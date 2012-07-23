@@ -202,10 +202,12 @@ InlineCommandComment *Sema::actOnInlineCommand(SourceLocation CommandLocBegin,
                                                SourceLocation CommandLocEnd,
                                                StringRef CommandName) {
   ArrayRef<InlineCommandComment::Argument> Args;
-  return new (Allocator) InlineCommandComment(CommandLocBegin,
-                                              CommandLocEnd,
-                                              CommandName,
-                                              Args);
+  return new (Allocator) InlineCommandComment(
+                                  CommandLocBegin,
+                                  CommandLocEnd,
+                                  CommandName,
+                                  getInlineCommandRenderKind(CommandName),
+                                  Args);
 }
 
 InlineCommandComment *Sema::actOnInlineCommand(SourceLocation CommandLocBegin,
@@ -219,17 +221,22 @@ InlineCommandComment *Sema::actOnInlineCommand(SourceLocation CommandLocBegin,
                                                      ArgLocEnd),
                                          Arg);
 
-  return new (Allocator) InlineCommandComment(CommandLocBegin,
-                                              CommandLocEnd,
-                                              CommandName,
-                                              llvm::makeArrayRef(A, 1));
+  return new (Allocator) InlineCommandComment(
+                                  CommandLocBegin,
+                                  CommandLocEnd,
+                                  CommandName,
+                                  getInlineCommandRenderKind(CommandName),
+                                  llvm::makeArrayRef(A, 1));
 }
 
 InlineContentComment *Sema::actOnUnknownCommand(SourceLocation LocBegin,
                                                 SourceLocation LocEnd,
                                                 StringRef Name) {
   ArrayRef<InlineCommandComment::Argument> Args;
-  return new (Allocator) InlineCommandComment(LocBegin, LocEnd, Name, Args);
+  return new (Allocator) InlineCommandComment(
+                                  LocBegin, LocEnd, Name,
+                                  InlineCommandComment::RenderNormal,
+                                  Args);
 }
 
 TextComment *Sema::actOnText(SourceLocation LocBegin,
@@ -445,12 +452,23 @@ unsigned Sema::getBlockCommandNumArgs(StringRef Name) {
       .Default(0);
 }
 
-bool Sema::isInlineCommand(StringRef Name) {
+bool Sema::isInlineCommand(StringRef Name) const {
   return llvm::StringSwitch<bool>(Name)
       .Case("b", true)
       .Cases("c", "p", true)
       .Cases("a", "e", "em", true)
       .Default(false);
+}
+
+InlineCommandComment::RenderKind
+Sema::getInlineCommandRenderKind(StringRef Name) const {
+  assert(isInlineCommand(Name));
+
+  return llvm::StringSwitch<InlineCommandComment::RenderKind>(Name)
+      .Case("b", InlineCommandComment::RenderBold)
+      .Cases("c", "p", InlineCommandComment::RenderMonospaced)
+      .Cases("a", "e", "em", InlineCommandComment::RenderEmphasized)
+      .Default(InlineCommandComment::RenderNormal);
 }
 
 bool Sema::isHTMLEndTagOptional(StringRef Name) {

@@ -283,6 +283,20 @@ static void DumpCXCommentInternal(struct CommentASTDumpingContext *Ctx,
     PrintCXStringWithPrefixAndDispose(
         "CommandName",
         clang_InlineCommandComment_getCommandName(Comment));
+    switch (clang_InlineCommandComment_getRenderKind(Comment)) {
+    case CXCommentInlineCommandRenderKind_Normal:
+      printf(" RenderNormal");
+      break;
+    case CXCommentInlineCommandRenderKind_Bold:
+      printf(" RenderBold");
+      break;
+    case CXCommentInlineCommandRenderKind_Monospaced:
+      printf(" RenderMonospaced");
+      break;
+    case CXCommentInlineCommandRenderKind_Emphasized:
+      printf(" RenderEmphasized");
+      break;
+    }
     for (i = 0, e = clang_InlineCommandComment_getNumArgs(Comment);
          i != e; ++i) {
       printf(" Arg[%u]=", i);

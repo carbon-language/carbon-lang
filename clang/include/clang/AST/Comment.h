@@ -63,6 +63,15 @@ protected:
   };
   enum { NumTextCommentBits = NumInlineContentCommentBits + 2 };
 
+  class InlineCommandCommentBitfields {
+    friend class InlineCommandComment;
+
+    unsigned : NumInlineContentCommentBits;
+
+    unsigned RenderKind : 2;
+  };
+  enum { NumInlineCommandCommentBits = NumInlineContentCommentBits + 1 };
+
   class HTMLStartTagCommentBitfields {
     friend class HTMLStartTagComment;
 
@@ -104,6 +113,7 @@ protected:
     CommentBitfields CommentBits;
     InlineContentCommentBitfields InlineContentCommentBits;
     TextCommentBitfields TextCommentBits;
+    InlineCommandCommentBitfields InlineCommandCommentBits;
     HTMLStartTagCommentBitfields HTMLStartTagCommentBits;
     ParagraphCommentBitfields ParagraphCommentBits;
     ParamCommandCommentBitfields ParamCommandCommentBits;
@@ -248,6 +258,15 @@ public:
     Argument(SourceRange Range, StringRef Text) : Range(Range), Text(Text) { }
   };
 
+  /// The most appropriate rendering mode for this command, chosen on command
+  /// semantics in Doxygen.
+  enum RenderKind {
+    RenderNormal,
+    RenderBold,
+    RenderMonospaced,
+    RenderEmphasized
+  };
+
 protected:
   /// Command name.
   StringRef Name;
@@ -259,10 +278,12 @@ public:
   InlineCommandComment(SourceLocation LocBegin,
                        SourceLocation LocEnd,
                        StringRef Name,
+                       RenderKind RK,
                        llvm::ArrayRef<Argument> Args) :
-    InlineContentComment(InlineCommandCommentKind, LocBegin, LocEnd),
-    Name(Name), Args(Args)
-  { }
+      InlineContentComment(InlineCommandCommentKind, LocBegin, LocEnd),
+      Name(Name), Args(Args) {
+    InlineCommandCommentBits.RenderKind = RK;
+  }
 
   static bool classof(const Comment *C) {
     return C->getCommentKind() == InlineCommandCommentKind;
@@ -281,6 +302,10 @@ public:
   SourceRange getCommandNameRange() const {
     return SourceRange(getLocStart().getLocWithOffset(-1),
                        getLocEnd());
+  }
+
+  RenderKind getRenderKind() const {
+    return static_cast<RenderKind>(InlineCommandCommentBits.RenderKind);
   }
 
   unsigned getNumArgs() const {

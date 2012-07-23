@@ -572,25 +572,25 @@ void comment_to_html_conversion_22();
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
 // CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
-// CHECK-NEXT:         (CXComment_InlineCommand CommandName=[b] Arg[0]=Aaa)))]
+// CHECK-NEXT:         (CXComment_InlineCommand CommandName=[b] RenderBold Arg[0]=Aaa)))]
 // CHECK: annotate-comments.cpp:307:6: FunctionDecl=comment_to_html_conversion_19:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <tt>Aaa</tt> <tt>Bbb</tt></p>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
 // CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
-// CHECK-NEXT:         (CXComment_InlineCommand CommandName=[c] Arg[0]=Aaa)
+// CHECK-NEXT:         (CXComment_InlineCommand CommandName=[c] RenderMonospaced Arg[0]=Aaa)
 // CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
-// CHECK-NEXT:         (CXComment_InlineCommand CommandName=[p] Arg[0]=Bbb)))]
+// CHECK-NEXT:         (CXComment_InlineCommand CommandName=[p] RenderMonospaced Arg[0]=Bbb)))]
 // CHECK: annotate-comments.cpp:310:6: FunctionDecl=comment_to_html_conversion_20:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <em>Aaa</em> <em>Bbb</em> <em>Ccc</em></p>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
 // CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
-// CHECK-NEXT:         (CXComment_InlineCommand CommandName=[a] Arg[0]=Aaa)
+// CHECK-NEXT:         (CXComment_InlineCommand CommandName=[a] RenderEmphasized Arg[0]=Aaa)
 // CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
-// CHECK-NEXT:         (CXComment_InlineCommand CommandName=[e] Arg[0]=Bbb)
+// CHECK-NEXT:         (CXComment_InlineCommand CommandName=[e] RenderEmphasized Arg[0]=Bbb)
 // CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
-// CHECK-NEXT:         (CXComment_InlineCommand CommandName=[em] Arg[0]=Ccc)))]
+// CHECK-NEXT:         (CXComment_InlineCommand CommandName=[em] RenderEmphasized Arg[0]=Ccc)))]
 // CHECK: annotate-comments.cpp:313:6: FunctionDecl=comment_to_html_conversion_21:{{.*}} FullCommentAsHTML=[<p class="para-brief"> \ @ &amp; $ # &lt; &gt; % &quot; . ::</p>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment

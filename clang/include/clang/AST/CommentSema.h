@@ -155,7 +155,10 @@ public:
   bool isParamCommand(StringRef Name);
   unsigned getBlockCommandNumArgs(StringRef Name);
 
-  bool isInlineCommand(StringRef Name);
+  bool isInlineCommand(StringRef Name) const;
+
+  InlineCommandComment::RenderKind
+  getInlineCommandRenderKind(StringRef Name) const;
 
   bool isHTMLEndTagOptional(StringRef Name);
   bool isHTMLEndTagForbidden(StringRef Name);

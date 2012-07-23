@@ -126,6 +126,28 @@ CXString clang_InlineCommandComment_getCommandName(CXComment CXC) {
   return createCXString(ICC->getCommandName(), /*DupString=*/ false);
 }
 
+enum CXCommentInlineCommandRenderKind
+clang_InlineCommandComment_getRenderKind(CXComment CXC) {
+  const InlineCommandComment *ICC = getASTNodeAs<InlineCommandComment>(CXC);
+  if (!ICC)
+    return CXCommentInlineCommandRenderKind_Normal;
+
+  switch (ICC->getRenderKind()) {
+  case InlineCommandComment::RenderNormal:
+    return CXCommentInlineCommandRenderKind_Normal;
+
+  case InlineCommandComment::RenderBold:
+    return CXCommentInlineCommandRenderKind_Bold;
+
+  case InlineCommandComment::RenderMonospaced:
+    return CXCommentInlineCommandRenderKind_Monospaced;
+
+  case InlineCommandComment::RenderEmphasized:
+    return CXCommentInlineCommandRenderKind_Emphasized;
+  }
+  llvm_unreachable("unknown InlineCommandComment::RenderKind");
+}
+
 unsigned clang_InlineCommandComment_getNumArgs(CXComment CXC) {
   const InlineCommandComment *ICC = getASTNodeAs<InlineCommandComment>(CXC);
   if (!ICC)
@@ -344,34 +366,34 @@ void CommentASTToHTMLConverter::visitTextComment(const TextComment *C) {
 
 void CommentASTToHTMLConverter::visitInlineCommandComment(
                                   const InlineCommandComment *C) {
-  StringRef CommandName = C->getCommandName();
-  bool HasArg0 = C->getNumArgs() > 0 && !C->getArgText(0).empty();
-  StringRef Arg0;
-  if (HasArg0)
-    Arg0 = C->getArgText(0);
+  // Nothing to render if no arguments supplied.
+  if (C->getNumArgs() == 0)
+    return;
 
-  if (CommandName == "b") {
-    if (!HasArg0)
-      return;
+  // Nothing to render if argument is empty.
+  StringRef Arg0 = C->getArgText(0);
+  if (Arg0.empty())
+    return;
+
+  switch (C->getRenderKind()) {
+  case InlineCommandComment::RenderNormal:
+    for (unsigned i = 0, e = C->getNumArgs(); i != e; ++i)
+      Result << C->getArgText(i) << " ";
+    return;
+
+  case InlineCommandComment::RenderBold:
+    assert(C->getNumArgs() == 1);
     Result << "<b>" << Arg0 << "</b>";
     return;
-  }
-  if (CommandName == "c" || CommandName == "p") {
-    if (!HasArg0)
-      return;
+  case InlineCommandComment::RenderMonospaced:
+    assert(C->getNumArgs() == 1);
     Result << "<tt>" << Arg0 << "</tt>";
     return;
-  }
-  if (CommandName == "a" || CommandName == "e" || CommandName == "em") {
-    if (!HasArg0)
-      return;
+  case InlineCommandComment::RenderEmphasized:
+    assert(C->getNumArgs() == 1);
     Result << "<em>" << Arg0 << "</em>";
     return;
   }
-
-  // We don't recognize this command, so just print its arguments.
-  for (unsigned i = 0, e = C->getNumArgs(); i != e; ++i)
-    Result << C->getArgText(i) << " ";
 }
 
 void CommentASTToHTMLConverter::visitHTMLStartTagComment(

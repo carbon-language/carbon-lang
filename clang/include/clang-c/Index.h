@@ -3308,6 +3308,33 @@ enum CXCommentKind {
 };
 
 /**
+ * \brief The most appropriate rendering mode for an inline command, chosen on
+ * command semantics in Doxygen.
+ */
+enum CXCommentInlineCommandRenderKind {
+  /**
+   * \brief Command argument should be rendered in a normal font.
+   */
+  CXCommentInlineCommandRenderKind_Normal,
+
+  /**
+   * \brief Command argument should be rendered in a bold font.
+   */
+  CXCommentInlineCommandRenderKind_Bold,
+
+  /**
+   * \brief Command argument should be rendered in a monospaced font.
+   */
+  CXCommentInlineCommandRenderKind_Monospaced,
+
+  /**
+   * \brief Command argument should be rendered emphasized (typically italic
+   * font).
+   */
+  CXCommentInlineCommandRenderKind_Emphasized
+};
+
+/**
  * \brief Describes parameter passing direction for \\param or \\arg command.
  */
 enum CXCommentParamPassDirection {
@@ -3384,6 +3411,15 @@ CINDEX_LINKAGE CXString clang_TextComment_getText(CXComment Comment);
  */
 CINDEX_LINKAGE
 CXString clang_InlineCommandComment_getCommandName(CXComment Comment);
+
+/**
+ * \param Comment a \c CXComment_InlineCommand AST node.
+ *
+ * \returns the most appropriate rendering mode, chosen on command
+ * semantics in Doxygen.
+ */
+CINDEX_LINKAGE enum CXCommentInlineCommandRenderKind
+clang_InlineCommandComment_getRenderKind(CXComment Comment);
 
 /**
  * \param Comment a \c CXComment_InlineCommand AST node.
