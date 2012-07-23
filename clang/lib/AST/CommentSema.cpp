@@ -19,7 +19,8 @@ namespace comments {
 
 Sema::Sema(llvm::BumpPtrAllocator &Allocator, const SourceManager &SourceMgr,
            DiagnosticsEngine &Diags) :
-    Allocator(Allocator), SourceMgr(SourceMgr), Diags(Diags), ThisDecl(NULL) {
+    Allocator(Allocator), SourceMgr(SourceMgr), Diags(Diags), ThisDecl(NULL),
+    IsThisDeclInspected(false) {
 }
 
 void Sema::setDecl(const Decl *D) {
@@ -58,8 +59,7 @@ ParamCommandComment *Sema::actOnParamCommandStart(SourceLocation LocBegin,
   ParamCommandComment *Command =
       new (Allocator) ParamCommandComment(LocBegin, LocEnd, Name);
 
-  if (!ThisDecl ||
-      !(isa<FunctionDecl>(ThisDecl) || isa<ObjCMethodDecl>(ThisDecl)))
+  if (!isFunctionDecl())
     Diag(Command->getLocation(),
          diag::warn_doc_param_not_attached_to_a_function_decl)
       << Command->getCommandNameRange();
@@ -142,25 +142,15 @@ ParamCommandComment *Sema::actOnParamCommandParamNameArg(
                                          Arg);
   Command->setArgs(llvm::makeArrayRef(A, 1));
 
-  if (!ThisDecl)
-    return Command;
-
-  const ParmVarDecl * const *ParamVars;
-  unsigned NumParams;
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ThisDecl)) {
-    ParamVars = FD->param_begin();
-    NumParams = FD->getNumParams();
-  } else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(ThisDecl)) {
-    ParamVars = MD->param_begin();
-    NumParams = MD->param_size();
-  } else {
+  if (!isFunctionDecl()) {
     // We already warned that this \\param is not attached to a function decl.
     return Command;
   }
 
+  ArrayRef<const ParmVarDecl *> ParamVars = getParamVars();
+
   // Check that referenced parameter name is in the function decl.
-  const unsigned ResolvedParamIndex = resolveParmVarReference(Arg, ParamVars,
-                                                              NumParams);
+  const unsigned ResolvedParamIndex = resolveParmVarReference(Arg, ParamVars);
   if (ResolvedParamIndex != ParamCommandComment::InvalidParamIndex) {
     Command->setParamIndex(ResolvedParamIndex);
     return Command;
@@ -171,14 +161,13 @@ ParamCommandComment *Sema::actOnParamCommandParamNameArg(
     << Arg << ArgRange;
 
   unsigned CorrectedParamIndex = ParamCommandComment::InvalidParamIndex;
-  if (NumParams == 1) {
+  if (ParamVars.size() == 1) {
     // If function has only one parameter then only that parameter
     // can be documented.
     CorrectedParamIndex = 0;
   } else {
     // Do typo correction.
-    CorrectedParamIndex = correctTypoInParmVarReference(Arg, ParamVars,
-                                                        NumParams);
+    CorrectedParamIndex = correctTypoInParmVarReference(Arg, ParamVars);
   }
   if (CorrectedParamIndex != ParamCommandComment::InvalidParamIndex) {
     const ParmVarDecl *CorrectedPVD = ParamVars[CorrectedParamIndex];
@@ -362,6 +351,7 @@ HTMLEndTagComment *Sema::actOnHTMLEndTag(SourceLocation LocBegin,
 
 FullComment *Sema::actOnFullComment(
                               ArrayRef<BlockContentComment *> Blocks) {
+  SmallVector<ParamCommandComment *, 8> Params;
   return new (Allocator) FullComment(Blocks);
 }
 
@@ -379,10 +369,44 @@ void Sema::checkBlockCommandEmptyParagraph(BlockCommandComment *Command) {
   }
 }
 
+bool Sema::isFunctionDecl() {
+  if (IsThisDeclInspected)
+    return IsFunctionDecl;
+
+  inspectThisDecl();
+  return IsFunctionDecl;
+}
+
+ArrayRef<const ParmVarDecl *> Sema::getParamVars() {
+  if (IsThisDeclInspected)
+    return ParamVars;
+
+  inspectThisDecl();
+  return ParamVars;
+}
+
+void Sema::inspectThisDecl() {
+  if (!ThisDecl) {
+    IsFunctionDecl = false;
+    ParamVars = ArrayRef<const ParmVarDecl *>();
+  } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ThisDecl)) {
+    IsFunctionDecl = true;
+    ParamVars = ArrayRef<const ParmVarDecl *>(FD->param_begin(),
+                                              FD->getNumParams());
+  } else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(ThisDecl)) {
+    IsFunctionDecl = true;
+    ParamVars = ArrayRef<const ParmVarDecl *>(MD->param_begin(),
+                                              MD->param_size());
+  } else {
+    IsFunctionDecl = false;
+    ParamVars = ArrayRef<const ParmVarDecl *>();
+  }
+  IsThisDeclInspected = true;
+}
+
 unsigned Sema::resolveParmVarReference(StringRef Name,
-                                       const ParmVarDecl * const *ParamVars,
-                                       unsigned NumParams) {
-  for (unsigned i = 0; i != NumParams; ++i) {
+                                       ArrayRef<const ParmVarDecl *> ParamVars) {
+  for (unsigned i = 0, e = ParamVars.size(); i != e; ++i) {
     const IdentifierInfo *II = ParamVars[i]->getIdentifier();
     if (II && II->getName() == Name)
       return i;
@@ -392,12 +416,11 @@ unsigned Sema::resolveParmVarReference(StringRef Name,
 
 unsigned Sema::correctTypoInParmVarReference(
                                     StringRef Typo,
-                                    const ParmVarDecl * const *ParamVars,
-                                    unsigned NumParams) {
+                                    ArrayRef<const ParmVarDecl *> ParamVars) {
   const unsigned MaxEditDistance = (Typo.size() + 2) / 3;
   unsigned BestPVDIndex = 0;
   unsigned BestEditDistance = MaxEditDistance + 1;
-  for (unsigned i = 0; i != NumParams; ++i) {
+  for (unsigned i = 0, e = ParamVars.size(); i != e; ++i) {
     const IdentifierInfo *II = ParamVars[i]->getIdentifier();
     if (II) {
       StringRef Name = II->getName();
