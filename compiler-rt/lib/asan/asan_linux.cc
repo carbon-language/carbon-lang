@@ -72,6 +72,10 @@ bool AsanInterceptsSignal(int signum) {
   return signum == SIGSEGV && flags()->handle_segv;
 }
 
+void AsanPlatformThreadInit() {
+  // Nothing here for now.
+}
+
 AsanLock::AsanLock(LinkerInitialized) {
   // We assume that pthread_mutex_t initialized to all zeroes is a valid
   // unlocked mutex. We can not use PTHREAD_MUTEX_INITIALIZER as it triggers

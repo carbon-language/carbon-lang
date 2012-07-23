@@ -1906,9 +1906,40 @@ void CFAllocator_DoubleFreeOnPthread() {
   pthread_join(child, NULL);  // Shouldn't be reached.
 }
 
-TEST(AddressSanitizerMac, DISABLED_CFAllocatorDefaultDoubleFree_ChildPhread) {
+TEST(AddressSanitizerMac, CFAllocatorDefaultDoubleFree_ChildPhread) {
   EXPECT_DEATH(CFAllocator_DoubleFreeOnPthread(), "attempting double-free");
 }
+
+namespace {
+
+void *GLOB;
+
+void *CFAllocatorAllocateToGlob(void *unused) {
+  GLOB = CFAllocatorAllocate(NULL, 100, /*hint*/0);
+  return NULL;
+}
+
+void *CFAllocatorDeallocateFromGlob(void *unused) {
+  char *p = (char*)GLOB;
+  p[100] = 'A';  // ASan should report an error here.
+  CFAllocatorDeallocate(NULL, GLOB);
+  return NULL;
+}
+
+void CFAllocator_PassMemoryToAnotherThread() {
+  pthread_t th1, th2;
+  pthread_create(&th1, NULL, CFAllocatorAllocateToGlob, NULL);
+  pthread_join(th1, NULL);
+  pthread_create(&th2, NULL, CFAllocatorDeallocateFromGlob, NULL);
+  pthread_join(th2, NULL);
+}
+
+TEST(AddressSanitizerMac, CFAllocator_PassMemoryToAnotherThread) {
+  EXPECT_DEATH(CFAllocator_PassMemoryToAnotherThread(),
+               "heap-buffer-overflow");
+}
+
+}  // namespace
 
 // TODO(glider): figure out whether we still need these tests. Is it correct
 // to intercept the non-default CFAllocators?

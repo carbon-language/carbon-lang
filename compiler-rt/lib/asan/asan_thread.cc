@@ -89,6 +89,7 @@ void AsanThread::Init() {
            stack_top_ - stack_bottom_, &local);
   }
   fake_stack_.Init(stack_size());
+  AsanPlatformThreadInit();
 }
 
 thread_return_t AsanThread::ThreadStart() {

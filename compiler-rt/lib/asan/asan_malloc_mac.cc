@@ -336,8 +336,10 @@ void ReplaceCFAllocator() {
         /*reallocate*/ &cf_realloc,
         /*deallocate*/ &cf_free,
         /*preferredSize*/ 0 };
-  cf_asan = CFAllocatorCreate(kCFAllocatorUseContext, &asan_context);
-  CFAllocatorSetDefault(cf_asan);
+  if (!cf_asan)
+    cf_asan = CFAllocatorCreate(kCFAllocatorUseContext, &asan_context);
+  if (CFAllocatorGetDefault() != cf_asan)
+    CFAllocatorSetDefault(cf_asan);
 }
 
 void ReplaceSystemMalloc() {
