@@ -1673,7 +1673,7 @@ X86TargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
     SDValue Val;
 
     // If this is a call to a function that returns an fp value on the floating
-    // point stack, we must guarantee the the value is popped from the stack, so
+    // point stack, we must guarantee the value is popped from the stack, so
     // a CopyFromReg is not good enough - the copy instruction may be eliminated
     // if the return value is not used. We use the FpPOP_RETVAL instruction
     // instead.

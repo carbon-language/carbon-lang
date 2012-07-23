@@ -1,5 +1,5 @@
 #
-# This function determins if the the srand48,drand48,lrand48 functions are
+# This function determins if the srand48,drand48,lrand48 functions are
 # available on this platform.
 #
 AC_DEFUN([AC_FUNC_RAND48],[

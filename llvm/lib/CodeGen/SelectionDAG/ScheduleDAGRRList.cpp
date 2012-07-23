@@ -853,7 +853,7 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
 }
 
 /// After backtracking, the hazard checker needs to be restored to a state
-/// corresponding the the current cycle.
+/// corresponding the current cycle.
 void ScheduleDAGRRList::RestoreHazardCheckerBottomUp() {
   HazardRec->Reset();
 

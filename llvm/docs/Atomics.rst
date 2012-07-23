@@ -318,7 +318,7 @@ Notes for frontends
   operation, and vice versa.
 
 Notes for optimizers
-  In general, optimizers should treat this like a nothrow call; the the possible
+  In general, optimizers should treat this like a nothrow call; the possible
   optimizations are usually not interesting.
 
 Notes for code generation

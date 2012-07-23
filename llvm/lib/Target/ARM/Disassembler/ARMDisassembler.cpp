@@ -603,7 +603,7 @@ static bool tryAddingSymbolicOperand(uint64_t Address, int32_t Value,
 /// These can often be values in a literal pool near the Address of the
 /// instruction.  The Address of the instruction and its immediate Value are
 /// used as a possible literal pool entry.  The SymbolLookUp call back will
-/// return the name of a symbol referenced by the the literal pool's entry if
+/// return the name of a symbol referenced by the literal pool's entry if
 /// the referenced address is that of a symbol.  Or it will return a pointer to
 /// a literal 'C' string if the referenced address of the literal pool's entry
 /// is an address into a section with 'C' string literals.

@@ -4,7 +4,7 @@
 %0 = type opaque
 %struct.NSConstantString = type { i32*, i32, i8*, i32 }
 
-; Make sure that the string ends up the the correct section.
+; Make sure that the string ends up the correct section.
 
 ; CHECK:        .section __TEXT,__cstring
 ; CHECK-NEXT: l_.str3:

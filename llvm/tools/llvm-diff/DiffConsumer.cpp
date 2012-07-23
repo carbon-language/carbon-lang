@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This files implements the the LLVM difference Consumer
+// This files implements the LLVM difference Consumer
 //
 //===----------------------------------------------------------------------===//
 

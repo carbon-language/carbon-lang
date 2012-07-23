@@ -208,7 +208,7 @@ section (above) to determine which modifiers are applicable to which operations.
  When inserting or moving member files, this option specifies the destination of
  the new files as being before the *relpos* member. If *relpos* is not
  found, the files are placed at the end of the archive. This modifier is
- identical to the the *i* modifier.
+ identical to the *i* modifier.
 
 
 

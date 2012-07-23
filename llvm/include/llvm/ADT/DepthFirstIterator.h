@@ -187,7 +187,7 @@ public:
   /// current node, counting both nodes.
   unsigned getPathLength() const { return VisitStack.size(); }
 
-  /// getPath - Return the n'th node in the path from the the entry node to the
+  /// getPath - Return the n'th node in the path from the entry node to the
   /// current node.
   NodeType *getPath(unsigned n) const {
     return VisitStack[n].first.getPointer();

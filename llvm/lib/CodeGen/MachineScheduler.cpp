@@ -212,7 +212,7 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
     Scheduler->startBlock(MBB);
 
     // Break the block into scheduling regions [I, RegionEnd), and schedule each
-    // region as soon as it is discovered. RegionEnd points the the scheduling
+    // region as soon as it is discovered. RegionEnd points the scheduling
     // boundary at the bottom of the region. The DAG does not include RegionEnd,
     // but the region does (i.e. the next RegionEnd is above the previous
     // RegionBegin). If the current block has no terminator then RegionEnd ==

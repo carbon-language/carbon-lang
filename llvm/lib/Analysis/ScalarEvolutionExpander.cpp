@@ -37,7 +37,7 @@ Value *SCEVExpander::ReuseOrCreateCast(Value *V, Type *Ty,
   // We use this precondition to produce a cast that will dominate all its
   // uses. In particular, this is crucial for the case where the builder's
   // insertion point *is* the point where we were asked to put the cast.
-  // Since we don't know the the builder's insertion point is actually
+  // Since we don't know the builder's insertion point is actually
   // where the uses will be added (only that it dominates it), we are
   // not allowed to move it.
   BasicBlock::iterator BIP = Builder.GetInsertPoint();

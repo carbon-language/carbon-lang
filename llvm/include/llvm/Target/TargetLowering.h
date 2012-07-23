@@ -1188,7 +1188,7 @@ protected:
     ShouldFoldAtomicFences = fold;
   }
 
-  /// setInsertFencesForAtomic - Set if the the DAG builder should
+  /// setInsertFencesForAtomic - Set if the DAG builder should
   /// automatically insert fences and reduce the order of atomic memory
   /// operations to Monotonic.
   void setInsertFencesForAtomic(bool fence) {

@@ -583,7 +583,7 @@ error_code GetMainExecutable(const char *argv0, void *MainAddr,
 /// @param file_offset Byte offset in file where mapping should begin.
 /// @param size_t Byte length of range of the file to map.
 /// @param map_writable If true, the file will be mapped in r/w such
-///        that changes to the the mapped buffer will be flushed back
+///        that changes to the mapped buffer will be flushed back
 ///        to the file.  If false, the file will be mapped read-only
 ///        and the buffer will be read-only.
 /// @param result Set to the start address of the mapped buffer.

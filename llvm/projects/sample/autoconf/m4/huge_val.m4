@@ -1,5 +1,5 @@
 #
-# This function determins if the the HUGE_VAL macro is compilable with the 
+# This function determins if the HUGE_VAL macro is compilable with the 
 # -pedantic switch or not. XCode < 2.4.1 doesn't get it right.
 #
 AC_DEFUN([AC_HUGE_VAL_CHECK],[

@@ -1485,7 +1485,7 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
       return false;
 
     // The call to CreateRegs builds two sequential registers, to store the
-    // both the the returned values.
+    // both the returned values.
     unsigned ResultReg = FuncInfo.CreateRegs(I.getType());
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(OpC), ResultReg)
       .addReg(Reg1).addReg(Reg2);

@@ -156,7 +156,7 @@ bool BugDriver::run(std::string &ErrMsg) {
   // If we're not running as a child, the first thing that we must do is
   // determine what the problem is. Does the optimization series crash the
   // compiler, or does it produce illegal code?  We make the top-level
-  // decision by trying to run all of the passes on the the input program,
+  // decision by trying to run all of the passes on the input program,
   // which should generate a bitcode file.  If it does generate a bitcode
   // file, then we know the compiler didn't crash, so try to diagnose a
   // miscompilation.

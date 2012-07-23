@@ -1330,7 +1330,7 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
       return false;
   }
   
-  // If we folded the the first phi, PN dangles at this point.  Refresh it.  If
+  // If we folded the first phi, PN dangles at this point.  Refresh it.  If
   // we ran out of PHIs then we simplified them all.
   PN = dyn_cast<PHINode>(BB->begin());
   if (PN == 0) return true;

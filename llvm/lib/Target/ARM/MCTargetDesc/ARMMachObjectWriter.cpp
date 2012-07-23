@@ -190,7 +190,7 @@ RecordARMScatteredHalfRelocation(MachObjectWriter *Writer,
   //      0 - arm instructions
   //      1 - thumb instructions
   // the other half of the relocated expression is in the following pair
-  // relocation entry in the the low 16 bits of r_address field.
+  // relocation entry in the low 16 bits of r_address field.
   unsigned ThumbBit = 0;
   unsigned MovtBit = 0;
   switch ((unsigned)Fixup.getKind()) {

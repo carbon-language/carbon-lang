@@ -2198,7 +2198,7 @@ ARMBaseInstrInfo::getNumMicroOps(const InstrItineraryData *ItinData,
   //
   // On Cortex-A8, each pair of register loads / stores can be scheduled on the
   // same cycle. The scheduling for the first load / store must be done
-  // separately by assuming the the address is not 64-bit aligned.
+  // separately by assuming the address is not 64-bit aligned.
   //
   // On Cortex-A9, the formula is simply (#reg / 2) + (#reg % 2). If the address
   // is not 64-bit aligned, then AGU would take an extra cycle.  For VFP / NEON

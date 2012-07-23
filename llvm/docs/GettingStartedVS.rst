@@ -170,7 +170,7 @@ An Example Using the LLVM Tool Chain
       C:\..> clang -c hello.c -emit-llvm -o hello.bc
 
    This will create the result file ``hello.bc`` which is the LLVM bitcode
-   that corresponds the the compiled program and the library facilities that
+   that corresponds the compiled program and the library facilities that
    it required.  You can execute this file directly using ``lli`` tool,
    compile it to native assembly with the ``llc``, optimize or analyze it
    further with the ``opt`` tool, etc.

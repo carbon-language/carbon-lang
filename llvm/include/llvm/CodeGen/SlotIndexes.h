@@ -399,7 +399,7 @@ namespace llvm {
     }
 
     /// getIndexBefore - Returns the index of the last indexed instruction
-    /// before MI, or the the start index of its basic block.
+    /// before MI, or the start index of its basic block.
     /// MI is not required to have an index.
     SlotIndex getIndexBefore(const MachineInstr *MI) const {
       const MachineBasicBlock *MBB = MI->getParent();

@@ -1397,7 +1397,7 @@ bool AsmParser::ParseCppHashLineFilenameComment(const SMLoc &L) {
   return false;
 }
 
-/// DiagHandler - will use the the last parsed cpp hash line filename comment
+/// DiagHandler - will use the last parsed cpp hash line filename comment
 /// for the Filename and LineNo if any in the diagnostic.
 void AsmParser::DiagHandler(const SMDiagnostic &Diag, void *Context) {
   const AsmParser *Parser = static_cast<const AsmParser*>(Context);

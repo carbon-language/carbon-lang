@@ -193,7 +193,7 @@ function check_valid_urls() {
     done
 }
 
-# Export sources to the the build directory.
+# Export sources to the build directory.
 function export_sources() {
     check_valid_urls
 

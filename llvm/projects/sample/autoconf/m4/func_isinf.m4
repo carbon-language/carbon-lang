@@ -1,5 +1,5 @@
 #
-# This function determins if the the isinf function isavailable on this
+# This function determins if the isinf function isavailable on this
 # platform.
 #
 AC_DEFUN([AC_FUNC_ISINF],[

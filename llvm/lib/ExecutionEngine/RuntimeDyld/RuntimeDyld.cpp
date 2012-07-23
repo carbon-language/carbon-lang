@@ -60,7 +60,7 @@ void RuntimeDyldImpl::mapSectionAddress(void *LocalAddress,
 }
 
 // Subclasses can implement this method to create specialized image instances.
-// The caller owns the the pointer that is returned.
+// The caller owns the pointer that is returned.
 ObjectImage *RuntimeDyldImpl::createObjectImage(const MemoryBuffer *InputBuffer) {
   ObjectFile *ObjFile = ObjectFile::createObjectFile(const_cast<MemoryBuffer*>
                                                                  (InputBuffer));

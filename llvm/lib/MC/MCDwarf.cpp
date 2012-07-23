@@ -198,7 +198,7 @@ static inline void EmitDwarfLineTable(MCStreamer *MCOS,
   // Set the value of the symbol, as we are at the end of the section.
   MCOS->EmitLabel(SectionEnd);
 
-  // Switch back the the dwarf line section.
+  // Switch back the dwarf line section.
   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfLineSection());
 
   const MCAsmInfo &asmInfo = MCOS->getContext().getAsmInfo();
