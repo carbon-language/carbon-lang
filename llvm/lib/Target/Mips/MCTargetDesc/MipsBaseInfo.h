@@ -81,6 +81,8 @@ namespace MipsII {
     MO_GOT_PAGE,
     MO_GOT_OFST,
 
+    /// MO_HIGHER/HIGHEST - Represents the highest or higher half word of a
+    /// 64-bit symbol address.
     MO_HIGHER,
     MO_HIGHEST
   };
