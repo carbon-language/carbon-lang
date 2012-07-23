@@ -578,7 +578,7 @@ bool TokenLexer::PasteTokens(Token &Tok) {
         Result.setKind(tok::unknown);
     }
 
-    // Transfer properties of the LHS over the the Result.
+    // Transfer properties of the LHS over the Result.
     Result.setFlagValue(Token::StartOfLine , Tok.isAtStartOfLine());
     Result.setFlagValue(Token::LeadingSpace, Tok.hasLeadingSpace());
     

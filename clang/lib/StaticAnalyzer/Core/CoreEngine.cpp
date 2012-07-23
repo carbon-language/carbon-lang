@@ -541,7 +541,7 @@ ExplodedNode *CoreEngine::generateCallExitBeginNode(ExplodedNode *N) {
   const StackFrameContext *LocCtx
                          = cast<StackFrameContext>(N->getLocationContext());
 
-  // Use the the callee location context.
+  // Use the callee location context.
   CallExitBegin Loc(LocCtx);
 
   bool isNew;

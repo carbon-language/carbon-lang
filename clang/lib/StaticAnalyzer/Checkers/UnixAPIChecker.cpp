@@ -256,7 +256,7 @@ void UnixAPIChecker::BasicAllocationCheck(CheckerContext &C,
     (void) ReportZeroByteAllocation(C, falseState, arg, fn); 
     return;
   }
-  // Assume the the value is non-zero going forward.
+  // Assume the value is non-zero going forward.
   assert(trueState);
   if (trueState != state)
     C.addTransition(trueState);                           
@@ -292,7 +292,7 @@ void UnixAPIChecker::CheckCallocZero(CheckerContext &C,
     }
   }
 
-  // Assume the the value is non-zero going forward.
+  // Assume the value is non-zero going forward.
   assert(trueState);
   if (trueState != state)
     C.addTransition(trueState);

@@ -811,7 +811,7 @@ void LocalVariableMap::intersectBackEdge(Context C1, Context C2) {
 // incoming back edge, it duplicates the context, creating new definitions
 // that refer back to the originals.  (These correspond to places where SSA
 // might have to insert a phi node.)  On the second pass, these definitions are
-// set to NULL if the the variable has changed on the back-edge (i.e. a phi
+// set to NULL if the variable has changed on the back-edge (i.e. a phi
 // node was actually required.)  E.g.
 //
 //                       { Context           | VarDefinitions }

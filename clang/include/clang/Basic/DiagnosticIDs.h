@@ -190,7 +190,7 @@ public:
   /// category.
   static bool isARCDiagnostic(unsigned DiagID);
 
-  /// \brief Enumeration describing how the the emission of a diagnostic should
+  /// \brief Enumeration describing how the emission of a diagnostic should
   /// be treated when it occurs during C++ template argument deduction.
   enum SFINAEResponse {
     /// \brief The diagnostic should not be reported, but it should cause

@@ -2500,7 +2500,7 @@ void Sema::HandleFunctionTypeMismatch(PartialDiagnostic &PDiag,
 /// for equality of their argument types. Caller has already checked that
 /// they have same number of arguments. This routine assumes that Objective-C
 /// pointer types which only differ in their protocol qualifiers are equal.
-/// If the parameters are different, ArgPos will have the the parameter index
+/// If the parameters are different, ArgPos will have the parameter index
 /// of the first different parameter.
 bool Sema::FunctionArgTypesAreEqual(const FunctionProtoType *OldType,
                                     const FunctionProtoType *NewType,

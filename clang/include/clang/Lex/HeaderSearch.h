@@ -409,7 +409,7 @@ public:
   bool isFileMultipleIncludeGuarded(const FileEntry *File);
 
   /// CreateHeaderMap - This method returns a HeaderMap for the specified
-  /// FileEntry, uniquing them through the the 'HeaderMaps' datastructure.
+  /// FileEntry, uniquing them through the 'HeaderMaps' datastructure.
   const HeaderMap *CreateHeaderMap(const FileEntry *FE);
 
   /// \brief Retrieve the name of the module file that should be used to 

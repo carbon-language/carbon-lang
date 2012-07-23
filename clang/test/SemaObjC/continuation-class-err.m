@@ -13,7 +13,7 @@
 @interface ReadOnly ()
 @property(readwrite, copy) id object;	// expected-warning {{property attribute in class extension does not match the primary class}}
 @property(readonly) id object1; // expected-error {{illegal redeclaration of property in class extension 'ReadOnly' (attribute must be 'readwrite', while its primary must be 'readonly')}}
-@property (readwrite, assign) int indentLevel; // OK. assign the the default in any case.
+@property (readwrite, assign) int indentLevel; // OK. assign the default in any case.
 @end
 
 @protocol Proto

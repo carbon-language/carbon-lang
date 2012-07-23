@@ -456,7 +456,7 @@ private:
   /// consumer eagerly.
   SmallVector<uint64_t, 16> ExternalDefinitions;
 
-  /// \brief The IDs of all tentative definitions stored in the the chain.
+  /// \brief The IDs of all tentative definitions stored in the chain.
   ///
   /// Sema keeps track of all tentative definitions in a TU because it has to
   /// complete them and pass them on to CodeGen. Thus, tentative definitions in

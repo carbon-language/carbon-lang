@@ -118,7 +118,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
   llvm::raw_svector_ostream DiagMessageStream(OutStr);
   printDiagnosticOptions(DiagMessageStream, Level, Info, *DiagOpts);
 
-  // Keeps track of the the starting position of the location
+  // Keeps track of the starting position of the location
   // information (e.g., "foo.c:10:4:") that precedes the error
   // message. We use this information to determine how long the
   // file+line+column number prefix is.

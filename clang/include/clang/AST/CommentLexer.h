@@ -270,7 +270,7 @@ private:
   /// Registered verbatim-like block commands.
   VerbatimBlockCommandVector VerbatimBlockCommands;
 
-  /// If State is LS_VerbatimBlock, contains the the name of verbatim end
+  /// If State is LS_VerbatimBlock, contains the name of verbatim end
   /// command, including command marker.
   SmallString<16> VerbatimBlockEndCommandName;
 

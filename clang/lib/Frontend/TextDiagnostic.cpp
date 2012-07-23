@@ -184,7 +184,7 @@ static void expandTabs(std::string &SourceLine, unsigned TabStop) {
 ///  characters will appear at (numbering the first column as 0).
 ///
 /// If a byte 'i' corresponds to muliple columns (e.g. the byte contains a tab
-///  character) then the the array will map that byte to the first column the
+///  character) then the array will map that byte to the first column the
 ///  tab appears at and the next value in the map will have been incremented
 ///  more than once.
 ///

@@ -2788,7 +2788,7 @@ CINDEX_LINKAGE long long clang_getNumElements(CXType T);
 CINDEX_LINKAGE CXType clang_getArrayElementType(CXType T);
 
 /**
- * \brief Return the the array size of a constant array.
+ * \brief Return the array size of a constant array.
  *
  * If a non-array type is passed in, -1 is returned.
  */

@@ -779,7 +779,7 @@ public:
                             const llvm::MemoryBuffer *Buffer,
                             bool DoNotFree = false);
 
-  /// \brief Override the the given source file with another one.
+  /// \brief Override the given source file with another one.
   ///
   /// \param SourceFile the source file which will be overriden.
   ///

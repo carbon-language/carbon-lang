@@ -13,7 +13,7 @@ void test_fprintf(FILE *file) {
   fprintf(file, "Hello, modules\n");
 }
 
-// Supplied by compiler, which forwards to the the "/usr/include" version.
+// Supplied by compiler, which forwards to the "/usr/include" version.
 @__experimental_modules_import cstd.stdint;
 
 my_awesome_nonstandard_integer_type value;

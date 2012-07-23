@@ -9,7 +9,7 @@
 //
 // rewriteBlockObjCVariable:
 //
-// Adding __block to an obj-c variable could be either because the the variable
+// Adding __block to an obj-c variable could be either because the variable
 // is used for output storage or the user wanted to break a retain cycle.
 // This transformation checks whether a reference of the variable for the block
 // is actually needed (it is assigned to or its address is taken) or not.

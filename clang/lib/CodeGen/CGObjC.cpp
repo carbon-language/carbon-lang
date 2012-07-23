@@ -580,7 +580,7 @@ namespace {
   };
 }
 
-/// Pick an implementation strategy for the the given property synthesis.
+/// Pick an implementation strategy for the given property synthesis.
 PropertyImplStrategy::PropertyImplStrategy(CodeGenModule &CGM,
                                      const ObjCPropertyImplDecl *propImpl) {
   const ObjCPropertyDecl *prop = propImpl->getPropertyDecl();

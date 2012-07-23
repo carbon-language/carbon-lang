@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -pedantic -Wsign-conversion %s
 void foo() {
   *(0 ? (double *)0 : (void *)0) = 0;
-  // FIXME: GCC doesn't consider the the following two statements to be errors.
+  // FIXME: GCC doesn't consider the following two statements to be errors.
   *(0 ? (double *)0 : (void *)(int *)0) = 0; // expected-error {{incomplete type 'void' is not assignable}}
   *(0 ? (double *)0 : (void *)(double *)0) = 0; // expected-error {{incomplete type 'void' is not assignable}}
   *(0 ? (double *)0 : (int *)(void *)0) = 0; // expected-error {{incomplete type 'void' is not assignable}} expected-warning {{pointer type mismatch ('double *' and 'int *')}}

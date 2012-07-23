@@ -517,7 +517,7 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, bool OnlyTemplate) {
 
   // If this class member has an explicit visibility attribute, the only
   // thing that can change its visibility is the template arguments, so
-  // only look for them when processing the the class.
+  // only look for them when processing the class.
   bool ClassOnlyTemplate =  LV.visibilityExplicit() ? true : OnlyTemplate;
 
   // If this member has an visibility attribute, ClassF will exclude

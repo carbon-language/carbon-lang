@@ -84,7 +84,7 @@ void HeaderSearch::PrintStats() {
 }
 
 /// CreateHeaderMap - This method returns a HeaderMap for the specified
-/// FileEntry, uniquing them through the the 'HeaderMaps' datastructure.
+/// FileEntry, uniquing them through the 'HeaderMaps' datastructure.
 const HeaderMap *HeaderSearch::CreateHeaderMap(const FileEntry *FE) {
   // We expect the number of headermaps to be small, and almost always empty.
   // If it ever grows, use of a linear search should be re-evaluated.
