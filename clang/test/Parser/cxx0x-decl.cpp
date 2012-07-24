@@ -25,3 +25,6 @@ class ExtraSemiAfterMemFn {
   void h() = delete;; // ok
   void i() = delete;;; // expected-warning {{extra ';' after member function definition}}
 };
+
+int *const const p = 0; // ok
+const const int *q = 0; // expected-warning {{duplicate 'const' declaration specifier}}
