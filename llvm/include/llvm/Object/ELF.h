@@ -505,9 +505,6 @@ private:
   const Elf_Rela *getRela(DataRefImpl Rela) const;
   const char     *getString(uint32_t section, uint32_t offset) const;
   const char     *getString(const Elf_Shdr *section, uint32_t offset) const;
-  error_code      getSymbolName(const Elf_Shdr *section,
-                                const Elf_Sym *Symb,
-                                StringRef &Res) const;
   error_code      getSymbolVersion(const Elf_Shdr *section,
                                    const Elf_Sym *Symb,
                                    StringRef &Version,
@@ -519,6 +516,11 @@ protected:
   void            validateSymbol(DataRefImpl Symb) const;
 
 public:
+  error_code      getSymbolName(const Elf_Shdr *section,
+                                const Elf_Sym *Symb,
+                                StringRef &Res) const;
+  error_code      getSectionName(const Elf_Shdr *section,
+                                 StringRef &Res) const;
   const Elf_Dyn  *getDyn(DataRefImpl DynData) const;
   error_code getSymbolVersion(SymbolRef Symb, StringRef &Version,
                               bool &IsDefault) const;
@@ -597,11 +599,15 @@ public:
   virtual StringRef getObjectType() const { return "ELF"; }
   virtual unsigned getArch() const;
   virtual StringRef getLoadName() const;
+  virtual error_code getSectionContents(const Elf_Shdr *sec,
+                                        StringRef &Res) const;
 
   uint64_t getNumSections() const;
   uint64_t getStringTableIndex() const;
   ELF::Elf64_Word getSymbolTableIndex(const Elf_Sym *symb) const;
   const Elf_Shdr *getSection(const Elf_Sym *symb) const;
+  const Elf_Shdr *getElfSection(section_iterator &It) const;
+  const Elf_Sym *getElfSymbol(symbol_iterator &It) const;
 
   // Methods for type inquiry through isa, cast, and dyn_cast
   bool isDyldType() const { return isDyldELFObject; }
@@ -780,6 +786,22 @@ ELFObjectFile<target_endianness, is64Bits>
   if (symb->st_shndx >= ELF::SHN_LORESERVE)
     return 0;
   return getSection(symb->st_shndx);
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Shdr *
+ELFObjectFile<target_endianness, is64Bits>
+                             ::getElfSection(section_iterator &It) const {
+  llvm::object::DataRefImpl ShdrRef = It->getRawDataRefImpl();
+  return const_cast<Elf_Shdr*>(reinterpret_cast<const Elf_Shdr *>
+                                 (ShdrRef.p));
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Sym *
+ELFObjectFile<target_endianness, is64Bits>
+                             ::getElfSymbol(symbol_iterator &It) const {
+  return getSymbol(It->getRawDataRefImpl());
 }
 
 template<support::endianness target_endianness, bool is64Bits>
@@ -1055,6 +1077,15 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
   const char *start = (const char*)base() + sec->sh_offset;
   Result = StringRef(start, sec->sh_size);
+  return object_error::success;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::getSectionContents(const Elf_Shdr *Sec,
+                                             StringRef &Result) const {
+  const char *start = (const char*)base() + Sec->sh_offset;
+  Result = StringRef(start, Sec->sh_size);
   return object_error::success;
 }
 
@@ -2148,6 +2179,14 @@ error_code ELFObjectFile<target_endianness, is64Bits>
     // Use the default symbol table name section.
     Result = getString(dot_strtab_sec, symb->st_name);
   }
+  return object_error::success;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::getSectionName(const Elf_Shdr *section,
+                                        StringRef &Result) const {
+  Result = StringRef(getString(dot_shstrtab_sec, section->sh_name));
   return object_error::success;
 }
 
