@@ -1018,7 +1018,9 @@ bool DAGTypeLegalizer::SplitVectorOperand(SDNode *N, unsigned OpNo) {
       N->dump(&DAG);
       dbgs() << "\n";
 #endif
-      llvm_unreachable("Do not know how to split this operator's operand!");
+      report_fatal_error("Do not know how to split this operator's "
+                         "operand!\n");
+
     case ISD::SETCC:             Res = SplitVecOp_VSETCC(N); break;
     case ISD::BITCAST:           Res = SplitVecOp_BITCAST(N); break;
     case ISD::EXTRACT_SUBVECTOR: Res = SplitVecOp_EXTRACT_SUBVECTOR(N); break;
