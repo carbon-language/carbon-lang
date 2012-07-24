@@ -503,3 +503,8 @@ int compound_assign_3() {
   x *= 0; // expected-warning {{variable 'x' is uninitialized}}
   return x;
 }
+
+int self_init_in_cond(int *p) {
+  int n = ((p && (0 || 1)) && (n = *p)) ? n : -1; // ok
+  return n;
+}
