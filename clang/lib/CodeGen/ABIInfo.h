@@ -75,8 +75,8 @@ namespace clang {
     bool BoolData0;
     bool BoolData1;
 
-    ABIArgInfo(Kind K, llvm::Type *TD=0, unsigned UI=0,
-               bool B0 = false, bool B1 = false, llvm::Type* P = 0)
+    ABIArgInfo(Kind K, llvm::Type *TD, unsigned UI, bool B0, bool B1,
+               llvm::Type* P)
       : TheKind(K), TypeData(TD), PaddingType(P), UIntData(UI), BoolData0(B0),
         BoolData1(B1) {}
 
@@ -88,17 +88,17 @@ namespace clang {
       return ABIArgInfo(Direct, T, Offset, false, false, Padding);
     }
     static ABIArgInfo getExtend(llvm::Type *T = 0) {
-      return ABIArgInfo(Extend, T, 0);
+      return ABIArgInfo(Extend, T, 0, false, false, 0);
     }
     static ABIArgInfo getIgnore() {
-      return ABIArgInfo(Ignore);
+      return ABIArgInfo(Ignore, 0, 0, false, false, 0);
     }
     static ABIArgInfo getIndirect(unsigned Alignment, bool ByVal = true
                                   , bool Realign = false) {
-      return ABIArgInfo(Indirect, 0, Alignment, ByVal, Realign);
+      return ABIArgInfo(Indirect, 0, Alignment, ByVal, Realign, 0);
     }
     static ABIArgInfo getExpand() {
-      return ABIArgInfo(Expand);
+      return ABIArgInfo(Expand, 0, 0, false, false, 0);
     }
 
     Kind getKind() const { return TheKind; }
