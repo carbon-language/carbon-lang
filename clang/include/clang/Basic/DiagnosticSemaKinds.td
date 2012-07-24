@@ -192,6 +192,9 @@ def warn_return_value_size: Warning<
 def warn_return_value_udt: Warning<
   "%0 has C-linkage specified, but returns user-defined type %1 which is "
   "incompatible with C">, InGroup<ReturnTypeCLinkage>;
+def warn_return_value_udt_incomplete: Warning<
+  "%0 has C-linkage specified, but returns incomplete type %1 which could be "
+  "incompatible with C">, InGroup<ReturnTypeCLinkage>;
 def warn_implicit_function_decl : Warning<
   "implicit declaration of function %0">,
   InGroup<ImplicitFunctionDeclare>, DefaultIgnore;

@@ -36,3 +36,5 @@ extern "C" void f7( U u );
 extern "C" double f8(void);
 extern "C" long long f11( void );
 extern "C" A *f10( void );
+
+extern "C" struct mypodstruct f12(); // expected-warning {{'f12' has C-linkage specified, but returns incomplete type 'struct mypodstruct' which could be incompatible with C}}

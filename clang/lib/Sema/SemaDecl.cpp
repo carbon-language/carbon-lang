@@ -6086,10 +6086,11 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
     // compatible, and if it does, warn the user.
     if (NewFD->isExternC()) {
       QualType R = NewFD->getResultType();
-      if (!R.isPODType(Context) && 
-          !R->isVoidType())
-        Diag( NewFD->getLocation(), diag::warn_return_value_udt ) 
-          << NewFD << R;
+      if (R->isIncompleteType() && !R->isVoidType())
+        Diag(NewFD->getLocation(), diag::warn_return_value_udt_incomplete)
+            << NewFD << R;
+      else if (!R.isPODType(Context) && !R->isVoidType())
+        Diag(NewFD->getLocation(), diag::warn_return_value_udt) << NewFD << R;
     }
   }
   return Redeclaration;
