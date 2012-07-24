@@ -144,7 +144,7 @@ int test_param9(int a);
 /// \param [ junk] a Blah blah.
 int test_param10(int a);
 
-// expected-warning@+1 {{parameter 'aab' not found in the function declaration}}
+// expected-warning@+1 {{parameter 'a' not found in the function declaration}}
 /// \param a Blah blah.
 int test_param11();
 
