@@ -165,8 +165,9 @@ const AttrConst FunctionOnly = {NoReturn_i | NoUnwind_i | ReadNone_i |
 const AttrConst VarArgsIncompatible = {StructRet_i};
 
 /// @brief Attributes that are mutually incompatible.
-const AttrConst MutuallyIncompatible[4] = {
-  {ByVal_i | InReg_i | Nest_i | StructRet_i},
+const AttrConst MutuallyIncompatible[5] = {
+  {ByVal_i | Nest_i | StructRet_i},
+  {ByVal_i | Nest_i | InReg_i },
   {ZExt_i  | SExt_i},
   {ReadNone_i | ReadOnly_i},
   {NoInline_i | AlwaysInline_i}
