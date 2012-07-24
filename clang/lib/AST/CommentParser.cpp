@@ -20,8 +20,14 @@ namespace comments {
 class TextTokenRetokenizer {
   llvm::BumpPtrAllocator &Allocator;
   Parser &P;
+
+  /// This flag is set when there are no more tokens we can fetch from lexer.
+  bool NoMoreInterestingTokens;
+
+  /// Token buffer: tokens we have processed and lookahead.
   SmallVector<Token, 16> Toks;
 
+  /// A position in \c Toks.
   struct Position {
     unsigned CurToken;
     const char *BufferStart;
@@ -65,10 +71,11 @@ class TextTokenRetokenizer {
     Pos.BufferPtr++;
     if (Pos.BufferPtr == Pos.BufferEnd) {
       Pos.CurToken++;
-      if (isEnd() && addToken()) {
-        assert(!isEnd());
-        setupBuffer();
-      }
+      if (isEnd() && !addToken())
+        return;
+
+      assert(!isEnd());
+      setupBuffer();
     }
   }
 
@@ -76,8 +83,23 @@ class TextTokenRetokenizer {
   /// Returns true on success, false if there are no interesting tokens to
   /// fetch from lexer.
   bool addToken() {
-    if (P.Tok.isNot(tok::text))
+    if (NoMoreInterestingTokens)
       return false;
+
+    if (P.Tok.is(tok::newline)) {
+      // If we see a single newline token between text tokens, skip it.
+      Token Newline = P.Tok;
+      P.consumeToken();
+      if (P.Tok.isNot(tok::text)) {
+        P.putBack(Newline);
+        NoMoreInterestingTokens = true;
+        return false;
+      }
+    }
+    if (P.Tok.isNot(tok::text)) {
+      NoMoreInterestingTokens = true;
+      return false;
+    }
 
     Toks.push_back(P.Tok);
     P.consumeToken();
@@ -117,7 +139,7 @@ class TextTokenRetokenizer {
 
 public:
   TextTokenRetokenizer(llvm::BumpPtrAllocator &Allocator, Parser &P):
-      Allocator(Allocator), P(P) {
+      Allocator(Allocator), P(P), NoMoreInterestingTokens(false) {
     Pos.CurToken = 0;
     addToken();
   }
