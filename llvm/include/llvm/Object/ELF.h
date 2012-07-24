@@ -793,8 +793,7 @@ const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Shdr *
 ELFObjectFile<target_endianness, is64Bits>
                              ::getElfSection(section_iterator &It) const {
   llvm::object::DataRefImpl ShdrRef = It->getRawDataRefImpl();
-  return const_cast<Elf_Shdr*>(reinterpret_cast<const Elf_Shdr *>
-                                 (ShdrRef.p));
+  return reinterpret_cast<const Elf_Shdr *>(ShdrRef.p);
 }
 
 template<support::endianness target_endianness, bool is64Bits>
