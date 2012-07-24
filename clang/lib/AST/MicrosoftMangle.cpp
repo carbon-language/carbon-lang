@@ -21,6 +21,8 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/Basic/ABI.h"
 
+#include <map>
+
 using namespace clang;
 
 namespace {
@@ -31,14 +33,18 @@ class MicrosoftCXXNameMangler {
   MangleContext &Context;
   raw_ostream &Out;
 
-  typedef llvm::DenseMap<void*, unsigned> BackRefMap;
-  BackRefMap NameBackReferences, TypeBackReferences;
+  typedef std::map<std::string, unsigned> BackRefMap;
+  BackRefMap NameBackReferences;
+  bool UseNameBackReferences;
+
+  typedef llvm::DenseMap<void*, unsigned> ArgBackRefMap;
+  ArgBackRefMap TypeBackReferences;
 
   ASTContext &getASTContext() const { return Context.getASTContext(); }
 
 public:
   MicrosoftCXXNameMangler(MangleContext &C, raw_ostream &Out_)
-  : Context(C), Out(Out_) { }
+  : Context(C), Out(Out_), UseNameBackReferences(true) { }
 
   raw_ostream &getStream() const { return Out; }
 
@@ -51,6 +57,7 @@ public:
   void mangleType(QualType T, SourceRange Range);
 
 private:
+  void disableBackReferences() { UseNameBackReferences = false; }
   void mangleUnqualifiedName(const NamedDecl *ND) {
     mangleUnqualifiedName(ND, ND->getDeclName());
   }
@@ -406,7 +413,42 @@ MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
   SmallVector<TemplateArgumentLoc, 2> TemplateArgs;
   // Check if we have a template.
   if (const TemplateDecl *TD = isTemplate(ND, TemplateArgs)) {
-    mangleTemplateInstantiationName(TD, TemplateArgs);
+    // We have a template.
+    // Here comes the tricky thing: if we need to mangle something like
+    //   void foo(A::X<Y>, B::X<Y>),
+    // the X<Y> part is aliased. However, if you need to mangle
+    //   void foo(A::X<A::Y>, A::X<B::Y>),
+    // the A::X<> part is not aliased.
+    // That said, from the mangler's perspective we have a structure like this:
+    //   namespace[s] -> type[ -> template-parameters]
+    // but from the Clang perspective we have
+    //   type [ -> template-parameters]
+    //      \-> namespace[s]
+    // What we do is we create a new mangler, mangle the same type (without
+    // a namespace suffix) using the extra mangler with back references
+    // disabled (to avoid infinite recursion) and then use the mangled type
+    // name as a key to check the mangling of different types for aliasing.
+
+    std::string BackReferenceKey;
+    BackRefMap::iterator Found;
+    if (UseNameBackReferences) {
+      llvm::raw_string_ostream Stream(BackReferenceKey);
+      MicrosoftCXXNameMangler Extra(Context, Stream);
+      Extra.disableBackReferences();
+      Extra.mangleUnqualifiedName(ND, Name);
+      Stream.flush();
+
+      Found = NameBackReferences.find(BackReferenceKey);
+    }
+    if (!UseNameBackReferences || Found == NameBackReferences.end()) {
+      mangleTemplateInstantiationName(TD, TemplateArgs);
+      if (UseNameBackReferences && NameBackReferences.size() < 10) {
+        size_t Size = NameBackReferences.size();
+        NameBackReferences[BackReferenceKey] = Size;
+      }
+    } else {
+      Out << Found->second;
+    }
     return;
   }
 
@@ -646,12 +688,15 @@ void MicrosoftCXXNameMangler::mangleOperatorName(OverloadedOperatorKind OO,
 
 void MicrosoftCXXNameMangler::mangleSourceName(const IdentifierInfo *II) {
   // <source name> ::= <identifier> @
-  BackRefMap::iterator Found = NameBackReferences.find((void*)II);
-  if (Found == NameBackReferences.end()) {
+  std::string key = II->getNameStart();
+  BackRefMap::iterator Found;
+  if (UseNameBackReferences)
+    Found = NameBackReferences.find(key);
+  if (!UseNameBackReferences || Found == NameBackReferences.end()) {
     Out << II->getName() << '@';
-    if (NameBackReferences.size() < 10) {
+    if (UseNameBackReferences && NameBackReferences.size() < 10) {
       size_t Size = NameBackReferences.size();
-      NameBackReferences[(void*)II] = Size;
+      NameBackReferences[key] = Size;
     }
   } else {
     Out << Found->second;
@@ -713,7 +758,7 @@ void MicrosoftCXXNameMangler::mangleTemplateInstantiationName(
 
   mangleUnscopedTemplateName(TD);
   mangleTemplateArgs(TemplateArgs);
-  
+
   NameBackReferences.swap(TemplateContext);
 }
 
@@ -863,7 +908,7 @@ void MicrosoftCXXNameMangler::mangleQualifiers(Qualifiers Quals,
 
 void MicrosoftCXXNameMangler::mangleTypeRepeated(QualType T, SourceRange Range) {
   void *TypePtr = getASTContext().getCanonicalType(T).getAsOpaquePtr();
-  BackRefMap::iterator Found = TypeBackReferences.find(TypePtr);
+  ArgBackRefMap::iterator Found = TypeBackReferences.find(TypePtr);
 
   if (Found == TypeBackReferences.end()) {
     size_t OutSizeBefore = Out.GetNumBytesInBuffer();
