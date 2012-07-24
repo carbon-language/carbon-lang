@@ -84,7 +84,7 @@ static bool isFunction(const Decl *D) {
 /// type (function or function-typed variable) or an Objective-C
 /// method.
 static bool isFunctionOrMethod(const Decl *D) {
-  return isFunction(D)|| isa<ObjCMethodDecl>(D);
+  return isFunction(D) || isa<ObjCMethodDecl>(D);
 }
 
 /// isFunctionOrMethodOrBlock - Return true if the given decl has function
@@ -622,7 +622,7 @@ static void handleAcquiredAfterAttr(Sema &S, Decl *D,
 
   Expr **StartArg = &Args[0];
   D->addAttr(::new (S.Context) AcquiredAfterAttr(Attr.getRange(), S.Context,
-	                                         StartArg, Args.size()));
+                                                 StartArg, Args.size()));
 }
 
 static void handleAcquiredBeforeAttr(Sema &S, Decl *D, 
@@ -633,7 +633,7 @@ static void handleAcquiredBeforeAttr(Sema &S, Decl *D,
 
   Expr **StartArg = &Args[0];
   D->addAttr(::new (S.Context) AcquiredBeforeAttr(Attr.getRange(), S.Context,
-			                          StartArg, Args.size()));
+                                                  StartArg, Args.size()));
 }
 
 static bool checkLockFunAttrCommon(Sema &S, Decl *D, 
@@ -766,7 +766,7 @@ static void handleExclusiveLocksRequiredAttr(Sema &S, Decl *D,
 
   Expr **StartArg = &Args[0];
   D->addAttr(::new (S.Context) ExclusiveLocksRequiredAttr(Attr.getRange(),
-			                                  S.Context, 
+                                                          S.Context, 
                                                           StartArg, 
                                                           Args.size()));
 }
@@ -779,7 +779,7 @@ static void handleSharedLocksRequiredAttr(Sema &S, Decl *D,
 
   Expr **StartArg = &Args[0];
   D->addAttr(::new (S.Context) SharedLocksRequiredAttr(Attr.getRange(),
-			                               S.Context, 
+                                                       S.Context, 
                                                        StartArg, 
                                                        Args.size()));
 }
@@ -2462,7 +2462,7 @@ static void handleWeakImportAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 
 // Handles reqd_work_group_size and work_group_size_hint.
 static void handleWorkGroupSize(Sema &S, Decl *D,
-				const AttributeList &Attr) {
+                                const AttributeList &Attr) {
   assert(Attr.getKind() == AttributeList::AT_ReqdWorkGroupSize 
       || Attr.getKind() == AttributeList::AT_WorkGroupSizeHint);
 
