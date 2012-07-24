@@ -576,7 +576,7 @@ static void handleNoAddressSafetyAttr(Sema &S, Decl *D,
   }
 
   D->addAttr(::new (S.Context) NoAddressSafetyAnalysisAttr(Attr.getRange(),
-                                                          S.Context));
+                                                           S.Context));
 }
 
 static bool checkAcquireOrderAttrCommon(Sema &S, Decl *D, 
