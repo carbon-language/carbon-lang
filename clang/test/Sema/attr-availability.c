@@ -37,3 +37,9 @@ void f6(int) __attribute__((availability(ios,deprecated=4.0))); // expected-warn
 void f7(int) __attribute__((availability(ios,introduced=2.0)));
 void f7(int) __attribute__((availability(ios,deprecated=3.0))); // expected-note {{previous attribute is here}}
 void f7(int) __attribute__((availability(ios,deprecated=4.0))); // expected-warning {{availability does not match previous declaration}}
+
+
+// <rdar://problem/11886458>
+#if !__has_feature(attribute_availability_with_message)
+# error "Missing __has_feature"
+#endif
