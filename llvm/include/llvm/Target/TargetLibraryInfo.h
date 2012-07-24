@@ -187,6 +187,18 @@ namespace llvm {
       sqrtl,
       /// float sqrtf(float x);
       sqrtf,
+      /// char *strcat(char *s1, const char *s2);
+      strcat,
+      /// char *strcpy(char *s1, const char *s2);
+      strcpy,
+      /// size_t strlen(const char *s);
+      strlen,
+      /// char *strncat(char *s1, const char *s2, size_t n);
+      strncat,
+      /// char *strncpy(char *s1, const char *s2, size_t n);
+      strncpy,
+      /// size_t strnlen(const char *s, size_t maxlen);
+      strnlen,
       /// double tan(double x);
       tan,
       /// long double tanl(long double x);
