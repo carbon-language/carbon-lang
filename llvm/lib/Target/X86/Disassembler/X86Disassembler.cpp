@@ -327,7 +327,7 @@ static void translateImmediate(MCInst &mcInst, uint64_t immediate,
   if (type == TYPE_RELv) {
     isBranch = true;
     pcrel = insn.startLocation +
-            insn.displacementOffset + insn.displacementSize;
+            insn.immediateOffset + insn.immediateSize;
     switch (insn.displacementSize) {
     default:
       break;
