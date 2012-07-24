@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i686-pc-linux | FileCheck %s
+; RUN: llc < %s -mtriple=i686-pc-linux -mcpu=corei7 | FileCheck %s
 
 %struct.s = type { double, float }
 
