@@ -120,28 +120,10 @@ bool
 IsSBProcess (nub_process_t pid)
 {
 #ifdef WITH_SPRINGBOARD
-    bool opt_runningApps = true;
-    bool opt_debuggable = false;
-
-    CFReleaser<CFArrayRef> sbsAppIDs (::SBSCopyApplicationDisplayIdentifiers (opt_runningApps, opt_debuggable));
-    if (sbsAppIDs.get() != NULL)
-    {
-        CFIndex count = ::CFArrayGetCount (sbsAppIDs.get());
-        CFIndex i = 0;
-        for (i = 0; i < count; i++)
-        {
-            CFStringRef displayIdentifier = (CFStringRef)::CFArrayGetValueAtIndex (sbsAppIDs.get(), i);
-
-            // Get the process id for the app (if there is one)
-            pid_t sbs_pid = INVALID_NUB_PROCESS;
-            if (::SBSProcessIDForDisplayIdentifier ((CFStringRef)displayIdentifier, &sbs_pid) == TRUE)
-            {
-                if (sbs_pid == pid)
-                    return true;
-            }
-        }
-    }
-#endif
+    CFReleaser<CFArrayRef> appIdsForPID (::SBSCopyDisplayIdentifiersForProcessID(pid));
+    return appIdsForPID.get() != NULL;
+#else
     return false;
+#endif
 }
 
