@@ -1716,6 +1716,9 @@ def warn_pointer_attribute_wrong_type : Warning<
 def warn_objc_object_attribute_wrong_type : Warning<
   "'%0' only applies to Objective-C object or block pointer types; type here is %1">,
   InGroup<IgnoredAttributes>;
+def warn_attribute_requires_functions_or_static_globals : Warning<
+  "%0 only applies to variables with static storage duration and functions">,
+  InGroup<IgnoredAttributes>;
 def warn_gnu_inline_attribute_requires_inline : Warning<
   "'gnu_inline' attribute requires function to be marked 'inline',"
   " attribute ignored">,

@@ -321,9 +321,12 @@ void CodeGenFunction::GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn,
                                                        const VarDecl *D,
                                                  llvm::GlobalVariable *Addr,
                                                        bool PerformInit) {
-  StartFunction(GlobalDecl(), getContext().VoidTy, Fn,
+  if (CGM.getModuleDebugInfo() && !D->hasAttr<NoDebugAttr>())
+    DebugInfo = CGM.getModuleDebugInfo();
+
+  StartFunction(GlobalDecl(D), getContext().VoidTy, Fn,
                 getTypes().arrangeNullaryFunction(),
-                FunctionArgList(), SourceLocation());
+                FunctionArgList(), D->getInit()->getExprLoc());
 
   // Use guarded initialization if the global variable is weak. This
   // occurs for, e.g., instantiated static data members and

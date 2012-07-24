@@ -3313,9 +3313,15 @@ static void handleNoDebugAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (!checkAttributeNumArgs(S, Attr, 0))
     return;
 
-  if (!isFunctionOrMethod(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << ExpectedFunction;
+  if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    if (!VD->hasGlobalStorage())
+      S.Diag(Attr.getLoc(),
+             diag::warn_attribute_requires_functions_or_static_globals)
+        << Attr.getName();
+  } else if (!isFunctionOrMethod(D)) {
+    S.Diag(Attr.getLoc(),
+           diag::warn_attribute_requires_functions_or_static_globals)
+      << Attr.getName();
     return;
   }
 
