@@ -258,7 +258,7 @@ void MipsCodeEmitter::emitGlobalAddressUnaligned(const GlobalValue *GV,
 void MipsCodeEmitter::
 emitExternalSymbolAddress(const char *ES, unsigned Reloc) const {
   MCE.addRelocation(MachineRelocation::getExtSym(MCE.getCurrentPCOffset(),
-                                                 Reloc, ES, 0, 0, false));
+                                                 Reloc, ES, 0, 0));
 }
 
 void MipsCodeEmitter::emitConstPoolAddress(unsigned CPI, unsigned Reloc) const {
