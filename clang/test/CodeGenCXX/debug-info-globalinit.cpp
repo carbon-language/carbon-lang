@@ -17,14 +17,14 @@ int main(void) {}
 
 // CHECK: define internal void @__cxx_global_var_init()
 // CHECK-NOT: __cxx_global_var_init
-// CHECK: %call = call i32 @_Z4testv(), !dbg ![[LINE:.*]]
+// CHECK: %[[C0:.+]] = call i32 @_Z4testv(), !dbg ![[LINE:.*]]
 // CHECK-NOT: __cxx_global_var_init
-// CHECK: store i32 %call, i32* @_ZL1i, align 4, !dbg
+// CHECK: store i32 %[[C0]], i32* @_ZL1i, align 4, !dbg
 // 
 // CHECK: define internal void @__cxx_global_var_init1()
 // CHECK-NOT: dbg
-// CHECK: %call = call i32 @_Z4testv()
+// CHECK: %[[C1:.+]] = call i32 @_Z4testv()
 // CHECK-NOT: dbg
-// CHECK: store i32 %call, i32* @_ZL1j, align 4
+// CHECK: store i32 %[[C1]], i32* @_ZL1j, align 4
 // 
 // CHECK: ![[LINE]] = metadata !{i32 13, i32 16
