@@ -63,6 +63,13 @@ def warn_doc_param_not_attached_to_a_function_decl : Warning<
   "a function declaration">,
   InGroup<Documentation>, DefaultIgnore;
 
+def warn_doc_param_duplicate : Warning<
+  "parameter '%0' is already documented">,
+  InGroup<Documentation>, DefaultIgnore;
+
+def note_doc_param_previous : Note<
+  "previous documentation">;
+
 def warn_doc_param_not_found : Warning<
   "parameter '%0' not found in the function declaration">,
   InGroup<Documentation>, DefaultIgnore;

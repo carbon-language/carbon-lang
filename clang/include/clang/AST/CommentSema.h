@@ -46,6 +46,13 @@ class Sema {
   /// Contains a valid value if \c IsThisDeclInspected is true.
   ArrayRef<const ParmVarDecl *> ParamVars;
 
+  /// Comment AST nodes that correspond to \c ParamVars for which we have
+  /// found a \\param command or NULL if no documentation was found so far.
+  ///
+  /// Has correct size and contains valid values if \c IsThisDeclInspected is
+  /// true.
+  llvm::SmallVector<ParamCommandComment *, 8> ParamVarDocs;
+
   /// True if we extracted all important information from \c ThisDecl into
   /// \c Sema members.
   unsigned IsThisDeclInspected : 1;

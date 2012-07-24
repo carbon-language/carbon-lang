@@ -153,6 +153,15 @@ ParamCommandComment *Sema::actOnParamCommandParamNameArg(
   const unsigned ResolvedParamIndex = resolveParmVarReference(Arg, ParamVars);
   if (ResolvedParamIndex != ParamCommandComment::InvalidParamIndex) {
     Command->setParamIndex(ResolvedParamIndex);
+    if (ParamVarDocs[ResolvedParamIndex]) {
+      SourceRange ArgRange(ArgLocBegin, ArgLocEnd);
+      Diag(ArgLocBegin, diag::warn_doc_param_duplicate)
+        << Arg << ArgRange;
+      ParamCommandComment *PrevCommand = ParamVarDocs[ResolvedParamIndex];
+      Diag(PrevCommand->getLocation(), diag::note_doc_param_previous)
+        << PrevCommand->getParamNameRange();
+    }
+    ParamVarDocs[ResolvedParamIndex] = Command;
     return Command;
   }
 
@@ -351,7 +360,6 @@ HTMLEndTagComment *Sema::actOnHTMLEndTag(SourceLocation LocBegin,
 
 FullComment *Sema::actOnFullComment(
                               ArrayRef<BlockContentComment *> Blocks) {
-  SmallVector<ParamCommandComment *, 8> Params;
   return new (Allocator) FullComment(Blocks);
 }
 
@@ -382,6 +390,7 @@ ArrayRef<const ParmVarDecl *> Sema::getParamVars() {
 }
 
 void Sema::inspectThisDecl() {
+  assert(!IsThisDeclInspected);
   if (!ThisDecl) {
     IsFunctionDecl = false;
     ParamVars = ArrayRef<const ParmVarDecl *>();
@@ -397,6 +406,7 @@ void Sema::inspectThisDecl() {
     IsFunctionDecl = false;
     ParamVars = ArrayRef<const ParmVarDecl *>();
   }
+  ParamVarDocs.resize(ParamVars.size(), NULL);
   IsThisDeclInspected = true;
 }
 

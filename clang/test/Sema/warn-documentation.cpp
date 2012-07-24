@@ -166,6 +166,18 @@ class C {
  int test_param14(int bbb, int ccc);
 };
 
+// expected-warning@+3 {{parameter 'a' is already documented}}
+// expected-note@+1 {{previous documentation}}
+/// \param a Aaa.
+/// \param a Aaa.
+int test_param15(int a);
+
+// expected-warning@+4 {{parameter 'x2' is already documented}}
+// expected-note@+2 {{previous documentation}}
+/// \param x1 Aaa.
+/// \param x2 Bbb.
+/// \param x2 Ccc.
+int test_param16(int x1, int x2, int x3);
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
 int test1; ///< \brief\brief Aaa
