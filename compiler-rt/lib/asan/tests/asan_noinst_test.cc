@@ -221,6 +221,7 @@ void CompressStackTraceTest(size_t n_iter) {
       std::max((size_t)2, (size_t)my_rand(&seed) % (2 * kNumPcs));
     size_t n_frames =
       __asan::AsanStackTrace::CompressStack(&stack0, compressed, compress_size);
+    Ident(n_frames);
     assert(n_frames <= stack0.size);
     __asan::AsanStackTrace::UncompressStack(&stack1, compressed, compress_size);
     assert(stack1.size == n_frames);
@@ -275,6 +276,7 @@ TEST(AddressSanitizer, QuarantineTest) {
 }
 
 void *ThreadedQuarantineTestWorker(void *unused) {
+  (void)unused;
   u32 seed = my_rand(&global_seed);
   __asan::AsanStackTrace stack;
   stack.trace[0] = 0x890;
@@ -302,6 +304,7 @@ TEST(AddressSanitizer, ThreadedQuarantineTest) {
 }
 
 void *ThreadedOneSizeMallocStress(void *unused) {
+  (void)unused;
   __asan::AsanStackTrace stack;
   stack.trace[0] = 0x890;
   stack.size = 1;
@@ -478,9 +481,10 @@ TEST(AddressSanitizerInterface, GetFreeBytesTest) {
 
 static const size_t kManyThreadsMallocSizes[] = {5, 1UL<<10, 1UL<<20, 357};
 static const size_t kManyThreadsIterations = 250;
-static const size_t kManyThreadsNumThreads = 200;
+static const size_t kManyThreadsNumThreads = (__WORDSIZE == 32) ? 40 : 200;
 
 void *ManyThreadsWithStatsWorker(void *arg) {
+  (void)arg;
   for (size_t iter = 0; iter < kManyThreadsIterations; iter++) {
     for (size_t size_index = 0; size_index < 4; size_index++) {
       free(Ident(malloc(kManyThreadsMallocSizes[size_index])));
