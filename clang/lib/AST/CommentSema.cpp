@@ -370,18 +370,14 @@ void Sema::checkBlockCommandEmptyParagraph(BlockCommandComment *Command) {
 }
 
 bool Sema::isFunctionDecl() {
-  if (IsThisDeclInspected)
-    return IsFunctionDecl;
-
-  inspectThisDecl();
+  if (!IsThisDeclInspected)
+    inspectThisDecl();
   return IsFunctionDecl;
 }
 
 ArrayRef<const ParmVarDecl *> Sema::getParamVars() {
-  if (IsThisDeclInspected)
-    return ParamVars;
-
-  inspectThisDecl();
+  if (!IsThisDeclInspected)
+    inspectThisDecl();
   return ParamVars;
 }
 
