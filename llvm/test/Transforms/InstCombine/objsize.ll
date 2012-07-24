@@ -171,3 +171,51 @@ define i32 @test8(i8** %esc) {
 ; CHECK: ret i32 30
   ret i32 %objsize
 }
+
+declare noalias i8* @strdup(i8* nocapture) nounwind
+declare noalias i8* @strndup(i8* nocapture, i32) nounwind
+
+; CHECK: @test9
+define i32 @test9(i8** %esc) {
+  %call = tail call i8* @strdup(i8* getelementptr inbounds ([8 x i8]* @.str, i64 0, i64 0)) nounwind
+  store i8* %call, i8** %esc, align 8
+  %1 = tail call i32 @llvm.objectsize.i32(i8* %call, i1 true)
+; CHECK: ret i32 8
+  ret i32 %1
+}
+
+; CHECK: @test10
+define i32 @test10(i8** %esc) {
+  %call = tail call i8* @strndup(i8* getelementptr inbounds ([8 x i8]* @.str, i64 0, i64 0), i32 3) nounwind
+  store i8* %call, i8** %esc, align 8
+  %1 = tail call i32 @llvm.objectsize.i32(i8* %call, i1 true)
+; CHECK: ret i32 4
+  ret i32 %1
+}
+
+; CHECK: @test11
+define i32 @test11(i8** %esc) {
+  %call = tail call i8* @strndup(i8* getelementptr inbounds ([8 x i8]* @.str, i64 0, i64 0), i32 7) nounwind
+  store i8* %call, i8** %esc, align 8
+  %1 = tail call i32 @llvm.objectsize.i32(i8* %call, i1 true)
+; CHECK: ret i32 8
+  ret i32 %1
+}
+
+; CHECK: @test12
+define i32 @test12(i8** %esc) {
+  %call = tail call i8* @strndup(i8* getelementptr inbounds ([8 x i8]* @.str, i64 0, i64 0), i32 8) nounwind
+  store i8* %call, i8** %esc, align 8
+  %1 = tail call i32 @llvm.objectsize.i32(i8* %call, i1 true)
+; CHECK: ret i32 8
+  ret i32 %1
+}
+
+; CHECK: @test13
+define i32 @test13(i8** %esc) {
+  %call = tail call i8* @strndup(i8* getelementptr inbounds ([8 x i8]* @.str, i64 0, i64 0), i32 57) nounwind
+  store i8* %call, i8** %esc, align 8
+  %1 = tail call i32 @llvm.objectsize.i32(i8* %call, i1 true)
+; CHECK: ret i32 8
+  ret i32 %1
+}

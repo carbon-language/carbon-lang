@@ -64,7 +64,7 @@ static const AllocFnsTy AllocationFnData[] = {
   {"realloc",             ReallocLike, 2, 1,  -1},
   {"reallocf",            ReallocLike, 2, 1,  -1},
   {"strdup",              StrDupLike,  1, -1, -1},
-  {"strndup",             StrDupLike,  2, -1, -1}
+  {"strndup",             StrDupLike,  2, 1,  -1}
 };
 
 
@@ -414,8 +414,21 @@ SizeOffsetType ObjectSizeOffsetVisitor::visitCallSite(CallSite CS) {
 
   // handle strdup-like functions separately
   if (FnData->AllocTy == StrDupLike) {
-    // TODO
-    return unknown();
+    APInt Size(IntTyBits, GetStringLength(CS.getArgument(0)));
+    if (!Size)
+      return unknown();
+
+    // strndup limits strlen
+    if (FnData->FstParam > 0) {
+      ConstantInt *Arg= dyn_cast<ConstantInt>(CS.getArgument(FnData->FstParam));
+      if (!Arg)
+        return unknown();
+
+      APInt MaxSize = Arg->getValue().zextOrSelf(IntTyBits);
+      if (Size.ugt(MaxSize))
+        Size = MaxSize + 1;
+    }
+    return std::make_pair(Size, Zero);
   }
 
   ConstantInt *Arg = dyn_cast<ConstantInt>(CS.getArgument(FnData->FstParam));
