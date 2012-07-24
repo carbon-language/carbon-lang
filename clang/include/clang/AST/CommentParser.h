@@ -27,6 +27,8 @@ namespace comments {
 
 /// Doxygen comment parser.
 class Parser {
+  friend class TextTokenRetokenizer;
+
   Lexer &L;
 
   Sema &S;

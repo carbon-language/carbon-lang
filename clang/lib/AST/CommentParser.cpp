@@ -19,8 +19,8 @@ namespace comments {
 /// Re-lexes a sequence of tok::text tokens.
 class TextTokenRetokenizer {
   llvm::BumpPtrAllocator &Allocator;
-  static const unsigned MaxTokens = 16;
-  SmallVector<Token, MaxTokens> Toks;
+  Parser &P;
+  SmallVector<Token, 16> Toks;
 
   struct Position {
     unsigned CurToken;
@@ -39,7 +39,7 @@ class TextTokenRetokenizer {
 
   /// Sets up the buffer pointers to point to current token.
   void setupBuffer() {
-    assert(Pos.CurToken < Toks.size());
+    assert(!isEnd());
     const Token &Tok = Toks[Pos.CurToken];
 
     Pos.BufferStart = Tok.getText().begin();
@@ -65,9 +65,25 @@ class TextTokenRetokenizer {
     Pos.BufferPtr++;
     if (Pos.BufferPtr == Pos.BufferEnd) {
       Pos.CurToken++;
-      if (Pos.CurToken < Toks.size())
+      if (isEnd() && addToken()) {
+        assert(!isEnd());
         setupBuffer();
+      }
     }
+  }
+
+  /// Add a token.
+  /// Returns true on success, false if there are no interesting tokens to
+  /// fetch from lexer.
+  bool addToken() {
+    if (P.Tok.isNot(tok::text))
+      return false;
+
+    Toks.push_back(P.Tok);
+    P.consumeToken();
+    if (Toks.size() == 1)
+      setupBuffer();
+    return true;
   }
 
   static bool isWhitespace(char C) {
@@ -100,22 +116,10 @@ class TextTokenRetokenizer {
   }
 
 public:
-  TextTokenRetokenizer(llvm::BumpPtrAllocator &Allocator):
-      Allocator(Allocator) {
+  TextTokenRetokenizer(llvm::BumpPtrAllocator &Allocator, Parser &P):
+      Allocator(Allocator), P(P) {
     Pos.CurToken = 0;
-  }
-
-  /// Add a token.
-  /// Returns true on success, false if it seems like we have enough tokens.
-  bool addToken(const Token &Tok) {
-    assert(Tok.is(tok::text));
-    if (Toks.size() >= MaxTokens)
-      return false;
-
-    Toks.push_back(Tok);
-    if (Toks.size() == 1)
-      setupBuffer();
-    return true;
+    addToken();
   }
 
   /// Extract a word -- sequence of non-whitespace characters.
@@ -199,23 +203,27 @@ public:
     return true;
   }
 
-  /// Return a text token.  Useful to take tokens back.
-  bool lexText(Token &Tok) {
+  /// Put back tokens that we didn't consume.
+  void putBackLeftoverTokens() {
     if (isEnd())
-      return false;
+      return;
 
-    if (Pos.BufferPtr != Pos.BufferStart)
-      formTokenWithChars(Tok, getSourceLocation(),
+    bool HavePartialTok = false;
+    Token PartialTok;
+    if (Pos.BufferPtr != Pos.BufferStart) {
+      formTokenWithChars(PartialTok, getSourceLocation(),
                          Pos.BufferPtr, Pos.BufferEnd - Pos.BufferPtr,
                          StringRef(Pos.BufferPtr,
                                    Pos.BufferEnd - Pos.BufferPtr));
-    else
-      Tok = Toks[Pos.CurToken];
+      HavePartialTok = true;
+      Pos.CurToken++;
+    }
 
-    Pos.CurToken++;
-    if (Pos.CurToken < Toks.size())
-      setupBuffer();
-    return true;
+    P.putBack(llvm::makeArrayRef(Toks.begin() + Pos.CurToken, Toks.end()));
+    Pos.CurToken = Toks.size();
+
+    if (HavePartialTok)
+      P.putBack(PartialTok);
   }
 };
 
@@ -296,24 +304,14 @@ BlockCommandComment *Parser::parseBlockCommand() {
   if (IsParam || NumArgs > 0) {
     // In order to parse command arguments we need to retokenize a few
     // following text tokens.
-    TextTokenRetokenizer Retokenizer(Allocator);
-    while (Tok.is(tok::text)) {
-      if (Retokenizer.addToken(Tok))
-        consumeToken();
-    }
+    TextTokenRetokenizer Retokenizer(Allocator, *this);
 
     if (IsParam)
       PC = parseParamCommandArgs(PC, Retokenizer);
     else
       BC = parseBlockCommandArgs(BC, Retokenizer, NumArgs);
 
-    // Put back tokens we didn't use.
-    SmallVector<Token, 16> TextToks;
-    Token Text;
-    while (Retokenizer.lexText(Text)) {
-      TextToks.push_back(Text);
-    }
-    putBack(TextToks);
+    Retokenizer.putBackLeftoverTokens();
   }
 
   BlockContentComment *Block = parseParagraphOrBlockCommand();
@@ -331,11 +329,7 @@ InlineCommandComment *Parser::parseInlineCommand() {
   const Token CommandTok = Tok;
   consumeToken();
 
-  TextTokenRetokenizer Retokenizer(Allocator);
-  while (Tok.is(tok::text)) {
-    if (Retokenizer.addToken(Tok))
-      consumeToken();
-  }
+  TextTokenRetokenizer Retokenizer(Allocator, *this);
 
   Token ArgTok;
   bool ArgTokValid = Retokenizer.lexWord(ArgTok);
@@ -354,9 +348,7 @@ InlineCommandComment *Parser::parseInlineCommand() {
                               CommandTok.getCommandName());
   }
 
-  Token Text;
-  while (Retokenizer.lexText(Text))
-    putBack(Text);
+  Retokenizer.putBackLeftoverTokens();
 
   return IC;
 }
