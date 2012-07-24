@@ -375,7 +375,7 @@ typedef std::pair<Value*, APInt> RepeatedValue;
 /// nodes in Ops along with their weights (how many times the leaf occurs).  The
 /// original expression is the same as
 ///   (Ops[0].first op Ops[0].first op ... Ops[0].first)  <- Ops[0].second times
-/// op 
+/// op
 ///   (Ops[1].first op Ops[1].first op ... Ops[1].first)  <- Ops[1].second times
 /// op
 ///   ...

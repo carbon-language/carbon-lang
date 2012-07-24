@@ -100,7 +100,7 @@ static bool IsOnlyUsedInZeroEqualityComparison(Value *V) {
   }
   return true;
 }
- 
+
 static bool CallHasFloatingPointArgument(const CallInst *CI) {
   for (CallInst::const_op_iterator it = CI->op_begin(), e = CI->op_end();
        it != e; ++it) {
@@ -256,7 +256,7 @@ struct StrChrOpt : public LibCallOptimization {
                         ConstantInt::get(TD->getIntPtrType(*Context), Len),
                         B, TD);
     }
-    
+
     // Otherwise, the character is a constant, see if the first argument is
     // a string literal.  If so, we can constant fold.
     StringRef Str;
@@ -1514,7 +1514,7 @@ namespace {
   ///
   class SimplifyLibCalls : public FunctionPass {
     TargetLibraryInfo *TLI;
-    
+
     StringMap<LibCallOptimization*> Optimizations;
     // String and Memory LibCall Optimizations
     StrCatOpt StrCat; StrNCatOpt StrNCat; StrChrOpt StrChr; StrRChrOpt StrRChr;
@@ -1534,7 +1534,7 @@ namespace {
     SPrintFOpt SPrintF; PrintFOpt PrintF;
     FWriteOpt FWrite; FPutsOpt FPuts; FPrintFOpt FPrintF;
     PutsOpt Puts;
-    
+
     bool Modified;  // This is only used by doInitialization.
   public:
     static char ID; // Pass identification
@@ -1767,7 +1767,7 @@ void SimplifyLibCalls::setDoesNotAlias(Function &F, unsigned n) {
 
 void SimplifyLibCalls::inferPrototypeAttributes(Function &F) {
   FunctionType *FTy = F.getFunctionType();
-  
+
   StringRef Name = F.getName();
   switch (Name[0]) {
   case 's':

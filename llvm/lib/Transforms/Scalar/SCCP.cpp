@@ -409,7 +409,7 @@ private:
 
     if (Constant *C = dyn_cast<Constant>(V)) {
       Constant *Elt = C->getAggregateElement(i);
-      
+
       if (Elt == 0)
         LV.markOverdefined();      // Unknown sort of constant.
       else if (isa<UndefValue>(Elt))

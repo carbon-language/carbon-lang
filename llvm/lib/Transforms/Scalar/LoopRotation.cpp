@@ -418,12 +418,13 @@ bool LoopRotate::rotateLoop(Loop *L) {
     }
 
     // Right now OrigPreHeader has two successors, NewHeader and ExitBlock, and
-    // thus is not a preheader anymore.  Split the edge to form a real preheader.
+    // thus is not a preheader anymore.
+    // Split the edge to form a real preheader.
     BasicBlock *NewPH = SplitCriticalEdge(OrigPreheader, NewHeader, this);
     NewPH->setName(NewHeader->getName() + ".lr.ph");
 
-    // Preserve canonical loop form, which means that 'Exit' should have only one
-    // predecessor.
+    // Preserve canonical loop form, which means that 'Exit' should have only
+    // one predecessor.
     BasicBlock *ExitSplit = SplitCriticalEdge(L->getLoopLatch(), Exit, this);
     ExitSplit->moveBefore(Exit);
   } else {

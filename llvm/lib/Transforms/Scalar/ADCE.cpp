@@ -9,7 +9,7 @@
 //
 // This file implements the Aggressive Dead Code Elimination pass.  This pass
 // optimistically assumes that all instructions are dead until proven otherwise,
-// allowing it to eliminate dead computations that other DCE passes do not 
+// allowing it to eliminate dead computations that other DCE passes do not
 // catch, particularly involving loop computations.
 //
 //===----------------------------------------------------------------------===//
@@ -36,13 +36,13 @@ namespace {
     ADCE() : FunctionPass(ID) {
       initializeADCEPass(*PassRegistry::getPassRegistry());
     }
-    
+
     virtual bool runOnFunction(Function& F);
-    
+
     virtual void getAnalysisUsage(AnalysisUsage& AU) const {
       AU.setPreservesCFG();
     }
-    
+
   };
 }
 
@@ -52,7 +52,7 @@ INITIALIZE_PASS(ADCE, "adce", "Aggressive Dead Code Elimination", false, false)
 bool ADCE::runOnFunction(Function& F) {
   SmallPtrSet<Instruction*, 128> alive;
   SmallVector<Instruction*, 128> worklist;
-  
+
   // Collect the set of "root" instructions that are known live.
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
     if (isa<TerminatorInst>(I.getInstructionIterator()) ||
@@ -62,7 +62,7 @@ bool ADCE::runOnFunction(Function& F) {
       alive.insert(I.getInstructionIterator());
       worklist.push_back(I.getInstructionIterator());
     }
-  
+
   // Propagate liveness backwards to operands.
   while (!worklist.empty()) {
     Instruction* curr = worklist.pop_back_val();
@@ -72,7 +72,7 @@ bool ADCE::runOnFunction(Function& F) {
         if (alive.insert(Inst))
           worklist.push_back(Inst);
   }
-  
+
   // The inverse of the live set is the dead set.  These are those instructions
   // which have no side effects and do not influence the control flow or return
   // value of the function, and may therefore be deleted safely.
@@ -82,7 +82,7 @@ bool ADCE::runOnFunction(Function& F) {
       worklist.push_back(I.getInstructionIterator());
       I->dropAllReferences();
     }
-  
+
   for (SmallVector<Instruction*, 1024>::iterator I = worklist.begin(),
        E = worklist.end(); I != E; ++I) {
     ++NumRemoved;

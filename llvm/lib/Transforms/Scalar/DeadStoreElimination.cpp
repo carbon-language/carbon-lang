@@ -248,7 +248,7 @@ static bool isShortenable(Instruction *I) {
   // Don't shorten stores for now
   if (isa<StoreInst>(I))
     return false;
-  
+
   IntrinsicInst *II = cast<IntrinsicInst>(I);
   switch (II->getIntrinsicID()) {
     default: return false;
@@ -292,7 +292,7 @@ namespace {
 
 /// isOverwrite - Return 'OverwriteComplete' if a store to the 'Later' location
 /// completely overwrites a store to the 'Earlier' location.
-/// 'OverwriteEnd' if the end of the 'Earlier' location is completely 
+/// 'OverwriteEnd' if the end of the 'Earlier' location is completely
 /// overwritten by 'Later', or 'OverwriteUnknown' if nothing can be determined
 static OverwriteResult isOverwrite(const AliasAnalysis::Location &Later,
                                    const AliasAnalysis::Location &Earlier,
@@ -315,7 +315,7 @@ static OverwriteResult isOverwrite(const AliasAnalysis::Location &Later,
       if (AA.getTargetData() == 0 &&
           Later.Ptr->getType() == Earlier.Ptr->getType())
         return OverwriteComplete;
-        
+
       return OverwriteUnknown;
     }
 
@@ -381,7 +381,7 @@ static OverwriteResult isOverwrite(const AliasAnalysis::Location &Later,
       Later.Size > Earlier.Size &&
       uint64_t(EarlierOff - LaterOff) + Earlier.Size <= Later.Size)
     return OverwriteComplete;
-  
+
   // The other interesting case is if the later store overwrites the end of
   // the earlier store
   //
@@ -520,11 +520,11 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       // If we find a write that is a) removable (i.e., non-volatile), b) is
       // completely obliterated by the store to 'Loc', and c) which we know that
       // 'Inst' doesn't load from, then we can remove it.
-      if (isRemovable(DepWrite) && 
+      if (isRemovable(DepWrite) &&
           !isPossibleSelfRead(Inst, Loc, DepWrite, *AA)) {
-        int64_t InstWriteOffset, DepWriteOffset; 
-        OverwriteResult OR = isOverwrite(Loc, DepLoc, *AA, 
-                                         DepWriteOffset, InstWriteOffset); 
+        int64_t InstWriteOffset, DepWriteOffset;
+        OverwriteResult OR = isOverwrite(Loc, DepLoc, *AA,
+                                         DepWriteOffset, InstWriteOffset);
         if (OR == OverwriteComplete) {
           DEBUG(dbgs() << "DSE: Remove Dead Store:\n  DEAD: "
                 << *DepWrite << "\n  KILLER: " << *Inst << '\n');
@@ -533,7 +533,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
           DeleteDeadInstruction(DepWrite, *MD);
           ++NumFastStores;
           MadeChange = true;
-          
+
           // DeleteDeadInstruction can delete the current instruction in loop
           // cases, reset BBI.
           BBI = Inst;
@@ -551,16 +551,16 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
           unsigned DepWriteAlign = DepIntrinsic->getAlignment();
           if (llvm::isPowerOf2_64(InstWriteOffset) ||
               ((DepWriteAlign != 0) && InstWriteOffset % DepWriteAlign == 0)) {
-            
+
             DEBUG(dbgs() << "DSE: Remove Dead Store:\n  OW END: "
-                  << *DepWrite << "\n  KILLER (offset " 
-                  << InstWriteOffset << ", " 
+                  << *DepWrite << "\n  KILLER (offset "
+                  << InstWriteOffset << ", "
                   << DepLoc.Size << ")"
                   << *Inst << '\n');
-            
+
             Value* DepWriteLength = DepIntrinsic->getLength();
             Value* TrimmedLength = ConstantInt::get(DepWriteLength->getType(),
-                                                    InstWriteOffset - 
+                                                    InstWriteOffset -
                                                     DepWriteOffset);
             DepIntrinsic->setLength(TrimmedLength);
             MadeChange = true;

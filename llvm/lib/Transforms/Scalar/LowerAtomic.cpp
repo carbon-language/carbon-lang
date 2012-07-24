@@ -25,12 +25,12 @@ static bool LowerAtomicCmpXchgInst(AtomicCmpXchgInst *CXI) {
   Value *Ptr = CXI->getPointerOperand();
   Value *Cmp = CXI->getCompareOperand();
   Value *Val = CXI->getNewValOperand();
- 
+
   LoadInst *Orig = Builder.CreateLoad(Ptr);
   Value *Equal = Builder.CreateICmpEQ(Orig, Cmp);
   Value *Res = Builder.CreateSelect(Equal, Val, Orig);
   Builder.CreateStore(Res, Ptr);
- 
+
   CXI->replaceAllUsesWith(Orig);
   CXI->eraseFromParent();
   return true;

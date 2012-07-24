@@ -32,10 +32,10 @@ namespace {
     LoopDeletion() : LoopPass(ID) {
       initializeLoopDeletionPass(*PassRegistry::getPassRegistry());
     }
-    
+
     // Possibly eliminate loop L if it is dead.
     bool runOnLoop(Loop* L, LPPassManager& LPM);
-    
+
     bool IsLoopDead(Loop* L, SmallVector<BasicBlock*, 4>& exitingBlocks,
                     SmallVector<BasicBlock*, 4>& exitBlocks,
                     bool &Changed, BasicBlock *Preheader);
@@ -46,7 +46,7 @@ namespace {
       AU.addRequired<ScalarEvolution>();
       AU.addRequiredID(LoopSimplifyID);
       AU.addRequiredID(LCSSAID);
-      
+
       AU.addPreserved<ScalarEvolution>();
       AU.addPreserved<DominatorTree>();
       AU.addPreserved<LoopInfo>();
@@ -55,7 +55,7 @@ namespace {
     }
   };
 }
-  
+
 char LoopDeletion::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopDeletion, "loop-deletion",
                 "Delete dead loops", false, false)
@@ -79,7 +79,7 @@ bool LoopDeletion::IsLoopDead(Loop* L,
                               SmallVector<BasicBlock*, 4>& exitBlocks,
                               bool &Changed, BasicBlock *Preheader) {
   BasicBlock* exitBlock = exitBlocks[0];
-  
+
   // Make sure that all PHI entries coming from the loop are loop invariant.
   // Because the code is in LCSSA form, any values used outside of the loop
   // must pass through a PHI in the exit block, meaning that this check is
@@ -97,14 +97,14 @@ bool LoopDeletion::IsLoopDead(Loop* L,
       if (incoming != P->getIncomingValueForBlock(exitingBlocks[i]))
         return false;
     }
-      
+
     if (Instruction* I = dyn_cast<Instruction>(incoming))
       if (!L->makeLoopInvariant(I, Changed, Preheader->getTerminator()))
         return false;
 
     ++BI;
   }
-  
+
   // Make sure that no instructions in the block have potential side-effects.
   // This includes instructions that could write to memory, and loads that are
   // marked volatile.  This could be made more aggressive by using aliasing
@@ -117,23 +117,23 @@ bool LoopDeletion::IsLoopDead(Loop* L,
         return false;
     }
   }
-  
+
   return true;
 }
 
 /// runOnLoop - Remove dead loops, by which we mean loops that do not impact the
-/// observable behavior of the program other than finite running time.  Note 
+/// observable behavior of the program other than finite running time.  Note
 /// we do ensure that this never remove a loop that might be infinite, as doing
 /// so could change the halting/non-halting nature of a program.
 /// NOTE: This entire process relies pretty heavily on LoopSimplify and LCSSA
 /// in order to make various safety checks work.
 bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
-  // We can only remove the loop if there is a preheader that we can 
+  // We can only remove the loop if there is a preheader that we can
   // branch from after removing it.
   BasicBlock* preheader = L->getLoopPreheader();
   if (!preheader)
     return false;
-  
+
   // If LoopSimplify form is not available, stay out of trouble.
   if (!L->hasDedicatedExits())
     return false;
@@ -142,36 +142,36 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   // they would already have been removed in earlier executions of this pass.
   if (L->begin() != L->end())
     return false;
-  
+
   SmallVector<BasicBlock*, 4> exitingBlocks;
   L->getExitingBlocks(exitingBlocks);
-  
+
   SmallVector<BasicBlock*, 4> exitBlocks;
   L->getUniqueExitBlocks(exitBlocks);
-  
+
   // We require that the loop only have a single exit block.  Otherwise, we'd
   // be in the situation of needing to be able to solve statically which exit
   // block will be branched to, or trying to preserve the branching logic in
   // a loop invariant manner.
   if (exitBlocks.size() != 1)
     return false;
-  
+
   // Finally, we have to check that the loop really is dead.
   bool Changed = false;
   if (!IsLoopDead(L, exitingBlocks, exitBlocks, Changed, preheader))
     return Changed;
-  
+
   // Don't remove loops for which we can't solve the trip count.
   // They could be infinite, in which case we'd be changing program behavior.
   ScalarEvolution& SE = getAnalysis<ScalarEvolution>();
   const SCEV *S = SE.getMaxBackedgeTakenCount(L);
   if (isa<SCEVCouldNotCompute>(S))
     return Changed;
-  
+
   // Now that we know the removal is safe, remove the loop by changing the
-  // branch from the preheader to go to the single exit block.  
+  // branch from the preheader to go to the single exit block.
   BasicBlock* exitBlock = exitBlocks[0];
-  
+
   // Because we're deleting a large chunk of code at once, the sequence in which
   // we remove things is very important to avoid invalidation issues.  Don't
   // mess with this unless you have good reason and know what you're doing.
@@ -197,7 +197,7 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
       P->removeIncomingValue(exitingBlocks[i]);
     ++BI;
   }
-  
+
   // Update the dominator tree and remove the instructions and blocks that will
   // be deleted from the reference counting scheme.
   DominatorTree& DT = getAnalysis<DominatorTree>();
@@ -211,7 +211,7 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
          DE = ChildNodes.end(); DI != DE; ++DI) {
       DT.changeImmediateDominator(*DI, DT[preheader]);
     }
-    
+
     ChildNodes.clear();
     DT.eraseNode(*LI);
 
@@ -219,7 +219,7 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
     // delete it freely later.
     (*LI)->dropAllReferences();
   }
-  
+
   // Erase the instructions and the blocks without having to worry
   // about ordering because we already dropped the references.
   // NOTE: This iteration is safe because erasing the block does not remove its
@@ -236,13 +236,13 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   for (SmallPtrSet<BasicBlock*,8>::iterator I = blocks.begin(),
        E = blocks.end(); I != E; ++I)
     loopInfo.removeBlock(*I);
-  
+
   // The last step is to inform the loop pass manager that we've
   // eliminated this loop.
   LPM.deleteLoopFromQueue(L);
   Changed = true;
-  
+
   ++NumDeleted;
-  
+
   return Changed;
 }

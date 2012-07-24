@@ -12,7 +12,7 @@
 // global). Such a transformation can significantly reduce the register pressure
 // when many globals are involved.
 //
-// For example, consider the code which touches several global variables at 
+// For example, consider the code which touches several global variables at
 // once:
 //
 // static int foo[N], bar[N], baz[N];
@@ -208,8 +208,8 @@ bool GlobalMerge::doInitialization(Module &M) {
   if (BSSGlobals.size() > 1)
     Changed |= doMerge(BSSGlobals, M, false);
 
-  // FIXME: This currently breaks the EH processing due to way how the 
-  // typeinfo detection works. We might want to detect the TIs and ignore 
+  // FIXME: This currently breaks the EH processing due to way how the
+  // typeinfo detection works. We might want to detect the TIs and ignore
   // them in the future.
   // if (ConstGlobals.size() > 1)
   //  Changed |= doMerge(ConstGlobals, M, true);

@@ -172,7 +172,7 @@ bool TailCallElim::runOnFunction(Function &F) {
     FunctionContainsEscapingAllocas |=
       CheckForEscapingAllocas(BB, CannotTCETailMarkedCall);
   }
-  
+
   /// FIXME: The code generator produces really bad code when an 'escaping
   /// alloca' is changed from being a static alloca to being a dynamic alloca.
   /// Until this is resolved, disable this transformation if that would ever
@@ -234,7 +234,7 @@ bool TailCallElim::CanMoveAboveCall(Instruction *I, CallInst *CI) {
   // call does not mod/ref the memory location being processed.
   if (I->mayHaveSideEffects())  // This also handles volatile loads.
     return false;
-  
+
   if (LoadInst *L = dyn_cast<LoadInst>(I)) {
     // Loads may always be moved above calls without side effects.
     if (CI->mayHaveSideEffects()) {
@@ -364,7 +364,7 @@ TailCallElim::FindTRECandidate(Instruction *TI,
 
   if (&BB->front() == TI) // Make sure there is something before the terminator.
     return 0;
-  
+
   // Scan backwards from the return, checking to see if there is a tail call in
   // this block.  If so, set CI to it.
   CallInst *CI = 0;
@@ -388,7 +388,7 @@ TailCallElim::FindTRECandidate(Instruction *TI,
   //   double fabs(double f) { return __builtin_fabs(f); } // a 'fabs' call
   // and disable this xform in this case, because the code generator will
   // lower the call to fabs into inline code.
-  if (BB == &F->getEntryBlock() && 
+  if (BB == &F->getEntryBlock() &&
       FirstNonDbg(BB->front()) == CI &&
       FirstNonDbg(llvm::next(BB->begin())) == TI &&
       callIsSmall(CI)) {
@@ -432,7 +432,7 @@ bool TailCallElim::EliminateRecursiveTailCall(CallInst *CI, ReturnInst *Ret,
   BasicBlock::iterator BBI = CI;
   for (++BBI; &*BBI != Ret; ++BBI) {
     if (CanMoveAboveCall(BBI, CI)) continue;
-    
+
     // If we can't move the instruction above the call, it might be because it
     // is an associative and commutative operation that could be transformed
     // using accumulator recursion elimination.  Check to see if this is the
