@@ -4,7 +4,7 @@ void __tsan_init();
 void __tsan_fini();
 void __tsan_event(int typ, int tid, void *pc, void *addr, int info);
 
-int goCallbackCommentPc(void *pc, char **img, char **rtn, char **file, int *l) {
+int __tsan_symbolize(void *pc, char **img, char **rtn, char **file, int *l) {
   return 0;
 }
 

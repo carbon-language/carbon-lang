@@ -37,24 +37,22 @@ bool IsExpectedReport(uptr addr, uptr size) {
 void internal_start_thread(void(*func)(void*), void *arg) {
 }
 
-extern "C" int goCallbackCommentPc(uptr pc, char **img, char **rtn,
-                                   char **filename, int *lineno);
+extern "C" int __tsan_symbolize(uptr pc, char **func, char **file,
+    int *line, int *off);
 extern "C" void free(void *p);
 
 ReportStack *SymbolizeCode(uptr addr) {
   ReportStack *s = NewReportStackEntry(addr);
-  char *img, *rtn, *filename;
-  int lineno;
-  if (goCallbackCommentPc(addr, &img, &rtn, &filename, &lineno)) {
-    s->module = internal_strdup(img);
-    s->offset = addr;
-    s->func = internal_strdup(rtn);
-    s->file = internal_strdup(filename);
-    s->line = lineno;
+  char *func, *file;
+  int line, off;
+  if (__tsan_symbolize(addr, &func, &file, &line, &off)) {
+    s->offset = off;
+    s->func = internal_strdup(func);
+    s->file = internal_strdup(file);
+    s->line = line;
     s->col = 0;
-    free(img);
-    free(rtn);
-    free(filename);
+    free(func);
+    free(file);
   }
   return s;
 }
