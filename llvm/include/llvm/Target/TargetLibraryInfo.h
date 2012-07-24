@@ -104,6 +104,8 @@ namespace llvm {
       fmodl,
       /// float fmodf(float x, float y);
       fmodf,
+      /// int fputc(int c, FILE *stream);
+      fputc,
       /// int fputs(const char *s, FILE *stream);
       fputs,
       /// size_t fwrite(const void *ptr, size_t size, size_t nitems,
@@ -135,6 +137,10 @@ namespace llvm {
       log1pl,
       /// float log1pf(float x);
       log1pf,
+      /// void *memchr(const void *s, int c, size_t n);
+      memchr,
+      /// int memcmp(const void *s1, const void *s2, size_t n);
+      memcmp,
       /// void *memcpy(void *s1, const void *s2, size_t n);
       memcpy,
       /// void *memmove(void *s1, const void *s2, size_t n);
@@ -155,6 +161,10 @@ namespace llvm {
       powf,
       /// long double powl(long double x, long double y);
       powl,
+      /// int putchar(int c);
+      putchar,
+      /// int puts(const char *s);
+      puts,
       /// double rint(double x);
       rint,
       /// float rintf(float x);
@@ -189,12 +199,16 @@ namespace llvm {
       sqrtf,
       /// char *strcat(char *s1, const char *s2);
       strcat,
+      /// char *strchr(const char *s, int c);
+      strchr,
       /// char *strcpy(char *s1, const char *s2);
       strcpy,
       /// size_t strlen(const char *s);
       strlen,
       /// char *strncat(char *s1, const char *s2, size_t n);
       strncat,
+      /// int strncmp(const char *s1, const char *s2, size_t n);
+      strncmp,
       /// char *strncpy(char *s1, const char *s2, size_t n);
       strncpy,
       /// size_t strnlen(const char *s, size_t maxlen);
