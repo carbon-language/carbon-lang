@@ -442,12 +442,14 @@ static bool CleanupPointerRootUsers(GlobalVariable *GV) {
       Dead[i].second->eraseFromParent();
       Instruction *I = Dead[i].first;
       do {
+	if (isAllocationFn(I))
+	  break;
         Instruction *J = dyn_cast<Instruction>(I->getOperand(0));
         if (!J)
           break;
         I->eraseFromParent();
         I = J;
-      } while (!isAllocationFn(I));
+      } while (1);
       I->eraseFromParent();
     }
   }
