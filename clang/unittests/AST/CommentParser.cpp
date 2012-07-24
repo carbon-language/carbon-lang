@@ -755,6 +755,31 @@ TEST_F(CommentParserTest, ParamCommand4) {
   }
 }
 
+TEST_F(CommentParserTest, ParamCommand5) {
+  const char *Source =
+    "// \\param aaa \\% Bbb \\$ ccc\n";
+
+  FullComment *FC = parseString(Source);
+  ASSERT_TRUE(HasChildCount(FC, 2));
+
+  ASSERT_TRUE(HasParagraphCommentAt(FC, 0, " "));
+  {
+    ParamCommandComment *PCC;
+    ParagraphComment *PC;
+    ASSERT_TRUE(HasParamCommandAt(FC, 1, PCC, "param",
+                                  ParamCommandComment::In,
+                                  /* IsDirectionExplicit = */ false,
+                                  "aaa", PC));
+    ASSERT_TRUE(HasChildCount(PCC, 1));
+
+    ASSERT_TRUE(HasChildCount(PC, 5));
+      ASSERT_TRUE(HasTextAt(PC, 0, " "));
+      ASSERT_TRUE(HasTextAt(PC, 1, "%"));
+      ASSERT_TRUE(HasTextAt(PC, 2, " Bbb "));
+      ASSERT_TRUE(HasTextAt(PC, 3, "$"));
+      ASSERT_TRUE(HasTextAt(PC, 4, " ccc"));
+  }
+}
 
 TEST_F(CommentParserTest, InlineCommand1) {
   const char *Source = "// \\c";

@@ -83,7 +83,7 @@ class Parser {
 
     MoreLATokens.push_back(Tok);
     for (const Token *I = &Toks.back(),
-         *B = &Toks.front() + 1;
+         *B = &Toks.front();
          I != B; --I) {
       MoreLATokens.push_back(*I);
     }

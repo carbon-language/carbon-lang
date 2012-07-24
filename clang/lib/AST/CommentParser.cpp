@@ -105,9 +105,12 @@ BlockCommandComment *Parser::parseBlockCommand() {
       BC = parseBlockCommandArgs(BC, Retokenizer, NumArgs);
 
     // Put back tokens we didn't use.
+    SmallVector<Token, 16> TextToks;
     Token Text;
-    while (Retokenizer.lexText(Text))
-      putBack(Text);
+    while (Retokenizer.lexText(Text)) {
+      TextToks.push_back(Text);
+    }
+    putBack(TextToks);
   }
 
   BlockContentComment *Block = parseParagraphOrBlockCommand();
