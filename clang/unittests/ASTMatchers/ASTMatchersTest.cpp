@@ -283,7 +283,7 @@ TEST(DeclarationMatcher, ClassIsDerived) {
 
   EXPECT_TRUE(matches(
       "class X {}; class Y : public X {};",
-      record(isDerivedFrom(id("test", record(hasName("X")))))));
+      record(isDerivedFrom(record(hasName("X")).bind("test")))));
 }
 
 TEST(AllOf, AllOverloadsWork) {
@@ -620,7 +620,7 @@ private:
 };
 
 TEST(Matcher, BindMatchedNodes) {
-  DeclarationMatcher ClassX = has(id("x", record(hasName("X"))));
+  DeclarationMatcher ClassX = has(record(hasName("::X")).bind("x"));
 
   EXPECT_TRUE(matchAndVerifyResultTrue("class X {};",
       ClassX, new VerifyIdIsBoundToDecl<CXXRecordDecl>("x")));
@@ -629,13 +629,13 @@ TEST(Matcher, BindMatchedNodes) {
       ClassX, new VerifyIdIsBoundToDecl<CXXRecordDecl>("other-id")));
 
   TypeMatcher TypeAHasClassB = hasDeclaration(
-      record(hasName("A"), has(id("b", record(hasName("B"))))));
+      record(hasName("A"), has(record(hasName("B")).bind("b"))));
 
   EXPECT_TRUE(matchAndVerifyResultTrue("class A { public: A *a; class B {}; };",
       TypeAHasClassB,
       new VerifyIdIsBoundToDecl<Decl>("b")));
 
-  StatementMatcher MethodX = id("x", call(callee(method(hasName("x")))));
+  StatementMatcher MethodX = call(callee(method(hasName("x")))).bind("x");
 
   EXPECT_TRUE(matchAndVerifyResultTrue("class A { void x() { x(); } };",
       MethodX,
@@ -645,11 +645,11 @@ TEST(Matcher, BindMatchedNodes) {
 TEST(Matcher, BindTheSameNameInAlternatives) {
   StatementMatcher matcher = anyOf(
       binaryOperator(hasOperatorName("+"),
-                     hasLHS(id("x", expression())),
+                     hasLHS(expression().bind("x")),
                      hasRHS(integerLiteral(equals(0)))),
       binaryOperator(hasOperatorName("+"),
                      hasLHS(integerLiteral(equals(0))),
-                     hasRHS(id("x", expression()))));
+                     hasRHS(expression().bind("x"))));
 
   EXPECT_TRUE(matchAndVerifyResultTrue(
       // The first branch of the matcher binds x to 0 but then fails.
@@ -707,7 +707,7 @@ TEST(Matcher, Call) {
   EXPECT_TRUE(matches("class Y { void x() { x(); } };", MethodX));
   EXPECT_TRUE(notMatches("class Y { void x() {} };", MethodX));
 
-  StatementMatcher MethodOnY = call(on(hasType(record(hasName("Y")))));
+  StatementMatcher MethodOnY = memberCall(on(hasType(record(hasName("Y")))));
 
   EXPECT_TRUE(
       matches("class Y { public: void x(); }; void z() { Y y; y.x(); }",
@@ -726,7 +726,7 @@ TEST(Matcher, Call) {
                  MethodOnY));
 
   StatementMatcher MethodOnYPointer =
-      call(on(hasType(pointsTo(record(hasName("Y"))))));
+      memberCall(on(hasType(pointsTo(record(hasName("Y"))))));
 
   EXPECT_TRUE(
       matches("class Y { public: void x(); }; void z() { Y *y; y->x(); }",
@@ -748,7 +748,7 @@ TEST(Matcher, Call) {
 TEST(HasType, MatchesAsString) {
   EXPECT_TRUE(
       matches("class Y { public: void x(); }; void z() {Y* y; y->x(); }",
-              call(on(hasType(asString("class Y *"))))));
+              memberCall(on(hasType(asString("class Y *"))))));
   EXPECT_TRUE(matches("class X { void x(int x) {} };",
       method(hasParameter(0, hasType(asString("int"))))));
   EXPECT_TRUE(matches("namespace ns { struct A {}; }  struct B { ns::A a; };",
@@ -798,7 +798,8 @@ TEST(Matcher, HasOperatorNameForOverloadedOperatorCall) {
 }
 
 TEST(Matcher, ThisPointerType) {
-  StatementMatcher MethodOnY = call(thisPointerType(record(hasName("Y"))));
+  StatementMatcher MethodOnY =
+    memberCall(thisPointerType(record(hasName("Y"))));
 
   EXPECT_TRUE(
       matches("class Y { public: void x(); }; void z() { Y y; y.x(); }",
@@ -830,7 +831,7 @@ TEST(Matcher, VariableUsage) {
   StatementMatcher Reference =
       declarationReference(to(
           variable(hasInitializer(
-              call(thisPointerType(record(hasName("Y"))))))));
+              memberCall(thisPointerType(record(hasName("Y"))))))));
 
   EXPECT_TRUE(matches(
       "class Y {"
@@ -854,7 +855,7 @@ TEST(Matcher, VariableUsage) {
 
 TEST(Matcher, CalledVariable) {
   StatementMatcher CallOnVariableY = expression(
-      call(on(declarationReference(to(variable(hasName("y")))))));
+      memberCall(on(declarationReference(to(variable(hasName("y")))))));
 
   EXPECT_TRUE(matches(
       "class Y { public: void x() { Y y; y.x(); } };", CallOnVariableY));
@@ -1739,7 +1740,7 @@ AST_MATCHER_P(Decl, just, internal::Matcher<Decl>, AMatcher) {
 }
 
 TEST(AstMatcherPMacro, Works) {
-  DeclarationMatcher HasClassB = just(has(id("b", record(hasName("B")))));
+  DeclarationMatcher HasClassB = just(has(record(hasName("B")).bind("b")));
 
   EXPECT_TRUE(matchAndVerifyResultTrue("class A { class B {}; };",
       HasClassB, new VerifyIdIsBoundToDecl<Decl>("b")));
@@ -1764,7 +1765,7 @@ AST_POLYMORPHIC_MATCHER_P(
 }
 
 TEST(AstPolymorphicMatcherPMacro, Works) {
-  DeclarationMatcher HasClassB = polymorphicHas(id("b", record(hasName("B"))));
+  DeclarationMatcher HasClassB = polymorphicHas(record(hasName("B")).bind("b"));
 
   EXPECT_TRUE(matchAndVerifyResultTrue("class A { class B {}; };",
       HasClassB, new VerifyIdIsBoundToDecl<Decl>("b")));
@@ -2133,26 +2134,26 @@ TEST(HasConditionVariableStatement, MatchesConditionVariables) {
 
 TEST(ForEach, BindsOneNode) {
   EXPECT_TRUE(matchAndVerifyResultTrue("class C { int x; };",
-      record(hasName("C"), forEach(id("x", field(hasName("x"))))),
+      record(hasName("C"), forEach(field(hasName("x")).bind("x"))),
       new VerifyIdIsBoundToDecl<FieldDecl>("x", 1)));
 }
 
 TEST(ForEach, BindsMultipleNodes) {
   EXPECT_TRUE(matchAndVerifyResultTrue("class C { int x; int y; int z; };",
-      record(hasName("C"), forEach(id("f", field()))),
+      record(hasName("C"), forEach(field().bind("f"))),
       new VerifyIdIsBoundToDecl<FieldDecl>("f", 3)));
 }
 
 TEST(ForEach, BindsRecursiveCombinations) {
   EXPECT_TRUE(matchAndVerifyResultTrue(
       "class C { class D { int x; int y; }; class E { int y; int z; }; };",
-      record(hasName("C"), forEach(record(forEach(id("f", field()))))),
+      record(hasName("C"), forEach(record(forEach(field().bind("f"))))),
       new VerifyIdIsBoundToDecl<FieldDecl>("f", 4)));
 }
 
 TEST(ForEachDescendant, BindsOneNode) {
   EXPECT_TRUE(matchAndVerifyResultTrue("class C { class D { int x; }; };",
-      record(hasName("C"), forEachDescendant(id("x", field(hasName("x"))))),
+      record(hasName("C"), forEachDescendant(field(hasName("x")).bind("x"))),
       new VerifyIdIsBoundToDecl<FieldDecl>("x", 1)));
 }
 
@@ -2160,7 +2161,7 @@ TEST(ForEachDescendant, BindsMultipleNodes) {
   EXPECT_TRUE(matchAndVerifyResultTrue(
       "class C { class D { int x; int y; }; "
       "          class E { class F { int y; int z; }; }; };",
-      record(hasName("C"), forEachDescendant(id("f", field()))),
+      record(hasName("C"), forEachDescendant(field().bind("f"))),
       new VerifyIdIsBoundToDecl<FieldDecl>("f", 4)));
 }
 
@@ -2169,7 +2170,7 @@ TEST(ForEachDescendant, BindsRecursiveCombinations) {
       "class C { class D { "
       "          class E { class F { class G { int y; int z; }; }; }; }; };",
       record(hasName("C"), forEachDescendant(record(
-          forEachDescendant(id("f", field()))))),
+          forEachDescendant(field().bind("f"))))),
       new VerifyIdIsBoundToDecl<FieldDecl>("f", 8)));
 }
 

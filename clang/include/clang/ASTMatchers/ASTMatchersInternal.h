@@ -440,20 +440,19 @@ public:
                                    BindKind Bind) = 0;
 };
 
-/// \brief Converts a Matcher<T> to a matcher of desired type To by "adapting"
-/// a To into a T.
+/// \brief Converts a \c Matcher<T> to a matcher of desired type \c To by
+/// "adapting" a \c To into a \c T.
 ///
-/// The ArgumentAdapterT argument specifies how the adaptation is done.
+/// The \c ArgumentAdapterT argument specifies how the adaptation is done.
 ///
 /// For example:
-///   ArgumentAdaptingMatcher<DynCastMatcher, T>(InnerMatcher);
-/// returns a matcher that can be used where a Matcher<To> is required, if
-/// To and T are in the same type hierarchy, and thus dyn_cast can be
-/// called to convert a To to a T.
+///   \c ArgumentAdaptingMatcher<HasMatcher, T>(InnerMatcher);
+/// Given that \c InnerMatcher is of type \c Matcher<T>, this returns a matcher
+/// that is convertible into any matcher of type \c To by constructing
+/// \c HasMatcher<To, T>(InnerMatcher).
 ///
-/// FIXME: Make sure all our applications of this class actually require
-/// knowledge about the inner type. DynCastMatcher obviously does, but the
-/// Has *matchers require the inner type solely for COMPILE_ASSERT purposes.
+/// If a matcher does not need knowledge about the inner type, prefer to use
+/// PolymorphicMatcherWithParam1.
 template <template <typename ToArg, typename FromArg> class ArgumentAdapterT,
           typename T>
 class ArgumentAdaptingMatcher {
@@ -567,19 +566,6 @@ private:
   const Matcher<To> InnerMatcher;
 };
 
-/// \brief Enables the user to pass a Matcher<CXXMemberCallExpr> to
-/// Call().
-///
-/// FIXME: Alternatives are using more specific methods than Call, like
-/// MemberCall, or not using VariadicFunction for Call and overloading it.
-template <>
-template <>
-inline Matcher<CXXMemberCallExpr>::
-operator Matcher<CallExpr>() const {
-  return makeMatcher(
-    new DynCastMatcher<CallExpr, CXXMemberCallExpr>(*this));
-}
-
 /// \brief Matcher<T> that wraps an inner Matcher<T> and binds the matched node
 /// to an ID if the inner matcher matches on the node.
 template <typename T>
@@ -603,6 +589,28 @@ public:
 private:
   const std::string ID;
   const Matcher<T> InnerMatcher;
+};
+
+/// \brief A Matcher that allows binding the node it matches to an id.
+///
+/// BindableMatcher provides a \a bind() method that allows binding the
+/// matched node to an id if the match was successful.
+template <typename T>
+class BindableMatcher : public Matcher<T> {
+public:
+  BindableMatcher(MatcherInterface<T> *Implementation)
+    : Matcher<T>(Implementation) {}
+
+  /// \brief Returns a matcher that will bind the matched node on a match.
+  ///
+  /// The returned matcher is equivalent to this matcher, but will
+  /// bind the matched node on a match.
+  Matcher<T> bind(StringRef ID) const {
+    TOOLING_COMPILE_ASSERT((llvm::is_base_of<Stmt, T>::value ||
+                            llvm::is_base_of<Decl, T>::value),
+      trying_to_bind_unsupported_node_type__only_decl_and_stmt_supported);
+    return Matcher<T>(new IdMatcher<T>(ID, *this));
+  }
 };
 
 /// \brief Matches nodes of type T that have child nodes of type ChildT for
@@ -727,12 +735,16 @@ private:
 
 /// \brief Creates a Matcher<T> that matches if
 /// T is dyn_cast'able into InnerT and all inner matchers match.
+///
+/// Returns BindableMatcher, as matchers that use dyn_cast have
+/// the same object both to match on and to run submatchers on,
+/// so there is no ambiguity with what gets bound.
 template<typename T, typename InnerT>
-Matcher<T> makeDynCastAllOfComposite(
+BindableMatcher<T> makeDynCastAllOfComposite(
     ArrayRef<const Matcher<InnerT> *> InnerMatchers) {
   if (InnerMatchers.empty()) {
-    return ArgumentAdaptingMatcher<DynCastMatcher, InnerT>(
-        makeMatcher(new TrueMatcher<InnerT>));
+    Matcher<InnerT> InnerMatcher = makeMatcher(new TrueMatcher<InnerT>);
+    return BindableMatcher<T>(new DynCastMatcher<T, InnerT>(InnerMatcher));
   }
   Matcher<InnerT> InnerMatcher = *InnerMatchers.back();
   for (int i = InnerMatchers.size() - 2; i >= 0; --i) {
@@ -740,7 +752,7 @@ Matcher<T> makeDynCastAllOfComposite(
         new AllOfMatcher<InnerT, Matcher<InnerT>, Matcher<InnerT> >(
             *InnerMatchers[i], InnerMatcher));
   }
-  return ArgumentAdaptingMatcher<DynCastMatcher, InnerT>(InnerMatcher);
+  return BindableMatcher<T>(new DynCastMatcher<T, InnerT>(InnerMatcher));
 }
 
 /// \brief Matches nodes of type T that have at least one descendant node of
@@ -876,7 +888,7 @@ class IsConstQualifiedMatcher
 template <typename SourceT, typename TargetT>
 class VariadicDynCastAllOfMatcher
     : public llvm::VariadicFunction<
-        Matcher<SourceT>, Matcher<TargetT>,
+        BindableMatcher<SourceT>, Matcher<TargetT>,
         makeDynCastAllOfComposite<SourceT, TargetT> > {
 public:
   VariadicDynCastAllOfMatcher() {}
