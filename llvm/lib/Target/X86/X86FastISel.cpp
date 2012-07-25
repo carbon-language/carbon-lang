@@ -1527,6 +1527,8 @@ static unsigned computeBytesPopedByCalle(const X86Subtarget &Subtarget,
     return 0;
   if (!CS.paramHasAttr(1, Attribute::StructRet))
     return 0;
+ if (CS.paramHasAttr(1, Attribute::InReg))
+    return 0;
   return 4;
 }
 

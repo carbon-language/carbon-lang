@@ -1717,21 +1717,37 @@ X86TargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
 
 /// CallIsStructReturn - Determines whether a call uses struct return
 /// semantics.
-static bool CallIsStructReturn(const SmallVectorImpl<ISD::OutputArg> &Outs) {
+enum StructReturnType {
+  NotStructReturn,
+  RegStructReturn,
+  StackStructReturn
+};
+static StructReturnType
+callIsStructReturn(const SmallVectorImpl<ISD::OutputArg> &Outs) {
   if (Outs.empty())
-    return false;
+    return NotStructReturn;
 
-  return Outs[0].Flags.isSRet();
+  const ISD::ArgFlagsTy &Flags = Outs[0].Flags;
+  if (!Flags.isSRet())
+    return NotStructReturn;
+  if (Flags.isInReg())
+    return RegStructReturn;
+  return StackStructReturn;
 }
 
 /// ArgsAreStructReturn - Determines whether a function uses struct
 /// return semantics.
-static bool
-ArgsAreStructReturn(const SmallVectorImpl<ISD::InputArg> &Ins) {
+static StructReturnType
+argsAreStructReturn(const SmallVectorImpl<ISD::InputArg> &Ins) {
   if (Ins.empty())
-    return false;
+    return NotStructReturn;
 
-  return Ins[0].Flags.isSRet();
+  const ISD::ArgFlagsTy &Flags = Ins[0].Flags;
+  if (!Flags.isSRet())
+    return NotStructReturn;
+  if (Flags.isInReg())
+    return RegStructReturn;
+  return StackStructReturn;
 }
 
 /// CreateCopyOfByValArgument - Make a copy of an aggregate at address specified
@@ -2072,7 +2088,7 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
     FuncInfo->setBytesToPopOnReturn(0); // Callee pops nothing.
     // If this is an sret function, the return should pop the hidden pointer.
     if (!Is64Bit && !IsTailCallConvention(CallConv) && !IsWindows &&
-        ArgsAreStructReturn(Ins))
+        argsAreStructReturn(Ins) == StackStructReturn)
       FuncInfo->setBytesToPopOnReturn(4);
   }
 
@@ -2162,7 +2178,7 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   bool Is64Bit        = Subtarget->is64Bit();
   bool IsWin64        = Subtarget->isTargetWin64();
   bool IsWindows      = Subtarget->isTargetWindows();
-  bool IsStructRet    = CallIsStructReturn(Outs);
+  StructReturnType SR = callIsStructReturn(Outs);
   bool IsSibcall      = false;
 
   if (MF.getTarget().Options.DisableTailCalls)
@@ -2171,8 +2187,9 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   if (isTailCall) {
     // Check if it's really possible to do a tail call.
     isTailCall = IsEligibleForTailCallOptimization(Callee, CallConv,
-                    isVarArg, IsStructRet, MF.getFunction()->hasStructRetAttr(),
-                                                   Outs, OutVals, Ins, DAG);
+                    isVarArg, SR != NotStructReturn,
+                    MF.getFunction()->hasStructRetAttr(),
+                    Outs, OutVals, Ins, DAG);
 
     // Sibcalls are automatically detected tailcalls which do not require
     // ABI changes.
@@ -2548,7 +2565,7 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                        getTargetMachine().Options.GuaranteedTailCallOpt))
     NumBytesForCalleeToPush = NumBytes;    // Callee pops everything
   else if (!Is64Bit && !IsTailCallConvention(CallConv) && !IsWindows &&
-           IsStructRet)
+           SR == StackStructReturn)
     // If this is a call to a struct-return function, the callee
     // pops the hidden struct pointer, so we have to push it back.
     // This is common for Darwin/X86, Linux & Mingw32 targets.
