@@ -352,7 +352,8 @@ static bool IsSafeComputationToRemove(Value *V) {
       return true;
     if (!V->hasOneUse())
       return false;
-    if (isa<LoadInst>(V) || isa<Argument>(V) || isa<GlobalValue>(V))
+    if (isa<LoadInst>(V) || isa<InvokeInst>(V) || isa<Argument>(V) ||
+        isa<GlobalValue>(V))
       return false;
     if (isAllocationFn(V))
       return true;
