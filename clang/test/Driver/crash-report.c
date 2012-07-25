@@ -1,6 +1,7 @@
 // RUN: rm -rf %t
 // RUN: mkdir %t
-// RUN: env TMPDIR=%t TEMP=%t TMP=%t %clang -fsyntax-only %s -DFOO=BAR 2>&1 | FileCheck %s
+// RUN: env TMPDIR=%t TEMP=%t TMP=%t %clang -fsyntax-only %s \
+// RUN:  -F/tmp/ -I /tmp/ -iquote /tmp/ -DFOO=BAR 2>&1 | FileCheck %s
 // RUN: cat %t/crash-report-*.c | FileCheck --check-prefix=CHECKSRC %s
 // RUN: cat %t/crash-report-*.sh | FileCheck --check-prefix=CHECKSH %s
 // REQUIRES: crash-recovery
@@ -10,4 +11,7 @@
 // CHECK-NEXT: note: diagnostic msg: {{.*}}.c
 FOO
 // CHECKSRC: FOO
-// CHECKSH: -D FOO=BAR
+// CHECKSH: -D "FOO=BAR"
+// CHECKSH-NOT: -F/tmp/
+// CHECKSH-NOT: -I /tmp/
+// CHECKSH-NOT: -iquote /tmp/

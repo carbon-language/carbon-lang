@@ -504,8 +504,18 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
         // Strip away options not necessary to reproduce the crash.
         // FIXME: This doesn't work with quotes (e.g., -D "foo bar").
         SmallVector<std::string, 16> Flag;
+        Flag.push_back("-D ");
         Flag.push_back("-F");
         Flag.push_back("-I ");
+        Flag.push_back("-M ");
+        Flag.push_back("-MD ");
+        Flag.push_back("-MF ");
+        Flag.push_back("-MG ");
+        Flag.push_back("-MM ");
+        Flag.push_back("-MMD ");
+        Flag.push_back("-MP ");
+        Flag.push_back("-MQ ");
+        Flag.push_back("-MT ");
         Flag.push_back("-o ");
         Flag.push_back("-coverage-file ");
         Flag.push_back("-dependency-file ");
@@ -514,6 +524,7 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
         Flag.push_back("-include ");
         Flag.push_back("-include-pch ");
         Flag.push_back("-isysroot ");
+        Flag.push_back("-iquote ");
         Flag.push_back("-resource-dir ");
         Flag.push_back("-serialize-diagnostic-file ");
         for (unsigned i = 0, e = Flag.size(); i < e; ++i) {
@@ -524,7 +535,14 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
 
             E = Cmd.find(" ", I + Flag[i].length());
             if (E == std::string::npos) break;
-            Cmd.erase(I, E - I + 1);
+            // The -D option is not removed.  Instead, the argument is quoted.
+            if (Flag[i] != "-D ") {
+              Cmd.erase(I, E - I + 1);
+            } else {
+              Cmd.insert(I+3, "\"");
+              Cmd.insert(++E, "\"");
+              I = E;
+            }
           } while(1);
         }
         // Append the new filename with correct preprocessed suffix.
