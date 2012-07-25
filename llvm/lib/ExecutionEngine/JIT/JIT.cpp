@@ -361,7 +361,7 @@ bool JIT::removeModule(Module *M) {
 
   MutexGuard locked(lock);
 
-  if (jitstate->getModule() == M) {
+  if (jitstate && jitstate->getModule() == M) {
     delete jitstate;
     jitstate = 0;
   }
