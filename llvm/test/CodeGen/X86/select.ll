@@ -1,4 +1,5 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin10 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin10 -mcpu=generic | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin10 -mcpu=atom | FileCheck -check-prefix=ATOM %s
 ; PR5757
 
 %0 = type { i64, i32 }
@@ -12,6 +13,10 @@ define i32 @test1(%0* %p, %0* %q, i1 %r) nounwind {
 ; CHECK: test1:
 ; CHECK: cmovneq %rdi, %rsi
 ; CHECK: movl (%rsi), %eax
+
+; ATOM: test1:
+; ATOM: cmovneq %rdi, %rsi
+; ATOM: movl (%rsi), %eax
 }
 
 
@@ -31,6 +36,10 @@ bb91:		; preds = %bb84
 ; CHECK: test2:
 ; CHECK: movnew
 ; CHECK: movswl
+
+; ATOM: test2:
+; ATOM: movnew
+; ATOM: movswl
 }
 
 declare i1 @return_false()
@@ -44,6 +53,9 @@ entry:
 	ret float %iftmp.0.0
 ; CHECK: test3:
 ; CHECK: movss	{{.*}},4), %xmm0
+
+; ATOM: test3:
+; ATOM: movss  {{.*}},4), %xmm0
 }
 
 define signext i8 @test4(i8* nocapture %P, double %F) nounwind readonly {
@@ -55,6 +67,9 @@ entry:
 	ret i8 %2
 ; CHECK: test4:
 ; CHECK: movsbl	({{.*}},4), %eax
+
+; ATOM: test4:
+; ATOM: movsbl ({{.*}},4), %eax
 }
 
 define void @test5(i1 %c, <2 x i16> %a, <2 x i16> %b, <2 x i16>* %p) nounwind {
@@ -62,6 +77,8 @@ define void @test5(i1 %c, <2 x i16> %a, <2 x i16> %b, <2 x i16>* %p) nounwind {
   store <2 x i16> %x, <2 x i16>* %p
   ret void
 ; CHECK: test5:
+
+; ATOM: test5:
 }
 
 define void @test6(i32 %C, <4 x float>* %A, <4 x float>* %B) nounwind {
@@ -79,6 +96,12 @@ define void @test6(i32 %C, <4 x float>* %A, <4 x float>* %B) nounwind {
 ; CHECK: ret
 ; CHECK: mulps
 ; CHECK: ret
+
+; ATOM: test6:
+; ATOM: je
+; ATOM: ret
+; ATOM: mulps
+; ATOM: ret
 }
 
 ; Select with fp80's
@@ -89,6 +112,10 @@ define x86_fp80 @test7(i32 %tmp8) nounwind {
 ; CHECK: test7:
 ; CHECK: leaq
 ; CHECK: fldt (%r{{.}}x,%r{{.}}x)
+
+; ATOM: test7:
+; ATOM: leaq
+; ATOM: fldt (%r{{.}}x,%r{{.}}x)
 }
 
 ; widening select v6i32 and then a sub
@@ -99,6 +126,8 @@ define void @test8(i1 %c, <6 x i32>* %dst.addr, <6 x i32> %src1,<6 x i32> %src2)
 	ret void
 
 ; CHECK: test8:
+
+; ATOM: test8:
 }
 
 
@@ -113,6 +142,12 @@ define i64 @test9(i64 %x, i64 %y) nounwind readnone ssp noredzone {
 ; CHECK: sbbq	%rax, %rax
 ; CHECK: orq	%rsi, %rax
 ; CHECK: ret
+
+; ATOM: test9:
+; ATOM: cmpq   $1, %rdi
+; ATOM: sbbq   %rax, %rax
+; ATOM: orq    %rsi, %rax
+; ATOM: ret
 }
 
 ;; Same as test9
@@ -125,6 +160,12 @@ define i64 @test9a(i64 %x, i64 %y) nounwind readnone ssp noredzone {
 ; CHECK: sbbq	%rax, %rax
 ; CHECK: orq	%rsi, %rax
 ; CHECK: ret
+
+; ATOM: test9a:
+; ATOM: cmpq   $1, %rdi
+; ATOM: sbbq   %rax, %rax
+; ATOM: orq    %rsi, %rax
+; ATOM: ret
 }
 
 define i64 @test9b(i64 %x, i64 %y) nounwind readnone ssp noredzone {
@@ -137,6 +178,12 @@ define i64 @test9b(i64 %x, i64 %y) nounwind readnone ssp noredzone {
 ; CHECK: sbbq	%rax, %rax
 ; CHECK: orq	%rsi, %rax
 ; CHECK: ret
+
+; ATOM: test9b:
+; ATOM: cmpq   $1, %rdi
+; ATOM: sbbq   %rax, %rax
+; ATOM: orq    %rsi, %rax
+; ATOM: ret
 }
 
 ;; Select between -1 and 1.
@@ -149,6 +196,12 @@ define i64 @test10(i64 %x, i64 %y) nounwind readnone ssp noredzone {
 ; CHECK: sbbq	%rax, %rax
 ; CHECK: orq	$1, %rax
 ; CHECK: ret
+
+; ATOM: test10:
+; ATOM: cmpq   $1, %rdi
+; ATOM: sbbq   %rax, %rax
+; ATOM: orq    $1, %rax
+; ATOM: ret
 }
 
 
@@ -163,6 +216,13 @@ define i64 @test11(i64 %x, i64 %y) nounwind readnone ssp noredzone {
 ; CHECK: notq %rax
 ; CHECK: orq	%rsi, %rax
 ; CHECK: ret
+
+; ATOM: test11:
+; ATOM: cmpq   $1, %rdi
+; ATOM: sbbq   %rax, %rax
+; ATOM: notq %rax
+; ATOM: orq    %rsi, %rax
+; ATOM: ret
 }
 
 define i64 @test11a(i64 %x, i64 %y) nounwind readnone ssp noredzone {
@@ -175,6 +235,13 @@ define i64 @test11a(i64 %x, i64 %y) nounwind readnone ssp noredzone {
 ; CHECK: notq %rax
 ; CHECK: orq	%rsi, %rax
 ; CHECK: ret
+
+; ATOM: test11a:
+; ATOM: cmpq   $1, %rdi
+; ATOM: sbbq   %rax, %rax
+; ATOM: notq %rax
+; ATOM: orq    %rsi, %rax
+; ATOM: ret
 }
 
 
@@ -193,6 +260,12 @@ entry:
 ; CHECK: mulq
 ; CHECK: cmovnoq	%rax, %rdi
 ; CHECK: jmp	__Znam
+
+; ATOM: test12:
+; ATOM: mulq
+; ATOM: movq $-1, %rdi
+; ATOM: cmovnoq        %rax, %rdi
+; ATOM: jmp    __Znam
 }
 
 declare { i64, i1 } @llvm.umul.with.overflow.i64(i64, i64) nounwind readnone
@@ -205,6 +278,11 @@ define i32 @test13(i32 %a, i32 %b) nounwind {
 ; CHECK: cmpl
 ; CHECK-NEXT: sbbl
 ; CHECK-NEXT: ret
+
+; ATOM: test13:
+; ATOM: cmpl
+; ATOM-NEXT: sbbl
+; ATOM-NEXT: ret
 }
 
 define i32 @test14(i32 %a, i32 %b) nounwind {
@@ -216,6 +294,12 @@ define i32 @test14(i32 %a, i32 %b) nounwind {
 ; CHECK-NEXT: sbbl
 ; CHECK-NEXT: notl
 ; CHECK-NEXT: ret
+
+; ATOM: test14:
+; ATOM: cmpl
+; ATOM-NEXT: sbbl
+; ATOM-NEXT: notl
+; ATOM-NEXT: ret
 }
 
 ; rdar://10961709
@@ -227,6 +311,10 @@ entry:
 ; CHECK: test15:
 ; CHECK: negl
 ; CHECK: sbbl
+
+; ATOM: test15:
+; ATOM: negl
+; ATOM: sbbl
 }
 
 define i64 @test16(i64 %x) nounwind uwtable readnone ssp {
@@ -237,6 +325,10 @@ entry:
 ; CHECK: test16:
 ; CHECK: negq
 ; CHECK: sbbq
+
+; ATOM: test16:
+; ATOM: negq
+; ATOM: sbbq
 }
 
 define i16 @test17(i16 %x) nounwind {
@@ -247,4 +339,8 @@ entry:
 ; CHECK: test17:
 ; CHECK: negw
 ; CHECK: sbbw
+
+; ATOM: test17:
+; ATOM: negw
+; ATOM: sbbw
 }
