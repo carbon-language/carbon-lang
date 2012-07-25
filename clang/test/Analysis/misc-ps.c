@@ -126,3 +126,10 @@ void rdar10686586() {
     }
 }
 
+// This example tests CFG handling of '||' nested in a ternary expression,
+// and seeing that the analyzer doesn't crash.
+int isctype(char c, unsigned long f)
+{
+  return (c < 1 || c > 10) ? 0 : !!(c & f);
+}
+

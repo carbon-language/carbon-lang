@@ -590,17 +590,27 @@ void ExprEngine::VisitGuardedExpr(const Expr *Ex,
                                   ExplodedNode *Pred,
                                   ExplodedNodeSet &Dst) {
   StmtNodeBuilder B(Pred, Dst, *currentBuilderContext);
-  
   ProgramStateRef state = Pred->getState();
   const LocationContext *LCtx = Pred->getLocationContext();
-  SVal X = state->getSVal(Ex, LCtx);  
-  assert (X.isUndef());  
-  const Expr *SE = (Expr*) cast<UndefinedVal>(X).getData();
-  assert(SE);
-  X = state->getSVal(SE, LCtx);
-  
-  // Make sure that we invalidate the previous binding.
-  B.generateNode(Ex, Pred, state->BindExpr(Ex, LCtx, X, true));
+
+  // Assume that the last CFGElement visited is the value of
+  // the guarded expression.
+  ExplodedNode *N = Pred;
+  SVal V;
+  while (N) {
+    ProgramPoint P = N->getLocation();
+    if (const PostStmt *PS = dyn_cast<PostStmt>(&P)) {
+      const Expr *Ex = cast<Expr>(PS->getStmt());
+      V = state->getSVal(Ex, LCtx);
+      break;
+    }
+    assert(N->pred_size() == 1);
+    N = *N->pred_begin();
+  }
+  assert(N);
+
+  // Generate a new node with the binding from the appropriate path.
+  B.generateNode(Ex, Pred, state->BindExpr(Ex, LCtx, V, true));
 }
 
 void ExprEngine::
