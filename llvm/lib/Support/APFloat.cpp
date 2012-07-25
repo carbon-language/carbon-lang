@@ -3278,16 +3278,8 @@ APFloat::APFloat(double d) : exponent2(0), sign2(0) {
 }
 
 namespace {
-  static void append(SmallVectorImpl<char> &Buffer,
-                     unsigned N, const char *Str) {
-    unsigned Start = Buffer.size();
-    Buffer.set_size(Start + N);
-    memcpy(&Buffer[Start], Str, N);
-  }
-
-  template <unsigned N>
-  void append(SmallVectorImpl<char> &Buffer, const char (&Str)[N]) {
-    append(Buffer, N, Str);
+  void append(SmallVectorImpl<char> &Buffer, StringRef Str) {
+    Buffer.append(Str.begin(), Str.end());
   }
 
   /// Removes data from the given significand until it is no more
