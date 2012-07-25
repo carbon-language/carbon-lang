@@ -443,7 +443,8 @@ void CommentASTToHTMLConverter::visitBlockCommandComment(
     Result << "</p>";
     return;
   }
-  if (CommandName == "returns" || CommandName == "return") {
+  if (CommandName == "returns" || CommandName == "return" ||
+      CommandName == "result") {
     Result << "<p class=\"para-returns\">"
               "<span class=\"word-returns\">Returns</span> ";
     visitNonStandaloneParagraphComment(C->getParagraph());
