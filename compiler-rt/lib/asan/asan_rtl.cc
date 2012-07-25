@@ -98,6 +98,10 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->disable_core, "disable_core");
 }
 
+extern "C" {
+const char* WEAK __asan_default_options() { return ""; }
+}  // extern "C"
+
 void InitializeFlags(Flags *f, const char *env) {
   internal_memset(f, 0, sizeof(*f));
 
@@ -126,15 +130,11 @@ void InitializeFlags(Flags *f, const char *env) {
   f->disable_core = (__WORDSIZE == 64);
 
   // Override from user-specified string.
-#if !defined(_WIN32)
-  if (__asan_default_options) {
-    ParseFlagsFromString(f, __asan_default_options());
-    if (flags()->verbosity) {
-      Report("Using the defaults from __asan_default_options: %s\n",
-             __asan_default_options());
-    }
+  ParseFlagsFromString(f, __asan_default_options());
+  if (flags()->verbosity) {
+    Report("Using the defaults from __asan_default_options: %s\n",
+           __asan_default_options());
   }
-#endif
 
   // Override from command line.
   ParseFlagsFromString(f, env);
