@@ -128,10 +128,10 @@ void InitializeFlags(Flags *f, const char *env) {
   // Override from user-specified string.
 #if !defined(_WIN32)
   if (__asan_default_options) {
-    ParseFlagsFromString(f, __asan_default_options);
+    ParseFlagsFromString(f, __asan_default_options());
     if (flags()->verbosity) {
       Report("Using the defaults from __asan_default_options: %s\n",
-             __asan_default_options);
+             __asan_default_options());
     }
   }
 #endif

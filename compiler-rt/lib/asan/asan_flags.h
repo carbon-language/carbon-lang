@@ -25,7 +25,7 @@
 extern "C" {
 #if !defined(_WIN32)
   // We do not need to redefine the defaults right now on Windows.
-  char *__asan_default_options SANITIZER_WEAK_ATTRIBUTE;
+  const char *__asan_default_options() SANITIZER_WEAK_ATTRIBUTE;
 #endif
 }
 
@@ -89,6 +89,7 @@ struct Flags {
   // to dump 16T+ core.
   bool disable_core;
 };
+
 Flags *flags();
 void InitializeFlags(Flags *f, const char *env);
 

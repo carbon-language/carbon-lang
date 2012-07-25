@@ -39,6 +39,8 @@ check_program a.out $C_TEST.c CHECKSLEEP
 export ASAN_OPTIONS=""
 rm ./a.out
 
+# FIXME: some tests do not need to be ran for all the combinations of arch
+# and optimization mode.
 for t in  *.cc; do
   for b in 32 64; do
     for O in 0 1 2 3; do
