@@ -1080,63 +1080,6 @@ void ExprEngine::processCFGBlockEntrance(const BlockEdge &L,
 // Branch processing.
 //===----------------------------------------------------------------------===//
 
-ProgramStateRef ExprEngine::MarkBranch(ProgramStateRef state,
-                                           const Stmt *Terminator,
-                                           const LocationContext *LCtx,
-                                           bool branchTaken) {
-
-  switch (Terminator->getStmtClass()) {
-    default:
-      return state;
-
-    case Stmt::BinaryOperatorClass: { // '&&' and '||'
-
-      const BinaryOperator* B = cast<BinaryOperator>(Terminator);
-      BinaryOperator::Opcode Op = B->getOpcode();
-
-      assert (Op == BO_LAnd || Op == BO_LOr);
-
-      // For &&, if we take the true branch, then the value of the whole
-      // expression is that of the RHS expression.
-      //
-      // For ||, if we take the false branch, then the value of the whole
-      // expression is that of the RHS expression.
-
-      const Expr *Ex = (Op == BO_LAnd && branchTaken) ||
-                       (Op == BO_LOr && !branchTaken)
-                       ? B->getRHS() : B->getLHS();
-
-      return state->BindExpr(B, LCtx, UndefinedVal(Ex));
-    }
-
-    case Stmt::BinaryConditionalOperatorClass:
-    case Stmt::ConditionalOperatorClass: { // ?:
-      const AbstractConditionalOperator* C
-        = cast<AbstractConditionalOperator>(Terminator);
-
-      // For ?, if branchTaken == true then the value is either the LHS or
-      // the condition itself. (GNU extension).
-
-      const Expr *Ex;
-
-      if (branchTaken)
-        Ex = C->getTrueExpr();
-      else
-        Ex = C->getFalseExpr();
-
-      return state->BindExpr(C, LCtx, UndefinedVal(Ex));
-    }
-
-    case Stmt::ChooseExprClass: { // ?:
-
-      const ChooseExpr *C = cast<ChooseExpr>(Terminator);
-
-      const Expr *Ex = branchTaken ? C->getLHS() : C->getRHS();
-      return state->BindExpr(C, LCtx, UndefinedVal(Ex));
-    }
-  }
-}
-
 /// RecoverCastedSymbol - A helper function for ProcessBranch that is used
 /// to try to recover some path-sensitivity for casts of symbolic
 /// integers that promote their values (which are currently not tracked well).
@@ -1282,14 +1225,10 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
       }
     }
     
-    const LocationContext *LCtx = PredI->getLocationContext();
-
     // If the condition is still unknown, give up.
     if (X.isUnknownOrUndef()) {
-      builder.generateNode(MarkBranch(PrevState, Term, LCtx, true),
-                           true, PredI);
-      builder.generateNode(MarkBranch(PrevState, Term, LCtx, false),
-                           false, PredI);
+      builder.generateNode(PrevState, true, PredI);
+      builder.generateNode(PrevState, false, PredI);
       continue;
     }
 
@@ -1298,8 +1237,7 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
     // Process the true branch.
     if (builder.isFeasible(true)) {
       if (ProgramStateRef state = PrevState->assume(V, true))
-        builder.generateNode(MarkBranch(state, Term, LCtx, true),
-                             true, PredI);
+        builder.generateNode(state, true, PredI);
       else
         builder.markInfeasible(true);
     }
@@ -1307,8 +1245,7 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
     // Process the false branch.
     if (builder.isFeasible(false)) {
       if (ProgramStateRef state = PrevState->assume(V, false))
-        builder.generateNode(MarkBranch(state, Term, LCtx, false),
-                             false, PredI);
+        builder.generateNode(state, false, PredI);
       else
         builder.markInfeasible(false);
     }

@@ -435,11 +435,6 @@ protected:
                        ExplodedNode *Pred, ProgramStateRef state,
                        bool GenSink);
 
-  ProgramStateRef MarkBranch(ProgramStateRef state,
-                                 const Stmt *Terminator,
-                                 const LocationContext *LCtx,
-                                 bool branchTaken);
-
   /// evalBind - Handle the semantics of binding a value to a specific location.
   ///  This method is used by evalStore, VisitDeclStmt, and others.
   void evalBind(ExplodedNodeSet &Dst, const Stmt *StoreE, ExplodedNode *Pred,
