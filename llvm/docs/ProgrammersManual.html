@@ -507,8 +507,9 @@ small and pervasive enough in LLVM that it should always be passed by value.</p>
 
 <div>
 
-<p>The <tt>Twine</tt> class is an efficient way for APIs to accept concatenated
-strings.  For example, a common LLVM paradigm is to name one instruction based on
+<p>The <tt><a href="/doxygen/classllvm_1_1Twine.html">Twine</a></tt> class is an
+efficient way for APIs to accept concatenated strings.  For example, a common
+LLVM paradigm is to name one instruction based on
 the name of another instruction with a suffix, for example:</p>
 
 <div class="doc_code">
@@ -517,17 +518,17 @@ the name of another instruction with a suffix, for example:</p>
 </pre>
 </div>
 
-<p>The <tt>Twine</tt> class is effectively a
-lightweight <a href="http://en.wikipedia.org/wiki/Rope_(computer_science)">rope</a>
+<p>The <tt>Twine</tt> class is effectively a lightweight
+<a href="http://en.wikipedia.org/wiki/Rope_(computer_science)">rope</a>
 which points to temporary (stack allocated) objects.  Twines can be implicitly
 constructed as the result of the plus operator applied to strings (i.e., a C
-strings, an <tt>std::string</tt>, or a <tt>StringRef</tt>).  The twine delays the
-actual concatenation of strings until it is actually required, at which point
-it can be efficiently rendered directly into a character array.  This avoids
-unnecessary heap allocation involved in constructing the temporary results of
-string concatenation. See
-"<tt><a href="/doxygen/classllvm_1_1Twine_8h-source.html">llvm/ADT/Twine.h</a></tt>"
-for more information.</p>
+strings, an <tt>std::string</tt>, or a <tt>StringRef</tt>).  The twine delays
+the actual concatenation of strings until it is actually required, at which
+point it can be efficiently rendered directly into a character array.  This
+avoids unnecessary heap allocation involved in constructing the temporary
+results of string concatenation. See
+"<tt><a href="/doxygen/Twine_8h_source.html">llvm/ADT/Twine.h</a></tt>"
+and <a href="#dss_twine">here</a> for more information.</p>
 
 <p>As with a <tt>StringRef</tt>, <tt>Twine</tt> objects point to external memory
 and should almost never be stored or mentioned directly.  They are intended
