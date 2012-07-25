@@ -4271,6 +4271,10 @@ SDValue ARMTargetLowering::ReconstructShuffle(SDValue Op,
 
     // Record this extraction against the appropriate vector if possible...
     SDValue SourceVec = V.getOperand(0);
+    // If the element number isn't a constant, we can't effectively
+    // analyze what's going on.
+    if (!isa<ConstantSDNode>(V.getOperand(1)))
+      return SDValue();
     unsigned EltNo = cast<ConstantSDNode>(V.getOperand(1))->getZExtValue();
     bool FoundSource = false;
     for (unsigned j = 0; j < SourceVecs.size(); ++j) {
