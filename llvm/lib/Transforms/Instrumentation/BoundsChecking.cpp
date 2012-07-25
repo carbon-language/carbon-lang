@@ -24,6 +24,7 @@
 #include "llvm/Support/TargetFolder.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Transforms/Instrumentation.h"
 using namespace llvm;
 
@@ -48,6 +49,7 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<TargetData>();
+      AU.addRequired<TargetLibraryInfo>();
     }
 
   private:
@@ -166,11 +168,12 @@ bool BoundsChecking::instrument(Value *Ptr, Value *InstVal) {
 
 bool BoundsChecking::runOnFunction(Function &F) {
   TD = &getAnalysis<TargetData>();
+  const TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
 
   TrapBB = 0;
   BuilderTy TheBuilder(F.getContext(), TargetFolder(TD));
   Builder = &TheBuilder;
-  ObjectSizeOffsetEvaluator TheObjSizeEval(TD, F.getContext());
+  ObjectSizeOffsetEvaluator TheObjSizeEval(TD, TLI, F.getContext());
   ObjSizeEval = &TheObjSizeEval;
 
   // check HANDLE_MEMORY_INST in include/llvm/Instruction.def for memory
