@@ -3103,7 +3103,9 @@ Expr *RewriteModernObjC::SynthMsgSendStretCallExpr(FunctionDecl *MsgSendStretFla
   // build type for containing the objc_msgSend_stret object.
   static unsigned stretCount=0;
   std::string name = "__Stret"; name += utostr(stretCount);
-  std::string str = "struct "; str += name;
+  std::string str = 
+    "extern \"C\" void * __cdecl memset(void *_Dst, int _Val, size_t _Size);\n";
+  str += "struct "; str += name;
   str += " {\n\t";
   str += name;
   str += "(id receiver, SEL sel";
@@ -5959,11 +5961,6 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
     Preamble += "#define __block\n";
     Preamble += "#define __weak\n";
   }
-  Preamble += "\n#if defined(_MSC_VER)\n";
-  Preamble += "#include <string.h>\n";
-  Preamble += "#else\n";
-  Preamble += "extern \"C\" void * memset(void *b, int c, unsigned long len);\n";
-  Preamble += "#endif\n";
   
   // Declarations required for modern objective-c array and dictionary literals.
   Preamble += "\n#include <stdarg.h>\n";
