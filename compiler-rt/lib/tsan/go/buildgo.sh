@@ -48,6 +48,7 @@ elif [ "$MAC" != "" ]; then
         "
 fi
 
+SRCS+=$ADD_SRCS
 #ASMS="../rtl/tsan_rtl_amd64.S"
 
 rm -f gotsan.cc

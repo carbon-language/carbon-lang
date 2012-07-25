@@ -24,9 +24,13 @@ Flags *flags() {
 }
 
 // Can be overriden in frontend.
+#ifdef TSAN_EXTERNAL_HOOKS
+void OverrideFlags(Flags *f);
+#else
 void WEAK OverrideFlags(Flags *f) {
   (void)f;
 }
+#endif
 
 void InitializeFlags(Flags *f, const char *env) {
   internal_memset(f, 0, sizeof(*f));
