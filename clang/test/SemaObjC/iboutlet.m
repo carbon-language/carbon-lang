@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -fobjc-default-synthesize-properties  -verify %s
-// RUN: %clang_cc1 -x objective-c++ -fsyntax-only -fobjc-default-synthesize-properties  -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fobjc-default-synthesize-properties -Wno-objc-root-class -verify %s
+// RUN: %clang_cc1 -x objective-c++ -fsyntax-only -fobjc-default-synthesize-properties -Wno-objc-root-class -verify %s
 // rdar://11448209
 
 #define READONLY readonly

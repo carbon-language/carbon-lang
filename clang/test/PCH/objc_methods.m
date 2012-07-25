@@ -1,5 +1,5 @@
 // Test this without pch.
-// RUN: %clang_cc1 -include %S/objc_methods.h -fsyntax-only -verify %s
+// RUN: %clang_cc1 -include %S/objc_methods.h -fsyntax-only -Wno-objc-root-class -verify %s
 
 // Test with pch.
 // RUN: %clang_cc1 -x objective-c -emit-pch -o %t %S/objc_methods.h
