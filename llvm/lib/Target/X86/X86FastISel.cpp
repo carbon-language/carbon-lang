@@ -1516,6 +1516,20 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
   return DoSelectCall(I, 0);
 }
 
+static unsigned computeBytesPopedByCalle(const X86Subtarget &Subtarget,
+                                         const ImmutableCallSite &CS) {
+  if (Subtarget.is64Bit())
+    return 0;
+  if (Subtarget.isTargetWindows())
+    return 0;
+  CallingConv::ID CC = CS.getCallingConv();
+  if (CC == CallingConv::Fast || CC == CallingConv::GHC)
+    return 0;
+  if (!CS.paramHasAttr(1, Attribute::StructRet))
+    return 0;
+  return 4;
+}
+
 // Select either a call, or an llvm.memcpy/memmove/memset intrinsic
 bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
   const CallInst *CI = cast<CallInst>(I);
@@ -1862,12 +1876,7 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
 
   // Issue CALLSEQ_END
   unsigned AdjStackUp = TII.getCallFrameDestroyOpcode();
-  unsigned NumBytesCallee = 0;
-  if (!Subtarget->is64Bit() && !Subtarget->isTargetWindows() &&
-      !(CS.getCallingConv() == CallingConv::Fast ||
-        CS.getCallingConv() == CallingConv::GHC) &&
-      CS.paramHasAttr(1, Attribute::StructRet))
-    NumBytesCallee = 4;
+  const unsigned NumBytesCallee = computeBytesPopedByCalle(*Subtarget, CS);
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(AdjStackUp))
     .addImm(NumBytes).addImm(NumBytesCallee);
 
