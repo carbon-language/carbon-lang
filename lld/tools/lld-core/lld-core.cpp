@@ -14,6 +14,9 @@
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/ReaderNative.h"
 #include "lld/ReaderWriter/ReaderYAML.h"
+#include "lld/ReaderWriter/ReaderELF.h"
+#include "lld/ReaderWriter/ReaderPECOFF.h"
+#include "lld/ReaderWriter/ReaderMachO.h"
 #include "lld/ReaderWriter/Writer.h"
 #include "lld/ReaderWriter/WriterELF.h"
 #include "lld/ReaderWriter/WriterMachO.h"
@@ -97,6 +100,19 @@ writeSelected("writer",
     clEnumValN(writePECOFF, "PECOFF", "link as windows would"),
     clEnumValN(writeELF,    "ELF",    "link as linux would"),
     clEnumValEnd));
+
+enum ReaderChoice {
+  readerYAML, readerMachO, readerPECOFF, readerELF
+};
+llvm::cl::opt<ReaderChoice> 
+readerSelected("reader",
+  llvm::cl::desc("Select reader"),
+  llvm::cl::values(
+    clEnumValN(readerYAML,   "YAML",   "read assuming YAML format"),
+    clEnumValN(readerMachO,  "mach-o", "read as darwin would"),
+    clEnumValN(readerPECOFF, "PECOFF", "read as windows would"),
+    clEnumValN(readerELF,    "ELF",    "read as linux would"),
+    clEnumValEnd));
     
 
 
@@ -156,15 +172,36 @@ int main(int argc, char *argv[]) {
   InputFiles inputFiles;
 
   // read input files into in-memory File objects
+
   TestingReaderOptionsYAML  readerOptionsYAML;
-  Reader *reader = createReaderYAML(readerOptionsYAML);
+  Reader *reader = nullptr;
+  switch ( readerSelected ) {
+    case readerYAML:
+      reader = createReaderYAML(readerOptionsYAML);
+      break;
+#if 0 
+    case readerMachO:
+      reader = createReaderMachO(lld::readerOptionsMachO);
+      break;
+#endif
+    case readerPECOFF:
+      reader = createReaderPECOFF(lld::ReaderOptionsPECOFF());
+      break;
+    case readerELF:
+      reader = createReaderELF(lld::ReaderOptionsELF());
+      break;
+    default:
+      reader = createReaderYAML(readerOptionsYAML);
+      break;
+  }
+
   for (auto path : cmdLineInputFilePaths) {
     std::vector<std::unique_ptr<File>> files;
     if ( error(reader->readFile(path, files)) )
       return 1;
     inputFiles.appendFiles(files);
   }
-    
+
   // given writer a chance to add files
   writer->addFiles(inputFiles);
 
