@@ -670,20 +670,12 @@ TEST(AddressSanitizerInterface, DISABLED_InvalidPoisonAndUnpoisonCallsTest) {
 }
 
 static void ErrorReportCallbackOneToZ(const char *report) {
-  int len = strlen(report);
-  char *dup = (char*)malloc(len);
-  strcpy(dup, report);
-  for (int i = 0; i < len; i++) {
-    if (dup[i] == '1') dup[i] = 'Z';
-  }
-  int written = write(2, dup, len);
-  ASSERT_EQ(len, written);
-  free(dup);
+  write(2, "ABCDEF", 6);
 }
 
 TEST(AddressSanitizerInterface, SetErrorReportCallbackTest) {
   __asan_set_error_report_callback(ErrorReportCallbackOneToZ);
-  EXPECT_DEATH(__asan_report_error(0, 0, 0, 0, true, 1), "size Z");
+  EXPECT_DEATH(__asan_report_error(0, 0, 0, 0, true, 1), "ABCDEF");
   __asan_set_error_report_callback(NULL);
 }
 

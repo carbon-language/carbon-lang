@@ -387,9 +387,15 @@ void NOINLINE __asan_set_error_report_callback(void (*callback)(const char*)) {
 
 void __asan_report_error(uptr pc, uptr bp, uptr sp,
                          uptr addr, bool is_write, uptr access_size) {
-  // Do not print more than one report, otherwise they will mix up.
   static atomic_uint32_t num_calls;
-  if (atomic_fetch_add(&num_calls, 1, memory_order_relaxed) != 0) return;
+  if (atomic_fetch_add(&num_calls, 1, memory_order_relaxed) != 0) {
+    // Do not print more than one report, otherwise they will mix up.
+    // We can not return here because the function is marked as never-return.
+    AsanPrintf("AddressSanitizer: while reporting a bug found another one."
+               "Ignoring.\n");
+    SleepForSeconds(5);
+    Die();
+  }
 
   AsanPrintf("===================================================="
              "=============\n");
