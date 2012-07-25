@@ -99,7 +99,7 @@ if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}" AND UNIX)
               -c -o "${output_obj}"
               ${CMAKE_CURRENT_SOURCE_DIR}/${source}
       MAIN_DEPENDENCY ${source}
-      DEPENDS clang ${ARGN}
+      DEPENDS clang clang_rt.asan-i386 clang_rt.asan-x86_64 ${ARGN}
       )
   endfunction()
 

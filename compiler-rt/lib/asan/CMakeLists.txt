@@ -45,6 +45,9 @@ set(ASAN_COMMON_DEFINITIONS
   ASAN_NEEDS_SEGV=1
   )
 
+# FIXME: We need to build universal binaries on OS X instead of
+# two arch-specific binaries.
+
 if(CAN_TARGET_X86_64)
   add_library(clang_rt.asan-x86_64 STATIC
     ${ASAN_SOURCES}
@@ -57,6 +60,7 @@ if(CAN_TARGET_X86_64)
     )
   set_property(TARGET clang_rt.asan-x86_64 APPEND PROPERTY COMPILE_DEFINITIONS
     ${ASAN_COMMON_DEFINITIONS})
+  add_clang_runtime_static_library(clang_rt.asan-x86_64)
 endif()
 if(CAN_TARGET_I386)
   add_library(clang_rt.asan-i386 STATIC
@@ -70,6 +74,7 @@ if(CAN_TARGET_I386)
     )
   set_property(TARGET clang_rt.asan-i386 APPEND PROPERTY COMPILE_DEFINITIONS
     ${ASAN_COMMON_DEFINITIONS})
+  add_clang_runtime_static_library(clang_rt.asan-i386)
 endif()
 
 if(LLVM_INCLUDE_TESTS)

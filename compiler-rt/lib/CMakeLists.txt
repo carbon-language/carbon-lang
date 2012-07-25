@@ -1,3 +1,25 @@
+# Compute the Clang version from the LLVM version.
+# FIXME: We should be able to reuse CLANG_VERSION variable calculated
+#        in Clang cmake files, instead of copying the rules here.
+string(REGEX MATCH "[0-9]+\\.[0-9]+(\\.[0-9]+)?" CLANG_VERSION
+       ${PACKAGE_VERSION})
+
+# Call add_clang_runtime_static_library(<target_library>) to make
+# sure that static <target_library> is built in the directory
+# where Clang driver expects to find it.
+if (APPLE)
+  set(CLANG_RUNTIME_LIB_DIR
+      ${LLVM_BINARY_DIR}/lib/clang/${CLANG_VERSION}/lib/darwin)
+elseif (UNIX)
+  # Assume Linux.
+  set(CLANG_RUNTIME_LIB_DIR
+      ${LLVM_BINARY_DIR}/lib/clang/${CLANG_VERSION}/lib/linux)
+endif()
+function(add_clang_runtime_static_library target_name)
+  set_target_properties(${target_name} PROPERTIES
+                        ARCHIVE_OUTPUT_DIRECTORY ${CLANG_RUNTIME_LIB_DIR})
+endfunction()
+
 # First, add the subdirectories which contain feature-based runtime libraries
 # and several convenience helper libraries.
 add_subdirectory(asan)
