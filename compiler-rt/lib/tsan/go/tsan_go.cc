@@ -43,12 +43,12 @@ extern "C" void free(void *p);
 
 ReportStack *SymbolizeCode(uptr addr) {
   ReportStack *s = NewReportStackEntry(addr);
-  char *func, *file;
-  int line, off;
+  char *func = 0, *file = 0;
+  int line = 0, off = 0;
   if (__tsan_symbolize(addr, &func, &file, &line, &off)) {
     s->offset = off;
-    s->func = internal_strdup(func);
-    s->file = internal_strdup(file);
+    s->func = internal_strdup(func ? func : "??");
+    s->file = internal_strdup(file ? file : "-");
     s->line = line;
     s->col = 0;
     free(func);
