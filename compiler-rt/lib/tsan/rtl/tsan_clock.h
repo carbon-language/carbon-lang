@@ -61,6 +61,8 @@ struct ThreadClock {
       nclk_ = tid + 1;
   }
 
+  void Disable();
+
   uptr size() const {
     return nclk_;
   }

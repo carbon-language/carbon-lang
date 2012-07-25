@@ -221,5 +221,10 @@ void __tsan_event(int typ, int tid, void *pc, void *addr, int info) {
   }
 }
 
+void __tsan_finalizer_goroutine(int tid) {
+  ThreadState *thr = goroutines[tid];
+  ThreadFinalizerGoroutine(thr);
+}
+
 }  // extern "C"
 }  // namespace __tsan

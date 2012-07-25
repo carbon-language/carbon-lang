@@ -93,6 +93,11 @@ void ThreadClock::acq_rel(SyncClock *dst) {
   release(dst);
 }
 
+void ThreadClock::Disable() {
+  for (uptr i = 0; i < kMaxTidInClock; i++)
+    clk_[i] = (u64)-1;
+}
+
 SyncClock::SyncClock()
   : clk_(MBlockClock) {
 }
