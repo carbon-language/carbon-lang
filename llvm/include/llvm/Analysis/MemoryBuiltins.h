@@ -201,7 +201,6 @@ class ObjectSizeOffsetEvaluator
   typedef SmallPtrSet<const Value*, 8> PtrSetTy;
 
   const TargetData *TD;
-  const TargetLibraryInfo *TLI;
   LLVMContext &Context;
   BuilderTy Builder;
   ObjectSizeOffsetVisitor Visitor;
@@ -216,8 +215,7 @@ class ObjectSizeOffsetEvaluator
   SizeOffsetEvalType compute_(Value *V);
 
 public:
-  ObjectSizeOffsetEvaluator(const TargetData *TD, const TargetLibraryInfo *TLI,
-                            LLVMContext &Context);
+  ObjectSizeOffsetEvaluator(const TargetData *TD, LLVMContext &Context);
   SizeOffsetEvalType compute(Value *V);
 
   bool knownSize(SizeOffsetEvalType SizeOffset) {

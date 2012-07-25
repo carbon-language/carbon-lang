@@ -26,7 +26,6 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Transforms/Utils/BuildLibCalls.h"
 #include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;
 
@@ -449,9 +448,11 @@ SizeOffsetType ObjectSizeOffsetVisitor::visitCallSite(CallSite CS) {
   return std::make_pair(Size, Zero);
 
   // TODO: handle more standard functions (+ wchar cousins):
+  // - strdup / strndup
   // - strcpy / strncpy
   // - strcat / strncat
   // - memcpy / memmove
+  // - strcat / strncat
   // - memset
 }
 
@@ -523,9 +524,8 @@ SizeOffsetType ObjectSizeOffsetVisitor::visitInstruction(Instruction &I) {
 
 
 ObjectSizeOffsetEvaluator::ObjectSizeOffsetEvaluator(const TargetData *TD,
-                                                     const TargetLibraryInfo *TLI,
                                                      LLVMContext &Context)
-: TD(TD), TLI(TLI), Context(Context), Builder(Context, TargetFolder(TD)),
+: TD(TD), Context(Context), Builder(Context, TargetFolder(TD)),
 Visitor(TD, Context) {
   IntTy = TD->getIntPtrType(Context);
   Zero = ConstantInt::get(IntTy, 0);
@@ -619,21 +619,8 @@ SizeOffsetEvalType ObjectSizeOffsetEvaluator::visitCallSite(CallSite CS) {
 
   // handle strdup-like functions separately
   if (FnData->AllocTy == StrDupLike) {
-    IRBuilder<> StdBuilder(Builder.GetInsertPoint());
-    Value *Size;
-
-    // strdup(str): size =  strlen(str)+1
-    if (FnData->FstParam < 0)
-      Size = EmitStrLen(CS.getArgument(0), StdBuilder, TD, TLI);
-    else
-      // strndup(str, maxlen): size = strnlen(str, maxlen)+1
-      Size = EmitStrNLen(CS.getArgument(0), CS.getArgument(FnData->FstParam),
-                         StdBuilder, TD, TLI);
-    if (!Size)
-      return unknown();
-    Builder.SetInsertPoint(StdBuilder.GetInsertPoint());
-    Size = Builder.CreateNUWAdd(Size, ConstantInt::get(IntTy, 1));
-    return std::make_pair(Size, Zero);
+    // TODO
+    return unknown();
   }
 
   Value *FirstArg = CS.getArgument(FnData->FstParam);
@@ -647,9 +634,11 @@ SizeOffsetEvalType ObjectSizeOffsetEvaluator::visitCallSite(CallSite CS) {
   return std::make_pair(Size, Zero);
 
   // TODO: handle more standard functions (+ wchar cousins):
+  // - strdup / strndup
   // - strcpy / strncpy
   // - strcat / strncat
   // - memcpy / memmove
+  // - strcat / strncat
   // - memset
 }
 
