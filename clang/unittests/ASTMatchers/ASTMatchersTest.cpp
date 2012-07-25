@@ -39,6 +39,12 @@ TEST(IsDerivedFromDeathTest, DiesOnEmptyBaseName) {
 }
 #endif
 
+TEST(Decl, MatchesDeclarations) {
+  EXPECT_TRUE(notMatches("", decl(usingDecl())));
+  EXPECT_TRUE(matches("namespace x { class X {}; } using x::X;",
+                      decl(usingDecl())));
+}
+
 TEST(NameableDeclaration, MatchesVariousDecls) {
   DeclarationMatcher NamedX = nameableDeclaration(hasName("X"));
   EXPECT_TRUE(matches("typedef int X;", NamedX));
@@ -2037,11 +2043,18 @@ TEST(HasDestinationType, MatchesSimpleCase) {
                               pointsTo(TypeMatcher(anything())))))));
 }
 
-TEST(HasSourceExpression, MatchesSimpleCase) {
+TEST(HasSourceExpression, MatchesImplicitCasts) {
   EXPECT_TRUE(matches("class string {}; class URL { public: URL(string s); };"
                       "void r() {string a_string; URL url = a_string; }",
                       expression(implicitCast(
                           hasSourceExpression(constructorCall())))));
+}
+
+TEST(HasSourceExpression, MatchesExplicitCasts) {
+  EXPECT_TRUE(matches("float x = static_cast<float>(42);",
+                      expression(explicitCast(
+                        hasSourceExpression(hasDescendant(
+                          expression(integerLiteral())))))));
 }
 
 TEST(Statement, DoesNotMatchDeclarations) {

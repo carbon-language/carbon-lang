@@ -130,6 +130,17 @@ inline internal::PolymorphicMatcherWithParam0<internal::TrueMatcher> anything() 
   return internal::PolymorphicMatcherWithParam0<internal::TrueMatcher>();
 }
 
+/// \brief Matches declarations.
+///
+/// Examples matches \c X, \c C, and the friend declaration inside \c C;
+/// \code
+///   void X();
+///   class C {
+///     friend X;
+///   };
+/// \endcode
+const internal::VariadicDynCastAllOfMatcher<Decl, Decl> decl;
+
 /// \brief Matches a declaration of anything that could have a name.
 ///
 /// Example matches X, S, the anonymous union type, i, and U;
@@ -1549,15 +1560,14 @@ AST_MATCHER_P(UnaryOperator, hasUnaryOperand,
           InnerMatcher.matches(*Operand, Finder, Builder));
 }
 
-/// \brief Matches if the implicit cast's source expression matches the given
-/// matcher.
+/// \brief Matches if the cast's source expression matches the given matcher.
 ///
 /// Example: matches "a string" (matcher =
 ///                                  hasSourceExpression(constructorCall()))
 ///
 /// class URL { URL(string); };
 /// URL url = "a string";
-AST_MATCHER_P(ImplicitCastExpr, hasSourceExpression,
+AST_MATCHER_P(CastExpr, hasSourceExpression,
               internal::Matcher<Expr>, InnerMatcher) {
   const Expr* const SubExpression = Node.getSubExpr();
   return (SubExpression != NULL &&
