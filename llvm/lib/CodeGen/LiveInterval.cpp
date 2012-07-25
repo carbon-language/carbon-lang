@@ -827,14 +827,11 @@ void ConnectedVNInfoEqClasses::Distribute(LiveInterval *LIV[],
     MachineOperand &MO = RI.getOperand();
     MachineInstr *MI = MO.getParent();
     ++RI;
-    if (MO.isUse() && MO.isUndef())
-      continue;
     // DBG_VALUE instructions should have been eliminated earlier.
-    SlotIndex Idx = LIS.getInstructionIndex(MI);
-    Idx = Idx.getRegSlot(MO.isUse());
-    const VNInfo *VNI = LI.getVNInfoAt(Idx);
-    // FIXME: We should be able to assert(VNI) here, but the coalescer leaves
-    // dangling defs around.
+    LiveRangeQuery LRQ(LI, LIS.getInstructionIndex(MI));
+    const VNInfo *VNI = MO.readsReg() ? LRQ.valueIn() : LRQ.valueDefined();
+    // In the case of an <undef> use that isn't tied to any def, VNI will be
+    // NULL. If the use is tied to a def, VNI will be the defined value.
     if (!VNI)
       continue;
     MO.setReg(LIV[getEqClass(VNI)]->reg);
