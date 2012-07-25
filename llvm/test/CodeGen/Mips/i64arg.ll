@@ -10,8 +10,8 @@ entry:
 ; CHECK: jalr
   tail call void @ff1(i32 %i, i64 1085102592623924856) nounwind
 ; CHECK: lw $25, %call16(ff2)
-; CHECK: lw $[[R2:[0-9]+]], 88($sp)
-; CHECK: lw $[[R3:[0-9]+]], 92($sp)
+; CHECK: lw $[[R2:[0-9]+]], 80($sp)
+; CHECK: lw $[[R3:[0-9]+]], 84($sp)
 ; CHECK: addu $4, $zero, $[[R2]]
 ; CHECK: addu $5, $zero, $[[R3]]
 ; CHECK: jalr $25

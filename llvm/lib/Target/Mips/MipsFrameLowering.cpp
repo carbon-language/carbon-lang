@@ -113,11 +113,7 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   // First, compute final stack size.
   unsigned StackAlign = getStackAlignment();
   uint64_t StackSize = RoundUpToAlignment(MFI->getStackSize(), StackAlign);
-
-  if (MipsFI->globalBaseRegSet())
-    StackSize += MFI->getObjectOffset(MipsFI->getGlobalRegFI()) + StackAlign;
-  else
-    StackSize += RoundUpToAlignment(MipsFI->getMaxCallFrameSize(), StackAlign);
+  StackSize += RoundUpToAlignment(MipsFI->getMaxCallFrameSize(), StackAlign);
 
    // Update stack size
   MFI->setStackSize(StackSize);

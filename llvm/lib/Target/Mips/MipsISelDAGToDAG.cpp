@@ -117,28 +117,23 @@ private:
 void MipsDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
 
-  if (((MF.getTarget().getRelocationModel() == Reloc::Static) ||
-       Subtarget.inMips16Mode()) && !MipsFI->globalBaseRegSet())
+  if (!MipsFI->globalBaseRegSet())
     return;
 
   MachineBasicBlock &MBB = MF.front();
   MachineBasicBlock::iterator I = MBB.begin();
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
-  const MipsRegisterInfo *TargetRegInfo = TM.getRegisterInfo();
-  const MipsInstrInfo *MII = TM.getInstrInfo();
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
   DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
   unsigned V0, V1, V2, GlobalBaseReg = MipsFI->getGlobalBaseReg();
-  int FI = 0;
+  const TargetRegisterClass *RC;
 
-  FI= MipsFI->initGlobalRegFI();
-
-  const TargetRegisterClass *RC = Subtarget.isABI_N64() ?
-    (const TargetRegisterClass*)&Mips::CPU64RegsRegClass :
-    (const TargetRegisterClass*)&Mips::CPURegsRegClass;
-
-  if (Subtarget.inMips16Mode())
-    RC=(const TargetRegisterClass*)&Mips::CPU16RegsRegClass;
+  if (Subtarget.isABI_N64())
+    RC = (const TargetRegisterClass*)&Mips::CPU64RegsRegClass;
+  else if (Subtarget.inMips16Mode())
+    RC = (const TargetRegisterClass*)&Mips::CPU16RegsRegClass;
+  else
+    RC = (const TargetRegisterClass*)&Mips::CPURegsRegClass;
 
   V0 = RegInfo.createVirtualRegister(RC);
   V1 = RegInfo.createVirtualRegister(RC);
@@ -158,23 +153,17 @@ void MipsDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
       .addReg(Mips::T9_64);
     BuildMI(MBB, I, DL, TII.get(Mips::DADDiu), GlobalBaseReg).addReg(V1)
       .addGlobalAddress(FName, 0, MipsII::MO_GPOFF_LO);
-    MII->storeRegToStackSlot(MBB, I, GlobalBaseReg, false, FI, RC,
-                             TargetRegInfo);
     return;
   }
 
   if (Subtarget.inMips16Mode()) {
     BuildMI(MBB, I, DL, TII.get(Mips::LiRxImmX16), V0)
-        .addExternalSymbol("_gp_disp", MipsII::MO_ABS_HI);
-    BuildMI(MBB, I, DL, TII.get(Mips::AddiuRxPcImmX16),
-            V1)
-        .addExternalSymbol("_gp_disp", MipsII::MO_ABS_LO);
-    BuildMI(MBB, I, DL, TII.get(Mips::SllX16),
-            V2 ).addReg(V0).addImm(16);
+      .addExternalSymbol("_gp_disp", MipsII::MO_ABS_HI);
+    BuildMI(MBB, I, DL, TII.get(Mips::AddiuRxPcImmX16), V1)
+      .addExternalSymbol("_gp_disp", MipsII::MO_ABS_LO);
+    BuildMI(MBB, I, DL, TII.get(Mips::SllX16), V2).addReg(V0).addImm(16);
     BuildMI(MBB, I, DL, TII.get(Mips::AdduRxRyRz16), GlobalBaseReg)
       .addReg(V1).addReg(V2);
-
-
     return;
   }
 
@@ -203,18 +192,10 @@ void MipsDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
     BuildMI(MBB, I, DL, TII.get(Mips::ADDu), V1).addReg(V0).addReg(Mips::T9);
     BuildMI(MBB, I, DL, TII.get(Mips::ADDiu), GlobalBaseReg).addReg(V1)
       .addGlobalAddress(FName, 0, MipsII::MO_GPOFF_LO);
-    MII->storeRegToStackSlot(MBB, I, GlobalBaseReg, false, FI, RC,
-                             TargetRegInfo);
     return;
   }
 
   assert(Subtarget.isABI_O32());
-
-
-  //if (Subtarget.inMips16Mode())
-  //  return; // no need to load GP. It can be calculated anywhere
-
-
 
   // For O32 ABI, the following instruction sequence is emitted to initialize
   // the global base register:
@@ -237,7 +218,6 @@ void MipsDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
   MBB.addLiveIn(Mips::V0);
   BuildMI(MBB, I, DL, TII.get(Mips::ADDu), GlobalBaseReg)
     .addReg(Mips::V0).addReg(Mips::T9);
-  MII->storeRegToStackSlot(MBB, I, GlobalBaseReg, false, FI, RC, TargetRegInfo);
 }
 
 bool MipsDAGToDAGISel::ReplaceUsesWithZeroReg(MachineRegisterInfo *MRI,
