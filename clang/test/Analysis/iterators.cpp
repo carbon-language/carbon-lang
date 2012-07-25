@@ -3,6 +3,8 @@
 
 // FIXME: Does not work with inlined C++ methods.
 // XFAIL: *
+// Crashes due to assertion failure.
+// REQUIRES: asserts
 
 #include <vector>
 
