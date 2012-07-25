@@ -1516,8 +1516,8 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
   return DoSelectCall(I, 0);
 }
 
-static unsigned computeBytesPopedByCalle(const X86Subtarget &Subtarget,
-                                         const ImmutableCallSite &CS) {
+static unsigned computeBytesPoppedByCallee(const X86Subtarget &Subtarget,
+                                           const ImmutableCallSite &CS) {
   if (Subtarget.is64Bit())
     return 0;
   if (Subtarget.isTargetWindows())
@@ -1878,7 +1878,7 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
 
   // Issue CALLSEQ_END
   unsigned AdjStackUp = TII.getCallFrameDestroyOpcode();
-  const unsigned NumBytesCallee = computeBytesPopedByCalle(*Subtarget, CS);
+  const unsigned NumBytesCallee = computeBytesPoppedByCallee(*Subtarget, CS);
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(AdjStackUp))
     .addImm(NumBytes).addImm(NumBytesCallee);
 
