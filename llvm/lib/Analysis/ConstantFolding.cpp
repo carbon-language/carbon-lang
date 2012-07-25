@@ -358,17 +358,20 @@ static bool ReadDataFromGlobal(Constant *C, uint64_t ByteOffset,
       NumElts = AT->getNumElements();
     else
       NumElts = cast<VectorType>(C->getType())->getNumElements();
-    
+
     for (; Index != NumElts; ++Index) {
       if (!ReadDataFromGlobal(C->getAggregateElement(Index), Offset, CurPtr,
                               BytesLeft, TD))
         return false;
-      if (EltSize >= BytesLeft)
+
+      uint64_t BytesWritten = EltSize - Offset;
+      assert(BytesWritten <= EltSize && "Not indexing into this element?");
+      if (BytesWritten >= BytesLeft)
         return true;
-      
+
       Offset = 0;
-      BytesLeft -= EltSize;
-      CurPtr += EltSize;
+      BytesLeft -= BytesWritten;
+      CurPtr += BytesWritten;
     }
     return true;
   }
