@@ -55,7 +55,6 @@ STATISTIC(NumCommuted        , "Number of instructions commuted to coalesce");
 STATISTIC(NumAggrCommuted    , "Number of instructions aggressively commuted");
 STATISTIC(NumConvertedTo3Addr, "Number of instructions promoted to 3-address");
 STATISTIC(Num3AddrSunk,        "Number of 3-address instructions sunk");
-STATISTIC(NumReMats,           "Number of instructions re-materialized");
 STATISTIC(NumDeletes,          "Number of dead instructions deleted");
 STATISTIC(NumReSchedUps,       "Number of instructions re-scheduled up");
 STATISTIC(NumReSchedDowns,     "Number of instructions re-scheduled down");
@@ -91,10 +90,6 @@ namespace {
     bool Sink3AddrInstruction(MachineBasicBlock *MBB, MachineInstr *MI,
                               unsigned Reg,
                               MachineBasicBlock::iterator OldPos);
-
-    bool isProfitableToReMat(unsigned Reg, const TargetRegisterClass *RC,
-                             MachineInstr *MI, MachineInstr *DefMI,
-                             MachineBasicBlock *MBB, unsigned Loc);
 
     bool NoUseAfterLastDef(unsigned Reg, MachineBasicBlock *MBB, unsigned Dist,
                            unsigned &LastDef);
@@ -301,55 +296,6 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
   return true;
 }
 
-/// isTwoAddrUse - Return true if the specified MI is using the specified
-/// register as a two-address operand.
-static bool isTwoAddrUse(MachineInstr *UseMI, unsigned Reg) {
-  const MCInstrDesc &MCID = UseMI->getDesc();
-  for (unsigned i = 0, e = MCID.getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = UseMI->getOperand(i);
-    if (MO.isReg() && MO.getReg() == Reg &&
-        (MO.isDef() || UseMI->isRegTiedToDefOperand(i)))
-      // Earlier use is a two-address one.
-      return true;
-  }
-  return false;
-}
-
-/// isProfitableToReMat - Return true if the heuristics determines it is likely
-/// to be profitable to re-materialize the definition of Reg rather than copy
-/// the register.
-bool
-TwoAddressInstructionPass::isProfitableToReMat(unsigned Reg,
-                                         const TargetRegisterClass *RC,
-                                         MachineInstr *MI, MachineInstr *DefMI,
-                                         MachineBasicBlock *MBB, unsigned Loc) {
-  bool OtherUse = false;
-  for (MachineRegisterInfo::use_nodbg_iterator UI = MRI->use_nodbg_begin(Reg),
-         UE = MRI->use_nodbg_end(); UI != UE; ++UI) {
-    MachineOperand &UseMO = UI.getOperand();
-    MachineInstr *UseMI = UseMO.getParent();
-    MachineBasicBlock *UseMBB = UseMI->getParent();
-    if (UseMBB == MBB) {
-      DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(UseMI);
-      if (DI != DistanceMap.end() && DI->second == Loc)
-        continue;  // Current use.
-      OtherUse = true;
-      // There is at least one other use in the MBB that will clobber the
-      // register.
-      if (isTwoAddrUse(UseMI, Reg))
-        return true;
-    }
-  }
-
-  // If other uses in MBB are not two-address uses, then don't remat.
-  if (OtherUse)
-    return false;
-
-  // No other uses in the same block, remat if it's defined in the same
-  // block so it does not unnecessarily extend the live range.
-  return MBB == DefMI->getParent();
-}
-
 /// NoUseAfterLastDef - Return true if there are no intervening uses between the
 /// last instruction in the MBB that defines the specified register and the
 /// two-address instruction which is being processed. It also returns the last
@@ -538,7 +484,7 @@ regsAreCompatible(unsigned RegA, unsigned RegB, const TargetRegisterInfo *TRI) {
 }
 
 
-/// isProfitableToReMat - Return true if it's potentially profitable to commute
+/// isProfitableToCommute - Return true if it's potentially profitable to commute
 /// the two-address instruction that's being processed.
 bool
 TwoAddressInstructionPass::isProfitableToCommute(unsigned regA, unsigned regB,
@@ -1518,26 +1464,9 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                    mi->getOperand(i).getReg() != regA);
 #endif
 
-          // Emit a copy or rematerialize the definition.
-          bool isCopy = false;
-          const TargetRegisterClass *rc = MRI->getRegClass(regB);
-          MachineInstr *DefMI = MRI->getUniqueVRegDef(regB);
-          // If it's safe and profitable, remat the definition instead of
-          // copying it.
-          if (DefMI &&
-              DefMI->isAsCheapAsAMove() &&
-              DefMI->isSafeToReMat(TII, AA, regB) &&
-              isProfitableToReMat(regB, rc, mi, DefMI, mbbi, Dist)){
-            DEBUG(dbgs() << "2addr: REMATTING : " << *DefMI << "\n");
-            unsigned regASubIdx = mi->getOperand(DstIdx).getSubReg();
-            TII->reMaterialize(*mbbi, mi, regA, regASubIdx, DefMI, *TRI);
-            ReMatRegs.set(TargetRegisterInfo::virtReg2Index(regB));
-            ++NumReMats;
-          } else {
-            BuildMI(*mbbi, mi, mi->getDebugLoc(), TII->get(TargetOpcode::COPY),
-                    regA).addReg(regB);
-            isCopy = true;
-          }
+          // Emit a copy.
+          BuildMI(*mbbi, mi, mi->getDebugLoc(), TII->get(TargetOpcode::COPY),
+                  regA).addReg(regB);
 
           // Update DistanceMap.
           MachineBasicBlock::iterator prevMI = prior(mi);
@@ -1561,9 +1490,8 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
           MO.setReg(regA);
 
-          if (isCopy)
-            // Propagate SrcRegMap.
-            SrcRegMap[regA] = regB;
+          // Propagate SrcRegMap.
+          SrcRegMap[regA] = regB;
         }
 
         if (AllUsesCopied) {

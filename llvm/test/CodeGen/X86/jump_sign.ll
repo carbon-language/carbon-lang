@@ -142,6 +142,7 @@ if.else:
 define i32 @l4(i32 %a, i32 %b) nounwind {
 entry:
 ; CHECK: l4:
+; CHECK: xor
 ; CHECK: sub
 ; CHECK-NOT: cmp
   %cmp = icmp sgt i32 %b, %a
