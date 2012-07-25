@@ -171,6 +171,7 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (query_shlib_notify_info_addr,  &RNBRemote::HandlePacket_qShlibInfoAddr,NULL, "qShlibInfoAddr", "Returns the address that contains info needed for getting shared library notifications"));
     t.push_back (Packet (query_step_packet_supported,   &RNBRemote::HandlePacket_qStepPacketSupported,NULL, "qStepPacketSupported", "Replys with OK if the 's' packet is supported."));
     t.push_back (Packet (query_vattachorwait_supported, &RNBRemote::HandlePacket_qVAttachOrWaitSupported,NULL, "qVAttachOrWaitSupported", "Replys with OK if the 'vAttachOrWait' packet is supported."));
+    t.push_back (Packet (query_sync_thread_state_supported, &RNBRemote::HandlePacket_qSyncThreadStateSupported,NULL, "qSyncThreadStateSupported", "Replys with OK if the 'QSyncThreadState:' packet is supported."));
     t.push_back (Packet (query_host_info,               &RNBRemote::HandlePacket_qHostInfo,     NULL, "qHostInfo", "Replies with multiple 'key:value;' tuples appended to each other."));
 //  t.push_back (Packet (query_symbol_lookup,           &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "qSymbol", "Notify that host debugger is ready to do symbol lookups"));
     t.push_back (Packet (start_noack_mode,              &RNBRemote::HandlePacket_QStartNoAckMode        , NULL, "QStartNoAckMode", "Request that " DEBUGSERVER_PROGRAM_NAME " stop acking remote protocol packets"));
@@ -187,6 +188,7 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (set_stderr,                    &RNBRemote::HandlePacket_QSetSTDIO              , NULL, "QSetSTDERR:", "Set the standard error for a process to be launched with the 'A' packet"));
     t.push_back (Packet (set_working_dir,               &RNBRemote::HandlePacket_QSetWorkingDir         , NULL, "QSetWorkingDir:", "Set the working directory for a process to be launched with the 'A' packet"));
     t.push_back (Packet (set_list_threads_in_stop_reply,&RNBRemote::HandlePacket_QListThreadsInStopReply , NULL, "QListThreadsInStopReply", "Set if the 'threads' key should be added to the stop reply packets with a list of all thread IDs."));
+    t.push_back (Packet (sync_thread_state,             &RNBRemote::HandlePacket_QSyncThreadState , NULL, "QSyncThreadState:", "Do whatever is necessary to make sure 'thread' is in a safe state to call functions on."));
 //  t.push_back (Packet (pass_signals_to_inferior,      &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "QPassSignals:", "Specify which signals are passed to the inferior"));
     t.push_back (Packet (allocate_memory,               &RNBRemote::HandlePacket_AllocateMemory, NULL, "_M", "Allocate memory in the inferior process."));
     t.push_back (Packet (deallocate_memory,             &RNBRemote::HandlePacket_DeallocateMemory, NULL, "_m", "Deallocate memory in the inferior process."));
@@ -1304,6 +1306,13 @@ RNBRemote::HandlePacket_qStepPacketSupported (const char *p)
 }
 
 rnb_err_t
+RNBRemote::HandlePacket_qSyncThreadStateSupported (const char *p)
+{
+    // We support attachOrWait meaning attach if the process exists, otherwise wait to attach.
+    return SendPacket("OK");
+}
+
+rnb_err_t
 RNBRemote::HandlePacket_qVAttachOrWaitSupported (const char *p)
 {
     // We support attachOrWait meaning attach if the process exists, otherwise wait to attach.
@@ -1878,6 +1887,30 @@ RNBRemote::HandlePacket_QSetWorkingDir (const char *p)
         return SendPacket ("E59");  // Invalid path
     }
     return SendPacket ("E60"); // Already had a process, too late to set working dir
+}
+
+rnb_err_t
+RNBRemote::HandlePacket_QSyncThreadState (const char *p)
+{
+    if (!m_ctx.HasValidProcessID())
+    {
+        // We allow gdb to connect to a server that hasn't started running
+        // the target yet.  gdb still wants to ask questions about it and
+        // freaks out if it gets an error.  So just return OK here.
+        return SendPacket ("OK");
+    }
+
+    errno = 0;
+    p += strlen("QSyncThreadState:");
+    nub_thread_t tid = strtoul (p, NULL, 16);
+    if (errno != 0 && tid == 0)
+    {
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid thread number in QSyncThreadState packet");
+    }
+    if (DNBProcessSyncThreadState(m_ctx.ProcessID(), tid))
+        return SendPacket("OK");
+    else
+        return SendPacket ("E61");
 }
 
 rnb_err_t

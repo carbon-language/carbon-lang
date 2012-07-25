@@ -243,6 +243,9 @@ protected:
     void
     SetAllRegisterValid (bool b);
 
+    void
+    SyncThreadState(lldb_private::Process *process);  // Assumes the sequence mutex has already been acquired.
+    
     GDBRemoteDynamicRegisterInfo &m_reg_info;
     std::vector<bool> m_reg_valid;
     lldb_private::DataExtractor m_reg_data;

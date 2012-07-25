@@ -155,9 +155,6 @@ DNBArchImplX86_64::GetGPRState(bool force)
 {
     if (force || m_state.GetError(e_regSetGPR, Read))
     {
-        kern_return_t kret = ::thread_abort_safely(m_thread->ThreadID());
-        DNBLogThreadedIf (LOG_THREAD, "thread = 0x%4.4x calling thread_abort_safely (tid) => %u (GetGPRState() for stop_count = %u)", m_thread->ThreadID(), kret, m_thread->Process()->StopCount());    
-
 #if DEBUG_GPR_VALUES
         m_state.context.gpr.__rax = ('a' << 8) + 'x';
         m_state.context.gpr.__rbx = ('b' << 8) + 'x';

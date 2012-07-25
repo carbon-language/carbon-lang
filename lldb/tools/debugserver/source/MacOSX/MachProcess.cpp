@@ -151,6 +151,22 @@ MachProcess::GetThreadAtIndex (nub_size_t thread_idx) const
     return m_thread_list.ThreadIDAtIndex(thread_idx);
 }
 
+nub_bool_t
+MachProcess::SyncThreadState (nub_thread_t tid)
+{
+    MachThreadSP thread_sp(m_thread_list.GetThreadByID(tid));
+    if (!thread_sp)
+        return false;
+    kern_return_t kret = ::thread_abort_safely(thread_sp->ThreadID());
+    DNBLogThreadedIf (LOG_THREAD, "thread = 0x%4.4x calling thread_abort_safely (tid) => %u (GetGPRState() for stop_count = %u)", thread_sp->ThreadID(), kret, thread_sp->Process()->StopCount());
+
+    if (kret == KERN_SUCCESS)
+        return true;
+    else
+        return false;
+    
+}
+
 nub_thread_t
 MachProcess::GetCurrentThread ()
 {

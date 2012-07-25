@@ -159,6 +159,7 @@ public:
                             GetRegisterSetInfo (nub_thread_t tid, nub_size_t *num_reg_sets) const;
     bool                    GetRegisterValue (nub_thread_t tid, uint32_t set, uint32_t reg, DNBRegisterValue *reg_value) const;
     bool                    SetRegisterValue (nub_thread_t tid, uint32_t set, uint32_t reg, const DNBRegisterValue *value) const;
+    nub_bool_t              SyncThreadState (nub_thread_t tid);
     const char *            ThreadGetName (nub_thread_t tid);
     nub_state_t             ThreadGetState (nub_thread_t tid);
     nub_size_t              GetNumThreads () const;

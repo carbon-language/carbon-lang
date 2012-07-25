@@ -93,6 +93,7 @@ public:
         query_shlib_notify_info_addr,   // 'qShlibInfoAddr'
         query_step_packet_supported,    // 'qStepPacketSupported'
         query_vattachorwait_supported,  // 'qVAttachOrWaitSupported'
+        query_sync_thread_state_supported,// 'QSyncThreadState'
         query_host_info,                // 'qHostInfo'
         pass_signals_to_inferior,       // 'QPassSignals'
         start_noack_mode,               // 'QStartNoAckMode'
@@ -109,6 +110,7 @@ public:
         set_stderr,                     // 'QSetSTDERR:'
         set_working_dir,                // 'QSetWorkingDir:'
         set_list_threads_in_stop_reply, // 'QListThreadsInStopReply:'
+        sync_thread_state,              // 'QSyncThreadState:'
         memory_region_info,             // 'qMemoryRegionInfo:'
         watchpoint_support_info,        // 'qWatchpointSupportInfo:'
         allocate_memory,                // '_M'
@@ -167,6 +169,7 @@ public:
     rnb_err_t HandlePacket_qShlibInfoAddr (const char *p);
     rnb_err_t HandlePacket_qStepPacketSupported (const char *p);
     rnb_err_t HandlePacket_qVAttachOrWaitSupported (const char *p);
+    rnb_err_t HandlePacket_qSyncThreadStateSupported (const char *p);
     rnb_err_t HandlePacket_qThreadInfo (const char *p);
     rnb_err_t HandlePacket_qThreadExtraInfo (const char *p);
     rnb_err_t HandlePacket_qThreadStopInfo (const char *p);
@@ -183,6 +186,7 @@ public:
     rnb_err_t HandlePacket_QEnvironmentHexEncoded (const char *p);
     rnb_err_t HandlePacket_QLaunchArch (const char *p);
     rnb_err_t HandlePacket_QListThreadsInStopReply (const char *p);
+    rnb_err_t HandlePacket_QSyncThreadState (const char *p);
     rnb_err_t HandlePacket_QPrefixRegisterPacketsWithThreadID (const char *p);
     rnb_err_t HandlePacket_last_signal (const char *p);
     rnb_err_t HandlePacket_m (const char *p);

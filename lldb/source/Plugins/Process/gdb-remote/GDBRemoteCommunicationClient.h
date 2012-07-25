@@ -224,6 +224,9 @@ public:
     bool
     GetVAttachOrWaitSupported ();
     
+    bool
+    GetSyncThreadStateSupported();
+    
     void
     ResetDiscoverableSettings();
 
@@ -369,6 +372,7 @@ protected:
     lldb_private::LazyBool m_supports_watchpoint_support_info;
     lldb_private::LazyBool m_watchpoints_trigger_after_instruction;
     lldb_private::LazyBool m_attach_or_wait_reply;
+    lldb_private::LazyBool m_prepare_for_reg_writing_reply;
     
     bool
         m_supports_qProcessInfoPID:1,

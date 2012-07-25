@@ -1797,6 +1797,19 @@ DNBProcessGetThreadAtIndex (nub_process_t pid, size_t thread_idx)
     return INVALID_NUB_THREAD;
 }
 
+//----------------------------------------------------------------------
+// Do whatever is needed to sync the thread's register state with it's kernel values.
+//----------------------------------------------------------------------
+nub_bool_t
+DNBProcessSyncThreadState (nub_process_t pid, nub_thread_t tid)
+{
+    MachProcessSP procSP;
+    if (GetProcessSP (pid, procSP))
+        return procSP->SyncThreadState (tid);
+    return false;
+
+}
+
 nub_addr_t
 DNBProcessGetSharedLibraryInfoAddress (nub_process_t pid)
 {

@@ -286,7 +286,6 @@ GDBRemoteRegisterContext::ReadRegisterBytes (const RegisterInfo *reg_info, DataE
     return true;
 }
 
-
 bool
 GDBRemoteRegisterContext::WriteRegister (const RegisterInfo *reg_info,
                                          const RegisterValue &value)
@@ -326,6 +325,29 @@ GDBRemoteRegisterContext::SetPrimordialRegister(const lldb_private::RegisterInfo
     }
     return false;
 }
+
+void
+GDBRemoteRegisterContext::SyncThreadState(Process *process)
+{
+    // NB.  We assume our caller has locked the sequence mutex.
+    
+    GDBRemoteCommunicationClient &gdb_comm (((ProcessGDBRemote *) process)->GetGDBRemote());
+    if (!gdb_comm.GetSyncThreadStateSupported())
+        return;
+
+    StreamString packet;
+    StringExtractorGDBRemote response;
+    packet.Printf ("QSyncThreadState:%4.4llx;", m_thread.GetID());
+    if (gdb_comm.SendPacketAndWaitForResponse(packet.GetString().c_str(),
+                                              packet.GetString().size(),
+                                              response,
+                                              false))
+    {
+        if (response.IsOKResponse())
+            InvalidateAllRegisters();
+    }
+}
+
 bool
 GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *reg_info, DataExtractor &data, uint32_t data_offset)
 {
@@ -479,6 +501,8 @@ GDBRemoteRegisterContext::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
     Mutex::Locker locker;
     if (gdb_comm.GetSequenceMutex (locker, "Didn't get sequence mutex for read all registers."))
     {
+        SyncThreadState(process);
+        
         char packet[32];
         const bool thread_suffix_supported = gdb_comm.GetThreadSuffixSupported();
         ProcessSP process_sp (m_thread.GetProcess());
