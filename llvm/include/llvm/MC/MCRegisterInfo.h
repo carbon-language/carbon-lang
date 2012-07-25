@@ -148,7 +148,6 @@ private:
   unsigned NumClasses;                        // Number of entries in the array
   unsigned NumRegUnits;                       // Number of regunits.
   const uint16_t (*RegUnitRoots)[2];          // Pointer to regunit root table.
-  const uint16_t *RegLists;                   // Pointer to the reglists array
   const uint16_t *DiffLists;                  // Pointer to the difflists array
   const char *RegStrings;                     // Pointer to the string table.
   const uint16_t *SubRegIndices;              // Pointer to the subreg lookup
@@ -168,25 +167,6 @@ private:
   DenseMap<unsigned, int> L2SEHRegs;          // LLVM to SEH regs mapping
 
 public:
-  /// RegListIterator. This iterator class is used to traverse lists of
-  /// super-registers, sub-registers, and overlapping registers. Don't use it
-  /// directly, use one of the sub-classes defined below.
-  class RegListIterator {
-    const uint16_t *Pos;
-  public:
-    explicit RegListIterator(const uint16_t *Table)
-      : Pos(Table) {}
-
-    /// isValid - Return false when the end of the list is reached.
-    bool isValid() const { return *Pos; }
-
-    /// Dereference the iterator to get the current register.
-    unsigned operator*() const { return *Pos; }
-
-    /// Pre-increment. Move to the next register.
-    void operator++() { ++Pos; }
-  };
-
   /// DiffListIterator - Base iterator class that can traverse the
   /// differentially encoded register and regunit lists in DiffLists.
   /// Don't use this class directly, use one of the specialized sub-classes
@@ -233,8 +213,8 @@ public:
     }
   };
 
-  // These iterators are allowed to sub-class RegListIterator and
-  // DiffListIterator and access internal list pointers.
+  // These iterators are allowed to sub-class DiffListIterator and access
+  // internal list pointers.
   friend class MCSubRegIterator;
   friend class MCSuperRegIterator;
   friend class MCRegAliasIterator;
@@ -247,7 +227,6 @@ public:
                           const MCRegisterClass *C, unsigned NC,
                           const uint16_t (*RURoots)[2],
                           unsigned NRU,
-                          const uint16_t *RL,
                           const uint16_t *DL,
                           const char *Strings,
                           const uint16_t *SubIndices,
@@ -257,7 +236,6 @@ public:
     NumRegs = NR;
     RAReg = RA;
     Classes = C;
-    RegLists = RL;
     DiffLists = DL;
     RegStrings = Strings;
     NumClasses = NC;
@@ -431,26 +409,34 @@ public:
 // aliasing registers. Use these iterator classes to traverse the lists.
 
 /// MCSubRegIterator enumerates all sub-registers of Reg.
-class MCSubRegIterator : public MCRegisterInfo::RegListIterator {
+class MCSubRegIterator : public MCRegisterInfo::DiffListIterator {
 public:
-  MCSubRegIterator(unsigned Reg, const MCRegisterInfo *MCRI)
-    : RegListIterator(MCRI->RegLists + MCRI->get(Reg).SubRegs) {}
+  MCSubRegIterator(unsigned Reg, const MCRegisterInfo *MCRI) {
+    init(Reg, MCRI->DiffLists + MCRI->get(Reg).SubRegs);
+    ++*this;
+  }
 };
 
 /// MCSuperRegIterator enumerates all super-registers of Reg.
-class MCSuperRegIterator : public MCRegisterInfo::RegListIterator {
+class MCSuperRegIterator : public MCRegisterInfo::DiffListIterator {
 public:
-  MCSuperRegIterator(unsigned Reg, const MCRegisterInfo *MCRI)
-    : RegListIterator(MCRI->RegLists + MCRI->get(Reg).SuperRegs) {}
+  MCSuperRegIterator(unsigned Reg, const MCRegisterInfo *MCRI) {
+    init(Reg, MCRI->DiffLists + MCRI->get(Reg).SuperRegs);
+    ++*this;
+  }
 };
 
 /// MCRegAliasIterator enumerates all registers aliasing Reg.
 /// If IncludeSelf is set, Reg itself is included in the list.
-class MCRegAliasIterator : public MCRegisterInfo::RegListIterator {
+class MCRegAliasIterator : public MCRegisterInfo::DiffListIterator {
 public:
-  MCRegAliasIterator(unsigned Reg, const MCRegisterInfo *MCRI, bool IncludeSelf)
-    : RegListIterator(MCRI->RegLists + MCRI->get(Reg).Overlaps + !IncludeSelf)
-  {}
+  MCRegAliasIterator(unsigned Reg, const MCRegisterInfo *MCRI,
+                     bool IncludeSelf) {
+    init(Reg, MCRI->DiffLists + MCRI->get(Reg).Overlaps);
+    // Initially, the iterator points to Reg itself.
+    if (!IncludeSelf)
+      ++*this;
+  }
 };
 
 inline
