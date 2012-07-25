@@ -1,4 +1,5 @@
-RUN: diagtool list-warnings | FileCheck %s
+RUN: diagtool list-warnings > %t 2>&1
+RUN: FileCheck --input-file=%t %s
 
 This test serves two purposes:
 
@@ -17,7 +18,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (131):
+CHECK: Warnings without flags (130):
 CHECK-NEXT:   pp_include_next_absolute_path
 CHECK-NEXT:   pp_include_next_in_primary
 CHECK-NEXT:   pp_invalid_string_literal
@@ -144,7 +145,6 @@ CHECK-NEXT:   warn_undef_interface
 CHECK-NEXT:   warn_undef_interface_suggest
 CHECK-NEXT:   warn_undef_protocolref
 CHECK-NEXT:   warn_undefined_internal
-CHECK-NEXT:   warn_unknown_analyzer_checker
 CHECK-NEXT:   warn_unknown_method_family
 CHECK-NEXT:   warn_use_out_of_scope_declaration
 CHECK-NEXT:   warn_weak_identifier_undeclared
