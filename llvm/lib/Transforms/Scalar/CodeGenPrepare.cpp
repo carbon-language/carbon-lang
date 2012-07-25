@@ -610,7 +610,7 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
   // that have the default "don't know" as the objectsize.  Anything else
   // should be left alone.
   CodeGenPrepareFortifiedLibCalls Simplifier;
-  return Simplifier.fold(CI, TD);
+  return Simplifier.fold(CI, TD, TLInfo);
 }
 
 /// DupRetToEnableTailCallOpts - Look for opportunities to duplicate return

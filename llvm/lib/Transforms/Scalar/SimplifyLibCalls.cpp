@@ -164,7 +164,7 @@ struct StrCatOpt : public LibCallOptimization {
   void EmitStrLenMemCpy(Value *Src, Value *Dst, uint64_t Len, IRBuilder<> &B) {
     // We need to find the end of the destination string.  That's where the
     // memory is to be moved to. We just generate a call to strlen.
-    Value *DstLen = EmitStrLen(Dst, B, TD);
+    Value *DstLen = EmitStrLen(Dst, B, TD, TLI);
 
     // Now that we have the destination's length, we must index into the
     // destination's pointer to get the actual memcpy destination (end of
@@ -254,7 +254,7 @@ struct StrChrOpt : public LibCallOptimization {
 
       return EmitMemChr(SrcStr, CI->getArgOperand(1), // include nul.
                         ConstantInt::get(TD->getIntPtrType(*Context), Len),
-                        B, TD);
+                        B, TD, TLI);
     }
 
     // Otherwise, the character is a constant, see if the first argument is
@@ -299,7 +299,7 @@ struct StrRChrOpt : public LibCallOptimization {
     if (!getConstantStringInfo(SrcStr, Str)) {
       // strrchr(s, 0) -> strchr(s, 0)
       if (TD && CharC->isZero())
-        return EmitStrChr(SrcStr, '\0', B, TD);
+        return EmitStrChr(SrcStr, '\0', B, TD, TLI);
       return 0;
     }
 
@@ -355,7 +355,7 @@ struct StrCmpOpt : public LibCallOptimization {
 
       return EmitMemCmp(Str1P, Str2P,
                         ConstantInt::get(TD->getIntPtrType(*Context),
-                        std::min(Len1, Len2)), B, TD);
+                        std::min(Len1, Len2)), B, TD, TLI);
     }
 
     return 0;
@@ -391,7 +391,7 @@ struct StrNCmpOpt : public LibCallOptimization {
       return ConstantInt::get(CI->getType(), 0);
 
     if (TD && Length == 1) // strncmp(x,y,1) -> memcmp(x,y,1)
-      return EmitMemCmp(Str1P, Str2P, CI->getArgOperand(2), B, TD);
+      return EmitMemCmp(Str1P, Str2P, CI->getArgOperand(2), B, TD, TLI);
 
     StringRef Str1, Str2;
     bool HasStr1 = getConstantStringInfo(Str1P, Str1);
@@ -450,7 +450,7 @@ struct StrCpyOpt : public LibCallOptimization {
     if (OptChkCall)
       EmitMemCpyChk(Dst, Src,
                     ConstantInt::get(TD->getIntPtrType(*Context), Len),
-                    CI->getArgOperand(2), B, TD);
+                    CI->getArgOperand(2), B, TD, TLI);
     else
       B.CreateMemCpy(Dst, Src,
                      ConstantInt::get(TD->getIntPtrType(*Context), Len), 1);
@@ -480,8 +480,10 @@ struct StpCpyOpt: public LibCallOptimization {
     if (!TD) return 0;
 
     Value *Dst = CI->getArgOperand(0), *Src = CI->getArgOperand(1);
-    if (Dst == Src)  // stpcpy(x,x)  -> x+strlen(x)
-      return B.CreateInBoundsGEP(Dst, EmitStrLen(Src, B, TD));
+    if (Dst == Src) {  // stpcpy(x,x)  -> x+strlen(x)
+      Value *StrLen = EmitStrLen(Src, B, TD, TLI);
+      return StrLen ? B.CreateInBoundsGEP(Dst, StrLen) : 0;
+    }
 
     // See if we can get the length of the input string.
     uint64_t Len = GetStringLength(Src);
@@ -495,7 +497,7 @@ struct StpCpyOpt: public LibCallOptimization {
     // We have enough information to now generate the memcpy call to do the
     // copy for us.  Make a memcpy to copy the nul byte with align = 1.
     if (OptChkCall)
-      EmitMemCpyChk(Dst, Src, LenV, CI->getArgOperand(2), B, TD);
+      EmitMemCpyChk(Dst, Src, LenV, CI->getArgOperand(2), B, TD, TLI);
     else
       B.CreateMemCpy(Dst, Src, LenV, 1);
     return DstEnd;
@@ -609,7 +611,7 @@ struct StrPBrkOpt : public LibCallOptimization {
 
     // strpbrk(s, "a") -> strchr(s, 'a')
     if (TD && HasS2 && S2.size() == 1)
-      return EmitStrChr(CI->getArgOperand(0), S2[0], B, TD);
+      return EmitStrChr(CI->getArgOperand(0), S2[0], B, TD, TLI);
 
     return 0;
   }
@@ -698,7 +700,7 @@ struct StrCSpnOpt : public LibCallOptimization {
 
     // strcspn(s, "") -> strlen(s)
     if (TD && HasS2 && S2.empty())
-      return EmitStrLen(CI->getArgOperand(0), B, TD);
+      return EmitStrLen(CI->getArgOperand(0), B, TD, TLI);
 
     return 0;
   }
@@ -722,9 +724,13 @@ struct StrStrOpt : public LibCallOptimization {
 
     // fold strstr(a, b) == a -> strncmp(a, b, strlen(b)) == 0
     if (TD && IsOnlyUsedInEqualityComparison(CI, CI->getArgOperand(0))) {
-      Value *StrLen = EmitStrLen(CI->getArgOperand(1), B, TD);
+      Value *StrLen = EmitStrLen(CI->getArgOperand(1), B, TD, TLI);
+      if (!StrLen)
+        return 0;
       Value *StrNCmp = EmitStrNCmp(CI->getArgOperand(0), CI->getArgOperand(1),
-                                   StrLen, B, TD);
+                                   StrLen, B, TD, TLI);
+      if (!StrNCmp)
+        return 0;
       for (Value::use_iterator UI = CI->use_begin(), UE = CI->use_end();
            UI != UE; ) {
         ICmpInst *Old = cast<ICmpInst>(*UI++);
@@ -760,9 +766,10 @@ struct StrStrOpt : public LibCallOptimization {
     }
 
     // fold strstr(x, "y") -> strchr(x, 'y').
-    if (HasStr2 && ToFindStr.size() == 1)
-      return B.CreateBitCast(EmitStrChr(CI->getArgOperand(0),
-                             ToFindStr[0], B, TD), CI->getType());
+    if (HasStr2 && ToFindStr.size() == 1) {
+      Value *StrChr= EmitStrChr(CI->getArgOperand(0), ToFindStr[0], B, TD, TLI);
+      return StrChr ? B.CreateBitCast(StrChr, CI->getType()) : 0;
+    }
     return 0;
   }
 };
@@ -1179,7 +1186,7 @@ struct PrintFOpt : public LibCallOptimization {
 
     // printf("x") -> putchar('x'), even for '%'.
     if (FormatStr.size() == 1) {
-      Value *Res = EmitPutChar(B.getInt32(FormatStr[0]), B, TD);
+      Value *Res = EmitPutChar(B.getInt32(FormatStr[0]), B, TD, TLI);
       if (CI->use_empty()) return CI;
       return B.CreateIntCast(Res, CI->getType(), true);
     }
@@ -1191,16 +1198,17 @@ struct PrintFOpt : public LibCallOptimization {
       // pass to be run after this pass, to merge duplicate strings.
       FormatStr = FormatStr.drop_back();
       Value *GV = B.CreateGlobalString(FormatStr, "str");
-      EmitPutS(GV, B, TD);
-      return CI->use_empty() ? (Value*)CI :
-                    ConstantInt::get(CI->getType(), FormatStr.size()+1);
+      Value *NewCI = EmitPutS(GV, B, TD, TLI);
+      return (CI->use_empty() || !NewCI) ?
+              NewCI :
+              ConstantInt::get(CI->getType(), FormatStr.size()+1);
     }
 
     // Optimize specific format strings.
     // printf("%c", chr) --> putchar(chr)
     if (FormatStr == "%c" && CI->getNumArgOperands() > 1 &&
         CI->getArgOperand(1)->getType()->isIntegerTy()) {
-      Value *Res = EmitPutChar(CI->getArgOperand(1), B, TD);
+      Value *Res = EmitPutChar(CI->getArgOperand(1), B, TD, TLI);
 
       if (CI->use_empty()) return CI;
       return B.CreateIntCast(Res, CI->getType(), true);
@@ -1209,8 +1217,7 @@ struct PrintFOpt : public LibCallOptimization {
     // printf("%s\n", str) --> puts(str)
     if (FormatStr == "%s\n" && CI->getNumArgOperands() > 1 &&
         CI->getArgOperand(1)->getType()->isPointerTy()) {
-      EmitPutS(CI->getArgOperand(1), B, TD);
-      return CI;
+      return EmitPutS(CI->getArgOperand(1), B, TD, TLI);
     }
     return 0;
   }
@@ -1297,7 +1304,9 @@ struct SPrintFOpt : public LibCallOptimization {
       // sprintf(dest, "%s", str) -> llvm.memcpy(dest, str, strlen(str)+1, 1)
       if (!CI->getArgOperand(2)->getType()->isPointerTy()) return 0;
 
-      Value *Len = EmitStrLen(CI->getArgOperand(2), B, TD);
+      Value *Len = EmitStrLen(CI->getArgOperand(2), B, TD, TLI);
+      if (!Len)
+        return 0;
       Value *IncLen = B.CreateAdd(Len,
                                   ConstantInt::get(Len->getType(), 1),
                                   "leninc");
@@ -1364,8 +1373,8 @@ struct FWriteOpt : public LibCallOptimization {
     // This optimisation is only valid, if the return value is unused.
     if (Bytes == 1 && CI->use_empty()) {  // fwrite(S,1,1,F) -> fputc(S[0],F)
       Value *Char = B.CreateLoad(CastToCStr(CI->getArgOperand(0), B), "char");
-      EmitFPutC(Char, CI->getArgOperand(3), B, TD);
-      return ConstantInt::get(CI->getType(), 1);
+      Value *NewCI = EmitFPutC(Char, CI->getArgOperand(3), B, TD, TLI);
+      return NewCI ? ConstantInt::get(CI->getType(), 1) : 0;
     }
 
     return 0;
@@ -1390,10 +1399,10 @@ struct FPutsOpt : public LibCallOptimization {
     // fputs(s,F) --> fwrite(s,1,strlen(s),F)
     uint64_t Len = GetStringLength(CI->getArgOperand(0));
     if (!Len) return 0;
-    EmitFWrite(CI->getArgOperand(0),
-               ConstantInt::get(TD->getIntPtrType(*Context), Len-1),
-               CI->getArgOperand(1), B, TD, TLI);
-    return CI;  // Known to have no uses (see above).
+    // Known to have no uses (see above).
+    return EmitFWrite(CI->getArgOperand(0),
+                      ConstantInt::get(TD->getIntPtrType(*Context), Len-1),
+                      CI->getArgOperand(1), B, TD, TLI);
   }
 };
 
@@ -1417,11 +1426,11 @@ struct FPrintFOpt : public LibCallOptimization {
       // These optimizations require TargetData.
       if (!TD) return 0;
 
-      EmitFWrite(CI->getArgOperand(1),
-                 ConstantInt::get(TD->getIntPtrType(*Context),
-                                  FormatStr.size()),
-                 CI->getArgOperand(0), B, TD, TLI);
-      return ConstantInt::get(CI->getType(), FormatStr.size());
+      Value *NewCI = EmitFWrite(CI->getArgOperand(1),
+                                ConstantInt::get(TD->getIntPtrType(*Context),
+                                                 FormatStr.size()),
+                                CI->getArgOperand(0), B, TD, TLI);
+      return NewCI ? ConstantInt::get(CI->getType(), FormatStr.size()) : 0;
     }
 
     // The remaining optimizations require the format string to be "%s" or "%c"
@@ -1434,16 +1443,16 @@ struct FPrintFOpt : public LibCallOptimization {
     if (FormatStr[1] == 'c') {
       // fprintf(F, "%c", chr) --> fputc(chr, F)
       if (!CI->getArgOperand(2)->getType()->isIntegerTy()) return 0;
-      EmitFPutC(CI->getArgOperand(2), CI->getArgOperand(0), B, TD);
-      return ConstantInt::get(CI->getType(), 1);
+      Value *NewCI = EmitFPutC(CI->getArgOperand(2), CI->getArgOperand(0), B,
+                               TD, TLI);
+      return NewCI ? ConstantInt::get(CI->getType(), 1) : 0;
     }
 
     if (FormatStr[1] == 's') {
       // fprintf(F, "%s", str) --> fputs(str, F)
       if (!CI->getArgOperand(2)->getType()->isPointerTy() || !CI->use_empty())
         return 0;
-      EmitFPutS(CI->getArgOperand(2), CI->getArgOperand(0), B, TD, TLI);
-      return CI;
+      return EmitFPutS(CI->getArgOperand(2), CI->getArgOperand(0), B, TD, TLI);
     }
     return 0;
   }
@@ -1494,7 +1503,8 @@ struct PutsOpt : public LibCallOptimization {
 
     if (Str.empty() && CI->use_empty()) {
       // puts("") -> putchar('\n')
-      Value *Res = EmitPutChar(B.getInt32('\n'), B, TD);
+      Value *Res = EmitPutChar(B.getInt32('\n'), B, TD, TLI);
+      if (!Res) return 0;
       if (CI->use_empty()) return CI;
       return B.CreateIntCast(Res, CI->getType(), true);
     }

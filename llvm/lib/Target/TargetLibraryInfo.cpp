@@ -133,7 +133,8 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "__cxa_atexit",
     "__cxa_guard_abort",
     "__cxa_guard_acquire",
-    "__cxa_guard_release"
+    "__cxa_guard_release",
+    "__memcpy_chk"
   };
 
 /// initialize - Initialize the set of available library functions based on the

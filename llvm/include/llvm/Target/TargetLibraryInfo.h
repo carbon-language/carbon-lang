@@ -240,6 +240,8 @@ namespace llvm {
       cxa_guard_acquire,
       /// void __cxa_guard_release(guard_t *guard);
       cxa_guard_release,
+      /// void *__memcpy_chk(void *s1, const void *s2, size_t n, size_t s1size);
+      memcpy_chk,
 
       NumLibFuncs
     };
