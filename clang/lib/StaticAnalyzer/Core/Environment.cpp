@@ -230,13 +230,6 @@ EnvironmentManager::removeDeadBindings(Environment Env,
       RSScaner.scan(X);
       continue;
     }
-
-    // Otherwise the expression is dead with a couple exceptions.
-    // Do not misclean LogicalExpr or ConditionalOperator.  It is dead at the
-    // beginning of itself, but we need its UndefinedVal to determine its
-    // SVal.
-    if (X.isUndef() && cast<UndefinedVal>(X).getData())
-      EBMapRef = EBMapRef.add(BlkExpr, X);
   }
   
   // Go through he deferred locations and add them to the new environment if

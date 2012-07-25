@@ -163,13 +163,10 @@ public:
 class UndefinedVal : public SVal {
 public:
   UndefinedVal() : SVal(UndefinedKind) {}
-  UndefinedVal(const void *D) : SVal(UndefinedKind, D) {}
 
   static inline bool classof(const SVal* V) {
     return V->getBaseKind() == UndefinedKind;
   }
-
-  const void *getData() const { return Data; }
 };
 
 class DefinedOrUnknownSVal : public SVal {
