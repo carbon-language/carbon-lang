@@ -33,6 +33,8 @@ class MicrosoftCXXNameMangler {
   MangleContext &Context;
   raw_ostream &Out;
 
+  // FIXME: audit the performance of BackRefMap as it might do way too many
+  // copying of strings.
   typedef std::map<std::string, unsigned> BackRefMap;
   BackRefMap NameBackReferences;
   bool UseNameBackReferences;
