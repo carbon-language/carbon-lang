@@ -30,6 +30,9 @@ class SourceMgr;
 namespace comments {
 
 class Sema {
+  Sema(const Sema&);           // DO NOT IMPLEMENT
+  void operator=(const Sema&); // DO NOT IMPLEMENT
+
   /// Allocator for AST nodes.
   llvm::BumpPtrAllocator &Allocator;
 

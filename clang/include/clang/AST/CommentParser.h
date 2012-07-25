@@ -27,6 +27,9 @@ namespace comments {
 
 /// Doxygen comment parser.
 class Parser {
+  Parser(const Parser&);         // DO NOT IMPLEMENT
+  void operator=(const Parser&); // DO NOT IMPLEMENT
+
   friend class TextTokenRetokenizer;
 
   Lexer &L;
