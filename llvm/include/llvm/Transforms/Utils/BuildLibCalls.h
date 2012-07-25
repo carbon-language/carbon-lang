@@ -31,6 +31,12 @@ namespace llvm {
   Value *EmitStrLen(Value *Ptr, IRBuilder<> &B, const TargetData *TD,
                     const TargetLibraryInfo *TLI);
 
+  /// EmitStrNLen - Emit a call to the strnlen function to the builder, for the
+  /// specified pointer.  Ptr is required to be some pointer type, MaxLen must
+  /// be of size_t type, and the return value has 'intptr_t' type.
+  Value *EmitStrNLen(Value *Ptr, Value *MaxLen, IRBuilder<> &B,
+                     const TargetData *TD, const TargetLibraryInfo *TLI);
+
   /// EmitStrChr - Emit a call to the strchr function to the builder, for the
   /// specified pointer and character.  Ptr is required to be some pointer type,
   /// and the return value has 'i8*' type.

@@ -57,6 +57,33 @@ Value *llvm::EmitStrLen(Value *Ptr, IRBuilder<> &B, const TargetData *TD,
   return CI;
 }
 
+/// EmitStrNLen - Emit a call to the strnlen function to the builder, for the
+/// specified pointer.  Ptr is required to be some pointer type, MaxLen must
+/// be of size_t type, and the return value has 'intptr_t' type.
+Value *llvm::EmitStrNLen(Value *Ptr, Value *MaxLen, IRBuilder<> &B,
+                         const TargetData *TD, const TargetLibraryInfo *TLI) {
+  if (!TLI->has(LibFunc::strnlen))
+    return 0;
+
+  Module *M = B.GetInsertBlock()->getParent()->getParent();
+  AttributeWithIndex AWI[2];
+  AWI[0] = AttributeWithIndex::get(1, Attribute::NoCapture);
+  AWI[1] = AttributeWithIndex::get(~0u, Attribute::ReadOnly |
+                                   Attribute::NoUnwind);
+
+  LLVMContext &Context = B.GetInsertBlock()->getContext();
+  Constant *StrNLen = M->getOrInsertFunction("strnlen", AttrListPtr::get(AWI),
+                                             TD->getIntPtrType(Context),
+                                             B.getInt8PtrTy(),
+                                             TD->getIntPtrType(Context),
+                                             NULL);
+  CallInst *CI = B.CreateCall2(StrNLen, CastToCStr(Ptr, B), MaxLen, "strnlen");
+  if (const Function *F = dyn_cast<Function>(StrNLen->stripPointerCasts()))
+    CI->setCallingConv(F->getCallingConv());
+
+  return CI;
+}
+
 /// EmitStrChr - Emit a call to the strchr function to the builder, for the
 /// specified pointer and character.  Ptr is required to be some pointer type,
 /// and the return value has 'i8*' type.
