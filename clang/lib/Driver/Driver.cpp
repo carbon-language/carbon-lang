@@ -521,9 +521,14 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
         Flag.push_back("-dependency-file ");
         Flag.push_back("-fdebug-compilation-dir ");
         Flag.push_back("-fmodule-cache-path ");
+        Flag.push_back("-idirafter ");
         Flag.push_back("-include ");
         Flag.push_back("-include-pch ");
+        Flag.push_back("-iprefix ");
+        Flag.push_back("-iwithprefix ");
+        Flag.push_back("-iwithprefixbefore ");
         Flag.push_back("-isysroot ");
+        Flag.push_back("-isystem ");
         Flag.push_back("-iquote ");
         Flag.push_back("-resource-dir ");
         Flag.push_back("-serialize-diagnostic-file ");
