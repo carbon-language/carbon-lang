@@ -12,6 +12,7 @@
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/ParsedTemplate.h"
+#include "clang/Sema/ScopeInfo.h"
 #include "clang/Sema/SemaInternal.h"
 #include "clang/Sema/Template.h"
 #include "clang/AST/Expr.h"
@@ -34,10 +35,12 @@ namespace {
 
     SmallVectorImpl<UnexpandedParameterPack> &Unexpanded;
 
+    bool InLambda;
+
   public:
     explicit CollectUnexpandedParameterPacksVisitor(
                   SmallVectorImpl<UnexpandedParameterPack> &Unexpanded)
-      : Unexpanded(Unexpanded) { }
+      : Unexpanded(Unexpanded), InLambda(false) { }
 
     bool shouldWalkTypesOfTypeLocs() const { return false; }
     
@@ -107,17 +110,17 @@ namespace {
     /// \brief Suppress traversal into statements and expressions that
     /// do not contain unexpanded parameter packs.
     bool TraverseStmt(Stmt *S) { 
-      if (Expr *E = dyn_cast_or_null<Expr>(S))
-        if (E->containsUnexpandedParameterPack())
-          return inherited::TraverseStmt(E);
+      Expr *E = dyn_cast_or_null<Expr>(S);
+      if ((E && E->containsUnexpandedParameterPack()) || InLambda)
+        return inherited::TraverseStmt(S);
 
-      return true; 
+      return true;
     }
 
     /// \brief Suppress traversal into types that do not contain
     /// unexpanded parameter packs.
     bool TraverseType(QualType T) {
-      if (!T.isNull() && T->containsUnexpandedParameterPack())
+      if ((!T.isNull() && T->containsUnexpandedParameterPack()) || InLambda)
         return inherited::TraverseType(T);
 
       return true;
@@ -126,8 +129,9 @@ namespace {
     /// \brief Suppress traversel into types with location information
     /// that do not contain unexpanded parameter packs.
     bool TraverseTypeLoc(TypeLoc TL) {
-      if (!TL.getType().isNull() && 
-          TL.getType()->containsUnexpandedParameterPack())
+      if ((!TL.getType().isNull() && 
+           TL.getType()->containsUnexpandedParameterPack()) ||
+          InLambda)
         return inherited::TraverseTypeLoc(TL);
 
       return true;
@@ -136,10 +140,10 @@ namespace {
     /// \brief Suppress traversal of non-parameter declarations, since
     /// they cannot contain unexpanded parameter packs.
     bool TraverseDecl(Decl *D) { 
-      if (D && isa<ParmVarDecl>(D))
+      if ((D && isa<ParmVarDecl>(D)) || InLambda)
         return inherited::TraverseDecl(D);
 
-      return true; 
+      return true;
     }
 
     /// \brief Suppress traversal of template argument pack expansions.
@@ -157,17 +161,57 @@ namespace {
       
       return inherited::TraverseTemplateArgumentLoc(ArgLoc);
     }
+
+    /// \brief Note whether we're traversing a lambda containing an unexpanded
+    /// parameter pack. In this case, the unexpanded pack can occur anywhere,
+    /// including all the places where we normally wouldn't look. Within a
+    /// lambda, we don't propagate the 'contains unexpanded parameter pack' bit
+    /// outside an expression.
+    bool TraverseLambdaExpr(LambdaExpr *Lambda) {
+      // The ContainsUnexpandedParameterPack bit on a lambda is always correct,
+      // even if it's contained within another lambda.
+      if (!Lambda->containsUnexpandedParameterPack())
+        return true;
+
+      bool WasInLambda = InLambda;
+      InLambda = true;
+
+      // If any capture names a function parameter pack, that pack is expanded
+      // when the lambda is expanded.
+      for (LambdaExpr::capture_iterator I = Lambda->capture_begin(),
+                                        E = Lambda->capture_end(); I != E; ++I)
+        if (VarDecl *VD = I->getCapturedVar())
+          if (VD->isParameterPack())
+            Unexpanded.push_back(std::make_pair(VD, I->getLocation()));
+
+      inherited::TraverseLambdaExpr(Lambda);
+
+      InLambda = WasInLambda;
+      return true;
+    }
   };
 }
 
 /// \brief Diagnose all of the unexpanded parameter packs in the given
 /// vector.
-void
+bool
 Sema::DiagnoseUnexpandedParameterPacks(SourceLocation Loc,
                                        UnexpandedParameterPackContext UPPC,
                                  ArrayRef<UnexpandedParameterPack> Unexpanded) {
   if (Unexpanded.empty())
-    return;
+    return false;
+
+  // If we are within a lambda expression, that lambda contains an unexpanded
+  // parameter pack, and we are done.
+  // FIXME: Store 'Unexpanded' on the lambda so we don't need to recompute it
+  // later.
+  for (unsigned N = FunctionScopes.size(); N; --N) {
+    if (sema::LambdaScopeInfo *LSI =
+          dyn_cast<sema::LambdaScopeInfo>(FunctionScopes[N-1])) {
+      LSI->ContainsUnexpandedParameterPack = true;
+      return false;
+    }
+  }
   
   SmallVector<SourceLocation, 4> Locations;
   SmallVector<IdentifierInfo *, 4> Names;
@@ -200,6 +244,7 @@ Sema::DiagnoseUnexpandedParameterPacks(SourceLocation Loc,
 
   for (unsigned I = 0, N = Locations.size(); I != N; ++I)
     DB << SourceRange(Locations[I]);
+  return true;
 }
 
 bool Sema::DiagnoseUnexpandedParameterPack(SourceLocation Loc, 
@@ -215,8 +260,7 @@ bool Sema::DiagnoseUnexpandedParameterPack(SourceLocation Loc,
   CollectUnexpandedParameterPacksVisitor(Unexpanded).TraverseTypeLoc(
                                                               T->getTypeLoc());
   assert(!Unexpanded.empty() && "Unable to find unexpanded parameter packs");
-  DiagnoseUnexpandedParameterPacks(Loc, UPPC, Unexpanded);
-  return true;
+  return DiagnoseUnexpandedParameterPacks(Loc, UPPC, Unexpanded);
 }
 
 bool Sema::DiagnoseUnexpandedParameterPack(Expr *E,
@@ -230,8 +274,7 @@ bool Sema::DiagnoseUnexpandedParameterPack(Expr *E,
   SmallVector<UnexpandedParameterPack, 2> Unexpanded;
   CollectUnexpandedParameterPacksVisitor(Unexpanded).TraverseStmt(E);
   assert(!Unexpanded.empty() && "Unable to find unexpanded parameter packs");
-  DiagnoseUnexpandedParameterPacks(E->getLocStart(), UPPC, Unexpanded);
-  return true;
+  return DiagnoseUnexpandedParameterPacks(E->getLocStart(), UPPC, Unexpanded);
 }
 
 bool Sema::DiagnoseUnexpandedParameterPack(const CXXScopeSpec &SS,
@@ -247,9 +290,8 @@ bool Sema::DiagnoseUnexpandedParameterPack(const CXXScopeSpec &SS,
   CollectUnexpandedParameterPacksVisitor(Unexpanded)
     .TraverseNestedNameSpecifier(SS.getScopeRep());
   assert(!Unexpanded.empty() && "Unable to find unexpanded parameter packs");
-  DiagnoseUnexpandedParameterPacks(SS.getRange().getBegin(), 
-                                   UPPC, Unexpanded);
-  return true;
+  return DiagnoseUnexpandedParameterPacks(SS.getRange().getBegin(),
+                                          UPPC, Unexpanded);
 }
 
 bool Sema::DiagnoseUnexpandedParameterPack(const DeclarationNameInfo &NameInfo,
@@ -284,8 +326,7 @@ bool Sema::DiagnoseUnexpandedParameterPack(const DeclarationNameInfo &NameInfo,
   CollectUnexpandedParameterPacksVisitor(Unexpanded)
     .TraverseType(NameInfo.getName().getCXXNameType());
   assert(!Unexpanded.empty() && "Unable to find unexpanded parameter packs");
-  DiagnoseUnexpandedParameterPacks(NameInfo.getLoc(), UPPC, Unexpanded);
-  return true;
+  return DiagnoseUnexpandedParameterPacks(NameInfo.getLoc(), UPPC, Unexpanded);
 }
 
 bool Sema::DiagnoseUnexpandedParameterPack(SourceLocation Loc,
@@ -299,8 +340,7 @@ bool Sema::DiagnoseUnexpandedParameterPack(SourceLocation Loc,
   CollectUnexpandedParameterPacksVisitor(Unexpanded)
     .TraverseTemplateName(Template);
   assert(!Unexpanded.empty() && "Unable to find unexpanded parameter packs");
-  DiagnoseUnexpandedParameterPacks(Loc, UPPC, Unexpanded);
-  return true;
+  return DiagnoseUnexpandedParameterPacks(Loc, UPPC, Unexpanded);
 }
 
 bool Sema::DiagnoseUnexpandedParameterPack(TemplateArgumentLoc Arg,
@@ -313,8 +353,7 @@ bool Sema::DiagnoseUnexpandedParameterPack(TemplateArgumentLoc Arg,
   CollectUnexpandedParameterPacksVisitor(Unexpanded)
     .TraverseTemplateArgumentLoc(Arg);
   assert(!Unexpanded.empty() && "Unable to find unexpanded parameter packs");
-  DiagnoseUnexpandedParameterPacks(Arg.getLocation(), UPPC, Unexpanded);
-  return true;  
+  return DiagnoseUnexpandedParameterPacks(Arg.getLocation(), UPPC, Unexpanded);
 }
 
 void Sema::collectUnexpandedParameterPacks(TemplateArgument Arg,

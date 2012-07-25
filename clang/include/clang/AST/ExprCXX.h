@@ -1254,7 +1254,8 @@ private:
              ArrayRef<Expr *> CaptureInits,
              ArrayRef<VarDecl *> ArrayIndexVars,
              ArrayRef<unsigned> ArrayIndexStarts,
-             SourceLocation ClosingBrace);
+             SourceLocation ClosingBrace,
+             bool ContainsUnexpandedParameterPack);
 
   /// \brief Construct an empty lambda expression.
   LambdaExpr(EmptyShell Empty, unsigned NumCaptures, bool HasArrayIndexVars)
@@ -1292,7 +1293,8 @@ public:
                             ArrayRef<Expr *> CaptureInits,
                             ArrayRef<VarDecl *> ArrayIndexVars,
                             ArrayRef<unsigned> ArrayIndexStarts,
-                            SourceLocation ClosingBrace);
+                            SourceLocation ClosingBrace,
+                            bool ContainsUnexpandedParameterPack);
 
   /// \brief Construct a new lambda expression that will be deserialized from
   /// an external source.

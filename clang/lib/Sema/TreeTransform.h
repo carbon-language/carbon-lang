@@ -571,6 +571,9 @@ public:
   StmtResult TransformCompoundStmt(CompoundStmt *S, bool IsStmtExpr);
   ExprResult TransformCXXNamedCastExpr(CXXNamedCastExpr *E);
 
+  /// \brief Transform the captures and body of a lambda expression.
+  ExprResult TransformLambdaScope(LambdaExpr *E, CXXMethodDecl *CallOperator);
+
 #define STMT(Node, Parent)                        \
   StmtResult Transform##Node(Node *S);
 #define EXPR(Node, Parent)                        \
@@ -7894,14 +7897,13 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
     return ExprError();
 
   // Transform lambda parameters.
-  bool Invalid = false;
   llvm::SmallVector<QualType, 4> ParamTypes;
   llvm::SmallVector<ParmVarDecl *, 4> Params;
   if (getDerived().TransformFunctionTypeParams(E->getLocStart(),
         E->getCallOperator()->param_begin(),
         E->getCallOperator()->param_size(),
         0, ParamTypes, &Params))
-    Invalid = true;  
+    return ExprError();
 
   // Build the call operator.
   CXXMethodDecl *CallOperator
@@ -7910,11 +7912,14 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
                                       E->getCallOperator()->getLocEnd(),
                                       Params);
   getDerived().transformAttrs(E->getCallOperator(), CallOperator);
-  
-  // FIXME: Instantiation-specific.
-  CallOperator->setInstantiationOfMemberFunction(E->getCallOperator(), 
-                                                 TSK_ImplicitInstantiation);
 
+  return getDerived().TransformLambdaScope(E, CallOperator);
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformLambdaScope(LambdaExpr *E,
+                                             CXXMethodDecl *CallOperator) {
   // Introduce the context of the call operator.
   Sema::ContextRAII SavedContext(getSema(), CallOperator);
 
@@ -7927,6 +7932,7 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
                                  E->isMutable());
   
   // Transform captures.
+  bool Invalid = false;
   bool FinishedExplicitCaptures = false;
   for (LambdaExpr::capture_iterator C = E->capture_begin(), 
                                  CEnd = E->capture_end();

@@ -344,6 +344,9 @@ public:
   /// \brief Whether any of the capture expressions requires cleanups.
   bool ExprNeedsCleanups;
 
+  /// \brief Whether the lambda contains an unexpanded parameter pack.
+  bool ContainsUnexpandedParameterPack;
+
   /// \brief Variables used to index into by-copy array captures.
   llvm::SmallVector<VarDecl *, 4> ArrayIndexVars;
 
@@ -355,7 +358,7 @@ public:
                   CXXMethodDecl *CallOperator)
     : CapturingScopeInfo(Diag, ImpCap_None), Lambda(Lambda),
       CallOperator(CallOperator), NumExplicitCaptures(0), Mutable(false),
-      ExprNeedsCleanups(false)
+      ExprNeedsCleanups(false), ContainsUnexpandedParameterPack(false)
   {
     Kind = SK_Lambda;
   }

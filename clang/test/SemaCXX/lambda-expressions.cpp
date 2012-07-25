@@ -145,3 +145,79 @@ namespace ModifyingCapture {
     };
   }
 }
+
+namespace VariadicPackExpansion {
+  template<typename T, typename U> using Fst = T;
+  template<typename...Ts> bool g(Fst<bool, Ts> ...bools);
+  template<typename...Ts> bool f(Ts &&...ts) {
+    return g<Ts...>([&ts] {
+      if (!ts)
+        return false;
+      --ts;
+      return true;
+    } () ...);
+  }
+  void h() {
+    int a = 5, b = 2, c = 3;
+    while (f(a, b, c)) {
+    }
+  }
+
+  struct sink {
+    template<typename...Ts> sink(Ts &&...) {}
+  };
+
+  template<typename...Ts> void local_class() {
+    sink {
+      [] (Ts t) {
+        struct S : Ts {
+          void f(Ts t) {
+            Ts &that = *this;
+            that = t;
+          }
+          Ts g() { return *this; };
+        };
+        S s;
+        s.f(t);
+        return s;
+      } (Ts()).g() ...
+    };
+  };
+  struct X {}; struct Y {};
+  template void local_class<X, Y>();
+
+  template<typename...Ts> void nested(Ts ...ts) {
+    f(
+      // Each expansion of this lambda implicitly captures all of 'ts', because
+      // the inner lambda also expands 'ts'.
+      [&] {
+        return ts + [&] { return f(ts...); } ();
+      } () ...
+    );
+  }
+  template void nested(int, int, int);
+
+  template<typename...Ts> void nested2(Ts ...ts) { // expected-note 2{{here}}
+    // Capture all 'ts', use only one.
+    f([&ts...] { return ts; } ()...);
+    // Capture each 'ts', use it.
+    f([&ts] { return ts; } ()...);
+    // Capture all 'ts', use all of them.
+    f([&ts...] { return (int)f(ts...); } ());
+    // Capture each 'ts', use all of them. Ill-formed. In more detail:
+    //
+    // We instantiate two lambdas here; the first captures ts$0, the second
+    // captures ts$1. Both of them reference both ts parameters, so both are
+    // ill-formed because ts can't be implicitly captured.
+    //
+    // FIXME: This diagnostic does not explain what's happening. We should
+    // specify which 'ts' we're referring to in its diagnostic name. We should
+    // also say which slice of the pack expansion is being performed in the
+    // instantiation backtrace.
+    f([&ts] { return (int)f(ts...); } ()...); // \
+    // expected-error 2{{'ts' cannot be implicitly captured}} \
+    // expected-note 2{{lambda expression begins here}}
+  }
+  template void nested2(int); // ok
+  template void nested2(int, int); // expected-note {{in instantiation of}}
+}

@@ -89,6 +89,8 @@ namespace overloading {
 
 namespace PR13117 {
   struct A {
+    template<typename ... Args> static void f(Args...);
+
     template<typename ... Args> static void f1()
     {
       (void)^(Args args) { // expected-error{{block contains unexpanded parameter pack 'Args'}}
@@ -97,8 +99,23 @@ namespace PR13117 {
 
     template<typename ... Args> static void f2()
     {
-      (void)[](Args args) { // expected-error{{lambda contains unexpanded parameter pack 'Args'}}
+      // FIXME: Allow this.
+      f(
+        ^(Args args) // expected-error{{block contains unexpanded parameter pack 'Args'}}
+        { }
+        ... // expected-error{{pack expansion does not contain any unexpanded parameter packs}}
+      );
+    }
+
+    template<typename ... Args> static void f3()
+    {
+      (void)[](Args args) { // expected-error{{expression contains unexpanded parameter pack 'Args'}}
       };
+    }
+
+    template<typename ... Args> static void f4()
+    {
+      f([](Args args) { } ...);
     }
   };
 

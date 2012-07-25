@@ -9,8 +9,8 @@ void print(T first, Ts... rest) {
 }
 
 template<typename... Ts>
-void unsupported(Ts ...values) {
-  auto unsup = [values] {}; // expected-error{{unexpanded function parameter pack capture is unsupported}}
+void unexpanded_capture(Ts ...values) {
+  auto unexp = [values] {}; // expected-error{{initializer contains unexpanded parameter pack 'values'}}
 }
 
 template<typename... Ts>

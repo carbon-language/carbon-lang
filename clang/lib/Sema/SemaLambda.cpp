@@ -375,6 +375,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
   TypeSourceInfo *MethodTyInfo;
   bool ExplicitParams = true;
   bool ExplicitResultType = true;
+  bool ContainsUnexpandedParameterPack = false;
   SourceLocation EndLoc;
   llvm::ArrayRef<ParmVarDecl *> Params;
   if (ParamInfo.getNumTypeObjects() == 0) {
@@ -416,21 +417,8 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
                                            Proto.getNumArgs());
 
     // Check for unexpanded parameter packs in the method type.
-    // FIXME: We should allow unexpanded parameter packs here, but that would,
-    // in turn, make the lambda expression contain unexpanded parameter packs.
-    if (DiagnoseUnexpandedParameterPack(Intro.Range.getBegin(), MethodTyInfo,
-                                        UPPC_Lambda)) {
-      // Drop the parameters.
-      Params = llvm::ArrayRef<ParmVarDecl *>();
-      FunctionProtoType::ExtProtoInfo EPI;
-      EPI.HasTrailingReturn = false;
-      EPI.TypeQuals |= DeclSpec::TQ_const;
-      QualType MethodTy = Context.getFunctionType(Context.DependentTy,
-                                                  /*Args=*/0, /*NumArgs=*/0, EPI);
-      MethodTyInfo = Context.getTrivialTypeSourceInfo(MethodTy);
-      ExplicitParams = false;
-      ExplicitResultType = false;
-    }
+    if (MethodTyInfo->getType()->containsUnexpandedParameterPack())
+      ContainsUnexpandedParameterPack = true;
   }
   
   CXXMethodDecl *Method = startLambdaDefinition(Class, Intro.Range,
@@ -571,8 +559,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
         // Just ignore the ellipsis.
       }
     } else if (Var->isParameterPack()) {
-      Diag(C->Loc, diag::err_lambda_unexpanded_pack);
-      continue;
+      ContainsUnexpandedParameterPack = true;
     }
     
     TryCaptureKind Kind = C->Kind == LCK_ByRef ? TryCapture_ExplicitByRef :
@@ -580,6 +567,8 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     tryCaptureVariable(Var, C->Loc, Kind, EllipsisLoc);
   }
   finishLambdaExplicitCaptures(LSI);
+
+  LSI->ContainsUnexpandedParameterPack = ContainsUnexpandedParameterPack;
 
   // Add lambda parameters into scope.
   addLambdaParameters(Method, CurScope);
@@ -743,6 +732,7 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
   bool ExplicitParams;
   bool ExplicitResultType;
   bool LambdaExprNeedsCleanups;
+  bool ContainsUnexpandedParameterPack;
   llvm::SmallVector<VarDecl *, 4> ArrayIndexVars;
   llvm::SmallVector<unsigned, 4> ArrayIndexStarts;
   {
@@ -753,6 +743,7 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
     ExplicitParams = LSI->ExplicitParams;
     ExplicitResultType = !LSI->HasImplicitReturnType;
     LambdaExprNeedsCleanups = LSI->ExprNeedsCleanups;
+    ContainsUnexpandedParameterPack = LSI->ContainsUnexpandedParameterPack;
     ArrayIndexVars.swap(LSI->ArrayIndexVars);
     ArrayIndexStarts.swap(LSI->ArrayIndexStarts);
     
@@ -867,7 +858,8 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
                                           CaptureDefault, Captures, 
                                           ExplicitParams, ExplicitResultType,
                                           CaptureInits, ArrayIndexVars, 
-                                          ArrayIndexStarts, Body->getLocEnd());
+                                          ArrayIndexStarts, Body->getLocEnd(),
+                                          ContainsUnexpandedParameterPack);
 
   // C++11 [expr.prim.lambda]p2:
   //   A lambda-expression shall not appear in an unevaluated operand

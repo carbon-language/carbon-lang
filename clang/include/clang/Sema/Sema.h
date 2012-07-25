@@ -5003,7 +5003,9 @@ public:
   /// parameter packs.
   ///
   /// \param Unexpanded the set of unexpanded parameter packs.
-  void DiagnoseUnexpandedParameterPacks(SourceLocation Loc,
+  ///
+  /// \returns true if an error occurred, false otherwise.
+  bool DiagnoseUnexpandedParameterPacks(SourceLocation Loc,
                                         UnexpandedParameterPackContext UPPC,
                                   ArrayRef<UnexpandedParameterPack> Unexpanded);
 
