@@ -3,6 +3,7 @@
 // RUN: env TMPDIR=%t TEMP=%t TMP=%t %clang -fsyntax-only %s \
 // RUN:  -F/tmp/ -I /tmp/ -idirafter /tmp/ -iquote /tmp/ -isystem /tmp/ \
 // RUN:  -iprefix /the/prefix -iwithprefix /tmp -iwithprefixbefore /tmp/ \
+// RUN:  -internal-isystem /tmp/ -internal-externc-isystem /tmp/ \
 // RUN:  -DFOO=BAR 2>&1 | FileCheck %s
 // RUN: cat %t/crash-report-*.c | FileCheck --check-prefix=CHECKSRC %s
 // RUN: cat %t/crash-report-*.sh | FileCheck --check-prefix=CHECKSH %s
@@ -22,3 +23,5 @@ FOO
 // CHECKSH-NOT: -iprefix /the/prefix
 // CHECKSH-NOT: -iwithprefix /tmp/
 // CHECKSH-NOT: -iwithprefixbefore /tmp/
+// CHECKSH-NOT: -internal-isystem /tmp/
+// CHECKSH-NOT: -internal-externc-isystem /tmp/

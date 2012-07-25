@@ -524,6 +524,8 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
         Flag.push_back("-idirafter ");
         Flag.push_back("-include ");
         Flag.push_back("-include-pch ");
+        Flag.push_back("-internal-isystem ");
+        Flag.push_back("-internal-externc-isystem ");
         Flag.push_back("-iprefix ");
         Flag.push_back("-iwithprefix ");
         Flag.push_back("-iwithprefixbefore ");
