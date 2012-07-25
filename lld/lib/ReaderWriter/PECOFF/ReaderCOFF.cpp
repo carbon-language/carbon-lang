@@ -386,6 +386,12 @@ Reader *createReaderPECOFF(const ReaderOptionsPECOFF &options) {
   return new ReaderCOFF(options);
 }
 
+ReaderOptionsPECOFF::ReaderOptionsPECOFF() {
+}
+
+ReaderOptionsPECOFF::~ReaderOptionsPECOFF() {
+}
+
 } // namespace lld
 
 
