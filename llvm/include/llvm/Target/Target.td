@@ -64,18 +64,6 @@ class Register<string n, list<string> altNames = []> {
   // register.
   list<RegAltNameIndex> RegAltNameIndices = [];
 
-  // CompositeIndices - Specify subreg indices that don't correspond directly to
-  // a register in SubRegs and are not inherited. The following formats are
-  // supported:
-  //
-  // (a)     Identity  - Reg:a == Reg
-  // (a b)   Alias     - Reg:a == Reg:b
-  // (a b,c) Composite - Reg:a == (Reg:b):c
-  //
-  // This can be used to disambiguate a sub-sub-register that exists in more
-  // than one subregister and other weird stuff.
-  list<dag> CompositeIndices = [];
-
   // DwarfNumbers - Numbers used internally by gcc/gdb to identify the register.
   // These values can be determined by locating the <target>.h file in the
   // directory llvmgcc/gcc/config/<target>/ and looking for REGISTER_NAMES.  The
@@ -252,9 +240,6 @@ class RegisterTuples<list<SubRegIndex> Indices, list<dag> Regs> {
   // SubRegIndices - N SubRegIndex instances. This provides the names of the
   // sub-registers in the synthesized super-registers.
   list<SubRegIndex> SubRegIndices = Indices;
-
-  // Compose sub-register indices like in a normal Register.
-  list<dag> CompositeIndices = [];
 }
 
 
