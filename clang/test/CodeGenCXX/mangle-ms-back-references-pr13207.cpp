@@ -35,6 +35,31 @@ void foo_abb(N::A<char, N::B<char>, N::B<char> >) {}
 void foo_abc(N::A<char, N::B<char>, N::C<char> >) {}
 // CHECK: "\01?foo_abc@@YAXV?$A@DV?$B@D@N@@V?$C@D@2@@N@@@Z"
 
+N::A<char, N::B<char>, N::C<char> > abc_foo() {
+// CHECK: ?abc_foo@@YA?AV?$A@DV?$B@D@N@@V?$C@D@2@@N@@XZ
+  return N::A<char, N::B<char>, N::C<char> >();
+}
+
+N::Z z_foo(N::Z arg) {
+// CHECK: ?z_foo@@YA?AVZ@N@@V12@@Z
+  return arg;
+}
+
+N::B<char> b_foo(N::B<char> arg) {
+// CHECK: ?b_foo@@YA?AV?$B@D@N@@V12@@Z
+  return arg;
+}
+
+N::D<char, char> d_foo(N::D<char, char> arg) {
+// CHECK: ?d_foo@@YA?AV?$D@DD@N@@V12@@Z
+  return arg;
+}
+
+N::A<char, N::B<char>, N::C<char> > abc_foo_abc(N::A<char, N::B<char>, N::C<char> >) {
+// CHECK: ?abc_foo_abc@@YA?AV?$A@DV?$B@D@N@@V?$C@D@2@@N@@V12@@Z
+  return N::A<char, N::B<char>, N::C<char> >();
+}
+
 namespace NA {
 class X {};
 template<class T> class Y {};
