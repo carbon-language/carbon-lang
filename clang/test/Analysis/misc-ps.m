@@ -1356,3 +1356,21 @@ void radar9414427() {
 }
 @end
 
+// Don't crash when a ?: is only preceded by a statement (not an expression)
+// in the CFG.
+void __assert_fail();
+
+enum rdar1196620_e { E_A, E_B, E_C, E_D };
+struct rdar1196620_s { int ints[E_D+1]; };
+
+static int rdar1196620_call_assert(struct rdar1196620_s* s) {
+  int i = 0;
+  s?(void)0:__assert_fail();
+}
+
+static void rdar1196620(struct rdar1196620_s* s) {
+  if (rdar1196620_call_assert(s))
+    return;
+}
+
+
