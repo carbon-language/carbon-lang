@@ -358,42 +358,41 @@ void ExprEngine::ProcessInitializer(const CFGInitializer Init,
   ExplodedNodeSet Dst;
   NodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
 
+  ProgramStateRef State = Pred->getState();
+
   // We don't set EntryNode and currentStmt. And we don't clean up state.
   const CXXCtorInitializer *BMI = Init.getInitializer();
   const StackFrameContext *stackFrame =
                            cast<StackFrameContext>(Pred->getLocationContext());
   const CXXConstructorDecl *decl =
                            cast<CXXConstructorDecl>(stackFrame->getDecl());
-  SVal thisVal = Pred->getState()->getSVal(svalBuilder.getCXXThis(decl,
-                                                                  stackFrame));
+  SVal thisVal = State->getSVal(svalBuilder.getCXXThis(decl, stackFrame));
 
+  // Evaluate the initializer, if necessary
   if (BMI->isAnyMemberInitializer()) {
-    // Evaluate the initializer.
-    ProgramStateRef state = Pred->getState();
+    // Constructors build the object directly in the field,
+    // but non-objects must be copied in from the initializer.
+    if (!isa<CXXConstructExpr>(BMI->getInit())) {
+      SVal FieldLoc;
+      if (BMI->isIndirectMemberInitializer())
+        FieldLoc = State->getLValue(BMI->getIndirectMember(), thisVal);
+      else
+        FieldLoc = State->getLValue(BMI->getMember(), thisVal);
 
-    const FieldDecl *FD = BMI->getAnyMember();
-
-    // FIXME: This does not work for initializers that call constructors.
-    SVal FieldLoc = state->getLValue(FD, thisVal);
-    SVal InitVal = state->getSVal(BMI->getInit(), Pred->getLocationContext());
-    state = state->bindLoc(FieldLoc, InitVal);
-
-    // Use a custom node building process.
-    PostInitializer PP(BMI, stackFrame);
-    // Builder automatically add the generated node to the deferred set,
-    // which are processed in the builder's dtor.
-    Bldr.generateNode(PP, state, Pred);
+      SVal InitVal = State->getSVal(BMI->getInit(), stackFrame);
+      State = State->bindLoc(FieldLoc, InitVal);
+    }
   } else {
     assert(BMI->isBaseInitializer());
-
     // We already did all the work when visiting the CXXConstructExpr.
-    // Just construct a PostInitializer node so that the diagnostics don't get
-    // confused.
-    PostInitializer PP(BMI, stackFrame);
-    // Builder automatically add the generated node to the deferred set,
-    // which are processed in the builder's dtor.
-    Bldr.generateNode(PP, Pred->getState(), Pred);
   }
+
+  // Construct a PostInitializer node whether the state changed or not,
+  // so that the diagnostics don't get confused.
+  PostInitializer PP(BMI, stackFrame);
+  // Builder automatically add the generated node to the deferred set,
+  // which are processed in the builder's dtor.
+  Bldr.generateNode(PP, State, Pred);
 
   // Enqueue the new nodes onto the work list.
   Engine.enqueue(Dst, currentBuilderContext->getBlock(), currentStmtIdx);
@@ -459,7 +458,20 @@ void ExprEngine::ProcessBaseDtor(const CFGBaseDtor D,
 }
 
 void ExprEngine::ProcessMemberDtor(const CFGMemberDtor D,
-                                   ExplodedNode *Pred, ExplodedNodeSet &Dst) {}
+                                   ExplodedNode *Pred, ExplodedNodeSet &Dst) {
+  const FieldDecl *Member = D.getFieldDecl();
+  ProgramStateRef State = Pred->getState();
+  const LocationContext *LCtx = Pred->getLocationContext();
+
+  const CXXDestructorDecl *CurDtor = cast<CXXDestructorDecl>(LCtx->getDecl());
+  Loc ThisVal = getSValBuilder().getCXXThis(CurDtor,
+                                            LCtx->getCurrentStackFrame());
+  SVal FieldVal = State->getLValue(Member, cast<Loc>(State->getSVal(ThisVal)));
+
+  VisitCXXDestructor(Member->getType(),
+                     cast<loc::MemRegionVal>(FieldVal).getRegion(),
+                     CurDtor->getBody(), Pred, Dst);
+}
 
 void ExprEngine::ProcessTemporaryDtor(const CFGTemporaryDtor D,
                                       ExplodedNode *Pred,

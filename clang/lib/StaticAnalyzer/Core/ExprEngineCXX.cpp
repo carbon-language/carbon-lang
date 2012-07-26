@@ -63,6 +63,25 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
             if (Var->getInit() == CE)
               Target = State->getLValue(Var, LCtx).getAsRegion();
 
+      // Is this a constructor for a member?
+      if (const CFGInitializer *InitElem = dyn_cast<CFGInitializer>(&Next)) {
+        const CXXCtorInitializer *Init = InitElem->getInitializer();
+        assert(Init->isAnyMemberInitializer());
+
+        const CXXMethodDecl *CurCtor = cast<CXXMethodDecl>(LCtx->getDecl());
+        Loc ThisPtr = getSValBuilder().getCXXThis(CurCtor,
+                                                  LCtx->getCurrentStackFrame());
+        SVal ThisVal = State->getSVal(ThisPtr);
+
+        if (Init->isIndirectMemberInitializer()) {
+          SVal Field = State->getLValue(Init->getIndirectMember(), ThisVal);
+          Target = cast<loc::MemRegionVal>(Field).getRegion();
+        } else {
+          SVal Field = State->getLValue(Init->getMember(), ThisVal);
+          Target = cast<loc::MemRegionVal>(Field).getRegion();
+        }
+      }
+
       // FIXME: This will eventually need to handle new-expressions as well.
     }
 

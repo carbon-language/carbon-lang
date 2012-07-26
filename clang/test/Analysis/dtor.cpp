@@ -103,3 +103,21 @@ void testMultipleInheritance3() {
     // expected-warning@25 {{Attempt to free released memory}}
   }
 }
+
+
+class SmartPointerMember {
+  SmartPointer P;
+public:
+  SmartPointerMember(void *x) : P(x) {}
+};
+
+void testSmartPointerMember() {
+  char *mem = (char*)malloc(4);
+  {
+    SmartPointerMember Deleter(mem);
+    // Remove dead bindings...
+    doSomething();
+    // destructor called here
+  }
+  *mem = 0; // expected-warning{{Use of memory after it is freed}}
+}

@@ -238,6 +238,9 @@ public:
   /// Get the lvalue for a field reference.
   SVal getLValue(const FieldDecl *decl, SVal Base) const;
 
+  /// Get the lvalue for an indirect field reference.
+  SVal getLValue(const IndirectFieldDecl *decl, SVal Base) const;
+
   /// Get the lvalue for an array index.
   SVal getLValue(QualType ElementType, SVal Idx, SVal Base) const;
 
@@ -647,6 +650,18 @@ inline SVal ProgramState::getLValue(const ObjCIvarDecl *D, SVal Base) const {
 
 inline SVal ProgramState::getLValue(const FieldDecl *D, SVal Base) const {
   return getStateManager().StoreMgr->getLValueField(D, Base);
+}
+
+inline SVal ProgramState::getLValue(const IndirectFieldDecl *D,
+                                    SVal Base) const {
+  StoreManager &SM = *getStateManager().StoreMgr;
+  for (IndirectFieldDecl::chain_iterator I = D->chain_begin(),
+                                         E = D->chain_end();
+       I != E; ++I) {
+    Base = SM.getLValueField(cast<FieldDecl>(*I), Base);
+  }
+
+  return Base;
 }
 
 inline SVal ProgramState::getLValue(QualType ElementType, SVal Idx, SVal Base) const{

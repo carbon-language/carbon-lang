@@ -305,13 +305,15 @@ bool ExprEngine::inlineCall(const CallEvent &Call,
     if (!ADC->getCFGBuildOptions().AddImplicitDtors ||
         !ADC->getCFGBuildOptions().AddInitializers)
       return false;
-    // FIXME: This is a hack. We don't handle member or temporary constructors
+
+    // FIXME: This is a hack. We don't handle temporary destructors
     // right now, so we shouldn't inline their constructors.
     if (const CXXConstructorCall *Ctor = dyn_cast<CXXConstructorCall>(&Call)) {
       const CXXConstructExpr *CtorExpr = Ctor->getOriginExpr();
       if (CtorExpr->getConstructionKind() == CXXConstructExpr::CK_Complete)
-        if (!isa<VarRegion>(Ctor->getCXXThisVal().getAsRegion()))
-          return false;
+        if (const MemRegion *Target = Ctor->getCXXThisVal().getAsRegion())
+          if (!isa<DeclRegion>(Target))
+            return false;
     }
     break;
   }
