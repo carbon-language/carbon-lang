@@ -392,6 +392,10 @@ namespace llvm {
   /// into tails of their predecessors.
   extern char &TailDuplicateID;
 
+  /// MachineTraceMetrics - This pass computes critical path and CPU resource
+  /// usage in an ensemble of traces.
+  extern char &MachineTraceMetricsID;
+
   /// EarlyIfConverter - This pass performs if-conversion on SSA form by
   /// inserting cmov instructions.
   extern char &EarlyIfConverterID;

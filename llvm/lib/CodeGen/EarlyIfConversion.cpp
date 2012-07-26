@@ -17,6 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "early-ifcvt"
+#include "MachineTraceMetrics.h"
 #include "llvm/Function.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/PostOrderIterator.h"
@@ -515,6 +516,8 @@ class EarlyIfConverter : public MachineFunctionPass {
   MachineRegisterInfo *MRI;
   MachineDominatorTree *DomTree;
   MachineLoopInfo *Loops;
+  MachineTraceMetrics *Traces;
+  MachineTraceMetrics::Ensemble *MinInstr;
   SSAIfConv IfConv;
 
 public:
@@ -527,6 +530,8 @@ private:
   bool tryConvertIf(MachineBasicBlock*);
   void updateDomTree(ArrayRef<MachineBasicBlock*> Removed);
   void updateLoops(ArrayRef<MachineBasicBlock*> Removed);
+  void invalidateTraces();
+  bool shouldConvertIf();
 };
 } // end anonymous namespace
 
@@ -537,6 +542,7 @@ INITIALIZE_PASS_BEGIN(EarlyIfConverter,
                       "early-ifcvt", "Early If Converter", false, false)
 INITIALIZE_PASS_DEPENDENCY(MachineBranchProbabilityInfo)
 INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
+INITIALIZE_PASS_DEPENDENCY(MachineTraceMetrics)
 INITIALIZE_PASS_END(EarlyIfConverter,
                       "early-ifcvt", "Early If Converter", false, false)
 
@@ -546,6 +552,8 @@ void EarlyIfConverter::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<MachineDominatorTree>();
   AU.addRequired<MachineLoopInfo>();
   AU.addPreserved<MachineLoopInfo>();
+  AU.addRequired<MachineTraceMetrics>();
+  AU.addPreserved<MachineTraceMetrics>();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
@@ -576,12 +584,31 @@ void EarlyIfConverter::updateLoops(ArrayRef<MachineBasicBlock*> Removed) {
     Loops->removeBlock(Removed[i]);
 }
 
+/// Invalidate MachineTraceMetrics before if-conversion.
+void EarlyIfConverter::invalidateTraces() {
+  Traces->invalidate(IfConv.Head);
+  Traces->invalidate(IfConv.Tail);
+  Traces->invalidate(IfConv.TBB);
+  Traces->invalidate(IfConv.FBB);
+}
+
+/// Apply cost model and heuristics to the if-conversion in IfConv.
+/// Return true if the conversion is a good idea.
+///
+bool EarlyIfConverter::shouldConvertIf() {
+  if (!MinInstr)
+    MinInstr = Traces->getEnsemble(MachineTraceMetrics::TS_MinInstrCount);
+  DEBUG(dbgs() << MinInstr->getTrace(IfConv.Head));
+  return true;
+}
+
 /// Attempt repeated if-conversion on MBB, return true if successful.
 ///
 bool EarlyIfConverter::tryConvertIf(MachineBasicBlock *MBB) {
   bool Changed = false;
-  while (IfConv.canConvertIf(MBB)) {
+  while (IfConv.canConvertIf(MBB) && shouldConvertIf()) {
     // If-convert MBB and update analyses.
+    invalidateTraces();
     SmallVector<MachineBasicBlock*, 4> RemovedBlocks;
     IfConv.convertIf(RemovedBlocks);
     Changed = true;
@@ -600,6 +627,8 @@ bool EarlyIfConverter::runOnMachineFunction(MachineFunction &MF) {
   MRI = &MF.getRegInfo();
   DomTree = &getAnalysis<MachineDominatorTree>();
   Loops = getAnalysisIfAvailable<MachineLoopInfo>();
+  Traces = &getAnalysis<MachineTraceMetrics>();
+  MinInstr = 0;
 
   bool Changed = false;
   IfConv.runOnMachineFunction(MF);
