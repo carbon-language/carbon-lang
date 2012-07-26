@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements a handle way of adding debugging information to your
+// This file implements a handy way of adding debugging information to your
 // code, without it being enabled all of the time, and without having to add
 // command line options to enable it.
 //
@@ -18,8 +18,8 @@
 // can specify '-debug-only=foo' to enable JUST the debug information for the
 // foo class.
 //
-// When compiling in release mode, the -debug-* options and all code in DEBUG()
-// statements disappears, so it does not effect the runtime of the code.
+// When compiling without assertions, the -debug-* options and all code in
+// DEBUG() statements disappear, so it does not effect the runtime of the code.
 //
 //===----------------------------------------------------------------------===//
 
@@ -89,11 +89,11 @@ bool llvm::isCurrentDebugType(const char *DebugType) {
   return CurrentDebugType.empty() || DebugType == CurrentDebugType;
 }
 
-/// SetCurrentDebugType - Set the current debug type, as if the -debug-only=X
+/// setCurrentDebugType - Set the current debug type, as if the -debug-only=X
 /// option were specified.  Note that DebugFlag also needs to be set to true for
 /// debug output to be produced.
 ///
-void llvm::SetCurrentDebugType(const char *Type) {
+void llvm::setCurrentDebugType(const char *Type) {
   CurrentDebugType = Type;
 }
 

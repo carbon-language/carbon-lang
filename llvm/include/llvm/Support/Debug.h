@@ -19,7 +19,7 @@
 // foo class.
 //
 // When compiling without assertions, the -debug-* options and all code in
-// DEBUG() statements disappears, so it does not effect the runtime of the code.
+// DEBUG() statements disappear, so it does not effect the runtime of the code.
 //
 //===----------------------------------------------------------------------===//
 
@@ -49,11 +49,11 @@ extern bool DebugFlag;
 ///
 bool isCurrentDebugType(const char *Type);
 
-/// SetCurrentDebugType - Set the current debug type, as if the -debug-only=X
+/// setCurrentDebugType - Set the current debug type, as if the -debug-only=X
 /// option were specified.  Note that DebugFlag also needs to be set to true for
 /// debug output to be produced.
 ///
-void SetCurrentDebugType(const char *Type);
+void setCurrentDebugType(const char *Type);
 
 /// DEBUG_WITH_TYPE macro - This macro should be used by passes to emit debug
 /// information.  In the '-debug' option is specified on the commandline, and if
@@ -70,7 +70,7 @@ void SetCurrentDebugType(const char *Type);
 
 #else
 #define isCurrentDebugType(X) (false)
-#define SetCurrentDebugType(X)
+#define setCurrentDebugType(X)
 #define DEBUG_WITH_TYPE(TYPE, X) do { } while (0)
 #endif
 
