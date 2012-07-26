@@ -107,19 +107,19 @@ public:
 typedef void (*unexpected_handler)();
 _LIBCPP_VISIBLE unexpected_handler set_unexpected(unexpected_handler) _NOEXCEPT;
 _LIBCPP_VISIBLE unexpected_handler get_unexpected() _NOEXCEPT;
-_ATTRIBUTE(noreturn) _LIBCPP_VISIBLE void unexpected();
+_LIBCPP_NORETURN _LIBCPP_VISIBLE void unexpected();
 
 typedef void (*terminate_handler)();
 _LIBCPP_VISIBLE terminate_handler set_terminate(terminate_handler) _NOEXCEPT;
 _LIBCPP_VISIBLE terminate_handler get_terminate() _NOEXCEPT;
-_ATTRIBUTE(noreturn) _LIBCPP_VISIBLE void terminate() _NOEXCEPT;
+_LIBCPP_NORETURN _LIBCPP_VISIBLE void terminate() _NOEXCEPT;
 
 _LIBCPP_VISIBLE bool uncaught_exception() _NOEXCEPT;
 
 class exception_ptr;
 
 exception_ptr current_exception() _NOEXCEPT;
-_ATTRIBUTE(noreturn) void rethrow_exception(exception_ptr);
+_LIBCPP_NORETURN void rethrow_exception(exception_ptr);
 
 class _LIBCPP_VISIBLE exception_ptr
 {
@@ -143,7 +143,7 @@ public:
         {return !(__x == __y);}
 
     friend exception_ptr current_exception() _NOEXCEPT;
-    _ATTRIBUTE(noreturn) friend void rethrow_exception(exception_ptr);
+    _LIBCPP_NORETURN friend void rethrow_exception(exception_ptr);
 };
 
 template<class _Ep>
@@ -174,7 +174,7 @@ public:
     virtual ~nested_exception() _NOEXCEPT;
 
     // access functions
-    _ATTRIBUTE(noreturn) void rethrow_nested() const;
+    _LIBCPP_NORETURN void rethrow_nested() const;
     _LIBCPP_INLINE_VISIBILITY exception_ptr nested_ptr() const _NOEXCEPT {return __ptr_;}
 };
 
@@ -187,7 +187,7 @@ struct __nested
 };
 
 template <class _Tp>
-_ATTRIBUTE(noreturn)
+_LIBCPP_NORETURN
 void
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 throw_with_nested(_Tp&& __t, typename enable_if<
@@ -206,7 +206,7 @@ throw_with_nested (_Tp& __t, typename enable_if<
 }
 
 template <class _Tp>
-_ATTRIBUTE(noreturn)
+_LIBCPP_NORETURN
 void
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 throw_with_nested(_Tp&& __t, typename enable_if<

@@ -182,9 +182,9 @@ typedef __char32_t char32_t;
 #endif
 
 #if __has_feature(cxx_attributes)
-#  define _ATTRIBUTE(x) [[x]]
+#  define _LIBCPP_NORETURN [[noreturn]]
 #else
-#  define _ATTRIBUTE(x) __attribute__ ((x))
+#  define _LIBCPP_NORETURN __attribute__ ((noreturn))
 #endif
 
 #define _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
@@ -277,7 +277,7 @@ namespace std {
 
 #define _ALIGNAS(x) __attribute__((__aligned__(x)))
 
-#define _ATTRIBUTE(x) __attribute__((x))
+#define _LIBCPP_NORETURN __attribute__((noreturn))
 
 #if !__EXCEPTIONS
 #define _LIBCPP_NO_EXCEPTIONS
@@ -349,7 +349,7 @@ using namespace _LIBCPP_NAMESPACE __attribute__((__strong__));
 #define _LIBCPP_HAS_NO_UNICODE_CHARS
 #define _LIBCPP_HAS_NO_DELETED_FUNCTIONS
 #define __alignof__ __alignof
-#define _ATTRIBUTE __declspec
+#define _LIBCPP_NORETURN __declspec(noreturn)
 #define _ALIGNAS(x) __declspec(align(x))
 #define _LIBCPP_HAS_NO_VARIADICS
 

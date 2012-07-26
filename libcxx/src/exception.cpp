@@ -56,7 +56,7 @@ get_unexpected() _NOEXCEPT
     return __sync_fetch_and_add(&__unexpected_handler, (unexpected_handler)0);
 }
 
-_ATTRIBUTE(noreturn)
+_LIBCPP_NORETURN
 void
 unexpected()
 {
@@ -77,7 +77,7 @@ get_terminate() _NOEXCEPT
     return __sync_fetch_and_add(&__terminate_handler, (terminate_handler)0);
 }
 
-_ATTRIBUTE(noreturn)
+_LIBCPP_NORETURN
 void
 terminate() _NOEXCEPT
 {
@@ -184,7 +184,7 @@ nested_exception::~nested_exception() _NOEXCEPT
 {
 }
 
-_ATTRIBUTE(noreturn)
+_LIBCPP_NORETURN
 void
 nested_exception::rethrow_nested() const
 {
@@ -209,7 +209,7 @@ exception_ptr current_exception() _NOEXCEPT
 #endif  // __APPLE__
 }
 
-_ATTRIBUTE(noreturn)
+_LIBCPP_NORETURN
 void rethrow_exception(exception_ptr p)
 {
 #if HAVE_DEPENDENT_EH_ABI
