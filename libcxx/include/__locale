@@ -119,7 +119,7 @@ class _LIBCPP_VISIBLE locale::id
 
     static int32_t __next_id;
 public:
-    _LIBCPP_INLINE_VISIBILITY id() {}
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR id() :__id_(0) {}
 private:
     void __init();
     void operator=(const id&); // = delete;
