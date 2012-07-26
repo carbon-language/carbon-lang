@@ -13,8 +13,8 @@ extern CFStringRef CFMakeString0(void);
 extern CFStringRef CFCreateString0(void);
 void test0() {
   id x;
-  x = (id) CFMakeString0(); // expected-error {{requires a bridged cast}} expected-note {{__bridge to convert directly}} expected-note {{CFBridgingRelease call to transfer}}
-  x = (id) CFCreateString0(); // expected-error {{requires a bridged cast}} expected-note {{__bridge to convert directly}} expected-note {{CFBridgingRelease call to transfer}}
+  x = (id) CFMakeString0(); // expected-error {{requires a bridged cast}} expected-note {{CFBridgingRelease call to transfer}}
+  x = (id) CFCreateString0(); // expected-error {{requires a bridged cast}} expected-note {{CFBridgingRelease call to transfer}}
 }
 
 extern CFStringRef CFMakeString1(void) __attribute__((cf_returns_not_retained));
@@ -22,7 +22,7 @@ extern CFStringRef CFCreateString1(void) __attribute__((cf_returns_retained));
 void test1() {
   id x;
   x = (id) CFMakeString1();
-  x = (id) CFCreateString1(); // expected-error {{requires a bridged cast}} expected-note {{__bridge to convert directly}} expected-note {{CFBridgingRelease call to transfer}}
+  x = (id) CFCreateString1(); // expected-error {{requires a bridged cast}} expected-note {{CFBridgingRelease call to transfer}}
 }
 
 #define CF_AUDIT_BEGIN _Pragma("clang arc_cf_code_audited begin")
@@ -40,6 +40,6 @@ void test2() {
   id x;
   x = (id) CFMakeString2();
   x = (id) CFCreateString2();
-  x = (id) CFMakeString3(); // expected-error {{requires a bridged cast}} expected-note {{__bridge to convert directly}} expected-note {{CFBridgingRelease call to transfer}}
-  x = (id) CFCreateString3(); // expected-error {{requires a bridged cast}} expected-note {{__bridge to convert directly}} expected-note {{CFBridgingRelease call to transfer}}
+  x = (id) CFMakeString3(); // expected-error {{requires a bridged cast}} expected-note {{CFBridgingRelease call to transfer}}
+  x = (id) CFCreateString3(); // expected-error {{requires a bridged cast}} expected-note {{CFBridgingRelease call to transfer}}
 }
