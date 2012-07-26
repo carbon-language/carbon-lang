@@ -286,10 +286,15 @@ bool ExprEngine::inlineCall(const CallEvent &Call,
     // These are always at least possible to inline.
     break;
   case CE_CXXConstructor:
-  case CE_CXXDestructor:
-    // Do not inline constructors until we can really model destructors.
-    // This is unfortunate, but basically necessary for smart pointers and such.
-    return false;
+  case CE_CXXDestructor: {
+    // Only inline constructors and destructors if we built the CFGs for them
+    // properly.
+    const AnalysisDeclContext *ADC = CallerSFC->getAnalysisDeclContext();
+    if (!ADC->getCFGBuildOptions().AddImplicitDtors ||
+        !ADC->getCFGBuildOptions().AddInitializers)
+      return false;
+    break;
+  }
   case CE_CXXAllocator:
     // Do not inline allocators until we model deallocators.
     // This is unfortunate, but basically necessary for smart pointers and such.
