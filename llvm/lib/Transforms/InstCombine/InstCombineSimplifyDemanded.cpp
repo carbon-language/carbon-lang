@@ -1074,6 +1074,12 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
     // like undef&0.  The result is known zero, not undef.
     UndefElts &= UndefElts2;
     break;
+  case Instruction::FPTrunc:
+  case Instruction::FPExt:
+    TmpV = SimplifyDemandedVectorElts(I->getOperand(0), DemandedElts,
+                                      UndefElts, Depth+1);
+    if (TmpV) { I->setOperand(0, TmpV); MadeChange = true; }
+    break;
     
   case Instruction::Call: {
     IntrinsicInst *II = dyn_cast<IntrinsicInst>(I);

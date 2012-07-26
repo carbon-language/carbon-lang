@@ -162,4 +162,32 @@ entry:
   ret <4 x float> %shuffle9.i
 }
 
+define <2 x float> @test_fptrunc(double %f) {
+; CHECK: @test_fptrunc
+; CHECK: insertelement
+; CHECK: insertelement
+; CHECK-NOT: insertelement
+  %tmp9 = insertelement <4 x double> undef, double %f, i32 0
+  %tmp10 = insertelement <4 x double> %tmp9, double 0.000000e+00, i32 1
+  %tmp11 = insertelement <4 x double> %tmp10, double 0.000000e+00, i32 2
+  %tmp12 = insertelement <4 x double> %tmp11, double 0.000000e+00, i32 3
+  %tmp5 = fptrunc <4 x double> %tmp12 to <4 x float>
+  %ret = shufflevector <4 x float> %tmp5, <4 x float> undef, <2 x i32> <i32 0, i32 1>
+  ret <2 x float> %ret
+}
+
+define <2 x double> @test_fpext(float %f) {
+; CHECK: @test_fpext
+; CHECK: insertelement
+; CHECK: insertelement
+; CHECK-NOT: insertelement
+  %tmp9 = insertelement <4 x float> undef, float %f, i32 0
+  %tmp10 = insertelement <4 x float> %tmp9, float 0.000000e+00, i32 1
+  %tmp11 = insertelement <4 x float> %tmp10, float 0.000000e+00, i32 2
+  %tmp12 = insertelement <4 x float> %tmp11, float 0.000000e+00, i32 3
+  %tmp5 = fpext <4 x float> %tmp12 to <4 x double>
+  %ret = shufflevector <4 x double> %tmp5, <4 x double> undef, <2 x i32> <i32 0, i32 1>
+  ret <2 x double> %ret
+}
+
 
