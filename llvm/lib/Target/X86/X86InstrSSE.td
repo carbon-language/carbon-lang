@@ -7704,24 +7704,18 @@ let Predicates = [HasAVX2] in {
   // is used by additional users, which prevents the pattern selection.
   let AddedComplexity = 20 in {
     def : Pat<(v4f32 (X86VBroadcast FR32:$src)),
-              (VBROADCASTSSrr
-              (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), FR32:$src, sub_ss))>;
+              (VBROADCASTSSrr (COPY_TO_REGCLASS FR32:$src, VR128))>;
     def : Pat<(v8f32 (X86VBroadcast FR32:$src)),
-              (VBROADCASTSSYrr
-              (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), FR32:$src, sub_ss))>;
+              (VBROADCASTSSYrr (COPY_TO_REGCLASS FR32:$src, VR128))>;
     def : Pat<(v4f64 (X86VBroadcast FR64:$src)),
-              (VBROADCASTSDYrr
-              (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)), FR64:$src, sub_sd))>;
+              (VBROADCASTSDYrr (COPY_TO_REGCLASS FR64:$src, VR128))>;
 
     def : Pat<(v4i32 (X86VBroadcast GR32:$src)),
-              (VBROADCASTSSrr
-              (INSERT_SUBREG (v4i32 (IMPLICIT_DEF)), GR32:$src, sub_ss))>;
+              (VBROADCASTSSrr (COPY_TO_REGCLASS GR32:$src, VR128))>;
     def : Pat<(v8i32 (X86VBroadcast GR32:$src)),
-              (VBROADCASTSSYrr
-              (INSERT_SUBREG (v4i32 (IMPLICIT_DEF)), GR32:$src, sub_ss))>;
+              (VBROADCASTSSYrr (COPY_TO_REGCLASS GR32:$src, VR128))>;
     def : Pat<(v4i64 (X86VBroadcast GR64:$src)),
-              (VBROADCASTSDYrr
-              (INSERT_SUBREG (v2i64 (IMPLICIT_DEF)), GR64:$src, sub_sd))>;
+              (VBROADCASTSDYrr (COPY_TO_REGCLASS GR64:$src, VR128))>;
   }
 }
 
@@ -7745,46 +7739,26 @@ def : Pat<(v4i32 (X86VBroadcast (loadi32 addr:$src))),
   let AddedComplexity = 20 in {
   // 128bit broadcasts:
   def : Pat<(v4f32 (X86VBroadcast FR32:$src)),
-            (VPSHUFDri
-            (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), FR32:$src, sub_ss), 0)>;
+            (VPSHUFDri (COPY_TO_REGCLASS FR32:$src, VR128), 0)>;
   def : Pat<(v8f32 (X86VBroadcast FR32:$src)),
             (VINSERTF128rr (INSERT_SUBREG (v8f32 (IMPLICIT_DEF)),
-              (VPSHUFDri
-                (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), FR32:$src, sub_ss), 0),
-                  sub_xmm),
-              (VPSHUFDri
-                (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), FR32:$src, sub_ss),
-               0), 1)>;
+              (VPSHUFDri (COPY_TO_REGCLASS FR32:$src, VR128), 0), sub_xmm),
+              (VPSHUFDri (COPY_TO_REGCLASS FR32:$src, VR128), 0), 1)>;
   def : Pat<(v4f64 (X86VBroadcast FR64:$src)),
             (VINSERTF128rr (INSERT_SUBREG (v4f64 (IMPLICIT_DEF)),
-              (VPSHUFDri
-                (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)), FR64:$src, sub_sd),
-                0x44),
-              sub_xmm),
-              (VPSHUFDri
-                (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)), FR64:$src, sub_sd),
-                0x44), 1)>;
+              (VPSHUFDri (COPY_TO_REGCLASS FR64:$src, VR128), 0x44), sub_xmm),
+              (VPSHUFDri (COPY_TO_REGCLASS FR64:$src, VR128), 0x44), 1)>;
 
   def : Pat<(v4i32 (X86VBroadcast GR32:$src)),
-            (VPSHUFDri
-            (INSERT_SUBREG (v4i32 (IMPLICIT_DEF)), GR32:$src, sub_ss), 0)>;
+            (VPSHUFDri (COPY_TO_REGCLASS GR32:$src, VR128), 0)>;
   def : Pat<(v8i32 (X86VBroadcast GR32:$src)),
             (VINSERTF128rr (INSERT_SUBREG (v8i32 (IMPLICIT_DEF)),
-              (VPSHUFDri
-                (INSERT_SUBREG (v4i32 (IMPLICIT_DEF)), GR32:$src, sub_ss), 0),
-                  sub_xmm),
-              (VPSHUFDri
-                (INSERT_SUBREG (v4i32 (IMPLICIT_DEF)), GR32:$src, sub_ss),
-               0), 1)>;
+              (VPSHUFDri (COPY_TO_REGCLASS GR32:$src, VR128), 0), sub_xmm),
+              (VPSHUFDri (COPY_TO_REGCLASS GR32:$src, VR128), 0), 1)>;
   def : Pat<(v4i64 (X86VBroadcast GR64:$src)),
             (VINSERTF128rr (INSERT_SUBREG (v4i64 (IMPLICIT_DEF)),
-              (VPSHUFDri
-                (INSERT_SUBREG (v2i64 (IMPLICIT_DEF)), GR64:$src, sub_sd),
-                0x44),
-              sub_xmm),
-              (VPSHUFDri
-                (INSERT_SUBREG (v2i64 (IMPLICIT_DEF)), GR64:$src, sub_sd),
-                0x44), 1)>;
+              (VPSHUFDri (COPY_TO_REGCLASS GR64:$src, VR128), 0x44), sub_xmm),
+              (VPSHUFDri (COPY_TO_REGCLASS GR64:$src, VR128), 0x44), 1)>;
   }
 }
 
