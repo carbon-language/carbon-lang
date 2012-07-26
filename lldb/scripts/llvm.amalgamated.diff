@@ -492,7 +492,7 @@ Index: lib/Target/X86/Disassembler/X86Disassembler.cpp
    if (type == TYPE_RELv) {
 +    isBranch = true;
 +    pcrel = insn.startLocation +
-+            insn.displacementOffset + insn.displacementSize;
++            insn.immediateOffset + insn.immediateSize;
      switch (insn.displacementSize) {
      default:
        break;
