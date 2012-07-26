@@ -1,6 +1,8 @@
 ; RUN: opt < %s -reassociate -S | FileCheck %s
 ; PR12169
 ; PR12764
+; XFAIL: *
+; Transform disabled until PR13021 is fixed.
 
 define i64 @f(i64 %x0) {
 ; CHECK: @f

@@ -543,6 +543,7 @@ static bool LinearizeExprTree(BinaryOperator *I,
         // Update the number of paths to the leaf.
         IncorporateWeight(It->second, Weight, Opcode);
 
+#if 0   // TODO: Re-enable once PR13021 is fixed.
         // The leaf already has one use from inside the expression.  As we want
         // exactly one such use, drop this new use of the leaf.
         assert(!Op->hasOneUse() && "Only one use, but we got here twice!");
@@ -559,6 +560,7 @@ static bool LinearizeExprTree(BinaryOperator *I,
           Leaves.erase(It);
           continue;
         }
+#endif
 
         // If we still have uses that are not accounted for by the expression
         // then it is not safe to modify the value.
