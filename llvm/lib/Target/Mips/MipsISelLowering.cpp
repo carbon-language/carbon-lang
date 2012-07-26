@@ -2645,7 +2645,6 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   SmallVector<ISD::InputArg, 32> &Ins   = CLI.Ins;
   SDValue InChain                       = CLI.Chain;
   SDValue Callee                        = CLI.Callee;
-  SDValue CalleeSave                    = CLI.Callee;
   bool &isTailCall                      = CLI.IsTailCall;
   CallingConv::ID CallConv              = CLI.CallConv;
   bool isVarArg                         = CLI.IsVarArg;
@@ -2867,6 +2866,9 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     }
   }
 
+  // T9 register operand.
+  SDValue T9;
+
   // T9 should contain the address of the callee function if
   // -reloction-model=pic or it is an indirect call.
   if (IsPICCall || !GlobalOrExternal) {
@@ -2874,7 +2876,11 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     unsigned T9Reg = IsN64 ? Mips::T9_64 : Mips::T9;
     Chain = DAG.getCopyToReg(Chain, dl, T9Reg, Callee, SDValue(0, 0));
     InFlag = Chain.getValue(1);
-    Callee = DAG.getRegister(T9Reg, getPointerTy());
+
+    if (Subtarget->inMips16Mode())
+      T9 = DAG.getRegister(T9Reg, getPointerTy());
+    else
+      Callee = DAG.getRegister(T9Reg, getPointerTy());
   }
 
   // Insert node "GP copy globalreg" before call to function.
@@ -2902,7 +2908,7 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
   SmallVector<SDValue, 8> Ops;
   Ops.push_back(Chain);
-  Ops.push_back(Subtarget->inMips16Mode()? CalleeSave: Callee);
+  Ops.push_back(Callee);
 
   // Add argument registers to the end of the list so that they are
   // known live into the call.
@@ -2910,8 +2916,10 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     Ops.push_back(DAG.getRegister(RegsToPass[i].first,
                                   RegsToPass[i].second.getValueType()));
 
-  if (Subtarget->inMips16Mode())
-    Ops.push_back(Callee);
+  // Add T9 register operand.
+  if (T9.getNode())
+    Ops.push_back(T9);
+
   // Add a register mask operand representing the call-preserved registers.
   const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
   const uint32_t *Mask = TRI->getCallPreservedMask(CallConv);

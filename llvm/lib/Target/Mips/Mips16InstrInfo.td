@@ -46,6 +46,15 @@ class FEXT_RI16_ins<bits<5> _op, string asmstr,
 class FEXT_RI16_PC_ins<bits<5> _op, string asmstr, InstrItinClass itin>:
   FEXT_RI16_ins_base<_op, asmstr, "\t$rx, $$pc, $imm", itin>;
 
+
+class FEXT_2RI16_ins<bits<5> _op, string asmstr,
+                     InstrItinClass itin>:
+  FEXT_RI16<_op, (outs CPU16Regs:$rx), (ins CPU16Regs:$rx_, simm16:$imm),
+            !strconcat(asmstr, "\t$rx, $imm"), [], itin> {
+  let Constraints = "$rx_ = $rx";
+}
+
+
 //
 // RR-type instruction format
 //
@@ -80,6 +89,20 @@ def mem16 : Operand<i32> {
 }
 
 //
+
+// Format: ADDIU rx, immediate MIPS16e
+// Purpose: Add Immediate Unsigned Word (2-Operand, Extended)
+// To add a constant to a 32-bit integer.
+//
+class AddiuRxImmX16_base: FEXT_RI16_ins<0b01001, "addiu", IIAlu>;
+def AddiuRxImmX16: AddiuRxImmX16_base;
+
+
+class AddiuRxRxImmX16_base: FEXT_2RI16_ins<0b01001, "addiu", IIAlu>;
+def AddiuRxRxImmX16: AddiuRxRxImmX16_base;
+
+//
+
 // Format: ADDIU rx, pc, immediate MIPS16e
 // Purpose: Add Immediate Unsigned Word (3-Operand, PC-Relative, Extended)
 // To add a constant to the program counter.
@@ -240,4 +263,7 @@ def ADJCALLSTACKUP16   : MipsPseudo16<(outs), (ins uimm16:$amt1, uimm16:$amt2),
 
 // Small immediates
 def : Mips16Pat<(i32 immZExt16:$in), (LiRxImmX16 immZExt16:$in)>;
-def : Mips16Pat<(MipsLo tglobaladdr:$in), (LiRxImmX16 tglobaladdr:$in)>;
+
+
+def : Mips16Pat<(add CPU16Regs:$hi, (MipsLo tglobaladdr:$lo)),
+                (AddiuRxRxImmX16 CPU16Regs:$hi, tglobaladdr:$lo)>;
