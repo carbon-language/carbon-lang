@@ -20,6 +20,7 @@
 // Not a portable test
 
 #include <codecvt>
+#include <cstdlib>
 #include <cassert>
 
 int outstanding_news = 0;
