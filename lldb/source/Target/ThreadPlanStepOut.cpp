@@ -415,6 +415,7 @@ ThreadPlanStepOut::QueueInlinedStepPlan (bool queue_now)
             {
                 SymbolContext inlined_sc;
                 inlined_block->CalculateSymbolContext(&inlined_sc);
+                inlined_sc.target_sp = GetTarget().shared_from_this();
                 RunMode run_mode = m_stop_others ? lldb::eOnlyThisThread : lldb::eAllThreads;
                 ThreadPlanStepOverRange *step_through_inline_plan_ptr = new ThreadPlanStepOverRange(m_thread, 
                                                                                                     inline_range, 

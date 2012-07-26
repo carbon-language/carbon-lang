@@ -110,7 +110,36 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
         if (older_frame_sp)
         {
             const SymbolContext &older_context = older_frame_sp->GetSymbolContext(eSymbolContextEverything);
-            if (older_context == m_addr_context)
+            
+            // Match as much as is specified in the m_addr_context:
+            // This is a fairly loose sanity check.  Note, sometimes the target doesn't get filled
+            // in so I left out the target check.  And sometimes the module comes in as the .o file from the
+            // inlined range, so I left that out too...
+            
+            bool older_ctx_is_equivalent = false;
+            if (m_addr_context.comp_unit)
+            {
+                if (m_addr_context.comp_unit == older_context.comp_unit)
+                {
+                    if (m_addr_context.function && m_addr_context.function == older_context.function)
+                    {
+                        if (m_addr_context.block && m_addr_context.block == older_context.block)
+                        {
+                            older_ctx_is_equivalent = true;
+                            if (m_addr_context.line_entry.IsValid() && LineEntry::Compare(m_addr_context.line_entry, older_context.line_entry) != 0)
+                            {
+                                older_ctx_is_equivalent = false;
+                            }
+                        }
+                    }
+                }
+            }
+            else if (m_addr_context.symbol && m_addr_context.symbol == older_context.symbol)
+            {
+                older_ctx_is_equivalent = true;
+            }
+        
+            if (older_ctx_is_equivalent)
             {
                 new_plan = m_thread.QueueThreadPlanForStepOut (false, 
                                                            NULL, 
