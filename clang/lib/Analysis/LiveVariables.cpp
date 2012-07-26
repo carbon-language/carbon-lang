@@ -455,6 +455,12 @@ LiveVariablesImpl::runOnBlock(const CFGBlock *block,
   for (CFGBlock::const_reverse_iterator it = block->rbegin(),
        ei = block->rend(); it != ei; ++it) {
     const CFGElement &elem = *it;
+
+    if (const CFGAutomaticObjDtor *Dtor = dyn_cast<CFGAutomaticObjDtor>(&elem)){
+      val.liveDecls = DSetFact.add(val.liveDecls, Dtor->getVarDecl());
+      continue;
+    }
+
     if (!isa<CFGStmt>(elem))
       continue;
     
