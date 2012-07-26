@@ -1090,8 +1090,15 @@ void MicrosoftCXXNameMangler::mangleType(const FunctionType *T,
   else {
     QualType Result = Proto->getResultType();
     const Type* RT = Result.getTypePtr();
-    if(isa<TagType>(RT) && !RT->isAnyPointerType() && !RT->isReferenceType())
-        Out << "?A";
+    if (!RT->isAnyPointerType() && !RT->isReferenceType()) {
+      if (Result.hasQualifiers() || !RT->isBuiltinType())
+        Out << '?';
+      if (!RT->isBuiltinType() && !Result.hasQualifiers()) {
+        // Lack of qualifiers for user types is mangled as 'A'.
+        Out << 'A';
+      }
+    }
+
     // FIXME: Get the source range for the result type. Or, better yet,
     // implement the unimplemented stuff so we don't need accurate source
     // location info anymore :).
