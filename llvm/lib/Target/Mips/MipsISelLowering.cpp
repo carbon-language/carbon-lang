@@ -2674,6 +2674,14 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NextStackOffset = CCInfo.getNextStackOffset();
+  unsigned StackAlignment = TFL->getStackAlignment();
+  NextStackOffset = RoundUpToAlignment(NextStackOffset, StackAlignment);
+
+  // Update size of the maximum argument space.
+  // For O32, a minimum of four words (16 bytes) of argument space is
+  // allocated.
+  if (IsO32 && (CallConv != CallingConv::Fast))
+    NextStackOffset = std::max(NextStackOffset, (unsigned)16);
 
   // Chain is the output chain of the last Load/Store or CopyToReg node.
   // ByValChain is the output chain of the last Memcpy node created for copying
@@ -2687,24 +2695,12 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // of dynamically allocated area on the stack.
   int DynAllocFI = MipsFI->getDynAllocFI();
 
-  // Update size of the maximum argument space.
-  // For O32, a minimum of four words (16 bytes) of argument space is
-  // allocated.
-  if (IsO32 && (CallConv != CallingConv::Fast))
-    NextStackOffset = std::max(NextStackOffset, (unsigned)16);
-
-  unsigned MaxCallFrameSize = MipsFI->getMaxCallFrameSize();
-
-  if (MaxCallFrameSize < NextStackOffset) {
+  if (MipsFI->getMaxCallFrameSize() < NextStackOffset) {
     MipsFI->setMaxCallFrameSize(NextStackOffset);
 
     // Set the offsets relative to $sp of the $gp restore slot and dynamically
     // allocated stack space. These offsets must be aligned to a boundary
     // determined by the stack alignment of the ABI.
-    unsigned StackAlignment = TFL->getStackAlignment();
-    NextStackOffset = (NextStackOffset + StackAlignment - 1) /
-                      StackAlignment * StackAlignment;
-
     MFI->setObjectOffset(DynAllocFI, NextStackOffset);
   }
 
@@ -2933,8 +2929,7 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   InFlag = Chain.getValue(1);
 
   // Create the CALLSEQ_END node.
-  Chain = DAG.getCALLSEQ_END(Chain,
-                             DAG.getIntPtrConstant(NextStackOffset, true),
+  Chain = DAG.getCALLSEQ_END(Chain, NextStackOffsetVal,
                              DAG.getIntPtrConstant(0, true), InFlag);
   InFlag = Chain.getValue(1);
 
