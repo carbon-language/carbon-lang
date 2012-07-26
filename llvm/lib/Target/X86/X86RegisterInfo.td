@@ -23,9 +23,6 @@ let Namespace = "X86" in {
   def sub_8bit_hi : SubRegIndex;
   def sub_16bit   : SubRegIndex;
   def sub_32bit   : SubRegIndex;
-
-  def sub_ss  : SubRegIndex;
-  def sub_sd  : SubRegIndex;
   def sub_xmm : SubRegIndex;
 
 
@@ -163,8 +160,6 @@ let Namespace = "X86" in {
   def FP6 : Register<"fp6">;
 
   // XMM Registers, used by the various SSE instruction set extensions.
-  // The sub_ss and sub_sd subregs are the same registers with another regclass.
-  let CompositeIndices = [(sub_ss), (sub_sd)] in {
   def XMM0: Register<"xmm0">, DwarfRegNum<[17, 21, 21]>;
   def XMM1: Register<"xmm1">, DwarfRegNum<[18, 22, 22]>;
   def XMM2: Register<"xmm2">, DwarfRegNum<[19, 23, 23]>;
@@ -184,7 +179,7 @@ let Namespace = "X86" in {
   def XMM13: Register<"xmm13">, DwarfRegNum<[30, -2, -2]>;
   def XMM14: Register<"xmm14">, DwarfRegNum<[31, -2, -2]>;
   def XMM15: Register<"xmm15">, DwarfRegNum<[32, -2, -2]>;
-  }}
+  } // CostPerUse
 
   // YMM Registers, used by AVX instructions
   let SubRegIndices = [sub_xmm] in {
