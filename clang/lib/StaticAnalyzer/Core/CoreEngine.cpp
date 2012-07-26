@@ -266,6 +266,7 @@ void CoreEngine::dispatchWorkItem(ExplodedNode* Pred, ProgramPoint Loc,
     default:
       assert(isa<PostStmt>(Loc) ||
              isa<PostInitializer>(Loc) ||
+             isa<PostImplicitCall>(Loc) ||
              isa<CallExitEnd>(Loc));
       HandlePostStmt(WU.getBlock(), WU.getIndex(), Pred);
       break;
@@ -507,7 +508,8 @@ void CoreEngine::enqueueStmtNode(ExplodedNode *N,
   }
 
   // Do not create extra nodes. Move to the next CFG element.
-  if (isa<PostInitializer>(N->getLocation())) {
+  if (isa<PostInitializer>(N->getLocation()) ||
+      isa<PostImplicitCall>(N->getLocation())) {
     WList->enqueue(N, Block, Idx+1);
     return;
   }
