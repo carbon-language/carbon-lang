@@ -17,7 +17,6 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/Calls.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/StmtCXX.h"
-#include "clang/AST/ParentMap.h"
 
 using namespace clang;
 using namespace ento;
@@ -41,45 +40,35 @@ void ExprEngine::CreateCXXTemporaryObject(const MaterializeTemporaryExpr *ME,
   Bldr.generateNode(ME, Pred, state->BindExpr(ME, LCtx, loc::MemRegionVal(R)));
 }
 
-static const VarDecl *findDirectConstruction(const DeclStmt *DS,
-                                             const Expr *Init) {
-  for (DeclStmt::const_decl_iterator I = DS->decl_begin(), E = DS->decl_end();
-       I != E; ++I) {
-    const VarDecl *Var = dyn_cast<VarDecl>(*I);
-    if (!Var)
-      continue;
-    if (Var->getInit() != Init)
-      continue;
-    // FIXME: We need to decide how copy-elision should work here.
-    if (!Var->isDirectInit())
-      break;
-    if (Var->getType()->isReferenceType())
-      break;
-    return Var;
-  }
-
-  return 0;
-}
-
 void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
                                        ExplodedNode *Pred,
                                        ExplodedNodeSet &destNodes) {
   const LocationContext *LCtx = Pred->getLocationContext();
+  ProgramStateRef State = Pred->getState();
+
   const MemRegion *Target = 0;
 
   switch (CE->getConstructionKind()) {
   case CXXConstructExpr::CK_Complete: {
-    // See if we're constructing an existing region.
-    // FIXME: This is inefficient. Not only are we getting the parent of the
-    // CXXConstructExpr, but we also then have to crawl through it if it's a
-    // DeclStmt to find out which variable is being constructed. (The CFG has
-    // one (fake) DeclStmt per Decl, but ParentMap uses the original AST.)
-    const ParentMap &PM = LCtx->getParentMap();
-    if (const DeclStmt *DS = dyn_cast_or_null<DeclStmt>(PM.getParent(CE)))
-      if (const VarDecl *Var = findDirectConstruction(DS, CE))
-        Target = Pred->getState()->getLValue(Var, LCtx).getAsRegion();
-    // If we can't find an existing region to construct into, we'll just
+    // See if we're constructing an existing region by looking at the next
+    // element in the CFG.
+    const CFGBlock *B = currentBuilderContext->getBlock();
+    if (currentStmtIdx + 1 < B->size()) {
+      CFGElement Next = (*B)[currentStmtIdx+1];
+
+      // Is this a constructor for a local variable?
+      if (const CFGStmt *StmtElem = dyn_cast<CFGStmt>(&Next))
+        if (const DeclStmt *DS = dyn_cast<DeclStmt>(StmtElem->getStmt()))
+          if (const VarDecl *Var = dyn_cast<VarDecl>(DS->getSingleDecl()))
+            if (Var->getInit() == CE)
+              Target = State->getLValue(Var, LCtx).getAsRegion();
+
+      // FIXME: This will eventually need to handle new-expressions as well.
+    }
+
+    // If we couldn't find an existing region to construct into, we'll just
     // generate a symbolic region, which is fine.
+
     break;
   }
   case CXXConstructExpr::CK_NonVirtualBase:
@@ -88,7 +77,7 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
     const CXXMethodDecl *CurCtor = cast<CXXMethodDecl>(LCtx->getDecl());
     Loc ThisPtr = getSValBuilder().getCXXThis(CurCtor,
                                               LCtx->getCurrentStackFrame());
-    SVal ThisVal = Pred->getState()->getSVal(ThisPtr);
+    SVal ThisVal = State->getSVal(ThisPtr);
 
     if (CE->getConstructionKind() == CXXConstructExpr::CK_Delegating) {
       Target = ThisVal.getAsRegion();
@@ -102,8 +91,7 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
   }
   }
 
-  CXXConstructorCall Call(CE, Target, Pred->getState(),
-                          Pred->getLocationContext());
+  CXXConstructorCall Call(CE, Target, State, LCtx);
 
   ExplodedNodeSet DstPreVisit;
   getCheckerManager().runCheckersForPreStmt(DstPreVisit, Pred, CE, *this);
