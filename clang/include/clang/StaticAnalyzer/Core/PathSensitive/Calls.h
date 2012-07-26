@@ -121,15 +121,9 @@ public:
   const Decl *getDecl() const;
 
   /// \brief Returns the definition of the function or method that will be
-  /// called. May be null.
-  ///
-  /// This is used when deciding how to inline the call.
-  ///
-  /// \param IsDynamicDispatch True if the definition returned may not be the
-  ///   definition that is actually invoked at runtime. Note that if we have
-  ///   sufficient type information to devirtualize a dynamic method call,
-  ///   we will (and \p IsDynamicDispatch will be set to \c false).
-  const Decl *getDefinition(bool &IsDynamicDispatch) const;
+  /// called. Returns NULL if the definition cannot be found; ex: due to
+  /// dynamic dispatch in ObjC methods.
+  const Decl *getRuntimeDefinition() const;
 
   /// \brief Returns the expression whose value will be the result of this call.
   /// May be null.
@@ -289,8 +283,7 @@ public:
     return cast_or_null<FunctionDecl>(CallEvent::getDecl());
   }
 
-  const Decl *getDefinition(bool &IsDynamicDispatch) const {
-    IsDynamicDispatch = false;
+  const Decl *getRuntimeDefinition() const {
     const FunctionDecl *FD = getDecl();
     // Note that hasBody() will fill FD with the definition FunctionDecl.
     if (FD && FD->hasBody(FD))
@@ -371,7 +364,7 @@ protected:
     : SimpleCall(CE, St, LCtx, K) {}
 
 public:
-  const Decl *getDefinition(bool &IsDynamicDispatch) const;
+  const Decl *getRuntimeDefinition() const;
 
   static bool classof(const CallEvent *CA) {
     return CA->getKind() >= CE_BEG_CXX_INSTANCE_CALLS &&
@@ -457,8 +450,7 @@ public:
     return BR->getDecl();
   }
 
-  const Decl *getDefinition(bool &IsDynamicDispatch) const {
-    IsDynamicDispatch = false;
+  const Decl *getRuntimeDefinition() const {
     return getBlockDecl();
   }
 
@@ -551,7 +543,7 @@ public:
   unsigned getNumArgs() const { return 0; }
 
   SVal getCXXThisVal() const;
-  const Decl *getDefinition(bool &IsDynamicDispatch) const;
+  const Decl *getRuntimeDefinition() const;
 
   static bool classof(const CallEvent *CA) {
     return CA->getKind() == CE_CXXDestructor;
@@ -620,6 +612,8 @@ protected:
   void getExtraInvalidatedRegions(RegionList &Regions) const;
 
   QualType getDeclaredResultType() const;
+  ObjCMethodDecl *LookupClassMethodDefinition(Selector Sel,
+                                           ObjCInterfaceDecl *ClassDecl) const;
 
 public:
   ObjCMethodCall(const ObjCMessageExpr *Msg, ProgramStateRef St,
@@ -678,18 +672,23 @@ public:
     llvm_unreachable("Unknown message kind");
   }
 
-  const Decl *getDefinition(bool &IsDynamicDispatch) const {
-    IsDynamicDispatch = true;
-    
-    const ObjCMethodDecl *MD = getDecl();
-    if (!MD)
-      return 0;
+  // TODO: We might want to only compute this once (or change the API for 
+  // getting the parameters). Currently, this gets called 3 times during 
+  // inlining.
+  const Decl *getRuntimeDefinition() const {
 
-    for (Decl::redecl_iterator I = MD->redecls_begin(), E = MD->redecls_end();
-         I != E; ++I) {
-      if (cast<ObjCMethodDecl>(*I)->isThisDeclarationADefinition())
-        return *I;
+    const ObjCMessageExpr *E = getOriginExpr();
+    if (E->isInstanceMessage()) {
+      return 0;
+    } else {
+      // This is a calss method.
+      // If we have type info for the receiver class, we are calling via
+      // class name.
+      if (ObjCInterfaceDecl *IDecl = E->getReceiverInterface()) {
+        return LookupClassMethodDefinition(E->getSelector(), IDecl);
+      }
     }
+
     return 0;
   }
 
@@ -770,8 +769,8 @@ inline const Decl *CallEvent::getDecl() const {
   DISPATCH(getDecl);
 }
 
-inline const Decl *CallEvent::getDefinition(bool &IsDynamicDispatch) const {
-  DISPATCH_ARG(getDefinition, IsDynamicDispatch);
+inline const Decl *CallEvent::getRuntimeDefinition() const {
+  DISPATCH(getRuntimeDefinition);
 }
 
 inline unsigned CallEvent::getNumArgs() const {

@@ -190,9 +190,6 @@ void ExprEngine::VisitObjCMessage(const ObjCMethodCall &msg,
         // Generate a transition to non-Nil state.
         if (notNilState != state)
           Pred = Bldr.generateNode(currentStmt, Pred, notNilState);
-
-        // Evaluate the call.
-        defaultEvalCall(Bldr, Pred, msg);
       }
     } else {
       // Check for special class methods.
@@ -242,10 +239,10 @@ void ExprEngine::VisitObjCMessage(const ObjCMethodCall &msg,
 
         }
       }
-
-      // Evaluate the call.
-      defaultEvalCall(Bldr, Pred, msg);
     }
+    // Evaluate the call.
+    defaultEvalCall(Bldr, Pred, msg);
+
   }
   
   ExplodedNodeSet dstPostvisit;

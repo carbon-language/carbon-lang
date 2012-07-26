@@ -271,9 +271,8 @@ bool ExprEngine::inlineCall(const CallEvent &Call,
   if (!getAnalysisManager().shouldInlineCall())
     return false;
 
-  bool IsDynamicDispatch;
-  const Decl *D = Call.getDefinition(IsDynamicDispatch);
-  if (!D || IsDynamicDispatch)
+  const Decl *D = Call.getRuntimeDefinition();
+  if (!D)
     return false;
 
   const LocationContext *CurLC = Pred->getLocationContext();
@@ -305,9 +304,7 @@ bool ExprEngine::inlineCall(const CallEvent &Call,
     break;
   }
   case CE_ObjCMessage:
-    // These always use dynamic dispatch; enabling inlining means assuming
-    // that a particular method will be called at runtime.
-    llvm_unreachable("Dynamic dispatch should be handled above.");
+    break;
   }
 
   if (!shouldInlineDecl(D, Pred))
@@ -435,7 +432,6 @@ ProgramStateRef ExprEngine::bindReturnValue(const CallEvent &Call,
     case OMF_self: {
       // These methods return their receivers.
       return State->BindExpr(E, LCtx, Msg->getReceiverSVal());
-      break;
     }
     }
   }
@@ -457,15 +453,13 @@ void ExprEngine::defaultEvalCall(NodeBuilder &Bldr, ExplodedNode *Pred,
   // The origin expression here is just used as a kind of checksum;
   // for CallEvents that do not have origin expressions, this should still be
   // safe.
-  if (!isa<ObjCMethodCall>(Call)) {
-    State = getInlineFailedState(Pred->getState(), E);
-    if (State == 0 && inlineCall(Call, Pred)) {
-      // If we inlined the call, the successor has been manually added onto
-      // the work list and we should not consider it for subsequent call
-      // handling steps.
-      Bldr.takeNodes(Pred);
-      return;
-    }
+  State = getInlineFailedState(Pred->getState(), E);
+  if (State == 0 && inlineCall(Call, Pred)) {
+    // If we inlined the call, the successor has been manually added onto
+    // the work list and we should not consider it for subsequent call
+    // handling steps.
+    Bldr.takeNodes(Pred);
+    return;
   }
 
   // If we can't inline it, handle the return value and invalidate the regions.

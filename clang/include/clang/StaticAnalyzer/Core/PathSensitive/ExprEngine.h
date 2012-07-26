@@ -471,7 +471,7 @@ public:
   void evalCall(ExplodedNodeSet &Dst, ExplodedNode *Pred,
                 const SimpleCall &Call);
 
-  /// \bried Default implementation of call evaluation.
+  /// \brief Default implementation of call evaluation.
   void defaultEvalCall(NodeBuilder &B, ExplodedNode *Pred,
                        const CallEvent &Call);
 private:
