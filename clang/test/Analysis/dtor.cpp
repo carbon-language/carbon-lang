@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc,debug.ExprInspection -analyzer-store region -analyzer-ipa=inlining -cfg-add-implicit-dtors -cfg-add-initializers -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc,debug.ExprInspection -analyzer-store region -analyzer-ipa=inlining -cfg-add-implicit-dtors -cfg-add-initializers -Wno-null-dereference -verify %s
 
 void clang_analyzer_eval(bool);
 
@@ -153,4 +153,23 @@ void testArrayInvalidation() {
   // The destructors should have invalidated i and j.
   clang_analyzer_eval(i == 42); // expected-warning{{UNKNOWN}}
   clang_analyzer_eval(j == 42); // expected-warning{{UNKNOWN}}
+}
+
+
+
+// Don't crash on a default argument inside an initializer.
+struct DefaultArg {
+  DefaultArg(int x = 0) {}
+  ~DefaultArg();
+};
+
+struct InheritsDefaultArg : DefaultArg {
+  InheritsDefaultArg() {}
+  virtual ~InheritsDefaultArg();
+};
+
+void testDefaultArg() {
+  InheritsDefaultArg a;
+  // Force a bug to be emitted.
+  *(char *)0 = 1; // expected-warning{{Dereference of null pointer}}
 }

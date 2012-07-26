@@ -253,16 +253,33 @@ static SourceLocation getValidSourceLocation(const Stmt* S,
   // source code, so find an enclosing statement and use its location.
   if (!L.isValid()) {
 
-    ParentMap *PM = 0;
+    AnalysisDeclContext *ADC;
     if (LAC.is<const LocationContext*>())
-      PM = &LAC.get<const LocationContext*>()->getParentMap();
+      ADC = LAC.get<const LocationContext*>()->getAnalysisDeclContext();
     else
-      PM = &LAC.get<AnalysisDeclContext*>()->getParentMap();
+      ADC = LAC.get<AnalysisDeclContext*>();
 
-    while (!L.isValid()) {
-      S = PM->getParent(S);
-      L = UseEnd ? S->getLocEnd() : S->getLocStart();
-    }
+    ParentMap &PM = ADC->getParentMap();
+
+    const Stmt *Parent = S;
+    do {
+      Parent = PM.getParent(Parent);
+
+      // In rare cases, we have implicit top-level expressions,
+      // such as arguments for implicit member initializers.
+      // In this case, fall back to the start of the body (even if we were
+      // asked for the statement end location).
+      if (!Parent) {
+        const Stmt *Body = ADC->getBody();
+        if (Body)
+          L = Body->getLocStart();
+        else
+          L = ADC->getDecl()->getLocEnd();
+        break;
+      }
+
+      L = UseEnd ? Parent->getLocEnd() : Parent->getLocStart();
+    } while (!L.isValid());
   }
 
   return L;
