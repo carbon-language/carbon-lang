@@ -7,7 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 #include <stdlib.h>
+
+#ifndef __has_include
+#define __has_include(inc) 0
+#endif
+
 #if __APPLE__
+#include <cxxabi.h>
+#elif defined(LIBCXXRT) || __has_include(<cxxabi.h>)
 #include <cxxabi.h>
 #endif
 
