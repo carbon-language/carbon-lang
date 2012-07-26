@@ -73,6 +73,6 @@ cat tmp.s $ASMS > gotsan.s
 echo as gotsan.s -o gotsan_$SUFFIX.syso
 as gotsan.s -o gotsan_$SUFFIX.syso
 
-gcc test.c gotsan_$SUFFIX.syso -lpthread -o test
+gcc test.c race_$SUFFIX.syso -lpthread -o test
 ./test
 
