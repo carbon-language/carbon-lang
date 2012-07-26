@@ -384,7 +384,7 @@ void MachineTraceMetrics::Ensemble::computeTrace(const MachineBasicBlock *MBB) {
     DEBUG(dbgs() << "  succ for BB#" << I->getNumber() << ": ");
     TraceBlockInfo &TBI = BlockInfo[I->getNumber()];
     // All the successors have been visited, pick the preferred one.
-    BlockInfo[I->getNumber()].Succ = pickTraceSucc(*I);
+    TBI.Succ = pickTraceSucc(*I);
     DEBUG({
       if (TBI.Pred)
         dbgs() << "BB#" << TBI.Succ->getNumber() << '\n';
