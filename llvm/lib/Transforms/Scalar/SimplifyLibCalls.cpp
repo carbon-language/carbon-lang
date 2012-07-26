@@ -157,14 +157,15 @@ struct StrCatOpt : public LibCallOptimization {
     // These optimizations require TargetData.
     if (!TD) return 0;
 
-    EmitStrLenMemCpy(Src, Dst, Len, B);
-    return Dst;
+    return EmitStrLenMemCpy(Src, Dst, Len, B);
   }
 
-  void EmitStrLenMemCpy(Value *Src, Value *Dst, uint64_t Len, IRBuilder<> &B) {
+  Value *EmitStrLenMemCpy(Value *Src, Value *Dst, uint64_t Len, IRBuilder<> &B) {
     // We need to find the end of the destination string.  That's where the
     // memory is to be moved to. We just generate a call to strlen.
     Value *DstLen = EmitStrLen(Dst, B, TD, TLI);
+    if (!DstLen)
+      return 0;
 
     // Now that we have the destination's length, we must index into the
     // destination's pointer to get the actual memcpy destination (end of
@@ -175,6 +176,7 @@ struct StrCatOpt : public LibCallOptimization {
     // concatenation for us.  Make a memcpy to copy the nul byte with align = 1.
     B.CreateMemCpy(CpyDst, Src,
                    ConstantInt::get(TD->getIntPtrType(*Context), Len + 1), 1);
+    return Dst;
   }
 };
 
@@ -221,8 +223,7 @@ struct StrNCatOpt : public StrCatOpt {
 
     // strncat(x, s, c) -> strcat(x, s)
     // s is constant so the strcat can be optimized further
-    EmitStrLenMemCpy(Src, Dst, SrcLen, B);
-    return Dst;
+    return EmitStrLenMemCpy(Src, Dst, SrcLen, B);
   }
 };
 
@@ -447,11 +448,10 @@ struct StrCpyOpt : public LibCallOptimization {
 
     // We have enough information to now generate the memcpy call to do the
     // concatenation for us.  Make a memcpy to copy the nul byte with align = 1.
-    if (OptChkCall)
-      EmitMemCpyChk(Dst, Src,
-                    ConstantInt::get(TD->getIntPtrType(*Context), Len),
-                    CI->getArgOperand(2), B, TD, TLI);
-    else
+    if (!OptChkCall ||
+        !EmitMemCpyChk(Dst, Src,
+                       ConstantInt::get(TD->getIntPtrType(*Context), Len),
+                       CI->getArgOperand(2), B, TD, TLI))
       B.CreateMemCpy(Dst, Src,
                      ConstantInt::get(TD->getIntPtrType(*Context), Len), 1);
     return Dst;
@@ -496,9 +496,8 @@ struct StpCpyOpt: public LibCallOptimization {
 
     // We have enough information to now generate the memcpy call to do the
     // copy for us.  Make a memcpy to copy the nul byte with align = 1.
-    if (OptChkCall)
-      EmitMemCpyChk(Dst, Src, LenV, CI->getArgOperand(2), B, TD, TLI);
-    else
+    if (!OptChkCall || !EmitMemCpyChk(Dst, Src, LenV, CI->getArgOperand(2), B,
+                                      TD, TLI))
       B.CreateMemCpy(Dst, Src, LenV, 1);
     return DstEnd;
   }
@@ -1187,7 +1186,7 @@ struct PrintFOpt : public LibCallOptimization {
     // printf("x") -> putchar('x'), even for '%'.
     if (FormatStr.size() == 1) {
       Value *Res = EmitPutChar(B.getInt32(FormatStr[0]), B, TD, TLI);
-      if (CI->use_empty()) return CI;
+      if (CI->use_empty() || !Res) return Res;
       return B.CreateIntCast(Res, CI->getType(), true);
     }
 
@@ -1210,7 +1209,7 @@ struct PrintFOpt : public LibCallOptimization {
         CI->getArgOperand(1)->getType()->isIntegerTy()) {
       Value *Res = EmitPutChar(CI->getArgOperand(1), B, TD, TLI);
 
-      if (CI->use_empty()) return CI;
+      if (CI->use_empty() || !Res) return Res;
       return B.CreateIntCast(Res, CI->getType(), true);
     }
 
@@ -1504,8 +1503,7 @@ struct PutsOpt : public LibCallOptimization {
     if (Str.empty() && CI->use_empty()) {
       // puts("") -> putchar('\n')
       Value *Res = EmitPutChar(B.getInt32('\n'), B, TD, TLI);
-      if (!Res) return 0;
-      if (CI->use_empty()) return CI;
+      if (CI->use_empty() || !Res) return Res;
       return B.CreateIntCast(Res, CI->getType(), true);
     }
 
