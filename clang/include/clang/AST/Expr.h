@@ -596,6 +596,10 @@ public:
     return cast<Expr>(Stmt::IgnoreImplicit());
   }
 
+  const Expr *IgnoreImplicit() const LLVM_READONLY {
+    return const_cast<Expr*>(this)->IgnoreImplicit();
+  }
+
   /// IgnoreParens - Ignore parentheses.  If this Expr is a ParenExpr, return
   ///  its subexpression.  If that subexpression is also a ParenExpr,
   ///  then this method recursively returns its subexpression, and so forth.
