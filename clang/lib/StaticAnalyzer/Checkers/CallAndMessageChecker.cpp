@@ -31,6 +31,8 @@ class CallAndMessageChecker
                     check::PreCall > {
   mutable OwningPtr<BugType> BT_call_null;
   mutable OwningPtr<BugType> BT_call_undef;
+  mutable OwningPtr<BugType> BT_cxx_call_null;
+  mutable OwningPtr<BugType> BT_cxx_call_undef;
   mutable OwningPtr<BugType> BT_call_arg;
   mutable OwningPtr<BugType> BT_msg_undef;
   mutable OwningPtr<BugType> BT_objc_prop_undef;
@@ -239,14 +241,35 @@ void CallAndMessageChecker::checkPreStmt(const CallExpr *CE,
 
 void CallAndMessageChecker::checkPreCall(const CallEvent &Call,
                                          CheckerContext &C) const {
+  // If this is a call to a C++ method, check if the callee is null or
+  // undefined.
+  // FIXME: Generalize this to CXXInstanceCall once it supports
+  // getCXXThisVal().
+  if (const CXXMemberCall *CC = dyn_cast<CXXMemberCall>(&Call)) {
+    SVal V = CC->getCXXThisVal();
+    if (V.isUndef()) {
+      if (!BT_cxx_call_undef)
+        BT_cxx_call_undef.reset(new BuiltinBug("Called C++ object pointer is "
+                                               "uninitialized"));
+      EmitBadCall(BT_cxx_call_undef.get(), C, CC->getOriginExpr());
+      return;
+    }
+    if (V.isZeroConstant()) {
+      if (!BT_cxx_call_null)
+        BT_cxx_call_null.reset(new BuiltinBug("Called C++ object pointer "
+                                              "is null"));
+      EmitBadCall(BT_cxx_call_null.get(), C, CC->getOriginExpr());
+      return;
+    }
+  }
+
   // Don't check for uninitialized field values in arguments if the
   // caller has a body that is available and we have the chance to inline it.
   // This is a hack, but is a reasonable compromise betweens sometimes warning
   // and sometimes not depending on if we decide to inline a function.
   const Decl *D = Call.getDecl();
   const bool checkUninitFields =
-    !(C.getAnalysisManager().shouldInlineCall() &&
-      (D && D->getBody()));
+    !(C.getAnalysisManager().shouldInlineCall() && (D && D->getBody()));
 
   OwningPtr<BugType> *BT;
   if (isa<ObjCMethodCall>(Call))
