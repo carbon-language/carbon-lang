@@ -273,7 +273,7 @@ def main():
 
     dirA,dirB = args
 
-    cmpScanBuildResults(dirA, dirB, opts)    
+    dumpScanBuildResultsDiff(dirA, dirB, opts)    
 
 if __name__ == '__main__':
     main()
