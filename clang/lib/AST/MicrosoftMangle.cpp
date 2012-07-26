@@ -1059,8 +1059,6 @@ void MicrosoftCXXNameMangler::mangleType(const FunctionProtoType *T,
                                          SourceRange) {
   // Structors only appear in decls, so at this point we know it's not a
   // structor type.
-  // I'll probably have mangleType(MemberPointerType) call the mangleType()
-  // method directly.
   mangleType(T, NULL, false, false);
 }
 void MicrosoftCXXNameMangler::mangleType(const FunctionNoProtoType *T,

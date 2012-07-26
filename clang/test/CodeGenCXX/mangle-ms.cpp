@@ -120,9 +120,13 @@ void delta(int * const a, const long &) {}
 void epsilon(int a[][10][20]) {}
 // CHECK: @"\01?epsilon@@YAXQAY19BE@H@Z"
 
-// Blocks mangling (Clang extension).
-void zeta(int (^)(int, int)) {}
-// CHECK: @"\01?zeta@@YAXP_EAHHH@Z@Z"
+void zeta(int (*)(int, int)) {}
+// CHECK: @"\01?zeta@@YAXP6AHHH@Z@Z"
+
+// Blocks mangling (Clang extension). A block should be mangled slightly
+// differently from a similar function pointer.
+void eta(int (^)(int, int)) {}
+// CHECK: @"\01?eta@@YAXP_EAHHH@Z@Z"
 
 void operator_new_delete() {
   char *ptr = new char;
