@@ -1,4 +1,6 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc -analyzer-store region -analyzer-ipa=inlining -cfg-add-implicit-dtors -cfg-add-initializers -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc,debug.ExprInspection -analyzer-store region -analyzer-ipa=inlining -cfg-add-implicit-dtors -cfg-add-initializers -verify %s
+
+void clang_analyzer_eval(bool);
 
 class A {
 public:
@@ -100,7 +102,7 @@ void testMultipleInheritance3() {
     // Remove dead bindings...
     doSomething();
     // destructor called here
-    // expected-warning@25 {{Attempt to free released memory}}
+    // expected-warning@27 {{Attempt to free released memory}}
   }
 }
 
@@ -120,4 +122,35 @@ void testSmartPointerMember() {
     // destructor called here
   }
   *mem = 0; // expected-warning{{Use of memory after it is freed}}
+}
+
+
+struct IntWrapper {
+  IntWrapper() : x(0) {}
+  ~IntWrapper();
+  int *x;
+};
+
+void testArrayInvalidation() {
+  int i = 42;
+  int j = 42;
+
+  {
+    IntWrapper arr[2];
+
+    // There should be no undefined value warnings here.
+    // Eventually these should be TRUE as well, but right now
+    // we can't handle array constructors.
+    clang_analyzer_eval(arr[0].x == 0); // expected-warning{{UNKNOWN}}
+    clang_analyzer_eval(arr[1].x == 0); // expected-warning{{UNKNOWN}}
+
+    arr[0].x = &i;
+    arr[1].x = &j;
+    clang_analyzer_eval(*arr[0].x == 42); // expected-warning{{TRUE}}
+    clang_analyzer_eval(*arr[1].x == 42); // expected-warning{{TRUE}}
+  }
+
+  // The destructors should have invalidated i and j.
+  clang_analyzer_eval(i == 42); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(j == 42); // expected-warning{{UNKNOWN}}
 }

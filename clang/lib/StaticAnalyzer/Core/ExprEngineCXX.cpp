@@ -57,12 +57,27 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
       CFGElement Next = (*B)[currentStmtIdx+1];
 
       // Is this a constructor for a local variable?
-      if (const CFGStmt *StmtElem = dyn_cast<CFGStmt>(&Next))
-        if (const DeclStmt *DS = dyn_cast<DeclStmt>(StmtElem->getStmt()))
-          if (const VarDecl *Var = dyn_cast<VarDecl>(DS->getSingleDecl()))
-            if (Var->getInit() == CE)
-              Target = State->getLValue(Var, LCtx).getAsRegion();
-
+      if (const CFGStmt *StmtElem = dyn_cast<CFGStmt>(&Next)) {
+        if (const DeclStmt *DS = dyn_cast<DeclStmt>(StmtElem->getStmt())) {
+          if (const VarDecl *Var = dyn_cast<VarDecl>(DS->getSingleDecl())) {
+            if (Var->getInit()->IgnoreImplicit() == CE) {
+              QualType Ty = Var->getType();
+              if (const ArrayType *AT = getContext().getAsArrayType(Ty)) {
+                // FIXME: Handle arrays, which run the same constructor for
+                // every element. This workaround will just run the first
+                // constructor (which should still invalidate the entire array).
+                SVal Base = State->getLValue(Var, LCtx);
+                Target = State->getLValue(AT->getElementType(),
+                                          getSValBuilder().makeZeroArrayIndex(),
+                                          Base).getAsRegion();
+              } else {
+                Target = State->getLValue(Var, LCtx).getAsRegion();
+              }
+            }
+          }
+        }
+      }
+      
       // Is this a constructor for a member?
       if (const CFGInitializer *InitElem = dyn_cast<CFGInitializer>(&Next)) {
         const CXXCtorInitializer *Init = InitElem->getInitializer();
@@ -75,10 +90,10 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
 
         if (Init->isIndirectMemberInitializer()) {
           SVal Field = State->getLValue(Init->getIndirectMember(), ThisVal);
-          Target = cast<loc::MemRegionVal>(Field).getRegion();
+          Target = Field.getAsRegion();
         } else {
           SVal Field = State->getLValue(Init->getMember(), ThisVal);
-          Target = cast<loc::MemRegionVal>(Field).getRegion();
+          Target = Field.getAsRegion();
         }
       }
 
@@ -104,7 +119,7 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
       // Cast to the base type.
       QualType BaseTy = CE->getType();
       SVal BaseVal = getStoreManager().evalDerivedToBase(ThisVal, BaseTy);
-      Target = cast<loc::MemRegionVal>(BaseVal).getRegion();
+      Target = BaseVal.getAsRegion();
     }
     break;
   }
@@ -135,6 +150,16 @@ void ExprEngine::VisitCXXDestructor(QualType ObjectType,
                                     const Stmt *S,
                                     ExplodedNode *Pred, 
                                     ExplodedNodeSet &Dst) {
+  // FIXME: We need to run the same destructor on every element of the array.
+  // This workaround will just run the first destructor (which will still
+  // invalidate the entire array).
+  if (const ArrayType *AT = getContext().getAsArrayType(ObjectType)) {
+    ObjectType = AT->getElementType();
+    Dest = Pred->getState()->getLValue(ObjectType,
+                                       getSValBuilder().makeZeroArrayIndex(),
+                                       loc::MemRegionVal(Dest)).getAsRegion();
+  }
+
   const CXXRecordDecl *RecordDecl = ObjectType->getAsCXXRecordDecl();
   assert(RecordDecl && "Only CXXRecordDecls should have destructors");
   const CXXDestructorDecl *DtorDecl = RecordDecl->getDestructor();

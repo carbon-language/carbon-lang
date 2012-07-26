@@ -306,14 +306,18 @@ bool ExprEngine::inlineCall(const CallEvent &Call,
         !ADC->getCFGBuildOptions().AddInitializers)
       return false;
 
+    // FIXME: We don't handle constructors or destructors for arrays properly.
+    const MemRegion *Target = Call.getCXXThisVal().getAsRegion();
+    if (Target && isa<ElementRegion>(Target))
+      return false;
+
     // FIXME: This is a hack. We don't handle temporary destructors
     // right now, so we shouldn't inline their constructors.
     if (const CXXConstructorCall *Ctor = dyn_cast<CXXConstructorCall>(&Call)) {
       const CXXConstructExpr *CtorExpr = Ctor->getOriginExpr();
       if (CtorExpr->getConstructionKind() == CXXConstructExpr::CK_Complete)
-        if (const MemRegion *Target = Ctor->getCXXThisVal().getAsRegion())
-          if (!isa<DeclRegion>(Target))
-            return false;
+        if (!Target || !isa<DeclRegion>(Target))
+          return false;
     }
     break;
   }
@@ -461,6 +465,8 @@ ProgramStateRef ExprEngine::bindReturnValue(const CallEvent &Call,
       return State->BindExpr(E, LCtx, Msg->getReceiverSVal());
     }
     }
+  } else if (const CXXConstructorCall *C = dyn_cast<CXXConstructorCall>(&Call)){
+    return State->BindExpr(E, LCtx, C->getCXXThisVal());
   }
 
   // Conjure a symbol if the return value is unknown.

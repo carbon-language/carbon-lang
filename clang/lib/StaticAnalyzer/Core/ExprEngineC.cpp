@@ -453,16 +453,17 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
     const LocationContext *LC = N->getLocationContext();
     
     if (const Expr *InitEx = VD->getInit()) {
-      SVal InitVal = state->getSVal(InitEx, Pred->getLocationContext());
+      SVal InitVal = state->getSVal(InitEx, LC);
 
-      if (InitVal == state->getLValue(VD, LC)) {
+      if (InitVal == state->getLValue(VD, LC) ||
+          (VD->getType()->isArrayType() &&
+           isa<CXXConstructExpr>(InitEx->IgnoreImplicit()))) {
         // We constructed the object directly in the variable.
         // No need to bind anything.
         B.generateNode(DS, N, state);
       } else {
         // We bound the temp obj region to the CXXConstructExpr. Now recover
         // the lazy compound value when the variable is not a reference.
-        // FIXME: This is probably not correct for most constructors!
         if (AMgr.getLangOpts().CPlusPlus && VD->getType()->isRecordType() && 
             !VD->getType()->isReferenceType() && isa<loc::MemRegionVal>(InitVal)){
           InitVal = state->getSVal(cast<loc::MemRegionVal>(InitVal).getRegion());
