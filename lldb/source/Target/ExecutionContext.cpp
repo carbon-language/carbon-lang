@@ -643,7 +643,7 @@ ExecutionContextRef::SetTargetPtr (Target* target, bool adopt_selected)
                         if (!thread_sp)
                             thread_sp = process_sp->GetThreadList().GetThreadAtIndex(0);
                         
-                        if (thread_sp)
+                        if (thread_sp && process_sp->GetState() == lldb::eStateStopped)
                         {
                             SetThreadSP (thread_sp);
                             lldb::StackFrameSP frame_sp (thread_sp->GetSelectedFrame());
