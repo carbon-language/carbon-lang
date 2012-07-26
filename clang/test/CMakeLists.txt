@@ -31,7 +31,7 @@ if( NOT CLANG_BUILT_STANDALONE )
   set(CLANG_TEST_DEPS
     clang clang-headers
     c-index-test diagtool arcmt-test c-arcmt-test
-    clang-check clang-ast-dump
+    clang-check
     llvm-dis llc opt FileCheck count not
     )
   set(CLANG_TEST_PARAMS
@@ -80,7 +80,7 @@ else()
       COMMENT "Running Clang regression tests"
       DEPENDS clang clang-headers
               c-index-test diagtool arcmt-test c-arcmt-test
-              clang-check clang-ast-dump
+              clang-check
       )
     set_target_properties(check-clang PROPERTIES FOLDER "Clang tests")
   endif()
