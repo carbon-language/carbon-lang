@@ -2578,17 +2578,13 @@ let Predicates = [HasAVX] in {
                                         OpSize, VEX;
 
   def : Pat<(i32 (X86fgetsign FR32:$src)),
-            (VMOVMSKPSrr32 (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), FR32:$src,
-                                          sub_ss))>;
+            (VMOVMSKPSrr32 (COPY_TO_REGCLASS FR32:$src, VR128))>;
   def : Pat<(i64 (X86fgetsign FR32:$src)),
-            (VMOVMSKPSrr64 (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), FR32:$src,
-                                          sub_ss))>;
+            (VMOVMSKPSrr64 (COPY_TO_REGCLASS FR32:$src, VR128))>;
   def : Pat<(i32 (X86fgetsign FR64:$src)),
-            (VMOVMSKPDrr32 (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)), FR64:$src,
-                                          sub_sd))>;
+            (VMOVMSKPDrr32 (COPY_TO_REGCLASS FR64:$src, VR128))>;
   def : Pat<(i64 (X86fgetsign FR64:$src)),
-            (VMOVMSKPDrr64 (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)), FR64:$src,
-                                          sub_sd))>;
+            (VMOVMSKPDrr64 (COPY_TO_REGCLASS FR64:$src, VR128))>;
 
   // Assembler Only
   def VMOVMSKPSr64r : PI<0x50, MRMSrcReg, (outs GR64:$dst), (ins VR128:$src),
@@ -2613,17 +2609,17 @@ defm MOVMSKPD : sse12_extr_sign_mask<VR128, int_x86_sse2_movmsk_pd, "movmskpd",
                                      SSEPackedDouble>, TB, OpSize;
 
 def : Pat<(i32 (X86fgetsign FR32:$src)),
-          (MOVMSKPSrr32 (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), FR32:$src,
-                                       sub_ss))>, Requires<[HasSSE1]>;
+          (MOVMSKPSrr32 (COPY_TO_REGCLASS FR32:$src, VR128))>,
+      Requires<[HasSSE1]>;
 def : Pat<(i64 (X86fgetsign FR32:$src)),
-          (MOVMSKPSrr64 (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), FR32:$src,
-                                       sub_ss))>, Requires<[HasSSE1]>;
+          (MOVMSKPSrr64 (COPY_TO_REGCLASS FR32:$src, VR128))>,
+      Requires<[HasSSE1]>;
 def : Pat<(i32 (X86fgetsign FR64:$src)),
-          (MOVMSKPDrr32 (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)), FR64:$src,
-                                       sub_sd))>, Requires<[HasSSE2]>;
+          (MOVMSKPDrr32 (COPY_TO_REGCLASS FR64:$src, VR128))>,
+      Requires<[HasSSE2]>;
 def : Pat<(i64 (X86fgetsign FR64:$src)),
-          (MOVMSKPDrr64 (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)), FR64:$src,
-                                       sub_sd))>, Requires<[HasSSE2]>;
+          (MOVMSKPDrr64 (COPY_TO_REGCLASS FR64:$src, VR128))>,
+      Requires<[HasSSE2]>;
 
 //===---------------------------------------------------------------------===//
 // SSE2 - Packed Integer Logical Instructions
@@ -3221,34 +3217,30 @@ def : Pat<(f32 (X86frcp (load addr:$src))),
 
 let Predicates = [HasAVX], AddedComplexity = 1 in {
   def : Pat<(int_x86_sse_sqrt_ss VR128:$src),
-            (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)),
-                (VSQRTSSr (f32 (IMPLICIT_DEF)),
-                          (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss)),
-                sub_ss)>;
+            (COPY_TO_REGCLASS (VSQRTSSr (f32 (IMPLICIT_DEF)),
+                                        (COPY_TO_REGCLASS VR128:$src, FR32)),
+                              VR128)>;
   def : Pat<(int_x86_sse_sqrt_ss sse_load_f32:$src),
             (VSQRTSSm_Int (v4f32 (IMPLICIT_DEF)), sse_load_f32:$src)>;
 
   def : Pat<(int_x86_sse2_sqrt_sd VR128:$src),
-            (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)),
-                (VSQRTSDr (f64 (IMPLICIT_DEF)),
-                          (EXTRACT_SUBREG (v2f64 VR128:$src), sub_sd)),
-                sub_sd)>;
+            (COPY_TO_REGCLASS (VSQRTSDr (f64 (IMPLICIT_DEF)),
+                                        (COPY_TO_REGCLASS VR128:$src, FR64)),
+                              VR128)>;
   def : Pat<(int_x86_sse2_sqrt_sd sse_load_f64:$src),
             (VSQRTSDm_Int (v2f64 (IMPLICIT_DEF)), sse_load_f64:$src)>;
 
   def : Pat<(int_x86_sse_rsqrt_ss VR128:$src),
-            (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)),
-                (VRSQRTSSr (f32 (IMPLICIT_DEF)),
-                          (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss)),
-                sub_ss)>;
+            (COPY_TO_REGCLASS (VRSQRTSSr (f32 (IMPLICIT_DEF)),
+                                         (COPY_TO_REGCLASS VR128:$src, FR32)),
+                              VR128)>;
   def : Pat<(int_x86_sse_rsqrt_ss sse_load_f32:$src),
             (VRSQRTSSm_Int (v4f32 (IMPLICIT_DEF)), sse_load_f32:$src)>;
 
   def : Pat<(int_x86_sse_rcp_ss VR128:$src),
-            (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)),
-                (VRCPSSr (f32 (IMPLICIT_DEF)),
-                         (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss)),
-                sub_ss)>;
+            (COPY_TO_REGCLASS (VRCPSSr (f32 (IMPLICIT_DEF)),
+                                       (COPY_TO_REGCLASS VR128:$src, FR32)),
+                              VR128)>;
   def : Pat<(int_x86_sse_rcp_ss sse_load_f32:$src),
             (VRCPSSm_Int (v4f32 (IMPLICIT_DEF)), sse_load_f32:$src)>;
 }
