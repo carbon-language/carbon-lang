@@ -7509,6 +7509,10 @@ static bool ShouldWarnAboutMissingPrototype(const FunctionDecl *FD) {
   if (FD->isFunctionTemplateSpecialization())
     return false;
 
+  // Don't warn for OpenCL kernels.
+  if (FD->hasAttr<OpenCLKernelAttr>())
+    return false;
+  
   bool MissingPrototype = true;
   for (const FunctionDecl *Prev = FD->getPreviousDecl();
        Prev; Prev = Prev->getPreviousDecl()) {
