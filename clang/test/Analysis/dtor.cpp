@@ -34,3 +34,72 @@ void testSmartPointer() {
   }
   *mem = 0; // expected-warning{{Use of memory after it is freed}}
 }
+
+
+void doSomething();
+void testSmartPointer2() {
+  char *mem = (char*)malloc(4);
+  {
+    SmartPointer Deleter(mem);
+    // Remove dead bindings...
+    doSomething();
+    // destructor called here
+  }
+  *mem = 0; // expected-warning{{Use of memory after it is freed}}
+}
+
+
+class Subclass : public SmartPointer {
+public:
+  Subclass(void *x) : SmartPointer(x) {}
+};
+
+void testSubclassSmartPointer() {
+  char *mem = (char*)malloc(4);
+  {
+    Subclass Deleter(mem);
+    // Remove dead bindings...
+    doSomething();
+    // destructor called here
+  }
+  *mem = 0; // expected-warning{{Use of memory after it is freed}}
+}
+
+
+class MultipleInheritance : public Subclass, public SmartPointer {
+public:
+  MultipleInheritance(void *a, void *b) : Subclass(a), SmartPointer(b) {}
+};
+
+void testMultipleInheritance1() {
+  char *mem = (char*)malloc(4);
+  {
+    MultipleInheritance Deleter(mem, 0);
+    // Remove dead bindings...
+    doSomething();
+    // destructor called here
+  }
+  *mem = 0; // expected-warning{{Use of memory after it is freed}}
+}
+
+void testMultipleInheritance2() {
+  char *mem = (char*)malloc(4);
+  {
+    MultipleInheritance Deleter(0, mem);
+    // Remove dead bindings...
+    doSomething();
+    // destructor called here
+  }
+  *mem = 0; // expected-warning{{Use of memory after it is freed}}
+}
+
+void testMultipleInheritance3() {
+  char *mem = (char*)malloc(4);
+  {
+    MultipleInheritance Deleter(mem, mem);
+    // Remove dead bindings...
+    doSomething();
+    // destructor called here
+    // expected-warning@25 {{Attempt to free released memory}}
+  }
+}

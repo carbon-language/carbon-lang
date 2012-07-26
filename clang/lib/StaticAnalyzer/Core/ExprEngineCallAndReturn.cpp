@@ -293,6 +293,11 @@ bool ExprEngine::inlineCall(const CallEvent &Call,
     if (!ADC->getCFGBuildOptions().AddImplicitDtors ||
         !ADC->getCFGBuildOptions().AddInitializers)
       return false;
+    // FIXME: This is a hack. We only process VarDecl destructors right now,
+    // so we should only inline VarDecl constructors.
+    if (const CXXConstructorCall *Ctor = dyn_cast<CXXConstructorCall>(&Call))
+      if (!isa<VarRegion>(Ctor->getCXXThisVal().getAsRegion()))
+        return false;
     break;
   }
   case CE_CXXAllocator:
