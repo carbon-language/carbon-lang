@@ -717,14 +717,13 @@ let Predicates = [HasSSE1] in {
   }
 
   let AddedComplexity = 20 in {
-  // MOVSSrm zeros the high parts of the register; represent this
-  // with SUBREG_TO_REG.
+  // MOVSSrm already zeros the high parts of the register.
   def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector (loadf32 addr:$src))))),
-            (SUBREG_TO_REG (i32 0), (MOVSSrm addr:$src), sub_ss)>;
+            (COPY_TO_REGCLASS (MOVSSrm addr:$src), VR128)>;
   def : Pat<(v4f32 (scalar_to_vector (loadf32 addr:$src))),
-            (SUBREG_TO_REG (i32 0), (MOVSSrm addr:$src), sub_ss)>;
+            (COPY_TO_REGCLASS (MOVSSrm addr:$src), VR128)>;
   def : Pat<(v4f32 (X86vzmovl (loadv4f32 addr:$src))),
-            (SUBREG_TO_REG (i32 0), (MOVSSrm addr:$src), sub_ss)>;
+            (COPY_TO_REGCLASS (MOVSSrm addr:$src), VR128)>;
   }
 
   // Extract and store.
@@ -748,18 +747,17 @@ let Predicates = [HasSSE2] in {
   }
 
   let AddedComplexity = 20 in {
-  // MOVSDrm zeros the high parts of the register; represent this
-  // with SUBREG_TO_REG.
+  // MOVSDrm already zeros the high parts of the register.
   def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector (loadf64 addr:$src))))),
-            (SUBREG_TO_REG (i64 0), (MOVSDrm addr:$src), sub_sd)>;
+            (COPY_TO_REGCLASS (MOVSDrm addr:$src), VR128)>;
   def : Pat<(v2f64 (scalar_to_vector (loadf64 addr:$src))),
-            (SUBREG_TO_REG (i64 0), (MOVSDrm addr:$src), sub_sd)>;
+            (COPY_TO_REGCLASS (MOVSDrm addr:$src), VR128)>;
   def : Pat<(v2f64 (X86vzmovl (loadv2f64 addr:$src))),
-            (SUBREG_TO_REG (i64 0), (MOVSDrm addr:$src), sub_sd)>;
+            (COPY_TO_REGCLASS (MOVSDrm addr:$src), VR128)>;
   def : Pat<(v2f64 (X86vzmovl (bc_v2f64 (loadv4f32 addr:$src)))),
-            (SUBREG_TO_REG (i64 0), (MOVSDrm addr:$src), sub_sd)>;
+            (COPY_TO_REGCLASS (MOVSDrm addr:$src), VR128)>;
   def : Pat<(v2f64 (X86vzload addr:$src)),
-            (SUBREG_TO_REG (i64 0), (MOVSDrm addr:$src), sub_sd)>;
+            (COPY_TO_REGCLASS (MOVSDrm addr:$src), VR128)>;
   }
 
   // Extract and store.
