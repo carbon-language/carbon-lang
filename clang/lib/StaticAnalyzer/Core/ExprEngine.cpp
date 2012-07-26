@@ -877,10 +877,10 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
 
     case Stmt::ObjCMessageExprClass: {
       Bldr.takeNodes(Pred);
-      VisitObjCMessage(ObjCMethodCall(cast<ObjCMessageExpr>(S),
-                                      Pred->getState(),
-                                      Pred->getLocationContext()),
-                       Pred, Dst);
+      ObjCMethodCall Call(cast<ObjCMessageExpr>(S),
+                          Pred->getState(),
+                          Pred->getLocationContext());
+      VisitObjCMessage(Call, Pred, Dst);
       Bldr.addNodes(Dst);
       break;
     }
