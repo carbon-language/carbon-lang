@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mattr=+sse3,+sse41 -mcpu=penryn -stats 2>&1 | grep "8 machine-licm"
+; RUN: llc < %s -march=x86-64 -mattr=+sse3,+sse41 -mcpu=penryn -stats 2>&1 | grep "5 machine-licm"
 ; RUN: llc < %s -march=x86-64 -mattr=+sse3,+sse41 -mcpu=penryn | FileCheck %s
 ; rdar://6627786
 ; rdar://7792037
