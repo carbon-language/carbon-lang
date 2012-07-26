@@ -3103,21 +3103,21 @@
 // CHECK: encoding: [0xc5,0xf8,0x77]
           vzeroupper
 
-// CHECK: vcvtsd2si  %xmm4, %ecx
+// CHECK: vcvtsd2sil  %xmm4, %ecx
 // CHECK: encoding: [0xc5,0xfb,0x2d,0xcc]
-          vcvtsd2si  %xmm4, %ecx
+          vcvtsd2sil  %xmm4, %ecx
 
-// CHECK: vcvtsd2si  (%ecx), %ecx
+// CHECK: vcvtsd2sil  (%ecx), %ecx
 // CHECK: encoding: [0xc5,0xfb,0x2d,0x09]
-          vcvtsd2si  (%ecx), %ecx
+          vcvtsd2sil  (%ecx), %ecx
 
-// CHECK: vcvtsi2sdl  (%ebp), %xmm0, %xmm7
+// CHECK: vcvtsi2sd  (%ebp), %xmm0, %xmm7
 // CHECK: encoding: [0xc5,0xfb,0x2a,0x7d,0x00]
-          vcvtsi2sdl  (%ebp), %xmm0, %xmm7
+          vcvtsi2sd  (%ebp), %xmm0, %xmm7
 
-// CHECK: vcvtsi2sdl  (%esp), %xmm0, %xmm7
+// CHECK: vcvtsi2sd  (%esp), %xmm0, %xmm7
 // CHECK: encoding: [0xc5,0xfb,0x2a,0x3c,0x24]
-          vcvtsi2sdl  (%esp), %xmm0, %xmm7
+          vcvtsi2sd  (%esp), %xmm0, %xmm7
 
 // CHECK: vlddqu  (%eax), %ymm2
 // CHECK: encoding: [0xc5,0xff,0xf0,0x10]
