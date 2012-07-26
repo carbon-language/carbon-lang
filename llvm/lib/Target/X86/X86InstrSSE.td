@@ -1639,22 +1639,22 @@ defm CVTDQ2PS : sse12_cvt_p<0x5B, VR128, VR128, undef, i128mem, load /*dummy*/,
 
 let Predicates = [HasAVX] in {
   def : Pat<(int_x86_sse_cvtss2si VR128:$src),
-            (VCVTSS2SIrr (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss))>;
+            (VCVTSS2SIrr (COPY_TO_REGCLASS VR128:$src, FR32))>;
   def : Pat<(int_x86_sse_cvtss2si (load addr:$src)),
             (VCVTSS2SIrm addr:$src)>;
   def : Pat<(int_x86_sse_cvtss2si64 VR128:$src),
-            (VCVTSS2SI64rr (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss))>;
+            (VCVTSS2SI64rr (COPY_TO_REGCLASS VR128:$src, FR32))>;
   def : Pat<(int_x86_sse_cvtss2si64 (load addr:$src)),
             (VCVTSS2SI64rm addr:$src)>;
 }
 
 let Predicates = [HasSSE1] in {
   def : Pat<(int_x86_sse_cvtss2si VR128:$src),
-            (CVTSS2SIrr (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss))>;
+            (CVTSS2SIrr (COPY_TO_REGCLASS VR128:$src, FR32))>;
   def : Pat<(int_x86_sse_cvtss2si (load addr:$src)),
             (CVTSS2SIrm addr:$src)>;
   def : Pat<(int_x86_sse_cvtss2si64 VR128:$src),
-            (CVTSS2SI64rr (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss))>;
+            (CVTSS2SI64rr (COPY_TO_REGCLASS VR128:$src, FR32))>;
   def : Pat<(int_x86_sse_cvtss2si64 (load addr:$src)),
             (CVTSS2SI64rm addr:$src)>;
 }
