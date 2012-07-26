@@ -70,37 +70,49 @@ void ExprEngine::processCallEnter(CallEnter CE, ExplodedNode *Pred) {
 static std::pair<const Stmt*,
                  const CFGBlock*> getLastStmt(const ExplodedNode *Node) {
   const Stmt *S = 0;
-  const CFGBlock *Blk = 0;
   const StackFrameContext *SF =
           Node->getLocation().getLocationContext()->getCurrentStackFrame();
+
+  // Back up through the ExplodedGraph until we reach a statement node.
   while (Node) {
     const ProgramPoint &PP = Node->getLocation();
-    // Skip any BlockEdges, empty blocks, and the CallExitBegin node.
-    if (isa<BlockEdge>(PP) || isa<CallExitBegin>(PP) || isa<BlockEntrance>(PP)){
-      assert(Node->pred_size() == 1);
-      Node = *Node->pred_begin();
-      continue;
-    }
-    // If we reached the CallEnter, the function has no statements.
-    if (isa<CallEnter>(PP))
-      break;
+
     if (const StmtPoint *SP = dyn_cast<StmtPoint>(&PP)) {
       S = SP->getStmt();
-      // Now, get the enclosing basic block.
-      while (Node && Node->pred_size() >=1 ) {
-        const ProgramPoint &PP = Node->getLocation();
-        if (isa<BlockEdge>(PP) &&
-            (PP.getLocationContext()->getCurrentStackFrame() == SF)) {
-          BlockEdge &EPP = cast<BlockEdge>(PP);
-          Blk = EPP.getDst();
-          break;
-        }
-        Node = *Node->pred_begin();
-      }
       break;
+    } else if (const CallExitEnd *CEE = dyn_cast<CallExitEnd>(&PP)) {
+      S = CEE->getCalleeContext()->getCallSite();
+      if (S)
+        break;
+      // If we have an implicit call, we'll probably end up with a
+      // StmtPoint inside the callee, which is acceptable.
+      // (It's possible a function ONLY contains implicit calls -- such as an
+      // implicitly-generated destructor -- so we shouldn't just skip back to
+      // the CallEnter node and keep going.)
+    } else if (const CallEnter *CE = dyn_cast<CallEnter>(&PP)) {
+      // If we reached the CallEnter for this function, it has no statements.
+      if (CE->getCalleeContext() == SF)
+        break;
     }
-    break;
+
+    Node = *Node->pred_begin();
   }
+
+  const CFGBlock *Blk = 0;
+  if (S) {
+    // Now, get the enclosing basic block.
+    while (Node && Node->pred_size() >=1 ) {
+      const ProgramPoint &PP = Node->getLocation();
+      if (isa<BlockEdge>(PP) &&
+          (PP.getLocationContext()->getCurrentStackFrame() == SF)) {
+        BlockEdge &EPP = cast<BlockEdge>(PP);
+        Blk = EPP.getDst();
+        break;
+      }
+      Node = *Node->pred_begin();
+    }
+  }
+
   return std::pair<const Stmt*, const CFGBlock*>(S, Blk);
 }
 
@@ -293,11 +305,14 @@ bool ExprEngine::inlineCall(const CallEvent &Call,
     if (!ADC->getCFGBuildOptions().AddImplicitDtors ||
         !ADC->getCFGBuildOptions().AddInitializers)
       return false;
-    // FIXME: This is a hack. We only process VarDecl destructors right now,
-    // so we should only inline VarDecl constructors.
-    if (const CXXConstructorCall *Ctor = dyn_cast<CXXConstructorCall>(&Call))
-      if (!isa<VarRegion>(Ctor->getCXXThisVal().getAsRegion()))
-        return false;
+    // FIXME: This is a hack. We don't handle member or temporary constructors
+    // right now, so we shouldn't inline their constructors.
+    if (const CXXConstructorCall *Ctor = dyn_cast<CXXConstructorCall>(&Call)) {
+      const CXXConstructExpr *CtorExpr = Ctor->getOriginExpr();
+      if (CtorExpr->getConstructionKind() == CXXConstructExpr::CK_Complete)
+        if (!isa<VarRegion>(Ctor->getCXXThisVal().getAsRegion()))
+          return false;
+    }
     break;
   }
   case CE_CXXAllocator:

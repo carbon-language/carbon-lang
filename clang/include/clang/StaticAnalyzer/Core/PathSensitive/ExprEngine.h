@@ -378,10 +378,10 @@ public:
   void VisitCXXThisExpr(const CXXThisExpr *TE, ExplodedNode *Pred, 
                         ExplodedNodeSet & Dst);
 
-  void VisitCXXConstructExpr(const CXXConstructExpr *E, const MemRegion *Dest,
-                             ExplodedNode *Pred, ExplodedNodeSet &Dst);
+  void VisitCXXConstructExpr(const CXXConstructExpr *E, ExplodedNode *Pred,
+                             ExplodedNodeSet &Dst);
 
-  void VisitCXXDestructor(const CXXDestructorDecl *DD,
+  void VisitCXXDestructor(QualType ObjectType,
                           const MemRegion *Dest, const Stmt *S,
                           ExplodedNode *Pred, ExplodedNodeSet &Dst);
 

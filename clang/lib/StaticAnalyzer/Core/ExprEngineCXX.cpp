@@ -17,6 +17,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/Calls.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/StmtCXX.h"
+#include "clang/AST/ParentMap.h"
 
 using namespace clang;
 using namespace ento;
@@ -40,11 +41,68 @@ void ExprEngine::CreateCXXTemporaryObject(const MaterializeTemporaryExpr *ME,
   Bldr.generateNode(ME, Pred, state->BindExpr(ME, LCtx, loc::MemRegionVal(R)));
 }
 
+static const VarDecl *findDirectConstruction(const DeclStmt *DS,
+                                             const Expr *Init) {
+  for (DeclStmt::const_decl_iterator I = DS->decl_begin(), E = DS->decl_end();
+       I != E; ++I) {
+    const VarDecl *Var = dyn_cast<VarDecl>(*I);
+    if (!Var)
+      continue;
+    if (Var->getInit() != Init)
+      continue;
+    // FIXME: We need to decide how copy-elision should work here.
+    if (!Var->isDirectInit())
+      break;
+    if (Var->getType()->isReferenceType())
+      break;
+    return Var;
+  }
+
+  return 0;
+}
+
 void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
-                                       const MemRegion *Dest,
                                        ExplodedNode *Pred,
                                        ExplodedNodeSet &destNodes) {
-  CXXConstructorCall Call(CE, Dest, Pred->getState(),
+  const LocationContext *LCtx = Pred->getLocationContext();
+  const MemRegion *Target = 0;
+
+  switch (CE->getConstructionKind()) {
+  case CXXConstructExpr::CK_Complete: {
+    // See if we're constructing an existing region.
+    // FIXME: This is inefficient. Not only are we getting the parent of the
+    // CXXConstructExpr, but we also then have to crawl through it if it's a
+    // DeclStmt to find out which variable is being constructed. (The CFG has
+    // one (fake) DeclStmt per Decl, but ParentMap uses the original AST.)
+    const ParentMap &PM = LCtx->getParentMap();
+    if (const DeclStmt *DS = dyn_cast_or_null<DeclStmt>(PM.getParent(CE)))
+      if (const VarDecl *Var = findDirectConstruction(DS, CE))
+        Target = Pred->getState()->getLValue(Var, LCtx).getAsRegion();
+    // If we can't find an existing region to construct into, we'll just
+    // generate a symbolic region, which is fine.
+    break;
+  }
+  case CXXConstructExpr::CK_NonVirtualBase:
+  case CXXConstructExpr::CK_VirtualBase:
+  case CXXConstructExpr::CK_Delegating: {
+    const CXXMethodDecl *CurCtor = cast<CXXMethodDecl>(LCtx->getDecl());
+    Loc ThisPtr = getSValBuilder().getCXXThis(CurCtor,
+                                              LCtx->getCurrentStackFrame());
+    SVal ThisVal = Pred->getState()->getSVal(ThisPtr);
+
+    if (CE->getConstructionKind() == CXXConstructExpr::CK_Delegating) {
+      Target = ThisVal.getAsRegion();
+    } else {
+      // Cast to the base type.
+      QualType BaseTy = CE->getType();
+      SVal BaseVal = getStoreManager().evalDerivedToBase(ThisVal, BaseTy);
+      Target = cast<loc::MemRegionVal>(BaseVal).getRegion();
+    }
+    break;
+  }
+  }
+
+  CXXConstructorCall Call(CE, Target, Pred->getState(),
                           Pred->getLocationContext());
 
   ExplodedNodeSet DstPreVisit;
@@ -65,12 +123,16 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
   getCheckerManager().runCheckersForPostStmt(destNodes, DstPostCall, CE, *this);
 }
 
-void ExprEngine::VisitCXXDestructor(const CXXDestructorDecl *DD,
-                                      const MemRegion *Dest,
-                                      const Stmt *S,
-                                      ExplodedNode *Pred, 
-                                      ExplodedNodeSet &Dst) {
-  CXXDestructorCall Call(DD, S, Dest, Pred->getState(),
+void ExprEngine::VisitCXXDestructor(QualType ObjectType,
+                                    const MemRegion *Dest,
+                                    const Stmt *S,
+                                    ExplodedNode *Pred, 
+                                    ExplodedNodeSet &Dst) {
+  const CXXRecordDecl *RecordDecl = ObjectType->getAsCXXRecordDecl();
+  assert(RecordDecl && "Only CXXRecordDecls should have destructors");
+  const CXXDestructorDecl *DtorDecl = RecordDecl->getDestructor();
+
+  CXXDestructorCall Call(DtorDecl, S, Dest, Pred->getState(),
                          Pred->getLocationContext());
 
   ExplodedNodeSet DstPreCall;

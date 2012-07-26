@@ -532,7 +532,12 @@ getLocationForCaller(const StackFrameContext *SFC,
                                              SM, CallerCtx);
   }
   case CFGElement::BaseDtor:
-  case CFGElement::MemberDtor:
+  case CFGElement::MemberDtor: {
+    const AnalysisDeclContext *CallerInfo = CallerCtx->getAnalysisDeclContext();
+    if (const Stmt *CallerBody = CallerInfo->getBody())
+      return PathDiagnosticLocation::createEnd(CallerBody, SM, CallerCtx);
+    return PathDiagnosticLocation::create(CallerInfo->getDecl(), SM);
+  }
   case CFGElement::TemporaryDtor:
     llvm_unreachable("not yet implemented!");
   }
