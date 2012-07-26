@@ -50,3 +50,7 @@ D: Minor patches, mostly related to constexpr
 
 N: Richard Smith
 D: Minor patches.
+
+N: Andrew Morrow
+E: andrew.c.morrow@gmail.com
+D: Minor patches and Linux fixes.
