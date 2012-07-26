@@ -33,11 +33,11 @@ class TargetOptions;
 // original C code.  The output is intended to be in a format such that
 // clang could re-parse the output back into the same AST, but the
 // implementation is still incomplete.
-ASTConsumer *CreateASTPrinter(raw_ostream *OS);
+ASTConsumer *CreateASTPrinter(raw_ostream *OS, StringRef FilterString);
 
 // AST dumper: dumps the raw AST in human-readable form to stderr; this is
 // intended for debugging.
-ASTConsumer *CreateASTDumper();
+ASTConsumer *CreateASTDumper(StringRef FilterString);
 
 // AST XML-dumper: dumps out the AST to stderr in a very detailed XML
 // format; this is intended for particularly intense debugging.

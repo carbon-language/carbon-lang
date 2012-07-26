@@ -47,13 +47,13 @@ void InitOnlyAction::ExecuteAction() {
 ASTConsumer *ASTPrintAction::CreateASTConsumer(CompilerInstance &CI,
                                                StringRef InFile) {
   if (raw_ostream *OS = CI.createDefaultOutputFile(false, InFile))
-    return CreateASTPrinter(OS);
+    return CreateASTPrinter(OS, CI.getFrontendOpts().ASTDumpFilter);
   return 0;
 }
 
 ASTConsumer *ASTDumpAction::CreateASTConsumer(CompilerInstance &CI,
                                               StringRef InFile) {
-  return CreateASTDumper();
+  return CreateASTDumper(CI.getFrontendOpts().ASTDumpFilter);
 }
 
 ASTConsumer *ASTDumpXMLAction::CreateASTConsumer(CompilerInstance &CI,

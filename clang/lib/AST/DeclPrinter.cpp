@@ -173,8 +173,10 @@ void DeclContext::dumpDeclContext() const {
   Printer.VisitDeclContext(const_cast<DeclContext *>(this), /*Indent=*/false);
 }
 
-void Decl::dump() const {
-  print(llvm::errs());
+void Decl::dump(raw_ostream &Out) const {
+  PrintingPolicy Policy = getASTContext().getPrintingPolicy();
+  Policy.Dump = true;
+  print(Out, Policy, /*Indentation*/ 0, /*PrintInstantiation*/ true);
 }
 
 raw_ostream& DeclPrinter::Indent(unsigned Indentation) {

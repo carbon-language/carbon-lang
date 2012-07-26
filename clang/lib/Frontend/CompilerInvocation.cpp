@@ -558,6 +558,8 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts, ToArgsList &Res) {
     for(unsigned i = 0, e = Opts.PluginArgs.size(); i != e; ++i)
       Res.push_back("-plugin-arg-" + Opts.ActionName, Opts.PluginArgs[i]);
   }
+  if (!Opts.ASTDumpFilter.empty())
+    Res.push_back("-ast-dump-filter", Opts.ASTDumpFilter);
   for (unsigned i = 0, e = Opts.Plugins.size(); i != e; ++i)
     Res.push_back("-load", Opts.Plugins[i]);
   for (unsigned i = 0, e = Opts.AddPluginActions.size(); i != e; ++i) {
@@ -1542,6 +1544,7 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
   Opts.FixOnlyWarnings = Args.hasArg(OPT_fix_only_warnings);
   Opts.FixAndRecompile = Args.hasArg(OPT_fixit_recompile);
   Opts.FixToTemporaries = Args.hasArg(OPT_fixit_to_temp);
+  Opts.ASTDumpFilter = Args.getLastArgValue(OPT_ast_dump_filter);
 
   Opts.CodeCompleteOpts.IncludeMacros
     = Args.hasArg(OPT_code_completion_macros);

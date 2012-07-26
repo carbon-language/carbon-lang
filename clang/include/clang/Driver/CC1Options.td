@@ -286,6 +286,10 @@ def resource_dir : Separate<"-resource-dir">,
   HelpText<"The directory which holds the compiler resource files">;
 def version : Flag<"-version">,
   HelpText<"Print the compiler version">;
+def ast_dump_filter : Separate<"-ast-dump-filter">,
+  MetaVarName<"<dump_filter>">,
+  HelpText<"Use with -ast-dump or -ast-print to dump/print only AST declaration"
+           " nodes having a certain substring in a qualified name.">;
 
 let Group = Action_Group in {
 

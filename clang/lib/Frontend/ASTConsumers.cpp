@@ -12,47 +12,89 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/ASTConsumers.h"
+#include "clang/Basic/FileManager.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
-#include "clang/Basic/FileManager.h"
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/RecordLayout.h"
 #include "clang/AST/PrettyPrinter.h"
+#include "clang/AST/RecordLayout.h"
+#include "clang/AST/RecursiveASTVisitor.h"
 #include "llvm/Module.h"
-#include "llvm/Support/Timer.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Timer.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
 /// ASTPrinter - Pretty-printer and dumper of ASTs
 
 namespace {
-  class ASTPrinter : public ASTConsumer {
-    raw_ostream &Out;
-    bool Dump;
+  class ASTPrinter : public ASTConsumer,
+                     public RecursiveASTVisitor<ASTPrinter> {
+    typedef RecursiveASTVisitor<ASTPrinter> base;
 
   public:
-    ASTPrinter(raw_ostream* o = NULL, bool Dump = false)
-      : Out(o? *o : llvm::outs()), Dump(Dump) { }
+    ASTPrinter(raw_ostream *Out = NULL, bool Dump = false,
+               StringRef FilterString = "")
+        : Out(Out ? *Out : llvm::outs()), Dump(Dump),
+          FilterString(FilterString) {}
 
     virtual void HandleTranslationUnit(ASTContext &Context) {
-      PrintingPolicy Policy = Context.getPrintingPolicy();
-      Policy.Dump = Dump;
-      Context.getTranslationUnitDecl()->print(Out, Policy, /*Indentation=*/0,
-                                              /*PrintInstantiation=*/true);
+      TranslationUnitDecl *D = Context.getTranslationUnitDecl();
+
+      if (FilterString.empty()) {
+        if (Dump)
+          D->dump(Out);
+        else
+          D->print(Out, /*Indentation=*/0, /*PrintInstantiation=*/true);
+        return;
+      }
+
+      TraverseDecl(D);
     }
+
+    bool shouldWalkTypesOfTypeLocs() const { return false; }
+
+    bool TraverseDecl(Decl *D) {
+      if (filterMatches(D)) {
+        Out.changeColor(llvm::raw_ostream::BLUE) <<
+            (Dump ? "Dumping " : "Printing ") << getName(D) << ":\n";
+        Out.resetColor();
+        if (Dump)
+          D->dump(Out);
+        else
+          D->print(Out, /*Indentation=*/0, /*PrintInstantiation=*/true);
+        // Don't traverse child nodes to avoid output duplication.
+        return true;
+      }
+      return base::TraverseDecl(D);
+    }
+
+  private:
+    std::string getName(Decl *D) {
+      if (isa<NamedDecl>(D))
+        return cast<NamedDecl>(D)->getQualifiedNameAsString();
+      return "";
+    }
+    bool filterMatches(Decl *D) {
+      return getName(D).find(FilterString) != std::string::npos;
+    }
+
+    raw_ostream &Out;
+    bool Dump;
+    std::string FilterString;
   };
 } // end anonymous namespace
 
-ASTConsumer *clang::CreateASTPrinter(raw_ostream* out) {
-  return new ASTPrinter(out);
+ASTConsumer *clang::CreateASTPrinter(raw_ostream *Out,
+                                     StringRef FilterString) {
+  return new ASTPrinter(Out, /*Dump=*/ false, FilterString);
 }
 
-ASTConsumer *clang::CreateASTDumper() {
-  return new ASTPrinter(0, true);
+ASTConsumer *clang::CreateASTDumper(StringRef FilterString) {
+  return new ASTPrinter(0, /*Dump=*/ true, FilterString);
 }
 
 //===----------------------------------------------------------------------===//
