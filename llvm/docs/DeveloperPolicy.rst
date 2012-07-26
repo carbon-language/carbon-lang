@@ -152,33 +152,10 @@ committed are reviewed after they go in: you don't want everyone to assume
 someone else will review it, allowing the patch to go unreviewed.  To solve this
 problem, we have a notion of an 'owner' for a piece of the code.  The sole
 responsibility of a code owner is to ensure that a commit to their area of the
-code is appropriately reviewed, either by themself or by someone else.  The
-current code owners are:
-
-* **Evan Cheng**: Code generator and all targets
-
-* **Greg Clayton**: LLDB
-
-* **Doug Gregor**: Clang Frontend Libraries
-
-* **Howard Hinnant**: libc++
-
-* **Anton Korobeynikov**: Exception handling, debug information, and Windows
-  codegen
-
-* **Ted Kremenek**: Clang Static Analyzer
-
-* **Chris Lattner**: Everything not covered by someone else
-
-* **John McCall**: Clang LLVM IR generation
-
-* **Jakob Olesen**: Register allocators and TableGen
-
-* **Duncan Sands**: dragonegg and llvm-gcc 4.2
-
-* **Peter Collingbourne**: libclc
-
-* **Tobias Grosser**: polly
+code is appropriately reviewed, either by themself or by someone else.  The list
+of current code owners can be found in the file
+`CODE_OWNERS.TXT <http://llvm.org/viewvc/llvm-project/llvm/trunk/CODE_OWNERS.TXT>`_
+in the root of the LLVM source tree.
 
 Note that code ownership is completely different than reviewers: anyone can
 review a piece of code, and we welcome code review from anyone who is
