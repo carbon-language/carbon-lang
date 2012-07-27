@@ -57,3 +57,63 @@ struct Friends {
   friend S<bar>::S(const S&);
   friend S<bar>::S(S&&);
 };
+
+namespace DefaultedFnExceptionSpec {
+  // DR1330: The exception-specification of an implicitly-declared special
+  // member function is evaluated as needed.
+  template<typename T> T &&declval();
+  template<typename T> struct pair {
+    pair(const pair&) noexcept(noexcept(T(declval<T>())));
+  };
+
+  struct Y;
+  struct X { X(); X(const Y&); };
+  struct Y { pair<X> p; };
+
+  template<typename T>
+  struct A {
+    pair<T> p;
+  };
+  struct B {
+    B();
+    B(const A<B>&);
+  };
+
+  // Don't crash here.
+  void f() {
+    X x = X();
+    (void)noexcept(B(declval<B>()));
+  }
+
+  template<typename T>
+  struct Error {
+    // FIXME: Type canonicalization causes all the errors to point at the first
+    // declaration which has the type 'void () noexcept (T::error)'. We should
+    // get one error for 'Error<int>::Error()' and one for 'Error<int>::~Error()'.
+    void f() noexcept(T::error); // expected-error 2{{has no members}}
+
+    Error() noexcept(T::error);
+    Error(const Error&) noexcept(T::error);
+    Error(Error&&) noexcept(T::error);
+    Error &operator=(const Error&) noexcept(T::error);
+    Error &operator=(Error&&) noexcept(T::error);
+    ~Error() noexcept(T::error);
+  };
+
+  struct DelayImplicit {
+    Error<int> e;
+  };
+
+  // Don't instantiate the exception specification here.
+  void test1(decltype(declval<DelayImplicit>() = DelayImplicit(DelayImplicit())));
+  void test2(decltype(declval<DelayImplicit>() = declval<const DelayImplicit>()));
+  void test3(decltype(DelayImplicit(declval<const DelayImplicit>())));
+
+  // Any odr-use causes the exception specification to be evaluated.
+  struct OdrUse { // \
+    expected-note {{instantiation of exception specification for 'Error'}} \
+    expected-note {{instantiation of exception specification for '~Error'}}
+    Error<int> e;
+  };
+  OdrUse use; // expected-note {{implicit default constructor for 'DefaultedFnExceptionSpec::OdrUse' first required here}}
+}

@@ -2367,15 +2367,18 @@ ASTContext::getFunctionType(QualType ResultTy,
   //  - exception types
   //  - consumed-arguments flags
   // Instead of the exception types, there could be a noexcept
-  // expression.
+  // expression, or information used to resolve the exception
+  // specification.
   size_t Size = sizeof(FunctionProtoType) +
                 NumArgs * sizeof(QualType);
-  if (EPI.ExceptionSpecType == EST_Dynamic)
+  if (EPI.ExceptionSpecType == EST_Dynamic) {
     Size += EPI.NumExceptions * sizeof(QualType);
-  else if (EPI.ExceptionSpecType == EST_ComputedNoexcept) {
+  } else if (EPI.ExceptionSpecType == EST_ComputedNoexcept) {
     Size += sizeof(Expr*);
   } else if (EPI.ExceptionSpecType == EST_Uninstantiated) {
     Size += 2 * sizeof(FunctionDecl*);
+  } else if (EPI.ExceptionSpecType == EST_Unevaluated) {
+    Size += sizeof(FunctionDecl*);
   }
   if (EPI.ConsumedArguments)
     Size += NumArgs * sizeof(bool);

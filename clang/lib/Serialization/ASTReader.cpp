@@ -3906,6 +3906,8 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
     } else if (EST == EST_Uninstantiated) {
       EPI.ExceptionSpecDecl = ReadDeclAs<FunctionDecl>(*Loc.F, Record, Idx);
       EPI.ExceptionSpecTemplate = ReadDeclAs<FunctionDecl>(*Loc.F, Record, Idx);
+    } else if (EST == EST_Unevaluated) {
+      EPI.ExceptionSpecDecl = ReadDeclAs<FunctionDecl>(*Loc.F, Record, Idx);
     }
     return Context.getFunctionType(ResultType, ParamTypes.data(), NumParams,
                                     EPI);

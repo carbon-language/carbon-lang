@@ -25,7 +25,7 @@ enum ExceptionSpecificationType {
   EST_MSAny,            ///< Microsoft throw(...) extension
   EST_BasicNoexcept,    ///< noexcept
   EST_ComputedNoexcept, ///< noexcept(expression)
-  EST_Delayed,          ///< not known yet
+  EST_Unevaluated,      ///< not evaluated yet, for special member function
   EST_Uninstantiated    ///< not instantiated yet
 };
 
@@ -35,6 +35,10 @@ inline bool isDynamicExceptionSpec(ExceptionSpecificationType ESpecType) {
 
 inline bool isNoexceptExceptionSpec(ExceptionSpecificationType ESpecType) {
   return ESpecType == EST_BasicNoexcept || ESpecType == EST_ComputedNoexcept;
+}
+
+inline bool isUnresolvedExceptionSpec(ExceptionSpecificationType ESpecType) {
+  return ESpecType == EST_Unevaluated || ESpecType == EST_Uninstantiated;
 }
 
 /// \brief Possible results from evaluation of a noexcept expression.

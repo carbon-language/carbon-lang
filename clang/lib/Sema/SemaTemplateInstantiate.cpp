@@ -1996,8 +1996,7 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   Instantiator.disableLateAttributeInstantiation();
   LateAttrs.clear();
 
-  if (!FieldsWithMemberInitializers.empty())
-    ActOnFinishDelayedMemberInitializers(Instantiation);
+  ActOnFinishDelayedMemberInitializers(Instantiation);
 
   if (TSK == TSK_ImplicitInstantiation) {
     Instantiation->setLocation(Pattern->getLocation());

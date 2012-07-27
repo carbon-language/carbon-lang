@@ -1384,9 +1384,6 @@ void has_nothrow_copy() {
   { int arr[F(__has_nothrow_copy(cvoid))]; }
 }
 
-template<bool b> struct assert_expr;
-template<> struct assert_expr<true> {};
-
 void has_nothrow_constructor() {
   { int arr[T(__has_nothrow_constructor(Int))]; }
   { int arr[T(__has_nothrow_constructor(IntAr))]; }
@@ -1415,11 +1412,6 @@ void has_nothrow_constructor() {
   { int arr[F(__has_nothrow_constructor(void))]; }
   { int arr[F(__has_nothrow_constructor(cvoid))]; }
   { int arr[F(__has_nothrow_constructor(HasTemplateCons))]; }
-
-  // While parsing an in-class initializer, the constructor is not known to be
-  // non-throwing yet.
-  struct HasInClassInit { int n = (assert_expr<!__has_nothrow_constructor(HasInClassInit)>(), 0); };
-  { int arr[T(__has_nothrow_constructor(HasInClassInit))]; }
 }
 
 void has_virtual_destructor() {

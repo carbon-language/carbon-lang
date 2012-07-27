@@ -100,20 +100,22 @@ bool Sema::CheckDistantExceptionSpec(QualType T) {
 
 const FunctionProtoType *
 Sema::ResolveExceptionSpec(SourceLocation Loc, const FunctionProtoType *FPT) {
-  // FIXME: If FD is a special member, we should delay computing its exception
-  // specification until this point.
-  if (FPT->getExceptionSpecType() != EST_Uninstantiated)
+  if (!isUnresolvedExceptionSpec(FPT->getExceptionSpecType()))
     return FPT;
 
   FunctionDecl *SourceDecl = FPT->getExceptionSpecDecl();
   const FunctionProtoType *SourceFPT =
       SourceDecl->getType()->castAs<FunctionProtoType>();
 
-  if (SourceFPT->getExceptionSpecType() != EST_Uninstantiated)
+  // If the exception specification has already been resolved, just return it.
+  if (!isUnresolvedExceptionSpec(SourceFPT->getExceptionSpecType()))
     return SourceFPT;
 
-  // Instantiate the exception specification now.
-  InstantiateExceptionSpec(Loc, SourceDecl);
+  // Compute or instantiate the exception specification now.
+  if (FPT->getExceptionSpecType() == EST_Unevaluated)
+    EvaluateImplicitExceptionSpec(Loc, cast<CXXMethodDecl>(SourceDecl));
+  else
+    InstantiateExceptionSpec(Loc, SourceDecl);
 
   return SourceDecl->getType()->castAs<FunctionProtoType>();
 }
@@ -346,8 +348,8 @@ bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
   ExceptionSpecificationType OldEST = Old->getExceptionSpecType();
   ExceptionSpecificationType NewEST = New->getExceptionSpecType();
 
-  assert(OldEST != EST_Delayed && NewEST != EST_Delayed &&
-         OldEST != EST_Uninstantiated && NewEST != EST_Uninstantiated &&
+  assert(!isUnresolvedExceptionSpec(OldEST) &&
+         !isUnresolvedExceptionSpec(NewEST) &&
          "Shouldn't see unknown exception specifications here");
 
   // Shortcut the case where both have no spec.
@@ -544,8 +546,8 @@ bool Sema::CheckExceptionSpecSubset(
 
   ExceptionSpecificationType SubEST = Subset->getExceptionSpecType();
 
-  assert(SuperEST != EST_Delayed && SubEST != EST_Delayed &&
-         SuperEST != EST_Uninstantiated && SubEST != EST_Uninstantiated &&
+  assert(!isUnresolvedExceptionSpec(SuperEST) &&
+         !isUnresolvedExceptionSpec(SubEST) &&
          "Shouldn't see unknown exception specifications here");
 
   // It does not. If the subset contains everything, we've failed.
@@ -807,15 +809,6 @@ static CanThrowResult canCalleeThrow(Sema &S, const Expr *E,
   FT = S.ResolveExceptionSpec(E->getLocStart(), FT);
   if (!FT)
     return CT_Can;
-
-  if (FT->getExceptionSpecType() == EST_Delayed) {
-    // FIXME: Try to resolve a delayed exception spec in ResolveExceptionSpec.
-    assert(isa<CXXConstructorDecl>(D) &&
-           "only constructor exception specs can be unknown");
-    S.Diag(E->getLocStart(), diag::err_exception_spec_unknown)
-      << E->getSourceRange();
-    return CT_Can;
-  }
 
   return FT->isNothrow(S.Context) ? CT_Cannot : CT_Can;
 }

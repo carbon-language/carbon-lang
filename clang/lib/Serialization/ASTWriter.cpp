@@ -198,6 +198,8 @@ void ASTTypeWriter::VisitFunctionProtoType(const FunctionProtoType *T) {
   } else if (T->getExceptionSpecType() == EST_Uninstantiated) {
     Writer.AddDeclRef(T->getExceptionSpecDecl(), Record);
     Writer.AddDeclRef(T->getExceptionSpecTemplate(), Record);
+  } else if (T->getExceptionSpecType() == EST_Unevaluated) {
+    Writer.AddDeclRef(T->getExceptionSpecDecl(), Record);
   }
   Code = TYPE_FUNCTION_PROTO;
 }

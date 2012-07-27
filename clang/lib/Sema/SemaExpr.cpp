@@ -10224,11 +10224,11 @@ void Sema::MarkFunctionReferenced(SourceLocation Loc, FunctionDecl *Func) {
   // FIXME: Is this really right?
   if (CurContext == Func) return;
 
-  // Instantiate the exception specification for any function which is
+  // Resolve the exception specification for any function which is
   // used: CodeGen will need it.
   const FunctionProtoType *FPT = Func->getType()->getAs<FunctionProtoType>();
-  if (FPT && FPT->getExceptionSpecType() == EST_Uninstantiated)
-    InstantiateExceptionSpec(Loc, Func);
+  if (FPT && isUnresolvedExceptionSpec(FPT->getExceptionSpecType()))
+    ResolveExceptionSpec(Loc, FPT);
 
   // Implicit instantiation of function templates and member functions of
   // class templates.

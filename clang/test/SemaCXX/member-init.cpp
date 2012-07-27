@@ -14,7 +14,7 @@ public:
 bool b();
 int k;
 struct Recurse {
-  int &n = b() ? Recurse().n : k; // ok
+  int &n = b() ? Recurse().n : k; // expected-error {{defaulted default constructor of 'Recurse' cannot be used by non-static data member initializer which appears before end of class definition}}
 };
 
 struct UnknownBound {

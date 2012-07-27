@@ -870,8 +870,6 @@ def warn_missing_exception_specification : Warning<
   "%0 is missing exception specification '%1'">;
 def err_noexcept_needs_constant_expression : Error<
   "argument to noexcept specifier must be a constant expression">;
-def err_exception_spec_unknown : Error<
-  "exception specification is not available until end of class definition">;
 
 // C++ access checking
 def err_class_redeclared_with_different_access : Error<
@@ -5088,6 +5086,9 @@ def err_in_class_initializer_literal_type : Error<
   "'constexpr' specifier">;
 def err_in_class_initializer_non_constant : Error<
   "in-class initializer for static data member is not a constant expression">;
+def err_in_class_initializer_references_def_ctor : Error<
+  "defaulted default constructor of %0 cannot be used by non-static data "
+  "member initializer which appears before end of class definition">;
 
 def ext_in_class_initializer_non_constant : Extension<
   "in-class initializer for static data member is not a constant expression; "

@@ -1584,6 +1584,11 @@ FunctionProtoType::FunctionProtoType(QualType result, const QualType *args,
     slot[1] = epi.ExceptionSpecTemplate;
     // This exception specification doesn't make the type dependent, because
     // it's not instantiated as part of instantiating the type.
+  } else if (getExceptionSpecType() == EST_Unevaluated) {
+    // Store the function decl from which we will resolve our
+    // exception specification.
+    FunctionDecl **slot = reinterpret_cast<FunctionDecl**>(argSlot + numArgs);
+    slot[0] = epi.ExceptionSpecDecl;
   }
 
   if (epi.ConsumedArguments) {
@@ -1667,7 +1672,8 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
       ID.AddPointer(epi.Exceptions[i].getAsOpaquePtr());
   } else if (epi.ExceptionSpecType == EST_ComputedNoexcept && epi.NoexceptExpr){
     epi.NoexceptExpr->Profile(ID, Context, false);
-  } else if (epi.ExceptionSpecType == EST_Uninstantiated) {
+  } else if (epi.ExceptionSpecType == EST_Uninstantiated ||
+             epi.ExceptionSpecType == EST_Unevaluated) {
     ID.AddPointer(epi.ExceptionSpecDecl->getCanonicalDecl());
   }
   if (epi.ConsumedArguments) {

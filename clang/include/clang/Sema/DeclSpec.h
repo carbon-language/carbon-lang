@@ -1152,8 +1152,7 @@ struct DeclaratorChunk {
     /// any.
     unsigned MutableLoc;
 
-    /// \brief When ExceptionSpecType isn't EST_None or EST_Delayed, the
-    /// location of the keyword introducing the spec.
+    /// \brief The location of the keyword introducing the spec, if any.
     unsigned ExceptionSpecLoc;
 
     /// ArgInfo - This is a pointer to a new[]'d array of ParamInfo objects that

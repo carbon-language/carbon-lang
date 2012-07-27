@@ -3190,8 +3190,6 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
             CPT = Self.ResolveExceptionSpec(KeyLoc, CPT);
             if (!CPT)
               return false;
-            if (CPT->getExceptionSpecType() == EST_Delayed)
-              return false;
             if (!CPT->isNothrow(Self.Context))
               return false;
           }
@@ -3232,8 +3230,6 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
           CPT = Self.ResolveExceptionSpec(KeyLoc, CPT);
           if (!CPT)
             return false;
-          if (CPT->getExceptionSpecType() == EST_Delayed)
-            return false;
           // FIXME: check whether evaluating default arguments can throw.
           // For now, we'll be conservative and assume that they can throw.
           if (!CPT->isNothrow(Self.Context) || CPT->getNumArgs() > 1)
@@ -3269,8 +3265,6 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
               = Constructor->getType()->getAs<FunctionProtoType>();
           CPT = Self.ResolveExceptionSpec(KeyLoc, CPT);
           if (!CPT)
-            return false;
-          if (CPT->getExceptionSpecType() == EST_Delayed)
             return false;
           // TODO: check whether evaluating default arguments can throw.
           // For now, we'll be conservative and assume that they can throw.
