@@ -248,7 +248,7 @@ void RuntimeDyldELF::resolveX86Relocation(uint8_t *LocalAddress,
     }
     default:
       // There are other relocation types, but it appears these are the
-      //  only ones currently used by the LLVM ELF object writer
+      // only ones currently used by the LLVM ELF object writer
       llvm_unreachable("Relocation type not implemented yet!");
       break;
   }
