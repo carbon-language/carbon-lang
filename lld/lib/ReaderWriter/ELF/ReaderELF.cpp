@@ -132,7 +132,7 @@ public:
     , SectionName(SN)
     , Symbol(E)
     , Section(S)
-    , Data(D) {
+    , ContentData(D) {
     static uint64_t ordernumber = 0;
     _ordinal = ++ordernumber;
   }
@@ -157,7 +157,7 @@ public:
         || Symbol->st_shndx == llvm::ELF::SHN_COMMON)
       return (uint64_t)0;
 
-    return Data.size();
+    return ContentData.size();
 
   }
 
@@ -281,7 +281,7 @@ public:
   }
 
   virtual llvm::ArrayRef<uint8_t> rawContent() const {
-    return Data;
+    return ContentData;
   }
 
   virtual reference_iterator begin() const {
@@ -305,8 +305,8 @@ private:
   const Elf_Sym *Symbol;
   const Elf_Shdr *Section;
 
-  // Data will hold the bits that make up the atom.
-  llvm::ArrayRef<uint8_t> Data;
+  // ContentData will hold the bits that make up the atom.
+  llvm::ArrayRef<uint8_t> ContentData;
 
   uint64_t _ordinal;
 };
@@ -343,28 +343,24 @@ public:
 
     std::map< const Elf_Shdr *, std::vector<const Elf_Sym *>> SectionSymbols;
 
-    llvm::object::SectionRef SR;
-    llvm::object::section_iterator section(SR);
-    llvm::object::symbol_iterator si(Obj->begin_symbols());
-    llvm::object::symbol_iterator se(Obj->end_symbols());
+    llvm::object::symbol_iterator it(Obj->begin_symbols());
+    llvm::object::symbol_iterator ie(Obj->end_symbols());
 
-    for (; si != se; si.increment(EC)) {
+    for (; it != ie; it.increment(EC)) {
       if (EC)
-        llvm::report_fatal_error("Could not read all symbols");
+        return;
       llvm::object::SectionRef SR;
       llvm::object::section_iterator section(SR);
 
-      EC = si->getSection(section);
-      if (EC)
-        llvm::report_fatal_error("Could not get section iterator");
+      if ((EC = it->getSection(section)))
+        return;
 
       const Elf_Shdr *Section = Obj->getElfSection(section);
-      const Elf_Sym  *Symbol  = Obj->getElfSymbol(si);
+      const Elf_Sym  *Symbol  = Obj->getElfSymbol(it);
 
       llvm::StringRef SymbolName;
-      EC = Obj->getSymbolName(Section, Symbol, SymbolName);
-      if (EC)
-        llvm::report_fatal_error("Could not get symbol name");
+      if ((EC = Obj->getSymbolName(Section, Symbol, SymbolName)))
+        return;
 
       if (Symbol->st_shndx == llvm::ELF::SHN_ABS) {
         // Create an absolute atom.
@@ -420,17 +416,14 @@ public:
       for (auto si = Symbs.begin(), se = Symbs.end(); si != se; ++si) {
 
         StringRef symbolContents;
-        EC = Obj->getSectionContents(i.first, symbolContents);
-        if (EC)
-          llvm::report_fatal_error("Could not get section iterator");
+        if ((EC = Obj->getSectionContents(i.first, symbolContents)))
+          return;
 
-        EC = Obj->getSymbolName(i.first, *si, SymbolName);
-        if (EC)
-          llvm::report_fatal_error("Could not get symbol name");
+        if ((EC = Obj->getSymbolName(i.first, *si, SymbolName)))
+          return;
 
-        EC = Obj->getSectionName(i.first, SectionName);
-        if (EC)
-          llvm::report_fatal_error("Could not get section name");
+        if ((EC = Obj->getSectionName(i.first, SectionName)))
+          return;
 
         bool IsCommon = false;
         if (((*si)->getType() == llvm::ELF::STT_COMMON)
