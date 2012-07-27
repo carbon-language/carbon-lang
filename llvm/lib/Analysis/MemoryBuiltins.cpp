@@ -506,6 +506,10 @@ SizeOffsetType ObjectSizeOffsetVisitor::visitPHINode(PHINode&) {
 }
 
 SizeOffsetType ObjectSizeOffsetVisitor::visitSelectInst(SelectInst &I) {
+  // ignore malformed self-looping selects
+  if (I.getTrueValue() == &I || I.getFalseValue() == &I)
+    return unknown();
+
   SizeOffsetType TrueSide  = compute(I.getTrueValue());
   SizeOffsetType FalseSide = compute(I.getFalseValue());
   if (bothKnown(TrueSide) && bothKnown(FalseSide) && TrueSide == FalseSide)
@@ -711,6 +715,10 @@ SizeOffsetEvalType ObjectSizeOffsetEvaluator::visitPHINode(PHINode &PHI) {
 }
 
 SizeOffsetEvalType ObjectSizeOffsetEvaluator::visitSelectInst(SelectInst &I) {
+  // ignore malformed self-looping selects
+  if (I.getTrueValue() == &I || I.getFalseValue() == &I)
+    return unknown();
+
   SizeOffsetEvalType TrueSide  = compute_(I.getTrueValue());
   SizeOffsetEvalType FalseSide = compute_(I.getFalseValue());
 

@@ -219,3 +219,22 @@ define i32 @test13(i8** %esc) {
 ; CHECK: ret i32 8
   ret i32 %1
 }
+
+; CHECK: @PR13390
+define i32 @PR13390(i1 %bool, i8* %a) {
+entry:
+  %cond = or i1 %bool, true
+  br i1 %cond, label %return, label %xpto
+
+xpto:
+  %select = select i1 %bool, i8* %select, i8* %a
+  %select2 = select i1 %bool, i8* %a, i8* %select2
+  %0 = tail call i32 @llvm.objectsize.i32(i8* %select, i1 true)
+  %1 = tail call i32 @llvm.objectsize.i32(i8* %select2, i1 true)
+  %2 = add i32 %0, %1
+; CHECK: ret i32 undef
+  ret i32 %2
+
+return:
+  ret i32 42
+}
