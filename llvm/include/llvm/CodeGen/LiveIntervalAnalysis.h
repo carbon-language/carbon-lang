@@ -375,6 +375,7 @@ namespace llvm {
 
     void computeLiveInRegUnits();
     void computeRegUnitInterval(LiveInterval*);
+    void computeVirtRegInterval(LiveInterval*);
 
     class HMEditor;
   };
