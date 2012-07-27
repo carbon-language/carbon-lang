@@ -423,6 +423,7 @@ INTERCEPTOR(int, strcmp, const char *s1, const char *s2) {
   if (!asan_inited) {
     return internal_strcmp(s1, s2);
   }
+  ENSURE_ASAN_INITED();
   unsigned char c1, c2;
   uptr i;
   for (i = 0; ; i++) {
@@ -494,6 +495,7 @@ INTERCEPTOR(int, strncmp, const char *s1, const char *s2, uptr size) {
   if (asan_init_is_running) {
     return REAL(strncmp)(s1, s2, size);
   }
+  ENSURE_ASAN_INITED();
   unsigned char c1 = 0, c2 = 0;
   uptr i;
   for (i = 0; i < size; i++) {
