@@ -1,4 +1,6 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core -fblocks -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -fblocks -verify %s
+
+void clang_analyzer_eval(bool);
 
 // Do not crash on this templated code which uses a block.
 typedef void (^my_block)(void);
@@ -27,3 +29,16 @@ int main(){
   Mf m;
   m.I();
 }
+
+
+// <rdar://problem/11949235>
+template<class T, unsigned N>
+inline unsigned array_lengthof(T (&)[N]) {
+  return N;
+}
+
+void testNonTypeTemplateInstantiation() {
+  const char *S[] = { "a", "b" };
+  clang_analyzer_eval(array_lengthof(S) == 2); // expected-warning{{TRUE}}
+}
+

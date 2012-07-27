@@ -528,7 +528,6 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     
     // We don't handle default arguments either yet, but we can fake it
     // for now by just skipping them.
-    case Stmt::SubstNonTypeTemplateParmExprClass:
     case Stmt::CXXDefaultArgExprClass:
       break;
 
@@ -622,6 +621,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::StringLiteralClass:
     case Stmt::ObjCStringLiteralClass:
     case Stmt::CXXBindTemporaryExprClass:
+    case Stmt::SubstNonTypeTemplateParmExprClass:
     case Stmt::CXXNullPtrLiteralExprClass: {
       Bldr.takeNodes(Pred);
       ExplodedNodeSet preVisit;
