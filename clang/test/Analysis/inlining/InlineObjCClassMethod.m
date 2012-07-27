@@ -132,3 +132,30 @@ int foo() {
   return 5/y; // Would be great to get a warning here.
 }
 @end
+
+// Another false negative due to us not reasoning about self, which in this 
+// case points to the object of the class in the call site and should be equal 
+// to [MyParent class].
+@interface MyParentSelf : NSObject
++ (int)testSelf;
+@end
+@implementation MyParentSelf
++ (int)testSelf {
+  if (self == [MyParentSelf class])
+      return 0;
+    else
+      return 1;
+}
+@end
+@interface MyClassSelf : MyParentSelf
+@end
+@implementation MyClassSelf
++ (int)testClassMethodByKnownVarDecl {
+  int y = [MyParentSelf testSelf];
+  return 5/y; // Should warn here.
+}
+@end
+int foo2() {
+  int y = [MyParentSelf testSelf];
+  return 5/y; // Should warn here.
+}
