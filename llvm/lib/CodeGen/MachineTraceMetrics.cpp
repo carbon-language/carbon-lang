@@ -142,6 +142,7 @@ computeDepthResources(const MachineBasicBlock *MBB) {
   // Compute resources from trace above. The top block is simple.
   if (!TBI->Pred) {
     TBI->InstrDepth = 0;
+    TBI->Head = MBB->getNumber();
     return;
   }
 
@@ -151,6 +152,7 @@ computeDepthResources(const MachineBasicBlock *MBB) {
   assert(PredTBI->hasValidDepth() && "Trace above has not been computed yet");
   const FixedBlockInfo *PredFBI = CT.getResources(TBI->Pred);
   TBI->InstrDepth = PredTBI->InstrDepth + PredFBI->InstrCount;
+  TBI->Head = PredTBI->Head;
 }
 
 // Update resource-related information in the TraceBlockInfo for MBB.
@@ -163,14 +165,17 @@ computeHeightResources(const MachineBasicBlock *MBB) {
   TBI->InstrHeight = CT.getResources(MBB)->InstrCount;
 
   // The trace tail is done.
-  if (!TBI->Succ)
+  if (!TBI->Succ) {
+    TBI->Tail = MBB->getNumber();
     return;
+  }
 
   // Compute from the block below. A post-order traversal ensures the
   // predecessor is always computed first.
   TraceBlockInfo *SuccTBI = &BlockInfo[TBI->Succ->getNumber()];
   assert(SuccTBI->hasValidHeight() && "Trace below has not been computed yet");
   TBI->InstrHeight += SuccTBI->InstrHeight;
+  TBI->Tail = SuccTBI->Tail;
 }
 
 // Check if depth resources for MBB are valid and return the TBI.
@@ -454,12 +459,15 @@ MachineTraceMetrics::Ensemble::getTrace(const MachineBasicBlock *MBB) {
 }
 
 void MachineTraceMetrics::Trace::print(raw_ostream &OS) const {
-  OS << TE.getName() << " trace:";
+  unsigned MBBNum = &TBI - &TE.BlockInfo[0];
+
+  OS << TE.getName() << " trace BB#" << TBI.Head << " --> BB#" << MBBNum
+     << " --> BB#" << TBI.Tail << ':';
   if (TBI.hasValidHeight() && TBI.hasValidDepth())
     OS << ' ' << getInstrCount() << " instrs.";
 
   const MachineTraceMetrics::TraceBlockInfo *Block = &TBI;
-  OS << "\n *";
+  OS << "\nBB#" << MBBNum;
   while (Block->hasValidDepth() && Block->Pred) {
     unsigned Num = Block->Pred->getNumber();
     OS << " <- BB#" << Num;
@@ -467,7 +475,7 @@ void MachineTraceMetrics::Trace::print(raw_ostream &OS) const {
   }
 
   Block = &TBI;
-  OS << "\n *";
+  OS << "\n    ";
   while (Block->hasValidHeight() && Block->Succ) {
     unsigned Num = Block->Succ->getNumber();
     OS << " -> BB#" << Num;

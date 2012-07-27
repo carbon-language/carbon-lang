@@ -110,6 +110,12 @@ public:
     /// Trace successor, or NULL for the last block in the trace.
     const MachineBasicBlock *Succ;
 
+    /// The block number of the head of the trace. (When hasValidDepth()).
+    unsigned Head;
+
+    /// The block number of the tail of the trace. (When hasValidHeight()).
+    unsigned Tail;
+
     /// Accumulated number of instructions in the trace above this block.
     /// Does not include instructions in this block.
     unsigned InstrDepth;
