@@ -1,9 +1,9 @@
 ; RUN: llc -mtriple=x86_64-macosx %s -o %t -filetype=obj
 ; RUN: llvm-dwarfdump %t | FileCheck %s
 
-; CHECK: 0x00000027:   DW_TAG_structure_type
-; CHECK: 0x0000002c:     DW_AT_declaration
-; CHECK: 0x0000002d:     DW_AT_APPLE_runtime_class
+; CHECK: 0x0000002f:   DW_TAG_structure_type
+; CHECK: 0x00000034:     DW_AT_declaration
+; CHECK: 0x00000035:     DW_AT_APPLE_runtime_class
 
 %0 = type opaque
 
