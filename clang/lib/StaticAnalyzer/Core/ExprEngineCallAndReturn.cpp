@@ -400,21 +400,26 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
 
     // Evaluate the call.
     switch (K) {
-    case CE_Function:
-      evalCall(dstCallEvaluated, *I, FunctionCall(CE, State, LCtx));
+    case CE_Function: {
+      FunctionCall Call(CE, State, LCtx);
+      evalCall(dstCallEvaluated, *I, Call);
       break;
-    case CE_CXXMember:
-      evalCall(dstCallEvaluated, *I, CXXMemberCall(cast<CXXMemberCallExpr>(CE),
-                                                   State, LCtx));
+    }
+    case CE_CXXMember: {
+      CXXMemberCall Call(cast<CXXMemberCallExpr>(CE), State, LCtx);
+      evalCall(dstCallEvaluated, *I, Call);
       break;
-    case CE_CXXMemberOperator:
-      evalCall(dstCallEvaluated, *I,
-               CXXMemberOperatorCall(cast<CXXOperatorCallExpr>(CE),
-                                     State, LCtx));
+    }
+    case CE_CXXMemberOperator: {
+      CXXMemberOperatorCall Call(cast<CXXOperatorCallExpr>(CE), State, LCtx);
+      evalCall(dstCallEvaluated, *I, Call);
       break;
-    case CE_Block:
-      evalCall(dstCallEvaluated, *I, BlockCall(CE, State, LCtx));
+    }
+    case CE_Block: {
+      BlockCall Call(CE, State, LCtx);
+      evalCall(dstCallEvaluated, *I, Call);
       break;
+    }
     default:
       llvm_unreachable("Non-CallExpr CallEventKind");
     }
