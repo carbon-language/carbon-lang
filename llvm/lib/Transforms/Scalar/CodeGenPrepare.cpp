@@ -645,10 +645,18 @@ bool CodeGenPrepare::DupRetToEnableTailCallOpts(ReturnInst *RI) {
   if (!TLI)
     return false;
 
+  PHINode *PN = 0;
+  BitCastInst *BCI = 0;
   Value *V = RI->getReturnValue();
-  PHINode *PN = V ? dyn_cast<PHINode>(V) : NULL;
-  if (V && !PN)
-    return false;
+  if (V) {
+    BCI = dyn_cast<BitCastInst>(V);
+    if (BCI)
+      V = BCI->getOperand(0);
+
+    PN = dyn_cast<PHINode>(V);
+    if (!PN)
+      return false;
+  }
 
   BasicBlock *BB = RI->getParent();
   if (PN && PN->getParent() != BB)
@@ -666,6 +674,9 @@ bool CodeGenPrepare::DupRetToEnableTailCallOpts(ReturnInst *RI) {
   if (PN) {
     BasicBlock::iterator BI = BB->begin();
     do { ++BI; } while (isa<DbgInfoIntrinsic>(BI));
+    if (&*BI == BCI)
+      // Also skip over the bitcast.
+      ++BI;
     if (&*BI != RI)
       return false;
   } else {

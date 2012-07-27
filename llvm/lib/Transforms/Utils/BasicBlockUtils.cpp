@@ -659,10 +659,26 @@ ReturnInst *llvm::FoldReturnIntoUncondBranch(ReturnInst *RI, BasicBlock *BB,
   // If the return instruction returns a value, and if the value was a
   // PHI node in "BB", propagate the right value into the return.
   for (User::op_iterator i = NewRet->op_begin(), e = NewRet->op_end();
-       i != e; ++i)
-    if (PHINode *PN = dyn_cast<PHINode>(*i))
-      if (PN->getParent() == BB)
-        *i = PN->getIncomingValueForBlock(Pred);
+       i != e; ++i) {
+    Value *V = *i;
+    Instruction *NewBC = 0;
+    if (BitCastInst *BCI = dyn_cast<BitCastInst>(V)) {
+      // Return value might be bitcasted. Clone and insert it before the
+      // return instruction.
+      V = BCI->getOperand(0);
+      NewBC = BCI->clone();
+      Pred->getInstList().insert(NewRet, NewBC);
+      *i = NewBC;
+    }
+    if (PHINode *PN = dyn_cast<PHINode>(V)) {
+      if (PN->getParent() == BB) {
+        if (NewBC)
+          NewBC->setOperand(0, PN->getIncomingValueForBlock(Pred));
+        else
+          *i = PN->getIncomingValueForBlock(Pred);
+      }
+    }
+  }
       
   // Update any PHI nodes in the returning block to realize that we no
   // longer branch to them.
