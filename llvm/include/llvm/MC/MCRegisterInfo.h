@@ -111,6 +111,10 @@ struct MCRegisterDesc {
   uint32_t SubRegs;   // Sub-register set, described above
   uint32_t SuperRegs; // Super-register set, described above
 
+  // Offset into MCRI::SubRegIndices of a list of sub-register indices for each
+  // sub-register in SubRegs.
+  uint32_t SubRegIndices;
+
   // RegUnits - Points to the list of register units. The low 4 bits holds the
   // Scale, the high bits hold an offset into DiffLists. See MCRegUnitIterator.
   uint32_t RegUnits;
@@ -305,9 +309,7 @@ public:
   /// getSubReg - Returns the physical register number of sub-register "Index"
   /// for physical register RegNo. Return zero if the sub-register does not
   /// exist.
-  unsigned getSubReg(unsigned Reg, unsigned Idx) const {
-    return *(SubRegIndices + (Reg - 1) * NumSubRegIndices + Idx - 1);
-  }
+  unsigned getSubReg(unsigned Reg, unsigned Idx) const;
 
   /// getMatchingSuperReg - Return a super-register of the specified register
   /// Reg so its sub-register of index SubIdx is Reg.
@@ -317,12 +319,7 @@ public:
   /// getSubRegIndex - For a given register pair, return the sub-register index
   /// if the second register is a sub-register of the first. Return zero
   /// otherwise.
-  unsigned getSubRegIndex(unsigned RegNo, unsigned SubRegNo) const {
-    for (unsigned I = 1; I <= NumSubRegIndices; ++I)
-      if (getSubReg(RegNo, I) == SubRegNo)
-        return I;
-    return 0;
-  }
+  unsigned getSubRegIndex(unsigned RegNo, unsigned SubRegNo) const;
 
   /// getName - Return the human-readable symbolic target-specific name for the
   /// specified physical register.
@@ -442,10 +439,32 @@ public:
 inline
 unsigned MCRegisterInfo::getMatchingSuperReg(unsigned Reg, unsigned SubIdx,
                                              const MCRegisterClass *RC) const {
-    for (MCSuperRegIterator Supers(Reg, this); Supers.isValid(); ++Supers)
-      if (Reg == getSubReg(*Supers, SubIdx) && RC->contains(*Supers))
-        return *Supers;
-    return 0;
+  for (MCSuperRegIterator Supers(Reg, this); Supers.isValid(); ++Supers)
+    if (RC->contains(*Supers) && Reg == getSubReg(*Supers, SubIdx))
+      return *Supers;
+  return 0;
+}
+
+inline
+unsigned MCRegisterInfo::getSubReg(unsigned Reg, unsigned Idx) const {
+  // Get a pointer to the corresponding SubRegIndices list. This list has the
+  // name of each sub-register in the same order as MCSubRegIterator.
+  const uint16_t *SRI = SubRegIndices + get(Reg).SubRegIndices;
+  for (MCSubRegIterator Subs(Reg, this); Subs.isValid(); ++Subs, ++SRI)
+    if (*SRI == Idx)
+      return *Subs;
+  return 0;
+}
+
+inline
+unsigned MCRegisterInfo::getSubRegIndex(unsigned Reg, unsigned SubReg) const {
+  // Get a pointer to the corresponding SubRegIndices list. This list has the
+  // name of each sub-register in the same order as MCSubRegIterator.
+  const uint16_t *SRI = SubRegIndices + get(Reg).SubRegIndices;
+  for (MCSubRegIterator Subs(Reg, this); Subs.isValid(); ++Subs, ++SRI)
+    if (*Subs == SubReg)
+      return *SRI;
+  return 0;
 }
 
 //===----------------------------------------------------------------------===//

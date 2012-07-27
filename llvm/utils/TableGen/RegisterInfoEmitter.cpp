@@ -484,7 +484,7 @@ static void printSimpleValueType(raw_ostream &OS, MVT::SimpleValueType VT) {
 }
 
 static void printSubRegIndex(raw_ostream &OS, const CodeGenSubRegIndex *Idx) {
-  OS << Idx->getQualifiedName();
+  OS << Idx->EnumValue;
 }
 
 // Differentially encoded register and regunit lists allow for better
@@ -555,6 +555,12 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
   SmallVector<DiffVec, 4> RegUnitLists(Regs.size());
   SmallVector<unsigned, 4> RegUnitInitScale(Regs.size());
 
+  // Keep track of sub-register names as well. These are not differentially
+  // encoded.
+  typedef SmallVector<const CodeGenSubRegIndex*, 4> SubRegIdxVec;
+  SequenceToOffsetTable<SubRegIdxVec> SubRegIdxSeqs;
+  SmallVector<SubRegIdxVec, 4> SubRegIdxLists(Regs.size());
+
   SequenceToOffsetTable<std::string> RegStrings;
 
   // Precompute register lists for the SequenceToOffsetTable.
@@ -568,6 +574,12 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
     Reg->addSubRegsPreOrder(SR, RegBank);
     diffEncode(SubRegLists[i], Reg->EnumValue, SR.begin(), SR.end());
     DiffSeqs.add(SubRegLists[i]);
+
+    // Compute the corresponding sub-register indexes.
+    SubRegIdxVec &SRIs = SubRegIdxLists[i];
+    for (unsigned j = 0, je = SR.size(); j != je; ++j)
+      SRIs.push_back(Reg->getSubRegIndex(SR[j]));
+    SubRegIdxSeqs.add(SRIs);
 
     // Super-registers are already computed.
     const RegVec &SuperRegList = Reg->getSuperRegs();
@@ -612,6 +624,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   // Compute the final layout of the sequence table.
   DiffSeqs.layout();
+  SubRegIdxSeqs.layout();
 
   OS << "namespace llvm {\n\n";
 
@@ -622,6 +635,11 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
   DiffSeqs.emit(OS, printDiff16);
   OS << "};\n\n";
 
+  // Emit the table of sub-register indexes.
+  OS << "extern const uint16_t " << TargetName << "SubRegIdxLists[] = {\n";
+  SubRegIdxSeqs.emit(OS, printSubRegIndex);
+  OS << "};\n\n";
+
   // Emit the string table.
   RegStrings.layout();
   OS << "extern const char " << TargetName << "RegStrings[] = {\n";
@@ -630,7 +648,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   OS << "extern const MCRegisterDesc " << TargetName
      << "RegDesc[] = { // Descriptors\n";
-  OS << "  { " << RegStrings.get("") << ", 0, 0, 0, 0 },\n";
+  OS << "  { " << RegStrings.get("") << ", 0, 0, 0, 0, 0 },\n";
 
   // Emit the register descriptors now.
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
@@ -639,6 +657,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
        << DiffSeqs.get(OverlapLists[i]) << ", "
        << DiffSeqs.get(SubRegLists[i]) << ", "
        << DiffSeqs.get(SuperRegLists[i]) << ", "
+       << SubRegIdxSeqs.get(SubRegIdxLists[i]) << ", "
        << (DiffSeqs.get(RegUnitLists[i])*16 + RegUnitInitScale[i]) << " },\n";
   }
   OS << "};\n\n";      // End of register descriptors...
@@ -718,37 +737,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   OS << "};\n\n";
 
-  // Emit the data table for getSubReg().
   ArrayRef<CodeGenSubRegIndex*> SubRegIndices = RegBank.getSubRegIndices();
-  if (SubRegIndices.size()) {
-    OS << "const uint16_t " << TargetName << "SubRegTable[]["
-       << SubRegIndices.size() << "] = {\n";
-    for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-      const CodeGenRegister::SubRegMap &SRM = Regs[i]->getSubRegs();
-      OS << "  /* " << Regs[i]->TheDef->getName() << " */\n";
-      if (SRM.empty()) {
-        OS << "  {0},\n";
-        continue;
-      }
-      OS << "  {";
-      for (unsigned j = 0, je = SubRegIndices.size(); j != je; ++j) {
-        // FIXME: We really should keep this to 80 columns...
-        CodeGenRegister::SubRegMap::const_iterator SubReg =
-          SRM.find(SubRegIndices[j]);
-        if (SubReg != SRM.end())
-          OS << getQualifiedName(SubReg->second->TheDef);
-        else
-          OS << "0";
-        if (j != je - 1)
-          OS << ", ";
-      }
-      OS << "}" << (i != e ? "," : "") << "\n";
-    }
-    OS << "};\n\n";
-    OS << "const uint16_t *get" << TargetName
-       << "SubRegTable() {\n  return (const uint16_t *)" << TargetName
-       << "SubRegTable;\n}\n\n";
-  }
 
   EmitRegMappingTables(OS, Regs, false);
 
@@ -772,21 +761,17 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
   // MCRegisterInfo initialization routine.
   OS << "static inline void Init" << TargetName
      << "MCRegisterInfo(MCRegisterInfo *RI, unsigned RA, "
-     << "unsigned DwarfFlavour = 0, unsigned EHFlavour = 0) {\n";
-  OS << "  RI->InitMCRegisterInfo(" << TargetName << "RegDesc, "
+     << "unsigned DwarfFlavour = 0, unsigned EHFlavour = 0) {\n"
+     << "  RI->InitMCRegisterInfo(" << TargetName << "RegDesc, "
      << Regs.size()+1 << ", RA, " << TargetName << "MCRegisterClasses, "
      << RegisterClasses.size() << ", "
      << TargetName << "RegUnitRoots, "
      << RegBank.getNumNativeRegUnits() << ", "
      << TargetName << "RegDiffLists, "
-     << TargetName << "RegStrings, ";
-  if (SubRegIndices.size() != 0)
-    OS << "(uint16_t*)" << TargetName << "SubRegTable, "
-       << SubRegIndices.size() << ",\n";
-  else
-    OS << "NULL, 0,\n";
-
-  OS << "  " << TargetName << "RegEncodingTable);\n\n";
+     << TargetName << "RegStrings, "
+     << TargetName << "SubRegIdxLists, "
+     << SubRegIndices.size() << ",\n"
+     << "  " << TargetName << "RegEncodingTable);\n\n";
 
   EmitRegMapping(OS, Regs, false);
 
@@ -1139,9 +1124,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   OS << "extern const uint16_t " << TargetName << "RegDiffLists[];\n";
   OS << "extern const char " << TargetName << "RegStrings[];\n";
   OS << "extern const uint16_t " << TargetName << "RegUnitRoots[][2];\n";
-  if (SubRegIndices.size() != 0)
-    OS << "extern const uint16_t *get" << TargetName
-       << "SubRegTable();\n";
+  OS << "extern const uint16_t " << TargetName << "SubRegIdxLists[];\n";
   OS << "extern const uint16_t " << TargetName << "RegEncodingTable[];\n";
 
   EmitRegMappingTables(OS, Regs, true);
@@ -1158,14 +1141,9 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
      << "                     " << RegBank.getNumNativeRegUnits() << ",\n"
      << "                     " << TargetName << "RegDiffLists,\n"
      << "                     " << TargetName << "RegStrings,\n"
-     << "                     ";
-  if (SubRegIndices.size() != 0)
-    OS << "get" << TargetName << "SubRegTable(), "
-       << SubRegIndices.size() << ",\n";
-  else
-    OS << "NULL, 0,\n";
-
-  OS << "                     " << TargetName << "RegEncodingTable);\n\n";
+     << "                     " << TargetName << "SubRegIdxLists,\n"
+     << "                     " << SubRegIndices.size() << ",\n"
+     << "                     " << TargetName << "RegEncodingTable);\n\n";
 
   EmitRegMapping(OS, Regs, true);
 
