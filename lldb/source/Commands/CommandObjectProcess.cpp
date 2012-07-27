@@ -566,6 +566,7 @@ protected:
                     else
                     {
                         result.AppendError ("attach failed: process did not stop (no such process or permission problem?)");
+                        process->Destroy();
                         result.SetStatus (eReturnStatusFailed);
                         return false;                
                     }

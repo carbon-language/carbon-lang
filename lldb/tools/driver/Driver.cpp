@@ -1080,11 +1080,12 @@ Driver::EditLineInputReaderCallback
     case eInputReaderInterrupt:
         if (driver->m_io_channel_ap.get() != NULL)
         {
-            SBProcess process = driver->GetDebugger().GetSelectedTarget().GetProcess();
+            SBProcess process(driver->GetDebugger().GetSelectedTarget().GetProcess());
             if (!driver->m_io_channel_ap->EditLineHasCharacters()
-                &&  process.IsValid() && process.GetState() == lldb::eStateRunning)
+                &&  process.IsValid()
+                && (process.GetState() == lldb::eStateRunning || process.GetState() == lldb::eStateAttaching))
             {
-                process.Stop();
+                process.SendAsyncInterrupt ();
             }
             else
             {

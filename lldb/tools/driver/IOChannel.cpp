@@ -55,7 +55,15 @@ IOChannel::EditLineHasCharacters ()
 {
     const LineInfo *line_info  = el_line(m_edit_line);
     if (line_info)
-        return line_info->cursor != line_info->buffer;
+    {
+        // Sometimes we get called after the user has submitted the line, but before editline has
+        // cleared the buffer.  In that case the cursor will be pointing at the newline.  That's
+        // equivalent to having no characters on the line, since it has already been submitted.
+        if (*line_info->cursor == '\n')
+            return false;
+        else
+            return line_info->cursor != line_info->buffer;
+    }
     else
         return false;
 }

@@ -718,6 +718,16 @@ SBProcess::Signal (int signo)
     return sb_error;
 }
 
+void
+SBProcess::SendAsyncInterrupt ()
+{
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
+    {
+        process_sp->SendAsyncInterrupt ();
+    }
+}
+
 SBThread
 SBProcess::GetThreadByID (tid_t tid)
 {

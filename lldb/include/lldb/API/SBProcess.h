@@ -156,6 +156,9 @@ public:
     lldb::SBError
     Signal (int signal);
 
+    void
+    SendAsyncInterrupt();
+    
     size_t
     ReadMemory (addr_t addr, void *buf, size_t size, lldb::SBError &error);
 

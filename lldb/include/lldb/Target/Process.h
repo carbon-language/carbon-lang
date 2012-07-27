@@ -2388,6 +2388,9 @@ public:
                      uint32_t num_frames, 
                      uint32_t num_frames_with_source);
 
+    void
+    SendAsyncInterrupt ();
+    
 protected:
     
     void

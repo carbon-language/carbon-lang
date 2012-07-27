@@ -835,7 +835,8 @@ Process::Process(Target &target, Listener &listener) :
                                       eBroadcastBitSTDERR);
 
     m_private_state_listener.StartListeningForEvents(&m_private_state_broadcaster,
-                                                     eBroadcastBitStateChanged);
+                                                     eBroadcastBitStateChanged |
+                                                     eBroadcastBitInterrupt);
 
     m_private_state_listener.StartListeningForEvents(&m_private_state_control_broadcaster,
                                                      eBroadcastInternalStateControlStop |
@@ -1027,7 +1028,7 @@ Process::HijackProcessEvents (Listener *listener)
 {
     if (listener != NULL)
     {
-        return HijackBroadcaster(listener, eBroadcastBitStateChanged);
+        return HijackBroadcaster(listener, eBroadcastBitStateChanged | eBroadcastBitInterrupt);
     }
     else
         return false;
@@ -1044,7 +1045,7 @@ Process::HijackPrivateProcessEvents (Listener *listener)
 {
     if (listener != NULL)
     {
-        return m_private_state_broadcaster.HijackBroadcaster(listener, eBroadcastBitStateChanged);
+        return m_private_state_broadcaster.HijackBroadcaster(listener, eBroadcastBitStateChanged | eBroadcastBitInterrupt);
     }
     else
         return false;
@@ -1067,9 +1068,14 @@ Process::WaitForStateChangedEvents (const TimeValue *timeout, EventSP &event_sp)
     StateType state = eStateInvalid;
     if (m_listener.WaitForEventForBroadcasterWithType (timeout,
                                                        this,
-                                                       eBroadcastBitStateChanged,
+                                                       eBroadcastBitStateChanged | eBroadcastBitInterrupt,
                                                        event_sp))
-        state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
+    {
+        if (event_sp && event_sp->GetType() == eBroadcastBitStateChanged)
+            state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
+        else if (log)
+            log->Printf ("Process::%s got no event or was interrupted.", __FUNCTION__);
+    }
 
     if (log)
         log->Printf ("Process::%s (timeout = %p, event_sp) => %s",
@@ -1118,9 +1124,10 @@ Process::WaitForStateChangedEventsPrivate (const TimeValue *timeout, EventSP &ev
     StateType state = eStateInvalid;
     if (m_private_state_listener.WaitForEventForBroadcasterWithType (timeout,
                                                                      &m_private_state_broadcaster,
-                                                                     eBroadcastBitStateChanged,
+                                                                     eBroadcastBitStateChanged | eBroadcastBitInterrupt,
                                                                      event_sp))
-        state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
+        if (event_sp && event_sp->GetType() == eBroadcastBitStateChanged)
+            state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
 
     // This is a bit of a hack, but when we wait here we could very well return
     // to the command-line, and that could disable the log, which would render the
@@ -3292,6 +3299,15 @@ Process::ControlPrivateStateThread (uint32_t signal)
 }
 
 void
+Process::SendAsyncInterrupt ()
+{
+    if (PrivateStateThreadIsValid())
+        m_private_state_broadcaster.BroadcastEvent (Process::eBroadcastBitInterrupt, NULL);
+    else
+        BroadcastEvent (Process::eBroadcastBitInterrupt, NULL);
+}
+
+void
 Process::HandlePrivateEvent (EventSP &event_sp)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
@@ -3410,7 +3426,22 @@ Process::RunPrivateStateThread ()
             m_private_state_control_wait.SetValue (true, eBroadcastAlways);
             continue;
         }
-
+        else if (event_sp->GetType() == eBroadcastBitInterrupt)
+        {
+            if (m_public_state.GetValue() == eStateAttaching)
+            {
+                if (log)
+                    log->Printf ("Process::%s (arg = %p, pid = %llu) woke up with an interrupt while attaching - forwarding interrupt.", __FUNCTION__, this, GetID());
+                BroadcastEvent (eBroadcastBitInterrupt, NULL);
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("Process::%s (arg = %p, pid = %llu) woke up with an interrupt - Halting.", __FUNCTION__, this, GetID());
+                Halt();
+            }
+            continue;
+        }
 
         const StateType internal_state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
 
@@ -4215,72 +4246,85 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 if (event_sp.get())
                 {
                     bool keep_going = false;
-                    stop_state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
-                    if (log)
-                        log->Printf("Process::RunThreadPlan(): in while loop, got event: %s.", StateAsCString(stop_state));
-                        
-                    switch (stop_state)
+                    if (event_sp->GetType() == eBroadcastBitInterrupt)
                     {
-                    case lldb::eStateStopped:
+                        Halt();
+                        keep_going = false;
+                        return_value = eExecutionInterrupted;
+                        errors.Printf ("Execution halted by user interrupt.");
+                        if (log)
+                            log->Printf ("Process::RunThreadPlan(): Got  interrupted by eBroadcastBitInterrupted, exiting.");
+                    }
+                    else
+                    {
+                        stop_state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
+                        if (log)
+                            log->Printf("Process::RunThreadPlan(): in while loop, got event: %s.", StateAsCString(stop_state));
+                            
+                        switch (stop_state)
                         {
-                            // Yay, we're done.  Now make sure that our thread plan actually completed.
-                            ThreadSP thread_sp = GetThreadList().FindThreadByIndexID (thread_idx_id);
-                            if (!thread_sp)
+                        case lldb::eStateStopped:
                             {
-                                // Ooh, our thread has vanished.  Unlikely that this was successful execution...
-                                if (log)
-                                    log->Printf ("Process::RunThreadPlan(): execution completed but our thread (index-id=%u) has vanished.", thread_idx_id);
-                                return_value = eExecutionInterrupted;
-                            }
-                            else
-                            {
-                                StopInfoSP stop_info_sp (thread_sp->GetStopInfo ());
-                                StopReason stop_reason = eStopReasonInvalid;
-                                if (stop_info_sp)
-                                     stop_reason = stop_info_sp->GetStopReason();
-                                if (stop_reason == eStopReasonPlanComplete)
+                                // Yay, we're done.  Now make sure that our thread plan actually completed.
+                                ThreadSP thread_sp = GetThreadList().FindThreadByIndexID (thread_idx_id);
+                                if (!thread_sp)
                                 {
+                                    // Ooh, our thread has vanished.  Unlikely that this was successful execution...
                                     if (log)
-                                        log->PutCString ("Process::RunThreadPlan(): execution completed successfully.");
-                                    // Now mark this plan as private so it doesn't get reported as the stop reason
-                                    // after this point.  
-                                    if (thread_plan_sp)
-                                        thread_plan_sp->SetPrivate (orig_plan_private);
-                                    return_value = eExecutionCompleted;
+                                        log->Printf ("Process::RunThreadPlan(): execution completed but our thread (index-id=%u) has vanished.", thread_idx_id);
+                                    return_value = eExecutionInterrupted;
                                 }
                                 else
                                 {
-                                    if (log)
-                                        log->PutCString ("Process::RunThreadPlan(): thread plan didn't successfully complete.");
+                                    StopInfoSP stop_info_sp (thread_sp->GetStopInfo ());
+                                    StopReason stop_reason = eStopReasonInvalid;
+                                    if (stop_info_sp)
+                                         stop_reason = stop_info_sp->GetStopReason();
+                                    if (stop_reason == eStopReasonPlanComplete)
+                                    {
+                                        if (log)
+                                            log->PutCString ("Process::RunThreadPlan(): execution completed successfully.");
+                                        // Now mark this plan as private so it doesn't get reported as the stop reason
+                                        // after this point.  
+                                        if (thread_plan_sp)
+                                            thread_plan_sp->SetPrivate (orig_plan_private);
+                                        return_value = eExecutionCompleted;
+                                    }
+                                    else
+                                    {
+                                        if (log)
+                                            log->PutCString ("Process::RunThreadPlan(): thread plan didn't successfully complete.");
 
-                                    return_value = eExecutionInterrupted;
+                                        return_value = eExecutionInterrupted;
+                                    }
                                 }
-                            }
-                        }        
-                        break;
+                            }        
+                            break;
 
-                    case lldb::eStateCrashed:
-                        if (log)
-                            log->PutCString ("Process::RunThreadPlan(): execution crashed.");
-                        return_value = eExecutionInterrupted;
-                        break;
+                        case lldb::eStateCrashed:
+                            if (log)
+                                log->PutCString ("Process::RunThreadPlan(): execution crashed.");
+                            return_value = eExecutionInterrupted;
+                            break;
 
-                    case lldb::eStateRunning:
-                        do_resume = false;
-                        keep_going = true;
-                        break;
+                        case lldb::eStateRunning:
+                            do_resume = false;
+                            keep_going = true;
+                            break;
 
-                    default:
-                        if (log)
-                            log->Printf("Process::RunThreadPlan(): execution stopped with unexpected state: %s.", StateAsCString(stop_state));
-                            
-                        if (stop_state == eStateExited)
-                            event_to_broadcast_sp = event_sp;
-                            
-                        errors.Printf ("Execution stopped with unexpected state.");
-                        return_value = eExecutionInterrupted;
-                        break;
+                        default:
+                            if (log)
+                                log->Printf("Process::RunThreadPlan(): execution stopped with unexpected state: %s.", StateAsCString(stop_state));
+                                
+                            if (stop_state == eStateExited)
+                                event_to_broadcast_sp = event_sp;
+                                
+                            errors.Printf ("Execution stopped with unexpected state.");
+                            return_value = eExecutionInterrupted;
+                            break;
+                        }
                     }
+                    
                     if (keep_going)
                         continue;
                     else
@@ -4499,83 +4543,92 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 
                 do 
                 {
-                    const Process::ProcessEventData *event_data = Process::ProcessEventData::GetEventDataFromEvent (event_sp.get());
-
-                    if (!event_data)
+                    if (!event_sp)
                     {
-                        event_explanation = "<no event data>";
+                        event_explanation = "<no event>";
                         break;
                     }
-                    
-                    Process *process = event_data->GetProcessSP().get();
-
-                    if (!process)
+                    else if (event_sp->GetType() == eBroadcastBitInterrupt)
                     {
-                        event_explanation = "<no process>";
+                        event_explanation = "<user interrupt>";
                         break;
                     }
-                    
-                    ThreadList &thread_list = process->GetThreadList();
-                    
-                    uint32_t num_threads = thread_list.GetSize();
-                    uint32_t thread_index;
-                    
-                    ts.Printf("<%u threads> ", num_threads);
-                    
-                    for (thread_index = 0;
-                         thread_index < num_threads;
-                         ++thread_index)
+                    else
                     {
-                        Thread *thread = thread_list.GetThreadAtIndex(thread_index).get();
-                        
-                        if (!thread)
+                        const Process::ProcessEventData *event_data = Process::ProcessEventData::GetEventDataFromEvent (event_sp.get());
+
+                        if (!event_data)
                         {
-                            ts.Printf("<?> ");
-                            continue;
+                            event_explanation = "<no event data>";
+                            break;
                         }
                         
-                        ts.Printf("<0x%4.4llx ", thread->GetID());
-                        RegisterContext *register_context = thread->GetRegisterContext().get();
-                        
-                        if (register_context)
-                            ts.Printf("[ip 0x%llx] ", register_context->GetPC());
-                        else
-                            ts.Printf("[ip unknown] ");
-                        
-                        lldb::StopInfoSP stop_info_sp = thread->GetStopInfo();
-                        if (stop_info_sp)
+                        Process *process = event_data->GetProcessSP().get();
+
+                        if (!process)
                         {
-                            const char *stop_desc = stop_info_sp->GetDescription();
-                            if (stop_desc)
-                                ts.PutCString (stop_desc);
+                            event_explanation = "<no process>";
+                            break;
                         }
-                        ts.Printf(">");
+                        
+                        ThreadList &thread_list = process->GetThreadList();
+                        
+                        uint32_t num_threads = thread_list.GetSize();
+                        uint32_t thread_index;
+                        
+                        ts.Printf("<%u threads> ", num_threads);
+                        
+                        for (thread_index = 0;
+                             thread_index < num_threads;
+                             ++thread_index)
+                        {
+                            Thread *thread = thread_list.GetThreadAtIndex(thread_index).get();
+                            
+                            if (!thread)
+                            {
+                                ts.Printf("<?> ");
+                                continue;
+                            }
+                            
+                            ts.Printf("<0x%4.4llx ", thread->GetID());
+                            RegisterContext *register_context = thread->GetRegisterContext().get();
+                            
+                            if (register_context)
+                                ts.Printf("[ip 0x%llx] ", register_context->GetPC());
+                            else
+                                ts.Printf("[ip unknown] ");
+                            
+                            lldb::StopInfoSP stop_info_sp = thread->GetStopInfo();
+                            if (stop_info_sp)
+                            {
+                                const char *stop_desc = stop_info_sp->GetDescription();
+                                if (stop_desc)
+                                    ts.PutCString (stop_desc);
+                            }
+                            ts.Printf(">");
+                        }
+                        
+                        event_explanation = ts.GetData();
                     }
-                    
-                    event_explanation = ts.GetData();
                 } while (0);
                 
-                if (log)
-                {
-                    if (event_explanation)
-                        log->Printf("Process::RunThreadPlan(): execution interrupted: %s %s", s.GetData(), event_explanation);
-                    else
-                        log->Printf("Process::RunThreadPlan(): execution interrupted: %s", s.GetData());
-                }                
-                    
-                if (discard_on_error && thread_plan_sp)
-                {
-                    if (log)
-                        log->Printf ("Process::RunThreadPlan: ExecutionInterrupted - discarding thread plans up to %p.", thread_plan_sp.get());
-                    thread->DiscardThreadPlansUpToPlan (thread_plan_sp);
-                    thread_plan_sp->SetPrivate (orig_plan_private);
-                }
+                if (event_explanation)
+                    log->Printf("Process::RunThreadPlan(): execution interrupted: %s %s", s.GetData(), event_explanation);
                 else
-                {
-                    if (log)
-                        log->Printf ("Process::RunThreadPlan: ExecutionInterrupted - for plan: %p not discarding.", thread_plan_sp.get());
-
-                }
+                    log->Printf("Process::RunThreadPlan(): execution interrupted: %s", s.GetData());
+            }
+            
+            if (discard_on_error && thread_plan_sp)
+            {
+                if (log)
+                    log->Printf ("Process::RunThreadPlan: ExecutionInterrupted - discarding thread plans up to %p.", thread_plan_sp.get());
+                thread->DiscardThreadPlansUpToPlan (thread_plan_sp);
+                thread_plan_sp->SetPrivate (orig_plan_private);
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("Process::RunThreadPlan: ExecutionInterrupted - for plan: %p not discarding.", thread_plan_sp.get());
             }
         }
         else if (return_value == eExecutionSetupError)

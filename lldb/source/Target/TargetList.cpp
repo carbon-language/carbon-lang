@@ -349,7 +349,7 @@ TargetList::SendAsyncInterrupt (lldb::pid_t pid)
             Process* process = target_sp->GetProcessSP().get();
             if (process)
             {
-                process->BroadcastEvent (Process::eBroadcastBitInterrupt, NULL);
+                process->SendAsyncInterrupt();
                 ++num_async_interrupts_sent;
             }
         }
