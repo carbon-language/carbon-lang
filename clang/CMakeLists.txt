@@ -250,13 +250,13 @@ mark_as_advanced(CLANG_EXECUTABLE_VERSION LIBCLANG_LIBRARY_VERSION)
 
 add_subdirectory(utils/TableGen)
 
-option(CLANG_BUILD_EXAMPLES "Build CLANG example programs by default." OFF)
-add_subdirectory(examples)
-
 add_subdirectory(include)
 add_subdirectory(lib)
 add_subdirectory(tools)
 add_subdirectory(runtime)
+
+option(CLANG_BUILD_EXAMPLES "Build CLANG example programs by default." OFF)
+add_subdirectory(examples)
 
 # TODO: docs.
 add_subdirectory(test)
