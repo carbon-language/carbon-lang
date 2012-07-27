@@ -55,7 +55,7 @@ public:
 
   const MemoryBuffer& getBuffer() const { return *InputData; }
 
-  // Methods for type inquiry through isa, cast, and dyn_cast
+  // Methods for type inquiry through isa, cast and dyn_cast
   static inline bool classof(const Binary *v) {
     return (isa<ELFObjectFile<target_endianness, is64Bits> >(v)
             && classof(cast<ELFObjectFile<target_endianness, is64Bits> >(v)));
