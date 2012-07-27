@@ -63,10 +63,10 @@ add_dependencies(clangAST
   ClangAttrClasses
   ClangAttrList
   ClangAttrImpl
-  ClangDiagnosticAST
-  ClangDiagnosticComment
   ClangCommentNodes
   ClangDeclNodes
+  ClangDiagnosticAST
+  ClangDiagnosticComment
   ClangStmtNodes
   )
 

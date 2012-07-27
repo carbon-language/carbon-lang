@@ -25,7 +25,8 @@ add_dependencies(clangARCMigrate
   ClangAttrList
   ClangCommentNodes
   ClangDeclNodes
-  ClangStmtNodes)
+  ClangStmtNodes
+  )
 
 target_link_libraries(clangARCMigrate
   clangBasic

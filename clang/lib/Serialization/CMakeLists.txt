@@ -18,11 +18,11 @@ add_dependencies(clangSerialization
   ClangAttrList
   ClangAttrPCHRead
   ClangAttrPCHWrite
+  ClangCommentNodes
+  ClangDeclNodes
   ClangDiagnosticLex
   ClangDiagnosticSema
   ClangDiagnosticSerialization
-  ClangCommentNodes
-  ClangDeclNodes
   ClangStmtNodes
   )
 

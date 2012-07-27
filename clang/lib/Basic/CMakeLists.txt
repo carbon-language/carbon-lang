@@ -43,9 +43,9 @@ add_dependencies(clangBasic
   ClangDiagnosticDriver
   ClangDiagnosticFrontend
   ClangDiagnosticGroups
+  ClangDiagnosticIndexName
   ClangDiagnosticLex
   ClangDiagnosticParse
   ClangDiagnosticSema
   ClangDiagnosticSerialization
-  ClangDiagnosticIndexName
   )

@@ -6,7 +6,7 @@ add_clang_library(clangEdit
 
 add_dependencies(clangEdit
   ClangDiagnosticCommon
-)
+  )
 
 target_link_libraries(clangEdit
   clangBasic

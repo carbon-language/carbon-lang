@@ -20,9 +20,9 @@ add_clang_library(clangDriver
 
 add_dependencies(clangDriver
   ClangAttrList
+  ClangCC1AsOptions
   ClangDiagnosticDriver
   ClangDriverOptions
-  ClangCC1AsOptions
   )
 
 target_link_libraries(clangDriver
