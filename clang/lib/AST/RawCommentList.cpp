@@ -134,7 +134,13 @@ const char *RawComment::extractBriefText(const ASTContext &Context) const {
   // Make sure that RawText is valid.
   getRawText(Context.getSourceManager());
 
-  comments::Lexer L(Range.getBegin(), comments::CommentOptions(),
+  // Since we will be copying the resulting text, all allocations made during
+  // parsing are garbage after resulting string is formed.  Thus we can use
+  // a separate allocator for all temporary stuff.
+  llvm::BumpPtrAllocator Allocator;
+
+  comments::Lexer L(Allocator,
+                    Range.getBegin(), comments::CommentOptions(),
                     RawText.begin(), RawText.end());
   comments::BriefParser P(L);
 

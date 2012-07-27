@@ -323,6 +323,9 @@ void comment_to_html_conversion_23();
 /// &amp; &lt; &gt; &quot;
 void comment_to_html_conversion_24();
 
+/// <em>0&lt;i</em>
+void comment_to_html_conversion_25();
+
 #endif
 
 // RUN: rm -rf %t
@@ -642,9 +645,26 @@ void comment_to_html_conversion_24();
 // CHECK-NEXT:         (CXComment_Text Text=[.])
 // CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
 // CHECK-NEXT:         (CXComment_Text Text=[::])))]
-// CHECK: annotate-comments.cpp:324:6: FunctionDecl=comment_to_html_conversion_24:{{.*}} FullCommentAsHTML=[<p class="para-brief"> &amp;amp; &amp;lt; &amp;gt; &amp;quot;</p>]
-// CHECK:  CommentAST=[
-// CHECK:    (CXComment_FullComment
-// CHECK:       (CXComment_Paragraph
-// CHECK:         (CXComment_Text Text=[ &amp; &lt; &gt; &quot;])))]
+// CHECK: annotate-comments.cpp:324:6: FunctionDecl=comment_to_html_conversion_24:{{.*}} FullCommentAsHTML=[<p class="para-brief"> &amp; &lt; &gt; &quot;</p>]
+// CHECK-NEXT:  CommentAST=[
+// CHECK-NEXT:    (CXComment_FullComment
+// CHECK-NEXT:       (CXComment_Paragraph
+// CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
+// CHECK-NEXT:         (CXComment_Text Text=[&])
+// CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
+// CHECK-NEXT:         (CXComment_Text Text=[<])
+// CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
+// CHECK-NEXT:         (CXComment_Text Text=[>])
+// CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
+// CHECK-NEXT:         (CXComment_Text Text=["])))]
+// CHECK: annotate-comments.cpp:327:6: FunctionDecl=comment_to_html_conversion_25:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <em>0&lt;i</em></p>]
+// CHECK-NEXT:  CommentAST=[
+// CHECK-NEXT:    (CXComment_FullComment
+// CHECK-NEXT:       (CXComment_Paragraph
+// CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
+// CHECK-NEXT:         (CXComment_HTMLStartTag Name=[em])
+// CHECK-NEXT:         (CXComment_Text Text=[0])
+// CHECK-NEXT:         (CXComment_Text Text=[<])
+// CHECK-NEXT:         (CXComment_Text Text=[i])
+// CHECK-NEXT:         (CXComment_HTMLEndTag Name=[em])))]
 

@@ -211,6 +211,10 @@ private:
   Lexer(const Lexer&);          // DO NOT IMPLEMENT
   void operator=(const Lexer&); // DO NOT IMPLEMENT
 
+  /// Allocator for strings that are semantic values of tokens and have to be
+  /// computed (for example, resolved decimal character references).
+  llvm::BumpPtrAllocator &Allocator;
+
   const char *const BufferStart;
   const char *const BufferEnd;
   SourceLocation FileLoc;
@@ -289,6 +293,16 @@ private:
 
   bool isVerbatimLineCommand(StringRef Name) const;
 
+  /// Given a character reference name (e.g., "lt"), return the character that
+  /// it stands for (e.g., "<").
+  StringRef resolveHTMLNamedCharacterReference(StringRef Name) const;
+
+  /// Given a Unicode codepoint as base-10 integer, return the character.
+  StringRef resolveHTMLDecimalCharacterReference(StringRef Name) const;
+
+  /// Given a Unicode codepoint as base-16 integer, return the character.
+  StringRef resolveHTMLHexCharacterReference(StringRef Name) const;
+
   void formTokenWithChars(Token &Result, const char *TokEnd,
                           tok::TokenKind Kind) {
     const unsigned TokLen = TokEnd - BufferPtr;
@@ -300,6 +314,12 @@ private:
     Result.TextLen1 = 7;
 #endif
     BufferPtr = TokEnd;
+  }
+
+  void formTextToken(Token &Result, const char *TokEnd) {
+    StringRef Text(BufferPtr, TokEnd - BufferPtr);
+    formTokenWithChars(Result, TokEnd, tok::text);
+    Result.setText(Text);
   }
 
   SourceLocation getSourceLocation(const char *Loc) const {
@@ -328,6 +348,8 @@ private:
 
   void lexVerbatimLineText(Token &T);
 
+  void lexHTMLCharacterReference(Token &T);
+
   void setupAndLexHTMLStartTag(Token &T);
 
   void lexHTMLStartTag(Token &T);
@@ -337,7 +359,8 @@ private:
   void lexHTMLEndTag(Token &T);
 
 public:
-  Lexer(SourceLocation FileLoc, const CommentOptions &CommOpts,
+  Lexer(llvm::BumpPtrAllocator &Allocator,
+        SourceLocation FileLoc, const CommentOptions &CommOpts,
         const char *BufferStart, const char *BufferEnd);
 
   void lex(Token &T);

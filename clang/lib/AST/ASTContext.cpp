@@ -216,7 +216,8 @@ comments::FullComment *ASTContext::getCommentForDecl(const Decl *D) const {
     return NULL;
 
   const StringRef RawText = RC->getRawText(SourceMgr);
-  comments::Lexer L(RC->getSourceRange().getBegin(), comments::CommentOptions(),
+  comments::Lexer L(getAllocator(),
+                    RC->getSourceRange().getBegin(), comments::CommentOptions(),
                     RawText.begin(), RawText.end());
 
   comments::Sema S(getAllocator(), getSourceManager(), getDiagnostics());
