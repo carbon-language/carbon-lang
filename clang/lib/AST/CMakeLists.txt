@@ -67,6 +67,8 @@ add_dependencies(clangAST
   ClangDeclNodes
   ClangDiagnosticAST
   ClangDiagnosticComment
+  ClangDiagnosticCommon
+  ClangDiagnosticSema
   ClangStmtNodes
   )
 

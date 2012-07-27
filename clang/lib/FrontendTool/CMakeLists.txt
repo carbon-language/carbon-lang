@@ -3,7 +3,9 @@ add_clang_library(clangFrontendTool
   )
 
 add_dependencies(clangFrontendTool
+  ClangDiagnosticCommon
   ClangDiagnosticFrontend
+  ClangDriverOptions
   )
 
 target_link_libraries(clangFrontendTool

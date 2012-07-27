@@ -23,8 +23,12 @@ add_clang_library(clangARCMigrate
 add_dependencies(clangARCMigrate
   ClangAttrClasses
   ClangAttrList
+  ClangAttrParsedAttrList
   ClangCommentNodes
   ClangDeclNodes
+  ClangDiagnosticCommon
+  ClangDiagnosticGroups
+  ClangDiagnosticSema
   ClangStmtNodes
   )
 

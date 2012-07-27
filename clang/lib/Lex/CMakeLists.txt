@@ -28,6 +28,7 @@ add_clang_library(clangLex
 
 add_dependencies(clangLex
   ClangAttrSpellings
+  ClangDiagnosticCommon
   ClangDiagnosticLex
   )
 

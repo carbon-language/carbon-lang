@@ -51,7 +51,10 @@ add_dependencies(clangSema
   ClangAttrTemplateInstantiate
   ClangCommentNodes
   ClangDeclNodes
+  ClangDiagnosticAST
   ClangDiagnosticComment
+  ClangDiagnosticCommon
+  ClangDiagnosticParse
   ClangDiagnosticSema
   ClangStmtNodes
   )

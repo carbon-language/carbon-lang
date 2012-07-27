@@ -45,6 +45,7 @@ add_dependencies(clangStaticAnalyzerCore
   ClangAttrList
   ClangCommentNodes
   ClangDeclNodes
+  ClangDiagnosticCommon
   ClangStmtNodes
   )
 

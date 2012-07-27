@@ -18,8 +18,10 @@ add_dependencies(clangParse
   ClangAttrClasses
   ClangAttrLateParsed
   ClangAttrList
+  ClangAttrParsedAttrList
   ClangCommentNodes
   ClangDeclNodes
+  ClangDiagnosticCommon
   ClangDiagnosticParse
   ClangStmtNodes
   )

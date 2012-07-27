@@ -16,10 +16,12 @@ add_clang_library(clangSerialization
 add_dependencies(clangSerialization
   ClangAttrClasses
   ClangAttrList
+  ClangAttrParsedAttrList
   ClangAttrPCHRead
   ClangAttrPCHWrite
   ClangCommentNodes
   ClangDeclNodes
+  ClangDiagnosticCommon
   ClangDiagnosticLex
   ClangDiagnosticSema
   ClangDiagnosticSerialization

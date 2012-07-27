@@ -10,7 +10,12 @@ add_clang_library(clangTooling
   )
 
 add_dependencies(clangTooling
+  ClangAttrClasses
+  ClangAttrList
+  ClangDeclNodes
   ClangDiagnosticCommon
+  ClangDiagnosticFrontend
+  ClangStmtNodes
   )
 
 target_link_libraries(clangTooling
