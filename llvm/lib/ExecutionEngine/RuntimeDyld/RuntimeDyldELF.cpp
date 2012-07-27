@@ -208,10 +208,9 @@ void RuntimeDyldELF::resolveX86_64Relocation(uint8_t *LocalAddress,
   case ELF::R_X86_64_32:
   case ELF::R_X86_64_32S: {
     Value += Addend;
-    // FIXME: Handle the possibility of this assertion failing
-    assert((Type == ELF::R_X86_64_32 && !(Value & 0xFFFFFFFF00000000ULL)) ||
-           (Type == ELF::R_X86_64_32S &&
-            (Value & 0xFFFFFFFF00000000ULL) == 0xFFFFFFFF00000000ULL));
+    assert((Type == ELF::R_X86_64_32 && (Value <= UINT32_MAX)) ||
+           (Type == ELF::R_X86_64_32S && 
+             ((int64_t)Value <= INT32_MAX && (int64_t)Value >= INT32_MIN)));
     uint32_t TruncatedAddr = (Value & 0xFFFFFFFF);
     uint32_t *Target = reinterpret_cast<uint32_t*>(LocalAddress);
     *Target = TruncatedAddr;
@@ -220,7 +219,7 @@ void RuntimeDyldELF::resolveX86_64Relocation(uint8_t *LocalAddress,
   case ELF::R_X86_64_PC32: {
     uint32_t *Placeholder = reinterpret_cast<uint32_t*>(LocalAddress);
     int64_t RealOffset = *Placeholder + Value + Addend - FinalAddress;
-    assert(RealOffset <= 214783647 && RealOffset >= -214783648);
+    assert(RealOffset <= INT32_MAX && RealOffset >= INT32_MIN);
     int32_t TruncOffset = (RealOffset & 0xFFFFFFFF);
     *Placeholder = TruncOffset;
     break;
