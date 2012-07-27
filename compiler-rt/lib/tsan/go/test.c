@@ -11,6 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <stdio.h>
+
 void __tsan_init();
 void __tsan_fini();
 void __tsan_go_start(int pgoid, int chgoid, void *pc);
