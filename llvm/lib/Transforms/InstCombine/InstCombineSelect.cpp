@@ -881,12 +881,16 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
 
   if (SelectInst *TrueSI = dyn_cast<SelectInst>(TrueVal)) {
     if (TrueSI->getCondition() == CondVal) {
+      if (SI.getTrueValue() == TrueSI->getTrueValue())
+        return 0;
       SI.setOperand(1, TrueSI->getTrueValue());
       return &SI;
     }
   }
   if (SelectInst *FalseSI = dyn_cast<SelectInst>(FalseVal)) {
     if (FalseSI->getCondition() == CondVal) {
+      if (SI.getFalseValue() == FalseSI->getFalseValue())
+        return 0;
       SI.setOperand(2, FalseSI->getFalseValue());
       return &SI;
     }
