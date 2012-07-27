@@ -19,7 +19,7 @@
 // foo class.
 //
 // When compiling without assertions, the -debug-* options and all code in
-// DEBUG() statements disappear, so it does not effect the runtime of the code.
+// DEBUG() statements disappears, so it does not affect the runtime of the code.
 //
 //===----------------------------------------------------------------------===//
 
