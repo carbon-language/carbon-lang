@@ -451,7 +451,7 @@ unsigned Sema::correctTypoInParmVarReference(
   if (BestEditDistance <= MaxEditDistance)
     return BestPVDIndex;
   else
-    return ParamCommandComment::InvalidParamIndex;;
+    return ParamCommandComment::InvalidParamIndex;
 }
 
 // TODO: tablegen
