@@ -652,17 +652,17 @@ public:
   // getting the parameters). Currently, this gets called 3 times during 
   // inlining.
   virtual const Decl *getRuntimeDefinition() const {
-
     const ObjCMessageExpr *E = getOriginExpr();
+    assert(E);
+
     if (E->isInstanceMessage()) {
       return 0;
     } else {
-      // This is a calss method.
+      // This is a class method.
       // If we have type info for the receiver class, we are calling via
       // class name.
-      if (ObjCInterfaceDecl *IDecl = E->getReceiverInterface()) {
+      if (ObjCInterfaceDecl *IDecl = E->getReceiverInterface())
         return LookupClassMethodDefinition(E->getSelector(), IDecl);
-      }
     }
 
     return 0;

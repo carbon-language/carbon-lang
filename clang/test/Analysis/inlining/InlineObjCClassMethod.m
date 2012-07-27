@@ -114,6 +114,7 @@ int foo() {
 // False negative.
 // ObjC class method call through a decl with a known type.
 // We should be able to track the type of currentClass and inline this call.
+// Note, [self class] could be a subclass. Do we still want to inline here?
 @interface MyClassKT : NSObject
 @end
 @interface MyClassKT (MyCatKT)
