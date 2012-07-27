@@ -113,7 +113,9 @@ if (!defined $ClangSB || ! -x $ClangSB) {
 else {
   $Clang = $ClangSB;
 }
-my $ClangCXX = $Clang . "++";
+my $ClangCXX = $Clang;
+$ClangCXX =~ s/\-\d+\.\d+$//;
+$ClangCXX .= "++";
 my $ClangVersion = HtmlEscape(`$Clang --version`);
 
 ##----------------------------------------------------------------------------##
