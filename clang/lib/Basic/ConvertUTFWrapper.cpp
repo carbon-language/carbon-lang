@@ -51,4 +51,20 @@ bool ConvertUTF8toWide(unsigned WideCharWidth, llvm::StringRef Source,
   return result == conversionOK;
 }
 
+bool ConvertCodePointToUTF8(unsigned Source, char *&ResultPtr) {
+  const UTF32 *SourceStart = &Source;
+  const UTF32 *SourceEnd = SourceStart + 1;
+  UTF8 *TargetStart = reinterpret_cast<UTF8 *>(ResultPtr);
+  UTF8 *TargetEnd = TargetStart + 4;
+  ConversionResult CR = ConvertUTF32toUTF8(&SourceStart, SourceEnd,
+                                           &TargetStart, TargetEnd,
+                                           strictConversion);
+  if (CR != conversionOK)
+    return false;
+
+  ResultPtr = reinterpret_cast<char*>(TargetStart);
+  return true;
 }
+
+} // end namespace clang
+

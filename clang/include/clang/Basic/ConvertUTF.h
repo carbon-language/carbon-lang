@@ -110,6 +110,8 @@ typedef unsigned char   Boolean; /* 0 or 1 */
 #define UNI_MAX_UTF32 (UTF32)0x7FFFFFFF
 #define UNI_MAX_LEGAL_UTF32 (UTF32)0x0010FFFF
 
+#define UNI_MAX_UTF8_BYTES_PER_CODE_POINT 4
+
 typedef enum {
   conversionOK,           /* conversion successful */
   sourceExhausted,        /* partial character in source, but hit end */
@@ -139,11 +141,13 @@ ConversionResult ConvertUTF8toUTF32 (
 ConversionResult ConvertUTF16toUTF8 (
   const UTF16** sourceStart, const UTF16* sourceEnd,
   UTF8** targetStart, UTF8* targetEnd, ConversionFlags flags);
+#endif
 
 ConversionResult ConvertUTF32toUTF8 (
   const UTF32** sourceStart, const UTF32* sourceEnd,
   UTF8** targetStart, UTF8* targetEnd, ConversionFlags flags);
 
+#ifdef CLANG_NEEDS_THESE_ONE_DAY
 ConversionResult ConvertUTF16toUTF32 (
   const UTF16** sourceStart, const UTF16* sourceEnd,
   UTF32** targetStart, UTF32* targetEnd, ConversionFlags flags);
@@ -176,6 +180,18 @@ namespace clang {
  */
 bool ConvertUTF8toWide(unsigned WideCharWidth, llvm::StringRef Source,
                        char *&ResultPtr);
+
+/**
+ * Convert an Unicode code point to UTF8 sequence.
+ *
+ * \param Source a Unicode code point.
+ * \param [in,out] ResultPtr pointer to the output buffer, needs to be at least
+ * \c UNI_MAX_UTF8_BYTES_PER_CODE_POINT bytes.  On success \c ResultPtr is
+ * updated one past end of the converted sequence.
+ *
+ * \returns true on success.
+ */
+bool ConvertCodePointToUTF8(unsigned Source, char *&ResultPtr);
 
 }
 #endif

@@ -285,6 +285,7 @@ ConversionResult ConvertUTF16toUTF8 (
     *targetStart = target;
     return result;
 }
+#endif
 
 /* --------------------------------------------------------------------- */
 
@@ -338,8 +339,6 @@ ConversionResult ConvertUTF32toUTF8 (
     *targetStart = target;
     return result;
 }
-
-#endif
 
 /* --------------------------------------------------------------------- */
 
