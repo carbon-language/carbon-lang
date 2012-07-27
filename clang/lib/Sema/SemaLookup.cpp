@@ -3895,13 +3895,13 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
       // If a validator callback object was given, drop the correction
       // unless it passes validation.
       bool Viable = false;
-      for (TypoResultList::iterator RI = I->second.begin(), RIEnd = I->second.end();
-           RI != RIEnd; /* Increment in loop. */) {
+      for (TypoResultList::iterator RI = I->second.begin();
+           RI != I->second.end(); /* Increment in loop. */) {
         TypoResultList::iterator Prev = RI;
         ++RI;
         if (Prev->isResolved()) {
           if (!isCandidateViable(CCC, *Prev))
-            I->second.erase(Prev);
+            RI = I->second.erase(Prev);
           else
             Viable = true;
         }
