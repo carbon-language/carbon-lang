@@ -54,8 +54,7 @@ void LiveRangeCalc::createDeadDefs(LiveInterval *LI, unsigned Reg) {
         .getRegSlot(I.getOperand().isEarlyClobber());
 
     // Create the def in LI. This may find an existing def.
-    VNInfo *VNI = LI->createDeadDef(Idx, *Alloc);
-    VNI->setIsPHIDef(MI->isPHI());
+    LI->createDeadDef(Idx, *Alloc);
   }
 }
 
@@ -320,7 +319,6 @@ void LiveRangeCalc::updateSSA() {
         SlotIndex Start, End;
         tie(Start, End) = Indexes->getMBBRange(MBB);
         VNInfo *VNI = I->LI->getNextValue(Start, *Alloc);
-        VNI->setIsPHIDef(true);
         I->Value = VNI;
         // This block is done, we know the final value.
         I->DomNode = 0;

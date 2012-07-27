@@ -1047,8 +1047,7 @@ void SplitEditor::finish(SmallVectorImpl<unsigned> *LRMap) {
     if (ParentVNI->isUnused())
       continue;
     unsigned RegIdx = RegAssign.lookup(ParentVNI->def);
-    VNInfo *VNI = defValue(RegIdx, ParentVNI, ParentVNI->def);
-    VNI->setIsPHIDef(ParentVNI->isPHIDef());
+    defValue(RegIdx, ParentVNI, ParentVNI->def);
 
     // Force rematted values to be recomputed everywhere.
     // The new live ranges may be truncated.

@@ -290,7 +290,6 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         assert(getInstructionFromIndex(Start) == 0 &&
                "PHI def index points at actual instruction.");
         ValNo = interval.getNextValue(Start, VNInfoAllocator);
-        ValNo->setIsPHIDef(true);
       }
       LiveRange LR(Start, killIdx, ValNo);
       interval.addRange(LR);

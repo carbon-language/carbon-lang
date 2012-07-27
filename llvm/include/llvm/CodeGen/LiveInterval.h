@@ -43,8 +43,7 @@ namespace llvm {
   private:
     enum {
       HAS_PHI_KILL    = 1,
-      IS_PHI_DEF      = 1 << 1,
-      IS_UNUSED       = 1 << 2
+      IS_UNUSED       = 1 << 1
     };
 
     unsigned char flags;
@@ -96,14 +95,9 @@ namespace llvm {
 
     /// Returns true if this value is defined by a PHI instruction (or was,
     /// PHI instrucions may have been eliminated).
-    bool isPHIDef() const { return flags & IS_PHI_DEF; }
-    /// Set the "phi def" flag on this value.
-    void setIsPHIDef(bool phiDef) {
-      if (phiDef)
-        flags |= IS_PHI_DEF;
-      else
-        flags &= ~IS_PHI_DEF;
-    }
+    /// PHI-defs begin at a block boundary, all other defs begin at register or
+    /// EC slots.
+    bool isPHIDef() const { return def.isBlock(); }
 
     /// Returns true if this value is unused.
     bool isUnused() const { return flags & IS_UNUSED; }

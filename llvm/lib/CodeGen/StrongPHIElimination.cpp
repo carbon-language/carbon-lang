@@ -744,7 +744,6 @@ void StrongPHIElimination::InsertCopiesForPHI(MachineInstr *PHI,
     SlotIndex PHIIndex = LI->getInstructionIndex(PHI);
     VNInfo *DestVNI = DestLI.getVNInfoAt(PHIIndex.getRegSlot());
     assert(DestVNI);
-    DestVNI->setIsPHIDef(true);
   
     // Prior to PHI elimination, the live ranges of PHIs begin at their defining
     // instruction. After PHI elimination, PHI instructions are replaced by VNs
@@ -777,7 +776,6 @@ void StrongPHIElimination::InsertCopiesForPHI(MachineInstr *PHI,
   SlotIndex DestCopyIndex = LI->getInstructionIndex(CopyInstr);
   VNInfo *CopyVNI = CopyLI.getNextValue(MBBStartIndex,
                                         LI->getVNInfoAllocator());
-  CopyVNI->setIsPHIDef(true);
   CopyLI.addRange(LiveRange(MBBStartIndex,
                             DestCopyIndex.getRegSlot(),
                             CopyVNI));
