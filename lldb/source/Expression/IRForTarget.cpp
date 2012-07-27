@@ -2811,7 +2811,12 @@ IRForTarget::runOnModule (Module &llvm_module)
             
             return false;
         }
+    }
 
+    for (bbi = function->begin();
+         bbi != function->end();
+         ++bbi)
+    {
         if (!ResolveCalls(*bbi))
         {
             if (log)
