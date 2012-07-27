@@ -463,7 +463,9 @@ public:
   }
 
   iterator erase(iterator I) {
-    assert(I >= this->begin() && I < this->end() && "Iterator out of bounds");
+    assert(I >= this->begin() && "Iterator to erase is out of bounds.");
+    assert(I < this->end() && "Erasing at past-the-end iterator.");
+
     iterator N = I;
     // Shift all elts down one.
     this->move(I+1, this->end(), I);
@@ -473,8 +475,10 @@ public:
   }
 
   iterator erase(iterator S, iterator E) {
-    assert(S >= this->begin() && S <= E && E <= this->end() &&
-           "Iterator range out of bounds");
+    assert(S >= this->begin() && "Range to erase is out of bounds.");
+    assert(S <= E && "Trying to erase invalid range.");
+    assert(E <= this->end() && "Trying to erase past the end.");
+
     iterator N = S;
     // Shift all elts down.
     iterator I = this->move(E, this->end(), S);
@@ -490,6 +494,9 @@ public:
       this->push_back(::std::move(Elt));
       return this->end()-1;
     }
+
+    assert(I >= this->begin() && "Insertion iterator is out of bounds.");
+    assert(I <= this->end() && "Inserting past the end of the vector.");
 
     if (this->EndX < this->CapacityX) {
     Retry:
@@ -519,6 +526,9 @@ public:
       this->push_back(Elt);
       return this->end()-1;
     }
+
+    assert(I >= this->begin() && "Insertion iterator is out of bounds.");
+    assert(I <= this->end() && "Inserting past the end of the vector.");
 
     if (this->EndX < this->CapacityX) {
     Retry:
@@ -550,6 +560,9 @@ public:
       append(NumToInsert, Elt);
       return this->begin()+InsertElt;
     }
+
+    assert(I >= this->begin() && "Insertion iterator is out of bounds.");
+    assert(I <= this->end() && "Inserting past the end of the vector.");
 
     // Ensure there is enough space.
     reserve(static_cast<unsigned>(this->size() + NumToInsert));
@@ -598,6 +611,9 @@ public:
       append(From, To);
       return this->begin()+InsertElt;
     }
+
+    assert(I >= this->begin() && "Insertion iterator is out of bounds.");
+    assert(I <= this->end() && "Inserting past the end of the vector.");
 
     size_t NumToInsert = std::distance(From, To);
 
