@@ -131,13 +131,16 @@ bool ExpandPostRA::LowerSubregToReg(MachineInstr *MI) {
   } else {
     TII->copyPhysReg(*MBB, MI, MI->getDebugLoc(), DstSubReg, InsReg,
                      MI->getOperand(2).isKill());
+
+    // Implicitly define DstReg for subsequent uses.
+    MachineBasicBlock::iterator CopyMI = MI;
+    --CopyMI;
+    CopyMI->addRegisterDefined(DstReg);
+
     // Transfer the kill/dead flags, if needed.
     if (MI->getOperand(0).isDead())
       TransferDeadFlag(MI, DstSubReg, TRI);
-    DEBUG({
-        MachineBasicBlock::iterator dMI = MI;
-        dbgs() << "subreg: " << *(--dMI);
-      });
+    DEBUG(dbgs() << "subreg: " << *CopyMI);
   }
 
   DEBUG(dbgs() << '\n');
