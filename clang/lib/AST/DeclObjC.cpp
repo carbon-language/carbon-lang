@@ -363,6 +363,9 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel,
   return NULL;
 }
 
+// Will search "local" class/category implementations for a method decl.
+// If failed, then we search in class's root for an instance method.
+// Returns 0 if no method is found.
 ObjCMethodDecl *ObjCInterfaceDecl::lookupPrivateMethod(
                                    const Selector &Sel,
                                    bool Instance) {
@@ -377,7 +380,23 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupPrivateMethod(
   if (ObjCImplementationDecl *ImpDecl = getImplementation())
     Method = Instance ? ImpDecl->getInstanceMethod(Sel) 
                       : ImpDecl->getClassMethod(Sel);
-  
+
+  // Look through local category implementations associated with the class.
+  if (!Method)
+    Method = Instance ? getCategoryInstanceMethod(Sel)
+                      : getCategoryClassMethod(Sel);
+
+  // Before we give up, check if the selector is an instance method.
+  // But only in the root. This matches gcc's behavior and what the
+  // runtime expects.
+  if (!Instance && !Method && !getSuperClass()) {
+    Method = lookupInstanceMethod(Sel);
+    // Look through local category implementations associated
+    // with the root class.
+    if (!Method)
+      Method = lookupPrivateMethod(Sel, true);
+  }
+
   if (!Method && getSuperClass())
     return getSuperClass()->lookupPrivateMethod(Sel, Instance);
   return Method;

@@ -1247,57 +1247,6 @@ bool Sema::isSelfExpr(Expr *receiver) {
   return false;
 }
 
-// Helper method for ActOnClassMethod/ActOnInstanceMethod.
-// Will search "local" class/category implementations for a method decl.
-// If failed, then we search in class's root for an instance method.
-// Returns 0 if no method is found.
-ObjCMethodDecl *Sema::LookupPrivateClassMethod(Selector Sel,
-                                          ObjCInterfaceDecl *ClassDecl) {
-  ObjCMethodDecl *Method = 0;
-  // lookup in class and all superclasses
-  while (ClassDecl && !Method) {
-    if (ObjCImplementationDecl *ImpDecl = ClassDecl->getImplementation())
-      Method = ImpDecl->getClassMethod(Sel);
-
-    // Look through local category implementations associated with the class.
-    if (!Method)
-      Method = ClassDecl->getCategoryClassMethod(Sel);
-
-    // Before we give up, check if the selector is an instance method.
-    // But only in the root. This matches gcc's behaviour and what the
-    // runtime expects.
-    if (!Method && !ClassDecl->getSuperClass()) {
-      Method = ClassDecl->lookupInstanceMethod(Sel);
-      // Look through local category implementations associated
-      // with the root class.
-      if (!Method)
-        Method = LookupPrivateInstanceMethod(Sel, ClassDecl);
-    }
-
-    ClassDecl = ClassDecl->getSuperClass();
-  }
-  return Method;
-}
-
-ObjCMethodDecl *Sema::LookupPrivateInstanceMethod(Selector Sel,
-                                              ObjCInterfaceDecl *ClassDecl) {
-  if (!ClassDecl->hasDefinition())
-    return 0;
-
-  ObjCMethodDecl *Method = 0;
-  while (ClassDecl && !Method) {
-    // If we have implementations in scope, check "private" methods.
-    if (ObjCImplementationDecl *ImpDecl = ClassDecl->getImplementation())
-      Method = ImpDecl->getInstanceMethod(Sel);
-
-    // Look through local category implementations associated with the class.
-    if (!Method)
-      Method = ClassDecl->getCategoryInstanceMethod(Sel);
-    ClassDecl = ClassDecl->getSuperClass();
-  }
-  return Method;
-}
-
 /// LookupMethodInType - Look up a method in an ObjCObjectType.
 ObjCMethodDecl *Sema::LookupMethodInObjectType(Selector sel, QualType type,
                                                bool isInstance) {
@@ -1309,13 +1258,8 @@ ObjCMethodDecl *Sema::LookupMethodInObjectType(Selector sel, QualType type,
 
     // Okay, look for "private" methods declared in any
     // @implementations we've seen.
-    if (isInstance) {
-      if (ObjCMethodDecl *method = LookupPrivateInstanceMethod(sel, iface))
-        return method;
-    } else {
-      if (ObjCMethodDecl *method = LookupPrivateClassMethod(sel, iface))
-        return method;
-    }
+    if (ObjCMethodDecl *method = iface->lookupPrivateMethod(sel, isInstance))
+      return method;
   }
 
   // Check qualifiers.
@@ -1489,9 +1433,6 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
   if (!Getter)
     Getter = IFace->lookupPrivateMethod(Sel);
 
-  // Look through local category implementations associated with the class.
-  if (!Getter)
-    Getter = IFace->getCategoryInstanceMethod(Sel);
   if (Getter) {
     // Check if we can reference this property.
     if (DiagnoseUseOfDecl(Getter, MemberLoc))
@@ -1513,9 +1454,6 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
     // methods.
     Setter = IFace->lookupPrivateMethod(SetterSel);
   }
-  // Look through local category implementations associated with the class.
-  if (!Setter)
-    Setter = IFace->getCategoryInstanceMethod(SetterSel);
     
   if (Setter && DiagnoseUseOfDecl(Setter, MemberLoc))
     return ExprError();
@@ -2010,7 +1948,7 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
 
     // If we have an implementation in scope, check "private" methods.
     if (!Method)
-      Method = LookupPrivateClassMethod(Sel, Class);
+      Method = Class->lookupPrivateClassMethod(Sel);
 
     if (Method && DiagnoseUseOfDecl(Method, Loc))
       return ExprError();
@@ -2207,7 +2145,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
             Method = ClassDecl->lookupClassMethod(Sel);
 
             if (!Method)
-              Method = LookupPrivateClassMethod(Sel, ClassDecl);
+              Method = ClassDecl->lookupPrivateClassMethod(Sel);
           }
           if (Method && DiagnoseUseOfDecl(Method, Loc))
             return ExprError();
@@ -2280,7 +2218,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
         
         if (!Method) {
           // If we have implementations in scope, check "private" methods.
-          Method = LookupPrivateInstanceMethod(Sel, ClassDecl);
+          Method = ClassDecl->lookupPrivateMethod(Sel);
 
           if (!Method && getLangOpts().ObjCAutoRefCount) {
             Diag(Loc, diag::err_arc_may_not_respond)

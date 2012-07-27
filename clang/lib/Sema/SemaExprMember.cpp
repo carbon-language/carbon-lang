@@ -1366,9 +1366,6 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
         // methods.
         Setter = IFace->lookupPrivateMethod(SetterSel, false);
       }
-      // Look through local category implementations associated with the class.
-      if (!Setter)
-        Setter = IFace->getCategoryClassMethod(SetterSel);
 
       if (Setter && DiagnoseUseOfDecl(Setter, MemberLoc))
         return ExprError();

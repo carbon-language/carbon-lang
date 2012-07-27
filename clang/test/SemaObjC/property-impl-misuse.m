@@ -30,8 +30,8 @@
 @synthesize gradientStyle = _gradientStyle;
 - (void)setGradientStyle:(id)value { }
 
-+ (void)_componentCellWithRepresentedObject {
-    self.gradientStyle; // expected-error {{property 'gradientStyle' not found on object of type 'Class'}}
++ (id)_componentCellWithRepresentedObject {
+    return self.gradientStyle;
 }
 @end
 

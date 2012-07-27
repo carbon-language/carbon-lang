@@ -6107,14 +6107,6 @@ public:
     AttributeList *AttrList, tok::ObjCKeywordKind MethodImplKind,
     bool isVariadic, bool MethodDefinition);
 
-  // Helper method for ActOnClassMethod/ActOnInstanceMethod.
-  // Will search "local" class/category implementations for a method decl.
-  // Will also search in class's root looking for instance method.
-  // Returns 0 if no method is found.
-  ObjCMethodDecl *LookupPrivateClassMethod(Selector Sel,
-                                           ObjCInterfaceDecl *CDecl);
-  ObjCMethodDecl *LookupPrivateInstanceMethod(Selector Sel,
-                                              ObjCInterfaceDecl *ClassDecl);
   ObjCMethodDecl *LookupMethodInQualifiedType(Selector Sel,
                                               const ObjCObjectPointerType *OPT,
                                               bool IsInstance);
