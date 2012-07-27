@@ -44,10 +44,10 @@ void test1(int cond) {
   x = (id) (cond ? (void*) 0 : unauditedString()); // expected-error {{requires a bridged cast}} expected-note {{use __bridge to}} expected-note {{use CFBridgingRelease call to}}
   x = (id) (cond ? (CFStringRef) @"help" : unauditedString()); // expected-error {{requires a bridged cast}} expected-note {{use __bridge to}} expected-note {{use CFBridgingRelease call to}}
 
-  x = (id) auditedCreateString(); // expected-error {{requires a bridged cast}} expected-note {{use __bridge to}} expected-note {{use CFBridgingRelease call to}}
-  x = (id) (cond ? auditedCreateString() : (void*) 0); // expected-error {{requires a bridged cast}} expected-note {{use __bridge to}} expected-note {{use CFBridgingRelease call to}}
-  x = (id) (cond ? (void*) 0 : auditedCreateString()); // expected-error {{requires a bridged cast}} expected-note {{use __bridge to}} expected-note {{use CFBridgingRelease call to}}
-  x = (id) (cond ? (CFStringRef) @"help" : auditedCreateString()); // expected-error {{requires a bridged cast}} expected-note {{use __bridge to}} expected-note {{use CFBridgingRelease call to}}
+  x = (id) auditedCreateString(); // expected-error {{requires a bridged cast}} expected-note {{use CFBridgingRelease call to}}
+  x = (id) (cond ? auditedCreateString() : (void*) 0); // expected-error {{requires a bridged cast}} expected-note {{use CFBridgingRelease call to}}
+  x = (id) (cond ? (void*) 0 : auditedCreateString()); // expected-error {{requires a bridged cast}} expected-note {{use CFBridgingRelease call to}}
+  x = (id) (cond ? (CFStringRef) @"help" : auditedCreateString()); // expected-error {{requires a bridged cast}} expected-note {{use CFBridgingRelease call to}}
 
   x = (id) [object property];
   x = (id) (cond ? [object property] : (void*) 0);

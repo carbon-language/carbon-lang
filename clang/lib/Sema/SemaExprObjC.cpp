@@ -2541,6 +2541,7 @@ namespace {
     ASTContext &Context;
     ARCConversionTypeClass SourceClass;
     ARCConversionTypeClass TargetClass;
+    bool Diagnose;
 
     static bool isCFType(QualType type) {
       // Someday this can use ns_bridged.  For now, it has to do this.
@@ -2549,8 +2550,9 @@ namespace {
 
   public:
     ARCCastChecker(ASTContext &Context, ARCConversionTypeClass source,
-                   ARCConversionTypeClass target)
-      : Context(Context), SourceClass(source), TargetClass(target) {}
+                   ARCConversionTypeClass target, bool diagnose)
+      : Context(Context), SourceClass(source), TargetClass(target),
+        Diagnose(diagnose) {}
 
     using super::Visit;
     ACCResult Visit(Expr *e) {
@@ -2675,13 +2677,14 @@ namespace {
       if (builtinID == Builtin::BI__builtin___CFStringMakeConstantString)
         return ACC_bottom;
 
+      // Otherwise, it's +0 unless it follows the create convention.
+      if (ento::coreFoundation::followsCreateRule(fn))
+        return Diagnose ? ACC_plusOne 
+                        : ACC_invalid; // ACC_plusOne if we start accepting this
+      
       // Otherwise, don't do anything implicit with an unaudited function.
       if (!fn->hasAttr<CFAuditedTransferAttr>())
         return ACC_invalid;
-
-      // Otherwise, it's +0 unless it follows the create convention.
-      if (ento::coreFoundation::followsCreateRule(fn))
-        return ACC_invalid; // ACC_plusOne if we start accepting this
 
       return ACC_plusZero;
     }
@@ -2856,6 +2859,10 @@ diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
       << castRange
       << castExpr->getSourceRange();
     bool br = S.isKnownName("CFBridgingRelease");
+    bool  fCreateRule = 
+      ARCCastChecker(S.Context, exprACTC, castACTC, true).Visit(castExpr) 
+        == ACC_plusOne;
+    if (!fCreateRule)
     {
       DiagnosticBuilder DiagB = S.Diag(noteLoc, diag::note_arc_bridge);
       addFixitForObjCARCConversion(S, DiagB, CCK, afterLParen,
@@ -2884,7 +2891,10 @@ diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
       << castType
       << castRange
       << castExpr->getSourceRange();
-
+    bool  fCreateRule = 
+      ARCCastChecker(S.Context, exprACTC, castACTC, true).Visit(castExpr) 
+        == ACC_plusOne;
+    if (!fCreateRule)
     {
       DiagnosticBuilder DiagB = S.Diag(noteLoc, diag::note_arc_bridge);
       addFixitForObjCARCConversion(S, DiagB, CCK, afterLParen,
@@ -2965,7 +2975,7 @@ Sema::CheckObjCARCConversion(SourceRange castRange, QualType castType,
       CCK != CCK_ImplicitConversion)
     return ACR_okay;
 
-  switch (ARCCastChecker(Context, exprACTC, castACTC).Visit(castExpr)) {
+  switch (ARCCastChecker(Context, exprACTC, castACTC, false).Visit(castExpr)) {
   // For invalid casts, fall through.
   case ACC_invalid:
     break;
