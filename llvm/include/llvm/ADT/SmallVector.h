@@ -463,6 +463,7 @@ public:
   }
 
   iterator erase(iterator I) {
+    assert(I >= this->begin() && I < this->end() && "Iterator out of bounds");
     iterator N = I;
     // Shift all elts down one.
     this->move(I+1, this->end(), I);
@@ -472,6 +473,8 @@ public:
   }
 
   iterator erase(iterator S, iterator E) {
+    assert(S >= this->begin() && S <= E && E <= this->end() &&
+           "Iterator range out of bounds");
     iterator N = S;
     // Shift all elts down.
     iterator I = this->move(E, this->end(), S);
