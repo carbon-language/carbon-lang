@@ -211,7 +211,7 @@ getHeightResources(const MachineBasicBlock *MBB) const {
 // instructions.
 namespace {
 class MinInstrCountEnsemble : public MachineTraceMetrics::Ensemble {
-  const char *getName() { return "MinInstr"; }
+  const char *getName() const { return "MinInstr"; }
   const MachineBasicBlock *pickTracePred(const MachineBasicBlock*);
   const MachineBasicBlock *pickTraceSucc(const MachineBasicBlock*);
 
@@ -456,6 +456,37 @@ MachineTraceMetrics::Ensemble::getTrace(const MachineBasicBlock *MBB) {
   // FIXME: Check cache tags, recompute as needed.
   computeTrace(MBB);
   return Trace(*this, BlockInfo[MBB->getNumber()]);
+}
+
+void MachineTraceMetrics::Ensemble::print(raw_ostream &OS) const {
+  OS << getName() << " ensemble:\n";
+  for (unsigned i = 0, e = BlockInfo.size(); i != e; ++i) {
+    OS << "  BB#" << i << '\t';
+    BlockInfo[i].print(OS);
+    OS << '\n';
+  }
+}
+
+void MachineTraceMetrics::TraceBlockInfo::print(raw_ostream &OS) const {
+  if (hasValidDepth()) {
+    OS << "depth=" << InstrDepth;
+    if (Pred)
+      OS << " pred=BB#" << Pred->getNumber();
+    else
+      OS << " pred=null";
+    OS << " head=BB#" << Head;
+  } else
+    OS << "depth invalid";
+  OS << ", ";
+  if (hasValidHeight()) {
+    OS << "height=" << InstrHeight;
+    if (Succ)
+      OS << " succ=BB#" << Succ->getNumber();
+    else
+      OS << " succ=null";
+    OS << " tail=BB#" << Tail;
+  } else
+    OS << "height invalid";
 }
 
 void MachineTraceMetrics::Trace::print(raw_ostream &OS) const {

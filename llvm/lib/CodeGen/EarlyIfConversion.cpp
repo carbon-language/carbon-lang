@@ -590,6 +590,7 @@ void EarlyIfConverter::invalidateTraces() {
   Traces->invalidate(IfConv.Tail);
   Traces->invalidate(IfConv.TBB);
   Traces->invalidate(IfConv.FBB);
+  DEBUG(if (MinInstr) MinInstr->print(dbgs()));
 }
 
 /// Apply cost model and heuristics to the if-conversion in IfConv.
@@ -598,7 +599,10 @@ void EarlyIfConverter::invalidateTraces() {
 bool EarlyIfConverter::shouldConvertIf() {
   if (!MinInstr)
     MinInstr = Traces->getEnsemble(MachineTraceMetrics::TS_MinInstrCount);
-  DEBUG(dbgs() << MinInstr->getTrace(IfConv.Head));
+  DEBUG({
+    dbgs() << MinInstr->getTrace(IfConv.Head);
+    MinInstr->print(dbgs());
+  });
   return true;
 }
 

@@ -105,9 +105,11 @@ public:
   /// block in a trace ensemble.
   struct TraceBlockInfo {
     /// Trace predecessor, or NULL for the first block in the trace.
+    /// Valid when hasValidDepth().
     const MachineBasicBlock *Pred;
 
     /// Trace successor, or NULL for the last block in the trace.
+    /// Valid when hasValidHeight().
     const MachineBasicBlock *Succ;
 
     /// The block number of the head of the trace. (When hasValidDepth()).
@@ -139,6 +141,8 @@ public:
 
     /// Invalidate height resources when a block below this one has changed.
     void invalidateHeight() { InstrHeight = ~0u; }
+
+    void print(raw_ostream&) const;
   };
 
   /// A trace represents a plausible sequence of executed basic blocks that
@@ -180,7 +184,8 @@ public:
 
   public:
     virtual ~Ensemble();
-    virtual const char *getName() =0;
+    virtual const char *getName() const =0;
+    void print(raw_ostream&) const;
     void invalidate(const MachineBasicBlock *MBB);
 
     /// Get the trace that passes through MBB.
@@ -219,6 +224,11 @@ inline raw_ostream &operator<<(raw_ostream &OS,
   return OS;
 }
 
+inline raw_ostream &operator<<(raw_ostream &OS,
+                               const MachineTraceMetrics::Ensemble &En) {
+  En.print(OS);
+  return OS;
+}
 } // end namespace llvm
 
 #endif
