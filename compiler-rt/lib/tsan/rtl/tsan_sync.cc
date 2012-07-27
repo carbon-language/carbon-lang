@@ -71,7 +71,9 @@ SyncVar* SyncTab::GetAndLock(ThreadState *thr, uptr pc,
       StatInc(thr, StatSyncCreated);
       void *mem = internal_alloc(MBlockSync, sizeof(SyncVar));
       res = new(mem) SyncVar(addr);
+#ifndef TSAN_GO
       res->creation_stack.ObtainCurrent(thr, pc);
+#endif
       res->next = p->val;
       p->val = res;
     }
