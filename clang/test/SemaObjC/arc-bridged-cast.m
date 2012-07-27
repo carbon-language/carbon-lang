@@ -38,7 +38,7 @@ void to_cf(id obj) {
 
 CFTypeRef fixits() {
   id obj1 = (id)CFCreateSomething(); // expected-error{{cast of C pointer type 'CFTypeRef' (aka 'const void *') to Objective-C pointer type 'id' requires a bridged cast}} \
-  // expected-note{{use CFBridgingRelease call to transfer ownership of a +1 'CFTypeRef' (aka 'const void *') into ARC}}
+  // expected-note{{use __bridge to convert directly (no change in ownership)}} expected-note{{use CFBridgingRelease call to transfer ownership of a +1 'CFTypeRef' (aka 'const void *') into ARC}}
   // CHECK: fix-it:"{{.*}}":{40:17-40:17}:"CFBridgingRelease("
   // CHECK: fix-it:"{{.*}}":{40:36-40:36}:")"
 

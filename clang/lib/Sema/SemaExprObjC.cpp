@@ -2670,21 +2670,22 @@ namespace {
       // now we're not going to permit implicit handling of +1 results,
       // because it's a bit frightening.
       if (fn->hasAttr<CFReturnsRetainedAttr>())
-        return ACC_invalid; // ACC_plusOne if we start accepting this
+        return Diagnose ? ACC_plusOne
+                        : ACC_invalid; // ACC_plusOne if we start accepting this
 
       // Recognize this specific builtin function, which is used by CFSTR.
       unsigned builtinID = fn->getBuiltinID();
       if (builtinID == Builtin::BI__builtin___CFStringMakeConstantString)
         return ACC_bottom;
 
+      // Otherwise, don't do anything implicit with an unaudited function.
+      if (!fn->hasAttr<CFAuditedTransferAttr>())
+        return ACC_invalid;
+      
       // Otherwise, it's +0 unless it follows the create convention.
       if (ento::coreFoundation::followsCreateRule(fn))
         return Diagnose ? ACC_plusOne 
                         : ACC_invalid; // ACC_plusOne if we start accepting this
-      
-      // Otherwise, don't do anything implicit with an unaudited function.
-      if (!fn->hasAttr<CFAuditedTransferAttr>())
-        return ACC_invalid;
 
       return ACC_plusZero;
     }
@@ -2859,15 +2860,15 @@ diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
       << castRange
       << castExpr->getSourceRange();
     bool br = S.isKnownName("CFBridgingRelease");
-    bool  fCreateRule = 
-      ARCCastChecker(S.Context, exprACTC, castACTC, true).Visit(castExpr) 
-        == ACC_plusOne;
-    if (!fCreateRule)
+    ACCResult  CreateRule = 
+      ARCCastChecker(S.Context, exprACTC, castACTC, true).Visit(castExpr);
+    if (CreateRule != ACC_plusOne)
     {
       DiagnosticBuilder DiagB = S.Diag(noteLoc, diag::note_arc_bridge);
       addFixitForObjCARCConversion(S, DiagB, CCK, afterLParen,
                                    castType, castExpr, "__bridge ", 0);
     }
+    if (CreateRule != ACC_plusZero)
     {
       DiagnosticBuilder DiagB = S.Diag(br ? castExpr->getExprLoc() : noteLoc,
                                        diag::note_arc_bridge_transfer)
@@ -2891,15 +2892,15 @@ diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
       << castType
       << castRange
       << castExpr->getSourceRange();
-    bool  fCreateRule = 
-      ARCCastChecker(S.Context, exprACTC, castACTC, true).Visit(castExpr) 
-        == ACC_plusOne;
-    if (!fCreateRule)
+    ACCResult CreateRule = 
+      ARCCastChecker(S.Context, exprACTC, castACTC, true).Visit(castExpr);
+    if (CreateRule != ACC_plusOne)
     {
       DiagnosticBuilder DiagB = S.Diag(noteLoc, diag::note_arc_bridge);
       addFixitForObjCARCConversion(S, DiagB, CCK, afterLParen,
                                    castType, castExpr, "__bridge ", 0);
     }
+    if (CreateRule != ACC_plusZero)
     {
       DiagnosticBuilder DiagB = S.Diag(br ? castExpr->getExprLoc() : noteLoc,
                                        diag::note_arc_bridge_retained)
