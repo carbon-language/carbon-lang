@@ -447,21 +447,8 @@ bool PrintfSpecifier::fixType(QualType QT, const LangOptions &LangOpt,
   }
 
   // Handle size_t, ptrdiff_t, etc. that have dedicated length modifiers in C99.
-  if (isa<TypedefType>(QT) && (LangOpt.C99 || LangOpt.CPlusPlus0x)) {
-    const IdentifierInfo *Identifier = QT.getBaseTypeIdentifier();
-    if (Identifier->getName() == "size_t") {
-      LM.setKind(LengthModifier::AsSizeT);
-    } else if (Identifier->getName() == "ssize_t") {
-      // Not C99, but common in Unix.
-      LM.setKind(LengthModifier::AsSizeT);
-    } else if (Identifier->getName() == "intmax_t") {
-      LM.setKind(LengthModifier::AsIntMax);
-    } else if (Identifier->getName() == "uintmax_t") {
-      LM.setKind(LengthModifier::AsIntMax);
-    } else if (Identifier->getName() == "ptrdiff_t") {
-      LM.setKind(LengthModifier::AsPtrDiff);
-    }
-  }
+  if (isa<TypedefType>(QT) && (LangOpt.C99 || LangOpt.CPlusPlus0x))
+    namedTypeToLengthModifier(QT, LM);
 
   // If fixing the length modifier was enough, we are done.
   const analyze_printf::ArgTypeResult &ATR = getArgType(Ctx, IsObjCLiteral);

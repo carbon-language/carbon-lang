@@ -64,6 +64,18 @@ void test() {
   printf("%f", (uintmax_t) 42);
   printf("%f", (ptrdiff_t) 42);
 
+  // Look beyond the first typedef.
+  typedef size_t my_size_type;
+  typedef intmax_t my_intmax_type;
+  typedef uintmax_t my_uintmax_type;
+  typedef ptrdiff_t my_ptrdiff_type;
+  typedef int my_int_type;
+  printf("%f", (my_size_type) 42);
+  printf("%f", (my_intmax_type) 42);
+  printf("%f", (my_uintmax_type) 42);
+  printf("%f", (my_ptrdiff_type) 42);
+  printf("%f", (my_int_type) 42);
+
   // string
   printf("%ld", "foo");
 
@@ -122,6 +134,18 @@ void test2() {
   scanf("%f", &uIntmaxVar);
   scanf("%f", &ptrdiffVar);
 
+  // Look beyond the first typedef for named integer types.
+  typedef size_t my_size_type;
+  typedef intmax_t my_intmax_type;
+  typedef uintmax_t my_uintmax_type;
+  typedef ptrdiff_t my_ptrdiff_type;
+  typedef int my_int_type;
+  scanf("%f", (my_size_type*)&sizeVar);
+  scanf("%f", (my_intmax_type*)&intmaxVar);
+  scanf("%f", (my_uintmax_type*)&uIntmaxVar);
+  scanf("%f", (my_ptrdiff_type*)&ptrdiffVar);
+  scanf("%f", (my_int_type*)&intVar);
+
   // Preserve the original formatting.
   scanf("%o", &longVar);
   scanf("%u", &longVar);
@@ -162,6 +186,11 @@ void test2() {
 // CHECK: printf("%jd", (intmax_t) 42);
 // CHECK: printf("%ju", (uintmax_t) 42);
 // CHECK: printf("%td", (ptrdiff_t) 42);
+// CHECK: printf("%zu", (my_size_type) 42);
+// CHECK: printf("%jd", (my_intmax_type) 42);
+// CHECK: printf("%ju", (my_uintmax_type) 42);
+// CHECK: printf("%td", (my_ptrdiff_type) 42);
+// CHECK: printf("%d", (my_int_type) 42);
 // CHECK: printf("%s", "foo");
 // CHECK: printf("%lo", (long) 42);
 // CHECK: printf("%lu", (long) 42);
@@ -193,6 +222,11 @@ void test2() {
 // CHECK: scanf("%jd", &intmaxVar);
 // CHECK: scanf("%ju", &uIntmaxVar);
 // CHECK: scanf("%td", &ptrdiffVar);
+// CHECK: scanf("%zu", (my_size_type*)&sizeVar);
+// CHECK: scanf("%jd", (my_intmax_type*)&intmaxVar);
+// CHECK: scanf("%ju", (my_uintmax_type*)&uIntmaxVar);
+// CHECK: scanf("%td", (my_ptrdiff_type*)&ptrdiffVar);
+// CHECK: scanf("%d", (my_int_type*)&intVar);
 // CHECK: scanf("%lo", &longVar);
 // CHECK: scanf("%lu", &longVar);
 // CHECK: scanf("%lx", &longVar);

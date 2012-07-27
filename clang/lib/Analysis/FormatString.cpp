@@ -681,3 +681,37 @@ bool FormatSpecifier::hasStandardLengthConversionCombination() const {
   }
   return true;
 }
+
+bool FormatSpecifier::namedTypeToLengthModifier(QualType QT,
+                                                LengthModifier &LM) {
+  assert(isa<TypedefType>(QT) && "Expected a TypedefType");
+  const TypedefNameDecl *Typedef = cast<TypedefType>(QT)->getDecl();
+
+  for (;;) {
+    const IdentifierInfo *Identifier = Typedef->getIdentifier();
+    if (Identifier->getName() == "size_t") {
+      LM.setKind(LengthModifier::AsSizeT);
+      return true;
+    } else if (Identifier->getName() == "ssize_t") {
+      // Not C99, but common in Unix.
+      LM.setKind(LengthModifier::AsSizeT);
+      return true;
+    } else if (Identifier->getName() == "intmax_t") {
+      LM.setKind(LengthModifier::AsIntMax);
+      return true;
+    } else if (Identifier->getName() == "uintmax_t") {
+      LM.setKind(LengthModifier::AsIntMax);
+      return true;
+    } else if (Identifier->getName() == "ptrdiff_t") {
+      LM.setKind(LengthModifier::AsPtrDiff);
+      return true;
+    }
+
+    QualType T = Typedef->getUnderlyingType();
+    if (!isa<TypedefType>(T))
+      break;
+
+    Typedef = cast<TypedefType>(T)->getDecl();
+  }
+  return false;
+}
