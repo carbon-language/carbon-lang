@@ -18,10 +18,6 @@
 
 namespace __tsan {
 
-struct ThreadStatePlaceholder {
-  uptr opaque[sizeof(ThreadState) / sizeof(uptr) + kCacheLineSize];
-};
-
 static ThreadState *goroutines[kMaxTid];
 
 void InitializeInterceptors() {
@@ -35,26 +31,6 @@ bool IsExpectedReport(uptr addr, uptr size) {
 }
 
 void internal_start_thread(void(*func)(void*), void *arg) {
-}
-
-extern "C" int __tsan_symbolize(uptr pc, char **func, char **file,
-    int *line, int *off);
-extern "C" void free(void *p);
-
-ReportStack *SymbolizeCode(uptr addr) {
-  ReportStack *s = NewReportStackEntry(addr);
-  char *func = 0, *file = 0;
-  int line = 0, off = 0;
-  if (__tsan_symbolize(addr, &func, &file, &line, &off)) {
-    s->offset = off;
-    s->func = internal_strdup(func ? func : "??");
-    s->file = internal_strdup(file ? file : "-");
-    s->line = line;
-    s->col = 0;
-    free(func);
-    free(file);
-  }
-  return s;
 }
 
 ReportStack *SymbolizeData(uptr addr) {
@@ -77,65 +53,30 @@ void internal_free(void *p) {
   InternalFree(p);
 }
 
-extern "C" {
+// Callback into Go.
+extern "C" int __tsan_symbolize(uptr pc, char **func, char **file,
+    int *line, int *off);
 
-enum Tsan1EventType {
-	NOOP,               // Should not appear.
-	READ,               // {tid, pc, addr, size}
-	WRITE,              // {tid, pc, addr, size}
-	READER_LOCK,        // {tid, pc, lock, 0}
-	WRITER_LOCK,        // {tid, pc, lock, 0}
-	UNLOCK,             // {tid, pc, lock, 0}
-	UNLOCK_OR_INIT,     // {tid, pc, lock, 0}
-	LOCK_CREATE,        // {tid, pc, lock, 0}
-	LOCK_DESTROY,       // {tid, pc, lock, 0}
-	THR_CREATE_BEFORE,  // Parent thread's event. {tid, pc, 0, 0}
-	THR_CREATE_AFTER,   // Parent thread's event. {tid, 0, 0, child_tid}/* 10 */
-	THR_START,          // Child thread's event {tid, CallStack, 0, parent_tid}
-	THR_FIRST_INSN,     // Used only by valgrind.
-	THR_END,            // {tid, 0, 0, 0}
-	THR_JOIN_AFTER,     // {tid, pc, joined_tid}
-	THR_STACK_TOP,      // {tid, pc, stack_top, stack_size_if_known}
-	RTN_EXIT,           // {tid, 0, 0, 0}
-	RTN_CALL,           // {tid, pc, 0, 0}
-	SBLOCK_ENTER,       // {tid, pc, 0, 0}
-	SIGNAL,             // {tid, pc, obj, 0}
-	WAIT,               // {tid, pc, obj, 0} /* 20 */
-	CYCLIC_BARRIER_INIT,         // {tid, pc, obj, n}
-	CYCLIC_BARRIER_WAIT_BEFORE,  // {tid, pc, obj, 0}
-	CYCLIC_BARRIER_WAIT_AFTER,   // {tid, pc, obj, 0}
-	PCQ_CREATE,         // {tid, pc, pcq_addr, 0}
-	PCQ_DESTROY,        // {tid, pc, pcq_addr, 0}
-	PCQ_PUT,            // {tid, pc, pcq_addr, 0}
-	PCQ_GET,            // {tid, pc, pcq_addr, 0}
-	STACK_MEM_DIE,      // deprecated.
-	MALLOC,             // {tid, pc, addr, size}
-	FREE,               // {tid, pc, addr, 0} /* 30 */
-	MMAP,               // {tid, pc, addr, size}
-	MUNMAP,             // {tid, pc, addr, size}
-	PUBLISH_RANGE,      // may be deprecated later.
-	UNPUBLISH_RANGE,    // deprecated. TODO(kcc): get rid of this.
-	HB_LOCK,            // {tid, pc, addr, 0}
-	NON_HB_LOCK,        // {tid, pc, addr, 0}
-	IGNORE_READS_BEG,   // {tid, pc, 0, 0}
-	IGNORE_READS_END,   // {tid, pc, 0, 0}
-	IGNORE_WRITES_BEG,  // {tid, pc, 0, 0}
-	IGNORE_WRITES_END,  // {tid, pc, 0, 0}
-	SET_THREAD_NAME,    // {tid, pc, name_str, 0}
-	SET_LOCK_NAME,      // {tid, pc, lock, lock_name_str}
-	TRACE_MEM,          // {tid, pc, addr, 0}
-	EXPECT_RACE,        // {tid, descr_str, ptr, size}
-	BENIGN_RACE,        // {tid, descr_str, ptr, size}
-	EXPECT_RACE_BEGIN,  // {tid, pc, 0, 0}
-	EXPECT_RACE_END,    // {tid, pc, 0, 0}
-	VERBOSITY,          // Used for debugging.
-	STACK_TRACE,        // {tid, pc, 0, 0}, for debugging.
-	FLUSH_STATE,        // {tid, pc, 0, 0}
-	PC_DESCRIPTION,     // {0, pc, descr_str, 0}, for ts_offline.
-	PRINT_MESSAGE,      // {tid, pc, message_str, 0}, for ts_offline.
-	FLUSH_EXPECTED_RACES,  // {0, 0, 0, 0}
-	LAST_EVENT          // Should not appear.
-};
+ReportStack *SymbolizeCode(uptr addr) {
+  ReportStack *s = (ReportStack*)internal_alloc(MBlockReportStack,
+                                                sizeof(ReportStack));
+  internal_memset(s, 0, sizeof(*s));
+  s->pc = addr;
+  char *func = 0, *file = 0;
+  int line = 0, off = 0;
+  if (__tsan_symbolize(addr, &func, &file, &line, &off)) {
+    s->offset = off;
+    s->func = internal_strdup(func ? func : "??");
+    s->file = internal_strdup(file ? file : "-");
+    s->line = line;
+    s->col = 0;
+    free(func);
+    free(file);
+  }
+  return s;
+}
+
+extern "C" {
 
 static void AllocGoroutine(int tid) {
   goroutines[tid] = (ThreadState*)internal_alloc(MBlockThreadContex,
@@ -160,69 +101,84 @@ void __tsan_fini() {
   exit(res);  
 }
 
-void __tsan_event(int typ, int tid, void *pc, void *addr, int info) {
-  ThreadState *thr = goroutines[tid];
-  switch (typ) {
-  case READ:
-    MemoryAccess(thr, (uptr)pc, (uptr)addr, 0, false);
-    break;
-  case WRITE:
-    MemoryAccess(thr, (uptr)pc, (uptr)addr, 0, true);
-    break;
-  case RTN_EXIT:
-    FuncExit(thr);
-    break;
-  case RTN_CALL:
-    FuncEntry(thr, (uptr)pc);
-    break;
-  case SBLOCK_ENTER:
-    break;
-  case SIGNAL:
-    thr->in_rtl++;
-    Release(thr, (uptr)pc, (uptr)addr);
-    thr->in_rtl--;
-    break;
-  case WAIT:
-    thr->in_rtl++;
-    Acquire(thr, (uptr)pc, (uptr)addr);
-    thr->in_rtl--;
-    break;
-  case MALLOC:
-    thr->in_rtl++;
-    MemoryResetRange(thr, (uptr)pc, (uptr)addr, (uptr)info);
-    MemoryAccessRange(thr, (uptr)pc, (uptr)addr, (uptr)info, true);
-    thr->in_rtl--;
-    break;
-  case FREE:
-    break;
-  case THR_START: {
-    if (tid == 0)
-      return;
-    ThreadState *parent = goroutines[info];
-    AllocGoroutine(tid);
-    thr = goroutines[tid];
-    thr->in_rtl++;
-    parent->in_rtl++;
-    int tid2 = ThreadCreate(parent, (uptr)pc, 0, true);
-    ThreadStart(thr, tid2);
-    parent->in_rtl--;
-    thr->in_rtl--;
-    break;
-  }
-  case THR_END: {
-    thr->in_rtl++;
-    ThreadFinish(thr);
-    thr->in_rtl--;
-    break;
-  }
-  default:
-    Printf("Unknown event type %d\n", typ);
-    Die();
-  }
+void __tsan_read(int goid, void *addr, void *pc) {
+  ThreadState *thr = goroutines[goid];
+  MemoryAccess(thr, (uptr)pc, (uptr)addr, 0, false);
 }
 
-void __tsan_finalizer_goroutine(int tid) {
-  ThreadState *thr = goroutines[tid];
+void __tsan_write(int goid, void *addr, void *pc) {
+  ThreadState *thr = goroutines[goid];
+  MemoryAccess(thr, (uptr)pc, (uptr)addr, 0, true);
+}
+
+void __tsan_func_enter(int goid, void *pc) {
+  ThreadState *thr = goroutines[goid];
+  FuncEntry(thr, (uptr)pc);
+}
+
+void __tsan_func_exit(int goid) {
+  ThreadState *thr = goroutines[goid];
+  FuncExit(thr);
+}
+
+void __tsan_malloc(int goid, void *p, uptr sz, void *pc) {
+  ThreadState *thr = goroutines[goid];
+  thr->in_rtl++;
+  MemoryResetRange(thr, (uptr)pc, (uptr)p, sz);
+  MemoryAccessRange(thr, (uptr)pc, (uptr)p, sz, true);
+  thr->in_rtl--;
+}
+
+void __tsan_free(void *p) {
+  (void)p;
+}
+
+void __tsan_go_start(int pgoid, int chgoid, void *pc) {
+  if (chgoid == 0)
+    return;
+  AllocGoroutine(chgoid);
+  ThreadState *thr = goroutines[chgoid];
+  ThreadState *parent = goroutines[pgoid];
+  thr->in_rtl++;
+  parent->in_rtl++;
+  int goid2 = ThreadCreate(parent, (uptr)pc, 0, true);
+  ThreadStart(thr, goid2);
+  parent->in_rtl--;
+  thr->in_rtl--;
+}
+
+void __tsan_go_end(int goid) {
+  ThreadState *thr = goroutines[goid];
+  thr->in_rtl++;
+  ThreadFinish(thr);
+  thr->in_rtl--;
+}
+
+void __tsan_acquire(int goid, void *addr) {
+  ThreadState *thr = goroutines[goid];
+  thr->in_rtl++;
+  Acquire(thr, 0, (uptr)addr);
+  thr->in_rtl--;
+  //internal_free(thr);
+}
+
+void __tsan_release(int goid, void *addr) {
+  ThreadState *thr = goroutines[goid];
+  thr->in_rtl++;
+  Release(thr, 0, (uptr)addr);
+  thr->in_rtl--;
+}
+
+void __tsan_release_merge(int goid, void *addr) {
+  ThreadState *thr = goroutines[goid];
+  thr->in_rtl++;
+  Release(thr, 0, (uptr)addr);
+  //ReleaseMerge(thr, 0, (uptr)addr);
+  thr->in_rtl--;
+}
+
+void __tsan_finalizer_goroutine(int goid) {
+  ThreadState *thr = goroutines[goid];
   ThreadFinalizerGoroutine(thr);
 }
 
