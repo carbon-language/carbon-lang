@@ -344,36 +344,15 @@ public:
   /// number.  Returns -1 if there is no equivalent value.  The second
   /// parameter allows targets to use different numberings for EH info and
   /// debugging info.
-  int getDwarfRegNum(unsigned RegNum, bool isEH) const {
-    const DwarfLLVMRegPair *M = isEH ? EHL2DwarfRegs : L2DwarfRegs;
-    unsigned Size = isEH ? EHL2DwarfRegsSize : L2DwarfRegsSize;
-
-    DwarfLLVMRegPair Key = { RegNum, 0 };
-    const DwarfLLVMRegPair *I = std::lower_bound(M, M+Size, Key);
-    if (I == M+Size || I->FromReg != RegNum)
-      return -1;
-    return I->ToReg;
-  }
+  int getDwarfRegNum(unsigned RegNum, bool isEH) const;
 
   /// getLLVMRegNum - Map a dwarf register back to a target register.
   ///
-  int getLLVMRegNum(unsigned RegNum, bool isEH) const {
-    const DwarfLLVMRegPair *M = isEH ? EHDwarf2LRegs : Dwarf2LRegs;
-    unsigned Size = isEH ? EHDwarf2LRegsSize : Dwarf2LRegsSize;
-
-    DwarfLLVMRegPair Key = { RegNum, 0 };
-    const DwarfLLVMRegPair *I = std::lower_bound(M, M+Size, Key);
-    assert(I != M+Size && I->FromReg == RegNum && "Invalid RegNum");
-    return I->ToReg;
-  }
+  int getLLVMRegNum(unsigned RegNum, bool isEH) const;
 
   /// getSEHRegNum - Map a target register to an equivalent SEH register
   /// number.  Returns LLVM register number if there is no equivalent value.
-  int getSEHRegNum(unsigned RegNum) const {
-    const DenseMap<unsigned, int>::const_iterator I = L2SEHRegs.find(RegNum);
-    if (I == L2SEHRegs.end()) return (int)RegNum;
-    return I->second;
-  }
+  int getSEHRegNum(unsigned RegNum) const;
 
   regclass_iterator regclass_begin() const { return Classes; }
   regclass_iterator regclass_end() const { return Classes+NumClasses; }
@@ -435,37 +414,6 @@ public:
       ++*this;
   }
 };
-
-inline
-unsigned MCRegisterInfo::getMatchingSuperReg(unsigned Reg, unsigned SubIdx,
-                                             const MCRegisterClass *RC) const {
-  for (MCSuperRegIterator Supers(Reg, this); Supers.isValid(); ++Supers)
-    if (RC->contains(*Supers) && Reg == getSubReg(*Supers, SubIdx))
-      return *Supers;
-  return 0;
-}
-
-inline
-unsigned MCRegisterInfo::getSubReg(unsigned Reg, unsigned Idx) const {
-  // Get a pointer to the corresponding SubRegIndices list. This list has the
-  // name of each sub-register in the same order as MCSubRegIterator.
-  const uint16_t *SRI = SubRegIndices + get(Reg).SubRegIndices;
-  for (MCSubRegIterator Subs(Reg, this); Subs.isValid(); ++Subs, ++SRI)
-    if (*SRI == Idx)
-      return *Subs;
-  return 0;
-}
-
-inline
-unsigned MCRegisterInfo::getSubRegIndex(unsigned Reg, unsigned SubReg) const {
-  // Get a pointer to the corresponding SubRegIndices list. This list has the
-  // name of each sub-register in the same order as MCSubRegIterator.
-  const uint16_t *SRI = SubRegIndices + get(Reg).SubRegIndices;
-  for (MCSubRegIterator Subs(Reg, this); Subs.isValid(); ++Subs, ++SRI)
-    if (*Subs == SubReg)
-      return *SRI;
-  return 0;
-}
 
 //===----------------------------------------------------------------------===//
 //                               Register Units
