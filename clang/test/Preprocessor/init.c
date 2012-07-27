@@ -48,6 +48,9 @@
 // COMMON:#define __GNUC_STDC_INLINE__ 1
 // COMMON:#define __GNUC__
 // COMMON:#define __GXX_ABI_VERSION
+// COMMON:#define __ORDER_BIG_ENDIAN__ 4321
+// COMMON:#define __ORDER_LITTLE_ENDIAN__ 1234
+// COMMON:#define __ORDER_PDP_ENDIAN__ 3412
 // COMMON:#define __STDC_HOSTED__ 1
 // COMMON:#define __STDC_VERSION__
 // COMMON:#define __STDC__ 1
@@ -137,6 +140,7 @@
 // ARM:#define __APCS_32__ 1
 // ARM:#define __ARMEL__ 1
 // ARM:#define __ARM_ARCH_6J__ 1
+// ARM:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // ARM:#define __CHAR16_TYPE__ unsigned short
 // ARM:#define __CHAR32_TYPE__ unsigned int
 // ARM:#define __CHAR_BIT__ 8
@@ -231,6 +235,7 @@
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=i386-none-none < /dev/null | FileCheck -check-prefix I386 %s
 //
+// I386:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // I386:#define __CHAR16_TYPE__ unsigned short
 // I386:#define __CHAR32_TYPE__ unsigned int
 // I386:#define __CHAR_BIT__ 8
@@ -326,6 +331,7 @@
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=i386-pc-linux-gnu -target-cpu pentium4 < /dev/null | FileCheck -check-prefix I386-LINUX %s
 //
+// I386-LINUX:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // I386-LINUX:#define __CHAR16_TYPE__ unsigned short
 // I386-LINUX:#define __CHAR32_TYPE__ unsigned int
 // I386-LINUX:#define __CHAR_BIT__ 8
@@ -428,6 +434,7 @@
 // MIPS32BE:#define _MIPS_SZINT 32
 // MIPS32BE:#define _MIPS_SZLONG 32
 // MIPS32BE:#define _MIPS_SZPTR 32
+// MIPS32BE:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // MIPS32BE:#define __CHAR16_TYPE__ unsigned short
 // MIPS32BE:#define __CHAR32_TYPE__ unsigned int
 // MIPS32BE:#define __CHAR_BIT__ 8
@@ -540,6 +547,7 @@
 // MIPS32EL:#define _MIPS_SZINT 32
 // MIPS32EL:#define _MIPS_SZLONG 32
 // MIPS32EL:#define _MIPS_SZPTR 32
+// MIPS32EL:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // MIPS32EL:#define __CHAR16_TYPE__ unsigned short
 // MIPS32EL:#define __CHAR32_TYPE__ unsigned int
 // MIPS32EL:#define __CHAR_BIT__ 8
@@ -649,6 +657,7 @@
 // MIPS64BE:#define _MIPS_SZINT 32
 // MIPS64BE:#define _MIPS_SZLONG 64
 // MIPS64BE:#define _MIPS_SZPTR 64
+// MIPS64BE:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // MIPS64BE:#define __CHAR16_TYPE__ unsigned short
 // MIPS64BE:#define __CHAR32_TYPE__ unsigned int
 // MIPS64BE:#define __CHAR_BIT__ 8
@@ -758,6 +767,7 @@
 // MIPS64EL:#define _MIPS_SZINT 32
 // MIPS64EL:#define _MIPS_SZLONG 64
 // MIPS64EL:#define _MIPS_SZPTR 64
+// MIPS64EL:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // MIPS64EL:#define __CHAR16_TYPE__ unsigned short
 // MIPS64EL:#define __CHAR32_TYPE__ unsigned int
 // MIPS64EL:#define __CHAR_BIT__ 8
@@ -905,6 +915,7 @@
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=msp430-none-none < /dev/null | FileCheck -check-prefix MSP430 %s
 //
 // MSP430:#define MSP430 1
+// MSP430:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // MSP430:#define __CHAR16_TYPE__ unsigned short
 // MSP430:#define __CHAR32_TYPE__ unsigned int
 // MSP430:#define __CHAR_BIT__ 8
@@ -995,6 +1006,7 @@
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=nvptx-none-none < /dev/null | FileCheck -check-prefix NVPTX32 %s
 //
+// NVPTX32:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // NVPTX32:#define __CHAR16_TYPE__ unsigned short
 // NVPTX32:#define __CHAR32_TYPE__ unsigned int
 // NVPTX32:#define __CHAR_BIT__ 8
@@ -1088,6 +1100,7 @@
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=nvptx64-none-none < /dev/null | FileCheck -check-prefix NVPTX64 %s
 //
+// NVPTX64:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // NVPTX64:#define __CHAR16_TYPE__ unsigned short
 // NVPTX64:#define __CHAR32_TYPE__ unsigned int
 // NVPTX64:#define __CHAR_BIT__ 8
@@ -1187,6 +1200,7 @@
 // PPC603E:#define _ARCH_PPCGR 1
 // PPC603E:#define _BIG_ENDIAN 1
 // PPC603E:#define __BIG_ENDIAN__ 1
+// PPC603E:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // PPC603E:#define __CHAR16_TYPE__ unsigned short
 // PPC603E:#define __CHAR32_TYPE__ unsigned int
 // PPC603E:#define __CHAR_BIT__ 8
@@ -1293,6 +1307,7 @@
 // PPC64:#define _BIG_ENDIAN 1
 // PPC64:#define _LP64 1
 // PPC64:#define __BIG_ENDIAN__ 1
+// PPC64:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // PPC64:#define __CHAR16_TYPE__ unsigned short
 // PPC64:#define __CHAR32_TYPE__ unsigned int
 // PPC64:#define __CHAR_BIT__ 8
@@ -1395,6 +1410,7 @@
 // PPC64-LINUX:#define _BIG_ENDIAN 1
 // PPC64-LINUX:#define _LP64 1
 // PPC64-LINUX:#define __BIG_ENDIAN__ 1
+// PPC64-LINUX:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // PPC64-LINUX:#define __CHAR16_TYPE__ unsigned short
 // PPC64-LINUX:#define __CHAR32_TYPE__ unsigned int
 // PPC64-LINUX:#define __CHAR_BIT__ 8
@@ -1498,6 +1514,7 @@
 // PPC:#define _ARCH_PPC 1
 // PPC:#define _BIG_ENDIAN 1
 // PPC:#define __BIG_ENDIAN__ 1
+// PPC:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // PPC:#define __CHAR16_TYPE__ unsigned short
 // PPC:#define __CHAR32_TYPE__ unsigned int
 // PPC:#define __CHAR_BIT__ 8
@@ -1596,6 +1613,7 @@
 // PPC-LINUX:#define _ARCH_PPC 1
 // PPC-LINUX:#define _BIG_ENDIAN 1
 // PPC-LINUX:#define __BIG_ENDIAN__ 1
+// PPC-LINUX:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // PPC-LINUX:#define __CHAR16_TYPE__ unsigned short
 // PPC-LINUX:#define __CHAR32_TYPE__ unsigned int
 // PPC-LINUX:#define __CHAR_BIT__ 8
@@ -1693,6 +1711,7 @@
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=sparc-none-none < /dev/null | FileCheck -check-prefix SPARC %s
 //
+// SPARC:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // SPARC:#define __CHAR16_TYPE__ unsigned short
 // SPARC:#define __CHAR32_TYPE__ unsigned int
 // SPARC:#define __CHAR_BIT__ 8
@@ -1788,6 +1807,7 @@
 // 
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=tce-none-none < /dev/null | FileCheck -check-prefix TCE %s
 //
+// TCE:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // TCE:#define __CHAR16_TYPE__ unsigned short
 // TCE:#define __CHAR32_TYPE__ unsigned int
 // TCE:#define __CHAR_BIT__ 8
@@ -1881,6 +1901,7 @@
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=x86_64-none-none < /dev/null | FileCheck -check-prefix X86_64 %s
 //
 // X86_64:#define _LP64 1
+// X86_64:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // X86_64:#define __CHAR16_TYPE__ unsigned short
 // X86_64:#define __CHAR32_TYPE__ unsigned int
 // X86_64:#define __CHAR_BIT__ 8
@@ -1984,6 +2005,7 @@
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=x86_64-pc-linux-gnu < /dev/null | FileCheck -check-prefix X86_64-LINUX %s
 //
 // X86_64-LINUX:#define _LP64 1
+// X86_64-LINUX:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // X86_64-LINUX:#define __CHAR16_TYPE__ unsigned short
 // X86_64-LINUX:#define __CHAR32_TYPE__ unsigned int
 // X86_64-LINUX:#define __CHAR_BIT__ 8
