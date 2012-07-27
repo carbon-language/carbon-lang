@@ -117,14 +117,8 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   if (NewLiveIntervals) {
     // This is the new way of computing live intervals.
     // It is independent of LiveVariables, and it can run at any time.
-    for (unsigned i = 0, e = MRI->getNumVirtRegs(); i != e; ++i) {
-      unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
-      if (MRI->reg_nodbg_empty(Reg))
-        continue;
-      LiveInterval *LI = createInterval(Reg);
-      VirtRegIntervals[Reg] = LI;
-      computeVirtRegInterval(LI);
-    }
+    computeVirtRegs();
+    computeRegMasks();
   } else {
     // This is the old way of computing live intervals.
     // It depends on LiveVariables.
@@ -475,6 +469,38 @@ void LiveIntervals::computeVirtRegInterval(LiveInterval *LI) {
   LRCalc->extendToUses(LI);
 }
 
+void LiveIntervals::computeVirtRegs() {
+  for (unsigned i = 0, e = MRI->getNumVirtRegs(); i != e; ++i) {
+    unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
+    if (MRI->reg_nodbg_empty(Reg))
+      continue;
+    LiveInterval *LI = createInterval(Reg);
+    VirtRegIntervals[Reg] = LI;
+    computeVirtRegInterval(LI);
+  }
+}
+
+void LiveIntervals::computeRegMasks() {
+  RegMaskBlocks.resize(MF->getNumBlockIDs());
+
+  // Find all instructions with regmask operands.
+  for (MachineFunction::iterator MBBI = MF->begin(), E = MF->end();
+       MBBI != E; ++MBBI) {
+    MachineBasicBlock *MBB = MBBI;
+    std::pair<unsigned, unsigned> &RMB = RegMaskBlocks[MBB->getNumber()];
+    RMB.first = RegMaskSlots.size();
+    for (MachineBasicBlock::iterator MI = MBB->begin(), ME = MBB->end();
+         MI != ME; ++MI)
+      for (MIOperands MO(MI); MO.isValid(); ++MO) {
+        if (!MO->isRegMask())
+          continue;
+          RegMaskSlots.push_back(Indexes->getInstructionIndex(MI).getRegSlot());
+          RegMaskBits.push_back(MO->getRegMask());
+      }
+    // Compute the number of register mask instructions in this block.
+    RMB.second = RegMaskSlots.size() - RMB.first;;
+  }
+}
 
 //===----------------------------------------------------------------------===//
 //                           Register Unit Liveness
