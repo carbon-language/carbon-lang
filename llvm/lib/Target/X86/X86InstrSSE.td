@@ -1504,14 +1504,14 @@ defm CVTSI2SD64 : sse12_cvt_s<0x2A, GR64, FR64, sint_to_fp, i64mem, loadi64,
 // and/or XMM operand(s).
 
 multiclass sse12_cvt_sint<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
-                         Intrinsic Int, X86MemOperand x86memop, PatFrag ld_frag,
+                         Intrinsic Int, Operand memop, ComplexPattern mem_cpat,
                          string asm, OpndItins itins> {
   def rr : SI<opc, MRMSrcReg, (outs DstRC:$dst), (ins SrcRC:$src),
               !strconcat(asm, "\t{$src, $dst|$dst, $src}"),
               [(set DstRC:$dst, (Int SrcRC:$src))], itins.rr>;
-  def rm : SI<opc, MRMSrcMem, (outs DstRC:$dst), (ins x86memop:$src),
+  def rm : SI<opc, MRMSrcMem, (outs DstRC:$dst), (ins memop:$src),
               !strconcat(asm, "\t{$src, $dst|$dst, $src}"),
-              [(set DstRC:$dst, (Int (ld_frag addr:$src)))], itins.rm>;
+              [(set DstRC:$dst, (Int mem_cpat:$src))], itins.rm>;
 }
 
 multiclass sse12_cvt_sint_3addr<bits<8> opc, RegisterClass SrcRC,
@@ -1533,16 +1533,17 @@ multiclass sse12_cvt_sint_3addr<bits<8> opc, RegisterClass SrcRC,
               itins.rm>;
 }
 
-defm VCVTSD2SI : sse12_cvt_sint<0x2D, VR128, GR32, int_x86_sse2_cvtsd2si,
-                  f128mem, load, "cvtsd2si{l}", SSE_CVT_SD2SI>, XD, VEX, VEX_LIG;
+defm VCVTSD2SI : sse12_cvt_sint<0x2D, VR128, GR32,
+                  int_x86_sse2_cvtsd2si, sdmem, sse_load_f64, "cvtsd2si{l}",
+                  SSE_CVT_SD2SI>, XD, VEX, VEX_LIG;
 defm VCVTSD2SI64 : sse12_cvt_sint<0x2D, VR128, GR64,
-                  int_x86_sse2_cvtsd2si64, f128mem, load, "cvtsd2si{q}",
-                  SSE_CVT_SD2SI>, XD, VEX, VEX_W, VEX_LIG;
+                    int_x86_sse2_cvtsd2si64, sdmem, sse_load_f64, "cvtsd2si{q}",
+                    SSE_CVT_SD2SI>, XD, VEX, VEX_W, VEX_LIG;
 
 defm CVTSD2SI : sse12_cvt_sint<0x2D, VR128, GR32, int_x86_sse2_cvtsd2si,
-                f128mem, load, "cvtsd2si{l}", SSE_CVT_SD2SI>, XD;
+                 sdmem, sse_load_f64, "cvtsd2si{l}", SSE_CVT_SD2SI>, XD;
 defm CVTSD2SI64 : sse12_cvt_sint<0x2D, VR128, GR64, int_x86_sse2_cvtsd2si64,
-                  f128mem, load, "cvtsd2si{q}", SSE_CVT_SD2SI>, XD, REX_W;
+                   sdmem, sse_load_f64, "cvtsd2si{q}", SSE_CVT_SD2SI>, XD, REX_W;
 
 
 defm Int_VCVTSI2SS : sse12_cvt_sint_3addr<0x2A, GR32, VR128,
@@ -1579,33 +1580,31 @@ let Constraints = "$src1 = $dst" in {
 
 // Aliases for intrinsics
 defm Int_VCVTTSS2SI : sse12_cvt_sint<0x2C, VR128, GR32, int_x86_sse_cvttss2si,
-                                    f32mem, load, "cvttss2si",
+                                    ssmem, sse_load_f32, "cvttss2si",
                                     SSE_CVT_SS2SI_32>, XS, VEX;
 defm Int_VCVTTSS2SI64 : sse12_cvt_sint<0x2C, VR128, GR64,
-                                    int_x86_sse_cvttss2si64, f32mem, load,
-                                    "cvttss2si{q}", SSE_CVT_SS2SI_64>,
-                                    XS, VEX, VEX_W;
+                                   int_x86_sse_cvttss2si64, ssmem, sse_load_f32,
+                                   "cvttss2si{q}", SSE_CVT_SS2SI_64>,
+                                   XS, VEX, VEX_W;
 defm Int_VCVTTSD2SI : sse12_cvt_sint<0x2C, VR128, GR32, int_x86_sse2_cvttsd2si,
-                                    f128mem, load, "cvttsd2si", SSE_CVT_SD2SI>,
-                                    XD, VEX;
+                                    sdmem, sse_load_f64, "cvttsd2si",
+                                    SSE_CVT_SD2SI>, XD, VEX;
 defm Int_VCVTTSD2SI64 : sse12_cvt_sint<0x2C, VR128, GR64,
-                                    int_x86_sse2_cvttsd2si64, f128mem, load,
-                                    "cvttsd2si{q}", SSE_CVT_SD2SI>,
-                                    XD, VEX, VEX_W;
+                                  int_x86_sse2_cvttsd2si64, sdmem, sse_load_f64,
+                                  "cvttsd2si{q}", SSE_CVT_SD2SI>,
+                                  XD, VEX, VEX_W;
 defm Int_CVTTSS2SI : sse12_cvt_sint<0x2C, VR128, GR32, int_x86_sse_cvttss2si,
-                                    f32mem, load, "cvttss2si",
+                                    ssmem, sse_load_f32, "cvttss2si",
                                     SSE_CVT_SS2SI_32>, XS;
 defm Int_CVTTSS2SI64 : sse12_cvt_sint<0x2C, VR128, GR64,
-                                    int_x86_sse_cvttss2si64, f32mem, load,
-                                    "cvttss2si{q}", SSE_CVT_SS2SI_64>,
-                                    XS, REX_W;
+                                   int_x86_sse_cvttss2si64, ssmem, sse_load_f32,
+                                   "cvttss2si{q}", SSE_CVT_SS2SI_64>, XS, REX_W;
 defm Int_CVTTSD2SI : sse12_cvt_sint<0x2C, VR128, GR32, int_x86_sse2_cvttsd2si,
-                                    f128mem, load, "cvttsd2si", SSE_CVT_SD2SI>,
-                                    XD;
+                                    sdmem, sse_load_f64, "cvttsd2si",
+                                    SSE_CVT_SD2SI>, XD;
 defm Int_CVTTSD2SI64 : sse12_cvt_sint<0x2C, VR128, GR64,
-                                    int_x86_sse2_cvttsd2si64, f128mem, load,
-                                    "cvttsd2si{q}", SSE_CVT_SD2SI>,
-                                    XD, REX_W;
+                                  int_x86_sse2_cvttsd2si64, sdmem, sse_load_f64,
+                                  "cvttsd2si{q}", SSE_CVT_SD2SI>, XD, REX_W;
 
 let Pattern = []<dag>, neverHasSideEffects = 1 in {
 defm VCVTSS2SI   : sse12_cvt_s<0x2D, FR32, GR32, undef, f32mem, load,
