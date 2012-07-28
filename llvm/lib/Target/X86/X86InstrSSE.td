@@ -1398,14 +1398,15 @@ multiclass sse12_cvt_s<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
 }
 
 multiclass sse12_cvt_p<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
-                         SDNode OpNode, X86MemOperand x86memop, PatFrag ld_frag,
-                         string asm, Domain d, OpndItins itins> {
+                       X86MemOperand x86memop, string asm, Domain d,
+                       OpndItins itins> {
+let neverHasSideEffects = 1 in {
   def rr : I<opc, MRMSrcReg, (outs DstRC:$dst), (ins SrcRC:$src), asm,
-                        [(set DstRC:$dst, (OpNode SrcRC:$src))],
-                        itins.rr, d>;
+             [], itins.rr, d>;
+  let mayLoad = 1 in
   def rm : I<opc, MRMSrcMem, (outs DstRC:$dst), (ins x86memop:$src), asm,
-                        [(set DstRC:$dst, (OpNode (ld_frag addr:$src)))],
-                        itins.rm, d>;
+             [], itins.rm, d>;
+}
 }
 
 multiclass sse12_vcvt_avx<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
@@ -1613,17 +1614,6 @@ defm VCVTSS2SI64 : sse12_cvt_sint<0x2D, VR128, GR64, int_x86_sse_cvtss2si64,
                                   ssmem, sse_load_f32, "cvtss2si{q}",
                                   SSE_CVT_SS2SI_64>, XS, VEX, VEX_W, VEX_LIG;
 
-let Pattern = []<dag>, neverHasSideEffects = 1 in {
-defm VCVTDQ2PS   : sse12_cvt_p<0x5B, VR128, VR128, undef, i128mem, load,
-                               "vcvtdq2ps\t{$src, $dst|$dst, $src}",
-                               SSEPackedSingle, SSE_CVT_PS>, TB, VEX,
-                               Requires<[HasAVX]>;
-defm VCVTDQ2PSY  : sse12_cvt_p<0x5B, VR256, VR256, undef, i256mem, load,
-                               "vcvtdq2ps\t{$src, $dst|$dst, $src}",
-                               SSEPackedSingle, SSE_CVT_PS>, TB, VEX,
-                               Requires<[HasAVX]>;
-}
-
 defm CVTSS2SI : sse12_cvt_sint<0x2D, VR128, GR32, int_x86_sse_cvtss2si,
                                ssmem, sse_load_f32, "cvtss2si{l}",
                                SSE_CVT_SS2SI_32>, XS;
@@ -1631,16 +1621,24 @@ defm CVTSS2SI64 : sse12_cvt_sint<0x2D, VR128, GR64, int_x86_sse_cvtss2si64,
                                  ssmem, sse_load_f32, "cvtss2si{q}",
                                  SSE_CVT_SS2SI_64>, XS, REX_W;
 
-let Pattern = []<dag>, neverHasSideEffects = 1 in {
-defm CVTDQ2PS : sse12_cvt_p<0x5B, VR128, VR128, undef, i128mem, load /*dummy*/,
+defm VCVTDQ2PS   : sse12_cvt_p<0x5B, VR128, VR128, i128mem,
+                               "vcvtdq2ps\t{$src, $dst|$dst, $src}",
+                               SSEPackedSingle, SSE_CVT_PS>,
+                               TB, VEX, Requires<[HasAVX]>;
+defm VCVTDQ2PSY  : sse12_cvt_p<0x5B, VR256, VR256, i256mem,
+                               "vcvtdq2ps\t{$src, $dst|$dst, $src}",
+                               SSEPackedSingle, SSE_CVT_PS>,
+                               TB, VEX, Requires<[HasAVX]>;
+
+defm CVTDQ2PS : sse12_cvt_p<0x5B, VR128, VR128, i128mem,
                             "cvtdq2ps\t{$src, $dst|$dst, $src}",
-                            SSEPackedSingle, SSE_CVT_PS>, TB,
-                            Requires<[HasSSE2]>;
-}
+                            SSEPackedSingle, SSE_CVT_PS>,
+                            TB, Requires<[HasSSE2]>;
 
 /// SSE 2 Only
 
 // Convert scalar double to scalar single
+let neverHasSideEffects = 1 in {
 def VCVTSD2SSrr  : VSDI<0x5A, MRMSrcReg, (outs FR32:$dst),
                        (ins FR64:$src1, FR64:$src2),
                       "cvtsd2ss\t{$src2, $src1, $dst|$dst, $src1, $src2}", [],
@@ -1651,6 +1649,7 @@ def VCVTSD2SSrm  : I<0x5A, MRMSrcMem, (outs FR32:$dst),
                       "vcvtsd2ss\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                       [], IIC_SSE_CVT_Scalar_RM>,
                       XD, Requires<[HasAVX, OptForSize]>, VEX_4V, VEX_LIG;
+}
 
 def : Pat<(f32 (fround FR64:$src)), (VCVTSD2SSrr FR64:$src, FR64:$src)>,
           Requires<[HasAVX]>;
@@ -1677,6 +1676,7 @@ defm Int_CVTSD2SS: sse12_cvt_sint_3addr<0x5A, VR128, VR128,
 
 // Convert scalar single to scalar double
 // SSE2 instructions with XS prefix
+let neverHasSideEffects = 1 in {
 def VCVTSS2SDrr : I<0x5A, MRMSrcReg, (outs FR64:$dst),
                     (ins FR32:$src1, FR32:$src2),
                     "vcvtss2sd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
@@ -1688,6 +1688,7 @@ def VCVTSS2SDrm : I<0x5A, MRMSrcMem, (outs FR64:$dst),
                     "vcvtss2sd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                     [], IIC_SSE_CVT_Scalar_RM>,
                     XS, VEX_4V, VEX_LIG, Requires<[HasAVX, OptForSize]>;
+}
 
 let Predicates = [HasAVX] in {
   def : Pat<(f64 (fextend FR32:$src)),
