@@ -4783,6 +4783,11 @@ ExprResult Sema::ActOnDecltypeExpression(Expr *E) {
   // Disable the special decltype handling now.
   Rec.IsDecltype = false;
 
+  // In MS mode, don't perform any extra checking of call return types within a
+  // decltype expression.
+  if (getLangOpts().MicrosoftMode)
+    return Owned(E);
+
   // Perform the semantic checks we delayed until this point.
   CallExpr *TopCall = dyn_cast<CallExpr>(E);
   for (unsigned I = 0, N = Rec.DelayedDecltypeCalls.size(); I != N; ++I) {
