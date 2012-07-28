@@ -207,4 +207,14 @@ void Release(ThreadState *thr, uptr pc, uptr addr) {
   s->mtx.Unlock();
 }
 
+void ReleaseStore(ThreadState *thr, uptr pc, uptr addr) {
+  CHECK_GT(thr->in_rtl, 0);
+  DPrintf("#%d: ReleaseStore %zx\n", thr->tid, addr);
+  SyncVar *s = CTX()->synctab.GetAndLock(thr, pc, addr, true);
+  thr->clock.set(thr->tid, thr->fast_state.epoch());
+  thr->clock.ReleaseStore(&s->clock);
+  StatInc(thr, StatSyncRelease);
+  s->mtx.Unlock();
+}
+
 }  // namespace __tsan

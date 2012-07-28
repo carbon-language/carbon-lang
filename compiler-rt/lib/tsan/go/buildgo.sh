@@ -74,5 +74,5 @@ echo as gotsan.s -o race_$SUFFIX.syso
 as gotsan.s -o race_$SUFFIX.syso
 
 gcc test.c race_$SUFFIX.syso -lpthread -o test
-./test
+TSAN_OPTIONS="exitcode=0" ./test
 

@@ -88,14 +88,28 @@ void ThreadClock::release(SyncClock *dst) const {
   }
 }
 
+void ThreadClock::ReleaseStore(SyncClock *dst) const {
+  DCHECK(nclk_ <= kMaxTid);
+  DCHECK(dst->clk_.Size() <= kMaxTid);
+
+  if (dst->clk_.Size() < nclk_)
+    dst->clk_.Resize(nclk_);
+  for (uptr i = 0; i < nclk_; i++)
+    dst->clk_[i] = clk_[i];
+  for (uptr i = nclk_; i < dst->clk_.Size(); i++)  
+    dst->clk_[i] = 0;
+}
+
 void ThreadClock::acq_rel(SyncClock *dst) {
   acquire(dst);
   release(dst);
 }
 
-void ThreadClock::Disable() {
+void ThreadClock::Disable(unsigned tid) {
+  u64 c0 = clk_[tid];
   for (uptr i = 0; i < kMaxTidInClock; i++)
     clk_[i] = (u64)-1;
+  clk_[tid] = c0;
 }
 
 SyncClock::SyncClock()

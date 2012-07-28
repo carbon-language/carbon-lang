@@ -449,6 +449,7 @@ void MutexReadOrWriteUnlock(ThreadState *thr, uptr pc, uptr addr);
 
 void Acquire(ThreadState *thr, uptr pc, uptr addr);
 void Release(ThreadState *thr, uptr pc, uptr addr);
+void ReleaseStore(ThreadState *thr, uptr pc, uptr addr);
 
 // The hacky call uses custom calling convention and an assembly thunk.
 // It is considerably faster that a normal call for the caller

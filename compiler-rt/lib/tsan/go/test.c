@@ -46,7 +46,6 @@ int main(void) {
   __tsan_read(0, buf, 0);
   __tsan_free(buf);
   __tsan_func_exit(0);
-  printf("OK\n");
   __tsan_fini();
   return 0;
 }

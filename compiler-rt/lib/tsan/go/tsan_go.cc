@@ -165,7 +165,7 @@ void __tsan_acquire(int goid, void *addr) {
 void __tsan_release(int goid, void *addr) {
   ThreadState *thr = goroutines[goid];
   thr->in_rtl++;
-  Release(thr, 0, (uptr)addr);
+  ReleaseStore(thr, 0, (uptr)addr);
   thr->in_rtl--;
 }
 
@@ -173,7 +173,6 @@ void __tsan_release_merge(int goid, void *addr) {
   ThreadState *thr = goroutines[goid];
   thr->in_rtl++;
   Release(thr, 0, (uptr)addr);
-  //ReleaseMerge(thr, 0, (uptr)addr);
   thr->in_rtl--;
 }
 
