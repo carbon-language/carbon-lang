@@ -3323,6 +3323,75 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
   return true;
 }
 
+/// optimizeLoadInstr - Try to remove the load by folding it to a register
+/// operand at the use. We fold the load instructions if and only if the
+/// def and use are in the same BB.
+MachineInstr* X86InstrInfo::
+optimizeLoadInstr(MachineInstr *MI, const MachineRegisterInfo *MRI,
+                  SmallSet<unsigned, 4> &FoldAsLoadDefRegs,
+                  MachineInstr *&DefMI) const {
+  if (MI->mayStore() || MI->isCall())
+    // To be conservative, we don't fold the loads if there is a store in
+    // between.
+    FoldAsLoadDefRegs.clear();
+  // We only fold loads to a virtual register.
+  if (MI->canFoldAsLoad()) {
+    const MCInstrDesc &MCID = MI->getDesc();
+    if (MCID.getNumDefs() == 1) {
+      unsigned Reg = MI->getOperand(0).getReg();
+      // To reduce compilation time, we check MRI->hasOneUse when inserting
+      // loads. It should be checked when processing uses of the load, since
+      // uses can be removed during peephole.
+      if (TargetRegisterInfo::isVirtualRegister(Reg) && MRI->hasOneUse(Reg)) {
+        FoldAsLoadDefRegs.insert(Reg);
+        return 0;
+      }
+    }
+  }
+
+  // Collect information about virtual register operands of MI.
+  DenseMap<unsigned, unsigned> SrcVirtualRegToOp;
+  SmallSet<unsigned, 4> DstVirtualRegs;
+  for (unsigned i = 0, e = MI->getDesc().getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg())
+      continue;
+    unsigned Reg = MO.getReg();
+    if (!TargetRegisterInfo::isVirtualRegister(Reg))
+      continue;
+    if (MO.isDef())
+      DstVirtualRegs.insert(Reg);
+    else if (FoldAsLoadDefRegs.count(Reg)) {
+      // Only handle the case where Reg is used in a single src operand.
+      if (SrcVirtualRegToOp.find(Reg) != SrcVirtualRegToOp.end())
+        SrcVirtualRegToOp.erase(Reg);
+      else
+        SrcVirtualRegToOp.insert(std::make_pair(Reg, i));
+    }
+  }
+
+  for (DenseMap<unsigned, unsigned>::iterator SI = SrcVirtualRegToOp.begin(),
+       SE = SrcVirtualRegToOp.end(); SI != SE; SI++) {
+    // If the virtual register is updated by MI, we can't fold the load.
+    if (DstVirtualRegs.count(SI->first)) continue;
+
+    // Check whether we can fold the def into this operand.
+    DefMI = MRI->getVRegDef(SI->first);
+    assert(DefMI);
+    bool SawStore = false;
+    if (!DefMI->isSafeToMove(this, 0, SawStore))
+       continue;
+
+    SmallVector<unsigned, 8> Ops;
+    Ops.push_back(SI->second);
+    MachineInstr *FoldMI = foldMemoryOperand(MI, Ops, DefMI);
+    if (!FoldMI) continue;
+    FoldAsLoadDefRegs.erase(SI->first);
+    return FoldMI;
+  }
+  return 0;
+}
+
 /// Expand2AddrUndef - Expand a single-def pseudo instruction to a two-addr
 /// instruction with two undef reads of the register being defined.  This is
 /// used for mapping:
