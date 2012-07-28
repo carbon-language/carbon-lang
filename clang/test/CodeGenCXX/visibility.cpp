@@ -1077,3 +1077,20 @@ namespace test58 {
   // CHECK: define linkonce_odr hidden void @_ZN6test583barINS_3fooEE3zedEv
   // CHECK-HIDDEN: define linkonce_odr hidden void @_ZN6test583barINS_3fooEE3zedEv
 }
+
+namespace test59 {
+  DEFAULT int f();
+  HIDDEN int g();
+  typedef int (*foo)();
+  template<foo x, foo y>
+  void test() {}
+  void use() {
+    test<&g, &f>();
+    // CHECK: define linkonce_odr hidden void @_ZN6test594testIXadL_ZNS_1gEvEEXadL_ZNS_1fEvEEEEvv
+    // CHECK-HIDDEN: define linkonce_odr hidden void @_ZN6test594testIXadL_ZNS_1gEvEEXadL_ZNS_1fEvEEEEvv
+
+    test<&f, &g>();
+    // CHECK: define linkonce_odr hidden void @_ZN6test594testIXadL_ZNS_1fEvEEXadL_ZNS_1gEvEEEEvv
+    // CHECK-HIDDEN: define linkonce_odr hidden void @_ZN6test594testIXadL_ZNS_1fEvEEXadL_ZNS_1gEvEEEEvv
+  }
+}
