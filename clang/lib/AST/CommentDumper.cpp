@@ -169,9 +169,11 @@ void CommentDumper::visitParamCommandComment(const ParamCommandComment *C) {
   else
     OS << " implicitly";
 
-  if (C->hasParamName()) {
+  if (C->hasParamName())
     OS << " Param=\"" << C->getParamName() << "\"";
-  }
+
+  if (C->isParamIndexValid())
+    OS << " ParamIndex=" << C->getParamIndex();
 }
 
 void CommentDumper::visitVerbatimBlockComment(const VerbatimBlockComment *C) {
