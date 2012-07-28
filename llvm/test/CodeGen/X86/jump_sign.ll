@@ -214,3 +214,19 @@ entry:
   %add. = select i1 %cmp, i32 %add, i32 0
   ret i32 %add.
 }
+; PR13475
+; If we have sub a, b and cmp b, a and the result of cmp is used
+; by sbb, we should not optimize cmp away.
+define i32 @q(i32 %j.4, i32 %w, i32 %el) {
+; CHECK: q:
+; CHECK: sub
+; CHECK: cmp
+; CHECK-NEXT: sbb
+  %tmp532 = add i32 %j.4, %w
+  %tmp533 = icmp ugt i32 %tmp532, %el
+  %tmp534 = icmp ult i32 %w, %el
+  %or.cond = and i1 %tmp533, %tmp534
+  %tmp535 = sub i32 %el, %w
+  %j.5 = select i1 %or.cond, i32 %tmp535, i32 %j.4
+  ret i32 %j.5
+}

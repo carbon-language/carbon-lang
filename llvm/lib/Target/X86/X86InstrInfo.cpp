@@ -3221,12 +3221,15 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
   MachineBasicBlock::iterator E = CmpInstr->getParent()->end();
   for (++I; I != E; ++I) {
     const MachineInstr &Instr = *I;
-    if (Instr.modifiesRegister(X86::EFLAGS, TRI)) {
+    bool ModifyEFLAGS = Instr.modifiesRegister(X86::EFLAGS, TRI);
+    bool UseEFLAGS = Instr.readsRegister(X86::EFLAGS, TRI);
+    // We should check the usage if this instruction uses and updates EFLAGS.
+    if (!UseEFLAGS && ModifyEFLAGS) {
       // It is safe to remove CmpInstr if EFLAGS is updated again.
       IsSafe = true;
       break;
     }
-    if (!Instr.readsRegister(X86::EFLAGS, TRI))
+    if (!UseEFLAGS && !ModifyEFLAGS)
       continue;
 
     // EFLAGS is used by this instruction.
@@ -3281,7 +3284,8 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
       // instructions will be modified.
       OpsToUpdate.push_back(std::make_pair(&*I, NewOpc));
     }
-    if (Instr.killsRegister(X86::EFLAGS, TRI)) {
+    if (ModifyEFLAGS || Instr.killsRegister(X86::EFLAGS, TRI)) {
+      // It is safe to remove CmpInstr if EFLAGS is updated again or killed.
       IsSafe = true;
       break;
     }
