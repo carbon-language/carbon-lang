@@ -2703,6 +2703,9 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             {
                 const bool include_symbols = true;
                 
+                // TODO Fix FindFunctions so that it doesn't return
+                //   instance methods for eFunctionNameTypeBase.
+                
                 target->GetImages().FindFunctions(name,
                                                   eFunctionNameTypeBase,
                                                   include_symbols,
@@ -2725,6 +2728,14 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                     
                     if (sym_ctx.function)
                     {
+                        clang::DeclContext *decl_ctx = sym_ctx.function->GetClangDeclContext();
+                        
+                        // Filter out class/instance methods.
+                        if (dyn_cast<clang::ObjCMethodDecl>(decl_ctx))
+                            continue;
+                        if (dyn_cast<clang::CXXMethodDecl>(decl_ctx))
+                            continue;
+                        
                         // TODO only do this if it's a C function; C++ functions may be
                         // overloaded
                         if (!context.m_found.function_with_type_info)
@@ -3281,10 +3292,15 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
     {
         ASTDumper ast_dumper(fun_decl);
         
-        log->Printf("  CEDM::FEVD[%u] Found %s function %s, returned %s", 
+        StreamString ss;
+        
+        fun_address->Dump(&ss, m_parser_vars->m_exe_ctx.GetBestExecutionContextScope(), Address::DumpStyleResolvedDescription);
+        
+        log->Printf("  CEDM::FEVD[%u] Found %s function %s (description %s), returned %s",
                     current_id,
                     (fun ? "specific" : "generic"), 
-                    decl_name.c_str(), 
+                    decl_name.c_str(),
+                    ss.GetData(),
                     ast_dumper.GetCString());
     }
 }
