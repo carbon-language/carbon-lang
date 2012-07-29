@@ -1517,13 +1517,12 @@ private:
       return true;
 
     // If it is the last local entry, then it does if the location is local.
-    if (static_cast<unsigned>(FID.ID+1) == LocalSLocEntryTable.size()) {
+    if (FID.ID+1 == static_cast<int>(LocalSLocEntryTable.size()))
       return SLocOffset < NextLocalOffset;
-    }
 
     // Otherwise, the entry after it has to not include it. This works for both
     // local and loaded entries.
-    return SLocOffset < getSLocEntry(FileID::get(FID.ID+1)).getOffset();
+    return SLocOffset < getSLocEntryByID(FID.ID+1).getOffset();
   }
 
   /// \brief Create a new fileID for the specified ContentCache and
