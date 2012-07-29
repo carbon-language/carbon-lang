@@ -1665,14 +1665,33 @@ def CVTSD2SSrm  : I<0x5A, MRMSrcMem, (outs FR32:$dst), (ins f64mem:$src),
                       XD,
                   Requires<[HasSSE2, OptForSize]>;
 
-defm Int_VCVTSD2SS: sse12_cvt_sint_3addr<0x5A, VR128, VR128,
-                      int_x86_sse2_cvtsd2ss, f64mem, load, "cvtsd2ss",
-                      SSE_CVT_Scalar, 0>,
-                      XS, VEX_4V;
-let Constraints = "$src1 = $dst" in
-defm Int_CVTSD2SS: sse12_cvt_sint_3addr<0x5A, VR128, VR128,
-                      int_x86_sse2_cvtsd2ss, f64mem, load, "cvtsd2ss",
-                      SSE_CVT_Scalar>, XS;
+def Int_VCVTSD2SSrr: I<0x5A, MRMSrcReg,
+                       (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
+                       "vcvtsd2ss\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                       [(set VR128:$dst,
+                         (int_x86_sse2_cvtsd2ss VR128:$src1, VR128:$src2))],
+                       IIC_SSE_CVT_Scalar_RR>, XD, VEX_4V, Requires<[HasAVX]>;
+def Int_VCVTSD2SSrm: I<0x5A, MRMSrcReg,
+                       (outs VR128:$dst), (ins VR128:$src1, sdmem:$src2),
+                       "vcvtsd2ss\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                       [(set VR128:$dst, (int_x86_sse2_cvtsd2ss
+                                          VR128:$src1, sse_load_f64:$src2))],
+                       IIC_SSE_CVT_Scalar_RM>, XD, VEX_4V, Requires<[HasAVX]>;
+
+let Constraints = "$src1 = $dst" in {
+def Int_CVTSD2SSrr: I<0x5A, MRMSrcReg,
+                       (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
+                       "cvtsd2ss\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                       [(set VR128:$dst,
+                         (int_x86_sse2_cvtsd2ss VR128:$src1, VR128:$src2))],
+                       IIC_SSE_CVT_Scalar_RR>, XD, Requires<[HasSSE2]>;
+def Int_CVTSD2SSrm: I<0x5A, MRMSrcReg,
+                       (outs VR128:$dst), (ins VR128:$src1, sdmem:$src2),
+                       "cvtsd2ss\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                       [(set VR128:$dst, (int_x86_sse2_cvtsd2ss
+                                          VR128:$src1, sse_load_f64:$src2))],
+                       IIC_SSE_CVT_Scalar_RM>, XD, Requires<[HasSSE2]>;
+}
 
 // Convert scalar single to scalar double
 // SSE2 instructions with XS prefix
@@ -1727,32 +1746,28 @@ def : Pat<(extloadf32 addr:$src),
 def Int_VCVTSS2SDrr: I<0x5A, MRMSrcReg,
                       (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                     "vcvtss2sd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                    [(set VR128:$dst, (int_x86_sse2_cvtss2sd VR128:$src1,
-                                       VR128:$src2))],
-                                       IIC_SSE_CVT_Scalar_RR>, XS, VEX_4V,
-                    Requires<[HasAVX]>;
+                    [(set VR128:$dst,
+                      (int_x86_sse2_cvtss2sd VR128:$src1, VR128:$src2))],
+                    IIC_SSE_CVT_Scalar_RR>, XS, VEX_4V, Requires<[HasAVX]>;
 def Int_VCVTSS2SDrm: I<0x5A, MRMSrcMem,
-                      (outs VR128:$dst), (ins VR128:$src1, f32mem:$src2),
+                      (outs VR128:$dst), (ins VR128:$src1, ssmem:$src2),
                     "vcvtss2sd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                    [(set VR128:$dst, (int_x86_sse2_cvtss2sd VR128:$src1,
-                                       (load addr:$src2)))],
-                                       IIC_SSE_CVT_Scalar_RM>, XS, VEX_4V,
-                    Requires<[HasAVX]>;
+                    [(set VR128:$dst,
+                      (int_x86_sse2_cvtss2sd VR128:$src1, sse_load_f32:$src2))],
+                    IIC_SSE_CVT_Scalar_RM>, XS, VEX_4V, Requires<[HasAVX]>;
 let Constraints = "$src1 = $dst" in { // SSE2 instructions with XS prefix
 def Int_CVTSS2SDrr: I<0x5A, MRMSrcReg,
                       (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                     "cvtss2sd\t{$src2, $dst|$dst, $src2}",
-                    [(set VR128:$dst, (int_x86_sse2_cvtss2sd VR128:$src1,
-                                       VR128:$src2))],
-                                       IIC_SSE_CVT_Scalar_RR>, XS,
-                    Requires<[HasSSE2]>;
+                    [(set VR128:$dst,
+                      (int_x86_sse2_cvtss2sd VR128:$src1, VR128:$src2))],
+                    IIC_SSE_CVT_Scalar_RR>, XS, Requires<[HasSSE2]>;
 def Int_CVTSS2SDrm: I<0x5A, MRMSrcMem,
-                      (outs VR128:$dst), (ins VR128:$src1, f32mem:$src2),
+                      (outs VR128:$dst), (ins VR128:$src1, ssmem:$src2),
                     "cvtss2sd\t{$src2, $dst|$dst, $src2}",
-                    [(set VR128:$dst, (int_x86_sse2_cvtss2sd VR128:$src1,
-                                       (load addr:$src2)))],
-                                       IIC_SSE_CVT_Scalar_RM>, XS,
-                    Requires<[HasSSE2]>;
+                    [(set VR128:$dst,
+                      (int_x86_sse2_cvtss2sd VR128:$src1, sse_load_f32:$src2))],
+                    IIC_SSE_CVT_Scalar_RM>, XS, Requires<[HasSSE2]>;
 }
 
 // Convert packed single/double fp to doubleword
