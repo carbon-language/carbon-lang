@@ -10185,7 +10185,7 @@ __demangle_tree::__parse_nested_name(const char* first, const char* last)
         {
             bool can_sub = true;
             bool make_nested = true;
-            const char* t1;
+            const char* t1 = NULL;
             switch (*t0)
             {
             case '1':
