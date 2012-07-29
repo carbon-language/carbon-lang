@@ -20,3 +20,7 @@ D: Architect and primary coauthor of libc++abi
 
 N: Nick Kledzik
 E: kledzik@apple.com
+
+N: Andrew Morrow
+E: andrew.c.morrow@gmail.com
+D: Minor patches and fixes
