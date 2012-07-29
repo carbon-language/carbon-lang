@@ -34,7 +34,8 @@ entry:
 define double @squirt(double* %x) nounwind {
 entry:
 ; CHECK: squirt:
-; CHECK: sqrtsd ([[A0]]), %xmm0
+; CHECK: movsd ([[A0]]), %xmm0
+; CHECK: sqrtsd %xmm0, %xmm0
   %z = load double* %x
   %t = call double @llvm.sqrt.f64(double %z)
   ret double %t

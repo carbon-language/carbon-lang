@@ -387,14 +387,6 @@ public:
                                     unsigned SrcReg2, int CmpMask, int CmpValue,
                                     const MachineRegisterInfo *MRI) const;
 
-  /// optimizeLoadInstr - Try to remove the load by folding it to a register
-  /// operand at the use. We fold the load instructions if and only if the
-  /// def and use are in the same BB.
-  virtual MachineInstr* optimizeLoadInstr(MachineInstr *MI,
-                        const MachineRegisterInfo *MRI,
-                        SmallSet<unsigned, 4> &FoldAsLoadDefRegs,
-                        MachineInstr *&DefMI) const;
-
 private:
   MachineInstr * convertToThreeAddressWithLEA(unsigned MIOpc,
                                               MachineFunction::iterator &MFI,

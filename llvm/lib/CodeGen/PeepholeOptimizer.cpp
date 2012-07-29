@@ -78,7 +78,6 @@ STATISTIC(NumReuse,      "Number of extension results reused");
 STATISTIC(NumBitcasts,   "Number of bitcasts eliminated");
 STATISTIC(NumCmps,       "Number of compares eliminated");
 STATISTIC(NumImmFold,    "Number of move immediate folded");
-STATISTIC(NumLoadFold,   "Number of loads folded");
 
 namespace {
   class PeepholeOptimizer : public MachineFunctionPass {
@@ -442,7 +441,6 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
   SmallPtrSet<MachineInstr*, 8> LocalMIs;
   SmallSet<unsigned, 4> ImmDefRegs;
   DenseMap<unsigned, MachineInstr*> ImmDefMIs;
-  SmallSet<unsigned, 4> FoldAsLoadDefRegs;
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
     MachineBasicBlock *MBB = &*I;
 
@@ -450,7 +448,6 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
     LocalMIs.clear();
     ImmDefRegs.clear();
     ImmDefMIs.clear();
-    FoldAsLoadDefRegs.clear();
 
     bool First = true;
     MachineBasicBlock::iterator PMII;
@@ -490,25 +487,6 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
         Changed |= optimizeExtInstr(MI, MBB, LocalMIs);
         if (SeenMoveImm)
           Changed |= foldImmediate(MI, MBB, ImmDefRegs, ImmDefMIs);
-      }
-
-      MachineInstr *DefMI = 0;
-      MachineInstr *FoldMI = TII->optimizeLoadInstr(MI, MRI, FoldAsLoadDefRegs,
-                                                    DefMI);
-      if (FoldMI) {
-        // Update LocalMIs since we replaced MI with FoldMI and deleted DefMI.
-        LocalMIs.erase(MI);
-        LocalMIs.erase(DefMI);
-        LocalMIs.insert(FoldMI);
-        MI->eraseFromParent();
-        DefMI->eraseFromParent();
-        ++NumLoadFold;
-
-        // MI is replaced with FoldMI.
-        Changed = true;
-        PMII = FoldMI;
-        MII = llvm::next(PMII);
-        continue;
       }
 
       First = false;

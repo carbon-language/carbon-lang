@@ -3,7 +3,8 @@
 define void @double_save(<4 x i32>* %Ap, <4 x i32>* %Bp, <8 x i32>* %P) nounwind ssp {
 entry:
   ; CHECK: vmovaps
-  ; CHECK: vinsertf128 $1, ([[A0:%rdi|%rsi]]),
+  ; CHECK: vmovaps
+  ; CHECK: vinsertf128
   ; CHECK: vmovups
   %A = load <4 x i32>* %Ap
   %B = load <4 x i32>* %Bp
