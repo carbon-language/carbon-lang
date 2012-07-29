@@ -5003,8 +5003,14 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
                                  const char *LinkingOutput) const {
   const Driver &D = getToolChain().getDriver();
   ArgStringList CmdArgs;
-  CmdArgs.push_back("--hash-style=both");
-  CmdArgs.push_back("--enable-new-dtags");
+
+  // Silence warning for "clang -g foo.o -o foo"
+  Args.ClaimAllArgs(options::OPT_g_Group);
+  // and "clang -emit-llvm foo.o -o foo"
+  Args.ClaimAllArgs(options::OPT_emit_llvm);
+  // and for "clang -w foo.o -o foo". Other warning options are already
+  // handled somewhere else.
+  Args.ClaimAllArgs(options::OPT_w);
 
   if (!D.SysRoot.empty())
     CmdArgs.push_back(Args.MakeArgString("--sysroot=" + D.SysRoot));
@@ -5021,6 +5027,14 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-dynamic-linker");
       CmdArgs.push_back("/libexec/ld-elf.so.1");
     }
+    if (getToolChain().getTriple().getOSMajorVersion() >= 9) {
+      llvm::Triple::ArchType Arch = getToolChain().getArch();
+      if (Arch == llvm::Triple::arm || Arch == llvm::Triple::sparc ||
+          Arch == llvm::Triple::x86 || Arch == llvm::Triple::x86_64) {
+        CmdArgs.push_back("--hash-style=both");
+      }
+    }
+    CmdArgs.push_back("--enable-new-dtags");
   }
 
   // When building 32-bit code on FreeBSD/amd64, we have to explicitly
@@ -5432,7 +5446,7 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   Args.ClaimAllArgs(options::OPT_g_Group);
   // and "clang -emit-llvm foo.o -o foo"
   Args.ClaimAllArgs(options::OPT_emit_llvm);
-  // and for "clang -g foo.o -o foo". Other warning options are already
+  // and for "clang -w foo.o -o foo". Other warning options are already
   // handled somewhere else.
   Args.ClaimAllArgs(options::OPT_w);
 
