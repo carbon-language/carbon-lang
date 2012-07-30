@@ -8,6 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Target/ExecutionContext.h"
+
+#include "lldb/Core/State.h"
 #include "lldb/Target/ExecutionContextScope.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Process.h"
@@ -639,18 +641,22 @@ ExecutionContextRef::SetTargetPtr (Target* target, bool adopt_selected)
                     m_process_wp = process_sp;
                     if (process_sp)
                     {
-                        lldb::ThreadSP thread_sp (process_sp->GetThreadList().GetSelectedThread());
-                        if (!thread_sp)
-                            thread_sp = process_sp->GetThreadList().GetThreadAtIndex(0);
-                        
-                        if (thread_sp && process_sp->GetState() == lldb::eStateStopped)
+                        // Only fill in the thread and frame if our process is stopped
+                        if (StateIsStoppedState (process_sp->GetState(), true))
                         {
-                            SetThreadSP (thread_sp);
-                            lldb::StackFrameSP frame_sp (thread_sp->GetSelectedFrame());
-                            if (!frame_sp)
-                                frame_sp = thread_sp->GetStackFrameAtIndex(0);
-                            if (frame_sp)
-                                SetFrameSP (frame_sp);
+                            lldb::ThreadSP thread_sp (process_sp->GetThreadList().GetSelectedThread());
+                            if (!thread_sp)
+                                thread_sp = process_sp->GetThreadList().GetThreadAtIndex(0);
+                            
+                            if (thread_sp)
+                            {
+                                SetThreadSP (thread_sp);
+                                lldb::StackFrameSP frame_sp (thread_sp->GetSelectedFrame());
+                                if (!frame_sp)
+                                    frame_sp = thread_sp->GetStackFrameAtIndex(0);
+                                if (frame_sp)
+                                    SetFrameSP (frame_sp);
+                            }
                         }
                     }
                 }
