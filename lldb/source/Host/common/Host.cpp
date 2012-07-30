@@ -1016,7 +1016,9 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                         ::strncpy (framework_pos, "/Resources/Python", PATH_MAX - (framework_pos - raw_path));
                     }
 #else
-                    ::strlcat(raw_path, "/python", sizeof(raw_path));
+                    // We may get our string truncated. Should we protect
+                    // this with an assert?
+                    ::strncat(raw_path, "/python", sizeof(raw_path) - strlen(raw_path) - 1);
 #endif
                     FileSpec::Resolve (raw_path, resolved_path, sizeof(resolved_path));
                     g_lldb_python_dir.SetCString(resolved_path);
