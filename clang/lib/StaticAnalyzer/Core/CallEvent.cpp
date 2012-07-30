@@ -592,20 +592,26 @@ ObjCMessageKind ObjCMethodCall::getMessageKind() const {
 
 const Decl *ObjCMethodCall::getRuntimeDefinition() const {
   const ObjCMessageExpr *E = getOriginExpr();
-  Selector Sel = E->getSelector();
   assert(E);
+  Selector Sel = E->getSelector();
 
   if (E->isInstanceMessage()) {
-    const MemRegion *Receiver = getReceiverSVal().getAsRegion();
-    DynamicTypeInfo TI = getState()->getDynamicTypeInfo(Receiver);
-    const ObjCObjectPointerType *T =
-                    dyn_cast<ObjCObjectPointerType>(TI.getType().getTypePtr());
-    if (!T)
-      return 0;
-    if (ObjCInterfaceDecl *IDecl = T->getInterfaceDecl()) {
-      // Find the method implementation.
-      return IDecl->lookupPrivateMethod(Sel);
+
+    // Find the the receiver type.
+    const ObjCObjectPointerType *ReceiverT = 0;
+    QualType SupersType = E->getSuperType();
+    if (!SupersType.isNull()) {
+      ReceiverT = cast<ObjCObjectPointerType>(SupersType.getTypePtr());
+    } else {
+      const MemRegion *Receiver = getReceiverSVal().getAsRegion();
+      DynamicTypeInfo TI = getState()->getDynamicTypeInfo(Receiver);
+      ReceiverT = dyn_cast<ObjCObjectPointerType>(TI.getType().getTypePtr());
     }
+
+    // Lookup the method implementation.
+    if (ReceiverT)
+      if (ObjCInterfaceDecl *IDecl = ReceiverT->getInterfaceDecl())
+        return IDecl->lookupPrivateMethod(Sel);
 
   } else {
     // This is a class method.

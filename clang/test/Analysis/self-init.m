@@ -1,3 +1,4 @@
+// RUN: %clang_cc1 -analyze -analyzer-checker=osx.cocoa.SelfInit -fobjc-default-synthesize-properties -analyzer-ipa=dynamic -fno-builtin %s -verify
 // RUN: %clang_cc1 -analyze -analyzer-checker=osx.cocoa.SelfInit -fobjc-default-synthesize-properties -fno-builtin %s -verify
 
 @class NSZone, NSCoder;
