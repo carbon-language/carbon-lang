@@ -58,9 +58,8 @@ void func(Foo *p) {
 @end
 
 @implementation Baz
-- dealloc {
+- (void) dealloc {
   [_foo release];
-  return 0;
 }
 @end
 

@@ -197,7 +197,6 @@ static bool CheckARCMethodDecl(Sema &S, ObjCMethodDecl *method) {
   ObjCMethodFamily family = method->getMethodFamily();
   switch (family) {
   case OMF_None:
-  case OMF_dealloc:
   case OMF_finalize:
   case OMF_retain:
   case OMF_release:
@@ -207,6 +206,24 @@ static bool CheckARCMethodDecl(Sema &S, ObjCMethodDecl *method) {
   case OMF_performSelector:
     return false;
 
+  case OMF_dealloc:
+    if (!S.Context.hasSameType(method->getResultType(), S.Context.VoidTy)) {
+      SourceRange ResultTypeRange;
+      if (const TypeSourceInfo *ResultTypeInfo
+          = method->getResultTypeSourceInfo())
+        ResultTypeRange = ResultTypeInfo->getTypeLoc().getSourceRange();
+      if (ResultTypeRange.isInvalid())
+        S.Diag(method->getLocation(), diag::error_dealloc_bad_result_type) 
+          << method->getResultType() 
+          << FixItHint::CreateInsertion(method->getSelectorLoc(0), "(void)");
+      else
+        S.Diag(method->getLocation(), diag::error_dealloc_bad_result_type) 
+          << method->getResultType() 
+          << FixItHint::CreateReplacement(ResultTypeRange, "void");
+      return true;
+    }
+    return false;
+      
   case OMF_init:
     // If the method doesn't obey the init rules, don't bother annotating it.
     if (S.checkInitMethod(method, QualType()))

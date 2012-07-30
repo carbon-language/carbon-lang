@@ -731,6 +731,9 @@ def warn_objc_property_attr_mutually_exclusive : Warning<
 def warn_objc_missing_super_dealloc : Warning<
   "method possibly missing a [super dealloc] call">,
   InGroup<ObjCMissingSuperCalls>;
+def error_dealloc_bad_result_type : Error<
+  "dealloc return type must be correctly specified as 'void' under ARC, "
+  "instead of %0">;
 def warn_objc_missing_super_finalize : Warning<
   "method possibly missing a [super finalize] call">,
   InGroup<ObjCMissingSuperCalls>;

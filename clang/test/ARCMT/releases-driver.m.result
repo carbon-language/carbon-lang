@@ -49,9 +49,6 @@ void func(Foo *p) {
 @end
 
 @implementation Baz
-- dealloc {
-  return 0;
-}
 @end
 
 #define RELEASE_MACRO(x) [x release]
