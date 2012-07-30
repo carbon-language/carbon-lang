@@ -9513,10 +9513,9 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
 
   case CXXCopyAssignment:
     if (RD->hasUserDeclaredCopyAssignment()) {
-      // FIXME: this should use the location of the copy
-      // assignment, not the type.
-      SourceLocation TyLoc = RD->getLocStart();
-      Diag(TyLoc, diag::note_nontrivial_user_defined) << QT << member;
+      SourceLocation AssignLoc =
+        RD->getCopyAssignmentOperator(0)->getLocation();
+      Diag(AssignLoc, diag::note_nontrivial_user_defined) << QT << member;
       return;
     }
     break;
