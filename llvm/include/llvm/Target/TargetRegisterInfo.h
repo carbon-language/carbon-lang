@@ -152,7 +152,7 @@ public:
   }
 
   /// getSuperRegIndices - Returns a 0-terminated list of sub-register indices
-  /// that projec some super-register class into this register class. The list
+  /// that project some super-register class into this register class. The list
   /// has an entry for each Idx such that:
   ///
   ///   There exists SuperRC where:
