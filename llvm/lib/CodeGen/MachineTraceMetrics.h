@@ -75,6 +75,7 @@ public:
   void getAnalysisUsage(AnalysisUsage&) const;
   bool runOnMachineFunction(MachineFunction&);
   void releaseMemory();
+  void verifyAnalysis() const;
 
   friend class Ensemble;
   friend class Trace;
@@ -211,10 +212,6 @@ public:
   /// Invalidate cached information about MBB. This must be called *before* MBB
   /// is erased, or the CFG is otherwise changed.
   void invalidate(const MachineBasicBlock *MBB);
-
-  /// Verify the internal consistency of cached data.
-  /// This does nothing in NDEBUG builds.
-  void verify() const;
 
 private:
   // One entry per basic block, indexed by block number.

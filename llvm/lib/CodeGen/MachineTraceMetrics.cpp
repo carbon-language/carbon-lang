@@ -284,7 +284,7 @@ void MachineTraceMetrics::invalidate(const MachineBasicBlock *MBB) {
       Ensembles[i]->invalidate(MBB);
 }
 
-void MachineTraceMetrics::verify() const {
+void MachineTraceMetrics::verifyAnalysis() const {
 #ifndef NDEBUG
   assert(BlockInfo.size() == MF->getNumBlockIDs() && "Outdated BlockInfo size");
   for (unsigned i = 0; i != TS_NumStrategies; ++i)
