@@ -394,8 +394,7 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
 
   // Filter out intrinsics
 
-  if (!Rec->isSubClassOf("X86Inst"))
-    return FILTER_STRONG;
+  assert(Rec->isSubClassOf("X86Inst") && "Can only filter X86 instructions");
 
   if (Form == X86Local::Pseudo ||
       (IsCodeGenOnly && Name.find("_REV") == Name.npos))
@@ -544,7 +543,7 @@ void RecognizableInstr::handleOperand(bool optional, unsigned &operandIndex,
 void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
   Spec->name       = Name;
 
-  if (!Rec->isSubClassOf("X86Inst"))
+  if (!ShouldBeEmitted)
     return;
 
   switch (filter()) {
@@ -586,9 +585,6 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
       operandMapping[operandIndex] = operandIndex;
     }
   }
-
-  if (!ShouldBeEmitted)
-    return;
 
 #define HANDLE_OPERAND(class)               \
   handleOperand(false,                      \
