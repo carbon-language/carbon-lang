@@ -603,6 +603,22 @@ static Constant *CastGEPIndices(ArrayRef<Constant *> Ops,
   return C;
 }
 
+/// Strip the pointer casts, but preserve the address space information.
+static Constant* StripPtrCastKeepAS(Constant* Ptr) {
+  assert(Ptr->getType()->isPointerTy() && "Not a pointer type");
+  PointerType *OldPtrTy = cast<PointerType>(Ptr->getType());
+  Ptr = cast<Constant>(Ptr->stripPointerCasts());
+  PointerType *NewPtrTy = cast<PointerType>(Ptr->getType());
+
+  // Preserve the address space number of the pointer.
+  if (NewPtrTy->getAddressSpace() != OldPtrTy->getAddressSpace()) {
+    NewPtrTy = NewPtrTy->getElementType()->getPointerTo(
+      OldPtrTy->getAddressSpace());
+    Ptr = ConstantExpr::getBitCast(Ptr, NewPtrTy);
+  }
+  return Ptr;
+}
+
 /// SymbolicallyEvaluateGEP - If we can symbolically evaluate the specified GEP
 /// constant expression, do so.
 static Constant *SymbolicallyEvaluateGEP(ArrayRef<Constant *> Ops,
@@ -639,13 +655,13 @@ static Constant *SymbolicallyEvaluateGEP(ArrayRef<Constant *> Ops,
       }
       return 0;
     }
-  
+
   unsigned BitWidth = TD->getTypeSizeInBits(IntPtrTy);
   APInt Offset =
     APInt(BitWidth, TD->getIndexedOffset(Ptr->getType(),
                                          makeArrayRef((Value **)Ops.data() + 1,
                                                       Ops.size() - 1)));
-  Ptr = cast<Constant>(Ptr->stripPointerCasts());
+  Ptr = StripPtrCastKeepAS(Ptr);
 
   // If this is a GEP of a GEP, fold it all into a single GEP.
   while (GEPOperator *GEP = dyn_cast<GEPOperator>(Ptr)) {
@@ -664,7 +680,7 @@ static Constant *SymbolicallyEvaluateGEP(ArrayRef<Constant *> Ops,
     Ptr = cast<Constant>(GEP->getOperand(0));
     Offset += APInt(BitWidth,
                     TD->getIndexedOffset(Ptr->getType(), NestedOps));
-    Ptr = cast<Constant>(Ptr->stripPointerCasts());
+    Ptr = StripPtrCastKeepAS(Ptr);
   }
 
   // If the base value for this address is a literal integer value, fold the
