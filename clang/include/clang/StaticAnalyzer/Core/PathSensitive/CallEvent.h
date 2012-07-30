@@ -695,8 +695,6 @@ protected:
   virtual void getExtraInvalidatedRegions(RegionList &Regions) const;
 
   virtual QualType getDeclaredResultType() const;
-  ObjCMethodDecl *LookupClassMethodDefinition(Selector Sel,
-                                           ObjCInterfaceDecl *ClassDecl) const;
 
 public:
   virtual const ObjCMessageExpr *getOriginExpr() const {
@@ -752,22 +750,7 @@ public:
   // TODO: We might want to only compute this once (or change the API for 
   // getting the parameters). Currently, this gets called 3 times during 
   // inlining.
-  virtual const Decl *getRuntimeDefinition() const {
-    const ObjCMessageExpr *E = getOriginExpr();
-    assert(E);
-
-    if (E->isInstanceMessage()) {
-      return 0;
-    } else {
-      // This is a class method.
-      // If we have type info for the receiver class, we are calling via
-      // class name.
-      if (ObjCInterfaceDecl *IDecl = E->getReceiverInterface())
-        return LookupClassMethodDefinition(E->getSelector(), IDecl);
-    }
-
-    return 0;
-  }
+  virtual const Decl *getRuntimeDefinition() const;
 
   virtual param_iterator param_begin(bool UseDefinitionParams = false) const;
   virtual param_iterator param_end(bool UseDefinitionParams = false) const;

@@ -731,3 +731,12 @@ bool ProgramState::isTainted(SymbolRef Sym, TaintTagType Kind) const {
   
   return Tainted;
 }
+
+DynamicTypeInfo ProgramState::getDynamicTypeInfo(const MemRegion *Reg) const {
+  if (const TypedRegion *TR = dyn_cast<TypedRegion>(Reg))
+    return DynamicTypeInfo(TR->getLocationType());
+  if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(Reg))
+    return DynamicTypeInfo(SR->getSymbol()
+                             ->getType(getStateManager().getContext()));
+  return DynamicTypeInfo();
+}

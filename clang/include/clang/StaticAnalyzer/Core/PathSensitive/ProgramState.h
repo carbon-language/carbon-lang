@@ -56,6 +56,18 @@ template <typename T> struct ProgramStateTrait {
   }
 };
 
+/// \class Stores the dynamic type information.
+/// Information about type of an object at runtime. This is used by dynamic
+/// dispatch implementation.
+class DynamicTypeInfo {
+  QualType T;
+
+public:
+  DynamicTypeInfo() : T(QualType()) {}
+  DynamicTypeInfo(QualType WithType) : T(WithType) {}
+  QualType getType() {return T;}
+};
+
 /// \class ProgramState
 /// ProgramState - This class encapsulates:
 ///
@@ -312,6 +324,9 @@ public:
   bool isTainted(SVal V, TaintTagType Kind = TaintTagGeneric) const;
   bool isTainted(SymbolRef Sym, TaintTagType Kind = TaintTagGeneric) const;
   bool isTainted(const MemRegion *Reg, TaintTagType Kind=TaintTagGeneric) const;
+
+  /// Get dynamic type information for a region.
+  DynamicTypeInfo getDynamicTypeInfo(const MemRegion *Reg) const;
 
   //==---------------------------------------------------------------------==//
   // Accessing the Generic Data Map (GDM).

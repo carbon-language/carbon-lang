@@ -53,6 +53,13 @@ StoreRef StoreManager::enterStackFrame(Store OldStore,
     Store = Bind(Store.getStore(), ThisRegion, ThisVal);
   }
 
+  if (const ObjCMethodCall *MCall = dyn_cast<ObjCMethodCall>(&Call)) {
+    SVal SelfVal = MCall->getReceiverSVal();
+    const VarDecl *SelfDecl = LCtx->getAnalysisDeclContext()->getSelfDecl();
+    Store = Bind(Store.getStore(),
+                 svalBuilder.makeLoc(MRMgr.getVarRegion(SelfDecl, LCtx)),
+                 SelfVal);
+  }
   return Store;
 }
 

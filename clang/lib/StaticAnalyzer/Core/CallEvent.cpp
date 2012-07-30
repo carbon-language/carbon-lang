@@ -590,34 +590,34 @@ ObjCMessageKind ObjCMethodCall::getMessageKind() const {
   return static_cast<ObjCMessageKind>(Info.getInt());
 }
 
-// TODO: This implementation is copied from SemaExprObjC.cpp, needs to be
-// factored into the ObjCInterfaceDecl.
-ObjCMethodDecl *ObjCMethodCall::LookupClassMethodDefinition(Selector Sel,
-                                           ObjCInterfaceDecl *ClassDecl) const {
-  ObjCMethodDecl *Method = 0;
-  // Lookup in class and all superclasses.
-  while (ClassDecl && !Method) {
-    if (ObjCImplementationDecl *ImpDecl = ClassDecl->getImplementation())
-      Method = ImpDecl->getClassMethod(Sel);
+const Decl *ObjCMethodCall::getRuntimeDefinition() const {
+  const ObjCMessageExpr *E = getOriginExpr();
+  Selector Sel = E->getSelector();
+  assert(E);
 
-    // Look through local category implementations associated with the class.
-    if (!Method)
-      Method = ClassDecl->getCategoryClassMethod(Sel);
-
-    // Before we give up, check if the selector is an instance method.
-    // But only in the root. This matches gcc's behavior and what the
-    // runtime expects.
-    if (!Method && !ClassDecl->getSuperClass()) {
-      Method = ClassDecl->lookupInstanceMethod(Sel);
-      // Look through local category implementations associated
-      // with the root class.
-      //if (!Method)
-      //  Method = LookupPrivateInstanceMethod(Sel, ClassDecl);
+  if (E->isInstanceMessage()) {
+    const MemRegion *Receiver = getReceiverSVal().getAsRegion();
+    DynamicTypeInfo TI = getState()->getDynamicTypeInfo(Receiver);
+    const ObjCObjectPointerType *T =
+                    dyn_cast<ObjCObjectPointerType>(TI.getType().getTypePtr());
+    if (!T)
+      return 0;
+    if (ObjCInterfaceDecl *IDecl = T->getInterfaceDecl()) {
+      // Find the method implementation.
+      return IDecl->lookupPrivateMethod(Sel);
     }
 
-    ClassDecl = ClassDecl->getSuperClass();
+  } else {
+    // This is a class method.
+    // If we have type info for the receiver class, we are calling via
+    // class name.
+    if (ObjCInterfaceDecl *IDecl = E->getReceiverInterface()) {
+      // Find/Return the method implementation.
+      return IDecl->lookupPrivateClassMethod(Sel);
+    }
   }
-  return Method;
+
+  return 0;
 }
 
 
