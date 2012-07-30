@@ -4007,19 +4007,37 @@ computeImplicitExceptionSpec(Sema &S, SourceLocation Loc, CXXMethodDecl *MD) {
   llvm_unreachable("only special members have implicit exception specs");
 }
 
+static void
+updateExceptionSpec(Sema &S, FunctionDecl *FD, const FunctionProtoType *FPT,
+                    const Sema::ImplicitExceptionSpecification &ExceptSpec) {
+  FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
+  ExceptSpec.getEPI(EPI);
+  const FunctionProtoType *NewFPT = cast<FunctionProtoType>(
+    S.Context.getFunctionType(FPT->getResultType(), FPT->arg_type_begin(),
+                              FPT->getNumArgs(), EPI));
+  FD->setType(QualType(NewFPT, 0));
+}
+
 void Sema::EvaluateImplicitExceptionSpec(SourceLocation Loc, CXXMethodDecl *MD) {
   const FunctionProtoType *FPT = MD->getType()->castAs<FunctionProtoType>();
   if (FPT->getExceptionSpecType() != EST_Unevaluated)
     return;
 
-  // Evaluate the exception specification and update the type of the special
-  // member to use it.
-  FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
-  computeImplicitExceptionSpec(*this, Loc, MD).getEPI(EPI);
-  const FunctionProtoType *NewFPT = cast<FunctionProtoType>(
-    Context.getFunctionType(FPT->getResultType(), FPT->arg_type_begin(),
-                            FPT->getNumArgs(), EPI));
-  MD->setType(QualType(NewFPT, 0));
+  // Evaluate the exception specification.
+  ImplicitExceptionSpecification ExceptSpec =
+      computeImplicitExceptionSpec(*this, Loc, MD);
+
+  // Update the type of the special member to use it.
+  updateExceptionSpec(*this, MD, FPT, ExceptSpec);
+
+  // A user-provided destructor can be defined outside the class. When that
+  // happens, be sure to update the exception specification on both
+  // declarations.
+  const FunctionProtoType *CanonicalFPT =
+    MD->getCanonicalDecl()->getType()->castAs<FunctionProtoType>();
+  if (CanonicalFPT->getExceptionSpecType() == EST_Unevaluated)
+    updateExceptionSpec(*this, MD->getCanonicalDecl(),
+                        CanonicalFPT, ExceptSpec);
 }
 
 static bool isImplicitCopyCtorArgConst(Sema &S, CXXRecordDecl *ClassDecl);
