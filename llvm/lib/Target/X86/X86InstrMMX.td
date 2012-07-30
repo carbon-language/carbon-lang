@@ -251,7 +251,7 @@ def MMX_MOVDQ2Qrr : SDIi8<0xD6, MRMSrcReg, (outs VR64:$dst),
                                   (iPTR 0))))))],
                           IIC_MMX_MOVQ_RR>;
 
-def MMX_MOVQ2DQrr : SSDIi8<0xD6, MRMSrcReg, (outs VR128:$dst),
+def MMX_MOVQ2DQrr : S2SIi8<0xD6, MRMSrcReg, (outs VR128:$dst),
                             (ins VR64:$src), "movq2dq\t{$src, $dst|$dst, $src}",
           [(set VR128:$dst,
             (v2i64 (scalar_to_vector
@@ -259,7 +259,7 @@ def MMX_MOVQ2DQrr : SSDIi8<0xD6, MRMSrcReg, (outs VR128:$dst),
                            IIC_MMX_MOVQ_RR>;
 
 let neverHasSideEffects = 1 in
-def MMX_MOVQ2FR64rr: SSDIi8<0xD6, MRMSrcReg, (outs FR64:$dst),
+def MMX_MOVQ2FR64rr: S2SIi8<0xD6, MRMSrcReg, (outs FR64:$dst),
                        (ins VR64:$src), "movq2dq\t{$src, $dst|$dst, $src}", [],
                        IIC_MMX_MOVQ_RR>;
 

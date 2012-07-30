@@ -366,7 +366,7 @@ class VPSI<bits<8> o, Format F, dag outs, dag ins, string asm,
 // 
 //   SDI    - SSE2 instructions with XD prefix.
 //   SDIi8  - SSE2 instructions with ImmT == Imm8 and XD prefix.
-//   SSDI   - SSE2 instructions with XS prefix.
+//   S2SI   - SSE2 instructions with XS prefix.
 //   SSDIi8 - SSE2 instructions with ImmT == Imm8 and XS prefix.
 //   PDI    - SSE2 instructions with TB and OpSize prefixes.
 //   PDIi8  - SSE2 instructions with ImmT == Imm8 and TB and OpSize prefixes.
@@ -379,10 +379,10 @@ class SDI<bits<8> o, Format F, dag outs, dag ins, string asm,
 class SDIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag> pattern, InstrItinClass itin = IIC_DEFAULT>
       : Ii8<o, F, outs, ins, asm, pattern, itin>, XD, Requires<[HasSSE2]>;
-class SSDI<bits<8> o, Format F, dag outs, dag ins, string asm,
-          list<dag> pattern, InstrItinClass itin = IIC_DEFAULT>
+class S2SI<bits<8> o, Format F, dag outs, dag ins, string asm,
+           list<dag> pattern, InstrItinClass itin = IIC_DEFAULT>
       : I<o, F, outs, ins, asm, pattern, itin>, XS, Requires<[HasSSE2]>;
-class SSDIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
+class S2SIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
              list<dag> pattern, InstrItinClass itin = IIC_DEFAULT>
       : Ii8<o, F, outs, ins, asm, pattern>, XS, Requires<[HasSSE2]>;
 class PDI<bits<8> o, Format F, dag outs, dag ins, string asm,
@@ -396,6 +396,10 @@ class PDIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
 class VSDI<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern, InstrItinClass itin = IIC_DEFAULT>
       : I<o, F, outs, ins, !strconcat("v", asm), pattern, itin>, XD,
+        Requires<[HasAVX]>;
+class VS2SI<bits<8> o, Format F, dag outs, dag ins, string asm,
+            list<dag> pattern, InstrItinClass itin = IIC_DEFAULT>
+      : I<o, F, outs, ins, !strconcat("v", asm), pattern, itin>, XS,
         Requires<[HasAVX]>;
 class VPDI<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern, InstrItinClass itin = IIC_DEFAULT>
