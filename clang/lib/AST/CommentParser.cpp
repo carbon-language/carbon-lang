@@ -318,9 +318,9 @@ BlockCommandComment *Parser::parseBlockCommand() {
   if (Tok.is(tok::command) && S.isBlockCommand(Tok.getCommandName())) {
     // Block command ahead.  We can't nest block commands, so pretend that this
     // command has an empty argument.
-    ParagraphComment *PC = S.actOnParagraphComment(
+    ParagraphComment *Paragraph = S.actOnParagraphComment(
                                 ArrayRef<InlineContentComment *>());
-    return S.actOnBlockCommandFinish(BC, PC);
+    return S.actOnBlockCommandFinish(IsParam ? PC : BC, Paragraph);
   }
 
   if (IsParam || NumArgs > 0) {

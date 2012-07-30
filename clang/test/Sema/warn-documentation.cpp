@@ -298,3 +298,9 @@ namespace test_attach24 {
  */
 void test_nocrash1(int);
 
+// We used to crash on this.
+// expected-warning@+2 {{empty paragraph passed to '\param' command}}
+// expected-warning@+1 {{empty paragraph passed to '\brief' command}}
+/// \param\brief
+void test_nocrash2(int);
+
