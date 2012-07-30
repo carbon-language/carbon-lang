@@ -408,15 +408,22 @@ void ARMMachObjectWriter::RecordRelocation(MachObjectWriter *Writer,
   // Even when it's not a scattered relocation, movw/movt always uses
   // a PAIR relocation.
   if (Type == macho::RIT_ARM_Half) {
-    // The other-half value only gets populated for the movt relocation.
+    // The other-half value only gets populated for the movt and movw
+    // relocation entries.
     uint32_t Value = 0;;
     switch ((unsigned)Fixup.getKind()) {
     default: break;
+    case ARM::fixup_arm_movw_lo16:
+    case ARM::fixup_arm_movw_lo16_pcrel:
+    case ARM::fixup_t2_movw_lo16:
+    case ARM::fixup_t2_movw_lo16_pcrel:
+      Value = (FixedValue >> 16) & 0xffff;
+      break;
     case ARM::fixup_arm_movt_hi16:
     case ARM::fixup_arm_movt_hi16_pcrel:
     case ARM::fixup_t2_movt_hi16:
     case ARM::fixup_t2_movt_hi16_pcrel:
-      Value = FixedValue;
+      Value = FixedValue & 0xffff;
       break;
     }
     macho::RelocationEntry MREPair;
