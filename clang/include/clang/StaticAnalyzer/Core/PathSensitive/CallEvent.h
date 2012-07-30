@@ -47,9 +47,19 @@ enum CallEventKind {
   CE_ObjCMessage
 };
 
+class CallEvent;
+typedef IntrusiveRefCntPtr<CallEvent> CallEventRef;
+
 
 /// \brief Represents an abstract call to a function or method along a
 /// particular path.
+///
+/// CallEvents are created through the factory methods of CallEventManager.
+///
+/// CallEvents should always be cheap to create and destroy. In order for
+/// CallEventManager to be able to re-use CallEvent-sized memory blocks,
+/// subclasses of CallEvent may not add any data members to the base class.
+/// Use the "Data" and "Location" fields instead.
 class CallEvent {
 public:
   typedef CallEventKind Kind;
@@ -59,20 +69,36 @@ private:
   const LocationContext *LCtx;
   llvm::PointerUnion<const Expr *, const Decl *> Origin;
 
-  // DO NOT IMPLEMENT! CallEvents should not be copied.
-  CallEvent(const CallEvent &);
+  // DO NOT IMPLEMENT
   CallEvent &operator=(const CallEvent &);
 
 protected:
   // This is user data for subclasses.
   const void *Data;
+
+  // This is user data for subclasses.
+  // This should come right before RefCount, so that the two fields can be
+  // packed together on LP64 platforms.
   SourceLocation Location;
 
+private:
+  mutable unsigned RefCount;
+
+  template <typename T> friend struct llvm::IntrusiveRefCntPtrInfo;
+  void Retain() const { ++RefCount; }
+  void Release() const;
+
+protected:
   CallEvent(const Expr *E, ProgramStateRef state, const LocationContext *lctx)
-    : State(state), LCtx(lctx), Origin(E) {}
+    : State(state), LCtx(lctx), Origin(E), RefCount(0) {}
 
   CallEvent(const Decl *D, ProgramStateRef state, const LocationContext *lctx)
-    : State(state), LCtx(lctx), Origin(D) {}
+    : State(state), LCtx(lctx), Origin(D), RefCount(0) {}
+
+  // DO NOT MAKE PUBLIC
+  CallEvent(const CallEvent &Original)
+    : State(Original.State), LCtx(Original.LCtx), Origin(Original.Origin),
+      Data(Original.Data), Location(Original.Location), RefCount(0) {}
 
   ProgramStateRef getState() const {
     return State;
@@ -83,10 +109,14 @@ protected:
   }
 
 
+  /// Copies this CallEvent, with vtable intact, into a new block of memory.
+  virtual void cloneTo(void *Dest) const = 0;
+
   /// \brief Get the value of arbitrary expressions at this point in the path.
   SVal getSVal(const Stmt *S) const {
     return getState()->getSVal(S, getLocationContext());
   }
+
 
   typedef SmallVectorImpl<const MemRegion *> RegionList;
 
@@ -197,6 +227,15 @@ public:
   ProgramStateRef invalidateRegions(unsigned BlockCount,
                                     ProgramStateRef Orig = 0) const;
 
+  /// Returns a copy of this CallEvent, but using the given state.
+  template <typename T>
+  IntrusiveRefCntPtr<T> cloneWithState(ProgramStateRef NewState) const;
+
+  /// Returns a copy of this CallEvent, but using the given state.
+  CallEventRef cloneWithState(ProgramStateRef NewState) const {
+    return cloneWithState<CallEvent>(NewState);
+  }
+
   /// \brief Returns true if this is a statement that can be considered for
   /// inlining.
   ///
@@ -264,6 +303,7 @@ protected:
   AnyFunctionCall(const Decl *D, ProgramStateRef St,
                   const LocationContext *LCtx)
     : CallEvent(D, St, LCtx) {}
+  AnyFunctionCall(const AnyFunctionCall &Other) : CallEvent(Other) {}
 
   virtual QualType getDeclaredResultType() const;
 
@@ -298,8 +338,8 @@ class SimpleCall : public AnyFunctionCall {
 protected:
   SimpleCall(const CallExpr *CE, ProgramStateRef St,
              const LocationContext *LCtx)
-    : AnyFunctionCall(CE, St, LCtx) {
-  }
+    : AnyFunctionCall(CE, St, LCtx) {}
+  SimpleCall(const SimpleCall &Other) : AnyFunctionCall(Other) {}
 
 public:
   virtual const CallExpr *getOriginExpr() const {
@@ -324,6 +364,10 @@ public:
 ///
 /// Example: \c fun()
 class FunctionCall : public SimpleCall {
+protected:
+  FunctionCall(const FunctionCall &Other) : SimpleCall(Other) {}
+  virtual void cloneTo(void *Dest) const { new (Dest) FunctionCall(*this); }
+
 public:
   FunctionCall(const CallExpr *CE, ProgramStateRef St,
                const LocationContext *LCtx)
@@ -346,6 +390,8 @@ protected:
                   const LocationContext *LCtx)
     : SimpleCall(CE, St, LCtx) {}
 
+  CXXInstanceCall(const CXXInstanceCall &Other) : SimpleCall(Other) {}
+
 public:
   virtual const Decl *getRuntimeDefinition() const;
 
@@ -359,6 +405,10 @@ public:
 ///
 /// Example: \c obj.fun()
 class CXXMemberCall : public CXXInstanceCall {
+protected:
+  CXXMemberCall(const CXXMemberCall &Other) : CXXInstanceCall(Other) {}
+  virtual void cloneTo(void *Dest) const { new (Dest) CXXMemberCall(*this); }
+
 public:
   CXXMemberCall(const CXXMemberCallExpr *CE, ProgramStateRef St,
                 const LocationContext *LCtx)
@@ -382,6 +432,13 @@ public:
 ///
 /// Example: <tt>iter + 1</tt>
 class CXXMemberOperatorCall : public CXXInstanceCall {
+protected:
+  CXXMemberOperatorCall(const CXXMemberOperatorCall &Other)
+    : CXXInstanceCall(Other) {}
+  virtual void cloneTo(void *Dest) const {
+    new (Dest) CXXMemberOperatorCall(*this);
+  }
+
 public:
   CXXMemberOperatorCall(const CXXOperatorCallExpr *CE, ProgramStateRef St,
                         const LocationContext *LCtx)
@@ -412,6 +469,9 @@ public:
 /// Example: <tt>^{ /* ... */ }()</tt>
 class BlockCall : public SimpleCall {
 protected:
+  BlockCall(const BlockCall &Other) : SimpleCall(Other) {}
+  virtual void cloneTo(void *Dest) const { new (Dest) BlockCall(*this); }
+
   virtual void getExtraInvalidatedRegions(RegionList &Regions) const;
 
   virtual QualType getDeclaredResultType() const;
@@ -456,6 +516,9 @@ public:
 /// Example: \c T(1)
 class CXXConstructorCall : public AnyFunctionCall {
 protected:
+  CXXConstructorCall(const CXXConstructorCall &Other) : AnyFunctionCall(Other){}
+  virtual void cloneTo(void *Dest) const { new (Dest) CXXConstructorCall(*this); }
+
   virtual void getExtraInvalidatedRegions(RegionList &Regions) const;
 
 public:
@@ -502,6 +565,9 @@ public:
 /// of a full-expression (for temporaries), or as part of a delete.
 class CXXDestructorCall : public AnyFunctionCall {
 protected:
+  CXXDestructorCall(const CXXDestructorCall &Other) : AnyFunctionCall(Other) {}
+  virtual void cloneTo(void *Dest) const { new (Dest) CXXDestructorCall(*this); }
+
   virtual void getExtraInvalidatedRegions(RegionList &Regions) const;
 
 public:
@@ -537,6 +603,10 @@ public:
 ///
 /// This is a call to "operator new".
 class CXXAllocatorCall : public AnyFunctionCall {
+protected:
+  CXXAllocatorCall(const CXXAllocatorCall &Other) : AnyFunctionCall(Other) {}
+  virtual void cloneTo(void *Dest) const { new (Dest) CXXAllocatorCall(*this); }
+
 public:
   CXXAllocatorCall(const CXXNewExpr *E, ProgramStateRef St,
                    const LocationContext *LCtx)
@@ -585,6 +655,9 @@ class ObjCMethodCall : public CallEvent {
   const PseudoObjectExpr *getContainingPseudoObjectExpr() const;
 
 protected:
+  ObjCMethodCall(const ObjCMethodCall &Other) : CallEvent(Other) {}
+  virtual void cloneTo(void *Dest) const { new (Dest) ObjCMethodCall(*this); }
+
   virtual void getExtraInvalidatedRegions(RegionList &Regions) const;
 
   virtual QualType getDeclaredResultType() const;
@@ -677,6 +750,64 @@ public:
     return CA->getKind() == CE_ObjCMessage;
   }
 };
+
+
+/// \brief Manages the lifetime of CallEvent objects.
+///
+/// CallEventManager provides a way to create arbitrary CallEvents "on the
+/// stack" as if they were value objects by keeping a cache of CallEvent-sized
+/// memory blocks. The CallEvents created by CallEventManager are only valid
+/// for the lifetime of the OwnedCallEvent that holds them; right now these
+/// objects cannot be copied and ownership cannot be transferred.
+class CallEventManager {
+  friend class CallEvent;
+
+  llvm::BumpPtrAllocator &Alloc;
+  SmallVector<void *, 4> Cache;
+
+  void reclaim(const void *Memory) {
+    Cache.push_back(const_cast<void *>(Memory));
+  }
+
+  /// Returns memory that can be initialized as a CallEvent.
+  void *allocate() {
+    if (Cache.empty())
+      return Alloc.Allocate<FunctionCall>();
+    else
+      return Cache.pop_back_val();
+  }
+
+public:
+  CallEventManager(llvm::BumpPtrAllocator &alloc) : Alloc(alloc) {}
+};
+
+
+template <typename T>
+IntrusiveRefCntPtr<T> CallEvent::cloneWithState(ProgramStateRef NewState) const{
+  assert(isa<T>(*this) && "Cloning to unrelated type");
+  assert(sizeof(T) == sizeof(CallEvent) && "Subclasses may not add fields");
+
+  CallEventManager &Mgr = State->getStateManager().getCallEventManager();
+  T *Copy = static_cast<T *>(Mgr.allocate());
+  cloneTo(Copy);
+  assert(Copy->getKind() == this->getKind() && "Bad copy");
+
+  Copy->State = NewState;
+  return Copy;
+}
+
+inline void CallEvent::Release() const {
+  assert(RefCount > 0 && "Reference count is already zero.");
+  --RefCount;
+
+  if (RefCount > 0)
+    return;
+
+  CallEventManager &Mgr = State->getStateManager().getCallEventManager();
+  Mgr.reclaim(this);
+
+  this->~CallEvent();
+}
 
 } // end namespace ento
 } // end namespace clang
