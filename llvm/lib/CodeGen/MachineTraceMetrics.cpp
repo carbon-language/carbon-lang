@@ -420,10 +420,15 @@ MachineTraceMetrics::Ensemble::invalidate(const MachineBasicBlock *BadMBB) {
       for (MachineBasicBlock::const_pred_iterator
            I = MBB->pred_begin(), E = MBB->pred_end(); I != E; ++I) {
         TraceBlockInfo &TBI = BlockInfo[(*I)->getNumber()];
-        if (TBI.hasValidHeight() && TBI.Succ == MBB) {
+        if (!TBI.hasValidHeight())
+          continue;
+        if (TBI.Succ == MBB) {
           TBI.invalidateHeight();
           WorkList.push_back(*I);
+          continue;
         }
+        // Verify that TBI.Succ is actually a *I successor.
+        assert((!TBI.Succ || (*I)->isSuccessor(TBI.Succ)) && "CFG changed");
       }
     } while (!WorkList.empty());
   }
@@ -441,10 +446,15 @@ MachineTraceMetrics::Ensemble::invalidate(const MachineBasicBlock *BadMBB) {
       for (MachineBasicBlock::const_succ_iterator
            I = MBB->succ_begin(), E = MBB->succ_end(); I != E; ++I) {
         TraceBlockInfo &TBI = BlockInfo[(*I)->getNumber()];
-        if (TBI.hasValidDepth() && TBI.Pred == MBB) {
+        if (!TBI.hasValidDepth())
+          continue;
+        if (TBI.Pred == MBB) {
           TBI.invalidateDepth();
           WorkList.push_back(*I);
+          continue;
         }
+        // Verify that TBI.Pred is actually a *I predecessor.
+        assert((!TBI.Pred || (*I)->isPredecessor(TBI.Pred)) && "CFG changed");
       }
     } while (!WorkList.empty());
   }
