@@ -47,7 +47,8 @@ ANALYSIS_PURGE(PurgeNone,  "none", "Do not purge symbols, bindings, or constrain
 #endif
 
 ANALYSIS_IPA(None, "none", "Perform only intra-procedural analysis")
-ANALYSIS_IPA(Inlining, "inlining", "Experimental: Inline callees when their definitions are available")
+ANALYSIS_IPA(Inlining, "inlining", "Inline callees when their definitions are available")
+ANALYSIS_IPA(DynamicDispatch, "dynamic", "Experimental: Enable inlining of dynamically dispatched methods")
 
 #ifndef ANALYSIS_INLINING_MODE
 #define ANALYSIS_INLINING_MODE(NAME, CMDFLAG, DESC)
