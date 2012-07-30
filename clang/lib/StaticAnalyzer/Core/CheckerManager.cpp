@@ -192,15 +192,10 @@ namespace {
 
     void runChecker(CheckerManager::CheckObjCMessageFunc checkFn,
                     NodeBuilder &Bldr, ExplodedNode *Pred) {
-      ProgramPoint::Kind K =  IsPreVisit ? ProgramPoint::PreStmtKind :
-                                           ProgramPoint::PostStmtKind;
-      const ProgramPoint &L =
-        ProgramPoint::getProgramPoint(Msg.getOriginExpr(),
-                                      K, Pred->getLocationContext(),
-                                      checkFn.Checker);
+      const ProgramPoint &L = Msg.getProgramPoint(IsPreVisit,checkFn.Checker);
       CheckerContext C(Bldr, Eng, Pred, L);
 
-      checkFn(Msg, C);
+      checkFn(*Msg.cloneWithState<ObjCMethodCall>(Pred->getState()), C);
     }
   };
 }
@@ -237,10 +232,10 @@ namespace {
 
     void runChecker(CheckerManager::CheckCallFunc checkFn,
                     NodeBuilder &Bldr, ExplodedNode *Pred) {
-      const ProgramPoint &L = Call.getProgramPoint(IsPreVisit, checkFn.Checker);
+      const ProgramPoint &L = Call.getProgramPoint(IsPreVisit,checkFn.Checker);
       CheckerContext C(Bldr, Eng, Pred, L);
 
-      checkFn(Call, C);
+      checkFn(*Call.cloneWithState(Pred->getState()), C);
     }
   };
 }

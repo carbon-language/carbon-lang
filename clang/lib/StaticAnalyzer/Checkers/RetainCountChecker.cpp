@@ -1975,8 +1975,11 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
       }
       else {
         assert(isa<ObjCMessageExpr>(S));
-        ObjCMethodCall Call(cast<ObjCMessageExpr>(S), CurrSt, LCtx);
-        switch (Call.getMessageKind()) {
+        CallEventManager &Mgr = CurrSt->getStateManager().getCallEventManager();
+        CallEventRef<ObjCMethodCall> Call
+          = Mgr.getObjCMethodCall(cast<ObjCMessageExpr>(S), CurrSt, LCtx);
+
+        switch (Call->getMessageKind()) {
         case OCM_Message:
           os << "Method";
           break;

@@ -875,15 +875,11 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
       Bldr.addNodes(Dst);
       break;
 
-    case Stmt::ObjCMessageExprClass: {
+    case Stmt::ObjCMessageExprClass:
       Bldr.takeNodes(Pred);
-      ObjCMethodCall Call(cast<ObjCMessageExpr>(S),
-                          Pred->getState(),
-                          Pred->getLocationContext());
-      VisitObjCMessage(Call, Pred, Dst);
+      VisitObjCMessage(cast<ObjCMessageExpr>(S), Pred, Dst);
       Bldr.addNodes(Dst);
       break;
-    }
 
     case Stmt::ObjCAtThrowStmtClass: {
       // FIXME: This is not complete.  We basically treat @throw as

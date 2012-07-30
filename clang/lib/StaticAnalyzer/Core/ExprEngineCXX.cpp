@@ -125,23 +125,25 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
   }
   }
 
-  CXXConstructorCall Call(CE, Target, State, LCtx);
+  CallEventManager &CEMgr = getStateManager().getCallEventManager();
+  CallEventRef<CXXConstructorCall> Call =
+    CEMgr.getCXXConstructorCall(CE, Target, State, LCtx);
 
   ExplodedNodeSet DstPreVisit;
   getCheckerManager().runCheckersForPreStmt(DstPreVisit, Pred, CE, *this);
   ExplodedNodeSet DstPreCall;
   getCheckerManager().runCheckersForPreCall(DstPreCall, DstPreVisit,
-                                            Call, *this);
+                                            *Call, *this);
 
   ExplodedNodeSet DstInvalidated;
   StmtNodeBuilder Bldr(DstPreCall, DstInvalidated, *currentBuilderContext);
   for (ExplodedNodeSet::iterator I = DstPreCall.begin(), E = DstPreCall.end();
        I != E; ++I)
-    defaultEvalCall(Bldr, *I, Call);
+    defaultEvalCall(Bldr, *I, *Call);
 
   ExplodedNodeSet DstPostCall;
   getCheckerManager().runCheckersForPostCall(DstPostCall, DstInvalidated,
-                                             Call, *this);
+                                             *Call, *this);
   getCheckerManager().runCheckersForPostStmt(destNodes, DstPostCall, CE, *this);
 }
 
@@ -150,36 +152,39 @@ void ExprEngine::VisitCXXDestructor(QualType ObjectType,
                                     const Stmt *S,
                                     ExplodedNode *Pred, 
                                     ExplodedNodeSet &Dst) {
+  const LocationContext *LCtx = Pred->getLocationContext();
+  ProgramStateRef State = Pred->getState();
+
   // FIXME: We need to run the same destructor on every element of the array.
   // This workaround will just run the first destructor (which will still
   // invalidate the entire array).
   if (const ArrayType *AT = getContext().getAsArrayType(ObjectType)) {
     ObjectType = AT->getElementType();
-    Dest = Pred->getState()->getLValue(ObjectType,
-                                       getSValBuilder().makeZeroArrayIndex(),
-                                       loc::MemRegionVal(Dest)).getAsRegion();
+    Dest = State->getLValue(ObjectType, getSValBuilder().makeZeroArrayIndex(),
+                            loc::MemRegionVal(Dest)).getAsRegion();
   }
 
   const CXXRecordDecl *RecordDecl = ObjectType->getAsCXXRecordDecl();
   assert(RecordDecl && "Only CXXRecordDecls should have destructors");
   const CXXDestructorDecl *DtorDecl = RecordDecl->getDestructor();
 
-  CXXDestructorCall Call(DtorDecl, S, Dest, Pred->getState(),
-                         Pred->getLocationContext());
+  CallEventManager &CEMgr = getStateManager().getCallEventManager();
+  CallEventRef<CXXDestructorCall> Call =
+    CEMgr.getCXXDestructorCall(DtorDecl, S, Dest, State, LCtx);
 
   ExplodedNodeSet DstPreCall;
   getCheckerManager().runCheckersForPreCall(DstPreCall, Pred,
-                                            Call, *this);
+                                            *Call, *this);
 
   ExplodedNodeSet DstInvalidated;
   StmtNodeBuilder Bldr(DstPreCall, DstInvalidated, *currentBuilderContext);
   for (ExplodedNodeSet::iterator I = DstPreCall.begin(), E = DstPreCall.end();
        I != E; ++I)
-    defaultEvalCall(Bldr, *I, Call);
+    defaultEvalCall(Bldr, *I, *Call);
 
   ExplodedNodeSet DstPostCall;
   getCheckerManager().runCheckersForPostCall(Dst, DstInvalidated,
-                                             Call, *this);
+                                             *Call, *this);
 }
 
 void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
@@ -196,9 +201,14 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
     svalBuilder.getConjuredSymbolVal(0, CNE, LCtx, CNE->getType(), blockCount);
   ProgramStateRef State = Pred->getState();
 
+  CallEventManager &CEMgr = getStateManager().getCallEventManager();
+  CallEventRef<CXXAllocatorCall> Call =
+    CEMgr.getCXXAllocatorCall(CNE, State, LCtx);
+
   // Invalidate placement args.
-  CXXAllocatorCall Call(CNE, State, LCtx);
-  State = Call.invalidateRegions(blockCount);
+  // FIXME: Once we figure out how we want allocators to work,
+  // we should be using the usual pre-/(default-)eval-/post-call checks here.
+  State = Call->invalidateRegions(blockCount);
 
   if (CNE->isArray()) {
     // FIXME: allocating an array requires simulating the constructors.

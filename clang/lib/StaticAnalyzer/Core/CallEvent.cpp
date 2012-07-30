@@ -620,3 +620,24 @@ ObjCMethodDecl *ObjCMethodCall::LookupClassMethodDefinition(Selector Sel,
   return Method;
 }
 
+
+CallEventRef<SimpleCall>
+CallEventManager::getSimpleCall(const CallExpr *CE, ProgramStateRef State,
+                                const LocationContext *LCtx) {
+  if (const CXXMemberCallExpr *MCE = dyn_cast<CXXMemberCallExpr>(CE))
+    return create<CXXMemberCall>(MCE, State, LCtx);
+
+  if (const CXXOperatorCallExpr *OpCE = dyn_cast<CXXOperatorCallExpr>(CE)) {
+    const FunctionDecl *DirectCallee = OpCE->getDirectCallee();
+    if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(DirectCallee))
+      if (MD->isInstance())
+        return create<CXXMemberOperatorCall>(OpCE, State, LCtx);
+
+  } else if (CE->getCallee()->getType()->isBlockPointerType()) {
+    return create<BlockCall>(CE, State, LCtx);
+  }
+
+  // Otherwise, it's a normal function call, static member function call, or
+  // something we can't reason about.
+  return create<FunctionCall>(CE, State, LCtx);
+}

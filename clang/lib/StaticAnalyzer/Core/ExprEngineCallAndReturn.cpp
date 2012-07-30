@@ -22,23 +22,6 @@
 using namespace clang;
 using namespace ento;
 
-static CallEventKind classifyCallExpr(const CallExpr *CE) {
-  if (isa<CXXMemberCallExpr>(CE))
-    return CE_CXXMember;
-
-  const CXXOperatorCallExpr *OpCE = dyn_cast<CXXOperatorCallExpr>(CE);
-  if (OpCE) {
-    const FunctionDecl *DirectCallee = CE->getDirectCallee();
-    if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(DirectCallee))
-      if (MD->isInstance())
-        return CE_CXXMemberOperator;
-  } else if (CE->getCallee()->getType()->isBlockPointerType()) {
-    return CE_Block;
-  }
-
-  return CE_Function;
-}
-
 void ExprEngine::processCallEnter(CallEnter CE, ExplodedNode *Pred) {
   // Get the entry block in the CFG of the callee.
   const StackFrameContext *calleeCtx = CE.getCalleeContext();
@@ -387,42 +370,18 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
   ExplodedNodeSet dstPreVisit;
   getCheckerManager().runCheckersForPreStmt(dstPreVisit, Pred, CE, *this);
 
-  // Get the callee kind.
-  CallEventKind K = classifyCallExpr(CE);
+  // Get the call in its initial state. We use this as a template to perform
+  // all the checks.
+  CallEventManager &CEMgr = getStateManager().getCallEventManager();
+  CallEventRef<SimpleCall> CallTemplate
+    = CEMgr.getSimpleCall(CE, Pred->getState(), Pred->getLocationContext());
 
   // Evaluate the function call.  We try each of the checkers
   // to see if the can evaluate the function call.
   ExplodedNodeSet dstCallEvaluated;
   for (ExplodedNodeSet::iterator I = dstPreVisit.begin(), E = dstPreVisit.end();
        I != E; ++I) {
-    ProgramStateRef State = (*I)->getState();
-    const LocationContext *LCtx = (*I)->getLocationContext();
-
-    // Evaluate the call.
-    switch (K) {
-    case CE_Function: {
-      FunctionCall Call(CE, State, LCtx);
-      evalCall(dstCallEvaluated, *I, Call);
-      break;
-    }
-    case CE_CXXMember: {
-      CXXMemberCall Call(cast<CXXMemberCallExpr>(CE), State, LCtx);
-      evalCall(dstCallEvaluated, *I, Call);
-      break;
-    }
-    case CE_CXXMemberOperator: {
-      CXXMemberOperatorCall Call(cast<CXXOperatorCallExpr>(CE), State, LCtx);
-      evalCall(dstCallEvaluated, *I, Call);
-      break;
-    }
-    case CE_Block: {
-      BlockCall Call(CE, State, LCtx);
-      evalCall(dstCallEvaluated, *I, Call);
-      break;
-    }
-    default:
-      llvm_unreachable("Non-CallExpr CallEventKind");
-    }
+    evalCall(dstCallEvaluated, *I, *CallTemplate);
   }
 
   // Finally, perform the post-condition check of the CallExpr and store
@@ -435,6 +394,13 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
 
 void ExprEngine::evalCall(ExplodedNodeSet &Dst, ExplodedNode *Pred,
                           const SimpleCall &Call) {
+  // WARNING: At this time, the state attached to 'Call' may be older than the
+  // state in 'Pred'. This is a minor optimization since CheckerManager will
+  // use an updated CallEvent instance when calling checkers, but if 'Call' is
+  // ever used directly in this function all callers should be updated to pass
+  // the most recent state. (It is probably not worth doing the work here since
+  // for some callers this will not be necessary.)
+
   // Run any pre-call checks using the generic call interface.
   ExplodedNodeSet dstPreVisit;
   getCheckerManager().runCheckersForPreCall(dstPreVisit, Pred, Call, *this);
@@ -483,36 +449,35 @@ ProgramStateRef ExprEngine::bindReturnValue(const CallEvent &Call,
 }
 
 void ExprEngine::defaultEvalCall(NodeBuilder &Bldr, ExplodedNode *Pred,
-                                 const CallEvent &Call) {
-  ProgramStateRef State = 0;
-  const Expr *E = Call.getOriginExpr();
+                                 const CallEvent &CallTemplate) {
+  // Make sure we have the most recent state attached to the call.
+  ProgramStateRef State = Pred->getState();
+  CallEventRef<> Call = CallTemplate.cloneWithState(State);
 
   // Try to inline the call.
   // The origin expression here is just used as a kind of checksum;
-  // for CallEvents that do not have origin expressions, this should still be
-  // safe.
-  State = getInlineFailedState(Pred->getState(), E);
-  if (State == 0 && inlineCall(Call, Pred)) {
-    // If we inlined the call, the successor has been manually added onto
-    // the work list and we should not consider it for subsequent call
-    // handling steps.
+  // this should still be safe even for CallEvents that don't come from exprs.
+  const Expr *E = Call->getOriginExpr();
+  ProgramStateRef InlinedFailedState = getInlineFailedState(State, E);
+
+  if (InlinedFailedState) {
+    // If we already tried once and failed, make sure we don't retry later.
+    State = InlinedFailedState;
+  } else if (inlineCall(*Call, Pred)) {
+    // If we decided to inline the call, the successor has been manually
+    // added onto the work list and we should not perform our generic
+    // call-handling steps.
     Bldr.takeNodes(Pred);
     return;
   }
 
   // If we can't inline it, handle the return value and invalidate the regions.
-  if (State == 0)
-    State = Pred->getState();
-
-  // Invalidate any regions touched by the call.
   unsigned Count = currentBuilderContext->getCurrentBlockCount();
-  State = Call.invalidateRegions(Count, State);
-
-  // Construct and bind the return value.
-  State = bindReturnValue(Call, Pred->getLocationContext(), State);
+  State = Call->invalidateRegions(Count, State);
+  State = bindReturnValue(*Call, Pred->getLocationContext(), State);
 
   // And make the result node.
-  Bldr.generateNode(Call.getProgramPoint(), State, Pred);
+  Bldr.generateNode(Call->getProgramPoint(), State, Pred);
 }
 
 void ExprEngine::VisitReturnStmt(const ReturnStmt *RS, ExplodedNode *Pred,
