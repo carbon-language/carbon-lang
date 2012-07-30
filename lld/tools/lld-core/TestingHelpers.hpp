@@ -275,11 +275,11 @@ struct TestingKindMapping {
 // Table of fixup kinds in YAML documents used for testing
 //
 const TestingKindMapping sKinds[] = {
-    { "call32",         1,    true,  false, false},
-    { "pcrel32",        2,    false, false, false },
-    { "gotLoad32",      3,    false, true,  true },
-    { "gotUse32",       4,    false, false, true },
-    { "lea32wasGot",    5,    false, false, false },
+    { "call32",         2,    true,  false, false},
+    { "pcrel32",        3,    false, false, false },
+    { "gotLoad32",      7,    false, true,  true },
+    { "gotUse32",       9,    false, false, true },
+    { "lea32wasGot",    8,    false, false, false },
     { nullptr,          0,    false, false, false }
   };
 
@@ -336,9 +336,9 @@ public:
 
   virtual void updateReferenceToGOT(const Reference *ref, bool targetIsNowGOT) {
     if ( targetIsNowGOT )
-      (const_cast<Reference*>(ref))->setKind(2); // pcrel32
+      (const_cast<Reference*>(ref))->setKind(3); // pcrel32
     else
-      (const_cast<Reference*>(ref))->setKind(5); // lea32wasGot
+      (const_cast<Reference*>(ref))->setKind(8); // lea32wasGot
   }
 
   virtual const DefinedAtom* makeGOTEntry(const Atom &target) {
