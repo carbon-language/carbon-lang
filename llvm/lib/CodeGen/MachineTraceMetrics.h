@@ -211,6 +211,12 @@ public:
 
   /// Invalidate cached information about MBB. This must be called *before* MBB
   /// is erased, or the CFG is otherwise changed.
+  ///
+  /// This invalidates per-block information about resource usage for MBB only,
+  /// and it invalidates per-trace information for any trace that passes
+  /// through MBB.
+  ///
+  /// Call Ensemble::getTrace() again to update any trace handles.
   void invalidate(const MachineBasicBlock *MBB);
 
 private:
