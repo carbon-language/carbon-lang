@@ -368,7 +368,7 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel,
 // Returns 0 if no method is found.
 ObjCMethodDecl *ObjCInterfaceDecl::lookupPrivateMethod(
                                    const Selector &Sel,
-                                   bool Instance) {
+                                   bool Instance) const {
   // FIXME: Should make sure no callers ever do this.
   if (!hasDefinition())
     return 0;

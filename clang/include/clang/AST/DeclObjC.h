@@ -940,7 +940,8 @@ public:
   ObjCInterfaceDecl *lookupInheritedClass(const IdentifierInfo *ICName);
 
   /// \brief Lookup a method in the classes implementation hierarchy.
-  ObjCMethodDecl *lookupPrivateMethod(const Selector &Sel, bool Instance=true);
+  ObjCMethodDecl *lookupPrivateMethod(const Selector &Sel,
+                                      bool Instance=true) const;
 
   ObjCMethodDecl *lookupPrivateClassMethod(const Selector &Sel) {
     return lookupPrivateMethod(Sel, false);
