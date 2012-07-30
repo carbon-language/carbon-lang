@@ -713,6 +713,7 @@ public:
   }
 
   unsigned getParamIndex() const LLVM_READONLY {
+    assert(isParamIndexValid());
     return ParamIndex;
   }
 
