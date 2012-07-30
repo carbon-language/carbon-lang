@@ -214,15 +214,12 @@ MinInstrCountEnsemble::pickTracePred(const MachineBasicBlock *MBB) {
   for (MachineBasicBlock::const_pred_iterator
        I = MBB->pred_begin(), E = MBB->pred_end(); I != E; ++I) {
     const MachineBasicBlock *Pred = *I;
-    const MachineTraceMetrics::TraceBlockInfo *PredTBI =
-      getDepthResources(Pred);
-    // Ignore invalidated predecessors. This never happens on the first scan,
-    // but if we rejected this predecessor earlier, it won't be revalidated.
-    if (!PredTBI)
-      continue;
     // Don't consider predecessors in other loops.
     if (getLoopFor(Pred) != CurLoop)
       continue;
+    const MachineTraceMetrics::TraceBlockInfo *PredTBI =
+      getDepthResources(Pred);
+    assert(PredTBI && "Predecessor must be visited first");
     // Pick the predecessor that would give this block the smallest InstrDepth.
     unsigned Depth = PredTBI->InstrDepth + CurCount;
     if (!Best || Depth < BestDepth)
@@ -242,17 +239,15 @@ MinInstrCountEnsemble::pickTraceSucc(const MachineBasicBlock *MBB) {
   for (MachineBasicBlock::const_succ_iterator
        I = MBB->succ_begin(), E = MBB->succ_end(); I != E; ++I) {
     const MachineBasicBlock *Succ = *I;
-    const MachineTraceMetrics::TraceBlockInfo *SuccTBI =
-      getHeightResources(Succ);
-    // Ignore invalidated successors.
-    if (!SuccTBI)
-      continue;
     // Don't consider back-edges.
     if (CurLoop && Succ == CurLoop->getHeader())
       continue;
     // Don't consider successors in other loops.
     if (getLoopFor(Succ) != CurLoop)
       continue;
+    const MachineTraceMetrics::TraceBlockInfo *SuccTBI =
+      getHeightResources(Succ);
+    assert(SuccTBI && "Successor must be visited first");
     // Pick the successor that would give this block the smallest InstrHeight.
     unsigned Height = SuccTBI->InstrHeight;
     if (!Best || Height < BestHeight)
