@@ -42,3 +42,15 @@ top bar, 42
 // CHECK-NOT: fred
 // CHECK: _bar
 // CHECK-NEXT: fred = 42
+
+
+.macro foo
+foo_$0_$1_$2_$3:
+  nop
+.endm
+
+foo 1, 2, 3, 4
+foo 1, , 3, 4
+
+// CHECK: foo_1_2_3_4:
+// CHECK: foo_1__3_4:

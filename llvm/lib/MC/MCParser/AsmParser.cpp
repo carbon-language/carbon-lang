@@ -1597,8 +1597,8 @@ bool AsmParser::ParseMacroArguments(const Macro *M,
     if (ParseMacroArgument(MA))
       return true;
 
-    if (!MA.empty())
-      A.push_back(MA);
+    A.push_back(MA);
+
     if (Lexer.is(AsmToken::EndOfStatement))
       return false;
 
@@ -1618,6 +1618,12 @@ bool AsmParser::HandleMacroEntry(StringRef Name, SMLoc NameLoc,
   std::vector<MacroArgument> MacroArguments;
   if (ParseMacroArguments(M, MacroArguments))
     return true;
+
+  // Remove any trailing empty arguments. Do this after-the-fact as we have
+  // to keep empty arguments in the middle of the list or positionality
+  // gets off. e.g.,  "foo 1, , 2" vs. "foo 1, 2,"
+  while (!MacroArguments.empty() && MacroArguments.back().empty())
+    MacroArguments.pop_back();
 
   // Macro instantiation is lexical, unfortunately. We construct a new buffer
   // to hold the macro body with substitutions.
