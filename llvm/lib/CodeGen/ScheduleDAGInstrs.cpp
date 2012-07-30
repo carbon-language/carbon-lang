@@ -414,7 +414,7 @@ void ScheduleDAGInstrs::addVRegDefDeps(SUnit *SU, unsigned OperIdx) {
   // Singly defined vregs do not have output/anti dependencies.
   // The current operand is a def, so we have at least one.
   // Check here if there are any others...
-  if (llvm::next(MRI.def_begin(Reg)) == MRI.def_end())
+  if (MRI.hasOneDef(Reg))
     return;
 
   // Add output dependence to the next nearest def of this vreg.
