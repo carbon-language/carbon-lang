@@ -677,6 +677,25 @@ TEST_F(CommentParserTest, Paragraph4) {
 }
 
 TEST_F(CommentParserTest, ParamCommand1) {
+  const char *Source = "// \\param aaa";
+
+  FullComment *FC = parseString(Source);
+  ASSERT_TRUE(HasChildCount(FC, 2));
+
+  ASSERT_TRUE(HasParagraphCommentAt(FC, 0, " "));
+  {
+    ParamCommandComment *PCC;
+    ParagraphComment *PC;
+    ASSERT_TRUE(HasParamCommandAt(FC, 1, PCC, "param",
+                                  ParamCommandComment::In,
+                                  /* IsDirectionExplicit = */ false,
+                                  "aaa", PC));
+    ASSERT_TRUE(HasChildCount(PCC, 1));
+    ASSERT_TRUE(HasChildCount(PC, 0));
+  }
+}
+
+TEST_F(CommentParserTest, ParamCommand2) {
   const char *Sources[] = {
     "// \\param aaa Bbb\n",
     "// \\param\n"
@@ -705,7 +724,7 @@ TEST_F(CommentParserTest, ParamCommand1) {
   }
 }
 
-TEST_F(CommentParserTest, ParamCommand2) {
+TEST_F(CommentParserTest, ParamCommand3) {
   const char *Sources[] = {
     "// \\param [in] aaa Bbb\n",
     "// \\param\n"
@@ -734,7 +753,7 @@ TEST_F(CommentParserTest, ParamCommand2) {
   }
 }
 
-TEST_F(CommentParserTest, ParamCommand3) {
+TEST_F(CommentParserTest, ParamCommand4) {
   const char *Sources[] = {
     "// \\param [out] aaa Bbb\n",
     "// \\param\n"
@@ -763,7 +782,7 @@ TEST_F(CommentParserTest, ParamCommand3) {
   }
 }
 
-TEST_F(CommentParserTest, ParamCommand4) {
+TEST_F(CommentParserTest, ParamCommand5) {
   const char *Sources[] = {
     "// \\param [in,out] aaa Bbb\n",
     "// \\param [in, out] aaa Bbb\n",
@@ -793,7 +812,7 @@ TEST_F(CommentParserTest, ParamCommand4) {
   }
 }
 
-TEST_F(CommentParserTest, ParamCommand5) {
+TEST_F(CommentParserTest, ParamCommand6) {
   const char *Source =
     "// \\param aaa \\% Bbb \\$ ccc\n";
 
