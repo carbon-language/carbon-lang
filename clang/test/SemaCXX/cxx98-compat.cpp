@@ -335,3 +335,14 @@ namespace NullPointerTemplateArg {
   X<(int*)0> x; // expected-warning {{use of null pointer as non-type template argument is incompatible with C++98}}
   Y<(int A::*)0> y; // expected-warning {{use of null pointer as non-type template argument is incompatible with C++98}}
 }
+
+namespace PR13480 {
+  struct basic_iterator {
+    basic_iterator(const basic_iterator &it) {}
+    basic_iterator(basic_iterator &it) {} // expected-note {{because type 'PR13480::basic_iterator' has a user-declared copy constructor}}
+  };
+
+  union test {
+    basic_iterator it; // expected-warning {{union member 'it' with a non-trivial copy constructor is incompatible with C++98}}
+  };
+}

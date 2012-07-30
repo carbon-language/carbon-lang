@@ -344,8 +344,8 @@ GetBestOverloadCandidateSimple(
     if (Cands[Best].second.compatiblyIncludes(Cands[I].second))
       Best = I;
   
-  for (unsigned I = 1; I != N; ++I)
-    if (Cands[Best].second.compatiblyIncludes(Cands[I].second))
+  for (unsigned I = 0; I != N; ++I)
+    if (I != Best && Cands[Best].second.compatiblyIncludes(Cands[I].second))
       return 0;
   
   return Cands[Best].first;
