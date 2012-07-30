@@ -403,6 +403,7 @@ static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
     ID.AddPointer(GA->getGlobal());
     ID.AddInteger(GA->getOffset());
     ID.AddInteger(GA->getTargetFlags());
+    ID.AddInteger(GA->getAddressSpace());
     break;
   }
   case ISD::BasicBlock:
@@ -442,12 +443,14 @@ static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
     const LoadSDNode *LD = cast<LoadSDNode>(N);
     ID.AddInteger(LD->getMemoryVT().getRawBits());
     ID.AddInteger(LD->getRawSubclassData());
+    ID.AddInteger(LD->getPointerInfo().getAddrSpace());
     break;
   }
   case ISD::STORE: {
     const StoreSDNode *ST = cast<StoreSDNode>(N);
     ID.AddInteger(ST->getMemoryVT().getRawBits());
     ID.AddInteger(ST->getRawSubclassData());
+    ID.AddInteger(ST->getPointerInfo().getAddrSpace());
     break;
   }
   case ISD::ATOMIC_CMP_SWAP:
@@ -467,6 +470,12 @@ static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
     const AtomicSDNode *AT = cast<AtomicSDNode>(N);
     ID.AddInteger(AT->getMemoryVT().getRawBits());
     ID.AddInteger(AT->getRawSubclassData());
+    ID.AddInteger(AT->getPointerInfo().getAddrSpace());
+    break;
+  }
+  case ISD::PREFETCH: {
+    const MemSDNode *PF = cast<MemSDNode>(N);
+    ID.AddInteger(PF->getPointerInfo().getAddrSpace());
     break;
   }
   case ISD::VECTOR_SHUFFLE: {
@@ -483,6 +492,10 @@ static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
     break;
   }
   } // end switch (N->getOpcode())
+
+  // Target specific memory nodes could also have address spaces to check.
+  if (N->isTargetMemoryOpcode())
+    ID.AddInteger(cast<MemSDNode>(N)->getPointerInfo().getAddrSpace());
 }
 
 /// AddNodeIDNode - Generic routine for adding a nodes info to the NodeID
@@ -1100,6 +1113,7 @@ SDValue SelectionDAG::getGlobalAddress(const GlobalValue *GV, DebugLoc DL,
   ID.AddPointer(GV);
   ID.AddInteger(Offset);
   ID.AddInteger(TargetFlags);
+  ID.AddInteger(GV->getType()->getAddressSpace());
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDValue(E, 0);
@@ -3901,6 +3915,7 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT,
   ID.AddInteger(MemVT.getRawBits());
   SDValue Ops[] = {Chain, Ptr, Cmp, Swp};
   AddNodeIDNode(ID, Opcode, VTs, Ops, 4);
+  ID.AddInteger(MMO->getPointerInfo().getAddrSpace());
   void* IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP)) {
     cast<AtomicSDNode>(E)->refineAlignment(MMO);
@@ -3973,6 +3988,7 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT,
   ID.AddInteger(MemVT.getRawBits());
   SDValue Ops[] = {Chain, Ptr, Val};
   AddNodeIDNode(ID, Opcode, VTs, Ops, 3);
+  ID.AddInteger(MMO->getPointerInfo().getAddrSpace());
   void* IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP)) {
     cast<AtomicSDNode>(E)->refineAlignment(MMO);
@@ -4029,6 +4045,7 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT,
   ID.AddInteger(MemVT.getRawBits());
   SDValue Ops[] = {Chain, Ptr};
   AddNodeIDNode(ID, Opcode, VTs, Ops, 2);
+  ID.AddInteger(MMO->getPointerInfo().getAddrSpace());
   void* IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP)) {
     cast<AtomicSDNode>(E)->refineAlignment(MMO);
@@ -4106,6 +4123,7 @@ SelectionDAG::getMemIntrinsicNode(unsigned Opcode, DebugLoc dl, SDVTList VTList,
   if (VTList.VTs[VTList.NumVTs-1] != MVT::Glue) {
     FoldingSetNodeID ID;
     AddNodeIDNode(ID, Opcode, VTList, Ops, NumOps);
+    ID.AddInteger(MMO->getPointerInfo().getAddrSpace());
     void *IP = 0;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP)) {
       cast<MemIntrinsicSDNode>(E)->refineAlignment(MMO);
@@ -4225,6 +4243,7 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
   ID.AddInteger(encodeMemSDNodeFlags(ExtType, AM, MMO->isVolatile(),
                                      MMO->isNonTemporal(), 
                                      MMO->isInvariant()));
+  ID.AddInteger(MMO->getPointerInfo().getAddrSpace());
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP)) {
     cast<LoadSDNode>(E)->refineAlignment(MMO);
@@ -4314,6 +4333,7 @@ SDValue SelectionDAG::getStore(SDValue Chain, DebugLoc dl, SDValue Val,
   ID.AddInteger(VT.getRawBits());
   ID.AddInteger(encodeMemSDNodeFlags(false, ISD::UNINDEXED, MMO->isVolatile(),
                                      MMO->isNonTemporal(), MMO->isInvariant()));
+  ID.AddInteger(MMO->getPointerInfo().getAddrSpace());
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP)) {
     cast<StoreSDNode>(E)->refineAlignment(MMO);
@@ -4381,6 +4401,7 @@ SDValue SelectionDAG::getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val,
   ID.AddInteger(SVT.getRawBits());
   ID.AddInteger(encodeMemSDNodeFlags(true, ISD::UNINDEXED, MMO->isVolatile(),
                                      MMO->isNonTemporal(), MMO->isInvariant()));
+  ID.AddInteger(MMO->getPointerInfo().getAddrSpace());
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP)) {
     cast<StoreSDNode>(E)->refineAlignment(MMO);
@@ -4405,6 +4426,7 @@ SelectionDAG::getIndexedStore(SDValue OrigStore, DebugLoc dl, SDValue Base,
   AddNodeIDNode(ID, ISD::STORE, VTs, Ops, 4);
   ID.AddInteger(ST->getMemoryVT().getRawBits());
   ID.AddInteger(ST->getRawSubclassData());
+  ID.AddInteger(ST->getPointerInfo().getAddrSpace());
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDValue(E, 0);

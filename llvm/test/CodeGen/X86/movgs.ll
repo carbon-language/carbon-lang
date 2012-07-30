@@ -55,4 +55,20 @@ entry:
 ; X64:	ret
 }
 
+; The two loads here both look identical to selection DAG, except for their
+; address spaces.  Make sure they aren't CSE'd.
+define i32 @test_no_cse() nounwind readonly {
+entry:
+	%tmp = load i32* addrspace(256)* getelementptr (i32* addrspace(256)* inttoptr (i32 72 to i32* addrspace(256)*), i32 31)		; <i32*> [#uses=1]
+	%tmp1 = load i32* %tmp		; <i32> [#uses=1]
+	%tmp2 = load i32* addrspace(257)* getelementptr (i32* addrspace(257)* inttoptr (i32 72 to i32* addrspace(257)*), i32 31)		; <i32*> [#uses=1]
+	%tmp3 = load i32* %tmp2		; <i32> [#uses=1]
+	%tmp4 = add i32 %tmp1, %tmp3
+	ret i32 %tmp4
+}
+; X32: test_no_cse:
+; X32: 	movl	%gs:196
+; X32: 	movl	%fs:196
+; X32: 	ret
+
 declare <4 x i32> @llvm.x86.sse41.pmovsxwd(<8 x i16>) nounwind readnone
