@@ -59,6 +59,13 @@ public:
   CallEventRef<T> cloneWithState(ProgramStateRef State) const {
     return this->getPtr()->template cloneWithState<T>(State);
   }
+
+  // Allow implicit conversions to a superclass type, since CallEventRef
+  // behaves like a pointer-to-const.
+  template <typename SuperT>
+  operator CallEventRef<SuperT> () const {
+    return this->getPtr();
+  }
 };
 
 /// \brief Represents an abstract call to a function or method along a
@@ -807,6 +814,11 @@ class CallEventManager {
 public:
   CallEventManager(llvm::BumpPtrAllocator &alloc) : Alloc(alloc) {}
 
+
+  CallEventRef<>
+  getCaller(const StackFrameContext *CalleeCtx, ProgramStateRef State);
+
+
   CallEventRef<SimpleCall>
   getSimpleCall(const CallExpr *E, ProgramStateRef State,
                 const LocationContext *LCtx);
@@ -870,5 +882,17 @@ inline void CallEvent::Release() const {
 
 } // end namespace ento
 } // end namespace clang
+
+namespace llvm {
+  // Support isa<>, cast<>, and dyn_cast<> for CallEventRef.
+  template<class T> struct simplify_type< clang::ento::CallEventRef<T> > {
+    typedef const T *SimpleType;
+
+    static SimpleType
+    getSimplifiedValue(const clang::ento::CallEventRef<T>& Val) {
+      return Val.getPtr();
+    }
+  };
+}
 
 #endif

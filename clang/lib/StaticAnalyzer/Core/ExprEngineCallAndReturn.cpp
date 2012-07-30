@@ -132,7 +132,7 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
     if (const ReturnStmt *RS = dyn_cast_or_null<ReturnStmt>(LastSt)) {
       const LocationContext *LCtx = CEBNode->getLocationContext();
       SVal V = state->getSVal(RS, LCtx);
-      state = state->BindExpr(CE, calleeCtx->getParent(), V);
+      state = state->BindExpr(CE, callerCtx, V);
     }
 
     // Bind the constructed object value to CXXConstructExpr.
@@ -142,7 +142,7 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
       SVal ThisV = state->getSVal(This);
 
       // Always bind the region to the CXXConstructExpr.
-      state = state->BindExpr(CCE, calleeCtx->getParent(), ThisV);
+      state = state->BindExpr(CCE, callerCtx, ThisV);
     }
   }
 
@@ -190,19 +190,29 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
     // Step 5: Perform the post-condition check of the CallExpr and enqueue the
     // result onto the work list.
     // CEENode -> Dst -> WorkList
-    ExplodedNodeSet Dst;
     NodeBuilderContext Ctx(Engine, calleeCtx->getCallSiteBlock(), CEENode);
     SaveAndRestore<const NodeBuilderContext*> NBCSave(currentBuilderContext,
         &Ctx);
     SaveAndRestore<unsigned> CBISave(currentStmtIdx, calleeCtx->getIndex());
 
-    // FIXME: This needs to call PostCall.
-    // FIXME: If/when we inline Objective-C messages, this also needs to call
-    // PostObjCMessage.
-    if (CE)
-      getCheckerManager().runCheckersForPostStmt(Dst, CEENode, CE, *this, true);
-    else
-      Dst.Add(CEENode);
+    CallEventManager &CEMgr = getStateManager().getCallEventManager();
+    CallEventRef<> Call = CEMgr.getCaller(calleeCtx, CEEState);
+
+    ExplodedNodeSet DstPostCall;
+    getCheckerManager().runCheckersForPostCall(DstPostCall, CEENode, *Call,
+                                               *this, true);
+
+    ExplodedNodeSet Dst;
+    if (isa<ObjCMethodCall>(Call)) {
+      getCheckerManager().runCheckersForPostObjCMessage(Dst, DstPostCall,
+                                                    cast<ObjCMethodCall>(*Call),
+                                                        *this, true);
+    } else if (CE) {
+      getCheckerManager().runCheckersForPostStmt(Dst, DstPostCall, CE,
+                                                 *this, true);
+    } else {
+      Dst.insert(DstPostCall);
+    }
 
     // Enqueue the next element in the block.
     for (ExplodedNodeSet::iterator PSI = Dst.begin(), PSE = Dst.end();

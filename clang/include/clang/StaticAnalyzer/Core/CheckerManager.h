@@ -211,15 +211,18 @@ public:
   void runCheckersForPostObjCMessage(ExplodedNodeSet &Dst,
                                      const ExplodedNodeSet &Src,
                                      const ObjCMethodCall &msg,
-                                     ExprEngine &Eng) {
-    runCheckersForObjCMessage(/*isPreVisit=*/false, Dst, Src, msg, Eng);
+                                     ExprEngine &Eng,
+                                     bool wasInlined = false) {
+    runCheckersForObjCMessage(/*isPreVisit=*/false, Dst, Src, msg, Eng,
+                              wasInlined);
   }
 
   /// \brief Run checkers for visiting obj-c messages.
   void runCheckersForObjCMessage(bool isPreVisit,
                                  ExplodedNodeSet &Dst,
                                  const ExplodedNodeSet &Src,
-                                 const ObjCMethodCall &msg, ExprEngine &Eng);
+                                 const ObjCMethodCall &msg, ExprEngine &Eng,
+                                 bool wasInlined = false);
 
   /// \brief Run checkers for pre-visiting obj-c messages.
   void runCheckersForPreCall(ExplodedNodeSet &Dst, const ExplodedNodeSet &Src,
@@ -229,14 +232,17 @@ public:
 
   /// \brief Run checkers for post-visiting obj-c messages.
   void runCheckersForPostCall(ExplodedNodeSet &Dst, const ExplodedNodeSet &Src,
-                              const CallEvent &Call, ExprEngine &Eng) {
-    runCheckersForCallEvent(/*isPreVisit=*/false, Dst, Src, Call, Eng);
+                              const CallEvent &Call, ExprEngine &Eng,
+                              bool wasInlined = false) {
+    runCheckersForCallEvent(/*isPreVisit=*/false, Dst, Src, Call, Eng,
+                            wasInlined);
   }
 
   /// \brief Run checkers for visiting obj-c messages.
   void runCheckersForCallEvent(bool isPreVisit, ExplodedNodeSet &Dst,
                                const ExplodedNodeSet &Src,
-                               const CallEvent &Call, ExprEngine &Eng);
+                               const CallEvent &Call, ExprEngine &Eng,
+                               bool wasInlined = false);
 
   /// \brief Run checkers for load/store of a location.
   void runCheckersForLocation(ExplodedNodeSet &Dst,

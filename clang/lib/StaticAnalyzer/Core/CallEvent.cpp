@@ -641,3 +641,60 @@ CallEventManager::getSimpleCall(const CallExpr *CE, ProgramStateRef State,
   // something we can't reason about.
   return create<FunctionCall>(CE, State, LCtx);
 }
+
+
+CallEventRef<>
+CallEventManager::getCaller(const StackFrameContext *CalleeCtx,
+                            ProgramStateRef State) {
+  const LocationContext *ParentCtx = CalleeCtx->getParent();
+  const LocationContext *CallerCtx = ParentCtx->getCurrentStackFrame();
+  assert(CallerCtx && "This should not be used for top-level stack frames");
+
+  const Stmt *CallSite = CalleeCtx->getCallSite();
+
+  if (CallSite) {
+    if (const CallExpr *CE = dyn_cast<CallExpr>(CallSite))
+      return getSimpleCall(CE, State, CallerCtx);
+
+    switch (CallSite->getStmtClass()) {
+    case Stmt::CXXConstructExprClass: {
+      SValBuilder &SVB = State->getStateManager().getSValBuilder();
+      const CXXMethodDecl *Ctor = cast<CXXMethodDecl>(CalleeCtx->getDecl());
+      Loc ThisPtr = SVB.getCXXThis(Ctor, CalleeCtx);
+      SVal ThisVal = State->getSVal(ThisPtr);
+
+      return getCXXConstructorCall(cast<CXXConstructExpr>(CallSite),
+                                   ThisVal.getAsRegion(), State, CallerCtx);
+    }
+    case Stmt::CXXNewExprClass:
+      return getCXXAllocatorCall(cast<CXXNewExpr>(CallSite), State, CallerCtx);
+    case Stmt::ObjCMessageExprClass:
+      return getObjCMethodCall(cast<ObjCMessageExpr>(CallSite),
+                               State, CallerCtx);
+    default:
+      llvm_unreachable("This is not an inlineable statement.");
+    }
+  }
+
+  // Fall back to the CFG. The only thing we haven't handled yet is
+  // destructors, though this could change in the future.
+  const CFGBlock *B = CalleeCtx->getCallSiteBlock();
+  CFGElement E = (*B)[CalleeCtx->getIndex()];
+  assert(isa<CFGImplicitDtor>(E) && "All other CFG elements should have exprs");
+  assert(!isa<CFGTemporaryDtor>(E) && "We don't handle temporaries yet");
+
+  SValBuilder &SVB = State->getStateManager().getSValBuilder();
+  const CXXDestructorDecl *Dtor = cast<CXXDestructorDecl>(CalleeCtx->getDecl());
+  Loc ThisPtr = SVB.getCXXThis(Dtor, CalleeCtx);
+  SVal ThisVal = State->getSVal(ThisPtr);
+
+  const Stmt *Trigger;
+  if (const CFGAutomaticObjDtor *AutoDtor = dyn_cast<CFGAutomaticObjDtor>(&E))
+    Trigger = AutoDtor->getTriggerStmt();
+  else
+    Trigger = Dtor->getBody();
+
+  return getCXXDestructorCall(Dtor, Trigger, ThisVal.getAsRegion(),
+                              State, CallerCtx);
+}
+
