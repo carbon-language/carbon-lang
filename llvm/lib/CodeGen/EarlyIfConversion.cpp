@@ -586,11 +586,13 @@ void EarlyIfConverter::updateLoops(ArrayRef<MachineBasicBlock*> Removed) {
 
 /// Invalidate MachineTraceMetrics before if-conversion.
 void EarlyIfConverter::invalidateTraces() {
+  Traces->verify();
   Traces->invalidate(IfConv.Head);
   Traces->invalidate(IfConv.Tail);
   Traces->invalidate(IfConv.TBB);
   Traces->invalidate(IfConv.FBB);
   DEBUG(if (MinInstr) MinInstr->print(dbgs()));
+  Traces->verify();
 }
 
 /// Apply cost model and heuristics to the if-conversion in IfConv.

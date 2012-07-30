@@ -61,6 +61,7 @@ class MachineLoop;
 class raw_ostream;
 
 class MachineTraceMetrics : public MachineFunctionPass {
+  const MachineFunction *MF;
   const TargetInstrInfo *TII;
   const TargetRegisterInfo *TRI;
   const MachineRegisterInfo *MRI;
@@ -178,7 +179,7 @@ public:
     virtual const MachineBasicBlock *pickTracePred(const MachineBasicBlock*) =0;
     virtual const MachineBasicBlock *pickTraceSucc(const MachineBasicBlock*) =0;
     explicit Ensemble(MachineTraceMetrics*);
-    MachineLoop *getLoopFor(const MachineBasicBlock*);
+    const MachineLoop *getLoopFor(const MachineBasicBlock*) const;
     const TraceBlockInfo *getDepthResources(const MachineBasicBlock*) const;
     const TraceBlockInfo *getHeightResources(const MachineBasicBlock*) const;
 
@@ -187,6 +188,7 @@ public:
     virtual const char *getName() const =0;
     void print(raw_ostream&) const;
     void invalidate(const MachineBasicBlock *MBB);
+    void verify() const;
 
     /// Get the trace that passes through MBB.
     /// The trace is computed on demand.
@@ -209,6 +211,10 @@ public:
   /// Invalidate cached information about MBB. This must be called *before* MBB
   /// is erased, or the CFG is otherwise changed.
   void invalidate(const MachineBasicBlock *MBB);
+
+  /// Verify the internal consistency of cached data.
+  /// This does nothing in NDEBUG builds.
+  void verify() const;
 
 private:
   // One entry per basic block, indexed by block number.

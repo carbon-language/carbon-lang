@@ -44,13 +44,13 @@ void MachineTraceMetrics::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
-bool MachineTraceMetrics::runOnMachineFunction(MachineFunction &MF) {
-  TII = MF.getTarget().getInstrInfo();
-  TRI = MF.getTarget().getRegisterInfo();
-  MRI = &MF.getRegInfo();
+bool MachineTraceMetrics::runOnMachineFunction(MachineFunction &Func) {
+  MF = &Func;
+  TII = MF->getTarget().getInstrInfo();
+  TRI = MF->getTarget().getRegisterInfo();
+  MRI = &MF->getRegInfo();
   Loops = &getAnalysis<MachineLoopInfo>();
-  unsigned NumBlocks = MF.getNumBlockIDs();
-  BlockInfo.resize(NumBlocks);
+  BlockInfo.resize(MF->getNumBlockIDs());
   return false;
 }
 
@@ -128,8 +128,8 @@ MachineTraceMetrics::Ensemble::Ensemble(MachineTraceMetrics *ct)
 // Virtual destructor serves as an anchor.
 MachineTraceMetrics::Ensemble::~Ensemble() {}
 
-MachineLoop*
-MachineTraceMetrics::Ensemble::getLoopFor(const MachineBasicBlock *MBB) {
+const MachineLoop*
+MachineTraceMetrics::Ensemble::getLoopFor(const MachineBasicBlock *MBB) const {
   return CT.Loops->getLoopFor(MBB);
 }
 
@@ -226,7 +226,7 @@ const MachineBasicBlock*
 MinInstrCountEnsemble::pickTracePred(const MachineBasicBlock *MBB) {
   if (MBB->pred_empty())
     return 0;
-  MachineLoop *CurLoop = getLoopFor(MBB);
+  const MachineLoop *CurLoop = getLoopFor(MBB);
   // Don't leave loops, and never follow back-edges.
   if (CurLoop && MBB == CurLoop->getHeader())
     return 0;
@@ -258,7 +258,7 @@ const MachineBasicBlock*
 MinInstrCountEnsemble::pickTraceSucc(const MachineBasicBlock *MBB) {
   if (MBB->pred_empty())
     return 0;
-  MachineLoop *CurLoop = getLoopFor(MBB);
+  const MachineLoop *CurLoop = getLoopFor(MBB);
   const MachineBasicBlock *Best = 0;
   unsigned BestHeight = 0;
   for (MachineBasicBlock::const_succ_iterator
@@ -304,6 +304,15 @@ void MachineTraceMetrics::invalidate(const MachineBasicBlock *MBB) {
   for (unsigned i = 0; i != TS_NumStrategies; ++i)
     if (Ensembles[i])
       Ensembles[i]->invalidate(MBB);
+}
+
+void MachineTraceMetrics::verify() const {
+#ifndef NDEBUG
+  assert(BlockInfo.size() == MF->getNumBlockIDs() && "Outdated BlockInfo size");
+  for (unsigned i = 0; i != TS_NumStrategies; ++i)
+    if (Ensembles[i])
+      Ensembles[i]->verify();
+#endif
 }
 
 //===----------------------------------------------------------------------===//
@@ -460,6 +469,33 @@ MachineTraceMetrics::Ensemble::invalidate(const MachineBasicBlock *BadMBB) {
   }
 }
 
+void MachineTraceMetrics::Ensemble::verify() const {
+#ifndef NDEBUG
+  assert(BlockInfo.size() == CT.MF->getNumBlockIDs() &&
+         "Outdated BlockInfo size");
+  for (unsigned Num = 0, e = BlockInfo.size(); Num != e; ++Num) {
+    const TraceBlockInfo &TBI = BlockInfo[Num];
+    if (TBI.hasValidDepth() && TBI.Pred) {
+      const MachineBasicBlock *MBB = CT.MF->getBlockNumbered(Num);
+      assert(MBB->isPredecessor(TBI.Pred) && "CFG doesn't match trace");
+      assert(BlockInfo[TBI.Pred->getNumber()].hasValidDepth() &&
+             "Trace is broken, depth should have been invalidated.");
+      const MachineLoop *Loop = getLoopFor(MBB);
+      assert(!(Loop && MBB == Loop->getHeader()) && "Trace contains backedge");
+    }
+    if (TBI.hasValidHeight() && TBI.Succ) {
+      const MachineBasicBlock *MBB = CT.MF->getBlockNumbered(Num);
+      assert(MBB->isSuccessor(TBI.Succ) && "CFG doesn't match trace");
+      assert(BlockInfo[TBI.Succ->getNumber()].hasValidHeight() &&
+             "Trace is broken, height should have been invalidated.");
+      const MachineLoop *Loop = getLoopFor(MBB);
+      const MachineLoop *SuccLoop = getLoopFor(TBI.Succ);
+      assert(!(Loop && Loop == SuccLoop && TBI.Succ == Loop->getHeader()) &&
+             "Trace contains backedge");
+    }
+  }
+#endif
+}
 
 MachineTraceMetrics::Trace
 MachineTraceMetrics::Ensemble::getTrace(const MachineBasicBlock *MBB) {
