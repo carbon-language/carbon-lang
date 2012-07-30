@@ -500,7 +500,7 @@ bool RecognizableInstr::has256BitOperands() const {
   for (unsigned operandIndex = 0; operandIndex < numOperands; ++operandIndex) {
     const std::string &recName = OperandList[operandIndex].Rec->getName();
 
-    if (!recName.compare("VR256") || !recName.compare("f256mem")) {
+    if (!recName.compare("VR256")) {
       return true;
     }
   }
