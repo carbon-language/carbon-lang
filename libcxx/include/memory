@@ -602,6 +602,10 @@ void* align(size_t alignment, size_t size, void*& ptr, size_t& space);
     #include <cassert>
 #endif
 
+#if __has_feature(cxx_atomic)
+#  include <atomic>
+#endif
+
 #include <__undef_min_max>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
@@ -3387,8 +3391,19 @@ struct __scalar_hash<_Tp, 4>
 
 template<class _Tp>
 struct _LIBCPP_VISIBLE hash<_Tp*>
-    : public __scalar_hash<_Tp*>
+    : public unary_function<_Tp*, size_t>
 {
+    _LIBCPP_INLINE_VISIBILITY
+    size_t operator()(_Tp* __v) const _NOEXCEPT
+    {
+        union
+        {
+            _Tp* __t;
+            size_t __a;
+        } __u;
+        __u.__t = __v;
+        return __murmur2_or_cityhash<size_t>()(&__u, sizeof(__u));
+    }
 };
 
 template <class _Tp, class _Dp>
@@ -3934,6 +3949,10 @@ public:
         _LIBCPP_INLINE_VISIBILITY
         bool owner_before(weak_ptr<_Up> const& __p) const
         {return __cntrl_ < __p.__cntrl_;}
+    _LIBCPP_INLINE_VISIBILITY
+    bool
+    __owner_equivalent(const shared_ptr& __p) const
+        {return __cntrl_ == __p.__cntrl_;}
 
 #ifndef _LIBCPP_NO_RTTI
     template <class _Dp>
@@ -5244,6 +5263,134 @@ template<class _CharT, class _Traits, class _Yp>
 inline _LIBCPP_INLINE_VISIBILITY
 basic_ostream<_CharT, _Traits>&
 operator<<(basic_ostream<_CharT, _Traits>& __os, shared_ptr<_Yp> const& __p);
+
+#if __has_feature(cxx_atomic)
+
+class __sp_mut
+{
+    void* _;
+public:
+    void lock() _NOEXCEPT;
+    void unlock() _NOEXCEPT;
+
+private:
+    _LIBCPP_CONSTEXPR __sp_mut(void*) _NOEXCEPT;
+    __sp_mut(const __sp_mut&);
+    __sp_mut& operator=(const __sp_mut&);
+
+    friend __sp_mut& __get_sp_mut(const void*);
+};
+
+__sp_mut& __get_sp_mut(const void*);
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_is_lock_free(const shared_ptr<_Tp>*)
+{
+    return false;
+}
+
+template <class _Tp>
+shared_ptr<_Tp>
+atomic_load(const shared_ptr<_Tp>* __p)
+{
+    __sp_mut& __m = __get_sp_mut(__p);
+    __m.lock();
+    shared_ptr<_Tp> __q = *__p;
+    __m.unlock();
+    return __q;
+}
+  
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+shared_ptr<_Tp>
+atomic_load_explicit(const shared_ptr<_Tp>* __p, memory_order)
+{
+    return atomic_load(__p);
+}
+
+template <class _Tp>
+void
+atomic_store(shared_ptr<_Tp>* __p, shared_ptr<_Tp> __r)
+{
+    __sp_mut& __m = __get_sp_mut(__p);
+    __m.lock();
+    __p->swap(__r);
+    __m.unlock();
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_store_explicit(shared_ptr<_Tp>* __p, shared_ptr<_Tp> __r, memory_order)
+{
+    atomic_store(__p, __r);
+}
+
+template <class _Tp>
+shared_ptr<_Tp>
+atomic_exchange(shared_ptr<_Tp>* __p, shared_ptr<_Tp> __r)
+{
+    __sp_mut& __m = __get_sp_mut(__p);
+    __m.lock();
+    __p->swap(__r);
+    __m.unlock();
+    return __r;
+}
+  
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+shared_ptr<_Tp>
+atomic_exchange_explicit(shared_ptr<_Tp>* __p, shared_ptr<_Tp> __r, memory_order)
+{
+    return atomic_exchange(__p, __r);
+}
+
+template <class _Tp>
+bool
+atomic_compare_exchange_strong(shared_ptr<_Tp>* __p, shared_ptr<_Tp>* __v, shared_ptr<_Tp> __w)
+{
+    __sp_mut& __m = __get_sp_mut(__p);
+    __m.lock();
+    if (__p->__owner_equivalent(*__v))
+    {
+        *__p = __w;
+        __m.unlock();
+        return true;
+    }
+    *__v = *__p;
+    __m.unlock();
+    return false;
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_weak(shared_ptr<_Tp>* __p, shared_ptr<_Tp>* __v, shared_ptr<_Tp> __w)
+{
+    return atomic_compare_exchange_strong(__p, __v, __w);
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_strong_explicit(shared_ptr<_Tp>* __p, shared_ptr<_Tp>* __v,
+                                        shared_ptr<_Tp> __w, memory_order, memory_order)
+{
+    return atomic_compare_exchange_strong(__p, __v, __w);
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_weak_explicit(shared_ptr<_Tp>* __p, shared_ptr<_Tp>* __v,
+                                      shared_ptr<_Tp> __w, memory_order, memory_order)
+{
+    return atomic_compare_exchange_weak(__p, __v, __w);
+}
+
+#endif  // __has_feature(cxx_atomic)
 
 //enum class
 struct _LIBCPP_VISIBLE pointer_safety
