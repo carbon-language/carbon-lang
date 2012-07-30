@@ -992,9 +992,11 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
     case ePathTypePythonDir:                
         {
             // TODO: Anyone know how we can determine this for linux? Other systems?
-            // For linux we are currently assuming the location of the lldb
-            // binary that contains this function is the directory that will 
-            // contain lldb.so, lldb.py and embedded_interpreter.py...
+            // For linux and FreeBSD we are currently assuming the
+            // location of the lldb binary that contains this function is
+            // the directory that will contain a python directory which
+            // has our lldb module. This is how files get placed when
+            // compiling with Makefiles.
 
             static ConstString g_lldb_python_dir;
             if (!g_lldb_python_dir)
@@ -1013,6 +1015,8 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                         framework_pos += strlen("LLDB.framework");
                         ::strncpy (framework_pos, "/Resources/Python", PATH_MAX - (framework_pos - raw_path));
                     }
+#else
+                    ::strlcat(raw_path, "/python", sizeof(raw_path));
 #endif
                     FileSpec::Resolve (raw_path, resolved_path, sizeof(resolved_path));
                     g_lldb_python_dir.SetCString(resolved_path);
