@@ -1709,18 +1709,19 @@ def VCVTSS2SDrm : I<0x5A, MRMSrcMem, (outs FR64:$dst),
                     XS, VEX_4V, VEX_LIG, Requires<[HasAVX, OptForSize]>;
 }
 
-let Predicates = [HasAVX] in {
+let AddedComplexity = 1 in { // give AVX priority
   def : Pat<(f64 (fextend FR32:$src)),
-            (VCVTSS2SDrr FR32:$src, FR32:$src)>;
+            (VCVTSS2SDrr FR32:$src, FR32:$src)>, Requires<[HasAVX]>;
   def : Pat<(fextend (loadf32 addr:$src)),
-            (VCVTSS2SDrm (f32 (IMPLICIT_DEF)), addr:$src)>;
-  def : Pat<(extloadf32 addr:$src),
-            (VCVTSS2SDrm (f32 (IMPLICIT_DEF)), addr:$src)>;
-}
+            (VCVTSS2SDrm (f32 (IMPLICIT_DEF)), addr:$src)>, Requires<[HasAVX]>;
 
-def : Pat<(extloadf32 addr:$src),
-          (VCVTSS2SDrr (f32 (IMPLICIT_DEF)), (MOVSSrm addr:$src))>,
-          Requires<[HasAVX, OptForSpeed]>;
+  def : Pat<(extloadf32 addr:$src),
+            (VCVTSS2SDrm (f32 (IMPLICIT_DEF)), addr:$src)>,
+            Requires<[HasAVX, OptForSize]>;
+  def : Pat<(extloadf32 addr:$src),
+            (VCVTSS2SDrr (f32 (IMPLICIT_DEF)), (VMOVSSrm addr:$src))>,
+            Requires<[HasAVX, OptForSpeed]>;
+} // AddedComplexity = 1
 
 def CVTSS2SDrr : I<0x5A, MRMSrcReg, (outs FR64:$dst), (ins FR32:$src),
                    "cvtss2sd\t{$src, $dst|$dst, $src}",
