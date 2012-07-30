@@ -544,7 +544,6 @@ Lexer::ComputePreamble(const llvm::MemoryBuffer *Buffer,
     if (InPreprocessorDirective) {
       // If we've hit the end of the file, we're done.
       if (TheTok.getKind() == tok::eof) {
-        InPreprocessorDirective = false;
         break;
       }
       
@@ -1769,7 +1768,7 @@ void Lexer::LexAngledStringLiteral(Token &Result, const char *CurPtr) {
     // Skip escaped characters.
     if (C == '\\') {
       // Skip the escaped character.
-      C = getAndAdvanceChar(CurPtr, Result);
+      getAndAdvanceChar(CurPtr, Result);
     } else if (C == '\n' || C == '\r' ||             // Newline.
                (C == 0 && (CurPtr-1 == BufferEnd ||  // End of file.
                            isCodeCompletionPoint(CurPtr-1)))) {
@@ -1817,7 +1816,7 @@ void Lexer::LexCharConstant(Token &Result, const char *CurPtr,
     if (C == '\\') {
       // Skip the escaped character.
       // FIXME: UCN's
-      C = getAndAdvanceChar(CurPtr, Result);
+      getAndAdvanceChar(CurPtr, Result);
     } else if (C == '\n' || C == '\r' ||             // Newline.
                (C == 0 && CurPtr-1 == BufferEnd)) {  // End of file.
       if (!isLexingRawMode() && !LangOpts.AsmPreprocessor)
@@ -1938,8 +1937,6 @@ bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
         CurPtr = EscapePtr-2;
       else
         break; // This is a newline, we're done.
-
-      C = *CurPtr;
     }
 
     // Otherwise, this is a hard case.  Fall back on getAndAdvanceChar to
