@@ -405,8 +405,7 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
   // printed as a separate "instruction".
 
   if (Name.find("_Int") != Name.npos       ||
-      Name.find("Int_") != Name.npos       ||
-      Name.find("_NOREX") != Name.npos)
+      Name.find("Int_") != Name.npos)
     return FILTER_STRONG;
 
   // Filter out instructions with segment override prefixes.

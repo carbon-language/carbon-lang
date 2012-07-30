@@ -82,6 +82,7 @@ def MOVZX32rm16: I<0xB7, MRMSrcMem, (outs GR32:$dst), (ins i16mem:$src),
 // These are the same as the regular MOVZX32rr8 and MOVZX32rm8
 // except that they use GR32_NOREX for the output operand register class
 // instead of GR32. This allows them to operate on h registers on x86-64.
+let neverHasSideEffects = 1, isCodeGenOnly = 1 in {
 def MOVZX32_NOREXrr8 : I<0xB6, MRMSrcReg,
                          (outs GR32_NOREX:$dst), (ins GR8_NOREX:$src),
                          "movz{bl|x}\t{$src, $dst|$dst, $src}",
@@ -91,6 +92,7 @@ def MOVZX32_NOREXrm8 : I<0xB6, MRMSrcMem,
                          (outs GR32_NOREX:$dst), (ins i8mem_NOREX:$src),
                          "movz{bl|x}\t{$src, $dst|$dst, $src}",
                          [], IIC_MOVZX>, TB;
+}
 
 // MOVSX64rr8 always has a REX prefix and it has an 8-bit register
 // operand, which makes it a rare instruction with an 8-bit register
