@@ -475,7 +475,7 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
   if (HasFROperands && Name.find("MOV") != Name.npos &&
      ((Name.find("2") != Name.npos && Name.find("32") == Name.npos) ||
       (Name.find("to") != Name.npos)))
-    return FILTER_WEAK;
+    return FILTER_STRONG;
 
   return FILTER_NORMAL;
 }
@@ -568,9 +568,6 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
   // operandMapping maps from operands in OperandList to their originals.
   // If operandMapping[i] != i, then the entry is a duplicate.
   unsigned operandMapping[X86_MAX_OPERANDS];
-
-  bool hasFROperands = false;
-
   assert(numOperands <= X86_MAX_OPERANDS && "X86_MAX_OPERANDS is not large enough");
 
   for (unsigned operandIndex = 0; operandIndex < numOperands; ++operandIndex) {
@@ -588,17 +585,7 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
       ++numPhysicalOperands;
       operandMapping[operandIndex] = operandIndex;
     }
-
-    const std::string &recName = OperandList[operandIndex].Rec->getName();
-
-    if (recName.find("FR") != recName.npos)
-      hasFROperands = true;
   }
-
-  if (hasFROperands && Name.find("MOV") != Name.npos &&
-     ((Name.find("2") != Name.npos && Name.find("32") == Name.npos) ||
-      (Name.find("to") != Name.npos)))
-    ShouldBeEmitted = false;
 
   if (!ShouldBeEmitted)
     return;
