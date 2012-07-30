@@ -918,7 +918,8 @@ public:
 template <typename T>
 class SmallVector<T,0> : public SmallVectorImpl<T> {
 public:
-  SmallVector() : SmallVectorImpl<T>(0) {}
+  SmallVector() : SmallVectorImpl<T>(0) {
+  }
 
   explicit SmallVector(unsigned Size, const T &Value = T())
     : SmallVectorImpl<T>(0) {
@@ -931,13 +932,26 @@ public:
   }
 
   SmallVector(const SmallVector &RHS) : SmallVectorImpl<T>(0) {
+    if (!RHS.empty())
+      SmallVectorImpl<T>::operator=(RHS);
+  }
+
+  const SmallVector &operator=(const SmallVector &RHS) {
     SmallVectorImpl<T>::operator=(RHS);
+    return *this;
   }
 
-  SmallVector &operator=(const SmallVectorImpl<T> &RHS) {
-    return SmallVectorImpl<T>::operator=(RHS);
+#if LLVM_USE_RVALUE_REFERENCES
+  SmallVector(SmallVector &&RHS) : SmallVectorImpl<T>(0) {
+    if (!RHS.empty())
+      SmallVectorImpl<T>::operator=(::std::move(RHS));
   }
 
+  const SmallVector &operator=(SmallVector &&RHS) {
+    SmallVectorImpl<T>::operator=(::std::move(RHS));
+    return *this;
+  }
+#endif
 };
 
 template<typename T, unsigned N>
