@@ -303,6 +303,9 @@ ScanfArgTypeResult ScanfSpecifier::getArgType(ASTContext &Ctx) const {
     case ConversionSpecifier::pArg:
       return ScanfArgTypeResult(ArgTypeResult(ArgTypeResult::CPointerTy));
 
+    case ConversionSpecifier::nArg:
+      return ArgTypeResult(Ctx.IntTy);
+
     default:
       break;
   }
@@ -313,6 +316,10 @@ ScanfArgTypeResult ScanfSpecifier::getArgType(ASTContext &Ctx) const {
 bool ScanfSpecifier::fixType(QualType QT, const LangOptions &LangOpt,
                              ASTContext &Ctx) {
   if (!QT->isPointerType())
+    return false;
+
+  // %n is different from other conversion specifiers; don't try to fix it.
+  if (CS.getKind() == ConversionSpecifier::nArg)
     return false;
 
   QualType PT = QT->getPointeeType();

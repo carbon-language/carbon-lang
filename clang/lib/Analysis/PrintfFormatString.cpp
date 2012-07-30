@@ -330,6 +330,8 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx,
       return ArgTypeResult(Ctx.WCharTy, "wchar_t");
     case ConversionSpecifier::pArg:
       return ArgTypeResult::CPointerTy;
+    case ConversionSpecifier::nArg:
+      return Ctx.getPointerType(Ctx.IntTy);
     case ConversionSpecifier::ObjCObjArg:
       return ArgTypeResult::ObjCPointerTy;
     default:
@@ -342,6 +344,10 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx,
 
 bool PrintfSpecifier::fixType(QualType QT, const LangOptions &LangOpt,
                               ASTContext &Ctx, bool IsObjCLiteral) {
+  // %n is different from other conversion specifiers; don't try to fix it.
+  if (CS.getKind() == ConversionSpecifier::nArg)
+    return false;
+
   // Handle Objective-C objects first. Note that while the '%@' specifier will
   // not warn for structure pointer or void pointer arguments (because that's
   // how CoreFoundation objects are implemented), we only show a fixit for '%@'

@@ -2568,8 +2568,6 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
                          getLocationOfByte(CS.getStart()),
                          /*IsStringLocation*/true,
                          getSpecifierRange(startSpecifier, specifierLen));
-    // Continue checking the other format specifiers.
-    return true;
   }
 
   // The remaining checks depend on the data arguments.

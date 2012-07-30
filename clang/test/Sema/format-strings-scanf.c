@@ -121,3 +121,8 @@ void test_quad(int *x, long long *llx) {
   scanf("%qd", x); // expected-warning{{format specifies type 'long long *' but the argument has type 'int *'}}
   scanf("%qd", llx); // no-warning
 }
+
+void test_writeback(int *x) {
+  scanf("%n", (void*)0); // expected-warning{{format specifies type 'int *' but the argument has type 'void *'}}
+  scanf("%n %c", x, x); // expected-warning{{format specifies type 'char *' but the argument has type 'int *'}}
+}
