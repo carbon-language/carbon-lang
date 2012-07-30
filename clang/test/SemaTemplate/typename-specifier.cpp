@@ -22,8 +22,8 @@ typename N::C::type *ip3 = &i; // expected-error{{typename specifier refers to n
 // expected-warning{{'typename' occurs outside of a template}}
 
 void test(double d) {
-  typename N::A::type f(typename N::A::type(a)); // expected-warning{{parentheses were disambiguated as a function declarator}} \
-  // expected-warning 2{{'typename' occurs outside of a template}}
+  typename N::A::type f(typename N::A::type(a)); // expected-warning{{disambiguated as a function declaration}} \
+  // expected-note{{add a pair of parentheses}} expected-warning 2{{'typename' occurs outside of a template}}
   int five = f(5);
   
   using namespace N;

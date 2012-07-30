@@ -2415,7 +2415,7 @@ ExprResult Parser::ParseBlockLiteralExpression() {
   } else {
     // Otherwise, pretend we saw (void).
     ParsedAttributes attrs(AttrFactory);
-    ParamInfo.AddTypeInfo(DeclaratorChunk::getFunction(true, false,
+    ParamInfo.AddTypeInfo(DeclaratorChunk::getFunction(true, false, false,
                                                        SourceLocation(),
                                                        0, 0, 0,
                                                        true, SourceLocation(),

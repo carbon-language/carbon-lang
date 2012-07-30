@@ -22,10 +22,10 @@ void f() {
   (int())1; // expected-error {{C-style cast from 'int' to 'int ()' is not allowed}}
 
   // Declarations.
-  int fd(T(a)); // expected-warning {{parentheses were disambiguated as a function declarator}}
-  T(*d)(int(p)); // expected-warning {{parentheses were disambiguated as a function declarator}} expected-note {{previous definition is here}}
-  typedef T(*td)(int(p));
-  extern T(*tp)(int(p));
+  int fd(T(a)); // expected-warning {{disambiguated as a function declaration}} expected-note{{add a pair of parentheses}}
+  T(*d)(int(p)); // expected-note {{previous}}
+  typedef T td(int(p));
+  extern T tp(int(p));
   T d3(); // expected-warning {{empty parentheses interpreted as a function declaration}} expected-note {{replace parentheses with an initializer}}
   T d3v(void);
   typedef T d3t();

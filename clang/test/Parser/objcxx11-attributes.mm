@@ -35,7 +35,8 @@ void f(X *noreturn) {
   [[class, test(foo 'x' bar),,,]];
   [[bitand, noreturn]]; // expected-warning {{attribute noreturn cannot be specified on a statement}}
 
-  [[noreturn]]int(e)();
+  // FIXME: Suppress vexing parse warning
+  [[noreturn]]int(e)(); // expected-warning {{function declaration}} expected-note {{replace parentheses with an initializer}} 
   int e2(); // expected-warning {{interpreted as a function declaration}} expected-note{{}}
 
   // A function taking a noreturn function.

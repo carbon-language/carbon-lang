@@ -7,7 +7,7 @@ void test() {
 
   typedef int arr[10];
   while (arr x=0) ; // expected-error {{an array type is not allowed here}} expected-error {{array initializer must be an initializer list}}
-  while (int f()=0) ; // expected-warning {{interpreted as a function declaration}} expected-note {{initializer}} expected-error {{a function type is not allowed here}}
+  while (int f()=0) ; // expected-error {{a function type is not allowed here}}
 
   struct S {} s;
   if (s) ++x; // expected-error {{value of type 'struct S' is not contextually convertible to 'bool'}}

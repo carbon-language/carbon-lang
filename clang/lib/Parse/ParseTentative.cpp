@@ -671,7 +671,7 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
       // initializer that follows the declarator. Note that ctor-style
       // initializers are not possible in contexts where abstract declarators
       // are allowed.
-      if (!mayBeAbstract && !isCXXFunctionDeclarator(false/*warnIfAmbiguous*/))
+      if (!mayBeAbstract && !isCXXFunctionDeclarator())
         break;
 
       // direct-declarator '(' parameter-declaration-clause ')'
@@ -1267,7 +1267,7 @@ Parser::TryParseDeclarationSpecifier(bool *HasMissingTypename) {
 /// '(' parameter-declaration-clause ')' cv-qualifier-seq[opt]
 ///         exception-specification[opt]
 ///
-bool Parser::isCXXFunctionDeclarator(bool warnIfAmbiguous) {
+bool Parser::isCXXFunctionDeclarator(bool *IsAmbiguous) {
 
   // C++ 8.2p1:
   // The ambiguity arising from the similarity between a function-style cast and
@@ -1304,23 +1304,13 @@ bool Parser::isCXXFunctionDeclarator(bool warnIfAmbiguous) {
     }
   }
 
-  SourceLocation TPLoc = Tok.getLocation();
   PA.Revert();
 
+  if (IsAmbiguous && TPR == TPResult::Ambiguous())
+    *IsAmbiguous = true;
+
   // In case of an error, let the declaration parsing code handle it.
-  if (TPR == TPResult::Error())
-    return true;
-
-  if (TPR == TPResult::Ambiguous()) {
-    // Function declarator has precedence over constructor-style initializer.
-    // Emit a warning just in case the author intended a variable definition.
-    if (warnIfAmbiguous)
-      Diag(Tok, diag::warn_parens_disambiguated_as_function_decl)
-        << SourceRange(Tok.getLocation(), TPLoc);
-    return true;
-  }
-
-  return TPR == TPResult::True();
+  return TPR != TPResult::False();
 }
 
 /// parameter-declaration-clause:
@@ -1344,7 +1334,7 @@ Parser::TPResult
 Parser::TryParseParameterDeclarationClause(bool *InvalidAsDeclaration) {
 
   if (Tok.is(tok::r_paren))
-    return TPResult::True();
+    return TPResult::Ambiguous();
 
   //   parameter-declaration-list[opt] '...'[opt]
   //   parameter-declaration-list ',' '...'

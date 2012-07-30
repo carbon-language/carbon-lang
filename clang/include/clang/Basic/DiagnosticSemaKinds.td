@@ -158,6 +158,11 @@ def warn_redefinition_in_param_list : Warning<
 def warn_empty_parens_are_function_decl : Warning<
   "empty parentheses interpreted as a function declaration">,
   InGroup<VexingParse>;
+def warn_parens_disambiguated_as_function_declaration : Warning<
+  "parentheses were disambiguated as a function declaration">,
+  InGroup<VexingParse>;
+def note_additional_parens_for_variable_declaration : Note<
+  "add a pair of parentheses to declare a variable">;
 def note_empty_parens_function_call : Note<
   "change this ',' to a ';' to call %0">;
 def note_empty_parens_default_ctor : Note<

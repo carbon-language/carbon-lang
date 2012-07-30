@@ -5245,58 +5245,6 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         FunctionTemplate->setInvalidDecl();
     }
 
-    // If we see "T var();" at block scope, where T is a class type, it is
-    // probably an attempt to initialize a variable, not a function declaration.
-    // We don't catch this case earlier, since there is no ambiguity here.
-    if (!FunctionTemplate && D.getFunctionDefinitionKind() == FDK_Declaration &&
-        CurContext->isFunctionOrMethod() &&
-        D.getNumTypeObjects() == 1 && D.isFunctionDeclarator() &&
-        D.getDeclSpec().getStorageClassSpecAsWritten()
-          == DeclSpec::SCS_unspecified) {
-      QualType T = R->getAs<FunctionType>()->getResultType();
-      DeclaratorChunk &C = D.getTypeObject(0);
-      if (!T->isVoidType() && C.Fun.NumArgs == 0 && !C.Fun.isVariadic &&
-          !C.Fun.hasTrailingReturnType() &&
-          C.Fun.getExceptionSpecType() == EST_None) {
-        SourceRange ParenRange(C.Loc, C.EndLoc);
-        Diag(C.Loc, diag::warn_empty_parens_are_function_decl) << ParenRange;
-
-        // If the declaration looks like:
-        //   T var1,
-        //   f();
-        // and name lookup finds a function named 'f', then the ',' was
-        // probably intended to be a ';'.
-        if (!D.isFirstDeclarator() && D.getIdentifier()) {
-          FullSourceLoc Comma(D.getCommaLoc(), SourceMgr);
-          FullSourceLoc Name(D.getIdentifierLoc(), SourceMgr);
-          if (Comma.getFileID() != Name.getFileID() ||
-              Comma.getSpellingLineNumber() != Name.getSpellingLineNumber()) {
-            LookupResult Result(*this, D.getIdentifier(), SourceLocation(),
-                                LookupOrdinaryName);
-            if (LookupName(Result, S))
-              Diag(D.getCommaLoc(), diag::note_empty_parens_function_call)
-                << FixItHint::CreateReplacement(D.getCommaLoc(), ";") << NewFD;
-          }
-        }
-        const CXXRecordDecl *RD = T->getAsCXXRecordDecl();
-        // Empty parens mean value-initialization, and no parens mean default
-        // initialization. These are equivalent if the default constructor is
-        // user-provided, or if zero-initialization is a no-op.
-        if (RD && RD->hasDefinition() &&
-            (RD->isEmpty() || RD->hasUserProvidedDefaultConstructor()))
-          Diag(C.Loc, diag::note_empty_parens_default_ctor)
-            << FixItHint::CreateRemoval(ParenRange);
-        else {
-          std::string Init = getFixItZeroInitializerForType(T);
-          if (Init.empty() && LangOpts.CPlusPlus0x)
-            Init = "{}";
-          if (!Init.empty())
-            Diag(C.Loc, diag::note_empty_parens_zero_initialize)
-              << FixItHint::CreateReplacement(ParenRange, Init);
-        }
-      }
-    }
-
     // C++ [dcl.fct.spec]p5:
     //   The virtual specifier shall only be used in declarations of
     //   nonstatic class member functions that appear within a
@@ -7915,10 +7863,10 @@ NamedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
   (void)Error; // Silence warning.
   assert(!Error && "Error setting up implicit decl!");
   Declarator D(DS, Declarator::BlockContext);
-  D.AddTypeInfo(DeclaratorChunk::getFunction(false, false, SourceLocation(), 0,
-                                             0, 0, true, SourceLocation(),
+  D.AddTypeInfo(DeclaratorChunk::getFunction(false, false, false,
+                                             SourceLocation(), 0, 0, 0, true, 
                                              SourceLocation(), SourceLocation(),
-                                             SourceLocation(),
+                                             SourceLocation(), SourceLocation(),
                                              EST_None, SourceLocation(),
                                              0, 0, 0, 0, Loc, Loc, D),
                 DS.getAttributes(),
