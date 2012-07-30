@@ -2561,15 +2561,6 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
     HandleNonStandardConversionSpecification(LM, CS, startSpecifier,
                                              specifierLen);
 
-  // Are we using '%n'?
-  if (CS.getKind() == ConversionSpecifier::nArg) {
-    // Issue a warning about this being a possible security issue.
-    EmitFormatDiagnostic(S.PDiag(diag::warn_printf_write_back),
-                         getLocationOfByte(CS.getStart()),
-                         /*IsStringLocation*/true,
-                         getSpecifierRange(startSpecifier, specifierLen));
-  }
-
   // The remaining checks depend on the data arguments.
   if (HasVAListArg)
     return true;

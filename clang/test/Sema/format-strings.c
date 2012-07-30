@@ -88,10 +88,8 @@ void check_writeback_specifier()
 {
   int x;
   char *b;
-
-  printf("%n",&x); // expected-warning {{'%n' in format string discouraged}}
-  sprintf(b,"%d%%%n",1, &x); // expected-warning {{'%n' in format string dis}}
-  printf("%n",b); // expected-warning {{'%n' in format string discouraged}} expected-warning{{format specifies type 'int *' but the argument has type 'char *'}}
+  printf("%n", b); // expected-warning{{format specifies type 'int *' but the argument has type 'char *'}}
+  printf("%n", &x); // no-warning
 }
 
 void check_invalid_specifier(FILE* fp, char *buf)
@@ -168,7 +166,6 @@ void test9(char *P) {
   int x;
   printf(P);   // expected-warning {{format string is not a string literal (potentially insecure)}}
   printf(P, 42);
-  printf("%n", &x); // expected-warning {{use of '%n' in format string discouraged }}
 }
 
 void torture(va_list v8) {
@@ -186,7 +183,6 @@ void test10(int x, float f, int i, long long lli) {
   printf("%*d\n", f, x); // expected-warning{{field width should have type 'int', but argument has type 'double'}}
   printf("%*.*d\n", x, f, x); // expected-warning{{field precision should have type 'int', but argument has type 'double'}}
   printf("%**\n"); // expected-warning{{invalid conversion specifier '*'}}
-  printf("%n", &i); // expected-warning{{use of '%n' in format string discouraged (potentially insecure)}}
   printf("%d%d\n", x); // expected-warning{{more '%' conversions than data arguments}}
   printf("%d\n", x, x); // expected-warning{{data argument not used by format string}}
   printf("%W%d%Z\n", x, x, x); // expected-warning{{invalid conversion specifier 'W'}} expected-warning{{invalid conversion specifier 'Z'}}
@@ -317,14 +313,14 @@ void bug7377_bad_length_mod_usage() {
   // Bad flag usage
   printf("%#p", (void *) 0); // expected-warning{{flag '#' results in undefined behavior with 'p' conversion specifier}}
   printf("%0d", -1); // no-warning
-  printf("%#n", (int *) 0); // expected-warning{{flag '#' results in undefined behavior with 'n' conversion specifier}} expected-warning{{use of '%n' in format string discouraged (potentially insecure)}}
-  printf("%-n", (int *) 0); // expected-warning{{flag '-' results in undefined behavior with 'n' conversion specifier}} expected-warning{{use of '%n' in format string discouraged (potentially insecure)}}
+  printf("%#n", (int *) 0); // expected-warning{{flag '#' results in undefined behavior with 'n' conversion specifier}}
+  printf("%-n", (int *) 0); // expected-warning{{flag '-' results in undefined behavior with 'n' conversion specifier}}
   printf("%-p", (void *) 0); // no-warning
 
   // Bad optional amount use
   printf("%.2c", 'a'); // expected-warning{{precision used with 'c' conversion specifier, resulting in undefined behavior}}
-  printf("%1n", (int *) 0); // expected-warning{{field width used with 'n' conversion specifier, resulting in undefined behavior}} expected-warning{{use of '%n' in format string discouraged (potentially insecure)}}
-  printf("%.9n", (int *) 0); // expected-warning{{precision used with 'n' conversion specifier, resulting in undefined behavior}} expected-warning{{use of '%n' in format string discouraged (potentially insecure)}}
+  printf("%1n", (int *) 0); // expected-warning{{field width used with 'n' conversion specifier, resulting in undefined behavior}}
+  printf("%.9n", (int *) 0); // expected-warning{{precision used with 'n' conversion specifier, resulting in undefined behavior}}
 
   // Ignored flags
   printf("% +f", 1.23); // expected-warning{{flag ' ' is ignored when flag '+' is present}}
@@ -435,11 +431,6 @@ void pr9751() {
   const char kFormat2[] = "%18$s\n"; // expected-note{{format string is defined here}}
   printf(kFormat2, 1, "foo"); // expected-warning{{data argument position '18' exceeds the number of data arguments (2)}}
   printf("%18$s\n", 1, "foo"); // expected-warning{{data argument position '18' exceeds the number of data arguments (2)}}
-
-  const char kFormat3[] = "%n"; // expected-note{{format string is defined here}}
-  printf(kFormat3, (int*)NULL); // expected-warning{{use of '%n' in format string discouraged}}
-  printf("%n", (int*)NULL); // expected-warning{{use of '%n' in format string discouraged}}
-
 
   const char kFormat4[] = "%y"; // expected-note{{format string is defined here}}
   printf(kFormat4, 5); // expected-warning{{invalid conversion specifier 'y'}}
