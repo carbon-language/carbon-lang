@@ -185,7 +185,12 @@ public:
 
   /// hasOneUse - Return true if there is exactly one instruction using the
   /// specified register.
-  bool hasOneUse(unsigned RegNo) const;
+  bool hasOneUse(unsigned RegNo) const {
+    use_iterator UI = use_begin(RegNo);
+    if (UI == use_end())
+      return false;
+    return ++UI == use_end();
+  }
 
   /// use_nodbg_iterator/use_nodbg_begin/use_nodbg_end - Walk all uses of the
   /// specified register, skipping those marked as Debug.
