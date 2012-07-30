@@ -467,8 +467,9 @@ bool MatchASTVisitor::TraverseType(QualType TypeNode) {
 }
 
 bool MatchASTVisitor::TraverseTypeLoc(TypeLoc TypeLoc) {
+  match(TypeLoc.getType());
   return RecursiveASTVisitor<MatchASTVisitor>::
-      TraverseType(TypeLoc.getType());
+      TraverseTypeLoc(TypeLoc);
 }
 
 class MatchASTConsumer : public ASTConsumer {

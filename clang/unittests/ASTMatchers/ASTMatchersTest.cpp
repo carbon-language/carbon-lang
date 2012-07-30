@@ -859,6 +859,12 @@ TEST(Matcher, VariableUsage) {
       "}", Reference));
 }
 
+TEST(Matcher, FindsVarDeclInFuncitonParameter) {
+  EXPECT_TRUE(matches(
+      "void f(int i) {}",
+      variable(hasName("i"))));
+}
+
 TEST(Matcher, CalledVariable) {
   StatementMatcher CallOnVariableY = expression(
       memberCall(on(declarationReference(to(variable(hasName("y")))))));
