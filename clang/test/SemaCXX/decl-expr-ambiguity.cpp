@@ -49,6 +49,7 @@ struct RAII {
 };
 
 void func();
+void func2(short);
 namespace N {
   struct S;
 
@@ -58,6 +59,10 @@ namespace N {
     func(); // expected-warning {{function declaration}} expected-note {{replace parentheses with an initializer}}
 
     S s(); // expected-warning {{function declaration}}
+  }
+  void nonEmptyParens() {
+    int f = 0, // g = 0; expected-note {{change this ',' to a ';' to call 'func2'}}
+    func2(short(f)); // expected-warning {{function declaration}} expected-note {{add a pair of parentheses}}
   }
 }
 

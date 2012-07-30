@@ -2076,13 +2076,34 @@ static void warnAboutAmbiguousFunction(Sema &S, Declarator &D,
 
   SourceRange ParenRange(DeclType.Loc, DeclType.EndLoc);
 
-  // Declaration with parameters, eg. "T var(T());".
-  if (FTI.NumArgs > 0 &&
-      D.getContext() != Declarator::ConditionContext) {
-    S.Diag(DeclType.Loc,
-           diag::warn_parens_disambiguated_as_function_declaration)
-        << ParenRange;
+  S.Diag(DeclType.Loc,
+         FTI.NumArgs ? diag::warn_parens_disambiguated_as_function_declaration
+                     : diag::warn_empty_parens_are_function_decl)
+    << ParenRange;
 
+  // If the declaration looks like:
+  //   T var1,
+  //   f();
+  // and name lookup finds a function named 'f', then the ',' was
+  // probably intended to be a ';'.
+  if (!D.isFirstDeclarator() && D.getIdentifier()) {
+    FullSourceLoc Comma(D.getCommaLoc(), S.SourceMgr);
+    FullSourceLoc Name(D.getIdentifierLoc(), S.SourceMgr);
+    if (Comma.getFileID() != Name.getFileID() ||
+        Comma.getSpellingLineNumber() != Name.getSpellingLineNumber()) {
+      LookupResult Result(S, D.getIdentifier(), SourceLocation(),
+                          Sema::LookupOrdinaryName);
+      if (S.LookupName(Result, S.getCurScope()))
+        S.Diag(D.getCommaLoc(), diag::note_empty_parens_function_call)
+          << FixItHint::CreateReplacement(D.getCommaLoc(), ";")
+          << D.getIdentifier();
+    }
+  }
+
+  if (FTI.NumArgs > 0) {
+    // For a declaration with parameters, eg. "T var(T());", suggest adding parens
+    // around the first parameter to turn the declaration into a variable
+    // declaration.
     SourceRange Range = FTI.ArgInfo[0].Param->getSourceRange();
     SourceLocation B = Range.getBegin();
     SourceLocation E = S.PP.getLocForEndOfToken(Range.getEnd());
@@ -2091,32 +2112,12 @@ static void warnAboutAmbiguousFunction(Sema &S, Declarator &D,
     S.Diag(B, diag::note_additional_parens_for_variable_declaration)
       << FixItHint::CreateInsertion(B, "(")
       << FixItHint::CreateInsertion(E, ")");
-  }
-
-  // Declaration without parameters, eg. "T var();".
-  if (FTI.NumArgs == 0) {
-    S.Diag(DeclType.Loc, diag::warn_empty_parens_are_function_decl)
-      << ParenRange;
-
-    // If the declaration looks like:
-    //   T var1,
-    //   f();
-    // and name lookup finds a function named 'f', then the ',' was
-    // probably intended to be a ';'.
-    if (!D.isFirstDeclarator() && D.getIdentifier()) {
-      FullSourceLoc Comma(D.getCommaLoc(), S.SourceMgr);
-      FullSourceLoc Name(D.getIdentifierLoc(), S.SourceMgr);
-      if (Comma.getFileID() != Name.getFileID() ||
-          Comma.getSpellingLineNumber() != Name.getSpellingLineNumber()) {
-        LookupResult Result(S, D.getIdentifier(), SourceLocation(),
-        Sema::LookupOrdinaryName);
-        if (S.LookupName(Result, S.getCurScope()))
-          S.Diag(D.getCommaLoc(), diag::note_empty_parens_function_call)
-            << FixItHint::CreateReplacement(D.getCommaLoc(), ";")
-            << D.getIdentifier();
-      }
-    }
+  } else {
+    // For a declaration without parameters, eg. "T var();", suggest replacing the
+    // parens with an initializer to turn the declaration into a variable
+    // declaration.
     const CXXRecordDecl *RD = RT->getAsCXXRecordDecl();
+
     // Empty parens mean value-initialization, and no parens mean
     // default initialization. These are equivalent if the default
     // constructor is user-provided or if zero-initialization is a
