@@ -379,6 +379,10 @@ public:
   /// which refer to fromMBB to refer to this.
   void transferSuccessorsAndUpdatePHIs(MachineBasicBlock *fromMBB);
 
+  /// isPredecessor - Return true if the specified MBB is a predecessor of this
+  /// block.
+  bool isPredecessor(const MachineBasicBlock *MBB) const;
+
   /// isSuccessor - Return true if the specified MBB is a successor of this
   /// block.
   bool isSuccessor(const MachineBasicBlock *MBB) const;

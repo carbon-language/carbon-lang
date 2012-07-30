@@ -540,9 +540,12 @@ MachineBasicBlock::transferSuccessorsAndUpdatePHIs(MachineBasicBlock *fromMBB) {
   }
 }
 
+bool MachineBasicBlock::isPredecessor(const MachineBasicBlock *MBB) const {
+  return std::find(pred_begin(), pred_end(), MBB) != pred_end();
+}
+
 bool MachineBasicBlock::isSuccessor(const MachineBasicBlock *MBB) const {
-  const_succ_iterator I = std::find(Successors.begin(), Successors.end(), MBB);
-  return I != Successors.end();
+  return std::find(succ_begin(), succ_end(), MBB) != succ_end();
 }
 
 bool MachineBasicBlock::isLayoutSuccessor(const MachineBasicBlock *MBB) const {
