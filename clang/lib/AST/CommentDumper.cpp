@@ -75,7 +75,7 @@ void CommentDumper::dumpSourceRange(const Comment *C) {
 void CommentDumper::dumpComment(const Comment *C) {
   dumpIndent();
   OS << "(" << C->getCommentKindName()
-     << " " << (void *) C;
+     << " " << (const void *) C;
   dumpSourceRange(C);
 }
 
