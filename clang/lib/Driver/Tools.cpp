@@ -5516,8 +5516,12 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
     else if (ToolChain.getArch() == llvm::Triple::x86)
       CmdArgs.push_back("/lib/ld-linux.so.2");
     else if (ToolChain.getArch() == llvm::Triple::arm ||
-             ToolChain.getArch() == llvm::Triple::thumb)
-      CmdArgs.push_back("/lib/ld-linux.so.3");
+             ToolChain.getArch() == llvm::Triple::thumb) {
+      if (ToolChain.getTriple().getEnvironment() == llvm::Triple::GNUEABIHF)
+        CmdArgs.push_back("/lib/ld-linux-armhf.so.3");
+      else
+        CmdArgs.push_back("/lib/ld-linux.so.3");
+    }
     else if (ToolChain.getArch() == llvm::Triple::mips ||
              ToolChain.getArch() == llvm::Triple::mipsel)
       CmdArgs.push_back("/lib/ld.so.1");

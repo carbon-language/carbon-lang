@@ -186,6 +186,21 @@
 // CHECK-SUSE-10-3-PPC64: "-L[[SYSROOT]]/lib/../lib64"
 // CHECK-SUSE-10-3-PPC64: "-L[[SYSROOT]]/usr/lib/../lib64"
 //
+// Check dynamic-linker for different archs
+// RUN: %clang %s -### -o %t.o 2>&1 \
+// RUN:     -target arm-linux-gnueabi \
+// RUN:   | FileCheck --check-prefix=CHECK-ARM %s
+// CHECK-ARM: "{{.*}}ld{{(.exe)?}}"
+// CHECK-ARM: "-m" "armelf_linux_eabi"
+// CHECK-ARM: "-dynamic-linker" "{{.*}}/lib/ld-linux.so.3"
+//
+// RUN: %clang %s -### -o %t.o 2>&1 \
+// RUN:     -target arm-linux-gnueabihf \
+// RUN:   | FileCheck --check-prefix=CHECK-ARM-HF %s
+// CHECK-ARM-HF: "{{.*}}ld{{(.exe)?}}"
+// CHECK-ARM-HF: "-m" "armelf_linux_eabi"
+// CHECK-ARM-HF: "-dynamic-linker" "{{.*}}/lib/ld-linux-armhf.so.3"
+//
 // Check that we do not pass --hash-style=gnu and --hash-style=both to linker
 // and provide correct path to the dynamic linker and emulation mode when build
 // for MIPS platforms.
