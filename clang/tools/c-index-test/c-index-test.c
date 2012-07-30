@@ -2386,7 +2386,6 @@ static int index_file(int argc, const char **argv) {
     return 1;
   }
   idxAction = 0;
-  result = 1;
 
   index_data.check_prefix = check_prefix;
   index_data.first_check_printed = 0;
