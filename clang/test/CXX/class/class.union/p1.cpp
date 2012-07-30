@@ -27,9 +27,8 @@ class CopyCtor {
   CopyCtor(CopyCtor &cc) { abort(); } // expected-note 4 {{because type 'CopyCtor' has a user-declared copy constructor}}
 };
 
-// FIXME: this should eventually trigger on the operator's declaration line
-class CopyAssign { // expected-note 4 {{because type 'CopyAssign' has a user-declared copy assignment operator}}
-  CopyAssign& operator=(CopyAssign& CA) { abort(); }
+class CopyAssign {
+  CopyAssign& operator=(CopyAssign& CA) { abort(); } // expected-note 4 {{because type 'CopyAssign' has a user-declared copy assignment operator}}
 };
 
 class Dtor {
