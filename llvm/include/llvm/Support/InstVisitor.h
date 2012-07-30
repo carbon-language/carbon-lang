@@ -13,6 +13,8 @@
 
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
+#include "llvm/Intrinsics.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Module.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -145,14 +147,17 @@ public:
   // visitMul to proxy to visitBinaryOperator for instance in case the user does
   // not need this generality.
   //
-  // The one problem case we have to handle here though is that the PHINode
-  // class and opcode name are the exact same.  Because of this, we cannot
-  // define visitPHINode (the inst version) to forward to visitPHINode (the
-  // generic version) without multiply defined symbols and recursion.  To handle
-  // this, we do not autoexpand "Other" instructions, we do it manually.
-  //
+  // These functions can also implement fan-out, when a single opcode and
+  // instruction have multiple more specific Instruction subclasses. The Call
+  // instruction currently supports this. We implement that by redirecting that
+  // instruction to a special delegation helper.
 #define HANDLE_INST(NUM, OPCODE, CLASS) \
-    RetTy visit##OPCODE(CLASS &I) { DELEGATE(CLASS); }
+    RetTy visit##OPCODE(CLASS &I) { \
+      if (NUM == Instruction::Call) \
+        return delegateCallInst(I); \
+      else \
+        DELEGATE(CLASS); \
+    }
 #include "llvm/Instruction.def"
 
   // Specific Instruction type classes... note that all of the casts are
@@ -195,6 +200,17 @@ public:
   RetTy visitInsertValueInst(InsertValueInst &I)  { DELEGATE(Instruction); }
   RetTy visitLandingPadInst(LandingPadInst &I)    { DELEGATE(Instruction); }
 
+  // Handle the special instrinsic instruction classes.
+  RetTy visitDbgDeclareInst(DbgDeclareInst &I)    { DELEGATE(DbgInfoIntrinsic);}
+  RetTy visitDbgValueInst(DbgValueInst &I)        { DELEGATE(DbgInfoIntrinsic);}
+  RetTy visitDbgInfoIntrinsic(DbgInfoIntrinsic &I) { DELEGATE(IntrinsicInst); }
+  RetTy visitMemSetInst(MemSetInst &I)            { DELEGATE(MemIntrinsic); }
+  RetTy visitMemCpyInst(MemCpyInst &I)            { DELEGATE(MemTransferInst); }
+  RetTy visitMemMoveInst(MemMoveInst &I)          { DELEGATE(MemTransferInst); }
+  RetTy visitMemTransferInst(MemTransferInst &I)  { DELEGATE(MemIntrinsic); }
+  RetTy visitMemIntrinsic(MemIntrinsic &I)        { DELEGATE(IntrinsicInst); }
+  RetTy visitIntrinsicInst(IntrinsicInst &I)      { DELEGATE(CallInst); }
+
   // Call and Invoke are slightly different as they delegate first through
   // a generic CallSite visitor.
   RetTy visitCallInst(CallInst &I) {
@@ -234,6 +250,29 @@ public:
   // Note that you MUST override this function if your return type is not void.
   //
   void visitInstruction(Instruction &I) {}  // Ignore unhandled instructions
+
+private:
+  // Special helper function to delegate to CallInst subclass visitors.
+  RetTy delegateCallInst(CallInst &I) {
+    if (const Function *F = I.getCalledFunction()) {
+      switch ((Intrinsic::ID)F->getIntrinsicID()) {
+      default:                     DELEGATE(IntrinsicInst);
+      case Intrinsic::dbg_declare: DELEGATE(DbgDeclareInst);
+      case Intrinsic::dbg_value:   DELEGATE(DbgValueInst);
+      case Intrinsic::memcpy:      DELEGATE(MemCpyInst);
+      case Intrinsic::memmove:     DELEGATE(MemMoveInst);
+      case Intrinsic::memset:      DELEGATE(MemSetInst);
+      case Intrinsic::not_intrinsic: break;
+      }
+    }
+    DELEGATE(CallInst);
+  }
+
+  // An overload that will never actually be called, it is used only from dead
+  // code in the dispatching from opcodes to instruction subclasses.
+  RetTy delegateCallInst(Instruction &I) {
+    llvm_unreachable("delegateCallInst called for non-CallInst");
+  }
 };
 
 #undef DELEGATE
