@@ -10,6 +10,7 @@
 #define _LIBCPP_BUILDING_MEMORY
 #include "memory"
 #include "mutex"
+#include "thread"
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
@@ -129,13 +130,23 @@ _LIBCPP_CONSTEXPR __sp_mut::__sp_mut(void* p) _NOEXCEPT
 void
 __sp_mut::lock() _NOEXCEPT
 {
-    reinterpret_cast<mutex*>(_)->lock();
+    mutex& m = *static_cast<mutex*>(_);
+    unsigned count = 0;
+    while (!m.try_lock())
+    {
+        if (++count > 16)
+        {
+            m.lock();
+            break;
+        }
+        this_thread::yield();
+    }
 }
 
 void
 __sp_mut::unlock() _NOEXCEPT
 {
-    reinterpret_cast<mutex*>(_)->unlock();
+    static_cast<mutex*>(_)->unlock();
 }
 
 __sp_mut&
