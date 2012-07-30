@@ -96,7 +96,7 @@ void ThreadClock::ReleaseStore(SyncClock *dst) const {
     dst->clk_.Resize(nclk_);
   for (uptr i = 0; i < nclk_; i++)
     dst->clk_[i] = clk_[i];
-  for (uptr i = nclk_; i < dst->clk_.Size(); i++)  
+  for (uptr i = nclk_; i < dst->clk_.Size(); i++)
     dst->clk_[i] = 0;
 }
 
