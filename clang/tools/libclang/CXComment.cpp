@@ -316,10 +316,10 @@ CXString clang_VerbatimLineComment_getText(CXComment CXC) {
 
 namespace {
 
+/// This comparison will sort parameters with valid index by index and
+/// invalid (unresolved) parameters last.
 class ParamCommandCommentCompareIndex {
 public:
-  /// This comparison will sort parameters with valid index by index and
-  /// invalid (unresolved) parameters last.
   bool operator()(const ParamCommandComment *LHS,
                   const ParamCommandComment *RHS) const {
     unsigned LHSIndex = UINT_MAX;
