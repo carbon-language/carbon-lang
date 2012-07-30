@@ -431,10 +431,6 @@ public:
   }
   
 protected:
-  void evalObjCMessage(StmtNodeBuilder &Bldr, const ObjCMethodCall &Msg,
-                       ExplodedNode *Pred, ProgramStateRef state,
-                       bool GenSink);
-
   /// evalBind - Handle the semantics of binding a value to a specific location.
   ///  This method is used by evalStore, VisitDeclStmt, and others.
   void evalBind(ExplodedNodeSet &Dst, const Stmt *StoreE, ExplodedNode *Pred,
