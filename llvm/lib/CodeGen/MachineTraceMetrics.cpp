@@ -185,6 +185,19 @@ getHeightResources(const MachineBasicBlock *MBB) const {
 // DFS, pickTraceSucc() is called in a post-order.
 //
 
+// We never allow traces that leave loops, but we do allow traces to enter
+// nested loops. We also never allow traces to contain back-edges.
+//
+// This means that a loop header can never appear above the center block of a
+// trace, except as the trace head. Below the center block, loop exiting edges
+// are banned.
+//
+// Return true if an edge from the From loop to the To loop is leaving a loop.
+// Either of To and From can be null.
+static bool isExitingLoop(const MachineLoop *From, const MachineLoop *To) {
+  return From && !From->contains(To);
+}
+
 // MinInstrCountEnsemble - Pick the trace that executes the least number of
 // instructions.
 namespace {
@@ -214,9 +227,6 @@ MinInstrCountEnsemble::pickTracePred(const MachineBasicBlock *MBB) {
   for (MachineBasicBlock::const_pred_iterator
        I = MBB->pred_begin(), E = MBB->pred_end(); I != E; ++I) {
     const MachineBasicBlock *Pred = *I;
-    // Don't consider predecessors in other loops.
-    if (getLoopFor(Pred) != CurLoop)
-      continue;
     const MachineTraceMetrics::TraceBlockInfo *PredTBI =
       getDepthResources(Pred);
     assert(PredTBI && "Predecessor must be visited first");
@@ -242,8 +252,8 @@ MinInstrCountEnsemble::pickTraceSucc(const MachineBasicBlock *MBB) {
     // Don't consider back-edges.
     if (CurLoop && Succ == CurLoop->getHeader())
       continue;
-    // Don't consider successors in other loops.
-    if (getLoopFor(Succ) != CurLoop)
+    // Don't consider successors exiting CurLoop.
+    if (isExitingLoop(CurLoop, getLoopFor(Succ)))
       continue;
     const MachineTraceMetrics::TraceBlockInfo *SuccTBI =
       getHeightResources(Succ);
@@ -300,11 +310,10 @@ namespace {
 struct LoopBounds {
   MutableArrayRef<MachineTraceMetrics::TraceBlockInfo> Blocks;
   const MachineLoopInfo *Loops;
-  const MachineLoop *CurLoop;
   bool Downward;
   LoopBounds(MutableArrayRef<MachineTraceMetrics::TraceBlockInfo> blocks,
-             const MachineLoopInfo *loops, const MachineLoop *curloop)
-    : Blocks(blocks), Loops(loops), CurLoop(curloop), Downward(false) {}
+             const MachineLoopInfo *loops)
+    : Blocks(blocks), Loops(loops), Downward(false) {}
 };
 }
 
@@ -323,11 +332,17 @@ public:
     MachineTraceMetrics::TraceBlockInfo &TBI = LB.Blocks[To->getNumber()];
     if (LB.Downward ? TBI.hasValidHeight() : TBI.hasValidDepth())
       return false;
-    // Don't follow CurLoop backedges.
-    if (LB.CurLoop && (LB.Downward ? To : From) == LB.CurLoop->getHeader())
+    // From is null once when To is the trace center block.
+    if (!From)
+      return true;
+    const MachineLoop *FromLoop = LB.Loops->getLoopFor(From);
+    if (!FromLoop)
+      return true;
+    // Don't follow backedges, don't leave FromLoop when going upwards.
+    if ((LB.Downward ? To : From) == FromLoop->getHeader())
       return false;
-    // Don't leave CurLoop.
-    if (LB.Loops->getLoopFor(To) != LB.CurLoop)
+    // Don't leave FromLoop.
+    if (isExitingLoop(FromLoop, LB.Loops->getLoopFor(To)))
       return false;
     // This is a new block. The PO traversal will compute height/depth
     // resources, causing us to reject new edges to To. This only works because
@@ -342,7 +357,7 @@ void MachineTraceMetrics::Ensemble::computeTrace(const MachineBasicBlock *MBB) {
   DEBUG(dbgs() << "Computing " << getName() << " trace through BB#"
                << MBB->getNumber() << '\n');
   // Set up loop bounds for the backwards post-order traversal.
-  LoopBounds Bounds(BlockInfo, CT.Loops, getLoopFor(MBB));
+  LoopBounds Bounds(BlockInfo, CT.Loops);
 
   // Run an upwards post-order search for the trace start.
   Bounds.Downward = false;
@@ -373,7 +388,7 @@ void MachineTraceMetrics::Ensemble::computeTrace(const MachineBasicBlock *MBB) {
     // All the successors have been visited, pick the preferred one.
     TBI.Succ = pickTraceSucc(*I);
     DEBUG({
-      if (TBI.Pred)
+      if (TBI.Succ)
         dbgs() << "BB#" << TBI.Succ->getNumber() << '\n';
       else
         dbgs() << "null\n";
