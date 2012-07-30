@@ -635,6 +635,30 @@ public:
       getOperand(0).getSubReg() == getOperand(1).getSubReg();
   }
 
+  /// isTransient - Return true if this is a transient instruction that is
+  /// either very likely to be eliminated during register allocation (such as
+  /// copy-like instructions), or if this instruction doesn't have an
+  /// execution-time cost.
+  bool isTransient() const {
+    switch(getOpcode()) {
+    default: return false;
+    // Copy-like instructions are usually eliminated during register allocation.
+    case TargetOpcode::PHI:
+    case TargetOpcode::COPY:
+    case TargetOpcode::INSERT_SUBREG:
+    case TargetOpcode::SUBREG_TO_REG:
+    case TargetOpcode::REG_SEQUENCE:
+    // Pseudo-instructions that don't produce any real output.
+    case TargetOpcode::IMPLICIT_DEF:
+    case TargetOpcode::KILL:
+    case TargetOpcode::PROLOG_LABEL:
+    case TargetOpcode::EH_LABEL:
+    case TargetOpcode::GC_LABEL:
+    case TargetOpcode::DBG_VALUE:
+      return true;
+    }
+  }
+
   /// getBundleSize - Return the number of instructions inside the MI bundle.
   unsigned getBundleSize() const;
 

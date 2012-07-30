@@ -69,28 +69,6 @@ void MachineTraceMetrics::releaseMemory() {
 // The number of instructions in a basic block and the CPU resources used by
 // those instructions don't depend on any given trace strategy.
 
-/// Is MI an instruction that should be considered free because it will likely
-/// be eliminated by later passes?
-static bool isFree(const MachineInstr *MI) {
-  switch(MI->getOpcode()) {
-  default: return false;
-  case TargetOpcode::PHI:
-  case TargetOpcode::PROLOG_LABEL:
-  case TargetOpcode::EH_LABEL:
-  case TargetOpcode::GC_LABEL:
-  case TargetOpcode::KILL:
-  case TargetOpcode::EXTRACT_SUBREG:
-  case TargetOpcode::INSERT_SUBREG:
-  case TargetOpcode::IMPLICIT_DEF:
-  case TargetOpcode::SUBREG_TO_REG:
-  case TargetOpcode::COPY_TO_REGCLASS:
-  case TargetOpcode::DBG_VALUE:
-  case TargetOpcode::REG_SEQUENCE:
-  case TargetOpcode::COPY:
-    return true;
-  }
-}
-
 /// Compute the resource usage in basic block MBB.
 const MachineTraceMetrics::FixedBlockInfo*
 MachineTraceMetrics::getResources(const MachineBasicBlock *MBB) {
@@ -106,7 +84,7 @@ MachineTraceMetrics::getResources(const MachineBasicBlock *MBB) {
   for (MachineBasicBlock::const_iterator I = MBB->begin(), E = MBB->end();
        I != E; ++I) {
     const MachineInstr *MI = I;
-    if (isFree(MI))
+    if (MI->isTransient())
       continue;
     ++InstrCount;
     if (MI->isCall())
