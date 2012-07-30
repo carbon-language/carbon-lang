@@ -102,7 +102,7 @@ Follow these simple steps to start your project:
    ``--prefix=<directory>``
        Tell your project where it should get installed.
 
-That's it!  Now all you have to do is type ``gmake`` (or ``make`` if your on a
+That's it!  Now all you have to do is type ``gmake`` (or ``make`` if you're on a
 GNU/Linux system) in the root of your object directory, and your project should
 build.
 
