@@ -1927,16 +1927,6 @@ def VCVTTPD2DQrr : VPDI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                               (int_x86_sse2_cvttpd2dq VR128:$src))],
                               IIC_SSE_CVT_PD_RR>, VEX;
 
-def CVTTPD2DQrr : PDI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                      "cvttpd2dq\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst, (int_x86_sse2_cvttpd2dq VR128:$src))],
-                      IIC_SSE_CVT_PD_RR>;
-def CVTTPD2DQrm : PDI<0xE6, MRMSrcMem, (outs VR128:$dst),(ins f128mem:$src),
-                      "cvttpd2dq\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst, (int_x86_sse2_cvttpd2dq
-                                        (memopv2f64 addr:$src)))],
-                                        IIC_SSE_CVT_PD_RM>;
-
 // The assembler can recognize rr 256-bit instructions by seeing a ymm
 // register, but the same isn't true when using memory operands instead.
 // Provide other assembly rr and rm forms to address this explicitly.
@@ -1970,6 +1960,16 @@ let Predicates = [HasAVX] in {
   def : Pat<(v4i32 (fp_to_sint (memopv4f64 addr:$src))),
             (VCVTTPD2DQYrm addr:$src)>;
 } // Predicates = [HasAVX]
+
+def CVTTPD2DQrr : PDI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                      "cvttpd2dq\t{$src, $dst|$dst, $src}",
+                      [(set VR128:$dst, (int_x86_sse2_cvttpd2dq VR128:$src))],
+                      IIC_SSE_CVT_PD_RR>;
+def CVTTPD2DQrm : PDI<0xE6, MRMSrcMem, (outs VR128:$dst),(ins f128mem:$src),
+                      "cvttpd2dq\t{$src, $dst|$dst, $src}",
+                      [(set VR128:$dst, (int_x86_sse2_cvttpd2dq
+                                        (memopv2f64 addr:$src)))],
+                                        IIC_SSE_CVT_PD_RM>;
 
 // Convert packed single to packed double
 let Predicates = [HasAVX] in {
