@@ -172,6 +172,15 @@ public:
   /// specified register (it may be live-in).
   bool def_empty(unsigned RegNo) const { return def_begin(RegNo) == def_end(); }
 
+  /// hasOneDef - Return true if there is exactly one instruction defining the
+  /// specified register.
+  bool hasOneDef(unsigned RegNo) const {
+    def_iterator DI = def_begin(RegNo);
+    if (DI == def_end())
+      return false;
+    return ++DI == def_end();
+  }
+
   /// use_iterator/use_begin/use_end - Walk all uses of the specified register.
   typedef defusechain_iterator<true,false,false> use_iterator;
   use_iterator use_begin(unsigned RegNo) const {
