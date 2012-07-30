@@ -33,7 +33,7 @@ INITIALIZE_PASS_END(MachineTraceMetrics,
                   "machine-trace-metrics", "Machine Trace Metrics", false, true)
 
 MachineTraceMetrics::MachineTraceMetrics()
-  : MachineFunctionPass(ID), TII(0), TRI(0), MRI(0), Loops(0) {
+  : MachineFunctionPass(ID), MF(0), TII(0), TRI(0), MRI(0), Loops(0) {
   std::fill(Ensembles, array_endof(Ensembles), (Ensemble*)0);
 }
 
@@ -55,6 +55,7 @@ bool MachineTraceMetrics::runOnMachineFunction(MachineFunction &Func) {
 }
 
 void MachineTraceMetrics::releaseMemory() {
+  MF = 0;
   BlockInfo.clear();
   for (unsigned i = 0; i != TS_NumStrategies; ++i) {
     delete Ensembles[i];
@@ -290,6 +291,8 @@ void MachineTraceMetrics::invalidate(const MachineBasicBlock *MBB) {
 }
 
 void MachineTraceMetrics::verifyAnalysis() const {
+  if (!MF)
+    return;
 #ifndef NDEBUG
   assert(BlockInfo.size() == MF->getNumBlockIDs() && "Outdated BlockInfo size");
   for (unsigned i = 0; i != TS_NumStrategies; ++i)
