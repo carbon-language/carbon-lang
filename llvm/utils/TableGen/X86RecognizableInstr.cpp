@@ -400,9 +400,6 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
       (IsCodeGenOnly && Name.find("_REV") == Name.npos))
     return FILTER_STRONG;
 
-  if (Form == X86Local::MRMInitReg)
-    return FILTER_STRONG;
-
 
   // Filter out artificial instructions but leave in the LOCK_PREFIX so it is
   // printed as a separate "instruction".
@@ -418,15 +415,6 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
   if (SegOvr)
     return FILTER_STRONG;
 
-  // Filter out instructions that can't be printed.
-
-  if (AsmString.size() == 0)
-    return FILTER_STRONG;
-
-  // Filter out instructions with subreg operands.
-
-  if (AsmString.find("subreg") != AsmString.npos)
-    return FILTER_STRONG;
 
   /////////////////
   // FILTER_WEAK
