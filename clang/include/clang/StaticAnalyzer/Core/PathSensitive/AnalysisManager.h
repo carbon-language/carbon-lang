@@ -169,7 +169,7 @@ public:
 
   bool shouldEagerlyAssume() const { return EagerlyAssume; }
 
-  bool shouldInlineCall() const { return (IPAMode == Inlining); }
+  bool shouldInlineCall() const { return (IPAMode != None); }
 
   CFG *getCFG(Decl const *D) {
     return AnaCtxMgr.getContext(D)->getCFG();

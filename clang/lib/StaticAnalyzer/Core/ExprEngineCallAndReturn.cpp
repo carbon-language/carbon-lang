@@ -318,6 +318,8 @@ bool ExprEngine::inlineCall(const CallEvent &Call,
     break;
   }
   case CE_ObjCMessage:
+    if (getAnalysisManager().IPAMode != DynamicDispatch)
+      return false;
     break;
   }
 

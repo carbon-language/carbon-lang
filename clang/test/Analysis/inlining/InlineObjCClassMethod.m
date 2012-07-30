@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-ipa=dynamic -verify %s
 
 // Test inlining of ObjC class methods.
 
@@ -65,6 +65,26 @@ int foo() {
 @implementation AAA
 @end
 @implementation AAA (MyCat)
++ (int)getInt {
+    return 0;
+}
+@end
+
+// ObjC class method is called by name. Definition is in the parent category.
+@interface PPP : NSObject
+@end
+@interface PPP (MyCat)
++ (int)getInt;
+@end
+@interface CCC : PPP
+@end
+int foo4() {
+    int y = [CCC getInt];
+    return 5/y; // expected-warning {{Division by zero}}
+}
+@implementation PPP
+@end
+@implementation PPP (MyCat)
 + (int)getInt {
     return 0;
 }
