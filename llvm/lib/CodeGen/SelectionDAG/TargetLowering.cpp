@@ -2464,8 +2464,8 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
     // Otherwise, we can't fold it.  However, we can simplify it to SETUO/SETO
     // if it is not already.
     ISD::CondCode NewCond = UOF == 0 ? ISD::SETO : ISD::SETUO;
-    if (NewCond != Cond && (DCI.isBeforeLegalizeOps() 
-        || getCondCodeAction(NewCond, N0.getValueType()) == Legal))
+    if (NewCond != Cond && (DCI.isBeforeLegalizeOps() ||
+          getCondCodeAction(NewCond, N0.getValueType()) == Legal))
       return DAG.getSetCC(dl, VT, N0, N1, NewCond);
   }
 
