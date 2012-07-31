@@ -22,8 +22,8 @@ extern "C" void LLVMInitializeMipsTarget() {
   // Register the target.
   RegisterTargetMachine<MipsebTargetMachine> X(TheMipsTarget);
   RegisterTargetMachine<MipselTargetMachine> Y(TheMipselTarget);
-  RegisterTargetMachine<Mips64ebTargetMachine> A(TheMips64Target);
-  RegisterTargetMachine<Mips64elTargetMachine> B(TheMips64elTarget);
+  RegisterTargetMachine<MipsebTargetMachine> A(TheMips64Target);
+  RegisterTargetMachine<MipselTargetMachine> B(TheMips64elTarget);
 }
 
 // DataLayout --> Big-endian, 32-bit pointer/ABI/alignment
@@ -69,24 +69,6 @@ MipselTargetMachine(const Target &T, StringRef TT,
                     StringRef CPU, StringRef FS, const TargetOptions &Options,
                     Reloc::Model RM, CodeModel::Model CM,
                     CodeGenOpt::Level OL)
-  : MipsTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, true) {}
-
-void Mips64ebTargetMachine::anchor() { }
-
-Mips64ebTargetMachine::
-Mips64ebTargetMachine(const Target &T, StringRef TT,
-                      StringRef CPU, StringRef FS, const TargetOptions &Options,
-                      Reloc::Model RM, CodeModel::Model CM,
-                      CodeGenOpt::Level OL)
-  : MipsTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, false) {}
-
-void Mips64elTargetMachine::anchor() { }
-
-Mips64elTargetMachine::
-Mips64elTargetMachine(const Target &T, StringRef TT,
-                      StringRef CPU, StringRef FS, const TargetOptions &Options,
-                      Reloc::Model RM, CodeModel::Model CM,
-                      CodeGenOpt::Level OL)
   : MipsTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, true) {}
 
 namespace {
