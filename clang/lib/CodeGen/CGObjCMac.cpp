@@ -2515,7 +2515,7 @@ llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
                                                    Values);
 
   std::string Name("\01L_OBJC_METACLASS_");
-  Name += ID->getNameAsCString();
+  Name += ID->getName();
 
   // Check for a forward reference.
   llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name);
