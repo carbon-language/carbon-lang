@@ -175,3 +175,15 @@ namespace PR12436 {
   
   X x({}, 17);
 }
+
+namespace rdar11948732 {
+  template<typename T> struct X {};
+
+  struct XCtorInit {
+    XCtorInit(std::initializer_list<X<int>>);
+  };
+
+  void f(X<int> &xi) {
+    XCtorInit xc = { xi, xi };
+  }
+}
