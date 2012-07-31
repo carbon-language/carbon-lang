@@ -82,3 +82,49 @@ if.then195:                                       ; preds = %if.then84
 if.end251:                                        ; preds = %if.then195, %if.then84, %entry
   ret void
 }
+
+; Coalescer failure: removeCopyByCommutingDef leaves a bad kill flag
+; behind.
+define void @rdar11950722() nounwind readonly optsize ssp align 2 {
+entry:
+  br i1 undef, label %land.lhs.true7, label %lor.lhs.false.i
+
+lor.lhs.false.i:
+  br i1 undef, label %if.then10.i, label %land.lhs.true7
+
+if.then10.i:
+  %xFlags.1.i = select i1 undef, i32 0, i32 undef
+  br i1 undef, label %land.lhs.true33.i, label %f.exit
+
+land.lhs.true33.i:
+  %and26.i = and i32 %xFlags.1.i, 8
+  %cmp27.i = icmp eq i32 %and26.i, 0
+  %and29.i = and i32 %xFlags.1.i, 2147483645
+  %xFlags.1.and29.i = select i1 %cmp27.i, i32 %xFlags.1.i, i32 %and29.i
+  %and34.i = and i32 %xFlags.1.i, 8
+  %cmp35.i = icmp eq i32 %and34.i, 0
+  %and37.i = and i32 %xFlags.1.i, 2147483645
+  %yFlags.1.and37.i = select i1 %cmp35.i, i32 %xFlags.1.i, i32 %and37.i
+  br label %f.exit
+
+f.exit:
+  %xFlags.3.i = phi i32 [ %xFlags.1.and29.i, %land.lhs.true33.i ], [ %xFlags.1.i, %if.then10.i ]
+  %yFlags.2.i = phi i32 [ %yFlags.1.and37.i, %land.lhs.true33.i ], [ %xFlags.1.i, %if.then10.i ]
+  %cmp40.i = icmp eq i32 %xFlags.3.i, %yFlags.2.i
+  br i1 %cmp40.i, label %land.lhs.true7, label %land.end
+
+land.lhs.true7:
+  br i1 undef, label %land.lhs.true34, label %lor.lhs.false27
+
+lor.lhs.false27:
+  br i1 undef, label %land.lhs.true34, label %land.end
+
+land.lhs.true34:
+  br i1 undef, label %land.end, label %lor.lhs.false44
+
+lor.lhs.false44:
+  ret void
+
+land.end:
+  ret void
+}

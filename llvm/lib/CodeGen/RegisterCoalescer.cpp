@@ -657,6 +657,8 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
     LiveInterval::iterator ULR = IntA.FindLiveRangeContaining(UseIdx);
     if (ULR == IntA.end() || ULR->valno != AValNo)
       continue;
+    // Kill flags are no longer accurate. They are recomputed after RA.
+    UseMO.setIsKill(false);
     if (TargetRegisterInfo::isPhysicalRegister(NewReg))
       UseMO.substPhysReg(NewReg, *TRI);
     else
