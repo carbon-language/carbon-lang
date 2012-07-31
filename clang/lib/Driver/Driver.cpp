@@ -1210,8 +1210,14 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
     }
     return new PreprocessJobAction(Input, OutputTy);
   }
-  case phases::Precompile:
-    return new PrecompileJobAction(Input, types::TY_PCH);
+  case phases::Precompile: {
+    types::ID OutputTy = types::TY_PCH;
+    if (Args.hasArg(options::OPT_fsyntax_only)) {
+      // Syntax checks should not emit a PCH file
+      OutputTy = types::TY_Nothing;
+    }
+    return new PrecompileJobAction(Input, OutputTy);
+  }
   case phases::Compile: {
     if (Args.hasArg(options::OPT_fsyntax_only)) {
       return new CompileJobAction(Input, types::TY_Nothing);

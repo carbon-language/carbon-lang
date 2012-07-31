@@ -1537,7 +1537,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     // Use PCH if the user requested it.
     bool UsePCH = D.CCCUsePCH;
 
-    if (UsePCH)
+    if (JA.getType() == types::TY_Nothing)
+      CmdArgs.push_back("-fsyntax-only");
+    else if (UsePCH)
       CmdArgs.push_back("-emit-pch");
     else
       CmdArgs.push_back("-emit-pth");
