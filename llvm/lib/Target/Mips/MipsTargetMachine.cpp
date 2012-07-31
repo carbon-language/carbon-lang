@@ -12,6 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "MipsTargetMachine.h"
+#include "MipsSEInstrInfo.h"
+#include "Mips16InstrInfo.h"
 #include "Mips.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/Passes.h"
@@ -24,6 +26,17 @@ extern "C" void LLVMInitializeMipsTarget() {
   RegisterTargetMachine<MipselTargetMachine> Y(TheMipselTarget);
   RegisterTargetMachine<MipsebTargetMachine> A(TheMips64Target);
   RegisterTargetMachine<MipselTargetMachine> B(TheMips64elTarget);
+}
+
+static const MipsInstrInfo *genInstrInfo(MipsTargetMachine &TM) {
+  const MipsInstrInfo *II;
+
+  if (TM.getSubtargetImpl()->inMips16Mode())
+    II = new Mips16InstrInfo(TM);
+  else
+    II = new MipsSEInstrInfo(TM);
+
+  return II;
 }
 
 // DataLayout --> Big-endian, 32-bit pointer/ABI/alignment
@@ -48,7 +61,7 @@ MipsTargetMachine(const Target &T, StringRef TT,
                (Subtarget.isABI_N64() ?
                 "E-p:64:64:64-i8:8:32-i16:16:32-i64:64:64-f128:128:128-n32" :
                 "E-p:32:32:32-i8:8:32-i16:16:32-i64:64:64-n32")),
-    InstrInfo(*this),
+    InstrInfo(genInstrInfo(*this)),
     FrameLowering(Subtarget),
     TLInfo(*this), TSInfo(*this), JITInfo() {
 }

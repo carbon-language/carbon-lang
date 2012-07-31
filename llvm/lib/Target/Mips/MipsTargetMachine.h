@@ -25,12 +25,13 @@
 #include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {
-  class formatted_raw_ostream;
+class formatted_raw_ostream;
+class MipsRegisterInfo;
 
 class MipsTargetMachine : public LLVMTargetMachine {
   MipsSubtarget       Subtarget;
   const TargetData    DataLayout; // Calculates type size & alignment
-  MipsInstrInfo       InstrInfo;
+  const MipsInstrInfo *InstrInfo;
   MipsFrameLowering   FrameLowering;
   MipsTargetLowering  TLInfo;
   MipsSelectionDAGInfo TSInfo;
@@ -43,8 +44,10 @@ public:
                     CodeGenOpt::Level OL,
                     bool isLittle);
 
+  virtual ~MipsTargetMachine() { delete InstrInfo; }
+
   virtual const MipsInstrInfo *getInstrInfo() const
-  { return &InstrInfo; }
+  { return InstrInfo; }
   virtual const TargetFrameLowering *getFrameLowering() const
   { return &FrameLowering; }
   virtual const MipsSubtarget *getSubtargetImpl() const
@@ -55,7 +58,7 @@ public:
   { return &JITInfo; }
 
   virtual const MipsRegisterInfo *getRegisterInfo()  const {
-    return &InstrInfo.getRegisterInfo();
+    return &InstrInfo->getRegisterInfo();
   }
 
   virtual const MipsTargetLowering *getTargetLowering() const {

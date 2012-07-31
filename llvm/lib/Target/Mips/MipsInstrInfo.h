@@ -26,12 +26,38 @@
 namespace llvm {
 
 class MipsInstrInfo : public MipsGenInstrInfo {
+protected:
   MipsTargetMachine &TM;
-  bool IsN64; bool InMips16Mode;
   const MipsRegisterInfo RI;
   unsigned UncondBrOpc;
+
 public:
-  explicit MipsInstrInfo(MipsTargetMachine &TM);
+  explicit MipsInstrInfo(MipsTargetMachine &TM, unsigned UncondBrOpc);
+
+  /// Branch Analysis
+  virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
+                             MachineBasicBlock *&FBB,
+                             SmallVectorImpl<MachineOperand> &Cond,
+                             bool AllowModify) const;
+
+  virtual unsigned RemoveBranch(MachineBasicBlock &MBB) const;
+
+  virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                                MachineBasicBlock *FBB,
+                                const SmallVectorImpl<MachineOperand> &Cond,
+                                DebugLoc DL) const;
+
+  virtual
+  bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
+
+  virtual MachineInstr* emitFrameIndexDebugValue(MachineFunction &MF,
+                                                 int FrameIx, uint64_t Offset,
+                                                 const MDNode *MDPtr,
+                                                 DebugLoc DL) const;
+
+  /// Insert nop instruction when hazard condition is found
+  virtual void insertNoop(MachineBasicBlock &MBB,
+                          MachineBasicBlock::iterator MI) const;
 
   /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should
@@ -39,86 +65,29 @@ public:
   ///
   virtual const MipsRegisterInfo &getRegisterInfo() const;
 
-  /// isLoadFromStackSlot - If the specified machine instruction is a direct
-  /// load from a stack slot, return the virtual or physical register number of
-  /// the destination along with the FrameIndex of the loaded stack slot.  If
-  /// not, return 0.  This predicate must return 0 if the instruction has
-  /// any side effects other than loading from the stack slot.
-  virtual unsigned isLoadFromStackSlot(const MachineInstr *MI,
-                                       int &FrameIndex) const;
-
-  /// isStoreToStackSlot - If the specified machine instruction is a direct
-  /// store to a stack slot, return the virtual or physical register number of
-  /// the source reg along with the FrameIndex of the loaded stack slot.  If
-  /// not, return 0.  This predicate must return 0 if the instruction has
-  /// any side effects other than storing to the stack slot.
-  virtual unsigned isStoreToStackSlot(const MachineInstr *MI,
-                                      int &FrameIndex) const;
-
-  /// Branch Analysis
-  virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
-                             MachineBasicBlock *&FBB,
-                             SmallVectorImpl<MachineOperand> &Cond,
-                             bool AllowModify) const;
-  virtual unsigned RemoveBranch(MachineBasicBlock &MBB) const;
-
-private:
-  void ExpandRetRA(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-                   unsigned Opc) const;
-  void ExpandRetRA16(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-                   unsigned Opc) const;
-
-  void BuildCondBr(MachineBasicBlock &MBB, MachineBasicBlock *TBB, DebugLoc DL,
-                   const SmallVectorImpl<MachineOperand>& Cond) const;
-  void ExpandExtractElementF64(MachineBasicBlock &MBB,
-                               MachineBasicBlock::iterator I) const;
-  void ExpandBuildPairF64(MachineBasicBlock &MBB,
-                          MachineBasicBlock::iterator I) const;
-
-public:
-  virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
-                                MachineBasicBlock *FBB,
-                                const SmallVectorImpl<MachineOperand> &Cond,
-                                DebugLoc DL) const;
-  virtual void copyPhysReg(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator MI, DebugLoc DL,
-                           unsigned DestReg, unsigned SrcReg,
-                           bool KillSrc) const;
-  virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
-                                   MachineBasicBlock::iterator MBBI,
-                                   unsigned SrcReg, bool isKill, int FrameIndex,
-                                   const TargetRegisterClass *RC,
-                                   const TargetRegisterInfo *TRI) const;
-
-  virtual void loadRegFromStackSlot(MachineBasicBlock &MBB,
-                                    MachineBasicBlock::iterator MBBI,
-                                    unsigned DestReg, int FrameIndex,
-                                    const TargetRegisterClass *RC,
-                                    const TargetRegisterInfo *TRI) const;
-
-  virtual bool expandPostRAPseudo(MachineBasicBlock::iterator MI) const;
-
-  virtual MachineInstr* emitFrameIndexDebugValue(MachineFunction &MF,
-                                                 int FrameIx, uint64_t Offset,
-                                                 const MDNode *MDPtr,
-                                                 DebugLoc DL) const;
-
-  virtual
-  bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
-
-  /// Insert nop instruction when hazard condition is found
-  virtual void insertNoop(MachineBasicBlock &MBB,
-                          MachineBasicBlock::iterator MI) const;
+  virtual unsigned GetOppositeBranchOpc(unsigned Opc) const = 0;
 
   /// Return the number of bytes of code the specified instruction may be.
   unsigned GetInstSizeInBytes(const MachineInstr *MI) const;
+
+protected:
+  bool isZeroImm(const MachineOperand &op) const;
+
+  MachineMemOperand *GetMemOperand(MachineBasicBlock &MBB, int FI,
+                                   unsigned Flag) const;
+
+private:
+  virtual unsigned GetAnalyzableBrOpc(unsigned Opc) const = 0;
+
+  void AnalyzeCondBr(const MachineInstr *Inst, unsigned Opc,
+                     MachineBasicBlock *&BB,
+                     SmallVectorImpl<MachineOperand> &Cond) const;
+
+  void BuildCondBr(MachineBasicBlock &MBB, MachineBasicBlock *TBB, DebugLoc DL,
+                   const SmallVectorImpl<MachineOperand>& Cond) const;
 };
 
 namespace Mips {
-  /// GetOppositeBranchOpc - Return the inverse of the specified
-  /// opcode, e.g. turning BEQ to BNE.
-  unsigned GetOppositeBranchOpc(unsigned Opc);
-
   /// Emit a series of instructions to load an immediate. All instructions
   /// except for the last one are emitted. The function returns the number of
   /// MachineInstrs generated. The opcode-immediate pair of the last
