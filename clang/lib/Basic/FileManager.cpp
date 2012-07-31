@@ -223,6 +223,10 @@ void FileManager::removeStatCache(FileSystemStatCache *statCache) {
   PrevCache->setNextStatCache(statCache->getNextStatCache());
 }
 
+void FileManager::clearStatCaches() {
+  StatCache.reset(0);
+}
+
 /// \brief Retrieve the directory that the given file name resides in.
 /// Filename can point to either a real file or a virtual file.
 static const DirectoryEntry *getDirectoryFromFile(FileManager &FileMgr,

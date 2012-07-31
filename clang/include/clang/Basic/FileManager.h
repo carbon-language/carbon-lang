@@ -186,6 +186,9 @@ public:
   /// \brief Removes the specified FileSystemStatCache object from the manager.
   void removeStatCache(FileSystemStatCache *statCache);
 
+  /// \brief Removes all FileSystemStatCache objects from the manager.
+  void clearStatCaches();
+
   /// \brief Lookup, cache, and verify the specified directory (real or
   /// virtual).
   ///

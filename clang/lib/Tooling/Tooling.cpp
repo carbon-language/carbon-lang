@@ -212,6 +212,7 @@ bool ToolInvocation::runInvocation(
   const bool Success = Compiler.ExecuteAction(*ScopedToolAction);
 
   Compiler.resetAndLeakFileManager();
+  Files->clearStatCaches();
   return Success;
 }
 
