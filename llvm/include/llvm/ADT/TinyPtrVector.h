@@ -30,7 +30,7 @@ public:
   typedef typename VecTy::value_type value_type;
 
   llvm::PointerUnion<EltTy, VecTy*> Val;
-  
+
   TinyPtrVector() {}
   TinyPtrVector(const TinyPtrVector &RHS) : Val(RHS.Val) {
     if (VecTy *V = Val.template dyn_cast<VecTy*>())
@@ -45,7 +45,7 @@ public:
     if (VecTy *V = Val.template dyn_cast<VecTy*>())
       delete V;
   }
-  
+
   // implicit conversion operator to ArrayRef.
   operator ArrayRef<EltTy>() const {
     if (Val.isNull())
@@ -54,7 +54,7 @@ public:
       return *Val.getAddrOfPtr1();
     return *Val.template get<VecTy*>();
   }
-  
+
   bool empty() const {
     // This vector can be empty if it contains no element, or if it
     // contains a pointer to an empty vector.
@@ -63,7 +63,7 @@ public:
       return Vec->empty();
     return false;
   }
-  
+
   unsigned size() const {
     if (empty())
       return 0;
@@ -71,21 +71,21 @@ public:
       return 1;
     return Val.template get<VecTy*>()->size();
   }
-  
+
   typedef const EltTy *const_iterator;
   typedef EltTy *iterator;
 
   iterator begin() {
     if (Val.template is<EltTy>())
       return Val.getAddrOfPtr1();
-    
+
     return Val.template get<VecTy *>()->begin();
 
   }
   iterator end() {
     if (Val.template is<EltTy>())
       return begin() + (Val.isNull() ? 0 : 1);
-    
+
     return Val.template get<VecTy *>()->end();
   }
 
@@ -103,19 +103,19 @@ public:
       assert(i == 0 && "tinyvector index out of range");
       return V;
     }
-    
-    assert(i < Val.template get<VecTy*>()->size() && 
+
+    assert(i < Val.template get<VecTy*>()->size() &&
            "tinyvector index out of range");
     return (*Val.template get<VecTy*>())[i];
   }
-  
+
   EltTy front() const {
     assert(!empty() && "vector empty");
     if (EltTy V = Val.template dyn_cast<EltTy>())
       return V;
     return Val.template get<VecTy*>()->front();
   }
-  
+
   EltTy back() const {
     assert(!empty() && "vector empty");
     if (EltTy V = Val.template dyn_cast<EltTy>())
@@ -123,26 +123,25 @@ public:
     return Val.template get<VecTy*>()->back();
   }
 
-  
   void push_back(EltTy NewVal) {
     assert(NewVal != 0 && "Can't add a null value");
-    
+
     // If we have nothing, add something.
     if (Val.isNull()) {
       Val = NewVal;
       return;
     }
-    
+
     // If we have a single value, convert to a vector.
     if (EltTy V = Val.template dyn_cast<EltTy>()) {
       Val = new VecTy();
       Val.template get<VecTy*>()->push_back(V);
     }
-    
+
     // Add the new value, we know we have a vector.
     Val.template get<VecTy*>()->push_back(NewVal);
   }
-  
+
   void pop_back() {
     // If we have a single value, convert to empty.
     if (Val.template is<EltTy>())
@@ -151,7 +150,6 @@ public:
       Vec->pop_back();
   }
 
-  
   void clear() {
     // If we have a single value, convert to empty.
     if (Val.template is<EltTy>()) {
@@ -175,7 +173,7 @@ public:
     }
     return end();
   }
-  
+
 private:
   void operator=(const TinyPtrVector&); // NOT IMPLEMENTED YET.
 #if LLVM_USE_RVALUE_REFERENCES
