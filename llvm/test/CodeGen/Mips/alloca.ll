@@ -4,14 +4,10 @@ define i32 @twoalloca(i32 %size) nounwind {
 entry:
 ; CHECK: subu  $[[T0:[0-9]+]], $sp, $[[SZ:[0-9]+]]
 ; CHECK: addu  $sp, $zero, $[[T0]]
-; CHECK: addiu $[[T1:[0-9]+]], $sp, [[OFF:[0-9]+]]
 ; CHECK: subu  $[[T2:[0-9]+]], $sp, $[[SZ]]
 ; CHECK: addu  $sp, $zero, $[[T2]]
-; CHECK: addiu $[[T3:[0-9]+]], $sp, [[OFF]]
-; CHECK: lw    $[[T4:[0-9]+]], %call16(foo)
-; CHECK: addu  $25, $zero, $[[T4]]
-; CHECK: addu  $4, $zero, $[[T1]]
-; CHECK: jalr  $25
+; CHECK: addu  $4, $zero, $[[T0]]
+; CHECK: addu  $4, $zero, $[[T2]]
   %tmp1 = alloca i8, i32 %size, align 4
   %add.ptr = getelementptr inbounds i8* %tmp1, i32 5
   store i8 97, i8* %add.ptr, align 1
@@ -34,7 +30,6 @@ entry:
 ; CHECK: alloca2
 ; CHECK: subu  $[[T0:[0-9]+]], $sp
 ; CHECK: addu  $sp, $zero, $[[T0]]
-; CHECK: addiu $[[T1:[0-9]+]], $sp
 
   %tmp1 = alloca i8, i32 %size, align 4
   %0 = bitcast i8* %tmp1 to i32*
@@ -42,7 +37,7 @@ entry:
   br i1 %cmp, label %if.then, label %if.else
 
 if.then:                                          ; preds = %entry
-; CHECK: addiu $4, $[[T1]], 40
+; CHECK: addiu $4, $[[T0]], 40
 
   %add.ptr = getelementptr inbounds i8* %tmp1, i32 40
   %1 = bitcast i8* %add.ptr to i32*
@@ -52,7 +47,7 @@ if.then:                                          ; preds = %entry
   br label %if.end
 
 if.else:                                          ; preds = %entry
-; CHECK: addiu $4, $[[T1]], 12
+; CHECK: addiu $4, $[[T0]], 12
 
   %add.ptr5 = getelementptr inbounds i8* %tmp1, i32 12
   %2 = bitcast i8* %add.ptr5 to i32*
@@ -60,7 +55,7 @@ if.else:                                          ; preds = %entry
   br label %if.end
 
 if.end:                                           ; preds = %if.else, %if.then
-; CHECK: lw  $5, 0($[[T1]])
+; CHECK: lw  $5, 0($[[T0]])
 ; CHECK: lw  $25, %call16(printf)
 
   %.pre-phi = phi i32* [ %2, %if.else ], [ %.pre, %if.then ]

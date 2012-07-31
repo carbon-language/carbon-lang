@@ -157,7 +157,6 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::SETCC,              MVT::f32,   Custom);
   setOperationAction(ISD::SETCC,              MVT::f64,   Custom);
   setOperationAction(ISD::BRCOND,             MVT::Other, Custom);
-  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32,   Custom);
   setOperationAction(ISD::VASTART,            MVT::Other, Custom);
   setOperationAction(ISD::FCOPYSIGN,          MVT::f32,   Custom);
   setOperationAction(ISD::FCOPYSIGN,          MVT::f64,   Custom);
@@ -178,7 +177,6 @@ MipsTargetLowering(MipsTargetMachine &TM)
     setOperationAction(ISD::JumpTable,          MVT::i64,   Custom);
     setOperationAction(ISD::ConstantPool,       MVT::i64,   Custom);
     setOperationAction(ISD::SELECT,             MVT::i64,   Custom);
-    setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64,   Custom);
     setOperationAction(ISD::LOAD,               MVT::i64,   Custom);
     setOperationAction(ISD::STORE,              MVT::i64,   Custom);
   }
@@ -217,6 +215,8 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::CTLZ_ZERO_UNDEF,   MVT::i64,   Expand);
   setOperationAction(ISD::ROTL,              MVT::i32,   Expand);
   setOperationAction(ISD::ROTL,              MVT::i64,   Expand);
+  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32,  Expand);
+  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64,  Expand);
 
   if (!Subtarget->hasMips32r2())
     setOperationAction(ISD::ROTR, MVT::i32,   Expand);
@@ -792,7 +792,6 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const
   {
     case ISD::BRCOND:             return LowerBRCOND(Op, DAG);
     case ISD::ConstantPool:       return LowerConstantPool(Op, DAG);
-    case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG);
     case ISD::GlobalAddress:      return LowerGlobalAddress(Op, DAG);
     case ISD::BlockAddress:       return LowerBlockAddress(Op, DAG);
     case ISD::GlobalTLSAddress:   return LowerGlobalTLSAddress(Op, DAG);
@@ -1501,42 +1500,6 @@ MipsTargetLowering::EmitAtomicCmpSwapPartword(MachineInstr *MI,
 //===----------------------------------------------------------------------===//
 //  Misc Lower Operation implementation
 //===----------------------------------------------------------------------===//
-SDValue MipsTargetLowering::
-LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const
-{
-  MachineFunction &MF = DAG.getMachineFunction();
-  MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
-  unsigned SP = IsN64 ? Mips::SP_64 : Mips::SP;
-
-  assert(getTargetMachine().getFrameLowering()->getStackAlignment() >=
-         cast<ConstantSDNode>(Op.getOperand(2).getNode())->getZExtValue() &&
-         "Cannot lower if the alignment of the allocated space is larger than \
-          that of the stack.");
-
-  SDValue Chain = Op.getOperand(0);
-  SDValue Size = Op.getOperand(1);
-  DebugLoc dl = Op.getDebugLoc();
-
-  // Get a reference from Mips stack pointer
-  SDValue StackPointer = DAG.getCopyFromReg(Chain, dl, SP, getPointerTy());
-
-  // Subtract the dynamic size from the actual stack size to
-  // obtain the new stack size.
-  SDValue Sub = DAG.getNode(ISD::SUB, dl, getPointerTy(), StackPointer, Size);
-
-  // The Sub result contains the new stack start address, so it
-  // must be placed in the stack pointer register.
-  Chain = DAG.getCopyToReg(StackPointer.getValue(1), dl, SP, Sub, SDValue());
-
-  // This node always has two return values: a new stack pointer
-  // value and a chain
-  SDVTList VTLs = DAG.getVTList(getPointerTy(), MVT::Other);
-  SDValue Ptr = DAG.getFrameIndex(MipsFI->getDynAllocFI(), getPointerTy());
-  SDValue Ops[] = { Chain, Ptr, Chain.getValue(1) };
-
-  return DAG.getNode(MipsISD::DynAlloc, dl, VTLs, Ops, 3);
-}
-
 SDValue MipsTargetLowering::
 LowerBRCOND(SDValue Op, SelectionDAG &DAG) const
 {
@@ -2691,18 +2654,8 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                         IsN64 ? Mips::SP_64 : Mips::SP,
                                         getPointerTy());
 
-  // Get the frame index of the stack frame object that points to the location
-  // of dynamically allocated area on the stack.
-  int DynAllocFI = MipsFI->getDynAllocFI();
-
-  if (MipsFI->getMaxCallFrameSize() < NextStackOffset) {
+  if (MipsFI->getMaxCallFrameSize() < NextStackOffset)
     MipsFI->setMaxCallFrameSize(NextStackOffset);
-
-    // Set the offsets relative to $sp of the $gp restore slot and dynamically
-    // allocated stack space. These offsets must be aligned to a boundary
-    // determined by the stack alignment of the ABI.
-    MFI->setObjectOffset(DynAllocFI, NextStackOffset);
-  }
 
   // With EABI is it possible to have 16 args on registers.
   SmallVector<std::pair<unsigned, SDValue>, 16> RegsToPass;

@@ -199,7 +199,7 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
   // getFrameRegister() returns.
   unsigned FrameReg;
 
-  if (MipsFI->isOutArgFI(FrameIndex) || MipsFI->isDynAllocFI(FrameIndex) ||
+  if (MipsFI->isOutArgFI(FrameIndex) ||
       (FrameIndex >= MinCSFI && FrameIndex <= MaxCSFI))
     FrameReg = Subtarget.isABI_N64() ? Mips::SP_64 : Mips::SP;
   else
@@ -214,7 +214,7 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
   //   incoming argument, callee-saved register location or local variable.
   int64_t Offset;
 
-  if (MipsFI->isOutArgFI(FrameIndex) || MipsFI->isDynAllocFI(FrameIndex))
+  if (MipsFI->isOutArgFI(FrameIndex))
     Offset = spOffset;
   else
     Offset = spOffset + (int64_t)stackSize;
