@@ -27,6 +27,8 @@ template <typename EltTy>
 class TinyPtrVector {
 public:
   typedef llvm::SmallVector<EltTy, 4> VecTy;
+  typedef typename VecTy::value_type value_type;
+
   llvm::PointerUnion<EltTy, VecTy*> Val;
   
   TinyPtrVector() {}
@@ -74,9 +76,6 @@ public:
   typedef EltTy *iterator;
 
   iterator begin() {
-    if (empty())
-      return 0;
-    
     if (Val.template is<EltTy>())
       return Val.getAddrOfPtr1();
     
@@ -84,11 +83,8 @@ public:
 
   }
   iterator end() {
-    if (empty())
-      return 0;
-    
     if (Val.template is<EltTy>())
-      return begin() + 1;
+      return begin() + (Val.isNull() ? 0 : 1);
     
     return Val.template get<VecTy *>()->end();
   }
@@ -177,8 +173,7 @@ public:
       // benefit to collapsing back to a pointer
       return Vec->erase(I);
     }
-
-    return 0;
+    return end();
   }
   
 private:

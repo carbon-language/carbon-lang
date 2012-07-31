@@ -26,6 +26,7 @@ add_llvm_unittest(ADTTests
   SparseSetTest.cpp
   StringMapTest.cpp
   StringRefTest.cpp
+  TinyPtrVectorTest.cpp
   TripleTest.cpp
   TwineTest.cpp
   VariadicFunctionTest.cpp
