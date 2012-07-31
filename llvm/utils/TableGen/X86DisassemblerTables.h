@@ -42,13 +42,13 @@ private:
   /// [4] three-byte opcodes of the form 0f a6 __
   /// [5] three-byte opcodes of the form 0f a7 __
   ContextDecision* Tables[6];
-  
+
   /// The instruction information table
   std::vector<InstructionSpecifier> InstructionSpecifiers;
-  
+
   /// True if there are primary decode conflicts in the instruction set
   bool HasConflicts;
-  
+
   /// emitOneID - Emits a table entry for a single instruction entry, at the
   ///   innermost level of the structure hierarchy.  The entry is printed out
   ///   in the format "nnnn, /* MNEMONIC */" where nnnn is the ID in decimal,
@@ -64,7 +64,7 @@ private:
                  uint32_t &i,
                  InstrUID id,
                  bool addComma) const;
-  
+
   /// emitModRMDecision - Emits a table of entries corresponding to a single
   ///   ModR/M decision.  Compacts the ModR/M decision if possible.  ModR/M
   ///   decisions are printed as:
@@ -77,12 +77,12 @@ private:
   ///   where nnnn is a unique ID for the corresponding table of IDs.
   ///   TYPE indicates whether the table has one entry that is the same
   ///   regardless of ModR/M byte, two entries - one for bytes 0x00-0xbf and one
-  ///   for bytes 0xc0-0xff -, or 256 entries, one for each possible byte.  
+  ///   for bytes 0xc0-0xff -, or 256 entries, one for each possible byte.
   ///   nnnn is the number of a table for looking up these values.  The tables
   ///   are written separately so that tables consisting entirely of zeros will
   ///   not be duplicated.  (These all have the name modRMEmptyTable.)  A table
   ///   is printed as:
-  ///   
+  ///
   ///   InstrUID modRMTablennnn[k] = {
   ///     nnnn, /* MNEMONIC */
   ///     ...
@@ -100,7 +100,7 @@ private:
                          uint32_t &i1,
                          uint32_t &i2,
                          ModRMDecision &decision) const;
-  
+
   /// emitOpcodeDecision - Emits an OpcodeDecision and all its subsidiary ModR/M
   ///   decisions.  An OpcodeDecision is printed as:
   ///
@@ -129,8 +129,8 @@ private:
                           uint32_t &i1,
                           uint32_t &i2,
                           OpcodeDecision &decision) const;
-  
-  /// emitContextDecision - Emits a ContextDecision and all its subsidiary 
+
+  /// emitContextDecision - Emits a ContextDecision and all its subsidiary
   ///   Opcode and ModRMDecisions.  A ContextDecision is printed as:
   ///
   ///   struct ContextDecision NAME = {
@@ -163,10 +163,10 @@ private:
   void emitContextDecision(raw_ostream &o1,
                            raw_ostream &o2,
                            uint32_t &i1,
-                           uint32_t &i2,                           
+                           uint32_t &i2,
                            ContextDecision &decision,
                            const char* name) const;
-  
+
   /// emitInstructionInfo - Prints the instruction specifier table, which has
   ///   one entry for each instruction, and contains name and operand
   ///   information.  This table is printed as:
@@ -187,17 +187,17 @@ private:
   ///   };
   ///
   ///   k is the total number of instructions.
-  ///   nnnn is the ID of the current instruction (0-based).  This table 
+  ///   nnnn is the ID of the current instruction (0-based).  This table
   ///   includes entries for non-instructions like PHINODE.
   ///   0xnn is the lowest possible opcode for the current instruction, used for
   ///   AddRegFrm instructions to compute the operand's value.
   ///   ENCODING and TYPE describe the encoding and type for a single operand.
   ///
-  /// @param o  - The output stream to which the instruction table should be 
+  /// @param o  - The output stream to which the instruction table should be
   ///             written.
   /// @param i  - The indent level for use with the stream.
   void emitInstructionInfo(raw_ostream &o, uint32_t &i) const;
-  
+
   /// emitContextTable - Prints the table that is used to translate from an
   ///   instruction attribute mask to an instruction context.  This table is
   ///   printed as:
@@ -213,7 +213,7 @@ private:
   /// @param o  - The output stream to which the context table should be written.
   /// @param i  - The indent level for use with the stream.
   void emitContextTable(raw_ostream &o, uint32_t &i) const;
-  
+
   /// emitContextDecisions - Prints all four ContextDecision structures using
   ///   emitContextDecision().
   ///
@@ -225,7 +225,7 @@ private:
   void emitContextDecisions(raw_ostream &o1,
                             raw_ostream &o2,
                             uint32_t &i1,
-                            uint32_t &i2) const; 
+                            uint32_t &i2) const;
 
   /// setTableFields - Uses a ModRMFilter to set the appropriate entries in a
   ///   ModRMDecision to refer to a particular instruction ID.
@@ -241,14 +241,14 @@ private:
 public:
   /// Constructor - Allocates space for the class decisions and clears them.
   DisassemblerTables();
-  
+
   ~DisassemblerTables();
-  
+
   /// emit - Emits the instruction table, context table, and class decisions.
   ///
   /// @param o  - The output stream to print the tables to.
   void emit(raw_ostream &o) const;
-  
+
   /// setTableFields - Uses the opcode type, instruction context, opcode, and a
   ///   ModRMFilter as criteria to set a particular set of entries in the
   ///   decode tables to point to a specific uid.
@@ -268,24 +268,24 @@ public:
                       const ModRMFilter &filter,
                       InstrUID uid,
                       bool is32bit,
-                      bool ignoresVEX_L);  
-  
+                      bool ignoresVEX_L);
+
   /// specForUID - Returns the instruction specifier for a given unique
   ///   instruction ID.  Used when resolving collisions.
   ///
   /// @param uid  - The unique ID of the instruction.
-  /// @return     - A reference to the instruction specifier. 
+  /// @return     - A reference to the instruction specifier.
   InstructionSpecifier& specForUID(InstrUID uid) {
     if (uid >= InstructionSpecifiers.size())
       InstructionSpecifiers.resize(uid + 1);
-    
+
     return InstructionSpecifiers[uid];
   }
-  
+
   // hasConflicts - Reports whether there were primary decode conflicts
   //   from any instructions added to the tables.
   // @return  - true if there were; false otherwise.
-  
+
   bool hasConflicts() {
     return HasConflicts;
   }
