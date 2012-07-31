@@ -16,6 +16,8 @@
   [a instanceMethod:0 withOther:1];
   [self someMethod:a];
   [super instanceMethod];
+  [&,a ]{};
+  [a,self instanceMethod:0 withOther:1]{};  
 }
 
 @end
@@ -38,3 +40,12 @@
 // CHECK-CC4: NotImplemented:{ResultType A *}{TypedText super} (40)
 
 // RUN: c-index-test -code-completion-at=%s:18:10 -x objective-c++ -std=c++11 %s | FileCheck -check-prefix=CHECK-CC1 %s
+
+// RUN: c-index-test -code-completion-at=%s:19:8 -x objective-c++ -std=c++11 %s | FileCheck -check-prefix=CHECK-CC5 %s
+// CHECK-CC5: NotImplemented:{ResultType SEL}{TypedText _cmd} (80)
+// CHECK-CC5-NEXT: NotImplemented:{ResultType B *}{TypedText self} (34)
+
+// RUN: c-index-test -code-completion-at=%s:20:11 -x objective-c++ -std=c++11 %s | FileCheck -check-prefix=CHECK-CC6 %s
+// CHECK-CC6: ObjCInstanceMethodDecl:{ResultType id}{TypedText instanceMethod:}{Placeholder (int)}{HorizontalSpace  }{TypedText withOther:}{Placeholder (int)} (37) (parent: ObjCInterfaceDecl 'A')
+// CHECK-CC6-NEXT: ObjCInstanceMethodDecl:{ResultType id}{TypedText someMethod:}{Placeholder (A *)} (32) (parent: ObjCImplementationDecl 'B')
+

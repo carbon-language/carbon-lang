@@ -646,7 +646,9 @@ llvm::Optional<unsigned> Parser::ParseLambdaIntroducer(LambdaIntroducer &Intro){
         // in Objective-C, where this is Almost Surely meant to be a message
         // send. In that case, fail here and let the ObjC message
         // expression parser perform the completion.
-        if (Tok.is(tok::code_completion) && !getLangOpts().ObjC1) {
+        if (Tok.is(tok::code_completion) &&
+            !(getLangOpts().ObjC1 && Intro.Default == LCD_None &&
+              !Intro.Captures.empty())) {
           Actions.CodeCompleteLambdaIntroducer(getCurScope(), Intro, 
                                                /*AfterAmpersand=*/false);
           ConsumeCodeCompletionToken();
