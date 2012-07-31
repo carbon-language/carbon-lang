@@ -100,8 +100,8 @@ MachineTraceMetrics::getResources(const MachineBasicBlock *MBB) {
 //===----------------------------------------------------------------------===//
 
 MachineTraceMetrics::Ensemble::Ensemble(MachineTraceMetrics *ct)
-  : CT(*ct) {
-  BlockInfo.resize(CT.BlockInfo.size());
+  : MTM(*ct) {
+  BlockInfo.resize(MTM.BlockInfo.size());
 }
 
 // Virtual destructor serves as an anchor.
@@ -109,7 +109,7 @@ MachineTraceMetrics::Ensemble::~Ensemble() {}
 
 const MachineLoop*
 MachineTraceMetrics::Ensemble::getLoopFor(const MachineBasicBlock *MBB) const {
-  return CT.Loops->getLoopFor(MBB);
+  return MTM.Loops->getLoopFor(MBB);
 }
 
 // Update resource-related information in the TraceBlockInfo for MBB.
@@ -129,7 +129,7 @@ computeDepthResources(const MachineBasicBlock *MBB) {
   // predecessor is always computed first.
   TraceBlockInfo *PredTBI = &BlockInfo[TBI->Pred->getNumber()];
   assert(PredTBI->hasValidDepth() && "Trace above has not been computed yet");
-  const FixedBlockInfo *PredFBI = CT.getResources(TBI->Pred);
+  const FixedBlockInfo *PredFBI = MTM.getResources(TBI->Pred);
   TBI->InstrDepth = PredTBI->InstrDepth + PredFBI->InstrCount;
   TBI->Head = PredTBI->Head;
 }
@@ -141,7 +141,7 @@ computeHeightResources(const MachineBasicBlock *MBB) {
   TraceBlockInfo *TBI = &BlockInfo[MBB->getNumber()];
 
   // Compute resources for the current block.
-  TBI->InstrHeight = CT.getResources(MBB)->InstrCount;
+  TBI->InstrHeight = MTM.getResources(MBB)->InstrCount;
 
   // The trace tail is done.
   if (!TBI->Succ) {
@@ -208,8 +208,8 @@ class MinInstrCountEnsemble : public MachineTraceMetrics::Ensemble {
   const MachineBasicBlock *pickTraceSucc(const MachineBasicBlock*);
 
 public:
-  MinInstrCountEnsemble(MachineTraceMetrics *ct)
-    : MachineTraceMetrics::Ensemble(ct) {}
+  MinInstrCountEnsemble(MachineTraceMetrics *mtm)
+    : MachineTraceMetrics::Ensemble(mtm) {}
 };
 }
 
@@ -222,7 +222,7 @@ MinInstrCountEnsemble::pickTracePred(const MachineBasicBlock *MBB) {
   // Don't leave loops, and never follow back-edges.
   if (CurLoop && MBB == CurLoop->getHeader())
     return 0;
-  unsigned CurCount = CT.getResources(MBB)->InstrCount;
+  unsigned CurCount = MTM.getResources(MBB)->InstrCount;
   const MachineBasicBlock *Best = 0;
   unsigned BestDepth = 0;
   for (MachineBasicBlock::const_pred_iterator
@@ -360,7 +360,7 @@ void MachineTraceMetrics::Ensemble::computeTrace(const MachineBasicBlock *MBB) {
   DEBUG(dbgs() << "Computing " << getName() << " trace through BB#"
                << MBB->getNumber() << '\n');
   // Set up loop bounds for the backwards post-order traversal.
-  LoopBounds Bounds(BlockInfo, CT.Loops);
+  LoopBounds Bounds(BlockInfo, MTM.Loops);
 
   // Run an upwards post-order search for the trace start.
   Bounds.Downward = false;
@@ -462,12 +462,12 @@ MachineTraceMetrics::Ensemble::invalidate(const MachineBasicBlock *BadMBB) {
 
 void MachineTraceMetrics::Ensemble::verify() const {
 #ifndef NDEBUG
-  assert(BlockInfo.size() == CT.MF->getNumBlockIDs() &&
+  assert(BlockInfo.size() == MTM.MF->getNumBlockIDs() &&
          "Outdated BlockInfo size");
   for (unsigned Num = 0, e = BlockInfo.size(); Num != e; ++Num) {
     const TraceBlockInfo &TBI = BlockInfo[Num];
     if (TBI.hasValidDepth() && TBI.Pred) {
-      const MachineBasicBlock *MBB = CT.MF->getBlockNumbered(Num);
+      const MachineBasicBlock *MBB = MTM.MF->getBlockNumbered(Num);
       assert(MBB->isPredecessor(TBI.Pred) && "CFG doesn't match trace");
       assert(BlockInfo[TBI.Pred->getNumber()].hasValidDepth() &&
              "Trace is broken, depth should have been invalidated.");
@@ -475,7 +475,7 @@ void MachineTraceMetrics::Ensemble::verify() const {
       assert(!(Loop && MBB == Loop->getHeader()) && "Trace contains backedge");
     }
     if (TBI.hasValidHeight() && TBI.Succ) {
-      const MachineBasicBlock *MBB = CT.MF->getBlockNumbered(Num);
+      const MachineBasicBlock *MBB = MTM.MF->getBlockNumbered(Num);
       assert(MBB->isSuccessor(TBI.Succ) && "CFG doesn't match trace");
       assert(BlockInfo[TBI.Succ->getNumber()].hasValidHeight() &&
              "Trace is broken, height should have been invalidated.");

@@ -176,7 +176,7 @@ public:
     void computeHeightResources(const MachineBasicBlock*);
 
   protected:
-    MachineTraceMetrics &CT;
+    MachineTraceMetrics &MTM;
     virtual const MachineBasicBlock *pickTracePred(const MachineBasicBlock*) =0;
     virtual const MachineBasicBlock *pickTraceSucc(const MachineBasicBlock*) =0;
     explicit Ensemble(MachineTraceMetrics*);
