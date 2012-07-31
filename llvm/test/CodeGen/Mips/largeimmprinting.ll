@@ -6,7 +6,7 @@
 
 define void @f() nounwind {
 entry:
-; CHECK:  lui $at, 65534
+; CHECK:  lui $at, 65535
 ; CHECK:  addiu $at, $at, -16
 ; CHECK:  addu  $sp, $sp, $at
 

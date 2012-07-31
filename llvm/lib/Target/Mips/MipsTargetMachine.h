@@ -32,7 +32,7 @@ class MipsTargetMachine : public LLVMTargetMachine {
   MipsSubtarget       Subtarget;
   const TargetData    DataLayout; // Calculates type size & alignment
   const MipsInstrInfo *InstrInfo;
-  MipsFrameLowering   FrameLowering;
+  const MipsFrameLowering *FrameLowering;
   MipsTargetLowering  TLInfo;
   MipsSelectionDAGInfo TSInfo;
   MipsJITInfo JITInfo;
@@ -49,7 +49,7 @@ public:
   virtual const MipsInstrInfo *getInstrInfo() const
   { return InstrInfo; }
   virtual const TargetFrameLowering *getFrameLowering() const
-  { return &FrameLowering; }
+  { return FrameLowering; }
   virtual const MipsSubtarget *getSubtargetImpl() const
   { return &Subtarget; }
   virtual const TargetData *getTargetData()    const

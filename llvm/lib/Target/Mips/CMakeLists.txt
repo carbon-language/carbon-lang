@@ -13,6 +13,7 @@ tablegen(LLVM MipsGenEDInfo.inc -gen-enhanced-disassembly-info)
 add_public_tablegen_target(MipsCommonTableGen)
 
 add_llvm_target(MipsCodeGen
+  Mips16FrameLowering.cpp
   Mips16InstrInfo.cpp
   MipsAnalyzeImmediate.cpp
   MipsAsmPrinter.cpp
@@ -27,6 +28,7 @@ add_llvm_target(MipsCodeGen
   MipsMCInstLower.cpp
   MipsMachineFunction.cpp
   MipsRegisterInfo.cpp
+  MipsSEFrameLowering.cpp
   MipsSEInstrInfo.cpp
   MipsSubtarget.cpp
   MipsTargetMachine.cpp

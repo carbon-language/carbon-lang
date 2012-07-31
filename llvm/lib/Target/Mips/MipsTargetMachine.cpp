@@ -12,9 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "MipsTargetMachine.h"
-#include "MipsSEInstrInfo.h"
-#include "Mips16InstrInfo.h"
 #include "Mips.h"
+#include "Mips16FrameLowering.h"
+#include "Mips16InstrInfo.h"
+#include "MipsSEFrameLowering.h"
+#include "MipsSEInstrInfo.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -37,6 +39,18 @@ static const MipsInstrInfo *genInstrInfo(MipsTargetMachine &TM) {
     II = new MipsSEInstrInfo(TM);
 
   return II;
+}
+
+static const MipsFrameLowering *genFrameLowering(MipsTargetMachine &TM,
+                                                 const MipsSubtarget &ST) {
+  const MipsFrameLowering *FL;
+
+  if (TM.getSubtargetImpl()->inMips16Mode())
+    FL = new Mips16FrameLowering(ST);
+  else
+    FL = new MipsSEFrameLowering(ST);
+
+  return FL;
 }
 
 // DataLayout --> Big-endian, 32-bit pointer/ABI/alignment
@@ -62,7 +76,7 @@ MipsTargetMachine(const Target &T, StringRef TT,
                 "E-p:64:64:64-i8:8:32-i16:16:32-i64:64:64-f128:128:128-n32" :
                 "E-p:32:32:32-i8:8:32-i16:16:32-i64:64:64-n32")),
     InstrInfo(genInstrInfo(*this)),
-    FrameLowering(Subtarget),
+    FrameLowering(genFrameLowering(*this, Subtarget)),
     TLInfo(*this), TSInfo(*this), JITInfo() {
 }
 
