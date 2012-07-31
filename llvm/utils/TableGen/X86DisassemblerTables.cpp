@@ -170,9 +170,7 @@ static inline const char* stringForOperandEncoding(OperandEncoding encoding) {
   }
 }
 
-void DisassemblerTables::emitOneID(raw_ostream &o,
-                                   uint32_t &i,
-                                   InstrUID id,
+void DisassemblerTables::emitOneID(raw_ostream &o, uint32_t &i, InstrUID id,
                                    bool addComma) const {
   if (id)
     o.indent(i * 2) << format("0x%hx", id);
@@ -197,8 +195,7 @@ void DisassemblerTables::emitOneID(raw_ostream &o,
 ///
 /// @param o        - The output stream on which to emit the table.
 /// @param i        - The indentation level for that output stream.
-static void emitEmptyTable(raw_ostream &o, uint32_t &i)
-{
+static void emitEmptyTable(raw_ostream &o, uint32_t &i) {
   o.indent(i * 2) << "0x0, /* EmptyTable */\n";
 }
 
@@ -207,8 +204,7 @@ static void emitEmptyTable(raw_ostream &o, uint32_t &i)
 ///
 /// @param decision - The decision to be compacted.
 /// @return         - The compactest available representation for the decision.
-static ModRMDecisionType getDecisionType(ModRMDecision &decision)
-{
+static ModRMDecisionType getDecisionType(ModRMDecision &decision) {
   bool satisfiesOneEntry = true;
   bool satisfiesSplitRM = true;
   bool satisfiesSplitReg = true;
@@ -254,8 +250,7 @@ static ModRMDecisionType getDecisionType(ModRMDecision &decision)
 /// @param dt - The decision type.
 /// @return   - A pointer to the statically-allocated string (e.g.,
 ///             "MODRM_ONEENTRY" for MODRM_ONEENTRY).
-static const char* stringForDecisionType(ModRMDecisionType dt)
-{
+static const char* stringForDecisionType(ModRMDecisionType dt) {
 #define ENUM_ENTRY(n) case n: return #n;
   switch (dt) {
     default:
@@ -271,8 +266,7 @@ static const char* stringForDecisionType(ModRMDecisionType dt)
 /// @param mt - The modifier type.
 /// @return   - A pointer to the statically-allocated string (e.g.,
 ///             "MODIFIER_NONE" for MODIFIER_NONE).
-static const char* stringForModifierType(ModifierType mt)
-{
+static const char* stringForModifierType(ModifierType mt) {
 #define ENUM_ENTRY(n) case n: return #n;
   switch(mt) {
     default:
@@ -300,12 +294,9 @@ DisassemblerTables::~DisassemblerTables() {
     delete Tables[i];
 }
 
-void DisassemblerTables::emitModRMDecision(raw_ostream &o1,
-                                           raw_ostream &o2,
-                                           uint32_t &i1,
-                                           uint32_t &i2,
-                                           ModRMDecision &decision)
-  const {
+void DisassemblerTables::emitModRMDecision(raw_ostream &o1, raw_ostream &o2,
+                                           uint32_t &i1, uint32_t &i2,
+                                           ModRMDecision &decision) const {
   static uint64_t sTableNumber = 0;
   static uint64_t sEntryNumber = 1;
   ModRMDecisionType dt = getDecisionType(decision);
@@ -380,12 +371,9 @@ void DisassemblerTables::emitModRMDecision(raw_ostream &o1,
   ++sTableNumber;
 }
 
-void DisassemblerTables::emitOpcodeDecision(
-  raw_ostream &o1,
-  raw_ostream &o2,
-  uint32_t &i1,
-  uint32_t &i2,
-  OpcodeDecision &decision) const {
+void DisassemblerTables::emitOpcodeDecision(raw_ostream &o1, raw_ostream &o2,
+                                            uint32_t &i1, uint32_t &i2,
+                                            OpcodeDecision &decision) const {
   uint16_t index;
 
   o2.indent(i2) << "{ /* struct OpcodeDecision */" << "\n";
@@ -412,13 +400,10 @@ void DisassemblerTables::emitOpcodeDecision(
   o2.indent(i2) << "}" << "\n";
 }
 
-void DisassemblerTables::emitContextDecision(
-  raw_ostream &o1,
-  raw_ostream &o2,
-  uint32_t &i1,
-  uint32_t &i2,
-  ContextDecision &decision,
-  const char* name) const {
+void DisassemblerTables::emitContextDecision(raw_ostream &o1, raw_ostream &o2,
+                                             uint32_t &i1, uint32_t &i2,
+                                             ContextDecision &decision,
+                                             const char* name) const {
   o2.indent(i2) << "static const struct ContextDecision " << name << " = {\n";
   i2++;
   o2.indent(i2) << "{ /* opcodeDecisions */" << "\n";
@@ -593,11 +578,8 @@ void DisassemblerTables::emitContextTable(raw_ostream &o, uint32_t &i) const {
   o.indent(i * 2) << "};" << "\n";
 }
 
-void DisassemblerTables::emitContextDecisions(raw_ostream &o1,
-                                            raw_ostream &o2,
-                                            uint32_t &i1,
-                                            uint32_t &i2)
-  const {
+void DisassemblerTables::emitContextDecisions(raw_ostream &o1, raw_ostream &o2,
+                                             uint32_t &i1, uint32_t &i2) const {
   emitContextDecision(o1, o2, i1, i2, *Tables[0], ONEBYTE_STR);
   emitContextDecision(o1, o2, i1, i2, *Tables[1], TWOBYTE_STR);
   emitContextDecision(o1, o2, i1, i2, *Tables[2], THREEBYTE38_STR);
