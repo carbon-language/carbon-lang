@@ -1,4 +1,6 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core -analyzer-store=region -analyzer-constraints=range -verify -Wno-null-dereference %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core,debug.ExprInspection -analyzer-store=region -analyzer-constraints=range -verify -Wno-null-dereference %s
+
+void clang_analyzer_eval(bool);
 
 typedef typeof(sizeof(int)) size_t;
 void malloc (size_t);
@@ -54,4 +56,37 @@ char t6 (char* p) {
   *p = 'c'; // no-warning
   if (*p) return *p;
   return *(char*)0; // no-warning
+}
+
+
+// PR13440 / <rdar://problem/11977113>
+// Test that the array-to-pointer decay works for array references as well.
+// More generally, when we want an lvalue for a reference field, we still need
+// to do one level of load.
+namespace PR13440 {
+  typedef int T[1];
+  struct S {
+    T &x;
+
+    int *m() { return x; }
+  };
+
+  struct S2 {
+    int (&x)[1];
+
+    int *m() { return x; }
+  };
+
+  void test() {
+    int a[1];
+    S s = { a };
+    S2 s2 = { a };
+
+    if (s.x != a) return;
+    if (s2.x != a) return;
+
+    a[0] = 42;
+    clang_analyzer_eval(s.x[0] == 42); // expected-warning{{TRUE}}
+    clang_analyzer_eval(s2.x[0] == 42); // expected-warning{{TRUE}}
+  }
 }

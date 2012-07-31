@@ -1522,10 +1522,17 @@ void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
 
   // For all other cases, compute an lvalue.    
   SVal L = state->getLValue(field, baseExprVal);
-  if (M->isGLValue())
+  if (M->isGLValue()) {
+    if (field->getType()->isReferenceType()) {
+      if (const MemRegion *R = L.getAsRegion())
+        L = state->getSVal(R);
+      else
+        L = UnknownVal();
+    }
+
     Bldr.generateNode(M, Pred, state->BindExpr(M, LCtx, L), false, 0,
                       ProgramPoint::PostLValueKind);
-  else {
+  } else {
     Bldr.takeNodes(Pred);
     evalLoad(Dst, M, M, Pred, state, L);
     Bldr.addNodes(Dst);
