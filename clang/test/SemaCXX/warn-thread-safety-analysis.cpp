@@ -1702,7 +1702,7 @@ struct TestTryLock {
     bool b2 = b;
     if (cond)
       b = true;
-    if (b) {    // b should be unknown at this point, becuase of the join point
+    if (b) {    // b should be unknown at this point, because of the join point
       a = 8;    // expected-warning {{writing variable 'a' requires locking 'mu' exclusively}}
     }
     if (b2) {   // b2 should be known at this point.

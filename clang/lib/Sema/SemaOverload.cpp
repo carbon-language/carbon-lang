@@ -9332,7 +9332,7 @@ bool Sema::ResolveAndFixSingleFunctionTemplateSpecialization(
       return true;
     }
 
-    // Fix the expresion to refer to 'fn'.
+    // Fix the expression to refer to 'fn'.
     SingleFunctionExpression =
       Owned(FixOverloadedFunctionReference(SrcExpr.take(), found, fn));
 
