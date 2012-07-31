@@ -32,19 +32,72 @@ public:
   llvm::PointerUnion<EltTy, VecTy*> Val;
 
   TinyPtrVector() {}
-  TinyPtrVector(const TinyPtrVector &RHS) : Val(RHS.Val) {
-    if (VecTy *V = Val.template dyn_cast<VecTy*>())
-      Val = new VecTy(*V);
-  }
-#if LLVM_USE_RVALUE_REFERENCES
-  TinyPtrVector(TinyPtrVector &&RHS) : Val(RHS.Val) {
-    RHS.Val = (EltTy)0;
-  }
-#endif
   ~TinyPtrVector() {
     if (VecTy *V = Val.template dyn_cast<VecTy*>())
       delete V;
   }
+
+  TinyPtrVector(const TinyPtrVector &RHS) : Val(RHS.Val) {
+    if (VecTy *V = Val.template dyn_cast<VecTy*>())
+      Val = new VecTy(*V);
+  }
+  TinyPtrVector &operator=(const TinyPtrVector &RHS) {
+    if (this == &RHS)
+      return *this;
+    if (RHS.empty()) {
+      this->clear();
+      return *this;
+    }
+
+    // Try to squeeze into the single slot. If it won't fit, allocate a copied
+    // vector.
+    if (Val.template is<EltTy>()) {
+      if (RHS.size() == 1)
+        Val = RHS.front();
+      else
+        Val = new VecTy(*RHS.Val.template get<VecTy*>());
+      return *this;
+    }
+
+    // If we have a full vector allocated, try to re-use it.
+    if (RHS.Val.template is<EltTy>()) {
+      Val.template get<VecTy*>()->clear();
+      Val.template get<VecTy*>()->push_back(RHS.front());
+    } else {
+      *Val.template get<VecTy*>() = *RHS.Val.template get<VecTy*>();
+    }
+    return *this;
+  }
+
+#if LLVM_USE_RVALUE_REFERENCES
+  TinyPtrVector(TinyPtrVector &&RHS) : Val(RHS.Val) {
+    RHS.Val = (EltTy)0;
+  }
+  TinyPtrVector &operator=(TinyPtrVector &&RHS) {
+    if (this == &RHS)
+      return *this;
+    if (RHS.empty()) {
+      this->clear();
+      return *this;
+    }
+
+    // If this vector has been allocated on the heap, re-use it if cheap. If it
+    // would require more copying, just delete it and we'll steal the other
+    // side.
+    if (VecTy *V = Val.template dyn_cast<VecTy*>()) {
+      if (RHS.Val.template is<EltTy>()) {
+        V->clear();
+        V->push_back(RHS.front());
+        return *this;
+      }
+      delete V;
+    }
+
+    Val = RHS.Val;
+    RHS.Val = (EltTy)0;
+    return *this;
+  }
+#endif
 
   // implicit conversion operator to ArrayRef.
   operator ArrayRef<EltTy>() const {
@@ -173,12 +226,6 @@ public:
     }
     return end();
   }
-
-private:
-  void operator=(const TinyPtrVector&); // NOT IMPLEMENTED YET.
-#if LLVM_USE_RVALUE_REFERENCES
-  void operator=(TinyPtrVector&&); // NOT IMPLEMENTED YET.
-#endif
 };
 } // end namespace llvm
 
