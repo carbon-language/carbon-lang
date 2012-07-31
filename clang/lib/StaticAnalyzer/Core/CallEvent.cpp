@@ -393,6 +393,10 @@ const Decl *CXXInstanceCall::getRuntimeDefinition() const {
 
   // If the method is virtual, see if we can find the actual implementation
   // based on context-sensitivity.
+  // FIXME: Virtual method calls behave differently when an object is being
+  // constructed or destructed. It's not as simple as "no devirtualization"
+  // because a /partially/ constructed object can be referred to through a
+  // base pointer. We'll eventually want to use DynamicTypeInfo here.
   if (const CXXMethodDecl *Devirtualized = devirtualize(MD, getCXXThisVal()))
     return Devirtualized;
 
@@ -527,6 +531,10 @@ const Decl *CXXDestructorCall::getRuntimeDefinition() const {
 
   // If the method is virtual, see if we can find the actual implementation
   // based on context-sensitivity.
+  // FIXME: Virtual method calls behave differently when an object is being
+  // constructed or destructed. It's not as simple as "no devirtualization"
+  // because a /partially/ constructed object can be referred to through a
+  // base pointer. We'll eventually want to use DynamicTypeInfo here.
   if (const CXXMethodDecl *Devirtualized = devirtualize(MD, getCXXThisVal()))
     return Devirtualized;
 
