@@ -16,11 +16,17 @@
 
 namespace llvm {
 
+static void SuppressDiagnosticsOutput(const SMDiagnostic &, void *) {
+  // Prevent SourceMgr from writing errors to stderr 
+  // to reduce noise in unit test runs.
+}
+
 // Checks that the given input gives a parse error. Makes sure that an error
 // text is available and the parse fails.
 static void ExpectParseError(StringRef Message, StringRef Input) {
   SourceMgr SM;
   yaml::Stream Stream(Input, SM);
+  SM.setDiagHandler(SuppressDiagnosticsOutput);
   EXPECT_FALSE(Stream.validate()) << Message << ": " << Input;
   EXPECT_TRUE(Stream.failed()) << Message << ": " << Input;
 }
