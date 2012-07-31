@@ -101,7 +101,7 @@ class FPStore<bits<6> op, string opstr, RegisterClass RC, Operand MemOpnd>:
 }
 // FP indexed load.
 class FPIdxLoad<bits<6> funct, string opstr, RegisterClass DRC,
-                RegisterClass PRC, PatFrag FOp>:
+                RegisterClass PRC, SDPatternOperator FOp = null_frag>:
   FFMemIdx<funct, (outs DRC:$fd), (ins PRC:$base, PRC:$index),
            !strconcat(opstr, "\t$fd, $index($base)"),
            [(set DRC:$fd, (FOp (add PRC:$base, PRC:$index)))]> {
@@ -110,7 +110,7 @@ class FPIdxLoad<bits<6> funct, string opstr, RegisterClass DRC,
 
 // FP indexed store.
 class FPIdxStore<bits<6> funct, string opstr, RegisterClass DRC,
-                 RegisterClass PRC, PatFrag FOp>:
+                 RegisterClass PRC, SDPatternOperator FOp= null_frag>:
   FFMemIdx<funct, (outs), (ins DRC:$fs, PRC:$base, PRC:$index),
            !strconcat(opstr, "\t$fs, $index($base)"),
            [(FOp DRC:$fs, (add PRC:$base, PRC:$index))]> {
@@ -270,7 +270,7 @@ let Predicates = [NotN64, HasStandardEncoding] in {
 }
 
 let Predicates = [NotN64, HasMips64, HasStandardEncoding],
-    DecoderNamespace = "Mips64" in {
+  DecoderNamespace = "Mips64" in {
   def LDC164 : FPLoad<0x35, "ldc1", FGR64, mem>;
   def SDC164 : FPStore<0x3d, "sdc1", FGR64, mem>;
 }
@@ -283,9 +283,7 @@ let Predicates = [NotN64, NotMips64, HasStandardEncoding] in {
 // Indexed loads and stores.
 let Predicates = [HasMips32r2Or64, HasStandardEncoding] in {
   def LWXC1 : FPIdxLoad<0x0, "lwxc1", FGR32, CPURegs, load_a>;
-  def LUXC1 : FPIdxLoad<0x5, "luxc1", FGR32, CPURegs, load_u>;
   def SWXC1 : FPIdxStore<0x8, "swxc1", FGR32, CPURegs, store_a>;
-  def SUXC1 : FPIdxStore<0xd, "suxc1", FGR32, CPURegs, store_u>;
 }
 
 let Predicates = [HasMips32r2, NotMips64, HasStandardEncoding] in {
@@ -301,11 +299,21 @@ let Predicates = [HasMips64, NotN64, HasStandardEncoding], DecoderNamespace="Mip
 // n64
 let Predicates = [IsN64, HasStandardEncoding], isCodeGenOnly=1 in {
   def LWXC1_P8   : FPIdxLoad<0x0, "lwxc1", FGR32, CPU64Regs, load_a>;
-  def LUXC1_P8   : FPIdxLoad<0x5, "luxc1", FGR32, CPU64Regs, load_u>;
   def LDXC164_P8 : FPIdxLoad<0x1, "ldxc1", FGR64, CPU64Regs, load_a>;
   def SWXC1_P8   : FPIdxStore<0x8, "swxc1", FGR32, CPU64Regs, store_a>;
-  def SUXC1_P8   : FPIdxStore<0xd, "suxc1", FGR32, CPU64Regs, store_u>;
   def SDXC164_P8 : FPIdxStore<0x9, "sdxc1", FGR64, CPU64Regs, store_a>;
+}
+
+// Load/store doubleword indexed unaligned.
+let Predicates = [NotMips64, HasStandardEncoding] in {
+  def LUXC1 : FPIdxLoad<0x5, "luxc1", AFGR64, CPURegs>;
+  def SUXC1 : FPIdxStore<0xd, "suxc1", AFGR64, CPURegs>;
+}
+
+let Predicates = [HasMips64, HasStandardEncoding],
+  DecoderNamespace="Mips64" in {
+  def LUXC164 : FPIdxLoad<0x5, "luxc1", FGR64, CPURegs>;
+  def SUXC164 : FPIdxStore<0xd, "suxc1", FGR64, CPURegs>;
 }
 
 /// Floating-point Aritmetic
@@ -465,18 +473,4 @@ let Predicates = [IsFP64bit, HasStandardEncoding] in {
 
   def : MipsPat<(f32 (fround FGR64:$src)), (CVT_S_D64 FGR64:$src)>;
   def : MipsPat<(f64 (fextend FGR32:$src)), (CVT_D64_S FGR32:$src)>;
-}
-
-// Patterns for unaligned floating point loads and stores.
-let Predicates = [HasMips32r2Or64, NotN64, HasStandardEncoding] in {
-  def : MipsPat<(f32 (load_u CPURegs:$addr)), (LUXC1 CPURegs:$addr, ZERO)>;
-  def : MipsPat<(store_u FGR32:$src, CPURegs:$addr),
-                (SUXC1 FGR32:$src, CPURegs:$addr, ZERO)>;
-}
-
-let Predicates = [IsN64, HasStandardEncoding] in {
-  def : MipsPat<(f32 (load_u CPU64Regs:$addr)),
-                (LUXC1_P8 CPU64Regs:$addr, ZERO_64)>;
-  def : MipsPat<(store_u FGR32:$src, CPU64Regs:$addr),
-                (SUXC1_P8 FGR32:$src, CPU64Regs:$addr, ZERO_64)>;
 }

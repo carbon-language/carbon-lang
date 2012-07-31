@@ -314,8 +314,6 @@ bool MipsTargetLowering::allowsUnalignedMemoryAccesses(EVT VT) const {
   case MVT::i64:
   case MVT::i32:
     return true;
-  case MVT::f32:
-    return Subtarget->hasMips32r2Or64();
   default:
     return false;
   }
