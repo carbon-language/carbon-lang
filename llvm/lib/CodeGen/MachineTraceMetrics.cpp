@@ -19,6 +19,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/PostOrderIterator.h"
+#include "llvm/ADT/SparseSet.h"
 
 using namespace llvm;
 
@@ -48,6 +49,7 @@ bool MachineTraceMetrics::runOnMachineFunction(MachineFunction &Func) {
   MF = &Func;
   TII = MF->getTarget().getInstrInfo();
   TRI = MF->getTarget().getRegisterInfo();
+  ItinData = MF->getTarget().getInstrItineraryData();
   MRI = &MF->getRegInfo();
   Loops = &getAnalysis<MachineLoopInfo>();
   BlockInfo.resize(MF->getNumBlockIDs());
@@ -458,6 +460,15 @@ MachineTraceMetrics::Ensemble::invalidate(const MachineBasicBlock *BadMBB) {
       }
     } while (!WorkList.empty());
   }
+
+  // Clear any per-instruction data. We only have to do this for BadMBB itself
+  // because the instructions in that block may change. Other blocks may be
+  // invalidated, but their instructions will stay the same, so there is no
+  // need to erase the Cycle entries. They will be overwritten when we
+  // recompute.
+  for (MachineBasicBlock::const_iterator I = BadMBB->begin(), E = BadMBB->end();
+       I != E; ++I)
+    Cycles.erase(I);
 }
 
 void MachineTraceMetrics::Ensemble::verify() const {
@@ -488,10 +499,227 @@ void MachineTraceMetrics::Ensemble::verify() const {
 #endif
 }
 
+//===----------------------------------------------------------------------===//
+//                             Data Dependencies
+//===----------------------------------------------------------------------===//
+//
+// Compute the depth and height of each instruction based on data dependencies
+// and instruction latencies. These cycle numbers assume that the CPU can issue
+// an infinite number of instructions per cycle as long as their dependencies
+// are ready.
+
+// A data dependency is represented as a defining MI and operand numbers on the
+// defining and using MI.
+namespace {
+struct DataDep {
+  const MachineInstr *DefMI;
+  unsigned DefOp;
+  unsigned UseOp;
+};
+}
+
+// Get the input data dependencies that must be ready before UseMI can issue.
+// Return true if UseMI has any physreg operands.
+static bool getDataDeps(const MachineInstr *UseMI,
+                        SmallVectorImpl<DataDep> &Deps,
+                        const MachineRegisterInfo *MRI) {
+  bool HasPhysRegs = false;
+  for (ConstMIOperands MO(UseMI); MO.isValid(); ++MO) {
+    if (!MO->isReg())
+      continue;
+    unsigned Reg = MO->getReg();
+    if (!Reg)
+      continue;
+    if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
+      HasPhysRegs = true;
+      continue;
+    }
+    // Collect virtual register reads.
+    if (!MO->readsReg())
+      continue;
+    MachineRegisterInfo::def_iterator DefI = MRI->def_begin(Reg);
+    DataDep Dep;
+    Dep.DefMI = &*DefI;
+    Dep.DefOp = DefI.getOperandNo();
+    Dep.UseOp = MO.getOperandNo();
+    Deps.push_back(Dep);
+  }
+  return HasPhysRegs;
+}
+
+// Get the input data dependencies of a PHI instruction, using Pred as the
+// preferred predecessor.
+// This will add at most one dependency to Deps.
+static void getPHIDeps(const MachineInstr *UseMI,
+                       SmallVectorImpl<DataDep> &Deps,
+                       const MachineBasicBlock *Pred,
+                       const MachineRegisterInfo *MRI) {
+  // No predecessor at the beginning of a trace. Ignore dependencies.
+  if (!Pred)
+    return;
+  assert(UseMI->isPHI() && UseMI->getNumOperands() % 2 && "Bad PHI");
+  for (unsigned i = 1; i != UseMI->getNumOperands(); i += 2) {
+    if (UseMI->getOperand(i + 1).getMBB() == Pred) {
+      unsigned Reg = UseMI->getOperand(i).getReg();
+      assert(TargetRegisterInfo::isVirtualRegister(Reg) && "Bad PHI op");
+      MachineRegisterInfo::def_iterator DefI = MRI->def_begin(Reg);
+      DataDep Dep;
+      Dep.DefMI = &*DefI;
+      Dep.DefOp = DefI.getOperandNo();
+      Dep.UseOp = i;
+      Deps.push_back(Dep);
+      return;
+    }
+  }
+}
+
+// Keep track of physreg data dependencies by recording each live register unit.
+namespace {
+struct LiveRegUnit {
+  unsigned RegUnit;
+  unsigned DefOp;
+  const MachineInstr *DefMI;
+
+  unsigned getSparseSetIndex() const { return RegUnit; }
+
+  LiveRegUnit(unsigned RU, const MachineInstr *MI = 0, unsigned OpNo = 0)
+    : RegUnit(RU), DefOp(OpNo), DefMI(MI) {}
+};
+}
+
+// Identify physreg dependencies for UseMI, and update the live regunit
+// tracking set when scanning instructions downwards.
+static void updatePhysDepsDownwards(const MachineInstr *UseMI,
+                                    SmallVectorImpl<DataDep> &Deps,
+                                    SparseSet<LiveRegUnit> &RegUnits,
+                                    const TargetRegisterInfo *TRI) {
+  SmallVector<unsigned, 8> Kills;
+  SmallVector<unsigned, 8> LiveDefOps;
+
+  for (ConstMIOperands MO(UseMI); MO.isValid(); ++MO) {
+    if (!MO->isReg())
+      continue;
+    unsigned Reg = MO->getReg();
+    if (!TargetRegisterInfo::isPhysicalRegister(Reg))
+      continue;
+    // Track live defs and kills for updating RegUnits.
+    if (MO->isDef()) {
+      if (MO->isDead())
+        Kills.push_back(Reg);
+      else
+        LiveDefOps.push_back(MO.getOperandNo());
+    } else if (MO->isKill())
+      Kills.push_back(Reg);
+    // Identify dependencies.
+    if (!MO->readsReg())
+      continue;
+    for (MCRegUnitIterator Units(Reg, TRI); Units.isValid(); ++Units) {
+      SparseSet<LiveRegUnit>::iterator I = RegUnits.find(*Units);
+      if (I == RegUnits.end())
+        continue;
+      DataDep Dep;
+      Dep.DefMI = I->DefMI;
+      Dep.DefOp = I->DefOp;
+      Dep.UseOp = MO.getOperandNo();
+      Deps.push_back(Dep);
+      break;
+    }
+  }
+
+  // Update RegUnits to reflect live registers after UseMI.
+  // First kills.
+  for (unsigned i = 0, e = Kills.size(); i != e; ++i)
+    for (MCRegUnitIterator Units(Kills[i], TRI); Units.isValid(); ++Units)
+      RegUnits.erase(*Units);
+
+  // Second, live defs.
+  for (unsigned i = 0, e = LiveDefOps.size(); i != e; ++i) {
+    unsigned DefOp = LiveDefOps[i];
+    for (MCRegUnitIterator Units(UseMI->getOperand(DefOp).getReg(), TRI);
+         Units.isValid(); ++Units) {
+      LiveRegUnit &LRU = RegUnits[*Units];
+      LRU.DefMI = UseMI;
+      LRU.DefOp = DefOp;
+    }
+  }
+}
+
+
+
+
+/// Compute instruction depths for all instructions above or in MBB in its
+/// trace. This assumes that the trace through MBB has already been computed.
+void MachineTraceMetrics::Ensemble::
+computeInstrDepths(const MachineBasicBlock *MBB) {
+  // The top of the trace may already be computed, and HasValidInstrDepths
+  // implies Head->HasValidInstrDepths, so we only need to start from the first
+  // block in the trace that needs to be recomputed.
+  SmallVector<const MachineBasicBlock*, 8> Stack;
+  do {
+    TraceBlockInfo &TBI = BlockInfo[MBB->getNumber()];
+    assert(TBI.hasValidDepth() && "Incomplete trace");
+    if (TBI.HasValidInstrDepths)
+      break;
+    Stack.push_back(MBB);
+    MBB = TBI.Pred;
+  } while (MBB);
+
+  // FIXME: If MBB is non-null at this point, it is the last pre-computed block
+  // in the trace. We should track any live-out physregs that were defined in
+  // the trace. This is quite rare in SSA form, typically created by CSE
+  // hoisting a compare.
+  SparseSet<LiveRegUnit> RegUnits;
+  RegUnits.setUniverse(MTM.TRI->getNumRegUnits());
+
+  // Go through trace blocks in top-down order, stopping after the center block.
+  SmallVector<DataDep, 8> Deps;
+  while (!Stack.empty()) {
+    MBB = Stack.pop_back_val();
+    DEBUG(dbgs() << "Depths for BB#" << MBB->getNumber() << ":\n");
+    TraceBlockInfo &TBI = BlockInfo[MBB->getNumber()];
+    TBI.HasValidInstrDepths = true;
+    for (MachineBasicBlock::const_iterator I = MBB->begin(), E = MBB->end();
+         I != E; ++I) {
+      const MachineInstr *UseMI = I;
+
+      // Collect all data dependencies.
+      Deps.clear();
+      if (UseMI->isPHI())
+        getPHIDeps(UseMI, Deps, TBI.Pred, MTM.MRI);
+      else if (getDataDeps(UseMI, Deps, MTM.MRI))
+        updatePhysDepsDownwards(UseMI, Deps, RegUnits, MTM.TRI);
+
+      // Filter and process dependencies, computing the earliest issue cycle.
+      unsigned Cycle = 0;
+      for (unsigned i = 0, e = Deps.size(); i != e; ++i) {
+        const DataDep &Dep = Deps[i];
+        const TraceBlockInfo&DepTBI =
+          BlockInfo[Dep.DefMI->getParent()->getNumber()];
+        // Ignore dependencies from outside the current trace.
+        if (!DepTBI.hasValidDepth() || DepTBI.Head != TBI.Head)
+          continue;
+        assert(DepTBI.HasValidInstrDepths && "Inconsistent dependency");
+        unsigned DepCycle = Cycles.lookup(Dep.DefMI).Depth;
+        // Add latency if DefMI is a real instruction. Transients get latency 0.
+        if (!Dep.DefMI->isTransient())
+          DepCycle += MTM.TII->computeOperandLatency(MTM.ItinData,
+                                                     Dep.DefMI, Dep.DefOp,
+                                                     UseMI, Dep.UseOp,
+                                                     /* FindMin = */ false);
+        Cycle = std::max(Cycle, DepCycle);
+      }
+      // Remember the instruction depth.
+      Cycles[UseMI].Depth = Cycle;
+      DEBUG(dbgs() << Cycle << '\t' << *UseMI);
+    }
+  }
+}
+
 MachineTraceMetrics::Trace
 MachineTraceMetrics::Ensemble::getTrace(const MachineBasicBlock *MBB) {
   // FIXME: Check cache tags, recompute as needed.
   computeTrace(MBB);
+  computeInstrDepths(MBB);
   return Trace(*this, BlockInfo[MBB->getNumber()]);
 }
 
@@ -512,6 +740,8 @@ void MachineTraceMetrics::TraceBlockInfo::print(raw_ostream &OS) const {
     else
       OS << " pred=null";
     OS << " head=BB#" << Head;
+    if (HasValidInstrDepths)
+      OS << " +instrs";
   } else
     OS << "depth invalid";
   OS << ", ";
@@ -522,6 +752,8 @@ void MachineTraceMetrics::TraceBlockInfo::print(raw_ostream &OS) const {
     else
       OS << " succ=null";
     OS << " tail=BB#" << Tail;
+    if (HasValidInstrHeights)
+      OS << " +instrs";
   } else
     OS << "height invalid";
 }

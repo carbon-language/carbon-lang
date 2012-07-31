@@ -47,23 +47,27 @@
 #ifndef LLVM_CODEGEN_MACHINE_TRACE_METRICS_H
 #define LLVM_CODEGEN_MACHINE_TRACE_METRICS_H
 
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 
 namespace llvm {
 
+class InstrItineraryData;
+class MachineBasicBlock;
+class MachineInstr;
+class MachineLoop;
+class MachineLoopInfo;
+class MachineRegisterInfo;
 class TargetInstrInfo;
 class TargetRegisterInfo;
-class MachineBasicBlock;
-class MachineRegisterInfo;
-class MachineLoopInfo;
-class MachineLoop;
 class raw_ostream;
 
 class MachineTraceMetrics : public MachineFunctionPass {
   const MachineFunction *MF;
   const TargetInstrInfo *TII;
   const TargetRegisterInfo *TRI;
+  const InstrItineraryData *ItinData;
   const MachineRegisterInfo *MRI;
   const MachineLoopInfo *Loops;
 
@@ -128,7 +132,10 @@ public:
     /// Includes instructions in this block.
     unsigned InstrHeight;
 
-    TraceBlockInfo() : Pred(0), Succ(0), InstrDepth(~0u), InstrHeight(~0u) {}
+    TraceBlockInfo() :
+      Pred(0), Succ(0),
+      InstrDepth(~0u), InstrHeight(~0u),
+      HasValidInstrDepths(false), HasValidInstrHeights(false) {}
 
     /// Returns true if the depth resources have been computed from the trace
     /// above this block.
@@ -139,10 +146,20 @@ public:
     bool hasValidHeight() const { return InstrHeight != ~0u; }
 
     /// Invalidate depth resources when some block above this one has changed.
-    void invalidateDepth() { InstrDepth = ~0u; }
+    void invalidateDepth() { InstrDepth = ~0u; HasValidInstrDepths = false; }
 
     /// Invalidate height resources when a block below this one has changed.
-    void invalidateHeight() { InstrHeight = ~0u; }
+    void invalidateHeight() { InstrHeight = ~0u; HasValidInstrHeights = false; }
+
+    // Data-dependency-related information. Per-instruction depth and height
+    // are computed from data dependencies in the current trace, using
+    // itinerary data.
+
+    /// Instruction depths have been computed. This implies hasValidDepth().
+    bool HasValidInstrDepths;
+
+    /// Instruction heights have been computed. This implies hasValidHeight().
+    bool HasValidInstrHeights;
 
     void print(raw_ostream&) const;
   };
@@ -164,16 +181,32 @@ public:
     }
   };
 
+  /// InstrCycles represents the cycle height and depth of an instruction in a
+  /// trace.
+  struct InstrCycles {
+    /// Earliest issue cycle as determined by data dependencies and instruction
+    /// latencies from the beginning of the trace. Data dependencies from
+    /// before the trace are not included.
+    unsigned Depth;
+
+    /// Minimum number of cycles from this instruction is issued to the of the
+    /// trace, as determined by data dependencies and instruction latencies.
+    unsigned Height;
+  };
+
   /// A trace ensemble is a collection of traces selected using the same
   /// strategy, for example 'minimum resource height'. There is one trace for
   /// every block in the function.
   class Ensemble {
     SmallVector<TraceBlockInfo, 4> BlockInfo;
+    DenseMap<const MachineInstr*, InstrCycles> Cycles;
     friend class Trace;
 
     void computeTrace(const MachineBasicBlock*);
     void computeDepthResources(const MachineBasicBlock*);
     void computeHeightResources(const MachineBasicBlock*);
+    void computeInstrDepths(const MachineBasicBlock*);
+    void computeInstrHeights(const MachineBasicBlock*);
 
   protected:
     MachineTraceMetrics &MTM;
