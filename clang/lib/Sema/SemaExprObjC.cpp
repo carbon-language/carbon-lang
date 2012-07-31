@@ -575,27 +575,33 @@ ExprResult Sema::BuildObjCBoxedExpr(SourceRange SR, Expr *ValueExpr) {
   return MaybeBindToTemporary(BoxedExpr);
 }
 
+/// Build an ObjC subscript pseudo-object expression, given that
+/// that's supported by the runtime.
 ExprResult Sema::BuildObjCSubscriptExpression(SourceLocation RB, Expr *BaseExpr,
                                         Expr *IndexExpr,
                                         ObjCMethodDecl *getterMethod,
                                         ObjCMethodDecl *setterMethod) {
-  // Subscripting is only supported in the non-fragile ABI.
-  if (LangOpts.ObjCRuntime.isFragile())
-    return ExprError();
+  assert(!LangOpts.ObjCRuntime.isSubscriptPointerArithmetic());
 
-  // If the expression is type-dependent, there's nothing for us to do.
-  assert ((!BaseExpr->isTypeDependent() && !IndexExpr->isTypeDependent()) &&
-          "base or index cannot have dependent type here");
+  // We can't get dependent types here; our callers should have
+  // filtered them out.
+  assert((!BaseExpr->isTypeDependent() && !IndexExpr->isTypeDependent()) &&
+         "base or index cannot have dependent type here");
+
+  // Filter out placeholders in the index.  In theory, overloads could
+  // be preserved here, although that might not actually work correctly.
   ExprResult Result = CheckPlaceholderExpr(IndexExpr);
   if (Result.isInvalid())
     return ExprError();
   IndexExpr = Result.get();
   
-  // Perform lvalue-to-rvalue conversion.
+  // Perform lvalue-to-rvalue conversion on the base.
   Result = DefaultLvalueConversion(BaseExpr);
   if (Result.isInvalid())
     return ExprError();
   BaseExpr = Result.get();
+
+  // Build the pseudo-object expression.
   return Owned(ObjCSubscriptRefExpr::Create(Context, 
                                             BaseExpr,
                                             IndexExpr,

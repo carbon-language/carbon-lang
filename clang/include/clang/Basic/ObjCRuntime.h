@@ -170,6 +170,34 @@ public:
     llvm_unreachable("bad kind");
   }
 
+  /// \brief Does this runtime allow sizeof or alignof on object types?
+  bool allowsSizeofAlignof() const {
+    return isFragile();
+  }
+
+  /// \brief Does this runtime allow pointer arithmetic on objects?
+  ///
+  /// This covers +, -, ++, --, and (if isSubscriptPointerArithmetic()
+  /// yields true) [].
+  bool allowsPointerArithmetic() const {
+    switch (getKind()) {
+    case FragileMacOSX:
+    case GCC:
+      return true;
+    case MacOSX:
+    case iOS:
+    case GNUstep:
+    case ObjFW:
+      return false;
+    }
+    llvm_unreachable("bad kind");
+  }
+
+  /// \brief Is subscripting pointer arithmetic?
+  bool isSubscriptPointerArithmetic() const {
+    return allowsPointerArithmetic();
+  }
+
   /// \brief Does this runtime provide an objc_terminate function?
   ///
   /// This is used in handlers for exceptions during the unwind process;

@@ -653,8 +653,11 @@ class CGObjCGNUstep : public CGObjCGNU {
     }
 };
 
-/// Class used when targeting the ObjFW runtime.
-class CGObjCObjFW: public CGObjCGCC {
+/// The ObjFW runtime, which closely follows the GCC runtime's
+/// compiler ABI.  Support here is due to Jonathan Schleifer, the
+/// ObjFW maintainer.
+class CGObjCObjFW : public CGObjCGCC {
+  /// Emit class references unconditionally as direct symbol references.
   virtual llvm::Value *GetClassNamed(CGBuilderTy &Builder,
                                      const std::string &Name, bool isWeak) {
     if (isWeak)
