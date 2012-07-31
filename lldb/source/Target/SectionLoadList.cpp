@@ -109,12 +109,16 @@ SectionLoadList::SetSectionLoadAddress (const lldb::SectionSP &section, addr_t l
             ModuleSP module_sp (section->GetModule());
             if (module_sp)
             {
-                module_sp->ReportWarning ("address 0x%16.16llx maps to more than one section: %s.%s and %s.%s",
-                                          load_addr, 
-                                          module_sp->GetFileSpec().GetFilename().GetCString(), 
-                                          section->GetName().GetCString(),
-                                          ats_pos->second->GetModule()->GetFileSpec().GetFilename().GetCString(), 
-                                          ats_pos->second->GetName().GetCString());
+                ModuleSP curr_module_sp (ats_pos->second->GetModule());
+                if (curr_module_sp)
+                {
+                    module_sp->ReportWarning ("address 0x%16.16llx maps to more than one section: %s.%s and %s.%s",
+                                              load_addr, 
+                                              module_sp->GetFileSpec().GetFilename().GetCString(), 
+                                              section->GetName().GetCString(),
+                                              curr_module_sp->GetFileSpec().GetFilename().GetCString(),
+                                              ats_pos->second->GetName().GetCString());
+                }
             }
         }
         ats_pos->second = section;
