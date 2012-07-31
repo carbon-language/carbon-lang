@@ -97,7 +97,6 @@ bool MipsFrameLowering::targetHandlesStackFrameRounding() const {
 void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB   = MF.front();
   MachineFrameInfo *MFI    = MF.getFrameInfo();
-  MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
   const MipsRegisterInfo *RegInfo =
     static_cast<const MipsRegisterInfo*>(MF.getTarget().getRegisterInfo());
   const MipsInstrInfo &TII =
@@ -113,7 +112,7 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   // First, compute final stack size.
   unsigned StackAlign = getStackAlignment();
   uint64_t StackSize = RoundUpToAlignment(MFI->getStackSize(), StackAlign);
-  StackSize += RoundUpToAlignment(MipsFI->getMaxCallFrameSize(), StackAlign);
+  StackSize += RoundUpToAlignment(MFI->getMaxCallFrameSize(), StackAlign);
 
    // Update stack size
   MFI->setStackSize(StackSize);

@@ -2453,9 +2453,9 @@ static unsigned getNextIntArgReg(unsigned Reg) {
 
 // Write ByVal Arg to arg registers and stack.
 static void
-WriteByValArg(SDValue& ByValChain, SDValue Chain, DebugLoc dl,
+WriteByValArg(SDValue Chain, DebugLoc dl,
               SmallVector<std::pair<unsigned, SDValue>, 16> &RegsToPass,
-              SmallVector<SDValue, 8> &MemOpChains, int &LastFI,
+              SmallVector<SDValue, 8> &MemOpChains, SDValue StackPtr,
               MachineFrameInfo *MFI, SelectionDAG &DAG, SDValue Arg,
               const CCValAssign &VA, const ISD::ArgFlagsTy &Flags,
               MVT PtrType, bool isLittle) {
@@ -2529,24 +2529,24 @@ WriteByValArg(SDValue& ByValChain, SDValue Chain, DebugLoc dl,
     return;
   }
 
-  // Create a fixed object on stack at offset LocMemOffset and copy
-  // remaining part of byval arg to it using memcpy.
+  // Copy remaining part of byval arg using memcpy.
   SDValue Src = DAG.getNode(ISD::ADD, dl, MVT::i32, Arg,
                             DAG.getConstant(Offset, MVT::i32));
-  LastFI = MFI->CreateFixedObject(RemainingSize, LocMemOffset, true);
-  SDValue Dst = DAG.getFrameIndex(LastFI, PtrType);
-  ByValChain = DAG.getMemcpy(ByValChain, dl, Dst, Src,
-                             DAG.getConstant(RemainingSize, MVT::i32),
-                             std::min(ByValAlign, (unsigned)4),
-                             /*isVolatile=*/false, /*AlwaysInline=*/false,
-                             MachinePointerInfo(0), MachinePointerInfo(0));
+  SDValue Dst = DAG.getNode(ISD::ADD, dl, MVT::i32, StackPtr,
+                            DAG.getIntPtrConstant(LocMemOffset));
+  Chain = DAG.getMemcpy(Chain, dl, Dst, Src,
+                        DAG.getConstant(RemainingSize, MVT::i32),
+                        std::min(ByValAlign, (unsigned)4),
+                        /*isVolatile=*/false, /*AlwaysInline=*/false,
+                        MachinePointerInfo(0), MachinePointerInfo(0));
+  MemOpChains.push_back(Chain);
 }
 
 // Copy Mips64 byVal arg to registers and stack.
 void static
-PassByValArg64(SDValue& ByValChain, SDValue Chain, DebugLoc dl,
+PassByValArg64(SDValue Chain, DebugLoc dl,
                SmallVector<std::pair<unsigned, SDValue>, 16> &RegsToPass,
-               SmallVector<SDValue, 8> &MemOpChains, int &LastFI,
+               SmallVector<SDValue, 8> &MemOpChains, SDValue StackPtr,
                MachineFrameInfo *MFI, SelectionDAG &DAG, SDValue Arg,
                const CCValAssign &VA, const ISD::ArgFlagsTy &Flags,
                EVT PtrTy, bool isLittle) {
@@ -2618,16 +2618,16 @@ PassByValArg64(SDValue& ByValChain, SDValue Chain, DebugLoc dl,
 
   assert(MemCpySize && "MemCpySize must not be zero.");
 
-  // Create a fixed object on stack at offset LocMemOffset and copy
-  // remainder of byval arg to it with memcpy.
+  // Copy remainder of byval arg to it with memcpy.
   SDValue Src = DAG.getNode(ISD::ADD, dl, PtrTy, Arg,
                             DAG.getConstant(Offset, PtrTy));
-  LastFI = MFI->CreateFixedObject(MemCpySize, LocMemOffset, true);
-  SDValue Dst = DAG.getFrameIndex(LastFI, PtrTy);
-  ByValChain = DAG.getMemcpy(ByValChain, dl, Dst, Src,
-                             DAG.getConstant(MemCpySize, PtrTy), Alignment,
-                             /*isVolatile=*/false, /*AlwaysInline=*/false,
-                             MachinePointerInfo(0), MachinePointerInfo(0));
+  SDValue Dst = DAG.getNode(ISD::ADD, dl, MVT::i64, StackPtr,
+                            DAG.getIntPtrConstant(LocMemOffset));
+  Chain = DAG.getMemcpy(Chain, dl, Dst, Src,
+                        DAG.getConstant(MemCpySize, PtrTy), Alignment,
+                        /*isVolatile=*/false, /*AlwaysInline=*/false,
+                        MachinePointerInfo(0), MachinePointerInfo(0));
+  MemOpChains.push_back(Chain);
 }
 
 /// LowerCall - functions arguments are copied from virtual regs to
@@ -2641,7 +2641,7 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   SmallVector<ISD::OutputArg, 32> &Outs = CLI.Outs;
   SmallVector<SDValue, 32> &OutVals     = CLI.OutVals;
   SmallVector<ISD::InputArg, 32> &Ins   = CLI.Ins;
-  SDValue InChain                       = CLI.Chain;
+  SDValue Chain                         = CLI.Chain;
   SDValue Callee                        = CLI.Callee;
   bool &isTailCall                      = CLI.IsTailCall;
   CallingConv::ID CallConv              = CLI.CallConv;
@@ -2684,10 +2684,12 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // Chain is the output chain of the last Load/Store or CopyToReg node.
   // ByValChain is the output chain of the last Memcpy node created for copying
   // byval arguments to the stack.
-  SDValue Chain, CallSeqStart, ByValChain;
   SDValue NextStackOffsetVal = DAG.getIntPtrConstant(NextStackOffset, true);
-  Chain = CallSeqStart = DAG.getCALLSEQ_START(InChain, NextStackOffsetVal);
-  ByValChain = InChain;
+  Chain = DAG.getCALLSEQ_START(Chain, NextStackOffsetVal);
+
+  SDValue StackPtr = DAG.getCopyFromReg(Chain, dl,
+                                        IsN64 ? Mips::SP_64 : Mips::SP,
+                                        getPointerTy());
 
   // Get the frame index of the stack frame object that points to the location
   // of dynamically allocated area on the stack.
@@ -2706,8 +2708,6 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   SmallVector<std::pair<unsigned, SDValue>, 16> RegsToPass;
   SmallVector<SDValue, 8> MemOpChains;
 
-  int FirstFI = -MFI->getNumFixedObjects() - 1, LastFI = 0;
-
   // Walk the register/memloc assignments, inserting copies/loads.
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     SDValue Arg = OutVals[i];
@@ -2720,11 +2720,11 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       assert(Flags.getByValSize() &&
              "ByVal args of size 0 should have been ignored by front-end.");
       if (IsO32)
-        WriteByValArg(ByValChain, Chain, dl, RegsToPass, MemOpChains, LastFI,
+        WriteByValArg(Chain, dl, RegsToPass, MemOpChains, StackPtr,
                       MFI, DAG, Arg, VA, Flags, getPointerTy(),
                       Subtarget->isLittle());
       else
-        PassByValArg64(ByValChain, Chain, dl, RegsToPass, MemOpChains, LastFI,
+        PassByValArg64(Chain, dl, RegsToPass, MemOpChains, StackPtr,
                        MFI, DAG, Arg, VA, Flags, getPointerTy(),
                        Subtarget->isLittle());
       continue;
@@ -2774,28 +2774,13 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     // Register can't get to this point...
     assert(VA.isMemLoc());
 
-    // Create the frame index object for this incoming parameter
-    LastFI = MFI->CreateFixedObject(ValVT.getSizeInBits()/8,
-                                    VA.getLocMemOffset(), true);
-    SDValue PtrOff = DAG.getFrameIndex(LastFI, getPointerTy());
-
     // emit ISD::STORE whichs stores the
     // parameter value to a stack Location
+    SDValue PtrOff = DAG.getNode(ISD::ADD, dl, getPointerTy(), StackPtr,
+                                 DAG.getIntPtrConstant(VA.getLocMemOffset()));
     MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff,
                                        MachinePointerInfo(), false, false, 0));
   }
-
-  // Extend range of indices of frame objects for outgoing arguments that were
-  // created during this function call. Skip this step if no such objects were
-  // created.
-  if (LastFI)
-    MipsFI->extendOutArgFIRange(FirstFI, LastFI);
-
-  // If a memcpy has been created to copy a byval arg to a stack, replace the
-  // chain input of CallSeqStart with ByValChain.
-  if (InChain != ByValChain)
-    DAG.UpdateNodeOperands(CallSeqStart.getNode(), ByValChain,
-                           NextStackOffsetVal);
 
   // Transform all store nodes into one single node because all store
   // nodes are independent of each other.
