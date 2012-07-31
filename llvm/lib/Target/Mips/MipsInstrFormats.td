@@ -37,8 +37,8 @@ def FrmFI     : Format<5>;
 def FrmOther  : Format<6>; // Instruction w/ a custom format
 
 // Generic Mips Format
-class MipsInst<dag outs, dag ins, string asmstr, list<dag> pattern,
-               InstrItinClass itin, Format f>: Instruction
+class InstSE<dag outs, dag ins, string asmstr, list<dag> pattern,
+             InstrItinClass itin, Format f>: Instruction
 {
   field bits<32> Inst;
   Format Form = f;
@@ -77,7 +77,7 @@ class MipsInst<dag outs, dag ins, string asmstr, list<dag> pattern,
 
 // Mips Pseudo Instructions Format
 class MipsPseudo<dag outs, dag ins, string asmstr, list<dag> pattern>:
-      MipsInst<outs, ins, asmstr, pattern, IIPseudo, Pseudo> {
+  InstSE<outs, ins, asmstr, pattern, IIPseudo, Pseudo> {
   let isCodeGenOnly = 1;
   let isPseudo = 1;
 }
@@ -88,7 +88,7 @@ class MipsPseudo<dag outs, dag ins, string asmstr, list<dag> pattern>:
 
 class FR<bits<6> op, bits<6> _funct, dag outs, dag ins, string asmstr,
          list<dag> pattern, InstrItinClass itin>:
-      MipsInst<outs, ins, asmstr, pattern, itin, FrmR>
+  InstSE<outs, ins, asmstr, pattern, itin, FrmR>
 {
   bits<5>  rd;
   bits<5>  rs;
@@ -111,7 +111,7 @@ class FR<bits<6> op, bits<6> _funct, dag outs, dag ins, string asmstr,
 //===----------------------------------------------------------------------===//
 
 class FI<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
-         InstrItinClass itin>: MipsInst<outs, ins, asmstr, pattern, itin, FrmI>
+         InstrItinClass itin>: InstSE<outs, ins, asmstr, pattern, itin, FrmI>
 {
   bits<5>  rt;
   bits<5>  rs;
@@ -126,7 +126,7 @@ class FI<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
 
 class BranchBase<bits<6> op, dag outs, dag ins, string asmstr,
                   list<dag> pattern, InstrItinClass itin>:
-  MipsInst<outs, ins, asmstr, pattern, itin, FrmI>
+  InstSE<outs, ins, asmstr, pattern, itin, FrmI>
 {
   bits<5>  rs;
   bits<5>  rt;
@@ -144,7 +144,7 @@ class BranchBase<bits<6> op, dag outs, dag ins, string asmstr,
 //===----------------------------------------------------------------------===//
 
 class FJ<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
-         InstrItinClass itin>: MipsInst<outs, ins, asmstr, pattern, itin, FrmJ>
+         InstrItinClass itin>: InstSE<outs, ins, asmstr, pattern, itin, FrmJ>
 {
   bits<26> addr;
 
@@ -172,7 +172,7 @@ class FJ<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
 
 class FFR<bits<6> op, bits<6> _funct, bits<5> _fmt, dag outs, dag ins,
           string asmstr, list<dag> pattern> :
-          MipsInst<outs, ins, asmstr, pattern, NoItinerary, FrmFR>
+  InstSE<outs, ins, asmstr, pattern, NoItinerary, FrmFR>
 {
   bits<5>  fd;
   bits<5>  fs;
@@ -196,7 +196,7 @@ class FFR<bits<6> op, bits<6> _funct, bits<5> _fmt, dag outs, dag ins,
 //===----------------------------------------------------------------------===//
 
 class FFI<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern>:
-          MipsInst<outs, ins, asmstr, pattern, NoItinerary, FrmFI>
+  InstSE<outs, ins, asmstr, pattern, NoItinerary, FrmFI>
 {
   bits<5>  ft;
   bits<5>  base;
@@ -214,7 +214,7 @@ class FFI<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern>:
 //===----------------------------------------------------------------------===//
 
 class FCC<bits<5> _fmt, dag outs, dag ins, string asmstr, list<dag> pattern> :
-          MipsInst<outs, ins, asmstr, pattern, NoItinerary, FrmOther>
+  InstSE<outs, ins, asmstr, pattern, NoItinerary, FrmOther>
 {
   bits<5>  fs;
   bits<5>  ft;
@@ -235,7 +235,7 @@ class FCC<bits<5> _fmt, dag outs, dag ins, string asmstr, list<dag> pattern> :
 
 class FCMOV<bits<1> _tf, dag outs, dag ins, string asmstr,
             list<dag> pattern> :
-  MipsInst<outs, ins, asmstr, pattern, NoItinerary, FrmOther>
+  InstSE<outs, ins, asmstr, pattern, NoItinerary, FrmOther>
 {
   bits<5>  rd;
   bits<5>  rs;
@@ -256,7 +256,7 @@ class FCMOV<bits<1> _tf, dag outs, dag ins, string asmstr,
 
 class FFCMOV<bits<5> _fmt, bits<1> _tf, dag outs, dag ins, string asmstr,
              list<dag> pattern> :
-  MipsInst<outs, ins, asmstr, pattern, NoItinerary, FrmOther>
+  InstSE<outs, ins, asmstr, pattern, NoItinerary, FrmOther>
 {
   bits<5>  fd;
   bits<5>  fs;
@@ -303,7 +303,7 @@ class FFR2P<bits<6> funct, bits<5> fmt, string opstr,
 // Floating point madd/msub/nmadd/nmsub.
 class FFMADDSUB<bits<3> funct, bits<3> fmt, dag outs, dag ins, string asmstr,
                 list<dag> pattern>
-  : MipsInst<outs, ins, asmstr, pattern, NoItinerary, FrmOther> {
+  : InstSE<outs, ins, asmstr, pattern, NoItinerary, FrmOther> {
   bits<5> fd;
   bits<5> fr;
   bits<5> fs;
@@ -321,7 +321,7 @@ class FFMADDSUB<bits<3> funct, bits<3> fmt, dag outs, dag ins, string asmstr,
 // FP indexed load/store instructions.
 class FFMemIdx<bits<6> funct, dag outs, dag ins, string asmstr,
                list<dag> pattern> :
-  MipsInst<outs, ins, asmstr, pattern, NoItinerary, FrmOther>
+  InstSE<outs, ins, asmstr, pattern, NoItinerary, FrmOther>
 {
   bits<5>  base;
   bits<5>  index;

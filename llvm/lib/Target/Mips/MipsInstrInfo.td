@@ -969,8 +969,8 @@ defm SWL : StoreLeftRightM32<0x2a, "swl", MipsSWL>;
 defm SWR : StoreLeftRightM32<0x2e, "swr", MipsSWR>;
 
 let hasSideEffects = 1 in
-def SYNC : MipsInst<(outs), (ins i32imm:$stype), "sync $stype",
-                    [(MipsSync imm:$stype)], NoItinerary, FrmOther>
+def SYNC : InstSE<(outs), (ins i32imm:$stype), "sync $stype",
+                  [(MipsSync imm:$stype)], NoItinerary, FrmOther>
 {
   bits<5> stype;
   let Opcode = 0;
