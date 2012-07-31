@@ -15,7 +15,7 @@
 #include "MipsSERegisterInfo.h"
 #include "Mips.h"
 #include "MipsAnalyzeImmediate.h"
-#include "MipsInstrInfo.h"
+#include "MipsSEInstrInfo.h"
 #include "MipsSubtarget.h"
 #include "MipsMachineFunction.h"
 #include "llvm/Constants.h"
@@ -42,6 +42,29 @@ using namespace llvm;
 MipsSERegisterInfo::MipsSERegisterInfo(const MipsSubtarget &ST,
                                        const TargetInstrInfo &TII)
   : MipsRegisterInfo(ST, TII) {}
+
+// This function eliminate ADJCALLSTACKDOWN,
+// ADJCALLSTACKUP pseudo instructions
+void MipsSERegisterInfo::
+eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
+                              MachineBasicBlock::iterator I) const {
+  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
+
+  if (!TFI->hasReservedCallFrame(MF)) {
+    DebugLoc DL = I->getDebugLoc();
+    int64_t Amount = I->getOperand(0).getImm();
+
+    if (I->getOpcode() == Mips::ADJCALLSTACKDOWN)
+      Amount = -Amount;
+
+    const MipsSEInstrInfo *II = static_cast<const MipsSEInstrInfo*>(&TII);
+    unsigned SP = Subtarget.isABI_N64() ? Mips::SP_64 : Mips::SP;
+
+    II->adjustStackPtr(SP, Amount, MBB, I);
+  }
+
+  MBB.erase(I);
+}
 
 void MipsSERegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
                                      unsigned OpNo, int FrameIndex,

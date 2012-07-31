@@ -13,7 +13,7 @@
 
 #include "MipsSEFrameLowering.h"
 #include "MipsAnalyzeImmediate.h"
-#include "MipsInstrInfo.h"
+#include "MipsSEInstrInfo.h"
 #include "MipsMachineFunction.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
 #include "llvm/Function.h"
@@ -33,15 +33,14 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineFrameInfo *MFI    = MF.getFrameInfo();
   const MipsRegisterInfo *RegInfo =
     static_cast<const MipsRegisterInfo*>(MF.getTarget().getRegisterInfo());
-  const MipsInstrInfo &TII =
-    *static_cast<const MipsInstrInfo*>(MF.getTarget().getInstrInfo());
+  const MipsSEInstrInfo &TII =
+    *static_cast<const MipsSEInstrInfo*>(MF.getTarget().getInstrInfo());
   MachineBasicBlock::iterator MBBI = MBB.begin();
   DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
   unsigned SP = STI.isABI_N64() ? Mips::SP_64 : Mips::SP;
   unsigned FP = STI.isABI_N64() ? Mips::FP_64 : Mips::FP;
   unsigned ZERO = STI.isABI_N64() ? Mips::ZERO_64 : Mips::ZERO;
   unsigned ADDu = STI.isABI_N64() ? Mips::DADDu : Mips::ADDu;
-  unsigned ADDiu = STI.isABI_N64() ? Mips::DADDiu : Mips::ADDiu;
 
   // First, compute final stack size.
   uint64_t StackSize = MFI->getStackSize();
@@ -54,16 +53,7 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineLocation DstML, SrcML;
 
   // Adjust stack.
-  if (isInt<16>(-StackSize))// addi sp, sp, (-stacksize)
-    BuildMI(MBB, MBBI, dl, TII.get(ADDiu), SP).addReg(SP).addImm(-StackSize);
-  else { // Expand immediate that doesn't fit in 16-bit.
-    unsigned ATReg = STI.isABI_N64() ? Mips::AT_64 : Mips::AT;
-
-    MF.getInfo<MipsFunctionInfo>()->setEmitNOAT();
-    Mips::loadImmediate(-StackSize, STI.isABI_N64(), TII, MBB, MBBI, dl, false,
-                        0);
-    BuildMI(MBB, MBBI, dl, TII.get(ADDu), SP).addReg(SP).addReg(ATReg);
-  }
+  TII.adjustStackPtr(SP, -StackSize, MBB, MBBI);
 
   // emit ".cfi_def_cfa_offset StackSize"
   MCSymbol *AdjustSPLabel = MMI.getContext().CreateTempSymbol();
@@ -133,14 +123,13 @@ void MipsSEFrameLowering::emitEpilogue(MachineFunction &MF,
                                        MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   MachineFrameInfo *MFI            = MF.getFrameInfo();
-  const MipsInstrInfo &TII =
-    *static_cast<const MipsInstrInfo*>(MF.getTarget().getInstrInfo());
+  const MipsSEInstrInfo &TII =
+    *static_cast<const MipsSEInstrInfo*>(MF.getTarget().getInstrInfo());
   DebugLoc dl = MBBI->getDebugLoc();
   unsigned SP = STI.isABI_N64() ? Mips::SP_64 : Mips::SP;
   unsigned FP = STI.isABI_N64() ? Mips::FP_64 : Mips::FP;
   unsigned ZERO = STI.isABI_N64() ? Mips::ZERO_64 : Mips::ZERO;
   unsigned ADDu = STI.isABI_N64() ? Mips::DADDu : Mips::ADDu;
-  unsigned ADDiu = STI.isABI_N64() ? Mips::DADDiu : Mips::ADDiu;
 
   // if framepointer enabled, restore the stack pointer.
   if (hasFP(MF)) {
@@ -161,16 +150,7 @@ void MipsSEFrameLowering::emitEpilogue(MachineFunction &MF,
     return;
 
   // Adjust stack.
-  if (isInt<16>(StackSize)) // addi sp, sp, (-stacksize)
-    BuildMI(MBB, MBBI, dl, TII.get(ADDiu), SP).addReg(SP).addImm(StackSize);
-  else { // Expand immediate that doesn't fit in 16-bit.
-    unsigned ATReg = STI.isABI_N64() ? Mips::AT_64 : Mips::AT;
-
-    MF.getInfo<MipsFunctionInfo>()->setEmitNOAT();
-    Mips::loadImmediate(StackSize, STI.isABI_N64(), TII, MBB, MBBI, dl, false,
-                        0);
-    BuildMI(MBB, MBBI, dl, TII.get(ADDu), SP).addReg(SP).addReg(ATReg);
-  }
+  TII.adjustStackPtr(SP, StackSize, MBB, MBBI);
 }
 
 bool MipsSEFrameLowering::

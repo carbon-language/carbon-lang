@@ -248,6 +248,26 @@ unsigned MipsSEInstrInfo::GetOppositeBranchOpc(unsigned Opc) const {
   }
 }
 
+/// Adjust SP by Amount bytes.
+void MipsSEInstrInfo::adjustStackPtr(unsigned SP, int64_t Amount,
+                                     MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator I) const {
+  const MipsSubtarget &STI = TM.getSubtarget<MipsSubtarget>();
+  DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
+  unsigned ADDu = STI.isABI_N64() ? Mips::DADDu : Mips::ADDu;
+  unsigned ADDiu = STI.isABI_N64() ? Mips::DADDiu : Mips::ADDiu;
+
+  if (isInt<16>(Amount))// addi sp, sp, amount
+    BuildMI(MBB, I, DL, get(ADDiu), SP).addReg(SP).addImm(Amount);
+  else { // Expand immediate that doesn't fit in 16-bit.
+    unsigned ATReg = STI.isABI_N64() ? Mips::AT_64 : Mips::AT;
+
+    MBB.getParent()->getInfo<MipsFunctionInfo>()->setEmitNOAT();
+    Mips::loadImmediate(Amount, STI.isABI_N64(), *this, MBB, I, DL, false, 0);
+    BuildMI(MBB, I, DL, get(ADDu), SP).addReg(SP).addReg(ATReg);
+  }
+}
+
 unsigned MipsSEInstrInfo::GetAnalyzableBrOpc(unsigned Opc) const {
   return (Opc == Mips::BEQ    || Opc == Mips::BNE    || Opc == Mips::BGTZ   ||
           Opc == Mips::BGEZ   || Opc == Mips::BLTZ   || Opc == Mips::BLEZ   ||

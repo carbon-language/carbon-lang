@@ -23,6 +23,9 @@ public:
   Mips16RegisterInfo(const MipsSubtarget &Subtarget,
                      const TargetInstrInfo &TII);
 
+  void eliminateCallFramePseudoInstr(MachineFunction &MF,
+                                     MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator I) const;
 private:
   virtual void eliminateFI(MachineBasicBlock::iterator II, unsigned OpNo,
                            int FrameIndex, uint64_t StackSize,
