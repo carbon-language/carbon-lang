@@ -427,6 +427,9 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                         // value and adding (delta * code_align). All other
                         // values in the new row are initially identical to the current row.
                         unwind_plan.AppendRow(row);
+                        UnwindPlan::Row *newrow = new UnwindPlan::Row;
+                        *newrow = *row.get();
+                        row.reset (newrow);
                         row->SlideOffset(extended_opcode * code_align);
                     }
                     break;
@@ -477,6 +480,9 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                         // are initially identical to the current row. The new location value
                         // should always be greater than the current one.
                         unwind_plan.AppendRow(row);
+                        UnwindPlan::Row *newrow = new UnwindPlan::Row;
+                        *newrow = *row.get();
+                        row.reset (newrow);
                         row->SetOffset(m_cfi_data.GetPointer(&offset) - startaddr.GetFileAddress());
                     }
                     break;
@@ -487,6 +493,9 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                         // This instruction is identical to DW_CFA_advance_loc except for the
                         // encoding and size of the delta argument.
                         unwind_plan.AppendRow(row);
+                        UnwindPlan::Row *newrow = new UnwindPlan::Row;
+                        *newrow = *row.get();
+                        row.reset (newrow);
                         row->SlideOffset (m_cfi_data.GetU8(&offset) * code_align);
                     }
                     break;
@@ -497,6 +506,9 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                         // This instruction is identical to DW_CFA_advance_loc except for the
                         // encoding and size of the delta argument.
                         unwind_plan.AppendRow(row);
+                        UnwindPlan::Row *newrow = new UnwindPlan::Row;
+                        *newrow = *row.get();
+                        row.reset (newrow);
                         row->SlideOffset (m_cfi_data.GetU16(&offset) * code_align);
                     }
                     break;
@@ -507,6 +519,9 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                         // This instruction is identical to DW_CFA_advance_loc except for the
                         // encoding and size of the delta argument.
                         unwind_plan.AppendRow(row);
+                        UnwindPlan::Row *newrow = new UnwindPlan::Row;
+                        *newrow = *row.get();
+                        row.reset (newrow);
                         row->SlideOffset (m_cfi_data.GetU32(&offset) * code_align);
                     }
                     break;
@@ -570,14 +585,19 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                     break;
 
                 case DW_CFA_remember_state      : // 0xA
-                    // These instructions define a stack of information. Encountering the
-                    // DW_CFA_remember_state instruction means to save the rules for every
-                    // register on the current row on the stack. Encountering the
-                    // DW_CFA_restore_state instruction means to pop the set of rules off
-                    // the stack and place them in the current row. (This operation is
-                    // useful for compilers that move epilogue code into the body of a
-                    // function.)
-                    unwind_plan.AppendRow (row);
+                    {
+                        // These instructions define a stack of information. Encountering the
+                        // DW_CFA_remember_state instruction means to save the rules for every
+                        // register on the current row on the stack. Encountering the
+                        // DW_CFA_restore_state instruction means to pop the set of rules off
+                        // the stack and place them in the current row. (This operation is
+                        // useful for compilers that move epilogue code into the body of a
+                        // function.)
+                        unwind_plan.AppendRow (row);
+                        UnwindPlan::Row *newrow = new UnwindPlan::Row;
+                        *newrow = *row.get();
+                        row.reset (newrow);
+                    }
                     break;
 
                 case DW_CFA_restore_state       : // 0xB
