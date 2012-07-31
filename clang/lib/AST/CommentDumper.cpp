@@ -50,6 +50,7 @@ public:
   void visitParagraphComment(const ParagraphComment *C);
   void visitBlockCommandComment(const BlockCommandComment *C);
   void visitParamCommandComment(const ParamCommandComment *C);
+  void visitTParamCommandComment(const TParamCommandComment *C);
   void visitVerbatimBlockComment(const VerbatimBlockComment *C);
   void visitVerbatimBlockLineComment(const VerbatimBlockLineComment *C);
   void visitVerbatimLineComment(const VerbatimLineComment *C);
@@ -174,6 +175,24 @@ void CommentDumper::visitParamCommandComment(const ParamCommandComment *C) {
 
   if (C->isParamIndexValid())
     OS << " ParamIndex=" << C->getParamIndex();
+}
+
+void CommentDumper::visitTParamCommandComment(const TParamCommandComment *C) {
+  dumpComment(C);
+
+  if (C->hasParamName()) {
+    OS << " Param=\"" << C->getParamName() << "\"";
+  }
+
+  if (C->isPositionValid()) {
+    OS << " Position=<";
+    for (unsigned i = 0, e = C->getDepth(); i != e; ++i) {
+      OS << C->getIndex(i);
+      if (i != e - 1)
+        OS << ", ";
+    }
+    OS << ">";
+  }
 }
 
 void CommentDumper::visitVerbatimBlockComment(const VerbatimBlockComment *C) {

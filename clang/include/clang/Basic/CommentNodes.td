@@ -17,6 +17,7 @@ def BlockContentComment : Comment<1>;
   def ParagraphComment : DComment<BlockContentComment>;
   def BlockCommandComment : DComment<BlockContentComment>;
     def ParamCommandComment : DComment<BlockCommandComment>;
+    def TParamCommandComment : DComment<BlockCommandComment>;
     def VerbatimBlockComment : DComment<BlockCommandComment>;
     def VerbatimLineComment : DComment<BlockCommandComment>;
 

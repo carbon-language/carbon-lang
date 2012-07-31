@@ -221,6 +221,39 @@ template <typename T>
   return ::testing::AssertionSuccess();
 }
 
+::testing::AssertionResult HasTParamCommandAt(
+                              const Comment *C,
+                              size_t Idx,
+                              TParamCommandComment *&TPCC,
+                              StringRef CommandName,
+                              StringRef ParamName,
+                              ParagraphComment *&Paragraph) {
+  ::testing::AssertionResult AR = GetChildAt(C, Idx, TPCC);
+  if (!AR)
+    return AR;
+
+  StringRef ActualCommandName = TPCC->getCommandName();
+  if (ActualCommandName != CommandName)
+    return ::testing::AssertionFailure()
+        << "TParamCommandComment has name \"" << ActualCommandName.str() << "\", "
+           "expected \"" << CommandName.str() << "\"";
+
+  if (!TPCC->hasParamName())
+    return ::testing::AssertionFailure()
+        << "TParamCommandComment has no parameter name";
+
+  StringRef ActualParamName = TPCC->getParamName();
+  if (ActualParamName != ParamName)
+    return ::testing::AssertionFailure()
+        << "TParamCommandComment has parameter name \"" << ActualParamName.str()
+        << "\", "
+           "expected \"" << ParamName.str() << "\"";
+
+  Paragraph = TPCC->getParagraph();
+
+  return ::testing::AssertionSuccess();
+}
+
 ::testing::AssertionResult HasInlineCommandAt(const Comment *C,
                                               size_t Idx,
                                               InlineCommandComment *&ICC,
@@ -835,6 +868,33 @@ TEST_F(CommentParserTest, ParamCommand6) {
       ASSERT_TRUE(HasTextAt(PC, 2, " Bbb "));
       ASSERT_TRUE(HasTextAt(PC, 3, "$"));
       ASSERT_TRUE(HasTextAt(PC, 4, " ccc"));
+  }
+}
+
+TEST_F(CommentParserTest, TParamCommand1) {
+  const char *Sources[] = {
+    "// \\tparam aaa Bbb\n",
+    "// \\tparam\n"
+    "//     aaa Bbb\n",
+    "// \\tparam \n"
+    "//     aaa Bbb\n",
+    "// \\tparam aaa\n"
+    "// Bbb\n"
+  };
+
+  for (size_t i = 0, e = array_lengthof(Sources); i != e; i++) {
+    FullComment *FC = parseString(Sources[i]);
+    ASSERT_TRUE(HasChildCount(FC, 2));
+
+    ASSERT_TRUE(HasParagraphCommentAt(FC, 0, " "));
+    {
+      TParamCommandComment *TPCC;
+      ParagraphComment *PC;
+      ASSERT_TRUE(HasTParamCommandAt(FC, 1, TPCC, "tparam",
+                                     "aaa", PC));
+      ASSERT_TRUE(HasChildCount(TPCC, 1));
+      ASSERT_TRUE(HasParagraphCommentAt(TPCC, 0, " Bbb"));
+    }
   }
 }
 

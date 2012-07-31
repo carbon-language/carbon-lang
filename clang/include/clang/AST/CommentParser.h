@@ -42,17 +42,6 @@ class Parser {
   /// Source manager for the comment being parsed.
   const SourceManager &SourceMgr;
 
-  template<typename T>
-  ArrayRef<T> copyArray(ArrayRef<T> Source) {
-    size_t Size = Source.size();
-    if (Size != 0) {
-      T *Mem = Allocator.Allocate<T>(Size);
-      std::uninitialized_copy(Source.begin(), Source.end(), Mem);
-      return llvm::makeArrayRef(Mem, Size);
-    } else
-      return llvm::makeArrayRef(static_cast<T *>(NULL), 0);
-  }
-
   DiagnosticsEngine &Diags;
 
   DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID) {
@@ -103,6 +92,11 @@ public:
   /// Parse arguments for \\param command.
   ParamCommandComment *parseParamCommandArgs(
                                     ParamCommandComment *PC,
+                                    TextTokenRetokenizer &Retokenizer);
+
+  /// Parse arguments for \\tparam command.
+  TParamCommandComment *parseTParamCommandArgs(
+                                    TParamCommandComment *TPC,
                                     TextTokenRetokenizer &Retokenizer);
 
   BlockCommandComment *parseBlockCommandArgs(

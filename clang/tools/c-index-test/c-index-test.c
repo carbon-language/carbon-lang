@@ -378,6 +378,23 @@ static void DumpCXCommentInternal(struct CommentASTDumpingContext *Ctx,
     else
       printf(" ParamIndex=Invalid");
     break;
+  case CXComment_TParamCommand:
+    printf("CXComment_TParamCommand");
+    PrintCXStringWithPrefixAndDispose(
+        "ParamName",
+        clang_TParamCommandComment_getParamName(Comment));
+    if (clang_TParamCommandComment_isParamPositionValid(Comment)) {
+      printf(" ParamPosition={");
+      for (i = 0, e = clang_TParamCommandComment_getDepth(Comment);
+           i != e; ++i) {
+        printf("%u", clang_TParamCommandComment_getIndex(Comment, i));
+        if (i != e - 1)
+          printf(", ");
+      }
+      printf("}");
+    } else
+      printf(" ParamPosition=Invalid");
+    break;
   case CXComment_VerbatimBlockCommand:
     printf("CXComment_VerbatimBlockCommand");
     PrintCXStringWithPrefixAndDispose(

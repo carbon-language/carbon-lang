@@ -1139,6 +1139,8 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   if (PrevClassTemplate)
     mergeDeclAttributes(NewClass, PrevClassTemplate->getTemplatedDecl());
 
+  ActOnDocumentableDecl(NewTemplate);
+
   return NewTemplate;
 }
 
@@ -5568,7 +5570,9 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
 Decl *Sema::ActOnTemplateDeclarator(Scope *S,
                               MultiTemplateParamsArg TemplateParameterLists,
                                     Declarator &D) {
-  return HandleDeclarator(S, D, move(TemplateParameterLists));
+  Decl *NewDecl = HandleDeclarator(S, D, move(TemplateParameterLists));
+  ActOnDocumentableDecl(NewDecl);
+  return NewDecl;
 }
 
 Decl *Sema::ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope,

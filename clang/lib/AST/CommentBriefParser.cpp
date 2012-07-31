@@ -48,6 +48,7 @@ bool isBlockCommand(StringRef Name) {
       .Case("pre", true)
       .Case("post", true)
       .Cases("param", "arg", true)
+      .Case("tparam", true)
       .Default(false);
 }
 } // unnamed namespace

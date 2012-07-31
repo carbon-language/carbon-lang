@@ -19,12 +19,14 @@
 #include "clang/AST/Comment.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Allocator.h"
 
 namespace clang {
 class Decl;
 class FunctionDecl;
 class ParmVarDecl;
+class TemplateParameterList;
 class SourceMgr;
 
 namespace comments {
@@ -56,6 +58,18 @@ class Sema {
   /// true.
   llvm::SmallVector<ParamCommandComment *, 8> ParamVarDocs;
 
+  /// Template parameters that can be referenced by \\tparam if \c ThisDecl is
+  /// a template.
+  ///
+  /// Contains a valid value if \c IsThisDeclInspected is true.
+  const TemplateParameterList *TemplateParameters;
+
+  /// Comment AST nodes that correspond to parameter names in
+  /// \c TemplateParameters.
+  ///
+  /// Contains a valid value if \c IsThisDeclInspected is true.
+  llvm::StringMap<TParamCommandComment *> TemplateParameterDocs;
+
   /// True if we extracted all important information from \c ThisDecl into
   /// \c Sema members.
   unsigned IsThisDeclInspected : 1;
@@ -63,6 +77,10 @@ class Sema {
   /// Is \c ThisDecl something that we consider a "function".
   /// Contains a valid value if \c IsThisDeclInspected is true.
   unsigned IsFunctionDecl : 1;
+
+  /// Is \c ThisDecl a template declaration.
+  /// Contains a valid value if \c IsThisDeclInspected is true.
+  unsigned IsTemplateDecl : 1;
 
   DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID) {
     return Diags.Report(Loc, DiagID);
@@ -77,6 +95,18 @@ public:
        DiagnosticsEngine &Diags);
 
   void setDecl(const Decl *D);
+
+  /// Returns a copy of array, owned by Sema's allocator.
+  template<typename T>
+  ArrayRef<T> copyArray(ArrayRef<T> Source) {
+    size_t Size = Source.size();
+    if (Size != 0) {
+      T *Mem = Allocator.Allocate<T>(Size);
+      std::uninitialized_copy(Source.begin(), Source.end(), Mem);
+      return llvm::makeArrayRef(Mem, Size);
+    } else
+      return llvm::makeArrayRef(static_cast<T *>(NULL), 0);
+  }
 
   ParagraphComment *actOnParagraphComment(
       ArrayRef<InlineContentComment *> Content);
@@ -110,6 +140,19 @@ public:
 
   ParamCommandComment *actOnParamCommandFinish(ParamCommandComment *Command,
                                                ParagraphComment *Paragraph);
+
+  TParamCommandComment *actOnTParamCommandStart(SourceLocation LocBegin,
+                                                SourceLocation LocEnd,
+                                                StringRef Name);
+
+  TParamCommandComment *actOnTParamCommandParamNameArg(
+                                            TParamCommandComment *Command,
+                                            SourceLocation ArgLocBegin,
+                                            SourceLocation ArgLocEnd,
+                                            StringRef Arg);
+
+  TParamCommandComment *actOnTParamCommandFinish(TParamCommandComment *Command,
+                                                 ParagraphComment *Paragraph);
 
   InlineCommandComment *actOnInlineCommand(SourceLocation CommandLocBegin,
                                            SourceLocation CommandLocEnd,
@@ -165,6 +208,8 @@ public:
   void checkBlockCommandEmptyParagraph(BlockCommandComment *Command);
 
   bool isFunctionDecl();
+  bool isTemplateDecl();
+
   ArrayRef<const ParmVarDecl *> getParamVars();
 
   /// Extract all important semantic information from \c ThisDecl into
@@ -180,8 +225,17 @@ public:
   unsigned correctTypoInParmVarReference(StringRef Typo,
                                          ArrayRef<const ParmVarDecl *> ParamVars);
 
+  bool resolveTParamReference(StringRef Name,
+                              const TemplateParameterList *TemplateParameters,
+                              SmallVectorImpl<unsigned> *Position);
+
+  StringRef correctTypoInTParamReference(
+                              StringRef Typo,
+                              const TemplateParameterList *TemplateParameters);
+
   bool isBlockCommand(StringRef Name);
   bool isParamCommand(StringRef Name);
+  bool isTParamCommand(StringRef Name);
   unsigned getBlockCommandNumArgs(StringRef Name);
 
   bool isInlineCommand(StringRef Name) const;

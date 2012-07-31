@@ -7618,6 +7618,7 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
         << FD->getName() << "dllimport";
     }
   }
+  ActOnDocumentableDecl(FD);
   return FD;
 }
 

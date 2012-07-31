@@ -59,6 +59,9 @@ enum CXCommentKind clang_Comment_getKind(CXComment CXC) {
   case Comment::ParamCommandCommentKind:
     return CXComment_ParamCommand;
 
+  case Comment::TParamCommandCommentKind:
+    return CXComment_TParamCommand;
+
   case Comment::VerbatimBlockCommentKind:
     return CXComment_VerbatimBlockCommand;
 
@@ -291,6 +294,38 @@ enum CXCommentParamPassDirection clang_ParamCommandComment_getDirection(
   llvm_unreachable("unknown ParamCommandComment::PassDirection");
 }
 
+CXString clang_TParamCommandComment_getParamName(CXComment CXC) {
+  const TParamCommandComment *TPCC = getASTNodeAs<TParamCommandComment>(CXC);
+  if (!TPCC || !TPCC->hasParamName())
+    return createCXString((const char *) 0);
+
+  return createCXString(TPCC->getParamName(), /*DupString=*/ false);
+}
+
+unsigned clang_TParamCommandComment_isParamPositionValid(CXComment CXC) {
+  const TParamCommandComment *TPCC = getASTNodeAs<TParamCommandComment>(CXC);
+  if (!TPCC)
+    return false;
+
+  return TPCC->isPositionValid();
+}
+
+unsigned clang_TParamCommandComment_getDepth(CXComment CXC) {
+  const TParamCommandComment *TPCC = getASTNodeAs<TParamCommandComment>(CXC);
+  if (!TPCC || !TPCC->isPositionValid())
+    return 0;
+
+  return TPCC->getDepth();
+}
+
+unsigned clang_TParamCommandComment_getIndex(CXComment CXC, unsigned Depth) {
+  const TParamCommandComment *TPCC = getASTNodeAs<TParamCommandComment>(CXC);
+  if (!TPCC || !TPCC->isPositionValid() || Depth >= TPCC->getDepth())
+    return 0;
+
+  return TPCC->getIndex(Depth);
+}
+
 CXString clang_VerbatimBlockLineComment_getText(CXComment CXC) {
   const VerbatimBlockLineComment *VBL =
       getASTNodeAs<VerbatimBlockLineComment>(CXC);
@@ -333,6 +368,34 @@ public:
   }
 };
 
+/// This comparison will sort template parameters in the following order:
+/// \li real template parameters (depth = 1) in index order;
+/// \li all other names (depth > 1);
+/// \li unresolved names.
+class TParamCommandCommentComparePosition {
+public:
+  bool operator()(const TParamCommandComment *LHS,
+                  const TParamCommandComment *RHS) const {
+    // Sort unresolved names last.
+    if (!LHS->isPositionValid())
+      return false;
+    if (!RHS->isPositionValid())
+      return true;
+
+    if (LHS->getDepth() > 1)
+      return false;
+    if (RHS->getDepth() > 1)
+      return true;
+
+    // Sort template parameters in index order.
+    if (LHS->getDepth() == 1 && RHS->getDepth() == 1)
+      return LHS->getIndex(0) < RHS->getIndex(0);
+
+    // Leave all other names in source order.
+    return true;
+  }
+};
+
 class CommentASTToHTMLConverter :
     public ConstCommentVisitor<CommentASTToHTMLConverter> {
 public:
@@ -349,6 +412,7 @@ public:
   void visitParagraphComment(const ParagraphComment *C);
   void visitBlockCommandComment(const BlockCommandComment *C);
   void visitParamCommandComment(const ParamCommandComment *C);
+  void visitTParamCommandComment(const TParamCommandComment *C);
   void visitVerbatimBlockComment(const VerbatimBlockComment *C);
   void visitVerbatimBlockLineComment(const VerbatimBlockLineComment *C);
   void visitVerbatimLineComment(const VerbatimLineComment *C);
@@ -486,6 +550,34 @@ void CommentASTToHTMLConverter::visitParamCommandComment(
   Result << "</dd>";
 }
 
+void CommentASTToHTMLConverter::visitTParamCommandComment(
+                                  const TParamCommandComment *C) {
+  if (C->isPositionValid()) {
+    if (C->getDepth() == 1)
+      Result << "<dt class=\"taram-name-index-"
+             << C->getIndex(0)
+             << "\">";
+    else
+      Result << "<dt class=\"taram-name-index-other\">";
+  } else
+    Result << "<dt class=\"tparam-name-index-invalid\">";
+
+  Result << C->getParamName() << "</dt>";
+
+  if (C->isPositionValid()) {
+    if (C->getDepth() == 1)
+      Result << "<dd class=\"tparam-descr-index-"
+             << C->getIndex(0)
+             << "\">";
+    else
+      Result << "<dd class=\"tparam-descr-index-other\">";
+  } else
+    Result << "<dd class=\"tparam-descr-index-invalid\">";
+
+  visitNonStandaloneParagraphComment(C->getParagraph());
+  Result << "</dd>";
+}
+
 void CommentASTToHTMLConverter::visitVerbatimBlockComment(
                                   const VerbatimBlockComment *C) {
   unsigned NumLines = C->getNumLines();
@@ -518,6 +610,7 @@ void CommentASTToHTMLConverter::visitFullComment(const FullComment *C) {
   const ParagraphComment *FirstParagraph = NULL;
   const BlockCommandComment *Returns = NULL;
   SmallVector<const ParamCommandComment *, 8> Params;
+  SmallVector<const TParamCommandComment *, 4> TParams;
   SmallVector<const BlockContentComment *, 8> MiscBlocks;
 
   // Extract various blocks into separate variables and vectors above.
@@ -568,6 +661,15 @@ void CommentASTToHTMLConverter::visitFullComment(const FullComment *C) {
       break;
     }
 
+    case Comment::TParamCommandCommentKind: {
+      const TParamCommandComment *TPCC = cast<TParamCommandComment>(Child);
+      if (!TPCC->hasParamName())
+        break;
+
+      TParams.push_back(TPCC);
+      break;
+    }
+
     case Comment::VerbatimBlockCommentKind:
     case Comment::VerbatimLineCommentKind:
       MiscBlocks.push_back(cast<BlockCommandComment>(Child));
@@ -590,6 +692,9 @@ void CommentASTToHTMLConverter::visitFullComment(const FullComment *C) {
   std::stable_sort(Params.begin(), Params.end(),
                    ParamCommandCommentCompareIndex());
 
+  std::stable_sort(TParams.begin(), TParams.end(),
+                   TParamCommandCommentComparePosition());
+
   bool FirstParagraphIsBrief = false;
   if (Brief)
     visit(Brief);
@@ -605,6 +710,13 @@ void CommentASTToHTMLConverter::visitFullComment(const FullComment *C) {
     if (FirstParagraphIsBrief && C == FirstParagraph)
       continue;
     visit(C);
+  }
+
+  if (TParams.size() != 0) {
+    Result << "<dl>";
+    for (unsigned i = 0, e = TParams.size(); i != e; ++i)
+      visit(TParams[i]);
+    Result << "</dl>";
   }
 
   if (Params.size() != 0) {

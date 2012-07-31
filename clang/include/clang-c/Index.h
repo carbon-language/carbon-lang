@@ -3277,6 +3277,14 @@ enum CXCommentKind {
   CXComment_ParamCommand = 7,
 
   /**
+   * \brief A \\tparam command that describes a template parameter (name and
+   * description).
+   *
+   * \brief For example: \\tparam T description.
+   */
+  CXComment_TParamCommand = 8,
+
+  /**
    * \brief A verbatim block command (e. g., preformatted code).  Verbatim
    * block has an opening and a closing command and contains multiple lines of
    * text (\c CXComment_VerbatimBlockLine child nodes).
@@ -3286,25 +3294,25 @@ enum CXCommentKind {
    * aaa
    * \\endverbatim
    */
-  CXComment_VerbatimBlockCommand = 8,
+  CXComment_VerbatimBlockCommand = 9,
 
   /**
    * \brief A line of text that is contained within a
    * CXComment_VerbatimBlockCommand node.
    */
-  CXComment_VerbatimBlockLine = 9,
+  CXComment_VerbatimBlockLine = 10,
 
   /**
    * \brief A verbatim line command.  Verbatim line has an opening command,
    * a single line of text (up to the newline after the opening command) and
    * has no closing command.
    */
-  CXComment_VerbatimLine = 10,
+  CXComment_VerbatimLine = 11,
 
   /**
    * \brief A full comment attached to a declaration, contains block content.
    */
-  CXComment_FullComment = 11
+  CXComment_FullComment = 12
 };
 
 /**
@@ -3564,6 +3572,63 @@ enum CXCommentParamPassDirection clang_ParamCommandComment_getDirection(
                                                             CXComment Comment);
 
 /**
+ * \param Comment a \c CXComment_TParamCommand AST node.
+ *
+ * \returns template parameter name.
+ */
+CINDEX_LINKAGE
+CXString clang_TParamCommandComment_getParamName(CXComment Comment);
+
+/**
+ * \param Comment a \c CXComment_TParamCommand AST node.
+ *
+ * \returns non-zero if the parameter that this AST node represents was found
+ * in the template parameter list and
+ * \c clang_TParamCommandComment_getDepth and
+ * \c clang_TParamCommandComment_getIndex functions will return a meaningful
+ * value.
+ */
+CINDEX_LINKAGE
+unsigned clang_TParamCommandComment_isParamPositionValid(CXComment Comment);
+
+/**
+ * \param Comment a \c CXComment_TParamCommand AST node.
+ *
+ * \returns zero-based nesting depth of this parameter in the template parameter list.
+ *
+ * For example,
+ * \verbatim
+ *     template<typename C, template<typename T> class TT>
+ *     void test(TT<int> aaa);
+ * \endverbatim
+ * for C and TT nesting depth is 0,
+ * for T nesting depth is 1.
+ */
+CINDEX_LINKAGE
+unsigned clang_TParamCommandComment_getDepth(CXComment Comment);
+
+/**
+ * \param Comment a \c CXComment_TParamCommand AST node.
+ *
+ * \returns zero-based parameter index in the template parameter list at a
+ * given nesting depth.
+ *
+ * For example,
+ * \verbatim
+ *     template<typename C, template<typename T> class TT>
+ *     void test(TT<int> aaa);
+ * \endverbatim
+ * for C and TT nesting depth is 0, so we can ask for index at depth 0:
+ * at depth 0 C's index is 0, TT's index is 1.
+ *
+ * For T nesting depth is 1, so we can ask for index at depth 0 and 1:
+ * at depth 0 T's index is 1 (same as TT's),
+ * at depth 1 T's index is 0.
+ */
+CINDEX_LINKAGE
+unsigned clang_TParamCommandComment_getIndex(CXComment Comment, unsigned Depth);
+
+/**
  * \param Comment a \c CXComment_VerbatimBlockLine AST node.
  *
  * \returns text contained in the AST node.
@@ -3605,6 +3670,15 @@ CINDEX_LINKAGE CXString clang_HTMLTagComment_getAsString(CXComment Comment);
  * \li "param-descr-index-NUMBER" for parameter description (\<dd\>);
  * \li "param-name-index-invalid" and "param-descr-index-invalid" are used if
  * parameter index is invalid.
+ *
+ * Template parameter documentation is rendered as a \<dl\> list with
+ * parameters sorted in template parameter list order.  CSS classes used:
+ * \li "tparam-name-index-NUMBER" for parameter name (\<dt\>);
+ * \li "tparam-descr-index-NUMBER" for parameter description (\<dd\>);
+ * \li "taram-name-index-other" and "tparam-descr-index-other" are used for
+ * names inside template template parameters;
+ * \li "tparam-name-index-invalid" and "tparam-descr-index-invalid" are used if
+ * parameter position is invalid.
  *
  * \param Comment a \c CXComment_FullComment AST node.
  *

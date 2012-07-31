@@ -723,6 +723,68 @@ public:
   }
 };
 
+/// Doxygen \\tparam command, describes a template parameter.
+class TParamCommandComment : public BlockCommandComment {
+private:
+  /// If this template parameter name was resolved (found in template parameter
+  /// list), then this stores a list of position indexes in all template
+  /// parameter lists.
+  ///
+  /// For example:
+  /// \verbatim
+  ///     template<typename C, template<typename T> class TT>
+  ///     void test(TT<int> aaa);
+  /// \endverbatim
+  /// For C:  Position = { 0 }
+  /// For TT: Position = { 1 }
+  /// For T:  Position = { 1, 0 }
+  llvm::ArrayRef<unsigned> Position;
+
+public:
+  TParamCommandComment(SourceLocation LocBegin,
+                       SourceLocation LocEnd,
+                       StringRef Name) :
+      BlockCommandComment(TParamCommandCommentKind, LocBegin, LocEnd, Name)
+  { }
+
+  static bool classof(const Comment *C) {
+    return C->getCommentKind() == TParamCommandCommentKind;
+  }
+
+  static bool classof(const TParamCommandComment *) { return true; }
+
+  bool hasParamName() const {
+    return getNumArgs() > 0;
+  }
+
+  StringRef getParamName() const {
+    return Args[0].Text;
+  }
+
+  SourceRange getParamNameRange() const {
+    return Args[0].Range;
+  }
+
+  bool isPositionValid() const LLVM_READONLY {
+    return !Position.empty();
+  }
+
+  unsigned getDepth() const {
+    assert(isPositionValid());
+    return Position.size();
+  }
+
+  unsigned getIndex(unsigned Depth) const {
+    assert(isPositionValid());
+    return Position[Depth];
+  }
+
+  void setPosition(ArrayRef<unsigned> NewPosition) {
+    Position = NewPosition;
+    assert(isPositionValid());
+  }
+};
+
 /// A line of text contained in a verbatim block.
 class VerbatimBlockLineComment : public Comment {
   StringRef Text;

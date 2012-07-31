@@ -77,5 +77,26 @@ def warn_doc_param_not_found : Warning<
 def note_doc_param_name_suggestion : Note<
   "did you mean '%0'?">;
 
+// \tparam command
+
+def warn_doc_tparam_not_attached_to_a_template_decl : Warning<
+  "'\\tparam' command used in a comment that is not attached to "
+  "a template declaration">,
+  InGroup<Documentation>, DefaultIgnore;
+
+def warn_doc_tparam_duplicate : Warning<
+  "template parameter '%0' is already documented">,
+  InGroup<Documentation>, DefaultIgnore;
+
+def note_doc_tparam_previous : Note<
+  "previous documentation">;
+
+def warn_doc_tparam_not_found : Warning<
+  "template parameter '%0' not found in the template declaration">,
+  InGroup<Documentation>, DefaultIgnore;
+
+def note_doc_tparam_name_suggestion : Note<
+  "did you mean '%0'?">;
+
 } // end of documentation issue category
 } // end of AST component

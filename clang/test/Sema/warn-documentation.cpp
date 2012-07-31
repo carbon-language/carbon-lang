@@ -170,18 +170,86 @@ class C {
  int test_param15(int bbb, int ccc);
 };
 
+// expected-warning@+1 {{parameter 'aab' not found in the function declaration}}
+/// \param aab Blah blah.
+template<typename T>
+void test_param16(int bbb, int ccc);
+
 // expected-warning@+3 {{parameter 'a' is already documented}}
 // expected-note@+1 {{previous documentation}}
 /// \param a Aaa.
 /// \param a Aaa.
-int test_param16(int a);
+int test_param17(int a);
 
 // expected-warning@+4 {{parameter 'x2' is already documented}}
 // expected-note@+2 {{previous documentation}}
 /// \param x1 Aaa.
 /// \param x2 Bbb.
 /// \param x2 Ccc.
-int test_param17(int x1, int x2, int x3);
+int test_param18(int x1, int x2, int x3);
+
+
+// expected-warning@+1 {{'\tparam' command used in a comment that is not attached to a template declaration}}
+/// \tparam T Aaa
+int test_tparam1;
+
+// expected-warning@+1 {{'\tparam' command used in a comment that is not attached to a template declaration}}
+/// \tparam T Aaa
+void test_tparam2(int aaa);
+
+// expected-warning@+1 {{empty paragraph passed to '\tparam' command}}
+/// \tparam
+/// \param aaa Blah blah
+template<typename T>
+void test_tparam3(T aaa);
+
+// expected-warning@+1 {{template parameter 'T' not found in the template declaration}} expected-note@+1 {{did you mean 'TT'?}}
+/// \tparam T Aaa
+template<typename TT>
+void test_tparam4(TT aaa);
+
+// expected-warning@+1 {{template parameter 'T' not found in the template declaration}} expected-note@+1 {{did you mean 'TT'?}}
+/// \tparam T Aaa
+template<typename TT>
+class test_tparam5 {
+  // expected-warning@+1 {{template parameter 'T' not found in the template declaration}} expected-note@+1 {{did you mean 'TTT'?}}
+  /// \tparam T Aaa
+  template<typename TTT>
+  void test_tparam6(TTT aaa);
+};
+
+/// \tparam T1 Aaa
+/// \tparam T2 Bbb
+template<typename T1, typename T2>
+void test_tparam7(T1 aaa, T2 bbb);
+
+// expected-warning@+1 {{template parameter 'SomTy' not found in the template declaration}} expected-note@+1 {{did you mean 'SomeTy'?}}
+/// \tparam SomTy Aaa
+/// \tparam OtherTy Bbb
+template<typename SomeTy, typename OtherTy>
+void test_tparam8(SomeTy aaa, OtherTy bbb);
+
+// expected-warning@+2 {{template parameter 'T1' is already documented}} expected-note@+1 {{previous documentation}}
+/// \tparam T1 Aaa
+/// \tparam T1 Bbb
+template<typename T1, typename T2>
+void test_tparam9(T1 aaa, T2 bbb);
+
+/// \tparam T Aaa
+/// \tparam TT Bbb
+template<template<typename T> class TT>
+void test_tparam10(TT<int> aaa);
+
+/// \tparam T Aaa
+/// \tparam TT Bbb
+/// \tparam TTT Ccc
+template<template<template<typename T> class TT, class C> class TTT>
+void test_tparam11();
+
+/// \tparam I Aaa
+template<int I>
+void test_tparam12();
+
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
 int test1; ///< \brief\brief Aaa
@@ -291,6 +359,125 @@ namespace test_attach24 {
   namespace test_attach25 {
   }
 }
+
+// expected-warning@+1 {{empty paragraph passed to '\brief' command}}
+/// \brief\brief Aaa
+/// \tparam T Aaa
+template<typename T>
+void test_attach26(T aaa);
+
+// expected-warning@+1 {{empty paragraph passed to '\brief' command}}
+/// \brief\brief Aaa
+/// \tparam T Aaa
+template<typename T, typename U>
+void test_attach27(T aaa, U bbb);
+
+// expected-warning@+2 {{empty paragraph passed to '\brief' command}}
+// expected-warning@+2 {{template parameter 'T' not found in the template declaration}}
+/// \brief\brief Aaa
+/// \tparam T Aaa
+template<>
+void test_attach27(int aaa, int bbb);
+
+// expected-warning@+1 {{empty paragraph passed to '\brief' command}}
+/// \brief\brief Aaa
+/// \tparam T Aaa
+template<typename T>
+class test_attach28 {
+  T aaa;
+};
+
+// expected-warning@+1 {{empty paragraph passed to '\brief' command}}
+/// \brief\brief Aaa
+/// \tparam T Aaa
+template<typename T, typename U>
+class test_attach29 { };
+
+// expected-warning@+1 {{empty paragraph passed to '\brief' command}}
+/// \brief\brief Aaa
+/// \tparam T Aaa
+template<typename T>
+class test_attach29<T, int> { };
+
+// expected-warning@+1 {{empty paragraph passed to '\brief' command}}
+/// \brief\brief Aaa
+template<>
+class test_attach29<int, int> { };
+
+// expected-warning@+1 {{empty paragraph passed to '\brief' command}}
+/// \brief\brief Aaa
+/// \tparam T Aaa
+template<typename T, typename U, typename V>
+class test_attach30 { };
+
+// expected-warning@+1 {{empty paragraph passed to '\brief' command}}
+/// \brief\brief Aaa
+/// \tparam T Aaa
+template<typename T, typename U>
+class test_attach30<T, U, int> { };
+
+// expected-warning@+1 {{empty paragraph passed to '\brief' command}}
+/// \brief\brief Aaa
+/// \tparam T Aaa
+template<typename T>
+class test_attach30<T, int, int> { };
+
+// expected-warning@+2 {{empty paragraph passed to '\brief' command}}
+// expected-warning@+2 {{template parameter 'T' not found in the template declaration}}
+/// \brief\brief Aaa
+/// \tparam T Aaa
+template<>
+class test_attach30<int, int, int> { };
+
+// expected-warning@+1 {{empty paragraph passed to '\brief' command}}
+/// \brief\brief Aaa
+class test_attach31 {
+  // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
+  /// \brief\brief Aaa
+  /// \tparam T Aaa
+  template<typename T, typename U>
+  void test_attach32(T aaa, U bbb);
+};
+
+template<typename T>
+class test_attach33 {
+  // expected-warning@+2 {{empty paragraph passed to '\brief' command}}
+  // expected-warning@+2 {{template parameter 'T' not found in the template declaration}}
+  /// \brief\brief Aaa
+  /// \tparam T Aaa
+  template<typename TT, typename UU>
+  void test_attach34(TT aaa, UU bbb);
+};
+
+// expected-warning@+2 {{empty paragraph passed to '\brief' command}}
+// expected-warning@+2 {{template parameter 'T' not found in the template declaration}}
+/// \brief\brief Aaa
+/// \tparam T Aaa
+template<> template<>
+void test_attach33<int>::test_attach34(int aaa, int bbb) {}
+
+template<typename T>
+class test_attach35 {
+  // expected-warning@+2 {{empty paragraph passed to '\brief' command}}
+  // expected-warning@+2 {{'\tparam' command used in a comment that is not attached to a template declaration}}
+  /// \brief\brief Aaa
+  /// \tparam T Aaa
+  void test_attach36(int aaa, int bbb);
+};
+
+// expected-warning@+1 {{empty paragraph passed to '\brief' command}}
+/// \brief\brief Aaa
+/// \tparam T Aaa
+template<typename T>
+void test_attach35<T>::test_attach36(int aaa, int bbb) {}
+
+// expected-warning@+2 {{empty paragraph passed to '\brief' command}}
+// expected-warning@+2 {{template parameter 'T' not found in the template declaration}}
+/// \brief\brief Aaa
+/// \tparam T Aaa
+template<>
+void test_attach35<int>::test_attach36(int aaa, int bbb) {}
+
 
 // PR13411, reduced.  We used to crash on this.
 /**

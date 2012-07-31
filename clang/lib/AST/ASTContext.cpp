@@ -72,6 +72,13 @@ RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
   if (isa<ParmVarDecl>(D))
     return NULL;
 
+  // TODO: we could look up template parameter documentation in the template
+  // documentation.
+  if (isa<TemplateTypeParmDecl>(D) ||
+      isa<NonTypeTemplateParmDecl>(D) ||
+      isa<TemplateTemplateParmDecl>(D))
+    return NULL;
+
   ArrayRef<RawComment *> RawComments = Comments.getComments();
 
   // If there are no comments anywhere, we won't find anything.
@@ -86,7 +93,9 @@ RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
   // so we use the location of the identifier as the "declaration location".
   SourceLocation DeclLoc;
   if (isa<ObjCMethodDecl>(D) || isa<ObjCContainerDecl>(D) ||
-      isa<ObjCPropertyDecl>(D))
+      isa<ObjCPropertyDecl>(D) ||
+      isa<FunctionTemplateDecl>(D) ||
+      isa<ClassTemplateDecl>(D) || isa<ClassTemplateSpecializationDecl>(D))
     DeclLoc = D->getLocStart();
   else
     DeclLoc = D->getLocation();
