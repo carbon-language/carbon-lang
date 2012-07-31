@@ -1,7 +1,6 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -analyzer-store region -cfg-add-initializers -cfg-add-implicit-dtors -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -analyzer-store region -cfg-add-implicit-dtors -verify %s
 
-// We don't inline constructors unless we have both initializers and
-// implicit destructors turned on.
+// We don't inline constructors unless we have destructors turned on.
 
 void clang_analyzer_eval(bool);
 

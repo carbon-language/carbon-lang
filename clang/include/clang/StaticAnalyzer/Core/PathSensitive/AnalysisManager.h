@@ -91,7 +91,7 @@ public:
                   bool vizdot, bool vizubi, AnalysisPurgeMode purge,
                   bool eager, bool trim,
                   bool useUnoptimizedCFG,
-                  bool addImplicitDtors, bool addInitializers,
+                  bool addImplicitDtors,
                   bool eagerlyTrimEGraph,
                   AnalysisIPAMode ipa,
                   unsigned inlineMaxStack,

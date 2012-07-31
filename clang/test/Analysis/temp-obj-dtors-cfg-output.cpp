@@ -1,5 +1,5 @@
 // RUN: rm -f %t
-// RUN: %clang_cc1 -analyze -analyzer-checker=debug.DumpCFG -cfg-add-implicit-dtors -cfg-add-initializers %s > %t 2>&1
+// RUN: %clang_cc1 -analyze -analyzer-checker=debug.DumpCFG -cfg-add-implicit-dtors %s > %t 2>&1
 // RUN: FileCheck --input-file=%t %s
 // XPASS: *
 

@@ -96,7 +96,6 @@ public:
   unsigned VisualizeEGUbi : 1;
   unsigned UnoptimizedCFG : 1;
   unsigned CFGAddImplicitDtors : 1;
-  unsigned CFGAddInitializers : 1;
   unsigned EagerlyTrimEGraph : 1;
   unsigned PrintStats : 1;
   unsigned NoRetryExhausted : 1;
@@ -121,7 +120,6 @@ public:
     VisualizeEGUbi = 0;
     UnoptimizedCFG = 0;
     CFGAddImplicitDtors = 0;
-    CFGAddInitializers = 0;
     EagerlyTrimEGraph = 0;
     PrintStats = 0;
     NoRetryExhausted = 0;

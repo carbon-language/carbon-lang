@@ -214,7 +214,6 @@ public:
                                   Opts.AnalysisPurgeOpt, Opts.EagerlyAssume,
                                   Opts.TrimGraph,
                                   Opts.UnoptimizedCFG, Opts.CFGAddImplicitDtors,
-                                  Opts.CFGAddInitializers,
                                   Opts.EagerlyTrimEGraph,
                                   Opts.IPAMode,
                                   Opts.InlineMaxStackDepth,
