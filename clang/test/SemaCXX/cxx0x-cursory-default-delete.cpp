@@ -24,7 +24,8 @@ void fn1 () {
   non_const_copy ncc;
   non_const_copy ncc2 = ncc;
   ncc = ncc2;
-  const non_const_copy cncc;
+  const non_const_copy cncc{};
+  const non_const_copy cncc1; // expected-error {{default initialization of an object of const type 'const non_const_copy' requires a user-provided default constructor}}
   non_const_copy ncc3 = cncc; // expected-error {{no matching}}
   ncc = cncc; // expected-error {{no viable overloaded}}
 };
@@ -69,7 +70,7 @@ struct except_spec_d_mismatch : except_spec_a, except_spec_b {
 };
 struct except_spec_d_match : except_spec_a, except_spec_b {
   except_spec_d_match() throw(A, B) = default;
-};  
+};
 
 // gcc-compatibility: allow attributes on default definitions
 // (but not normal definitions)

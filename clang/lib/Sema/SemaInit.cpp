@@ -2906,7 +2906,7 @@ static void TryConstructorInitialization(Sema &S,
   //   user-provided default constructor.
   if (Kind.getKind() == InitializationKind::IK_Default &&
       Entity.getType().isConstQualified() &&
-      cast<CXXConstructorDecl>(Best->Function)->isImplicit()) {
+      !cast<CXXConstructorDecl>(Best->Function)->isUserProvided()) {
     Sequence.SetFailed(InitializationSequence::FK_DefaultInitOfConst);
     return;
   }

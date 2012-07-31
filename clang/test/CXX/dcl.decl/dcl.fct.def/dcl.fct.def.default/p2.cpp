@@ -27,7 +27,7 @@ struct S2 {
 //   -- it is implicitly considered to be constexpr if the implicit declaration
 //      would be
 struct S3 {
-  S3() = default; // expected-note {{here}}
+  S3() = default;
   S3(const S3&) = default;
   S3(S3&&) = default;
   constexpr S3(int n) : n(n) {}
@@ -36,7 +36,7 @@ struct S3 {
 constexpr S3 s3a = S3(0);
 constexpr S3 s3b = s3a;
 constexpr S3 s3c = S3();
-constexpr S3 s3d; // expected-error {{constant expression}} expected-note {{non-constexpr constructor}}
+constexpr S3 s3d; // expected-error {{default initialization of an object of const type 'const S3' requires a user-provided default constructor}}
 
 struct S4 {
   S4() = default;
@@ -44,7 +44,7 @@ struct S4 {
   S4(S4&&) = default; // expected-note {{here}}
   NoCopyMove ncm;
 };
-constexpr S4 s4a; // ok
+constexpr S4 s4a{}; // ok
 constexpr S4 s4b = S4(); // expected-error {{constant expression}} expected-note {{non-constexpr constructor}}
 constexpr S4 s4c = s4a; // expected-error {{constant expression}} expected-note {{non-constexpr constructor}}
 
@@ -112,3 +112,13 @@ static_assert(!noexcept(E5(static_cast<E5&&>(e5))), "");
 static_assert(!noexcept(E5(e5)), "");
 static_assert(!noexcept(e5 = E5()), "");
 static_assert(!noexcept(e5 = e5), "");
+
+namespace PR13492 {
+  struct B {
+    B() = default;
+  };
+
+  void f() {
+    const B b; // expected-error {{default initialization of an object of const type 'const PR13492::B' requires a user-provided default constructor}}
+  }
+}
