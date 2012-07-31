@@ -367,7 +367,7 @@ ScriptInterpreterPython::PythonInputReaderManager::InputReaderCallback
                     StreamString run_string;
                     char error_str[1024];
                     const char *pty_slave_name = script_interpreter->m_embedded_python_pty.GetSlaveName (error_str, sizeof (error_str));
-                    if (pty_slave_name != NULL)
+                    if (pty_slave_name != NULL && PyThreadState_GetDict() != NULL)
                     {
                         run_string.Printf ("run_one_line (%s, 'save_stderr = sys.stderr')", script_interpreter->m_dictionary_name.c_str());
                         PyRun_SimpleString (run_string.GetData());
@@ -474,7 +474,7 @@ ScriptInterpreterPython::PythonInputReaderManager::InputReaderCallback
             StreamString run_string;
             char error_str[1024];
             const char *pty_slave_name = script_interpreter->m_embedded_python_pty.GetSlaveName (error_str, sizeof (error_str));
-            if (pty_slave_name != NULL)
+            if (pty_slave_name != NULL && PyThreadState_GetDict() != NULL)
             {
                 run_string.Printf ("run_one_line (%s, 'sys.stdin = save_stdin')", script_interpreter->m_dictionary_name.c_str());
                 PyRun_SimpleString (run_string.GetData());
