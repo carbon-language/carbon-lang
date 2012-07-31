@@ -10,7 +10,6 @@
 CLANG_LEVEL := ../..
 
 TOOLNAME = clang-check
-NO_INSTALL = 1
 
 # No plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1

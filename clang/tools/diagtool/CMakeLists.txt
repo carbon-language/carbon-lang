@@ -27,6 +27,3 @@ if(UNIX)
 else()
   set(CLANGXX_LINK_OR_COPY copy)
 endif()
-
-install(TARGETS diagtool 
-  RUNTIME DESTINATION bin)
