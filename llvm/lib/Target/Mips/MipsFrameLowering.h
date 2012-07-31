@@ -31,8 +31,6 @@ public:
       STI(sti) {
   }
 
-  bool targetHandlesStackFrameRounding() const;
-
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function.
   void emitPrologue(MachineFunction &MF) const;

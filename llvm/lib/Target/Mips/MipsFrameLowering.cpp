@@ -90,10 +90,6 @@ bool MipsFrameLowering::hasFP(const MachineFunction &MF) const {
       MFI->hasVarSizedObjects() || MFI->isFrameAddressTaken();
 }
 
-bool MipsFrameLowering::targetHandlesStackFrameRounding() const {
-  return true;
-}
-
 void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB   = MF.front();
   MachineFrameInfo *MFI    = MF.getFrameInfo();
@@ -110,12 +106,7 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   unsigned ADDiu = STI.isABI_N64() ? Mips::DADDiu : Mips::ADDiu;
 
   // First, compute final stack size.
-  unsigned StackAlign = getStackAlignment();
-  uint64_t StackSize = RoundUpToAlignment(MFI->getStackSize(), StackAlign);
-  StackSize += RoundUpToAlignment(MFI->getMaxCallFrameSize(), StackAlign);
-
-   // Update stack size
-  MFI->setStackSize(StackSize);
+  uint64_t StackSize = MFI->getStackSize();
 
   // No need to allocate space on the stack.
   if (StackSize == 0 && !MFI->adjustsStack()) return;
