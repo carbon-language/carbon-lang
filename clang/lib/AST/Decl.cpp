@@ -710,6 +710,10 @@ llvm::Optional<Visibility> NamedDecl::getExplicitVisibility() const {
   if (llvm::Optional<Visibility> V = getVisibilityOf(this))
     return V;
 
+  // The visibility of a template is stored in the templated decl.
+  if (const TemplateDecl *TD = dyn_cast<TemplateDecl>(this))
+    return getVisibilityOf(TD->getTemplatedDecl());
+
   // If there wasn't explicit visibility there, and this is a
   // specialization of a class template, check for visibility
   // on the pattern.

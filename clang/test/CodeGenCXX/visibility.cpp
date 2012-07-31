@@ -1094,3 +1094,21 @@ namespace test59 {
     // CHECK-HIDDEN: define linkonce_odr hidden void @_ZN6test594testIXadL_ZNS_1fEvEEXadL_ZNS_1gEvEEEEvv
   }
 }
+
+namespace test60 {
+  template<int i>
+  class __attribute__((visibility("hidden"))) a {};
+  template<int i>
+  class __attribute__((visibility("default"))) b {};
+  template<template<int> class x, template<int> class y>
+  void test() {}
+  void use() {
+    test<a, b>();
+    // CHECK: define linkonce_odr hidden void @_ZN6test604testINS_1aENS_1bEEEvv
+    // CHECK-HIDDEN: define linkonce_odr hidden void @_ZN6test604testINS_1aENS_1bEEEvv
+
+    test<b, a>();
+    // CHECK: define linkonce_odr hidden void @_ZN6test604testINS_1bENS_1aEEEvv
+    // CHECK-HIDDEN: define linkonce_odr hidden void @_ZN6test604testINS_1bENS_1aEEEvv
+  }
+}
