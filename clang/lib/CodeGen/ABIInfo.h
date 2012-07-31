@@ -74,31 +74,42 @@ namespace clang {
     unsigned UIntData;
     bool BoolData0;
     bool BoolData1;
+    bool InReg;
 
-    ABIArgInfo(Kind K, llvm::Type *TD, unsigned UI, bool B0, bool B1,
+    ABIArgInfo(Kind K, llvm::Type *TD, unsigned UI, bool B0, bool B1, bool IR,
                llvm::Type* P)
       : TheKind(K), TypeData(TD), PaddingType(P), UIntData(UI), BoolData0(B0),
-        BoolData1(B1) {}
+        BoolData1(B1), InReg(IR) {}
 
   public:
     ABIArgInfo() : TheKind(Direct), TypeData(0), UIntData(0) {}
 
     static ABIArgInfo getDirect(llvm::Type *T = 0, unsigned Offset = 0,
                                 llvm::Type *Padding = 0) {
-      return ABIArgInfo(Direct, T, Offset, false, false, Padding);
+      return ABIArgInfo(Direct, T, Offset, false, false, false, Padding);
+    }
+    static ABIArgInfo getDirectInReg(llvm::Type *T) {
+      return ABIArgInfo(Direct, T, 0, false, false, true, 0);
     }
     static ABIArgInfo getExtend(llvm::Type *T = 0) {
-      return ABIArgInfo(Extend, T, 0, false, false, 0);
+      return ABIArgInfo(Extend, T, 0, false, false, false, 0);
+    }
+    static ABIArgInfo getExtendInReg(llvm::Type *T = 0) {
+      return ABIArgInfo(Extend, T, 0, false, false, true, 0);
     }
     static ABIArgInfo getIgnore() {
-      return ABIArgInfo(Ignore, 0, 0, false, false, 0);
+      return ABIArgInfo(Ignore, 0, 0, false, false, false, 0);
     }
     static ABIArgInfo getIndirect(unsigned Alignment, bool ByVal = true
                                   , bool Realign = false) {
-      return ABIArgInfo(Indirect, 0, Alignment, ByVal, Realign, 0);
+      return ABIArgInfo(Indirect, 0, Alignment, ByVal, Realign, false, 0);
+    }
+    static ABIArgInfo getIndirectInReg(unsigned Alignment, bool ByVal = true
+                                  , bool Realign = false) {
+      return ABIArgInfo(Indirect, 0, Alignment, ByVal, Realign, true, 0);
     }
     static ABIArgInfo getExpand() {
-      return ABIArgInfo(Expand, 0, 0, false, false, 0);
+      return ABIArgInfo(Expand, 0, 0, false, false, false, 0);
     }
 
     Kind getKind() const { return TheKind; }
@@ -130,6 +141,11 @@ namespace clang {
     void setCoerceToType(llvm::Type *T) {
       assert(canHaveCoerceToType() && "Invalid kind!");
       TypeData = T;
+    }
+
+    bool getInReg() const {
+      assert((isDirect() || isExtend() || isIndirect()) && "Invalid kind!");
+      return InReg;
     }
 
     // Indirect accessors

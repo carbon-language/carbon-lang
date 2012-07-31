@@ -413,12 +413,18 @@ static llvm::Type* X86AdjustInlineAsmType(CodeGen::CodeGenFunction &CGF,
 
 /// X86_32ABIInfo - The X86-32 ABI information.
 class X86_32ABIInfo : public ABIInfo {
+  enum Class {
+    Integer,
+    Float
+  };
+
   static const unsigned MinABIStackAlignInBytes = 4;
 
   bool IsDarwinVectorABI;
   bool IsSmallStructInRegABI;
   bool IsMMXDisabled;
   bool IsWin32FloatStructABI;
+  unsigned DefaultNumRegisterParameters;
 
   static bool isRegisterSize(unsigned Size) {
     return (Size == 8 || Size == 16 || Size == 32 || Size == 64);
@@ -434,8 +440,11 @@ class X86_32ABIInfo : public ABIInfo {
   /// \brief Return the alignment to use for the given type on the stack.
   unsigned getTypeStackAlignInBytes(QualType Ty, unsigned Align) const;
 
+  Class classify(QualType Ty) const;
   ABIArgInfo classifyReturnType(QualType RetTy,
                                 unsigned callingConvention) const;
+  ABIArgInfo classifyArgumentTypeWithReg(QualType RetTy,
+                                         unsigned &FreeRegs) const;
   ABIArgInfo classifyArgumentType(QualType RetTy) const;
 
 public:
@@ -444,16 +453,18 @@ public:
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                  CodeGenFunction &CGF) const;
 
-  X86_32ABIInfo(CodeGen::CodeGenTypes &CGT, bool d, bool p, bool m, bool w)
+  X86_32ABIInfo(CodeGen::CodeGenTypes &CGT, bool d, bool p, bool m, bool w,
+                unsigned r)
     : ABIInfo(CGT), IsDarwinVectorABI(d), IsSmallStructInRegABI(p),
-      IsMMXDisabled(m), IsWin32FloatStructABI(w) {}
+      IsMMXDisabled(m), IsWin32FloatStructABI(w),
+      DefaultNumRegisterParameters(r) {}
 };
 
 class X86_32TargetCodeGenInfo : public TargetCodeGenInfo {
 public:
   X86_32TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT,
-      bool d, bool p, bool m, bool w)
-    :TargetCodeGenInfo(new X86_32ABIInfo(CGT, d, p, m, w)) {}
+      bool d, bool p, bool m, bool w, unsigned r)
+    :TargetCodeGenInfo(new X86_32ABIInfo(CGT, d, p, m, w, r)) {}
 
   void SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
                            CodeGen::CodeGenModule &CGM) const;
@@ -690,6 +701,57 @@ ABIArgInfo X86_32ABIInfo::getIndirectResult(QualType Ty, bool ByVal) const {
   return ABIArgInfo::getIndirect(StackAlign);
 }
 
+X86_32ABIInfo::Class X86_32ABIInfo::classify(QualType Ty) const {
+  const Type *T = isSingleElementStruct(Ty, getContext());
+  if (!T)
+    T = Ty.getTypePtr();
+
+  if (const BuiltinType *BT = T->getAs<BuiltinType>()) {
+    BuiltinType::Kind K = BT->getKind();
+    if (K == BuiltinType::Float || K == BuiltinType::Double)
+      return Float;
+  }
+  return Integer;
+}
+
+ABIArgInfo
+X86_32ABIInfo::classifyArgumentTypeWithReg(QualType Ty,
+                                           unsigned &FreeRegs) const {
+  // Common case first.
+  if (FreeRegs == 0)
+    return classifyArgumentType(Ty);
+
+  Class C = classify(Ty);
+  if (C == Float)
+    return classifyArgumentType(Ty);
+
+  unsigned SizeInRegs = (getContext().getTypeSize(Ty) + 31) / 32;
+  if (SizeInRegs == 0)
+    return classifyArgumentType(Ty);
+
+  if (SizeInRegs > FreeRegs) {
+    FreeRegs = 0;
+    return classifyArgumentType(Ty);
+  }
+  assert(SizeInRegs >= 1 && SizeInRegs <= 3);
+  FreeRegs -= SizeInRegs;
+
+  // If it is a simple scalar, keep the type so that we produce a cleaner IR.
+  ABIArgInfo Foo = classifyArgumentType(Ty);
+  if (Foo.isDirect() && !Foo.getDirectOffset() && !Foo.getPaddingType())
+    return ABIArgInfo::getDirectInReg(Foo.getCoerceToType());
+  if (Foo.isExtend())
+    return ABIArgInfo::getExtendInReg(Foo.getCoerceToType());
+
+  llvm::LLVMContext &LLVMContext = getVMContext();
+  llvm::Type *Int32 = llvm::Type::getInt32Ty(LLVMContext);
+  SmallVector<llvm::Type*, 3> Elements;
+  for (unsigned I = 0; I < SizeInRegs; ++I)
+    Elements.push_back(Int32);
+  llvm::Type *Result = llvm::StructType::get(LLVMContext, Elements);
+  return ABIArgInfo::getDirectInReg(Result);
+}
+
 ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty) const {
   // FIXME: Set alignment on indirect arguments.
   if (isAggregateTypeForABI(Ty)) {
@@ -754,9 +816,23 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty) const {
 void X86_32ABIInfo::computeInfo(CGFunctionInfo &FI) const {
   FI.getReturnInfo() = classifyReturnType(FI.getReturnType(),
                                           FI.getCallingConvention());
+
+  unsigned FreeRegs = FI.getHasRegParm() ? FI.getRegParm() :
+    DefaultNumRegisterParameters;
+
+  // If the return value is indirect, then the hidden argument is consuming one
+  // integer register.
+  if (FI.getReturnInfo().isIndirect() && FreeRegs) {
+    --FreeRegs;
+    ABIArgInfo &Old = FI.getReturnInfo();
+    Old = ABIArgInfo::getIndirectInReg(Old.getIndirectAlign(),
+                                       Old.getIndirectByVal(),
+                                       Old.getIndirectRealign());
+  }
+
   for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
        it != ie; ++it)
-    it->info = classifyArgumentType(it->type);
+    it->info = classifyArgumentTypeWithReg(it->type, FreeRegs);
 }
 
 llvm::Value *X86_32ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
@@ -3735,8 +3811,8 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
 
     if (Triple.isOSDarwin())
       return *(TheTargetCodeGenInfo =
-               new X86_32TargetCodeGenInfo(
-                 Types, true, true, DisableMMX, false));
+               new X86_32TargetCodeGenInfo(Types, true, true, DisableMMX, false,
+                                           CodeGenOpts.NumRegisterParameters));
 
     switch (Triple.getOS()) {
     case llvm::Triple::Cygwin:
@@ -3746,18 +3822,20 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
     case llvm::Triple::FreeBSD:
     case llvm::Triple::OpenBSD:
       return *(TheTargetCodeGenInfo =
-               new X86_32TargetCodeGenInfo(
-                 Types, false, true, DisableMMX, false));
+               new X86_32TargetCodeGenInfo(Types, false, true, DisableMMX,
+                                           false,
+                                           CodeGenOpts.NumRegisterParameters));
 
     case llvm::Triple::Win32:
       return *(TheTargetCodeGenInfo =
-               new X86_32TargetCodeGenInfo(
-                 Types, false, true, DisableMMX, true));
+               new X86_32TargetCodeGenInfo(Types, false, true, DisableMMX, true,
+                                           CodeGenOpts.NumRegisterParameters));
 
     default:
       return *(TheTargetCodeGenInfo =
-               new X86_32TargetCodeGenInfo(
-                 Types, false, false, DisableMMX, false));
+               new X86_32TargetCodeGenInfo(Types, false, false, DisableMMX,
+                                           false,
+                                           CodeGenOpts.NumRegisterParameters));
     }
   }
 

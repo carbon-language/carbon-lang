@@ -983,14 +983,18 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
   case ABIArgInfo::Ignore:
     break;
 
-  case ABIArgInfo::Indirect:
-    PAL.push_back(llvm::AttributeWithIndex::get(Index,
-                                                llvm::Attribute::StructRet));
+  case ABIArgInfo::Indirect: {
+    llvm::Attributes SRETAttrs = llvm::Attribute::StructRet;
+    if (RetAI.getInReg())
+      SRETAttrs |= llvm::Attribute::InReg;
+    PAL.push_back(llvm::AttributeWithIndex::get(Index, SRETAttrs));
+
     ++Index;
     // sret disables readnone and readonly
     FuncAttrs &= ~(llvm::Attribute::ReadOnly |
                    llvm::Attribute::ReadNone);
     break;
+  }
 
   case ABIArgInfo::Expand:
     llvm_unreachable("Invalid ABI kind for return argument");
@@ -999,14 +1003,6 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
   if (RetAttrs)
     PAL.push_back(llvm::AttributeWithIndex::get(0, RetAttrs));
 
-  // FIXME: RegParm should be reduced in case of global register variable.
-  signed RegParm;
-  if (FI.getHasRegParm())
-    RegParm = FI.getRegParm();
-  else
-    RegParm = CodeGenOpts.NumRegisterParameters;
-
-  unsigned PointerWidth = getContext().getTargetInfo().getPointerWidth(0);
   for (CGFunctionInfo::const_arg_iterator it = FI.arg_begin(),
          ie = FI.arg_end(); it != ie; ++it) {
     QualType ParamType = it->type;
@@ -1024,22 +1020,22 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
         Attrs |= llvm::Attribute::ZExt;
       // FALL THROUGH
     case ABIArgInfo::Direct:
-      if (RegParm > 0 &&
-          (ParamType->isIntegerType() || ParamType->isPointerType() ||
-           ParamType->isReferenceType())) {
-        RegParm -=
-        (Context.getTypeSize(ParamType) + PointerWidth - 1) / PointerWidth;
-        if (RegParm >= 0)
+      if (AI.getInReg())
           Attrs |= llvm::Attribute::InReg;
-      }
+
       // FIXME: handle sseregparm someday...
 
       // Increment Index if there is padding.
       Index += (AI.getPaddingType() != 0);
 
       if (llvm::StructType *STy =
-            dyn_cast<llvm::StructType>(AI.getCoerceToType()))
-        Index += STy->getNumElements()-1;  // 1 will be added below.
+          dyn_cast<llvm::StructType>(AI.getCoerceToType())) {
+        unsigned Extra = STy->getNumElements()-1;  // 1 will be added below.
+        if (Attrs != llvm::Attribute::None)
+          for (unsigned I = 0; I < Extra; ++I)
+            PAL.push_back(llvm::AttributeWithIndex::get(Index + I, Attrs));
+        Index += Extra;
+      }
       break;
 
     case ABIArgInfo::Indirect:
