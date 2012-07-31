@@ -78,3 +78,9 @@
   return 5/_attribute; // expected-warning {{Division by zero}}
 }
 @end
+
+
+// Don't crash if we don't know the receiver's region.
+void randomlyMessageAnObject(MyClass *arr[], int i) {
+  (void)[arr[i] getInt];
+}
