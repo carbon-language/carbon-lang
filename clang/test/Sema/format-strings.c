@@ -555,3 +555,19 @@ void test14_zed(int *p) {
   test14_foo("%", "%d", p); // expected-warning{{incomplete format specifier}}
   test14_bar("%", "%d", p); // expected-warning{{incomplete format specifier}}
 }
+
+void test_qualifiers(volatile int *vip, const int *cip,
+                     const volatile int *cvip) {
+  printf("%n", cip); // expected-warning{{format specifies type 'int *' but the argument has type 'const int *'}}
+  printf("%n", cvip); // expected-warning{{format specifies type 'int *' but the argument has type 'const volatile int *'}}
+
+  printf("%n", vip); // No warning.
+  printf("%p", cip); // No warning.
+  printf("%p", cvip); // No warning.
+
+
+  typedef int* ip_t;
+  typedef const int* cip_t;
+  printf("%n", (ip_t)0); // No warning.
+  printf("%n", (cip_t)0); // expected-warning{{format specifies type 'int *' but the argument has type 'cip_t' (aka 'const int *')}}
+}

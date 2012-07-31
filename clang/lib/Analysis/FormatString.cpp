@@ -262,6 +262,13 @@ bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
         argTy = ETy->getDecl()->getIntegerType();
       argTy = C.getCanonicalType(argTy).getUnqualifiedType();
 
+      if (const PointerType *PTy = argTy->getAs<PointerType>()) {
+        // Strip volatile qualifier from pointee type.
+        QualType Pointee = PTy->getPointeeType();
+        Pointee.removeLocalVolatile();
+        argTy = C.getPointerType(Pointee);
+      }
+
       if (T == argTy)
         return true;
       // Check for "compatible types".

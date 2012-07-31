@@ -126,3 +126,21 @@ void test_writeback(int *x) {
   scanf("%n", (void*)0); // expected-warning{{format specifies type 'int *' but the argument has type 'void *'}}
   scanf("%n %c", x, x); // expected-warning{{format specifies type 'char *' but the argument has type 'int *'}}
 }
+
+void test_qualifiers(const int *cip, volatile int* vip,
+                     const char *ccp, volatile char* vcp,
+                     const volatile int *cvip) {
+  scanf("%d", cip); // expected-warning{{format specifies type 'int *' but the argument has type 'const int *'}}
+  scanf("%n", cip); // expected-warning{{format specifies type 'int *' but the argument has type 'const int *'}}
+  scanf("%s", ccp); // expected-warning{{format specifies type 'char *' but the argument has type 'const char *'}}
+  scanf("%d", cvip); // expected-warning{{format specifies type 'int *' but the argument has type 'const volatile int *'}}
+
+  scanf("%d", vip); // No warning.
+  scanf("%n", vip); // No warning.
+  scanf("%c", vcp); // No warning.
+
+  typedef int* ip_t;
+  typedef const int* cip_t;
+  scanf("%d", (ip_t)0); // No warning.
+  scanf("%d", (cip_t)0); // expected-warning{{format specifies type 'int *' but the argument has type 'cip_t' (aka 'const int *')}}
+}

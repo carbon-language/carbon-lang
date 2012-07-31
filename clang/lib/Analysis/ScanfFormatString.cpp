@@ -453,6 +453,15 @@ bool clang::analyze_format_string::ParseScanfString(FormatStringHandler &H,
 }
 
 bool ScanfArgTypeResult::matchesType(ASTContext& C, QualType argTy) const {
+  // It has to be a pointer type.
+  const PointerType *PT = argTy->getAs<PointerType>();
+  if (!PT)
+    return false;
+
+  // We cannot write through a const qualified pointer.
+  if (PT->getPointeeType().isConstQualified())
+    return false;
+
   switch (K) {
     case InvalidTy:
       llvm_unreachable("ArgTypeResult must be valid");
@@ -463,9 +472,6 @@ bool ScanfArgTypeResult::matchesType(ASTContext& C, QualType argTy) const {
     case WCStrTy:
       return ArgTypeResult(ArgTypeResult::WCStrTy).matchesType(C, argTy);
     case PtrToArgTypeResultTy: {
-      const PointerType *PT = argTy->getAs<PointerType>();
-      if (!PT)
-        return false;
       return A.matchesType(C, PT->getPointeeType());
     }
   }
