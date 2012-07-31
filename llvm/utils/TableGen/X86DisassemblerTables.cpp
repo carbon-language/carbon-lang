@@ -484,7 +484,7 @@ void DisassemblerTables::emitInstructionInfo(raw_ostream &o,
 }
 
 void DisassemblerTables::emitContextTable(raw_ostream &o, unsigned &i) const {
-  o.indent(i * 2) << "static const InstructionContext " CONTEXTS_STR
+  o.indent(i * 2) << "static const uint8_t " CONTEXTS_STR
                      "[256] = {\n";
   i++;
 
