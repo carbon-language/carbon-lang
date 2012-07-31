@@ -1405,7 +1405,8 @@ static llvm::Value *tryEmitFusedAutoreleaseOfResult(CodeGenFunction &CGF,
 static llvm::Value *tryRemoveRetainOfSelf(CodeGenFunction &CGF,
                                           llvm::Value *result) {
   // This is only applicable to a method with an immutable 'self'.
-  const ObjCMethodDecl *method = dyn_cast<ObjCMethodDecl>(CGF.CurCodeDecl);
+  const ObjCMethodDecl *method =
+    dyn_cast_or_null<ObjCMethodDecl>(CGF.CurCodeDecl);
   if (!method) return 0;
   const VarDecl *self = method->getSelfDecl();
   if (!self->getType().isConstQualified()) return 0;

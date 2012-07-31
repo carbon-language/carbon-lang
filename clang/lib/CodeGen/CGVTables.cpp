@@ -387,6 +387,9 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
   if (!ResultType->isVoidType() && Slot.isNull())
     CGM.getCXXABI().EmitReturnFromThunk(*this, RV, ResultType);
 
+  // Disable the final ARC autorelease.
+  AutoreleaseResult = false;
+
   FinishFunction();
 
   // Set the right linkage.

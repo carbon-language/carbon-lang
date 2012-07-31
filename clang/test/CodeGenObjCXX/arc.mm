@@ -252,3 +252,19 @@ template <class T> class Test38 {
 };
 // CHECK: define weak_odr void @_ZN6Test38IiE4testEi(
 template class Test38<int>;
+
+// rdar://problem/11964832
+class Test39_base1 {
+  virtual void foo();
+};
+class Test39_base2 {
+  virtual id bar();
+};
+class Test39 : Test39_base1, Test39_base2 { // base2 is at non-zero offset
+  virtual id bar();
+};
+id Test39::bar() { return 0; }
+// Note lack of autorelease.
+// CHECK:    define i8* @_ZThn8_N6Test393barEv(
+// CHECK:      call i8* @_ZN6Test393barEv(
+// CHECK-NEXT: ret i8*
