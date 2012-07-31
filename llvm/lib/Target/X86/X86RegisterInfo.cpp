@@ -72,13 +72,15 @@ X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
     SlotSize = 8;
     StackPtr = X86::RSP;
     FramePtr = X86::RBP;
-    BasePtr = X86::RBX;
   } else {
     SlotSize = 4;
     StackPtr = X86::ESP;
     FramePtr = X86::EBP;
-    BasePtr = X86::EBX;
   }
+  // Use a callee-saved register as the base pointer.  These registers must
+  // not conflict with any ABI requirements.  For example, in 32-bit mode PIC 
+  // requires GOT in the EBX register before function calls via PLT GOT pointer.
+  BasePtr = Is64Bit ? X86::RBX : X86::ESI;
 }
 
 /// getCompactUnwindRegNum - This function maps the register to the number for

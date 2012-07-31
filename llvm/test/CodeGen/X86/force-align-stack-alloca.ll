@@ -24,8 +24,8 @@ define i64 @g(i32 %i) nounwind {
 ; CHECK-NEXT: andl   $-32, %esp
 ; CHECK-NEXT: subl   $32, %esp
 ;
-; Now setup the base pointer (%ebx).
-; CHECK-NEXT: movl   %esp, %ebx
+; Now setup the base pointer (%esi).
+; CHECK-NEXT: movl   %esp, %esi
 ; CHECK-NOT:         {{[^ ,]*}}, %esp
 ;
 ; The next adjustment of the stack is due to the alloca.
