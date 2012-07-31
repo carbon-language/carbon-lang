@@ -416,25 +416,23 @@ let Defs=[FCR31] in {
 //===----------------------------------------------------------------------===//
 // Floating Point Pseudo-Instructions
 //===----------------------------------------------------------------------===//
-def MOVCCRToCCR : MipsPseudo<(outs CCR:$dst), (ins CCR:$src),
-                             "# MOVCCRToCCR", []>;
+def MOVCCRToCCR : PseudoSE<(outs CCR:$dst), (ins CCR:$src),
+                           "# MOVCCRToCCR", []>;
 
 // This pseudo instr gets expanded into 2 mtc1 instrs after register
 // allocation.
 def BuildPairF64 :
-  MipsPseudo<(outs AFGR64:$dst),
-             (ins CPURegs:$lo, CPURegs:$hi), "",
-             [(set AFGR64:$dst, (MipsBuildPairF64 CPURegs:$lo, CPURegs:$hi))]>;
+  PseudoSE<(outs AFGR64:$dst),
+           (ins CPURegs:$lo, CPURegs:$hi), "",
+           [(set AFGR64:$dst, (MipsBuildPairF64 CPURegs:$lo, CPURegs:$hi))]>;
 
 // This pseudo instr gets expanded into 2 mfc1 instrs after register
 // allocation.
 // if n is 0, lower part of src is extracted.
 // if n is 1, higher part of src is extracted.
 def ExtractElementF64 :
-  MipsPseudo<(outs CPURegs:$dst),
-             (ins AFGR64:$src, i32imm:$n), "",
-             [(set CPURegs:$dst,
-               (MipsExtractElementF64 AFGR64:$src, imm:$n))]>;
+  PseudoSE<(outs CPURegs:$dst), (ins AFGR64:$src, i32imm:$n), "",
+           [(set CPURegs:$dst, (MipsExtractElementF64 AFGR64:$src, imm:$n))]>;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Patterns

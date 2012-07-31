@@ -37,8 +37,8 @@ def FrmFI     : Format<5>;
 def FrmOther  : Format<6>; // Instruction w/ a custom format
 
 // Generic Mips Format
-class InstSE<dag outs, dag ins, string asmstr, list<dag> pattern,
-             InstrItinClass itin, Format f>: Instruction
+class MipsInst<dag outs, dag ins, string asmstr, list<dag> pattern,
+               InstrItinClass itin, Format f>: Instruction
 {
   field bits<32> Inst;
   Format Form = f;
@@ -70,16 +70,26 @@ class InstSE<dag outs, dag ins, string asmstr, list<dag> pattern,
   let DecoderNamespace = "Mips";
 
   field bits<32> SoftFail = 0;
+}
 
+// Mips32/64 Instruction Format
+class InstSE<dag outs, dag ins, string asmstr, list<dag> pattern,
+             InstrItinClass itin, Format f>:
+  MipsInst<outs, ins, asmstr, pattern, itin, f> {
   let Predicates = [HasStandardEncoding];
-
 }
 
 // Mips Pseudo Instructions Format
 class MipsPseudo<dag outs, dag ins, string asmstr, list<dag> pattern>:
-  InstSE<outs, ins, asmstr, pattern, IIPseudo, Pseudo> {
+  MipsInst<outs, ins, asmstr, pattern, IIPseudo, Pseudo> {
   let isCodeGenOnly = 1;
   let isPseudo = 1;
+}
+
+// Mips32/64 Pseudo Instruction Format
+class PseudoSE<dag outs, dag ins, string asmstr, list<dag> pattern>:
+  MipsPseudo<outs, ins, asmstr, pattern> {
+  let Predicates = [HasStandardEncoding];
 }
 
 //===----------------------------------------------------------------------===//

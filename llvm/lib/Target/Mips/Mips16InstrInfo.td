@@ -249,18 +249,6 @@ let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1, hasCtrlDep=1,
   hasExtraSrcRegAllocReq = 1 in
 def RetRA16 : MipsPseudo16<(outs), (ins), "", [(MipsRet)]>;
 
-// As stack alignment is always done with addiu, we need a 16-bit immediate
-// This is basically deprecated code but needs to be there for things
-// to work.
-let Defs = [SP], Uses = [SP] in {
-def ADJCALLSTACKDOWN16 : MipsPseudo16<(outs), (ins uimm16:$amt),
-                                      ";",
-                                      [(callseq_start timm:$amt)]>;
-def ADJCALLSTACKUP16   : MipsPseudo16<(outs), (ins uimm16:$amt1, uimm16:$amt2),
-                                      ";",
-                                      [(callseq_end timm:$amt1, timm:$amt2)]>;
-}
-
 // Small immediates
 def : Mips16Pat<(i32 immZExt16:$in), (LiRxImmX16 immZExt16:$in)>;
 
