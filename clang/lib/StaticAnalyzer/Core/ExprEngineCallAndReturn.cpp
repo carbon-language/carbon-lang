@@ -284,13 +284,37 @@ bool ExprEngine::inlineCall(const CallEvent &Call,
   const StackFrameContext *CallerSFC = CurLC->getCurrentStackFrame();
   const LocationContext *ParentOfCallee = 0;
 
+  // FIXME: Refactor this check into a hypothetical CallEvent::canInline.
   switch (Call.getKind()) {
   case CE_Function:
   case CE_CXXMember:
   case CE_CXXMemberOperator:
     // These are always at least possible to inline.
     break;
-  case CE_CXXConstructor:
+  case CE_CXXConstructor: {
+    // Only inline constructors and destructors if we built the CFGs for them
+    // properly.
+    const AnalysisDeclContext *ADC = CallerSFC->getAnalysisDeclContext();
+    if (!ADC->getCFGBuildOptions().AddImplicitDtors ||
+        !ADC->getCFGBuildOptions().AddInitializers)
+      return false;
+
+    const CXXConstructorCall &Ctor = cast<CXXConstructorCall>(Call);
+
+    // FIXME: We don't handle constructors or destructors for arrays properly.
+    const MemRegion *Target = Ctor.getCXXThisVal().getAsRegion();
+    if (Target && isa<ElementRegion>(Target))
+      return false;
+
+    // FIXME: This is a hack. We don't handle temporary destructors
+    // right now, so we shouldn't inline their constructors.
+    const CXXConstructExpr *CtorExpr = Ctor.getOriginExpr();
+    if (CtorExpr->getConstructionKind() == CXXConstructExpr::CK_Complete)
+      if (!Target || !isa<DeclRegion>(Target))
+        return false;
+
+    break;
+  }
   case CE_CXXDestructor: {
     // Only inline constructors and destructors if we built the CFGs for them
     // properly.
@@ -299,19 +323,13 @@ bool ExprEngine::inlineCall(const CallEvent &Call,
         !ADC->getCFGBuildOptions().AddInitializers)
       return false;
 
+    const CXXDestructorCall &Dtor = cast<CXXDestructorCall>(Call);
+
     // FIXME: We don't handle constructors or destructors for arrays properly.
-    const MemRegion *Target = Call.getCXXThisVal().getAsRegion();
+    const MemRegion *Target = Dtor.getCXXThisVal().getAsRegion();
     if (Target && isa<ElementRegion>(Target))
       return false;
 
-    // FIXME: This is a hack. We don't handle temporary destructors
-    // right now, so we shouldn't inline their constructors.
-    if (const CXXConstructorCall *Ctor = dyn_cast<CXXConstructorCall>(&Call)) {
-      const CXXConstructExpr *CtorExpr = Ctor->getOriginExpr();
-      if (CtorExpr->getConstructionKind() == CXXConstructExpr::CK_Complete)
-        if (!Target || !isa<DeclRegion>(Target))
-          return false;
-    }
     break;
   }
   case CE_CXXAllocator:

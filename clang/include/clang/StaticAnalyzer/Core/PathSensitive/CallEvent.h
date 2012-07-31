@@ -218,12 +218,6 @@ public:
   /// \brief Returns the result type, adjusted for references.
   QualType getResultType() const;
 
-  /// \brief Returns the value of the implicit 'this' object, or UndefinedVal if
-  /// this is not a C++ member function call.
-  virtual SVal getCXXThisVal() const {
-    return UndefinedVal();
-  }
-
   /// \brief Returns true if any of the arguments appear to represent callbacks.
   bool hasNonZeroCallbackArg() const;
 
@@ -246,6 +240,14 @@ public:
   /// occurred.
   ProgramStateRef invalidateRegions(unsigned BlockCount,
                                     ProgramStateRef Orig = 0) const;
+
+  typedef std::pair<Loc, SVal> FrameBindingTy;
+  typedef SmallVectorImpl<FrameBindingTy> BindingsTy;
+
+  /// Populates the given SmallVector with the bindings in the callee's stack
+  /// frame at the start of this call.
+  virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
+                                            BindingsTy &Bindings) const = 0;
 
   /// Returns a copy of this CallEvent, but using the given state.
   template <typename T>
@@ -284,9 +286,9 @@ public:
   /// If the call has no accessible declaration (or definition, if
   /// \p UseDefinitionParams is set), \c param_begin() will be equal to
   /// \c param_end().
-  virtual param_iterator param_begin(bool UseDefinitionParams = false) const =0;
+  virtual param_iterator param_begin() const =0;
   /// \sa param_begin()
-  virtual param_iterator param_end(bool UseDefinitionParams = false) const = 0;
+  virtual param_iterator param_end() const = 0;
 
   typedef llvm::mapped_iterator<param_iterator, get_type_fun>
     param_type_iterator;
@@ -344,8 +346,11 @@ public:
 
   virtual bool argumentsMayEscape() const;
 
-  virtual param_iterator param_begin(bool UseDefinitionParams = false) const;
-  virtual param_iterator param_end(bool UseDefinitionParams = false) const;
+  virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
+                                            BindingsTy &Bindings) const;
+
+  virtual param_iterator param_begin() const;
+  virtual param_iterator param_end() const;
 
   static bool classof(const CallEvent *CA) {
     return CA->getKind() >= CE_BEG_FUNCTION_CALLS &&
@@ -415,7 +420,13 @@ protected:
   CXXInstanceCall(const CXXInstanceCall &Other) : SimpleCall(Other) {}
 
 public:
+  /// \brief Returns the value of the implicit 'this' object.
+  virtual SVal getCXXThisVal() const = 0;
+
   virtual const Decl *getRuntimeDefinition() const;
+
+  virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
+                                            BindingsTy &Bindings) const;
 
   static bool classof(const CallEvent *CA) {
     return CA->getKind() >= CE_BEG_CXX_INSTANCE_CALLS &&
@@ -529,8 +540,11 @@ public:
     return getBlockDecl();
   }
 
-  virtual param_iterator param_begin(bool UseDefinitionParams = false) const;
-  virtual param_iterator param_end(bool UseDefinitionParams = false) const;
+  virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
+                                            BindingsTy &Bindings) const;
+
+  virtual param_iterator param_begin() const;
+  virtual param_iterator param_end() const;
 
   virtual Kind getKind() const { return CE_Block; }
 
@@ -579,7 +593,11 @@ public:
     return getOriginExpr()->getArg(Index);
   }
 
+  /// \brief Returns the value of the implicit 'this' object.
   virtual SVal getCXXThisVal() const;
+
+  virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
+                                            BindingsTy &Bindings) const;
 
   virtual Kind getKind() const { return CE_CXXConstructor; }
 
@@ -620,8 +638,13 @@ public:
   virtual SourceRange getSourceRange() const { return Location; }
   virtual unsigned getNumArgs() const { return 0; }
 
+  /// \brief Returns the value of the implicit 'this' object.
   virtual SVal getCXXThisVal() const;
+
   virtual const Decl *getRuntimeDefinition() const;
+
+  virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
+                                            BindingsTy &Bindings) const;
 
   virtual Kind getKind() const { return CE_CXXDestructor; }
 
@@ -754,13 +777,13 @@ public:
     llvm_unreachable("Unknown message kind");
   }
 
-  // TODO: We might want to only compute this once (or change the API for 
-  // getting the parameters). Currently, this gets called 3 times during 
-  // inlining.
   virtual const Decl *getRuntimeDefinition() const;
 
-  virtual param_iterator param_begin(bool UseDefinitionParams = false) const;
-  virtual param_iterator param_end(bool UseDefinitionParams = false) const;
+  virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
+                                            BindingsTy &Bindings) const;
+
+  virtual param_iterator param_begin() const;
+  virtual param_iterator param_end() const;
 
   virtual Kind getKind() const { return CE_ObjCMessage; }
 

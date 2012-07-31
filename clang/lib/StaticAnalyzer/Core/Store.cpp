@@ -29,37 +29,15 @@ StoreRef StoreManager::enterStackFrame(Store OldStore,
                                        const StackFrameContext *LCtx) {
   StoreRef Store = StoreRef(OldStore, *this);
 
-  unsigned Idx = 0;
-  for (CallEvent::param_iterator I = Call.param_begin(/*UseDefinition=*/true),
-                                 E = Call.param_end(/*UseDefinition=*/true);
-       I != E; ++I, ++Idx) {
-    const ParmVarDecl *Decl = *I;
-    assert(Decl && "Formal parameter has no decl?");
+  SmallVector<CallEvent::FrameBindingTy, 16> InitialBindings;
+  Call.getInitialStackFrameContents(LCtx, InitialBindings);
 
-    SVal ArgVal = Call.getArgSVal(Idx);
-    if (!ArgVal.isUnknown()) {
-      Store = Bind(Store.getStore(),
-                   svalBuilder.makeLoc(MRMgr.getVarRegion(Decl, LCtx)),
-                   ArgVal);
-    }
+  for (CallEvent::BindingsTy::iterator I = InitialBindings.begin(),
+                                       E = InitialBindings.end();
+       I != E; ++I) {
+    Store = Bind(Store.getStore(), I->first, I->second);
   }
 
-  // FIXME: We will eventually want to generalize this to handle other non-
-  // parameter arguments besides 'this' (such as 'self' for ObjC methods).
-  SVal ThisVal = Call.getCXXThisVal();
-  if (isa<DefinedSVal>(ThisVal)) {
-    const CXXMethodDecl *MD = cast<CXXMethodDecl>(Call.getDecl());
-    loc::MemRegionVal ThisRegion = svalBuilder.getCXXThis(MD, LCtx);
-    Store = Bind(Store.getStore(), ThisRegion, ThisVal);
-  }
-
-  if (const ObjCMethodCall *MCall = dyn_cast<ObjCMethodCall>(&Call)) {
-    SVal SelfVal = MCall->getReceiverSVal();
-    const VarDecl *SelfDecl = LCtx->getAnalysisDeclContext()->getSelfDecl();
-    Store = Bind(Store.getStore(),
-                 svalBuilder.makeLoc(MRMgr.getVarRegion(SelfDecl, LCtx)),
-                 SelfVal);
-  }
   return Store;
 }
 

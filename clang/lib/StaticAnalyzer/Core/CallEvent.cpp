@@ -232,25 +232,53 @@ bool CallEvent::mayBeInlined(const Stmt *S) {
                           || isa<CXXConstructExpr>(S);
 }
 
+static void addParameterValuesToBindings(const StackFrameContext *CalleeCtx,
+                                         CallEvent::BindingsTy &Bindings,
+                                         SValBuilder &SVB,
+                                         const CallEvent &Call,
+                                         CallEvent::param_iterator I,
+                                         CallEvent::param_iterator E) {
+  MemRegionManager &MRMgr = SVB.getRegionManager();
 
-CallEvent::param_iterator
-AnyFunctionCall::param_begin(bool UseDefinitionParams) const {
-  const Decl *D = UseDefinitionParams ? getRuntimeDefinition()
-                                      : getDecl();
-  if (!D)
-    return 0;
+  unsigned Idx = 0;
+  for (; I != E; ++I, ++Idx) {
+    const ParmVarDecl *ParamDecl = *I;
+    assert(ParamDecl && "Formal parameter has no decl?");
 
-  return cast<FunctionDecl>(D)->param_begin();
+    SVal ArgVal = Call.getArgSVal(Idx);
+    if (!ArgVal.isUnknown()) {
+      Loc ParamLoc = SVB.makeLoc(MRMgr.getVarRegion(ParamDecl, CalleeCtx));
+      Bindings.push_back(std::make_pair(ParamLoc, ArgVal));
+    }
+  }
+
+  // FIXME: Variadic arguments are not handled at all right now.
 }
 
-CallEvent::param_iterator
-AnyFunctionCall::param_end(bool UseDefinitionParams) const {
-  const Decl *D = UseDefinitionParams ? getRuntimeDefinition()
-                                      : getDecl();
+
+CallEvent::param_iterator AnyFunctionCall::param_begin() const {
+  const FunctionDecl *D = getDecl();
   if (!D)
     return 0;
 
-  return cast<FunctionDecl>(D)->param_end();
+  return D->param_begin();
+}
+
+CallEvent::param_iterator AnyFunctionCall::param_end() const {
+  const FunctionDecl *D = getDecl();
+  if (!D)
+    return 0;
+
+  return D->param_end();
+}
+
+void AnyFunctionCall::getInitialStackFrameContents(
+                                        const StackFrameContext *CalleeCtx,
+                                        BindingsTy &Bindings) const {
+  const FunctionDecl *D = cast<FunctionDecl>(CalleeCtx->getDecl());
+  SValBuilder &SVB = getState()->getStateManager().getSValBuilder();
+  addParameterValuesToBindings(CalleeCtx, Bindings, SVB, *this,
+                               D->param_begin(), D->param_end());
 }
 
 QualType AnyFunctionCall::getDeclaredResultType() const {
@@ -371,6 +399,21 @@ const Decl *CXXInstanceCall::getRuntimeDefinition() const {
   return 0;
 }
 
+void CXXInstanceCall::getInitialStackFrameContents(
+                                            const StackFrameContext *CalleeCtx,
+                                            BindingsTy &Bindings) const {
+  AnyFunctionCall::getInitialStackFrameContents(CalleeCtx, Bindings);
+
+  SVal ThisVal = getCXXThisVal();
+  if (!ThisVal.isUnknown()) {
+    SValBuilder &SVB = getState()->getStateManager().getSValBuilder();
+    const CXXMethodDecl *MD = cast<CXXMethodDecl>(CalleeCtx->getDecl());
+    Loc ThisLoc = SVB.getCXXThis(MD, CalleeCtx);
+    Bindings.push_back(std::make_pair(ThisLoc, ThisVal));
+  }
+}
+
+
 
 SVal CXXMemberCall::getCXXThisVal() const {
   const Expr *Base = getOriginExpr()->getImplicitObjectArgument();
@@ -397,22 +440,14 @@ const BlockDataRegion *BlockCall::getBlockRegion() const {
   return dyn_cast_or_null<BlockDataRegion>(DataReg);
 }
 
-CallEvent::param_iterator
-BlockCall::param_begin(bool UseDefinitionParams) const {
-  // Blocks don't have distinct declarations and definitions.
-  (void)UseDefinitionParams;
-
+CallEvent::param_iterator BlockCall::param_begin() const {
   const BlockDecl *D = getBlockDecl();
   if (!D)
     return 0;
   return D->param_begin();
 }
 
-CallEvent::param_iterator
-BlockCall::param_end(bool UseDefinitionParams) const {
-  // Blocks don't have distinct declarations and definitions.
-  (void)UseDefinitionParams;
-
+CallEvent::param_iterator BlockCall::param_end() const {
   const BlockDecl *D = getBlockDecl();
   if (!D)
     return 0;
@@ -424,6 +459,15 @@ void BlockCall::getExtraInvalidatedRegions(RegionList &Regions) const {
   if (const MemRegion *R = getBlockRegion())
     Regions.push_back(R);
 }
+
+void BlockCall::getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
+                                             BindingsTy &Bindings) const {
+  const BlockDecl *D = cast<BlockDecl>(CalleeCtx->getDecl());
+  SValBuilder &SVB = getState()->getStateManager().getSValBuilder();
+  addParameterValuesToBindings(CalleeCtx, Bindings, SVB, *this,
+                               D->param_begin(), D->param_end());
+}
+
 
 QualType BlockCall::getDeclaredResultType() const {
   const BlockDataRegion *BR = getBlockRegion();
@@ -444,6 +488,21 @@ void CXXConstructorCall::getExtraInvalidatedRegions(RegionList &Regions) const {
   if (Data)
     Regions.push_back(static_cast<const MemRegion *>(Data));
 }
+
+void CXXConstructorCall::getInitialStackFrameContents(
+                                             const StackFrameContext *CalleeCtx,
+                                             BindingsTy &Bindings) const {
+  AnyFunctionCall::getInitialStackFrameContents(CalleeCtx, Bindings);
+
+  SVal ThisVal = getCXXThisVal();
+  if (!ThisVal.isUnknown()) {
+    SValBuilder &SVB = getState()->getStateManager().getSValBuilder();
+    const CXXMethodDecl *MD = cast<CXXMethodDecl>(CalleeCtx->getDecl());
+    Loc ThisLoc = SVB.getCXXThis(MD, CalleeCtx);
+    Bindings.push_back(std::make_pair(ThisLoc, ThisVal));
+  }
+}
+
 
 
 SVal CXXDestructorCall::getCXXThisVal() const {
@@ -474,25 +533,35 @@ const Decl *CXXDestructorCall::getRuntimeDefinition() const {
   return 0;
 }
 
+void CXXDestructorCall::getInitialStackFrameContents(
+                                             const StackFrameContext *CalleeCtx,
+                                             BindingsTy &Bindings) const {
+  AnyFunctionCall::getInitialStackFrameContents(CalleeCtx, Bindings);
 
-CallEvent::param_iterator
-ObjCMethodCall::param_begin(bool UseDefinitionParams) const {
-  const Decl *D = UseDefinitionParams ? getRuntimeDefinition()
-                                      : getDecl();
-  if (!D)
-    return 0;
-
-  return cast<ObjCMethodDecl>(D)->param_begin();
+  SVal ThisVal = getCXXThisVal();
+  if (!ThisVal.isUnknown()) {
+    SValBuilder &SVB = getState()->getStateManager().getSValBuilder();
+    const CXXMethodDecl *MD = cast<CXXMethodDecl>(CalleeCtx->getDecl());
+    Loc ThisLoc = SVB.getCXXThis(MD, CalleeCtx);
+    Bindings.push_back(std::make_pair(ThisLoc, ThisVal));
+  }
 }
 
-CallEvent::param_iterator
-ObjCMethodCall::param_end(bool UseDefinitionParams) const {
-  const Decl *D = UseDefinitionParams ? getRuntimeDefinition()
-                                      : getDecl();
+
+CallEvent::param_iterator ObjCMethodCall::param_begin() const {
+  const ObjCMethodDecl *D = getDecl();
   if (!D)
     return 0;
 
-  return cast<ObjCMethodDecl>(D)->param_end();
+  return D->param_begin();
+}
+
+CallEvent::param_iterator ObjCMethodCall::param_end() const {
+  const ObjCMethodDecl *D = getDecl();
+  if (!D)
+    return 0;
+
+  return D->param_end();
 }
 
 void
@@ -624,6 +693,23 @@ const Decl *ObjCMethodCall::getRuntimeDefinition() const {
   }
 
   return 0;
+}
+
+void ObjCMethodCall::getInitialStackFrameContents(
+                                             const StackFrameContext *CalleeCtx,
+                                             BindingsTy &Bindings) const {
+  const ObjCMethodDecl *D = cast<ObjCMethodDecl>(CalleeCtx->getDecl());
+  SValBuilder &SVB = getState()->getStateManager().getSValBuilder();
+  addParameterValuesToBindings(CalleeCtx, Bindings, SVB, *this,
+                               D->param_begin(), D->param_end());
+
+  SVal SelfVal = getReceiverSVal();
+  if (!SelfVal.isUnknown()) {
+    const VarDecl *SelfD = CalleeCtx->getAnalysisDeclContext()->getSelfDecl();
+    MemRegionManager &MRMgr = SVB.getRegionManager();
+    Loc SelfLoc = SVB.makeLoc(MRMgr.getVarRegion(SelfD, CalleeCtx));
+    Bindings.push_back(std::make_pair(SelfLoc, SelfVal));
+  }
 }
 
 
