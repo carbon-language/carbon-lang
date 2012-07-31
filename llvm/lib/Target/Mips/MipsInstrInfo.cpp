@@ -29,11 +29,7 @@ using namespace llvm;
 
 MipsInstrInfo::MipsInstrInfo(MipsTargetMachine &tm, unsigned UncondBr)
   : MipsGenInstrInfo(Mips::ADJCALLSTACKDOWN, Mips::ADJCALLSTACKUP),
-    TM(tm), RI(*TM.getSubtargetImpl(), *this), UncondBrOpc(UncondBr) {}
-
-const MipsRegisterInfo &MipsInstrInfo::getRegisterInfo() const {
-  return RI;
-}
+    TM(tm), UncondBrOpc(UncondBr) {}
 
 bool MipsInstrInfo::isZeroImm(const MachineOperand &op) const {
   return op.isImm() && op.getImm() == 0;

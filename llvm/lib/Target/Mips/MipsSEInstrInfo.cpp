@@ -26,7 +26,12 @@ using namespace llvm;
 MipsSEInstrInfo::MipsSEInstrInfo(MipsTargetMachine &tm)
   : MipsInstrInfo(tm,
                   tm.getRelocationModel() == Reloc::PIC_ ? Mips::B : Mips::J),
+    RI(*tm.getSubtargetImpl(), *this),
     IsN64(tm.getSubtarget<MipsSubtarget>().isABI_N64()) {}
+
+const MipsRegisterInfo &MipsSEInstrInfo::getRegisterInfo() const {
+  return RI;
+}
 
 /// isLoadFromStackSlot - If the specified machine instruction is a direct
 /// load from a stack slot, return the virtual or physical register number of

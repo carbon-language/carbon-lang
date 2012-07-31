@@ -28,7 +28,6 @@ namespace llvm {
 class MipsInstrInfo : public MipsGenInstrInfo {
 protected:
   MipsTargetMachine &TM;
-  const MipsRegisterInfo RI;
   unsigned UncondBrOpc;
 
 public:
@@ -63,7 +62,7 @@ public:
   /// such, whenever a client has an instance of instruction info, it should
   /// always be able to get register info as well (through this method).
   ///
-  virtual const MipsRegisterInfo &getRegisterInfo() const;
+  virtual const MipsRegisterInfo &getRegisterInfo() const = 0;
 
   virtual unsigned GetOppositeBranchOpc(unsigned Opc) const = 0;
 

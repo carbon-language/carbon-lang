@@ -25,10 +25,12 @@ class MipsSubtarget;
 class TargetInstrInfo;
 class Type;
 
-struct MipsRegisterInfo : public MipsGenRegisterInfo {
+class MipsRegisterInfo : public MipsGenRegisterInfo {
+protected:
   const MipsSubtarget &Subtarget;
   const TargetInstrInfo &TII;
 
+public:
   MipsRegisterInfo(const MipsSubtarget &Subtarget, const TargetInstrInfo &tii);
 
   /// getRegisterNumbering - Given the enum value for some register, e.g.
@@ -67,6 +69,11 @@ struct MipsRegisterInfo : public MipsGenRegisterInfo {
   /// Exception handling queries.
   unsigned getEHExceptionRegister() const;
   unsigned getEHHandlerRegister() const;
+
+private:
+  virtual void eliminateFI(MachineBasicBlock::iterator II, unsigned OpNo,
+                           int FrameIndex, uint64_t StackSize,
+                           int64_t SPOffset) const = 0;
 };
 
 } // end namespace llvm

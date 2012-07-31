@@ -15,12 +15,17 @@
 #define MIPS16INSTRUCTIONINFO_H
 
 #include "MipsInstrInfo.h"
+#include "Mips16RegisterInfo.h"
 
 namespace llvm {
 
 class Mips16InstrInfo : public MipsInstrInfo {
+  const Mips16RegisterInfo RI;
+
 public:
   explicit Mips16InstrInfo(MipsTargetMachine &TM);
+
+  virtual const MipsRegisterInfo &getRegisterInfo() const;
 
   /// isLoadFromStackSlot - If the specified machine instruction is a direct
   /// load from a stack slot, return the virtual or physical register number of

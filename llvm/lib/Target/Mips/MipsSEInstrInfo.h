@@ -16,13 +16,18 @@
 
 #include "MipsInstrInfo.h"
 #include "MipsAnalyzeImmediate.h"
+#include "MipsSERegisterInfo.h"
 
 namespace llvm {
 
 class MipsSEInstrInfo : public MipsInstrInfo {
+  const MipsSERegisterInfo RI;
   bool IsN64;
+
 public:
   explicit MipsSEInstrInfo(MipsTargetMachine &TM);
+
+  virtual const MipsRegisterInfo &getRegisterInfo() const;
 
   /// isLoadFromStackSlot - If the specified machine instruction is a direct
   /// load from a stack slot, return the virtual or physical register number of
