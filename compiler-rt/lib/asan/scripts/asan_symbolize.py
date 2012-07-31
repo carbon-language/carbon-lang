@@ -17,6 +17,7 @@ pipes = {}
 filetypes = {}
 DEBUG=False
 
+
 def fix_filename(file_name):
   for path_to_cut in sys.argv[1:]:
     file_name = re.sub(".*" + path_to_cut, "", file_name)
@@ -116,12 +117,18 @@ def symbolize_atos(line):
   else:
     print line.rstrip()
 
-system = os.uname()[0]
-if system in ['Linux', 'Darwin']:
-  for line in sys.stdin:
-    if system == 'Linux':
-      symbolize_addr2line(line)
-    elif system == 'Darwin':
-      symbolize_atos(line)
-else:
-  print 'Unknown system: ', system
+
+def main():
+  system = os.uname()[0]
+  if system in ['Linux', 'Darwin']:
+    for line in sys.stdin:
+      if system == 'Linux':
+        symbolize_addr2line(line)
+      elif system == 'Darwin':
+        symbolize_atos(line)
+  else:
+    print 'Unknown system: ', system
+
+
+if __name__ == '__main__':
+  main()
