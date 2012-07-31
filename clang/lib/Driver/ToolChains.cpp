@@ -1103,6 +1103,9 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
     "arm-linux-gnueabi",
     "arm-linux-androideabi"
   };
+  static const char *const ARMHFTriples[] = {
+    "arm-linux-gnueabihf",
+  };
 
   static const char *const X86_64LibDirs[] = { "/lib64", "/lib" };
   static const char *const X86_64Triples[] = {
@@ -1159,8 +1162,13 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
   case llvm::Triple::arm:
   case llvm::Triple::thumb:
     LibDirs.append(ARMLibDirs, ARMLibDirs + llvm::array_lengthof(ARMLibDirs));
-    TripleAliases.append(
-      ARMTriples, ARMTriples + llvm::array_lengthof(ARMTriples));
+    if (TargetTriple.getEnvironment() == llvm::Triple::GNUEABIHF) {
+      TripleAliases.append(
+        ARMHFTriples, ARMHFTriples + llvm::array_lengthof(ARMHFTriples));
+    } else {
+      TripleAliases.append(
+        ARMTriples, ARMTriples + llvm::array_lengthof(ARMTriples));
+    }
     break;
   case llvm::Triple::x86_64:
     LibDirs.append(
@@ -1912,8 +1920,13 @@ static std::string getMultiarchTriple(const llvm::Triple TargetTriple,
     // regardless of what the actual target triple is.
   case llvm::Triple::arm:
   case llvm::Triple::thumb:
-    if (llvm::sys::fs::exists(SysRoot + "/lib/arm-linux-gnueabi"))
-      return "arm-linux-gnueabi";
+    if (TargetTriple.getEnvironment() == llvm::Triple::GNUEABIHF) {
+      if (llvm::sys::fs::exists(SysRoot + "/lib/arm-linux-gnueabihf"))
+        return "arm-linux-gnueabihf";
+    } else {
+      if (llvm::sys::fs::exists(SysRoot + "/lib/arm-linux-gnueabi"))
+        return "arm-linux-gnueabi";
+    }
     return TargetTriple.str();
   case llvm::Triple::x86:
     if (llvm::sys::fs::exists(SysRoot + "/lib/i386-linux-gnu"))
@@ -2161,6 +2174,9 @@ void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
   const StringRef ARMMultiarchIncludeDirs[] = {
     "/usr/include/arm-linux-gnueabi"
   };
+  const StringRef ARMHFMultiarchIncludeDirs[] = {
+    "/usr/include/arm-linux-gnueabihf"
+  };
   const StringRef MIPSMultiarchIncludeDirs[] = {
     "/usr/include/mips-linux-gnu"
   };
@@ -2179,7 +2195,10 @@ void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
   } else if (getTriple().getArch() == llvm::Triple::x86) {
     MultiarchIncludeDirs = X86MultiarchIncludeDirs;
   } else if (getTriple().getArch() == llvm::Triple::arm) {
-    MultiarchIncludeDirs = ARMMultiarchIncludeDirs;
+    if (getTriple().getEnvironment() == llvm::Triple::GNUEABIHF)
+      MultiarchIncludeDirs = ARMHFMultiarchIncludeDirs;
+    else
+      MultiarchIncludeDirs = ARMMultiarchIncludeDirs;
   } else if (getTriple().getArch() == llvm::Triple::mips) {
     MultiarchIncludeDirs = MIPSMultiarchIncludeDirs;
   } else if (getTriple().getArch() == llvm::Triple::mipsel) {
