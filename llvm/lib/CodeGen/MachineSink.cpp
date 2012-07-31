@@ -538,7 +538,7 @@ MachineBasicBlock *MachineSinking::FindSuccToSinkTo(MachineInstr *MI,
       // we should sink to.
       // We give successors with smaller loop depth higher priority.
       SmallVector<MachineBasicBlock*, 4> Succs(MBB->succ_begin(), MBB->succ_end());
-      std::sort(Succs.begin(), Succs.end(), SuccessorSorter(LI));
+      std::stable_sort(Succs.begin(), Succs.end(), SuccessorSorter(LI));
       for (SmallVector<MachineBasicBlock*, 4>::iterator SI = Succs.begin(),
            E = Succs.end(); SI != E; ++SI) {
         MachineBasicBlock *SuccBlock = *SI;
