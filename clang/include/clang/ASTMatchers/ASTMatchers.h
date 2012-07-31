@@ -980,6 +980,8 @@ internal::PolymorphicMatcherWithParam1<internal::NotMatcher, M> unless(const M &
 
 /// \brief Matches a type if the declaration of the type matches the given
 /// matcher.
+///
+/// Usable as: Matcher<QualType>, Matcher<CallExpr>, Matcher<CXXConstructExpr>
 inline internal::PolymorphicMatcherWithParam1< internal::HasDeclarationMatcher,
                                      internal::Matcher<Decl> >
     hasDeclaration(const internal::Matcher<Decl> &InnerMatcher) {
@@ -1066,6 +1068,8 @@ AST_POLYMORPHIC_MATCHER_P(hasType, internal::Matcher<QualType>,
 ///             and z (matcher = variable(hasType(record(hasName("X")))))
 ///  class X {};
 ///  void y(X &x) { x; X z; }
+///
+/// Usable as: Matcher<Expr>, Matcher<ValueDecl>
 inline internal::PolymorphicMatcherWithParam1<
   internal::matcher_hasTypeMatcher,
   internal::Matcher<QualType> >
@@ -1499,6 +1503,9 @@ AST_MATCHER_P(CompoundStmt, statementCountIs, unsigned, N) {
 ///
 /// Example matches true (matcher = boolLiteral(equals(true)))
 ///   true
+///
+/// Usable as: Matcher<CharacterLiteral>, Matcher<CXXBoolLiteral>,
+///            Matcher<FloatingLiteral>, Matcher<IntegerLiteral>
 template <typename ValueT>
 internal::PolymorphicMatcherWithParam1<internal::ValueEqualsMatcher, ValueT>
 equals(const ValueT &Value) {
@@ -1624,6 +1631,8 @@ AST_MATCHER_P(ConditionalOperator, hasFalseExpression,
 ///   extern int vb;  // Doesn't match, as it doesn't define the variable.
 ///   void fa() {}
 ///   void fb();  // Doesn't match, as it has no body.
+///
+/// Usable as: Matcher<TagDecl>, Matcher<VarDecl>, Matcher<FunctionDecl>
 inline internal::PolymorphicMatcherWithParam0<internal::IsDefinitionMatcher>
 isDefinition() {
   return internal::PolymorphicMatcherWithParam0<
@@ -1775,6 +1784,8 @@ AST_MATCHER_P(UsingShadowDecl, hasTargetDecl,
 ///   template <> class X<A> {}; X<A> x;
 /// record(hasName("::X"), isTemplateInstantiation())
 ///   does not match, as X<A> is an explicit template specialization.
+///
+/// Usable as: Matcher<FunctionDecl>, Matcher<VarDecl>, Matcher<CXXRecordDecl>
 inline internal::PolymorphicMatcherWithParam0<
   internal::IsTemplateInstantiationMatcher>
 isTemplateInstantiation() {
