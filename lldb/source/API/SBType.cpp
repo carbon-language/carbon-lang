@@ -410,17 +410,19 @@ SBType::GetFieldAtIndex (uint32_t idx)
     SBTypeMember sb_type_member;
     if (IsValid())
     {
-        uint32_t bit_offset = 0;
+        uint64_t bit_offset = 0;
+        uint32_t bitfield_bit_size = 0;
+        bool is_bitfield = false;
         clang::ASTContext* ast = m_opaque_sp->GetASTContext();
         std::string name_sstr;
-        clang_type_t clang_type = ClangASTContext::GetFieldAtIndex (ast, m_opaque_sp->GetOpaqueQualType(), idx, name_sstr, &bit_offset);
+        clang_type_t clang_type = ClangASTContext::GetFieldAtIndex (ast, m_opaque_sp->GetOpaqueQualType(), idx, name_sstr, &bit_offset, &bitfield_bit_size, &is_bitfield);
         if (clang_type)
         {
             ConstString name;
             if (!name_sstr.empty())
                 name.SetCString(name_sstr.c_str());
             TypeImplSP type_impl_sp (new TypeImpl(ClangASTType (ast, clang_type)));
-            sb_type_member.reset (new TypeMemberImpl (type_impl_sp, bit_offset, name));
+            sb_type_member.reset (new TypeMemberImpl (type_impl_sp, bit_offset, name, bitfield_bit_size, is_bitfield));
         }        
     }
     return sb_type_member;
@@ -627,7 +629,7 @@ uint64_t
 SBTypeMember::GetOffsetInBytes()
 {
     if (m_opaque_ap.get())
-        return (m_opaque_ap->GetBitOffset() + 7) / 8u;
+        return m_opaque_ap->GetBitOffset() / 8u;
     return 0;
 }
 
@@ -640,21 +642,48 @@ SBTypeMember::GetOffsetInBits()
 }
 
 bool
+SBTypeMember::IsBitfield()
+{
+    if (m_opaque_ap.get())
+        return m_opaque_ap->GetIsBitfield();
+    return false;
+}
+
+uint32_t
+SBTypeMember::GetBitfieldSizeInBits()
+{
+    if (m_opaque_ap.get())
+        return m_opaque_ap->GetBitfieldBitSize();
+    return 0;
+}
+
+
+bool
 SBTypeMember::GetDescription (lldb::SBStream &description, lldb::DescriptionLevel description_level)
 {
     Stream &strm = description.ref();
 
     if (m_opaque_ap.get())
     {
-        const uint32_t byte_offset = (m_opaque_ap->GetBitOffset() + 7) / 8u;
+        const uint32_t bit_offset = m_opaque_ap->GetBitOffset();
+        const uint32_t byte_offset = bit_offset / 8u;
+        const uint32_t byte_bit_offset = bit_offset % 8u;
         const char *name = m_opaque_ap->GetName().GetCString();
-        strm.Printf ("+%u: (", byte_offset);
+        if (byte_bit_offset)
+            strm.Printf ("+%u + %u bits: (", byte_offset, byte_bit_offset);
+        else
+            strm.Printf ("+%u: (", byte_offset);
         
         TypeImplSP type_impl_sp (m_opaque_ap->GetTypeImpl());
         if (type_impl_sp)
             type_impl_sp->GetDescription(strm, description_level);
         
         strm.Printf (") %s", name);
+        if (m_opaque_ap->GetIsBitfield())
+        {
+            const uint32_t bitfield_bit_size = m_opaque_ap->GetBitfieldBitSize();
+            strm.Printf (" : %u", bitfield_bit_size);
+        }
     }
     else
     {

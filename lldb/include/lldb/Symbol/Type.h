@@ -477,16 +477,23 @@ public:
     TypeMemberImpl () :
         m_type_impl_sp (),
         m_bit_offset (0),
-        m_name ()
+        m_name (),
+        m_bitfield_bit_size (0),
+        m_is_bitfield (false)
+
     {
     }
 
     TypeMemberImpl (const lldb::TypeImplSP &type_impl_sp, 
                     uint64_t bit_offset,
-                    const ConstString &name) :
+                    const ConstString &name,
+                    uint32_t bitfield_bit_size = 0,
+                    bool is_bitfield = false) :
         m_type_impl_sp (type_impl_sp),
         m_bit_offset (bit_offset),
-        m_name (name)
+        m_name (name),
+        m_bitfield_bit_size (bitfield_bit_size),
+        m_is_bitfield (is_bitfield)
     {
     }
     
@@ -494,7 +501,9 @@ public:
                     uint64_t bit_offset):
         m_type_impl_sp (type_impl_sp),
         m_bit_offset (bit_offset),
-        m_name ()
+        m_name (),
+        m_bitfield_bit_size (0),
+        m_is_bitfield (false)
     {
     }
 
@@ -516,10 +525,36 @@ public:
         return m_bit_offset;
     }
 
+    uint32_t
+    GetBitfieldBitSize () const
+    {
+        return m_bitfield_bit_size;
+    }
+
+    void
+    SetBitfieldBitSize (uint32_t bitfield_bit_size)
+    {
+        m_bitfield_bit_size = bitfield_bit_size;
+    }
+
+    bool
+    GetIsBitfield () const
+    {
+        return m_is_bitfield;
+    }
+    
+    void
+    SetIsBitfield (bool is_bitfield)
+    {
+        m_is_bitfield = is_bitfield;
+    }
+
 protected:
     lldb::TypeImplSP m_type_impl_sp;
     uint64_t m_bit_offset;
     ConstString m_name;
+    uint32_t m_bitfield_bit_size; // Bit size for bitfield members only
+    bool m_is_bitfield;
 };
 
     

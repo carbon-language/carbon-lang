@@ -44,6 +44,12 @@ public:
     GetOffsetInBits();
 
     bool
+    IsBitfield();
+    
+    uint32_t
+    GetBitfieldSizeInBits();
+
+    bool
     GetDescription (lldb::SBStream &description, 
                     lldb::DescriptionLevel description_level);
     

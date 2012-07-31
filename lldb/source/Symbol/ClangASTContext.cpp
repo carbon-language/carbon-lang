@@ -3499,7 +3499,9 @@ ClangASTContext::GetFieldAtIndex (clang::ASTContext *ast,
                                   clang_type_t clang_type,
                                   uint32_t idx, 
                                   std::string& name,
-                                  uint32_t *bit_offset_ptr)
+                                  uint64_t *bit_offset_ptr,
+                                  uint32_t *bitfield_bit_size_ptr,
+                                  bool *is_bitfield_ptr)
 {
     if (clang_type == NULL)
         return 0;
@@ -3531,6 +3533,25 @@ ClangASTContext::GetFieldAtIndex (clang::ASTContext *ast,
                             *bit_offset_ptr = record_layout.getFieldOffset (field_idx);
                         }
                         
+                        const bool is_bitfield = field->isBitField();
+                        
+                        if (bitfield_bit_size_ptr)
+                        {
+                            *bitfield_bit_size_ptr = 0;
+
+                            if (is_bitfield && ast)
+                            {
+                                Expr *bitfield_bit_size_expr = field->getBitWidth();
+                                llvm::APSInt bitfield_apsint;
+                                if (bitfield_bit_size_expr && bitfield_bit_size_expr->EvaluateAsInt(bitfield_apsint, *ast))
+                                {
+                                    *bitfield_bit_size_ptr = bitfield_apsint.getLimitedValue();
+                                }
+                            }
+                        }
+                        if (is_bitfield_ptr)
+                            *is_bitfield_ptr = is_bitfield;
+
                         return field->getType().getAsOpaquePtr();
                     }
                 }
@@ -3570,6 +3591,25 @@ ClangASTContext::GetFieldAtIndex (clang::ASTContext *ast,
                                         *bit_offset_ptr = interface_layout.getFieldOffset (ivar_idx);
                                     }
                                     
+                                    const bool is_bitfield = ivar_pos->isBitField();
+                                    
+                                    if (bitfield_bit_size_ptr)
+                                    {
+                                        *bitfield_bit_size_ptr = 0;
+                                        
+                                        if (is_bitfield && ast)
+                                        {
+                                            Expr *bitfield_bit_size_expr = ivar_pos->getBitWidth();
+                                            llvm::APSInt bitfield_apsint;
+                                            if (bitfield_bit_size_expr && bitfield_bit_size_expr->EvaluateAsInt(bitfield_apsint, *ast))
+                                            {
+                                                *bitfield_bit_size_ptr = bitfield_apsint.getLimitedValue();
+                                            }
+                                        }
+                                    }
+                                    if (is_bitfield_ptr)
+                                        *is_bitfield_ptr = is_bitfield;
+                                    
                                     return ivar_qual_type.getAsOpaquePtr();
                                 }
                             }
@@ -3585,14 +3625,18 @@ ClangASTContext::GetFieldAtIndex (clang::ASTContext *ast,
                                                      cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(),
                                                      idx,
                                                      name,
-                                                     bit_offset_ptr);
+                                                     bit_offset_ptr,
+                                                     bitfield_bit_size_ptr,
+                                                     is_bitfield_ptr);
             
         case clang::Type::Elaborated:
             return  ClangASTContext::GetFieldAtIndex (ast, 
                                                       cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(),
                                                       idx,
                                                       name,
-                                                      bit_offset_ptr);
+                                                      bit_offset_ptr,
+                                                      bitfield_bit_size_ptr,
+                                                      is_bitfield_ptr);
             
         default:
             break;
