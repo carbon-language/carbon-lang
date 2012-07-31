@@ -19,6 +19,8 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Support/SaveAndRestore.h"
 
+#define CXX_INLINING_ENABLED 1
+
 using namespace clang;
 using namespace ento;
 
@@ -287,11 +289,16 @@ bool ExprEngine::inlineCall(const CallEvent &Call,
   // FIXME: Refactor this check into a hypothetical CallEvent::canInline.
   switch (Call.getKind()) {
   case CE_Function:
+    break;
   case CE_CXXMember:
   case CE_CXXMemberOperator:
-    // These are always at least possible to inline.
+    if (!CXX_INLINING_ENABLED)
+      return false;
     break;
   case CE_CXXConstructor: {
+    if (!CXX_INLINING_ENABLED)
+      return false;
+
     // Only inline constructors and destructors if we built the CFGs for them
     // properly.
     const AnalysisDeclContext *ADC = CallerSFC->getAnalysisDeclContext();
@@ -316,6 +323,9 @@ bool ExprEngine::inlineCall(const CallEvent &Call,
     break;
   }
   case CE_CXXDestructor: {
+    if (!CXX_INLINING_ENABLED)
+      return false;
+
     // Only inline constructors and destructors if we built the CFGs for them
     // properly.
     const AnalysisDeclContext *ADC = CallerSFC->getAnalysisDeclContext();
@@ -333,6 +343,9 @@ bool ExprEngine::inlineCall(const CallEvent &Call,
     break;
   }
   case CE_CXXAllocator:
+    if (!CXX_INLINING_ENABLED)
+      return false;
+
     // Do not inline allocators until we model deallocators.
     // This is unfortunate, but basically necessary for smart pointers and such.
     return false;
