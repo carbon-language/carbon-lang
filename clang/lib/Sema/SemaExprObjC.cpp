@@ -2860,15 +2860,15 @@ diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
       << castRange
       << castExpr->getSourceRange();
     bool br = S.isKnownName("CFBridgingRelease");
-    ACCResult  CreateRule = 
+    ACCResult CreateRule = 
       ARCCastChecker(S.Context, exprACTC, castACTC, true).Visit(castExpr);
+    assert(CreateRule != ACC_bottom && "This cast should already be accepted.");
     if (CreateRule != ACC_plusOne)
     {
       DiagnosticBuilder DiagB = S.Diag(noteLoc, diag::note_arc_bridge);
       addFixitForObjCARCConversion(S, DiagB, CCK, afterLParen,
                                    castType, castExpr, "__bridge ", 0);
     }
-    assert (CreateRule != ACC_bottom);
     if (CreateRule != ACC_plusZero)
     {
       DiagnosticBuilder DiagB = S.Diag(br ? castExpr->getExprLoc() : noteLoc,
@@ -2895,13 +2895,13 @@ diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
       << castExpr->getSourceRange();
     ACCResult CreateRule = 
       ARCCastChecker(S.Context, exprACTC, castACTC, true).Visit(castExpr);
+    assert(CreateRule != ACC_bottom && "This cast should already be accepted.");
     if (CreateRule != ACC_plusOne)
     {
       DiagnosticBuilder DiagB = S.Diag(noteLoc, diag::note_arc_bridge);
       addFixitForObjCARCConversion(S, DiagB, CCK, afterLParen,
                                    castType, castExpr, "__bridge ", 0);
     }
-    assert (CreateRule != ACC_bottom);
     if (CreateRule != ACC_plusZero)
     {
       DiagnosticBuilder DiagB = S.Diag(br ? castExpr->getExprLoc() : noteLoc,
