@@ -276,7 +276,8 @@ static llvm::raw_ostream &yamlCOFFSections(llvm::object::COFFObjectFile &Obj,
     Obj.getSectionContents(sect, sectionData);    
     Out << "    SectionData: ";
     yaml::writeHexStream(Out, sectionData) << endl;
-    
+    if (iter->begin_relocations() != iter->end_relocations())
+      Out << "    Relocations:\n";
     for (llvm::object::relocation_iterator rIter = iter->begin_relocations();
                        rIter != iter->end_relocations(); rIter.increment(ec)) {
       const llvm::object::coff_relocation *reloc = Obj.getCOFFRelocation(rIter);
