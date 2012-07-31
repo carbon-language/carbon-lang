@@ -1812,6 +1812,8 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
     // Constructors and destructors don't have return types. Use
     // "void" instead.
     T = SemaRef.Context.VoidTy;
+    if (AttributeList *attrs = D.getDeclSpec().getAttributes().getList())
+      processTypeAttrs(state, T, true, attrs);
     break;
 
   case UnqualifiedId::IK_ConversionFunctionId:
