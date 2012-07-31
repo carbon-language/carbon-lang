@@ -985,8 +985,22 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
     // boiler plate.
     Cond.clear();
     MachineBasicBlock *TBB = 0, *FBB = 0; // For AnalyzeBranch.
-    if (!TII->AnalyzeBranch(*PrevBB, TBB, FBB, Cond))
+    if (!TII->AnalyzeBranch(*PrevBB, TBB, FBB, Cond)) {
+      // If PrevBB has a two-way branch, try to re-order the branches
+      // such that we branch to the successor with higher weight first.
+      if (TBB && !Cond.empty() && FBB &&
+          MBPI->getEdgeWeight(PrevBB, FBB) > MBPI->getEdgeWeight(PrevBB, TBB) &&
+          !TII->ReverseBranchCondition(Cond)) {
+        DEBUG(dbgs() << "Reverse order of the two branches: "
+                     << getBlockName(PrevBB) << "\n");
+        DEBUG(dbgs() << "    Edge weight: " << MBPI->getEdgeWeight(PrevBB, FBB)
+                     << " vs " << MBPI->getEdgeWeight(PrevBB, TBB) << "\n");
+        DebugLoc dl;  // FIXME: this is nowhere
+        TII->RemoveBranch(*PrevBB);
+        TII->InsertBranch(*PrevBB, FBB, TBB, Cond, dl);
+      }
       PrevBB->updateTerminator();
+    }
   }
 
   // Fixup the last block.
