@@ -15,7 +15,3 @@
 #include "Inputs/pch-fail.h"
 
 // CHECK: Processing
-
-// FIXME: This is incompatible to -fms-compatibility.
-// XFAIL: win32
-
