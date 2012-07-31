@@ -975,8 +975,16 @@ Thread::QueueThreadPlanForStepOut
                                                         stop_vote, 
                                                         run_vote, 
                                                         frame_idx));
-    QueueThreadPlan (thread_plan_sp, abort_other_plans);
-    return thread_plan_sp.get();
+    
+    if (thread_plan_sp->ValidatePlan(NULL))
+    {
+        QueueThreadPlan (thread_plan_sp, abort_other_plans);
+        return thread_plan_sp.get();
+    }
+    else
+    {
+        return NULL;
+    }
 }
 
 ThreadPlan *
