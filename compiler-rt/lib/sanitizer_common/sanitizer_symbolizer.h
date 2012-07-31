@@ -66,6 +66,14 @@ bool FindDWARFSection(uptr object_file_addr, const char *section_name,
                       DWARFSection *section);
 bool IsFullNameOfDWARFSection(const char *full_name, const char *short_name);
 
+class DWARFContext;
+DWARFContext *getDWARFContext(DWARFSection debug_info,
+                              DWARFSection debug_abbrev,
+                              DWARFSection debug_aranges,
+                              DWARFSection debug_line,
+                              DWARFSection debug_str);
+void getLineInfoFromContext(DWARFContext *context, AddressInfo *info);
+
 class ModuleDIContext {
  public:
   ModuleDIContext(const char *module_name, uptr base_address);
@@ -76,7 +84,7 @@ class ModuleDIContext {
   const char *full_name() const { return full_name_; }
 
  private:
-  void CreateDIContext();
+  void CreateDWARFContext();
 
   struct AddressRange {
     uptr beg;
@@ -90,6 +98,7 @@ class ModuleDIContext {
   uptr n_ranges_;
   uptr mapped_addr_;
   uptr mapped_size_;
+  DWARFContext *dwarf_context_;
 };
 
 // OS-dependent function that gets the linked list of all loaded modules.

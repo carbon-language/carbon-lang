@@ -11,13 +11,15 @@ set(SANITIZER_SOURCES
   sanitizer_posix.cc
   sanitizer_printf.cc
   sanitizer_symbolizer.cc
+  sanitizer_symbolizer_llvm.cc
   sanitizer_win.cc
   )
 
 set(SANITIZER_CFLAGS "-fPIC -fno-exceptions -funwind-tables -fvisibility=hidden")
 
 set(SANITIZER_COMMON_DEFINITIONS
-	SANITIZER_HAS_EXCEPTIONS=1)
+  SANITIZER_HAS_EXCEPTIONS=1
+  )
 
 if(CAN_TARGET_X86_64)
   add_library(RTSanitizerCommon.x86_64 OBJECT ${SANITIZER_SOURCES})
