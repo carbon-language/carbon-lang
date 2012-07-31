@@ -20,6 +20,7 @@ namespace clang {
 
 namespace frontend {
   enum ActionKind {
+    ASTDeclList,            ///< Parse ASTs and list Decl nodes.
     ASTDump,                ///< Parse ASTs and dump them.
     ASTDumpXML,             ///< Parse ASTs and dump them in XML.
     ASTPrint,               ///< Parse ASTs and print them.

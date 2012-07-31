@@ -434,6 +434,7 @@ static const char *getActionName(frontend::ActionKind Kind) {
   case frontend::PluginAction:
     llvm_unreachable("Invalid kind!");
 
+  case frontend::ASTDeclList:            return "-ast-list";
   case frontend::ASTDump:                return "-ast-dump";
   case frontend::ASTDumpXML:             return "-ast-dump-xml";
   case frontend::ASTPrint:               return "-ast-print";
@@ -1438,6 +1439,8 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
     switch (A->getOption().getID()) {
     default:
       llvm_unreachable("Invalid option in group!");
+    case OPT_ast_list:
+      Opts.ProgramAction = frontend::ASTDeclList; break;
     case OPT_ast_dump:
       Opts.ProgramAction = frontend::ASTDump; break;
     case OPT_ast_dump_xml:

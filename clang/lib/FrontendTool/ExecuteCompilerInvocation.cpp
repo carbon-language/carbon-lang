@@ -32,6 +32,7 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
   using namespace clang::frontend;
 
   switch (CI.getFrontendOpts().ProgramAction) {
+  case ASTDeclList:            return new ASTDeclListAction();
   case ASTDump:                return new ASTDumpAction();
   case ASTDumpXML:             return new ASTDumpXMLAction();
   case ASTPrint:               return new ASTPrintAction();

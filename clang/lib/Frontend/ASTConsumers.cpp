@@ -86,6 +86,29 @@ namespace {
     bool Dump;
     std::string FilterString;
   };
+
+  class ASTDeclNodeLister : public ASTConsumer,
+                     public RecursiveASTVisitor<ASTDeclNodeLister> {
+    typedef RecursiveASTVisitor<ASTPrinter> base;
+
+  public:
+    ASTDeclNodeLister(raw_ostream *Out = NULL)
+        : Out(Out ? *Out : llvm::outs()) {}
+
+    virtual void HandleTranslationUnit(ASTContext &Context) {
+      TraverseDecl(Context.getTranslationUnitDecl());
+    }
+
+    bool shouldWalkTypesOfTypeLocs() const { return false; }
+
+    virtual bool VisitNamedDecl(NamedDecl *D) {
+      Out << D->getQualifiedNameAsString() << "\n";
+      return true;
+    }
+
+  private:
+    raw_ostream &Out;
+  };
 } // end anonymous namespace
 
 ASTConsumer *clang::CreateASTPrinter(raw_ostream *Out,
@@ -95,6 +118,10 @@ ASTConsumer *clang::CreateASTPrinter(raw_ostream *Out,
 
 ASTConsumer *clang::CreateASTDumper(StringRef FilterString) {
   return new ASTPrinter(0, /*Dump=*/ true, FilterString);
+}
+
+ASTConsumer *clang::CreateASTDeclNodeLister() {
+  return new ASTDeclNodeLister(0);
 }
 
 //===----------------------------------------------------------------------===//

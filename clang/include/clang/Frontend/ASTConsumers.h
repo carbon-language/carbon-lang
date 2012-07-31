@@ -39,6 +39,10 @@ ASTConsumer *CreateASTPrinter(raw_ostream *OS, StringRef FilterString);
 // intended for debugging.
 ASTConsumer *CreateASTDumper(StringRef FilterString);
 
+// AST Decl node lister: prints qualified names of all filterable AST Decl
+// nodes.
+ASTConsumer *CreateASTDeclNodeLister();
+
 // AST XML-dumper: dumps out the AST to stderr in a very detailed XML
 // format; this is intended for particularly intense debugging.
 ASTConsumer *CreateASTDumperXML(raw_ostream &OS);

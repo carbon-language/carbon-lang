@@ -289,7 +289,8 @@ def version : Flag<"-version">,
 def ast_dump_filter : Separate<"-ast-dump-filter">,
   MetaVarName<"<dump_filter>">,
   HelpText<"Use with -ast-dump or -ast-print to dump/print only AST declaration"
-           " nodes having a certain substring in a qualified name.">;
+           " nodes having a certain substring in a qualified name. Use"
+           " -ast-list to list all filterable declaration node names.">;
 
 let Group = Action_Group in {
 
@@ -314,6 +315,8 @@ def emit_html : Flag<"-emit-html">,
   HelpText<"Output input source as HTML">;
 def ast_print : Flag<"-ast-print">,
   HelpText<"Build ASTs and then pretty-print them">;
+def ast_list : Flag<"-ast-list">,
+  HelpText<"Build ASTs and print the list of declaration node qualified names">;
 def ast_dump : Flag<"-ast-dump">,
   HelpText<"Build ASTs and then debug dump them">;
 def ast_dump_xml : Flag<"-ast-dump-xml">,

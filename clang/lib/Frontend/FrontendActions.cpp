@@ -56,6 +56,11 @@ ASTConsumer *ASTDumpAction::CreateASTConsumer(CompilerInstance &CI,
   return CreateASTDumper(CI.getFrontendOpts().ASTDumpFilter);
 }
 
+ASTConsumer *ASTDeclListAction::CreateASTConsumer(CompilerInstance &CI,
+                                                  StringRef InFile) {
+  return CreateASTDeclNodeLister();
+}
+
 ASTConsumer *ASTDumpXMLAction::CreateASTConsumer(CompilerInstance &CI,
                                                  StringRef InFile) {
   raw_ostream *OS;
