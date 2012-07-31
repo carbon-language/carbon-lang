@@ -19,17 +19,17 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-  
+
 #define INSTRUCTION_SPECIFIER_FIELDS
 
 #define INSTRUCTION_IDS     \
   unsigned instructionIDs;
 
 #include "X86DisassemblerDecoderCommon.h"
-  
+
 #undef INSTRUCTION_SPECIFIER_FIELDS
 #undef INSTRUCTION_IDS
-  
+
 /*
  * Accessor functions for various fields of an Intel instruction
  */
@@ -43,7 +43,7 @@ extern "C" {
 #define rFromREX(rex)        (((rex) & 0x4) >> 2)
 #define xFromREX(rex)        (((rex) & 0x2) >> 1)
 #define bFromREX(rex)        ((rex) & 0x1)
-    
+
 #define rFromVEX2of3(vex)       (((~(vex)) & 0x80) >> 7)
 #define xFromVEX2of3(vex)       (((~(vex)) & 0x40) >> 6)
 #define bFromVEX2of3(vex)       (((~(vex)) & 0x20) >> 5)
@@ -237,7 +237,7 @@ extern "C" {
   ENTRY(YMM13)    \
   ENTRY(YMM14)    \
   ENTRY(YMM15)
-    
+
 #define REGS_SEGMENT \
   ENTRY(ES)          \
   ENTRY(CS)          \
@@ -245,7 +245,7 @@ extern "C" {
   ENTRY(DS)          \
   ENTRY(FS)          \
   ENTRY(GS)
-  
+
 #define REGS_DEBUG  \
   ENTRY(DR0)        \
   ENTRY(DR1)        \
@@ -266,12 +266,12 @@ extern "C" {
   ENTRY(CR6)          \
   ENTRY(CR7)          \
   ENTRY(CR8)
-  
+
 #define ALL_EA_BASES  \
   EA_BASES_16BIT      \
   EA_BASES_32BIT      \
   EA_BASES_64BIT
-  
+
 #define ALL_SIB_BASES \
   REGS_32BIT          \
   REGS_64BIT
@@ -290,7 +290,7 @@ extern "C" {
   ENTRY(RIP)
 
 /*
- * EABase - All possible values of the base field for effective-address 
+ * EABase - All possible values of the base field for effective-address
  *   computations, a.k.a. the Mod and R/M fields of the ModR/M byte.  We
  *   distinguish between bases (EA_BASE_*) and registers that just happen to be
  *   referred to when Mod == 0b11 (EA_REG_*).
@@ -305,8 +305,8 @@ typedef enum {
 #undef ENTRY
   EA_max
 } EABase;
-  
-/* 
+
+/*
  * SIBIndex - All possible values of the SIB index field.
  *   Borrows entries from ALL_EA_BASES with the special case that
  *   sib is synonymous with NONE.
@@ -321,7 +321,7 @@ typedef enum {
 #undef ENTRY
   SIB_INDEX_max
 } SIBIndex;
-  
+
 /*
  * SIBBase - All possible values of the SIB base field.
  */
@@ -353,7 +353,7 @@ typedef enum {
 #undef ENTRY
   MODRM_REG_max
 } Reg;
-  
+
 /*
  * SegmentOverride - All possible segment overrides.
  */
@@ -367,7 +367,7 @@ typedef enum {
   SEG_OVERRIDE_GS,
   SEG_OVERRIDE_max
 } SegmentOverride;
-    
+
 /*
  * VEXLeadingOpcodeByte - Possible values for the VEX.m-mmmm field
  */
@@ -431,16 +431,16 @@ struct InternalInstruction {
   void* dlogArg;
 
   /* General instruction information */
-  
+
   /* The mode to disassemble for (64-bit, protected, real) */
   DisassemblerMode mode;
   /* The start of the instruction, usable with the reader */
   uint64_t startLocation;
   /* The length of the instruction, in bytes */
   size_t length;
-  
+
   /* Prefix state */
-  
+
   /* 1 if the prefix byte corresponding to the entry is present; 0 if not */
   uint8_t prefixPresent[0x100];
   /* contains the location (for use with the reader) of the prefix byte */
@@ -456,7 +456,7 @@ struct InternalInstruction {
   uint64_t necessaryPrefixLocation;
   /* The segment override type */
   SegmentOverride segmentOverride;
-  
+
   /* Sizes of various critical pieces of data, in bytes */
   uint8_t registerSize;
   uint8_t addressSize;
@@ -467,9 +467,9 @@ struct InternalInstruction {
      needed to find relocation entries for adding symbolic operands */
   uint8_t displacementOffset;
   uint8_t immediateOffset;
-  
+
   /* opcode state */
-  
+
   /* The value of the two-byte escape prefix (usually 0x0f) */
   uint8_t twoByteEscape;
   /* The value of the three-byte escape prefix (usually 0x38 or 0x3a) */
@@ -478,16 +478,16 @@ struct InternalInstruction {
   uint8_t opcode;
   /* The ModR/M byte of the instruction, if it is an opcode extension */
   uint8_t modRMExtension;
-  
+
   /* decode state */
-  
+
   /* The type of opcode, used for indexing into the array of decode tables */
   OpcodeType opcodeType;
   /* The instruction ID, extracted from the decode table */
   uint16_t instructionID;
   /* The specifier for the instruction, from the instruction info table */
   const struct InstructionSpecifier *spec;
-  
+
   /* state for additional bytes, consumed during operand decode.  Pattern:
      consumed___ indicates that the byte was already consumed and does not
      need to be consumed again */
@@ -495,12 +495,12 @@ struct InternalInstruction {
   /* The VEX.vvvv field, which contains a third register operand for some AVX
      instructions */
   Reg                           vvvv;
-  
+
   /* The ModR/M byte, which contains most register operands and some portion of
      all memory operands */
   BOOL                          consumedModRM;
   uint8_t                       modRM;
-  
+
   /* The SIB byte, used for more complex 32- or 64-bit memory operands */
   BOOL                          consumedSIB;
   uint8_t                       sib;
@@ -508,19 +508,19 @@ struct InternalInstruction {
   /* The displacement, used for memory operands */
   BOOL                          consumedDisplacement;
   int32_t                       displacement;
-  
+
   /* Immediates.  There can be two in some cases */
   uint8_t                       numImmediatesConsumed;
   uint8_t                       numImmediatesTranslated;
   uint64_t                      immediates[2];
-  
+
   /* A register or immediate operand encoded into the opcode */
   BOOL                          consumedOpcodeModifier;
   uint8_t                       opcodeModifier;
   Reg                           opcodeRegister;
-  
+
   /* Portions of the ModR/M byte */
-  
+
   /* These fields determine the allowable values for the ModR/M fields, which
      depend on operand and address widths */
   EABase                        eaBaseBase;
@@ -533,7 +533,7 @@ struct InternalInstruction {
   EADisplacement                eaDisplacement;
   /* The reg field always encodes a register */
   Reg                           reg;
-  
+
   /* SIB state */
   SIBIndex                      sibIndex;
   uint8_t                       sibScale;
@@ -571,15 +571,15 @@ int decodeInstruction(struct InternalInstruction* insn,
  * @param line  - The line number that printed the debug message.
  * @param s     - The message to print.
  */
-  
+
 void x86DisassemblerDebug(const char *file,
                           unsigned line,
                           const char *s);
 
 const char *x86DisassemblerGetInstrName(unsigned Opcode, void *mii);
 
-#ifdef __cplusplus 
+#ifdef __cplusplus
 }
 #endif
-  
+
 #endif
