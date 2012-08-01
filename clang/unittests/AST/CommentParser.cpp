@@ -760,6 +760,7 @@ TEST_F(CommentParserTest, ParamCommand2) {
 TEST_F(CommentParserTest, ParamCommand3) {
   const char *Sources[] = {
     "// \\param [in] aaa Bbb\n",
+    "// \\param[in] aaa Bbb\n",
     "// \\param\n"
     "//     [in] aaa Bbb\n",
     "// \\param [in]\n"
@@ -789,6 +790,7 @@ TEST_F(CommentParserTest, ParamCommand3) {
 TEST_F(CommentParserTest, ParamCommand4) {
   const char *Sources[] = {
     "// \\param [out] aaa Bbb\n",
+    "// \\param[out] aaa Bbb\n",
     "// \\param\n"
     "//     [out] aaa Bbb\n",
     "// \\param [out]\n"
@@ -818,6 +820,7 @@ TEST_F(CommentParserTest, ParamCommand4) {
 TEST_F(CommentParserTest, ParamCommand5) {
   const char *Sources[] = {
     "// \\param [in,out] aaa Bbb\n",
+    "// \\param[in,out] aaa Bbb\n",
     "// \\param [in, out] aaa Bbb\n",
     "// \\param [in,\n"
     "//     out] aaa Bbb\n",
