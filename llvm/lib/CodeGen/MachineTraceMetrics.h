@@ -47,8 +47,8 @@
 #ifndef LLVM_CODEGEN_MACHINE_TRACE_METRICS_H
 #define LLVM_CODEGEN_MACHINE_TRACE_METRICS_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 
 namespace llvm {
@@ -106,6 +106,19 @@ public:
   /// Get the fixed resource information about MBB. Compute it on demand.
   const FixedBlockInfo *getResources(const MachineBasicBlock*);
 
+  /// A virtual register or regunit required by a basic block or its trace
+  /// successors.
+  struct LiveInReg {
+    /// The virtual register required, or a register unit.
+    unsigned Reg;
+
+    /// For virtual registers: Minimum height of the defining instruction.
+    /// For regunits: Height of the highest user in the trace.
+    unsigned Height;
+
+    LiveInReg(unsigned Reg, unsigned Height = 0) : Reg(Reg), Height(Height) {}
+  };
+
   /// Per-basic block information that relates to a specific trace through the
   /// block. Convergent traces means that only one of these is required per
   /// block in a trace ensemble.
@@ -161,6 +174,12 @@ public:
     /// Instruction heights have been computed. This implies hasValidHeight().
     bool HasValidInstrHeights;
 
+    /// Live-in registers. These registers are defined above the current block
+    /// and used by this block or a block below it.
+    /// This does not include PHI uses in the current block, but it does
+    /// include PHI uses in deeper blocks.
+    SmallVector<LiveInReg, 4> LiveIns;
+
     void print(raw_ostream&) const;
   };
 
@@ -207,6 +226,8 @@ public:
     void computeHeightResources(const MachineBasicBlock*);
     void computeInstrDepths(const MachineBasicBlock*);
     void computeInstrHeights(const MachineBasicBlock*);
+    void addLiveIns(const MachineInstr *DefMI,
+                    ArrayRef<const MachineBasicBlock*> Trace);
 
   protected:
     MachineTraceMetrics &MTM;
