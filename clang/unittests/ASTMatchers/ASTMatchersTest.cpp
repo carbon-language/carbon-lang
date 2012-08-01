@@ -1116,6 +1116,46 @@ TEST(HasName, MatchesParameterVariableDeclartions) {
       method(hasAnyParameter(hasName("x")))));
 }
 
+TEST(Matcher, MatchesClassTemplateSpecialization) {
+  EXPECT_TRUE(matches("template<typename T> struct A {};"
+                      "template<> struct A<int> {};",
+                      classTemplateSpecialization()));
+  EXPECT_TRUE(matches("template<typename T> struct A {}; A<int> a;",
+                      classTemplateSpecialization()));
+  EXPECT_TRUE(notMatches("template<typename T> struct A {};",
+                         classTemplateSpecialization()));
+}
+
+TEST(Matcher, MatchesTypeTemplateArgument) {
+  EXPECT_TRUE(matches(
+      "template<typename T> struct B {};"
+      "B<int> b;",
+      classTemplateSpecialization(hasAnyTemplateArgument(refersToType(
+          asString("int"))))));
+}
+
+TEST(Matcher, MatchesDeclarationReferenceTemplateArgument) {
+  EXPECT_TRUE(matches(
+      "struct B { int next; };"
+      "template<int(B::*next_ptr)> struct A {};"
+      "A<&B::next> a;",
+      classTemplateSpecialization(hasAnyTemplateArgument(
+          refersToDeclaration(field(hasName("next")))))));
+}
+
+TEST(Matcher, MatchesSpecificArgument) {
+  EXPECT_TRUE(matches(
+      "template<typename T, typename U> class A {};"
+      "A<bool, int> a;",
+      classTemplateSpecialization(hasTemplateArgument(
+          1, refersToType(asString("int"))))));
+  EXPECT_TRUE(notMatches(
+      "template<typename T, typename U> class A {};"
+      "A<int, bool> a;",
+      classTemplateSpecialization(hasTemplateArgument(
+          1, refersToType(asString("int"))))));
+}
+
 TEST(Matcher, ConstructorCall) {
   StatementMatcher Constructor = expression(constructorCall());
 
