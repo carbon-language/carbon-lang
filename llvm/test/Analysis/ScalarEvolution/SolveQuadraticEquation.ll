@@ -80,3 +80,24 @@ for.cond539.preheader:
   unreachable
 }
 ; CHECK: Determining loop execution counts for: @test3
+
+; PR13489
+; We used to crash on this too.
+
+define void @test4() {
+entry:
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %entry
+  %v2.02 = phi i64 [ 2, %entry ], [ %phitmp, %for.body ]
+  %v1.01 = phi i64 [ -2, %entry ], [ %sub1, %for.body ]
+  %sub1 = sub i64 %v1.01, %v2.02
+  %phitmp = add i64 %v2.02, 2
+  %tobool = icmp eq i64 %sub1, %phitmp
+  br i1 %tobool, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body
+  ret void
+}
+
+; CHECK: Determining loop execution counts for: @test4

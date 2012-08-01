@@ -5370,6 +5370,12 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec, ScalarEvolution &SE) {
     SqrtTerm *= B;
     SqrtTerm -= Four * (A * C);
 
+    if (SqrtTerm.isNegative()) {
+      // The loop is provably infinite.
+      const SCEV *CNC = SE.getCouldNotCompute();
+      return std::make_pair(CNC, CNC);
+    }
+
     // Compute sqrt(B^2-4ac). This is guaranteed to be the nearest
     // integer value or else APInt::sqrt() will assert.
     APInt SqrtVal(SqrtTerm.sqrt());
