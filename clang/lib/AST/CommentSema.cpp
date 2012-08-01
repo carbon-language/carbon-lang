@@ -29,6 +29,7 @@ void Sema::setDecl(const Decl *D) {
 
   ThisDeclInfo = new (Allocator) DeclInfo;
   ThisDeclInfo->ThisDecl = D;
+  ThisDeclInfo->IsFilled = false;
 }
 
 ParagraphComment *Sema::actOnParagraphComment(
