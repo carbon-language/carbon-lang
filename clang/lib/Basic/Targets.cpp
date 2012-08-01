@@ -373,6 +373,7 @@ public:
   OpenBSDTargetInfo(const std::string &triple)
     : OSTargetInfo<Target>(triple) {
       this->UserLabelPrefix = "";
+      this->TLSSupported = false;
 
       llvm::Triple Triple(triple);
       switch (Triple.getArch()) {
