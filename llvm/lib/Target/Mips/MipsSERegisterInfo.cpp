@@ -51,7 +51,6 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
 
   if (!TFI->hasReservedCallFrame(MF)) {
-    DebugLoc DL = I->getDebugLoc();
     int64_t Amount = I->getOperand(0).getImm();
 
     if (I->getOpcode() == Mips::ADJCALLSTACKDOWN)
