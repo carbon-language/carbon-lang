@@ -3675,7 +3675,7 @@ CINDEX_LINKAGE CXString clang_HTMLTagComment_getAsString(CXComment Comment);
  * parameters sorted in template parameter list order.  CSS classes used:
  * \li "tparam-name-index-NUMBER" for parameter name (\<dt\>);
  * \li "tparam-descr-index-NUMBER" for parameter description (\<dd\>);
- * \li "taram-name-index-other" and "tparam-descr-index-other" are used for
+ * \li "tparam-name-index-other" and "tparam-descr-index-other" are used for
  * names inside template template parameters;
  * \li "tparam-name-index-invalid" and "tparam-descr-index-invalid" are used if
  * parameter position is invalid.

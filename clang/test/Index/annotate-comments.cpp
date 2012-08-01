@@ -609,7 +609,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:       (CXComment_ParamCommand in implicitly ParamName=[aaa] ParamIndex=0
 // CHECK-NEXT:         (CXComment_Paragraph
 // CHECK-NEXT:           (CXComment_Text Text=[ Blah blah]))))]
-// CHECK: annotate-comments.cpp:306:6: FunctionTemplate=comment_to_html_conversion_19:{{.*}} FullCommentAsHTML=[<dl><dt class="taram-name-index-0">T1</dt><dd class="tparam-descr-index-0"> Aaa</dd><dt class="taram-name-index-1">T2</dt><dd class="tparam-descr-index-1"> Bbb </dd></dl>]
+// CHECK: annotate-comments.cpp:306:6: FunctionTemplate=comment_to_html_conversion_19:{{.*}} FullCommentAsHTML=[<dl><dt class="tparam-name-index-0">T1</dt><dd class="tparam-descr-index-0"> Aaa</dd><dt class="tparam-name-index-1">T2</dt><dd class="tparam-descr-index-1"> Bbb </dd></dl>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -621,7 +621,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:       (CXComment_TParamCommand ParamName=[T1] ParamPosition={0}
 // CHECK-NEXT:         (CXComment_Paragraph
 // CHECK-NEXT:           (CXComment_Text Text=[ Aaa]))))]
-// CHECK: annotate-comments.cpp:313:6: FunctionTemplate=comment_to_html_conversion_20:{{.*}} FullCommentAsHTML=[<dl><dt class="taram-name-index-0">T1</dt><dd class="tparam-descr-index-0"> Aaa</dd><dt class="taram-name-index-1">T2</dt><dd class="tparam-descr-index-1"> Bbb </dd><dt class="taram-name-index-2">V</dt><dd class="tparam-descr-index-2"> Ccc </dd><dt class="tparam-name-index-invalid">U</dt><dd class="tparam-descr-index-invalid"> Zzz </dd></dl>]
+// CHECK: annotate-comments.cpp:313:6: FunctionTemplate=comment_to_html_conversion_20:{{.*}} FullCommentAsHTML=[<dl><dt class="tparam-name-index-0">T1</dt><dd class="tparam-descr-index-0"> Aaa</dd><dt class="tparam-name-index-1">T2</dt><dd class="tparam-descr-index-1"> Bbb </dd><dt class="tparam-name-index-2">V</dt><dd class="tparam-descr-index-2"> Ccc </dd><dt class="tparam-name-index-invalid">U</dt><dd class="tparam-descr-index-invalid"> Zzz </dd></dl>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -641,7 +641,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:       (CXComment_TParamCommand ParamName=[T1] ParamPosition={0}
 // CHECK-NEXT:         (CXComment_Paragraph
 // CHECK-NEXT:           (CXComment_Text Text=[ Aaa]))))]
-// CHECK: annotate-comments.cpp:320:6: FunctionTemplate=comment_to_html_conversion_21:{{.*}} FullCommentAsHTML=[<dl><dt class="taram-name-index-0">TTT</dt><dd class="tparam-descr-index-0"> Ddd </dd><dt class="taram-name-index-other">C</dt><dd class="tparam-descr-index-other"> Ccc </dd><dt class="taram-name-index-other">T</dt><dd class="tparam-descr-index-other"> Aaa </dd><dt class="taram-name-index-other">TT</dt><dd class="tparam-descr-index-other"> Bbb</dd></dl>]
+// CHECK: annotate-comments.cpp:320:6: FunctionTemplate=comment_to_html_conversion_21:{{.*}} FullCommentAsHTML=[<dl><dt class="tparam-name-index-0">TTT</dt><dd class="tparam-descr-index-0"> Ddd </dd><dt class="tparam-name-index-other">C</dt><dd class="tparam-descr-index-other"> Ccc </dd><dt class="tparam-name-index-other">T</dt><dd class="tparam-descr-index-other"> Aaa </dd><dt class="tparam-name-index-other">TT</dt><dd class="tparam-descr-index-other"> Bbb</dd></dl>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace

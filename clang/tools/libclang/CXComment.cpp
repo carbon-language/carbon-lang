@@ -668,11 +668,11 @@ void CommentASTToHTMLConverter::visitTParamCommandComment(
                                   const TParamCommandComment *C) {
   if (C->isPositionValid()) {
     if (C->getDepth() == 1)
-      Result << "<dt class=\"taram-name-index-"
+      Result << "<dt class=\"tparam-name-index-"
              << C->getIndex(0)
              << "\">";
     else
-      Result << "<dt class=\"taram-name-index-other\">";
+      Result << "<dt class=\"tparam-name-index-other\">";
   } else
     Result << "<dt class=\"tparam-name-index-invalid\">";
 
