@@ -23,6 +23,7 @@ add_llvm_library(LLVMSupport
   Dwarf.cpp
   ErrorHandling.cpp
   FileUtilities.cpp
+  FileOutputBuffer.cpp
   FoldingSet.cpp
   FormattedStream.cpp
   GraphWriter.cpp
