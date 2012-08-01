@@ -24,9 +24,6 @@
 
 namespace clang {
 class Decl;
-class FunctionDecl;
-class ParmVarDecl;
-class TemplateParameterList;
 class SourceMgr;
 
 namespace comments {
@@ -43,44 +40,21 @@ class Sema {
 
   DiagnosticsEngine &Diags;
 
-  /// Declaration this comment is attached to.
-  const Decl *ThisDecl;
-
-  /// Parameters that can be referenced by \\param if \c ThisDecl is something
-  /// that we consider a "function".
-  /// Contains a valid value if \c IsThisDeclInspected is true.
-  ArrayRef<const ParmVarDecl *> ParamVars;
+  /// Information about the declaration this comment is attached to.
+  DeclInfo *ThisDeclInfo;
 
   /// Comment AST nodes that correspond to \c ParamVars for which we have
   /// found a \\param command or NULL if no documentation was found so far.
   ///
-  /// Has correct size and contains valid values if \c IsThisDeclInspected is
+  /// Has correct size and contains valid values if \c DeclInfo->IsFilled is
   /// true.
   llvm::SmallVector<ParamCommandComment *, 8> ParamVarDocs;
-
-  /// Template parameters that can be referenced by \\tparam if \c ThisDecl is
-  /// a template.
-  ///
-  /// Contains a valid value if \c IsThisDeclInspected is true.
-  const TemplateParameterList *TemplateParameters;
 
   /// Comment AST nodes that correspond to parameter names in
   /// \c TemplateParameters.
   ///
-  /// Contains a valid value if \c IsThisDeclInspected is true.
+  /// Contains a valid value if \c DeclInfo->IsFilled is true.
   llvm::StringMap<TParamCommandComment *> TemplateParameterDocs;
-
-  /// True if we extracted all important information from \c ThisDecl into
-  /// \c Sema members.
-  unsigned IsThisDeclInspected : 1;
-
-  /// Is \c ThisDecl something that we consider a "function".
-  /// Contains a valid value if \c IsThisDeclInspected is true.
-  unsigned IsFunctionDecl : 1;
-
-  /// Is \c ThisDecl a template declaration.
-  /// Contains a valid value if \c IsThisDeclInspected is true.
-  unsigned IsTemplateDecl : 1;
 
   DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID) {
     return Diags.Report(Loc, DiagID);
@@ -212,8 +186,8 @@ public:
 
   ArrayRef<const ParmVarDecl *> getParamVars();
 
-  /// Extract all important semantic information from \c ThisDecl into
-  /// \c Sema members.
+  /// Extract all important semantic information from
+  /// \c ThisDeclInfo->ThisDecl into \c ThisDeclInfo members.
   void inspectThisDecl();
 
   /// Returns index of a function parameter with a given name.

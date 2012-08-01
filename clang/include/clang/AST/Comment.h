@@ -19,6 +19,10 @@
 #include "llvm/ADT/StringRef.h"
 
 namespace clang {
+class Decl;
+class ParmVarDecl;
+class TemplateParameterList;
+
 namespace comments {
 
 /// Any part of the comment.
@@ -906,14 +910,61 @@ public:
   }
 };
 
+/// Information about the declaration, useful to clients of FullComment.
+struct DeclInfo {
+  /// Declaration the comment is attached to.  Should not be NULL.
+  const Decl *ThisDecl;
+
+  /// Parameters that can be referenced by \\param if \c ThisDecl is something
+  /// that we consider a "function".
+  ArrayRef<const ParmVarDecl *> ParamVars;
+
+  /// Template parameters that can be referenced by \\tparam if \c ThisDecl is
+  /// a template.
+  const TemplateParameterList *TemplateParameters;
+
+  /// If false, only \c ThisDecl is valid.
+  unsigned IsFilled : 1;
+
+  /// Is \c ThisDecl something that we consider a "function".
+  unsigned IsFunctionDecl : 1;
+
+  /// Is \c ThisDecl something that we consider a "class".
+  unsigned IsClassDecl : 1;
+
+  /// Is \c ThisDecl a template declaration.
+  unsigned IsTemplateDecl : 1;
+
+  /// Is \c ThisDecl a template specialization.
+  unsigned IsTemplateSpecialization : 1;
+
+  /// Is \c ThisDecl a template partial specialization.
+  /// Never true if \c IsFunctionDecl is true.
+  unsigned IsTemplatePartialSpecialization : 1;
+
+  /// Is \c ThisDecl a non-static member function of C++ class or
+  /// instance method of ObjC class.
+  /// Can be true only if \c IsFunctionDecl is true.
+  unsigned IsInstanceMethod : 1;
+
+  /// Is \c ThisDecl a static member function of C++ class or
+  /// class method of ObjC class.
+  /// Can be true only if \c IsFunctionDecl is true.
+  unsigned IsClassMethod : 1;
+
+  void fill();
+};
+
 /// A full comment attached to a declaration, contains block content.
 class FullComment : public Comment {
   llvm::ArrayRef<BlockContentComment *> Blocks;
 
+  DeclInfo *ThisDeclInfo;
+
 public:
-  FullComment(llvm::ArrayRef<BlockContentComment *> Blocks) :
+  FullComment(llvm::ArrayRef<BlockContentComment *> Blocks, DeclInfo *D) :
       Comment(FullCommentKind, SourceLocation(), SourceLocation()),
-      Blocks(Blocks) {
+      Blocks(Blocks), ThisDeclInfo(D) {
     if (Blocks.empty())
       return;
 
@@ -934,6 +985,16 @@ public:
 
   child_iterator child_end() const {
     return reinterpret_cast<child_iterator>(Blocks.end());
+  }
+
+  const Decl *getDecl() const LLVM_READONLY {
+    return ThisDeclInfo->ThisDecl;
+  }
+
+  const DeclInfo *getDeclInfo() const LLVM_READONLY {
+    if (!ThisDeclInfo->IsFilled)
+      ThisDeclInfo->fill();
+    return ThisDeclInfo;
   }
 };
 

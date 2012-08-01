@@ -10,7 +10,6 @@
 #include "clang/AST/CommentSema.h"
 #include "clang/AST/CommentDiagnostic.h"
 #include "clang/AST/Decl.h"
-#include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -20,12 +19,16 @@ namespace comments {
 
 Sema::Sema(llvm::BumpPtrAllocator &Allocator, const SourceManager &SourceMgr,
            DiagnosticsEngine &Diags) :
-    Allocator(Allocator), SourceMgr(SourceMgr), Diags(Diags), ThisDecl(NULL),
-    IsThisDeclInspected(false) {
+    Allocator(Allocator), SourceMgr(SourceMgr), Diags(Diags),
+    ThisDeclInfo(NULL) {
 }
 
 void Sema::setDecl(const Decl *D) {
-  ThisDecl = D;
+  if (!D)
+    return;
+
+  ThisDeclInfo = new (Allocator) DeclInfo;
+  ThisDeclInfo->ThisDecl = D;
 }
 
 ParagraphComment *Sema::actOnParagraphComment(
@@ -234,6 +237,8 @@ TParamCommandComment *Sema::actOnTParamCommandParamNameArg(
     return Command;
   }
 
+  const TemplateParameterList *TemplateParameters =
+      ThisDeclInfo->TemplateParameters;
   SmallVector<unsigned, 2> Position;
   if (resolveTParamReference(Arg, TemplateParameters, &Position)) {
     Command->setPosition(copyArray(llvm::makeArrayRef(Position)));
@@ -449,7 +454,7 @@ HTMLEndTagComment *Sema::actOnHTMLEndTag(SourceLocation LocBegin,
 
 FullComment *Sema::actOnFullComment(
                               ArrayRef<BlockContentComment *> Blocks) {
-  return new (Allocator) FullComment(Blocks);
+  return new (Allocator) FullComment(Blocks, ThisDeclInfo);
 }
 
 void Sema::checkBlockCommandEmptyParagraph(BlockCommandComment *Command) {
@@ -467,80 +472,30 @@ void Sema::checkBlockCommandEmptyParagraph(BlockCommandComment *Command) {
 }
 
 bool Sema::isFunctionDecl() {
-  if (!IsThisDeclInspected)
+  if (!ThisDeclInfo)
+    return false;
+  if (!ThisDeclInfo->IsFilled)
     inspectThisDecl();
-  return IsFunctionDecl;
+  return ThisDeclInfo->IsFunctionDecl;
 }
 
 bool Sema::isTemplateDecl() {
-  if (!IsThisDeclInspected)
+  if (!ThisDeclInfo)
+    return false;
+  if (!ThisDeclInfo->IsFilled)
     inspectThisDecl();
-  return IsTemplateDecl;
+  return ThisDeclInfo->IsTemplateDecl;
 }
 
 ArrayRef<const ParmVarDecl *> Sema::getParamVars() {
-  if (!IsThisDeclInspected)
+  if (!ThisDeclInfo->IsFilled)
     inspectThisDecl();
-  return ParamVars;
+  return ThisDeclInfo->ParamVars;
 }
 
 void Sema::inspectThisDecl() {
-  assert(!IsThisDeclInspected);
-  if (!ThisDecl) {
-    IsFunctionDecl = false;
-    IsTemplateDecl = false;
-    ParamVars = ArrayRef<const ParmVarDecl *>();
-    TemplateParameters = NULL;
-  } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ThisDecl)) {
-    IsFunctionDecl = true;
-    IsTemplateDecl = false;
-    ParamVars = ArrayRef<const ParmVarDecl *>(FD->param_begin(),
-                                              FD->getNumParams());
-    TemplateParameters = NULL;
-    unsigned NumLists = FD->getNumTemplateParameterLists();
-    if (NumLists != 0) {
-      IsTemplateDecl = true;
-      TemplateParameters = FD->getTemplateParameterList(NumLists - 1);
-    }
-  } else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(ThisDecl)) {
-    IsFunctionDecl = true;
-    IsTemplateDecl = false;
-    ParamVars = ArrayRef<const ParmVarDecl *>(MD->param_begin(),
-                                              MD->param_size());
-    TemplateParameters = NULL;
-  } else if (const FunctionTemplateDecl *FTD =
-                 dyn_cast<FunctionTemplateDecl>(ThisDecl)) {
-    IsFunctionDecl = true;
-    IsTemplateDecl = true;
-    const FunctionDecl *FD = FTD->getTemplatedDecl();
-    ParamVars = ArrayRef<const ParmVarDecl *>(FD->param_begin(),
-                                              FD->getNumParams());
-    TemplateParameters = FTD->getTemplateParameters();
-  } else if (const ClassTemplateDecl *CTD =
-                 dyn_cast<ClassTemplateDecl>(ThisDecl)) {
-    IsFunctionDecl = false;
-    IsTemplateDecl = true;
-    ParamVars = ArrayRef<const ParmVarDecl *>();
-    TemplateParameters = CTD->getTemplateParameters();
-  } else if (const ClassTemplatePartialSpecializationDecl *CTPSD =
-                 dyn_cast<ClassTemplatePartialSpecializationDecl>(ThisDecl)) {
-    IsFunctionDecl = false;
-    IsTemplateDecl = true;
-    ParamVars = ArrayRef<const ParmVarDecl *>();
-    TemplateParameters = CTPSD->getTemplateParameters();
-  } else if (isa<ClassTemplateSpecializationDecl>(ThisDecl)) {
-    IsFunctionDecl = false;
-    IsTemplateDecl = true;
-    ParamVars = ArrayRef<const ParmVarDecl *>();
-    TemplateParameters = NULL;
-  } else {
-    IsFunctionDecl = false;
-    IsTemplateDecl = false;
-    ParamVars = ArrayRef<const ParmVarDecl *>();
-    TemplateParameters = NULL;
-  }
-  ParamVarDocs.resize(ParamVars.size(), NULL);
-  IsThisDeclInspected = true;
+  ThisDeclInfo->fill();
+  ParamVarDocs.resize(ThisDeclInfo->ParamVars.size(), NULL);
 }
 
 unsigned Sema::resolveParmVarReference(StringRef Name,

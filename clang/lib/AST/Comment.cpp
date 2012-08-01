@@ -8,6 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/Comment.h"
+#include "clang/AST/Decl.h"
+#include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclTemplate.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -132,6 +135,67 @@ const char *ParamCommandComment::getDirectionAsString(PassDirection D) {
     return "[in,out]";
   }
   llvm_unreachable("unknown PassDirection");
+}
+
+void DeclInfo::fill() {
+  assert(!IsFilled);
+
+  // Set defaults.
+  IsFunctionDecl = false;
+  IsTemplateDecl = false;
+  IsTemplateSpecialization = false;
+  IsTemplatePartialSpecialization = false;
+  IsInstanceMethod = false;
+  IsClassMethod = false;
+  ParamVars = ArrayRef<const ParmVarDecl *>();
+  TemplateParameters = NULL;
+
+  if (!ThisDecl) {
+    // Defaults are OK.
+  } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ThisDecl)) {
+    IsFunctionDecl = true;
+    ParamVars = ArrayRef<const ParmVarDecl *>(FD->param_begin(),
+                                              FD->getNumParams());
+    unsigned NumLists = FD->getNumTemplateParameterLists();
+    if (NumLists != 0) {
+      IsTemplateDecl = true;
+      IsTemplateSpecialization = true;
+      TemplateParameters =
+          FD->getTemplateParameterList(NumLists - 1);
+    }
+
+    if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
+      IsInstanceMethod = MD->isInstance();
+      IsClassMethod = !IsInstanceMethod;
+    }
+  } else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(ThisDecl)) {
+    IsFunctionDecl = true;
+    ParamVars = ArrayRef<const ParmVarDecl *>(MD->param_begin(),
+                                              MD->param_size());
+    IsInstanceMethod = MD->isInstanceMethod();
+    IsClassMethod = !IsInstanceMethod;
+  } else if (const FunctionTemplateDecl *FTD =
+                 dyn_cast<FunctionTemplateDecl>(ThisDecl)) {
+    IsFunctionDecl = true;
+    IsTemplateDecl = true;
+    const FunctionDecl *FD = FTD->getTemplatedDecl();
+    ParamVars = ArrayRef<const ParmVarDecl *>(FD->param_begin(),
+                                              FD->getNumParams());
+    TemplateParameters = FTD->getTemplateParameters();
+  } else if (const ClassTemplateDecl *CTD =
+                 dyn_cast<ClassTemplateDecl>(ThisDecl)) {
+    IsTemplateDecl = true;
+    TemplateParameters = CTD->getTemplateParameters();
+  } else if (const ClassTemplatePartialSpecializationDecl *CTPSD =
+                 dyn_cast<ClassTemplatePartialSpecializationDecl>(ThisDecl)) {
+    IsTemplateDecl = true;
+    IsTemplatePartialSpecialization = true;
+    TemplateParameters = CTPSD->getTemplateParameters();
+  } else if (isa<ClassTemplateSpecializationDecl>(ThisDecl)) {
+    IsTemplateDecl = true;
+    IsTemplateSpecialization = true;
+  }
+  IsFilled = true;
 }
 
 } // end namespace comments
