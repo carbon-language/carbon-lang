@@ -159,6 +159,7 @@ void IndependentBlocks::moveOperandTree(Instruction *Inst, const Region *R,
   std::vector<std::pair<Instruction*, ChildIt> > WorkStack;
 
   WorkStack.push_back(std::make_pair(Inst, Inst->op_begin()));
+  DenseSet<Instruction*> VisitedSet;
 
   while (!WorkStack.empty()) {
     Instruction *CurInst = WorkStack.back().first;
@@ -204,11 +205,11 @@ void IndependentBlocks::moveOperandTree(Instruction *Inst, const Region *R,
 
       // Do not need to move instruction if it contained in the same BB with
       // the root instruction.
-      // FIXME: Remember this in visited Map.
       if (Operand->getParent() == CurBB) {
         DEBUG(dbgs() << "No need to move.\n");
-        // Try to move its operand.
-        WorkStack.push_back(std::make_pair(Operand, Operand->op_begin()));
+        // Try to move its operand, but do not visit an instuction twice.
+        if (VisitedSet.insert(Operand).second)
+          WorkStack.push_back(std::make_pair(Operand, Operand->op_begin()));
         continue;
       }
 
@@ -230,8 +231,9 @@ void IndependentBlocks::moveOperandTree(Instruction *Inst, const Region *R,
         DEBUG(dbgs() << "Move to " << *NewOp << "\n");
         It->set(NewOp);
         ReplacedMap.insert(std::make_pair(Operand, NewOp));
-        // Process its operands.
-        WorkStack.push_back(std::make_pair(NewOp, NewOp->op_begin()));
+        // Process its operands, but do not visit an instuction twice.
+        if (VisitedSet.insert(NewOp).second)
+          WorkStack.push_back(std::make_pair(NewOp, NewOp->op_begin()));
       }
     }
   }
