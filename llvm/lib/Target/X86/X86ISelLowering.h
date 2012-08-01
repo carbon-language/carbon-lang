@@ -294,6 +294,14 @@ namespace llvm {
       // PMULUDQ - Vector multiply packed unsigned doubleword integers
       PMULUDQ,
 
+      // FMA nodes
+      FMADD,
+      FNMADD,
+      FMSUB,
+      FNMSUB,
+      FMADDSUB,
+      FMSUBADD,
+
       // VASTART_SAVE_XMM_REGS - Save xmm argument registers to the stack,
       // according to %al. An operator is needed so that this can be expanded
       // with control flow.
@@ -596,6 +604,12 @@ namespace llvm {
     /// result out to 64 bits.
     virtual bool isZExtFree(Type *Ty1, Type *Ty2) const;
     virtual bool isZExtFree(EVT VT1, EVT VT2) const;
+
+    /// isFMAFasterThanMulAndAdd - Return true if an FMA operation is faster than
+    /// a pair of mul and add instructions. fmuladd intrinsics will be expanded to
+    /// FMAs when this method returns true (and FMAs are legal), otherwise fmuladd
+    /// is expanded to mul + add.
+    virtual bool isFMAFasterThanMulAndAdd(EVT) const { return true; }
 
     /// isNarrowingProfitable - Return true if it's profitable to narrow
     /// operations of type VT1 to VT2. e.g. on x86, it's profitable to narrow

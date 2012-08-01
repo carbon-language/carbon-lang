@@ -730,6 +730,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FSIN, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FCOS, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FREM, (MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::FMA,  (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FPOWI, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FSQRT, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FCOPYSIGN, (MVT::SimpleValueType)VT, Expand);
@@ -1071,6 +1072,14 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::VSELECT,           MVT::v8i32, Legal);
     setOperationAction(ISD::VSELECT,           MVT::v8f32, Legal);
 
+    if (Subtarget->hasFMA()) {
+      setOperationAction(ISD::FMA,             MVT::v8f32, Custom);
+      setOperationAction(ISD::FMA,             MVT::v4f64, Custom);
+      setOperationAction(ISD::FMA,             MVT::v4f32, Custom);
+      setOperationAction(ISD::FMA,             MVT::v2f64, Custom);
+      setOperationAction(ISD::FMA,             MVT::f32, Custom);
+      setOperationAction(ISD::FMA,             MVT::f64, Custom);
+    }
     if (Subtarget->hasAVX2()) {
       setOperationAction(ISD::ADD,             MVT::v4i64, Legal);
       setOperationAction(ISD::ADD,             MVT::v8i32, Legal);
@@ -1220,6 +1229,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setTargetDAGCombine(ISD::ADD);
   setTargetDAGCombine(ISD::FADD);
   setTargetDAGCombine(ISD::FSUB);
+  setTargetDAGCombine(ISD::FMA);
   setTargetDAGCombine(ISD::SUB);
   setTargetDAGCombine(ISD::LOAD);
   setTargetDAGCombine(ISD::STORE);
@@ -11289,6 +11299,12 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::WIN_FTOL:           return "X86ISD::WIN_FTOL";
   case X86ISD::SAHF:               return "X86ISD::SAHF";
   case X86ISD::RDRAND:             return "X86ISD::RDRAND";
+  case X86ISD::FMADD:              return "X86ISD::FMADD";
+  case X86ISD::FMSUB:              return "X86ISD::FMSUB";
+  case X86ISD::FNMADD:             return "X86ISD::FNMADD";
+  case X86ISD::FNMSUB:             return "X86ISD::FNMSUB";
+  case X86ISD::FMADDSUB:           return "X86ISD::FMADDSUB";
+  case X86ISD::FMSUBADD:           return "X86ISD::FMSUBADD";
   }
 }
 
@@ -15108,6 +15124,40 @@ static SDValue PerformSExtCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+static SDValue PerformFMACombine(SDNode *N, SelectionDAG &DAG, 
+                                 const X86Subtarget* Subtarget) {
+  DebugLoc dl = N->getDebugLoc();
+  EVT VT = N->getValueType(0);
+
+  EVT ScalarVT = VT.getScalarType();
+  if ((ScalarVT != MVT::f32 && ScalarVT != MVT::f64) || !Subtarget->hasFMA())
+    return SDValue();
+
+  SDValue A = N->getOperand(0);
+  SDValue B = N->getOperand(1);
+  SDValue C = N->getOperand(2);
+
+  bool NegA = (A.getOpcode() == ISD::FNEG);
+  bool NegB = (B.getOpcode() == ISD::FNEG);
+  bool NegC = (C.getOpcode() == ISD::FNEG);
+
+  // Negative multiplication when NegA xor NegB 
+  bool NegMul = (NegA != NegB); 
+  if (NegA)
+    A = A.getOperand(0);
+  if (NegB)
+    B = B.getOperand(0);
+  if (NegC)
+    C = C.getOperand(0);
+
+  unsigned Opcode;
+  if (!NegMul)
+    Opcode = (!NegC)? X86ISD::FMADD : X86ISD::FMSUB;
+  else
+    Opcode = (!NegC)? X86ISD::FNMADD : X86ISD::FNMSUB;
+  return DAG.getNode(Opcode, dl, VT, A, B, C);
+}
+
 static SDValue PerformZExtCombine(SDNode *N, SelectionDAG &DAG,
                                   TargetLowering::DAGCombinerInfo &DCI,
                                   const X86Subtarget *Subtarget) {
@@ -15447,6 +15497,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::VPERMILP:
   case X86ISD::VPERM2X128:
   case ISD::VECTOR_SHUFFLE: return PerformShuffleCombine(N, DAG, DCI,Subtarget);
+  case ISD::FMA:            return PerformFMACombine(N, DAG, Subtarget);
   }
 
   return SDValue();

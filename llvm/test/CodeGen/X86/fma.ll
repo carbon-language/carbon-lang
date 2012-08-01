@@ -1,8 +1,11 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin10 | FileCheck %s
-; RUN: llc < %s -mtriple=x86_64-apple-darwin10 | FileCheck %s
+; RUN: llc < %s -mtriple=i386-apple-darwin10  -mattr=+fma  | FileCheck %s --check-prefix=CHECK-FMA-INST
+; RUN: llc < %s -mtriple=i386-apple-darwin10               | FileCheck %s --check-prefix=CHECK-FMA-CALL
+; RUN: llc < %s -mtriple=x86_64-apple-darwin10 -mattr=+fma | FileCheck %s --check-prefix=CHECK-FMA-INST
+; RUN: llc < %s -mtriple=x86_64-apple-darwin10             | FileCheck %s --check-prefix=CHECK-FMA-CALL
 
 ; CHECK: test_f32
-; CHECK: _fmaf
+; CHECK-FMA-INST: vfmadd213ss
+; CHECK-FMA-CALL: _fmaf
 
 define float @test_f32(float %a, float %b, float %c) nounwind readnone ssp {
 entry:
@@ -11,7 +14,8 @@ entry:
 }
 
 ; CHECK: test_f64
-; CHECK: _fma
+; CHECK-FMA-INST: vfmadd213sd
+; CHECK-FMA-CALL: _fma
 
 define double @test_f64(double %a, double %b, double %c) nounwind readnone ssp {
 entry:

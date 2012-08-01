@@ -5679,7 +5679,7 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
   if ((DAG.getTarget().Options.AllowFPOpFusion == FPOpFusion::Fast ||
        DAG.getTarget().Options.UnsafeFPMath) &&
       DAG.getTarget().getTargetLowering()->isFMAFasterThanMulAndAdd(VT) &&
-      TLI.isOperationLegal(ISD::FMA, VT)) {
+      TLI.isOperationLegalOrCustom(ISD::FMA, VT)) {
 
     // fold (fadd (fmul x, y), z) -> (fma x, y, z)
     if (N0.getOpcode() == ISD::FMUL && N0->hasOneUse()) {
@@ -5704,6 +5704,7 @@ SDValue DAGCombiner::visitFSUB(SDNode *N) {
   ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
   ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1);
   EVT VT = N->getValueType(0);
+  DebugLoc dl = N->getDebugLoc();
 
   // fold vector ops
   if (VT.isVector()) {
@@ -5724,11 +5725,11 @@ SDValue DAGCombiner::visitFSUB(SDNode *N) {
     if (isNegatibleForFree(N1, LegalOperations, TLI, &DAG.getTarget().Options))
       return GetNegatedExpression(N1, DAG, LegalOperations);
     if (!LegalOperations || TLI.isOperationLegal(ISD::FNEG, VT))
-      return DAG.getNode(ISD::FNEG, N->getDebugLoc(), VT, N1);
+      return DAG.getNode(ISD::FNEG, dl, VT, N1);
   }
   // fold (fsub A, (fneg B)) -> (fadd A, B)
   if (isNegatibleForFree(N1, LegalOperations, TLI, &DAG.getTarget().Options))
-    return DAG.getNode(ISD::FADD, N->getDebugLoc(), VT, N0,
+    return DAG.getNode(ISD::FADD, dl, VT, N0,
                        GetNegatedExpression(N1, DAG, LegalOperations));
 
   // If 'unsafe math' is enabled, fold
@@ -5756,22 +5757,33 @@ SDValue DAGCombiner::visitFSUB(SDNode *N) {
   if ((DAG.getTarget().Options.AllowFPOpFusion == FPOpFusion::Fast ||
        DAG.getTarget().Options.UnsafeFPMath) &&
       DAG.getTarget().getTargetLowering()->isFMAFasterThanMulAndAdd(VT) &&
-      TLI.isOperationLegal(ISD::FMA, VT)) {
+      TLI.isOperationLegalOrCustom(ISD::FMA, VT)) {
 
     // fold (fsub (fmul x, y), z) -> (fma x, y, (fneg z))
     if (N0.getOpcode() == ISD::FMUL && N0->hasOneUse()) {
-      return DAG.getNode(ISD::FMA, N->getDebugLoc(), VT,
+      return DAG.getNode(ISD::FMA, dl, VT,
                          N0.getOperand(0), N0.getOperand(1),
-                         DAG.getNode(ISD::FNEG, N1->getDebugLoc(), VT, N1));
+                         DAG.getNode(ISD::FNEG, dl, VT, N1));
     }
 
     // fold (fsub x, (fmul y, z)) -> (fma (fneg y), z, x)
     // Note: Commutes FSUB operands.
     if (N1.getOpcode() == ISD::FMUL && N1->hasOneUse()) {
-      return DAG.getNode(ISD::FMA, N->getDebugLoc(), VT,
-                         DAG.getNode(ISD::FNEG, N1->getDebugLoc(), VT,
+      return DAG.getNode(ISD::FMA, dl, VT,
+                         DAG.getNode(ISD::FNEG, dl, VT,
                          N1.getOperand(0)),
                          N1.getOperand(1), N0);
+    }
+
+    // fold (fsub (-(fmul, x, y)), z) -> (fma (fneg x), y, (fneg z))
+    if (N0.getOpcode() == ISD::FNEG && 
+        N0.getOperand(0).getOpcode() == ISD::FMUL &&
+        N0->hasOneUse() && N0.getOperand(0).hasOneUse()) {
+      SDValue N00 = N0.getOperand(0).getOperand(0);
+      SDValue N01 = N0.getOperand(0).getOperand(1);
+      return DAG.getNode(ISD::FMA, dl, VT,
+                         DAG.getNode(ISD::FNEG, dl, VT, N00), N01,
+                         DAG.getNode(ISD::FNEG, dl, VT, N1));
     }
   }
 
