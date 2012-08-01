@@ -527,7 +527,7 @@ bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD,
       Value *Ret = EmitStrCpy(CI->getArgOperand(0), CI->getArgOperand(1), B, TD,
                               TLI, Name.substr(2, 6));
       if (!Ret)
-	return false;
+        return false;
       replaceCall(Ret);
       return true;
     }
@@ -548,7 +548,7 @@ bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD,
                                CI->getArgOperand(2), B, TD, TLI,
                                Name.substr(2, 7));
       if (!Ret)
-	return false;
+        return false;
       replaceCall(Ret);
       return true;
     }
