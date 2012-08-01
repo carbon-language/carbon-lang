@@ -105,30 +105,28 @@ CodeGenFunction::GetAddressOfDirectBaseInCompleteClass(llvm::Value *This,
 }
 
 static llvm::Value *
-ApplyNonVirtualAndVirtualOffset(CodeGenFunction &CGF, llvm::Value *ThisPtr,
-                                CharUnits NonVirtual, llvm::Value *Virtual) {
-  llvm::Type *PtrDiffTy = 
-    CGF.ConvertType(CGF.getContext().getPointerDiffType());
-  
-  llvm::Value *NonVirtualOffset = 0;
-  if (!NonVirtual.isZero())
-    NonVirtualOffset = llvm::ConstantInt::get(PtrDiffTy, 
-                                              NonVirtual.getQuantity());
-  
-  llvm::Value *BaseOffset;
-  if (Virtual) {
-    if (NonVirtualOffset)
-      BaseOffset = CGF.Builder.CreateAdd(Virtual, NonVirtualOffset);
-    else
-      BaseOffset = Virtual;
-  } else
-    BaseOffset = NonVirtualOffset;
+ApplyNonVirtualAndVirtualOffset(CodeGenFunction &CGF, llvm::Value *ptr,
+                                CharUnits nonVirtualOffset,
+                                llvm::Value *virtualOffset) {
+  // Assert that we have something to do.
+  assert(!nonVirtualOffset.isZero() || virtualOffset != 0);
+
+  // Compute the offset from the static and dynamic components.
+  llvm::Value *baseOffset;
+  if (!nonVirtualOffset.isZero()) {
+    baseOffset = llvm::ConstantInt::get(CGF.PtrDiffTy,
+                                        nonVirtualOffset.getQuantity());
+    if (virtualOffset) {
+      baseOffset = CGF.Builder.CreateAdd(virtualOffset, baseOffset);
+    }
+  } else {
+    baseOffset = virtualOffset;
+  }
   
   // Apply the base offset.
-  ThisPtr = CGF.Builder.CreateBitCast(ThisPtr, CGF.Int8PtrTy);
-  ThisPtr = CGF.Builder.CreateGEP(ThisPtr, BaseOffset, "add.ptr");
-
-  return ThisPtr;
+  ptr = CGF.Builder.CreateBitCast(ptr, CGF.Int8PtrTy);
+  ptr = CGF.Builder.CreateInBoundsGEP(ptr, baseOffset, "add.ptr");
+  return ptr;
 }
 
 llvm::Value *
@@ -142,72 +140,81 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
   CastExpr::path_const_iterator Start = PathBegin;
   const CXXRecordDecl *VBase = 0;
   
-  // Get the virtual base.
+  // Sema has done some convenient canonicalization here: if the
+  // access path involved any virtual steps, the conversion path will
+  // *start* with a step down to the correct virtual base subobject,
+  // and hence will not require any further steps.
   if ((*Start)->isVirtual()) {
     VBase = 
       cast<CXXRecordDecl>((*Start)->getType()->getAs<RecordType>()->getDecl());
     ++Start;
   }
-  
+
+  // Compute the static offset of the ultimate destination within its
+  // allocating subobject (the virtual base, if there is one, or else
+  // the "complete" object that we see).
   CharUnits NonVirtualOffset = 
     ComputeNonVirtualBaseClassOffset(getContext(), VBase ? VBase : Derived,
                                      Start, PathEnd);
 
+  // If there's a virtual step, we can sometimes "devirtualize" it.
+  // For now, that's limited to when the derived type is final.
+  // TODO: "devirtualize" this for accesses to known-complete objects.
+  if (VBase && Derived->hasAttr<FinalAttr>()) {
+    const ASTRecordLayout &layout = getContext().getASTRecordLayout(Derived);
+    CharUnits vBaseOffset = layout.getVBaseClassOffset(VBase);
+    NonVirtualOffset += vBaseOffset;
+    VBase = 0; // we no longer have a virtual step
+  }
+
   // Get the base pointer type.
   llvm::Type *BasePtrTy = 
     ConvertType((PathEnd[-1])->getType())->getPointerTo();
-  
+
+  // If the static offset is zero and we don't have a virtual step,
+  // just do a bitcast; null checks are unnecessary.
   if (NonVirtualOffset.isZero() && !VBase) {
-    // Just cast back.
     return Builder.CreateBitCast(Value, BasePtrTy);
   }    
+
+  llvm::BasicBlock *origBB = 0;
+  llvm::BasicBlock *endBB = 0;
   
-  llvm::BasicBlock *CastNull = 0;
-  llvm::BasicBlock *CastNotNull = 0;
-  llvm::BasicBlock *CastEnd = 0;
-  
+  // Skip over the offset (and the vtable load) if we're supposed to
+  // null-check the pointer.
   if (NullCheckValue) {
-    CastNull = createBasicBlock("cast.null");
-    CastNotNull = createBasicBlock("cast.notnull");
-    CastEnd = createBasicBlock("cast.end");
+    origBB = Builder.GetInsertBlock();
+    llvm::BasicBlock *notNullBB = createBasicBlock("cast.notnull");
+    endBB = createBasicBlock("cast.end");
     
-    llvm::Value *IsNull = Builder.CreateIsNull(Value);
-    Builder.CreateCondBr(IsNull, CastNull, CastNotNull);
-    EmitBlock(CastNotNull);
+    llvm::Value *isNull = Builder.CreateIsNull(Value);
+    Builder.CreateCondBr(isNull, endBB, notNullBB);
+    EmitBlock(notNullBB);
   }
 
+  // Compute the virtual offset.
   llvm::Value *VirtualOffset = 0;
-
   if (VBase) {
-    if (Derived->hasAttr<FinalAttr>()) {
-      VirtualOffset = 0;
-
-      const ASTRecordLayout &Layout = getContext().getASTRecordLayout(Derived);
-
-      CharUnits VBaseOffset = Layout.getVBaseClassOffset(VBase);
-      NonVirtualOffset += VBaseOffset;
-    } else
-      VirtualOffset = GetVirtualBaseClassOffset(Value, Derived, VBase);
+    VirtualOffset = GetVirtualBaseClassOffset(Value, Derived, VBase);
   }
 
-  // Apply the offsets.
+  // Apply both offsets.
   Value = ApplyNonVirtualAndVirtualOffset(*this, Value, 
                                           NonVirtualOffset,
                                           VirtualOffset);
   
-  // Cast back.
+  // Cast to the destination type.
   Value = Builder.CreateBitCast(Value, BasePtrTy);
- 
+
+  // Build a phi if we needed a null check.
   if (NullCheckValue) {
-    Builder.CreateBr(CastEnd);
-    EmitBlock(CastNull);
-    Builder.CreateBr(CastEnd);
-    EmitBlock(CastEnd);
+    llvm::BasicBlock *notNullBB = Builder.GetInsertBlock();
+    Builder.CreateBr(endBB);
+    EmitBlock(endBB);
     
-    llvm::PHINode *PHI = Builder.CreatePHI(Value->getType(), 2);
-    PHI->addIncoming(Value, CastNotNull);
-    PHI->addIncoming(llvm::Constant::getNullValue(Value->getType()), 
-                     CastNull);
+    llvm::PHINode *PHI = Builder.CreatePHI(BasePtrTy, 2, "cast.result");
+    PHI->addIncoming(Value, notNullBB);
+    PHI->addIncoming(llvm::Constant::getNullValue(BasePtrTy), origBB);
     Value = PHI;
   }
   

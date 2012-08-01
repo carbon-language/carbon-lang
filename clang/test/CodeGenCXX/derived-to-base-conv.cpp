@@ -1,85 +1,86 @@
-// REQUIRES: x86-registered-target,x86-64-registered-target
-// RUN: %clang_cc1 -triple x86_64-apple-darwin -std=c++11 -S %s -o %t-64.s
-// RUN: FileCheck -check-prefix LP64 --input-file=%t-64.s %s
-// RUN: %clang_cc1 -triple i386-apple-darwin -std=c++11 -S %s -o %t-32.s
-// RUN: FileCheck -check-prefix LP32 --input-file=%t-32.s %s
-
-extern "C" int printf(...);
-extern "C" void exit(int);
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -std=c++11 -emit-llvm %s -o - | FileCheck %s
 
 struct A {
-  A (const A&) { printf("A::A(const A&)\n"); }
-  A() {};
-  ~A() { printf("A::~A()\n"); }
+  A(const A&);
+  A();
+  ~A();
 }; 
 
 struct B : public A {
-  B() {};
-  B(const B& Other) : A(Other) { printf("B::B(const B&)\n"); }
-  ~B() { printf("B::~B()\n"); }
+  B();
+  B(const B& Other);
+  ~B();
 };
 
 struct C : public B {
-  C() {};
-  C(const C& Other) : B(Other) { printf("C::C(const C&)\n"); }
-  ~C() { printf("C::~C()\n"); }
+  C();
+  C(const C& Other);
+  ~C();
 }; 
 
 struct X {
-	operator B&() {printf("X::operator B&()\n"); return b; }
-	operator C&() {printf("X::operator C&()\n"); return c; }
- 	X (const X&) { printf("X::X(const X&)\n"); }
- 	X () { printf("X::X()\n"); }
- 	~X () { printf("X::~X()\n"); }
-	B b;
-	C c;
+  operator B&();
+  operator C&();
+  X(const X&);
+  X();
+  ~X();
+  B b;
+  C c;
 };
 
-void f(A) {
-  printf("f(A)\n");
-}
-
-
-void func(X x) 
-{
-  f (x);
-}
-
-int main()
-{
-    X x;
-    func(x);
+void test0_helper(A);
+void test0(X x) {
+  test0_helper(x);
+  // CHECK:    define void @_Z5test01X(
+  // CHECK:      [[TMP:%.*]] = alloca [[A:%.*]], align
+  // CHECK-NEXT: [[T0:%.*]] = call [[B:%.*]]* @_ZN1XcvR1BEv(
+  // CHECK-NEXT: [[T1:%.*]] = bitcast [[B]]* [[T0]] to [[A]]*
+  // CHECK-NEXT: call void @_ZN1AC1ERKS_([[A]]* [[TMP]], [[A]]* [[T1]])
+  // CHECK-NEXT: call void @_Z12test0_helper1A([[A]]* [[TMP]])
+  // CHECK-NEXT: call void @_ZN1AD1Ev([[A]]* [[TMP]])
+  // CHECK-NEXT: ret void
 }
 
 struct Base;
 
 struct Root {
-  operator Base&() { exit(1); }
+  operator Base&();
 };
 
 struct Derived;
 
 struct Base : Root {
-  Base(const Base&) { printf("Base::(const Base&)\n"); }
-  Base() { printf("Base::Base()\n"); }
-  operator Derived&() { exit(1); }
+  Base(const Base &);
+  Base();
+  operator Derived &();
 };
 
 struct Derived : Base {
 };
 
-void foo(Base) {}
-
-void test(Derived bb)
-{
-	// CHECK-LP64-NOT: callq    __ZN4BasecvR7DerivedEv
-	// CHECK-LP32-NOT: callq    L__ZN4BasecvR7DerivedEv
-        foo(bb);
+void test1_helper(Base);
+void test1(Derived bb) {
+  // CHECK:     define void @_Z5test17Derived(
+  // CHECK-NOT: call {{.*}} @_ZN4BasecvR7DerivedEv(
+  // CHECK:     call void @_ZN4BaseC1ERKS_(
+  // CHECK-NOT: call {{.*}} @_ZN4BasecvR7DerivedEv(
+  // CHECK:     call void @_Z12test1_helper4Base(
+  test1_helper(bb);
 }
-// CHECK-LP64: callq    __ZN1XcvR1BEv
-// CHECK-LP64: callq    __ZN1AC1ERKS_
 
-// CHECK-LP32: calll     L__ZN1XcvR1BEv
-// CHECK-LP32: calll     L__ZN1AC1ERKS_
-
-
+// Don't crash after devirtualizing a derived-to-base conversion
+// to an empty base allocated at offset zero.
+// rdar://problem/11993704
+class Test2a {};
+class Test2b final : public virtual Test2a {};
+void test2(Test2b &x) {
+  Test2a &y = x;
+  // CHECK:    define void @_Z5test2R6Test2b(
+  // CHECK:      [[X:%.*]] = alloca [[B:%.*]]*, align 8
+  // CHECK-NEXT: [[Y:%.*]] = alloca [[A:%.*]]*, align 8
+  // CHECK-NEXT: store [[B]]* {{%.*}}, [[B]]** [[X]], align 8
+  // CHECK-NEXT: [[T0:%.*]] = load [[B]]** [[X]], align 8
+  // CHECK-NEXT: [[T1:%.*]] = bitcast [[B]]* [[T0]] to [[A]]*
+  // CHECK-NEXT: store [[A]]* [[T1]], [[A]]** [[Y]], align 8
+  // CHECK-NEXT: ret void
+}
