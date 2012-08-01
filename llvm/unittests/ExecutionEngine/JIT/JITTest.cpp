@@ -555,10 +555,10 @@ TEST_F(JITTest, FunctionPointersOutliveTheirCreator) {
 #endif
 }
 
-// ARM and MIPS do not have an implementation
+// ARM does not have an implementation
 // of replaceMachineCodeForFunction(), so recompileAndRelinkFunction
 // doesn't work.
-#if !defined(__arm__) && !defined(__mips__)
+#if !defined(__arm__)
 TEST_F(JITTest, FunctionIsRecompiledAndRelinked) {
   Function *F = Function::Create(TypeBuilder<int(void), false>::get(Context),
                                  GlobalValue::ExternalLinkage, "test", M);
