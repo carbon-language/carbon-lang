@@ -120,7 +120,7 @@ private:
     TypeFromUser
     GetIntPointerType();
 
-    std::auto_ptr<Disassembler> m_disassembler_ap;
+    lldb::DisassemblerSP    m_disassembler_sp;
     TypeFromUser            m_intptr_type;
     std::vector<RegisterValue> m_register_values;
     lldb::DataBufferSP      m_buffer_sp;

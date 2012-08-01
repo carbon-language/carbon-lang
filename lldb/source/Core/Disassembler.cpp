@@ -37,7 +37,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 
-Disassembler*
+DisassemblerSP
 Disassembler::FindPlugin (const ArchSpec &arch, const char *plugin_name)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__,
@@ -45,7 +45,6 @@ Disassembler::FindPlugin (const ArchSpec &arch, const char *plugin_name)
                         arch.GetArchitectureName(),
                         plugin_name);
 
-    std::auto_ptr<Disassembler> disassembler_ap;
     DisassemblerCreateInstance create_callback = NULL;
     
     if (plugin_name)
@@ -53,23 +52,23 @@ Disassembler::FindPlugin (const ArchSpec &arch, const char *plugin_name)
         create_callback = PluginManager::GetDisassemblerCreateCallbackForPluginName (plugin_name);
         if (create_callback)
         {
-            disassembler_ap.reset (create_callback(arch));
+            DisassemblerSP disassembler_sp(create_callback(arch));
             
-            if (disassembler_ap.get())
-                return disassembler_ap.release();
+            if (disassembler_sp.get())
+                return disassembler_sp;
         }
     }
     else
     {
         for (uint32_t idx = 0; (create_callback = PluginManager::GetDisassemblerCreateCallbackAtIndex(idx)) != NULL; ++idx)
         {
-            disassembler_ap.reset (create_callback(arch));
+            DisassemblerSP disassembler_sp(create_callback(arch));
 
-            if (disassembler_ap.get())
-                return disassembler_ap.release();
+            if (disassembler_sp.get())
+                return disassembler_sp;
         }
     }
-    return NULL;
+    return DisassemblerSP();
 }
 
 
@@ -221,7 +220,7 @@ Disassembler::DisassembleRange
     lldb::DisassemblerSP disasm_sp;
     if (range.GetByteSize() > 0 && range.GetBaseAddress().IsValid())
     {
-        disasm_sp.reset (Disassembler::FindPlugin(arch, plugin_name));
+        disasm_sp = Disassembler::FindPlugin(arch, plugin_name);
 
         if (disasm_sp)
         {
@@ -248,7 +247,7 @@ Disassembler::DisassembleBytes
     
     if (bytes)
     {
-        disasm_sp.reset(Disassembler::FindPlugin(arch, plugin_name));
+        disasm_sp = Disassembler::FindPlugin(arch, plugin_name);
         
         if (disasm_sp)
         {
@@ -282,19 +281,19 @@ Disassembler::Disassemble
 {
     if (disasm_range.GetByteSize())
     {
-        std::auto_ptr<Disassembler> disasm_ap (Disassembler::FindPlugin(arch, plugin_name));
+        lldb::DisassemblerSP disasm_sp (Disassembler::FindPlugin(arch, plugin_name));
 
-        if (disasm_ap.get())
+        if (disasm_sp.get())
         {
             AddressRange range;
             ResolveAddress (exe_ctx, disasm_range.GetBaseAddress(), range.GetBaseAddress());
             range.SetByteSize (disasm_range.GetByteSize());
             
-            size_t bytes_disassembled = disasm_ap->ParseInstructions (&exe_ctx, range, &strm);
+            size_t bytes_disassembled = disasm_sp->ParseInstructions (&exe_ctx, range, &strm);
             if (bytes_disassembled == 0)
                 return false;
 
-            return PrintInstructions (disasm_ap.get(),
+            return PrintInstructions (disasm_sp.get(),
                                       debugger,
                                       arch,
                                       exe_ctx,
@@ -323,16 +322,16 @@ Disassembler::Disassemble
 {
     if (num_instructions > 0)
     {
-        std::auto_ptr<Disassembler> disasm_ap (Disassembler::FindPlugin(arch, plugin_name));
-        if (disasm_ap.get())
+        lldb::DisassemblerSP disasm_sp (Disassembler::FindPlugin(arch, plugin_name));
+        if (disasm_sp.get())
         {
             Address addr;
             ResolveAddress (exe_ctx, start_address, addr);
 
-            size_t bytes_disassembled = disasm_ap->ParseInstructions (&exe_ctx, addr, num_instructions);
+            size_t bytes_disassembled = disasm_sp->ParseInstructions (&exe_ctx, addr, num_instructions);
             if (bytes_disassembled == 0)
                 return false;
-            return PrintInstructions (disasm_ap.get(),
+            return PrintInstructions (disasm_sp.get(),
                                       debugger,
                                       arch,
                                       exe_ctx,

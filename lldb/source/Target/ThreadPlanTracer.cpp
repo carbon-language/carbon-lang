@@ -96,7 +96,7 @@ ThreadPlanTracer::TracerExplainsStop ()
 
 ThreadPlanAssemblyTracer::ThreadPlanAssemblyTracer (Thread &thread, lldb::StreamSP &stream_sp) :
     ThreadPlanTracer (thread, stream_sp),
-    m_disassembler_ap (),
+    m_disassembler_sp (),
     m_intptr_type (),
     m_register_values ()
 {
@@ -104,7 +104,7 @@ ThreadPlanAssemblyTracer::ThreadPlanAssemblyTracer (Thread &thread, lldb::Stream
 
 ThreadPlanAssemblyTracer::ThreadPlanAssemblyTracer (Thread &thread) :
     ThreadPlanTracer (thread),
-    m_disassembler_ap (),
+    m_disassembler_sp (),
     m_intptr_type (),
     m_register_values ()
 {
@@ -113,9 +113,9 @@ ThreadPlanAssemblyTracer::ThreadPlanAssemblyTracer (Thread &thread) :
 Disassembler *
 ThreadPlanAssemblyTracer::GetDisassembler ()
 {
-    if (m_disassembler_ap.get() == NULL)
-        m_disassembler_ap.reset(Disassembler::FindPlugin(m_thread.GetProcess()->GetTarget().GetArchitecture(), NULL));
-    return m_disassembler_ap.get();
+    if (m_disassembler_sp.get() == NULL)
+        m_disassembler_sp = Disassembler::FindPlugin(m_thread.GetProcess()->GetTarget().GetArchitecture(), NULL);
+    return m_disassembler_sp.get();
 }
 
 TypeFromUser

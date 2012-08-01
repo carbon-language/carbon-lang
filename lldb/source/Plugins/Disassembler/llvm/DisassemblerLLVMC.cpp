@@ -36,6 +36,7 @@ public:
         Instruction(address, addr_class),
         m_is_valid(false),
         m_disasm(disasm),
+        m_disasm_sp(disasm.shared_from_this()),
         m_does_branch(eLazyBoolCalculate)
     {
     }
@@ -415,6 +416,7 @@ protected:
     
     bool                    m_is_valid;
     DisassemblerLLVMC      &m_disasm;
+    DisassemblerSP          m_disasm_sp; // for ownership
     LazyBool                m_does_branch;
     
     static bool             s_regex_compiled;

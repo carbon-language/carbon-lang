@@ -233,6 +233,7 @@ protected:
 };
 
 class Disassembler :
+    public STD_ENABLE_SHARED_FROM_THIS(Disassembler),
     public PluginInterface
 {
 public:
@@ -246,7 +247,7 @@ public:
         eOptionMarkPCAddress    = (1u << 3)  // Mark the disassembly line the contains the PC
     };
 
-    static Disassembler*
+    static lldb::DisassemblerSP
     FindPlugin (const ArchSpec &arch, const char *plugin_name);
 
     static lldb::DisassemblerSP

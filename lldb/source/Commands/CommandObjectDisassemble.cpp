@@ -243,7 +243,7 @@ CommandObjectDisassemble::DoExecute (Args& command, CommandReturnObject &result)
     }
 
     const char *plugin_name = m_options.GetPluginName ();
-    Disassembler *disassembler = Disassembler::FindPlugin(m_options.arch, plugin_name);
+    DisassemblerSP disassembler = Disassembler::FindPlugin(m_options.arch, plugin_name);
 
     if (disassembler == NULL)
     {
