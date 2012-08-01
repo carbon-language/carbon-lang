@@ -215,6 +215,9 @@ public:
   }
 
   iterator erase(iterator I) {
+    assert(I >= begin() && "Iterator to erase is out of bounds.");
+    assert(I < end() && "Erasing at past-the-end iterator.");
+
     // If we have a single value, convert to empty.
     if (Val.template is<EltTy>()) {
       if (I == begin())
