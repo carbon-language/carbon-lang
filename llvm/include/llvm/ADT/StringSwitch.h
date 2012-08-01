@@ -48,8 +48,8 @@ class StringSwitch {
   const T *Result;
 
 public:
-  explicit StringSwitch(StringRef Str)
-  : Str(Str), Result(0) { }
+  explicit StringSwitch(StringRef S)
+  : Str(S), Result(0) { }
 
   template<unsigned N>
   StringSwitch& Case(const char (&S)[N], const T& Value) {
