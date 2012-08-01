@@ -47,11 +47,6 @@ CheckVMLxHazard("check-vmlx-hazard", cl::Hidden,
   cl::desc("Check fp vmla / vmls hazard at isel time"),
   cl::init(true));
 
-static cl::opt<bool>
-DisableARMIntABS("disable-arm-int-abs", cl::Hidden,
-  cl::desc("Enable / disable ARM integer abs transform"),
-  cl::init(false));
-
 //===--------------------------------------------------------------------===//
 /// ARMDAGToDAGISel - ARM specific code to select ARM machine
 /// instructions for SelectionDAG operations.
@@ -2491,9 +2486,6 @@ SDNode *ARMDAGToDAGISel::SelectABSOp(SDNode *N){
   SDValue XORSrc0 = N->getOperand(0);
   SDValue XORSrc1 = N->getOperand(1);
   EVT VT = N->getValueType(0);
-
-  if (DisableARMIntABS)
-    return NULL;
 
   if (Subtarget->isThumb1Only())
     return NULL;

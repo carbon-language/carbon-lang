@@ -4068,11 +4068,8 @@ def ISB : AInoP<(outs), (ins memb_opt:$opt), MiscFrm, NoItinerary,
 
 // Pseudo instruction that combines movs + predicated rsbmi
 // to implement integer ABS
-let usesCustomInserter = 1, Defs = [CPSR] in {
-def ABS : ARMPseudoInst<
-  (outs GPR:$dst), (ins GPR:$src),
-  8, NoItinerary, []>;
-}
+let usesCustomInserter = 1, Defs = [CPSR] in
+def ABS : ARMPseudoInst<(outs GPR:$dst), (ins GPR:$src), 8, NoItinerary, []>;
 
 let usesCustomInserter = 1 in {
   let Defs = [CPSR] in {
