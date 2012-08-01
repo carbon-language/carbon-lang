@@ -25,7 +25,7 @@ namespace llvm {
   class Mangler;
   class TargetMachine;
   class X86AsmPrinter;
-  
+
 /// X86MCInstLower - This class is used to lower an MachineInstr into an MCInst.
 class LLVM_LIBRARY_VISIBILITY X86MCInstLower {
   MCContext &Ctx;
@@ -37,12 +37,12 @@ class LLVM_LIBRARY_VISIBILITY X86MCInstLower {
 public:
   X86MCInstLower(Mangler *mang, const MachineFunction &MF,
                  X86AsmPrinter &asmprinter);
-  
+
   void Lower(const MachineInstr *MI, MCInst &OutMI) const;
 
   MCSymbol *GetSymbolFromOperand(const MachineOperand &MO) const;
   MCOperand LowerSymbolOperand(const MachineOperand &MO, MCSymbol *Sym) const;
-  
+
 private:
   MachineModuleInfoMachO &getMachOMMI() const;
 };

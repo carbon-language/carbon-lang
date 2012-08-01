@@ -173,7 +173,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   // For 64-bit since we have so many registers use the ILP scheduler, for
   // 32-bit code use the register pressure specific scheduling.
   // For Atom, always use ILP scheduling.
-  if (Subtarget->isAtom()) 
+  if (Subtarget->isAtom())
     setSchedulingPreference(Sched::ILP);
   else if (Subtarget->is64Bit())
     setSchedulingPreference(Sched::ILP);
@@ -7761,9 +7761,9 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i64(SDValue Op,
      punpckldq  (c0),  %xmm0  // c0: (uint4){ 0x43300000U, 0x45300000U, 0U, 0U }
      subpd      (c1),  %xmm0  // c1: (double2){ 0x1.0p52, 0x1.0p52 * 0x1.0p32 }
      #ifdef __SSE3__
-       haddpd   %xmm0, %xmm0          
+       haddpd   %xmm0, %xmm0
      #else
-       pshufd   $0x4e, %xmm0, %xmm1 
+       pshufd   $0x4e, %xmm0, %xmm1
        addpd    %xmm1, %xmm0
      #endif
   */
@@ -8090,7 +8090,7 @@ SDValue X86TargetLowering::LowerFABS(SDValue Op,
     EltVT = VT.getVectorElementType();
   Constant *C;
   if (EltVT == MVT::f64) {
-    C = ConstantVector::getSplat(2, 
+    C = ConstantVector::getSplat(2,
                 ConstantFP::get(*Context, APFloat(APInt(64, ~(1ULL << 63)))));
   } else {
     C = ConstantVector::getSplat(4,
@@ -8814,11 +8814,11 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
       // (select (x != 0), -1, 0) -> neg & sbb
       // (select (x == 0), 0, -1) -> neg & sbb
       if (ConstantSDNode *YC = dyn_cast<ConstantSDNode>(Y))
-        if (YC->isNullValue() && 
+        if (YC->isNullValue() &&
             (isAllOnes(Op1) == (CondCode == X86::COND_NE))) {
           SDVTList VTs = DAG.getVTList(CmpOp0.getValueType(), MVT::i32);
-          SDValue Neg = DAG.getNode(X86ISD::SUB, DL, VTs, 
-                                    DAG.getConstant(0, CmpOp0.getValueType()), 
+          SDValue Neg = DAG.getNode(X86ISD::SUB, DL, VTs,
+                                    DAG.getConstant(0, CmpOp0.getValueType()),
                                     CmpOp0);
           SDValue Res = DAG.getNode(X86ISD::SETCC_CARRY, DL, Op.getValueType(),
                                     DAG.getConstant(X86::COND_B, MVT::i8),
@@ -11118,7 +11118,7 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
                                Regs64bit ? X86::RBX : X86::EBX,
                                swapInL, cpInH.getValue(1));
     swapInH = DAG.getCopyToReg(swapInL.getValue(0), dl,
-                               Regs64bit ? X86::RCX : X86::ECX, 
+                               Regs64bit ? X86::RCX : X86::ECX,
                                swapInH, swapInL.getValue(1));
     SDValue Ops[] = { swapInH.getValue(0),
                       N->getOperand(1),
@@ -13075,7 +13075,7 @@ static SDValue PerformShuffleCombine256(SDNode *N, SelectionDAG &DAG,
                                   false/*WriteMem*/);
         return DAG.getNode(ISD::BITCAST, dl, VT, ResNode);
       }
-    } 
+    }
 
     // Emit a zeroed vector and insert the desired subvector on its
     // first half.
@@ -13141,7 +13141,7 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
 /// a sequence of vector shuffle operations.
 /// It is possible when we truncate 256-bit vector to 128-bit vector
 
-SDValue X86TargetLowering::PerformTruncateCombine(SDNode *N, SelectionDAG &DAG, 
+SDValue X86TargetLowering::PerformTruncateCombine(SDNode *N, SelectionDAG &DAG,
                                                   DAGCombinerInfo &DCI) const {
   if (!DCI.isBeforeLegalizeOps())
     return SDValue();
@@ -15230,7 +15230,7 @@ static SDValue PerformZExtCombine(SDNode *N, SelectionDAG &DAG,
 static SDValue PerformISDSETCCCombine(SDNode *N, SelectionDAG &DAG) {
   ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(2))->get();
   SDValue LHS = N->getOperand(0);
-  SDValue RHS = N->getOperand(1); 
+  SDValue RHS = N->getOperand(1);
 
   if ((CC == ISD::SETNE || CC == ISD::SETEQ) && LHS.getOpcode() == ISD::SUB)
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(LHS.getOperand(0)))

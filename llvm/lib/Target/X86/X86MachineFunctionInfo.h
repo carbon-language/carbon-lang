@@ -24,7 +24,7 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   virtual void anchor();
 
   /// ForceFramePointer - True if the function is required to use of frame
-  /// pointer for reasons other than it containing dynamic allocation or 
+  /// pointer for reasons other than it containing dynamic allocation or
   /// that FP eliminatation is turned off. For example, Cygwin main function
   /// contains stack pointer re-alignment code which requires FP.
   bool ForceFramePointer;
@@ -83,7 +83,7 @@ public:
                              VarArgsFPOffset(0),
                              ArgumentStackSize(0),
                              NumLocalDynamics(0) {}
-  
+
   explicit X86MachineFunctionInfo(MachineFunction &MF)
     : ForceFramePointer(false),
       CalleeSavedFrameSize(0),
@@ -99,7 +99,7 @@ public:
       ArgumentStackSize(0),
       NumLocalDynamics(0) {}
 
-  bool getForceFramePointer() const { return ForceFramePointer;} 
+  bool getForceFramePointer() const { return ForceFramePointer;}
   void setForceFramePointer(bool forceFP) { ForceFramePointer = forceFP; }
 
   unsigned getCalleeSavedFrameSize() const { return CalleeSavedFrameSize; }

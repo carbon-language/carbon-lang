@@ -222,7 +222,7 @@ bool VZeroUpperInserter::processBasicBlock(MachineFunction &MF,
     DebugLoc dl = I->getDebugLoc();
     bool isControlFlow = MI->isCall() || MI->isReturn();
 
-    // Shortcut: don't need to check regular instructions in dirty state. 
+    // Shortcut: don't need to check regular instructions in dirty state.
     if (!isControlFlow && CurState == ST_DIRTY)
       continue;
 

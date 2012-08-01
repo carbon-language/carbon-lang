@@ -17,4 +17,3 @@ using namespace llvm;
 
 X86COFFMachineModuleInfo::~X86COFFMachineModuleInfo() {
 }
-

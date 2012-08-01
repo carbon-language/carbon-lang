@@ -55,7 +55,7 @@ protected:
 
   /// X86ProcFamily - X86 processor family: Intel Atom, and others
   X86ProcFamilyEnum X86ProcFamily;
-  
+
   /// PICStyle - Which PIC style to use
   ///
   PICStyles::Style PICStyle;
@@ -149,7 +149,7 @@ protected:
 
   /// TargetTriple - What processor and OS we're targeting.
   Triple TargetTriple;
-  
+
   /// Instruction itineraries for scheduling
   InstrItineraryData InstrItins;
 

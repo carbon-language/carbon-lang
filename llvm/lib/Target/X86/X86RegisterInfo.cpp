@@ -78,7 +78,7 @@ X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
     FramePtr = X86::EBP;
   }
   // Use a callee-saved register as the base pointer.  These registers must
-  // not conflict with any ABI requirements.  For example, in 32-bit mode PIC 
+  // not conflict with any ABI requirements.  For example, in 32-bit mode PIC
   // requires GOT in the EBX register before function calls via PLT GOT pointer.
   BasePtr = Is64Bit ? X86::RBX : X86::ESI;
 }
@@ -368,7 +368,7 @@ bool X86RegisterInfo::hasBasePointer(const MachineFunction &MF) const {
    if (!EnableBasePointer)
      return false;
 
-   // When we need stack realignment and there are dynamic allocas, we can't 
+   // When we need stack realignment and there are dynamic allocas, we can't
    // reference off of the stack pointer, so we reserve a base pointer.
    if (needsStackRealignment(MF) && MFI->hasVarSizedObjects())
      return true;

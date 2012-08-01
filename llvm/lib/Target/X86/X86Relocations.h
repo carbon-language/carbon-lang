@@ -21,7 +21,7 @@ namespace llvm {
     /// RelocationType - An enum for the x86 relocation codes. Note that
     /// the terminology here doesn't follow x86 convention - word means
     /// 32-bit and dword means 64-bit. The relocations will be treated
-    /// by JIT or ObjectCode emitters, this is transparent to the x86 code 
+    /// by JIT or ObjectCode emitters, this is transparent to the x86 code
     /// emitter but JIT and ObjectCode will treat them differently
     enum RelocationType {
       /// reloc_pcrel_word - PC relative relocation, add the relocated value to

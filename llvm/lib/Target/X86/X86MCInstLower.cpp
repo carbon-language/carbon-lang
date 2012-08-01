@@ -46,12 +46,12 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
   assert((MO.isGlobal() || MO.isSymbol()) && "Isn't a symbol reference");
 
   SmallString<128> Name;
-  
+
   if (!MO.isGlobal()) {
     assert(MO.isSymbol());
     Name += MAI.getGlobalPrefix();
     Name += MO.getSymbolName();
-  } else {    
+  } else {
     const GlobalValue *GV = MO.getGlobal();
     bool isImplicitlyPrivate = false;
     if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB ||
@@ -59,7 +59,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
         MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE ||
         MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE)
       isImplicitlyPrivate = true;
-    
+
     Mang->getNameWithPrefix(Name, GV, isImplicitlyPrivate);
   }
 
@@ -110,7 +110,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
       getMachOMMI().getFnStubEntry(Sym);
     if (StubSym.getPointer())
       return Sym;
-    
+
     if (MO.isGlobal()) {
       StubSym =
         MachineModuleInfoImpl::
@@ -135,7 +135,7 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
   // lot of extra uniquing.
   const MCExpr *Expr = 0;
   MCSymbolRefExpr::VariantKind RefKind = MCSymbolRefExpr::VK_None;
-  
+
   switch (MO.getTargetFlags()) {
   default: llvm_unreachable("Unknown target flag on GV operand");
   case X86II::MO_NO_FLAG:    // No flag.
@@ -144,7 +144,7 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
   case X86II::MO_DLLIMPORT:
   case X86II::MO_DARWIN_STUB:
     break;
-      
+
   case X86II::MO_TLVP:      RefKind = MCSymbolRefExpr::VK_TLVP; break;
   case X86II::MO_TLVP_PIC_BASE:
     Expr = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_TLVP, Ctx);
@@ -173,7 +173,7 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
     Expr = MCSymbolRefExpr::Create(Sym, Ctx);
     // Subtract the pic base.
-    Expr = MCBinaryExpr::CreateSub(Expr, 
+    Expr = MCBinaryExpr::CreateSub(Expr,
                             MCSymbolRefExpr::Create(MF.getPICBaseSymbol(), Ctx),
                                    Ctx);
     if (MO.isJTI() && MAI.hasSetDirective()) {
@@ -187,10 +187,10 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
     }
     break;
   }
-  
+
   if (Expr == 0)
     Expr = MCSymbolRefExpr::Create(Sym, RefKind, Ctx);
-  
+
   if (!MO.isJTI() && MO.getOffset())
     Expr = MCBinaryExpr::CreateAdd(Expr,
                                    MCConstantExpr::Create(MO.getOffset(), Ctx),
@@ -211,10 +211,10 @@ static void lower_lea64_32mem(MCInst *MI, unsigned OpNo) {
   // Convert registers in the addr mode according to subreg64.
   for (unsigned i = 0; i != 4; ++i) {
     if (!MI->getOperand(OpNo+i).isReg()) continue;
-    
+
     unsigned Reg = MI->getOperand(OpNo+i).getReg();
     if (Reg == 0) continue;
-    
+
     MI->getOperand(OpNo+i).setReg(getX86SubSuperRegister(Reg, MVT::i64));
   }
 }
@@ -280,7 +280,7 @@ static void SimplifyShortMoveForm(X86AsmPrinter &Printer, MCInst &Inst,
     return;
 
   // Check whether this is an absolute address.
-  // FIXME: We know TLVP symbol refs aren't, but there should be a better way 
+  // FIXME: We know TLVP symbol refs aren't, but there should be a better way
   // to do this here.
   bool Absolute = true;
   if (Inst.getOperand(AddrOp).isExpr()) {
@@ -289,7 +289,7 @@ static void SimplifyShortMoveForm(X86AsmPrinter &Printer, MCInst &Inst,
       if (SRE->getKind() == MCSymbolRefExpr::VK_TLVP)
         Absolute = false;
   }
-  
+
   if (Absolute &&
       (Inst.getOperand(AddrBase + 0).getReg() != 0 ||
        Inst.getOperand(AddrBase + 2).getReg() != 0 ||
@@ -306,10 +306,10 @@ static void SimplifyShortMoveForm(X86AsmPrinter &Printer, MCInst &Inst,
 
 void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
   OutMI.setOpcode(MI->getOpcode());
-  
+
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    
+
     MCOperand MCOp;
     switch (MO.getType()) {
     default:
@@ -345,10 +345,10 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
       // Ignore call clobbers.
       continue;
     }
-    
+
     OutMI.addOperand(MCOp);
   }
-  
+
   // Handle a few special cases to eliminate operand modifiers.
 ReSimplify:
   switch (OutMI.getOpcode()) {
@@ -425,7 +425,7 @@ ReSimplify:
     case X86::TAILJMPd:
     case X86::TAILJMPd64: Opcode = X86::JMP_1; break;
     }
-    
+
     MCOperand Saved = OutMI.getOperand(0);
     OutMI = MCInst();
     OutMI.setOpcode(Opcode);
@@ -445,7 +445,7 @@ ReSimplify:
   case X86::ADD16ri8_DB:  OutMI.setOpcode(X86::OR16ri8); goto ReSimplify;
   case X86::ADD32ri8_DB:  OutMI.setOpcode(X86::OR32ri8); goto ReSimplify;
   case X86::ADD64ri8_DB:  OutMI.setOpcode(X86::OR64ri8); goto ReSimplify;
-      
+
   // The assembler backend wants to see branches in their small form and relax
   // them to their large form.  The JIT can only handle the large form because
   // it does not do relaxation.  For now, translate the large form to the
@@ -688,7 +688,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     //     call "L1$pb"
     // "L1$pb":
     //     popl %esi
-    
+
     // Emit the call.
     MCSymbol *PICBase = MF->getPICBaseSymbol();
     TmpInst.setOpcode(X86::CALLpcrel32);
@@ -697,43 +697,43 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     TmpInst.addOperand(MCOperand::CreateExpr(MCSymbolRefExpr::Create(PICBase,
                                                                  OutContext)));
     OutStreamer.EmitInstruction(TmpInst);
-    
+
     // Emit the label.
     OutStreamer.EmitLabel(PICBase);
-    
+
     // popl $reg
     TmpInst.setOpcode(X86::POP32r);
     TmpInst.getOperand(0) = MCOperand::CreateReg(MI->getOperand(0).getReg());
     OutStreamer.EmitInstruction(TmpInst);
     return;
   }
-      
+
   case X86::ADD32ri: {
     // Lower the MO_GOT_ABSOLUTE_ADDRESS form of ADD32ri.
     if (MI->getOperand(2).getTargetFlags() != X86II::MO_GOT_ABSOLUTE_ADDRESS)
       break;
-    
+
     // Okay, we have something like:
     //  EAX = ADD32ri EAX, MO_GOT_ABSOLUTE_ADDRESS(@MYGLOBAL)
-    
+
     // For this, we want to print something like:
     //   MYGLOBAL + (. - PICBASE)
     // However, we can't generate a ".", so just emit a new label here and refer
     // to it.
     MCSymbol *DotSym = OutContext.CreateTempSymbol();
     OutStreamer.EmitLabel(DotSym);
-    
+
     // Now that we have emitted the label, lower the complex operand expression.
     MCSymbol *OpSym = MCInstLowering.GetSymbolFromOperand(MI->getOperand(2));
-    
+
     const MCExpr *DotExpr = MCSymbolRefExpr::Create(DotSym, OutContext);
     const MCExpr *PICBase =
       MCSymbolRefExpr::Create(MF->getPICBaseSymbol(), OutContext);
     DotExpr = MCBinaryExpr::CreateSub(DotExpr, PICBase, OutContext);
-    
-    DotExpr = MCBinaryExpr::CreateAdd(MCSymbolRefExpr::Create(OpSym,OutContext), 
+
+    DotExpr = MCBinaryExpr::CreateAdd(MCSymbolRefExpr::Create(OpSym,OutContext),
                                       DotExpr, OutContext);
-    
+
     MCInst TmpInst;
     TmpInst.setOpcode(X86::ADD32ri);
     TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
@@ -743,7 +743,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     return;
   }
   }
-  
+
   MCInst TmpInst;
   MCInstLowering.Lower(MI, TmpInst);
   OutStreamer.EmitInstruction(TmpInst);
