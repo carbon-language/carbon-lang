@@ -34,7 +34,7 @@ namespace llvm {
 /// RefCountedBase - A generic base class for objects that wish to
 ///  have their lifetimes managed using reference counts. Classes
 ///  subclass RefCountedBase to obtain such functionality, and are
-///  typically handled with IntrusivePtr "smart pointers" (see below)
+///  typically handled with IntrusiveRefCntPtr "smart pointers" (see below)
 ///  which automatically handle the management of reference counts.
 ///  Objects that subclass RefCountedBase should not be allocated on
 ///  the stack, as invoking "delete" (which is called when the
