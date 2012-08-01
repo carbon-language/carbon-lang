@@ -2816,9 +2816,6 @@ def MOVr : AsI1<0b1101, (outs GPR:$Rd), (ins GPR:$Rm), DPFrm, IIC_iMOVr,
   let Inst{15-12} = Rd;
 }
 
-def : ARMInstAlias<"movs${p} $Rd, $Rm",
-                   (MOVr GPR:$Rd, GPR:$Rm, pred:$p, CPSR)>;
-
 // A version for the smaller set of tail call registers.
 let neverHasSideEffects = 1 in
 def MOVr_TC : AsI1<0b1101, (outs tcGPR:$Rd), (ins tcGPR:$Rm), DPFrm,
