@@ -7715,22 +7715,24 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
       if (Body)
         computeNRVO(Body, getCurFunction());
     }
-    if (ObjCShouldCallSuperDealloc) {
+    if (getCurFunction()->ObjCShouldCallSuperDealloc) {
       Diag(MD->getLocEnd(), diag::warn_objc_missing_super_dealloc);
-      ObjCShouldCallSuperDealloc = false;
+      getCurFunction()->ObjCShouldCallSuperDealloc = false;
     }
-    if (ObjCShouldCallSuperFinalize) {
+    if (getCurFunction()->ObjCShouldCallSuperFinalize) {
       Diag(MD->getLocEnd(), diag::warn_objc_missing_super_finalize);
-      ObjCShouldCallSuperFinalize = false;
+      getCurFunction()->ObjCShouldCallSuperFinalize = false;
     }
   } else {
     return 0;
   }
 
-  assert(!ObjCShouldCallSuperDealloc && "This should only be set for "
-         "ObjC methods, which should have been handled in the block above.");
-  assert(!ObjCShouldCallSuperFinalize && "This should only be set for "
-         "ObjC methods, which should have been handled in the block above.");
+  assert(!getCurFunction()->ObjCShouldCallSuperDealloc &&
+         "This should only be set for ObjC methods, which should have been "
+         "handled in the block above.");
+  assert(!getCurFunction()->ObjCShouldCallSuperFinalize &&
+         "This should only be set for ObjC methods, which should have been "
+         "handled in the block above.");
 
   // Verify and clean out per-function state.
   if (Body) {

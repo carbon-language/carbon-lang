@@ -1778,9 +1778,9 @@ ExprResult Sema::ActOnSuperMessage(Scope *S,
   // is acting as a keyword.
   if (Method->isInstanceMethod()) {
     if (Sel.getMethodFamily() == OMF_dealloc)
-      ObjCShouldCallSuperDealloc = false;
+      getCurFunction()->ObjCShouldCallSuperDealloc = false;
     if (Sel.getMethodFamily() == OMF_finalize)
-      ObjCShouldCallSuperFinalize = false;
+      getCurFunction()->ObjCShouldCallSuperFinalize = false;
 
     // Since we are in an instance method, this is an instance
     // message to the superclass instance.
