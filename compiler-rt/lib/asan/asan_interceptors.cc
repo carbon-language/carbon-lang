@@ -27,8 +27,24 @@
 // intercepted on a given platform.
 #if !defined(_WIN32)
 # define ASAN_INTERCEPT_ATOLL_AND_STRTOLL 1
+# define ASAN_INTERCEPT__LONGJMP 1
+# define ASAN_INTERCEPT_STRDUP 1
+# define ASAN_INTERCEPT_STRCASECMP_AND_STRNCASECMP 1
+# define ASAN_INTERCEPT_INDEX 1
+# define ASAN_INTERCEPT_PTHREAD_CREATE 1
 #else
 # define ASAN_INTERCEPT_ATOLL_AND_STRTOLL 0
+# define ASAN_INTERCEPT__LONGJMP 0
+# define ASAN_INTERCEPT_STRDUP 0
+# define ASAN_INTERCEPT_STRCASECMP_AND_STRNCASECMP 0
+# define ASAN_INTERCEPT_INDEX 0
+# define ASAN_INTERCEPT_PTHREAD_CREATE 0
+#endif
+
+#if defined(__linux__)
+# define ASAN_USE_ALIAS_ATTRIBUTE_FOR_INDEX 1
+#else
+# define ASAN_USE_ALIAS_ATTRIBUTE_FOR_INDEX 0
 #endif
 
 #if !defined(__APPLE__)
@@ -37,10 +53,24 @@
 # define ASAN_INTERCEPT_STRNLEN 0
 #endif
 
-#if defined(ANDROID) || defined(_WIN32)
-# define ASAN_INTERCEPT_SIGNAL_AND_SIGACTION 0
-#else
+#if !defined(ANDROID) && !defined(_WIN32)
 # define ASAN_INTERCEPT_SIGNAL_AND_SIGACTION 1
+#else
+# define ASAN_INTERCEPT_SIGNAL_AND_SIGACTION 0
+#endif
+
+// On Darwin siglongjmp tailcalls longjmp, so we don't want to intercept it
+// there.
+#if !defined(_WIN32) && !defined(__APPLE__)
+# define ASAN_INTERCEPT_SIGLONGJMP 1
+#else
+# define ASAN_INTERCEPT_SIGLONGJMP 0
+#endif
+
+#if ASAN_HAS_EXCEPTIONS && !defined(_WIN32)
+# define ASAN_INTERCEPT___CXA_THROW 1
+#else
+# define ASAN_INTERCEPT___CXA_THROW 0
 #endif
 
 // Use extern declarations of intercepted functions on Mac and Windows
@@ -57,9 +87,12 @@ void *signal(int signum, void *handler);
 
 // setjmp.h
 void longjmp(void* env, int value);
-# if !defined(_WIN32)
+# if ASAN_INTERCEPT__LONGJMP
 void _longjmp(void *env, int value);
 # endif
+# if ASAN_INTERCEPT___CXA_THROW
+void __cxa_throw(void *a, void *b, void *c);
+#endif
 
 // string.h / strings.h
 int memcmp(const void *a1, const void *a2, uptr size);
@@ -67,23 +100,25 @@ void* memmove(void *to, const void *from, uptr size);
 void* memcpy(void *to, const void *from, uptr size);
 void* memset(void *block, int c, uptr size);
 char* strchr(const char *str, int c);
-# if defined(__APPLE__)
-char* index(const char *string, int c);
-# endif
 char* strcat(char *to, const char* from);  // NOLINT
 char *strncat(char *to, const char* from, uptr size);
 char* strcpy(char *to, const char* from);  // NOLINT
 char* strncpy(char *to, const char* from, uptr size);
 int strcmp(const char *s1, const char* s2);
 int strncmp(const char *s1, const char* s2, uptr size);
-# if !defined(_WIN32)
+uptr strlen(const char *s);
+# if ASAN_INTERCEPT_STRCASECMP_AND_STRNCASECMP
 int strcasecmp(const char *s1, const char *s2);
 int strncasecmp(const char *s1, const char *s2, uptr n);
+# endif
+# if ASAN_INTERCEPT_STRDUP
 char* strdup(const char *s);
 # endif
-uptr strlen(const char *s);
 # if ASAN_INTERCEPT_STRNLEN
 uptr strnlen(const char *s, uptr maxlen);
+# endif
+# if ASAN_INTERCEPT_INDEX
+char* index(const char *string, int c);
 # endif
 
 // stdlib.h
@@ -101,9 +136,8 @@ __declspec(dllimport)
 void* __stdcall CreateThread(void *sec, uptr st, void* start,
                              void *arg, DWORD fl, DWORD *id);
 # endif
-
 // Posix threads.
-# if !defined(_WIN32)
+# if ASAN_INTERCEPT_PTHREAD_CREATE
 int pthread_create(void *thread, void *attr, void *(*start_routine)(void*),
                    void *arg);
 # endif
@@ -191,7 +225,7 @@ static thread_return_t THREAD_CALLING_CONV asan_thread_start(void *arg) {
   return t->ThreadStart();
 }
 
-#ifndef _WIN32
+#if ASAN_INTERCEPT_PTHREAD_CREATE
 INTERCEPTOR(int, pthread_create, void *thread,
     void *attr, void *(*start_routine)(void*), void *arg) {
   GET_STACK_TRACE_HERE(kStackTraceMax);
@@ -200,7 +234,7 @@ INTERCEPTOR(int, pthread_create, void *thread,
   asanThreadRegistry().RegisterThread(t);
   return REAL(pthread_create)(thread, attr, asan_thread_start, t);
 }
-#endif  // !_WIN32
+#endif  // ASAN_INTERCEPT_PTHREAD_CREATE
 
 #if ASAN_INTERCEPT_SIGNAL_AND_SIGACTION
 INTERCEPTOR(void*, signal, int signum, void *handler) {
@@ -228,23 +262,21 @@ INTERCEPTOR(void, longjmp, void *env, int val) {
   REAL(longjmp)(env, val);
 }
 
-#if !defined(_WIN32)
+#if ASAN_INTERCEPT__LONGJMP
 INTERCEPTOR(void, _longjmp, void *env, int val) {
   __asan_handle_no_return();
   REAL(_longjmp)(env, val);
 }
+#endif
 
+#if ASAN_INTERCEPT_SIGLONGJMP
 INTERCEPTOR(void, siglongjmp, void *env, int val) {
   __asan_handle_no_return();
   REAL(siglongjmp)(env, val);
 }
 #endif
 
-#if ASAN_HAS_EXCEPTIONS == 1
-#ifdef __APPLE__
-extern "C" void __cxa_throw(void *a, void *b, void *c);
-#endif  // __APPLE__
-
+#if ASAN_INTERCEPT___CXA_THROW
 INTERCEPTOR(void, __cxa_throw, void *a, void *b, void *c) {
   CHECK(REAL(__cxa_throw));
   __asan_handle_no_return();
@@ -367,26 +399,14 @@ INTERCEPTOR(char*, strchr, const char *str, int c) {
   return result;
 }
 
-#ifdef __linux__
+#if ASAN_INTERCEPT_INDEX
+# if ASAN_USE_ALIAS_ATTRIBUTE_FOR_INDEX
 INTERCEPTOR(char*, index, const char *string, int c)
   ALIAS(WRAPPER_NAME(strchr));
-#else
+# else
 DEFINE_REAL(char*, index, const char *string, int c)
-#endif
-
-INTERCEPTOR(int, strcasecmp, const char *s1, const char *s2) {
-  ENSURE_ASAN_INITED();
-  unsigned char c1, c2;
-  uptr i;
-  for (i = 0; ; i++) {
-    c1 = (unsigned char)s1[i];
-    c2 = (unsigned char)s2[i];
-    if (CharCaseCmp(c1, c2) != 0 || c1 == '\0') break;
-  }
-  ASAN_READ_RANGE(s1, i + 1);
-  ASAN_READ_RANGE(s2, i + 1);
-  return CharCaseCmp(c1, c2);
-}
+# endif
+#endif  // ASAN_INTERCEPT_INDEX
 
 INTERCEPTOR(char*, strcat, char *to, const char *from) {  // NOLINT
   ENSURE_ASAN_INITED();
@@ -420,8 +440,8 @@ INTERCEPTOR(char*, strncat, char *to, const char *from, uptr size) {
 }
 
 INTERCEPTOR(int, strcmp, const char *s1, const char *s2) {
-  if (!asan_inited) {
-    return internal_strcmp(s1, s2);
+  if (asan_init_is_running) {
+    return REAL(strcmp)(s1, s2);
   }
   ENSURE_ASAN_INITED();
   unsigned char c1, c2;
@@ -452,6 +472,7 @@ INTERCEPTOR(char*, strcpy, char *to, const char *from) {  // NOLINT
   return REAL(strcpy)(to, from);  // NOLINT
 }
 
+#if ASAN_INTERCEPT_STRDUP
 INTERCEPTOR(char*, strdup, const char *s) {
   ENSURE_ASAN_INITED();
   if (flags()->replace_str) {
@@ -460,6 +481,7 @@ INTERCEPTOR(char*, strdup, const char *s) {
   }
   return REAL(strdup)(s);
 }
+#endif
 
 INTERCEPTOR(uptr, strlen, const char *s) {
   // strlen is called from malloc_default_purgeable_zone()
@@ -475,6 +497,21 @@ INTERCEPTOR(uptr, strlen, const char *s) {
   return length;
 }
 
+#if ASAN_INTERCEPT_STRCASECMP_AND_STRNCASECMP
+INTERCEPTOR(int, strcasecmp, const char *s1, const char *s2) {
+  ENSURE_ASAN_INITED();
+  unsigned char c1, c2;
+  uptr i;
+  for (i = 0; ; i++) {
+    c1 = (unsigned char)s1[i];
+    c2 = (unsigned char)s2[i];
+    if (CharCaseCmp(c1, c2) != 0 || c1 == '\0') break;
+  }
+  ASAN_READ_RANGE(s1, i + 1);
+  ASAN_READ_RANGE(s2, i + 1);
+  return CharCaseCmp(c1, c2);
+}
+
 INTERCEPTOR(int, strncasecmp, const char *s1, const char *s2, uptr n) {
   ENSURE_ASAN_INITED();
   unsigned char c1 = 0, c2 = 0;
@@ -488,6 +525,7 @@ INTERCEPTOR(int, strncasecmp, const char *s1, const char *s2, uptr n) {
   ASAN_READ_RANGE(s2, Min(i + 1, n));
   return CharCaseCmp(c1, c2);
 }
+#endif  // ASAN_INTERCEPT_STRCASECMP_AND_STRNCASECMP
 
 INTERCEPTOR(int, strncmp, const char *s1, const char *s2, uptr size) {
   // strncmp is called from malloc_default_purgeable_zone()
@@ -679,18 +717,22 @@ void InitializeAsanInterceptors() {
   ASAN_INTERCEPT_FUNC(strncat);
   ASAN_INTERCEPT_FUNC(strncmp);
   ASAN_INTERCEPT_FUNC(strncpy);
-#if !defined(_WIN32)
+#if ASAN_INTERCEPT_STRCASECMP_AND_STRNCASECMP
   ASAN_INTERCEPT_FUNC(strcasecmp);
-  ASAN_INTERCEPT_FUNC(strdup);
   ASAN_INTERCEPT_FUNC(strncasecmp);
-# ifndef __APPLE__
+#endif
+#if ASAN_INTERCEPT_STRDUP
+  ASAN_INTERCEPT_FUNC(strdup);
+#endif
+#if ASAN_INTERCEPT_STRNLEN
+  ASAN_INTERCEPT_FUNC(strnlen);
+#endif
+#if ASAN_INTERCEPT_INDEX
+# if ASAN_USE_ALIAS_ATTRIBUTE_FOR_INDEX
   ASAN_INTERCEPT_FUNC(index);
 # else
   CHECK(OVERRIDE_FUNCTION(index, WRAP(strchr)));
 # endif
-#endif
-#if ASAN_INTERCEPT_STRNLEN
-  ASAN_INTERCEPT_FUNC(strnlen);
 #endif
 
   ASAN_INTERCEPT_FUNC(atoi);
@@ -707,19 +749,20 @@ void InitializeAsanInterceptors() {
   ASAN_INTERCEPT_FUNC(sigaction);
   ASAN_INTERCEPT_FUNC(signal);
 #endif
-
-#if !defined(_WIN32)
+#if ASAN_INTERCEPT__LONGJMP
   ASAN_INTERCEPT_FUNC(_longjmp);
-  INTERCEPT_FUNCTION(__cxa_throw);
-# if !defined(__APPLE__)
-  // On Darwin siglongjmp tailcalls longjmp, so we don't want to intercept it
-  // there.
+#endif
+#if ASAN_INTERCEPT_SIGLONGJMP
   ASAN_INTERCEPT_FUNC(siglongjmp);
-# endif
+#endif
+
+  // Intercept exception handling functions.
+#if ASAN_INTERCEPT___CXA_THROW
+  INTERCEPT_FUNCTION(__cxa_throw);
 #endif
 
   // Intercept threading-related functions
-#if !defined(_WIN32)
+#if ASAN_INTERCEPT_PTHREAD_CREATE
   ASAN_INTERCEPT_FUNC(pthread_create);
 #endif
 
