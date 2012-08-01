@@ -515,6 +515,20 @@ struct DataDep {
   const MachineInstr *DefMI;
   unsigned DefOp;
   unsigned UseOp;
+
+  DataDep(const MachineInstr *DefMI, unsigned DefOp, unsigned UseOp)
+    : DefMI(DefMI), DefOp(DefOp), UseOp(UseOp) {}
+
+  /// Create a DataDep from an SSA form virtual register.
+  DataDep(const MachineRegisterInfo *MRI, unsigned VirtReg, unsigned UseOp)
+    : UseOp(UseOp) {
+    assert(TargetRegisterInfo::isVirtualRegister(VirtReg));
+    MachineRegisterInfo::def_iterator DefI = MRI->def_begin(VirtReg);
+    assert(!DefI.atEnd() && "Register has no defs");
+    DefMI = &*DefI;
+    DefOp = DefI.getOperandNo();
+    assert((++DefI).atEnd() && "Register has multiple defs");
+  }
 };
 }
 
@@ -535,14 +549,8 @@ static bool getDataDeps(const MachineInstr *UseMI,
       continue;
     }
     // Collect virtual register reads.
-    if (!MO->readsReg())
-      continue;
-    MachineRegisterInfo::def_iterator DefI = MRI->def_begin(Reg);
-    DataDep Dep;
-    Dep.DefMI = &*DefI;
-    Dep.DefOp = DefI.getOperandNo();
-    Dep.UseOp = MO.getOperandNo();
-    Deps.push_back(Dep);
+    if (MO->readsReg())
+      Deps.push_back(DataDep(MRI, Reg, MO.getOperandNo()));
   }
   return HasPhysRegs;
 }
@@ -561,13 +569,7 @@ static void getPHIDeps(const MachineInstr *UseMI,
   for (unsigned i = 1; i != UseMI->getNumOperands(); i += 2) {
     if (UseMI->getOperand(i + 1).getMBB() == Pred) {
       unsigned Reg = UseMI->getOperand(i).getReg();
-      assert(TargetRegisterInfo::isVirtualRegister(Reg) && "Bad PHI op");
-      MachineRegisterInfo::def_iterator DefI = MRI->def_begin(Reg);
-      DataDep Dep;
-      Dep.DefMI = &*DefI;
-      Dep.DefOp = DefI.getOperandNo();
-      Dep.UseOp = i;
-      Deps.push_back(Dep);
+      Deps.push_back(DataDep(MRI, Reg, i));
       return;
     }
   }
@@ -617,11 +619,7 @@ static void updatePhysDepsDownwards(const MachineInstr *UseMI,
       SparseSet<LiveRegUnit>::iterator I = RegUnits.find(*Units);
       if (I == RegUnits.end())
         continue;
-      DataDep Dep;
-      Dep.DefMI = I->DefMI;
-      Dep.DefOp = I->DefOp;
-      Dep.UseOp = MO.getOperandNo();
-      Deps.push_back(Dep);
+      Deps.push_back(DataDep(I->DefMI, I->DefOp, MO.getOperandNo()));
       break;
     }
   }
