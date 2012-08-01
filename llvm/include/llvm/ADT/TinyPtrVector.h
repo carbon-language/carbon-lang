@@ -11,8 +11,9 @@
 #define LLVM_ADT_TINYPTRVECTOR_H
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/PointerUnion.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
 
 namespace llvm {
@@ -228,6 +229,61 @@ public:
       return Vec->erase(I);
     }
     return end();
+  }
+
+  iterator erase(iterator S, iterator E) {
+    assert(S >= begin() && "Range to erase is out of bounds.");
+    assert(S <= E && "Trying to erase invalid range.");
+    assert(E <= end() && "Trying to erase past the end.");
+
+    if (Val.template is<EltTy>()) {
+      if (S == begin() && S != E)
+        Val = (EltTy)0;
+    } else if (VecTy *Vec = Val.template dyn_cast<VecTy*>()) {
+      return Vec->erase(S, E);
+    }
+    return end();
+  }
+
+  iterator insert(iterator I, const EltTy &Elt) {
+    assert(I >= this->begin() && "Insertion iterator is out of bounds.");
+    assert(I <= this->end() && "Inserting past the end of the vector.");
+    if (I == end()) {
+      push_back(Elt);
+      return llvm::prior(end());
+    }
+    assert(!Val.isNull() && "Null value with non-end insert iterator.");
+    if (EltTy V = Val.template dyn_cast<EltTy>()) {
+      assert(I == begin());
+      Val = Elt;
+      push_back(V);
+      return begin();
+    }
+
+    return Val.template get<VecTy*>()->insert(I, Elt);
+  }
+
+  template<typename ItTy>
+  iterator insert(iterator I, ItTy From, ItTy To) {
+    assert(I >= this->begin() && "Insertion iterator is out of bounds.");
+    assert(I <= this->end() && "Inserting past the end of the vector.");
+    if (From == To)
+      return I;
+
+    // If we have a single value, convert to a vector.
+    ptrdiff_t Offset = I - begin();
+    if (Val.isNull()) {
+      if (llvm::next(From) == To) {
+        Val = *From;
+        return begin();
+      }
+
+      Val = new VecTy();
+    } else if (EltTy V = Val.template dyn_cast<EltTy>()) {
+      Val = new VecTy();
+      Val.template get<VecTy*>()->push_back(V);
+    }
+    return Val.template get<VecTy*>()->insert(begin() + Offset, From, To);
   }
 };
 } // end namespace llvm

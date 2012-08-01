@@ -354,4 +354,95 @@ TYPED_TEST(TinyPtrVectorTest, EraseTest) {
   this->expectValues(this->V, this->testArray(0));
 }
 
+TYPED_TEST(TinyPtrVectorTest, EraseRangeTest) {
+  this->appendValues(this->V, this->testArray(1));
+  this->expectValues(this->V, this->testArray(1));
+  this->V.erase(this->V.begin(), this->V.begin());
+  this->expectValues(this->V, this->testArray(1));
+  this->V.erase(this->V.end(), this->V.end());
+  this->expectValues(this->V, this->testArray(1));
+  this->V.erase(this->V.begin(), this->V.end());
+  this->expectValues(this->V, this->testArray(0));
+
+  this->appendValues(this->V, this->testArray(42));
+  this->expectValues(this->V, this->testArray(42));
+  this->V.erase(this->V.begin(), llvm::next(this->V.begin(), 1));
+  this->TestPtrs.erase(this->TestPtrs.begin(),
+                       llvm::next(this->TestPtrs.begin(), 1));
+  this->expectValues(this->V, this->testArray(41));
+  this->V.erase(llvm::next(this->V.begin(), 1), llvm::next(this->V.begin(), 2));
+  this->TestPtrs.erase(llvm::next(this->TestPtrs.begin(), 1),
+                       llvm::next(this->TestPtrs.begin(), 2));
+  this->expectValues(this->V, this->testArray(40));
+  this->V.erase(llvm::next(this->V.begin(), 2), llvm::next(this->V.begin(), 4));
+  this->TestPtrs.erase(llvm::next(this->TestPtrs.begin(), 2),
+                       llvm::next(this->TestPtrs.begin(), 4));
+  this->expectValues(this->V, this->testArray(38));
+  this->V.erase(llvm::next(this->V.begin(), 5), llvm::next(this->V.begin(), 10));
+  this->TestPtrs.erase(llvm::next(this->TestPtrs.begin(), 5),
+                       llvm::next(this->TestPtrs.begin(), 10));
+  this->expectValues(this->V, this->testArray(33));
+  this->V.erase(llvm::next(this->V.begin(), 13), llvm::next(this->V.begin(), 26));
+  this->TestPtrs.erase(llvm::next(this->TestPtrs.begin(), 13),
+                       llvm::next(this->TestPtrs.begin(), 26));
+  this->expectValues(this->V, this->testArray(20));
+  this->V.erase(llvm::next(this->V.begin(), 7), this->V.end());
+  this->expectValues(this->V, this->testArray(7));
+  this->V.erase(this->V.begin(), this->V.end());
+  this->expectValues(this->V, this->testArray(0));
+}
+
+TYPED_TEST(TinyPtrVectorTest, Insert) {
+  this->V.insert(this->V.end(), this->TestPtrs[0]);
+  this->expectValues(this->V, this->testArray(1));
+  this->V.clear();
+  this->appendValues(this->V, this->testArray(4));
+  this->expectValues(this->V, this->testArray(4));
+  this->V.insert(this->V.end(), this->TestPtrs[4]);
+  this->expectValues(this->V, this->testArray(5));
+  this->V.insert(this->V.begin(), this->TestPtrs[42]);
+  this->TestPtrs.insert(this->TestPtrs.begin(), this->TestPtrs[42]);
+  this->expectValues(this->V, this->testArray(6));
+  this->V.insert(llvm::next(this->V.begin(), 3), this->TestPtrs[43]);
+  this->TestPtrs.insert(llvm::next(this->TestPtrs.begin(), 3),
+                        this->TestPtrs[43]);
+  this->expectValues(this->V, this->testArray(7));
+}
+
+TYPED_TEST(TinyPtrVectorTest, InsertRange) {
+  this->V.insert(this->V.end(), this->TestPtrs.begin(), this->TestPtrs.begin());
+  this->expectValues(this->V, this->testArray(0));
+  this->V.insert(this->V.begin(), this->TestPtrs.begin(),
+                 this->TestPtrs.begin());
+  this->expectValues(this->V, this->testArray(0));
+  this->V.insert(this->V.end(), this->TestPtrs.end(), this->TestPtrs.end());
+  this->expectValues(this->V, this->testArray(0));
+  this->V.insert(this->V.end(), this->TestPtrs.begin(),
+                 llvm::next(this->TestPtrs.begin()));
+  this->expectValues(this->V, this->testArray(1));
+  this->V.clear();
+  this->V.insert(this->V.end(), this->TestPtrs.begin(),
+                 llvm::next(this->TestPtrs.begin(), 2));
+  this->expectValues(this->V, this->testArray(2));
+  this->V.clear();
+  this->V.insert(this->V.end(), this->TestPtrs.begin(),
+                 llvm::next(this->TestPtrs.begin(), 42));
+  this->expectValues(this->V, this->testArray(42));
+  this->V.clear();
+  this->V.insert(this->V.end(),
+                 llvm::next(this->TestPtrs.begin(), 5),
+                 llvm::next(this->TestPtrs.begin(), 13));
+  this->V.insert(this->V.begin(),
+                 llvm::next(this->TestPtrs.begin(), 0),
+                 llvm::next(this->TestPtrs.begin(), 3));
+  this->V.insert(llvm::next(this->V.begin(), 2),
+                 llvm::next(this->TestPtrs.begin(), 2),
+                 llvm::next(this->TestPtrs.begin(), 4));
+  this->V.erase(llvm::next(this->V.begin(), 4));
+  this->V.insert(llvm::next(this->V.begin(), 4),
+                 llvm::next(this->TestPtrs.begin(), 4),
+                 llvm::next(this->TestPtrs.begin(), 5));
+  this->expectValues(this->V, this->testArray(13));
+}
+
 }
