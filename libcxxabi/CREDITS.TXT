@@ -24,3 +24,8 @@ E: kledzik@apple.com
 N: Andrew Morrow
 E: andrew.c.morrow@gmail.com
 D: Minor patches and fixes
+
+N: Erik Olofsson
+E: erik.olofsson@hansoft.se
+E: erik@olofsson.info
+D: Minor patches and fixes
