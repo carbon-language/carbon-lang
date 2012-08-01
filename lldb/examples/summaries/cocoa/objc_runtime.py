@@ -220,7 +220,7 @@ class Class_Data_V2:
 	def check_valid(self):
 		logger = lldb.formatters.Logger.Logger()
 		self.valid = 1
-	
+
 		self.isaPointer = Utilities.read_child_of(self.valobj,0,self.sys_params.types_cache.addr_ptr_type)
 		if not(Utilities.is_valid_pointer(self.isaPointer,self.sys_params.pointer_size,allow_tagged=0)):
 			logger >> "Marking as invalid - isaPointer is invalid"
@@ -461,7 +461,7 @@ class TaggedClass_Data:
 		self.val = (pointer & ~0x0000000000000000FF) >> 8
 		self.class_bits = (pointer & 0xE) >> 1
 		self.i_bits = (pointer & 0xF0) >> 4
-		
+
 		if self.sys_params.is_lion:
 			if self.class_bits in TaggedClass_Values_Lion:
 				self.name = TaggedClass_Values_Lion[self.class_bits]
@@ -522,7 +522,7 @@ class InvalidClass_Data:
 	def is_valid(self):
 		return 0
 
-@functools.total_ordering
+
 class Version:
 	def __init__(self, major, minor, release, build_string):
 		self._major = major
@@ -561,6 +561,18 @@ class Version:
 		       (self.release == other.release) and \
 		       (self.build_string == other.build_string)
 
+	# Python 2.6 doesn't have functools.total_ordering, so we have to implement
+	# other comparators
+	def __gt__(self, other):
+		return other < self
+
+	def __le__(self, other):
+		return not other < self
+
+	def __ge__(self, other):
+		return not self < other
+
+
 runtime_version = lldb.formatters.cache.Cache()
 os_version = lldb.formatters.cache.Cache()
 types_caches = lldb.formatters.cache.Cache()
@@ -578,22 +590,22 @@ class SystemParameters:
 		global os_version
 		global types_caches
 		global isa_caches
-		
+
 		process = valobj.GetTarget().GetProcess()
 		self.pid = process.GetProcessID()
-		
+
 		if runtime_version.look_for_key(self.pid):
 			self.runtime_version = runtime_version.get_value(self.pid)
 		else:
 			self.runtime_version = ObjCRuntime.runtime_version(process)
 			runtime_version.add_item(self.pid,self.runtime_version)
-		
+
 		if os_version.look_for_key(self.pid):
 			self.is_lion = os_version.get_value(self.pid)
 		else:
 			self.is_lion = Utilities.check_is_osx_lion(valobj.GetTarget())
 			os_version.add_item(self.pid,self.is_lion)
-		
+
 		if types_caches.look_for_key(self.pid):
 			self.types_cache = types_caches.get_value(self.pid)
 		else:
@@ -602,7 +614,7 @@ class SystemParameters:
 			self.types_cache.addr_ptr_type = self.types_cache.addr_type.GetPointerType()
 			self.types_cache.uint32_t = valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
 			types_caches.add_item(self.pid,self.types_cache)
-		
+
 		if isa_caches.look_for_key(self.pid):
 			self.isa_cache = isa_caches.get_value(self.pid)
 		else:
