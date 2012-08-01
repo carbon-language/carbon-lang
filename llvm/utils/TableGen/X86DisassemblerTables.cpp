@@ -21,6 +21,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
+#include <map>
 
 using namespace llvm;
 using namespace X86Disassembler;
@@ -424,48 +425,71 @@ void DisassemblerTables::emitContextDecision(raw_ostream &o1, raw_ostream &o2,
 
 void DisassemblerTables::emitInstructionInfo(raw_ostream &o,
                                              unsigned &i) const {
+  unsigned NumInstructions = InstructionSpecifiers.size();
+
+  o << "static const struct OperandSpecifier x86OperandSets[]["
+    << X86_MAX_OPERANDS << "] = {\n";
+
+  typedef std::vector<std::pair<const char *, const char *> > OperandListTy;
+  std::map<OperandListTy, unsigned> OperandSets;
+
+  unsigned OperandSetNum = 0;
+  for (unsigned Index = 0; Index < NumInstructions; ++Index) {
+    OperandListTy OperandList;
+
+    for (unsigned OperandIndex = 0; OperandIndex < X86_MAX_OPERANDS;
+         ++OperandIndex) {
+      const char *Encoding =
+        stringForOperandEncoding((OperandEncoding)InstructionSpecifiers[Index]
+                                 .operands[OperandIndex].encoding);
+      const char *Type =
+        stringForOperandType((OperandType)InstructionSpecifiers[Index]
+                             .operands[OperandIndex].type);
+      OperandList.push_back(std::make_pair(Encoding, Type));
+    }
+    unsigned &N = OperandSets[OperandList];
+    if (N != 0) continue;
+
+    N = ++OperandSetNum;
+
+    o << "  { /* " << (OperandSetNum - 1) << " */\n";
+    for (unsigned i = 0, e = OperandList.size(); i != e; ++i) {
+      o << "    { " << OperandList[i].first << ", "
+        << OperandList[i].second << " },\n";
+    }
+    o << "  },\n";
+  }
+  o << "};" << "\n\n";
+
   o.indent(i * 2) << "static const struct InstructionSpecifier ";
   o << INSTRUCTIONS_STR "[" << InstructionSpecifiers.size() << "] = {\n";
 
   i++;
 
-  unsigned numInstructions = InstructionSpecifiers.size();
-
-  for (unsigned index = 0; index < numInstructions; ++index) {
+  for (unsigned index = 0; index < NumInstructions; ++index) {
     o.indent(i * 2) << "{ /* " << index << " */" << "\n";
     i++;
 
     o.indent(i * 2) << stringForModifierType(
                        (ModifierType)InstructionSpecifiers[index].modifierType);
-    o << "," << "\n";
+    o << ",\n";
 
     o.indent(i * 2) << "0x";
     o << format("%02hhx", (uint16_t)InstructionSpecifiers[index].modifierBase);
-    o << "," << "\n";
+    o << ",\n";
 
-    o.indent(i * 2) << "{" << "\n";
-    i++;
-
-    for (unsigned operandIndex = 0; operandIndex < X86_MAX_OPERANDS;
-         ++operandIndex) {
-      o.indent(i * 2) << "{ ";
-      o <<stringForOperandEncoding((OperandEncoding)InstructionSpecifiers[index]
-                                   .operands[operandIndex]
-                                   .encoding);
-      o << ", ";
-      o << stringForOperandType((OperandType)InstructionSpecifiers[index]
-                                .operands[operandIndex]
-                                .type);
-      o << " }";
-
-      if (operandIndex < X86_MAX_OPERANDS - 1)
-        o << ",";
-
-      o << "\n";
+    OperandListTy OperandList;
+    for (unsigned OperandIndex = 0; OperandIndex < X86_MAX_OPERANDS;
+         ++OperandIndex) {
+      const char *Encoding =
+        stringForOperandEncoding((OperandEncoding)InstructionSpecifiers[index]
+                                 .operands[OperandIndex].encoding);
+      const char *Type =
+        stringForOperandType((OperandType)InstructionSpecifiers[index]
+                             .operands[OperandIndex].type);
+      OperandList.push_back(std::make_pair(Encoding, Type));
     }
-
-    i--;
-    o.indent(i * 2) << "}," << "\n";
+    o.indent(i * 2) << (OperandSets[OperandList] - 1) << ",\n";
 
     o.indent(i * 2) << "/* " << InstructionSpecifiers[index].name << " */";
     o << "\n";
@@ -473,7 +497,7 @@ void DisassemblerTables::emitInstructionInfo(raw_ostream &o,
     i--;
     o.indent(i * 2) << "}";
 
-    if (index + 1 < numInstructions)
+    if (index + 1 < NumInstructions)
       o << ",";
 
     o << "\n";

@@ -1495,14 +1495,14 @@ static int readOperands(struct InternalInstruction* insn) {
   needVVVV = hasVVVV && (insn->vvvv != 0);
   
   for (index = 0; index < X86_MAX_OPERANDS; ++index) {
-    switch (insn->spec->operands[index].encoding) {
+    switch (x86OperandSets[insn->spec->operands][index].encoding) {
     case ENCODING_NONE:
       break;
     case ENCODING_REG:
     case ENCODING_RM:
       if (readModRM(insn))
         return -1;
-      if (fixupReg(insn, &insn->spec->operands[index]))
+      if (fixupReg(insn, &x86OperandSets[insn->spec->operands][index]))
         return -1;
       break;
     case ENCODING_CB:
@@ -1524,14 +1524,14 @@ static int readOperands(struct InternalInstruction* insn) {
       }
       if (readImmediate(insn, 1))
         return -1;
-      if (insn->spec->operands[index].type == TYPE_IMM3 &&
+      if (x86OperandSets[insn->spec->operands][index].type == TYPE_IMM3 &&
           insn->immediates[insn->numImmediatesConsumed - 1] > 7)
         return -1;
-      if (insn->spec->operands[index].type == TYPE_IMM5 &&
+      if (x86OperandSets[insn->spec->operands][index].type == TYPE_IMM5 &&
           insn->immediates[insn->numImmediatesConsumed - 1] > 31)
         return -1;
-      if (insn->spec->operands[index].type == TYPE_XMM128 ||
-          insn->spec->operands[index].type == TYPE_XMM256)
+      if (x86OperandSets[insn->spec->operands][index].type == TYPE_XMM128 ||
+          x86OperandSets[insn->spec->operands][index].type == TYPE_XMM256)
         sawRegImm = 1;
       break;
     case ENCODING_IW:
@@ -1582,7 +1582,7 @@ static int readOperands(struct InternalInstruction* insn) {
       needVVVV = 0; /* Mark that we have found a VVVV operand. */
       if (!hasVVVV)
         return -1;
-      if (fixupReg(insn, &insn->spec->operands[index]))
+      if (fixupReg(insn, &x86OperandSets[insn->spec->operands][index]))
         return -1;
       break;
     case ENCODING_DUP:
@@ -1644,6 +1644,8 @@ int decodeInstruction(struct InternalInstruction* insn,
       insn->instructionID == 0 ||
       readOperands(insn))
     return -1;
+
+  insn->operands = &x86OperandSets[insn->spec->operands][0];
   
   insn->length = insn->readerCursor - insn->startLocation;
   

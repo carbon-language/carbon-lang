@@ -74,7 +74,8 @@
 #ifndef X86DISASSEMBLER_H
 #define X86DISASSEMBLER_H
 
-#define INSTRUCTION_SPECIFIER_FIELDS
+#define INSTRUCTION_SPECIFIER_FIELDS \
+  uint16_t operands;
 
 #define INSTRUCTION_IDS               \
   unsigned instructionIDs;

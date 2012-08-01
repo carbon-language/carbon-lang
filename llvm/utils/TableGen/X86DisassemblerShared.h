@@ -14,6 +14,7 @@
 #include <string.h>
 
 #define INSTRUCTION_SPECIFIER_FIELDS       \
+  struct OperandSpecifier operands[X86_MAX_OPERANDS]; \
   bool                    filtered;        \
   InstructionContext      insnContext;     \
   std::string             name;            \

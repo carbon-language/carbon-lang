@@ -374,7 +374,6 @@ typedef enum {
 struct InstructionSpecifier {
   uint8_t modifierType;
   uint8_t modifierBase;
-  struct OperandSpecifier operands[X86_MAX_OPERANDS];
 
   /* The macro below must be defined wherever this file is included. */
   INSTRUCTION_SPECIFIER_FIELDS

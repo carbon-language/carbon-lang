@@ -20,7 +20,8 @@
 extern "C" {
 #endif
 
-#define INSTRUCTION_SPECIFIER_FIELDS
+#define INSTRUCTION_SPECIFIER_FIELDS \
+  uint16_t operands;
 
 #define INSTRUCTION_IDS     \
   unsigned instructionIDs;
@@ -538,6 +539,8 @@ struct InternalInstruction {
   SIBIndex                      sibIndex;
   uint8_t                       sibScale;
   SIBBase                       sibBase;
+
+  const struct OperandSpecifier *operands;
 };
 
 /* decodeInstruction - Decode one instruction and store the decoding results in
