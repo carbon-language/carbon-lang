@@ -804,23 +804,44 @@ void MachineVerifier::checkLiveness(const MachineOperand *MO, unsigned MONum) {
     }
 
     // Check LiveInts liveness and kill.
-    if (TargetRegisterInfo::isVirtualRegister(Reg) &&
-        LiveInts && !LiveInts->isNotInMIMap(MI)) {
-      SlotIndex UseIdx = LiveInts->getInstructionIndex(MI).getRegSlot(true);
-      if (LiveInts->hasInterval(Reg)) {
-        const LiveInterval &LI = LiveInts->getInterval(Reg);
-        if (!LI.liveAt(UseIdx)) {
-          report("No live range at use", MO, MONum);
-          *OS << UseIdx << " is not live in " << LI << '\n';
+    if (LiveInts && !LiveInts->isNotInMIMap(MI)) {
+      SlotIndex UseIdx = LiveInts->getInstructionIndex(MI);
+      // Check the cached regunit intervals.
+      if (TargetRegisterInfo::isPhysicalRegister(Reg) && !isReserved(Reg)) {
+        for (MCRegUnitIterator Units(Reg, TRI); Units.isValid(); ++Units) {
+          if (const LiveInterval *LI = LiveInts->getCachedRegUnit(*Units)) {
+            LiveRangeQuery LRQ(*LI, UseIdx);
+            if (!LRQ.valueIn()) {
+              report("No live range at use", MO, MONum);
+              *OS << UseIdx << " is not live in " << PrintRegUnit(*Units, TRI)
+                  << ' ' << *LI << '\n';
+            }
+            if (MO->isKill() && !LRQ.isKill()) {
+              report("Live range continues after kill flag", MO, MONum);
+              *OS << PrintRegUnit(*Units, TRI) << ' ' << *LI << '\n';
+            }
+          }
         }
-        // Check for extra kill flags.
-        // Note that we allow missing kill flags for now.
-        if (MO->isKill() && !LI.killedAt(UseIdx.getRegSlot())) {
-          report("Live range continues after kill flag", MO, MONum);
-          *OS << "Live range: " << LI << '\n';
+      }
+
+      if (TargetRegisterInfo::isVirtualRegister(Reg)) {
+        if (LiveInts->hasInterval(Reg)) {
+          // This is a virtual register interval.
+          const LiveInterval &LI = LiveInts->getInterval(Reg);
+          LiveRangeQuery LRQ(LI, UseIdx);
+          if (!LRQ.valueIn()) {
+            report("No live range at use", MO, MONum);
+            *OS << UseIdx << " is not live in " << LI << '\n';
+          }
+          // Check for extra kill flags.
+          // Note that we allow missing kill flags for now.
+          if (MO->isKill() && !LRQ.isKill()) {
+            report("Live range continues after kill flag", MO, MONum);
+            *OS << "Live range: " << LI << '\n';
+          }
+        } else {
+          report("Virtual register has no live interval", MO, MONum);
         }
-      } else {
-        report("Virtual register has no Live interval", MO, MONum);
       }
     }
 
