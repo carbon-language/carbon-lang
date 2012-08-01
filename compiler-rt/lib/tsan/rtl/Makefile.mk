@@ -18,6 +18,8 @@ Implementation := Generic
 
 # FIXME: use automatic dependencies?
 Dependencies := $(wildcard $(Dir)/*.h)
+Dependencies += $(wildcard $(Dir)/../../interception/*.h)
+Dependencies += $(wildcard $(Dir)/../../interception/mach_override/*.h)
 
 # Define a convenience variable for all the tsan functions.
 TsanFunctions += $(Sources:%.cc=%) $(AsmSources:%.S=%)
