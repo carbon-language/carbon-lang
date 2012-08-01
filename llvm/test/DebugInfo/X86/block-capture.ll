@@ -2,10 +2,10 @@
 ; RUN: llvm-dwarfdump %t | FileCheck %s
 
 ; Checks that we emit debug info for the block variable declare.
-; CHECK: 0x00000038:   DW_TAG_subprogram [3]
-; CHECK: 0x00000063:     DW_TAG_variable [5]
-; CHECK: 0x00000064:       DW_AT_name [DW_FORM_strp]     ( .debug_str[0x000000e6] = "block")
-; CHECK: 0x0000006e:       DW_AT_location [DW_FORM_data4]        (0x00000023)
+; CHECK: 0x00000030:   DW_TAG_subprogram [3]
+; CHECK: 0x0000005b:     DW_TAG_variable [5]
+; CHECK: 0x0000005c:       DW_AT_name [DW_FORM_strp]     ( .debug_str[0x000000e6] = "block")
+; CHECK: 0x00000066:       DW_AT_location [DW_FORM_data4]        (0x00000023)
 
 %struct.__block_descriptor = type { i64, i64 }
 %struct.__block_literal_generic = type { i8*, i32, i32, i8*, %struct.__block_descriptor* }

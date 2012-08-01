@@ -307,9 +307,6 @@ class DwarfDebug {
   // table for the same directory as DW_at_comp_dir.
   StringRef CompilationDir;
 
-  // True if the current module has non text section.
-  bool HasNonTextSection;
-
 private:
 
   /// assignAbbrevNumber - Define a unique number for the abbreviation.

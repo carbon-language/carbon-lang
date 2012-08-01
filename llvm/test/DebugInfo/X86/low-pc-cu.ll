@@ -1,11 +1,10 @@
 ; RUN: llc -mtriple=x86_64-apple-darwin %s -o %t -filetype=obj
 ; RUN: llvm-dwarfdump %t | FileCheck %s
 
-; Check that we use DW_AT_low_pc and DW_AT_high_pc
+; Check that we use DW_AT_low_pc
 
 ; CHECK: DW_TAG_compile_unit [1]
 ; CHECK: DW_AT_low_pc [DW_FORM_addr]       (0x0000000000000000)
-; CHECK: DW_AT_high_pc [DW_FORM_addr]      (0x0000000000000001)
 ; CHECK: DW_TAG_subprogram [2]
 
 define i32 @_Z1qv() nounwind uwtable readnone ssp {

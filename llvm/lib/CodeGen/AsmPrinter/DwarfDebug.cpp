@@ -127,8 +127,7 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   : Asm(A), MMI(Asm->MMI), FirstCU(0),
     AbbreviationsSet(InitAbbreviationsSetSize),
     SourceIdMap(DIEValueAllocator), StringPool(DIEValueAllocator),
-    PrevLabel(NULL),
-    HasNonTextSection(false) {
+    PrevLabel(NULL) {
   NextStringPoolNumber = 0;
 
   DwarfInfoSectionSym = DwarfAbbrevSectionSym = 0;
@@ -562,6 +561,9 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
   NewCU->addUInt(Die, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
                  DIUnit.getLanguage());
   NewCU->addString(Die, dwarf::DW_AT_name, FN);
+  // 2.17.1 requires that we use DW_AT_low_pc for a single entry point
+  // into an entity.
+  NewCU->addUInt(Die, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr, 0);
   // DW_AT_stmt_list is a offset of line number information for this
   // compile unit in debug_line section.
   if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
@@ -785,25 +787,12 @@ void DwarfDebug::endModule() {
     FirstCU->addUInt(ISP, dwarf::DW_AT_inline, 0, dwarf::DW_INL_inlined);
   }
 
+  // Emit DW_AT_containing_type attribute to connect types with their
+  // vtable holding type.
   for (DenseMap<const MDNode *, CompileUnit *>::iterator CUI = CUMap.begin(),
          CUE = CUMap.end(); CUI != CUE; ++CUI) {
-    // Emit DW_AT_containing_type attribute to connect types with their
-    // vtable holding type.
     CompileUnit *TheCU = CUI->second;
     TheCU->constructContainingTypeDIEs();
-
-    // Emit low_pc and high_pc for CU.
-    DIE *Die = TheCU->getCUDie();
-    if (HasNonTextSection) {
-      // 2.17.1 requires that we use DW_AT_low_pc for a single entry point
-      // into an entity.
-      TheCU->addUInt(Die, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr, 0);
-    } else {
-      TheCU->addLabel(Die, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
-                      Asm->GetTempSymbol("text_begin"));
-      TheCU->addLabel(Die, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr,
-                      Asm->GetTempSymbol("text_end"));
-    }
   }
 
   // Standard sections final addresses.
@@ -863,7 +852,6 @@ void DwarfDebug::endModule() {
          E = CUMap.end(); I != E; ++I)
     delete I->second;
   FirstCU = NULL;  // Reset for the next Module, if any.
-  HasNonTextSection = false;
 }
 
 /// findAbstractVariable - Find abstract variable, if any, associated with Var.
@@ -1231,9 +1219,6 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   LScopes.initialize(*MF);
   if (LScopes.empty()) return;
   identifyScopeMarkers();
-
-  if (!Asm->getCurrentSection()->getKind().isText())
-    HasNonTextSection = true;
 
   FunctionBeginSym = Asm->GetTempSymbol("func_begin",
                                         Asm->getFunctionNumber());
