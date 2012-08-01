@@ -676,6 +676,9 @@ void CommentASTToHTMLConverter::visitFullComment(const FullComment *C) {
       if (!TPCC->hasParamName())
         break;
 
+      if (!TPCC->hasNonWhitespaceParagraph())
+        break;
+
       TParams.push_back(TPCC);
       break;
     }
