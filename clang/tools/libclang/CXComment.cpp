@@ -450,21 +450,29 @@ void CommentASTToHTMLConverter::visitInlineCommandComment(
 
   switch (C->getRenderKind()) {
   case InlineCommandComment::RenderNormal:
-    for (unsigned i = 0, e = C->getNumArgs(); i != e; ++i)
-      Result << C->getArgText(i) << " ";
+    for (unsigned i = 0, e = C->getNumArgs(); i != e; ++i) {
+      appendToResultWithHTMLEscaping(C->getArgText(i));
+      Result << " ";
+    }
     return;
 
   case InlineCommandComment::RenderBold:
     assert(C->getNumArgs() == 1);
-    Result << "<b>" << Arg0 << "</b>";
+    Result << "<b>";
+    appendToResultWithHTMLEscaping(Arg0);
+    Result << "</b>";
     return;
   case InlineCommandComment::RenderMonospaced:
     assert(C->getNumArgs() == 1);
-    Result << "<tt>" << Arg0 << "</tt>";
+    Result << "<tt>";
+    appendToResultWithHTMLEscaping(Arg0);
+    Result<< "</tt>";
     return;
   case InlineCommandComment::RenderEmphasized:
     assert(C->getNumArgs() == 1);
-    Result << "<em>" << Arg0 << "</em>";
+    Result << "<em>";
+    appendToResultWithHTMLEscaping(Arg0);
+    Result << "</em>";
     return;
   }
 }
@@ -537,7 +545,8 @@ void CommentASTToHTMLConverter::visitParamCommandComment(
   } else
     Result << "<dt class=\"param-name-index-invalid\">";
 
-  Result << C->getParamName() << "</dt>";
+  appendToResultWithHTMLEscaping(C->getParamName());
+  Result << "</dt>";
 
   if (C->isParamIndexValid()) {
     Result << "<dd class=\"param-descr-index-"
@@ -562,7 +571,8 @@ void CommentASTToHTMLConverter::visitTParamCommandComment(
   } else
     Result << "<dt class=\"tparam-name-index-invalid\">";
 
-  Result << C->getParamName() << "</dt>";
+  appendToResultWithHTMLEscaping(C->getParamName());
+  Result << "</dt>";
 
   if (C->isPositionValid()) {
     if (C->getDepth() == 1)

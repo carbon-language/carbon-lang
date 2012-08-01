@@ -341,14 +341,17 @@ void comment_to_html_conversion_25();
 /// \a Aaa \e Bbb \em Ccc
 void comment_to_html_conversion_26();
 
-/// \\ \@ \& \$ \# \< \> \% \" \. \::
+/// \a 1<2 \e 3<4 \em 5<6 \param 7<8 aaa \tparam 9<10 bbb
 void comment_to_html_conversion_27();
 
-/// &amp; &lt; &gt; &quot;
+/// \\ \@ \& \$ \# \< \> \% \" \. \::
 void comment_to_html_conversion_28();
 
-/// <em>0&lt;i</em>
+/// &amp; &lt; &gt; &quot;
 void comment_to_html_conversion_29();
+
+/// <em>0&lt;i</em>
+void comment_to_html_conversion_30();
 
 #endif
 
@@ -706,7 +709,24 @@ void comment_to_html_conversion_29();
 // CHECK-NEXT:         (CXComment_InlineCommand CommandName=[e] RenderEmphasized Arg[0]=Bbb)
 // CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
 // CHECK-NEXT:         (CXComment_InlineCommand CommandName=[em] RenderEmphasized Arg[0]=Ccc)))]
-// CHECK: annotate-comments.cpp:345:6: FunctionDecl=comment_to_html_conversion_27:{{.*}} FullCommentAsHTML=[<p class="para-brief"> \ @ &amp; $ # &lt; &gt; % &quot; . ::</p>]
+// CHECK: annotate-comments.cpp:345:6: FunctionDecl=comment_to_html_conversion_27:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <em>1&lt;2</em> <em>3&lt;4</em> <em>5&lt;6</em> </p><dl><dt class="tparam-name-index-invalid">9&lt;10</dt><dd class="tparam-descr-index-invalid"> bbb</dd></dl><dl><dt class="param-name-index-invalid">7&lt;8</dt><dd class="param-descr-index-invalid"> aaa </dd></dl>]
+// CHECK-NEXT:  CommentAST=[
+// CHECK-NEXT:    (CXComment_FullComment
+// CHECK-NEXT:       (CXComment_Paragraph
+// CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
+// CHECK-NEXT:         (CXComment_InlineCommand CommandName=[a] RenderEmphasized Arg[0]=1<2)
+// CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
+// CHECK-NEXT:         (CXComment_InlineCommand CommandName=[e] RenderEmphasized Arg[0]=3<4)
+// CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
+// CHECK-NEXT:         (CXComment_InlineCommand CommandName=[em] RenderEmphasized Arg[0]=5<6)
+// CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace))
+// CHECK-NEXT:       (CXComment_ParamCommand in implicitly ParamName=[7<8] ParamIndex=Invalid
+// CHECK-NEXT:         (CXComment_Paragraph
+// CHECK-NEXT:           (CXComment_Text Text=[ aaa ])))
+// CHECK-NEXT:       (CXComment_TParamCommand ParamName=[9<10] ParamPosition=Invalid
+// CHECK-NEXT:         (CXComment_Paragraph
+// CHECK-NEXT:           (CXComment_Text Text=[ bbb]))))]
+// CHECK: annotate-comments.cpp:348:6: FunctionDecl=comment_to_html_conversion_28:{{.*}} FullCommentAsHTML=[<p class="para-brief"> \ @ &amp; $ # &lt; &gt; % &quot; . ::</p>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -732,7 +752,7 @@ void comment_to_html_conversion_29();
 // CHECK-NEXT:         (CXComment_Text Text=[.])
 // CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
 // CHECK-NEXT:         (CXComment_Text Text=[::])))]
-// CHECK: annotate-comments.cpp:348:6: FunctionDecl=comment_to_html_conversion_28:{{.*}} FullCommentAsHTML=[<p class="para-brief"> &amp; &lt; &gt; &quot;</p>]
+// CHECK: annotate-comments.cpp:351:6: FunctionDecl=comment_to_html_conversion_29:{{.*}} FullCommentAsHTML=[<p class="para-brief"> &amp; &lt; &gt; &quot;</p>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -744,7 +764,7 @@ void comment_to_html_conversion_29();
 // CHECK-NEXT:         (CXComment_Text Text=[>])
 // CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
 // CHECK-NEXT:         (CXComment_Text Text=["])))]
-// CHECK: annotate-comments.cpp:351:6: FunctionDecl=comment_to_html_conversion_29:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <em>0&lt;i</em></p>]
+// CHECK: annotate-comments.cpp:354:6: FunctionDecl=comment_to_html_conversion_30:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <em>0&lt;i</em></p>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
