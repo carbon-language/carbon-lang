@@ -580,6 +580,10 @@ openscop_ld
 openscop_lib
 openscop_inc
 openscop_found
+pluto_ld
+pluto_lib
+pluto_inc
+pluto_found
 cloog_ld
 cloog_lib
 cloog_inc
@@ -647,6 +651,7 @@ with_llvmobj
 with_gmp
 with_isl
 with_cloog
+with_pluto
 with_openscop
 with_scoplib
 with_cuda
@@ -1275,6 +1280,7 @@ Optional Packages:
   --with-gmp              prefix of gmp
   --with-isl              prefix of isl
   --with-cloog            prefix of cloog
+  --with-pluto            prefix of pluto
   --with-openscop         prefix of openscop
   --with-scoplib          prefix of scoplib
   --with-cuda             prefix of cuda
@@ -2727,6 +2733,94 @@ CXXFLAGS=$saved_CXXFLAGS
 if test "x$cloog_found" = "xyes"; then :
 
 $as_echo "#define CLOOG_FOUND 1" >>confdefs.h
+
+fi
+
+saved_CXXFLAGS=$CXXFLAGS
+CXXFLAGS="$CXXFLAGS $gmp_inc $isl_inc"
+
+  ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+  OLD_CXXFLAGS=$CXXFLAGS;
+  OLD_LDFLAGS=$LDFLAGS;
+  OLD_LIBS=$LIBS;
+
+  LIBS="$LIBS -lpluto";
+
+  # Get include path and lib path
+
+# Check whether --with-pluto was given.
+if test "${with_pluto+set}" = set; then :
+  withval=$with_pluto; given_inc_path="$withval/include"; CXXFLAGS="-I$given_inc_path $CXXFLAGS";
+       given_lib_path="$withval/lib"; LDFLAGS="-L$given_lib_path $LDFLAGS"
+else
+  given_inc_path=inc_not_give_pluto;
+       given_lib_path=lib_not_give_pluto
+
+fi
+
+  # Check for library and headers works
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pluto: pluto/libpluto.h in $given_inc_path, and libpluto in $given_lib_path" >&5
+$as_echo_n "checking for pluto: pluto/libpluto.h in $given_inc_path, and libpluto in $given_lib_path... " >&6; }
+
+  # try to compile a file that includes a header of the library
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <pluto/libpluto.h>
+int
+main ()
+{
+;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: ok" >&5
+$as_echo "ok" >&6; }
+    pluto_found="yes"
+
+    if test "x$given_inc_path" != "xinc_not_give_pluto"; then :
+  pluto_inc="-I$given_inc_path"
+
+fi
+    pluto_lib="-lpluto"
+
+    if test "x$given_lib_path" != "xlib_not_give_pluto"; then :
+  pluto_ld="-L$given_lib_path"
+
+fi
+else
+  if test "x" = "xrequired"; then :
+  as_fn_error $? "pluto required but not found" "$LINENO" 5
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+$as_echo "not found" >&6; }
+fi
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+  # reset original CXXFLAGS
+  CXXFLAGS=$OLD_CXXFLAGS
+  LDFLAGS=$OLD_LDFLAGS;
+  LIBS=$OLD_LIBS
+  ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+
+CXXFLAGS=$saved_CXXFLAGS
+if test "x$pluto_found" = "xyes"; then :
+
+$as_echo "#define PLUTO_FOUND 1" >>confdefs.h
 
 fi
 

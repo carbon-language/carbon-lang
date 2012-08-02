@@ -11,6 +11,10 @@ if (SCOPLIB_FOUND)
   set(POLLY_SCOPLIB_FILES Pocc.cpp)
 endif (SCOPLIB_FOUND)
 
+if (PLUTO_FOUND)
+  set(POLLY_PLUTO_FILES Pluto.cpp)
+endif (PLUTO_FOUND)
+
 set(LLVM_USED_LIBS
   PollyAnalysis
   PollyCodeGen
@@ -30,6 +34,7 @@ add_polly_library(LLVMPolly
   RegisterPasses.cpp
   ScheduleOptimizer.cpp
   ${POLLY_SCOPLIB_FILES}
+  ${POLLY_PLUTO_FILES}
   )
 
 add_dependencies(LLVMPolly
@@ -44,3 +49,7 @@ set_target_properties(LLVMPolly
   PROPERTIES
   LINKER_LANGUAGE CXX
   PREFIX "")
+
+if (PLUTO_FOUND)
+  target_link_libraries(LLVMPolly ${PLUTO_LIBRARY})
+endif(PLUTO_FOUND)

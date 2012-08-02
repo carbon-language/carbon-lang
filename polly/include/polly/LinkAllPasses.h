@@ -45,6 +45,9 @@ namespace polly {
   Pass *createIndVarSimplifyPass();
   Pass *createJSONExporterPass();
   Pass *createJSONImporterPass();
+#ifdef PLUTO_FOUND
+  Pass *createPlutoOptimizerPass();
+#endif
   Pass *createRegionSimplifyPass();
   Pass *createScopDetectionPass();
   Pass *createScopInfoPass();
@@ -98,6 +101,9 @@ namespace {
        createRegionSimplifyPass();
        createScopDetectionPass();
        createScopInfoPass();
+#ifdef PLUTO_FOUND
+       createPlutoOptimizerPass();
+#endif
        createIslScheduleOptimizerPass();
        createTempScopInfoPass();
 
@@ -126,6 +132,9 @@ namespace llvm {
   void initializeJSONExporterPass(llvm::PassRegistry&);
   void initializeJSONImporterPass(llvm::PassRegistry&);
   void initializeIslScheduleOptimizerPass(llvm::PassRegistry&);
+#ifdef PLUTO_FOUND
+  void initializePlutoOptimizerPass(llvm::PassRegistry&);
+#endif
 #ifdef SCOPLIB_FOUND
   void initializePoccPass(llvm::PassRegistry&);
 #endif

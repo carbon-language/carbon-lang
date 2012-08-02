@@ -93,6 +93,14 @@ CXXFLAGS=$saved_CXXFLAGS
 AS_IF([test "x$cloog_found" = "xyes"],
   [AC_DEFINE([CLOOG_FOUND],[1],[Define if cloog found])])
 
+dnl Check that we have libpluto.
+saved_CXXFLAGS=$CXXFLAGS
+CXXFLAGS="$CXXFLAGS $gmp_inc $isl_inc"
+find_lib_and_headers([pluto], [pluto/libpluto.h], [pluto])
+CXXFLAGS=$saved_CXXFLAGS
+AS_IF([test "x$pluto_found" = "xyes"],
+  [AC_DEFINE([PLUTO_FOUND],[1],[Define if pluto found])])
+
 dnl Check that we have openscop.
 find_lib_and_headers([openscop], [openscop/scop.h], [openscop])
 AS_IF([test "x$openscop_found" = "xyes"],

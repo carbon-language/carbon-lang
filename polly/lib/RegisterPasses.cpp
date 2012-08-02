@@ -48,6 +48,9 @@ enum OptimizerChoice {
 #ifdef SCOPLIB_FOUND
   OPTIMIZER_POCC,
 #endif
+#ifdef PLUTO_FOUND
+  OPTIMIZER_PLUTO,
+#endif
   OPTIMIZER_ISL
 };
 
@@ -56,6 +59,9 @@ Optimizer("polly-optimizer",
           cl::desc("Select the scheduling optimizer"),
           cl::values(
             clEnumValN(OPTIMIZER_NONE, "none", "No optimizer"),
+#ifdef PLUTO_FOUND
+            clEnumValN(OPTIMIZER_PLUTO, "pluto", "The Pluto scheduling optimizer"),
+#endif
 #ifdef SCOPLIB_FOUND
             clEnumValN(OPTIMIZER_POCC, "pocc", "The PoCC scheduling optimizer"),
 #endif
@@ -220,8 +226,14 @@ static void registerPollyPasses(llvm::PassManagerBase &PM) {
     break; /* Do nothing */
 
 #ifdef SCOPLIB_FOUND
-  case OPTIMIZER_POCC
+  case OPTIMIZER_POCC:
     PM.add(polly::createPoccPass());
+    break;
+#endif
+
+#ifdef PLUTO_FOUND
+  case OPTIMIZER_PLUTO:
+    PM.add(polly::createPlutoOptimizerPass());
     break;
 #endif
 
