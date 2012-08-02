@@ -16,8 +16,12 @@ Usage:
 
     # Load the results of both runs, to obtain lists of the corresponding
     # AnalysisDiagnostic objects.
-    resultsA = loadResults(dirA, opts, deleteEmpty)
-    resultsB = loadResults(dirB, opts, deleteEmpty)
+    #
+    # root - the name of the root directory, which will be disregarded when 
+    # determining the source file name
+    # 
+    resultsA = loadResults(dirA, opts, root, deleteEmpty)
+    resultsB = loadResults(dirB, opts, root, deleteEmpty)
     
     # Generate a relation from diagnostics in run A to diagnostics in run B 
     # to obtain a list of triples (a, b, confidence). 
@@ -54,10 +58,10 @@ class AnalysisDiagnostic:
     def getIssueIdentifier(self) :
         id = ''
         if 'issue_context' in self._data :
-          id += self._data['issue_context']
+          id += self._data['issue_context'] + ":"
         if 'issue_hash' in self._data :
-          id += str(self._data['issue_hash'])
-        return id
+          id += str(self._data['issue_hash']) + ":"
+        return id + ":" + self.getFileName()
 
     def getReport(self):
         if self._htmlReport is None:
@@ -96,8 +100,9 @@ class multidict:
 #
 
 class CmpOptions:
-    def __init__(self, verboseLog=None, root=""):
-        self.root = root
+    def __init__(self, verboseLog=None, rootA="", rootB=""):
+        self.rootA = rootA
+        self.rootB = rootB
         self.verboseLog = verboseLog
 
 class AnalysisReport:
@@ -106,20 +111,21 @@ class AnalysisReport:
         self.files = files
 
 class AnalysisRun:
-    def __init__(self, path, opts):
+    def __init__(self, path, root, opts):
         self.path = path
+        self.root = root
         self.reports = []
         self.diagnostics = []
         self.opts = opts
 
     def getSourceName(self, path):
-        if path.startswith(self.opts.root):
-            return path[len(self.opts.root):]
+        if path.startswith(self.root):
+            return path[len(self.root):]
         return path
 
-def loadResults(path, opts, deleteEmpty=True):
-    run = AnalysisRun(path, opts)
-
+def loadResults(path, opts, root = "", deleteEmpty=True):
+    run = AnalysisRun(path, root, opts)
+    
     for f in os.listdir(path):
         if (not f.startswith('report') or
             not f.endswith('plist')):
@@ -209,8 +215,8 @@ def compareResults(A, B):
 
 def dumpScanBuildResultsDiff(dirA, dirB, opts, deleteEmpty=True):
     # Load the run results.
-    resultsA = loadResults(dirA, opts, deleteEmpty)
-    resultsB = loadResults(dirB, opts, deleteEmpty)
+    resultsA = loadResults(dirA, opts, opts.rootA, deleteEmpty)
+    resultsB = loadResults(dirB, opts, opts.rootB, deleteEmpty)
     
     # Open the verbose log, if given.
     if opts.verboseLog:
@@ -259,8 +265,11 @@ def dumpScanBuildResultsDiff(dirA, dirB, opts, deleteEmpty=True):
 def main():
     from optparse import OptionParser
     parser = OptionParser("usage: %prog [options] [dir A] [dir B]")
-    parser.add_option("", "--root", dest="root",
-                      help="Prefix to ignore on source files",
+    parser.add_option("", "--rootA", dest="rootA",
+                      help="Prefix to ignore on source files for directory A",
+                      action="store", type=str, default="")
+    parser.add_option("", "--rootB", dest="rootB",
+                      help="Prefix to ignore on source files for directory B",
                       action="store", type=str, default="")
     parser.add_option("", "--verbose-log", dest="verboseLog",
                       help="Write additional information to LOG [default=None]",
