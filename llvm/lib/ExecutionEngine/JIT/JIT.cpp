@@ -433,11 +433,16 @@ GenericValue JIT::runFunction(Function *F,
       }
       break;
     case 1:
-      if (FTy->getNumParams() == 1 &&
-          FTy->getParamType(0)->isIntegerTy(32)) {
+      if (FTy->getParamType(0)->isIntegerTy(32)) {
         GenericValue rv;
         int (*PF)(int) = (int(*)(int))(intptr_t)FPtr;
         rv.IntVal = APInt(32, PF(ArgValues[0].IntVal.getZExtValue()));
+        return rv;
+      }
+      if (FTy->getParamType(0)->isPointerTy()) {
+        GenericValue rv;
+        int (*PF)(char *) = (int(*)(char *))(intptr_t)FPtr;
+        rv.IntVal = APInt(32, PF((char*)GVTOP(ArgValues[0])));
         return rv;
       }
       break;
