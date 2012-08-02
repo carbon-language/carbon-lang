@@ -27,9 +27,8 @@ protected:
 
 public:
   explicit MipsFrameLowering(const MipsSubtarget &sti)
-    : TargetFrameLowering(StackGrowsDown, sti.hasMips64() ? 16 : 8, 0),
-      STI(sti) {
-  }
+    : TargetFrameLowering(StackGrowsDown, sti.hasMips64() ? 16 : 8, 0,
+                          sti.hasMips64() ? 16 : 8), STI(sti) {}
 
   bool hasFP(const MachineFunction &MF) const;
 };

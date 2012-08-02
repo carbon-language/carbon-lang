@@ -1,7 +1,4 @@
-; reenable when the correct value for TransientStackAlignment is set.
-; DISABLED: llc -march=mipsel -pre-RA-sched=source < %s | FileCheck %s
-; RUN: false
-; XFAIL: *
+; RUN: llc -march=mipsel -pre-RA-sched=source < %s | FileCheck %s
 
 ; All test functions do the same thing - they return the first variable
 ; argument.
