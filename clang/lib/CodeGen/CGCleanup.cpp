@@ -831,8 +831,12 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
 
     EmitBlock(EHEntry);
 
-    cleanupFlags.setIsForEHCleanup();
-    EmitCleanup(*this, Fn, cleanupFlags, EHActiveFlag);
+    // We only actually emit the cleanup code if the cleanup is either
+    // active or was used before it was deactivated.
+    if (EHActiveFlag || IsActive) {
+      cleanupFlags.setIsForEHCleanup();
+      EmitCleanup(*this, Fn, cleanupFlags, EHActiveFlag);
+    }
 
     Builder.CreateBr(getEHDispatchBlock(EHParent));
 
