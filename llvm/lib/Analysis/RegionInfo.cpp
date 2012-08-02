@@ -262,22 +262,6 @@ Region::const_block_node_iterator Region::block_node_end() const {
   return GraphTraits<FlatIt<const Region*> >::nodes_end(this);
 }
 
-Region::block_iterator Region::block_begin() {
-  return block_node_begin();
-}
-
-Region::block_iterator Region::block_end() {
-  return block_node_end();
-}
-
-Region::const_block_iterator Region::block_begin() const {
-  return block_node_begin();
-}
-
-Region::const_block_iterator Region::block_end() const {
-  return block_node_end();
-}
-
 Region::element_iterator Region::element_begin() {
   return GraphTraits<Region*>::nodes_begin(this);
 }

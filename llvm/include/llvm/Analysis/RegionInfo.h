@@ -500,50 +500,58 @@ public:
   /// Region. The iterator also iterates over BasicBlocks that are elements of
   /// a subregion of this Region. It is therefore called a flat iterator.
   //@{
-  template <typename RegionNodeItT>
+  template <bool IsConst>
   class block_iterator_wrapper
-    : public std::iterator<std::forward_iterator_tag, BasicBlock, ptrdiff_t> {
-    typedef std::iterator<std::forward_iterator_tag, BasicBlock, ptrdiff_t>
+    : public df_iterator<typename conditional<IsConst,
+                                              const BasicBlock,
+                                              BasicBlock>::type*> {
+    typedef df_iterator<typename conditional<IsConst,
+                                             const BasicBlock,
+                                             BasicBlock>::type*>
       super;
-
-    RegionNodeItT Iter;
-
   public:
-    typedef block_iterator_wrapper<RegionNodeItT> Self;
+    typedef block_iterator_wrapper<IsConst> Self;
     typedef typename super::pointer pointer;
 
-    block_iterator_wrapper(RegionNodeItT Iter) : Iter(Iter) {}
-
-    bool operator==(const Self &RHS) const { return Iter == RHS.Iter; }
-    bool operator!=(const Self &RHS) const { return Iter != RHS.Iter; }
-    pointer operator*() const {
-      return (*Iter)->template getNodeAs<BasicBlock>();
+    // Construct the begin iterator.
+    block_iterator_wrapper(pointer Entry, pointer Exit) : super(df_begin(Entry))
+    {
+      // Mark the exit of the region as visited, so that the children of the
+      // exit and the exit itself, i.e. the block outside the region will never
+      // be visited.
+      super::Visited.insert(Exit);
     }
 
-    Self& operator++() {
-      ++Iter;
-      return *this;
-    }
-    Self operator++(int) {
-      Self tmp = *this;
-      ++*this;
-      return tmp;
-    }
+    // Construct the end iterator.
+    block_iterator_wrapper() : super(df_end<pointer>(0)) {}
 
-    const Self &operator=(const Self &I) {
-      Iter = I.Iter;
-      return *this;
+    /*implicit*/ block_iterator_wrapper(super I) : super(I) {}
+
+    // FIXME: Even a const_iterator returns a non-const BasicBlock pointer.
+    //        This was introduced for backwards compatibility, but should
+    //        be removed as soon as all users are fixed.
+    BasicBlock *operator*() const {
+      return const_cast<BasicBlock*>(super::operator*());
     }
   };
-  typedef block_iterator_wrapper<block_node_iterator> block_iterator;
-  typedef block_iterator_wrapper<const_block_node_iterator>
-    const_block_iterator;
 
-  block_iterator block_begin();
-  block_iterator block_end();
+  typedef block_iterator_wrapper<false> block_iterator;
+  typedef block_iterator_wrapper<true>  const_block_iterator;
 
-  const_block_iterator block_begin() const;
-  const_block_iterator block_end() const;
+  block_iterator block_begin() {
+   return block_iterator(getEntry(), getExit());
+  }
+
+  block_iterator block_end() {
+   return block_iterator();
+  }
+
+  const_block_iterator block_begin() const {
+    return const_block_iterator(getEntry(), getExit());
+  }
+  const_block_iterator block_end() const {
+    return const_block_iterator();
+  }
   //@}
 
   /// @name Element Iterators
