@@ -135,9 +135,11 @@ _func:
 
         subw r11, pc, #3270
         adr.w r11, #-826
+        adr.w r1, #-0x0
 
 @ CHECK: subw	r11, pc, #3270          @ encoding: [0xaf,0xf6,0xc6,0x4b]
 @ CHECK: adr.w	r11, #-826              @ encoding: [0xaf,0xf2,0x3a,0x3b]
+@ CHECK: adr.w	r1, #-0                 @ encoding: [0xaf,0xf2,0x00,0x01]
 
 @------------------------------------------------------------------------------
 @ AND (immediate)

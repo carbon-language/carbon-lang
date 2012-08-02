@@ -796,6 +796,13 @@ public:
     int64_t Value = CE->getValue();
     return Value > 0 && Value <= 32;
   }
+  bool isAdrLabel() const {
+    // If we have an immediate that's not a constant, treat it as a label
+    // reference needing a fixup. If it is a constant, but it can't fit 
+    // into shift immediate encoding, we reject it.
+    if (isImm() && !isa<MCConstantExpr>(getImm())) return true;
+    else return (isARMSOImm() || isARMSOImmNeg());
+  }
   bool isARMSOImm() const {
     if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
@@ -1642,6 +1649,22 @@ public:
     // FIXME: Handle #-0
     if (Imm == INT32_MIN) Imm = 0;
     Inst.addOperand(MCOperand::CreateImm(Imm));
+  }
+
+  void addAdrLabelOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    assert(isImm() && "Not an immediate!");
+
+    // If we have an immediate that's not a constant, treat it as a label
+    // reference needing a fixup. 
+    if (!isa<MCConstantExpr>(getImm())) {
+      Inst.addOperand(MCOperand::CreateExpr(getImm()));
+      return;
+    }
+
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    int Val = CE->getValue();
+    Inst.addOperand(MCOperand::CreateImm(Val));
   }
 
   void addAlignedMemoryOperands(MCInst &Inst, unsigned N) const {

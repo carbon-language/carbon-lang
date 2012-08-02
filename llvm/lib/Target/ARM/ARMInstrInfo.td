@@ -416,8 +416,11 @@ def pclabel : Operand<i32> {
 }
 
 // ADR instruction labels.
+def AdrLabelAsmOperand : AsmOperandClass { let Name = "AdrLabel"; }
 def adrlabel : Operand<i32> {
   let EncoderMethod = "getAdrLabelOpValue";
+  let ParserMatchClass = AdrLabelAsmOperand;
+  let PrintMethod = "printAdrLabelOperand";
 }
 
 def neon_vcvt_imm32 : Operand<i32> {

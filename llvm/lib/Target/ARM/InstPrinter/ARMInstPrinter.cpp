@@ -792,6 +792,25 @@ void ARMInstPrinter::printPCLabel(const MCInst *MI, unsigned OpNum,
   llvm_unreachable("Unhandled PC-relative pseudo-instruction!");
 }
 
+void ARMInstPrinter::printAdrLabelOperand(const MCInst *MI, unsigned OpNum,
+                                  raw_ostream &O) {
+  const MCOperand &MO = MI->getOperand(OpNum);
+
+  if (MO.isExpr()) {
+    O << *MO.getExpr();
+    return;
+  }
+
+  int32_t OffImm = (int32_t)MO.getImm();
+
+  if (OffImm == INT32_MIN)
+    O << "#-0";
+  else if (OffImm < 0)
+    O << "#-" << -OffImm;
+  else
+    O << "#" << OffImm;
+}
+
 void ARMInstPrinter::printThumbS4ImmOperand(const MCInst *MI, unsigned OpNum,
                                             raw_ostream &O) {
   O << "#" << MI->getOperand(OpNum).getImm() * 4;

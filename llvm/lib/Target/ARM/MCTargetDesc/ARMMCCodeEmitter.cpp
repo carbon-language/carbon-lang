@@ -641,8 +641,8 @@ getUnconditionalBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
   return Val;
 }
 
-/// getAdrLabelOpValue - Return encoding info for 12-bit immediate ADR label
-/// target.
+/// getAdrLabelOpValue - Return encoding info for 12-bit shifted-immediate
+/// ADR label target.
 uint32_t ARMMCCodeEmitter::
 getAdrLabelOpValue(const MCInst &MI, unsigned OpIdx,
                    SmallVectorImpl<MCFixup> &Fixups) const {
@@ -652,15 +652,23 @@ getAdrLabelOpValue(const MCInst &MI, unsigned OpIdx,
                                     Fixups);
   int32_t offset = MO.getImm();
   uint32_t Val = 0x2000;
-  if (offset < 0) {
+
+  if (offset == INT32_MIN) {
+    Val = 0x1000;
+    offset = 0;
+  } else if (offset < 0) {
     Val = 0x1000;
     offset *= -1;
   }
-  Val |= offset;
+
+  int SoImmVal = ARM_AM::getSOImmVal(offset);
+  assert(SoImmVal != -1 && "Not a valid so_imm value!");
+
+  Val |= SoImmVal;
   return Val;
 }
 
-/// getAdrLabelOpValue - Return encoding info for 12-bit immediate ADR label
+/// getT2AdrLabelOpValue - Return encoding info for 12-bit immediate ADR label
 /// target.
 uint32_t ARMMCCodeEmitter::
 getT2AdrLabelOpValue(const MCInst &MI, unsigned OpIdx,
@@ -670,14 +678,16 @@ getT2AdrLabelOpValue(const MCInst &MI, unsigned OpIdx,
     return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_t2_adr_pcrel_12,
                                     Fixups);
   int32_t Val = MO.getImm();
-  if (Val < 0) {
+  if (Val == INT32_MIN)
+    Val = 0x1000;
+  else if (Val < 0) {
     Val *= -1;
     Val |= 0x1000;
   }
   return Val;
 }
 
-/// getAdrLabelOpValue - Return encoding info for 8-bit immediate ADR label
+/// getThumbAdrLabelOpValue - Return encoding info for 8-bit immediate ADR label
 /// target.
 uint32_t ARMMCCodeEmitter::
 getThumbAdrLabelOpValue(const MCInst &MI, unsigned OpIdx,
