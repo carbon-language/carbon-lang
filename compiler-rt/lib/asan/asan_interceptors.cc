@@ -408,16 +408,22 @@ DEFINE_REAL(char*, index, const char *string, int c)
 # endif
 #endif  // ASAN_INTERCEPT_INDEX
 
+// For both strcat() and strncat() we need to check the validity of |to|
+// argument irrespective of the |from| length.
 INTERCEPTOR(char*, strcat, char *to, const char *from) {  // NOLINT
   ENSURE_ASAN_INITED();
   if (flags()->replace_str) {
     uptr from_length = REAL(strlen)(from);
     ASAN_READ_RANGE(from, from_length + 1);
+    uptr to_length = REAL(strlen)(to);
+    ASAN_READ_RANGE(to, to_length);
+    ASAN_WRITE_RANGE(to + to_length, from_length + 1);
+    // If the copying actually happens, the |from| string should not overlap
+    // with the resulting string starting at |to|, which has a length of
+    // to_length + from_length + 1.
     if (from_length > 0) {
-      uptr to_length = REAL(strlen)(to);
-      ASAN_READ_RANGE(to, to_length);
-      ASAN_WRITE_RANGE(to + to_length, from_length + 1);
-      CHECK_RANGES_OVERLAP("strcat", to, to_length + 1, from, from_length + 1);
+      CHECK_RANGES_OVERLAP("strcat", to, from_length + to_length + 1,
+                           from, from_length + 1);
     }
   }
   return REAL(strcat)(to, from);  // NOLINT
@@ -425,15 +431,16 @@ INTERCEPTOR(char*, strcat, char *to, const char *from) {  // NOLINT
 
 INTERCEPTOR(char*, strncat, char *to, const char *from, uptr size) {
   ENSURE_ASAN_INITED();
-  if (flags()->replace_str && size > 0) {
+  if (flags()->replace_str) {
     uptr from_length = MaybeRealStrnlen(from, size);
-    ASAN_READ_RANGE(from, Min(size, from_length + 1));
+    uptr copy_length = Min(size, from_length + 1);
+    ASAN_READ_RANGE(from, copy_length);
     uptr to_length = REAL(strlen)(to);
     ASAN_READ_RANGE(to, to_length);
     ASAN_WRITE_RANGE(to + to_length, from_length + 1);
     if (from_length > 0) {
-      CHECK_RANGES_OVERLAP("strncat", to, to_length + 1,
-                           from, Min(size, from_length + 1));
+      CHECK_RANGES_OVERLAP("strncat", to, to_length + copy_length + 1,
+                           from, copy_length);
     }
   }
   return REAL(strncat)(to, from, size);

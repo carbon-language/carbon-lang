@@ -1226,8 +1226,9 @@ TEST(AddressSanitizer, StrCatOOBTest) {
   strcat(to, from);
   strcat(to, from);
   strcat(to + from_size, from + from_size - 2);
-  // Catenate empty string is not always an error.
-  strcat(to - 1, from + from_size - 1);
+  // Passing an invalid pointer is an error even when concatenating an empty
+  // string.
+  EXPECT_DEATH(strcat(to - 1, from + from_size - 1), LeftOOBErrorMessage(1));
   // One of arguments points to not allocated memory.
   EXPECT_DEATH(strcat(to - 1, from), LeftOOBErrorMessage(1));
   EXPECT_DEATH(strcat(to, from - 1), LeftOOBErrorMessage(1));
@@ -1262,8 +1263,8 @@ TEST(AddressSanitizer, StrNCatOOBTest) {
   strncat(to, from, from_size);
   from[from_size - 1] = '\0';
   strncat(to, from, 2 * from_size);
-  // Catenating empty string is not an error.
-  strncat(to - 1, from, 0);
+  // Catenating empty string with an invalid string is still an error.
+  EXPECT_DEATH(strncat(to - 1, from, 0), LeftOOBErrorMessage(1));
   strncat(to, from + from_size - 1, 10);
   // One of arguments points to not allocated memory.
   EXPECT_DEATH(strncat(to - 1, from, 2), LeftOOBErrorMessage(1));
@@ -1336,7 +1337,7 @@ TEST(AddressSanitizer, StrArgsOverlapTest) {
   str[10] = '\0';
   str[20] = '\0';
   strcat(str, str + 10);
-  strcat(str, str + 11);
+  EXPECT_DEATH(strcat(str, str + 11), OverlapErrorMessage("strcat"));
   str[10] = '\0';
   strcat(str + 11, str);
   EXPECT_DEATH(strcat(str, str + 9), OverlapErrorMessage("strcat"));
@@ -1347,7 +1348,7 @@ TEST(AddressSanitizer, StrArgsOverlapTest) {
   memset(str, 'z', size);
   str[10] = '\0';
   strncat(str, str + 10, 10);  // from is empty
-  strncat(str, str + 11, 10);
+  EXPECT_DEATH(strncat(str, str + 11, 10), OverlapErrorMessage("strncat"));
   str[10] = '\0';
   str[20] = '\0';
   strncat(str + 5, str, 5);
