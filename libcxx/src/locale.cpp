@@ -4864,7 +4864,7 @@ template <>
 void
 __time_get_storage<char>::init(const ctype<char>& ct)
 {
-    tm t;
+    tm t = {0};
     char buf[100];
     // __weeks_
     for (int i = 0; i < 7; ++i)
