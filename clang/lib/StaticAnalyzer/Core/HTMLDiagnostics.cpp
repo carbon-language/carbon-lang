@@ -428,6 +428,15 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
     os << "<div class=\"PathIndex";
     if (Kind) os << " PathIndex" << Kind;
     os << "\">" << num << "</div>";
+
+    if (num > 1) {
+      os << "</td><td><div class=\"PathNav\"><a href=\"#Path"
+         << (num - 1)
+         << "\" title=\"Previous event ("
+         << (num - 1)
+         << ")\">&#x2190;</a></div></td>";
+    }
+
     os << "</td><td>";
   }
 
@@ -463,8 +472,21 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
   else {
     os << html::EscapeText(P.getString());
 
-    if (max > 1)
-      os << "</td></tr></table>";
+    if (max > 1) {
+      os << "</td>";
+      if (num < max) {
+        os << "<td><div class=\"PathNav\"><a href=\"#";
+        if (num == max - 1)
+          os << "EndPath";
+        else
+          os << "Path" << (num + 1);
+        os << "\" title=\"Next event ("
+           << (num + 1)
+           << ")\">&#x2192;</a></div></td>";
+      }
+      
+      os << "</tr></table>";
+    }
   }
 
   os << "</div></td></tr>";
