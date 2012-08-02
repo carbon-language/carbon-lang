@@ -50,6 +50,8 @@ namespace COFF {
   };
 
   enum MachineTypes {
+    MT_Invalid = -1,
+
     IMAGE_FILE_MACHINE_UNKNOWN   = 0x0,
     IMAGE_FILE_MACHINE_AM33      = 0x13,
     IMAGE_FILE_MACHINE_AMD64     = 0x8664,
@@ -74,6 +76,8 @@ namespace COFF {
   };
 
   enum Characteristics {
+    C_Invalid = 0,
+
     /// The file does not contain base relocations and must be loaded at its
     /// preferred base. If this cannot be done, the loader will error.
     IMAGE_FILE_RELOCS_STRIPPED         = 0x0001,
@@ -138,6 +142,8 @@ namespace COFF {
 
   /// Storage class tells where and what the symbol represents
   enum SymbolStorageClass {
+    SSC_Invalid = -1,
+
     IMAGE_SYM_CLASS_END_OF_FUNCTION  = -1,  ///< Physical end of function
     IMAGE_SYM_CLASS_NULL             = 0,   ///< No symbol
     IMAGE_SYM_CLASS_AUTOMATIC        = 1,   ///< Stack variable
@@ -214,6 +220,8 @@ namespace COFF {
   };
 
   enum SectionCharacteristics {
+    SC_Invalid = -1,
+
     IMAGE_SCN_TYPE_NO_PAD            = 0x00000008,
     IMAGE_SCN_CNT_CODE               = 0x00000020,
     IMAGE_SCN_CNT_INITIALIZED_DATA   = 0x00000040,

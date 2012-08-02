@@ -1,17 +1,17 @@
-RUN: llvm-objdump -t %p/Inputs/trivial-object-test.coff-i386 \
+RUN: yaml2obj %p/COFF/i386.yaml | llvm-objdump -t - \
 RUN:              | FileCheck %s -check-prefix COFF-i386
 RUN: llvm-objdump -t %p/Inputs/trivial-object-test.elf-i386 \
 RUN:              | FileCheck %s -check-prefix ELF-i386
 RUN: llvm-objdump -t %p/Inputs/trivial-object-test.macho-i386 \
 RUN:              | FileCheck %s -check-prefix macho-i386
 
-COFF-i386: trivial-object-test.coff-i386:     file format
+COFF-i386: file format
 COFF-i386: SYMBOL TABLE:
 COFF-i386: [  0](sec  1)(fl 0x00)(ty   0)(scl   3) (nx 1) 0x00000000 .text
 COFF-i386: AUX scnlen 0x24 nreloc 3 nlnno 0 checksum 0x0 assoc 1 comdat 0
 COFF-i386: [  2](sec  2)(fl 0x00)(ty   0)(scl   3) (nx 1) 0x00000000 .data
 COFF-i386: AUX scnlen 0xd nreloc 0 nlnno 0 checksum 0x0 assoc 2 comdat 0
-COFF-i386: [  4](sec  1)(fl 0x00)(ty 200)(scl   2) (nx 0) 0x00000000 _main
+COFF-i386: [  4](sec  1)(fl 0x00)(ty  20)(scl   2) (nx 0) 0x00000000 _main
 COFF-i386: [  5](sec  2)(fl 0x00)(ty   0)(scl   3) (nx 0) 0x00000000 L_.str
 COFF-i386: [  6](sec  0)(fl 0x00)(ty   0)(scl   2) (nx 0) 0x00000000 _puts
 COFF-i386: [  7](sec  0)(fl 0x00)(ty   0)(scl   2) (nx 0) 0x00000000 _SomeOtherFunction

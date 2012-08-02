@@ -1,7 +1,5 @@
-RUN: llvm-nm %p/Inputs/trivial-object-test.coff-i386 \
-RUN:         | FileCheck %s -check-prefix COFF
-RUN: llvm-nm %p/Inputs/trivial-object-test.coff-x86-64 \
-RUN:         | FileCheck %s -check-prefix COFF
+RUN: yaml2obj %p/COFF/i386.yaml | llvm-nm | FileCheck %s -check-prefix COFF
+RUN: yaml2obj %p/COFF/x86-64.yaml | llvm-nm | FileCheck %s -check-prefix COFF
 RUN: llvm-nm %p/Inputs/trivial-object-test.elf-i386 \
 RUN:         | FileCheck %s -check-prefix ELF
 RUN: llvm-nm %p/Inputs/trivial-object-test.elf-x86-64 \
