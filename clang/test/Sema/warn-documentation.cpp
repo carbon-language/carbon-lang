@@ -250,6 +250,18 @@ void test_tparam11();
 template<int I>
 void test_tparam12();
 
+template<typename T, typename U>
+class test_tparam13 { };
+
+/// \tparam T Aaa
+template<typename T>
+using test_tparam14 = test_tparam13<T, int>;
+
+// expected-warning@+1 {{template parameter 'U' not found in the template declaration}} expected-note@+1 {{did you mean 'T'?}}
+/// \tparam U Aaa
+template<typename T>
+using test_tparam15 = test_tparam13<T, int>;
+
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
 int test1; ///< \brief\brief Aaa

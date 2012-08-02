@@ -194,6 +194,10 @@ void DeclInfo::fill() {
   } else if (isa<ClassTemplateSpecializationDecl>(ThisDecl)) {
     IsTemplateDecl = true;
     IsTemplateSpecialization = true;
+  } else if (const TypeAliasTemplateDecl *TAT =
+                 dyn_cast<TypeAliasTemplateDecl>(ThisDecl)) {
+    IsTemplateDecl = true;
+    TemplateParameters = TAT->getTemplateParameters();
   }
   IsFilled = true;
 }
