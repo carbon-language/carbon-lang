@@ -1170,6 +1170,11 @@ void MachineVerifier::verifyLiveIntervals() {
     assert(Reg == LI.reg && "Invalid reg to interval mapping");
     verifyLiveInterval(LI);
   }
+
+  // Verify all the cached regunit intervals.
+  for (unsigned i = 0, e = TRI->getNumRegUnits(); i != e; ++i)
+    if (const LiveInterval *LI = LiveInts->getCachedRegUnit(i))
+      verifyLiveInterval(*LI);
 }
 
 void MachineVerifier::verifyLiveIntervalValue(const LiveInterval &LI,
@@ -1227,7 +1232,7 @@ void MachineVerifier::verifyLiveIntervalValue(const LiveInterval &LI,
         continue;
     } else {
       if (!TargetRegisterInfo::isPhysicalRegister(MOI->getReg()) ||
-          !TRI->regsOverlap(LI.reg, MOI->getReg()))
+          !TRI->hasRegUnit(MOI->getReg(), LI.reg))
         continue;
     }
     hasDef = true;
@@ -1292,6 +1297,11 @@ MachineVerifier::verifyLiveIntervalSegment(const LiveInterval &LI,
 
   // No more checks for live-out segments.
   if (I->end == LiveInts->getMBBEndIdx(EndMBB))
+    return;
+
+  // RegUnit intervals are allowed dead phis.
+  if (!TargetRegisterInfo::isVirtualRegister(LI.reg) && VNI->isPHIDef() &&
+      I->start == VNI->def && I->end == VNI->def.getDeadSlot())
     return;
 
   // The live segment is ending inside EndMBB
@@ -1371,7 +1381,7 @@ MachineVerifier::verifyLiveIntervalSegment(const LiveInterval &LI,
   for (;;) {
     assert(LiveInts->isLiveInToMBB(LI, MFI));
     // We don't know how to track physregs into a landing pad.
-    if (TargetRegisterInfo::isPhysicalRegister(LI.reg) &&
+    if (!TargetRegisterInfo::isVirtualRegister(LI.reg) &&
         MFI->isLandingPad()) {
       if (&*MFI == EndMBB)
         break;
