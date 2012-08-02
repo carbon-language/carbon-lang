@@ -1040,7 +1040,8 @@ public:
     // Immediate offset a multiple of 4 in range [-1020, 1020].
     if (!Memory.OffsetImm) return true;
     int64_t Val = Memory.OffsetImm->getValue();
-    return Val >= -1020 && Val <= 1020 && (Val & 3) == 0;
+    // Special case, #-0 is INT32_MIN.
+    return (Val >= -1020 && Val <= 1020 && (Val & 3) == 0) || Val == INT32_MIN;
   }
   bool isMemImm0_1020s4Offset() const {
     if (!isMemory() || Memory.OffsetRegNum != 0 || Memory.Alignment != 0)

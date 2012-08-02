@@ -3151,9 +3151,14 @@ static DecodeStatus DecodeT2LoadShift(MCInst &Inst, unsigned Insn,
 
 static DecodeStatus DecodeT2Imm8S4(MCInst &Inst, unsigned Val,
                            uint64_t Address, const void *Decoder) {
-  int imm = Val & 0xFF;
-  if (!(Val & 0x100)) imm *= -1;
-  Inst.addOperand(MCOperand::CreateImm(imm << 2));
+  if (Val == 0)
+    Inst.addOperand(MCOperand::CreateImm(INT32_MIN));
+  else {
+    int imm = Val & 0xFF;
+
+    if (!(Val & 0x100)) imm *= -1;
+    Inst.addOperand(MCOperand::CreateImm(imm << 2));
+  }
 
   return MCDisassembler::Success;
 }

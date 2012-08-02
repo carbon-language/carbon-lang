@@ -852,6 +852,9 @@ _func:
         ldrd r3, r5, [r6], #-8
         ldrd r3, r5, [r6]
         ldrd r8, r1, [r3, #0]
+        ldrd r0, r1, [r2, #-0]
+        ldrd r0, r1, [r2, #-0]!
+        ldrd r0, r1, [r2], #-0
 
 @ CHECK: ldrd	r3, r5, [r6, #24]       @ encoding: [0xd6,0xe9,0x06,0x35]
 @ CHECK: ldrd	r3, r5, [r6, #24]!      @ encoding: [0xf6,0xe9,0x06,0x35]
@@ -859,6 +862,9 @@ _func:
 @ CHECK: ldrd	r3, r5, [r6], #-8       @ encoding: [0x76,0xe8,0x02,0x35]
 @ CHECK: ldrd	r3, r5, [r6]            @ encoding: [0xd6,0xe9,0x00,0x35]
 @ CHECK: ldrd	r8, r1, [r3]            @ encoding: [0xd3,0xe9,0x00,0x81]
+@ CHECK: ldrd	r0, r1, [r2, #-0]       @ encoding: [0x52,0xe9,0x00,0x01]
+@ CHECK: ldrd	r0, r1, [r2, #-0]!      @ encoding: [0x72,0xe9,0x00,0x01]
+@ CHECK: ldrd	r0, r1, [r2], #-0       @ encoding: [0x72,0xe8,0x00,0x01]
 
 
 @------------------------------------------------------------------------------
@@ -2636,6 +2642,9 @@ _func:
         strd r3, r5, [r6], #-8
         strd r3, r5, [r6]
         strd r8, r1, [r3, #0]
+        strd r0, r1, [r2, #-0]
+        strd r0, r1, [r2, #-0]!
+        strd r0, r1, [r2], #-0
 
 @ CHECK: strd	r3, r5, [r6, #24]       @ encoding: [0xc6,0xe9,0x06,0x35]
 @ CHECK: strd	r3, r5, [r6, #24]!      @ encoding: [0xe6,0xe9,0x06,0x35]
@@ -2643,6 +2652,9 @@ _func:
 @ CHECK: strd	r3, r5, [r6], #-8       @ encoding: [0x66,0xe8,0x02,0x35]
 @ CHECK: strd	r3, r5, [r6]            @ encoding: [0xc6,0xe9,0x00,0x35]
 @ CHECK: strd	r8, r1, [r3]            @ encoding: [0xc3,0xe9,0x00,0x81]
+@ CHECK: strd   r0, r1, [r2, #-0]       @ encoding: [0x42,0xe9,0x00,0x01]
+@ CHECK: strd   r0, r1, [r2, #-0]!      @ encoding: [0x62,0xe9,0x00,0x01]
+@ CHECK: strd   r0, r1, [r2], #-0       @ encoding: [0x62,0xe8,0x00,0x01]
 
 
 @------------------------------------------------------------------------------
