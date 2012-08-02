@@ -63,7 +63,7 @@ int main()
         std::ostream os(&sb);
         const void* n = 0;
         os << n;
-        assert(sb.str() == "0x0");
+        assert(sb.str() == "0x0" || sb.str() == "(nil)");
         assert(os.good());
     }
     {
