@@ -1,5 +1,6 @@
 @ RUN: llvm-mc < %s -triple armv7-unknown-unknown -show-encoding -mattr=+neon,+vfp4   | FileCheck %s --check-prefix=ARM
 @ RUN: llvm-mc < %s -triple thumbv7-unknown-unknown -show-encoding -mattr=+neon,+vfp4 | FileCheck %s --check-prefix=THUMB
+@ RUN: llvm-mc < %s -triple thumbv7-unknown-unknown -show-encoding -mcpu=cortex-m4 | FileCheck %s --check-prefix=THUMB_V7EM
 
 @ ARM: vfma.f64 d16, d18, d17 @ encoding: [0xa1,0x0b,0xe2,0xee]
 @ THUMB: vfma.f64 d16, d18, d17 @ encoding: [0xe2,0xee,0xa1,0x0b]
@@ -7,6 +8,7 @@ vfma.f64 d16, d18, d17
 
 @ ARM: vfma.f32 s2, s4, s0 @ encoding: [0x00,0x1a,0xa2,0xee]
 @ THUMB: vfma.f32 s2, s4, s0 @ encoding: [0xa2,0xee,0x00,0x1a]
+@ THUMB_V7EM: vfma.f32 s2, s4, s0 @ encoding: [0xa2,0xee,0x00,0x1a]
 vfma.f32 s2, s4, s0
 
 @ ARM: vfma.f32 d16, d18, d17 @ encoding: [0xb1,0x0c,0x42,0xf2]
@@ -23,6 +25,7 @@ vfnma.f64 d16, d18, d17
 
 @ ARM: vfnma.f32 s2, s4, s0 @ encoding: [0x40,0x1a,0x92,0xee]
 @ THUMB: vfnma.f32 s2, s4, s0 @ encoding: [0x92,0xee,0x40,0x1a]
+@ THUMB_V7EM: vfnma.f32 s2, s4, s0 @ encoding: [0x92,0xee,0x40,0x1a]
 vfnma.f32 s2, s4, s0
 
 @ ARM: vfms.f64 d16, d18, d17 @ encoding: [0xe1,0x0b,0xe2,0xee]
@@ -31,6 +34,7 @@ vfms.f64 d16, d18, d17
 
 @ ARM: vfms.f32 s2, s4, s0 @ encoding: [0x40,0x1a,0xa2,0xee]
 @ THUMB: vfms.f32 s2, s4, s0 @ encoding: [0xa2,0xee,0x40,0x1a]
+@ THUMB_V7EM: vfms.f32 s2, s4, s0 @ encoding: [0xa2,0xee,0x40,0x1a]
 vfms.f32 s2, s4, s0
 
 @ ARM: vfms.f32 d16, d18, d17 @ encoding: [0xb1,0x0c,0x62,0xf2]

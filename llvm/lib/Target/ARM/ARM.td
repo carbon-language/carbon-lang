@@ -224,7 +224,7 @@ def : ProcNoItin<"cortex-m3",       [HasV7Ops,
 def : ProcNoItin<"cortex-m4",       [HasV7Ops,
                                      FeatureThumb2, FeatureNoARM, FeatureDB,
                                      FeatureHWDiv, FeatureDSPThumb2,
-                                     FeatureT2XtPk, FeatureVFP2,
+                                     FeatureT2XtPk, FeatureVFP4,
                                      FeatureVFPOnlySP, FeatureMClass]>;
 
 //===----------------------------------------------------------------------===//
