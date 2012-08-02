@@ -923,14 +923,43 @@ struct DeclInfo {
   /// a template.
   const TemplateParameterList *TemplateParameters;
 
+  /// A simplified description of \c ThisDecl kind that should be good enough
+  /// for documentation rendering purposes.
+  enum DeclKind {
+    /// Something that we consider a "function":
+    /// \li function,
+    /// \li function template,
+    /// \li function template specialization,
+    /// \li member function,
+    /// \li member function template,
+    /// \li member function template specialization,
+    /// \li ObjC method.
+    FunctionKind,
+
+    /// Something that we consider a "class":
+    /// \li class/struct,
+    /// \li class template,
+    /// \li class template (partial) specialization.
+    ClassKind,
+
+    /// Something that we consider a "variable":
+    /// \li namespace scope variables;
+    /// \li static and non-static class data members.
+    VariableKind,
+
+    /// A C++ namespace.
+    NamespaceKind,
+
+    /// A C++ typedef-name (a 'typedef' decl specifier or alias-declaration),
+    /// see \c TypedefNameDecl.
+    TypedefKind
+  };
+
   /// If false, only \c ThisDecl is valid.
   unsigned IsFilled : 1;
 
-  /// Is \c ThisDecl something that we consider a "function".
-  unsigned IsFunctionDecl : 1;
-
-  /// Is \c ThisDecl something that we consider a "class".
-  unsigned IsClassDecl : 1;
+  /// Simplified kind of \c ThisDecl, see\c DeclKind enum.
+  unsigned Kind : 3;
 
   /// Is \c ThisDecl a template declaration.
   unsigned IsTemplateDecl : 1;
@@ -953,6 +982,10 @@ struct DeclInfo {
   unsigned IsClassMethod : 1;
 
   void fill();
+
+  DeclKind getKind() const LLVM_READONLY {
+    return static_cast<DeclKind>(Kind);
+  }
 };
 
 /// A full comment attached to a declaration, contains block content.

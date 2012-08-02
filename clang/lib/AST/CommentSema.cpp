@@ -477,7 +477,7 @@ bool Sema::isFunctionDecl() {
     return false;
   if (!ThisDeclInfo->IsFilled)
     inspectThisDecl();
-  return ThisDeclInfo->IsFunctionDecl;
+  return ThisDeclInfo->getKind() == DeclInfo::FunctionKind;
 }
 
 bool Sema::isTemplateDecl() {

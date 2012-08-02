@@ -141,7 +141,7 @@ void DeclInfo::fill() {
   assert(!IsFilled);
 
   // Set defaults.
-  IsFunctionDecl = false;
+  Kind = FunctionKind;
   IsTemplateDecl = false;
   IsTemplateSpecialization = false;
   IsTemplatePartialSpecialization = false;
@@ -153,7 +153,7 @@ void DeclInfo::fill() {
   if (!ThisDecl) {
     // Defaults are OK.
   } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ThisDecl)) {
-    IsFunctionDecl = true;
+    Kind = FunctionKind;
     ParamVars = ArrayRef<const ParmVarDecl *>(FD->param_begin(),
                                               FD->getNumParams());
     unsigned NumLists = FD->getNumTemplateParameterLists();
@@ -169,14 +169,14 @@ void DeclInfo::fill() {
       IsClassMethod = !IsInstanceMethod;
     }
   } else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(ThisDecl)) {
-    IsFunctionDecl = true;
+    Kind = FunctionKind;
     ParamVars = ArrayRef<const ParmVarDecl *>(MD->param_begin(),
                                               MD->param_size());
     IsInstanceMethod = MD->isInstanceMethod();
     IsClassMethod = !IsInstanceMethod;
   } else if (const FunctionTemplateDecl *FTD =
                  dyn_cast<FunctionTemplateDecl>(ThisDecl)) {
-    IsFunctionDecl = true;
+    Kind = FunctionKind;
     IsTemplateDecl = true;
     const FunctionDecl *FD = FTD->getTemplatedDecl();
     ParamVars = ArrayRef<const ParmVarDecl *>(FD->param_begin(),
@@ -184,18 +184,30 @@ void DeclInfo::fill() {
     TemplateParameters = FTD->getTemplateParameters();
   } else if (const ClassTemplateDecl *CTD =
                  dyn_cast<ClassTemplateDecl>(ThisDecl)) {
+    Kind = ClassKind;
     IsTemplateDecl = true;
     TemplateParameters = CTD->getTemplateParameters();
   } else if (const ClassTemplatePartialSpecializationDecl *CTPSD =
                  dyn_cast<ClassTemplatePartialSpecializationDecl>(ThisDecl)) {
+    Kind = ClassKind;
     IsTemplateDecl = true;
     IsTemplatePartialSpecialization = true;
     TemplateParameters = CTPSD->getTemplateParameters();
   } else if (isa<ClassTemplateSpecializationDecl>(ThisDecl)) {
+    Kind = ClassKind;
     IsTemplateDecl = true;
     IsTemplateSpecialization = true;
+  } else if (isa<RecordDecl>(ThisDecl)) {
+    Kind = ClassKind;
+  } else if (isa<VarDecl>(ThisDecl) || isa<FieldDecl>(ThisDecl)) {
+    Kind = VariableKind;
+  } else if (isa<NamespaceDecl>(ThisDecl)) {
+    Kind = NamespaceKind;
+  } else if (isa<TypedefNameDecl>(ThisDecl)) {
+    Kind = TypedefKind;
   } else if (const TypeAliasTemplateDecl *TAT =
                  dyn_cast<TypeAliasTemplateDecl>(ThisDecl)) {
+    Kind = TypedefKind;
     IsTemplateDecl = true;
     TemplateParameters = TAT->getTemplateParameters();
   }
@@ -204,3 +216,4 @@ void DeclInfo::fill() {
 
 } // end namespace comments
 } // end namespace clang
+
