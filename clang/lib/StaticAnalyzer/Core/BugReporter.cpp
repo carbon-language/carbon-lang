@@ -1536,9 +1536,10 @@ void BugReporter::FlushReports() {
          I = bugTypes.begin(), E = bugTypes.end(); I != E; ++I)
     const_cast<BugType*>(*I)->FlushReports(*this);
 
-  typedef llvm::FoldingSet<BugReportEquivClass> SetTy;
-  for (SetTy::iterator EI=EQClasses.begin(), EE=EQClasses.end(); EI!=EE;++EI){
-    BugReportEquivClass& EQ = *EI;
+  typedef std::vector<BugReportEquivClass *> ContVecTy;
+  for (ContVecTy::iterator EI=EQClassesVector.begin(), EE=EQClassesVector.end();
+       EI != EE; ++EI){
+    BugReportEquivClass& EQ = **EI;
     FlushReport(EQ);
   }
 
