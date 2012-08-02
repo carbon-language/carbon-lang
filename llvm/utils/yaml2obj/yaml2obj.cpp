@@ -91,7 +91,7 @@ struct hex_pair_iterator {
   }
 
   bool operator ==(const hex_pair_iterator Other) {
-    return (IsDone == Other.IsDone == true) ||
+    return (IsDone == Other.IsDone) ||
            (Current == Other.Current && End == Other.End);
   }
 
