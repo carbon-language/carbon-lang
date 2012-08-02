@@ -349,6 +349,14 @@ public:
     return false;
   }
 
+  /// hasRegUnit - Returns true if Reg contains RegUnit.
+  bool hasRegUnit(unsigned Reg, unsigned RegUnit) const {
+    for (MCRegUnitIterator Units(Reg, this); Units.isValid(); ++Units)
+      if (*Units == RegUnit)
+        return true;
+    return false;
+  }
+
   /// isSubRegister - Returns true if regB is a sub-register of regA.
   ///
   bool isSubRegister(unsigned regA, unsigned regB) const {
