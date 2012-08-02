@@ -50,10 +50,6 @@ localization/
    locale.codecvt/
     locale.codecvt.members/
      wchar_t_out.pass.cpp: Needs investigation.
-   locale.ctype.byname/
-    is_1.pass.cpp: Fails because of bug in ctype_byname::do_[scan_]is
-     for non is-mask platforms. Patch in progress.
-    scan_is.pass.cpp: idem.
     widen_1.pass.cpp: Fails due to not converting some out of bounds
      characters the same way as expected. Needs investigation.
     widen_many.pass.cpp: idem.
