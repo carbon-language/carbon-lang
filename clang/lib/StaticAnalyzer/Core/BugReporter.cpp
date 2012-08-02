@@ -1536,6 +1536,8 @@ void BugReporter::FlushReports() {
          I = bugTypes.begin(), E = bugTypes.end(); I != E; ++I)
     const_cast<BugType*>(*I)->FlushReports(*this);
 
+  // We need to flush reports in deterministic order to ensure the order
+  // of the reports is consistent between runs.
   typedef std::vector<BugReportEquivClass *> ContVecTy;
   for (ContVecTy::iterator EI=EQClassesVector.begin(), EE=EQClassesVector.end();
        EI != EE; ++EI){

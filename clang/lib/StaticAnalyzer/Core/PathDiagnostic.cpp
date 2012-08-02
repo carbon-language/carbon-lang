@@ -148,23 +148,14 @@ void PathDiagnosticConsumer::HandlePathDiagnostic(PathDiagnostic *D) {
 
   if (PathDiagnostic *orig = Diags.FindNodeOrInsertPos(profile, InsertPos)) {
     // Keep the PathDiagnostic with the shorter path.
+    // Note, the enclosing rutine is called in deterministic order, so the
+    // results will be consistent between runs (no reason to break ties if the
+    // size is the same).
     const unsigned orig_size = orig->full_size();
     const unsigned new_size = D->full_size();
-    
-    if (orig_size <= new_size) {
-      bool shouldKeepOriginal = true;
-      if (orig_size == new_size) {
-        // Here we break ties in a fairly arbitrary, but deterministic, way.
-        llvm::FoldingSetNodeID fullProfile, fullProfileOrig;
-        D->FullProfile(fullProfile);
-        orig->FullProfile(fullProfileOrig);
-        if (fullProfile.ComputeHash() < fullProfileOrig.ComputeHash())
-          shouldKeepOriginal = false;
-      }
+    if (orig_size <= new_size)
+      return;
 
-      if (shouldKeepOriginal)
-        return;
-    }
     Diags.RemoveNode(orig);
     delete orig;
   }
