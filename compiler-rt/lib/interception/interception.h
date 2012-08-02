@@ -148,6 +148,15 @@
   INTERCEPTOR_EX(ret_type, __stdcall, func, __VA_ARGS__)
 #endif
 
+// ISO C++ forbids casting between pointer-to-function and pointer-to-object,
+// so we use casting via an integral type __interception::uptr,
+// assuming that system is POSIX-compliant. Using other hacks seem
+// challenging, as we don't even pass function type to
+// INTERCEPT_FUNCTION macro, only its name.
+namespace __interception {
+typedef unsigned long uptr;  // NOLINT
+}  // namespace __interception
+
 #define INCLUDED_FROM_INTERCEPTION_LIB
 
 #if defined(__linux__)

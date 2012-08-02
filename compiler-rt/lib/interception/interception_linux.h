@@ -23,13 +23,15 @@
 
 namespace __interception {
 // returns true if a function with the given name was found.
-bool GetRealFunctionAddress(const char *func_name, void **func_addr,
-    void *real, void *wrapper);
+bool GetRealFunctionAddress(const char *func_name, uptr *func_addr,
+    uptr real, uptr wrapper);
 }  // namespace __interception
 
 #define INTERCEPT_FUNCTION_LINUX(func) \
-    ::__interception::GetRealFunctionAddress(#func, (void**)&REAL(func), \
-    (void*)&(func), (void*)&WRAP(func))
+    ::__interception::GetRealFunctionAddress( \
+          #func, (::__interception::uptr*)&REAL(func), \
+          (::__interception::uptr)&(func), \
+          (::__interception::uptr)&WRAP(func))
 
 #endif  // INTERCEPTION_LINUX_H
 #endif  // __linux__

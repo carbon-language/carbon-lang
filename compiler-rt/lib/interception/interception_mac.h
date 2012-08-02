@@ -35,12 +35,14 @@ mach_error_t __interception_deallocate_island(void *ptr);
 
 namespace __interception {
 // returns true if the old function existed.
-bool OverrideFunction(void *old_func, void *new_func, void **orig_old_func);
+bool OverrideFunction(uptr old_func, uptr new_func, uptr *orig_old_func);
 }  // namespace __interception
 
 # define OVERRIDE_FUNCTION_MAC(old_func, new_func) \
-    ::__interception::OverrideFunction((void*)old_func, (void*)new_func, \
-                                       (void**)&REAL(old_func))
+    ::__interception::OverrideFunction( \
+          (::__interception::uptr)old_func, \
+          (::__interception::uptr)new_func, \
+          (::__interception::uptr*)&REAL(old_func))
 # define INTERCEPT_FUNCTION_MAC(func) OVERRIDE_FUNCTION_MAC(func, WRAP(func))
 
 #endif  // INTERCEPTION_MAC_H
