@@ -523,7 +523,7 @@ public:
     }
 
     // Construct the end iterator.
-    block_iterator_wrapper() : super(df_end<pointer>(0)) {}
+    block_iterator_wrapper() : super(df_end<pointer>((BasicBlock *)0)) {}
 
     /*implicit*/ block_iterator_wrapper(super I) : super(I) {}
 
