@@ -28,7 +28,7 @@ bool GetRealFunctionAddress(const char *func_name, uptr *func_addr) {
   };
   *func_addr = 0;
   for (size_t i = 0; *func_addr == 0 && DLLS[i]; ++i) {
-    *func_addr = GetProcAddress(GetModuleHandleA(DLLS[i]), func_name);
+    *func_addr = (uptr)GetProcAddress(GetModuleHandleA(DLLS[i]), func_name);
   }
   return (*func_addr != 0);
 }
