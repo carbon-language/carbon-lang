@@ -13,7 +13,7 @@ import re
 import sys
 import subprocess
 
-pipes = {}
+symbolizers = {}
 filetypes = {}
 vmaddrs = {}
 DEBUG = False
@@ -27,35 +27,29 @@ def fix_filename(file_name):
   return file_name
 
 
-# TODO(glider): need some refactoring here
-def symbolize_addr2line(line):
-  #0 0x7f6e35cf2e45  (/blah/foo.so+0x11fe45)
-  match = re.match('^( *#([0-9]+) *0x[0-9a-f]+) *\((.*)\+(0x[0-9a-f]+)\)', line)
-  if match:
-    # frameno = match.group(2)
-    binary = match.group(3)
-    addr = match.group(4)
-    if not pipes.has_key(binary):
-      pipes[binary] = subprocess.Popen(["addr2line", "-f", "-e", binary],
-                         stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    p = pipes[binary]
+class Symbolizer(object):
+  def __init__(self):
+    pass
+
+
+class LinuxSymbolizer(Symbolizer):
+  def __init__(self, binary):
+    super(LinuxSymbolizer, self).__init__()
+    self.binary = binary
+    self.pipe = self.open_addr2line()
+  def open_addr2line(self):
+    return subprocess.Popen(["addr2line", "-f", "-e", self.binary],
+                            stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+  def symbolize(self, prefix, addr, _):
     try:
-      print >> p.stdin, addr
-      function_name = p.stdout.readline().rstrip()
-      file_name     = p.stdout.readline().rstrip()
+      print >> self.pipe.stdin, addr
+      function_name = self.pipe.stdout.readline().rstrip()
+      file_name     = self.pipe.stdout.readline().rstrip()
     except Exception:
       function_name = ""
       file_name = ""
     file_name = fix_filename(file_name)
-
-    print match.group(1), "in", function_name, file_name
-  else:
-    print line.rstrip()
-
-
-class Symbolizer(object):
-  def __init__(self):
-    pass
+    return "%s%s in %s %s" % (prefix, addr, function_name, file_name)
 
 
 class DarwinSymbolizer(Symbolizer):
@@ -150,6 +144,13 @@ def BreakpadSymbolizerFactory(addr, binary):
   return None
 
 
+def SystemSymbolizerFactory(system, addr, binary):
+  if system == 'Darwin':
+    return DarwinSymbolizer(addr, binary)
+  elif system == 'Linux':
+    return LinuxSymbolizer(binary)
+
+
 class BreakpadSymbolizer(Symbolizer):
   def __init__(self, filename):
     super(BreakpadSymbolizer, self).__init__()
@@ -215,7 +216,7 @@ class BreakpadSymbolizer(Symbolizer):
       return None
 
 
-def symbolize_line(line):
+def symbolize_line(system, line):
   #0 0x7f6e35cf2e45  (/blah/foo.so+0x11fe45)
   match = re.match('^( *#([0-9]+) *)(0x[0-9a-f]+) *\((.*)\+(0x[0-9a-f]+)\)',
                    line)
@@ -227,30 +228,27 @@ def symbolize_line(line):
     addr = match.group(3)
     binary = match.group(4)
     offset = match.group(5)
-    if not pipes.has_key(binary):
+    if not symbolizers.has_key(binary):
       p = BreakpadSymbolizerFactory(addr, binary)
       if p:
-        pipes[binary] = p
+        symbolizers[binary] = p
       else:
-        pipes[binary] = DarwinSymbolizer(addr, binary)
-    result = pipes[binary].symbolize(prefix, addr, offset)
+        symbolizers[binary] = SystemSymbolizerFactory(system, addr, binary)
+    result = symbolizers[binary].symbolize(prefix, addr, offset)
     if result is None:
-      pipes[binary] = ChainSymbolizer(pipes[binary],
-                                      DarwinSymbolizer(addr, binary))
-    return pipes[binary].symbolize(prefix, addr, offset)
+      symbolizers[binary] = ChainSymbolizer(symbolizers[binary],
+          SystemSymbolizerFactory(system, addr, binary))
+    return symbolizers[binary].symbolize(prefix, addr, offset)
   else:
     return line
- 
+
 
 def main():
   system = os.uname()[0]
   if system in ['Linux', 'Darwin']:
     for line in sys.stdin:
-      if system == 'Linux':
-        symbolize_addr2line(line)
-      elif system == 'Darwin':
-        line = symbolize_line(line)
-        print line.rstrip()
+      line = symbolize_line(system, line)
+      print line.rstrip()
   else:
     print 'Unknown system: ', system
 
