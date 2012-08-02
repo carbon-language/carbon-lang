@@ -2020,7 +2020,9 @@ ValueObject::GetSyntheticExpressionPathChild(const char* expression, bool can_cr
     {
         // We haven't made a synthetic array member for expression yet, so
         // lets make one and cache it for any future reference.
-        synthetic_child_sp = GetValueForExpressionPath(expression);
+        synthetic_child_sp = GetValueForExpressionPath(expression,
+                                                       NULL, NULL, NULL,
+                                                       GetValueForExpressionPathOptions().DontAllowSyntheticChildren());
         
         // Cache the value if we got one back...
         if (synthetic_child_sp.get())
@@ -2486,10 +2488,14 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                     else if (options.m_no_synthetic_children == false) // let's try with synthetic children
                     {
                         if (root->IsSynthetic())
-                            child_valobj_sp = root;
-                        else
-                            child_valobj_sp = root->GetSyntheticValue();
-                        
+                        {
+                            *first_unparsed = expression_cstr;
+                            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonNoSuchChild;
+                            *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
+                            return ValueObjectSP();
+                        }
+
+                        child_valobj_sp = root->GetSyntheticValue();
                         if (child_valobj_sp.get())
                             child_valobj_sp = child_valobj_sp->GetChildMemberWithName(child_name, true);
                     }
@@ -2524,6 +2530,14 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                     }
                     else if (options.m_no_synthetic_children == false) // let's try with synthetic children
                     {
+                        if (root->IsSynthetic())
+                        {
+                            *first_unparsed = expression_cstr;
+                            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonNoSuchChild;
+                            *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
+                            return ValueObjectSP();
+                        }
+                        
                         child_valobj_sp = root->GetSyntheticValue(true);
                         if (child_valobj_sp)
                             child_valobj_sp = child_valobj_sp->GetChildMemberWithName(child_name, true);
