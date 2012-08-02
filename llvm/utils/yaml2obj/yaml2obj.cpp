@@ -39,7 +39,7 @@ static cl::opt<std::string>
   Input(cl::Positional, cl::desc("<input>"), cl::init("-"));
 
 template<class T>
-typename std::enable_if<std::numeric_limits<T>::is_integer, bool>::type
+typename llvm::enable_if_c<std::numeric_limits<T>::is_integer, bool>::type
 getAs(const llvm::yaml::ScalarNode *SN, T &Result) {
   SmallString<4> Storage;
   StringRef Value = SN->getValue(Storage);
