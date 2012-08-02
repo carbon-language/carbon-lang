@@ -391,20 +391,21 @@ bool PeepholeOptimizer::optimizeCmpInstr(MachineInstr *MI,
 /// register defined has a single use.
 bool PeepholeOptimizer::isLoadFoldable(MachineInstr *MI,
                                        unsigned &FoldAsLoadDefReg) {
-  if (MI->canFoldAsLoad()) {
-    const MCInstrDesc &MCID = MI->getDesc();
-    if (MCID.getNumDefs() == 1) {
-      unsigned Reg = MI->getOperand(0).getReg();
-      // To reduce compilation time, we check MRI->hasOneUse when inserting
-      // loads. It should be checked when processing uses of the load, since
-      // uses can be removed during peephole.
-      if (!MI->getOperand(0).getSubReg() &&
-          TargetRegisterInfo::isVirtualRegister(Reg) &&
-          MRI->hasOneUse(Reg)) {
-        FoldAsLoadDefReg = Reg;
-        return true;
-      }
-    }
+  if (!MI->canFoldAsLoad() || !MI->mayLoad())
+    return false;
+  const MCInstrDesc &MCID = MI->getDesc();
+  if (MCID.getNumDefs() != 1)
+    return false;
+
+  unsigned Reg = MI->getOperand(0).getReg();
+  // To reduce compilation time, we check MRI->hasOneUse when inserting
+  // loads. It should be checked when processing uses of the load, since
+  // uses can be removed during peephole.
+  if (!MI->getOperand(0).getSubReg() &&
+      TargetRegisterInfo::isVirtualRegister(Reg) &&
+      MRI->hasOneUse(Reg)) {
+    FoldAsLoadDefReg = Reg;
+    return true;
   }
   return false;
 }

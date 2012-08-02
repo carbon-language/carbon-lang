@@ -137,13 +137,16 @@ define double @ole_inverse(double %x, double %y) nounwind {
 }
 
 ; CHECK:      ogt_x:
-; CHECK-NEXT: maxsd LCP{{.*}}(%rip), %xmm0
+; CHECK-NEXT: xorp{{[sd]}} %xmm1, %xmm1
+; CHECK-NEXT: maxsd %xmm1, %xmm0
 ; CHECK-NEXT: ret
 ; UNSAFE:      ogt_x:
-; UNSAFE-NEXT: maxsd LCP{{.*}}(%rip), %xmm0
+; UNSAFE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
+; UNSAFE-NEXT: maxsd %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
 ; FINITE:      ogt_x:
-; FINITE-NEXT: maxsd LCP{{.*}}(%rip), %xmm0
+; FINITE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
+; FINITE-NEXT: maxsd %xmm1, %xmm0
 ; FINITE-NEXT: ret
 define double @ogt_x(double %x) nounwind {
   %c = fcmp ogt double %x, 0.000000e+00
@@ -152,13 +155,16 @@ define double @ogt_x(double %x) nounwind {
 }
 
 ; CHECK:      olt_x:
-; CHECK-NEXT: minsd LCP{{.*}}(%rip), %xmm0
+; CHECK-NEXT: xorp{{[sd]}} %xmm1, %xmm1
+; CHECK-NEXT: minsd %xmm1, %xmm0
 ; CHECK-NEXT: ret
 ; UNSAFE:      olt_x:
-; UNSAFE-NEXT: minsd LCP{{.*}}(%rip), %xmm0
+; UNSAFE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
+; UNSAFE-NEXT: minsd %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
 ; FINITE:      olt_x:
-; FINITE-NEXT: minsd LCP{{.*}}(%rip), %xmm0
+; FINITE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
+; FINITE-NEXT: minsd %xmm1, %xmm0
 ; FINITE-NEXT: ret
 define double @olt_x(double %x) nounwind {
   %c = fcmp olt double %x, 0.000000e+00
@@ -211,10 +217,12 @@ define double @olt_inverse_x(double %x) nounwind {
 ; CHECK:      oge_x:
 ; CHECK:      ucomisd %xmm1, %xmm0
 ; UNSAFE:      oge_x:
-; UNSAFE-NEXT: maxsd   LCP{{.*}}(%rip), %xmm0
+; UNSAFE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
+; UNSAFE-NEXT: maxsd   %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
 ; FINITE:      oge_x:
-; FINITE-NEXT: maxsd   LCP{{.*}}(%rip), %xmm0
+; FINITE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
+; FINITE-NEXT: maxsd   %xmm1, %xmm0
 ; FINITE-NEXT: ret
 define double @oge_x(double %x) nounwind {
   %c = fcmp oge double %x, 0.000000e+00
@@ -225,10 +233,12 @@ define double @oge_x(double %x) nounwind {
 ; CHECK:      ole_x:
 ; CHECK:      ucomisd %xmm0, %xmm1
 ; UNSAFE:      ole_x:
-; UNSAFE-NEXT: minsd LCP{{.*}}(%rip), %xmm0
+; UNSAFE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
+; UNSAFE-NEXT: minsd %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
 ; FINITE:      ole_x:
-; FINITE-NEXT: minsd LCP{{.*}}(%rip), %xmm0
+; FINITE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
+; FINITE-NEXT: minsd %xmm1, %xmm0
 ; FINITE-NEXT: ret
 define double @ole_x(double %x) nounwind {
   %c = fcmp ole double %x, 0.000000e+00
@@ -401,10 +411,12 @@ define double @ule_inverse(double %x, double %y) nounwind {
 ; CHECK:      ugt_x:
 ; CHECK:      ucomisd %xmm0, %xmm1
 ; UNSAFE:      ugt_x:
-; UNSAFE-NEXT: maxsd   LCP{{.*}}(%rip), %xmm0
+; UNSAFE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
+; UNSAFE-NEXT: maxsd   %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
 ; FINITE:      ugt_x:
-; FINITE-NEXT: maxsd   LCP{{.*}}(%rip), %xmm0
+; FINITE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
+; FINITE-NEXT: maxsd   %xmm1, %xmm0
 ; FINITE-NEXT: ret
 define double @ugt_x(double %x) nounwind {
   %c = fcmp ugt double %x, 0.000000e+00
@@ -415,10 +427,12 @@ define double @ugt_x(double %x) nounwind {
 ; CHECK:      ult_x:
 ; CHECK:      ucomisd %xmm1, %xmm0
 ; UNSAFE:      ult_x:
-; UNSAFE-NEXT: minsd   LCP{{.*}}(%rip), %xmm0
+; UNSAFE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
+; UNSAFE-NEXT: minsd   %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
 ; FINITE:      ult_x:
-; FINITE-NEXT: minsd   LCP{{.*}}(%rip), %xmm0
+; FINITE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
+; FINITE-NEXT: minsd   %xmm1, %xmm0
 ; FINITE-NEXT: ret
 define double @ult_x(double %x) nounwind {
   %c = fcmp ult double %x, 0.000000e+00
@@ -468,10 +482,12 @@ define double @ult_inverse_x(double %x) nounwind {
 ; CHECK-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; CHECK-NEXT: ret
 ; UNSAFE:      uge_x:
-; UNSAFE-NEXT: maxsd  LCP{{.*}}(%rip), %xmm0
+; UNSAFE-NEXT: xorp{{[sd]}}  %xmm1, %xmm1
+; UNSAFE-NEXT: maxsd  %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
 ; FINITE:      uge_x:
-; FINITE-NEXT: maxsd  LCP{{.*}}(%rip), %xmm0
+; FINITE-NEXT: xorp{{[sd]}}  %xmm1, %xmm1
+; FINITE-NEXT: maxsd  %xmm1, %xmm0
 ; FINITE-NEXT: ret
 define double @uge_x(double %x) nounwind {
   %c = fcmp uge double %x, 0.000000e+00
@@ -485,10 +501,12 @@ define double @uge_x(double %x) nounwind {
 ; CHECK-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; CHECK-NEXT: ret
 ; UNSAFE:      ule_x:
-; UNSAFE-NEXT: minsd  LCP{{.*}}(%rip), %xmm0
+; UNSAFE-NEXT: xorp{{[sd]}}  %xmm1, %xmm1
+; UNSAFE-NEXT: minsd  %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
 ; FINITE:      ule_x:
-; FINITE-NEXT: minsd  LCP{{.*}}(%rip), %xmm0
+; FINITE-NEXT: xorp{{[sd]}}  %xmm1, %xmm1
+; FINITE-NEXT: minsd  %xmm1, %xmm0
 ; FINITE-NEXT: ret
 define double @ule_x(double %x) nounwind {
   %c = fcmp ule double %x, 0.000000e+00
@@ -497,7 +515,8 @@ define double @ule_x(double %x) nounwind {
 }
 
 ; CHECK:      uge_inverse_x:
-; CHECK-NEXT: minsd LCP{{.*}}(%rip), %xmm0
+; CHECK-NEXT: xorp{{[sd]}} %xmm1, %xmm1
+; CHECK-NEXT: minsd %xmm1, %xmm0
 ; CHECK-NEXT: ret
 ; UNSAFE:      uge_inverse_x:
 ; UNSAFE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
@@ -516,7 +535,8 @@ define double @uge_inverse_x(double %x) nounwind {
 }
 
 ; CHECK:      ule_inverse_x:
-; CHECK-NEXT: maxsd LCP{{.*}}(%rip), %xmm0
+; CHECK-NEXT: xorp{{[sd]}} %xmm1, %xmm1
+; CHECK-NEXT: maxsd %xmm1, %xmm0
 ; CHECK-NEXT: ret
 ; UNSAFE:      ule_inverse_x:
 ; UNSAFE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
