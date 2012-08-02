@@ -463,8 +463,21 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
 
     os << "':\n";
 
-    if (max > 1)
-      os << "</td></tr></table>";
+    if (max > 1) {
+      os << "</td>";
+      if (num < max) {
+        os << "<td><div class=\"PathNav\"><a href=\"#";
+        if (num == max - 1)
+          os << "EndPath";
+        else
+          os << "Path" << (num + 1);
+        os << "\" title=\"Next event ("
+        << (num + 1)
+        << ")\">&#x2192;</a></div></td>";
+      }
+
+      os << "</tr></table>";
+    }
 
     // Within a macro piece.  Write out each event.
     ProcessMacroPiece(os, *MP, 0);
