@@ -90,3 +90,29 @@ namespace PR13440 {
     clang_analyzer_eval(s2.x[0] == 42); // expected-warning{{TRUE}}
   }
 }
+
+void testRef() {
+  int *x = 0;
+  int &y = *x; // expected-warning{{Dereference of null pointer}}
+  y = 5;
+}
+
+
+// ------------------------------------
+// False negatives
+// ------------------------------------
+
+namespace rdar11212286 {
+  class B{};
+
+  B test() {
+    B *x = 0;
+    return *x; // should warn here!
+  }
+
+  B &testRef() {
+    B *x = 0;
+    return *x; // should warn here!
+  }
+
+}

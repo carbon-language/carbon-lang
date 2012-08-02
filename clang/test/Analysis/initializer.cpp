@@ -43,3 +43,24 @@ void testIndirectMember() {
   IndirectMember obj(3);
   clang_analyzer_eval(obj.getX() == 3); // expected-warning{{TRUE}}
 }
+
+
+// ------------------------------------
+// False negatives
+// ------------------------------------
+
+struct RefWrapper {
+  RefWrapper(int *p) : x(*p) {}
+  RefWrapper(int &r) : x(r) {}
+  int &x;
+};
+
+void testReferenceMember() {
+  int *p = 0;
+  RefWrapper X(p); // should warn in the constructor
+}
+
+void testReferenceMember2() {
+  int *p = 0;
+  RefWrapper X(*p); // should warn here
+}

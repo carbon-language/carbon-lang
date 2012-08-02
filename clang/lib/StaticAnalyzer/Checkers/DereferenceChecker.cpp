@@ -26,13 +26,18 @@ using namespace ento;
 namespace {
 class DereferenceChecker
     : public Checker< check::Location,
-                        EventDispatcher<ImplicitNullDerefEvent> > {
+                      check::Bind,
+                      EventDispatcher<ImplicitNullDerefEvent> > {
   mutable OwningPtr<BuiltinBug> BT_null;
   mutable OwningPtr<BuiltinBug> BT_undef;
+
+  void reportBug(ProgramStateRef State, const Stmt *S, CheckerContext &C,
+                 bool IsBind = false) const;
 
 public:
   void checkLocation(SVal location, bool isLoad, const Stmt* S,
                      CheckerContext &C) const;
+  void checkBind(SVal L, SVal V, const Stmt *S, CheckerContext &C) const;
 
   static const MemRegion *AddDerefSource(raw_ostream &os,
                              SmallVectorImpl<SourceRange> &Ranges,
@@ -76,6 +81,108 @@ DereferenceChecker::AddDerefSource(raw_ostream &os,
   return sourceR;
 }
 
+void DereferenceChecker::reportBug(ProgramStateRef State, const Stmt *S,
+                                   CheckerContext &C, bool IsBind) const {
+  // Generate an error node.
+  ExplodedNode *N = C.generateSink(State);
+  if (!N)
+    return;
+
+  // We know that 'location' cannot be non-null.  This is what
+  // we call an "explicit" null dereference.
+  if (!BT_null)
+    BT_null.reset(new BuiltinBug("Dereference of null pointer"));
+
+  SmallString<100> buf;
+  SmallVector<SourceRange, 2> Ranges;
+
+  // Walk through lvalue casts to get the original expression
+  // that syntactically caused the load.
+  if (const Expr *expr = dyn_cast<Expr>(S))
+    S = expr->IgnoreParenLValueCasts();
+
+  const MemRegion *sourceR = 0;
+
+  if (IsBind) {
+    if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(S)) {
+      if (BO->isAssignmentOp())
+        S = BO->getRHS();
+    } else if (const DeclStmt *DS = dyn_cast<DeclStmt>(S)) {
+      assert(DS->isSingleDecl() && "We process decls one by one");
+      if (const VarDecl *VD = dyn_cast<VarDecl>(DS->getSingleDecl()))
+        if (const Expr *Init = VD->getAnyInitializer())
+          S = Init;
+    }
+  }
+
+  switch (S->getStmtClass()) {
+  case Stmt::ArraySubscriptExprClass: {
+    llvm::raw_svector_ostream os(buf);
+    os << "Array access";
+    const ArraySubscriptExpr *AE = cast<ArraySubscriptExpr>(S);
+    sourceR = AddDerefSource(os, Ranges, AE->getBase()->IgnoreParenCasts(),
+                             State.getPtr(), N->getLocationContext());
+    os << " results in a null pointer dereference";
+    break;
+  }
+  case Stmt::UnaryOperatorClass: {
+    llvm::raw_svector_ostream os(buf);
+    os << "Dereference of null pointer";
+    const UnaryOperator *U = cast<UnaryOperator>(S);
+    sourceR = AddDerefSource(os, Ranges, U->getSubExpr()->IgnoreParens(),
+                             State.getPtr(), N->getLocationContext(), true);
+    break;
+  }
+  case Stmt::MemberExprClass: {
+    const MemberExpr *M = cast<MemberExpr>(S);
+    if (M->isArrow()) {
+      llvm::raw_svector_ostream os(buf);
+      os << "Access to field '" << M->getMemberNameInfo()
+         << "' results in a dereference of a null pointer";
+      sourceR = AddDerefSource(os, Ranges, M->getBase()->IgnoreParenCasts(),
+                               State.getPtr(), N->getLocationContext(), true);
+    }
+    break;
+  }
+  case Stmt::ObjCIvarRefExprClass: {
+    const ObjCIvarRefExpr *IV = cast<ObjCIvarRefExpr>(S);
+    if (const DeclRefExpr *DR =
+        dyn_cast<DeclRefExpr>(IV->getBase()->IgnoreParenCasts())) {
+      if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
+        llvm::raw_svector_ostream os(buf);
+        os << "Instance variable access (via '" << VD->getName()
+           << "') results in a null pointer dereference";
+      }
+    }
+    Ranges.push_back(IV->getSourceRange());
+    break;
+  }
+  default:
+    break;
+  }
+
+  BugReport *report =
+    new BugReport(*BT_null,
+                  buf.empty() ? BT_null->getDescription() : buf.str(),
+                  N);
+
+  report->addVisitor(
+    bugreporter::getTrackNullOrUndefValueVisitor(N,
+                                                 bugreporter::GetDerefExpr(N),
+                                                 report));
+
+  for (SmallVectorImpl<SourceRange>::iterator
+       I = Ranges.begin(), E = Ranges.end(); I!=E; ++I)
+    report->addRange(*I);
+
+  if (sourceR) {
+    report->markInteresting(sourceR);
+    report->markInteresting(State->getRawSVal(loc::MemRegionVal(sourceR)));
+  }
+
+  C.EmitReport(report);
+}
+
 void DereferenceChecker::checkLocation(SVal l, bool isLoad, const Stmt* S,
                                        CheckerContext &C) const {
   // Check for dereference of an undefined value.
@@ -101,115 +208,66 @@ void DereferenceChecker::checkLocation(SVal l, bool isLoad, const Stmt* S,
     return;
 
   ProgramStateRef state = C.getState();
-  const LocationContext *LCtx = C.getLocationContext();
+
   ProgramStateRef notNullState, nullState;
   llvm::tie(notNullState, nullState) = state->assume(location);
 
   // The explicit NULL case.
   if (nullState) {
     if (!notNullState) {
-      // Generate an error node.
-      ExplodedNode *N = C.generateSink(nullState);
-      if (!N)
-        return;
-
-      // We know that 'location' cannot be non-null.  This is what
-      // we call an "explicit" null dereference.
-      if (!BT_null)
-        BT_null.reset(new BuiltinBug("Dereference of null pointer"));
-
-      SmallString<100> buf;
-      SmallVector<SourceRange, 2> Ranges;
-      
-      // Walk through lvalue casts to get the original expression
-      // that syntactically caused the load.
-      if (const Expr *expr = dyn_cast<Expr>(S))
-        S = expr->IgnoreParenLValueCasts();
-      
-      const MemRegion *sourceR = 0;
-
-      switch (S->getStmtClass()) {
-        case Stmt::ArraySubscriptExprClass: {
-          llvm::raw_svector_ostream os(buf);
-          os << "Array access";
-          const ArraySubscriptExpr *AE = cast<ArraySubscriptExpr>(S);
-          sourceR =
-            AddDerefSource(os, Ranges, AE->getBase()->IgnoreParenCasts(),
-                           state.getPtr(), LCtx);
-          os << " results in a null pointer dereference";
-          break;
-        }
-        case Stmt::UnaryOperatorClass: {
-          llvm::raw_svector_ostream os(buf);
-          os << "Dereference of null pointer";
-          const UnaryOperator *U = cast<UnaryOperator>(S);
-          sourceR =
-            AddDerefSource(os, Ranges, U->getSubExpr()->IgnoreParens(),
-                           state.getPtr(), LCtx, true);
-          break;
-        }
-        case Stmt::MemberExprClass: {
-          const MemberExpr *M = cast<MemberExpr>(S);
-          if (M->isArrow()) {
-            llvm::raw_svector_ostream os(buf);
-            os << "Access to field '" << M->getMemberNameInfo()
-               << "' results in a dereference of a null pointer";
-            sourceR =
-              AddDerefSource(os, Ranges, M->getBase()->IgnoreParenCasts(),
-                             state.getPtr(), LCtx, true);
-          }
-          break;
-        }
-        case Stmt::ObjCIvarRefExprClass: {
-          const ObjCIvarRefExpr *IV = cast<ObjCIvarRefExpr>(S);
-          if (const DeclRefExpr *DR =
-              dyn_cast<DeclRefExpr>(IV->getBase()->IgnoreParenCasts())) {
-            if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
-              llvm::raw_svector_ostream os(buf);
-              os << "Instance variable access (via '" << VD->getName()
-                 << "') results in a null pointer dereference";
-            }
-          }
-          Ranges.push_back(IV->getSourceRange());
-          break;
-        }
-        default:
-          break;
-      }
-
-      BugReport *report =
-        new BugReport(*BT_null,
-                              buf.empty() ? BT_null->getDescription():buf.str(),
-                              N);
-
-      report->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N,
-                                        bugreporter::GetDerefExpr(N), report));
-
-      for (SmallVectorImpl<SourceRange>::iterator
-            I = Ranges.begin(), E = Ranges.end(); I!=E; ++I)
-        report->addRange(*I);
-
-      if (sourceR) {
-        report->markInteresting(sourceR);
-        report->markInteresting(state->getRawSVal(loc::MemRegionVal(sourceR)));
-      }
-
-      C.EmitReport(report);
+      reportBug(nullState, S, C);
       return;
     }
-    else {
-      // Otherwise, we have the case where the location could either be
-      // null or not-null.  Record the error node as an "implicit" null
-      // dereference.
-      if (ExplodedNode *N = C.generateSink(nullState)) {
-        ImplicitNullDerefEvent event = { l, isLoad, N, &C.getBugReporter() };
-        dispatchEvent(event);
-      }
+
+    // Otherwise, we have the case where the location could either be
+    // null or not-null.  Record the error node as an "implicit" null
+    // dereference.
+    if (ExplodedNode *N = C.generateSink(nullState)) {
+      ImplicitNullDerefEvent event = { l, isLoad, N, &C.getBugReporter() };
+      dispatchEvent(event);
     }
   }
 
   // From this point forward, we know that the location is not null.
   C.addTransition(notNullState);
+}
+
+void DereferenceChecker::checkBind(SVal L, SVal V, const Stmt *S,
+                                   CheckerContext &C) const {
+  // If we're binding to a reference, check if the value is potentially null.
+  if (V.isUndef())
+    return;
+
+  const MemRegion *MR = L.getAsRegion();
+  const TypedValueRegion *TVR = dyn_cast_or_null<TypedValueRegion>(MR);
+  if (!TVR)
+    return;
+
+  if (!TVR->getValueType()->isReferenceType())
+    return;
+
+  ProgramStateRef State = C.getState();
+
+  ProgramStateRef StNonNull, StNull;
+  llvm::tie(StNonNull, StNull) = State->assume(cast<DefinedOrUnknownSVal>(V));
+
+  if (StNull) {
+    if (!StNonNull) {
+      reportBug(StNull, S, C, /*isBind=*/true);
+      return;
+    }
+
+    // At this point the value could be either null or non-null.
+    // Record this as an "implicit" null dereference.
+    if (ExplodedNode *N = C.generateSink(StNull)) {
+      ImplicitNullDerefEvent event = { V, /*isLoad=*/true, N,
+                                       &C.getBugReporter() };
+      dispatchEvent(event);
+    }
+  }
+
+  // From here on out, assume the value is non-null.
+  C.addTransition(StNonNull);
 }
 
 void ento::registerDereferenceChecker(CheckerManager &mgr) {

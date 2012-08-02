@@ -271,10 +271,24 @@ class Rdar9212495_A : public Rdar9212495_B {};
 const Rdar9212495_A& rdar9212495(const Rdar9212495_C* ptr) {
   const Rdar9212495_A& val = dynamic_cast<const Rdar9212495_A&>(*ptr);
   
+  // This is not valid C++; dynamic_cast with a reference type will throw an
+  // exception if the pointer does not match the expected type.
   if (&val == 0) {
-    val.bar(); // FIXME: This should eventually be a null dereference.
+    val.bar(); // no warning (unreachable)
+    int *p = 0;
+    *p = 0xDEAD; // no warning (unreachable)
   }
   
+  return val;
+}
+
+const Rdar9212495_A* rdar9212495_ptr(const Rdar9212495_C* ptr) {
+  const Rdar9212495_A* val = dynamic_cast<const Rdar9212495_A*>(ptr);
+
+  if (val == 0) {
+    val->bar(); // expected-warning{{Called C++ object pointer is null}}
+  }
+
   return val;
 }
 
