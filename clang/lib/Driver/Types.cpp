@@ -67,7 +67,8 @@ bool types::appendSuffixForType(ID Id) {
 bool types::canLipoType(ID Id) {
   return (Id == TY_Nothing ||
           Id == TY_Image ||
-          Id == TY_Object);
+          Id == TY_Object ||
+          Id == TY_LTO_BC);
 }
 
 bool types::isAcceptedByClang(ID Id) {
