@@ -12,9 +12,13 @@
 #include "vector"
 #include "future"
 #include <sys/types.h>
-#if !_WIN32 && !__sun__
+#if !_WIN32
+#if !__sun__ && !__linux__
 #include <sys/sysctl.h>
-#endif // _WIN32
+#else
+#include <unistd.h>
+#endif // !__sun__ && !__linux__
+#endif // !_WIN32
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
@@ -60,6 +64,11 @@ thread::hardware_concurrency() _NOEXCEPT
     std::size_t s = sizeof(n);
     sysctl(mib, 2, &n, &s, 0, 0);
     return n;
+#elif defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 200112L) && defined(_SC_NPROCESSORS_ONLN)
+    long result = sysconf(_SC_NPROCESSORS_ONLN);
+    if (result < 0 || result > UINT_MAX)
+        result = 0;
+    return result;
 #else  // defined(CTL_HW) && defined(HW_NCPU)
     // TODO: grovel through /proc or check cpuid on x86 and similar
     // instructions on other architectures.
