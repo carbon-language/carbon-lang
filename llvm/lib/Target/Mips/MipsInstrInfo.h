@@ -33,6 +33,8 @@ protected:
 public:
   explicit MipsInstrInfo(MipsTargetMachine &TM, unsigned UncondBrOpc);
 
+  static const MipsInstrInfo *create(MipsTargetMachine &TM);
+
   /// Branch Analysis
   virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
                              MachineBasicBlock *&FBB,
@@ -97,6 +99,10 @@ namespace Mips {
                 DebugLoc DL, bool LastInstrIsADDiu,
                 MipsAnalyzeImmediate::Inst *LastInst);
 }
+
+/// Create MipsInstrInfo objects.
+const MipsInstrInfo *createMips16InstrInfo(MipsTargetMachine &TM);
+const MipsInstrInfo *createMipsSEInstrInfo(MipsTargetMachine &TM);
 
 }
 

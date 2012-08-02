@@ -31,6 +31,13 @@ MipsInstrInfo::MipsInstrInfo(MipsTargetMachine &tm, unsigned UncondBr)
   : MipsGenInstrInfo(Mips::ADJCALLSTACKDOWN, Mips::ADJCALLSTACKUP),
     TM(tm), UncondBrOpc(UncondBr) {}
 
+const MipsInstrInfo *MipsInstrInfo::create(MipsTargetMachine &TM) {
+  if (TM.getSubtargetImpl()->inMips16Mode())
+    return llvm::createMips16InstrInfo(TM);
+
+  return llvm::createMipsSEInstrInfo(TM);
+}
+
 bool MipsInstrInfo::isZeroImm(const MachineOperand &op) const {
   return op.isImm() && op.getImm() == 0;
 }

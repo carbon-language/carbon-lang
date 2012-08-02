@@ -126,3 +126,7 @@ void Mips16InstrInfo::ExpandRetRA16(MachineBasicBlock &MBB,
                                   unsigned Opc) const {
   BuildMI(MBB, I, I->getDebugLoc(), get(Opc));
 }
+
+const MipsInstrInfo *llvm::createMips16InstrInfo(MipsTargetMachine &TM) {
+  return new Mips16InstrInfo(TM);
+}

@@ -314,3 +314,7 @@ void MipsSEInstrInfo::ExpandBuildPairF64(MachineBasicBlock &MBB,
   BuildMI(MBB, I, dl, Mtc1Tdd, TRI.getSubReg(DstReg, Mips::sub_fpodd))
     .addReg(HiReg);
 }
+
+const MipsInstrInfo *llvm::createMipsSEInstrInfo(MipsTargetMachine &TM) {
+  return new MipsSEInstrInfo(TM);
+}

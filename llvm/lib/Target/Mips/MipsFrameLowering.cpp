@@ -15,6 +15,7 @@
 #include "MipsAnalyzeImmediate.h"
 #include "MipsInstrInfo.h"
 #include "MipsMachineFunction.h"
+#include "MipsTargetMachine.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -80,6 +81,14 @@ using namespace llvm;
 // their real location.
 //
 //===----------------------------------------------------------------------===//
+
+const MipsFrameLowering *MipsFrameLowering::create(MipsTargetMachine &TM,
+                                                   const MipsSubtarget &ST) {
+  if (TM.getSubtargetImpl()->inMips16Mode())
+    return llvm::createMips16FrameLowering(ST);
+
+  return llvm::createMipsSEFrameLowering(ST);
+}
 
 // hasFP - Return true if the specified function should have a dedicated frame
 // pointer register.  This is true if the function has variable sized allocas or

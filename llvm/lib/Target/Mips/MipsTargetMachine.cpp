@@ -13,10 +13,8 @@
 
 #include "MipsTargetMachine.h"
 #include "Mips.h"
-#include "Mips16FrameLowering.h"
-#include "Mips16InstrInfo.h"
-#include "MipsSEFrameLowering.h"
-#include "MipsSEInstrInfo.h"
+#include "MipsFrameLowering.h"
+#include "MipsInstrInfo.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -28,29 +26,6 @@ extern "C" void LLVMInitializeMipsTarget() {
   RegisterTargetMachine<MipselTargetMachine> Y(TheMipselTarget);
   RegisterTargetMachine<MipsebTargetMachine> A(TheMips64Target);
   RegisterTargetMachine<MipselTargetMachine> B(TheMips64elTarget);
-}
-
-static const MipsInstrInfo *genInstrInfo(MipsTargetMachine &TM) {
-  const MipsInstrInfo *II;
-
-  if (TM.getSubtargetImpl()->inMips16Mode())
-    II = new Mips16InstrInfo(TM);
-  else
-    II = new MipsSEInstrInfo(TM);
-
-  return II;
-}
-
-static const MipsFrameLowering *genFrameLowering(MipsTargetMachine &TM,
-                                                 const MipsSubtarget &ST) {
-  const MipsFrameLowering *FL;
-
-  if (TM.getSubtargetImpl()->inMips16Mode())
-    FL = new Mips16FrameLowering(ST);
-  else
-    FL = new MipsSEFrameLowering(ST);
-
-  return FL;
 }
 
 // DataLayout --> Big-endian, 32-bit pointer/ABI/alignment
@@ -75,8 +50,8 @@ MipsTargetMachine(const Target &T, StringRef TT,
                (Subtarget.isABI_N64() ?
                 "E-p:64:64:64-i8:8:32-i16:16:32-i64:64:64-f128:128:128-n32" :
                 "E-p:32:32:32-i8:8:32-i16:16:32-i64:64:64-n32")),
-    InstrInfo(genInstrInfo(*this)),
-    FrameLowering(genFrameLowering(*this, Subtarget)),
+    InstrInfo(MipsInstrInfo::create(*this)),
+    FrameLowering(MipsFrameLowering::create(*this, Subtarget)),
     TLInfo(*this), TSInfo(*this), JITInfo() {
 }
 

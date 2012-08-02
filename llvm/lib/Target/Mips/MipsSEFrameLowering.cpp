@@ -203,3 +203,8 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   if (hasFP(MF))
     MRI.setPhysRegUsed(FP);
 }
+
+const MipsFrameLowering *
+llvm::createMipsSEFrameLowering(const MipsSubtarget &ST) {
+  return new MipsSEFrameLowering(ST);
+}

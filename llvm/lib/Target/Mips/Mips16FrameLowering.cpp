@@ -80,3 +80,8 @@ void Mips16FrameLowering::
 processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                      RegScavenger *RS) const {
 }
+
+const MipsFrameLowering *
+llvm::createMips16FrameLowering(const MipsSubtarget &ST) {
+  return new Mips16FrameLowering(ST);
+}
