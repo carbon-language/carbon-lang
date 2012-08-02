@@ -95,8 +95,8 @@ RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
   SourceLocation DeclLoc;
   if (isa<ObjCMethodDecl>(D) || isa<ObjCContainerDecl>(D) ||
       isa<ObjCPropertyDecl>(D) ||
-      isa<FunctionTemplateDecl>(D) ||
-      isa<ClassTemplateDecl>(D) || isa<ClassTemplateSpecializationDecl>(D))
+      isa<RedeclarableTemplateDecl>(D) ||
+      isa<ClassTemplateSpecializationDecl>(D))
     DeclLoc = D->getLocStart();
   else
     DeclLoc = D->getLocation();
