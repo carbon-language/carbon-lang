@@ -971,7 +971,7 @@ include "ARMInstrFormats.td"
 let TwoOperandAliasConstraint = "$Rn = $Rd" in
 multiclass AsI1_bin_irs<bits<4> opcod, string opc,
                      InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
-                        PatFrag opnode, string baseOpc, bit Commutable = 0> {
+                        PatFrag opnode, bit Commutable = 0> {
   // The register-immediate version is re-materializable. This is useful
   // in particular for taking the address of a local.
   let isReMaterializable = 1 in {
@@ -1040,7 +1040,7 @@ multiclass AsI1_bin_irs<bits<4> opcod, string opc,
 let TwoOperandAliasConstraint = "$Rn = $Rd" in
 multiclass AsI1_rbin_irs<bits<4> opcod, string opc,
                      InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
-                        PatFrag opnode, string baseOpc, bit Commutable = 0> {
+                        PatFrag opnode, bit Commutable = 0> {
   // The register-immediate version is re-materializable. This is useful
   // in particular for taking the address of a local.
   let isReMaterializable = 1 in {
@@ -1288,7 +1288,7 @@ class AI_exta_rrot_np<bits<8> opcod, string opc>
 /// AI1_adde_sube_irs - Define instructions and patterns for adde and sube.
 let TwoOperandAliasConstraint = "$Rn = $Rd" in
 multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
-                             string baseOpc, bit Commutable = 0> {
+                             bit Commutable = 0> {
   let hasPostISelHook = 1, Defs = [CPSR], Uses = [CPSR] in {
   def ri : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
                 DPFrm, IIC_iALUi, opc, "\t$Rd, $Rn, $imm",
@@ -1354,8 +1354,7 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
 
 /// AI1_rsc_irs - Define instructions and patterns for rsc
 let TwoOperandAliasConstraint = "$Rn = $Rd" in
-multiclass AI1_rsc_irs<bits<4> opcod, string opc, PatFrag opnode,
-                       string baseOpc> {
+multiclass AI1_rsc_irs<bits<4> opcod, string opc, PatFrag opnode> {
   let hasPostISelHook = 1, Defs = [CPSR], Uses = [CPSR] in {
   def ri : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
                 DPFrm, IIC_iALUi, opc, "\t$Rd, $Rn, $imm",
@@ -3029,10 +3028,10 @@ def UBFX  : I<(outs GPR:$Rd),
 
 defm ADD  : AsI1_bin_irs<0b0100, "add",
                          IIC_iALUi, IIC_iALUr, IIC_iALUsr,
-                         BinOpFrag<(add  node:$LHS, node:$RHS)>, "ADD", 1>;
+                         BinOpFrag<(add  node:$LHS, node:$RHS)>, 1>;
 defm SUB  : AsI1_bin_irs<0b0010, "sub",
                          IIC_iALUi, IIC_iALUr, IIC_iALUsr,
-                         BinOpFrag<(sub  node:$LHS, node:$RHS)>, "SUB">;
+                         BinOpFrag<(sub  node:$LHS, node:$RHS)>>;
 
 // ADD and SUB with 's' bit set.
 //
@@ -3050,15 +3049,13 @@ defm SUBS : AsI1_bin_s_irs<IIC_iALUi, IIC_iALUr, IIC_iALUsr,
                            BinOpFrag<(ARMsubc node:$LHS, node:$RHS)>>;
 
 defm ADC : AI1_adde_sube_irs<0b0101, "adc",
-                  BinOpWithFlagFrag<(ARMadde node:$LHS, node:$RHS, node:$FLAG)>,
-                          "ADC", 1>;
+              BinOpWithFlagFrag<(ARMadde node:$LHS, node:$RHS, node:$FLAG)>, 1>;
 defm SBC : AI1_adde_sube_irs<0b0110, "sbc",
-                  BinOpWithFlagFrag<(ARMsube node:$LHS, node:$RHS, node:$FLAG)>,
-                          "SBC">;
+              BinOpWithFlagFrag<(ARMsube node:$LHS, node:$RHS, node:$FLAG)>>;
 
-defm RSB  : AsI1_rbin_irs <0b0011, "rsb",
-                         IIC_iALUi, IIC_iALUr, IIC_iALUsr,
-                         BinOpFrag<(sub node:$LHS, node:$RHS)>, "RSB">;
+defm RSB  : AsI1_rbin_irs<0b0011, "rsb",
+                          IIC_iALUi, IIC_iALUr, IIC_iALUsr,
+                          BinOpFrag<(sub node:$LHS, node:$RHS)>>;
 
 // FIXME: Eliminate them if we can write def : Pat patterns which defines
 // CPSR and the implicit def of CPSR is not needed.
@@ -3066,8 +3063,7 @@ defm RSBS : AsI1_rbin_s_is<IIC_iALUi, IIC_iALUr, IIC_iALUsr,
                            BinOpFrag<(ARMsubc node:$LHS, node:$RHS)>>;
 
 defm RSC : AI1_rsc_irs<0b0111, "rsc",
-                  BinOpWithFlagFrag<(ARMsube node:$LHS, node:$RHS, node:$FLAG)>,
-                       "RSC">;
+                BinOpWithFlagFrag<(ARMsube node:$LHS, node:$RHS, node:$FLAG)>>;
 
 // (sub X, imm) gets canonicalized to (add X, -imm).  Match this form.
 // The assume-no-carry-in form uses the negation of the input since add/sub
@@ -3276,16 +3272,16 @@ def : ARMV6Pat<(int_arm_usat GPRnopc:$a, imm:$pos),
 
 defm AND   : AsI1_bin_irs<0b0000, "and",
                           IIC_iBITi, IIC_iBITr, IIC_iBITsr,
-                          BinOpFrag<(and node:$LHS, node:$RHS)>, "AND", 1>;
+                          BinOpFrag<(and node:$LHS, node:$RHS)>, 1>;
 defm ORR   : AsI1_bin_irs<0b1100, "orr",
                           IIC_iBITi, IIC_iBITr, IIC_iBITsr,
-                          BinOpFrag<(or  node:$LHS, node:$RHS)>, "ORR", 1>;
+                          BinOpFrag<(or  node:$LHS, node:$RHS)>, 1>;
 defm EOR   : AsI1_bin_irs<0b0001, "eor",
                           IIC_iBITi, IIC_iBITr, IIC_iBITsr,
-                          BinOpFrag<(xor node:$LHS, node:$RHS)>, "EOR", 1>;
+                          BinOpFrag<(xor node:$LHS, node:$RHS)>, 1>;
 defm BIC   : AsI1_bin_irs<0b1110, "bic",
                           IIC_iBITi, IIC_iBITr, IIC_iBITsr,
-                          BinOpFrag<(and node:$LHS, (not node:$RHS))>, "BIC">;
+                          BinOpFrag<(and node:$LHS, (not node:$RHS))>>;
 
 // FIXME: bf_inv_mask_imm should be two operands, the lsb and the msb, just
 // like in the actual instruction encoding. The complexity of mapping the mask
