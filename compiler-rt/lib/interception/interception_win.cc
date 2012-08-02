@@ -14,22 +14,23 @@
 
 #ifdef _WIN32
 
+#include "interception.h"
 #include <windows.h>
 
 namespace __interception {
 
-bool GetRealFunctionAddress(const char *func_name, void **func_addr) {
+bool GetRealFunctionAddress(const char *func_name, uptr *func_addr) {
   const char *DLLS[] = {
     "msvcr80.dll",
     "msvcr90.dll",
     "kernel32.dll",
     NULL
   };
-  *func_addr = NULL;
-  for (size_t i = 0; *func_addr == NULL && DLLS[i]; ++i) {
+  *func_addr = 0;
+  for (size_t i = 0; *func_addr == 0 && DLLS[i]; ++i) {
     *func_addr = GetProcAddress(GetModuleHandleA(DLLS[i]), func_name);
   }
-  return (*func_addr != NULL);
+  return (*func_addr != 0);
 }
 
 // FIXME: internal_str* and internal_mem* functions should be moved from the
@@ -55,7 +56,7 @@ static void WriteJumpInstruction(char *jmp_from, char *to) {
   *(ptrdiff_t*)(jmp_from + 1) = offset;
 }
 
-bool OverrideFunction(void *old_func, void *new_func, void **orig_old_func) {
+bool OverrideFunction(uptr old_func, uptr new_func, uptr *orig_old_func) {
 #ifdef _WIN64
 # error OverrideFunction was not tested on x64
 #endif
@@ -125,20 +126,21 @@ bool OverrideFunction(void *old_func, void *new_func, void **orig_old_func) {
 
   // Now put the "jump to trampoline" instruction into the original code.
   DWORD old_prot, unused_prot;
-  if (!VirtualProtect(old_func, head, PAGE_EXECUTE_READWRITE, &old_prot))
+  if (!VirtualProtect((void*)old_func, head, PAGE_EXECUTE_READWRITE,
+                      &old_prot))
     return false;
 
   // Put the needed instructions into the trampoline bytes.
   _memcpy(trampoline, old_bytes, head);
   WriteJumpInstruction(trampoline + head, old_bytes + head);
-  *orig_old_func = trampoline;
+  *orig_old_func = (uptr)trampoline;
   pool_used += head + 5;
 
   // Intercept the 'old_func'.
   WriteJumpInstruction(old_bytes, (char*)new_func);
   _memset(old_bytes + 5, 0xCC /* int 3 */, head - 5);
 
-  if (!VirtualProtect(old_func, head, old_prot, &unused_prot))
+  if (!VirtualProtect((void*)old_func, head, old_prot, &unused_prot))
     return false;  // not clear if this failure bothers us.
 
   return true;

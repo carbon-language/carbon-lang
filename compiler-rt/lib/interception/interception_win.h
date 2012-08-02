@@ -23,19 +23,22 @@
 
 namespace __interception {
 // returns true if a function with the given name was found.
-bool GetRealFunctionAddress(const char *func_name, void **func_addr);
+bool GetRealFunctionAddress(const char *func_name, uptr *func_addr);
 
 // returns true if the old function existed, false on failure.
-bool OverrideFunction(void *old_func, void *new_func, void **orig_old_func);
+bool OverrideFunction(uptr old_func, uptr new_func, uptr *orig_old_func);
 }  // namespace __interception
 
 #if defined(_DLL)
 # define INTERCEPT_FUNCTION_WIN(func) \
-    ::__interception::GetRealFunctionAddress(#func, (void**)&REAL(func))
+    ::__interception::GetRealFunctionAddress( \
+        #func, (::__interception::uptr*)&REAL(func))
 #else
 # define INTERCEPT_FUNCTION_WIN(func) \
-    ::__interception::OverrideFunction((void*)func, (void*)WRAP(func), \
-                                       (void**)&REAL(func))
+    ::__interception::OverrideFunction( \
+        (::__interception::uptr)func, \
+        (::__interception::uptr)WRAP(func), \
+        (::__interception::uptr*)&REAL(func))
 #endif
 
 #endif  // INTERCEPTION_WIN_H
