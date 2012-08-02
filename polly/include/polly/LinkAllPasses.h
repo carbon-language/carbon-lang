@@ -28,7 +28,6 @@ namespace llvm {
 using namespace llvm;
 
 namespace polly {
-  Pass *createAffSCEVItTesterPass();
 #ifdef CLOOG_FOUND
   Pass *createCloogExporterPass();
   Pass *createCloogInfoPass();
@@ -81,7 +80,6 @@ namespace {
       if (std::getenv("bar") != (char*) -1)
         return;
 
-       createAffSCEVItTesterPass();
 #ifdef CLOOG_FOUND
        createCloogExporterPass();
        createCloogInfoPass();
