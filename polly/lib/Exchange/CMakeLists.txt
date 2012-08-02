@@ -16,3 +16,5 @@ add_polly_library(PollyExchange
   ${POLLY_OPENSCOP_FILES}
   ${POLLY_SCOPLIB_FILES}
 )
+
+target_link_libraries(PollyExchange PollyJSON)
