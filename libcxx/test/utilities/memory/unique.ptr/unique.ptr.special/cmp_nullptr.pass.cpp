@@ -43,8 +43,6 @@ void do_nothing(int*) {}
 
 int main()
 {
-    int* ptr1(new int);
-    int* ptr2(new int);
     const std::unique_ptr<int> p1(new int(1));
     assert(!(p1 == nullptr));
     assert(!(nullptr == p1));
