@@ -20,7 +20,6 @@
 #include "clang/Basic/OperatorKinds.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/VersionTuple.h"
-#include "clang/AST/Comment.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/LambdaMangleContext.h"
 #include "clang/AST/NestedNameSpecifier.h"
@@ -80,6 +79,10 @@ namespace clang {
   class UnresolvedSetIterator;
 
   namespace Builtin { class Context; }
+
+  namespace comments {
+    class FullComment;
+  }
 
 /// ASTContext - This class holds long-lived AST nodes (such as types and
 /// decls) that can be referred to throughout the semantic analysis of a file.

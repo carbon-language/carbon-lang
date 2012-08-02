@@ -13,6 +13,7 @@
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CharUnits.h"
+#include "clang/AST/Comment.h"
 #include "clang/AST/CommentLexer.h"
 #include "clang/AST/CommentSema.h"
 #include "clang/AST/CommentParser.h"
