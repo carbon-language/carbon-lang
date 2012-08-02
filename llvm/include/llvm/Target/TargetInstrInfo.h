@@ -14,6 +14,7 @@
 #ifndef LLVM_TARGET_TARGETINSTRINFO_H
 #define LLVM_TARGET_TARGETINSTRINFO_H
 
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/CodeGen/DFAPacketizer.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -691,6 +692,16 @@ public:
                                     int Mask, int Value,
                                     const MachineRegisterInfo *MRI) const {
     return false;
+  }
+
+  /// optimizeLoadInstr - Try to remove the load by folding it to a register
+  /// operand at the use. We fold the load instructions if and only if the
+  /// def and use are in the same BB.
+  virtual MachineInstr* optimizeLoadInstr(MachineInstr *MI,
+                        const MachineRegisterInfo *MRI,
+                        unsigned &FoldAsLoadDefReg,
+                        MachineInstr *&DefMI) const {
+    return 0;
   }
 
   /// FoldImmediate - 'Reg' is known to be defined by a move immediate

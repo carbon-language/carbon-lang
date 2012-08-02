@@ -45,3 +45,29 @@ L:
 
 }
 
+; rdar://10554090
+; xor in exit block will be CSE'ed and load will be folded to xor in entry.
+define i1 @test3(i32* %P, i32* %Q) nounwind {
+; CHECK: test3:
+; CHECK: movl 8(%esp), %eax
+; CHECK: xorl (%eax),
+; CHECK: j
+; CHECK-NOT: xor
+entry:
+  %0 = load i32* %P, align 4
+  %1 = load i32* %Q, align 4
+  %2 = xor i32 %0, %1
+  %3 = and i32 %2, 65535
+  %4 = icmp eq i32 %3, 0
+  br i1 %4, label %exit, label %land.end
+
+exit:
+  %shr.i.i19 = xor i32 %1, %0
+  %5 = and i32 %shr.i.i19, 2147418112
+  %6 = icmp eq i32 %5, 0
+  br label %land.end
+
+land.end:
+  %7 = phi i1 [ %6, %exit ], [ false, %entry ]
+  ret i1 %7
+}

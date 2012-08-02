@@ -3323,6 +3323,81 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
   return true;
 }
 
+/// optimizeLoadInstr - Try to remove the load by folding it to a register
+/// operand at the use. We fold the load instructions if load defines a virtual
+/// register, the virtual register is used once in the same BB, and the
+/// instructions in-between do not load or store, and have no side effects.
+MachineInstr* X86InstrInfo::
+optimizeLoadInstr(MachineInstr *MI, const MachineRegisterInfo *MRI,
+                  unsigned &FoldAsLoadDefReg,
+                  MachineInstr *&DefMI) const {
+  if (FoldAsLoadDefReg == 0)
+    return 0;
+  // To be conservative, if there exists another load, clear the load candidate.
+  if (MI->mayLoad()) {
+    FoldAsLoadDefReg = 0;
+    return 0;
+  }
+
+  // Check whether we can move DefMI here.
+  DefMI = MRI->getVRegDef(FoldAsLoadDefReg);
+  assert(DefMI);
+  bool SawStore = false;
+  if (!DefMI->isSafeToMove(this, 0, SawStore))
+    return 0;
+
+  // We try to commute MI if possible.
+  unsigned IdxEnd = (MI->isCommutable()) ? 2 : 1;
+  for (unsigned Idx = 0; Idx < IdxEnd; Idx++) {
+    // Collect information about virtual register operands of MI.
+    unsigned SrcOperandId = 0;
+    bool FoundSrcOperand = false;
+    for (unsigned i = 0, e = MI->getDesc().getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = MI->getOperand(i);
+      if (!MO.isReg())
+        continue;
+      unsigned Reg = MO.getReg();
+      if (Reg != FoldAsLoadDefReg)
+        continue;
+      // Do not fold if we have a subreg use or a def or multiple uses.
+      if (MO.getSubReg() || MO.isDef() || FoundSrcOperand)
+        return 0;
+
+      SrcOperandId = i;
+      FoundSrcOperand = true;
+    }
+    if (!FoundSrcOperand) return 0;
+
+    // Check whether we can fold the def into SrcOperandId.
+    SmallVector<unsigned, 8> Ops;
+    Ops.push_back(SrcOperandId);
+    MachineInstr *FoldMI = foldMemoryOperand(MI, Ops, DefMI);
+    if (FoldMI) {
+      FoldAsLoadDefReg = 0;
+      return FoldMI;
+    }
+
+    if (Idx == 1) {
+      // MI was changed but it didn't help, commute it back!
+      commuteInstruction(MI, false);
+      return 0;
+    }
+
+    // Check whether we can commute MI and enable folding.
+    if (MI->isCommutable()) {
+      MachineInstr *NewMI = commuteInstruction(MI, false);
+      // Unable to commute.
+      if (!NewMI) return 0;
+      if (NewMI != MI) {
+        // New instruction. It doesn't need to be kept.
+        NewMI->eraseFromParent();
+        return 0;
+      }
+    }
+  }
+  return 0;
+}
+
 /// Expand2AddrUndef - Expand a single-def pseudo instruction to a two-addr
 /// instruction with two undef reads of the register being defined.  This is
 /// used for mapping:
