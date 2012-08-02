@@ -3494,19 +3494,8 @@ static DecodeStatus DecodeThumbBLTargetOperand(MCInst &Inst, unsigned Val,
 
 static DecodeStatus DecodeMemBarrierOption(MCInst &Inst, unsigned Val,
                                    uint64_t Address, const void *Decoder) {
-  switch (Val) {
-  default:
+  if (Val & ~0xf)
     return MCDisassembler::Fail;
-  case 0xF: // SY
-  case 0xE: // ST
-  case 0xB: // ISH
-  case 0xA: // ISHST
-  case 0x7: // NSH
-  case 0x6: // NSHST
-  case 0x3: // OSH
-  case 0x2: // OSHST
-    break;
-  }
 
   Inst.addOperand(MCOperand::CreateImm(Val));
   return MCDisassembler::Success;

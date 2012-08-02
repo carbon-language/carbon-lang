@@ -120,14 +120,22 @@ namespace ARM_MB {
   // The Memory Barrier Option constants map directly to the 4-bit encoding of
   // the option field for memory barrier operations.
   enum MemBOpt {
-    SY    = 15,
-    ST    = 14,
-    ISH   = 11,
-    ISHST = 10,
-    NSH   = 7,
-    NSHST = 6,
+    RESERVED_0 = 0,
+    RESERVED_1 = 1,
+    OSHST = 2,
     OSH   = 3,
-    OSHST = 2
+    RESERVED_4 = 4,
+    RESERVED_5 = 5,
+    NSHST = 6,
+    NSH   = 7,
+    RESERVED_8 = 8,
+    RESERVED_9 = 9,
+    ISHST = 10,
+    ISH   = 11,
+    RESERVED_12 = 12,
+    RESERVED_13 = 13,
+    ST    = 14,
+    SY    = 15
   };
 
   inline static const char *MemBOptToString(unsigned val) {
@@ -135,12 +143,20 @@ namespace ARM_MB {
     default: llvm_unreachable("Unknown memory operation");
     case SY:    return "sy";
     case ST:    return "st";
+    case RESERVED_13: return "#0xd";
+    case RESERVED_12: return "#0xc";
     case ISH:   return "ish";
     case ISHST: return "ishst";
+    case RESERVED_9: return "#0x9";
+    case RESERVED_8: return "#0x8";
     case NSH:   return "nsh";
     case NSHST: return "nshst";
+    case RESERVED_5: return "#0x5";
+    case RESERVED_4: return "#0x4";
     case OSH:   return "osh";
     case OSHST: return "oshst";
+    case RESERVED_1: return "#0x1";
+    case RESERVED_0: return "#0x0";
     }
   }
 } // namespace ARM_MB

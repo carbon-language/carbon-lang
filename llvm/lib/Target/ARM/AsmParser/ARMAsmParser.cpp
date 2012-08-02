@@ -3279,29 +3279,59 @@ ARMAsmParser::OperandMatchResultTy ARMAsmParser::
 parseMemBarrierOptOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
-  if (!Tok.is(AsmToken::Identifier))
-    return MatchOperand_NoMatch;
-  StringRef OptStr = Tok.getString();
+  unsigned Opt;
 
-  unsigned Opt = StringSwitch<unsigned>(OptStr.slice(0, OptStr.size()).lower())
-    .Case("sy",    ARM_MB::SY)
-    .Case("st",    ARM_MB::ST)
-    .Case("sh",    ARM_MB::ISH)
-    .Case("ish",   ARM_MB::ISH)
-    .Case("shst",  ARM_MB::ISHST)
-    .Case("ishst", ARM_MB::ISHST)
-    .Case("nsh",   ARM_MB::NSH)
-    .Case("un",    ARM_MB::NSH)
-    .Case("nshst", ARM_MB::NSHST)
-    .Case("unst",  ARM_MB::NSHST)
-    .Case("osh",   ARM_MB::OSH)
-    .Case("oshst", ARM_MB::OSHST)
-    .Default(~0U);
+  if (Tok.is(AsmToken::Identifier)) {
+    StringRef OptStr = Tok.getString();
 
-  if (Opt == ~0U)
-    return MatchOperand_NoMatch;
+    Opt = StringSwitch<unsigned>(OptStr.slice(0, OptStr.size()).lower())
+      .Case("sy",    ARM_MB::SY)
+      .Case("st",    ARM_MB::ST)
+      .Case("sh",    ARM_MB::ISH)
+      .Case("ish",   ARM_MB::ISH)
+      .Case("shst",  ARM_MB::ISHST)
+      .Case("ishst", ARM_MB::ISHST)
+      .Case("nsh",   ARM_MB::NSH)
+      .Case("un",    ARM_MB::NSH)
+      .Case("nshst", ARM_MB::NSHST)
+      .Case("unst",  ARM_MB::NSHST)
+      .Case("osh",   ARM_MB::OSH)
+      .Case("oshst", ARM_MB::OSHST)
+      .Default(~0U);
 
-  Parser.Lex(); // Eat identifier token.
+    if (Opt == ~0U)
+      return MatchOperand_NoMatch;
+
+    Parser.Lex(); // Eat identifier token.
+  } else if (Tok.is(AsmToken::Hash) ||
+             Tok.is(AsmToken::Dollar) ||
+             Tok.is(AsmToken::Integer)) {
+    if (Parser.getTok().isNot(AsmToken::Integer))
+      Parser.Lex(); // Eat the '#'.
+    SMLoc Loc = Parser.getTok().getLoc();
+
+    const MCExpr *MemBarrierID;
+    if (getParser().ParseExpression(MemBarrierID)) {
+      Error(Loc, "illegal expression");
+      return MatchOperand_ParseFail;
+    }
+    
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(MemBarrierID);
+    if (!CE) {
+      Error(Loc, "constant expression expected");
+      return MatchOperand_ParseFail;
+    }
+
+    int Val = CE->getValue();
+    if (Val & ~0xf) {
+      Error(Loc, "immediate value out of range");
+      return MatchOperand_ParseFail;
+    }
+
+    Opt = ARM_MB::RESERVED_0 + Val;
+  } else
+    return MatchOperand_ParseFail;
+
   Operands.push_back(ARMOperand::CreateMemBarrierOpt((ARM_MB::MemBOpt)Opt, S));
   return MatchOperand_Success;
 }
