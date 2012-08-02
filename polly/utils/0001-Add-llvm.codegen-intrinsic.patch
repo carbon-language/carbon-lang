@@ -1,4 +1,4 @@
-From 99a052044158acb8e53385be47c09db20019df20 Mon Sep 17 00:00:00 2001
+From 6cf5becb06fc6c960e3862577e2280610d301fba Mon Sep 17 00:00:00 2001
 From: Yabin Hu <yabin.hwu@gmail.com>
 Date: Tue, 3 Jul 2012 11:21:45 +0800
 Subject: [PATCH] Add llvm.codegen intrinsic.
@@ -27,7 +27,7 @@ different to the one of the parent module.
  create mode 100644 test/CodeGen/X86/EmbeddedCG/lit.local.cfg
 
 diff --git a/docs/LangRef.html b/docs/LangRef.html
-index ba653db..b442bcc 100644
+index ef58b98..274a4d3 100644
 --- a/docs/LangRef.html
 +++ b/docs/LangRef.html
 @@ -242,6 +242,7 @@
@@ -38,7 +38,7 @@ index ba653db..b442bcc 100644
          </ol>
        </li>
        <li><a href="#int_libc">Standard C Library Intrinsics</a>
-@@ -7055,6 +7056,41 @@ LLVM</a>.</p>
+@@ -7060,6 +7061,41 @@ LLVM</a>.</p>
  
  </div>
  
@@ -81,10 +81,10 @@ index ba653db..b442bcc 100644
  
  <!-- ======================================================================= -->
 diff --git a/include/llvm/CodeGen/Passes.h b/include/llvm/CodeGen/Passes.h
-index 4a24ab0..2375222 100644
+index 0cddff8..047f48a 100644
 --- a/include/llvm/CodeGen/Passes.h
 +++ b/include/llvm/CodeGen/Passes.h
-@@ -419,6 +419,9 @@ namespace llvm {
+@@ -427,6 +427,9 @@ namespace llvm {
    /// branch folding).
    extern char &GCMachineCodeAnalysisID;
  
@@ -95,7 +95,7 @@ index 4a24ab0..2375222 100644
    ///
    FunctionPass *createGCInfoDeleter();
 diff --git a/include/llvm/InitializePasses.h b/include/llvm/InitializePasses.h
-index c2cb7c2..fb1e575 100644
+index de97957..9f32374 100644
 --- a/include/llvm/InitializePasses.h
 +++ b/include/llvm/InitializePasses.h
 @@ -91,6 +91,7 @@ void initializeCorrelatedValuePropagationPass(PassRegistry&);
@@ -107,10 +107,10 @@ index c2cb7c2..fb1e575 100644
  void initializeDeadInstEliminationPass(PassRegistry&);
  void initializeDeadMachineInstructionElimPass(PassRegistry&);
 diff --git a/include/llvm/Intrinsics.td b/include/llvm/Intrinsics.td
-index 95fd843..8088ff1 100644
+index d1a0fee..11d7a02 100644
 --- a/include/llvm/Intrinsics.td
 +++ b/include/llvm/Intrinsics.td
-@@ -228,6 +228,10 @@ def int_readcyclecounter : Intrinsic<[llvm_i64_ty]>;
+@@ -232,6 +232,10 @@ def int_readcyclecounter : Intrinsic<[llvm_i64_ty]>;
  // guard to the correct place on the stack frame.
  def int_stackprotector : Intrinsic<[], [llvm_ptr_ty, llvm_ptrptr_ty], []>;
  
@@ -122,7 +122,7 @@ index 95fd843..8088ff1 100644
  //
  
 diff --git a/lib/CodeGen/CMakeLists.txt b/lib/CodeGen/CMakeLists.txt
-index a2ce7a0..f070518 100644
+index 2e189ad..9f01b40 100644
 --- a/lib/CodeGen/CMakeLists.txt
 +++ b/lib/CodeGen/CMakeLists.txt
 @@ -6,6 +6,7 @@ add_llvm_library(LLVMCodeGen
@@ -134,7 +134,7 @@ index a2ce7a0..f070518 100644
    CriticalAntiDepBreaker.cpp
    DeadMachineInstructionElim.cpp
 diff --git a/lib/CodeGen/CodeGen.cpp b/lib/CodeGen/CodeGen.cpp
-index 7b015d8..06b3979 100644
+index fb2c2e8..47895c3 100644
 --- a/lib/CodeGen/CodeGen.cpp
 +++ b/lib/CodeGen/CodeGen.cpp
 @@ -21,6 +21,7 @@ using namespace llvm;
@@ -144,7 +144,7 @@ index 7b015d8..06b3979 100644
 +  initializeCodeGenIntrinsicPass(Registry);
    initializeCodePlacementOptPass(Registry);
    initializeDeadMachineInstructionElimPass(Registry);
-   initializeExpandPostRAPass(Registry);
+   initializeEarlyIfConverterPass(Registry);
 diff --git a/lib/CodeGen/CodeGenIntrinsic.cpp b/lib/CodeGen/CodeGenIntrinsic.cpp
 new file mode 100644
 index 0000000..8b43754
@@ -381,10 +381,10 @@ index 0000000..8b43754
 +  return MadeChange;
 +}
 diff --git a/lib/CodeGen/Passes.cpp b/lib/CodeGen/Passes.cpp
-index 9693780..db91bbe 100644
+index 69d6d00..c053aba 100644
 --- a/lib/CodeGen/Passes.cpp
 +++ b/lib/CodeGen/Passes.cpp
-@@ -354,6 +354,9 @@ void TargetPassConfig::addIRPasses() {
+@@ -362,6 +362,9 @@ void TargetPassConfig::addIRPasses() {
  
    addPass(createGCLoweringPass());
  
@@ -395,10 +395,10 @@ index 9693780..db91bbe 100644
    addPass(createUnreachableBlockEliminationPass());
  }
 diff --git a/lib/CodeGen/SelectionDAG/SelectionDAGBuilder.cpp b/lib/CodeGen/SelectionDAG/SelectionDAGBuilder.cpp
-index 42b9099..6eba1ce 100644
+index 2cdc41b..68b9161 100644
 --- a/lib/CodeGen/SelectionDAG/SelectionDAGBuilder.cpp
 +++ b/lib/CodeGen/SelectionDAG/SelectionDAGBuilder.cpp
-@@ -5185,6 +5185,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
+@@ -5190,6 +5190,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
    case Intrinsic::donothing:
      // ignore
      return 0;
@@ -487,5 +487,5 @@ index 0000000..7180c84
 +if not 'NVPTX' in targets:
 +    config.unsupported = True
 -- 
-1.7.6.5
+1.7.3.4
 
