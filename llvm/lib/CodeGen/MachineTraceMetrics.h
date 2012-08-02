@@ -174,6 +174,11 @@ public:
     /// Instruction heights have been computed. This implies hasValidHeight().
     bool HasValidInstrHeights;
 
+    /// Critical path length. This is the number of cycles in the longest data
+    /// dependency chain through the trace. This is only valid when both
+    /// HasValidInstrDepths and HasValidInstrHeights are set.
+    unsigned CriticalPath;
+
     /// Live-in registers. These registers are defined above the current block
     /// and used by this block or a block below it.
     /// This does not include PHI uses in the current block, but it does
@@ -224,6 +229,7 @@ public:
     void computeTrace(const MachineBasicBlock*);
     void computeDepthResources(const MachineBasicBlock*);
     void computeHeightResources(const MachineBasicBlock*);
+    unsigned computeCrossBlockCriticalPath(const TraceBlockInfo&);
     void computeInstrDepths(const MachineBasicBlock*);
     void computeInstrHeights(const MachineBasicBlock*);
     void addLiveIns(const MachineInstr *DefMI,

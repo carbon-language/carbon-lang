@@ -645,6 +645,37 @@ static void updatePhysDepsDownwards(const MachineInstr *UseMI,
   }
 }
 
+/// The length of the critical path through a trace is the maximum of two path
+/// lengths:
+///
+/// 1. The maximum height+depth over all instructions in the trace center block.
+///
+/// 2. The longest cross-block dependency chain. For small blocks, it is
+///    possible that the critical path through the trace doesn't include any
+///    instructions in the block.
+///
+/// This function computes the second number from the live-in list of the
+/// center block.
+unsigned MachineTraceMetrics::Ensemble::
+computeCrossBlockCriticalPath(const TraceBlockInfo &TBI) {
+  assert(TBI.HasValidInstrDepths && "Missing depth info");
+  assert(TBI.HasValidInstrHeights && "Missing height info");
+  unsigned MaxLen = 0;
+  for (unsigned i = 0, e = TBI.LiveIns.size(); i != e; ++i) {
+    const LiveInReg &LIR = TBI.LiveIns[i];
+    if (!TargetRegisterInfo::isVirtualRegister(LIR.Reg))
+      continue;
+    const MachineInstr *DefMI = MTM.MRI->getVRegDef(LIR.Reg);
+    // Ignore dependencies outside the current trace.
+    const TraceBlockInfo &DefTBI = BlockInfo[DefMI->getParent()->getNumber()];
+    if (!DefTBI.hasValidDepth() || DefTBI.Head != TBI.Head)
+      continue;
+    unsigned Len = LIR.Height + Cycles[DefMI].Depth;
+    MaxLen = std::max(MaxLen, Len);
+  }
+  return MaxLen;
+}
+
 /// Compute instruction depths for all instructions above or in MBB in its
 /// trace. This assumes that the trace through MBB has already been computed.
 void MachineTraceMetrics::Ensemble::
@@ -676,6 +707,12 @@ computeInstrDepths(const MachineBasicBlock *MBB) {
     DEBUG(dbgs() << "Depths for BB#" << MBB->getNumber() << ":\n");
     TraceBlockInfo &TBI = BlockInfo[MBB->getNumber()];
     TBI.HasValidInstrDepths = true;
+    TBI.CriticalPath = 0;
+
+    // Also compute the critical path length through MBB when possible.
+    if (TBI.HasValidInstrHeights)
+      TBI.CriticalPath = computeCrossBlockCriticalPath(TBI);
+
     for (MachineBasicBlock::const_iterator I = MBB->begin(), E = MBB->end();
          I != E; ++I) {
       const MachineInstr *UseMI = I;
@@ -707,8 +744,16 @@ computeInstrDepths(const MachineBasicBlock *MBB) {
         Cycle = std::max(Cycle, DepCycle);
       }
       // Remember the instruction depth.
-      Cycles[UseMI].Depth = Cycle;
-      DEBUG(dbgs() << Cycle << '\t' << *UseMI);
+      InstrCycles &MICycles = Cycles[UseMI];
+      MICycles.Depth = Cycle;
+
+      if (!TBI.HasValidInstrHeights) {
+        DEBUG(dbgs() << Cycle << '\t' << *UseMI);
+        continue;
+      }
+      // Update critical path length.
+      TBI.CriticalPath = std::max(TBI.CriticalPath, Cycle + MICycles.Height);
+      DEBUG(dbgs() << TBI.CriticalPath << '\t' << Cycle << '\t' << *UseMI);
     }
   }
 }
@@ -877,6 +922,7 @@ computeInstrHeights(const MachineBasicBlock *MBB) {
     DEBUG(dbgs() << "Heights for BB#" << MBB->getNumber() << ":\n");
     TraceBlockInfo &TBI = BlockInfo[MBB->getNumber()];
     TBI.HasValidInstrHeights = true;
+    TBI.CriticalPath = 0;
 
     // Get dependencies from PHIs in the trace successor.
     if (TBI.Succ) {
@@ -918,13 +964,20 @@ computeInstrHeights(const MachineBasicBlock *MBB) {
         Cycle = updatePhysDepsUpwards(MI, Cycle, RegUnits,
                                       MTM.ItinData, MTM.TII, MTM.TRI);
 
-      DEBUG(dbgs() << Cycle << '\t' << *MI);
-      Cycles[MI].Height = Cycle;
-
       // Update the required height of any virtual registers read by MI.
       for (unsigned i = 0, e = Deps.size(); i != e; ++i)
         if (pushDepHeight(Deps[i], MI, Cycle, Heights, MTM.ItinData, MTM.TII))
           addLiveIns(Deps[i].DefMI, Stack);
+
+      InstrCycles &MICycles = Cycles[MI];
+      MICycles.Height = Cycle;
+      if (!TBI.HasValidInstrDepths) {
+        DEBUG(dbgs() << Cycle << '\t' << *MI);
+        continue;
+      }
+      // Update critical path length.
+      TBI.CriticalPath = std::max(TBI.CriticalPath, Cycle + MICycles.Depth);
+      DEBUG(dbgs() << TBI.CriticalPath << '\t' << Cycle << '\t' << *MI);
     }
 
     // Update virtual live-in heights. They were added by addLiveIns() with a 0
@@ -945,6 +998,13 @@ computeInstrHeights(const MachineBasicBlock *MBB) {
                    << '@' << RI->Cycle);
     }
     DEBUG(dbgs() << '\n');
+
+    if (!TBI.HasValidInstrDepths)
+      continue;
+    // Add live-ins to the critical path length.
+    TBI.CriticalPath = std::max(TBI.CriticalPath,
+                                computeCrossBlockCriticalPath(TBI));
+    DEBUG(dbgs() << "Critical path: " << TBI.CriticalPath << '\n');
   }
 }
 
@@ -990,6 +1050,8 @@ void MachineTraceMetrics::TraceBlockInfo::print(raw_ostream &OS) const {
       OS << " +instrs";
   } else
     OS << "height invalid";
+  if (HasValidInstrDepths && HasValidInstrHeights)
+    OS << ", crit=" << CriticalPath;
 }
 
 void MachineTraceMetrics::Trace::print(raw_ostream &OS) const {
@@ -999,6 +1061,8 @@ void MachineTraceMetrics::Trace::print(raw_ostream &OS) const {
      << " --> BB#" << TBI.Tail << ':';
   if (TBI.hasValidHeight() && TBI.hasValidDepth())
     OS << ' ' << getInstrCount() << " instrs.";
+  if (TBI.HasValidInstrDepths && TBI.HasValidInstrHeights)
+    OS << ' ' << TBI.CriticalPath << " cycles.";
 
   const MachineTraceMetrics::TraceBlockInfo *Block = &TBI;
   OS << "\nBB#" << MBBNum;
