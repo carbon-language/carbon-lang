@@ -11,10 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-def uimm5      : Operand<i8> {
-  let DecoderMethod= "DecodeSimm16";
-}
-
 //
 // RRR-type instruction format
 //
@@ -58,6 +54,20 @@ class FEXT_2RI16_ins<bits<5> _op, string asmstr,
 //
 // RR-type instruction format
 //
+
+class FRR16_ins<bits<5> f, string asmstr, InstrItinClass itin> :
+  FRR16<f, (outs CPU16Regs:$rx), (ins CPU16Regs:$ry),
+        !strconcat(asmstr, "\t$rx, $ry"), [], itin> {
+}
+
+class FRxRxRy16_ins<bits<5> f, string asmstr,
+                    InstrItinClass itin> :
+  FRR16<f, (outs CPU16Regs:$rz), (ins CPU16Regs:$rx, CPU16Regs:$ry),
+            !strconcat(asmstr, "\t$rz, $ry"),
+            [], itin> {
+  let Constraints = "$rx = $rz";
+}
+
 let rx=0 in
 class FRR16_JALRC_RA_only_ins<bits<1> nd_, bits<1> l_,
                               string asmstr, InstrItinClass itin>:
@@ -73,11 +83,16 @@ class FEXT_RRI16_mem_ins<bits<5> op, string asmstr, Operand MemOpnd,
   FEXT_RRI16<op, (outs CPU16Regs:$ry), (ins  MemOpnd:$addr),
              !strconcat(asmstr, "\t$ry, $addr"), [], itin>;
 
+class FEXT_RRI16_mem2_ins<bits<5> op, string asmstr, Operand MemOpnd,
+                          InstrItinClass itin>:
+  FEXT_RRI16<op, (outs ), (ins  CPU16Regs:$ry, MemOpnd:$addr),
+             !strconcat(asmstr, "\t$ry, $addr"), [], itin>;
+
 //
 // EXT-SHIFT instruction format
 //
 class FEXT_SHIFT16_ins<bits<2> _f, string asmstr, InstrItinClass itin>:
-  FEXT_SHIFT16<_f, (outs CPU16Regs:$rx), (ins CPU16Regs:$ry, uimm5:$sa),
+  FEXT_SHIFT16<_f, (outs CPU16Regs:$rx), (ins CPU16Regs:$ry, shamt:$sa),
                !strconcat(asmstr, "\t$rx, $ry, $sa"), [], itin>;
 
 //
@@ -89,17 +104,27 @@ def mem16 : Operand<i32> {
 }
 
 //
+// Some general instruction class info
+//
+//
+
+class ArithLogic16Defs<bit isCom=0> {
+  bits<5> shamt = 0;
+  bit isCommutable = isCom;
+  bit isReMaterializable = 1;
+  bit neverHasSideEffects = 1;
+}
+
+//
 
 // Format: ADDIU rx, immediate MIPS16e
 // Purpose: Add Immediate Unsigned Word (2-Operand, Extended)
 // To add a constant to a 32-bit integer.
 //
-class AddiuRxImmX16_base: FEXT_RI16_ins<0b01001, "addiu", IIAlu>;
-def AddiuRxImmX16: AddiuRxImmX16_base;
+def AddiuRxImmX16: FEXT_RI16_ins<0b01001, "addiu", IIAlu>;
 
-
-class AddiuRxRxImmX16_base: FEXT_2RI16_ins<0b01001, "addiu", IIAlu>;
-def AddiuRxRxImmX16: AddiuRxRxImmX16_base;
+def AddiuRxRxImmX16: FEXT_2RI16_ins<0b01001, "addiu", IIAlu>,
+  ArithLogic16Defs<0>;
 
 //
 
@@ -107,16 +132,21 @@ def AddiuRxRxImmX16: AddiuRxRxImmX16_base;
 // Purpose: Add Immediate Unsigned Word (3-Operand, PC-Relative, Extended)
 // To add a constant to the program counter.
 //
-class AddiuRxPcImmX16_base : FEXT_RI16_PC_ins<0b00001, "addiu", IIAlu>;
-def AddiuRxPcImmX16   : AddiuRxPcImmX16_base;
+def AddiuRxPcImmX16: FEXT_RI16_PC_ins<0b00001, "addiu", IIAlu>;
 //
 // Format: ADDU rz, rx, ry MIPS16e
 // Purpose: Add Unsigned Word (3-Operand)
 // To add 32-bit integers.
 //
 
-class AdduRxRyRz16_base: FRRR16_ins<01, "addu", IIAlu>;
-def AdduRxRyRz16: AdduRxRyRz16_base;
+def AdduRxRyRz16: FRRR16_ins<01, "addu", IIAlu>, ArithLogic16Defs<1>;
+
+//
+// Format: AND rx, ry MIPS16e
+// Purpose: AND
+// To do a bitwise logical AND.
+
+def AndRxRxRy16: FRxRxRy16_ins<0b01100, "and", IIAlu>, ArithLogic16Defs<1>;
 
 //
 // Format: JR ra MIPS16e
@@ -126,6 +156,34 @@ def AdduRxRyRz16: AdduRxRyRz16_base;
 //
 
 def JrRa16: FRR16_JALRC_RA_only_ins<0, 0, "jr", IIAlu>;
+
+//
+// Format: LB ry, offset(rx) MIPS16e
+// Purpose: Load Byte (Extended)
+// To load a byte from memory as a signed value.
+//
+def LbRxRyOffMemX16: FEXT_RRI16_mem_ins<0b10011, "lb", mem16, IIAlu>;
+
+//
+// Format: LBU ry, offset(rx) MIPS16e
+// Purpose: Load Byte Unsigned (Extended)
+// To load a byte from memory as a unsigned value.
+//
+def LbuRxRyOffMemX16: FEXT_RRI16_mem_ins<0b10100, "lbu", mem16, IIAlu>;
+
+//
+// Format: LH ry, offset(rx) MIPS16e
+// Purpose: Load Halfword signed (Extended)
+// To load a halfword from memory as a signed value.
+//
+def LhRxRyOffMemX16: FEXT_RRI16_mem_ins<0b10100, "lh", mem16, IIAlu>;
+
+//
+// Format: LHU ry, offset(rx) MIPS16e
+// Purpose: Load Halfword unsigned (Extended)
+// To load a halfword from memory as an unsigned value.
+//
+def LhuRxRyOffMemX16: FEXT_RRI16_mem_ins<0b10100, "lhu", mem16, IIAlu>;
 
 //
 // Format: LI rx, immediate MIPS16e
@@ -139,8 +197,7 @@ def LiRxImmX16: FEXT_RI16_ins<0b01101, "li", IIAlu>;
 // Purpose: Load Word (Extended)
 // To load a word from memory as a signed value.
 //
-class LwRxRyOffMemX16_base: FEXT_RRI16_mem_ins<0b10011, "lw", mem16, IIAlu>;
-def LwRxRyOffMemX16: LwRxRyOffMemX16_base;
+def LwRxRyOffMemX16: FEXT_RRI16_mem_ins<0b10011, "lw", mem16, IIAlu>;
 
 //
 // Format: MOVE r32, rz MIPS16e
@@ -148,6 +205,28 @@ def LwRxRyOffMemX16: LwRxRyOffMemX16_base;
 // To move the contents of a GPR to a GPR.
 //
 def Mov32R16: FI8_MOV32R16_ins<"move", IIAlu>;
+
+//
+// Format: NEG rx, ry MIPS16e
+// Purpose: Negate
+// To negate an integer value.
+//
+def NegRxRy16: FRR16_ins<0b11101, "neg", IIAlu>;
+
+//
+// Format: NOT rx, ry MIPS16e
+// Purpose: Not
+// To complement an integer value
+//
+def NotRxRy16: FRR16_ins<0b01111, "not", IIAlu>;
+
+//
+// Format: OR rx, ry MIPS16e
+// Purpose: Or
+// To do a bitwise logical OR.
+//
+def OrRxRxRy16: FRxRxRy16_ins<0b01101, "or", IIAlu>, ArithLogic16Defs<1>;
+
 //
 // Format: RESTORE {ra,}{s0/s1/s0-1,}{framesize}
 // (All args are optional) MIPS16e
@@ -179,6 +258,20 @@ def SaveRaF16:
              "save \t$$ra, $frame_size", [], IILoad >;
 
 //
+// Format: SB ry, offset(rx) MIPS16e
+// Purpose: Store Byte (Extended)
+// To store a byte to memory.
+//
+def SbRxRyOffMemX16: FEXT_RRI16_mem2_ins<0b11000, "sb", mem16, IIAlu>;
+
+//
+// Format: SH ry, offset(rx) MIPS16e
+// Purpose: Store Halfword (Extended)
+// To store a halfword to memory.
+//
+def ShRxRyOffMemX16: FEXT_RRI16_mem2_ins<0b11001, "sh", mem16, IIAlu>;
+
+//
 // Format: SLL rx, ry, sa MIPS16e
 // Purpose: Shift Word Left Logical (Extended)
 // To execute a left-shift of a word by a fixed number of bits—0 to 31 bits.
@@ -186,57 +279,127 @@ def SaveRaF16:
 def SllX16: FEXT_SHIFT16_ins<0b00, "sll", IIAlu>;
 
 //
+// Format: SLLV ry, rx MIPS16e
+// Purpose: Shift Word Left Logical Variable
+// To execute a left-shift of a word by a variable number of bits.
+//
+def SllvRxRy16 : FRxRxRy16_ins<0b00100, "sllv", IIAlu>;
+
+
+//
+// Format: SRAV ry, rx MIPS16e
+// Purpose: Shift Word Right Arithmetic Variable
+// To execute an arithmetic right-shift of a word by a variable
+// number of bits.
+//
+def SravRxRy16: FRxRxRy16_ins<0b00111, "srav", IIAlu>;
+
+
+//
+// Format: SRA rx, ry, sa MIPS16e
+// Purpose: Shift Word Right Arithmetic (Extended)
+// To execute an arithmetic right-shift of a word by a fixed
+// number of bits—1 to 8 bits.
+//
+def SraX16: FEXT_SHIFT16_ins<0b11, "sra", IIAlu>;
+
+
+//
+// Format: SRLV ry, rx MIPS16e
+// Purpose: Shift Word Right Logical Variable
+// To execute a logical right-shift of a word by a variable
+// number of bits.
+//
+def SrlvRxRy16: FRxRxRy16_ins<0b00110, "srlv", IIAlu>;
+
+
+//
+// Format: SRL rx, ry, sa MIPS16e
+// Purpose: Shift Word Right Logical (Extended)
+// To execute a logical right-shift of a word by a fixed
+// number of bits—1 to 31 bits.
+//
+def SrlX16: FEXT_SHIFT16_ins<0b10, "srl", IIAlu>;
+
+//
+// Format: SUBU rz, rx, ry MIPS16e
+// Purpose: Subtract Unsigned Word
+// To subtract 32-bit integers
+//
+def SubuRxRyRz16: FRRR16_ins<0b11, "subu", IIAlu>, ArithLogic16Defs<0>;
+
+//
 // Format: SW ry, offset(rx) MIPS16e
 // Purpose: Store Word (Extended)
 // To store a word to memory.
 //
-class SwRxRyOffMemX16_base: FEXT_RRI16_mem_ins<0b11011, "sw", mem16, IIAlu>;
-def SwRxRyOffMemX16: SwRxRyOffMemX16_base;
+def SwRxRyOffMemX16: FEXT_RRI16_mem2_ins<0b11011, "sw", mem16, IIAlu>;
+
+//
+// Format: XOR rx, ry MIPS16e
+// Purpose: Xor
+// To do a bitwise logical XOR.
+//
+def XorRxRxRy16: FRxRxRy16_ins<0b01110, "xor", IIAlu>, ArithLogic16Defs<1>;
 
 class Mips16Pat<dag pattern, dag result> : Pat<pattern, result> {
   let Predicates = [InMips16Mode];
 }
 
-class ArithLogicR16Defs<SDNode OpNode, bit isComm = 0> {
-  dag OutOperandList = (outs CPU16Regs:$rz);
-  dag InOperandList = (ins CPU16Regs:$rx, CPU16Regs:$ry);
-  list<dag> Pattern = [(set CPU16Regs:$rz,
-                       (OpNode CPU16Regs:$rx, CPU16Regs:$ry))];
-}
+// Unary Arith/Logic
+//
+class ArithLogicU_pat<PatFrag OpNode, Instruction I> :
+  Mips16Pat<(OpNode CPU16Regs:$r),
+            (I CPU16Regs:$r)>;
 
-multiclass ArithLogicR16_base {
-  def _add: AdduRxRyRz16_base, ArithLogicR16Defs<add, 1>;
-}
+def: ArithLogicU_pat<not, NotRxRy16>;
+def: ArithLogicU_pat<ineg, NegRxRy16>;
 
-defm ArithLogicR16_patt : ArithLogicR16_base;
+class ArithLogic16_pat<SDNode OpNode, Instruction I> :
+  Mips16Pat<(OpNode CPU16Regs:$l, CPU16Regs:$r),
+            (I CPU16Regs:$l, CPU16Regs:$r)>;
 
-class LoadM16Defs<PatFrag OpNode, Operand _MemOpnd, bit Pseudo=0> {
-  bit isPseudo = Pseudo;
-  Operand MemOpnd = _MemOpnd;
-  dag OutOperandList = (outs CPU16Regs:$ry);
-  dag InOperandList = (ins MemOpnd:$addr);
-  list<dag> Pattern = [(set CPU16Regs:$ry, (OpNode addr:$addr))];
-}
+def: ArithLogic16_pat<add, AdduRxRyRz16>;
+def: ArithLogic16_pat<and, AndRxRxRy16>;
+def: ArithLogic16_pat<or, OrRxRxRy16>;
+def: ArithLogic16_pat<sub, SubuRxRyRz16>;
+def: ArithLogic16_pat<xor, XorRxRxRy16>;
 
-multiclass LoadM16_base {
-  def _LwRxRyOffMemX16: LwRxRyOffMemX16_base, LoadM16Defs<load_a, mem16>;
-}
+// Arithmetic and logical instructions with 2 register operands.
 
-defm LoadM16: LoadM16_base;
+class ArithLogicI16_pat<SDNode OpNode, PatFrag imm_type, Instruction I> :
+  Mips16Pat<(OpNode CPU16Regs:$in, imm_type:$imm),
+            (I CPU16Regs:$in, imm_type:$imm)>;
 
-class StoreM16Defs<PatFrag OpNode, Operand _MemOpnd, bit Pseudo=0> {
-  bit isPseudo = Pseudo;
-  Operand MemOpnd = _MemOpnd;
-  dag OutOperandList = (outs );
-  dag InOperandList = (ins CPU16Regs:$ry, MemOpnd:$addr);
-  list<dag> Pattern = [(OpNode CPU16Regs:$ry, addr:$addr)];
-}
+def: ArithLogicI16_pat<add, immSExt16, AddiuRxRxImmX16>;
+def: ArithLogicI16_pat<shl, immZExt5, SllX16>;
+def: ArithLogicI16_pat<srl, immZExt5, SrlX16>;
+def: ArithLogicI16_pat<sra, immZExt5, SraX16>;
 
-multiclass StoreM16_base {
-  def _SwRxRyOffMemX16: SwRxRyOffMemX16_base, StoreM16Defs<store_a, mem16>;
-}
+class shift_rotate_reg16_pat<SDNode OpNode, Instruction I> :
+  Mips16Pat<(OpNode CPU16Regs:$r, CPU16Regs:$ra),
+            (I CPU16Regs:$r, CPU16Regs:$ra)>;
 
-defm StoreM16: StoreM16_base;
+def: shift_rotate_reg16_pat<shl, SllvRxRy16>;
+def: shift_rotate_reg16_pat<sra, SravRxRy16>;
+def: shift_rotate_reg16_pat<srl, SrlvRxRy16>;
+
+class LoadM16_pat<PatFrag OpNode, Instruction I> :
+  Mips16Pat<(OpNode addr:$addr), (I addr:$addr)>;
+
+def: LoadM16_pat<sextloadi8, LbRxRyOffMemX16>;
+def: LoadM16_pat<zextloadi8, LbuRxRyOffMemX16>;
+def: LoadM16_pat<sextloadi16_a, LhRxRyOffMemX16>;
+def: LoadM16_pat<zextloadi16_a, LhuRxRyOffMemX16>;
+def: LoadM16_pat<load_a, LwRxRyOffMemX16>;
+
+class StoreM16_pat<PatFrag OpNode, Instruction I> :
+  Mips16Pat<(OpNode CPU16Regs:$r, addr:$addr), (I CPU16Regs:$r, addr:$addr)>;
+
+def: StoreM16_pat<truncstorei8, SbRxRyOffMemX16>;
+def: StoreM16_pat<truncstorei16_a, ShRxRyOffMemX16>;
+def: StoreM16_pat<store_a, SwRxRyOffMemX16>;
+
 
 // Jump and Link (Call)
 let isCall=1, hasDelaySlot=1 in
@@ -250,8 +413,7 @@ let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1, hasCtrlDep=1,
 def RetRA16 : MipsPseudo16<(outs), (ins), "", [(MipsRet)]>;
 
 // Small immediates
-def : Mips16Pat<(i32 immZExt16:$in), (LiRxImmX16 immZExt16:$in)>;
+def: Mips16Pat<(i32 immZExt16:$in), (LiRxImmX16 immZExt16:$in)>;
 
-
-def : Mips16Pat<(add CPU16Regs:$hi, (MipsLo tglobaladdr:$lo)),
-                (AddiuRxRxImmX16 CPU16Regs:$hi, tglobaladdr:$lo)>;
+def: Mips16Pat<(add CPU16Regs:$hi, (MipsLo tglobaladdr:$lo)),
+               (AddiuRxRxImmX16 CPU16Regs:$hi, tglobaladdr:$lo)>;
