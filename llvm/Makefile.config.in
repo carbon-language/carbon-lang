@@ -347,6 +347,10 @@ LLVM_HAS_POLLY = @LLVM_HAS_POLLY@
 # bfd ld / gold --version-script=file
 HAVE_LINK_VERSION_SCRIPT = @HAVE_LINK_VERSION_SCRIPT@
 
+# Flags to control using libxml2
+LIBXML2_LIBS := @LIBXML2_LIBS@
+LIBXML2_INC  := @LIBXML2_INC@
+
 # Flags to control building support for Intel JIT Events API
 USE_INTEL_JITEVENTS := @USE_INTEL_JITEVENTS@
 INTEL_JITEVENTS_INCDIR := @INTEL_JITEVENTS_INCDIR@

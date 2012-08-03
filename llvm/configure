@@ -766,6 +766,9 @@ USE_OPROFILE
 USE_INTEL_JITEVENTS
 INTEL_JITEVENTS_INCDIR
 INTEL_JITEVENTS_LIBDIR
+XML2CONFIG
+LIBXML2_LIBS
+LIBXML2_INC
 HAVE_PTHREAD
 HUGE_VAL_SANITY
 MMAP_FILE
@@ -10231,7 +10234,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10234 "configure"
+#line 10237 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13804,6 +13807,148 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define LLVM_USE_INTEL_JITEVENTS $USE_INTEL_JITEVENTS
 _ACEOF
+
+
+for ac_prog in xml2-config
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
+if test "${ac_cv_prog_XML2CONFIG+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$XML2CONFIG"; then
+  ac_cv_prog_XML2CONFIG="$XML2CONFIG" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_prog_XML2CONFIG="$ac_prog"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+IFS=$as_save_IFS
+
+fi
+fi
+XML2CONFIG=$ac_cv_prog_XML2CONFIG
+if test -n "$XML2CONFIG"; then
+  { echo "$as_me:$LINENO: result: $XML2CONFIG" >&5
+echo "${ECHO_T}$XML2CONFIG" >&6; }
+else
+  { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+fi
+
+
+  test -n "$XML2CONFIG" && break
+done
+
+
+{ echo "$as_me:$LINENO: checking for libxml2 includes" >&5
+echo $ECHO_N "checking for libxml2 includes... $ECHO_C" >&6; }
+if test "x$XML2CONFIG" = "x"; then
+ { echo "$as_me:$LINENO: result: xml2-config not found" >&5
+echo "${ECHO_T}xml2-config not found" >&6; }
+else
+ LIBXML2_INC=`$XML2CONFIG --cflags`
+ { echo "$as_me:$LINENO: result: $LIBXML2_INC" >&5
+echo "${ECHO_T}$LIBXML2_INC" >&6; }
+ { echo "$as_me:$LINENO: checking for xmlReadFile in -lxml2" >&5
+echo $ECHO_N "checking for xmlReadFile in -lxml2... $ECHO_C" >&6; }
+if test "${ac_cv_lib_xml2_xmlReadFile+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lxml2  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char xmlReadFile ();
+int
+main ()
+{
+return xmlReadFile ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag" || test ! -s conftest.err'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_xml2_xmlReadFile=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_xml2_xmlReadFile=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_xml2_xmlReadFile" >&5
+echo "${ECHO_T}$ac_cv_lib_xml2_xmlReadFile" >&6; }
+if test $ac_cv_lib_xml2_xmlReadFile = yes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define CLANG_HAVE_LIBXML 1
+_ACEOF
+
+                                LIBXML2_LIBS="-lxml2"
+fi
+
+fi
+
 
 
 
@@ -22081,6 +22226,9 @@ USE_OPROFILE!$USE_OPROFILE$ac_delim
 USE_INTEL_JITEVENTS!$USE_INTEL_JITEVENTS$ac_delim
 INTEL_JITEVENTS_INCDIR!$INTEL_JITEVENTS_INCDIR$ac_delim
 INTEL_JITEVENTS_LIBDIR!$INTEL_JITEVENTS_LIBDIR$ac_delim
+XML2CONFIG!$XML2CONFIG$ac_delim
+LIBXML2_LIBS!$LIBXML2_LIBS$ac_delim
+LIBXML2_INC!$LIBXML2_INC$ac_delim
 HAVE_PTHREAD!$HAVE_PTHREAD$ac_delim
 HUGE_VAL_SANITY!$HUGE_VAL_SANITY$ac_delim
 MMAP_FILE!$MMAP_FILE$ac_delim
@@ -22106,7 +22254,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 90; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 93; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

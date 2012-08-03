@@ -1292,6 +1292,23 @@ AC_ARG_WITH(intel-jitevents,
 AC_DEFINE_UNQUOTED([LLVM_USE_INTEL_JITEVENTS],$USE_INTEL_JITEVENTS,
                    [Define if we have the Intel JIT API runtime support library])
 
+dnl Check for libxml2
+dnl Right now we're just checking for the existence, we could also check for a
+dnl particular version via --version on xml2-config
+AC_CHECK_PROGS(XML2CONFIG, xml2-config)
+
+AC_MSG_CHECKING(for libxml2 includes)
+if test "x$XML2CONFIG" = "x"; then
+ AC_MSG_RESULT(xml2-config not found)
+else
+ LIBXML2_INC=`$XML2CONFIG --cflags`
+ AC_MSG_RESULT($LIBXML2_INC)
+ AC_CHECK_LIB(xml2, xmlReadFile,[AC_DEFINE([CLANG_HAVE_LIBXML],1,[Define if we have libxml2])
+                                LIBXML2_LIBS="-lxml2"])
+fi
+AC_SUBST(LIBXML2_LIBS)
+AC_SUBST(LIBXML2_INC)
+
 dnl===-----------------------------------------------------------------------===
 dnl===
 dnl=== SECTION 6: Check for header files

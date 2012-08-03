@@ -6,6 +6,9 @@
 /* Bug report URL. */
 #undef BUG_REPORT_URL
 
+/* Define if we have libxml2 */
+#undef CLANG_HAVE_LIBXML
+
 /* Relative directory for resource files */
 #undef CLANG_RESOURCE_DIR
 
