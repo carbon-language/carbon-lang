@@ -17,7 +17,6 @@
 #include <algorithm>
 #include <assert.h>
 
-
 #ifdef DEBUGGING
 
 #include <string>
@@ -3701,6 +3700,8 @@ public:
     }
     virtual bool is_function() const
     {
+        if (__left_ == 0)
+            return false;
         return __left_->is_function();
     }
     virtual bool is_cv_qualifer() const
@@ -9196,7 +9197,7 @@ __demangle_tree::__parse_operator_name(const char* first, const char* last, int*
             case 'v':
                 // cast <type>
                 {
-                const char* t = __parse_type(first+2, last, false);
+                const char* t = __parse_type(first+2, last, false, true);
                 if (t != first+2)
                 {
                     __node* cast_type = __root_;
