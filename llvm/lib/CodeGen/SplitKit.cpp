@@ -652,7 +652,7 @@ void SplitEditor::removeBackCopies(SmallVectorImpl<VNInfo*> &Copies) {
     // Adjust RegAssign if a register assignment is killed at VNI->def.  We
     // want to avoid calculating the live range of the source register if
     // possible.
-    AssignI.find(VNI->def.getPrevSlot());
+    AssignI.find(Def.getPrevSlot());
     if (!AssignI.valid() || AssignI.start() >= Def)
       continue;
     // If MI doesn't kill the assigned register, just leave it.
@@ -739,6 +739,8 @@ void SplitEditor::hoistCopiesForSize() {
   for (LiveInterval::vni_iterator VI = LI->vni_begin(), VE = LI->vni_end();
        VI != VE; ++VI) {
     VNInfo *VNI = *VI;
+    if (VNI->isUnused())
+      continue;
     VNInfo *ParentVNI = Edit->getParent().getVNInfoAt(VNI->def);
     assert(ParentVNI && "Parent not live at complement def");
 
@@ -812,6 +814,8 @@ void SplitEditor::hoistCopiesForSize() {
   for (LiveInterval::vni_iterator VI = LI->vni_begin(), VE = LI->vni_end();
        VI != VE; ++VI) {
     VNInfo *VNI = *VI;
+    if (VNI->isUnused())
+      continue;
     VNInfo *ParentVNI = Edit->getParent().getVNInfoAt(VNI->def);
     const DomPair &Dom = NearestDom[ParentVNI->id];
     if (!Dom.first || Dom.second == VNI->def)
