@@ -26,6 +26,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Operator.h"
 #include "llvm/Module.h"
+#include "llvm/TypeFinder.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
@@ -145,7 +146,7 @@ class TypePrinting {
 public:
 
   /// NamedTypes - The named types that are used by the current module.
-  std::vector<StructType*> NamedTypes;
+  TypeFinder NamedTypes;
 
   /// NumberedTypes - The numbered types, along with their value.
   DenseMap<StructType*, unsigned> NumberedTypes;
@@ -164,7 +165,7 @@ public:
 
 
 void TypePrinting::incorporateTypes(const Module &M) {
-  M.findUsedStructTypes(NamedTypes);
+  NamedTypes.run(M, false);
 
   // The list of struct types we got back includes all the struct types, split
   // the unnamed ones out to a numbering and remove the anonymous structs.

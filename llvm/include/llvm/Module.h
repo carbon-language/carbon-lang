@@ -301,11 +301,6 @@ public:
   typedef DenseMap<StructType*, unsigned, DenseMapInfo<StructType*> >
                    NumeredTypesMapTy;
 
-  /// findUsedStructTypes - Walk the entire module and find all of the
-  /// struct types that are in use, returning them in a vector.
-  void findUsedStructTypes(std::vector<StructType*> &StructTypes,
-                           bool OnlyNamed = false) const;
-  
   /// getTypeByName - Return the type with the specified name, or null if there
   /// is none by that name.
   StructType *getTypeByName(StringRef Name) const;

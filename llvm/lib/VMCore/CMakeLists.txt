@@ -31,6 +31,7 @@ add_llvm_library(LLVMCore
   PassRegistry.cpp
   PrintModulePass.cpp
   Type.cpp
+  TypeFinder.cpp
   Use.cpp
   User.cpp
   Value.cpp

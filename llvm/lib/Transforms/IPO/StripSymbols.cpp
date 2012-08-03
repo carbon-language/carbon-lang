@@ -27,6 +27,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/TypeFinder.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/DenseMap.h"
@@ -175,8 +176,8 @@ static void StripSymtab(ValueSymbolTable &ST, bool PreserveDbgInfo) {
 
 // Strip any named types of their names.
 static void StripTypeNames(Module &M, bool PreserveDbgInfo) {
-  std::vector<StructType*> StructTypes;
-  M.findUsedStructTypes(StructTypes);
+  TypeFinder StructTypes;
+  StructTypes.run(M, false);
 
   for (unsigned i = 0, e = StructTypes.size(); i != e; ++i) {
     StructType *STy = StructTypes[i];
