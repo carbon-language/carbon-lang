@@ -315,7 +315,7 @@ static bool checkBaseClassIsLockableCallback(const CXXBaseSpecifier *Specifier,
 static void checkForLockableRecord(Sema &S, Decl *D, const AttributeList &Attr,
                                    QualType Ty) {
   const RecordType *RT = getRecordType(Ty);
-                                   
+
   // Warn if could not get record type for this argument.
   if (!RT) {
     S.Diag(Attr.getLoc(), diag::warn_thread_attribute_argument_not_class)
@@ -323,7 +323,7 @@ static void checkForLockableRecord(Sema &S, Decl *D, const AttributeList &Attr,
     return;
   }
 
-  // Don't check for lockable if the class hasn't been defined yet. 
+  // Don't check for lockable if the class hasn't been defined yet.
   if (RT->isIncompleteType())
     return;
 
@@ -430,7 +430,7 @@ enum ThreadAttributeDeclKind {
   ThreadExpectedClassOrStruct
 };
 
-static bool checkGuardedVarAttrCommon(Sema &S, Decl *D, 
+static bool checkGuardedVarAttrCommon(Sema &S, Decl *D,
                                       const AttributeList &Attr) {
   assert(!Attr.isInvalid());
 
@@ -450,11 +450,11 @@ static bool checkGuardedVarAttrCommon(Sema &S, Decl *D,
 static void handleGuardedVarAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (!checkGuardedVarAttrCommon(S, D, Attr))
     return;
-  
+
   D->addAttr(::new (S.Context) GuardedVarAttr(Attr.getRange(), S.Context));
 }
 
-static void handlePtGuardedVarAttr(Sema &S, Decl *D, 
+static void handlePtGuardedVarAttr(Sema &S, Decl *D,
                            const AttributeList &Attr) {
   if (!checkGuardedVarAttrCommon(S, D, Attr))
     return;
@@ -465,8 +465,8 @@ static void handlePtGuardedVarAttr(Sema &S, Decl *D,
   D->addAttr(::new (S.Context) PtGuardedVarAttr(Attr.getRange(), S.Context));
 }
 
-static bool checkGuardedByAttrCommon(Sema &S, Decl *D, 
-                                     const AttributeList &Attr, 
+static bool checkGuardedByAttrCommon(Sema &S, Decl *D,
+                                     const AttributeList &Attr,
                                      Expr* &Arg) {
   assert(!Attr.isInvalid());
 
@@ -486,7 +486,7 @@ static bool checkGuardedByAttrCommon(Sema &S, Decl *D,
   unsigned Size = Args.size();
   if (Size != 1)
     return false;
-    
+
   Arg = Args[0];
 
   return true;
@@ -500,7 +500,7 @@ static void handleGuardedByAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   D->addAttr(::new (S.Context) GuardedByAttr(Attr.getRange(), S.Context, Arg));
 }
 
-static void handlePtGuardedByAttr(Sema &S, Decl *D, 
+static void handlePtGuardedByAttr(Sema &S, Decl *D,
                                   const AttributeList &Attr) {
   Expr *Arg = 0;
   if (!checkGuardedByAttrCommon(S, D, Attr, Arg))
@@ -513,7 +513,7 @@ static void handlePtGuardedByAttr(Sema &S, Decl *D,
                                                S.Context, Arg));
 }
 
-static bool checkLockableAttrCommon(Sema &S, Decl *D, 
+static bool checkLockableAttrCommon(Sema &S, Decl *D,
                                     const AttributeList &Attr) {
   assert(!Attr.isInvalid());
 
@@ -537,7 +537,7 @@ static void handleLockableAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   D->addAttr(::new (S.Context) LockableAttr(Attr.getRange(), S.Context));
 }
 
-static void handleScopedLockableAttr(Sema &S, Decl *D, 
+static void handleScopedLockableAttr(Sema &S, Decl *D,
                              const AttributeList &Attr) {
   if (!checkLockableAttrCommon(S, D, Attr))
     return;
@@ -579,8 +579,8 @@ static void handleNoAddressSafetyAttr(Sema &S, Decl *D,
                                                            S.Context));
 }
 
-static bool checkAcquireOrderAttrCommon(Sema &S, Decl *D, 
-                                        const AttributeList &Attr, 
+static bool checkAcquireOrderAttrCommon(Sema &S, Decl *D,
+                                        const AttributeList &Attr,
                                         SmallVector<Expr*, 1> &Args) {
   assert(!Attr.isInvalid());
 
@@ -610,11 +610,11 @@ static bool checkAcquireOrderAttrCommon(Sema &S, Decl *D,
   checkAttrArgsAreLockableObjs(S, D, Attr, Args);
   if (Args.size() == 0)
     return false;
-    
+
   return true;
 }
 
-static void handleAcquiredAfterAttr(Sema &S, Decl *D, 
+static void handleAcquiredAfterAttr(Sema &S, Decl *D,
                                     const AttributeList &Attr) {
   SmallVector<Expr*, 1> Args;
   if (!checkAcquireOrderAttrCommon(S, D, Attr, Args))
@@ -625,7 +625,7 @@ static void handleAcquiredAfterAttr(Sema &S, Decl *D,
                                                  StartArg, Args.size()));
 }
 
-static void handleAcquiredBeforeAttr(Sema &S, Decl *D, 
+static void handleAcquiredBeforeAttr(Sema &S, Decl *D,
                                      const AttributeList &Attr) {
   SmallVector<Expr*, 1> Args;
   if (!checkAcquireOrderAttrCommon(S, D, Attr, Args))
@@ -636,8 +636,8 @@ static void handleAcquiredBeforeAttr(Sema &S, Decl *D,
                                                   StartArg, Args.size()));
 }
 
-static bool checkLockFunAttrCommon(Sema &S, Decl *D, 
-                                   const AttributeList &Attr, 
+static bool checkLockFunAttrCommon(Sema &S, Decl *D,
+                                   const AttributeList &Attr,
                                    SmallVector<Expr*, 1> &Args) {
   assert(!Attr.isInvalid());
 
@@ -656,7 +656,7 @@ static bool checkLockFunAttrCommon(Sema &S, Decl *D,
   return true;
 }
 
-static void handleSharedLockFunctionAttr(Sema &S, Decl *D, 
+static void handleSharedLockFunctionAttr(Sema &S, Decl *D,
                                          const AttributeList &Attr) {
   SmallVector<Expr*, 1> Args;
   if (!checkLockFunAttrCommon(S, D, Attr, Args))
@@ -665,11 +665,11 @@ static void handleSharedLockFunctionAttr(Sema &S, Decl *D,
   unsigned Size = Args.size();
   Expr **StartArg = Size == 0 ? 0 : &Args[0];
   D->addAttr(::new (S.Context) SharedLockFunctionAttr(Attr.getRange(),
-                                                      S.Context, 
+                                                      S.Context,
                                                       StartArg, Size));
 }
 
-static void handleExclusiveLockFunctionAttr(Sema &S, Decl *D, 
+static void handleExclusiveLockFunctionAttr(Sema &S, Decl *D,
                                             const AttributeList &Attr) {
   SmallVector<Expr*, 1> Args;
   if (!checkLockFunAttrCommon(S, D, Attr, Args))
@@ -678,12 +678,12 @@ static void handleExclusiveLockFunctionAttr(Sema &S, Decl *D,
   unsigned Size = Args.size();
   Expr **StartArg = Size == 0 ? 0 : &Args[0];
   D->addAttr(::new (S.Context) ExclusiveLockFunctionAttr(Attr.getRange(),
-                                                         S.Context, 
+                                                         S.Context,
                                                          StartArg, Size));
 }
 
-static bool checkTryLockFunAttrCommon(Sema &S, Decl *D, 
-                                      const AttributeList &Attr, 
+static bool checkTryLockFunAttrCommon(Sema &S, Decl *D,
+                                      const AttributeList &Attr,
                                       SmallVector<Expr*, 2> &Args) {
   assert(!Attr.isInvalid());
 
@@ -708,7 +708,7 @@ static bool checkTryLockFunAttrCommon(Sema &S, Decl *D,
   return true;
 }
 
-static void handleSharedTrylockFunctionAttr(Sema &S, Decl *D, 
+static void handleSharedTrylockFunctionAttr(Sema &S, Decl *D,
                                             const AttributeList &Attr) {
   SmallVector<Expr*, 2> Args;
   if (!checkTryLockFunAttrCommon(S, D, Attr, Args))
@@ -717,12 +717,12 @@ static void handleSharedTrylockFunctionAttr(Sema &S, Decl *D,
   unsigned Size = Args.size();
   Expr **StartArg = Size == 0 ? 0 : &Args[0];
   D->addAttr(::new (S.Context) SharedTrylockFunctionAttr(Attr.getRange(),
-                                                         S.Context, 
-                                                         Attr.getArg(0), 
+                                                         S.Context,
+                                                         Attr.getArg(0),
                                                          StartArg, Size));
 }
 
-static void handleExclusiveTrylockFunctionAttr(Sema &S, Decl *D, 
+static void handleExclusiveTrylockFunctionAttr(Sema &S, Decl *D,
                                                const AttributeList &Attr) {
   SmallVector<Expr*, 2> Args;
   if (!checkTryLockFunAttrCommon(S, D, Attr, Args))
@@ -731,13 +731,13 @@ static void handleExclusiveTrylockFunctionAttr(Sema &S, Decl *D,
   unsigned Size = Args.size();
   Expr **StartArg = Size == 0 ? 0 : &Args[0];
   D->addAttr(::new (S.Context) ExclusiveTrylockFunctionAttr(Attr.getRange(),
-                                                            S.Context, 
-                                                            Attr.getArg(0), 
+                                                            S.Context,
+                                                            Attr.getArg(0),
                                                             StartArg, Size));
 }
 
-static bool checkLocksRequiredCommon(Sema &S, Decl *D, 
-                                     const AttributeList &Attr, 
+static bool checkLocksRequiredCommon(Sema &S, Decl *D,
+                                     const AttributeList &Attr,
                                      SmallVector<Expr*, 1> &Args) {
   assert(!Attr.isInvalid());
 
@@ -754,11 +754,11 @@ static bool checkLocksRequiredCommon(Sema &S, Decl *D,
   checkAttrArgsAreLockableObjs(S, D, Attr, Args);
   if (Args.size() == 0)
     return false;
-   
+
   return true;
 }
 
-static void handleExclusiveLocksRequiredAttr(Sema &S, Decl *D, 
+static void handleExclusiveLocksRequiredAttr(Sema &S, Decl *D,
                                              const AttributeList &Attr) {
   SmallVector<Expr*, 1> Args;
   if (!checkLocksRequiredCommon(S, D, Attr, Args))
@@ -766,12 +766,12 @@ static void handleExclusiveLocksRequiredAttr(Sema &S, Decl *D,
 
   Expr **StartArg = &Args[0];
   D->addAttr(::new (S.Context) ExclusiveLocksRequiredAttr(Attr.getRange(),
-                                                          S.Context, 
-                                                          StartArg, 
+                                                          S.Context,
+                                                          StartArg,
                                                           Args.size()));
 }
 
-static void handleSharedLocksRequiredAttr(Sema &S, Decl *D, 
+static void handleSharedLocksRequiredAttr(Sema &S, Decl *D,
                                           const AttributeList &Attr) {
   SmallVector<Expr*, 1> Args;
   if (!checkLocksRequiredCommon(S, D, Attr, Args))
@@ -779,8 +779,8 @@ static void handleSharedLocksRequiredAttr(Sema &S, Decl *D,
 
   Expr **StartArg = &Args[0];
   D->addAttr(::new (S.Context) SharedLocksRequiredAttr(Attr.getRange(),
-                                                       S.Context, 
-                                                       StartArg, 
+                                                       S.Context,
+                                                       StartArg,
                                                        Args.size()));
 }
 
@@ -878,12 +878,12 @@ static void handleExtVectorTypeAttr(Sema &S, Scope *scope, Decl *D,
     SourceLocation TemplateKWLoc;
     UnqualifiedId id;
     id.setIdentifier(Attr.getParameterName(), Attr.getLoc());
-    
+
     ExprResult Size = S.ActOnIdExpression(scope, SS, TemplateKWLoc, id,
                                           false, false);
     if (Size.isInvalid())
       return;
-    
+
     sizeExpr = Size.get();
   } else {
     // check the attribute arguments.
