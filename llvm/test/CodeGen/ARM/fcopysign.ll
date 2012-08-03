@@ -11,7 +11,7 @@ entry:
 ; HARD: test1:
 ; HARD: vmov.i32 [[REG1:(d[0-9]+)]], #0x80000000
 ; HARD: vbsl [[REG1]], d
-  %0 = tail call float @copysignf(float %x, float %y) nounwind
+  %0 = tail call float @copysignf(float %x, float %y) nounwind readnone
   ret float %0
 }
 
@@ -25,7 +25,7 @@ entry:
 ; HARD: vmov.i32 [[REG2:(d[0-9]+)]], #0x80000000
 ; HARD: vshl.i64 [[REG2]], [[REG2]], #32
 ; HARD: vbsl [[REG2]], d1, d0
-  %0 = tail call double @copysign(double %x, double %y) nounwind
+  %0 = tail call double @copysign(double %x, double %y) nounwind readnone
   ret double %0
 }
 
@@ -36,7 +36,7 @@ entry:
 ; SOFT: vshl.i64 [[REG3]], [[REG3]], #32
 ; SOFT: vbsl [[REG3]],
   %0 = fmul double %x, %y
-  %1 = tail call double @copysign(double %0, double %z) nounwind
+  %1 = tail call double @copysign(double %0, double %z) nounwind readnone
   ret double %1
 }
 

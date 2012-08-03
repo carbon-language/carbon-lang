@@ -32,11 +32,11 @@ declare double @fabs(double)
 declare float @fabsf(float)
 
 define double @fabs_dp(double %X) {
-        %Y = call double @fabs( double %X )
+        %Y = call double @fabs( double %X ) readnone
         ret double %Y
 }
 
 define float @fabs_sp(float %X) {
-        %Y = call float @fabsf( float %X )
+        %Y = call float @fabsf( float %X ) readnone
         ret float %Y
 }

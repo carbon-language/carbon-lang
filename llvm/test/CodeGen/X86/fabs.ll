@@ -11,7 +11,7 @@ declare x86_fp80 @fabsl(x86_fp80)
 ; UNSAFE: test1:
 ; NOOPT:  test1:
 define float @test1(float %X) {
-        %Y = call float @fabsf(float %X)
+        %Y = call float @fabsf(float %X) readnone
         ret float %Y
 }
 ; CHECK:  {{^[ \t]+fabs$}}
@@ -42,7 +42,7 @@ define double @test2(double %X) {
 ; UNSAFE: test3:
 ; NOOPT:  test3:
 define x86_fp80 @test3(x86_fp80 %X) {
-        %Y = call x86_fp80 @fabsl(x86_fp80 %X)
+        %Y = call x86_fp80 @fabsl(x86_fp80 %X) readnone
         ret x86_fp80 %Y
 }
 ; CHECK:  {{^[ \t]+fabs$}}

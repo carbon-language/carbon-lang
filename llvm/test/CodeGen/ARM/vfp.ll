@@ -17,11 +17,11 @@ define void @test_abs(float* %P, double* %D) {
 ;CHECK: test_abs:
 	%a = load float* %P		; <float> [#uses=1]
 ;CHECK: vabs.f32
-	%b = call float @fabsf( float %a )		; <float> [#uses=1]
+	%b = call float @fabsf( float %a ) readnone	; <float> [#uses=1]
 	store float %b, float* %P
 	%A = load double* %D		; <double> [#uses=1]
 ;CHECK: vabs.f64
-	%B = call double @fabs( double %A )		; <double> [#uses=1]
+	%B = call double @fabs( double %A ) readnone	; <double> [#uses=1]
 	store double %B, double* %D
 	ret void
 }
