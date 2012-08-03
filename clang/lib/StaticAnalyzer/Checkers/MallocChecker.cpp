@@ -679,14 +679,8 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
   SymbolRef Sym = SR->getSymbol();
   const RefState *RS = state->get<RegionState>(Sym);
 
-  // If the symbol has not been tracked, return. This is possible when free() is
-  // called on a pointer that does not get its pointee directly from malloc(). 
-  // Full support of this requires inter-procedural analysis.
-  if (!RS)
-    return 0;
-
   // Check double free.
-  if (RS->isReleased() || RS->isRelinquished()) {
+  if (RS && (RS->isReleased() || RS->isRelinquished())) {
     if (ExplodedNode *N = C.generateSink()) {
       if (!BT_DoubleFree)
         BT_DoubleFree.reset(
@@ -902,10 +896,8 @@ ProgramStateRef MallocChecker::ReallocMem(CheckerContext &C,
     if (ProgramStateRef stateFree = FreeMemAux(C, CE, StateSizeIsZero,0,false)){
       // The semantics of the return value are:
       // If size was equal to 0, either NULL or a pointer suitable to be passed
-      // to free() is returned.
-      stateFree = stateFree->set<ReallocPairs>(ToPtr,
-                                            ReallocPair(FromPtr, FreesOnFail));
-      C.getSymbolManager().addSymbolDependency(ToPtr, FromPtr);
+      // to free() is returned. We just free the input pointer and do not add
+      // any constrains on the output pointer.
       return stateFree;
     }
 
@@ -1518,7 +1510,7 @@ MallocChecker::MallocBugVisitor::VisitNode(const ExplodedNode *N,
 
   const RefState *RS = state->get<RegionState>(Sym);
   const RefState *RSPrev = statePrev->get<RegionState>(Sym);
-  if (!RS && !RSPrev)
+  if (!RS)
     return 0;
 
   const Stmt *S = 0;

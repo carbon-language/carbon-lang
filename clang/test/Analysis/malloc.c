@@ -69,7 +69,7 @@ void reallocSizeZero1() {
   char *p = malloc(12);
   char *r = realloc(p, 0);
   if (!r) {
-    free(p);
+    free(p); // expected-warning {{Attempt to free released memory}}
   } else {
     free(r);
   }
@@ -79,7 +79,7 @@ void reallocSizeZero2() {
   char *p = malloc(12);
   char *r = realloc(p, 0);
   if (!r) {
-    free(p);
+    free(p); // expected-warning {{Attempt to free released memory}}
   } else {
     free(r);
   }
@@ -321,7 +321,7 @@ void nullFree() {
 void paramFree(int *p) {
   myfoo(p);
   free(p); // no warning
-  myfoo(p); // TODO: This should be a warning.
+  myfoo(p); // expected-warning {{Use of memory after it is freed}}
 }
 
 int* mallocEscapeRet() {
@@ -999,3 +999,11 @@ void foo (xpc_connection_t peer) {
   xpc_connection_resume(peer);
 }
 
+// Make sure we catch errors when we free in a function which does not allocate memory.
+void freeButNoMalloc(int *p, int x){
+  if (x) {
+    free(p);
+    //user forgot a return here.
+  }
+  free(p); // expected-warning {{Attempt to free released memory}}
+}
