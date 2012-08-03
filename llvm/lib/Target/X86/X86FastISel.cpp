@@ -57,7 +57,9 @@ class X86FastISel : public FastISel {
   bool X86ScalarSSEf32;
 
 public:
-  explicit X86FastISel(FunctionLoweringInfo &funcInfo) : FastISel(funcInfo) {
+  explicit X86FastISel(FunctionLoweringInfo &funcInfo,
+                       const TargetLibraryInfo *libInfo)
+    : FastISel(funcInfo, libInfo) {
     Subtarget = &TM.getSubtarget<X86Subtarget>();
     StackPtr = Subtarget->is64Bit() ? X86::RSP : X86::ESP;
     X86ScalarSSEf64 = Subtarget->hasSSE2();
@@ -2199,7 +2201,8 @@ bool X86FastISel::TryToFoldLoad(MachineInstr *MI, unsigned OpNo,
 
 
 namespace llvm {
-  FastISel *X86::createFastISel(FunctionLoweringInfo &funcInfo) {
-    return new X86FastISel(funcInfo);
+  FastISel *X86::createFastISel(FunctionLoweringInfo &funcInfo,
+                                const TargetLibraryInfo *libInfo) {
+    return new X86FastISel(funcInfo, libInfo);
   }
 }

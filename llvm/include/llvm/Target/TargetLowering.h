@@ -51,6 +51,7 @@ namespace llvm {
   template<typename T> class SmallVectorImpl;
   class TargetData;
   class TargetRegisterClass;
+  class TargetLibraryInfo;
   class TargetLoweringObjectFile;
   class Value;
 
@@ -1413,7 +1414,8 @@ public:
 
   /// createFastISel - This method returns a target specific FastISel object,
   /// or null if the target does not support "fast" ISel.
-  virtual FastISel *createFastISel(FunctionLoweringInfo &) const {
+  virtual FastISel *createFastISel(FunctionLoweringInfo &,
+                                   const TargetLibraryInfo *) const {
     return 0;
   }
 

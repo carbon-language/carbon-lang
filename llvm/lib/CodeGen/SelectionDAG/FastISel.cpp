@@ -55,6 +55,7 @@
 #include "llvm/Analysis/Loads.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -789,6 +790,18 @@ FastISel::SelectInstruction(const Instruction *I) {
 
   MachineBasicBlock::iterator SavedInsertPt = FuncInfo.InsertPt;
 
+  // As a special case, don't even try to handle calls to builtin library
+  // functions so that calls to builtin functions get translated to
+  // instructions when supported by the target.
+  if (const CallInst *Call = dyn_cast<CallInst>(I)) {
+    const Function *F = Call->getCalledFunction();
+    LibFunc::Func Func;
+    if (F && !F->hasLocalLinkage() && F->hasName() &&
+        LibInfo->getLibFunc(F->getName(), Func) &&
+        LibInfo->has(Func))
+      return false;
+  }
+
   // First, try doing target-independent selection.
   if (SelectOperator(I, I->getOpcode())) {
     ++NumFastIselSuccessIndependent;
@@ -1040,7 +1053,8 @@ FastISel::SelectOperator(const User *I, unsigned Opcode) {
   }
 }
 
-FastISel::FastISel(FunctionLoweringInfo &funcInfo)
+FastISel::FastISel(FunctionLoweringInfo &funcInfo,
+                   const TargetLibraryInfo *libInfo)
   : FuncInfo(funcInfo),
     MRI(FuncInfo.MF->getRegInfo()),
     MFI(*FuncInfo.MF->getFrameInfo()),
@@ -1049,7 +1063,8 @@ FastISel::FastISel(FunctionLoweringInfo &funcInfo)
     TD(*TM.getTargetData()),
     TII(*TM.getInstrInfo()),
     TLI(*TM.getTargetLowering()),
-    TRI(*TM.getRegisterInfo()) {
+    TRI(*TM.getRegisterInfo()),
+    LibInfo(libInfo) {
 }
 
 FastISel::~FastISel() {}

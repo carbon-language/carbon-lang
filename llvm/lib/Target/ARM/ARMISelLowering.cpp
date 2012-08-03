@@ -1041,8 +1041,9 @@ const TargetRegisterClass *ARMTargetLowering::getRegClassFor(EVT VT) const {
 
 // Create a fast isel object.
 FastISel *
-ARMTargetLowering::createFastISel(FunctionLoweringInfo &funcInfo) const {
-  return ARM::createFastISel(funcInfo);
+ARMTargetLowering::createFastISel(FunctionLoweringInfo &funcInfo,
+                                  const TargetLibraryInfo *libInfo) const {
+  return ARM::createFastISel(funcInfo, libInfo);
 }
 
 /// getMaximalGlobalOffset - Returns the maximal possible offset which can
