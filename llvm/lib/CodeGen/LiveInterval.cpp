@@ -737,9 +737,7 @@ void LiveInterval::print(raw_ostream &OS) const {
       } else {
         OS << vni->def;
         if (vni->isPHIDef())
-          OS << "-phidef";
-        if (vni->hasPHIKill())
-          OS << "-phikill";
+          OS << "-phi";
       }
     }
   }

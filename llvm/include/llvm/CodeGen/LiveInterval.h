@@ -42,8 +42,7 @@ namespace llvm {
   class VNInfo {
   private:
     enum {
-      HAS_PHI_KILL    = 1,
-      IS_UNUSED       = 1 << 1
+      IS_UNUSED       = 1
     };
 
     unsigned char flags;
@@ -80,17 +79,6 @@ namespace llvm {
     /// Merge flags from another VNInfo
     void mergeFlags(const VNInfo *VNI) {
       flags = (flags | VNI->flags) & ~IS_UNUSED;
-    }
-
-    /// Returns true if one or more kills are PHI nodes.
-    /// Obsolete, do not use!
-    bool hasPHIKill() const { return flags & HAS_PHI_KILL; }
-    /// Set the PHI kill flag on this value.
-    void setHasPHIKill(bool hasKill) {
-      if (hasKill)
-        flags |= HAS_PHI_KILL;
-      else
-        flags &= ~HAS_PHI_KILL;
     }
 
     /// Returns true if this value is defined by a PHI instruction (or was,

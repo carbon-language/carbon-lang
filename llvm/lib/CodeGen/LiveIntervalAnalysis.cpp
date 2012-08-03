@@ -256,7 +256,6 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // new valno in the killing blocks.
       assert(vi.AliveBlocks.empty() && "Phi join can't pass through blocks");
       DEBUG(dbgs() << " phi-join");
-      ValNo->setHasPHIKill(true);
     } else {
       // Iterate over all of the blocks that the variable is completely
       // live in, adding [insrtIndex(begin), instrIndex(end)+4) to the
@@ -357,7 +356,6 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       SlotIndex killIndex = getMBBEndIdx(mbb);
       LiveRange LR(defIndex, killIndex, ValNo);
       interval.addRange(LR);
-      ValNo->setHasPHIKill(true);
       DEBUG(dbgs() << " phi-join +" << LR);
     } else {
       llvm_unreachable("Multiply defined register");
@@ -823,7 +821,6 @@ LiveRange LiveIntervals::addLiveRangeToEndOfBlock(unsigned reg,
   VNInfo* VN = Interval.getNextValue(
     SlotIndex(getInstructionIndex(startInst).getRegSlot()),
     getVNInfoAllocator());
-  VN->setHasPHIKill(true);
   LiveRange LR(
      SlotIndex(getInstructionIndex(startInst).getRegSlot()),
      getMBBEndIdx(startInst->getParent()), VN);

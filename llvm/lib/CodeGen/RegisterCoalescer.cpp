@@ -460,14 +460,8 @@ bool RegisterCoalescer::adjustCopiesBackFrom(const CoalescerPair &CP,
   IntB.addRange(LiveRange(FillerStart, FillerEnd, BValNo));
 
   // Okay, merge "B1" into the same value number as "B0".
-  if (BValNo != ValLR->valno) {
-    // If B1 is killed by a PHI, then the merged live range must also be killed
-    // by the same PHI, as B0 and B1 can not overlap.
-    bool HasPHIKill = BValNo->hasPHIKill();
+  if (BValNo != ValLR->valno)
     IntB.MergeValueNumberInto(BValNo, ValLR->valno);
-    if (HasPHIKill)
-      ValLR->valno->setHasPHIKill(true);
-  }
   DEBUG(dbgs() << "   result = " << IntB << '\n');
 
   // If the source instruction was killing the source register before the
@@ -1384,24 +1378,6 @@ bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
       ++I;
     else
       ++J;
-  }
-
-  // Update kill info. Some live ranges are extended due to copy coalescing.
-  for (DenseMap<VNInfo*, VNInfo*>::iterator I = LHSValsDefinedFromRHS.begin(),
-         E = LHSValsDefinedFromRHS.end(); I != E; ++I) {
-    VNInfo *VNI = I->first;
-    unsigned LHSValID = LHSValNoAssignments[VNI->id];
-    if (VNI->hasPHIKill())
-      NewVNInfo[LHSValID]->setHasPHIKill(true);
-  }
-
-  // Update kill info. Some live ranges are extended due to copy coalescing.
-  for (DenseMap<VNInfo*, VNInfo*>::iterator I = RHSValsDefinedFromLHS.begin(),
-         E = RHSValsDefinedFromLHS.end(); I != E; ++I) {
-    VNInfo *VNI = I->first;
-    unsigned RHSValID = RHSValNoAssignments[VNI->id];
-    if (VNI->hasPHIKill())
-      NewVNInfo[RHSValID]->setHasPHIKill(true);
   }
 
   // Clear kill flags where live ranges are extended.
