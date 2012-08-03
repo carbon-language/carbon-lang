@@ -2351,6 +2351,9 @@ RecordLayoutBuilder::ComputeKeyFunction(const CXXRecordDecl *RD) {
     if (MD->hasInlineBody())
       continue;
 
+    if (!MD->isUserProvided())
+      continue;
+
     // We found it.
     return MD;
   }
