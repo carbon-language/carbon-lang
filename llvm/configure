@@ -684,6 +684,7 @@ BUILD_EXEEXT
 BUILD_CXX
 CVSBUILD
 ENABLE_LIBCPP
+ENABLE_CXX11
 ENABLE_OPTIMIZED
 ENABLE_PROFILING
 DISABLE_ASSERTIONS
@@ -1390,6 +1391,7 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-polly          Use polly if available (default is YES)
   --enable-libcpp         Use libc++ if available (default is NO)
+  --enable-cxx11          Use c++11 if available (default is NO)
   --enable-optimized      Compile with optimizations enabled (default is NO)
   --enable-profiling      Compile with profiling enabled (default is NO)
   --enable-assertions     Compile with assertion checks enabled (default is
@@ -5013,6 +5015,25 @@ case "$enableval" in
 ;;
   *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-libcpp. Use \"yes\" or \"no\"" >&5
 echo "$as_me: error: Invalid setting for --enable-libcpp. Use \"yes\" or \"no\"" >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
+
+# Check whether --enable-cxx11 was given.
+if test "${enable_cxx11+set}" = set; then
+  enableval=$enable_cxx11;
+else
+  enableval=default
+fi
+
+case "$enableval" in
+  yes) ENABLE_CXX11=1
+ ;;
+  no)  ENABLE_CXX11=0
+ ;;
+  default) ENABLE_CXX11=0
+;;
+  *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-cxx11. Use \"yes\" or \"no\"" >&5
+echo "$as_me: error: Invalid setting for --enable-cxx11. Use \"yes\" or \"no\"" >&2;}
    { (exit 1); exit 1; }; } ;;
 esac
 
@@ -10210,7 +10231,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10213 "configure"
+#line 10234 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -21937,6 +21958,7 @@ BUILD_EXEEXT!$BUILD_EXEEXT$ac_delim
 BUILD_CXX!$BUILD_CXX$ac_delim
 CVSBUILD!$CVSBUILD$ac_delim
 ENABLE_LIBCPP!$ENABLE_LIBCPP$ac_delim
+ENABLE_CXX11!$ENABLE_CXX11$ac_delim
 ENABLE_OPTIMIZED!$ENABLE_OPTIMIZED$ac_delim
 ENABLE_PROFILING!$ENABLE_PROFILING$ac_delim
 DISABLE_ASSERTIONS!$DISABLE_ASSERTIONS$ac_delim
@@ -21951,7 +21973,6 @@ ENABLE_DOXYGEN!$ENABLE_DOXYGEN$ac_delim
 LLVM_ENABLE_THREADS!$LLVM_ENABLE_THREADS$ac_delim
 ENABLE_PTHREADS!$ENABLE_PTHREADS$ac_delim
 ENABLE_PIC!$ENABLE_PIC$ac_delim
-ENABLE_SHARED!$ENABLE_SHARED$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -21993,6 +22014,7 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+ENABLE_SHARED!$ENABLE_SHARED$ac_delim
 ENABLE_EMBED_STDCXX!$ENABLE_EMBED_STDCXX$ac_delim
 ENABLE_TIMESTAMPS!$ENABLE_TIMESTAMPS$ac_delim
 TARGETS_TO_BUILD!$TARGETS_TO_BUILD$ac_delim
@@ -22084,7 +22106,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 89; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 90; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
