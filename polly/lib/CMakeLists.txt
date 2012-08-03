@@ -23,7 +23,7 @@ set(LLVM_USED_LIBS
   PollyJSON
   )
 
-add_polly_library(LLVMPolly
+add_polly_loadable_module(LLVMPolly
   CodePreparation.cpp
   DeadCodeElimination.cpp
   IndependentBlocks.cpp
