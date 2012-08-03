@@ -419,21 +419,13 @@ void CXXInstanceCall::getInitialStackFrameContents(
 
 
 
-SVal CXXMemberCall::getCXXThisVal() const {
-  const Expr *Base = getOriginExpr()->getImplicitObjectArgument();
-
-  // FIXME: Will eventually need to cope with member pointers.  This is
-  // a limitation in getImplicitObjectArgument().
-  if (!Base)
-    return UnknownVal();
-
-  return getSVal(Base);
+const Expr *CXXMemberCall::getCXXThisExpr() const {
+  return getOriginExpr()->getImplicitObjectArgument();
 }
 
 
-SVal CXXMemberOperatorCall::getCXXThisVal() const {
-  const Expr *Base = getOriginExpr()->getArg(0);
-  return getSVal(Base);
+const Expr *CXXMemberOperatorCall::getCXXThisExpr() const {
+  return getOriginExpr()->getArg(0);
 }
 
 

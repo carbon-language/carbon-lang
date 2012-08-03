@@ -420,8 +420,17 @@ protected:
   CXXInstanceCall(const CXXInstanceCall &Other) : SimpleCall(Other) {}
 
 public:
+  /// \brief Returns the expression representing the implicit 'this' object.
+  virtual const Expr *getCXXThisExpr() const = 0;
+
   /// \brief Returns the value of the implicit 'this' object.
-  virtual SVal getCXXThisVal() const = 0;
+  SVal getCXXThisVal() const {
+    const Expr *Base = getCXXThisExpr();
+    // FIXME: This doesn't handle an overloaded ->* operator.
+    if (!Base)
+      return UnknownVal();
+    return getSVal(Base);
+  }
 
   virtual const Decl *getRuntimeDefinition() const;
 
@@ -453,7 +462,7 @@ public:
     return cast<CXXMemberCallExpr>(SimpleCall::getOriginExpr());
   }
 
-  virtual SVal getCXXThisVal() const;
+  virtual const Expr *getCXXThisExpr() const;
 
   virtual Kind getKind() const { return CE_CXXMember; }
 
@@ -492,7 +501,7 @@ public:
     return getOriginExpr()->getArg(Index + 1);
   }
 
-  virtual SVal getCXXThisVal() const;
+  virtual const Expr *getCXXThisExpr() const;
 
   virtual Kind getKind() const { return CE_CXXMemberOperator; }
 
