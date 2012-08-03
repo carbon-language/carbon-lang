@@ -17,6 +17,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/CallEvent.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/StmtCXX.h"
+#include "clang/Basic/PrettyStackTrace.h"
 
 using namespace clang;
 using namespace ento;
@@ -171,6 +172,10 @@ void ExprEngine::VisitCXXDestructor(QualType ObjectType,
   CallEventManager &CEMgr = getStateManager().getCallEventManager();
   CallEventRef<CXXDestructorCall> Call =
     CEMgr.getCXXDestructorCall(DtorDecl, S, Dest, State, LCtx);
+
+  PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
+                                Call->getSourceRange().getBegin(),
+                                "Error evaluating destructor");
 
   ExplodedNodeSet DstPreCall;
   getCheckerManager().runCheckersForPreCall(DstPreCall, Pred,

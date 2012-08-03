@@ -360,8 +360,13 @@ void ExprEngine::ProcessInitializer(const CFGInitializer Init,
 
   ProgramStateRef State = Pred->getState();
 
-  // We don't set EntryNode and currentStmt. And we don't clean up state.
   const CXXCtorInitializer *BMI = Init.getInitializer();
+
+  PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
+                                BMI->getSourceLocation(),
+                                "Error evaluating initializer");
+
+  // We don't set EntryNode and currentStmt. And we don't clean up state.
   const StackFrameContext *stackFrame =
                            cast<StackFrameContext>(Pred->getLocationContext());
   const CXXConstructorDecl *decl =
@@ -383,7 +388,7 @@ void ExprEngine::ProcessInitializer(const CFGInitializer Init,
       State = State->bindLoc(FieldLoc, InitVal);
     }
   } else {
-    assert(BMI->isBaseInitializer());
+    assert(BMI->isBaseInitializer() || BMI->isDelegatingInitializer());
     // We already did all the work when visiting the CXXConstructExpr.
   }
 

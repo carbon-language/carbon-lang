@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -analyzer-store region -cfg-add-implicit-dtors -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -analyzer-store region -cfg-add-implicit-dtors -std=c++11 -verify %s
 
 // We don't inline constructors unless we have destructors turned on.
 
@@ -42,6 +42,18 @@ public:
 void testIndirectMember() {
   IndirectMember obj(3);
   clang_analyzer_eval(obj.getX() == 3); // expected-warning{{TRUE}}
+}
+
+
+struct DelegatingConstructor {
+  int x;
+  DelegatingConstructor(int y) { x = y; }
+  DelegatingConstructor() : DelegatingConstructor(42) {}
+};
+
+void testDelegatingConstructor() {
+  DelegatingConstructor obj;
+  clang_analyzer_eval(obj.x == 42); // expected-warning{{TRUE}}
 }
 
 
