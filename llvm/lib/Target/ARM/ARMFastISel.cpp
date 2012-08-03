@@ -167,6 +167,7 @@ class ARMFastISel : public FastISel {
     bool SelectRet(const Instruction *I);
     bool SelectTrunc(const Instruction *I);
     bool SelectIntExt(const Instruction *I);
+    bool SelectShift(const Instruction *I, ARM_AM::ShiftOpc ShiftTy);
 
     // Utility routines.
   private:
@@ -2613,6 +2614,61 @@ bool ARMFastISel::SelectIntExt(const Instruction *I) {
   return true;
 }
 
+bool ARMFastISel::SelectShift(const Instruction *I,
+                              ARM_AM::ShiftOpc ShiftTy) {
+  // We handle thumb2 mode by target independent selector
+  // or SelectionDAG ISel.
+  if (isThumb2)
+    return false;
+
+  // Only handle i32 now.
+  EVT DestVT = TLI.getValueType(I->getType(), true);
+  if (DestVT != MVT::i32)
+    return false;
+
+  unsigned Opc = ARM::MOVsr;
+  unsigned ShiftImm;
+  Value *Src2Value = I->getOperand(1);
+  if (const ConstantInt *CI = dyn_cast<ConstantInt>(Src2Value)) {
+    ShiftImm = CI->getZExtValue();
+
+    // Fall back to selection DAG isel if the shift amount
+    // is zero or greater than the width of the value type.
+    if (ShiftImm == 0 || ShiftImm >=32)
+      return false;
+
+    Opc = ARM::MOVsi;
+  }
+
+  Value *Src1Value = I->getOperand(0);
+  unsigned Reg1 = getRegForValue(Src1Value);
+  if (Reg1 == 0) return false;
+
+  unsigned Reg2;
+  if (Opc == ARM::MOVsr) {
+    Reg2 = getRegForValue(Src2Value);
+    if (Reg2 == 0) return false;
+  }
+
+  unsigned ResultReg = createResultReg(TLI.getRegClassFor(MVT::i32));
+  if(ResultReg == 0) return false;
+
+  MachineInstrBuilder MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                                    TII.get(Opc), ResultReg)
+                            .addReg(Reg1);
+
+  if (Opc == ARM::MOVsi)
+    MIB.addImm(ARM_AM::getSORegOpc(ShiftTy, ShiftImm));
+  else if (Opc == ARM::MOVsr) {
+    MIB.addReg(Reg2);
+    MIB.addImm(ARM_AM::getSORegOpc(ShiftTy, 0));
+  }
+
+  AddOptionalDefs(MIB);
+  UpdateValueMap(I, ResultReg);
+  return true;
+}
+
 // TODO: SoftFP support.
 bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
 
@@ -2673,6 +2729,12 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
     case Instruction::ZExt:
     case Instruction::SExt:
       return SelectIntExt(I);
+    case Instruction::Shl:
+      return SelectShift(I, ARM_AM::lsl);
+    case Instruction::LShr:
+      return SelectShift(I, ARM_AM::lsr);
+    case Instruction::AShr:
+      return SelectShift(I, ARM_AM::asr);
     default: break;
   }
   return false;
