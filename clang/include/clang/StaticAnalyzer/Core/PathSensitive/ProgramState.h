@@ -66,6 +66,12 @@ public:
   DynamicTypeInfo() : T(QualType()) {}
   DynamicTypeInfo(QualType WithType) : T(WithType) {}
   QualType getType() {return T;}
+  void Profile(llvm::FoldingSetNodeID &ID) const {
+    T.Profile(ID);
+  }
+  bool operator==(const DynamicTypeInfo &X) const {
+    return T == X.T;
+  }
 };
 
 /// \class ProgramState
@@ -327,6 +333,8 @@ public:
 
   /// Get dynamic type information for a region.
   DynamicTypeInfo getDynamicTypeInfo(const MemRegion *Reg) const;
+  /// Add dynamic type information to the region and return the new state.
+  ProgramStateRef addDynamicTypeInfo(const MemRegion *Reg, QualType NewTy)const;
 
   //==---------------------------------------------------------------------==//
   // Accessing the Generic Data Map (GDM).

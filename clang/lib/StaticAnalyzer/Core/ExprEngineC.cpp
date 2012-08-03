@@ -308,6 +308,9 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
         const LocationContext *LCtx = Pred->getLocationContext();
         SVal V = state->getSVal(Ex, LCtx);
         V = svalBuilder.evalCast(V, T, ExTy);
+        if (const MemRegion *R = V.getAsRegion()) {
+          state = state->addDynamicTypeInfo(R, T);
+        }
         state = state->BindExpr(CastE, LCtx, V);
         Bldr.generateNode(CastE, Pred, state);
         continue;
