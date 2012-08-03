@@ -55,7 +55,6 @@ STATISTIC(NumCommuted        , "Number of instructions commuted to coalesce");
 STATISTIC(NumAggrCommuted    , "Number of instructions aggressively commuted");
 STATISTIC(NumConvertedTo3Addr, "Number of instructions promoted to 3-address");
 STATISTIC(Num3AddrSunk,        "Number of 3-address instructions sunk");
-STATISTIC(NumDeletes,          "Number of dead instructions deleted");
 STATISTIC(NumReSchedUps,       "Number of instructions re-scheduled up");
 STATISTIC(NumReSchedDowns,     "Number of instructions re-scheduled down");
 
@@ -111,14 +110,6 @@ namespace {
                             MachineBasicBlock::iterator &nmi,
                             MachineFunction::iterator &mbbi,
                             unsigned RegA, unsigned RegB, unsigned Dist);
-
-    typedef std::pair<std::pair<unsigned, bool>, MachineInstr*> NewKill;
-    bool canUpdateDeletedKills(SmallVector<unsigned, 4> &Kills,
-                               SmallVector<NewKill, 4> &NewKills,
-                               MachineBasicBlock *MBB, unsigned Dist);
-    bool DeleteUnusedInstr(MachineBasicBlock::iterator &mi,
-                           MachineBasicBlock::iterator &nmi,
-                           MachineFunction::iterator &mbbi, unsigned Dist);
 
     bool isDefTooClose(unsigned Reg, unsigned Dist,
                        MachineInstr *MI, MachineBasicBlock *MBB);
@@ -731,92 +722,6 @@ void TwoAddressInstructionPass::ProcessCopy(MachineInstr *MI,
   return;
 }
 
-/// isSafeToDelete - If the specified instruction does not produce any side
-/// effects and all of its defs are dead, then it's safe to delete.
-static bool isSafeToDelete(MachineInstr *MI,
-                           const TargetInstrInfo *TII,
-                           SmallVector<unsigned, 4> &Kills) {
-  if (MI->mayStore() || MI->isCall())
-    return false;
-  if (MI->isTerminator() || MI->hasUnmodeledSideEffects())
-    return false;
-
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg())
-      continue;
-    if (MO.isDef() && !MO.isDead())
-      return false;
-    if (MO.isUse() && MO.isKill())
-      Kills.push_back(MO.getReg());
-  }
-  return true;
-}
-
-/// canUpdateDeletedKills - Check if all the registers listed in Kills are
-/// killed by instructions in MBB preceding the current instruction at
-/// position Dist.  If so, return true and record information about the
-/// preceding kills in NewKills.
-bool TwoAddressInstructionPass::
-canUpdateDeletedKills(SmallVector<unsigned, 4> &Kills,
-                      SmallVector<NewKill, 4> &NewKills,
-                      MachineBasicBlock *MBB, unsigned Dist) {
-  while (!Kills.empty()) {
-    unsigned Kill = Kills.back();
-    Kills.pop_back();
-    if (TargetRegisterInfo::isPhysicalRegister(Kill))
-      return false;
-
-    MachineInstr *LastKill = FindLastUseInMBB(Kill, MBB, Dist);
-    if (!LastKill)
-      return false;
-
-    bool isModRef = LastKill->definesRegister(Kill);
-    NewKills.push_back(std::make_pair(std::make_pair(Kill, isModRef),
-                                      LastKill));
-  }
-  return true;
-}
-
-/// DeleteUnusedInstr - If an instruction with a tied register operand can
-/// be safely deleted, just delete it.
-bool
-TwoAddressInstructionPass::DeleteUnusedInstr(MachineBasicBlock::iterator &mi,
-                                             MachineBasicBlock::iterator &nmi,
-                                             MachineFunction::iterator &mbbi,
-                                             unsigned Dist) {
-  // Check if the instruction has no side effects and if all its defs are dead.
-  SmallVector<unsigned, 4> Kills;
-  if (!isSafeToDelete(mi, TII, Kills))
-    return false;
-
-  // If this instruction kills some virtual registers, we need to
-  // update the kill information. If it's not possible to do so,
-  // then bail out.
-  SmallVector<NewKill, 4> NewKills;
-  if (!canUpdateDeletedKills(Kills, NewKills, &*mbbi, Dist))
-    return false;
-
-  if (LV) {
-    while (!NewKills.empty()) {
-      MachineInstr *NewKill = NewKills.back().second;
-      unsigned Kill = NewKills.back().first.first;
-      bool isDead = NewKills.back().first.second;
-      NewKills.pop_back();
-      if (LV->removeVirtualRegisterKilled(Kill, mi)) {
-        if (isDead)
-          LV->addVirtualRegisterDead(Kill, NewKill);
-        else
-          LV->addVirtualRegisterKilled(Kill, NewKill);
-      }
-    }
-  }
-
-  mbbi->erase(mi); // Nuke the old inst.
-  mi = nmi;
-  return true;
-}
-
 /// RescheduleMIBelowKill - If there is one more local instruction that reads
 /// 'Reg' and it kills 'Reg, consider moving the instruction below the kill
 /// instruction in order to eliminate the need for the copy.
@@ -1126,16 +1031,7 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
 
   assert(TargetRegisterInfo::isVirtualRegister(regB) &&
          "cannot make instruction into two-address form");
-
-  // If regA is dead and the instruction can be deleted, just delete
-  // it so it doesn't clobber regB.
   bool regBKilled = isKilled(MI, regB, MRI, TII);
-  if (!regBKilled && MI.getOperand(DstIdx).isDead() &&
-      DeleteUnusedInstr(mi, nmi, mbbi, Dist)) {
-    ++NumDeletes;
-    DEBUG(dbgs() << "\tdeleted unused instruction.\n");
-    return true; // Done with this instruction."
-  }
 
   if (TargetRegisterInfo::isVirtualRegister(regA))
     ScanUses(regA, &*mbbi, Processed);
