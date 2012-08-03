@@ -434,9 +434,12 @@ SourceRange CXXOperatorCallExpr::getSourceRangeImpl() const {
 }
 
 Expr *CXXMemberCallExpr::getImplicitObjectArgument() const {
-  if (const MemberExpr *MemExpr = 
-        dyn_cast<MemberExpr>(getCallee()->IgnoreParens()))
+  const Expr *Callee = getCallee()->IgnoreParens();
+  if (const MemberExpr *MemExpr = dyn_cast<MemberExpr>(Callee))
     return MemExpr->getBase();
+  if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(Callee))
+    if (BO->getOpcode() == BO_PtrMemD || BO->getOpcode() == BO_PtrMemI)
+      return BO->getLHS();
 
   // FIXME: Will eventually need to cope with member pointers.
   return 0;

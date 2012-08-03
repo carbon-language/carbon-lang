@@ -109,3 +109,10 @@ void test_ic_null(TestInstanceCall *p) {
     p->foo(); // expected-warning {{Called C++ object pointer is null}}
 }
 
+void test_ic_member_ptr() {
+  TestInstanceCall *p = 0;
+  typedef void (TestInstanceCall::*IC_Ptr)();
+  IC_Ptr bar = &TestInstanceCall::foo;
+  (p->*bar)(); // expected-warning {{Called C++ object pointer is null}}
+}
+
