@@ -246,6 +246,10 @@ namespace llvm {
     /// return NULL.
     MachineBasicBlock *intervalIsInOneMBB(const LiveInterval &LI) const;
 
+    /// Returns true if VNI is killed by any PHI-def values in LI.
+    /// This may conservatively return true to avoid expensive computations.
+    bool hasPHIKill(const LiveInterval &LI, const VNInfo *VNI) const;
+
     /// addKillFlags - Add kill flags to any instruction that kills a virtual
     /// register.
     void addKillFlags();

@@ -780,6 +780,25 @@ LiveIntervals::intervalIsInOneMBB(const LiveInterval &LI) const {
   return MBB1 == MBB2 ? MBB1 : NULL;
 }
 
+bool
+LiveIntervals::hasPHIKill(const LiveInterval &LI, const VNInfo *VNI) const {
+  for (LiveInterval::const_vni_iterator I = LI.vni_begin(), E = LI.vni_end();
+       I != E; ++I) {
+    const VNInfo *PHI = *I;
+    if (PHI->isUnused() || !PHI->isPHIDef())
+      continue;
+    const MachineBasicBlock *PHIMBB = getMBBFromIndex(PHI->def);
+    // Conservatively return true instead of scanning huge predecessor lists.
+    if (PHIMBB->pred_size() > 100)
+      return true;
+    for (MachineBasicBlock::const_pred_iterator
+         PI = PHIMBB->pred_begin(), PE = PHIMBB->pred_end(); PI != PE; ++PI)
+      if (VNI == LI.getVNInfoBefore(Indexes->getMBBEndIdx(*PI)))
+        return true;
+  }
+  return false;
+}
+
 float
 LiveIntervals::getSpillWeight(bool isDef, bool isUse, unsigned loopDepth) {
   // Limit the loop depth ridiculousness.

@@ -494,6 +494,11 @@ bool RegisterCoalescer::hasOtherReachingDefs(LiveInterval &IntA,
                                              LiveInterval &IntB,
                                              VNInfo *AValNo,
                                              VNInfo *BValNo) {
+  // If AValNo has PHI kills, conservatively assume that IntB defs can reach
+  // the PHI values.
+  if (LIS->hasPHIKill(IntA, AValNo))
+    return true;
+
   for (LiveInterval::iterator AI = IntA.begin(), AE = IntA.end();
        AI != AE; ++AI) {
     if (AI->valno != AValNo) continue;
@@ -558,10 +563,7 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
   // AValNo is the value number in A that defines the copy, A3 in the example.
   VNInfo *AValNo = IntA.getVNInfoAt(CopyIdx.getRegSlot(true));
   assert(AValNo && "COPY source not live");
-
-  // If other defs can reach uses of this def, then it's not safe to perform
-  // the optimization.
-  if (AValNo->isPHIDef() || AValNo->isUnused() || AValNo->hasPHIKill())
+  if (AValNo->isPHIDef() || AValNo->isUnused())
     return false;
   MachineInstr *DefMI = LIS->getInstructionFromIndex(AValNo->def);
   if (!DefMI)
