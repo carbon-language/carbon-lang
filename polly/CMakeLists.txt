@@ -75,7 +75,14 @@ FIND_PACKAGE(Cloog REQUIRED)
 FIND_PACKAGE(Isl REQUIRED)
 FIND_PACKAGE(Gmp REQUIRED)
 FIND_PACKAGE(Pluto)
-FIND_PACKAGE(CUDA)
+
+option(POLLY_ENABLE_GPGPU_CODEGEN "Enable GPGPU code generation feature" OFF)
+if (POLLY_ENABLE_GPGPU_CODEGEN)
+  # Do not require CUDA, as GPU code generation test cases can be run without
+  # a cuda library.
+  FIND_PACKAGE(CUDA)
+  set(GPU_CODEGEN TRUE)
+endif(POLLY_ENABLE_GPGPU_CODEGEN)
 
 option(POLLY_ENABLE_OPENSCOP "Enable Openscop library for scop import/export" ON)
 if (POLLY_ENABLE_OPENSCOP)

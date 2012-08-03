@@ -654,6 +654,7 @@ with_cloog
 with_pluto
 with_openscop
 with_scoplib
+enable_polly_gpu_codegen
 with_cuda
 '
       ac_precious_vars='build_alias
@@ -1271,6 +1272,13 @@ if test -n "$ac_init_help"; then
      short | recursive ) echo "Configuration of Polly 0.01:";;
    esac
   cat <<\_ACEOF
+
+Optional Features:
+  --disable-option-checking  ignore unrecognized --enable/--with options
+  --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
+  --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --enable-polly-gpu-codegen
+                          Enable GPU code generation in Polly(default is NO)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -3002,6 +3010,26 @@ fi
 
 
 
+# Check whether --enable-polly_gpu_codegen was given.
+if test "${enable_polly_gpu_codegen+set}" = set; then :
+  enableval=$enable_polly_gpu_codegen;
+else
+  enableval=default
+fi
+
+case "$enableval" in
+  yes)
+$as_echo "#define GPU_CODEGEN 1" >>confdefs.h
+ ;;
+  no)
+$as_echo "#define GPU_CODEGEN 0" >>confdefs.h
+ ;;
+  default)
+$as_echo "#define GPU_CODEGEN 0" >>confdefs.h
+ ;;
+  *) as_fn_error $? "Invalid setting for --enable-polly-gpu-codegen. Use \"yes\" or \"no\"" "$LINENO" 5 ;;
+esac
+
 
   ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -3079,6 +3107,7 @@ ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
 
 
 if test "x$cuda_found" = "xyes"; then :

@@ -9,10 +9,16 @@ if (ISL_CODEGEN_FOUND)
       IslCodeGeneration.cpp)
 endif (ISL_CODEGEN_FOUND)
 
+if (GPU_CODEGEN)
+  set (GPGPU_CODEGEN_FILES
+       PTXGenerator.cpp)
+endif (GPU_CODEGEN)
+
 add_polly_library(PollyCodeGen
   BlockGenerators.cpp
   ${CLOOG_FILES}
   ${ISL_CODEGEN_FILES}
   LoopGenerators.cpp
   Utils.cpp
+  ${GPGPU_CODEGEN_FILES}
 )

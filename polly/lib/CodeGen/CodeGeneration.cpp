@@ -31,6 +31,7 @@
 #include "polly/CodeGen/CodeGeneration.h"
 #include "polly/CodeGen/BlockGenerators.h"
 #include "polly/CodeGen/LoopGenerators.h"
+#include "polly/CodeGen/PTXGenerator.h"
 #include "polly/CodeGen/Utils.h"
 #include "polly/Support/GICHelper.h"
 
@@ -64,6 +65,19 @@ OpenMP("enable-polly-openmp",
        cl::desc("Generate OpenMP parallel code"), cl::Hidden,
        cl::value_desc("OpenMP code generation enabled if true"),
        cl::init(false), cl::ZeroOrMore);
+
+#ifdef GPU_CODEGEN
+static cl::opt<bool>
+GPGPU("enable-polly-gpgpu",
+       cl::desc("Generate GPU parallel code"), cl::Hidden,
+       cl::value_desc("GPGPU code generation enabled if true"),
+       cl::init(false), cl::ZeroOrMore);
+
+static cl::opt<std::string>
+GPUTriple("polly-gpgpu-triple",
+       cl::desc("Target triple for GPU code generation"),
+       cl::Hidden, cl::init(""));
+#endif /* GPU_CODEGEN */
 
 static cl::opt<bool>
 AtLeastOnce("enable-polly-atLeastOnce",
@@ -283,6 +297,27 @@ private:
   /// This loop reflects a loop as if it would have been created by an OpenMP
   /// statement.
   void codegenForOpenMP(const clast_for *f);
+
+#ifdef GPU_CODEGEN
+  /// @brief Create GPGPU device memory access values.
+  ///
+  /// Create a list of values that will be set to be parameters of the GPGPU
+  /// subfunction. These parameters represent device memory base addresses
+  /// and the size in bytes.
+  SetVector<Value*> getGPUValues(unsigned &OutputBytes);
+
+  /// @brief Create a GPU parallel for loop.
+  ///
+  /// This loop reflects a loop as if it would have been created by a GPU
+  /// statement.
+  void codegenForGPGPU(const clast_for *F);
+
+  /// @brief Get innermost for loop.
+  const clast_stmt *getScheduleInfo(const clast_for *F,
+                                    std::vector<int> &NumIters,
+                                    unsigned &LoopDepth,
+                                    unsigned &NonPLoopDepth);
+#endif /* GPU_CODEGEN */
 
   /// @brief Check if a loop is parallel
   ///
@@ -530,6 +565,163 @@ void ClastStmtCodeGen::codegenForOpenMP(const clast_for *For) {
   Builder.SetInsertPoint(AfterLoop);
 }
 
+#ifdef GPU_CODEGEN
+static unsigned getArraySizeInBytes(const ArrayType *AT) {
+  unsigned Bytes = AT->getNumElements();
+  if (const ArrayType *T = dyn_cast<ArrayType>(AT->getElementType()))
+    Bytes *= getArraySizeInBytes(T);
+  else
+    Bytes *= AT->getElementType()->getPrimitiveSizeInBits() / 8;
+
+  return Bytes;
+}
+
+SetVector<Value*> ClastStmtCodeGen::getGPUValues(unsigned &OutputBytes) {
+  SetVector<Value*> Values;
+  OutputBytes = 0;
+
+  // Record the memory reference base addresses.
+  for (Scop::iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI) {
+    ScopStmt *Stmt = *SI;
+    for (SmallVector<MemoryAccess*, 8>::iterator I = Stmt->memacc_begin(),
+         E = Stmt->memacc_end(); I != E; ++I) {
+      Value *BaseAddr = const_cast<Value*>((*I)->getBaseAddr());
+      Values.insert((BaseAddr));
+
+      // FIXME: we assume that there is one and only one array to be written
+      // in a SCoP.
+      int NumWrites = 0;
+      if ((*I)->isWrite()) {
+        ++NumWrites;
+        assert(NumWrites <= 1 &&
+               "We support at most one array to be written in a SCoP.");
+        if (const PointerType * PT =
+            dyn_cast<PointerType>(BaseAddr->getType())) {
+          Type *T = PT->getArrayElementType();
+          const ArrayType *ATy = dyn_cast<ArrayType>(T);
+          OutputBytes = getArraySizeInBytes(ATy);
+        }
+      }
+    }
+  }
+
+  return Values;
+}
+
+const clast_stmt *ClastStmtCodeGen::getScheduleInfo(const clast_for *F,
+                                                    std::vector<int> &NumIters,
+                                                    unsigned &LoopDepth,
+                                                    unsigned &NonPLoopDepth) {
+  clast_stmt *Stmt = (clast_stmt *)F;
+  const clast_for *Result;
+  bool NonParaFlag = false;
+  LoopDepth = 0;
+  NonPLoopDepth = 0;
+
+  while (Stmt) {
+    if (CLAST_STMT_IS_A(Stmt, stmt_for)) {
+      const clast_for *T = (clast_for *) Stmt;
+      if (isParallelFor(T)) {
+        if (!NonParaFlag) {
+          NumIters.push_back(getNumberOfIterations(T));
+          Result = T;
+        }
+      } else
+        NonParaFlag = true;
+
+      Stmt = T->body;
+      LoopDepth++;
+      continue;
+    }
+    Stmt = Stmt->next;
+  }
+
+  assert(NumIters.size() == 4 &&
+         "The loops should be tiled into 4-depth parallel loops and an "
+         "innermost non-parallel one (if exist).");
+  NonPLoopDepth = LoopDepth - NumIters.size();
+  assert(NonPLoopDepth <= 1
+         && "We support only one innermost non-parallel loop currently.");
+  return (const clast_stmt *)Result->body;
+}
+
+void ClastStmtCodeGen::codegenForGPGPU(const clast_for *F) {
+  BasicBlock::iterator LoopBody;
+  SetVector<Value *> Values;
+  SetVector<Value *> IVS;
+  std::vector<int> NumIterations;
+  PTXGenerator::ValueToValueMapTy VMap;
+
+  assert(!GPUTriple.empty()
+         && "Target triple should be set properly for GPGPU code generation.");
+  PTXGenerator PTXGen(Builder, P, GPUTriple);
+
+  // Get original IVS and ScopStmt
+  unsigned TiledLoopDepth, NonPLoopDepth;
+  const clast_stmt *InnerStmt = getScheduleInfo(F, NumIterations,
+                                                TiledLoopDepth, NonPLoopDepth);
+  const clast_stmt *TmpStmt;
+  const clast_user_stmt *U;
+  const clast_for *InnerFor;
+  if (CLAST_STMT_IS_A(InnerStmt, stmt_for)) {
+    InnerFor = (const clast_for *)InnerStmt;
+    TmpStmt = InnerFor->body;
+  } else
+    TmpStmt = InnerStmt;
+  U = (const clast_user_stmt *) TmpStmt;
+  ScopStmt *Statement = (ScopStmt *) U->statement->usr;
+  for (unsigned i = 0; i < Statement->getNumIterators() - NonPLoopDepth; i++) {
+    const Value* IV = Statement->getInductionVariableForDimension(i);
+    IVS.insert(const_cast<Value *>(IV));
+  }
+
+  unsigned OutBytes;
+  Values = getGPUValues(OutBytes);
+  PTXGen.setOutputBytes(OutBytes);
+  PTXGen.startGeneration(Values, IVS, VMap, &LoopBody);
+
+  BasicBlock::iterator AfterLoop = Builder.GetInsertPoint();
+  Builder.SetInsertPoint(LoopBody);
+
+  BasicBlock *AfterBB = 0;
+  if (NonPLoopDepth) {
+    Value *LowerBound, *UpperBound, *IV, *Stride;
+    Type *IntPtrTy = getIntPtrTy();
+    LowerBound = ExpGen.codegen(InnerFor->LB, IntPtrTy);
+    UpperBound = ExpGen.codegen(InnerFor->UB, IntPtrTy);
+    Stride = Builder.getInt(APInt_from_MPZ(InnerFor->stride));
+    IV = createLoop(LowerBound, UpperBound, Stride, Builder, P, AfterBB);
+    const Value *OldIV_ = Statement->getInductionVariableForDimension(2);
+    Value *OldIV = const_cast<Value *>(OldIV_);
+    VMap.insert(std::make_pair<Value*, Value*>(OldIV, IV));
+  }
+
+  updateWithValueMap(VMap, /* reverse */ false);
+  BlockGenerator::generate(Builder, *Statement, ValueMap, P);
+  updateWithValueMap(VMap, /* reverse */ true);
+
+  if (AfterBB)
+    Builder.SetInsertPoint(AfterBB->begin());
+
+  // FIXME: The replacement of the host base address with the parameter of ptx
+  // subfunction should have been done by updateWithValueMap. We use the
+  // following codes to avoid affecting other parts of Polly. This should be
+  // fixed later.
+  Function *FN = Builder.GetInsertBlock()->getParent();
+  for (unsigned j = 0; j < Values.size(); j++) {
+    Value *baseAddr = Values[j];
+    for (Function::iterator B = FN->begin(); B != FN->end(); ++B) {
+      for (BasicBlock::iterator I = B->begin(); I != B->end(); ++I)
+        I->replaceUsesOfWith(baseAddr, ValueMap[baseAddr]);
+    }
+  }
+  Builder.SetInsertPoint(AfterLoop);
+  PTXGen.setLaunchingParameters(NumIterations[0], NumIterations[1],
+                                NumIterations[2], NumIterations[3]);
+  PTXGen.finishGeneration(FN);
+}
+#endif
+
 bool ClastStmtCodeGen::isInnermostLoop(const clast_for *f) {
   const clast_stmt *stmt = f->body;
 
@@ -646,6 +838,18 @@ void ClastStmtCodeGen::codegen(const clast_for *f) {
       return;
     }
   }
+
+#ifdef GPU_CODEGEN
+  if (GPGPU && isParallelFor(f)) {
+    if (!parallelCodeGeneration) {
+      parallelCodeGeneration = true;
+      parallelLoops.push_back(f->iterator);
+      codegenForGPGPU(f);
+      parallelCodeGeneration = false;
+      return;
+    }
+  }
+#endif
 
   codegenForSequential(f);
 }

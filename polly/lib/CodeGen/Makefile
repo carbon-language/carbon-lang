@@ -10,6 +10,8 @@ BUILD_ARCHIVE = 1
 
 CPP.Flags += $(POLLY_INC)
 
+include $(LEVEL)/Makefile.config
+
 #
 # Include Makefile.common so we know what to do.
 #

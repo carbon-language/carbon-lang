@@ -120,7 +120,20 @@ fi
 AC_SUBST(scoplib_rpath)
 
 dnl Check if CUDA lib there
+dnl Disable the build of polly, even if it is checked out into tools/polly.
+AC_ARG_ENABLE(polly_gpu_codegen,
+              AS_HELP_STRING([--enable-polly-gpu-codegen],
+                             [Enable GPU code generation in Polly(default is NO)]),,
+                             enableval=default)
+case "$enableval" in
+  yes) AC_DEFINE([GPU_CODEGEN],[1], [Define if gpu codegen is enabled]) ;;
+  no)  AC_DEFINE([GPU_CODEGEN],[0], [Define if gpu codegen is enabled]) ;;
+  default) AC_DEFINE([GPU_CODEGEN],[0],  [Define if gpu codegen is enabled]) ;;
+  *) AC_MSG_ERROR([Invalid setting for --enable-polly-gpu-codegen. Use "yes" or "no"]) ;;
+esac
+
 find_lib_and_headers([cuda], [cuda.h], [cuda])
+
 AS_IF([test "x$cuda_found" = "xyes"],
   [AC_DEFINE([CUDALIB_FOUND],[1],[Define if cudalib found])])
 

@@ -9,6 +9,9 @@
 /* Define if cudalib found */
 #undef CUDALIB_FOUND
 
+/* Define if gpu codegen is enabled */
+#undef GPU_CODEGEN
+
 /* Define if ISL has a code generator */
 #undef ISL_CODEGEN_FOUND
 
