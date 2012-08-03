@@ -151,8 +151,22 @@ void DeclInfo::fill() {
   TemplateParameters = NULL;
 
   if (!ThisDecl) {
-    // Defaults are OK.
-  } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ThisDecl)) {
+    // If there is no declaration, the defaults is our only guess.
+    IsFilled = true;
+    return;
+  }
+
+  Decl::Kind K = ThisDecl->getKind();
+  switch (K) {
+  default:
+    // Defaults are should be good for declarations we don't handle explicitly.
+    break;
+  case Decl::Function:
+  case Decl::CXXMethod:
+  case Decl::CXXConstructor:
+  case Decl::CXXDestructor:
+  case Decl::CXXConversion: {
+    const FunctionDecl *FD = cast<FunctionDecl>(ThisDecl);
     Kind = FunctionKind;
     ParamVars = ArrayRef<const ParmVarDecl *>(FD->param_begin(),
                                               FD->getNumParams());
@@ -164,53 +178,78 @@ void DeclInfo::fill() {
           FD->getTemplateParameterList(NumLists - 1);
     }
 
-    if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
+    if (K == Decl::CXXMethod) {
+      const CXXMethodDecl *MD = cast<CXXMethodDecl>(ThisDecl);
       IsInstanceMethod = MD->isInstance();
       IsClassMethod = !IsInstanceMethod;
     }
-  } else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(ThisDecl)) {
+    break;
+  }
+  case Decl::ObjCMethod: {
+    const ObjCMethodDecl *MD = cast<ObjCMethodDecl>(ThisDecl);
     Kind = FunctionKind;
     ParamVars = ArrayRef<const ParmVarDecl *>(MD->param_begin(),
                                               MD->param_size());
     IsInstanceMethod = MD->isInstanceMethod();
     IsClassMethod = !IsInstanceMethod;
-  } else if (const FunctionTemplateDecl *FTD =
-                 dyn_cast<FunctionTemplateDecl>(ThisDecl)) {
+    break;
+  }
+  case Decl::FunctionTemplate: {
+    const FunctionTemplateDecl *FTD = cast<FunctionTemplateDecl>(ThisDecl);
     Kind = FunctionKind;
     IsTemplateDecl = true;
     const FunctionDecl *FD = FTD->getTemplatedDecl();
     ParamVars = ArrayRef<const ParmVarDecl *>(FD->param_begin(),
                                               FD->getNumParams());
     TemplateParameters = FTD->getTemplateParameters();
-  } else if (const ClassTemplateDecl *CTD =
-                 dyn_cast<ClassTemplateDecl>(ThisDecl)) {
+    break;
+  }
+  case Decl::ClassTemplate: {
+    const ClassTemplateDecl *CTD = cast<ClassTemplateDecl>(ThisDecl);
     Kind = ClassKind;
     IsTemplateDecl = true;
     TemplateParameters = CTD->getTemplateParameters();
-  } else if (const ClassTemplatePartialSpecializationDecl *CTPSD =
-                 dyn_cast<ClassTemplatePartialSpecializationDecl>(ThisDecl)) {
+    break;
+  }
+  case Decl::ClassTemplatePartialSpecialization: {
+    const ClassTemplatePartialSpecializationDecl *CTPSD =
+        cast<ClassTemplatePartialSpecializationDecl>(ThisDecl);
     Kind = ClassKind;
     IsTemplateDecl = true;
     IsTemplatePartialSpecialization = true;
     TemplateParameters = CTPSD->getTemplateParameters();
-  } else if (isa<ClassTemplateSpecializationDecl>(ThisDecl)) {
+    break;
+  }
+  case Decl::ClassTemplateSpecialization:
     Kind = ClassKind;
     IsTemplateDecl = true;
     IsTemplateSpecialization = true;
-  } else if (isa<RecordDecl>(ThisDecl)) {
+    break;
+  case Decl::Record:
     Kind = ClassKind;
-  } else if (isa<VarDecl>(ThisDecl) || isa<FieldDecl>(ThisDecl)) {
+    break;
+  case Decl::Var:
+  case Decl::Field:
+  case Decl::ObjCIvar:
+  case Decl::ObjCAtDefsField:
     Kind = VariableKind;
-  } else if (isa<NamespaceDecl>(ThisDecl)) {
+    break;
+  case Decl::Namespace:
     Kind = NamespaceKind;
-  } else if (isa<TypedefNameDecl>(ThisDecl)) {
+    break;
+  case Decl::Typedef:
+  case Decl::TypeAlias:
     Kind = TypedefKind;
-  } else if (const TypeAliasTemplateDecl *TAT =
-                 dyn_cast<TypeAliasTemplateDecl>(ThisDecl)) {
+    break;
+  case Decl::TypeAliasTemplate: {
+    const TypeAliasTemplateDecl *TAT = cast<TypeAliasTemplateDecl>(ThisDecl);
     Kind = TypedefKind;
     IsTemplateDecl = true;
     TemplateParameters = TAT->getTemplateParameters();
+    break;
   }
+  }
+
   IsFilled = true;
 }
 
