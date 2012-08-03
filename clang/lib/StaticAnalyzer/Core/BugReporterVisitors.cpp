@@ -63,14 +63,6 @@ const Stmt *bugreporter::GetDenomExpr(const ExplodedNode *N) {
   return NULL;
 }
 
-const Stmt *bugreporter::GetCalleeExpr(const ExplodedNode *N) {
-  // Callee is checked as a PreVisit to the CallExpr.
-  const Stmt *S = N->getLocationAs<PreStmt>()->getStmt();
-  if (const CallExpr *CE = dyn_cast<CallExpr>(S))
-    return CE->getCallee();
-  return NULL;
-}
-
 const Stmt *bugreporter::GetRetValExpr(const ExplodedNode *N) {
   const Stmt *S = N->getLocationAs<PostStmt>()->getStmt();
   if (const ReturnStmt *RS = dyn_cast<ReturnStmt>(S))
@@ -127,10 +119,16 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *N,
     return NULL;
 
   if (!StoreSite) {
-    const ExplodedNode *Node = N, *Last = NULL;
+    // Make sure the region is actually bound to value V here.
+    // This is necessary because the region may not actually be live at the
+    // report's error node.
+    if (N->getState()->getSVal(R) != V)
+      return NULL;
 
+    const ExplodedNode *Node = N, *Last = N;
+
+    // Now look for the store of V.
     for ( ; Node ; Node = Node->getFirstPred()) {
-
       if (const VarRegion *VR = dyn_cast<VarRegion>(R)) {
         if (const PostStmt *P = Node->getLocationAs<PostStmt>())
           if (const DeclStmt *DS = P->getStmtAs<DeclStmt>())
@@ -145,9 +143,11 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *N,
       // looking for store sites.
       if (Node->getState()->getSVal(R) != V)
         break;
+
+      Last = Node;
     }
 
-    if (!Node || !Last) {
+    if (!Node) {
       satisfied = true;
       return NULL;
     }
