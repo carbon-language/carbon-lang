@@ -1234,7 +1234,7 @@ static std::string GenIntrinsic(const std::string &name,
     s += " __attribute__((unavailable));\n";
     return s;
   } else
-    s += " { \\\n  ";
+    s += " {\n  ";
 
   if (kind != OpNone)
     s += GenOpString(kind, proto, outTypeStr);
