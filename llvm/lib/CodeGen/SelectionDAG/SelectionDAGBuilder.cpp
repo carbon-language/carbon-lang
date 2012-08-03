@@ -5682,7 +5682,7 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
                                    Tmp.getValueType(), Tmp));
           return;
         }
-      } else if (Name == "memcmp") {
+      } else if ((LibInfo->has(LibFunc::memcmp) && Name == "memcmp")) {
         if (visitMemCmpCall(I))
           return;
       }

@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s
+; RUN: llc < %s -disable-simplify-libcalls -mtriple=x86_64-linux | FileCheck %s --check-prefix=NOBUILTIN
 ; RUN: llc < %s -mtriple=x86_64-win32 | FileCheck %s
 
 ; This tests codegen time inlining/optimization of memcmp
@@ -23,6 +24,8 @@ return:                                           ; preds = %entry
 ; CHECK: memcmp2:
 ; CHECK: movw    ([[A0:%rdi|%rcx]]), %ax
 ; CHECK: cmpw    ([[A1:%rsi|%rdx]]), %ax
+; NOBUILTIN: memcmp2:
+; NOBUILTIN: callq
 }
 
 define void @memcmp2a(i8* %X, i32* nocapture %P) nounwind {
