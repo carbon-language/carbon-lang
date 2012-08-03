@@ -93,9 +93,6 @@ namespace {
     bool NoUseAfterLastDef(unsigned Reg, MachineBasicBlock *MBB, unsigned Dist,
                            unsigned &LastDef);
 
-    MachineInstr *FindLastUseInMBB(unsigned Reg, MachineBasicBlock *MBB,
-                                   unsigned Dist);
-
     bool isProfitableToCommute(unsigned regA, unsigned regB, unsigned regC,
                                MachineInstr *MI, MachineBasicBlock *MBB,
                                unsigned Dist);
@@ -312,31 +309,6 @@ bool TwoAddressInstructionPass::NoUseAfterLastDef(unsigned Reg,
   }
 
   return !(LastUse > LastDef && LastUse < Dist);
-}
-
-MachineInstr *TwoAddressInstructionPass::FindLastUseInMBB(unsigned Reg,
-                                                         MachineBasicBlock *MBB,
-                                                         unsigned Dist) {
-  unsigned LastUseDist = 0;
-  MachineInstr *LastUse = 0;
-  for (MachineRegisterInfo::reg_iterator I = MRI->reg_begin(Reg),
-         E = MRI->reg_end(); I != E; ++I) {
-    MachineOperand &MO = I.getOperand();
-    MachineInstr *MI = MO.getParent();
-    if (MI->getParent() != MBB || MI->isDebugValue())
-      continue;
-    DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(MI);
-    if (DI == DistanceMap.end())
-      continue;
-    if (DI->second >= Dist)
-      continue;
-
-    if (MO.isUse() && DI->second > LastUseDist) {
-      LastUse = DI->first;
-      LastUseDist = DI->second;
-    }
-  }
-  return LastUse;
 }
 
 /// isCopyToReg - Return true if the specified MI is a copy instruction or
