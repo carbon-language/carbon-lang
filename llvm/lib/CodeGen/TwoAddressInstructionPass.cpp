@@ -137,9 +137,10 @@ namespace {
     void ProcessCopy(MachineInstr *MI, MachineBasicBlock *MBB,
                      SmallPtrSet<MachineInstr*, 8> &Processed);
 
-    typedef SmallVector<std::pair<unsigned, unsigned>, 4> TiedOpList;
-    typedef SmallDenseMap<unsigned, TiedOpList> TiedOperandMap;
+    typedef SmallVector<std::pair<unsigned, unsigned>, 4> TiedPairList;
+    typedef SmallDenseMap<unsigned, TiedPairList> TiedOperandMap;
     bool collectTiedOperands(MachineInstr *MI, TiedOperandMap&);
+    void processTiedPairs(MachineInstr *MI, TiedPairList&, unsigned &Dist);
 
     void CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs, unsigned DstReg);
 
@@ -1233,6 +1234,135 @@ collectTiedOperands(MachineInstr *MI, TiedOperandMap &TiedOperands) {
   return AnyOps;
 }
 
+// Process a list of tied MI operands that all use the same source register.
+// The tied pairs are of the form (SrcIdx, DstIdx).
+void
+TwoAddressInstructionPass::processTiedPairs(MachineInstr *MI,
+                                            TiedPairList &TiedPairs,
+                                            unsigned &Dist) {
+  bool IsEarlyClobber = false;
+  bool RemovedKillFlag = false;
+  bool AllUsesCopied = true;
+  unsigned LastCopiedReg = 0;
+  unsigned RegB = 0;
+  for (unsigned tpi = 0, tpe = TiedPairs.size(); tpi != tpe; ++tpi) {
+    unsigned SrcIdx = TiedPairs[tpi].first;
+    unsigned DstIdx = TiedPairs[tpi].second;
+
+    const MachineOperand &DstMO = MI->getOperand(DstIdx);
+    unsigned RegA = DstMO.getReg();
+    IsEarlyClobber |= DstMO.isEarlyClobber();
+
+    // Grab RegB from the instruction because it may have changed if the
+    // instruction was commuted.
+    RegB = MI->getOperand(SrcIdx).getReg();
+
+    if (RegA == RegB) {
+      // The register is tied to multiple destinations (or else we would
+      // not have continued this far), but this use of the register
+      // already matches the tied destination.  Leave it.
+      AllUsesCopied = false;
+      continue;
+    }
+    LastCopiedReg = RegA;
+
+    assert(TargetRegisterInfo::isVirtualRegister(RegB) &&
+           "cannot make instruction into two-address form");
+
+#ifndef NDEBUG
+    // First, verify that we don't have a use of "a" in the instruction
+    // (a = b + a for example) because our transformation will not
+    // work. This should never occur because we are in SSA form.
+    for (unsigned i = 0; i != MI->getNumOperands(); ++i)
+      assert(i == DstIdx ||
+             !MI->getOperand(i).isReg() ||
+             MI->getOperand(i).getReg() != RegA);
+#endif
+
+    // Emit a copy.
+    BuildMI(*MI->getParent(), MI, MI->getDebugLoc(),
+            TII->get(TargetOpcode::COPY), RegA).addReg(RegB);
+
+    // Update DistanceMap.
+    MachineBasicBlock::iterator PrevMI = MI;
+    --PrevMI;
+    DistanceMap.insert(std::make_pair(PrevMI, Dist));
+    DistanceMap[MI] = ++Dist;
+
+    SlotIndex CopyIdx;
+    if (Indexes)
+      CopyIdx = Indexes->insertMachineInstrInMaps(PrevMI).getRegSlot();
+
+    DEBUG(dbgs() << "\t\tprepend:\t" << *PrevMI);
+
+    MachineOperand &MO = MI->getOperand(SrcIdx);
+    assert(MO.isReg() && MO.getReg() == RegB && MO.isUse() &&
+           "inconsistent operand info for 2-reg pass");
+    if (MO.isKill()) {
+      MO.setIsKill(false);
+      RemovedKillFlag = true;
+    }
+
+    // Make sure regA is a legal regclass for the SrcIdx operand.
+    if (TargetRegisterInfo::isVirtualRegister(RegA) &&
+        TargetRegisterInfo::isVirtualRegister(RegB))
+      MRI->constrainRegClass(RegA, MRI->getRegClass(RegB));
+
+    MO.setReg(RegA);
+
+    // Propagate SrcRegMap.
+    SrcRegMap[RegA] = RegB;
+  }
+
+
+  if (AllUsesCopied) {
+    if (!IsEarlyClobber) {
+      // Replace other (un-tied) uses of regB with LastCopiedReg.
+      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+        MachineOperand &MO = MI->getOperand(i);
+        if (MO.isReg() && MO.getReg() == RegB && MO.isUse()) {
+          if (MO.isKill()) {
+            MO.setIsKill(false);
+            RemovedKillFlag = true;
+          }
+          MO.setReg(LastCopiedReg);
+        }
+      }
+    }
+
+    // Update live variables for regB.
+    if (RemovedKillFlag && LV && LV->getVarInfo(RegB).removeKill(MI)) {
+      MachineBasicBlock::iterator PrevMI = MI;
+      --PrevMI;
+      LV->addVirtualRegisterKilled(RegB, PrevMI);
+    }
+
+  } else if (RemovedKillFlag) {
+    // Some tied uses of regB matched their destination registers, so
+    // regB is still used in this instruction, but a kill flag was
+    // removed from a different tied use of regB, so now we need to add
+    // a kill flag to one of the remaining uses of regB.
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = MI->getOperand(i);
+      if (MO.isReg() && MO.getReg() == RegB && MO.isUse()) {
+        MO.setIsKill(true);
+        break;
+      }
+    }
+  }
+
+  // We didn't change anything if there was a single tied pair, and that
+  // pair didn't require copies.
+  if (AllUsesCopied || TiedPairs.size() > 1) {
+    // Schedule the source copy / remat inserted to form two-address
+    // instruction. FIXME: Does it matter the distance map may not be
+    // accurate after it's scheduled?
+    MachineBasicBlock::iterator PrevMI = MI;
+    --PrevMI;
+    TII->scheduleTwoAddrSource(PrevMI, MI, *TRI);
+  }
+}
+
 /// runOnMachineFunction - Reduce two-address instructions to two operands.
 ///
 bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &Func) {
@@ -1294,6 +1424,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &Func) {
       }
 
       ++NumTwoAddressInstrs;
+      MadeChange = true;
       DEBUG(dbgs() << '\t' << *mi);
 
       // If the instruction has a single pair of tied operands, try some
@@ -1322,125 +1453,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &Func) {
       // Now iterate over the information collected above.
       for (TiedOperandMap::iterator OI = TiedOperands.begin(),
              OE = TiedOperands.end(); OI != OE; ++OI) {
-        SmallVector<std::pair<unsigned, unsigned>, 4> &TiedPairs = OI->second;
-
-        bool IsEarlyClobber = false;
-        bool RemovedKillFlag = false;
-        bool AllUsesCopied = true;
-        unsigned LastCopiedReg = 0;
-        unsigned regB = OI->first;
-        for (unsigned tpi = 0, tpe = TiedPairs.size(); tpi != tpe; ++tpi) {
-          unsigned SrcIdx = TiedPairs[tpi].first;
-          unsigned DstIdx = TiedPairs[tpi].second;
-
-          const MachineOperand &DstMO = mi->getOperand(DstIdx);
-          unsigned regA = DstMO.getReg();
-          IsEarlyClobber |= DstMO.isEarlyClobber();
-
-          // Grab regB from the instruction because it may have changed if the
-          // instruction was commuted.
-          regB = mi->getOperand(SrcIdx).getReg();
-
-          if (regA == regB) {
-            // The register is tied to multiple destinations (or else we would
-            // not have continued this far), but this use of the register
-            // already matches the tied destination.  Leave it.
-            AllUsesCopied = false;
-            continue;
-          }
-          LastCopiedReg = regA;
-
-          assert(TargetRegisterInfo::isVirtualRegister(regB) &&
-                 "cannot make instruction into two-address form");
-
-#ifndef NDEBUG
-          // First, verify that we don't have a use of "a" in the instruction
-          // (a = b + a for example) because our transformation will not
-          // work. This should never occur because we are in SSA form.
-          for (unsigned i = 0; i != mi->getNumOperands(); ++i)
-            assert(i == DstIdx ||
-                   !mi->getOperand(i).isReg() ||
-                   mi->getOperand(i).getReg() != regA);
-#endif
-
-          // Emit a copy.
-          BuildMI(*mbbi, mi, mi->getDebugLoc(), TII->get(TargetOpcode::COPY),
-                  regA).addReg(regB);
-
-          // Update DistanceMap.
-          MachineBasicBlock::iterator prevMI = prior(mi);
-          DistanceMap.insert(std::make_pair(prevMI, Dist));
-          DistanceMap[mi] = ++Dist;
-
-          SlotIndex CopyIdx;
-          if (Indexes)
-            CopyIdx = Indexes->insertMachineInstrInMaps(prevMI).getRegSlot();
-
-          DEBUG(dbgs() << "\t\tprepend:\t" << *prevMI);
-
-          MachineOperand &MO = mi->getOperand(SrcIdx);
-          assert(MO.isReg() && MO.getReg() == regB && MO.isUse() &&
-                 "inconsistent operand info for 2-reg pass");
-          if (MO.isKill()) {
-            MO.setIsKill(false);
-            RemovedKillFlag = true;
-          }
-
-          // Make sure regA is a legal regclass for the SrcIdx operand.
-          if (TargetRegisterInfo::isVirtualRegister(regA) &&
-              TargetRegisterInfo::isVirtualRegister(regB))
-            MRI->constrainRegClass(regA, MRI->getRegClass(regB));
-
-          MO.setReg(regA);
-
-          // Propagate SrcRegMap.
-          SrcRegMap[regA] = regB;
-        }
-
-        if (AllUsesCopied) {
-          if (!IsEarlyClobber) {
-            // Replace other (un-tied) uses of regB with LastCopiedReg.
-            for (unsigned i = 0, e = mi->getNumOperands(); i != e; ++i) {
-              MachineOperand &MO = mi->getOperand(i);
-              if (MO.isReg() && MO.getReg() == regB && MO.isUse()) {
-                if (MO.isKill()) {
-                  MO.setIsKill(false);
-                  RemovedKillFlag = true;
-                }
-                MO.setReg(LastCopiedReg);
-              }
-            }
-          }
-
-          // Update live variables for regB.
-          if (RemovedKillFlag && LV && LV->getVarInfo(regB).removeKill(mi))
-            LV->addVirtualRegisterKilled(regB, prior(mi));
-
-        } else if (RemovedKillFlag) {
-          // Some tied uses of regB matched their destination registers, so
-          // regB is still used in this instruction, but a kill flag was
-          // removed from a different tied use of regB, so now we need to add
-          // a kill flag to one of the remaining uses of regB.
-          for (unsigned i = 0, e = mi->getNumOperands(); i != e; ++i) {
-            MachineOperand &MO = mi->getOperand(i);
-            if (MO.isReg() && MO.getReg() == regB && MO.isUse()) {
-              MO.setIsKill(true);
-              break;
-            }
-          }
-        }
-
-        // We didn't change anything if there was a single tied pair, and that
-        // pair didn't require copies.
-        if (AllUsesCopied || TiedPairs.size() > 1) {
-          MadeChange = true;
-
-          // Schedule the source copy / remat inserted to form two-address
-          // instruction. FIXME: Does it matter the distance map may not be
-          // accurate after it's scheduled?
-          TII->scheduleTwoAddrSource(prior(mi), mi, *TRI);
-        }
-
+        processTiedPairs(mi, OI->second, Dist);
         DEBUG(dbgs() << "\t\trewrite to:\t" << *mi);
       }
 
