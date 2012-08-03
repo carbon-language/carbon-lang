@@ -45,6 +45,7 @@ NewLiveIntervals("new-live-intervals", cl::Hidden,
                  cl::desc("Use new algorithm forcomputing live intervals"));
 
 char LiveIntervals::ID = 0;
+char &llvm::LiveIntervalsID = LiveIntervals::ID;
 INITIALIZE_PASS_BEGIN(LiveIntervals, "liveintervals",
                 "Live Interval Analysis", false, false)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)

@@ -315,6 +315,10 @@ namespace llvm {
   ///  This pass is still in development
   extern char &StrongPHIEliminationID;
 
+  /// LiveIntervals - This analysis keeps track of the live ranges of virtual
+  /// and physical registers.
+  extern char &LiveIntervalsID;
+
   /// LiveStacks pass. An analysis keeping track of the liveness of stack slots.
   extern char &LiveStacksID;
 
