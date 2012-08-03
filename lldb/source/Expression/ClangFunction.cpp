@@ -504,13 +504,23 @@ ClangFunction::ExecuteFunction (
     
     call_plan_sp->SetPrivate(true);
     
-    return exe_ctx.GetProcessRef().RunThreadPlan (exe_ctx, call_plan_sp, 
-                                                  stop_others, 
-                                                  try_all_threads, 
-                                                  discard_on_error,
-                                                  single_thread_timeout_usec, 
-                                                  errors);
-}  
+    // <rdar://problem/12027563> we need to make sure we record the fact that we are running an expression here
+    // otherwise this fact will fail to be recorded when fetching an Objective-C object description
+    if (exe_ctx.GetProcessPtr())
+        exe_ctx.GetProcessPtr()->SetRunningUserExpression(true);
+    
+    ExecutionResults results = exe_ctx.GetProcessRef().RunThreadPlan (exe_ctx, call_plan_sp,
+                                                                      stop_others, 
+                                                                      try_all_threads, 
+                                                                      discard_on_error,
+                                                                      single_thread_timeout_usec, 
+                                                                      errors);
+    
+    if (exe_ctx.GetProcessPtr())
+        exe_ctx.GetProcessPtr()->SetRunningUserExpression(false);
+    
+    return results;
+}
 
 ExecutionResults
 ClangFunction::ExecuteFunction(

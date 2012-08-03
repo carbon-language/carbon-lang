@@ -1935,7 +1935,12 @@ Target::RunStopHooks ()
         
     if (!m_process_sp)
         return;
-        
+    
+    // <rdar://problem/12027563> make sure we check that we are not stopped because of us running a user expression
+    // since in that case we do not want to run the stop-hooks
+    if (m_process_sp->GetModIDRef().IsLastResumeForUserExpression())
+        return;
+    
     if (m_stop_hooks.empty())
         return;
         
