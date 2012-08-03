@@ -730,13 +730,13 @@ else
 endif
 
 Compile.C     = $(Compile.Wrapper) \
-	          $(CC) $(CPP.Flags) $(C.Flags) $(CFLAGS) $(CPPFLAGS) $(BUILD_FLAGS) \
+	          $(CC) $(CPP.Flags) $(C.Flags) $(CFLAGS) $(CPPFLAGS) \
                 $(TargetCommonOpts) $(CompileCommonOpts) -c
 Compile.CXX   = $(Compile.Wrapper) \
-	          $(CXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) $(CPPFLAGS) $(BUILD_FLAGS) \
+	          $(CXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) $(CPPFLAGS) \
                 $(TargetCommonOpts) $(CompileCommonOpts) -c
 Preprocess.CXX= $(Compile.Wrapper) \
-	          $(CXX) $(CPP.Flags) $(TargetCommonOpts) $(CPPFLAGS) $(BUILD_FLAGS) \
+	          $(CXX) $(CPP.Flags) $(TargetCommonOpts) $(CPPFLAGS) \
                 $(CompileCommonOpts) $(CXX.Flags) -E
 Link          = $(Compile.Wrapper) \
 	          $(CXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) $(LD.Flags) \
