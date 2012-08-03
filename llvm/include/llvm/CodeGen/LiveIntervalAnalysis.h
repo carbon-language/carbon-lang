@@ -241,13 +241,6 @@ namespace llvm {
     /// print - Implement the dump method.
     virtual void print(raw_ostream &O, const Module* = 0) const;
 
-    /// isReMaterializable - Returns true if every definition of MI of every
-    /// val# of the specified interval is re-materializable. Also returns true
-    /// by reference if all of the defs are load instructions.
-    bool isReMaterializable(const LiveInterval &li,
-                            const SmallVectorImpl<LiveInterval*> *SpillIs,
-                            bool &isLoad);
-
     /// intervalIsInOneMBB - If LI is confined to a single basic block, return
     /// a pointer to that block.  If LI is live in to or out of any block,
     /// return NULL.
