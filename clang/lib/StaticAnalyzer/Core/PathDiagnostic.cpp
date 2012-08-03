@@ -148,7 +148,7 @@ void PathDiagnosticConsumer::HandlePathDiagnostic(PathDiagnostic *D) {
 
   if (PathDiagnostic *orig = Diags.FindNodeOrInsertPos(profile, InsertPos)) {
     // Keep the PathDiagnostic with the shorter path.
-    // Note, the enclosing rutine is called in deterministic order, so the
+    // Note, the enclosing routine is called in deterministic order, so the
     // results will be consistent between runs (no reason to break ties if the
     // size is the same).
     const unsigned orig_size = orig->full_size();
