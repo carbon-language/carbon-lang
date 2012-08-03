@@ -688,6 +688,7 @@ ENABLE_CXX11
 ENABLE_OPTIMIZED
 ENABLE_PROFILING
 DISABLE_ASSERTIONS
+ENABLE_WERROR
 ENABLE_EXPENSIVE_CHECKS
 EXPENSIVE_CHECKS
 DEBUG_RUNTIME
@@ -1399,6 +1400,7 @@ Optional Features:
   --enable-profiling      Compile with profiling enabled (default is NO)
   --enable-assertions     Compile with assertion checks enabled (default is
                           YES)
+  --enable-werror         Compile with -Werror enabled (default is NO)
   --enable-expensive-checks
                           Compile with expensive debug checks enabled (default
                           is NO)
@@ -5084,6 +5086,25 @@ else
   DISABLE_ASSERTIONS=DISABLE_ASSERTIONS=1
 
 fi
+
+# Check whether --enable-werror was given.
+if test "${enable_werror+set}" = set; then
+  enableval=$enable_werror;
+else
+  enableval="no"
+fi
+
+case "$enableval" in
+  yes) ENABLE_WERROR=1
+ ;;
+  no)  ENABLE_WERROR=0
+ ;;
+  default) ENABLE_WERROR=0
+;;
+  *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-werror. Use \"yes\" or \"no\"" >&5
+echo "$as_me: error: Invalid setting for --enable-werror. Use \"yes\" or \"no\"" >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 
 # Check whether --enable-expensive-checks was given.
 if test "${enable_expensive_checks+set}" = set; then
@@ -10234,7 +10255,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10237 "configure"
+#line 10258 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -22107,6 +22128,7 @@ ENABLE_CXX11!$ENABLE_CXX11$ac_delim
 ENABLE_OPTIMIZED!$ENABLE_OPTIMIZED$ac_delim
 ENABLE_PROFILING!$ENABLE_PROFILING$ac_delim
 DISABLE_ASSERTIONS!$DISABLE_ASSERTIONS$ac_delim
+ENABLE_WERROR!$ENABLE_WERROR$ac_delim
 ENABLE_EXPENSIVE_CHECKS!$ENABLE_EXPENSIVE_CHECKS$ac_delim
 EXPENSIVE_CHECKS!$EXPENSIVE_CHECKS$ac_delim
 DEBUG_RUNTIME!$DEBUG_RUNTIME$ac_delim
@@ -22117,7 +22139,6 @@ ENABLE_DOCS!$ENABLE_DOCS$ac_delim
 ENABLE_DOXYGEN!$ENABLE_DOXYGEN$ac_delim
 LLVM_ENABLE_THREADS!$LLVM_ENABLE_THREADS$ac_delim
 ENABLE_PTHREADS!$ENABLE_PTHREADS$ac_delim
-ENABLE_PIC!$ENABLE_PIC$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -22159,6 +22180,7 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+ENABLE_PIC!$ENABLE_PIC$ac_delim
 ENABLE_SHARED!$ENABLE_SHARED$ac_delim
 ENABLE_EMBED_STDCXX!$ENABLE_EMBED_STDCXX$ac_delim
 ENABLE_TIMESTAMPS!$ENABLE_TIMESTAMPS$ac_delim
@@ -22254,7 +22276,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 93; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 94; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
