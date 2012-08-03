@@ -9473,7 +9473,7 @@ bool Sema::CheckLiteralOperatorDeclaration(FunctionDecl *FnDecl) {
       TemplateParameterList *Params = TpDecl->getTemplateParameters();
       if (Params->size() == 1) {
         NonTypeTemplateParmDecl *PmDecl =
-          cast<NonTypeTemplateParmDecl>(Params->getParam(0));
+          dyn_cast<NonTypeTemplateParmDecl>(Params->getParam(0));
 
         // The template parameter must be a char parameter pack.
         if (PmDecl && PmDecl->isTemplateParameterPack() &&

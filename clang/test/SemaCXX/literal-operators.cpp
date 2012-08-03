@@ -41,3 +41,4 @@ void operator "" _cv_good (volatile const char *, const size_t); // expected-err
 template <char...> void operator "" _good ();
 
 // FIXME: Test some invalid decls that might crop up.
+template <typename...> void operator "" _invalid(); // expected-error {{parameter declaration for literal operator 'operator "" _invalid' is not valid}}
