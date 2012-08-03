@@ -30,6 +30,7 @@
 #define DEBUG_TYPE "twoaddrinstr"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Function.h"
+#include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -65,6 +66,8 @@ namespace {
     const InstrItineraryData *InstrItins;
     MachineRegisterInfo *MRI;
     LiveVariables *LV;
+    SlotIndexes *Indexes;
+    LiveIntervals *LIS;
     AliasAnalysis *AA;
     CodeGenOpt::Level OptLevel;
 
@@ -150,6 +153,8 @@ namespace {
       AU.setPreservesCFG();
       AU.addRequired<AliasAnalysis>();
       AU.addPreserved<LiveVariables>();
+      AU.addPreserved<SlotIndexes>();
+      AU.addPreserved<LiveIntervals>();
       AU.addPreservedID(MachineLoopInfoID);
       AU.addPreservedID(MachineDominatorsID);
       MachineFunctionPass::getAnalysisUsage(AU);
@@ -279,6 +284,9 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
   // Move instruction to its destination.
   MBB->remove(MI);
   MBB->insert(KillPos, MI);
+
+  if (LIS)
+    LIS->handleMove(MI);
 
   ++Num3AddrSunk;
   return true;
@@ -537,6 +545,8 @@ TwoAddressInstructionPass::CommuteInstruction(MachineBasicBlock::iterator &mi,
     if (LV)
       // Update live variables
       LV->replaceKillInstruction(RegC, MI, NewMI);
+    if (Indexes)
+      Indexes->replaceMachineInstrInMaps(MI, NewMI);
 
     mbbi->insert(mi, NewMI);           // Insert the new inst
     mbbi->erase(mi);                   // Nuke the old inst.
@@ -584,6 +594,9 @@ TwoAddressInstructionPass::ConvertInstTo3Addr(MachineBasicBlock::iterator &mi,
     DEBUG(dbgs() << "2addr: CONVERTING 2-ADDR: " << *mi);
     DEBUG(dbgs() << "2addr:         TO 3-ADDR: " << *NewMI);
     bool Sunk = false;
+
+    if (Indexes)
+      Indexes->replaceMachineInstrInMaps(mi, NewMI);
 
     if (NewMI->findRegisterUseOperand(RegB, false, TRI))
       // FIXME: Temporary workaround. If the new instruction doesn't
@@ -823,6 +836,8 @@ TwoAddressInstructionPass::RescheduleMIBelowKill(MachineBasicBlock *MBB,
   // Update live variables
   LV->removeVirtualRegisterKilled(Reg, KillMI);
   LV->addVirtualRegisterKilled(Reg, MI);
+  if (LIS)
+    LIS->handleMove(MI);
 
   DEBUG(dbgs() << "\trescheduled below kill: " << *KillMI);
   return true;
@@ -977,6 +992,8 @@ TwoAddressInstructionPass::RescheduleKillAboveMI(MachineBasicBlock *MBB,
   // Update live variables
   LV->removeVirtualRegisterKilled(Reg, KillMI);
   LV->addVirtualRegisterKilled(Reg, MI);
+  if (LIS)
+    LIS->handleMove(KillMI);
 
   DEBUG(dbgs() << "\trescheduled kill: " << *KillMI);
   return true;
@@ -1181,7 +1198,9 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
   TII = TM.getInstrInfo();
   TRI = TM.getRegisterInfo();
   InstrItins = TM.getInstrItineraryData();
+  Indexes = getAnalysisIfAvailable<SlotIndexes>();
   LV = getAnalysisIfAvailable<LiveVariables>();
+  LIS = getAnalysisIfAvailable<LiveIntervals>();
   AA = &getAnalysis<AliasAnalysis>();
   OptLevel = TM.getOptLevel();
 
@@ -1340,6 +1359,10 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           MachineBasicBlock::iterator prevMI = prior(mi);
           DistanceMap.insert(std::make_pair(prevMI, Dist));
           DistanceMap[mi] = ++Dist;
+
+          SlotIndex CopyIdx;
+          if (Indexes)
+            CopyIdx = Indexes->insertMachineInstrInMaps(prevMI).getRegSlot();
 
           DEBUG(dbgs() << "\t\tprepend:\t" << *prevMI);
 
