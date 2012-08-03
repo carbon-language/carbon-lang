@@ -5541,11 +5541,15 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
 
     // Check for well-known libc/libm calls.  If the function is internal, it
     // can't be a library call.
-    if (!F->hasLocalLinkage() && F->hasName()) {
-      StringRef Name = F->getName();
-      if ((LibInfo->has(LibFunc::copysign) && Name == "copysign") ||
-          (LibInfo->has(LibFunc::copysignf) && Name == "copysignf") ||
-          (LibInfo->has(LibFunc::copysignl) && Name == "copysignl")) {
+    LibFunc::Func Func;
+    if (!F->hasLocalLinkage() && F->hasName() &&
+        LibInfo->getLibFunc(F->getName(), Func) &&
+        LibInfo->hasOptimizedCodeGen(Func)) {
+      switch (Func) {
+      default: break;
+      case LibFunc::copysign:
+      case LibFunc::copysignf:
+      case LibFunc::copysignl:
         if (I.getNumArgOperands() == 2 &&   // Basic sanity checks.
             I.getArgOperand(0)->getType()->isFloatingPointTy() &&
             I.getType() == I.getArgOperand(0)->getType() &&
@@ -5556,9 +5560,10 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
                                    LHS.getValueType(), LHS, RHS));
           return;
         }
-      } else if ((LibInfo->has(LibFunc::fabs) && Name == "fabs") ||
-                 (LibInfo->has(LibFunc::fabsf) && Name == "fabsf") ||
-                 (LibInfo->has(LibFunc::fabsl) && Name == "fabsl")) {
+        break;
+      case LibFunc::fabs:
+      case LibFunc::fabsf:
+      case LibFunc::fabsl:
         if (I.getNumArgOperands() == 1 &&   // Basic sanity checks.
             I.getArgOperand(0)->getType()->isFloatingPointTy() &&
             I.getType() == I.getArgOperand(0)->getType()) {
@@ -5567,9 +5572,10 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
                                    Tmp.getValueType(), Tmp));
           return;
         }
-      } else if ((LibInfo->has(LibFunc::sin) && Name == "sin") ||
-                 (LibInfo->has(LibFunc::sinf) && Name == "sinf") ||
-                 (LibInfo->has(LibFunc::sinl) && Name == "sinl")) {
+        break;
+      case LibFunc::sin:
+      case LibFunc::sinf:
+      case LibFunc::sinl:
         if (I.getNumArgOperands() == 1 &&   // Basic sanity checks.
             I.getArgOperand(0)->getType()->isFloatingPointTy() &&
             I.getType() == I.getArgOperand(0)->getType() &&
@@ -5579,9 +5585,10 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
                                    Tmp.getValueType(), Tmp));
           return;
         }
-      } else if ((LibInfo->has(LibFunc::cos) && Name == "cos") ||
-                 (LibInfo->has(LibFunc::cosf) && Name == "cosf") ||
-                 (LibInfo->has(LibFunc::cosl) && Name == "cosl")) {
+        break;
+      case LibFunc::cos:
+      case LibFunc::cosf:
+      case LibFunc::cosl:
         if (I.getNumArgOperands() == 1 &&   // Basic sanity checks.
             I.getArgOperand(0)->getType()->isFloatingPointTy() &&
             I.getType() == I.getArgOperand(0)->getType() &&
@@ -5591,9 +5598,10 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
                                    Tmp.getValueType(), Tmp));
           return;
         }
-      } else if ((LibInfo->has(LibFunc::sqrt) && Name == "sqrt") ||
-                 (LibInfo->has(LibFunc::sqrtf) && Name == "sqrtf") ||
-                 (LibInfo->has(LibFunc::sqrtl) && Name == "sqrtl")) {
+        break;
+      case LibFunc::sqrt:
+      case LibFunc::sqrtf:
+      case LibFunc::sqrtl:
         if (I.getNumArgOperands() == 1 &&   // Basic sanity checks.
             I.getArgOperand(0)->getType()->isFloatingPointTy() &&
             I.getType() == I.getArgOperand(0)->getType() &&
@@ -5603,9 +5611,10 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
                                    Tmp.getValueType(), Tmp));
           return;
         }
-      } else if ((LibInfo->has(LibFunc::floor) && Name == "floor") ||
-                 (LibInfo->has(LibFunc::floorf) && Name == "floorf") ||
-                 (LibInfo->has(LibFunc::floorl) && Name == "floorl")) {
+        break;
+      case LibFunc::floor:
+      case LibFunc::floorf:
+      case LibFunc::floorl:
         if (I.getNumArgOperands() == 1 && // Basic sanity checks.
             I.getArgOperand(0)->getType()->isFloatingPointTy() &&
             I.getType() == I.getArgOperand(0)->getType()) {
@@ -5614,9 +5623,10 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
                                    Tmp.getValueType(), Tmp));
           return;
         }
-      } else if ((LibInfo->has(LibFunc::nearbyint) && Name == "nearbyint") ||
-                 (LibInfo->has(LibFunc::nearbyintf) && Name == "nearbyintf") ||
-                 (LibInfo->has(LibFunc::nearbyintl) && Name == "nearbyintl")) {
+        break;
+      case LibFunc::nearbyint:
+      case LibFunc::nearbyintf:
+      case LibFunc::nearbyintl:
         if (I.getNumArgOperands() == 1 && // Basic sanity checks.
             I.getArgOperand(0)->getType()->isFloatingPointTy() &&
             I.getType() == I.getArgOperand(0)->getType()) {
@@ -5625,9 +5635,10 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
                                    Tmp.getValueType(), Tmp));
           return;
         }
-      } else if ((LibInfo->has(LibFunc::ceil) && Name == "ceil") ||
-                 (LibInfo->has(LibFunc::ceilf) && Name == "ceilf") ||
-                 (LibInfo->has(LibFunc::ceill) && Name == "ceill")) {
+        break;
+      case LibFunc::ceil:
+      case LibFunc::ceilf:
+      case LibFunc::ceill:
         if (I.getNumArgOperands() == 1 && // Basic sanity checks.
             I.getArgOperand(0)->getType()->isFloatingPointTy() &&
             I.getType() == I.getArgOperand(0)->getType()) {
@@ -5636,9 +5647,10 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
                                    Tmp.getValueType(), Tmp));
           return;
         }
-      } else if ((LibInfo->has(LibFunc::rint) && Name == "rint") ||
-                 (LibInfo->has(LibFunc::rintf) && Name == "rintf") ||
-                 (LibInfo->has(LibFunc::rintl) && Name == "rintl")) {
+        break;
+      case LibFunc::rint:
+      case LibFunc::rintf:
+      case LibFunc::rintl:
         if (I.getNumArgOperands() == 1 && // Basic sanity checks.
             I.getArgOperand(0)->getType()->isFloatingPointTy() &&
             I.getType() == I.getArgOperand(0)->getType()) {
@@ -5647,9 +5659,10 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
                                    Tmp.getValueType(), Tmp));
           return;
         }
-      } else if ((LibInfo->has(LibFunc::trunc) && Name == "trunc") ||
-                 (LibInfo->has(LibFunc::truncf) && Name == "truncf") ||
-                 (LibInfo->has(LibFunc::truncl) && Name == "truncl")) {
+        break;
+      case LibFunc::trunc:
+      case LibFunc::truncf:
+      case LibFunc::truncl:
         if (I.getNumArgOperands() == 1 && // Basic sanity checks.
             I.getArgOperand(0)->getType()->isFloatingPointTy() &&
             I.getType() == I.getArgOperand(0)->getType()) {
@@ -5658,9 +5671,10 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
                                    Tmp.getValueType(), Tmp));
           return;
         }
-      } else if ((LibInfo->has(LibFunc::log2) && Name == "log2") ||
-                 (LibInfo->has(LibFunc::log2f) && Name == "log2f") ||
-                 (LibInfo->has(LibFunc::log2l) && Name == "log2l")) {
+        break;
+      case LibFunc::log2:
+      case LibFunc::log2f:
+      case LibFunc::log2l:
         if (I.getNumArgOperands() == 1 && // Basic sanity checks.
             I.getArgOperand(0)->getType()->isFloatingPointTy() &&
             I.getType() == I.getArgOperand(0)->getType() &&
@@ -5670,9 +5684,10 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
                                    Tmp.getValueType(), Tmp));
           return;
         }
-      } else if ((LibInfo->has(LibFunc::exp2) && Name == "exp2") ||
-                 (LibInfo->has(LibFunc::exp2f) && Name == "exp2f") ||
-                 (LibInfo->has(LibFunc::exp2l) && Name == "exp2l")) {
+        break;
+      case LibFunc::exp2:
+      case LibFunc::exp2f:
+      case LibFunc::exp2l:
         if (I.getNumArgOperands() == 1 && // Basic sanity checks.
             I.getArgOperand(0)->getType()->isFloatingPointTy() &&
             I.getType() == I.getArgOperand(0)->getType() &&
@@ -5682,9 +5697,11 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
                                    Tmp.getValueType(), Tmp));
           return;
         }
-      } else if ((LibInfo->has(LibFunc::memcmp) && Name == "memcmp")) {
+        break;
+      case LibFunc::memcmp:
         if (visitMemCmpCall(I))
           return;
+        break;
       }
     }
   }

@@ -285,6 +285,31 @@ public:
     return getState(F) != Unavailable;
   }
 
+  /// hasOptimizedCodeGen - Return true if the function is both available as
+  /// a builtin and a candidate for optimized code generation.
+  bool hasOptimizedCodeGen(LibFunc::Func F) const {
+    if (getState(F) == Unavailable)
+      return false;
+    switch (F) {
+    default: break;
+    case LibFunc::copysign:  case LibFunc::copysignf:  case LibFunc::copysignl:
+    case LibFunc::fabs:      case LibFunc::fabsf:      case LibFunc::fabsl:
+    case LibFunc::sin:       case LibFunc::sinf:       case LibFunc::sinl:
+    case LibFunc::cos:       case LibFunc::cosf:       case LibFunc::cosl:
+    case LibFunc::sqrt:      case LibFunc::sqrtf:      case LibFunc::sqrtl:
+    case LibFunc::floor:     case LibFunc::floorf:     case LibFunc::floorl:
+    case LibFunc::nearbyint: case LibFunc::nearbyintf: case LibFunc::nearbyintl:
+    case LibFunc::ceil:      case LibFunc::ceilf:      case LibFunc::ceill:
+    case LibFunc::rint:      case LibFunc::rintf:      case LibFunc::rintl:
+    case LibFunc::trunc:     case LibFunc::truncf:     case LibFunc::truncl:
+    case LibFunc::log2:      case LibFunc::log2f:      case LibFunc::log2l:
+    case LibFunc::exp2:      case LibFunc::exp2f:      case LibFunc::exp2l:
+    case LibFunc::memcmp:
+      return true;
+    }
+    return false;
+  }
+
   StringRef getName(LibFunc::Func F) const {
     AvailabilityState State = getState(F);
     if (State == Unavailable)
