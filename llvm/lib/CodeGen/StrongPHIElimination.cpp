@@ -672,6 +672,7 @@ void StrongPHIElimination::InsertCopiesForPHI(MachineInstr *PHI,
       LiveInterval &SrcInterval = LI->getInterval(SrcReg);
       SlotIndex PredIndex = LI->getMBBEndIdx(PredBB);
       VNInfo *SrcVNI = SrcInterval.getVNInfoBefore(PredIndex);
+      (void)SrcVNI;
       assert(SrcVNI);
       continue;
     }
