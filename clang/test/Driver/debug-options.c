@@ -20,7 +20,7 @@
 // RUN: %clang -### -c -gline-tables-only -g0 %s 2>&1 \
 // RUN:             | FileCheck -check-prefix=GLTO_NO %s
 //
-// RUN: %clang -c -grecord-gcc-switches -gno-record-gcc-switches \
+// RUN: %clang -### -c -grecord-gcc-switches -gno-record-gcc-switches \
 // RUN:           -gstrict-dwarf -gno-strict-dwarf %s 2>&1 \
 // RUN:        | not grep "argument unused during compilation"
 //

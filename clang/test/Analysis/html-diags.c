@@ -1,5 +1,5 @@
 // RUN: mkdir %t.dir
-// RUN: %clang_cc1 -analyze -analyzer-output=html -analyzer-checker=core -o %T.dir %s
+// RUN: %clang_cc1 -analyze -analyzer-output=html -analyzer-checker=core -o %t.dir %s
 // RUN: rm -fR %t.dir
 
 // Currently this test mainly checks that the HTML diagnostics doesn't crash
