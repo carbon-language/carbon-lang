@@ -15,6 +15,8 @@
 #include "ARMBaseInstrInfo.h"
 #include "ARMBaseRegisterInfo.h"
 #include "ARMMachineFunctionInfo.h"
+#include "llvm/CallingConv.h"
+#include "llvm/Function.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -150,6 +152,10 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
   unsigned GPRCS1Size = 0, GPRCS2Size = 0, DPRCSSize = 0;
   int FramePtrSpillFI = 0;
   int D8SpillFI = 0;
+
+  // All calls are tail calls in GHC calling conv, and functions have no prologue/epilogue.
+  if (MF.getFunction()->getCallingConv() == CallingConv::GHC)
+    return;
 
   // Allocate the vararg register save area. This is not counted in NumBytes.
   if (VARegSaveSize)
@@ -353,6 +359,10 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
   unsigned VARegSaveSize = AFI->getVarArgsRegSaveSize();
   int NumBytes = (int)MFI->getStackSize();
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
+
+  // All calls are tail calls in GHC calling conv, and functions have no prologue/epilogue.
+  if (MF.getFunction()->getCallingConv() == CallingConv::GHC)
+    return;
 
   if (!AFI->hasStackFrame()) {
     if (NumBytes != 0)

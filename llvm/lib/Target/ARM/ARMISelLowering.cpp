@@ -1171,6 +1171,8 @@ CCAssignFn *ARMTargetLowering::CCAssignFnForNode(CallingConv::ID CC,
     return (Return ? RetCC_ARM_AAPCS : CC_ARM_AAPCS);
   case CallingConv::ARM_APCS:
     return (Return ? RetCC_ARM_APCS : CC_ARM_APCS);
+  case CallingConv::GHC:
+    return (Return ? RetCC_ARM_APCS : CC_ARM_APCS_GHC);
   }
 }
 

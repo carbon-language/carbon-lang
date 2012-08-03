@@ -1842,6 +1842,11 @@ CCAssignFn *ARMFastISel::CCAssignFnForCall(CallingConv::ID CC,
     return (Return ? RetCC_ARM_AAPCS: CC_ARM_AAPCS);
   case CallingConv::ARM_APCS:
     return (Return ? RetCC_ARM_APCS: CC_ARM_APCS);
+  case CallingConv::GHC:
+    if (Return)
+      llvm_unreachable("Can't return in GHC call convention");
+    else
+      return CC_ARM_APCS_GHC;
   }
 }
 
