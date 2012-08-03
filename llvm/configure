@@ -765,6 +765,7 @@ USE_OPROFILE
 USE_INTEL_JITEVENTS
 INTEL_JITEVENTS_INCDIR
 INTEL_JITEVENTS_LIBDIR
+BUILD_FLAGS
 HAVE_PTHREAD
 HUGE_VAL_SANITY
 MMAP_FILE
@@ -10210,7 +10211,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10213 "configure"
+#line 10214 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13073,7 +13074,7 @@ if test "${with_oprofile+set}" = set; then
             USE_OPROFILE=0
  ;;
         *) llvm_cv_oppath="${withval}/lib/oprofile"
-           CPPFLAGS="-I${withval}/include";;
+           BUILD_FLAGS="-I${withval}/include";;
       esac
       case $llvm_cv_os_type in
         Linux)
@@ -13500,7 +13501,7 @@ echo "$as_me: error:
 
 
       LIBS="$LIBS -L${INTEL_JITEVENTS_LIBDIR}"
-      CPPFLAGS="$CPPFLAGS -I$INTEL_JITEVENTS_INCDIR"
+      BUILD_FLAGS="$CPPFLAGS -I$INTEL_JITEVENTS_INCDIR"
 
       { echo "$as_me:$LINENO: checking for library containing iJIT_IsProfilingActive" >&5
 echo $ECHO_N "checking for library containing iJIT_IsProfilingActive... $ECHO_C" >&6; }
@@ -13783,6 +13784,8 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define LLVM_USE_INTEL_JITEVENTS $USE_INTEL_JITEVENTS
 _ACEOF
+
+
 
 
 
@@ -22059,6 +22062,7 @@ USE_OPROFILE!$USE_OPROFILE$ac_delim
 USE_INTEL_JITEVENTS!$USE_INTEL_JITEVENTS$ac_delim
 INTEL_JITEVENTS_INCDIR!$INTEL_JITEVENTS_INCDIR$ac_delim
 INTEL_JITEVENTS_LIBDIR!$INTEL_JITEVENTS_LIBDIR$ac_delim
+BUILD_FLAGS!$BUILD_FLAGS$ac_delim
 HAVE_PTHREAD!$HAVE_PTHREAD$ac_delim
 HUGE_VAL_SANITY!$HUGE_VAL_SANITY$ac_delim
 MMAP_FILE!$MMAP_FILE$ac_delim
@@ -22084,7 +22088,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 89; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 90; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

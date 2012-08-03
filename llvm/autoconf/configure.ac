@@ -1201,7 +1201,7 @@ AC_ARG_WITH(oprofile,
         no) llvm_cv_oppath=
             AC_SUBST(USE_OPROFILE, [0]) ;;
         *) llvm_cv_oppath="${withval}/lib/oprofile"
-           CPPFLAGS="-I${withval}/include";;
+           BUILD_FLAGS="-I${withval}/include";;
       esac
       case $llvm_cv_os_type in
         Linux)
@@ -1262,7 +1262,7 @@ AC_ARG_WITH(intel-jitevents,
       AC_SUBST(INTEL_JITEVENTS_LIBDIR)
 
       LIBS="$LIBS -L${INTEL_JITEVENTS_LIBDIR}"
-      CPPFLAGS="$CPPFLAGS -I$INTEL_JITEVENTS_INCDIR"
+      BUILD_FLAGS="$CPPFLAGS -I$INTEL_JITEVENTS_INCDIR"
 
       AC_SEARCH_LIBS(iJIT_IsProfilingActive, jitprofiling, [], [
         echo "Error! Cannot find libjitprofiling.a. Please check path specified in flag --with-intel-jitevents"
@@ -1279,6 +1279,9 @@ AC_ARG_WITH(intel-jitevents,
     ])
 AC_DEFINE_UNQUOTED([LLVM_USE_INTEL_JITEVENTS],$USE_INTEL_JITEVENTS,
                    [Define if we have the Intel JIT API runtime support library])
+
+dnl Substitute this here for now.
+AC_SUBST(BUILD_FLAGS)
 
 dnl===-----------------------------------------------------------------------===
 dnl===
