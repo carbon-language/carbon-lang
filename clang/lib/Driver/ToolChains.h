@@ -538,6 +538,10 @@ public:
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
                            const ActionList &Inputs) const;
 
+  virtual bool IsObjCDefaultSynthPropertiesDefault() const {
+    return true;
+  }
+
   virtual bool IsIntegratedAssemblerDefault() const;
   virtual bool IsUnwindTablesDefault() const;
   virtual const char *GetDefaultRelocationModel() const;
