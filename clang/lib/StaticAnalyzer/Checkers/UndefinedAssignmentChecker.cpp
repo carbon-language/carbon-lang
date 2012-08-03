@@ -78,7 +78,7 @@ void UndefinedAssignmentChecker::checkBind(SVal location, SVal val,
   BugReport *R = new BugReport(*BT, str, N);
   if (ex) {
     R->addRange(ex->getSourceRange());
-    R->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N, ex, R));
+    bugreporter::addTrackNullOrUndefValueVisitor(N, ex, R);
   }
   R->disablePathPruning();
   C.EmitReport(R);

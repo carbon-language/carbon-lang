@@ -55,8 +55,7 @@ void ReturnUndefChecker::checkPreStmt(const ReturnStmt *RS,
 
   report->disablePathPruning();
   report->addRange(RetE->getSourceRange());
-  report->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N, RetE,
-                                                                  report));
+  bugreporter::addTrackNullOrUndefValueVisitor(N, RetE, report);
 
   C.EmitReport(report);
 }

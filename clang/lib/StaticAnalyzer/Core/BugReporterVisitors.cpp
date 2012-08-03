@@ -197,6 +197,9 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *N,
             os << "declared without an initial value";
         }
       }
+      else {
+        os << "initialized here";
+      }
     }
   }
 
@@ -223,7 +226,7 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *N,
                << " is assigned to ";
     }
     else
-      return NULL;
+      os << "Value assigned to ";
 
     if (const VarRegion *VR = dyn_cast<VarRegion>(R)) {
       os << '\'' << *VR->getDecl() << '\'';
@@ -293,12 +296,11 @@ TrackConstraintBRVisitor::VisitNode(const ExplodedNode *N,
   return NULL;
 }
 
-BugReporterVisitor *
-bugreporter::getTrackNullOrUndefValueVisitor(const ExplodedNode *N,
-                                             const Stmt *S,
-                                             BugReport *report) {
+void bugreporter::addTrackNullOrUndefValueVisitor(const ExplodedNode *N,
+                                                  const Stmt *S,
+                                                  BugReport *report) {
   if (!S || !N)
-    return 0;
+    return;
 
   ProgramStateManager &StateMgr = N->getState()->getStateManager();
 
@@ -314,7 +316,7 @@ bugreporter::getTrackNullOrUndefValueVisitor(const ExplodedNode *N,
   }
 
   if (!N)
-    return 0;
+    return;
   
   ProgramStateRef state = N->getState();
 
@@ -331,7 +333,15 @@ bugreporter::getTrackNullOrUndefValueVisitor(const ExplodedNode *N,
         SVal V = state->getRawSVal(loc::MemRegionVal(R));
         report->markInteresting(R);
         report->markInteresting(V);
-        return new FindLastStoreBRVisitor(V, R);
+
+        if (V.getAsLocSymbol()) {
+          BugReporterVisitor *ConstraintTracker
+            = new TrackConstraintBRVisitor(cast<loc::MemRegionVal>(V), false);
+          report->addVisitor(ConstraintTracker);
+        }
+
+        report->addVisitor(new FindLastStoreBRVisitor(V, R));
+        return;
       }
     }
   }
@@ -351,11 +361,10 @@ bugreporter::getTrackNullOrUndefValueVisitor(const ExplodedNode *N,
 
     if (R) {
       report->markInteresting(R);
-      return new TrackConstraintBRVisitor(loc::MemRegionVal(R), false);
+      report->addVisitor(new TrackConstraintBRVisitor(loc::MemRegionVal(R),
+                                                      false));
     }
   }
-
-  return 0;
 }
 
 BugReporterVisitor *
@@ -397,7 +406,7 @@ PathDiagnosticPiece *NilReceiverBRVisitor::VisitNode(const ExplodedNode *N,
   // The receiver was nil, and hence the method was skipped.
   // Register a BugReporterVisitor to issue a message telling us how
   // the receiver was null.
-  BR.addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N, Receiver, &BR));
+  bugreporter::addTrackNullOrUndefValueVisitor(N, Receiver, &BR);
   // Issue a message saying that the method was skipped.
   PathDiagnosticLocation L(Receiver, BRC.getSourceManager(),
                                      N->getLocationContext());

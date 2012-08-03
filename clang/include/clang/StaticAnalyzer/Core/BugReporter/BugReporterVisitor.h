@@ -226,9 +226,8 @@ public:
   
 namespace bugreporter {
 
-BugReporterVisitor *getTrackNullOrUndefValueVisitor(const ExplodedNode *N,
-                                                    const Stmt *S,
-                                                    BugReport *R);
+void addTrackNullOrUndefValueVisitor(const ExplodedNode *N, const Stmt *S,
+                                     BugReport *R);
 
 const Stmt *GetDerefExpr(const ExplodedNode *N);
 const Stmt *GetDenomExpr(const ExplodedNode *N);

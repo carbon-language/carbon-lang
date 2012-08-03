@@ -166,10 +166,8 @@ void DereferenceChecker::reportBug(ProgramStateRef State, const Stmt *S,
                   buf.empty() ? BT_null->getDescription() : buf.str(),
                   N);
 
-  report->addVisitor(
-    bugreporter::getTrackNullOrUndefValueVisitor(N,
-                                                 bugreporter::GetDerefExpr(N),
-                                                 report));
+  bugreporter::addTrackNullOrUndefValueVisitor(N, bugreporter::GetDerefExpr(N),
+                                               report);
 
   for (SmallVectorImpl<SourceRange>::iterator
        I = Ranges.begin(), E = Ranges.end(); I!=E; ++I)
@@ -193,8 +191,9 @@ void DereferenceChecker::checkLocation(SVal l, bool isLoad, const Stmt* S,
 
       BugReport *report =
         new BugReport(*BT_undef, BT_undef->getDescription(), N);
-      report->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N,
-                                        bugreporter::GetDerefExpr(N), report));
+      bugreporter::addTrackNullOrUndefValueVisitor(N,
+                                                   bugreporter::GetDerefExpr(N),
+                                                   report);
       report->disablePathPruning();
       C.EmitReport(report);
     }

@@ -105,8 +105,7 @@ void AttrNonNullChecker::checkPreCall(const CallEvent &Call,
         // Highlight the range of the argument that was null.
         R->addRange(Call.getArgSourceRange(idx));
         if (const Expr *ArgE = Call.getArgExpr(idx))
-          R->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(errorNode,
-                                                                     ArgE, R));
+          bugreporter::addTrackNullOrUndefValueVisitor(errorNode, ArgE, R);
         // Emit the bug report.
         C.EmitReport(R);
       }
