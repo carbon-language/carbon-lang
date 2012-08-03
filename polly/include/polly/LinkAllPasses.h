@@ -25,43 +25,41 @@ namespace llvm {
   class RegionPass;
 }
 
-using namespace llvm;
-
 namespace polly {
 #ifdef CLOOG_FOUND
-  Pass *createCloogExporterPass();
-  Pass *createCloogInfoPass();
-  Pass *createCodeGenerationPass();
+  llvm::Pass *createCloogExporterPass();
+  llvm::Pass *createCloogInfoPass();
+  llvm::Pass *createCodeGenerationPass();
 #endif
-  Pass *createCodePreparationPass();
-  Pass *createDeadCodeElimPass();
-  Pass *createDependencesPass();
-  Pass *createDOTOnlyPrinterPass();
-  Pass *createDOTOnlyViewerPass();
-  Pass *createDOTPrinterPass();
-  Pass *createDOTViewerPass();
-  Pass *createIndependentBlocksPass();
-  Pass *createIndVarSimplifyPass();
-  Pass *createJSONExporterPass();
-  Pass *createJSONImporterPass();
+  llvm::Pass *createCodePreparationPass();
+  llvm::Pass *createDeadCodeElimPass();
+  llvm::Pass *createDependencesPass();
+  llvm::Pass *createDOTOnlyPrinterPass();
+  llvm::Pass *createDOTOnlyViewerPass();
+  llvm::Pass *createDOTPrinterPass();
+  llvm::Pass *createDOTViewerPass();
+  llvm::Pass *createIndependentBlocksPass();
+  llvm::Pass *createIndVarSimplifyPass();
+  llvm::Pass *createJSONExporterPass();
+  llvm::Pass *createJSONImporterPass();
 #ifdef PLUTO_FOUND
-  Pass *createPlutoOptimizerPass();
+  llvm::Pass *createPlutoOptimizerPass();
 #endif
-  Pass *createRegionSimplifyPass();
-  Pass *createScopDetectionPass();
-  Pass *createScopInfoPass();
-  Pass *createIslScheduleOptimizerPass();
-  Pass *createTempScopInfoPass();
+  llvm::Pass *createRegionSimplifyPass();
+  llvm::Pass *createScopDetectionPass();
+  llvm::Pass *createScopInfoPass();
+  llvm::Pass *createIslScheduleOptimizerPass();
+  llvm::Pass *createTempScopInfoPass();
 
 #ifdef OPENSCOP_FOUND
-  Pass *createScopExporterPass();
-  Pass *createScopImporterPass();
+  llvm::Pass *createScopExporterPass();
+  llvm::Pass *createScopImporterPass();
 #endif
 
 #ifdef SCOPLIB_FOUND
-  Pass *createPoccPass();
-  Pass *createScopLibExporterPass();
-  Pass *createScopLibImporterPass();
+  llvm::Pass *createPoccPass();
+  llvm::Pass *createScopLibExporterPass();
+  llvm::Pass *createScopLibImporterPass();
 #endif
 
   extern char &IndependentBlocksID;
