@@ -1091,6 +1091,11 @@ bool RegisterCoalescer::joinReservedPhysReg(CoalescerPair &CP) {
   // register live range doesn't need to be accurate as long as all the
   // defs are there.
 
+  // Delete the identity copy.
+  MachineInstr *CopyMI = MRI->getVRegDef(RHS.reg);
+  LIS->RemoveMachineInstrFromMaps(CopyMI);
+  CopyMI->eraseFromParent();
+
   // We don't track kills for reserved registers.
   MRI->clearKillFlags(CP.getSrcReg());
 
