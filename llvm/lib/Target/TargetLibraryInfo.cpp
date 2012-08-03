@@ -24,65 +24,70 @@ void TargetLibraryInfo::anchor() { }
 
 const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
   {
+    "__cxa_atexit",
+    "__cxa_guard_abort",
+    "__cxa_guard_acquire",
+    "__cxa_guard_release",
+    "__memcpy_chk",
     "acos",
-    "acosl",
     "acosf",
+    "acosl",
     "asin",
-    "asinl",
     "asinf",
+    "asinl",
     "atan",
-    "atanl",
-    "atanf",
     "atan2",
-    "atan2l",
     "atan2f",
+    "atan2l",
+    "atanf",
+    "atanl",
     "ceil",
-    "ceill",
     "ceilf",
+    "ceill",
     "copysign",
     "copysignf",
     "copysignl",
     "cos",
-    "cosl",
     "cosf",
     "cosh",
-    "coshl",
     "coshf",
+    "coshl",
+    "cosl",
     "exp",
-    "expl",
-    "expf",
     "exp2",
-    "exp2l",
     "exp2f",
+    "exp2l",
+    "expf",
+    "expl",
     "expm1",
-    "expm1l",
     "expm1f",
+    "expm1l",
     "fabs",
-    "fabsl",
     "fabsf",
-    "floor",
-    "floorl",
-    "floorf",
+    "fabsl",
     "fiprintf",
+    "floor",
+    "floorf",
+    "floorl",
     "fmod",
-    "fmodl",
     "fmodf",
+    "fmodl",
     "fputc",
     "fputs",
     "fwrite",
     "iprintf",
     "log",
-    "logl",
-    "logf",
-    "log2",
-    "log2l",
-    "log2f",
     "log10",
-    "log10l",
     "log10f",
+    "log10l",
     "log1p",
-    "log1pl",
     "log1pf",
+    "log1pl",
+    "log2",
+    "log2f",
+    "log2l",
+    "logf",
+    "logl",
     "memchr",
     "memcmp",
     "memcpy",
@@ -104,15 +109,15 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "roundf",
     "roundl",
     "sin",
-    "sinl",
     "sinf",
     "sinh",
-    "sinhl",
     "sinhf",
+    "sinhl",
+    "sinl",
     "siprintf",
     "sqrt",
-    "sqrtl",
     "sqrtf",
+    "sqrtl",
     "strcat",
     "strchr",
     "strcpy",
@@ -122,27 +127,30 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "strncpy",
     "strnlen",
     "tan",
-    "tanl",
     "tanf",
     "tanh",
-    "tanhl",
     "tanhf",
+    "tanhl",
+    "tanl",
     "trunc",
     "truncf",
-    "truncl",
-    "__cxa_atexit",
-    "__cxa_guard_abort",
-    "__cxa_guard_acquire",
-    "__cxa_guard_release",
-    "__memcpy_chk"
+    "truncl"
   };
 
 /// initialize - Initialize the set of available library functions based on the
 /// specified target triple.  This should be carefully written so that a missing
 /// target triple gets a sane set of defaults.
-static void initialize(TargetLibraryInfo &TLI, const Triple &T) {
+static void initialize(TargetLibraryInfo &TLI, const Triple &T,
+                       const char **StandardNames) {
   initializeTargetLibraryInfoPass(*PassRegistry::getPassRegistry());
 
+#ifndef NDEBUG
+  // Verify that the StandardNames array is in alphabetical order.
+  for (unsigned F = 1; F < LibFunc::NumLibFuncs; ++F) {
+    if (strcmp(StandardNames[F-1], StandardNames[F]) >= 0)
+      llvm_unreachable("TargetLibraryInfo function names must be sorted");
+  }
+#endif // !NDEBUG
   
   // memset_pattern16 is only available on iOS 3.0 and Mac OS/X 10.5 and later.
   if (T.isMacOSX()) {
@@ -254,14 +262,14 @@ TargetLibraryInfo::TargetLibraryInfo() : ImmutablePass(ID) {
   // Default to everything being available.
   memset(AvailableArray, -1, sizeof(AvailableArray));
 
-  initialize(*this, Triple());
+  initialize(*this, Triple(), StandardNames);
 }
 
 TargetLibraryInfo::TargetLibraryInfo(const Triple &T) : ImmutablePass(ID) {
   // Default to everything being available.
   memset(AvailableArray, -1, sizeof(AvailableArray));
   
-  initialize(*this, T);
+  initialize(*this, T, StandardNames);
 }
 
 TargetLibraryInfo::TargetLibraryInfo(const TargetLibraryInfo &TLI)
@@ -270,6 +278,17 @@ TargetLibraryInfo::TargetLibraryInfo(const TargetLibraryInfo &TLI)
   CustomNames = TLI.CustomNames;
 }
 
+bool TargetLibraryInfo::getLibFunc(StringRef funcName,
+                                   LibFunc::Func &F) const {
+  const char **Start = &StandardNames[0];
+  const char **End = &StandardNames[LibFunc::NumLibFuncs];
+  const char **I = std::lower_bound(Start, End, funcName);
+  if (I != End && *I == funcName) {
+    F = (LibFunc::Func)(I - Start);
+    return true;
+  }
+  return false;
+}
 
 /// disableAllFunctions - This disables all builtins, which is used for options
 /// like -fno-builtin.
