@@ -55,6 +55,7 @@ BlockCommandComment *Sema::actOnBlockCommandFinish(
                               ParagraphComment *Paragraph) {
   Command->setParagraph(Paragraph);
   checkBlockCommandEmptyParagraph(Command);
+  checkReturnsCommand(Command);
   return Command;
 }
 
@@ -472,6 +473,37 @@ void Sema::checkBlockCommandEmptyParagraph(BlockCommandComment *Command) {
   }
 }
 
+void Sema::checkReturnsCommand(const BlockCommandComment *Command) {
+  if (!isReturnsCommand(Command->getCommandName()))
+    return;
+  if (isFunctionDecl()) {
+    if (ThisDeclInfo->ResultType->isVoidType()) {
+      unsigned DiagKind;
+      switch (ThisDeclInfo->ThisDecl->getKind()) {
+      default:
+        DiagKind = 0;
+        break;
+      case Decl::CXXConstructor:
+        DiagKind = 1;
+        break;
+      case Decl::CXXDestructor:
+        DiagKind = 2;
+        break;
+      }
+      Diag(Command->getLocation(),
+           diag::warn_doc_returns_attached_to_a_void_function)
+        << Command->getCommandName()
+        << DiagKind
+        << Command->getSourceRange();
+    }
+    return;
+  }
+  Diag(Command->getLocation(),
+       diag::warn_doc_returns_not_attached_to_a_function_decl)
+    << Command->getCommandName()
+    << Command->getSourceRange();
+}
+
 bool Sema::isFunctionDecl() {
   if (!ThisDeclInfo)
     return false;
@@ -643,16 +675,15 @@ StringRef Sema::correctTypoInTParamReference(
 
 // TODO: tablegen
 bool Sema::isBlockCommand(StringRef Name) {
-  return llvm::StringSwitch<bool>(Name)
+  return isReturnsCommand(Name) ||
+      isParamCommand(Name) || isTParamCommand(Name) ||
+      llvm::StringSwitch<bool>(Name)
       .Cases("brief", "short", true)
-      .Case("result", true)
-      .Case("return", true)
-      .Case("returns", true)
       .Case("author", true)
       .Case("authors", true)
       .Case("pre", true)
       .Case("post", true)
-      .Default(false) || isParamCommand(Name) || isTParamCommand(Name);
+      .Default(false);
 }
 
 bool Sema::isParamCommand(StringRef Name) {
@@ -664,6 +695,10 @@ bool Sema::isParamCommand(StringRef Name) {
 
 bool Sema::isTParamCommand(StringRef Name) {
   return Name == "tparam";
+}
+
+bool Sema::isReturnsCommand(StringRef Name) {
+  return Name == "returns" || Name == "return" || Name == "result";
 }
 
 unsigned Sema::getBlockCommandNumArgs(StringRef Name) {

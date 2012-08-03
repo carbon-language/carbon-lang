@@ -262,6 +262,84 @@ using test_tparam14 = test_tparam13<T, int>;
 template<typename T>
 using test_tparam15 = test_tparam13<T, int>;
 
+// no-warning
+/// \returns Aaa
+int test_returns_right_decl_1(int);
+
+class test_returns_right_decl_2 {
+  // no-warning
+  /// \returns Aaa
+  int test_returns_right_decl_3(int);
+};
+
+// no-warning
+/// \returns Aaa
+template<typename T>
+int test_returns_right_decl_4(T aaa);
+
+// no-warning
+/// \returns Aaa
+template<>
+int test_returns_right_decl_4(int aaa);
+
+/// \returns Aaa
+template<typename T>
+T test_returns_right_decl_5(T aaa);
+
+// expected-warning@+1 {{'\returns' command used in a comment that is not attached to a function declaration}}
+/// \returns Aaa
+int test_returns_wrong_decl_1;
+
+// expected-warning@+1 {{'\return' command used in a comment that is not attached to a function declaration}}
+/// \return Aaa
+int test_returns_wrong_decl_2;
+
+// expected-warning@+1 {{'\result' command used in a comment that is not attached to a function declaration}}
+/// \result Aaa
+int test_returns_wrong_decl_3;
+
+// expected-warning@+1 {{'\returns' command used in a comment that is attached to a void function}}
+/// \returns Aaa
+void test_returns_wrong_decl_4(int);
+
+// expected-warning@+1 {{'\returns' command used in a comment that is attached to a void function}}
+/// \returns Aaa
+template<typename T>
+void test_returns_wrong_decl_5(T aaa);
+
+// expected-warning@+1 {{'\returns' command used in a comment that is attached to a void function}}
+/// \returns Aaa
+template<>
+void test_returns_wrong_decl_5(int aaa);
+
+// expected-warning@+1 {{'\returns' command used in a comment that is not attached to a function declaration}}
+/// \returns Aaa
+struct test_returns_wrong_decl_6 { };
+
+// expected-warning@+1 {{'\returns' command used in a comment that is not attached to a function declaration}}
+/// \returns Aaa
+class test_returns_wrong_decl_7 {
+  // expected-warning@+1 {{'\returns' command used in a comment that is attached to a constructor}}
+  /// \returns Aaa
+  test_returns_wrong_decl_7();
+
+  // expected-warning@+1 {{'\returns' command used in a comment that is attached to a destructor}}
+  /// \returns Aaa
+  ~test_returns_wrong_decl_7();
+};
+
+// expected-warning@+1 {{'\returns' command used in a comment that is not attached to a function declaration}}
+/// \returns Aaa
+enum test_returns_wrong_decl_8 {
+  // expected-warning@+1 {{'\returns' command used in a comment that is not attached to a function declaration}}
+  /// \returns Aaa
+  test_returns_wrong_decl_9
+};
+
+// expected-warning@+1 {{'\returns' command used in a comment that is not attached to a function declaration}}
+/// \returns Aaa
+namespace test_returns_wrong_decl_10 { };
+
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
 int test1; ///< \brief\brief Aaa

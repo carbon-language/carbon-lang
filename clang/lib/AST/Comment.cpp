@@ -141,7 +141,7 @@ void DeclInfo::fill() {
   assert(!IsFilled);
 
   // Set defaults.
-  Kind = FunctionKind;
+  Kind = OtherKind;
   IsTemplateDecl = false;
   IsTemplateSpecialization = false;
   IsTemplatePartialSpecialization = false;
@@ -170,6 +170,7 @@ void DeclInfo::fill() {
     Kind = FunctionKind;
     ParamVars = ArrayRef<const ParmVarDecl *>(FD->param_begin(),
                                               FD->getNumParams());
+    ResultType = FD->getResultType();
     unsigned NumLists = FD->getNumTemplateParameterLists();
     if (NumLists != 0) {
       IsTemplateDecl = true;
@@ -178,7 +179,8 @@ void DeclInfo::fill() {
           FD->getTemplateParameterList(NumLists - 1);
     }
 
-    if (K == Decl::CXXMethod) {
+    if (K == Decl::CXXMethod || K == Decl::CXXConstructor ||
+        K == Decl::CXXDestructor || K == Decl::CXXConversion) {
       const CXXMethodDecl *MD = cast<CXXMethodDecl>(ThisDecl);
       IsInstanceMethod = MD->isInstance();
       IsClassMethod = !IsInstanceMethod;
@@ -190,6 +192,7 @@ void DeclInfo::fill() {
     Kind = FunctionKind;
     ParamVars = ArrayRef<const ParmVarDecl *>(MD->param_begin(),
                                               MD->param_size());
+    ResultType = MD->getResultType();
     IsInstanceMethod = MD->isInstanceMethod();
     IsClassMethod = !IsInstanceMethod;
     break;
@@ -201,6 +204,7 @@ void DeclInfo::fill() {
     const FunctionDecl *FD = FTD->getTemplatedDecl();
     ParamVars = ArrayRef<const ParmVarDecl *>(FD->param_begin(),
                                               FD->getNumParams());
+    ResultType = FD->getResultType();
     TemplateParameters = FTD->getTemplateParameters();
     break;
   }
@@ -226,6 +230,7 @@ void DeclInfo::fill() {
     IsTemplateSpecialization = true;
     break;
   case Decl::Record:
+  case Decl::CXXRecord:
     Kind = ClassKind;
     break;
   case Decl::Var:

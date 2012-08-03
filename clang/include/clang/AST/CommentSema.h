@@ -181,6 +181,8 @@ public:
 
   void checkBlockCommandEmptyParagraph(BlockCommandComment *Command);
 
+  void checkReturnsCommand(const BlockCommandComment *Command);
+
   bool isFunctionDecl();
   bool isTemplateDecl();
 
@@ -210,6 +212,7 @@ public:
   bool isBlockCommand(StringRef Name);
   bool isParamCommand(StringRef Name);
   bool isTParamCommand(StringRef Name);
+  bool isReturnsCommand(StringRef Name);
   unsigned getBlockCommandNumArgs(StringRef Name);
 
   bool isInlineCommand(StringRef Name) const;

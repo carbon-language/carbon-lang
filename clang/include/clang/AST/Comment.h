@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_COMMENT_H
 
 #include "clang/Basic/SourceLocation.h"
+#include "clang/AST/Type.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 
@@ -919,6 +920,10 @@ struct DeclInfo {
   /// that we consider a "function".
   ArrayRef<const ParmVarDecl *> ParamVars;
 
+  /// Function result type if \c ThisDecl is something that we consider
+  /// a "function".
+  QualType ResultType;
+
   /// Template parameters that can be referenced by \\tparam if \c ThisDecl is
   /// a template.
   const TemplateParameterList *TemplateParameters;
@@ -926,6 +931,9 @@ struct DeclInfo {
   /// A simplified description of \c ThisDecl kind that should be good enough
   /// for documentation rendering purposes.
   enum DeclKind {
+    /// Everything else not explicitly mentioned below.
+    OtherKind,
+
     /// Something that we consider a "function":
     /// \li function,
     /// \li function template,

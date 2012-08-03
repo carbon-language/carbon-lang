@@ -98,5 +98,17 @@ def warn_doc_tparam_not_found : Warning<
 def note_doc_tparam_name_suggestion : Note<
   "did you mean '%0'?">;
 
+// \returns command
+
+def warn_doc_returns_not_attached_to_a_function_decl : Warning<
+  "'\\%0' command used in a comment that is not attached to "
+  "a function declaration">,
+  InGroup<Documentation>, DefaultIgnore;
+
+def warn_doc_returns_attached_to_a_void_function : Warning<
+  "'\\%0' command used in a comment that is attached to a "
+  "%select{void function|constructor|destructor}1">,
+  InGroup<Documentation>, DefaultIgnore;
+
 } // end of documentation issue category
 } // end of AST component
