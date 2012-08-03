@@ -61,6 +61,7 @@ STATISTIC(NumReSchedDowns,     "Number of instructions re-scheduled down");
 
 namespace {
   class TwoAddressInstructionPass : public MachineFunctionPass {
+    MachineFunction *MF;
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
     const InstrItineraryData *InstrItins;
@@ -135,6 +136,10 @@ namespace {
 
     void ProcessCopy(MachineInstr *MI, MachineBasicBlock *MBB,
                      SmallPtrSet<MachineInstr*, 8> &Processed);
+
+    typedef SmallVector<std::pair<unsigned, unsigned>, 4> TiedOpList;
+    typedef SmallDenseMap<unsigned, TiedOpList> TiedOperandMap;
+    bool collectTiedOperands(MachineInstr *MI, TiedOperandMap&);
 
     void CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs, unsigned DstReg);
 
@@ -1104,16 +1109,14 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
     if (NewOpc != 0) {
       const MCInstrDesc &UnfoldMCID = TII->get(NewOpc);
       if (UnfoldMCID.getNumDefs() == 1) {
-        MachineFunction &MF = *mbbi->getParent();
-
         // Unfold the load.
         DEBUG(dbgs() << "2addr:   UNFOLDING: " << MI);
         const TargetRegisterClass *RC =
           TRI->getAllocatableClass(
-            TII->getRegClass(UnfoldMCID, LoadRegIndex, TRI, MF));
+            TII->getRegClass(UnfoldMCID, LoadRegIndex, TRI, *MF));
         unsigned Reg = MRI->createVirtualRegister(RC);
         SmallVector<MachineInstr *, 2> NewMIs;
-        if (!TII->unfoldMemoryOperand(MF, &MI, Reg,
+        if (!TII->unfoldMemoryOperand(*MF, &MI, Reg,
                                       /*UnfoldLoad=*/true,/*UnfoldStore=*/false,
                                       NewMIs)) {
           DEBUG(dbgs() << "2addr: ABANDONING UNFOLD\n");
@@ -1190,11 +1193,52 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
   return false;
 }
 
+// Collect tied operands of MI that need to be handled.
+// Rewrite trivial cases immediately.
+// Return true if any tied operands where found, including the trivial ones.
+bool TwoAddressInstructionPass::
+collectTiedOperands(MachineInstr *MI, TiedOperandMap &TiedOperands) {
+  const MCInstrDesc &MCID = MI->getDesc();
+  bool AnyOps = false;
+  unsigned NumOps = MI->isInlineAsm() ?
+    MI->getNumOperands() : MCID.getNumOperands();
+
+  for (unsigned SrcIdx = 0; SrcIdx < NumOps; ++SrcIdx) {
+    unsigned DstIdx = 0;
+    if (!MI->isRegTiedToDefOperand(SrcIdx, &DstIdx))
+      continue;
+    AnyOps = true;
+
+    assert(MI->getOperand(SrcIdx).isReg() &&
+           MI->getOperand(SrcIdx).getReg() &&
+           MI->getOperand(SrcIdx).isUse() &&
+           "two address instruction invalid");
+
+    unsigned RegB = MI->getOperand(SrcIdx).getReg();
+
+    // Deal with <undef> uses immediately - simply rewrite the src operand.
+    if (MI->getOperand(SrcIdx).isUndef()) {
+      unsigned DstReg = MI->getOperand(DstIdx).getReg();
+      // Constrain the DstReg register class if required.
+      if (TargetRegisterInfo::isVirtualRegister(DstReg))
+        if (const TargetRegisterClass *RC = TII->getRegClass(MCID, SrcIdx,
+                                                             TRI, *MF))
+          MRI->constrainRegClass(DstReg, RC);
+      MI->getOperand(SrcIdx).setReg(DstReg);
+      DEBUG(dbgs() << "\t\trewrite undef:\t" << *MI);
+      continue;
+    }
+    TiedOperands[RegB].push_back(std::make_pair(SrcIdx, DstIdx));
+  }
+  return AnyOps;
+}
+
 /// runOnMachineFunction - Reduce two-address instructions to two operands.
 ///
-bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
-  const TargetMachine &TM = MF.getTarget();
-  MRI = &MF.getRegInfo();
+bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &Func) {
+  MF = &Func;
+  const TargetMachine &TM = MF->getTarget();
+  MRI = &MF->getRegInfo();
   TII = TM.getInstrInfo();
   TRI = TM.getRegisterInfo();
   InstrItins = TM.getInstrItineraryData();
@@ -1208,7 +1252,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
   DEBUG(dbgs() << "********** REWRITING TWO-ADDR INSTRS **********\n");
   DEBUG(dbgs() << "********** Function: "
-        << MF.getFunction()->getName() << '\n');
+        << MF->getFunction()->getName() << '\n');
 
   // This pass takes the function out of SSA form.
   MRI->leaveSSA();
@@ -1216,12 +1260,10 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
   // ReMatRegs - Keep track of the registers whose def's are remat'ed.
   BitVector ReMatRegs(MRI->getNumVirtRegs());
 
-  typedef DenseMap<unsigned, SmallVector<std::pair<unsigned, unsigned>, 4> >
-    TiedOperandMap;
-  TiedOperandMap TiedOperands(4);
+  TiedOperandMap TiedOperands;
 
   SmallPtrSet<MachineInstr*, 8> Processed;
-  for (MachineFunction::iterator mbbi = MF.begin(), mbbe = MF.end();
+  for (MachineFunction::iterator mbbi = MF->begin(), mbbe = MF->end();
        mbbi != mbbe; ++mbbi) {
     unsigned Dist = 0;
     DistanceMap.clear();
@@ -1240,49 +1282,19 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
       if (mi->isRegSequence())
         RegSequences.push_back(&*mi);
 
-      const MCInstrDesc &MCID = mi->getDesc();
-      bool FirstTied = true;
-
       DistanceMap.insert(std::make_pair(mi, ++Dist));
 
       ProcessCopy(&*mi, &*mbbi, Processed);
 
       // First scan through all the tied register uses in this instruction
       // and record a list of pairs of tied operands for each register.
-      unsigned NumOps = mi->isInlineAsm()
-        ? mi->getNumOperands() : MCID.getNumOperands();
-      for (unsigned SrcIdx = 0; SrcIdx < NumOps; ++SrcIdx) {
-        unsigned DstIdx = 0;
-        if (!mi->isRegTiedToDefOperand(SrcIdx, &DstIdx))
-          continue;
-
-        if (FirstTied) {
-          FirstTied = false;
-          ++NumTwoAddressInstrs;
-          DEBUG(dbgs() << '\t' << *mi);
-        }
-
-        assert(mi->getOperand(SrcIdx).isReg() &&
-               mi->getOperand(SrcIdx).getReg() &&
-               mi->getOperand(SrcIdx).isUse() &&
-               "two address instruction invalid");
-
-        unsigned regB = mi->getOperand(SrcIdx).getReg();
-
-        // Deal with <undef> uses immediately - simply rewrite the src operand.
-        if (mi->getOperand(SrcIdx).isUndef()) {
-          unsigned DstReg = mi->getOperand(DstIdx).getReg();
-          // Constrain the DstReg register class if required.
-          if (TargetRegisterInfo::isVirtualRegister(DstReg))
-            if (const TargetRegisterClass *RC = TII->getRegClass(MCID, SrcIdx,
-                                                                 TRI, MF))
-              MRI->constrainRegClass(DstReg, RC);
-          mi->getOperand(SrcIdx).setReg(DstReg);
-          DEBUG(dbgs() << "\t\trewrite undef:\t" << *mi);
-          continue;
-        }
-        TiedOperands[regB].push_back(std::make_pair(SrcIdx, DstIdx));
+      if (!collectTiedOperands(mi, TiedOperands)) {
+        mi = nmi;
+        continue;
       }
+
+      ++NumTwoAddressInstrs;
+      DEBUG(dbgs() << '\t' << *mi);
 
       // If the instruction has a single pair of tied operands, try some
       // transformations that may either eliminate the tied operands or
