@@ -706,7 +706,7 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
       continue;
     if (VNI->isPHIDef()) {
       // This is a dead PHI. Remove it.
-      VNI->setIsUnused(true);
+      VNI->markUnused();
       NewLI.removeRange(*LII);
       DEBUG(dbgs() << "Dead PHI at " << VNI->def << " may separate interval\n");
       CanSeparate = true;

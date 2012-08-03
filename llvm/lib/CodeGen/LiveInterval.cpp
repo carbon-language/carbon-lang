@@ -160,7 +160,7 @@ void LiveInterval::markValNoForDeletion(VNInfo *ValNo) {
       valnos.pop_back();
     } while (!valnos.empty() && valnos.back()->isUnused());
   } else {
-    ValNo->setIsUnused(true);
+    ValNo->markUnused();
   }
 }
 
@@ -666,9 +666,6 @@ VNInfo* LiveInterval::MergeValueNumberInto(VNInfo *V1, VNInfo *V2) {
       }
     }
   }
-
-  // Merge the relevant flags.
-  V2->mergeFlags(V1);
 
   // Now that V1 is dead, remove it.
   markValNoForDeletion(V1);

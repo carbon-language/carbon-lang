@@ -40,13 +40,6 @@ namespace llvm {
   /// definition and use points.
   ///
   class VNInfo {
-  private:
-    enum {
-      IS_UNUSED       = 1
-    };
-
-    unsigned char flags;
-
   public:
     typedef BumpPtrAllocator Allocator;
 
@@ -58,27 +51,17 @@ namespace llvm {
 
     /// VNInfo constructor.
     VNInfo(unsigned i, SlotIndex d)
-      : flags(0), id(i), def(d)
+      : id(i), def(d)
     { }
 
     /// VNInfo construtor, copies values from orig, except for the value number.
     VNInfo(unsigned i, const VNInfo &orig)
-      : flags(orig.flags), id(i), def(orig.def)
+      : id(i), def(orig.def)
     { }
 
     /// Copy from the parameter into this VNInfo.
     void copyFrom(VNInfo &src) {
-      flags = src.flags;
       def = src.def;
-    }
-
-    /// Used for copying value number info.
-    unsigned getFlags() const { return flags; }
-    void setFlags(unsigned flags) { this->flags = flags; }
-
-    /// Merge flags from another VNInfo
-    void mergeFlags(const VNInfo *VNI) {
-      flags = (flags | VNI->flags) & ~IS_UNUSED;
     }
 
     /// Returns true if this value is defined by a PHI instruction (or was,
@@ -88,14 +71,10 @@ namespace llvm {
     bool isPHIDef() const { return def.isBlock(); }
 
     /// Returns true if this value is unused.
-    bool isUnused() const { return flags & IS_UNUSED; }
-    /// Set the "is unused" flag on this value.
-    void setIsUnused(bool unused) {
-      if (unused)
-        flags |= IS_UNUSED;
-      else
-        flags &= ~IS_UNUSED;
-    }
+    bool isUnused() const { return !def.isValid(); }
+
+    /// Mark this value as unused.
+    void markUnused() { def = SlotIndex(); }
   };
 
   /// LiveRange structure - This represents a simple register range in the
