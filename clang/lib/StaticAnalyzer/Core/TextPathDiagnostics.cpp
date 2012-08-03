@@ -42,6 +42,7 @@ public:
   bool supportsLogicalOpControlFlow() const { return true; }
   bool supportsAllBlockEdges() const { return true; }
   virtual bool useVerboseDescription() const { return true; }
+  virtual bool supportsCrossFileDiagnostics() const { return true; }
 };
 
 } // end anonymous namespace
@@ -58,7 +59,9 @@ void TextPathDiagnostics::FlushDiagnosticsImpl(
   for (std::vector<const PathDiagnostic *>::iterator it = Diags.begin(),
        et = Diags.end(); it != et; ++it) {
     const PathDiagnostic *D = *it;
-    for (PathPieces::const_iterator I = D->path.begin(), E = D->path.end(); 
+
+    PathPieces FlatPath = D->path.flatten(/*ShouldFlattenMacros=*/true);
+    for (PathPieces::const_iterator I = FlatPath.begin(), E = FlatPath.end(); 
          I != E; ++I) {
       unsigned diagID =
         Diag.getDiagnosticIDs()->getCustomDiagID(DiagnosticIDs::Note,

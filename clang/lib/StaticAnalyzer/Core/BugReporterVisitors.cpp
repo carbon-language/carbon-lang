@@ -707,6 +707,9 @@ ConditionBRVisitor::VisitConditionVariable(StringRef LhsString,
                                            BugReporterContext &BRC,
                                            BugReport &report,
                                            const ExplodedNode *N) {
+  // FIXME: If there's already a constraint tracker for this variable,
+  // we shouldn't emit anything here (c.f. the double note in
+  // test/Analysis/inlining/path-notes.c)
   SmallString<256> buf;
   llvm::raw_svector_ostream Out(buf);
   Out << "Assuming " << LhsString << " is ";

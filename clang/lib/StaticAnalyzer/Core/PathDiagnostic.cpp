@@ -59,6 +59,48 @@ PathDiagnosticMacroPiece::~PathDiagnosticMacroPiece() {}
 
 
 PathPieces::~PathPieces() {}
+
+void PathPieces::flattenTo(PathPieces &Primary, PathPieces &Current,
+                           bool ShouldFlattenMacros) const {
+  for (PathPieces::const_iterator I = begin(), E = end(); I != E; ++I) {
+    PathDiagnosticPiece *Piece = I->getPtr();
+
+    switch (Piece->getKind()) {
+    case PathDiagnosticPiece::Call: {
+      PathDiagnosticCallPiece *Call = cast<PathDiagnosticCallPiece>(Piece);
+      IntrusiveRefCntPtr<PathDiagnosticEventPiece> CallEnter =
+        Call->getCallEnterEvent();
+      if (CallEnter)
+        Current.push_back(CallEnter);
+      Call->path.flattenTo(Primary, Primary, ShouldFlattenMacros);
+      IntrusiveRefCntPtr<PathDiagnosticEventPiece> callExit =
+        Call->getCallExitEvent();
+      if (callExit)
+        Current.push_back(callExit);
+      break;
+    }
+    case PathDiagnosticPiece::Macro: {
+      PathDiagnosticMacroPiece *Macro = cast<PathDiagnosticMacroPiece>(Piece);
+      if (ShouldFlattenMacros) {
+        Macro->subPieces.flattenTo(Primary, Primary, ShouldFlattenMacros);
+      } else {
+        Current.push_back(Piece);
+        PathPieces NewPath;
+        Macro->subPieces.flattenTo(Primary, NewPath, ShouldFlattenMacros);
+        // FIXME: This probably shouldn't mutate the original path piece.
+        Macro->subPieces = NewPath;
+      }
+      break;
+    }
+    case PathDiagnosticPiece::Event:
+    case PathDiagnosticPiece::ControlFlow:
+      Current.push_back(Piece);
+      break;
+    }
+  }
+}
+
+
 PathDiagnostic::~PathDiagnostic() {}
 
 PathDiagnostic::PathDiagnostic(const Decl *declWithIssue,

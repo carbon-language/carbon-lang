@@ -350,10 +350,17 @@ public:
 };
   
   
-class PathPieces :
-  public std::deque<IntrusiveRefCntPtr<PathDiagnosticPiece> > {
+class PathPieces : public std::deque<IntrusiveRefCntPtr<PathDiagnosticPiece> > {
+  void flattenTo(PathPieces &Primary, PathPieces &Current,
+                 bool ShouldFlattenMacros) const;
 public:
-  ~PathPieces();  
+  ~PathPieces();
+
+  PathPieces flatten(bool ShouldFlattenMacros) const {
+    PathPieces Result;
+    flattenTo(Result, Result, ShouldFlattenMacros);
+    return Result;
+  }
 };
 
 class PathDiagnosticSpotPiece : public PathDiagnosticPiece {

@@ -95,37 +95,6 @@ void HTMLDiagnostics::FlushDiagnosticsImpl(
   }
 }
 
-static void flattenPath(PathPieces &primaryPath, PathPieces &currentPath,
-                        const PathPieces &oldPath) {
-  for (PathPieces::const_iterator it = oldPath.begin(), et = oldPath.end();
-       it != et; ++it ) {
-    PathDiagnosticPiece *piece = it->getPtr();
-    if (const PathDiagnosticCallPiece *call =
-        dyn_cast<PathDiagnosticCallPiece>(piece)) {
-      IntrusiveRefCntPtr<PathDiagnosticEventPiece> callEnter =
-        call->getCallEnterEvent();
-      if (callEnter)
-        currentPath.push_back(callEnter);
-      flattenPath(primaryPath, primaryPath, call->path);
-      IntrusiveRefCntPtr<PathDiagnosticEventPiece> callExit =
-        call->getCallExitEvent();
-      if (callExit)
-        currentPath.push_back(callExit);
-      continue;
-    }
-    if (PathDiagnosticMacroPiece *macro =
-        dyn_cast<PathDiagnosticMacroPiece>(piece)) {
-      currentPath.push_back(piece);
-      PathPieces newPath;
-      flattenPath(primaryPath, newPath, macro->subPieces);
-      macro->subPieces = newPath;
-      continue;
-    }
-    
-    currentPath.push_back(piece);
-  }
-}
-
 void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
                                  SmallVectorImpl<std::string> *FilesMade) {
     
@@ -152,8 +121,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
     return;
 
   // First flatten out the entire path to make it easier to use.
-  PathPieces path;
-  flattenPath(path, path, D.path);
+  PathPieces path = D.path.flatten(/*ShouldFlattenMacros=*/false);
 
   // The path as already been prechecked that all parts of the path are
   // from the same file and that it is non-empty.
