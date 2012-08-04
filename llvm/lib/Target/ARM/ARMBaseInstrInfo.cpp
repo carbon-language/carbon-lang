@@ -888,6 +888,8 @@ ARMBaseInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
     }
     break;
   case ARM::VST1q64:
+  case ARM::VST1d64TPseudo:
+  case ARM::VST1d64QPseudo:
     if (MI->getOperand(0).isFI() &&
         MI->getOperand(2).getSubReg() == 0) {
       FrameIndex = MI->getOperand(0).getIndex();
@@ -1056,6 +1058,8 @@ ARMBaseInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
     }
     break;
   case ARM::VLD1q64:
+  case ARM::VLD1d64TPseudo:
+  case ARM::VLD1d64QPseudo:
     if (MI->getOperand(1).isFI() &&
         MI->getOperand(0).getSubReg() == 0) {
       FrameIndex = MI->getOperand(1).getIndex();
