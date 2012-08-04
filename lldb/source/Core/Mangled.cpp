@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <cxxabi.h>
+//#include "lldb/Core/cxa_demangle.h"
 
 #include "llvm/ADT/DenseMap.h"
 
@@ -195,6 +196,7 @@ Mangled::GetDemangledName () const
                 // We didn't already mangle this name, demangle it and if all goes well
                 // add it to our map.
                 char *demangled_name = abi::__cxa_demangle (mangled_cstr, NULL, NULL, NULL);
+                //char *demangled_name = lldb_cxxabiv1::__cxa_demangle (mangled_cstr, NULL, NULL, NULL);
 
                 if (demangled_name)
                 {
