@@ -1387,9 +1387,6 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &Func) {
   // This pass takes the function out of SSA form.
   MRI->leaveSSA();
 
-  // ReMatRegs - Keep track of the registers whose def's are remat'ed.
-  BitVector ReMatRegs(MRI->getNumVirtRegs());
-
   TiedOperandMap TiedOperands;
 
   SmallPtrSet<MachineInstr*, 8> Processed;
@@ -1475,15 +1472,6 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &Func) {
       // since most instructions do not have tied operands.
       TiedOperands.clear();
       mi = nmi;
-    }
-  }
-
-  // Some remat'ed instructions are dead.
-  for (int i = ReMatRegs.find_first(); i != -1; i = ReMatRegs.find_next(i)) {
-    unsigned VReg = TargetRegisterInfo::index2VirtReg(i);
-    if (MRI->use_nodbg_empty(VReg)) {
-      MachineInstr *DefMI = MRI->getVRegDef(VReg);
-      DefMI->eraseFromParent();
     }
   }
 
