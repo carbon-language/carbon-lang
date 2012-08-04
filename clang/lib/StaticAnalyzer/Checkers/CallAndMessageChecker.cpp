@@ -232,7 +232,11 @@ void CallAndMessageChecker::checkPreStmt(const CallExpr *CE,
     return;
   }
 
-  if (L.isZeroConstant()) {
+  ProgramStateRef StNonNull, StNull;
+  llvm::tie(StNonNull, StNull) = State->assume(cast<DefinedOrUnknownSVal>(L));
+
+  // FIXME: Do we want to record the non-null assumption here?
+  if (StNull && !StNonNull) {
     if (!BT_call_null)
       BT_call_null.reset(
         new BuiltinBug("Called function pointer is null (null dereference)"));
@@ -253,7 +257,13 @@ void CallAndMessageChecker::checkPreCall(const CallEvent &Call,
       emitBadCall(BT_cxx_call_undef.get(), C, CC->getCXXThisExpr());
       return;
     }
-    if (V.isZeroConstant()) {
+
+    ProgramStateRef State = C.getState();
+    ProgramStateRef StNonNull, StNull;
+    llvm::tie(StNonNull, StNull) = State->assume(cast<DefinedOrUnknownSVal>(V));
+
+    // FIXME: Do we want to record the non-null assumption here?
+    if (StNull && !StNonNull) {
       if (!BT_cxx_call_null)
         BT_cxx_call_null.reset(new BuiltinBug("Called C++ object pointer "
                                               "is null"));

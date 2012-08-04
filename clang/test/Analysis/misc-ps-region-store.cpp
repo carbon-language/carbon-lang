@@ -272,11 +272,11 @@ const Rdar9212495_A& rdar9212495(const Rdar9212495_C* ptr) {
   const Rdar9212495_A& val = dynamic_cast<const Rdar9212495_A&>(*ptr);
   
   // This is not valid C++; dynamic_cast with a reference type will throw an
-  // exception if the pointer does not match the expected type.
+  // exception if the pointer does not match the expected type. However, our
+  // implementation of dynamic_cast will pass through a null pointer...or a
+  // "null reference"! So this branch is actually possible.
   if (&val == 0) {
-    val.bar(); // no warning (unreachable)
-    int *p = 0;
-    *p = 0xDEAD; // no warning (unreachable)
+    val.bar(); // expected-warning{{Called C++ object pointer is null}}
   }
   
   return val;
