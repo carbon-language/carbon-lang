@@ -265,6 +265,11 @@ def MTCTR8 : XFXForm_7_ext<31, 467, 9, (outs), (ins G8RC:$rS),
              PPC970_DGroup_First, PPC970_Unit_FXU;
 }
 
+let Pattern = [(set G8RC:$rT, readcyclecounter)] in
+def MFTB8 : XFXForm_1_ext<31, 371, 268, (outs G8RC:$rT), (ins),
+                          "mftb $rT", SprMFTB>,
+            PPC970_DGroup_First, PPC970_Unit_FXU;
+
 let Defs = [X1], Uses = [X1] in
 def DYNALLOC8 : Pseudo<(outs G8RC:$result), (ins G8RC:$negsize, memri:$fpsi),"",
                        [(set G8RC:$result,
