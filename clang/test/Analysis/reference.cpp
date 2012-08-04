@@ -91,10 +91,23 @@ namespace PR13440 {
   }
 }
 
-void testRef() {
+void testNullReference() {
   int *x = 0;
   int &y = *x; // expected-warning{{Dereference of null pointer}}
   y = 5;
+}
+
+void testRetroactiveNullReference(int *x) {
+  // According to the C++ standard, there is no such thing as a
+  // "null reference". So the 'if' statement ought to be dead code.
+  // However, Clang (and other compilers) don't actually check that a pointer
+  // value is non-null in the implementation of references, so it is possible
+  // to produce a supposed "null reference" at runtime. The analyzer shoeuld
+  // still warn when it can prove such errors.
+  int &y = *x;
+  if (x != 0)
+    return;
+  y = 5; // expected-warning{{Dereference of null pointer}}
 }
 
 
