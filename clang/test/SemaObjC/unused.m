@@ -51,3 +51,5 @@ void test2() {
 }
 @end
 
+// rdar://10777111
+static NSString *x = @"hi"; // expected-warning {{unused variable 'x'}}

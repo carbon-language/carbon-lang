@@ -2315,6 +2315,7 @@ public:
   bool VisitIntegerLiteral(const IntegerLiteral *E) { return false; }
   bool VisitFloatingLiteral(const FloatingLiteral *E) { return false; }
   bool VisitStringLiteral(const StringLiteral *E) { return false; }
+  bool VisitObjCStringLiteral(const ObjCStringLiteral *E) { return false; }
   bool VisitCharacterLiteral(const CharacterLiteral *E) { return false; }
   bool VisitUnaryExprOrTypeTraitExpr(const UnaryExprOrTypeTraitExpr *E)
     { return false; }
