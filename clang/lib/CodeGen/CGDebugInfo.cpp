@@ -684,9 +684,9 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
   // FIXME: IF NOT, HOW IS THIS REPRESENTED?  llvm-gcc doesn't represent '...'!
   if (isa<FunctionNoProtoType>(Ty))
     EltTys.push_back(DBuilder.createUnspecifiedParameter());
-  else if (const FunctionProtoType *FTP = dyn_cast<FunctionProtoType>(Ty)) {
-    for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
-      EltTys.push_back(getOrCreateType(FTP->getArgType(i), Unit));
+  else if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(Ty)) {
+    for (unsigned i = 0, e = FPT->getNumArgs(); i != e; ++i)
+      EltTys.push_back(getOrCreateType(FPT->getArgType(i), Unit));
   }
 
   llvm::DIArray EltTypeArray = DBuilder.getOrCreateArray(EltTys);
@@ -911,7 +911,7 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
   
   StringRef MethodName = getFunctionName(Method);
   llvm::DIType MethodTy = getOrCreateMethodType(Method, Unit);
-  
+
   // Since a single ctor/dtor corresponds to multiple functions, it doesn't
   // make sense to give a single ctor/dtor a linkage name.
   StringRef MethodLinkageName;
