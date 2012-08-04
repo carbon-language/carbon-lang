@@ -2649,7 +2649,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "    for (unsigned i = 0; i != " << MaxNumOperands << "; ++i) {\n";
   OS << "      if (i + 1 >= Operands.size()) {\n";
   OS << "        OperandsValid = (it->Classes[i] == " <<"InvalidMatchClass);\n";
-  OS << "        if (!OperandsValid) ErrorInfo = i + 1;\n;";
+  OS << "        if (!OperandsValid) ErrorInfo = i + 1;\n";
   OS << "        break;\n";
   OS << "      }\n";
   OS << "      unsigned Diag = validateOperandClass(Operands[i+1],\n";
