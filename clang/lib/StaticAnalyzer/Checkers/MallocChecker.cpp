@@ -1569,11 +1569,6 @@ MallocChecker::MallocBugVisitor::VisitNode(const ExplodedNode *N,
 
     // Is this is the first appearance of the reallocated symbol?
     if (!statePrev->get<RegionState>(FailedReallocSymbol)) {
-      // If we ever hit this assert, that means BugReporter has decided to skip
-      // node pairs or visit them out of order.
-      assert(state->get<RegionState>(FailedReallocSymbol) &&
-        "Missed the reallocation point");
-
       // We're at the reallocation point.
       Msg = "Attempt to reallocate memory";
       StackHint = new StackHintGeneratorForSymbol(Sym,

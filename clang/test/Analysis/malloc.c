@@ -1007,3 +1007,15 @@ void freeButNoMalloc(int *p, int x){
   }
   free(p); // expected-warning {{Attempt to free released memory}}
 }
+
+struct HasPtr {
+  int *p;
+};
+
+int* reallocButNoMalloc(struct HasPtr *a, int c, int size) {
+  int *s;
+  a->p = (int *)realloc(a->p, size);
+  if (a->p == 0)
+    return 0; // expected-warning{{Memory is never released; potential leak}}
+  return a->p;
+}
