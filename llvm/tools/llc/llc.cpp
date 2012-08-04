@@ -495,9 +495,12 @@ int main(int argc, char **argv) {
 
   // Add an appropriate TargetLibraryInfo pass for the module's triple.
   TargetLibraryInfo *TLI = new TargetLibraryInfo(TheTriple);
-  if (DisableSimplifyLibCalls)
+  if (DisableSimplifyLibCalls) {
     TLI->disableAllFunctions();
-  PM.add(TLI);
+
+    // FIXME: Fix several tests on i686-win32 due to lacking of many libraries.
+    PM.add(TLI);
+  }
 
   // Add the target data from the target machine, if it exists, or the module.
   if (const TargetData *TD = Target.getTargetData())
