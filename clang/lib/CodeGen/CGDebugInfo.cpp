@@ -2601,9 +2601,7 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   if (T->isIncompleteArrayType()) {
 
     // CodeGen turns int[] into int[1] so we'll do the same here.
-    llvm::APSInt ConstVal(32);
-
-    ConstVal = 1;
+    llvm::APInt ConstVal(32, 1);
     QualType ET = CGM.getContext().getAsArrayType(T)->getElementType();
 
     T = CGM.getContext().getConstantArrayType(ET, ConstVal,
@@ -2637,9 +2635,7 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   if (T->isIncompleteArrayType()) {
 
     // CodeGen turns int[] into int[1] so we'll do the same here.
-    llvm::APSInt ConstVal(32);
-
-    ConstVal = 1;
+    llvm::APInt ConstVal(32, 1);
     QualType ET = CGM.getContext().getAsArrayType(T)->getElementType();
 
     T = CGM.getContext().getConstantArrayType(ET, ConstVal,

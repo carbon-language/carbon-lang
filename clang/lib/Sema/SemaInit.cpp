@@ -92,8 +92,7 @@ static void CheckStringInit(Expr *Str, QualType &DeclT, const ArrayType *AT,
   if (const IncompleteArrayType *IAT = dyn_cast<IncompleteArrayType>(AT)) {
     // C99 6.7.8p14. We have an array of character type with unknown size
     // being initialized to a string literal.
-    llvm::APSInt ConstVal(32);
-    ConstVal = StrLength;
+    llvm::APInt ConstVal(32, StrLength);
     // Return a new array type (C99 6.7.8p22).
     DeclT = S.Context.getConstantArrayType(IAT->getElementType(),
                                            ConstVal,
