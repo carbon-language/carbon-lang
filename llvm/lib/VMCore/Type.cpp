@@ -464,19 +464,26 @@ void StructType::setBody(ArrayRef<Type*> Elements, bool isPacked) {
 void StructType::setName(StringRef Name) {
   if (Name == getName()) return;
 
-  // If this struct already had a name, remove its symbol table entry.
-  if (SymbolTableEntry) {
-    getContext().pImpl->NamedStructTypes.erase(getName());
-    SymbolTableEntry = 0;
+  StringMap<StructType *> &SymbolTable = getContext().pImpl->NamedStructTypes;
+  typedef StringMap<StructType *>::MapEntryTy EntryTy;
+
+  // If this struct already had a name, remove its symbol table entry. Don't
+  // delete the data yet because it may be part of the new name.
+  if (SymbolTableEntry)
+    SymbolTable.remove((EntryTy *)SymbolTableEntry);
+
+  // If this is just removing the name, we're done.
+  if (Name.empty()) {
+    if (SymbolTableEntry) {
+      // Delete the old string data.
+      ((EntryTy *)SymbolTableEntry)->Destroy(SymbolTable.getAllocator());
+      SymbolTableEntry = 0;
+    }
+    return;
   }
   
-  // If this is just removing the name, we're done.
-  if (Name.empty())
-    return;
-  
   // Look up the entry for the name.
-  StringMapEntry<StructType*> *Entry =
-    &getContext().pImpl->NamedStructTypes.GetOrCreateValue(Name);
+  EntryTy *Entry = &getContext().pImpl->NamedStructTypes.GetOrCreateValue(Name);
   
   // While we have a name collision, try a random rename.
   if (Entry->getValue()) {
@@ -497,7 +504,10 @@ void StructType::setName(StringRef Name) {
 
   // Okay, we found an entry that isn't used.  It's us!
   Entry->setValue(this);
-    
+
+  // Delete the old string data.
+  if (SymbolTableEntry)
+    ((EntryTy *)SymbolTableEntry)->Destroy(SymbolTable.getAllocator());
   SymbolTableEntry = Entry;
 }
 
