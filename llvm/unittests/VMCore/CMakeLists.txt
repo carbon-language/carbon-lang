@@ -13,6 +13,7 @@ set(VMCoreSources
   MetadataTest.cpp
   PassManagerTest.cpp
   TypeBuilderTest.cpp
+  TypesTest.cpp
   ValueMapTest.cpp
   VerifierTest.cpp
   )
