@@ -58,7 +58,7 @@ void f()
     }
     else
     {
-        assert(t1 - t0 - milliseconds(250) < milliseconds(2));
+        assert(t1 - t0 - milliseconds(250) < milliseconds(10));
         assert(test2 == 0);
     }
     ++runs;
