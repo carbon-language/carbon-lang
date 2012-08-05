@@ -57,6 +57,7 @@
 #include <clc/integer/abs.h>
 #include <clc/integer/abs_diff.h>
 #include <clc/integer/add_sat.h>
+#include <clc/integer/sub_sat.h>
 
 /* 6.11.5 Geometric Functions */
 #include <clc/geometric/cross.h>
