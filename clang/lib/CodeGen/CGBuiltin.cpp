@@ -365,6 +365,10 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *F = CGM.getIntrinsic(Intrinsic::prefetch);
     return RValue::get(Builder.CreateCall4(F, Address, RW, Locality, Data));
   }
+  case Builtin::BI__builtin_readcyclecounter: {
+    Value *F = CGM.getIntrinsic(Intrinsic::readcyclecounter);
+    return RValue::get(Builder.CreateCall(F));
+  }
   case Builtin::BI__builtin_trap: {
     Value *F = CGM.getIntrinsic(Intrinsic::trap);
     return RValue::get(Builder.CreateCall(F));

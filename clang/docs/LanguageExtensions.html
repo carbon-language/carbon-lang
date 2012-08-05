@@ -98,6 +98,7 @@
 <li><a href="#complex-list-init">Initializer lists for complex numbers in C</a></li>
 <li><a href="#builtins">Builtin Functions</a>
   <ul>
+  <li><a href="#__builtin_readcyclecounter">__builtin_readcyclecounter</a></li>
   <li><a href="#__builtin_shufflevector">__builtin_shufflevector</a></li>
   <li><a href="#__builtin_unreachable">__builtin_unreachable</a></li>
   <li><a href="#__sync_swap">__sync_swap</a></li>
@@ -1365,6 +1366,42 @@ define portable wrappers for these.  Many of the Clang versions of these
 functions are implemented directly in terms of <a href="#vectors">extended
 vector support</a> instead of builtins, in order to reduce the number of
 builtins that we need to implement.</p>
+
+<!-- ======================================================================= -->
+<h3><a name="__builtin_readcyclecounter">__builtin_readcyclecounter</a></h3>
+<!-- ======================================================================= -->
+
+<p><tt>__builtin_readcyclecounter</tt> is used to access the cycle counter
+register (or a similar low-latency, high-accuracy clock) on those targets that
+support it.
+</p>
+
+<p><b>Syntax:</b></p>
+
+<pre>
+__builtin_readcyclecounter()
+</pre>
+
+<p><b>Example of Use:</b></p>
+
+<pre>
+unsigned long long t0 = __builtin_readcyclecounter();
+do_something();
+unsigned long long t1 = __builtin_readcyclecounter();
+unsigned long long cycles_to_do_something = t1 - t0; // assuming no overflow
+</pre>
+
+<p><b>Description:</b></p>
+
+<p>The __builtin_readcyclecounter() builtin returns the cycle counter value,
+which may be either global or process/thread-specific depending on the target.
+As the backing counters often overflow quickly (on the order of
+seconds) this should only be used for timing small intervals. When not
+supported by the target, the return value is always zero. This builtin
+takes no arguments and produces an unsigned long long result.
+</p>
+
+<p>Query for this feature with __has_builtin(__builtin_readcyclecounter).</p>
 
 <!-- ======================================================================= -->
 <h3><a name="__builtin_shufflevector">__builtin_shufflevector</a></h3>
