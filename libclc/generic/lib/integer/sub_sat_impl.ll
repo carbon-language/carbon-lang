@@ -1,7 +1,7 @@
 declare {i8, i1} @llvm.ssub.with.overflow.i8(i8, i8)
 declare {i8, i1} @llvm.usub.with.overflow.i8(i8, i8)
 
-define linkonce_odr i8 @__clc_sub_sat_impl_s8(i8 %x, i8 %y) nounwind readnone alwaysinline {
+define i8 @__clc_sub_sat_impl_s8(i8 %x, i8 %y) nounwind readnone alwaysinline {
   %call = call {i8, i1} @llvm.ssub.with.overflow.i8(i8 %x, i8 %y)
   %res = extractvalue {i8, i1} %call, 0
   %over = extractvalue {i8, i1} %call, 1
@@ -11,7 +11,7 @@ define linkonce_odr i8 @__clc_sub_sat_impl_s8(i8 %x, i8 %y) nounwind readnone al
   ret i8 %sat
 }
 
-define linkonce_odr i8 @__clc_sub_sat_impl_u8(i8 %x, i8 %y) nounwind readnone alwaysinline {
+define i8 @__clc_sub_sat_impl_u8(i8 %x, i8 %y) nounwind readnone alwaysinline {
   %call = call {i8, i1} @llvm.usub.with.overflow.i8(i8 %x, i8 %y)
   %res = extractvalue {i8, i1} %call, 0
   %over = extractvalue {i8, i1} %call, 1
@@ -22,7 +22,7 @@ define linkonce_odr i8 @__clc_sub_sat_impl_u8(i8 %x, i8 %y) nounwind readnone al
 declare {i16, i1} @llvm.ssub.with.overflow.i16(i16, i16)
 declare {i16, i1} @llvm.usub.with.overflow.i16(i16, i16)
 
-define linkonce_odr i16 @__clc_sub_sat_impl_s16(i16 %x, i16 %y) nounwind readnone alwaysinline {
+define i16 @__clc_sub_sat_impl_s16(i16 %x, i16 %y) nounwind readnone alwaysinline {
   %call = call {i16, i1} @llvm.ssub.with.overflow.i16(i16 %x, i16 %y)
   %res = extractvalue {i16, i1} %call, 0
   %over = extractvalue {i16, i1} %call, 1
@@ -32,7 +32,7 @@ define linkonce_odr i16 @__clc_sub_sat_impl_s16(i16 %x, i16 %y) nounwind readnon
   ret i16 %sat
 }
 
-define linkonce_odr i16 @__clc_sub_sat_impl_u16(i16 %x, i16 %y) nounwind readnone alwaysinline {
+define i16 @__clc_sub_sat_impl_u16(i16 %x, i16 %y) nounwind readnone alwaysinline {
   %call = call {i16, i1} @llvm.usub.with.overflow.i16(i16 %x, i16 %y)
   %res = extractvalue {i16, i1} %call, 0
   %over = extractvalue {i16, i1} %call, 1
@@ -43,7 +43,7 @@ define linkonce_odr i16 @__clc_sub_sat_impl_u16(i16 %x, i16 %y) nounwind readnon
 declare {i32, i1} @llvm.ssub.with.overflow.i32(i32, i32)
 declare {i32, i1} @llvm.usub.with.overflow.i32(i32, i32)
 
-define linkonce_odr i32 @__clc_sub_sat_impl_s32(i32 %x, i32 %y) nounwind readnone alwaysinline {
+define i32 @__clc_sub_sat_impl_s32(i32 %x, i32 %y) nounwind readnone alwaysinline {
   %call = call {i32, i1} @llvm.ssub.with.overflow.i32(i32 %x, i32 %y)
   %res = extractvalue {i32, i1} %call, 0
   %over = extractvalue {i32, i1} %call, 1
@@ -53,7 +53,7 @@ define linkonce_odr i32 @__clc_sub_sat_impl_s32(i32 %x, i32 %y) nounwind readnon
   ret i32 %sat
 }
 
-define linkonce_odr i32 @__clc_sub_sat_impl_u32(i32 %x, i32 %y) nounwind readnone alwaysinline {
+define i32 @__clc_sub_sat_impl_u32(i32 %x, i32 %y) nounwind readnone alwaysinline {
   %call = call {i32, i1} @llvm.usub.with.overflow.i32(i32 %x, i32 %y)
   %res = extractvalue {i32, i1} %call, 0
   %over = extractvalue {i32, i1} %call, 1
@@ -64,7 +64,7 @@ define linkonce_odr i32 @__clc_sub_sat_impl_u32(i32 %x, i32 %y) nounwind readnon
 declare {i64, i1} @llvm.ssub.with.overflow.i64(i64, i64)
 declare {i64, i1} @llvm.usub.with.overflow.i64(i64, i64)
 
-define linkonce_odr i64 @__clc_sub_sat_impl_s64(i64 %x, i64 %y) nounwind readnone alwaysinline {
+define i64 @__clc_sub_sat_impl_s64(i64 %x, i64 %y) nounwind readnone alwaysinline {
   %call = call {i64, i1} @llvm.ssub.with.overflow.i64(i64 %x, i64 %y)
   %res = extractvalue {i64, i1} %call, 0
   %over = extractvalue {i64, i1} %call, 1
@@ -74,7 +74,7 @@ define linkonce_odr i64 @__clc_sub_sat_impl_s64(i64 %x, i64 %y) nounwind readnon
   ret i64 %sat
 }
 
-define linkonce_odr i64 @__clc_sub_sat_impl_u64(i64 %x, i64 %y) nounwind readnone alwaysinline {
+define i64 @__clc_sub_sat_impl_u64(i64 %x, i64 %y) nounwind readnone alwaysinline {
   %call = call {i64, i1} @llvm.usub.with.overflow.i64(i64 %x, i64 %y)
   %res = extractvalue {i64, i1} %call, 0
   %over = extractvalue {i64, i1} %call, 1
