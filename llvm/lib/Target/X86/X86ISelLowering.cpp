@@ -11867,8 +11867,7 @@ X86TargetLowering::EmitPCMP(MachineInstr *MI, MachineBasicBlock *BB,
       MIB.addOperand(Op);
   }
   BuildMI(*BB, MI, dl,
-    TII->get(Subtarget->hasAVX() ? X86::VMOVAPSrr : X86::MOVAPSrr),
-             MI->getOperand(0).getReg())
+    TII->get(TargetOpcode::COPY), MI->getOperand(0).getReg())
     .addReg(X86::XMM0);
 
   MI->eraseFromParent();
