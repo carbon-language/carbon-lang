@@ -1,14 +1,14 @@
 #include <clc/clc.h>
 
 // From add_sat.ll
-_CLC_DECL char __clc_add_sat_s8(char, char);
-_CLC_DECL char __clc_add_sat_u8(uchar, uchar);
-_CLC_DECL char __clc_add_sat_s16(short, short);
-_CLC_DECL char __clc_add_sat_u16(ushort, ushort);
-_CLC_DECL char __clc_add_sat_s32(int, int);
-_CLC_DECL char __clc_add_sat_u32(uint, uint);
-_CLC_DECL char __clc_add_sat_s64(long, long);
-_CLC_DECL char __clc_add_sat_u64(ulong, ulong);
+_CLC_DECL char   __clc_add_sat_s8(char, char);
+_CLC_DECL uchar  __clc_add_sat_u8(uchar, uchar);
+_CLC_DECL short  __clc_add_sat_s16(short, short);
+_CLC_DECL ushort __clc_add_sat_u16(ushort, ushort);
+_CLC_DECL int    __clc_add_sat_s32(int, int);
+_CLC_DECL uint   __clc_add_sat_u32(uint, uint);
+_CLC_DECL long   __clc_add_sat_s64(long, long);
+_CLC_DECL ulong  __clc_add_sat_u64(ulong, ulong);
 
 _CLC_OVERLOAD _CLC_DEF char add_sat(char x, char y) {
   return __clc_add_sat_s8(x, y);
