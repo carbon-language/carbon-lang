@@ -11900,24 +11900,6 @@ X86TargetLowering::EmitMonitor(MachineInstr *MI, MachineBasicBlock *BB) const {
 }
 
 MachineBasicBlock *
-X86TargetLowering::EmitMwait(MachineInstr *MI, MachineBasicBlock *BB) const {
-  DebugLoc dl = MI->getDebugLoc();
-  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
-
-  // First arg in ECX, the second in EAX.
-  BuildMI(*BB, MI, dl, TII->get(TargetOpcode::COPY), X86::ECX)
-    .addReg(MI->getOperand(0).getReg());
-  BuildMI(*BB, MI, dl, TII->get(TargetOpcode::COPY), X86::EAX)
-    .addReg(MI->getOperand(1).getReg());
-
-  // The instruction doesn't actually take any operands though.
-  BuildMI(*BB, MI, dl, TII->get(X86::MWAITrr));
-
-  MI->eraseFromParent(); // The pseudo is gone now.
-  return BB;
-}
-
-MachineBasicBlock *
 X86TargetLowering::EmitVAARG64WithCustomInserter(
                    MachineInstr *MI,
                    MachineBasicBlock *MBB) const {
@@ -12721,8 +12703,6 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     // Thread synchronization.
   case X86::MONITOR:
     return EmitMonitor(MI, BB);
-  case X86::MWAIT:
-    return EmitMwait(MI, BB);
 
     // Atomic Lowering.
   case X86::ATOMAND32:

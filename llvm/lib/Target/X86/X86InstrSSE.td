@@ -5442,16 +5442,14 @@ let usesCustomInserter = 1 in {
 def MONITOR : PseudoI<(outs), (ins i32mem:$src1, GR32:$src2, GR32:$src3),
                 [(int_x86_sse3_monitor addr:$src1, GR32:$src2, GR32:$src3)]>,
                 Requires<[HasSSE3]>;
-def MWAIT : PseudoI<(outs), (ins GR32:$src1, GR32:$src2),
-                [(int_x86_sse3_mwait GR32:$src1, GR32:$src2)]>,
-                Requires<[HasSSE3]>;
 }
 
 let Uses = [EAX, ECX, EDX] in
 def MONITORrrr : I<0x01, MRM_C8, (outs), (ins), "monitor", [], IIC_SSE_MONITOR>,
                  TB, Requires<[HasSSE3]>;
 let Uses = [ECX, EAX] in
-def MWAITrr   : I<0x01, MRM_C9, (outs), (ins), "mwait", [], IIC_SSE_MWAIT>,
+def MWAITrr   : I<0x01, MRM_C9, (outs), (ins), "mwait",
+                [(int_x86_sse3_mwait ECX, EAX)], IIC_SSE_MWAIT>,
                 TB, Requires<[HasSSE3]>;
 
 def : InstAlias<"mwait %eax, %ecx", (MWAITrr)>, Requires<[In32BitMode]>;
