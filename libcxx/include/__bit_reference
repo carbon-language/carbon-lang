@@ -927,12 +927,12 @@ rotate(__bit_iterator<_Cp, false> __first, __bit_iterator<_Cp, false> __middle, 
 
 // equal
 
-template <class _Cp>
+template <class _Cp, bool _IC1, bool _IC2>
 bool
-__equal_unaligned(__bit_iterator<_Cp, true> __first1, __bit_iterator<_Cp, true> __last1,
-                  __bit_iterator<_Cp, true> __first2)
+__equal_unaligned(__bit_iterator<_Cp, _IC1> __first1, __bit_iterator<_Cp, _IC1> __last1,
+                  __bit_iterator<_Cp, _IC2> __first2)
 {
-    typedef __bit_iterator<_Cp, true> _It;
+    typedef __bit_iterator<_Cp, _IC1> _It;
     typedef  typename _It::difference_type difference_type;
     typedef typename _It::__storage_type __storage_type;
     static const unsigned __bits_per_word = _It::__bits_per_word;
@@ -1009,12 +1009,12 @@ __equal_unaligned(__bit_iterator<_Cp, true> __first1, __bit_iterator<_Cp, true> 
     return true;
 }
 
-template <class _Cp>
+template <class _Cp, bool _IC1, bool _IC2>
 bool
-__equal_aligned(__bit_iterator<_Cp, true> __first1, __bit_iterator<_Cp, true> __last1,
-                __bit_iterator<_Cp, true> __first2)
+__equal_aligned(__bit_iterator<_Cp, _IC1> __first1, __bit_iterator<_Cp, _IC1> __last1,
+                __bit_iterator<_Cp, _IC2> __first2)
 {
-    typedef __bit_iterator<_Cp, true> _It;
+    typedef __bit_iterator<_Cp, _IC1> _It;
     typedef  typename _It::difference_type difference_type;
     typedef typename _It::__storage_type __storage_type;
     static const unsigned __bits_per_word = _It::__bits_per_word;
@@ -1234,12 +1234,12 @@ private:
     template <class _Dp> friend __bit_iterator<_Dp, false> rotate(__bit_iterator<_Dp, false>,
                                                                 __bit_iterator<_Dp, false>,
                                                                 __bit_iterator<_Dp, false>);
-    template <class _Dp> friend bool __equal_aligned(__bit_iterator<_Dp, true>,
-                                                    __bit_iterator<_Dp, true>,
-                                                    __bit_iterator<_Dp, true>);
-    template <class _Dp> friend bool __equal_unaligned(__bit_iterator<_Dp, true>,
-                                                      __bit_iterator<_Dp, true>,
-                                                      __bit_iterator<_Dp, true>);
+    template <class _Dp, bool _IC1, bool _IC2> friend bool __equal_aligned(__bit_iterator<_Dp, _IC1>,
+                                                    __bit_iterator<_Dp, _IC1>,
+                                                    __bit_iterator<_Dp, _IC2>);
+    template <class _Dp, bool _IC1, bool _IC2> friend bool __equal_unaligned(__bit_iterator<_Dp, _IC1>,
+                                                      __bit_iterator<_Dp, _IC1>,
+                                                      __bit_iterator<_Dp, _IC2>);
     template <class _Dp, bool _IC1, bool _IC2> friend bool equal(__bit_iterator<_Dp, _IC1>,
                                                                 __bit_iterator<_Dp, _IC1>,
                                                                 __bit_iterator<_Dp, _IC2>);
