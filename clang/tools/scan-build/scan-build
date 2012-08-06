@@ -868,6 +868,40 @@ sub AddIfNotPresent {
   }
 }
 
+sub RunXcodebuild {
+  my $Args = shift;
+  my $IgnoreErrors = shift;
+  my $CCAnalyzer = shift;
+  my $CXXAnalyzer = shift;
+  
+  if ($IgnoreErrors) {
+    AddIfNotPresent($Args,"-PBXBuildsContinueAfterErrors=YES");
+  }
+  
+  # Check if using iPhone SDK 3.0 (simulator).  If so the compiler being
+  # used should be gcc-4.2.
+  if (!defined $ENV{"CCC_CC"}) {
+    for (my $i = 0 ; $i < scalar(@$Args); ++$i) {
+      if ($Args->[$i] eq "-sdk" && $i + 1 < scalar(@$Args)) {
+        if (@$Args[$i+1] =~ /^iphonesimulator3/) {
+          $ENV{"CCC_CC"} = "gcc-4.2";
+          $ENV{"CCC_CXX"} = "g++-4.2";            
+        }
+      }
+    }
+  }
+
+  # Disable PCH files until clang supports them.
+  AddIfNotPresent($Args,"GCC_PRECOMPILE_PREFIX_HEADER=NO");
+  
+  # When 'CC' is set, xcodebuild uses it to do all linking, even if we are
+  # linking C++ object files.  Set 'LDPLUSPLUS' so that xcodebuild uses 'g++'
+  # (via c++-analyzer) when linking such files.
+  $ENV{"LDPLUSPLUS"} = $CXXAnalyzer;
+ 
+  return (system(@$Args) >> 8); 
+}
+
 sub RunBuildCommand {
   
   my $Args = shift;
@@ -879,6 +913,10 @@ sub RunBuildCommand {
   # Get only the part of the command after the last '/'.
   if ($Cmd =~ /\/([^\/]+)$/) {
     $Cmd = $1;
+  }
+  
+  if ($Cmd eq "xcodebuild") {
+    return RunXcodebuild($Args, $IgnoreErrors, $CCAnalyzer, $CXXAnalyzer);
   }
   
   if ($Cmd =~ /(.*\/?gcc[^\/]*$)/ or 
@@ -912,34 +950,8 @@ sub RunBuildCommand {
       AddIfNotPresent($Args,"-k");
       AddIfNotPresent($Args,"-i");
     }
-    elsif ($Cmd eq "xcodebuild") {
-      AddIfNotPresent($Args,"-PBXBuildsContinueAfterErrors=YES");
-    }
   } 
-  
-  if ($Cmd eq "xcodebuild") {
-    # Check if using iPhone SDK 3.0 (simulator).  If so the compiler being
-    # used should be gcc-4.2.
-    if (!defined $ENV{"CCC_CC"}) {
-      for (my $i = 0 ; $i < scalar(@$Args); ++$i) {
-        if ($Args->[$i] eq "-sdk" && $i + 1 < scalar(@$Args)) {
-          if (@$Args[$i+1] =~ /^iphonesimulator3/) {
-            $ENV{"CCC_CC"} = "gcc-4.2";
-            $ENV{"CCC_CXX"} = "g++-4.2";            
-          }
-        }
-      }
-    }
 
-    # Disable PCH files until clang supports them.
-    AddIfNotPresent($Args,"GCC_PRECOMPILE_PREFIX_HEADER=NO");
-    
-    # When 'CC' is set, xcodebuild uses it to do all linking, even if we are
-    # linking C++ object files.  Set 'LDPLUSPLUS' so that xcodebuild uses 'g++'
-    # (via c++-analyzer) when linking such files.
-    $ENV{"LDPLUSPLUS"} = $CXXAnalyzer;
-  }
-  
   return (system(@$Args) >> 8);
 }
 
