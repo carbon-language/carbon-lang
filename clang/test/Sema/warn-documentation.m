@@ -82,3 +82,12 @@ int a;
 
 int b;
 
+@interface TestReturns1
+/// \returns Aaa
+- (int)test1:(NSString *)aaa;
+
+// expected-warning@+1 {{'\returns' command used in a comment that is attached to a method returning void}}
+/// \returns Aaa
+- (void)test2:(NSString *)aaa;
+@end
+

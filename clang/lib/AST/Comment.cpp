@@ -145,6 +145,7 @@ void DeclInfo::fill() {
   IsTemplateDecl = false;
   IsTemplateSpecialization = false;
   IsTemplatePartialSpecialization = false;
+  IsObjCMethod = false;
   IsInstanceMethod = false;
   IsClassMethod = false;
   ParamVars = ArrayRef<const ParmVarDecl *>();
@@ -193,6 +194,7 @@ void DeclInfo::fill() {
     ParamVars = ArrayRef<const ParmVarDecl *>(MD->param_begin(),
                                               MD->param_size());
     ResultType = MD->getResultType();
+    IsObjCMethod = true;
     IsInstanceMethod = MD->isInstanceMethod();
     IsClassMethod = !IsInstanceMethod;
     break;

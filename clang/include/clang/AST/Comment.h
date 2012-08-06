@@ -979,6 +979,9 @@ struct DeclInfo {
   /// Never true if \c IsFunctionDecl is true.
   unsigned IsTemplatePartialSpecialization : 1;
 
+  /// Is \c ThisDecl an ObjCMethodDecl.
+  unsigned IsObjCMethod : 1;
+
   /// Is \c ThisDecl a non-static member function of C++ class or
   /// instance method of ObjC class.
   /// Can be true only if \c IsFunctionDecl is true.

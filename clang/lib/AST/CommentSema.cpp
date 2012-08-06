@@ -481,7 +481,10 @@ void Sema::checkReturnsCommand(const BlockCommandComment *Command) {
       unsigned DiagKind;
       switch (ThisDeclInfo->ThisDecl->getKind()) {
       default:
-        DiagKind = 0;
+        if (ThisDeclInfo->IsObjCMethod)
+          DiagKind = 3;
+        else
+          DiagKind = 0;
         break;
       case Decl::CXXConstructor:
         DiagKind = 1;
