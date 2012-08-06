@@ -7483,6 +7483,7 @@ void Sema::CheckForFunctionRedefinition(FunctionDecl *FD) {
     else
       Diag(FD->getLocation(), diag::err_redefinition) << FD->getDeclName();
     Diag(Definition->getLocation(), diag::note_previous_definition);
+    FD->setInvalidDecl();
   }
 }
 

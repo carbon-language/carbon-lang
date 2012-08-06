@@ -117,3 +117,35 @@ namespace DefaultedFnExceptionSpec {
   };
   OdrUse use; // expected-note {{implicit default constructor for 'DefaultedFnExceptionSpec::OdrUse' first required here}}
 }
+
+namespace PR13527 {
+  struct X {
+    X() = delete; // expected-note {{here}}
+    X(const X&) = delete; // expected-note {{here}}
+    X(X&&) = delete; // expected-note {{here}}
+    X &operator=(const X&) = delete; // expected-note {{here}}
+    X &operator=(X&&) = delete; // expected-note {{here}}
+    ~X() = delete; // expected-note {{here}}
+  };
+  X::X() = default; // expected-error {{redefinition}}
+  X::X(const X&) = default; // expected-error {{redefinition}}
+  X::X(X&&) = default; // expected-error {{redefinition}}
+  X &X::operator=(const X&) = default; // expected-error {{redefinition}}
+  X &X::operator=(X&&) = default; // expected-error {{redefinition}}
+  X::~X() = default; // expected-error {{redefinition}}
+
+  struct Y {
+    Y() = default;
+    Y(const Y&) = default;
+    Y(Y&&) = default;
+    Y &operator=(const Y&) = default;
+    Y &operator=(Y&&) = default;
+    ~Y() = default;
+  };
+  Y::Y() = default; // expected-error {{definition of explicitly defaulted}}
+  Y::Y(const Y&) = default; // expected-error {{definition of explicitly defaulted}}
+  Y::Y(Y&&) = default; // expected-error {{definition of explicitly defaulted}}
+  Y &Y::operator=(const Y&) = default; // expected-error {{definition of explicitly defaulted}}
+  Y &Y::operator=(Y&&) = default; // expected-error {{definition of explicitly defaulted}}
+  Y::~Y() = default; // expected-error {{definition of explicitly defaulted}}
+}
