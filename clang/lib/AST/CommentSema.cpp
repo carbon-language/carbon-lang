@@ -20,7 +20,7 @@ namespace comments {
 Sema::Sema(llvm::BumpPtrAllocator &Allocator, const SourceManager &SourceMgr,
            DiagnosticsEngine &Diags) :
     Allocator(Allocator), SourceMgr(SourceMgr), Diags(Diags),
-    ThisDeclInfo(NULL) {
+    ThisDeclInfo(NULL), BriefCommand(NULL), ReturnsCommand(NULL) {
 }
 
 void Sema::setDecl(const Decl *D) {
@@ -55,6 +55,7 @@ BlockCommandComment *Sema::actOnBlockCommandFinish(
                               ParagraphComment *Paragraph) {
   Command->setParagraph(Paragraph);
   checkBlockCommandEmptyParagraph(Command);
+  checkBlockCommandDuplicate(Command);
   checkReturnsCommand(Command);
   return Command;
 }
@@ -507,6 +508,39 @@ void Sema::checkReturnsCommand(const BlockCommandComment *Command) {
     << Command->getSourceRange();
 }
 
+void Sema::checkBlockCommandDuplicate(const BlockCommandComment *Command) {
+  StringRef Name = Command->getCommandName();
+  const BlockCommandComment *PrevCommand = NULL;
+  if (isBriefCommand(Name)) {
+    if (!BriefCommand) {
+      BriefCommand = Command;
+      return;
+    }
+    PrevCommand = BriefCommand;
+  } else if (isReturnsCommand(Name)) {
+    if (!ReturnsCommand) {
+      ReturnsCommand = Command;
+      return;
+    }
+    PrevCommand = ReturnsCommand;
+  } else {
+    // We don't want to check this command for duplicates.
+    return;
+  }
+  Diag(Command->getLocation(), diag::warn_doc_block_command_duplicate)
+      << Name
+      << Command->getSourceRange();
+  if (Name == PrevCommand->getCommandName())
+    Diag(PrevCommand->getLocation(), diag::note_doc_block_command_previous)
+        << PrevCommand->getCommandName()
+        << Command->getSourceRange();
+  else
+    Diag(PrevCommand->getLocation(),
+         diag::note_doc_block_command_previous_alias)
+        << PrevCommand->getCommandName()
+        << Name;
+}
+
 bool Sema::isFunctionDecl() {
   if (!ThisDeclInfo)
     return false;
@@ -678,10 +712,9 @@ StringRef Sema::correctTypoInTParamReference(
 
 // TODO: tablegen
 bool Sema::isBlockCommand(StringRef Name) {
-  return isReturnsCommand(Name) ||
+  return isBriefCommand(Name) || isReturnsCommand(Name) ||
       isParamCommand(Name) || isTParamCommand(Name) ||
       llvm::StringSwitch<bool>(Name)
-      .Cases("brief", "short", true)
       .Case("author", true)
       .Case("authors", true)
       .Case("pre", true)
@@ -698,6 +731,10 @@ bool Sema::isParamCommand(StringRef Name) {
 
 bool Sema::isTParamCommand(StringRef Name) {
   return Name == "tparam";
+}
+
+bool Sema::isBriefCommand(StringRef Name) {
+  return Name == "brief" || Name == "short";
 }
 
 bool Sema::isReturnsCommand(StringRef Name) {

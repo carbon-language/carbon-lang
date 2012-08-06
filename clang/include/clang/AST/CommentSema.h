@@ -56,6 +56,12 @@ class Sema {
   /// Contains a valid value if \c DeclInfo->IsFilled is true.
   llvm::StringMap<TParamCommandComment *> TemplateParameterDocs;
 
+  /// AST node for the \\brief command and its aliases.
+  const BlockCommandComment *BriefCommand;
+
+  /// AST node for the \\returns command and its aliases.
+  const BlockCommandComment *ReturnsCommand;
+
   DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID) {
     return Diags.Report(Loc, DiagID);
   }
@@ -183,6 +189,10 @@ public:
 
   void checkReturnsCommand(const BlockCommandComment *Command);
 
+  /// Emit diagnostics about duplicate block commands that should be
+  /// used only once per comment, e.g., \\brief and \\returns.
+  void checkBlockCommandDuplicate(const BlockCommandComment *Command);
+
   bool isFunctionDecl();
   bool isTemplateDecl();
 
@@ -212,6 +222,7 @@ public:
   bool isBlockCommand(StringRef Name);
   bool isParamCommand(StringRef Name);
   bool isTParamCommand(StringRef Name);
+  bool isBriefCommand(StringRef Name);
   bool isReturnsCommand(StringRef Name);
   unsigned getBlockCommandNumArgs(StringRef Name);
 

@@ -3,11 +3,11 @@
 @class NSString;
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 @interface Test1
 // expected-warning@+2 {{empty paragraph passed to '\brief' command}}
 /**
- * \brief\brief Aaa
+ * \brief\author Aaa
  * \param aaa Aaa
  * \param bbb Bbb
  */
@@ -20,21 +20,21 @@
 + (NSString *)test2:(NSString *)aaa;
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 @property int test3; // a property: ObjCPropertyDecl
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 @property int test4; // a property: ObjCPropertyDecl
 @end
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 @interface Test1()
 @end
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 @implementation Test1 // a class implementation : ObjCImplementationDecl
 + (NSString *)test1:(NSString *)aaa suffix:(NSString *)bbb {
   return 0;
@@ -48,20 +48,20 @@
 @dynamic test4; // a property implementation: ObjCPropertyImplDecl
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 NSString *_test5;
 @end
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 @interface Test1(Test1Category) // a category: ObjCCategoryDecl
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 + (NSString *)test3:(NSString *)aaa;
 @end
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 @implementation Test1(Test1Category) // a category implementation: ObjCCategoryImplDecl
 + (NSString *)test3:(NSString *)aaa {
   return 0;
@@ -69,14 +69,14 @@ NSString *_test5;
 @end
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 @protocol TestProto1 // a protocol: ObjCProtocolDecl
 @end
 
 int a;
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 @interface Test4
 @end
 

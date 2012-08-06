@@ -79,33 +79,91 @@ int test_html_nesting7(int);
 
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\returns Aaa
 int test_block_command1(int);
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief \brief Aaa
+/// \brief \returns Aaa
 int test_block_command2(int);
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
 /// \brief
-/// \brief Aaa
+/// \returns Aaa
 int test_block_command3(int);
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
 /// \brief
 ///
-/// \brief Aaa
+/// \returns Aaa
 int test_block_command4(int);
 
 // There is trailing whitespace on one of the following lines, don't remove it!
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
 /// \brief
 /// 
-/// \brief Aaa
+/// \returns Aaa
 int test_block_command5(int);
 
 /// \brief \c Aaa
 int test_block_command6(int);
+
+// expected-warning@+5 {{duplicated command '\brief'}} expected-note@+1 {{previous command '\brief' here}}
+/// \brief Aaa
+///
+/// Bbb
+///
+/// \brief Ccc
+int test_duplicate_brief1(int);
+
+// expected-warning@+5 {{duplicated command '\short'}} expected-note@+1 {{previous command '\short' here}}
+/// \short Aaa
+///
+/// Bbb
+///
+/// \short Ccc
+int test_duplicate_brief2(int);
+
+// expected-warning@+5 {{duplicated command '\brief'}} expected-note@+1 {{previous command '\short' (an alias of '\brief') here}}
+/// \short Aaa
+///
+/// Bbb
+///
+/// \brief Ccc
+int test_duplicate_brief3(int);
+
+
+// expected-warning@+5 {{duplicated command '\return'}} expected-note@+1 {{previous command '\return' here}}
+/// \return Aaa
+///
+/// Bbb
+///
+/// \return Ccc
+int test_duplicate_returns1(int);
+
+// expected-warning@+5 {{duplicated command '\returns'}} expected-note@+1 {{previous command '\returns' here}}
+/// \returns Aaa
+///
+/// Bbb
+///
+/// \returns Ccc
+int test_duplicate_returns2(int);
+
+// expected-warning@+5 {{duplicated command '\result'}} expected-note@+1 {{previous command '\result' here}}
+/// \result Aaa
+///
+/// Bbb
+///
+/// \result Ccc
+int test_duplicate_returns3(int);
+
+// expected-warning@+5 {{duplicated command '\return'}} expected-note@+1 {{previous command '\returns' (an alias of '\return') here}}
+/// \returns Aaa
+///
+/// Bbb
+///
+/// \return Ccc
+int test_duplicate_returns4(int);
+
 
 // expected-warning@+1 {{'\param' command used in a comment that is not attached to a function declaration}}
 /// \param a Blah blah.
@@ -342,16 +400,16 @@ namespace test_returns_wrong_decl_10 { };
 
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-int test1; ///< \brief\brief Aaa
+int test1; ///< \brief\author Aaa
 
 // expected-warning@+2 {{empty paragraph passed to '\brief' command}}
 // expected-warning@+2 {{empty paragraph passed to '\brief' command}}
-int test2, ///< \brief\brief Aaa
-    test3; ///< \brief\brief Aaa
+int test2, ///< \brief\author Aaa
+    test3; ///< \brief\author Aaa
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
 int test4; ///< \brief
-           ///< \brief Aaa
+           ///< \author Aaa
 
 
 // Check that we attach the comment to the declaration during parsing in the
@@ -359,118 +417,118 @@ int test4; ///< \brief
 // documentation comments that are not attached to anything.
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 int test_attach1;
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 int test_attach2(int);
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 struct test_attach3 {
   // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-  /// \brief\brief Aaa
+  /// \brief\author Aaa
   int test_attach4;
 
   // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-  int test_attach5; ///< \brief\brief Aaa
+  int test_attach5; ///< \brief\author Aaa
 
   // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-  /// \brief\brief Aaa
+  /// \brief\author Aaa
   int test_attach6(int);
 };
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 class test_attach7 {
   // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-  /// \brief\brief Aaa
+  /// \brief\author Aaa
   int test_attach8;
 
   // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-  int test_attach9; ///< \brief\brief Aaa
+  int test_attach9; ///< \brief\author Aaa
 
   // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-  /// \brief\brief Aaa
+  /// \brief\author Aaa
   int test_attach10(int);
 };
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 enum test_attach9 {
   // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-  /// \brief\brief Aaa
+  /// \brief\author Aaa
   test_attach10,
 
   // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-  test_attach11 ///< \brief\brief Aaa
+  test_attach11 ///< \brief\author Aaa
 };
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 struct test_noattach12 *test_attach13;
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 typedef struct test_noattach14 *test_attach15;
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 typedef struct test_attach16 { int a; } test_attach17;
 
 struct S { int a; };
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 struct S *test_attach18;
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 typedef struct S *test_attach19;
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 struct test_attach20;
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 typedef struct test_attach21 {
   // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-  /// \brief\brief Aaa
+  /// \brief\author Aaa
   int test_attach22;
 } test_attach23;
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 namespace test_attach24 {
   // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-  /// \brief\brief Aaa
+  /// \brief\author Aaa
   namespace test_attach25 {
   }
 }
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 /// \tparam T Aaa
 template<typename T>
 void test_attach26(T aaa);
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 /// \tparam T Aaa
 template<typename T, typename U>
 void test_attach27(T aaa, U bbb);
 
 // expected-warning@+2 {{empty paragraph passed to '\brief' command}}
 // expected-warning@+2 {{template parameter 'T' not found in the template declaration}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 /// \tparam T Aaa
 template<>
 void test_attach27(int aaa, int bbb);
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 /// \tparam T Aaa
 template<typename T>
 class test_attach28 {
@@ -478,61 +536,61 @@ class test_attach28 {
 };
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 using test_attach29 = test_attach28<int>;
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 /// \tparam T Aaa
 template<typename T, typename U>
 class test_attach30 { };
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 /// \tparam T Aaa
 template<typename T>
 class test_attach30<T, int> { };
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 template<>
 class test_attach30<int, int> { };
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 template<typename T>
 using test_attach31 = test_attach30<T, int>;
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 /// \tparam T Aaa
 template<typename T, typename U, typename V>
 class test_attach32 { };
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 /// \tparam T Aaa
 template<typename T, typename U>
 class test_attach32<T, U, int> { };
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 /// \tparam T Aaa
 template<typename T>
 class test_attach32<T, int, int> { };
 
 // expected-warning@+2 {{empty paragraph passed to '\brief' command}}
 // expected-warning@+2 {{template parameter 'T' not found in the template declaration}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 /// \tparam T Aaa
 template<>
 class test_attach32<int, int, int> { };
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 class test_attach33 {
   // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-  /// \brief\brief Aaa
+  /// \brief\author Aaa
   /// \tparam T Aaa
   template<typename T, typename U>
   void test_attach34(T aaa, U bbb);
@@ -542,7 +600,7 @@ template<typename T>
 class test_attach35 {
   // expected-warning@+2 {{empty paragraph passed to '\brief' command}}
   // expected-warning@+2 {{template parameter 'T' not found in the template declaration}}
-  /// \brief\brief Aaa
+  /// \brief\author Aaa
   /// \tparam T Aaa
   template<typename TT, typename UU>
   void test_attach36(TT aaa, UU bbb);
@@ -550,7 +608,7 @@ class test_attach35 {
 
 // expected-warning@+2 {{empty paragraph passed to '\brief' command}}
 // expected-warning@+2 {{template parameter 'T' not found in the template declaration}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 /// \tparam T Aaa
 template<> template<>
 void test_attach35<int>::test_attach36(int aaa, int bbb) {}
@@ -559,20 +617,20 @@ template<typename T>
 class test_attach37 {
   // expected-warning@+2 {{empty paragraph passed to '\brief' command}}
   // expected-warning@+2 {{'\tparam' command used in a comment that is not attached to a template declaration}}
-  /// \brief\brief Aaa
+  /// \brief\author Aaa
   /// \tparam T Aaa
   void test_attach38(int aaa, int bbb);
 };
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 /// \tparam T Aaa
 template<typename T>
 void test_attach37<T>::test_attach38(int aaa, int bbb) {}
 
 // expected-warning@+2 {{empty paragraph passed to '\brief' command}}
 // expected-warning@+2 {{template parameter 'T' not found in the template declaration}}
-/// \brief\brief Aaa
+/// \brief\author Aaa
 /// \tparam T Aaa
 template<>
 void test_attach37<int>::test_attach38(int aaa, int bbb) {}
