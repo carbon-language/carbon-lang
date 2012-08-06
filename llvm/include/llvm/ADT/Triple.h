@@ -98,7 +98,8 @@ public:
     Minix,
     RTEMS,
     NativeClient,
-    CNK         // BG/P Compute-Node Kernel
+    CNK,         // BG/P Compute-Node Kernel
+    Bitrig
   };
   enum EnvironmentType {
     UnknownEnvironment,
