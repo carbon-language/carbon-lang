@@ -255,6 +255,12 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
   case MCSymbolRefExpr::VK_Mips_TPREL_LO:
     FixupKind = Mips::fixup_Mips_TPREL_LO;
     break;
+  case MCSymbolRefExpr::VK_Mips_HIGHER:
+    FixupKind = Mips::fixup_Mips_HIGHER;
+    break;
+  case MCSymbolRefExpr::VK_Mips_HIGHEST:
+    FixupKind = Mips::fixup_Mips_HIGHEST;
+    break;
   } // switch
 
   Fixups.push_back(MCFixup::Create(0, MO.getExpr(), MCFixupKind(FixupKind)));
