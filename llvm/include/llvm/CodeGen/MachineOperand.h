@@ -302,8 +302,10 @@ public:
     return !isUndef() && !isInternalRead() && (isUse() || getSubReg());
   }
 
-  /// getNextOperandForReg - Return the next MachineOperand in the function that
-  /// uses or defines this register.
+  /// getNextOperandForReg - Return the next MachineOperand in the linked list
+  /// of operands that use or define the same register.
+  /// Don't call this function directly, see the def-use iterators in
+  /// MachineRegisterInfo instead.
   MachineOperand *getNextOperandForReg() const {
     assert(isReg() && "This is not a register operand!");
     return Contents.Reg.Next;
