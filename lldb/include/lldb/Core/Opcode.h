@@ -33,6 +33,7 @@ namespace lldb_private {
             eTypeInvalid,
             eType8,
             eType16,
+            eType16_2, // a 32-bit Thumb instruction, made up of two words
             eType32,
             eType64,
             eTypeBytes
@@ -86,6 +87,7 @@ namespace lldb_private {
             case Opcode::eTypeInvalid:  break;
             case Opcode::eType8:        return m_data.inst8;
             case Opcode::eType16:       break;
+            case Opcode::eType16_2:     break;
             case Opcode::eType32:       break;
             case Opcode::eType64:       break;
             case Opcode::eTypeBytes:    break;
@@ -102,6 +104,7 @@ namespace lldb_private {
             case Opcode::eTypeInvalid:  break;
             case Opcode::eType8:        return m_data.inst8;
             case Opcode::eType16:       return m_data.inst16;
+            case Opcode::eType16_2:     break;
             case Opcode::eType32:       break;
             case Opcode::eType64:       break;
             case Opcode::eTypeBytes:    break;
@@ -117,6 +120,7 @@ namespace lldb_private {
             case Opcode::eTypeInvalid:  break;
             case Opcode::eType8:        return m_data.inst8;
             case Opcode::eType16:       return m_data.inst16;
+            case Opcode::eType16_2:     // passthrough
             case Opcode::eType32:       return m_data.inst32;
             case Opcode::eType64:       break;
             case Opcode::eTypeBytes:    break;
@@ -132,6 +136,7 @@ namespace lldb_private {
             case Opcode::eTypeInvalid:  break;
             case Opcode::eType8:        return m_data.inst8;
             case Opcode::eType16:       return m_data.inst16;
+            case Opcode::eType16_2:     // passthrough
             case Opcode::eType32:       return m_data.inst32;
             case Opcode::eType64:       return m_data.inst64;
             case Opcode::eTypeBytes:    break;
@@ -151,6 +156,13 @@ namespace lldb_private {
         {
             m_type = eType16;
             m_data.inst16 = inst;
+        }
+        
+        void
+        SetOpcode16_2 (uint32_t inst)
+        {
+            m_type = eType16_2;
+            m_data.inst32 = inst;
         }
 
         void
@@ -203,6 +215,7 @@ namespace lldb_private {
             case Opcode::eTypeInvalid: break;
             case Opcode::eType8:     return sizeof(m_data.inst8);
             case Opcode::eType16:    return sizeof(m_data.inst16);
+            case Opcode::eType16_2:  // passthrough
             case Opcode::eType32:    return sizeof(m_data.inst32);
             case Opcode::eType64:    return sizeof(m_data.inst64);
             case Opcode::eTypeBytes: return m_data.inst.length;
@@ -227,6 +240,7 @@ namespace lldb_private {
                 case Opcode::eTypeInvalid: break;
                 case Opcode::eType8:     return &m_data.inst8;
                 case Opcode::eType16:    return &m_data.inst16;
+                case Opcode::eType16_2:  // passthrough
                 case Opcode::eType32:    return &m_data.inst32;
                 case Opcode::eType64:    return &m_data.inst64;
                 case Opcode::eTypeBytes: return m_data.inst.bytes;
