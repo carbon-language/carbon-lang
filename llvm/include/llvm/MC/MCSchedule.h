@@ -90,7 +90,7 @@ public:
   // target code can use it in static initializers. The defaults need to be
   // initialized in this default ctor because some clients directly instantiate
   // MCSchedModel instead of using a generated itinerary.
-  MCSchedModel(): IssueWidth(DefaultMinLatency),
+  MCSchedModel(): IssueWidth(DefaultIssueWidth),
                   MinLatency(DefaultMinLatency),
                   LoadLatency(DefaultLoadLatency),
                   HighLatency(DefaultHighLatency),
