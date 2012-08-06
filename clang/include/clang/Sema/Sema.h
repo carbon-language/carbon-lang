@@ -4379,12 +4379,12 @@ public:
 
   bool CheckPureMethod(CXXMethodDecl *Method, SourceRange InitRange);
 
-  /// CheckOverrideControl - Check C++0x override control semantics.
-  void CheckOverrideControl(const Decl *D);
+  /// CheckOverrideControl - Check C++11 override control semantics.
+  void CheckOverrideControl(Decl *D);
 
   /// CheckForFunctionMarkedFinal - Checks whether a virtual member function
   /// overrides a virtual member function marked 'final', according to
-  /// C++0x [class.virtual]p3.
+  /// C++11 [class.virtual]p4.
   bool CheckIfOverriddenFunctionIsMarkedFinal(const CXXMethodDecl *New,
                                               const CXXMethodDecl *Old);
 

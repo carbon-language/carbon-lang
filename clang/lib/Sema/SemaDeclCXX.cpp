@@ -1405,32 +1405,50 @@ bool Sema::ActOnAccessSpecifier(AccessSpecifier Access,
   return ProcessAccessDeclAttributeList(ASDecl, Attrs);
 }
 
-/// CheckOverrideControl - Check C++0x override control semantics.
-void Sema::CheckOverrideControl(const Decl *D) {
+/// CheckOverrideControl - Check C++11 override control semantics.
+void Sema::CheckOverrideControl(Decl *D) {
   const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D);
-  if (!MD || !MD->isVirtual())
-    return;
 
-  if (MD->isDependentContext())
-    return;
+  // Do we know which functions this declaration might be overriding?
+  bool OverridesAreKnown = !MD ||
+      (!MD->getParent()->hasAnyDependentBases() &&
+       !MD->getType()->isDependentType());
 
-  // C++0x [class.virtual]p3:
-  //   If a virtual function is marked with the virt-specifier override and does
-  //   not override a member function of a base class, 
-  //   the program is ill-formed.
-  bool HasOverriddenMethods = 
-    MD->begin_overridden_methods() != MD->end_overridden_methods();
-  if (MD->hasAttr<OverrideAttr>() && !HasOverriddenMethods) {
-    Diag(MD->getLocation(), 
-                 diag::err_function_marked_override_not_overriding)
-      << MD->getDeclName();
+  if (!MD || !MD->isVirtual()) {
+    if (OverridesAreKnown) {
+      if (OverrideAttr *OA = D->getAttr<OverrideAttr>()) {
+        Diag(OA->getLocation(),
+             diag::override_keyword_only_allowed_on_virtual_member_functions)
+          << "override" << FixItHint::CreateRemoval(OA->getLocation());
+        D->dropAttr<OverrideAttr>();
+      }
+      if (FinalAttr *FA = D->getAttr<FinalAttr>()) {
+        Diag(FA->getLocation(),
+             diag::override_keyword_only_allowed_on_virtual_member_functions)
+          << "final" << FixItHint::CreateRemoval(FA->getLocation());
+        D->dropAttr<FinalAttr>();
+      }
+    }
     return;
   }
+
+  if (!OverridesAreKnown)
+    return;
+
+  // C++11 [class.virtual]p5:
+  //   If a virtual function is marked with the virt-specifier override and
+  //   does not override a member function of a base class, the program is
+  //   ill-formed.
+  bool HasOverriddenMethods =
+    MD->begin_overridden_methods() != MD->end_overridden_methods();
+  if (MD->hasAttr<OverrideAttr>() && !HasOverriddenMethods)
+    Diag(MD->getLocation(), diag::err_function_marked_override_not_overriding)
+      << MD->getDeclName();
 }
 
-/// CheckIfOverriddenFunctionIsMarkedFinal - Checks whether a virtual member 
+/// CheckIfOverriddenFunctionIsMarkedFinal - Checks whether a virtual member
 /// function overrides a virtual member function marked 'final', according to
-/// C++0x [class.virtual]p3.
+/// C++11 [class.virtual]p4.
 bool Sema::CheckIfOverriddenFunctionIsMarkedFinal(const CXXMethodDecl *New,
                                                   const CXXMethodDecl *Old) {
   if (!Old->hasAttr<FinalAttr>())
@@ -1609,31 +1627,17 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       FunTmpl->getTemplatedDecl()->setAccess(AS);
   }
 
-  if (VS.isOverrideSpecified()) {
-    CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Member);
-    if (!MD || !MD->isVirtual()) {
-      Diag(Member->getLocStart(), 
-           diag::override_keyword_only_allowed_on_virtual_member_functions)
-        << "override" << FixItHint::CreateRemoval(VS.getOverrideLoc());
-    } else
-      MD->addAttr(new (Context) OverrideAttr(VS.getOverrideLoc(), Context));
-  }
-  if (VS.isFinalSpecified()) {
-    CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Member);
-    if (!MD || !MD->isVirtual()) {
-      Diag(Member->getLocStart(), 
-           diag::override_keyword_only_allowed_on_virtual_member_functions)
-      << "final" << FixItHint::CreateRemoval(VS.getFinalLoc());
-    } else
-      MD->addAttr(new (Context) FinalAttr(VS.getFinalLoc(), Context));
-  }
+  if (VS.isOverrideSpecified())
+    Member->addAttr(new (Context) OverrideAttr(VS.getOverrideLoc(), Context));
+  if (VS.isFinalSpecified())
+    Member->addAttr(new (Context) FinalAttr(VS.getFinalLoc(), Context));
 
   if (VS.getLastLocation().isValid()) {
     // Update the end location of a method that has a virt-specifiers.
     if (CXXMethodDecl *MD = dyn_cast_or_null<CXXMethodDecl>(Member))
       MD->setRangeEnd(VS.getLastLocation());
   }
-      
+
   CheckOverrideControl(Member);
 
   assert((Name || isInstField) && "No identifier for non-field ?");
