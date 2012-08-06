@@ -87,6 +87,8 @@ struct Flags {
   // By default, disable core dumper on 64-bit - it makes little sense
   // to dump 16T+ core.
   bool disable_core;
+  // Strips this prefix from file paths in error reports.
+  const char *strip_path_prefix;
 };
 
 Flags *flags();

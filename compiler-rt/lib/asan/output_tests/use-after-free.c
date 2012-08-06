@@ -7,3 +7,4 @@ int main() {
 
 // CHECK: heap-use-after-free
 // CHECKSLEEP: Sleeping for 1 second
+// CHECKSTRIP-NOT: #0 0x{{.*}} ({{[/].*}})

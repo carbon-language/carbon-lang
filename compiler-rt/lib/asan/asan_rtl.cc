@@ -35,7 +35,7 @@ void Die() {
     while (1) { }
   }
   if (flags()->sleep_before_dying) {
-    Report("Sleeping for %zd second(s)\n", flags()->sleep_before_dying);
+    Report("Sleeping for %d second(s)\n", flags()->sleep_before_dying);
     SleepForSeconds(flags()->sleep_before_dying);
   }
   if (flags()->unmap_shadow_on_exit)
@@ -96,6 +96,7 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->abort_on_error, "abort_on_error");
   ParseFlag(str, &f->atexit, "atexit");
   ParseFlag(str, &f->disable_core, "disable_core");
+  ParseFlag(str, &f->strip_path_prefix, "strip_path_prefix");
 }
 
 extern "C" {
@@ -128,6 +129,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->abort_on_error = false;
   f->atexit = false;
   f->disable_core = (__WORDSIZE == 64);
+  f->strip_path_prefix = "";
 
   // Override from user-specified string.
   ParseFlagsFromString(f, __asan_default_options());

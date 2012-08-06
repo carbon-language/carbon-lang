@@ -39,6 +39,13 @@ check_program a.out $C_TEST.c CHECKSLEEP
 export ASAN_OPTIONS=""
 rm ./a.out
 
+echo "Checking strip_path_prefix option"
+$CC -g -faddress-sanitizer -O2 $C_TEST.c
+export ASAN_OPTIONS="strip_path_prefix='/'"
+./a.out 2>&1 | $FILE_CHECK $C_TEST.c --check-prefix=CHECKSTRIP
+export ASAN_OPTIONS=""
+rm ./a.out
+
 # FIXME: some tests do not need to be ran for all the combinations of arch
 # and optimization mode.
 for t in  *.cc; do
