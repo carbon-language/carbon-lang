@@ -41,8 +41,8 @@ MyClass *getObj();
 /* Test that we get the right type from call to alloc. */
 
 + (void) testAllocSelf {
- id a = [self alloc];
- clang_analyzer_eval([a getZeroOverridden] == 0); // expected-warning{{TRUE}}
+  id a = [self alloc];
+  clang_analyzer_eval([a getZeroOverridden] == 0); // expected-warning{{TRUE}}
 }
 
 
@@ -68,8 +68,26 @@ MyClass *getObj();
 }
 
 + (void) testNewSelf {
- id a = [self new];
- clang_analyzer_eval([a getZeroOverridden] == 0); // expected-warning{{TRUE}}
+  id a = [self new];
+  clang_analyzer_eval([a getZeroOverridden] == 0); // expected-warning{{TRUE}}
+}
+
+// Casting to parent should not pessimize the dynamic type. 
++ (void) testCastToParent {
+ id a = [[self alloc] init];
+  MyParent *p = a;  
+  clang_analyzer_eval([p getZeroOverridden] == 0); // expected-warning{{TRUE}}
+}
+
+// The type of parameter gets used.
++ (void)testTypeFromParam:(MyParent*) p {
+  clang_analyzer_eval([p getZero] == 0); // expected-warning{{TRUE}}
+}
+
+// Test implisit cast.
++ (void) testCastFromId:(id) a {
+  MyParent *p = a;  
+  clang_analyzer_eval([p getZero] == 0); // expected-warning{{TRUE}}
 }
 
 @end

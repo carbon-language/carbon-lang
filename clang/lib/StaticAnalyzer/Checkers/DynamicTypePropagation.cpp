@@ -24,11 +24,18 @@ using namespace clang;
 using namespace ento;
 
 namespace {
-class DynamicTypePropagation : public Checker< check::PostCall > {
+class DynamicTypePropagation:
+    public Checker< check::PostCall,
+                    check::PostStmt<ImplicitCastExpr> > {
   const ObjCObjectType *getObjectTypeForAllocAndNew(const ObjCMessageExpr *MsgE,
                                                     CheckerContext &C) const;
+
+  /// \brief Return a better dynamic type if one can be derived from the cast.
+  const ObjCObjectPointerType *getBetterObjCType(const Expr *CastE,
+                                                 CheckerContext &C) const;
 public:
-  void checkPostCall(const CallEvent &CE, CheckerContext &C) const;
+  void checkPostCall(const CallEvent &Call, CheckerContext &C) const;
+  void checkPostStmt(const ImplicitCastExpr *CastE, CheckerContext &C) const;
 };
 }
 
@@ -77,6 +84,25 @@ void DynamicTypePropagation::checkPostCall(const CallEvent &Call,
   }
 }
 
+void DynamicTypePropagation::checkPostStmt(const ImplicitCastExpr *CastE,
+                                           CheckerContext &C) const {
+  // We only track dynamic type info for regions.
+  const MemRegion *ToR = C.getSVal(CastE).getAsRegion();
+  if (!ToR)
+    return;
+
+  switch (CastE->getCastKind()) {
+  default:
+    break;
+  case CK_BitCast:
+    // Only handle ObjCObjects for now.
+    if (const Type *NewTy = getBetterObjCType(CastE, C))
+      C.addTransition(C.getState()->addDynamicTypeInfo(ToR, QualType(NewTy,0)));
+    break;
+  }
+  return;
+}
+
 const ObjCObjectType *
 DynamicTypePropagation::getObjectTypeForAllocAndNew(const ObjCMessageExpr *MsgE,
                                                     CheckerContext &C) const {
@@ -108,6 +134,42 @@ DynamicTypePropagation::getObjectTypeForAllocAndNew(const ObjCMessageExpr *MsgE,
           return ObjTy;
     }
   }
+  return 0;
+}
+
+// Return a better dynamic type if one can be derived from the cast.
+// Compare the current dynamic type of the region and the new type to which we
+// are casting. If the new type is lower in the inheritance hierarchy, pick it.
+const ObjCObjectPointerType *
+DynamicTypePropagation::getBetterObjCType(const Expr *CastE,
+                                          CheckerContext &C) const {
+  const MemRegion *ToR = C.getSVal(CastE).getAsRegion();
+  assert(ToR);
+
+  // Get the old and new types.
+  const ObjCObjectPointerType *NewTy =
+      CastE->getType()->getAs<ObjCObjectPointerType>();
+  if (!NewTy)
+    return 0;
+  QualType OldDTy = C.getState()->getDynamicTypeInfo(ToR).getType();
+  if (OldDTy.isNull()) {
+    return NewTy;
+  }
+  const ObjCObjectPointerType *OldTy =
+    OldDTy->getAs<ObjCObjectPointerType>();
+  if (!OldTy)
+    return 0;
+
+  // Id the old type is 'id', the new one is more precise.
+  if (OldTy->isObjCIdType() && !NewTy->isObjCIdType())
+    return NewTy;
+
+  // Return new if it's a subclass of old.
+  const ObjCInterfaceDecl *ToI = NewTy->getInterfaceDecl();
+  const ObjCInterfaceDecl *FromI = OldTy->getInterfaceDecl();
+  if (ToI && FromI && FromI->isSuperClassOf(ToI))
+    return NewTy;
+
   return 0;
 }
 
