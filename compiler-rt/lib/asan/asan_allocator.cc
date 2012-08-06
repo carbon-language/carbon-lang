@@ -377,10 +377,11 @@ class MallocInfo {
     if (!ptr) return 0;
     ScopedLock lock(&mu_);
 
-    // first, check if this is our memory
-    PageGroup *g = FindPageGroupUnlocked(ptr);
-    if (!g) return 0;
-    AsanChunk *m = PtrToChunk(ptr);
+    // Make sure this is our chunk and |ptr| actually points to the beginning
+    // of the allocated memory.
+    AsanChunk *m = FindChunkByAddr(ptr);
+    if (!m || m->Beg() != ptr) return 0;
+
     if (m->chunk_state == CHUNK_ALLOCATED) {
       return m->used_size;
     } else {
