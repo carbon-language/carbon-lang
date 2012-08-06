@@ -21,6 +21,12 @@
 #include "asan_stack.h"
 
 #ifdef ANDROID
+DECLARE_REAL_AND_INTERCEPTOR(void*, malloc, uptr size);
+DECLARE_REAL_AND_INTERCEPTOR(void, free, void *ptr);
+DECLARE_REAL_AND_INTERCEPTOR(void*, calloc, uptr nmemb, uptr size);
+DECLARE_REAL_AND_INTERCEPTOR(void*, realloc, void *ptr, uptr size);
+DECLARE_REAL_AND_INTERCEPTOR(void*, memalign, uptr boundary, uptr size);
+
 struct MallocDebug {
   void* (*malloc)(uptr bytes);
   void  (*free)(void* mem);
@@ -30,7 +36,7 @@ struct MallocDebug {
 };
 
 const MallocDebug asan_malloc_dispatch ALIGNED(32) = {
-  malloc, free, calloc, realloc, memalign
+  WRAP(malloc), WRAP(free), WRAP(calloc), WRAP(realloc), WRAP(memalign)
 };
 
 extern "C" const MallocDebug* __libc_malloc_dispatch;
