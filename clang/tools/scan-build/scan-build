@@ -868,15 +868,42 @@ sub AddIfNotPresent {
   }
 }
 
+sub SetEnv {
+  my $Options = shift @_;
+  foreach my $opt ('CC', 'CXX', 'CLANG', 'CLANG_CXX',
+                    'CCC_ANALYZER_ANALYSIS', 'CCC_ANALYZER_PLUGINS') {
+    die "$opt is undefined\n" if (!defined $opt);
+    $ENV{$opt} = $Options->{$opt};
+  }
+  foreach my $opt ('CCC_ANALYZER_STORE_MODEL',
+                    'CCC_ANALYZER_PLUGINS',
+                    'CCC_ANALYZER_INTERNAL_STATS',
+                    'CCC_ANALYZER_OUTPUT_FORMAT') {
+    my $x = $Options->{$opt};
+    if (defined $x) { $ENV{$opt} = $x }
+  }
+  my $Verbose = $Options->{'VERBOSE'};
+  if ($Verbose >= 2) {
+    $ENV{'CCC_ANALYZER_VERBOSE'} = 1;
+  }
+  if ($Verbose >= 3) {
+    $ENV{'CCC_ANALYZER_LOG'} = 1;
+  }
+}
+
 sub RunXcodebuild {
   my $Args = shift;
   my $IgnoreErrors = shift;
   my $CCAnalyzer = shift;
   my $CXXAnalyzer = shift;
-  
+  my $Options = shift;
+
   if ($IgnoreErrors) {
     AddIfNotPresent($Args,"-PBXBuildsContinueAfterErrors=YES");
   }
+  
+  # Default to old behavior where we insert a bogus compiler.
+  SetEnv($Options);
   
   # Check if using iPhone SDK 3.0 (simulator).  If so the compiler being
   # used should be gcc-4.2.
@@ -885,7 +912,7 @@ sub RunXcodebuild {
       if ($Args->[$i] eq "-sdk" && $i + 1 < scalar(@$Args)) {
         if (@$Args[$i+1] =~ /^iphonesimulator3/) {
           $ENV{"CCC_CC"} = "gcc-4.2";
-          $ENV{"CCC_CXX"} = "g++-4.2";            
+          $ENV{"CCC_CXX"} = "g++-4.2";
         }
       }
     }
@@ -902,13 +929,13 @@ sub RunXcodebuild {
   return (system(@$Args) >> 8); 
 }
 
-sub RunBuildCommand {
-  
+sub RunBuildCommand {  
   my $Args = shift;
   my $IgnoreErrors = shift;
   my $Cmd = $Args->[0];
   my $CCAnalyzer = shift;
   my $CXXAnalyzer = shift;
+  my $Options = shift;
   
   # Get only the part of the command after the last '/'.
   if ($Cmd =~ /\/([^\/]+)$/) {
@@ -916,8 +943,11 @@ sub RunBuildCommand {
   }
   
   if ($Cmd eq "xcodebuild") {
-    return RunXcodebuild($Args, $IgnoreErrors, $CCAnalyzer, $CXXAnalyzer);
+    return RunXcodebuild($Args, $IgnoreErrors, $CCAnalyzer, $CXXAnalyzer, $Options);
   }
+  
+  # Setup the environment.
+  SetEnv($Options);
   
   if ($Cmd =~ /(.*\/?gcc[^\/]*$)/ or 
       $Cmd =~ /(.*\/?cc[^\/]*$)/ or
@@ -1432,47 +1462,42 @@ if (!defined $ClangSB || ! -x $ClangSB) {
   Diag("Using 'clang' from path: $Clang\n");
 }
 
-# Set the appropriate environment variables.
 SetHtmlEnv(\@ARGV, $HtmlDir);
-$ENV{'CC'} = $Cmd;
-$ENV{'CXX'} = $CmdCXX;
-$ENV{'CLANG'} = $Clang;
-$ENV{'CLANG_CXX'} = $ClangCXX;
-if ($Verbose >= 2) {
-  $ENV{'CCC_ANALYZER_VERBOSE'} = 1;
-}
-if ($Verbose >= 3) {
-  $ENV{'CCC_ANALYZER_LOG'} = 1;
-}
-if ($AnalyzeHeaders) {
-  push @AnalysesToRun,"-analyzer-opt-analyze-headers";  
-}
-if ($AnalyzerStats) {
-  push @AnalysesToRun, '-analyzer-checker', 'debug.Stats';
-}
-if ($MaxLoop > 0) {
-  push @AnalysesToRun, '-analyzer-max-loop ' . $MaxLoop;
-}
+if ($AnalyzeHeaders) { push @AnalysesToRun,"-analyzer-opt-analyze-headers"; }
+if ($AnalyzerStats) { push @AnalysesToRun, '-analyzer-checker=debug.Stats'; }
+if ($MaxLoop > 0) { push @AnalysesToRun, '-analyzer-max-loop=$MaxLoop'; }
 
-$ENV{'CCC_ANALYZER_ANALYSIS'} = join ' ',@AnalysesToRun;
-
-$ENV{'CCC_ANALYZER_PLUGINS'} = join ' ',@PluginsToLoad;
+# Delay setting up other environment variables in case we can do true
+# interposition.
+my $CCC_ANALYZER_ANALYSIS = join ' ',@AnalysesToRun;
+my $CCC_ANALYZER_PLUGINS = join ' ',@PluginsToLoad;
+my %Options = (
+  'CC' => $Cmd,
+  'CXX' => $CmdCXX,
+  'CLANG' => $Clang,
+  'CLANG_CXX' => $ClangCXX,
+  'VERBOSE' => $Verbose,
+  'CCC_ANALYZER_ANALYSIS' => $CCC_ANALYZER_ANALYSIS,
+  'CCC_ANALYZER_PLUGINS' => $CCC_ANALYZER_PLUGINS,
+  'OUTPUT_DIR' => $HtmlDir
+);
 
 if (defined $StoreModel) {
-  $ENV{'CCC_ANALYZER_STORE_MODEL'} = $StoreModel;
+  $Options{'CCC_ANALYZER_STORE_MODEL'} = $StoreModel;
 }
 if (defined $ConstraintsModel) {
-  $ENV{'CCC_ANALYZER_CONSTRAINTS_MODEL'} = $ConstraintsModel;
+  $Options{'CCC_ANALYZER_CONSTRAINTS_MODEL'} = $ConstraintsModel;
 }
 if (defined $InternalStats) {
-  $ENV{'CCC_ANALYZER_INTERNAL_STATS'} = 1;
+  $Options{'CCC_ANALYZER_INTERNAL_STATS'} = 1;
 }
 if (defined $OutputFormat) {
-  $ENV{'CCC_ANALYZER_OUTPUT_FORMAT'} = $OutputFormat;
+  $Options{'CCC_ANALYZER_OUTPUT_FORMAT'} = $OutputFormat;
 }
 
 # Run the build.
-my $ExitStatus = RunBuildCommand(\@ARGV, $IgnoreErrors, $Cmd, $CmdCXX);
+my $ExitStatus = RunBuildCommand(\@ARGV, $IgnoreErrors, $Cmd, $CmdCXX,
+                                \%Options);
 
 if (defined $OutputFormat) {
   if ($OutputFormat =~ /plist/) {
