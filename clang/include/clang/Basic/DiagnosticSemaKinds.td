@@ -5759,6 +5759,8 @@ def ext_typecheck_base_super : Warning<
 def warn_missing_method_return_type : Warning<
   "method has no return type specified; defaults to 'id'">,
   InGroup<MissingMethodReturnType>, DefaultIgnore;
+def warn_direct_ivar_access : Warning<"instance variable %0 is being "
+  "directly accessed">, InGroup<DiagGroup<"direct-ivar-access">>, DefaultIgnore;
 
 // Spell-checking diagnostics
 def err_unknown_type_or_class_name_suggest : Error<

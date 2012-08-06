@@ -1260,7 +1260,9 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
         if (DE->getType().getObjCLifetime() == Qualifiers::OCL_Weak)
           Diag(DE->getLocation(), diag::error_arc_weak_ivar_access);
     }
-
+    if (IV->getType()->isObjCObjectPointerType() &&
+        getLangOpts().getGC() == LangOptions::NonGC)
+      Diag(MemberLoc, diag::warn_direct_ivar_access) << IV->getDeclName();
     return Owned(new (Context) ObjCIvarRefExpr(IV, IV->getType(),
                                                MemberLoc, BaseExpr.take(),
                                                IsArrow));
