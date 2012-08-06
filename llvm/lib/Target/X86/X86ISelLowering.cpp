@@ -9845,6 +9845,83 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
                        DAG.getConstant(NewIntNo, MVT::i32),
                        Op.getOperand(1), ShAmt);
   }
+  case Intrinsic::x86_sse42_pcmpistria128:
+  case Intrinsic::x86_sse42_pcmpestria128:
+  case Intrinsic::x86_sse42_pcmpistric128:
+  case Intrinsic::x86_sse42_pcmpestric128:
+  case Intrinsic::x86_sse42_pcmpistrio128:
+  case Intrinsic::x86_sse42_pcmpestrio128:
+  case Intrinsic::x86_sse42_pcmpistris128:
+  case Intrinsic::x86_sse42_pcmpestris128:
+  case Intrinsic::x86_sse42_pcmpistriz128:
+  case Intrinsic::x86_sse42_pcmpestriz128: {
+    unsigned Opcode;
+    unsigned X86CC;
+    switch (IntNo) {
+    default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
+    case Intrinsic::x86_sse42_pcmpistria128:
+      Opcode = X86ISD::PCMPISTRI;
+      X86CC = X86::COND_A;
+      break;
+    case Intrinsic::x86_sse42_pcmpestria128:
+      Opcode = X86ISD::PCMPESTRI;
+      X86CC = X86::COND_A;
+      break;
+    case Intrinsic::x86_sse42_pcmpistric128:
+      Opcode = X86ISD::PCMPISTRI;
+      X86CC = X86::COND_B;
+      break;
+    case Intrinsic::x86_sse42_pcmpestric128:
+      Opcode = X86ISD::PCMPESTRI;
+      X86CC = X86::COND_B;
+      break;
+    case Intrinsic::x86_sse42_pcmpistrio128:
+      Opcode = X86ISD::PCMPISTRI;
+      X86CC = X86::COND_O;
+      break;
+    case Intrinsic::x86_sse42_pcmpestrio128:
+      Opcode = X86ISD::PCMPESTRI;
+      X86CC = X86::COND_O;
+      break;
+    case Intrinsic::x86_sse42_pcmpistris128:
+      Opcode = X86ISD::PCMPISTRI;
+      X86CC = X86::COND_S;
+      break;
+    case Intrinsic::x86_sse42_pcmpestris128:
+      Opcode = X86ISD::PCMPESTRI;
+      X86CC = X86::COND_S;
+      break;
+    case Intrinsic::x86_sse42_pcmpistriz128:
+      Opcode = X86ISD::PCMPISTRI;
+      X86CC = X86::COND_E;
+      break;
+    case Intrinsic::x86_sse42_pcmpestriz128:
+      Opcode = X86ISD::PCMPESTRI;
+      X86CC = X86::COND_E;
+      break;
+    }
+    SmallVector<SDValue, 5> NewOps;
+    NewOps.append(Op->op_begin()+1, Op->op_end());
+    SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::i32);
+    SDValue PCMP = DAG.getNode(Opcode, dl, VTs, NewOps.data(), NewOps.size());
+    SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
+                                DAG.getConstant(X86CC, MVT::i8),
+                                SDValue(PCMP.getNode(), 1));
+    return DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, SetCC);
+  }
+  case Intrinsic::x86_sse42_pcmpistri128:
+  case Intrinsic::x86_sse42_pcmpestri128: {
+    unsigned Opcode;
+    if (IntNo == Intrinsic::x86_sse42_pcmpistri128)
+      Opcode = X86ISD::PCMPISTRI;
+    else
+      Opcode = X86ISD::PCMPESTRI;
+
+    SmallVector<SDValue, 5> NewOps;
+    NewOps.append(Op->op_begin()+1, Op->op_end());
+    SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::i32);
+    return DAG.getNode(Opcode, dl, VTs, NewOps.data(), NewOps.size());
+  }
   }
 }
 

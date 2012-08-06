@@ -173,6 +173,17 @@ def X86Fnmsub    : SDNode<"X86ISD::FNMSUB",    SDTFma>;
 def X86Fmaddsub  : SDNode<"X86ISD::FMSUBADD",  SDTFma>;
 def X86Fmsubadd  : SDNode<"X86ISD::FMADDSUB",  SDTFma>;
 
+def SDT_PCMPISTRI : SDTypeProfile<2, 3, [SDTCisVT<0, i32>, SDTCisVT<1, i32>,
+                                         SDTCisVT<2, v16i8>, SDTCisVT<3, v16i8>,
+                                         SDTCisVT<4, i8>]>;
+def SDT_PCMPESTRI : SDTypeProfile<2, 5, [SDTCisVT<0, i32>, SDTCisVT<1, i32>,
+                                         SDTCisVT<2, v16i8>, SDTCisVT<3, i32>,
+                                         SDTCisVT<4, v16i8>, SDTCisVT<5, i32>,
+                                         SDTCisVT<6, i8>]>;
+
+def X86pcmpistri : SDNode<"X86ISD::PCMPISTRI", SDT_PCMPISTRI>;
+def X86pcmpestri : SDNode<"X86ISD::PCMPESTRI", SDT_PCMPESTRI>;
+
 //===----------------------------------------------------------------------===//
 // SSE Complex Patterns
 //===----------------------------------------------------------------------===//

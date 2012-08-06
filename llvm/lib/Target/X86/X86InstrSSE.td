@@ -6841,81 +6841,42 @@ let Defs = [XMM0, EFLAGS], Uses = [EAX, EDX], neverHasSideEffects = 1 in {
 }
 
 // Packed Compare Implicit Length Strings, Return Index
-let Defs = [ECX, EFLAGS] in {
-  multiclass SS42AI_pcmpistri<Intrinsic IntId128, string asm = "pcmpistri"> {
+let Defs = [ECX, EFLAGS], neverHasSideEffects = 1 in {
+  multiclass SS42AI_pcmpistri<string asm> {
     def rr : SS42AI<0x63, MRMSrcReg, (outs),
       (ins VR128:$src1, VR128:$src2, i8imm:$src3),
       !strconcat(asm, "\t{$src3, $src2, $src1|$src1, $src2, $src3}"),
-      [(set ECX, (IntId128 VR128:$src1, VR128:$src2, imm:$src3)),
-       (implicit EFLAGS)]>, OpSize;
+      []>, OpSize;
+    let mayLoad = 1 in
     def rm : SS42AI<0x63, MRMSrcMem, (outs),
       (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
       !strconcat(asm, "\t{$src3, $src2, $src1|$src1, $src2, $src3}"),
-      [(set ECX, (IntId128 VR128:$src1, (load addr:$src2), imm:$src3)),
-       (implicit EFLAGS)]>, OpSize;
+      []>, OpSize;
   }
 }
 
-let Predicates = [HasAVX] in {
-defm VPCMPISTRI  : SS42AI_pcmpistri<int_x86_sse42_pcmpistri128, "vpcmpistri">,
-                                    VEX;
-defm VPCMPISTRIA : SS42AI_pcmpistri<int_x86_sse42_pcmpistria128, "vpcmpistri">,
-                                    VEX;
-defm VPCMPISTRIC : SS42AI_pcmpistri<int_x86_sse42_pcmpistric128, "vpcmpistri">,
-                                    VEX;
-defm VPCMPISTRIO : SS42AI_pcmpistri<int_x86_sse42_pcmpistrio128, "vpcmpistri">,
-                                    VEX;
-defm VPCMPISTRIS : SS42AI_pcmpistri<int_x86_sse42_pcmpistris128, "vpcmpistri">,
-                                    VEX;
-defm VPCMPISTRIZ : SS42AI_pcmpistri<int_x86_sse42_pcmpistriz128, "vpcmpistri">,
-                                    VEX;
-}
-
-defm PCMPISTRI  : SS42AI_pcmpistri<int_x86_sse42_pcmpistri128>;
-defm PCMPISTRIA : SS42AI_pcmpistri<int_x86_sse42_pcmpistria128>;
-defm PCMPISTRIC : SS42AI_pcmpistri<int_x86_sse42_pcmpistric128>;
-defm PCMPISTRIO : SS42AI_pcmpistri<int_x86_sse42_pcmpistrio128>;
-defm PCMPISTRIS : SS42AI_pcmpistri<int_x86_sse42_pcmpistris128>;
-defm PCMPISTRIZ : SS42AI_pcmpistri<int_x86_sse42_pcmpistriz128>;
+let Predicates = [HasAVX] in
+defm VPCMPISTRI  : SS42AI_pcmpistri<"vpcmpistri">, VEX;
+defm PCMPISTRI   : SS42AI_pcmpistri<"pcmpistri">;
 
 // Packed Compare Explicit Length Strings, Return Index
-let Defs = [ECX, EFLAGS], Uses = [EAX, EDX] in {
-  multiclass SS42AI_pcmpestri<Intrinsic IntId128, string asm = "pcmpestri"> {
+let Defs = [ECX, EFLAGS], Uses = [EAX, EDX], neverHasSideEffects = 1 in {
+  multiclass SS42AI_pcmpestri<string asm> {
     def rr : SS42AI<0x61, MRMSrcReg, (outs),
       (ins VR128:$src1, VR128:$src3, i8imm:$src5),
       !strconcat(asm, "\t{$src5, $src3, $src1|$src1, $src3, $src5}"),
-      [(set ECX, (IntId128 VR128:$src1, EAX, VR128:$src3, EDX, imm:$src5)),
-       (implicit EFLAGS)]>, OpSize;
+      []>, OpSize;
+    let mayLoad = 1 in
     def rm : SS42AI<0x61, MRMSrcMem, (outs),
       (ins VR128:$src1, i128mem:$src3, i8imm:$src5),
       !strconcat(asm, "\t{$src5, $src3, $src1|$src1, $src3, $src5}"),
-       [(set ECX,
-             (IntId128 VR128:$src1, EAX, (load addr:$src3), EDX, imm:$src5)),
-        (implicit EFLAGS)]>, OpSize;
+      []>, OpSize;
   }
 }
 
-let Predicates = [HasAVX] in {
-defm VPCMPESTRI  : SS42AI_pcmpestri<int_x86_sse42_pcmpestri128, "vpcmpestri">,
-                                    VEX;
-defm VPCMPESTRIA : SS42AI_pcmpestri<int_x86_sse42_pcmpestria128, "vpcmpestri">,
-                                    VEX;
-defm VPCMPESTRIC : SS42AI_pcmpestri<int_x86_sse42_pcmpestric128, "vpcmpestri">,
-                                    VEX;
-defm VPCMPESTRIO : SS42AI_pcmpestri<int_x86_sse42_pcmpestrio128, "vpcmpestri">,
-                                    VEX;
-defm VPCMPESTRIS : SS42AI_pcmpestri<int_x86_sse42_pcmpestris128, "vpcmpestri">,
-                                    VEX;
-defm VPCMPESTRIZ : SS42AI_pcmpestri<int_x86_sse42_pcmpestriz128, "vpcmpestri">,
-                                    VEX;
-}
-
-defm PCMPESTRI  : SS42AI_pcmpestri<int_x86_sse42_pcmpestri128>;
-defm PCMPESTRIA : SS42AI_pcmpestri<int_x86_sse42_pcmpestria128>;
-defm PCMPESTRIC : SS42AI_pcmpestri<int_x86_sse42_pcmpestric128>;
-defm PCMPESTRIO : SS42AI_pcmpestri<int_x86_sse42_pcmpestrio128>;
-defm PCMPESTRIS : SS42AI_pcmpestri<int_x86_sse42_pcmpestris128>;
-defm PCMPESTRIZ : SS42AI_pcmpestri<int_x86_sse42_pcmpestriz128>;
+let Predicates = [HasAVX] in
+defm VPCMPESTRI  : SS42AI_pcmpestri<"vpcmpestri">, VEX;
+defm PCMPESTRI   : SS42AI_pcmpestri<"pcmpestri">;
 
 //===----------------------------------------------------------------------===//
 // SSE4.2 - CRC Instructions
