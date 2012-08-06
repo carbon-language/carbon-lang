@@ -266,8 +266,8 @@ def MTCTR8 : XFXForm_7_ext<31, 467, 9, (outs), (ins G8RC:$rS),
 }
 
 let Pattern = [(set G8RC:$rT, readcyclecounter)] in
-def MFTB8 : XFXForm_1_ext<31, 371, 268, (outs G8RC:$rT), (ins),
-                          "mftb $rT", SprMFTB>,
+def MFTB8 : XFXForm_1_ext<31, 339, 268, (outs G8RC:$rT), (ins),
+                          "mfspr $rT, 268", SprMFTB>,
             PPC970_DGroup_First, PPC970_Unit_FXU;
 
 let Defs = [X1], Uses = [X1] in

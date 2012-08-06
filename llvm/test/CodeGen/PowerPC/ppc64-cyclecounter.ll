@@ -9,7 +9,7 @@ entry:
 }
 
 ; CHECK: @test1
-; CHECK: mftb
+; CHECK: mfspr 3, 268
 
 declare i64 @llvm.readcyclecounter()
 
