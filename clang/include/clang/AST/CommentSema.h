@@ -188,7 +188,7 @@ public:
   void checkBlockCommandDuplicate(const BlockCommandComment *Command);
 
   bool isFunctionDecl();
-  bool isTemplateDecl();
+  bool isTemplateOrSpecialization();
 
   ArrayRef<const ParmVarDecl *> getParamVars();
 

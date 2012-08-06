@@ -925,7 +925,8 @@ struct DeclInfo {
   QualType ResultType;
 
   /// Template parameters that can be referenced by \\tparam if \c ThisDecl is
-  /// a template.
+  /// a template (\c IsTemplateDecl or \c IsTemplatePartialSpecialization is
+  /// true).
   const TemplateParameterList *TemplateParameters;
 
   /// A simplified description of \c ThisDecl kind that should be good enough
@@ -963,6 +964,14 @@ struct DeclInfo {
     TypedefKind
   };
 
+  /// What kind of template specialization \c ThisDecl is.
+  enum TemplateDeclKind {
+    NotTemplate,
+    Template,
+    TemplateSpecialization,
+    TemplatePartialSpecialization
+  };
+
   /// If false, only \c ThisDecl is valid.
   unsigned IsFilled : 1;
 
@@ -970,14 +979,7 @@ struct DeclInfo {
   unsigned Kind : 3;
 
   /// Is \c ThisDecl a template declaration.
-  unsigned IsTemplateDecl : 1;
-
-  /// Is \c ThisDecl a template specialization.
-  unsigned IsTemplateSpecialization : 1;
-
-  /// Is \c ThisDecl a template partial specialization.
-  /// Never true if \c IsFunctionDecl is true.
-  unsigned IsTemplatePartialSpecialization : 1;
+  unsigned TemplateKind : 2;
 
   /// Is \c ThisDecl an ObjCMethodDecl.
   unsigned IsObjCMethod : 1;
@@ -996,6 +998,10 @@ struct DeclInfo {
 
   DeclKind getKind() const LLVM_READONLY {
     return static_cast<DeclKind>(Kind);
+  }
+
+  TemplateDeclKind getTemplateKind() const LLVM_READONLY {
+    return static_cast<TemplateDeclKind>(TemplateKind);
   }
 };
 

@@ -205,7 +205,7 @@ TParamCommandComment *Sema::actOnTParamCommandStart(SourceLocation LocBegin,
   TParamCommandComment *Command =
       new (Allocator) TParamCommandComment(LocBegin, LocEnd, Name);
 
-  if (!isTemplateDecl())
+  if (!isTemplateOrSpecialization())
     Diag(Command->getLocation(),
          diag::warn_doc_tparam_not_attached_to_a_template_decl)
       << Command->getCommandNameRange();
@@ -226,7 +226,7 @@ void Sema::actOnTParamCommandParamNameArg(TParamCommandComment *Command,
                                          Arg);
   Command->setArgs(llvm::makeArrayRef(A, 1));
 
-  if (!isTemplateDecl()) {
+  if (!isTemplateOrSpecialization()) {
     // We already warned that this \\tparam is not attached to a template decl.
     return;
   }
@@ -536,12 +536,12 @@ bool Sema::isFunctionDecl() {
   return ThisDeclInfo->getKind() == DeclInfo::FunctionKind;
 }
 
-bool Sema::isTemplateDecl() {
+bool Sema::isTemplateOrSpecialization() {
   if (!ThisDeclInfo)
     return false;
   if (!ThisDeclInfo->IsFilled)
     inspectThisDecl();
-  return ThisDeclInfo->IsTemplateDecl;
+  return ThisDeclInfo->getTemplateKind() != DeclInfo::NotTemplate;
 }
 
 ArrayRef<const ParmVarDecl *> Sema::getParamVars() {
