@@ -4710,7 +4710,7 @@ void AnalyzeImplicitConversions(Sema &S, Expr *OrigE, SourceLocation CC) {
 ///   conversion
 void Sema::CheckImplicitConversions(Expr *E, SourceLocation CC) {
   // Don't diagnose in unevaluated contexts.
-  if (ExprEvalContexts.back().Context == Sema::Unevaluated)
+  if (isUnevaluatedContext())
     return;
 
   // Don't diagnose for value- or type-dependent expressions.

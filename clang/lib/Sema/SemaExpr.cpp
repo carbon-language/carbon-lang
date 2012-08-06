@@ -584,8 +584,7 @@ ExprResult Sema::DefaultArgumentPromotion(Expr *E) {
   //     is a prvalue for the temporary.
   // FIXME: add some way to gate this entire thing for correctness in
   // potentially potentially evaluated contexts.
-  if (getLangOpts().CPlusPlus && E->isGLValue() && 
-      ExprEvalContexts.back().Context != Unevaluated) {
+  if (getLangOpts().CPlusPlus && E->isGLValue() && !isUnevaluatedContext()) {
     ExprResult Temp = PerformCopyInitialization(
                        InitializedEntity::InitializeTemporary(E->getType()),
                                                 E->getExprLoc(),
@@ -2403,7 +2402,7 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
       // FIXME: Does the addition of const really only apply in
       // potentially-evaluated contexts? Since the variable isn't actually
       // captured in an unevaluated context, it seems that the answer is no.
-      if (ExprEvalContexts.back().Context != Sema::Unevaluated) {
+      if (!isUnevaluatedContext()) {
         QualType CapturedType = getCapturedDeclRefType(cast<VarDecl>(VD), Loc);
         if (!CapturedType.isNull())
           type = CapturedType;
@@ -10039,7 +10038,7 @@ namespace {
     // Error on DeclRefExprs referring to FieldDecls.
     ExprResult TransformDeclRefExpr(DeclRefExpr *E) {
       if (isa<FieldDecl>(E->getDecl()) &&
-          SemaRef.ExprEvalContexts.back().Context != Sema::Unevaluated)
+          !SemaRef.isUnevaluatedContext())
         return SemaRef.Diag(E->getLocation(),
                             diag::err_invalid_non_static_member_use)
             << E->getDecl() << E->getSourceRange();

@@ -5703,6 +5703,14 @@ public:
   /// diagnostics that will be suppressed.
   llvm::Optional<sema::TemplateDeductionInfo *> isSFINAEContext() const;
 
+  /// \brief Determines whether we are currently in a context that
+  /// is not evaluated as per C++ [expr] p5.
+  bool isUnevaluatedContext() const {
+    assert(!ExprEvalContexts.empty() &&
+           "Must be in an expression evaluation context");
+    return ExprEvalContexts.back().Context == Sema::Unevaluated;
+  }
+
   /// \brief RAII class used to determine whether SFINAE has
   /// trapped any errors that occur during template argument
   /// deduction.`
