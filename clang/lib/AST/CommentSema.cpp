@@ -43,21 +43,17 @@ BlockCommandComment *Sema::actOnBlockCommandStart(SourceLocation LocBegin,
   return new (Allocator) BlockCommandComment(LocBegin, LocEnd, Name);
 }
 
-BlockCommandComment *Sema::actOnBlockCommandArgs(
-                              BlockCommandComment *Command,
-                              ArrayRef<BlockCommandComment::Argument> Args) {
+void Sema::actOnBlockCommandArgs(BlockCommandComment *Command,
+                                 ArrayRef<BlockCommandComment::Argument> Args) {
   Command->setArgs(Args);
-  return Command;
 }
 
-BlockCommandComment *Sema::actOnBlockCommandFinish(
-                              BlockCommandComment *Command,
-                              ParagraphComment *Paragraph) {
+void Sema::actOnBlockCommandFinish(BlockCommandComment *Command,
+                                   ParagraphComment *Paragraph) {
   Command->setParagraph(Paragraph);
   checkBlockCommandEmptyParagraph(Command);
   checkBlockCommandDuplicate(Command);
   checkReturnsCommand(Command);
-  return Command;
 }
 
 ParamCommandComment *Sema::actOnParamCommandStart(SourceLocation LocBegin,
@@ -74,11 +70,10 @@ ParamCommandComment *Sema::actOnParamCommandStart(SourceLocation LocBegin,
   return Command;
 }
 
-ParamCommandComment *Sema::actOnParamCommandDirectionArg(
-                                                ParamCommandComment *Command,
-                                                SourceLocation ArgLocBegin,
-                                                SourceLocation ArgLocEnd,
-                                                StringRef Arg) {
+void Sema::actOnParamCommandDirectionArg(ParamCommandComment *Command,
+                                         SourceLocation ArgLocBegin,
+                                         SourceLocation ArgLocEnd,
+                                         StringRef Arg) {
   ParamCommandComment::PassDirection Direction;
   std::string ArgLower = Arg.lower();
   // TODO: optimize: lower Name first (need an API in SmallString for that),
@@ -128,14 +123,12 @@ ParamCommandComment *Sema::actOnParamCommandDirectionArg(
         << ArgRange;
   }
   Command->setDirection(Direction, /* Explicit = */ true);
-  return Command;
 }
 
-ParamCommandComment *Sema::actOnParamCommandParamNameArg(
-                                                ParamCommandComment *Command,
-                                                SourceLocation ArgLocBegin,
-                                                SourceLocation ArgLocEnd,
-                                                StringRef Arg) {
+void Sema::actOnParamCommandParamNameArg(ParamCommandComment *Command,
+                                         SourceLocation ArgLocBegin,
+                                         SourceLocation ArgLocEnd,
+                                         StringRef Arg) {
   // Parser will not feed us more arguments than needed.
   assert(Command->getNumArgs() == 0);
 
@@ -151,7 +144,7 @@ ParamCommandComment *Sema::actOnParamCommandParamNameArg(
 
   if (!isFunctionDecl()) {
     // We already warned that this \\param is not attached to a function decl.
-    return Command;
+    return;
   }
 
   ArrayRef<const ParmVarDecl *> ParamVars = getParamVars();
@@ -169,7 +162,7 @@ ParamCommandComment *Sema::actOnParamCommandParamNameArg(
         << PrevCommand->getParamNameRange();
     }
     ParamVarDocs[ResolvedParamIndex] = Command;
-    return Command;
+    return;
   }
 
   SourceRange ArgRange(ArgLocBegin, ArgLocEnd);
@@ -178,7 +171,7 @@ ParamCommandComment *Sema::actOnParamCommandParamNameArg(
 
   // No parameters -- can't suggest a correction.
   if (ParamVars.size() == 0)
-    return Command;
+    return;
 
   unsigned CorrectedParamIndex = ParamCommandComment::InvalidParamIndex;
   if (ParamVars.size() == 1) {
@@ -197,14 +190,13 @@ ParamCommandComment *Sema::actOnParamCommandParamNameArg(
         << FixItHint::CreateReplacement(ArgRange, CorrectedII->getName());
   }
 
-  return Command;
+  return;
 }
 
-ParamCommandComment *Sema::actOnParamCommandFinish(ParamCommandComment *Command,
-                                                   ParagraphComment *Paragraph) {
+void Sema::actOnParamCommandFinish(ParamCommandComment *Command,
+                                   ParagraphComment *Paragraph) {
   Command->setParagraph(Paragraph);
   checkBlockCommandEmptyParagraph(Command);
-  return Command;
 }
 
 TParamCommandComment *Sema::actOnTParamCommandStart(SourceLocation LocBegin,
@@ -221,11 +213,10 @@ TParamCommandComment *Sema::actOnTParamCommandStart(SourceLocation LocBegin,
   return Command;
 }
 
-TParamCommandComment *Sema::actOnTParamCommandParamNameArg(
-                                            TParamCommandComment *Command,
-                                            SourceLocation ArgLocBegin,
-                                            SourceLocation ArgLocEnd,
-                                            StringRef Arg) {
+void Sema::actOnTParamCommandParamNameArg(TParamCommandComment *Command,
+                                          SourceLocation ArgLocBegin,
+                                          SourceLocation ArgLocEnd,
+                                          StringRef Arg) {
   // Parser will not feed us more arguments than needed.
   assert(Command->getNumArgs() == 0);
 
@@ -237,7 +228,7 @@ TParamCommandComment *Sema::actOnTParamCommandParamNameArg(
 
   if (!isTemplateDecl()) {
     // We already warned that this \\tparam is not attached to a template decl.
-    return Command;
+    return;
   }
 
   const TemplateParameterList *TemplateParameters =
@@ -256,7 +247,7 @@ TParamCommandComment *Sema::actOnTParamCommandParamNameArg(
         << PrevCommand->getParamNameRange();
     }
     TemplateParameterDocs[Arg] = Command;
-    return Command;
+    return;
   }
 
   SourceRange ArgRange(ArgLocBegin, ArgLocEnd);
@@ -264,7 +255,7 @@ TParamCommandComment *Sema::actOnTParamCommandParamNameArg(
     << Arg << ArgRange;
 
   if (!TemplateParameters || TemplateParameters->size() == 0)
-    return Command;
+    return;
 
   StringRef CorrectedName;
   if (TemplateParameters->size() == 1) {
@@ -282,15 +273,13 @@ TParamCommandComment *Sema::actOnTParamCommandParamNameArg(
       << FixItHint::CreateReplacement(ArgRange, CorrectedName);
   }
 
-  return Command;
+  return;
 }
 
-TParamCommandComment *Sema::actOnTParamCommandFinish(
-                                            TParamCommandComment *Command,
-                                            ParagraphComment *Paragraph) {
+void Sema::actOnTParamCommandFinish(TParamCommandComment *Command,
+                                    ParagraphComment *Paragraph) {
   Command->setParagraph(Paragraph);
   checkBlockCommandEmptyParagraph(Command);
-  return Command;
 }
 
 InlineCommandComment *Sema::actOnInlineCommand(SourceLocation CommandLocBegin,
@@ -353,14 +342,13 @@ VerbatimBlockLineComment *Sema::actOnVerbatimBlockLine(SourceLocation Loc,
   return new (Allocator) VerbatimBlockLineComment(Loc, Text);
 }
 
-VerbatimBlockComment *Sema::actOnVerbatimBlockFinish(
+void Sema::actOnVerbatimBlockFinish(
                             VerbatimBlockComment *Block,
                             SourceLocation CloseNameLocBegin,
                             StringRef CloseName,
                             ArrayRef<VerbatimBlockLineComment *> Lines) {
   Block->setCloseName(CloseName, CloseNameLocBegin);
   Block->setLines(Lines);
-  return Block;
 }
 
 VerbatimLineComment *Sema::actOnVerbatimLine(SourceLocation LocBegin,
@@ -380,7 +368,7 @@ HTMLStartTagComment *Sema::actOnHTMLStartTagStart(SourceLocation LocBegin,
   return new (Allocator) HTMLStartTagComment(LocBegin, TagName);
 }
 
-HTMLStartTagComment *Sema::actOnHTMLStartTagFinish(
+void Sema::actOnHTMLStartTagFinish(
                               HTMLStartTagComment *Tag,
                               ArrayRef<HTMLStartTagComment::Attribute> Attrs,
                               SourceLocation GreaterLoc,
@@ -391,7 +379,6 @@ HTMLStartTagComment *Sema::actOnHTMLStartTagFinish(
     Tag->setSelfClosing();
   else if (!isHTMLEndTagForbidden(Tag->getTagName()))
     HTMLOpenTags.push_back(Tag);
-  return Tag;
 }
 
 HTMLEndTagComment *Sema::actOnHTMLEndTag(SourceLocation LocBegin,

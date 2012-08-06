@@ -255,44 +255,37 @@ Parser::Parser(Lexer &L, Sema &S, llvm::BumpPtrAllocator &Allocator,
   consumeToken();
 }
 
-ParamCommandComment *Parser::parseParamCommandArgs(
-    ParamCommandComment *PC,
-    TextTokenRetokenizer &Retokenizer) {
+void Parser::parseParamCommandArgs(ParamCommandComment *PC,
+                                   TextTokenRetokenizer &Retokenizer) {
   Token Arg;
   // Check if argument looks like direction specification: [dir]
   // e.g., [in], [out], [in,out]
   if (Retokenizer.lexDelimitedSeq(Arg, '[', ']'))
-    PC = S.actOnParamCommandDirectionArg(PC,
-                                         Arg.getLocation(),
-                                         Arg.getEndLocation(),
-                                         Arg.getText());
+    S.actOnParamCommandDirectionArg(PC,
+                                    Arg.getLocation(),
+                                    Arg.getEndLocation(),
+                                    Arg.getText());
 
   if (Retokenizer.lexWord(Arg))
-    PC = S.actOnParamCommandParamNameArg(PC,
-                                         Arg.getLocation(),
-                                         Arg.getEndLocation(),
-                                         Arg.getText());
-
-  return PC;
+    S.actOnParamCommandParamNameArg(PC,
+                                    Arg.getLocation(),
+                                    Arg.getEndLocation(),
+                                    Arg.getText());
 }
 
-TParamCommandComment *Parser::parseTParamCommandArgs(
-                                  TParamCommandComment *TPC,
-                                  TextTokenRetokenizer &Retokenizer) {
+void Parser::parseTParamCommandArgs(TParamCommandComment *TPC,
+                                    TextTokenRetokenizer &Retokenizer) {
   Token Arg;
   if (Retokenizer.lexWord(Arg))
-    TPC = S.actOnTParamCommandParamNameArg(TPC,
-                                           Arg.getLocation(),
-                                           Arg.getEndLocation(),
-                                           Arg.getText());
-
-  return TPC;
+    S.actOnTParamCommandParamNameArg(TPC,
+                                     Arg.getLocation(),
+                                     Arg.getEndLocation(),
+                                     Arg.getText());
 }
 
-BlockCommandComment *Parser::parseBlockCommandArgs(
-    BlockCommandComment *BC,
-    TextTokenRetokenizer &Retokenizer,
-    unsigned NumArgs) {
+void Parser::parseBlockCommandArgs(BlockCommandComment *BC,
+                                   TextTokenRetokenizer &Retokenizer,
+                                   unsigned NumArgs) {
   typedef BlockCommandComment::Argument Argument;
   Argument *Args =
       new (Allocator.Allocate<Argument>(NumArgs)) Argument[NumArgs];
@@ -305,7 +298,7 @@ BlockCommandComment *Parser::parseBlockCommandArgs(
     ParsedArgs++;
   }
 
-  return S.actOnBlockCommandArgs(BC, llvm::makeArrayRef(Args, ParsedArgs));
+  S.actOnBlockCommandArgs(BC, llvm::makeArrayRef(Args, ParsedArgs));
 }
 
 BlockCommandComment *Parser::parseBlockCommand() {
@@ -340,7 +333,13 @@ BlockCommandComment *Parser::parseBlockCommand() {
     // command has an empty argument.
     ParagraphComment *Paragraph = S.actOnParagraphComment(
                                 ArrayRef<InlineContentComment *>());
-    return S.actOnBlockCommandFinish(IsParam ? PC : BC, Paragraph);
+    if (IsParam) {
+      S.actOnBlockCommandFinish(PC, Paragraph);
+      return PC;
+    } else {
+      S.actOnBlockCommandFinish(BC, Paragraph);
+      return BC;
+    }
   }
 
   if (IsParam || IsTParam || NumArgs > 0) {
@@ -349,11 +348,11 @@ BlockCommandComment *Parser::parseBlockCommand() {
     TextTokenRetokenizer Retokenizer(Allocator, *this);
 
     if (IsParam)
-      PC = parseParamCommandArgs(PC, Retokenizer);
+      parseParamCommandArgs(PC, Retokenizer);
     else if (IsTParam)
-      TPC = parseTParamCommandArgs(TPC, Retokenizer);
+      parseTParamCommandArgs(TPC, Retokenizer);
     else
-      BC = parseBlockCommandArgs(BC, Retokenizer, NumArgs);
+      parseBlockCommandArgs(BC, Retokenizer, NumArgs);
 
     Retokenizer.putBackLeftoverTokens();
   }
@@ -361,12 +360,17 @@ BlockCommandComment *Parser::parseBlockCommand() {
   BlockContentComment *Block = parseParagraphOrBlockCommand();
   // Since we have checked for a block command, we should have parsed a
   // paragraph.
-  if (IsParam)
-    return S.actOnParamCommandFinish(PC, cast<ParagraphComment>(Block));
-  else if (IsTParam)
-    return S.actOnTParamCommandFinish(TPC, cast<ParagraphComment>(Block));
-  else
-    return S.actOnBlockCommandFinish(BC, cast<ParagraphComment>(Block));
+  ParagraphComment *Paragraph = cast<ParagraphComment>(Block);
+  if (IsParam) {
+    S.actOnParamCommandFinish(PC, Paragraph);
+    return PC;
+  } else if (IsTParam) {
+    S.actOnTParamCommandFinish(TPC, Paragraph);
+    return TPC;
+  } else {
+    S.actOnBlockCommandFinish(BC, Paragraph);
+    return BC;
+  }
 }
 
 InlineCommandComment *Parser::parseInlineCommand() {
@@ -442,18 +446,18 @@ HTMLStartTagComment *Parser::parseHTMLStartTag() {
     }
 
     case tok::html_greater:
-      HST = S.actOnHTMLStartTagFinish(HST,
-                                      S.copyArray(llvm::makeArrayRef(Attrs)),
-                                      Tok.getLocation(),
-                                      /* IsSelfClosing = */ false);
+      S.actOnHTMLStartTagFinish(HST,
+                                S.copyArray(llvm::makeArrayRef(Attrs)),
+                                Tok.getLocation(),
+                                /* IsSelfClosing = */ false);
       consumeToken();
       return HST;
 
     case tok::html_slash_greater:
-      HST = S.actOnHTMLStartTagFinish(HST,
-                                      S.copyArray(llvm::makeArrayRef(Attrs)),
-                                      Tok.getLocation(),
-                                      /* IsSelfClosing = */ true);
+      S.actOnHTMLStartTagFinish(HST,
+                                S.copyArray(llvm::makeArrayRef(Attrs)),
+                                Tok.getLocation(),
+                                /* IsSelfClosing = */ true);
       consumeToken();
       return HST;
 
@@ -469,17 +473,18 @@ HTMLStartTagComment *Parser::parseHTMLStartTag() {
           Tok.is(tok::html_slash_greater))
         continue;
 
-      return S.actOnHTMLStartTagFinish(HST,
-                                       S.copyArray(llvm::makeArrayRef(Attrs)),
-                                       SourceLocation(),
-                                       /* IsSelfClosing = */ false);
+      S.actOnHTMLStartTagFinish(HST,
+                                S.copyArray(llvm::makeArrayRef(Attrs)),
+                                SourceLocation(),
+                                /* IsSelfClosing = */ false);
+      return HST;
 
     default:
       // Not a token from an HTML start tag.  Thus HTML tag prematurely ended.
-      HST = S.actOnHTMLStartTagFinish(HST,
-                                      S.copyArray(llvm::makeArrayRef(Attrs)),
-                                      SourceLocation(),
-                                      /* IsSelfClosing = */ false);
+      S.actOnHTMLStartTagFinish(HST,
+                                S.copyArray(llvm::makeArrayRef(Attrs)),
+                                SourceLocation(),
+                                /* IsSelfClosing = */ false);
       bool StartLineInvalid;
       const unsigned StartLine = SourceMgr.getPresumedLineNumber(
                                                   HST->getLocation(),
@@ -623,14 +628,14 @@ VerbatimBlockComment *Parser::parseVerbatimBlock() {
   }
 
   if (Tok.is(tok::verbatim_block_end)) {
-    VB = S.actOnVerbatimBlockFinish(VB, Tok.getLocation(),
-                                    Tok.getVerbatimBlockName(),
-                                    S.copyArray(llvm::makeArrayRef(Lines)));
+    S.actOnVerbatimBlockFinish(VB, Tok.getLocation(),
+                               Tok.getVerbatimBlockName(),
+                               S.copyArray(llvm::makeArrayRef(Lines)));
     consumeToken();
   } else {
     // Unterminated \\verbatim block
-    VB = S.actOnVerbatimBlockFinish(VB, SourceLocation(), "",
-                                    S.copyArray(llvm::makeArrayRef(Lines)));
+    S.actOnVerbatimBlockFinish(VB, SourceLocation(), "",
+                               S.copyArray(llvm::makeArrayRef(Lines)));
   }
 
   return VB;

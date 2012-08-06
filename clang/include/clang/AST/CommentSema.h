@@ -95,44 +95,40 @@ public:
                                               SourceLocation LocEnd,
                                               StringRef Name);
 
-  BlockCommandComment *actOnBlockCommandArgs(
-                              BlockCommandComment *Command,
-                              ArrayRef<BlockCommandComment::Argument> Args);
+  void actOnBlockCommandArgs(BlockCommandComment *Command,
+                             ArrayRef<BlockCommandComment::Argument> Args);
 
-  BlockCommandComment *actOnBlockCommandFinish(BlockCommandComment *Command,
-                                               ParagraphComment *Paragraph);
+  void actOnBlockCommandFinish(BlockCommandComment *Command,
+                               ParagraphComment *Paragraph);
 
   ParamCommandComment *actOnParamCommandStart(SourceLocation LocBegin,
                                               SourceLocation LocEnd,
                                               StringRef Name);
 
-  ParamCommandComment *actOnParamCommandDirectionArg(
-                                            ParamCommandComment *Command,
-                                            SourceLocation ArgLocBegin,
-                                            SourceLocation ArgLocEnd,
-                                            StringRef Arg);
+  void actOnParamCommandDirectionArg(ParamCommandComment *Command,
+                                     SourceLocation ArgLocBegin,
+                                     SourceLocation ArgLocEnd,
+                                     StringRef Arg);
 
-  ParamCommandComment *actOnParamCommandParamNameArg(
-                                            ParamCommandComment *Command,
-                                            SourceLocation ArgLocBegin,
-                                            SourceLocation ArgLocEnd,
-                                            StringRef Arg);
+  void actOnParamCommandParamNameArg(ParamCommandComment *Command,
+                                     SourceLocation ArgLocBegin,
+                                     SourceLocation ArgLocEnd,
+                                     StringRef Arg);
 
-  ParamCommandComment *actOnParamCommandFinish(ParamCommandComment *Command,
-                                               ParagraphComment *Paragraph);
+  void actOnParamCommandFinish(ParamCommandComment *Command,
+                               ParagraphComment *Paragraph);
 
   TParamCommandComment *actOnTParamCommandStart(SourceLocation LocBegin,
                                                 SourceLocation LocEnd,
                                                 StringRef Name);
 
-  TParamCommandComment *actOnTParamCommandParamNameArg(
-                                            TParamCommandComment *Command,
-                                            SourceLocation ArgLocBegin,
-                                            SourceLocation ArgLocEnd,
-                                            StringRef Arg);
+  void actOnTParamCommandParamNameArg(TParamCommandComment *Command,
+                                      SourceLocation ArgLocBegin,
+                                      SourceLocation ArgLocEnd,
+                                      StringRef Arg);
 
-  TParamCommandComment *actOnTParamCommandFinish(TParamCommandComment *Command,
-                                                 ParagraphComment *Paragraph);
+  void actOnTParamCommandFinish(TParamCommandComment *Command,
+                                ParagraphComment *Paragraph);
 
   InlineCommandComment *actOnInlineCommand(SourceLocation CommandLocBegin,
                                            SourceLocation CommandLocEnd,
@@ -159,11 +155,10 @@ public:
   VerbatimBlockLineComment *actOnVerbatimBlockLine(SourceLocation Loc,
                                                    StringRef Text);
 
-  VerbatimBlockComment *actOnVerbatimBlockFinish(
-                              VerbatimBlockComment *Block,
-                              SourceLocation CloseNameLocBegin,
-                              StringRef CloseName,
-                              ArrayRef<VerbatimBlockLineComment *> Lines);
+  void actOnVerbatimBlockFinish(VerbatimBlockComment *Block,
+                                SourceLocation CloseNameLocBegin,
+                                StringRef CloseName,
+                                ArrayRef<VerbatimBlockLineComment *> Lines);
 
   VerbatimLineComment *actOnVerbatimLine(SourceLocation LocBegin,
                                          StringRef Name,
@@ -173,11 +168,10 @@ public:
   HTMLStartTagComment *actOnHTMLStartTagStart(SourceLocation LocBegin,
                                               StringRef TagName);
 
-  HTMLStartTagComment *actOnHTMLStartTagFinish(
-                              HTMLStartTagComment *Tag,
-                              ArrayRef<HTMLStartTagComment::Attribute> Attrs,
-                              SourceLocation GreaterLoc,
-                              bool IsSelfClosing);
+  void actOnHTMLStartTagFinish(HTMLStartTagComment *Tag,
+                               ArrayRef<HTMLStartTagComment::Attribute> Attrs,
+                               SourceLocation GreaterLoc,
+                               bool IsSelfClosing);
 
   HTMLEndTagComment *actOnHTMLEndTag(SourceLocation LocBegin,
                                      SourceLocation LocEnd,

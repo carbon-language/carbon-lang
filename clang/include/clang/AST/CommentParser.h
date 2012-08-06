@@ -55,15 +55,13 @@ class Parser {
   /// A stack of additional lookahead tokens.
   SmallVector<Token, 8> MoreLATokens;
 
-  SourceLocation consumeToken() {
-    SourceLocation Loc = Tok.getLocation();
+  void consumeToken() {
     if (MoreLATokens.empty())
       L.lex(Tok);
     else {
       Tok = MoreLATokens.back();
       MoreLATokens.pop_back();
     }
-    return Loc;
   }
 
   void putBack(const Token &OldTok) {
@@ -90,19 +88,16 @@ public:
          const SourceManager &SourceMgr, DiagnosticsEngine &Diags);
 
   /// Parse arguments for \\param command.
-  ParamCommandComment *parseParamCommandArgs(
-                                    ParamCommandComment *PC,
-                                    TextTokenRetokenizer &Retokenizer);
+  void parseParamCommandArgs(ParamCommandComment *PC,
+                             TextTokenRetokenizer &Retokenizer);
 
   /// Parse arguments for \\tparam command.
-  TParamCommandComment *parseTParamCommandArgs(
-                                    TParamCommandComment *TPC,
-                                    TextTokenRetokenizer &Retokenizer);
+  void parseTParamCommandArgs(TParamCommandComment *TPC,
+                              TextTokenRetokenizer &Retokenizer);
 
-  BlockCommandComment *parseBlockCommandArgs(
-                                    BlockCommandComment *BC,
-                                    TextTokenRetokenizer &Retokenizer,
-                                    unsigned NumArgs);
+  void parseBlockCommandArgs(BlockCommandComment *BC,
+                             TextTokenRetokenizer &Retokenizer,
+                             unsigned NumArgs);
 
   BlockCommandComment *parseBlockCommand();
   InlineCommandComment *parseInlineCommand();
