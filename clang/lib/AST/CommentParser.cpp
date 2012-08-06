@@ -334,8 +334,11 @@ BlockCommandComment *Parser::parseBlockCommand() {
     ParagraphComment *Paragraph = S.actOnParagraphComment(
                                 ArrayRef<InlineContentComment *>());
     if (IsParam) {
-      S.actOnBlockCommandFinish(PC, Paragraph);
+      S.actOnParamCommandFinish(PC, Paragraph);
       return PC;
+    } else if (IsTParam) {
+      S.actOnTParamCommandFinish(TPC, Paragraph);
+      return TPC;
     } else {
       S.actOnBlockCommandFinish(BC, Paragraph);
       return BC;

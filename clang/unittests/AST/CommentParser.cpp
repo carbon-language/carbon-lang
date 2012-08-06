@@ -205,11 +205,11 @@ template <typename T>
         << " direction, "
            "expected " << (IsDirectionExplicit ? "explicit" : "implicit");
 
-  if (!PCC->hasParamName())
+  if (!ParamName.empty() && !PCC->hasParamName())
     return ::testing::AssertionFailure()
         << "ParamCommandComment has no parameter name";
 
-  StringRef ActualParamName = PCC->getParamName();
+  StringRef ActualParamName = PCC->hasParamName() ? PCC->getParamName() : "";
   if (ActualParamName != ParamName)
     return ::testing::AssertionFailure()
         << "ParamCommandComment has parameter name \"" << ActualParamName.str()
@@ -238,11 +238,11 @@ template <typename T>
         << "TParamCommandComment has name \"" << ActualCommandName.str() << "\", "
            "expected \"" << CommandName.str() << "\"";
 
-  if (!TPCC->hasParamName())
+  if (!ParamName.empty() && !TPCC->hasParamName())
     return ::testing::AssertionFailure()
         << "TParamCommandComment has no parameter name";
 
-  StringRef ActualParamName = TPCC->getParamName();
+  StringRef ActualParamName = TPCC->hasParamName() ? TPCC->getParamName() : "";
   if (ActualParamName != ParamName)
     return ::testing::AssertionFailure()
         << "TParamCommandComment has parameter name \"" << ActualParamName.str()
@@ -729,6 +729,31 @@ TEST_F(CommentParserTest, ParamCommand1) {
 }
 
 TEST_F(CommentParserTest, ParamCommand2) {
+  const char *Source = "// \\param\\brief";
+
+  FullComment *FC = parseString(Source);
+  ASSERT_TRUE(HasChildCount(FC, 3));
+
+  ASSERT_TRUE(HasParagraphCommentAt(FC, 0, " "));
+  {
+    ParamCommandComment *PCC;
+    ParagraphComment *PC;
+    ASSERT_TRUE(HasParamCommandAt(FC, 1, PCC, "param",
+                                  ParamCommandComment::In,
+                                  /* IsDirectionExplicit = */ false,
+                                  "", PC));
+    ASSERT_TRUE(HasChildCount(PCC, 1));
+    ASSERT_TRUE(HasChildCount(PC, 0));
+  }
+  {
+    BlockCommandComment *BCC;
+    ParagraphComment *PC;
+    ASSERT_TRUE(HasBlockCommandAt(FC, 2, BCC, "brief", PC));
+    ASSERT_TRUE(HasChildCount(PC, 0));
+  }
+}
+
+TEST_F(CommentParserTest, ParamCommand3) {
   const char *Sources[] = {
     "// \\param aaa Bbb\n",
     "// \\param\n"
@@ -757,7 +782,7 @@ TEST_F(CommentParserTest, ParamCommand2) {
   }
 }
 
-TEST_F(CommentParserTest, ParamCommand3) {
+TEST_F(CommentParserTest, ParamCommand4) {
   const char *Sources[] = {
     "// \\param [in] aaa Bbb\n",
     "// \\param[in] aaa Bbb\n",
@@ -787,7 +812,7 @@ TEST_F(CommentParserTest, ParamCommand3) {
   }
 }
 
-TEST_F(CommentParserTest, ParamCommand4) {
+TEST_F(CommentParserTest, ParamCommand5) {
   const char *Sources[] = {
     "// \\param [out] aaa Bbb\n",
     "// \\param[out] aaa Bbb\n",
@@ -817,7 +842,7 @@ TEST_F(CommentParserTest, ParamCommand4) {
   }
 }
 
-TEST_F(CommentParserTest, ParamCommand5) {
+TEST_F(CommentParserTest, ParamCommand6) {
   const char *Sources[] = {
     "// \\param [in,out] aaa Bbb\n",
     "// \\param[in,out] aaa Bbb\n",
@@ -848,7 +873,7 @@ TEST_F(CommentParserTest, ParamCommand5) {
   }
 }
 
-TEST_F(CommentParserTest, ParamCommand6) {
+TEST_F(CommentParserTest, ParamCommand7) {
   const char *Source =
     "// \\param aaa \\% Bbb \\$ ccc\n";
 
@@ -900,6 +925,29 @@ TEST_F(CommentParserTest, TParamCommand1) {
     }
   }
 }
+
+TEST_F(CommentParserTest, TParamCommand2) {
+  const char *Source = "// \\tparam\\brief";
+
+  FullComment *FC = parseString(Source);
+  ASSERT_TRUE(HasChildCount(FC, 3));
+
+  ASSERT_TRUE(HasParagraphCommentAt(FC, 0, " "));
+  {
+    TParamCommandComment *TPCC;
+    ParagraphComment *PC;
+    ASSERT_TRUE(HasTParamCommandAt(FC, 1, TPCC, "tparam", "", PC));
+    ASSERT_TRUE(HasChildCount(TPCC, 1));
+    ASSERT_TRUE(HasChildCount(PC, 0));
+  }
+  {
+    BlockCommandComment *BCC;
+    ParagraphComment *PC;
+    ASSERT_TRUE(HasBlockCommandAt(FC, 2, BCC, "brief", PC));
+    ASSERT_TRUE(HasChildCount(PC, 0));
+  }
+}
+
 
 TEST_F(CommentParserTest, InlineCommand1) {
   const char *Source = "// \\c";
