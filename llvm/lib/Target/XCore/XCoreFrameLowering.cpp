@@ -371,8 +371,3 @@ XCoreFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                                false));
   }
 }
-
-void XCoreFrameLowering::
-processFunctionBeforeFrameFinalized(MachineFunction &MF) const {
-
-}

@@ -44,8 +44,6 @@ namespace llvm {
     void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                               RegScavenger *RS = NULL) const;
 
-    void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
-
     //! Stack slot size (4 bytes)
     static int stackSlotSize() {
       return 4;
