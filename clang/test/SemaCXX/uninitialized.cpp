@@ -116,6 +116,29 @@ void setupA(bool x) {
   A a19 = getA(x ? a19 : a17);  // expected-warning {{variable 'a19' is uninitialized when used within its own initialization}}
 }
 
+bool x;
+
+A a1;
+A a2(a1.get());
+A a3(a1);
+A a4(&a4);
+A a5(a5.zero());
+A a6(a6.ONE);
+A a7 = getA();
+A a8 = getA(a8.TWO);
+A a9 = getA(&a9);
+A a10(a10.count);
+
+A a11(a11);  // expected-warning {{variable 'a11' is uninitialized when used within its own initialization}}
+A a12(a12.get());  // expected-warning {{variable 'a12' is uninitialized when used within its own initialization}}
+A a13(a13.num);  // expected-warning {{variable 'a13' is uninitialized when used within its own initialization}}
+A a14 = A(a14);  // expected-warning {{variable 'a14' is uninitialized when used within its own initialization}}
+A a15 = getA(a15.num);  // expected-warning {{variable 'a15' is uninitialized when used within its own initialization}}
+A a16(&a16.num);  // expected-warning {{variable 'a16' is uninitialized when used within its own initialization}}
+A a17(a17.get2());  // expected-warning {{variable 'a17' is uninitialized when used within its own initialization}}
+A a18 = x ? a18 : a17;  // expected-warning {{variable 'a18' is uninitialized when used within its own initialization}}
+A a19 = getA(x ? a19 : a17);  // expected-warning {{variable 'a19' is uninitialized when used within its own initialization}}
+
 struct B {
   // POD struct.
   int x;

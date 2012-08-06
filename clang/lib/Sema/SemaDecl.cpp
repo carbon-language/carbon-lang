@@ -6310,7 +6310,10 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
   // Check for self-references within variable initializers.
   // Variables declared within a function/method body are handled
   // by a dataflow analysis.
-  if (!VDecl->hasLocalStorage() && !VDecl->isStaticLocal())
+  // Record types initialized by initializer list are handled here.
+  // Initialization by constructors are handled in TryConstructorInitialization.
+  if (!VDecl->hasLocalStorage() && !VDecl->isStaticLocal() &&
+      (isa<InitListExpr>(Init) || !VDecl->getType()->isRecordType()))
     CheckSelfReference(RealDecl, Init);
 
   ParenListExpr *CXXDirectInit = dyn_cast<ParenListExpr>(Init);
