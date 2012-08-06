@@ -331,10 +331,18 @@ public:
   bool isTainted(SymbolRef Sym, TaintTagType Kind = TaintTagGeneric) const;
   bool isTainted(const MemRegion *Reg, TaintTagType Kind=TaintTagGeneric) const;
 
-  /// Get dynamic type information for a region.
+  /// \brief Get dynamic type information for a region.
   DynamicTypeInfo getDynamicTypeInfo(const MemRegion *Reg) const;
-  /// Add dynamic type information to the region and return the new state.
-  ProgramStateRef addDynamicTypeInfo(const MemRegion *Reg, QualType NewTy)const;
+
+  /// \brief Add dynamic type information to the region; return the new state.
+  ProgramStateRef addDynamicTypeInfo(const MemRegion *Reg,
+                                     DynamicTypeInfo NewTy) const;
+
+  /// \brief Add dynamic type information to the region; return the new state.
+  ProgramStateRef addDynamicTypeInfo(const MemRegion *Reg,
+                                     QualType NewTy) const {
+    return addDynamicTypeInfo(Reg, DynamicTypeInfo(NewTy));
+  }
 
   //==---------------------------------------------------------------------==//
   // Accessing the Generic Data Map (GDM).

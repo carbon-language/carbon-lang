@@ -762,12 +762,12 @@ DynamicTypeInfo ProgramState::getDynamicTypeInfo(const MemRegion *Reg) const {
 }
 
 ProgramStateRef ProgramState::addDynamicTypeInfo(const MemRegion *Reg,
-                                                 QualType NewTy) const {
+                                                 DynamicTypeInfo NewTy) const {
   if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(Reg)) {
     SymbolRef Sym = SR->getSymbol();
     // TODO: Instead of resetting the type info, check the old type info and
     // merge and pick the most precise type.
-    ProgramStateRef NewState = set<DynamicTypeMap>(Sym, DynamicTypeInfo(NewTy));
+    ProgramStateRef NewState = set<DynamicTypeMap>(Sym, NewTy);
     assert(NewState);
     return NewState;
   }

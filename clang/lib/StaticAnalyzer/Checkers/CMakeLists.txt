@@ -29,6 +29,7 @@ add_clang_library(clangStaticAnalyzerCheckers
   DebugCheckers.cpp
   DereferenceChecker.cpp
   DivZeroChecker.cpp
+  DynamicTypePropagation.cpp
   ExprInspectionChecker.cpp
   FixedAddressChecker.cpp
   GenericTaintChecker.cpp

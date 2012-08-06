@@ -583,8 +583,8 @@ SVal ObjCMethodCall::getReceiverSVal() const {
   if (!isInstanceMessage())
     return UnknownVal();
     
-  if (const Expr *Base = getOriginExpr()->getInstanceReceiver())
-    return getSVal(Base);
+  if (const Expr *RecE = getOriginExpr()->getInstanceReceiver())
+    return getSVal(RecE);
 
   // An instance message with no expression means we are sending to super.
   // In this case the object reference is the same as 'self'.
@@ -676,8 +676,8 @@ const Decl *ObjCMethodCall::getRuntimeDefinition() const {
       if (!Receiver)
         return 0;
 
-      DynamicTypeInfo TI = getState()->getDynamicTypeInfo(Receiver);
-      ReceiverT = dyn_cast<ObjCObjectPointerType>(TI.getType().getTypePtr());
+      QualType DynType = getState()->getDynamicTypeInfo(Receiver).getType();
+      ReceiverT = dyn_cast<ObjCObjectPointerType>(DynType.getTypePtr());
     }
 
     // Lookup the method implementation.
@@ -714,7 +714,6 @@ void ObjCMethodCall::getInitialStackFrameContents(
     Bindings.push_back(std::make_pair(SelfLoc, SelfVal));
   }
 }
-
 
 CallEventRef<SimpleCall>
 CallEventManager::getSimpleCall(const CallExpr *CE, ProgramStateRef State,

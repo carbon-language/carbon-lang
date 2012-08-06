@@ -84,6 +84,10 @@ def StackAddrEscapeChecker : Checker<"StackAddressEscape">,
   HelpText<"Check that addresses to stack memory do not escape the function">,
   DescFile<"StackAddrEscapeChecker.cpp">;
 
+def DynamicTypePropagation : Checker<"DynamicTypePropagation">,
+  HelpText<"Generate dynamic type information">,
+  DescFile<"DynamicTypePropagation.cpp">;
+
 } // end "core"
 
 let ParentPackage = CoreExperimental in {

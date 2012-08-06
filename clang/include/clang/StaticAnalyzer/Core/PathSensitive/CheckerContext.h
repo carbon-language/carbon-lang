@@ -92,6 +92,10 @@ public:
     return Pred->getLocationContext();
   }
 
+  const StackFrameContext *getCurrentStackFrame() const {
+    return getLocationContext()->getCurrentStackFrame();
+  }
+
   BugReporter &getBugReporter() {
     return Eng.getBugReporter();
   }
@@ -130,6 +134,11 @@ public:
     if (const PostStore *PSL = dyn_cast<PostStore>(&L))
       return reinterpret_cast<const MemRegion*>(PSL->getLocationValue());
     return 0;
+  }
+
+  /// \brief Get the value of arbitrary expressions at this point in the path.
+  SVal getSVal(const Stmt *S) const {
+    return getState()->getSVal(S, getLocationContext());
   }
 
   /// \brief Generates a new transition in the program state graph
