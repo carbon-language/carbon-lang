@@ -1131,18 +1131,27 @@ void Driver::BuildActions(const ToolChain &TC, const DerivedArgList &Args,
       if (Args.hasArg(options::OPT_Qunused_arguments))
         continue;
 
+      // Special case when final phase determined by binary name, rather than
+      // by a command-line argument with a corresponding Arg.
+      if (CCCIsCPP)
+        Diag(clang::diag::warn_drv_input_file_unused_by_cpp)
+          << InputArg->getAsString(Args)
+          << getPhaseName(InitialPhase);
       // Special case '-E' warning on a previously preprocessed file to make
       // more sense.
-      if (InitialPhase == phases::Compile && FinalPhase == phases::Preprocess &&
-          getPreprocessedType(InputType) == types::TY_INVALID)
+      else if (InitialPhase == phases::Compile &&
+               FinalPhase == phases::Preprocess &&
+               getPreprocessedType(InputType) == types::TY_INVALID)
         Diag(clang::diag::warn_drv_preprocessed_input_file_unused)
           << InputArg->getAsString(Args)
-          << FinalPhaseArg->getOption().getName();
+          << !!FinalPhaseArg
+          << FinalPhaseArg ? FinalPhaseArg->getOption().getName() : "";
       else
         Diag(clang::diag::warn_drv_input_file_unused)
           << InputArg->getAsString(Args)
           << getPhaseName(InitialPhase)
-          << FinalPhaseArg->getOption().getName();
+          << !!FinalPhaseArg
+          << FinalPhaseArg ? FinalPhaseArg->getOption().getName() : "";
       continue;
     }
 
