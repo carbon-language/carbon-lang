@@ -46,10 +46,12 @@
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
-static cl::opt<bool> DisableInline("disable-inlining", cl::init(false),
+static cl::opt<bool>
+DisableInline("disable-inlining", cl::init(false),
   cl::desc("Do not run the inliner pass"));
 
-static cl::opt<bool> DisableGVNLoadPRE("disable-gvn-loadpre", cl::init(false),
+static cl::opt<bool>
+DisableGVNLoadPRE("disable-gvn-loadpre", cl::init(false),
   cl::desc("Do not run the GVN load PRE pass"));
 
 const char* LTOCodeGenerator::getVersionString() {
@@ -239,6 +241,7 @@ bool LTOCodeGenerator::determineTarget(std::string& errMsg) {
     Features.getDefaultSubtargetFeatures(llvm::Triple(Triple));
     std::string FeatureStr = Features.getString();
     TargetOptions Options;
+    LTOModule::getTargetOptions(Options);
     _target = march->createTargetMachine(Triple, _mCpu, FeatureStr, Options,
                                          RelocModel, CodeModel::Default,
                                          CodeGenOpt::Aggressive);

@@ -29,6 +29,7 @@ namespace llvm {
   class Function;
   class GlobalValue;
   class MemoryBuffer;
+  class TargetOptions;
   class Value;
 }
 
@@ -125,6 +126,10 @@ public:
   const std::vector<const char*> &getAsmUndefinedRefs() {
     return _asm_undefines;
   }
+
+  /// getTargetOptions - Fill the TargetOptions object with the options
+  /// specified on the command line.
+  static void getTargetOptions(llvm::TargetOptions &Options);
 
 private:
   /// parseSymbols - Parse the symbols from the module and model-level ASM and
