@@ -23,13 +23,20 @@ typedef llvm::DenseMap<Stmt*, Stmt*> MapTy;
 static void BuildParentMap(MapTy& M, Stmt* S) {
   for (Stmt::child_range I = S->children(); I; ++I)
     if (*I) {
-      M[*I] = S;
-      BuildParentMap(M, *I);
+      // Prefer the first time we see this statement in the traversal.
+      // This is important for PseudoObjectExprs.
+      Stmt *&Parent = M[*I];
+      if (!Parent) {
+        Parent = S;
+        BuildParentMap(M, *I);
+      }
     }
   
   // Also include the source expr tree of an OpaqueValueExpr in the map.
-  if (const OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(S))
+  if (const OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(S)) {
+    M[OVE->getSourceExpr()] = S;
     BuildParentMap(M, OVE->getSourceExpr());
+  }
 }
 
 ParentMap::ParentMap(Stmt* S) : Impl(0) {
