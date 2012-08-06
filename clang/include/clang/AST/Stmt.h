@@ -20,6 +20,7 @@
 #include "clang/AST/StmtIterator.h"
 #include "clang/AST/DeclGroup.h"
 #include "clang/AST/Attr.h"
+#include "clang/Lex/Token.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
@@ -1620,6 +1621,7 @@ public:
 ///
 class MSAsmStmt : public Stmt {
   SourceLocation AsmLoc, EndLoc;
+  SmallVector<Token, 4> AsmToks;
   std::string AsmStr;
 
   bool IsSimple;
@@ -1628,13 +1630,16 @@ class MSAsmStmt : public Stmt {
   Stmt **Exprs;
 
 public:
-  MSAsmStmt(ASTContext &C, SourceLocation asmloc, std::string &asmstr,
+  MSAsmStmt(ASTContext &C, SourceLocation asmloc,
+            SmallVectorImpl<Token> &asmtoks, std::string &asmstr,
             SourceLocation endloc);
 
   SourceLocation getAsmLoc() const { return AsmLoc; }
   void setAsmLoc(SourceLocation L) { AsmLoc = L; }
   SourceLocation getEndLoc() const { return EndLoc; }
   void setEndLoc(SourceLocation L) { EndLoc = L; }
+
+  SmallVectorImpl<Token> &getAsmToks() { return AsmToks; }
 
   bool isVolatile() const { return IsVolatile; }
   void setVolatile(bool V) { IsVolatile = V; }

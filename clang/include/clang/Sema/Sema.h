@@ -2543,6 +2543,7 @@ public:
                           bool MSAsm = false);
 
   StmtResult ActOnMSAsmStmt(SourceLocation AsmLoc,
+                            SmallVectorImpl<Token> &AsmToks,
                             std::string &AsmString,
                             SourceLocation EndLoc);
 

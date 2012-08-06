@@ -2748,13 +2748,14 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
 }
 
 StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
+                                SmallVectorImpl<Token> &AsmToks,
                                 std::string &AsmString,
                                 SourceLocation EndLoc) {
   // MS-style inline assembly is not fully supported, so emit a warning.
   Diag(AsmLoc, diag::warn_unsupported_msasm);
 
   MSAsmStmt *NS =
-    new (Context) MSAsmStmt(Context, AsmLoc, AsmString, EndLoc);
+    new (Context) MSAsmStmt(Context, AsmLoc, AsmToks, AsmString, EndLoc);
 
   return Owned(NS);
 }

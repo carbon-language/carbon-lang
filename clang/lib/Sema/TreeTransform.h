@@ -1185,9 +1185,10 @@ public:
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
   StmtResult RebuildMSAsmStmt(SourceLocation AsmLoc,
+                              SmallVectorImpl<Token> &AsmToks,
                               std::string &AsmString,
                               SourceLocation EndLoc) {
-    return getSema().ActOnMSAsmStmt(AsmLoc, AsmString, EndLoc);
+    return getSema().ActOnMSAsmStmt(AsmLoc, AsmToks, AsmString, EndLoc);
   }
 
   /// \brief Build a new Objective-C \@try statement.
@@ -5611,6 +5612,7 @@ StmtResult
 TreeTransform<Derived>::TransformMSAsmStmt(MSAsmStmt *S) {
   // No need to transform the asm string literal.
   return getDerived().RebuildMSAsmStmt(S->getAsmLoc(),
+                                       S->getAsmToks(),
                                        *S->getAsmString(),
                                        S->getEndLoc());
 }

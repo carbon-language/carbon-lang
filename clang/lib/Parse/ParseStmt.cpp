@@ -1816,12 +1816,9 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
     }
   }
 
-  // FIXME: We should be passing the tokens and source locations, rather than
-  // (or possibly in addition to the) AsmString.  Sema is going to interact with
-  // MC to determine Constraints, Clobbers, etc., which would be simplest to
-  // do with the tokens.
+  // FIXME: We should be passing source locations for better diagnostics.
   std::string AsmString = Asm.c_str();
-  return Actions.ActOnMSAsmStmt(AsmLoc, AsmString, EndLoc);
+  return Actions.ActOnMSAsmStmt(AsmLoc, AsmToks, AsmString, EndLoc);
 }
 
 /// ParseAsmStatement - Parse a GNU extended asm statement.
