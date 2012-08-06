@@ -208,13 +208,11 @@ def DCLO : CountLeading1<0x25, "dclo", CPU64Regs>;
 def DSBH : SubwordSwap<0x24, 0x2, "dsbh", CPU64Regs>;
 def DSHD : SubwordSwap<0x24, 0x5, "dshd", CPU64Regs>;
 
-def LEA_ADDiu64 : EffectiveAddress<"daddiu\t$rt, $addr", CPU64Regs, mem_ea_64>;
+def LEA_ADDiu64 : EffectiveAddress<0x19,"daddiu\t$rt, $addr", CPU64Regs, mem_ea_64>;
 }
 let Uses = [SP_64], DecoderNamespace = "Mips64" in
-def DynAlloc64 : EffectiveAddress<"daddiu\t$rt, $addr", CPU64Regs, mem_ea_64>,
-                 Requires<[IsN64, HasStandardEncoding]> {
-  let isCodeGenOnly = 1;
-}
+def DynAlloc64 : EffectiveAddress<0x19,"daddiu\t$rt, $addr", CPU64Regs, mem_ea_64>,
+                 Requires<[IsN64, HasStandardEncoding]>;
 let DecoderNamespace = "Mips64" in {
 def RDHWR64 : ReadHardware<CPU64Regs, HWRegs64>;
 

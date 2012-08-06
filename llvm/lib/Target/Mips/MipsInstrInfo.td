@@ -722,9 +722,11 @@ class MoveToLOHI<bits<6> func, string instr_asm, RegisterClass RC,
   let neverHasSideEffects = 1;
 }
 
-class EffectiveAddress<string instr_asm, RegisterClass RC, Operand Mem> :
-  FMem<0x09, (outs RC:$rt), (ins Mem:$addr),
-     instr_asm, [(set RC:$rt, addr:$addr)], IIAlu>;
+class EffectiveAddress<bits<6> opc, string instr_asm, RegisterClass RC, Operand Mem> :
+  FMem<opc, (outs RC:$rt), (ins Mem:$addr),
+     instr_asm, [(set RC:$rt, addr:$addr)], IIAlu> {
+ let isCodeGenOnly = 1;
+}
 
 // Count Leading Ones/Zeros in Word
 class CountLeading0<bits<6> func, string instr_asm, RegisterClass RC>:
@@ -1045,17 +1047,13 @@ let addr=0 in
 // instructions. The same not happens for stack address copies, so an
 // add op with mem ComplexPattern is used and the stack address copy
 // can be matched. It's similar to Sparc LEA_ADDRi
-def LEA_ADDiu : EffectiveAddress<"addiu\t$rt, $addr", CPURegs, mem_ea> {
-  let isCodeGenOnly = 1;
-}
+def LEA_ADDiu : EffectiveAddress<0x09,"addiu\t$rt, $addr", CPURegs, mem_ea>;
 
 // DynAlloc node points to dynamically allocated stack space.
 // $sp is added to the list of implicitly used registers to prevent dead code
 // elimination from removing instructions that modify $sp.
 let Uses = [SP] in
-def DynAlloc : EffectiveAddress<"addiu\t$rt, $addr", CPURegs, mem_ea> {
-  let isCodeGenOnly = 1;
-}
+def DynAlloc : EffectiveAddress<0x09,"addiu\t$rt, $addr", CPURegs, mem_ea>;
 
 // MADD*/MSUB*
 def MADD  : MArithR<0, "madd", MipsMAdd, 1>;
