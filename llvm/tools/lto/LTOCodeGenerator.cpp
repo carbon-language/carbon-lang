@@ -211,41 +211,41 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg) {
 }
 
 bool LTOCodeGenerator::determineTarget(std::string& errMsg) {
-  if ( _target == NULL ) {
-    std::string Triple = _linker.getModule()->getTargetTriple();
-    if (Triple.empty())
-      Triple = sys::getDefaultTargetTriple();
+  if ( _target != NULL ) return false;
 
-    // create target machine from info for merged modules
-    const Target *march = TargetRegistry::lookupTarget(Triple, errMsg);
-    if ( march == NULL )
-      return true;
+  std::string Triple = _linker.getModule()->getTargetTriple();
+  if (Triple.empty())
+    Triple = sys::getDefaultTargetTriple();
 
-    // The relocation model is actually a static member of TargetMachine and
-    // needs to be set before the TargetMachine is instantiated.
-    Reloc::Model RelocModel = Reloc::Default;
-    switch( _codeModel ) {
-    case LTO_CODEGEN_PIC_MODEL_STATIC:
-      RelocModel = Reloc::Static;
-      break;
-    case LTO_CODEGEN_PIC_MODEL_DYNAMIC:
-      RelocModel = Reloc::PIC_;
-      break;
-    case LTO_CODEGEN_PIC_MODEL_DYNAMIC_NO_PIC:
-      RelocModel = Reloc::DynamicNoPIC;
-      break;
-    }
+  // create target machine from info for merged modules
+  const Target *march = TargetRegistry::lookupTarget(Triple, errMsg);
+  if ( march == NULL )
+    return true;
 
-    // construct LTOModule, hand over ownership of module and target
-    SubtargetFeatures Features;
-    Features.getDefaultSubtargetFeatures(llvm::Triple(Triple));
-    std::string FeatureStr = Features.getString();
-    TargetOptions Options;
-    LTOModule::getTargetOptions(Options);
-    _target = march->createTargetMachine(Triple, _mCpu, FeatureStr, Options,
-                                         RelocModel, CodeModel::Default,
-                                         CodeGenOpt::Aggressive);
+  // The relocation model is actually a static member of TargetMachine and
+  // needs to be set before the TargetMachine is instantiated.
+  Reloc::Model RelocModel = Reloc::Default;
+  switch( _codeModel ) {
+  case LTO_CODEGEN_PIC_MODEL_STATIC:
+    RelocModel = Reloc::Static;
+    break;
+  case LTO_CODEGEN_PIC_MODEL_DYNAMIC:
+    RelocModel = Reloc::PIC_;
+    break;
+  case LTO_CODEGEN_PIC_MODEL_DYNAMIC_NO_PIC:
+    RelocModel = Reloc::DynamicNoPIC;
+    break;
   }
+
+  // construct LTOModule, hand over ownership of module and target
+  SubtargetFeatures Features;
+  Features.getDefaultSubtargetFeatures(llvm::Triple(Triple));
+  std::string FeatureStr = Features.getString();
+  TargetOptions Options;
+  LTOModule::getTargetOptions(Options);
+  _target = march->createTargetMachine(Triple, _mCpu, FeatureStr, Options,
+                                       RelocModel, CodeModel::Default,
+                                       CodeGenOpt::Aggressive);
   return false;
 }
 
