@@ -87,8 +87,8 @@ namespace rdar9357400 {
 
   typedef vector< float,  fixed<4> > vector4f;
 
-  // CHECK: @_ZN11rdar9357400L2ggE = internal constant [49 x i8] c"{vector<float, rdar9357400::fixed<4, -1> >=[4f]}\00"
-  const char gg[] = @encode(vector4f);
+  // CHECK: @_ZN11rdar93574002ggE = constant [49 x i8] c"{vector<float, rdar9357400::fixed<4, -1> >=[4f]}\00"
+  extern const char gg[] = @encode(vector4f);
 }
 
 // rdar://9624314
@@ -97,12 +97,12 @@ namespace rdar9624314 {
   struct B3 {};
   struct S : B2, B3 {};
 
-  // CHECK: @_ZN11rdar9624314L2ggE = internal constant [6 x i8] c"{S=i}\00"
-  const char gg[] = @encode(S);
+  // CHECK: @_ZN11rdar96243142ggE = constant [6 x i8] c"{S=i}\00"
+  extern const char gg[] = @encode(S);
 
   struct S2 { unsigned : 0; int x; unsigned : 0; };
-  // CHECK: @_ZN11rdar9624314L2g2E = internal constant [11 x i8] c"{S2=b0ib0}\00"
-  const char g2[] = @encode(S2);
+  // CHECK: @_ZN11rdar96243142g2E = constant [11 x i8] c"{S2=b0ib0}\00"
+  extern const char g2[] = @encode(S2);
 }
 
 namespace test {
@@ -122,8 +122,8 @@ namespace test {
    int y;
   };
 
-  // CHECK: @_ZN4testL3ecdE = internal constant [15 x i8] c"{Zoo=^^?ii^^?}\00"
-  const char ecd[] = @encode(Zoo);
+  // CHECK: @_ZN4test3ecdE = constant [15 x i8] c"{Zoo=^^?ii^^?}\00"
+  extern const char ecd[] = @encode(Zoo);
 }
 
 struct Base1 {
@@ -143,17 +143,17 @@ struct Sub2 : public Sub_with_virt, public Base1, virtual DBase {
   float x;
 };
 
-// CHECK: @_ZL2g1 = internal constant [10 x i8] c"{Base1=c}\00"
-const char g1[] = @encode(Base1);
+// CHECK: @g1 = constant [10 x i8] c"{Base1=c}\00"
+extern const char g1[] = @encode(Base1);
 
-// CHECK: @_ZL2g2 = internal constant [14 x i8] c"{DBase=^^?cd}\00"
-const char g2[] = @encode(DBase);
+// CHECK: @g2 = constant [14 x i8] c"{DBase=^^?cd}\00"
+extern const char g2[] = @encode(DBase);
 
-// CHECK: @_ZL2g3 = internal constant [26 x i8] c"{Sub_with_virt=^^?q^^?cd}\00"
-const char g3[] = @encode(Sub_with_virt);
+// CHECK: @g3 = constant [26 x i8] c"{Sub_with_virt=^^?q^^?cd}\00"
+extern const char g3[] = @encode(Sub_with_virt);
 
-// CHECK: @_ZL2g4 = internal constant [19 x i8] c"{Sub2=^^?qcf^^?cd}\00"
-const char g4[] = @encode(Sub2);
+// CHECK: @g4 = constant [19 x i8] c"{Sub2=^^?qcf^^?cd}\00"
+extern const char g4[] = @encode(Sub2);
 
 // http://llvm.org/PR9927
 class allocator {
@@ -165,8 +165,8 @@ char* _M_p;
 _Alloc_hider _M_dataplus;
 };
 
-// CHECK: @_ZL2g5 = internal constant [32 x i8] c"{basic_string={_Alloc_hider=*}}\00"
-const char g5[] = @encode(basic_string);
+// CHECK: @g5 = constant [32 x i8] c"{basic_string={_Alloc_hider=*}}\00"
+extern const char g5[] = @encode(basic_string);
 
 
 // PR10990
@@ -175,8 +175,8 @@ class CefBase {
 };
 class CefBrowser : public virtual CefBase {};
 class CefBrowserImpl : public CefBrowser {};
-// CHECK: @_ZL2g6 = internal constant [21 x i8] c"{CefBrowserImpl=^^?}\00"
-const char g6[] = @encode(CefBrowserImpl);
+// CHECK: @g6 = constant [21 x i8] c"{CefBrowserImpl=^^?}\00"
+extern const char g6[] = @encode(CefBrowserImpl);
 
 // PR10990_2
 class CefBase2 {
@@ -185,8 +185,8 @@ class CefBase2 {
 };
 class CefBrowser2 : public virtual CefBase2 {};
 class CefBrowserImpl2 : public CefBrowser2 {};
-// CHECK: @_ZL2g7 = internal constant [26 x i8] c"{CefBrowserImpl2=^^?^^?i}\00"
-const char g7[] = @encode(CefBrowserImpl2);
+// CHECK: @g7 = constant [26 x i8] c"{CefBrowserImpl2=^^?^^?i}\00"
+extern const char g7[] = @encode(CefBrowserImpl2);
 
 // <rdar://problem/11324167>
 struct Empty {};
@@ -199,5 +199,5 @@ struct Y : Empty {
   X vec;
 };
 
-// CHECK: @_ZL2g8 = internal constant [14 x i8] c"{Y={X=[10i]}}\00"
-const char g8[] = @encode(Y);
+// CHECK: @g8 = constant [14 x i8] c"{Y={X=[10i]}}\00"
+extern const char g8[] = @encode(Y);

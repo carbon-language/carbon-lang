@@ -326,8 +326,8 @@ namespace PR13273 {
     S() = default;
   };
 
-  // CHECK: @_ZN7PR13273L1sE = {{.*}} zeroinitializer
-  const S s {};
+  // CHECK: @_ZN7PR132731sE = {{.*}} zeroinitializer
+  extern const S s {};
 }
 
 // Constant initialization tests go before this point,

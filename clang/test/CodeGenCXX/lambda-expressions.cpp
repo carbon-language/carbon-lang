@@ -1,7 +1,11 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10.0.0 -emit-llvm -o - %s -fexceptions -std=c++11 | FileCheck %s
 
-// CHECK: @var = internal global
-auto var = [](int i) { return i+1; };
+// CHECK-NOT: @unused
+auto unused = [](int i) { return i+1; };
+
+// CHECK: @used = internal global
+auto used = [](int i) { return i+1; };
+void *use = &used;
 
 // CHECK: @cvar = global
 extern "C" auto cvar = []{};

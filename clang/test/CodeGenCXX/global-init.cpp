@@ -70,17 +70,17 @@ namespace test3 {
   const char *test() { return var; }
 }
 
-namespace test6 {
+namespace test4 {
   struct A {
     A();
   };
   extern int foo();
 
   // This needs an initialization function and guard variables.
-  // CHECK: load i8* bitcast (i64* @_ZGVN5test61xE
-  // CHECK: [[CALL:%.*]] = call i32 @_ZN5test63fooEv
-  // CHECK-NEXT: store i32 [[CALL]], i32* @_ZN5test61xE
-  // CHECK-NEXT: store i64 1, i64* @_ZGVN5test61xE
+  // CHECK: load i8* bitcast (i64* @_ZGVN5test41xE
+  // CHECK: [[CALL:%.*]] = call i32 @_ZN5test43fooEv
+  // CHECK-NEXT: store i32 [[CALL]], i32* @_ZN5test41xE
+  // CHECK-NEXT: store i64 1, i64* @_ZGVN5test41xE
   __attribute__((weak)) int x = foo();
 }
 
@@ -95,14 +95,6 @@ namespace PR5974 {
   A* a = &c;
   B* b = &c;
 }
-// CHECK:      define internal void [[TEST1_Z_INIT:@.*]]()
-// CHECK:        load i32* @_ZN5test1L1yE
-// CHECK-NEXT:   xor
-// CHECK-NEXT:   store i32 {{.*}}, i32* @_ZN5test1L1zE
-// CHECK:      define internal void [[TEST1_Y_INIT:@.*]]()
-// CHECK:        load i32* @_ZN5test1L1xE
-// CHECK-NEXT:   sub
-// CHECK-NEXT:   store i32 {{.*}}, i32* @_ZN5test1L1yE
 
 // PR9570: the indirect field shouldn't crash IR gen.
 namespace test5 {
@@ -111,8 +103,85 @@ namespace test5 {
   };
 }
 
+namespace std { struct type_info; }
+
+namespace test6 {
+  struct A { virtual ~A(); };
+  struct B : A {};
+  extern A *p;
+
+  // We must emit a dynamic initializer for 'q', because it could throw.
+  B *const q = &dynamic_cast<B&>(*p);
+  // CHECK: call void @__cxa_bad_cast()
+  // CHECK: store {{.*}} @_ZN5test6L1qE
+
+  // We don't need to emit 'r' at all, because it has internal linkage, is
+  // unused, and its initialization has no side-effects.
+  B *const r = dynamic_cast<B*>(p);
+  // CHECK-NOT: call void @__cxa_bad_cast()
+  // CHECK-NOT: store {{.*}} @_ZN5test6L1rE
+
+  // This can throw, so we need to emit it.
+  const std::type_info *const s = &typeid(*p);
+  // CHECK: store {{.*}} @_ZN5test6L1sE
+
+  // This can't throw, so we don't.
+  const std::type_info *const t = &typeid(p);
+  // CHECK-NOT: @_ZN5test6L1tE
+
+  namespace {
+    int a = int();
+    volatile int b = int();
+    int c = a;
+    int d = b;
+    // CHECK-NOT: store {{.*}} @_ZN5test6{{[A-Za-z0-9_]*}}1aE
+    // CHECK-NOT: store {{.*}} @_ZN5test6{{[A-Za-z0-9_]*}}1bE
+    // CHECK-NOT: store {{.*}} @_ZN5test6{{[A-Za-z0-9_]*}}1cE
+    // CHECK: load volatile {{.*}} @_ZN5test6{{[A-Za-z0-9_]*}}1bE
+    // CHECK: store {{.*}} @_ZN5test6{{[A-Za-z0-9_]*}}1dE
+  }
+}
+
+namespace test7 {
+  struct A { A(); };
+  struct B { ~B(); int n; };
+  struct C { C() = default; C(const C&); };
+  struct D {};
+
+  // CHECK: call void @_ZN5test71AC1Ev({{.*}}@_ZN5test7L1aE)
+  const A a = A();
+
+  // CHECK: call i32 @__cxa_atexit({{.*}} @_ZN5test71BD1Ev{{.*}} @_ZN5test7L2b1E
+  // CHECK: call i32 @__cxa_atexit({{.*}} @_ZN5test71BD1Ev{{.*}} @_ZGRN5test72b2E
+  // CHECK: call void @_ZN5test71BD1Ev(
+  // CHECK: store {{.*}} @_ZN5test7L2b3E
+  const B b1 = B();
+  const B &b2 = B();
+  const int b3 = B().n;
+
+  // CHECK-NOT: @_ZN5test7L2c1E
+  // CHECK: @_ZN5test7L2c2E
+  const C c1 = C(); // elidable copy
+  const C c2 = static_cast<C&&>(C()); // non-elidable copy
+
+  // CHECK-NOT: @_ZN5test7L1dE
+  const D d = D();
+
+  // CHECK: store {{.*}} @_ZN5test71eE
+  int f(), e = f();
+}
+
 
 // At the end of the file, we check that y is initialized before z.
+
+// CHECK:      define internal void [[TEST1_Z_INIT:@.*]]()
+// CHECK:        load i32* @_ZN5test1L1yE
+// CHECK-NEXT:   xor
+// CHECK-NEXT:   store i32 {{.*}}, i32* @_ZN5test1L1zE
+// CHECK:      define internal void [[TEST1_Y_INIT:@.*]]()
+// CHECK:        load i32* @_ZN5test1L1xE
+// CHECK-NEXT:   sub
+// CHECK-NEXT:   store i32 {{.*}}, i32* @_ZN5test1L1yE
 
 // CHECK: define internal void @_GLOBAL__I_a() section "__TEXT,__StaticInit,regular,pure_instructions" {
 // CHECK:   call void [[TEST1_Y_INIT]]

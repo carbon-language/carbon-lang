@@ -2622,6 +2622,221 @@ bool Expr::isConstantInitializer(ASTContext &Ctx, bool IsForRef) const {
   return isEvaluatable(Ctx);
 }
 
+bool Expr::HasSideEffects(const ASTContext &Ctx) const {
+  if (isInstantiationDependent())
+    return true;
+
+  switch (getStmtClass()) {
+  case NoStmtClass:
+  #define ABSTRACT_STMT(Type)
+  #define STMT(Type, Base) case Type##Class:
+  #define EXPR(Type, Base)
+  #include "clang/AST/StmtNodes.inc"
+    llvm_unreachable("unexpected Expr kind");
+
+  case DependentScopeDeclRefExprClass:
+  case CXXUnresolvedConstructExprClass:
+  case CXXDependentScopeMemberExprClass:
+  case UnresolvedLookupExprClass:
+  case UnresolvedMemberExprClass:
+  case PackExpansionExprClass:
+  case SubstNonTypeTemplateParmPackExprClass:
+    llvm_unreachable("shouldn't see dependent / unresolved nodes here");
+
+  case PredefinedExprClass:
+  case IntegerLiteralClass:
+  case FloatingLiteralClass:
+  case ImaginaryLiteralClass:
+  case StringLiteralClass:
+  case CharacterLiteralClass:
+  case OffsetOfExprClass:
+  case ImplicitValueInitExprClass:
+  case UnaryExprOrTypeTraitExprClass:
+  case AddrLabelExprClass:
+  case GNUNullExprClass:
+  case CXXBoolLiteralExprClass:
+  case CXXNullPtrLiteralExprClass:
+  case CXXThisExprClass:
+  case CXXScalarValueInitExprClass:
+  case TypeTraitExprClass:
+  case UnaryTypeTraitExprClass:
+  case BinaryTypeTraitExprClass:
+  case ArrayTypeTraitExprClass:
+  case ExpressionTraitExprClass:
+  case CXXNoexceptExprClass:
+  case SizeOfPackExprClass:
+  case ObjCStringLiteralClass:
+  case ObjCEncodeExprClass:
+  case ObjCBoolLiteralExprClass:
+  case CXXUuidofExprClass:
+  case OpaqueValueExprClass:
+    // These never have a side-effect.
+    return false;
+
+  case CallExprClass:
+  case CompoundAssignOperatorClass:
+  case VAArgExprClass:
+  case AtomicExprClass:
+  case StmtExprClass:
+  case CXXOperatorCallExprClass:
+  case CXXMemberCallExprClass:
+  case UserDefinedLiteralClass:
+  case CXXThrowExprClass:
+  case CXXNewExprClass:
+  case CXXDeleteExprClass:
+  case ExprWithCleanupsClass:
+  case CXXBindTemporaryExprClass:
+  case BlockExprClass:
+  case CUDAKernelCallExprClass:
+    // These always have a side-effect.
+    return true;
+
+  case ParenExprClass:
+  case ArraySubscriptExprClass:
+  case MemberExprClass:
+  case ConditionalOperatorClass:
+  case BinaryConditionalOperatorClass:
+  case ImplicitCastExprClass:
+  case CStyleCastExprClass:
+  case CompoundLiteralExprClass:
+  case ExtVectorElementExprClass:
+  case DesignatedInitExprClass:
+  case ParenListExprClass:
+  case CXXStaticCastExprClass:
+  case CXXReinterpretCastExprClass:
+  case CXXConstCastExprClass:
+  case CXXFunctionalCastExprClass:
+  case CXXPseudoDestructorExprClass:
+  case SubstNonTypeTemplateParmExprClass:
+  case MaterializeTemporaryExprClass:
+  case ShuffleVectorExprClass:
+  case AsTypeExprClass:
+    // These have a side-effect if any subexpression does.
+    break;
+
+  case UnaryOperatorClass: {
+    const UnaryOperator *UO = cast<UnaryOperator>(this);
+    if (UO->isIncrementDecrementOp())
+      return true;
+    if (UO->getOpcode() == UO_Deref && UO->getType().isVolatileQualified())
+      return true;
+    break;
+  }
+
+  case BinaryOperatorClass:
+    if (cast<BinaryOperator>(this)->isAssignmentOp())
+      return true;
+    break;
+
+  case DeclRefExprClass:
+  case ObjCIvarRefExprClass:
+    return getType().isVolatileQualified();
+
+  case InitListExprClass:
+    // FIXME: The children for an InitListExpr doesn't include the array filler.
+    if (const Expr *E = cast<InitListExpr>(this)->getArrayFiller())
+      if (E->HasSideEffects(Ctx))
+        return true;
+    break;
+
+  case GenericSelectionExprClass:
+    return cast<GenericSelectionExpr>(this)->getResultExpr()->
+        HasSideEffects(Ctx);
+
+  case ChooseExprClass:
+    return cast<ChooseExpr>(this)->getChosenSubExpr(Ctx)->HasSideEffects(Ctx);
+
+  case CXXDefaultArgExprClass:
+    return cast<CXXDefaultArgExpr>(this)->getExpr()->HasSideEffects(Ctx);
+
+  case CXXDynamicCastExprClass: {
+    // A dynamic_cast expression has side-effects if it can throw.
+    const CXXDynamicCastExpr *DCE = cast<CXXDynamicCastExpr>(this);
+    if (DCE->getTypeAsWritten()->isReferenceType() &&
+        DCE->getCastKind() == CK_Dynamic)
+      return true;
+    // Also has side-effects if the subexpression does.
+    break;
+  }
+
+  case CXXTypeidExprClass: {
+    // A typeid expression has side-effects if it can throw.
+    const CXXTypeidExpr *TE = cast<CXXTypeidExpr>(this);
+    if (TE->isTypeOperand())
+      return false;
+    const CXXRecordDecl *RD =
+        TE->getExprOperand()->getType()->getAsCXXRecordDecl();
+    if (!RD || !RD->isPolymorphic() ||
+        !TE->getExprOperand()->
+          Classify(const_cast<ASTContext&>(Ctx)).isGLValue())
+      // Not a glvalue of polymorphic class type: the expression is an
+      // unevaluated operand.
+      return false;
+    // Might throw.
+    return true;
+  }
+
+  case CXXConstructExprClass:
+  case CXXTemporaryObjectExprClass: {
+    const CXXConstructExpr *CE = cast<CXXConstructExpr>(this);
+    if (!CE->isElidable() && !CE->getConstructor()->isTrivial())
+      return true;
+    // An elidable or trivial constructor does not add any side-effects of its
+    // own. Just look at its arguments.
+    break;
+  }
+
+  case LambdaExprClass: {
+    const LambdaExpr *LE = cast<LambdaExpr>(this);
+    for (LambdaExpr::capture_iterator I = LE->capture_begin(),
+                                      E = LE->capture_end(); I != E; ++I)
+      if (I->getCaptureKind() == LCK_ByCopy)
+        // FIXME: Only has a side-effect if the variable is volatile or if
+        // the copy would invoke a non-trivial copy constructor.
+        return true;
+    return false;
+  }
+
+  case PseudoObjectExprClass: {
+    // Only look for side-effects in the semantic form, and look past
+    // OpaqueValueExpr bindings in that form.
+    const PseudoObjectExpr *PO = cast<PseudoObjectExpr>(this);
+    for (PseudoObjectExpr::const_semantics_iterator I = PO->semantics_begin(),
+                                                    E = PO->semantics_end();
+         I != E; ++I) {
+      const Expr *Subexpr = *I;
+      if (const OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(Subexpr))
+        Subexpr = OVE->getSourceExpr();
+      if (Subexpr->HasSideEffects(Ctx))
+        return true;
+    }
+    return false;
+  }
+
+  case ObjCBoxedExprClass:
+  case ObjCArrayLiteralClass:
+  case ObjCDictionaryLiteralClass:
+  case ObjCMessageExprClass:
+  case ObjCSelectorExprClass:
+  case ObjCProtocolExprClass:
+  case ObjCPropertyRefExprClass:
+  case ObjCIsaExprClass:
+  case ObjCIndirectCopyRestoreExprClass:
+  case ObjCSubscriptRefExprClass:
+  case ObjCBridgedCastExprClass:
+    // FIXME: Classify these cases better.
+    return true;
+  }
+
+  // Recurse to children.
+  for (const_child_range SubStmts = children(); SubStmts; ++SubStmts)
+    if (const Stmt *S = *SubStmts)
+      if (cast<Expr>(S)->HasSideEffects(Ctx))
+        return true;
+
+  return false;
+}
+
 namespace {
   /// \brief Look for a call to a non-trivial function within an expression.
   class NonTrivialCallFinder : public EvaluatedExprVisitor<NonTrivialCallFinder>
