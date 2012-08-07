@@ -11,6 +11,9 @@ void move_it(__strong id &&from) {
 - init;
 @end
 
+// <rdar://problem/12031870>: don't warn about this
+extern "C" A* MakeA();
+
 // Ensure that deduction works with lifetime qualifiers.
 void deduction(id obj) {
   auto a = [[A alloc] init];
