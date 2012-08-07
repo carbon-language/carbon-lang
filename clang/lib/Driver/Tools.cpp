@@ -174,8 +174,10 @@ static bool isObjCAutoRefCount(const ArgList &Args) {
 
 /// \brief Determine whether we are linking the ObjC runtime.
 static bool isObjCRuntimeLinked(const ArgList &Args) {
-  if (isObjCAutoRefCount(Args))
+  if (isObjCAutoRefCount(Args)) {
+    Args.ClaimAllArgs(options::OPT_fobjc_link_runtime);
     return true;
+  }
   return Args.hasArg(options::OPT_fobjc_link_runtime);
 }
 
