@@ -99,7 +99,6 @@ while.end:                                        ; preds = %entry
 ; CHECK: %for.body3.lr.ph.us.i.loopexit
 ; CHECK-NEXT: in Loop: Header
 ; CHECK-NEXT: incq
-; CHECK-NEXT: .align
 ; CHECK-NEXT: %for.body3.us.i
 ; CHECK-NEXT: Inner Loop
 ; CHECK: testb

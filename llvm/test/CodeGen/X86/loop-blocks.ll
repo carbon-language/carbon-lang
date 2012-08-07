@@ -41,7 +41,6 @@ done:
 ; CHECK-NEXT:   align
 ; CHECK-NEXT: .LBB1_4:
 ; CHECK-NEXT:   callq bar99
-; CHECK-NEXT:   align
 ; CHECK-NEXT: .LBB1_1:
 ; CHECK-NEXT:   callq body
 
@@ -79,7 +78,6 @@ exit:
 ; CHECK-NEXT: .LBB2_5:
 ; CHECK-NEXT:   callq block_a_true_func
 ; CHECK-NEXT:   callq block_a_merge_func
-; CHECK-NEXT:   align
 ; CHECK-NEXT: .LBB2_1:
 ; CHECK-NEXT:   callq body
 ;
@@ -139,13 +137,13 @@ exit:
 ; CHECK-NEXT:   align
 ; CHECK-NEXT: .LBB3_7:
 ; CHECK-NEXT:   callq   bar100
-; CHECK-NEXT:   align
 ; CHECK-NEXT: .LBB3_1:
 ; CHECK-NEXT:   callq   loop_header
 ;      CHECK:   jl .LBB3_7
 ;      CHECK:   jge .LBB3_3
 ; CHECK-NEXT:   callq   bar101
 ; CHECK-NEXT:   jmp     .LBB3_1
+; CHECK-NEXT:   align
 ; CHECK-NEXT: .LBB3_3:
 ;      CHECK:   jge .LBB3_4
 ; CHECK-NEXT:   callq   bar102

@@ -17,8 +17,7 @@ bb:		; preds = %bb, %entry
 ; CHECK: %bb30.loopexit
 ; CHECK: divsd %xmm0
 ; CHECK: movsd %xmm0, 16(%esp)
-; CHECK: .align
-; CHECK-NEXT: %bb3
+; CHECK: %bb3
 bb3:		; preds = %bb30.loopexit, %bb25, %bb3
 	%2 = load i32* null, align 4		; <i32> [#uses=1]
 	%3 = mul i32 %2, 0		; <i32> [#uses=1]
