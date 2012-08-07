@@ -5554,12 +5554,10 @@ def note_insert_fallthrough_fixit : Note<
 def note_insert_break_fixit : Note<
   "insert 'break;' to avoid fall-through">;
 def err_fallthrough_attr_wrong_target : Error<
-  "clang::fallthrough attribute is only allowed on empty statements">,
-  InGroup<IgnoredAttributes>;
+  "clang::fallthrough attribute is only allowed on empty statements">;
 def note_fallthrough_insert_semi_fixit : Note<"did you forget ';'?">;
 def err_fallthrough_attr_outside_switch : Error<
-  "fallthrough annotation is outside switch statement">,
-  InGroup<IgnoredAttributes>;
+  "fallthrough annotation is outside switch statement">;
 def warn_fallthrough_attr_invalid_placement : Warning<
   "fallthrough annotation does not directly precede switch label">,
   InGroup<ImplicitFallthrough>;
