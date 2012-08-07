@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "cxa_demangle.h"
+#include "lldb/Core/cxa_demangle.h"
 
 #include <stdlib.h>
 #include <string.h>
