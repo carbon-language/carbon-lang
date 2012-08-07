@@ -15,7 +15,7 @@
 #include "FormatStringParsing.h"
 #include "clang/Basic/LangOptions.h"
 
-using clang::analyze_format_string::ArgTypeResult;
+using clang::analyze_format_string::ArgType;
 using clang::analyze_format_string::FormatStringHandler;
 using clang::analyze_format_string::FormatSpecifier;
 using clang::analyze_format_string::LengthModifier;
@@ -229,13 +229,13 @@ clang::analyze_format_string::ParseLengthModifier(FormatSpecifier &FS,
 }
 
 //===----------------------------------------------------------------------===//
-// Methods on ArgTypeResult.
+// Methods on ArgType.
 //===----------------------------------------------------------------------===//
 
-bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
+bool ArgType::matchesType(ASTContext &C, QualType argTy) const {
   switch (K) {
     case InvalidTy:
-      llvm_unreachable("ArgTypeResult must be valid");
+      llvm_unreachable("ArgType must be valid");
 
     case UnknownTy:
       return true;
@@ -371,13 +371,13 @@ bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
     }
   }
 
-  llvm_unreachable("Invalid ArgTypeResult Kind!");
+  llvm_unreachable("Invalid ArgType Kind!");
 }
 
-QualType ArgTypeResult::getRepresentativeType(ASTContext &C) const {
+QualType ArgType::getRepresentativeType(ASTContext &C) const {
   switch (K) {
     case InvalidTy:
-      llvm_unreachable("No representative type for Invalid ArgTypeResult");
+      llvm_unreachable("No representative type for Invalid ArgType");
     case UnknownTy:
       return QualType();
     case AnyCharTy:
@@ -397,10 +397,10 @@ QualType ArgTypeResult::getRepresentativeType(ASTContext &C) const {
     }
   }
 
-  llvm_unreachable("Invalid ArgTypeResult Kind!");
+  llvm_unreachable("Invalid ArgType Kind!");
 }
 
-std::string ArgTypeResult::getRepresentativeTypeName(ASTContext &C) const {
+std::string ArgType::getRepresentativeTypeName(ASTContext &C) const {
   std::string S = getRepresentativeType(C).getAsString();
   if (Name && S != Name)
     return std::string("'") + Name + "' (aka '" + S + "')";
@@ -412,7 +412,7 @@ std::string ArgTypeResult::getRepresentativeTypeName(ASTContext &C) const {
 // Methods on OptionalAmount.
 //===----------------------------------------------------------------------===//
 
-ArgTypeResult
+ArgType
 analyze_format_string::OptionalAmount::getArgType(ASTContext &Ctx) const {
   return Ctx.IntTy;
 }
