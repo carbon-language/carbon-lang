@@ -104,7 +104,7 @@ static bool error(error_code ec) {
   return true;
 }
 
-static const Target *GetTarget(const ObjectFile *Obj = NULL) {
+static const Target *getTarget(const ObjectFile *Obj = NULL) {
   // Figure out the target triple.
   llvm::Triple TheTriple("unknown-unknown-unknown");
   if (TripleName.empty()) {
@@ -163,11 +163,11 @@ static bool RelocAddressLess(RelocationRef a, RelocationRef b) {
 }
 
 static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
-  const Target *TheTarget = GetTarget(Obj);
-  if (!TheTarget) {
-    // GetTarget prints out stuff.
+  const Target *TheTarget = getTarget(Obj);
+  // getTarget() will have already issued a diagnostic if necessary, so
+  // just bail here if it failed.
+  if (!TheTarget)
     return;
-  }
 
   error_code ec;
   for (section_iterator i = Obj->begin_sections(),
@@ -206,7 +206,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
     if (InlineRelocs) {
       for (relocation_iterator ri = i->begin_relocations(),
                                re = i->end_relocations();
-                              ri != re; ri.increment(ec)) {
+                               ri != re; ri.increment(ec)) {
         if (error(ec)) break;
         Rels.push_back(*ri);
       }
@@ -463,9 +463,8 @@ static void PrintCOFFSymbolTable(const COFFObjectFile *coff) {
                << format("assoc %d comdat %d\n"
                          , unsigned(asd->Number)
                          , unsigned(asd->Selection));
-      } else {
+      } else
         outs() << "AUX Unknown\n";
-      }
     } else {
       StringRef name;
       if (error(coff->getSymbol(i, symbol))) return;
@@ -609,13 +608,12 @@ static void DumpInput(StringRef file) {
     return;
   }
 
-  if (Archive *a = dyn_cast<Archive>(binary.get())) {
+  if (Archive *a = dyn_cast<Archive>(binary.get()))
     DumpArchive(a);
-  } else if (ObjectFile *o = dyn_cast<ObjectFile>(binary.get())) {
+  else if (ObjectFile *o = dyn_cast<ObjectFile>(binary.get()))
     DumpObject(o);
-  } else {
+  else
     errs() << ToolName << ": '" << file << "': " << "Unrecognized file type.\n";
-  }
 }
 
 int main(int argc, char **argv) {
