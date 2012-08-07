@@ -130,7 +130,7 @@ public:
             {
                 if (machine == llvm::Triple::thumb || is_altnernate_isa)
                 {
-                    uint16_t thumb_opcode = data.GetU16(&data_offset);
+                    uint32_t thumb_opcode = data.GetU16(&data_offset);
                     if ((thumb_opcode & 0xe000) != 0xe000 || ((thumb_opcode & 0x1800u) == 0))
                     {
                         m_opcode.SetOpcode16 (thumb_opcode);
@@ -138,8 +138,9 @@ public:
                     }
                     else
                     {
-                        data_offset -= 2;
-                        m_opcode.SetOpcode16_2 (data.GetU32(&data_offset));
+                        thumb_opcode <<= 16;
+                        thumb_opcode |= data.GetU16(&data_offset);
+                        m_opcode.SetOpcode16_2 (thumb_opcode);
                         m_is_valid = true;
                     }
                 }
