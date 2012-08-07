@@ -1209,27 +1209,28 @@ collectTiedOperands(MachineInstr *MI, TiedOperandMap &TiedOperands) {
     if (!MI->isRegTiedToDefOperand(SrcIdx, &DstIdx))
       continue;
     AnyOps = true;
+    MachineOperand &SrcMO = MI->getOperand(SrcIdx);
+    MachineOperand &DstMO = MI->getOperand(DstIdx);
+    unsigned SrcReg = SrcMO.getReg();
+    unsigned DstReg = DstMO.getReg();
+    // Tied constraint already satisfied?
+    if (SrcReg == DstReg)
+      continue;
 
-    assert(MI->getOperand(SrcIdx).isReg() &&
-           MI->getOperand(SrcIdx).getReg() &&
-           MI->getOperand(SrcIdx).isUse() &&
-           "two address instruction invalid");
-
-    unsigned RegB = MI->getOperand(SrcIdx).getReg();
+    assert(SrcReg && SrcMO.isUse() && "two address instruction invalid");
 
     // Deal with <undef> uses immediately - simply rewrite the src operand.
-    if (MI->getOperand(SrcIdx).isUndef()) {
-      unsigned DstReg = MI->getOperand(DstIdx).getReg();
+    if (SrcMO.isUndef()) {
       // Constrain the DstReg register class if required.
       if (TargetRegisterInfo::isVirtualRegister(DstReg))
         if (const TargetRegisterClass *RC = TII->getRegClass(MCID, SrcIdx,
                                                              TRI, *MF))
           MRI->constrainRegClass(DstReg, RC);
-      MI->getOperand(SrcIdx).setReg(DstReg);
+      SrcMO.setReg(DstReg);
       DEBUG(dbgs() << "\t\trewrite undef:\t" << *MI);
       continue;
     }
-    TiedOperands[RegB].push_back(std::make_pair(SrcIdx, DstIdx));
+    TiedOperands[SrcReg].push_back(std::make_pair(SrcIdx, DstIdx));
   }
   return AnyOps;
 }
