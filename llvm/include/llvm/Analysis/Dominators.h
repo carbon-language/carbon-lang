@@ -705,6 +705,20 @@ DominatorTreeBase<NodeT>::properlyDominates(const NodeT *A, const NodeT *B) {
 
 EXTERN_TEMPLATE_INSTANTIATION(class DominatorTreeBase<BasicBlock>);
 
+class BasicBlockEdge {
+  const BasicBlock *Start;
+  const BasicBlock *End;
+public:
+  BasicBlockEdge(const BasicBlock *Start_, const BasicBlock *End_) :
+    Start(Start_), End(End_) { }
+  const BasicBlock *getStart() const {
+    return Start;
+  }
+  const BasicBlock *getEnd() const {
+    return End;
+  }
+};
+
 //===-------------------------------------
 /// DominatorTree Class - Concrete subclass of DominatorTreeBase that is used to
 /// compute a normal dominator tree.
@@ -778,6 +792,8 @@ public:
   bool dominates(const Instruction *Def, const Use &U) const;
   bool dominates(const Instruction *Def, const Instruction *User) const;
   bool dominates(const Instruction *Def, const BasicBlock *BB) const;
+  bool dominates(const BasicBlockEdge &BBE, const Use &U) const;
+  bool dominates(const BasicBlockEdge &BBE, const BasicBlock *BB) const;
 
   bool properlyDominates(const DomTreeNode *A, const DomTreeNode *B) const {
     return DT->properlyDominates(A, B);

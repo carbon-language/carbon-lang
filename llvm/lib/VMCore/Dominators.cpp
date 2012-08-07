@@ -142,12 +142,22 @@ bool DominatorTree::dominates(const Instruction *Def,
   // Invoke results are only usable in the normal destination, not in the
   // exceptional destination.
   BasicBlock *NormalDest = II->getNormalDest();
-  if (!dominates(NormalDest, UseBB))
+  BasicBlockEdge E(DefBB, NormalDest);
+  return dominates(E, UseBB);
+}
+
+bool DominatorTree::dominates(const BasicBlockEdge &BBE,
+                              const BasicBlock *UseBB) const {
+  // If the BB the edge ends in doesn't dominate the use BB, then the
+  // edge also doesn't.
+  const BasicBlock *Start = BBE.getStart();
+  const BasicBlock *End = BBE.getEnd();
+  if (!dominates(End, UseBB))
     return false;
 
-  // Simple case: if the normal destination has a single predecessor, the
-  // fact that it dominates the use block implies that we also do.
-  if (NormalDest->getSinglePredecessor())
+  // Simple case: if the end BB has a single predecessor, the fact that it
+  // dominates the use block implies that the edge also does.
+  if (End->getSinglePredecessor())
     return true;
 
   // The normal edge from the invoke is critical. Conceptually, what we would
@@ -170,29 +180,40 @@ bool DominatorTree::dominates(const Instruction *Def,
   // trivially dominates itself, so we only have to find if it dominates the
   // other predecessors. Since the only way out of X is via NormalDest, X can
   // only properly dominate a node if NormalDest dominates that node too.
-  for (pred_iterator PI = pred_begin(NormalDest),
-         E = pred_end(NormalDest); PI != E; ++PI) {
+  for (const_pred_iterator PI = pred_begin(End), E = pred_end(End);
+       PI != E; ++PI) {
     const BasicBlock *BB = *PI;
-    if (BB == DefBB)
+    if (BB == Start)
       continue;
 
-    if (!DT->isReachableFromEntry(BB))
-      continue;
-
-    if (!dominates(NormalDest, BB))
+    if (!dominates(End, BB))
       return false;
   }
   return true;
 }
 
+bool DominatorTree::dominates(const BasicBlockEdge &BBE,
+                              const Use &U) const {
+  Instruction *UserInst = cast<Instruction>(U.getUser());
+  // A PHI in the end of the edge is dominated by it.
+  PHINode *PN = dyn_cast<PHINode>(UserInst);
+  if (PN && PN->getParent() == BBE.getEnd() &&
+      PN->getIncomingBlock(U) == BBE.getStart())
+    return true;
+
+  // Otherwise use the edge-dominates-block query, which
+  // handles the crazy critical edge cases properly.
+  const BasicBlock *UseBB;
+  if (PN)
+    UseBB = PN->getIncomingBlock(U);
+  else
+    UseBB = UserInst->getParent();
+  return dominates(BBE, UseBB);
+}
+
 bool DominatorTree::dominates(const Instruction *Def,
                               const Use &U) const {
-  Instruction *UserInst = dyn_cast<Instruction>(U.getUser());
-
-  // Instructions do not dominate non-instructions.
-  if (!UserInst)
-    return false;
-
+  Instruction *UserInst = cast<Instruction>(U.getUser());
   const BasicBlock *DefBB = Def->getParent();
 
   // Determine the block in which the use happens. PHI nodes use
@@ -218,17 +239,9 @@ bool DominatorTree::dominates(const Instruction *Def,
   // their own block, except possibly a phi, so we don't need to
   // walk the block in any case.
   if (const InvokeInst *II = dyn_cast<InvokeInst>(Def)) {
-    // A PHI in the normal successor using the invoke's return value is
-    // dominated by the invoke's return value.
-    if (isa<PHINode>(UserInst) &&
-        UserInst->getParent() == II->getNormalDest() &&
-        cast<PHINode>(UserInst)->getIncomingBlock(U) == DefBB)
-      return true;
-
-    // Otherwise use the instruction-dominates-block query, which
-    // handles the crazy case of an invoke with a critical edge
-    // properly.
-    return dominates(Def, UseBB);
+    BasicBlock *NormalDest = II->getNormalDest();
+    BasicBlockEdge E(DefBB, NormalDest);
+    return dominates(E, U);
   }
 
   // If the def and use are in different blocks, do a simple CFG dominator
