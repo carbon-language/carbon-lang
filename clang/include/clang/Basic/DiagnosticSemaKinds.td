@@ -3567,8 +3567,7 @@ def err_arc_autoreleasing_capture : Error<
 def err_arc_thread_ownership : Error<
   "thread-local variable has non-trivial ownership: type is %0">;
 def err_arc_indirect_no_ownership : Error<
-  "%select{pointer|reference}1 to non-const type %0 with no explicit ownership">,
-  InGroup<AutomaticReferenceCounting>;
+  "%select{pointer|reference}1 to non-const type %0 with no explicit ownership">;
 def err_arc_array_param_no_ownership : Error<
   "must explicitly describe intended ownership of an object array parameter">;
 def err_arc_pseudo_dtor_inconstant_quals : Error<
@@ -5491,8 +5490,7 @@ def err_builtin_annotation_second_arg : Error<
 
 // CFString checking
 def err_cfstring_literal_not_string_constant : Error<
-  "CFString literal is not a string constant">,
-  InGroup<DiagGroup<"CFString-literal">>;
+  "CFString literal is not a string constant">;
 def warn_cfstring_truncated : Warning<
   "input conversion stopped due to an input byte that does not "
   "belong to the input codeset UTF-8">,

@@ -339,6 +339,11 @@ void InferPedantic::compute(VecOrSet DiagsInPedantic,
 // Warning Tables (.inc file) generation.
 //===----------------------------------------------------------------------===//
 
+static bool isError(const Record &Diag) {
+  const std::string &ClsName = Diag.getValueAsDef("Class")->getName();
+  return ClsName == "CLASS_ERROR";
+}
+
 /// ClangDiagsDefsEmitter - The top-level class emits .def files containing
 /// declarations of Clang diagnostics.
 namespace clang {
@@ -373,6 +378,18 @@ void EmitClangDiagsDefs(RecordKeeper &Records, raw_ostream &OS,
 
   for (unsigned i = 0, e = Diags.size(); i != e; ++i) {
     const Record &R = *Diags[i];
+    
+    // Check if this is an error that is accidentally in a warning
+    // group.
+    if (isError(R)) {
+      if (DefInit *Group = dynamic_cast<DefInit*>(R.getValueInit("Group"))) {
+        const Record *GroupRec = Group->getDef();
+        const std::string &GroupName = GroupRec->getValueAsString("GroupName");
+        throw "Error " + R.getName() + " cannot be in a warning group [" +
+              GroupName + "]";
+      }
+    }
+
     // Filter by component.
     if (!Component.empty() && Component != R.getValueAsString("Component"))
       continue;
