@@ -558,7 +558,7 @@ llvm::DIType CGDebugInfo::CreatePointeeType(QualType PointeeTy,
 
   // Handle qualifiers.
   if (PointeeTy.hasLocalQualifiers())
-    return CreateQualifiedType(PointeeTy.getCanonicalType(), Unit);
+    return CreateQualifiedType(PointeeTy, Unit);
 
   if (const RecordType *RTy = dyn_cast<RecordType>(PointeeTy)) {
     RecordDecl *RD = RTy->getDecl();
@@ -685,9 +685,8 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
   if (isa<FunctionNoProtoType>(Ty))
     EltTys.push_back(DBuilder.createUnspecifiedParameter());
   else if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(Ty)) {
-    for (unsigned i = 0, e = FPT->getNumArgs(); i != e; ++i) {
+    for (unsigned i = 0, e = FPT->getNumArgs(); i != e; ++i)
       EltTys.push_back(getOrCreateType(FPT->getArgType(i), Unit));
-    }
   }
 
   llvm::DIArray EltTypeArray = DBuilder.getOrCreateArray(EltTys);
