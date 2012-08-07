@@ -397,10 +397,10 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
     }
   }
 
-  if (X86ProcFamily == IntelAtom) {
+  if (X86ProcFamily == IntelAtom)
     PostRAScheduler = true;
-    InstrItins = getInstrItineraryForCPU(CPUName);
-  }
+
+  InstrItins = getInstrItineraryForCPU(CPUName);
 
   // It's important to keep the MCSubtargetInfo feature bits in sync with
   // target data structure which is shared with MC code emitter, etc.
