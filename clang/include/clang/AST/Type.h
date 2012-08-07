@@ -1140,8 +1140,6 @@ private:
     unsigned TC : 8;
 
     /// Dependent - Whether this type is a dependent type (C++ [temp.dep.type]).
-    /// Note that this should stay at the end of the ivars for Type so that
-    /// subclasses can pack their bitfields into the same word.
     unsigned Dependent : 1;
 
     /// \brief Whether this type somehow involves a template parameter, even
