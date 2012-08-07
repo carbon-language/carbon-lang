@@ -176,13 +176,17 @@ cl::list<std::string> SourcePaths(
   cl::desc("<source0> [... <sourceN>]"),
   cl::OneOrMore);
 
-int main(int argc, char **argv) {
-  cl::ParseCommandLineOptions(argc, argv);
-  std::string ErrorMessage;
+int main(int argc, const char **argv) {
   llvm::OwningPtr<CompilationDatabase> Compilations(
-    CompilationDatabase::loadFromDirectory(BuildPath, ErrorMessage));
-  if (!Compilations)
-    llvm::report_fatal_error(ErrorMessage);
+    tooling::FixedCompilationDatabase::loadFromCommandLine(argc, argv));
+  cl::ParseCommandLineOptions(argc, argv);
+  if (!Compilations) {
+    std::string ErrorMessage;
+    Compilations.reset(
+           CompilationDatabase::loadFromDirectory(BuildPath, ErrorMessage));
+    if (!Compilations)
+      llvm::report_fatal_error(ErrorMessage);
+    }
   tooling::RefactoringTool Tool(*Compilations, SourcePaths);
   ast_matchers::MatchFinder Finder;
   FixCStrCall Callback(&Tool.getReplacements());
