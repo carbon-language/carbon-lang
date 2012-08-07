@@ -331,7 +331,7 @@ ArgType PrintfSpecifier::getArgType(ASTContext &Ctx,
     case ConversionSpecifier::pArg:
       return ArgType::CPointerTy;
     case ConversionSpecifier::nArg:
-      return Ctx.getPointerType(Ctx.IntTy);
+      return ArgType::PtrTo(Ctx.IntTy);
     case ConversionSpecifier::ObjCObjArg:
       return ArgType::ObjCPointerTy;
     default:

@@ -233,6 +233,19 @@ clang::analyze_format_string::ParseLengthModifier(FormatSpecifier &FS,
 //===----------------------------------------------------------------------===//
 
 bool ArgType::matchesType(ASTContext &C, QualType argTy) const {
+  if (Ptr) {
+    // It has to be a pointer.
+    const PointerType *PT = argTy->getAs<PointerType>();
+    if (!PT)
+      return false;
+
+    // We cannot write through a const qualified pointer.
+    if (PT->getPointeeType().isConstQualified())
+      return false;
+
+    argTy = PT->getPointeeType();
+  }
+
   switch (K) {
     case InvalidTy:
       llvm_unreachable("ArgType must be valid");
@@ -261,13 +274,6 @@ bool ArgType::matchesType(ASTContext &C, QualType argTy) const {
       if (const EnumType *ETy = argTy->getAs<EnumType>())
         argTy = ETy->getDecl()->getIntegerType();
       argTy = C.getCanonicalType(argTy).getUnqualifiedType();
-
-      if (const PointerType *PTy = argTy->getAs<PointerType>()) {
-        // Strip volatile qualifier from pointee type.
-        QualType Pointee = PTy->getPointeeType();
-        Pointee.removeLocalVolatile();
-        argTy = C.getPointerType(Pointee);
-      }
 
       if (T == argTy)
         return true;
@@ -375,35 +381,59 @@ bool ArgType::matchesType(ASTContext &C, QualType argTy) const {
 }
 
 QualType ArgType::getRepresentativeType(ASTContext &C) const {
+  QualType Res;
   switch (K) {
     case InvalidTy:
       llvm_unreachable("No representative type for Invalid ArgType");
     case UnknownTy:
-      return QualType();
+      llvm_unreachable("No representative type for Unknown ArgType");
     case AnyCharTy:
-      return C.CharTy;
+      Res = C.CharTy;
+      break;
     case SpecificTy:
-      return T;
+      Res = T;
+      break;
     case CStrTy:
-      return C.getPointerType(C.CharTy);
+      Res = C.getPointerType(C.CharTy);
+      break;
     case WCStrTy:
-      return C.getPointerType(C.getWCharType());
+      Res = C.getPointerType(C.getWCharType());
+      break;
     case ObjCPointerTy:
-      return C.ObjCBuiltinIdTy;
+      Res = C.ObjCBuiltinIdTy;
+      break;
     case CPointerTy:
-      return C.VoidPtrTy;
+      Res = C.VoidPtrTy;
+      break;
     case WIntTy: {
-      return C.getWIntType();
+      Res = C.getWIntType();
+      break;
     }
   }
 
-  llvm_unreachable("Invalid ArgType Kind!");
+  if (Ptr)
+    Res = C.getPointerType(Res);
+  return Res;
 }
 
 std::string ArgType::getRepresentativeTypeName(ASTContext &C) const {
   std::string S = getRepresentativeType(C).getAsString();
-  if (Name && S != Name)
-    return std::string("'") + Name + "' (aka '" + S + "')";
+
+  std::string Alias;
+  if (Name) {
+    // Use a specific name for this type, e.g. "size_t".
+    Alias = Name;
+    if (Ptr) {
+      // If ArgType is actually a pointer to T, append an asterisk.
+      Alias += (Alias[Alias.size()-1] == '*') ? "*" : " *";
+    }
+    // If Alias is the same as the underlying type, e.g. wchar_t, then drop it.
+    if (S == Alias)
+      Alias.clear();
+  }
+
+  if (!Alias.empty())
+    return std::string("'") + Alias + "' (aka '" + S + "')";
   return std::string("'") + S + "'";
 }
 

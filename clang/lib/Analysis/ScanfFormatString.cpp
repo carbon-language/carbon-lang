@@ -20,7 +20,6 @@ using clang::analyze_format_string::FormatStringHandler;
 using clang::analyze_format_string::LengthModifier;
 using clang::analyze_format_string::OptionalAmount;
 using clang::analyze_format_string::ConversionSpecifier;
-using clang::analyze_scanf::ScanfArgType;
 using clang::analyze_scanf::ScanfConversionSpecifier;
 using clang::analyze_scanf::ScanfSpecifier;
 using clang::UpdateOnReturn;
@@ -194,37 +193,42 @@ static ScanfSpecifierResult ParseScanfSpecifier(FormatStringHandler &H,
   return ScanfSpecifierResult(Start, FS);
 }
 
-ScanfArgType ScanfSpecifier::getArgType(ASTContext &Ctx) const {
+ArgType ScanfSpecifier::getArgType(ASTContext &Ctx) const {
   const ScanfConversionSpecifier &CS = getConversionSpecifier();
 
   if (!CS.consumesDataArgument())
-    return ScanfArgType::Invalid();
+    return ArgType::Invalid();
 
   switch(CS.getKind()) {
     // Signed int.
     case ConversionSpecifier::dArg:
     case ConversionSpecifier::iArg:
       switch (LM.getKind()) {
-        case LengthModifier::None: return ArgType(Ctx.IntTy);
+        case LengthModifier::None:
+          return ArgType::PtrTo(Ctx.IntTy);
         case LengthModifier::AsChar:
-          return ArgType(ArgType::AnyCharTy);
-        case LengthModifier::AsShort: return ArgType(Ctx.ShortTy);
-        case LengthModifier::AsLong: return ArgType(Ctx.LongTy);
+          return ArgType::PtrTo(ArgType::AnyCharTy);
+        case LengthModifier::AsShort:
+          return ArgType::PtrTo(Ctx.ShortTy);
+        case LengthModifier::AsLong:
+          return ArgType::PtrTo(Ctx.LongTy);
         case LengthModifier::AsLongLong:
         case LengthModifier::AsQuad:
-          return ArgType(Ctx.LongLongTy);
+          return ArgType::PtrTo(Ctx.LongLongTy);
         case LengthModifier::AsIntMax:
-          return ScanfArgType(Ctx.getIntMaxType(), "intmax_t *");
+          return ArgType::PtrTo(ArgType(Ctx.getIntMaxType(), "intmax_t"));
         case LengthModifier::AsSizeT:
           // FIXME: ssize_t.
-          return ScanfArgType();
+          return ArgType();
         case LengthModifier::AsPtrDiff:
-          return ScanfArgType(Ctx.getPointerDiffType(), "ptrdiff_t *");
+          return ArgType::PtrTo(ArgType(Ctx.getPointerDiffType(), "ptrdiff_t"));
         case LengthModifier::AsLongDouble:
           // GNU extension.
-          return ArgType(Ctx.LongLongTy);
-        case LengthModifier::AsAllocate: return ScanfArgType::Invalid();
-        case LengthModifier::AsMAllocate: return ScanfArgType::Invalid();
+          return ArgType::PtrTo(Ctx.LongLongTy);
+        case LengthModifier::AsAllocate:
+          return ArgType::Invalid();
+        case LengthModifier::AsMAllocate:
+          return ArgType::Invalid();
       }
 
     // Unsigned int.
@@ -233,25 +237,31 @@ ScanfArgType ScanfSpecifier::getArgType(ASTContext &Ctx) const {
     case ConversionSpecifier::xArg:
     case ConversionSpecifier::XArg:
       switch (LM.getKind()) {
-        case LengthModifier::None: return ArgType(Ctx.UnsignedIntTy);
-        case LengthModifier::AsChar: return ArgType(Ctx.UnsignedCharTy);
-        case LengthModifier::AsShort: return ArgType(Ctx.UnsignedShortTy);
-        case LengthModifier::AsLong: return ArgType(Ctx.UnsignedLongTy);
+        case LengthModifier::None:
+          return ArgType::PtrTo(Ctx.UnsignedIntTy);
+        case LengthModifier::AsChar:
+          return ArgType::PtrTo(Ctx.UnsignedCharTy);
+        case LengthModifier::AsShort:
+          return ArgType::PtrTo(Ctx.UnsignedShortTy);
+        case LengthModifier::AsLong:
+          return ArgType::PtrTo(Ctx.UnsignedLongTy);
         case LengthModifier::AsLongLong:
         case LengthModifier::AsQuad:
-          return ArgType(Ctx.UnsignedLongLongTy);
+          return ArgType::PtrTo(Ctx.UnsignedLongLongTy);
         case LengthModifier::AsIntMax:
-          return ScanfArgType(Ctx.getUIntMaxType(), "uintmax_t *");
+          return ArgType::PtrTo(ArgType(Ctx.getUIntMaxType(), "uintmax_t"));
         case LengthModifier::AsSizeT:
-          return ScanfArgType(Ctx.getSizeType(), "size_t *");
+          return ArgType::PtrTo(ArgType(Ctx.getSizeType(), "size_t"));
         case LengthModifier::AsPtrDiff:
           // FIXME: Unsigned version of ptrdiff_t?
-          return ScanfArgType();
+          return ArgType();
         case LengthModifier::AsLongDouble:
           // GNU extension.
-          return ArgType(Ctx.UnsignedLongLongTy);
-        case LengthModifier::AsAllocate: return ScanfArgType::Invalid();
-        case LengthModifier::AsMAllocate: return ScanfArgType::Invalid();
+          return ArgType::PtrTo(Ctx.UnsignedLongLongTy);
+        case LengthModifier::AsAllocate:
+          return ArgType::Invalid();
+        case LengthModifier::AsMAllocate:
+          return ArgType::Invalid();
       }
 
     // Float.
@@ -264,12 +274,14 @@ ScanfArgType ScanfSpecifier::getArgType(ASTContext &Ctx) const {
     case ConversionSpecifier::gArg:
     case ConversionSpecifier::GArg:
       switch (LM.getKind()) {
-        case LengthModifier::None: return ArgType(Ctx.FloatTy);
-        case LengthModifier::AsLong: return ArgType(Ctx.DoubleTy);
+        case LengthModifier::None:
+          return ArgType::PtrTo(Ctx.FloatTy);
+        case LengthModifier::AsLong:
+          return ArgType::PtrTo(Ctx.DoubleTy);
         case LengthModifier::AsLongDouble:
-          return ArgType(Ctx.LongDoubleTy);
+          return ArgType::PtrTo(Ctx.LongDoubleTy);
         default:
-          return ScanfArgType::Invalid();
+          return ArgType::Invalid();
       }
 
     // Char, string and scanlist.
@@ -277,40 +289,42 @@ ScanfArgType ScanfSpecifier::getArgType(ASTContext &Ctx) const {
     case ConversionSpecifier::sArg:
     case ConversionSpecifier::ScanListArg:
       switch (LM.getKind()) {
-        case LengthModifier::None: return ScanfArgType::CStrTy;
+        case LengthModifier::None:
+          return ArgType::PtrTo(ArgType::AnyCharTy);
         case LengthModifier::AsLong:
-          return ScanfArgType(ScanfArgType::WCStrTy, "wchar_t *");
+          return ArgType::PtrTo(ArgType(Ctx.getWCharType(), "wchar_t"));
         case LengthModifier::AsAllocate:
         case LengthModifier::AsMAllocate:
-          return ScanfArgType(ArgType::CStrTy);
+          return ArgType::PtrTo(ArgType::CStrTy);
         default:
-          return ScanfArgType::Invalid();
+          return ArgType::Invalid();
       }
     case ConversionSpecifier::CArg:
     case ConversionSpecifier::SArg:
       // FIXME: Mac OS X specific?
       switch (LM.getKind()) {
         case LengthModifier::None:
-          return ScanfArgType(ScanfArgType::WCStrTy, "wchar_t *");
+          return ArgType::PtrTo(ArgType(Ctx.getWCharType(), "wchar_t"));
         case LengthModifier::AsAllocate:
         case LengthModifier::AsMAllocate:
-          return ScanfArgType(ArgType::WCStrTy, "wchar_t **");
+          return ArgType::PtrTo(ArgType(ArgType::WCStrTy, "wchar_t *"));
         default:
-          return ScanfArgType::Invalid();
+          return ArgType::Invalid();
       }
 
     // Pointer.
     case ConversionSpecifier::pArg:
-      return ScanfArgType(ArgType(ArgType::CPointerTy));
+      return ArgType::PtrTo(ArgType::CPointerTy);
 
+    // Write-back.
     case ConversionSpecifier::nArg:
-      return ArgType(Ctx.IntTy);
+      return ArgType::PtrTo(Ctx.IntTy);
 
     default:
       break;
   }
 
-  return ScanfArgType();
+  return ArgType();
 }
 
 bool ScanfSpecifier::fixType(QualType QT, const LangOptions &LangOpt,
@@ -393,8 +407,8 @@ bool ScanfSpecifier::fixType(QualType QT, const LangOptions &LangOpt,
     namedTypeToLengthModifier(PT, LM);
 
   // If fixing the length modifier was enough, we are done.
-  const analyze_scanf::ScanfArgType &ATR = getArgType(Ctx);
-  if (hasValidLengthModifier() && ATR.isValid() && ATR.matchesType(Ctx, QT))
+  const analyze_scanf::ArgType &AT = getArgType(Ctx);
+  if (hasValidLengthModifier() && AT.isValid() && AT.matchesType(Ctx, QT))
     return true;
 
   // Figure out the conversion specifier.
@@ -450,55 +464,4 @@ bool clang::analyze_format_string::ParseScanfString(FormatStringHandler &H,
   }
   assert(I == E && "Format string not exhausted");
   return false;
-}
-
-bool ScanfArgType::matchesType(ASTContext& C, QualType argTy) const {
-  // It has to be a pointer type.
-  const PointerType *PT = argTy->getAs<PointerType>();
-  if (!PT)
-    return false;
-
-  // We cannot write through a const qualified pointer.
-  if (PT->getPointeeType().isConstQualified())
-    return false;
-
-  switch (K) {
-    case InvalidTy:
-      llvm_unreachable("ArgType must be valid");
-    case UnknownTy:
-      return true;
-    case CStrTy:
-      return ArgType(ArgType::CStrTy).matchesType(C, argTy);
-    case WCStrTy:
-      return ArgType(ArgType::WCStrTy).matchesType(C, argTy);
-    case PtrToArgTypeTy: {
-      return A.matchesType(C, PT->getPointeeType());
-    }
-  }
-
-  llvm_unreachable("Invalid ScanfArgType Kind!");
-}
-
-QualType ScanfArgType::getRepresentativeType(ASTContext &C) const {
-  switch (K) {
-    case InvalidTy:
-      llvm_unreachable("No representative type for Invalid ArgType");
-    case UnknownTy:
-      return QualType();
-    case CStrTy:
-      return C.getPointerType(C.CharTy);
-    case WCStrTy:
-      return C.getPointerType(C.getWCharType());
-    case PtrToArgTypeTy:
-      return C.getPointerType(A.getRepresentativeType(C));
-  }
-
-  llvm_unreachable("Invalid ScanfArgType Kind!");
-}
-
-std::string ScanfArgType::getRepresentativeTypeName(ASTContext& C) const {
-  std::string S = getRepresentativeType(C).getAsString();
-  if (!Name)
-    return std::string("'") + S + "'";
-  return std::string("'") + Name + "' (aka '" + S + "')";
 }

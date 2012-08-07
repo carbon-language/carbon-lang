@@ -33,6 +33,12 @@ void test(const char *s, int *i) {
   scanf("%*d", i); // // expected-warning{{data argument not used by format string}}
   scanf("%*d", i); // // expected-warning{{data argument not used by format string}}
   scanf("%*d%1$d", i); // no-warning
+
+  scanf("%s", (char*)0); // no-warning
+  scanf("%s", (volatile char*)0); // no-warning
+  scanf("%s", (signed char*)0); // no-warning
+  scanf("%s", (unsigned char*)0); // no-warning
+  scanf("%hhu", (signed char*)0); // no-warning
 }
 
 void bad_length_modifiers(char *s, void *p, wchar_t *ws, long double *ld) {

@@ -209,14 +209,23 @@ private:
   const Kind K;
   QualType T;
   const char *Name;
+  bool Ptr;
 public:
-  ArgType(Kind k = UnknownTy, const char *n = 0) : K(k), Name(n) {}
-  ArgType(QualType t, const char *n = 0) : K(SpecificTy), T(t), Name(n)  {}
-  ArgType(CanQualType t) : K(SpecificTy), T(t), Name(0) {}
+  ArgType(Kind k = UnknownTy, const char *n = 0) : K(k), Name(n), Ptr(false) {}
+  ArgType(QualType t, const char *n = 0)
+      : K(SpecificTy), T(t), Name(n), Ptr(false) {}
+  ArgType(CanQualType t) : K(SpecificTy), T(t), Name(0), Ptr(false) {}
 
   static ArgType Invalid() { return ArgType(InvalidTy); }
-
   bool isValid() const { return K != InvalidTy; }
+
+  /// Create an ArgType which corresponds to the type pointer to A.
+  static ArgType PtrTo(const ArgType& A) {
+    assert(A.K >= InvalidTy && "ArgType cannot be pointer to invalid/unknown");
+    ArgType Res = A;
+    Res.Ptr = true;
+    return Res;
+  }
 
   bool matchesType(ASTContext &C, QualType argTy) const;
 
@@ -517,30 +526,6 @@ using analyze_format_string::LengthModifier;
 using analyze_format_string::OptionalAmount;
 using analyze_format_string::OptionalFlag;
 
-class ScanfArgType : public ArgType {
-public:
-  enum Kind { UnknownTy, InvalidTy, CStrTy, WCStrTy, PtrToArgTypeTy };
-private:
-  Kind K;
-  ArgType A;
-  const char *Name;
-  QualType getRepresentativeType(ASTContext &C) const;
-public:
-  ScanfArgType(Kind k = UnknownTy, const char* n = 0) : K(k), Name(n) {}
-  ScanfArgType(ArgType a, const char *n = 0)
-      : K(PtrToArgTypeTy), A(a), Name(n) {
-    assert(A.isValid());
-  }
-
-  static ScanfArgType Invalid() { return ScanfArgType(InvalidTy); }
-
-  bool isValid() const { return K != InvalidTy; }
-
-  bool matchesType(ASTContext& C, QualType argTy) const;
-
-  std::string getRepresentativeTypeName(ASTContext& C) const;
-};
-
 class ScanfSpecifier : public analyze_format_string::FormatSpecifier {
   OptionalFlag SuppressAssignment; // '*'
 public:
@@ -569,7 +554,7 @@ public:
     return CS.consumesDataArgument() && !SuppressAssignment;
   }
 
-  ScanfArgType getArgType(ASTContext &Ctx) const;
+  ArgType getArgType(ASTContext &Ctx) const;
 
   bool fixType(QualType QT, const LangOptions &LangOpt, ASTContext &Ctx);
 
