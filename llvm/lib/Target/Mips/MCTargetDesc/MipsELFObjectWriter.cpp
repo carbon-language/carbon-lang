@@ -103,6 +103,9 @@ unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
   case FK_Data_4:
     Type = ELF::R_MIPS_32;
     break;
+  case FK_Data_8:
+    Type = ELF::R_MIPS_64;
+    break;
   case FK_GPRel_4:
     Type = ELF::R_MIPS_GPREL32;
     break;
