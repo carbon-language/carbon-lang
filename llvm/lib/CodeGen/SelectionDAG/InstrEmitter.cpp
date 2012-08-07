@@ -411,6 +411,10 @@ void InstrEmitter::AddOperand(MachineInstr *MI, SDValue Op,
   } else if (BlockAddressSDNode *BA = dyn_cast<BlockAddressSDNode>(Op)) {
     MI->addOperand(MachineOperand::CreateBA(BA->getBlockAddress(),
                                             BA->getTargetFlags()));
+  } else if (TargetIndexSDNode *TI = dyn_cast<TargetIndexSDNode>(Op)) {
+    MI->addOperand(MachineOperand::CreateTargetIndex(TI->getIndex(),
+                                                     TI->getOffset(),
+                                                     TI->getTargetFlags()));
   } else {
     assert(Op.getValueType() != MVT::Other &&
            Op.getValueType() != MVT::Glue &&

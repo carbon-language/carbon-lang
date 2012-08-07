@@ -126,6 +126,11 @@ namespace ISD {
     TargetExternalSymbol,
     TargetBlockAddress,
 
+    /// TargetIndex - Like a constant pool entry, but with completely
+    /// target-dependent semantics. Holds target flags, a 32-bit index, and a
+    /// 64-bit index. Targets can use this however they like.
+    TargetIndex,
+
     /// RESULT = INTRINSIC_WO_CHAIN(INTRINSICID, arg1, arg2, ...)
     /// This node represents a target intrinsic function with no side effects.
     /// The first operand is the ID number of the intrinsic from the

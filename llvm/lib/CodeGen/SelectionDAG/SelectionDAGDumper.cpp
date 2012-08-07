@@ -100,6 +100,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::EH_SJLJ_SETJMP:             return "EH_SJLJ_SETJMP";
   case ISD::EH_SJLJ_LONGJMP:            return "EH_SJLJ_LONGJMP";
   case ISD::ConstantPool:               return "ConstantPool";
+  case ISD::TargetIndex:                return "TargetIndex";
   case ISD::ExternalSymbol:             return "ExternalSymbol";
   case ISD::BlockAddress:               return "BlockAddress";
   case ISD::INTRINSIC_WO_CHAIN:
@@ -408,6 +409,10 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
     else
       OS << " " << offset;
     if (unsigned int TF = CP->getTargetFlags())
+      OS << " [TF=" << TF << ']';
+  } else if (const TargetIndexSDNode *TI = dyn_cast<TargetIndexSDNode>(this)) {
+    OS << "<" << TI->getIndex() << '+' << TI->getOffset() << ">";
+    if (unsigned TF = TI->getTargetFlags())
       OS << " [TF=" << TF << ']';
   } else if (const BasicBlockSDNode *BBDN = dyn_cast<BasicBlockSDNode>(this)) {
     OS << "<";
