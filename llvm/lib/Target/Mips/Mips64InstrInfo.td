@@ -219,13 +219,14 @@ def RDHWR64 : ReadHardware<CPU64Regs, HWRegs64>;
 def DEXT : ExtBase<3, "dext", CPU64Regs>;
 def DINS : InsBase<7, "dins", CPU64Regs>;
 
-def DSLL64_32 : FR<0x3c, 0x00, (outs CPU64Regs:$rd), (ins CPURegs:$rt),
-                   "dsll\t$rd, $rt, 32", [], IIAlu>;
-def SLL64_32 : FR<0x0, 0x00, (outs CPU64Regs:$rd), (ins CPURegs:$rt),
-                  "sll\t$rd, $rt, 0", [], IIAlu>;
-let isCodeGenOnly = 1 in
-def SLL64_64 : FR<0x0, 0x00, (outs CPU64Regs:$rd), (ins CPU64Regs:$rt),
-                  "sll\t$rd, $rt, 0", [], IIAlu>;
+let isCodeGenOnly = 1, rs = 0, shamt = 0 in {
+  def DSLL64_32 : FR<0x3c, 0x00, (outs CPU64Regs:$rd), (ins CPURegs:$rt),
+                     "dsll\t$rd, $rt, 32", [], IIAlu>;
+  def SLL64_32 : FR<0x0, 0x00, (outs CPU64Regs:$rd), (ins CPURegs:$rt),
+                    "sll\t$rd, $rt, 0", [], IIAlu>;
+  def SLL64_64 : FR<0x0, 0x00, (outs CPU64Regs:$rd), (ins CPU64Regs:$rt),
+                    "sll\t$rd, $rt, 0", [], IIAlu>;
+}
 }
 //===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions
