@@ -929,7 +929,7 @@ computeInstrHeights(const MachineBasicBlock *MBB) {
     if (TBI.Succ) {
       for (MachineBasicBlock::const_iterator
            I = TBI.Succ->begin(), E = TBI.Succ->end();
-           I != E && !I->isPHI(); ++I) {
+           I != E && I->isPHI(); ++I) {
         const MachineInstr *PHI = I;
         Deps.clear();
         getPHIDeps(PHI, Deps, MBB, MTM.MRI);

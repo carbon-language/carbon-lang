@@ -219,7 +219,7 @@ public:
       return TBI.InstrDepth + TBI.InstrHeight;
     }
 
-    /// Return the resource dpeth of the top/bottom of the trace center block.
+    /// Return the resource depth of the top/bottom of the trace center block.
     /// This is the number of cycles required to execute all instructions from
     /// the trace head to the trace center block. The resource depth only
     /// considers execution resources, it ignores data dependencies.
