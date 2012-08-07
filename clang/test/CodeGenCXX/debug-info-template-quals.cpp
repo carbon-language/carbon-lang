@@ -1,4 +1,4 @@
-// RUN: %clang -emit-llvm -g -S %s -o - | FileCheck %s
+// RUN: %clang -emit-llvm -g -S -triple x86_64-apple-darwin %s -o - | FileCheck %s
 
 template<typename _CharT>
 struct basic_string {
