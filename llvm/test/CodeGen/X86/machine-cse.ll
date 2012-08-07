@@ -99,3 +99,38 @@ return:                                           ; preds = %if.end, %entry
   %retval.0 = phi i32 [ 1, %entry ], [ %., %if.end ]
   ret i32 %retval.0
 }
+
+; rdar://11393714
+define i8* @bsd_memchr(i8* %s, i32 %a, i32 %c, i64 %n) nounwind ssp {
+; CHECK: %entry
+; CHECK: xorl
+; CHECK: %preheader
+; CHECK: %do.body
+; CHECK-NOT: xorl
+; CHECK: %do.cond
+; CHECK-NOT: xorl
+; CHECK: %return
+entry:
+  %cmp = icmp eq i64 %n, 0
+  br i1 %cmp, label %return, label %preheader
+
+preheader:
+  %conv2 = and i32 %c, 255
+  br label %do.body
+
+do.body:
+  %n.addr.0 = phi i64 [ %dec, %do.cond ], [ %n, %preheader ]
+  %p.0 = phi i8* [ %incdec.ptr, %do.cond ], [ %s, %preheader ]
+  %cmp3 = icmp eq i32 %a, %conv2
+  br i1 %cmp3, label %return, label %do.cond
+
+do.cond:
+  %incdec.ptr = getelementptr inbounds i8* %p.0, i64 1
+  %dec = add i64 %n.addr.0, -1
+  %cmp6 = icmp eq i64 %dec, 0
+  br i1 %cmp6, label %return, label %do.body
+
+return:
+  %retval.0 = phi i8* [ null, %entry ], [ null, %do.cond ], [ %p.0, %do.body ]
+  ret i8* %retval.0
+}

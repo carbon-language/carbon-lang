@@ -634,7 +634,7 @@ define void @test_unnatural_cfg_backwards_inner_loop() {
 ;
 ; CHECK: test_unnatural_cfg_backwards_inner_loop
 ; CHECK: %entry
-; CHECK: %body
+; CHECK: [[BODY:# BB#[0-9]+]]:
 ; CHECK: %loop2b
 ; CHECK: %loop1
 ; CHECK: %loop2a

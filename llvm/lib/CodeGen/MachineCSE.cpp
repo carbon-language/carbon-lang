@@ -324,6 +324,29 @@ bool MachineCSE::isProfitableToCSE(unsigned CSReg, unsigned Reg,
                                    MachineInstr *CSMI, MachineInstr *MI) {
   // FIXME: Heuristics that works around the lack the live range splitting.
 
+  // If CSReg is used at all uses of Reg, CSE should not increase register
+  // pressure of CSReg.
+  bool MayIncreasePressure = true;
+  if (TargetRegisterInfo::isVirtualRegister(CSReg) &&
+      TargetRegisterInfo::isVirtualRegister(Reg)) {
+    MayIncreasePressure = false;
+    SmallPtrSet<MachineInstr*, 8> CSUses;
+    for (MachineRegisterInfo::use_nodbg_iterator I =MRI->use_nodbg_begin(CSReg),
+         E = MRI->use_nodbg_end(); I != E; ++I) {
+      MachineInstr *Use = &*I;
+      CSUses.insert(Use);
+    }
+    for (MachineRegisterInfo::use_nodbg_iterator I = MRI->use_nodbg_begin(Reg),
+         E = MRI->use_nodbg_end(); I != E; ++I) {
+      MachineInstr *Use = &*I;
+      if (!CSUses.count(Use)) {
+        MayIncreasePressure = true;
+        break;
+      }
+    }
+  }
+  if (!MayIncreasePressure) return true;
+
   // Heuristics #1: Don't CSE "cheap" computation if the def is not local or in
   // an immediate predecessor. We don't want to increase register pressure and
   // end up causing other computation to be spilled.
