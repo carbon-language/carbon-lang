@@ -20,6 +20,11 @@ __attribute__((objc_root_class)) @interface MyObject {
     // expected-warning {{instance variable '_isTickledPink' is being directly accessed}}
 }
 
+- (id) init {
+    _myMaster=0;
+    return _myMaster;
+}
+- (void) dealloc { _myMaster = 0; }
 @end
 
 MyObject * foo ()
