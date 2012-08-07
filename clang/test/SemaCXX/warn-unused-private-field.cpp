@@ -107,7 +107,7 @@ class A {
   int used_, unused_; // expected-warning{{private field 'unused_' is not used}}
   int in_class_initializer_ = 42; // expected-warning{{private field 'in_class_initializer_' is not used}}
   int in_class_initializer_with_side_effect_ = side_effect();
-  Trivial trivial_initializer_ = Trivial();
+  Trivial trivial_initializer_ = Trivial(); // expected-warning{{private field 'trivial_initializer_' is not used}}
   Trivial non_trivial_initializer_ = Trivial(42);
   int initialized_with_side_effect_;
   static int static_fields_are_ignored_;
@@ -218,4 +218,29 @@ class A {
   A* a_;  // expected-warning{{private field 'a_' is not used}}
   void* p2_;  // expected-warning{{private field 'p2_' is not used}}
 };
+}
+
+namespace pr13543 {
+  void f(int);
+  void f(char);
+  struct S {
+    S() : p(&f) {}
+  private:
+    void (*p)(int); // expected-warning{{private field 'p' is not used}}
+  };
+
+  struct A { int n; };
+  struct B {
+    B() : a(A()) {}
+    B(char) {}
+    B(int n) : a{n}, b{(f(n), 0)} {}
+  private:
+    A a = A(); // expected-warning{{private field 'a' is not used}}
+    A b;
+  };
+
+  struct X { ~X(); };
+  class C {
+    X x[4]; // no-warning
+  };
 }

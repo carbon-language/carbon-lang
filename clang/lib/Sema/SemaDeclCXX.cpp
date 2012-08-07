@@ -1461,13 +1461,12 @@ bool Sema::CheckIfOverriddenFunctionIsMarkedFinal(const CXXMethodDecl *New,
 }
 
 static bool InitializationHasSideEffects(const FieldDecl &FD) {
-  if (!FD.getType().isNull()) {
-    if (const CXXRecordDecl *RD = FD.getType()->getAsCXXRecordDecl()) {
-      return !RD->isCompleteDefinition() ||
-             !RD->hasTrivialDefaultConstructor() ||
-             !RD->hasTrivialDestructor();
-    }
-  }
+  const Type *T = FD.getType()->getBaseElementTypeUnsafe();
+  // FIXME: Destruction of ObjC lifetime types has side-effects.
+  if (const CXXRecordDecl *RD = T->getAsCXXRecordDecl())
+    return !RD->isCompleteDefinition() ||
+           !RD->hasTrivialDefaultConstructor() ||
+           !RD->hasTrivialDestructor();
   return false;
 }
 
@@ -1654,7 +1653,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       if (!FD->isImplicit() && FD->getDeclName() &&
           FD->getAccess() == AS_private &&
           !FD->hasAttr<UnusedAttr>() &&
-          !FD->getParent()->getTypeForDecl()->isDependentType() &&
+          !FD->getParent()->isDependentContext() &&
           !InitializationHasSideEffects(*FD))
         UnusedPrivateFields.insert(FD);
     }
@@ -2162,24 +2161,6 @@ Sema::BuildMemberInitializer(ValueDecl *Member, Expr *Init,
     InitListExpr *InitList = cast<InitListExpr>(Init);
     Args = InitList->getInits();
     NumArgs = InitList->getNumInits();
-  }
-
-  // Mark FieldDecl as being used if it is a non-primitive type and the
-  // initializer does not call the default constructor (which is trivial
-  // for all entries in UnusedPrivateFields).
-  // FIXME: Make this smarter once more side effect-free types can be
-  // determined.
-  if (NumArgs > 0) {
-    if (Member->getType()->isRecordType()) {
-      UnusedPrivateFields.remove(Member);
-    } else {
-      for (unsigned i = 0; i < NumArgs; ++i) {
-        if (Args[i]->HasSideEffects(Context)) {
-          UnusedPrivateFields.remove(Member);
-          break;
-        }
-      }
-    }
   }
 
   if (getDiagnostics().getDiagnosticLevel(diag::warn_field_is_uninit, IdLoc)
@@ -2825,6 +2806,16 @@ struct BaseAndFieldInfo {
 
     llvm_unreachable("Invalid ImplicitInitializerKind!");
   }
+
+  bool addFieldInitializer(CXXCtorInitializer *Init) {
+    AllToInit.push_back(Init);
+
+    // Check whether this initializer makes the field "used".
+    if (Init->getInit() && Init->getInit()->HasSideEffects(S.Context))
+      S.UnusedPrivateFields.remove(Init->getAnyMember());
+
+    return false;
+  }
 };
 }
 
@@ -2862,12 +2853,10 @@ static bool CollectFieldInitializer(Sema &SemaRef, BaseAndFieldInfo &Info,
                                     IndirectFieldDecl *Indirect = 0) {
 
   // Overwhelmingly common case: we have a direct initializer for this field.
-  if (CXXCtorInitializer *Init = Info.AllBaseFields.lookup(Field)) {
-    Info.AllToInit.push_back(Init);
-    return false;
-  }
+  if (CXXCtorInitializer *Init = Info.AllBaseFields.lookup(Field))
+    return Info.addFieldInitializer(Init);
 
-  // C++0x [class.base.init]p8: if the entity is a non-static data member that
+  // C++11 [class.base.init]p8: if the entity is a non-static data member that
   // has a brace-or-equal-initializer, the entity is initialized as specified
   // in [dcl.init].
   if (Field->hasInClassInitializer() && !Info.isImplicitCopyOrMove()) {
@@ -2882,15 +2871,7 @@ static bool CollectFieldInitializer(Sema &SemaRef, BaseAndFieldInfo &Info,
                                                       SourceLocation(),
                                                       SourceLocation(), 0,
                                                       SourceLocation());
-    Info.AllToInit.push_back(Init);
-
-    // Check whether this initializer makes the field "used".
-    Expr *InitExpr = Field->getInClassInitializer();
-    if (Field->getType()->isRecordType() ||
-        (InitExpr && InitExpr->HasSideEffects(SemaRef.Context)))
-      SemaRef.UnusedPrivateFields.remove(Field);
-
-    return false;
+    return Info.addFieldInitializer(Init);
   }
 
   // Don't build an implicit initializer for union members if none was
@@ -2914,10 +2895,10 @@ static bool CollectFieldInitializer(Sema &SemaRef, BaseAndFieldInfo &Info,
                                      Indirect, Init))
     return true;
 
-  if (Init)
-    Info.AllToInit.push_back(Init);
+  if (!Init)
+    return false;
 
-  return false;
+  return Info.addFieldInitializer(Init);
 }
 
 bool
