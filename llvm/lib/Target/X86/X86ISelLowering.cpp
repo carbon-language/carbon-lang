@@ -8741,6 +8741,16 @@ static bool isAllOnes(SDValue V) {
   return C && C->isAllOnesValue();
 }
 
+static bool isTruncWithZeroHighBitsInput(SDValue V, SelectionDAG &DAG) {
+  if (V.getOpcode() != ISD::TRUNCATE)
+    return false;
+
+  SDValue VOp0 = V.getOperand(0);
+  unsigned InBits = VOp0.getValueSizeInBits();
+  unsigned Bits = V.getValueSizeInBits();
+  return DAG.MaskedValueIsZero(VOp0, APInt::getHighBitsSet(InBits,InBits-Bits));
+}
+
 SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
   bool addTest = true;
   SDValue Cond  = Op.getOperand(0);
@@ -8910,9 +8920,9 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
   }
 
   if (addTest) {
-    // Look pass the truncate.
-    if (Cond.getOpcode() == ISD::TRUNCATE)
-      Cond = Cond.getOperand(0);
+    // Look pass the truncate if the high bits are known zero.
+    if (isTruncWithZeroHighBitsInput(Cond, DAG))
+        Cond = Cond.getOperand(0);
 
     // We know the result of AND is compared against zero. Try to match
     // it to BT.
@@ -9219,9 +9229,9 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
   }
 
   if (addTest) {
-    // Look pass the truncate.
-    if (Cond.getOpcode() == ISD::TRUNCATE)
-      Cond = Cond.getOperand(0);
+    // Look pass the truncate if the high bits are known zero.
+    if (isTruncWithZeroHighBitsInput(Cond, DAG))
+        Cond = Cond.getOperand(0);
 
     // We know the result of AND is compared against zero. Try to match
     // it to BT.
