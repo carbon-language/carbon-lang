@@ -45,3 +45,12 @@ define i1 @test6(i32 %val) {
   ret i1 %2
 ; CHECK: ret i1 false
 }
+
+; Check that optimizing unsigned >= comparisons correctly distinguishes
+; positive and negative constants.  <rdar://problem/12029145>
+define i1 @test7(i32 %val) {
+  %1 = uitofp i32 %val to double
+  %2 = fcmp oge double %1, 3.200000e+00
+  ret i1 %2
+; CHECK: icmp ugt i32 %val, 3
+}

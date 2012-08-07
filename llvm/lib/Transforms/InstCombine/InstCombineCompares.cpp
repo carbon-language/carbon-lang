@@ -2824,7 +2824,7 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
       case ICmpInst::ICMP_UGE:
         // (float)int >= -4.4   --> true
         // (float)int >= 4.4    --> int > 4
-        if (!RHS.isNegative())
+        if (RHS.isNegative())
           return ReplaceInstUsesWith(I, ConstantInt::getTrue(I.getContext()));
         Pred = ICmpInst::ICMP_UGT;
         break;
