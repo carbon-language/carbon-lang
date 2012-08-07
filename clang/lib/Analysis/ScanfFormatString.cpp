@@ -318,7 +318,30 @@ ArgType ScanfSpecifier::getArgType(ASTContext &Ctx) const {
 
     // Write-back.
     case ConversionSpecifier::nArg:
-      return ArgType::PtrTo(Ctx.IntTy);
+      switch (LM.getKind()) {
+        case LengthModifier::None:
+          return ArgType::PtrTo(Ctx.IntTy);
+        case LengthModifier::AsChar:
+          return ArgType::PtrTo(Ctx.SignedCharTy);
+        case LengthModifier::AsShort:
+          return ArgType::PtrTo(Ctx.ShortTy);
+        case LengthModifier::AsLong:
+          return ArgType::PtrTo(Ctx.LongTy);
+        case LengthModifier::AsLongLong:
+        case LengthModifier::AsQuad:
+          return ArgType::PtrTo(Ctx.LongLongTy);
+        case LengthModifier::AsIntMax:
+          return ArgType::PtrTo(ArgType(Ctx.getIntMaxType(), "intmax_t"));
+        case LengthModifier::AsSizeT:
+          return ArgType(); // FIXME: ssize_t
+        case LengthModifier::AsPtrDiff:
+          return ArgType::PtrTo(ArgType(Ctx.getPointerDiffType(), "ptrdiff_t"));
+        case LengthModifier::AsLongDouble:
+          return ArgType(); // FIXME: Is this a known extension?
+        case LengthModifier::AsAllocate:
+        case LengthModifier::AsMAllocate:
+          return ArgType::Invalid();
+        }
 
     default:
       break;

@@ -90,6 +90,33 @@ void check_writeback_specifier()
   char *b;
   printf("%n", b); // expected-warning{{format specifies type 'int *' but the argument has type 'char *'}}
   printf("%n", &x); // no-warning
+
+  printf("%hhn", (signed char*)0); // no-warning
+  printf("%hhn", (char*)0); // no-warning
+  printf("%hhn", (unsigned char*)0); // no-warning
+  printf("%hhn", (int*)0); // expected-warning{{format specifies type 'signed char *' but the argument has type 'int *'}}
+
+  printf("%hn", (short*)0); // no-warning
+  printf("%hn", (unsigned short*)0); // no-warning
+  printf("%hn", (int*)0); // expected-warning{{format specifies type 'short *' but the argument has type 'int *'}}
+
+  printf("%n", (int*)0); // no-warning
+  printf("%n", (unsigned int*)0); // no-warning
+  printf("%n", (char*)0); // expected-warning{{format specifies type 'int *' but the argument has type 'char *'}}
+
+  printf("%ln", (long*)0); // no-warning
+  printf("%ln", (unsigned long*)0); // no-warning
+  printf("%ln", (int*)0); // expected-warning{{format specifies type 'long *' but the argument has type 'int *'}}
+
+  printf("%lln", (long long*)0); // no-warning
+  printf("%lln", (unsigned long long*)0); // no-warning
+  printf("%lln", (int*)0); // expected-warning{{format specifies type 'long long *' but the argument has type 'int *'}}
+
+  printf("%qn", (long long*)0); // no-warning
+  printf("%qn", (unsigned long long*)0); // no-warning
+  printf("%qn", (int*)0); // expected-warning{{format specifies type 'long long *' but the argument has type 'int *'}}
+
+  printf("%Ln", 0); // expected-warning{{length modifier 'L' results in undefined behavior or no effect with 'n' conversion specifier}}
 }
 
 void check_invalid_specifier(FILE* fp, char *buf)

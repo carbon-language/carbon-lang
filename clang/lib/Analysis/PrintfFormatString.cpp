@@ -312,6 +312,33 @@ ArgType PrintfSpecifier::getArgType(ASTContext &Ctx,
     return Ctx.DoubleTy;
   }
 
+  if (CS.getKind() == ConversionSpecifier::nArg) {
+    switch (LM.getKind()) {
+      case LengthModifier::None:
+        return ArgType::PtrTo(Ctx.IntTy);
+      case LengthModifier::AsChar:
+        return ArgType::PtrTo(Ctx.SignedCharTy);
+      case LengthModifier::AsShort:
+        return ArgType::PtrTo(Ctx.ShortTy);
+      case LengthModifier::AsLong:
+        return ArgType::PtrTo(Ctx.LongTy);
+      case LengthModifier::AsLongLong:
+      case LengthModifier::AsQuad:
+        return ArgType::PtrTo(Ctx.LongLongTy);
+      case LengthModifier::AsIntMax:
+        return ArgType::PtrTo(ArgType(Ctx.getIntMaxType(), "intmax_t"));
+      case LengthModifier::AsSizeT:
+        return ArgType(); // FIXME: ssize_t
+      case LengthModifier::AsPtrDiff:
+        return ArgType::PtrTo(ArgType(Ctx.getPointerDiffType(), "ptrdiff_t"));
+      case LengthModifier::AsLongDouble:
+        return ArgType(); // FIXME: Is this a known extension?
+      case LengthModifier::AsAllocate:
+      case LengthModifier::AsMAllocate:
+        return ArgType::Invalid();
+    }
+  }
+
   switch (CS.getKind()) {
     case ConversionSpecifier::sArg:
       if (LM.getKind() == LengthModifier::AsWideChar) {
@@ -330,8 +357,6 @@ ArgType PrintfSpecifier::getArgType(ASTContext &Ctx,
       return ArgType(Ctx.WCharTy, "wchar_t");
     case ConversionSpecifier::pArg:
       return ArgType::CPointerTy;
-    case ConversionSpecifier::nArg:
-      return ArgType::PtrTo(Ctx.IntTy);
     case ConversionSpecifier::ObjCObjArg:
       return ArgType::ObjCPointerTy;
     default:
