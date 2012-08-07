@@ -9,6 +9,9 @@ void test0(id x) {
   // CHECK-NEXT: [[TMP:%.*]] = load i8** [[X]]
   // CHECK-NEXT: call void @objc_release(i8* [[TMP]])
   // CHECK-NEXT: ret void
+// rdar://12040837
+  // CHECK: declare extern_weak i8* @objc_retain(i8*) nonlazybind
+  // CHECK: declare extern_weak void @objc_release(i8*) nonlazybind
 }
 
 // CHECK: define i8* @test1(i8*
