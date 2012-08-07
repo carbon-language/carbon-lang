@@ -269,6 +269,10 @@ let Pattern = [(set G8RC:$rT, readcyclecounter)] in
 def MFTB8 : XFXForm_1_ext<31, 339, 268, (outs G8RC:$rT), (ins),
                           "mfspr $rT, 268", SprMFTB>,
             PPC970_DGroup_First, PPC970_Unit_FXU;
+// Note that encoding mftb using mfspr is now the preferred form,
+// and has been since at least ISA v2.03. The mftb instruction has
+// now been phased out. Using mfspr, however, is known not to work on
+// the POWER3.
 
 let Defs = [X1], Uses = [X1] in
 def DYNALLOC8 : Pseudo<(outs G8RC:$result), (ins G8RC:$negsize, memri:$fpsi),"",
