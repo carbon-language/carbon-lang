@@ -110,3 +110,65 @@ bb.merge:
 bb.false:
   ret i32 %sub
 }
+
+
+define i32 @PR13412.main() {
+; This is a somewhat complicated three layer subprogram that was reported to
+; compute the wrong value for a branch due to assuming that an argument
+; mid-inline couldn't be equal to another pointer.
+;
+; After inlining, the branch should point directly to the exit block, not to
+; the intermediate block.
+; CHECK: @PR13412.main
+; CHECK: br i1 true, label %[[TRUE_DEST:.*]], label %[[FALSE_DEST:.*]]
+; CHECK: [[FALSE_DEST]]:
+; CHECK-NEXT: call void @PR13412.fail()
+; CHECK: [[TRUE_DEST]]:
+; CHECK-NEXT: ret i32 0
+
+entry:
+  %i1 = alloca i64
+  store i64 0, i64* %i1
+  %arraydecay = bitcast i64* %i1 to i32*
+  %call = call i1 @PR13412.first(i32* %arraydecay, i32* %arraydecay)
+  br i1 %call, label %cond.end, label %cond.false
+
+cond.false:
+  call void @PR13412.fail()
+  br label %cond.end
+
+cond.end:
+  ret i32 0
+}
+
+define internal i1 @PR13412.first(i32* %a, i32* %b) {
+entry:
+  %call = call i32* @PR13412.second(i32* %a, i32* %b)
+  %cmp = icmp eq i32* %call, %b
+  ret i1 %cmp
+}
+
+declare void @PR13412.fail()
+
+define internal i32* @PR13412.second(i32* %a, i32* %b) {
+entry:
+  %sub.ptr.lhs.cast = ptrtoint i32* %b to i64
+  %sub.ptr.rhs.cast = ptrtoint i32* %a to i64
+  %sub.ptr.sub = sub i64 %sub.ptr.lhs.cast, %sub.ptr.rhs.cast
+  %sub.ptr.div = ashr exact i64 %sub.ptr.sub, 2
+  %cmp = icmp ugt i64 %sub.ptr.div, 1
+  br i1 %cmp, label %if.then, label %if.end3
+
+if.then:
+  %0 = load i32* %a
+  %1 = load i32* %b
+  %cmp1 = icmp eq i32 %0, %1
+  br i1 %cmp1, label %return, label %if.end3
+
+if.end3:
+  br label %return
+
+return:
+  %retval.0 = phi i32* [ %b, %if.end3 ], [ %a, %if.then ]
+  ret i32* %retval.0
+}
