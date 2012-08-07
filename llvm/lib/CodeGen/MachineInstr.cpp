@@ -208,6 +208,7 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
   case MachineOperand::MO_FrameIndex:
     return getIndex() == Other.getIndex();
   case MachineOperand::MO_ConstantPoolIndex:
+  case MachineOperand::MO_TargetIndex:
     return getIndex() == Other.getIndex() && getOffset() == Other.getOffset();
   case MachineOperand::MO_JumpTableIndex:
     return getIndex() == Other.getIndex();
@@ -245,6 +246,7 @@ hash_code llvm::hash_value(const MachineOperand &MO) {
   case MachineOperand::MO_FrameIndex:
     return hash_combine(MO.getType(), MO.getTargetFlags(), MO.getIndex());
   case MachineOperand::MO_ConstantPoolIndex:
+  case MachineOperand::MO_TargetIndex:
     return hash_combine(MO.getType(), MO.getTargetFlags(), MO.getIndex(),
                         MO.getOffset());
   case MachineOperand::MO_JumpTableIndex:
@@ -350,6 +352,11 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
     break;
   case MachineOperand::MO_ConstantPoolIndex:
     OS << "<cp#" << getIndex();
+    if (getOffset()) OS << "+" << getOffset();
+    OS << '>';
+    break;
+  case MachineOperand::MO_TargetIndex:
+    OS << "<ti#" << getIndex();
     if (getOffset()) OS << "+" << getOffset();
     OS << '>';
     break;

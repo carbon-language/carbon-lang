@@ -108,6 +108,12 @@ public:
     return *this;
   }
 
+  const MachineInstrBuilder &addTargetIndex(unsigned Idx, int64_t Offset = 0,
+                                          unsigned char TargetFlags = 0) const {
+    MI->addOperand(MachineOperand::CreateTargetIndex(Idx, Offset, TargetFlags));
+    return *this;
+  }
+
   const MachineInstrBuilder &addJumpTableIndex(unsigned Idx,
                                           unsigned char TargetFlags = 0) const {
     MI->addOperand(MachineOperand::CreateJTI(Idx, TargetFlags));

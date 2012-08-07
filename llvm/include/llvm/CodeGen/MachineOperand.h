@@ -45,6 +45,7 @@ public:
     MO_MachineBasicBlock,      ///< MachineBasicBlock reference
     MO_FrameIndex,             ///< Abstract Stack Frame Index
     MO_ConstantPoolIndex,      ///< Address of indexed Constant in Constant Pool
+    MO_TargetIndex,            ///< Target-dependent index+offset operand.
     MO_JumpTableIndex,         ///< Address of indexed Jump Table for switch
     MO_ExternalSymbol,         ///< Name of external global symbol
     MO_GlobalAddress,          ///< Address of a global value
@@ -215,6 +216,8 @@ public:
   bool isFI() const { return OpKind == MO_FrameIndex; }
   /// isCPI - Tests if this is a MO_ConstantPoolIndex operand.
   bool isCPI() const { return OpKind == MO_ConstantPoolIndex; }
+  /// isTargetIndex - Tests if this is a MO_TargetIndex operand.
+  bool isTargetIndex() const { return OpKind == MO_TargetIndex; }
   /// isJTI - Tests if this is a MO_JumpTableIndex operand.
   bool isJTI() const { return OpKind == MO_JumpTableIndex; }
   /// isGlobal - Tests if this is a MO_GlobalAddress operand.
@@ -410,7 +413,7 @@ public:
   }
 
   int getIndex() const {
-    assert((isFI() || isCPI() || isJTI()) &&
+    assert((isFI() || isCPI() || isTargetIndex() || isJTI()) &&
            "Wrong MachineOperand accessor");
     return Contents.OffsetedInfo.Val.Index;
   }
@@ -433,8 +436,8 @@ public:
   /// getOffset - Return the offset from the symbol in this operand. This always
   /// returns 0 for ExternalSymbol operands.
   int64_t getOffset() const {
-    assert((isGlobal() || isSymbol() || isCPI() || isBlockAddress()) &&
-           "Wrong MachineOperand accessor");
+    assert((isGlobal() || isSymbol() || isCPI() || isTargetIndex() ||
+            isBlockAddress()) && "Wrong MachineOperand accessor");
     return (int64_t(Contents.OffsetedInfo.OffsetHi) << 32) |
            SmallContents.OffsetLo;
   }
@@ -481,14 +484,14 @@ public:
   }
 
   void setOffset(int64_t Offset) {
-    assert((isGlobal() || isSymbol() || isCPI() || isBlockAddress()) &&
-        "Wrong MachineOperand accessor");
+    assert((isGlobal() || isSymbol() || isCPI() || isTargetIndex() ||
+            isBlockAddress()) && "Wrong MachineOperand accessor");
     SmallContents.OffsetLo = unsigned(Offset);
     Contents.OffsetedInfo.OffsetHi = int(Offset >> 32);
   }
 
   void setIndex(int Idx) {
-    assert((isFI() || isCPI() || isJTI()) &&
+    assert((isFI() || isCPI() || isTargetIndex() || isJTI()) &&
            "Wrong MachineOperand accessor");
     Contents.OffsetedInfo.Val.Index = Idx;
   }
@@ -584,6 +587,14 @@ public:
   static MachineOperand CreateCPI(unsigned Idx, int Offset,
                                   unsigned char TargetFlags = 0) {
     MachineOperand Op(MachineOperand::MO_ConstantPoolIndex);
+    Op.setIndex(Idx);
+    Op.setOffset(Offset);
+    Op.setTargetFlags(TargetFlags);
+    return Op;
+  }
+  static MachineOperand CreateTargetIndex(unsigned Idx, int64_t Offset,
+                                          unsigned char TargetFlags = 0) {
+    MachineOperand Op(MachineOperand::MO_TargetIndex);
     Op.setIndex(Idx);
     Op.setOffset(Offset);
     Op.setTargetFlags(TargetFlags);
