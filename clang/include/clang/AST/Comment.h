@@ -953,7 +953,8 @@ struct DeclInfo {
 
     /// Something that we consider a "variable":
     /// \li namespace scope variables;
-    /// \li static and non-static class data members.
+    /// \li static and non-static class data members;
+    /// \li enumeratrs.
     VariableKind,
 
     /// A C++ namespace.
