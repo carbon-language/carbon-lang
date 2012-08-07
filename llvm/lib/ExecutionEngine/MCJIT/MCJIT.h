@@ -29,16 +29,15 @@ class MCJIT : public ExecutionEngine {
   TargetMachine *TM;
   MCContext *Ctx;
   RTDyldMemoryManager *MemMgr;
+  RuntimeDyld Dyld;
 
-  // FIXME: These may need moved to a separate 'jitstate' member like the
-  // non-MC JIT does for multithreading and such. Just keep them here for now.
-  PassManager PM;
+  // FIXME: Add support for multiple modules
+  bool isCompiled;
   Module *M;
-  // FIXME: This really doesn't belong here.
+
+  // FIXME: Move these to a single container which manages JITed objects
   SmallVector<char, 4096> Buffer; // Working buffer into which we JIT.
   raw_svector_ostream OS;
-
-  RuntimeDyld Dyld;
 
 public:
   ~MCJIT();
@@ -91,6 +90,14 @@ public:
                                     TargetMachine *TM);
 
   // @}
+
+protected:
+  /// emitObject -- Generate a JITed object in memory from the specified module
+  /// Currently, MCJIT only supports a single module and the module passed to
+  /// this function call is expected to be the contained module.  The module
+  /// is passed as a parameter here to prepare for multiple module support in 
+  /// the future.
+  void emitObject(Module *M);
 };
 
 } // End llvm namespace
