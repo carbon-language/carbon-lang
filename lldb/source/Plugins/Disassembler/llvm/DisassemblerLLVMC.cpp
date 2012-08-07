@@ -198,7 +198,7 @@ public:
         DataExtractor data;
         const AddressClass address_class = GetAddressClass ();
 
-        if (m_opcode.GetData(data, address_class))
+        if (m_opcode.GetData(data))
         {
             char out_string[512];
             

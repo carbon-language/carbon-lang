@@ -86,7 +86,7 @@ Opcode::GetDataByteOrder () const
 }
 
 uint32_t
-Opcode::GetData (DataExtractor &data, lldb::AddressClass address_class) const
+Opcode::GetData (DataExtractor &data) const
 {
     uint32_t byte_size = GetByteSize ();
     
@@ -101,12 +101,6 @@ Opcode::GetData (DataExtractor &data, lldb::AddressClass address_class) const
             case Opcode::eType8:    buffer_sp.reset (new DataBufferHeap (&m_data.inst8,  byte_size)); break;
             case Opcode::eType16:   buffer_sp.reset (new DataBufferHeap (&m_data.inst16, byte_size)); break;
             case Opcode::eType16_2:
-            case Opcode::eType32:
-                // The only thing that uses eAddressClassCodeAlternateISA currently
-                // is Thumb. If this ever changes, we will need to pass in more
-                // information like an additional "const ArchSpec &arch". For now
-                // this will do
-                if (m_type ==  Opcode::eType16_2 || address_class == eAddressClassCodeAlternateISA)
                 {
                     // 32 bit thumb instruction, we need to sizzle this a bit
                     uint8_t buf[4];
@@ -116,10 +110,9 @@ Opcode::GetData (DataExtractor &data, lldb::AddressClass address_class) const
                     buf[3] = m_data.inst.bytes[1];
                     buffer_sp.reset (new DataBufferHeap (buf, byte_size));
                 }
-                else
-                {
-                    buffer_sp.reset (new DataBufferHeap (&m_data.inst32, byte_size));
-                }
+                break;
+            case Opcode::eType32:
+                buffer_sp.reset (new DataBufferHeap (&m_data.inst32, byte_size));
                 break;
             case Opcode::eType64:   buffer_sp.reset (new DataBufferHeap (&m_data.inst64, byte_size)); break;
             case Opcode::eTypeBytes:buffer_sp.reset (new DataBufferHeap (GetOpcodeBytes(), byte_size)); break;

@@ -893,7 +893,7 @@ Instruction::Emulate (const ArchSpec &arch,
 uint32_t
 Instruction::GetData (DataExtractor &data)
 {
-    return m_opcode.GetData(data, GetAddressClass ());
+    return m_opcode.GetData(data);
 }
 
 InstructionList::InstructionList() :

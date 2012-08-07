@@ -225,8 +225,7 @@ namespace lldb_private {
         
         // Get the opcode exactly as it would be laid out in memory.
         uint32_t
-        GetData (DataExtractor &data,
-                 lldb::AddressClass address_class) const;
+        GetData (DataExtractor &data) const;
 
     protected:
 
