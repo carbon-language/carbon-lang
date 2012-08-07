@@ -75,7 +75,8 @@ void DynamicTypePropagation::checkPostCall(const CallEvent &Call,
       // Assume, the result of the init method has the same dynamic type as
       // the receiver and propagate the dynamic type info.
       const MemRegion *RecReg = Msg->getReceiverSVal().getAsRegion();
-      assert(RecReg);
+      if (!RecReg)
+        return;
       DynamicTypeInfo RecDynType = State->getDynamicTypeInfo(RecReg);
       C.addTransition(State->addDynamicTypeInfo(RetReg, RecDynType));
       break;

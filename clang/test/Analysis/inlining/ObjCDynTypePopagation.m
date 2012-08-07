@@ -1,6 +1,10 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -analyzer-ipa=dynamic -verify %s
 
 typedef signed char BOOL;
+typedef struct objc_class *Class;
+typedef struct objc_object {
+    Class isa;
+} *id;
 
 void clang_analyzer_eval(BOOL);
 
@@ -84,10 +88,20 @@ MyClass *getObj();
   clang_analyzer_eval([p getZero] == 0); // expected-warning{{TRUE}}
 }
 
-// Test implisit cast.
+// Test implicit cast.
+// Note, in this case, p could also be a subclass of MyParent.
 + (void) testCastFromId:(id) a {
   MyParent *p = a;  
   clang_analyzer_eval([p getZero] == 0); // expected-warning{{TRUE}}
 }
-
 @end
+
+// TODO: Would be nice to handle the case of dynamically obtained class info
+// as well. We need a MemRegion for class types for this.
+int testDynamicClass(BOOL coin) {
+ Class AllocClass = (coin ? [NSObject class] : [MyClass class]);
+ id x = [[AllocClass alloc] init];
+ if (coin)
+   return [x getZero];
+ return 1;
+}

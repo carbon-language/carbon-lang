@@ -670,14 +670,14 @@ const Decl *ObjCMethodCall::getRuntimeDefinition() const {
     const ObjCObjectPointerType *ReceiverT = 0;
     QualType SupersType = E->getSuperType();
     if (!SupersType.isNull()) {
-      ReceiverT = cast<ObjCObjectPointerType>(SupersType.getTypePtr());
+      ReceiverT = cast<ObjCObjectPointerType>(SupersType);
     } else {
       const MemRegion *Receiver = getReceiverSVal().getAsRegion();
       if (!Receiver)
         return 0;
 
       QualType DynType = getState()->getDynamicTypeInfo(Receiver).getType();
-      ReceiverT = dyn_cast<ObjCObjectPointerType>(DynType.getTypePtr());
+      ReceiverT = dyn_cast<ObjCObjectPointerType>(DynType);
     }
 
     // Lookup the method implementation.
