@@ -21,7 +21,7 @@ cmake_minimum_required(VERSION 2.8.8)
 
 # Detect whether the current target platform is 32-bit or 64-bit, and setup
 # the correct commandline flags needed to attempt to target 32-bit and 64-bit.
-if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+if(CMAKE_SIZEOF_VOID_P EQUAL 4 OR LLVM_BUILD_32_BITS)
   set(TARGET_X86_64_CFLAGS "-m64")
   set(TARGET_I386_CFLAGS "")
 else()
