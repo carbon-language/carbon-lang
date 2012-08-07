@@ -188,23 +188,6 @@ public:
     void print(raw_ostream&) const;
   };
 
-  /// A trace represents a plausible sequence of executed basic blocks that
-  /// passes through the current basic block one. The Trace class serves as a
-  /// handle to internal cached data structures.
-  class Trace {
-    Ensemble &TE;
-    TraceBlockInfo &TBI;
-
-  public:
-    explicit Trace(Ensemble &te, TraceBlockInfo &tbi) : TE(te), TBI(tbi) {}
-    void print(raw_ostream&) const;
-
-    /// Compute the total number of instructions in the trace.
-    unsigned getInstrCount() const {
-      return TBI.InstrDepth + TBI.InstrHeight;
-    }
-  };
-
   /// InstrCycles represents the cycle height and depth of an instruction in a
   /// trace.
   struct InstrCycles {
@@ -216,6 +199,48 @@ public:
     /// Minimum number of cycles from this instruction is issued to the of the
     /// trace, as determined by data dependencies and instruction latencies.
     unsigned Height;
+  };
+
+  /// A trace represents a plausible sequence of executed basic blocks that
+  /// passes through the current basic block one. The Trace class serves as a
+  /// handle to internal cached data structures.
+  class Trace {
+    Ensemble &TE;
+    TraceBlockInfo &TBI;
+
+    unsigned getBlockNum() const { return &TBI - &TE.BlockInfo[0]; }
+
+  public:
+    explicit Trace(Ensemble &te, TraceBlockInfo &tbi) : TE(te), TBI(tbi) {}
+    void print(raw_ostream&) const;
+
+    /// Compute the total number of instructions in the trace.
+    unsigned getInstrCount() const {
+      return TBI.InstrDepth + TBI.InstrHeight;
+    }
+
+    /// Return the resource dpeth of the top/bottom of the trace center block.
+    /// This is the number of cycles required to execute all instructions from
+    /// the trace head to the trace center block. The resource depth only
+    /// considers execution resources, it ignores data dependencies.
+    /// When Bottom is set, instructions in the trace center block are included.
+    unsigned getResourceDepth(bool Bottom) const;
+
+    /// Return the length of the (data dependency) critical path through the
+    /// trace.
+    unsigned getCriticalPath() const { return TBI.CriticalPath; }
+
+    /// Return the depth and height of MI. The depth is only valid for
+    /// instructions in or above the trace center block. The height is only
+    /// valid for instructions in or below the trace center block.
+    InstrCycles getInstrCycles(const MachineInstr *MI) const {
+      return TE.Cycles.lookup(MI);
+    }
+
+    /// Return the slack of MI. This is the number of cycles MI can be delayed
+    /// before the critical path becomes longer.
+    /// MI must be an instruction in the trace center block.
+    unsigned getInstrSlack(const MachineInstr *MI) const;
   };
 
   /// A trace ensemble is a collection of traces selected using the same

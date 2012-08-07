@@ -14,6 +14,7 @@
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Debug.h"
@@ -1015,6 +1016,29 @@ MachineTraceMetrics::Ensemble::getTrace(const MachineBasicBlock *MBB) {
   computeInstrDepths(MBB);
   computeInstrHeights(MBB);
   return Trace(*this, BlockInfo[MBB->getNumber()]);
+}
+
+unsigned
+MachineTraceMetrics::Trace::getInstrSlack(const MachineInstr *MI) const {
+  assert(MI && "Not an instruction.");
+  assert(getBlockNum() == unsigned(MI->getParent()->getNumber()) &&
+         "MI must be in the trace center block");
+  InstrCycles Cyc = getInstrCycles(MI);
+  return getCriticalPath() - (Cyc.Depth + Cyc.Height);
+}
+
+unsigned MachineTraceMetrics::Trace::getResourceDepth(bool Bottom) const {
+  // For now, we compute the resource depth from instruction count / issue
+  // width. Eventually, we should compute resource depth per functional unit
+  // and return the max.
+  unsigned Instrs = TBI.InstrDepth;
+  if (Bottom)
+    Instrs += TE.MTM.BlockInfo[getBlockNum()].InstrCount;
+  if (const MCSchedModel *Model = TE.MTM.ItinData->SchedModel)
+    if (Model->IssueWidth != 0)
+      return Instrs / Model->IssueWidth;
+  // Assume issue width 1 without a schedule model.
+  return Instrs;
 }
 
 void MachineTraceMetrics::Ensemble::print(raw_ostream &OS) const {

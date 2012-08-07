@@ -601,10 +601,24 @@ void EarlyIfConverter::invalidateTraces() {
 bool EarlyIfConverter::shouldConvertIf() {
   if (!MinInstr)
     MinInstr = Traces->getEnsemble(MachineTraceMetrics::TS_MinInstrCount);
-  DEBUG({
-    dbgs() << MinInstr->getTrace(IfConv.Head);
-    MinInstr->print(dbgs());
-  });
+
+  // MCSchedModel doesn't yet provide a misprediction penalty.
+  unsigned MispredictPenalty = 10;
+
+  // Compare the critical path through TBB and FBB. If the difference is
+  // greater than the branch misprediction penalty, it would never pay to
+  // if-convert. The triangle/diamond topology guarantees that these traces
+  // have the same head and tail, so they can be compared.
+  MachineTraceMetrics::Trace TBBTrace = MinInstr->getTrace(IfConv.TBB);
+  MachineTraceMetrics::Trace FBBTrace = MinInstr->getTrace(IfConv.FBB);
+  DEBUG(dbgs() << "TBB: " << TBBTrace << "FBB: " << FBBTrace);
+  unsigned TBBCrit = TBBTrace.getCriticalPath();
+  unsigned FBBCrit = FBBTrace.getCriticalPath();
+  unsigned ExtraCrit = TBBCrit > FBBCrit ? TBBCrit-FBBCrit : FBBCrit-TBBCrit;
+  if (ExtraCrit >= MispredictPenalty) {
+    DEBUG(dbgs() << "Critical path difference too large.\n");
+    return false;
+  }
   return true;
 }
 
