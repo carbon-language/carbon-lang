@@ -843,6 +843,7 @@ ValueObject::GetPointeeData (DataExtractor& data,
                     ModuleSP module_sp (GetModule());
                     if (module_sp)
                     {
+                        addr = addr + offset;
                         Address so_addr;
                         module_sp->ResolveFileAddress(addr, so_addr);
                         ExecutionContext exe_ctx (GetExecutionContextRef());
