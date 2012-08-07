@@ -962,7 +962,10 @@ struct DeclInfo {
 
     /// A C++ typedef-name (a 'typedef' decl specifier or alias-declaration),
     /// see \c TypedefNameDecl.
-    TypedefKind
+    TypedefKind,
+
+    /// An enumeration or scoped enumeration.
+    EnumKind
   };
 
   /// What kind of template specialization \c ThisDecl is.

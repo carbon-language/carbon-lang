@@ -13,6 +13,7 @@
       <ref name="Variable" />
       <ref name="Namespace" />
       <ref name="Typedef" />
+      <ref name="Enum" />
     </choice>
   </start>
 
@@ -203,6 +204,36 @@
 
       <!-- Parameters and results might make sense for typedefs if the type is
            a function pointer type. -->
+      <optional>
+        <ref name="Parameters" />
+      </optional>
+      <optional>
+        <ref name="ResultDiscussion" />
+      </optional>
+
+      <optional>
+        <ref name="Discussion" />
+      </optional>
+    </element>
+  </define>
+
+  <define name="Enum">
+    <element name="Enum">
+      <ref name="attrSourceLocation" />
+      <ref name="Name" />
+      <optional>
+        <ref name="USR" />
+      </optional>
+      <optional>
+        <ref name="Abstract" />
+      </optional>
+
+      <!-- Template parameters, parameters and results don't make sense for
+            enums, but the user can specify \tparam \param or \returns in a
+            comment anyway. -->
+      <optional>
+        <ref name="TemplateParameters" />
+      </optional>
       <optional>
         <ref name="Parameters" />
       </optional>

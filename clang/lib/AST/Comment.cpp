@@ -251,6 +251,9 @@ void DeclInfo::fill() {
     TemplateParameters = TAT->getTemplateParameters();
     break;
   }
+  case Decl::Enum:
+    Kind = EnumKind;
+    break;
   }
 
   IsFilled = true;
