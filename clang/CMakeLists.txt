@@ -141,7 +141,7 @@ endif ()
 
 # libxml2 is an optional dependency, required only to run validation
 # tests on XML output.
-find_package(libxml2)
+find_package(LibXml2)
 
 configure_file(
   ${CLANG_SOURCE_DIR}/include/clang/Config/config.h.cmake
