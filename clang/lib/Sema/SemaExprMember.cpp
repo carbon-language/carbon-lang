@@ -1250,6 +1250,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
             << IV->getDeclName();
       }
     }
+    bool warn = true;
     if (getLangOpts().ObjCAutoRefCount) {
       Expr *BaseExp = BaseExpr.get()->IgnoreParenImpCasts();
       if (UnaryOperator *UO = dyn_cast<UnaryOperator>(BaseExp))
@@ -1257,13 +1258,12 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
           BaseExp = UO->getSubExpr()->IgnoreParenCasts();
       
       if (DeclRefExpr *DE = dyn_cast<DeclRefExpr>(BaseExp))
-        if (DE->getType().getObjCLifetime() == Qualifiers::OCL_Weak)
+        if (DE->getType().getObjCLifetime() == Qualifiers::OCL_Weak) {
           Diag(DE->getLocation(), diag::error_arc_weak_ivar_access);
+          warn = false;
+        }
     }
-    if (IV->getType()->isObjCObjectPointerType() &&
-        getLangOpts().getGC() == LangOptions::NonGC &&
-        !getLangOpts().ObjCAutoRefCount) {
-      bool warn = true;
+    if (warn && IV->getType()->isObjCObjectPointerType()) {
       if (ObjCMethodDecl *MD = getCurMethodDecl()) {
         ObjCMethodFamily MF = MD->getMethodFamily();
         warn = (MF != OMF_init && MF != OMF_dealloc && 
