@@ -196,7 +196,7 @@ int main(int argc, char **argv) {
           // the string object).
           hasArgument(
               0,
-              id("call", call(
+              id("call", memberCall(
                   callee(id("member", memberExpression())),
                   callee(method(hasName(StringCStrMethod))),
                   on(id("arg", expression()))))),
@@ -223,7 +223,7 @@ int main(int argc, char **argv) {
           // directly.
           hasArgument(
               0,
-              id("call", call(
+              id("call", memberCall(
                   callee(id("member", memberExpression())),
                   callee(method(hasName(StringCStrMethod))),
                   on(id("arg", expression())))))),
