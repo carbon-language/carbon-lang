@@ -584,13 +584,14 @@ AsmStmt::AsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple,
 }
 
 MSAsmStmt::MSAsmStmt(ASTContext &C, SourceLocation asmloc,
-                     SmallVectorImpl<Token> &asmtoks,
+                     ArrayRef<Token> asmtoks,
                      std::string &asmstr, SourceLocation endloc)
   : Stmt(MSAsmStmtClass), AsmLoc(asmloc), EndLoc(endloc),
-    AsmToks(asmtoks.size()), AsmStr(asmstr),
-    IsSimple(true), IsVolatile(true) {
-  for (unsigned i = 0, e = asmtoks.size(); i != e; ++i)
-    AsmToks.push_back(asmtoks[i]);
+    AsmStr(asmstr), IsSimple(true), IsVolatile(true), NumAsmToks(asmtoks.size()) {
+
+  AsmToks = new (C) Token[NumAsmToks];
+  for (unsigned i = 0, e = NumAsmToks; i != e; ++i)
+    AsmToks[i] = asmtoks[i];
 }
 
 ObjCForCollectionStmt::ObjCForCollectionStmt(Stmt *Elem, Expr *Collect,

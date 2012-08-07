@@ -1818,7 +1818,8 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
 
   // FIXME: We should be passing source locations for better diagnostics.
   std::string AsmString = Asm.c_str();
-  return Actions.ActOnMSAsmStmt(AsmLoc, AsmToks, AsmString, EndLoc);
+  return Actions.ActOnMSAsmStmt(AsmLoc, llvm::makeArrayRef(AsmToks), AsmString,
+                                EndLoc);
 }
 
 /// ParseAsmStatement - Parse a GNU extended asm statement.

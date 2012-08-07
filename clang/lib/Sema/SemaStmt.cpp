@@ -2748,7 +2748,7 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
 }
 
 StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
-                                SmallVectorImpl<Token> &AsmToks,
+                                ArrayRef<Token> AsmToks,
                                 std::string &AsmString,
                                 SourceLocation EndLoc) {
   // MS-style inline assembly is not fully supported, so emit a warning.

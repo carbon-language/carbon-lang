@@ -1621,17 +1621,19 @@ public:
 ///
 class MSAsmStmt : public Stmt {
   SourceLocation AsmLoc, EndLoc;
-  SmallVector<Token, 4> AsmToks;
   std::string AsmStr;
 
   bool IsSimple;
   bool IsVolatile;
 
+  unsigned NumAsmToks;
+
+  Token *AsmToks;
   Stmt **Exprs;
 
 public:
   MSAsmStmt(ASTContext &C, SourceLocation asmloc,
-            SmallVectorImpl<Token> &asmtoks, std::string &asmstr,
+            ArrayRef<Token> asmtoks, std::string &asmstr,
             SourceLocation endloc);
 
   SourceLocation getAsmLoc() const { return AsmLoc; }
@@ -1639,7 +1641,8 @@ public:
   SourceLocation getEndLoc() const { return EndLoc; }
   void setEndLoc(SourceLocation L) { EndLoc = L; }
 
-  SmallVectorImpl<Token> &getAsmToks() { return AsmToks; }
+  unsigned getNumAsmToks() { return NumAsmToks; }
+  Token *getAsmToks() { return AsmToks; }
 
   bool isVolatile() const { return IsVolatile; }
   void setVolatile(bool V) { IsVolatile = V; }
