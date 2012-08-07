@@ -3687,6 +3687,21 @@ CINDEX_LINKAGE CXString clang_HTMLTagComment_getAsString(CXComment Comment);
 CINDEX_LINKAGE CXString clang_FullComment_getAsHTML(CXComment Comment);
 
 /**
+ * \brief Convert a given full parsed comment to an XML document.
+ *
+ * A Relax NG schema for the XML can be found in comment-xml-schema.rng file
+ * inside clang source tree.
+ *
+ * \param TU the translation unit \c Comment belongs to.
+ *
+ * \param Comment a \c CXComment_FullComment AST node.
+ *
+ * \returns string containing an XML document.
+ */
+CINDEX_LINKAGE CXString clang_FullComment_getAsXML(CXTranslationUnit TU,
+                                                   CXComment Comment);
+
+/**
  * @}
  */
 

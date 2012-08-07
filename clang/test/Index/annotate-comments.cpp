@@ -358,14 +358,84 @@ void comment_to_html_conversion_30();
 /// <em>0&lt;i</em>
 void comment_to_html_conversion_31();
 
+/// Aaa.
+class comment_to_xml_conversion_01 {
+  /// \param aaa Blah blah.
+  comment_to_xml_conversion_01(int aaa);
+
+  /// Aaa.
+  ~comment_to_xml_conversion_01();
+
+  /// \param aaa Blah blah.
+  int comment_to_xml_conversion_02(int aaa);
+
+  /// \param aaa Blah blah.
+  static int comment_to_xml_conversion_03(int aaa);
+
+  /// Aaa.
+  int comment_to_xml_conversion_04;
+
+  /// Aaa.
+  static int comment_to_xml_conversion_05;
+
+  /// \param aaa Blah blah.
+  void operator()(int aaa);
+
+  /// Aaa.
+  operator bool();
+
+  /// Aaa.
+  typedef int comment_to_xml_conversion_06;
+
+  /// Aaa.
+  using comment_to_xml_conversion_07 = int;
+
+  template<typename T, typename U>
+  class comment_to_xml_conversion_08 { };
+
+  /// Aaa.
+  template<typename T>
+  using comment_to_xml_conversion_09 = comment_to_xml_conversion_08<T, int>;
+};
+
+/// Aaa.
+template<typename T, typename U>
+void comment_to_xml_conversion_10(T aaa, U bbb);
+
+/// Aaa.
+template<>
+void comment_to_xml_conversion_10(int aaa, int bbb);
+
+/// Aaa.
+template<typename T, typename U>
+class comment_to_xml_conversion_11 { };
+
+/// Aaa.
+template<typename T>
+class comment_to_xml_conversion_11<T, int> { };
+
+/// Aaa.
+template<>
+class comment_to_xml_conversion_11<int, int> { };
+
+/// Aaa.
+int comment_to_xml_conversion_12;
+
+/// Aaa.
+namespace comment_to_xml_conversion_13 {
+  /// Aaa.
+  namespace comment_to_xml_conversion_14 {
+  }
+}
+
 #endif
 
 // RUN: rm -rf %t
 // RUN: mkdir %t
-// RUN: %clang_cc1 -x c++ -emit-pch -o %t/out.pch %s
-// RUN: %clang_cc1 -x c++ -include-pch %t/out.pch -fsyntax-only %s
+// RUN: %clang_cc1 -x c++ -std=c++11 -emit-pch -o %t/out.pch %s
+// RUN: %clang_cc1 -x c++ -std=c++11 -include-pch %t/out.pch -fsyntax-only %s
 
-// RUN: c-index-test -test-load-source all %s > %t/out.c-index-direct
+// RUN: c-index-test -test-load-source all -comments-xml-schema=%S/../../bindings/xml/comment-xml-schema.rng %s -std=c++11 > %t/out.c-index-direct
 // RUN: c-index-test -test-load-tu %t/out.pch all > %t/out.c-index-pch
 
 // RUN: FileCheck %s -check-prefix=WRONG < %t/out.c-index-direct
@@ -384,6 +454,9 @@ void comment_to_html_conversion_31();
 // Ensure we don't pick up extra comments.
 // WRONG-NOT: IS_DOXYGEN_START{{.*}}IS_DOXYGEN_START{{.*}}BriefComment=
 // WRONG-NOT: IS_DOXYGEN_END{{.*}}IS_DOXYGEN_END{{.*}}BriefComment=
+//
+// Ensure that XML is not invalid
+// WRONG-NOT: CommentXMLInvalid
 
 // RUN: FileCheck %s < %t/out.c-index-direct
 // RUN: FileCheck %s < %t/out.c-index-pch
@@ -427,12 +500,12 @@ void comment_to_html_conversion_31();
 // CHECK: annotate-comments.cpp:218:6: FunctionDecl=isdoxy49:{{.*}} BriefComment=[IS_DOXYGEN_START Aaa]
 // CHECK: annotate-comments.cpp:222:6: FunctionDecl=isdoxy50:{{.*}} BriefComment=[Returns ddd IS_DOXYGEN_END]
 
-// CHECK: annotate-comments.cpp:225:6: FunctionDecl=comment_to_html_conversion_1:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Aaa.</p>]
+// CHECK: annotate-comments.cpp:225:6: FunctionDecl=comment_to_html_conversion_1:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Aaa.</p>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="225" column="6"><Name>comment_to_html_conversion_1</Name><USR>c:@F@comment_to_html_conversion_1#</USR><Abstract><Para> Aaa.</Para></Abstract></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
 // CHECK-NEXT:         (CXComment_Text Text=[ Aaa.])))]
-// CHECK: annotate-comments.cpp:228:6: FunctionDecl=comment_to_html_conversion_2:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Aaa.</p>]
+// CHECK: annotate-comments.cpp:228:6: FunctionDecl=comment_to_html_conversion_2:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Aaa.</p>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="228" column="6"><Name>comment_to_html_conversion_2</Name><USR>c:@F@comment_to_html_conversion_2#</USR><Abstract><Para> Aaa.</Para></Abstract></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -440,7 +513,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:       (CXComment_BlockCommand CommandName=[brief]
 // CHECK-NEXT:         (CXComment_Paragraph
 // CHECK-NEXT:           (CXComment_Text Text=[ Aaa.]))))]
-// CHECK: annotate-comments.cpp:231:6: FunctionDecl=comment_to_html_conversion_3:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Aaa.</p>]
+// CHECK: annotate-comments.cpp:231:6: FunctionDecl=comment_to_html_conversion_3:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Aaa.</p>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="231" column="6"><Name>comment_to_html_conversion_3</Name><USR>c:@F@comment_to_html_conversion_3#</USR><Abstract><Para> Aaa.</Para></Abstract></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -448,7 +521,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:       (CXComment_BlockCommand CommandName=[short]
 // CHECK-NEXT:         (CXComment_Paragraph
 // CHECK-NEXT:           (CXComment_Text Text=[ Aaa.]))))]
-// CHECK: annotate-comments.cpp:236:6: FunctionDecl=comment_to_html_conversion_4:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Bbb.</p><p> Aaa.</p>]
+// CHECK: annotate-comments.cpp:236:6: FunctionDecl=comment_to_html_conversion_4:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Bbb.</p><p> Aaa.</p>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="236" column="6"><Name>comment_to_html_conversion_4</Name><USR>c:@F@comment_to_html_conversion_4#</USR><Abstract><Para> Bbb.</Para></Abstract><Discussion><Para> Aaa.</Para></Discussion></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -458,7 +531,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:       (CXComment_BlockCommand CommandName=[brief]
 // CHECK-NEXT:         (CXComment_Paragraph
 // CHECK-NEXT:           (CXComment_Text Text=[ Bbb.]))))]
-// CHECK: annotate-comments.cpp:243:6: FunctionDecl=comment_to_html_conversion_5:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Bbb.</p><p> Aaa.</p><p> Ccc.</p>]
+// CHECK: annotate-comments.cpp:243:6: FunctionDecl=comment_to_html_conversion_5:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Bbb.</p><p> Aaa.</p><p> Ccc.</p>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="243" column="6"><Name>comment_to_html_conversion_5</Name><USR>c:@F@comment_to_html_conversion_5#</USR><Abstract><Para> Bbb.</Para></Abstract><Discussion><Para> Aaa.</Para><Para> Ccc.</Para></Discussion></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -470,7 +543,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:           (CXComment_Text Text=[ Bbb.])))
 // CHECK-NEXT:       (CXComment_Paragraph
 // CHECK-NEXT:         (CXComment_Text Text=[ Ccc.])))]
-// CHECK: annotate-comments.cpp:247:6: FunctionDecl=comment_to_html_conversion_6:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Aaa. </p><p class="para-brief"> Bbb.</p>]
+// CHECK: annotate-comments.cpp:247:6: FunctionDecl=comment_to_html_conversion_6:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Aaa. </p><p class="para-brief"> Bbb.</p>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="247" column="6"><Name>comment_to_html_conversion_6</Name><USR>c:@F@comment_to_html_conversion_6#</USR><Abstract><Para> Aaa. </Para></Abstract><Discussion><Para> Bbb.</Para></Discussion></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -482,7 +555,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:       (CXComment_BlockCommand CommandName=[brief]
 // CHECK-NEXT:         (CXComment_Paragraph
 // CHECK-NEXT:           (CXComment_Text Text=[ Bbb.]))))]
-// CHECK: annotate-comments.cpp:252:6: FunctionDecl=comment_to_html_conversion_7:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Aaa.</p><p class="para-returns"><span class="word-returns">Returns</span>  Bbb.</p>]
+// CHECK: annotate-comments.cpp:252:6: FunctionDecl=comment_to_html_conversion_7:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Aaa.</p><p class="para-returns"><span class="word-returns">Returns</span>  Bbb.</p>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="252" column="6"><Name>comment_to_html_conversion_7</Name><USR>c:@F@comment_to_html_conversion_7#</USR><Abstract><Para> Aaa.</Para></Abstract><ResultDiscussion><Para> Bbb.</Para></ResultDiscussion></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -492,7 +565,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:       (CXComment_BlockCommand CommandName=[return]
 // CHECK-NEXT:         (CXComment_Paragraph
 // CHECK-NEXT:           (CXComment_Text Text=[ Bbb.]))))]
-// CHECK: annotate-comments.cpp:257:6: FunctionDecl=comment_to_html_conversion_8:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Aaa.</p><p class="para-returns"><span class="word-returns">Returns</span>  Bbb.</p>]
+// CHECK: annotate-comments.cpp:257:6: FunctionDecl=comment_to_html_conversion_8:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Aaa.</p><p class="para-returns"><span class="word-returns">Returns</span>  Bbb.</p>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="257" column="6"><Name>comment_to_html_conversion_8</Name><USR>c:@F@comment_to_html_conversion_8#</USR><Abstract><Para> Aaa.</Para></Abstract><ResultDiscussion><Para> Bbb.</Para></ResultDiscussion></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -502,7 +575,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:       (CXComment_BlockCommand CommandName=[returns]
 // CHECK-NEXT:         (CXComment_Paragraph
 // CHECK-NEXT:           (CXComment_Text Text=[ Bbb.]))))]
-// CHECK: annotate-comments.cpp:262:6: FunctionDecl=comment_to_html_conversion_9:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Aaa.</p><p class="para-returns"><span class="word-returns">Returns</span>  Bbb.</p>]
+// CHECK: annotate-comments.cpp:262:6: FunctionDecl=comment_to_html_conversion_9:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Aaa.</p><p class="para-returns"><span class="word-returns">Returns</span>  Bbb.</p>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="262" column="6"><Name>comment_to_html_conversion_9</Name><USR>c:@F@comment_to_html_conversion_9#</USR><Abstract><Para> Aaa.</Para></Abstract><Discussion><Para> Bbb.</Para></Discussion></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -512,7 +585,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:       (CXComment_BlockCommand CommandName=[result]
 // CHECK-NEXT:         (CXComment_Paragraph
 // CHECK-NEXT:           (CXComment_Text Text=[ Bbb.]))))]
-// CHECK: annotate-comments.cpp:266:6: FunctionDecl=comment_to_html_conversion_10:{{.*}} FullCommentAsHTML=[<p class="para-returns"><span class="word-returns">Returns</span>  Bbb.</p><p class="para-returns"><span class="word-returns">Returns</span>  Aaa. </p>]
+// CHECK: annotate-comments.cpp:266:6: FunctionDecl=comment_to_html_conversion_10:{{.*}} FullCommentAsHTML=[<p class="para-returns"><span class="word-returns">Returns</span>  Bbb.</p><p class="para-returns"><span class="word-returns">Returns</span>  Aaa. </p>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="266" column="6"><Name>comment_to_html_conversion_10</Name><USR>c:@F@comment_to_html_conversion_10#</USR><ResultDiscussion><Para> Aaa. </Para></ResultDiscussion><Discussion><Para> Bbb.</Para></Discussion></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -524,7 +597,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:       (CXComment_BlockCommand CommandName=[returns]
 // CHECK-NEXT:         (CXComment_Paragraph
 // CHECK-NEXT:           (CXComment_Text Text=[ Bbb.]))))]
-// CHECK: annotate-comments.cpp:273:6: FunctionDecl=comment_to_html_conversion_11:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Aaa.</p><p> Bbb.</p><p class="para-returns"><span class="word-returns">Returns</span>  Ccc.</p>]
+// CHECK: annotate-comments.cpp:273:6: FunctionDecl=comment_to_html_conversion_11:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Aaa.</p><p> Bbb.</p><p class="para-returns"><span class="word-returns">Returns</span>  Ccc.</p>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="273" column="6"><Name>comment_to_html_conversion_11</Name><USR>c:@F@comment_to_html_conversion_11#</USR><Abstract><Para> Aaa.</Para></Abstract><ResultDiscussion><Para> Ccc.</Para></ResultDiscussion><Discussion><Para> Bbb.</Para></Discussion></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -536,14 +609,14 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:       (CXComment_BlockCommand CommandName=[returns]
 // CHECK-NEXT:         (CXComment_Paragraph
 // CHECK-NEXT:           (CXComment_Text Text=[ Ccc.]))))]
-// CHECK: annotate-comments.cpp:276:6: FunctionDecl=comment_to_html_conversion_12:{{.*}} FullCommentAsHTML=[]
+// CHECK: annotate-comments.cpp:276:6: FunctionDecl=comment_to_html_conversion_12:{{.*}} FullCommentAsHTML=[] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="276" column="6"><Name>comment_to_html_conversion_12</Name><USR>c:@F@comment_to_html_conversion_12#I#</USR></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
 // CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace))
 // CHECK-NEXT:       (CXComment_ParamCommand in implicitly ParamName=[] ParamIndex=Invalid
 // CHECK-NEXT:         (CXComment_Paragraph IsWhitespace)))]
-// CHECK: annotate-comments.cpp:279:6: FunctionDecl=comment_to_html_conversion_13:{{.*}} FullCommentAsHTML=[<dl><dt class="param-name-index-0">x1</dt><dd class="param-descr-index-0"> Aaa.</dd></dl>]
+// CHECK: annotate-comments.cpp:279:6: FunctionDecl=comment_to_html_conversion_13:{{.*}} FullCommentAsHTML=[<dl><dt class="param-name-index-0">x1</dt><dd class="param-descr-index-0"> Aaa.</dd></dl>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="279" column="6"><Name>comment_to_html_conversion_13</Name><USR>c:@F@comment_to_html_conversion_13#I#</USR><Parameters><Parameter><Name>x1</Name><Index>0</Index><Direction isExplicit="0">in</Direction><Discussion><Para> Aaa.</Para></Discussion></Parameter></Parameters></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -551,7 +624,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:       (CXComment_ParamCommand in implicitly ParamName=[x1] ParamIndex=0
 // CHECK-NEXT:         (CXComment_Paragraph
 // CHECK-NEXT:           (CXComment_Text Text=[ Aaa.]))))]
-// CHECK: annotate-comments.cpp:282:6: FunctionDecl=comment_to_html_conversion_14:{{.*}} FullCommentAsHTML=[<dl><dt class="param-name-index-invalid">zzz</dt><dd class="param-descr-index-invalid"> Aaa.</dd></dl>]
+// CHECK: annotate-comments.cpp:282:6: FunctionDecl=comment_to_html_conversion_14:{{.*}} FullCommentAsHTML=[<dl><dt class="param-name-index-invalid">zzz</dt><dd class="param-descr-index-invalid"> Aaa.</dd></dl>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="282" column="6"><Name>comment_to_html_conversion_14</Name><USR>c:@F@comment_to_html_conversion_14#I#</USR><Parameters><Parameter><Name>zzz</Name><Direction isExplicit="0">in</Direction><Discussion><Para> Aaa.</Para></Discussion></Parameter></Parameters></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -559,7 +632,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:       (CXComment_ParamCommand in implicitly ParamName=[zzz] ParamIndex=Invalid
 // CHECK-NEXT:         (CXComment_Paragraph
 // CHECK-NEXT:           (CXComment_Text Text=[ Aaa.]))))]
-// CHECK: annotate-comments.cpp:286:6: FunctionDecl=comment_to_html_conversion_15:{{.*}} FullCommentAsHTML=[<dl><dt class="param-name-index-0">x1</dt><dd class="param-descr-index-0"> Aaa.</dd><dt class="param-name-index-1">x2</dt><dd class="param-descr-index-1"> Bbb. </dd></dl>]
+// CHECK: annotate-comments.cpp:286:6: FunctionDecl=comment_to_html_conversion_15:{{.*}} FullCommentAsHTML=[<dl><dt class="param-name-index-0">x1</dt><dd class="param-descr-index-0"> Aaa.</dd><dt class="param-name-index-1">x2</dt><dd class="param-descr-index-1"> Bbb. </dd></dl>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="286" column="6"><Name>comment_to_html_conversion_15</Name><USR>c:@F@comment_to_html_conversion_15#I#I#</USR><Parameters><Parameter><Name>x1</Name><Index>0</Index><Direction isExplicit="0">in</Direction><Discussion><Para> Aaa.</Para></Discussion></Parameter><Parameter><Name>x2</Name><Index>1</Index><Direction isExplicit="0">in</Direction><Discussion><Para> Bbb. </Para></Discussion></Parameter></Parameters></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -571,7 +644,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:       (CXComment_ParamCommand in implicitly ParamName=[x1] ParamIndex=0
 // CHECK-NEXT:         (CXComment_Paragraph
 // CHECK-NEXT:           (CXComment_Text Text=[ Aaa.]))))]
-// CHECK: annotate-comments.cpp:291:6: FunctionDecl=comment_to_html_conversion_16:{{.*}} FullCommentAsHTML=[<dl><dt class="param-name-index-0">x1</dt><dd class="param-descr-index-0"> Aaa.</dd><dt class="param-name-index-1">x2</dt><dd class="param-descr-index-1"> Bbb. </dd><dt class="param-name-index-invalid">zzz</dt><dd class="param-descr-index-invalid"> Aaa. </dd></dl>]
+// CHECK: annotate-comments.cpp:291:6: FunctionDecl=comment_to_html_conversion_16:{{.*}} FullCommentAsHTML=[<dl><dt class="param-name-index-0">x1</dt><dd class="param-descr-index-0"> Aaa.</dd><dt class="param-name-index-1">x2</dt><dd class="param-descr-index-1"> Bbb. </dd><dt class="param-name-index-invalid">zzz</dt><dd class="param-descr-index-invalid"> Aaa. </dd></dl>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="291" column="6"><Name>comment_to_html_conversion_16</Name><USR>c:@F@comment_to_html_conversion_16#I#I#</USR><Parameters><Parameter><Name>x1</Name><Index>0</Index><Direction isExplicit="0">in</Direction><Discussion><Para> Aaa.</Para></Discussion></Parameter><Parameter><Name>x2</Name><Index>1</Index><Direction isExplicit="0">in</Direction><Discussion><Para> Bbb. </Para></Discussion></Parameter><Parameter><Name>zzz</Name><Direction isExplicit="0">in</Direction><Discussion><Para> Aaa. </Para></Discussion></Parameter></Parameters></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -587,7 +660,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:       (CXComment_ParamCommand in implicitly ParamName=[x1] ParamIndex=0
 // CHECK-NEXT:         (CXComment_Paragraph
 // CHECK-NEXT:           (CXComment_Text Text=[ Aaa.]))))]
-// CHECK: annotate-comments.cpp:296:6: FunctionTemplate=comment_to_html_conversion_17:{{.*}} FullCommentAsHTML=[<dl><dt class="param-name-index-0">aaa</dt><dd class="param-descr-index-0"> Blah blah</dd></dl>]
+// CHECK: annotate-comments.cpp:296:6: FunctionTemplate=comment_to_html_conversion_17:{{.*}} FullCommentAsHTML=[<dl><dt class="param-name-index-0">aaa</dt><dd class="param-descr-index-0"> Blah blah</dd></dl>] FullCommentAsXML=[<Function templateKind="template" file="{{[^"]+}}annotate-comments.cpp" line="296" column="6"><Name>comment_to_html_conversion_17</Name><USR>c:@FT@&gt;1#Tcomment_to_html_conversion_17#t0.0#</USR><Parameters><Parameter><Name>aaa</Name><Index>0</Index><Direction isExplicit="0">in</Direction><Discussion><Para> Blah blah</Para></Discussion></Parameter></Parameters></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -598,7 +671,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:       (CXComment_ParamCommand in implicitly ParamName=[aaa] ParamIndex=0
 // CHECK-NEXT:         (CXComment_Paragraph
 // CHECK-NEXT:           (CXComment_Text Text=[ Blah blah]))))]
-// CHECK: annotate-comments.cpp:301:6: FunctionTemplate=comment_to_html_conversion_18:{{.*}} FullCommentAsHTML=[<dl><dt class="param-name-index-0">aaa</dt><dd class="param-descr-index-0"> Blah blah</dd></dl>]
+// CHECK: annotate-comments.cpp:301:6: FunctionTemplate=comment_to_html_conversion_18:{{.*}} FullCommentAsHTML=[<dl><dt class="param-name-index-0">aaa</dt><dd class="param-descr-index-0"> Blah blah</dd></dl>] FullCommentAsXML=[<Function templateKind="template" file="{{[^"]+}}annotate-comments.cpp" line="301" column="6"><Name>comment_to_html_conversion_18</Name><USR>c:@FT@&gt;1#Tcomment_to_html_conversion_18#t0.0#</USR><Parameters><Parameter><Name>aaa</Name><Index>0</Index><Direction isExplicit="0">in</Direction><Discussion><Para> Blah blah</Para></Discussion></Parameter></Parameters></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -609,7 +682,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:       (CXComment_ParamCommand in implicitly ParamName=[aaa] ParamIndex=0
 // CHECK-NEXT:         (CXComment_Paragraph
 // CHECK-NEXT:           (CXComment_Text Text=[ Blah blah]))))]
-// CHECK: annotate-comments.cpp:306:6: FunctionTemplate=comment_to_html_conversion_19:{{.*}} FullCommentAsHTML=[<dl><dt class="tparam-name-index-0">T1</dt><dd class="tparam-descr-index-0"> Aaa</dd><dt class="tparam-name-index-1">T2</dt><dd class="tparam-descr-index-1"> Bbb </dd></dl>]
+// CHECK: annotate-comments.cpp:306:6: FunctionTemplate=comment_to_html_conversion_19:{{.*}} FullCommentAsHTML=[<dl><dt class="tparam-name-index-0">T1</dt><dd class="tparam-descr-index-0"> Aaa</dd><dt class="tparam-name-index-1">T2</dt><dd class="tparam-descr-index-1"> Bbb </dd></dl>] FullCommentAsXML=[<Function templateKind="template" file="{{[^"]+}}annotate-comments.cpp" line="306" column="6"><Name>comment_to_html_conversion_19</Name><USR>c:@FT@&gt;2#T#Tcomment_to_html_conversion_19#t0.0#t0.1#</USR><TemplateParameters><Parameter><Name>T1</Name><Index>0</Index><Discussion><Para> Aaa</Para></Discussion></Parameter><Parameter><Name>T2</Name><Index>1</Index><Discussion><Para> Bbb </Para></Discussion></Parameter></TemplateParameters></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -621,7 +694,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:       (CXComment_TParamCommand ParamName=[T1] ParamPosition={0}
 // CHECK-NEXT:         (CXComment_Paragraph
 // CHECK-NEXT:           (CXComment_Text Text=[ Aaa]))))]
-// CHECK: annotate-comments.cpp:313:6: FunctionTemplate=comment_to_html_conversion_20:{{.*}} FullCommentAsHTML=[<dl><dt class="tparam-name-index-0">T1</dt><dd class="tparam-descr-index-0"> Aaa</dd><dt class="tparam-name-index-1">T2</dt><dd class="tparam-descr-index-1"> Bbb </dd><dt class="tparam-name-index-2">V</dt><dd class="tparam-descr-index-2"> Ccc </dd><dt class="tparam-name-index-invalid">U</dt><dd class="tparam-descr-index-invalid"> Zzz </dd></dl>]
+// CHECK: annotate-comments.cpp:313:6: FunctionTemplate=comment_to_html_conversion_20:{{.*}} FullCommentAsHTML=[<dl><dt class="tparam-name-index-0">T1</dt><dd class="tparam-descr-index-0"> Aaa</dd><dt class="tparam-name-index-1">T2</dt><dd class="tparam-descr-index-1"> Bbb </dd><dt class="tparam-name-index-2">V</dt><dd class="tparam-descr-index-2"> Ccc </dd><dt class="tparam-name-index-invalid">U</dt><dd class="tparam-descr-index-invalid"> Zzz </dd></dl>] FullCommentAsXML=[<Function templateKind="template" file="{{[^"]+}}annotate-comments.cpp" line="313" column="6"><Name>comment_to_html_conversion_20</Name><USR>c:@FT@&gt;3#T#T#NIcomment_to_html_conversion_20#t0.0#t0.1#</USR><TemplateParameters><Parameter><Name>T1</Name><Index>0</Index><Discussion><Para> Aaa</Para></Discussion></Parameter><Parameter><Name>T2</Name><Index>1</Index><Discussion><Para> Bbb </Para></Discussion></Parameter><Parameter><Name>V</Name><Index>2</Index><Discussion><Para> Ccc </Para></Discussion></Parameter><Parameter><Name>U</Name><Discussion><Para> Zzz </Para></Discussion></Parameter></TemplateParameters></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -641,7 +714,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:       (CXComment_TParamCommand ParamName=[T1] ParamPosition={0}
 // CHECK-NEXT:         (CXComment_Paragraph
 // CHECK-NEXT:           (CXComment_Text Text=[ Aaa]))))]
-// CHECK: annotate-comments.cpp:320:6: FunctionTemplate=comment_to_html_conversion_21:{{.*}} FullCommentAsHTML=[<dl><dt class="tparam-name-index-0">TTT</dt><dd class="tparam-descr-index-0"> Ddd </dd><dt class="tparam-name-index-other">C</dt><dd class="tparam-descr-index-other"> Ccc </dd><dt class="tparam-name-index-other">T</dt><dd class="tparam-descr-index-other"> Aaa </dd><dt class="tparam-name-index-other">TT</dt><dd class="tparam-descr-index-other"> Bbb</dd></dl>]
+// CHECK: annotate-comments.cpp:320:6: FunctionTemplate=comment_to_html_conversion_21:{{.*}} FullCommentAsHTML=[<dl><dt class="tparam-name-index-0">TTT</dt><dd class="tparam-descr-index-0"> Ddd </dd><dt class="tparam-name-index-other">C</dt><dd class="tparam-descr-index-other"> Ccc </dd><dt class="tparam-name-index-other">T</dt><dd class="tparam-descr-index-other"> Aaa </dd><dt class="tparam-name-index-other">TT</dt><dd class="tparam-descr-index-other"> Bbb</dd></dl>] FullCommentAsXML=[<Function templateKind="template" file="{{[^"]+}}annotate-comments.cpp" line="320" column="6"><Name>comment_to_html_conversion_21</Name><USR>c:@FT@&gt;1#t&gt;2#t&gt;1#T#Tcomment_to_html_conversion_21#</USR><TemplateParameters><Parameter><Name>TTT</Name><Index>0</Index><Discussion><Para> Ddd </Para></Discussion></Parameter><Parameter><Name>C</Name><Discussion><Para> Ccc </Para></Discussion></Parameter><Parameter><Name>T</Name><Discussion><Para> Aaa </Para></Discussion></Parameter><Parameter><Name>TT</Name><Discussion><Para> Bbb</Para></Discussion></Parameter></TemplateParameters></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -661,7 +734,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:       (CXComment_TParamCommand ParamName=[TT] ParamPosition={0, 0}
 // CHECK-NEXT:         (CXComment_Paragraph
 // CHECK-NEXT:           (CXComment_Text Text=[ Bbb]))))]
-// CHECK: annotate-comments.cpp:329:6: FunctionDecl=comment_to_html_conversion_22:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Aaa.</p><p> Bbb.</p><dl><dt class="param-name-index-0">x1</dt><dd class="param-descr-index-0"> Ccc. </dd><dt class="param-name-index-1">x2</dt><dd class="param-descr-index-1"> Ddd. </dd></dl><p class="para-returns"><span class="word-returns">Returns</span>  Eee.</p>]
+// CHECK: annotate-comments.cpp:329:6: FunctionDecl=comment_to_html_conversion_22:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Aaa.</p><p> Bbb.</p><dl><dt class="param-name-index-0">x1</dt><dd class="param-descr-index-0"> Ccc. </dd><dt class="param-name-index-1">x2</dt><dd class="param-descr-index-1"> Ddd. </dd></dl><p class="para-returns"><span class="word-returns">Returns</span>  Eee.</p>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="329" column="6"><Name>comment_to_html_conversion_22</Name><USR>c:@F@comment_to_html_conversion_22#I#I#</USR><Abstract><Para> Aaa.</Para></Abstract><Parameters><Parameter><Name>x1</Name><Index>0</Index><Direction isExplicit="0">in</Direction><Discussion><Para> Ccc. </Para></Discussion></Parameter><Parameter><Name>x2</Name><Index>1</Index><Direction isExplicit="0">in</Direction><Discussion><Para> Ddd. </Para></Discussion></Parameter></Parameters><ResultDiscussion><Para> Eee.</Para></ResultDiscussion><Discussion><Para> Bbb.</Para></Discussion></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -684,7 +757,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:       (CXComment_BlockCommand CommandName=[returns]
 // CHECK-NEXT:         (CXComment_Paragraph
 // CHECK-NEXT:           (CXComment_Text Text=[ Eee.]))))]
-// CHECK: annotate-comments.cpp:332:6: FunctionDecl=comment_to_html_conversion_23:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <br><a href="http://example.com/">Aaa</a></p>]
+// CHECK: annotate-comments.cpp:332:6: FunctionDecl=comment_to_html_conversion_23:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <br><a href="http://example.com/">Aaa</a></p>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="332" column="6"><Name>comment_to_html_conversion_23</Name><USR>c:@F@comment_to_html_conversion_23#</USR><Abstract><Para> <rawHTML><![CDATA[<br>]]></rawHTML><rawHTML><![CDATA[<a href="http://example.com/">]]></rawHTML>Aaa<rawHTML>&lt;/a&gt;</rawHTML></Para></Abstract></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -693,7 +766,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:         (CXComment_HTMLStartTag Name=[a] Attrs: href=http://example.com/)
 // CHECK-NEXT:         (CXComment_Text Text=[Aaa])
 // CHECK-NEXT:         (CXComment_HTMLEndTag Name=[a])))]
-// CHECK: annotate-comments.cpp:338:6: FunctionDecl=comment_to_html_conversion_24:{{.*}} FullCommentAsHTML=[<pre> &lt;a href=&quot;http:&#47;&#47;example.com&#47;&quot;&gt;Aaa&lt;&#47;a&gt;\n &lt;a href=&#39;http:&#47;&#47;example.com&#47;&#39;&gt;Aaa&lt;&#47;a&gt;</pre>]
+// CHECK: annotate-comments.cpp:338:6: FunctionDecl=comment_to_html_conversion_24:{{.*}} FullCommentAsHTML=[<pre> &lt;a href=&quot;http:&#47;&#47;example.com&#47;&quot;&gt;Aaa&lt;&#47;a&gt;\n &lt;a href=&#39;http:&#47;&#47;example.com&#47;&#39;&gt;Aaa&lt;&#47;a&gt;</pre>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="338" column="6"><Name>comment_to_html_conversion_24</Name><USR>c:@F@comment_to_html_conversion_24#</USR><Discussion><Verbatim kind="verbatim"> &lt;a href=&quot;http://example.com/&quot;&gt;Aaa&lt;/a&gt;\n &lt;a href=&apos;http://example.com/&apos;&gt;Aaa&lt;/a&gt;</Verbatim></Discussion></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -701,13 +774,13 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:       (CXComment_VerbatimBlockCommand CommandName=[verbatim]
 // CHECK-NEXT:         (CXComment_VerbatimBlockLine Text=[ <a href="http://example.com/">Aaa</a>])
 // CHECK-NEXT:         (CXComment_VerbatimBlockLine Text=[ <a href='http://example.com/'>Aaa</a>])))]
-// CHECK: annotate-comments.cpp:341:6: FunctionDecl=comment_to_html_conversion_25:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <b>Aaa</b></p>]
+// CHECK: annotate-comments.cpp:341:6: FunctionDecl=comment_to_html_conversion_25:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <b>Aaa</b></p>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="341" column="6"><Name>comment_to_html_conversion_25</Name><USR>c:@F@comment_to_html_conversion_25#</USR><Abstract><Para> <bold>Aaa</bold></Para></Abstract></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
 // CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
 // CHECK-NEXT:         (CXComment_InlineCommand CommandName=[b] RenderBold Arg[0]=Aaa)))]
-// CHECK: annotate-comments.cpp:344:6: FunctionDecl=comment_to_html_conversion_26:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <tt>Aaa</tt> <tt>Bbb</tt></p>]
+// CHECK: annotate-comments.cpp:344:6: FunctionDecl=comment_to_html_conversion_26:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <tt>Aaa</tt> <tt>Bbb</tt></p>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="344" column="6"><Name>comment_to_html_conversion_26</Name><USR>c:@F@comment_to_html_conversion_26#</USR><Abstract><Para> <monospaced>Aaa</monospaced> <monospaced>Bbb</monospaced></Para></Abstract></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -715,7 +788,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:         (CXComment_InlineCommand CommandName=[c] RenderMonospaced Arg[0]=Aaa)
 // CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
 // CHECK-NEXT:         (CXComment_InlineCommand CommandName=[p] RenderMonospaced Arg[0]=Bbb)))]
-// CHECK: annotate-comments.cpp:347:6: FunctionDecl=comment_to_html_conversion_27:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <em>Aaa</em> <em>Bbb</em> <em>Ccc</em></p>]
+// CHECK: annotate-comments.cpp:347:6: FunctionDecl=comment_to_html_conversion_27:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <em>Aaa</em> <em>Bbb</em> <em>Ccc</em></p>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="347" column="6"><Name>comment_to_html_conversion_27</Name><USR>c:@F@comment_to_html_conversion_27#</USR><Abstract><Para> <emphasized>Aaa</emphasized> <emphasized>Bbb</emphasized> <emphasized>Ccc</emphasized></Para></Abstract></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -725,7 +798,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:         (CXComment_InlineCommand CommandName=[e] RenderEmphasized Arg[0]=Bbb)
 // CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
 // CHECK-NEXT:         (CXComment_InlineCommand CommandName=[em] RenderEmphasized Arg[0]=Ccc)))]
-// CHECK: annotate-comments.cpp:350:6: FunctionDecl=comment_to_html_conversion_28:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <em>1&lt;2</em> <em>3&lt;4</em> <em>5&lt;6</em> </p><dl><dt class="tparam-name-index-invalid">9&lt;10</dt><dd class="tparam-descr-index-invalid"> bbb</dd></dl><dl><dt class="param-name-index-invalid">7&lt;8</dt><dd class="param-descr-index-invalid"> aaa </dd></dl>]
+// CHECK: annotate-comments.cpp:350:6: FunctionDecl=comment_to_html_conversion_28:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <em>1&lt;2</em> <em>3&lt;4</em> <em>5&lt;6</em> </p><dl><dt class="tparam-name-index-invalid">9&lt;10</dt><dd class="tparam-descr-index-invalid"> bbb</dd></dl><dl><dt class="param-name-index-invalid">7&lt;8</dt><dd class="param-descr-index-invalid"> aaa </dd></dl>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="350" column="6"><Name>comment_to_html_conversion_28</Name><USR>c:@F@comment_to_html_conversion_28#</USR><Abstract><Para> <emphasized>1&lt;2</emphasized> <emphasized>3&lt;4</emphasized> <emphasized>5&lt;6</emphasized> </Para></Abstract><TemplateParameters><Parameter><Name>9&lt;10</Name><Discussion><Para> bbb</Para></Discussion></Parameter></TemplateParameters><Parameters><Parameter><Name>7&lt;8</Name><Direction isExplicit="0">in</Direction><Discussion><Para> aaa </Para></Discussion></Parameter></Parameters></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -742,7 +815,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:       (CXComment_TParamCommand ParamName=[9<10] ParamPosition=Invalid
 // CHECK-NEXT:         (CXComment_Paragraph
 // CHECK-NEXT:           (CXComment_Text Text=[ bbb]))))]
-// CHECK: annotate-comments.cpp:353:6: FunctionDecl=comment_to_html_conversion_29:{{.*}} FullCommentAsHTML=[<p class="para-brief"> \ @ &amp; $ # &lt; &gt; % &quot; . ::</p>]
+// CHECK: annotate-comments.cpp:353:6: FunctionDecl=comment_to_html_conversion_29:{{.*}} FullCommentAsHTML=[<p class="para-brief"> \ @ &amp; $ # &lt; &gt; % &quot; . ::</p>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="353" column="6"><Name>comment_to_html_conversion_29</Name><USR>c:@F@comment_to_html_conversion_29#</USR><Abstract><Para> \ @ &amp; $ # &lt; &gt; % &quot; . ::</Para></Abstract></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -768,7 +841,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:         (CXComment_Text Text=[.])
 // CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
 // CHECK-NEXT:         (CXComment_Text Text=[::])))]
-// CHECK: annotate-comments.cpp:356:6: FunctionDecl=comment_to_html_conversion_30:{{.*}} FullCommentAsHTML=[<p class="para-brief"> &amp; &lt; &gt; &quot;</p>]
+// CHECK: annotate-comments.cpp:356:6: FunctionDecl=comment_to_html_conversion_30:{{.*}} FullCommentAsHTML=[<p class="para-brief"> &amp; &lt; &gt; &quot;</p>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="356" column="6"><Name>comment_to_html_conversion_30</Name><USR>c:@F@comment_to_html_conversion_30#</USR><Abstract><Para> &amp; &lt; &gt; &quot;</Para></Abstract></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -780,7 +853,7 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:         (CXComment_Text Text=[>])
 // CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
 // CHECK-NEXT:         (CXComment_Text Text=["])))]
-// CHECK: annotate-comments.cpp:359:6: FunctionDecl=comment_to_html_conversion_31:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <em>0&lt;i</em></p>]
+// CHECK: annotate-comments.cpp:359:6: FunctionDecl=comment_to_html_conversion_31:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <em>0&lt;i</em></p>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="359" column="6"><Name>comment_to_html_conversion_31</Name><USR>c:@F@comment_to_html_conversion_31#</USR><Abstract><Para> <rawHTML><![CDATA[<em>]]></rawHTML>0&lt;i<rawHTML>&lt;/em&gt;</rawHTML></Para></Abstract></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -790,4 +863,25 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:         (CXComment_Text Text=[<])
 // CHECK-NEXT:         (CXComment_Text Text=[i])
 // CHECK-NEXT:         (CXComment_HTMLEndTag Name=[em])))]
+
+// CHECK: annotate-comments.cpp:362:7: ClassDecl=comment_to_xml_conversion_01:{{.*}} FullCommentAsXML=[<Class file="{{[^"]+}}annotate-comments.cpp" line="362" column="7"><Name>comment_to_xml_conversion_01</Name><USR>c:@C@comment_to_xml_conversion_01</USR><Abstract><Para> Aaa.</Para></Abstract></Class>]
+// CHECK: annotate-comments.cpp:364:3: CXXConstructor=comment_to_xml_conversion_01:{{.*}} FullCommentAsXML=[<Function isInstanceMethod="1" file="{{[^"]+}}annotate-comments.cpp" line="364" column="3"><Name>comment_to_xml_conversion_01</Name><USR>c:@C@comment_to_xml_conversion_01@F@comment_to_xml_conversion_01#I#</USR><Parameters><Parameter><Name>aaa</Name><Index>0</Index><Direction isExplicit="0">in</Direction><Discussion><Para> Blah blah.</Para></Discussion></Parameter></Parameters></Function>]
+// CHECK: annotate-comments.cpp:367:3: CXXDestructor=~comment_to_xml_conversion_01:{{.*}} FullCommentAsXML=[<Function isInstanceMethod="1" file="{{[^"]+}}annotate-comments.cpp" line="367" column="3"><Name>~comment_to_xml_conversion_01</Name><USR>c:@C@comment_to_xml_conversion_01@F@~comment_to_xml_conversion_01#</USR><Abstract><Para> Aaa.</Para></Abstract></Function>]
+// CHECK: annotate-comments.cpp:370:7: CXXMethod=comment_to_xml_conversion_02:{{.*}} FullCommentAsXML=[<Function isInstanceMethod="1" file="{{[^"]+}}annotate-comments.cpp" line="370" column="7"><Name>comment_to_xml_conversion_02</Name><USR>c:@C@comment_to_xml_conversion_01@F@comment_to_xml_conversion_02#I#</USR><Parameters><Parameter><Name>aaa</Name><Index>0</Index><Direction isExplicit="0">in</Direction><Discussion><Para> Blah blah.</Para></Discussion></Parameter></Parameters></Function>]
+// CHECK: annotate-comments.cpp:373:14: CXXMethod=comment_to_xml_conversion_03:{{.*}} FullCommentAsXML=[<Function isClassMethod="1" file="{{[^"]+}}annotate-comments.cpp" line="373" column="14"><Name>comment_to_xml_conversion_03</Name><USR>c:@C@comment_to_xml_conversion_01@F@comment_to_xml_conversion_03#I#S</USR><Parameters><Parameter><Name>aaa</Name><Index>0</Index><Direction isExplicit="0">in</Direction><Discussion><Para> Blah blah.</Para></Discussion></Parameter></Parameters></Function>]
+// CHECK: annotate-comments.cpp:376:7: FieldDecl=comment_to_xml_conversion_04:{{.*}} FullCommentAsXML=[<Variable file="{{[^"]+}}annotate-comments.cpp" line="376" column="7"><Name>comment_to_xml_conversion_04</Name><USR>c:@C@comment_to_xml_conversion_01@FI@comment_to_xml_conversion_04</USR><Abstract><Para> Aaa.</Para></Abstract></Variable>]
+// CHECK: annotate-comments.cpp:379:14: VarDecl=comment_to_xml_conversion_05:{{.*}} FullCommentAsXML=[<Variable file="{{[^"]+}}annotate-comments.cpp" line="379" column="14"><Name>comment_to_xml_conversion_05</Name><USR>c:@C@comment_to_xml_conversion_01@comment_to_xml_conversion_05</USR><Abstract><Para> Aaa.</Para></Abstract></Variable>]
+// CHECK: annotate-comments.cpp:382:8: CXXMethod=operator():{{.*}} FullCommentAsXML=[<Function isInstanceMethod="1" file="{{[^"]+}}annotate-comments.cpp" line="382" column="8"><Name>operator()</Name><USR>c:@C@comment_to_xml_conversion_01@F@operator()#I#</USR><Parameters><Parameter><Name>aaa</Name><Index>0</Index><Direction isExplicit="0">in</Direction><Discussion><Para> Blah blah.</Para></Discussion></Parameter></Parameters></Function>]
+// CHECK: annotate-comments.cpp:385:3: CXXConversion=operator _Bool:{{.*}} FullCommentAsXML=[<Function isInstanceMethod="1" file="{{[^"]+}}annotate-comments.cpp" line="385" column="3"><Name>operator _Bool</Name><USR>c:@C@comment_to_xml_conversion_01@F@operator _Bool#</USR><Abstract><Para> Aaa.</Para></Abstract></Function>]
+// CHECK: annotate-comments.cpp:388:15: TypedefDecl=comment_to_xml_conversion_06:{{.*}} FullCommentAsXML=[<Typedef file="{{[^"]+}}annotate-comments.cpp" line="388" column="15"><Name>comment_to_xml_conversion_06</Name><USR>c:annotate-comments.cpp@7933@C@comment_to_xml_conversion_01@T@comment_to_xml_conversion_06</USR><Abstract><Para> Aaa.</Para></Abstract></Typedef>]
+// CHECK: annotate-comments.cpp:391:9: TypeAliasDecl=comment_to_xml_conversion_07:{{.*}} FullCommentAsXML=[<Typedef file="{{[^"]+}}annotate-comments.cpp" line="391" column="9"><Name>comment_to_xml_conversion_07</Name><USR>c:@C@comment_to_xml_conversion_01@comment_to_xml_conversion_07</USR><Abstract><Para> Aaa.</Para></Abstract></Typedef>]
+// CHECK: annotate-comments.cpp:398:3: UnexposedDecl=comment_to_xml_conversion_09:{{.*}} FullCommentAsXML=[<Typedef file="{{[^"]+}}annotate-comments.cpp" line="398" column="3"><Name>comment_to_xml_conversion_09</Name><USR>c:@C@comment_to_xml_conversion_01@comment_to_xml_conversion_09</USR><Abstract><Para> Aaa.</Para></Abstract></Typedef>]
+// CHECK: annotate-comments.cpp:403:6: FunctionTemplate=comment_to_xml_conversion_10:{{.*}} FullCommentAsXML=[<Function templateKind="template" file="{{[^"]+}}annotate-comments.cpp" line="403" column="6"><Name>comment_to_xml_conversion_10</Name><USR>c:@FT@&gt;2#T#Tcomment_to_xml_conversion_10#t0.0#t0.1#</USR><Abstract><Para> Aaa.</Para></Abstract></Function>]
+// CHECK: annotate-comments.cpp:407:6: FunctionDecl=comment_to_xml_conversion_10:{{.*}} FullCommentAsXML=[<Function templateKind="specialization" file="{{[^"]+}}annotate-comments.cpp" line="407" column="6"><Name>comment_to_xml_conversion_10</Name><USR>c:@F@comment_to_xml_conversion_10&lt;#I#I&gt;#I#I#</USR><Abstract><Para> Aaa.</Para></Abstract></Function>]
+// CHECK: annotate-comments.cpp:411:7: ClassTemplate=comment_to_xml_conversion_11:{{.*}} FullCommentAsXML=[<Class templateKind="template" file="{{[^"]+}}annotate-comments.cpp" line="411" column="7"><Name>comment_to_xml_conversion_11</Name><USR>c:@CT&gt;2#T#T@comment_to_xml_conversion_11</USR><Abstract><Para> Aaa.</Para></Abstract></Class>]
+// CHECK: annotate-comments.cpp:415:7: ClassTemplatePartialSpecialization=comment_to_xml_conversion_11:{{.*}} FullCommentAsXML=[<Class templateKind="partialSpecialization" file="{{[^"]+}}annotate-comments.cpp" line="415" column="7"><Name>comment_to_xml_conversion_11</Name><USR>c:@CP&gt;1#T@comment_to_xml_conversion_11&gt;#t0.0#I</USR><Abstract><Para> Aaa.</Para></Abstract></Class>]
+// CHECK: annotate-comments.cpp:419:7: ClassDecl=comment_to_xml_conversion_11:{{.*}} FullCommentAsXML=[<Class templateKind="specialization" file="{{[^"]+}}annotate-comments.cpp" line="419" column="7"><Name>comment_to_xml_conversion_11</Name><USR>c:@C@comment_to_xml_conversion_11&gt;#I#I</USR><Abstract><Para> Aaa.</Para></Abstract></Class>]
+// CHECK: annotate-comments.cpp:422:5: VarDecl=comment_to_xml_conversion_12:{{.*}} FullCommentAsXML=[<Variable file="{{[^"]+}}annotate-comments.cpp" line="422" column="5"><Name>comment_to_xml_conversion_12</Name><USR>c:@comment_to_xml_conversion_12</USR><Abstract><Para> Aaa.</Para></Abstract></Variable>]
+// CHECK: annotate-comments.cpp:425:11: Namespace=comment_to_xml_conversion_13:{{.*}} FullCommentAsXML=[<Namespace file="{{[^"]+}}annotate-comments.cpp" line="425" column="11"><Name>comment_to_xml_conversion_13</Name><USR>c:@N@comment_to_xml_conversion_13</USR><Abstract><Para> Aaa.</Para></Abstract></Namespace>]
+// CHECK: annotate-comments.cpp:427:13: Namespace=comment_to_xml_conversion_14:{{.*}} FullCommentAsXML=[<Namespace file="{{[^"]+}}annotate-comments.cpp" line="427" column="13"><Name>comment_to_xml_conversion_14</Name><USR>c:@N@comment_to_xml_conversion_13@N@comment_to_xml_conversion_14</USR><Abstract><Para> Aaa.</Para></Abstract></Namespace>]
 

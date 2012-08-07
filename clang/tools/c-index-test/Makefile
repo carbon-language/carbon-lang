@@ -28,3 +28,6 @@ USEDLIBS = clang.a clangFrontend.a clangDriver.a \
 	   clangBasic.a
 
 include $(CLANG_LEVEL)/Makefile
+
+LIBS += "$(LIBXML2_LIBS)"
+CPPFLAGS += "$(LIBXML2_INC)"

@@ -50,6 +50,7 @@ clang_VerbatimBlockLineComment_getText
 clang_VerbatimLineComment_getText
 clang_HTMLTagComment_getAsString
 clang_FullComment_getAsHTML
+clang_FullComment_getAsXML
 clang_annotateTokens
 clang_codeCompleteAt
 clang_codeCompleteGetContainerKind
