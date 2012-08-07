@@ -129,6 +129,14 @@ namespace test6 {
   const std::type_info *const t = &typeid(p);
   // CHECK-NOT: @_ZN5test6L1tE
 
+  extern B *volatile v;
+  // CHECK: store {{.*}} @_ZN5test6L1wE
+  B *const w = dynamic_cast<B*>(v);
+
+  // CHECK: load volatile
+  // CHECK: store {{.*}} @_ZN5test6L1xE
+  const int x = *(volatile int*)0x1234;
+
   namespace {
     int a = int();
     volatile int b = int();
@@ -145,7 +153,7 @@ namespace test6 {
 namespace test7 {
   struct A { A(); };
   struct B { ~B(); int n; };
-  struct C { C() = default; C(const C&); };
+  struct C { C() = default; C(const C&); int n; };
   struct D {};
 
   // CHECK: call void @_ZN5test71AC1Ev({{.*}}@_ZN5test7L1aE)
@@ -161,8 +169,12 @@ namespace test7 {
 
   // CHECK-NOT: @_ZN5test7L2c1E
   // CHECK: @_ZN5test7L2c2E
-  const C c1 = C(); // elidable copy
-  const C c2 = static_cast<C&&>(C()); // non-elidable copy
+  // CHECK-NOT: @_ZN5test7L2c3E
+  // CHECK: @_ZN5test7L2c4E
+  const C c1 = C();
+  const C c2 = static_cast<const C&>(C());
+  const int c3 = C().n;
+  const int c4 = C(C()).n;
 
   // CHECK-NOT: @_ZN5test7L1dE
   const D d = D();

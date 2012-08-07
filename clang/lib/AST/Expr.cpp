@@ -2643,6 +2643,8 @@ bool Expr::HasSideEffects(const ASTContext &Ctx) const {
   case SubstNonTypeTemplateParmPackExprClass:
     llvm_unreachable("shouldn't see dependent / unresolved nodes here");
 
+  case DeclRefExprClass:
+  case ObjCIvarRefExprClass:
   case PredefinedExprClass:
   case IntegerLiteralClass:
   case FloatingLiteralClass:
@@ -2696,16 +2698,10 @@ bool Expr::HasSideEffects(const ASTContext &Ctx) const {
   case MemberExprClass:
   case ConditionalOperatorClass:
   case BinaryConditionalOperatorClass:
-  case ImplicitCastExprClass:
-  case CStyleCastExprClass:
   case CompoundLiteralExprClass:
   case ExtVectorElementExprClass:
   case DesignatedInitExprClass:
   case ParenListExprClass:
-  case CXXStaticCastExprClass:
-  case CXXReinterpretCastExprClass:
-  case CXXConstCastExprClass:
-  case CXXFunctionalCastExprClass:
   case CXXPseudoDestructorExprClass:
   case SubstNonTypeTemplateParmExprClass:
   case MaterializeTemporaryExprClass:
@@ -2714,23 +2710,15 @@ bool Expr::HasSideEffects(const ASTContext &Ctx) const {
     // These have a side-effect if any subexpression does.
     break;
 
-  case UnaryOperatorClass: {
-    const UnaryOperator *UO = cast<UnaryOperator>(this);
-    if (UO->isIncrementDecrementOp())
-      return true;
-    if (UO->getOpcode() == UO_Deref && UO->getType().isVolatileQualified())
+  case UnaryOperatorClass:
+    if (cast<UnaryOperator>(this)->isIncrementDecrementOp())
       return true;
     break;
-  }
 
   case BinaryOperatorClass:
     if (cast<BinaryOperator>(this)->isAssignmentOp())
       return true;
     break;
-
-  case DeclRefExprClass:
-  case ObjCIvarRefExprClass:
-    return getType().isVolatileQualified();
 
   case InitListExprClass:
     // FIXME: The children for an InitListExpr doesn't include the array filler.
@@ -2755,7 +2743,17 @@ bool Expr::HasSideEffects(const ASTContext &Ctx) const {
     if (DCE->getTypeAsWritten()->isReferenceType() &&
         DCE->getCastKind() == CK_Dynamic)
       return true;
-    // Also has side-effects if the subexpression does.
+  } // Fall through.
+  case ImplicitCastExprClass:
+  case CStyleCastExprClass:
+  case CXXStaticCastExprClass:
+  case CXXReinterpretCastExprClass:
+  case CXXConstCastExprClass:
+  case CXXFunctionalCastExprClass: {
+    const CastExpr *CE = cast<CastExpr>(this);
+    if (CE->getCastKind() == CK_LValueToRValue &&
+        CE->getSubExpr()->getType().isVolatileQualified())
+      return true;
     break;
   }
 
@@ -2779,10 +2777,10 @@ bool Expr::HasSideEffects(const ASTContext &Ctx) const {
   case CXXConstructExprClass:
   case CXXTemporaryObjectExprClass: {
     const CXXConstructExpr *CE = cast<CXXConstructExpr>(this);
-    if (!CE->isElidable() && !CE->getConstructor()->isTrivial())
+    if (!CE->getConstructor()->isTrivial())
       return true;
-    // An elidable or trivial constructor does not add any side-effects of its
-    // own. Just look at its arguments.
+    // A trivial constructor does not add any side-effects of its own. Just look
+    // at its arguments.
     break;
   }
 
