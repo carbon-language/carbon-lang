@@ -25,7 +25,7 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>164</string>
+	<string>165</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2012 Apple Inc. All rights reserved.</string>
 	<key>XPCService</key>
