@@ -3,7 +3,8 @@
 
 config.target_triple = "@TARGET_TRIPLE@"
 config.llvm_src_root = "@LLVM_SOURCE_DIR@"
-config.clang = "@LLVM_BINARY_DIR@/bin/clang"
+config.build_type = "@CMAKE_BUILD_TYPE@"
+config.asan_binary_dir = "@ASAN_BINARY_DIR@"
 
 # Let the main config do the real work.
-lit.load_config(config, "@ASAN_SOURCE_DIR@/lit_tests/lit.cfg")
+lit.load_config(config, "@ASAN_SOURCE_DIR@/lit_tests/Unit/lit.cfg")

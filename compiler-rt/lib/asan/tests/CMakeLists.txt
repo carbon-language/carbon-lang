@@ -47,10 +47,10 @@ set(ASAN_UNITTEST_INSTRUMENTED_CFLAGS
   -DASAN_UAR=0
 )
 
-add_custom_target(AsanTests)
-set_target_properties(AsanTests PROPERTIES FOLDER "ASan tests")
+add_custom_target(AsanUnitTests)
+set_target_properties(AsanUnitTests PROPERTIES FOLDER "ASan unit tests")
 function(add_asan_test testname)
-  add_unittest(AsanTests ${testname} ${ARGN})
+  add_unittest(AsanUnitTests ${testname} ${ARGN})
   if(LLVM_BUILD_32_BITS)
     target_link_libraries(${testname} clang_rt.asan-i386)
   else()
