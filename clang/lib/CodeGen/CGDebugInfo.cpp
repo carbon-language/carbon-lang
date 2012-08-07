@@ -558,7 +558,7 @@ llvm::DIType CGDebugInfo::CreatePointeeType(QualType PointeeTy,
 
   // Handle qualifiers.
   if (PointeeTy.hasLocalQualifiers())
-    return CreateQualifiedType(PointeeTy, Unit);
+    return CreateQualifiedType(PointeeTy.getCanonicalType(), Unit);
 
   if (const RecordType *RTy = dyn_cast<RecordType>(PointeeTy)) {
     RecordDecl *RD = RTy->getDecl();
@@ -685,8 +685,9 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
   if (isa<FunctionNoProtoType>(Ty))
     EltTys.push_back(DBuilder.createUnspecifiedParameter());
   else if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(Ty)) {
-    for (unsigned i = 0, e = FPT->getNumArgs(); i != e; ++i)
+    for (unsigned i = 0, e = FPT->getNumArgs(); i != e; ++i) {
       EltTys.push_back(getOrCreateType(FPT->getArgType(i), Unit));
+    }
   }
 
   llvm::DIArray EltTypeArray = DBuilder.getOrCreateArray(EltTys);
@@ -1629,8 +1630,13 @@ static QualType UnwrapTypeForDebugInfo(QualType T) {
     case Type::Paren:
       T = cast<ParenType>(T)->getInnerType();
       break;
-    case Type::SubstTemplateTypeParm:
+    case Type::SubstTemplateTypeParm: {
+      // We need to keep the qualifiers handy since getReplacementType()
+      // will strip them away.
+      unsigned Quals = T.getLocalFastQualifiers();
       T = cast<SubstTemplateTypeParmType>(T)->getReplacementType();
+      T.addFastQualifiers(Quals);
+    }
       break;
     case Type::Auto:
       T = cast<AutoType>(T)->getDeducedType();
@@ -1689,10 +1695,11 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit) {
 
   // Unwrap the type as needed for debug information.
   Ty = UnwrapTypeForDebugInfo(Ty);
-  
+
   llvm::DIType T = getCompletedTypeOrNull(Ty);
 
-  if (T.Verify()) return T;
+  if (T.Verify())
+    return T;
 
   // Otherwise create the type.
   llvm::DIType Res = CreateTypeNode(Ty, Unit);
@@ -1707,6 +1714,7 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit) {
 
   if (!Res.isForwardDecl())
     CompletedTypeCache[Ty.getAsOpaquePtr()] = Res;
+
   return Res;
 }
 
@@ -1958,6 +1966,7 @@ llvm::DISubprogram CGDebugInfo::getFunctionDeclaration(const Decl *D) {
 llvm::DIType CGDebugInfo::getOrCreateFunctionType(const Decl * D,
                                                   QualType FnType,
                                                   llvm::DIFile F) {
+
   if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D))
     return getOrCreateMethodType(Method, F);
   if (const ObjCMethodDecl *OMethod = dyn_cast<ObjCMethodDecl>(D)) {
