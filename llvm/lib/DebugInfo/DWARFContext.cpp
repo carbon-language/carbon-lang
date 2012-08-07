@@ -167,9 +167,7 @@ DILineInfo DWARFContext::getLineInfoForAddress(uint64_t address,
     const DWARFDebugLine::LineTable *lineTable = getLineTableForCompileUnit(cu);
     if (lineTable) {
       // Get the index of the row we're looking for in the line table.
-      uint64_t hiPC = cu->getCompileUnitDIE()->getAttributeValueAsUnsigned(
-          cu, DW_AT_high_pc, -1ULL);
-      uint32_t rowIndex = lineTable->lookupAddress(address, hiPC);
+      uint32_t rowIndex = lineTable->lookupAddress(address);
       if (rowIndex != -1U) {
         const DWARFDebugLine::Row &row = lineTable->Rows[rowIndex];
         // Take file/line info from the line table.

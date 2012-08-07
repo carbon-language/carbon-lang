@@ -95,14 +95,46 @@ void DWARFDebugLine::LineTable::dump(raw_ostream &OS) const {
 DWARFDebugLine::State::~State() {}
 
 void DWARFDebugLine::State::appendRowToMatrix(uint32_t offset) {
+  if (Sequence::Empty) {
+    // Record the beginning of instruction sequence.
+    Sequence::Empty = false;
+    Sequence::LowPC = Address;
+    Sequence::FirstRowIndex = row;
+  }
   ++row;  // Increase the row number.
   LineTable::appendRow(*this);
+  if (EndSequence) {
+    // Record the end of instruction sequence.
+    Sequence::HighPC = Address;
+    Sequence::LastRowIndex = row;
+    if (Sequence::isValid())
+      LineTable::appendSequence(*this);
+    Sequence::reset();
+  }
   Row::postAppend();
+}
+
+void DWARFDebugLine::State::finalize() {
+  row = DoneParsingLineTable;
+  if (!Sequence::Empty) {
+    fprintf(stderr, "warning: last sequence in debug line table is not"
+                    "terminated!\n");
+  }
+  // Sort all sequences so that address lookup will work faster.
+  if (!Sequences.empty()) {
+    std::sort(Sequences.begin(), Sequences.end(), Sequence::orderByLowPC);
+    // Note: actually, instruction address ranges of sequences should not
+    // overlap (in shared objects and executables). If they do, the address
+    // lookup would still work, though, but result would be ambiguous.
+    // We don't report warning in this case. For example,
+    // sometimes .so compiled from multiple object files contains a few
+    // rudimentary sequences for address ranges [0x0, 0xsomething).
+  }
 }
 
 DWARFDebugLine::DumpingState::~DumpingState() {}
 
-void DWARFDebugLine::DumpingState::finalize(uint32_t offset) {
+void DWARFDebugLine::DumpingState::finalize() {
   LineTable::dump(OS);
 }
 
@@ -180,8 +212,9 @@ DWARFDebugLine::parsePrologue(DataExtractor debug_line_data,
     fprintf(stderr, "warning: parsing line table prologue at 0x%8.8x should"
                     " have ended at 0x%8.8x but it ended ad 0x%8.8x\n",
             prologue_offset, end_prologue_offset, *offset_ptr);
+    return false;
   }
-  return end_prologue_offset;
+  return true;
 }
 
 bool
@@ -430,47 +463,53 @@ DWARFDebugLine::parseStatementTable(DataExtractor debug_line_data,
     }
   }
 
-  state.finalize(*offset_ptr);
+  state.finalize();
 
   return end_offset;
 }
 
-static bool findMatchingAddress(const DWARFDebugLine::Row& row1,
-                                const DWARFDebugLine::Row& row2) {
-  return row1.Address < row2.Address;
-}
-
 uint32_t
-DWARFDebugLine::LineTable::lookupAddress(uint64_t address,
-                                         uint64_t cu_high_pc) const {
-  uint32_t index = UINT32_MAX;
-  if (!Rows.empty()) {
-    // Use the lower_bound algorithm to perform a binary search since we know
-    // that our line table data is ordered by address.
-    DWARFDebugLine::Row row;
-    row.Address = address;
-    typedef std::vector<Row>::const_iterator iterator;
-    iterator begin_pos = Rows.begin();
-    iterator end_pos = Rows.end();
-    iterator pos = std::lower_bound(begin_pos, end_pos, row,
-                                    findMatchingAddress);
-    if (pos == end_pos) {
-      if (address < cu_high_pc)
-        return Rows.size()-1;
-    } else {
-      // Rely on fact that we are using a std::vector and we can do
-      // pointer arithmetic to find the row index (which will be one less
-      // that what we found since it will find the first position after
-      // the current address) since std::vector iterators are just
-      // pointers to the container type.
-      index = pos - begin_pos;
-      if (pos->Address > address) {
-        if (index > 0)
-          --index;
-        else
-          index = UINT32_MAX;
-      }
-    }
+DWARFDebugLine::LineTable::lookupAddress(uint64_t address) const {
+  uint32_t unknown_index = UINT32_MAX;
+  if (Sequences.empty())
+    return unknown_index;
+  // First, find an instruction sequence containing the given address.
+  DWARFDebugLine::Sequence sequence;
+  sequence.LowPC = address;
+  SequenceIter first_seq = Sequences.begin();
+  SequenceIter last_seq = Sequences.end();
+  SequenceIter seq_pos = std::lower_bound(first_seq, last_seq, sequence,
+      DWARFDebugLine::Sequence::orderByLowPC);
+  DWARFDebugLine::Sequence found_seq;
+  if (seq_pos == last_seq) {
+    found_seq = Sequences.back();
+  } else if (seq_pos->LowPC == address) {
+    found_seq = *seq_pos;
+  } else {
+    if (seq_pos == first_seq)
+      return unknown_index;
+    found_seq = *(seq_pos - 1);
   }
-  return index; // Failed to find address.
+  if (!found_seq.containsPC(address))
+    return unknown_index;
+  // Search for instruction address in the rows describing the sequence.
+  // Rows are stored in a vector, so we may use arithmetical operations with
+  // iterators.
+  DWARFDebugLine::Row row;
+  row.Address = address;
+  RowIter first_row = Rows.begin() + found_seq.FirstRowIndex;
+  RowIter last_row = Rows.begin() + found_seq.LastRowIndex;
+  RowIter row_pos = std::lower_bound(first_row, last_row, row,
+      DWARFDebugLine::Row::orderByAddress);
+  if (row_pos == last_row) {
+    return found_seq.LastRowIndex - 1;
+  }
+  uint32_t index = found_seq.FirstRowIndex + (row_pos - first_row);
+  if (row_pos->Address > address) {
+    if (row_pos == first_row)
+      return unknown_index;
+    else
+      index--;
+  }
+  return index;
 }
