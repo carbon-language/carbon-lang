@@ -4106,7 +4106,7 @@ QualType Sema::CXXCheckConditionalOperands(ExprResult &Cond, ExprResult &LHS, Ex
   // FIXME: Handle C99's complex types, vector types, block pointers and Obj-C++
   // interface pointers.
 
-  // C++0x 5.16p1
+  // C++11 [expr.cond]p1
   //   The first expression is contextually converted to bool.
   if (!Cond.get()->isTypeDependent()) {
     ExprResult CondRes = CheckCXXBooleanCondition(Cond.take());
@@ -4123,7 +4123,7 @@ QualType Sema::CXXCheckConditionalOperands(ExprResult &Cond, ExprResult &LHS, Ex
   if (LHS.get()->isTypeDependent() || RHS.get()->isTypeDependent())
     return Context.DependentTy;
 
-  // C++0x 5.16p2
+  // C++11 [expr.cond]p2
   //   If either the second or the third operand has type (cv) void, ...
   QualType LTy = LHS.get()->getType();
   QualType RTy = RHS.get()->getType();
@@ -4136,12 +4136,26 @@ QualType Sema::CXXCheckConditionalOperands(ExprResult &Cond, ExprResult &LHS, Ex
     RHS = DefaultFunctionArrayLvalueConversion(RHS.take());
     if (LHS.isInvalid() || RHS.isInvalid())
       return QualType();
+
+    // Finish off the lvalue-to-rvalue conversion by copy-initializing a
+    // temporary if necessary. DefaultFunctionArrayLvalueConversion doesn't
+    // do this part for us.
+    ExprResult &NonVoid = LVoid ? RHS : LHS;
+    if (NonVoid.get()->getType()->isRecordType() &&
+        NonVoid.get()->isGLValue()) {
+      InitializedEntity Entity =
+          InitializedEntity::InitializeTemporary(NonVoid.get()->getType());
+      NonVoid = PerformCopyInitialization(Entity, SourceLocation(), NonVoid);
+      if (NonVoid.isInvalid())
+        return QualType();
+    }
+
     LTy = LHS.get()->getType();
     RTy = RHS.get()->getType();
 
     //   ... and one of the following shall hold:
     //   -- The second or the third operand (but not both) is a throw-
-    //      expression; the result is of the type of the other and is an rvalue.
+    //      expression; the result is of the type of the other and is a prvalue.
     bool LThrow = isa<CXXThrowExpr>(LHS.get());
     bool RThrow = isa<CXXThrowExpr>(RHS.get());
     if (LThrow && !RThrow)
@@ -4150,7 +4164,7 @@ QualType Sema::CXXCheckConditionalOperands(ExprResult &Cond, ExprResult &LHS, Ex
       return LTy;
 
     //   -- Both the second and third operands have type void; the result is of
-    //      type void and is an rvalue.
+    //      type void and is a prvalue.
     if (LVoid && RVoid)
       return Context.VoidTy;
 
@@ -4167,6 +4181,10 @@ QualType Sema::CXXCheckConditionalOperands(ExprResult &Cond, ExprResult &LHS, Ex
   //   Otherwise, if the second and third operand have different types, and
   //   either has (cv) class type, and attempt is made to convert each of those
   //   operands to the other.
+  //
+  // FIXME: In C++11, if both operands have the same value category and the same
+  // type except for cv-qualification, the types are unified. This is valid:
+  //   volatile int a; int b; volatile int &c = x ? a : b;
   if (!Context.hasSameType(LTy, RTy) &&
       (LTy->isRecordType() || RTy->isRecordType())) {
     ImplicitConversionSequence ICSLeftToRight, ICSRightToLeft;

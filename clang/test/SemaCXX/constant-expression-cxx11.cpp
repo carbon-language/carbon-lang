@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i686-linux -Wno-string-plus-int -fsyntax-only -verify -std=c++11 -pedantic %s -Wno-comment
+// RUN: %clang_cc1 -triple i686-linux -Wno-string-plus-int -fsyntax-only -fcxx-exceptions -verify -std=c++11 -pedantic %s -Wno-comment
 
 namespace StaticAssertFoldTest {
 
@@ -1294,9 +1294,9 @@ namespace InvalidClasses {
 // Constructors can be implicitly constexpr, even for a non-literal type.
 namespace ImplicitConstexpr {
   struct Q { Q() = default; Q(const Q&) = default; Q(Q&&) = default; ~Q(); }; // expected-note 3{{here}}
-  struct R { constexpr R(); constexpr R(const R&); constexpr R(R&&); ~R(); };
+  struct R { constexpr R() noexcept; constexpr R(const R&) noexcept; constexpr R(R&&) noexcept; ~R() noexcept; };
   struct S { R r; }; // expected-note 3{{here}}
-  struct T { T(const T&); T(T &&); ~T(); };
+  struct T { T(const T&) noexcept; T(T &&) noexcept; ~T() noexcept; };
   struct U { T t; }; // expected-note 3{{here}}
   static_assert(!__is_literal_type(Q), "");
   static_assert(!__is_literal_type(R), "");
@@ -1350,4 +1350,21 @@ namespace PR12670 {
   static_assert(x[0].m == 4, "");
   static_assert(x[1].m == 5, "");
   static_assert(x[2].m == 6, "");
+}
+
+// Indirectly test that an implicit lvalue-to-rvalue conversion is performed
+// when a conditional operator has one argument of type void and where the other
+// is a glvalue of class type.
+namespace ConditionalLValToRVal {
+  struct A {
+    constexpr A(int a) : v(a) {}
+    int v;
+  };
+
+  constexpr A f(const A &a) {
+    return a.v == 0 ? throw a : a;
+  }
+
+  constexpr A a(4);
+  static_assert(f(a).v == 4, "");
 }
