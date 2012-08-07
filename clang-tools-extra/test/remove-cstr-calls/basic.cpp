@@ -1,9 +1,8 @@
-// RUN: rm -rf %t
-// RUN: mkdir %t
-// RUN: echo '[{"directory":".","command":"clang++ -c %t/test.cpp","file":"%t/test.cpp"}]' > %t/compile_commands.json
-// RUN: cp "%s" "%t/test.cpp"
-// RUN: remove-cstr-calls "%t" "%t/test.cpp"
-// RUN: cat "%t/test.cpp" | FileCheck %s
+// RUN: echo '[{"directory":".","command":"clang++ -c %T/test.cpp","file":"%T/test.cpp"}]' > %T/compile_commands.json
+// RUN: cp "%s" "%T/test.cpp"
+// RUN: remove-cstr-calls "%T" "%T/test.cpp"
+// RUN: cat "%T/test.cpp" | FileCheck %s
+// REQUIRES: shell
 // FIXME: implement a mode for refactoring tools that takes input from stdin
 // and writes output to stdout for easier testing of tools. 
 

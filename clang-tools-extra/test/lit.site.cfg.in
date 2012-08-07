@@ -5,7 +5,7 @@ config.llvm_obj_root = "@LLVM_BINARY_DIR@"
 config.llvm_tools_dir = "@LLVM_TOOLS_DIR@"
 config.llvm_libs_dir = "@LLVM_LIBS_DIR@"
 config.lit_tools_dir = "@LLVM_LIT_TOOLS_DIR@"
-config.clang_obj_root = "@CLANG_BINARY_DIR@"
+config.clang_tools_binary_dir = "@CLANG_TOOLS_BINARY_DIR@"
 config.target_triple = "@TARGET_TRIPLE@"
 
 # Support substitution of the tools and libs dirs with user parameters. This is
@@ -18,4 +18,4 @@ except KeyError,e:
     lit.fatal("unable to find %r parameter, use '--param=%s=VALUE'" % (key,key))
 
 # Let the main config do the real work.
-lit.load_config(config, "@CLANG_SOURCE_DIR@/test/lit.cfg")
+lit.load_config(config, "@CLANG_TOOLS_SOURCE_DIR@/test/lit.cfg")
