@@ -572,7 +572,7 @@ private:
   /// getSuccWeight - Return weight of the edge from this block to MBB. This
   /// method should NOT be called directly, but by using getEdgeWeight method
   /// from MachineBranchProbabilityInfo class.
-  uint32_t getSuccWeight(const_succ_iterator Succ) const;
+  uint32_t getSuccWeight(const MachineBasicBlock *succ) const;
 
 
   // Methods used to maintain doubly linked list of blocks...
