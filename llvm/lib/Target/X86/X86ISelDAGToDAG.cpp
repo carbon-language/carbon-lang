@@ -2438,7 +2438,12 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
     return NULL;
   }
 
-  case X86ISD::CMP: {
+  case X86ISD::CMP:
+  case X86ISD::SUB: {
+    // Sometimes a SUB is used to perform comparison.
+    if (Opcode == X86ISD::SUB && Node->hasAnyUseOfValue(0))
+      // This node is not a CMP.
+      break;
     SDValue N0 = Node->getOperand(0);
     SDValue N1 = Node->getOperand(1);
 

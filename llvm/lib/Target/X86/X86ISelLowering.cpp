@@ -8333,11 +8333,7 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
     switch (Op.getNode()->getOpcode()) {
     default: llvm_unreachable("unexpected operator!");
     case ISD::SUB:
-      // If the only use of SUB is EFLAGS, use CMP instead.
-      if (Op.hasOneUse())
-        Opcode = X86ISD::CMP;
-      else
-        Opcode = X86ISD::SUB;
+      Opcode = X86ISD::SUB;
       break;
     case ISD::OR:  Opcode = X86ISD::OR;  break;
     case ISD::XOR: Opcode = X86ISD::XOR; break;
@@ -8391,6 +8387,14 @@ SDValue X86TargetLowering::EmitCmp(SDValue Op0, SDValue Op1, unsigned X86CC,
       return EmitTest(Op0, X86CC, DAG);
 
   DebugLoc dl = Op0.getDebugLoc();
+  if ((Op0.getValueType() == MVT::i8 || Op0.getValueType() == MVT::i16 ||
+       Op0.getValueType() == MVT::i32 || Op0.getValueType() == MVT::i64)) {
+    // Use SUB instead of CMP to enable CSE between SUB and CMP.
+    SDVTList VTs = DAG.getVTList(Op0.getValueType(), MVT::i32);
+    SDValue Sub = DAG.getNode(X86ISD::SUB, dl, VTs,
+                              Op0, Op1);
+    return SDValue(Sub.getNode(), 1);
+  }
   return DAG.getNode(X86ISD::CMP, dl, MVT::i32, Op0, Op1);
 }
 
@@ -8765,46 +8769,6 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
       Cond = NewCond;
   }
 
-  // Handle the following cases related to max and min:
-  // (a > b) ? (a-b) : 0
-  // (a >= b) ? (a-b) : 0
-  // (b < a) ? (a-b) : 0
-  // (b <= a) ? (a-b) : 0
-  // Comparison is removed to use EFLAGS from SUB.
-  if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op2))
-    if (Cond.getOpcode() == X86ISD::SETCC &&
-        Cond.getOperand(1).getOpcode() == X86ISD::CMP &&
-        (Op1.getOpcode() == ISD::SUB || Op1.getOpcode() == X86ISD::SUB) &&
-        C->getAPIntValue() == 0) {
-      SDValue Cmp = Cond.getOperand(1);
-      unsigned CC = cast<ConstantSDNode>(Cond.getOperand(0))->getZExtValue();
-      if ((DAG.isEqualTo(Op1.getOperand(0), Cmp.getOperand(0)) &&
-           DAG.isEqualTo(Op1.getOperand(1), Cmp.getOperand(1)) &&
-           (CC == X86::COND_G || CC == X86::COND_GE ||
-            CC == X86::COND_A || CC == X86::COND_AE)) ||
-          (DAG.isEqualTo(Op1.getOperand(0), Cmp.getOperand(1)) &&
-           DAG.isEqualTo(Op1.getOperand(1), Cmp.getOperand(0)) &&
-           (CC == X86::COND_L || CC == X86::COND_LE ||
-            CC == X86::COND_B || CC == X86::COND_BE))) {
-
-        if (Op1.getOpcode() == ISD::SUB) {
-          SDVTList VTs = DAG.getVTList(Op1.getValueType(), MVT::i32);
-          SDValue New = DAG.getNode(X86ISD::SUB, DL, VTs,
-                                    Op1.getOperand(0), Op1.getOperand(1));
-          DAG.ReplaceAllUsesWith(Op1, New);
-          Op1 = New;
-        }
-
-        SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Glue);
-        unsigned NewCC = (CC == X86::COND_G || CC == X86::COND_GE ||
-                          CC == X86::COND_L ||
-                          CC == X86::COND_LE) ? X86::COND_GE : X86::COND_AE;
-        SDValue Ops[] = { Op2, Op1, DAG.getConstant(NewCC, MVT::i8),
-                          SDValue(Op1.getNode(), 1) };
-        return DAG.getNode(X86ISD::CMOV, DL, VTs, Ops, array_lengthof(Ops));
-      }
-    }
-
   // (select (x == 0), -1, y) -> (sign_bit (x - 1)) | y
   // (select (x == 0), y, -1) -> ~(sign_bit (x - 1)) | y
   // (select (x != 0), y, -1) -> (sign_bit (x - 1)) | y
@@ -8945,7 +8909,7 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
   // a <  b ?  0 : -1 -> RES = setcc_carry
   // a >= b ? -1 :  0 -> RES = setcc_carry
   // a >= b ?  0 : -1 -> RES = ~setcc_carry
-  if (Cond.getOpcode() == X86ISD::CMP) {
+  if (Cond.getOpcode() == X86ISD::SUB) {
     Cond = ConvertCmpIfNecessary(Cond, DAG);
     unsigned CondCode = cast<ConstantSDNode>(CC)->getZExtValue();
 

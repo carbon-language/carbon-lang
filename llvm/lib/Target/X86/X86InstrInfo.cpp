@@ -3031,6 +3031,37 @@ analyzeCompare(const MachineInstr *MI, unsigned &SrcReg, unsigned &SrcReg2,
     CmpMask = ~0;
     CmpValue = MI->getOperand(1).getImm();
     return true;
+  // A SUB can be used to perform comparison.
+  case X86::SUB64rm:
+  case X86::SUB32rm:
+  case X86::SUB16rm:
+  case X86::SUB8rm:
+    SrcReg = MI->getOperand(1).getReg();
+    SrcReg2 = 0;
+    CmpMask = ~0;
+    CmpValue = 0;
+    return true;
+  case X86::SUB64rr:
+  case X86::SUB32rr:
+  case X86::SUB16rr:
+  case X86::SUB8rr:
+    SrcReg = MI->getOperand(1).getReg();
+    SrcReg2 = MI->getOperand(2).getReg();
+    CmpMask = ~0;
+    CmpValue = 0;
+    return true;
+  case X86::SUB64ri32:
+  case X86::SUB64ri8:
+  case X86::SUB32ri:
+  case X86::SUB32ri8:
+  case X86::SUB16ri:
+  case X86::SUB16ri8:
+  case X86::SUB8ri:
+    SrcReg = MI->getOperand(1).getReg();
+    SrcReg2 = 0;
+    CmpMask = ~0;
+    CmpValue = MI->getOperand(2).getImm();
+    return true;
   case X86::CMP64rr:
   case X86::CMP32rr:
   case X86::CMP16rr:
@@ -3139,6 +3170,55 @@ bool X86InstrInfo::
 optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
                      int CmpMask, int CmpValue,
                      const MachineRegisterInfo *MRI) const {
+  // Check whether we can replace SUB with CMP.
+  unsigned NewOpcode = 0;
+  switch (CmpInstr->getOpcode()) {
+  default: break;
+  case X86::SUB64ri32:
+  case X86::SUB64ri8:
+  case X86::SUB32ri:
+  case X86::SUB32ri8:
+  case X86::SUB16ri:
+  case X86::SUB16ri8:
+  case X86::SUB8ri:
+  case X86::SUB64rm:
+  case X86::SUB32rm:
+  case X86::SUB16rm:
+  case X86::SUB8rm:
+  case X86::SUB64rr:
+  case X86::SUB32rr:
+  case X86::SUB16rr:
+  case X86::SUB8rr: {
+    if (!MRI->use_nodbg_empty(CmpInstr->getOperand(0).getReg()))
+      return false;
+    // There is no use of the destination register, we can replace SUB with CMP.
+    switch (CmpInstr->getOpcode()) {
+    default: llvm_unreachable(0);
+    case X86::SUB64rm:   NewOpcode = X86::CMP64rm;   break;
+    case X86::SUB32rm:   NewOpcode = X86::CMP32rm;   break;
+    case X86::SUB16rm:   NewOpcode = X86::CMP16rm;   break;
+    case X86::SUB8rm:    NewOpcode = X86::CMP8rm;    break;
+    case X86::SUB64rr:   NewOpcode = X86::CMP64rr;   break;
+    case X86::SUB32rr:   NewOpcode = X86::CMP32rr;   break;
+    case X86::SUB16rr:   NewOpcode = X86::CMP16rr;   break;
+    case X86::SUB8rr:    NewOpcode = X86::CMP8rr;    break;
+    case X86::SUB64ri32: NewOpcode = X86::CMP64ri32; break;
+    case X86::SUB64ri8:  NewOpcode = X86::CMP64ri8;  break;
+    case X86::SUB32ri:   NewOpcode = X86::CMP32ri;   break;
+    case X86::SUB32ri8:  NewOpcode = X86::CMP32ri8;  break;
+    case X86::SUB16ri:   NewOpcode = X86::CMP16ri;   break;
+    case X86::SUB16ri8:  NewOpcode = X86::CMP16ri8;  break;
+    case X86::SUB8ri:    NewOpcode = X86::CMP8ri;    break;
+    }
+    CmpInstr->setDesc(get(NewOpcode));
+    CmpInstr->RemoveOperand(0);
+    // Fall through to optimize Cmp if Cmp is CMPrr or CMPri.
+    if (NewOpcode == X86::CMP64rm || NewOpcode == X86::CMP32rm ||
+        NewOpcode == X86::CMP16rm || NewOpcode == X86::CMP8rm)
+      return false;
+  }
+  }
+
   // Get the unique definition of SrcReg.
   MachineInstr *MI = MRI->getUniqueVRegDef(SrcReg);
   if (!MI) return false;

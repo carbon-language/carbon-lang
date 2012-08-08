@@ -230,3 +230,26 @@ define i32 @q(i32 %j.4, i32 %w, i32 %el) {
   %j.5 = select i1 %or.cond, i32 %tmp535, i32 %j.4
   ret i32 %j.5
 }
+; rdar://11873276
+define i8* @r(i8* %base, i32* nocapture %offset, i32 %size) nounwind {
+entry:
+; CHECK: r:
+; CHECK: sub
+; CHECK-NOT: cmp
+; CHECK: j
+; CHECK-NOT: sub
+; CHECK: ret
+  %0 = load i32* %offset, align 8
+  %cmp = icmp slt i32 %0, %size
+  br i1 %cmp, label %return, label %if.end
+
+if.end:
+  %sub = sub nsw i32 %0, %size
+  store i32 %sub, i32* %offset, align 8
+  %add.ptr = getelementptr inbounds i8* %base, i32 %sub
+  br label %return
+
+return:
+  %retval.0 = phi i8* [ %add.ptr, %if.end ], [ null, %entry ]
+  ret i8* %retval.0
+}

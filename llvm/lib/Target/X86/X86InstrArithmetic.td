@@ -1132,8 +1132,10 @@ defm XOR : ArithBinOp_RF<0x30, 0x32, 0x34, "xor", MRM6r, MRM6m,
                          X86xor_flag, xor, 1, 0>;
 defm ADD : ArithBinOp_RF<0x00, 0x02, 0x04, "add", MRM0r, MRM0m,
                          X86add_flag, add, 1, 1>;
+let isCompare = 1 in {
 defm SUB : ArithBinOp_RF<0x28, 0x2A, 0x2C, "sub", MRM5r, MRM5m,
                          X86sub_flag, sub, 0, 0>;
+}
 
 // Arithmetic.
 let Uses = [EFLAGS] in {
