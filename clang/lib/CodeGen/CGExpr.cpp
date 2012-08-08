@@ -2056,28 +2056,6 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   llvm_unreachable("Unhandled member declaration!");
 }
 
-/// EmitLValueForAnonRecordField - Given that the field is a member of
-/// an anonymous struct or union buried inside a record, and given
-/// that the base value is a pointer to the enclosing record, derive
-/// an lvalue for the ultimate field.
-LValue CodeGenFunction::EmitLValueForAnonRecordField(llvm::Value *BaseValue,
-                                             const IndirectFieldDecl *Field,
-                                                     unsigned CVRQualifiers) {
-  IndirectFieldDecl::chain_iterator I = Field->chain_begin(),
-    IEnd = Field->chain_end();
-  while (true) {
-    QualType RecordTy =
-        getContext().getTypeDeclType(cast<FieldDecl>(*I)->getParent());
-    LValue LV = EmitLValueForField(MakeAddrLValue(BaseValue, RecordTy),
-                                   cast<FieldDecl>(*I));
-    if (++I == IEnd) return LV;
-
-    assert(LV.isSimple());
-    BaseValue = LV.getAddress();
-    CVRQualifiers |= LV.getVRQualifiers();
-  }
-}
-
 LValue CodeGenFunction::EmitLValueForField(LValue base,
                                            const FieldDecl *field) {
   if (field->isBitField()) {

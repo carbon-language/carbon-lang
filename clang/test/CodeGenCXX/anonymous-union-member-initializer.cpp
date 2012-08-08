@@ -179,3 +179,13 @@ namespace PR9683 {
   };
   QueueEntry QE;
 }
+
+namespace PR13154 {
+  struct IndirectReferenceField {
+      struct {
+          float &x;
+      };
+      IndirectReferenceField(float &x);
+  };
+  IndirectReferenceField::IndirectReferenceField(float &xx) : x(xx) {}
+}

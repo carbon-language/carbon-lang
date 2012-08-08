@@ -563,16 +563,19 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
 
   llvm::Value *ThisPtr = CGF.LoadCXXThis();
   QualType RecordTy = CGF.getContext().getTypeDeclType(ClassDecl);
-  LValue LHS;
+  LValue LHS = CGF.MakeNaturalAlignAddrLValue(ThisPtr, RecordTy);
 
-  // If we are initializing an anonymous union field, drill down to the field.
   if (MemberInit->isIndirectMemberInitializer()) {
-    LHS = CGF.EmitLValueForAnonRecordField(ThisPtr,
-                                           MemberInit->getIndirectMember(), 0);
+    // If we are initializing an anonymous union field, drill down to
+    // the field.
+    IndirectFieldDecl *IndirectField = MemberInit->getIndirectMember();
+    IndirectFieldDecl::chain_iterator I = IndirectField->chain_begin(),
+      IEnd = IndirectField->chain_end();
+    for ( ; I != IEnd; ++I)
+      LHS = CGF.EmitLValueForFieldInitialization(LHS, cast<FieldDecl>(*I));
     FieldType = MemberInit->getIndirectMember()->getAnonField()->getType();
   } else {
-    LValue ThisLHSLV = CGF.MakeNaturalAlignAddrLValue(ThisPtr, RecordTy);
-    LHS = CGF.EmitLValueForFieldInitialization(ThisLHSLV, Field);
+    LHS = CGF.EmitLValueForFieldInitialization(LHS, Field);
   }
 
   // Special case: if we are in a copy or move constructor, and we are copying
