@@ -445,7 +445,9 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
 
   // Initialize target-specific preprocessor defines.
 
-  // __BYTE_ORDER__ was added in GCC 4.6.
+  // __BYTE_ORDER__ was added in GCC 4.6. It's analogous
+  // to the macro __BYTE_ORDER (no trailing underscores)
+  // from glibc's <endian.h> header.
   // We don't support the PDP-11 as a target, but include
   // the define so it can still be compared against.
   Builder.defineMacro("__ORDER_LITTLE_ENDIAN__", "1234");
