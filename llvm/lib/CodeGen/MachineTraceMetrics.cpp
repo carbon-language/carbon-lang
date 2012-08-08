@@ -233,7 +233,9 @@ MinInstrCountEnsemble::pickTracePred(const MachineBasicBlock *MBB) {
     const MachineBasicBlock *Pred = *I;
     const MachineTraceMetrics::TraceBlockInfo *PredTBI =
       getDepthResources(Pred);
-    assert(PredTBI && "Predecessor must be visited first");
+    // Ignore cycles that aren't natural loops.
+    if (!PredTBI)
+      continue;
     // Pick the predecessor that would give this block the smallest InstrDepth.
     unsigned Depth = PredTBI->InstrDepth + CurCount;
     if (!Best || Depth < BestDepth)
@@ -261,7 +263,9 @@ MinInstrCountEnsemble::pickTraceSucc(const MachineBasicBlock *MBB) {
       continue;
     const MachineTraceMetrics::TraceBlockInfo *SuccTBI =
       getHeightResources(Succ);
-    assert(SuccTBI && "Successor must be visited first");
+    // Ignore cycles that aren't natural loops.
+    if (!SuccTBI)
+      continue;
     // Pick the successor that would give this block the smallest InstrHeight.
     unsigned Height = SuccTBI->InstrHeight;
     if (!Best || Height < BestHeight)
@@ -315,6 +319,7 @@ void MachineTraceMetrics::verifyAnalysis() const {
 namespace {
 struct LoopBounds {
   MutableArrayRef<MachineTraceMetrics::TraceBlockInfo> Blocks;
+  SmallPtrSet<const MachineBasicBlock*, 8> Visited;
   const MachineLoopInfo *Loops;
   bool Downward;
   LoopBounds(MutableArrayRef<MachineTraceMetrics::TraceBlockInfo> blocks,
@@ -339,21 +344,19 @@ public:
     if (LB.Downward ? TBI.hasValidHeight() : TBI.hasValidDepth())
       return false;
     // From is null once when To is the trace center block.
-    if (!From)
-      return true;
-    const MachineLoop *FromLoop = LB.Loops->getLoopFor(From);
-    if (!FromLoop)
-      return true;
-    // Don't follow backedges, don't leave FromLoop when going upwards.
-    if ((LB.Downward ? To : From) == FromLoop->getHeader())
-      return false;
-    // Don't leave FromLoop.
-    if (isExitingLoop(FromLoop, LB.Loops->getLoopFor(To)))
-      return false;
-    // This is a new block. The PO traversal will compute height/depth
-    // resources, causing us to reject new edges to To. This only works because
-    // we reject back-edges, so the CFG is cycle-free.
-    return true;
+    if (From) {
+      if (const MachineLoop *FromLoop = LB.Loops->getLoopFor(From)) {
+        // Don't follow backedges, don't leave FromLoop when going upwards.
+        if ((LB.Downward ? To : From) == FromLoop->getHeader())
+          return false;
+        // Don't leave FromLoop.
+        if (isExitingLoop(FromLoop, LB.Loops->getLoopFor(To)))
+          return false;
+      }
+    }
+    // To is a new block. Mark the block as visited in case the CFG has cycles
+    // that MachineLoopInfo didn't recognize as a natural loop.
+    return LB.Visited.insert(To);
   }
 };
 }
@@ -367,6 +370,7 @@ void MachineTraceMetrics::Ensemble::computeTrace(const MachineBasicBlock *MBB) {
 
   // Run an upwards post-order search for the trace start.
   Bounds.Downward = false;
+  Bounds.Visited.clear();
   typedef ipo_ext_iterator<const MachineBasicBlock*, LoopBounds> UpwardPO;
   for (UpwardPO I = ipo_ext_begin(MBB, Bounds), E = ipo_ext_end(MBB, Bounds);
        I != E; ++I) {
@@ -386,6 +390,7 @@ void MachineTraceMetrics::Ensemble::computeTrace(const MachineBasicBlock *MBB) {
 
   // Run a downwards post-order search for the trace end.
   Bounds.Downward = true;
+  Bounds.Visited.clear();
   typedef po_ext_iterator<const MachineBasicBlock*, LoopBounds> DownwardPO;
   for (DownwardPO I = po_ext_begin(MBB, Bounds), E = po_ext_end(MBB, Bounds);
        I != E; ++I) {
