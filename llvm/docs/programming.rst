@@ -7,6 +7,7 @@ Programming Documentation
    :hidden:
 
    CodingStandards
+   CommandLine
 
 * `LLVM Language Reference Manual <LangRef.html>`_
 
@@ -18,7 +19,7 @@ Programming Documentation
   Introduction to the general layout of the LLVM sourcebase, important classes
   and APIs, and some tips & tricks.
 
-* `CommandLine library Reference Manual <CommandLine.html>`_
+* :ref:`commandline`
 
   Provides information on using the command line parsing library.
 
