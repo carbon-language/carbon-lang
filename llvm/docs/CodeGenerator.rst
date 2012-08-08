@@ -1,5 +1,9 @@
 .. _code_generator:
 
+==========================================
+The LLVM Target-Independent Code Generator
+==========================================
+
 .. role:: raw-html(raw)
    :format: html
 
@@ -14,10 +18,6 @@
     .yes { background-color: #0F0; }
     .yes:before { content: "Y" }
   </style>
-
-==========================================
-The LLVM Target-Independent Code Generator
-==========================================
 
 .. contents::
    :local:
