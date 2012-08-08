@@ -28,6 +28,7 @@ class MachineMemOperand;
 class MachineRegisterInfo;
 class MDNode;
 class MCInst;
+class MCSchedModel;
 class SDNode;
 class ScheduleHazardRecognizer;
 class SelectionDAG;
@@ -790,7 +791,7 @@ public:
                               SDNode *Node) const = 0;
 
   /// Return the default expected latency for a def based on it's opcode.
-  unsigned defaultDefLatency(const InstrItineraryData *ItinData,
+  unsigned defaultDefLatency(const MCSchedModel *SchedModel,
                              const MachineInstr *DefMI) const;
 
   /// isHighLatencyDef - Return true if this opcode has high latency to its

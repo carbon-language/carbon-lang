@@ -570,12 +570,12 @@ TargetInstrInfoImpl::getNumMicroOps(const InstrItineraryData *ItinData,
 }
 
 /// Return the default expected latency for a def based on it's opcode.
-unsigned TargetInstrInfo::defaultDefLatency(const InstrItineraryData *ItinData,
+unsigned TargetInstrInfo::defaultDefLatency(const MCSchedModel *SchedModel,
                                             const MachineInstr *DefMI) const {
   if (DefMI->mayLoad())
-    return ItinData->SchedModel->LoadLatency;
+    return SchedModel->LoadLatency;
   if (isHighLatencyDef(DefMI->getOpcode()))
-    return ItinData->SchedModel->HighLatency;
+    return SchedModel->HighLatency;
   return 1;
 }
 
@@ -638,7 +638,7 @@ static int computeDefOperandLatency(
       return 1;
   }
   else if(ItinData->isEmpty())
-    return TII->defaultDefLatency(ItinData, DefMI);
+    return TII->defaultDefLatency(ItinData->SchedModel, DefMI);
 
   // ...operand lookup required
   return -1;
@@ -669,7 +669,8 @@ computeOperandLatency(const InstrItineraryData *ItinData,
 
   // Expected latency is the max of the stage latency and itinerary props.
   if (!FindMin)
-    InstrLatency = std::max(InstrLatency, defaultDefLatency(ItinData, DefMI));
+    InstrLatency = std::max(InstrLatency,
+                            defaultDefLatency(ItinData->SchedModel, DefMI));
   return InstrLatency;
 }
 
@@ -742,6 +743,7 @@ computeOperandLatency(const InstrItineraryData *ItinData,
 
   // Expected latency is the max of the stage latency and itinerary props.
   if (!FindMin)
-    InstrLatency = std::max(InstrLatency, defaultDefLatency(ItinData, DefMI));
+    InstrLatency = std::max(InstrLatency,
+                            defaultDefLatency(ItinData->SchedModel, DefMI));
   return InstrLatency;
 }
