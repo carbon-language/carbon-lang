@@ -31,6 +31,7 @@
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/CommandLine.h"
@@ -513,6 +514,7 @@ namespace {
 class EarlyIfConverter : public MachineFunctionPass {
   const TargetInstrInfo *TII;
   const TargetRegisterInfo *TRI;
+  const MCSchedModel *SchedModel;
   MachineRegisterInfo *MRI;
   MachineDominatorTree *DomTree;
   MachineLoopInfo *Loops;
@@ -602,9 +604,6 @@ bool EarlyIfConverter::shouldConvertIf() {
   if (!MinInstr)
     MinInstr = Traces->getEnsemble(MachineTraceMetrics::TS_MinInstrCount);
 
-  // MCSchedModel doesn't yet provide a misprediction penalty.
-  unsigned MispredictPenalty = 10;
-
   // Compare the critical path through TBB and FBB. If the difference is
   // greater than the branch misprediction penalty, it would never pay to
   // if-convert. The triangle/diamond topology guarantees that these traces
@@ -615,8 +614,9 @@ bool EarlyIfConverter::shouldConvertIf() {
   unsigned TBBCrit = TBBTrace.getCriticalPath();
   unsigned FBBCrit = FBBTrace.getCriticalPath();
   unsigned ExtraCrit = TBBCrit > FBBCrit ? TBBCrit-FBBCrit : FBBCrit-TBBCrit;
-  if (ExtraCrit >= MispredictPenalty) {
-    DEBUG(dbgs() << "Critical path difference too large.\n");
+  if (ExtraCrit >= SchedModel->MispredictPenalty) {
+    DEBUG(dbgs() << "Critical path difference larger than "
+                 << SchedModel->MispredictPenalty << ".\n");
     return false;
   }
   return true;
@@ -644,6 +644,7 @@ bool EarlyIfConverter::runOnMachineFunction(MachineFunction &MF) {
                << ((Value*)MF.getFunction())->getName() << '\n');
   TII = MF.getTarget().getInstrInfo();
   TRI = MF.getTarget().getRegisterInfo();
+  SchedModel = MF.getTarget().getInstrItineraryData()->SchedModel;
   MRI = &MF.getRegInfo();
   DomTree = &getAnalysis<MachineDominatorTree>();
   Loops = getAnalysisIfAvailable<MachineLoopInfo>();
