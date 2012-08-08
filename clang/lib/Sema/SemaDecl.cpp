@@ -7974,6 +7974,13 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
                                              "printf", 2,
                                              Name->isStr("vasprintf") ? 0 : 3));
   }
+
+  if (Name->isStr("__CFStringMakeConstantString")) {
+    // We already have a __builtin___CFStringMakeConstantString,
+    // but builds that use -fno-constant-cfstrings don't go through that.
+    if (!FD->getAttr<FormatArgAttr>())
+      FD->addAttr(::new (Context) FormatArgAttr(FD->getLocation(), Context, 1));
+  }
 }
 
 TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,

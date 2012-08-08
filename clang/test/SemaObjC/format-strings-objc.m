@@ -34,9 +34,9 @@ extern void CFStringCreateWithFormat(CFStringRef format, ...) __attribute__((for
 #define CFSTR(cStr)  ((CFStringRef) __builtin___CFStringMakeConstantString ("" cStr ""))
 
 // This function is used instead of the builtin if -fno-constant-cfstrings.
-// The definition on Mac OS X is NOT annotated with format_arg as of 10.7,
-// but if it were, we want the same checking behavior as with the builtin.
-extern CFStringRef __CFStringMakeConstantString(const char *) __attribute__((format_arg(1)));
+// The definition on Mac OS X is NOT annotated with format_arg as of 10.8,
+// but clang will implicitly add the attribute if it's not written.
+extern CFStringRef __CFStringMakeConstantString(const char *);
 
 int printf(const char * restrict, ...) ;
 
