@@ -41,7 +41,7 @@ void test1(struct foo *F) {
   struct foo f2 = { 17 }; // expected-warning {{'x' is deprecated}}
 }
 
-typedef struct foo foo_dep __attribute__((deprecated)); // expected-note 10 {{declared here}}
+typedef struct foo foo_dep __attribute__((deprecated)); // expected-note 12 {{declared here}}
 foo_dep *test2;    // expected-warning {{'foo_dep' is deprecated}}
 
 struct __attribute__((deprecated, 
@@ -113,3 +113,10 @@ void test20() {
 }
 
 char test21[__has_feature(attribute_deprecated_with_message) ? 1 : -1];
+
+struct test22 {
+  foo_dep a __attribute((deprecated));
+  foo_dep b; // expected-warning {{'foo_dep' is deprecated}}
+  foo_dep c, d __attribute((deprecated)); // expected-warning {{'foo_dep' is deprecated}}
+  __attribute((deprecated)) foo_dep e, f;
+};

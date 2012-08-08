@@ -218,6 +218,28 @@ namespace clang {
     }
   };
 
+  /// A class for parsing a field declarator.
+  class ParsingFieldDeclarator : public FieldDeclarator {
+    ParsingDeclRAIIObject ParsingRAII;
+
+  public:
+    ParsingFieldDeclarator(Parser &P, const ParsingDeclSpec &DS)
+      : FieldDeclarator(DS), ParsingRAII(P, &DS.getDelayedDiagnosticPool()) {
+    }
+
+    const ParsingDeclSpec &getDeclSpec() const {
+      return static_cast<const ParsingDeclSpec&>(D.getDeclSpec());
+    }
+
+    ParsingDeclSpec &getMutableDeclSpec() const {
+      return const_cast<ParsingDeclSpec&>(getDeclSpec());
+    }
+
+    void complete(Decl *D) {
+      ParsingRAII.complete(D);
+    }
+  };
+
   /// ExtensionRAIIObject - This saves the state of extension warnings when
   /// constructed and disables them.  When destructed, it restores them back to
   /// the way they used to be.  This is used to handle __extension__ in the

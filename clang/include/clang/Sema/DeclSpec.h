@@ -1932,9 +1932,8 @@ public:
 struct FieldDeclarator {
   Declarator D;
   Expr *BitfieldSize;
-  explicit FieldDeclarator(DeclSpec &DS) : D(DS, Declarator::MemberContext) {
-    BitfieldSize = 0;
-  }
+  explicit FieldDeclarator(const DeclSpec &DS)
+    : D(DS, Declarator::MemberContext), BitfieldSize(0) { }
 };
 
 /// \brief Represents a C++11 virt-specifier-seq.

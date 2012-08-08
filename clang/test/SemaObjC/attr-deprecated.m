@@ -121,3 +121,16 @@ void test(Test2 *foo) {
 __attribute__((deprecated))
 @interface A(Blah) // expected-error{{attributes may not be specified on a category}}
 @end
+
+
+typedef struct {
+	int x;
+} footype __attribute((deprecated)); // expected-note 2 {{declared here}}
+
+@interface foo {
+	footype a; // expected-warning {{'footype' is deprecated}}
+	footype b __attribute((deprecated));
+}
+@property footype c; // expected-warning {{'footype' is deprecated}}
+@property footype d __attribute((deprecated));
+@end

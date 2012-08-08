@@ -308,7 +308,7 @@ public:
     MethodImplKind(MethodImplKind) {
   }
 
-  Decl *invoke(FieldDeclarator &FD) {
+  Decl *invoke(ParsingFieldDeclarator &FD) {
     if (FD.D.getIdentifier() == 0) {
       P.Diag(AtLoc, diag::err_objc_property_requires_field_name)
         << FD.D.getSourceRange();
@@ -344,6 +344,7 @@ public:
     if (!isOverridingProperty)
       Props.push_back(Property);
 
+    FD.complete(Property);
     return Property;
   }
 };
@@ -493,7 +494,7 @@ void Parser::ParseObjCInterfaceDeclList(tok::ObjCKeywordKind contextKey,
                                     OCDS, AtLoc, LParenLoc, MethodImplKind);
 
       // Parse all the comma separated declarators.
-      DeclSpec DS(AttrFactory);
+      ParsingDeclSpec DS(*this);
       ParseStructDeclaration(DS, Callback);
 
       ExpectAndConsume(tok::semi, diag::err_expected_semi_decl_list);
@@ -1306,7 +1307,7 @@ void Parser::ParseObjCClassInstanceVariables(Decl *interfaceDecl,
         P(P), IDecl(IDecl), visibility(V), AllIvarDecls(AllIvarDecls) {
       }
 
-      Decl *invoke(FieldDeclarator &FD) {
+      Decl *invoke(ParsingFieldDeclarator &FD) {
         P.Actions.ActOnObjCContainerStartDefinition(IDecl);
         // Install the declarator into the interface decl.
         Decl *Field
@@ -1316,12 +1317,13 @@ void Parser::ParseObjCClassInstanceVariables(Decl *interfaceDecl,
         P.Actions.ActOnObjCContainerFinishDefinition();
         if (Field)
           AllIvarDecls.push_back(Field);
+        FD.complete(Field);
         return Field;
       }
     } Callback(*this, interfaceDecl, visibility, AllIvarDecls);
     
     // Parse all the comma separated declarators.
-    DeclSpec DS(AttrFactory);
+    ParsingDeclSpec DS(*this);
     ParseStructDeclaration(DS, Callback);
 
     if (Tok.is(tok::semi)) {
