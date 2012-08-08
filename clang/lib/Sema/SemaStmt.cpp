@@ -2786,6 +2786,9 @@ static std::string PatchMSAsmString(Sema &SemaRef, bool &IsSimple,
                                     SourceLocation AsmLoc,
                                     ArrayRef<Token> AsmToks,
                                     const TargetInfo &TI) {
+  if (!AsmToks.size())
+    return "";
+
   std::string Res;
   IdentifierInfo *II = AsmToks[0].getIdentifierInfo();
   Res = II->getName().str();
@@ -2841,6 +2844,9 @@ static std::string PatchMSAsmString(Sema &SemaRef, bool &IsSimple,
 static std::string buildMSAsmString(Sema &SemaRef,
                                     ArrayRef<Token> AsmToks,
                                     ArrayRef<unsigned> LineEnds) {
+  if (!AsmToks.size())
+    return "";
+
   // Collect the tokens into a string
   SmallString<512> Asm;
   SmallString<512> TokenBuf;
