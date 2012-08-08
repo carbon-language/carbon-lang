@@ -29,7 +29,7 @@ void unavail(void) {
 
 // rdar://10201690
 enum foo {
-    a = 1,
+    a = 1, // expected-note {{declared here}}
     b __attribute__((deprecated())) = 2, // expected-note {{declared here}}
     c = 3
 }__attribute__((deprecated()));  

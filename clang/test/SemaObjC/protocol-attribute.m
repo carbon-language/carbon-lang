@@ -6,7 +6,7 @@ __attribute ((unavailable))
 Class <FwProto> cFw = 0;  // expected-error {{'FwProto' is unavailable}}
 
 
-__attribute ((deprecated)) @protocol MyProto1 // expected-note 5 {{declared here}}
+__attribute ((deprecated)) @protocol MyProto1 // expected-note 7 {{declared here}}
 @end
 
 @protocol Proto2  <MyProto1>  // expected-warning {{'MyProto1' is deprecated}}

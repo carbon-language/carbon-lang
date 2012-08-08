@@ -4650,24 +4650,36 @@ static bool isDeclDeprecated(Decl *D) {
   return false;
 }
 
+static void
+DoEmitDeprecationWarning(Sema &S, const NamedDecl *D, StringRef Message,
+                         SourceLocation Loc,
+                         const ObjCInterfaceDecl *UnknownObjCClass) {
+  DeclarationName Name = D->getDeclName();
+  if (!Message.empty()) {
+    S.Diag(Loc, diag::warn_deprecated_message) << Name << Message;
+    S.Diag(D->getLocation(),
+           isa<ObjCMethodDecl>(D) ? diag::note_method_declared_at
+                                  : diag::note_previous_decl) << Name;
+  } else if (!UnknownObjCClass) {
+    S.Diag(Loc, diag::warn_deprecated) << D->getDeclName();
+    S.Diag(D->getLocation(),
+           isa<ObjCMethodDecl>(D) ? diag::note_method_declared_at
+                                  : diag::note_previous_decl) << Name;
+  } else {
+    S.Diag(Loc, diag::warn_deprecated_fwdclass_message) << Name;
+    S.Diag(UnknownObjCClass->getLocation(), diag::note_forward_class);
+  }
+}
+
 void Sema::HandleDelayedDeprecationCheck(DelayedDiagnostic &DD,
                                          Decl *Ctx) {
   if (isDeclDeprecated(Ctx))
     return;
 
   DD.Triggered = true;
-  if (!DD.getDeprecationMessage().empty())
-    Diag(DD.Loc, diag::warn_deprecated_message)
-      << DD.getDeprecationDecl()->getDeclName()
-      << DD.getDeprecationMessage();
-  else if (DD.getUnknownObjCClass()) {
-    Diag(DD.Loc, diag::warn_deprecated_fwdclass_message) 
-      << DD.getDeprecationDecl()->getDeclName();
-    Diag(DD.getUnknownObjCClass()->getLocation(), diag::note_forward_class);
-  }
-  else
-    Diag(DD.Loc, diag::warn_deprecated)
-      << DD.getDeprecationDecl()->getDeclName();
+  DoEmitDeprecationWarning(*this, DD.getDeprecationDecl(),
+                           DD.getDeprecationMessage(), DD.Loc,
+                           DD.getUnknownObjCClass());
 }
 
 void Sema::EmitDeprecationWarning(NamedDecl *D, StringRef Message,
@@ -4684,23 +4696,5 @@ void Sema::EmitDeprecationWarning(NamedDecl *D, StringRef Message,
   // Otherwise, don't warn if our current context is deprecated.
   if (isDeclDeprecated(cast<Decl>(getCurLexicalContext())))
     return;
-  if (!Message.empty()) {
-    Diag(Loc, diag::warn_deprecated_message) << D->getDeclName() 
-                                             << Message;
-    Diag(D->getLocation(), 
-         isa<ObjCMethodDecl>(D) ? diag::note_method_declared_at 
-                                : diag::note_previous_decl) << D->getDeclName();
-  }
-  else {
-    if (!UnknownObjCClass) {
-      Diag(Loc, diag::warn_deprecated) << D->getDeclName();
-      Diag(D->getLocation(), 
-           isa<ObjCMethodDecl>(D) ? diag::note_method_declared_at 
-                                  : diag::note_previous_decl) << D->getDeclName();
-    }
-    else {
-      Diag(Loc, diag::warn_deprecated_fwdclass_message) << D->getDeclName();
-      Diag(UnknownObjCClass->getLocation(), diag::note_forward_class);
-    }
-  }
+  DoEmitDeprecationWarning(*this, D, Message, Loc, UnknownObjCClass);
 }

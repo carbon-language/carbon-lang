@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 %s -verify -fsyntax-only
 
-int f() __attribute__((deprecated)); // expected-note {{declared here}}
+int f() __attribute__((deprecated)); // expected-note 2 {{declared here}}
 void g() __attribute__((deprecated));
 void g(); // expected-note {{declared here}}
 
@@ -23,7 +23,7 @@ int w() {
 }
 
 int old_fn() __attribute__ ((deprecated));
-int old_fn();
+int old_fn(); // expected-note {{declared here}}
 int (*fn_ptr)() = old_fn; // expected-warning {{'old_fn' is deprecated}}
 
 int old_fn() {
@@ -32,7 +32,7 @@ int old_fn() {
 
 
 struct foo {
-  int x __attribute__((deprecated)); // expected-note {{declared here}}
+  int x __attribute__((deprecated)); // expected-note 3 {{declared here}}
 };
 
 void test1(struct foo *F) {
@@ -41,11 +41,11 @@ void test1(struct foo *F) {
   struct foo f2 = { 17 }; // expected-warning {{'x' is deprecated}}
 }
 
-typedef struct foo foo_dep __attribute__((deprecated)); // expected-note 3 {{declared here}}
+typedef struct foo foo_dep __attribute__((deprecated)); // expected-note 10 {{declared here}}
 foo_dep *test2;    // expected-warning {{'foo_dep' is deprecated}}
 
 struct __attribute__((deprecated, 
-                      invalid_attribute)) bar_dep ;  // expected-warning {{unknown attribute 'invalid_attribute' ignored}}
+                      invalid_attribute)) bar_dep ;  // expected-warning {{unknown attribute 'invalid_attribute' ignored}} expected-note 2 {{declared here}}
 
 struct bar_dep *test3;   // expected-warning {{'bar_dep' is deprecated}}
 
@@ -102,7 +102,7 @@ foo_dep test17, // expected-warning {{'foo_dep' is deprecated}}
         test19;
 
 // rdar://problem/8518751
-enum __attribute__((deprecated)) Test20 {
+enum __attribute__((deprecated)) Test20 { // expected-note {{declared here}}
   test20_a __attribute__((deprecated)), // expected-note {{declared here}}
   test20_b // expected-note {{declared here}}
 };

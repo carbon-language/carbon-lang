@@ -163,7 +163,7 @@ namespace test4 {
 
 namespace test5 {
   struct A {
-    operator int() __attribute__((deprecated)); // expected-note 2 {{declared here}}
+    operator int() __attribute__((deprecated)); // expected-note 3 {{declared here}}
     operator long();
   };
   void test1(A a) {
