@@ -57,6 +57,12 @@ class MachineRegisterInfo {
   /// physical registers.
   MachineOperand **PhysRegUseDefLists;
 
+  /// Get the next element in the use-def chain.
+  static MachineOperand *getNextOperandForReg(const MachineOperand *MO) {
+    assert(MO && MO->isReg() && "This is not a register operand!");
+    return MO->Contents.Reg.Next;
+  }
+
   /// UsedPhysRegs - This is a bit vector that is computed and set by the
   /// register allocator, and must be kept up to date by passes that run after
   /// register allocation (though most don't modify this).  This is used
@@ -134,6 +140,9 @@ public:
   /// MachineRegisterInfo object.
   template<bool Uses, bool Defs, bool SkipDebug>
   class defusechain_iterator;
+
+  // Make it a friend so it can access getNextOperandForReg().
+  template<bool, bool, bool> friend class defusechain_iterator;
 
   /// reg_iterator/reg_begin/reg_end - Walk all defs and uses of the specified
   /// register.
@@ -500,13 +509,13 @@ public:
     // Iterator traversal: forward iteration only
     defusechain_iterator &operator++() {          // Preincrement
       assert(Op && "Cannot increment end iterator!");
-      Op = Op->getNextOperandForReg();
+      Op = getNextOperandForReg(Op);
 
       // If this is an operand we don't care about, skip it.
       while (Op && ((!ReturnUses && Op->isUse()) ||
                     (!ReturnDefs && Op->isDef()) ||
                     (SkipDebug && Op->isDebug())))
-        Op = Op->getNextOperandForReg();
+        Op = getNextOperandForReg(Op);
 
       return *this;
     }
