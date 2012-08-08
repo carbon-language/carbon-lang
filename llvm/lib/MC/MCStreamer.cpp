@@ -15,6 +15,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/LEB128.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include <cstdlib>
@@ -94,7 +95,7 @@ void MCStreamer::EmitULEB128IntValue(uint64_t Value, unsigned AddrSpace,
                                      unsigned Padding) {
   SmallString<128> Tmp;
   raw_svector_ostream OSE(Tmp);
-  MCObjectWriter::EncodeULEB128(Value, OSE, Padding);
+  encodeULEB128(Value, OSE, Padding);
   EmitBytes(OSE.str(), AddrSpace);
 }
 
@@ -103,7 +104,7 @@ void MCStreamer::EmitULEB128IntValue(uint64_t Value, unsigned AddrSpace,
 void MCStreamer::EmitSLEB128IntValue(int64_t Value, unsigned AddrSpace) {
   SmallString<128> Tmp;
   raw_svector_ostream OSE(Tmp);
-  MCObjectWriter::EncodeSLEB128(Value, OSE);
+  encodeSLEB128(Value, OSE);
   EmitBytes(OSE.str(), AddrSpace);
 }
 

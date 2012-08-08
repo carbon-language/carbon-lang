@@ -27,6 +27,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/LEB128.h"
 
 using namespace llvm;
 
@@ -713,9 +714,9 @@ bool MCAssembler::relaxLEB(MCAsmLayout &Layout, MCLEBFragment &LF) {
   Data.clear();
   raw_svector_ostream OSE(Data);
   if (LF.isSigned())
-    MCObjectWriter::EncodeSLEB128(Value, OSE);
+    encodeSLEB128(Value, OSE);
   else
-    MCObjectWriter::EncodeULEB128(Value, OSE);
+    encodeULEB128(Value, OSE);
   OSE.flush();
   return OldSize != LF.getContents().size();
 }
