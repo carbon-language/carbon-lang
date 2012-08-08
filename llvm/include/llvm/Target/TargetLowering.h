@@ -366,7 +366,9 @@ public:
   /// for it.
   LegalizeAction getOperationAction(unsigned Op, EVT VT) const {
     if (VT.isExtended()) return Expand;
-    assert(Op < array_lengthof(OpActions[0]) && "Table isn't big enough!");
+    // If a target-specific SDNode requires legalization, require the target
+    // to provide custom legalization for it.
+    if (Op > array_lengthof(OpActions[0])) return Custom;
     unsigned I = (unsigned) VT.getSimpleVT().SimpleTy;
     return (LegalizeAction)OpActions[I][Op];
   }
