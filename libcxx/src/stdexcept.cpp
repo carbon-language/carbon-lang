@@ -34,7 +34,7 @@ private:
     const char* str_;
 
     typedef std::size_t unused_t;
-    typedef std::int32_t count_t;
+    typedef std::ptrdiff_t count_t;
 
     static const std::ptrdiff_t offset = static_cast<std::ptrdiff_t>(2*sizeof(unused_t) +
                                                                        sizeof(count_t));
@@ -72,7 +72,7 @@ __libcpp_nmstr::operator=(const __libcpp_nmstr& s)
     const char* p = str_;
     str_ = s.str_;
     __sync_add_and_fetch(&count(), 1);
-    if (__sync_add_and_fetch((count_t*)(p-sizeof(count_t)), -1) < 0)
+    if (__sync_add_and_fetch((count_t*)(p-sizeof(count_t)), count_t(-1)) < 0)
         delete [] (p-offset);
     return *this;
 }
@@ -80,7 +80,7 @@ __libcpp_nmstr::operator=(const __libcpp_nmstr& s)
 inline
 __libcpp_nmstr::~__libcpp_nmstr()
 {
-    if (__sync_add_and_fetch(&count(), -1) < 0)
+    if (__sync_add_and_fetch(&count(), count_t(-1)) < 0)
         delete [] (str_ - offset);
 }
 
