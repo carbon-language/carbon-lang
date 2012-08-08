@@ -1318,8 +1318,7 @@ public:
   void CheckForFunctionRedefinition(FunctionDecl *FD);
   Decl *ActOnStartOfFunctionDef(Scope *S, Declarator &D);
   Decl *ActOnStartOfFunctionDef(Scope *S, Decl *D);
-  void ActOnStartOfObjCMethodOrCFunctionDef(Scope *S, Decl *D,
-                                            bool parseMethod);
+  void ActOnStartOfObjCMethodDef(Scope *S, Decl *D);
   bool isObjCMethodDecl(Decl *D) {
     return D && isa<ObjCMethodDecl>(D);
   }

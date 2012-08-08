@@ -2880,7 +2880,10 @@ void Parser::ParseLexedObjCMethodDefs(LexedMethod &LM, bool parseMethod) {
     
   // Tell the actions module that we have entered a method or c-function definition 
   // with the specified Declarator for the method/function.
-  Actions.ActOnStartOfObjCMethodOrCFunctionDef(getCurScope(), MCDecl, parseMethod);
+  if (parseMethod)
+    Actions.ActOnStartOfObjCMethodDef(getCurScope(), MCDecl);
+  else
+    Actions.ActOnStartOfFunctionDef(getCurScope(), MCDecl);
     
   if (SkipFunctionBodies && trySkippingFunctionBody()) {
     BodyScope.Exit();
