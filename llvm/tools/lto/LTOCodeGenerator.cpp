@@ -154,7 +154,7 @@ bool LTOCodeGenerator::writeMergedModules(const char *path,
 bool LTOCodeGenerator::compile_to_file(const char** name, std::string& errMsg) {
   // make unique temp .o file to put generated object file
   sys::PathWithStatus uniqueObjPath("lto-llvm.o");
-  if ( uniqueObjPath.createTemporaryFileOnDisk(false, &errMsg) ) {
+  if (uniqueObjPath.createTemporaryFileOnDisk(false, &errMsg)) {
     uniqueObjPath.eraseFromDisk();
     return true;
   }
@@ -174,7 +174,7 @@ bool LTOCodeGenerator::compile_to_file(const char** name, std::string& errMsg) {
   }
 
   objFile.keep();
-  if ( genResult ) {
+  if (genResult) {
     uniqueObjPath.eraseFromDisk();
     return true;
   }
@@ -204,14 +204,15 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg) {
   sys::Path(_nativeObjectPath).eraseFromDisk();
 
   // return buffer, unless error
-  if ( _nativeObjectFile == NULL )
+  if (_nativeObjectFile == NULL)
     return NULL;
   *length = _nativeObjectFile->getBufferSize();
   return _nativeObjectFile->getBufferStart();
 }
 
 bool LTOCodeGenerator::determineTarget(std::string& errMsg) {
-  if ( _target != NULL ) return false;
+  if (_target != NULL)
+    return false;
 
   std::string Triple = _linker.getModule()->getTargetTriple();
   if (Triple.empty())
@@ -219,13 +220,13 @@ bool LTOCodeGenerator::determineTarget(std::string& errMsg) {
 
   // create target machine from info for merged modules
   const Target *march = TargetRegistry::lookupTarget(Triple, errMsg);
-  if ( march == NULL )
+  if (march == NULL)
     return true;
 
   // The relocation model is actually a static member of TargetMachine and
   // needs to be set before the TargetMachine is instantiated.
   Reloc::Model RelocModel = Reloc::Default;
-  switch( _codeModel ) {
+  switch (_codeModel) {
   case LTO_CODEGEN_PIC_MODEL_STATIC:
     RelocModel = Reloc::Static;
     break;
@@ -337,13 +338,13 @@ void LTOCodeGenerator::applyScopeRestrictions() {
 /// Optimize merged modules using various IPO passes
 bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
                                           std::string &errMsg) {
-  if ( this->determineTarget(errMsg) )
+  if (this->determineTarget(errMsg))
     return true;
 
   Module* mergedModule = _linker.getModule();
 
   // if options were requested, set them
-  if ( !_codegenOptions.empty() )
+  if (!_codegenOptions.empty())
     cl::ParseCommandLineOptions(_codegenOptions.size(),
                                 const_cast<char **>(&_codegenOptions[0]));
 
@@ -405,7 +406,7 @@ void LTOCodeGenerator::setCodeGenDebugOptions(const char *options) {
        !o.first.empty(); o = getToken(o.second)) {
     // ParseCommandLineOptions() expects argv[0] to be program name. Lazily add
     // that.
-    if ( _codegenOptions.empty() )
+    if (_codegenOptions.empty())
       _codegenOptions.push_back(strdup("libLTO"));
     _codegenOptions.push_back(strdup(o.first.str().c_str()));
   }
