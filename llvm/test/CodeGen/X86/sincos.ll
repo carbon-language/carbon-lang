@@ -1,6 +1,6 @@
 ; Make sure this testcase codegens to the sin and cos instructions, not calls
-; RUN: llc < %s -march=x86 -mattr=-sse,-sse2,-sse3 -enable-unsafe-fp-math  | FileCheck %s --check-prefix=SIN
-; RUN: llc < %s -march=x86 -mattr=-sse,-sse2,-sse3 -enable-unsafe-fp-math  | FileCheck %s --check-prefix=COS
+; RUN: llc < %s -mtriple=i686-apple-macosx -mattr=-sse,-sse2,-sse3 -enable-unsafe-fp-math  | FileCheck %s --check-prefix=SIN
+; RUN: llc < %s -mtriple=i686-apple-macosx -mattr=-sse,-sse2,-sse3 -enable-unsafe-fp-math  | FileCheck %s --check-prefix=COS
 
 declare float  @sinf(float) readonly
 

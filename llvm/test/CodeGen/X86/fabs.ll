@@ -1,7 +1,7 @@
 ; Make sure this testcase codegens to the fabs instruction, not a call to fabsf
-; RUN: llc < %s -march=x86 -mattr=-sse2,-sse3,-sse | FileCheck %s
-; RUN: llc < %s -march=x86 -mattr=-sse,-sse2,-sse3 -enable-unsafe-fp-math -enable-no-nans-fp-math | FileCheck %s --check-prefix=UNSAFE
-; RUN: llc < %s -march=x86-64 -O0 | FileCheck %s --check-prefix=NOOPT
+; RUN: llc < %s -mtriple=i686-apple-macosx -mattr=-sse2,-sse3,-sse | FileCheck %s
+; RUN: llc < %s -mtriple=i686-apple-macosx -mattr=-sse,-sse2,-sse3 -enable-unsafe-fp-math -enable-no-nans-fp-math | FileCheck %s --check-prefix=UNSAFE
+; RUN: llc < %s -mtriple=x86_64-apple-macosx -O0 | FileCheck %s --check-prefix=NOOPT
 
 declare float @fabsf(float)
 

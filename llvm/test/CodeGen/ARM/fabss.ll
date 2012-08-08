@@ -1,7 +1,7 @@
-; RUN: llc < %s -march=arm -mattr=+vfp2 | FileCheck %s -check-prefix=VFP2
-; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s -check-prefix=NFP0
-; RUN: llc < %s -march=arm -mcpu=cortex-a8 | FileCheck %s -check-prefix=CORTEXA8
-; RUN: llc < %s -march=arm -mcpu=cortex-a9 | FileCheck %s -check-prefix=CORTEXA9
+; RUN: llc < %s -mtriple=arm-apple-ios -mattr=+vfp2 | FileCheck %s -check-prefix=VFP2
+; RUN: llc < %s -mtriple=arm-apple-ios -mattr=+neon | FileCheck %s -check-prefix=NFP0
+; RUN: llc < %s -mtriple=arm-apple-ios -mcpu=cortex-a8 | FileCheck %s -check-prefix=CORTEXA8
+; RUN: llc < %s -mtriple=arm-apple-ios -mcpu=cortex-a9 | FileCheck %s -check-prefix=CORTEXA9
 
 define float @test(float %a, float %b) {
 entry:

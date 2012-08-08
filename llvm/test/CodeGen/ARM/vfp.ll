@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=arm -mattr=+vfp2 -disable-post-ra | FileCheck %s
-; RUN: llc < %s -march=arm -mattr=+vfp2 -disable-post-ra -regalloc=basic | FileCheck %s
+; RUN: llc < %s -mtriple=arm-apple-ios -mattr=+vfp2 -disable-post-ra | FileCheck %s
+; RUN: llc < %s -mtriple=arm-apple-ios -mattr=+vfp2 -disable-post-ra -regalloc=basic | FileCheck %s
 
 define void @test(float* %P, double* %D) {
 	%A = load float* %P		; <float> [#uses=1]

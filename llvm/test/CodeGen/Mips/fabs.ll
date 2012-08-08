@@ -1,8 +1,8 @@
-; RUN: llc  < %s -march=mipsel -mcpu=mips32 | FileCheck %s -check-prefix=32
-; RUN: llc  < %s -march=mipsel -mcpu=mips32r2 | FileCheck %s -check-prefix=32R2
-; RUN: llc  < %s -march=mips64el -mcpu=mips64 -mattr=n64 | FileCheck %s -check-prefix=64
-; RUN: llc  < %s -march=mips64el -mcpu=mips64r2 -mattr=n64 | FileCheck %s -check-prefix=64R2
-; RUN: llc  < %s -march=mipsel -mcpu=mips32 -enable-no-nans-fp-math | FileCheck %s -check-prefix=NO-NAN
+; RUN: llc  < %s -mtriple=mipsel-linux-gnu -mcpu=mips32 | FileCheck %s -check-prefix=32
+; RUN: llc  < %s -mtriple=mipsel-linux-gnu -mcpu=mips32r2 | FileCheck %s -check-prefix=32R2
+; RUN: llc  < %s -mtriple=mips64el-linux-gnu -mcpu=mips64 -mattr=n64 | FileCheck %s -check-prefix=64
+; RUN: llc  < %s -mtriple=mips64el-linux-gnu -mcpu=mips64r2 -mattr=n64 | FileCheck %s -check-prefix=64R2
+; RUN: llc  < %s -mtriple=mipsel-linux-gnu -mcpu=mips32 -enable-no-nans-fp-math | FileCheck %s -check-prefix=NO-NAN
 
 define float @foo0(float %a) nounwind readnone {
 entry:

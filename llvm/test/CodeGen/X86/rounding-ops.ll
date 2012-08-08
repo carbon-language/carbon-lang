@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=x86-64 -mattr=+sse41 | FileCheck -check-prefix=CHECK-SSE %s
-; RUN: llc < %s -march=x86-64 -mattr=+avx | FileCheck -check-prefix=CHECK-AVX %s
+; RUN: llc < %s -mtriple=x86_64-apple-macosx -mattr=+sse41 | FileCheck -check-prefix=CHECK-SSE %s
+; RUN: llc < %s -mtriple=x86_64-apple-macosx -mattr=+avx | FileCheck -check-prefix=CHECK-AVX %s
 
 define float @test1(float %x) nounwind  {
   %call = tail call float @floorf(float %x) nounwind readnone

@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+vfp2 | FileCheck %s
+; RUN: llc < %s -mtriple=arm-apple-ios -mattr=+vfp2 | FileCheck %s
 
 define float @f1(float %a, float %b) {
 ;CHECK: f1:

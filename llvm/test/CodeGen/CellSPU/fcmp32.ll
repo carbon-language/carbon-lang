@@ -1,4 +1,4 @@
-; RUN: llc --march=cellspu %s -o - | FileCheck %s
+; RUN: llc --mtriple=cellspu-unknown-elf %s -o - | FileCheck %s
 
 ; Exercise the floating point comparison operators for f32:
 

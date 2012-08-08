@@ -1,4 +1,4 @@
-; RUN: llc -march=hexagon -mcpu=hexagonv5  < %s | FileCheck %s
+; RUN: llc -mtriple=hexagon-unknown-elf -mcpu=hexagonv5  < %s | FileCheck %s
 ; Optimize fabsf to clrbit in V5.
 
 ; CHECK: r{{[0-9]+}} = clrbit(r{{[0-9]+}}, #31)

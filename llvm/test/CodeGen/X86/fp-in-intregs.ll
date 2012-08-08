@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mcpu=yonah | FileCheck %s
+; RUN: llc < %s -mtriple=i686-apple-macosx -mcpu=yonah | FileCheck %s
 ; CHECK-NOT:     {{((xor|and)ps|movd)}}
 
 ; These operations should be done in integer registers, eliminating constant
