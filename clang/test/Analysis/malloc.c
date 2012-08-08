@@ -513,20 +513,20 @@ void testMalloc() {
   int *x = malloc(12);
   StructWithPtr St;
   St.memP = x;
-  arrOfStructs[0] = St;
+  arrOfStructs[0] = St; // no-warning
 }
 
 StructWithPtr testMalloc2() {
   int *x = malloc(12);
   StructWithPtr St;
   St.memP = x;
-  return St;
+  return St; // no-warning
 }
 
 int *testMalloc3() {
   int *x = malloc(12);
   int *y = x;
-  return y;
+  return y; // no-warning
 }
 
 void testElemRegion1() {
@@ -926,31 +926,16 @@ int cmpHeapAllocationToUnknown() {
   return 0;
 }
 
-// ----------------------------------------------------------------------------
-// False negatives.
-
-// TODO: This requires tracking symbols stored inside the structs/arrays.
-void testMalloc5() {
-  StructWithPtr St;
-  StructWithPtr *pSt = &St;
-  pSt->memP = malloc(12);
-}
-
-// TODO: This is another false negative.
-void testMallocWithParam(int **p) {
-  *p = (int*) malloc(sizeof(int));
-  *p = 0;
-}
-
-void testMallocWithParam_2(int **p) {
-  *p = (int*) malloc(sizeof(int));
-}
-
-// TODO: This should produce a warning, similar to the previous issue.
 void localArrayTest() {
   char *p = (char*)malloc(12);
   char *ArrayL[12];
-  ArrayL[0] = p;
+  ArrayL[0] = p; // expected-warning {{leak}}
+}
+
+void localStructTest() {
+  StructWithPtr St;
+  StructWithPtr *pSt = &St;
+  pSt->memP = malloc(12); // expected-warning{{Memory is never released; potential leak}}
 }
 
 // Test double assignment through integers.
@@ -1018,4 +1003,17 @@ int* reallocButNoMalloc(struct HasPtr *a, int c, int size) {
   if (a->p == 0)
     return 0; // expected-warning{{Memory is never released; potential leak}}
   return a->p;
+}
+
+// ----------------------------------------------------------------------------
+// False negatives.
+
+// TODO: This is another false negative.
+void testMallocWithParam(int **p) {
+  *p = (int*) malloc(sizeof(int));
+  *p = 0;
+}
+
+void testMallocWithParam_2(int **p) {
+  *p = (int*) malloc(sizeof(int));
 }

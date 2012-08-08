@@ -542,6 +542,9 @@ bool ScanReachableSymbols::scan(SVal val) {
   if (loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(&val))
     return scan(X->getRegion());
 
+  if (nonloc::LazyCompoundVal *X = dyn_cast<nonloc::LazyCompoundVal>(&val))
+    return scan(X->getRegion());
+
   if (nonloc::LocAsInteger *X = dyn_cast<nonloc::LocAsInteger>(&val))
     return scan(X->getLoc());
 

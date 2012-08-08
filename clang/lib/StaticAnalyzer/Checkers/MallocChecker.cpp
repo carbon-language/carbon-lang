@@ -1000,10 +1000,11 @@ void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
   SmallString<200> buf;
   llvm::raw_svector_ostream os(buf);
   os << "Memory is never released; potential leak";
-  if (Region) {
+  // FIXME: Make all region pretty-printing nice enough to show.
+  if (Region && isa<VarRegion>(Region)) {
     os << " of memory pointed to by '";
     Region->dumpPretty(os);
-    os <<'\'';
+    os << '\'';
   }
 
   BugReport *R = new BugReport(*BT_Leak, os.str(), N, LocUsedForUniqueing);
@@ -1117,7 +1118,8 @@ void MallocChecker::checkPreStmt(const ReturnStmt *S, CheckerContext &C) const {
     return;
 
   // Check if we are returning a symbol.
-  SVal RetVal = C.getState()->getSVal(E, C.getLocationContext());
+  ProgramStateRef State = C.getState();
+  SVal RetVal = State->getSVal(E, C.getLocationContext());
   SymbolRef Sym = RetVal.getAsSymbol();
   if (!Sym)
     // If we are returning a field of the allocated struct or an array element,
@@ -1128,16 +1130,18 @@ void MallocChecker::checkPreStmt(const ReturnStmt *S, CheckerContext &C) const {
         if (const SymbolicRegion *BMR =
               dyn_cast<SymbolicRegion>(MR->getBaseRegion()))
           Sym = BMR->getSymbol();
-  if (!Sym)
-    return;
 
   // Check if we are returning freed memory.
-  if (checkUseAfterFree(Sym, C, E))
-    return;
+  if (Sym)
+    if (checkUseAfterFree(Sym, C, E))
+      return;
 
-  // If this function body is not inlined, check if the symbol is escaping.
-  if (C.getLocationContext()->getParent() == 0)
-    checkEscape(Sym, E, C);
+  // If this function body is not inlined, stop tracking any returned symbols.
+  if (C.getLocationContext()->getParent() == 0) {
+    State =
+      State->scanReachableSymbols<StopTrackingCallback>(RetVal).getState();
+    C.addTransition(State);
+  }
 }
 
 // TODO: Blocks should be either inlined or should call invalidate regions
@@ -1244,12 +1248,6 @@ void MallocChecker::checkBind(SVal loc, SVal val, const Stmt *S,
       SVal StoredVal = state->getSVal(regionLoc->getRegion());
       if (StoredVal != val)
         escapes = (state == (state->bindLoc(*regionLoc, val)));
-    }
-    if (!escapes) {
-      // Case 4: We do not currently model what happens when a symbol is
-      // assigned to a struct field, so be conservative here and let the symbol
-      // go. TODO: This could definitely be improved upon.
-      escapes = !isa<VarRegion>(regionLoc->getRegion());
     }
   }
 
