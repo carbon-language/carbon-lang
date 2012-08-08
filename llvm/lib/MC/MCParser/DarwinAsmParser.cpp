@@ -50,6 +50,9 @@ public:
     AddDirectiveHandler<&DarwinAsmParser::ParseDirectiveDumpOrLoad>(".dump");
     AddDirectiveHandler<&DarwinAsmParser::ParseDirectiveDumpOrLoad>(".load");
     AddDirectiveHandler<&DarwinAsmParser::ParseDirectiveSection>(".section");
+    AddDirectiveHandler<&DarwinAsmParser::ParseDirectivePushSection>(".pushsection");
+    AddDirectiveHandler<&DarwinAsmParser::ParseDirectivePopSection>(".popsection");
+    AddDirectiveHandler<&DarwinAsmParser::ParseDirectivePrevious>(".previous");
     AddDirectiveHandler<&DarwinAsmParser::ParseDirectiveSecureLogUnique>(
       ".secure_log_unique");
     AddDirectiveHandler<&DarwinAsmParser::ParseDirectiveSecureLogReset>(
@@ -112,6 +115,9 @@ public:
   bool ParseDirectiveDumpOrLoad(StringRef, SMLoc);
   bool ParseDirectiveLsym(StringRef, SMLoc);
   bool ParseDirectiveSection(StringRef, SMLoc);
+  bool ParseDirectivePushSection(StringRef, SMLoc);
+  bool ParseDirectivePopSection(StringRef, SMLoc);
+  bool ParseDirectivePrevious(StringRef, SMLoc);
   bool ParseDirectiveSecureLogReset(StringRef, SMLoc);
   bool ParseDirectiveSecureLogUnique(StringRef, SMLoc);
   bool ParseDirectiveSubsectionsViaSymbols(StringRef, SMLoc);
@@ -297,7 +303,7 @@ public:
 
 };
 
-}
+} // end anonymous namespace
 
 bool DarwinAsmParser::ParseSectionSwitch(const char *Segment,
                                          const char *Section,
@@ -454,6 +460,37 @@ bool DarwinAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
                                 Segment, Section, TAA, StubSize,
                                 isText ? SectionKind::getText()
                                 : SectionKind::getDataRel()));
+  return false;
+}
+
+/// ParseDirectivePushSection:
+///   ::= .pushsection identifier (',' identifier)*
+bool DarwinAsmParser::ParseDirectivePushSection(StringRef S, SMLoc Loc) {
+  getStreamer().PushSection();
+
+  if (ParseDirectiveSection(S, Loc)) {
+    getStreamer().PopSection();
+    return true;
+  }
+
+  return false;
+}
+
+/// ParseDirectivePopSection:
+///   ::= .popsection
+bool DarwinAsmParser::ParseDirectivePopSection(StringRef, SMLoc) {
+  if (!getStreamer().PopSection())
+    return TokError(".popsection without corresponding .pushsection");
+  return false;
+}
+
+/// ParseDirectivePrevious:
+///   ::= .previous
+bool DarwinAsmParser::ParseDirectivePrevious(StringRef DirName, SMLoc) {
+  const MCSection *PreviousSection = getStreamer().getPreviousSection();
+  if (PreviousSection == NULL)
+      return TokError(".previous without corresponding .section");
+  getStreamer().SwitchSection(PreviousSection);
   return false;
 }
 
@@ -707,4 +744,4 @@ MCAsmParserExtension *createDarwinAsmParser() {
   return new DarwinAsmParser;
 }
 
-}
+} // end llvm namespace
