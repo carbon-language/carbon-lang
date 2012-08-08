@@ -40,7 +40,7 @@ g_option_table[] =
     { LLDB_OPT_SET_1, false, "objc",             'O', no_argument,       NULL, 0, eArgTypeNone,      "Print as an Objective-C object."},
     { LLDB_OPT_SET_1, false, "ptr-depth",        'P', required_argument, NULL, 0, eArgTypeCount,     "The number of pointers to be traversed when dumping values (default is zero)."},
     { LLDB_OPT_SET_1, false, "show-types",       'T', no_argument,       NULL, 0, eArgTypeNone,      "Show variable types when dumping values."},
-    { LLDB_OPT_SET_1, false, "no-summary-depth", 'Y', optional_argument, NULL, 0, eArgTypeCount,     "Set a depth for omitting summary information (default is 1)."},
+    { LLDB_OPT_SET_1, false, "no-summary-depth", 'Y', optional_argument, NULL, 0, eArgTypeCount,     "Set the depth at which omitting summary information stops (default is 1)."},
     { LLDB_OPT_SET_1, false, "raw-output",       'R', no_argument,       NULL, 0, eArgTypeNone,      "Don't use formatting options."},
     { LLDB_OPT_SET_1, false, "show-all-children",'A', no_argument,       NULL, 0, eArgTypeNone,      "Ignore the upper bound on the number of children to show."},
     { 0, false, NULL, 0, 0, NULL, NULL, eArgTypeNone, NULL }
