@@ -4319,7 +4319,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                             if (stop_state == eStateExited)
                                 event_to_broadcast_sp = event_sp;
                                 
-                            errors.Printf ("Execution stopped with unexpected state.");
+                            errors.Printf ("Execution stopped with unexpected state.\n");
                             return_value = eExecutionInterrupted;
                             break;
                         }

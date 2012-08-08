@@ -335,44 +335,51 @@ CommandObjectExpression::EvaluateExpression
                 }
             }
         }
-
+        
         if (result_valobj_sp)
         {
+            Format format = m_format_options.GetFormat();
+
             if (result_valobj_sp->GetError().Success())
             {
-                Format format = m_format_options.GetFormat();
-                if (format != eFormatDefault)
-                    result_valobj_sp->SetFormat (format);
+                if (format != eFormatVoid)
+                {
+                    if (format != eFormatDefault)
+                        result_valobj_sp->SetFormat (format);
 
-                ValueObject::DumpValueObjectOptions options;
-                options.SetMaximumPointerDepth(0)
-                .SetMaximumDepth(UINT32_MAX)
-                .SetShowLocation(false)
-                .SetShowTypes(m_command_options.show_types)
-                .SetUseObjectiveC(m_command_options.print_object)
-                .SetUseDynamicType(use_dynamic)
-                .SetScopeChecked(true)
-                .SetFlatOutput(false)
-                .SetUseSyntheticValue(true)
-                .SetIgnoreCap(false)
-                .SetFormat(format)
-                .SetSummary()
-                .SetShowSummary(!m_command_options.print_object);
-                
-                ValueObject::DumpValueObject (*(output_stream),
-                                              result_valobj_sp.get(),   // Variable object to dump
-                                              options);
-                if (result)
-                    result->SetStatus (eReturnStatusSuccessFinishResult);
+                    ValueObject::DumpValueObjectOptions options;
+                    options.SetMaximumPointerDepth(0)
+                    .SetMaximumDepth(UINT32_MAX)
+                    .SetShowLocation(false)
+                    .SetShowTypes(m_command_options.show_types)
+                    .SetUseObjectiveC(m_command_options.print_object)
+                    .SetUseDynamicType(use_dynamic)
+                    .SetScopeChecked(true)
+                    .SetFlatOutput(false)
+                    .SetUseSyntheticValue(true)
+                    .SetIgnoreCap(false)
+                    .SetFormat(format)
+                    .SetSummary()
+                    .SetShowSummary(!m_command_options.print_object);
+                    
+                    ValueObject::DumpValueObject (*(output_stream),
+                                                  result_valobj_sp.get(),   // Variable object to dump
+                                                  options);
+                    if (result)
+                        result->SetStatus (eReturnStatusSuccessFinishResult);
+                }
             }
             else
             {
                 if (result_valobj_sp->GetError().GetError() == ClangUserExpression::kNoResult)
                 {
-                    error_stream->PutCString("<no result>\n");
-                    
-                    if (result)
-                        result->SetStatus (eReturnStatusSuccessFinishResult);
+                    if (format != eFormatVoid)
+                    {
+                        error_stream->PutCString("<no result>\n");
+                        
+                        if (result)
+                            result->SetStatus (eReturnStatusSuccessFinishResult);
+                    }
                 }
                 else
                 {

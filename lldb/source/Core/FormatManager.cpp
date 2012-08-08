@@ -65,7 +65,8 @@ g_format_infos[] =
     { eFormatCharArray      , 'a'   , "character array"     },
     { eFormatAddressInfo    , 'A'   , "address"             },
     { eFormatHexFloat       , 'X'   , "hex float"           },
-    { eFormatInstruction    , 'i'   , "instruction"         }
+    { eFormatInstruction    , 'i'   , "instruction"         },
+    { eFormatVoid           , 'v'   , "void"                }
 };
 
 static uint32_t 
