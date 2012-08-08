@@ -46,14 +46,17 @@ namespace {
 
 /// \brief Helper class for tracking macro definitions.
 typedef std::vector<AsmToken> MacroArgument;
+typedef std::vector<MacroArgument> MacroArguments;
+typedef StringRef MacroParameter;
+typedef std::vector<MacroParameter> MacroParameters;
 
 struct Macro {
   StringRef Name;
   StringRef Body;
-  std::vector<StringRef> Parameters;
+  MacroParameters Parameters;
 
 public:
-  Macro(StringRef N, StringRef B, const std::vector<StringRef> &P) :
+  Macro(StringRef N, StringRef B, const MacroParameters &P) :
     Name(N), Body(B), Parameters(P) {}
 };
 
@@ -181,8 +184,8 @@ private:
 
   bool HandleMacroEntry(StringRef Name, SMLoc NameLoc, const Macro *M);
   bool expandMacro(raw_svector_ostream &OS, StringRef Body,
-                   const std::vector<StringRef> &Parameters,
-                   const std::vector<MacroArgument> &A,
+                   const MacroParameters &Parameters,
+                   const MacroArguments &A,
                    const SMLoc &L);
   void HandleMacroExit();
 
@@ -207,7 +210,7 @@ private:
   void EatToEndOfStatement();
 
   bool ParseMacroArgument(MacroArgument &MA);
-  bool ParseMacroArguments(const Macro *M, std::vector<MacroArgument> &A);
+  bool ParseMacroArguments(const Macro *M, MacroArguments &A);
 
   /// \brief Parse up to the end of statement and a return the contents from the
   /// current token until the end of the statement; the current token on exit
@@ -1452,8 +1455,8 @@ void AsmParser::DiagHandler(const SMDiagnostic &Diag, void *Context) {
 }
 
 bool AsmParser::expandMacro(raw_svector_ostream &OS, StringRef Body,
-                            const std::vector<StringRef> &Parameters,
-                            const std::vector<MacroArgument> &A,
+                            const MacroParameters &Parameters,
+                            const MacroArguments &A,
                             const SMLoc &L) {
   unsigned NParameters = Parameters.size();
   if (NParameters != 0 && NParameters != A.size())
@@ -1583,8 +1586,7 @@ bool AsmParser::ParseMacroArgument(MacroArgument &MA) {
 }
 
 // Parse the macro instantiation arguments.
-bool AsmParser::ParseMacroArguments(const Macro *M,
-                                    std::vector<MacroArgument> &A) {
+bool AsmParser::ParseMacroArguments(const Macro *M, MacroArguments &A) {
   const unsigned NParameters = M ? M->Parameters.size() : 0;
 
   // Parse two kinds of macro invocations:
@@ -1615,15 +1617,15 @@ bool AsmParser::HandleMacroEntry(StringRef Name, SMLoc NameLoc,
   if (ActiveMacros.size() == 20)
     return TokError("macros cannot be nested more than 20 levels deep");
 
-  std::vector<MacroArgument> MacroArguments;
-  if (ParseMacroArguments(M, MacroArguments))
+  MacroArguments A;
+  if (ParseMacroArguments(M, A))
     return true;
 
   // Remove any trailing empty arguments. Do this after-the-fact as we have
   // to keep empty arguments in the middle of the list or positionality
   // gets off. e.g.,  "foo 1, , 2" vs. "foo 1, 2,"
-  while (!MacroArguments.empty() && MacroArguments.back().empty())
-    MacroArguments.pop_back();
+  while (!A.empty() && A.back().empty())
+    A.pop_back();
 
   // Macro instantiation is lexical, unfortunately. We construct a new buffer
   // to hold the macro body with substitutions.
@@ -1631,7 +1633,7 @@ bool AsmParser::HandleMacroEntry(StringRef Name, SMLoc NameLoc,
   StringRef Body = M->Body;
   raw_svector_ostream OS(Buf);
 
-  if (expandMacro(OS, Body, M->Parameters, MacroArguments, getTok().getLoc()))
+  if (expandMacro(OS, Body, M->Parameters, A, getTok().getLoc()))
     return true;
 
   // We include the .endmacro in the buffer as our queue to exit the macro
@@ -3073,7 +3075,7 @@ bool GenericAsmParser::ParseDirectiveMacro(StringRef Directive,
   if (getParser().ParseIdentifier(Name))
     return TokError("expected identifier in directive");
 
-  std::vector<StringRef> Parameters;
+  MacroParameters Parameters;
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     for(;;) {
       StringRef Parameter;
@@ -3132,7 +3134,7 @@ bool GenericAsmParser::ParseDirectiveMacro(StringRef Directive,
 /// ::= .endm
 /// ::= .endmacro
 bool GenericAsmParser::ParseDirectiveEndMacro(StringRef Directive,
-                                           SMLoc DirectiveLoc) {
+                                              SMLoc DirectiveLoc) {
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '" + Directive + "' directive");
 
@@ -3230,7 +3232,7 @@ Macro *AsmParser::ParseMacroLikeBody(SMLoc DirectiveLoc) {
 
   // We Are Anonymous.
   StringRef Name;
-  std::vector<StringRef> Parameters;
+  MacroParameters Parameters;
   return new Macro(Name, Body, Parameters);
 }
 
@@ -3276,8 +3278,8 @@ bool AsmParser::ParseDirectiveRept(SMLoc DirectiveLoc) {
   // Macro instantiation is lexical, unfortunately. We construct a new buffer
   // to hold the macro body with substitutions.
   SmallString<256> Buf;
-  std::vector<StringRef> Parameters;
-  const std::vector<MacroArgument> A;
+  MacroParameters Parameters;
+  MacroArguments A;
   raw_svector_ostream OS(Buf);
   while (Count--) {
     if (expandMacro(OS, M->Body, Parameters, A, getTok().getLoc()))
@@ -3291,8 +3293,8 @@ bool AsmParser::ParseDirectiveRept(SMLoc DirectiveLoc) {
 /// ParseDirectiveIrp
 /// ::= .irp symbol,values
 bool AsmParser::ParseDirectiveIrp(SMLoc DirectiveLoc) {
-  std::vector<StringRef> Parameters;
-  StringRef Parameter;
+  MacroParameters Parameters;
+  MacroParameter Parameter;
 
   if (ParseIdentifier(Parameter))
     return TokError("expected identifier in '.irp' directive");
@@ -3304,7 +3306,7 @@ bool AsmParser::ParseDirectiveIrp(SMLoc DirectiveLoc) {
 
   Lex();
 
-  std::vector<MacroArgument> A;
+  MacroArguments A;
   if (ParseMacroArguments(0, A))
     return true;
 
@@ -3338,8 +3340,8 @@ bool AsmParser::ParseDirectiveIrp(SMLoc DirectiveLoc) {
 /// ParseDirectiveIrpc
 /// ::= .irpc symbol,values
 bool AsmParser::ParseDirectiveIrpc(SMLoc DirectiveLoc) {
-  std::vector<StringRef> Parameters;
-  StringRef Parameter;
+  MacroParameters Parameters;
+  MacroParameter Parameter;
 
   if (ParseIdentifier(Parameter))
     return TokError("expected identifier in '.irpc' directive");
@@ -3351,7 +3353,7 @@ bool AsmParser::ParseDirectiveIrpc(SMLoc DirectiveLoc) {
 
   Lex();
 
-  std::vector<MacroArgument> A;
+  MacroArguments A;
   if (ParseMacroArguments(0, A))
     return true;
 
@@ -3377,7 +3379,7 @@ bool AsmParser::ParseDirectiveIrpc(SMLoc DirectiveLoc) {
     MacroArgument Arg;
     Arg.push_back(AsmToken(AsmToken::Identifier, Values.slice(I, I+1)));
 
-    std::vector<MacroArgument> Args;
+    MacroArguments Args;
     Args.push_back(Arg);
 
     if (expandMacro(OS, M->Body, Parameters, Args, getTok().getLoc()))
