@@ -337,7 +337,10 @@ CountValue *PPCCTRLoops::getTripCount(MachineLoop *L,
     // can get a useful trip count.  The trip count can
     // be either a register or an immediate.  The location
     // of the value depends upon the type (reg or imm).
-    while ((IV_Opnd = IV_Opnd->getNextOperandForReg())) {
+    for (MachineRegisterInfo::reg_iterator
+         RI = MRI->reg_begin(IV_Opnd->getReg()), RE = MRI->reg_end();
+         RI != RE; ++RI) {
+      IV_Opnd = &RI.getOperand();
       bool SignedCmp;
       MachineInstr *MI = IV_Opnd->getParent();
       if (L->contains(MI) && isCompareEqualsImm(MI, SignedCmp) &&
