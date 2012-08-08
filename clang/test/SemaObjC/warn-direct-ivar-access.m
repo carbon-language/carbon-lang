@@ -5,15 +5,18 @@ __attribute__((objc_root_class)) @interface MyObject {
 @public
     id _myMaster;
     id _isTickledPink;
+    int _myIntProp;
 }
 @property(retain) id myMaster;
 @property(assign) id isTickledPink; // expected-note {{property declared here}}
+@property int myIntProp;
 @end
 
 @implementation MyObject
 
 @synthesize myMaster = _myMaster;
 @synthesize isTickledPink = _isTickledPink; // expected-error {{existing ivar '_isTickledPink' for property 'isTickledPink'}}
+@synthesize myIntProp = _myIntProp;
 
 - (void) doSomething {
     _myMaster = _isTickledPink; // expected-warning {{instance variable '_myMaster' is being directly accessed}} \
@@ -33,6 +36,8 @@ MyObject * foo ()
         p.isTickledPink = p.myMaster;	// ok
 	p->_isTickledPink = (*p)._myMaster; // expected-warning {{instance variable '_isTickledPink' is being directly accessed}} \
         // expected-warning {{instance variable '_myMaster' is being directly accessed}}
+        if (p->_myIntProp) // expected-warning {{instance variable '_myIntProp' is being directly accessed}}
+          p->_myIntProp = 0; // expected-warning {{instance variable '_myIntProp' is being directly accessed}}
 	return p->_isTickledPink; // expected-warning {{instance variable '_isTickledPink' is being directly accessed}}
 }
 

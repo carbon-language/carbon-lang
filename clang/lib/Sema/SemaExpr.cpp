@@ -1961,11 +1961,10 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
         return ExprError();
 
       MarkAnyDeclReferenced(Loc, IV);
-      if (IV->getType()->isObjCObjectPointerType()) {
-        ObjCMethodFamily MF = CurMethod->getMethodFamily();
-        if (MF != OMF_init && MF != OMF_dealloc && MF != OMF_finalize)
-          Diag(Loc, diag::warn_direct_ivar_access) << IV->getDeclName();
-      }
+      
+      ObjCMethodFamily MF = CurMethod->getMethodFamily();
+      if (MF != OMF_init && MF != OMF_dealloc && MF != OMF_finalize)
+        Diag(Loc, diag::warn_direct_ivar_access) << IV->getDeclName();
       return Owned(new (Context)
                    ObjCIvarRefExpr(IV, IV->getType(), Loc,
                                    SelfExpr.take(), true, true));

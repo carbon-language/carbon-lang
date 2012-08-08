@@ -1263,7 +1263,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
           warn = false;
         }
     }
-    if (warn && IV->getType()->isObjCObjectPointerType()) {
+    if (warn) {
       if (ObjCMethodDecl *MD = getCurMethodDecl()) {
         ObjCMethodFamily MF = MD->getMethodFamily();
         warn = (MF != OMF_init && MF != OMF_dealloc && 
