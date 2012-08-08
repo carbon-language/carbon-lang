@@ -114,6 +114,8 @@ static QualType GetBaseType(QualType T) {
       BaseType = FTy->getResultType();
     else if (const VectorType *VTy = BaseType->getAs<VectorType>())
       BaseType = VTy->getElementType();
+    else if (const ReferenceType *RTy = BaseType->getAs<ReferenceType>())
+      BaseType = RTy->getPointeeType();
     else
       llvm_unreachable("Unknown declarator!");
   }
