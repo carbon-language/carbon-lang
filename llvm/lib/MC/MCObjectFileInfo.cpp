@@ -507,15 +507,13 @@ void MCObjectFileInfo::InitCOFFMCObjectFileInfo(Triple T) {
   PDataSection =
     Ctx->getCOFFSection(".pdata",
                         COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
-                        COFF::IMAGE_SCN_MEM_READ |
-                        COFF::IMAGE_SCN_MEM_WRITE,
+                        COFF::IMAGE_SCN_MEM_READ,
                         SectionKind::getDataRel());
 
   XDataSection =
     Ctx->getCOFFSection(".xdata",
                         COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
-                        COFF::IMAGE_SCN_MEM_READ |
-                        COFF::IMAGE_SCN_MEM_WRITE,
+                        COFF::IMAGE_SCN_MEM_READ,
                         SectionKind::getDataRel());
   TLSDataSection =
     Ctx->getCOFFSection(".tls$",
