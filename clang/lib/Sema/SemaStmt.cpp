@@ -2786,15 +2786,15 @@ static std::string PatchMSAsmString(Sema &SemaRef, bool &IsSimple,
                                     SourceLocation AsmLoc,
                                     ArrayRef<Token> AsmToks,
                                     const TargetInfo &TI) {
+  // Assume simple asm stmt until we parse a non-register identifer.
+  IsSimple = true;
+
   if (!AsmToks.size())
     return "";
 
   std::string Res;
   IdentifierInfo *II = AsmToks[0].getIdentifierInfo();
   Res = II->getName().str();
-
-  // Assume simple asm stmt until we parse a non-register identifer.
-  IsSimple = true;
 
   // Check the operands.
   for (unsigned i = 1, e = AsmToks.size(); i != e; ++i) {
