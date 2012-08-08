@@ -2755,7 +2755,8 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   Diag(AsmLoc, diag::warn_unsupported_msasm);
 
   MSAsmStmt *NS =
-    new (Context) MSAsmStmt(Context, AsmLoc, AsmToks, AsmString, EndLoc);
+    new (Context) MSAsmStmt(Context, AsmLoc, true, true, AsmToks, AsmString,
+                            EndLoc);
 
   return Owned(NS);
 }

@@ -1632,8 +1632,8 @@ class MSAsmStmt : public Stmt {
   Stmt **Exprs;
 
 public:
-  MSAsmStmt(ASTContext &C, SourceLocation asmloc,
-            ArrayRef<Token> asmtoks, std::string &asmstr,
+  MSAsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple,
+            bool isvolatile, ArrayRef<Token> asmtoks, std::string &asmstr,
             SourceLocation endloc);
 
   SourceLocation getAsmLoc() const { return AsmLoc; }
