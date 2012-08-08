@@ -74,7 +74,7 @@ protected:
   /// HasThumb2 - True if Thumb2 instructions are supported.
   bool HasThumb2;
 
-  /// IsMClass - True if the subtarget belongs to the 'M' profile of CPUs - 
+  /// IsMClass - True if the subtarget belongs to the 'M' profile of CPUs -
   /// v6m, v7m for example.
   bool IsMClass;
 
