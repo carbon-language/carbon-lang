@@ -92,3 +92,95 @@ float struct_in_struct_f() {
   return c.r; // no-warning
 }
 
+
+int randomInt();
+
+int testSymbolicInvalidation(int index) {
+  int vals[10];
+
+  vals[0] = 42;
+  clang_analyzer_eval(vals[0] == 42); // expected-warning{{TRUE}}
+
+  vals[index] = randomInt();
+  clang_analyzer_eval(vals[0] == 42); // expected-warning{{UNKNOWN}}
+
+  return vals[index]; // no-warning
+}
+
+int testConcreteInvalidation(int index) {
+  int vals[10];
+
+  vals[index] = 42;
+  clang_analyzer_eval(vals[index] == 42); // expected-warning{{TRUE}}
+  vals[0] = randomInt();
+  clang_analyzer_eval(vals[index] == 42); // expected-warning{{UNKNOWN}}
+
+  return vals[0]; // no-warning
+}
+
+
+typedef struct {
+  int x, y, z;
+} S;
+
+S makeS();
+
+int testSymbolicInvalidationStruct(int index) {
+  S vals[10];
+
+  vals[0].x = 42;
+  clang_analyzer_eval(vals[0].x == 42); // expected-warning{{TRUE}}
+
+  vals[index] = makeS();
+  clang_analyzer_eval(vals[0].x == 42); // expected-warning{{UNKNOWN}}
+
+  return vals[index].x; // no-warning
+}
+
+int testConcreteInvalidationStruct(int index) {
+  S vals[10];
+
+  vals[index].x = 42;
+  clang_analyzer_eval(vals[index].x == 42); // expected-warning{{TRUE}}
+  vals[0] = makeS();
+  clang_analyzer_eval(vals[index].x == 42); // expected-warning{{UNKNOWN}}
+
+  return vals[0].x; // no-warning
+}
+
+typedef struct {
+  S a[5];
+  S b[5];
+} SS;
+
+int testSymbolicInvalidationDoubleStruct(int index) {
+  SS vals;
+
+  vals.a[0].x = 42;
+  vals.b[0].x = 42;
+  clang_analyzer_eval(vals.a[0].x == 42); // expected-warning{{TRUE}}
+  clang_analyzer_eval(vals.b[0].x == 42); // expected-warning{{TRUE}}
+
+  vals.a[index] = makeS();
+  clang_analyzer_eval(vals.a[0].x == 42); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(vals.b[0].x == 42); // expected-warning{{TRUE}}
+
+  return vals.b[index].x; // no-warning
+}
+
+int testConcreteInvalidationDoubleStruct(int index) {
+  SS vals;
+
+  vals.a[index].x = 42;
+  vals.b[index].x = 42;
+  clang_analyzer_eval(vals.a[index].x == 42); // expected-warning{{TRUE}}
+  clang_analyzer_eval(vals.b[index].x == 42); // expected-warning{{TRUE}}
+
+  vals.a[0] = makeS();
+  clang_analyzer_eval(vals.a[index].x == 42); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(vals.b[index].x == 42); // expected-warning{{TRUE}}
+
+  return vals.b[0].x; // no-warning
+}
+
+

@@ -52,11 +52,13 @@ class RegionOffset {
   int64_t Offset;
 
 public:
-  RegionOffset(const MemRegion *r) : R(r), Offset(0) {}
+  RegionOffset() : R(0) {}
   RegionOffset(const MemRegion *r, int64_t off) : R(r), Offset(off) {}
 
   const MemRegion *getRegion() const { return R; }
   int64_t getOffset() const { return Offset; }
+
+  bool isValid() const { return R; }
 };
 
 //===----------------------------------------------------------------------===//
@@ -490,6 +492,8 @@ public:
     return T.getTypePtrOrNull() ? T.getDesugaredType(Context) : T;
   }
 
+  DefinedOrUnknownSVal getExtent(SValBuilder &svalBuilder) const;
+
   static bool classof(const MemRegion* R) {
     unsigned k = R->getKind();
     return k >= BEG_TYPED_VALUE_REGIONS && k <= END_TYPED_VALUE_REGIONS;
@@ -805,8 +809,6 @@ protected:
 public:
   const Decl *getDecl() const { return D; }
   void Profile(llvm::FoldingSetNodeID& ID) const;
-
-  DefinedOrUnknownSVal getExtent(SValBuilder &svalBuilder) const;
 
   static bool classof(const MemRegion* R) {
     unsigned k = R->getKind();

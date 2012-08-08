@@ -179,7 +179,7 @@ const StackFrameContext *VarRegion::getStackFrame() const {
 // Region extents.
 //===----------------------------------------------------------------------===//
 
-DefinedOrUnknownSVal DeclRegion::getExtent(SValBuilder &svalBuilder) const {
+DefinedOrUnknownSVal TypedValueRegion::getExtent(SValBuilder &svalBuilder) const {
   ASTContext &Ctx = svalBuilder.getContext();
   QualType T = getDesugaredValueType(Ctx);
 
@@ -470,7 +470,7 @@ void CXXTempObjectRegion::dumpToStream(raw_ostream &os) const {
 }
 
 void CXXBaseObjectRegion::dumpToStream(raw_ostream &os) const {
-  os << "base " << decl->getName();
+  os << "base{" << superRegion << ',' << decl->getName() << '}';
 }
 
 void CXXThisRegion::dumpToStream(raw_ostream &os) const {
@@ -1031,30 +1031,63 @@ RegionOffset MemRegion::getAsOffset() const {
   while (1) {
     switch (R->getKind()) {
     default:
-      return RegionOffset(0);
+      return RegionOffset();
     case SymbolicRegionKind:
     case AllocaRegionKind:
     case CompoundLiteralRegionKind:
     case CXXThisRegionKind:
     case StringRegionKind:
     case VarRegionKind:
+    case ObjCIvarRegionKind:
     case CXXTempObjectRegionKind:
       goto Finish;
+    case CXXBaseObjectRegionKind: {
+      const CXXBaseObjectRegion *BOR = cast<CXXBaseObjectRegion>(R);
+      R = BOR->getSuperRegion();
+
+      QualType Ty;
+      if (const TypedValueRegion *TVR = dyn_cast<TypedValueRegion>(R)) {
+        Ty = TVR->getDesugaredValueType(getContext());
+      } else if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(R)) {
+        // If our base region is symbolic, we don't know what type it really is.
+        // Pretend the type of the symbol is the true dynamic type.
+        // (This will at least be self-consistent for the life of the symbol.)
+        Ty = SR->getSymbol()->getType(getContext())->getPointeeType();
+      }
+      
+      const CXXRecordDecl *Child = Ty->getAsCXXRecordDecl();
+      if (!Child) {
+        // We cannot compute the offset of the base class.
+        return RegionOffset();
+      }
+      const ASTRecordLayout &Layout = getContext().getASTRecordLayout(Child);
+
+      CharUnits BaseOffset;
+      const CXXRecordDecl *Base = BOR->getDecl();
+      if (Child->isVirtuallyDerivedFrom(Base))
+        BaseOffset = Layout.getVBaseClassOffset(Base);
+      else
+        BaseOffset = Layout.getBaseClassOffset(Base);
+
+      // The base offset is in chars, not in bits.
+      Offset += BaseOffset.getQuantity() * getContext().getCharWidth();
+      break;
+    }
     case ElementRegionKind: {
       const ElementRegion *ER = cast<ElementRegion>(R);
       QualType EleTy = ER->getValueType();
 
       if (!IsCompleteType(getContext(), EleTy))
-        return RegionOffset(0);
+        return RegionOffset();
 
       SVal Index = ER->getIndex();
       if (const nonloc::ConcreteInt *CI=dyn_cast<nonloc::ConcreteInt>(&Index)) {
         int64_t i = CI->getValue().getSExtValue();
-        CharUnits Size = getContext().getTypeSizeInChars(EleTy);
-        Offset += i * Size.getQuantity() * 8;
+        // This type size is in bits.
+        Offset += i * getContext().getTypeSize(EleTy);
       } else {
         // We cannot compute offset for non-concrete index.
-        return RegionOffset(0);
+        return RegionOffset();
       }
       R = ER->getSuperRegion();
       break;
@@ -1064,7 +1097,7 @@ RegionOffset MemRegion::getAsOffset() const {
       const RecordDecl *RD = FR->getDecl()->getParent();
       if (!RD->isCompleteDefinition())
         // We cannot compute offset for incomplete type.
-        return RegionOffset(0);
+        return RegionOffset();
       // Get the field number.
       unsigned idx = 0;
       for (RecordDecl::field_iterator FI = RD->field_begin(), 

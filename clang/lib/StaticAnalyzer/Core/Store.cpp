@@ -369,6 +369,3 @@ bool StoreManager::FindUniqueBinding::HandleBinding(StoreManager& SMgr,
 
   return true;
 }
-
-void SubRegionMap::anchor() { }
-void SubRegionMap::Visitor::anchor() { }

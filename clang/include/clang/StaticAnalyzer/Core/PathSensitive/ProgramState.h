@@ -795,14 +795,12 @@ CB ProgramState::scanReachableSymbols(const MemRegion * const *beg,
 /// \class ScanReachableSymbols
 /// A Utility class that allows to visit the reachable symbols using a custom
 /// SymbolVisitor.
-class ScanReachableSymbols : public SubRegionMap::Visitor  {
-  virtual void anchor();
+class ScanReachableSymbols {
   typedef llvm::DenseMap<const void*, unsigned> VisitedItems;
 
   VisitedItems visited;
   ProgramStateRef state;
   SymbolVisitor &visitor;
-  OwningPtr<SubRegionMap> SRM;
 public:
 
   ScanReachableSymbols(ProgramStateRef st, SymbolVisitor& v)
@@ -812,11 +810,6 @@ public:
   bool scan(SVal val);
   bool scan(const MemRegion *R);
   bool scan(const SymExpr *sym);
-
-  // From SubRegionMap::Visitor.
-  bool Visit(const MemRegion* Parent, const MemRegion* SubRegion) {
-    return scan(SubRegion);
-  }
 };
 
 } // end GR namespace

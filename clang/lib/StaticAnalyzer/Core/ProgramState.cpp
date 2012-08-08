@@ -499,8 +499,6 @@ ProgramStateRef ProgramStateManager::removeGDM(ProgramStateRef state, void *Key)
   return getPersistentState(NewState);
 }
 
-void ScanReachableSymbols::anchor() { }
-
 bool ScanReachableSymbols::scan(nonloc::CompoundVal val) {
   for (nonloc::CompoundVal::iterator I=val.begin(), E=val.end(); I!=E; ++I)
     if (!scan(*I))
@@ -578,9 +576,18 @@ bool ScanReachableSymbols::scan(const MemRegion *R) {
       return false;
 
   // If this is a subregion, also visit the parent regions.
-  if (const SubRegion *SR = dyn_cast<SubRegion>(R))
-    if (!scan(SR->getSuperRegion()))
+  if (const SubRegion *SR = dyn_cast<SubRegion>(R)) {
+    const MemRegion *Super = SR->getSuperRegion();
+    if (!scan(Super))
       return false;
+
+    // When we reach the topmost region, scan all symbols in it.
+    if (isa<MemSpaceRegion>(Super)) {
+      StoreManager &StoreMgr = state->getStateManager().getStoreManager();
+      if (!StoreMgr.scanReachableSymbols(state->getStore(), SR, *this))
+        return false;
+    }
+  }
 
   // Regions captured by a block are also implicitly reachable.
   if (const BlockDataRegion *BDR = dyn_cast<BlockDataRegion>(R)) {
@@ -592,16 +599,7 @@ bool ScanReachableSymbols::scan(const MemRegion *R) {
     }
   }
 
-  // Now look at the binding to this region (if any).
-  if (!scan(state->getSValAsScalarOrLoc(R)))
-    return false;
-
-  // Now look at the subregions.
-  if (!SRM.get())
-    SRM.reset(state->getStateManager().getStoreManager().
-                                           getSubRegionMap(state->getStore()));
-
-  return SRM->iterSubRegions(R, *this);
+  return true;
 }
 
 bool ProgramState::scanReachableSymbols(SVal val, SymbolVisitor& visitor) const {
