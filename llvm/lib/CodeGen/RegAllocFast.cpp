@@ -201,20 +201,16 @@ int RAFast::getStackSpaceFor(unsigned VirtReg, const TargetRegisterClass *RC) {
 /// its virtual register, and it is guaranteed to be a block-local register.
 ///
 bool RAFast::isLastUseOfLocalReg(MachineOperand &MO) {
-  // Check for non-debug uses or defs following MO.
-  // This is the most likely way to fail - fast path it.
-  MachineOperand *Next = &MO;
-  while ((Next = Next->getNextOperandForReg()))
-    if (!Next->isDebug())
-      return false;
-
   // If the register has ever been spilled or reloaded, we conservatively assume
   // it is a global register used in multiple blocks.
   if (StackSlotForVirtReg[MO.getReg()] != -1)
     return false;
 
   // Check that the use/def chain has exactly one operand - MO.
-  return &MRI->reg_nodbg_begin(MO.getReg()).getOperand() == &MO;
+  MachineRegisterInfo::reg_nodbg_iterator I = MRI->reg_nodbg_begin(MO.getReg());
+  if (&I.getOperand() != &MO)
+    return false;
+  return ++I == MRI->reg_nodbg_end();
 }
 
 /// addKillFlag - Set kill flags on last use of a virtual register.
