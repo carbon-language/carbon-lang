@@ -742,7 +742,7 @@ CommandObjectTypeFormatList_LoopCallback (
 //-------------------------------------------------------------------------
 
 static const char *g_summary_addreader_instructions = "Enter your Python command(s). Type 'DONE' to end.\n"
-                                                       "def function (valobj,dict):";
+                                                       "def function (valobj,internal_dict):";
 
 class TypeScriptAddInputReader : public InputReaderEZ
 {
@@ -1050,7 +1050,7 @@ CommandObjectTypeSummaryAdd::Execute_ScriptSummary (Args& command, CommandReturn
             return false;
         }
         
-        std::string code = ("     " + m_options.m_python_function + "(valobj,dict)");
+        std::string code = ("     " + m_options.m_python_function + "(valobj,internal_dict)");
         
         script_format.reset(new ScriptSummaryFormat(m_options.m_flags,
                                                     funct_name,

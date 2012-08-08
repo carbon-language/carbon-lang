@@ -330,7 +330,7 @@ CommandObjectCommandsSource::CommandOptions::g_option_table[] =
 
 static const char *g_python_command_instructions =   "Enter your Python command(s). Type 'DONE' to end.\n"
                                                      "You must define a Python function with this signature:\n"
-                                                     "def my_command_impl(debugger, args, result, dict):";
+                                                     "def my_command_impl(debugger, args, result, internal_dict):";
 
 
 class CommandObjectCommandsAlias : public CommandObjectRaw

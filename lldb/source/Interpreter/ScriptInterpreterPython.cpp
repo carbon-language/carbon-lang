@@ -1466,9 +1466,9 @@ ScriptInterpreterPython::GenerateFunction(const char *signature, const StringLis
     StringList auto_generated_function;
     auto_generated_function.AppendString (signature);
     auto_generated_function.AppendString ("     global_dict = globals()");   // Grab the global dictionary
-    auto_generated_function.AppendString ("     new_keys = dict.keys()");    // Make a list of keys in the session dict
+    auto_generated_function.AppendString ("     new_keys = internal_dict.keys()");    // Make a list of keys in the session dict
     auto_generated_function.AppendString ("     old_keys = global_dict.keys()"); // Save list of keys in global dict
-    auto_generated_function.AppendString ("     global_dict.update (dict)"); // Add the session dictionary to the 
+    auto_generated_function.AppendString ("     global_dict.update (internal_dict)"); // Add the session dictionary to the 
     // global dictionary.
     
     // Wrap everything up inside the function, increasing the indentation.
@@ -1480,7 +1480,7 @@ ScriptInterpreterPython::GenerateFunction(const char *signature, const StringLis
         auto_generated_function.AppendString (sstr.GetData());
     }
     auto_generated_function.AppendString ("     for key in new_keys:");  // Iterate over all the keys from session dict
-    auto_generated_function.AppendString ("         dict[key] = global_dict[key]");  // Update session dict values
+    auto_generated_function.AppendString ("         internal_dict[key] = global_dict[key]");  // Update session dict values
     auto_generated_function.AppendString ("         if key not in old_keys:");       // If key was not originally in global dict
     auto_generated_function.AppendString ("             del global_dict[key]");      //  ...then remove key/value from global dict
     
@@ -1508,7 +1508,7 @@ ScriptInterpreterPython::GenerateTypeScriptFunction (StringList &user_input, std
     // ValueObject as parameter to the function.
     
     std::string auto_generated_function_name(GenerateUniqueName("lldb_autogen_python_type_print_func", num_created_functions, name_token));
-    sstr.Printf ("def %s (valobj, dict):", auto_generated_function_name.c_str());
+    sstr.Printf ("def %s (valobj, internal_dict):", auto_generated_function_name.c_str());
     
     if (!GenerateFunction(sstr.GetData(), user_input))
         return false;
@@ -1531,7 +1531,7 @@ ScriptInterpreterPython::GenerateScriptAliasFunction (StringList &user_input, st
     
     std::string auto_generated_function_name(GenerateUniqueName("lldb_autogen_python_cmd_alias_func", num_created_functions));
 
-    sstr.Printf ("def %s (debugger, args, result, dict):", auto_generated_function_name.c_str());
+    sstr.Printf ("def %s (debugger, args, result, internal_dict):", auto_generated_function_name.c_str());
     
     if (!GenerateFunction(sstr.GetData(),user_input))
         return false;
@@ -1651,7 +1651,7 @@ ScriptInterpreterPython::GenerateBreakpointCommandCallbackData (StringList &user
         return false;
 
     std::string auto_generated_function_name(GenerateUniqueName("lldb_autogen_python_bp_callback_func_",num_created_functions));
-    sstr.Printf ("def %s (frame, bp_loc, dict):", auto_generated_function_name.c_str());
+    sstr.Printf ("def %s (frame, bp_loc, internal_dict):", auto_generated_function_name.c_str());
     
     if (!GenerateFunction(sstr.GetData(), user_input))
         return false;

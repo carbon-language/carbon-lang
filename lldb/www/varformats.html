@@ -819,7 +819,7 @@
                         <td class="content">
                             <b>(lldb)</b> type summary add -P Rectangle<br/>
                             Enter your Python command(s). Type 'DONE' to end.<br/>
-def function (valobj,dict):<br/>
+def function (valobj,internal_dict):<br/>
      &nbsp;&nbsp;&nbsp;&nbsp;height_val = valobj.GetChildMemberWithName('height')<br/>
      &nbsp;&nbsp;&nbsp;&nbsp;width_val = valobj.GetChildMemberWithName('width')<br/>
      &nbsp;&nbsp;&nbsp;&nbsp;height = height_val.GetValueAsUnsigned(0)<br/>
@@ -841,9 +841,9 @@ def function (valobj,dict):<br/>
             the LLDB <a href="docs.html">doxygen documentation</a> when it becomes available.</p>
             
             <p>As a brief introduction, your script is encapsulated into a function that is
-            passed two parameters: <code>valobj</code> and <code>dict</code>.</p>
+            passed two parameters: <code>valobj</code> and <code>internal_dict</code>.</p>
             
-            <p><code>dict</code> is an internal support parameter used by LLDB and you should
+            <p><code>internal_dict</code> is an internal support parameter used by LLDB and you should
             not touch it.<br/><code>valobj</code> is the object encapsulating the actual
             variable being displayed, and its type is <a href="http://llvm.org/svn/llvm-project/lldb/trunk/include/lldb/API/SBValue.h">SBValue</a>.
  			Out of the many possible operations on an SBValue, the basic one is retrieve the children objects
@@ -1029,7 +1029,7 @@ def function (valobj,dict):<br/>
 			  must be implemented by the Python class):</p>
 		<code>
 			<font color=blue>class</font> SyntheticChildrenProvider:<br/>
-			&nbsp;&nbsp;&nbsp;&nbsp;<font color=blue>def</font> __init__(self, valobj, dict):<br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;<font color=blue>def</font> __init__(self, valobj, internal_dict):<br/>
 			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>this call should initialize the Python object using valobj as the variable to provide synthetic children for</i> <br/>
 			&nbsp;&nbsp;&nbsp;&nbsp;<font color=blue>def</font> num_children(self): <br/>
 			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>this call should return the number of children that you want your object to have</i> <br/>

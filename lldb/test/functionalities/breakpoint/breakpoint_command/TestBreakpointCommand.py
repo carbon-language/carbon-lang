@@ -86,7 +86,7 @@ class BreakpointCommandTestCase(TestBase):
                           "here.close()"])
         self.expect("breakpoint command list 3", "Breakpoint 3 command ok",
             substrs = ["Breakpoint commands:",
-                          "bktptcmd.function(frame, bp_loc, dict)"])
+                          "bktptcmd.function(frame, bp_loc, internal_dict)"])
 
         self.runCmd("command script import --allow-reload ./bktptcmd.py")
 

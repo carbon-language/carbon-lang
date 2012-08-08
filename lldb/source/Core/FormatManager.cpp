@@ -772,7 +772,7 @@ FormatManager::LoadLibcxxFormatters()
     .SetHideItemNames(false);
     
 #ifndef LLDB_DISABLE_PYTHON
-    std::string code("     lldb.formatters.cpp.libcxx.stdstring_SummaryProvider(valobj,dict)");
+    std::string code("     lldb.formatters.cpp.libcxx.stdstring_SummaryProvider(valobj,internal_dict)");
     lldb::TypeSummaryImplSP std_string_summary_sp(new ScriptSummaryFormat(stl_summary_flags, "lldb.formatters.cpp.libcxx.stdstring_SummaryProvider",code.c_str()));
     
     TypeCategoryImpl::SharedPointer libcxx_category_sp = GetCategory(m_libcxx_category_name);
@@ -868,7 +868,7 @@ AddScriptSummary(TypeCategoryImpl::SharedPointer category_sp,
 {
     
     std::string code("     ");
-    code.append(funct_name).append("(valobj,dict)");
+    code.append(funct_name).append("(valobj,internal_dict)");
     
     lldb::TypeSummaryImplSP summary_sp(new ScriptSummaryFormat(flags,
                                                                funct_name,
