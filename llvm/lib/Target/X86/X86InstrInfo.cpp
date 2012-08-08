@@ -1463,6 +1463,9 @@ unsigned X86InstrInfo::isStoreToStackSlotPostFE(const MachineInstr *MI,
 /// regIsPICBase - Return true if register is PIC base (i.e.g defined by
 /// X86::MOVPC32r.
 static bool regIsPICBase(unsigned BaseReg, const MachineRegisterInfo &MRI) {
+  // Don't waste compile time scanning use-def chains of physregs.
+  if (!TargetRegisterInfo::isVirtualRegister(BaseReg))
+    return false;
   bool isPICBase = false;
   for (MachineRegisterInfo::def_iterator I = MRI.def_begin(BaseReg),
          E = MRI.def_end(); I != E; ++I) {
@@ -1520,16 +1523,7 @@ X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI,
           return false;
         const MachineFunction &MF = *MI->getParent()->getParent();
         const MachineRegisterInfo &MRI = MF.getRegInfo();
-        bool isPICBase = false;
-        for (MachineRegisterInfo::def_iterator I = MRI.def_begin(BaseReg),
-               E = MRI.def_end(); I != E; ++I) {
-          MachineInstr *DefMI = I.getOperand().getParent();
-          if (DefMI->getOpcode() != X86::MOVPC32r)
-            return false;
-          assert(!isPICBase && "More than one PIC base?");
-          isPICBase = true;
-        }
-        return isPICBase;
+        return regIsPICBase(BaseReg, MRI);
       }
       return false;
     }
