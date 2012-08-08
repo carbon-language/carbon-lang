@@ -116,15 +116,8 @@ option(LLVM_ENABLE_FFI "Use libffi to call external functions from the interpret
 set(FFI_LIBRARY_DIR "" CACHE PATH "Additional directory, where CMake should search for libffi.so")
 set(FFI_INCLUDE_DIR "" CACHE PATH "Additional directory, where CMake should search for ffi.h or ffi/ffi.h")
 
-set(LLVM_TARGET_ARCH "host" CACHE STRING
-  "Set target to use for LLVM JIT or use \"host\" for automatic detection.")
-
-# By default, we target the host, but this can be overridden at CMake
-# invocation time.
-set(LLVM_DEFAULT_TARGET_TRIPLE "${LLVM_TARGET_ARCH}" CACHE STRING
-  "Default target for which LLVM will generate code." )
-set(TARGET_TRIPLE "${LLVM_DEFAULT_TARGET_TRIPLE}" CACHE STRING
-  "Default target for which LLVM will generate code." )
+set(LLVM_TARGET_ARCH "host"
+  CACHE STRING "Set target to use for LLVM JIT or use \"host\" for automatic detection.")
 
 option(LLVM_ENABLE_THREADS "Use threads if available." ON)
 
