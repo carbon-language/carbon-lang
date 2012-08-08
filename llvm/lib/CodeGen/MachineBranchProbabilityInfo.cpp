@@ -38,7 +38,7 @@ getSumForBlock(const MachineBasicBlock *MBB, uint32_t &Scale) const {
   Scale = 1;
   for (MachineBasicBlock::const_succ_iterator I = MBB->succ_begin(),
        E = MBB->succ_end(); I != E; ++I) {
-    uint32_t Weight = getEdgeWeight(MBB, *I);
+    uint32_t Weight = getEdgeWeight(MBB, I);
     Sum += Weight;
   }
 
@@ -53,20 +53,28 @@ getSumForBlock(const MachineBasicBlock *MBB, uint32_t &Scale) const {
   Sum = 0;
   for (MachineBasicBlock::const_succ_iterator I = MBB->succ_begin(),
        E = MBB->succ_end(); I != E; ++I) {
-    uint32_t Weight = getEdgeWeight(MBB, *I);
+    uint32_t Weight = getEdgeWeight(MBB, I);
     Sum += Weight / Scale;
   }
   assert(Sum <= UINT32_MAX);
   return Sum;
 }
 
-uint32_t
-MachineBranchProbabilityInfo::getEdgeWeight(const MachineBasicBlock *Src,
-                                            const MachineBasicBlock *Dst) const {
+uint32_t MachineBranchProbabilityInfo::
+getEdgeWeight(const MachineBasicBlock *Src,
+              MachineBasicBlock::const_succ_iterator Dst) const {
   uint32_t Weight = Src->getSuccWeight(Dst);
   if (!Weight)
     return DEFAULT_WEIGHT;
   return Weight;
+}
+
+uint32_t MachineBranchProbabilityInfo::
+getEdgeWeight(const MachineBasicBlock *Src,
+              const MachineBasicBlock *Dst) const {
+  // This is a linear search. Try to use the const_succ_iterator version when
+  // possible.
+  return getEdgeWeight(Src, std::find(Src->succ_begin(), Src->succ_end(), Dst));
 }
 
 bool MachineBranchProbabilityInfo::isEdgeHot(MachineBasicBlock *Src,
@@ -82,7 +90,7 @@ MachineBranchProbabilityInfo::getHotSucc(MachineBasicBlock *MBB) const {
   MachineBasicBlock *MaxSucc = 0;
   for (MachineBasicBlock::const_succ_iterator I = MBB->succ_begin(),
        E = MBB->succ_end(); I != E; ++I) {
-    uint32_t Weight = getEdgeWeight(MBB, *I);
+    uint32_t Weight = getEdgeWeight(MBB, I);
     if (Weight > MaxWeight) {
       MaxWeight = Weight;
       MaxSucc = *I;
