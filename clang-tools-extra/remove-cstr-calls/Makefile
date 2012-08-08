@@ -1,4 +1,4 @@
-##===- tools/remove-cstr-calls/Makefile --------------------*- Makefile -*-===##
+##===- tools/extra/remove-cstr-calls/Makefile --------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,7 +7,7 @@
 #
 ##===----------------------------------------------------------------------===##
 
-CLANG_LEVEL := ../..
+CLANG_LEVEL := ../../..
 
 TOOLNAME = remove-cstr-calls
 NO_INSTALL = 1
@@ -15,9 +15,10 @@ NO_INSTALL = 1
 # No plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1
 
-LINK_COMPONENTS := support mc
+include $(CLANG_LEVEL)/../../Makefile.config
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser support mc
 USEDLIBS = clangEdit.a clangTooling.a clangFrontend.a clangSerialization.a clangDriver.a \
-           clangRewrite.a clangParse.a clangSema.a clangAnalysis.a \
+					 clangRewrite.a clangParse.a clangSema.a clangAnalysis.a \
 					 clangAST.a clangASTMatchers.a clangLex.a clangBasic.a
 
 include $(CLANG_LEVEL)/Makefile
