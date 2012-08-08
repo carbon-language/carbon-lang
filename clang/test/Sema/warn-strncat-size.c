@@ -59,7 +59,7 @@ void size_1() {
   char z[1];
   char str[] = "hi";
 
-  strncat(z, str, sizeof(z)); // expected-warning{{the value of the size argument in 'strncat' is too large, might lead to a buffer overflow}}
+  strncat(z, str, sizeof(z)); // expected-warning{{the value of the size argument to 'strncat' is wrong}}
 }
 
 // Support VLAs.
@@ -68,4 +68,9 @@ void vlas(int size) {
   char str[] = "hi";
 
   strncat(z, str, sizeof(str)); // expected-warning {{size argument in 'strncat' call appears to be size of the source}} expected-note {{change the argument to be the free space in the destination buffer minus the terminating null byte}}
+}
+
+// Non-array type gets a different error message.
+void f(char* s, char* d) {
+  strncat(d, s, sizeof(d)); // expected-warning {{the value of the size argument to 'strncat' is wrong}}
 }

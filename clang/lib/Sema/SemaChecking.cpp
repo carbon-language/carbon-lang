@@ -3101,6 +3101,19 @@ static const Expr *ignoreLiteralAdditions(const Expr *Ex, ASTContext &Ctx) {
   return Ex;
 }
 
+static bool isConstantSizeArrayWithMoreThanOneElement(QualType Ty,
+                                                      ASTContext &Context) {
+  // Only handle constant-sized or VLAs, but not flexible members.
+  if (const ConstantArrayType *CAT = Context.getAsConstantArrayType(Ty)) {
+    // Only issue the FIXIT for arrays of size > 1.
+    if (CAT->getSize().getSExtValue() <= 1)
+      return false;
+  } else if (!Ty->isVariableArrayType()) {
+    return false;
+  }
+  return true;
+}
+
 // Warn if the user has made the 'size' argument to strlcpy or strlcat
 // be the size of the source, instead of the destination.
 void Sema::CheckStrlcpycatArguments(const CallExpr *Call,
@@ -3151,16 +3164,8 @@ void Sema::CheckStrlcpycatArguments(const CallExpr *Call,
   // pointers if we know the actual size, like if DstArg is 'array+2'
   // we could say 'sizeof(array)-2'.
   const Expr *DstArg = Call->getArg(0)->IgnoreParenImpCasts();
-  QualType DstArgTy = DstArg->getType();
-  
-  // Only handle constant-sized or VLAs, but not flexible members.
-  if (const ConstantArrayType *CAT = Context.getAsConstantArrayType(DstArgTy)) {
-    // Only issue the FIXIT for arrays of size > 1.
-    if (CAT->getSize().getSExtValue() <= 1)
-      return;
-  } else if (!DstArgTy->isVariableArrayType()) {
+  if (!isConstantSizeArrayWithMoreThanOneElement(DstArg->getType(), Context))
     return;
-  }
 
   SmallString<128> sizeString;
   llvm::raw_svector_ostream OS(sizeString);
@@ -3242,25 +3247,22 @@ void Sema::CheckStrncatArguments(const CallExpr *CE,
                      SM.getSpellingLoc(SR.getEnd()));
   }
 
+  // Check if the destination is an array (rather than a pointer to an array).
+  QualType DstTy = DstArg->getType();
+  bool isKnownSizeArray = isConstantSizeArrayWithMoreThanOneElement(DstTy,
+                                                                    Context);
+  if (!isKnownSizeArray) {
+    if (PatternType == 1)
+      Diag(SL, diag::warn_strncat_wrong_size) << SR;
+    else
+      Diag(SL, diag::warn_strncat_src_size) << SR;
+    return;
+  }
+
   if (PatternType == 1)
     Diag(SL, diag::warn_strncat_large_size) << SR;
   else
     Diag(SL, diag::warn_strncat_src_size) << SR;
-
-  // Output a FIXIT hint if the destination is an array (rather than a
-  // pointer to an array).  This could be enhanced to handle some
-  // pointers if we know the actual size, like if DstArg is 'array+2'
-  // we could say 'sizeof(array)-2'.
-  QualType DstArgTy = DstArg->getType();
-
-  // Only handle constant-sized or VLAs, but not flexible members.
-  if (const ConstantArrayType *CAT = Context.getAsConstantArrayType(DstArgTy)) {
-    // Only issue the FIXIT for arrays of size > 1.
-    if (CAT->getSize().getSExtValue() <= 1)
-      return;
-  } else if (!DstArgTy->isVariableArrayType()) {
-    return;
-  }
 
   SmallString<128> sizeString;
   llvm::raw_svector_ostream OS(sizeString);
