@@ -798,21 +798,20 @@ bool LTOModule::addAsmGlobalSymbols(std::string &errMsg) {
   OwningPtr<MCAsmParser> Parser(createMCAsmParser(SrcMgr,
                                                   _context, *Streamer,
                                                   *_target->getMCAsmInfo()));
-  OwningPtr<MCSubtargetInfo> STI(_target->getTarget().
-                      createMCSubtargetInfo(_target->getTargetTriple(),
-                                            _target->getTargetCPU(),
-                                            _target->getTargetFeatureString()));
-  OwningPtr<MCTargetAsmParser>
-    TAP(_target->getTarget().createMCAsmParser(*STI, *Parser.get()));
+  const Target &T = _target->getTarget();
+  OwningPtr<MCSubtargetInfo>
+    STI(T.createMCSubtargetInfo(_target->getTargetTriple(),
+                                _target->getTargetCPU(),
+                                _target->getTargetFeatureString()));
+  OwningPtr<MCTargetAsmParser> TAP(T.createMCAsmParser(*STI, *Parser.get()));
   if (!TAP) {
-    errMsg = "target " + std::string(_target->getTarget().getName()) +
-        " does not define AsmParser.";
+    errMsg = "target " + std::string(T.getName()) +
+      " does not define AsmParser.";
     return true;
   }
 
   Parser->setTargetParser(*TAP);
-  int Res = Parser->Run(false);
-  if (Res)
+  if (Parser->Run(false))
     return true;
 
   for (RecordStreamer::const_iterator i = Streamer->begin(),
@@ -827,6 +826,7 @@ bool LTOModule::addAsmGlobalSymbols(std::string &errMsg) {
              Value == RecordStreamer::Used)
       addAsmGlobalSymbolUndef(Key.data());
   }
+
   return false;
 }
 
@@ -834,8 +834,10 @@ bool LTOModule::addAsmGlobalSymbols(std::string &errMsg) {
 static bool isDeclaration(const GlobalValue &V) {
   if (V.hasAvailableExternallyLinkage())
     return true;
+
   if (V.isMaterializable())
     return false;
+
   return V.isDeclaration();
 }
 
