@@ -1896,6 +1896,9 @@ def warn_impcast_different_enum_types : Warning<
 def warn_impcast_bool_to_null_pointer : Warning<
     "initialization of pointer of type %0 to null from a constant boolean "
     "expression">, InGroup<BoolConversion>;
+def warn_non_literal_null_pointer : Warning<
+    "expression which evaluates to zero treated as a null pointer constant of "
+    "type %0">, InGroup<NonLiteralNullConversion>;
 def warn_impcast_null_pointer_to_integer : Warning<
     "implicit conversion of NULL constant to %0">,
     InGroup<NullConversion>;

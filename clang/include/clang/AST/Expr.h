@@ -541,8 +541,15 @@ public:
     /// \brief Expression is not a Null pointer constant.
     NPCK_NotNull = 0,
 
-    /// \brief Expression is a Null pointer constant built from a zero integer.
-    NPCK_ZeroInteger,
+    /// \brief Expression is a Null pointer constant built from a zero integer
+    /// expression that is not a simple, possibly parenthesized, zero literal.
+    /// C++ Core Issue 903 will classify these expressions as "not pointers"
+    /// once it is adopted.
+    /// http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_active.html#903
+    NPCK_ZeroExpression,
+
+    /// \brief Expression is a Null pointer constant built from a literal zero.
+    NPCK_ZeroLiteral,
 
     /// \brief Expression is a C++0X nullptr.
     NPCK_CXX0X_nullptr,

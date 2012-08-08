@@ -2562,13 +2562,17 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType,
 
   Kind = CK_BitCast;
 
-  if (!IsCStyleOrFunctionalCast &&
-      Context.hasSameUnqualifiedType(From->getType(), Context.BoolTy) &&
-      From->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNotNull))
-    DiagRuntimeBehavior(From->getExprLoc(), From,
-                        PDiag(diag::warn_impcast_bool_to_null_pointer)
-                          << ToType << From->getSourceRange());
-
+  if (!IsCStyleOrFunctionalCast && !FromType->isAnyPointerType() &&
+      From->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNotNull) ==
+      Expr::NPCK_ZeroExpression) {
+    if (Context.hasSameUnqualifiedType(From->getType(), Context.BoolTy))
+      DiagRuntimeBehavior(From->getExprLoc(), From,
+                          PDiag(diag::warn_impcast_bool_to_null_pointer)
+                            << ToType << From->getSourceRange());
+    else if (!isUnevaluatedContext())
+      Diag(From->getExprLoc(), diag::warn_non_literal_null_pointer)
+        << ToType << From->getSourceRange();
+  }
   if (const PointerType *ToPtrType = ToType->getAs<PointerType>()) {
     if (const PointerType *FromPtrType = FromType->getAs<PointerType>()) {
       QualType FromPointeeType = FromPtrType->getPointeeType(),

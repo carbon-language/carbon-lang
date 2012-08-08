@@ -117,16 +117,16 @@ namespace NullPtr {
 
     const int m = 0;
     [=] {
-      int &k = f(m); // a null pointer constant
+      int &k = f(m); // expected-warning{{expression which evaluates to zero treated as a null pointer constant of type 'int *'}}
     } ();
 
     [=] () -> bool {
-      int &k = f(m); // a null pointer constant
+      int &k = f(m); // expected-warning{{expression which evaluates to zero treated as a null pointer constant of type 'int *'}}
       return &m == 0;
     } ();
 
     [m] {
-      int &k = f(m); // a null pointer constant
+      int &k = f(m); // expected-warning{{expression which evaluates to zero treated as a null pointer constant of type 'int *'}}
     } ();
   }
 }

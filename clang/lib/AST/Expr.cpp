@@ -2903,7 +2903,7 @@ Expr::isNullPointerConstant(ASTContext &Ctx,
       llvm_unreachable("Unexpected value dependent expression!");
     case NPC_ValueDependentIsNull:
       if (isTypeDependent() || getType()->isIntegralType(Ctx))
-        return NPCK_ZeroInteger;
+        return NPCK_ZeroExpression;
       else
         return NPCK_NotNull;
         
@@ -2977,7 +2977,12 @@ Expr::isNullPointerConstant(ASTContext &Ctx,
       return NPCK_NotNull;
   }
 
-  return (EvaluateKnownConstInt(Ctx) == 0) ? NPCK_ZeroInteger : NPCK_NotNull;
+  if (EvaluateKnownConstInt(Ctx) != 0)
+    return NPCK_NotNull;
+
+  if (isa<IntegerLiteral>(this))
+    return NPCK_ZeroLiteral;
+  return NPCK_ZeroExpression;
 }
 
 /// \brief If this expression is an l-value for an Objective C

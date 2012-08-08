@@ -33,6 +33,7 @@ def StringConversion : DiagGroup<"string-conversion">;
 def SignConversion : DiagGroup<"sign-conversion">;
 def BoolConversion : DiagGroup<"bool-conversion">;
 def IntConversion : DiagGroup<"int-conversion">;
+def NonLiteralNullConversion : DiagGroup<"non-literal-null-conversion">;
 def NullConversion : DiagGroup<"null-conversion">;
 def BuiltinRequiresHeader : DiagGroup<"builtin-requires-header">;
 def CXXCompat: DiagGroup<"c++-compat">;
@@ -314,7 +315,8 @@ def Conversion : DiagGroup<"conversion",
                             StringConversion,
                             SignConversion,
                             BoolConversion,
-                            NullConversion,
+                            NullConversion, // NULL->non-pointer
+                            NonLiteralNullConversion, // (1-1)->pointer (etc)
                             IntConversion]>,
                  DiagCategory<"Value Conversion Issue">;
 

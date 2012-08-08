@@ -14,7 +14,7 @@ struct X0 {
   T f0(T x) {
     return x + 1;  // expected-error{{invalid operands}}
   } 
-  T* f0(T*, T*) { return T(); }
+  T* f0(T*, T*) { return T(); } // expected-warning{{expression which evaluates to zero treated as a null pointer constant of type 'int *'}}
   
   template<typename U>
   T f0(T, U) { return T(); }
@@ -32,7 +32,7 @@ struct NotDefaultConstructible { // expected-note{{candidate constructor (the im
 template NotDefaultConstructible X0<NotDefaultConstructible>::value; // expected-note{{instantiation}}
 
 template int X0<int>::f0(int);
-template int* X0<int>::f0(int*, int*);
+template int* X0<int>::f0(int*, int*); // expected-note{{in instantiation of member function 'X0<int>::f0' requested here}}
 template int X0<int>::f0(int, float);
 
 template int X0<int>::f0(int) const; // expected-error{{does not refer}}

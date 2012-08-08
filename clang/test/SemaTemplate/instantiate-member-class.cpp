@@ -124,19 +124,20 @@ namespace rdar10397846 {
   {
     struct B
     {
-      struct C { C() { int *ptr = I; } }; // expected-error{{cannot initialize a variable of type 'int *' with an rvalue of type 'int'}}
+      struct C { C() { int *ptr = I; } }; // expected-error{{cannot initialize a variable of type 'int *' with an rvalue of type 'int'}} \
+                                             expected-warning{{expression which evaluates to zero treated as a null pointer constant of type 'int *'}}
     };
   };
 
   template<int N> void foo()
   {
-    class A<N>::B::C X; // expected-note{{in instantiation of member function}}
+    class A<N>::B::C X; // expected-note 2 {{in instantiation of member function}}
     int A<N+1>::B::C::*member = 0;
   }
 
   void bar()
   {
-    foo<0>();
+    foo<0>(); // expected-note{{in instantiation of function template}}
     foo<1>(); // expected-note{{in instantiation of function template}}
   }
 }
