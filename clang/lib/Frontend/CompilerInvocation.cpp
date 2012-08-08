@@ -2096,9 +2096,10 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
                                  Opts.Deprecated);
 
   // FIXME: Eliminate this dependency.
-  unsigned Opt = getOptimizationLevel(Args, IK, Diags);
+  unsigned Opt = getOptimizationLevel(Args, IK, Diags),
+       OptSize = getOptimizationLevelSize(Args, IK, Diags);
   Opts.Optimize = Opt != 0;
-  Opts.OptimizeSize = getOptimizationLevelSize(Args, IK, Diags);
+  Opts.OptimizeSize = OptSize != 0;
 
   // This is the __NO_INLINE__ define, which just depends on things like the
   // optimization level and -fno-inline, not actually whether the backend has

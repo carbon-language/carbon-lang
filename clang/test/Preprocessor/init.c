@@ -111,12 +111,39 @@
 // NONFRAGILE:#define OBJC_ZEROCOST_EXCEPTIONS 1
 // NONFRAGILE:#define __OBJC2__ 1
 //
-// 
+//
+// RUN: %clang_cc1 -O0 -E -dM < /dev/null | FileCheck -check-prefix O0 %s
+//
+// O0:#define __NO_INLINE__ 1
+// O0-NOT:#define __OPTIMIZE_SIZE__
+// O0-NOT:#define __OPTIMIZE__
+//
+//
+// RUN: %clang_cc1 -fno-inline -O3 -E -dM < /dev/null | FileCheck -check-prefix NO_INLINE %s
+//
+// NO_INLINE:#define __NO_INLINE__ 1
+// NO_INLINE-NOT:#define __OPTIMIZE_SIZE__
+// NO_INLINE:#define __OPTIMIZE__
+//
+//
 // RUN: %clang_cc1 -O1 -E -dM < /dev/null | FileCheck -check-prefix O1 %s
 //
+// O1-NOT:#define __OPTIMIZE_SIZE__
 // O1:#define __OPTIMIZE__ 1
 //
-// 
+//
+// RUN: %clang_cc1 -Os -E -dM < /dev/null | FileCheck -check-prefix Os %s
+//
+// Os:#define __OPTIMIZE_SIZE__ 1
+// Os:#define __OPTIMIZE__ 1
+//
+//
+// RUN: %clang_cc1 -Oz -E -dM < /dev/null | FileCheck -check-prefix Oz %s
+//
+// Oz:#define __OPTIMIZE_SIZE__ 1
+// Oz:#define __OPTIMIZE__ 1
+//
+//
 // RUN: %clang_cc1 -fpascal-strings -E -dM < /dev/null | FileCheck -check-prefix PASCAL %s
 //
 // PASCAL:#define __PASCAL_STRINGS__ 1
@@ -200,7 +227,6 @@
 // ARM:#define __LITTLE_ENDIAN__ 1
 // ARM:#define __LONG_LONG_MAX__ 9223372036854775807LL
 // ARM:#define __LONG_MAX__ 2147483647L
-// ARM:#define __NO_INLINE__ 1
 // ARM:#define __POINTER_WIDTH__ 32
 // ARM:#define __PTRDIFF_TYPE__ int
 // ARM:#define __PTRDIFF_WIDTH__ 32
@@ -295,7 +321,6 @@
 // I386:#define __LITTLE_ENDIAN__ 1
 // I386:#define __LONG_LONG_MAX__ 9223372036854775807LL
 // I386:#define __LONG_MAX__ 2147483647L
-// I386:#define __NO_INLINE__ 1
 // I386:#define __NO_MATH_INLINES 1
 // I386:#define __POINTER_WIDTH__ 32
 // I386:#define __PTRDIFF_TYPE__ int
@@ -391,7 +416,6 @@
 // I386-LINUX:#define __LITTLE_ENDIAN__ 1
 // I386-LINUX:#define __LONG_LONG_MAX__ 9223372036854775807LL
 // I386-LINUX:#define __LONG_MAX__ 2147483647L
-// I386-LINUX:#define __NO_INLINE__ 1
 // I386-LINUX:#define __NO_MATH_INLINES 1
 // I386-LINUX:#define __POINTER_WIDTH__ 32
 // I386-LINUX:#define __PTRDIFF_TYPE__ int
@@ -496,7 +520,6 @@
 // MIPS32BE:#define __LONG_MAX__ 2147483647L
 // MIPS32BE:#define __MIPSEB 1
 // MIPS32BE:#define __MIPSEB__ 1
-// MIPS32BE:#define __NO_INLINE__ 1
 // MIPS32BE:#define __POINTER_WIDTH__ 32
 // MIPS32BE:#define __PRAGMA_REDEFINE_EXTNAME 1
 // MIPS32BE:#define __PTRDIFF_TYPE__ int
@@ -609,7 +632,6 @@
 // MIPS32EL:#define __LONG_MAX__ 2147483647L
 // MIPS32EL:#define __MIPSEL 1
 // MIPS32EL:#define __MIPSEL__ 1
-// MIPS32EL:#define __NO_INLINE__ 1
 // MIPS32EL:#define __POINTER_WIDTH__ 32
 // MIPS32EL:#define __PRAGMA_REDEFINE_EXTNAME 1
 // MIPS32EL:#define __PTRDIFF_TYPE__ int
@@ -719,7 +741,6 @@
 // MIPS64BE:#define __LONG_MAX__ 9223372036854775807L
 // MIPS64BE:#define __MIPSEB 1
 // MIPS64BE:#define __MIPSEB__ 1
-// MIPS64BE:#define __NO_INLINE__ 1
 // MIPS64BE:#define __POINTER_WIDTH__ 64
 // MIPS64BE:#define __PRAGMA_REDEFINE_EXTNAME 1
 // MIPS64BE:#define __PTRDIFF_TYPE__ long int
@@ -829,7 +850,6 @@
 // MIPS64EL:#define __LONG_MAX__ 9223372036854775807L
 // MIPS64EL:#define __MIPSEL 1
 // MIPS64EL:#define __MIPSEL__ 1
-// MIPS64EL:#define __NO_INLINE__ 1
 // MIPS64EL:#define __POINTER_WIDTH__ 64
 // MIPS64EL:#define __PRAGMA_REDEFINE_EXTNAME 1
 // MIPS64EL:#define __PTRDIFF_TYPE__ long int
@@ -974,7 +994,6 @@
 // MSP430:#define __LONG_LONG_MAX__ 9223372036854775807LL
 // MSP430:#define __LONG_MAX__ 2147483647L
 // MSP430:#define __MSP430__ 1
-// MSP430:#define __NO_INLINE__ 1
 // MSP430:#define __POINTER_WIDTH__ 16
 // MSP430:#define __PTRDIFF_TYPE__ int
 // MSP430:#define __PTRDIFF_WIDTH__ 16 
@@ -1261,7 +1280,6 @@
 // PPC603E:#define __LONG_LONG_MAX__ 9223372036854775807LL
 // PPC603E:#define __LONG_MAX__ 2147483647L
 // PPC603E:#define __NATURAL_ALIGNMENT__ 1
-// PPC603E:#define __NO_INLINE__ 1
 // PPC603E:#define __POINTER_WIDTH__ 32
 // PPC603E:#define __POWERPC__ 1
 // PPC603E:#define __PTRDIFF_TYPE__ long int
@@ -1370,7 +1388,6 @@
 // PPC64:#define __LONG_MAX__ 9223372036854775807L
 // PPC64:#define __LP64__ 1
 // PPC64:#define __NATURAL_ALIGNMENT__ 1
-// PPC64:#define __NO_INLINE__ 1
 // PPC64:#define __POINTER_WIDTH__ 64
 // PPC64:#define __POWERPC__ 1
 // PPC64:#define __PTRDIFF_TYPE__ long int
@@ -1473,7 +1490,6 @@
 // PPC64-LINUX:#define __LONG_MAX__ 9223372036854775807L
 // PPC64-LINUX:#define __LP64__ 1
 // PPC64-LINUX:#define __NATURAL_ALIGNMENT__ 1
-// PPC64-LINUX:#define __NO_INLINE__ 1
 // PPC64-LINUX:#define __POINTER_WIDTH__ 64
 // PPC64-LINUX:#define __POWERPC__ 1
 // PPC64-LINUX:#define __PTRDIFF_TYPE__ long int
@@ -1576,7 +1592,6 @@
 // PPC:#define __LONG_LONG_MAX__ 9223372036854775807LL
 // PPC:#define __LONG_MAX__ 2147483647L
 // PPC:#define __NATURAL_ALIGNMENT__ 1
-// PPC:#define __NO_INLINE__ 1
 // PPC:#define __POINTER_WIDTH__ 32
 // PPC:#define __POWERPC__ 1
 // PPC:#define __PTRDIFF_TYPE__ long int
@@ -1675,7 +1690,6 @@
 // PPC-LINUX:#define __LONG_LONG_MAX__ 9223372036854775807LL
 // PPC-LINUX:#define __LONG_MAX__ 2147483647L
 // PPC-LINUX:#define __NATURAL_ALIGNMENT__ 1
-// PPC-LINUX:#define __NO_INLINE__ 1
 // PPC-LINUX:#define __POINTER_WIDTH__ 32
 // PPC-LINUX:#define __POWERPC__ 1
 // PPC-LINUX:#define __PTRDIFF_TYPE__ int
@@ -1770,7 +1784,6 @@
 // SPARC:#define __LDBL_MIN__ 2.2250738585072014e-308
 // SPARC:#define __LONG_LONG_MAX__ 9223372036854775807LL
 // SPARC:#define __LONG_MAX__ 2147483647L
-// SPARC:#define __NO_INLINE__ 1
 // SPARC:#define __POINTER_WIDTH__ 32
 // SPARC:#define __PTRDIFF_TYPE__ long int
 // SPARC:#define __PTRDIFF_WIDTH__ 32
@@ -1864,7 +1877,6 @@
 // TCE:#define __LDBL_MIN__ 1.17549435e-38F
 // TCE:#define __LONG_LONG_MAX__ 2147483647LL
 // TCE:#define __LONG_MAX__ 2147483647L
-// TCE:#define __NO_INLINE__ 1
 // TCE:#define __POINTER_WIDTH__ 32
 // TCE:#define __PTRDIFF_TYPE__ int
 // TCE:#define __PTRDIFF_WIDTH__ 32
@@ -1963,7 +1975,6 @@
 // X86_64:#define __LONG_MAX__ 9223372036854775807L
 // X86_64:#define __LP64__ 1
 // X86_64:#define __MMX__ 1
-// X86_64:#define __NO_INLINE__ 1
 // X86_64:#define __NO_MATH_INLINES 1
 // X86_64:#define __POINTER_WIDTH__ 64
 // X86_64:#define __PTRDIFF_TYPE__ long int
@@ -2067,7 +2078,6 @@
 // X86_64-LINUX:#define __LONG_MAX__ 9223372036854775807L
 // X86_64-LINUX:#define __LP64__ 1
 // X86_64-LINUX:#define __MMX__ 1
-// X86_64-LINUX:#define __NO_INLINE__ 1
 // X86_64-LINUX:#define __NO_MATH_INLINES 1
 // X86_64-LINUX:#define __POINTER_WIDTH__ 64
 // X86_64-LINUX:#define __PTRDIFF_TYPE__ long int
