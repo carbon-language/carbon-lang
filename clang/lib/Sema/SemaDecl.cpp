@@ -8807,9 +8807,10 @@ CreateNewDecl:
     // many points during the parsing of a struct declaration (because
     // the #pragma tokens are effectively skipped over during the
     // parsing of the struct).
-    AddAlignmentAttributesForRecord(RD);
-    
-    AddMsStructLayoutForRecord(RD);
+    if (TUK == TUK_Definition) {
+      AddAlignmentAttributesForRecord(RD);
+      AddMsStructLayoutForRecord(RD);
+    }
   }
 
   if (ModulePrivateLoc.isValid()) {
