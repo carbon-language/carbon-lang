@@ -378,8 +378,6 @@ public:
     return hasConst();
   }
 
-  bool isSupersetOf(Qualifiers Other) const;
-
   /// \brief Determine whether this set of qualifiers is a strict superset of
   /// another set of qualifiers, not considering qualifier compatibility.
   bool isStrictSupersetOf(Qualifiers Other) const;
