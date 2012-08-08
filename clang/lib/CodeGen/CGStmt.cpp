@@ -1686,4 +1686,19 @@ void CodeGenFunction::EmitMSAsmStmt(const MSAsmStmt &S) {
   // MS-style inline assembly is not fully supported, so sema emits a warning.
   if (!CGM.getCodeGenOpts().EmitMicrosoftInlineAsm)
     return;
+
+  assert (S.isSimple() && "CodeGen can only handle simple MSAsmStmts.");
+
+  std::vector<llvm::Value*> Args;
+  std::vector<llvm::Type *> ArgTypes;
+
+  std::string MachineClobbers = Target.getClobbers();
+
+  llvm::FunctionType *FTy =
+    llvm::FunctionType::get(VoidTy, ArgTypes, false);
+
+  llvm::InlineAsm *IA =
+    llvm::InlineAsm::get(FTy, *S.getAsmString(), MachineClobbers, true);
+  llvm::CallInst *Result = Builder.CreateCall(IA, Args);
+  Result->addAttribute(~0, llvm::Attribute::NoUnwind);
 }
