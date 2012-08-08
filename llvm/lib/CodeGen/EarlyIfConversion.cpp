@@ -601,6 +601,10 @@ void EarlyIfConverter::invalidateTraces() {
 /// Return true if the conversion is a good idea.
 ///
 bool EarlyIfConverter::shouldConvertIf() {
+  // Stress testing mode disables all cost considerations.
+  if (Stress)
+    return true;
+
   if (!MinInstr)
     MinInstr = Traces->getEnsemble(MachineTraceMetrics::TS_MinInstrCount);
 
