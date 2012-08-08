@@ -150,8 +150,11 @@ public:
 
   void dump() const;
 
+  /// \brief Returns true if this region can be printed in a user-friendly way.
+  virtual bool canPrintPretty() const;
+
   /// \brief Print the region for use in diagnostics.
-  virtual void dumpPretty(raw_ostream &os) const;
+  virtual void printPretty(raw_ostream &os) const;
 
   Kind getKind() const { return kind; }
 
@@ -846,7 +849,8 @@ public:
     return R->getKind() == VarRegionKind;
   }
 
-  void dumpPretty(raw_ostream &os) const;
+  bool canPrintPretty() const;
+  void printPretty(raw_ostream &os) const;
 };
   
 /// CXXThisRegion - Represents the region for the implicit 'this' parameter
@@ -905,7 +909,9 @@ public:
   }
 
   void dumpToStream(raw_ostream &os) const;
-  void dumpPretty(raw_ostream &os) const;
+
+  bool canPrintPretty() const;
+  void printPretty(raw_ostream &os) const;
 };
 
 class ObjCIvarRegion : public DeclRegion {

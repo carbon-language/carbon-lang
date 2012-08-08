@@ -546,17 +546,29 @@ void StackLocalsSpaceRegion::dumpToStream(raw_ostream &os) const {
   os << "StackLocalsSpaceRegion";
 }
 
-void MemRegion::dumpPretty(raw_ostream &os) const {
+bool MemRegion::canPrintPretty() const {
+  return false;
+}
+
+void MemRegion::printPretty(raw_ostream &os) const {
   return;
 }
 
-void VarRegion::dumpPretty(raw_ostream &os) const {
+bool VarRegion::canPrintPretty() const {
+  return true;
+}
+
+void VarRegion::printPretty(raw_ostream &os) const {
   os << getDecl()->getName();
 }
 
-void FieldRegion::dumpPretty(raw_ostream &os) const {
-  superRegion->dumpPretty(os);
-  os << "->" << getDecl();
+bool FieldRegion::canPrintPretty() const {
+  return superRegion->canPrintPretty();
+}
+
+void FieldRegion::printPretty(raw_ostream &os) const {
+  superRegion->printPretty(os);
+  os << "." << getDecl()->getName();
 }
 
 //===----------------------------------------------------------------------===//

@@ -1000,10 +1000,9 @@ void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
   SmallString<200> buf;
   llvm::raw_svector_ostream os(buf);
   os << "Memory is never released; potential leak";
-  // FIXME: Make all region pretty-printing nice enough to show.
-  if (Region && isa<VarRegion>(Region)) {
+  if (Region && Region->canPrintPretty()) {
     os << " of memory pointed to by '";
-    Region->dumpPretty(os);
+    Region->printPretty(os);
     os << '\'';
   }
 

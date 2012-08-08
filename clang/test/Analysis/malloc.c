@@ -19,7 +19,7 @@ char *fooRetPtr();
 
 void f1() {
   int *p = malloc(12);
-  return; // expected-warning{{Memory is never released; potential leak}}
+  return; // expected-warning{{Memory is never released; potential leak of memory pointed to by 'p'}}
 }
 
 void f2() {
@@ -44,7 +44,7 @@ void reallocNotNullPtr(unsigned sizeIn) {
   char *p = (char*)malloc(size);
   if (p) {
     char *q = (char*)realloc(p, sizeIn);
-    char x = *q; // expected-warning {{Memory is never released; potential leak}}
+    char x = *q; // expected-warning {{Memory is never released; potential leak of memory pointed to by 'q'}}
   }
 }
 
@@ -102,7 +102,7 @@ void reallocSizeZero5() {
 }
 
 void reallocPtrZero1() {
-  char *r = realloc(0, 12); // expected-warning {{Memory is never released; potential leak}}
+  char *r = realloc(0, 12); // expected-warning {{Memory is never released; potential leak of memory pointed to by 'r'}}
 }
 
 void reallocPtrZero2() {
@@ -527,6 +527,12 @@ int *testMalloc3() {
   int *x = malloc(12);
   int *y = x;
   return y; // no-warning
+}
+
+void testStructLeak() {
+  StructWithPtr St;
+  St.memP = malloc(12);
+  return; // expected-warning {{Memory is never released; potential leak of memory pointed to by 'St.memP'}}
 }
 
 void testElemRegion1() {
