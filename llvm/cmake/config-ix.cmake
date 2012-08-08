@@ -291,12 +291,7 @@ check_cxx_compiler_flag("-Wno-variadic-macros" SUPPORTS_NO_VARIADIC_MACROS_FLAG)
 
 include(GetHostTriple)
 get_host_triple(LLVM_HOST_TRIPLE)
-
-# By default, we target the host, but this can be overridden at CMake
-# invocation time.
-set(LLVM_DEFAULT_TARGET_TRIPLE "${LLVM_HOST_TRIPLE}")
 set(LLVM_HOSTTRIPLE "${LLVM_HOST_TRIPLE}")
-set(TARGET_TRIPLE "${LLVM_DEFAULT_TARGET_TRIPLE}")
 
 # Determine the native architecture.
 string(TOLOWER "${LLVM_TARGET_ARCH}" LLVM_NATIVE_ARCH)
@@ -324,6 +319,8 @@ elseif (LLVM_NATIVE_ARCH MATCHES "xcore")
   set(LLVM_NATIVE_ARCH XCore)
 elseif (LLVM_NATIVE_ARCH MATCHES "msp430")
   set(LLVM_NATIVE_ARCH MSP430)
+elseif (LLVM_NATIVE_ARCH MATCHES "hexagon")
+  set(LLVM_NATIVE_ARCH Hexagon)
 else ()
   message(FATAL_ERROR "Unknown architecture ${LLVM_NATIVE_ARCH}")
 endif ()
