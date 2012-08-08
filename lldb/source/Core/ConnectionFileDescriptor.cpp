@@ -75,8 +75,8 @@ ConnectionFileDescriptor::ConnectionFileDescriptor () :
     m_udp_send_sockaddr (),
     m_should_close_fd (false), 
     m_socket_timeout_usec(0),
-    m_command_fd_send(-1),
-    m_command_fd_receive(-1),
+    m_pipe_read(-1),
+    m_pipe_write(-1),
     m_mutex (Mutex::eMutexTypeRecursive),
     m_shutting_down (false)
 {
@@ -94,14 +94,15 @@ ConnectionFileDescriptor::ConnectionFileDescriptor (int fd, bool owns_fd) :
     m_udp_send_sockaddr (),
     m_should_close_fd (owns_fd),
     m_socket_timeout_usec(0),
-    m_command_fd_send(-1),
-    m_command_fd_receive(-1),
+    m_pipe_read(-1),
+    m_pipe_write(-1),
     m_mutex (Mutex::eMutexTypeRecursive),
     m_shutting_down (false)
 {
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::ConnectionFileDescriptor (fd = %i, owns_fd = %i)", this, fd, owns_fd);
+    OpenCommandPipe ();
 }
 
 
@@ -111,13 +112,13 @@ ConnectionFileDescriptor::~ConnectionFileDescriptor ()
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::~ConnectionFileDescriptor ()", this);
     Disconnect (NULL);
-    CloseCommandFileDescriptor ();
+    CloseCommandPipe ();
 }
 
 void
-ConnectionFileDescriptor::InitializeCommandFileDescriptor ()
+ConnectionFileDescriptor::OpenCommandPipe ()
 {
-    CloseCommandFileDescriptor();
+    CloseCommandPipe();
     
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT));
     // Make the command file descriptor here:
@@ -132,24 +133,24 @@ ConnectionFileDescriptor::InitializeCommandFileDescriptor ()
     }
     else
     {
-        m_command_fd_receive = filedes[0];
-        m_command_fd_send    = filedes[1];
+        m_pipe_read  = filedes[0];
+        m_pipe_write = filedes[1];
     }
 }
 
 void
-ConnectionFileDescriptor::CloseCommandFileDescriptor ()
+ConnectionFileDescriptor::CloseCommandPipe ()
 {
-    if (m_command_fd_receive != -1)
+    if (m_pipe_read != -1)
     {
-        close (m_command_fd_receive);
-        m_command_fd_receive = -1;
+        close (m_pipe_read);
+        m_pipe_read = -1;
     }
     
-    if (m_command_fd_send != -1)
+    if (m_pipe_write != -1)
     {
-        close (m_command_fd_send);
-        m_command_fd_send = -1;
+        close (m_pipe_write);
+        m_pipe_write = -1;
     }
 }
 
@@ -167,7 +168,7 @@ ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::Connect (url = '%s')", this, s);
 
-    InitializeCommandFileDescriptor();
+    OpenCommandPipe();
     
     if (s && s[0])
     {
@@ -309,11 +310,11 @@ ConnectionFileDescriptor::Disconnect (Error *error_ptr)
     
     if (!got_lock)
     {
-        if (m_command_fd_send != -1 )
+        if (m_pipe_write != -1 )
         {
-            write (m_command_fd_send, "q", 1);
-            close (m_command_fd_send);
-            m_command_fd_send = -1;
+            write (m_pipe_write, "q", 1);
+            close (m_pipe_write);
+            m_pipe_write = -1;
         }
         locker.Lock (m_mutex);
     }
@@ -613,14 +614,14 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
         tv_ptr = &tv;
     }
 
-    while (IsConnected())
+    while (m_fd_recv >= 0)
     {
         fd_set read_fds;
         FD_ZERO (&read_fds);
         FD_SET (m_fd_recv, &read_fds);
-        if (m_command_fd_receive != -1)
-            FD_SET (m_command_fd_receive, &read_fds);
-        int nfds = (m_fd_recv > m_command_fd_receive ? m_fd_recv : m_command_fd_receive) + 1;
+        if (m_pipe_read != -1)
+            FD_SET (m_pipe_read, &read_fds);
+        int nfds = std::max<int>(m_fd_recv, m_pipe_read) + 1;
         
         Error error;
 
@@ -668,7 +669,7 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
         }
         else if (num_set_fds > 0)
         {
-            if (m_command_fd_receive != -1 && FD_ISSET(m_command_fd_receive, &read_fds))
+            if (m_pipe_read != -1 && FD_ISSET(m_pipe_read, &read_fds))
             {
                 // We got a command to exit.  Read the data from that pipe:
                 char buffer[16];
@@ -676,7 +677,7 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
                 
                 do
                 {
-                    bytes_read = ::read (m_command_fd_receive, buffer, sizeof(buffer));
+                    bytes_read = ::read (m_pipe_read, buffer, sizeof(buffer));
                 } while (bytes_read < 0 && errno == EINTR);
                 assert (bytes_read == 1 && buffer[0] == 'q');
                 

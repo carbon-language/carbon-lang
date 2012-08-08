@@ -72,10 +72,10 @@ public:
 protected:
     
     void
-    InitializeCommandFileDescriptor ();
+    OpenCommandPipe ();
     
     void
-    CloseCommandFileDescriptor ();
+    CloseCommandPipe ();
 
     lldb::ConnectionStatus
     BytesAvailable (uint32_t timeout_usec, Error *error_ptr);
@@ -110,13 +110,13 @@ protected:
     FDType m_fd_send_type;
     FDType m_fd_recv_type;
     SocketAddress m_udp_send_sockaddr;
-    bool m_should_close_fd; // True if this class should close the file descriptor when it goes away.
+    bool m_should_close_fd;     // True if this class should close the file descriptor when it goes away.
     uint32_t m_socket_timeout_usec;
-    int m_command_fd_send;       // A pipe that we select on the reading end of along with
-    int m_command_fd_receive;    // m_fd_recv so we can force ourselves out of the select.
+    int m_pipe_read;            // A pipe that we select on the reading end of along with
+    int m_pipe_write;           // m_fd_recv so we can force ourselves out of the select.
     Mutex m_mutex;          
-    bool m_shutting_down;        // This marks that we are shutting down so if we get woken up from BytesAvailable
-                                 // to disconnect, we won't try to read again.
+    bool m_shutting_down;       // This marks that we are shutting down so if we get woken up from BytesAvailable
+                                // to disconnect, we won't try to read again.
     
     static in_port_t
     GetSocketPort (int fd);
