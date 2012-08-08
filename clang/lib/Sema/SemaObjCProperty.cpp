@@ -730,8 +730,6 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
         (PIkind & ObjCPropertyDecl::OBJC_PR_readonly) &&
         property->hasAttr<IBOutletAttr>() &&
         !AtLoc.isValid()) {
-      unsigned rwPIKind = (PIkind | ObjCPropertyDecl::OBJC_PR_readwrite);
-      rwPIKind &= (~ObjCPropertyDecl::OBJC_PR_readonly);
       Diag(IC->getLocation(), diag::warn_auto_readonly_iboutlet_property);
       Diag(property->getLocation(), diag::note_property_declare);
       SourceLocation readonlyLoc;
