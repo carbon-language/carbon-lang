@@ -9751,11 +9751,6 @@ void Sema::ActOnFields(Scope* S,
                        AttributeList *Attr) {
   assert(EnclosingDecl && "missing record or interface decl");
 
-  // If the decl this is being inserted into is invalid, then it may be a
-  // redeclaration or some other bogus case.  Don't try to add fields to it.
-  if (EnclosingDecl->isInvalidDecl())
-    return;
-
   // If this is an Objective-C @implementation or category and we have
   // new fields here we should reset the layout of the interface since
   // it will now change.
