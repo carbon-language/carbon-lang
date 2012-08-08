@@ -2789,7 +2789,7 @@ static std::string PatchMSAsmString(Sema &SemaRef, bool &IsSimple,
   // Assume simple asm stmt until we parse a non-register identifer.
   IsSimple = true;
 
-  if (!AsmToks.size())
+  if (AsmToks.empty())
     return "";
 
   std::string Res;
@@ -2844,7 +2844,7 @@ static std::string PatchMSAsmString(Sema &SemaRef, bool &IsSimple,
 static std::string buildMSAsmString(Sema &SemaRef,
                                     ArrayRef<Token> AsmToks,
                                     ArrayRef<unsigned> LineEnds) {
-  if (!AsmToks.size())
+  if (AsmToks.empty())
     return "";
 
   SmallString<512> Asm;
