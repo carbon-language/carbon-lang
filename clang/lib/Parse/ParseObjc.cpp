@@ -308,16 +308,16 @@ public:
     MethodImplKind(MethodImplKind) {
   }
 
-  Decl *invoke(ParsingFieldDeclarator &FD) {
+  void invoke(ParsingFieldDeclarator &FD) {
     if (FD.D.getIdentifier() == 0) {
       P.Diag(AtLoc, diag::err_objc_property_requires_field_name)
         << FD.D.getSourceRange();
-      return 0;
+      return;
     }
     if (FD.BitfieldSize) {
       P.Diag(AtLoc, diag::err_objc_property_bitfield)
         << FD.D.getSourceRange();
-      return 0;
+      return;
     }
 
     // Install the property declarator into interfaceDecl.
@@ -345,7 +345,6 @@ public:
       Props.push_back(Property);
 
     FD.complete(Property);
-    return Property;
   }
 };
 
@@ -1307,7 +1306,7 @@ void Parser::ParseObjCClassInstanceVariables(Decl *interfaceDecl,
         P(P), IDecl(IDecl), visibility(V), AllIvarDecls(AllIvarDecls) {
       }
 
-      Decl *invoke(ParsingFieldDeclarator &FD) {
+      void invoke(ParsingFieldDeclarator &FD) {
         P.Actions.ActOnObjCContainerStartDefinition(IDecl);
         // Install the declarator into the interface decl.
         Decl *Field
@@ -1318,7 +1317,6 @@ void Parser::ParseObjCClassInstanceVariables(Decl *interfaceDecl,
         if (Field)
           AllIvarDecls.push_back(Field);
         FD.complete(Field);
-        return Field;
       }
     } Callback(*this, interfaceDecl, visibility, AllIvarDecls);
     

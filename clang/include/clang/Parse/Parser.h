@@ -1560,7 +1560,7 @@ private:
                             Decl *TagDecl);
 
   struct FieldCallback {
-    virtual Decl *invoke(ParsingFieldDeclarator &Field) = 0;
+    virtual void invoke(ParsingFieldDeclarator &Field) = 0;
     virtual ~FieldCallback() {}
 
   private:
