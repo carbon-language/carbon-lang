@@ -1618,8 +1618,8 @@ Decl *Parser::ParseObjCAtAliasDeclaration(SourceLocation atLoc) {
   SourceLocation classLoc = ConsumeToken(); // consume class-name;
   ExpectAndConsume(tok::semi, diag::err_expected_semi_after, 
                    "@compatibility_alias");
-  return Actions.ActOnCompatiblityAlias(atLoc, aliasId, aliasLoc,
-                                        classId, classLoc);
+  return Actions.ActOnCompatibilityAlias(atLoc, aliasId, aliasLoc,
+                                         classId, classLoc);
 }
 
 ///   property-synthesis:

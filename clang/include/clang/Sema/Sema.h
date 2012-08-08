@@ -5960,7 +5960,7 @@ public:
                                  SourceLocation EndProtoLoc,
                                  AttributeList *AttrList);
 
-  Decl *ActOnCompatiblityAlias(
+  Decl *ActOnCompatibilityAlias(
                     SourceLocation AtCompatibilityAliasLoc,
                     IdentifierInfo *AliasName,  SourceLocation AliasLocation,
                     IdentifierInfo *ClassName, SourceLocation ClassLocation);

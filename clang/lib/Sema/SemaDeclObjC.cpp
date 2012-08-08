@@ -543,13 +543,13 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
   return ActOnObjCContainerStartDefinition(IDecl);
 }
 
-/// ActOnCompatiblityAlias - this action is called after complete parsing of
+/// ActOnCompatibilityAlias - this action is called after complete parsing of
 /// a \@compatibility_alias declaration. It sets up the alias relationships.
-Decl *Sema::ActOnCompatiblityAlias(SourceLocation AtLoc,
-                                        IdentifierInfo *AliasName,
-                                        SourceLocation AliasLocation,
-                                        IdentifierInfo *ClassName,
-                                        SourceLocation ClassLocation) {
+Decl *Sema::ActOnCompatibilityAlias(SourceLocation AtLoc,
+                                    IdentifierInfo *AliasName,
+                                    SourceLocation AliasLocation,
+                                    IdentifierInfo *ClassName,
+                                    SourceLocation ClassLocation) {
   // Look for previous declaration of alias name
   NamedDecl *ADecl = LookupSingleName(TUScope, AliasName, AliasLocation,
                                       LookupOrdinaryName, ForRedeclaration);
