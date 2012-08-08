@@ -16,6 +16,7 @@
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/MachO.h"
+#include "lldb/Core/RegularExpression.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Target/Platform.h"
@@ -487,6 +488,44 @@ ArchSpec::SetTriple (const char *triple_cstr)
 {
     if (triple_cstr && triple_cstr[0])
     {
+        if (isdigit(triple_cstr[0]))
+        {
+            // Accept "12-10" or "12.10" as cpu type/subtype
+            char *end = NULL;
+            uint32_t cpu = ::strtoul (triple_cstr, &end, 0);
+            if (cpu != 0 && end && ((*end == '-') || (*end == '.')))
+            {
+                uint32_t sub = ::strtoul (end + 1, &end, 0);
+                if (sub != 0 && end && ((*end == '-') || (*end == '.') || (*end == '\0')))
+                {
+                    if (SetArchitecture (eArchTypeMachO, cpu, sub))
+                    {
+                        if (*end == '-')
+                        {
+                            llvm::StringRef vendor_os (end + 1);
+                            size_t dash_pos = vendor_os.find('-');
+                            if (dash_pos != llvm::StringRef::npos)
+                            {
+                                llvm::StringRef vendor_str(vendor_os.substr(0, dash_pos));
+                                m_triple.setVendorName(vendor_str);
+                                const size_t vendor_start_pos = dash_pos+1;
+                                dash_pos = vendor_os.find(vendor_start_pos, '-');
+                                if (dash_pos == llvm::StringRef::npos)
+                                {
+                                    if (vendor_start_pos < vendor_os.size())
+                                        m_triple.setOSName(vendor_os.substr(vendor_start_pos));
+                                }
+                                else
+                                {
+                                    m_triple.setOSName(vendor_os.substr(vendor_start_pos, dash_pos - vendor_start_pos));
+                                }
+                            }
+                        }
+                        return true;
+                    }
+                }
+            }
+        }
         llvm::StringRef triple_stref (triple_cstr);
         if (triple_stref.startswith (LLDB_ARCH_DEFAULT))
         {
