@@ -97,6 +97,9 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   if (!HasV6T2Ops && hasThumb2())
     HasV4TOps = HasV5TOps = HasV5TEOps = HasV6Ops = HasV6T2Ops = true;
 
+  // Keep a pointer to static instruction cost data for the specified CPU.
+  SchedModel = getSchedModelForCPU(CPUString);
+
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUString);
 
@@ -179,15 +182,7 @@ ARMSubtarget::GVIsIndirectSymbol(const GlobalValue *GV,
 }
 
 unsigned ARMSubtarget::getMispredictionPenalty() const {
-  // If we have a reasonable estimate of the pipeline depth, then we can
-  // estimate the penalty of a misprediction based on that.
-  if (isCortexA8())
-    return 13;
-  else if (isCortexA9())
-    return 8;
-
-  // Otherwise, just return a sensible default.
-  return 10;
+  return SchedModel->MispredictPenalty;
 }
 
 bool ARMSubtarget::enablePostRAScheduler(

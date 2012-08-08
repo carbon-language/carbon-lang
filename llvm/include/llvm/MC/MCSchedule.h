@@ -78,6 +78,11 @@ public:
   unsigned HighLatency;
   static const unsigned DefaultHighLatency = 10;
 
+  // MispredictPenalty is the typical number of extra cycles the processor
+  // takes to recover from a branch misprediction.
+  unsigned MispredictPenalty;
+  static const unsigned DefaultMispredictPenalty = 10;
+
 private:
   // TODO: Add a reference to proc resource types and sched resource tables.
 
@@ -94,13 +99,14 @@ public:
                   MinLatency(DefaultMinLatency),
                   LoadLatency(DefaultLoadLatency),
                   HighLatency(DefaultHighLatency),
+                  MispredictPenalty(DefaultMispredictPenalty),
                   InstrItineraries(0) {}
 
   // Table-gen driven ctor.
-  MCSchedModel(unsigned iw, int ml, unsigned ll, unsigned hl,
+  MCSchedModel(unsigned iw, int ml, unsigned ll, unsigned hl, unsigned mp,
                const InstrItinerary *ii):
     IssueWidth(iw), MinLatency(ml), LoadLatency(ll), HighLatency(hl),
-    InstrItineraries(ii){}
+    MispredictPenalty(mp), InstrItineraries(ii){}
 };
 
 } // End llvm namespace

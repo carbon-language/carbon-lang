@@ -155,6 +155,9 @@ protected:
   /// TargetTriple - What processor and OS we're targeting.
   Triple TargetTriple;
 
+  /// SchedModel - Processor specific instruction costs.
+  const MCSchedModel *SchedModel;
+
   /// Selected instruction itineraries (one entry per itinerary class.)
   InstrItineraryData InstrItins;
 

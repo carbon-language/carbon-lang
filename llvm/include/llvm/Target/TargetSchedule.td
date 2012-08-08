@@ -27,6 +27,7 @@ class SchedMachineModel {
                        // (-1) inorder (0) ooo, (1): inorder +var latencies.
   int LoadLatency = -1; // Cycles for loads to access the cache.
   int HighLatency = -1; // Approximation of cycles for "high latency" ops.
+  int MispredictPenalty = -1; // Extra cycles for a mispredicted branch.
 
   ProcessorItineraries Itineraries = NoItineraries;
 

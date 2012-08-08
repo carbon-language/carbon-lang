@@ -590,6 +590,7 @@ void SubtargetEmitter::EmitProcessorModels(raw_ostream &OS) {
     EmitProcessorProp(OS, PI->ModelDef, "MinLatency", ',');
     EmitProcessorProp(OS, PI->ModelDef, "LoadLatency", ',');
     EmitProcessorProp(OS, PI->ModelDef, "HighLatency", ',');
+    EmitProcessorProp(OS, PI->ModelDef, "MispredictPenalty", ',');
     if (SchedModels.hasItineraryClasses())
       OS << "  " << PI->ItinsDef->getName();
     else
