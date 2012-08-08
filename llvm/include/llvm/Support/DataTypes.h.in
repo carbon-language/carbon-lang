@@ -79,18 +79,6 @@ typedef u_int64_t uint64_t;
 #endif
 #endif
 
-#ifdef _OpenBSD_
-#define INT8_MAX 127
-#define INT8_MIN -128
-#define UINT8_MAX 255
-#define INT16_MAX 32767
-#define INT16_MIN -32768
-#define UINT16_MAX 65535
-#define INT32_MAX 2147483647
-#define INT32_MIN -2147483648
-#define UINT32_MAX 4294967295U
-#endif
-
 #else /* _MSC_VER */
 /* Visual C++ doesn't provide standard integer headers, but it does provide
    built-in data types. */
