@@ -218,6 +218,7 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
     case llvm::Triple::FreeBSD:
     case llvm::Triple::NetBSD:
     case llvm::Triple::OpenBSD:
+    case llvm::Triple::Bitrig:
       break;
     default:
       // FIXME: temporary hack: hard-coded paths.

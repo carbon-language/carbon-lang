@@ -1567,6 +1567,67 @@ Tool &OpenBSD::SelectTool(const Compilation &C, const JobAction &JA,
   return *T;
 }
 
+/// Bitrig - Bitrig tool chain which can call as(1) and ld(1) directly.
+
+Bitrig::Bitrig(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
+  : Generic_ELF(D, Triple, Args) {
+  getFilePaths().push_back(getDriver().Dir + "/../lib");
+  getFilePaths().push_back("/usr/lib");
+}
+
+Tool &Bitrig::SelectTool(const Compilation &C, const JobAction &JA,
+                         const ActionList &Inputs) const {
+  Action::ActionClass Key;
+  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
+    Key = Action::AnalyzeJobClass;
+  else
+    Key = JA.getKind();
+
+  bool UseIntegratedAs = C.getArgs().hasFlag(options::OPT_integrated_as,
+                                             options::OPT_no_integrated_as,
+                                             IsIntegratedAssemblerDefault());
+
+  Tool *&T = Tools[Key];
+  if (!T) {
+    switch (Key) {
+    case Action::AssembleJobClass: {
+      if (UseIntegratedAs)
+        T = new tools::ClangAs(*this);
+      else
+        T = new tools::bitrig::Assemble(*this);
+      break;
+    }
+    case Action::LinkJobClass:
+      T = new tools::bitrig::Link(*this); break;
+    default:
+      T = &Generic_GCC::SelectTool(C, JA, Inputs);
+    }
+  }
+
+  return *T;
+}
+
+void Bitrig::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
+                                          ArgStringList &CC1Args) const {
+  if (DriverArgs.hasArg(options::OPT_nostdlibinc) ||
+      DriverArgs.hasArg(options::OPT_nostdincxx))
+    return;
+
+  std::string Triple = getTriple().str();
+  if (Triple.substr(0, 5) == "amd64")
+    Triple.replace(0, 5, "x86_64");
+
+  addSystemInclude(DriverArgs, CC1Args, "/usr/include/c++/4.6.2");
+  addSystemInclude(DriverArgs, CC1Args, "/usr/include/c++/4.6.2/backward");
+  addSystemInclude(DriverArgs, CC1Args, "/usr/include/c++/4.6.2/" + Triple);
+
+}
+
+void Bitrig::AddCXXStdlibLibArgs(const ArgList &Args,
+                                 ArgStringList &CmdArgs) const {
+  CmdArgs.push_back("-lstdc++");
+}
+
 /// FreeBSD - FreeBSD tool chain which can call as(1) and ld(1) directly.
 
 FreeBSD::FreeBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)

@@ -1776,6 +1776,9 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
     case llvm::Triple::OpenBSD:
       TC = new toolchains::OpenBSD(*this, Target, Args);
       break;
+    case llvm::Triple::Bitrig:
+      TC = new toolchains::Bitrig(*this, Target, Args);
+      break;
     case llvm::Triple::NetBSD:
       TC = new toolchains::NetBSD(*this, Target, Args);
       break;
