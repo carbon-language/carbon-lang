@@ -982,8 +982,8 @@ void CommentASTToXMLConverter::visitVerbatimBlockComment(
     return;
 
   Result << llvm::StringSwitch<const char *>(C->getCommandName())
-      .Case("code", "<Verbatim kind=\"code\">")
-      .Default("<Verbatim kind=\"verbatim\">");
+      .Case("code", "<Verbatim xml:space=\"preserve\" kind=\"code\">")
+      .Default("<Verbatim xml:space=\"preserve\" kind=\"verbatim\">");
   for (unsigned i = 0; i != NumLines; ++i) {
     appendToResultWithXMLEscaping(C->getText(i));
     if (i + 1 != NumLines)
@@ -999,7 +999,7 @@ void CommentASTToXMLConverter::visitVerbatimBlockLineComment(
 
 void CommentASTToXMLConverter::visitVerbatimLineComment(
                                   const VerbatimLineComment *C) {
-  Result << "<Verbatim kind=\"verbatim\">";
+  Result << "<Verbatim xml:space=\"preserve\" kind=\"verbatim\">";
   appendToResultWithXMLEscaping(C->getText());
   Result << "</Verbatim>";
 }

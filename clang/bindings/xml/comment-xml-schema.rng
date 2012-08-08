@@ -385,6 +385,9 @@
         </zeroOrMore>
       </element>
       <element name="Verbatim">
+        <attribute name="xml:space">
+          <value>preserve</value>
+        </attribute>
         <attribute name="kind">
           <!-- TODO: add all Doxygen verbatim kinds -->
           <choice>

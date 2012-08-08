@@ -778,7 +778,7 @@ enum class comment_to_xml_conversion_17 {
 // CHECK-NEXT:         (CXComment_HTMLStartTag Name=[a] Attrs: href=http://example.com/)
 // CHECK-NEXT:         (CXComment_Text Text=[Aaa])
 // CHECK-NEXT:         (CXComment_HTMLEndTag Name=[a])))]
-// CHECK: annotate-comments.cpp:338:6: FunctionDecl=comment_to_html_conversion_24:{{.*}} FullCommentAsHTML=[<pre> &lt;a href=&quot;http:&#47;&#47;example.com&#47;&quot;&gt;Aaa&lt;&#47;a&gt;\n &lt;a href=&#39;http:&#47;&#47;example.com&#47;&#39;&gt;Aaa&lt;&#47;a&gt;</pre>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="338" column="6"><Name>comment_to_html_conversion_24</Name><USR>c:@F@comment_to_html_conversion_24#</USR><Discussion><Verbatim kind="verbatim"> &lt;a href=&quot;http://example.com/&quot;&gt;Aaa&lt;/a&gt;\n &lt;a href=&apos;http://example.com/&apos;&gt;Aaa&lt;/a&gt;</Verbatim></Discussion></Function>]
+// CHECK: annotate-comments.cpp:338:6: FunctionDecl=comment_to_html_conversion_24:{{.*}} FullCommentAsHTML=[<pre> &lt;a href=&quot;http:&#47;&#47;example.com&#47;&quot;&gt;Aaa&lt;&#47;a&gt;\n &lt;a href=&#39;http:&#47;&#47;example.com&#47;&#39;&gt;Aaa&lt;&#47;a&gt;</pre>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="338" column="6"><Name>comment_to_html_conversion_24</Name><USR>c:@F@comment_to_html_conversion_24#</USR><Discussion><Verbatim xml:space="preserve" kind="verbatim"> &lt;a href=&quot;http://example.com/&quot;&gt;Aaa&lt;/a&gt;\n &lt;a href=&apos;http://example.com/&apos;&gt;Aaa&lt;/a&gt;</Verbatim></Discussion></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
