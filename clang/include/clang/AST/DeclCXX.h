@@ -1295,7 +1295,7 @@ public:
   ///
   /// \returns true if this class is virtually derived from Base,
   /// false otherwise.
-  bool isVirtuallyDerivedFrom(CXXRecordDecl *Base) const;
+  bool isVirtuallyDerivedFrom(const CXXRecordDecl *Base) const;
 
   /// \brief Determine whether this class is provably not derived from
   /// the type \p Base.
