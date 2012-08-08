@@ -1627,13 +1627,16 @@ class MSAsmStmt : public Stmt {
   bool IsVolatile;
 
   unsigned NumAsmToks;
+  unsigned NumLineEnds;
 
   Token *AsmToks;
+  unsigned *LineEnds;
   Stmt **Exprs;
 
 public:
   MSAsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple,
-            bool isvolatile, ArrayRef<Token> asmtoks, std::string &asmstr,
+            bool isvolatile, ArrayRef<Token> asmtoks,
+            ArrayRef<unsigned> lineends, std::string &asmstr,
             SourceLocation endloc);
 
   SourceLocation getAsmLoc() const { return AsmLoc; }
@@ -1643,6 +1646,8 @@ public:
 
   unsigned getNumAsmToks() { return NumAsmToks; }
   Token *getAsmToks() { return AsmToks; }
+  unsigned getNumLineEnds() { return NumLineEnds; }
+  unsigned *getLineEnds() { return LineEnds; }
 
   bool isVolatile() const { return IsVolatile; }
   void setVolatile(bool V) { IsVolatile = V; }

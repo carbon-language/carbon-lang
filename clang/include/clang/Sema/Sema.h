@@ -2544,7 +2544,7 @@ public:
 
   StmtResult ActOnMSAsmStmt(SourceLocation AsmLoc,
                             ArrayRef<Token> AsmToks,
-                            std::string &AsmString,
+                            ArrayRef<unsigned> LineEnds,
                             SourceLocation EndLoc);
 
   VarDecl *BuildObjCExceptionDecl(TypeSourceInfo *TInfo, QualType ExceptionType,

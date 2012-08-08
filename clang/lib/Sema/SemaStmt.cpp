@@ -2749,9 +2749,6 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
 
 // needSpaceAsmToken - This function handles whitespace around asm punctuation.
 // Returns true if a space should be emitted.
-//
-// FIXME: This is replicated in ParseStmt.cpp.  Maybe we should defer building
-// the AsmString (i.e., non-patched AsmString) until Sema.
 static inline bool needSpaceAsmToken(Token currTok) {
   static Token prevTok;
 
@@ -2840,12 +2837,41 @@ static std::string PatchMSAsmString(Sema &SemaRef, bool &IsSimple,
   return Res;
 }
 
+// Build the unmodified MSAsmString.
+static std::string buildMSAsmString(Sema &SemaRef,
+                                    ArrayRef<Token> AsmToks,
+                                    ArrayRef<unsigned> LineEnds) {
+  // Collect the tokens into a string
+  SmallString<512> Asm;
+  SmallString<512> TokenBuf;
+  TokenBuf.resize(512);
+  unsigned AsmLineNum = 0;
+  for (unsigned i = 0, e = AsmToks.size(); i < e; ++i) {
+    const char *ThisTokBuf = &TokenBuf[0];
+    bool StringInvalid = false;
+    unsigned ThisTokLen =
+      Lexer::getSpelling(AsmToks[i], ThisTokBuf, SemaRef.getSourceManager(),
+                         SemaRef.getLangOpts(), &StringInvalid);
+    if (i && (!AsmLineNum || i != LineEnds[AsmLineNum-1]) &&
+        needSpaceAsmToken(AsmToks[i]))
+      Asm += ' ';
+    Asm += StringRef(ThisTokBuf, ThisTokLen);
+    if (i + 1 == LineEnds[AsmLineNum] && i + 1 != AsmToks.size()) {
+      Asm += '\n';
+      ++AsmLineNum;
+    }
+  }
+  return Asm.c_str();
+}
+
 StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
                                 ArrayRef<Token> AsmToks,
-                                std::string &AsmString,
+                                ArrayRef<unsigned> LineEnds,
                                 SourceLocation EndLoc) {
   // MS-style inline assembly is not fully supported, so emit a warning.
   Diag(AsmLoc, diag::warn_unsupported_msasm);
+
+  std::string AsmString = buildMSAsmString(*this, AsmToks, LineEnds);
 
   bool IsSimple;
   // Rewrite operands to appease the AsmParser.
@@ -2858,7 +2884,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
 
   MSAsmStmt *NS =
     new (Context) MSAsmStmt(Context, AsmLoc, IsSimple, /* IsVolatile */ true,
-                            AsmToks, AsmString, EndLoc);
+                            AsmToks, LineEnds, AsmString, EndLoc);
 
   return Owned(NS);
 }
