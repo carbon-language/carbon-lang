@@ -1229,7 +1229,7 @@ for ia in range(len(archs) if iterArchs else 1):
                     rmtree(newrdir)
                 copytree(rdir, newrdir, ignore=ignore_patterns('*.pyc', '*.o', '*.d'))
 
-               # Update the LLDB_TEST environment variable to reflect new top
+                # Update the LLDB_TEST environment variable to reflect new top
                 # level test directory.
                 #
                 # See also lldbtest.TestBase.setUpClass(cls).
