@@ -740,12 +740,19 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
       continue;
     }
 
-    if (isa<AllocaInst>(BBI) || isAllocLikeFn(BBI)) {
+    if (isa<AllocaInst>(BBI)) {
+      // Remove allocas from the list of dead stack objects; there can't be
+      // any references before the definition.
       DeadStackObjects.remove(BBI);
       continue;
     }
 
     if (CallSite CS = cast<Value>(BBI)) {
+      // Remove allocation function calls from the list of dead stack objects; 
+      // there can't be any references before the definition.
+      if (isAllocLikeFn(BBI))
+        DeadStackObjects.remove(BBI);
+
       // If this call does not access memory, it can't be loading any of our
       // pointers.
       if (AA->doesNotAccessMemory(CS))
@@ -771,7 +778,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
       // If all of the allocas were clobbered by the call then we're not going
       // to find anything else to process.
       if (DeadStackObjects.empty())
-        return MadeChange;
+        break;
 
       continue;
     }

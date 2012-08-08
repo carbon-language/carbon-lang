@@ -276,3 +276,18 @@ define void @test22(i1 %i, i32 %k, i32 %m) nounwind {
 ; CHECK-NEXT: ret void
   ret void
 }
+
+; PR13547
+; CHECK: @test23
+; CHECK: store i8 97
+; CHECK: store i8 0
+declare noalias i8* @strdup(i8* nocapture) nounwind
+define noalias i8* @test23() nounwind uwtable ssp {
+  %x = alloca [2 x i8], align 1
+  %arrayidx = getelementptr inbounds [2 x i8]* %x, i64 0, i64 0
+  store i8 97, i8* %arrayidx, align 1
+  %arrayidx1 = getelementptr inbounds [2 x i8]* %x, i64 0, i64 1
+  store i8 0, i8* %arrayidx1, align 1
+  %call = call i8* @strdup(i8* %arrayidx) nounwind
+  ret i8* %call
+}
