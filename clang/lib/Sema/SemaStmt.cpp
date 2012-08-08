@@ -2847,7 +2847,6 @@ static std::string buildMSAsmString(Sema &SemaRef,
   if (!AsmToks.size())
     return "";
 
-  // Collect the tokens into a string
   SmallString<512> Asm;
   SmallString<512> TokenBuf;
   TokenBuf.resize(512);
