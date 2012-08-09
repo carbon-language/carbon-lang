@@ -40,33 +40,42 @@ using llvm::Optional;
 namespace {
 class BindingKey {
 public:
-  enum Kind { Direct = 0x0, Default = 0x1 };
+  enum Kind { Default = 0x0, Direct = 0x1 };
 private:
-  enum { SYMBOLIC = UINT64_MAX };
+  enum { Symbolic = 0x2 };
 
-  llvm::PointerIntPair<const MemRegion *, 1, Kind> P;
-  uint64_t Offset;
+  llvm::PointerIntPair<const MemRegion *, 2> P;
+  uint64_t Data;
 
-  explicit BindingKey(const MemRegion *r, Kind k)
-    : P(r, k), Offset(SYMBOLIC) {}
+  explicit BindingKey(const MemRegion *r, const MemRegion *Base, Kind k)
+    : P(r, k | Symbolic), Data(reinterpret_cast<uintptr_t>(Base)) {
+    assert(r && Base && "Must have known regions.");
+    assert(getConcreteOffsetRegion() == Base && "Failed to store base region");
+  }
   explicit BindingKey(const MemRegion *r, uint64_t offset, Kind k)
-    : P(r, k), Offset(offset) {}
+    : P(r, k), Data(offset) {
+    assert(r && "Must have known regions.");
+    assert(getOffset() == offset && "Failed to store offset");
+  }
 public:
 
-  bool isDirect() const { return P.getInt() == Direct; }
-  bool hasSymbolicOffset() const { return Offset == SYMBOLIC; }
+  bool isDirect() const { return P.getInt() & Direct; }
+  bool hasSymbolicOffset() const { return P.getInt() & Symbolic; }
 
   const MemRegion *getRegion() const { return P.getPointer(); }
   uint64_t getOffset() const {
     assert(!hasSymbolicOffset());
-    return Offset;
+    return Data;
   }
 
-  const MemRegion *getConcreteOffsetRegion() const;
+  const MemRegion *getConcreteOffsetRegion() const {
+    assert(hasSymbolicOffset());
+    return reinterpret_cast<const MemRegion *>(static_cast<uintptr_t>(Data));
+  }
 
   void Profile(llvm::FoldingSetNodeID& ID) const {
     ID.AddPointer(P.getOpaqueValue());
-    ID.AddInteger(Offset);
+    ID.AddInteger(Data);
   }
 
   static BindingKey Make(const MemRegion *R, Kind k);
@@ -76,12 +85,12 @@ public:
       return true;
     if (P.getOpaqueValue() > X.P.getOpaqueValue())
       return false;
-    return Offset < X.Offset;
+    return Data < X.Data;
   }
 
   bool operator==(const BindingKey &X) const {
     return P.getOpaqueValue() == X.P.getOpaqueValue() &&
-           Offset == X.Offset;
+           Data == X.Data;
   }
 
   bool isValid() const {
@@ -92,27 +101,10 @@ public:
 
 BindingKey BindingKey::Make(const MemRegion *R, Kind k) {
   const RegionOffset &RO = R->getAsOffset();
-  if (RO.isValid())
-    return BindingKey(RO.getRegion(), RO.getOffset(), k);
+  if (RO.hasSymbolicOffset())
+    return BindingKey(R, RO.getRegion(), k);
 
-  return BindingKey(R, k);
-}
-
-const MemRegion *BindingKey::getConcreteOffsetRegion() const {
-  const MemRegion *R = getRegion();
-  if (!hasSymbolicOffset())
-    return R;
-
-  RegionOffset RO;
-  do {
-    const SubRegion *SR = dyn_cast<SubRegion>(R);
-    if (!SR)
-      break;
-    R = SR->getSuperRegion();
-    RO = R->getAsOffset();
-  } while (!RO.isValid());
-
-  return R;
+  return BindingKey(RO.getRegion(), RO.getOffset(), k);
 }
 
 namespace llvm {
@@ -561,7 +553,6 @@ RegionBindings RegionStoreManager::removeSubRegionBindings(RegionBindings B,
   // by changing the data structure used for RegionBindings.
 
   BindingKey SRKey = BindingKey::Make(R, BindingKey::Default);
-  assert(SRKey.isValid());
   if (SRKey.hasSymbolicOffset()) {
     const SubRegion *Base = cast<SubRegion>(SRKey.getConcreteOffsetRegion());
     B = removeSubRegionBindings(B, Base);

@@ -1038,12 +1038,14 @@ RegionRawOffset ElementRegion::getAsArrayOffset() const {
 
 RegionOffset MemRegion::getAsOffset() const {
   const MemRegion *R = this;
+  const MemRegion *SymbolicOffsetBase = 0;
   int64_t Offset = 0;
 
   while (1) {
     switch (R->getKind()) {
     default:
-      return RegionOffset();
+      return RegionOffset(R, RegionOffset::Symbolic);
+
     case SymbolicRegionKind:
     case AllocaRegionKind:
     case CompoundLiteralRegionKind:
@@ -1053,6 +1055,7 @@ RegionOffset MemRegion::getAsOffset() const {
     case ObjCIvarRegionKind:
     case CXXTempObjectRegionKind:
       goto Finish;
+
     case CXXBaseObjectRegionKind: {
       const CXXBaseObjectRegion *BOR = cast<CXXBaseObjectRegion>(R);
       R = BOR->getSuperRegion();
@@ -1070,8 +1073,14 @@ RegionOffset MemRegion::getAsOffset() const {
       const CXXRecordDecl *Child = Ty->getAsCXXRecordDecl();
       if (!Child) {
         // We cannot compute the offset of the base class.
-        return RegionOffset();
+        SymbolicOffsetBase = R;
       }
+
+      // Don't bother calculating precise offsets if we already have a
+      // symbolic offset somewhere in the chain.
+      if (SymbolicOffsetBase)
+        continue;
+
       const ASTRecordLayout &Layout = getContext().getASTRecordLayout(Child);
 
       CharUnits BaseOffset;
@@ -1087,29 +1096,46 @@ RegionOffset MemRegion::getAsOffset() const {
     }
     case ElementRegionKind: {
       const ElementRegion *ER = cast<ElementRegion>(R);
-      QualType EleTy = ER->getValueType();
+      R = ER->getSuperRegion();
 
-      if (!IsCompleteType(getContext(), EleTy))
-        return RegionOffset();
+      QualType EleTy = ER->getValueType();
+      if (!IsCompleteType(getContext(), EleTy)) {
+        // We cannot compute the offset of the base class.
+        SymbolicOffsetBase = R;
+        continue;
+      }
 
       SVal Index = ER->getIndex();
       if (const nonloc::ConcreteInt *CI=dyn_cast<nonloc::ConcreteInt>(&Index)) {
+        // Don't bother calculating precise offsets if we already have a
+        // symbolic offset somewhere in the chain. 
+        if (SymbolicOffsetBase)
+          continue;
+
         int64_t i = CI->getValue().getSExtValue();
         // This type size is in bits.
         Offset += i * getContext().getTypeSize(EleTy);
       } else {
         // We cannot compute offset for non-concrete index.
-        return RegionOffset();
+        SymbolicOffsetBase = R;
       }
-      R = ER->getSuperRegion();
       break;
     }
     case FieldRegionKind: {
       const FieldRegion *FR = cast<FieldRegion>(R);
+      R = FR->getSuperRegion();
+
       const RecordDecl *RD = FR->getDecl()->getParent();
-      if (!RD->isCompleteDefinition())
+      if (!RD->isCompleteDefinition()) {
         // We cannot compute offset for incomplete type.
-        return RegionOffset();
+        SymbolicOffsetBase = R;
+      }
+
+      // Don't bother calculating precise offsets if we already have a
+      // symbolic offset somewhere in the chain.
+      if (SymbolicOffsetBase)
+        continue;
+
       // Get the field number.
       unsigned idx = 0;
       for (RecordDecl::field_iterator FI = RD->field_begin(), 
@@ -1120,13 +1146,14 @@ RegionOffset MemRegion::getAsOffset() const {
       const ASTRecordLayout &Layout = getContext().getASTRecordLayout(RD);
       // This is offset in bits.
       Offset += Layout.getFieldOffset(idx);
-      R = FR->getSuperRegion();
       break;
     }
     }
   }
 
  Finish:
+  if (SymbolicOffsetBase)
+    return RegionOffset(SymbolicOffsetBase, RegionOffset::Symbolic);
   return RegionOffset(R, Offset);
 }
 

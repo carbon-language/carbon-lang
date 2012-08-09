@@ -52,11 +52,19 @@ class RegionOffset {
   int64_t Offset;
 
 public:
+  enum { Symbolic = INT64_MAX };
+
   RegionOffset() : R(0) {}
   RegionOffset(const MemRegion *r, int64_t off) : R(r), Offset(off) {}
 
   const MemRegion *getRegion() const { return R; }
-  int64_t getOffset() const { return Offset; }
+
+  bool hasSymbolicOffset() const { return Offset == Symbolic; }
+
+  int64_t getOffset() const {
+    assert(!hasSymbolicOffset());
+    return Offset;
+  }
 
   bool isValid() const { return R; }
 };
