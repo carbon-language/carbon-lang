@@ -65,6 +65,10 @@ private:
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                                MCStreamer &Out);
 
+  bool MatchInstruction(SMLoc IDLoc,
+                        SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                        SmallVectorImpl<MCInst> &MCInsts);
+
   /// isSrcOp - Returns true if operand is either (%rsi) or %ds:%(rsi)
   /// in 64bit mode or (%esi) or %es:(%esi) in 32bit mode.
   bool isSrcOp(X86Operand &Op);
@@ -1508,6 +1512,18 @@ bool X86AsmParser::
 MatchAndEmitInstruction(SMLoc IDLoc,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                         MCStreamer &Out) {
+  SmallVector<MCInst, 2> Insts;
+  bool Error = MatchInstruction(IDLoc, Operands, Insts);
+  if (!Error)
+    for (unsigned i = 0, e = Insts.size(); i != e; ++i)
+      Out.EmitInstruction(Insts[i]);
+  return Error;
+}
+
+bool X86AsmParser::
+MatchInstruction(SMLoc IDLoc,
+                 SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                 SmallVectorImpl<MCInst> &MCInsts) {
   assert(!Operands.empty() && "Unexpect empty operand list!");
   X86Operand *Op = static_cast<X86Operand*>(Operands[0]);
   assert(Op->isToken() && "Leading operand should always be a mnemonic!");
@@ -1523,7 +1539,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
     MCInst Inst;
     Inst.setOpcode(X86::WAIT);
     Inst.setLoc(IDLoc);
-    Out.EmitInstruction(Inst);
+    MCInsts.push_back(Inst);
 
     const char *Repl =
       StringSwitch<const char*>(Op->getToken())
@@ -1557,7 +1573,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
       ;
 
     Inst.setLoc(IDLoc);
-    Out.EmitInstruction(Inst);
+    MCInsts.push_back(Inst);
     return false;
   case Match_MissingFeature:
     Error(IDLoc, "instruction requires a CPU feature not currently enabled");
@@ -1615,7 +1631,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
     (Match3 == Match_Success) + (Match4 == Match_Success);
   if (NumSuccessfulMatches == 1) {
     Inst.setLoc(IDLoc);
-    Out.EmitInstruction(Inst);
+    MCInsts.push_back(Inst);
     return false;
   }
 

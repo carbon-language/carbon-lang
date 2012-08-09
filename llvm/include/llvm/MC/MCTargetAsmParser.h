@@ -79,6 +79,19 @@ public:
   /// \param DirectiveID - the identifier token of the directive.
   virtual bool ParseDirective(AsmToken DirectiveID) = 0;
 
+  /// MatchInstruction - Recognize a series of operands of a parsed instruction
+  /// as an actual MCInst.  This returns false on success and returns true on
+  /// failure to match.
+  ///
+  /// On failure, the target parser is responsible for emitting a diagnostic
+  /// explaining the match failure.
+  virtual bool
+  MatchInstruction(SMLoc IDLoc,
+                   SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                   SmallVectorImpl<MCInst> &MCInsts) {
+    return true;
+  }
+
   /// MatchAndEmitInstruction - Recognize a series of operands of a parsed
   /// instruction as an actual MCInst and emit it to the specified MCStreamer.
   /// This returns false on success and returns true on failure to match.
