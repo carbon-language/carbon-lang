@@ -32,6 +32,7 @@
 #include "asan_lock.h"
 #include "asan_mapping.h"
 #include "asan_stats.h"
+#include "asan_report.h"
 #include "asan_thread.h"
 #include "asan_thread_registry.h"
 #include "sanitizer_common/sanitizer_atomic.h"
@@ -585,7 +586,7 @@ void AsanThreadLocalMallocStorage::CommitBack() {
   malloc_info.SwallowThreadLocalMallocStorage(this, true);
 }
 
-static void Describe(uptr addr, uptr access_size) {
+void DescribeHeapAddress(uptr addr, uptr access_size) {
   AsanChunk *m = malloc_info.FindMallocedOrFreed(addr, access_size);
   if (!m) return;
   m->DescribeAddress(addr, access_size);
@@ -727,15 +728,9 @@ static void Deallocate(u8 *ptr, AsanStackTrace *stack) {
                                        memory_order_acq_rel);
 
   if (old_chunk_state == CHUNK_QUARANTINE) {
-    AsanReport("ERROR: AddressSanitizer attempting double-free on %p:\n", ptr);
-    stack->PrintStack();
-    Describe((uptr)ptr, 1);
-    ShowStatsAndAbort();
+    ReportDoubleFree((uptr)ptr, stack);
   } else if (old_chunk_state != CHUNK_ALLOCATED) {
-    AsanReport("ERROR: AddressSanitizer attempting free on address "
-               "which was not malloc()-ed: %p\n", ptr);
-    stack->PrintStack();
-    ShowStatsAndAbort();
+    ReportFreeNotMalloced((uptr)ptr, stack);
   }
   CHECK(old_chunk_state == CHUNK_ALLOCATED);
   // With REDZONE==16 m->next is in the user area, otherwise it should be 0.
@@ -884,22 +879,13 @@ uptr asan_malloc_usable_size(void *ptr, AsanStackTrace *stack) {
   if (ptr == 0) return 0;
   uptr usable_size = malloc_info.AllocationSize((uptr)ptr);
   if (flags()->check_malloc_usable_size && (usable_size == 0)) {
-    AsanReport("ERROR: AddressSanitizer attempting to call "
-               "malloc_usable_size() for pointer which is "
-               "not owned: %p\n", ptr);
-    stack->PrintStack();
-    Describe((uptr)ptr, 1);
-    ShowStatsAndAbort();
+    ReportMallocUsableSizeNotOwned((uptr)ptr, stack);
   }
   return usable_size;
 }
 
 uptr asan_mz_size(const void *ptr) {
   return malloc_info.AllocationSize((uptr)ptr);
-}
-
-void DescribeHeapAddress(uptr addr, uptr access_size) {
-  Describe(addr, access_size);
 }
 
 void asan_mz_force_lock() {
@@ -1090,12 +1076,8 @@ uptr __asan_get_allocated_size(const void *p) {
   uptr allocated_size = malloc_info.AllocationSize((uptr)p);
   // Die if p is not malloced or if it is already freed.
   if (allocated_size == 0) {
-    AsanReport("ERROR: AddressSanitizer attempting to call "
-               "__asan_get_allocated_size() for pointer which is "
-               "not owned: %p\n", p);
-    PRINT_CURRENT_STACK();
-    Describe((uptr)p, 1);
-    ShowStatsAndAbort();
+    GET_STACK_TRACE_HERE(kStackTraceMax);
+    ReportAsanGetAllocatedSizeNotOwned((uptr)p, &stack);
   }
   return allocated_size;
 }

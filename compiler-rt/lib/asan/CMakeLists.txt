@@ -13,6 +13,7 @@ set(ASAN_SOURCES
   asan_poisoning.cc
   asan_posix.cc
   asan_printf.cc
+  asan_report.cc
   asan_rtl.cc
   asan_stack.cc
   asan_stats.cc

@@ -11,6 +11,7 @@
 //
 // This file contains error reporting code.
 //===----------------------------------------------------------------------===//
+#include "asan_allocator.h"
 #include "asan_internal.h"
 #include "asan_report.h"
 #include "asan_stack.h"
@@ -28,5 +29,38 @@ void ReportSIGSEGV(uptr pc, uptr sp, uptr bp, uptr addr) {
   stack.PrintStack();
   ShowStatsAndAbort();
 }
+
+void ReportDoubleFree(uptr addr, AsanStackTrace *stack) {
+  AsanReport("ERROR: AddressSanitizer attempting double-free on %p:\n", addr);
+  stack->PrintStack();
+  DescribeHeapAddress(addr, 1);
+  ShowStatsAndAbort();
+}
+
+void ReportFreeNotMalloced(uptr addr, AsanStackTrace *stack) {
+  AsanReport("ERROR: AddressSanitizer attempting free on address "
+             "which was not malloc()-ed: %p\n", addr);
+  stack->PrintStack();
+  ShowStatsAndAbort();
+}
+
+void ReportMallocUsableSizeNotOwned(uptr addr, AsanStackTrace *stack) {
+  AsanReport("ERROR: AddressSanitizer attempting to call "
+             "malloc_usable_size() for pointer which is "
+             "not owned: %p\n", addr);
+  stack->PrintStack();
+  DescribeHeapAddress(addr, 1);
+  ShowStatsAndAbort();
+}
+
+void ReportAsanGetAllocatedSizeNotOwned(uptr addr, AsanStackTrace *stack) {
+  AsanReport("ERROR: AddressSanitizer attempting to call "
+             "__asan_get_allocated_size() for pointer which is "
+             "not owned: %p\n", addr);
+  stack->PrintStack();
+  DescribeHeapAddress(addr, 1);
+  ShowStatsAndAbort();
+}
+
 
 }  // namespace __asan

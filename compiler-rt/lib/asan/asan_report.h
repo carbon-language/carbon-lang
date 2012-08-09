@@ -16,6 +16,13 @@
 
 namespace __asan {
 
-void ReportSIGSEGV(uptr pc, uptr sp, uptr bp, uptr addr);
+void NORETURN ReportSIGSEGV(uptr pc, uptr sp, uptr bp, uptr addr);
+
+void NORETURN ReportDoubleFree(uptr addr, AsanStackTrace *stack);
+void NORETURN ReportFreeNotMalloced(uptr addr, AsanStackTrace *stack);
+void NORETURN ReportMallocUsableSizeNotOwned(uptr addr,
+                                             AsanStackTrace *stack);
+void NORETURN ReportAsanGetAllocatedSizeNotOwned(uptr addr,
+                                                 AsanStackTrace *stack);
 
 }  // namespace __asan
