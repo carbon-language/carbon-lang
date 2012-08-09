@@ -2807,7 +2807,7 @@ Debugger::SettingsController::global_settings_table[] =
     {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
 };
 
-#define MODULE_WITH_FUNC "{ ${module.file.basename}{`${function.name}${function.pc-offset}}}"
+#define MODULE_WITH_FUNC "{ ${module.file.basename}{`${function.name-with-args}${function.pc-offset}}}"
 #define FILE_AND_LINE "{ at ${line.file.basename}:${line.number}}"
 
 #define DEFAULT_THREAD_FORMAT "thread #${thread.index}: tid = ${thread.id}"\

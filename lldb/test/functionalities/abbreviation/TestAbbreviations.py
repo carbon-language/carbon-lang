@@ -133,7 +133,7 @@ class AbbreviationsTestCase(TestBase):
                     patterns = [ "Process .* stopped",
                                  "thread #1:",
                                  "a.out",
-                                 "sum\(int, int\)",
+                                 "sum\(a=1238, b=78392\)",
                                  "at main.cpp\:25", 
                                  "stop reason = breakpoint 2.1" ])
 
