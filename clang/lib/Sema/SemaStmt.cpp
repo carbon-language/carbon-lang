@@ -32,6 +32,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/TargetSelect.h"
 using namespace clang;
 using namespace sema;
 
@@ -2886,6 +2887,11 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   // Silence compiler warnings.  Eventually, the PatchedAsmString will be
   // passed to the AsmParser.
   (void)PatchedAsmString;
+
+  // Initialize targets and assembly printers/parsers.
+  llvm::InitializeAllTargetInfos();
+  llvm::InitializeAllTargetMCs();
+  llvm::InitializeAllAsmParsers();
 
   MSAsmStmt *NS =
     new (Context) MSAsmStmt(Context, AsmLoc, IsSimple, /* IsVolatile */ true,
