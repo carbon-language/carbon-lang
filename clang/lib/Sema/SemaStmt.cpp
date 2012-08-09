@@ -2890,7 +2890,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
 
   // Empty asm statements don't need to instantiate the AsmParser, etc.
   if (AsmToks.empty()) {
-    std::string AsmString;
+    StringRef AsmString;
     MSAsmStmt *NS =
       new (Context) MSAsmStmt(Context, AsmLoc, /* IsSimple */ true,
                               /* IsVolatile */ true, AsmToks, LineEnds,

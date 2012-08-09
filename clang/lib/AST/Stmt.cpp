@@ -585,10 +585,10 @@ AsmStmt::AsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple,
 
 MSAsmStmt::MSAsmStmt(ASTContext &C, SourceLocation asmloc,
                      bool issimple, bool isvolatile, ArrayRef<Token> asmtoks,
-                     ArrayRef<unsigned> lineends, std::string &asmstr,
+                     ArrayRef<unsigned> lineends, StringRef asmstr,
                      SourceLocation endloc)
   : Stmt(MSAsmStmtClass), AsmLoc(asmloc), EndLoc(endloc),
-    AsmStr(asmstr), IsSimple(issimple), IsVolatile(isvolatile),
+    AsmStr(asmstr.str()), IsSimple(issimple), IsVolatile(isvolatile),
     NumAsmToks(asmtoks.size()), NumLineEnds(lineends.size()) {
 
   AsmToks = new (C) Token[NumAsmToks];
