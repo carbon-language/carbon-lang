@@ -8,6 +8,7 @@ CC=$2
 FILE_CHECK=$3
 CXXFLAGS="-mno-omit-leaf-frame-pointer -fno-omit-frame-pointer -fno-optimize-sibling-calls -g"
 SYMBOLIZER=../scripts/asan_symbolize.py
+ASAN_INTERFACE_H=../asan_interface.h
 TMP_ASAN_REPORT=asan_report.tmp
 
 run_program() {
@@ -45,6 +46,18 @@ export ASAN_OPTIONS="strip_path_prefix='/'"
 ./a.out 2>&1 | $FILE_CHECK $C_TEST.c --check-prefix=CHECKSTRIP
 export ASAN_OPTIONS=""
 rm ./a.out
+
+echo "Checking the presense of interface symbols in compiled file"
+$CC -g -faddress-sanitizer -dead_strip -O2 $C_TEST.c
+nm ./a.out | grep " T " | sed "s/.* T //" | grep "__asan_" | sed "s/___asan_/__asan_/" > symbols.txt
+cat $ASAN_INTERFACE_H | sed "s/\/\/.*//" | grep "__asan_.*("  | sed "s/.* __asan_/__asan_/;s/(.*//" > interface.txt
+for i in __asan_report_{load,store}{1,2,4,8,16}
+do
+  echo $i >> interface.txt
+done
+cat interface.txt | sort | uniq | diff symbols.txt - || exit 1
+rm ./a.out interface.txt symbols.txt
+
 
 # FIXME: some tests do not need to be ran for all the combinations of arch
 # and optimization mode.
