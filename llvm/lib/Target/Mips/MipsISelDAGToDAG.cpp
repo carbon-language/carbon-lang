@@ -242,13 +242,14 @@ bool MipsDAGToDAGISel::ReplaceUsesWithZeroReg(MachineRegisterInfo *MRI,
 
   // Replace uses with ZeroReg.
   for (MachineRegisterInfo::use_iterator U = MRI->use_begin(DstReg),
-       E = MRI->use_end(); U != E; ++U) {
+       E = MRI->use_end(); U != E;) {
     MachineOperand &MO = U.getOperand();
+    unsigned OpNo = U.getOperandNo();
     MachineInstr *MI = MO.getParent();
+    ++U;
 
     // Do not replace if it is a phi's operand or is tied to def operand.
-    if (MI->isPHI() || MI->isRegTiedToDefOperand(U.getOperandNo()) ||
-        MI->isPseudo())
+    if (MI->isPHI() || MI->isRegTiedToDefOperand(OpNo) || MI->isPseudo())
       continue;
 
     MO.setReg(ZeroReg);
