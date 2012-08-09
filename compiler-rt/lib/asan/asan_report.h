@@ -39,5 +39,8 @@ void NORETURN ReportAsanGetAllocatedSizeNotOwned(uptr addr,
 void NORETURN ReportStringFunctionMemoryRangesOverlap(
     const char *function, const char *offset1, uptr length1,
     const char *offset2, uptr length2, AsanStackTrace *stack);
+// Generic error report.
+void NORETURN ReportInvalidMemoryAccess(uptr pc, uptr bp, uptr sp, uptr addr,
+                                        bool is_write, uptr access_size);
 
 }  // namespace __asan
