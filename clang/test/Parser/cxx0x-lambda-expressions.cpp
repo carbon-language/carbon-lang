@@ -40,4 +40,11 @@ class C {
     int a5[3] = { []{return 0;}() };
     int a6[1] = {[this] = 1 }; // expected-error{{integral constant expression must have integral or unscoped enumeration type, not 'C *'}}
   }
+
+  void delete_lambda(int *p) {
+    delete [] p;
+    delete [] (int*) { new int }; // ok, compound-literal, not lambda
+    delete [] { return new int; } (); // expected-error{{expected expression}}
+    delete [&] { return new int; } (); // ok, lambda
+  }
 };
