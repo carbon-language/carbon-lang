@@ -32,10 +32,10 @@ my $os_release = 11;
 my $original_env_path = $ENV{PATH};
 
 our %llvm_config_info = (
- 'Debug'         => { configure_options => '--disable-optimized --disable-assertions', make_options => 'DEBUG_SYMBOLS=1'},
- 'Debug+Asserts' => { configure_options => '--disable-optimized --enable-assertions' , make_options => 'DEBUG_SYMBOLS=1'},
- 'Release'       => { configure_options => '--enable-optimized --disable-assertions' , make_options => ''},
- 'Release+Debug' => { configure_options => '--enable-optimized --disable-assertions' , make_options => 'DEBUG_SYMBOLS=1'},
+ 'Debug'         => { configure_options => '--disable-optimized --disable-assertions --enable-libcpp', make_options => 'DEBUG_SYMBOLS=1'},
+ 'Debug+Asserts' => { configure_options => '--disable-optimized --enable-assertions --enable-libcpp' , make_options => 'DEBUG_SYMBOLS=1'},
+ 'Release'       => { configure_options => '--enable-optimized --disable-assertions --enable-libcpp' , make_options => ''},
+ 'Release+Debug' => { configure_options => '--enable-optimized --disable-assertions --enable-libcpp' , make_options => 'DEBUG_SYMBOLS=1'},
 );
 
 our $llvm_config_href = undef;
