@@ -15,11 +15,42 @@
 #include "asan_mapping.h"
 #include "asan_report.h"
 #include "asan_stack.h"
+#include "asan_thread.h"
 #include "asan_thread_registry.h"
 
 namespace __asan {
 
 // ---------------------- Address Descriptions ------------------- {{{1
+
+static bool IsASCII(unsigned char c) {
+  return 0x00 <= c && c <= 0x7F;
+}
+
+// Check if the global is a zero-terminated ASCII string. If so, print it.
+static void PrintGlobalNameIfASCII(const __asan_global &g) {
+  for (uptr p = g.beg; p < g.beg + g.size - 1; p++) {
+    if (!IsASCII(*(unsigned char*)p)) return;
+  }
+  if (*(char*)(g.beg + g.size - 1) != 0) return;
+  AsanPrintf("  '%s' is ascii string '%s'\n", g.name, (char*)g.beg);
+}
+
+bool DescribeAddressRelativeToGlobal(uptr addr, const __asan_global &g) {
+  if (addr < g.beg - kGlobalAndStackRedzone) return false;
+  if (addr >= g.beg + g.size_with_redzone) return false;
+  AsanPrintf("%p is located ", (void*)addr);
+  if (addr < g.beg) {
+    AsanPrintf("%zd bytes to the left", g.beg - addr);
+  } else if (addr >= g.beg + g.size) {
+    AsanPrintf("%zd bytes to the right", addr - (g.beg + g.size));
+  } else {
+    AsanPrintf("%zd bytes inside", addr - g.beg);  // Can it happen?
+  }
+  AsanPrintf(" of global variable '%s' (0x%zx) of size %zu\n",
+             g.name, g.beg, g.size);
+  PrintGlobalNameIfASCII(g);
+  return true;
+}
 
 bool DescribeAddressIfShadow(uptr addr) {
   if (AddrIsInMem(addr))

@@ -16,11 +16,10 @@
 #include "asan_internal.h"
 #include "asan_lock.h"
 #include "asan_mapping.h"
+#include "asan_report.h"
 #include "asan_stack.h"
 #include "asan_stats.h"
 #include "asan_thread.h"
-
-#include <ctype.h>
 
 namespace __asan {
 
@@ -60,32 +59,6 @@ static uptr GetAlignedSize(uptr size) {
       * kGlobalAndStackRedzone;
 }
 
-  // Check if the global is a zero-terminated ASCII string. If so, print it.
-void PrintIfASCII(const Global &g) {
-  for (uptr p = g.beg; p < g.beg + g.size - 1; p++) {
-    if (!isascii(*(char*)p)) return;
-  }
-  if (*(char*)(g.beg + g.size - 1) != 0) return;
-  AsanPrintf("  '%s' is ascii string '%s'\n", g.name, (char*)g.beg);
-}
-
-bool DescribeAddrIfMyRedZone(const Global &g, uptr addr) {
-  if (addr < g.beg - kGlobalAndStackRedzone) return false;
-  if (addr >= g.beg + g.size_with_redzone) return false;
-  AsanPrintf("%p is located ", (void*)addr);
-  if (addr < g.beg) {
-    AsanPrintf("%zd bytes to the left", g.beg - addr);
-  } else if (addr >= g.beg + g.size) {
-    AsanPrintf("%zd bytes to the right", addr - (g.beg + g.size));
-  } else {
-    AsanPrintf("%zd bytes inside", addr - g.beg);  // Can it happen?
-  }
-  AsanPrintf(" of global variable '%s' (0x%zx) of size %zu\n",
-             g.name, g.beg, g.size);
-  PrintIfASCII(g);
-  return true;
-}
-
 bool DescribeAddressIfGlobal(uptr addr) {
   if (!flags()->report_globals) return false;
   ScopedLock lock(&mu_for_globals);
@@ -93,9 +66,9 @@ bool DescribeAddressIfGlobal(uptr addr) {
   for (ListOfGlobals *l = list_of_globals; l; l = l->next) {
     const Global &g = *l->g;
     if (flags()->report_globals >= 2)
-      AsanPrintf("Search Global: beg=%p size=%zu name=%s\n",
-                 (void*)g.beg, g.size, (char*)g.name);
-    res |= DescribeAddrIfMyRedZone(g, addr);
+      Report("Search Global: beg=%p size=%zu name=%s\n",
+             (void*)g.beg, g.size, (char*)g.name);
+    res |= DescribeAddressRelativeToGlobal(addr, g);
   }
   return res;
 }

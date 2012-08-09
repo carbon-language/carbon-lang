@@ -12,6 +12,7 @@
 // ASan-private header for error reporting functions.
 //===----------------------------------------------------------------------===//
 
+#include "asan_interface.h"
 #include "asan_internal.h"
 
 namespace __asan {
@@ -20,6 +21,7 @@ namespace __asan {
 // on the memory type (shadow/heap/stack/global).
 void DescribeHeapAddress(uptr addr, uptr access_size);
 bool DescribeAddressIfGlobal(uptr addr);
+bool DescribeAddressRelativeToGlobal(uptr addr, const __asan_global &g);
 bool DescribeAddressIfShadow(uptr addr);
 bool DescribeAddressIfStack(uptr addr, uptr access_size);
 // Determines memory type on its own.
