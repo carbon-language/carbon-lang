@@ -9,6 +9,7 @@
 
 #include "clang/AST/CommentSema.h"
 #include "clang/AST/CommentDiagnostic.h"
+#include "clang/AST/CommentCommandTraits.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/Basic/SourceManager.h"
@@ -18,8 +19,8 @@ namespace clang {
 namespace comments {
 
 Sema::Sema(llvm::BumpPtrAllocator &Allocator, const SourceManager &SourceMgr,
-           DiagnosticsEngine &Diags) :
-    Allocator(Allocator), SourceMgr(SourceMgr), Diags(Diags),
+           DiagnosticsEngine &Diags, const CommandTraits &Traits) :
+    Allocator(Allocator), SourceMgr(SourceMgr), Diags(Diags), Traits(Traits),
     ThisDeclInfo(NULL), BriefCommand(NULL), ReturnsCommand(NULL) {
 }
 
@@ -462,7 +463,7 @@ void Sema::checkBlockCommandEmptyParagraph(BlockCommandComment *Command) {
 }
 
 void Sema::checkReturnsCommand(const BlockCommandComment *Command) {
-  if (!isReturnsCommand(Command->getCommandName()))
+  if (!Traits.isReturnsCommand(Command->getCommandName()))
     return;
   if (isFunctionDecl()) {
     if (ThisDeclInfo->ResultType->isVoidType()) {
@@ -498,13 +499,13 @@ void Sema::checkReturnsCommand(const BlockCommandComment *Command) {
 void Sema::checkBlockCommandDuplicate(const BlockCommandComment *Command) {
   StringRef Name = Command->getCommandName();
   const BlockCommandComment *PrevCommand = NULL;
-  if (isBriefCommand(Name)) {
+  if (Traits.isBriefCommand(Name)) {
     if (!BriefCommand) {
       BriefCommand = Command;
       return;
     }
     PrevCommand = BriefCommand;
-  } else if (isReturnsCommand(Name)) {
+  } else if (Traits.isReturnsCommand(Name)) {
     if (!ReturnsCommand) {
       ReturnsCommand = Command;
       return;
@@ -697,58 +698,9 @@ StringRef Sema::correctTypoInTParamReference(
   return StringRef();
 }
 
-// TODO: tablegen
-bool Sema::isBlockCommand(StringRef Name) {
-  return isBriefCommand(Name) || isReturnsCommand(Name) ||
-      isParamCommand(Name) || isTParamCommand(Name) ||
-      llvm::StringSwitch<bool>(Name)
-      .Case("author", true)
-      .Case("authors", true)
-      .Case("pre", true)
-      .Case("post", true)
-      .Default(false);
-}
-
-bool Sema::isParamCommand(StringRef Name) {
-  return llvm::StringSwitch<bool>(Name)
-      .Case("param", true)
-      .Case("arg", true)
-      .Default(false);
-}
-
-bool Sema::isTParamCommand(StringRef Name) {
-  return Name == "tparam";
-}
-
-bool Sema::isBriefCommand(StringRef Name) {
-  return Name == "brief" || Name == "short";
-}
-
-bool Sema::isReturnsCommand(StringRef Name) {
-  return Name == "returns" || Name == "return" || Name == "result";
-}
-
-unsigned Sema::getBlockCommandNumArgs(StringRef Name) {
-  return llvm::StringSwitch<unsigned>(Name)
-      .Cases("brief", "short", 0)
-      .Case("pre", 0)
-      .Case("post", 0)
-      .Case("author", 0)
-      .Case("authors", 0)
-      .Default(0);
-}
-
-bool Sema::isInlineCommand(StringRef Name) const {
-  return llvm::StringSwitch<bool>(Name)
-      .Case("b", true)
-      .Cases("c", "p", true)
-      .Cases("a", "e", "em", true)
-      .Default(false);
-}
-
 InlineCommandComment::RenderKind
 Sema::getInlineCommandRenderKind(StringRef Name) const {
-  assert(isInlineCommand(Name));
+  assert(Traits.isInlineCommand(Name));
 
   return llvm::StringSwitch<InlineCommandComment::RenderKind>(Name)
       .Case("b", InlineCommandComment::RenderBold)

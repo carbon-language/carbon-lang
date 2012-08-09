@@ -30,6 +30,8 @@ namespace comments {
 class BriefParser {
   Lexer &L;
 
+  const CommandTraits &Traits;
+
   /// Current lookahead token.
   Token Tok;
 
@@ -40,7 +42,7 @@ class BriefParser {
   }
 
 public:
-  BriefParser(Lexer &L);
+  BriefParser(Lexer &L, const CommandTraits &Traits);
 
   /// Return \\brief paragraph, if it exists; otherwise return the first
   /// paragraph.

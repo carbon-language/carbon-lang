@@ -11,6 +11,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/AST/CommentLexer.h"
+#include "clang/AST/CommentCommandTraits.h"
 #include "llvm/ADT/STLExtras.h"
 #include <vector>
 
@@ -48,7 +49,8 @@ void CommentLexerTest::lexString(const char *Source,
   FileID File = SourceMgr.createFileIDForMemBuffer(Buf);
   SourceLocation Begin = SourceMgr.getLocForStartOfFile(File);
 
-  comments::Lexer L(Allocator, Begin, CommentOptions(),
+  comments::CommandTraits Traits;
+  comments::Lexer L(Allocator, Traits, Begin, CommentOptions(),
                     Source, Source + strlen(Source));
 
   while (1) {

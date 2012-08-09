@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/CommentBriefParser.h"
+#include "clang/AST/CommentCommandTraits.h"
 #include "llvm/ADT/StringSwitch.h"
 
 namespace clang {
@@ -39,19 +40,13 @@ void cleanupBrief(std::string &S) {
 
   S.resize(O - S.begin());
 }
-
-bool isBlockCommand(StringRef Name) {
-  return llvm::StringSwitch<bool>(Name)
-      .Cases("brief", "short", true)
-      .Cases("result", "return", "returns", true)
-      .Cases("author", "authors", true)
-      .Case("pre", true)
-      .Case("post", true)
-      .Cases("param", "arg", true)
-      .Case("tparam", true)
-      .Default(false);
-}
 } // unnamed namespace
+
+BriefParser::BriefParser(Lexer &L, const CommandTraits &Traits) :
+    L(L), Traits(Traits) {
+  // Get lookahead token.
+  ConsumeToken();
+}
 
 std::string BriefParser::Parse() {
   std::string FirstParagraphOrBrief;
@@ -72,18 +67,18 @@ std::string BriefParser::Parse() {
 
     if (Tok.is(tok::command)) {
       StringRef Name = Tok.getCommandName();
-      if (Name == "brief" || Name == "short") {
+      if (Traits.isBriefCommand(Name)) {
         FirstParagraphOrBrief.clear();
         InBrief = true;
         ConsumeToken();
         continue;
       }
-      if (Name == "result" || Name == "return" || Name == "returns") {
+      if (Traits.isReturnsCommand(Name)) {
         InReturns = true;
         ReturnsParagraph += "Returns ";
       }
       // Block commands implicitly start a new paragraph.
-      if (isBlockCommand(Name)) {
+      if (Traits.isBlockCommand(Name)) {
         // We found an implicit paragraph end.
         InFirstParagraph = false;
         if (InBrief)
@@ -119,11 +114,6 @@ std::string BriefParser::Parse() {
 
   cleanupBrief(ReturnsParagraph);
   return ReturnsParagraph;
-}
-
-BriefParser::BriefParser(Lexer &L) : L(L) {
-  // Get lookahead token.
-  ConsumeToken();
 }
 
 } // end namespace comments

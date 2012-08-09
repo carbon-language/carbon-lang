@@ -27,6 +27,7 @@ class Decl;
 class SourceMgr;
 
 namespace comments {
+class CommandTraits;
 
 class Sema {
   Sema(const Sema&);           // DO NOT IMPLEMENT
@@ -39,6 +40,8 @@ class Sema {
   const SourceManager &SourceMgr;
 
   DiagnosticsEngine &Diags;
+
+  const CommandTraits &Traits;
 
   /// Information about the declaration this comment is attached to.
   DeclInfo *ThisDeclInfo;
@@ -72,7 +75,7 @@ class Sema {
 
 public:
   Sema(llvm::BumpPtrAllocator &Allocator, const SourceManager &SourceMgr,
-       DiagnosticsEngine &Diags);
+       DiagnosticsEngine &Diags, const CommandTraits &Traits);
 
   void setDecl(const Decl *D);
 
@@ -212,15 +215,6 @@ public:
   StringRef correctTypoInTParamReference(
                               StringRef Typo,
                               const TemplateParameterList *TemplateParameters);
-
-  bool isBlockCommand(StringRef Name);
-  bool isParamCommand(StringRef Name);
-  bool isTParamCommand(StringRef Name);
-  bool isBriefCommand(StringRef Name);
-  bool isReturnsCommand(StringRef Name);
-  unsigned getBlockCommandNumArgs(StringRef Name);
-
-  bool isInlineCommand(StringRef Name) const;
 
   InlineCommandComment::RenderKind
   getInlineCommandRenderKind(StringRef Name) const;

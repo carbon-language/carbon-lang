@@ -14,6 +14,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/Comment.h"
+#include "clang/AST/CommentCommandTraits.h"
 #include "clang/AST/CommentLexer.h"
 #include "clang/AST/CommentSema.h"
 #include "clang/AST/CommentParser.h"
@@ -226,14 +227,16 @@ comments::FullComment *ASTContext::getCommentForDecl(const Decl *D) const {
     return NULL;
 
   const StringRef RawText = RC->getRawText(SourceMgr);
-  comments::Lexer L(getAllocator(),
+  comments::CommandTraits Traits;
+  comments::Lexer L(getAllocator(), Traits,
                     RC->getSourceRange().getBegin(), comments::CommentOptions(),
                     RawText.begin(), RawText.end());
 
-  comments::Sema S(getAllocator(), getSourceManager(), getDiagnostics());
+  comments::Sema S(getAllocator(), getSourceManager(), getDiagnostics(),
+                   Traits);
   S.setDecl(D);
   comments::Parser P(L, S, getAllocator(), getSourceManager(),
-                     getDiagnostics());
+                     getDiagnostics(), Traits);
 
   comments::FullComment *FC = P.parseFullComment();
   DeclComments[D].second = FC;

@@ -10,6 +10,7 @@
 #include "clang/AST/CommentParser.h"
 #include "clang/AST/CommentSema.h"
 #include "clang/AST/CommentDiagnostic.h"
+#include "clang/AST/CommentCommandTraits.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/ErrorHandling.h"
 
@@ -250,8 +251,10 @@ public:
 };
 
 Parser::Parser(Lexer &L, Sema &S, llvm::BumpPtrAllocator &Allocator,
-               const SourceManager &SourceMgr, DiagnosticsEngine &Diags):
-    L(L), S(S), Allocator(Allocator), SourceMgr(SourceMgr), Diags(Diags) {
+               const SourceManager &SourceMgr, DiagnosticsEngine &Diags,
+               const CommandTraits &Traits):
+    L(L), S(S), Allocator(Allocator), SourceMgr(SourceMgr), Diags(Diags),
+    Traits(Traits) {
   consumeToken();
 }
 
@@ -310,25 +313,25 @@ BlockCommandComment *Parser::parseBlockCommand() {
   bool IsParam = false;
   bool IsTParam = false;
   unsigned NumArgs = 0;
-  if (S.isParamCommand(Tok.getCommandName())) {
+  if (Traits.isParamCommand(Tok.getCommandName())) {
     IsParam = true;
     PC = S.actOnParamCommandStart(Tok.getLocation(),
                                   Tok.getEndLocation(),
                                   Tok.getCommandName());
-  } if (S.isTParamCommand(Tok.getCommandName())) {
+  } if (Traits.isTParamCommand(Tok.getCommandName())) {
     IsTParam = true;
     TPC = S.actOnTParamCommandStart(Tok.getLocation(),
                                     Tok.getEndLocation(),
                                     Tok.getCommandName());
   } else {
-    NumArgs = S.getBlockCommandNumArgs(Tok.getCommandName());
+    NumArgs = Traits.getBlockCommandNumArgs(Tok.getCommandName());
     BC = S.actOnBlockCommandStart(Tok.getLocation(),
                                   Tok.getEndLocation(),
                                   Tok.getCommandName());
   }
   consumeToken();
 
-  if (Tok.is(tok::command) && S.isBlockCommand(Tok.getCommandName())) {
+  if (Tok.is(tok::command) && Traits.isBlockCommand(Tok.getCommandName())) {
     // Block command ahead.  We can't nest block commands, so pretend that this
     // command has an empty argument.
     ParagraphComment *Paragraph = S.actOnParagraphComment(
@@ -538,12 +541,12 @@ BlockContentComment *Parser::parseParagraphOrBlockCommand() {
       break; // Block content or EOF ahead, finish this parapgaph.
 
     case tok::command:
-      if (S.isBlockCommand(Tok.getCommandName())) {
+      if (Traits.isBlockCommand(Tok.getCommandName())) {
         if (Content.size() == 0)
           return parseBlockCommand();
         break; // Block command ahead, finish this parapgaph.
       }
-      if (S.isInlineCommand(Tok.getCommandName())) {
+      if (Traits.isInlineCommand(Tok.getCommandName())) {
         Content.push_back(parseInlineCommand());
         continue;
       }

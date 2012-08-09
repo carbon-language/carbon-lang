@@ -14,6 +14,7 @@
 #include "clang/AST/CommentLexer.h"
 #include "clang/AST/CommentParser.h"
 #include "clang/AST/CommentSema.h"
+#include "clang/AST/CommentCommandTraits.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Allocator.h"
 #include <vector>
@@ -54,11 +55,12 @@ FullComment *CommentParserTest::parseString(const char *Source) {
   FileID File = SourceMgr.createFileIDForMemBuffer(Buf);
   SourceLocation Begin = SourceMgr.getLocForStartOfFile(File);
 
-  comments::Lexer L(Allocator, Begin, CommentOptions(),
+  comments::CommandTraits Traits;
+  comments::Lexer L(Allocator, Traits, Begin, CommentOptions(),
                     Source, Source + strlen(Source));
 
-  comments::Sema S(Allocator, SourceMgr, Diags);
-  comments::Parser P(L, S, Allocator, SourceMgr, Diags);
+  comments::Sema S(Allocator, SourceMgr, Diags, Traits);
+  comments::Parser P(L, S, Allocator, SourceMgr, Diags, Traits);
   comments::FullComment *FC = P.parseFullComment();
 
   if (DEBUG) {
