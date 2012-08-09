@@ -236,23 +236,25 @@ ASAN_REPORT_ERROR(store, true, 16)
 // time.
 static NOINLINE void force_interface_symbols() {
   volatile int fake_condition = 0;  // prevent dead condition elimination.
-  if (fake_condition) {
-    __asan_report_load1(0);
-    __asan_report_load2(0);
-    __asan_report_load4(0);
-    __asan_report_load8(0);
-    __asan_report_load16(0);
-    __asan_report_store1(0);
-    __asan_report_store2(0);
-    __asan_report_store4(0);
-    __asan_report_store8(0);
-    __asan_report_store16(0);
-    __asan_register_global(0, 0, 0);
-    __asan_register_globals(0, 0);
-    __asan_unregister_globals(0, 0);
-    __asan_set_death_callback(0);
-    __asan_set_error_report_callback(0);
-    __asan_handle_no_return();
+  // __asan_report_* functions are noreturn, so we need a switch to prevent
+  // the compiler from removing any of them.
+  switch (fake_condition) {
+    case 1: __asan_report_load1(0); break;
+    case 2: __asan_report_load2(0); break;
+    case 3: __asan_report_load4(0); break;
+    case 4: __asan_report_load8(0); break;
+    case 5: __asan_report_load16(0); break;
+    case 6: __asan_report_store1(0); break;
+    case 7: __asan_report_store2(0); break;
+    case 8: __asan_report_store4(0); break;
+    case 9: __asan_report_store8(0); break;
+    case 10: __asan_report_store16(0); break;
+    case 11: __asan_register_global(0, 0, 0); break;
+    case 12: __asan_register_globals(0, 0); break;
+    case 13: __asan_unregister_globals(0, 0); break;
+    case 14: __asan_set_death_callback(0); break;
+    case 15: __asan_set_error_report_callback(0); break;
+    case 16: __asan_handle_no_return(); break;
   }
 }
 
