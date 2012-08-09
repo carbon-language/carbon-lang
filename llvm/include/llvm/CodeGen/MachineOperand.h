@@ -150,7 +150,7 @@ private:
 
     struct {                  // For MO_Register.
       // Register number is in SmallContents.RegNo.
-      MachineOperand *Prev;   // Access list for register. See MRI.
+      MachineOperand **Prev;  // Access list for register.
       MachineOperand *Next;
     } Reg;
 
