@@ -8,9 +8,10 @@
 ##===----------------------------------------------------------------------===##
 
 CLANG_LEVEL := ../..
-DIRS := remove-cstr-calls
 
 include $(CLANG_LEVEL)/../../Makefile.config
+
+PARALLEL_DIRS := remove-cstr-calls
 
 include $(CLANG_LEVEL)/Makefile
 
