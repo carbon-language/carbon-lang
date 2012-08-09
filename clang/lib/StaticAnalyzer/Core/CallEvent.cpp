@@ -383,7 +383,7 @@ static const CXXMethodDecl *devirtualize(const CXXMethodDecl *MD, SVal ThisVal){
 
 
 RuntimeDefinition CXXInstanceCall::getRuntimeDefinition() const {
-  const Decl *D = SimpleCall::getRuntimeDefinition().Decl;
+  const Decl *D = SimpleCall::getRuntimeDefinition().getDecl();
   if (!D)
     return RuntimeDefinition();
 
@@ -513,7 +513,7 @@ void CXXDestructorCall::getExtraInvalidatedRegions(RegionList &Regions) const {
 }
 
 RuntimeDefinition CXXDestructorCall::getRuntimeDefinition() const {
-  const Decl *D = AnyFunctionCall::getRuntimeDefinition().Decl;
+  const Decl *D = AnyFunctionCall::getRuntimeDefinition().getDecl();
   if (!D)
     return RuntimeDefinition();
 

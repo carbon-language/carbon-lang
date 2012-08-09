@@ -545,10 +545,10 @@ void ExprEngine::defaultEvalCall(NodeBuilder &Bldr, ExplodedNode *Pred,
     State = InlinedFailedState;
   } else if (getAnalysisManager().shouldInlineCall()) {
     RuntimeDefinition RD = Call->getRuntimeDefinition();
-    const Decl *D = RD.Decl;
+    const Decl *D = RD.getDecl();
     if (D) {
       // Explore with and without inlining the call.
-      const MemRegion *BifurReg = RD.Reg;
+      const MemRegion *BifurReg = RD.getReg();
       if (BifurReg &&
           getAnalysisManager().IPAMode == DynamicDispatchBifurcate) {
         BifurcateCall(BifurReg, *Call, D, Bldr, Pred);

@@ -68,12 +68,15 @@ public:
   }
 };
 
-struct RuntimeDefinition {
-  const Decl *Decl;
-  const MemRegion *Reg;
-  RuntimeDefinition(): Decl(0), Reg(0) {}
-  RuntimeDefinition(const class Decl *D): Decl(D), Reg(0) {}
-  RuntimeDefinition(const class Decl *D, const MemRegion *R): Decl(D), Reg(R){}
+class RuntimeDefinition {
+  const Decl *D;
+  const MemRegion *R;
+public:
+  RuntimeDefinition(): D(0), R(0) {}
+  RuntimeDefinition(const Decl *InD): D(InD), R(0) {}
+  RuntimeDefinition(const Decl *InD, const MemRegion *InR): D(InD), R(InR) {}
+  const Decl *getDecl() { return D;}
+  const MemRegion *getReg() {return R;}
 };
 
 /// \brief Represents an abstract call to a function or method along a
