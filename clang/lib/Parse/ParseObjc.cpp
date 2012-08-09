@@ -1971,15 +1971,10 @@ Decl *Parser::ParseObjCMethodDefinition() {
 
   // Allow the rest of sema to find private method decl implementations.
   Actions.AddAnyMethodToGlobalPool(MDecl);
-
-  if (CurParsedObjCImpl) {
-    // Consume the tokens and store them for later parsing.
-    StashAwayMethodOrFunctionBodyTokens(MDecl);
-  } else {
-    ConsumeBrace();
-    SkipUntil(tok::r_brace, /*StopAtSemi=*/false);
-  }
-
+  assert (CurParsedObjCImpl 
+          && "ParseObjCMethodDefinition - Method out of @implementation");
+  // Consume the tokens and store them for later parsing.
+  StashAwayMethodOrFunctionBodyTokens(MDecl);
   return MDecl;
 }
 
