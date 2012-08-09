@@ -334,14 +334,14 @@ public:
   /// \brief Get dynamic type information for a region.
   DynamicTypeInfo getDynamicTypeInfo(const MemRegion *Reg) const;
 
-  /// \brief Add dynamic type information to the region; return the new state.
-  ProgramStateRef addDynamicTypeInfo(const MemRegion *Reg,
+  /// \brief Set dynamic type information of the region; return the new state.
+  ProgramStateRef setDynamicTypeInfo(const MemRegion *Reg,
                                      DynamicTypeInfo NewTy) const;
 
-  /// \brief Add dynamic type information to the region; return the new state.
-  ProgramStateRef addDynamicTypeInfo(const MemRegion *Reg,
+  /// \brief Set dynamic type information of the region; return the new state.
+  ProgramStateRef setDynamicTypeInfo(const MemRegion *Reg,
                                      QualType NewTy) const {
-    return addDynamicTypeInfo(Reg, DynamicTypeInfo(NewTy));
+    return setDynamicTypeInfo(Reg, DynamicTypeInfo(NewTy));
   }
 
   //==---------------------------------------------------------------------==//

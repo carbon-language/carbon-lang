@@ -68,7 +68,7 @@ void DynamicTypePropagation::checkPostCall(const CallEvent &Call,
         return;
       QualType DynResTy =
                  C.getASTContext().getObjCObjectPointerType(QualType(ObjTy, 0));
-      C.addTransition(State->addDynamicTypeInfo(RetReg, DynResTy));
+      C.addTransition(State->setDynamicTypeInfo(RetReg, DynResTy));
       break;
     }
     case OMF_init: {
@@ -78,7 +78,7 @@ void DynamicTypePropagation::checkPostCall(const CallEvent &Call,
       if (!RecReg)
         return;
       DynamicTypeInfo RecDynType = State->getDynamicTypeInfo(RecReg);
-      C.addTransition(State->addDynamicTypeInfo(RetReg, RecDynType));
+      C.addTransition(State->setDynamicTypeInfo(RetReg, RecDynType));
       break;
     }
     }
@@ -98,7 +98,7 @@ void DynamicTypePropagation::checkPostStmt(const ImplicitCastExpr *CastE,
   case CK_BitCast:
     // Only handle ObjCObjects for now.
     if (const Type *NewTy = getBetterObjCType(CastE, C))
-      C.addTransition(C.getState()->addDynamicTypeInfo(ToR, QualType(NewTy,0)));
+      C.addTransition(C.getState()->setDynamicTypeInfo(ToR, QualType(NewTy,0)));
     break;
   }
   return;
