@@ -398,7 +398,7 @@ ThreadPlanCallFunction::PlanExplainsStop ()
         // If we want to discard the plan, then we say we explain the stop
         // but if we are going to be discarded, let whoever is above us
         // explain the stop.
-        if (m_subplan_sp != NULL)
+        if (m_subplan_sp)
         {
             if (m_discard_on_error)
             {

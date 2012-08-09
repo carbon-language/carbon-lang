@@ -756,7 +756,7 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
     
     lldb::DisassemblerSP disassembler = Disassembler::FindPlugin(arch, NULL);
     
-    if (disassembler == NULL)
+    if (!disassembler)
     {
         ret.SetErrorToGenericError();
         ret.SetErrorStringWithFormat("Unable to find disassembler plug-in for %s architecture.", arch.GetArchitectureName());

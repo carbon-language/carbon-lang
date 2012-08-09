@@ -317,7 +317,7 @@ ThreadPlanStepUntil::ShouldStop (Event *event_ptr)
     // we will stop.
 
     StopInfoSP stop_info_sp = GetPrivateStopReason();
-    if (stop_info_sp == NULL || stop_info_sp->GetStopReason() == eStopReasonNone)
+    if (!stop_info_sp || stop_info_sp->GetStopReason() == eStopReasonNone)
         return false;
 
     AnalyzeStop();

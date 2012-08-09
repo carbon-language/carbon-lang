@@ -464,7 +464,7 @@ CommandInterpreter::GetCommandSP (const char *cmd_cstr, bool include_aliases, bo
             ret_val = pos->second;
     }
 
-    if (!exact && ret_val == NULL)
+    if (!exact && !ret_val)
     {
         // We will only get into here if we didn't find any exact matches.
         
@@ -534,7 +534,7 @@ CommandInterpreter::GetCommandSP (const char *cmd_cstr, bool include_aliases, bo
                 return user_match_sp;
         }
     }
-    else if (matches && ret_val != NULL)
+    else if (matches && ret_val)
     {
         matches->AppendString (cmd_cstr);
     }
@@ -762,7 +762,7 @@ CommandInterpreter::GetAliasHelp (const char *alias_name, const char *command_na
     help_string.Printf ("'%s", command_name);
     OptionArgVectorSP option_arg_vector_sp = GetAliasOptions (alias_name);
 
-    if (option_arg_vector_sp != NULL)
+    if (option_arg_vector_sp)
     {
         OptionArgVector *options = option_arg_vector_sp.get();
         for (int i = 0; i < options->size(); ++i)
@@ -1936,7 +1936,7 @@ CommandInterpreter::CrossRegisterCommand (const char * dest_cmd, const char * ob
 {
     CommandObjectSP cmd_obj_sp = GetCommandSPExact (dest_cmd, true);
 
-    if (cmd_obj_sp != NULL)
+    if (cmd_obj_sp)
     {
         CommandObject *cmd_obj = cmd_obj_sp.get();
         if (cmd_obj->IsCrossRefObject ())

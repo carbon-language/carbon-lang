@@ -2327,7 +2327,7 @@ Debugger::EnableLog (const char *channel, const char **categories, const char *l
     Log::Callbacks log_callbacks;
 
     StreamSP log_stream_sp;
-    if (m_log_callback_stream_sp != NULL)
+    if (m_log_callback_stream_sp)
     {
         log_stream_sp = m_log_callback_stream_sp;
         // For now when using the callback mode you always get thread & timestamp.

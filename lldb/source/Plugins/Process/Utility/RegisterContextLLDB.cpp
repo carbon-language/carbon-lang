@@ -256,7 +256,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
         m_frame_type = eNotAValidFrame;
         return;
     }
-    if (m_thread.GetRegisterContext() == NULL)
+    if (!m_thread.GetRegisterContext())
     {
         m_frame_type = eNotAValidFrame;
         return;

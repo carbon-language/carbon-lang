@@ -1012,7 +1012,7 @@ ParseDWARFLineTableCallback(dw_offset_t offset, const DWARFDebugLine::State& sta
                 // this address is resolved. If they are the same, then the
                 // function for this address didn't make it into the final
                 // executable.
-                bool curr_in_final_executable = info->curr_section_sp->GetLinkedSection () != NULL;
+                bool curr_in_final_executable = info->curr_section_sp->GetLinkedSection ();
 
                 // If we are doing DWARF with debug map, then we need to carefully
                 // add each line table entry as there may be gaps as functions

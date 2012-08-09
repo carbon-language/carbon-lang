@@ -499,7 +499,7 @@ ClangFunction::ExecuteFunction (
                                                                                  stop_others, 
                                                                                  discard_on_error, 
                                                                                  this_arg));
-    if (call_plan_sp == NULL)
+    if (!call_plan_sp)
         return eExecutionSetupError;
     
     call_plan_sp->SetPrivate(true);

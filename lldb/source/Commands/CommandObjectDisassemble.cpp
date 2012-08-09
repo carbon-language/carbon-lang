@@ -245,7 +245,7 @@ CommandObjectDisassemble::DoExecute (Args& command, CommandReturnObject &result)
     const char *plugin_name = m_options.GetPluginName ();
     DisassemblerSP disassembler = Disassembler::FindPlugin(m_options.arch, plugin_name);
 
-    if (disassembler == NULL)
+    if (!disassembler)
     {
         if (plugin_name)
             result.AppendErrorWithFormat ("Unable to find Disassembler plug-in named '%s' that supports the '%s' architecture.\n", 

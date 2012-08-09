@@ -1133,7 +1133,7 @@ public:
             {
                 SectionSP section_sp (m_section_list->FindSectionByID (n_sect));
                 m_section_infos[n_sect].section_sp = section_sp;
-                if (section_sp != NULL)
+                if (section_sp)
                 {
                     m_section_infos[n_sect].vm_range.SetBaseAddress (section_sp->GetFileAddress());
                     m_section_infos[n_sect].vm_range.SetByteSize (section_sp->GetByteSize());
@@ -2716,7 +2716,7 @@ struct lldb_copy_dyld_cache_local_symbols_entry
                     {
                         symbol_section = section_info.GetSection (nlist.n_sect, nlist.n_value);
 
-                        if (symbol_section == NULL)
+                        if (!symbol_section)
                         {
                             // TODO: warn about this?
                             add_nlist = false;

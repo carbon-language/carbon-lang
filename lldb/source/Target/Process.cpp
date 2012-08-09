@@ -4515,7 +4515,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             StopPrivateStateThread();
             Error error;
             m_private_state_thread = backup_private_state_thread;
-            if (stopper_base_plan_sp != NULL)
+            if (stopper_base_plan_sp)
             {
                 thread->DiscardThreadPlansUpToPlan(stopper_base_plan_sp);
             }

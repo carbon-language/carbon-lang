@@ -582,7 +582,7 @@ DynamicLoaderMacOSXDYLD::NotifyBreakpointHit (void *baton,
     ExecutionContext exe_ctx (context->exe_ctx_ref);
     Process *process = exe_ctx.GetProcessPtr();
     const lldb::ABISP &abi = process->GetABI();
-    if (abi != NULL)
+    if (abi)
     {
         // Build up the value array to store the three arguments given above, then get the values from the ABI:
         

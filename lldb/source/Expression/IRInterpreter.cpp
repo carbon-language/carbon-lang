@@ -159,12 +159,12 @@ public:
         
         bool IsValid ()
         {
-            return m_allocation != NULL;
+            return m_allocation;
         }
         
         bool IsInvalid ()
         {
-            return m_allocation == NULL;
+            return !m_allocation;
         }
     };
     
