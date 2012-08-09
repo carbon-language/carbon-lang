@@ -374,13 +374,13 @@ CommandObjectExpression::EvaluateExpression
             {
                 if (result_valobj_sp->GetError().GetError() == ClangUserExpression::kNoResult)
                 {
-                    if (format != eFormatVoid)
+                    if (format != eFormatVoid && m_interpreter.GetDebugger().GetNotifyVoid())
                     {
-                        error_stream->PutCString("<no result>\n");
-                        
-                        if (result)
-                            result->SetStatus (eReturnStatusSuccessFinishResult);
+                        error_stream->PutCString("(void)\n");
                     }
+                    
+                    if (result)
+                        result->SetStatus (eReturnStatusSuccessFinishResult);
                 }
                 else
                 {

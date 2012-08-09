@@ -146,6 +146,12 @@ public:
             m_prompt.assign ("(lldb) ");
         BroadcastPromptChange (m_instance_name, m_prompt.c_str());
     }
+    
+    bool
+    GetNotifyVoid() const
+    {
+        return m_notify_void;
+    }
 
     const char *
     GetFrameFormat() const
@@ -247,6 +253,7 @@ private:
     uint32_t m_stop_disassembly_count;
     StopDisassemblyType m_stop_disassembly_display;
     std::string m_prompt;
+    bool m_notify_void;
     std::string m_frame_format;
     std::string m_thread_format;
     lldb::ScriptLanguage m_script_lang;

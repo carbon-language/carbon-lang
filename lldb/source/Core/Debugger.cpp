@@ -73,6 +73,13 @@ PromptVarName ()
 }
 
 static const ConstString &
+GetNotifyVoidName ()
+{
+    static ConstString g_const_string ("notify-void");
+    return g_const_string;
+}
+
+static const ConstString &
 GetFrameFormatName ()
 {
     static ConstString g_const_string ("frame-format");
@@ -2425,6 +2432,7 @@ DebuggerInstanceSettings::DebuggerInstanceSettings
     m_stop_disassembly_count (4),
     m_stop_disassembly_display (eStopDisassemblyTypeNoSource),
     m_prompt (),
+    m_notify_void (false),
     m_frame_format (),
     m_thread_format (),    
     m_script_lang (),
@@ -2452,6 +2460,7 @@ DebuggerInstanceSettings::DebuggerInstanceSettings
 DebuggerInstanceSettings::DebuggerInstanceSettings (const DebuggerInstanceSettings &rhs) :
     InstanceSettings (Debugger::GetSettingsController(), CreateInstanceName ().AsCString()),
     m_prompt (rhs.m_prompt),
+    m_notify_void (rhs.m_notify_void),
     m_frame_format (rhs.m_frame_format),
     m_thread_format (rhs.m_thread_format),
     m_script_lang (rhs.m_script_lang),
@@ -2477,6 +2486,7 @@ DebuggerInstanceSettings::operator= (const DebuggerInstanceSettings &rhs)
     {
         m_term_width = rhs.m_term_width;
         m_prompt = rhs.m_prompt;
+        m_notify_void = rhs.m_notify_void;
         m_frame_format = rhs.m_frame_format;
         m_thread_format = rhs.m_thread_format;
         m_script_lang = rhs.m_script_lang;
@@ -2560,6 +2570,10 @@ DebuggerInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var
             BroadcastPromptChange (new_name, m_prompt.c_str());
         }
     }
+    else if (var_name == GetNotifyVoidName())
+    {
+        UserSettingsController::UpdateBooleanVariable (op, m_notify_void, value, false, err);
+    }
     else if (var_name == GetFrameFormatName())
     {
         UserSettingsController::UpdateStringVariable (op, m_frame_format, value, err);
@@ -2624,7 +2638,10 @@ DebuggerInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
     if (var_name == PromptVarName())
     {
         value.AppendString (m_prompt.c_str(), m_prompt.size());
-        
+    }
+    else if (var_name == GetNotifyVoidName())
+    {
+        value.AppendString (m_notify_void ? "true" : "false");
     }
     else if (var_name == ScriptLangVarName())
     {
@@ -2715,6 +2732,7 @@ DebuggerInstanceSettings::CopyInstanceSettings (const InstanceSettingsSP &new_se
 
         BroadcastPromptChange (new_name, m_prompt.c_str());
     }
+    m_notify_void = new_debugger_settings->m_notify_void;
     m_frame_format = new_debugger_settings->m_frame_format;
     m_thread_format = new_debugger_settings->m_thread_format;
     m_term_width = new_debugger_settings->m_term_width;
@@ -2821,6 +2839,7 @@ Debugger::SettingsController::instance_settings_table[] =
 //  ======================= ======================= ======================  ====  ====== ====== ======================
 {   "frame-format",         eSetVarTypeString,      DEFAULT_FRAME_FORMAT,   NULL, false, false, "The default frame format string to use when displaying thread information." },
 {   "prompt",               eSetVarTypeString,      "(lldb) ",              NULL, false, false, "The debugger command line prompt displayed for the user." },
+{   "notify-void",          eSetVarTypeBoolean,     "false",                NULL, false, false, "Notify the user explicitly if an expression returns void." },
 {   "script-lang",          eSetVarTypeString,      "python",               NULL, false, false, "The script language to be used for evaluating user-written scripts." },
 {   "term-width",           eSetVarTypeInt,         "80"    ,               NULL, false, false, "The maximum number of columns to use for displaying text." },
 {   "thread-format",        eSetVarTypeString,      DEFAULT_THREAD_FORMAT,  NULL, false, false, "The default thread format string to use when displaying thread information." },
