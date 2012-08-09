@@ -8,8 +8,9 @@
 ##===----------------------------------------------------------------------===##
 
 CLANG_LEVEL := ..
+
 DIRS := driver libclang c-index-test arcmt-test c-arcmt-test diagtool \
-        clang-check
+        clang-check $(patsubst %/Makefile,%,$(wildcard extra/Makefile))
 
 include $(CLANG_LEVEL)/../../Makefile.config
 
