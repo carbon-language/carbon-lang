@@ -220,7 +220,7 @@ def DEXT : ExtBase<3, "dext", CPU64Regs>;
 def DINS : InsBase<7, "dins", CPU64Regs>;
 
 let isCodeGenOnly = 1, rs = 0, shamt = 0 in {
-  def DSLL64_32 : FR<0x3c, 0x00, (outs CPU64Regs:$rd), (ins CPURegs:$rt),
+  def DSLL64_32 : FR<0x00, 0x3c, (outs CPU64Regs:$rd), (ins CPURegs:$rt),
                      "dsll\t$rd, $rt, 32", [], IIAlu>;
   def SLL64_32 : FR<0x0, 0x00, (outs CPU64Regs:$rd), (ins CPURegs:$rt),
                     "sll\t$rd, $rt, 0", [], IIAlu>;
