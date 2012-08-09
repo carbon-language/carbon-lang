@@ -793,7 +793,7 @@ enum class comment_to_xml_conversion_17 {
 // CHECK-NEXT:       (CXComment_VerbatimBlockCommand CommandName=[verbatim]
 // CHECK-NEXT:         (CXComment_VerbatimBlockLine Text=[ <a href="http://example.com/">Aaa</a>])
 // CHECK-NEXT:         (CXComment_VerbatimBlockLine Text=[ <a href='http://example.com/'>Aaa</a>])))]
-// CHECK: annotate-comments.cpp:345:6: FunctionDecl=comment_to_html_conversion_25:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Blah blah.</p>] FullCommentAsXML=[<Function file="/Volumes/Data/clang-commit/llvm/tools/clang/test/Index/annotate-comments.cpp" line="345" column="6"><Name>comment_to_html_conversion_25</Name><USR>c:@F@comment_to_html_conversion_25#</USR><Abstract><Para> Blah blah.</Para></Abstract></Function>]
+// CHECK: annotate-comments.cpp:345:6: FunctionDecl=comment_to_html_conversion_25:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Blah blah.</p>] FullCommentAsXML=[<Function file="{{[^"]+}}annotate-comments.cpp" line="345" column="6"><Name>comment_to_html_conversion_25</Name><USR>c:@F@comment_to_html_conversion_25#</USR><Abstract><Para> Blah blah.</Para></Abstract></Function>]
 // CHECK:  CommentAST=[
 // CHECK:    (CXComment_FullComment
 // CHECK:       (CXComment_Paragraph IsWhitespace
