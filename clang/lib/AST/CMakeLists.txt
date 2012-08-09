@@ -10,6 +10,7 @@ add_clang_library(clangAST
   CXXInheritance.cpp
   Comment.cpp
   CommentBriefParser.cpp
+  CommentCommandTraits.cpp
   CommentDumper.cpp
   CommentLexer.cpp
   CommentParser.cpp
