@@ -221,8 +221,13 @@ static void PrintBytes(const char *before, uptr *a) {
   AsanPrintf("\n");
 }
 
-void ReportInvalidMemoryAccess(uptr pc, uptr bp, uptr sp, uptr addr,
-                               bool is_write, uptr access_size) {
+}  // namespace __asan
+
+// --------------------------- Interface --------------------- {{{1
+using namespace __asan;  // NOLINT
+
+void __asan_report_error(uptr pc, uptr bp, uptr sp,
+                         uptr addr, bool is_write, uptr access_size) {
   static atomic_uint32_t num_calls;
   if (atomic_fetch_add(&num_calls, 1, memory_order_relaxed) != 0) {
     // Do not print more than one report, otherwise they will mix up.
@@ -321,16 +326,6 @@ void ReportInvalidMemoryAccess(uptr pc, uptr bp, uptr sp, uptr addr,
     error_report_callback(error_message_buffer);
   }
   Die();
-}
-
-}  // namespace __asan
-
-// --------------------------- Interface --------------------- {{{1
-using namespace __asan;  // NOLINT
-
-void __asan_report_error(uptr pc, uptr bp, uptr sp,
-                         uptr addr, bool is_write, uptr access_size) {
-  ReportInvalidMemoryAccess(pc, bp, sp, addr, is_write, access_size);
 }
 
 void NOINLINE __asan_set_error_report_callback(void (*callback)(const char*)) {
