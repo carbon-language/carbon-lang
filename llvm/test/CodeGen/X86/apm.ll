@@ -3,8 +3,8 @@
 ; PR8573
 
 ; CHECK: foo:
-; CHECK: movl    %esi, %ecx
-; CHECK-NEXT: leaq    (%rdi), %rax
+; CHECK: leaq    (%rdi), %rax
+; CHECK-NEXT: movl    %esi, %ecx
 ; CHECK-NEXT: monitor
 ; WIN64: foo:
 ; WIN64:      leaq    (%rcx), %rax

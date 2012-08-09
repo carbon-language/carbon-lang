@@ -144,9 +144,17 @@ void MachineRegisterInfo::addRegOperandToUseList(MachineOperand *MO) {
   Head->Contents.Reg.Prev = MO;
   MO->Contents.Reg.Prev = Last;
 
-  // Insert at the front.
-  MO->Contents.Reg.Next = Head;
-  HeadRef = MO;
+  // Def operands always precede uses. This allows def_iterator to stop early.
+  // Insert def operands at the front, and use operands at the back.
+  if (MO->isDef()) {
+    // Insert def at the front.
+    MO->Contents.Reg.Next = Head;
+    HeadRef = MO;
+  } else {
+    // Insert use at the end.
+    MO->Contents.Reg.Next = 0;
+    Last->Contents.Reg.Next = MO;
+  }
 }
 
 /// Remove MO from its use-def list.

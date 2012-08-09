@@ -31,7 +31,7 @@ entry:
 ; X64: test3:
 ; X64:	notl
 ; X64:	andl
-; X64:	shrl	%eax
+; X64:	shrl
 ; X64:	ret
 
 ; X32: test3:
