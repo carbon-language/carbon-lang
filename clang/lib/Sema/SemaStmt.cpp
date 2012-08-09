@@ -32,6 +32,17 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Triple.h"
+#include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCObjectFileInfo.h"
+#include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/MCTargetAsmParser.h"
+#include "llvm/MC/MCParser/MCAsmParser.h"
+#include "llvm/Support/SourceMgr.h"
+#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 using namespace clang;
 using namespace sema;
@@ -2884,14 +2895,39 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   std::string PatchedAsmString =
     PatchMSAsmString(*this, IsSimple, AsmLoc, AsmToks, Context.getTargetInfo());
 
-  // Silence compiler warnings.  Eventually, the PatchedAsmString will be
-  // passed to the AsmParser.
-  (void)PatchedAsmString;
-
   // Initialize targets and assembly printers/parsers.
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargetMCs();
   llvm::InitializeAllAsmParsers();
+
+  // Get the target specific parser.
+  std::string Error;
+  const std::string &TT = Context.getTargetInfo().getTriple().getTriple();
+  const llvm::Target *TheTarget(llvm::TargetRegistry::lookupTarget(TT, Error));
+
+  llvm::SourceMgr SrcMgr;
+  llvm::MemoryBuffer *Buffer =
+    llvm::MemoryBuffer::getMemBuffer(PatchedAsmString, "<inline asm>");
+
+  // Tell SrcMgr about this buffer, which is what the parser will pick up.
+  SrcMgr.AddNewSourceBuffer(Buffer, llvm::SMLoc());
+
+  OwningPtr<llvm::MCAsmInfo> MAI(TheTarget->createMCAsmInfo(TT));
+  OwningPtr<llvm::MCRegisterInfo> MRI(TheTarget->createMCRegInfo(TT));
+  OwningPtr<llvm::MCObjectFileInfo> MOFI(new llvm::MCObjectFileInfo());
+  llvm::MCContext Ctx(*MAI, *MRI, MOFI.get(), &SrcMgr);
+  OwningPtr<llvm::MCSubtargetInfo>
+    STI(TheTarget->createMCSubtargetInfo(TT, "", ""));
+
+  OwningPtr<llvm::MCStreamer> Str;
+  OwningPtr<llvm::MCAsmParser>
+    Parser(createMCAsmParser(SrcMgr, Ctx, *Str.get(), *MAI));
+  OwningPtr<llvm::MCTargetAsmParser>
+    TargetParser(TheTarget->createMCAsmParser(*STI, *Parser));
+
+  // Change to the Intel syntax.
+  Parser->setAssemblerDialect(1);
+  Parser->setTargetParser(*TargetParser.get());
 
   MSAsmStmt *NS =
     new (Context) MSAsmStmt(Context, AsmLoc, IsSimple, /* IsVolatile */ true,
