@@ -287,13 +287,17 @@ bool ExprEngine::shouldInlineDecl(const Decl *D, ExplodedNode *Pred) {
 /// consider this region's information precise or not along the given path.
 namespace clang {
 namespace ento {
+enum DynamicDispatchMode { DynamicDispatchModeInlined = 1,
+                           DynamicDispatchModeConservative };
+
 struct DynamicDispatchBifurcationMap {};
 typedef llvm::ImmutableMap<const MemRegion*,
-                           int> DynamicDispatchBifur;
+                           unsigned int> DynamicDispatchBifur;
 template<> struct ProgramStateTrait<DynamicDispatchBifurcationMap>
     :  public ProgramStatePartialTrait<DynamicDispatchBifur> {
   static void *GDMIndex() { static int index; return &index; }
 };
+
 }}
 
 bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
@@ -575,10 +579,11 @@ void ExprEngine::BifurcateCall(const MemRegion *BifurReg,
   // Check if we've performed the split already - note, we only want
   // to split the path once per memory region.
   ProgramStateRef State = Pred->getState();
-  const int *BState = State->get<DynamicDispatchBifurcationMap>(BifurReg);
+  const unsigned int *BState =
+                        State->get<DynamicDispatchBifurcationMap>(BifurReg);
   if (BState) {
     // If we are on "inline path", keep inlining if possible.
-    if (*BState == true)
+    if (*BState == DynamicDispatchModeInlined)
       if (inlineCall(Call, D, Bldr, Pred, State))
         return;
     // If inline failed, or we are on the path where we assume we
@@ -591,11 +596,13 @@ void ExprEngine::BifurcateCall(const MemRegion *BifurReg,
   // If we got here, this is the first time we process a message to this
   // region, so split the path.
   ProgramStateRef IState =
-      State->set<DynamicDispatchBifurcationMap>(BifurReg, true);
+      State->set<DynamicDispatchBifurcationMap>(BifurReg,
+                                               DynamicDispatchModeInlined);
   inlineCall(Call, D, Bldr, Pred, IState);
 
   ProgramStateRef NoIState =
-      State->set<DynamicDispatchBifurcationMap>(BifurReg, false);
+      State->set<DynamicDispatchBifurcationMap>(BifurReg,
+                                               DynamicDispatchModeConservative);
   conservativeEvalCall(Call, Bldr, Pred, NoIState);
 
   NumOfDynamicDispatchPathSplits++;
