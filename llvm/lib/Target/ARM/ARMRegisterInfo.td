@@ -12,16 +12,16 @@
 //===----------------------------------------------------------------------===//
 
 // Registers are identified with 4-bit ID numbers.
-class ARMReg<bits<4> num, string n, list<Register> subregs = []> : Register<n> {
-  field bits<4> Num;
+class ARMReg<bits<16> Enc, string n, list<Register> subregs = []> : Register<n> {
+  let HWEncoding = Enc;
   let Namespace = "ARM";
   let SubRegs = subregs;
   // All bits of ARM registers with sub-registers are covered by sub-registers.
   let CoveredBySubRegs = 1;
 }
 
-class ARMFReg<bits<6> num, string n> : Register<n> {
-  field bits<6> Num;
+class ARMFReg<bits<16> Enc, string n> : Register<n> {
+  let HWEncoding = Enc;
   let Namespace = "ARM";
 }
 
