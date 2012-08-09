@@ -16,6 +16,16 @@
 
 namespace __asan {
 
+// The following functions prints address description depending
+// on the memory type (shadow/heap/stack/global).
+void DescribeHeapAddress(uptr addr, uptr access_size);
+bool DescribeAddressIfGlobal(uptr addr);
+bool DescribeAddressIfShadow(uptr addr);
+bool DescribeAddressIfStack(uptr addr, uptr access_size);
+// Determines memory type on its own.
+void DescribeAddress(uptr addr, uptr access_size);
+
+// Different kinds of error reports.
 void NORETURN ReportSIGSEGV(uptr pc, uptr sp, uptr bp, uptr addr);
 
 void NORETURN ReportDoubleFree(uptr addr, AsanStackTrace *stack);

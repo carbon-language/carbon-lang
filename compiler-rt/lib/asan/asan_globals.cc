@@ -86,8 +86,7 @@ bool DescribeAddrIfMyRedZone(const Global &g, uptr addr) {
   return true;
 }
 
-
-bool DescribeAddrIfGlobal(uptr addr) {
+bool DescribeAddressIfGlobal(uptr addr) {
   if (!flags()->report_globals) return false;
   ScopedLock lock(&mu_for_globals);
   bool res = false;

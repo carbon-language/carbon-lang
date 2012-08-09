@@ -91,9 +91,6 @@ struct AsanStackTrace;
 // asan_rtl.cc
 void NORETURN ShowStatsAndAbort();
 
-// asan_globals.cc
-bool DescribeAddrIfGlobal(uptr addr);
-
 void ReplaceOperatorsNewAndDelete();
 // asan_malloc_linux.cc / asan_malloc_mac.cc
 void ReplaceSystemMalloc();

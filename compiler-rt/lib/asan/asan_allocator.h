@@ -153,7 +153,6 @@ uptr asan_malloc_usable_size(void *ptr, AsanStackTrace *stack);
 uptr asan_mz_size(const void *ptr);
 void asan_mz_force_lock();
 void asan_mz_force_unlock();
-void DescribeHeapAddress(uptr addr, uptr access_size);
 
 }  // namespace __asan
 #endif  // ASAN_ALLOCATOR_H
