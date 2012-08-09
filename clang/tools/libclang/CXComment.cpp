@@ -18,6 +18,7 @@
 #include "CXTranslationUnit.h"
 
 #include "clang/AST/CommentVisitor.h"
+#include "clang/AST/CommentCommandTraits.h"
 #include "clang/AST/Decl.h"
 #include "clang/Frontend/ASTUnit.h"
 
@@ -416,6 +417,7 @@ struct FullCommentParts {
 
 FullCommentParts::FullCommentParts(const FullComment *C) :
     Brief(NULL), FirstParagraph(NULL), Returns(NULL) {
+  const CommandTraits Traits;
   for (Comment::child_iterator I = C->child_begin(), E = C->child_end();
        I != E; ++I) {
     const Comment *Child = *I;
@@ -439,11 +441,11 @@ FullCommentParts::FullCommentParts(const FullComment *C) :
     case Comment::BlockCommandCommentKind: {
       const BlockCommandComment *BCC = cast<BlockCommandComment>(Child);
       StringRef CommandName = BCC->getCommandName();
-      if (!Brief && (CommandName == "brief" || CommandName == "short")) {
+      if (!Brief && Traits.isBriefCommand(CommandName)) {
         Brief = BCC;
         break;
       }
-      if (!Returns && (CommandName == "returns" || CommandName == "return")) {
+      if (!Returns && Traits.isReturnsCommand(CommandName)) {
         Returns = BCC;
         break;
       }
@@ -553,6 +555,8 @@ public:
   void appendToResultWithHTMLEscaping(StringRef S);
 
 private:
+  const CommandTraits Traits;
+
   /// Output stream for HTML.
   llvm::raw_svector_ostream Result;
 };
@@ -628,14 +632,13 @@ void CommentASTToHTMLConverter::visitParagraphComment(
 void CommentASTToHTMLConverter::visitBlockCommandComment(
                                   const BlockCommandComment *C) {
   StringRef CommandName = C->getCommandName();
-  if (CommandName == "brief" || CommandName == "short") {
+  if (Traits.isBriefCommand(CommandName)) {
     Result << "<p class=\"para-brief\">";
     visitNonStandaloneParagraphComment(C->getParagraph());
     Result << "</p>";
     return;
   }
-  if (CommandName == "returns" || CommandName == "return" ||
-      CommandName == "result") {
+  if (Traits.isReturnsCommand(CommandName)) {
     Result << "<p class=\"para-returns\">"
               "<span class=\"word-returns\">Returns</span> ";
     visitNonStandaloneParagraphComment(C->getParagraph());
@@ -862,6 +865,7 @@ public:
 
 private:
   const SourceManager &SM;
+
   /// Output stream for XML.
   llvm::raw_svector_ostream Result;
 };

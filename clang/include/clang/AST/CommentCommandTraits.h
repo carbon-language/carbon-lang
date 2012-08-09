@@ -28,6 +28,8 @@ namespace comments {
 /// in comments.
 class CommandTraits {
 public:
+  CommandTraits() { }
+
   /// \brief Check if a given command is a verbatim-like block command.
   ///
   /// A verbatim-like block command eats every character (except line starting
