@@ -99,6 +99,9 @@ else( MSVC )
     CACHE STRING "Semicolon-separated list of targets to build, or \"all\".")
 endif( MSVC )
 
+set(LLVM_EXPERIMENTAL_TARGETS_TO_BUILD ""
+  CACHE STRING "Semicolon-separated list of experimental targets to build.")
+
 option(BUILD_SHARED_LIBS
   "Build all libraries as shared libraries instead of static" OFF)
 
@@ -135,6 +138,11 @@ foreach(c ${LLVM_TARGETS_TO_BUILD})
     set(LLVM_ENUM_TARGETS "${LLVM_ENUM_TARGETS}LLVM_TARGET(${c})\n")
   endif()
 endforeach(c)
+
+set(LLVM_TARGETS_TO_BUILD
+  ${LLVM_TARGETS_TO_BUILD}
+  ${LLVM_EXPERIMENTAL_TARGETS_TO_BUILD}
+  )
 
 set(llvm_builded_incs_dir ${LLVM_BINARY_DIR}/include/llvm)
 

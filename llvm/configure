@@ -1425,6 +1425,9 @@ Optional Features:
                           target1,target2,... Valid targets are: host, x86,
                           x86_64, sparc, powerpc, arm, mips, spu, hexagon,
                           xcore, msp430, nvptx, and cpp (default=all)
+  --enable-experimental-targets
+                          Build experimental host targets: disable or
+                          target1,target2,... (default=disable)
   --enable-bindings       Build specific language bindings:
                           all,auto,none,{binding-name} (default=auto)
   --enable-libffi         Check for the presence of libffi (default is NO)
@@ -5415,6 +5418,20 @@ echo "$as_me: error: Unrecognized target $a_target" >&2;}
   done
   ;;
 esac
+
+# Check whether --enable-experimental-targets was given.
+if test "${enable_experimental_targets+set}" = set; then
+  enableval=$enable_experimental_targets;
+else
+  enableval=disable
+fi
+
+
+if test ${enableval} != "disable"
+then
+  TARGETS_TO_BUILD="$enableval $TARGETS_TO_BUILD"
+fi
+
 TARGETS_TO_BUILD=$TARGETS_TO_BUILD
 
 
@@ -10255,7 +10272,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10258 "configure"
+#line 10275 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H

@@ -717,6 +717,17 @@ case "$enableval" in
   done
   ;;
 esac
+
+AC_ARG_ENABLE([experimental-targets],AS_HELP_STRING([--enable-experimental-targets],
+    [Build experimental host targets: disable or target1,target2,...
+     (default=disable)]),,
+    enableval=disable)
+
+if test ${enableval} != "disable"
+then
+  TARGETS_TO_BUILD="$enableval $TARGETS_TO_BUILD"
+fi
+
 AC_SUBST(TARGETS_TO_BUILD,$TARGETS_TO_BUILD)
 
 dnl Determine whether we are building LLVM support for the native architecture.
