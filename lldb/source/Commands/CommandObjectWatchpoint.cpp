@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CommandObjectWatchpoint.h"
+#include "CommandObjectWatchpointCommand.h"
 
 // C Includes
 // C++ Includes
@@ -1300,6 +1301,7 @@ CommandObjectMultiwordWatchpoint::CommandObjectMultiwordWatchpoint(CommandInterp
     CommandObjectSP disable_command_object (new CommandObjectWatchpointDisable (interpreter));
     CommandObjectSP delete_command_object (new CommandObjectWatchpointDelete (interpreter));
     CommandObjectSP ignore_command_object (new CommandObjectWatchpointIgnore (interpreter));
+    CommandObjectSP command_command_object (new CommandObjectWatchpointCommand (interpreter));
     CommandObjectSP modify_command_object (new CommandObjectWatchpointModify (interpreter));
     CommandObjectSP set_command_object (new CommandObjectWatchpointSet (interpreter));
 
@@ -1308,6 +1310,7 @@ CommandObjectMultiwordWatchpoint::CommandObjectMultiwordWatchpoint(CommandInterp
     disable_command_object->SetCommandName("watchpoint disable");
     delete_command_object->SetCommandName("watchpoint delete");
     ignore_command_object->SetCommandName("watchpoint ignore");
+    command_command_object->SetCommandName ("watchpoint command");
     modify_command_object->SetCommandName("watchpoint modify");
     set_command_object->SetCommandName("watchpoint set");
 
@@ -1316,6 +1319,7 @@ CommandObjectMultiwordWatchpoint::CommandObjectMultiwordWatchpoint(CommandInterp
     LoadSubCommand ("disable",    disable_command_object);
     LoadSubCommand ("delete",     delete_command_object);
     LoadSubCommand ("ignore",     ignore_command_object);
+    LoadSubCommand ("command",    command_command_object);
     LoadSubCommand ("modify",     modify_command_object);
     LoadSubCommand ("set",        set_command_object);
 }

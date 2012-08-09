@@ -31,6 +31,7 @@
 #include "lldb/API/SBValue.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
+#include "lldb/Breakpoint/WatchpointOptions.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Host/Host.h"
@@ -44,6 +45,7 @@ using namespace lldb_private;
 
 static ScriptInterpreter::SWIGInitCallback g_swig_init_callback = NULL;
 static ScriptInterpreter::SWIGBreakpointCallbackFunction g_swig_breakpoint_callback = NULL;
+static ScriptInterpreter::SWIGWatchpointCallbackFunction g_swig_watchpoint_callback = NULL;
 static ScriptInterpreter::SWIGPythonTypeScriptCallbackFunction g_swig_typescript_callback = NULL;
 static ScriptInterpreter::SWIGPythonCreateSyntheticProvider g_swig_synthetic_script = NULL;
 static ScriptInterpreter::SWIGPythonCalculateNumChildren g_swig_calc_children = NULL;
@@ -66,6 +68,15 @@ LLDBSwigPythonBreakpointCallbackFunction
  const char *session_dictionary_name,
  const lldb::StackFrameSP& sb_frame, 
  const lldb::BreakpointLocationSP& sb_bp_loc
+ );
+
+extern "C" bool
+LLDBSwigPythonWatchpointCallbackFunction 
+(
+ const char *python_function_name,
+ const char *session_dictionary_name,
+ const lldb::StackFrameSP& sb_frame, 
+ const lldb::WatchpointSP& sb_wp
  );
 
 extern "C" bool
@@ -1388,6 +1399,112 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
     return bytes_len;
 }
 
+size_t
+ScriptInterpreterPython::GenerateWatchpointOptionsCommandCallback
+(
+    void *baton, 
+    InputReader &reader, 
+    InputReaderAction notification,
+    const char *bytes, 
+    size_t bytes_len
+)
+{
+    static StringList commands_in_progress;
+    
+    StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
+    bool batch_mode = reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode();
+    
+    switch (notification)
+    {
+    case eInputReaderActivate:
+        {
+            commands_in_progress.Clear();
+            if (!batch_mode)
+            {
+                out_stream->Printf ("%s\n", g_reader_instructions);
+                if (reader.GetPrompt())
+                    out_stream->Printf ("%s", reader.GetPrompt());
+                out_stream->Flush ();
+            }
+        }
+        break;
+
+    case eInputReaderDeactivate:
+        break;
+
+    case eInputReaderReactivate:
+        if (reader.GetPrompt() && !batch_mode)
+        {
+            out_stream->Printf ("%s", reader.GetPrompt());
+            out_stream->Flush ();
+        }
+        break;
+
+    case eInputReaderAsynchronousOutputWritten:
+        break;
+        
+    case eInputReaderGotToken:
+        {
+            std::string temp_string (bytes, bytes_len);
+            commands_in_progress.AppendString (temp_string.c_str());
+            if (!reader.IsDone() && reader.GetPrompt() && !batch_mode)
+            {
+                out_stream->Printf ("%s", reader.GetPrompt());
+                out_stream->Flush ();
+            }
+        }
+        break;
+
+    case eInputReaderEndOfFile:
+    case eInputReaderInterrupt:
+        // Control-c (SIGINT) & control-d both mean finish & exit.
+        reader.SetIsDone(true);
+        
+        // Control-c (SIGINT) ALSO means cancel; do NOT create a breakpoint command.
+        if (notification == eInputReaderInterrupt)
+            commands_in_progress.Clear();  
+        
+        // Fall through here...
+
+    case eInputReaderDone:
+        {
+            WatchpointOptions *wp_options = (WatchpointOptions *)baton;
+            std::auto_ptr<WatchpointOptions::CommandData> data_ap(new WatchpointOptions::CommandData());
+            data_ap->user_source.AppendList (commands_in_progress);
+            if (data_ap.get())
+            {
+                ScriptInterpreter *interpreter = reader.GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
+                if (interpreter)
+                {
+                    if (interpreter->GenerateWatchpointCommandCallbackData (data_ap->user_source, 
+                                                                            data_ap->script_source))
+                    {
+                        BatonSP baton_sp (new WatchpointOptions::CommandBaton (data_ap.release()));
+                        wp_options->SetCallback (ScriptInterpreterPython::WatchpointCallbackFunction, baton_sp);
+                    }
+                    else if (!batch_mode)
+                    {
+                        out_stream->Printf ("Warning: No command attached to breakpoint.\n");
+                        out_stream->Flush();
+                    }
+                }
+                else
+                {
+		            if (!batch_mode)
+                    {
+                        out_stream->Printf ("Warning:  Unable to find script intepreter; no command attached to breakpoint.\n");
+                        out_stream->Flush();
+                    }
+                }
+            }
+        }
+        break;
+        
+    }
+
+    return bytes_len;
+}
+
 void
 ScriptInterpreterPython::CollectDataForBreakpointCommandCallback (BreakpointOptions *bp_options,
                                                                   CommandReturnObject &result)
@@ -1421,6 +1538,39 @@ ScriptInterpreterPython::CollectDataForBreakpointCommandCallback (BreakpointOpti
     }
 }
 
+void
+ScriptInterpreterPython::CollectDataForWatchpointCommandCallback (WatchpointOptions *wp_options,
+                                                                  CommandReturnObject &result)
+{
+    Debugger &debugger = GetCommandInterpreter().GetDebugger();
+    
+    InputReaderSP reader_sp (new InputReader (debugger));
+
+    if (reader_sp)
+    {
+        Error err = reader_sp->Initialize (
+                ScriptInterpreterPython::GenerateWatchpointOptionsCommandCallback,
+                wp_options,                 // baton
+                eInputReaderGranularityLine, // token size, for feeding data to callback function
+                "DONE",                     // end token
+                "> ",                       // prompt
+                true);                      // echo input
+    
+        if (err.Success())
+            debugger.PushInputReader (reader_sp);
+        else
+        {
+            result.AppendError (err.AsCString());
+            result.SetStatus (eReturnStatusFailed);
+        }
+    }
+    else
+    {
+        result.AppendError("out of memory");
+        result.SetStatus (eReturnStatusFailed);
+    }
+}
+
 // Set a Python one-liner as the callback for the breakpoint.
 void
 ScriptInterpreterPython::SetBreakpointCommandCallback (BreakpointOptions *bp_options,
@@ -1433,11 +1583,35 @@ ScriptInterpreterPython::SetBreakpointCommandCallback (BreakpointOptions *bp_opt
     // while the latter is used for Python to interpret during the actual callback.
 
     data_ap->user_source.AppendString (oneliner);
+    data_ap->script_source.assign (oneliner);
 
     if (GenerateBreakpointCommandCallbackData (data_ap->user_source, data_ap->script_source))
     {
         BatonSP baton_sp (new BreakpointOptions::CommandBaton (data_ap.release()));
         bp_options->SetCallback (ScriptInterpreterPython::BreakpointCallbackFunction, baton_sp);
+    }
+    
+    return;
+}
+
+// Set a Python one-liner as the callback for the watchpoint.
+void
+ScriptInterpreterPython::SetWatchpointCommandCallback (WatchpointOptions *wp_options,
+                                                       const char *oneliner)
+{
+    std::auto_ptr<WatchpointOptions::CommandData> data_ap(new WatchpointOptions::CommandData());
+
+    // It's necessary to set both user_source and script_source to the oneliner.
+    // The former is used to generate callback description (as in watchpoint command list)
+    // while the latter is used for Python to interpret during the actual callback.
+
+    data_ap->user_source.AppendString (oneliner);
+    data_ap->script_source.assign (oneliner);
+
+    if (GenerateWatchpointCommandCallbackData (data_ap->user_source, data_ap->script_source))
+    {
+        BatonSP baton_sp (new WatchpointOptions::CommandBaton (data_ap.release()));
+        wp_options->SetCallback (ScriptInterpreterPython::WatchpointCallbackFunction, baton_sp);
     }
     
     return;
@@ -1662,6 +1836,27 @@ ScriptInterpreterPython::GenerateBreakpointCommandCallbackData (StringList &user
 }
 
 bool
+ScriptInterpreterPython::GenerateWatchpointCommandCallbackData (StringList &user_input, std::string& output)
+{
+    static uint32_t num_created_functions = 0;
+    user_input.RemoveBlankLines ();
+    StreamString sstr;
+
+    if (user_input.GetSize() == 0)
+        return false;
+
+    std::string auto_generated_function_name(GenerateUniqueName("lldb_autogen_python_wp_callback_func_",num_created_functions));
+    sstr.Printf ("def %s (frame, wp, internal_dict):", auto_generated_function_name.c_str());
+    
+    if (!GenerateFunction(sstr.GetData(), user_input))
+        return false;
+    
+    // Store the name of the auto-generated function to be called.
+    output.assign(auto_generated_function_name);
+    return true;
+}
+
+bool
 ScriptInterpreterPython::GetScriptedSummary (const char *python_function_name,
                                              lldb::ValueObjectSP valobj,
                                              lldb::ScriptInterpreterObjectSP& callee_wrapper_sp,
@@ -1754,6 +1949,59 @@ ScriptInterpreterPython::BreakpointCallbackFunction
                                                           python_interpreter->m_dictionary_name.c_str(),
                                                           stop_frame_sp, 
                                                           bp_loc_sp);
+                }
+                return ret_val;
+            }
+        }
+    }
+    // We currently always true so we stop in case anything goes wrong when
+    // trying to call the script function
+    return true;
+}
+
+bool
+ScriptInterpreterPython::WatchpointCallbackFunction 
+(
+    void *baton,
+    StoppointCallbackContext *context,
+    user_id_t watch_id
+)
+{
+    WatchpointOptions::CommandData *wp_option_data = (WatchpointOptions::CommandData *) baton;
+    const char *python_function_name = wp_option_data->script_source.c_str();
+
+    if (!context)
+        return true;
+        
+    ExecutionContext exe_ctx (context->exe_ctx_ref);
+    Target *target = exe_ctx.GetTargetPtr();
+    
+    if (!target)
+        return true;
+        
+    Debugger &debugger = target->GetDebugger();
+    ScriptInterpreter *script_interpreter = debugger.GetCommandInterpreter().GetScriptInterpreter();
+    ScriptInterpreterPython *python_interpreter = (ScriptInterpreterPython *) script_interpreter;
+    
+    if (!script_interpreter)
+        return true;
+    
+    if (python_function_name != NULL 
+        && python_function_name[0] != '\0')
+    {
+        const StackFrameSP stop_frame_sp (exe_ctx.GetFrameSP());
+        WatchpointSP wp_sp = target->GetWatchpointList().FindByID (watch_id);
+        if (wp_sp)
+        {
+            if (stop_frame_sp && wp_sp)
+            {
+                bool ret_val = true;
+                {
+                    Locker py_lock(python_interpreter);
+                    ret_val = g_swig_watchpoint_callback (python_function_name, 
+                                                          python_interpreter->m_dictionary_name.c_str(),
+                                                          stop_frame_sp, 
+                                                          wp_sp);
                 }
                 return ret_val;
             }
@@ -2176,6 +2424,7 @@ ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback python_swig_ini
 {
     g_swig_init_callback = python_swig_init_callback;
     g_swig_breakpoint_callback = LLDBSwigPythonBreakpointCallbackFunction;
+    g_swig_watchpoint_callback = LLDBSwigPythonWatchpointCallbackFunction;
     g_swig_typescript_callback = LLDBSwigPythonCallTypeScript;
     g_swig_synthetic_script = LLDBSwigPythonCreateSyntheticProvider;
     g_swig_calc_children = LLDBSwigPython_CalculateNumChildren;

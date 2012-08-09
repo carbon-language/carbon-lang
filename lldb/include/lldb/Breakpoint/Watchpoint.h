@@ -22,6 +22,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Core/UserID.h"
+#include "lldb/Breakpoint/WatchpointOptions.h"
 #include "lldb/Breakpoint/StoppointLocation.h"
 
 namespace lldb_private {
@@ -52,8 +53,6 @@ public:
     uint32_t    GetIgnoreCount () const;
     void        SetIgnoreCount (uint32_t n);
     void        SetWatchpointType (uint32_t type);
-    bool        SetCallback (WatchpointHitCallback callback, void *callback_baton);
-    void        ClearCallback();
     void        SetDeclInfo (std::string &str);
     void        SetWatchSpec (std::string &str);
     void        GetDescription (Stream *s, lldb::DescriptionLevel level);
@@ -61,6 +60,43 @@ public:
     void        DumpWithLevel (Stream *s, lldb::DescriptionLevel description_level) const;
     Target      &GetTarget() { return *m_target; }
     const Error &GetError() { return m_error; }
+
+    //------------------------------------------------------------------
+    /// Returns the WatchpointOptions structure set for this watchpoint.
+    ///
+    /// @return
+    ///     A pointer to this watchpoint's WatchpointOptions.
+    //------------------------------------------------------------------
+    WatchpointOptions *
+    GetOptions () { return &m_options; }
+
+    //------------------------------------------------------------------
+    /// Set the callback action invoked when the watchpoint is hit.  
+    /// 
+    /// @param[in] callback
+    ///    The method that will get called when the watchpoint is hit.
+    /// @param[in] callback_baton
+    ///    A void * pointer that will get passed back to the callback function.
+    /// @param[in] is_synchronous
+    ///    If \b true the callback will be run on the private event thread
+    ///    before the stop event gets reported.  If false, the callback will get
+    ///    handled on the public event thead after the stop has been posted.
+    ///
+    /// @return
+    ///    \b true if the process should stop when you hit the watchpoint.
+    ///    \b false if it should continue.
+    //------------------------------------------------------------------
+    void
+    SetCallback (WatchpointHitCallback callback, 
+                 void *callback_baton,
+                 bool is_synchronous = false);
+
+    void
+    SetCallback (WatchpointHitCallback callback, 
+                 const lldb::BatonSP &callback_baton_sp,
+                 bool is_synchronous = false);
+
+    void        ClearCallback();
 
     //------------------------------------------------------------------
     /// Invoke the callback action when the watchpoint is hit.
@@ -78,10 +114,10 @@ public:
     // Condition
     //------------------------------------------------------------------
     //------------------------------------------------------------------
-    /// Set the breakpoint's condition.
+    /// Set the watchpoint's condition.
     ///
     /// @param[in] condition
-    ///    The condition expression to evaluate when the breakpoint is hit.
+    ///    The condition expression to evaluate when the watchpoint is hit.
     ///    Pass in NULL to clear the condition.
     //------------------------------------------------------------------
     void SetCondition (const char *condition);
@@ -111,11 +147,11 @@ private:
                 m_watch_was_read:1,    // Set to 1 when watchpoint is hit for a read access
                 m_watch_was_written:1; // Set to 1 when watchpoint is hit for a write access
     uint32_t    m_ignore_count;        // Number of times to ignore this breakpoint
-    WatchpointHitCallback m_callback;
-    void *      m_callback_baton;      // Callback user data to pass to callback
     std::string m_decl_str;            // Declaration information, if any.
     std::string m_watch_spec_str;      // Spec for the watchpoint (for future use).
     Error       m_error;               // An error object describing errors associated with this watchpoint.
+    WatchpointOptions m_options;       // Settable watchpoint options, which is a delegate to handle
+                                       // the callback machinery.
 
     std::auto_ptr<ClangUserExpression> m_condition_ap;  // The condition to test.
 

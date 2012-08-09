@@ -520,6 +520,8 @@
 		B299580B14F2FA1400050A04 /* DisassemblerLLVMC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B299580A14F2FA1400050A04 /* DisassemblerLLVMC.cpp */; };
 		B2A58722143119810092BFBA /* SBWatchpoint.h in Headers */ = {isa = PBXBuildFile; fileRef = B2A58721143119810092BFBA /* SBWatchpoint.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B2A58724143119D50092BFBA /* SBWatchpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B2A58723143119D50092BFBA /* SBWatchpoint.cpp */; };
+		B2B7CCEB15D1BD6700EEFB57 /* CommandObjectWatchpointCommand.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B2B7CCEA15D1BD6600EEFB57 /* CommandObjectWatchpointCommand.cpp */; };
+		B2B7CCF015D1C20F00EEFB57 /* WatchpointOptions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B2B7CCEF15D1C20F00EEFB57 /* WatchpointOptions.cpp */; };
 		ED88244E15114A9200BC98B9 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EDB919B414F6F10D008FF64B /* Security.framework */; };
 		ED88245015114CA200BC98B9 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = ED88244F15114CA200BC98B9 /* main.mm */; };
 		ED88245115114CA200BC98B9 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = ED88244F15114CA200BC98B9 /* main.mm */; };
@@ -1557,6 +1559,10 @@
 		B2A58721143119810092BFBA /* SBWatchpoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBWatchpoint.h; path = include/lldb/API/SBWatchpoint.h; sourceTree = "<group>"; };
 		B2A58723143119D50092BFBA /* SBWatchpoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBWatchpoint.cpp; path = source/API/SBWatchpoint.cpp; sourceTree = "<group>"; };
 		B2A5872514313B480092BFBA /* SBWatchpoint.i */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; path = SBWatchpoint.i; sourceTree = "<group>"; };
+		B2B7CCEA15D1BD6600EEFB57 /* CommandObjectWatchpointCommand.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectWatchpointCommand.cpp; path = source/Commands/CommandObjectWatchpointCommand.cpp; sourceTree = "<group>"; };
+		B2B7CCEC15D1BD9600EEFB57 /* CommandObjectWatchpointCommand.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = CommandObjectWatchpointCommand.h; path = source/Commands/CommandObjectWatchpointCommand.h; sourceTree = "<group>"; };
+		B2B7CCED15D1BFB700EEFB57 /* WatchpointOptions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WatchpointOptions.h; path = include/lldb/Breakpoint/WatchpointOptions.h; sourceTree = "<group>"; };
+		B2B7CCEF15D1C20F00EEFB57 /* WatchpointOptions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = WatchpointOptions.cpp; path = source/Breakpoint/WatchpointOptions.cpp; sourceTree = "<group>"; };
 		B2D3033612EFA5C500F84EB3 /* InstructionUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = InstructionUtils.h; path = Utility/InstructionUtils.h; sourceTree = "<group>"; };
 		ED88244F15114CA200BC98B9 /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		ED88245215114CFC00BC98B9 /* LauncherRootXPCService.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = LauncherRootXPCService.mm; sourceTree = "<group>"; };
@@ -2599,6 +2605,8 @@
 				B27318431416AC43006039C8 /* WatchpointList.h */,
 				26BC7E1810F1B83100F91463 /* Watchpoint.cpp */,
 				B27318411416AC12006039C8 /* WatchpointList.cpp */,
+				B2B7CCED15D1BFB700EEFB57 /* WatchpointOptions.h */,
+				B2B7CCEF15D1C20F00EEFB57 /* WatchpointOptions.cpp */,
 			);
 			name = Breakpoint;
 			sourceTree = "<group>";
@@ -2654,6 +2662,8 @@
 				B296983412C2FB2B002D92C3 /* CommandObjectVersion.cpp */,
 				B207C4941429609C00F36E4E /* CommandObjectWatchpoint.h */,
 				B207C4921429607D00F36E4E /* CommandObjectWatchpoint.cpp */,
+				B2B7CCEC15D1BD9600EEFB57 /* CommandObjectWatchpointCommand.h */,
+				B2B7CCEA15D1BD6600EEFB57 /* CommandObjectWatchpointCommand.cpp */,
 			);
 			name = Commands;
 			sourceTree = "<group>";
@@ -3928,6 +3938,8 @@
 				2694E9A414FC0BBD0076DE67 /* PlatformLinux.cpp in Sources */,
 				26B1EFAE154638AF00E2DAC7 /* DWARFDeclContext.cpp in Sources */,
 				B21EB71515CC99F100E60059 /* cxa_demangle.cpp in Sources */,
+				B2B7CCEB15D1BD6700EEFB57 /* CommandObjectWatchpointCommand.cpp in Sources */,
+				B2B7CCF015D1C20F00EEFB57 /* WatchpointOptions.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

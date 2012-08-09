@@ -33,11 +33,10 @@ Watchpoint::Watchpoint (lldb::addr_t addr, size_t size, bool hardware) :
     m_watch_was_read(0),
     m_watch_was_written(0),
     m_ignore_count(0),
-    m_callback(NULL),
-    m_callback_baton(NULL),
     m_decl_str(),
     m_watch_spec_str(),
-    m_error()
+    m_error(),
+    m_options ()
 {
 }
 
@@ -45,12 +44,29 @@ Watchpoint::~Watchpoint()
 {
 }
 
-bool
-Watchpoint::SetCallback (WatchpointHitCallback callback, void *callback_baton)
+// This function is used when "baton" doesn't need to be freed
+void
+Watchpoint::SetCallback (WatchpointHitCallback callback, void *baton, bool is_synchronous)
 {
-    m_callback = callback;
-    m_callback_baton = callback_baton;
-    return true;
+    // The default "Baton" class will keep a copy of "baton" and won't free
+    // or delete it when it goes goes out of scope.
+    m_options.SetCallback(callback, BatonSP (new Baton(baton)), is_synchronous);
+    
+    //SendWatchpointChangedEvent (eWatchpointEventTypeCommandChanged);
+}
+
+// This function is used when a baton needs to be freed and therefore is 
+// contained in a "Baton" subclass.
+void
+Watchpoint::SetCallback (WatchpointHitCallback callback, const BatonSP &callback_baton_sp, bool is_synchronous)
+{
+    m_options.SetCallback(callback, callback_baton_sp, is_synchronous);
+}
+
+void
+Watchpoint::ClearCallback ()
+{
+    m_options.ClearCallback ();
 }
 
 void
@@ -129,26 +145,15 @@ Watchpoint::DumpWithLevel(Stream *s, lldb::DescriptionLevel description_level) c
             s->Printf("\n    static watchpoint spec = '%s'", m_watch_spec_str.c_str());
         if (GetConditionText())
             s->Printf("\n    condition = '%s'", GetConditionText());
+        m_options.GetCallbackDescription(s, description_level);
     }
 
     if (description_level >= lldb::eDescriptionLevelVerbose)
     {
-        if (m_callback)
-        {
-            s->Printf("\n    hw_index = %i  hit_count = %-4u  ignore_count = %-4u  callback = %8p baton = %8p",
-                      GetHardwareIndex(),
-                      GetHitCount(),
-                      GetIgnoreCount(),
-                      m_callback,
-                      m_callback_baton);
-        }
-        else
-        {
-            s->Printf("\n    hw_index = %i  hit_count = %-4u  ignore_count = %-4u",
-                      GetHardwareIndex(),
-                      GetHitCount(),
-                      GetIgnoreCount());
-        }
+        s->Printf("\n    hw_index = %i  hit_count = %-4u  ignore_count = %-4u",
+                  GetHardwareIndex(),
+                  GetHitCount(),
+                  GetIgnoreCount());
     }
 }
 
@@ -198,17 +203,7 @@ Watchpoint::SetIgnoreCount (uint32_t n)
 bool
 Watchpoint::InvokeCallback (StoppointCallbackContext *context)
 {
-    if (m_callback && context->is_synchronous)
-    {
-        uint32_t access = 0;
-        if (m_watch_was_read)
-            access |= LLDB_WATCH_TYPE_READ;
-        if (m_watch_was_written)
-            access |= LLDB_WATCH_TYPE_WRITE;
-        return m_callback(m_callback_baton, context, GetID(), access);
-    }
-    else
-        return true;
+    return m_options.InvokeCallback (context, GetID());
 }
 
 void 

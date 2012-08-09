@@ -101,8 +101,18 @@ public:
     bool
     GenerateBreakpointCommandCallbackData (StringList &input, std::string& output);
 
+    bool
+    GenerateWatchpointCommandCallbackData (StringList &input, std::string& output);
+
     static size_t
     GenerateBreakpointOptionsCommandCallback (void *baton, 
+                                              InputReader &reader, 
+                                              lldb::InputReaderAction notification,
+                                              const char *bytes, 
+                                              size_t bytes_len);
+        
+    static size_t
+    GenerateWatchpointOptionsCommandCallback (void *baton, 
                                               InputReader &reader, 
                                               lldb::InputReaderAction notification,
                                               const char *bytes, 
@@ -113,6 +123,11 @@ public:
                                 StoppointCallbackContext *context, 
                                 lldb::user_id_t break_id,
                                 lldb::user_id_t break_loc_id);
+    
+    static bool
+    WatchpointCallbackFunction (void *baton, 
+                                StoppointCallbackContext *context, 
+                                lldb::user_id_t watch_id);
     
     virtual bool
     GetScriptedSummary (const char *function_name,
@@ -135,9 +150,18 @@ public:
     CollectDataForBreakpointCommandCallback (BreakpointOptions *bp_options,
                                              CommandReturnObject &result);
 
+    void 
+    CollectDataForWatchpointCommandCallback (WatchpointOptions *wp_options,
+                                             CommandReturnObject &result);
+
     /// Set a Python one-liner as the callback for the breakpoint.
     void 
     SetBreakpointCommandCallback (BreakpointOptions *bp_options,
+                                  const char *oneliner);
+
+    /// Set a one-liner as the callback for the watchpoint.
+    void 
+    SetWatchpointCommandCallback (WatchpointOptions *wp_options,
                                   const char *oneliner);
 
     StringList

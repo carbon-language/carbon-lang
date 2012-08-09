@@ -68,6 +68,11 @@ public:
                                                     const lldb::StackFrameSP& frame_sp,
                                                     const lldb::BreakpointLocationSP &bp_loc_sp);
     
+    typedef bool (*SWIGWatchpointCallbackFunction) (const char *python_function_name,
+                                                    const char *session_dictionary_name,
+                                                    const lldb::StackFrameSP& frame_sp,
+                                                    const lldb::WatchpointSP &wp_sp);
+    
     typedef bool (*SWIGPythonTypeScriptCallbackFunction) (const char *python_function_name,
                                                           void *session_dictionary,
                                                           const lldb::ValueObjectSP& valobj_sp,
@@ -148,6 +153,12 @@ public:
     }
     
     virtual bool
+    GenerateWatchpointCommandCallbackData (StringList &input, std::string& output)
+    {
+        return false;
+    }
+    
+    virtual bool
     GenerateTypeScriptFunction (const char* oneliner, std::string& output, void* name_token = NULL)
     {
         return false;
@@ -194,9 +205,21 @@ public:
     CollectDataForBreakpointCommandCallback (BreakpointOptions *bp_options,
                                              CommandReturnObject &result);
 
+    virtual void 
+    CollectDataForWatchpointCommandCallback (WatchpointOptions *wp_options,
+                                             CommandReturnObject &result);
+
     /// Set a one-liner as the callback for the breakpoint.
     virtual void 
     SetBreakpointCommandCallback (BreakpointOptions *bp_options,
+                                  const char *oneliner)
+    {
+        return;
+    }
+    
+    /// Set a one-liner as the callback for the watchpoint.
+    virtual void 
+    SetWatchpointCommandCallback (WatchpointOptions *wp_options,
                                   const char *oneliner)
     {
         return;

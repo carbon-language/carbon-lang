@@ -176,6 +176,85 @@ LLDBSwigPythonBreakpointCallbackFunction
     return stop_at_breakpoint;
 }
 
+// This function is called by lldb_private::ScriptInterpreterPython::WatchpointCallbackFunction(...)
+// and is used when a script command is attached to a watchpoint for execution.
+
+SWIGEXPORT bool
+LLDBSwigPythonWatchpointCallbackFunction 
+(
+    const char *python_function_name,
+    const char *session_dictionary_name,
+    const lldb::StackFrameSP& frame_sp, 
+    const lldb::WatchpointSP& wp_sp
+)
+{
+    lldb::SBFrame sb_frame (frame_sp);
+    lldb::SBWatchpoint sb_wp(wp_sp);
+
+    bool stop_at_watchpoint = true;
+    PyObject *Frame_PyObj = SWIG_NewPointerObj((void *) &sb_frame, SWIGTYPE_p_lldb__SBFrame, 0);
+    PyObject *Wp_PyObj = SWIG_NewPointerObj ((void *) &sb_wp, SWIGTYPE_p_lldb__SBWatchpoint, 0);
+    
+    if (Frame_PyObj == NULL || Wp_PyObj == NULL)
+        return stop_at_watchpoint;
+        
+    if (!python_function_name || !session_dictionary_name)
+        return stop_at_watchpoint;
+
+    PyObject *session_dict, *pfunc;
+    PyObject *pargs, *pvalue;
+    
+    session_dict = FindSessionDictionary (session_dictionary_name);
+    if (session_dict != NULL)
+    {
+        pfunc = ResolvePythonName (python_function_name, session_dict);
+        if (pfunc != NULL)
+        {
+            // Set up the arguments and call the function.
+                
+            if (PyCallable_Check (pfunc))
+            {
+                pargs = PyTuple_New (3);
+                if (pargs == NULL)
+                {
+                    if (PyErr_Occurred())
+                        PyErr_Clear();
+                    return stop_at_watchpoint;
+                }
+                
+                PyTuple_SetItem (pargs, 0, Frame_PyObj);  // This "steals" a reference to Frame_PyObj
+                PyTuple_SetItem (pargs, 1, Wp_PyObj);     // This "steals" a reference to Wp_PyObj
+                PyTuple_SetItem (pargs, 2, session_dict); // This "steals" a reference to session_dict
+                pvalue = PyObject_CallObject (pfunc, pargs);
+                Py_DECREF (pargs);
+                
+                if (pvalue != NULL)
+                {
+                    Py_DECREF (pvalue);
+                }
+                else if (PyErr_Occurred ())
+                {
+                    PyErr_Clear();
+                }
+                Py_INCREF (session_dict);
+            }
+            else if (PyErr_Occurred())
+            {
+                PyErr_Clear();
+            }
+        }
+        else if (PyErr_Occurred())
+        {
+            PyErr_Clear();
+        }
+    }
+    else if (PyErr_Occurred ())
+    {
+        PyErr_Clear ();
+    }
+    return stop_at_watchpoint;
+}
+
 SWIGEXPORT bool
 LLDBSwigPythonCallTypeScript 
 (
