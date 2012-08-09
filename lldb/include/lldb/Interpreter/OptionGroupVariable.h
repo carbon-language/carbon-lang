@@ -14,6 +14,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Interpreter/NamedOptionValue.h"
 #include "lldb/Interpreter/Options.h"
 
 namespace lldb_private {
@@ -52,7 +53,8 @@ namespace lldb_private {
              use_regex:1,
              show_scope:1,
              show_decl:1;
-        std::string summary;
+        OptionValueString summary;            // the name of a named summary
+        OptionValueString summary_string;     // a summary string
 
     private:
         DISALLOW_COPY_AND_ASSIGN(OptionGroupVariable);

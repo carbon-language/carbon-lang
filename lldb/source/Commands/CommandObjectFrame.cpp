@@ -394,8 +394,10 @@ protected:
         size_t idx;
         
         TypeSummaryImplSP summary_format_sp;
-        if (!m_option_variable.summary.empty())
-            DataVisualization::NamedSummaryFormats::GetSummaryFormat(ConstString(m_option_variable.summary.c_str()), summary_format_sp);
+        if (!m_option_variable.summary.IsCurrentValueEmpty())
+            DataVisualization::NamedSummaryFormats::GetSummaryFormat(ConstString(m_option_variable.summary.GetCurrentValue()), summary_format_sp);
+        else if (!m_option_variable.summary_string.IsCurrentValueEmpty())
+            summary_format_sp.reset(new StringSummaryFormat(TypeSummaryImpl::Flags(),m_option_variable.summary_string.GetCurrentValue()));
         
         ValueObject::DumpValueObjectOptions options;
         

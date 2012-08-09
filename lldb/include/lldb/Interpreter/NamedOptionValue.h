@@ -522,10 +522,22 @@ namespace lldb_private {
             return m_current_value.c_str();
         }
         
+        bool
+        IsCurrentValueEmpty () const
+        {
+            return m_current_value.empty();
+        }
+        
         const char *
         GetDefaultValue() const
         {
             return m_default_value.c_str();
+        }
+
+        bool
+        IsDefaultValueEmpty () const
+        {
+            return m_default_value.empty();
         }
         
         void

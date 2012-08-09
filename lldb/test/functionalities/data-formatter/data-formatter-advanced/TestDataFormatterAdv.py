@@ -119,9 +119,7 @@ class AdvDataFormatterTestCase(TestBase):
             substrs = ['low bits are',
                        'tgt is 6'])
 
-        self.runCmd("type summary add --summary-string \"${*var[0-1]}\" -x \"int \[[0-9]\]\"")
-
-        self.expect("frame variable int_array",
+        self.expect("frame variable int_array --summary-string \"${*var[0-1]}\"",
             substrs = ['3'])
 
         self.runCmd("type summary clear")
@@ -162,20 +160,24 @@ class AdvDataFormatterTestCase(TestBase):
 
         self.runCmd("type summary clear")
 
-        self.runCmd("type summary add --summary-string \"${var[0][0-2]%hex}\" -x \"int \[[0-9]\]\"")
-
-        self.expect("frame variable int_array",
+        self.expect("frame variable int_array --summary-string \"${var[0][0-2]%hex}\"",
             substrs = ['0x',
                        '7'])
 
         self.runCmd("type summary clear")
 
         self.runCmd("type summary add --summary-string \"${*var[].x[0-3]%hex} is a bitfield on a set of integers\" -x \"SimpleWithPointers \[[0-9]\]\"")
-        self.runCmd("type summary add --summary-string \"${*var.sp.x[0-2]} are low bits of integer ${*var.sp.x}. If I pretend it is an array I get ${var.sp.x[0-5]}\" Couple")
 
-        self.expect("frame variable couple",
+        self.expect("frame variable couple --summary-string \"${*var.sp.x[0-2]} are low bits of integer ${*var.sp.x}. If I pretend it is an array I get ${var.sp.x[0-5]}\"",
             substrs = ['1 are low bits of integer 9.',
                        'If I pretend it is an array I get [9,'])
+
+        # if the summary has an error, we still display the value
+        self.expect("frame variable couple --summary-string \"${*var.sp.foo[0-2]\"",
+            substrs = ['(Couple) couple =  {','sp = {','z =','"X"'])
+
+
+        self.runCmd("type summary add --summary-string \"${*var.sp.x[0-2]} are low bits of integer ${*var.sp.x}. If I pretend it is an array I get ${var.sp.x[0-5]}\" Couple")
 
         self.expect("frame variable sparray",
             substrs = ['[0x0000000f,0x0000000c,0x00000009]'])
