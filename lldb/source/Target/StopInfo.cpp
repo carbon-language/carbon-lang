@@ -492,17 +492,6 @@ public:
                 }
             }
             StoppointCallbackContext context (event_ptr, exe_ctx, false);
-            bool stop_requested = wp_sp->InvokeCallback (&context);
-            // Also make sure that the callback hasn't continued the target.  
-            // If it did, when we'll set m_should_start to false and get out of here.
-            if (HasTargetRunSinceMe ())
-                m_should_stop = false;
-            
-            if (m_should_stop && !stop_requested)
-            {
-                // We have been vetoed.
-                m_should_stop = false;
-            }
 
             if (m_should_stop && wp_sp->GetConditionText() != NULL)
             {
@@ -569,6 +558,22 @@ public:
                     error_sp->Flush();
                     // If the condition fails to be parsed or run, we should stop.
                     m_should_stop = true;
+                }
+            }
+
+            // If the condition says to stop, we run the callback to further decide whether to stop.
+            if (m_should_stop)
+            {
+                bool stop_requested = wp_sp->InvokeCallback (&context);
+                // Also make sure that the callback hasn't continued the target.  
+                // If it did, when we'll set m_should_stop to false and get out of here.
+                if (HasTargetRunSinceMe ())
+                    m_should_stop = false;
+                
+                if (m_should_stop && !stop_requested)
+                {
+                    // We have been vetoed by the callback mechanism.
+                    m_should_stop = false;
                 }
             }
         }
