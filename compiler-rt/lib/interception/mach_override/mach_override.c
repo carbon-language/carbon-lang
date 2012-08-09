@@ -29,6 +29,7 @@
 
 #if defined(__ppc__) || defined(__POWERPC__)
 
+static
 long kIslandTemplate[] = {
 	0x9001FFFC,	//	stw		r0,-4(SP)
 	0x3C00DEAD,	//	lis		r0,0xDEAD
@@ -48,6 +49,7 @@ long kIslandTemplate[] = {
 
 #define kOriginalInstructionsSize 16
 
+static
 char kIslandTemplate[] = {
 	// kOriginalInstructionsSize nop instructions so that we 
 	// should have enough space to host original instructions 
@@ -65,6 +67,7 @@ char kIslandTemplate[] = {
 
 #define kJumpAddress    kOriginalInstructionsSize + 6
 
+static
 char kIslandTemplate[] = {
 	// kOriginalInstructionsSize nop instructions so that we 
 	// should have enough space to host original instructions 
@@ -104,26 +107,27 @@ typedef	struct	{
 #pragma mark	-
 #pragma mark	(Funky Protos)
 
-	mach_error_t
+
+	static mach_error_t
 allocateBranchIsland(
 		BranchIsland	**island,
 		int				allocateHigh,
 		void *originalFunctionAddress) __attribute__((visibility("hidden")));
 
-	mach_error_t
+	static mach_error_t
 freeBranchIsland(
 		BranchIsland	*island ) __attribute__((visibility("hidden")));
 
-	mach_error_t
+	static mach_error_t
 defaultIslandMalloc(
 	  void **ptr, size_t unused_size, void *hint) __attribute__((visibility("hidden")));
 
-	mach_error_t
+	static mach_error_t
 defaultIslandFree(
    	void *ptr) __attribute__((visibility("hidden")));
 
 #if defined(__ppc__) || defined(__POWERPC__)
-	mach_error_t
+	static mach_error_t
 setBranchIslandTarget(
 		BranchIsland	*island,
 		const void		*branchTo,
@@ -131,11 +135,13 @@ setBranchIslandTarget(
 #endif 
 
 #if defined(__i386__) || defined(__x86_64__)
-mach_error_t
+static mach_error_t
 setBranchIslandTarget_i386(
 						   BranchIsland	*island,
 						   const void		*branchTo,
 						   char*			instructions ) __attribute__((visibility("hidden")));
+// Can't be made static because there's no C implementation for atomic_mov64
+// on i386.
 void 
 atomic_mov64(
 		uint64_t *targetAddress,
@@ -174,7 +180,7 @@ dump16Bytes(
 #pragma mark	(Interface)
 
 #if defined(__i386__) || defined(__x86_64__)
-mach_error_t makeIslandExecutable(void *address) {
+static mach_error_t makeIslandExecutable(void *address) {
 	mach_error_t err = err_none;
     vm_size_t pageSize;
     host_page_size( mach_host_self(), &pageSize );
@@ -189,12 +195,12 @@ mach_error_t makeIslandExecutable(void *address) {
 }
 #endif
 
-		mach_error_t
+		static mach_error_t
 defaultIslandMalloc(
 	void **ptr, size_t unused_size, void *hint) {
   return allocateBranchIsland( (BranchIsland**)ptr, kAllocateHigh, hint );
 }
-		mach_error_t
+		static mach_error_t
 defaultIslandFree(
 	void *ptr) {
 	return freeBranchIsland(ptr);
@@ -460,7 +466,7 @@ __asan_mach_override_ptr_custom(
 
 	***************************************************************************/
 
-	mach_error_t
+	static mach_error_t
 allocateBranchIsland(
 		BranchIsland	**island,
 		int				allocateHigh,
@@ -530,7 +536,7 @@ allocateBranchIsland(
 
 	***************************************************************************/
 
-	mach_error_t
+	static mach_error_t
 freeBranchIsland(
 		BranchIsland	*island )
 {
@@ -568,7 +574,7 @@ freeBranchIsland(
 
 	***************************************************************************/
 #if defined(__ppc__) || defined(__POWERPC__)
-	mach_error_t
+	static mach_error_t
 setBranchIslandTarget(
 		BranchIsland	*island,
 		const void		*branchTo,
@@ -598,7 +604,7 @@ setBranchIslandTarget(
 #endif 
 
 #if defined(__i386__)
-	mach_error_t
+	static mach_error_t
 setBranchIslandTarget_i386(
 	BranchIsland	*island,
 	const void		*branchTo,
@@ -622,7 +628,7 @@ setBranchIslandTarget_i386(
 }
 
 #elif defined(__x86_64__)
-mach_error_t
+static mach_error_t
 setBranchIslandTarget_i386(
         BranchIsland	*island,
         const void		*branchTo,
