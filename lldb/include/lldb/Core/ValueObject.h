@@ -231,6 +231,7 @@ public:
         lldb::Format m_format;
         lldb::TypeSummaryImplSP m_summary_sp;
         std::string m_root_valobj_name;
+        bool m_hide_root_type;
         
         DumpValueObjectOptions() :
             m_max_ptr_depth(0),
@@ -246,7 +247,8 @@ public:
             m_ignore_cap(false), 
             m_format (lldb::eFormatDefault),
             m_summary_sp(),
-            m_root_valobj_name()
+            m_root_valobj_name(),
+            m_hide_root_type(false)  // <rdar://problem/11505459> provide a special compact display for "po",
         {}
         
         static const DumpValueObjectOptions
@@ -271,7 +273,8 @@ public:
             m_ignore_cap(rhs.m_ignore_cap),
             m_format(rhs.m_format),
             m_summary_sp(rhs.m_summary_sp),
-            m_root_valobj_name(rhs.m_root_valobj_name)
+            m_root_valobj_name(rhs.m_root_valobj_name),
+            m_hide_root_type(rhs.m_hide_root_type)
         {}
         
         DumpValueObjectOptions&
@@ -400,6 +403,13 @@ public:
                 m_root_valobj_name.assign(name);
             else
                 m_root_valobj_name.clear();
+            return *this;
+        }
+                
+        DumpValueObjectOptions&
+        SetHideRootType (bool hide_root_type = false)
+        {
+            m_hide_root_type = hide_root_type;
             return *this;
         }
 

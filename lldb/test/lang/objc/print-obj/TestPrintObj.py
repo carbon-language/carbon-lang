@@ -94,7 +94,7 @@ class PrintObjTestCase(TestBase):
                 break
 
         self.expect("po lock_me", OBJECT_PRINTED_CORRECTLY,
-            substrs = ['LockMe *', 'I am pretty special.'])
+            substrs = ['I am pretty special.'])
 
 
 if __name__ == '__main__':

@@ -360,7 +360,8 @@ CommandObjectExpression::EvaluateExpression
                     .SetIgnoreCap(false)
                     .SetFormat(format)
                     .SetSummary()
-                    .SetShowSummary(!m_command_options.print_object);
+                    .SetShowSummary(!m_command_options.print_object)
+                    .SetHideRootType(m_command_options.print_object);
                     
                     ValueObject::DumpValueObject (*(output_stream),
                                                   result_valobj_sp.get(),   // Variable object to dump

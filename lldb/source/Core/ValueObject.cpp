@@ -3191,9 +3191,16 @@ DumpValueObject_Impl (Stream &s,
             }
 
             s.Indent();
-
-            // Always show the type for the top level items.
-            if (options.m_show_types || (curr_depth == 0 && !options.m_flat_output))
+            
+            bool show_type = true;
+            // if we are at the root-level and been asked to hide the root's type, then hide it
+            if (curr_depth == 0 && options.m_hide_root_type)
+                show_type = false;
+            else
+            // otherwise decide according to the usual rules (asked to show types - always at the root level)
+                show_type = options.m_show_types || (curr_depth == 0 && !options.m_flat_output);
+            
+            if (show_type)
             {
                 const char* typeName = valobj->GetQualifiedTypeName().AsCString("<invalid type>");
                 //const char* typeName = valobj->GetTypeName().AsCString("<invalid type>");
