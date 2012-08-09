@@ -456,8 +456,7 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
   DebugLoc dl = Loc->getDebugLoc();
   const MachineOperand &PMO = Loc->getOperand(0);
   unsigned PReg = PMO.getReg();
-  unsigned PRegNum = PMO.isUndef() ? UINT_MAX
-    : getARMRegisterNumbering(PReg);
+  unsigned PRegNum = PMO.isUndef() ? UINT_MAX : TRI->getEncodingValue(PReg);
   unsigned Count = 1;
   unsigned Limit = ~0U;
 
@@ -483,8 +482,7 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
     int NewOffset = MemOps[i].Offset;
     const MachineOperand &MO = MemOps[i].MBBI->getOperand(0);
     unsigned Reg = MO.getReg();
-    unsigned RegNum = MO.isUndef() ? UINT_MAX
-      : getARMRegisterNumbering(Reg);
+    unsigned RegNum = MO.isUndef() ? UINT_MAX : TRI->getEncodingValue(Reg);
     // Register numbers must be in ascending order. For VFP / NEON load and
     // store multiples, the registers must also be consecutive and within the
     // limit on the number of registers per instruction.

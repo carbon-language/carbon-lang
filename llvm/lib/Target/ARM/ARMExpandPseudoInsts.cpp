@@ -1009,7 +1009,7 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
         BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(NewOpc));
       unsigned OpIdx = 0;
       unsigned SrcReg = MI.getOperand(1).getReg();
-      unsigned Lane = getARMRegisterNumbering(SrcReg) & 1;
+      unsigned Lane = TRI->getEncodingValue(SrcReg) & 1;
       unsigned DReg = TRI->getMatchingSuperReg(SrcReg,
                             Lane & 1 ? ARM::ssub_1 : ARM::ssub_0,
                             &ARM::DPR_VFP2RegClass);

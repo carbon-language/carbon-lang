@@ -254,7 +254,7 @@ namespace {
         emitConstPoolAddress(MO.getIndex(), ARM::reloc_arm_cp_entry);
         return 0;
       }
-      unsigned Reg = getARMRegisterNumbering(MO.getReg());
+      unsigned Reg = II->getRegisterInfo().getEncodingValue(MO.getReg());
       int32_t Imm12 = MO1.getImm();
       uint32_t Binary;
       Binary = Imm12 & 0xfff;
@@ -296,7 +296,7 @@ namespace {
         emitConstPoolAddress(MO.getIndex(), ARM::reloc_arm_cp_entry);
         return 0;
       }
-      unsigned Reg = getARMRegisterNumbering(MO.getReg());
+      unsigned Reg = II->getRegisterInfo().getEncodingValue(MO.getReg());
       int32_t Imm12 = MO1.getImm();
 
       // Special value for #-0
@@ -352,6 +352,12 @@ namespace {
     void emitJumpTableAddress(unsigned JTIndex, unsigned Reloc) const;
     void emitMachineBasicBlock(MachineBasicBlock *BB, unsigned Reloc,
                                intptr_t JTBase = 0) const;
+    unsigned encodeVFPRd(const MachineInstr &MI, unsigned OpIdx) const;
+    unsigned encodeVFPRn(const MachineInstr &MI, unsigned OpIdx) const;
+    unsigned encodeVFPRm(const MachineInstr &MI, unsigned OpIdx) const;
+    unsigned encodeNEONRd(const MachineInstr &MI, unsigned OpIdx) const;
+    unsigned encodeNEONRn(const MachineInstr &MI, unsigned OpIdx) const;
+    unsigned encodeNEONRm(const MachineInstr &MI, unsigned OpIdx) const;
   };
 }
 
@@ -440,7 +446,7 @@ unsigned ARMCodeEmitter::getMovi32Value(const MachineInstr &MI,
 unsigned ARMCodeEmitter::getMachineOpValue(const MachineInstr &MI,
                                            const MachineOperand &MO) const {
   if (MO.isReg())
-    return getARMRegisterNumbering(MO.getReg());
+    return II->getRegisterInfo().getEncodingValue(MO.getReg());
   else if (MO.isImm())
     return static_cast<unsigned>(MO.getImm());
   else if (MO.isGlobal())
@@ -776,7 +782,7 @@ void ARMCodeEmitter::emitLEApcrelJTInstruction(const MachineInstr &MI) {
   Binary |= getMachineOpValue(MI, 0) << ARMII::RegRdShift;
 
   // Encode Rn which is PC.
-  Binary |= getARMRegisterNumbering(ARM::PC) << ARMII::RegRnShift;
+  Binary |= II->getRegisterInfo().getEncodingValue(ARM::PC) << ARMII::RegRnShift;
 
   // Encode the displacement.
   Binary |= 1 << ARMII::I_BitShift;
@@ -963,7 +969,7 @@ unsigned ARMCodeEmitter::getMachineSoRegOpValue(const MachineInstr &MI,
   if (Rs) {
     // Encode Rs bit[11:8].
     assert(ARM_AM::getSORegOffset(MO2.getImm()) == 0);
-    return Binary | (getARMRegisterNumbering(Rs) << ARMII::RegRsShift);
+    return Binary | (II->getRegisterInfo().getEncodingValue(Rs) << ARMII::RegRsShift);
   }
 
   // Encode shift_imm bit[11:7].
@@ -1014,7 +1020,7 @@ void ARMCodeEmitter::emitDataProcessingInstruction(const MachineInstr &MI,
     Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRdShift;
   else if (ImplicitRd)
     // Special handling for implicit use (e.g. PC).
-    Binary |= (getARMRegisterNumbering(ImplicitRd) << ARMII::RegRdShift);
+    Binary |= (II->getRegisterInfo().getEncodingValue(ImplicitRd) << ARMII::RegRdShift);
 
   if (MCID.Opcode == ARM::MOVi16) {
       // Get immediate from MI.
@@ -1064,7 +1070,7 @@ void ARMCodeEmitter::emitDataProcessingInstruction(const MachineInstr &MI,
   if (!isUnary) {
     if (ImplicitRn)
       // Special handling for implicit use (e.g. PC).
-      Binary |= (getARMRegisterNumbering(ImplicitRn) << ARMII::RegRnShift);
+      Binary |= (II->getRegisterInfo().getEncodingValue(ImplicitRn) << ARMII::RegRnShift);
     else {
       Binary |= getMachineOpValue(MI, OpIdx) << ARMII::RegRnShift;
       ++OpIdx;
@@ -1081,7 +1087,7 @@ void ARMCodeEmitter::emitDataProcessingInstruction(const MachineInstr &MI,
 
   if (MO.isReg()) {
     // Encode register Rm.
-    emitWordLE(Binary | getARMRegisterNumbering(MO.getReg()));
+    emitWordLE(Binary | II->getRegisterInfo().getEncodingValue(MO.getReg()));
     return;
   }
 
@@ -1124,14 +1130,14 @@ void ARMCodeEmitter::emitLoadStoreInstruction(const MachineInstr &MI,
   // Set first operand
   if (ImplicitRd)
     // Special handling for implicit use (e.g. PC).
-    Binary |= (getARMRegisterNumbering(ImplicitRd) << ARMII::RegRdShift);
+    Binary |= (II->getRegisterInfo().getEncodingValue(ImplicitRd) << ARMII::RegRdShift);
   else
     Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRdShift;
 
   // Set second operand
   if (ImplicitRn)
     // Special handling for implicit use (e.g. PC).
-    Binary |= (getARMRegisterNumbering(ImplicitRn) << ARMII::RegRnShift);
+    Binary |= (II->getRegisterInfo().getEncodingValue(ImplicitRn) << ARMII::RegRnShift);
   else
     Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRnShift;
 
@@ -1158,7 +1164,7 @@ void ARMCodeEmitter::emitLoadStoreInstruction(const MachineInstr &MI,
   Binary |= 1 << ARMII::I_BitShift;
   assert(TargetRegisterInfo::isPhysicalRegister(MO2.getReg()));
   // Set bit[3:0] to the corresponding Rm register
-  Binary |= getARMRegisterNumbering(MO2.getReg());
+  Binary |= II->getRegisterInfo().getEncodingValue(MO2.getReg());
 
   // If this instr is in scaled register offset/index instruction, set
   // shift_immed(bit[11:7]) and shift(bit[6:5]) fields.
@@ -1202,7 +1208,7 @@ void ARMCodeEmitter::emitMiscLoadStoreInstruction(const MachineInstr &MI,
   // Set second operand
   if (ImplicitRn)
     // Special handling for implicit use (e.g. PC).
-    Binary |= (getARMRegisterNumbering(ImplicitRn) << ARMII::RegRnShift);
+    Binary |= (II->getRegisterInfo().getEncodingValue(ImplicitRn) << ARMII::RegRnShift);
   else
     Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRnShift;
 
@@ -1221,7 +1227,7 @@ void ARMCodeEmitter::emitMiscLoadStoreInstruction(const MachineInstr &MI,
   // If this instr is in register offset/index encoding, set bit[3:0]
   // to the corresponding Rm register.
   if (MO2.getReg()) {
-    Binary |= getARMRegisterNumbering(MO2.getReg());
+    Binary |= II->getRegisterInfo().getEncodingValue(MO2.getReg());
     emitWordLE(Binary);
     return;
   }
@@ -1287,7 +1293,7 @@ void ARMCodeEmitter::emitLoadStoreMultipleInstruction(const MachineInstr &MI) {
     const MachineOperand &MO = MI.getOperand(i);
     if (!MO.isReg() || MO.isImplicit())
       break;
-    unsigned RegNum = getARMRegisterNumbering(MO.getReg());
+    unsigned RegNum = II->getRegisterInfo().getEncodingValue(MO.getReg());
     assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
            RegNum < 16);
     Binary |= 0x1 << RegNum;
@@ -1530,7 +1536,7 @@ void ARMCodeEmitter::emitMiscBranchInstruction(const MachineInstr &MI) {
 
   if (MCID.Opcode == ARM::BX_RET || MCID.Opcode == ARM::MOVPCLR)
     // The return register is LR.
-    Binary |= getARMRegisterNumbering(ARM::LR);
+    Binary |= II->getRegisterInfo().getEncodingValue(ARM::LR);
   else
     // otherwise, set the return register
     Binary |= getMachineOpValue(MI, 0);
@@ -1538,11 +1544,12 @@ void ARMCodeEmitter::emitMiscBranchInstruction(const MachineInstr &MI) {
   emitWordLE(Binary);
 }
 
-static unsigned encodeVFPRd(const MachineInstr &MI, unsigned OpIdx) {
+unsigned ARMCodeEmitter::encodeVFPRd(const MachineInstr &MI,
+                                     unsigned OpIdx) const {
   unsigned RegD = MI.getOperand(OpIdx).getReg();
   unsigned Binary = 0;
   bool isSPVFP = ARM::SPRRegClass.contains(RegD);
-  RegD = getARMRegisterNumbering(RegD);
+  RegD = II->getRegisterInfo().getEncodingValue(RegD);
   if (!isSPVFP)
     Binary |=   RegD               << ARMII::RegRdShift;
   else {
@@ -1552,11 +1559,12 @@ static unsigned encodeVFPRd(const MachineInstr &MI, unsigned OpIdx) {
   return Binary;
 }
 
-static unsigned encodeVFPRn(const MachineInstr &MI, unsigned OpIdx) {
+unsigned ARMCodeEmitter::encodeVFPRn(const MachineInstr &MI,
+                                     unsigned OpIdx) const {
   unsigned RegN = MI.getOperand(OpIdx).getReg();
   unsigned Binary = 0;
   bool isSPVFP = ARM::SPRRegClass.contains(RegN);
-  RegN = getARMRegisterNumbering(RegN);
+  RegN = II->getRegisterInfo().getEncodingValue(RegN);
   if (!isSPVFP)
     Binary |=   RegN               << ARMII::RegRnShift;
   else {
@@ -1566,11 +1574,12 @@ static unsigned encodeVFPRn(const MachineInstr &MI, unsigned OpIdx) {
   return Binary;
 }
 
-static unsigned encodeVFPRm(const MachineInstr &MI, unsigned OpIdx) {
+unsigned ARMCodeEmitter::encodeVFPRm(const MachineInstr &MI,
+                                     unsigned OpIdx) const {
   unsigned RegM = MI.getOperand(OpIdx).getReg();
   unsigned Binary = 0;
   bool isSPVFP = ARM::SPRRegClass.contains(RegM);
-  RegM = getARMRegisterNumbering(RegM);
+  RegM = II->getRegisterInfo().getEncodingValue(RegM);
   if (!isSPVFP)
     Binary |=   RegM;
   else {
@@ -1757,28 +1766,31 @@ ARMCodeEmitter::emitVFPLoadStoreMultipleInstruction(const MachineInstr &MI) {
   emitWordLE(Binary);
 }
 
-static unsigned encodeNEONRd(const MachineInstr &MI, unsigned OpIdx) {
+unsigned ARMCodeEmitter::encodeNEONRd(const MachineInstr &MI,
+                                      unsigned OpIdx) const {
   unsigned RegD = MI.getOperand(OpIdx).getReg();
   unsigned Binary = 0;
-  RegD = getARMRegisterNumbering(RegD);
+  RegD = II->getRegisterInfo().getEncodingValue(RegD);
   Binary |= (RegD & 0xf) << ARMII::RegRdShift;
   Binary |= ((RegD >> 4) & 1) << ARMII::D_BitShift;
   return Binary;
 }
 
-static unsigned encodeNEONRn(const MachineInstr &MI, unsigned OpIdx) {
+unsigned ARMCodeEmitter::encodeNEONRn(const MachineInstr &MI,
+                                      unsigned OpIdx) const {
   unsigned RegN = MI.getOperand(OpIdx).getReg();
   unsigned Binary = 0;
-  RegN = getARMRegisterNumbering(RegN);
+  RegN = II->getRegisterInfo().getEncodingValue(RegN);
   Binary |= (RegN & 0xf) << ARMII::RegRnShift;
   Binary |= ((RegN >> 4) & 1) << ARMII::N_BitShift;
   return Binary;
 }
 
-static unsigned encodeNEONRm(const MachineInstr &MI, unsigned OpIdx) {
+unsigned ARMCodeEmitter::encodeNEONRm(const MachineInstr &MI,
+                                      unsigned OpIdx) const {
   unsigned RegM = MI.getOperand(OpIdx).getReg();
   unsigned Binary = 0;
-  RegM = getARMRegisterNumbering(RegM);
+  RegM = II->getRegisterInfo().getEncodingValue(RegM);
   Binary |= (RegM & 0xf);
   Binary |= ((RegM >> 4) & 1) << ARMII::M_BitShift;
   return Binary;
@@ -1812,7 +1824,7 @@ void ARMCodeEmitter::emitNEONLaneInstruction(const MachineInstr &MI) {
   Binary |= (IsThumb ? ARMCC::AL : II->getPredicate(&MI)) << ARMII::CondShift;
 
   unsigned RegT = MI.getOperand(RegTOpIdx).getReg();
-  RegT = getARMRegisterNumbering(RegT);
+  RegT = II->getRegisterInfo().getEncodingValue(RegT);
   Binary |= (RegT << ARMII::RegRdShift);
   Binary |= encodeNEONRn(MI, RegNOpIdx);
 
@@ -1841,7 +1853,7 @@ void ARMCodeEmitter::emitNEONDupInstruction(const MachineInstr &MI) {
   Binary |= (IsThumb ? ARMCC::AL : II->getPredicate(&MI)) << ARMII::CondShift;
 
   unsigned RegT = MI.getOperand(1).getReg();
-  RegT = getARMRegisterNumbering(RegT);
+  RegT = II->getRegisterInfo().getEncodingValue(RegT);
   Binary |= (RegT << ARMII::RegRdShift);
   Binary |= encodeNEONRn(MI, 0);
   emitWordLE(Binary);

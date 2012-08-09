@@ -289,9 +289,9 @@ void ARMJITInfo::relocate(void *Function, MachineRelocation *MR,
       if (MR->getRelocationType() == ARM::reloc_arm_vfp_cp_entry)
         ResultPtr = ResultPtr >> 2;
       *((intptr_t*)RelocPos) |= ResultPtr;
-      // Set register Rn to PC.
-      *((intptr_t*)RelocPos) |=
-        getARMRegisterNumbering(ARM::PC) << ARMII::RegRnShift;
+      // Set register Rn to PC (which is register 15 on all architectures).
+      // FIXME: This avoids the need for register info in the JIT class.
+      *((intptr_t*)RelocPos) |= 15 << ARMII::RegRnShift;
       break;
     }
     case ARM::reloc_arm_pic_jt:
