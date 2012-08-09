@@ -282,8 +282,9 @@ public: // Part of public interface to class.
 
   StoreRef BindArray(Store store, const TypedValueRegion* R, SVal V);
 
-  /// KillStruct - Set the entire struct to unknown.
-  StoreRef KillStruct(Store store, const TypedRegion* R, SVal DefaultVal);
+  /// Clears out all bindings in the given region and assigns a new value
+  /// as a Default binding.
+  StoreRef BindAggregate(Store store, const TypedRegion *R, SVal DefaultVal);
 
   StoreRef Remove(Store store, Loc LV);
 
@@ -352,9 +353,6 @@ public: // Part of public interface to class.
   GetLazyBinding(RegionBindings B, const MemRegion *R,
                  const MemRegion *originalRegion,
                  bool includeSuffix = false);
-
-  StoreRef CopyLazyBindings(nonloc::LazyCompoundVal V, Store store,
-                            const TypedRegion *R);
 
   //===------------------------------------------------------------------===//
   // State pruning.
@@ -1661,12 +1659,12 @@ StoreRef RegionStoreManager::BindArray(Store store, const TypedValueRegion* R,
     nonloc::LazyCompoundVal LCV =
       cast<nonloc::LazyCompoundVal>(svalBuilder.
                                 makeLazyCompoundVal(StoreRef(store, *this), S));
-    return CopyLazyBindings(LCV, store, R);
+    return BindAggregate(store, R, LCV);
   }
 
   // Handle lazy compound values.
-  if (nonloc::LazyCompoundVal *LCV = dyn_cast<nonloc::LazyCompoundVal>(&Init))
-    return CopyLazyBindings(*LCV, store, R);
+  if (isa<nonloc::LazyCompoundVal>(Init))
+    return BindAggregate(store, R, Init);
 
   // Remaining case: explicit compound values.
 
@@ -1708,16 +1706,15 @@ StoreRef RegionStoreManager::BindVector(Store store, const TypedValueRegion* R,
   assert(T->isVectorType());
   const VectorType *VT = T->getAs<VectorType>(); // Use getAs for typedefs.
  
-  // Handle lazy compound values.
-  if (nonloc::LazyCompoundVal *LCV = dyn_cast<nonloc::LazyCompoundVal>(&V))
-    return CopyLazyBindings(*LCV, store, R);
+  // Handle lazy compound values and symbolic values.
+  if (isa<nonloc::LazyCompoundVal>(V) || isa<nonloc::SymbolVal>(V))
+    return BindAggregate(store, R, V);
   
   // We may get non-CompoundVal accidentally due to imprecise cast logic or
   // that we are binding symbolic struct value. Kill the field values, and if
   // the value is symbolic go and bind it as a "default" binding.
-  if (V.isUnknown() || !isa<nonloc::CompoundVal>(V)) {
-    SVal SV = isa<nonloc::SymbolVal>(V) ? V : UnknownVal();
-    return KillStruct(store, R, SV);
+  if (!isa<nonloc::CompoundVal>(V)) {
+    return BindAggregate(store, R, UnknownVal());
   }
 
   QualType ElemType = VT->getElementType();
@@ -1758,17 +1755,15 @@ StoreRef RegionStoreManager::BindStruct(Store store, const TypedValueRegion* R,
   if (!RD->isCompleteDefinition())
     return StoreRef(store, *this);
 
-  // Handle lazy compound values.
-  if (const nonloc::LazyCompoundVal *LCV=dyn_cast<nonloc::LazyCompoundVal>(&V))
-    return CopyLazyBindings(*LCV, store, R);
+  // Handle lazy compound values and symbolic values.
+  if (isa<nonloc::LazyCompoundVal>(V) || isa<nonloc::SymbolVal>(V))
+    return BindAggregate(store, R, V);
 
   // We may get non-CompoundVal accidentally due to imprecise cast logic or
   // that we are binding symbolic struct value. Kill the field values, and if
   // the value is symbolic go and bind it as a "default" binding.
-  if (V.isUnknown() || !isa<nonloc::CompoundVal>(V)) {
-    SVal SV = isa<nonloc::SymbolVal>(V) ? V : UnknownVal();
-    return KillStruct(store, R, SV);
-  }
+  if (V.isUnknown() || !isa<nonloc::CompoundVal>(V))
+    return BindAggregate(store, R, UnknownVal());
 
   nonloc::CompoundVal& CV = cast<nonloc::CompoundVal>(V);
   nonloc::CompoundVal::iterator VI = CV.begin(), VE = CV.end();
@@ -1807,30 +1802,16 @@ StoreRef RegionStoreManager::BindStruct(Store store, const TypedValueRegion* R,
   return newStore;
 }
 
-StoreRef RegionStoreManager::KillStruct(Store store, const TypedRegion* R,
-                                     SVal DefaultVal) {
-  BindingKey key = BindingKey::Make(R, BindingKey::Default);
-
+StoreRef RegionStoreManager::BindAggregate(Store store, const TypedRegion *R,
+                                           SVal Val) {
   // Remove the old bindings, using 'R' as the root of all regions
-  // we will invalidate.
+  // we will invalidate. Then add the new binding.
   RegionBindings B = GetRegionBindings(store);
+
   B = removeSubRegionBindings(B, R);
+  B = addBinding(B, R, BindingKey::Default, Val);
 
-  return StoreRef(addBinding(B, key, DefaultVal).getRootWithoutRetain(), *this);
-}
-
-StoreRef RegionStoreManager::CopyLazyBindings(nonloc::LazyCompoundVal V,
-                                              Store store,
-                                              const TypedRegion *R) {
-
-  // Nuke the old bindings stemming from R.
-  RegionBindings B = GetRegionBindings(store);
-  B = removeSubRegionBindings(B, R);
-
-  // Now copy the bindings.  This amounts to just binding 'V' to 'R'.  This
-  // results in a zero-copy algorithm.
-  return StoreRef(addBinding(B, R, BindingKey::Default,
-                             V).getRootWithoutRetain(), *this);
+  return StoreRef(B.getRootWithoutRetain(), *this);
 }
 
 //===----------------------------------------------------------------------===//
