@@ -62,5 +62,14 @@ void ReportAsanGetAllocatedSizeNotOwned(uptr addr, AsanStackTrace *stack) {
   ShowStatsAndAbort();
 }
 
+void ReportStringFunctionMemoryRangesOverlap(
+    const char *function, const char *offset1, uptr length1,
+    const char *offset2, uptr length2, AsanStackTrace *stack) {
+  AsanReport("ERROR: AddressSanitizer %s-param-overlap: "
+             "memory ranges [%p,%p) and [%p, %p) overlap\n", \
+             function, offset1, offset1 + length1, offset2, offset2 + length2);
+  stack->PrintStack();
+  ShowStatsAndAbort();
+}
 
 }  // namespace __asan
