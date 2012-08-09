@@ -2935,7 +2935,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   OwningPtr<llvm::MCTargetAsmParser>
     TargetParser(TheTarget->createMCAsmParser(*STI, *Parser));
 
-  // Change to the Intel syntax.
+  // Change to the Intel dialect.
   Parser->setAssemblerDialect(1);
   Parser->setTargetParser(*TargetParser.get());
 
