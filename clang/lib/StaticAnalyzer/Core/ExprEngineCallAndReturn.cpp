@@ -11,18 +11,24 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "ExprEngine"
+
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CallEvent.h"
 #include "clang/AST/DeclCXX.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Support/SaveAndRestore.h"
 
 #define CXX_INLINING_ENABLED 1
 
 using namespace clang;
 using namespace ento;
+
+STATISTIC(NumOfDynamicDispatchPathSplits,
+  "The # of times we split the path due to imprecise dynamic dispatch info");
 
 void ExprEngine::processCallEnter(CallEnter CE, ExplodedNode *Pred) {
   // Get the entry block in the CFG of the callee.
@@ -273,14 +279,27 @@ bool ExprEngine::shouldInlineDecl(const Decl *D, ExplodedNode *Pred) {
   return true;
 }
 
-bool ExprEngine::inlineCall(const CallEvent &Call,
-                            ExplodedNode *Pred) {
-  if (!getAnalysisManager().shouldInlineCall())
-    return false;
+/// The GDM component containing the dynamic dispatch bifurcation info. When
+/// the exact type of the receiver is not known, we want to explore both paths -
+/// one on which we do inline it and the other one on which we don't. This is
+/// done to ensure we do not drop coverage.
+/// This is the map from the receiver region to a bool, specifying either we
+/// consider this region's information precise or not along the given path.
+namespace clang {
+namespace ento {
+struct DynamicDispatchBifurcationMap {};
+typedef llvm::ImmutableMap<const MemRegion*,
+                           int> DynamicDispatchBifur;
+template<> struct ProgramStateTrait<DynamicDispatchBifurcationMap>
+    :  public ProgramStatePartialTrait<DynamicDispatchBifur> {
+  static void *GDMIndex() { static int index; return &index; }
+};
+}}
 
-  const Decl *D = Call.getRuntimeDefinition();
-  if (!D)
-    return false;
+bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
+                            NodeBuilder &Bldr, ExplodedNode *Pred,
+                            ProgramStateRef State) {
+  assert(D);
 
   const LocationContext *CurLC = Pred->getLocationContext();
   const StackFrameContext *CallerSFC = CurLC->getCurrentStackFrame();
@@ -359,7 +378,8 @@ bool ExprEngine::inlineCall(const CallEvent &Call,
     break;
   }
   case CE_ObjCMessage:
-    if (getAnalysisManager().IPAMode != DynamicDispatch)
+    if (!(getAnalysisManager().IPAMode == DynamicDispatch ||
+          getAnalysisManager().IPAMode == DynamicDispatchBifurcate))
       return false;
     break;
   }
@@ -384,7 +404,7 @@ bool ExprEngine::inlineCall(const CallEvent &Call,
 
   // Construct a new state which contains the mapping from actual to
   // formal arguments.
-  ProgramStateRef State = Pred->getState()->enterStackFrame(Call, CalleeSFC);
+  State = State->enterStackFrame(Call, CalleeSFC);
 
   bool isNew;
   if (ExplodedNode *N = G.getNode(Loc, State, false, &isNew)) {
@@ -392,6 +412,11 @@ bool ExprEngine::inlineCall(const CallEvent &Call,
     if (isNew)
       Engine.getWorkList()->enqueue(N);
   }
+
+  // If we decided to inline the call, the successor has been manually
+  // added onto the work list so remove it from the node builder.
+  Bldr.takeNodes(Pred);
+
   return true;
 }
 
@@ -491,6 +516,18 @@ ProgramStateRef ExprEngine::bindReturnValue(const CallEvent &Call,
   return State->BindExpr(E, LCtx, R);
 }
 
+// Conservatively evaluate call by invalidating regions and binding
+// a conjured return value.
+void ExprEngine::conservativeEvalCall(const CallEvent &Call, NodeBuilder &Bldr,
+                                      ExplodedNode *Pred, ProgramStateRef State) {
+  unsigned Count = currentBuilderContext->getCurrentBlockCount();
+  State = Call.invalidateRegions(Count, State);
+  State = bindReturnValue(Call, Pred->getLocationContext(), State);
+
+  // And make the result node.
+  Bldr.generateNode(Call.getProgramPoint(), State, Pred);
+}
+
 void ExprEngine::defaultEvalCall(NodeBuilder &Bldr, ExplodedNode *Pred,
                                  const CallEvent &CallTemplate) {
   // Make sure we have the most recent state attached to the call.
@@ -506,22 +543,66 @@ void ExprEngine::defaultEvalCall(NodeBuilder &Bldr, ExplodedNode *Pred,
   if (InlinedFailedState) {
     // If we already tried once and failed, make sure we don't retry later.
     State = InlinedFailedState;
-  } else if (inlineCall(*Call, Pred)) {
-    // If we decided to inline the call, the successor has been manually
-    // added onto the work list and we should not perform our generic
-    // call-handling steps.
-    Bldr.takeNodes(Pred);
-    return;
+  } else if (getAnalysisManager().shouldInlineCall()) {
+    RuntimeDefinition RD = Call->getRuntimeDefinition();
+    const Decl *D = RD.Decl;
+    if (D) {
+      // Explore with and without inlining the call.
+      const MemRegion *BifurReg = RD.Reg;
+      if (BifurReg &&
+          getAnalysisManager().IPAMode == DynamicDispatchBifurcate) {
+        BifurcateCall(BifurReg, *Call, D, Bldr, Pred);
+        return;
+      } else {
+        // We are not bifurcating and we do have a Decl, so just inline.
+        if (inlineCall(*Call, D, Bldr, Pred, State))
+          return;
+      }
+    }
   }
 
   // If we can't inline it, handle the return value and invalidate the regions.
-  unsigned Count = currentBuilderContext->getCurrentBlockCount();
-  State = Call->invalidateRegions(Count, State);
-  State = bindReturnValue(*Call, Pred->getLocationContext(), State);
-
-  // And make the result node.
-  Bldr.generateNode(Call->getProgramPoint(), State, Pred);
+  conservativeEvalCall(*Call, Bldr, Pred, State);
 }
+
+void ExprEngine::BifurcateCall(const MemRegion *BifurReg,
+                               const CallEvent &Call, const Decl *D,
+                               NodeBuilder &Bldr, ExplodedNode *Pred) {
+  assert(BifurReg);
+
+  // Check if we've performed the split already - note, we only want
+  // to split the path once per memory region.
+  ProgramStateRef State = Pred->getState();
+  DynamicDispatchBifur BM = State->get<DynamicDispatchBifurcationMap>();
+  for (DynamicDispatchBifur::iterator I = BM.begin(),
+                                      E = BM.end(); I != E; ++I) {
+    if (I->first == BifurReg) {
+      // If we are on "inline path", keep inlining if possible.
+      if (I->second == true)
+        if (inlineCall(Call, D, Bldr, Pred, State))
+          return;
+      // If inline failed, or we are on the path where we assume we
+      // don't have enough info about the receiver to inline, conjure the
+      // return value and invalidate the regions.
+      conservativeEvalCall(Call, Bldr, Pred, State);
+      return;
+    }
+  }
+
+  // If we got here, this is the first time we process a message to this
+  // region, so split the path.
+  ProgramStateRef IState =
+      State->set<DynamicDispatchBifurcationMap>(BifurReg, true);
+  inlineCall(Call, D, Bldr, Pred, IState);
+
+  ProgramStateRef NoIState =
+      State->set<DynamicDispatchBifurcationMap>(BifurReg, false);
+  conservativeEvalCall(Call, Bldr, Pred, NoIState);
+
+  NumOfDynamicDispatchPathSplits++;
+  return;
+}
+
 
 void ExprEngine::VisitReturnStmt(const ReturnStmt *RS, ExplodedNode *Pred,
                                  ExplodedNodeSet &Dst) {

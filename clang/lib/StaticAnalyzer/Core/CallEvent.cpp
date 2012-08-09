@@ -382,14 +382,14 @@ static const CXXMethodDecl *devirtualize(const CXXMethodDecl *MD, SVal ThisVal){
 }
 
 
-const Decl *CXXInstanceCall::getRuntimeDefinition() const {
-  const Decl *D = SimpleCall::getRuntimeDefinition();
+RuntimeDefinition CXXInstanceCall::getRuntimeDefinition() const {
+  const Decl *D = SimpleCall::getRuntimeDefinition().Decl;
   if (!D)
-    return 0;
+    return RuntimeDefinition();
 
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(D);
   if (!MD->isVirtual())
-    return MD;
+    return RuntimeDefinition(MD, 0);
 
   // If the method is virtual, see if we can find the actual implementation
   // based on context-sensitivity.
@@ -398,9 +398,9 @@ const Decl *CXXInstanceCall::getRuntimeDefinition() const {
   // because a /partially/ constructed object can be referred to through a
   // base pointer. We'll eventually want to use DynamicTypeInfo here.
   if (const CXXMethodDecl *Devirtualized = devirtualize(MD, getCXXThisVal()))
-    return Devirtualized;
+    return RuntimeDefinition(Devirtualized, 0);
 
-  return 0;
+  return RuntimeDefinition();
 }
 
 void CXXInstanceCall::getInitialStackFrameContents(
@@ -512,14 +512,14 @@ void CXXDestructorCall::getExtraInvalidatedRegions(RegionList &Regions) const {
     Regions.push_back(static_cast<const MemRegion *>(Data));
 }
 
-const Decl *CXXDestructorCall::getRuntimeDefinition() const {
-  const Decl *D = AnyFunctionCall::getRuntimeDefinition();
+RuntimeDefinition CXXDestructorCall::getRuntimeDefinition() const {
+  const Decl *D = AnyFunctionCall::getRuntimeDefinition().Decl;
   if (!D)
-    return 0;
+    return RuntimeDefinition();
 
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(D);
   if (!MD->isVirtual())
-    return MD;
+    return RuntimeDefinition(MD, 0);
 
   // If the method is virtual, see if we can find the actual implementation
   // based on context-sensitivity.
@@ -528,9 +528,9 @@ const Decl *CXXDestructorCall::getRuntimeDefinition() const {
   // because a /partially/ constructed object can be referred to through a
   // base pointer. We'll eventually want to use DynamicTypeInfo here.
   if (const CXXMethodDecl *Devirtualized = devirtualize(MD, getCXXThisVal()))
-    return Devirtualized;
+    return RuntimeDefinition(Devirtualized, 0);
 
-  return 0;
+  return RuntimeDefinition();
 }
 
 void CXXDestructorCall::getInitialStackFrameContents(
@@ -659,7 +659,7 @@ ObjCMessageKind ObjCMethodCall::getMessageKind() const {
   return static_cast<ObjCMessageKind>(Info.getInt());
 }
 
-const Decl *ObjCMethodCall::getRuntimeDefinition() const {
+RuntimeDefinition ObjCMethodCall::getRuntimeDefinition() const {
   const ObjCMessageExpr *E = getOriginExpr();
   assert(E);
   Selector Sel = E->getSelector();
@@ -669,12 +669,16 @@ const Decl *ObjCMethodCall::getRuntimeDefinition() const {
     // Find the the receiver type.
     const ObjCObjectPointerType *ReceiverT = 0;
     QualType SupersType = E->getSuperType();
+    const MemRegion *Receiver = 0;
+
     if (!SupersType.isNull()) {
+      // Super always means the type of immediate predecessor to the method
+      // where the call occurs.
       ReceiverT = cast<ObjCObjectPointerType>(SupersType);
     } else {
-      const MemRegion *Receiver = getReceiverSVal().getAsRegion();
+      Receiver = getReceiverSVal().getAsRegion();
       if (!Receiver)
-        return 0;
+        return RuntimeDefinition();
 
       QualType DynType = getState()->getDynamicTypeInfo(Receiver).getType();
       ReceiverT = dyn_cast<ObjCObjectPointerType>(DynType);
@@ -683,7 +687,7 @@ const Decl *ObjCMethodCall::getRuntimeDefinition() const {
     // Lookup the method implementation.
     if (ReceiverT)
       if (ObjCInterfaceDecl *IDecl = ReceiverT->getInterfaceDecl())
-        return IDecl->lookupPrivateMethod(Sel);
+        return RuntimeDefinition(IDecl->lookupPrivateMethod(Sel), Receiver);
 
   } else {
     // This is a class method.
@@ -691,11 +695,11 @@ const Decl *ObjCMethodCall::getRuntimeDefinition() const {
     // class name.
     if (ObjCInterfaceDecl *IDecl = E->getReceiverInterface()) {
       // Find/Return the method implementation.
-      return IDecl->lookupPrivateClassMethod(Sel);
+      return RuntimeDefinition(IDecl->lookupPrivateClassMethod(Sel), 0);
     }
   }
 
-  return 0;
+  return RuntimeDefinition();
 }
 
 void ObjCMethodCall::getInitialStackFrameContents(

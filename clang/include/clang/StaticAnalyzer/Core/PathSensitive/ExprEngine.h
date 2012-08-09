@@ -489,7 +489,19 @@ private:
                     const ProgramPointTag *tag, bool isLoad);
 
   bool shouldInlineDecl(const Decl *D, ExplodedNode *Pred);
-  bool inlineCall(const CallEvent &Call, ExplodedNode *Pred);
+  bool inlineCall(const CallEvent &Call, const Decl *D, NodeBuilder &Bldr,
+                  ExplodedNode *Pred, ProgramStateRef State);
+
+  /// \brief Conservatively evaluate call by invalidating regions and binding
+  /// a conjured return value.
+  void conservativeEvalCall(const CallEvent &Call, NodeBuilder &Bldr,
+                            ExplodedNode *Pred, ProgramStateRef State);
+
+  /// \brief Either inline or process the call conservatively (or both), based
+  /// on DynamicDispatchBifurcation data.
+  void BifurcateCall(const MemRegion *BifurReg,
+                     const CallEvent &Call, const Decl *D, NodeBuilder &Bldr,
+                     ExplodedNode *Pred);
 
   bool replayWithoutInlining(ExplodedNode *P, const LocationContext *CalleeLC);
 };

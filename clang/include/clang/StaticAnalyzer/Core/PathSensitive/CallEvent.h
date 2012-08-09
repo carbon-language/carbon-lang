@@ -68,6 +68,14 @@ public:
   }
 };
 
+struct RuntimeDefinition {
+  const Decl *Decl;
+  const MemRegion *Reg;
+  RuntimeDefinition(): Decl(0), Reg(0) {}
+  RuntimeDefinition(const class Decl *D): Decl(D), Reg(0) {}
+  RuntimeDefinition(const class Decl *D, const MemRegion *R): Decl(D), Reg(R){}
+};
+
 /// \brief Represents an abstract call to a function or method along a
 /// particular path.
 ///
@@ -161,7 +169,7 @@ public:
   /// \brief Returns the definition of the function or method that will be
   /// called. Returns NULL if the definition cannot be found; ex: due to
   /// dynamic dispatch in ObjC methods.
-  virtual const Decl *getRuntimeDefinition() const = 0;
+  virtual RuntimeDefinition getRuntimeDefinition() const = 0;
 
   /// \brief Returns the expression whose value will be the result of this call.
   /// May be null.
@@ -336,12 +344,12 @@ public:
     return cast<FunctionDecl>(CallEvent::getDecl());
   }
 
-  virtual const Decl *getRuntimeDefinition() const {
+  virtual RuntimeDefinition getRuntimeDefinition() const {
     const FunctionDecl *FD = getDecl();
     // Note that hasBody() will fill FD with the definition FunctionDecl.
     if (FD && FD->hasBody(FD))
-      return FD;
-    return 0;
+      return RuntimeDefinition(FD, 0);
+    return RuntimeDefinition();
   }
 
   virtual bool argumentsMayEscape() const;
@@ -432,7 +440,7 @@ public:
     return getSVal(Base);
   }
 
-  virtual const Decl *getRuntimeDefinition() const;
+  virtual RuntimeDefinition getRuntimeDefinition() const;
 
   virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
                                             BindingsTy &Bindings) const;
@@ -545,8 +553,8 @@ public:
     return BR->getDecl();
   }
 
-  virtual const Decl *getRuntimeDefinition() const {
-    return getBlockDecl();
+  virtual RuntimeDefinition getRuntimeDefinition() const {
+    return RuntimeDefinition(getBlockDecl(), 0);
   }
 
   virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
@@ -650,7 +658,7 @@ public:
   /// \brief Returns the value of the implicit 'this' object.
   virtual SVal getCXXThisVal() const;
 
-  virtual const Decl *getRuntimeDefinition() const;
+  virtual RuntimeDefinition getRuntimeDefinition() const;
 
   virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
                                             BindingsTy &Bindings) const;
@@ -786,7 +794,7 @@ public:
     llvm_unreachable("Unknown message kind");
   }
 
-  virtual const Decl *getRuntimeDefinition() const;
+  virtual RuntimeDefinition getRuntimeDefinition() const;
 
   virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
                                             BindingsTy &Bindings) const;
