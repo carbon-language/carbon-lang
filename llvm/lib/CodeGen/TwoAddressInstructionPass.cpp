@@ -235,7 +235,7 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
   // appropriate location, we can try to sink the current instruction
   // past it.
   if (!KillMI || KillMI->getParent() != MBB || KillMI == MI ||
-      KillMI->isTerminator())
+      KillMI == OldPos || KillMI->isTerminator())
     return false;
 
   // If any of the definitions are used by another instruction between the
@@ -278,6 +278,7 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
       }
     }
   }
+  assert(KillMO && "Didn't find kill");
 
   // Update kill and LV information.
   KillMO->setIsKill(false);
