@@ -38,9 +38,6 @@ class RefState {
               Allocated,
               // Reference to released/freed memory.
               Released,
-              // Reference to escaped memory - no assumptions can be made of
-              // the state after the reference escapes.
-              Escaped,
               // The responsibility for freeing resources has transfered from
               // this reference. A relinquished symbol should not be freed.
               Relinquished } K;
@@ -63,7 +60,6 @@ public:
     return RefState(Allocated, s);
   }
   static RefState getReleased(const Stmt *s) { return RefState(Released, s); }
-  static RefState getEscaped(const Stmt *s) { return RefState(Escaped, s); }
   static RefState getRelinquished(const Stmt *s) {
     return RefState(Relinquished, s);
   }
@@ -194,7 +190,6 @@ private:
   ///\brief Check if the memory associated with this symbol was released.
   bool isReleased(SymbolRef Sym, CheckerContext &C) const;
 
-  bool checkEscape(SymbolRef Sym, const Stmt *S, CheckerContext &C) const;
   bool checkUseAfterFree(SymbolRef Sym, CheckerContext &C,
                          const Stmt *S = 0) const;
 
@@ -1076,21 +1071,6 @@ void MallocChecker::checkEndPath(CheckerContext &C) const {
   }
 }
 
-bool MallocChecker::checkEscape(SymbolRef Sym, const Stmt *S,
-                                CheckerContext &C) const {
-  ProgramStateRef state = C.getState();
-  const RefState *RS = state->get<RegionState>(Sym);
-  if (!RS)
-    return false;
-
-  if (RS->isAllocated()) {
-    state = state->set<RegionState>(Sym, RefState::getEscaped(S));
-    C.addTransition(state);
-    return true;
-  }
-  return false;
-}
-
 void MallocChecker::checkPreStmt(const CallExpr *CE, CheckerContext &C) const {
   // We will check for double free in the post visit.
   if (isFreeFunction(C.getCalleeDecl(CE), C.getASTContext()))
@@ -1475,8 +1455,7 @@ MallocChecker::checkRegionChanges(ProgramStateRef State,
     // relinquished symbols.
     if (const RefState *RS = State->get<RegionState>(sym)) {
       if (RS->isAllocated())
-        State = State->set<RegionState>(sym,
-                                        RefState::getEscaped(RS->getStmt()));
+        State = State->remove<RegionState>(sym);
     }
   }
   return State;
