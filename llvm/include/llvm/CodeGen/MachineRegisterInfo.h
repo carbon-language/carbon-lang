@@ -57,6 +57,20 @@ class MachineRegisterInfo {
   /// physical registers.
   MachineOperand **PhysRegUseDefLists;
 
+  /// getRegUseDefListHead - Return the head pointer for the register use/def
+  /// list for the specified virtual or physical register.
+  MachineOperand *&getRegUseDefListHead(unsigned RegNo) {
+    if (TargetRegisterInfo::isVirtualRegister(RegNo))
+      return VRegInfo[RegNo].second;
+    return PhysRegUseDefLists[RegNo];
+  }
+
+  MachineOperand *getRegUseDefListHead(unsigned RegNo) const {
+    if (TargetRegisterInfo::isVirtualRegister(RegNo))
+      return VRegInfo[RegNo].second;
+    return PhysRegUseDefLists[RegNo];
+  }
+
   /// Get the next element in the use-def chain.
   static MachineOperand *getNextOperandForReg(const MachineOperand *MO) {
     assert(MO && MO->isReg() && "This is not a register operand!");
@@ -134,6 +148,12 @@ public:
   //===--------------------------------------------------------------------===//
   // Register Info
   //===--------------------------------------------------------------------===//
+
+  // Strictly for use by MachineInstr.cpp.
+  void addRegOperandToUseList(MachineOperand *MO);
+
+  // Strictly for use by MachineInstr.cpp.
+  void removeRegOperandFromUseList(MachineOperand *MO);
 
   /// reg_begin/reg_end - Provide iteration support to walk over all definitions
   /// and uses of a register within the MachineFunction that corresponds to this
@@ -240,20 +260,6 @@ public:
   /// That function will return NULL if the virtual registers have incompatible
   /// constraints.
   void replaceRegWith(unsigned FromReg, unsigned ToReg);
-
-  /// getRegUseDefListHead - Return the head pointer for the register use/def
-  /// list for the specified virtual or physical register.
-  MachineOperand *&getRegUseDefListHead(unsigned RegNo) {
-    if (TargetRegisterInfo::isVirtualRegister(RegNo))
-      return VRegInfo[RegNo].second;
-    return PhysRegUseDefLists[RegNo];
-  }
-
-  MachineOperand *getRegUseDefListHead(unsigned RegNo) const {
-    if (TargetRegisterInfo::isVirtualRegister(RegNo))
-      return VRegInfo[RegNo].second;
-    return PhysRegUseDefLists[RegNo];
-  }
 
   /// getVRegDef - Return the machine instr that defines the specified virtual
   /// register or null if none is found.  This assumes that the code is in SSA

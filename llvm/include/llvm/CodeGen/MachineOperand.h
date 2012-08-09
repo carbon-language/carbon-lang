@@ -666,15 +666,6 @@ private:
     assert(isReg() && "Can only add reg operand to use lists");
     return Contents.Reg.Prev != 0;
   }
-
-  /// AddRegOperandToRegInfo - Add this register operand to the specified
-  /// MachineRegisterInfo.  If it is null, then the next/prev fields should be
-  /// explicitly nulled out.
-  void AddRegOperandToRegInfo(MachineRegisterInfo *RegInfo);
-
-  /// RemoveRegOperandFromRegInfo - Remove this register operand from the
-  /// MachineRegisterInfo it is linked with.
-  void RemoveRegOperandFromRegInfo();
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS, const MachineOperand& MO) {

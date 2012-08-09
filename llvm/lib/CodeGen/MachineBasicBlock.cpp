@@ -109,7 +109,8 @@ void ilist_traits<MachineInstr>::removeNodeFromList(MachineInstr *N) {
   assert(N->getParent() != 0 && "machine instruction not in a basic block");
 
   // Remove from the use/def lists.
-  N->RemoveRegOperandsFromUseLists();
+  if (MachineFunction *MF = N->getParent()->getParent())
+    N->RemoveRegOperandsFromUseLists(MF->getRegInfo());
 
   N->setParent(0);
 

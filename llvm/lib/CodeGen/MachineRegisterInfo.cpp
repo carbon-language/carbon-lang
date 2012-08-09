@@ -126,6 +126,43 @@ void MachineRegisterInfo::clearVirtRegs() {
   VRegInfo.clear();
 }
 
+/// Add MO to the linked list of operands for its register.
+void MachineRegisterInfo::addRegOperandToUseList(MachineOperand *MO) {
+  assert(!MO->isOnRegUseList() && "Already on list");
+  MachineOperand **Head = &getRegUseDefListHead(MO->getReg());
+
+  // For SSA values, we prefer to keep the definition at the start of the list.
+  // we do this by skipping over the definition if it is at the head of the
+  // list.
+  if (*Head && (*Head)->isDef())
+    Head = &(*Head)->Contents.Reg.Next;
+
+  MO->Contents.Reg.Next = *Head;
+  if (MO->Contents.Reg.Next) {
+    assert(MO->getReg() == MO->Contents.Reg.Next->getReg() &&
+           "Different regs on the same list!");
+    MO->Contents.Reg.Next->Contents.Reg.Prev = &MO->Contents.Reg.Next;
+  }
+
+  MO->Contents.Reg.Prev = Head;
+  *Head = MO;
+}
+
+/// Remove MO from its use-def list.
+void MachineRegisterInfo::removeRegOperandFromUseList(MachineOperand *MO) {
+  assert(MO->isOnRegUseList() && "Operand not on use list");
+
+  // Unlink this from the doubly linked list of operands.
+  MachineOperand *NextOp = MO->Contents.Reg.Next;
+  *MO->Contents.Reg.Prev = NextOp;
+  if (NextOp) {
+    assert(NextOp->getReg() == MO->getReg() && "Corrupt reg use/def chain!");
+    NextOp->Contents.Reg.Prev = MO->Contents.Reg.Prev;
+  }
+  MO->Contents.Reg.Prev = 0;
+  MO->Contents.Reg.Next = 0;
+}
+
 /// HandleVRegListReallocation - We just added a virtual register to the
 /// VRegInfo info list and it reallocated.  Update the use/def lists info
 /// pointers.

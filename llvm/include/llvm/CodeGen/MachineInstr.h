@@ -936,12 +936,12 @@ private:
   /// RemoveRegOperandsFromUseLists - Unlink all of the register operands in
   /// this instruction from their respective use lists.  This requires that the
   /// operands already be on their use lists.
-  void RemoveRegOperandsFromUseLists();
+  void RemoveRegOperandsFromUseLists(MachineRegisterInfo&);
 
   /// AddRegOperandsToUseLists - Add all of the register operands in
   /// this instruction from their respective use lists.  This requires that the
   /// operands not be on their use lists yet.
-  void AddRegOperandsToUseLists(MachineRegisterInfo &RegInfo);
+  void AddRegOperandsToUseLists(MachineRegisterInfo&);
 
   /// hasPropertyInBundle - Slow path for hasProperty when we're dealing with a
   /// bundle.
