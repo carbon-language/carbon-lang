@@ -2757,21 +2757,24 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty) const {
     }
   }
 
+  // FIXME: byval for AAPCS is not yet supported; we need it for performance
+  // and to support large alignment.
+  if (getABIKind() == ARMABIInfo::APCS) {
+    if (getContext().getTypeSizeInChars(Ty) > CharUnits::fromQuantity(64) ||
+        getContext().getTypeAlign(Ty) > 64) {
+      return ABIArgInfo::getIndirect(0, /*ByVal=*/true);
+    }
+  }
+
   // Otherwise, pass by coercing to a structure of the appropriate size.
-  //
-  // FIXME: This doesn't handle alignment > 64 bits.
   llvm::Type* ElemTy;
   unsigned SizeRegs;
-  if (getContext().getTypeSizeInChars(Ty) <= CharUnits::fromQuantity(64)) {
+  // FIXME: Try to match the types of the arguments more accurately where
+  // we can.
+  if (getContext().getTypeAlign(Ty) <= 32) {
     ElemTy = llvm::Type::getInt32Ty(getVMContext());
     SizeRegs = (getContext().getTypeSize(Ty) + 31) / 32;
-  } else if (getABIKind() == ARMABIInfo::APCS) {
-    // Initial ARM ByVal support is APCS-only.
-    return ABIArgInfo::getIndirect(0, /*ByVal=*/true);
   } else {
-    // FIXME: This is kind of nasty... but there isn't much choice
-    // because most of the ARM calling conventions don't yet support
-    // byval.
     ElemTy = llvm::Type::getInt64Ty(getVMContext());
     SizeRegs = (getContext().getTypeSize(Ty) + 63) / 64;
   }
