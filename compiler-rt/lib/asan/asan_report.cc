@@ -211,6 +211,52 @@ void ReportStringFunctionMemoryRangesOverlap(
   ShowStatsAndAbort();
 }
 
+// ----------------------- Mac-specific reports ----------------- {{{1
+
+static void PrintZoneForPointer(uptr ptr, uptr zone_ptr,
+                                const char *zone_name) {
+  if (zone_ptr) {
+    if (zone_name) {
+      AsanPrintf("malloc_zone_from_ptr(%p) = %p, which is %s\n",
+                 ptr, zone_ptr, zone_name);
+    } else {
+      AsanPrintf("malloc_zone_from_ptr(%p) = %p, which doesn't have a name\n",
+                 ptr, zone_ptr);
+    }
+  } else {
+    AsanPrintf("malloc_zone_from_ptr(%p) = 0\n", ptr);
+  }
+}
+
+void WarnMacFreeUnallocated(
+    uptr addr, uptr zone_ptr, const char *zone_name, AsanStackTrace *stack) {
+  AsanPrintf("free_common(%p) -- attempting to free unallocated memory.\n"
+             "AddressSanitizer is ignoring this error on Mac OS now.\n",
+             addr);
+  PrintZoneForPointer(addr, zone_ptr, zone_name);
+  stack->PrintStack();
+}
+
+void ReportMacMzReallocUnknown(
+    uptr addr, uptr zone_ptr, const char *zone_name, AsanStackTrace *stack) {
+  AsanPrintf("mz_realloc(%p) -- attempting to realloc unallocated memory.\n"
+             "This is an unrecoverable problem, exiting now.\n",
+             addr);
+  PrintZoneForPointer(addr, zone_ptr, zone_name);
+  stack->PrintStack();
+  ShowStatsAndAbort();
+}
+
+void ReportMacCfReallocUnknown(
+    uptr addr, uptr zone_ptr, const char *zone_name, AsanStackTrace *stack) {
+  AsanPrintf("cf_realloc(%p) -- attempting to realloc unallocated memory.\n"
+             "This is an unrecoverable problem, exiting now.\n",
+             addr);
+  PrintZoneForPointer(addr, zone_ptr, zone_name);
+  stack->PrintStack();
+  ShowStatsAndAbort();
+}
+
 static void PrintBytes(const char *before, uptr *a) {
   u8 *bytes = (u8*)a;
   uptr byte_num = (__WORDSIZE) / 8;

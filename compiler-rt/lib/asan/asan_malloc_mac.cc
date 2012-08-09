@@ -24,6 +24,7 @@
 #include "asan_interceptors.h"
 #include "asan_internal.h"
 #include "asan_mac.h"
+#include "asan_report.h"
 #include "asan_stack.h"
 
 // Similar code is used in Google Perftools,
@@ -152,20 +153,9 @@ void *mz_valloc(malloc_zone_t *zone, size_t size) {
   return asan_memalign(kPageSize, size, &stack);
 }
 
-void print_zone_for_ptr(void *ptr) {
-  malloc_zone_t *orig_zone = malloc_zone_from_ptr(ptr);
-  if (orig_zone) {
-    if (orig_zone->zone_name) {
-      AsanPrintf("malloc_zone_from_ptr(%p) = %p, which is %s\n",
-                 ptr, orig_zone, orig_zone->zone_name);
-    } else {
-      AsanPrintf("malloc_zone_from_ptr(%p) = %p, which doesn't have a name\n",
-                 ptr, orig_zone);
-    }
-  } else {
-    AsanPrintf("malloc_zone_from_ptr(%p) = 0\n", ptr);
-  }
-}
+#define GET_ZONE_FOR_PTR(ptr) \
+  malloc_zone_t *zone_ptr = malloc_zone_from_ptr(ptr); \
+  const char *zone_name = (zone_ptr == 0) ? 0 : zone_ptr->zone_name
 
 void ALWAYS_INLINE free_common(void *context, void *ptr) {
   if (!ptr) return;
@@ -174,12 +164,9 @@ void ALWAYS_INLINE free_common(void *context, void *ptr) {
     asan_free(ptr, &stack);
   } else {
     // Let us just leak this memory for now.
-    AsanPrintf("free_common(%p) -- attempting to free unallocated memory.\n"
-               "AddressSanitizer is ignoring this error on Mac OS now.\n",
-               ptr);
-    print_zone_for_ptr(ptr);
     GET_STACK_TRACE_HERE_FOR_FREE(ptr);
-    stack.PrintStack();
+    GET_ZONE_FOR_PTR(ptr);
+    WarnMacFreeUnallocated((uptr)ptr, (uptr)zone_ptr, zone_name, &stack);
     return;
   }
 }
@@ -205,14 +192,9 @@ void *mz_realloc(malloc_zone_t *zone, void *ptr, size_t size) {
       // We can't recover from reallocating an unknown address, because
       // this would require reading at most |size| bytes from
       // potentially unaccessible memory.
-      AsanPrintf("mz_realloc(%p) -- attempting to realloc unallocated memory.\n"
-                 "This is an unrecoverable problem, exiting now.\n",
-                 ptr);
-      print_zone_for_ptr(ptr);
       GET_STACK_TRACE_HERE_FOR_FREE(ptr);
-      stack.PrintStack();
-      ShowStatsAndAbort();
-      return 0;  // unreachable
+      GET_ZONE_FOR_PTR(ptr);
+      ReportMacMzReallocUnknown((uptr)ptr, (uptr)zone_ptr, zone_name, &stack);
     }
   }
 }
@@ -229,14 +211,9 @@ void *cf_realloc(void *ptr, CFIndex size, CFOptionFlags hint, void *info) {
       // We can't recover from reallocating an unknown address, because
       // this would require reading at most |size| bytes from
       // potentially unaccessible memory.
-      AsanPrintf("cf_realloc(%p) -- attempting to realloc unallocated memory.\n"
-                 "This is an unrecoverable problem, exiting now.\n",
-                 ptr);
-      print_zone_for_ptr(ptr);
       GET_STACK_TRACE_HERE_FOR_FREE(ptr);
-      stack.PrintStack();
-      ShowStatsAndAbort();
-      return 0;  // unreachable
+      GET_ZONE_FOR_PTR(ptr);
+      ReportMacCfReallocUnknown((uptr)ptr, (uptr)zone_ptr, zone_name, &stack);
     }
   }
 }

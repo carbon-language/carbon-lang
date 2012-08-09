@@ -40,4 +40,12 @@ void NORETURN ReportStringFunctionMemoryRangesOverlap(
     const char *function, const char *offset1, uptr length1,
     const char *offset2, uptr length2, AsanStackTrace *stack);
 
+// Mac-specific errors and warnings.
+void WarnMacFreeUnallocated(
+    uptr addr, uptr zone_ptr, const char *zone_name, AsanStackTrace *stack);
+void NORETURN ReportMacMzReallocUnknown(
+    uptr addr, uptr zone_ptr, const char *zone_name, AsanStackTrace *stack);
+void NORETURN ReportMacCfReallocUnknown(
+    uptr addr, uptr zone_ptr, const char *zone_name, AsanStackTrace *stack);
+
 }  // namespace __asan
