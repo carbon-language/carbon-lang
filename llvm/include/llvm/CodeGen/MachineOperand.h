@@ -138,9 +138,6 @@ private:
   /// This is valid for all operand types, when the operand is in an instr.
   MachineInstr *ParentMI;
 
-  // MRI accesses Contents.Reg directly.
-  friend class MachineRegisterInfo;
-
   /// Contents union - This contains the payload for the various operand types.
   union {
     MachineBasicBlock *MBB;   // For MO_MachineBasicBlock.
