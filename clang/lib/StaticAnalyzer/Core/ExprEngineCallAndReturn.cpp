@@ -534,6 +534,10 @@ void ExprEngine::defaultEvalCall(NodeBuilder &Bldr, ExplodedNode *Pred,
   ProgramStateRef State = Pred->getState();
   CallEventRef<> Call = CallTemplate.cloneWithState(State);
 
+  if (!getAnalysisManager().shouldInlineCall()) {
+    conservativeEvalCall(*Call, Bldr, Pred, State);
+    return;
+  }
   // Try to inline the call.
   // The origin expression here is just used as a kind of checksum;
   // this should still be safe even for CallEvents that don't come from exprs.
@@ -543,21 +547,19 @@ void ExprEngine::defaultEvalCall(NodeBuilder &Bldr, ExplodedNode *Pred,
   if (InlinedFailedState) {
     // If we already tried once and failed, make sure we don't retry later.
     State = InlinedFailedState;
-  } else if (getAnalysisManager().shouldInlineCall()) {
+  } else {
     RuntimeDefinition RD = Call->getRuntimeDefinition();
     const Decl *D = RD.getDecl();
     if (D) {
       // Explore with and without inlining the call.
-      const MemRegion *BifurReg = RD.getReg();
-      if (BifurReg &&
+      if (RD.mayHaveOtherDefinitions() &&
           getAnalysisManager().IPAMode == DynamicDispatchBifurcate) {
-        BifurcateCall(BifurReg, *Call, D, Bldr, Pred);
+        BifurcateCall(RD.getDispatchRegion(), *Call, D, Bldr, Pred);
         return;
-      } else {
-        // We are not bifurcating and we do have a Decl, so just inline.
-        if (inlineCall(*Call, D, Bldr, Pred, State))
-          return;
       }
+      // We are not bifurcating and we do have a Decl, so just inline.
+      if (inlineCall(*Call, D, Bldr, Pred, State))
+        return;
     }
   }
 
@@ -573,20 +575,17 @@ void ExprEngine::BifurcateCall(const MemRegion *BifurReg,
   // Check if we've performed the split already - note, we only want
   // to split the path once per memory region.
   ProgramStateRef State = Pred->getState();
-  DynamicDispatchBifur BM = State->get<DynamicDispatchBifurcationMap>();
-  for (DynamicDispatchBifur::iterator I = BM.begin(),
-                                      E = BM.end(); I != E; ++I) {
-    if (I->first == BifurReg) {
-      // If we are on "inline path", keep inlining if possible.
-      if (I->second == true)
-        if (inlineCall(Call, D, Bldr, Pred, State))
-          return;
-      // If inline failed, or we are on the path where we assume we
-      // don't have enough info about the receiver to inline, conjure the
-      // return value and invalidate the regions.
-      conservativeEvalCall(Call, Bldr, Pred, State);
-      return;
-    }
+  const int *BState = State->get<DynamicDispatchBifurcationMap>(BifurReg);
+  if (BState) {
+    // If we are on "inline path", keep inlining if possible.
+    if (*BState == true)
+      if (inlineCall(Call, D, Bldr, Pred, State))
+        return;
+    // If inline failed, or we are on the path where we assume we
+    // don't have enough info about the receiver to inline, conjure the
+    // return value and invalidate the regions.
+    conservativeEvalCall(Call, Bldr, Pred, State);
+    return;
   }
 
   // If we got here, this is the first time we process a message to this

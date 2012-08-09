@@ -68,15 +68,24 @@ public:
   }
 };
 
+/// \brief Defines the runtime definition of the called function.
 class RuntimeDefinition {
+  /// The Declaration of the function which will be called at runtime.
+  /// 0 if not available.
   const Decl *D;
+
+  /// The region representing an object (ObjC/C++) on which the method is
+  /// called. With dynamic dispatch, the method definition depends on the
+  /// runtime type of this object. 0 when there is no dynamic dispatch.
   const MemRegion *R;
+
 public:
   RuntimeDefinition(): D(0), R(0) {}
   RuntimeDefinition(const Decl *InD): D(InD), R(0) {}
   RuntimeDefinition(const Decl *InD, const MemRegion *InR): D(InD), R(InR) {}
-  const Decl *getDecl() { return D;}
-  const MemRegion *getReg() {return R;}
+  const Decl *getDecl() { return D; }
+  const MemRegion *getDispatchRegion() { return R; }
+  bool mayHaveOtherDefinitions() { return R != 0; }
 };
 
 /// \brief Represents an abstract call to a function or method along a
@@ -170,8 +179,7 @@ public:
   }
 
   /// \brief Returns the definition of the function or method that will be
-  /// called. Returns NULL if the definition cannot be found; ex: due to
-  /// dynamic dispatch in ObjC methods.
+  /// called.
   virtual RuntimeDefinition getRuntimeDefinition() const = 0;
 
   /// \brief Returns the expression whose value will be the result of this call.
@@ -351,7 +359,7 @@ public:
     const FunctionDecl *FD = getDecl();
     // Note that hasBody() will fill FD with the definition FunctionDecl.
     if (FD && FD->hasBody(FD))
-      return RuntimeDefinition(FD, 0);
+      return RuntimeDefinition(FD);
     return RuntimeDefinition();
   }
 
@@ -557,7 +565,7 @@ public:
   }
 
   virtual RuntimeDefinition getRuntimeDefinition() const {
-    return RuntimeDefinition(getBlockDecl(), 0);
+    return RuntimeDefinition(getBlockDecl());
   }
 
   virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,

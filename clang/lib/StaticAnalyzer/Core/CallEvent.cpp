@@ -389,7 +389,7 @@ RuntimeDefinition CXXInstanceCall::getRuntimeDefinition() const {
 
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(D);
   if (!MD->isVirtual())
-    return RuntimeDefinition(MD, 0);
+    return RuntimeDefinition(MD);
 
   // If the method is virtual, see if we can find the actual implementation
   // based on context-sensitivity.
@@ -398,7 +398,7 @@ RuntimeDefinition CXXInstanceCall::getRuntimeDefinition() const {
   // because a /partially/ constructed object can be referred to through a
   // base pointer. We'll eventually want to use DynamicTypeInfo here.
   if (const CXXMethodDecl *Devirtualized = devirtualize(MD, getCXXThisVal()))
-    return RuntimeDefinition(Devirtualized, 0);
+    return RuntimeDefinition(Devirtualized);
 
   return RuntimeDefinition();
 }
@@ -519,7 +519,7 @@ RuntimeDefinition CXXDestructorCall::getRuntimeDefinition() const {
 
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(D);
   if (!MD->isVirtual())
-    return RuntimeDefinition(MD, 0);
+    return RuntimeDefinition(MD);
 
   // If the method is virtual, see if we can find the actual implementation
   // based on context-sensitivity.
@@ -528,7 +528,7 @@ RuntimeDefinition CXXDestructorCall::getRuntimeDefinition() const {
   // because a /partially/ constructed object can be referred to through a
   // base pointer. We'll eventually want to use DynamicTypeInfo here.
   if (const CXXMethodDecl *Devirtualized = devirtualize(MD, getCXXThisVal()))
-    return RuntimeDefinition(Devirtualized, 0);
+    return RuntimeDefinition(Devirtualized);
 
   return RuntimeDefinition();
 }
@@ -695,7 +695,7 @@ RuntimeDefinition ObjCMethodCall::getRuntimeDefinition() const {
     // class name.
     if (ObjCInterfaceDecl *IDecl = E->getReceiverInterface()) {
       // Find/Return the method implementation.
-      return RuntimeDefinition(IDecl->lookupPrivateClassMethod(Sel), 0);
+      return RuntimeDefinition(IDecl->lookupPrivateClassMethod(Sel));
     }
   }
 
