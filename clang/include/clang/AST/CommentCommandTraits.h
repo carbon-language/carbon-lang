@@ -50,6 +50,15 @@ public:
   /// comment end is hit.
   bool isVerbatimLineCommand(StringRef Name) const;
 
+  /// \brief Check if a given command is a command that contains a declaration
+  /// for the entity being documented.
+  ///
+  /// For example:
+  /// \code
+  ///   \fn void f(int a);
+  /// \endcode
+  bool isDeclarationCommand(StringRef Name) const;
+
   /// \brief Register a new verbatim line command.
   void addVerbatimLineCommand(StringRef Name);
 

@@ -478,9 +478,15 @@ FullCommentParts::FullCommentParts(const FullComment *C) :
     }
 
     case Comment::VerbatimBlockCommentKind:
-    case Comment::VerbatimLineCommentKind:
       MiscBlocks.push_back(cast<BlockCommandComment>(Child));
       break;
+
+    case Comment::VerbatimLineCommentKind: {
+      const VerbatimLineComment *VLC = cast<VerbatimLineComment>(Child);
+      if (!Traits.isDeclarationCommand(VLC->getCommandName()))
+        MiscBlocks.push_back(VLC);
+      break;
+    }
 
     case Comment::TextCommentKind:
     case Comment::InlineCommandCommentKind:

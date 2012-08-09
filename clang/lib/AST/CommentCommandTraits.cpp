@@ -53,14 +53,7 @@ bool CommandTraits::isVerbatimBlockCommand(StringRef BeginName,
 }
 
 bool CommandTraits::isVerbatimLineCommand(StringRef Name) const {
-  bool Result = llvm::StringSwitch<bool>(Name)
-  .Case("fn", true)
-  .Case("var", true)
-  .Case("property", true)
-  .Case("typedef", true)
-
-  .Case("overload", true)
-
+  bool Result = isDeclarationCommand(Name) || llvm::StringSwitch<bool>(Name)
   .Case("defgroup", true)
   .Case("ingroup", true)
   .Case("addtogroup", true)
@@ -89,6 +82,37 @@ bool CommandTraits::isVerbatimLineCommand(StringRef Name) const {
       return true;
 
   return false;
+}
+
+bool CommandTraits::isDeclarationCommand(StringRef Name) const {
+  return llvm::StringSwitch<bool>(Name)
+      // Doxygen commands.
+      .Case("fn", true)
+      .Case("var", true)
+      .Case("property", true)
+      .Case("typedef", true)
+
+      .Case("overload", true)
+
+      // HeaderDoc commands.
+      .Case("class", true)
+      .Case("interface", true)
+      .Case("protocol", true)
+      .Case("category", true)
+      .Case("template", true)
+      .Case("function", true)
+      .Case("method", true)
+      .Case("callback", true)
+      .Case("var", true)
+      .Case("const", true)
+      .Case("constant", true)
+      .Case("property", true)
+      .Case("struct", true)
+      .Case("union", true)
+      .Case("typedef", true)
+      .Case("enum", true)
+
+      .Default(false);
 }
 
 void CommandTraits::addVerbatimBlockCommand(StringRef BeginName,
