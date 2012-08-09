@@ -13,3 +13,12 @@ public:
 void B::f() {
   x = 3;
 }
+
+
+class C : public B {
+public:
+  void g() {
+    // This used to crash because we are upcasting through two bases.
+    x = 5;
+  }
+};

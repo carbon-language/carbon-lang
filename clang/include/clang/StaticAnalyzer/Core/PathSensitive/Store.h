@@ -115,7 +115,10 @@ public:
   virtual SVal ArrayToPointer(Loc Array) = 0;
 
   /// Evaluates DerivedToBase casts.
-  virtual SVal evalDerivedToBase(SVal derived, QualType basePtrType) = 0;
+  virtual SVal evalDerivedToBase(SVal derived, const CastExpr *Cast);
+
+  /// Evaluates a derived-to-base cast through a single level of derivation.
+  virtual SVal evalDerivedToBase(SVal derived, QualType derivedPtrType) = 0;
 
   /// \brief Evaluates C++ dynamic_cast cast.
   /// The callback may result in the following 3 scenarios:

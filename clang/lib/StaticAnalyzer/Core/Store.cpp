@@ -222,6 +222,17 @@ const MemRegion *StoreManager::castRegion(const MemRegion *R, QualType CastToTy)
   llvm_unreachable("unreachable");
 }
 
+SVal StoreManager::evalDerivedToBase(SVal Derived, const CastExpr *Cast) {
+  // Walk through the cast path to create nested CXXBaseRegions.
+  SVal Result = Derived;
+  for (CastExpr::path_const_iterator I = Cast->path_begin(),
+                                     E = Cast->path_end();
+       I != E; ++I) {
+    Result = evalDerivedToBase(Result, (*I)->getType());
+  }
+  return Result;
+}
+
 
 /// CastRetrievedVal - Used by subclasses of StoreManager to implement
 ///  implicit casts that arise from loads from regions that are reinterpreted

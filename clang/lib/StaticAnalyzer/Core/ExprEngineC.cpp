@@ -318,7 +318,7 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
         ProgramStateRef state = Pred->getState();
         const LocationContext *LCtx = Pred->getLocationContext();
         SVal val = state->getSVal(Ex, LCtx);
-        val = getStoreManager().evalDerivedToBase(val, T);
+        val = getStoreManager().evalDerivedToBase(val, CastE);
         state = state->BindExpr(CastE, LCtx, val);
         Bldr.generateNode(CastE, Pred, state);
         continue;
