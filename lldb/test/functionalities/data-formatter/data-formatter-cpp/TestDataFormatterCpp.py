@@ -30,6 +30,8 @@ class CppDataFormatterTestCase(TestBase):
         # Find the line number to break at.
         self.line = line_number('main.cpp', '// Set break point at this line.')
 
+    # <rdar://problem/12061386>
+    @unittest2.expectedFailure
     def data_formatter_commands(self):
         """Test that that file and class static variables display correctly."""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
