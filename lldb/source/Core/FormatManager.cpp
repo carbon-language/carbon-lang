@@ -42,6 +42,7 @@ g_format_infos[] =
     { eFormatDecimal        , 'd'   , "decimal"             },
     { eFormatEnum           , 'E'   , "enumeration"         },
     { eFormatHex            , 'x'   , "hex"                 },
+    { eFormatHexUppercase   , 'X'   , "uppercase hex"       },
     { eFormatFloat          , 'f'   , "float"               },
     { eFormatOctal          , 'o'   , "octal"               },
     { eFormatOSType         , 'O'   , "OSType"              },
@@ -64,7 +65,7 @@ g_format_infos[] =
     { eFormatComplexInteger , 'I'   , "complex integer"     },
     { eFormatCharArray      , 'a'   , "character array"     },
     { eFormatAddressInfo    , 'A'   , "address"             },
-    { eFormatHexFloat       , 'X'   , "hex float"           },
+    { eFormatHexFloat       , '\0'  , "hex float"           },
     { eFormatInstruction    , 'i'   , "instruction"         },
     { eFormatVoid           , 'v'   , "void"                }
 };

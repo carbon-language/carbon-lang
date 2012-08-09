@@ -100,6 +100,7 @@ namespace lldb {
         eFormatDecimal,
         eFormatEnum,
         eFormatHex,
+        eFormatHexUppercase,
         eFormatFloat,
         eFormatOctal,
         eFormatOSType,          // OS character codes encoded into an integer 'PICT' 'text' etc...

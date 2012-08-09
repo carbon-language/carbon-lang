@@ -1116,6 +1116,7 @@ protected:
             case eFormatDefault:
             case eFormatBytes:
             case eFormatHex:
+            case eFormatHexUppercase:
             case eFormatPointer:
                 
                 // Decode hex bytes

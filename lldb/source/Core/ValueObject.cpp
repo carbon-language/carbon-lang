@@ -1426,6 +1426,7 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
                 (custom_format == eFormatComplexFloat) ||
                 (custom_format == eFormatDecimal) ||
                 (custom_format == eFormatHex) ||
+                (custom_format == eFormatHexUppercase) ||
                 (custom_format == eFormatFloat) ||
                 (custom_format == eFormatOctal) ||
                 (custom_format == eFormatOSType) ||

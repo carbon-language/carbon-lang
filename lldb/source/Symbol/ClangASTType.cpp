@@ -1030,6 +1030,7 @@ ClangASTType::DumpTypeValue (clang::ASTContext *ast_context,
                     case eFormatDecimal:
                     case eFormatEnum:
                     case eFormatHex:
+                    case eFormatHexUppercase:
                     case eFormatFloat:
                     case eFormatOctal:
                     case eFormatOSType:
