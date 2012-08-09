@@ -1052,8 +1052,15 @@ RegionOffset MemRegion::getAsOffset() const {
     case CXXThisRegionKind:
     case StringRegionKind:
     case VarRegionKind:
-    case ObjCIvarRegionKind:
     case CXXTempObjectRegionKind:
+      goto Finish;
+
+    case ObjCIvarRegionKind:
+      // This is a little strange, but it's a compromise between
+      // ObjCIvarRegions having unknown compile-time offsets (when using the
+      // non-fragile runtime) and yet still being distinct, non-overlapping
+      // regions. Thus we treat them as "like" base regions for the purposes
+      // of computing offsets.
       goto Finish;
 
     case CXXBaseObjectRegionKind: {
