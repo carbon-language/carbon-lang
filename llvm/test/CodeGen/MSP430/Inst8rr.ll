@@ -4,7 +4,7 @@ target triple = "msp430-generic-generic"
 
 define i8 @mov(i8 %a, i8 %b) nounwind {
 ; CHECK: mov:
-; CHECK: mov.b	r14, r15
+; CHECK: mov.{{[bw]}} r14, r15
 	ret i8 %b
 }
 
