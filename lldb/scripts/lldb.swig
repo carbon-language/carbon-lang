@@ -44,6 +44,11 @@ import os
 %}
 %include "./Python/python-typemaps.swig"
 
+/* C++ headers to be included. */
+%{
+#include <string>
+%}
+
 /* The liblldb header files to be included. */
 %{
 #include "lldb/lldb-public.h"
