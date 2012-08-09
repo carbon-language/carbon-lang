@@ -96,7 +96,10 @@ int main (int argc, const char * argv[])
     
     Point iAmSomewhere(4,6);
     
-	i_am_cool *cool_pointer = new i_am_cool(3,-3.141592,'E');
+	i_am_cool *cool_pointer = (i_am_cool*)malloc(sizeof(i_am_cool)*3);
+	cool_pointer[0] = i_am_cool(3,-3.141592,'E');
+	cool_pointer[1] = i_am_cool(0,-3.141592,'E');
+	cool_pointer[2] = i_am_cool(0,-3.141592,'E');
     
     i_am_cool cool_array[5];
     
