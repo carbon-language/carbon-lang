@@ -2888,6 +2888,16 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   // MS-style inline assembly is not fully supported, so emit a warning.
   Diag(AsmLoc, diag::warn_unsupported_msasm);
 
+  // Empty asm statements don't need to instantiate the AsmParser, etc.
+  if (AsmToks.empty()) {
+    std::string AsmString;
+    MSAsmStmt *NS =
+      new (Context) MSAsmStmt(Context, AsmLoc, /* IsSimple */ true,
+                              /* IsVolatile */ true, AsmToks, LineEnds,
+                              AsmString, EndLoc);
+    return Owned(NS);
+  }
+
   std::string AsmString = buildMSAsmString(*this, AsmToks, LineEnds);
 
   bool IsSimple;
