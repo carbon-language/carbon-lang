@@ -2883,7 +2883,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
                                 SourceLocation EndLoc) {
   // MS-style inline assembly is not fully supported, so emit a warning.
   Diag(AsmLoc, diag::warn_unsupported_msasm);
-  SmallVector<std::string,4> Clobbers;
+  SmallVector<StringRef,4> Clobbers;
 
   // Empty asm statements don't need to instantiate the AsmParser, etc.
   if (AsmToks.empty()) {

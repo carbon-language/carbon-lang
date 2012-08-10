@@ -586,7 +586,7 @@ AsmStmt::AsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple,
 MSAsmStmt::MSAsmStmt(ASTContext &C, SourceLocation asmloc,
                      bool issimple, bool isvolatile, ArrayRef<Token> asmtoks,
                      ArrayRef<unsigned> lineends, StringRef asmstr,
-                     ArrayRef<std::string> clobbers, SourceLocation endloc)
+                     ArrayRef<StringRef> clobbers, SourceLocation endloc)
   : Stmt(MSAsmStmtClass), AsmLoc(asmloc), EndLoc(endloc),
     AsmStr(asmstr.str()), IsSimple(issimple), IsVolatile(isvolatile),
     NumAsmToks(asmtoks.size()), NumLineEnds(lineends.size()),
@@ -600,9 +600,14 @@ MSAsmStmt::MSAsmStmt(ASTContext &C, SourceLocation asmloc,
   for (unsigned i = 0, e = NumLineEnds; i != e; ++i)
     LineEnds[i] = lineends[i];
 
-  Clobbers = new (C) std::string[NumClobbers];
-  for (unsigned i = 0, e = NumClobbers; i != e; ++i)
-    Clobbers[i] = clobbers[i];
+  Clobbers = new (C) StringRef*[NumClobbers];
+  for (unsigned i = 0, e = NumClobbers; i != e; ++i) {
+    // FIXME: Avoid the allocation/copy if at all possible.
+    size_t size = clobbers[i].size();
+    char *dest = new (C) char[size];
+    std::strncpy(dest, clobbers[i].data(), size); 
+    Clobbers[i] = new (C) StringRef(dest, size);
+  }
 }
 
 ObjCForCollectionStmt::ObjCForCollectionStmt(Stmt *Elem, Expr *Collect,
