@@ -11,6 +11,7 @@
 //
 // This file contains error reporting code.
 //===----------------------------------------------------------------------===//
+#include "asan_flags.h"
 #include "asan_internal.h"
 #include "asan_mapping.h"
 #include "asan_report.h"
@@ -39,10 +40,52 @@ void AppendToErrorMessageBuffer(const char *buffer) {
   }
 }
 
+// ---------------------- Helper functions ----------------------- {{{1
+
+static void PrintBytes(const char *before, uptr *a) {
+  u8 *bytes = (u8*)a;
+  uptr byte_num = (__WORDSIZE) / 8;
+  AsanPrintf("%s%p:", before, (void*)a);
+  for (uptr i = 0; i < byte_num; i++) {
+    AsanPrintf(" %x%x", bytes[i] >> 4, bytes[i] & 15);
+  }
+  AsanPrintf("\n");
+}
+
+static void PrintShadowMemoryForAddress(uptr addr) {
+  if (!AddrIsInMem(addr))
+    return;
+  uptr shadow_addr = MemToShadow(addr);
+  AsanPrintf("Shadow byte and word:\n");
+  AsanPrintf("  %p: %x\n", (void*)shadow_addr, *(unsigned char*)shadow_addr);
+  uptr aligned_shadow = shadow_addr & ~(kWordSize - 1);
+  PrintBytes("  ", (uptr*)(aligned_shadow));
+  AsanPrintf("More shadow bytes:\n");
+  for (int i = -4; i <= 4; i++) {
+    const char *prefix = (i == 0) ? "=>" : "  ";
+    PrintBytes(prefix, (uptr*)(aligned_shadow + i * kWordSize));
+  }
+}
+
+static void PrintZoneForPointer(uptr ptr, uptr zone_ptr,
+                                const char *zone_name) {
+  if (zone_ptr) {
+    if (zone_name) {
+      AsanPrintf("malloc_zone_from_ptr(%p) = %p, which is %s\n",
+                 ptr, zone_ptr, zone_name);
+    } else {
+      AsanPrintf("malloc_zone_from_ptr(%p) = %p, which doesn't have a name\n",
+                 ptr, zone_ptr);
+    }
+  } else {
+    AsanPrintf("malloc_zone_from_ptr(%p) = 0\n", ptr);
+  }
+}
+
 // ---------------------- Address Descriptions ------------------- {{{1
 
 static bool IsASCII(unsigned char c) {
-  return 0x00 <= c && c <= 0x7F;
+  return /*0x00 <= c &&*/ c <= 0x7F;
 }
 
 // Check if the global is a zero-terminated ASCII string. If so, print it.
@@ -158,113 +201,139 @@ void DescribeAddress(uptr addr, uptr access_size) {
 
 // -------------------- Different kinds of reports ----------------- {{{1
 
+// Use ScopedInErrorReport to run common actions just before and
+// immediately after printing error report.
+class ScopedInErrorReport {
+ public:
+  ScopedInErrorReport() {
+    static atomic_uint32_t num_calls;
+    if (atomic_fetch_add(&num_calls, 1, memory_order_relaxed) != 0) {
+      // Do not print more than one report, otherwise they will mix up.
+      // Error reporting functions shouldn't return at this situation, as
+      // they are defined as no-return.
+      AsanReport("AddressSanitizer: while reporting a bug found another one."
+                 "Ignoring.\n");
+      SleepForSeconds(Max(5, flags()->sleep_before_dying + 1));
+      // Try to prevent substituting infinite busy loop with _exit or smth
+      // like that.
+      volatile int x = 1;
+      while (x) { }
+    }
+    AsanPrintf("===================================================="
+               "=============\n");
+    AsanThread *curr_thread = asanThreadRegistry().GetCurrent();
+    if (curr_thread) {
+      // We started reporting an error message. Stop using the fake stack
+      // in case we call an instrumented function from a symbolizer.
+      curr_thread->fake_stack().StopUsingFakeStack();
+    }
+  }
+  // Destructor is NORETURN, as functions that report errors are.
+  NORETURN ~ScopedInErrorReport() {
+    // Make sure the current thread is announced.
+    AsanThread *curr_thread = asanThreadRegistry().GetCurrent();
+    if (curr_thread) {
+      curr_thread->summary()->Announce();
+    }
+    // Print memory stats.
+    __asan_print_accumulated_stats();
+    if (error_report_callback) {
+      error_report_callback(error_message_buffer);
+    }
+    AsanReport("ABORTING\n");
+    Die();
+  }
+};
+
 void ReportSIGSEGV(uptr pc, uptr sp, uptr bp, uptr addr) {
+  ScopedInErrorReport in_report;
   AsanReport("ERROR: AddressSanitizer crashed on unknown address %p"
              " (pc %p sp %p bp %p T%d)\n",
              (void*)addr, (void*)pc, (void*)sp, (void*)bp,
              asanThreadRegistry().GetCurrentTidOrInvalid());
-  AsanPrintf("AddressSanitizer can not provide additional info. ABORTING\n");
+  AsanPrintf("AddressSanitizer can not provide additional info.\n");
   GET_STACK_TRACE_WITH_PC_AND_BP(kStackTraceMax, pc, bp);
   stack.PrintStack();
-  ShowStatsAndAbort();
 }
 
 void ReportDoubleFree(uptr addr, AsanStackTrace *stack) {
+  ScopedInErrorReport in_report;
   AsanReport("ERROR: AddressSanitizer attempting double-free on %p:\n", addr);
   stack->PrintStack();
   DescribeHeapAddress(addr, 1);
-  ShowStatsAndAbort();
 }
 
 void ReportFreeNotMalloced(uptr addr, AsanStackTrace *stack) {
+  ScopedInErrorReport in_report;
   AsanReport("ERROR: AddressSanitizer attempting free on address "
              "which was not malloc()-ed: %p\n", addr);
   stack->PrintStack();
-  ShowStatsAndAbort();
+  DescribeHeapAddress(addr, 1);
 }
 
 void ReportMallocUsableSizeNotOwned(uptr addr, AsanStackTrace *stack) {
+  ScopedInErrorReport in_report;
   AsanReport("ERROR: AddressSanitizer attempting to call "
              "malloc_usable_size() for pointer which is "
              "not owned: %p\n", addr);
   stack->PrintStack();
   DescribeHeapAddress(addr, 1);
-  ShowStatsAndAbort();
 }
 
 void ReportAsanGetAllocatedSizeNotOwned(uptr addr, AsanStackTrace *stack) {
+  ScopedInErrorReport in_report;
   AsanReport("ERROR: AddressSanitizer attempting to call "
              "__asan_get_allocated_size() for pointer which is "
              "not owned: %p\n", addr);
   stack->PrintStack();
   DescribeHeapAddress(addr, 1);
-  ShowStatsAndAbort();
 }
 
 void ReportStringFunctionMemoryRangesOverlap(
     const char *function, const char *offset1, uptr length1,
     const char *offset2, uptr length2, AsanStackTrace *stack) {
+  ScopedInErrorReport in_report;
   AsanReport("ERROR: AddressSanitizer %s-param-overlap: "
              "memory ranges [%p,%p) and [%p, %p) overlap\n", \
              function, offset1, offset1 + length1, offset2, offset2 + length2);
   stack->PrintStack();
-  ShowStatsAndAbort();
+  DescribeAddress((uptr)offset1, length1);
+  DescribeAddress((uptr)offset2, length2);
 }
 
 // ----------------------- Mac-specific reports ----------------- {{{1
 
-static void PrintZoneForPointer(uptr ptr, uptr zone_ptr,
-                                const char *zone_name) {
-  if (zone_ptr) {
-    if (zone_name) {
-      AsanPrintf("malloc_zone_from_ptr(%p) = %p, which is %s\n",
-                 ptr, zone_ptr, zone_name);
-    } else {
-      AsanPrintf("malloc_zone_from_ptr(%p) = %p, which doesn't have a name\n",
-                 ptr, zone_ptr);
-    }
-  } else {
-    AsanPrintf("malloc_zone_from_ptr(%p) = 0\n", ptr);
-  }
-}
-
 void WarnMacFreeUnallocated(
     uptr addr, uptr zone_ptr, const char *zone_name, AsanStackTrace *stack) {
+  // Just print a warning here.
   AsanPrintf("free_common(%p) -- attempting to free unallocated memory.\n"
              "AddressSanitizer is ignoring this error on Mac OS now.\n",
              addr);
   PrintZoneForPointer(addr, zone_ptr, zone_name);
   stack->PrintStack();
+  DescribeHeapAddress(addr, 1);
 }
 
 void ReportMacMzReallocUnknown(
     uptr addr, uptr zone_ptr, const char *zone_name, AsanStackTrace *stack) {
+  ScopedInErrorReport in_report;
   AsanPrintf("mz_realloc(%p) -- attempting to realloc unallocated memory.\n"
              "This is an unrecoverable problem, exiting now.\n",
              addr);
   PrintZoneForPointer(addr, zone_ptr, zone_name);
   stack->PrintStack();
-  ShowStatsAndAbort();
+  DescribeHeapAddress(addr, 1);
 }
 
 void ReportMacCfReallocUnknown(
     uptr addr, uptr zone_ptr, const char *zone_name, AsanStackTrace *stack) {
+  ScopedInErrorReport in_report;
   AsanPrintf("cf_realloc(%p) -- attempting to realloc unallocated memory.\n"
              "This is an unrecoverable problem, exiting now.\n",
              addr);
   PrintZoneForPointer(addr, zone_ptr, zone_name);
   stack->PrintStack();
-  ShowStatsAndAbort();
-}
-
-static void PrintBytes(const char *before, uptr *a) {
-  u8 *bytes = (u8*)a;
-  uptr byte_num = (__WORDSIZE) / 8;
-  AsanPrintf("%s%p:", before, (void*)a);
-  for (uptr i = 0; i < byte_num; i++) {
-    AsanPrintf(" %x%x", bytes[i] >> 4, bytes[i] & 15);
-  }
-  AsanPrintf("\n");
+  DescribeHeapAddress(addr, 1);
 }
 
 }  // namespace __asan
@@ -274,18 +343,9 @@ using namespace __asan;  // NOLINT
 
 void __asan_report_error(uptr pc, uptr bp, uptr sp,
                          uptr addr, bool is_write, uptr access_size) {
-  static atomic_uint32_t num_calls;
-  if (atomic_fetch_add(&num_calls, 1, memory_order_relaxed) != 0) {
-    // Do not print more than one report, otherwise they will mix up.
-    // We can not return here because the function is marked as never-return.
-    AsanPrintf("AddressSanitizer: while reporting a bug found another one."
-               "Ignoring.\n");
-    SleepForSeconds(5);
-    Die();
-  }
+  ScopedInErrorReport in_report;
 
-  AsanPrintf("===================================================="
-             "=============\n");
+  // Determine the error type.
   const char *bug_descr = "unknown-crash";
   if (AddrIsInMem(addr)) {
     u8 *shadow_addr = (u8*)MemToShadow(addr);
@@ -323,55 +383,21 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
     }
   }
 
-  AsanThread *curr_thread = asanThreadRegistry().GetCurrent();
-  u32 curr_tid = asanThreadRegistry().GetCurrentTidOrInvalid();
-
-  if (curr_thread) {
-    // We started reporting an error message. Stop using the fake stack
-    // in case we will call an instrumented function from a symbolizer.
-    curr_thread->fake_stack().StopUsingFakeStack();
-  }
-
   AsanReport("ERROR: AddressSanitizer %s on address "
              "%p at pc 0x%zx bp 0x%zx sp 0x%zx\n",
              bug_descr, (void*)addr, pc, bp, sp);
 
+  u32 curr_tid = asanThreadRegistry().GetCurrentTidOrInvalid();
   AsanPrintf("%s of size %zu at %p thread T%d\n",
              access_size ? (is_write ? "WRITE" : "READ") : "ACCESS",
              access_size, (void*)addr, curr_tid);
-
-  if (flags()->debug) {
-    PrintBytes("PC: ", (uptr*)pc);
-  }
 
   GET_STACK_TRACE_WITH_PC_AND_BP(kStackTraceMax, pc, bp);
   stack.PrintStack();
 
   DescribeAddress(addr, access_size);
 
-  if (AddrIsInMem(addr)) {
-    uptr shadow_addr = MemToShadow(addr);
-    AsanReport("ABORTING\n");
-    __asan_print_accumulated_stats();
-    AsanPrintf("Shadow byte and word:\n");
-    AsanPrintf("  %p: %x\n", (void*)shadow_addr, *(unsigned char*)shadow_addr);
-    uptr aligned_shadow = shadow_addr & ~(kWordSize - 1);
-    PrintBytes("  ", (uptr*)(aligned_shadow));
-    AsanPrintf("More shadow bytes:\n");
-    PrintBytes("  ", (uptr*)(aligned_shadow-4*kWordSize));
-    PrintBytes("  ", (uptr*)(aligned_shadow-3*kWordSize));
-    PrintBytes("  ", (uptr*)(aligned_shadow-2*kWordSize));
-    PrintBytes("  ", (uptr*)(aligned_shadow-1*kWordSize));
-    PrintBytes("=>", (uptr*)(aligned_shadow+0*kWordSize));
-    PrintBytes("  ", (uptr*)(aligned_shadow+1*kWordSize));
-    PrintBytes("  ", (uptr*)(aligned_shadow+2*kWordSize));
-    PrintBytes("  ", (uptr*)(aligned_shadow+3*kWordSize));
-    PrintBytes("  ", (uptr*)(aligned_shadow+4*kWordSize));
-  }
-  if (error_report_callback) {
-    error_report_callback(error_message_buffer);
-  }
-  Die();
+  PrintShadowMemoryForAddress(addr);
 }
 
 void NOINLINE __asan_set_error_report_callback(void (*callback)(const char*)) {

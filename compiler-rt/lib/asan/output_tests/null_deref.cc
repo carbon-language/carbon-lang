@@ -8,7 +8,7 @@ int main() {
 
 // Check-Common: {{.*ERROR: AddressSanitizer crashed on unknown address}}
 // Check-Common:   {{0x0*00028 .*pc 0x.*}}
-// Check-Common: {{AddressSanitizer can not provide additional info. ABORTING}}
+// Check-Common: {{AddressSanitizer can not provide additional info.}}
 
 // atos on Mac cannot extract the symbol name correctly.
 // Check-Linux: {{    #0 0x.* in NullDeref.*null_deref.cc:3}}

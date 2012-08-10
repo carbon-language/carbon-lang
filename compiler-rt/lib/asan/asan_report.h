@@ -29,7 +29,6 @@ void DescribeAddress(uptr addr, uptr access_size);
 
 // Different kinds of error reports.
 void NORETURN ReportSIGSEGV(uptr pc, uptr sp, uptr bp, uptr addr);
-
 void NORETURN ReportDoubleFree(uptr addr, AsanStackTrace *stack);
 void NORETURN ReportFreeNotMalloced(uptr addr, AsanStackTrace *stack);
 void NORETURN ReportMallocUsableSizeNotOwned(uptr addr,
