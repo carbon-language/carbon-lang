@@ -28,6 +28,10 @@ class CommandLineCompletionTestCase(TestBase):
         self.complete_from_to('process print hello\\', 'process print hello\\',
                               turn_off_re_match=True)
 
+    def test_watchpoint_command_dash_w_space(self):
+        """Test that 'watchpoint command' completes to ['Available completions:', 'add', 'delete', 'list']."""
+        self.complete_from_to('watchpoint command', ['Available completions:', 'add', 'delete', 'list'])
+
     def test_watchpoint_set_variable_dash_w(self):
         """Test that 'watchpoint set variable -w' completes to 'watchpoint set variable -w '."""
         self.complete_from_to('watchpoint set variable -w', 'watchpoint set variable -w ')
