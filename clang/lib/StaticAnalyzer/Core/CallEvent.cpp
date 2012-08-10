@@ -659,6 +659,59 @@ ObjCMessageKind ObjCMethodCall::getMessageKind() const {
   return static_cast<ObjCMessageKind>(Info.getInt());
 }
 
+
+bool ObjCMethodCall::canBeOverridenInSubclass(ObjCInterfaceDecl *IDecl,
+                                             Selector Sel) const {
+  assert(IDecl);
+  const SourceManager &SM =
+    getState()->getStateManager().getContext().getSourceManager();
+
+  // If the class interface is declared inside the main file, assume it is not
+  // subcassed. 
+  // TODO: It could actually be subclassed if the subclass is private as well.
+  // This is probably very rare.
+  SourceLocation InterfLoc = IDecl->getEndOfDefinitionLoc();
+  if (InterfLoc.isValid() && SM.isFromMainFile(InterfLoc))
+    return false;
+
+
+  // We assume that if the method is public (declared outside of main file) or
+  // has a parent which publicly declares the method, the method could be
+  // overridden in a subclass.
+
+  // Find the first declaration in the class hierarchy that declares
+  // the selector.
+  ObjCMethodDecl *D = 0;
+  while (true) {
+    D = IDecl->lookupMethod(Sel, true);
+
+    // Cannot find a public definition.
+    if (!D)
+      return false;
+
+    // If outside the main file,
+    if (D->getLocation().isValid() && !SM.isFromMainFile(D->getLocation()))
+      return true;
+
+    if (D->isOverriding()) {
+      // Search in the superclass on the next iteration.
+      IDecl = D->getClassInterface();
+      if (!IDecl)
+        return false;
+
+      IDecl = IDecl->getSuperClass();
+      if (!IDecl)
+        return false;
+
+      continue;
+    }
+
+    return false;
+  };
+
+  llvm_unreachable("The while loop should always terminate.");
+}
+
 RuntimeDefinition ObjCMethodCall::getRuntimeDefinition() const {
   const ObjCMessageExpr *E = getOriginExpr();
   assert(E);
@@ -686,8 +739,12 @@ RuntimeDefinition ObjCMethodCall::getRuntimeDefinition() const {
 
     // Lookup the method implementation.
     if (ReceiverT)
-      if (ObjCInterfaceDecl *IDecl = ReceiverT->getInterfaceDecl())
-        return RuntimeDefinition(IDecl->lookupPrivateMethod(Sel), Receiver);
+      if (ObjCInterfaceDecl *IDecl = ReceiverT->getInterfaceDecl()) {
+        if (canBeOverridenInSubclass(IDecl, Sel))
+          return RuntimeDefinition(IDecl->lookupPrivateMethod(Sel), Receiver);
+        else
+          return RuntimeDefinition(IDecl->lookupPrivateMethod(Sel), 0);
+      }
 
   } else {
     // This is a class method.

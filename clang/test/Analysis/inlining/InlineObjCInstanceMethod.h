@@ -17,3 +17,10 @@ typedef struct objc_object {
 - (Class)class;
 -(id)retain;
 @end
+
+@interface PublicClass : NSObject
+- (int)getZeroPublic;
+@end
+
+@interface PublicSubClass : PublicClass
+@end

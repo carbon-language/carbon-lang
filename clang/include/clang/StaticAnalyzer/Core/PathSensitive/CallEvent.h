@@ -754,6 +754,10 @@ protected:
 
   virtual QualType getDeclaredResultType() const;
 
+  /// Check if the selector may have multiple definitions (may have overrides).
+  virtual bool canBeOverridenInSubclass(ObjCInterfaceDecl *IDecl,
+                                        Selector Sel) const;
+
 public:
   virtual const ObjCMessageExpr *getOriginExpr() const {
     return cast<ObjCMessageExpr>(CallEvent::getOriginExpr());
