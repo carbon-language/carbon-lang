@@ -133,7 +133,7 @@ if [ \! -f Makefile.config ]; then
     || exit 1
 fi
 
-SUBVERSION=`echo $RC_ProjectSourceVersion | sed -e 's/[^.]*\.\([0-9]*\).*/\1/'`
+SUBVERSION=`echo $RC_ProjectSourceVersion | sed -e 's/.*\.\([0-9]*\).*/\1/'`
 
 if [ "x$SUBVERSION" != "x$RC_ProjectSourceVersion" ]; then
     LLVM_SUBMIT_SUBVERSION=`printf "%02d" $SUBVERSION`
