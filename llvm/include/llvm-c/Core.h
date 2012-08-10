@@ -53,7 +53,7 @@ extern "C" {
  * The declared parameter names are descriptive and specify which type is
  * required. Additionally, each type hierarchy is documented along with the
  * functions that operate upon it. For more detail, refer to LLVM's C++ code.
- * If in doubt, refer to Core.cpp, which performs paramter downcasts in the
+ * If in doubt, refer to Core.cpp, which performs parameter downcasts in the
  * form unwrap<RequiredType>(Param).
  *
  * Many exotic languages can interoperate with C code but have a harder time
@@ -106,7 +106,7 @@ typedef struct LLVMOpaqueType *LLVMTypeRef;
 typedef struct LLVMOpaqueValue *LLVMValueRef;
 
 /**
- * Represents a basic block of instruction in LLVM IR.
+ * Represents a basic block of instructions in LLVM IR.
  *
  * This models llvm::BasicBlock.
  */
