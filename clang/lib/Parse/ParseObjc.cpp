@@ -1931,6 +1931,16 @@ void Parser::StashAwayMethodOrFunctionBodyTokens(Decl *MDecl) {
   Toks.push_back(Tok);
   if (Tok.is(tok::kw_try)) {
     ConsumeToken();
+    if (Tok.is(tok::colon)) {
+      Toks.push_back(Tok);
+      ConsumeToken();
+      while (Tok.isNot(tok::l_brace)) {
+        ConsumeAndStoreUntil(tok::l_paren, Toks, /*StopAtSemi=*/false);
+        ConsumeAndStoreUntil(tok::r_paren, Toks, /*StopAtSemi=*/false);
+      }
+    }
+    assert(Tok.is(tok::l_brace) 
+           && "StashAwayMethodOrFunctionBodyTokens - '{' not found");
     Toks.push_back(Tok); // also store '{'
   }
   ConsumeBrace();

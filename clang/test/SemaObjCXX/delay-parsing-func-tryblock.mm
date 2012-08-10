@@ -8,7 +8,9 @@
 struct BadReturn {
   BadReturn(MyClass * myObject);
   int bar(MyClass * myObject);
+  void MemFunc(MyClass * myObject);
   int i;
+  MyClass *CObj;
 };
 
 @implementation MyClass
@@ -21,12 +23,29 @@ int BadReturn::bar(MyClass * myObject) {
     return 0;
 }
 
-BadReturn::BadReturn(MyClass * myObject) try {
+BadReturn::BadReturn(MyClass * myObject) try : CObj(myObject) {
 } catch(...) {
   try {
     [myObject privateMethod];
     [myObject privateMethod1];
     getMe = bar(myObject);
+    [CObj privateMethod1];
+  } catch(int ei) {
+    i = ei;
+  } catch(...) {
+    {
+      i = 0;
+    }
+  }
+}
+
+void BadReturn::MemFunc(MyClass * myObject) try {
+} catch(...) {
+  try {
+    [myObject privateMethod];
+    [myObject privateMethod1];
+    getMe = bar(myObject);
+    [CObj privateMethod1];
   } catch(int ei) {
     i = ei;
   } catch(...) {
