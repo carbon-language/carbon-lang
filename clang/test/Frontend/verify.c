@@ -108,3 +108,18 @@ unexpected b; // expected-error@33 1-1 {{unknown type}}
 // CHECK5-NEXT: 2 errors generated.
 #endif
 
+#if 0
+// RUN: %clang_cc1 -verify %t.invalid 2>&1 | FileCheck -check-prefix=CHECK6 %s
+
+//      CHECK6: error: 'error' diagnostics seen but not expected:
+// CHECK6-NEXT:   (frontend): error reading '{{.*}}verify.c.tmp.invalid'
+// CHECK6-NEXT: 1 error generated.
+
+// RUN: echo -e '//expected-error@2{{1}}\n#error 2' | %clang_cc1 -verify 2>&1 | FileCheck -check-prefix=CHECK7 %s
+
+//      CHECK7: error: 'error' diagnostics expected but not seen:
+// CHECK7-NEXT:   Line 2 (directive at <stdin>:1): 1
+// CHECK7-NEXT: error: 'error' diagnostics seen but not expected:
+// CHECK7-NEXT:   Line 2: 2
+// CHECK7-NEXT: 2 errors generated.
+#endif

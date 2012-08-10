@@ -5,6 +5,8 @@ import lookup_left_cxx;
 #define IMPORT(X) @__experimental_modules_import X
 IMPORT(lookup_right_cxx);
 
+// in lookup_left.hpp: expected-warning@3 {{weak identifier 'weak_identifier' never declared}}
+
 void test(int i, float f) {
   // unqualified lookup
   f0(&i);

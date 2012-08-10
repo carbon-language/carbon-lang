@@ -166,17 +166,22 @@ public:
     }
   };
 
-private:
+#ifndef NDEBUG
   typedef llvm::DenseSet<FileID> FilesWithDiagnosticsSet;
-  typedef llvm::SmallPtrSet<const FileEntry *, 4> FilesWithDirectivesSet;
+  typedef llvm::SmallPtrSet<const FileEntry *, 4> FilesParsedForDirectivesSet;
+#endif
 
+private:
   DiagnosticsEngine &Diags;
   DiagnosticConsumer *PrimaryClient;
   bool OwnsPrimaryClient;
   OwningPtr<TextDiagnosticBuffer> Buffer;
   const Preprocessor *CurrentPreprocessor;
+  unsigned ActiveSourceFiles;
+#ifndef NDEBUG
   FilesWithDiagnosticsSet FilesWithDiagnostics;
-  FilesWithDirectivesSet FilesWithDirectives;
+  FilesParsedForDirectivesSet FilesParsedForDirectives;
+#endif
   ExpectedData ED;
   void CheckDiagnostics();
 
@@ -191,6 +196,13 @@ public:
                                const Preprocessor *PP);
 
   virtual void EndSourceFile();
+
+  /// \brief Manually register a file as parsed.
+  inline void appendParsedFile(const FileEntry *File) {
+#ifndef NDEBUG
+    FilesParsedForDirectives.insert(File);
+#endif
+  }
 
   virtual bool HandleComment(Preprocessor &PP, SourceRange Comment);
 

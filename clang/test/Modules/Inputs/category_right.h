@@ -8,5 +8,5 @@
 -(void)right2;
 @end
 
-@interface Foo(Duplicate) // expected-warning {{duplicate definition of category}}
+@interface Foo(Duplicate)
 @end

@@ -91,11 +91,40 @@ namespace {
 
 class CaptureDiagnosticConsumer : public DiagnosticConsumer {
   DiagnosticsEngine &Diags;
+  DiagnosticConsumer &DiagClient;
   CapturedDiagList &CapturedDiags;
+  bool HasBegunSourceFile;
 public:
   CaptureDiagnosticConsumer(DiagnosticsEngine &diags,
-                           CapturedDiagList &capturedDiags)
-    : Diags(diags), CapturedDiags(capturedDiags) { }
+                            DiagnosticConsumer &client,
+                            CapturedDiagList &capturedDiags)
+    : Diags(diags), DiagClient(client), CapturedDiags(capturedDiags),
+      HasBegunSourceFile(false) { }
+
+  virtual void BeginSourceFile(const LangOptions &Opts,
+                               const Preprocessor *PP) {
+    // Pass BeginSourceFile message onto DiagClient on first call.
+    // The corresponding EndSourceFile call will be made from an
+    // explicit call to FinishCapture.
+    if (!HasBegunSourceFile) {
+      DiagClient.BeginSourceFile(Opts, PP);
+      HasBegunSourceFile = true;
+    }
+  }
+
+  void FinishCapture() {
+    // Call EndSourceFile on DiagClient on completion of capture to
+    // enable VerifyDiagnosticConsumer to check diagnostics *after*
+    // it has received the diagnostic list.
+    if (HasBegunSourceFile) {
+      DiagClient.EndSourceFile();
+      HasBegunSourceFile = false;
+    }
+  }
+
+  virtual ~CaptureDiagnosticConsumer() {
+    assert(!HasBegunSourceFile && "FinishCapture not called!");
+  }
 
   virtual void HandleDiagnostic(DiagnosticsEngine::Level level,
                                 const Diagnostic &Info) {
@@ -260,13 +289,15 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
       new DiagnosticsEngine(DiagID, DiagClient, /*ShouldOwnClient=*/false));
 
   // Filter of all diagnostics.
-  CaptureDiagnosticConsumer errRec(*Diags, capturedDiags);
+  CaptureDiagnosticConsumer errRec(*Diags, *DiagClient, capturedDiags);
   Diags->setClient(&errRec, /*ShouldOwnClient=*/false);
 
   OwningPtr<ASTUnit> Unit(
       ASTUnit::LoadFromCompilerInvocationAction(CInvok.take(), Diags));
-  if (!Unit)
+  if (!Unit) {
+    errRec.FinishCapture();
     return true;
+  }
 
   // Don't filter diagnostics anymore.
   Diags->setClient(DiagClient, /*ShouldOwnClient=*/false);
@@ -278,6 +309,7 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
     DiagClient->BeginSourceFile(Ctx.getLangOpts(), &Unit->getPreprocessor());
     capturedDiags.reportDiagnostics(*Diags);
     DiagClient->EndSourceFile();
+    errRec.FinishCapture();
     return true;
   }
 
@@ -315,6 +347,7 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
   capturedDiags.reportDiagnostics(*Diags);
 
   DiagClient->EndSourceFile();
+  errRec.FinishCapture();
 
   // If we are migrating code that gets the '-fobjc-arc' flag, make sure
   // to remove it so that we don't get errors from normal compilation.
@@ -563,7 +596,7 @@ bool MigrationProcess::applyTransform(TransformFn trans,
       new DiagnosticsEngine(DiagID, DiagClient, /*ShouldOwnClient=*/false));
 
   // Filter of all diagnostics.
-  CaptureDiagnosticConsumer errRec(*Diags, capturedDiags);
+  CaptureDiagnosticConsumer errRec(*Diags, *DiagClient, capturedDiags);
   Diags->setClient(&errRec, /*ShouldOwnClient=*/false);
 
   OwningPtr<ARCMTMacroTrackerAction> ASTAction;
@@ -572,8 +605,10 @@ bool MigrationProcess::applyTransform(TransformFn trans,
   OwningPtr<ASTUnit> Unit(
       ASTUnit::LoadFromCompilerInvocationAction(CInvok.take(), Diags,
                                                 ASTAction.get()));
-  if (!Unit)
+  if (!Unit) {
+    errRec.FinishCapture();
     return true;
+  }
   Unit->setOwnsRemappedFileBuffers(false); // FileRemapper manages that.
 
   // Don't filter diagnostics anymore.
@@ -586,6 +621,7 @@ bool MigrationProcess::applyTransform(TransformFn trans,
     DiagClient->BeginSourceFile(Ctx.getLangOpts(), &Unit->getPreprocessor());
     capturedDiags.reportDiagnostics(*Diags);
     DiagClient->EndSourceFile();
+    errRec.FinishCapture();
     return true;
   }
 
@@ -609,6 +645,7 @@ bool MigrationProcess::applyTransform(TransformFn trans,
   }
 
   DiagClient->EndSourceFile();
+  errRec.FinishCapture();
 
   if (DiagClient->getNumErrors())
     return true;

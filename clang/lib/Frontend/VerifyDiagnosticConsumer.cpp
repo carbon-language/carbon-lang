@@ -15,6 +15,7 @@
 #include "clang/Frontend/VerifyDiagnosticConsumer.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
+#include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Regex.h"
@@ -26,46 +27,91 @@ typedef VerifyDiagnosticConsumer::DirectiveList DirectiveList;
 typedef VerifyDiagnosticConsumer::ExpectedData ExpectedData;
 
 VerifyDiagnosticConsumer::VerifyDiagnosticConsumer(DiagnosticsEngine &_Diags)
-  : Diags(_Diags), PrimaryClient(Diags.getClient()),
-    OwnsPrimaryClient(Diags.ownsClient()),
-    Buffer(new TextDiagnosticBuffer()), CurrentPreprocessor(0) 
+  : Diags(_Diags),
+    PrimaryClient(Diags.getClient()), OwnsPrimaryClient(Diags.ownsClient()),
+    Buffer(new TextDiagnosticBuffer()), CurrentPreprocessor(0),
+    ActiveSourceFiles(0)
 {
   Diags.takeClient();
 }
 
 VerifyDiagnosticConsumer::~VerifyDiagnosticConsumer() {
+  assert(!ActiveSourceFiles && "Incomplete parsing of source files!");
+  assert(!CurrentPreprocessor && "CurrentPreprocessor should be invalid!");
   CheckDiagnostics();  
   Diags.takeClient();
   if (OwnsPrimaryClient)
     delete PrimaryClient;
 }
 
+#ifndef NDEBUG
+namespace {
+class VerifyFileTracker : public PPCallbacks {
+  typedef VerifyDiagnosticConsumer::FilesParsedForDirectivesSet ListType;
+  ListType &FilesList;
+  SourceManager &SM;
+
+public:
+  VerifyFileTracker(ListType &FilesList, SourceManager &SM)
+    : FilesList(FilesList), SM(SM) { }
+
+  /// \brief Hook into the preprocessor and update the list of parsed
+  /// files when the preprocessor indicates a new file is entered.
+  virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
+                           SrcMgr::CharacteristicKind FileType,
+                           FileID PrevFID) {
+    if (const FileEntry *E = SM.getFileEntryForID(SM.getFileID(Loc)))
+      FilesList.insert(E);
+  }
+};
+} // End anonymous namespace.
+#endif
+
 // DiagnosticConsumer interface.
 
 void VerifyDiagnosticConsumer::BeginSourceFile(const LangOptions &LangOpts,
                                                const Preprocessor *PP) {
-  CurrentPreprocessor = PP;
-  if (PP) const_cast<Preprocessor*>(PP)->addCommentHandler(this);
+  // Attach comment handler on first invocation.
+  if (++ActiveSourceFiles == 1) {
+    if (PP) {
+      CurrentPreprocessor = PP;
+      const_cast<Preprocessor*>(PP)->addCommentHandler(this);
+#ifndef NDEBUG
+      VerifyFileTracker *V = new VerifyFileTracker(FilesParsedForDirectives,
+                                                   PP->getSourceManager());
+      const_cast<Preprocessor*>(PP)->addPPCallbacks(V);
+#endif
+    }
+  }
 
+  assert((!PP || CurrentPreprocessor == PP) && "Preprocessor changed!");
   PrimaryClient->BeginSourceFile(LangOpts, PP);
 }
 
 void VerifyDiagnosticConsumer::EndSourceFile() {
-  if (CurrentPreprocessor)
-    const_cast<Preprocessor*>(CurrentPreprocessor)->removeCommentHandler(this);
-  CheckDiagnostics();
-
+  assert(ActiveSourceFiles && "No active source files!");
   PrimaryClient->EndSourceFile();
 
-  CurrentPreprocessor = 0;
+  // Detach comment handler once last active source file completed.
+  if (--ActiveSourceFiles == 0) {
+    if (CurrentPreprocessor)
+      const_cast<Preprocessor*>(CurrentPreprocessor)->removeCommentHandler(this);
+
+    // Check diagnostics once last file completed.
+    CheckDiagnostics();
+    CurrentPreprocessor = 0;
+  }
 }
 
 void VerifyDiagnosticConsumer::HandleDiagnostic(
       DiagnosticsEngine::Level DiagLevel, const Diagnostic &Info) {
+#ifndef NDEBUG
   if (Info.hasSourceManager()) {
-    const SourceManager &SM = Info.getSourceManager();
-    FilesWithDiagnostics.insert(SM.getFileID(Info.getLocation()));
+    FileID FID = Info.getSourceManager().getFileID(Info.getLocation());
+    if (!FID.isInvalid())
+      FilesWithDiagnostics.insert(FID);
   }
+#endif
   // Send the diagnostic to the buffer, we will check it once we reach the end
   // of the source file (or are destructed).
   Buffer->HandleDiagnostic(DiagLevel, Info);
@@ -192,7 +238,7 @@ private:
 /// diagnostics. If so, then put them in the appropriate directive list.
 ///
 /// Returns true if any valid directives were found.
-static bool ParseDirective(StringRef S, ExpectedData &ED, SourceManager &SM,
+static bool ParseDirective(StringRef S, ExpectedData *ED, SourceManager &SM,
                            SourceLocation Pos, DiagnosticsEngine &Diags) {
   // A single comment may contain multiple directives.
   bool FoundDirective = false;
@@ -210,14 +256,19 @@ static bool ParseDirective(StringRef S, ExpectedData &ED, SourceManager &SM,
     // Next token: { error | warning | note }
     DirectiveList* DL = NULL;
     if (PH.Next("error"))
-      DL = &ED.Errors;
+      DL = ED ? &ED->Errors : NULL;
     else if (PH.Next("warning"))
-      DL = &ED.Warnings;
+      DL = ED ? &ED->Warnings : NULL;
     else if (PH.Next("note"))
-      DL = &ED.Notes;
+      DL = ED ? &ED->Notes : NULL;
     else
       continue;
     PH.Advance();
+
+    // If a directive has been found but we're not interested
+    // in storing the directive information, return now.
+    if (!DL)
+      return true;
 
     // Default directive kind.
     bool RegexKind = false;
@@ -360,9 +411,7 @@ bool VerifyDiagnosticConsumer::HandleComment(Preprocessor &PP,
   // Fold any "\<EOL>" sequences
   size_t loc = C.find('\\');
   if (loc == StringRef::npos) {
-    if (ParseDirective(C, ED, SM, CommentBegin, PP.getDiagnostics()))
-      if (const FileEntry *E = SM.getFileEntryForID(SM.getFileID(CommentBegin)))
-        FilesWithDirectives.insert(E);
+    ParseDirective(C, &ED, SM, CommentBegin, PP.getDiagnostics());
     return false;
   }
 
@@ -392,19 +441,20 @@ bool VerifyDiagnosticConsumer::HandleComment(Preprocessor &PP,
   }
 
   if (!C2.empty())
-    if (ParseDirective(C2, ED, SM, CommentBegin, PP.getDiagnostics()))
-      if (const FileEntry *E = SM.getFileEntryForID(SM.getFileID(CommentBegin)))
-        FilesWithDirectives.insert(E);
+    ParseDirective(C2, &ED, SM, CommentBegin, PP.getDiagnostics());
   return false;
 }
 
-/// FindExpectedDiags - Lex the main source file to find all of the
-//   expected errors and warnings.
-static void FindExpectedDiags(const Preprocessor &PP, ExpectedData &ED,
-                              FileID FID) {
+#ifndef NDEBUG
+/// \brief Lex the specified source file to determine whether it contains
+/// any expected-* directives.  As a Lexer is used rather than a full-blown
+/// Preprocessor, directives inside skipped #if blocks will still be found.
+///
+/// \return true if any directives were found.
+static bool findDirectives(const Preprocessor &PP, FileID FID) {
   // Create a raw lexer to pull all the comments out of FID.
   if (FID.isInvalid())
-    return;
+    return false;
 
   SourceManager& SM = PP.getSourceManager();
   // Create a lexer to lex all the tokens of the main file in raw mode.
@@ -416,6 +466,7 @@ static void FindExpectedDiags(const Preprocessor &PP, ExpectedData &ED,
 
   Token Tok;
   Tok.setKind(tok::comment);
+  bool Found = false;
   while (Tok.isNot(tok::eof)) {
     RawLex.Lex(Tok);
     if (!Tok.is(tok::comment)) continue;
@@ -424,9 +475,12 @@ static void FindExpectedDiags(const Preprocessor &PP, ExpectedData &ED,
     if (Comment.empty()) continue;
 
     // Find all expected errors/warnings/notes.
-    ParseDirective(Comment, ED, SM, Tok.getLocation(), PP.getDiagnostics());
-  };
+    Found |= ParseDirective(Comment, 0, SM, Tok.getLocation(),
+                            PP.getDiagnostics());
+  }
+  return Found;
 }
+#endif // !NDEBUG
 
 /// \brief Takes a list of diagnostics that have been generated but not matched
 /// by an expected-* directive and produces a diagnostic to the user from this.
@@ -556,22 +610,28 @@ void VerifyDiagnosticConsumer::CheckDiagnostics() {
   // markers. If not then any diagnostics are unexpected.
   if (CurrentPreprocessor) {
     SourceManager &SM = CurrentPreprocessor->getSourceManager();
-    // Only check for expectations in other diagnostic locations not
-    // captured during normal parsing.
-    // FIXME: This check is currently necessary while synthesized files may
-    // not have their expected-* directives captured during parsing.  These
-    // cases should be fixed and the following loop replaced with one which
-    // checks only during a debug build and asserts on a mismatch.
+
+#ifndef NDEBUG
+    // In a debug build, scan through any files that may have been missed
+    // during parsing and issue a fatal error if directives are contained
+    // within these files.  If a fatal error occurs, this suggests that
+    // this file is being parsed separately from the main file.
+    HeaderSearch &HS = CurrentPreprocessor->getHeaderSearchInfo();
     for (FilesWithDiagnosticsSet::iterator I = FilesWithDiagnostics.begin(),
                                          End = FilesWithDiagnostics.end();
             I != End; ++I) {
       const FileEntry *E = SM.getFileEntryForID(*I);
-      if (!E || !FilesWithDirectives.count(E)) {
-        if (E)
-          FilesWithDirectives.insert(E);
-        FindExpectedDiags(*CurrentPreprocessor, ED, *I);
-      }
+      // Don't check files already parsed or those handled as modules.
+      if (E && (FilesParsedForDirectives.count(E)
+                  || HS.findModuleForHeader(E)))
+        continue;
+
+      if (findDirectives(*CurrentPreprocessor, *I))
+        llvm::report_fatal_error(Twine("-verify directives found after rather"
+                                       " than during normal parsing of ",
+                                 StringRef(E ? E->getName() : "(unknown)")));
     }
+#endif
 
     // Check that the expected diagnostics occurred.
     NumErrors += CheckResults(Diags, SM, *Buffer, ED);

@@ -12,6 +12,7 @@
 
 
 // in category_left.h: expected-note {{previous definition}}
+// in category_right.h: expected-warning@11 {{duplicate definition of category}}
 
 @interface Foo(Source)
 -(void)source; 
