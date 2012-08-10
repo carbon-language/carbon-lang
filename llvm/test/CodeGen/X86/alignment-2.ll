@@ -18,7 +18,9 @@
 define signext i8 @do_lo_list() nounwind optsize ssp {
 bb:
 ; CHECK:     do_lo_list
-; CHECK-NOT: movaps
+; Make sure we do not use movaps for the global variable.
+; It is okay to use movaps for writing the local variable on stack.
+; CHECK-NOT: movaps {{[0-9]*}}(%{{[a-z]*}}), {{%xmm[0-9]}}
   %myopt = alloca %struct.printQueryOpt, align 4
   %tmp = bitcast %struct.printQueryOpt* %myopt to i8*
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %tmp, i8* bitcast (%struct.printQueryOpt* getelementptr inbounds (%struct._psqlSettings* @pset, i32 0, i32 4) to i8*), i32 76, i32 4, i1 false)
