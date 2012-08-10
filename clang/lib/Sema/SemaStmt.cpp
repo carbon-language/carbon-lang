@@ -2902,6 +2902,15 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   std::string PatchedAsmString =
     PatchMSAsmString(*this, IsSimple, AsmLoc, AsmToks, Context.getTargetInfo());
 
+  // PatchMSAsmString doesn't correctly patch non-simple asm statements.
+  if (!IsSimple) {
+    MSAsmStmt *NS =
+      new (Context) MSAsmStmt(Context, AsmLoc, /* IsSimple */ true,
+                              /* IsVolatile */ true, AsmToks, LineEnds,
+                              AsmString, Clobbers, EndLoc);
+    return Owned(NS);
+  }
+
   // Initialize targets and assembly printers/parsers.
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargetMCs();
