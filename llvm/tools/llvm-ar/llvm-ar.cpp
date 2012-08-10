@@ -50,7 +50,7 @@ static cl::extrahelp MoreHelp(
   "  m[abiSs]     - move file(s) in the archive\n"
   "  p[kN]        - print file(s) found in the archive\n"
   "  q[ufsS]      - quick append file(s) to the archive\n"
-  "  r[abfiuzRsS] - replace or insert file(s) into the archive\n"
+  "  r[abfiuRsS]  - replace or insert file(s) into the archive\n"
   "  t            - display contents of archive\n"
   "  x[No]        - extract file(s) from the archive\n"
   "\nMODIFIERS (operation specific):\n"
@@ -66,7 +66,6 @@ static cl::extrahelp MoreHelp(
   "  [s] - create an archive index (cf. ranlib)\n"
   "  [S] - do not build a symbol table\n"
   "  [u] - update only files newer than archive contents\n"
-  "  [z] - compress files before inserting/extracting\n"
   "\nMODIFIERS (generic):\n"
   "  [c] - do not warn if the library had to be created\n"
   "  [v] - be verbose about actions taken\n"
@@ -101,7 +100,6 @@ bool SymTable = true;            ///< 's' & 'S' modifiers
 bool OnlyUpdate = false;         ///< 'u' modifier
 bool Verbose = false;            ///< 'v' modifier
 bool ReallyVerbose = false;      ///< 'V' modifier
-bool Compression = false;        ///< 'z' modifier
 
 // Relative Positional Argument (for insert/move). This variable holds
 // the name of the archive member to which the 'a', 'b' or 'i' modifier
@@ -208,7 +206,6 @@ ArchiveOperation parseCommandLine() {
     case 'u': OnlyUpdate = true; break;
     case 'v': Verbose = true; break;
     case 'V': Verbose = ReallyVerbose = true; break;
-    case 'z': Compression = true; break;
     case 'a':
       getRelPos();
       AddAfter = true;
@@ -260,8 +257,6 @@ ArchiveOperation parseCommandLine() {
     throw "The 'f' modifier is only applicable to the 'q' and 'r' operations";
   if (OnlyUpdate && Operation != ReplaceOrInsert)
     throw "The 'u' modifier is only applicable to the 'r' operation";
-  if (Compression && Operation!=ReplaceOrInsert && Operation!=Extract)
-    throw "The 'z' modifier is only applicable to the 'r' and 'x' operations";
   if (Count > 1 && Members.size() > 1)
     throw "Only one member name may be specified with the 'N' modifier";
 
@@ -413,8 +408,6 @@ doDisplayTable(std::string* ErrMsg) {
         // Zrw-r--r--  500/ 500    525 Nov  8 17:42 2004 Makefile
         if (I->isBitcode())
           outs() << "b";
-        else if (I->isCompressed())
-          outs() << "Z";
         else
           outs() << " ";
         unsigned mode = I->getMode();
@@ -437,7 +430,7 @@ doDisplayTable(std::string* ErrMsg) {
 }
 
 // doExtract - Implement the 'x' operation. This function extracts files back to
-// the file system, making sure to uncompress any that were compressed
+// the file system.
 bool
 doExtract(std::string* ErrMsg) {
   if (buildPaths(false, ErrMsg))
@@ -503,7 +496,7 @@ doDelete(std::string* ErrMsg) {
   }
 
   // We're done editting, reconstruct the archive.
-  if (TheArchive->writeToDisk(SymTable,TruncateNames,Compression,ErrMsg))
+  if (TheArchive->writeToDisk(SymTable,TruncateNames,ErrMsg))
     return true;
   if (ReallyVerbose)
     printSymbolTable();
@@ -558,7 +551,7 @@ doMove(std::string* ErrMsg) {
   }
 
   // We're done editting, reconstruct the archive.
-  if (TheArchive->writeToDisk(SymTable,TruncateNames,Compression,ErrMsg))
+  if (TheArchive->writeToDisk(SymTable,TruncateNames,ErrMsg))
     return true;
   if (ReallyVerbose)
     printSymbolTable();
@@ -583,7 +576,7 @@ doQuickAppend(std::string* ErrMsg) {
   }
 
   // We're done editting, reconstruct the archive.
-  if (TheArchive->writeToDisk(SymTable,TruncateNames,Compression,ErrMsg))
+  if (TheArchive->writeToDisk(SymTable,TruncateNames,ErrMsg))
     return true;
   if (ReallyVerbose)
     printSymbolTable();
@@ -681,7 +674,7 @@ doReplaceOrInsert(std::string* ErrMsg) {
   }
 
   // We're done editting, reconstruct the archive.
-  if (TheArchive->writeToDisk(SymTable,TruncateNames,Compression,ErrMsg))
+  if (TheArchive->writeToDisk(SymTable,TruncateNames,ErrMsg))
     return true;
   if (ReallyVerbose)
     printSymbolTable();

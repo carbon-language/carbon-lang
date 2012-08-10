@@ -6,7 +6,7 @@ SYNOPSIS
 --------
 
 
-**llvm-ar** [-]{dmpqrtx}[Rabfikouz] [relpos] [count] <archive> [files...]
+**llvm-ar** [-]{dmpqrtx}[Rabfikou] [relpos] [count] <archive> [files...]
 
 
 DESCRIPTION
@@ -63,16 +63,6 @@ Here's where **llvm-ar** departs from previous ``ar`` implementations:
 
 
 
-*Compression*
-
- **llvm-ar** can compress the members of an archive to save space. The
- compression used depends on what's available on the platform and what choices
- the LLVM Compressor utility makes. It generally favors bzip2 but will select
- between "no compression" or bzip2 depending on what makes sense for the
- file's content.
-
-
-
 *Directory Recursion*
 
  Most ``ar`` implementations do not recurse through directories but simply
@@ -86,9 +76,8 @@ Here's where **llvm-ar** departs from previous ``ar`` implementations:
 
  When **llvm-ar** prints out the verbose table of contents (``tv`` option), it
  precedes the usual output with a character indicating the basic kind of
- content in the file. A blank means the file is a regular file. A 'Z' means
- the file is compressed. A 'B' means the file is an LLVM bitcode file. An
- 'S' means the file is the symbol table.
+ content in the file. A blank means the file is a regular file. A 'B' means
+ the file is an LLVM bitcode file. An 'S' means the file is the symbol table.
 
 
 
@@ -98,7 +87,7 @@ OPTIONS
 
 
 The options to **llvm-ar** are compatible with other ``ar`` implementations.
-However, there are a few modifiers (*zR*) that are not found in other ``ar``
+However, there are a few modifiers (*R*) that are not found in other ``ar``
 implementations. The options to **llvm-ar** specify a single basic operation to
 perform on the archive, a variety of modifiers for that operation, the name of
 the archive file, and an optional list of file names. These options are used to
@@ -145,9 +134,9 @@ p[k]
 
 
 
-q[Rfz]
+q[Rf]
 
- Quickly append files to the end of the archive. The *R*, *f*, and *z*
+ Quickly append files to the end of the archive. The *R*, and *f*
  modifiers apply to this operation.  This operation quickly adds the
  *files* to the archive without checking for duplicates that should be
  removed first. If no *files* are specified, the archive is not modified.
@@ -156,9 +145,9 @@ q[Rfz]
 
 
 
-r[Rabfuz]
+r[Rabfu]
 
- Replace or insert file members. The *R*, *a*, *b*, *f*, *u*, and *z*
+ Replace or insert file members. The *R*, *a*, *b*, *f*, and *u*
  modifiers apply to this operation. This operation will replace existing
  *files* or insert them at the end of the archive if they do not exist. If no
  *files* are specified, the archive is not modified.
@@ -169,7 +158,7 @@ t[v]
 
  Print the table of contents. Without any modifiers, this operation just prints
  the names of the members to the standard output. With the *v* modifier,
- **llvm-ar** also prints out the file type (B=bitcode, Z=compressed, S=symbol
+ **llvm-ar** also prints out the file type (B=bitcode, S=symbol
  table, blank=regular file), the permission mode, the owner and group, the
  size, and the date. If any *files* are specified, the listing is only for
  those files. If no *files* are specified, the table of contents for the
@@ -270,15 +259,6 @@ section (above) to determine which modifiers are applicable to which operations.
 
  When replacing existing files in the archive, only replace those files that have
  a time stamp than the time stamp of the member in the archive.
-
-
-
-[z]
-
- When inserting or replacing any file in the archive, compress the file first.
- This
- modifier is safe to use when (previously) compressed bitcode files are added to
- the archive; the compressed bitcode files will not be doubly compressed.
 
 
 
@@ -410,11 +390,7 @@ mode - char[8]
 size - char[10]
 
  This field provides the size of the file, in bytes, encoded as a decimal ASCII
- string. If the size field is negative (starts with a minus sign, 0x02D), then
- the archive member is stored in compressed form. The first byte of the archive
- member's data indicates the compression type used. A value of 0 (0x30) indicates
- that no compression was used. A value of 2 (0x32) indicates that bzip2
- compression was used.
+ string.
 
 
 

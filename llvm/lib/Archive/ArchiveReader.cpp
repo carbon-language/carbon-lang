@@ -82,14 +82,9 @@ Archive::parseMemberHeader(const char*& At, const char* End, std::string* error)
   ArchiveMemberHeader* Hdr = (ArchiveMemberHeader*)At;
   At += sizeof(ArchiveMemberHeader);
 
-  // Extract the size and determine if the file is
-  // compressed or not (negative length).
   int flags = 0;
   int MemberSize = atoi(Hdr->size);
-  if (MemberSize < 0) {
-    flags |= ArchiveMember::CompressedFlag;
-    MemberSize = -MemberSize;
-  }
+  assert(MemberSize >= 0);
 
   // Check the size of the member for sanity
   if (At + MemberSize > End) {

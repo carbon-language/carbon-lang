@@ -47,14 +47,13 @@ class ArchiveMember : public ilist_node<ArchiveMember> {
     /// characteristics of the member. The various "is" methods below provide
     /// access to the flags. The flags are not user settable.
     enum Flags {
-      CompressedFlag = 1,          ///< Member is a normal compressed file
-      SVR4SymbolTableFlag = 2,     ///< Member is a SVR4 symbol table
-      BSD4SymbolTableFlag = 4,     ///< Member is a BSD4 symbol table
-      LLVMSymbolTableFlag = 8,     ///< Member is an LLVM symbol table
-      BitcodeFlag = 16,            ///< Member is bitcode
-      HasPathFlag = 64,            ///< Member has a full or partial path
-      HasLongFilenameFlag = 128,   ///< Member uses the long filename syntax
-      StringTableFlag = 256        ///< Member is an ar(1) format string table
+      SVR4SymbolTableFlag = 1,     ///< Member is a SVR4 symbol table
+      BSD4SymbolTableFlag = 2,     ///< Member is a BSD4 symbol table
+      LLVMSymbolTableFlag = 4,     ///< Member is an LLVM symbol table
+      BitcodeFlag = 8,             ///< Member is bitcode
+      HasPathFlag = 16,            ///< Member has a full or partial path
+      HasLongFilenameFlag = 32,    ///< Member uses the long filename syntax
+      StringTableFlag = 64         ///< Member is an ar(1) format string table
     };
 
   /// @}
@@ -108,11 +107,6 @@ class ArchiveMember : public ilist_node<ArchiveMember> {
     /// @returns a pointer to the member's data.
     /// @brief Get the data content of the archive member
     const char* getData() const { return data; }
-
-    /// This method determines if the member is a regular compressed file.
-    /// @returns true iff the archive member is a compressed regular file.
-    /// @brief Determine if the member is a compressed regular file.
-    bool isCompressed() const { return flags&CompressedFlag; }
 
     /// @returns true iff the member is a SVR4 (non-LLVM) symbol table
     /// @brief Determine if this member is a SVR4 symbol table.
@@ -427,7 +421,6 @@ class Archive {
     bool writeToDisk(
       bool CreateSymbolTable=false,   ///< Create Symbol table
       bool TruncateNames=false,       ///< Truncate the filename to 15 chars
-      bool Compress=false,            ///< Compress files
       std::string* ErrMessage=0       ///< If non-null, where error msg is set
     );
 
@@ -494,7 +487,6 @@ class Archive {
       std::ofstream& ARFile,       ///< The file to write member onto
       bool CreateSymbolTable,      ///< Should symbol table be created?
       bool TruncateNames,          ///< Should names be truncated to 11 chars?
-      bool ShouldCompress,         ///< Should the member be compressed?
       std::string* ErrMessage      ///< If non-null, place were error msg is set
     );
 

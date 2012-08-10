@@ -204,7 +204,6 @@ Archive::writeMember(
   std::ofstream& ARFile,
   bool CreateSymbolTable,
   bool TruncateNames,
-  bool ShouldCompress,
   std::string* ErrMsg
 ) {
 
@@ -349,7 +348,7 @@ Archive::writeSymbolTable(std::ofstream& ARFile) {
 // table, flattening the file names (no directories, 15 chars max) and
 // compressing each archive member.
 bool
-Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
+Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames,
                      std::string* ErrMsg)
 {
   // Make sure they haven't opened up the file, not loaded it,
@@ -394,7 +393,7 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
   // builds the symbol table, symTab.
   for (MembersList::iterator I = begin(), E = end(); I != E; ++I) {
     if (writeMember(*I, ArchiveFile, CreateSymbolTable,
-                     TruncateNames, Compress, ErrMsg)) {
+                     TruncateNames, ErrMsg)) {
       TmpArchive.eraseFromDisk();
       ArchiveFile.close();
       return true;
@@ -446,7 +445,7 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
     // compatibility with other ar(1) implementations as well as allowing the
     // archive to store both native .o and LLVM .bc files, both indexed.
     if (foreignST) {
-      if (writeMember(*foreignST, FinalFile, false, false, false, ErrMsg)) {
+      if (writeMember(*foreignST, FinalFile, false, false, ErrMsg)) {
         FinalFile.close();
         TmpArchive.eraseFromDisk();
         return true;
