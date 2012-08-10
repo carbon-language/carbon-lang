@@ -512,7 +512,7 @@ namespace {
     /// have that value number.  Use findLeader to query it.
     struct LeaderTableEntry {
       Value *Val;
-      BasicBlock *BB;
+      const BasicBlock *BB;
       LeaderTableEntry *Next;
     };
     DenseMap<uint32_t, LeaderTableEntry> LeaderTable;
@@ -542,7 +542,7 @@ namespace {
   private:
     /// addToLeaderTable - Push a new Value to the LeaderTable onto the list for
     /// its value number.
-    void addToLeaderTable(uint32_t N, Value *V, BasicBlock *BB) {
+    void addToLeaderTable(uint32_t N, Value *V, const BasicBlock *BB) {
       LeaderTableEntry &Curr = LeaderTable[N];
       if (!Curr.Val) {
         Curr.Val = V;
@@ -608,13 +608,13 @@ namespace {
     void dump(DenseMap<uint32_t, Value*> &d);
     bool iterateOnFunction(Function &F);
     bool performPRE(Function &F);
-    Value *findLeader(BasicBlock *BB, uint32_t num);
+    Value *findLeader(const BasicBlock *BB, uint32_t num);
     void cleanupGlobalSets();
     void verifyRemoved(const Instruction *I) const;
     bool splitCriticalEdges();
     unsigned replaceAllDominatedUsesWith(Value *From, Value *To,
-                                         BasicBlock *Root);
-    bool propagateEquality(Value *LHS, Value *RHS, BasicBlock *Root);
+                                         const BasicBlock *Root);
+    bool propagateEquality(Value *LHS, Value *RHS, const BasicBlock *Root);
   };
 
   char GVN::ID = 0;
@@ -1977,7 +1977,7 @@ bool GVN::processLoad(LoadInst *L) {
 // and then scan the list to find one whose block dominates the block in
 // question.  This is fast because dominator tree queries consist of only
 // a few comparisons of DFS numbers.
-Value *GVN::findLeader(BasicBlock *BB, uint32_t num) {
+Value *GVN::findLeader(const BasicBlock *BB, uint32_t num) {
   LeaderTableEntry Vals = LeaderTable[num];
   if (!Vals.Val) return 0;
 
@@ -2004,7 +2004,7 @@ Value *GVN::findLeader(BasicBlock *BB, uint32_t num) {
 /// use is dominated by the given basic block.  Returns the number of uses that
 /// were replaced.
 unsigned GVN::replaceAllDominatedUsesWith(Value *From, Value *To,
-                                          BasicBlock *Root) {
+                                          const BasicBlock *Root) {
   unsigned Count = 0;
   for (Value::use_iterator UI = From->use_begin(), UE = From->use_end();
        UI != UE; ) {
@@ -2030,7 +2030,7 @@ unsigned GVN::replaceAllDominatedUsesWith(Value *From, Value *To,
 /// propagateEquality - The given values are known to be equal in every block
 /// dominated by 'Root'.  Exploit this, for example by replacing 'LHS' with
 /// 'RHS' everywhere in the scope.  Returns whether a change was made.
-bool GVN::propagateEquality(Value *LHS, Value *RHS, BasicBlock *Root) {
+bool GVN::propagateEquality(Value *LHS, Value *RHS, const BasicBlock *Root) {
   SmallVector<std::pair<Value*, Value*>, 4> Worklist;
   Worklist.push_back(std::make_pair(LHS, RHS));
   bool Changed = false;
