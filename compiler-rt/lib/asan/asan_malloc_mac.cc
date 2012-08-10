@@ -1,4 +1,4 @@
-//===-- asan_rtl.cc -------------------------------------------------------===//
+//===-- asan_malloc_mac.cc ------------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -18,7 +18,6 @@
 #include <CoreFoundation/CFBase.h>
 #include <dlfcn.h>
 #include <malloc/malloc.h>
-#include <setjmp.h>
 
 #include "asan_allocator.h"
 #include "asan_interceptors.h"
