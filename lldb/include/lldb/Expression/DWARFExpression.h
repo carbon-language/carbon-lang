@@ -187,6 +187,36 @@ public:
     SetOpcodeData(const DataExtractor& data, uint32_t data_offset, uint32_t data_length);
 
     //------------------------------------------------------------------
+    /// Copy the DWARF location expression into a local buffer.
+    ///
+    /// It is a good idea to copy the data so we don't keep the entire
+    /// object file worth of data around just for a few bytes of location
+    /// expression. LLDB typically will mmap the entire contents of debug
+    /// information files, and if we use SetOpcodeData, it will get a
+    /// shared reference to all of this data for the and cause the object
+    /// file to have to stay around. Even worse, a very very large ".a"
+    /// that contains one or more .o files could end up being referenced.
+    /// Location lists are typically small so even though we are copying
+    /// the data, it shouldn't amount to that much for the variables we
+    /// end up parsing.
+    ///
+    /// @param[in] data
+    ///     A data extractor configured to read and copy the DWARF
+    ///     location expression's bytecode.
+    ///
+    /// @param[in] data_offset
+    ///     The offset of the location expression in the extractor.
+    ///
+    /// @param[in] data_length
+    ///     The byte length of the location expression.
+    //------------------------------------------------------------------
+    void
+    CopyOpcodeData (const DataExtractor& data,
+                    uint32_t data_offset,
+                    uint32_t data_length);
+    
+
+    //------------------------------------------------------------------
     /// Tells the expression that it refers to a location list.
     ///
     /// @param[in] slide

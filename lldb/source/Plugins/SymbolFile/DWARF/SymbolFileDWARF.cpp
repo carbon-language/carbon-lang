@@ -1012,7 +1012,9 @@ ParseDWARFLineTableCallback(dw_offset_t offset, const DWARFDebugLine::State& sta
                 // this address is resolved. If they are the same, then the
                 // function for this address didn't make it into the final
                 // executable.
-                bool curr_in_final_executable = info->curr_section_sp->GetLinkedSection ();
+                bool curr_in_final_executable = false;
+                if (info->curr_section_sp->GetLinkedSection ())
+                    curr_in_final_executable = true;
 
                 // If we are doing DWARF with debug map, then we need to carefully
                 // add each line table entry as there may be gaps as functions
@@ -6542,7 +6544,7 @@ SymbolFileDWARF::ParseVariableDIE
 
                                 uint32_t block_offset = form_value.BlockData() - debug_info_data.GetDataStart();
                                 uint32_t block_length = form_value.Unsigned();
-                                location.SetOpcodeData(get_debug_info_data(), block_offset, block_length);
+                                location.CopyOpcodeData(get_debug_info_data(), block_offset, block_length);
                             }
                             else
                             {
@@ -6552,7 +6554,7 @@ SymbolFileDWARF::ParseVariableDIE
                                 size_t loc_list_length = DWARFLocationList::Size(debug_loc_data, debug_loc_offset);
                                 if (loc_list_length > 0)
                                 {
-                                    location.SetOpcodeData(debug_loc_data, debug_loc_offset, loc_list_length);
+                                    location.CopyOpcodeData(debug_loc_data, debug_loc_offset, loc_list_length);
                                     assert (func_low_pc != LLDB_INVALID_ADDRESS);
                                     location.SetLocationListSlide (func_low_pc - dwarf_cu->GetBaseAddress());
                                 }

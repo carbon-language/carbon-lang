@@ -261,6 +261,13 @@ DWARFExpression::SetOpcodeData (const DataExtractor& data)
 }
 
 void
+DWARFExpression::CopyOpcodeData (const DataExtractor& data, uint32_t data_offset, uint32_t data_length)
+{
+    const uint8_t *bytes = data.PeekData(data_offset, data_length);
+    m_data.SetData(DataBufferSP(new DataBufferHeap(bytes, data_length)));
+}
+
+void
 DWARFExpression::SetOpcodeData (const DataExtractor& data, uint32_t data_offset, uint32_t data_length)
 {
     m_data.SetData(data, data_offset, data_length);
