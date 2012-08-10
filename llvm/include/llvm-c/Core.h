@@ -986,7 +986,7 @@ LLVMTypeRef LLVMX86MMXType(void);
  *
  * LLVMValueRef essentially represents llvm::Value. There is a rich
  * hierarchy of classes within this type. Depending on the instance
- * obtain, not all APIs are available.
+ * obtained, not all APIs are available.
  *
  * Callers can determine the type of a LLVMValueRef by calling the
  * LLVMIsA* family of functions (e.g. LLVMIsAArgument()). These
@@ -1162,7 +1162,7 @@ LLVM_FOR_EACH_VALUE_SUBCLASS(LLVM_DECLARE_VALUE_CAST)
  *
  * Uses are obtained in an iterator fashion. First, call this function
  * to obtain a reference to the first use. Then, call LLVMGetNextUse()
- * on that instance and all subsequently obtained instances untl
+ * on that instance and all subsequently obtained instances until
  * LLVMGetNextUse() returns NULL.
  *
  * @see llvm::Value::use_begin()
