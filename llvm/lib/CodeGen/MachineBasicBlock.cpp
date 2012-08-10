@@ -478,18 +478,42 @@ MachineBasicBlock::removeSuccessor(succ_iterator I) {
 
 void MachineBasicBlock::replaceSuccessor(MachineBasicBlock *Old,
                                          MachineBasicBlock *New) {
-  uint32_t weight = 0;
-  succ_iterator SI = std::find(Successors.begin(), Successors.end(), Old);
+  if (Old == New)
+    return;
 
-  // If Weight list is empty it means we don't use it (disabled optimization).
-  if (!Weights.empty()) {
-    weight_iterator WI = getWeightIterator(SI);
-    weight = *WI;
+  succ_iterator E = succ_end();
+  succ_iterator NewI = E;
+  succ_iterator OldI = E;
+  for (succ_iterator I = succ_begin(); I != E; ++I) {
+    if (*I == Old) {
+      OldI = I;
+      if (NewI != E)
+        break;
+    }
+    if (*I == New) {
+      NewI = I;
+      if (OldI != E)
+        break;
+    }
+  }
+  assert(OldI != E && "Old is not a successor of this block");
+  Old->removePredecessor(this);
+
+  // If New isn't already a successor, let it take Old's place.
+  if (NewI == E) {
+    New->addPredecessor(this);
+    *OldI = New;
+    return;
   }
 
-  // Update the successor information.
-  removeSuccessor(SI);
-  addSuccessor(New, weight);
+  // New is already a successor.
+  // Update its weight instead of adding a duplicate edge.
+  if (!Weights.empty()) {
+    weight_iterator OldWI = getWeightIterator(OldI);
+    *getWeightIterator(NewI) += *OldWI;
+    Weights.erase(OldWI);
+  }
+  Successors.erase(OldI);
 }
 
 void MachineBasicBlock::addPredecessor(MachineBasicBlock *pred) {
