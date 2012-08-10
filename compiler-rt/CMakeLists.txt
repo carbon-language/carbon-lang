@@ -48,6 +48,18 @@ try_compile(CAN_TARGET_I386 ${CMAKE_BINARY_DIR} ${SIMPLE_SOURCE32}
             COMPILE_DEFINITIONS "${TARGET_I386_CFLAGS}"
             CMAKE_FLAGS "-DCMAKE_EXE_LINKER_FLAGS:STRING=${TARGET_I386_CFLAGS}")
 
+function(filter_available_targets out_var)
+  set(archs)
+  foreach(arch ${ARGN})
+    if(${arch} STREQUAL "x86_64" AND CAN_TARGET_X86_64)
+      list(APPEND archs ${arch})
+    elseif (${arch} STREQUAL "i386" AND CAN_TARGET_I386)
+      list(APPEND archs ${arch})
+    endif()
+  endforeach()
+  set(${out_var} ${archs} PARENT_SCOPE)
+endfunction()
+
 # Because compiler-rt spends a lot of time setting up custom compile flags,
 # define a handy helper function for it. The compile flags setting in CMake
 # has serious issues that make its syntax challenging at best.

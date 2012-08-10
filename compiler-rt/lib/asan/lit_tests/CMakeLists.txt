@@ -16,7 +16,7 @@ if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}")
   # and can be sure that clang would produce working binaries.
   set(ASAN_TEST_DEPS
     clang clang-headers FileCheck count not
-    clang-rt.asan-x86_64 clang-rt.asan-i386
+    ${ASAN_RUNTIME_LIBRARIES}
     )
   if(LLVM_INCLUDE_TESTS)
     list(APPEND ASAN_TEST_DEPS AsanUnitTests)

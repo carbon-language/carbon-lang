@@ -15,8 +15,8 @@ elseif (UNIX)
   set(CLANG_RUNTIME_LIB_DIR
       ${LLVM_BINARY_DIR}/lib/clang/${CLANG_VERSION}/lib/linux)
 endif()
-function(add_clang_runtime_static_library target_name)
-  set_target_properties(${target_name} PROPERTIES
+function(add_clang_runtime_static_library target_names)
+  set_target_properties(${target_names} PROPERTIES
                         ARCHIVE_OUTPUT_DIRECTORY ${CLANG_RUNTIME_LIB_DIR})
 endfunction()
 
@@ -26,8 +26,8 @@ add_subdirectory(asan)
 add_subdirectory(interception)
 add_subdirectory(sanitizer_common)
 
+# FIXME: Add support for tsan library.
 # FIXME: Add support for the profile library.
-
 
 # The top-level lib directory contains a large amount of C code which provides
 # generic implementations of the core runtime library along with optimized

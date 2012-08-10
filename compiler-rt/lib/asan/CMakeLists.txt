@@ -46,37 +46,48 @@ set(ASAN_COMMON_DEFINITIONS
   ASAN_NEEDS_SEGV=1
   )
 
-# FIXME: We need to build universal binaries on OS X instead of
-# two arch-specific binaries.
+set(ASAN_RUNTIME_LIBRARIES)
+if(APPLE)
+  # Build universal binary on APPLE.
+  add_library(clang_rt.asan_osx STATIC
+    ${ASAN_SOURCES}
+    $<TARGET_OBJECTS:RTInterception.osx>
+    $<TARGET_OBJECTS:RTSanitizerCommon.osx>
+    )
+  set_target_compile_flags(clang_rt.asan_osx ${ASAN_CFLAGS})
+  filter_available_targets(ASAN_TARGETS x86_64 i386)
+  set_target_properties(clang_rt.asan_osx PROPERTIES
+    OSX_ARCHITECTURES "${ASAN_TARGETS}")
+  list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan_osx)
+else()
+  # Otherwise, build separate libraries for each target.
+  if(CAN_TARGET_X86_64)
+    add_library(clang_rt.asan-x86_64 STATIC
+      ${ASAN_SOURCES}
+      $<TARGET_OBJECTS:RTInterception.x86_64>
+      $<TARGET_OBJECTS:RTSanitizerCommon.x86_64>
+      )
+    set_target_compile_flags(clang_rt.asan-x86_64
+      ${ASAN_CFLAGS} ${TARGET_X86_64_CFLAGS}
+      )
+    list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-x86_64)
+  endif()
+  if(CAN_TARGET_I386)
+    add_library(clang_rt.asan-i386 STATIC
+      ${ASAN_SOURCES}
+      $<TARGET_OBJECTS:RTInterception.i386>
+      $<TARGET_OBJECTS:RTSanitizerCommon.i386>
+      )
+    set_target_compile_flags(clang_rt.asan-i386
+      ${ASAN_CFLAGS} ${TARGET_I386_CFLAGS}
+      )
+    list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-i386)
+  endif()
+endif()
 
-if(CAN_TARGET_X86_64)
-  add_library(clang_rt.asan-x86_64 STATIC
-    ${ASAN_SOURCES}
-    $<TARGET_OBJECTS:RTInterception.x86_64>
-    $<TARGET_OBJECTS:RTSanitizerCommon.x86_64>
-    )
-  set_target_compile_flags(clang_rt.asan-x86_64
-    ${ASAN_CFLAGS}
-    ${TARGET_X86_64_CFLAGS}
-    )
-  set_property(TARGET clang_rt.asan-x86_64 APPEND PROPERTY COMPILE_DEFINITIONS
-    ${ASAN_COMMON_DEFINITIONS})
-  add_clang_runtime_static_library(clang_rt.asan-x86_64)
-endif()
-if(CAN_TARGET_I386)
-  add_library(clang_rt.asan-i386 STATIC
-    ${ASAN_SOURCES}
-    $<TARGET_OBJECTS:RTInterception.i386>
-    $<TARGET_OBJECTS:RTSanitizerCommon.i386>
-    )
-  set_target_compile_flags(clang_rt.asan-i386
-    ${ASAN_CFLAGS}
-    ${TARGET_I386_CFLAGS}
-    )
-  set_property(TARGET clang_rt.asan-i386 APPEND PROPERTY COMPILE_DEFINITIONS
-    ${ASAN_COMMON_DEFINITIONS})
-  add_clang_runtime_static_library(clang_rt.asan-i386)
-endif()
+set_property(TARGET ${ASAN_RUNTIME_LIBRARIES} APPEND PROPERTY
+  COMPILE_DEFINITIONS ${ASAN_COMMON_DEFINITIONS})
+add_clang_runtime_static_library(${ASAN_RUNTIME_LIBRARIES})
 
 if(LLVM_INCLUDE_TESTS)
   add_subdirectory(tests)

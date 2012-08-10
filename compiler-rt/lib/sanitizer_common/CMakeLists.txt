@@ -23,19 +23,25 @@ set(SANITIZER_CFLAGS
   -fvisibility=hidden
   )
 
-set(SANITIZER_COMMON_DEFINITIONS)
+if(APPLE)
+  # Build universal binary on APPLE.
+  add_library(RTSanitizerCommon.osx OBJECT ${SANITIZER_SOURCES})
+  set_target_compile_flags(RTSanitizerCommon.osx ${SANITIZER_CFLAGS})
+  filter_available_targets(SANITIZER_TARGETS x86_64 i386)
+  set_target_properties(RTSanitizerCommon.osx PROPERTIES
+    OSX_ARCHITECTURES "${SANITIZER_TARGETS}")
+else()
+  # Otherwise, build separate libraries for each target.
+  if(CAN_TARGET_X86_64)
+    add_library(RTSanitizerCommon.x86_64 OBJECT ${SANITIZER_SOURCES})
+    set_target_compile_flags(RTSanitizerCommon.x86_64
+      ${SANITIZER_CFLAGS} ${TARGET_X86_64_CFLAGS})
+  endif()
+  if(CAN_TARGET_I386)
+    add_library(RTSanitizerCommon.i386 OBJECT ${SANITIZER_SOURCES})
+    set_target_compile_flags(RTSanitizerCommon.i386
+      ${SANITIZER_CFLAGS} ${TARGET_I386_CFLAGS})
+  endif()
+endif()
 
-if(CAN_TARGET_X86_64)
-  add_library(RTSanitizerCommon.x86_64 OBJECT ${SANITIZER_SOURCES})
-  set_target_compile_flags(RTSanitizerCommon.x86_64
-    ${SANITIZER_CFLAGS} ${TARGET_X86_64_CFLAGS})
-  set_property(TARGET RTSanitizerCommon.x86_64 APPEND PROPERTY
-    COMPILE_DEFINITIONS ${SANITIZER_COMMON_DEFINITIONS})
-endif()
-if(CAN_TARGET_I386)
-  add_library(RTSanitizerCommon.i386 OBJECT ${SANITIZER_SOURCES})
-  set_target_compile_flags(RTSanitizerCommon.i386
-    ${SANITIZER_CFLAGS} ${TARGET_I386_CFLAGS})
-  set_property(TARGET RTSanitizerCommon.i386 APPEND PROPERTY
-    COMPILE_DEFINITIONS ${SANITIZER_COMMON_DEFINITIONS})
-endif()
+# FIXME: Add support for running sanitizer_common unit tests.
