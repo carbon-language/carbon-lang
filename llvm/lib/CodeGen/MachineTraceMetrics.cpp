@@ -931,17 +931,29 @@ computeInstrHeights(const MachineBasicBlock *MBB) {
     TBI.CriticalPath = 0;
 
     // Get dependencies from PHIs in the trace successor.
-    if (TBI.Succ) {
-      for (MachineBasicBlock::const_iterator
-           I = TBI.Succ->begin(), E = TBI.Succ->end();
+    const MachineBasicBlock *Succ = TBI.Succ;
+    // If MBB is the last block in the trace, and it has a back-edge to the
+    // loop header, get loop-carried dependencies from PHIs in the header. For
+    // that purpose, pretend that all the loop header PHIs have height 0.
+    if (!Succ)
+      if (const MachineLoop *Loop = getLoopFor(MBB))
+        if (MBB->isSuccessor(Loop->getHeader()))
+          Succ = Loop->getHeader();
+
+    if (Succ) {
+      for (MachineBasicBlock::const_iterator I = Succ->begin(), E = Succ->end();
            I != E && I->isPHI(); ++I) {
         const MachineInstr *PHI = I;
         Deps.clear();
         getPHIDeps(PHI, Deps, MBB, MTM.MRI);
-        if (!Deps.empty())
-          if (pushDepHeight(Deps.front(), PHI, Cycles.lookup(PHI).Height,
-                        Heights, MTM.ItinData, MTM.TII))
+        if (!Deps.empty()) {
+          // Loop header PHI heights are all 0.
+          unsigned Height = TBI.Succ ? Cycles.lookup(PHI).Height : 0;
+          DEBUG(dbgs() << "pred\t" << Height << '\t' << *PHI);
+          if (pushDepHeight(Deps.front(), PHI, Height,
+                            Heights, MTM.ItinData, MTM.TII))
             addLiveIns(Deps.front().DefMI, Stack);
+        }
       }
     }
 
