@@ -211,7 +211,7 @@ static void computeDeclRefDependence(ASTContext &Ctx, NamedDecl *D, QualType T,
     if ((Ctx.getLangOpts().CPlusPlus0x ?
            Var->getType()->isLiteralType() :
            Var->getType()->isIntegralOrEnumerationType()) &&
-        (Var->getType().getCVRQualifiers() == Qualifiers::Const ||
+        (Var->getType().isConstQualified() ||
          Var->getType()->isReferenceType())) {
       if (const Expr *Init = Var->getAnyInitializer())
         if (Init->isValueDependent()) {
@@ -440,10 +440,10 @@ std::string PredefinedExpr::ComputeName(IdentType IT, const Decl *CurrentDecl) {
     POut << ")";
 
     if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
-      Qualifiers ThisQuals = Qualifiers::fromCVRMask(MD->getTypeQualifiers());
-      if (ThisQuals.hasConst())
+      const FunctionType *FT = cast<FunctionType>(MD->getType().getTypePtr());
+      if (FT->isConst())
         POut << " const";
-      if (ThisQuals.hasVolatile())
+      if (FT->isVolatile())
         POut << " volatile";
       RefQualifierKind Ref = MD->getRefQualifier();
       if (Ref == RQ_LValue)

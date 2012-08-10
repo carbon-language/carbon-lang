@@ -437,7 +437,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
   LambdaScopeInfo *LSI
     = enterLambdaScope(Method, Intro.Range, Intro.Default, ExplicitParams,
                        ExplicitResultType,
-                       (Method->getTypeQualifiers() & Qualifiers::Const) == 0);
+                       !Method->isConst());
  
   // Handle explicit captures.
   SourceLocation PrevCaptureLoc

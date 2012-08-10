@@ -2369,11 +2369,11 @@ AddFunctionTypeQualsToCompletionString(CodeCompletionBuilder &Result,
 
   // Handle multiple qualifiers.
   std::string QualsStr;
-  if (Proto->getTypeQuals() & Qualifiers::Const)
+  if (Proto->isConst())
     QualsStr += " const";
-  if (Proto->getTypeQuals() & Qualifiers::Volatile)
+  if (Proto->isVolatile())
     QualsStr += " volatile";
-  if (Proto->getTypeQuals() & Qualifiers::Restrict)
+  if (Proto->isRestrict())
     QualsStr += " restrict";
   Result.AddInformativeChunk(Result.getAllocator().CopyString(QualsStr));
 }

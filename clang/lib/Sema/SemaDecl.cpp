@@ -4852,7 +4852,7 @@ static NamedDecl* DiagnoseInvalidRedeclaration(
 
   bool NewFDisConst = false;
   if (CXXMethodDecl *NewMD = dyn_cast<CXXMethodDecl>(NewFD))
-    NewFDisConst = NewMD->getTypeQualifiers() & Qualifiers::Const;
+    NewFDisConst = NewMD->isConst();
 
   for (llvm::SmallVector<std::pair<FunctionDecl*, unsigned>, 1>::iterator
        NearMatch = NearMatches.begin(), NearMatchEnd = NearMatches.end();
@@ -4860,7 +4860,7 @@ static NamedDecl* DiagnoseInvalidRedeclaration(
     FunctionDecl *FD = NearMatch->first;
     bool FDisConst = false;
     if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD))
-      FDisConst = MD->getTypeQualifiers() & Qualifiers::Const;
+      FDisConst = MD->isConst();
 
     if (unsigned Idx = NearMatch->second) {
       ParmVarDecl *FDParam = FD->getParamDecl(Idx-1);

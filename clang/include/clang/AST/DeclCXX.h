@@ -1549,6 +1549,9 @@ public:
   bool isStatic() const { return getStorageClass() == SC_Static; }
   bool isInstance() const { return !isStatic(); }
 
+  bool isConst() { return getType()->castAs<FunctionType>()->isConst(); }
+  bool isVolatile() { return getType()->castAs<FunctionType>()->isVolatile(); }
+
   bool isVirtual() const {
     CXXMethodDecl *CD =
       cast<CXXMethodDecl>(const_cast<CXXMethodDecl*>(this)->getCanonicalDecl());

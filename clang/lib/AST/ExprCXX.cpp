@@ -943,7 +943,7 @@ CompoundStmt *LambdaExpr::getBody() const {
 }
 
 bool LambdaExpr::isMutable() const {
-  return (getCallOperator()->getTypeQualifiers() & Qualifiers::Const) == 0;
+  return !getCallOperator()->isConst();
 }
 
 ExprWithCleanups::ExprWithCleanups(Expr *subexpr,

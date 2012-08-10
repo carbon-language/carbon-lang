@@ -971,9 +971,9 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
   }
 
   void visitFunctionProtoTypeAttrs(FunctionProtoType *T) {
-    setFlag("const", T->getTypeQuals() & Qualifiers::Const);
-    setFlag("volatile", T->getTypeQuals() & Qualifiers::Volatile);
-    setFlag("restrict", T->getTypeQuals() & Qualifiers::Restrict);
+    setFlag("const", T->isConst());
+    setFlag("volatile", T->isVolatile());
+    setFlag("restrict", T->isRestrict());
   }
   void visitFunctionProtoTypeChildren(FunctionProtoType *T) {
     push("parameters");

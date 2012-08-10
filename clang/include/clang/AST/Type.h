@@ -2676,6 +2676,9 @@ public:
   bool getNoReturnAttr() const { return getExtInfo().getNoReturn(); }
   CallingConv getCallConv() const { return getExtInfo().getCC(); }
   ExtInfo getExtInfo() const { return ExtInfo(FunctionTypeBits.ExtInfo); }
+  bool isConst() const { return getTypeQuals() & Qualifiers::Const; }
+  bool isVolatile() const { return getTypeQuals() & Qualifiers::Volatile; }
+  bool isRestrict() const { return getTypeQuals() & Qualifiers::Restrict; }
 
   /// \brief Determine the type of an expression that calls a function of
   /// this type.
