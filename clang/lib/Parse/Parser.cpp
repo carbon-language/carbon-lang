@@ -1025,7 +1025,8 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
     }
     return DP;
   }
-  else if (CurParsedObjCImpl && Tok.is(tok::l_brace) && 
+  else if (CurParsedObjCImpl && 
+           (Tok.is(tok::l_brace) || Tok.is(tok::kw_try)) && 
       !TemplateInfo.TemplateParams &&
       Actions.CurContext->isTranslationUnit()) {
     MultiTemplateParamsArg TemplateParameterLists(Actions, 0, 0);

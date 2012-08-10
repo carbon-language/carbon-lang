@@ -1927,11 +1927,19 @@ void Parser::StashAwayMethodOrFunctionBodyTokens(Decl *MDecl) {
   LexedMethod* LM = new LexedMethod(this, MDecl);
   CurParsedObjCImpl->LateParsedObjCMethods.push_back(LM);
   CachedTokens &Toks = LM->Toks;
-  // Begin by storing the '{' token.
+  // Begin by storing the '{' or 'try' token.
   Toks.push_back(Tok);
+  if (Tok.is(tok::kw_try)) {
+    ConsumeToken();
+    Toks.push_back(Tok); // also store '{'
+  }
   ConsumeBrace();
   // Consume everything up to (and including) the matching right brace.
   ConsumeAndStoreUntil(tok::r_brace, Toks, /*StopAtSemi=*/false);
+  while (Tok.is(tok::kw_catch)) {
+    ConsumeAndStoreUntil(tok::l_brace, Toks, /*StopAtSemi=*/false);
+    ConsumeAndStoreUntil(tok::r_brace, Toks, /*StopAtSemi=*/false);
+  }
 }
 
 ///   objc-method-def: objc-method-proto ';'[opt] '{' body '}'
@@ -2863,7 +2871,8 @@ void Parser::ParseLexedObjCMethodDefs(LexedMethod &LM, bool parseMethod) {
   // Consume the previously pushed token.
   ConsumeAnyToken();
     
-  assert(Tok.is(tok::l_brace) && "Inline objective-c method not starting with '{'");
+  assert((Tok.is(tok::l_brace) || Tok.is(tok::kw_try)) && 
+          "Inline objective-c method not starting with '{' or 'try'");
   // Enter a scope for the method or c-fucntion body.
   ParseScope BodyScope(this,
                        parseMethod
@@ -2876,8 +2885,10 @@ void Parser::ParseLexedObjCMethodDefs(LexedMethod &LM, bool parseMethod) {
     Actions.ActOnStartOfObjCMethodDef(getCurScope(), MCDecl);
   else
     Actions.ActOnStartOfFunctionDef(getCurScope(), MCDecl);
-  
-  MCDecl = ParseFunctionStatementBody(MCDecl, BodyScope);
+  if (Tok.is(tok::kw_try))
+    MCDecl = ParseFunctionTryBlock(MCDecl, BodyScope);
+  else
+    MCDecl = ParseFunctionStatementBody(MCDecl, BodyScope);
   
   if (Tok.getLocation() != OrigLoc) {
     // Due to parsing error, we either went over the cached tokens or
