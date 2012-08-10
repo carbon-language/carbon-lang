@@ -88,6 +88,25 @@ void MachineOperand::substPhysReg(unsigned Reg, const TargetRegisterInfo &TRI) {
   setReg(Reg);
 }
 
+/// Change a def to a use, or a use to a def.
+void MachineOperand::setIsDef(bool Val) {
+  assert(isReg() && "Wrong MachineOperand accessor");
+  assert((!Val || !isDebug()) && "Marking a debug operation as def");
+  if (IsDef == Val)
+    return;
+  // MRI may keep uses and defs in different list positions.
+  if (MachineInstr *MI = getParent())
+    if (MachineBasicBlock *MBB = MI->getParent())
+      if (MachineFunction *MF = MBB->getParent()) {
+        MachineRegisterInfo &MRI = MF->getRegInfo();
+        MRI.removeRegOperandFromUseList(this);
+        IsDef = Val;
+        MRI.addRegOperandToUseList(this);
+        return;
+      }
+  IsDef = Val;
+}
+
 /// ChangeToImmediate - Replace this operand with a new immediate operand of
 /// the specified value.  If an operand is known to be an immediate already,
 /// the setImm method should be used.
@@ -110,26 +129,20 @@ void MachineOperand::ChangeToImmediate(int64_t ImmVal) {
 void MachineOperand::ChangeToRegister(unsigned Reg, bool isDef, bool isImp,
                                       bool isKill, bool isDead, bool isUndef,
                                       bool isDebug) {
-  // If this operand is already a register operand, use setReg to update the
+  MachineRegisterInfo *RegInfo = 0;
+  if (MachineInstr *MI = getParent())
+    if (MachineBasicBlock *MBB = MI->getParent())
+      if (MachineFunction *MF = MBB->getParent())
+        RegInfo = &MF->getRegInfo();
+  // If this operand is already a register operand, remove it from the
   // register's use/def lists.
-  if (isReg()) {
-    assert(!isEarlyClobber());
-    setReg(Reg);
-  } else {
-    // Otherwise, change this to a register and set the reg#.
-    OpKind = MO_Register;
-    SmallContents.RegNo = Reg;
-    // Ensure isOnRegUseList() returns false.
-    Contents.Reg.Prev = 0;
+  if (RegInfo && isReg())
+    RegInfo->removeRegOperandFromUseList(this);
 
-    // If this operand is embedded in a function, add the operand to the
-    // register's use/def list.
-    if (MachineInstr *MI = getParent())
-      if (MachineBasicBlock *MBB = MI->getParent())
-        if (MachineFunction *MF = MBB->getParent())
-          MF->getRegInfo().addRegOperandToUseList(this);
-  }
-
+  // Change this to a register and set the reg#.
+  OpKind = MO_Register;
+  SmallContents.RegNo = Reg;
+  SubReg = 0;
   IsDef = isDef;
   IsImp = isImp;
   IsKill = isKill;
@@ -138,7 +151,13 @@ void MachineOperand::ChangeToRegister(unsigned Reg, bool isDef, bool isImp,
   IsInternalRead = false;
   IsEarlyClobber = false;
   IsDebug = isDebug;
-  SubReg = 0;
+  // Ensure isOnRegUseList() returns false.
+  Contents.Reg.Prev = 0;
+
+  // If this operand is embedded in a function, add the operand to the
+  // register's use/def list.
+  if (RegInfo)
+    RegInfo->addRegOperandToUseList(this);
 }
 
 /// isIdenticalTo - Return true if this operand is identical to the specified

@@ -331,17 +331,9 @@ public:
   ///
   void substPhysReg(unsigned Reg, const TargetRegisterInfo&);
 
-  void setIsUse(bool Val = true) {
-    assert(isReg() && "Wrong MachineOperand accessor");
-    assert((Val || !isDebug()) && "Marking a debug operation as def");
-    IsDef = !Val;
-  }
+  void setIsUse(bool Val = true) { setIsDef(!Val); }
 
-  void setIsDef(bool Val = true) {
-    assert(isReg() && "Wrong MachineOperand accessor");
-    assert((!Val || !isDebug()) && "Marking a debug operation as def");
-    IsDef = Val;
-  }
+  void setIsDef(bool Val = true);
 
   void setImplicit(bool Val = true) {
     assert(isReg() && "Wrong MachineOperand accessor");
