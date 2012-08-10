@@ -34,9 +34,12 @@ define void @f1() {
 entry:
 ; OK
   invoke void @llvm.donothing()
-  to label %cont unwind label %cont
+  to label %conta unwind label %contb
 
-cont:
+conta:
+  ret void
+
+contb:
   %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
           filter [0 x i8*] zeroinitializer
   ret void
@@ -62,4 +65,16 @@ entry:
 ; CHECK: Cannot take the address of an intrinsic
   %call = call i32 @fn(i8 (i8, i8)* @llvm.expect.i8)
   ret i32 %call
+}
+
+define void @f4() {
+entry:
+  invoke void @llvm.donothing()
+  to label %cont unwind label %cont
+
+cont:
+; CHECK: Block containing LandingPadInst must be jumped to only by the unwind edge of an invoke.
+  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+          filter [0 x i8*] zeroinitializer
+  ret void
 }

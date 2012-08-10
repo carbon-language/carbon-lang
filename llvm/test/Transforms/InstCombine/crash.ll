@@ -132,12 +132,14 @@ define i32 @test5a() {
 }
 
 define void @test5() {
-       store i1 true, i1* undef
-       %1 = invoke i32 @test5a() to label %exit unwind label %exit
+  store i1 true, i1* undef
+  %r = invoke i32 @test5a() to label %exit unwind label %unwind
+unwind:
+  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+          cleanup
+  br label %exit
 exit:
-       %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
-                cleanup
-       ret void
+  ret void
 }
 
 
