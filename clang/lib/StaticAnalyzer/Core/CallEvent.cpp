@@ -15,6 +15,7 @@
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/CallEvent.h"
 #include "clang/Analysis/ProgramPoint.h"
+#include "clang/AST/CXXInheritance.h"
 #include "clang/AST/ParentMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringExtras.h"
@@ -408,11 +409,34 @@ void CXXInstanceCall::getInitialStackFrameContents(
                                             BindingsTy &Bindings) const {
   AnyFunctionCall::getInitialStackFrameContents(CalleeCtx, Bindings);
 
+  // Handle the binding of 'this' in the new stack frame.
+  // We need to make sure we have the proper layering of CXXBaseObjectRegions.
   SVal ThisVal = getCXXThisVal();
   if (!ThisVal.isUnknown()) {
-    SValBuilder &SVB = getState()->getStateManager().getSValBuilder();
+    ProgramStateManager &StateMgr = getState()->getStateManager();
+    SValBuilder &SVB = StateMgr.getSValBuilder();
+    
     const CXXMethodDecl *MD = cast<CXXMethodDecl>(CalleeCtx->getDecl());
     Loc ThisLoc = SVB.getCXXThis(MD, CalleeCtx);
+
+    if (const MemRegion *ThisReg = ThisVal.getAsRegion()) {
+      const CXXRecordDecl *Class = MD->getParent();
+
+      // We may be downcasting to call a devirtualized virtual method.
+      // Search through the base casts we already have to see if we can just
+      // strip them off.
+      const CXXBaseObjectRegion *BaseReg;
+      while ((BaseReg = dyn_cast<CXXBaseObjectRegion>(ThisReg))) {
+        if (BaseReg->getDecl() == Class)
+          break;
+        ThisReg = BaseReg->getSuperRegion();
+      }
+
+      // Either we found the right base class, or we stripped all the casts to
+      // the most derived type. Either one is good.
+      ThisVal = loc::MemRegionVal(ThisReg);
+    }
+
     Bindings.push_back(std::make_pair(ThisLoc, ThisVal));
   }
 }
