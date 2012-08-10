@@ -553,6 +553,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(naked);
   KEYWORD(nonlazybind);
   KEYWORD(address_safety);
+  KEYWORD(ia_nsdialect);
 
   KEYWORD(type);
   KEYWORD(opaque);

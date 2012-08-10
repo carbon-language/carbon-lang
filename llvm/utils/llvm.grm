@@ -175,6 +175,7 @@ FuncAttr      ::= noreturn
  | returns_twice
  | nonlazybind
  | address_safety
+ | ia_nsdialect
  ;
 
 OptFuncAttrs  ::= + _ | OptFuncAttrs FuncAttr ;
