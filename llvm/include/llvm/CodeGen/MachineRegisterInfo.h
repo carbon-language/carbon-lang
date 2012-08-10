@@ -468,10 +468,6 @@ public:
                         const TargetRegisterInfo &TRI,
                         const TargetInstrInfo &TII);
 
-private:
-  void HandleVRegListReallocation();
-
-public:
   /// defusechain_iterator - This class provides iterator support for machine
   /// operands in the function that use or define a specific register.  If
   /// ReturnUses is true it returns uses of registers, if ReturnDefs is true it
@@ -517,11 +513,20 @@ public:
       assert(Op && "Cannot increment end iterator!");
       Op = getNextOperandForReg(Op);
 
-      // If this is an operand we don't care about, skip it.
-      while (Op && ((!ReturnUses && Op->isUse()) ||
-                    (!ReturnDefs && Op->isDef()) ||
-                    (SkipDebug && Op->isDebug())))
-        Op = getNextOperandForReg(Op);
+      // All defs come before the uses, so stop def_iterator early.
+      if (!ReturnUses) {
+        if (Op) {
+          if (Op->isUse())
+            Op = 0;
+          else
+            assert(!Op->isDebug() && "Can't have debug defs");
+        }
+      } else {
+        // If this is an operand we don't care about, skip it.
+        while (Op && ((!ReturnDefs && Op->isDef()) ||
+                      (SkipDebug && Op->isDebug())))
+          Op = getNextOperandForReg(Op);
+      }
 
       return *this;
     }
