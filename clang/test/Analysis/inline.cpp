@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -analyzer-ipa=inlining -verify %s
 
 void clang_analyzer_eval(bool);
+void clang_analyzer_checkInlined(bool);
 
 class A {
 public:
@@ -42,4 +43,31 @@ void testPathSensitivity(int x) {
   // This should be true on both branches.
   clang_analyzer_eval(ptr->getNum() == x); // expected-warning {{TRUE}}
 }
+
+
+namespace PureVirtualParent {
+  class Parent {
+  public:
+    virtual int pureVirtual() const = 0;
+    int callVirtual() const {
+      return pureVirtual();
+    }
+  };
+
+  class Child : public Parent {
+  public:
+    virtual int pureVirtual() const {
+      clang_analyzer_checkInlined(true); // expected-warning{{TRUE}}
+      return 42;
+    }
+  };
+
+  void testVirtual() {
+    Child x;
+
+    clang_analyzer_eval(x.pureVirtual() == 42); // expected-warning{{TRUE}}
+    clang_analyzer_eval(x.callVirtual() == 42); // expected-warning{{TRUE}}
+  }
+}
+
 

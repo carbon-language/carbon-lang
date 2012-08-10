@@ -383,13 +383,13 @@ static const CXXMethodDecl *devirtualize(const CXXMethodDecl *MD, SVal ThisVal){
 
 
 RuntimeDefinition CXXInstanceCall::getRuntimeDefinition() const {
-  const Decl *D = SimpleCall::getRuntimeDefinition().getDecl();
+  const Decl *D = getDecl();
   if (!D)
     return RuntimeDefinition();
 
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(D);
   if (!MD->isVirtual())
-    return RuntimeDefinition(MD);
+    return SimpleCall::getRuntimeDefinition();
 
   // If the method is virtual, see if we can find the actual implementation
   // based on context-sensitivity.
