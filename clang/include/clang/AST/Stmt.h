@@ -1633,7 +1633,7 @@ class MSAsmStmt : public Stmt {
   Token *AsmToks;
   unsigned *LineEnds;
   Stmt **Exprs;
-  StringRef **Clobbers;
+  StringRef *Clobbers;
 
 public:
   MSAsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple,
@@ -1665,7 +1665,7 @@ public:
   //===--- Other ---===//
 
   unsigned getNumClobbers() const { return NumClobbers; }
-  StringRef *getClobber(unsigned i) { return Clobbers[i]; }
+  StringRef getClobber(unsigned i) { return Clobbers[i]; }
 
   SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(AsmLoc, EndLoc);

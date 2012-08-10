@@ -600,13 +600,13 @@ MSAsmStmt::MSAsmStmt(ASTContext &C, SourceLocation asmloc,
   for (unsigned i = 0, e = NumLineEnds; i != e; ++i)
     LineEnds[i] = lineends[i];
 
-  Clobbers = new (C) StringRef*[NumClobbers];
+  Clobbers = new (C) StringRef[NumClobbers];
   for (unsigned i = 0, e = NumClobbers; i != e; ++i) {
     // FIXME: Avoid the allocation/copy if at all possible.
     size_t size = clobbers[i].size();
     char *dest = new (C) char[size];
     std::strncpy(dest, clobbers[i].data(), size); 
-    Clobbers[i] = new (C) StringRef(dest, size);
+    Clobbers[i] = StringRef(dest, size);
   }
 }
 
