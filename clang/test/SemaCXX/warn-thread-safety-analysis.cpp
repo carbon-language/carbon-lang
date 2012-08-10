@@ -3056,7 +3056,66 @@ void Foo::test2() {
 */
 }
 
-
 } // end namespace TryLockEqTest
 
+
+namespace ExistentialPatternMatching {
+
+class Graph {
+public:
+  Mutex mu_;
+};
+
+void LockAllGraphs()   EXCLUSIVE_LOCK_FUNCTION(&Graph::mu_);
+void UnlockAllGraphs() UNLOCK_FUNCTION(&Graph::mu_);
+
+class Node {
+public:
+  int a GUARDED_BY(&Graph::mu_);
+
+  void foo()  EXCLUSIVE_LOCKS_REQUIRED(&Graph::mu_) {
+    a = 0;
+  }
+  void foo2() LOCKS_EXCLUDED(&Graph::mu_);
+};
+
+void test() {
+  Graph g1;
+  Graph g2;
+  Node n1;
+
+  n1.a = 0;   // expected-warning {{writing variable 'a' requires locking '&ExistentialPatternMatching::Graph::mu_' exclusively}}
+  n1.foo();   // expected-warning {{calling function 'foo' requires exclusive lock on '&ExistentialPatternMatching::Graph::mu_'}}
+  n1.foo2();
+
+  g1.mu_.Lock();
+  n1.a = 0;
+  n1.foo();
+  n1.foo2();  // expected-warning {{cannot call function 'foo2' while mutex '&ExistentialPatternMatching::Graph::mu_' is locked}}
+  g1.mu_.Unlock();
+
+  g2.mu_.Lock();
+  n1.a = 0;
+  n1.foo();
+  n1.foo2();  // expected-warning {{cannot call function 'foo2' while mutex '&ExistentialPatternMatching::Graph::mu_' is locked}}
+  g2.mu_.Unlock();
+
+  LockAllGraphs();
+  n1.a = 0;
+  n1.foo();
+  n1.foo2();  // expected-warning {{cannot call function 'foo2' while mutex '&ExistentialPatternMatching::Graph::mu_' is locked}}
+  UnlockAllGraphs();
+
+  LockAllGraphs();
+  g1.mu_.Unlock();
+
+  LockAllGraphs();
+  g2.mu_.Unlock();
+
+  LockAllGraphs();
+  g1.mu_.Lock();  // expected-warning {{locking 'g1.mu_' that is already locked}}
+  g1.mu_.Unlock();
+}
+
+} // end namespace ExistentialPatternMatching
 

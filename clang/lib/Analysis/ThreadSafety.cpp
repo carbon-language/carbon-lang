@@ -71,6 +71,7 @@ class SExpr {
 private:
   enum ExprOp {
     EOP_Nop,      //< No-op
+    EOP_Wildcard, //< Matches anything.
     EOP_This,     //< This keyword.
     EOP_NVar,     //< Named variable.
     EOP_LVar,     //< Local variable.
@@ -118,6 +119,7 @@ private:
     unsigned arity() const {
       switch (Op) {
         case EOP_Nop:      return 0;
+        case EOP_Wildcard: return 0;
         case EOP_NVar:     return 0;
         case EOP_LVar:     return 0;
         case EOP_This:     return 0;
@@ -134,12 +136,18 @@ private:
 
     bool operator==(const SExprNode& Other) const {
       // Ignore flags and size -- they don't matter.
-      return Op == Other.Op &&
-             Data == Other.Data;
+      return (Op == Other.Op &&
+              Data == Other.Data);
     }
 
     bool operator!=(const SExprNode& Other) const {
       return !(*this == Other);
+    }
+
+    bool matches(const SExprNode& Other) const {
+      return (*this == Other) ||
+             (Op == EOP_Wildcard) ||
+             (Other.Op == EOP_Wildcard);
     }
   };
 
@@ -176,12 +184,13 @@ private:
   NodeVector NodeVec;
 
 private:
-  unsigned getNextIndex(unsigned i) const {
-    return i + NodeVec[i].size();
-  }
-
   unsigned makeNop() {
     NodeVec.push_back(SExprNode(EOP_Nop, 0, 0));
+    return NodeVec.size()-1;
+  }
+
+  unsigned makeWildcard() {
+    NodeVec.push_back(SExprNode(EOP_Wildcard, 0, 0));
     return NodeVec.size()-1;
   }
 
@@ -365,6 +374,16 @@ private:
         return buildSExpr(UOE->getSubExpr(), CallCtx, NDeref);
       }
       if (UOE->getOpcode() == UO_AddrOf) {
+        if (DeclRefExpr* DRE = dyn_cast<DeclRefExpr>(UOE->getSubExpr())) {
+          if (DRE->getDecl()->isCXXInstanceMember()) {
+            // This is a pointer-to-member expression, e.g. &MyClass::mu_.
+            // We interpret this syntax specially, as a wildcard.
+            unsigned Root = makeDot(DRE->getDecl(), false);
+            makeWildcard();
+            NodeVec[Root].setSize(2);
+            return 2;
+          }
+        }
         if (NDeref) --(*NDeref);
         return buildSExpr(UOE->getSubExpr(), CallCtx, NDeref);
       }
@@ -464,6 +483,11 @@ private:
     buildSExpr(MutexExp, &CallCtx);
   }
 
+  /// \brief Get index of next sibling of node i.
+  unsigned getNextSibling(unsigned i) const {
+    return i + NodeVec[i].size();
+  }
+
 public:
   explicit SExpr(clang::Decl::EmptyShell e) { NodeVec.clear(); }
 
@@ -502,6 +526,21 @@ public:
     return !(*this == other);
   }
 
+  bool matches(const SExpr &Other, unsigned i = 0, unsigned j = 0) const {
+    if (NodeVec[i].matches(Other.NodeVec[j])) {
+      unsigned n = NodeVec[i].arity();
+      bool Result = true;
+      unsigned ci = i+1;  // first child of i
+      unsigned cj = j+1;  // first child of j
+      for (unsigned k = 0; k < n;
+           ++k, ci=getNextSibling(ci), cj = Other.getNextSibling(cj)) {
+        Result = Result && matches(Other, ci, cj);
+      }
+      return Result;
+    }
+    return false;
+  }
+
   /// \brief Pretty print a lock expression for use in error messages.
   std::string toString(unsigned i = 0) const {
     assert(isValid());
@@ -512,6 +551,8 @@ public:
     switch (N->kind()) {
       case EOP_Nop:
         return "_";
+      case EOP_Wildcard:
+        return "(?)";
       case EOP_This:
         return "this";
       case EOP_NVar:
@@ -519,9 +560,15 @@ public:
         return N->getNamedDecl()->getNameAsString();
       }
       case EOP_Dot: {
+        if (NodeVec[i+1].kind() == EOP_Wildcard) {
+          std::string S = "&";
+          S += N->getNamedDecl()->getQualifiedNameAsString();
+          return S;
+        }
         std::string FieldName = N->getNamedDecl()->getNameAsString();
         if (NodeVec[i+1].kind() == EOP_This)
           return FieldName;
+
         std::string S = toString(i+1);
         if (N->isArrow())
           return S + "->" + FieldName;
@@ -531,8 +578,8 @@ public:
       case EOP_Call: {
         std::string S = toString(i+1) + "(";
         unsigned NumArgs = N->arity()-1;
-        unsigned ci = getNextIndex(i+1);
-        for (unsigned k=0; k<NumArgs; ++k, ci = getNextIndex(ci)) {
+        unsigned ci = getNextSibling(i+1);
+        for (unsigned k=0; k<NumArgs; ++k, ci = getNextSibling(ci)) {
           S += toString(ci);
           if (k+1 < NumArgs) S += ",";
         }
@@ -548,8 +595,8 @@ public:
         else
           S += "#(";
         unsigned NumArgs = N->arity()-1;
-        unsigned ci = getNextIndex(i+1);
-        for (unsigned k=0; k<NumArgs; ++k, ci = getNextIndex(ci)) {
+        unsigned ci = getNextSibling(i+1);
+        for (unsigned k=0; k<NumArgs; ++k, ci = getNextSibling(ci)) {
           S += toString(ci);
           if (k+1 < NumArgs) S += ",";
         }
@@ -576,7 +623,7 @@ public:
           return "(...)";
         std::string S = "(";
         unsigned ci = i+1;
-        for (unsigned j = 0; j < NumChildren; ++j, ci = getNextIndex(ci)) {
+        for (unsigned j = 0; j < NumChildren; ++j, ci = getNextSibling(ci)) {
           S += toString(ci);
           if (j+1 < NumChildren) S += "#";
         }
@@ -720,13 +767,13 @@ public:
       return false;
 
     for (unsigned i = 0; i < n-1; ++i) {
-      if (FM[FactIDs[i]].MutID == M) {
+      if (FM[FactIDs[i]].MutID.matches(M)) {
         FactIDs[i] = FactIDs[n-1];
         FactIDs.pop_back();
         return true;
       }
     }
-    if (FM[FactIDs[n-1]].MutID == M) {
+    if (FM[FactIDs[n-1]].MutID.matches(M)) {
       FactIDs.pop_back();
       return true;
     }
@@ -735,7 +782,7 @@ public:
 
   LockData* findLock(FactManager& FM, const SExpr& M) const {
     for (const_iterator I=begin(), E=end(); I != E; ++I) {
-      if (FM[*I].MutID == M) return &FM[*I].LDat;
+      if (FM[*I].MutID.matches(M)) return &FM[*I].LDat;
     }
     return 0;
   }
