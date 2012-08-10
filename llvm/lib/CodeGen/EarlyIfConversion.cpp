@@ -96,6 +96,12 @@ public:
   /// equal to Tail.
   bool isTriangle() const { return TBB == Tail || FBB == Tail; }
 
+  /// Returns the Tail predecessor for the True side.
+  MachineBasicBlock *getTPred() const { return TBB == Tail ? Head : TBB; }
+
+  /// Returns the Tail predecessor for the  False side.
+  MachineBasicBlock *getFPred() const { return FBB == Tail ? Head : FBB; }
+
   /// Information about each phi in the Tail block.
   struct PHIInfo {
     MachineInstr *PHI;
@@ -391,8 +397,8 @@ bool SSAIfConv::canConvertIf(MachineBasicBlock *MBB) {
 
   // Any phis in the tail block must be convertible to selects.
   PHIs.clear();
-  MachineBasicBlock *TPred = TBB == Tail ? Head : TBB;
-  MachineBasicBlock *FPred = FBB == Tail ? Head : FBB;
+  MachineBasicBlock *TPred = getTPred();
+  MachineBasicBlock *FPred = getFPred();
   for (MachineBasicBlock::iterator I = Tail->begin(), E = Tail->end();
        I != E && I->isPHI(); ++I) {
     PHIs.push_back(&*I);
