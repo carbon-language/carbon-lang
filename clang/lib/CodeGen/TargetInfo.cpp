@@ -2757,6 +2757,8 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty) const {
     }
   }
 
+  // Turn on byval for APCS and AAPCS.
+  // FIXME: turn on byval for AAPCS_VFP for performance.
   if (getABIKind() == ARMABIInfo::APCS || getABIKind() == ARMABIInfo::AAPCS) {
     if (getContext().getTypeSizeInChars(Ty) > CharUnits::fromQuantity(64) ||
         getContext().getTypeAlign(Ty) > 64) {
