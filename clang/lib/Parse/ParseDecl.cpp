@@ -1340,12 +1340,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
       // Look at the next token to make sure that this isn't a function
       // declaration.  We have to check this because __attribute__ might be the
       // start of a function definition in GCC-extended K&R C.
-      // FIXME. Delayed parsing not done for c/c++ functions nested in namespace
-      !isDeclarationAfterDeclarator() && 
-      (!CurParsedObjCImpl || Tok.isNot(tok::l_brace) || 
-       (getLangOpts().CPlusPlus && 
-        (D.getCXXScopeSpec().isSet() || 
-         !Actions.CurContext->isTranslationUnit())))) {
+      !isDeclarationAfterDeclarator()) {
 
     if (isStartOfFunctionDefinition(D)) {
       if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
@@ -1401,14 +1396,6 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
     DeclsInGroup.push_back(FirstDecl);
 
   bool ExpectSemi = Context != Declarator::ForContext;
-
-  if (CurParsedObjCImpl && D.isFunctionDeclarator() &&
-      Tok.is(tok::l_brace)) {
-    // Consume the tokens and store them for later parsing.
-    StashAwayMethodOrFunctionBodyTokens(FirstDecl);
-    CurParsedObjCImpl->HasCFunction = true;
-    ExpectSemi = false;
-  }
   
   // If we don't have a comma, it is either the end of the list (a ';') or an
   // error, bail out.

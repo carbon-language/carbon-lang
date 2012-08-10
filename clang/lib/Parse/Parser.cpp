@@ -1025,7 +1025,26 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
     }
     return DP;
   }
-
+  else if (CurParsedObjCImpl && Tok.is(tok::l_brace) && 
+      !TemplateInfo.TemplateParams &&
+      Actions.CurContext->isTranslationUnit()) {
+    MultiTemplateParamsArg TemplateParameterLists(Actions, 0, 0);
+    ParseScope BodyScope(this, Scope::FnScope|Scope::DeclScope);
+    Scope *ParentScope = getCurScope()->getParent();
+    
+    D.setFunctionDefinitionKind(FDK_Definition);
+    Decl *FuncDecl = Actions.HandleDeclarator(ParentScope, D,
+                                        move(TemplateParameterLists));
+    D.complete(FuncDecl);
+    D.getMutableDeclSpec().abort();
+    if (FuncDecl) {
+      // Consume the tokens and store them for later parsing.
+      StashAwayMethodOrFunctionBodyTokens(FuncDecl);
+      CurParsedObjCImpl->HasCFunction = true;
+      return FuncDecl;
+    }
+  }
+      
   // Enter a scope for the function body.
   ParseScope BodyScope(this, Scope::FnScope|Scope::DeclScope);
 
