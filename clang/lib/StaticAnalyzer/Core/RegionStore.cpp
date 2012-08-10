@@ -56,7 +56,7 @@ private:
     : P(r, k), Data(offset) {
     assert(r && "Must have known regions.");
     assert(getOffset() == offset && "Failed to store offset");
-    assert(r == r->getBaseRegion() || isa<ObjCIvarRegion>(r) && "Not a base");
+    assert((r == r->getBaseRegion() || isa<ObjCIvarRegion>(r)) && "Not a base");
   }
 public:
 

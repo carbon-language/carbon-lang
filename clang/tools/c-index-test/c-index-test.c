@@ -3355,11 +3355,11 @@ void thread_runner(void *client_data_v) {
 }
 
 int main(int argc, const char **argv) {
+  thread_info client_data;
+
 #ifdef CLANG_HAVE_LIBXML
   LIBXML_TEST_VERSION
 #endif
-
-  thread_info client_data;
 
   if (getenv("CINDEXTEST_NOTHREADS"))
     return cindextest_main(argc, argv);
