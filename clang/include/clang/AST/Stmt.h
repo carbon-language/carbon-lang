@@ -1628,16 +1628,18 @@ class MSAsmStmt : public Stmt {
 
   unsigned NumAsmToks;
   unsigned NumLineEnds;
+  unsigned NumClobbers;
 
   Token *AsmToks;
   unsigned *LineEnds;
   Stmt **Exprs;
+  std::string *Clobbers;
 
 public:
   MSAsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple,
             bool isvolatile, ArrayRef<Token> asmtoks,
             ArrayRef<unsigned> lineends, StringRef asmstr,
-            SourceLocation endloc);
+            ArrayRef<std::string> clobbers, SourceLocation endloc);
 
   SourceLocation getAsmLoc() const { return AsmLoc; }
   void setAsmLoc(SourceLocation L) { AsmLoc = L; }
@@ -1661,6 +1663,9 @@ public:
   void setAsmString(StringRef &E) { AsmStr = E.str(); }
 
   //===--- Other ---===//
+
+  unsigned getNumClobbers() const { return NumClobbers; }
+  StringRef getClobber(unsigned i) { return Clobbers[i]; }
 
   SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(AsmLoc, EndLoc);
