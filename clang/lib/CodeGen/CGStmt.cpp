@@ -1701,4 +1701,5 @@ void CodeGenFunction::EmitMSAsmStmt(const MSAsmStmt &S) {
     llvm::InlineAsm::get(FTy, *S.getAsmString(), MachineClobbers, true);
   llvm::CallInst *Result = Builder.CreateCall(IA, Args);
   Result->addAttribute(~0, llvm::Attribute::NoUnwind);
+  Result->addAttribute(~0, llvm::Attribute::IANSDialect);
 }

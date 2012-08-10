@@ -2,7 +2,7 @@
 
 void t1() {
 // CHECK: @t1
-// CHECK: call void asm sideeffect "", "~{dirflag},~{fpsr},~{flags}"() nounwind
+// CHECK: call void asm sideeffect "", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
 // CHECK: ret void
   __asm {}
 }
