@@ -1044,6 +1044,23 @@ MachineTraceMetrics::Trace::getInstrSlack(const MachineInstr *MI) const {
   return getCriticalPath() - (Cyc.Depth + Cyc.Height);
 }
 
+unsigned
+MachineTraceMetrics::Trace::getPHIDepth(const MachineInstr *PHI) const {
+  const MachineBasicBlock *MBB = TE.MTM.MF->getBlockNumbered(getBlockNum());
+  SmallVector<DataDep, 1> Deps;
+  getPHIDeps(PHI, Deps, MBB, TE.MTM.MRI);
+  assert(Deps.size() == 1 && "PHI doesn't have MBB as a predecessor");
+  DataDep &Dep = Deps.front();
+  unsigned DepCycle = getInstrCycles(Dep.DefMI).Depth;
+  // Add latency if DefMI is a real instruction. Transients get latency 0.
+  if (!Dep.DefMI->isTransient())
+    DepCycle += TE.MTM.TII->computeOperandLatency(TE.MTM.ItinData,
+                                                  Dep.DefMI, Dep.DefOp,
+                                                  PHI, Dep.UseOp,
+                                                  /* FindMin = */ false);
+  return DepCycle;
+}
+
 unsigned MachineTraceMetrics::Trace::getResourceDepth(bool Bottom) const {
   // For now, we compute the resource depth from instruction count / issue
   // width. Eventually, we should compute resource depth per functional unit
@@ -1051,6 +1068,18 @@ unsigned MachineTraceMetrics::Trace::getResourceDepth(bool Bottom) const {
   unsigned Instrs = TBI.InstrDepth;
   if (Bottom)
     Instrs += TE.MTM.BlockInfo[getBlockNum()].InstrCount;
+  if (const MCSchedModel *Model = TE.MTM.ItinData->SchedModel)
+    if (Model->IssueWidth != 0)
+      return Instrs / Model->IssueWidth;
+  // Assume issue width 1 without a schedule model.
+  return Instrs;
+}
+
+unsigned MachineTraceMetrics::Trace::
+getResourceLength(ArrayRef<const MachineBasicBlock*> Extrablocks) const {
+  unsigned Instrs = TBI.InstrDepth + TBI.InstrHeight;
+  for (unsigned i = 0, e = Extrablocks.size(); i != e; ++i)
+    Instrs += TE.MTM.getResources(Extrablocks[i])->InstrCount;
   if (const MCSchedModel *Model = TE.MTM.ItinData->SchedModel)
     if (Model->IssueWidth != 0)
       return Instrs / Model->IssueWidth;

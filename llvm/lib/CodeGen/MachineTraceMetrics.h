@@ -226,6 +226,15 @@ public:
     /// When Bottom is set, instructions in the trace center block are included.
     unsigned getResourceDepth(bool Bottom) const;
 
+    /// Return the resource length of the trace. This is the number of cycles
+    /// required to execute the instructions in the trace if they were all
+    /// independent, exposing the maximum instruction-level parallelism.
+    ///
+    /// Any blocks in Extrablocks are included as if they were part of the
+    /// trace.
+    unsigned getResourceLength(ArrayRef<const MachineBasicBlock*> Extrablocks =
+                               ArrayRef<const MachineBasicBlock*>()) const;
+
     /// Return the length of the (data dependency) critical path through the
     /// trace.
     unsigned getCriticalPath() const { return TBI.CriticalPath; }
@@ -241,6 +250,10 @@ public:
     /// before the critical path becomes longer.
     /// MI must be an instruction in the trace center block.
     unsigned getInstrSlack(const MachineInstr *MI) const;
+
+    /// Return the Depth of a PHI instruction in a trace center block successor.
+    /// The PHI does not have to be part of the trace.
+    unsigned getPHIDepth(const MachineInstr *PHI) const;
   };
 
   /// A trace ensemble is a collection of traces selected using the same
