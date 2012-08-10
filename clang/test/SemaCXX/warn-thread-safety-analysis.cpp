@@ -529,7 +529,7 @@ void late_bad_0() {
   LateFoo fooB;
   fooA.mu.Lock();
   fooB.a = 5; // \
-    // expected-warning{{writing variable 'a' requires locking 'mu' exclusively}}
+    // expected-warning{{writing variable 'a' requires locking 'fooB.mu' exclusively}}
   fooA.mu.Unlock();
 }
 
@@ -539,7 +539,7 @@ void late_bad_1() {
   b1.mu1_.Lock();
   int res = b1.a_ + b3->b_;
   b3->b_ = *b1.q; // \
-    // expected-warning{{reading the value pointed to by 'q' requires locking 'mu'}}
+    // expected-warning{{reading the value pointed to by 'q' requires locking 'b1.mu'}}
   b1.mu1_.Unlock();
   b1.b_ = res;
   mu.Unlock();
@@ -549,7 +549,7 @@ void late_bad_2() {
   LateBar BarA;
   BarA.FooPointer->mu.Lock();
   BarA.Foo.a = 2; // \
-    // expected-warning{{writing variable 'a' requires locking 'mu' exclusively}}
+    // expected-warning{{writing variable 'a' requires locking 'BarA.Foo.mu' exclusively}}
   BarA.FooPointer->mu.Unlock();
 }
 
@@ -557,7 +557,7 @@ void late_bad_3() {
   LateBar BarA;
   BarA.Foo.mu.Lock();
   BarA.FooPointer->a = 2; // \
-    // expected-warning{{writing variable 'a' requires locking 'mu' exclusively}}
+    // expected-warning{{writing variable 'a' requires locking 'BarA.FooPointer->mu' exclusively}}
   BarA.Foo.mu.Unlock();
 }
 
@@ -565,7 +565,7 @@ void late_bad_4() {
   LateBar BarA;
   BarA.Foo.mu.Lock();
   BarA.Foo2.a = 2; // \
-    // expected-warning{{writing variable 'a' requires locking 'mu' exclusively}}
+    // expected-warning{{writing variable 'a' requires locking 'BarA.Foo2.mu' exclusively}}
   BarA.Foo.mu.Unlock();
 }
 
@@ -1199,13 +1199,13 @@ void main()
 {
   Foo f1, *f2;
   f1.mu_.Lock();
-  f1.bar(); // expected-warning {{cannot call function 'bar' while mutex 'mu_' is locked}}
+  f1.bar(); // expected-warning {{cannot call function 'bar' while mutex 'f1.mu_' is locked}}
   mu2.Lock();
   f1.foo();
   mu2.Unlock();
   f1.mu_.Unlock();
   f2->mu_.Lock();
-  f2->bar(); // expected-warning {{cannot call function 'bar' while mutex 'mu_' is locked}}
+  f2->bar(); // expected-warning {{cannot call function 'bar' while mutex 'f2->mu_' is locked}}
   f2->mu_.Unlock();
   mu2.Lock();
   w = 2;
@@ -1233,7 +1233,7 @@ void func()
 {
   b1->MyLock();
   b1->a_ = 5;
-  b2->a_ = 3; // expected-warning {{writing variable 'a_' requires locking 'mu1_' exclusively}}
+  b2->a_ = 3; // expected-warning {{writing variable 'a_' requires locking 'b2->mu1_' exclusively}}
   b2->MyLock();
   b2->MyUnlock();
   b1->MyUnlock();
@@ -1262,12 +1262,12 @@ int func(int i)
 {
   int x;
   b3->mu1_.Lock();
-  res = b1.a_ + b3->b_; // expected-warning {{reading variable 'a_' requires locking 'mu1_'}} \
+  res = b1.a_ + b3->b_; // expected-warning {{reading variable 'a_' requires locking 'b1.mu1_'}} \
     // expected-warning {{writing variable 'res' requires locking 'mu' exclusively}}
   *p = i; // expected-warning {{reading variable 'p' requires locking 'mu'}} \
     // expected-warning {{writing the value pointed to by 'p' requires locking 'mu' exclusively}}
   b1.a_ = res + b3->b_; // expected-warning {{reading variable 'res' requires locking 'mu'}} \
-    // expected-warning {{writing variable 'a_' requires locking 'mu1_' exclusively}}
+    // expected-warning {{writing variable 'a_' requires locking 'b1.mu1_' exclusively}}
   b3->b_ = *b1.q; // expected-warning {{reading the value pointed to by 'q' requires locking 'mu'}}
   b3->mu1_.Unlock();
   b1.b_ = res; // expected-warning {{reading variable 'res' requires locking 'mu'}}
@@ -1292,8 +1292,8 @@ class Foo {
 
      child->Func(new_foo); // There shouldn't be any warning here as the
                            // acquired lock is not in child.
-     child->bar(7); // expected-warning {{calling function 'bar' requires exclusive lock on 'lock_'}}
-     child->a_ = 5; // expected-warning {{writing variable 'a_' requires locking 'lock_' exclusively}}
+     child->bar(7); // expected-warning {{calling function 'bar' requires exclusive lock on 'child->lock_'}}
+     child->a_ = 5; // expected-warning {{writing variable 'a_' requires locking 'child->lock_' exclusively}}
      lock_.Unlock();
   }
 
@@ -1330,7 +1330,7 @@ void Foo::Func(Foo* child) {
   lock_.Lock();
 
   child->lock_.Lock();
-  child->Func(new_foo); // expected-warning {{cannot call function 'Func' while mutex 'lock_' is locked}}
+  child->Func(new_foo); // expected-warning {{cannot call function 'Func' while mutex 'child->lock_' is locked}}
   child->bar(7);
   child->a_ = 5;
   child->lock_.Unlock();
@@ -1378,8 +1378,8 @@ Foo *foo;
 
 void func()
 {
-  foo->f1(); // expected-warning {{calling function 'f1' requires exclusive lock on 'mu2'}} \
-    // expected-warning {{calling function 'f1' requires exclusive lock on 'mu1'}}
+  foo->f1(); // expected-warning {{calling function 'f1' requires exclusive lock on 'foo->mu2'}} \
+             // expected-warning {{calling function 'f1' requires exclusive lock on 'foo->mu1'}}
 }
 } // end namespace thread_annot_lock_42
 
@@ -1402,14 +1402,14 @@ void main() {
   Child *c;
   Base *b = c;
 
-  b->func1(); // expected-warning {{calling function 'func1' requires exclusive lock on 'mu_'}}
+  b->func1(); // expected-warning {{calling function 'func1' requires exclusive lock on 'b->mu_'}}
   b->mu_.Lock();
-  b->func2(); // expected-warning {{cannot call function 'func2' while mutex 'mu_' is locked}}
+  b->func2(); // expected-warning {{cannot call function 'func2' while mutex 'b->mu_' is locked}}
   b->mu_.Unlock();
 
-  c->func1(); // expected-warning {{calling function 'func1' requires exclusive lock on 'mu_'}}
+  c->func1(); // expected-warning {{calling function 'func1' requires exclusive lock on 'c->mu_'}}
   c->mu_.Lock();
-  c->func2(); // expected-warning {{cannot call function 'func2' while mutex 'mu_' is locked}}
+  c->func2(); // expected-warning {{cannot call function 'func2' while mutex 'c->mu_' is locked}}
   c->mu_.Unlock();
 }
 } // end namespace thread_annot_lock_46
@@ -1436,9 +1436,9 @@ int Foo::method1(int i) {
 void main()
 {
   Foo a;
-  a.method1(1); // expected-warning {{calling function 'method1' requires shared lock on 'mu1'}} \
+  a.method1(1); // expected-warning {{calling function 'method1' requires shared lock on 'a.mu1'}} \
     // expected-warning {{calling function 'method1' requires shared lock on 'mu'}} \
-    // expected-warning {{calling function 'method1' requires shared lock on 'mu2'}} \
+    // expected-warning {{calling function 'method1' requires shared lock on 'a.mu2'}} \
     // expected-warning {{calling function 'method1' requires shared lock on 'mu3'}}
 }
 } // end namespace thread_annot_lock_67_modified
@@ -1484,14 +1484,14 @@ namespace substitution_test {
       DataLocker dlr;
       dlr.lockData(d1);   // expected-note {{mutex acquired here}}
       dlr.unlockData(d2); // \
-        // expected-warning {{unlocking 'mu' that was not locked}}
-    } // expected-warning {{mutex 'mu' is still locked at the end of function}}
+        // expected-warning {{unlocking 'd2->mu' that was not locked}}
+    } // expected-warning {{mutex 'd1->mu' is still locked at the end of function}}
 
     void bar4(MyData* d1, MyData* d2) {
       DataLocker dlr;
       dlr.lockData(d1);
       foo(d2); // \
-        // expected-warning {{calling function 'foo' requires exclusive lock on 'mu'}}
+        // expected-warning {{calling function 'foo' requires exclusive lock on 'd2->mu'}}
       dlr.unlockData(d1);
     }
   };
@@ -1550,7 +1550,7 @@ namespace template_member_test {
   struct IndirectLock {
     int DoNaughtyThings(T *t) {
       u->n = 0; // expected-warning {{reading variable 'u' requires locking 'm'}}
-      return t->s->n; // expected-warning {{reading variable 's' requires locking 'm'}}
+      return t->s->n; // expected-warning {{reading variable 's' requires locking 't->m'}}
     }
   };
 
@@ -1566,7 +1566,7 @@ namespace template_member_test {
   template<typename U> struct W {
     V v;
     void f(U u) {
-      v.p->f(u); // expected-warning {{reading variable 'p' requires locking 'm'}}
+      v.p->f(u); // expected-warning {{reading variable 'p' requires locking 'v.m'}}
     }
   };
   template struct W<int>; // expected-note {{here}}
@@ -1629,7 +1629,7 @@ Foo fooObj;
 void foo() EXCLUSIVE_LOCKS_REQUIRED(fooObj.mu_);
 
 void bar() {
-  foo();  // expected-warning {{calling function 'foo' requires exclusive lock on 'mu_'}}
+  foo();  // expected-warning {{calling function 'foo' requires exclusive lock on 'fooObj.mu_'}}
   fooObj.mu_.Lock();
   foo();
   fooObj.mu_.Unlock();
@@ -1829,7 +1829,7 @@ void test() {
 
   f1.mu_.Unlock();
   bt.barTD(&f1);  // \
-    // expected-warning {{calling function 'barTD' requires exclusive lock on 'mu_'}}
+    // expected-warning {{calling function 'barTD' requires exclusive lock on 'f1.mu_'}}
 
   bt.fooBase.mu_.Unlock();
   bt.fooBaseT.mu_.Unlock();
@@ -1837,7 +1837,7 @@ void test() {
 
   Cell<int> cell;
   cell.data = 0; // \
-    // expected-warning {{writing variable 'data' requires locking 'mu_' exclusively}}
+    // expected-warning {{writing variable 'data' requires locking 'cell.mu_' exclusively}}
   cell.foo();
   cell.mu_.Lock();
   cell.fooEx();
@@ -1906,7 +1906,7 @@ void Foo::foo1(Foo *f_defined) {
 void test() {
   Foo myfoo;
   myfoo.foo1(&myfoo);  // \
-    // expected-warning {{calling function 'foo1' requires exclusive lock on 'mu_'}}
+    // expected-warning {{calling function 'foo1' requires exclusive lock on 'myfoo.mu_'}}
   myfoo.mu_.Lock();
   myfoo.foo1(&myfoo);
   myfoo.mu_.Unlock();
@@ -2021,29 +2021,28 @@ void test() {
   Foo myFoo;
 
   myFoo.foo2();        // \
-    // expected-warning {{calling function 'foo2' requires exclusive lock on 'mu_'}}
+    // expected-warning {{calling function 'foo2' requires exclusive lock on 'myFoo.mu_'}}
   myFoo.foo3(&myFoo);  // \
-    // expected-warning {{calling function 'foo3' requires exclusive lock on 'mu_'}}
+    // expected-warning {{calling function 'foo3' requires exclusive lock on 'myFoo.mu_'}}
   myFoo.fooT1(dummy);  // \
-    // expected-warning {{calling function 'fooT1' requires exclusive lock on 'mu_'}}
+    // expected-warning {{calling function 'fooT1' requires exclusive lock on 'myFoo.mu_'}}
 
-  // FIXME: uncomment with template instantiation of attributes patch
-  // myFoo.fooT2(dummy);  // expected warning
+  myFoo.fooT2(dummy);  // \
+    // expected-warning {{calling function 'fooT2' requires exclusive lock on 'myFoo.mu_'}}
 
   fooF1(&myFoo);  // \
-    // expected-warning {{calling function 'fooF1' requires exclusive lock on 'mu_'}}
+    // expected-warning {{calling function 'fooF1' requires exclusive lock on 'myFoo.mu_'}}
   fooF2(&myFoo);  // \
-    // expected-warning {{calling function 'fooF2' requires exclusive lock on 'mu_'}}
+    // expected-warning {{calling function 'fooF2' requires exclusive lock on 'myFoo.mu_'}}
   fooF3(&myFoo);  // \
-    // expected-warning {{calling function 'fooF3' requires exclusive lock on 'mu_'}}
+    // expected-warning {{calling function 'fooF3' requires exclusive lock on 'myFoo.mu_'}}
 
   myFoo.mu_.Lock();
   myFoo.foo2();
   myFoo.foo3(&myFoo);
   myFoo.fooT1(dummy);
 
-  // FIXME: uncomment with template instantiation of attributes patch
-  // myFoo.fooT2(dummy);
+  myFoo.fooT2(dummy);
 
   fooF1(&myFoo);
   fooF2(&myFoo);
@@ -2052,7 +2051,7 @@ void test() {
 
   FooT<int> myFooT;
   myFooT.foo();  // \
-    // expected-warning {{calling function 'foo' requires exclusive lock on 'mu_'}}
+    // expected-warning {{calling function 'foo' requires exclusive lock on 'myFooT.mu_'}}
 }
 
 } // end namespace FunctionDefinitionTest
@@ -2236,27 +2235,27 @@ void test() {
 
   bar.getFoo().mu_.Lock();
   bar.getFooey().a = 0; // \
-    // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+    // expected-warning {{writing variable 'a' requires locking 'bar.getFooey().mu_' exclusively}}
   bar.getFoo().mu_.Unlock();
 
   bar.getFoo2(a).mu_.Lock();
   bar.getFoo2(b).a = 0; // \
-    // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+    // expected-warning {{writing variable 'a' requires locking 'bar.getFoo2(b).mu_' exclusively}}
   bar.getFoo2(a).mu_.Unlock();
 
   bar.getFoo3(a, b).mu_.Lock();
   bar.getFoo3(a, c).a = 0;  // \
-    // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+    // expected-warning {{writing variable 'a' requires locking 'bar.getFoo3(a,c).mu_' exclusively}}
   bar.getFoo3(a, b).mu_.Unlock();
 
   getBarFoo(bar, a).mu_.Lock();
   getBarFoo(bar, b).a = 0;  // \
-    // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+    // expected-warning {{writing variable 'a' requires locking 'getBarFoo(bar,b).mu_' exclusively}}
   getBarFoo(bar, a).mu_.Unlock();
 
   (a > 0 ? fooArray[1] : fooArray[b]).mu_.Lock();
   (a > 0 ? fooArray[b] : fooArray[c]).a = 0; // \
-    // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+    // expected-warning {{writing variable 'a' requires locking '((a#_)#_#fooArray[b]).mu_' exclusively}}
   (a > 0 ? fooArray[1] : fooArray[b]).mu_.Unlock();
 }
 
@@ -2304,17 +2303,18 @@ public:
 
 // Calls getMu() directly to lock and unlock
 void test1(Foo* f1, Foo* f2) {
-  f1->a = 0;       // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
-  f1->foo();       // expected-warning {{calling function 'foo' requires exclusive lock on 'mu_'}}
+  f1->a = 0;       // expected-warning {{writing variable 'a' requires locking 'f1->mu_' exclusively}}
+  f1->foo();       // expected-warning {{calling function 'foo' requires exclusive lock on 'f1->mu_'}}
 
-  f1->foo2(f2);    // expected-warning 2{{calling function 'foo2' requires exclusive lock on 'mu_'}}
-  Foo::sfoo(f1);   // expected-warning {{calling function 'sfoo' requires exclusive lock on 'mu_'}}
+  f1->foo2(f2);    // expected-warning {{calling function 'foo2' requires exclusive lock on 'f1->mu_'}} \
+                   // expected-warning {{calling function 'foo2' requires exclusive lock on 'f2->mu_'}}
+  Foo::sfoo(f1);   // expected-warning {{calling function 'sfoo' requires exclusive lock on 'f1->mu_'}}
 
   f1->getMu()->Lock();
 
   f1->a = 0;
   f1->foo();
-  f1->foo2(f2);    // expected-warning {{calling function 'foo2' requires exclusive lock on 'mu_'}}
+  f1->foo2(f2);    // expected-warning {{calling function 'foo2' requires exclusive lock on 'f2->mu_'}}
 
   Foo::getMu(f2)->Lock();
   f1->foo2(f2);
@@ -2343,17 +2343,18 @@ public:
 // Use getMu() within other attributes.
 // This requires at lest levels of substitution, more in the case of
 void test2(Bar* b1, Bar* b2) {
-  b1->b = 0;       // expected-warning {{writing variable 'b' requires locking 'mu_' exclusively}}
-  b1->bar();       // expected-warning {{calling function 'bar' requires exclusive lock on 'mu_'}}
-  b1->bar2(b2);    // expected-warning 2{{calling function 'bar2' requires exclusive lock on 'mu_'}}
-  Bar::sbar(b1);   // expected-warning {{calling function 'sbar' requires exclusive lock on 'mu_'}}
-  Bar::sbar2(b1);  // expected-warning {{calling function 'sbar2' requires exclusive lock on 'mu_'}}
+  b1->b = 0;       // expected-warning {{writing variable 'b' requires locking 'b1->mu_' exclusively}}
+  b1->bar();       // expected-warning {{calling function 'bar' requires exclusive lock on 'b1->mu_'}}
+  b1->bar2(b2);    // expected-warning {{calling function 'bar2' requires exclusive lock on 'b1->mu_'}} \
+                   // expected-warning {{calling function 'bar2' requires exclusive lock on 'b2->mu_'}}
+  Bar::sbar(b1);   // expected-warning {{calling function 'sbar' requires exclusive lock on 'b1->mu_'}}
+  Bar::sbar2(b1);  // expected-warning {{calling function 'sbar2' requires exclusive lock on 'b1->mu_'}}
 
   b1->getMu()->Lock();
 
   b1->b = 0;
   b1->bar();
-  b1->bar2(b2);    // expected-warning {{calling function 'bar2' requires exclusive lock on 'mu_'}}
+  b1->bar2(b2);    // expected-warning {{calling function 'bar2' requires exclusive lock on 'b2->mu_'}}
 
   b2->getMu()->Lock();
   b1->bar2(b2);
@@ -2597,7 +2598,7 @@ void Foo::test() {
     ReaderMutexLock lock(getMutexPtr().get());
     int b = a;
   }
-  int b = a;  // expected-warning {{reading variable 'a' requires locking 'getMutexPtr'}}
+  int b = a;  // expected-warning {{reading variable 'a' requires locking 'getMutexPtr()'}}
 }
 
 } // end namespace TemporaryCleanupExpr
@@ -2732,9 +2733,9 @@ class Bar {
 
 
 void Bar::test0() {
-  foo->a = 0;         // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
-  (*foo).b = 0;       // expected-warning {{writing variable 'b' requires locking 'mu_' exclusively}}
-  foo.get()->c = 0;   // expected-warning {{writing variable 'c' requires locking 'mu_' exclusively}}
+  foo->a = 0;         // expected-warning {{writing variable 'a' requires locking 'foo->mu_' exclusively}}
+  (*foo).b = 0;       // expected-warning {{writing variable 'b' requires locking 'foo->mu_' exclusively}}
+  foo.get()->c = 0;   // expected-warning {{writing variable 'c' requires locking 'foo->mu_' exclusively}}
 }
 
 
@@ -2861,10 +2862,10 @@ void test1() {
   foo.unlock1();
 
   foo.lock1();
-  foo.lock1();    // expected-warning {{locking 'mu1_' that is already locked}}
+  foo.lock1();    // expected-warning {{locking 'foo.mu1_' that is already locked}}
   foo.a = 0;
   foo.unlock1();
-  foo.unlock1();  // expected-warning {{unlocking 'mu1_' that was not locked}}
+  foo.unlock1();  // expected-warning {{unlocking 'foo.mu1_' that was not locked}}
 }
 
 
@@ -2875,10 +2876,10 @@ int test2() {
   foo.unlock1();
 
   foo.slock1();
-  foo.slock1();    // expected-warning {{locking 'mu1_' that is already locked}}
+  foo.slock1();    // expected-warning {{locking 'foo.mu1_' that is already locked}}
   int d2 = foo.a;
   foo.unlock1();
-  foo.unlock1();   // expected-warning {{unlocking 'mu1_' that was not locked}}
+  foo.unlock1();   // expected-warning {{unlocking 'foo.mu1_' that was not locked}}
   return d1 + d2;
 }
 
@@ -2893,17 +2894,17 @@ void test3() {
 
   foo.lock3();
   foo.lock3(); // \
-    // expected-warning {{locking 'mu1_' that is already locked}} \
-    // expected-warning {{locking 'mu2_' that is already locked}} \
-    // expected-warning {{locking 'mu3_' that is already locked}}
+    // expected-warning {{locking 'foo.mu1_' that is already locked}} \
+    // expected-warning {{locking 'foo.mu2_' that is already locked}} \
+    // expected-warning {{locking 'foo.mu3_' that is already locked}}
   foo.a = 0;
   foo.b = 0;
   foo.c = 0;
   foo.unlock3();
   foo.unlock3(); // \
-    // expected-warning {{unlocking 'mu1_' that was not locked}} \
-    // expected-warning {{unlocking 'mu2_' that was not locked}} \
-    // expected-warning {{unlocking 'mu3_' that was not locked}}
+    // expected-warning {{unlocking 'foo.mu1_' that was not locked}} \
+    // expected-warning {{unlocking 'foo.mu2_' that was not locked}} \
+    // expected-warning {{unlocking 'foo.mu3_' that was not locked}}
 }
 
 
@@ -2917,17 +2918,17 @@ void testlots() {
 
   foo.locklots();
   foo.locklots(); // \
-    // expected-warning {{locking 'mu1_' that is already locked}} \
-    // expected-warning {{locking 'mu2_' that is already locked}} \
-    // expected-warning {{locking 'mu3_' that is already locked}}
+    // expected-warning {{locking 'foo.mu1_' that is already locked}} \
+    // expected-warning {{locking 'foo.mu2_' that is already locked}} \
+    // expected-warning {{locking 'foo.mu3_' that is already locked}}
   foo.a = 0;
   foo.b = 0;
   foo.c = 0;
   foo.unlocklots();
   foo.unlocklots(); // \
-    // expected-warning {{unlocking 'mu1_' that was not locked}} \
-    // expected-warning {{unlocking 'mu2_' that was not locked}} \
-    // expected-warning {{unlocking 'mu3_' that was not locked}}
+    // expected-warning {{unlocking 'foo.mu1_' that was not locked}} \
+    // expected-warning {{unlocking 'foo.mu2_' that was not locked}} \
+    // expected-warning {{unlocking 'foo.mu3_' that was not locked}}
 }
 
 }  // end namespace DuplicateAttributeTest
