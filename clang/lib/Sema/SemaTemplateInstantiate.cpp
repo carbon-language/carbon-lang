@@ -2005,6 +2005,9 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   }
 
   if (!Instantiation->isInvalidDecl()) {
+    // Perform any dependent diagnostics from the pattern.
+    PerformDependentDiagnostics(Pattern, TemplateArgs);
+
     // Instantiate any out-of-line class template partial
     // specializations now.
     for (TemplateDeclInstantiator::delayed_partial_spec_iterator 

@@ -4427,9 +4427,7 @@ public:
                                      CXXDestructorDecl *Dtor,
                                      const PartialDiagnostic &PDiag,
                                      QualType objectType = QualType());
-  AccessResult CheckDirectMemberAccess(SourceLocation Loc,
-                                       NamedDecl *D,
-                                       const PartialDiagnostic &PDiag);
+  AccessResult CheckFriendAccess(NamedDecl *D);
   AccessResult CheckMemberOperatorAccess(SourceLocation Loc,
                                          Expr *ObjectExpr,
                                          Expr *ArgExpr,

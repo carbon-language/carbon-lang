@@ -909,6 +909,9 @@ def err_access_field_ctor : Error<
   "field of type %0 has %select{private|protected}2 "
   "%select{default |copy |move |*ERROR* |*ERROR* |*ERROR* |}1constructor">,
   AccessControl;
+def err_access_friend_function : Error<
+  "friend function %1 is a %select{private|protected}0 member of %3">,
+  AccessControl;
 
 def err_access_dtor : Error<
   "calling a %select{private|protected}1 destructor of class %0">, 

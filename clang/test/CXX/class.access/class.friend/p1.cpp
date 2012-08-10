@@ -64,6 +64,7 @@ namespace test0 {
   };
 
   class MemberFriend {
+  public:
     void test();
   };
 
@@ -309,6 +310,7 @@ namespace test10 {
 // PR8705
 namespace test11 {
   class A {
+  public:
     void test0(int);
     void test1(int);
     void test2(int);

@@ -302,6 +302,7 @@ namespace test14 {
   };
 
   template <class T> class B {
+  public:
     void foo() { return A<long>::foo(); } // expected-error {{'foo' is a private member of 'test14::A<long>'}}
   };
 
@@ -320,10 +321,12 @@ namespace test15 {
   };
 
   template <class T> class B {
+  public:
     void foo() { return A<long>::foo(); } // expected-error {{'foo' is a private member of 'test15::A<long>'}}
   };
 
   template <> class B<float> {
+  public:
     void foo() { return A<float>::foo(); }
     template <class U> void bar(U u) {
       (void) A<float>::foo();

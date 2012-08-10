@@ -10342,9 +10342,11 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D,
   FrD->setAccess(AS_public);
   CurContext->addDecl(FrD);
 
-  if (ND->isInvalidDecl())
+  if (ND->isInvalidDecl()) {
     FrD->setInvalidDecl();
-  else {
+  } else {
+    if (DC->isRecord()) CheckFriendAccess(ND);
+
     FunctionDecl *FD;
     if (FunctionTemplateDecl *FTD = dyn_cast<FunctionTemplateDecl>(ND))
       FD = FTD->getTemplatedDecl();
