@@ -612,11 +612,16 @@ void ConvertToScalarInfo::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI,
     if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(User)) {
       // Compute the offset that this GEP adds to the pointer.
       SmallVector<Value*, 8> Indices(GEP->op_begin()+1, GEP->op_end());
-      if (!GEP->hasAllConstantIndices())
-        NonConstantIdx = Indices.pop_back_val();
+      Value* GEPNonConstantIdx = 0;
+      if (!GEP->hasAllConstantIndices()) {
+        assert(!NonConstantIdx &&
+               "Dynamic GEP reading from dynamic GEP unsupported");
+        GEPNonConstantIdx = Indices.pop_back_val();
+      } else
+        GEPNonConstantIdx = NonConstantIdx;
       uint64_t GEPOffset = TD.getIndexedOffset(GEP->getPointerOperandType(),
                                                Indices);
-      ConvertUsesToScalar(GEP, NewAI, Offset+GEPOffset*8, NonConstantIdx);
+      ConvertUsesToScalar(GEP, NewAI, Offset+GEPOffset*8, GEPNonConstantIdx);
       GEP->eraseFromParent();
       continue;
     }

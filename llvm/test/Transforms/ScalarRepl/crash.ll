@@ -260,5 +260,27 @@ entry:
   ret void
 }
 
+; rdar://11861001 - The dynamic GEP here was incorrectly making all accesses
+; to the alloca think they were also dynamic.  Inserts and extracts created to
+; access the vector were all being based from the dynamic access, even in BBs
+; not dominated by the GEP.
+define fastcc void @test() optsize inlinehint ssp align 2 {
+entry:
+  %alloc.0.0 = alloca <4 x float>, align 16
+  %bitcast = bitcast <4 x float>* %alloc.0.0 to [4 x float]*
+  %idx3 = getelementptr inbounds [4 x float]* %bitcast, i32 0, i32 3
+  store float 0.000000e+00, float* %idx3, align 4
+  br label %for.body10
+
+for.body10:                                       ; preds = %for.body10, %entry
+  %loopidx = phi i32 [ 0, %entry ], [ undef, %for.body10 ]
+  %unusedidx = getelementptr inbounds <4 x float>* %alloc.0.0, i32 0, i32 %loopidx
+  br i1 undef, label %for.end, label %for.body10
+
+for.end:                                          ; preds = %for.body10
+  store <4 x float> <float -1.000000e+00, float -1.000000e+00, float -1.000000e+00, float 0.000000e+00>, <4 x float>* %alloc.0.0, align 16
+  ret void
+}
+
 declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, i1) nounwind
 declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind
