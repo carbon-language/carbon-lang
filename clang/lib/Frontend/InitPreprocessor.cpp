@@ -458,6 +458,13 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   else
     Builder.defineMacro("__BYTE_ORDER__", "__ORDER_LITTLE_ENDIAN__");
 
+
+  if (TI.getPointerWidth(0) == 64 && TI.getLongWidth() == 64
+      && TI.getIntWidth() == 32) {
+    Builder.defineMacro("_LP64");
+    Builder.defineMacro("__LP64__");
+  }
+
   // Define type sizing macros based on the target properties.
   assert(TI.getCharWidth() == 8 && "Only support 8-bit char so far");
   Builder.defineMacro("__CHAR_BIT__", "8");

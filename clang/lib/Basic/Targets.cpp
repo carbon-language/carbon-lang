@@ -792,8 +792,6 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
   Builder.defineMacro("__POWERPC__");
   if (PointerWidth == 64) {
     Builder.defineMacro("_ARCH_PPC64");
-    Builder.defineMacro("_LP64");
-    Builder.defineMacro("__LP64__");
     Builder.defineMacro("__powerpc64__");
     Builder.defineMacro("__ppc64__");
   } else {
@@ -2074,10 +2072,6 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
                                      MacroBuilder &Builder) const {
   // Target identification.
   if (PointerWidth == 64) {
-    if (getLongWidth() == 64) {
-      Builder.defineMacro("_LP64");
-      Builder.defineMacro("__LP64__");
-    }
     Builder.defineMacro("__amd64__");
     Builder.defineMacro("__amd64");
     Builder.defineMacro("__x86_64");
