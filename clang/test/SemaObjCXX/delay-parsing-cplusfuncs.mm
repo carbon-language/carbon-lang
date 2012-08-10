@@ -10,6 +10,12 @@ struct S {
 
   int gorfbar(MyClass * myObject);
 
+  S();
+  S(MyClass *O1, MyClass *O2);
+  S(MyClass *O1);
+
+  MyClass * Obj1, *Obj2;
+
 };
 
 @implementation MyClass
@@ -28,6 +34,14 @@ int S::gorfbar(MyClass * myObject) {
     [myObject privateMethod1]; 
     return getMe + bar(myObject);
 }
+
+S::S(MyClass *O1, MyClass *O2) : Obj1(O1), Obj2(O2) {
+    [O1 privateMethod]; 
+    [O2 privateMethod1]; 
+}
+S::S(MyClass *O1) : Obj1(O1){ Obj2 = 0; }
+
+S::S() {}
 
 - (void)privateMethod1 {
   getMe = getMe+1;

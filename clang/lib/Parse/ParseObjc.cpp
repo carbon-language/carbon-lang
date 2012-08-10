@@ -1927,7 +1927,7 @@ void Parser::StashAwayMethodOrFunctionBodyTokens(Decl *MDecl) {
   LexedMethod* LM = new LexedMethod(this, MDecl);
   CurParsedObjCImpl->LateParsedObjCMethods.push_back(LM);
   CachedTokens &Toks = LM->Toks;
-  // Begin by storing the '{' or 'try' token.
+  // Begin by storing the '{' or 'try' or ':' token.
   Toks.push_back(Tok);
   if (Tok.is(tok::kw_try)) {
     ConsumeToken();
@@ -1939,8 +1939,14 @@ void Parser::StashAwayMethodOrFunctionBodyTokens(Decl *MDecl) {
         ConsumeAndStoreUntil(tok::r_paren, Toks, /*StopAtSemi=*/false);
       }
     }
-    assert(Tok.is(tok::l_brace) 
-           && "StashAwayMethodOrFunctionBodyTokens - '{' not found");
+    Toks.push_back(Tok); // also store '{'
+  }
+  else if (Tok.is(tok::colon)) {
+    ConsumeToken();
+    while (Tok.isNot(tok::l_brace)) {
+      ConsumeAndStoreUntil(tok::l_paren, Toks, /*StopAtSemi=*/false);
+      ConsumeAndStoreUntil(tok::r_paren, Toks, /*StopAtSemi=*/false);
+    }
     Toks.push_back(Tok); // also store '{'
   }
   ConsumeBrace();
@@ -2881,8 +2887,9 @@ void Parser::ParseLexedObjCMethodDefs(LexedMethod &LM, bool parseMethod) {
   // Consume the previously pushed token.
   ConsumeAnyToken();
     
-  assert((Tok.is(tok::l_brace) || Tok.is(tok::kw_try)) && 
-          "Inline objective-c method not starting with '{' or 'try'");
+  assert((Tok.is(tok::l_brace) || Tok.is(tok::kw_try) ||
+          Tok.is(tok::colon)) && 
+          "Inline objective-c method not starting with '{' or 'try' or ':'");
   // Enter a scope for the method or c-fucntion body.
   ParseScope BodyScope(this,
                        parseMethod
@@ -2897,8 +2904,11 @@ void Parser::ParseLexedObjCMethodDefs(LexedMethod &LM, bool parseMethod) {
     Actions.ActOnStartOfFunctionDef(getCurScope(), MCDecl);
   if (Tok.is(tok::kw_try))
     MCDecl = ParseFunctionTryBlock(MCDecl, BodyScope);
-  else
+  else {
+    if (Tok.is(tok::colon))
+      ParseConstructorInitializer(MCDecl);
     MCDecl = ParseFunctionStatementBody(MCDecl, BodyScope);
+  }
   
   if (Tok.getLocation() != OrigLoc) {
     // Due to parsing error, we either went over the cached tokens or
