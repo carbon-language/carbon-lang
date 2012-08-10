@@ -50,6 +50,12 @@
 #include <limits.h>
 #endif
 
+// Both stdio.h and cstdio are included via different pathes and
+// stdcxx's cstdio doesn't include stdio.h, so it doesn't #undef the macros
+// either.
+#undef ferror
+#undef feof
+
 // For GNU Hurd
 #if defined(__GNU__) && !defined(PATH_MAX)
 # define PATH_MAX 4096
