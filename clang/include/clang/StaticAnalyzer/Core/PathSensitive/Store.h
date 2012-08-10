@@ -131,15 +131,6 @@ public:
   virtual SVal evalDynamicCast(SVal base, QualType derivedPtrType,
                                  bool &Failed) = 0;
 
-  class CastResult {
-    ProgramStateRef state;
-    const MemRegion *region;
-  public:
-    ProgramStateRef getState() const { return state; }
-    const MemRegion* getRegion() const { return region; }
-    CastResult(ProgramStateRef s, const MemRegion* r = 0) : state(s), region(r){}
-  };
-
   const ElementRegion *GetElementZeroRegion(const MemRegion *R, QualType T);
 
   /// castRegion - Used by ExprEngine::VisitCast to handle casts from
