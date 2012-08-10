@@ -14,6 +14,7 @@
 #include "clang/Lex/TokenConcatenation.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/Support/ErrorHandling.h"
+#include <cctype>
 using namespace clang;
 
 

@@ -20,6 +20,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/raw_ostream.h"
+#include <cctype>
 
 using namespace clang;
 typedef VerifyDiagnosticConsumer::Directive Directive;

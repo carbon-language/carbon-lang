@@ -26,6 +26,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ErrorHandling.h"
+#include <cctype>
 #include <cstdio>
 using namespace clang;
 

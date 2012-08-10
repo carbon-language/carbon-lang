@@ -20,6 +20,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
+#include <cctype>
 
 using namespace clang;
 

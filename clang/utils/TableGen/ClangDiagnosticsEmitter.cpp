@@ -21,6 +21,7 @@
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/TableGenBackend.h"
 #include <algorithm>
+#include <cctype>
 #include <functional>
 #include <map>
 #include <set>
