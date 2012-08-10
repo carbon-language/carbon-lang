@@ -15156,7 +15156,7 @@ static SDValue PerformSExtCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-static SDValue PerformFMACombine(SDNode *N, SelectionDAG &DAG, 
+static SDValue PerformFMACombine(SDNode *N, SelectionDAG &DAG,
                                  const X86Subtarget* Subtarget) {
   DebugLoc dl = N->getDebugLoc();
   EVT VT = N->getValueType(0);
@@ -15173,8 +15173,8 @@ static SDValue PerformFMACombine(SDNode *N, SelectionDAG &DAG,
   bool NegB = (B.getOpcode() == ISD::FNEG);
   bool NegC = (C.getOpcode() == ISD::FNEG);
 
-  // Negative multiplication when NegA xor NegB 
-  bool NegMul = (NegA != NegB); 
+  // Negative multiplication when NegA xor NegB
+  bool NegMul = (NegA != NegB);
   if (NegA)
     A = A.getOperand(0);
   if (NegB)
