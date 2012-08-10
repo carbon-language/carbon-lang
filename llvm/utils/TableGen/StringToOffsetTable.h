@@ -14,6 +14,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
+#include <cctype>
 
 namespace llvm {
 

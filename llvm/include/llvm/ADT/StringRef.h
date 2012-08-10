@@ -12,6 +12,7 @@
 
 #include "llvm/Support/type_traits.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cstring>
 #include <limits>

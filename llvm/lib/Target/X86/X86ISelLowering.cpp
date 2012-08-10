@@ -49,6 +49,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetOptions.h"
 #include <bitset>
+#include <cctype>
 using namespace llvm;
 
 STATISTIC(NumTailCalls, "Number of tail calls");
