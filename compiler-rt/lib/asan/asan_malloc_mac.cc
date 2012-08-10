@@ -161,7 +161,15 @@ void ALWAYS_INLINE free_common(void *context, void *ptr) {
   if (!ptr) return;
   if (!flags()->mac_ignore_invalid_free || asan_mz_size(ptr)) {
     GET_STACK_TRACE_HERE_FOR_FREE(ptr);
-    asan_free(ptr, &stack);
+    malloc_zone_t *zone_ptr = malloc_zone_from_ptr(ptr);
+    if (zone_ptr == system_purgeable_zone) {
+      // Allocations from malloc_default_purgeable_zone() done before
+      // __asan_init() may be occasionally freed via free_common().
+      // See http://code.google.com/p/address-sanitizer/issues/detail?id=99.
+      malloc_zone_free(zone_ptr, ptr);
+    } else {
+      asan_free(ptr, &stack);
+    }
   } else {
     // Let us just leak this memory for now.
     GET_STACK_TRACE_HERE_FOR_FREE(ptr);
