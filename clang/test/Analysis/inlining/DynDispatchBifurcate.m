@@ -11,10 +11,35 @@
 }
 @end
 
+@interface PublicClass () {
+   int value2;
+}
+@property (readwrite) int value1;
+- (void)setValue2:(int)newValue2;
+@end
+
 @implementation PublicClass
+
 - (int)getZeroPublic {
     return 0;
 }
+
+@synthesize value1;
+
+- (int)value2 {
+    return value2;
+} 
+- (void)setValue2:(int)newValue {
+    value2 = newValue;
+}
+
+- (int)value3 {
+    return value3;
+} 
+- (void)setValue3:(int)newValue {
+    value3 = newValue;
+}
+
 @end
 
 @interface MyClassWithPublicParent : PublicClass
@@ -37,8 +62,11 @@
 @end
 
 
-@interface MyClass : MyParent
+@interface MyClass : MyParent {
+  int value;
+}
 - (int)getZero;
+@property int value;
 @end
 
 // Since class is private, we assume that it cannot be subclassed.
@@ -66,6 +94,33 @@
 - (int)getZero {
     return 1;
 }
+
+- (int)value {
+  return value;
+}
+ 
+- (void)setValue:(int)newValue {
+  value = newValue;
+}
+
+// Test ivar access.
+- (int) testIvarInSelf {
+  value = 0;
+  return 5/value; // expected-warning {{Division by zero}}
+}
+
++ (int) testIvar: (MyClass*) p {
+  p.value = 0;
+  return 5/p.value; // expected-warning {{Division by zero}}
+}
+
+// Test simple property access.
++ (int) testProperty: (MyClass*) p {
+  int x= 0;
+  [p setValue:0];
+  return 5/[p value]; // expected-warning {{Division by zero}}  
+}
+
 @end
 
 // The class is prvate and is not subclassed.
@@ -99,4 +154,28 @@ int testCallToPublicAPICat(PublicSubClass *p) {
   if (z)
     return 5/m; // expected-warning {{Division by zero}}
   return 5/[p getZeroPublic];// expected-warning {{Division by zero}}  
+}
+
+// Test public property - properties should always be inlined, regardless 
+// weither they are "public" or private. 
+int testPublicProperty(PublicClass *p) {
+  int x = 0;
+  [p setValue3:0];
+  if ([p value3] != 0)
+    return 5/x; // expected-warning {{Division by zero}} // TODO: no warning, we should always inline the property.
+  return 5/[p value3];// expected-warning {{Division by zero}}
+}
+
+int testExtension(PublicClass *p) {
+  int x = 0;
+  [p setValue2:0];
+  if ([p value2] != 0)
+    return 5/x; // expected-warning {{Division by zero}} // TODO: no warning, we should always inline the property.
+  return 5/[p value2]; // expected-warning {{Division by zero}}
+}
+
+// TODO: we do not handle synthesized properties yet.
+int testPropertySynthesized(PublicClass *p) {
+  [p setValue1:0];
+  return 5/[p value1];  
 }

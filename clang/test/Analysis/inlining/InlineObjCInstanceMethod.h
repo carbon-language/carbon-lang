@@ -19,8 +19,18 @@ typedef struct objc_object {
 -(id)retain;
 @end
 
-@interface PublicClass : NSObject
+@interface PublicClass : NSObject {
+  int value3;
+}
 - (int)getZeroPublic;
+
+- (int) value2;
+
+@property (readonly) int value1;
+
+@property int value3;
+- (int)value3;
+- (void)setValue3:(int)newValue;
 @end
 
 @interface PublicSubClass : PublicClass
