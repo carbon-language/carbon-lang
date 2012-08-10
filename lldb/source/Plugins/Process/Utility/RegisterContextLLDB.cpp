@@ -896,6 +896,10 @@ RegisterContextLLDB::ReadRegisterValueFromRegisterLocation (lldb_private::Unwind
     case UnwindLLDB::RegisterLocation::eRegisterInRegister:
         {
             const RegisterInfo *other_reg_info = GetRegisterInfoAtIndex(regloc.location.register_number);
+            
+            if (!other_reg_info)
+                return false;
+            
             if (IsFrameZero ()) 
             {
                 success = m_thread.GetRegisterContext()->ReadRegister (other_reg_info, value);
