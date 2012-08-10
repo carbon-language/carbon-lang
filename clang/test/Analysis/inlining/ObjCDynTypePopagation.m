@@ -1,28 +1,12 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -analyzer-ipa=dynamic -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -analyzer-ipa=dynamic-bifurcate -verify %s
 
-typedef signed char BOOL;
-typedef struct objc_class *Class;
-typedef struct objc_object {
-    Class isa;
-} *id;
+#include "InlineObjCInstanceMethod.h"
 
-void clang_analyzer_eval(BOOL);
+void clang_analyzer_eval(int);
 
-@protocol NSObject  - (BOOL)isEqual:(id)object; @end
-@interface NSObject <NSObject> {}
-+(id)alloc;
--(id)init;
-+(id)new;
--(id)autorelease;
--(id)copy;
-- (Class)class;
--(id)retain;
-@end
+PublicSubClass2 *getObj();
 
-@interface MyParent : NSObject
-- (int)getZeroOverridden;
-@end
-@implementation MyParent
+@implementation PublicParent
 - (int) getZeroOverridden {
    return 1;
 }
@@ -31,19 +15,12 @@ void clang_analyzer_eval(BOOL);
 }
 @end
 
-@interface MyClass : MyParent
-- (int) getZeroOverridden;
-@end
-
-MyClass *getObj();
-
-@implementation MyClass
+@implementation PublicSubClass2
 - (int) getZeroOverridden {
    return 0;
 }
 
 /* Test that we get the right type from call to alloc. */
-
 + (void) testAllocSelf {
   id a = [self alloc];
   clang_analyzer_eval([a getZeroOverridden] == 0); // expected-warning{{TRUE}}
@@ -51,7 +28,7 @@ MyClass *getObj();
 
 
 + (void) testAllocClass {
-  id a = [MyClass alloc];
+  id a = [PublicSubClass2 alloc];
   clang_analyzer_eval([a getZeroOverridden] == 0); // expected-warning{{TRUE}}
 }
 
@@ -79,19 +56,19 @@ MyClass *getObj();
 // Casting to parent should not pessimize the dynamic type. 
 + (void) testCastToParent {
  id a = [[self alloc] init];
-  MyParent *p = a;  
+ PublicParent *p = a;  
   clang_analyzer_eval([p getZeroOverridden] == 0); // expected-warning{{TRUE}}
 }
 
 // The type of parameter gets used.
-+ (void)testTypeFromParam:(MyParent*) p {
++ (void)testTypeFromParam:(PublicParent*) p {
   clang_analyzer_eval([p getZero] == 0); // expected-warning{{TRUE}}
 }
 
 // Test implicit cast.
 // Note, in this case, p could also be a subclass of MyParent.
 + (void) testCastFromId:(id) a {
-  MyParent *p = a;  
+  PublicParent *p = a;  
   clang_analyzer_eval([p getZero] == 0); // expected-warning{{TRUE}}
 }
 @end
@@ -99,7 +76,7 @@ MyClass *getObj();
 // TODO: Would be nice to handle the case of dynamically obtained class info
 // as well. We need a MemRegion for class types for this.
 int testDynamicClass(BOOL coin) {
- Class AllocClass = (coin ? [NSObject class] : [MyClass class]);
+ Class AllocClass = (coin ? [NSObject class] : [PublicSubClass2 class]);
  id x = [[AllocClass alloc] init];
  if (coin)
    return [x getZero];

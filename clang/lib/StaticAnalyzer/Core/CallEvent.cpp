@@ -721,6 +721,7 @@ RuntimeDefinition ObjCMethodCall::getRuntimeDefinition() const {
 
     // Find the the receiver type.
     const ObjCObjectPointerType *ReceiverT = 0;
+    bool CanBeSubClassed = false;
     QualType SupersType = E->getSuperType();
     const MemRegion *Receiver = 0;
 
@@ -733,17 +734,25 @@ RuntimeDefinition ObjCMethodCall::getRuntimeDefinition() const {
       if (!Receiver)
         return RuntimeDefinition();
 
-      QualType DynType = getState()->getDynamicTypeInfo(Receiver).getType();
+      DynamicTypeInfo DTI = getState()->getDynamicTypeInfo(Receiver);
+      QualType DynType = DTI.getType();
+      CanBeSubClassed = DTI.canBeASubClass();
       ReceiverT = dyn_cast<ObjCObjectPointerType>(DynType);
+
+      if (ReceiverT && CanBeSubClassed)
+        if (ObjCInterfaceDecl *IDecl = ReceiverT->getInterfaceDecl())
+          if (!canBeOverridenInSubclass(IDecl, Sel))
+            CanBeSubClassed = false;
     }
 
     // Lookup the method implementation.
     if (ReceiverT)
       if (ObjCInterfaceDecl *IDecl = ReceiverT->getInterfaceDecl()) {
-        if (canBeOverridenInSubclass(IDecl, Sel))
-          return RuntimeDefinition(IDecl->lookupPrivateMethod(Sel), Receiver);
+        const ObjCMethodDecl *MD = IDecl->lookupPrivateMethod(Sel);
+        if (CanBeSubClassed)
+          return RuntimeDefinition(MD, Receiver);
         else
-          return RuntimeDefinition(IDecl->lookupPrivateMethod(Sel), 0);
+          return RuntimeDefinition(MD, 0);
       }
 
   } else {

@@ -68,7 +68,7 @@ void DynamicTypePropagation::checkPostCall(const CallEvent &Call,
         return;
       QualType DynResTy =
                  C.getASTContext().getObjCObjectPointerType(QualType(ObjTy, 0));
-      C.addTransition(State->setDynamicTypeInfo(RetReg, DynResTy));
+      C.addTransition(State->setDynamicTypeInfo(RetReg, DynResTy, false));
       break;
     }
     case OMF_init: {

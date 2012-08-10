@@ -61,16 +61,20 @@ template <typename T> struct ProgramStateTrait {
 /// dispatch implementation.
 class DynamicTypeInfo {
   QualType T;
+  bool CanBeASubClass;
 
 public:
   DynamicTypeInfo() : T(QualType()) {}
-  DynamicTypeInfo(QualType WithType) : T(WithType) {}
-  QualType getType() {return T;}
+  DynamicTypeInfo(QualType WithType, bool CanBeSub = true):
+    T(WithType), CanBeASubClass(CanBeSub) {}
+  QualType getType() { return T; }
+  bool canBeASubClass() { return CanBeASubClass; }
   void Profile(llvm::FoldingSetNodeID &ID) const {
     T.Profile(ID);
+    ID.AddInteger((unsigned)CanBeASubClass);
   }
   bool operator==(const DynamicTypeInfo &X) const {
-    return T == X.T;
+    return T == X.T && CanBeASubClass == X.CanBeASubClass;
   }
 };
 
@@ -340,8 +344,9 @@ public:
 
   /// \brief Set dynamic type information of the region; return the new state.
   ProgramStateRef setDynamicTypeInfo(const MemRegion *Reg,
-                                     QualType NewTy) const {
-    return setDynamicTypeInfo(Reg, DynamicTypeInfo(NewTy));
+                                     QualType NewTy,
+                                     bool CanBeSubClassed = true) const {
+    return setDynamicTypeInfo(Reg, DynamicTypeInfo(NewTy, CanBeSubClassed));
   }
 
   //==---------------------------------------------------------------------==//
