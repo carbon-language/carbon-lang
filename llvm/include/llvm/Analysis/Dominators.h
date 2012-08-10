@@ -705,19 +705,7 @@ DominatorTreeBase<NodeT>::properlyDominates(const NodeT *A, const NodeT *B) {
 
 EXTERN_TEMPLATE_INSTANTIATION(class DominatorTreeBase<BasicBlock>);
 
-class BasicBlockEdge {
-  const BasicBlock *Start;
-  const BasicBlock *End;
-public:
-  BasicBlockEdge(const BasicBlock *Start_, const BasicBlock *End_) :
-    Start(Start_), End(End_) { }
-  const BasicBlock *getStart() const {
-    return Start;
-  }
-  const BasicBlock *getEnd() const {
-    return End;
-  }
-};
+class BasicBlockEdge;
 
 //===-------------------------------------
 /// DominatorTree Class - Concrete subclass of DominatorTreeBase that is used to
