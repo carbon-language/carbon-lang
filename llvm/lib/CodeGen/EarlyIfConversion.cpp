@@ -599,8 +599,14 @@ void EarlyIfConverter::invalidateTraces() {
   Traces->invalidate(IfConv.Tail);
   Traces->invalidate(IfConv.TBB);
   Traces->invalidate(IfConv.FBB);
-  DEBUG(if (MinInstr) MinInstr->print(dbgs()));
   Traces->verifyAnalysis();
+}
+
+// Adjust cycles with downward saturation.
+static unsigned adjCycles(unsigned Cyc, int Delta) {
+  if (Delta < 0 && Cyc + Delta > Cyc)
+    return 0;
+  return Cyc + Delta;
 }
 
 /// Apply cost model and heuristics to the if-conversion in IfConv.
@@ -614,20 +620,78 @@ bool EarlyIfConverter::shouldConvertIf() {
   if (!MinInstr)
     MinInstr = Traces->getEnsemble(MachineTraceMetrics::TS_MinInstrCount);
 
-  // Compare the critical path through TBB and FBB. If the difference is
-  // greater than the branch misprediction penalty, it would never pay to
-  // if-convert. The triangle/diamond topology guarantees that these traces
-  // have the same head and tail, so they can be compared.
-  MachineTraceMetrics::Trace TBBTrace = MinInstr->getTrace(IfConv.TBB);
-  MachineTraceMetrics::Trace FBBTrace = MinInstr->getTrace(IfConv.FBB);
+  MachineTraceMetrics::Trace TBBTrace = MinInstr->getTrace(IfConv.getTPred());
+  MachineTraceMetrics::Trace FBBTrace = MinInstr->getTrace(IfConv.getFPred());
   DEBUG(dbgs() << "TBB: " << TBBTrace << "FBB: " << FBBTrace);
-  unsigned TBBCrit = TBBTrace.getCriticalPath();
-  unsigned FBBCrit = FBBTrace.getCriticalPath();
-  unsigned ExtraCrit = TBBCrit > FBBCrit ? TBBCrit-FBBCrit : FBBCrit-TBBCrit;
-  if (ExtraCrit >= SchedModel->MispredictPenalty) {
-    DEBUG(dbgs() << "Critical path difference larger than "
-                 << SchedModel->MispredictPenalty << ".\n");
+  unsigned MinCrit = std::min(TBBTrace.getCriticalPath(),
+                              FBBTrace.getCriticalPath());
+
+  // Set a somewhat arbitrary limit on the critical path extension we accept.
+  unsigned CritLimit = SchedModel->MispredictPenalty/2;
+
+  // If-conversion only makes sense when there is unexploited ILP. Compute the
+  // maximum-ILP resource length of the trace after if-conversion. Compare it
+  // to the shortest critical path.
+  SmallVector<const MachineBasicBlock*, 1> ExtraBlocks;
+  if (IfConv.TBB != IfConv.Tail)
+    ExtraBlocks.push_back(IfConv.TBB);
+  unsigned ResLength = FBBTrace.getResourceLength(ExtraBlocks);
+  DEBUG(dbgs() << "Resource length " << ResLength
+               << ", minimal critical path " << MinCrit << '\n');
+  if (ResLength > MinCrit + CritLimit) {
+    DEBUG(dbgs() << "Not enough available ILP.\n");
     return false;
+  }
+
+  // Assume that the depth of the first head terminator will also be the depth
+  // of the select instruction inserted, as determined by the flag dependency.
+  // TBB / FBB data dependencies may delay the select even more.
+  MachineTraceMetrics::Trace HeadTrace = MinInstr->getTrace(IfConv.Head);
+  unsigned BranchDepth =
+    HeadTrace.getInstrCycles(IfConv.Head->getFirstTerminator()).Depth;
+  DEBUG(dbgs() << "Branch depth: " << BranchDepth << '\n');
+
+  // Look at all the tail phis, and compute the critical path extension caused
+  // by inserting select instructions.
+  MachineTraceMetrics::Trace TailTrace = MinInstr->getTrace(IfConv.Tail);
+  for (unsigned i = 0, e = IfConv.PHIs.size(); i != e; ++i) {
+    SSAIfConv::PHIInfo &PI = IfConv.PHIs[i];
+    unsigned Slack = TailTrace.getInstrSlack(PI.PHI);
+    unsigned MaxDepth = Slack + TailTrace.getInstrCycles(PI.PHI).Depth;
+    DEBUG(dbgs() << "Slack " << Slack << ":\t" << *PI.PHI);
+
+    // The condition is pulled into the critical path.
+    unsigned CondDepth = adjCycles(BranchDepth, PI.CondCycles);
+    if (CondDepth > MaxDepth) {
+      unsigned Extra = CondDepth - MaxDepth;
+      DEBUG(dbgs() << "Condition adds " << Extra << " cycles.\n");
+      if (Extra > CritLimit) {
+        DEBUG(dbgs() << "Exceeds limit of " << CritLimit << '\n');
+        return false;
+      }
+    }
+
+    // The TBB value is pulled into the critical path.
+    unsigned TDepth = adjCycles(TBBTrace.getPHIDepth(PI.PHI), PI.TCycles);
+    if (TDepth > MaxDepth) {
+      unsigned Extra = TDepth - MaxDepth;
+      DEBUG(dbgs() << "TBB data adds " << Extra << " cycles.\n");
+      if (Extra > CritLimit) {
+        DEBUG(dbgs() << "Exceeds limit of " << CritLimit << '\n');
+        return false;
+      }
+    }
+
+    // The FBB value is pulled into the critical path.
+    unsigned FDepth = adjCycles(FBBTrace.getPHIDepth(PI.PHI), PI.FCycles);
+    if (FDepth > MaxDepth) {
+      unsigned Extra = FDepth - MaxDepth;
+      DEBUG(dbgs() << "FBB data adds " << Extra << " cycles.\n");
+      if (Extra > CritLimit) {
+        DEBUG(dbgs() << "Exceeds limit of " << CritLimit << '\n');
+        return false;
+      }
+    }
   }
   return true;
 }
