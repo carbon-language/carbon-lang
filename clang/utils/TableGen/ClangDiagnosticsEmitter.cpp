@@ -204,6 +204,9 @@ private:
   /// Determine if the diagnostic is an extension.
   bool isExtension(const Record *Diag);
 
+  /// Determine if the diagnostic is off by default.
+  bool isOffByDefault(const Record *Diag);
+
   /// Increment the count for a group, and transitively marked
   /// parent groups when appropriate.
   void markGroup(const Record *Group);
@@ -232,6 +235,11 @@ bool InferPedantic::isSubGroupOfGroup(const Record *Group,
 bool InferPedantic::isExtension(const Record *Diag) {
   const std::string &ClsName = Diag->getValueAsDef("Class")->getName();
   return ClsName == "CLASS_EXTENSION";
+}
+
+bool InferPedantic::isOffByDefault(const Record *Diag) {
+  const std::string &DefMap = Diag->getValueAsDef("DefaultMapping")->getName();
+  return DefMap == "MAP_IGNORE";
 }
 
 bool InferPedantic::groupInPedantic(const Record *Group, bool increment) {
@@ -265,12 +273,12 @@ void InferPedantic::markGroup(const Record *Group) {
 
 void InferPedantic::compute(VecOrSet DiagsInPedantic,
                             VecOrSet GroupsInPedantic) {
-  // All extensions are implicitly in the "pedantic" group.  For those that
-  // aren't explicitly included in -Wpedantic, mark them for consideration
-  // to be included in -Wpedantic directly.
+  // All extensions that are not on by default are implicitly in the
+  // "pedantic" group.  For those that aren't explicitly included in -Wpedantic,
+  // mark them for consideration to be included in -Wpedantic directly.
   for (unsigned i = 0, e = Diags.size(); i != e; ++i) {
     Record *R = Diags[i];
-    if (isExtension(R)) {
+    if (isExtension(R) && isOffByDefault(R)) {
       DiagsSet.insert(R);
       if (DefInit *Group = dynamic_cast<DefInit*>(R->getValueInit("Group"))) {
         const Record *GroupRec = Group->getDef();
