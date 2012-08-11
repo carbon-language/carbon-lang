@@ -2062,7 +2062,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
   case X86ISD::ATOMSWAP64_DAG: {
     unsigned Opc;
     switch (Opcode) {
-    default: llvm_unreachable("Impossible intrinsic");
+    default: llvm_unreachable("Impossible opcode");
     case X86ISD::ATOMOR64_DAG:   Opc = X86::ATOMOR6432;   break;
     case X86ISD::ATOMXOR64_DAG:  Opc = X86::ATOMXOR6432;  break;
     case X86ISD::ATOMADD64_DAG:  Opc = X86::ATOMADD6432;  break;
@@ -2119,7 +2119,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
     if (Opcode != ISD::AND && ((Val >> ShlVal) << ShlVal) != Val)
       break;
 
-    unsigned ShlOp, Op = 0;
+    unsigned ShlOp, Op;
     EVT CstVT = NVT;
 
     // Check the minimum bitwidth for the new constant.
@@ -2142,6 +2142,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
       ShlOp = X86::SHL32ri;
 
       switch (Opcode) {
+      default: llvm_unreachable("Impossible opcode");
       case ISD::AND: Op = X86::AND32ri8; break;
       case ISD::OR:  Op =  X86::OR32ri8; break;
       case ISD::XOR: Op = X86::XOR32ri8; break;
@@ -2152,6 +2153,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
       ShlOp = X86::SHL64ri;
 
       switch (Opcode) {
+      default: llvm_unreachable("Impossible opcode");
       case ISD::AND: Op = CstVT==MVT::i8? X86::AND64ri8 : X86::AND64ri32; break;
       case ISD::OR:  Op = CstVT==MVT::i8?  X86::OR64ri8 :  X86::OR64ri32; break;
       case ISD::XOR: Op = CstVT==MVT::i8? X86::XOR64ri8 : X86::XOR64ri32; break;
