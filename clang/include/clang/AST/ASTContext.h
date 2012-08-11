@@ -433,14 +433,57 @@ public:
   /// \brief True if comments are already loaded from ExternalASTSource.
   mutable bool CommentsLoaded;
 
-  typedef std::pair<const RawComment *, comments::FullComment *>
-      RawAndParsedComment;
+  class RawCommentAndCacheFlags {
+  public:
+    enum Kind {
+      /// We searched for a comment attached to the particular declaration, but
+      /// didn't find any.
+      ///
+      /// getRaw() == 0.
+      NoCommentInDecl = 0,
 
-  /// \brief Mapping from declarations to their comments.
+      /// We have found a comment attached to this particular declaration.
+      ///
+      /// getRaw() != 0.
+      FromDecl,
+
+      /// This declaration does not have an attached comment, and we have
+      /// searched the redeclaration chain.
+      ///
+      /// If getRaw() == 0, the whole redeclaration chain does not have any
+      /// comments.
+      ///
+      /// If getRaw() != 0, it is a comment propagated from other
+      /// redeclaration.
+      FromRedecl
+    };
+
+    Kind getKind() const LLVM_READONLY {
+      return Data.getInt();
+    }
+
+    void setKind(Kind K) {
+      Data.setInt(K);
+    }
+
+    const RawComment *getRaw() const LLVM_READONLY {
+      return Data.getPointer();
+    }
+
+    void setRaw(const RawComment *RC) {
+      Data.setPointer(RC);
+    }
+
+  private:
+    llvm::PointerIntPair<const RawComment *, 2, Kind> Data;
+  };
+
+  /// \brief Mapping from declarations to comments attached to any
+  /// redeclaration.
   ///
   /// Raw comments are owned by Comments list.  This mapping is populated
   /// lazily.
-  mutable llvm::DenseMap<const Decl *, RawAndParsedComment> DeclComments;
+  mutable llvm::DenseMap<const Decl *, RawCommentAndCacheFlags> RedeclComments;
 
   /// \brief Return the documentation comment attached to a given declaration,
   /// without looking into cache.
@@ -457,7 +500,7 @@ public:
 
   /// \brief Return the documentation comment attached to a given declaration.
   /// Returns NULL if no comment is attached.
-  const RawComment *getRawCommentForDecl(const Decl *D) const;
+  const RawComment *getRawCommentForAnyRedecl(const Decl *D) const;
 
   /// Return parsed documentation comment attached to a given declaration.
   /// Returns NULL if no comment is attached.

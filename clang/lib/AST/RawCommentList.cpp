@@ -9,8 +9,11 @@
 
 #include "clang/AST/RawCommentList.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Comment.h"
 #include "clang/AST/CommentLexer.h"
 #include "clang/AST/CommentBriefParser.h"
+#include "clang/AST/CommentSema.h"
+#include "clang/AST/CommentParser.h"
 #include "clang/AST/CommentCommandTraits.h"
 #include "llvm/ADT/STLExtras.h"
 
@@ -62,7 +65,7 @@ bool mergedCommentIsTrailingComment(StringRef Comment) {
 RawComment::RawComment(const SourceManager &SourceMgr, SourceRange SR,
                        bool Merged) :
     Range(SR), RawTextValid(false), BriefTextValid(false),
-    IsAttached(false), IsAlmostTrailingComment(false),
+    IsAlmostTrailingComment(false),
     BeginLineValid(false), EndLineValid(false) {
   // Extract raw comment text, if possible.
   if (SR.getBegin() == SR.getEnd() || getRawText(SourceMgr).empty()) {
@@ -82,6 +85,16 @@ RawComment::RawComment(const SourceManager &SourceMgr, SourceRange SR,
     Kind = RCK_Merged;
     IsTrailingComment = mergedCommentIsTrailingComment(RawText);
   }
+}
+
+const Decl *RawComment::getDecl() const {
+  if (DeclOrParsedComment.isNull())
+    return NULL;
+
+  if (const Decl *D = DeclOrParsedComment.dyn_cast<const Decl *>())
+    return D;
+
+  return DeclOrParsedComment.get<comments::FullComment *>()->getDecl();
 }
 
 unsigned RawComment::getBeginLine(const SourceManager &SM) const {
@@ -154,6 +167,25 @@ const char *RawComment::extractBriefText(const ASTContext &Context) const {
   BriefTextValid = true;
 
   return BriefTextPtr;
+}
+
+comments::FullComment *RawComment::parse(const ASTContext &Context) const {
+  // Make sure that RawText is valid.
+  getRawText(Context.getSourceManager());
+
+  comments::CommandTraits Traits;
+  comments::Lexer L(Context.getAllocator(), Traits,
+                    getSourceRange().getBegin(), comments::CommentOptions(),
+                    RawText.begin(), RawText.end());
+  comments::Sema S(Context.getAllocator(), Context.getSourceManager(),
+                   Context.getDiagnostics(), Traits);
+  S.setDecl(getDecl());
+  comments::Parser P(L, S, Context.getAllocator(), Context.getSourceManager(),
+                     Context.getDiagnostics(), Traits);
+
+  comments::FullComment *FC = P.parseFullComment();
+  DeclOrParsedComment = FC;
+  return FC;
 }
 
 namespace {

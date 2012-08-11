@@ -17,17 +17,35 @@ public:
 namespace T5 {
 }
 
-void test() {
+struct T6 {
+ /// \brief Fff.
+ void T7();
 
-  T2 t2;
-  t2.
+ /// \brief Ggg.
+ void T8();
+};
+
+void T6::T7() {
 }
 
-// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:21:1 %s | FileCheck -check-prefix=CC1 %s
+void test1() {
+
+  T2 t2;
+  t2.T4;
+
+  T6 t6;
+  t6.T8();
+}
+
+// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:32:1 %s | FileCheck -check-prefix=CC1 %s
 // CHECK-CC1: FunctionDecl:{ResultType void}{TypedText T1}{{.*}}(brief comment: Aaa.)
 // CHECK-CC1: ClassDecl:{TypedText T2}{{.*}}(brief comment: Bbb.)
 // CHECK-CC1: Namespace:{TypedText T5}{{.*}}(brief comment: Eee.)
 
-// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:23:6 %s | FileCheck -check-prefix=CC2 %s
+// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:34:6 %s | FileCheck -check-prefix=CC2 %s
 // CHECK-CC2: CXXMethod:{ResultType void}{TypedText T3}{{.*}}(brief comment: Ccc.)
 // CHECK-CC2: FieldDecl:{ResultType int}{TypedText T4}{{.*}}(brief comment: Ddd.)
+
+// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:37:6 %s | FileCheck -check-prefix=CC3 %s
+// CHECK-CC3: CXXMethod:{ResultType void}{TypedText T7}{LeftParen (}{RightParen )} (34) (parent: StructDecl 'T6')(brief comment: Fff.)
+// CHECK-CC3: CXXMethod:{ResultType void}{TypedText T8}{LeftParen (}{RightParen )} (34) (parent: StructDecl 'T6')(brief comment: Ggg.)

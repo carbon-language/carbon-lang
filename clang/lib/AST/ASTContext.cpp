@@ -13,11 +13,7 @@
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CharUnits.h"
-#include "clang/AST/Comment.h"
 #include "clang/AST/CommentCommandTraits.h"
-#include "clang/AST/CommentLexer.h"
-#include "clang/AST/CommentSema.h"
-#include "clang/AST/CommentParser.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
@@ -149,6 +145,7 @@ RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
         SourceMgr.getLineNumber(DeclLocDecomp.first, DeclLocDecomp.second)
           == SourceMgr.getLineNumber(CommentBeginDecomp.first,
                                      CommentBeginDecomp.second)) {
+      (*Comment)->setDecl(D);
       return *Comment;
     }
   }
@@ -188,59 +185,74 @@ RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
   if (Text.find_first_of(",;{}#@") != StringRef::npos)
     return NULL;
 
+   (*Comment)->setDecl(D);
   return *Comment;
 }
 
-const RawComment *ASTContext::getRawCommentForDecl(const Decl *D) const {
-  // Check whether we have cached a comment string for this declaration
-  // already.
-  llvm::DenseMap<const Decl *, RawAndParsedComment>::iterator Pos
-      = DeclComments.find(D);
-  if (Pos != DeclComments.end()) {
-    RawAndParsedComment C = Pos->second;
-    return C.first;
+const RawComment *ASTContext::getRawCommentForAnyRedecl(const Decl *D) const {
+  // Check whether we have cached a comment for this declaration already.
+  {
+    llvm::DenseMap<const Decl *, RawCommentAndCacheFlags>::iterator Pos =
+        RedeclComments.find(D);
+    if (Pos != RedeclComments.end()) {
+      const RawCommentAndCacheFlags &Raw = Pos->second;
+      if (Raw.getKind() != RawCommentAndCacheFlags::NoCommentInDecl)
+        return Raw.getRaw();
+    }
   }
 
-  RawComment *RC = getRawCommentForDeclNoCache(D);
+  // Search for comments attached to declarations in the redeclaration chain.
+  const RawComment *RC = NULL;
+  for (Decl::redecl_iterator I = D->redecls_begin(),
+                             E = D->redecls_end();
+       I != E; ++I) {
+    llvm::DenseMap<const Decl *, RawCommentAndCacheFlags>::iterator Pos =
+        RedeclComments.find(*I);
+    if (Pos != RedeclComments.end()) {
+      const RawCommentAndCacheFlags &Raw = Pos->second;
+      if (Raw.getKind() != RawCommentAndCacheFlags::NoCommentInDecl) {
+        RC = Raw.getRaw();
+        break;
+      }
+    } else {
+      RC = getRawCommentForDeclNoCache(*I);
+      RawCommentAndCacheFlags Raw;
+      if (RC) {
+        Raw.setRaw(RC);
+        Raw.setKind(RawCommentAndCacheFlags::FromDecl);
+      } else
+        Raw.setKind(RawCommentAndCacheFlags::NoCommentInDecl);
+      RedeclComments[*I] = Raw;
+      if (RC)
+        break;
+    }
+  }
+
   // If we found a comment, it should be a documentation comment.
   assert(!RC || RC->isDocumentation());
-  DeclComments[D] =
-      RawAndParsedComment(RC, static_cast<comments::FullComment *>(NULL));
-  if (RC)
-    RC->setAttached();
+
+  // Update cache for every declaration in the redeclaration chain.
+  RawCommentAndCacheFlags Raw;
+  Raw.setRaw(RC);
+  Raw.setKind(RawCommentAndCacheFlags::FromRedecl);
+
+  for (Decl::redecl_iterator I = D->redecls_begin(),
+                             E = D->redecls_end();
+       I != E; ++I) {
+    RawCommentAndCacheFlags &R = RedeclComments[*I];
+    if (R.getKind() == RawCommentAndCacheFlags::NoCommentInDecl)
+      R = Raw;
+  }
+
   return RC;
 }
 
 comments::FullComment *ASTContext::getCommentForDecl(const Decl *D) const {
-  llvm::DenseMap<const Decl *, RawAndParsedComment>::iterator Pos
-      = DeclComments.find(D);
-  const RawComment *RC;
-  if (Pos != DeclComments.end()) {
-    RawAndParsedComment C = Pos->second;
-    if (comments::FullComment *FC = C.second)
-      return FC;
-    RC = C.first;
-  } else
-    RC = getRawCommentForDecl(D);
-
+  const RawComment *RC = getRawCommentForAnyRedecl(D);
   if (!RC)
     return NULL;
 
-  const StringRef RawText = RC->getRawText(SourceMgr);
-  comments::CommandTraits Traits;
-  comments::Lexer L(getAllocator(), Traits,
-                    RC->getSourceRange().getBegin(), comments::CommentOptions(),
-                    RawText.begin(), RawText.end());
-
-  comments::Sema S(getAllocator(), getSourceManager(), getDiagnostics(),
-                   Traits);
-  S.setDecl(D);
-  comments::Parser P(L, S, getAllocator(), getSourceManager(),
-                     getDiagnostics(), Traits);
-
-  comments::FullComment *FC = P.parseFullComment();
-  DeclComments[D].second = FC;
-  return FC;
+  return RC->getParsed(*this);
 }
 
 void 

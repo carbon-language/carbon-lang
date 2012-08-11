@@ -5689,7 +5689,7 @@ CXSourceRange clang_Cursor_getCommentRange(CXCursor C) {
 
   const Decl *D = getCursorDecl(C);
   ASTContext &Context = getCursorContext(C);
-  const RawComment *RC = Context.getRawCommentForDecl(D);
+  const RawComment *RC = Context.getRawCommentForAnyRedecl(D);
   if (!RC)
     return clang_getNullRange();
 
@@ -5702,7 +5702,7 @@ CXString clang_Cursor_getRawCommentText(CXCursor C) {
 
   const Decl *D = getCursorDecl(C);
   ASTContext &Context = getCursorContext(C);
-  const RawComment *RC = Context.getRawCommentForDecl(D);
+  const RawComment *RC = Context.getRawCommentForAnyRedecl(D);
   StringRef RawText = RC ? RC->getRawText(Context.getSourceManager()) :
                            StringRef();
 
@@ -5717,7 +5717,7 @@ CXString clang_Cursor_getBriefCommentText(CXCursor C) {
 
   const Decl *D = getCursorDecl(C);
   const ASTContext &Context = getCursorContext(C);
-  const RawComment *RC = Context.getRawCommentForDecl(D);
+  const RawComment *RC = Context.getRawCommentForAnyRedecl(D);
 
   if (RC) {
     StringRef BriefText = RC->getBriefText(Context);
