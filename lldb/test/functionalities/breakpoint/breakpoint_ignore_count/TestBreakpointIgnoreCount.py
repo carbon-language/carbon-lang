@@ -48,6 +48,7 @@ class BreakpointIgnoreCountTestCase(TestBase):
         self.line2 = line_number('main.c', '// b(2) -> c(2) Find the call site of b(2).')
         self.line3 = line_number('main.c', '// a(3) -> c(3) Find the call site of c(3).')
         self.line4 = line_number('main.c', '// a(3) -> c(3) Find the call site of a(3).')
+        self.line5 = line_number('main.c', '// Find the call site of c in main.')
 
     def breakpoint_ignore_count(self):
         """Exercise breakpoint ignore count with 'breakpoint set -i <count>'."""
@@ -77,6 +78,28 @@ class BreakpointIgnoreCountTestCase(TestBase):
             #substrs = ["stop reason = breakpoint"],
             patterns = ["frame #0.*main.c:%d" % self.line1,
                         "frame #2.*main.c:%d" % self.line2])
+
+        # continue -i 1 is the same as setting the ignore count to 1 again, try that:
+        # Now run the program.
+        self.runCmd("process continue -i 1", RUN_SUCCEEDED)
+
+        # The process should be stopped at this point.
+        self.expect("process status", PROCESS_STOPPED,
+            patterns = ['Process .* stopped'])
+
+        # Also check the hit count, which should be 2, due to ignore count of 1.
+        self.expect("breakpoint list -f", BREAKPOINT_HIT_THRICE,
+            substrs = ["resolved = 1",
+                       "hit count = 4"])
+
+        # The frame #0 should correspond to main.c:37, the executable statement
+        # in function name 'c'.  And frame #2 should point to main.c:45.
+        self.expect("thread backtrace", STOPPED_DUE_TO_BREAKPOINT_IGNORE_COUNT,
+            #substrs = ["stop reason = breakpoint"],
+            patterns = ["frame #0.*main.c:%d" % self.line1,
+                        "frame #1.*main.c:%d" % self.line5])
+
+        
 
     def breakpoint_ignore_count_python(self):
         """Use Python APIs to set breakpoint ignore count."""

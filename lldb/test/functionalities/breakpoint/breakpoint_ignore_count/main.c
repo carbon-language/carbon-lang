@@ -48,5 +48,7 @@ int main (int argc, char const *argv[])
     int A3 = a(3);  // a(3) -> c(3) Find the call site of a(3).
     printf("a(3) returns %d\n", A3);
     
+    int C1 = c(5); // Find the call site of c in main.
+    printf ("c(5) returns %d\n", C1);
     return 0;
 }

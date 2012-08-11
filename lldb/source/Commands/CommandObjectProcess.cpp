@@ -13,14 +13,18 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Interpreter/Args.h"
-#include "lldb/Interpreter/Options.h"
+#include "lldb/Breakpoint/Breakpoint.h"
+#include "lldb/Breakpoint/BreakpointLocation.h"
+#include "lldb/Breakpoint/BreakpointSite.h"
 #include "lldb/Core/State.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Interpreter/Args.h"
+#include "lldb/Interpreter/Options.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
@@ -670,7 +674,8 @@ public:
                              "process continue",
                              "Continue execution of all threads in the current process.",
                              "process continue",
-                             eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
+                             eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
+        m_options(interpreter)
     {
     }
 
@@ -680,6 +685,62 @@ public:
     }
 
 protected:
+
+    class CommandOptions : public Options
+    {
+    public:
+
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options(interpreter)
+        {
+            // Keep default values of all options in one place: OptionParsingStarting ()
+            OptionParsingStarting ();
+        }
+
+        ~CommandOptions ()
+        {
+        }
+
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        {
+            Error error;
+            char short_option = (char) m_getopt_table[option_idx].val;
+            bool success = false;
+            switch (short_option)
+            {
+                case 'i':
+                    m_ignore = Args::StringToUInt32 (option_arg, 0, 0, &success);
+                    if (!success)
+                        error.SetErrorStringWithFormat ("invalid value for ignore option: \"%s\", should be a number.", option_arg);
+                    break;
+
+                default:
+                    error.SetErrorStringWithFormat("invalid short option character '%c'", short_option);
+                    break;
+            }
+            return error;
+        }
+
+        void
+        OptionParsingStarting ()
+        {
+            m_ignore = 0;
+        }
+
+        const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+
+        // Options table: Required for subclasses of Options.
+
+        static OptionDefinition g_option_table[];
+
+        uint32_t m_ignore;
+    };
+    
     bool
     DoExecute (Args& command,
              CommandReturnObject &result)
@@ -704,6 +765,32 @@ protected:
                 return false;
             }
 
+            if (m_options.m_ignore > 0)
+            {
+                ThreadSP sel_thread_sp(process->GetThreadList().GetSelectedThread());
+                if (sel_thread_sp)
+                {
+                    StopInfoSP stop_info_sp = sel_thread_sp->GetStopInfo();
+                    if (stop_info_sp && stop_info_sp->GetStopReason() == eStopReasonBreakpoint)
+                    {
+                        uint64_t bp_site_id = stop_info_sp->GetValue();
+                        BreakpointSiteSP bp_site_sp(process->GetBreakpointSiteList().FindByID(bp_site_id));
+                        if (bp_site_sp)
+                        {
+                            uint32_t num_owners = bp_site_sp->GetNumberOfOwners();
+                            for (uint32_t i = 0; i < num_owners; i++)
+                            {
+                                Breakpoint &bp_ref = bp_site_sp->GetOwnerAtIndex(i)->GetBreakpoint();
+                                if (!bp_ref.IsInternal())
+                                {
+                                    bp_ref.SetIgnoreCount(m_options.m_ignore);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
             const uint32_t num_threads = process->GetThreadList().GetSize();
 
             // Set the actions that the threads should each take when resuming
@@ -743,6 +830,23 @@ protected:
         }
         return result.Succeeded();
     }
+
+    Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+    
+    CommandOptions m_options;
+
+};
+
+OptionDefinition
+CommandObjectProcessContinue::CommandOptions::g_option_table[] =
+{
+{ LLDB_OPT_SET_ALL, false, "ignore-count",'i', required_argument,         NULL, 0, eArgTypeUnsignedInteger,
+                           "Ignore <N> crossings of the breakpoint (if it exists) for the currently selected thread."},
+{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 //-------------------------------------------------------------------------
