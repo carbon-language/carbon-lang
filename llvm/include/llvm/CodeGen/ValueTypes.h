@@ -158,7 +158,7 @@ namespace llvm {
       return ((SimpleTy >= MVT::FIRST_FP_VALUETYPE &&
                SimpleTy <= MVT::LAST_FP_VALUETYPE) ||
               (SimpleTy >= MVT::FIRST_FP_VECTOR_VALUETYPE &&
-         SimpleTy <= MVT::LAST_FP_VECTOR_VALUETYPE));
+               SimpleTy <= MVT::LAST_FP_VECTOR_VALUETYPE));
     }
 
     /// isInteger - Return true if this is an integer, or a vector integer type.
@@ -173,6 +173,37 @@ namespace llvm {
     bool isVector() const {
       return (SimpleTy >= MVT::FIRST_VECTOR_VALUETYPE &&
               SimpleTy <= MVT::LAST_VECTOR_VALUETYPE);
+    }
+
+    /// is64BitVector - Return true if this is a 64-bit vector type.
+    bool is64BitVector() const {
+      return (SimpleTy == MVT::v8i8  || SimpleTy == MVT::v4i16 ||
+              SimpleTy == MVT::v2i32 || SimpleTy == MVT::v1i64 ||
+              SimpleTy == MVT::v2f32);
+    }
+
+    /// is128BitVector - Return true if this is a 128-bit vector type.
+    bool is128BitVector() const {
+      return (SimpleTy == MVT::v16i8 || SimpleTy == MVT::v8i16 ||
+              SimpleTy == MVT::v4i32 || SimpleTy == MVT::v2i64 ||
+              SimpleTy == MVT::v4f32 || SimpleTy == MVT::v2f64);
+    }
+
+    /// is256BitVector - Return true if this is a 256-bit vector type.
+    bool is256BitVector() const {
+      return (SimpleTy == MVT::v8f32 || SimpleTy == MVT::v4f64  ||
+              SimpleTy == MVT::v32i8 || SimpleTy == MVT::v16i16 ||
+              SimpleTy == MVT::v8i32 || SimpleTy == MVT::v4i64);
+    }
+
+    /// is512BitVector - Return true if this is a 512-bit vector type.
+    bool is512BitVector() const {
+      return (SimpleTy == MVT::v8i64 || SimpleTy == MVT::v16i32);
+    }
+
+    /// is1024BitVector - Return true if this is a 1024-bit vector type.
+    bool is1024BitVector() const {
+      return (SimpleTy == MVT::v16i64);
     }
 
     /// isPow2VectorType - Returns true if the given vector is a power of 2.
@@ -500,38 +531,27 @@ namespace llvm {
 
     /// is64BitVector - Return true if this is a 64-bit vector type.
     bool is64BitVector() const {
-      if (!isSimple())
-        return isExtended64BitVector();
-
-      return (V == MVT::v8i8  || V==MVT::v4i16 || V==MVT::v2i32 ||
-              V == MVT::v1i64 || V==MVT::v2f32);
+      return isSimple() ? V.is64BitVector() : isExtended64BitVector();
     }
 
     /// is128BitVector - Return true if this is a 128-bit vector type.
     bool is128BitVector() const {
-      if (!isSimple())
-        return isExtended128BitVector();
-      return (V==MVT::v16i8 || V==MVT::v8i16 || V==MVT::v4i32 ||
-              V==MVT::v2i64 || V==MVT::v4f32 || V==MVT::v2f64);
+      return isSimple() ? V.is128BitVector() : isExtended128BitVector();
     }
 
     /// is256BitVector - Return true if this is a 256-bit vector type.
     bool is256BitVector() const {
-      if (!isSimple())
-        return isExtended256BitVector();
-      return (V == MVT::v8f32  || V == MVT::v4f64 || V == MVT::v32i8 ||
-              V == MVT::v16i16 || V == MVT::v8i32 || V == MVT::v4i64);
+      return isSimple() ? V.is256BitVector() : isExtended256BitVector();
     }
 
     /// is512BitVector - Return true if this is a 512-bit vector type.
-    inline bool is512BitVector() const {
-      return isSimple() ? (V == MVT::v8i64
-          || V == MVT::v16i32) : isExtended512BitVector();
+    bool is512BitVector() const {
+      return isSimple() ? V.is512BitVector() : isExtended512BitVector();
     }
 
     /// is1024BitVector - Return true if this is a 1024-bit vector type.
-    inline bool is1024BitVector() const {
-      return isSimple() ? (V == MVT::v16i64) : isExtended1024BitVector();
+    bool is1024BitVector() const {
+      return isSimple() ? V.is1024BitVector() : isExtended1024BitVector();
     }
 
     /// isOverloaded - Return true if this is an overloaded type for TableGen.
