@@ -399,16 +399,19 @@ find_pointer_in_heap (const void * addr)
     g_matches.clear();
     // Setup "info" to look for a malloc block that contains data
     // that is the a pointer 
-    range_contains_data_callback_info_t data_info;
-    data_info.type = eDataTypeContainsData;      // Check each block for data
-    g_lookup_addr = addr;
-    data_info.data.buffer = (uint8_t *)&addr;    // What data? The pointer value passed in
-    data_info.data.size = sizeof(addr);          // How many bytes? The byte size of a pointer
-    data_info.data.align = sizeof(addr);         // Align to a pointer byte size
-    data_info.match_count = 0;                   // Initialize the match count to zero
-    data_info.done = false;                      // Set done to false so searching doesn't stop
-    range_callback_info_t info = { enumerate_range_in_zone, range_info_callback, &data_info };
-    foreach_zone_in_this_process (&info);
+    if (addr)
+    {
+        range_contains_data_callback_info_t data_info;
+        data_info.type = eDataTypeContainsData;      // Check each block for data
+        g_lookup_addr = addr;
+        data_info.data.buffer = (uint8_t *)&addr;    // What data? The pointer value passed in
+        data_info.data.size = sizeof(addr);          // How many bytes? The byte size of a pointer
+        data_info.data.align = sizeof(addr);         // Align to a pointer byte size
+        data_info.match_count = 0;                   // Initialize the match count to zero
+        data_info.done = false;                      // Set done to false so searching doesn't stop
+        range_callback_info_t info = { enumerate_range_in_zone, range_info_callback, &data_info };
+        foreach_zone_in_this_process (&info);
+    }
     if (g_matches.empty())
         return NULL;
     malloc_match match = { NULL, 0, 0 };

@@ -131,6 +131,7 @@ def add_common_options(parser):
     parser.add_option('-s', '--stack', action='store_true', dest='stack', help='gets the stack that allocated each malloc block if MallocStackLogging is enabled', default=False)
     parser.add_option('-S', '--stack-history', action='store_true', dest='stack_history', help='gets the stack history for all allocations whose start address matches each malloc block if MallocStackLogging is enabled', default=False)
     parser.add_option('-M', '--max-matches', type='int', dest='max_matches', help='the maximum number of matches to print', default=256)
+    parser.add_option('-O', '--offset', type='int', dest='offset', help='the matching data must be at this offset', default=-1)
 
 def dump_stack_history_entry(stack_history_entry, idx):
     address = int(stack_history_entry.address)
@@ -192,6 +193,7 @@ def display_match_results (options, arg_str_description, expr_sbvalue, print_no_
         if expr_sbvalue.unsigned:
             match_value = lldb.value(expr_sbvalue)  
             i = 0
+            match_idx = 0
             while 1:
                 print_entry = True
                 match_entry = match_value[i]; i += 1
@@ -203,44 +205,49 @@ def display_match_results (options, arg_str_description, expr_sbvalue, print_no_
                     break
                 malloc_size = int(match_entry.size)
                 offset = int(match_entry.offset)
-                match_addr = malloc_addr + offset
-                dynamic_value = match_entry.addr.sbvalue.GetDynamicValue(lldb.eDynamicCanRunTarget)
-                description = '[%u] %s: addr = 0x%x' % (i, arg_str_description, malloc_addr)
-                if offset != 0:
-                    description += ' + %u' % (offset)
-                description += ', size = %u' % (malloc_size)
-                derefed_dynamic_value = None
-                if dynamic_value.type.name == 'void *':
-                    if options.type == 'pointer' and malloc_size == 4096:
-                        error = lldb.SBError()
-                        data = bytearray(lldb.process.ReadMemory(malloc_addr, 16, error))
-                        if data == '\xa1\xa1\xa1\xa1AUTORELEASE!':
-                            description += ', type = (AUTORELEASE!)'
-                else:
-                    derefed_dynamic_value = dynamic_value.deref
-                    if derefed_dynamic_value:                        
-                        derefed_dynamic_type = derefed_dynamic_value.type
-                        derefed_dynamic_type_size = derefed_dynamic_type.size
-                        derefed_dynamic_type_name = derefed_dynamic_type.name
-                        description += ', type = %s <%u>' % (derefed_dynamic_type_name, derefed_dynamic_type_size)
-                        if offset < derefed_dynamic_type_size:
-                            member_list = list();
-                            get_member_types_for_offset (derefed_dynamic_type, offset, member_list)
-                            if member_list:
-                                member_path = ''
-                                for member in member_list:
-                                    member_name = member.name
-                                    if member_name: 
-                                        if member_path:
-                                            member_path += '.'
-                                        member_path += member_name
-                                if member_path:
-                                    if options.ivar_regex_blacklist:
-                                        for ivar_regex in options.ivar_regex_blacklist:
-                                            if ivar_regex.match(member_path):
-                                                print_entry = False
-                                    description += ', ivar = %s' % (member_path)
+                
+                if options.offset >= 0 and options.offset != offset:
+                    print_entry = False
+                else:                    
+                    match_addr = malloc_addr + offset
+                    dynamic_value = match_entry.addr.sbvalue.GetDynamicValue(lldb.eDynamicCanRunTarget)
+                    description = '[%u] %s: addr = 0x%x' % (match_idx, arg_str_description, malloc_addr)
+                    if offset != 0:
+                        description += ' + %u' % (offset)
+                    description += ', size = %u' % (malloc_size)
+                    derefed_dynamic_value = None
+                    if dynamic_value.type.name == 'void *':
+                        if options.type == 'pointer' and malloc_size == 4096:
+                            error = lldb.SBError()
+                            data = bytearray(lldb.process.ReadMemory(malloc_addr, 16, error))
+                            if data == '\xa1\xa1\xa1\xa1AUTORELEASE!':
+                                description += ', type = (AUTORELEASE!)'
+                    else:
+                        derefed_dynamic_value = dynamic_value.deref
+                        if derefed_dynamic_value:                        
+                            derefed_dynamic_type = derefed_dynamic_value.type
+                            derefed_dynamic_type_size = derefed_dynamic_type.size
+                            derefed_dynamic_type_name = derefed_dynamic_type.name
+                            description += ', type = %s <%u>' % (derefed_dynamic_type_name, derefed_dynamic_type_size)
+                            if offset < derefed_dynamic_type_size:
+                                member_list = list();
+                                get_member_types_for_offset (derefed_dynamic_type, offset, member_list)
+                                if member_list:
+                                    member_path = ''
+                                    for member in member_list:
+                                        member_name = member.name
+                                        if member_name: 
+                                            if member_path:
+                                                member_path += '.'
+                                            member_path += member_name
+                                    if member_path:
+                                        if options.ivar_regex_blacklist:
+                                            for ivar_regex in options.ivar_regex_blacklist:
+                                                if ivar_regex.match(member_path):
+                                                    print_entry = False
+                                        description += ', ivar = %s' % (member_path)
                 if print_entry:
+                    match_idx += 1
                     if description:
                         print description
                         if options.print_type and derefed_dynamic_value:
@@ -248,7 +255,7 @@ def display_match_results (options, arg_str_description, expr_sbvalue, print_no_
                         if options.print_object_description and dynamic_value:
                             desc = dynamic_value.GetObjectDescription()
                             if desc:
-                                print '  (%s) 0x%x %s\n' % (type_name, malloc_addr, desc)
+                                print ', po=%s\n' % (desc)
                     if options.memory:
                         cmd_result = lldb.SBCommandReturnObject()
                         memory_command = "memory read -f %s 0x%x 0x%x" % (options.format, malloc_addr, malloc_addr + malloc_size)
@@ -277,6 +284,12 @@ def heap_search(options, arg_str):
     if options.type == 'pointer':
         expr = 'find_pointer_in_heap((void *)%s)' % (arg_str)
         arg_str_description = 'malloc block containing pointer %s' % arg_str
+        if options.format == None: 
+            options.format = "A" # 'A' is "address" format
+    elif options.type == 'isa':
+        expr = 'find_pointer_in_heap((void *)%s)' % (arg_str)
+        arg_str_description = 'objective C classes with isa %s' % arg_str
+        options.offset = 0
         if options.format == None: 
             options.format = "A" # 'A' is "address" format
     elif options.type == 'cstr':
@@ -430,6 +443,37 @@ def section_ptr_refs(debugger, command, result, dict):
     else:
         print 'error: no sections were found that match any of %s' % (', '.join(options.section_names))
 
+def objc_refs(debugger, command, result, dict):
+    command_args = shlex.split(command)
+    usage = "usage: %prog [options] <EXPR> [EXPR ...]"
+    description='''Find all heap allocations given one or more objective C class names.'''
+    parser = optparse.OptionParser(description=description, prog='object_refs',usage=usage)
+    add_common_options(parser)
+    try:
+        (options, args) = parser.parse_args(command_args)
+    except:
+        return
+
+    dylid_load_err = load_dylib()
+    if dylid_load_err:
+        print dylid_load_err
+    else:
+        if args:
+            for class_name in args:
+                addr_expr_str = "(void *)[%s class]" % class_name
+                expr_sbvalue = lldb.frame.EvaluateExpression (addr_expr_str)
+                if expr_sbvalue.error.Success():
+                    isa = expr_sbvalue.unsigned
+                    if isa:
+                        options.type = 'isa'
+                        heap_search (options, '0x%x' % isa)
+                    else:
+                        print 'error: Can\'t find isa for an ObjC class named "%s"' % (class_name)
+                else:
+                    print 'error: expression error for "%s": %s' % (addr_expr_str, expr_sbvalue.error)
+        else:
+            print 'error: no address expressions were specified'
+
 if __name__ == '__main__':
     lldb.debugger = lldb.SBDebugger.Create()
 
@@ -440,6 +484,7 @@ lldb.debugger.HandleCommand('command script add -f lldb.macosx.heap.cstr_refs cs
 lldb.debugger.HandleCommand('command script add -f lldb.macosx.heap.malloc_info malloc_info')
 lldb.debugger.HandleCommand('command script add -f lldb.macosx.heap.malloc_history malloc_history')
 lldb.debugger.HandleCommand('command script add -f lldb.macosx.heap.section_ptr_refs section_ptr_refs')
+lldb.debugger.HandleCommand('command script add -f lldb.macosx.heap.objc_refs objc_refs')
 print '"ptr_refs", "cstr_refs", "malloc_info", "malloc_history" and "section_ptr_refs" commands have been installed, use the "--help" options on these commands for detailed help.'
 
 
