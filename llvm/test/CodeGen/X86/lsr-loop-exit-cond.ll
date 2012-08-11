@@ -3,11 +3,11 @@
 
 ; CHECK: t:
 ; CHECK: decq
-; CHECK-NEXT: movl (%r11,%rax,4), %eax
+; CHECK-NEXT: movl (%r9,%rax,4), %eax
 ; CHECK-NEXT: jne
 
 ; ATOM: t:
-; ATOM: movl (%r10,%rax,4), %eax
+; ATOM: movl (%r9,%rax,4), %eax
 ; ATOM-NEXT: decq
 ; ATOM-NEXT: jne
 

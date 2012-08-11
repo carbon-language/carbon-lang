@@ -134,3 +134,25 @@ return:
   %retval.0 = phi i8* [ null, %entry ], [ null, %do.cond ], [ %p.0, %do.body ]
   ret i8* %retval.0
 }
+
+; PR13578
+@t2_global = external global i32
+
+declare i1 @t2_func()
+
+define i32 @t2() {
+  store i32 42, i32* @t2_global
+  %c = call i1 @t2_func()
+  br i1 %c, label %a, label %b
+
+a:
+  %l = load i32* @t2_global
+  ret i32 %l
+
+b:
+  ret i32 0
+
+; CHECK: t2:
+; CHECK: t2_global@GOTPCREL(%rip)
+; CHECK-NOT: t2_global@GOTPCREL(%rip)
+}
