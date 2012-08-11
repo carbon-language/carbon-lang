@@ -157,9 +157,9 @@ bool X86FastISel::isTypeLegal(Type *Ty, MVT &VT, bool AllowI1) {
   // For now, require SSE/SSE2 for performing floating-point operations,
   // since x87 requires additional work.
   if (VT == MVT::f64 && !X86ScalarSSEf64)
-     return false;
+    return false;
   if (VT == MVT::f32 && !X86ScalarSSEf32)
-     return false;
+    return false;
   // Similarly, no f80 support yet.
   if (VT == MVT::f80)
     return false;
@@ -1529,7 +1529,7 @@ static unsigned computeBytesPoppedByCallee(const X86Subtarget &Subtarget,
     return 0;
   if (!CS.paramHasAttr(1, Attribute::StructRet))
     return 0;
- if (CS.paramHasAttr(1, Attribute::InReg))
+  if (CS.paramHasAttr(1, Attribute::InReg))
     return 0;
   return 4;
 }
@@ -2142,28 +2142,28 @@ unsigned X86FastISel::TargetMaterializeFloatZero(const ConstantFP *CF) {
   unsigned Opc = 0;
   const TargetRegisterClass *RC = NULL;
   switch (VT.SimpleTy) {
-    default: return false;
-    case MVT::f32:
-      if (X86ScalarSSEf32) {
-        Opc = X86::FsFLD0SS;
-        RC  = &X86::FR32RegClass;
-      } else {
-        Opc = X86::LD_Fp032;
-        RC  = &X86::RFP32RegClass;
-      }
-      break;
-    case MVT::f64:
-      if (X86ScalarSSEf64) {
-        Opc = X86::FsFLD0SD;
-        RC  = &X86::FR64RegClass;
-      } else {
-        Opc = X86::LD_Fp064;
-        RC  = &X86::RFP64RegClass;
-      }
-      break;
-    case MVT::f80:
-      // No f80 support yet.
-      return false;
+  default: return false;
+  case MVT::f32:
+    if (X86ScalarSSEf32) {
+      Opc = X86::FsFLD0SS;
+      RC  = &X86::FR32RegClass;
+    } else {
+      Opc = X86::LD_Fp032;
+      RC  = &X86::RFP32RegClass;
+    }
+    break;
+  case MVT::f64:
+    if (X86ScalarSSEf64) {
+      Opc = X86::FsFLD0SD;
+      RC  = &X86::FR64RegClass;
+    } else {
+      Opc = X86::LD_Fp064;
+      RC  = &X86::RFP64RegClass;
+    }
+    break;
+  case MVT::f80:
+    // No f80 support yet.
+    return false;
   }
 
   unsigned ResultReg = createResultReg(RC);
