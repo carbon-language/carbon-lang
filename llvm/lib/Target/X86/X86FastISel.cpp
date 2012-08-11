@@ -2182,7 +2182,7 @@ bool X86FastISel::TryToFoldLoad(MachineInstr *MI, unsigned OpNo,
   if (!X86SelectAddress(LI->getOperand(0), AM))
     return false;
 
-  X86InstrInfo &XII = (X86InstrInfo&)TII;
+  const X86InstrInfo &XII = (const X86InstrInfo&)TII;
 
   unsigned Size = TD.getTypeAllocSize(LI->getType());
   unsigned Alignment = LI->getAlignment();
