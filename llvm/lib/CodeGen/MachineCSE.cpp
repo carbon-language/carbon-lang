@@ -215,11 +215,10 @@ bool MachineCSE::hasLivePhysRegDefUses(const MachineInstr *MI,
     if (MO.isDef() &&
         (MO.isDead() || isPhysDefTriviallyDead(Reg, I, MBB->end())))
       continue;
-    for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI) {
-      // Reading constant physregs is ok.
-      if (!MRI->isConstantPhysReg(*AI, *MBB->getParent()))
+    // Reading constant physregs is ok.
+    if (!MRI->isConstantPhysReg(Reg, *MBB->getParent()))
+      for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
         PhysRefs.insert(*AI);
-    }
     if (MO.isDef())
       PhysDefs.push_back(Reg);
   }
