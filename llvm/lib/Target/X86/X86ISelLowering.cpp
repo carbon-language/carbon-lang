@@ -1043,13 +1043,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SINT_TO_FP,         MVT::v8i32, Legal);
     setOperationAction(ISD::FP_ROUND,           MVT::v4f32, Legal);
 
-    setOperationAction(ISD::CONCAT_VECTORS,     MVT::v4f64,  Custom);
-    setOperationAction(ISD::CONCAT_VECTORS,     MVT::v4i64,  Custom);
-    setOperationAction(ISD::CONCAT_VECTORS,     MVT::v8f32,  Custom);
-    setOperationAction(ISD::CONCAT_VECTORS,     MVT::v8i32,  Custom);
-    setOperationAction(ISD::CONCAT_VECTORS,     MVT::v32i8,  Custom);
-    setOperationAction(ISD::CONCAT_VECTORS,     MVT::v16i16, Custom);
-
     setOperationAction(ISD::SRL,               MVT::v16i16, Custom);
     setOperationAction(ISD::SRL,               MVT::v32i8, Custom);
 
@@ -1081,6 +1074,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
       setOperationAction(ISD::FMA,             MVT::f32, Custom);
       setOperationAction(ISD::FMA,             MVT::f64, Custom);
     }
+
     if (Subtarget->hasAVX2()) {
       setOperationAction(ISD::ADD,             MVT::v4i64, Legal);
       setOperationAction(ISD::ADD,             MVT::v8i32, Legal);
@@ -1152,6 +1146,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
       setOperationAction(ISD::EXTRACT_VECTOR_ELT, SVT, Custom);
       setOperationAction(ISD::SCALAR_TO_VECTOR,   SVT, Custom);
       setOperationAction(ISD::INSERT_SUBVECTOR,   SVT, Custom);
+      setOperationAction(ISD::CONCAT_VECTORS,     SVT, Custom);
     }
 
     // Promote v32i8, v16i16, v8i32 select, and, or, xor to v4i64.
