@@ -87,7 +87,7 @@ SBWatchpoint::GetID ()
 bool
 SBWatchpoint::IsValid() const
 {
-    return m_opaque_sp;
+    return (bool) m_opaque_sp;
 }
 
 SBError

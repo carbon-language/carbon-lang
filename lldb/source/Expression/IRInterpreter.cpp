@@ -159,7 +159,7 @@ public:
         
         bool IsValid ()
         {
-            return m_allocation;
+            return (bool) m_allocation;
         }
         
         bool IsInvalid ()

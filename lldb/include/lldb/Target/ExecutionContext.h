@@ -729,7 +729,7 @@ public:
     bool
     HasTargetScope () const
     {
-        return m_target_sp;
+        return (bool) m_target_sp;
     }
 
     //------------------------------------------------------------------

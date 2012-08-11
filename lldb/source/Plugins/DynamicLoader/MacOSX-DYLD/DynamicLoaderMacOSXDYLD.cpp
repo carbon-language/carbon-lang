@@ -313,7 +313,7 @@ DynamicLoaderMacOSXDYLD::FindTargetModuleForDYLDImageInfo (const DYLDImageInfo &
             }
 
             if (did_create_ptr)
-                *did_create_ptr = module_sp;
+                *did_create_ptr = (bool) module_sp;
         }
     }
     return module_sp;

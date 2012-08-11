@@ -3135,7 +3135,7 @@ ClangExpressionDeclMap::ResolveUnknownTypes()
                 if (log)
                     log->Printf("ClangExpressionDeclMap::ResolveUnknownType - Couldn't import the type for a variable");
                 
-                return lldb::ClangExpressionVariableSP();
+                return (bool) lldb::ClangExpressionVariableSP();
             }
             
             TypeFromUser user_type(copied_type, scratch_ast_context);

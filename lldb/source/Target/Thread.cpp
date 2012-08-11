@@ -136,7 +136,7 @@ Thread::SetStopInfoToNothing()
 bool
 Thread::ThreadStoppedForAReason (void)
 {
-    return GetPrivateStopReason ();
+    return (bool) GetPrivateStopReason ();
 }
 
 bool

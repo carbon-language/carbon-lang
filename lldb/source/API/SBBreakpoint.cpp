@@ -124,7 +124,7 @@ SBBreakpoint::GetID () const
 bool
 SBBreakpoint::IsValid() const
 {
-    return m_opaque_sp;
+    return (bool) m_opaque_sp;
 }
 
 void

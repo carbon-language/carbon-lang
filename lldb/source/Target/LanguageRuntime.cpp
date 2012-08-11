@@ -128,7 +128,7 @@ LanguageRuntime::ExceptionBreakpointResolver::SetActualResolver()
             if (runtime)
             {
                 m_actual_resolver_sp = runtime->CreateExceptionResolver (m_breakpoint, m_catch_bp, m_throw_bp);
-                return m_actual_resolver_sp;
+                return (bool) m_actual_resolver_sp;
             }
             else
                 return false;
