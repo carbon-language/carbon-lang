@@ -1,4 +1,4 @@
-# RUN: llvm-mc -filetype=obj %s -o %t.o && llvm-objdump -s %t.o
+# RUN: llvm-mc -filetype=obj %s -o %t.o -triple x86_64-pc-linux-gnu && llvm-objdump -s %t.o
 # PR13581
 
 # CHECK: Contents of section .debug_frame:
