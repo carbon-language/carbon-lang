@@ -878,19 +878,16 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
     // Custom lower build_vector, vector_shuffle, and extract_vector_elt.
     for (int i = MVT::v16i8; i != MVT::v2i64; ++i) {
-      EVT VT = (MVT::SimpleValueType)i;
+      MVT VT = (MVT::SimpleValueType)i;
       // Do not attempt to custom lower non-power-of-2 vectors
       if (!isPowerOf2_32(VT.getVectorNumElements()))
         continue;
       // Do not attempt to custom lower non-128-bit vectors
       if (!VT.is128BitVector())
         continue;
-      setOperationAction(ISD::BUILD_VECTOR,
-                         VT.getSimpleVT().SimpleTy, Custom);
-      setOperationAction(ISD::VECTOR_SHUFFLE,
-                         VT.getSimpleVT().SimpleTy, Custom);
-      setOperationAction(ISD::EXTRACT_VECTOR_ELT,
-                         VT.getSimpleVT().SimpleTy, Custom);
+      setOperationAction(ISD::BUILD_VECTOR,       VT, Custom);
+      setOperationAction(ISD::VECTOR_SHUFFLE,     VT, Custom);
+      setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT, Custom);
     }
 
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v2f64, Custom);
@@ -907,23 +904,22 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
     // Promote v16i8, v8i16, v4i32 load, select, and, or, xor to v2i64.
     for (int i = MVT::v16i8; i != MVT::v2i64; ++i) {
-      MVT::SimpleValueType SVT = (MVT::SimpleValueType)i;
-      EVT VT = SVT;
+      MVT VT = (MVT::SimpleValueType)i;
 
       // Do not attempt to promote non-128-bit vectors
       if (!VT.is128BitVector())
         continue;
 
-      setOperationAction(ISD::AND,    SVT, Promote);
-      AddPromotedToType (ISD::AND,    SVT, MVT::v2i64);
-      setOperationAction(ISD::OR,     SVT, Promote);
-      AddPromotedToType (ISD::OR,     SVT, MVT::v2i64);
-      setOperationAction(ISD::XOR,    SVT, Promote);
-      AddPromotedToType (ISD::XOR,    SVT, MVT::v2i64);
-      setOperationAction(ISD::LOAD,   SVT, Promote);
-      AddPromotedToType (ISD::LOAD,   SVT, MVT::v2i64);
-      setOperationAction(ISD::SELECT, SVT, Promote);
-      AddPromotedToType (ISD::SELECT, SVT, MVT::v2i64);
+      setOperationAction(ISD::AND,    VT, Promote);
+      AddPromotedToType (ISD::AND,    VT, MVT::v2i64);
+      setOperationAction(ISD::OR,     VT, Promote);
+      AddPromotedToType (ISD::OR,     VT, MVT::v2i64);
+      setOperationAction(ISD::XOR,    VT, Promote);
+      AddPromotedToType (ISD::XOR,    VT, MVT::v2i64);
+      setOperationAction(ISD::LOAD,   VT, Promote);
+      AddPromotedToType (ISD::LOAD,   VT, MVT::v2i64);
+      setOperationAction(ISD::SELECT, VT, Promote);
+      AddPromotedToType (ISD::SELECT, VT, MVT::v2i64);
     }
 
     setTruncStoreAction(MVT::f64, MVT::f32, Expand);
@@ -1128,46 +1124,44 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     // Custom lower several nodes for 256-bit types.
     for (int i = MVT::FIRST_VECTOR_VALUETYPE;
              i <= MVT::LAST_VECTOR_VALUETYPE; ++i) {
-      MVT::SimpleValueType SVT = (MVT::SimpleValueType)i;
-      EVT VT = SVT;
+      MVT VT = (MVT::SimpleValueType)i;
 
       // Extract subvector is special because the value type
       // (result) is 128-bit but the source is 256-bit wide.
       if (VT.is128BitVector())
-        setOperationAction(ISD::EXTRACT_SUBVECTOR, SVT, Custom);
+        setOperationAction(ISD::EXTRACT_SUBVECTOR, VT, Custom);
 
       // Do not attempt to custom lower other non-256-bit vectors
       if (!VT.is256BitVector())
         continue;
 
-      setOperationAction(ISD::BUILD_VECTOR,       SVT, Custom);
-      setOperationAction(ISD::VECTOR_SHUFFLE,     SVT, Custom);
-      setOperationAction(ISD::INSERT_VECTOR_ELT,  SVT, Custom);
-      setOperationAction(ISD::EXTRACT_VECTOR_ELT, SVT, Custom);
-      setOperationAction(ISD::SCALAR_TO_VECTOR,   SVT, Custom);
-      setOperationAction(ISD::INSERT_SUBVECTOR,   SVT, Custom);
-      setOperationAction(ISD::CONCAT_VECTORS,     SVT, Custom);
+      setOperationAction(ISD::BUILD_VECTOR,       VT, Custom);
+      setOperationAction(ISD::VECTOR_SHUFFLE,     VT, Custom);
+      setOperationAction(ISD::INSERT_VECTOR_ELT,  VT, Custom);
+      setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT, Custom);
+      setOperationAction(ISD::SCALAR_TO_VECTOR,   VT, Custom);
+      setOperationAction(ISD::INSERT_SUBVECTOR,   VT, Custom);
+      setOperationAction(ISD::CONCAT_VECTORS,     VT, Custom);
     }
 
     // Promote v32i8, v16i16, v8i32 select, and, or, xor to v4i64.
     for (int i = MVT::v32i8; i != MVT::v4i64; ++i) {
-      MVT::SimpleValueType SVT = (MVT::SimpleValueType)i;
-      EVT VT = SVT;
+      MVT VT = (MVT::SimpleValueType)i;
 
       // Do not attempt to promote non-256-bit vectors
       if (!VT.is256BitVector())
         continue;
 
-      setOperationAction(ISD::AND,    SVT, Promote);
-      AddPromotedToType (ISD::AND,    SVT, MVT::v4i64);
-      setOperationAction(ISD::OR,     SVT, Promote);
-      AddPromotedToType (ISD::OR,     SVT, MVT::v4i64);
-      setOperationAction(ISD::XOR,    SVT, Promote);
-      AddPromotedToType (ISD::XOR,    SVT, MVT::v4i64);
-      setOperationAction(ISD::LOAD,   SVT, Promote);
-      AddPromotedToType (ISD::LOAD,   SVT, MVT::v4i64);
-      setOperationAction(ISD::SELECT, SVT, Promote);
-      AddPromotedToType (ISD::SELECT, SVT, MVT::v4i64);
+      setOperationAction(ISD::AND,    VT, Promote);
+      AddPromotedToType (ISD::AND,    VT, MVT::v4i64);
+      setOperationAction(ISD::OR,     VT, Promote);
+      AddPromotedToType (ISD::OR,     VT, MVT::v4i64);
+      setOperationAction(ISD::XOR,    VT, Promote);
+      AddPromotedToType (ISD::XOR,    VT, MVT::v4i64);
+      setOperationAction(ISD::LOAD,   VT, Promote);
+      AddPromotedToType (ISD::LOAD,   VT, MVT::v4i64);
+      setOperationAction(ISD::SELECT, VT, Promote);
+      AddPromotedToType (ISD::SELECT, VT, MVT::v4i64);
     }
   }
 
