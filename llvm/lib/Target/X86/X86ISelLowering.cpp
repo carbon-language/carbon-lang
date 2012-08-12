@@ -1006,9 +1006,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     }
   }
 
-  if (Subtarget->hasSSE42())
-    setOperationAction(ISD::SETCC,             MVT::v2i64, Custom);
-
   if (!TM.Options.UseSoftFloat && Subtarget->hasAVX()) {
     addRegisterClass(MVT::v32i8,  &X86::VR256RegClass);
     addRegisterClass(MVT::v16i16, &X86::VR256RegClass);
