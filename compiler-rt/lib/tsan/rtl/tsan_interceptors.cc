@@ -1157,7 +1157,7 @@ TSAN_INTERCEPTOR(long_t, pwrite, int fd, void *buf, long_t sz, unsigned off) {
   return res;
 }
 
-TSAN_INTERCEPTOR(long_t, pwrite64, int fd, void *buf, long_t sz, unsigned off) {
+TSAN_INTERCEPTOR(long_t, pwrite64, int fd, void *buf, long_t sz, u64 off) {
   SCOPED_TSAN_INTERCEPTOR(pwrite64, fd, buf, sz, off);
   Release(cur_thread(), pc, fd2addr(fd));
   int res = REAL(pwrite64)(fd, buf, sz, off);
