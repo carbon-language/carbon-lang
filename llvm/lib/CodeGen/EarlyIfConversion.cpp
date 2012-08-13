@@ -140,6 +140,12 @@ private:
   /// Find a valid insertion point in Head.
   bool findInsertionPoint();
 
+  /// Replace PHI instructions in Tail with selects.
+  void replacePHIInstrs();
+
+  /// Insert selects and rewrite PHI operands to use them.
+  void rewritePHIOperands();
+
 public:
   /// runOnMachineFunction - Initialize per-function data structures.
   void runOnMachineFunction(MachineFunction &MF) {
@@ -343,11 +349,7 @@ bool SSAIfConv::canConvertIf(MachineBasicBlock *MBB) {
   if (Succ0->pred_size() != 1 || Succ0->succ_size() != 1)
     return false;
 
-  // We could support additional Tail predecessors by updating phis instead of
-  // eliminating them. Let's see an example where it matters first.
   Tail = Succ0->succ_begin()[0];
-  if (Tail->pred_size() != 2)
-    return false;
 
   // This is not a triangle.
   if (Tail != Succ1) {
@@ -437,21 +439,11 @@ bool SSAIfConv::canConvertIf(MachineBasicBlock *MBB) {
   return true;
 }
 
-
-/// convertIf - Execute the if conversion after canConvertIf has determined the
-/// feasibility.
-///
-/// Any basic blocks erased will be added to RemovedBlocks.
-///
-void SSAIfConv::convertIf(SmallVectorImpl<MachineBasicBlock*> &RemovedBlocks) {
-  assert(Head && Tail && TBB && FBB && "Call canConvertIf first.");
-
-  // Move all instructions into Head, except for the terminators.
-  if (TBB != Tail)
-    Head->splice(InsertionPoint, TBB, TBB->begin(), TBB->getFirstTerminator());
-  if (FBB != Tail)
-    Head->splice(InsertionPoint, FBB, FBB->begin(), FBB->getFirstTerminator());
-
+/// replacePHIInstrs - Completely replace PHI instructions with selects.
+/// This is possible when the only Tail predecessors are the if-converted
+/// blocks.
+void SSAIfConv::replacePHIInstrs() {
+  assert(Tail->pred_size() == 2 && "Cannot replace PHIs");
   MachineBasicBlock::iterator FirstTerm = Head->getFirstTerminator();
   assert(FirstTerm != Head->end() && "No terminators");
   DebugLoc HeadDL = FirstTerm->getDebugLoc();
@@ -467,6 +459,60 @@ void SSAIfConv::convertIf(SmallVectorImpl<MachineBasicBlock*> &RemovedBlocks) {
     PI.PHI->eraseFromParent();
     PI.PHI = 0;
   }
+}
+
+/// rewritePHIOperands - When there are additional Tail predecessors, insert
+/// select instructions in Head and rewrite PHI operands to use the selects.
+/// Keep the PHI instructions in Tail to handle the other predecessors.
+void SSAIfConv::rewritePHIOperands() {
+  MachineBasicBlock::iterator FirstTerm = Head->getFirstTerminator();
+  assert(FirstTerm != Head->end() && "No terminators");
+  DebugLoc HeadDL = FirstTerm->getDebugLoc();
+
+  // Convert all PHIs to select instructions inserted before FirstTerm.
+  for (unsigned i = 0, e = PHIs.size(); i != e; ++i) {
+    PHIInfo &PI = PHIs[i];
+    DEBUG(dbgs() << "If-converting " << *PI.PHI);
+    unsigned PHIDst = PI.PHI->getOperand(0).getReg();
+    unsigned DstReg = MRI->createVirtualRegister(MRI->getRegClass(PHIDst));
+    TII->insertSelect(*Head, FirstTerm, HeadDL, DstReg, Cond, PI.TReg, PI.FReg);
+    DEBUG(dbgs() << "          --> " << *llvm::prior(FirstTerm));
+
+    // Rewrite PHI operands TPred -> (DstReg, Head), remove FPred.
+    for (unsigned i = PI.PHI->getNumOperands(); i != 1; i -= 2) {
+      MachineBasicBlock *MBB = PI.PHI->getOperand(i-1).getMBB();
+      if (MBB == getTPred()) {
+        PI.PHI->getOperand(i-1).setMBB(Head);
+        PI.PHI->getOperand(i-2).setReg(DstReg);
+      } else if (MBB == getFPred()) {
+        PI.PHI->RemoveOperand(i-1);
+        PI.PHI->RemoveOperand(i-2);
+      }
+    }
+    DEBUG(dbgs() << "          --> " << *PI.PHI);
+  }
+}
+
+/// convertIf - Execute the if conversion after canConvertIf has determined the
+/// feasibility.
+///
+/// Any basic blocks erased will be added to RemovedBlocks.
+///
+void SSAIfConv::convertIf(SmallVectorImpl<MachineBasicBlock*> &RemovedBlocks) {
+  assert(Head && Tail && TBB && FBB && "Call canConvertIf first.");
+
+  // Move all instructions into Head, except for the terminators.
+  if (TBB != Tail)
+    Head->splice(InsertionPoint, TBB, TBB->begin(), TBB->getFirstTerminator());
+  if (FBB != Tail)
+    Head->splice(InsertionPoint, FBB, FBB->begin(), FBB->getFirstTerminator());
+
+  // Are there extra Tail predecessors?
+  bool ExtraPreds = Tail->pred_size() != 2;
+  if (ExtraPreds)
+    rewritePHIOperands();
+  else
+    replacePHIInstrs();
 
   // Fix up the CFG, temporarily leave Head without any successors.
   Head->removeSuccessor(TBB);
@@ -478,6 +524,7 @@ void SSAIfConv::convertIf(SmallVectorImpl<MachineBasicBlock*> &RemovedBlocks) {
 
   // Fix up Head's terminators.
   // It should become a single branch or a fallthrough.
+  DebugLoc HeadDL = Head->getFirstTerminator()->getDebugLoc();
   TII->RemoveBranch(*Head);
 
   // Erase the now empty conditional blocks. It is likely that Head can fall
@@ -492,7 +539,7 @@ void SSAIfConv::convertIf(SmallVectorImpl<MachineBasicBlock*> &RemovedBlocks) {
   }
 
   assert(Head->succ_empty() && "Additional head successors?");
-  if (Head->isLayoutSuccessor(Tail)) {
+  if (!ExtraPreds && Head->isLayoutSuccessor(Tail)) {
     // Splice Tail onto the end of Head.
     DEBUG(dbgs() << "Joining tail BB#" << Tail->getNumber()
                  << " into head BB#" << Head->getNumber() << '\n');
