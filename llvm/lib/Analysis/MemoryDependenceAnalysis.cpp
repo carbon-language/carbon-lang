@@ -227,13 +227,18 @@ getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
 
         // Otherwise if the two calls don't interact (e.g. InstCS is readnone)
         // keep scanning.
-        break;
+        continue;
       default:
         return MemDepResult::getClobber(Inst);
       }
     }
+
+    // If we could not obtain a pointer for the instruction and the instruction
+    // touches memory then assume that this is a dependency.
+    if (MR != AliasAnalysis::NoModRef)
+      return MemDepResult::getClobber(Inst);
   }
-  
+
   // No dependence found.  If this is the entry block of the function, it is
   // unknown, otherwise it is non-local.
   if (BB != &BB->getParent()->getEntryBlock())
