@@ -24,6 +24,7 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SparseSet.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -49,6 +50,11 @@ BlockInstrLimit("early-ifcvt-limit", cl::init(30), cl::Hidden,
 // Stress testing mode - disable heuristics.
 static cl::opt<bool> Stress("stress-early-ifcvt", cl::Hidden,
   cl::desc("Turn all knobs to 11"));
+
+STATISTIC(NumDiamondsSeen,  "Number of diamonds");
+STATISTIC(NumDiamondsConv,  "Number of diamonds converted");
+STATISTIC(NumTrianglesSeen, "Number of triangles");
+STATISTIC(NumTrianglesConv, "Number of triangles converted");
 
 //===----------------------------------------------------------------------===//
 //                                 SSAIfConv
@@ -434,6 +440,10 @@ bool SSAIfConv::canConvertIf(MachineBasicBlock *MBB) {
   if (!findInsertionPoint())
     return false;
 
+  if (isTriangle())
+    ++NumTrianglesSeen;
+  else
+    ++NumDiamondsSeen;
   return true;
 }
 
@@ -498,6 +508,12 @@ void SSAIfConv::rewritePHIOperands() {
 ///
 void SSAIfConv::convertIf(SmallVectorImpl<MachineBasicBlock*> &RemovedBlocks) {
   assert(Head && Tail && TBB && FBB && "Call canConvertIf first.");
+
+  // Update statistics.
+  if (isTriangle())
+    ++NumTrianglesConv;
+  else
+    ++NumDiamondsConv;
 
   // Move all instructions into Head, except for the terminators.
   if (TBB != Tail)
