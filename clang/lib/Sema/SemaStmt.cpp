@@ -2836,6 +2836,7 @@ static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
         TokenBuf.resize(32);
         bool StringInvalid = false;
         Asm += SemaRef.PP.getSpelling(AsmToks[j], TokenBuf, &StringInvalid);
+        assert (!StringInvalid && "Expected valid string!");
         break;
       }
       case tok::identifier: {
