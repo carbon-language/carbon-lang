@@ -869,12 +869,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v4i32, Custom);
     setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v4f32, Custom);
 
-    setOperationAction(ISD::CONCAT_VECTORS,     MVT::v2f64, Custom);
-    setOperationAction(ISD::CONCAT_VECTORS,     MVT::v2i64, Custom);
-    setOperationAction(ISD::CONCAT_VECTORS,     MVT::v16i8, Custom);
-    setOperationAction(ISD::CONCAT_VECTORS,     MVT::v8i16, Custom);
-    setOperationAction(ISD::CONCAT_VECTORS,     MVT::v4i32, Custom);
-
     // Custom lower build_vector, vector_shuffle, and extract_vector_elt.
     for (int i = MVT::v16i8; i != MVT::v2i64; ++i) {
       MVT VT = (MVT::SimpleValueType)i;
@@ -5447,32 +5441,6 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   return SDValue();
 }
 
-// LowerMMXCONCAT_VECTORS - We support concatenate two MMX registers and place
-// them in a MMX register.  This is better than doing a stack convert.
-static SDValue LowerMMXCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
-  DebugLoc dl = Op.getDebugLoc();
-  EVT ResVT = Op.getValueType();
-
-  assert(ResVT == MVT::v2i64 || ResVT == MVT::v4i32 ||
-         ResVT == MVT::v8i16 || ResVT == MVT::v16i8);
-  int Mask[2];
-  SDValue InVec = DAG.getNode(ISD::BITCAST,dl, MVT::v1i64, Op.getOperand(0));
-  SDValue VecOp = DAG.getNode(X86ISD::MOVQ2DQ, dl, MVT::v2i64, InVec);
-  InVec = Op.getOperand(1);
-  if (InVec.getOpcode() == ISD::SCALAR_TO_VECTOR) {
-    unsigned NumElts = ResVT.getVectorNumElements();
-    VecOp = DAG.getNode(ISD::BITCAST, dl, ResVT, VecOp);
-    VecOp = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, ResVT, VecOp,
-                       InVec.getOperand(0), DAG.getIntPtrConstant(NumElts/2+1));
-  } else {
-    InVec = DAG.getNode(ISD::BITCAST, dl, MVT::v1i64, InVec);
-    SDValue VecOp2 = DAG.getNode(X86ISD::MOVQ2DQ, dl, MVT::v2i64, InVec);
-    Mask[0] = 0; Mask[1] = 2;
-    VecOp = DAG.getVectorShuffle(MVT::v2i64, dl, VecOp, VecOp2, Mask);
-  }
-  return DAG.getNode(ISD::BITCAST, dl, ResVT, VecOp);
-}
-
 // LowerAVXCONCAT_VECTORS - 256-bit AVX can use the vinsertf128 instruction
 // to create 256-bit vectors from two other 128-bit ones.
 static SDValue LowerAVXCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
@@ -5493,13 +5461,7 @@ X86TargetLowering::LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) const {
   EVT ResVT = Op.getValueType();
 
   assert(Op.getNumOperands() == 2);
-  assert((ResVT.is128BitVector() || ResVT.is256BitVector()) &&
-         "Unsupported CONCAT_VECTORS for value type");
-
-  // We support concatenate two MMX registers and place them in a MMX register.
-  // This is better than doing a stack convert.
-  if (ResVT.is128BitVector())
-    return LowerMMXCONCAT_VECTORS(Op, DAG);
+  assert(ResVT.is256BitVector() && "Unsupported CONCAT_VECTORS for value type");
 
   // 256-bit AVX can use the vinsertf128 instruction to create 256-bit vectors
   // from two other 128-bit ones.
