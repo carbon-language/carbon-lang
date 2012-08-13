@@ -277,6 +277,7 @@ OverloadExpr::OverloadExpr(StmtClass K, ASTContext &C,
           isa<UnresolvedUsingValueDecl>(*I)) {
         ExprBits.TypeDependent = true;
         ExprBits.ValueDependent = true;
+        ExprBits.InstantiationDependent = true;
       }
     }
 

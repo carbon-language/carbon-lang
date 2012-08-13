@@ -6,3 +6,13 @@ namespace PR9414 {
     return x;
   }
 }
+
+// Don't crash.
+namespace PR13570 {
+  template<typename T, typename U> struct P {};
+  template<typename T> struct A {
+    template<typename U> static P<T,U> isa(U);
+    decltype(isa(int())) f() {}
+  };
+  template struct A<int>;
+}
