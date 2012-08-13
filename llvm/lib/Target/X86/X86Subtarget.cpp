@@ -248,9 +248,9 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
     // If it's Nehalem, unaligned memory access is fast.
     // Include Westmere and Sandy Bridge as well.
     // FIXME: add later processors.
-    if ((Family == 6 && Model == 26) ||
+    if (IsIntel && ((Family == 6 && Model == 26) ||
         (Family == 6 && Model == 44) ||
-        (Family == 6 && Model == 42)) {
+        (Family == 6 && Model == 42))) {
       IsUAMemFast = true;
       ToggleFeature(X86::FeatureFastUAMem);
     }
