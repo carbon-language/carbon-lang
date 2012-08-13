@@ -999,11 +999,9 @@ CollectCXXMemberFunctions(const CXXRecordDecl *RD, llvm::DIFile Unit,
     }
     else if (FunctionTemplateDecl *FTD = dyn_cast<FunctionTemplateDecl>(D))
       for (FunctionTemplateDecl::spec_iterator SI = FTD->spec_begin(),
-            SE = FTD->spec_end(); SI != SE; ++SI) {
-        FunctionDecl *FD = *SI;
-        if (CXXMethodDecl *M = dyn_cast<CXXMethodDecl>(FD))
-          EltTys.push_back(CreateCXXMemberFunction(M, Unit, RecordTy));
-      }
+             SE = FTD->spec_end(); SI != SE; ++SI)
+        EltTys.push_back(CreateCXXMemberFunction(cast<CXXMethodDecl>(*SI), Unit,
+                                                 RecordTy));
   }
 }                                 
 
