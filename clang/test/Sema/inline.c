@@ -34,9 +34,7 @@ extern inline int useStaticInlineFromExtern () {
   return useStaticFromStatic(); // no-warning
 }
 
-#if __has_attribute(const)
 static int constFunction() __attribute__((const));
-#endif
 
 inline int useConst () {
   return constFunction(); // no-warning

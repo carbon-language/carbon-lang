@@ -1054,16 +1054,9 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     if (Tok.is(tok::l_paren)) {
       // Read the identifier
       Lex(Tok);
-      if (Tok.is(tok::identifier)) {
+      if (Tok.is(tok::identifier) || Tok.is(tok::kw_const)) {
         FeatureII = Tok.getIdentifierInfo();
 
-        // Read the ')'.
-        Lex(Tok);
-        if (Tok.is(tok::r_paren))
-          IsValid = true;
-      }
-      else if (Tok.is(tok::kw_const)) {
-        FeatureII = getIdentifierInfo("const");
         // Read the ')'.
         Lex(Tok);
         if (Tok.is(tok::r_paren))

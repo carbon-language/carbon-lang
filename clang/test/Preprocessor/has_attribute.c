@@ -24,3 +24,13 @@ int has_has_attribute();
 #if !__has_attribute(something_we_dont_have)
 int has_something_we_dont_have();
 #endif
+
+// rdar://10253857
+#if __has_attribute(__const)
+ int fn3() __attribute__ ((__const));
+#endif
+
+#if __has_attribute(const)
+ static int constFunction() __attribute__((const));
+#endif
+
