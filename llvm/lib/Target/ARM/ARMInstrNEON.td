@@ -5597,26 +5597,27 @@ def : Pat<(v2f64 (bitconvert (v4f32 QPR:$src))), (v2f64 QPR:$src)>;
 // Vector lengthening move with load, matching extending loads.
 
 // extload, zextload and sextload for a standard lengthening load. Example:
-// Lengthen_Single<"8", "i16", "i8"> = 
-//     Pat<(v8i16 (extloadvi8 addrmode6oneL32:$addr))
-//         (VMOVLuv8i16 (VLD1LNd32 addrmode6oneL32:$addr,
-//                                 (f64 (IMPLICIT_DEF)), (i32 0)))>;
+// Lengthen_Single<"8", "i16", "8"> = 
+//     Pat<(v8i16 (extloadvi8 addrmode6:$addr))
+//         (VMOVLuv8i16 (VLD1d8 addrmode6:$addr,
+//                              (f64 (IMPLICIT_DEF)), (i32 0)))>;
 multiclass Lengthen_Single<string DestLanes, string DestTy, string SrcTy> {
+  let AddedComplexity = 10 in {
   def _Any : Pat<(!cast<ValueType>("v" # DestLanes # DestTy)
-                    (!cast<PatFrag>("extloadv" # SrcTy) addrmode6oneL32:$addr)),
+                    (!cast<PatFrag>("extloadvi" # SrcTy) addrmode6:$addr)),
                   (!cast<Instruction>("VMOVLuv" # DestLanes # DestTy)
-                    (VLD1LNd32 addrmode6oneL32:$addr, 
-                               (f64 (IMPLICIT_DEF)), (i32 0)))>;
+                    (!cast<Instruction>("VLD1d" # SrcTy) addrmode6:$addr))>;
+
   def _Z : Pat<(!cast<ValueType>("v" # DestLanes # DestTy)
-                  (!cast<PatFrag>("zextloadv" # SrcTy) addrmode6oneL32:$addr)),
+                  (!cast<PatFrag>("zextloadvi" # SrcTy) addrmode6:$addr)),
                 (!cast<Instruction>("VMOVLuv" # DestLanes # DestTy)
-                    (VLD1LNd32 addrmode6oneL32:$addr, 
-                               (f64 (IMPLICIT_DEF)), (i32 0)))>;
+                    (!cast<Instruction>("VLD1d" # SrcTy) addrmode6:$addr))>;
+
   def _S : Pat<(!cast<ValueType>("v" # DestLanes # DestTy)
-                  (!cast<PatFrag>("sextloadv" # SrcTy) addrmode6oneL32:$addr)),
+                  (!cast<PatFrag>("sextloadvi" # SrcTy) addrmode6:$addr)),
                 (!cast<Instruction>("VMOVLsv" # DestLanes # DestTy)
-                    (VLD1LNd32 addrmode6oneL32:$addr, 
-                               (f64 (IMPLICIT_DEF)), (i32 0)))>;
+                    (!cast<Instruction>("VLD1d" # SrcTy) addrmode6:$addr))>;
+  }
 }
 
 // extload, zextload and sextload for a lengthening load which only uses
@@ -5648,8 +5649,8 @@ multiclass Lengthen_HalfSingle<string DestLanes, string DestTy, string SrcTy,
 // extload, zextload and sextload for a lengthening load followed by another
 // lengthening load, to quadruple the initial length.
 //
-// Lengthen_Double<"4", "i32", "i8", "8", "i16", "4", "i32", qsub_0> =
-//     Pat<(v4i32 (extloadvi8 addrmode5:$addr))
+// Lengthen_Double<"4", "i32", "i8", "8", "i16", "4", "i32"> =
+//     Pat<(v4i32 (extloadvi8 addrmode6oneL32:$addr))
 //         (EXTRACT_SUBREG (VMOVLuv4i32
 //           (EXTRACT_SUBREG (VMOVLuv8i16 (VLD1LNd32 addrmode6oneL32:$addr,
 //                                                   (f64 (IMPLICIT_DEF)),
@@ -5663,19 +5664,19 @@ multiclass Lengthen_Double<string DestLanes, string DestTy, string SrcTy,
                    (!cast<PatFrag>("extloadv" # SrcTy) addrmode6oneL32:$addr)),
          (!cast<Instruction>("VMOVLuv" # Insn2Lanes # Insn2Ty)
            (EXTRACT_SUBREG (!cast<Instruction>("VMOVLuv" # Insn1Lanes # Insn1Ty)
-             (VLD1LNd32 addrmode6oneL32:$addr, (f64 (IMPLICIT_DEF)), (i32 0))), 
+             (VLD1LNd32 addrmode6oneL32:$addr, (f64 (IMPLICIT_DEF)), (i32 0))),
              dsub_0))>;
   def _Z   : Pat<(!cast<ValueType>("v" # DestLanes # DestTy)
                    (!cast<PatFrag>("zextloadv" # SrcTy) addrmode6oneL32:$addr)),
          (!cast<Instruction>("VMOVLuv" # Insn2Lanes # Insn2Ty)
            (EXTRACT_SUBREG (!cast<Instruction>("VMOVLuv" # Insn1Lanes # Insn1Ty)
-             (VLD1LNd32 addrmode6oneL32:$addr, (f64 (IMPLICIT_DEF)), (i32 0))), 
+             (VLD1LNd32 addrmode6oneL32:$addr, (f64 (IMPLICIT_DEF)), (i32 0))),
              dsub_0))>;
   def _S   : Pat<(!cast<ValueType>("v" # DestLanes # DestTy)
                    (!cast<PatFrag>("sextloadv" # SrcTy) addrmode6oneL32:$addr)),
          (!cast<Instruction>("VMOVLsv" # Insn2Lanes # Insn2Ty)
            (EXTRACT_SUBREG (!cast<Instruction>("VMOVLsv" # Insn1Lanes # Insn1Ty)
-             (VLD1LNd32 addrmode6oneL32:$addr, (f64 (IMPLICIT_DEF)), (i32 0))), 
+             (VLD1LNd32 addrmode6oneL32:$addr, (f64 (IMPLICIT_DEF)), (i32 0))),
              dsub_0))>;
 }
 
@@ -5684,9 +5685,9 @@ multiclass Lengthen_Double<string DestLanes, string DestTy, string SrcTy,
 // requiring half the available lanes (a 64-bit outcome instead of a 128-bit).
 //
 // Lengthen_HalfDouble<"2", "i32", "i8", "8", "i16", "4", "i32"> =
-// Pat<(v4i32 (extloadvi8 addrmode5:$addr))
+// Pat<(v2i32 (extloadvi8 addrmode6:$addr))
 //     (EXTRACT_SUBREG (VMOVLuv4i32
-//       (EXTRACT_SUBREG (VMOVLuv8i16 (VLD1LNd32 addrmode6oneL32:$addr,
+//       (EXTRACT_SUBREG (VMOVLuv8i16 (VLD1LNd16 addrmode6:$addr,
 //                                               (f64 (IMPLICIT_DEF)), (i32 0))),
 //                       dsub_0)),
 //       dsub_0)>;
@@ -5694,34 +5695,33 @@ multiclass Lengthen_HalfDouble<string DestLanes, string DestTy, string SrcTy,
                            string Insn1Lanes, string Insn1Ty, string Insn2Lanes,
                            string Insn2Ty> {
   def _Any : Pat<(!cast<ValueType>("v" # DestLanes # DestTy)
-                   (!cast<PatFrag>("extloadv" # SrcTy) addrmode6oneL32:$addr)),
+                   (!cast<PatFrag>("extloadv" # SrcTy) addrmode6:$addr)),
          (EXTRACT_SUBREG (!cast<Instruction>("VMOVLuv" # Insn2Lanes # Insn2Ty)
            (EXTRACT_SUBREG (!cast<Instruction>("VMOVLuv" # Insn1Lanes # Insn1Ty)
-             (VLD1LNd32 addrmode6oneL32:$addr, (f64 (IMPLICIT_DEF)), (i32 0))), 
+             (VLD1LNd16 addrmode6:$addr, (f64 (IMPLICIT_DEF)), (i32 0))),
              dsub_0)),
           dsub_0)>;
   def _Z   : Pat<(!cast<ValueType>("v" # DestLanes # DestTy)
-                   (!cast<PatFrag>("zextloadv" # SrcTy) addrmode6oneL32:$addr)),
+                   (!cast<PatFrag>("zextloadv" # SrcTy) addrmode6:$addr)),
          (EXTRACT_SUBREG (!cast<Instruction>("VMOVLuv" # Insn2Lanes # Insn2Ty)
            (EXTRACT_SUBREG (!cast<Instruction>("VMOVLuv" # Insn1Lanes # Insn1Ty)
-             (VLD1LNd32 addrmode6oneL32:$addr, (f64 (IMPLICIT_DEF)), (i32 0))), 
+             (VLD1LNd16 addrmode6:$addr, (f64 (IMPLICIT_DEF)), (i32 0))),
              dsub_0)),
           dsub_0)>;
   def _S   : Pat<(!cast<ValueType>("v" # DestLanes # DestTy)
-                   (!cast<PatFrag>("sextloadv" # SrcTy) addrmode6oneL32:$addr)),
+                   (!cast<PatFrag>("sextloadv" # SrcTy) addrmode6:$addr)),
          (EXTRACT_SUBREG (!cast<Instruction>("VMOVLsv" # Insn2Lanes # Insn2Ty)
            (EXTRACT_SUBREG (!cast<Instruction>("VMOVLsv" # Insn1Lanes # Insn1Ty)
-             (VLD1LNd32 addrmode6oneL32:$addr, (f64 (IMPLICIT_DEF)), (i32 0))), 
+             (VLD1LNd16 addrmode6:$addr, (f64 (IMPLICIT_DEF)), (i32 0))),
              dsub_0)),
           dsub_0)>;
 }
 
-defm : Lengthen_Single<"8", "i16", "i8">; // v8i8 -> v8i16
-defm : Lengthen_Single<"4", "i32", "i16">; // v4i16 -> v4i32
-defm : Lengthen_Single<"2", "i64", "i32">; // v2i32 -> v2i64
+defm : Lengthen_Single<"8", "i16", "8">; // v8i8 -> v8i16
+defm : Lengthen_Single<"4", "i32", "16">; // v4i16 -> v4i32
+defm : Lengthen_Single<"2", "i64", "32">; // v2i32 -> v2i64
 
 defm : Lengthen_HalfSingle<"4", "i16", "i8", "8", "i16">; // v4i8 -> v4i16
-defm : Lengthen_HalfSingle<"2", "i16", "i8", "8", "i16">; // v2i8 -> v2i16
 defm : Lengthen_HalfSingle<"2", "i32", "i16", "4", "i32">; // v2i16 -> v2i32
 
 // Double lengthening - v4i8 -> v4i16 -> v4i32
@@ -5732,17 +5732,17 @@ defm : Lengthen_HalfDouble<"2", "i32", "i8", "8", "i16", "4", "i32">;
 defm : Lengthen_Double<"2", "i64", "i16", "4", "i32", "2", "i64">;
 
 // Triple lengthening - v2i8 -> v2i16 -> v2i32 -> v2i64
-def : Pat<(v2i64 (extloadvi8 addrmode6oneL32:$addr)),
+def : Pat<(v2i64 (extloadvi8 addrmode6:$addr)),
       (VMOVLuv2i64 (EXTRACT_SUBREG (VMOVLuv4i32 (EXTRACT_SUBREG (VMOVLuv8i16
-         (VLD1LNd32 addrmode6oneL32:$addr, 
+         (VLD1LNd16 addrmode6:$addr, 
                     (f64 (IMPLICIT_DEF)), (i32 0))), dsub_0)), dsub_0))>;
-def : Pat<(v2i64 (zextloadvi8 addrmode6oneL32:$addr)),
+def : Pat<(v2i64 (zextloadvi8 addrmode6:$addr)),
       (VMOVLuv2i64 (EXTRACT_SUBREG (VMOVLuv4i32 (EXTRACT_SUBREG (VMOVLuv8i16
-         (VLD1LNd32 addrmode6oneL32:$addr,
+         (VLD1LNd16 addrmode6:$addr,
                     (f64 (IMPLICIT_DEF)), (i32 0))), dsub_0)), dsub_0))>;
-def : Pat<(v2i64 (sextloadvi8 addrmode6oneL32:$addr)),
+def : Pat<(v2i64 (sextloadvi8 addrmode6:$addr)),
       (VMOVLsv2i64 (EXTRACT_SUBREG (VMOVLsv4i32 (EXTRACT_SUBREG (VMOVLsv8i16
-         (VLD1LNd32 addrmode6oneL32:$addr,
+         (VLD1LNd16 addrmode6:$addr,
                     (f64 (IMPLICIT_DEF)), (i32 0))), dsub_0)), dsub_0))>;
 
 //===----------------------------------------------------------------------===//
