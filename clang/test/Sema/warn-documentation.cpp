@@ -652,3 +652,19 @@ void test_nocrash1(int);
 /// \param\brief
 void test_nocrash2(int);
 
+// PR13593
+
+/**
+* Bla.
+*/
+template <typename>
+void test_nocrash3();
+
+/// Foo
+template <typename, typename>
+void test_nocrash4() { }
+
+template <typename>
+void test_nocrash3()
+{
+}
