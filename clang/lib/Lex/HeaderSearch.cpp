@@ -442,11 +442,19 @@ const FileEntry *HeaderSearch::LookupFile(
       // Leave CurDir unset.
       // This file is a system header or C++ unfriendly if the old file is.
       //
-      // Note that the temporary 'DirInfo' is required here, as either call to
-      // getFileInfo could resize the vector and we don't want to rely on order
-      // of evaluation.
-      unsigned DirInfo = getFileInfo(CurFileEnt).DirInfo;
-      getFileInfo(FE).DirInfo = DirInfo;
+      // Note that we only use one of FromHFI/ToHFI at once, due to potential
+      // reallocation of the underlying vector potentially making the first
+      // reference binding dangling.
+      HeaderFileInfo &FromHFI = getFileInfo(CurFileEnt);
+      unsigned DirInfo = FromHFI.DirInfo;
+      bool IndexHeaderMapHeader = FromHFI.IndexHeaderMapHeader;
+      StringRef Framework = FromHFI.Framework;
+
+      HeaderFileInfo &ToHFI = getFileInfo(FE);
+      ToHFI.DirInfo = DirInfo;
+      ToHFI.IndexHeaderMapHeader = IndexHeaderMapHeader;
+      ToHFI.Framework = Framework;
+
       if (SearchPath != NULL) {
         StringRef SearchPathRef(CurFileEnt->getDir()->getName());
         SearchPath->clear();
