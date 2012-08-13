@@ -16,7 +16,7 @@ else
 endif
 INSTALL_DIR=$(DSTROOT)/$(INSTALL_PREFIX)
 
-.PHONY: help installsrc clean installheaders do-installhdrs install
+.PHONY: help installsrc clean installheaders install
 
 help::
 	@echo "Use make install DSTROOT=<destination>"
@@ -30,7 +30,7 @@ installsrc:: $(SRCROOT)
 
 clean::
 
-installheaders:: do-installhdrs
+installheaders::
 
 install::
 
