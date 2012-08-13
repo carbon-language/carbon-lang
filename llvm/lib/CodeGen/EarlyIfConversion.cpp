@@ -50,8 +50,6 @@ BlockInstrLimit("early-ifcvt-limit", cl::init(30), cl::Hidden,
 static cl::opt<bool> Stress("stress-early-ifcvt", cl::Hidden,
   cl::desc("Turn all knobs to 11"));
 
-typedef SmallSetVector<MachineBasicBlock*, 8> BlockSetVector;
-
 //===----------------------------------------------------------------------===//
 //                                 SSAIfConv
 //===----------------------------------------------------------------------===//
