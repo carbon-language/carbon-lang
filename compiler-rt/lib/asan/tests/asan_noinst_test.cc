@@ -530,6 +530,12 @@ TEST(AddressSanitizerInterface, DeathCallbackTest) {
   __asan_set_death_callback(NULL);
 }
 
+TEST(AddressSanitizerInterface, OnErrorCallbackTest) {
+  __asan_set_on_error_callback(MyDeathCallback);
+  EXPECT_DEATH(DoDoubleFree(), "MyDeathCallback.*double-free");
+  __asan_set_on_error_callback(NULL);
+}
+
 static const char* kUseAfterPoisonErrorMessage = "use-after-poison";
 
 #define GOOD_ACCESS(ptr, offset)  \

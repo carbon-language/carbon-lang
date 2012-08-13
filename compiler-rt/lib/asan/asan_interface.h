@@ -118,6 +118,13 @@ extern "C" {
   void __asan_set_error_report_callback(void (*callback)(const char*))
       SANITIZER_INTERFACE_ATTRIBUTE;
 
+  // Sets the callback to be called right when ASan detects an error.
+  // This can be used to notice cases when ASan detects an error, but the
+  // program crashes before ASan report is printed.
+  // Passing 0 unsets the callback.
+  void __asan_set_on_error_callback(void (*callback)(void))
+      SANITIZER_INTERFACE_ATTRIBUTE;
+
   // Returns the estimated number of bytes that will be reserved by allocator
   // for request of "size" bytes. If ASan allocator can't allocate that much
   // memory, returns the maximal possible allocation size, otherwise returns

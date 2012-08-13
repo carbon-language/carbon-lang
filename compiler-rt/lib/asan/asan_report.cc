@@ -21,7 +21,7 @@
 
 namespace __asan {
 
-// ---------------------- Error report callback ------------------- {{{1
+// -------------------- User-specified callbacks ----------------- {{{1
 static void (*error_report_callback)(const char*);
 static char *error_message_buffer = 0;
 static uptr error_message_buffer_pos = 0;
@@ -39,6 +39,8 @@ void AppendToErrorMessageBuffer(const char *buffer) {
     error_message_buffer_pos += remaining > length ? length : remaining;
   }
 }
+
+static void (*on_error_callback)(void);
 
 // ---------------------- Helper functions ----------------------- {{{1
 
@@ -218,6 +220,9 @@ class ScopedInErrorReport {
       // that prints error report for buffer overflow results in SEGV).
       SleepForSeconds(Max(5, flags()->sleep_before_dying + 1));
       Die();
+    }
+    if (on_error_callback) {
+      on_error_callback();
     }
     AsanPrintf("===================================================="
                "=============\n");
@@ -408,4 +413,8 @@ void NOINLINE __asan_set_error_report_callback(void (*callback)(const char*)) {
         (char*)MmapOrDie(error_message_buffer_size, __FUNCTION__);
     error_message_buffer_pos = 0;
   }
+}
+
+void NOINLINE __asan_set_on_error_callback(void (*callback)(void)) {
+  on_error_callback = callback;
 }
