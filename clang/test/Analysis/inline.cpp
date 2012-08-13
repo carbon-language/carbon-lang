@@ -106,6 +106,63 @@ namespace PR13569 {
     // Don't crash when inlining and devirtualizing.
     x.interface();
   }
+
+
+  class Grandchild : public Child {};
+
+  void testDevirtualizeToMiddle() {
+    Grandchild x;
+    x.m_child = 42;
+
+    // Don't crash when inlining and devirtualizing.
+    x.interface();
+  }
 }
 
+namespace PR13569_virtual {
+  class Parent {
+  protected:
+    int m_parent;
+    virtual int impl() const = 0;
 
+    Parent() : m_parent(0) {}
+
+  public:
+    int interface() const {
+      clang_analyzer_checkInlined(true); // expected-warning{{TRUE}}
+      return impl();
+    }
+  };
+
+  class Child : virtual public Parent {
+  protected:
+    virtual int impl() const {
+      clang_analyzer_checkInlined(true); // expected-warning{{TRUE}}
+      return m_parent + m_child;
+    }
+
+  public:
+    Child() : m_child(0) {}
+
+    int m_child;
+  };
+
+  void testVirtual() {
+    Child x;
+    x.m_child = 42;
+
+    // Don't crash when inlining and devirtualizing.
+    x.interface();
+  }
+
+
+  class Grandchild : virtual public Child {};
+
+  void testDevirtualizeToMiddle() {
+    Grandchild x;
+    x.m_child = 42;
+
+    // Don't crash when inlining and devirtualizing.
+    x.interface();
+  }
+}

@@ -419,21 +419,18 @@ void CXXInstanceCall::getInitialStackFrameContents(
     Loc ThisLoc = SVB.getCXXThis(MD, CalleeCtx);
 
     if (const MemRegion *ThisReg = ThisVal.getAsRegion()) {
+      ASTContext &Ctx = SVB.getContext();
       const CXXRecordDecl *Class = MD->getParent();
+      QualType Ty = Ctx.getPointerType(Ctx.getRecordType(Class));
 
-      // We may be downcasting to call a devirtualized virtual method.
-      // Search through the base casts we already have to see if we can just
-      // strip them off.
-      const CXXBaseObjectRegion *BaseReg;
-      while ((BaseReg = dyn_cast<CXXBaseObjectRegion>(ThisReg))) {
-        if (BaseReg->getDecl() == Class)
-          break;
-        ThisReg = BaseReg->getSuperRegion();
-      }
+      // FIXME: CallEvent maybe shouldn't be directly accessing StoreManager.
+      bool Failed;
+      ThisVal = StateMgr.getStoreManager().evalDynamicCast(ThisVal, Ty, Failed);
+      assert(!Failed && "Calling an incorrectly devirtualized method");
 
-      // Either we found the right base class, or we stripped all the casts to
-      // the most derived type. Either one is good.
-      ThisVal = loc::MemRegionVal(ThisReg);
+      // If we couldn't build the correct cast, just strip off all casts.
+      if (ThisVal.isUnknown())
+        ThisVal = loc::MemRegionVal(ThisReg->StripCasts());
     }
 
     Bindings.push_back(std::make_pair(ThisLoc, ThisVal));
