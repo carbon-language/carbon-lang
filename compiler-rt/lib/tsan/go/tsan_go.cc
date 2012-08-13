@@ -18,7 +18,9 @@
 
 namespace __tsan {
 
-static ThreadState *goroutines[kMaxTid];
+const int kMaxGoroutinesEver = 128*1024;
+
+static ThreadState *goroutines[kMaxGoroutinesEver];
 
 void InitializeInterceptors() {
 }
@@ -79,9 +81,14 @@ ReportStack *SymbolizeCode(uptr addr) {
 extern "C" {
 
 static void AllocGoroutine(int tid) {
-  goroutines[tid] = (ThreadState*)internal_alloc(MBlockThreadContex,
+  if (tid >= kMaxGoroutinesEver) {
+    Printf("FATAL: Reached goroutine limit\n");
+    Die();
+  }
+  ThreadState *thr = (ThreadState*)internal_alloc(MBlockThreadContex,
       sizeof(ThreadState));
-  internal_memset(goroutines[tid], 0, sizeof(ThreadState));
+  internal_memset(thr, 0, sizeof(*thr));
+  goroutines[tid] = thr;
 }
 
 void __tsan_init() {
@@ -152,6 +159,8 @@ void __tsan_go_end(int goid) {
   thr->in_rtl++;
   ThreadFinish(thr);
   thr->in_rtl--;
+  internal_free(thr);
+  goroutines[goid] = 0;
 }
 
 void __tsan_acquire(int goid, void *addr) {
@@ -159,7 +168,6 @@ void __tsan_acquire(int goid, void *addr) {
   thr->in_rtl++;
   Acquire(thr, 0, (uptr)addr);
   thr->in_rtl--;
-  //internal_free(thr);
 }
 
 void __tsan_release(int goid, void *addr) {

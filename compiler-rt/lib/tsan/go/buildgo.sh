@@ -33,7 +33,6 @@ SRCS="
 	../../sanitizer_common/sanitizer_libc.cc
 	../../sanitizer_common/sanitizer_posix.cc
 	../../sanitizer_common/sanitizer_printf.cc
-	../../sanitizer_common/sanitizer_symbolizer.cc
 "
 
 if [ "$LINUX" != "" ]; then
@@ -42,10 +41,10 @@ if [ "$LINUX" != "" ]; then
 		../../sanitizer_common/sanitizer_linux.cc
 	"
 elif [ "$MAC" != "" ]; then
-        SRCS+="
-                ../rtl/tsan_platform_mac.cc
-                ../../sanitizer_common/sanitizer_mac.cc
-        "
+	SRCS+="
+		../rtl/tsan_platform_mac.cc
+		../../sanitizer_common/sanitizer_mac.cc
+	"
 fi
 
 SRCS+=$ADD_SRCS
