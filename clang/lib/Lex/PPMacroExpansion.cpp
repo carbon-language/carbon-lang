@@ -1062,6 +1062,13 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
         if (Tok.is(tok::r_paren))
           IsValid = true;
       }
+      else if (Tok.is(tok::kw_const)) {
+        FeatureII = getIdentifierInfo("const");
+        // Read the ')'.
+        Lex(Tok);
+        if (Tok.is(tok::r_paren))
+          IsValid = true;
+      }
     }
 
     bool Value = false;

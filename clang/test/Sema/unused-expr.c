@@ -82,7 +82,9 @@ void t5() {
 
 int fn1() __attribute__ ((warn_unused_result));
 int fn2() __attribute__ ((pure));
-int fn3() __attribute__ ((const));
+#if __has_attribute(__const)
+int fn3() __attribute__ ((__const));
+#endif
 // rdar://6587766
 int t6() {
   if (fn1() < 0 || fn2(2,1) < 0 || fn3(2) < 0)  // no warnings
