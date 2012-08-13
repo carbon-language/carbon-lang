@@ -168,11 +168,8 @@ WatchpointOptions::GetCallbackDescription (Stream *s, lldb::DescriptionLevel lev
 {
     if (m_callback_baton_sp.get())
     {
-        if (level != eDescriptionLevelBrief)
-        {
-            s->EOL();
-            m_callback_baton_sp->GetDescription (s, level);
-        }
+        s->EOL();
+        m_callback_baton_sp->GetDescription (s, level);
     }
 }
 void
@@ -222,7 +219,7 @@ WatchpointOptions::CommandBaton::GetDescription (Stream *s, lldb::DescriptionLev
     }
     
     s->IndentMore ();
-    s->Indent("Watchpoint commands:\n");
+    s->Indent("watchpoint commands:\n");
     
     s->IndentMore ();
     if (data && data->user_source.GetSize() > 0)

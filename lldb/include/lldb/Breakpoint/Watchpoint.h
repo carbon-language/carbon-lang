@@ -53,10 +53,25 @@ public:
     uint32_t    GetIgnoreCount () const;
     void        SetIgnoreCount (uint32_t n);
     void        SetWatchpointType (uint32_t type);
-    void        SetDeclInfo (std::string &str);
-    void        SetWatchSpec (std::string &str);
+    void        SetDeclInfo (const std::string &str);
+    std::string GetWatchSpec();
+    void        SetWatchSpec (const std::string &str);
+
+    // Snapshot management interface.
+    bool        IsWatchVariable() const;
+    void        SetWatchVariable(bool val);
+    std::string GetOldSnapshot() const;
+    void        SetOldSnapshot (const std::string &str);
+    std::string GetNewSnapshot() const;
+    void        SetNewSnapshot (const std::string &str);
+    uint64_t    GetOldSnapshotVal() const;
+    void        SetOldSnapshotVal (uint64_t val);
+    uint64_t    GetNewSnapshotVal() const;
+    void        SetNewSnapshotVal (uint64_t val);
+
     void        GetDescription (Stream *s, lldb::DescriptionLevel level);
     void        Dump (Stream *s) const;
+    void        DumpSnapshots (const char * prefix, Stream *s) const;
     void        DumpWithLevel (Stream *s, lldb::DescriptionLevel description_level) const;
     Target      &GetTarget() { return *m_target; }
     const Error &GetError() { return m_error; }
@@ -136,19 +151,23 @@ private:
     friend class WatchpointList;
 
     void        SetTarget(Target *target_ptr) { m_target = target_ptr; }
-    std::string GetWatchSpec() { return m_watch_spec_str; }
     void        ResetHitCount() { m_hit_count = 0; }
 
     Target      *m_target;
     bool        m_enabled;             // Is this watchpoint enabled
     bool        m_is_hardware;         // Is this a hardware watchpoint
+    bool        m_is_watch_variable;   // True if set via 'watchpoint set variable'.
     uint32_t    m_watch_read:1,        // 1 if we stop when the watched data is read from
                 m_watch_write:1,       // 1 if we stop when the watched data is written to
                 m_watch_was_read:1,    // Set to 1 when watchpoint is hit for a read access
                 m_watch_was_written:1; // Set to 1 when watchpoint is hit for a write access
     uint32_t    m_ignore_count;        // Number of times to ignore this breakpoint
     std::string m_decl_str;            // Declaration information, if any.
-    std::string m_watch_spec_str;      // Spec for the watchpoint (for future use).
+    std::string m_watch_spec_str;      // Spec for the watchpoint.
+    std::string m_snapshot_old_str;    // Old snapshot for the watchpoint value as by ValueObject::DumpValueObject().
+    std::string m_snapshot_new_str;    // New Snapshot for the watchpoint value as by ValueObject::DumpValueObject().
+    uint64_t    m_snapshot_old_val;    // Old snapshot for the watchpoint bytes.
+    uint64_t    m_snapshot_new_val;    // New Snapshot for the watchpoint bytes.
     Error       m_error;               // An error object describing errors associated with this watchpoint.
     WatchpointOptions m_options;       // Settable watchpoint options, which is a delegate to handle
                                        // the callback machinery.

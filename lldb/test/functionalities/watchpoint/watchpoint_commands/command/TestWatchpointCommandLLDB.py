@@ -63,11 +63,11 @@ class WatchpointLLDBCommandTestCase(TestBase):
             substrs = ['Watchpoint created', 'size = 4', 'type = w',
                        '%s:%d' % (self.source, self.decl)])
 
-        self.runCmd('watchpoint command add 1 -o "expr -- global = 777"')
+        self.runCmd('watchpoint command add 1 -o "expr -- cookie = 777"')
 
         # List the watchpoint command we just added.
         self.expect("watchpoint command list 1",
-            substrs = ['expr -- global = 777'])
+            substrs = ['expr -- cookie = 777'])
 
         # Use the '-v' option to do verbose listing of the watchpoint.
         # The hit count should be 0 initially.
@@ -81,9 +81,14 @@ class WatchpointLLDBCommandTestCase(TestBase):
         self.expect("thread backtrace", STOPPED_DUE_TO_WATCHPOINT,
             substrs = ['stop reason = watchpoint'])
 
-        # The watchpoint command "forced" our global variable to become 777.
-        self.expect("frame variable -g global",
-            substrs = ['(int32_t)', 'global = 777'])
+        # Check that the watchpoint snapshoting mechanism is working.
+        self.expect("watchpoint list -v",
+            substrs = ['watchpoint old value:', 'global = 0',
+                       'watchpoint new value:', 'global = 1'])
+
+        # The watchpoint command "forced" our global variable 'cookie' to become 777.
+        self.expect("frame variable -g cookie",
+            substrs = ['(int32_t)', 'cookie = 777'])
 
 
 if __name__ == '__main__':

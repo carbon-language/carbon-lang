@@ -1047,6 +1047,8 @@ protected:
         error.Clear();
         Watchpoint *wp = target->CreateWatchpoint(addr, size, watch_type, error).get();
         if (wp) {
+            wp->SetWatchSpec(command.GetArgumentAtIndex(0));
+            wp->SetWatchVariable(true);
             if (var_sp && var_sp->GetDeclaration().GetFile()) {
                 StreamString ss;
                 // True to show fullpath for declaration file.
@@ -1054,13 +1056,15 @@ protected:
                 wp->SetDeclInfo(ss.GetString());
             }
             StreamString ss;
+            ValueObject::DumpValueObject(ss, valobj_sp.get());
+            wp->SetNewSnapshot(ss.GetString());
             output_stream.Printf("Watchpoint created: ");
             wp->GetDescription(&output_stream, lldb::eDescriptionLevelFull);
             output_stream.EOL();
             result.SetStatus(eReturnStatusSuccessFinishResult);
         } else {
-            result.AppendErrorWithFormat("Watchpoint creation failed (addr=0x%llx, size=%lu).\n",
-                                         addr, size);
+            result.AppendErrorWithFormat("Watchpoint creation failed (addr=0x%llx, size=%lu, variable expression='%s').\n",
+                                         addr, size, command.GetArgumentAtIndex(0));
             if (error.AsCString(NULL))
                 result.AppendError(error.AsCString());
             result.SetStatus(eReturnStatusFailed);
@@ -1238,8 +1242,12 @@ protected:
                 var_sp->GetDeclaration().DumpStopContext(&ss, true);
                 wp->SetDeclInfo(ss.GetString());
             }
-            StreamString ss;
             output_stream.Printf("Watchpoint created: ");
+            uint64_t val = target->GetProcessSP()->ReadUnsignedIntegerFromMemory(addr, size, 0, error);
+            if (error.Success())
+                wp->SetNewSnapshotVal(val);
+            else
+                output_stream.Printf("watchpoint snapshot failed: %s", error.AsCString());
             wp->GetDescription(&output_stream, lldb::eDescriptionLevelFull);
             output_stream.EOL();
             result.SetStatus(eReturnStatusSuccessFinishResult);

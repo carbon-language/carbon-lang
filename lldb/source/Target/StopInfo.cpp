@@ -451,7 +451,7 @@ public:
     virtual void
     PerformAction (Event *event_ptr)
     {
-        LogSP log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
+        LogSP log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS);
         // We're going to calculate if we should stop or not in some way during the course of
         // this code.  Also by default we're going to stop, so set that here.
         m_should_stop = true;
@@ -461,11 +461,11 @@ public:
         if (wp_sp)
         {
             ExecutionContext exe_ctx (m_thread.GetStackFrameAtIndex(0));
+            Process* process = exe_ctx.GetProcessPtr();
             {
                 // check if this process is running on an architecture where watchpoints trigger
 				// before the associated instruction runs. if so, disable the WP, single-step and then
 				// re-enable the watchpoint
-                Process* process = exe_ctx.GetProcessPtr();
                 if (process)
                 {
                     uint32_t num; bool wp_triggers_after;
@@ -491,7 +491,62 @@ public:
                     }
                 }
             }
-            StoppointCallbackContext context (event_ptr, exe_ctx, false);
+
+            // Record the snapshot of our watchpoint.
+            VariableSP var_sp;
+            ValueObjectSP valobj_sp;        
+            StackFrame *frame = exe_ctx.GetFramePtr();
+            if (frame)
+            {
+                if (!wp_sp->IsWatchVariable())
+                {
+                    assert (process);
+                    Error error;
+                    uint64_t val = process->ReadUnsignedIntegerFromMemory(wp_sp->GetLoadAddress(),
+                                                                          wp_sp->GetByteSize(),
+                                                                          0,
+                                                                          error);
+                    if (log)
+                    {
+                        if (error.Success())
+                            log->Printf("Watchpoint snapshot val taken: 0x%llx\n", val);
+                        else
+                            log->Printf("Watchpoint snapshot val taking failed.\n");
+                    }                        
+                    wp_sp->SetNewSnapshotVal(val);
+                }
+                else if (!wp_sp->GetWatchSpec().empty())
+                {
+                    // Things have checked out ok...
+                    Error error;
+                    uint32_t expr_path_options = StackFrame::eExpressionPathOptionCheckPtrVsMember |
+                                                 StackFrame::eExpressionPathOptionsAllowDirectIVarAccess;
+                    valobj_sp = frame->GetValueForVariableExpressionPath (wp_sp->GetWatchSpec().c_str(), 
+                                                                          eNoDynamicValues, 
+                                                                          expr_path_options,
+                                                                          var_sp,
+                                                                          error);
+                    if (valobj_sp)
+                    {
+                        // We're in business.
+                        StreamString ss;
+                        ValueObject::DumpValueObject(ss, valobj_sp.get());
+                        wp_sp->SetNewSnapshot(ss.GetString());
+                    }
+                    else
+                        wp_sp->SetNewSnapshot("snapshot attempt failed.");
+
+                    if (log)
+                        log->Printf("Watchpoint snapshot taken: '%s'\n", wp_sp->GetNewSnapshot().c_str());
+                }
+
+                // Now dump the snapshots we have taken.
+                Debugger &debugger = exe_ctx.GetTargetRef().GetDebugger();
+                StreamSP output_sp = debugger.GetAsyncOutputStream ();
+                wp_sp->DumpSnapshots("!!! ", output_sp.get());
+                //output_sp->EOL();
+                output_sp->Flush();
+            }
 
             if (m_should_stop && wp_sp->GetConditionText() != NULL)
             {
@@ -564,6 +619,7 @@ public:
             // If the condition says to stop, we run the callback to further decide whether to stop.
             if (m_should_stop)
             {
+                StoppointCallbackContext context (event_ptr, exe_ctx, false);
                 bool stop_requested = wp_sp->InvokeCallback (&context);
                 // Also make sure that the callback hasn't continued the target.  
                 // If it did, when we'll set m_should_stop to false and get out of here.

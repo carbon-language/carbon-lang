@@ -28,6 +28,7 @@ Watchpoint::Watchpoint (lldb::addr_t addr, size_t size, bool hardware) :
     m_target(NULL),
     m_enabled(false),
     m_is_hardware(hardware),
+    m_is_watch_variable(false),
     m_watch_read(0),
     m_watch_write(0),
     m_watch_was_read(0),
@@ -35,6 +36,10 @@ Watchpoint::Watchpoint (lldb::addr_t addr, size_t size, bool hardware) :
     m_ignore_count(0),
     m_decl_str(),
     m_watch_spec_str(),
+    m_snapshot_old_str(),
+    m_snapshot_new_str(),
+    m_snapshot_old_val(0),
+    m_snapshot_new_val(0),
     m_error(),
     m_options ()
 {
@@ -70,16 +75,76 @@ Watchpoint::ClearCallback ()
 }
 
 void
-Watchpoint::SetDeclInfo (std::string &str)
+Watchpoint::SetDeclInfo (const std::string &str)
 {
     m_decl_str = str;
     return;
 }
 
+std::string
+Watchpoint::GetWatchSpec()
+{
+    return m_watch_spec_str;
+}
+
 void
-Watchpoint::SetWatchSpec (std::string &str)
+Watchpoint::SetWatchSpec (const std::string &str)
 {
     m_watch_spec_str = str;
+    return;
+}
+
+std::string
+Watchpoint::GetOldSnapshot() const
+{
+    return m_snapshot_old_str;
+}
+
+void
+Watchpoint::SetOldSnapshot (const std::string &str)
+{
+    m_snapshot_old_str = str;
+    return;
+}
+
+std::string
+Watchpoint::GetNewSnapshot() const
+{
+    return m_snapshot_new_str;
+}
+
+void
+Watchpoint::SetNewSnapshot (const std::string &str)
+{
+    m_snapshot_old_str = m_snapshot_new_str;
+    m_snapshot_new_str = str;
+    return;
+}
+
+uint64_t
+Watchpoint::GetOldSnapshotVal() const
+{
+    return m_snapshot_old_val;
+}
+
+void
+Watchpoint::SetOldSnapshotVal (uint64_t val)
+{
+    m_snapshot_old_val = val;
+    return;
+}
+
+uint64_t
+Watchpoint::GetNewSnapshotVal() const
+{
+    return m_snapshot_new_val;
+}
+
+void
+Watchpoint::SetNewSnapshotVal (uint64_t val)
+{
+    m_snapshot_old_val = m_snapshot_new_val;
+    m_snapshot_new_val = val;
     return;
 }
 
@@ -89,6 +154,18 @@ bool
 Watchpoint::IsHardware () const
 {
     return m_is_hardware;
+}
+
+bool
+Watchpoint::IsWatchVariable() const
+{
+    return m_is_watch_variable;
+}
+
+void
+Watchpoint::SetWatchVariable(bool val)
+{
+    m_is_watch_variable = val;
 }
 
 // RETURNS - true if we should stop at this breakpoint, false if we
@@ -122,6 +199,24 @@ Watchpoint::Dump(Stream *s) const
 }
 
 void
+Watchpoint::DumpSnapshots(const char *prefix, Stream *s) const
+{
+    if (IsWatchVariable())
+    {
+        if (!m_snapshot_old_str.empty())
+            s->Printf("\n%swatchpoint old value:\n\t%s", prefix, m_snapshot_old_str.c_str());
+        if (!m_snapshot_new_str.empty())
+            s->Printf("\n%swatchpoint new value:\n\t%s", prefix, m_snapshot_new_str.c_str());
+    }
+    else
+    {
+        uint32_t num_hex_digits = GetByteSize() * 2;
+        s->Printf("\n%swatchpoint old value:0x%0*.*llx", prefix, num_hex_digits, num_hex_digits, m_snapshot_old_val);
+        s->Printf("\n%swatchpoint new value:0x%0*.*llx", prefix, num_hex_digits, num_hex_digits, m_snapshot_new_val);
+    }
+}
+
+void
 Watchpoint::DumpWithLevel(Stream *s, lldb::DescriptionLevel description_level) const
 {
     if (s == NULL)
@@ -142,7 +237,11 @@ Watchpoint::DumpWithLevel(Stream *s, lldb::DescriptionLevel description_level) c
         if (!m_decl_str.empty())
             s->Printf("\n    declare @ '%s'", m_decl_str.c_str());
         if (!m_watch_spec_str.empty())
-            s->Printf("\n    static watchpoint spec = '%s'", m_watch_spec_str.c_str());
+            s->Printf("\n    watchpoint spec = '%s'", m_watch_spec_str.c_str());
+
+        // Dump the snapshots we have taken.
+        DumpSnapshots("   ", s);
+
         if (GetConditionText())
             s->Printf("\n    condition = '%s'", GetConditionText());
         m_options.GetCallbackDescription(s, description_level);
