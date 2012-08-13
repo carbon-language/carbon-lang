@@ -535,14 +535,13 @@ void MachineBasicBlock::transferSuccessors(MachineBasicBlock *fromMBB) {
 
   while (!fromMBB->succ_empty()) {
     MachineBasicBlock *Succ = *fromMBB->succ_begin();
-    uint32_t weight = 0;
-
+    uint32_t Weight = 0;
 
     // If Weight list is empty it means we don't use it (disabled optimization).
     if (!fromMBB->Weights.empty())
-      weight = *fromMBB->Weights.begin();
+      Weight = *fromMBB->Weights.begin();
 
-    addSuccessor(Succ, weight);
+    addSuccessor(Succ, Weight);
     fromMBB->removeSuccessor(Succ);
   }
 }
@@ -554,7 +553,10 @@ MachineBasicBlock::transferSuccessorsAndUpdatePHIs(MachineBasicBlock *fromMBB) {
 
   while (!fromMBB->succ_empty()) {
     MachineBasicBlock *Succ = *fromMBB->succ_begin();
-    addSuccessor(Succ);
+    uint32_t Weight = 0;
+    if (!fromMBB->Weights.empty())
+      Weight = *fromMBB->Weights.begin();
+    addSuccessor(Succ, Weight);
     fromMBB->removeSuccessor(Succ);
 
     // Fix up any PHI nodes in the successor.
