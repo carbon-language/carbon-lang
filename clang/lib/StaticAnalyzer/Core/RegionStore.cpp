@@ -17,6 +17,7 @@
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/ExprCXX.h"
+#include "clang/AST/CXXInheritance.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Basic/TargetInfo.h"
@@ -960,19 +961,16 @@ SVal RegionStoreManager::evalDynamicCast(SVal base, QualType derivedType,
     if (!derivedType->isVoidType()) {
       // Static upcasts are marked as DerivedToBase casts by Sema, so this will
       // only happen when multiple or virtual inheritance is involved.
-      // FIXME: We should build the correct stack of CXXBaseObjectRegions here,
-      // instead of just punting.
-      if (SRDecl->isDerivedFrom(DerivedDecl))
-        return UnknownVal();
-
-      // If super region is not a parent of derived class, the cast definitely
-      // fails.
-      // FIXME: This and the above test each require walking the entire
-      // inheritance hierarchy, and this will happen for each
-      // CXXBaseObjectRegion wrapper. We should probably be combining the two.
-      if (DerivedDecl->isProvablyNotDerivedFrom(SRDecl)) {
-        Failed = true;
-        return UnknownVal();
+      CXXBasePaths Paths(/*FindAmbiguities=*/false, /*RecordPaths=*/true,
+                         /*DetectVirtual=*/false);
+      if (SRDecl->isDerivedFrom(DerivedDecl, Paths)) {
+        SVal Result = loc::MemRegionVal(TSR);
+        const CXXBasePath &Path = *Paths.begin();
+        for (CXXBasePath::const_iterator I = Path.begin(), E = Path.end();
+             I != E; ++I) {
+          Result = evalDerivedToBase(Result, I->Base->getType());
+        }
+        return Result;
       }
     }
 

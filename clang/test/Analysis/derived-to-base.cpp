@@ -85,3 +85,53 @@ namespace VirtualBaseClasses {
     clang_analyzer_eval(d.getX() == 42); // expected-warning{{TRUE}}
   }
 }
+
+
+namespace DynamicVirtualUpcast {
+  class A {
+  public:
+    virtual ~A();
+  };
+
+  class B : virtual public A {};
+  class C : virtual public B {};
+  class D : virtual public C {};
+
+  bool testCast(A *a) {
+    return dynamic_cast<B*>(a) && dynamic_cast<C*>(a);
+  }
+
+  void test() {
+    D d;
+    clang_analyzer_eval(testCast(&d)); // expected-warning{{TRUE}}
+  }
+}
+
+namespace DynamicMultipleInheritanceUpcast {
+  class B {
+  public:
+    virtual ~B();
+  };
+  class C {
+  public:
+    virtual ~C();
+  };
+  class D : public B, public C {};
+
+  bool testCast(B *a) {
+    return dynamic_cast<C*>(a);
+  }
+
+  void test() {
+    D d;
+    clang_analyzer_eval(testCast(&d)); // expected-warning{{TRUE}}
+  }
+
+
+  class DV : virtual public B, virtual public C {};
+
+  void testVirtual() {
+    DV d;
+    clang_analyzer_eval(testCast(&d)); // expected-warning{{TRUE}}
+  }
+}
