@@ -47,7 +47,7 @@ namespace {
     Function *F;
     Module *M;
 
-    DominatorTree* DT;
+    DominatorTree *DT;
 
     /// InsertStackProtectors - Insert code into the prologue and epilogue of
     /// the function.
@@ -71,8 +71,8 @@ namespace {
     }
     StackProtector(const TargetLowering *tli)
       : FunctionPass(ID), TLI(tli) {
-        initializeStackProtectorPass(*PassRegistry::getPassRegistry());
-      }
+      initializeStackProtectorPass(*PassRegistry::getPassRegistry());
+    }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addPreserved<DominatorTree>();
@@ -96,7 +96,7 @@ bool StackProtector::runOnFunction(Function &Fn) {
   DT = getAnalysisIfAvailable<DominatorTree>();
 
   if (!RequiresStackProtector()) return false;
-  
+
   return InsertStackProtectors();
 }
 
@@ -168,17 +168,17 @@ bool StackProtector::InsertStackProtectors() {
       //     StackGuardSlot = alloca i8*
       //     StackGuard = load __stack_chk_guard
       //     call void @llvm.stackprotect.create(StackGuard, StackGuardSlot)
-      // 
+      //
       PointerType *PtrTy = Type::getInt8PtrTy(RI->getContext());
       unsigned AddressSpace, Offset;
       if (TLI->getStackCookieLocation(AddressSpace, Offset)) {
         Constant *OffsetVal =
           ConstantInt::get(Type::getInt32Ty(RI->getContext()), Offset);
-        
+
         StackGuardVar = ConstantExpr::getIntToPtr(OffsetVal,
                                       PointerType::get(PtrTy, AddressSpace));
       } else {
-        StackGuardVar = M->getOrInsertGlobal("__stack_chk_guard", PtrTy); 
+        StackGuardVar = M->getOrInsertGlobal("__stack_chk_guard", PtrTy);
       }
 
       BasicBlock &Entry = F->getEntryBlock();
