@@ -5458,10 +5458,7 @@ static SDValue LowerAVXCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
 
 SDValue
 X86TargetLowering::LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) const {
-  EVT ResVT = Op.getValueType();
-
   assert(Op.getNumOperands() == 2);
-  assert(ResVT.is256BitVector() && "Unsupported CONCAT_VECTORS for value type");
 
   // 256-bit AVX can use the vinsertf128 instruction to create 256-bit vectors
   // from two other 128-bit ones.
