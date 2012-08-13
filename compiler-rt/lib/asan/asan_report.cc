@@ -213,11 +213,11 @@ class ScopedInErrorReport {
       // they are defined as no-return.
       AsanReport("AddressSanitizer: while reporting a bug found another one."
                  "Ignoring.\n");
+      // We can't use infinite busy loop here, as ASan may try to report an
+      // error while another error report is being printed (e.g. if the code
+      // that prints error report for buffer overflow results in SEGV).
       SleepForSeconds(Max(5, flags()->sleep_before_dying + 1));
-      // Try to prevent substituting infinite busy loop with _exit or smth
-      // like that.
-      volatile int x = 1;
-      while (x) { }
+      Die();
     }
     AsanPrintf("===================================================="
                "=============\n");
