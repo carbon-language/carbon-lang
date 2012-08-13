@@ -737,38 +737,34 @@ bool ProgramState::isTainted(SymbolRef Sym, TaintTagType Kind) const {
 /// symbol to it's most likely type.
 namespace clang {
 namespace ento {
-struct DynamicTypeMap {};
-typedef llvm::ImmutableMap<SymbolRef, DynamicTypeInfo> DynamicTypeMapImpl;
+typedef llvm::ImmutableMap<const MemRegion *, DynamicTypeInfo> DynamicTypeMap;
 template<> struct ProgramStateTrait<DynamicTypeMap>
-    :  public ProgramStatePartialTrait<DynamicTypeMapImpl> {
+    : public ProgramStatePartialTrait<DynamicTypeMap> {
   static void *GDMIndex() { static int index; return &index; }
 };
 }}
 
 DynamicTypeInfo ProgramState::getDynamicTypeInfo(const MemRegion *Reg) const {
-  if (const TypedRegion *TR = dyn_cast<TypedRegion>(Reg))
-    return DynamicTypeInfo(TR->getLocationType());
+  // Look up the dynamic type in the GDM.
+  const DynamicTypeInfo *GDMType = get<DynamicTypeMap>(Reg);
+  if (GDMType)
+    return *GDMType;
+
+  // Otherwise, fall back to what we know about the region.
+  if (const TypedValueRegion *TR = dyn_cast<TypedValueRegion>(Reg))
+    return DynamicTypeInfo(TR->getValueType());
 
   if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(Reg)) {
     SymbolRef Sym = SR->getSymbol();
-    // Lookup the dynamic type in the GDM.
-    const DynamicTypeInfo *GDMType = get<DynamicTypeMap>(Sym);
-    if (GDMType)
-      return *GDMType;
-
-    // Else, lookup the type at point of symbol creation.
     return DynamicTypeInfo(Sym->getType(getStateManager().getContext()));
   }
+
   return DynamicTypeInfo();
 }
 
 ProgramStateRef ProgramState::setDynamicTypeInfo(const MemRegion *Reg,
                                                  DynamicTypeInfo NewTy) const {
-  if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(Reg)) {
-    SymbolRef Sym = SR->getSymbol();
-    ProgramStateRef NewState = set<DynamicTypeMap>(Sym, NewTy);
-    assert(NewState);
-    return NewState;
-  }
-  return this;
+  ProgramStateRef NewState = set<DynamicTypeMap>(Reg, NewTy);
+  assert(NewState);
+  return NewState;
 }
