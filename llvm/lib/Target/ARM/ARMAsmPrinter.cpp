@@ -529,10 +529,23 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
       return false;
     }
 
-    // These modifiers are not yet supported.
+    // This modifier is not yet supported.
     case 'h': // A range of VFP/NEON registers suitable for VLD1/VST1.
-    case 'H': // The highest-numbered register of a pair.
       return true;
+    case 'H': // The highest-numbered register of a pair.
+      const MachineOperand &MO = MI->getOperand(OpNum);
+      if (!MO.isReg())
+        return true;
+      const TargetRegisterClass &RC = ARM::GPRRegClass;
+      const MachineFunction &MF = *MI->getParent()->getParent();
+      const TargetRegisterInfo *TRI = MF.getTarget().getRegisterInfo();
+
+      unsigned RegIdx = TRI->getEncodingValue(MO.getReg());
+      RegIdx |= 1; //The odd register is also the higher-numbered one of a pair.
+
+      unsigned Reg = RC.getRegister(RegIdx);
+      O << ARMInstPrinter::getRegisterName(Reg);
+      return false;
     }
   }
 
