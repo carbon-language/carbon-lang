@@ -934,7 +934,7 @@ SVal RegionStoreManager::evalDynamicCast(SVal base, QualType derivedType,
   loc::MemRegionVal *baseRegVal = dyn_cast<loc::MemRegionVal>(&base);
   if (!baseRegVal)
     return UnknownVal();
-  const MemRegion *BaseRegion = baseRegVal->stripCasts();
+  const MemRegion *BaseRegion = baseRegVal->stripCasts(/*StripBases=*/false);
 
   // Assume the derived class is a pointer or a reference to a CXX record.
   derivedType = derivedType->getPointeeType();
@@ -957,23 +957,23 @@ SVal RegionStoreManager::evalDynamicCast(SVal base, QualType derivedType,
     if (SRDecl == DerivedDecl)
       return loc::MemRegionVal(TSR);
 
-    // If the region type is a subclass of the derived type.
-    if (!derivedType->isVoidType() && SRDecl->isDerivedFrom(DerivedDecl)) {
-      // This occurs in two cases.
-      // 1) We are processing an upcast.
-      // 2) We are processing a downcast but we jumped directly from the
-      // ancestor to a child of the cast value, so conjure the
-      // appropriate region to represent value (the intermediate node).
-      return loc::MemRegionVal(MRMgr.getCXXBaseObjectRegion(DerivedDecl,
-                                                            BaseRegion));
-    }
+    if (!derivedType->isVoidType()) {
+      // Static upcasts are marked as DerivedToBase casts by Sema, so this will
+      // only happen when multiple or virtual inheritance is involved.
+      // FIXME: We should build the correct stack of CXXBaseObjectRegions here,
+      // instead of just punting.
+      if (SRDecl->isDerivedFrom(DerivedDecl))
+        return UnknownVal();
 
-    // If super region is not a parent of derived class, the cast definitely
-    // fails.
-    if (!derivedType->isVoidType() &&
-        DerivedDecl->isProvablyNotDerivedFrom(SRDecl)) {
-      Failed = true;
-      return UnknownVal();
+      // If super region is not a parent of derived class, the cast definitely
+      // fails.
+      // FIXME: This and the above test each require walking the entire
+      // inheritance hierarchy, and this will happen for each
+      // CXXBaseObjectRegion wrapper. We should probably be combining the two.
+      if (DerivedDecl->isProvablyNotDerivedFrom(SRDecl)) {
+        Failed = true;
+        return UnknownVal();
+      }
     }
 
     if (const CXXBaseObjectRegion *R = dyn_cast<CXXBaseObjectRegion>(TSR))

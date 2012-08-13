@@ -888,6 +888,37 @@ MemRegionManager::getCXXTempObjectRegion(Expr const *E,
 const CXXBaseObjectRegion *
 MemRegionManager::getCXXBaseObjectRegion(const CXXRecordDecl *decl,
                                          const MemRegion *superRegion) {
+  // Check that the base class is actually a direct base of this region.
+  if (const TypedValueRegion *TVR = dyn_cast<TypedValueRegion>(superRegion)) {
+    if (const CXXRecordDecl *Class = TVR->getValueType()->getAsCXXRecordDecl()){
+      if (Class->isVirtuallyDerivedFrom(decl)) {
+        // Virtual base regions should not be layered, since the layout rules
+        // are different.
+        while (const CXXBaseObjectRegion *Base =
+                 dyn_cast<CXXBaseObjectRegion>(superRegion)) {
+          superRegion = Base->getSuperRegion();
+        }
+        assert(superRegion && !isa<MemSpaceRegion>(superRegion));
+
+      } else {
+        // Non-virtual bases should always be direct bases.
+#ifndef NDEBUG
+        bool FoundBase = false;
+        for (CXXRecordDecl::base_class_const_iterator I = Class->bases_begin(),
+                                                      E = Class->bases_end();
+             I != E; ++I) {
+          if (I->getType()->getAsCXXRecordDecl() == decl) {
+            FoundBase = true;
+            break;
+          }
+        }
+
+        assert(FoundBase && "Not a direct base class of this region");
+#endif
+      }
+    }
+  }
+
   return getSubRegion<CXXBaseObjectRegion>(decl, superRegion);
 }
 
@@ -963,7 +994,7 @@ const MemRegion *MemRegion::getBaseRegion() const {
 // View handling.
 //===----------------------------------------------------------------------===//
 
-const MemRegion *MemRegion::StripCasts() const {
+const MemRegion *MemRegion::StripCasts(bool StripBaseCasts) const {
   const MemRegion *R = this;
   while (true) {
     switch (R->getKind()) {
@@ -975,6 +1006,8 @@ const MemRegion *MemRegion::StripCasts() const {
       break;
     }
     case CXXBaseObjectRegionKind:
+      if (!StripBaseCasts)
+        return R;
       R = cast<CXXBaseObjectRegion>(R)->getSuperRegion();
       break;
     default:

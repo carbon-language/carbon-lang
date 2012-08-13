@@ -433,7 +433,7 @@ public:
   }
 
   /// \brief Get the underlining region and strip casts.
-  const MemRegion* stripCasts() const;
+  const MemRegion* stripCasts(bool StripBaseCasts = true) const;
 
   template <typename REGION>
   const REGION* getRegionAs() const {

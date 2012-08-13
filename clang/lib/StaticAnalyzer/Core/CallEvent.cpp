@@ -15,7 +15,6 @@
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/CallEvent.h"
 #include "clang/Analysis/ProgramPoint.h"
-#include "clang/AST/CXXInheritance.h"
 #include "clang/AST/ParentMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringExtras.h"

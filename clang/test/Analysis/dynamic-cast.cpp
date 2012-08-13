@@ -1,4 +1,6 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -analyzer-checker=core -analyzer-ipa=none -verify %s
+// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -analyzer-checker=core,debug.ExprInspection -analyzer-ipa=none -verify %s
+
+void clang_analyzer_eval(bool);
 
 class A {
 public:
@@ -208,7 +210,25 @@ void callTestDynCastMostLikelyWillFail() {
   testDynCastMostLikelyWillFail(&m);
 }
 
+
+void testDynCastToMiddleClass () {
+  class BBB : public BB {};
+  BBB obj;
+  A &ref = obj;
+
+  // These didn't always correctly layer base regions.
+  B *ptr = dynamic_cast<B*>(&ref);
+  clang_analyzer_eval(ptr != 0); // expected-warning{{TRUE}}
+
+  // This is actually statically resolved to be a DerivedToBase cast.
+  ptr = dynamic_cast<B*>(&obj);
+  clang_analyzer_eval(ptr != 0); // expected-warning{{TRUE}}
+}
+
+
+// -----------------------------
 // False positives/negatives.
+// -----------------------------
 
 // Due to symbolic regions not being typed.
 int testDynCastFalsePositive(BB *c) {

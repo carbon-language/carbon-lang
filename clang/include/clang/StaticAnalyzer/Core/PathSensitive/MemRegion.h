@@ -138,7 +138,7 @@ public:
 
   const MemRegion *getBaseRegion() const;
 
-  const MemRegion *StripCasts() const;
+  const MemRegion *StripCasts(bool StripBaseCasts = true) const;
 
   bool hasGlobalsOrParametersStorage() const;
 

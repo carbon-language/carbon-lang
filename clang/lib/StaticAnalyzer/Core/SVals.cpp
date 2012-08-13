@@ -133,9 +133,9 @@ const MemRegion *SVal::getAsRegion() const {
   return 0;
 }
 
-const MemRegion *loc::MemRegionVal::stripCasts() const {
+const MemRegion *loc::MemRegionVal::stripCasts(bool StripBaseCasts) const {
   const MemRegion *R = getRegion();
-  return R ?  R->StripCasts() : NULL;
+  return R ?  R->StripCasts(StripBaseCasts) : NULL;
 }
 
 const void *nonloc::LazyCompoundVal::getStore() const {
