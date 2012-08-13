@@ -2580,22 +2580,16 @@ let isCall = 1, neverHasSideEffects = 1,
  }
 
 // Tail Calls.
-let isCall = 1, isBarrier = 1, isReturn = 1, isTerminator = 1,
-  Defs = [D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10,
-          R22, R23, R28, R31, P0, P1, P2, P3, LC0, LC1, SA0, SA1] in {
+let isCall = 1, isBarrier = 1, isReturn = 1, isTerminator = 1 in {
   def TCRETURNtg : JInst<(outs), (ins calltarget:$dst),
              "jump $dst // TAILCALL", []>;
 }
-let isCall = 1, isBarrier = 1, isReturn = 1, isTerminator = 1,
-  Defs = [D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10,
-          R22, R23, R28, R31, P0, P1, P2, P3, LC0, LC1, SA0, SA1] in {
+let isCall = 1, isBarrier = 1, isReturn = 1, isTerminator = 1 in {
   def TCRETURNtext : JInst<(outs), (ins calltarget:$dst),
              "jump $dst // TAILCALL", []>;
 }
 
-let isCall = 1, isBarrier = 1, isReturn = 1, isTerminator = 1,
-  Defs = [D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10,
-          R22, R23, R28, R31, P0, P1, P2, P3, LC0, LC1, SA0, SA1] in {
+let isCall = 1, isBarrier = 1, isReturn = 1, isTerminator = 1 in {
   def TCRETURNR : JInst<(outs), (ins IntRegs:$dst),
              "jumpr $dst // TAILCALL", []>;
 }
