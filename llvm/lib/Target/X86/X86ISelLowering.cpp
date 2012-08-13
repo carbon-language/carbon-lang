@@ -8558,7 +8558,7 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
     //  6 - NLE
     //  7 - ORD
     switch (SetCCOpcode) {
-    default: llvm_unreachable("Unknown SetCC condition");
+    default: llvm_unreachable("Unexpected SETCC condition");
     case ISD::SETOEQ:
     case ISD::SETEQ:  SSECC = 0; break;
     case ISD::SETOGT:
@@ -8612,11 +8612,11 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
   // We are handling one of the integer comparisons here.  Since SSE only has
   // GT and EQ comparisons for integer, swapping operands and multiple
   // operations may be required for some comparisons.
-  unsigned Opc = 0;
+  unsigned Opc;
   bool Swap = false, Invert = false, FlipSigns = false;
 
   switch (SetCCOpcode) {
-  default: break;
+  default: llvm_unreachable("Unexpected SETCC condition");
   case ISD::SETNE:  Invert = true;
   case ISD::SETEQ:  Opc = X86ISD::PCMPEQ; break;
   case ISD::SETLT:  Swap = true;
@@ -8633,10 +8633,12 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
 
   // Check that the operation in question is available (most are plain SSE2,
   // but PCMPGTQ and PCMPEQQ have different requirements).
-  if (Opc == X86ISD::PCMPGT && VT == MVT::v2i64 && !Subtarget->hasSSE42())
-    return SDValue();
-  if (Opc == X86ISD::PCMPEQ && VT == MVT::v2i64 && !Subtarget->hasSSE41())
-    return SDValue();
+  if (VT == MVT::v2i64) {
+    if (Opc == X86ISD::PCMPGT && !Subtarget->hasSSE42())
+      return SDValue();
+    if (Opc == X86ISD::PCMPEQ && !Subtarget->hasSSE41())
+      return SDValue();
+  }
 
   // Since SSE has no unsigned integer comparisons, we need to flip  the sign
   // bits of the inputs before performing those operations.
