@@ -355,6 +355,18 @@ const FunctionDecl *SimpleCall::getDecl() const {
 }
 
 
+const FunctionDecl *CXXInstanceCall::getDecl() const {
+  const CallExpr *CE = cast_or_null<CallExpr>(getOriginExpr());
+  if (!CE)
+    return AnyFunctionCall::getDecl();
+
+  const FunctionDecl *D = CE->getDirectCallee();
+  if (D)
+    return D;
+
+  return getSVal(CE->getCallee()).getAsFunctionDecl();
+}
+
 void CXXInstanceCall::getExtraInvalidatedRegions(RegionList &Regions) const {
   if (const MemRegion *R = getCXXThisVal().getAsRegion())
     Regions.push_back(R);
@@ -389,7 +401,7 @@ RuntimeDefinition CXXInstanceCall::getRuntimeDefinition() const {
 
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(D);
   if (!MD->isVirtual())
-    return SimpleCall::getRuntimeDefinition();
+    return AnyFunctionCall::getRuntimeDefinition();
 
   // If the method is virtual, see if we can find the actual implementation
   // based on context-sensitivity.
@@ -525,46 +537,6 @@ SVal CXXDestructorCall::getCXXThisVal() const {
   if (Data)
     return loc::MemRegionVal(static_cast<const MemRegion *>(Data));
   return UnknownVal();
-}
-
-void CXXDestructorCall::getExtraInvalidatedRegions(RegionList &Regions) const {
-  if (Data)
-    Regions.push_back(static_cast<const MemRegion *>(Data));
-}
-
-RuntimeDefinition CXXDestructorCall::getRuntimeDefinition() const {
-  const Decl *D = AnyFunctionCall::getRuntimeDefinition().getDecl();
-  if (!D)
-    return RuntimeDefinition();
-
-  const CXXMethodDecl *MD = cast<CXXMethodDecl>(D);
-  if (!MD->isVirtual())
-    return RuntimeDefinition(MD);
-
-  // If the method is virtual, see if we can find the actual implementation
-  // based on context-sensitivity.
-  // FIXME: Virtual method calls behave differently when an object is being
-  // constructed or destructed. It's not as simple as "no devirtualization"
-  // because a /partially/ constructed object can be referred to through a
-  // base pointer. We'll eventually want to use DynamicTypeInfo here.
-  if (const CXXMethodDecl *Devirtualized = devirtualize(MD, getCXXThisVal()))
-    return RuntimeDefinition(Devirtualized);
-
-  return RuntimeDefinition();
-}
-
-void CXXDestructorCall::getInitialStackFrameContents(
-                                             const StackFrameContext *CalleeCtx,
-                                             BindingsTy &Bindings) const {
-  AnyFunctionCall::getInitialStackFrameContents(CalleeCtx, Bindings);
-
-  SVal ThisVal = getCXXThisVal();
-  if (!ThisVal.isUnknown()) {
-    SValBuilder &SVB = getState()->getStateManager().getSValBuilder();
-    const CXXMethodDecl *MD = cast<CXXMethodDecl>(CalleeCtx->getDecl());
-    Loc ThisLoc = SVB.getCXXThis(MD, CalleeCtx);
-    Bindings.push_back(std::make_pair(ThisLoc, ThisVal));
-  }
 }
 
 
@@ -805,7 +777,7 @@ void ObjCMethodCall::getInitialStackFrameContents(
   }
 }
 
-CallEventRef<SimpleCall>
+CallEventRef<>
 CallEventManager::getSimpleCall(const CallExpr *CE, ProgramStateRef State,
                                 const LocationContext *LCtx) {
   if (const CXXMemberCallExpr *MCE = dyn_cast<CXXMemberCallExpr>(CE))

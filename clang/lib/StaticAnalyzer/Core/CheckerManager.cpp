@@ -504,9 +504,9 @@ CheckerManager::runCheckersForEvalAssume(ProgramStateRef state,
 /// Only one checker will evaluate the call.
 void CheckerManager::runCheckersForEvalCall(ExplodedNodeSet &Dst,
                                             const ExplodedNodeSet &Src,
-                                            const SimpleCall &Call,
+                                            const CallEvent &Call,
                                             ExprEngine &Eng) {
-  const CallExpr *CE = Call.getOriginExpr();
+  const CallExpr *CE = cast<CallExpr>(Call.getOriginExpr());
   for (ExplodedNodeSet::iterator
          NI = Src.begin(), NE = Src.end(); NI != NE; ++NI) {
 

@@ -32,15 +32,15 @@ namespace ento {
 
 enum CallEventKind {
   CE_Function,
-  CE_CXXMember,
-  CE_CXXMemberOperator,
-  CE_BEG_CXX_INSTANCE_CALLS = CE_CXXMember,
-  CE_END_CXX_INSTANCE_CALLS = CE_CXXMemberOperator,
   CE_Block,
   CE_BEG_SIMPLE_CALLS = CE_Function,
   CE_END_SIMPLE_CALLS = CE_Block,
-  CE_CXXConstructor,
+  CE_CXXMember,
+  CE_CXXMemberOperator,
   CE_CXXDestructor,
+  CE_BEG_CXX_INSTANCE_CALLS = CE_CXXMember,
+  CE_END_CXX_INSTANCE_CALLS = CE_CXXDestructor,
+  CE_CXXConstructor,
   CE_CXXAllocator,
   CE_BEG_FUNCTION_CALLS = CE_Function,
   CE_END_FUNCTION_CALLS = CE_CXXAllocator,
@@ -377,7 +377,7 @@ public:
   }
 };
 
-/// \brief Represents a call to a written as a CallExpr.
+/// \brief Represents a call to a non-C++ function, written as a CallExpr.
 class SimpleCall : public AnyFunctionCall {
 protected:
   SimpleCall(const CallExpr *CE, ProgramStateRef St,
@@ -423,109 +423,6 @@ public:
 
   static bool classof(const CallEvent *CA) {
     return CA->getKind() == CE_Function;
-  }
-};
-
-/// \brief Represents a non-static C++ member function call, no matter how
-/// it is written.
-class CXXInstanceCall : public SimpleCall {
-protected:
-  virtual void getExtraInvalidatedRegions(RegionList &Regions) const;
-
-  CXXInstanceCall(const CallExpr *CE, ProgramStateRef St,
-                  const LocationContext *LCtx)
-    : SimpleCall(CE, St, LCtx) {}
-
-  CXXInstanceCall(const CXXInstanceCall &Other) : SimpleCall(Other) {}
-
-public:
-  /// \brief Returns the expression representing the implicit 'this' object.
-  virtual const Expr *getCXXThisExpr() const = 0;
-
-  /// \brief Returns the value of the implicit 'this' object.
-  SVal getCXXThisVal() const {
-    const Expr *Base = getCXXThisExpr();
-    // FIXME: This doesn't handle an overloaded ->* operator.
-    if (!Base)
-      return UnknownVal();
-    return getSVal(Base);
-  }
-
-  virtual RuntimeDefinition getRuntimeDefinition() const;
-
-  virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
-                                            BindingsTy &Bindings) const;
-
-  static bool classof(const CallEvent *CA) {
-    return CA->getKind() >= CE_BEG_CXX_INSTANCE_CALLS &&
-           CA->getKind() <= CE_END_CXX_INSTANCE_CALLS;
-  }
-};
-
-/// \brief Represents a non-static C++ member function call.
-///
-/// Example: \c obj.fun()
-class CXXMemberCall : public CXXInstanceCall {
-  friend class CallEventManager;
-
-protected:
-  CXXMemberCall(const CXXMemberCallExpr *CE, ProgramStateRef St,
-                const LocationContext *LCtx)
-    : CXXInstanceCall(CE, St, LCtx) {}
-
-  CXXMemberCall(const CXXMemberCall &Other) : CXXInstanceCall(Other) {}
-  virtual void cloneTo(void *Dest) const { new (Dest) CXXMemberCall(*this); }
-
-public:
-  virtual const CXXMemberCallExpr *getOriginExpr() const {
-    return cast<CXXMemberCallExpr>(SimpleCall::getOriginExpr());
-  }
-
-  virtual const Expr *getCXXThisExpr() const;
-
-  virtual Kind getKind() const { return CE_CXXMember; }
-
-  static bool classof(const CallEvent *CA) {
-    return CA->getKind() == CE_CXXMember;
-  }
-};
-
-/// \brief Represents a C++ overloaded operator call where the operator is
-/// implemented as a non-static member function.
-///
-/// Example: <tt>iter + 1</tt>
-class CXXMemberOperatorCall : public CXXInstanceCall {
-  friend class CallEventManager;
-
-protected:
-  CXXMemberOperatorCall(const CXXOperatorCallExpr *CE, ProgramStateRef St,
-                        const LocationContext *LCtx)
-    : CXXInstanceCall(CE, St, LCtx) {}
-
-  CXXMemberOperatorCall(const CXXMemberOperatorCall &Other)
-    : CXXInstanceCall(Other) {}
-  virtual void cloneTo(void *Dest) const {
-    new (Dest) CXXMemberOperatorCall(*this);
-  }
-
-public:
-  virtual const CXXOperatorCallExpr *getOriginExpr() const {
-    return cast<CXXOperatorCallExpr>(SimpleCall::getOriginExpr());
-  }
-
-  virtual unsigned getNumArgs() const {
-    return getOriginExpr()->getNumArgs() - 1;
-  }
-  virtual const Expr *getArgExpr(unsigned Index) const {
-    return getOriginExpr()->getArg(Index + 1);
-  }
-
-  virtual const Expr *getCXXThisExpr() const;
-
-  virtual Kind getKind() const { return CE_CXXMemberOperator; }
-
-  static bool classof(const CallEvent *CA) {
-    return CA->getKind() == CE_CXXMemberOperator;
   }
 };
 
@@ -581,6 +478,165 @@ public:
   }
 };
 
+/// \brief Represents a non-static C++ member function call, no matter how
+/// it is written.
+class CXXInstanceCall : public AnyFunctionCall {
+protected:
+  virtual void getExtraInvalidatedRegions(RegionList &Regions) const;
+
+  CXXInstanceCall(const CallExpr *CE, ProgramStateRef St,
+                  const LocationContext *LCtx)
+    : AnyFunctionCall(CE, St, LCtx) {}
+  CXXInstanceCall(const FunctionDecl *D, ProgramStateRef St,
+                  const LocationContext *LCtx)
+    : AnyFunctionCall(D, St, LCtx) {}
+
+
+  CXXInstanceCall(const CXXInstanceCall &Other) : AnyFunctionCall(Other) {}
+
+public:
+  /// \brief Returns the expression representing the implicit 'this' object.
+  virtual const Expr *getCXXThisExpr() const { return 0; }
+
+  /// \brief Returns the value of the implicit 'this' object.
+  virtual SVal getCXXThisVal() const {
+    const Expr *Base = getCXXThisExpr();
+    // FIXME: This doesn't handle an overloaded ->* operator.
+    if (!Base)
+      return UnknownVal();
+    return getSVal(Base);
+  }
+
+  virtual const FunctionDecl *getDecl() const;
+
+  virtual RuntimeDefinition getRuntimeDefinition() const;
+
+  virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
+                                            BindingsTy &Bindings) const;
+
+  static bool classof(const CallEvent *CA) {
+    return CA->getKind() >= CE_BEG_CXX_INSTANCE_CALLS &&
+           CA->getKind() <= CE_END_CXX_INSTANCE_CALLS;
+  }
+};
+
+/// \brief Represents a non-static C++ member function call.
+///
+/// Example: \c obj.fun()
+class CXXMemberCall : public CXXInstanceCall {
+  friend class CallEventManager;
+
+protected:
+  CXXMemberCall(const CXXMemberCallExpr *CE, ProgramStateRef St,
+                const LocationContext *LCtx)
+    : CXXInstanceCall(CE, St, LCtx) {}
+
+  CXXMemberCall(const CXXMemberCall &Other) : CXXInstanceCall(Other) {}
+  virtual void cloneTo(void *Dest) const { new (Dest) CXXMemberCall(*this); }
+
+public:
+  virtual const CXXMemberCallExpr *getOriginExpr() const {
+    return cast<CXXMemberCallExpr>(CXXInstanceCall::getOriginExpr());
+  }
+
+  virtual unsigned getNumArgs() const {
+    if (const CallExpr *CE = getOriginExpr())
+      return CE->getNumArgs();
+    return 0;
+  }
+
+  virtual const Expr *getArgExpr(unsigned Index) const {
+    return getOriginExpr()->getArg(Index);
+  }
+
+  virtual const Expr *getCXXThisExpr() const;
+
+  virtual Kind getKind() const { return CE_CXXMember; }
+
+  static bool classof(const CallEvent *CA) {
+    return CA->getKind() == CE_CXXMember;
+  }
+};
+
+/// \brief Represents a C++ overloaded operator call where the operator is
+/// implemented as a non-static member function.
+///
+/// Example: <tt>iter + 1</tt>
+class CXXMemberOperatorCall : public CXXInstanceCall {
+  friend class CallEventManager;
+
+protected:
+  CXXMemberOperatorCall(const CXXOperatorCallExpr *CE, ProgramStateRef St,
+                        const LocationContext *LCtx)
+    : CXXInstanceCall(CE, St, LCtx) {}
+
+  CXXMemberOperatorCall(const CXXMemberOperatorCall &Other)
+    : CXXInstanceCall(Other) {}
+  virtual void cloneTo(void *Dest) const {
+    new (Dest) CXXMemberOperatorCall(*this);
+  }
+
+public:
+  virtual const CXXOperatorCallExpr *getOriginExpr() const {
+    return cast<CXXOperatorCallExpr>(CXXInstanceCall::getOriginExpr());
+  }
+
+  virtual unsigned getNumArgs() const {
+    return getOriginExpr()->getNumArgs() - 1;
+  }
+  virtual const Expr *getArgExpr(unsigned Index) const {
+    return getOriginExpr()->getArg(Index + 1);
+  }
+
+  virtual const Expr *getCXXThisExpr() const;
+
+  virtual Kind getKind() const { return CE_CXXMemberOperator; }
+
+  static bool classof(const CallEvent *CA) {
+    return CA->getKind() == CE_CXXMemberOperator;
+  }
+};
+
+/// \brief Represents an implicit call to a C++ destructor.
+///
+/// This can occur at the end of a scope (for automatic objects), at the end
+/// of a full-expression (for temporaries), or as part of a delete.
+class CXXDestructorCall : public CXXInstanceCall {
+  friend class CallEventManager;
+
+protected:
+  /// Creates an implicit destructor.
+  ///
+  /// \param DD The destructor that will be called.
+  /// \param Trigger The statement whose completion causes this destructor call.
+  /// \param Target The object region to be destructed.
+  /// \param St The path-sensitive state at this point in the program.
+  /// \param LCtx The location context at this point in the program.
+  CXXDestructorCall(const CXXDestructorDecl *DD, const Stmt *Trigger,
+                    const MemRegion *Target, ProgramStateRef St,
+                    const LocationContext *LCtx)
+    : CXXInstanceCall(DD, St, LCtx) {
+    Data = Target;
+    Location = Trigger->getLocEnd();
+  }
+
+  CXXDestructorCall(const CXXDestructorCall &Other) : CXXInstanceCall(Other) {}
+  virtual void cloneTo(void *Dest) const { new (Dest) CXXDestructorCall(*this); }
+
+public:
+  virtual SourceRange getSourceRange() const { return Location; }
+  virtual unsigned getNumArgs() const { return 0; }
+
+  /// \brief Returns the value of the implicit 'this' object.
+  virtual SVal getCXXThisVal() const;
+
+  virtual Kind getKind() const { return CE_CXXDestructor; }
+
+  static bool classof(const CallEvent *CA) {
+    return CA->getKind() == CE_CXXDestructor;
+  }
+};
+
 /// \brief Represents a call to a C++ constructor.
 ///
 /// Example: \c T(1)
@@ -622,7 +678,7 @@ public:
   }
 
   /// \brief Returns the value of the implicit 'this' object.
-  virtual SVal getCXXThisVal() const;
+  SVal getCXXThisVal() const;
 
   virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
                                             BindingsTy &Bindings) const;
@@ -631,53 +687,6 @@ public:
 
   static bool classof(const CallEvent *CA) {
     return CA->getKind() == CE_CXXConstructor;
-  }
-};
-
-/// \brief Represents an implicit call to a C++ destructor.
-///
-/// This can occur at the end of a scope (for automatic objects), at the end
-/// of a full-expression (for temporaries), or as part of a delete.
-class CXXDestructorCall : public AnyFunctionCall {
-  friend class CallEventManager;
-
-protected:
-  /// Creates an implicit destructor.
-  ///
-  /// \param DD The destructor that will be called.
-  /// \param Trigger The statement whose completion causes this destructor call.
-  /// \param Target The object region to be destructed.
-  /// \param St The path-sensitive state at this point in the program.
-  /// \param LCtx The location context at this point in the program.
-  CXXDestructorCall(const CXXDestructorDecl *DD, const Stmt *Trigger,
-                    const MemRegion *Target, ProgramStateRef St,
-                    const LocationContext *LCtx)
-    : AnyFunctionCall(DD, St, LCtx) {
-    Data = Target;
-    Location = Trigger->getLocEnd();
-  }
-
-  CXXDestructorCall(const CXXDestructorCall &Other) : AnyFunctionCall(Other) {}
-  virtual void cloneTo(void *Dest) const { new (Dest) CXXDestructorCall(*this); }
-
-  virtual void getExtraInvalidatedRegions(RegionList &Regions) const;
-
-public:
-  virtual SourceRange getSourceRange() const { return Location; }
-  virtual unsigned getNumArgs() const { return 0; }
-
-  /// \brief Returns the value of the implicit 'this' object.
-  virtual SVal getCXXThisVal() const;
-
-  virtual RuntimeDefinition getRuntimeDefinition() const;
-
-  virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
-                                            BindingsTy &Bindings) const;
-
-  virtual Kind getKind() const { return CE_CXXDestructor; }
-
-  static bool classof(const CallEvent *CA) {
-    return CA->getKind() == CE_CXXDestructor;
   }
 };
 
@@ -874,7 +883,7 @@ public:
   getCaller(const StackFrameContext *CalleeCtx, ProgramStateRef State);
 
 
-  CallEventRef<SimpleCall>
+  CallEventRef<>
   getSimpleCall(const CallExpr *E, ProgramStateRef State,
                 const LocationContext *LCtx);
 

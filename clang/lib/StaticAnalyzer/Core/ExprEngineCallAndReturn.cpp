@@ -445,7 +445,7 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
   // Get the call in its initial state. We use this as a template to perform
   // all the checks.
   CallEventManager &CEMgr = getStateManager().getCallEventManager();
-  CallEventRef<SimpleCall> CallTemplate
+  CallEventRef<> CallTemplate
     = CEMgr.getSimpleCall(CE, Pred->getState(), Pred->getLocationContext());
 
   // Evaluate the function call.  We try each of the checkers
@@ -465,7 +465,7 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
 }
 
 void ExprEngine::evalCall(ExplodedNodeSet &Dst, ExplodedNode *Pred,
-                          const SimpleCall &Call) {
+                          const CallEvent &Call) {
   // WARNING: At this time, the state attached to 'Call' may be older than the
   // state in 'Pred'. This is a minor optimization since CheckerManager will
   // use an updated CallEvent instance when calling checkers, but if 'Call' is

@@ -463,8 +463,10 @@ public:
                                   const LocationContext *LCtx,
                                   ProgramStateRef State);
 
+  /// Evaluate a call, running pre- and post-call checks and allowing checkers
+  /// to be responsible for handling the evaluation of the call itself.
   void evalCall(ExplodedNodeSet &Dst, ExplodedNode *Pred,
-                const SimpleCall &Call);
+                const CallEvent &Call);
 
   /// \brief Default implementation of call evaluation.
   void defaultEvalCall(NodeBuilder &B, ExplodedNode *Pred,
