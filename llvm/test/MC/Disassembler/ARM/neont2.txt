@@ -2042,3 +2042,13 @@
 # CHECK: vld2.16	{d0[], d2[]}, [r3], r4  
 0xa3 0xf9 0xa4 0x0d
 # CHECK: vld2.32	{d0[], d2[]}, [r3], r4  
+
+
+# rdar://10798451
+0xe7 0xf9 0x32 0x1d
+# CHECK: vld2.8	{d17[], d19[]}, [r7, :16], r2
+0xe7 0xf9 0x3d 0x1d
+# CHECK: vld2.8	{d17[], d19[]}, [r7, :16]!
+0xe7 0xf9 0x3f 0x1d
+# CHECK: vld2.8	{d17[], d19[]}, [r7, :16]
+

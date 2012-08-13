@@ -1931,14 +1931,6 @@
 # CHECK: vmov.f32	d0, #1.600000e+01
 # CHECK: vmov.f32	q0, #1.600000e+01
 
-# rdar://10798451
-0xe7 0xf9 0x32 0x1d
-# CHECK vld2.8	{d17[], d19[]}, [r7, :16], r2
-0xe7 0xf9 0x3d 0x1d
-# CHECK vld2.8	{d17[], d19[]}, [r7, :16]!
-0xe7 0xf9 0x3f 0x1d
-# CHECK vld2.8	{d17[], d19[]}, [r7, :16]
-
 # rdar://11034702
 0x0d 0x87 0x04 0xf4
 # CHECK: vst1.8	{d8}, [r4]!            
