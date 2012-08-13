@@ -7422,8 +7422,12 @@ static SDValue PerformORCombine(SDNode *N,
       return COR;
   }
 
+
+  // The code below optimizes (or (and X, Y), Z).
+  // The AND operand needs to have a single user to make these optimizations
+  // profitable.
   SDValue N0 = N->getOperand(0);
-  if (N0.getOpcode() != ISD::AND)
+  if (N0.getOpcode() != ISD::AND || !N0.hasOneUse())
     return SDValue();
   SDValue N1 = N->getOperand(1);
 
