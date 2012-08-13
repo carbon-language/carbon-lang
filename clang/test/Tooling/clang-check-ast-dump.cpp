@@ -1,0 +1,35 @@
+// RUN: clang-check -ast-dump "%s" -- 2>&1 | FileCheck %s
+// CHECK: namespace test_namespace
+// CHECK-NEXT: class TheClass
+// CHECK: int theMethod(int x) (CompoundStmt
+// CHECK-NEXT:   (ReturnStmt
+// CHECK-NEXT:     (BinaryOperator
+//
+// RUN: clang-check -ast-dump -ast-dump-filter test_namespace::TheClass::theMethod "%s" -- 2>&1 | FileCheck -check-prefix CHECK-FILTER %s
+// CHECK-FILTER-NOT: namespace test_namespace
+// CHECK-FILTER-NOT: class TheClass
+// CHECK-FILTER: int theMethod(int x) (CompoundStmt
+// CHECK-FILTER-NEXT:   (ReturnStmt
+// CHECK-FILTER-NEXT:     (BinaryOperator
+//
+// RUN: clang-check -ast-print "%s" -- 2>&1 | FileCheck -check-prefix CHECK-PRINT %s
+// CHECK-PRINT: namespace test_namespace
+// CHECK-PRINT: class TheClass
+// CHECK-PRINT: int theMethod(int x)
+//
+// RUN: clang-check -ast-list "%s" -- 2>&1 | FileCheck -check-prefix CHECK-LIST %s
+// CHECK-LIST: test_namespace
+// CHECK-LIST-NEXT: test_namespace::TheClass
+// CHECK-LIST-NEXT: test_namespace::TheClass::theMethod
+// CHECK-LIST-NEXT: x
+
+namespace test_namespace {
+
+class TheClass {
+public:
+  int theMethod(int x) {
+    return x + x;
+  }
+};
+
+}

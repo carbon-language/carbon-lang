@@ -17,10 +17,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/CommandLine.h"
+#include "clang/AST/ASTConsumer.h"
+#include "clang/Driver/OptTable.h"
+#include "clang/Driver/Options.h"
+#include "clang/Frontend/ASTConsumers.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CommandLineClangTool.h"
 #include "clang/Tooling/Tooling.h"
 
+using namespace clang::driver;
 using namespace clang::tooling;
 using namespace llvm;
 
@@ -38,9 +43,46 @@ static const char *MoreHelpText =
     "\trules described above.\n"
     "\n";
 
+namespace {
+class ActionFactory {
+public:
+  ActionFactory()
+    : Options(createDriverOptTable()),
+      ASTDump(
+        "ast-dump",
+        cl::desc(Options->getOptionHelpText(options::OPT_ast_dump))),
+      ASTList(
+        "ast-list",
+        cl::desc(Options->getOptionHelpText(options::OPT_ast_list))),
+      ASTPrint(
+        "ast-print",
+        cl::desc(Options->getOptionHelpText(options::OPT_ast_print))),
+      ASTDumpFilter(
+        "ast-dump-filter",
+        cl::desc(Options->getOptionHelpText(options::OPT_ast_dump_filter))) {}
+
+  clang::ASTConsumer *newASTConsumer() {
+    if (ASTList)
+      return clang::CreateASTDeclNodeLister();
+    if (ASTDump)
+      return clang::CreateASTDumper(ASTDumpFilter);
+    if (ASTPrint)
+      return clang::CreateASTPrinter(&llvm::outs(), ASTDumpFilter);
+    return new clang::ASTConsumer();
+  }
+private:
+  OwningPtr<OptTable> Options;
+  cl::opt<bool> ASTDump;
+  cl::opt<bool> ASTList;
+  cl::opt<bool> ASTPrint;
+  cl::opt<std::string> ASTDumpFilter;
+};
+}
+
 int main(int argc, const char **argv) {
+  ActionFactory Factory;
   CommandLineClangTool Tool;
   cl::extrahelp MoreHelp(MoreHelpText);
   Tool.initialize(argc, argv);
-  return Tool.run(newFrontendActionFactory<clang::SyntaxOnlyAction>());
+  return Tool.run(newFrontendActionFactory(&Factory));
 }
