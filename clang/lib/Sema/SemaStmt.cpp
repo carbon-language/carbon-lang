@@ -2835,11 +2835,7 @@ static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
         SmallString<32> TokenBuf;
         TokenBuf.resize(32);
         bool StringInvalid = false;
-        const char *ThisTokBuf = &TokenBuf[0];
-        unsigned ThisTokLen =
-          Lexer::getSpelling(AsmToks[j], ThisTokBuf, SemaRef.getSourceManager(),
-                             SemaRef.getLangOpts(), &StringInvalid);
-        Asm += StringRef(ThisTokBuf, ThisTokLen);
+        Asm += SemaRef.PP.getSpelling(AsmToks[j], TokenBuf, &StringInvalid);
         break;
       }
       case tok::identifier: {
