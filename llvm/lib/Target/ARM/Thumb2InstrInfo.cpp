@@ -563,48 +563,6 @@ bool llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
   return Offset == 0;
 }
 
-/// scheduleTwoAddrSource - Schedule the copy / re-mat of the source of the
-/// two-addrss instruction inserted by two-address pass.
-void
-Thumb2InstrInfo::scheduleTwoAddrSource(MachineInstr *SrcMI,
-                                       MachineInstr *UseMI,
-                                       const TargetRegisterInfo &TRI) const {
-  if (SrcMI->getOpcode() != ARM::tMOVr || SrcMI->getOperand(1).isKill())
-    return;
-
-  unsigned PredReg = 0;
-  ARMCC::CondCodes CC = getInstrPredicate(UseMI, PredReg);
-  if (CC == ARMCC::AL || PredReg != ARM::CPSR)
-    return;
-
-  // Schedule the copy so it doesn't come between previous instructions
-  // and UseMI which can form an IT block.
-  unsigned SrcReg = SrcMI->getOperand(1).getReg();
-  ARMCC::CondCodes OCC = ARMCC::getOppositeCondition(CC);
-  MachineBasicBlock *MBB = UseMI->getParent();
-  MachineBasicBlock::iterator MBBI = SrcMI;
-  unsigned NumInsts = 0;
-  while (--MBBI != MBB->begin()) {
-    if (MBBI->isDebugValue())
-      continue;
-
-    MachineInstr *NMI = &*MBBI;
-    ARMCC::CondCodes NCC = getInstrPredicate(NMI, PredReg);
-    if (!(NCC == CC || NCC == OCC) ||
-        NMI->modifiesRegister(SrcReg, &TRI) ||
-        NMI->modifiesRegister(ARM::CPSR, &TRI))
-      break;
-    if (++NumInsts == 4)
-      // Too many in a row!
-      return;
-  }
-
-  if (NumInsts) {
-    MBB->remove(SrcMI);
-    MBB->insert(++MBBI, SrcMI);
-  }
-}
-
 ARMCC::CondCodes
 llvm::getITInstrPredicate(const MachineInstr *MI, unsigned &PredReg) {
   unsigned Opc = MI->getOpcode();

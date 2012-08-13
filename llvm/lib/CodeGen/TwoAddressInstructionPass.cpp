@@ -1352,17 +1352,6 @@ TwoAddressInstructionPass::processTiedPairs(MachineInstr *MI,
       }
     }
   }
-
-  // We didn't change anything if there was a single tied pair, and that
-  // pair didn't require copies.
-  if (AllUsesCopied || TiedPairs.size() > 1) {
-    // Schedule the source copy / remat inserted to form two-address
-    // instruction. FIXME: Does it matter the distance map may not be
-    // accurate after it's scheduled?
-    MachineBasicBlock::iterator PrevMI = MI;
-    --PrevMI;
-    TII->scheduleTwoAddrSource(PrevMI, MI, *TRI);
-  }
 }
 
 /// runOnMachineFunction - Reduce two-address instructions to two operands.

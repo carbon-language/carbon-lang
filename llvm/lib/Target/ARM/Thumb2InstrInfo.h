@@ -57,11 +57,6 @@ public:
                             const TargetRegisterClass *RC,
                             const TargetRegisterInfo *TRI) const;
 
-  /// scheduleTwoAddrSource - Schedule the copy / re-mat of the source of the
-  /// two-addrss instruction inserted by two-address pass.
-  void scheduleTwoAddrSource(MachineInstr *SrcMI, MachineInstr *UseMI,
-                             const TargetRegisterInfo &TRI) const;
-
   /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should
   /// always be able to get register info as well (through this method).
