@@ -228,6 +228,9 @@ namespace {
     SDValue visitFP_EXTEND(SDNode *N);
     SDValue visitFNEG(SDNode *N);
     SDValue visitFABS(SDNode *N);
+    SDValue visitFCEIL(SDNode *N);
+    SDValue visitFTRUNC(SDNode *N);
+    SDValue visitFFLOOR(SDNode *N);
     SDValue visitBRCOND(SDNode *N);
     SDValue visitBR_CC(SDNode *N);
     SDValue visitLOAD(SDNode *N);
@@ -1140,6 +1143,9 @@ SDValue DAGCombiner::visit(SDNode *N) {
   case ISD::FP_EXTEND:          return visitFP_EXTEND(N);
   case ISD::FNEG:               return visitFNEG(N);
   case ISD::FABS:               return visitFABS(N);
+  case ISD::FFLOOR:             return visitFFLOOR(N);
+  case ISD::FCEIL:              return visitFCEIL(N);
+  case ISD::FTRUNC:             return visitFTRUNC(N);
   case ISD::BRCOND:             return visitBRCOND(N);
   case ISD::BR_CC:              return visitBR_CC(N);
   case ISD::LOAD:               return visitLOAD(N);
@@ -6239,6 +6245,42 @@ SDValue DAGCombiner::visitFNEG(SDNode *N) {
                          VT, Int);
     }
   }
+
+  return SDValue();
+}
+
+SDValue DAGCombiner::visitFCEIL(SDNode *N) {
+  SDValue N0 = N->getOperand(0);
+  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
+  EVT VT = N->getValueType(0);
+
+  // fold (fceil c1) -> fceil(c1)
+  if (N0CFP && VT != MVT::ppcf128)
+    return DAG.getNode(ISD::FCEIL, N->getDebugLoc(), VT, N0);
+
+  return SDValue();
+}
+
+SDValue DAGCombiner::visitFTRUNC(SDNode *N) {
+  SDValue N0 = N->getOperand(0);
+  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
+  EVT VT = N->getValueType(0);
+
+  // fold (ftrunc c1) -> ftrunc(c1)
+  if (N0CFP && VT != MVT::ppcf128)
+    return DAG.getNode(ISD::FTRUNC, N->getDebugLoc(), VT, N0);
+
+  return SDValue();
+}
+
+SDValue DAGCombiner::visitFFLOOR(SDNode *N) {
+  SDValue N0 = N->getOperand(0);
+  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
+  EVT VT = N->getValueType(0);
+
+  // fold (ffloor c1) -> ffloor(c1)
+  if (N0CFP && VT != MVT::ppcf128)
+    return DAG.getNode(ISD::FFLOOR, N->getDebugLoc(), VT, N0);
 
   return SDValue();
 }

@@ -274,6 +274,7 @@ namespace llvm {
     /* C fmod, or llvm frem. */
     opStatus mod(const APFloat &, roundingMode);
     opStatus fusedMultiplyAdd(const APFloat &, const APFloat &, roundingMode);
+    opStatus roundToIntegral(roundingMode);
 
     /* Sign operations.  */
     void changeSign();

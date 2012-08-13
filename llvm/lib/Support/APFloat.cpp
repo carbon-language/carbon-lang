@@ -1765,6 +1765,32 @@ APFloat::fusedMultiplyAdd(const APFloat &multiplicand,
   return fs;
 }
 
+/* Rounding-mode corrrect round to integral value.  */
+APFloat::opStatus APFloat::roundToIntegral(roundingMode rounding_mode) {
+  opStatus fs;
+  assertArithmeticOK(*semantics);
+
+  // The algorithm here is quite simple: we add 2^(p-1), where p is the
+  // precision of our format, and then subtract it back off again.  The choice
+  // of rounding modes for the addition/subtraction determines the rounding mode
+  // for our integral rounding as well.
+  APInt IntegerConstant(NextPowerOf2(semanticsPrecision(*semantics)),
+                        1 << (semanticsPrecision(*semantics)-1));
+  APFloat MagicConstant(*semantics);
+  fs = MagicConstant.convertFromAPInt(IntegerConstant, false,
+                                      rmNearestTiesToEven);
+  if (fs != opOK)
+    return fs;
+
+  fs = add(MagicConstant, rounding_mode);
+  if (fs != opOK && fs != opInexact)
+    return fs;
+
+  fs = subtract(MagicConstant, rounding_mode);
+  return fs;
+}
+
+
 /* Comparison requires normalized numbers.  */
 APFloat::cmpResult
 APFloat::compare(const APFloat &rhs) const

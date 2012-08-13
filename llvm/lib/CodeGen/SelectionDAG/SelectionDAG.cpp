@@ -2483,6 +2483,24 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
       case ISD::FABS:
         V.clearSign();
         return getConstantFP(V, VT);
+      case ISD::FCEIL: {
+        APFloat::opStatus fs = V.roundToIntegral(APFloat::rmTowardPositive);
+        if (fs == APFloat::opOK || fs == APFloat::opInexact)
+          return getConstantFP(V, VT);
+        break;
+      }
+      case ISD::FTRUNC: {
+        APFloat::opStatus fs = V.roundToIntegral(APFloat::rmTowardZero);
+        if (fs == APFloat::opOK || fs == APFloat::opInexact)
+          return getConstantFP(V, VT);
+        break;
+      }
+      case ISD::FFLOOR: {
+        APFloat::opStatus fs = V.roundToIntegral(APFloat::rmTowardNegative);
+        if (fs == APFloat::opOK || fs == APFloat::opInexact)
+          return getConstantFP(V, VT);
+        break;
+      }
       case ISD::FP_EXTEND: {
         bool ignored;
         // This can return overflow, underflow, or inexact; we don't care.
