@@ -70,3 +70,17 @@ define <4 x float> @test4(<4 x float> %A, float *%b, i32 %C) nounwind {
 ; CHECK: call
 ; CHECK: roundss $4, %xmm{{.*}}, %xmm0
 }
+
+; PR13576 
+define  <2 x double> @test5() nounwind uwtable readnone noinline {
+entry:
+  %0 = tail call <2 x double> @llvm.x86.sse2.cvtsi2sd(<2 x double> <double
+4.569870e+02, double 1.233210e+02>, i32 128) nounwind readnone
+  ret <2 x double> %0
+; CHECK: test5:
+; CHECK: movl
+; CHECK: mov
+; CHECK: cvtsi2sd
+}
+
+declare <2 x double> @llvm.x86.sse2.cvtsi2sd(<2 x double>, i32) nounwind readnone
