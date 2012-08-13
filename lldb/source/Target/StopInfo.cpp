@@ -500,6 +500,7 @@ public:
             {
                 if (!wp_sp->IsWatchVariable())
                 {
+                    // We are not watching a variable, just read from the process memory for the watched location.
                     assert (process);
                     Error error;
                     uint64_t val = process->ReadUnsignedIntegerFromMemory(wp_sp->GetLoadAddress(),
@@ -517,7 +518,7 @@ public:
                 }
                 else if (!wp_sp->GetWatchSpec().empty())
                 {
-                    // Things have checked out ok...
+                    // Use our frame to evaluate the variable expression.
                     Error error;
                     uint32_t expr_path_options = StackFrame::eExpressionPathOptionCheckPtrVsMember |
                                                  StackFrame::eExpressionPathOptionsAllowDirectIVarAccess;
