@@ -110,11 +110,12 @@ protected:
            V != DenseMapInfo<Value *>::getTombstoneKey();
   }
 
-private:
+public:
   // Callbacks made from Value.
   static void ValueIsDeleted(Value *V);
   static void ValueIsRAUWd(Value *Old, Value *New);
 
+private:
   // Internal implementation details.
   ValueHandleBase **getPrevPtr() const { return PrevPair.getPointer(); }
   HandleBaseKind getKind() const { return PrevPair.getInt(); }
