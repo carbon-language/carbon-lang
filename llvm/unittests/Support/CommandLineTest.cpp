@@ -55,6 +55,17 @@ TEST(CommandLineTest, ParseEnvironment) {
   EXPECT_EQ("hello", EnvironmentTestOption);
 }
 
+// This test used to make valgrind complain
+// ("Conditional jump or move depends on uninitialised value(s)")
+TEST(CommandLineTest, ParseEnvironmentToLocalVar) {
+  // Put cl::opt on stack to check for proper initialization of fields.
+  cl::opt<std::string> EnvironmentTestOptionLocal("env-test-opt-local");
+  TempEnvVar TEV(test_env_var, "-env-test-opt-local=hello-local");
+  EXPECT_EQ("", EnvironmentTestOptionLocal);
+  cl::ParseEnvironmentOptions("CommandLineTest", test_env_var);
+  EXPECT_EQ("hello-local", EnvironmentTestOptionLocal);
+}
+
 #endif  // SKIP_ENVIRONMENT_TESTS
 
 }  // anonymous namespace
