@@ -78,7 +78,7 @@ entry:
 4.569870e+02, double 1.233210e+02>, i32 128) nounwind readnone
   ret <2 x double> %0
 ; CHECK: test5:
-; CHECK: movl
+; CHECK: mov
 ; CHECK: mov
 ; CHECK: cvtsi2sd
 }
