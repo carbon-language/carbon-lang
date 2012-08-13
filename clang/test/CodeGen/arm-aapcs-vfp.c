@@ -88,3 +88,7 @@ extern void neon_callee(struct neon_struct);
 void test_neon(struct neon_struct arg) {
   neon_callee(arg);
 }
+
+// CHECK: define arm_aapcs_vfpcc void @f33(%struct.s33* byval %s)
+struct s33 { char buf[32*32]; };
+void f33(struct s33 s) { }

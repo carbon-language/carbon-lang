@@ -2757,13 +2757,10 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty) const {
     }
   }
 
-  // Turn on byval for APCS and AAPCS.
-  // FIXME: turn on byval for AAPCS_VFP for performance.
-  if (getABIKind() == ARMABIInfo::APCS || getABIKind() == ARMABIInfo::AAPCS) {
-    if (getContext().getTypeSizeInChars(Ty) > CharUnits::fromQuantity(64) ||
-        getContext().getTypeAlign(Ty) > 64) {
-      return ABIArgInfo::getIndirect(0, /*ByVal=*/true);
-    }
+  // Support byval for ARM.
+  if (getContext().getTypeSizeInChars(Ty) > CharUnits::fromQuantity(64) ||
+      getContext().getTypeAlign(Ty) > 64) {
+    return ABIArgInfo::getIndirect(0, /*ByVal=*/true);
   }
 
   // Otherwise, pass by coercing to a structure of the appropriate size.
