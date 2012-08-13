@@ -2794,60 +2794,71 @@ static inline bool needSpaceAsmToken(Token currTok) {
   return true;
 }
 
-static std::string PatchMSAsmString(Sema &SemaRef, bool &IsSimple,
-                                    SourceLocation AsmLoc,
-                                    ArrayRef<Token> AsmToks,
-                                    const TargetInfo &TI) {
+static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
+                              SourceLocation AsmLoc,
+                              ArrayRef<Token> AsmToks,
+                              ArrayRef<unsigned> LineEnds,
+                              const TargetInfo &TI,
+                              std::vector<std::string> &AsmStrings) {
   assert (!AsmToks.empty() && "Didn't expect an empty AsmToks!");
-  std::string Res;
-  IdentifierInfo *II = AsmToks[0].getIdentifierInfo();
-  Res = II->getName().str();
 
   // Assume simple asm stmt until we parse a non-register identifer.
   IsSimple = true;
 
-  // Check the operands.
-  for (unsigned i = 1, e = AsmToks.size(); i != e; ++i) {
-    if (needSpaceAsmToken(AsmToks[i]))
-        Res += " ";
+  for (unsigned i = 0, e = LineEnds.size(); i != e; ++i) {
+    SmallString<512> Asm;
 
-    switch (AsmToks[i].getKind()) {
-    default:
-      //llvm_unreachable("Unknown token.");
-      break;
-    case tok::comma: Res += ","; break;
-    case tok::colon: Res += ":"; break;
-    case tok::l_square: Res += "["; break;
-    case tok::r_square: Res += "]"; break;
-    case tok::l_brace: Res += "{"; break;
-    case tok::r_brace: Res += "}"; break;
-    case tok::numeric_constant: {
-      SmallString<32> TokenBuf;
-      TokenBuf.resize(32);
-      bool StringInvalid = false;
-      const char *ThisTokBuf = &TokenBuf[0];
-      unsigned ThisTokLen =
-        Lexer::getSpelling(AsmToks[i], ThisTokBuf, SemaRef.getSourceManager(),
-                           SemaRef.getLangOpts(), &StringInvalid);
-      Res += StringRef(ThisTokBuf, ThisTokLen);
-      break;
-    }
-    case tok::identifier: {
-      II = AsmToks[i].getIdentifierInfo();
-      StringRef Name = II->getName();
+    // Check the operands.
+    for (unsigned j = (i == 0) ? 0 : LineEnds[i-1], e = LineEnds[i]; j != e; ++j) {
 
-      // Valid registers don't need modification.
-      if (TI.isValidGCCRegisterName(Name)) {
-        Res += Name;
-        break;
+      IdentifierInfo *II;
+      if (j == 0 || (i > 0 && j == LineEnds[i-1])) {
+        II = AsmToks[j].getIdentifierInfo();
+        Asm = II->getName().str();
+        continue;
       }
 
-      // TODO: Lookup the identifier.
-      IsSimple = false;
+      if (needSpaceAsmToken(AsmToks[j]))
+        Asm += " ";
+
+      switch (AsmToks[j].getKind()) {
+      default:
+        //llvm_unreachable("Unknown token.");
+        break;
+      case tok::comma: Asm += ","; break;
+      case tok::colon: Asm += ":"; break;
+      case tok::l_square: Asm += "["; break;
+      case tok::r_square: Asm += "]"; break;
+      case tok::l_brace: Asm += "{"; break;
+      case tok::r_brace: Asm += "}"; break;
+      case tok::numeric_constant: {
+        SmallString<32> TokenBuf;
+        TokenBuf.resize(32);
+        bool StringInvalid = false;
+        const char *ThisTokBuf = &TokenBuf[0];
+        unsigned ThisTokLen =
+          Lexer::getSpelling(AsmToks[j], ThisTokBuf, SemaRef.getSourceManager(),
+                             SemaRef.getLangOpts(), &StringInvalid);
+        Asm += StringRef(ThisTokBuf, ThisTokLen);
+        break;
+      }
+      case tok::identifier: {
+        II = AsmToks[j].getIdentifierInfo();
+        StringRef Name = II->getName();
+
+        // Valid registers don't need modification.
+        if (TI.isValidGCCRegisterName(Name)) {
+          Asm += Name;
+          break;
+        }
+
+        // TODO: Lookup the identifier.
+        IsSimple = false;
+      }
+      } // AsmToks[i].getKind()
     }
-    } // AsmToks[i].getKind()
+    AsmStrings[i] = Asm.c_str();
   }
-  return Res;
 }
 
 // Build the unmodified MSAsmString.
@@ -2898,11 +2909,14 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   std::string AsmString = buildMSAsmString(*this, AsmToks, LineEnds);
 
   bool IsSimple;
-  // Rewrite operands to appease the AsmParser.
-  std::string PatchedAsmString =
-    PatchMSAsmString(*this, IsSimple, AsmLoc, AsmToks, Context.getTargetInfo());
+  std::vector<std::string> PatchedAsmStrings;
+  PatchedAsmStrings.resize(LineEnds.size());
 
-  // PatchMSAsmString doesn't correctly patch non-simple asm statements.
+  // Rewrite operands to appease the AsmParser.
+  patchMSAsmStrings(*this, IsSimple, AsmLoc, AsmToks, LineEnds, 
+                   Context.getTargetInfo(), PatchedAsmStrings);
+
+  // patchMSAsmStrings doesn't correctly patch non-simple asm statements.
   if (!IsSimple) {
     MSAsmStmt *NS =
       new (Context) MSAsmStmt(Context, AsmLoc, /* IsSimple */ true,
@@ -2921,29 +2935,32 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   const std::string &TT = Context.getTargetInfo().getTriple().getTriple();
   const llvm::Target *TheTarget(llvm::TargetRegistry::lookupTarget(TT, Error));
 
-  llvm::SourceMgr SrcMgr;
-  llvm::MemoryBuffer *Buffer =
-    llvm::MemoryBuffer::getMemBuffer(PatchedAsmString, "<inline asm>");
-
-  // Tell SrcMgr about this buffer, which is what the parser will pick up.
-  SrcMgr.AddNewSourceBuffer(Buffer, llvm::SMLoc());
-
   OwningPtr<llvm::MCAsmInfo> MAI(TheTarget->createMCAsmInfo(TT));
   OwningPtr<llvm::MCRegisterInfo> MRI(TheTarget->createMCRegInfo(TT));
   OwningPtr<llvm::MCObjectFileInfo> MOFI(new llvm::MCObjectFileInfo());
-  llvm::MCContext Ctx(*MAI, *MRI, MOFI.get(), &SrcMgr);
   OwningPtr<llvm::MCSubtargetInfo>
     STI(TheTarget->createMCSubtargetInfo(TT, "", ""));
 
-  OwningPtr<llvm::MCStreamer> Str;
-  OwningPtr<llvm::MCAsmParser>
-    Parser(createMCAsmParser(SrcMgr, Ctx, *Str.get(), *MAI));
-  OwningPtr<llvm::MCTargetAsmParser>
-    TargetParser(TheTarget->createMCAsmParser(*STI, *Parser));
+  for (unsigned i = 0, e = PatchedAsmStrings.size(); i != e; ++i) {
+    llvm::SourceMgr SrcMgr;
+    llvm::MCContext Ctx(*MAI, *MRI, MOFI.get(), &SrcMgr);
+    llvm::MemoryBuffer *Buffer =
+      llvm::MemoryBuffer::getMemBuffer(PatchedAsmStrings[i], "<inline asm>");
 
-  // Change to the Intel dialect.
-  Parser->setAssemblerDialect(1);
-  Parser->setTargetParser(*TargetParser.get());
+    // Tell SrcMgr about this buffer, which is what the parser will pick up.
+    SrcMgr.AddNewSourceBuffer(Buffer, llvm::SMLoc());
+
+    OwningPtr<llvm::MCStreamer> Str;
+    OwningPtr<llvm::MCAsmParser>
+      Parser(createMCAsmParser(SrcMgr, Ctx, *Str.get(), *MAI));
+    OwningPtr<llvm::MCTargetAsmParser>
+      TargetParser(TheTarget->createMCAsmParser(*STI, *Parser));
+    // Change to the Intel dialect.
+    Parser->setAssemblerDialect(1);
+    Parser->setTargetParser(*TargetParser.get());
+
+    // TODO: Start parsing.
+  }
 
   MSAsmStmt *NS =
     new (Context) MSAsmStmt(Context, AsmLoc, IsSimple, /* IsVolatile */ true,
