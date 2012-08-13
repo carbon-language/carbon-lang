@@ -2757,22 +2757,10 @@ bool Expr::HasSideEffects(const ASTContext &Ctx) const {
     break;
   }
 
-  case CXXTypeidExprClass: {
-    // A typeid expression has side-effects if it can throw.
-    const CXXTypeidExpr *TE = cast<CXXTypeidExpr>(this);
-    if (TE->isTypeOperand())
-      return false;
-    const CXXRecordDecl *RD =
-        TE->getExprOperand()->getType()->getAsCXXRecordDecl();
-    if (!RD || !RD->isPolymorphic() ||
-        !TE->getExprOperand()->
-          Classify(const_cast<ASTContext&>(Ctx)).isGLValue())
-      // Not a glvalue of polymorphic class type: the expression is an
-      // unevaluated operand.
-      return false;
-    // Might throw.
-    return true;
-  }
+  case CXXTypeidExprClass:
+    // typeid might throw if its subexpression is potentially-evaluated, so has
+    // side-effects in that case whether or not its subexpression does.
+    return cast<CXXTypeidExpr>(this)->isPotentiallyEvaluated();
 
   case CXXConstructExprClass:
   case CXXTemporaryObjectExprClass: {

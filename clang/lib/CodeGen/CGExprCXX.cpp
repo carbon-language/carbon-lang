@@ -1643,15 +1643,9 @@ llvm::Value *CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
   //   polymorphic class type, the result refers to a std::type_info object
   //   representing the type of the most derived object (that is, the dynamic
   //   type) to which the glvalue refers.
-  if (E->getExprOperand()->isGLValue()) {
-    if (const RecordType *RT =
-          E->getExprOperand()->getType()->getAs<RecordType>()) {
-      const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-      if (RD->isPolymorphic())
-        return EmitTypeidFromVTable(*this, E->getExprOperand(), 
-                                    StdTypeInfoPtrTy);
-    }
-  }
+  if (E->isPotentiallyEvaluated())
+    return EmitTypeidFromVTable(*this, E->getExprOperand(), 
+                                StdTypeInfoPtrTy);
 
   QualType OperandTy = E->getExprOperand()->getType();
   return Builder.CreateBitCast(CGM.GetAddrOfRTTIDescriptor(OperandTy),

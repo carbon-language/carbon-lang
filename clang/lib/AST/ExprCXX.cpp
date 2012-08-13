@@ -24,6 +24,21 @@ using namespace clang;
 //  Child Iterators for iterating over subexpressions/substatements
 //===----------------------------------------------------------------------===//
 
+bool CXXTypeidExpr::isPotentiallyEvaluated() const {
+  if (isTypeOperand())
+    return false;
+
+  // C++11 [expr.typeid]p3:
+  //   When typeid is applied to an expression other than a glvalue of
+  //   polymorphic class type, [...] the expression is an unevaluated operand.
+  const Expr *E = getExprOperand();
+  if (const CXXRecordDecl *RD = E->getType()->getAsCXXRecordDecl())
+    if (RD->isPolymorphic() && E->isGLValue())
+      return true;
+
+  return false;
+}
+
 QualType CXXTypeidExpr::getTypeOperand() const {
   assert(isTypeOperand() && "Cannot call getTypeOperand for typeid(expr)");
   return Operand.get<TypeSourceInfo *>()->getType().getNonReferenceType()

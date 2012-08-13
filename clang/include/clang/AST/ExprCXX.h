@@ -499,6 +499,10 @@ public:
       Operand = (TypeSourceInfo*)0;
   }
 
+  /// Determine whether this typeid has a type operand which is potentially
+  /// evaluated, per C++11 [expr.typeid]p3.
+  bool isPotentiallyEvaluated() const;
+
   bool isTypeOperand() const { return Operand.is<TypeSourceInfo *>(); }
 
   /// \brief Retrieves the type operand of this typeid() expression after

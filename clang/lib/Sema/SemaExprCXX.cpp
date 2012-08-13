@@ -333,7 +333,7 @@ ExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
       //   When typeid is applied to an expression other than an glvalue of a
       //   polymorphic class type [...] [the] expression is an unevaluated
       //   operand. [...]
-      if (RecordD->isPolymorphic() && E->Classify(Context).isGLValue()) {
+      if (RecordD->isPolymorphic() && E->isGLValue()) {
         // The subexpression is potentially evaluated; switch the context
         // and recheck the subexpression.
         ExprResult Result = TranformToPotentiallyEvaluated(E);

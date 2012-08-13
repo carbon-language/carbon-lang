@@ -3177,7 +3177,7 @@ QualType ASTContext::getDecltypeType(Expr *e, QualType UnderlyingType) const {
     if (Canon) {
       // We already have a "canonical" version of an equivalent, dependent
       // decltype type. Use that as our canonical type.
-      dt = new (*this, TypeAlignment) DecltypeType(e, DependentTy,
+      dt = new (*this, TypeAlignment) DecltypeType(e, UnderlyingType,
                                        QualType((DecltypeType*)Canon, 0));
     } else {
       // Build a new, canonical typeof(expr) type.
