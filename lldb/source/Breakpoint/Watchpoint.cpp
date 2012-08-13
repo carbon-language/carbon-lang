@@ -103,7 +103,10 @@ Watchpoint::GetOldSnapshot() const
 void
 Watchpoint::SetOldSnapshot (const std::string &str)
 {
+    size_t len = str.length();
     m_snapshot_old_str = str;
+    if (len && str.at(len - 1) == '\n')
+        m_snapshot_old_str.resize(len - 1);
     return;
 }
 
@@ -117,7 +120,10 @@ void
 Watchpoint::SetNewSnapshot (const std::string &str)
 {
     m_snapshot_old_str = m_snapshot_new_str;
+    size_t len = str.length();
     m_snapshot_new_str = str;
+    if (len && str.at(len - 1) == '\n')
+        m_snapshot_new_str.resize(len - 1);
     return;
 }
 
@@ -146,6 +152,15 @@ Watchpoint::SetNewSnapshotVal (uint64_t val)
     m_snapshot_old_val = m_snapshot_new_val;
     m_snapshot_new_val = val;
     return;
+}
+
+void
+Watchpoint::ClearSnapshots()
+{
+    m_snapshot_old_str.clear();
+    m_snapshot_new_str.clear();
+    m_snapshot_old_val = 0;
+    m_snapshot_new_val = 0;
 }
 
 // Override default impl of StoppointLocation::IsHardware() since m_is_hardware
@@ -198,21 +213,28 @@ Watchpoint::Dump(Stream *s) const
     DumpWithLevel(s, lldb::eDescriptionLevelBrief);
 }
 
+// If prefix is NULL, we display the watch id and ignore the prefix altogether.
 void
-Watchpoint::DumpSnapshots(const char *prefix, Stream *s) const
+Watchpoint::DumpSnapshots(Stream *s, const char *prefix) const
 {
+    if (!prefix)
+    {
+        s->Printf("\nWatchpoint %u hit:", GetID());
+        prefix = "";
+    }
+
     if (IsWatchVariable())
     {
         if (!m_snapshot_old_str.empty())
-            s->Printf("\n%swatchpoint old value:\n\t%s", prefix, m_snapshot_old_str.c_str());
+            s->Printf("\n%sold value: %s", prefix, m_snapshot_old_str.c_str());
         if (!m_snapshot_new_str.empty())
-            s->Printf("\n%swatchpoint new value:\n\t%s", prefix, m_snapshot_new_str.c_str());
+            s->Printf("\n%snew value: %s", prefix, m_snapshot_new_str.c_str());
     }
     else
     {
         uint32_t num_hex_digits = GetByteSize() * 2;
-        s->Printf("\n%swatchpoint old value:0x%0*.*llx", prefix, num_hex_digits, num_hex_digits, m_snapshot_old_val);
-        s->Printf("\n%swatchpoint new value:0x%0*.*llx", prefix, num_hex_digits, num_hex_digits, m_snapshot_new_val);
+        s->Printf("\n%sold value: 0x%0*.*llx", prefix, num_hex_digits, num_hex_digits, m_snapshot_old_val);
+        s->Printf("\n%snew value: 0x%0*.*llx", prefix, num_hex_digits, num_hex_digits, m_snapshot_new_val);
     }
 }
 
@@ -240,7 +262,7 @@ Watchpoint::DumpWithLevel(Stream *s, lldb::DescriptionLevel description_level) c
             s->Printf("\n    watchpoint spec = '%s'", m_watch_spec_str.c_str());
 
         // Dump the snapshots we have taken.
-        DumpSnapshots("   ", s);
+        DumpSnapshots(s, "    ");
 
         if (GetConditionText())
             s->Printf("\n    condition = '%s'", GetConditionText());
@@ -266,7 +288,10 @@ void
 Watchpoint::SetEnabled(bool enabled)
 {
     if (!enabled)
+    {
         SetHardwareIndex(LLDB_INVALID_INDEX32);
+        ClearSnapshots();
+    }
     m_enabled = enabled;
 }
 

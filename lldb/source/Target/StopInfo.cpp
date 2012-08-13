@@ -544,8 +544,8 @@ public:
                 // Now dump the snapshots we have taken.
                 Debugger &debugger = exe_ctx.GetTargetRef().GetDebugger();
                 StreamSP output_sp = debugger.GetAsyncOutputStream ();
-                wp_sp->DumpSnapshots("!!! ", output_sp.get());
-                //output_sp->EOL();
+                wp_sp->DumpSnapshots(output_sp.get());
+                output_sp->EOL();
                 output_sp->Flush();
             }
 

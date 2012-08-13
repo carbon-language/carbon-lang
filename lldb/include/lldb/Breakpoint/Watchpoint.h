@@ -68,10 +68,11 @@ public:
     void        SetOldSnapshotVal (uint64_t val);
     uint64_t    GetNewSnapshotVal() const;
     void        SetNewSnapshotVal (uint64_t val);
+    void        ClearSnapshots();
 
     void        GetDescription (Stream *s, lldb::DescriptionLevel level);
     void        Dump (Stream *s) const;
-    void        DumpSnapshots (const char * prefix, Stream *s) const;
+    void        DumpSnapshots (Stream *s, const char * prefix = NULL) const;
     void        DumpWithLevel (Stream *s, lldb::DescriptionLevel description_level) const;
     Target      &GetTarget() { return *m_target; }
     const Error &GetError() { return m_error; }
