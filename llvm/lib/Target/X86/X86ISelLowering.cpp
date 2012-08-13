@@ -8540,10 +8540,12 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
 
   if (isFP) {
-    unsigned SSECC = 8;
+#ifndef NDEBUG
     EVT EltVT = Op0.getValueType().getVectorElementType();
-    assert(EltVT == MVT::f32 || EltVT == MVT::f64); (void)EltVT;
+    assert(EltVT == MVT::f32 || EltVT == MVT::f64);
+#endif
 
+    unsigned SSECC;
     bool Swap = false;
 
     // SSE Condition code mapping:
@@ -8556,7 +8558,7 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
     //  6 - NLE
     //  7 - ORD
     switch (SetCCOpcode) {
-    default: break;
+    default: llvm_unreachable("Unknown SetCC condition");
     case ISD::SETOEQ:
     case ISD::SETEQ:  SSECC = 0; break;
     case ISD::SETOGT:
@@ -8570,34 +8572,33 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
     case ISD::SETUO:  SSECC = 3; break;
     case ISD::SETUNE:
     case ISD::SETNE:  SSECC = 4; break;
-    case ISD::SETULE: Swap = true;
+    case ISD::SETULE: Swap = true; // Fallthrough
     case ISD::SETUGE: SSECC = 5; break;
-    case ISD::SETULT: Swap = true;
+    case ISD::SETULT: Swap = true; // Fallthrough
     case ISD::SETUGT: SSECC = 6; break;
     case ISD::SETO:   SSECC = 7; break;
+    case ISD::SETUEQ:
+    case ISD::SETONE: SSECC = 8; break;
     }
     if (Swap)
       std::swap(Op0, Op1);
 
     // In the two special cases we can't handle, emit two comparisons.
     if (SSECC == 8) {
+      unsigned CC0, CC1;
+      unsigned CombineOpc;
       if (SetCCOpcode == ISD::SETUEQ) {
-        SDValue UNORD, EQ;
-        UNORD = DAG.getNode(X86ISD::CMPP, dl, VT, Op0, Op1,
-                            DAG.getConstant(3, MVT::i8));
-        EQ = DAG.getNode(X86ISD::CMPP, dl, VT, Op0, Op1,
-                         DAG.getConstant(0, MVT::i8));
-        return DAG.getNode(ISD::OR, dl, VT, UNORD, EQ);
+        CC0 = 3; CC1 = 0; CombineOpc = ISD::OR;
+      } else {
+        assert(SetCCOpcode == ISD::SETONE);
+        CC0 = 7; CC1 = 4; CombineOpc = ISD::AND;
       }
-      if (SetCCOpcode == ISD::SETONE) {
-        SDValue ORD, NEQ;
-        ORD = DAG.getNode(X86ISD::CMPP, dl, VT, Op0, Op1,
-                          DAG.getConstant(7, MVT::i8));
-        NEQ = DAG.getNode(X86ISD::CMPP, dl, VT, Op0, Op1,
-                          DAG.getConstant(4, MVT::i8));
-        return DAG.getNode(ISD::AND, dl, VT, ORD, NEQ);
-      }
-      llvm_unreachable("Illegal FP comparison");
+
+      SDValue Cmp0 = DAG.getNode(X86ISD::CMPP, dl, VT, Op0, Op1,
+                                 DAG.getConstant(CC0, MVT::i8));
+      SDValue Cmp1 = DAG.getNode(X86ISD::CMPP, dl, VT, Op0, Op1,
+                                 DAG.getConstant(CC1, MVT::i8));
+      return DAG.getNode(CombineOpc, dl, VT, Cmp0, Cmp1);
     }
     // Handle all other FP comparisons here.
     return DAG.getNode(X86ISD::CMPP, dl, VT, Op0, Op1,
