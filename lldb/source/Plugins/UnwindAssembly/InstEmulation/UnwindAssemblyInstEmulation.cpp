@@ -350,6 +350,7 @@ UnwindAssemblyInstEmulation::ReadMemory (EmulateInstruction *instruction,
         context.Dump(strm, instruction);
         log->PutCString (strm.GetData ());
     }
+    memset (dst, 0, dst_len);
     return dst_len;
 }
 
