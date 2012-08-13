@@ -219,7 +219,7 @@ class CrashLog(symbolication.Symbolicator):
                 # print 'PARSE_MODE_NORMAL'
             elif parse_mode == PARSE_MODE_NORMAL:
                 if line.startswith ('Process:'):
-                    (self.process_name, pid_with_brackets) = line[8:].strip().split()
+                    (self.process_name, pid_with_brackets) = line[8:].strip().split(' [')
                     self.process_id = pid_with_brackets.strip('[]')
                 elif line.startswith ('Path:'):
                     self.process_path = line[5:].strip()
