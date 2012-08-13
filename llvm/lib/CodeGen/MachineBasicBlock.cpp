@@ -311,8 +311,11 @@ void MachineBasicBlock::print(raw_ostream &OS, SlotIndexes *Indexes) const {
   if (!succ_empty()) {
     if (Indexes) OS << '\t';
     OS << "    Successors according to CFG:";
-    for (const_succ_iterator SI = succ_begin(), E = succ_end(); SI != E; ++SI)
+    for (const_succ_iterator SI = succ_begin(), E = succ_end(); SI != E; ++SI) {
       OS << " BB#" << (*SI)->getNumber();
+      if (!Weights.empty())
+        OS << '(' << *getWeightIterator(SI) << ')';
+    }
     OS << '\n';
   }
 }
