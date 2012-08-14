@@ -1657,7 +1657,6 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
   SourceManager &SrcMgr = PP.getSourceManager();
   SourceLocation EndLoc = AsmLoc;
   SmallVector<Token, 4> AsmToks;
-  SmallVector<unsigned, 4> LineEnds;
 
   bool InBraces = false;
   unsigned short savedBraceCount = 0;
@@ -1741,8 +1740,6 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
     ++NumTokensRead;
   } while (1);
 
-  LineEnds.push_back(AsmToks.size());
-
   if (InBraces && BraceCount != savedBraceCount) {
     // __asm without closing brace (this can happen at EOF).
     Diag(Tok, diag::err_expected_rbrace);
@@ -1755,8 +1752,7 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
   }
 
   // FIXME: We should be passing source locations for better diagnostics.
-  return Actions.ActOnMSAsmStmt(AsmLoc, llvm::makeArrayRef(AsmToks),
-                                llvm::makeArrayRef(LineEnds), EndLoc);
+  return Actions.ActOnMSAsmStmt(AsmLoc, llvm::makeArrayRef(AsmToks), EndLoc);                               
 }
 
 /// ParseAsmStatement - Parse a GNU extended asm statement.

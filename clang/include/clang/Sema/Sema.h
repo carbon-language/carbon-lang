@@ -2543,7 +2543,6 @@ public:
 
   StmtResult ActOnMSAsmStmt(SourceLocation AsmLoc,
                             ArrayRef<Token> AsmToks,
-                            ArrayRef<unsigned> LineEnds,
                             SourceLocation EndLoc);
 
   VarDecl *BuildObjCExceptionDecl(TypeSourceInfo *TInfo, QualType ExceptionType,

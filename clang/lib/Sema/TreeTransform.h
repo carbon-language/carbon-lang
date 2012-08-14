@@ -1186,9 +1186,8 @@ public:
   /// Subclasses may override this routine to provide different behavior.
   StmtResult RebuildMSAsmStmt(SourceLocation AsmLoc,
                               ArrayRef<Token> AsmToks,
-                              ArrayRef<unsigned> LineEnds,
                               SourceLocation EndLoc) {
-    return getSema().ActOnMSAsmStmt(AsmLoc, AsmToks, LineEnds, EndLoc);
+    return getSema().ActOnMSAsmStmt(AsmLoc, AsmToks, EndLoc);
   }
 
   /// \brief Build a new Objective-C \@try statement.
@@ -5610,12 +5609,8 @@ StmtResult
 TreeTransform<Derived>::TransformMSAsmStmt(MSAsmStmt *S) {
   ArrayRef<Token> AsmToks =
     llvm::makeArrayRef(S->getAsmToks(), S->getNumAsmToks());
-  ArrayRef<unsigned> LineEnds =
-    llvm::makeArrayRef(S->getLineEnds(), S->getNumLineEnds());
 
-  // No need to transform the asm string literal.
-  return getDerived().RebuildMSAsmStmt(S->getAsmLoc(), AsmToks, LineEnds,
-                                       S->getEndLoc());
+  return getDerived().RebuildMSAsmStmt(S->getAsmLoc(), AsmToks, S->getEndLoc());
 }
 
 template<typename Derived>

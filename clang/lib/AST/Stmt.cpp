@@ -585,20 +585,15 @@ AsmStmt::AsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple,
 
 MSAsmStmt::MSAsmStmt(ASTContext &C, SourceLocation asmloc,
                      bool issimple, bool isvolatile, ArrayRef<Token> asmtoks,
-                     ArrayRef<unsigned> lineends, StringRef asmstr,
-                     ArrayRef<StringRef> clobbers, SourceLocation endloc)
+                     StringRef asmstr, ArrayRef<StringRef> clobbers,
+                     SourceLocation endloc)
   : Stmt(MSAsmStmtClass), AsmLoc(asmloc), EndLoc(endloc),
     AsmStr(asmstr.str()), IsSimple(issimple), IsVolatile(isvolatile),
-    NumAsmToks(asmtoks.size()), NumLineEnds(lineends.size()),
-    NumClobbers(clobbers.size()) {
+    NumAsmToks(asmtoks.size()), NumClobbers(clobbers.size()) {
 
   AsmToks = new (C) Token[NumAsmToks];
   for (unsigned i = 0, e = NumAsmToks; i != e; ++i)
     AsmToks[i] = asmtoks[i];
-
-  LineEnds = new (C) unsigned[NumLineEnds];
-  for (unsigned i = 0, e = NumLineEnds; i != e; ++i)
-    LineEnds[i] = lineends[i];
 
   Clobbers = new (C) StringRef[NumClobbers];
   for (unsigned i = 0, e = NumClobbers; i != e; ++i) {
