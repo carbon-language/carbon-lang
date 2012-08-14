@@ -2,6 +2,7 @@
 # Do not edit!
 
 config.target_triple = "@TARGET_TRIPLE@"
+config.host_os = "@HOST_OS@"
 config.llvm_src_root = "@LLVM_SOURCE_DIR@"
 config.llvm_tools_dir = "@LLVM_TOOLS_DIR@"
 config.clang = "@LLVM_BINARY_DIR@/bin/clang"
