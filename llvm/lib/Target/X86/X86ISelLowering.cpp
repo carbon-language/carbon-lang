@@ -11422,6 +11422,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::ATOMAND64_DAG:      return "X86ISD::ATOMAND64_DAG";
   case X86ISD::ATOMNAND64_DAG:     return "X86ISD::ATOMNAND64_DAG";
   case X86ISD::VZEXT_MOVL:         return "X86ISD::VZEXT_MOVL";
+  case X86ISD::VSEXT_MOVL:         return "X86ISD::VSEXT_MOVL";
   case X86ISD::VZEXT_LOAD:         return "X86ISD::VZEXT_LOAD";
   case X86ISD::VFPEXT:             return "X86ISD::VFPEXT";
   case X86ISD::VSHLDQ:             return "X86ISD::VSHLDQ";
