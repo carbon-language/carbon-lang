@@ -18,7 +18,6 @@
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_libc.h"
 #include "sanitizer_procmaps.h"
-#include "sanitizer_symbolizer.h"
 
 #include <crt_externs.h>  // for _NSGetEnviron
 #include <fcntl.h>
@@ -104,18 +103,6 @@ const char *GetEnv(const char *name) {
     }
     environ++;
   }
-  return 0;
-}
-
-// ------------------ sanitizer_symbolizer.h
-bool FindDWARFSection(uptr object_file_addr, const char *section_name,
-                      DWARFSection *section) {
-  UNIMPLEMENTED();
-  return false;
-}
-
-uptr GetListOfModules(ModuleDIContext *modules, uptr max_modules) {
-  UNIMPLEMENTED();
   return 0;
 }
 
