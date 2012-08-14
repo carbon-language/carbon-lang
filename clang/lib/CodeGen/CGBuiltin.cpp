@@ -1720,8 +1720,29 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Ops.push_back(GetPointeeAlignmentValue(E->getArg(0)));
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vld1, Ty),
                         Ops, "vld1");
-  case ARM::BI__builtin_neon_vld1_lane_v:
-  case ARM::BI__builtin_neon_vld1q_lane_v: {
+  case ARM::BI__builtin_neon_vld1q_lane_v:
+    // Handle 64-bit integer elements as a special case.  Use shuffles of
+    // one-element vectors to avoid poor code for i64 in the backend.
+    if (VTy->getElementType()->isIntegerTy(64)) {
+      // Extract the other lane.
+      Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
+      int Lane = cast<ConstantInt>(Ops[2])->getZExtValue();
+      Value *SV = llvm::ConstantVector::get(ConstantInt::get(Int32Ty, 1-Lane));
+      Ops[1] = Builder.CreateShuffleVector(Ops[1], Ops[1], SV);
+      // Load the value as a one-element vector.
+      Ty = llvm::VectorType::get(VTy->getElementType(), 1);
+      Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vld1, Ty);
+      Value *Ld = Builder.CreateCall2(F, Ops[0],
+                                      GetPointeeAlignmentValue(E->getArg(0)));
+      // Combine them.
+      SmallVector<Constant*, 2> Indices;
+      Indices.push_back(ConstantInt::get(Int32Ty, 1-Lane));
+      Indices.push_back(ConstantInt::get(Int32Ty, Lane));
+      SV = llvm::ConstantVector::get(Indices);
+      return Builder.CreateShuffleVector(Ops[1], Ld, SV, "vld1q_lane");
+    }
+    // fall through
+  case ARM::BI__builtin_neon_vld1_lane_v: {
     Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
     Ty = llvm::PointerType::getUnqual(VTy->getElementType());
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
@@ -2086,8 +2107,19 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Ops.push_back(GetPointeeAlignmentValue(E->getArg(0)));
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vst1, Ty),
                         Ops, "");
-  case ARM::BI__builtin_neon_vst1_lane_v:
-  case ARM::BI__builtin_neon_vst1q_lane_v: {
+  case ARM::BI__builtin_neon_vst1q_lane_v:
+    // Handle 64-bit integer elements as a special case.  Use a shuffle to get
+    // a one-element vector and avoid poor code for i64 in the backend.
+    if (VTy->getElementType()->isIntegerTy(64)) {
+      Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
+      Value *SV = llvm::ConstantVector::get(cast<llvm::Constant>(Ops[2]));
+      Ops[1] = Builder.CreateShuffleVector(Ops[1], Ops[1], SV);
+      Ops[2] = GetPointeeAlignmentValue(E->getArg(0));
+      return Builder.CreateCall(CGM.getIntrinsic(Intrinsic::arm_neon_vst1,
+                                                 Ops[1]->getType()), Ops);
+    }
+    // fall through
+  case ARM::BI__builtin_neon_vst1_lane_v: {
     Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
     Ops[1] = Builder.CreateExtractElement(Ops[1], Ops[2]);
     Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
