@@ -3723,6 +3723,7 @@ void RetainCountChecker::checkDeadSymbols(SymbolReaper &SymReaper,
 // Debug printing of refcount bindings and autorelease pools.
 //===----------------------------------------------------------------------===//
 
+#if AUTORELEASE_POOL_MODELING
 static void PrintPool(raw_ostream &Out, SymbolRef Sym,
                       ProgramStateRef State) {
   Out << ' ';
@@ -3732,16 +3733,13 @@ static void PrintPool(raw_ostream &Out, SymbolRef Sym,
     Out << "<pool>";
   Out << ":{";
 
-#if AUTORELEASE_POOL_MODELING
   // Get the contents of the pool.
   if (const ARCounts *Cnts = State->get<AutoreleasePoolContents>(Sym))
     for (ARCounts::iterator I = Cnts->begin(), E = Cnts->end(); I != E; ++I)
       Out << '(' << I.getKey() << ',' << I.getData() << ')';
-#endif
   Out << '}';
 }
 
-#if AUTORELEASE_POOL_MODELING
 static bool UsesAutorelease(ProgramStateRef state) {
   // A state uses autorelease if it allocated an autorelease pool or if it has
   // objects in the caller's autorelease pool.
