@@ -16,6 +16,7 @@
 #include "MipsRegisterInfo.h"
 #include "llvm/MC/EDInstInfo.h"
 #include "llvm/MC/MCDisassembler.h"
+#include "llvm/MC/MCFixedLenDisassembler.h"
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -274,7 +275,8 @@ MipsDisassembler::getInstruction(MCInst &instr,
     return MCDisassembler::Fail;
 
   // Calling the auto-generated decoder function.
-  Result = decodeMipsInstruction32(instr, Insn, Address, this, STI);
+  Result = decodeInstruction(DecoderTableMips32, instr, Insn, Address,
+                             this, STI);
   if (Result != MCDisassembler::Fail) {
     Size = 4;
     return Result;
@@ -298,13 +300,15 @@ Mips64Disassembler::getInstruction(MCInst &instr,
     return MCDisassembler::Fail;
 
   // Calling the auto-generated decoder function.
-  Result = decodeMips64Instruction32(instr, Insn, Address, this, STI);
+  Result = decodeInstruction(DecoderTableMips6432, instr, Insn, Address,
+                             this, STI);
   if (Result != MCDisassembler::Fail) {
     Size = 4;
     return Result;
   }
   // If we fail to decode in Mips64 decoder space we can try in Mips32
-  Result = decodeMipsInstruction32(instr, Insn, Address, this, STI);
+  Result = decodeInstruction(DecoderTableMips32, instr, Insn, Address,
+                             this, STI);
   if (Result != MCDisassembler::Fail) {
     Size = 4;
     return Result;
@@ -379,8 +383,8 @@ static DecodeStatus DecodeMem(MCInst &Inst,
                               uint64_t Address,
                               const void *Decoder) {
   int Offset = SignExtend32<16>(Insn & 0xffff);
-  unsigned Reg = fieldFromInstruction32(Insn, 16, 5);
-  unsigned Base = fieldFromInstruction32(Insn, 21, 5);
+  unsigned Reg = fieldFromInstruction(Insn, 16, 5);
+  unsigned Base = fieldFromInstruction(Insn, 21, 5);
 
   Reg = getReg(Decoder, Mips::CPURegsRegClassID, Reg);
   Base = getReg(Decoder, Mips::CPURegsRegClassID, Base);
@@ -401,8 +405,8 @@ static DecodeStatus DecodeFMem(MCInst &Inst,
                                uint64_t Address,
                                const void *Decoder) {
   int Offset = SignExtend32<16>(Insn & 0xffff);
-  unsigned Reg = fieldFromInstruction32(Insn, 16, 5);
-  unsigned Base = fieldFromInstruction32(Insn, 21, 5);
+  unsigned Reg = fieldFromInstruction(Insn, 16, 5);
+  unsigned Base = fieldFromInstruction(Insn, 21, 5);
 
   Reg = getReg(Decoder, Mips::FGR64RegClassID, Reg);
   Base = getReg(Decoder, Mips::CPURegsRegClassID, Base);
@@ -484,7 +488,7 @@ static DecodeStatus DecodeJumpTarget(MCInst &Inst,
                                      uint64_t Address,
                                      const void *Decoder) {
 
-  unsigned JumpOffset = fieldFromInstruction32(Insn, 0, 26) << 2;
+  unsigned JumpOffset = fieldFromInstruction(Insn, 0, 26) << 2;
   Inst.addOperand(MCOperand::CreateImm(JumpOffset));
   return MCDisassembler::Success;
 }
