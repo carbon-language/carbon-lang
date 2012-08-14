@@ -1956,24 +1956,46 @@ protected:
             return false;
         }
         
-        for (int i = argc - 1; i >= 0; i--)
+        if (argc == 1 && strcmp(command.GetArgumentAtIndex(0),"*") == 0)
         {
-            const char* typeA = command.GetArgumentAtIndex(i);
-            ConstString typeCS(typeA);
-            
-            if (!typeCS)
+            // we want to make sure to enable "system" last and "default" first
+            DataVisualization::Categories::Enable(ConstString("default"), CategoryMap::First);
+            uint32_t num_categories = DataVisualization::Categories::GetCount();
+            for (uint32_t i = 0; i < num_categories; i++)
             {
-                result.AppendError("empty category name not allowed");
-                result.SetStatus(eReturnStatusFailed);
-                return false;
-            }
-            DataVisualization::Categories::Enable(typeCS);
-            lldb::TypeCategoryImplSP cate;
-            if (DataVisualization::Categories::GetCategory(typeCS, cate) && cate.get())
-            {
-                if (cate->GetCount() == 0)
+                lldb::TypeCategoryImplSP category_sp = DataVisualization::Categories::GetCategoryAtIndex(i);
+                if (category_sp)
                 {
-                    result.AppendWarning("empty category enabled (typo?)");
+                    if ( ::strcmp(category_sp->GetName(), "system") == 0 ||
+                         ::strcmp(category_sp->GetName(), "default") == 0 )
+                        continue;
+                    else
+                        DataVisualization::Categories::Enable(category_sp, CategoryMap::Default);
+                }
+            }
+            DataVisualization::Categories::Enable(ConstString("system"), CategoryMap::Last);
+        }
+        else
+        {
+            for (int i = argc - 1; i >= 0; i--)
+            {
+                const char* typeA = command.GetArgumentAtIndex(i);
+                ConstString typeCS(typeA);
+                
+                if (!typeCS)
+                {
+                    result.AppendError("empty category name not allowed");
+                    result.SetStatus(eReturnStatusFailed);
+                    return false;
+                }
+                DataVisualization::Categories::Enable(typeCS);
+                lldb::TypeCategoryImplSP cate;
+                if (DataVisualization::Categories::GetCategory(typeCS, cate) && cate.get())
+                {
+                    if (cate->GetCount() == 0)
+                    {
+                        result.AppendWarning("empty category enabled (typo?)");
+                    }
                 }
             }
         }

@@ -83,7 +83,7 @@ class DataFormatterDisablingTestCase(TestBase):
         self.expect('type category list', substrs = ['system is not enabled', 'gnu-libstdc++ is not enabled', 'AppKit is not enabled'])
         
         # now enable and check that we are back to normal
-        cleanup()
+        self.runCmd("type category enable *")
 
         self.expect('type category list', substrs = ['system is enabled', 'gnu-libstdc++ is enabled', 'AppKit is enabled'])
 
