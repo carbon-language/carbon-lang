@@ -23,15 +23,14 @@ define i32 @test_load(i32* %a) address_safety {
 ; CHECK:   icmp sge i8 %{{.*}}, %[[LOAD_SHADOW]]
 ; CHECK:   br i1 %{{.*}}, label %{{.*}}, label %{{.*}}
 ;
-; The actual load comes next because ASan adds the crash block
-; to the end of the function.
-; CHECK:   %tmp1 = load i32* %a
-; CHECK:   ret i32 %tmp1
-
 ; The crash block reports the error.
 ; CHECK:   call void @__asan_report_load4(i64 %[[LOAD_ADDR]])
 ; CHECK:   unreachable
 ;
+; The actual load.
+; CHECK:   %tmp1 = load i32* %a
+; CHECK:   ret i32 %tmp1
+
 
 
 entry:
@@ -57,14 +56,13 @@ define void @test_store(i32* %a) address_safety {
 ; CHECK:   icmp sge i8 %{{.*}}, %[[STORE_SHADOW]]
 ; CHECK:   br i1 %{{.*}}, label %{{.*}}, label %{{.*}}
 ;
-; The actual load comes next because ASan adds the crash block
-; to the end of the function.
-; CHECK:   store i32 42, i32* %a
-; CHECK:   ret void
-;
 ; The crash block reports the error.
 ; CHECK:   call void @__asan_report_store4(i64 %[[STORE_ADDR]])
 ; CHECK:   unreachable
+;
+; The actual load.
+; CHECK:   store i32 42, i32* %a
+; CHECK:   ret void
 ;
 
 entry:
