@@ -15,14 +15,14 @@ entry:
   %1 = load i16* @y, align 2
   %2 = tail call float @llvm.convert.from.fp16(i16 %0)
 ; CHECK: __gnu_h2f_ieee
-; CHECK-FP16: vcvtb.f16.f32
+; CHECK-FP16: vcvtb.f32.f16
   %3 = tail call float @llvm.convert.from.fp16(i16 %1)
 ; CHECK: __gnu_h2f_ieee
-; CHECK-FP16: vcvtb.f16.f32
+; CHECK-FP16: vcvtb.f32.f16
   %4 = fadd float %2, %3
   %5 = tail call i16 @llvm.convert.to.fp16(float %4)
 ; CHECK: __gnu_f2h_ieee
-; CHECK-FP16: vcvtb.f32.f16
+; CHECK-FP16: vcvtb.f16.f32
   store i16 %5, i16* @x, align 2
   ret void
 }
