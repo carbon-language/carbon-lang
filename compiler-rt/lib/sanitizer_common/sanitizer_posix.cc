@@ -17,10 +17,12 @@
 #include "sanitizer_libc.h"
 #include "sanitizer_procmaps.h"
 
+#include <errno.h>
 #include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
 #include <sys/time.h>
@@ -45,8 +47,9 @@ void *MmapOrDie(uptr size, const char *mem_type) {
                             PROT_READ | PROT_WRITE,
                             MAP_PRIVATE | MAP_ANON, -1, 0);
   if (res == (void*)-1) {
-    Report("ERROR: Failed to allocate 0x%zx (%zd) bytes of %s\n",
-           size, size, mem_type);
+    Report("ERROR: Failed to allocate 0x%zx (%zd) bytes of %s: %s\n",
+           size, size, mem_type, strerror(errno));
+    DumpProcessMap();
     CHECK("unable to mmap" && 0);
   }
   return res;

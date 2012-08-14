@@ -1879,7 +1879,7 @@ TEST(AddressSanitizer, DISABLED_DemoTooMuchMemoryTest) {
     char *x = (char*)malloc(kAllocSize);
     memset(x, 0, kAllocSize);
     total_size += kAllocSize;
-    fprintf(stderr, "total: %ldM\n", (long)total_size >> 20);
+    fprintf(stderr, "total: %ldM %p\n", (long)total_size >> 20, x);
   }
 }
 
