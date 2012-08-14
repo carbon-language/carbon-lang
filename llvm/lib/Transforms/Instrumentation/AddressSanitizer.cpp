@@ -159,7 +159,7 @@ struct AddressSanitizer : public ModulePass {
                          Value *Addr, uint32_t TypeSize, bool IsWrite);
   Value *createSlowPathCmp(IRBuilder<> &IRB, Value *AddrLong,
                            Value *ShadowValue, uint32_t TypeSize);
-  Instruction *generateCrashCode(BasicBlock *BB, Value *Addr, Value *PC,
+  Instruction *generateCrashCode(Instruction *InsertBefore, Value *Addr,
                                  bool IsWrite, size_t AccessSizeIndex);
   bool instrumentMemIntrinsic(AsanFunctionContext &AFC, MemIntrinsic *MI);
   void instrumentMemIntrinsicParam(AsanFunctionContext &AFC,
@@ -251,24 +251,24 @@ static GlobalVariable *createPrivateGlobalForString(Module &M, StringRef Str) {
 //     ThenBlock
 //   Tail
 //
-// If ThenBlock is zero, a new block is created and its terminator is returned.
-// Otherwize 0 is returned.
-static BranchInst *splitBlockAndInsertIfThen(Value *Cmp,
-                                             BasicBlock *ThenBlock = 0) {
+// ThenBlock block is created and its terminator is returned.
+// If Unreachable, ThenBlock is terminated with UnreachableInst, otherwise
+// it is terminated with BranchInst to Tail.
+static TerminatorInst *splitBlockAndInsertIfThen(Value *Cmp, bool Unreachable) {
   Instruction *SplitBefore = cast<Instruction>(Cmp)->getNextNode();
   BasicBlock *Head = SplitBefore->getParent();
   BasicBlock *Tail = Head->splitBasicBlock(SplitBefore);
   TerminatorInst *HeadOldTerm = Head->getTerminator();
-  BranchInst *CheckTerm = 0;
-  if (!ThenBlock) {
-    LLVMContext &C = Head->getParent()->getParent()->getContext();
-    ThenBlock = BasicBlock::Create(C, "", Head->getParent(), Tail);
+  LLVMContext &C = Head->getParent()->getParent()->getContext();
+  BasicBlock *ThenBlock = BasicBlock::Create(C, "", Head->getParent(), Tail);
+  TerminatorInst *CheckTerm;
+  if (Unreachable)
+    CheckTerm = new UnreachableInst(C, ThenBlock);
+  else
     CheckTerm = BranchInst::Create(Tail, ThenBlock);
-  }
   BranchInst *HeadNewTerm =
     BranchInst::Create(/*ifTrue*/ThenBlock, /*ifFalse*/Tail, Cmp);
   ReplaceInstWithInst(HeadOldTerm, HeadNewTerm);
-
   return CheckTerm;
 }
 
@@ -320,7 +320,7 @@ bool AddressSanitizer::instrumentMemIntrinsic(AsanFunctionContext &AFC,
 
     Value *Cmp = IRB.CreateICmpNE(Length,
                                   Constant::getNullValue(Length->getType()));
-    InsertBefore = splitBlockAndInsertIfThen(Cmp);
+    InsertBefore = splitBlockAndInsertIfThen(Cmp, false);
   }
 
   instrumentMemIntrinsicParam(AFC, MI, Dst, Length, InsertBefore, true);
@@ -391,15 +391,11 @@ Function *AddressSanitizer::checkInterfaceFunction(Constant *FuncOrBitcast) {
 }
 
 Instruction *AddressSanitizer::generateCrashCode(
-    BasicBlock *BB, Value *Addr, Value *PC,
+    Instruction *InsertBefore, Value *Addr,
     bool IsWrite, size_t AccessSizeIndex) {
-  IRBuilder<> IRB(BB->getFirstNonPHI());
-  CallInst *Call;
-  if (PC)
-    Call = IRB.CreateCall2(AsanErrorCallback[IsWrite][AccessSizeIndex],
-                           Addr, PC);
-  else
-    Call = IRB.CreateCall(AsanErrorCallback[IsWrite][AccessSizeIndex], Addr);
+  IRBuilder<> IRB(InsertBefore);
+  CallInst *Call = IRB.CreateCall(AsanErrorCallback[IsWrite][AccessSizeIndex],
+                                  Addr);
   // We don't do Call->setDoesNotReturn() because the BB already has
   // UnreachableInst at the end.
   // This EmptyAsm is required to avoid callback merge.
@@ -440,26 +436,27 @@ void AddressSanitizer::instrumentAddress(AsanFunctionContext &AFC,
       IRB.CreateIntToPtr(ShadowPtr, ShadowPtrTy));
 
   Value *Cmp = IRB.CreateICmpNE(ShadowValue, CmpVal);
-
-  BasicBlock *CrashBlock = BasicBlock::Create(*C, "crash_bb", &AFC.F);
-  new UnreachableInst(*C, CrashBlock);
   size_t AccessSizeIndex = TypeSizeToSizeIndex(TypeSize);
-  Instruction *Crash =
-      generateCrashCode(CrashBlock, AddrLong, 0, IsWrite, AccessSizeIndex);
-  Crash->setDebugLoc(OrigIns->getDebugLoc());
-
   size_t Granularity = 1 << MappingScale;
+  TerminatorInst *CrashTerm = 0;
+
   if (TypeSize < 8 * Granularity) {
-    BranchInst *CheckTerm = splitBlockAndInsertIfThen(Cmp);
-    assert(CheckTerm->isUnconditional());
+    TerminatorInst *CheckTerm = splitBlockAndInsertIfThen(Cmp, false);
+    assert(dyn_cast<BranchInst>(CheckTerm)->isUnconditional());
     BasicBlock *NextBB = CheckTerm->getSuccessor(0);
     IRB.SetInsertPoint(CheckTerm);
     Value *Cmp2 = createSlowPathCmp(IRB, AddrLong, ShadowValue, TypeSize);
+    BasicBlock *CrashBlock = BasicBlock::Create(*C, "", &AFC.F, NextBB);
+    CrashTerm = new UnreachableInst(*C, CrashBlock);
     BranchInst *NewTerm = BranchInst::Create(CrashBlock, NextBB, Cmp2);
     ReplaceInstWithInst(CheckTerm, NewTerm);
   } else {
-    splitBlockAndInsertIfThen(Cmp, CrashBlock);
+    CrashTerm = splitBlockAndInsertIfThen(Cmp, true);
   }
+
+  Instruction *Crash =
+      generateCrashCode(CrashTerm, AddrLong, IsWrite, AccessSizeIndex);
+  Crash->setDebugLoc(OrigIns->getDebugLoc());
 }
 
 // This function replaces all global variables with new variables that have
