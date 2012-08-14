@@ -43,3 +43,45 @@ void t5(void) {
 // CHECK: ret void
   __asm mov ebx, eax __asm mov ecx, ebx
 }
+
+void t6(void) {
+  __asm int 0x2c
+// CHECK: t6
+// CHECK: call void asm sideeffect "int 0x2c", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
+}
+
+void* t7(void) {
+  __asm mov eax, fs:[0x10]
+// CHECK: t7
+// CHECK: call void asm sideeffect "mov eax, fs:[0x10]", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
+}
+
+void t8() {
+  __asm {
+    int 0x2c ; } asm comments are fun! }{
+  }
+  __asm {}
+// CHECK: t8
+// CHECK: call void asm sideeffect "int 0x2c", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
+// CHECK: call void asm sideeffect "", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
+}
+int t9() {
+  __asm int 3 ; } comments for single-line asm
+  __asm {}
+  __asm int 4
+  return 10;
+// CHECK: t9
+// CHECK: call void asm sideeffect "int 3", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
+// CHECK: call void asm sideeffect "", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
+// CHECK: call void asm sideeffect "int 4", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
+// CHECK: ret i32 10
+}
+void t10() {
+  __asm {
+    push ebx
+    mov ebx, 0x07
+    pop ebx
+  }
+// CHECK: t10
+// CHECK: call void asm sideeffect "push ebx\0Amov ebx, 0x07\0Apop ebx", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
+}
