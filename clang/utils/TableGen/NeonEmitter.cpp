@@ -1504,7 +1504,7 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
       throw TGError(R->getLoc(), "Builtin has no class kind");
 
     int si = -1, qi = -1;
-    unsigned mask = 0, qmask = 0;
+    uint64_t mask = 0, qmask = 0;
     for (unsigned ti = 0, te = TypeVec.size(); ti != te; ++ti) {
       // Generate the switch case(s) for this builtin for the type validation.
       bool quad = false, poly = false, usgn = false;
@@ -1512,10 +1512,10 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
 
       if (quad) {
         qi = ti;
-        qmask |= 1 << GetNeonEnum(Proto, TypeVec[ti]);
+        qmask |= 1ULL << GetNeonEnum(Proto, TypeVec[ti]);
       } else {
         si = ti;
-        mask |= 1 << GetNeonEnum(Proto, TypeVec[ti]);
+        mask |= 1ULL << GetNeonEnum(Proto, TypeVec[ti]);
       }
     }
 
