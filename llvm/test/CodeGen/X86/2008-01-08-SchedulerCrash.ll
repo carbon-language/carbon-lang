@@ -10,10 +10,10 @@
 
 	%struct.indexentry = type { i32, i8*, i8*, i8*, i8*, i8* }
 
-define i32 @_bfd_stab_section_find_nearest_line(i32 %offset) nounwind  {
+define i32 @_bfd_stab_section_find_nearest_line(i32 %offset, i1 %cond) nounwind  {
 entry:
 	%tmp910 = add i32 0, %offset		; <i32> [#uses=1]
-	br i1 true, label %bb951, label %bb917
+	br i1 %cond, label %bb951, label %bb917
 
 bb917:		; preds = %entry
 	ret i32 0
@@ -21,7 +21,7 @@ bb917:		; preds = %entry
 bb951:		; preds = %bb986, %entry
 	%tmp955 = sdiv i32 0, 2		; <i32> [#uses=3]
 	%tmp961 = getelementptr %struct.indexentry* null, i32 %tmp955, i32 0		; <i32*> [#uses=1]
-	br i1 true, label %bb986, label %bb967
+	br i1 %cond, label %bb986, label %bb967
 
 bb967:		; preds = %bb951
 	ret i32 0

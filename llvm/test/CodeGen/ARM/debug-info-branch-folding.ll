@@ -3,16 +3,17 @@ target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-
 target triple = "thumbv7-apple-macosx10.6.7"
 
 ;CHECK: 	vadd.f32	q4, q8, q8
-;CHECK-NEXT: Ltmp
-;CHECK-NEXT: 	@DEBUG_VALUE: y <- Q4+0
-;CHECK-NEXT:    @DEBUG_VALUE: x <- Q4+0
+;CHECK-NEXT: Ltmp1
+
+;CHECK:@DEBUG_VALUE: x <- Q4+0
+;CHECK-NEXT:@DEBUG_VALUE: y <- Q4+0
 
 
 @.str = external constant [13 x i8]
 
 declare <4 x float> @test0001(float) nounwind readnone ssp
 
-define i32 @main(i32 %argc, i8** nocapture %argv) nounwind ssp {
+define i32 @main(i32 %argc, i8** nocapture %argv, i1 %cond) nounwind ssp {
 entry:
   br label %for.body9
 
@@ -21,7 +22,7 @@ for.body9:                                        ; preds = %for.body9, %entry
   tail call void @llvm.dbg.value(metadata !{<4 x float> %add19}, i64 0, metadata !27), !dbg !39
   %add20 = fadd <4 x float> undef, <float 0.000000e+00, float 0.000000e+00, float 0.000000e+00, float 1.000000e+00>, !dbg !39
   tail call void @llvm.dbg.value(metadata !{<4 x float> %add20}, i64 0, metadata !28), !dbg !39
-  br i1 undef, label %for.end54, label %for.body9, !dbg !44
+  br i1 %cond, label %for.end54, label %for.body9, !dbg !44
 
 for.end54:                                        ; preds = %for.body9
   %tmp115 = extractelement <4 x float> %add19, i32 1
@@ -52,7 +53,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !7 = metadata !{i32 589860, metadata !2, metadata !"float", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 4} ; [ DW_TAG_base_type ]
 !8 = metadata !{metadata !9}
 !9 = metadata !{i32 589857, i64 0, i64 3}         ; [ DW_TAG_subrange_type ]
-!10 = metadata !{i32 589870, i32 0, metadata !1, metadata !"main", metadata !"main", metadata !"", metadata !1, i32 59, metadata !11, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32, i8**)* @main, null} ; [ DW_TAG_subprogram ]
+!10 = metadata !{i32 589870, i32 0, metadata !1, metadata !"main", metadata !"main", metadata !"", metadata !1, i32 59, metadata !11, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32, i8**, i1)* @main, null} ; [ DW_TAG_subprogram ]
 !11 = metadata !{i32 589845, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !12, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !12 = metadata !{metadata !13}
 !13 = metadata !{i32 589860, metadata !2, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]

@@ -5,7 +5,7 @@ target triple = "x86_64-apple-darwin10.0.0"
 
 ; CHECK: @test1
 ; objectsize should fold to a constant, which causes the branch to fold to an
-; uncond branch.
+; uncond branch. Next, we fold the control flow alltogether.
 ; rdar://8785296
 define i32 @test1(i8* %ptr) nounwind ssp noredzone align 2 {
 entry:
@@ -13,8 +13,8 @@ entry:
   %1 = icmp ugt i64 %0, 3
   br i1 %1, label %T, label %trap
 
-; CHECK: entry:
-; CHECK-NEXT: br label %T
+; CHECK: T:
+; CHECK-NOT: br label %
 
 trap:                                             ; preds = %0, %entry
   tail call void @llvm.trap() noreturn nounwind

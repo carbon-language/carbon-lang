@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=x86-64 > %t
-; RUN: grep movb %t | count 2
+; RUN: grep movb %t | count 1
 ; RUN: grep "movzb[wl]" %t
 
 

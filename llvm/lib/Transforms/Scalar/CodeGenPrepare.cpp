@@ -116,6 +116,7 @@ namespace {
     }
 
   private:
+    bool EliminateFallThrough(Function &F);
     bool EliminateMostlyEmptyBlocks(Function &F);
     bool CanMergeBlocks(const BasicBlock *BB, const BasicBlock *DestBB) const;
     void EliminateMostlyEmptyBlock(BasicBlock *BB);
@@ -192,6 +193,11 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
              I = WorkList.begin(), E = WorkList.end(); I != E; ++I)
         DeleteDeadBlock(*I);
 
+    // Merge pairs of basic blocks with unconditional branches, connected by
+    // a single edge.
+    if (EverMadeChange || MadeChange)
+      MadeChange |= EliminateFallThrough(F);
+
     if (MadeChange)
       ModifiedDT = true;
     EverMadeChange |= MadeChange;
@@ -201,6 +207,39 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
     DT->DT->recalculate(F);
 
   return EverMadeChange;
+}
+
+/// EliminateFallThrough - Merge basic blocks which are connected
+/// by a single edge, where one of the basic blocks has a single successor
+/// pointing to the other basic block, which has a single predecessor.
+bool CodeGenPrepare::EliminateFallThrough(Function &F) {
+  bool Changed = false;
+  // Scan all of the blocks in the function, except for the entry block.
+  for (Function::iterator I = ++F.begin(), E = F.end(); I != E; ) {
+    BasicBlock *BB = I++;
+    // If the destination block has a single pred, then this is a trivial
+    // edge, just collapse it.
+    BasicBlock *SinglePred = BB->getSinglePredecessor();
+
+    if (!SinglePred || SinglePred == BB) continue;
+
+    BranchInst *Term = dyn_cast<BranchInst>(SinglePred->getTerminator());
+    if (Term && !Term->isConditional()) {
+      Changed = true;
+      // Remember if SinglePred was the entry block of the function.
+      // If so, we will need to move BB back to the entry position.
+      bool isEntry = SinglePred == &SinglePred->getParent()->getEntryBlock();
+      MergeBasicBlockIntoOnlyPred(BB, this);
+
+      if (isEntry && BB != &BB->getParent()->getEntryBlock())
+        BB->moveBefore(&BB->getParent()->getEntryBlock());
+
+      // We have erased a block. Update the iterator.
+      I = BB;
+      DEBUG(dbgs() << "Merged:\n"<< *SinglePred << "\n\n\n");
+    }
+  }
+  return Changed;
 }
 
 /// EliminateMostlyEmptyBlocks - eliminate blocks that contain only PHI nodes,

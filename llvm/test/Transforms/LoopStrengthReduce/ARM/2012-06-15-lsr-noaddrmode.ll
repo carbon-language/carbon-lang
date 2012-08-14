@@ -44,7 +44,7 @@ declare %s* @getstruct() nounwind
 
 ; CHECK: @main
 ; Check that the loop preheader contains no address computation.
-; CHECK: %entry
+; CHECK: %end_of_chain
 ; CHECK-NOT: add{{.*}}lsl
 ; CHECK: ldr{{.*}}lsl #2
 ; CHECK: ldr{{.*}}lsl #2
@@ -65,15 +65,15 @@ while.cond:
 
 while.body:
   %v3 = load i32* @ncol, align 4, !tbaa !0
-  br label %while.cond.i
+  br label %end_of_chain
 
-while.cond.i:
+end_of_chain:
   %state.i = getelementptr inbounds %s* %call18, i32 0, i32 0
   %v4 = load i32** %state.i, align 4, !tbaa !3
   br label %while.cond.i.i
 
 while.cond.i.i:
-  %counter.0.i.i = phi i32 [ %v3, %while.cond.i ], [ %dec.i.i, %land.rhs.i.i ]
+  %counter.0.i.i = phi i32 [ %v3, %end_of_chain ], [ %dec.i.i, %land.rhs.i.i ]
   %dec.i.i = add nsw i32 %counter.0.i.i, -1
   %tobool.i.i = icmp eq i32 %counter.0.i.i, 0
   br i1 %tobool.i.i, label %where.exit, label %land.rhs.i.i
