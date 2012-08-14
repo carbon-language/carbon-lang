@@ -6313,7 +6313,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
   // by a dataflow analysis.
   // Record types initialized by initializer list are handled here.
   // Initialization by constructors are handled in TryConstructorInitialization.
-  if (!VDecl->hasLocalStorage() && !VDecl->isStaticLocal() &&
+  if (!VDecl->hasLocalStorage() &&
       (isa<InitListExpr>(Init) || !VDecl->getType()->isRecordType()))
     CheckSelfReference(RealDecl, Init);
 

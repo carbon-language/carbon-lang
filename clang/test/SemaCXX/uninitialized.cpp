@@ -316,3 +316,65 @@ namespace {
     G(char (*)[8]) : f3(new F(f3->*ptr)) {} // expected-warning {{field is uninitialized when used here}}
   };
 }
+
+namespace statics {
+  static int a = a; // no-warning: used to signal intended lack of initialization.
+  static int b = b + 1; // expected-warning {{variable 'b' is uninitialized when used within its own initialization}}
+  static int c = (c + c); // expected-warning 2{{variable 'c' is uninitialized when used within its own initialization}}
+  static int e = static_cast<long>(e) + 1; // expected-warning {{variable 'e' is uninitialized when used within its own initialization}}
+  static int f = foo(f); // expected-warning {{variable 'f' is uninitialized when used within its own initialization}}
+
+  // Thes don't warn as they don't require the value.
+  static int g = sizeof(g);
+  int gg = g;  // Silence unneeded warning
+  static void* ptr = &ptr;
+  static int h = bar(&h);
+  static int i = boo(i);
+  static int j = far(j);
+  static int k = __alignof__(k);
+
+  static int l = k ? l : l;  // expected-warning 2{{variable 'l' is uninitialized when used within its own initialization}}
+  static int m = 1 + (k ? m : m);  // expected-warning 2{{variable 'm' is uninitialized when used within its own initialization}}
+  static int n = -n;  // expected-warning {{variable 'n' is uninitialized when used within its own initialization}}
+
+  void test() {
+    static int a = a; // no-warning: used to signal intended lack of initialization.
+    static int b = b + 1; // expected-warning {{variable 'b' is uninitialized when used within its own initialization}}
+    static int c = (c + c); // expected-warning 2{{variable 'c' is uninitialized when used within its own initialization}}
+    static int d = ({ d + d ;}); // expected-warning 2{{variable 'd' is uninitialized when used within its own initialization}}
+    static int e = static_cast<long>(e) + 1; // expected-warning {{variable 'e' is uninitialized when used within its own initialization}}
+    static int f = foo(f); // expected-warning {{variable 'f' is uninitialized when used within its own initialization}}
+
+    // Thes don't warn as they don't require the value.
+    static int g = sizeof(g);
+    static void* ptr = &ptr;
+    static int h = bar(&h);
+    static int i = boo(i);
+    static int j = far(j);
+    static int k = __alignof__(k);
+
+    static int l = k ? l : l;  // expected-warning 2{{variable 'l' is uninitialized when used within its own initialization}}
+    static int m = 1 + (k ? m : m);  // expected-warning 2{{variable 'm' is uninitialized when used within its own initialization}}
+    static int n = -n;  // expected-warning {{variable 'n' is uninitialized when used within its own initialization}}
+   for (;;) {
+      static int a = a; // no-warning: used to signal intended lack of initialization.
+      static int b = b + 1; // expected-warning {{variable 'b' is uninitialized when used within its own initialization}}
+      static int c = (c + c); // expected-warning 2{{variable 'c' is uninitialized when used within its own initialization}}
+      static int d = ({ d + d ;}); // expected-warning 2{{variable 'd' is uninitialized when used within its own initialization}}
+      static int e = static_cast<long>(e) + 1; // expected-warning {{variable 'e' is uninitialized when used within its own initialization}}
+      static int f = foo(f); // expected-warning {{variable 'f' is uninitialized when used within its own initialization}}
+
+      // Thes don't warn as they don't require the value.
+      static int g = sizeof(g);
+      static void* ptr = &ptr;
+      static int h = bar(&h);
+      static int i = boo(i);
+      static int j = far(j);
+      static int k = __alignof__(k);
+
+      static int l = k ? l : l;  // expected-warning 2{{variable 'l' is uninitialized when used within its own initialization}}
+      static int m = 1 + (k ? m : m); // expected-warning 2{{variable 'm' is uninitialized when used within its own initialization}}
+      static int n = -n;  // expected-warning {{variable 'n' is uninitialized when used within its own initialization}}
+    }
+  }
+}
