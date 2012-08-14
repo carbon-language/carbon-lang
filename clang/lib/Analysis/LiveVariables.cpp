@@ -284,6 +284,14 @@ void TransferFunctions::Visit(Stmt *S) {
       }
       break;
     }
+    case Stmt::ObjCMessageExprClass: {
+      // In calls to super, include the implicit "self" pointer as being live.
+      ObjCMessageExpr *CE = cast<ObjCMessageExpr>(S);
+      if (CE->getReceiverKind() == ObjCMessageExpr::SuperInstance)
+        val.liveDecls = LV.DSetFact.add(val.liveDecls,
+                                        LV.analysisContext.getSelfDecl());
+      break;
+    }
     case Stmt::DeclStmtClass: {
       const DeclStmt *DS = cast<DeclStmt>(S);
       if (const VarDecl *VD = dyn_cast<VarDecl>(DS->getSingleDecl())) {
