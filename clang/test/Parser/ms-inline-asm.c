@@ -11,13 +11,13 @@ void t5() {
   __asm { // expected-warning {{MS-style inline assembly is not supported}}
     int 0x2c ; } asm comments are fun! }{
   }
-  __asm {}  // no warning as this gets merged with the previous inline asm
+  __asm {} // expected-warning {{MS-style inline assembly is not supported}}
 }
 int t6() {
   __asm int 3 ; } comments for single-line asm // expected-warning {{MS-style inline assembly is not supported}}
-  __asm {} // no warning as this gets merged with the previous inline asm
+  __asm {} // expected-warning {{MS-style inline assembly is not supported}}
 
-  __asm int 4 // no warning as this gets merged with the previous inline asm
+  __asm int 4 // expected-warning {{MS-style inline assembly is not supported}}
   return 10;
 }
 int t7() {
@@ -28,10 +28,10 @@ int t7() {
   }
 }
 void t8() {
-  __asm nop __asm nop __asm nop // expected-warning {{MS-style inline assembly is not supported}}
+  __asm nop __asm nop __asm nop // expected-warning {{MS-style inline assembly is not supported}} expected-warning {{MS-style inline assembly is not supported}} expected-warning {{MS-style inline assembly is not supported}}
 }
 void t9() {
-  __asm nop __asm nop ; __asm nop // expected-warning {{MS-style inline assembly is not supported}}
+  __asm nop __asm nop ; __asm nop // expected-warning {{MS-style inline assembly is not supported}} expected-warning {{MS-style inline assembly is not supported}}
 }
 int t_fail() { // expected-note {{to match this}}
   __asm

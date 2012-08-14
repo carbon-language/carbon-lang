@@ -1658,107 +1658,101 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
   SourceLocation EndLoc = AsmLoc;
   SmallVector<Token, 4> AsmToks;
   SmallVector<unsigned, 4> LineEnds;
+
+  bool InBraces = false;
+  unsigned short savedBraceCount = 0;
+  bool InAsmComment = false;
+  FileID FID;
+  unsigned LineNo = 0;
+  unsigned NumTokensRead = 0;
+  SourceLocation LBraceLoc;
+
+  if (Tok.is(tok::l_brace)) {
+    // Braced inline asm: consume the opening brace.
+    InBraces = true;
+    savedBraceCount = BraceCount;
+    EndLoc = LBraceLoc = ConsumeBrace();
+    ++NumTokensRead;
+  } else {
+    // Single-line inline asm; compute which line it is on.
+    std::pair<FileID, unsigned> ExpAsmLoc =
+      SrcMgr.getDecomposedExpansionLoc(EndLoc);
+    FID = ExpAsmLoc.first;
+    LineNo = SrcMgr.getLineNumber(FID, ExpAsmLoc.second);
+  }
+
+  SourceLocation TokLoc = Tok.getLocation();
   do {
-    bool InBraces = false;
-    unsigned short savedBraceCount = 0;
-    bool InAsmComment = false;
-    FileID FID;
-    unsigned LineNo = 0;
-    unsigned NumTokensRead = 0;
-    SourceLocation LBraceLoc;
-
-    if (Tok.is(tok::l_brace)) {
-      // Braced inline asm: consume the opening brace.
-      InBraces = true;
-      savedBraceCount = BraceCount;
-      EndLoc = LBraceLoc = ConsumeBrace();
-      ++NumTokensRead;
-    } else {
-      // Single-line inline asm; compute which line it is on.
-      std::pair<FileID, unsigned> ExpAsmLoc =
-          SrcMgr.getDecomposedExpansionLoc(EndLoc);
-      FID = ExpAsmLoc.first;
-      LineNo = SrcMgr.getLineNumber(FID, ExpAsmLoc.second);
-    }
-
-    SourceLocation TokLoc = Tok.getLocation();
-    do {
-      // If we hit EOF, we're done, period.
-      if (Tok.is(tok::eof))
-        break;
-
-      // The asm keyword is a statement separator, so multiple asm statements
-      // are allowed.
-      if (!InAsmComment && Tok.is(tok::kw_asm))
-        break;
-
-      if (!InAsmComment && Tok.is(tok::semi)) {
-        // A semicolon in an asm is the start of a comment.
-        InAsmComment = true;
-        if (InBraces) {
-          // Compute which line the comment is on.
-          std::pair<FileID, unsigned> ExpSemiLoc =
-              SrcMgr.getDecomposedExpansionLoc(TokLoc);
-          FID = ExpSemiLoc.first;
-          LineNo = SrcMgr.getLineNumber(FID, ExpSemiLoc.second);
-        }
-      } else if (!InBraces || InAsmComment) {
-        // If end-of-line is significant, check whether this token is on a
-        // new line.
-        std::pair<FileID, unsigned> ExpLoc =
-            SrcMgr.getDecomposedExpansionLoc(TokLoc);
-        if (ExpLoc.first != FID ||
-            SrcMgr.getLineNumber(ExpLoc.first, ExpLoc.second) != LineNo) {
-          // If this is a single-line __asm, we're done.
-          if (!InBraces)
-            break;
-          // We're no longer in a comment.
-          InAsmComment = false;
-        } else if (!InAsmComment && Tok.is(tok::r_brace)) {
-          // Single-line asm always ends when a closing brace is seen.
-          // FIXME: This is compatible with Apple gcc's -fasm-blocks; what
-          // does MSVC do here?
-          break;
-        }
-      }
-      if (!InAsmComment && InBraces && Tok.is(tok::r_brace) &&
-          BraceCount == (savedBraceCount + 1)) {
-        // Consume the closing brace, and finish
-        EndLoc = ConsumeBrace();
-        break;
-      }
-
-      // Consume the next token; make sure we don't modify the brace count etc.
-      // if we are in a comment.
-      EndLoc = TokLoc;
-      if (InAsmComment)
-        PP.Lex(Tok);
-      else {
-        AsmToks.push_back(Tok);
-        ConsumeAnyToken();
-      }
-      TokLoc = Tok.getLocation();
-      ++NumTokensRead;
-    } while (1);
-
-    LineEnds.push_back(AsmToks.size());
-
-    if (InBraces && BraceCount != savedBraceCount) {
-      // __asm without closing brace (this can happen at EOF).
-      Diag(Tok, diag::err_expected_rbrace);
-      Diag(LBraceLoc, diag::note_matching) << "{";
-      return StmtError();
-    } else if (NumTokensRead == 0) {
-      // Empty __asm.
-      Diag(Tok, diag::err_expected_lbrace);
-      return StmtError();
-    }
-    // Multiple adjacent asm's form together into a single asm statement
-    // in the AST.
-    if (!Tok.is(tok::kw_asm))
+    // If we hit EOF, we're done, period.
+    if (Tok.is(tok::eof))
       break;
-    EndLoc = ConsumeToken();
+
+    // The asm keyword is a statement separator, so multiple asm statements
+    // are allowed on a single line.
+    if (!InAsmComment && Tok.is(tok::kw_asm))
+      break;
+
+    if (!InAsmComment && Tok.is(tok::semi)) {
+      // A semicolon in an asm is the start of a comment.
+      InAsmComment = true;
+      if (InBraces) {
+        // Compute which line the comment is on.
+        std::pair<FileID, unsigned> ExpSemiLoc =
+          SrcMgr.getDecomposedExpansionLoc(TokLoc);
+        FID = ExpSemiLoc.first;
+        LineNo = SrcMgr.getLineNumber(FID, ExpSemiLoc.second);
+      }
+    } else if (!InBraces || InAsmComment) {
+      // If end-of-line is significant, check whether this token is on a
+      // new line.
+      std::pair<FileID, unsigned> ExpLoc =
+        SrcMgr.getDecomposedExpansionLoc(TokLoc);
+      if (ExpLoc.first != FID ||
+          SrcMgr.getLineNumber(ExpLoc.first, ExpLoc.second) != LineNo) {
+        // If this is a single-line __asm, we're done.
+        if (!InBraces)
+          break;
+        // We're no longer in a comment.
+        InAsmComment = false;
+      } else if (!InAsmComment && Tok.is(tok::r_brace)) {
+        // Single-line asm always ends when a closing brace is seen.
+        // FIXME: This is compatible with Apple gcc's -fasm-blocks; what
+        // does MSVC do here?
+        break;
+      }
+    }
+    if (!InAsmComment && InBraces && Tok.is(tok::r_brace) &&
+        BraceCount == (savedBraceCount + 1)) {
+      // Consume the closing brace, and finish
+      EndLoc = ConsumeBrace();
+      break;
+    }
+
+    // Consume the next token; make sure we don't modify the brace count etc.
+    // if we are in a comment.
+    EndLoc = TokLoc;
+    if (InAsmComment)
+      PP.Lex(Tok);
+    else {
+      AsmToks.push_back(Tok);
+      ConsumeAnyToken();
+    }
+    TokLoc = Tok.getLocation();
+    ++NumTokensRead;
   } while (1);
+
+  LineEnds.push_back(AsmToks.size());
+
+  if (InBraces && BraceCount != savedBraceCount) {
+    // __asm without closing brace (this can happen at EOF).
+    Diag(Tok, diag::err_expected_rbrace);
+    Diag(LBraceLoc, diag::note_matching) << "{";
+    return StmtError();
+  } else if (NumTokensRead == 0) {
+    // Empty __asm.
+    Diag(Tok, diag::err_expected_lbrace);
+    return StmtError();
+  }
 
   // FIXME: We should be passing source locations for better diagnostics.
   return Actions.ActOnMSAsmStmt(AsmLoc, llvm::makeArrayRef(AsmToks),
