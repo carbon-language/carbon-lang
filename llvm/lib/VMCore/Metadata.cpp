@@ -200,7 +200,7 @@ const Function *MDNode::getFunction() const {
 // destroy - Delete this node.  Only when there are no uses.
 void MDNode::destroy() {
   setValueSubclassData(getSubclassDataFromValue() | DestroyFlag);
-  // Placement delete, the free the memory.
+  // Placement delete, then free the memory.
   this->~MDNode();
   free(this);
 }
