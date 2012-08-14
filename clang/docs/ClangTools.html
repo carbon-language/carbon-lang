@@ -13,8 +13,8 @@
 <div id="content">
 
 <h1>Clang Tools</h1>
-<p>Clang Tools are standalone commandline (and potentially GUI) tools design for
-use by C++ developers who are already using and enjoying Clang as their
+<p>Clang Tools are standalone command line (and potentially GUI) tools design
+for use by C++ developers who are already using and enjoying Clang as their
 compiler. These tools provide developer-oriented functionality such as fast
 syntax checking, automatic formatting, refactoring, etc.</p>
 
@@ -58,9 +58,9 @@ a standalone tool based on Clang, core shared logic used by many different tools
 in the form of refactoring and rewriting libraries, and the tools
 themselves.</p>
 
-<p>The underyling infrastructure for Clang Tools is the
+<p>The underlying infrastructure for Clang Tools is the
 <a href="LibTooling.html">LibTooling</a> platform. See its documentation for
-much more detailed information about how this infrastructuro works. The common
+much more detailed information about how this infrastructure works. The common
 refactoring and rewriting toolkit-style library is also part of LibTooling
 organizationally.</p>
 
@@ -71,7 +71,7 @@ libraries. We intentionally do not support public libraries in the side
 repository, as we want to carefully review and find good APIs for libraries as
 they are lifted out of a few tools and into the core Clang library set.</p>
 
-<p>Regardless of which repositiory Clang Tools' code resides in, the development
+<p>Regardless of which repository Clang Tools' code resides in, the development
 process and practices for all Clang Tools are exactly those of Clang itself.
 They are entirely within the Clang <em>project</em>, regardless of the version
 control scheme.</p>
@@ -87,14 +87,14 @@ specific functionality.</p>
 
 <h3 id="clang-check"><tt>clang-check</tt></h3>
 <p>This tool combines the LibTooling framework for running a Clang tool with the
-basic Clang diagnostics by syntax checking specific files in a fast, commandline
+basic Clang diagnostics by syntax checking specific files in a fast, command line
 interface. It can also accept flags to re-display the diagnostics in different
 formats with different flags, suitable for use driving an IDE or editor.</p>
 
 <p>FIXME: Link to user-oriented clang-check documentation.</p>
 
 <h3 id="clang-fixit"><tt>clang-fixit</tt></h3>
-<p>A tool which specifically applies the Clang fix-it hint diagnostic technogoy
+<p>A tool which specifically applies the Clang fix-it hint diagnostic technology
 on top of a dedicated tool. It is designed to explore alternative interfaces for
 applying fix-it hints, including automatic application, prompting users with
 options for different fixes, etc.</p>
