@@ -42,7 +42,7 @@ MachineSSAUpdater::MachineSSAUpdater(MachineFunction &MF,
 }
 
 MachineSSAUpdater::~MachineSSAUpdater() {
-  delete &getAvailableVals(AV);
+  delete static_cast<AvailableValsTy*>(AV);
 }
 
 /// Initialize - Reset this object to get ready for a new set of SSA
