@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains support for writing dwarf compile unit.
+// This file contains support for constructing a dwarf compile unit.
 //
 //===----------------------------------------------------------------------===//
 
