@@ -3560,10 +3560,9 @@ bool Sema::CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC) {
   if (attr.isInvalid())
     return true;
 
-  if ((attr.getNumArgs() != 0 &&
-      !(attr.getKind() == AttributeList::AT_Pcs && attr.getNumArgs() == 1)) ||
-      attr.getParameterName()) {
-    Diag(attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+  unsigned ReqArgs = attr.getKind() == AttributeList::AT_Pcs ? 1 : 0;
+  if (attr.getNumArgs() != ReqArgs || attr.getParameterName()) {
+    Diag(attr.getLoc(), diag::err_attribute_wrong_number_arguments) << ReqArgs;
     attr.setInvalid();
     return true;
   }
@@ -3594,7 +3593,10 @@ bool Sema::CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC) {
       CC = CC_AAPCS_VFP;
       break;
     }
-    // FALLS THROUGH
+
+    attr.setInvalid();
+    Diag(attr.getLoc(), diag::err_invalid_pcs);
+    return true;
   }
   default: llvm_unreachable("unexpected attribute kind");
   }
