@@ -2870,15 +2870,12 @@ static std::string buildMSAsmString(Sema &SemaRef,
   TokenBuf.resize(512);
   unsigned AsmLineNum = 0;
   for (unsigned i = 0, e = AsmToks.size(); i < e; ++i) {
-    const char *ThisTokBuf = &TokenBuf[0];
     bool StringInvalid = false;
-    unsigned ThisTokLen =
-      Lexer::getSpelling(AsmToks[i], ThisTokBuf, SemaRef.getSourceManager(),
-                         SemaRef.getLangOpts(), &StringInvalid);
     if (i && (!AsmLineNum || i != LineEnds[AsmLineNum-1]) &&
         needSpaceAsmToken(AsmToks[i]))
       Asm += ' ';
-    Asm += StringRef(ThisTokBuf, ThisTokLen);
+    Asm += SemaRef.PP.getSpelling(AsmToks[i], TokenBuf, &StringInvalid);
+    assert (!StringInvalid && "Expected valid string!");
     if (i + 1 == LineEnds[AsmLineNum] && i + 1 != AsmToks.size()) {
       Asm += '\n';
       ++AsmLineNum;
