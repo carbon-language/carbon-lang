@@ -3523,25 +3523,16 @@ static void handleCallConvAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     D->addAttr(::new (S.Context) PascalAttr(Attr.getRange(), S.Context));
     return;
   case AttributeList::AT_Pcs: {
-    Expr *Arg = Attr.getArg(0);
-    StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
-    if (!Str || !Str->isAscii()) {
-      S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
-        << "pcs" << 1;
-      Attr.setInvalid();
-      return;
-    }
-
-    StringRef StrRef = Str->getString();
     PcsAttr::PCSType PCS;
-    if (StrRef == "aapcs")
+    switch (CC) {
+    case CC_AAPCS:
       PCS = PcsAttr::AAPCS;
-    else if (StrRef == "aapcs-vfp")
+      break;
+    case CC_AAPCS_VFP:
       PCS = PcsAttr::AAPCS_VFP;
-    else {
-      S.Diag(Attr.getLoc(), diag::err_invalid_pcs);
-      Attr.setInvalid();
-      return;
+      break;
+    default:
+      llvm_unreachable("unexpected calling convention in pcs attribute");
     }
 
     D->addAttr(::new (S.Context) PcsAttr(Attr.getRange(), S.Context, PCS));
