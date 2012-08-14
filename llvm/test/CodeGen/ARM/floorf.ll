@@ -1,4 +1,4 @@
-; RUN: llc -march=arm < %s | FileCheck %s
+; RUN: llc -mtriple=arm-unknown-unknown < %s | FileCheck %s
 
 ; CHECK: test1
 define float @test1() nounwind uwtable readnone ssp {
