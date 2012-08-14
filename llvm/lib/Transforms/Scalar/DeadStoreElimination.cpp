@@ -378,7 +378,7 @@ static OverwriteResult isOverwrite(const AliasAnalysis::Location &Later,
   //
   // We have to be careful here as *Off is signed while *.Size is unsigned.
   if (EarlierOff >= LaterOff &&
-      Later.Size > Earlier.Size &&
+      Later.Size >= Earlier.Size &&
       uint64_t(EarlierOff - LaterOff) + Earlier.Size <= Later.Size)
     return OverwriteComplete;
 
