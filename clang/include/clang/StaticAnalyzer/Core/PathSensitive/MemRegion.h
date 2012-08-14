@@ -52,7 +52,9 @@ class RegionOffset {
   int64_t Offset;
 
 public:
-  enum { Symbolic = INT64_MAX };
+  // We're using a const instead of an enumeration due to the size required;
+  // Visual Studio will only create enumerations of size int, not long long.
+  static const int64_t Symbolic = INT64_MAX;
 
   RegionOffset() : R(0) {}
   RegionOffset(const MemRegion *r, int64_t off) : R(r), Offset(off) {}
