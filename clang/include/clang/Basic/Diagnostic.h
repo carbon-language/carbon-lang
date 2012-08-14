@@ -267,16 +267,14 @@ private:
   }
 
   void PushDiagStatePoint(DiagState *State, SourceLocation L) {
-    FullSourceLoc Loc(L, *SourceMgr);
+    FullSourceLoc Loc(L, getSourceManager());
     // Make sure that DiagStatePoints is always sorted according to Loc.
-    assert((Loc.isValid() || DiagStatePoints.empty()) &&
-           "Adding invalid loc point after another point");
-    assert((Loc.isInvalid() || DiagStatePoints.empty() ||
-            DiagStatePoints.back().Loc.isInvalid() ||
+    assert(Loc.isValid() && "Adding invalid loc point");
+    assert(!DiagStatePoints.empty() &&
+           (DiagStatePoints.back().Loc.isInvalid() ||
             DiagStatePoints.back().Loc.isBeforeInTranslationUnitThan(Loc)) &&
            "Previous point loc comes after or is the same as new one");
-    DiagStatePoints.push_back(DiagStatePoint(State,
-                                             FullSourceLoc(Loc, *SourceMgr)));
+    DiagStatePoints.push_back(DiagStatePoint(State, Loc));
   }
 
   /// \brief Finds the DiagStatePoint that contains the diagnostic state of

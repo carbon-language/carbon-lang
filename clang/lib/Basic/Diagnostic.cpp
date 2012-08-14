@@ -119,7 +119,7 @@ void DiagnosticsEngine::Reset() {
   // Create a DiagState and DiagStatePoint representing diagnostic changes
   // through command-line.
   DiagStates.push_back(DiagState());
-  PushDiagStatePoint(&DiagStates.back(), SourceLocation());
+  DiagStatePoints.push_back(DiagStatePoint(&DiagStates.back(), FullSourceLoc()));
 }
 
 void DiagnosticsEngine::SetDelayedDiagnostic(unsigned DiagID, StringRef Arg1,
