@@ -9413,8 +9413,7 @@ static SDValue getTargetVShiftNode(unsigned Opc, DebugLoc dl, EVT VT,
   SDValue ShOps[4];
   ShOps[0] = ShAmt;
   ShOps[1] = DAG.getConstant(0, MVT::i32);
-  ShOps[2] = DAG.getUNDEF(MVT::i32);
-  ShOps[3] = DAG.getUNDEF(MVT::i32);
+  ShOps[2] = ShOps[3] = DAG.getUNDEF(MVT::i32);
   ShAmt = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, &ShOps[0], 4);
 
   // The return type has to be a 128-bit type with the same element
@@ -9457,8 +9456,8 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
   case Intrinsic::x86_sse2_ucomigt_sd:
   case Intrinsic::x86_sse2_ucomige_sd:
   case Intrinsic::x86_sse2_ucomineq_sd: {
-    unsigned Opc = 0;
-    ISD::CondCode CC = ISD::SETCC_INVALID;
+    unsigned Opc;
+    ISD::CondCode CC;
     switch (IntNo) {
     default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
     case Intrinsic::x86_sse_comieq_ss:
@@ -9532,55 +9531,102 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
                                 DAG.getConstant(X86CC, MVT::i8), Cond);
     return DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, SetCC);
   }
+
   // Arithmetic intrinsics.
   case Intrinsic::x86_sse2_pmulu_dq:
   case Intrinsic::x86_avx2_pmulu_dq:
     return DAG.getNode(X86ISD::PMULUDQ, dl, Op.getValueType(),
                        Op.getOperand(1), Op.getOperand(2));
+
+  // SSE3/AVX horizontal add/sub intrinsics
   case Intrinsic::x86_sse3_hadd_ps:
   case Intrinsic::x86_sse3_hadd_pd:
   case Intrinsic::x86_avx_hadd_ps_256:
   case Intrinsic::x86_avx_hadd_pd_256:
-    return DAG.getNode(X86ISD::FHADD, dl, Op.getValueType(),
-                       Op.getOperand(1), Op.getOperand(2));
   case Intrinsic::x86_sse3_hsub_ps:
   case Intrinsic::x86_sse3_hsub_pd:
   case Intrinsic::x86_avx_hsub_ps_256:
   case Intrinsic::x86_avx_hsub_pd_256:
-    return DAG.getNode(X86ISD::FHSUB, dl, Op.getValueType(),
-                       Op.getOperand(1), Op.getOperand(2));
   case Intrinsic::x86_ssse3_phadd_w_128:
   case Intrinsic::x86_ssse3_phadd_d_128:
   case Intrinsic::x86_avx2_phadd_w:
   case Intrinsic::x86_avx2_phadd_d:
-    return DAG.getNode(X86ISD::HADD, dl, Op.getValueType(),
-                       Op.getOperand(1), Op.getOperand(2));
   case Intrinsic::x86_ssse3_phsub_w_128:
   case Intrinsic::x86_ssse3_phsub_d_128:
   case Intrinsic::x86_avx2_phsub_w:
-  case Intrinsic::x86_avx2_phsub_d:
-    return DAG.getNode(X86ISD::HSUB, dl, Op.getValueType(),
+  case Intrinsic::x86_avx2_phsub_d: {
+    unsigned Opcode;
+    switch (IntNo) {
+    default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
+    case Intrinsic::x86_sse3_hadd_ps:
+    case Intrinsic::x86_sse3_hadd_pd:
+    case Intrinsic::x86_avx_hadd_ps_256:
+    case Intrinsic::x86_avx_hadd_pd_256:
+      Opcode = X86ISD::FHADD;
+      break;
+    case Intrinsic::x86_sse3_hsub_ps:
+    case Intrinsic::x86_sse3_hsub_pd:
+    case Intrinsic::x86_avx_hsub_ps_256:
+    case Intrinsic::x86_avx_hsub_pd_256:
+      Opcode = X86ISD::FHSUB;
+      break;
+    case Intrinsic::x86_ssse3_phadd_w_128:
+    case Intrinsic::x86_ssse3_phadd_d_128:
+    case Intrinsic::x86_avx2_phadd_w:
+    case Intrinsic::x86_avx2_phadd_d:
+      Opcode = X86ISD::HADD;
+      break;
+    case Intrinsic::x86_ssse3_phsub_w_128:
+    case Intrinsic::x86_ssse3_phsub_d_128:
+    case Intrinsic::x86_avx2_phsub_w:
+    case Intrinsic::x86_avx2_phsub_d:
+      Opcode = X86ISD::HSUB;
+      break;
+    }
+    return DAG.getNode(Opcode, dl, Op.getValueType(),
                        Op.getOperand(1), Op.getOperand(2));
+  }
+
+  // AVX2 variable shift intrinsics
   case Intrinsic::x86_avx2_psllv_d:
   case Intrinsic::x86_avx2_psllv_q:
   case Intrinsic::x86_avx2_psllv_d_256:
   case Intrinsic::x86_avx2_psllv_q_256:
-    return DAG.getNode(ISD::SHL, dl, Op.getValueType(),
-                      Op.getOperand(1), Op.getOperand(2));
   case Intrinsic::x86_avx2_psrlv_d:
   case Intrinsic::x86_avx2_psrlv_q:
   case Intrinsic::x86_avx2_psrlv_d_256:
   case Intrinsic::x86_avx2_psrlv_q_256:
-    return DAG.getNode(ISD::SRL, dl, Op.getValueType(),
-                      Op.getOperand(1), Op.getOperand(2));
   case Intrinsic::x86_avx2_psrav_d:
-  case Intrinsic::x86_avx2_psrav_d_256:
-    return DAG.getNode(ISD::SRA, dl, Op.getValueType(),
-                      Op.getOperand(1), Op.getOperand(2));
+  case Intrinsic::x86_avx2_psrav_d_256: {
+    unsigned Opcode;
+    switch (IntNo) {
+    default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
+    case Intrinsic::x86_avx2_psllv_d:
+    case Intrinsic::x86_avx2_psllv_q:
+    case Intrinsic::x86_avx2_psllv_d_256:
+    case Intrinsic::x86_avx2_psllv_q_256:
+      Opcode = ISD::SHL;
+      break;
+    case Intrinsic::x86_avx2_psrlv_d:
+    case Intrinsic::x86_avx2_psrlv_q:
+    case Intrinsic::x86_avx2_psrlv_d_256:
+    case Intrinsic::x86_avx2_psrlv_q_256:
+      Opcode = ISD::SRL;
+      break;
+    case Intrinsic::x86_avx2_psrav_d:
+    case Intrinsic::x86_avx2_psrav_d_256:
+      Opcode = ISD::SRA;
+      break;
+    }
+    return DAG.getNode(Opcode, dl, Op.getValueType(),
+                       Op.getOperand(1), Op.getOperand(2));
+  }
+
   case Intrinsic::x86_ssse3_pshuf_b_128:
   case Intrinsic::x86_avx2_pshuf_b:
     return DAG.getNode(X86ISD::PSHUFB, dl, Op.getValueType(),
                        Op.getOperand(1), Op.getOperand(2));
+
   case Intrinsic::x86_ssse3_psign_b_128:
   case Intrinsic::x86_ssse3_psign_w_128:
   case Intrinsic::x86_ssse3_psign_d_128:
@@ -9589,15 +9635,18 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
   case Intrinsic::x86_avx2_psign_d:
     return DAG.getNode(X86ISD::PSIGN, dl, Op.getValueType(),
                        Op.getOperand(1), Op.getOperand(2));
+
   case Intrinsic::x86_sse41_insertps:
     return DAG.getNode(X86ISD::INSERTPS, dl, Op.getValueType(),
                        Op.getOperand(1), Op.getOperand(2), Op.getOperand(3));
+
   case Intrinsic::x86_avx_vperm2f128_ps_256:
   case Intrinsic::x86_avx_vperm2f128_pd_256:
   case Intrinsic::x86_avx_vperm2f128_si_256:
   case Intrinsic::x86_avx2_vperm2i128:
     return DAG.getNode(X86ISD::VPERM2X128, dl, Op.getValueType(),
                        Op.getOperand(1), Op.getOperand(2), Op.getOperand(3));
+
   case Intrinsic::x86_avx2_permd:
   case Intrinsic::x86_avx2_permps:
     // Operands intentionally swapped. Mask is last operand to intrinsic,
@@ -9627,7 +9676,7 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
   case Intrinsic::x86_avx_vtestc_pd_256:
   case Intrinsic::x86_avx_vtestnzc_pd_256: {
     bool IsTestPacked = false;
-    unsigned X86CC = 0;
+    unsigned X86CC;
     switch (IntNo) {
     default: llvm_unreachable("Bad fallthrough in Intrinsic lowering.");
     case Intrinsic::x86_avx_vtestz_ps:
@@ -9678,44 +9727,93 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
   case Intrinsic::x86_avx2_psll_w:
   case Intrinsic::x86_avx2_psll_d:
   case Intrinsic::x86_avx2_psll_q:
-    return DAG.getNode(X86ISD::VSHL, dl, Op.getValueType(),
-                       Op.getOperand(1), Op.getOperand(2));
   case Intrinsic::x86_sse2_psrl_w:
   case Intrinsic::x86_sse2_psrl_d:
   case Intrinsic::x86_sse2_psrl_q:
   case Intrinsic::x86_avx2_psrl_w:
   case Intrinsic::x86_avx2_psrl_d:
   case Intrinsic::x86_avx2_psrl_q:
-    return DAG.getNode(X86ISD::VSRL, dl, Op.getValueType(),
-                       Op.getOperand(1), Op.getOperand(2));
   case Intrinsic::x86_sse2_psra_w:
   case Intrinsic::x86_sse2_psra_d:
   case Intrinsic::x86_avx2_psra_w:
-  case Intrinsic::x86_avx2_psra_d:
-    return DAG.getNode(X86ISD::VSRA, dl, Op.getValueType(),
+  case Intrinsic::x86_avx2_psra_d: {
+    unsigned Opcode;
+    switch (IntNo) {
+    default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
+    case Intrinsic::x86_sse2_psll_w:
+    case Intrinsic::x86_sse2_psll_d:
+    case Intrinsic::x86_sse2_psll_q:
+    case Intrinsic::x86_avx2_psll_w:
+    case Intrinsic::x86_avx2_psll_d:
+    case Intrinsic::x86_avx2_psll_q:
+      Opcode = X86ISD::VSHL;
+      break;
+    case Intrinsic::x86_sse2_psrl_w:
+    case Intrinsic::x86_sse2_psrl_d:
+    case Intrinsic::x86_sse2_psrl_q:
+    case Intrinsic::x86_avx2_psrl_w:
+    case Intrinsic::x86_avx2_psrl_d:
+    case Intrinsic::x86_avx2_psrl_q:
+      Opcode = X86ISD::VSRL;
+      break;
+    case Intrinsic::x86_sse2_psra_w:
+    case Intrinsic::x86_sse2_psra_d:
+    case Intrinsic::x86_avx2_psra_w:
+    case Intrinsic::x86_avx2_psra_d:
+      Opcode = X86ISD::VSRA;
+      break;
+    }
+    return DAG.getNode(Opcode, dl, Op.getValueType(),
                        Op.getOperand(1), Op.getOperand(2));
+  }
+
+  // SSE/AVX immediate shift intrinsics
   case Intrinsic::x86_sse2_pslli_w:
   case Intrinsic::x86_sse2_pslli_d:
   case Intrinsic::x86_sse2_pslli_q:
   case Intrinsic::x86_avx2_pslli_w:
   case Intrinsic::x86_avx2_pslli_d:
   case Intrinsic::x86_avx2_pslli_q:
-    return getTargetVShiftNode(X86ISD::VSHLI, dl, Op.getValueType(),
-                               Op.getOperand(1), Op.getOperand(2), DAG);
   case Intrinsic::x86_sse2_psrli_w:
   case Intrinsic::x86_sse2_psrli_d:
   case Intrinsic::x86_sse2_psrli_q:
   case Intrinsic::x86_avx2_psrli_w:
   case Intrinsic::x86_avx2_psrli_d:
   case Intrinsic::x86_avx2_psrli_q:
-    return getTargetVShiftNode(X86ISD::VSRLI, dl, Op.getValueType(),
-                               Op.getOperand(1), Op.getOperand(2), DAG);
   case Intrinsic::x86_sse2_psrai_w:
   case Intrinsic::x86_sse2_psrai_d:
   case Intrinsic::x86_avx2_psrai_w:
-  case Intrinsic::x86_avx2_psrai_d:
-    return getTargetVShiftNode(X86ISD::VSRAI, dl, Op.getValueType(),
+  case Intrinsic::x86_avx2_psrai_d: {
+    unsigned Opcode;
+    switch (IntNo) {
+    default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
+    case Intrinsic::x86_sse2_pslli_w:
+    case Intrinsic::x86_sse2_pslli_d:
+    case Intrinsic::x86_sse2_pslli_q:
+    case Intrinsic::x86_avx2_pslli_w:
+    case Intrinsic::x86_avx2_pslli_d:
+    case Intrinsic::x86_avx2_pslli_q:
+      Opcode = X86ISD::VSHLI;
+      break;
+    case Intrinsic::x86_sse2_psrli_w:
+    case Intrinsic::x86_sse2_psrli_d:
+    case Intrinsic::x86_sse2_psrli_q:
+    case Intrinsic::x86_avx2_psrli_w:
+    case Intrinsic::x86_avx2_psrli_d:
+    case Intrinsic::x86_avx2_psrli_q:
+      Opcode = X86ISD::VSRLI;
+      break;
+    case Intrinsic::x86_sse2_psrai_w:
+    case Intrinsic::x86_sse2_psrai_d:
+    case Intrinsic::x86_avx2_psrai_w:
+    case Intrinsic::x86_avx2_psrai_d:
+      Opcode = X86ISD::VSRAI;
+      break;
+    }
+    return getTargetVShiftNode(Opcode, dl, Op.getValueType(),
                                Op.getOperand(1), Op.getOperand(2), DAG);
+  }
+
   // Fix vector shift instructions where the last operand is a non-immediate
   // i32 value.
   case Intrinsic::x86_mmx_pslli_w:
@@ -9730,8 +9828,9 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
     if (isa<ConstantSDNode>(ShAmt))
       return SDValue();
 
-    unsigned NewIntNo = 0;
+    unsigned NewIntNo;
     switch (IntNo) {
+    default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
     case Intrinsic::x86_mmx_pslli_w:
       NewIntNo = Intrinsic::x86_mmx_psll_w;
       break;
@@ -9756,7 +9855,6 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
     case Intrinsic::x86_mmx_psrai_d:
       NewIntNo = Intrinsic::x86_mmx_psra_d;
       break;
-    default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
     }
 
     // The vector shift intrinsics with scalars uses 32b shift amounts but
@@ -9836,6 +9934,7 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
                                 SDValue(PCMP.getNode(), 1));
     return DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, SetCC);
   }
+
   case Intrinsic::x86_sse42_pcmpistri128:
   case Intrinsic::x86_sse42_pcmpestri128: {
     unsigned Opcode;
