@@ -258,6 +258,11 @@ ENABLE_WERROR = @ENABLE_WERROR@
 #DEBUG_SYMBOLS = 1
 @DEBUG_SYMBOLS@
 
+# When KEEP_SYMBOLS is enabled, installed executables will never have their
+# symbols stripped.
+#KEEP_SYMBOLS = 1
+@KEEP_SYMBOLS@
+
 # The compiler flags to use for optimized builds.
 OPTIMIZE_OPTION := @OPTIMIZE_OPTION@
 

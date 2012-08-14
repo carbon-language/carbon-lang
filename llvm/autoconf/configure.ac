@@ -542,6 +542,15 @@ else
   AC_SUBST(DEBUG_SYMBOLS,[[DEBUG_SYMBOLS=1]])
 fi
 
+dnl --enable-keep-symbols : do not strip installed executables
+AC_ARG_ENABLE(keep-symbols,
+   AS_HELP_STRING(--enable-keep-symbols,[Do not strip installed executables)]),,enableval=no)
+if test ${enableval} = "no" ; then
+  AC_SUBST(KEEP_SYMBOLS,[[]])
+else
+  AC_SUBST(KEEP_SYMBOLS,[[KEEP_SYMBOLS=1]])
+fi
+
 dnl --enable-jit: check whether they want to enable the jit
 AC_ARG_ENABLE(jit,
   AS_HELP_STRING(--enable-jit,
