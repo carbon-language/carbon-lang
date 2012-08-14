@@ -227,6 +227,9 @@ namespace llvm {
       // VSEXT_MOVL - Vector move low and sign extend.
       VSEXT_MOVL,
 
+      // VFPEXT - Vector FP extend.
+      VFPEXT,
+
       // VSHL, VSRL - 128-bit vector logical left / right shift
       VSHLDQ, VSRLDQ,
 
@@ -827,6 +830,8 @@ namespace llvm {
     SDValue LowerVECTOR_SHUFFLEv8i16(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerVectorBroadcast(SDValue &Op, SelectionDAG &DAG) const;
     SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG) const;
+
+    SDValue LowerVectorFpExtend(SDValue &Op, SelectionDAG &DAG) const;
 
     virtual SDValue
       LowerFormalArguments(SDValue Chain,

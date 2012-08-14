@@ -2101,10 +2101,18 @@ let Predicates = [HasAVX] in {
   def : Pat<(v4f32 (fround (loadv4f64 addr:$src))),
             (VCVTPD2PSYrm addr:$src)>;
 
+  def : Pat<(v2f64 (X86vfpext (v4f32 VR128:$src))),
+            (VCVTPS2PDrr VR128:$src)>;
   def : Pat<(v4f64 (fextend (v4f32 VR128:$src))),
             (VCVTPS2PDYrr VR128:$src)>;
   def : Pat<(v4f64 (fextend (loadv4f32 addr:$src))),
             (VCVTPS2PDYrm addr:$src)>;
+}
+
+let Predicates = [HasSSE2] in {
+  // Match fextend for 128 conversions
+  def : Pat<(v2f64 (X86vfpext (v4f32 VR128:$src))),
+            (CVTPS2PDrr VR128:$src)>;
 }
 
 //===----------------------------------------------------------------------===//

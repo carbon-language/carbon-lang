@@ -81,6 +81,11 @@ def X86vsmovl  : SDNode<"X86ISD::VSEXT_MOVL",
 
 def X86vzload  : SDNode<"X86ISD::VZEXT_LOAD", SDTLoad,
                         [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
+
+def X86vfpext  : SDNode<"X86ISD::VFPEXT",
+                        SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisVec<1>,
+                                             SDTCisFP<0>, SDTCisFP<1>]>>;
+
 def X86vshldq  : SDNode<"X86ISD::VSHLDQ",    SDTIntShiftOp>;
 def X86vshrdq  : SDNode<"X86ISD::VSRLDQ",    SDTIntShiftOp>;
 def X86cmpp    : SDNode<"X86ISD::CMPP",      SDTX86VFCMP>;
