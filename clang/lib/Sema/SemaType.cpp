@@ -3224,7 +3224,6 @@ namespace {
       assert(Chunk.Kind == DeclaratorChunk::Function);
       TL.setLocalRangeBegin(Chunk.Loc);
       TL.setLocalRangeEnd(Chunk.EndLoc);
-      TL.setTrailingReturn(Chunk.Fun.hasTrailingReturnType());
 
       const DeclaratorChunk::FunctionTypeInfo &FTI = Chunk.Fun;
       for (unsigned i = 0, e = TL.getNumArgs(), tpi = 0; i != e; ++i) {

@@ -4205,7 +4205,7 @@ TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
 
   QualType ResultType;
 
-  if (TL.getTrailingReturn()) {
+  if (T->hasTrailingReturn()) {
     if (getDerived().TransformFunctionTypeParams(TL.getBeginLoc(),
                                                  TL.getParmArray(),
                                                  TL.getNumArgs(),
@@ -4262,7 +4262,6 @@ TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
   FunctionProtoTypeLoc NewTL = TLB.push<FunctionProtoTypeLoc>(Result);
   NewTL.setLocalRangeBegin(TL.getLocalRangeBegin());
   NewTL.setLocalRangeEnd(TL.getLocalRangeEnd());
-  NewTL.setTrailingReturn(TL.getTrailingReturn());
   for (unsigned i = 0, e = NewTL.getNumArgs(); i != e; ++i)
     NewTL.setArg(i, ParamDecls[i]);
 
@@ -4286,7 +4285,6 @@ QualType TreeTransform<Derived>::TransformFunctionNoProtoType(
   FunctionNoProtoTypeLoc NewTL = TLB.push<FunctionNoProtoTypeLoc>(Result);
   NewTL.setLocalRangeBegin(TL.getLocalRangeBegin());
   NewTL.setLocalRangeEnd(TL.getLocalRangeEnd());
-  NewTL.setTrailingReturn(false);
 
   return Result;
 }

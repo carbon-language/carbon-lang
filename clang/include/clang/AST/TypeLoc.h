@@ -1061,7 +1061,6 @@ public:
 struct FunctionLocInfo {
   SourceLocation LocalRangeBegin;
   SourceLocation LocalRangeEnd;
-  bool TrailingReturn;
 };
 
 /// \brief Wrapper for source info for functions.
@@ -1082,13 +1081,6 @@ public:
   }
   void setLocalRangeEnd(SourceLocation L) {
     getLocalData()->LocalRangeEnd = L;
-  }
-
-  bool getTrailingReturn() const {
-    return getLocalData()->TrailingReturn;
-  }
-  void setTrailingReturn(bool Trailing) {
-    getLocalData()->TrailingReturn = Trailing;
   }
 
   ArrayRef<ParmVarDecl *> getParams() const {
@@ -1119,7 +1111,6 @@ public:
   void initializeLocal(ASTContext &Context, SourceLocation Loc) {
     setLocalRangeBegin(Loc);
     setLocalRangeEnd(Loc);
-    setTrailingReturn(false);
     for (unsigned i = 0, e = getNumArgs(); i != e; ++i)
       setArg(i, NULL);
   }
