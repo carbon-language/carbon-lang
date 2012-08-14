@@ -1552,7 +1552,7 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
     if (mask) {
       OS << "case ARM::BI__builtin_neon_"
          << MangleName(name, TypeVec[si], ClassB)
-         << ": mask = " << "0x" << utohexstr(mask);
+         << ": mask = " << "0x" << utohexstr(mask) << "ULL";
       if (PtrArgNum >= 0)
         OS << "; PtrArgNum = " << PtrArgNum;
       if (HasConstPtr)
@@ -1562,7 +1562,7 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
     if (qmask) {
       OS << "case ARM::BI__builtin_neon_"
          << MangleName(name, TypeVec[qi], ClassB)
-         << ": mask = " << "0x" << utohexstr(qmask);
+         << ": mask = " << "0x" << utohexstr(qmask) << "ULL";
       if (PtrArgNum >= 0)
         OS << "; PtrArgNum = " << PtrArgNum;
       if (HasConstPtr)
