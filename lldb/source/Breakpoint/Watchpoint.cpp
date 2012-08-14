@@ -34,6 +34,7 @@ Watchpoint::Watchpoint (lldb::addr_t addr, size_t size, bool hardware) :
     m_watch_was_read(0),
     m_watch_was_written(0),
     m_ignore_count(0),
+    m_false_alarms(0),
     m_decl_str(),
     m_watch_spec_str(),
     m_snapshot_old_str(),
@@ -181,6 +182,25 @@ void
 Watchpoint::SetWatchVariable(bool val)
 {
     m_is_watch_variable = val;
+}
+
+void
+Watchpoint::IncrementFalseAlarmsAndReviseHitCount()
+{
+    ++m_false_alarms;
+    if (m_false_alarms)
+    {
+        if (m_hit_count >= m_false_alarms)
+        {
+            m_hit_count -= m_false_alarms;
+            m_false_alarms = 0;
+        }
+        else
+        {
+            m_false_alarms -= m_hit_count;
+            m_hit_count = 0;
+        }
+    }
 }
 
 // RETURNS - true if we should stop at this breakpoint, false if we

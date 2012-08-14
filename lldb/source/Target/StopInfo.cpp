@@ -498,6 +498,7 @@ public:
             StackFrame *frame = exe_ctx.GetFramePtr();
             if (frame)
             {
+                bool snapshot_taken = true;
                 if (!wp_sp->IsWatchVariable())
                 {
                     // We are not watching a variable, just read from the process memory for the watched location.
@@ -535,18 +536,29 @@ public:
                         wp_sp->SetNewSnapshot(ss.GetString());
                     }
                     else
-                        wp_sp->SetNewSnapshot("snapshot attempt failed.");
+                    {
+                        // The variable expression has become out of scope?
+                        // Let us forget about this stop info.
+                        if (log)
+                            log->Printf("Snapshot attempt failed.  Variable expression has become out of scope?");
+                        snapshot_taken = false;
+                        m_should_stop = false;
+                        wp_sp->IncrementFalseAlarmsAndReviseHitCount();
+                    }
 
-                    if (log)
+                    if (log && snapshot_taken)
                         log->Printf("Watchpoint snapshot taken: '%s'\n", wp_sp->GetNewSnapshot().c_str());
                 }
 
                 // Now dump the snapshots we have taken.
-                Debugger &debugger = exe_ctx.GetTargetRef().GetDebugger();
-                StreamSP output_sp = debugger.GetAsyncOutputStream ();
-                wp_sp->DumpSnapshots(output_sp.get());
-                output_sp->EOL();
-                output_sp->Flush();
+                if (snapshot_taken)
+                {
+                    Debugger &debugger = exe_ctx.GetTargetRef().GetDebugger();
+                    StreamSP output_sp = debugger.GetAsyncOutputStream ();
+                    wp_sp->DumpSnapshots(output_sp.get());
+                    output_sp->EOL();
+                    output_sp->Flush();
+                }
             }
 
             if (m_should_stop && wp_sp->GetConditionText() != NULL)

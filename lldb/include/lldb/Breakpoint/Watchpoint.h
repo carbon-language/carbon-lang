@@ -36,6 +36,9 @@ public:
 
     ~Watchpoint ();
 
+    void
+    IncrementFalseAlarmsAndReviseHitCount();
+
     bool
     IsEnabled () const;
 
@@ -162,7 +165,8 @@ private:
                 m_watch_write:1,       // 1 if we stop when the watched data is written to
                 m_watch_was_read:1,    // Set to 1 when watchpoint is hit for a read access
                 m_watch_was_written:1; // Set to 1 when watchpoint is hit for a write access
-    uint32_t    m_ignore_count;        // Number of times to ignore this breakpoint
+    uint32_t    m_ignore_count;        // Number of times to ignore this watchpoint
+    uint32_t    m_false_alarms;        // Number of false alarms.
     std::string m_decl_str;            // Declaration information, if any.
     std::string m_watch_spec_str;      // Spec for the watchpoint.
     std::string m_snapshot_old_str;    // Old snapshot for the watchpoint value as by ValueObject::DumpValueObject().
