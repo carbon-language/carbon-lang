@@ -693,6 +693,7 @@ ENABLE_EXPENSIVE_CHECKS
 EXPENSIVE_CHECKS
 DEBUG_RUNTIME
 DEBUG_SYMBOLS
+KEEP_SYMBOLS
 JIT
 TARGET_HAS_JIT
 ENABLE_DOCS
@@ -1408,6 +1409,7 @@ Optional Features:
                           NO)
   --enable-debug-symbols  Build compiler with debug symbols (default is NO if
                           optimization is on and YES if it's off)
+  --enable-keep-symbols   Do not strip installed executables)
   --enable-jit            Enable Just In Time Compiling (default is YES)
   --enable-docs           Build documents (default is YES)
   --enable-doxygen        Build doxygen documentation (default is NO)
@@ -5155,6 +5157,21 @@ if test ${enableval} = "no" ; then
 
 else
   DEBUG_SYMBOLS=DEBUG_SYMBOLS=1
+
+fi
+
+# Check whether --enable-keep-symbols was given.
+if test "${enable_keep_symbols+set}" = set; then
+  enableval=$enable_keep_symbols;
+else
+  enableval=no
+fi
+
+if test ${enableval} = "no" ; then
+  KEEP_SYMBOLS=
+
+else
+  KEEP_SYMBOLS=KEEP_SYMBOLS=1
 
 fi
 
@@ -10272,7 +10289,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10275 "configure"
+#line 10292 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -22150,12 +22167,12 @@ ENABLE_EXPENSIVE_CHECKS!$ENABLE_EXPENSIVE_CHECKS$ac_delim
 EXPENSIVE_CHECKS!$EXPENSIVE_CHECKS$ac_delim
 DEBUG_RUNTIME!$DEBUG_RUNTIME$ac_delim
 DEBUG_SYMBOLS!$DEBUG_SYMBOLS$ac_delim
+KEEP_SYMBOLS!$KEEP_SYMBOLS$ac_delim
 JIT!$JIT$ac_delim
 TARGET_HAS_JIT!$TARGET_HAS_JIT$ac_delim
 ENABLE_DOCS!$ENABLE_DOCS$ac_delim
 ENABLE_DOXYGEN!$ENABLE_DOXYGEN$ac_delim
 LLVM_ENABLE_THREADS!$LLVM_ENABLE_THREADS$ac_delim
-ENABLE_PTHREADS!$ENABLE_PTHREADS$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -22197,6 +22214,7 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+ENABLE_PTHREADS!$ENABLE_PTHREADS$ac_delim
 ENABLE_PIC!$ENABLE_PIC$ac_delim
 ENABLE_SHARED!$ENABLE_SHARED$ac_delim
 ENABLE_EMBED_STDCXX!$ENABLE_EMBED_STDCXX$ac_delim
@@ -22293,7 +22311,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 94; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 95; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
