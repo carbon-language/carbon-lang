@@ -101,7 +101,9 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
 }
 
 extern "C" {
-const char* WEAK __asan_default_options() { return ""; }
+SANITIZER_WEAK_ATTRIBUTE
+SANITIZER_INTERFACE_ATTRIBUTE
+const char* __asan_default_options() { return ""; }
 }  // extern "C"
 
 void InitializeFlags(Flags *f, const char *env) {
