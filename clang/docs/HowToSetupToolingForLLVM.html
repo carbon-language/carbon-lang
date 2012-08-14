@@ -84,6 +84,42 @@ into your .vimrc:</p>
 <p>When editing C++ code, hit F5 to reparse the current buffer. The output will
 go into the error window, which you can enable with <code>:cope</code>.</p>
 
+<p>Other <code>clang-check</code> options that can be useful when working with
+clang AST:</p>
+<ul>
+  <li><code>-ast-print</code> - Build ASTs and then pretty-print them.</li>
+  <li><code>-ast-dump</code> - Build ASTs and then debug dump them.</li>
+  <li><code>-ast-dump-filter=&lt;string&gt;</code> - Use with
+    <code>-ast-dump</code> or <code>-ast-print</code> to dump/print
+    only AST declaration nodes having a certain substring in a qualified name.
+    Use <code>-ast-list</code> to list all filterable declaration node
+    names.</li>
+  <li><code>-ast-list</code> - Build ASTs and print the list of declaration
+    node qualified names.</li>
+</ul>
+<p>Examples:</p>
+<pre>
+<b>$ clang-check tools/clang/tools/clang-check/ClangCheck.cpp -ast-dump -ast-dump-filter ActionFactory::newASTConsumer</b>
+Processing: tools/clang/tools/clang-check/ClangCheck.cpp.
+Dumping <anonymous namespace>::ActionFactory::newASTConsumer:
+clang::ASTConsumer *newASTConsumer() (CompoundStmt 0x44da290 &lt;/home/alexfh/local/llvm/tools/clang/tools/clang-check/ClangCheck.cpp:64:40, line:72:3&gt;
+  (IfStmt 0x44d97c8 &lt;line:65:5, line:66:45&gt;
+    &lt;&lt;&lt;NULL&gt;&gt;&gt;
+      (ImplicitCastExpr 0x44d96d0 &lt;line:65:9&gt; '_Bool':'_Bool' &lt;UserDefinedConversion&gt;
+...
+<b>$ clang-check tools/clang/tools/clang-check/ClangCheck.cpp -ast-print -ast-dump-filter ActionFactory::newASTConsumer</b>
+Processing: tools/clang/tools/clang-check/ClangCheck.cpp.
+Printing &lt;anonymous namespace&gt;::ActionFactory::newASTConsumer:
+clang::ASTConsumer *newASTConsumer() {
+    if (this-&gt;ASTList.operator _Bool())
+        return clang::CreateASTDeclNodeLister();
+    if (this-&gt;ASTDump.operator _Bool())
+        return clang::CreateASTDumper(this-&gt;ASTDumpFilter);
+    if (this-&gt;ASTPrint.operator _Bool())
+        return clang::CreateASTPrinter(&amp;llvm::outs(), this-&gt;ASTDumpFilter);
+    return new clang::ASTConsumer();
+}
+</pre>
 
 <!-- ======================================================================= -->
 <h2><a name="using-ninja">(Experimental) Using Ninja Build System</a></h2>
