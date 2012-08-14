@@ -170,7 +170,7 @@ int testExtension(PublicClass *p) {
   int x = 0;
   [p setValue2:0];
   if ([p value2] != 0)
-    return 5/x; // expected-warning {{Division by zero}} // TODO: no warning, we should always inline the property.
+    return 5/x; // expected-warning {{Division by zero}}
   return 5/[p value2]; // expected-warning {{Division by zero}}
 }
 

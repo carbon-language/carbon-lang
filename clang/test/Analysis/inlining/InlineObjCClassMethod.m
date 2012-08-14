@@ -179,3 +179,33 @@ int foo2() {
   int y = [MyParentSelf testSelf];
   return 5/y; // Should warn here.
 }
+
+// TODO: We do not inline 'getNum' in the following case, where the value of 
+// 'self' in call '[self getNum]' is available and evaualtes to 
+// 'SelfUsedInParentChild' if it's called from fooA.
+// Self region should get created before we call foo and yje call to super 
+// should keep it live. 
+@interface SelfUsedInParent : NSObject
++ (int)getNum;
++ (int)foo;
+@end
+@implementation SelfUsedInParent
++ (int)getNum {return 5;}
++ (int)foo {
+  return [self getNum];
+}
+@end
+@interface SelfUsedInParentChild : SelfUsedInParent
++ (int)getNum;
++ (int)fooA;
+@end
+@implementation SelfUsedInParentChild
++ (int)getNum {return 0;}
++ (int)fooA {
+  return [super foo];
+}
+@end
+int checkSelfUsedInparentClassMethod() {
+    return 5/[SelfUsedInParentChild fooA];
+}
+
