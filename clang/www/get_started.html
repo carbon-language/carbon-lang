@@ -53,21 +53,21 @@ follows:</p>
   </li>
   <li>Checkout Clang:
   <ul>
-    <li><tt>cd llvm/tools</tt>
+    <li><tt>cd llvm/tools</tt></li>
     <li><tt>svn co http://llvm.org/svn/llvm-project/cfe/trunk clang</tt></li>
+    <li><tt>cd ../..</tt></li>
   </ul>
   </li>
   <li>Checkout Compiler-RT:
   <ul>
-    <li><tt>cd ../..</tt>  (back to where you started)</li>
-    <li><tt>cd llvm/projects</tt>
+    <li><tt>cd llvm/projects</tt></li>
     <li><tt>svn co http://llvm.org/svn/llvm-project/compiler-rt/trunk
         compiler-rt</tt></li>
+    <li><tt>cd ../..</tt></li>
   </ul>
   </li>
   <li>Build LLVM and Clang:
   <ul>
-    <li><tt>cd ../..</tt>  (back to where you started)</li>
     <li><tt>mkdir build</tt> (for building without polluting the source dir)
     </li>
     <li><tt>cd build</tt></li>
