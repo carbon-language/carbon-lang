@@ -271,43 +271,43 @@ static unsigned getDeclShowContexts(NamedDecl *ND,
   if (!ND)
     return 0;
   
-  unsigned Contexts = 0;
+  uint64_t Contexts = 0;
   if (isa<TypeDecl>(ND) || isa<ObjCInterfaceDecl>(ND) || 
       isa<ClassTemplateDecl>(ND) || isa<TemplateTemplateParmDecl>(ND)) {
     // Types can appear in these contexts.
     if (LangOpts.CPlusPlus || !isa<TagDecl>(ND))
-      Contexts |= (1 << (CodeCompletionContext::CCC_TopLevel - 1))
-                | (1 << (CodeCompletionContext::CCC_ObjCIvarList - 1))
-                | (1 << (CodeCompletionContext::CCC_ClassStructUnion - 1))
-                | (1 << (CodeCompletionContext::CCC_Statement - 1))
-                | (1 << (CodeCompletionContext::CCC_Type - 1))
-              | (1 << (CodeCompletionContext::CCC_ParenthesizedExpression - 1));
+      Contexts |= (1LL << CodeCompletionContext::CCC_TopLevel)
+               |  (1LL << CodeCompletionContext::CCC_ObjCIvarList)
+               |  (1LL << CodeCompletionContext::CCC_ClassStructUnion)
+               |  (1LL << CodeCompletionContext::CCC_Statement)
+               |  (1LL << CodeCompletionContext::CCC_Type)
+               |  (1LL << CodeCompletionContext::CCC_ParenthesizedExpression);
 
     // In C++, types can appear in expressions contexts (for functional casts).
     if (LangOpts.CPlusPlus)
-      Contexts |= (1 << (CodeCompletionContext::CCC_Expression - 1));
+      Contexts |= (1LL << CodeCompletionContext::CCC_Expression);
     
     // In Objective-C, message sends can send interfaces. In Objective-C++,
     // all types are available due to functional casts.
     if (LangOpts.CPlusPlus || isa<ObjCInterfaceDecl>(ND))
-      Contexts |= (1 << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1));
+      Contexts |= (1LL << CodeCompletionContext::CCC_ObjCMessageReceiver);
     
     // In Objective-C, you can only be a subclass of another Objective-C class
     if (isa<ObjCInterfaceDecl>(ND))
-      Contexts |= (1 << (CodeCompletionContext::CCC_ObjCInterfaceName - 1));
+      Contexts |= (1LL << CodeCompletionContext::CCC_ObjCInterfaceName);
 
     // Deal with tag names.
     if (isa<EnumDecl>(ND)) {
-      Contexts |= (1 << (CodeCompletionContext::CCC_EnumTag - 1));
+      Contexts |= (1LL << CodeCompletionContext::CCC_EnumTag);
       
       // Part of the nested-name-specifier in C++0x.
       if (LangOpts.CPlusPlus0x)
         IsNestedNameSpecifier = true;
     } else if (RecordDecl *Record = dyn_cast<RecordDecl>(ND)) {
       if (Record->isUnion())
-        Contexts |= (1 << (CodeCompletionContext::CCC_UnionTag - 1));
+        Contexts |= (1LL << CodeCompletionContext::CCC_UnionTag);
       else
-        Contexts |= (1 << (CodeCompletionContext::CCC_ClassOrStructTag - 1));
+        Contexts |= (1LL << CodeCompletionContext::CCC_ClassOrStructTag);
       
       if (LangOpts.CPlusPlus)
         IsNestedNameSpecifier = true;
@@ -315,16 +315,16 @@ static unsigned getDeclShowContexts(NamedDecl *ND,
       IsNestedNameSpecifier = true;
   } else if (isa<ValueDecl>(ND) || isa<FunctionTemplateDecl>(ND)) {
     // Values can appear in these contexts.
-    Contexts = (1 << (CodeCompletionContext::CCC_Statement - 1))
-             | (1 << (CodeCompletionContext::CCC_Expression - 1))
-             | (1 << (CodeCompletionContext::CCC_ParenthesizedExpression - 1))
-             | (1 << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1));
+    Contexts = (1LL << CodeCompletionContext::CCC_Statement)
+             | (1LL << CodeCompletionContext::CCC_Expression)
+             | (1LL << CodeCompletionContext::CCC_ParenthesizedExpression)
+             | (1LL << CodeCompletionContext::CCC_ObjCMessageReceiver);
   } else if (isa<ObjCProtocolDecl>(ND)) {
-    Contexts = (1 << (CodeCompletionContext::CCC_ObjCProtocolName - 1));
+    Contexts = (1LL << CodeCompletionContext::CCC_ObjCProtocolName);
   } else if (isa<ObjCCategoryDecl>(ND)) {
-    Contexts = (1 << (CodeCompletionContext::CCC_ObjCCategoryName - 1));
+    Contexts = (1LL << CodeCompletionContext::CCC_ObjCCategoryName);
   } else if (isa<NamespaceDecl>(ND) || isa<NamespaceAliasDecl>(ND)) {
-    Contexts = (1 << (CodeCompletionContext::CCC_Namespace - 1));
+    Contexts = (1LL << CodeCompletionContext::CCC_Namespace);
    
     // Part of the nested-name-specifier.
     IsNestedNameSpecifier = true;
@@ -399,23 +399,23 @@ void ASTUnit::CacheCodeCompletionResults() {
       if (TheSema->Context.getLangOpts().CPlusPlus && 
           IsNestedNameSpecifier && !Results[I].StartsNestedNameSpecifier) {
         // The contexts in which a nested-name-specifier can appear in C++.
-        unsigned NNSContexts
-          = (1 << (CodeCompletionContext::CCC_TopLevel - 1))
-          | (1 << (CodeCompletionContext::CCC_ObjCIvarList - 1))
-          | (1 << (CodeCompletionContext::CCC_ClassStructUnion - 1))
-          | (1 << (CodeCompletionContext::CCC_Statement - 1))
-          | (1 << (CodeCompletionContext::CCC_Expression - 1))
-          | (1 << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1))
-          | (1 << (CodeCompletionContext::CCC_EnumTag - 1))
-          | (1 << (CodeCompletionContext::CCC_UnionTag - 1))
-          | (1 << (CodeCompletionContext::CCC_ClassOrStructTag - 1))
-          | (1 << (CodeCompletionContext::CCC_Type - 1))
-          | (1 << (CodeCompletionContext::CCC_PotentiallyQualifiedName - 1))
-          | (1 << (CodeCompletionContext::CCC_ParenthesizedExpression - 1));
+        uint64_t NNSContexts
+          = (1LL << CodeCompletionContext::CCC_TopLevel)
+          | (1LL << CodeCompletionContext::CCC_ObjCIvarList)
+          | (1LL << CodeCompletionContext::CCC_ClassStructUnion)
+          | (1LL << CodeCompletionContext::CCC_Statement)
+          | (1LL << CodeCompletionContext::CCC_Expression)
+          | (1LL << CodeCompletionContext::CCC_ObjCMessageReceiver)
+          | (1LL << CodeCompletionContext::CCC_EnumTag)
+          | (1LL << CodeCompletionContext::CCC_UnionTag)
+          | (1LL << CodeCompletionContext::CCC_ClassOrStructTag)
+          | (1LL << CodeCompletionContext::CCC_Type)
+          | (1LL << CodeCompletionContext::CCC_PotentiallyQualifiedName)
+          | (1LL << CodeCompletionContext::CCC_ParenthesizedExpression);
 
         if (isa<NamespaceDecl>(Results[I].Declaration) ||
             isa<NamespaceAliasDecl>(Results[I].Declaration))
-          NNSContexts |= (1 << (CodeCompletionContext::CCC_Namespace - 1));
+          NNSContexts |= (1LL << CodeCompletionContext::CCC_Namespace);
 
         if (unsigned RemainingContexts 
                                 = NNSContexts & ~CachedResult.ShowInContexts) {
@@ -452,18 +452,18 @@ void ASTUnit::CacheCodeCompletionResults() {
                                                 getCodeCompletionTUInfo(),
                                           IncludeBriefCommentsInCodeCompletion);
       CachedResult.ShowInContexts
-        = (1 << (CodeCompletionContext::CCC_TopLevel - 1))
-        | (1 << (CodeCompletionContext::CCC_ObjCInterface - 1))
-        | (1 << (CodeCompletionContext::CCC_ObjCImplementation - 1))
-        | (1 << (CodeCompletionContext::CCC_ObjCIvarList - 1))
-        | (1 << (CodeCompletionContext::CCC_ClassStructUnion - 1))
-        | (1 << (CodeCompletionContext::CCC_Statement - 1))
-        | (1 << (CodeCompletionContext::CCC_Expression - 1))
-        | (1 << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1))
-        | (1 << (CodeCompletionContext::CCC_MacroNameUse - 1))
-        | (1 << (CodeCompletionContext::CCC_PreprocessorExpression - 1))
-        | (1 << (CodeCompletionContext::CCC_ParenthesizedExpression - 1))
-        | (1 << (CodeCompletionContext::CCC_OtherWithMacros - 1));
+        = (1LL << CodeCompletionContext::CCC_TopLevel)
+        | (1LL << CodeCompletionContext::CCC_ObjCInterface)
+        | (1LL << CodeCompletionContext::CCC_ObjCImplementation)
+        | (1LL << CodeCompletionContext::CCC_ObjCIvarList)
+        | (1LL << CodeCompletionContext::CCC_ClassStructUnion)
+        | (1LL << CodeCompletionContext::CCC_Statement)
+        | (1LL << CodeCompletionContext::CCC_Expression)
+        | (1LL << CodeCompletionContext::CCC_ObjCMessageReceiver)
+        | (1LL << CodeCompletionContext::CCC_MacroNameUse)
+        | (1LL << CodeCompletionContext::CCC_PreprocessorExpression)
+        | (1LL << CodeCompletionContext::CCC_ParenthesizedExpression)
+        | (1LL << CodeCompletionContext::CCC_OtherWithMacros);
       
       CachedResult.Priority = Results[I].Priority;
       CachedResult.Kind = Results[I].CursorKind;
@@ -2061,7 +2061,7 @@ namespace {
   /// results from an ASTUnit with the code-completion results provided to it,
   /// then passes the result on to 
   class AugmentedCodeCompleteConsumer : public CodeCompleteConsumer {
-    unsigned long long NormalContexts;
+    uint64_t NormalContexts;
     ASTUnit &AST;
     CodeCompleteConsumer &Next;
     
@@ -2074,24 +2074,24 @@ namespace {
       // Compute the set of contexts in which we will look when we don't have
       // any information about the specific context.
       NormalContexts 
-        = (1LL << (CodeCompletionContext::CCC_TopLevel - 1))
-        | (1LL << (CodeCompletionContext::CCC_ObjCInterface - 1))
-        | (1LL << (CodeCompletionContext::CCC_ObjCImplementation - 1))
-        | (1LL << (CodeCompletionContext::CCC_ObjCIvarList - 1))
-        | (1LL << (CodeCompletionContext::CCC_Statement - 1))
-        | (1LL << (CodeCompletionContext::CCC_Expression - 1))
-        | (1LL << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1))
-        | (1LL << (CodeCompletionContext::CCC_DotMemberAccess - 1))
-        | (1LL << (CodeCompletionContext::CCC_ArrowMemberAccess - 1))
-        | (1LL << (CodeCompletionContext::CCC_ObjCPropertyAccess - 1))
-        | (1LL << (CodeCompletionContext::CCC_ObjCProtocolName - 1))
-        | (1LL << (CodeCompletionContext::CCC_ParenthesizedExpression - 1))
-        | (1LL << (CodeCompletionContext::CCC_Recovery - 1));
+        = (1LL << CodeCompletionContext::CCC_TopLevel)
+        | (1LL << CodeCompletionContext::CCC_ObjCInterface)
+        | (1LL << CodeCompletionContext::CCC_ObjCImplementation)
+        | (1LL << CodeCompletionContext::CCC_ObjCIvarList)
+        | (1LL << CodeCompletionContext::CCC_Statement)
+        | (1LL << CodeCompletionContext::CCC_Expression)
+        | (1LL << CodeCompletionContext::CCC_ObjCMessageReceiver)
+        | (1LL << CodeCompletionContext::CCC_DotMemberAccess)
+        | (1LL << CodeCompletionContext::CCC_ArrowMemberAccess)
+        | (1LL << CodeCompletionContext::CCC_ObjCPropertyAccess)
+        | (1LL << CodeCompletionContext::CCC_ObjCProtocolName)
+        | (1LL << CodeCompletionContext::CCC_ParenthesizedExpression)
+        | (1LL << CodeCompletionContext::CCC_Recovery);
 
       if (AST.getASTContext().getLangOpts().CPlusPlus)
-        NormalContexts |= (1LL << (CodeCompletionContext::CCC_EnumTag - 1))
-                   | (1LL << (CodeCompletionContext::CCC_UnionTag - 1))
-                   | (1LL << (CodeCompletionContext::CCC_ClassOrStructTag - 1));
+        NormalContexts |= (1LL << CodeCompletionContext::CCC_EnumTag)
+                       |  (1LL << CodeCompletionContext::CCC_UnionTag)
+                       |  (1LL << CodeCompletionContext::CCC_ClassOrStructTag);
     }
     
     virtual void ProcessCodeCompleteResults(Sema &S, 
@@ -2206,9 +2206,9 @@ void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
                                             unsigned NumResults) { 
   // Merge the results we were given with the results we cached.
   bool AddedResult = false;
-  unsigned InContexts  
-    = (Context.getKind() == CodeCompletionContext::CCC_Recovery? NormalContexts
-                                        : (1ULL << (Context.getKind() - 1)));
+  uint64_t InContexts =
+      Context.getKind() == CodeCompletionContext::CCC_Recovery
+        ? NormalContexts : (1LL << Context.getKind());
   // Contains the set of names that are hidden by "local" completion results.
   llvm::StringSet<llvm::BumpPtrAllocator> HiddenNames;
   typedef CodeCompletionResult Result;

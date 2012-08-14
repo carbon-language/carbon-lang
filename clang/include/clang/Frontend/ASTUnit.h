@@ -284,12 +284,11 @@ public:
     /// \brief A bitmask that indicates which code-completion contexts should
     /// contain this completion result.
     ///
-    /// The bits in the bitmask correspond to the values of 
-    /// CodeCompleteContext::Kind. To map from a completion context kind to a 
-    /// bit, subtract one from the completion context kind and shift 1 by that
-    /// number of bits. Many completions can occur in several different
-    /// contexts.
-    unsigned ShowInContexts;
+    /// The bits in the bitmask correspond to the values of
+    /// CodeCompleteContext::Kind. To map from a completion context kind to a
+    /// bit, shift 1 by that number of bits. Many completions can occur in
+    /// several different contexts.
+    uint64_t ShowInContexts;
     
     /// \brief The priority given to this code-completion result.
     unsigned Priority;
