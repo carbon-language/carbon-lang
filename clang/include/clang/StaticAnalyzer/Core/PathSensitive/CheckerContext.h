@@ -92,8 +92,8 @@ public:
     return Pred->getLocationContext();
   }
 
-  const StackFrameContext *getCurrentStackFrame() const {
-    return getLocationContext()->getCurrentStackFrame();
+  const StackFrameContext *getStackFrame() const {
+    return Pred->getStackFrame();
   }
 
   BugReporter &getBugReporter() {

@@ -125,7 +125,7 @@ DynamicTypePropagation::getObjectTypeForAllocAndNew(const ObjCMessageExpr *MsgE,
 
   RecE= RecE->IgnoreParenImpCasts();
   if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(RecE)) {
-    const StackFrameContext *SFCtx = C.getCurrentStackFrame();
+    const StackFrameContext *SFCtx = C.getStackFrame();
     // Are we calling [self alloc]? If this is self, get the type of the
     // enclosing ObjC class.
     if (DRE->getDecl() == SFCtx->getSelfDecl()) {

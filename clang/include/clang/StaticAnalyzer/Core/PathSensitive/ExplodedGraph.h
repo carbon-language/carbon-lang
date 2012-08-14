@@ -133,6 +133,10 @@ public:
     return getLocation().getLocationContext();
   }
 
+  const StackFrameContext *getStackFrame() const {
+    return getLocationContext()->getCurrentStackFrame();
+  }
+
   const Decl &getCodeDecl() const { return *getLocationContext()->getDecl(); }
 
   CFG &getCFG() const { return *getLocationContext()->getCFG(); }
