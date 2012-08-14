@@ -207,6 +207,10 @@ SourceRange CallEvent::getArgSourceRange(unsigned Index) const {
   return ArgE->getSourceRange();
 }
 
+void CallEvent::dump() const {
+  dump(llvm::errs());
+}
+
 void CallEvent::dump(raw_ostream &Out) const {
   ASTContext &Ctx = getState()->getStateManager().getContext();
   if (const Expr *E = getOriginExpr()) {

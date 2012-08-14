@@ -175,6 +175,10 @@ void DeclContext::dumpDeclContext() const {
   Printer.VisitDeclContext(const_cast<DeclContext *>(this), /*Indent=*/false);
 }
 
+void Decl::dump() const {
+  dump(llvm::errs());
+}
+
 void Decl::dump(raw_ostream &Out) const {
   PrintingPolicy Policy = getASTContext().getPrintingPolicy();
   Policy.Dump = true;

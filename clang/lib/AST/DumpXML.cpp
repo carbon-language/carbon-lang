@@ -1022,12 +1022,17 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
 };
 }
 
+void Decl::dumpXML() const {
+  dump(llvm::errs());
+}
+
 void Decl::dumpXML(raw_ostream &out) const {
   XMLDumper(out, getASTContext()).dispatch(const_cast<Decl*>(this));
 }
 
 #else /* ifndef NDEBUG */
 
+void Decl::dumpXML() const {}
 void Decl::dumpXML(raw_ostream &out) const {}
 
 #endif

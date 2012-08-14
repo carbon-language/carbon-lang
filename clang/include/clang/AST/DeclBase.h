@@ -858,10 +858,10 @@ public:
                          raw_ostream &Out, const PrintingPolicy &Policy,
                          unsigned Indentation = 0);
   // Debuggers don't usually respect default arguments.
-  LLVM_ATTRIBUTE_USED void dump() const { dump(llvm::errs()); }
+  LLVM_ATTRIBUTE_USED void dump() const;
   void dump(raw_ostream &Out) const;
   // Debuggers don't usually respect default arguments.
-  LLVM_ATTRIBUTE_USED void dumpXML() const { dumpXML(llvm::errs()); }
+  LLVM_ATTRIBUTE_USED void dumpXML() const;
   void dumpXML(raw_ostream &OS) const;
 
 private:

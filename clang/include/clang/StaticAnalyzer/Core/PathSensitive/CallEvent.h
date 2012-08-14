@@ -328,7 +328,7 @@ public:
 
   // For debugging purposes only
   void dump(raw_ostream &Out) const;
-  LLVM_ATTRIBUTE_USED void dump() const { dump(llvm::errs()); }
+  LLVM_ATTRIBUTE_USED void dump() const;
 
   static bool classof(const CallEvent *) { return true; }
 };
