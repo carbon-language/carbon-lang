@@ -624,13 +624,9 @@ class test_attach37 {
   /// \brief\author Aaa
   /// \tparam T Aaa
   void test_attach38(int aaa, int bbb);
-};
 
-// expected-warning@+1 {{empty paragraph passed to '\brief' command}}
-/// \brief\author Aaa
-/// \tparam T Aaa
-template<typename T>
-void test_attach37<T>::test_attach38(int aaa, int bbb) {}
+  void test_attach39(int aaa, int bbb);
+};
 
 // expected-warning@+2 {{empty paragraph passed to '\brief' command}}
 // expected-warning@+2 {{template parameter 'T' not found in the template declaration}}
@@ -638,6 +634,13 @@ void test_attach37<T>::test_attach38(int aaa, int bbb) {}
 /// \tparam T Aaa
 template<>
 void test_attach37<int>::test_attach38(int aaa, int bbb) {}
+
+// expected-warning@+1 {{empty paragraph passed to '\brief' command}}
+/// \brief\author Aaa
+/// \tparam T Aaa
+template<typename T>
+void test_attach37<T>::test_attach39(int aaa, int bbb) {}
+
 
 
 // PR13411, reduced.  We used to crash on this.
@@ -652,7 +655,7 @@ void test_nocrash1(int);
 /// \param\brief
 void test_nocrash2(int);
 
-// PR13593
+// PR13593, example 1 and 2
 
 /**
 * Bla.
@@ -668,3 +671,30 @@ template <typename>
 void test_nocrash3()
 {
 }
+
+// PR13593, example 3
+
+/**
+ * aaa
+ */
+template <typename T>
+inline T test_nocrash5(T a1)
+{
+    return a1;
+}
+
+///
+//,
+
+inline void test_nocrash6()
+{
+    test_nocrash5(1);
+}
+
+// We used to crash on this.
+
+/*!
+  Blah.
+*/
+typedef const struct test_nocrash7 * test_nocrash8;
+

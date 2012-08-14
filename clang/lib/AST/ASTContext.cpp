@@ -66,6 +66,12 @@ RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
   if (D->isImplicit())
     return NULL;
 
+  // User can not attach documentation to implicit instantiations.
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    if (FD->getTemplateSpecializationKind() == TSK_ImplicitInstantiation)
+      return NULL;
+  }
+
   // TODO: handle comments for function parameters properly.
   if (isa<ParmVarDecl>(D))
     return NULL;
@@ -145,7 +151,6 @@ RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
         SourceMgr.getLineNumber(DeclLocDecomp.first, DeclLocDecomp.second)
           == SourceMgr.getLineNumber(CommentBeginDecomp.first,
                                      CommentBeginDecomp.second)) {
-      (*Comment)->setDecl(D);
       return *Comment;
     }
   }
@@ -185,13 +190,13 @@ RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
   if (Text.find_first_of(",;{}#@") != StringRef::npos)
     return NULL;
 
-   (*Comment)->setDecl(D);
   return *Comment;
 }
 
-const RawComment *ASTContext::getRawCommentForAnyRedecl(const Decl *D) const {
-  // If we have a 'templated' declaration for a template, adjust 'D' to
-  // refer to the actual template.
+namespace {
+/// If we have a 'templated' declaration for a template, adjust 'D' to
+/// refer to the actual template.
+const Decl *adjustDeclToTemplate(const Decl *D) {
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     if (const FunctionTemplateDecl *FTD = FD->getDescribedFunctionTemplate())
       D = FTD;
@@ -200,6 +205,12 @@ const RawComment *ASTContext::getRawCommentForAnyRedecl(const Decl *D) const {
       D = CTD;
   }
   // FIXME: Alias templates?
+  return D;
+}
+} // unnamed namespace
+
+const RawComment *ASTContext::getRawCommentForAnyRedecl(const Decl *D) const {
+  D = adjustDeclToTemplate(D);
 
   // Check whether we have cached a comment for this declaration already.
   {
@@ -259,11 +270,20 @@ const RawComment *ASTContext::getRawCommentForAnyRedecl(const Decl *D) const {
 }
 
 comments::FullComment *ASTContext::getCommentForDecl(const Decl *D) const {
+  D = adjustDeclToTemplate(D);
+  const Decl *Canonical = D->getCanonicalDecl();
+  llvm::DenseMap<const Decl *, comments::FullComment *>::iterator Pos =
+      ParsedComments.find(Canonical);
+  if (Pos != ParsedComments.end())
+    return Pos->second;
+
   const RawComment *RC = getRawCommentForAnyRedecl(D);
   if (!RC)
     return NULL;
 
-  return RC->getParsed(*this);
+  comments::FullComment *FC = RC->parse(*this, D);
+  ParsedComments[Canonical] = FC;
+  return FC;
 }
 
 void 

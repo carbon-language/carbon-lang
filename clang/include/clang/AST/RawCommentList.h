@@ -55,16 +55,11 @@ public:
 
   /// Is this comment attached to any declaration?
   bool isAttached() const LLVM_READONLY {
-    return !DeclOrParsedComment.isNull();
+    return IsAttached;
   }
 
-  /// Return the declaration that this comment is attached to.
-  const Decl *getDecl() const;
-
-  /// Set the declaration that this comment is attached to.
-  void setDecl(const Decl *D) {
-    assert(DeclOrParsedComment.isNull());
-    DeclOrParsedComment = D;
+  void setAttached() {
+    IsAttached = true;
   }
 
   /// Returns true if it is a comment that should be put after a member:
@@ -118,27 +113,22 @@ public:
     return extractBriefText(Context);
   }
 
-  /// Returns a \c FullComment AST node, parsing the comment if needed.
-  comments::FullComment *getParsed(const ASTContext &Context) const {
-    if (comments::FullComment *FC =
-            DeclOrParsedComment.dyn_cast<comments::FullComment *>())
-      return FC;
-
-    return parse(Context);
-  }
+  /// Parse the comment, assuming it is attached to decl \c D.
+  comments::FullComment *parse(const ASTContext &Context, const Decl *D) const;
 
 private:
   SourceRange Range;
 
   mutable StringRef RawText;
   mutable const char *BriefText;
-  mutable llvm::PointerUnion<const Decl *, comments::FullComment *>
-      DeclOrParsedComment;
 
   mutable bool RawTextValid : 1;   ///< True if RawText is valid
   mutable bool BriefTextValid : 1; ///< True if BriefText is valid
 
   unsigned Kind : 3;
+
+  /// True if comment is attached to a declaration in ASTContext.
+  bool IsAttached : 1;
 
   bool IsTrailingComment : 1;
   bool IsAlmostTrailingComment : 1;
@@ -152,7 +142,7 @@ private:
   RawComment(SourceRange SR, CommentKind K, bool IsTrailingComment,
              bool IsAlmostTrailingComment) :
     Range(SR), RawTextValid(false), BriefTextValid(false), Kind(K),
-    IsTrailingComment(IsTrailingComment),
+    IsAttached(false), IsTrailingComment(IsTrailingComment),
     IsAlmostTrailingComment(IsAlmostTrailingComment),
     BeginLineValid(false), EndLineValid(false)
   { }
@@ -160,8 +150,6 @@ private:
   StringRef getRawTextSlow(const SourceManager &SourceMgr) const;
 
   const char *extractBriefText(const ASTContext &Context) const;
-
-  comments::FullComment *parse(const ASTContext &Context) const;
 
   friend class ASTReader;
 };

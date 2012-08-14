@@ -485,6 +485,10 @@ public:
   /// lazily.
   mutable llvm::DenseMap<const Decl *, RawCommentAndCacheFlags> RedeclComments;
 
+  /// \brief Mapping from declarations to parsed comments attached to any
+  /// redeclaration.
+  mutable llvm::DenseMap<const Decl *, comments::FullComment *> ParsedComments;
+
   /// \brief Return the documentation comment attached to a given declaration,
   /// without looking into cache.
   RawComment *getRawCommentForDeclNoCache(const Decl *D) const;
