@@ -1574,6 +1574,8 @@ struct X0 {
   template<typename U> X0(const X0<U>&);
 };
 
+struct Abstract { virtual void f() = 0; };
+
 void is_convertible_to() {
   { int arr[T(__is_convertible_to(Int, Int))]; }
   { int arr[F(__is_convertible_to(Int, IntAr))]; }
@@ -1598,6 +1600,7 @@ void is_convertible_to() {
   { int arr[F(__is_convertible_to(Function, Function))]; }
   { int arr[F(__is_convertible_to(PrivateCopy, PrivateCopy))]; }
   { int arr[T(__is_convertible_to(X0<int>, X0<float>))]; }
+  { int arr[F(__is_convertible_to(Abstract, Abstract))]; }
 }
 
 namespace is_convertible_to_instantiate {

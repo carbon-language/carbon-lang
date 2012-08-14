@@ -3478,6 +3478,7 @@ bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
       : TypeDiagnoser(DiagID == 0), DiagID(DiagID), SelID(SelID) { }
     
     virtual void diagnose(Sema &S, SourceLocation Loc, QualType T) {
+      if (Suppressed) return;
       if (SelID == -1)
         S.Diag(Loc, DiagID) << T;
       else

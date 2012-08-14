@@ -3542,9 +3542,25 @@ static bool EvaluateBinaryTypeTrait(Sema &Self, BinaryTypeTrait BTT,
     // We model the initialization as a copy-initialization of a temporary
     // of the appropriate type, which for this expression is identical to the
     // return statement (since NRVO doesn't apply).
+
+    // Functions aren't allowed to return function or array types.
+    if (RhsT->isFunctionType() || RhsT->isArrayType())
+      return false;
+
+    // A return statement in a void function must have void type.
+    if (RhsT->isVoidType())
+      return LhsT->isVoidType();
+
+    // A function definition requires a complete, non-abstract return type.
+    if (Self.RequireCompleteType(KeyLoc, RhsT, 0) ||
+        Self.RequireNonAbstractType(KeyLoc, RhsT, 0))
+      return false;
+
+    // Compute the result of add_rvalue_reference.
     if (LhsT->isObjectType() || LhsT->isFunctionType())
       LhsT = Self.Context.getRValueReferenceType(LhsT);
-    
+
+    // Build a fake source and destination for initialization.
     InitializedEntity To(InitializedEntity::InitializeTemporary(RhsT));
     OpaqueValueExpr From(KeyLoc, LhsT.getNonLValueExprType(Self.Context),
                          Expr::getValueKindForType(LhsT));
