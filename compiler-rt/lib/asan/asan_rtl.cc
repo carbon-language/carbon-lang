@@ -244,6 +244,7 @@ static NOINLINE void force_interface_symbols() {
     case 28: __asan_stack_free(0, 0, 0); break;
     case 29: __asan_stack_malloc(0, 0); break;
     case 30: __asan_set_on_error_callback(0); break;
+    case 31: __asan_default_options(); break;
   }
 }
 
