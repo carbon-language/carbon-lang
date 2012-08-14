@@ -2797,7 +2797,6 @@ static inline bool needSpaceAsmToken(Token currTok) {
 static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
                               SourceLocation AsmLoc,
                               ArrayRef<Token> AsmToks,
-                              ArrayRef<unsigned> LineEnds,
                               const TargetInfo &TI,
                               std::vector<std::string> &AsmStrings) {
   assert (!AsmToks.empty() && "Didn't expect an empty AsmToks!");
@@ -2805,57 +2804,60 @@ static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
   // Assume simple asm stmt until we parse a non-register identifer.
   IsSimple = true;
 
-  for (unsigned i = 0, e = LineEnds.size(); i != e; ++i) {
-    SmallString<512> Asm;
+  SmallString<512> Asm;
+  unsigned NumAsmStrings = 0;
+  for (unsigned i = 0, e = AsmToks.size(); i != e; ++i) {
 
-    // Check the operands.
-    for (unsigned j = (i == 0) ? 0 : LineEnds[i-1], e = LineEnds[i]; j != e; ++j) {
+    // Emit the previous asm string.
+    if (i != 0 && AsmToks[i].isAtStartOfLine())
+      AsmStrings[NumAsmStrings++] = Asm.c_str();
 
-      IdentifierInfo *II;
-      if (j == 0 || (i > 0 && j == LineEnds[i-1])) {
-        II = AsmToks[j].getIdentifierInfo();
-        Asm = II->getName().str();
-        continue;
-      }
-
-      if (needSpaceAsmToken(AsmToks[j]))
-        Asm += " ";
-
-      switch (AsmToks[j].getKind()) {
-      default:
-        //llvm_unreachable("Unknown token.");
-        break;
-      case tok::comma: Asm += ","; break;
-      case tok::colon: Asm += ":"; break;
-      case tok::l_square: Asm += "["; break;
-      case tok::r_square: Asm += "]"; break;
-      case tok::l_brace: Asm += "{"; break;
-      case tok::r_brace: Asm += "}"; break;
-      case tok::numeric_constant: {
-        SmallString<32> TokenBuf;
-        TokenBuf.resize(32);
-        bool StringInvalid = false;
-        Asm += SemaRef.PP.getSpelling(AsmToks[j], TokenBuf, &StringInvalid);
-        assert (!StringInvalid && "Expected valid string!");
-        break;
-      }
-      case tok::identifier: {
-        II = AsmToks[j].getIdentifierInfo();
-        StringRef Name = II->getName();
-
-        // Valid registers don't need modification.
-        if (TI.isValidGCCRegisterName(Name)) {
-          Asm += Name;
-          break;
-        }
-
-        // TODO: Lookup the identifier.
-        IsSimple = false;
-      }
-      } // AsmToks[i].getKind()
+    // Start a new asm string with the opcode.
+    if (i == 0 || AsmToks[i].isAtStartOfLine()) {
+      Asm = AsmToks[i].getIdentifierInfo()->getName().str();
+      continue;
     }
-    AsmStrings[i] = Asm.c_str();
+
+    if (needSpaceAsmToken(AsmToks[i]))
+      Asm += " ";
+
+    // Check the operand(s).
+    switch (AsmToks[i].getKind()) {
+    default:
+      //llvm_unreachable("Unknown token.");
+      break;
+    case tok::comma: Asm += ","; break;
+    case tok::colon: Asm += ":"; break;
+    case tok::l_square: Asm += "["; break;
+    case tok::r_square: Asm += "]"; break;
+    case tok::l_brace: Asm += "{"; break;
+    case tok::r_brace: Asm += "}"; break;
+    case tok::numeric_constant: {
+      SmallString<32> TokenBuf;
+      TokenBuf.resize(32);
+      bool StringInvalid = false;
+      Asm += SemaRef.PP.getSpelling(AsmToks[i], TokenBuf, &StringInvalid);
+      assert (!StringInvalid && "Expected valid string!");
+      break;
+    }
+    case tok::identifier: {
+      StringRef Name = AsmToks[i].getIdentifierInfo()->getName();
+
+      // Valid registers don't need modification.
+      if (TI.isValidGCCRegisterName(Name)) {
+        Asm += Name;
+        break;
+      }
+
+      // TODO: Lookup the identifier.
+      IsSimple = false;
+      break;
+    }
+    } // AsmToks[i].getKind()
   }
+
+  // Emit the final (and possibly only) asm string.
+  AsmStrings[NumAsmStrings] = Asm.c_str();
 }
 
 // Build the unmodified MSAsmString.
@@ -2907,11 +2909,18 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
 
   bool IsSimple;
   std::vector<std::string> PatchedAsmStrings;
-  PatchedAsmStrings.resize(LineEnds.size());
+
+  // FIXME: Count this while parsing.
+  unsigned NumAsmStrings = 0;
+  for (unsigned i = 0, e = AsmToks.size(); i != e; ++i)
+    if (AsmToks[i].isAtStartOfLine())
+      ++NumAsmStrings;
+
+  PatchedAsmStrings.resize(NumAsmStrings ? NumAsmStrings : 1);
 
   // Rewrite operands to appease the AsmParser.
-  patchMSAsmStrings(*this, IsSimple, AsmLoc, AsmToks, LineEnds, 
-                   Context.getTargetInfo(), PatchedAsmStrings);
+  patchMSAsmStrings(*this, IsSimple, AsmLoc, AsmToks, Context.getTargetInfo(),
+                    PatchedAsmStrings);
 
   // patchMSAsmStrings doesn't correctly patch non-simple asm statements.
   if (!IsSimple) {
