@@ -2759,41 +2759,6 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
   return Owned(NS);
 }
 
-// needSpaceAsmToken - This function handles whitespace around asm punctuation.
-// Returns true if a space should be emitted.
-static inline bool needSpaceAsmToken(Token currTok) {
-  static Token prevTok;
-
-  // No need for space after prevToken.
-  switch(prevTok.getKind()) {
-  default:
-    break;
-  case tok::l_square:
-  case tok::r_square:
-  case tok::l_brace:
-  case tok::r_brace:
-  case tok::colon:
-    prevTok = currTok;
-    return false;
-  }
-
-  // No need for a space before currToken.
-  switch(currTok.getKind()) {
-  default:
-    break;
-  case tok::l_square:
-  case tok::r_square:
-  case tok::l_brace:
-  case tok::r_brace:
-  case tok::comma:
-  case tok::colon:
-    prevTok = currTok;
-    return false;
-  }
-  prevTok = currTok;
-  return true;
-}
-
 static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
                               SourceLocation AsmLoc,
                               ArrayRef<Token> AsmToks,
@@ -2812,14 +2777,17 @@ static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
     if (i != 0 && AsmToks[i].isAtStartOfLine())
       AsmStrings[NumAsmStrings++] = Asm.c_str();
 
+    if (i && AsmToks[i].isAtStartOfLine())
+      Asm += '\n';
+
     // Start a new asm string with the opcode.
     if (i == 0 || AsmToks[i].isAtStartOfLine()) {
       Asm = AsmToks[i].getIdentifierInfo()->getName().str();
       continue;
     }
 
-    if (needSpaceAsmToken(AsmToks[i]))
-      Asm += " ";
+    if (i && AsmToks[i].hasLeadingSpace())
+      Asm += ' ';
 
     // Check the operand(s).
     switch (AsmToks[i].getKind()) {
@@ -2862,24 +2830,19 @@ static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
 
 // Build the unmodified MSAsmString.
 static std::string buildMSAsmString(Sema &SemaRef,
-                                    ArrayRef<Token> AsmToks,
-                                    ArrayRef<unsigned> LineEnds) {
+                                    ArrayRef<Token> AsmToks) {
   assert (!AsmToks.empty() && "Didn't expect an empty AsmToks!");
   SmallString<512> Asm;
   SmallString<512> TokenBuf;
   TokenBuf.resize(512);
-  unsigned AsmLineNum = 0;
   for (unsigned i = 0, e = AsmToks.size(); i < e; ++i) {
     bool StringInvalid = false;
-    if (i && (!AsmLineNum || i != LineEnds[AsmLineNum-1]) &&
-        needSpaceAsmToken(AsmToks[i]))
+    if (i && AsmToks[i].isAtStartOfLine())
+      Asm += '\n';
+    else if (i && AsmToks[i].hasLeadingSpace())
       Asm += ' ';
     Asm += SemaRef.PP.getSpelling(AsmToks[i], TokenBuf, &StringInvalid);
     assert (!StringInvalid && "Expected valid string!");
-    if (i + 1 == LineEnds[AsmLineNum] && i + 1 != AsmToks.size()) {
-      Asm += '\n';
-      ++AsmLineNum;
-    }
   }
   return Asm.c_str();
 }
@@ -2902,7 +2865,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
     return Owned(NS);
   }
 
-  std::string AsmString = buildMSAsmString(*this, AsmToks, LineEnds);
+  std::string AsmString = buildMSAsmString(*this, AsmToks);
 
   bool IsSimple;
   std::vector<std::string> PatchedAsmStrings;
