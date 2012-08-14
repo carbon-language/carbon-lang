@@ -670,6 +670,9 @@ bool ObjCMethodCall::canBeOverridenInSubclass(ObjCInterfaceDecl *IDecl,
   if (InterfLoc.isValid() && SM.isFromMainFile(InterfLoc))
     return false;
 
+  // Assume that property accessors are not overridden.
+  if (getMessageKind() == OCM_PropertyAccess)
+    return false;
 
   // We assume that if the method is public (declared outside of main file) or
   // has a parent which publicly declares the method, the method could be

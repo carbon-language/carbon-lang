@@ -160,10 +160,10 @@ int testCallToPublicAPICat(PublicSubClass *p) {
 // weither they are "public" or private. 
 int testPublicProperty(PublicClass *p) {
   int x = 0;
-  [p setValue3:0];
-  if ([p value3] != 0)
-    return 5/x; // expected-warning {{Division by zero}} // TODO: no warning, we should always inline the property.
-  return 5/[p value3];// expected-warning {{Division by zero}}
+  p.value3 = 0;
+  if (p.value3 != 0)
+    return 5/x; 
+  return 5/p.value3;// expected-warning {{Division by zero}}
 }
 
 int testExtension(PublicClass *p) {
