@@ -229,6 +229,35 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
 
     return RValue::get(Result);
   }
+  
+  case Builtin::BI__builtin_conj:
+  case Builtin::BI__builtin_conjf:
+  case Builtin::BI__builtin_conjl: {
+    ComplexPairTy ComplexVal = EmitComplexExpr(E->getArg(0));
+    Value *Real = ComplexVal.first;
+    Value *Imag = ComplexVal.second;
+    Value *Zero = 
+      Imag->getType()->isFPOrFPVectorTy() 
+        ? llvm::ConstantFP::getZeroValueForNegation(Imag->getType())
+        : llvm::Constant::getNullValue(Imag->getType());
+    
+    Imag = Builder.CreateFSub(Zero, Imag, "sub");
+    return RValue::getComplex(std::make_pair(Real, Imag));
+  }
+  case Builtin::BI__builtin_creal:
+  case Builtin::BI__builtin_crealf:
+  case Builtin::BI__builtin_creall: {
+    ComplexPairTy ComplexVal = EmitComplexExpr(E->getArg(0));
+    return RValue::get(ComplexVal.first);
+  }
+      
+  case Builtin::BI__builtin_cimag:
+  case Builtin::BI__builtin_cimagf:
+  case Builtin::BI__builtin_cimagl: {
+    ComplexPairTy ComplexVal = EmitComplexExpr(E->getArg(0));
+    return RValue::get(ComplexVal.second);
+  }
+      
   case Builtin::BI__builtin_ctzs:
   case Builtin::BI__builtin_ctz:
   case Builtin::BI__builtin_ctzl:
