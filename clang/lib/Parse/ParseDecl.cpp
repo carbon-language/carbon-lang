@@ -866,7 +866,8 @@ void Parser::ParseLexedAttributes(ParsingClass &Class) {
 void Parser::ParseLexedAttributeList(LateParsedAttrList &LAs, Decl *D,
                                      bool EnterScope, bool OnDefinition) {
   for (unsigned i = 0, ni = LAs.size(); i < ni; ++i) {
-    LAs[i]->addDecl(D);
+    if (D)
+      LAs[i]->addDecl(D);
     ParseLexedAttribute(*LAs[i], EnterScope, OnDefinition);
     delete LAs[i];
   }
