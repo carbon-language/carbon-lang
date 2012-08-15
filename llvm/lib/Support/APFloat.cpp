@@ -1774,19 +1774,31 @@ APFloat::opStatus APFloat::roundToIntegral(roundingMode rounding_mode) {
   // precision of our format, and then subtract it back off again.  The choice
   // of rounding modes for the addition/subtraction determines the rounding mode
   // for our integral rounding as well.
+  // NOTE: When the input value is negative, we do subtractation followed by
+  // addition instead.
   APInt IntegerConstant(NextPowerOf2(semanticsPrecision(*semantics)), 1);
   IntegerConstant <<= semanticsPrecision(*semantics)-1;
   APFloat MagicConstant(*semantics);
   fs = MagicConstant.convertFromAPInt(IntegerConstant, false,
                                       rmNearestTiesToEven);
+  MagicConstant.copySign(*this);
+
   if (fs != opOK)
     return fs;
+
+  // Preserve the input sign so that we can handle 0.0/-0.0 cases correctly.
+  bool inputSign = isNegative();
 
   fs = add(MagicConstant, rounding_mode);
   if (fs != opOK && fs != opInexact)
     return fs;
 
   fs = subtract(MagicConstant, rounding_mode);
+
+  // Restore the input sign.
+  if (inputSign != isNegative())
+    changeSign();
+
   return fs;
 }
 

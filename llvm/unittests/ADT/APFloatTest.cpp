@@ -648,6 +648,36 @@ TEST(APFloatTest, exactInverse) {
   EXPECT_FALSE(APFloat(1.40129846e-45f).getExactInverse(0));
 }
 
+TEST(APFloatTest, roundToIntegral) {
+  APFloat T(-0.5), S(3.14), P(0.0);
+
+  P = T;
+  P.roundToIntegral(APFloat::rmTowardZero);
+  EXPECT_EQ(-0.0, P.convertToDouble());
+  P = T;
+  P.roundToIntegral(APFloat::rmTowardNegative);
+  EXPECT_EQ(-1.0, P.convertToDouble());
+  P = T;
+  P.roundToIntegral(APFloat::rmTowardPositive);
+  EXPECT_EQ(-0.0, P.convertToDouble());
+  P = T;
+  P.roundToIntegral(APFloat::rmNearestTiesToEven);
+  EXPECT_EQ(-0.0, P.convertToDouble());
+
+  P = S;
+  P.roundToIntegral(APFloat::rmTowardZero);
+  EXPECT_EQ(3.0, P.convertToDouble());
+  P = S;
+  P.roundToIntegral(APFloat::rmTowardNegative);
+  EXPECT_EQ(3.0, P.convertToDouble());
+  P = S;
+  P.roundToIntegral(APFloat::rmTowardPositive);
+  EXPECT_EQ(4.0, P.convertToDouble());
+  P = S;
+  P.roundToIntegral(APFloat::rmNearestTiesToEven);
+  EXPECT_EQ(3.0, P.convertToDouble());
+}
+
 TEST(APFloatTest, getLargest) {
   EXPECT_EQ(3.402823466e+38f, APFloat::getLargest(APFloat::IEEEsingle).convertToFloat());
   EXPECT_EQ(1.7976931348623158e+308, APFloat::getLargest(APFloat::IEEEdouble).convertToDouble());
