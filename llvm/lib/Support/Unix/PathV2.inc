@@ -465,6 +465,118 @@ rety_open_create:
   return error_code::success();
 }
 
+error_code mapped_file_region::init(int fd, uint64_t offset) {
+  AutoFD FD(fd);
+
+  // Figure out how large the file is.
+  struct stat FileInfo;
+  if (fstat(fd, &FileInfo) == -1)
+    return error_code(errno, system_category());
+  uint64_t FileSize = FileInfo.st_size;
+
+  if (Size == 0)
+    Size = FileSize;
+  else if (FileSize < Size) {
+    // We need to grow the file.
+    if (ftruncate(fd, Size) == -1)
+      return error_code(errno, system_category());
+  }
+
+  int flags = (Mode == readwrite) ? MAP_SHARED : MAP_PRIVATE;
+  int prot = (Mode == readonly) ? PROT_READ : (PROT_READ | PROT_WRITE);
+#ifdef MAP_FILE
+  flags |= MAP_FILE;
+#endif
+  Mapping = ::mmap(0, Size, prot, flags, fd, offset);
+  if (Mapping == MAP_FAILED)
+    return error_code(errno, system_category());
+  return error_code::success();
+}
+
+mapped_file_region::mapped_file_region(const Twine &path,
+                                       mapmode mode,
+                                       uint64_t length,
+                                       uint64_t offset,
+                                       error_code &ec)
+  : Mode(mode)
+  , Size(length)
+  , Mapping() {
+  // Make sure that the requested size fits within SIZE_T.
+  if (length > std::numeric_limits<size_t>::max()) {
+    ec = make_error_code(errc::invalid_argument);
+    return;
+  }
+
+  SmallString<128> path_storage;
+  StringRef name = path.toNullTerminatedStringRef(path_storage);
+  int oflags = (mode == readonly) ? O_RDONLY : O_RDWR;
+  int ofd = ::open(name.begin(), oflags);
+  if (ofd == -1) {
+    ec = error_code(errno, system_category());
+    return;
+  }
+
+  ec = init(ofd, offset);
+  if (ec)
+    Mapping = 0;
+}
+
+mapped_file_region::mapped_file_region(int fd,
+                                       mapmode mode,
+                                       uint64_t length,
+                                       uint64_t offset,
+                                       error_code &ec)
+  : Mode(mode)
+  , Size(length)
+  , Mapping() {
+  // Make sure that the requested size fits within SIZE_T.
+  if (length > std::numeric_limits<size_t>::max()) {
+    ec = make_error_code(errc::invalid_argument);
+    return;
+  }
+
+  ec = init(fd, offset);
+  if (ec)
+    Mapping = 0;
+}
+
+mapped_file_region::~mapped_file_region() {
+  if (Mapping)
+    ::munmap(Mapping, Size);
+}
+
+#ifdef LLVM_USE_RVALUE_REFERENCES
+mapped_file_region::mapped_file_region(mapped_file_region &&other)
+  : Mode(other.Mode), Size(other.Size), Mapping(other.Mapping) {
+  other.Mapping = 0;
+}
+#endif
+
+mapped_file_region::mapmode mapped_file_region::flags() const {
+  assert(Mapping && "Mapping failed but used anyway!");
+  return Mode;
+}
+
+uint64_t mapped_file_region::size() const {
+  assert(Mapping && "Mapping failed but used anyway!");
+  return Size;
+}
+
+char *mapped_file_region::data() const {
+  assert(Mapping && "Mapping failed but used anyway!");
+  assert(Mode != readonly && "Cannot get non const data for readonly mapping!");
+  return reinterpret_cast<char*>(Mapping);
+}
+
+const char *mapped_file_region::const_data() const {
+  assert(Mapping && "Mapping failed but used anyway!");
+  return reinterpret_cast<const char*>(Mapping);
+}
+
+int mapped_file_region::alignment() {
+  return Process::GetPageSize();
+}
+
 error_code detail::directory_iterator_construct(detail::DirIterState &it,
                                                 StringRef path){
   SmallString<128> path_null(path);

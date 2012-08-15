@@ -340,44 +340,51 @@ TEST_F(FileSystemTest, Permissions) {
 }
 #endif
 
-#if !defined(_WIN32) // FIXME: temporary suppressed.
 TEST_F(FileSystemTest, FileMapping) {
   // Create a temp file.
   int FileDescriptor;
   SmallString<64> TempPath;
   ASSERT_NO_ERROR(
     fs::unique_file("%%-%%-%%-%%.temp", FileDescriptor, TempPath));
-
-  // Grow temp file to be 4096 bytes 
-  ASSERT_NO_ERROR(sys::fs::resize_file(Twine(TempPath), 4096));
-  
   // Map in temp file and add some content
-  void* MappedMemory;
-  ASSERT_NO_ERROR(fs::map_file_pages(Twine(TempPath), 0, 4096, 
-                                true /*writable*/, MappedMemory));
-  char* Memory = reinterpret_cast<char*>(MappedMemory);
-  strcpy(Memory, "hello there");
-  
-  // Unmap temp file
-  ASSERT_NO_ERROR(fs::unmap_file_pages(MappedMemory, 4096));
-  MappedMemory = NULL;
-  Memory = NULL;
+  error_code EC;
+  StringRef Val("hello there");
+  {
+    fs::mapped_file_region mfr(FileDescriptor,
+                               fs::mapped_file_region::readwrite,
+                               4096,
+                               0,
+                               EC);
+    ASSERT_NO_ERROR(EC);
+    std::copy(Val.begin(), Val.end(), mfr.data());
+    // Explicitly add a 0.
+    mfr.data()[Val.size()] = 0;
+    // Unmap temp file
+  }
   
   // Map it back in read-only
-  ASSERT_NO_ERROR(fs::map_file_pages(Twine(TempPath), 0, 4096, 
-                                false /*read-only*/, MappedMemory));
+  fs::mapped_file_region mfr(Twine(TempPath),
+                             fs::mapped_file_region::readonly,
+                             0,
+                             0,
+                             EC);
+  ASSERT_NO_ERROR(EC);
   
   // Verify content
-  Memory = reinterpret_cast<char*>(MappedMemory);
-  bool SAME = (strcmp(Memory, "hello there") == 0);
-  EXPECT_TRUE(SAME);
+  EXPECT_EQ(StringRef(mfr.const_data()), Val);
   
   // Unmap temp file
-  ASSERT_NO_ERROR(fs::unmap_file_pages(MappedMemory, 4096));
-  MappedMemory = NULL;
-  Memory = NULL;
-}
+
+#ifdef LLVM_USE_RVALUE_REFERENCES
+  fs::mapped_file_region m(Twine(TempPath),
+                             fs::mapped_file_region::readonly,
+                             0,
+                             0,
+                             EC);
+  ASSERT_NO_ERROR(EC);
+  const char *Data = m.const_data();
+  fs::mapped_file_region mfrrv(llvm_move(m));
+  EXPECT_EQ(mfrrv.const_data(), Data);
 #endif
-
-
+}
 } // anonymous namespace

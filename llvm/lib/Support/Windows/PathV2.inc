@@ -22,6 +22,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#undef max
+
 // MinGW doesn't define this.
 #ifndef _ERRNO_T_DEFINED
 #define _ERRNO_T_DEFINED
@@ -701,6 +703,203 @@ error_code get_magic(const Twine &path, uint32_t len,
 
   result.set_size(len);
   return error_code::success();
+}
+
+error_code mapped_file_region::init(int FD, uint64_t Offset) {
+  FileDescriptor = FD;
+  // Make sure that the requested size fits within SIZE_T.
+  if (Size > std::numeric_limits<SIZE_T>::max()) {
+    if (FileDescriptor)
+      _close(FileDescriptor);
+    else
+      ::CloseHandle(FileHandle);
+    return make_error_code(errc::invalid_argument);
+  }
+
+  DWORD flprotect;
+  switch (Mode) {
+  case readonly:  flprotect = PAGE_READONLY; break;
+  case readwrite: flprotect = PAGE_READWRITE; break;
+  case priv:      flprotect = PAGE_WRITECOPY; break;
+  default: llvm_unreachable("invalid mapping mode");
+  }
+
+  FileMappingHandle = ::CreateFileMapping(FileHandle,
+                                          0,
+                                          flprotect,
+                                          Size >> 32,
+                                          Size & 0xffffffff,
+                                          0);
+  if (FileMappingHandle == NULL) {
+    error_code ec = windows_error(GetLastError());
+    if (FileDescriptor)
+      _close(FileDescriptor);
+    else
+      ::CloseHandle(FileHandle);
+    return ec;
+  }
+
+  DWORD dwDesiredAccess;
+  switch (Mode) {
+  case readonly:  dwDesiredAccess = FILE_MAP_READ; break;
+  case readwrite: dwDesiredAccess = FILE_MAP_WRITE; break;
+  case priv:      dwDesiredAccess = FILE_MAP_COPY; break;
+  default: llvm_unreachable("invalid mapping mode");
+  }
+  Mapping = ::MapViewOfFile(FileMappingHandle,
+                            dwDesiredAccess,
+                            Offset >> 32,
+                            Offset & 0xffffffff,
+                            Size);
+  if (Mapping == NULL) {
+    error_code ec = windows_error(GetLastError());
+    ::CloseHandle(FileMappingHandle);
+    if (FileDescriptor)
+      _close(FileDescriptor);
+    else
+      ::CloseHandle(FileHandle);
+    return ec;
+  }
+
+  if (Size == 0) {
+    MEMORY_BASIC_INFORMATION mbi;
+    SIZE_T Result = VirtualQuery(Mapping, &mbi, sizeof(mbi));
+    if (Result == 0) {
+      error_code ec = windows_error(GetLastError());
+      ::UnmapViewOfFile(Mapping);
+      ::CloseHandle(FileMappingHandle);
+      if (FileDescriptor)
+        _close(FileDescriptor);
+      else
+        ::CloseHandle(FileHandle);
+      return ec;
+    }
+    Size = mbi.RegionSize;
+  }
+  return error_code::success();
+}
+
+mapped_file_region::mapped_file_region(const Twine &path,
+                                       mapmode mode,
+                                       uint64_t length,
+                                       uint64_t offset,
+                                       error_code &ec) 
+  : Mode(mode)
+  , Size(length)
+  , Mapping()
+  , FileDescriptor()
+  , FileHandle(INVALID_HANDLE_VALUE)
+  , FileMappingHandle() {
+  SmallString<128> path_storage;
+  SmallVector<wchar_t, 128> path_utf16;
+
+  // Convert path to UTF-16.
+  if (ec = UTF8ToUTF16(path.toStringRef(path_storage), path_utf16))
+    return;
+
+  // Get file handle for creating a file mapping.
+  FileHandle = ::CreateFileW(c_str(path_utf16),
+                             Mode == readonly ? GENERIC_READ
+                                              : GENERIC_READ | GENERIC_WRITE,
+                             Mode == readonly ? FILE_SHARE_READ
+                                              : 0,
+                             0,
+                             Mode == readonly ? OPEN_EXISTING
+                                              : OPEN_ALWAYS,
+                             Mode == readonly ? FILE_ATTRIBUTE_READONLY
+                                              : FILE_ATTRIBUTE_NORMAL,
+                             0);
+  if (FileHandle == INVALID_HANDLE_VALUE) {
+    ec = windows_error(::GetLastError());
+    return;
+  }
+
+  FileDescriptor = 0;
+  ec = init(FileDescriptor, offset);
+  if (ec) {
+    Mapping = FileMappingHandle = 0;
+    FileHandle = INVALID_HANDLE_VALUE;
+    FileDescriptor = 0;
+  }
+}
+
+mapped_file_region::mapped_file_region(int fd,
+                                       mapmode mode,
+                                       uint64_t length,
+                                       uint64_t offset,
+                                       error_code &ec)
+  : Mode(mode)
+  , Size(length)
+  , Mapping()
+  , FileDescriptor(fd)
+  , FileHandle(INVALID_HANDLE_VALUE)
+  , FileMappingHandle() {
+  FileHandle = reinterpret_cast<HANDLE>(_get_osfhandle(fd));
+  if (FileHandle == INVALID_HANDLE_VALUE) {
+    _close(FileDescriptor);
+    FileDescriptor = 0;
+    ec = make_error_code(errc::bad_file_descriptor);
+    return;
+  }
+
+  ec = init(FileDescriptor, offset);
+  if (ec) {
+    Mapping = FileMappingHandle = 0;
+    FileHandle = INVALID_HANDLE_VALUE;
+    FileDescriptor = 0;
+  }
+}
+
+mapped_file_region::~mapped_file_region() {
+  if (Mapping)
+    ::UnmapViewOfFile(Mapping);
+  if (FileMappingHandle)
+    ::CloseHandle(FileMappingHandle);
+  if (FileDescriptor)
+    _close(FileDescriptor);
+  else if (FileHandle != INVALID_HANDLE_VALUE)
+    ::CloseHandle(FileHandle);
+}
+
+#ifdef LLVM_USE_RVALUE_REFERENCES
+mapped_file_region::mapped_file_region(mapped_file_region &&other)
+  : Mode(other.Mode)
+  , Size(other.Size)
+  , Mapping(other.Mapping)
+  , FileDescriptor(other.FileDescriptor)
+  , FileHandle(other.FileHandle)
+  , FileMappingHandle(other.FileMappingHandle) {
+  other.Mapping = other.FileMappingHandle = 0;
+  other.FileHandle = INVALID_HANDLE_VALUE;
+  other.FileDescriptor = 0;
+}
+#endif
+
+mapped_file_region::mapmode mapped_file_region::flags() const {
+  assert(Mapping && "Mapping failed but used anyway!");
+  return Mode;
+}
+
+uint64_t mapped_file_region::size() const {
+  assert(Mapping && "Mapping failed but used anyway!");
+  return Size;
+}
+
+char *mapped_file_region::data() const {
+  assert(Mode != readonly && "Cannot get non const data for readonly mapping!");
+  assert(Mapping && "Mapping failed but used anyway!");
+  return reinterpret_cast<char*>(Mapping);
+}
+
+const char *mapped_file_region::const_data() const {
+  assert(Mapping && "Mapping failed but used anyway!");
+  return reinterpret_cast<const char*>(Mapping);
+}
+
+int mapped_file_region::alignment() {
+  SYSTEM_INFO SysInfo;
+  ::GetSystemInfo(&SysInfo);
+  return SysInfo.dwAllocationGranularity;
 }
 
 error_code detail::directory_iterator_construct(detail::DirIterState &it,
