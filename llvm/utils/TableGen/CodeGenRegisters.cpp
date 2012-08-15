@@ -50,16 +50,29 @@ std::string CodeGenSubRegIndex::getQualifiedName() const {
 void CodeGenSubRegIndex::updateComponents(CodeGenRegBank &RegBank) {
   if (!TheDef)
     return;
+
   std::vector<Record*> Comps = TheDef->getValueAsListOfDefs("ComposedOf");
-  if (Comps.empty())
-    return;
-  if (Comps.size() != 2)
-    throw TGError(TheDef->getLoc(), "ComposedOf must have exactly two entries");
-  CodeGenSubRegIndex *A = RegBank.getSubRegIdx(Comps[0]);
-  CodeGenSubRegIndex *B = RegBank.getSubRegIdx(Comps[1]);
-  CodeGenSubRegIndex *X = A->addComposite(B, this);
-  if (X)
-    throw TGError(TheDef->getLoc(), "Ambiguous ComposedOf entries");
+  if (!Comps.empty()) {
+    if (Comps.size() != 2)
+      throw TGError(TheDef->getLoc(), "ComposedOf must have exactly two entries");
+    CodeGenSubRegIndex *A = RegBank.getSubRegIdx(Comps[0]);
+    CodeGenSubRegIndex *B = RegBank.getSubRegIdx(Comps[1]);
+    CodeGenSubRegIndex *X = A->addComposite(B, this);
+    if (X)
+      throw TGError(TheDef->getLoc(), "Ambiguous ComposedOf entries");
+  }
+
+  std::vector<Record*> Parts =
+    TheDef->getValueAsListOfDefs("CoveringSubRegIndices");
+  if (!Parts.empty()) {
+    if (Parts.size() < 2)
+      throw TGError(TheDef->getLoc(),
+                    "CoveredBySubRegs must have two or more entries");
+    SmallVector<CodeGenSubRegIndex*, 8> IdxParts;
+    for (unsigned i = 0, e = Parts.size(); i != e; ++i)
+      IdxParts.push_back(RegBank.getSubRegIdx(Parts[i]));
+    RegBank.addConcatSubRegIndex(IdxParts, this);
+  }
 }
 
 void CodeGenSubRegIndex::cleanComposites() {

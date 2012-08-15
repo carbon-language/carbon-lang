@@ -28,6 +28,24 @@ class SubRegIndex<list<SubRegIndex> comps = []> {
   // ComposedOf - A list of two SubRegIndex instances, [A, B].
   // This indicates that this SubRegIndex is the result of composing A and B.
   list<SubRegIndex> ComposedOf = comps;
+
+  // CoveringSubRegIndices - A list of two or more sub-register indexes that
+  // cover this sub-register.
+  //
+  // This field should normally be left blank as TableGen can infer it.
+  //
+  // TableGen automatically detects sub-registers that straddle the registers
+  // in the SubRegs field of a Register definition. For example:
+  //
+  //   Q0    = dsub_0 -> D0, dsub_1 -> D1
+  //   Q1    = dsub_0 -> D2, dsub_1 -> D3
+  //   D1_D2 = dsub_0 -> D1, dsub_1 -> D2
+  //   QQ0   = qsub_0 -> Q0, qsub_1 -> Q1
+  //
+  // TableGen will infer that D1_D2 is a sub-register of QQ0. It will be given
+  // the synthetic index dsub_1_dsub_2 unless some SubRegIndex is defined with
+  // CoveringSubRegIndices = [dsub_1, dsub_2].
+  list<SubRegIndex> CoveringSubRegIndices = [];
 }
 
 // RegAltNameIndex - The alternate name set to use for register operands of
