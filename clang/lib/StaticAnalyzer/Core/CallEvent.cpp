@@ -401,7 +401,7 @@ RuntimeDefinition CXXInstanceCall::getRuntimeDefinition() const {
   // Is the type a C++ class? (This is mostly a defensive check.)
   QualType RegionType = DynType.getType()->getPointeeType();
   const CXXRecordDecl *RD = RegionType->getAsCXXRecordDecl();
-  if (!RD)
+  if (!RD || !RD->hasDefinition())
     return RuntimeDefinition();
 
   // Find the decl for this method in that class.
