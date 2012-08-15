@@ -1489,6 +1489,11 @@ def note_non_literal_user_provided_dtor : Note<
   "%0 is not literal because it has a user-provided destructor">;
 def note_non_literal_nontrivial_dtor : Note<
   "%0 is not literal because it has a non-trivial destructor">;
+def warn_private_extern : Warning<
+  "Use of __private_extern__ on tentative definition has unexpected"
+  " behaviour - use __attribute__((visibility(\"hidden\"))) on extern"
+  " declaration or definition instead">,
+  InGroup<PrivateExtern>, DefaultIgnore;
 
 // C++11 char16_t/char32_t
 def warn_cxx98_compat_unicode_type : Warning<
