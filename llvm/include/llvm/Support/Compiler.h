@@ -38,6 +38,25 @@
 #define llvm_move(value) (value)
 #endif
 
+/// LLVM_DELETED_FUNCTION - Expands to = delete if the compiler supports it.
+/// Use to mark functions as uncallable. Member functions with this should
+/// be declared private so that some behaivor is kept in C++03 mode.
+///
+/// class DontCopy {
+/// private:
+///   DontCopy(const DontCopy&) LLVM_DELETED_FUNCTION;
+///   DontCopy &operator =(const DontCopy&) LLVM_DELETED_FUNCTION;
+/// public:
+///   ...
+/// };
+#if (__has_feature(cxx_deleted_functions) \
+     || defined(__GXX_EXPERIMENTAL_CXX0X__))
+     // No version of MSVC currently supports this.
+#define LLVM_DELETED_FUNCTION = delete
+#else
+#define LLVM_DELETED_FUNCTION
+#endif
+
 /// LLVM_LIBRARY_VISIBILITY - If a class marked with this attribute is linked
 /// into a shared library, then the class should be private to the library and
 /// not accessible from outside it.  Can also be used to mark variables and
