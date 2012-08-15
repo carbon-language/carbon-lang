@@ -193,6 +193,13 @@ TEST(SanitizerCommon, CombinedAllocator) {
   Allocator a;
   a.Init();
   cache.Init();
+
+  EXPECT_EQ(a.Allocate(&cache, -1, 1), (void*)0);
+  EXPECT_EQ(a.Allocate(&cache, -1, 1024), (void*)0);
+  EXPECT_EQ(a.Allocate(&cache, (uptr)-1 - 1024, 1), (void*)0);
+  EXPECT_EQ(a.Allocate(&cache, (uptr)-1 - 1024, 1024), (void*)0);
+  EXPECT_EQ(a.Allocate(&cache, (uptr)-1 - 1023, 1024), (void*)0);
+
   const uptr kNumAllocs = 100000;
   const uptr kNumIter = 10;
   for (uptr iter = 0; iter < kNumIter; iter++) {
