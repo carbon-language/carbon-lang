@@ -73,7 +73,7 @@ using __sanitizer::uptr;
 
 #define DECLARE_FUNCTION_AND_WRAPPER(ret_type, func, ...) \
   ret_type func(__VA_ARGS__); \
-  ret_type WRAP(func)(__VA_ARGS__);
+  ret_type WRAP(func)(__VA_ARGS__)
 
 // Use extern declarations of intercepted functions on Mac and Windows
 // to avoid including system headers.
