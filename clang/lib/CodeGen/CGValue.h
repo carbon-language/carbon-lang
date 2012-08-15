@@ -128,7 +128,7 @@ class LValue {
 
   // The alignment to use when accessing this lvalue.  (For vector elements,
   // this is the alignment of the whole vector.)
-  unsigned short Alignment;
+  int64_t Alignment;
 
   // objective-c's ivar
   bool Ivar:1;
