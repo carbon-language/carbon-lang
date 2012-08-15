@@ -138,6 +138,7 @@ void AsanStackTrace::FastUnwindStack(uptr pc, uptr bp) {
 // On 32-bits we don't compress stack traces.
 // On 64-bits we compress stack traces: if a given pc differes slightly from
 // the previous one, we record a 31-bit offset instead of the full pc.
+SANITIZER_INTERFACE_ATTRIBUTE
 uptr AsanStackTrace::CompressStack(AsanStackTrace *stack,
                                    u32 *compressed, uptr size) {
 #if __WORDSIZE == 32
@@ -201,6 +202,7 @@ uptr AsanStackTrace::CompressStack(AsanStackTrace *stack,
   return res;
 }
 
+SANITIZER_INTERFACE_ATTRIBUTE
 void AsanStackTrace::UncompressStack(AsanStackTrace *stack,
                                      u32 *compressed, uptr size) {
 #if __WORDSIZE == 32

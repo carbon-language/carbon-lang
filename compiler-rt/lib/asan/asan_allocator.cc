@@ -810,20 +810,20 @@ static inline void ASAN_DELETE_HOOK(void *ptr) { }
 
 namespace __asan {
 
-__attribute__((visibility("default")))
+SANITIZER_INTERFACE_ATTRIBUTE
 void *asan_memalign(uptr alignment, uptr size, AsanStackTrace *stack) {
   void *ptr = (void*)Allocate(alignment, size, stack);
   ASAN_NEW_HOOK(ptr, size);
   return ptr;
 }
 
-__attribute__((visibility("default")))
+SANITIZER_INTERFACE_ATTRIBUTE
 void asan_free(void *ptr, AsanStackTrace *stack) {
   ASAN_DELETE_HOOK(ptr);
   Deallocate((u8*)ptr, stack);
 }
 
-__attribute__((visibility("default")))
+SANITIZER_INTERFACE_ATTRIBUTE
 void *asan_malloc(uptr size, AsanStackTrace *stack) {
   void *ptr = (void*)Allocate(0, size, stack);
   ASAN_NEW_HOOK(ptr, size);

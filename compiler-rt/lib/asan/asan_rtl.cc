@@ -48,6 +48,7 @@ void Die() {
   Exit(flags()->exitcode);
 }
 
+SANITIZER_INTERFACE_ATTRIBUTE
 void CheckFailed(const char *file, int line, const char *cond, u64 v1, u64 v2) {
   AsanReport("AddressSanitizer CHECK failed: %s:%d \"%s\" (0x%zx, 0x%zx)\n",
              file, line, cond, (uptr)v1, (uptr)v2);
