@@ -166,3 +166,30 @@ namespace PR13569_virtual {
     x.interface();
   }
 }
+
+namespace Invalidation {
+  struct X {
+    void touch(int &x) const {
+      x = 0;
+    }
+
+    void touch2(int &x) const;
+
+    virtual void touchV(int &x) const {
+      x = 0;
+    }
+
+    virtual void touchV2(int &x) const;
+
+    int test() const {
+      // We were accidentally not invalidating under -analyzer-ipa=inlining
+      // at one point for virtual methods with visible definitions.
+      int a, b, c, d;
+      touch(a);
+      touch2(b);
+      touchV(c);
+      touchV2(d);
+      return a + b + c + d; // no-warning
+    }
+  };
+}

@@ -568,8 +568,10 @@ void ExprEngine::defaultEvalCall(NodeBuilder &Bldr, ExplodedNode *Pred,
         }
 
         // Don't inline if we're not in any dynamic dispatch mode.
-        if (getAnalysisManager().IPAMode != DynamicDispatch)
+        if (getAnalysisManager().IPAMode != DynamicDispatch) {
+          conservativeEvalCall(*Call, Bldr, Pred, State);
           return;
+        }
       }
 
       // We are not bifurcating and we do have a Decl, so just inline.
