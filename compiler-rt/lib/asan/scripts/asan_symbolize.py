@@ -38,11 +38,14 @@ class LinuxSymbolizer(Symbolizer):
     self.binary = binary
     self.pipe = self.open_addr2line()
   def open_addr2line(self):
-    return subprocess.Popen(["addr2line", "-f", "-e", self.binary],
+    cmd = ["addr2line", "-f", "-e", self.binary]
+    if DEBUG:
+      print ' '.join(cmd)
+    return subprocess.Popen(cmd,
                             stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-  def symbolize(self, prefix, addr, _):
+  def symbolize(self, prefix, addr, offset):
     try:
-      print >> self.pipe.stdin, addr
+      print >> self.pipe.stdin, offset
       function_name = self.pipe.stdout.readline().rstrip()
       file_name     = self.pipe.stdout.readline().rstrip()
     except Exception:
@@ -140,7 +143,7 @@ def BreakpadSymbolizerFactory(addr, binary):
   if suffix:
     filename = binary + suffix
     if os.access(filename, os.F_OK):
-      return BreakpadSymbolizer(addr, filename)
+      return BreakpadSymbolizer(filename)
   return None
 
 
@@ -175,10 +178,12 @@ class BreakpadSymbolizer(Symbolizer):
         self.files.append(' '.join(fragments[2:]))
       elif fragments[0] == 'PUBLIC':
         self.symbols[int(fragments[1], 16)] = ' '.join(fragments[3:])
-      elif fragments[0] == 'CFI':
+      elif fragments[0] in ['CFI', 'STACK']:
         pass
       elif fragments[0] == 'FUNC':
         cur_function_addr = int(fragments[1], 16)
+        if not cur_function_addr in self.symbols.keys():
+          self.symbols[cur_function_addr] = ' '.join(fragments[4:])
       else:
         # Line starting with an address.
         addr = int(fragments[0], 16)
@@ -210,8 +215,10 @@ class BreakpadSymbolizer(Symbolizer):
     res = self.get_sym_file_line(int(offset, 16))
     if res:
       function_name, file_name, line_no = res
-      return "%s%s in %s %s:%d" % (
+      result = "%s%s in %s %s:%d" % (
           prefix, addr, function_name, file_name, line_no)
+      print result
+      return result
     else:
       return None
 
