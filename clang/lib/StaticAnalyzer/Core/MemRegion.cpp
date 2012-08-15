@@ -1111,7 +1111,7 @@ RegionOffset MemRegion::getAsOffset() const {
       }
       
       const CXXRecordDecl *Child = Ty->getAsCXXRecordDecl();
-      if (!Child) {
+      if (!Child || !Child->isCompleteDefinition()) {
         // We cannot compute the offset of the base class.
         SymbolicOffsetBase = R;
       }
