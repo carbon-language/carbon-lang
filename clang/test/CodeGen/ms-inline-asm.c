@@ -80,5 +80,5 @@ void t10() {
     pop ebx
   }
 // CHECK: t10
-// CHECK: call void asm sideeffect "push ebx\0Amov ebx, 0x07\0Apop ebx", "~{ebx},~{ebx},~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
+// CHECK: call void asm sideeffect "push ebx\0Amov ebx, 0x07\0Apop ebx", "~{ebx},~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
 }
