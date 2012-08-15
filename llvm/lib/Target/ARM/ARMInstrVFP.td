@@ -61,6 +61,15 @@ def vfp_f64imm : Operand<f64>,
   let ParserMatchClass = FPImmOperand;
 }
 
+def alignedload32 : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+  return cast<LoadSDNode>(N)->getAlignment() >= 4;
+}]>;
+
+def alignedstore32 : PatFrag<(ops node:$val, node:$ptr),
+                             (store node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->getAlignment() >= 4;
+}]>;
+
 // The VCVT to/from fixed-point instructions encode the 'fbits' operand
 // (the number of fixed bits) differently than it appears in the assembly
 // source. It's encoded as "Size - fbits" where Size is the size of the
@@ -86,7 +95,7 @@ let canFoldAsLoad = 1, isReMaterializable = 1 in {
 
 def VLDRD : ADI5<0b1101, 0b01, (outs DPR:$Dd), (ins addrmode5:$addr),
                  IIC_fpLoad64, "vldr", "\t$Dd, $addr",
-                 [(set DPR:$Dd, (f64 (load addrmode5:$addr)))]>;
+                 [(set DPR:$Dd, (f64 (alignedload32 addrmode5:$addr)))]>;
 
 def VLDRS : ASI5<0b1101, 0b01, (outs SPR:$Sd), (ins addrmode5:$addr),
                  IIC_fpLoad32, "vldr", "\t$Sd, $addr",
@@ -100,7 +109,7 @@ def VLDRS : ASI5<0b1101, 0b01, (outs SPR:$Sd), (ins addrmode5:$addr),
 
 def VSTRD : ADI5<0b1101, 0b00, (outs), (ins DPR:$Dd, addrmode5:$addr),
                  IIC_fpStore64, "vstr", "\t$Dd, $addr",
-                 [(store (f64 DPR:$Dd), addrmode5:$addr)]>;
+                 [(alignedstore32 (f64 DPR:$Dd), addrmode5:$addr)]>;
 
 def VSTRS : ASI5<0b1101, 0b00, (outs), (ins SPR:$Sd, addrmode5:$addr),
                  IIC_fpStore32, "vstr", "\t$Sd, $addr",

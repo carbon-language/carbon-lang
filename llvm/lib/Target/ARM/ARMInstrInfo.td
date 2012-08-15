@@ -242,6 +242,9 @@ def UseFusedMAC      : Predicate<"(TM.Options.AllowFPOpFusion =="
 def DontUseFusedMAC  : Predicate<"!Subtarget->hasVFP4() || "
                                  "Subtarget->isTargetDarwin()">;
 
+def IsLE             : Predicate<"TLI.isLittleEndian()">;
+def IsBE             : Predicate<"TLI.isBigEndian()">;
+
 //===----------------------------------------------------------------------===//
 // ARM Flag Definitions.
 

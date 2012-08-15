@@ -398,6 +398,27 @@ def VecListFourQWordIndexed : Operand<i32> {
   let MIOperandInfo = (ops DPR:$Vd, i32imm:$idx);
 }
 
+def hword_alignedload : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+  return cast<LoadSDNode>(N)->getAlignment() == 2;
+}]>;
+def hword_alignedstore : PatFrag<(ops node:$val, node:$ptr),
+                                 (store node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->getAlignment() == 2;
+}]>;
+def byte_alignedload : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+  return cast<LoadSDNode>(N)->getAlignment() == 1;
+}]>;
+def byte_alignedstore : PatFrag<(ops node:$val, node:$ptr),
+                             (store node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->getAlignment() == 1;
+}]>;
+def non_word_alignedload : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+  return cast<LoadSDNode>(N)->getAlignment() < 4;
+}]>;
+def non_word_alignedstore : PatFrag<(ops node:$val, node:$ptr),
+                                    (store node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->getAlignment() < 4;
+}]>;
 
 //===----------------------------------------------------------------------===//
 // NEON-specific DAG Nodes.
@@ -2238,6 +2259,19 @@ def VST4LNq32Pseudo_UPD : VSTQQQQLNWBPseudo<IIC_VST4lnu>;
 
 } // mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1
 
+// Use vld1/vst1 for unaligned f64 load / store
+def : Pat<(f64 (hword_alignedload addrmode6:$addr)),
+          (VLD1d16 addrmode6:$addr)>, Requires<[IsLE]>;
+def : Pat<(hword_alignedstore (f64 DPR:$value), addrmode6:$addr),
+          (VST1d16 addrmode6:$addr, DPR:$value)>, Requires<[IsLE]>;
+def : Pat<(f64 (byte_alignedload addrmode6:$addr)),
+          (VLD1d8 addrmode6:$addr)>, Requires<[IsLE]>;
+def : Pat<(byte_alignedstore (f64 DPR:$value), addrmode6:$addr),
+          (VST1d8 addrmode6:$addr, DPR:$value)>, Requires<[IsLE]>;
+def : Pat<(f64 (non_word_alignedload addrmode6:$addr)),
+          (VLD1d64 addrmode6:$addr)>, Requires<[IsBE]>;
+def : Pat<(non_word_alignedstore (f64 DPR:$value), addrmode6:$addr),
+          (VST1d64 addrmode6:$addr, DPR:$value)>, Requires<[IsBE]>;
 
 //===----------------------------------------------------------------------===//
 // NEON pattern fragments

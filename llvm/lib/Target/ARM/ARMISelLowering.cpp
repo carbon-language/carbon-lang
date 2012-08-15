@@ -8808,6 +8808,8 @@ bool ARMTargetLowering::allowsUnalignedMemoryAccesses(EVT VT) const {
   case MVT::i16:
   case MVT::i32:
     return true;
+  case MVT::f64:
+    return Subtarget->hasNEON();
   // FIXME: VLD1 etc with standard alignment is legal.
   }
 }
