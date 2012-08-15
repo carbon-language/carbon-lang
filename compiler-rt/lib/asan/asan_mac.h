@@ -43,6 +43,9 @@ enum {
   MACOS_VERSION_LION
 };
 
+// Used by asan_malloc_mac.cc and asan_mac.cc
+extern "C" void __CFInitialize();
+
 namespace __asan {
 
 int GetMacosVersion();

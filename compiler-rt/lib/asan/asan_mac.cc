@@ -404,8 +404,6 @@ INTERCEPTOR(CFStringRef, CFStringCreateCopy, CFAllocatorRef alloc,
 
 DECLARE_REAL_AND_INTERCEPTOR(void, free, void *ptr)
 
-extern "C"
-void __CFInitialize();
 DECLARE_REAL_AND_INTERCEPTOR(void, __CFInitialize)
 
 namespace __asan {
