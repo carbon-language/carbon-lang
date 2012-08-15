@@ -2857,7 +2857,9 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
                                 SourceLocation EndLoc) {
   // MS-style inline assembly is not fully supported, so emit a warning.
   Diag(AsmLoc, diag::warn_unsupported_msasm);
+  unsigned NumClobberRegs = 0;
   SmallVector<StringRef,4> Clobbers;
+  SmallVector<std::string,4> ClobberRegs;
 
   // Empty asm statements don't need to instantiate the AsmParser, etc.
   if (AsmToks.empty()) {
@@ -2962,13 +2964,13 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
       TheTarget->createMCInstPrinter(1, *MAI, *MII, *MRI, *STI);
 
     // Build the list of clobbers.
+    ClobberRegs.resize(NumClobberRegs + Desc.getNumDefs());
     for (unsigned i = 0, e = Desc.getNumDefs(); i != e; ++i) {
       const llvm::MCOperand &Op = Inst.getOperand(i);
       if (!Op.isReg())
         continue;
 
-      std::string Reg;
-      llvm::raw_string_ostream OS(Reg);
+      llvm::raw_string_ostream OS(ClobberRegs[NumClobberRegs]);
       IP->printRegName(OS, Op.getReg());
 
       StringRef Clobber(OS.str());
@@ -2976,7 +2978,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
         return StmtError(Diag(AsmLoc, diag::err_asm_unknown_register_name) <<
                          Clobber);
       // FIXME: Asm blocks may result in redundant clobbers.
-      Clobbers.push_back(Reg);
+      Clobbers.push_back(ClobberRegs[NumClobberRegs++]);
     }
   }
 
