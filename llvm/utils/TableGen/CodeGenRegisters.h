@@ -35,14 +35,17 @@ namespace llvm {
   /// CodeGenSubRegIndex - Represents a sub-register index.
   class CodeGenSubRegIndex {
     Record *const TheDef;
+    std::string Name;
+    std::string Namespace;
 
   public:
     const unsigned EnumValue;
 
     CodeGenSubRegIndex(Record *R, unsigned Enum);
+    CodeGenSubRegIndex(StringRef N, StringRef Nspace, unsigned Enum);
 
-    const std::string &getName() const;
-    std::string getNamespace() const;
+    const std::string &getName() const { return Name; }
+    const std::string &getNamespace() const { return Namespace; }
     std::string getQualifiedName() const;
 
     // Order CodeGenSubRegIndex pointers by EnumValue.
@@ -422,13 +425,13 @@ namespace llvm {
   // CodeGenRegBank - Represent a target's registers and the relations between
   // them.
   class CodeGenRegBank {
-    RecordKeeper &Records;
     SetTheory Sets;
 
     // SubRegIndices.
     std::vector<CodeGenSubRegIndex*> SubRegIndices;
     DenseMap<Record*, CodeGenSubRegIndex*> Def2SubRegIdx;
-    unsigned NumNamedIndices;
+
+    CodeGenSubRegIndex *createSubRegIndex(StringRef Name, StringRef NameSpace);
 
     typedef std::map<SmallVector<CodeGenSubRegIndex*, 8>,
                      CodeGenSubRegIndex*> ConcatIdxMap;
@@ -495,7 +498,6 @@ namespace llvm {
     // in the .td files. The rest are synthesized such that all sub-registers
     // have a unique name.
     ArrayRef<CodeGenSubRegIndex*> getSubRegIndices() { return SubRegIndices; }
-    unsigned getNumNamedIndices() { return NumNamedIndices; }
 
     // Find a SubRegIndex form its Record def.
     CodeGenSubRegIndex *getSubRegIdx(Record*);

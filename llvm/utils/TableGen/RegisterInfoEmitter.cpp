@@ -145,9 +145,9 @@ void RegisterInfoEmitter::runEnums(raw_ostream &OS,
     if (!Namespace.empty())
       OS << "namespace " << Namespace << " {\n";
     OS << "enum {\n  NoSubRegister,\n";
-    for (unsigned i = 0, e = Bank.getNumNamedIndices(); i != e; ++i)
+    for (unsigned i = 0, e = SubRegIndices.size(); i != e; ++i)
       OS << "  " << SubRegIndices[i]->getName() << ",\t// " << i+1 << "\n";
-    OS << "  NUM_TARGET_NAMED_SUBREGS\n};\n";
+    OS << "  NUM_TARGET_SUBREGS\n};\n";
     if (!Namespace.empty())
       OS << "}\n";
   }
@@ -885,17 +885,6 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   }
   OS << "\" };\n\n";
 
-  // Emit names of the anonymous subreg indices.
-  unsigned NamedIndices = RegBank.getNumNamedIndices();
-  if (SubRegIndices.size() > NamedIndices) {
-    OS << "  enum {";
-    for (unsigned i = NamedIndices, e = SubRegIndices.size(); i != e; ++i) {
-      OS << "\n    " << SubRegIndices[i]->getName() << " = " << i+1;
-      if (i+1 != e)
-        OS << ',';
-    }
-    OS << "\n  };\n\n";
-  }
   OS << "\n";
 
   // Now that all of the structs have been emitted, emit the instances.
