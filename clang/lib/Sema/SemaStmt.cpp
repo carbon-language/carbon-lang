@@ -2778,11 +2778,8 @@ static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
   for (unsigned i = 0, e = AsmToks.size(); i != e; ++i) {
 
     // Emit the previous asm string.
-    if (i != 0 && AsmToks[i].isAtStartOfLine())
-      AsmStrings[NumAsmStrings++] = Asm.c_str();
-
     if (i && AsmToks[i].isAtStartOfLine())
-      Asm += '\n';
+      AsmStrings[NumAsmStrings++] = Asm.c_str();
 
     // Start a new asm string with the opcode.
     if (i == 0 || AsmToks[i].isAtStartOfLine()) {
