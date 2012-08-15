@@ -104,3 +104,63 @@ entry:
   ret i32 %tmp3
 }
 
+; Fold ORRri into movcc.
+define i32 @t8(i32 %a, i32 %b) nounwind {
+; ARM: t8:
+; ARM: cmp r0, r1
+; ARM: orrge r0, r1, #1
+
+; T2: t8:
+; T2: cmp r0, r1
+; T2: orrge r0, r1, #1
+  %x = or i32 %b, 1
+  %cond = icmp slt i32 %a, %b
+  %tmp1 = select i1 %cond, i32 %a, i32 %x
+  ret i32 %tmp1
+}
+
+; Fold ANDrr into movcc.
+define i32 @t9(i32 %a, i32 %b, i32 %c) nounwind {
+; ARM: t9:
+; ARM: cmp r0, r1
+; ARM: andge r0, r1, r2
+
+; T2: t9:
+; T2: cmp r0, r1
+; T2: andge.w r0, r1, r2
+  %x = and i32 %b, %c
+  %cond = icmp slt i32 %a, %b
+  %tmp1 = select i1 %cond, i32 %a, i32 %x
+  ret i32 %tmp1
+}
+
+; Fold EORrs into movcc.
+define i32 @t10(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
+; ARM: t10:
+; ARM: cmp r0, r1
+; ARM: eorge r0, r1, r2, lsl #7
+
+; T2: t10:
+; T2: cmp r0, r1
+; T2: eorge.w r0, r1, r2, lsl #7
+  %s = shl i32 %c, 7
+  %x = xor i32 %b, %s
+  %cond = icmp slt i32 %a, %b
+  %tmp1 = select i1 %cond, i32 %a, i32 %x
+  ret i32 %tmp1
+}
+
+; Fold ORRri into movcc, reversing the condition.
+define i32 @t11(i32 %a, i32 %b) nounwind {
+; ARM: t11:
+; ARM: cmp r0, r1
+; ARM: orrlt r0, r1, #1
+
+; T2: t11:
+; T2: cmp r0, r1
+; T2: orrlt r0, r1, #1
+  %x = or i32 %b, 1
+  %cond = icmp slt i32 %a, %b
+  %tmp1 = select i1 %cond, i32 %x, i32 %a
+  ret i32 %tmp1
+}

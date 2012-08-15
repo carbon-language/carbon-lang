@@ -95,7 +95,7 @@ bb.nph:
 bb:                                               ; preds = %bb, %bb.nph
 ; CHECK: bb
 ; CHECK: eor.w
-; CHECK: eor.w {{(r[0-9])|(lr)}}, {{(r[0-9])|(lr)}}, [[REGISTER]]
+; CHECK: eorne.w {{(r[0-9])|(lr)}}, {{(r[0-9])|(lr)}}, [[REGISTER]]
 ; CHECK-NOT: eor
 ; CHECK: and
   %data_addr.013 = phi i8 [ %data, %bb.nph ], [ %8, %bb ] ; <i8> [#uses=2]

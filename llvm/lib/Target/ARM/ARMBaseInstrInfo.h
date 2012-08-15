@@ -352,6 +352,11 @@ ARMCC::CondCodes getInstrPredicate(const MachineInstr *MI, unsigned &PredReg);
 
 int getMatchingCondBranchOpcode(int Opc);
 
+/// Determine if MI can be folded into an ARM MOVCC instruction, and return the
+/// opcode of the SSA instruction representing the conditional MI.
+unsigned canFoldARMInstrIntoMOVCC(unsigned Reg,
+                                  MachineInstr *&MI,
+                                  const MachineRegisterInfo &MRI);
 
 /// Map pseudo instructions that imply an 'S' bit onto real opcodes. Whether
 /// the instruction is encoded with an 'S' bit is determined by the optional
