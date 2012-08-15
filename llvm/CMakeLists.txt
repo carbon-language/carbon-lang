@@ -128,21 +128,21 @@ if( LLVM_TARGETS_TO_BUILD STREQUAL "all" )
   set( LLVM_TARGETS_TO_BUILD ${LLVM_ALL_TARGETS} )
 endif()
 
+set(LLVM_TARGETS_TO_BUILD
+   ${LLVM_TARGETS_TO_BUILD}
+   ${LLVM_EXPERIMENTAL_TARGETS_TO_BUILD})
+
 set(LLVM_ENUM_TARGETS "")
 foreach(c ${LLVM_TARGETS_TO_BUILD})
   list(FIND LLVM_ALL_TARGETS ${c} idx)
-  if( idx LESS 0 )
+  list(FIND LLVM_EXPERIMENTAL_TARGETS_TO_BUILD ${c} idy)
+  if( idx LESS 0 AND idy LESS 0 )
     message(FATAL_ERROR "The target `${c}' does not exist.
     It should be one of\n${LLVM_ALL_TARGETS}")
   else()
     set(LLVM_ENUM_TARGETS "${LLVM_ENUM_TARGETS}LLVM_TARGET(${c})\n")
   endif()
 endforeach(c)
-
-set(LLVM_TARGETS_TO_BUILD
-  ${LLVM_TARGETS_TO_BUILD}
-  ${LLVM_EXPERIMENTAL_TARGETS_TO_BUILD}
-  )
 
 set(llvm_builded_incs_dir ${LLVM_BINARY_DIR}/include/llvm)
 
