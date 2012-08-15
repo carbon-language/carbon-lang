@@ -1,7 +1,19 @@
-// RUN: %clangxx_asan -m64 -O2 %s -o %t
-// RUN: %t 2>&1 | %symbolizer | c++filt > %t.output
-// RUN: FileCheck %s < %t.output
-// RUN: FileCheck %s --check-prefix=CHECK-%os < %t.output
+// RUN: %clangxx_asan -m64 -O0 %s -o %t && %t 2>&1 | %symbolize > %t.out
+// RUN: FileCheck %s < %t.out && FileCheck %s --check-prefix=CHECK-%os < %t.out
+// RUN: %clangxx_asan -m64 -O1 %s -o %t && %t 2>&1 | %symbolize > %t.out
+// RUN: FileCheck %s < %t.out && FileCheck %s --check-prefix=CHECK-%os < %t.out
+// RUN: %clangxx_asan -m64 -O2 %s -o %t && %t 2>&1 | %symbolize > %t.out
+// RUN: FileCheck %s < %t.out && FileCheck %s --check-prefix=CHECK-%os < %t.out
+// RUN: %clangxx_asan -m64 -O3 %s -o %t && %t 2>&1 | %symbolize > %t.out
+// RUN: FileCheck %s < %t.out && FileCheck %s --check-prefix=CHECK-%os < %t.out
+// RUN: %clangxx_asan -m32 -O0 %s -o %t && %t 2>&1 | %symbolize > %t.out
+// RUN: FileCheck %s < %t.out && FileCheck %s --check-prefix=CHECK-%os < %t.out
+// RUN: %clangxx_asan -m32 -O1 %s -o %t && %t 2>&1 | %symbolize > %t.out
+// RUN: FileCheck %s < %t.out && FileCheck %s --check-prefix=CHECK-%os < %t.out
+// RUN: %clangxx_asan -m32 -O2 %s -o %t && %t 2>&1 | %symbolize > %t.out
+// RUN: FileCheck %s < %t.out && FileCheck %s --check-prefix=CHECK-%os < %t.out
+// RUN: %clangxx_asan -m32 -O3 %s -o %t && %t 2>&1 | %symbolize > %t.out
+// RUN: FileCheck %s < %t.out && FileCheck %s --check-prefix=CHECK-%os < %t.out
 
 #include <stdlib.h>
 __attribute__((noinline))
@@ -43,11 +55,11 @@ int main(int argc, char **argv) {
 
 // atos incorrectly extracts the symbol name for the static functions on
 // Darwin.
-// CHECK-Linux:  {{    #0 0x.* in LargeFunction.*large_func_test.cc:20}}
-// CHECK-Darwin: {{    #0 0x.* in .*LargeFunction.*large_func_test.cc:20}}
+// CHECK-Linux:  {{    #0 0x.* in LargeFunction.*large_func_test.cc:32}}
+// CHECK-Darwin: {{    #0 0x.* in .*LargeFunction.*large_func_test.cc:32}}
 
-// CHECK: {{    #1 0x.* in main .*large_func_test.cc:36}}
+// CHECK: {{    #1 0x.* in main .*large_func_test.cc:48}}
 // CHECK: {{0x.* is located 44 bytes to the right of 400-byte region}}
 // CHECK: {{allocated by thread T0 here:}}
 // CHECK: {{    #0 0x.* in operator new.*}}
-// CHECK: {{    #1 0x.* in main .*large_func_test.cc:35}}
+// CHECK: {{    #1 0x.* in main .*large_func_test.cc:47}}

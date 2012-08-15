@@ -1,14 +1,3 @@
-//===----------- dlclose-test.cc --------------------------------*- C++ -*-===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This file is a part of AddressSanitizer, an address sanity checker.
-//
 // Regression test for
 // http://code.google.com/p/address-sanitizer/issues/detail?id=19
 // Bug description:
@@ -19,12 +8,31 @@
 // 5. application starts using this mmaped memory, but asan still thinks there
 // are globals.
 // 6. BOOM
-//===----------------------------------------------------------------------===//
 
-// RUN: %clangxx_asan -O2 %p/SharedLibs/dlclose-test-so.cc \
+// RUN: %clangxx_asan -m64 -O0 %p/SharedLibs/dlclose-test-so.cc \
 // RUN:     -fPIC -shared -o %t-so.so
-// RUN: %clangxx_asan -O2 %s -o %t
-// RUN: %t | FileCheck %s
+// RUN: %clangxx_asan -m64 -O0 %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -m64 -O1 %p/SharedLibs/dlclose-test-so.cc \
+// RUN:     -fPIC -shared -o %t-so.so
+// RUN: %clangxx_asan -m64 -O1 %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -m64 -O2 %p/SharedLibs/dlclose-test-so.cc \
+// RUN:     -fPIC -shared -o %t-so.so
+// RUN: %clangxx_asan -m64 -O2 %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -m64 -O3 %p/SharedLibs/dlclose-test-so.cc \
+// RUN:     -fPIC -shared -o %t-so.so
+// RUN: %clangxx_asan -m64 -O3 %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -m32 -O0 %p/SharedLibs/dlclose-test-so.cc \
+// RUN:     -fPIC -shared -o %t-so.so
+// RUN: %clangxx_asan -m32 -O0 %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -m32 -O1 %p/SharedLibs/dlclose-test-so.cc \
+// RUN:     -fPIC -shared -o %t-so.so
+// RUN: %clangxx_asan -m32 -O1 %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -m32 -O2 %p/SharedLibs/dlclose-test-so.cc \
+// RUN:     -fPIC -shared -o %t-so.so
+// RUN: %clangxx_asan -m32 -O2 %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -m32 -O3 %p/SharedLibs/dlclose-test-so.cc \
+// RUN:     -fPIC -shared -o %t-so.so
+// RUN: %clangxx_asan -m32 -O3 %s -o %t && %t 2>&1 | FileCheck %s
 
 #include <assert.h>
 #include <dlfcn.h>
