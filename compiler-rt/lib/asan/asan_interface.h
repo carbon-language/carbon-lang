@@ -161,6 +161,11 @@ extern "C" {
   // Prints accumulated stats to stderr. Used for debugging.
   void __asan_print_accumulated_stats()
       SANITIZER_INTERFACE_ATTRIBUTE;
-}  // namespace
+
+  // This function may be overriden by user to provide a string containing
+  // ASan runtime options. See asan_flags.h for details.
+  const char* __asan_default_options()
+      SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE;
+}  // extern "C"
 
 #endif  // ASAN_INTERFACE_H

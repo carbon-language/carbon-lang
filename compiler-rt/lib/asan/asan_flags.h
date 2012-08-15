@@ -23,12 +23,6 @@
 //    __asan_default_options().
 // 3) overriden from env variable ASAN_OPTIONS.
 
-extern "C" {
-// Can be overriden by user.
-const char *__asan_default_options()
-    SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE;
-}  // extern "C"
-
 namespace __asan {
 
 struct Flags {
