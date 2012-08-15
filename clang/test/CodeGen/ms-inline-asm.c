@@ -29,8 +29,8 @@ void t3() {
 
 void t4(void) {
 // CHECK: @t4
-// CHECK: call void asm sideeffect "mov ebx, eax", "~{ebx},~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
-// CHECK: call void asm sideeffect "mov ecx, ebx", "~{ecx},~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
+// CHECK: call void asm sideeffect "mov ebx, eax", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
+// CHECK: call void asm sideeffect "mov ecx, ebx", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
 // CHECK: ret void
   __asm mov ebx, eax
   __asm mov ecx, ebx
@@ -38,8 +38,8 @@ void t4(void) {
 
 void t5(void) {
 // CHECK: @t5
-// CHECK: call void asm sideeffect "mov ebx, eax", "~{ebx},~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
-// CHECK: call void asm sideeffect "mov ecx, ebx", "~{ecx},~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
+// CHECK: call void asm sideeffect "mov ebx, eax", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
+// CHECK: call void asm sideeffect "mov ecx, ebx", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
 // CHECK: ret void
   __asm mov ebx, eax __asm mov ecx, ebx
 }
@@ -83,5 +83,5 @@ void t10() {
     pop ebx
   }
 // CHECK: t10
-// CHECK: call void asm sideeffect "push ebx\0Amov ebx, 0x07\0Apop ebx", "~{ebx},~{ebx},~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
+// CHECK: call void asm sideeffect "push ebx\0Amov ebx, 0x07\0Apop ebx", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
 }
