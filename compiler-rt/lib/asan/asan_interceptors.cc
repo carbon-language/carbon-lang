@@ -33,6 +33,7 @@
 # define ASAN_INTERCEPT_STRCASECMP_AND_STRNCASECMP 1
 # define ASAN_INTERCEPT_INDEX 1
 # define ASAN_INTERCEPT_PTHREAD_CREATE 1
+# define ASAN_INTERCEPT_MLOCKX 1
 #else
 # define ASAN_INTERCEPT_ATOLL_AND_STRTOLL 0
 # define ASAN_INTERCEPT__LONGJMP 0
@@ -40,6 +41,7 @@
 # define ASAN_INTERCEPT_STRCASECMP_AND_STRNCASECMP 0
 # define ASAN_INTERCEPT_INDEX 0
 # define ASAN_INTERCEPT_PTHREAD_CREATE 0
+# define ASAN_INTERCEPT_MLOCKX 0
 #endif
 
 #if defined(__linux__)
@@ -131,11 +133,13 @@ long long atoll(const char *nptr);  // NOLINT
 long long strtoll(const char *nptr, char **endptr, int base);  // NOLINT
 # endif
 
+# if ASAN_INTERCEPT_MLOCKX
 // mlock/munlock
 int mlock(const void *addr, size_t len);
 int munlock(const void *addr, size_t len);
 int mlockall(int flags);
 int munlockall(void);
+# endif
 
 // Windows threads.
 # if defined(_WIN32)
@@ -751,11 +755,13 @@ void InitializeAsanInterceptors() {
   ASAN_INTERCEPT_FUNC(strtoll);
 #endif
 
+#if ASAN_INTERCEPT_MLOCKX
   // Intercept mlock/munlock.
   ASAN_INTERCEPT_FUNC(mlock);
   ASAN_INTERCEPT_FUNC(munlock);
   ASAN_INTERCEPT_FUNC(mlockall);
   ASAN_INTERCEPT_FUNC(munlockall);
+#endif
 
   // Intecept signal- and jump-related functions.
   ASAN_INTERCEPT_FUNC(longjmp);
