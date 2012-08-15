@@ -861,7 +861,7 @@ mapped_file_region::~mapped_file_region() {
     ::CloseHandle(FileHandle);
 }
 
-#ifdef LLVM_USE_RVALUE_REFERENCES
+#if LLVM_USE_RVALUE_REFERENCES
 mapped_file_region::mapped_file_region(mapped_file_region &&other)
   : Mode(other.Mode)
   , Size(other.Size)
