@@ -556,8 +556,7 @@ const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
 const ASTTemplateArgumentListInfo *
 ASTTemplateArgumentListInfo::Create(ASTContext &C,
                                     const TemplateArgumentListInfo &List) {
-  std::size_t size = sizeof(CXXDependentScopeMemberExpr) +
-                     ASTTemplateArgumentListInfo::sizeFor(List.size());
+  std::size_t size = ASTTemplateArgumentListInfo::sizeFor(List.size());
   void *Mem = C.Allocate(size, llvm::alignOf<ASTTemplateArgumentListInfo>());
   ASTTemplateArgumentListInfo *TAI = new (Mem) ASTTemplateArgumentListInfo();
   TAI->initializeFrom(List);
@@ -642,6 +641,7 @@ ASTTemplateKWAndArgsInfo::initializeFrom(SourceLocation TemplateKWLoc) {
 std::size_t
 ASTTemplateKWAndArgsInfo::sizeFor(unsigned NumTemplateArgs) {
   // Add space for the template keyword location.
+  // FIXME: There's room for this in the padding before the template args in
+  //        64-bit builds.
   return Base::sizeFor(NumTemplateArgs) + sizeof(SourceLocation);
 }
-

@@ -510,17 +510,23 @@ public:
 /// This is safe to be used inside an AST node, in contrast with
 /// TemplateArgumentListInfo.
 struct ASTTemplateArgumentListInfo {
-  /// \brief The source location of the left angle bracket ('<');
+  /// \brief The source location of the left angle bracket ('<').
   SourceLocation LAngleLoc;
   
-  /// \brief The source location of the right angle bracket ('>');
+  /// \brief The source location of the right angle bracket ('>').
   SourceLocation RAngleLoc;
   
-  /// \brief The number of template arguments in TemplateArgs.
-  /// The actual template arguments (if any) are stored after the
-  /// ExplicitTemplateArgumentList structure.
-  unsigned NumTemplateArgs;
-  
+  union {
+    /// \brief The number of template arguments in TemplateArgs.
+    /// The actual template arguments (if any) are stored after the
+    /// ExplicitTemplateArgumentList structure.
+    unsigned NumTemplateArgs;
+
+    /// Force ASTTemplateArgumentListInfo to the right alignment
+    /// for the following array of TemplateArgumentLocs.
+    void *Aligner;
+  };
+
   /// \brief Retrieve the template arguments
   TemplateArgumentLoc *getTemplateArgs() {
     return reinterpret_cast<TemplateArgumentLoc *> (this + 1);
