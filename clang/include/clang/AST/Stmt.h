@@ -1620,7 +1620,7 @@ public:
 /// MSAsmStmt - This represents a MS inline-assembly statement extension.
 ///
 class MSAsmStmt : public Stmt {
-  SourceLocation AsmLoc, EndLoc;
+  SourceLocation AsmLoc, LBraceLoc, EndLoc;
   std::string AsmStr;
 
   bool IsSimple;
@@ -1634,14 +1634,19 @@ class MSAsmStmt : public Stmt {
   StringRef *Clobbers;
 
 public:
-  MSAsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple,
-            bool isvolatile, ArrayRef<Token> asmtoks, StringRef asmstr,
-            ArrayRef<StringRef> clobbers, SourceLocation endloc);
+  MSAsmStmt(ASTContext &C, SourceLocation asmloc, SourceLocation lbraceloc,
+            bool issimple, bool isvolatile, ArrayRef<Token> asmtoks,
+            StringRef asmstr, ArrayRef<StringRef> clobbers,
+            SourceLocation endloc);
 
   SourceLocation getAsmLoc() const { return AsmLoc; }
   void setAsmLoc(SourceLocation L) { AsmLoc = L; }
+  SourceLocation getLBraceLoc() const { return LBraceLoc; }
+  void setLBraceLoc(SourceLocation L) { LBraceLoc = L; }
   SourceLocation getEndLoc() const { return EndLoc; }
   void setEndLoc(SourceLocation L) { EndLoc = L; }
+
+  bool hasBraces() const { return LBraceLoc.isValid(); }
 
   unsigned getNumAsmToks() { return NumAsmToks; }
   Token *getAsmToks() { return AsmToks; }

@@ -2542,6 +2542,7 @@ public:
                           bool MSAsm = false);
 
   StmtResult ActOnMSAsmStmt(SourceLocation AsmLoc,
+                            SourceLocation LBraceLoc,
                             ArrayRef<Token> AsmToks,
                             SourceLocation EndLoc);
 

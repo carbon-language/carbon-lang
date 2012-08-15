@@ -583,11 +583,12 @@ AsmStmt::AsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple,
   std::copy(clobbers, clobbers + NumClobbers, Clobbers);
 }
 
-MSAsmStmt::MSAsmStmt(ASTContext &C, SourceLocation asmloc,
+MSAsmStmt::MSAsmStmt(ASTContext &C,
+                     SourceLocation asmloc, SourceLocation lbraceloc,
                      bool issimple, bool isvolatile, ArrayRef<Token> asmtoks,
                      StringRef asmstr, ArrayRef<StringRef> clobbers,
                      SourceLocation endloc)
-  : Stmt(MSAsmStmtClass), AsmLoc(asmloc), EndLoc(endloc),
+  : Stmt(MSAsmStmtClass), AsmLoc(asmloc), LBraceLoc(lbraceloc), EndLoc(endloc),
     AsmStr(asmstr.str()), IsSimple(issimple), IsVolatile(isvolatile),
     NumAsmToks(asmtoks.size()), NumClobbers(clobbers.size()) {
 

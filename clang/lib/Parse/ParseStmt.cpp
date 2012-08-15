@@ -1752,7 +1752,8 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
   }
 
   // FIXME: We should be passing source locations for better diagnostics.
-  return Actions.ActOnMSAsmStmt(AsmLoc, llvm::makeArrayRef(AsmToks), EndLoc);                               
+  return Actions.ActOnMSAsmStmt(AsmLoc, LBraceLoc,
+                                llvm::makeArrayRef(AsmToks), EndLoc);
 }
 
 /// ParseAsmStatement - Parse a GNU extended asm statement.

@@ -2852,6 +2852,7 @@ static std::string buildMSAsmString(Sema &SemaRef,
 }
 
 StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
+                                SourceLocation LBraceLoc,
                                 ArrayRef<Token> AsmToks,
                                 SourceLocation EndLoc) {
   // MS-style inline assembly is not fully supported, so emit a warning.
@@ -2862,9 +2863,9 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   if (AsmToks.empty()) {
     StringRef AsmString;
     MSAsmStmt *NS =
-      new (Context) MSAsmStmt(Context, AsmLoc, /* IsSimple */ true,
-                              /* IsVolatile */ true, AsmToks, AsmString,
-                              Clobbers, EndLoc);
+      new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc,
+                              /* IsSimple */ true, /* IsVolatile */ true,
+                              AsmToks, AsmString, Clobbers, EndLoc);
     return Owned(NS);
   }
 
@@ -2888,9 +2889,9 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   // patchMSAsmStrings doesn't correctly patch non-simple asm statements.
   if (!IsSimple) {
     MSAsmStmt *NS =
-      new (Context) MSAsmStmt(Context, AsmLoc, /* IsSimple */ true,
-                              /* IsVolatile */ true, AsmToks, AsmString,
-                              Clobbers, EndLoc);
+      new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc,
+                              /* IsSimple */ true, /* IsVolatile */ true,
+                              AsmToks, AsmString, Clobbers, EndLoc);
     return Owned(NS);
   }
 
@@ -2980,7 +2981,8 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   }
 
   MSAsmStmt *NS =
-    new (Context) MSAsmStmt(Context, AsmLoc, IsSimple, /* IsVolatile */ true,
+    new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc,
+                            IsSimple, /* IsVolatile */ true,
                             AsmToks, AsmString, Clobbers, EndLoc);
 
   return Owned(NS);
