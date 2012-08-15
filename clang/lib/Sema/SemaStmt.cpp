@@ -2840,17 +2840,20 @@ static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
 
 // Build the unmodified MSAsmString.
 static std::string buildMSAsmString(Sema &SemaRef,
-                                    ArrayRef<Token> AsmToks) {                                    
+                                    ArrayRef<Token> AsmToks,
+                                    unsigned &NumAsmStrings) {
   assert (!AsmToks.empty() && "Didn't expect an empty AsmToks!");
   SmallString<512> Asm;
   SmallString<512> TokenBuf;
   TokenBuf.resize(512);
 
+  NumAsmStrings = 0;
   for (unsigned i = 0, e = AsmToks.size(); i < e; ++i) {
     bool isNewAsm = i == 0 || AsmToks[i].isAtStartOfLine() ||
       AsmToks[i].is(tok::kw_asm);
 
     if (isNewAsm) {
+      ++NumAsmStrings;
       if (i)
         Asm += '\n';
       if (AsmToks[i].is(tok::kw_asm)) {
@@ -2889,18 +2892,12 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
     return Owned(NS);
   }
 
-  std::string AsmString = buildMSAsmString(*this, AsmToks);
+  unsigned NumAsmStrings;
+  std::string AsmString = buildMSAsmString(*this, AsmToks, NumAsmStrings);
 
   bool IsSimple;
   std::vector<std::string> PatchedAsmStrings;
-
-  // FIXME: Count this while parsing.
-  unsigned NumAsmStrings = 0;
-  for (unsigned i = 0, e = AsmToks.size(); i != e; ++i)
-    if (i == 0 || AsmToks[i].isAtStartOfLine() || AsmToks[i].is(tok::kw_asm))
-      ++NumAsmStrings;
-
-  PatchedAsmStrings.resize(NumAsmStrings ? NumAsmStrings : 1);
+  PatchedAsmStrings.resize(NumAsmStrings);
 
   // Rewrite operands to appease the AsmParser.
   patchMSAsmStrings(*this, IsSimple, AsmLoc, AsmToks, Context.getTargetInfo(),
