@@ -905,7 +905,7 @@ emitDecoderFunction(formatted_raw_ostream &OS, DecoderSet &Decoders,
   OS.indent(Indentation) << "static DecodeStatus decodeToMCInst(DecodeStatus S,"
     << " unsigned Idx, InsnType insn, MCInst &MI,\n";
   OS.indent(Indentation) << "                                   uint64_t "
-    << "Address, void *Decoder) {\n";
+    << "Address, const void *Decoder) {\n";
   Indentation += 2;
   OS.indent(Indentation) << "InsnType tmp;\n";
   OS.indent(Indentation) << "switch (Idx) {\n";
@@ -1975,7 +1975,7 @@ static void emitDecodeInstruction(formatted_raw_ostream &OS) {
      << "      DEBUG(dbgs() << \"----- DECODE SUCCESSFUL -----\\n\");\n"
      << "\n"
      << "      MI.setOpcode(Opc);\n"
-     << "      return decodeToMCInst(S, DecodeIdx, insn, MI, Address, (void*)DisAsm);\n"
+     << "      return decodeToMCInst(S, DecodeIdx, insn, MI, Address, DisAsm);\n"
      << "    }\n"
      << "    case MCD::OPC_SoftFail: {\n"
      << "      // Decode the mask values.\n"
