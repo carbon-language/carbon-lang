@@ -28,10 +28,10 @@ int t7() {
   }
 }
 void t8() {
-  __asm nop __asm nop __asm nop // expected-warning {{MS-style inline assembly is not supported}} expected-warning {{MS-style inline assembly is not supported}} expected-warning {{MS-style inline assembly is not supported}}
+  __asm nop __asm nop __asm nop // expected-warning {{MS-style inline assembly is not supported}}
 }
 void t9() {
-  __asm nop __asm nop ; __asm nop // expected-warning {{MS-style inline assembly is not supported}} expected-warning {{MS-style inline assembly is not supported}}
+  __asm nop __asm nop ; __asm nop // expected-warning {{MS-style inline assembly is not supported}}
 }
 int t_fail() { // expected-note {{to match this}}
   __asm

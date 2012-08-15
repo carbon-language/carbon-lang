@@ -20,9 +20,7 @@ void t2() {
 
 void t3() {
 // CHECK: @t3
-// CHECK: call void asm sideeffect "nop", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
-// CHECK: call void asm sideeffect "nop", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
-// CHECK: call void asm sideeffect "nop", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
+// CHECK: call void asm sideeffect "nop\0Anop\0Anop", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
 // CHECK: ret void
   __asm nop __asm nop __asm nop
 }
@@ -38,8 +36,7 @@ void t4(void) {
 
 void t5(void) {
 // CHECK: @t5
-// CHECK: call void asm sideeffect "mov ebx, eax", "~{ebx},~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
-// CHECK: call void asm sideeffect "mov ecx, ebx", "~{ecx},~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
+// CHECK: call void asm sideeffect "mov ebx, eax\0Amov ecx, ebx", "~{ebx},~{ecx},~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
 // CHECK: ret void
   __asm mov ebx, eax __asm mov ecx, ebx
 }

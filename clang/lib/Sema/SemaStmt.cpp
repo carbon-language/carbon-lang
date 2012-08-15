@@ -2777,12 +2777,21 @@ static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
   unsigned NumAsmStrings = 0;
   for (unsigned i = 0, e = AsmToks.size(); i != e; ++i) {
 
+    // Determine if this should be considered a new asm.
+    bool isNewAsm = i == 0 || AsmToks[i].isAtStartOfLine() ||
+      AsmToks[i].is(tok::kw_asm);
+
     // Emit the previous asm string.
-    if (i && AsmToks[i].isAtStartOfLine())
+    if (i && isNewAsm) {
       AsmStrings[NumAsmStrings++] = Asm.c_str();
+      if (AsmToks[i].is(tok::kw_asm)) {
+        ++i; // Skip __asm
+        assert (i != e && "Expected another token.");
+      }
+    }
 
     // Start a new asm string with the opcode.
-    if (i == 0 || AsmToks[i].isAtStartOfLine()) {
+    if (isNewAsm) {
       Asm = AsmToks[i].getIdentifierInfo()->getName().str();
       continue;
     }
@@ -2831,17 +2840,29 @@ static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
 
 // Build the unmodified MSAsmString.
 static std::string buildMSAsmString(Sema &SemaRef,
-                                    ArrayRef<Token> AsmToks) {
+                                    ArrayRef<Token> AsmToks) {                                    
   assert (!AsmToks.empty() && "Didn't expect an empty AsmToks!");
   SmallString<512> Asm;
   SmallString<512> TokenBuf;
   TokenBuf.resize(512);
+
   for (unsigned i = 0, e = AsmToks.size(); i < e; ++i) {
-    bool StringInvalid = false;
-    if (i && AsmToks[i].isAtStartOfLine())
-      Asm += '\n';
-    else if (i && AsmToks[i].hasLeadingSpace())
+    bool isNewAsm = i == 0 || AsmToks[i].isAtStartOfLine() ||
+      AsmToks[i].is(tok::kw_asm);
+
+    if (isNewAsm) {
+      if (i)
+        Asm += '\n';
+      if (AsmToks[i].is(tok::kw_asm)) {
+        i++; // Skip __asm
+        assert (i != e && "Expected another token");
+      }
+    }
+
+    if (i && AsmToks[i].hasLeadingSpace() && !isNewAsm)
       Asm += ' ';
+
+    bool StringInvalid = false;
     Asm += SemaRef.PP.getSpelling(AsmToks[i], TokenBuf, &StringInvalid);
     assert (!StringInvalid && "Expected valid string!");
   }
@@ -2876,7 +2897,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   // FIXME: Count this while parsing.
   unsigned NumAsmStrings = 0;
   for (unsigned i = 0, e = AsmToks.size(); i != e; ++i)
-    if (AsmToks[i].isAtStartOfLine())
+    if (i == 0 || AsmToks[i].isAtStartOfLine() || AsmToks[i].is(tok::kw_asm))
       ++NumAsmStrings;
 
   PatchedAsmStrings.resize(NumAsmStrings ? NumAsmStrings : 1);
