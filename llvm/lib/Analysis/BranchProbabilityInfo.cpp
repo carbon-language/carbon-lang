@@ -1,4 +1,4 @@
-//===-- BranchProbabilityInfo.cpp - Branch Probability Analysis -*- C++ -*-===//
+//===-- BranchProbabilityInfo.cpp - Branch Probability Analysis -----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -77,6 +77,19 @@ static const uint32_t ZH_NONTAKEN_WEIGHT = 12;
 
 static const uint32_t FPH_TAKEN_WEIGHT = 20;
 static const uint32_t FPH_NONTAKEN_WEIGHT = 12;
+
+/// \brief Invoke-terminating normal branch taken weight
+///
+/// This is the weight for branching to the normal destination of an invoke
+/// instruction. We expect this to happen most of the time. Set the weight to an
+/// absurdly high value so that nested loops subsume it.
+static const uint32_t IH_TAKEN_WEIGHT = 1024 * 1024 - 1;
+
+/// \brief Invoke-terminating normal branch not-taken weight.
+///
+/// This is the weight for branching to the unwind destination of an invoke
+/// instruction. This is essentially never taken.
+static const uint32_t IH_NONTAKEN_WEIGHT = 1;
 
 // Standard weight value. Used when none of the heuristics set weight for
 // the edge.
@@ -371,6 +384,19 @@ bool BranchProbabilityInfo::calcFloatingPointHeuristics(BasicBlock *BB) {
   return true;
 }
 
+bool BranchProbabilityInfo::calcInvokeHeuristics(BasicBlock *BB) {
+  InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator());
+  if (!II)
+    return false;
+
+  BasicBlock *Normal = II->getNormalDest();
+  BasicBlock *Unwind = II->getUnwindDest();
+
+  setEdgeWeight(BB, Normal, IH_TAKEN_WEIGHT);
+  setEdgeWeight(BB, Unwind, IH_NONTAKEN_WEIGHT);
+  return true;
+}
+
 void BranchProbabilityInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LoopInfo>();
   AU.setPreservesAll();
@@ -397,7 +423,9 @@ bool BranchProbabilityInfo::runOnFunction(Function &F) {
       continue;
     if (calcZeroHeuristics(*I))
       continue;
-    calcFloatingPointHeuristics(*I);
+    if (calcFloatingPointHeuristics(*I))
+      continue;
+    calcInvokeHeuristics(*I);
   }
 
   PostDominatedByUnreachable.clear();

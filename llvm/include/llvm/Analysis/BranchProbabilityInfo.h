@@ -122,6 +122,7 @@ private:
   bool calcLoopBranchHeuristics(BasicBlock *BB);
   bool calcZeroHeuristics(BasicBlock *BB);
   bool calcFloatingPointHeuristics(BasicBlock *BB);
+  bool calcInvokeHeuristics(BasicBlock *BB);
 };
 
 }
