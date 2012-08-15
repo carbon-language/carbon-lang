@@ -40,7 +40,9 @@ namespace __tsan {
 
 // Descriptor of user's memory block.
 struct MBlock {
+  Mutex mtx;
   uptr size;
+  SyncVar *head;
 };
 
 #ifndef TSAN_GO
@@ -451,6 +453,7 @@ void MemoryAccessRange(ThreadState *thr, uptr pc, uptr addr,
                        uptr size, bool is_write);
 void MemoryResetRange(ThreadState *thr, uptr pc, uptr addr, uptr size);
 void MemoryRangeFreed(ThreadState *thr, uptr pc, uptr addr, uptr size);
+void MemoryRangeImitateWrite(ThreadState *thr, uptr pc, uptr addr, uptr size);
 void IgnoreCtl(ThreadState *thr, bool write, bool begin);
 
 void FuncEntry(ThreadState *thr, uptr pc);

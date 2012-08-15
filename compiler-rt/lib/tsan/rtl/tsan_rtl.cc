@@ -427,13 +427,16 @@ static void MemoryRangeSet(ThreadState *thr, uptr pc, uptr addr, uptr size,
   const uptr kMaxResetSize = 1024*1024*1024;
   if (size > kMaxResetSize)
     size = kMaxResetSize;
-  size = (size + 7) & ~7;
+  size = (size + (kShadowCell - 1)) & ~(kShadowCell - 1);
   u64 *p = (u64*)MemToShadow(addr);
   CHECK(IsShadowMem((uptr)p));
   CHECK(IsShadowMem((uptr)(p + size * kShadowCnt / kShadowCell - 1)));
   // FIXME: may overwrite a part outside the region
-  for (uptr i = 0; i < size * kShadowCnt / kShadowCell; i++)
-    p[i] = val;
+  for (uptr i = 0; i < size * kShadowCnt / kShadowCell;) {
+    p[i++] = val;
+    for (uptr j = 1; j < kShadowCnt; j++)
+      p[i++] = 0;
+  }
 }
 
 void MemoryResetRange(ThreadState *thr, uptr pc, uptr addr, uptr size) {
@@ -444,6 +447,13 @@ void MemoryRangeFreed(ThreadState *thr, uptr pc, uptr addr, uptr size) {
   MemoryAccessRange(thr, pc, addr, size, true);
   Shadow s(thr->fast_state);
   s.MarkAsFreed();
+  s.SetWrite(true);
+  s.SetAddr0AndSizeLog(0, 3);
+  MemoryRangeSet(thr, pc, addr, size, s.raw());
+}
+
+void MemoryRangeImitateWrite(ThreadState *thr, uptr pc, uptr addr, uptr size) {
+  Shadow s(thr->fast_state);
   s.SetWrite(true);
   s.SetAddr0AndSizeLog(0, 3);
   MemoryRangeSet(thr, pc, addr, size, s.raw());
