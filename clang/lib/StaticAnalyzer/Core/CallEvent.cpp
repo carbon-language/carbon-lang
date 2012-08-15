@@ -376,47 +376,49 @@ void CXXInstanceCall::getExtraInvalidatedRegions(RegionList &Regions) const {
     Regions.push_back(R);
 }
 
-static const CXXMethodDecl *devirtualize(const CXXMethodDecl *MD, SVal ThisVal){
-  const MemRegion *R = ThisVal.getAsRegion();
-  if (!R)
-    return 0;
-
-  const TypedValueRegion *TR = dyn_cast<TypedValueRegion>(R->StripCasts());
-  if (!TR)
-    return 0;
-
-  const CXXRecordDecl *RD = TR->getValueType()->getAsCXXRecordDecl();
-  if (!RD)
-    return 0;
-
-  const CXXMethodDecl *Result = MD->getCorrespondingMethodInClass(RD);
-  const FunctionDecl *Definition;
-  if (!Result->hasBody(Definition))
-    return 0;
-
-  return cast<CXXMethodDecl>(Definition);
-}
-
 
 RuntimeDefinition CXXInstanceCall::getRuntimeDefinition() const {
+  // Do we have a decl at all?
   const Decl *D = getDecl();
   if (!D)
     return RuntimeDefinition();
 
+  // If the method is non-virtual, we know we can inline it.
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(D);
   if (!MD->isVirtual())
     return AnyFunctionCall::getRuntimeDefinition();
 
-  // If the method is virtual, see if we can find the actual implementation
-  // based on context-sensitivity.
-  // FIXME: Virtual method calls behave differently when an object is being
-  // constructed or destructed. It's not as simple as "no devirtualization"
-  // because a /partially/ constructed object can be referred to through a
-  // base pointer. We'll eventually want to use DynamicTypeInfo here.
-  if (const CXXMethodDecl *Devirtualized = devirtualize(MD, getCXXThisVal()))
-    return RuntimeDefinition(Devirtualized);
+  // Do we know the implicit 'this' object being called?
+  const MemRegion *R = getCXXThisVal().getAsRegion();
+  if (!R)
+    return RuntimeDefinition();
 
-  return RuntimeDefinition();
+  // Do we know anything about the type of 'this'?
+  DynamicTypeInfo DynType = getState()->getDynamicTypeInfo(R);
+  if (!DynType.isValid())
+    return RuntimeDefinition();
+
+  // Is the type a C++ class? (This is mostly a defensive check.)
+  QualType RegionType = DynType.getType()->getPointeeType();
+  const CXXRecordDecl *RD = RegionType->getAsCXXRecordDecl();
+  if (!RD)
+    return RuntimeDefinition();
+
+  // Find the decl for this method in that class.
+  const CXXMethodDecl *Result = MD->getCorrespondingMethodInClass(RD);
+  assert(Result && "At the very least the static decl should show up.");
+
+  // Does the decl that we found have an implementation?
+  const FunctionDecl *Definition;
+  if (!Result->hasBody(Definition))
+    return RuntimeDefinition();
+
+  // We found a definition. If we're not sure that this devirtualization is
+  // actually what will happen at runtime, make sure to provide the region so
+  // that ExprEngine can decide what to do with it.
+  if (DynType.canBeASubClass())
+    return RuntimeDefinition(Definition, R->StripCasts());
+  return RuntimeDefinition(Definition, /*DispatchRegion=*/0);
 }
 
 void CXXInstanceCall::getInitialStackFrameContents(

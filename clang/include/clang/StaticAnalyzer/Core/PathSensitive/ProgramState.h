@@ -65,10 +65,14 @@ class DynamicTypeInfo {
 
 public:
   DynamicTypeInfo() : T(QualType()) {}
-  DynamicTypeInfo(QualType WithType, bool CanBeSub = true):
-    T(WithType), CanBeASubClass(CanBeSub) {}
-  QualType getType() { return T; }
-  bool canBeASubClass() { return CanBeASubClass; }
+  DynamicTypeInfo(QualType WithType, bool CanBeSub = true)
+    : T(WithType), CanBeASubClass(CanBeSub) {}
+
+  bool isValid() const { return !T.isNull(); }
+
+  QualType getType() const { return T; }
+  bool canBeASubClass() const { return CanBeASubClass; }
+  
   void Profile(llvm::FoldingSetNodeID &ID) const {
     T.Profile(ID);
     ID.AddInteger((unsigned)CanBeASubClass);

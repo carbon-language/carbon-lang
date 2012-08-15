@@ -25,7 +25,8 @@ using namespace ento;
 
 namespace {
 class DynamicTypePropagation:
-    public Checker< check::PostCall,
+    public Checker< check::PreCall,
+                    check::PostCall,
                     check::PostStmt<ImplicitCastExpr> > {
   const ObjCObjectType *getObjectTypeForAllocAndNew(const ObjCMessageExpr *MsgE,
                                                     CheckerContext &C) const;
@@ -34,9 +35,43 @@ class DynamicTypePropagation:
   const ObjCObjectPointerType *getBetterObjCType(const Expr *CastE,
                                                  CheckerContext &C) const;
 public:
+  void checkPreCall(const CallEvent &Call, CheckerContext &C) const;
   void checkPostCall(const CallEvent &Call, CheckerContext &C) const;
   void checkPostStmt(const ImplicitCastExpr *CastE, CheckerContext &C) const;
 };
+}
+
+void DynamicTypePropagation::checkPreCall(const CallEvent &Call,
+                                          CheckerContext &C) const {
+  if (const CXXDestructorCall *Dtor = dyn_cast<CXXDestructorCall>(&Call)) {
+    // C++11 [class.cdtor]p4: When a virtual function is called directly or
+    //   indirectly from a constructor or from a destructor, including during
+    //   the construction or destruction of the class’s non-static data members,
+    //   and the object to which the call applies is the object under
+    //   construction or destruction, the function called is the final overrider
+    //   in the constructor's or destructor's class and not one overriding it in
+    //   a more-derived class.
+    // FIXME: We don't support this behavior yet for constructors.
+
+    const MemRegion *Target = Dtor->getCXXThisVal().getAsRegion();
+    if (!Target)
+      return;
+
+    // FIXME: getRuntimeDefinition() can be expensive. It would be better to do
+    // this when we are entering the stack frame for the destructor.
+    const Decl *D = Dtor->getRuntimeDefinition().getDecl();
+    if (!D)
+      return;
+
+    const CXXRecordDecl *Class = cast<CXXDestructorDecl>(D)->getParent();
+
+    ASTContext &Ctx = C.getASTContext();
+    QualType Ty = Ctx.getPointerType(Ctx.getRecordType(Class));
+
+    ProgramStateRef State = C.getState();
+    State = State->setDynamicTypeInfo(Target, Ty, /*CanBeSubclass=*/false);
+    C.addTransition(State);
+  }
 }
 
 void DynamicTypePropagation::checkPostCall(const CallEvent &Call,

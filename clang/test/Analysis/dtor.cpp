@@ -173,3 +173,57 @@ void testDefaultArg() {
   // Force a bug to be emitted.
   *(char *)0 = 1; // expected-warning{{Dereference of null pointer}}
 }
+
+
+namespace DestructorVirtualCalls {
+  class A {
+  public:
+    int *out1, *out2, *out3;
+
+    virtual int get() { return 1; }
+
+    ~A() {
+      *out1 = get();
+    }
+  };
+
+  class B : public A {
+  public:
+    virtual int get() { return 2; }
+
+    ~B() {
+      *out2 = get();
+    }
+  };
+
+  class C : public B {
+  public:
+    virtual int get() { return 3; }
+
+    ~C() {
+      *out3 = get();
+    }
+  };
+
+  void test() {
+    int a, b, c;
+
+    // New scope for the C object.
+    {
+      C obj;
+      clang_analyzer_eval(obj.get() == 3); // expected-warning{{TRUE}}
+
+      // Sanity check for devirtualization.
+      A *base = &obj;
+      clang_analyzer_eval(base->get() == 3); // expected-warning{{TRUE}}
+
+      obj.out1 = &a;
+      obj.out2 = &b;
+      obj.out3 = &c;
+    }
+
+    clang_analyzer_eval(a == 1); // expected-warning{{TRUE}}
+    clang_analyzer_eval(b == 2); // expected-warning{{TRUE}}
+    clang_analyzer_eval(c == 3); // expected-warning{{TRUE}}
+  }
+}

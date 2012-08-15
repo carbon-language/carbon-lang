@@ -745,14 +745,16 @@ template<> struct ProgramStateTrait<DynamicTypeMap>
 }}
 
 DynamicTypeInfo ProgramState::getDynamicTypeInfo(const MemRegion *Reg) const {
+  Reg = Reg->StripCasts();
+
   // Look up the dynamic type in the GDM.
   const DynamicTypeInfo *GDMType = get<DynamicTypeMap>(Reg);
   if (GDMType)
     return *GDMType;
 
   // Otherwise, fall back to what we know about the region.
-  if (const TypedValueRegion *TR = dyn_cast<TypedValueRegion>(Reg))
-    return DynamicTypeInfo(TR->getValueType());
+  if (const TypedRegion *TR = dyn_cast<TypedRegion>(Reg))
+    return DynamicTypeInfo(TR->getLocationType(), /*CanBeSubclass=*/false);
 
   if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(Reg)) {
     SymbolRef Sym = SR->getSymbol();
@@ -764,6 +766,7 @@ DynamicTypeInfo ProgramState::getDynamicTypeInfo(const MemRegion *Reg) const {
 
 ProgramStateRef ProgramState::setDynamicTypeInfo(const MemRegion *Reg,
                                                  DynamicTypeInfo NewTy) const {
+  Reg = Reg->StripCasts();
   ProgramStateRef NewState = set<DynamicTypeMap>(Reg, NewTy);
   assert(NewState);
   return NewState;
