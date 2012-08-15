@@ -35,6 +35,9 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCInstPrinter.h"
+#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
@@ -2924,7 +2927,55 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
     Parser->setAssemblerDialect(1);
     Parser->setTargetParser(*TargetParser.get());
 
-    // TODO: Start parsing.
+    // Prime the lexer.
+    Parser->Lex();
+
+    // Parse the opcode.
+    StringRef IDVal;
+    Parser->ParseIdentifier(IDVal);
+
+    // Canonicalize the opcode to lower case.
+    SmallString<128> Opcode;
+    for (unsigned i = 0, e = IDVal.size(); i != e; ++i)
+      Opcode.push_back(tolower(IDVal[i]));
+
+    // Parse the operands.
+    llvm::SMLoc IDLoc;
+    SmallVector<llvm::MCParsedAsmOperand*, 8> Operands;
+    bool HadError = TargetParser->ParseInstruction(Opcode.str(), IDLoc,
+                                                   Operands);
+    assert (!HadError && "Unexpected error parsing instruction");
+
+    // Match the MCInstr.
+    SmallVector<llvm::MCInst, 2> Instrs;
+    HadError = TargetParser->MatchInstruction(IDLoc, Operands, Instrs);
+    assert (!HadError && "Unexpected error matching instruction");
+    assert ((Instrs.size() == 1) && "Expected only a single instruction.");
+
+    // Get the instruction descriptor.
+    llvm::MCInst Inst = Instrs[0];
+    const llvm::MCInstrInfo *MII = TheTarget->createMCInstrInfo();
+    const llvm::MCInstrDesc &Desc = MII->get(Inst.getOpcode());
+    llvm::MCInstPrinter *IP =
+      TheTarget->createMCInstPrinter(1, *MAI, *MII, *MRI, *STI);
+
+    // Build the list of clobbers.
+    for (unsigned i = 0, e = Desc.getNumDefs(); i != e; ++i) {
+      const llvm::MCOperand &Op = Inst.getOperand(i);
+      if (!Op.isReg())
+        continue;
+
+      std::string Reg;
+      llvm::raw_string_ostream OS(Reg);
+      IP->printRegName(OS, Op.getReg());
+
+      StringRef Clobber(OS.str());
+      if (!Context.getTargetInfo().isValidClobber(Clobber))
+        return StmtError(Diag(AsmLoc, diag::err_asm_unknown_register_name) <<
+                         Clobber);
+      // FIXME: Asm blocks may result in redundant clobbers.
+      Clobbers.push_back(Reg);
+    }
   }
 
   MSAsmStmt *NS =
