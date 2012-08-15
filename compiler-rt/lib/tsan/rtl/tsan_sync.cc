@@ -47,6 +47,31 @@ SyncTab::~SyncTab() {
 
 SyncVar* SyncTab::GetAndLock(ThreadState *thr, uptr pc,
                              uptr addr, bool write_lock) {
+#ifndef TSAN_GO
+  if (PrimaryAllocator::PointerIsMine((void*)addr)) {
+    MBlock *b = user_mblock(thr, (void*)addr);
+    Lock l(&b->mtx);
+    SyncVar *res = 0;
+    for (res = b->head; res; res = res->next) {
+      if (res->addr == addr)
+        break;
+    }
+    if (res == 0) {
+      StatInc(thr, StatSyncCreated);
+      void *mem = internal_alloc(MBlockSync, sizeof(SyncVar));
+      res = new(mem) SyncVar(addr);
+      res->creation_stack.ObtainCurrent(thr, pc);
+      res->next = b->head;
+      b->head = res;
+    }
+    if (write_lock)
+      res->mtx.Lock();
+    else
+      res->mtx.ReadLock();
+    return res;
+  }
+#endif
+
   Part *p = &tab_[PartIdx(addr)];
   {
     ReadLock l(&p->mtx);
@@ -86,6 +111,32 @@ SyncVar* SyncTab::GetAndLock(ThreadState *thr, uptr pc,
 }
 
 SyncVar* SyncTab::GetAndRemove(ThreadState *thr, uptr pc, uptr addr) {
+#ifndef TSAN_GO
+  if (PrimaryAllocator::PointerIsMine((void*)addr)) {
+    MBlock *b = user_mblock(thr, (void*)addr);
+    SyncVar *res = 0;
+    {
+      Lock l(&b->mtx);
+      SyncVar **prev = &b->head;
+      res = *prev;
+      while (res) {
+        if (res->addr == addr) {
+          *prev = res->next;
+          break;
+        }
+        prev = &res->next;
+        res = *prev;
+      }
+    }
+    if (res) {
+      StatInc(thr, StatSyncDestroyed);
+      res->mtx.Lock();
+      res->mtx.Unlock();
+    }
+    return res;
+  }
+#endif
+
   Part *p = &tab_[PartIdx(addr)];
   SyncVar *res = 0;
   {

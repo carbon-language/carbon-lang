@@ -50,7 +50,7 @@ void *user_alloc(ThreadState *thr, uptr pc, uptr sz, uptr align) {
   MBlock *b = (MBlock*)allocator()->GetMetaData(p);
   b->size = sz;
   if (CTX() && CTX()->initialized) {
-    MemoryResetRange(thr, pc, (uptr)p, sz);
+    MemoryRangeImitateWrite(thr, pc, (uptr)p, sz);
   }
   DPrintf("#%d: alloc(%zu) = %p\n", thr->tid, sz, p);
   SignalUnsafeCall(thr, pc);
@@ -62,6 +62,18 @@ void user_free(ThreadState *thr, uptr pc, void *p) {
   CHECK_NE(p, (void*)0);
   DPrintf("#%d: free(%p)\n", thr->tid, p);
   MBlock *b = (MBlock*)allocator()->GetMetaData(p);
+  if (b->head)   {
+    Lock l(&b->mtx);
+    for (SyncVar *s = b->head; s;) {
+      SyncVar *res = s;
+      s = s->next;
+      StatInc(thr, StatSyncDestroyed);
+      res->mtx.Lock();
+      res->mtx.Unlock();
+      DestroyAndFree(res);
+    }
+    b->head = 0;
+  }
   if (CTX() && CTX()->initialized && thr->in_rtl == 1) {
     MemoryRangeFreed(thr, pc, (uptr)p, b->size);
   }

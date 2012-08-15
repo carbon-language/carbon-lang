@@ -145,10 +145,11 @@ class SizeClassAllocator64 {
     region->free_list.append_front(free_list);
   }
 
-  bool PointerIsMine(void *p) {
+  static bool PointerIsMine(void *p) {
     return reinterpret_cast<uptr>(p) / kSpaceSize == kSpaceBeg / kSpaceSize;
   }
-  uptr GetSizeClass(void *p) {
+
+  static uptr GetSizeClass(void *p) {
     return (reinterpret_cast<uptr>(p) / kRegionSize) % kNumClasses;
   }
 
