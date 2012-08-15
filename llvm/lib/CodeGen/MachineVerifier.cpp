@@ -681,10 +681,10 @@ void
 MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
   const MachineInstr *MI = MO->getParent();
   const MCInstrDesc &MCID = MI->getDesc();
-  const MCOperandInfo &MCOI = MCID.OpInfo[MONum];
 
   // The first MCID.NumDefs operands must be explicit register defines
   if (MONum < MCID.getNumDefs()) {
+    const MCOperandInfo &MCOI = MCID.OpInfo[MONum];
     if (!MO->isReg())
       report("Explicit definition must be a register", MO, MONum);
     else if (!MO->isDef() && !MCOI.isOptionalDef())
@@ -692,6 +692,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
     else if (MO->isImplicit())
       report("Explicit definition marked as implicit", MO, MONum);
   } else if (MONum < MCID.getNumOperands()) {
+    const MCOperandInfo &MCOI = MCID.OpInfo[MONum];
     // Don't check if it's the last operand in a variadic instruction. See,
     // e.g., LDM_RET in the arm back end.
     if (MO->isReg() &&
