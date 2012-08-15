@@ -1385,6 +1385,18 @@ AST_MATCHER_P(FunctionDecl, returns, internal::Matcher<QualType>, Matcher) {
   return Matcher.matches(Node.getResultType(), Finder, Builder);
 }
 
+/// \brief Matches extern "C" function declarations.
+///
+/// Given:
+///   extern "C" void f() {}
+///   extern "C" { void g() {} }
+///   void h() {}
+/// function(isExternC())
+///   matches the declaration of f and g, but not the declaration h
+AST_MATCHER(FunctionDecl, isExternC) {
+  return Node.isExternC();
+}
+
 /// \brief Matches the condition expression of an if statement, for loop,
 /// or conditional operator.
 ///

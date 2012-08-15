@@ -1099,6 +1099,12 @@ TEST(Returns, MatchesReturnTypes) {
                       function(returns(hasDeclaration(record(hasName("Y")))))));
 }
 
+TEST(IsExternC, MatchesExternCFunctionDeclarations) {
+  EXPECT_TRUE(matches("extern \"C\" void f() {}", function(isExternC())));
+  EXPECT_TRUE(matches("extern \"C\" { void f() {} }", function(isExternC())));
+  EXPECT_TRUE(notMatches("void f() {}", function(isExternC())));
+}
+
 TEST(HasAnyParameter, DoesntMatchIfInnerMatcherDoesntMatch) {
   EXPECT_TRUE(notMatches("class Y {}; class X { void x(int) {} };",
       method(hasAnyParameter(hasType(record(hasName("X")))))));
