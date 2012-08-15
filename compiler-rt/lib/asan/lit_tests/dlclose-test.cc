@@ -21,9 +21,9 @@
 // 6. BOOM
 //===----------------------------------------------------------------------===//
 
-// RUN: %clang_asan -O2 %p/SharedLibs/dlclose-test-so.cc \
+// RUN: %clangxx_asan -O2 %p/SharedLibs/dlclose-test-so.cc \
 // RUN:     -fPIC -shared -o %t-so.so
-// RUN: %clang_asan -O2 %s -o %t
+// RUN: %clangxx_asan -O2 %s -o %t
 // RUN: %t | FileCheck %s
 
 #include <assert.h>

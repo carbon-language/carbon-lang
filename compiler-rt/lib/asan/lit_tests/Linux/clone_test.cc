@@ -1,7 +1,7 @@
 // Regression test for:
 // http://code.google.com/p/address-sanitizer/issues/detail?id=37
 
-// RUN: %clang_asan -O2 %s -o %t
+// RUN: %clangxx_asan -O2 %s -o %t
 // RUN: %t | FileCheck %s
 
 #include <stdio.h>

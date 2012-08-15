@@ -1,4 +1,4 @@
-// RUN: %clang_asan -m64 -O2 %s -o %t
+// RUN: %clangxx_asan -m64 -O2 %s -o %t
 // RUN: %t 2>&1 | %symbolizer | FileCheck %s
 
 // CHECK: AddressSanitizer global-buffer-overflow

@@ -1,4 +1,4 @@
-// RUN: %clang_asan -O2 %s -o %t
+// RUN: %clangxx_asan -O2 %s -o %t
 // RUN: %t 2>&1 | FileCheck %s
 
 const char *kAsanDefaultOptions="verbosity=1 foo=bar";

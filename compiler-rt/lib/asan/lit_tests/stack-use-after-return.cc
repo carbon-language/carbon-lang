@@ -1,5 +1,5 @@
 // XFAIL: *
-// RUN: %clang_asan -m64 -O2 %s -o %t
+// RUN: %clangxx_asan -m64 -O2 %s -o %t
 // RUN: %t 2>&1 | %symbolizer | c++filt | FileCheck %s
 
 #include <stdio.h>

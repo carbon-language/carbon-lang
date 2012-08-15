@@ -11,9 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-// RUN: %clang_asan -O2 %p/SharedLibs/shared-lib-test-so.cc \
+// RUN: %clangxx_asan -O2 %p/SharedLibs/shared-lib-test-so.cc \
 // RUN:     -fPIC -shared -o %t-so.so
-// RUN: %clang_asan -O2 %s -o %t
+// RUN: %clangxx_asan -O2 %s -o %t
 // RUN: %t 2>&1 | %symbolizer | FileCheck %s
 
 #include <dlfcn.h>

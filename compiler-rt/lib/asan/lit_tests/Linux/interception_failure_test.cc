@@ -1,7 +1,7 @@
 // If user provides his own libc functions, ASan doesn't
 // intercept these functions.
 
-// RUN: %clang_asan -O2 %s -o %t
+// RUN: %clangxx_asan -O2 %s -o %t
 // RUN: %t 2>&1 | FileCheck %s
 #include <stdlib.h>
 #include <stdio.h>
