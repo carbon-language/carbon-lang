@@ -178,9 +178,14 @@ class SizeClassAllocator64 {
     UnmapOrDie(reinterpret_cast<void*>(AllocBeg()), AllocSize());
   }
 
+  static uptr AllocBeg()  { return kSpaceBeg  - AdditionalSize(); }
+  static uptr AllocEnd()  { return kSpaceBeg  + kSpaceSize; }
+  static uptr AllocSize() { return kSpaceSize + AdditionalSize(); }
+
   static const uptr kNumClasses = 256;  // Power of two <= 256
 
  private:
+  COMPILER_CHECK(kSpaceBeg % kSpaceSize == 0);
   COMPILER_CHECK(kNumClasses <= SizeClassMap::kNumClasses);
   static const uptr kRegionSize = kSpaceSize / kNumClasses;
   COMPILER_CHECK((kRegionSize >> 32) > 0);  // kRegionSize must be >= 2^32.
@@ -197,13 +202,11 @@ class SizeClassAllocator64 {
   };
   COMPILER_CHECK(sizeof(RegionInfo) == kCacheLineSize);
 
-  uptr AdditionalSize() {
+  static uptr AdditionalSize() {
     uptr res = sizeof(RegionInfo) * kNumClasses;
     CHECK_EQ(res % kPageSize, 0);
     return res;
   }
-  uptr AllocBeg()  { return kSpaceBeg  - AdditionalSize(); }
-  uptr AllocSize() { return kSpaceSize + AdditionalSize(); }
 
   RegionInfo *GetRegionInfo(uptr class_id) {
     CHECK_LT(class_id, kNumClasses);
@@ -306,6 +309,8 @@ class LargeMmapAllocator {
   }
   void *Allocate(uptr size, uptr alignment) {
     CHECK_LE(alignment, kPageSize);  // Not implemented. Do we need it?
+    if (size + alignment + 2 * kPageSize < size)
+      return 0;
     uptr map_size = RoundUpMapSize(size);
     void *map = MmapOrDie(map_size, "LargeMmapAllocator");
     void *res = reinterpret_cast<void*>(reinterpret_cast<uptr>(map)
@@ -409,7 +414,10 @@ class CombinedAllocator {
   void *Allocate(AllocatorCache *cache, uptr size, uptr alignment,
                  bool cleared = false) {
     // Returning 0 on malloc(0) may break a lot of code.
-    if (size == 0) size = 1;
+    if (size == 0)
+      size = 1;
+    if (size + alignment < size)
+      return 0;
     if (alignment > 8)
       size = RoundUpTo(size, alignment);
     void *res;
@@ -419,7 +427,7 @@ class CombinedAllocator {
       res = secondary_.Allocate(size, alignment);
     if (alignment > 8)
       CHECK_EQ(reinterpret_cast<uptr>(res) & (alignment - 1), 0);
-    if (cleared)
+    if (cleared && res)
       internal_memset(res, 0, size);
     return res;
   }
