@@ -154,6 +154,11 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
     }
   }
 
+  // Generate a CallEvent /before/ cleaning the state, so that we can get the
+  // correct value for 'this' (if necessary).
+  CallEventManager &CEMgr = getStateManager().getCallEventManager();
+  CallEventRef<> Call = CEMgr.getCaller(calleeCtx, state);
+
   // Step 3: BindedRetNode -> CleanedNodes
   // If we can find a statement and a block in the inlined function, run remove
   // dead bindings before returning from the call. This is important to ensure
@@ -203,21 +208,21 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
         &Ctx);
     SaveAndRestore<unsigned> CBISave(currentStmtIdx, calleeCtx->getIndex());
 
-    CallEventManager &CEMgr = getStateManager().getCallEventManager();
-    CallEventRef<> Call = CEMgr.getCaller(calleeCtx, CEEState);
+    CallEventRef<> UpdatedCall = Call.cloneWithState(CEEState);
 
     ExplodedNodeSet DstPostCall;
-    getCheckerManager().runCheckersForPostCall(DstPostCall, CEENode, *Call,
-                                               *this, true);
+    getCheckerManager().runCheckersForPostCall(DstPostCall, CEENode,
+                                               *UpdatedCall, *this,
+                                               /*WasInlined=*/true);
 
     ExplodedNodeSet Dst;
-    if (isa<ObjCMethodCall>(Call)) {
-      getCheckerManager().runCheckersForPostObjCMessage(Dst, DstPostCall,
-                                                    cast<ObjCMethodCall>(*Call),
-                                                        *this, true);
+    if (const ObjCMethodCall *Msg = dyn_cast<ObjCMethodCall>(Call)) {
+      getCheckerManager().runCheckersForPostObjCMessage(Dst, DstPostCall, *Msg,
+                                                        *this,
+                                                        /*WasInlined=*/true);
     } else if (CE) {
       getCheckerManager().runCheckersForPostStmt(Dst, DstPostCall, CE,
-                                                 *this, true);
+                                                 *this, /*WasInlined=*/true);
     } else {
       Dst.insert(DstPostCall);
     }

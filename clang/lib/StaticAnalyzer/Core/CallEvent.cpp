@@ -405,7 +405,7 @@ RuntimeDefinition CXXInstanceCall::getRuntimeDefinition() const {
     return RuntimeDefinition();
 
   // Find the decl for this method in that class.
-  const CXXMethodDecl *Result = MD->getCorrespondingMethodInClass(RD);
+  const CXXMethodDecl *Result = MD->getCorrespondingMethodInClass(RD, true);
   assert(Result && "At the very least the static decl should show up.");
 
   // Does the decl that we found have an implementation?

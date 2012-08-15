@@ -41,9 +41,23 @@ public:
 };
 }
 
+static void recordFixedType(const MemRegion *Region, const CXXMethodDecl *MD,
+                            CheckerContext &C) {
+  assert(Region);
+  assert(MD);
+
+  ASTContext &Ctx = C.getASTContext();
+  QualType Ty = Ctx.getPointerType(Ctx.getRecordType(MD->getParent()));
+
+  ProgramStateRef State = C.getState();
+  State = State->setDynamicTypeInfo(Region, Ty, /*CanBeSubclass=*/false);
+  C.addTransition(State);
+  return;
+}
+
 void DynamicTypePropagation::checkPreCall(const CallEvent &Call,
                                           CheckerContext &C) const {
-  if (const CXXDestructorCall *Dtor = dyn_cast<CXXDestructorCall>(&Call)) {
+  if (const CXXConstructorCall *Ctor = dyn_cast<CXXConstructorCall>(&Call)) {
     // C++11 [class.cdtor]p4: When a virtual function is called directly or
     //   indirectly from a constructor or from a destructor, including during
     //   the construction or destruction of the class’s non-static data members,
@@ -51,7 +65,24 @@ void DynamicTypePropagation::checkPreCall(const CallEvent &Call,
     //   construction or destruction, the function called is the final overrider
     //   in the constructor's or destructor's class and not one overriding it in
     //   a more-derived class.
-    // FIXME: We don't support this behavior yet for constructors.
+
+    switch (Ctor->getOriginExpr()->getConstructionKind()) {
+    case CXXConstructExpr::CK_Complete:
+    case CXXConstructExpr::CK_Delegating:
+      // No additional type info necessary.
+      return;
+    case CXXConstructExpr::CK_NonVirtualBase:
+    case CXXConstructExpr::CK_VirtualBase:
+      if (const MemRegion *Target = Ctor->getCXXThisVal().getAsRegion())
+        recordFixedType(Target, Ctor->getDecl(), C);
+      return;
+    }
+
+    return;
+  }
+
+  if (const CXXDestructorCall *Dtor = dyn_cast<CXXDestructorCall>(&Call)) {
+    // C++11 [class.cdtor]p4 (see above)
 
     const MemRegion *Target = Dtor->getCXXThisVal().getAsRegion();
     if (!Target)
@@ -63,14 +94,8 @@ void DynamicTypePropagation::checkPreCall(const CallEvent &Call,
     if (!D)
       return;
 
-    const CXXRecordDecl *Class = cast<CXXDestructorDecl>(D)->getParent();
-
-    ASTContext &Ctx = C.getASTContext();
-    QualType Ty = Ctx.getPointerType(Ctx.getRecordType(Class));
-
-    ProgramStateRef State = C.getState();
-    State = State->setDynamicTypeInfo(Target, Ty, /*CanBeSubclass=*/false);
-    C.addTransition(State);
+    recordFixedType(Target, cast<CXXDestructorDecl>(D), C);
+    return;
   }
 }
 
@@ -116,6 +141,31 @@ void DynamicTypePropagation::checkPostCall(const CallEvent &Call,
       C.addTransition(State->setDynamicTypeInfo(RetReg, RecDynType));
       break;
     }
+    }
+
+    return;
+  }
+
+  if (const CXXConstructorCall *Ctor = dyn_cast<CXXConstructorCall>(&Call)) {
+    // We may need to undo the effects of our pre-call check.
+    switch (Ctor->getOriginExpr()->getConstructionKind()) {
+    case CXXConstructExpr::CK_Complete:
+    case CXXConstructExpr::CK_Delegating:
+      // No additional work necessary.
+      // Note: This will leave behind the actual type of the object for
+      // complete constructors, but arguably that's a good thing, since it
+      // means the dynamic type info will be correct even for objects
+      // constructed with operator new.
+      return;
+    case CXXConstructExpr::CK_NonVirtualBase:
+    case CXXConstructExpr::CK_VirtualBase:
+      if (const MemRegion *Target = Ctor->getCXXThisVal().getAsRegion()) {
+        // We just finished a base constructor. Now we can use the subclass's
+        // type when resolving virtual calls.
+        const Decl *D = C.getLocationContext()->getDecl();
+        recordFixedType(Target, cast<CXXConstructorDecl>(D), C);
+      }
+      return;
     }
   }
 }

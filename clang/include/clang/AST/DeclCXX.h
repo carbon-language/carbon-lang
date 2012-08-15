@@ -1646,14 +1646,17 @@ public:
   /// \brief Find the method in RD that corresponds to this one.
   ///
   /// Find if RD or one of the classes it inherits from override this method.
-  /// If so, return it. RD is assumed to be a base class of the class defining
-  /// this method (or be the class itself).
+  /// If so, return it. RD is assumed to be a subclass of the class defining
+  /// this method (or be the class itself), unless MayBeBase is set to true.
   CXXMethodDecl *
-  getCorrespondingMethodInClass(const CXXRecordDecl *RD);
+  getCorrespondingMethodInClass(const CXXRecordDecl *RD,
+                                bool MayBeBase = false);
 
   const CXXMethodDecl *
-  getCorrespondingMethodInClass(const CXXRecordDecl *RD) const {
-    return const_cast<CXXMethodDecl*>(this)->getCorrespondingMethodInClass(RD);
+  getCorrespondingMethodInClass(const CXXRecordDecl *RD,
+                                bool MayBeBase = false) const {
+    return const_cast<CXXMethodDecl *>(this)
+              ->getCorrespondingMethodInClass(RD, MayBeBase);
   }
 
   // Implement isa/cast/dyncast/etc.

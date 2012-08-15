@@ -39,3 +39,51 @@ void testNonPODCopyConstructor() {
   clang_analyzer_eval(b.x == 42); // expected-warning{{TRUE}}
 }
 
+
+namespace ConstructorVirtualCalls {
+  class A {
+  public:
+    int *out1, *out2, *out3;
+
+    virtual int get() { return 1; }
+
+    A(int *out1) {
+      *out1 = get();
+    }
+  };
+
+  class B : public A {
+  public:
+    virtual int get() { return 2; }
+
+    B(int *out1, int *out2) : A(out1) {
+      *out2 = get();
+    }
+  };
+
+  class C : public B {
+  public:
+    virtual int get() { return 3; }
+
+    C(int *out1, int *out2, int *out3) : B(out1, out2) {
+      *out3 = get();
+    }
+  };
+
+  void test() {
+    int a, b, c;
+
+    C obj(&a, &b, &c);
+    clang_analyzer_eval(a == 1); // expected-warning{{TRUE}}
+    clang_analyzer_eval(b == 2); // expected-warning{{TRUE}}
+    clang_analyzer_eval(c == 3); // expected-warning{{TRUE}}
+
+    clang_analyzer_eval(obj.get() == 3); // expected-warning{{TRUE}}
+
+    // Sanity check for devirtualization.
+    A *base = &obj;
+    clang_analyzer_eval(base->get() == 3); // expected-warning{{TRUE}}
+  }
+}
+
+
