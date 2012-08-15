@@ -18,6 +18,7 @@
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/TypeLoc.h"
+#include "llvm/Support/AlignOf.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
 
@@ -33,7 +34,8 @@ NestedNameSpecifier::FindOrInsert(const ASTContext &Context,
   NestedNameSpecifier *NNS
     = Context.NestedNameSpecifiers.FindNodeOrInsertPos(ID, InsertPos);
   if (!NNS) {
-    NNS = new (Context, 4) NestedNameSpecifier(Mockup);
+    NNS = new (Context, llvm::alignOf<NestedNameSpecifier>())
+        NestedNameSpecifier(Mockup);
     Context.NestedNameSpecifiers.InsertNode(NNS, InsertPos);
   }
 
@@ -107,7 +109,9 @@ NestedNameSpecifier::Create(const ASTContext &Context, IdentifierInfo *II) {
 NestedNameSpecifier *
 NestedNameSpecifier::GlobalSpecifier(const ASTContext &Context) {
   if (!Context.GlobalNestedNameSpecifier)
-    Context.GlobalNestedNameSpecifier = new (Context, 4) NestedNameSpecifier();
+    Context.GlobalNestedNameSpecifier =
+        new (Context, llvm::alignOf<NestedNameSpecifier>())
+            NestedNameSpecifier();
   return Context.GlobalNestedNameSpecifier;
 }
 
@@ -630,4 +634,3 @@ NestedNameSpecifierLocBuilder::getWithLocInContext(ASTContext &Context) const {
   memcpy(Mem, Buffer, BufferSize);
   return NestedNameSpecifierLoc(Representation, Mem);
 }
-
