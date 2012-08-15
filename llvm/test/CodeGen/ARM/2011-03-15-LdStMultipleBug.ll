@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=thumbv7-apple-darwin10 -relocation-model=pic -disable-fp-elim -disable-cgp-delete-dead-blocks -mcpu=cortex-a8 | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin10 -relocation-model=pic -disable-fp-elim -mcpu=cortex-a8 | FileCheck %s
 
 ; Do not form Thumb2 ldrd / strd if the offset is not multiple of 4.
 ; rdar://9133587
@@ -21,12 +21,6 @@ for.body:                                         ; preds = %_Z14printIsNotZeroi
   %x = getelementptr %struct.Outer* @oStruct, i32 0, i32 1, i32 %i.022, i32 0
   %y = getelementptr %struct.Outer* @oStruct, i32 0, i32 1, i32 %i.022, i32 1
   %inc = add i32 %i.022, 1
-  br i1 %tmp3, label %_Z14printIsNotZeroi.exit, label %if.then.i
-
-if.then.i:                                        ; preds = %for.body
-  unreachable
-
-_Z14printIsNotZeroi.exit:                         ; preds = %for.body
   %tmp8 = load i32* %x, align 4, !tbaa !0
   %tmp11 = load i32* %y, align 4, !tbaa !0
   %mul = mul nsw i32 %tmp11, %tmp8
@@ -37,7 +31,7 @@ if.then.i16:                                      ; preds = %_Z14printIsNotZeroi
   unreachable
 
 _Z14printIsNotZeroi.exit17:                       ; preds = %_Z14printIsNotZeroi.exit
-  br i1 undef, label %_Z14printIsNotZeroi.exit17.for.body_crit_edge, label %for.end
+  br label %_Z14printIsNotZeroi.exit17.for.body_crit_edge
 
 _Z14printIsNotZeroi.exit17.for.body_crit_edge:    ; preds = %_Z14printIsNotZeroi.exit17
   %b.phi.trans.insert = getelementptr %struct.Outer* @oStruct, i32 0, i32 1, i32 %inc, i32 3
