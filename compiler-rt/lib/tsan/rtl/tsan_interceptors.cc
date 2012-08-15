@@ -624,23 +624,23 @@ TSAN_INTERCEPTOR(void, _ZdaPvRKSt9nothrow_t, void *p) {
 
 TSAN_INTERCEPTOR(void*, memalign, uptr align, uptr sz) {
   SCOPED_TSAN_INTERCEPTOR(memalign, align, sz);
-  return user_alloc_aligned(thr, pc, sz, align);
+  return user_alloc(thr, pc, sz, align);
 }
 
 TSAN_INTERCEPTOR(void*, valloc, uptr sz) {
   SCOPED_TSAN_INTERCEPTOR(valloc, sz);
-  return user_alloc_aligned(thr, pc, sz, kPageSize);
+  return user_alloc(thr, pc, sz, kPageSize);
 }
 
 TSAN_INTERCEPTOR(void*, pvalloc, uptr sz) {
   SCOPED_TSAN_INTERCEPTOR(pvalloc, sz);
   sz = RoundUp(sz, kPageSize);
-  return user_alloc_aligned(thr, pc, sz, kPageSize);
+  return user_alloc(thr, pc, sz, kPageSize);
 }
 
 TSAN_INTERCEPTOR(int, posix_memalign, void **memptr, uptr align, uptr sz) {
   SCOPED_TSAN_INTERCEPTOR(posix_memalign, memptr, align, sz);
-  *memptr = user_alloc_aligned(thr, pc, sz, align);
+  *memptr = user_alloc(thr, pc, sz, align);
   return 0;
 }
 

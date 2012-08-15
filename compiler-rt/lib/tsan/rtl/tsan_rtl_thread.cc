@@ -238,6 +238,7 @@ void ThreadFinish(ThreadState *thr) {
   }
   tctx->epoch1 = thr->fast_state.epoch();
 
+  AlloctorThreadFinish(thr);
   thr->~ThreadState();
   StatAggregate(ctx->stat, thr->stat);
   tctx->thr = 0;

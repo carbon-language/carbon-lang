@@ -31,7 +31,7 @@ static const uptr kLinuxShadowMsk = 0x100000000000ULL;
 static const uptr kLinuxAppMemBeg = 0x2a0000000000ULL;
 static const uptr kLinuxAppMemEnd = 0x7fffffffffffULL;
 #else
-static const uptr kLinuxAppMemBeg = 0x7ef000000000ULL;
+static const uptr kLinuxAppMemBeg = 0x7cf000000000ULL;
 static const uptr kLinuxAppMemEnd = 0x7fffffffffffULL;
 #endif
 

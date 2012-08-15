@@ -133,6 +133,7 @@ struct ReportStack;
 class ReportDesc;
 class RegionAlloc;
 class StackTrace;
+struct MBlock;
 
 }  // namespace __tsan
 

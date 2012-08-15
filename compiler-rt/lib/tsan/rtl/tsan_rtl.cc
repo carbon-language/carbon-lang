@@ -32,6 +32,7 @@ namespace __tsan {
 
 #ifndef TSAN_GO
 THREADLOCAL char cur_thread_placeholder[sizeof(ThreadState)] ALIGNED(64);
+char allocator_placeholder[sizeof(Allocator)] ALIGNED(64);
 #endif
 static char ctx_placeholder[sizeof(Context)] ALIGNED(64);
 
@@ -163,6 +164,7 @@ void Initialize(ThreadState *thr) {
     return;
   is_initialized = true;
   ScopedInRtl in_rtl;
+  InitializeAllocator();
   InitializeInterceptors();
   const char *env = InitializePlatform();
   InitializeMutex();

@@ -27,6 +27,7 @@
 #define TSAN_RTL_H
 
 #include "sanitizer_common/sanitizer_common.h"
+#include "sanitizer_common/sanitizer_allocator64.h"
 #include "tsan_clock.h"
 #include "tsan_defs.h"
 #include "tsan_flags.h"
@@ -36,6 +37,28 @@
 #include "tsan_report.h"
 
 namespace __tsan {
+
+// Descriptor of user's memory block.
+struct MBlock {
+  uptr size;
+};
+
+#ifndef TSAN_GO
+#if defined(TSAN_COMPAT_SHADOW) && TSAN_COMPAT_SHADOW
+const uptr kAllocatorSpace = 0x7e0000000000ULL;
+#else
+const uptr kAllocatorSpace = 0x7d0000000000ULL;
+#endif
+const uptr kAllocatorSize  =  0x10000000000ULL;  // 1T.
+
+typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize, sizeof(MBlock),
+    DefaultSizeClassMap> PrimaryAllocator;
+typedef SizeClassAllocatorLocalCache<PrimaryAllocator::kNumClasses,
+    PrimaryAllocator> AllocatorCache;
+typedef LargeMmapAllocator SecondaryAllocator;
+typedef CombinedAllocator<PrimaryAllocator, AllocatorCache,
+    SecondaryAllocator> Allocator;
+#endif
 
 void TsanPrintf(const char *format, ...);
 
@@ -237,6 +260,9 @@ struct ThreadState {
   uptr *shadow_stack_end;
 #endif
   ThreadClock clock;
+#ifndef TSAN_GO
+  AllocatorCache alloc_cache;
+#endif
   u64 stat[StatCnt];
   const int tid;
   int in_rtl;

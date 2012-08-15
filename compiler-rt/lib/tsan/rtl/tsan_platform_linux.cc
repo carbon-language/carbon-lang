@@ -104,7 +104,7 @@ void InitializeShadowMemory() {
   if (shadow != kLinuxShadowBeg) {
     TsanPrintf("FATAL: ThreadSanitizer can not mmap the shadow memory\n");
     TsanPrintf("FATAL: Make sure to compile with -fPIE and "
-               "to link with -pie.\n");
+               "to link with -pie (%p, %p).\n", shadow, kLinuxShadowBeg);
     Die();
   }
 #ifndef TSAN_GO
