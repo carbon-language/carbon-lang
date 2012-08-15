@@ -66,11 +66,6 @@ static cl::opt<bool> DisableBranchOpts(
   "disable-cgp-branch-opts", cl::Hidden, cl::init(false),
   cl::desc("Disable branch optimizations in CodeGenPrepare"));
 
-// FIXME: Remove this abomination once all of the tests pass without it!
-static cl::opt<bool> DisableDeleteDeadBlocks(
-  "disable-cgp-delete-dead-blocks", cl::Hidden, cl::init(false),
-  cl::desc("Disable deleting dead blocks in CodeGenPrepare"));
-
 static cl::opt<bool> DisableSelectToBranch(
   "disable-cgp-select2branch", cl::Hidden, cl::init(false),
   cl::desc("Disable select to branch conversion."));
@@ -188,10 +183,9 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
           WorkList.insert(*II);
     }
 
-    if (!DisableDeleteDeadBlocks)
-      for (SmallPtrSet<BasicBlock*, 8>::iterator
-             I = WorkList.begin(), E = WorkList.end(); I != E; ++I)
-        DeleteDeadBlock(*I);
+    for (SmallPtrSet<BasicBlock*, 8>::iterator
+           I = WorkList.begin(), E = WorkList.end(); I != E; ++I)
+      DeleteDeadBlock(*I);
 
     // Merge pairs of basic blocks with unconditional branches, connected by
     // a single edge.
