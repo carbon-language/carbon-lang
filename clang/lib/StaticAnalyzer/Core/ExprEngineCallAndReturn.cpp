@@ -555,12 +555,18 @@ void ExprEngine::defaultEvalCall(NodeBuilder &Bldr, ExplodedNode *Pred,
     RuntimeDefinition RD = Call->getRuntimeDefinition();
     const Decl *D = RD.getDecl();
     if (D) {
-      // Explore with and without inlining the call.
-      if (RD.mayHaveOtherDefinitions() &&
-          getAnalysisManager().IPAMode == DynamicDispatchBifurcate) {
-        BifurcateCall(RD.getDispatchRegion(), *Call, D, Bldr, Pred);
-        return;
+      if (RD.mayHaveOtherDefinitions()) {
+        // Explore with and without inlining the call.
+        if (getAnalysisManager().IPAMode == DynamicDispatchBifurcate) {
+          BifurcateCall(RD.getDispatchRegion(), *Call, D, Bldr, Pred);
+          return;
+        }
+
+        // Don't inline if we're not in any dynamic dispatch mode.
+        if (getAnalysisManager().IPAMode != DynamicDispatch)
+          return;
       }
+
       // We are not bifurcating and we do have a Decl, so just inline.
       if (inlineCall(*Call, D, Bldr, Pred, State))
         return;
@@ -575,6 +581,7 @@ void ExprEngine::BifurcateCall(const MemRegion *BifurReg,
                                const CallEvent &Call, const Decl *D,
                                NodeBuilder &Bldr, ExplodedNode *Pred) {
   assert(BifurReg);
+  BifurReg = BifurReg->StripCasts();
 
   // Check if we've performed the split already - note, we only want
   // to split the path once per memory region.
