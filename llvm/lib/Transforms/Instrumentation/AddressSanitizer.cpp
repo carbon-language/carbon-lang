@@ -86,6 +86,9 @@ static cl::opt<bool> ClInstrumentWrites("asan-instrument-writes",
 static cl::opt<bool> ClInstrumentAtomics("asan-instrument-atomics",
        cl::desc("instrument atomic instructions (rmw, cmpxchg)"),
        cl::Hidden, cl::init(true));
+static cl::opt<bool> ClAlwaysSlowPath("asan-always-slow-path",
+       cl::desc("use instrumentation with slow path for all accesses"),
+       cl::Hidden, cl::init(false));
 // This flag limits the number of instructions to be instrumented
 // in any given BB. Normally, this should be set to unlimited (INT_MAX),
 // but due to http://llvm.org/bugs/show_bug.cgi?id=12652 we temporary
@@ -416,7 +419,7 @@ Value *AddressSanitizer::createSlowPathCmp(IRBuilder<> &IRB, Value *AddrLong,
         LastAccessedByte, ConstantInt::get(IntptrTy, TypeSize / 8 - 1));
   // (uint8_t) ((Addr & (Granularity-1)) + size - 1)
   LastAccessedByte = IRB.CreateIntCast(
-      LastAccessedByte, IRB.getInt8Ty(), false);
+      LastAccessedByte, ShadowValue->getType(), false);
   // ((uint8_t) ((Addr & (Granularity-1)) + size - 1)) >= ShadowValue
   return IRB.CreateICmpSGE(LastAccessedByte, ShadowValue);
 }
@@ -440,7 +443,7 @@ void AddressSanitizer::instrumentAddress(AsanFunctionContext &AFC,
   size_t Granularity = 1 << MappingScale;
   TerminatorInst *CrashTerm = 0;
 
-  if (TypeSize < 8 * Granularity) {
+  if (ClAlwaysSlowPath || (TypeSize < 8 * Granularity)) {
     TerminatorInst *CheckTerm = splitBlockAndInsertIfThen(Cmp, false);
     assert(dyn_cast<BranchInst>(CheckTerm)->isUnconditional());
     BasicBlock *NextBB = CheckTerm->getSuccessor(0);
