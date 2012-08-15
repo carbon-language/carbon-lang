@@ -427,16 +427,17 @@ void CXXInstanceCall::getInitialStackFrameContents(
   AnyFunctionCall::getInitialStackFrameContents(CalleeCtx, Bindings);
 
   // Handle the binding of 'this' in the new stack frame.
-  // We need to make sure we have the proper layering of CXXBaseObjectRegions.
   SVal ThisVal = getCXXThisVal();
   if (!ThisVal.isUnknown()) {
     ProgramStateManager &StateMgr = getState()->getStateManager();
     SValBuilder &SVB = StateMgr.getSValBuilder();
-    
+
     const CXXMethodDecl *MD = cast<CXXMethodDecl>(CalleeCtx->getDecl());
     Loc ThisLoc = SVB.getCXXThis(MD, CalleeCtx);
 
-    if (const MemRegion *ThisReg = ThisVal.getAsRegion()) {
+    // If we devirtualized to a different member function, we need to make sure
+    // we have the proper layering of CXXBaseObjectRegions.
+    if (MD->getCanonicalDecl() != getDecl()->getCanonicalDecl()) {
       ASTContext &Ctx = SVB.getContext();
       const CXXRecordDecl *Class = MD->getParent();
       QualType Ty = Ctx.getPointerType(Ctx.getRecordType(Class));
@@ -445,13 +446,10 @@ void CXXInstanceCall::getInitialStackFrameContents(
       bool Failed;
       ThisVal = StateMgr.getStoreManager().evalDynamicCast(ThisVal, Ty, Failed);
       assert(!Failed && "Calling an incorrectly devirtualized method");
-
-      // If we couldn't build the correct cast, just strip off all casts.
-      if (ThisVal.isUnknown())
-        ThisVal = loc::MemRegionVal(ThisReg->StripCasts());
     }
 
-    Bindings.push_back(std::make_pair(ThisLoc, ThisVal));
+    if (!ThisVal.isUnknown())
+      Bindings.push_back(std::make_pair(ThisLoc, ThisVal));
   }
 }
 
