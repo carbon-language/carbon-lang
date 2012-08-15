@@ -1770,6 +1770,12 @@ APFloat::opStatus APFloat::roundToIntegral(roundingMode rounding_mode) {
   opStatus fs;
   assertArithmeticOK(*semantics);
 
+  // If the exponent is large enough, we know that this value is already
+  // integral, and the arithmetic below would potentially cause it to saturate
+  // to +/-Inf.  Bail out early instead.
+  if (exponent+1 >= (int)semanticsPrecision(*semantics))
+    return opOK;
+
   // The algorithm here is quite simple: we add 2^(p-1), where p is the
   // precision of our format, and then subtract it back off again.  The choice
   // of rounding modes for the addition/subtraction determines the rounding mode

@@ -649,7 +649,7 @@ TEST(APFloatTest, exactInverse) {
 }
 
 TEST(APFloatTest, roundToIntegral) {
-  APFloat T(-0.5), S(3.14), P(0.0);
+  APFloat T(-0.5), S(3.14), R(APFloat::getLargest(APFloat::IEEEdouble)), P(0.0);
 
   P = T;
   P.roundToIntegral(APFloat::rmTowardZero);
@@ -676,6 +676,19 @@ TEST(APFloatTest, roundToIntegral) {
   P = S;
   P.roundToIntegral(APFloat::rmNearestTiesToEven);
   EXPECT_EQ(3.0, P.convertToDouble());
+
+  P = R;
+  P.roundToIntegral(APFloat::rmTowardZero);
+  EXPECT_EQ(R.convertToDouble(), P.convertToDouble());
+  P = R;
+  P.roundToIntegral(APFloat::rmTowardNegative);
+  EXPECT_EQ(R.convertToDouble(), P.convertToDouble());
+  P = R;
+  P.roundToIntegral(APFloat::rmTowardPositive);
+  EXPECT_EQ(R.convertToDouble(), P.convertToDouble());
+  P = R;
+  P.roundToIntegral(APFloat::rmNearestTiesToEven);
+  EXPECT_EQ(R.convertToDouble(), P.convertToDouble());
 }
 
 TEST(APFloatTest, getLargest) {
