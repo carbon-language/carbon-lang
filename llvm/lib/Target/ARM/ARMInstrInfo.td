@@ -3989,25 +3989,29 @@ multiclass AsI1_bincc_irs<Instruction iri, Instruction irr, Instruction irsi,
                           InstrItinClass iii, InstrItinClass iir,
                           InstrItinClass iis> {
   def ri  : ARMPseudoExpand<(outs GPR:$Rd),
-                            (ins GPR:$Rn, so_imm:$imm, pred:$p, cc_out:$s),
+                            (ins GPR:$Rfalse, GPR:$Rn, so_imm:$imm,
+                                 pred:$p, cc_out:$s),
                             4, iii, [],
                        (iri GPR:$Rd, GPR:$Rn, so_imm:$imm, pred:$p, cc_out:$s)>,
-                            RegConstraint<"$Rn = $Rd">;
+                            RegConstraint<"$Rfalse = $Rd">;
   def rr  : ARMPseudoExpand<(outs GPR:$Rd),
-                            (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
+                            (ins GPR:$Rfalse, GPR:$Rn, GPR:$Rm,
+                                 pred:$p, cc_out:$s),
                             4, iir, [],
                            (irr GPR:$Rd, GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s)>,
-                            RegConstraint<"$Rn = $Rd">;
+                            RegConstraint<"$Rfalse = $Rd">;
   def rsi : ARMPseudoExpand<(outs GPR:$Rd),
-                           (ins GPR:$Rn, so_reg_imm:$shift, pred:$p, cc_out:$s),
+                            (ins GPR:$Rfalse, GPR:$Rn, so_reg_imm:$shift,
+                                 pred:$p, cc_out:$s),
                             4, iis, [],
                 (irsi GPR:$Rd, GPR:$Rn, so_reg_imm:$shift, pred:$p, cc_out:$s)>,
-                            RegConstraint<"$Rn = $Rd">;
+                            RegConstraint<"$Rfalse = $Rd">;
   def rsr : ARMPseudoExpand<(outs GPRnopc:$Rd),
-                       (ins GPRnopc:$Rn, so_reg_reg:$shift, pred:$p, cc_out:$s),
+                           (ins GPRnopc:$Rfalse, GPRnopc:$Rn, so_reg_reg:$shift,
+                                pred:$p, cc_out:$s),
                             4, iis, [],
                 (irsr GPR:$Rd, GPR:$Rn, so_reg_reg:$shift, pred:$p, cc_out:$s)>,
-                            RegConstraint<"$Rn = $Rd">;
+                            RegConstraint<"$Rfalse = $Rd">;
 }
 
 defm ANDCC : AsI1_bincc_irs<ANDri, ANDrr, ANDrsi, ANDrsr,

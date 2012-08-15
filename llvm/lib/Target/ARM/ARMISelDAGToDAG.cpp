@@ -2385,8 +2385,10 @@ SDNode *ARMDAGToDAGISel::SelectConditionalOp(SDNode *N) {
       case ARMISD::COR:  Opc = ARM::t2ORRCCrs; break;
       case ARMISD::CXOR: Opc = ARM::t2EORCCrs; break;
       }
-      SDValue Ops[] = { FalseVal, CPTmp0, CPTmp1, CC, CCR, Reg0, InFlag };
-      return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 7);
+      SDValue Ops[] = {
+        FalseVal, FalseVal, CPTmp0, CPTmp1, CC, CCR, Reg0, InFlag
+      };
+      return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 8);
     }
 
     ConstantSDNode *T = dyn_cast<ConstantSDNode>(TrueVal);
@@ -2401,8 +2403,8 @@ SDNode *ARMDAGToDAGISel::SelectConditionalOp(SDNode *N) {
         case ARMISD::CXOR: Opc = ARM::t2EORCCri; break;
         }
         SDValue True = CurDAG->getTargetConstant(TrueImm, MVT::i32);
-        SDValue Ops[] = { FalseVal, True, CC, CCR, Reg0, InFlag };
-        return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 6);
+        SDValue Ops[] = { FalseVal, FalseVal, True, CC, CCR, Reg0, InFlag };
+        return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 7);
       }
     }
 
@@ -2413,8 +2415,8 @@ SDNode *ARMDAGToDAGISel::SelectConditionalOp(SDNode *N) {
     case ARMISD::COR:  Opc = ARM::t2ORRCCrr; break;
     case ARMISD::CXOR: Opc = ARM::t2EORCCrr; break;
     }
-    SDValue Ops[] = { FalseVal, TrueVal, CC, CCR, Reg0, InFlag };
-    return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 6);
+    SDValue Ops[] = { FalseVal, FalseVal, TrueVal, CC, CCR, Reg0, InFlag };
+    return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 7);
   }
 
   SDValue CPTmp0;
@@ -2428,8 +2430,10 @@ SDNode *ARMDAGToDAGISel::SelectConditionalOp(SDNode *N) {
     case ARMISD::COR:  Opc = ARM::ORRCCrsi; break;
     case ARMISD::CXOR: Opc = ARM::EORCCrsi; break;
     }
-    SDValue Ops[] = { FalseVal, CPTmp0, CPTmp2, CC, CCR, Reg0, InFlag };
-    return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 7);
+    SDValue Ops[] = {
+      FalseVal, FalseVal, CPTmp0, CPTmp2, CC, CCR, Reg0, InFlag
+    };
+    return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 8);
   }
 
   if (SelectRegShifterOperand(TrueVal, CPTmp0, CPTmp1, CPTmp2)) {
@@ -2440,8 +2444,10 @@ SDNode *ARMDAGToDAGISel::SelectConditionalOp(SDNode *N) {
     case ARMISD::COR:  Opc = ARM::ORRCCrsr; break;
     case ARMISD::CXOR: Opc = ARM::EORCCrsr; break;
     }
-    SDValue Ops[] = { FalseVal, CPTmp0, CPTmp1, CPTmp2, CC, CCR, Reg0, InFlag };
-    return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 8);
+    SDValue Ops[] = {
+      FalseVal, FalseVal, CPTmp0, CPTmp1, CPTmp2, CC, CCR, Reg0, InFlag
+    };
+    return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 9);
   }
 
   ConstantSDNode *T = dyn_cast<ConstantSDNode>(TrueVal);
@@ -2456,8 +2462,8 @@ SDNode *ARMDAGToDAGISel::SelectConditionalOp(SDNode *N) {
       case ARMISD::CXOR: Opc = ARM::EORCCri; break;
       }
       SDValue True = CurDAG->getTargetConstant(TrueImm, MVT::i32);
-      SDValue Ops[] = { FalseVal, True, CC, CCR, Reg0, InFlag };
-      return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 6);
+      SDValue Ops[] = { FalseVal, FalseVal, True, CC, CCR, Reg0, InFlag };
+      return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 7);
     }
   }
 
@@ -2468,8 +2474,8 @@ SDNode *ARMDAGToDAGISel::SelectConditionalOp(SDNode *N) {
   case ARMISD::COR:  Opc = ARM::ORRCCrr; break;
   case ARMISD::CXOR: Opc = ARM::EORCCrr; break;
   }
-  SDValue Ops[] = { FalseVal, TrueVal, CC, CCR, Reg0, InFlag };
-  return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 6);
+  SDValue Ops[] = { FalseVal, FalseVal, TrueVal, CC, CCR, Reg0, InFlag };
+  return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 7);
 }
 
 /// Target-specific DAG combining for ISD::XOR.
