@@ -15,7 +15,7 @@ if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}")
   # Run ASan output tests only if we're not cross-compiling,
   # and can be sure that clang would produce working binaries.
   set(ASAN_TEST_DEPS
-    clang clang-headers FileCheck count not
+    clang clang-headers FileCheck count not llvm-nm
     ${ASAN_RUNTIME_LIBRARIES}
     )
   if(LLVM_INCLUDE_TESTS)

@@ -1,7 +1,7 @@
 // Check the presense of interface symbols in compiled file.
 
 // RUN: %clang -faddress-sanitizer -dead_strip -O2 %s -o %t.exe
-// RUN: llvm-nm %t.exe | egrep " [TW] " | sed "s/.* T //" | sed "s/.* W //" \
+// RUN: nm %t.exe | egrep " [TW] " | sed "s/.* T //" | sed "s/.* W //" \
 // RUN:    | grep "__asan_" | sed "s/___asan_/__asan_/" > %t.symbols
 // RUN: cat %p/../asan_interface.h | sed "s/\/\/.*//" | grep "__asan_.*(" \
 // RUN:    | sed "s/.* __asan_/__asan_/;s/(.*//" > %t.interface
