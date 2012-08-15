@@ -89,7 +89,7 @@ namespace {
 
   class ASTDeclNodeLister : public ASTConsumer,
                      public RecursiveASTVisitor<ASTDeclNodeLister> {
-    typedef RecursiveASTVisitor<ASTPrinter> base;
+    typedef RecursiveASTVisitor<ASTDeclNodeLister> base;
 
   public:
     ASTDeclNodeLister(raw_ostream *Out = NULL)
