@@ -2263,7 +2263,8 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
       // shall appear only in a declaration of a function parameter with an
       // array type, ...
       if (ASM == ArrayType::Static || ATI.TypeQuals) {
-        if (!D.isPrototypeContext()) {
+        if (!(D.isPrototypeContext() ||
+              D.getContext() == Declarator::KNRTypeListContext)) {
           S.Diag(DeclType.Loc, diag::err_array_static_outside_prototype) <<
               (ASM == ArrayType::Static ? "'static'" : "type qualifier");
           // Remove the 'static' and the type qualifiers.

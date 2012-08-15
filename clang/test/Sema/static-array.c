@@ -51,3 +51,7 @@ void n(int *(x)[static 10]); // no-warning
 void o(int (x[static 10])(void)); // expected-error{{'x' declared as array of functions of type 'int (void)'}}
 void p(int (^x)[static 10]); // expected-error{{block pointer to non-function type is invalid}}
 void q(int (^x[static 10])()); // no-warning
+
+void r(x)
+  int x[restrict]; // no-warning
+{}
