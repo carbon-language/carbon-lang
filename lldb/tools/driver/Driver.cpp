@@ -84,6 +84,8 @@ static OptionDefinition g_options[] =
         "be one of the architectures for which the program was compiled." },
     { LLDB_OPT_SET_3,    true , "file"           , 'f', required_argument, NULL,  eArgTypeFilename,     
         "Tells the debugger to use the file <filename> as the program to be debugged." },
+    { LLDB_OPT_SET_3,    false, "core"           , 'c', required_argument, NULL,  eArgTypePath,     
+        "Tells the debugger to use the fullpath to <path> as the core file." },
     { LLDB_OPT_SET_4,    true , "attach-name"    , 'n', required_argument, NULL,  eArgTypeProcessName,  
         "Tells the debugger to attach to a process with the given name." },
     { LLDB_OPT_SET_4,    true , "wait-for"       , 'w', no_argument      , NULL,  eArgTypeNone,         
@@ -379,6 +381,7 @@ BuildGetOptTable (OptionDefinition *expanded_option_table, std::vector<struct op
 Driver::OptionData::OptionData () :
     m_args(),
     m_script_lang (lldb::eScriptLanguageDefault),
+    m_core_file (),
     m_crash_log (),
     m_source_command_files (),
     m_debug_mode (false),
@@ -587,9 +590,17 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
                         break;
 
                     case 'c':
-                        m_option_data.m_crash_log = optarg;
+                        {
+                            SBFileSpec file(optarg);
+                            if (file.Exists())
+                            {
+                                m_option_data.m_core_file = optarg;
+                            }
+                            else
+                                error.SetErrorStringWithFormat("file specified in --core (-c) option doesn't exist: '%s'", optarg);
+                        }
                         break;
-
+                    
                     case 'e':
                         m_option_data.m_use_external_editor = true;
                         break;
@@ -690,10 +701,6 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
     {
         ::fprintf (out_fh, "%s\n", m_debugger.GetVersionString());
         exit = true;
-    }
-    else if (! m_option_data.m_crash_log.empty())
-    {
-        // Handle crash log stuff here.
     }
     else if (m_option_data.m_process_name.empty() && m_option_data.m_process_pid == LLDB_INVALID_PROCESS_ID)
     {
@@ -1311,6 +1318,11 @@ Driver::MainLoop ()
                 }
             }
 
+            // Was there a core file specified?
+            std::string core_file_spec("");
+            if (!m_option_data.m_core_file.empty())
+                core_file_spec.append("--core ").append(m_option_data.m_core_file);
+
             const size_t num_args = m_option_data.m_args.size();
             if (num_args > 0)
             {
@@ -1318,13 +1330,15 @@ Driver::MainLoop ()
                 if (m_debugger.GetDefaultArchitecture (arch_name, sizeof (arch_name)))
                     ::snprintf (command_string, 
                                 sizeof (command_string), 
-                                "target create --arch=%s \"%s\"", 
+                                "target create --arch=%s %s \"%s\"", 
                                 arch_name,
+                                core_file_spec.c_str(),
                                 m_option_data.m_args[0].c_str());
                 else
                     ::snprintf (command_string, 
                                 sizeof(command_string), 
-                                "target create \"%s\"", 
+                                "target create %s \"%s\"", 
+                                core_file_spec.c_str(),
                                 m_option_data.m_args[0].c_str());
 
                 m_debugger.HandleCommand (command_string);
@@ -1342,6 +1356,14 @@ Driver::MainLoop ()
                         m_debugger.HandleCommand (arg_cstr);
                     }
                 }
+            }
+            else if (!core_file_spec.empty())
+            {
+                ::snprintf (command_string, 
+                            sizeof(command_string), 
+                            "target create %s", 
+                            core_file_spec.c_str());
+                m_debugger.HandleCommand (command_string);;
             }
 
             // Now that all option parsing is done, we try and parse the .lldbinit

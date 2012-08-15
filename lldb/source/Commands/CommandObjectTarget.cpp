@@ -151,7 +151,7 @@ public:
         m_option_group (interpreter),
         m_arch_option (),
         m_platform_options(true), // Do include the "--platform" option in the platform settings by passing true
-        m_core_file (LLDB_OPT_SET_1, false, "core-file", 'c', 0, eArgTypePath, "Fullpath to a core file to use for this target.")
+        m_core_file (LLDB_OPT_SET_1, false, "core", 'c', 0, eArgTypePath, "Fullpath to a core file to use for this target.")
     {
         CommandArgumentEntry arg;
         CommandArgumentData file_arg;

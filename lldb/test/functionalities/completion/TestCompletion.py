@@ -131,6 +131,10 @@ class CommandLineCompletionTestCase(TestBase):
                               ['Available completions:', 'create', 'delete', 'list',
                                'modules', 'select', 'stop-hook', 'variable'])
 
+    def test_target_create_dash_co(self):
+        """Test that 'target create --co' completes to 'target variable --core '."""
+        self.complete_from_to('target create --co', 'target create --core ')
+
     def test_target_va(self):
         """Test that 'target va' completes to 'target variable '."""
         self.complete_from_to('target va', 'target variable ')

@@ -103,6 +103,7 @@ public:
 
         std::vector<std::string> m_args;
         lldb::ScriptLanguage m_script_lang;
+        std::string m_core_file;
         std::string m_crash_log;
         std::vector<std::string> m_source_command_files;
         bool m_debug_mode;
