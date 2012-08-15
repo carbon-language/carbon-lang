@@ -131,6 +131,12 @@ long long atoll(const char *nptr);  // NOLINT
 long long strtoll(const char *nptr, char **endptr, int base);  // NOLINT
 # endif
 
+// mlock/munlock
+int mlock(const void *addr, size_t len);
+int munlock(const void *addr, size_t len);
+int mlockall(int flags);
+int munlockall(void);
+
 // Windows threads.
 # if defined(_WIN32)
 __declspec(dllimport)
@@ -294,26 +300,22 @@ static void MlockIsUnsupported() {
 }
 
 extern "C" {
-INTERCEPTOR_ATTRIBUTE
-int mlock(const void *addr, uptr len) {
+INTERCEPTOR(int, mlock, const void *addr, uptr len) {
   MlockIsUnsupported();
   return 0;
 }
 
-INTERCEPTOR_ATTRIBUTE
-int munlock(const void *addr, uptr len) {
+INTERCEPTOR(int, munlock, const void *addr, uptr len) {
   MlockIsUnsupported();
   return 0;
 }
 
-INTERCEPTOR_ATTRIBUTE
-int mlockall(int flags) {
+INTERCEPTOR(int, mlockall, int flags) {
   MlockIsUnsupported();
   return 0;
 }
 
-INTERCEPTOR_ATTRIBUTE
-int munlockall(void) {
+INTERCEPTOR(int, munlockall, void) {
   MlockIsUnsupported();
   return 0;
 }
@@ -748,6 +750,12 @@ void InitializeAsanInterceptors() {
   ASAN_INTERCEPT_FUNC(atoll);
   ASAN_INTERCEPT_FUNC(strtoll);
 #endif
+
+  // Intercept mlock/munlock.
+  ASAN_INTERCEPT_FUNC(mlock);
+  ASAN_INTERCEPT_FUNC(munlock);
+  ASAN_INTERCEPT_FUNC(mlockall);
+  ASAN_INTERCEPT_FUNC(munlockall);
 
   // Intecept signal- and jump-related functions.
   ASAN_INTERCEPT_FUNC(longjmp);
