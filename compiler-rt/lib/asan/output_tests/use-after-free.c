@@ -6,5 +6,9 @@ int main() {
 }
 
 // CHECK: heap-use-after-free
+// CHECK: free
+// CHECK: main{{.*}}use-after-free.c:4
+// CHECK: malloc
+// CHECK: main{{.*}}use-after-free.c:3
 // CHECKSLEEP: Sleeping for 1 second
 // CHECKSTRIP-NOT: #0 0x{{.*}} ({{[/].*}})
