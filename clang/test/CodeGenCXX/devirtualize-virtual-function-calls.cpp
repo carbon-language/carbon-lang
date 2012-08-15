@@ -83,3 +83,20 @@ namespace test3 {
     d.B::~B();
   }
 }
+
+namespace test4 {
+  struct Animal {
+    virtual void eat();
+  };
+  struct Fish : Animal {
+    virtual void eat();
+  };
+  struct Wrapper {
+    Fish fish;
+  };
+  extern Wrapper *p;
+  void test() {
+    // CHECK: call void @_ZN5test44Fish3eatEv
+    p->fish.eat();
+  }
+}
