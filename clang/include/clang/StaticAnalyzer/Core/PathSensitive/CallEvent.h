@@ -804,8 +804,12 @@ public:
     return getOriginExpr()->getReceiverInterface();
   }
 
+  /// Returns how the message was written in the source (property access,
+  /// subscript, or explicit message send).
   ObjCMessageKind getMessageKind() const;
 
+  /// Returns true if this property access or subscript is a setter (has the
+  /// form of an assignment).
   bool isSetter() const {
     switch (getMessageKind()) {
     case OCM_Message:
