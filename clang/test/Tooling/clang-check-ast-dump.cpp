@@ -25,7 +25,7 @@
 //
 // RUN: clang-check -ast-dump -ast-dump-filter test_namespace::TheClass::n "%s" -- 2>&1 | FileCheck -check-prefix CHECK-ATTR %s
 // CHECK-ATTR: test_namespace
-// CHECK-ATTR-NEXT: int n __attribute__((aligned(1 + 1
+// CHECK-ATTR-NEXT: int n __attribute__((aligned((BinaryOperator
 
 namespace test_namespace {
 

@@ -1149,7 +1149,7 @@ class TemplateDiff {
     if (!E)
       OS << "(no argument)";
     else
-      E->printPretty(OS, Context, 0, Policy); return;
+      E->printPretty(OS, 0, Policy); return;
   }
 
   /// PrintTemplateTemplate - Handles printing of template template arguments,

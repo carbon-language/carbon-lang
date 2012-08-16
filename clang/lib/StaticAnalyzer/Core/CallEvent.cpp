@@ -214,7 +214,7 @@ void CallEvent::dump() const {
 void CallEvent::dump(raw_ostream &Out) const {
   ASTContext &Ctx = getState()->getStateManager().getContext();
   if (const Expr *E = getOriginExpr()) {
-    E->printPretty(Out, Ctx, 0, Ctx.getPrintingPolicy());
+    E->printPretty(Out, 0, Ctx.getPrintingPolicy());
     Out << "\n";
     return;
   }
@@ -860,4 +860,3 @@ CallEventManager::getCaller(const StackFrameContext *CalleeCtx,
   return getCXXDestructorCall(Dtor, Trigger, ThisVal.getAsRegion(),
                               State, CallerCtx);
 }
-

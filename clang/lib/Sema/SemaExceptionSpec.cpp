@@ -242,8 +242,7 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
 
     case EST_ComputedNoexcept:
       OS << "noexcept(";
-      OldProto->getNoexceptExpr()->printPretty(OS, Context, 0, 
-                                               getPrintingPolicy());
+      OldProto->getNoexceptExpr()->printPretty(OS, 0, getPrintingPolicy());
       OS << ")";
       break;
 

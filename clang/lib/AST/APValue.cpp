@@ -367,8 +367,7 @@ void APValue::printPretty(raw_ostream &Out, ASTContext &Ctx, QualType Ty) const{
       if (const ValueDecl *VD = Base.dyn_cast<const ValueDecl*>())
         Out << *VD;
       else
-        Base.get<const Expr*>()->printPretty(Out, Ctx, 0,
-                                             Ctx.getPrintingPolicy());
+        Base.get<const Expr*>()->printPretty(Out, 0, Ctx.getPrintingPolicy());
       if (!O.isZero()) {
         Out << " + " << (O / S);
         if (IsReference)
@@ -389,7 +388,7 @@ void APValue::printPretty(raw_ostream &Out, ASTContext &Ctx, QualType Ty) const{
       ElemTy = VD->getType();
     } else {
       const Expr *E = Base.get<const Expr*>();
-      E->printPretty(Out, Ctx, 0,Ctx.getPrintingPolicy());
+      E->printPretty(Out, 0, Ctx.getPrintingPolicy());
       ElemTy = E->getType();
     }
 
