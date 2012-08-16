@@ -195,6 +195,75 @@ AST_MATCHER_P(ClassTemplateSpecializationDecl, hasAnyTemplateArgument,
   return false;
 }
 
+/// \brief Matches expressions that match InnerMatcher after any implicit casts
+/// are stripped off.
+///
+/// Parentheses and explicit casts are not discarded.
+/// Given
+///   int arr[5];
+///   int a = 0;
+///   char b = 0;
+///   const int c = a;
+///   int *d = arr;
+///   long e = (long) 0l;
+/// The matchers
+///    variable(hasInitializer(ignoringImpCasts(integerLiteral())))
+///    variable(hasInitializer(ignoringImpCasts(declarationReference())))
+/// would match the declarations for a, b, c, and d, but not e.
+/// while
+///    variable(hasInitializer(integerLiteral()))
+///    variable(hasInitializer(declarationReference()))
+/// only match the declarations for b, c, and d.
+AST_MATCHER_P(Expr, ignoringImpCasts,
+              internal::Matcher<Expr>, InnerMatcher) {
+  return InnerMatcher.matches(*Node.IgnoreImpCasts(), Finder, Builder);
+}
+
+/// \brief Matches expressions that match InnerMatcher after parentheses and
+/// casts are stripped off.
+///
+/// Implicit and non-C Style casts are also discarded.
+/// Given
+///   int a = 0;
+///   char b = (0);
+///   void* c = reinterpret_cast<char*>(0);
+///   char d = char(0);
+/// The matcher
+///    variable(hasInitializer(ignoringParenCasts(integerLiteral())))
+/// would match the declarations for a, b, c, and d.
+/// while
+///    variable(hasInitializer(integerLiteral()))
+/// only match the declaration for a.
+AST_MATCHER_P(Expr, ignoringParenCasts, internal::Matcher<Expr>, InnerMatcher) {
+  return InnerMatcher.matches(*Node.IgnoreParenCasts(), Finder, Builder);
+}
+
+/// \brief Matches expressions that match InnerMatcher after implicit casts and
+/// parentheses are stripped off.
+///
+/// Explicit casts are not discarded.
+/// Given
+///   int arr[5];
+///   int a = 0;
+///   char b = (0);
+///   const int c = a;
+///   int *d = (arr);
+///   long e = ((long) 0l);
+/// The matchers
+///    variable(hasInitializer(ignoringParenImpCasts(
+///       integerLiteral())))
+///    variable(hasInitializer(ignoringParenImpCasts(
+///       declarationReference())))
+/// would match the declarations for a, b, c, and d, but not e.
+/// while
+///    variable(hasInitializer(integerLiteral()))
+///    variable(hasInitializer(declarationReference()))
+/// would only match the declaration for a.
+AST_MATCHER_P(Expr, ignoringParenImpCasts,
+              internal::Matcher<Expr>, InnerMatcher) {
+  return InnerMatcher.matches(*Node.IgnoreParenImpCasts(), Finder, Builder);
+}
+
 /// \brief Matches classTemplateSpecializations where the n'th TemplateArgument
 /// matches the given Matcher.
 ///
@@ -690,6 +759,19 @@ const internal::VariadicDynCastAllOfMatcher<
 const internal::VariadicDynCastAllOfMatcher<
   Expr,
   ImplicitCastExpr> implicitCast;
+
+/// \brief Matches any cast nodes of Clang's AST.
+///
+/// Example: castExpr() matches each of the following:
+///   (int) 3;
+///   const_cast<Expr *>(SubExpr);
+///   char c = 0;
+/// but does not match
+///   int i = (0);
+///   int k = 0;
+const internal::VariadicDynCastAllOfMatcher<
+  Expr,
+  CastExpr> castExpr;
 
 /// \brief Matches functional cast expressions
 ///

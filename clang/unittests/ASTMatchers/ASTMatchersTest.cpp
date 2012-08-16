@@ -2029,6 +2029,28 @@ TEST(IsConstQualified, DoesNotMatchInappropriately) {
                          variable(hasType(isConstQualified()))));
 }
 
+TEST(CastExpression, MatchesExplicitCasts) {
+  EXPECT_TRUE(matches("char *p = reinterpret_cast<char *>(&p);",
+                      expression(castExpr())));
+  EXPECT_TRUE(matches("void *p = (void *)(&p);", expression(castExpr())));
+  EXPECT_TRUE(matches("char q, *p = const_cast<char *>(&q);",
+                      expression(castExpr())));
+  EXPECT_TRUE(matches("char c = char(0);", expression(castExpr())));
+}
+TEST(CastExpression, MatchesImplicitCasts) {
+  // This test creates an implicit cast from int to char.
+  EXPECT_TRUE(matches("char c = 0;", expression(castExpr())));
+  // This test creates an implicit cast from lvalue to rvalue.
+  EXPECT_TRUE(matches("char c = 0, d = c;", expression(castExpr())));
+}
+
+TEST(CastExpression, DoesNotMatchNonCasts) {
+  EXPECT_TRUE(notMatches("char c = '0';", expression(castExpr())));
+  EXPECT_TRUE(notMatches("char c, &q = c;", expression(castExpr())));
+  EXPECT_TRUE(notMatches("int i = (0);", expression(castExpr())));
+  EXPECT_TRUE(notMatches("int i = 0;", expression(castExpr())));
+}
+
 TEST(ReinterpretCast, MatchesSimpleCase) {
   EXPECT_TRUE(matches("char* p = reinterpret_cast<char*>(&p);",
                       expression(reinterpretCast())));
@@ -2093,6 +2115,201 @@ TEST(HasDestinationType, MatchesSimpleCase) {
                       expression(
                           staticCast(hasDestinationType(
                               pointsTo(TypeMatcher(anything())))))));
+}
+
+TEST(HasImplicitDestinationType, MatchesSimpleCase) {
+  // This test creates an implicit const cast.
+  EXPECT_TRUE(matches("int x; const int i = x;",
+                      expression(implicitCast(
+                          hasImplicitDestinationType(isInteger())))));
+  // This test creates an implicit array-to-pointer cast.
+  EXPECT_TRUE(matches("int arr[3]; int *p = arr;",
+                      expression(implicitCast(hasImplicitDestinationType(
+                          pointsTo(TypeMatcher(anything())))))));
+}
+
+TEST(HasImplicitDestinationType, DoesNotMatchIncorrectly) {
+  // This test creates an implicit cast from int to char.
+  EXPECT_TRUE(notMatches("char c = 0;",
+                      expression(implicitCast(hasImplicitDestinationType(
+                          unless(anything()))))));
+  // This test creates an implicit array-to-pointer cast.
+  EXPECT_TRUE(notMatches("int arr[3]; int *p = arr;",
+                      expression(implicitCast(hasImplicitDestinationType(
+                          unless(anything()))))));
+}
+
+TEST(ImplicitCast, MatchesSimpleCase) {
+  // This test creates an implicit const cast.
+  EXPECT_TRUE(matches("int x = 0; const int y = x;",
+                      variable(hasInitializer(implicitCast()))));
+  // This test creates an implicit cast from int to char.
+  EXPECT_TRUE(matches("char c = 0;",
+                      variable(hasInitializer(implicitCast()))));
+  // This test creates an implicit array-to-pointer cast.
+  EXPECT_TRUE(matches("int arr[6]; int *p = arr;",
+                      variable(hasInitializer(implicitCast()))));
+}
+
+TEST(ImplicitCast, DoesNotMatchIncorrectly) {
+  // This test verifies that implicitCast() matches exactly when implicit casts
+  // are present, and that it ignores explicit and paren casts.
+
+  // These two test cases have no casts.
+  EXPECT_TRUE(notMatches("int x = 0;",
+                         variable(hasInitializer(implicitCast()))));
+  EXPECT_TRUE(notMatches("int x = 0, &y = x;",
+                         variable(hasInitializer(implicitCast()))));
+
+  EXPECT_TRUE(notMatches("int x = 0; double d = (double) x;",
+                         variable(hasInitializer(implicitCast()))));
+  EXPECT_TRUE(notMatches("const int *p; int *q = const_cast<int *>(p);",
+                         variable(hasInitializer(implicitCast()))));
+
+  EXPECT_TRUE(notMatches("int x = (0);",
+                         variable(hasInitializer(implicitCast()))));
+}
+
+TEST(IgnoringImpCasts, MatchesImpCasts) {
+  // This test checks that ignoringImpCasts matches when implicit casts are
+  // present and its inner matcher alone does not match.
+  // Note that this test creates an implicit const cast.
+  EXPECT_TRUE(matches("int x = 0; const int y = x;",
+                      variable(hasInitializer(ignoringImpCasts(
+                          declarationReference(to(variable(hasName("x")))))))));
+  // This test creates an implict cast from int to char.
+  EXPECT_TRUE(matches("char x = 0;",
+                      variable(hasInitializer(ignoringImpCasts(
+                          integerLiteral(equals(0)))))));
+}
+
+TEST(IgnoringImpCasts, DoesNotMatchIncorrectly) {
+  // These tests verify that ignoringImpCasts does not match if the inner
+  // matcher does not match.
+  // Note that the first test creates an implicit const cast.
+  EXPECT_TRUE(notMatches("int x; const int y = x;",
+                         variable(hasInitializer(ignoringImpCasts(
+                             unless(anything()))))));
+  EXPECT_TRUE(notMatches("int x; int y = x;",
+                         variable(hasInitializer(ignoringImpCasts(
+                             unless(anything()))))));
+
+  // These tests verify that ignoringImplictCasts does not look through explicit
+  // casts or parentheses.
+  EXPECT_TRUE(notMatches("char* p = static_cast<char*>(0);",
+                      variable(hasInitializer(ignoringImpCasts(
+                          integerLiteral())))));
+  EXPECT_TRUE(notMatches("int i = (0);",
+                      variable(hasInitializer(ignoringImpCasts(
+                          integerLiteral())))));
+  EXPECT_TRUE(notMatches("float i = (float)0;",
+                      variable(hasInitializer(ignoringImpCasts(
+                          integerLiteral())))));
+  EXPECT_TRUE(notMatches("float i = float(0);",
+                      variable(hasInitializer(ignoringImpCasts(
+                          integerLiteral())))));
+}
+
+TEST(IgnoringImpCasts, MatchesWithoutImpCasts) {
+  // This test verifies that expressions that do not have implicit casts
+  // still match the inner matcher.
+  EXPECT_TRUE(matches("int x = 0; int &y = x;",
+                      variable(hasInitializer(ignoringImpCasts(
+                          declarationReference(to(variable(hasName("x")))))))));
+}
+
+TEST(IgnoringParenCasts, MatchesParenCasts) {
+  // This test checks that ignoringParenCasts matches when parentheses and/or
+  // casts are present and its inner matcher alone does not match.
+  EXPECT_TRUE(matches("int x = (0);",
+                         variable(hasInitializer(ignoringParenCasts(
+                             integerLiteral(equals(0)))))));
+  EXPECT_TRUE(matches("int x = (((((0)))));",
+                         variable(hasInitializer(ignoringParenCasts(
+                             integerLiteral(equals(0)))))));
+
+  // This test creates an implict cast from int to char in addition to the
+  // parentheses.
+  EXPECT_TRUE(matches("char x = (0);",
+                         variable(hasInitializer(ignoringParenCasts(
+                             integerLiteral(equals(0)))))));
+
+  EXPECT_TRUE(matches("char x = (char)0;",
+                         variable(hasInitializer(ignoringParenCasts(
+                             integerLiteral(equals(0)))))));
+  EXPECT_TRUE(matches("char* p = static_cast<char*>(0);",
+                      variable(hasInitializer(ignoringParenCasts(
+                          integerLiteral(equals(0)))))));
+}
+
+TEST(IgnoringParenCasts, MatchesWithoutParenCasts) {
+  // This test verifies that expressions that do not have any casts still match.
+  EXPECT_TRUE(matches("int x = 0;",
+                         variable(hasInitializer(ignoringParenCasts(
+                             integerLiteral(equals(0)))))));
+}
+
+TEST(IgnoringParenCasts, DoesNotMatchIncorrectly) {
+  // These tests verify that ignoringImpCasts does not match if the inner
+  // matcher does not match.
+  EXPECT_TRUE(notMatches("int x = ((0));",
+                         variable(hasInitializer(ignoringParenCasts(
+                             unless(anything()))))));
+
+  // This test creates an implicit cast from int to char in addition to the
+  // parentheses.
+  EXPECT_TRUE(notMatches("char x = ((0));",
+                         variable(hasInitializer(ignoringParenCasts(
+                             unless(anything()))))));
+
+  EXPECT_TRUE(notMatches("char *x = static_cast<char *>((0));",
+                         variable(hasInitializer(ignoringParenCasts(
+                             unless(anything()))))));
+}
+
+TEST(IgnoringParenAndImpCasts, MatchesParenImpCasts) {
+  // This test checks that ignoringParenAndImpCasts matches when
+  // parentheses and/or implicit casts are present and its inner matcher alone
+  // does not match.
+  // Note that this test creates an implicit const cast.
+  EXPECT_TRUE(matches("int x = 0; const int y = x;",
+                      variable(hasInitializer(ignoringParenImpCasts(
+                          declarationReference(to(variable(hasName("x")))))))));
+  // This test creates an implicit cast from int to char.
+  EXPECT_TRUE(matches("const char x = (0);",
+                         variable(hasInitializer(ignoringParenImpCasts(
+                             integerLiteral(equals(0)))))));
+}
+
+TEST(IgnoringParenAndImpCasts, MatchesWithoutParenImpCasts) {
+  // This test verifies that expressions that do not have parentheses or
+  // implicit casts still match.
+  EXPECT_TRUE(matches("int x = 0; int &y = x;",
+                      variable(hasInitializer(ignoringParenImpCasts(
+                          declarationReference(to(variable(hasName("x")))))))));
+  EXPECT_TRUE(matches("int x = 0;",
+                         variable(hasInitializer(ignoringParenImpCasts(
+                             integerLiteral(equals(0)))))));
+}
+
+TEST(IgnoringParenAndImpCasts, DoesNotMatchIncorrectly) {
+  // These tests verify that ignoringParenImpCasts does not match if
+  // the inner matcher does not match.
+  // This test creates an implicit cast.
+  EXPECT_TRUE(notMatches("char c = ((3));",
+                         variable(hasInitializer(ignoringParenImpCasts(
+                             unless(anything()))))));
+  // These tests verify that ignoringParenAndImplictCasts does not look
+  // through explicit casts.
+  EXPECT_TRUE(notMatches("float y = (float(0));",
+                      variable(hasInitializer(ignoringParenImpCasts(
+                          integerLiteral())))));
+  EXPECT_TRUE(notMatches("float y = (float)0;",
+                      variable(hasInitializer(ignoringParenImpCasts(
+                          integerLiteral())))));
+  EXPECT_TRUE(notMatches("char* p = static_cast<char*>(0);",
+                      variable(hasInitializer(ignoringParenImpCasts(
+                          integerLiteral())))));
 }
 
 TEST(HasSourceExpression, MatchesImplicitCasts) {
