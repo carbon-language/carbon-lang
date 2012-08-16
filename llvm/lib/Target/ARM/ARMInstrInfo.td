@@ -3939,7 +3939,7 @@ def BCCZi64 : PseudoInst<(outs),
 // a two-value operand where a dag node expects two operands. :(
 let neverHasSideEffects = 1 in {
 
-let isCommutable = 1, usesCustomInserter = 1 in
+let isCommutable = 1, isSelect = 1 in
 def MOVCCr : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$false, GPR:$Rm, pred:$p),
                            4, IIC_iCMOVr,
   [/*(set GPR:$Rd, (ARMcmov GPR:$false, GPR:$Rm, imm:$cc, CCR:$ccr))*/]>,

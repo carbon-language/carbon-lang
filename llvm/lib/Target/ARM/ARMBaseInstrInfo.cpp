@@ -1570,9 +1570,8 @@ ARMBaseInstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
 
 /// Identify instructions that can be folded into a MOVCC instruction, and
 /// return the corresponding opcode for the predicated pseudo-instruction.
-unsigned llvm::canFoldARMInstrIntoMOVCC(unsigned Reg,
-                                        MachineInstr *&MI,
-                                        const MachineRegisterInfo &MRI) {
+static unsigned canFoldIntoMOVCC(unsigned Reg, MachineInstr *&MI,
+                                 const MachineRegisterInfo &MRI) {
   if (!TargetRegisterInfo::isVirtualRegister(Reg))
     return 0;
   if (!MRI.hasOneNonDBGUse(Reg))
@@ -1615,6 +1614,68 @@ unsigned llvm::canFoldARMInstrIntoMOVCC(unsigned Reg,
   case ARM::t2ORRrr: return ARM::t2ORRCCrr;
   case ARM::t2ORRrs: return ARM::t2ORRCCrs;
   }
+}
+
+bool ARMBaseInstrInfo::analyzeSelect(const MachineInstr *MI,
+                                     SmallVectorImpl<MachineOperand> &Cond,
+                                     unsigned &TrueOp, unsigned &FalseOp,
+                                     bool &Optimizable) const {
+  assert((MI->getOpcode() == ARM::MOVCCr || MI->getOpcode() == ARM::t2MOVCCr) &&
+         "Unknown select instruction");
+  // MOVCC operands:
+  // 0: Def.
+  // 1: True use.
+  // 2: False use.
+  // 3: Condition code.
+  // 4: CPSR use.
+  TrueOp = 1;
+  FalseOp = 2;
+  Cond.push_back(MI->getOperand(3));
+  Cond.push_back(MI->getOperand(4));
+  // We can always fold a def.
+  Optimizable = true;
+  return false;
+}
+
+MachineInstr *ARMBaseInstrInfo::optimizeSelect(MachineInstr *MI,
+                                               bool PreferFalse) const {
+  assert((MI->getOpcode() == ARM::MOVCCr || MI->getOpcode() == ARM::t2MOVCCr) &&
+         "Unknown select instruction");
+  const MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
+  MachineInstr *DefMI = 0;
+  unsigned Opc = canFoldIntoMOVCC(MI->getOperand(2).getReg(), DefMI, MRI);
+  bool Invert = !Opc;
+  if (!Opc)
+    Opc = canFoldIntoMOVCC(MI->getOperand(1).getReg(), DefMI, MRI);
+  if (!Opc)
+    return 0;
+
+  // Create a new predicated version of DefMI.
+  // Rfalse is the first use.
+  MachineInstrBuilder NewMI = BuildMI(*MI->getParent(), MI, MI->getDebugLoc(),
+                                      get(Opc), MI->getOperand(0).getReg())
+    .addOperand(MI->getOperand(Invert ? 2 : 1));
+
+  // Copy all the DefMI operands, excluding its (null) predicate.
+  const MCInstrDesc &DefDesc = DefMI->getDesc();
+  for (unsigned i = 1, e = DefDesc.getNumOperands();
+       i != e && !DefDesc.OpInfo[i].isPredicate(); ++i)
+    NewMI.addOperand(DefMI->getOperand(i));
+
+  unsigned CondCode = MI->getOperand(3).getImm();
+  if (Invert)
+    NewMI.addImm(ARMCC::getOppositeCondition(ARMCC::CondCodes(CondCode)));
+  else
+    NewMI.addImm(CondCode);
+  NewMI.addOperand(MI->getOperand(4));
+
+  // DefMI is not the -S version that sets CPSR, so add an optional %noreg.
+  if (NewMI->hasOptionalDef())
+    AddDefaultCC(NewMI);
+
+  // The caller will erase MI, but not DefMI.
+  DefMI->eraseFromParent();
+  return NewMI;
 }
 
 /// Map pseudo instructions that imply an 'S' bit onto real opcodes. Whether the

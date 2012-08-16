@@ -6762,54 +6762,6 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     return BB;
   }
 
-  case ARM::MOVCCr:
-  case ARM::t2MOVCCr: {
-    // MOVCCr instructions can fold one of its operands as a predicated
-    // instruction:
-    //
-    //   %v1 = AND %v2, %v3
-    //   %v4 = MOVCCr %v5, %v1, CC
-    //
-    // Becomes:
-    //
-    //   %v4 = ANDCCrr %v5, %v2, %v3, CC
-    //
-    const MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
-    MachineInstr *DefMI = 0;
-    unsigned Opc = canFoldARMInstrIntoMOVCC(MI->getOperand(2).getReg(),
-                                            DefMI, MRI);
-    bool Invert = !Opc;
-    if (!Opc)
-      Opc = canFoldARMInstrIntoMOVCC(MI->getOperand(1).getReg(), DefMI, MRI);
-    if (!Opc)
-      return BB;
-
-    // Create a new predicated version of DefMI.
-    // Rfalse is the first use.
-    MachineInstrBuilder NewMI = BuildMI(*BB, MI, dl, TII->get(Opc),
-                                        MI->getOperand(0).getReg())
-      .addOperand(MI->getOperand(Invert ? 2 : 1));
-
-    // Copy all the DefMI operands, excluding its (null) predicate.
-    const MCInstrDesc &DefDesc = DefMI->getDesc();
-    for (unsigned i = 1, e = DefDesc.getNumOperands();
-         i != e && !DefDesc.OpInfo[i].isPredicate(); ++i)
-      NewMI.addOperand(DefMI->getOperand(i));
-
-    unsigned CondCode = MI->getOperand(3).getImm();
-    if (Invert)
-      NewMI.addImm(ARMCC::getOppositeCondition(ARMCC::CondCodes(CondCode)));
-    else
-      NewMI.addImm(CondCode);
-    NewMI.addOperand(MI->getOperand(4));
-
-    AddDefaultCC(NewMI);
-
-    DefMI->eraseFromParent();
-    MI->eraseFromParent();
-    return BB;
-  }
-
   case ARM::BCCi64:
   case ARM::BCCZi64: {
     // If there is an unconditional branch to the other successor, remove it.

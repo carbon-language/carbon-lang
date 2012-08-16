@@ -202,6 +202,13 @@ public:
                                     unsigned SrcReg2, int CmpMask, int CmpValue,
                                     const MachineRegisterInfo *MRI) const;
 
+  virtual bool analyzeSelect(const MachineInstr *MI,
+                             SmallVectorImpl<MachineOperand> &Cond,
+                             unsigned &TrueOp, unsigned &FalseOp,
+                             bool &Optimizable) const;
+
+  virtual MachineInstr *optimizeSelect(MachineInstr *MI, bool) const;
+
   /// FoldImmediate - 'Reg' is known to be defined by a move immediate
   /// instruction, try to fold the immediate into the use instruction.
   virtual bool FoldImmediate(MachineInstr *UseMI, MachineInstr *DefMI,
