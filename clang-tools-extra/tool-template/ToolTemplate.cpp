@@ -1,4 +1,4 @@
-//===- tools/extra/RefactoringTemplate.cpp - Template for refactoring tool ===//
+//===- tools/extra/ToolTemplate.cpp - Template for refactoring tool ===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,7 +11,7 @@
 //  The goal is to lower the "barrier to entry" for writing refactoring tools.
 //
 //  Usage:
-//  refactoringTemplate <cmake-output-dir> <file1> <file2> ...
+//  tool-template <cmake-output-dir> <file1> <file2> ...
 //
 //  Where <cmake-output-dir> is a CMake build directory in which a file named
 //  compile_commands.json exists (enable -DCMAKE_EXPORT_COMPILE_COMMANDS in
@@ -26,11 +26,11 @@
 //  removed, but the rest of a relative path must be a suffix of a path in
 //  the compile command line database.
 //
-//  For example, to use refactoringTemplate on all files in a subtree of the
+//  For example, to use tool-template on all files in a subtree of the
 //  source tree, use:
 //
 //    /path/in/subtree $ find . -name '*.cpp'|
-//        xargs refactoringTemplate /path/to/build
+//        xargs tool-template /path/to/build
 //
 //===----------------------------------------------------------------------===//
 
@@ -52,14 +52,15 @@ using namespace clang::tooling;
 using namespace llvm;
 
 namespace {
-class TemplateCallback : public MatchFinder::MatchCallback {
+class ToolTemplateCallback : public MatchFinder::MatchCallback {
  public:
-  TemplateCallback(Replacements *Replace) : Replace(Replace) {}
+  ToolTemplateCallback(Replacements *Replace) : Replace(Replace) {}
 
   virtual void run(const MatchFinder::MatchResult &Result) {
 //  TODO: This routine will get called for each thing that the matchers find.
 //  At this point, you can examine the match, and do whatever you want,
 //  including replacing the matched text with other text
+  (void) Replace; // This to prevent an "unused member variable" warning;
   }
 
  private:
@@ -95,7 +96,7 @@ int main(int argc, const char **argv) {
     }
   RefactoringTool Tool(*Compilations, SourcePaths);
   ast_matchers::MatchFinder Finder;
-  TemplateCallback Callback(&Tool.getReplacements());
+  ToolTemplateCallback Callback(&Tool.getReplacements());
 
 // TODO: Put your matchers here.
 // Use Finder.addMatcher(...) to define the patterns in the AST that you
