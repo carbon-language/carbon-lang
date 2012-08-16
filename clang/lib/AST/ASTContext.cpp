@@ -209,7 +209,9 @@ const Decl *adjustDeclToTemplate(const Decl *D) {
 }
 } // unnamed namespace
 
-const RawComment *ASTContext::getRawCommentForAnyRedecl(const Decl *D) const {
+const RawComment *ASTContext::getRawCommentForAnyRedecl(
+                                                const Decl *D,
+                                                const Decl **OriginalDecl) const {
   D = adjustDeclToTemplate(D);
 
   // Check whether we have cached a comment for this declaration already.
@@ -218,13 +220,17 @@ const RawComment *ASTContext::getRawCommentForAnyRedecl(const Decl *D) const {
         RedeclComments.find(D);
     if (Pos != RedeclComments.end()) {
       const RawCommentAndCacheFlags &Raw = Pos->second;
-      if (Raw.getKind() != RawCommentAndCacheFlags::NoCommentInDecl)
+      if (Raw.getKind() != RawCommentAndCacheFlags::NoCommentInDecl) {
+        if (OriginalDecl)
+          *OriginalDecl = Raw.getOriginalDecl();
         return Raw.getRaw();
+      }
     }
   }
 
   // Search for comments attached to declarations in the redeclaration chain.
   const RawComment *RC = NULL;
+  const Decl *OriginalDeclForRC = NULL;
   for (Decl::redecl_iterator I = D->redecls_begin(),
                              E = D->redecls_end();
        I != E; ++I) {
@@ -234,16 +240,19 @@ const RawComment *ASTContext::getRawCommentForAnyRedecl(const Decl *D) const {
       const RawCommentAndCacheFlags &Raw = Pos->second;
       if (Raw.getKind() != RawCommentAndCacheFlags::NoCommentInDecl) {
         RC = Raw.getRaw();
+        OriginalDeclForRC = Raw.getOriginalDecl();
         break;
       }
     } else {
       RC = getRawCommentForDeclNoCache(*I);
+      OriginalDeclForRC = *I;
       RawCommentAndCacheFlags Raw;
       if (RC) {
         Raw.setRaw(RC);
         Raw.setKind(RawCommentAndCacheFlags::FromDecl);
       } else
         Raw.setKind(RawCommentAndCacheFlags::NoCommentInDecl);
+      Raw.setOriginalDecl(*I);
       RedeclComments[*I] = Raw;
       if (RC)
         break;
@@ -253,10 +262,14 @@ const RawComment *ASTContext::getRawCommentForAnyRedecl(const Decl *D) const {
   // If we found a comment, it should be a documentation comment.
   assert(!RC || RC->isDocumentation());
 
+  if (OriginalDecl)
+    *OriginalDecl = OriginalDeclForRC;
+
   // Update cache for every declaration in the redeclaration chain.
   RawCommentAndCacheFlags Raw;
   Raw.setRaw(RC);
   Raw.setKind(RawCommentAndCacheFlags::FromRedecl);
+  Raw.setOriginalDecl(OriginalDeclForRC);
 
   for (Decl::redecl_iterator I = D->redecls_begin(),
                              E = D->redecls_end();
@@ -277,9 +290,13 @@ comments::FullComment *ASTContext::getCommentForDecl(const Decl *D) const {
   if (Pos != ParsedComments.end())
     return Pos->second;
 
-  const RawComment *RC = getRawCommentForAnyRedecl(D);
+  const Decl *OriginalDecl;
+  const RawComment *RC = getRawCommentForAnyRedecl(D, &OriginalDecl);
   if (!RC)
     return NULL;
+
+  if (D != OriginalDecl)
+    return getCommentForDecl(OriginalDecl);
 
   comments::FullComment *FC = RC->parse(*this, D);
   ParsedComments[Canonical] = FC;

@@ -641,6 +641,22 @@ void test_attach37<int>::test_attach38(int aaa, int bbb) {}
 template<typename T>
 void test_attach37<T>::test_attach39(int aaa, int bbb) {}
 
+// We used to emit warning that parameter 'a' is not found because we parsed
+// the comment in context of the redeclaration which does not have parameter
+// names.
+template <typename T>
+struct test_attach38 {
+  /*!
+    \param a  First param
+    \param b  Second param
+  */
+  template <typename B>
+  void test_attach39(T a, B b);
+};
+
+template <>
+template <typename B>
+void test_attach38<int>::test_attach39(int, B);
 
 
 // PR13411, reduced.  We used to crash on this.

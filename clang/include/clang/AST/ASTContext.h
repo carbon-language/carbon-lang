@@ -474,8 +474,17 @@ public:
       Data.setPointer(RC);
     }
 
+    const Decl *getOriginalDecl() const LLVM_READONLY {
+      return OriginalDecl;
+    }
+
+    void setOriginalDecl(const Decl *Orig) {
+      OriginalDecl = Orig;
+    }
+
   private:
     llvm::PointerIntPair<const RawComment *, 2, Kind> Data;
+    const Decl *OriginalDecl;
   };
 
   /// \brief Mapping from declarations to comments attached to any
@@ -504,7 +513,12 @@ public:
 
   /// \brief Return the documentation comment attached to a given declaration.
   /// Returns NULL if no comment is attached.
-  const RawComment *getRawCommentForAnyRedecl(const Decl *D) const;
+  ///
+  /// \param OriginalDecl if not NULL, is set to declaration AST node that had
+  /// the comment, if the comment we found comes from a redeclaration.
+  const RawComment *getRawCommentForAnyRedecl(
+                                      const Decl *D,
+                                      const Decl **OriginalDecl = NULL) const;
 
   /// Return parsed documentation comment attached to a given declaration.
   /// Returns NULL if no comment is attached.
