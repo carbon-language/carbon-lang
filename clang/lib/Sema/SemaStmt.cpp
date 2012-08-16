@@ -2824,7 +2824,8 @@ static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
       break;
     }
     case tok::identifier: {
-      StringRef Name = AsmToks[i].getIdentifierInfo()->getName();
+      IdentifierInfo *II = AsmToks[i].getIdentifierInfo();
+      StringRef Name = II->getName();
 
       // Valid register?
       if (TI.isValidGCCRegisterName(Name)) {
@@ -2841,16 +2842,37 @@ static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
         break;
       }
 
-      // Not a register, so this must be a variable, function or label
-      // reference.  Track these as they are either an Input or an Output.
-      // Unfortunately, we don't know which is which until after we feed
-      // the patched asms to the AsmParser.
-      AsmNames[NumAsmStrings].set(i);
+      // Lookup the identifier.
+      // TODO: Someone with more experience with clang should verify this the
+      // proper way of doing a symbol lookup.
+      DeclarationName DeclName(II);
+      Scope *CurScope = SemaRef.getCurScope();
+      LookupResult R(SemaRef, DeclName, AsmLoc, Sema::LookupOrdinaryName);
+      if (!SemaRef.LookupName(R, CurScope, false/*AllowBuiltinCreation*/))
+        break;
 
-      // TODO: Lookup the identifier and patch appropriately.
+      assert (R.isSingleResult() && "Expected a single result?!");
+      NamedDecl *Decl = R.getFoundDecl();
+      switch (Decl->getKind()) {
+      default:
+        assert(0 && "Unknown decl kind.");
+        break;
+      case Decl::Var: {
+      case Decl::ParmVar:
+        AsmNames[NumAsmStrings].set(i);
+
+        VarDecl *Var = cast<VarDecl>(Decl);
+        QualType Ty = Var->getType();
+        (void)Ty; // Avoid warning.
+        // TODO: Patch identifier with valid operand.  One potential idea is to
+        // probe the backend with type information to guess the possible
+        // operand.
+        break;
+      }
+      }
       break;
     }
-    } // AsmToks[i].getKind()
+    }
   }
 
   // Emit the final (and possibly only) asm string.
