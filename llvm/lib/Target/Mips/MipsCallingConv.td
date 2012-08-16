@@ -145,6 +145,17 @@ def RetCC_MipsEABI : CallingConv<[
 ]>;
 
 //===----------------------------------------------------------------------===//
+// Mips Android Calling Convention
+//===----------------------------------------------------------------------===//
+
+def RetCC_MipsAndroid : CallingConv<[
+  // f32 are returned in registers F0, F2, F1, F3
+  CCIfType<[f32], CCAssignToReg<[F0, F2, F1, F3]>>,
+
+  CCDelegateTo<RetCC_MipsO32>
+]>;
+
+//===----------------------------------------------------------------------===//
 // Mips FastCC Calling Convention
 //===----------------------------------------------------------------------===//
 def CC_MipsO32_FastCC : CallingConv<[
@@ -210,6 +221,7 @@ def RetCC_Mips : CallingConv<[
   CCIfSubtarget<"isABI_EABI()", CCDelegateTo<RetCC_MipsEABI>>,
   CCIfSubtarget<"isABI_N32()", CCDelegateTo<RetCC_MipsN>>,
   CCIfSubtarget<"isABI_N64()", CCDelegateTo<RetCC_MipsN>>,
+  CCIfSubtarget<"isAndroid()", CCDelegateTo<RetCC_MipsAndroid>>,
   CCDelegateTo<RetCC_MipsO32>
 ]>;
 
