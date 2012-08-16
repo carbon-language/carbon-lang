@@ -35,14 +35,14 @@ public:
   /// A verbatim-like block command eats every character (except line starting
   /// decorations) until matching end command is seen or comment end is hit.
   ///
-  /// \param BeginName name of the command that starts the verbatim block.
+  /// \param StartName name of the command that starts the verbatim block.
   /// \param [out] EndName name of the command that ends the verbatim block.
   ///
   /// \returns true if a given command is a verbatim block command.
   bool isVerbatimBlockCommand(StringRef StartName, StringRef &EndName) const;
 
   /// \brief Register a new verbatim block command.
-  void addVerbatimBlockCommand(StringRef BeginName, StringRef EndName);
+  void addVerbatimBlockCommand(StringRef StartName, StringRef EndName);
 
   /// \brief Check if a given command is a verbatim line command.
   ///
@@ -90,7 +90,7 @@ public:
 
 private:
   struct VerbatimBlockCommand {
-    StringRef BeginName;
+    StringRef StartName;
     StringRef EndName;
   };
 

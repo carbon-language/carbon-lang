@@ -15,9 +15,9 @@ namespace comments {
 
 // TODO: tablegen
 
-bool CommandTraits::isVerbatimBlockCommand(StringRef BeginName,
+bool CommandTraits::isVerbatimBlockCommand(StringRef StartName,
                                            StringRef &EndName) const {
-  const char *Result = llvm::StringSwitch<const char *>(BeginName)
+  const char *Result = llvm::StringSwitch<const char *>(StartName)
     .Case("code", "endcode")
     .Case("verbatim", "endverbatim")
     .Case("htmlonly", "endhtmlonly")
@@ -44,7 +44,7 @@ bool CommandTraits::isVerbatimBlockCommand(StringRef BeginName,
            I = VerbatimBlockCommands.begin(),
            E = VerbatimBlockCommands.end();
        I != E; ++I)
-    if (I->BeginName == BeginName) {
+    if (I->StartName == StartName) {
       EndName = I->EndName;
       return true;
     }
@@ -115,10 +115,10 @@ bool CommandTraits::isDeclarationCommand(StringRef Name) const {
       .Default(false);
 }
 
-void CommandTraits::addVerbatimBlockCommand(StringRef BeginName,
+void CommandTraits::addVerbatimBlockCommand(StringRef StartName,
                                             StringRef EndName) {
   VerbatimBlockCommand VBC;
-  VBC.BeginName = BeginName;
+  VBC.StartName = StartName;
   VBC.EndName = EndName;
   VerbatimBlockCommands.push_back(VBC);
 }
