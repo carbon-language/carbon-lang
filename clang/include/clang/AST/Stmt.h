@@ -1627,15 +1627,19 @@ class MSAsmStmt : public Stmt {
   bool IsVolatile;
 
   unsigned NumAsmToks;
+  unsigned NumInputs;
+  unsigned NumOutputs;
   unsigned NumClobbers;
 
   Token *AsmToks;
+  IdentifierInfo **Names;
   Stmt **Exprs;
   StringRef *Clobbers;
 
 public:
   MSAsmStmt(ASTContext &C, SourceLocation asmloc, SourceLocation lbraceloc,
             bool issimple, bool isvolatile, ArrayRef<Token> asmtoks,
+            ArrayRef<IdentifierInfo*> inputs, ArrayRef<IdentifierInfo*> outputs,
             StringRef asmstr, ArrayRef<StringRef> clobbers,
             SourceLocation endloc);
 

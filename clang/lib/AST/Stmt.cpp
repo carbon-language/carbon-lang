@@ -583,14 +583,23 @@ AsmStmt::AsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple,
   std::copy(clobbers, clobbers + NumClobbers, Clobbers);
 }
 
-MSAsmStmt::MSAsmStmt(ASTContext &C,
-                     SourceLocation asmloc, SourceLocation lbraceloc,
-                     bool issimple, bool isvolatile, ArrayRef<Token> asmtoks,
-                     StringRef asmstr, ArrayRef<StringRef> clobbers,
-                     SourceLocation endloc)
+MSAsmStmt::MSAsmStmt(ASTContext &C, SourceLocation asmloc,
+                     SourceLocation lbraceloc, bool issimple, bool isvolatile,
+                     ArrayRef<Token> asmtoks, ArrayRef<IdentifierInfo*> inputs,
+                     ArrayRef<IdentifierInfo*> outputs, StringRef asmstr,
+                     ArrayRef<StringRef> clobbers, SourceLocation endloc)
   : Stmt(MSAsmStmtClass), AsmLoc(asmloc), LBraceLoc(lbraceloc), EndLoc(endloc),
     AsmStr(asmstr.str()), IsSimple(issimple), IsVolatile(isvolatile),
-    NumAsmToks(asmtoks.size()), NumClobbers(clobbers.size()) {
+    NumAsmToks(asmtoks.size()), NumInputs(inputs.size()),
+    NumOutputs(outputs.size()), NumClobbers(clobbers.size()) {
+
+  unsigned NumExprs = NumOutputs + NumInputs;
+
+  Names = new (C) IdentifierInfo*[NumExprs];
+  for (unsigned i = 0, e = NumOutputs; i != e; ++i)
+    Names[i] = outputs[i];
+  for (unsigned i = NumOutputs, e = NumExprs; i != e; ++i)
+    Names[i] = inputs[i];
 
   AsmToks = new (C) Token[NumAsmToks];
   for (unsigned i = 0, e = NumAsmToks; i != e; ++i)

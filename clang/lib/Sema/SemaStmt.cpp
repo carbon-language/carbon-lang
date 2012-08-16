@@ -2880,14 +2880,16 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   Diag(AsmLoc, diag::warn_unsupported_msasm);
   SmallVector<StringRef,4> Clobbers;
   std::set<std::string> ClobberRegs;
+  SmallVector<IdentifierInfo*, 4> Inputs;
+  SmallVector<IdentifierInfo*, 4> Outputs;
 
   // Empty asm statements don't need to instantiate the AsmParser, etc.
   if (AsmToks.empty()) {
     StringRef AsmString;
     MSAsmStmt *NS =
-      new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc,
-                              /* IsSimple */ true, /* IsVolatile */ true,
-                              AsmToks, AsmString, Clobbers, EndLoc);
+      new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc, /*IsSimple*/ true,
+                              /*IsVolatile*/ true, AsmToks, Inputs, Outputs,
+                              AsmString, Clobbers, EndLoc);
     return Owned(NS);
   }
 
@@ -2905,9 +2907,9 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   // patchMSAsmStrings doesn't correctly patch non-simple asm statements.
   if (!IsSimple) {
     MSAsmStmt *NS =
-      new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc,
-                              /* IsSimple */ true, /* IsVolatile */ true,
-                              AsmToks, AsmString, Clobbers, EndLoc);
+      new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc, /*IsSimple*/ true,
+                              /*IsVolatile*/ true, AsmToks, Inputs, Outputs,
+                              AsmString, Clobbers, EndLoc);
     return Owned(NS);
   }
 
@@ -2999,10 +3001,9 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
     Clobbers.push_back(*I);
 
   MSAsmStmt *NS =
-    new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc,
-                            IsSimple, /* IsVolatile */ true,
-                            AsmToks, AsmString, Clobbers, EndLoc);
-
+    new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc, IsSimple,
+                            /*IsVolatile*/ true, AsmToks, Inputs, Outputs,
+                            AsmString, Clobbers, EndLoc);
   return Owned(NS);
 }
 
