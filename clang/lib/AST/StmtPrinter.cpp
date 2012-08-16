@@ -181,7 +181,7 @@ void StmtPrinter::VisitAttributedStmt(AttributedStmt *Node) {
       first = false;
     }
     // TODO: check this
-    (*it)->printPretty(OS, Context);
+    (*it)->printPretty(OS, Policy);
   }
   OS << "]] ";
   PrintStmt(Node->getSubStmt(), 0);

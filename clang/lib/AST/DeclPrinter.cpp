@@ -195,8 +195,8 @@ void DeclPrinter::prettyPrintAttributes(Decl *D) {
   if (D->hasAttrs()) {
     AttrVec &Attrs = D->getAttrs();
     for (AttrVec::const_iterator i=Attrs.begin(), e=Attrs.end(); i!=e; ++i) {
-        Attr *A = *i;
-        A->printPretty(Out, Context);
+      Attr *A = *i;
+      A->printPretty(Out, Policy);
     }
   }
 }

@@ -105,7 +105,8 @@ public:
   virtual bool isLateParsed() const { return false; }
 
   // Pretty print this attribute.
-  virtual void printPretty(llvm::raw_ostream &OS, ASTContext &C) const = 0;
+  virtual void printPretty(llvm::raw_ostream &OS,
+                           const PrintingPolicy &Policy) const = 0;
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *) { return true; }
