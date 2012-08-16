@@ -1501,6 +1501,12 @@ ClangExpressionDeclMap::DoMaterialize
         
         if (m_found_entities.ContainsVariable (member_sp))
         {
+            if (!member_sp->GetValueObject())
+            {
+                err.SetErrorString("Variable being materialized doesn't have a frozen version");
+                return false;
+            }
+            
             RegisterInfo *reg_info = member_sp->GetRegisterInfo ();
             if (reg_info)
             {
