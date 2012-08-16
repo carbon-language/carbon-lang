@@ -238,7 +238,9 @@ void ThreadFinish(ThreadState *thr) {
   }
   tctx->epoch1 = thr->fast_state.epoch();
 
+#ifndef TSAN_GO
   AlloctorThreadFinish(thr);
+#endif
   thr->~ThreadState();
   StatAggregate(ctx->stat, thr->stat);
   tctx->thr = 0;

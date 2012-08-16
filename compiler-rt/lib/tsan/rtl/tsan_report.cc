@@ -137,6 +137,7 @@ static void PrintStack(const ReportStack *ent) {
     TsanPrintf("  %s()\n      %s:%d +0x%zx\n",
         ent->func, ent->file, ent->line, (void*)ent->offset);
   }
+  TsanPrintf("\n");
 }
 
 static void PrintMop(const ReportMop *mop, bool first) {
@@ -157,7 +158,7 @@ static void PrintThread(const ReportThread *rt) {
 
 void PrintReport(const ReportDesc *rep) {
   TsanPrintf("==================\n");
-  TsanPrintf("WARNING: DATA RACE at %p\n", (void*)rep->mops[0]->addr);
+  TsanPrintf("WARNING: DATA RACE\n");
   for (uptr i = 0; i < rep->mops.Size(); i++)
     PrintMop(rep->mops[i], i == 0);
   for (uptr i = 0; i < rep->threads.Size(); i++)

@@ -164,7 +164,9 @@ void Initialize(ThreadState *thr) {
     return;
   is_initialized = true;
   ScopedInRtl in_rtl;
+#ifndef TSAN_GO
   InitializeAllocator();
+#endif
   InitializeInterceptors();
   const char *env = InitializePlatform();
   InitializeMutex();
