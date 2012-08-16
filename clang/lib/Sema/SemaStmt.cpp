@@ -2773,6 +2773,16 @@ static bool isMSAsmKeyword(StringRef Name) {
   return Ret;
 }
 
+static StringRef getSpelling(Sema &SemaRef, Token AsmTok) {
+  StringRef Asm;
+  SmallString<512> TokenBuf;
+  TokenBuf.resize(512);
+  bool StringInvalid = false;
+  Asm = SemaRef.PP.getSpelling(AsmTok, TokenBuf, &StringInvalid);
+  assert (!StringInvalid && "Expected valid string!");
+  return Asm;
+}
+
 static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
                               SourceLocation AsmLoc,
                               ArrayRef<Token> AsmToks,
@@ -2824,6 +2834,7 @@ static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
     switch (AsmToks[i].getKind()) {
     default:
       IsSimple = false;
+      Asm += getSpelling(SemaRef, AsmToks[i]);
       break;
     case tok::comma: Asm += ","; break;
     case tok::colon: Asm += ":"; break;
@@ -2831,14 +2842,9 @@ static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
     case tok::r_square: Asm += "]"; break;
     case tok::l_brace: Asm += "{"; break;
     case tok::r_brace: Asm += "}"; break;
-    case tok::numeric_constant: {
-      SmallString<32> TokenBuf;
-      TokenBuf.resize(32);
-      bool StringInvalid = false;
-      Asm += SemaRef.PP.getSpelling(AsmToks[i], TokenBuf, &StringInvalid);
-      assert (!StringInvalid && "Expected valid string!");
+    case tok::numeric_constant:
+      Asm += getSpelling(SemaRef, AsmToks[i]);
       break;
-    }
     case tok::identifier: {
       IdentifierInfo *II = AsmToks[i].getIdentifierInfo();
       StringRef Name = II->getName();
@@ -2907,11 +2913,9 @@ static std::string buildMSAsmString(Sema &SemaRef,
                                     ArrayRef<Token> AsmToks,
                                     unsigned &NumAsmStrings) {
   assert (!AsmToks.empty() && "Didn't expect an empty AsmToks!");
-  SmallString<512> Asm;
-  SmallString<512> TokenBuf;
-  TokenBuf.resize(512);
-
   NumAsmStrings = 0;
+
+  SmallString<512> Asm;
   for (unsigned i = 0, e = AsmToks.size(); i < e; ++i) {
     bool isNewAsm = i == 0 || AsmToks[i].isAtStartOfLine() ||
       AsmToks[i].is(tok::kw_asm);
@@ -2929,9 +2933,7 @@ static std::string buildMSAsmString(Sema &SemaRef,
     if (i && AsmToks[i].hasLeadingSpace() && !isNewAsm)
       Asm += ' ';
 
-    bool StringInvalid = false;
-    Asm += SemaRef.PP.getSpelling(AsmToks[i], TokenBuf, &StringInvalid);
-    assert (!StringInvalid && "Expected valid string!");
+    Asm += getSpelling(SemaRef, AsmToks[i]);
   }
   return Asm.c_str();
 }
