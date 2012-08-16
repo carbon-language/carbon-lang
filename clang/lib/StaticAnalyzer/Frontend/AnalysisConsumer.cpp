@@ -64,13 +64,54 @@ STATISTIC(MaxCFGSize, "The maximum number of basic blocks in a function.");
 // Special PathDiagnosticConsumers.
 //===----------------------------------------------------------------------===//
 
-static PathDiagnosticConsumer*
-createPlistHTMLDiagnosticConsumer(const std::string& prefix,
-                                const Preprocessor &PP) {
-  PathDiagnosticConsumer *PD =
-    createHTMLDiagnosticConsumer(llvm::sys::path::parent_path(prefix), PP);
-  return createPlistDiagnosticConsumer(prefix, PP, PD);
+static void createPlistHTMLDiagnosticConsumer(PathDiagnosticConsumers &C,
+                                              const std::string &prefix,
+                                              const Preprocessor &PP) {
+  createHTMLDiagnosticConsumer(C, llvm::sys::path::parent_path(prefix), PP);
+  createPlistDiagnosticConsumer(C, prefix, PP);
 }
+
+namespace {
+class ClangDiagPathDiagConsumer : public PathDiagnosticConsumer {
+  DiagnosticsEngine &Diag;
+public:
+  ClangDiagPathDiagConsumer(DiagnosticsEngine &Diag) : Diag(Diag) {}
+  virtual ~ClangDiagPathDiagConsumer() {}
+  virtual StringRef getName() const { return "ClangDiags"; }
+  virtual bool useVerboseDescription() const { return false; }
+  virtual PathGenerationScheme getGenerationScheme() const { return None; }
+
+  void FlushDiagnosticsImpl(std::vector<const PathDiagnostic *> &Diags,
+                            FilesMade *filesMade) {
+    for (std::vector<const PathDiagnostic*>::iterator I = Diags.begin(),
+         E = Diags.end(); I != E; ++I) {
+      const PathDiagnostic *PD = *I;
+      StringRef desc = PD->getDescription();
+      SmallString<512> TmpStr;
+      llvm::raw_svector_ostream Out(TmpStr);
+      for (StringRef::iterator I=desc.begin(), E=desc.end(); I!=E; ++I) {
+        if (*I == '%')
+          Out << "%%";
+        else
+          Out << *I;
+      }
+      Out.flush();
+      unsigned ErrorDiag = Diag.getCustomDiagID(DiagnosticsEngine::Warning,
+                                                TmpStr);
+      SourceLocation L = PD->getLocation().asLocation();
+      DiagnosticBuilder diagBuilder = Diag.Report(L, ErrorDiag);
+
+      // Get the ranges from the last point in the path.
+      ArrayRef<SourceRange> Ranges = PD->path.back()->getRanges();
+
+      for (ArrayRef<SourceRange>::iterator I = Ranges.begin(),
+                                           E = Ranges.end(); I != E; ++I) {
+        diagBuilder << *I;
+      }
+    }
+  }
+};
+} // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
 // AnalysisConsumer declaration.
@@ -105,8 +146,8 @@ public:
   /// working with a PCH file.
   SetOfDecls LocalTUDecls;
                            
-  // PD is owned by AnalysisManager.
-  PathDiagnosticConsumer *PD;
+  // Set of PathDiagnosticConsumers.  Owned by AnalysisManager.
+  PathDiagnosticConsumers PathConsumers;
 
   StoreManagerCreator CreateStoreMgr;
   ConstraintManagerCreator CreateConstraintMgr;
@@ -126,7 +167,7 @@ public:
                    const AnalyzerOptions& opts,
                    ArrayRef<std::string> plugins)
     : RecVisitorMode(ANALYSIS_ALL), RecVisitorBR(0),
-      Ctx(0), PP(pp), OutDir(outdir), Opts(opts), Plugins(plugins), PD(0) {
+      Ctx(0), PP(pp), OutDir(outdir), Opts(opts), Plugins(plugins) {
     DigestAnalyzerOptions();
     if (Opts.PrintStats) {
       llvm::EnableStatistics();
@@ -141,17 +182,19 @@ public:
 
   void DigestAnalyzerOptions() {
     // Create the PathDiagnosticConsumer.
+    PathConsumers.push_back(new ClangDiagPathDiagConsumer(PP.getDiagnostics()));
+
     if (!OutDir.empty()) {
       switch (Opts.AnalysisDiagOpt) {
       default:
 #define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN, AUTOCREATE) \
-        case PD_##NAME: PD = CREATEFN(OutDir, PP); break;
+        case PD_##NAME: CREATEFN(PathConsumers, OutDir, PP); break;
 #include "clang/Frontend/Analyses.def"
       }
     } else if (Opts.AnalysisDiagOpt == PD_TEXT) {
       // Create the text client even without a specified output file since
       // it just uses diagnostic notes.
-      PD = createTextPathDiagnosticConsumer("", PP);
+      createTextPathDiagnosticConsumer(PathConsumers, "", PP);
     }
 
     // Create the analyzer component creators.
@@ -205,9 +248,12 @@ public:
     Ctx = &Context;
     checkerMgr.reset(createCheckerManager(Opts, PP.getLangOpts(), Plugins,
                                           PP.getDiagnostics()));
-    Mgr.reset(new AnalysisManager(*Ctx, PP.getDiagnostics(),
-                                  PP.getLangOpts(), PD,
-                                  CreateStoreMgr, CreateConstraintMgr,
+    Mgr.reset(new AnalysisManager(*Ctx,
+                                  PP.getDiagnostics(),
+                                  PP.getLangOpts(),
+                                  PathConsumers,
+                                  CreateStoreMgr,
+                                  CreateConstraintMgr,
                                   checkerMgr.get(),
                                   Opts.MaxNodes, Opts.MaxLoop,
                                   Opts.VisualizeEGDot, Opts.VisualizeEGUbi,

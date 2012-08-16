@@ -240,8 +240,8 @@ struct CompareDiagnostics {
 };  
 }
 
-void
-PathDiagnosticConsumer::FlushDiagnostics(SmallVectorImpl<std::string> *Files) {
+void PathDiagnosticConsumer::FlushDiagnostics(
+                                     PathDiagnosticConsumer::FilesMade *Files) {
   if (flushed)
     return;
   

@@ -36,7 +36,7 @@ domain_port (const char *domain_b, const char *domain_e,
 
 void f3() {
   int x, y;
-  int d = &y - &x; // expected-warning{{Subtraction of two pointers that do not point to the same memory chunk may cause incorrect result.}}
+  int d = &y - &x; // expected-warning{{Subtraction of two pointers that do not point to the same memory chunk may cause incorrect result}}
 
   int a[10];
   int *p = &a[2];
@@ -46,13 +46,13 @@ void f3() {
 
 void f4() {
   int *p;
-  p = (int*) 0x10000; // expected-warning{{Using a fixed address is not portable because that address will probably not be valid in all environments or platforms.}}
+  p = (int*) 0x10000; // expected-warning{{Using a fixed address is not portable because that address will probably not be valid in all environments or platforms}}
 }
 
 void f5() {
   int x, y;
   int *p;
-  p = &x + 1;  // expected-warning{{Pointer arithmetic done on non-array variables means reliance on memory layout, which is dangerous.}}
+  p = &x + 1;  // expected-warning{{Pointer arithmetic done on non-array variables means reliance on memory layout, which is dangerous}}
 
   int a[10];
   p = a + 1; // no-warning

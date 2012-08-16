@@ -74,7 +74,7 @@ void f(id a, id<P> b, C* c, C<P> *d, FooType fooType, BarType barType) {
   [NSArray arrayWithObjects:@"Hello", a, b, c, d, nil];
   [NSArray arrayWithObjects:@"Foo", ^{}, nil];
 
-  [NSArray arrayWithObjects:@"Foo", "Bar", "Baz", nil]; // expected-warning 2 {{Argument to 'NSArray' method 'arrayWithObjects:' should be an Objective-C pointer type, not 'char *'}}
+  [NSArray arrayWithObjects:@"Foo", "Bar", "Baz", nil]; // expected-warning {{Argument to 'NSArray' method 'arrayWithObjects:' should be an Objective-C pointer type, not 'char *'}}
   [NSDictionary dictionaryWithObjectsAndKeys:@"Foo", "Bar", nil]; // expected-warning {{Argument to 'NSDictionary' method 'dictionaryWithObjectsAndKeys:' should be an Objective-C pointer type, not 'char *'}}
   [NSSet setWithObjects:@"Foo", "Bar", nil]; // expected-warning {{Argument to 'NSSet' method 'setWithObjects:' should be an Objective-C pointer type, not 'char *'}}
   [NSOrderedSet orderedSetWithObjects:@"Foo", "Bar", nil]; // expected-warning {{Argument to 'NSOrderedSet' method 'orderedSetWithObjects:' should be an Objective-C pointer type, not 'char *'}}

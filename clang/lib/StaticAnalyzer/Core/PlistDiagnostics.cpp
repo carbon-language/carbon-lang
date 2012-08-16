@@ -30,23 +30,21 @@ namespace {
   class PlistDiagnostics : public PathDiagnosticConsumer {
     const std::string OutputFile;
     const LangOptions &LangOpts;
-    OwningPtr<PathDiagnosticConsumer> SubPD;
     const bool SupportsCrossFileDiagnostics;
   public:
     PlistDiagnostics(const std::string& prefix, const LangOptions &LangOpts,
-                     bool supportsMultipleFiles,
-                     PathDiagnosticConsumer *subPD);
+                     bool supportsMultipleFiles);
 
     virtual ~PlistDiagnostics() {}
 
     void FlushDiagnosticsImpl(std::vector<const PathDiagnostic *> &Diags,
-                              SmallVectorImpl<std::string> *FilesMade);
+                              FilesMade *filesMade);
     
     virtual StringRef getName() const {
       return "PlistDiagnostics";
     }
 
-    PathGenerationScheme getGenerationScheme() const;
+    PathGenerationScheme getGenerationScheme() const { return Extensive; }
     bool supportsLogicalOpControlFlow() const { return true; }
     bool supportsAllBlockEdges() const { return true; }
     virtual bool useVerboseDescription() const { return false; }
@@ -58,29 +56,20 @@ namespace {
 
 PlistDiagnostics::PlistDiagnostics(const std::string& output,
                                    const LangOptions &LO,
-                                   bool supportsMultipleFiles,
-                                   PathDiagnosticConsumer *subPD)
-  : OutputFile(output), LangOpts(LO), SubPD(subPD),
+                                   bool supportsMultipleFiles)
+  : OutputFile(output), LangOpts(LO),
     SupportsCrossFileDiagnostics(supportsMultipleFiles) {}
 
-PathDiagnosticConsumer*
-ento::createPlistDiagnosticConsumer(const std::string& s, const Preprocessor &PP,
-                                  PathDiagnosticConsumer *subPD) {
-  return new PlistDiagnostics(s, PP.getLangOpts(), false, subPD);
+void ento::createPlistDiagnosticConsumer(PathDiagnosticConsumers &C,
+                                         const std::string& s,
+                                         const Preprocessor &PP) {
+  C.push_back(new PlistDiagnostics(s, PP.getLangOpts(), false));
 }
 
-PathDiagnosticConsumer*
-ento::createPlistMultiFileDiagnosticConsumer(const std::string &s,
-                                              const Preprocessor &PP) {
-  return new PlistDiagnostics(s, PP.getLangOpts(), true, 0);
-}
-
-PathDiagnosticConsumer::PathGenerationScheme
-PlistDiagnostics::getGenerationScheme() const {
-  if (const PathDiagnosticConsumer *PD = SubPD.get())
-    return PD->getGenerationScheme();
-
-  return Extensive;
+void ento::createPlistMultiFileDiagnosticConsumer(PathDiagnosticConsumers &C,
+                                                  const std::string &s,
+                                                  const Preprocessor &PP) {
+  C.push_back(new PlistDiagnostics(s, PP.getLangOpts(), true));
 }
 
 static void AddFID(FIDMap &FIDs, SmallVectorImpl<FileID> &V,
@@ -353,7 +342,7 @@ static void ReportPiece(raw_ostream &o,
 
 void PlistDiagnostics::FlushDiagnosticsImpl(
                                     std::vector<const PathDiagnostic *> &Diags,
-                                    SmallVectorImpl<std::string> *FilesMade) {
+                                    FilesMade *filesMade) {
   // Build up a set of FIDs that we use by scanning the locations and
   // ranges of the diagnostics.
   FIDMap FM;
@@ -507,19 +496,21 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
     EmitLocation(o, *SM, LangOpts, D->getLocation(), FM, 2);
 
     // Output the diagnostic to the sub-diagnostic client, if any.
-    if (SubPD) {
-      std::vector<const PathDiagnostic *> SubDiags;
-      SubDiags.push_back(D);
-      SmallVector<std::string, 1> SubFilesMade;
-      SubPD->FlushDiagnosticsImpl(SubDiags, &SubFilesMade);
-
-      if (!SubFilesMade.empty()) {
-        o << "  <key>" << SubPD->getName() << "_files</key>\n";
-        o << "  <array>\n";
-        for (size_t i = 0, n = SubFilesMade.size(); i < n ; ++i)
-          o << "   <string>" << SubFilesMade[i] << "</string>\n";
-        o << "  </array>\n";
+    if (!filesMade->empty()) {
+      StringRef lastName;
+      for (FilesMade::iterator I = filesMade->begin(), E = filesMade->end();
+           I != E; ++I) {
+        StringRef newName = I->first;
+        if (newName != lastName) {
+          if (!lastName.empty())
+            o << "  </array>\n";
+          lastName = newName;
+          o <<  "  <key>" << lastName << "_files</key>\n";
+          o << "  <array>\n";
+        }
+        o << "   <string>" << I->second << "</string>\n";
       }
+      o << "  </array>\n";
     }
 
     // Close up the entry.
@@ -531,6 +522,8 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
   // Finish.
   o << "</dict>\n</plist>";
   
-  if (FilesMade)
-    FilesMade->push_back(OutputFile);
+  if (filesMade) {
+    StringRef Name(getName());
+    filesMade->push_back(std::make_pair(Name, OutputFile));
+  }
 }

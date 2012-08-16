@@ -1345,6 +1345,9 @@ BugReport::~BugReport() {
   for (visitor_iterator I = visitor_begin(), E = visitor_end(); I != E; ++I) {
     delete *I;
   }
+  while (!interestingSymbols.empty()) {
+    popInterestingSymbolsAndRegions();
+  }
 }
 
 const Decl *BugReport::getDeclWithIssue() const {
@@ -1386,11 +1389,11 @@ void BugReport::markInteresting(SymbolRef sym) {
     return;
 
   // If the symbol wasn't already in our set, note a configuration change.
-  if (interestingSymbols.insert(sym).second)
+  if (getInterestingSymbols().insert(sym).second)
     ++ConfigurationChangeToken;
 
   if (const SymbolMetadata *meta = dyn_cast<SymbolMetadata>(sym))
-    interestingRegions.insert(meta->getRegion());
+    getInterestingRegions().insert(meta->getRegion());
 }
 
 void BugReport::markInteresting(const MemRegion *R) {
@@ -1399,11 +1402,11 @@ void BugReport::markInteresting(const MemRegion *R) {
 
   // If the base region wasn't already in our set, note a configuration change.
   R = R->getBaseRegion();
-  if (interestingRegions.insert(R).second)
+  if (getInterestingRegions().insert(R).second)
     ++ConfigurationChangeToken;
 
   if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(R))
-    interestingSymbols.insert(SR->getSymbol());
+    getInterestingSymbols().insert(SR->getSymbol());
 }
 
 void BugReport::markInteresting(SVal V) {
@@ -1411,30 +1414,58 @@ void BugReport::markInteresting(SVal V) {
   markInteresting(V.getAsSymbol());
 }
 
-bool BugReport::isInteresting(SVal V) const {
+bool BugReport::isInteresting(SVal V) {
   return isInteresting(V.getAsRegion()) || isInteresting(V.getAsSymbol());
 }
 
-bool BugReport::isInteresting(SymbolRef sym) const {
+bool BugReport::isInteresting(SymbolRef sym) {
   if (!sym)
     return false;
   // We don't currently consider metadata symbols to be interesting
   // even if we know their region is interesting. Is that correct behavior?
-  return interestingSymbols.count(sym);
+  return getInterestingSymbols().count(sym);
 }
 
-bool BugReport::isInteresting(const MemRegion *R) const {
+bool BugReport::isInteresting(const MemRegion *R) {
   if (!R)
     return false;
   R = R->getBaseRegion();
-  bool b = interestingRegions.count(R);
+  bool b = getInterestingRegions().count(R);
   if (b)
     return true;
   if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(R))
-    return interestingSymbols.count(SR->getSymbol());
+    return getInterestingSymbols().count(SR->getSymbol());
   return false;
 }
-  
+
+void BugReport::lazyInitializeInterestingSets() {
+  if (interestingSymbols.empty()) {
+    interestingSymbols.push_back(new Symbols());
+    interestingRegions.push_back(new Regions());
+  }
+}
+
+BugReport::Symbols &BugReport::getInterestingSymbols() {
+  lazyInitializeInterestingSets();
+  return *interestingSymbols.back();
+}
+
+BugReport::Regions &BugReport::getInterestingRegions() {
+  lazyInitializeInterestingSets();
+  return *interestingRegions.back();
+}
+
+void BugReport::pushInterestingSymbolsAndRegions() {
+  interestingSymbols.push_back(new Symbols(getInterestingSymbols()));
+  interestingRegions.push_back(new Regions(getInterestingRegions()));
+}
+
+void BugReport::popInterestingSymbolsAndRegions() {
+  delete interestingSymbols.back();
+  interestingSymbols.pop_back();
+  delete interestingRegions.back();
+  interestingRegions.pop_back();
+}
 
 const Stmt *BugReport::getStmt() const {
   if (!ErrorNode)
@@ -1793,12 +1824,13 @@ static void CompactPathDiagnostic(PathPieces &path, const SourceManager& SM) {
 }
 
 void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
-                        SmallVectorImpl<BugReport *> &bugReports) {
+                                           PathDiagnosticConsumer &PC,
+                                           ArrayRef<BugReport *> &bugReports) {
 
   assert(!bugReports.empty());
   SmallVector<const ExplodedNode *, 10> errorNodes;
-  for (SmallVectorImpl<BugReport*>::iterator I = bugReports.begin(),
-    E = bugReports.end(); I != E; ++I) {
+  for (ArrayRef<BugReport*>::iterator I = bugReports.begin(),
+                                      E = bugReports.end(); I != E; ++I) {
       errorNodes.push_back((*I)->getErrorNode());
   }
 
@@ -1818,8 +1850,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   const ExplodedNode *N = GPair.second.first;
 
   // Start building the path diagnostic...
-  PathDiagnosticBuilder PDB(*this, R, BackMap.get(),
-                            getPathDiagnosticConsumer());
+  PathDiagnosticBuilder PDB(*this, R, BackMap.get(), &PC);
 
   // Register additional node visitors.
   R->addVisitor(new NilReceiverBRVisitor());
@@ -1867,6 +1898,8 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
     case PathDiagnosticConsumer::Minimal:
       GenerateMinimalPathDiagnostic(PD, PDB, N, visitors);
       break;
+    case PathDiagnosticConsumer::None:
+      llvm_unreachable("PathDiagnosticConsumer::None should never appear here");
     }
 
     // Clean up the visitors we used.
@@ -2022,53 +2055,21 @@ FindReportInEquivalenceClass(BugReportEquivClass& EQ,
   return exampleReport;
 }
 
-//===----------------------------------------------------------------------===//
-// DiagnosticCache.  This is a hack to cache analyzer diagnostics.  It
-// uses global state, which eventually should go elsewhere.
-//===----------------------------------------------------------------------===//
-namespace {
-class DiagCacheItem : public llvm::FoldingSetNode {
-  llvm::FoldingSetNodeID ID;
-public:
-  DiagCacheItem(BugReport *R, PathDiagnostic *PD) {
-    R->Profile(ID);
-    PD->Profile(ID);
-  }
-  
-  void Profile(llvm::FoldingSetNodeID &id) {
-    id = ID;
-  }
-  
-  llvm::FoldingSetNodeID &getID() { return ID; }
-};
-}
-
-static bool IsCachedDiagnostic(BugReport *R, PathDiagnostic *PD) {
-  // FIXME: Eventually this diagnostic cache should reside in something
-  // like AnalysisManager instead of being a static variable.  This is
-  // really unsafe in the long term.
-  typedef llvm::FoldingSet<DiagCacheItem> DiagnosticCache;
-  static DiagnosticCache DC;
-  
-  void *InsertPos;
-  DiagCacheItem *Item = new DiagCacheItem(R, PD);
-  
-  if (DC.FindNodeOrInsertPos(Item->getID(), InsertPos)) {
-    delete Item;
-    return true;
-  }
-  
-  DC.InsertNode(Item, InsertPos);
-  return false;
-}
-
 void BugReporter::FlushReport(BugReportEquivClass& EQ) {
   SmallVector<BugReport*, 10> bugReports;
   BugReport *exampleReport = FindReportInEquivalenceClass(EQ, bugReports);
-  if (!exampleReport)
-    return;
-  
-  PathDiagnosticConsumer* PD = getPathDiagnosticConsumer();
+  if (exampleReport) {
+    const PathDiagnosticConsumers &C = getPathDiagnosticConsumers();
+    for (PathDiagnosticConsumers::const_iterator I=C.begin(),
+                                                 E=C.end(); I != E; ++I) {
+      FlushReport(exampleReport, **I, bugReports);
+    }
+  }
+}
+
+void BugReporter::FlushReport(BugReport *exampleReport,
+                              PathDiagnosticConsumer &PD,
+                              ArrayRef<BugReport*> bugReports) {
 
   // FIXME: Make sure we use the 'R' for the path that was actually used.
   // Probably doesn't make a difference in practice.
@@ -2077,65 +2078,39 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
   OwningPtr<PathDiagnostic>
     D(new PathDiagnostic(exampleReport->getDeclWithIssue(),
                          exampleReport->getBugType().getName(),
-                         !PD || PD->useVerboseDescription()
+                         PD.useVerboseDescription()
                          ? exampleReport->getDescription() 
                          : exampleReport->getShortDescription(),
                          BT.getCategory()));
 
-  if (!bugReports.empty())
-    GeneratePathDiagnostic(*D.get(), bugReports);
-  
+  // Generate the full path diagnostic, using the generation scheme
+  // specified by the PathDiagnosticConsumer.
+  if (PD.getGenerationScheme() != PathDiagnosticConsumer::None) {
+    if (!bugReports.empty())
+      GeneratePathDiagnostic(*D.get(), PD, bugReports);
+  }
+
+  // If the path is empty, generate a single step path with the location
+  // of the issue.
+  if (D->path.empty()) {
+    PathDiagnosticLocation L = exampleReport->getLocation(getSourceManager());
+    PathDiagnosticPiece *piece =
+      new PathDiagnosticEventPiece(L, exampleReport->getDescription());
+    BugReport::ranges_iterator Beg, End;
+    llvm::tie(Beg, End) = exampleReport->getRanges();
+    for ( ; Beg != End; ++Beg)
+      piece->addRange(*Beg);
+    D->getActivePath().push_back(piece);
+  }
+
   // Get the meta data.
-  const BugReport::ExtraTextList &Meta =
-                                  exampleReport->getExtraText();
+  const BugReport::ExtraTextList &Meta = exampleReport->getExtraText();
   for (BugReport::ExtraTextList::const_iterator i = Meta.begin(),
                                                 e = Meta.end(); i != e; ++i) {
     D->addMeta(*i);
   }
 
-  // Emit a summary diagnostic to the regular Diagnostics engine.
-  BugReport::ranges_iterator Beg, End;
-  llvm::tie(Beg, End) = exampleReport->getRanges();
-  DiagnosticsEngine &Diag = getDiagnostic();
-  
-  if (!IsCachedDiagnostic(exampleReport, D.get())) {
-    // Search the description for '%', as that will be interpretted as a
-    // format character by FormatDiagnostics.
-    StringRef desc = exampleReport->getShortDescription();
-
-    SmallString<512> TmpStr;
-    llvm::raw_svector_ostream Out(TmpStr);
-    for (StringRef::iterator I=desc.begin(), E=desc.end(); I!=E; ++I) {
-      if (*I == '%')
-        Out << "%%";
-      else
-        Out << *I;
-    }
-    
-    Out.flush();
-    unsigned ErrorDiag = Diag.getCustomDiagID(DiagnosticsEngine::Warning, TmpStr);
-
-    DiagnosticBuilder diagBuilder = Diag.Report(
-      exampleReport->getLocation(getSourceManager()).asLocation(), ErrorDiag);
-    for (BugReport::ranges_iterator I = Beg; I != End; ++I)
-      diagBuilder << *I;
-  }
-
-  // Emit a full diagnostic for the path if we have a PathDiagnosticConsumer.
-  if (!PD)
-    return;
-
-  if (D->path.empty()) {
-    PathDiagnosticPiece *piece = new PathDiagnosticEventPiece(
-                                 exampleReport->getLocation(getSourceManager()),
-                                 exampleReport->getDescription());
-    for ( ; Beg != End; ++Beg)
-      piece->addRange(*Beg);
-
-    D->getActivePath().push_back(piece);
-  }
-
-  PD->HandlePathDiagnostic(D.take());
+  PD.HandlePathDiagnostic(D.take());
 }
 
 void BugReporter::EmitBasicReport(const Decl *DeclWithIssue,

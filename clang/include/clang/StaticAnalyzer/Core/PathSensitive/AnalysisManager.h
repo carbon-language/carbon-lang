@@ -19,6 +19,7 @@
 #include "clang/Frontend/AnalyzerOptions.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
+#include "clang/StaticAnalyzer/Core/PathDiagnosticConsumers.h"
 
 namespace clang {
 
@@ -32,8 +33,7 @@ class AnalysisManager : public BugReporterData {
   ASTContext &Ctx;
   DiagnosticsEngine &Diags;
   const LangOptions &LangOpts;
-
-  OwningPtr<PathDiagnosticConsumer> PD;
+  PathDiagnosticConsumers PathConsumers;
 
   // Configurable components creators.
   StoreManagerCreator CreateStoreMgr;
@@ -82,8 +82,9 @@ public:
   bool NoRetryExhausted;
 
 public:
-  AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags, 
-                  const LangOptions &lang, PathDiagnosticConsumer *pd,
+  AnalysisManager(ASTContext &ctx,DiagnosticsEngine &diags,
+                  const LangOptions &lang,
+                  const PathDiagnosticConsumers &Consumers,
                   StoreManagerCreator storemgr,
                   ConstraintManagerCreator constraintmgr, 
                   CheckerManager *checkerMgr,
@@ -99,12 +100,7 @@ public:
                   AnalysisInliningMode inliningMode,
                   bool NoRetry);
 
-  /// Construct a clone of the given AnalysisManager with the given ASTContext
-  /// and DiagnosticsEngine.
-  AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags,
-                  AnalysisManager &ParentAM);
-
-  ~AnalysisManager() { FlushDiagnostics(); }
+  ~AnalysisManager();
   
   void ClearContexts() {
     AnaCtxMgr.clear();
@@ -140,14 +136,11 @@ public:
     return LangOpts;
   }
 
-  virtual PathDiagnosticConsumer *getPathDiagnosticConsumer() {
-    return PD.get();
+  ArrayRef<PathDiagnosticConsumer*> getPathDiagnosticConsumers()  {
+    return PathConsumers;
   }
-  
-  void FlushDiagnostics() {
-    if (PD.get())
-      PD->FlushDiagnostics(0);
-  }
+
+  void FlushDiagnostics();
 
   unsigned getMaxNodes() const { return MaxNodes; }
 

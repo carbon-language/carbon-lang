@@ -76,7 +76,7 @@ void errRetVal() {
   UInt32 length;
   void *outData;
   st = SecKeychainItemCopyContent(2, ptr, ptr, &length, &outData);
-  if (st == GenericError) // expected-warning{{Allocated data is not released: missing a call to 'SecKeychainItemFreeContent'.}}
+  if (st == GenericError) // expected-warning{{Allocated data is not released: missing a call to 'SecKeychainItemFreeContent'}}
     SecKeychainItemFreeContent(ptr, outData); // expected-warning{{Only call free if a valid (non-NULL) buffer was returned}}
 }
 
@@ -220,7 +220,7 @@ int foo(CFTypeRef keychainOrArray, SecProtocolType protocol,
     if (st == noErr)
       SecKeychainItemFreeContent(ptr, outData[3]);
   }
-  if (length) { // expected-warning{{Allocated data is not released: missing a call to 'SecKeychainItemFreeContent'.}}
+  if (length) { // expected-warning{{Allocated data is not released: missing a call to 'SecKeychainItemFreeContent'}}
     length++;
   }
   return 0;
@@ -318,7 +318,7 @@ void radar10508828_2() {
   UInt32 pwdLen = 0;
   void*  pwdBytes = 0;
   OSStatus rc = SecKeychainFindGenericPassword(0, 3, "foo", 3, "bar", &pwdLen, &pwdBytes, 0);
-  SecKeychainItemFreeContent(0, pwdBytes); // expected-warning {{Only call free if a valid (non-NULL) buffer was returned.}}
+  SecKeychainItemFreeContent(0, pwdBytes); // expected-warning {{Only call free if a valid (non-NULL) buffer was returned}}
 }
 
 //Example from bug 10797.

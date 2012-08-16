@@ -208,11 +208,11 @@ void f7_realloc() {
 }
 
 void PR6123() {
-  int *x = malloc(11); // expected-warning{{Cast a region whose size is not a multiple of the destination type size.}}
+  int *x = malloc(11); // expected-warning{{Cast a region whose size is not a multiple of the destination type size}}
 }
 
 void PR7217() {
-  int *buf = malloc(2); // expected-warning{{Cast a region whose size is not a multiple of the destination type size.}}
+  int *buf = malloc(2); // expected-warning{{Cast a region whose size is not a multiple of the destination type size}}
   buf[1] = 'c'; // not crash
 }
 

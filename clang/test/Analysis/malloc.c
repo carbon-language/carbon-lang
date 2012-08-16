@@ -260,11 +260,11 @@ void f7_realloc() {
 }
 
 void PR6123() {
-  int *x = malloc(11); // expected-warning{{Cast a region whose size is not a multiple of the destination type size.}}
+  int *x = malloc(11); // expected-warning{{Cast a region whose size is not a multiple of the destination type size}}
 }
 
 void PR7217() {
-  int *buf = malloc(2); // expected-warning{{Cast a region whose size is not a multiple of the destination type size.}}
+  int *buf = malloc(2); // expected-warning{{Cast a region whose size is not a multiple of the destination type size}}
   buf[1] = 'c'; // not crash
 }
 
@@ -389,7 +389,7 @@ void mallocEscapeMalloc() {
 
 void mallocMalloc() {
   int *p = malloc(12);
-  p = malloc(12); // expected-warning 2 {{Memory is never released; potential leak}}
+  p = malloc(12); // expected-warning {{Memory is never released; potential leak}}
 }
 
 void mallocFreeMalloc() {

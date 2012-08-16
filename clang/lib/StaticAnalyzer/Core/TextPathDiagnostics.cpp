@@ -32,7 +32,7 @@ public:
     : OutputFile(output), Diag(diag) {}
 
   void FlushDiagnosticsImpl(std::vector<const PathDiagnostic *> &Diags,
-                            SmallVectorImpl<std::string> *FilesMade);
+                            FilesMade *filesMade);
   
   virtual StringRef getName() const {
     return "TextPathDiagnostics";
@@ -47,15 +47,15 @@ public:
 
 } // end anonymous namespace
 
-PathDiagnosticConsumer*
-ento::createTextPathDiagnosticConsumer(const std::string& out,
-                                     const Preprocessor &PP) {
-  return new TextPathDiagnostics(out, PP.getDiagnostics());
+void ento::createTextPathDiagnosticConsumer(PathDiagnosticConsumers &C,
+                                            const std::string& out,
+                                            const Preprocessor &PP) {
+  C.push_back(new TextPathDiagnostics(out, PP.getDiagnostics()));
 }
 
 void TextPathDiagnostics::FlushDiagnosticsImpl(
                               std::vector<const PathDiagnostic *> &Diags,
-                              SmallVectorImpl<std::string> *FilesMade) {
+                              FilesMade *) {
   for (std::vector<const PathDiagnostic *>::iterator it = Diags.begin(),
        et = Diags.end(); it != et; ++it) {
     const PathDiagnostic *D = *it;

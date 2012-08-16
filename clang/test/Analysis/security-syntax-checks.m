@@ -46,7 +46,7 @@ int getpw(unsigned int uid, char *buf);
 
 void test_getpw() {
   char buff[1024];
-  getpw(2, buff); // expected-warning{{The getpw() function is dangerous as it may overflow the provided buffer. It is obsoleted by getpwuid().}}
+  getpw(2, buff); // expected-warning{{The getpw() function is dangerous as it may overflow the provided buffer. It is obsoleted by getpwuid()}}
 }
 
 // <rdar://problem/6337132> CWE-273: Failure to Check Whether Privileges Were
@@ -138,7 +138,7 @@ void test_strcpy() {
   char x[4];
   char *y;
 
-  strcpy(x, y); //expected-warning{{Call to function 'strcpy' is insecure as it does not provide bounding of the memory buffer. Replace unbounded copy functions with analogous functions that support length arguments such as 'strlcpy'. CWE-119.}}
+  strcpy(x, y); //expected-warning{{Call to function 'strcpy' is insecure as it does not provide bounding of the memory buffer. Replace unbounded copy functions with analogous functions that support length arguments such as 'strlcpy'. CWE-119}}
 }
 
 //===----------------------------------------------------------------------===
@@ -162,7 +162,7 @@ void test_strcat() {
   char x[4];
   char *y;
 
-  strcat(x, y); //expected-warning{{Call to function 'strcat' is insecure as it does not provide bounding of the memory buffer. Replace unbounded copy functions with analogous functions that support length arguments such as 'strlcat'. CWE-119.}}
+  strcat(x, y); //expected-warning{{Call to function 'strcat' is insecure as it does not provide bounding of the memory buffer. Replace unbounded copy functions with analogous functions that support length arguments such as 'strlcat'. CWE-119}}
 }
 
 //===----------------------------------------------------------------------===
@@ -173,7 +173,7 @@ typedef __int32_t pid_t;
 pid_t vfork(void);
 
 void test_vfork() {
-  vfork(); //expected-warning{{Call to function 'vfork' is insecure as it can lead to denial of service situations in the parent process.}}
+  vfork(); //expected-warning{{Call to function 'vfork' is insecure as it can lead to denial of service situations in the parent process}}
 }
 
 //===----------------------------------------------------------------------===

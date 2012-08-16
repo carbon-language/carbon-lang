@@ -51,22 +51,25 @@ typedef const SymExpr* SymbolRef;
 class PathDiagnostic;
 
 class PathDiagnosticConsumer {
+public:
+  typedef std::vector<std::pair<StringRef, std::string> > FilesMade;
+
+private:
   virtual void anchor();
 public:
   PathDiagnosticConsumer() : flushed(false) {}
   virtual ~PathDiagnosticConsumer();
 
-  void FlushDiagnostics(SmallVectorImpl<std::string> *FilesMade);
+  void FlushDiagnostics(FilesMade *FilesMade);
 
   virtual void FlushDiagnosticsImpl(std::vector<const PathDiagnostic *> &Diags,
-                                    SmallVectorImpl<std::string> *FilesMade)
-                                    = 0;
+                                    FilesMade *filesMade) = 0;
 
   virtual StringRef getName() const = 0;
   
   void HandlePathDiagnostic(PathDiagnostic *D);
 
-  enum PathGenerationScheme { Minimal, Extensive };
+  enum PathGenerationScheme { None, Minimal, Extensive };
   virtual PathGenerationScheme getGenerationScheme() const { return Minimal; }
   virtual bool supportsLogicalOpControlFlow() const { return false; }
   virtual bool supportsAllBlockEdges() const { return false; }
@@ -333,6 +336,8 @@ public:
   }
 
   typedef const SourceRange* range_iterator;
+
+  ArrayRef<SourceRange> getRanges() const { return ranges; }
 
   range_iterator ranges_begin() const {
     return ranges.empty() ? NULL : &ranges[0];
