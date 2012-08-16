@@ -57,7 +57,7 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
                                  StandardConversionSequence &SCS,
                                  bool CStyle,
                                  bool AllowObjCWritebackConversion);
-  
+
 static bool IsTransparentUnionStandardConversion(Sema &S, Expr* From, 
                                                  QualType &ToType,
                                                  bool InOverloadResolution,
