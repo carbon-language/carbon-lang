@@ -2015,6 +2015,8 @@ StringRef ELFObjectFile<target_endianness, is64Bits>
       return "ELF32-arm";
     case ELF::EM_HEXAGON:
       return "ELF32-hexagon";
+    case ELF::EM_PPC:
+      return "ELF32-ppc";
     default:
       return "ELF32-unknown";
     }
@@ -2024,6 +2026,8 @@ StringRef ELFObjectFile<target_endianness, is64Bits>
       return "ELF64-i386";
     case ELF::EM_X86_64:
       return "ELF64-x86-64";
+    case ELF::EM_PPC64:
+      return "ELF64-ppc64";
     default:
       return "ELF64-unknown";
     }
@@ -2044,6 +2048,10 @@ unsigned ELFObjectFile<target_endianness, is64Bits>::getArch() const {
     return Triple::arm;
   case ELF::EM_HEXAGON:
     return Triple::hexagon;
+  case ELF::EM_PPC:
+    return Triple::ppc;
+  case ELF::EM_PPC64:
+    return Triple::ppc64;
   default:
     return Triple::UnknownArch;
   }
