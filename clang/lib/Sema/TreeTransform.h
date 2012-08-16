@@ -1277,12 +1277,11 @@ public:
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
   StmtResult RebuildObjCForCollectionStmt(SourceLocation ForLoc,
-                                          SourceLocation LParenLoc,
                                           Stmt *Element,
                                           Expr *Collection,
                                           SourceLocation RParenLoc,
                                           Stmt *Body) {
-    StmtResult ForEachStmt = getSema().ActOnObjCForCollectionStmt(ForLoc, LParenLoc,
+    StmtResult ForEachStmt = getSema().ActOnObjCForCollectionStmt(ForLoc,
                                                 Element,
                                                 Collection,
                                                 RParenLoc);
@@ -5803,7 +5802,6 @@ TreeTransform<Derived>::TransformObjCForCollectionStmt(
 
   // Build a new statement.
   return getDerived().RebuildObjCForCollectionStmt(S->getForLoc(),
-                                                   /*FIXME:*/S->getForLoc(),
                                                    Element.get(),
                                                    Collection.get(),
                                                    S->getRParenLoc(),

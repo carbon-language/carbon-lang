@@ -1521,7 +1521,6 @@ Sema::CheckObjCForCollectionOperand(SourceLocation forLoc, Expr *collection) {
 
 StmtResult
 Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
-                                 SourceLocation LParenLoc,
                                  Stmt *First, Expr *collection,
                                  SourceLocation RParenLoc) {
 
@@ -1703,9 +1702,9 @@ static bool ObjCEnumerationCollection(Expr *Collection) {
           && Collection->getType()->getAs<ObjCObjectPointerType>() != 0;
 }
 
-/// ActOnCXXForRangeStmt - Check and build a C++0x for-range statement.
+/// ActOnCXXForRangeStmt - Check and build a C++11 for-range statement.
 ///
-/// C++0x [stmt.ranged]:
+/// C++11 [stmt.ranged]:
 ///   A range-based for statement is equivalent to
 ///
 ///   {
@@ -1722,15 +1721,14 @@ static bool ObjCEnumerationCollection(Expr *Collection) {
 /// The body of the loop is not available yet, since it cannot be analysed until
 /// we have determined the type of the for-range-declaration.
 StmtResult
-Sema::ActOnCXXForRangeStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
+Sema::ActOnCXXForRangeStmt(SourceLocation ForLoc,
                            Stmt *First, SourceLocation ColonLoc, Expr *Range,
                            SourceLocation RParenLoc) {
   if (!First || !Range)
     return StmtError();
 
   if (ObjCEnumerationCollection(Range))
-    return ActOnObjCForCollectionStmt(ForLoc, LParenLoc, First, Range,
-                                      RParenLoc);
+    return ActOnObjCForCollectionStmt(ForLoc, First, Range, RParenLoc);
 
   DeclStmt *DS = dyn_cast<DeclStmt>(First);
   assert(DS && "first part of for range not a decl stmt");

@@ -2498,13 +2498,11 @@ public:
   ExprResult CheckObjCForCollectionOperand(SourceLocation forLoc,
                                            Expr *collection);
   StmtResult ActOnObjCForCollectionStmt(SourceLocation ForColLoc,
-                                        SourceLocation LParenLoc,
                                         Stmt *First, Expr *collection,
                                         SourceLocation RParenLoc);
   StmtResult FinishObjCForCollectionStmt(Stmt *ForCollection, Stmt *Body);
 
-  StmtResult ActOnCXXForRangeStmt(SourceLocation ForLoc,
-                                  SourceLocation LParenLoc, Stmt *LoopVar,
+  StmtResult ActOnCXXForRangeStmt(SourceLocation ForLoc, Stmt *LoopVar,
                                   SourceLocation ColonLoc, Expr *Collection,
                                   SourceLocation RParenLoc);
   StmtResult BuildCXXForRangeStmt(SourceLocation ForLoc,
