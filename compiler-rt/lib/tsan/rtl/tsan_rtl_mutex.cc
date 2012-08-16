@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "tsan_rtl.h"
+#include "tsan_flags.h"
 #include "tsan_sync.h"
 #include "tsan_report.h"
 #include "tsan_symbolize.h"
@@ -43,7 +44,9 @@ void MutexDestroy(ThreadState *thr, uptr pc, uptr addr) {
     return;
   if (!s->is_linker_init) {
     MemoryWrite1Byte(thr, pc, addr);
-    if (s->owner_tid != SyncVar::kInvalidTid && !s->is_broken) {
+    if (flags()->report_destroy_locked
+        && s->owner_tid != SyncVar::kInvalidTid
+        && !s->is_broken) {
       s->is_broken = true;
       ScopedReport rep(ReportTypeMutexDestroyLocked);
       rep.AddMutex(s);
