@@ -98,3 +98,23 @@ unsigned t11(void) {
 // CHECK: [[RET:%[a-zA-Z0-9]+]] = load i32* [[J]], align 4
 // CHECK: ret i32 [[RET]]
 }
+
+void t12(void) {
+  __asm EVEN
+  __asm ALIGN
+}
+
+void t13(void) {
+  __asm {
+    _emit 0x4A
+    _emit 0x43
+    _emit 0x4B
+  }
+}
+
+void t14(void) {
+  unsigned arr[10];
+  __asm LENGTH arr ; sizeof(arr)/sizeof(arr[0])
+  __asm SIZE arr   ; sizeof(arr)
+  __asm TYPE arr   ; sizeof(arr[0])
+}

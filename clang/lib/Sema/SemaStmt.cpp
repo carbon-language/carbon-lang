@@ -2762,6 +2762,17 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
   return Owned(NS);
 }
 
+// isMSAsmKeyword - Return true if this is an MS-style inline asm keyword. These
+// require special handling.
+static bool isMSAsmKeyword(StringRef Name) {
+  bool Ret = llvm::StringSwitch<bool>(Name)
+    .Cases("EVEN", "ALIGN", true) // Alignment directives.
+    .Cases("LENGTH", "SIZE", "TYPE", true) // Type and variable sizes.
+    .Case("_emit", true) // _emit Pseudoinstruction.
+    .Default(false);
+  return Ret;
+}
+
 static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
                               SourceLocation AsmLoc,
                               ArrayRef<Token> AsmToks,
@@ -2795,7 +2806,14 @@ static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
     if (isNewAsm) {
       AsmRegs[NumAsmStrings].resize(AsmToks.size());
       AsmNames[NumAsmStrings].resize(AsmToks.size());
-      Asm = AsmToks[i].getIdentifierInfo()->getName().str();
+
+      StringRef Piece = AsmToks[i].getIdentifierInfo()->getName();
+      // MS-style inline asm keywords require special handling.
+      if (isMSAsmKeyword(Piece))
+        IsSimple = false;
+
+      // TODO: Verify this is a valid opcode.
+      Asm = Piece;
       continue;
     }
 
@@ -2833,6 +2851,13 @@ static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
       }
 
       IsSimple = false;
+
+      // MS-style inline asm keywords require special handling.
+      if (isMSAsmKeyword(Name)) {
+        IsSimple = false;
+        Asm += Name;
+        break;
+      }
 
       // FIXME: Why are we missing this segment register?
       if (Name == "fs") {
