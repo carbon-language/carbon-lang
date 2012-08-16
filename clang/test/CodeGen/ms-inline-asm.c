@@ -91,7 +91,6 @@ unsigned t11(void) {
   }
   return j;
 // CHECK: t11
-// CHECK: entry:
 // CHECK: [[I:%[a-zA-Z0-9]+]] = alloca i32, align 4
 // CHECK: [[J:%[a-zA-Z0-9]+]] = alloca i32, align 4
 // CHECK: store i32 1, i32* [[I]], align 4
