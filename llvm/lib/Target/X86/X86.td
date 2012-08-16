@@ -97,7 +97,7 @@ def FeatureFMA4    : SubtargetFeature<"fma4", "HasFMA4", "true",
                                       [FeatureAVX, FeatureSSE4A]>;
 def FeatureXOP     : SubtargetFeature<"xop", "HasXOP", "true",
                                       "Enable XOP instructions",
-                                      [FeatureAVX, FeatureSSE4A]>;
+                                      [FeatureFMA4]>;
 def FeatureVectorUAMem : SubtargetFeature<"vector-unaligned-mem",
                                           "HasVectorUAMem", "true",
                  "Allow unaligned memory operands on vector/SIMD instructions">;
@@ -226,7 +226,7 @@ def : Proc<"bdver1",          [FeatureXOP, FeatureFMA4, FeatureCMPXCHG16B,
 def : Proc<"bdver2",          [FeatureXOP, FeatureFMA4, FeatureCMPXCHG16B,
                                FeatureAES, FeaturePCLMUL,
                                FeatureF16C, FeatureLZCNT,
-                               FeaturePOPCNT, FeatureBMI]>;
+                               FeaturePOPCNT, FeatureBMI, FeatureFMA]>;
 
 def : Proc<"winchip-c6",      [FeatureMMX]>;
 def : Proc<"winchip2",        [Feature3DNow]>;
