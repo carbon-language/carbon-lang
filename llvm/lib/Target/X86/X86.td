@@ -17,14 +17,14 @@
 include "llvm/Target/Target.td"
 
 //===----------------------------------------------------------------------===//
-// X86 Subtarget state.
+// X86 Subtarget state
 //
 
 def Mode64Bit : SubtargetFeature<"64bit-mode", "In64BitMode", "true",
                                   "64-bit mode (x86_64)">;
 
 //===----------------------------------------------------------------------===//
-// X86 Subtarget features.
+// X86 Subtarget features
 //===----------------------------------------------------------------------===//
 
 def FeatureCMOV    : SubtargetFeature<"cmov","HasCMov", "true",
