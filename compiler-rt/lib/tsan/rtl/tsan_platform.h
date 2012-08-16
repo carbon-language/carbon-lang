@@ -72,7 +72,7 @@ static inline uptr ShadowToMem(uptr shadow) {
 // COMPAT mapping is not quite one-to-one.
 static inline uptr AlternativeAddress(uptr addr) {
 #if defined(TSAN_COMPAT_SHADOW) && TSAN_COMPAT_SHADOW
-  return addr | 0x280000000000ULL;
+  return (addr & ~kLinuxAppMemMsk) | 0x280000000000ULL;
 #else
   return 0;
 #endif
