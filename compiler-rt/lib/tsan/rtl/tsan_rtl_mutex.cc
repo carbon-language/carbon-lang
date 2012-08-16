@@ -47,6 +47,12 @@ void MutexDestroy(ThreadState *thr, uptr pc, uptr addr) {
       s->is_broken = true;
       ScopedReport rep(ReportTypeMutexDestroyLocked);
       rep.AddMutex(s);
+      StackTrace trace;
+      trace.ObtainCurrent(thr, pc);
+      rep.AddStack(&trace);
+      FastState last(s->last_lock);
+      RestoreStack(last.tid(), last.epoch(), &trace);
+      rep.AddStack(&trace);
       rep.AddLocation(s->addr, 1);
       OutputReport(rep);
     }
@@ -64,6 +70,7 @@ void MutexLock(ThreadState *thr, uptr pc, uptr addr) {
   if (s->owner_tid == SyncVar::kInvalidTid) {
     CHECK_EQ(s->recursion, 0);
     s->owner_tid = thr->tid;
+    s->last_lock = thr->fast_state.raw();
   } else if (s->owner_tid == thr->tid) {
     CHECK_GT(s->recursion, 0);
   } else {
@@ -128,6 +135,7 @@ void MutexReadLock(ThreadState *thr, uptr pc, uptr addr) {
     TsanPrintf("ThreadSanitizer WARNING: read lock of a write locked mutex\n");
   thr->clock.set(thr->tid, thr->fast_state.epoch());
   thr->clock.acquire(&s->clock);
+  s->last_lock = thr->fast_state.raw();
   StatInc(thr, StatSyncAcquire);
   s->mtx.ReadUnlock();
 }

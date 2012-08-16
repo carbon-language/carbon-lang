@@ -188,7 +188,7 @@ const ReportDesc *ScopedReport::GetReport() const {
   return rep_;
 }
 
-static void RestoreStack(int tid, const u64 epoch, StackTrace *stk) {
+void RestoreStack(int tid, const u64 epoch, StackTrace *stk) {
   ThreadContext *tctx = CTX()->threads[tid];
   if (tctx == 0)
     return;

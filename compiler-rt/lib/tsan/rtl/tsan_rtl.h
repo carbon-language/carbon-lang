@@ -83,6 +83,10 @@ class FastState {
       : x_(x) {
   }
 
+  u64 raw() const {
+    return x_;
+  }
+
   u64 tid() const {
     u64 res = x_ >> kTidShift;
     return res;
@@ -143,7 +147,6 @@ class Shadow : public FastState {
   }
 
   bool IsZero() const { return x_ == 0; }
-  u64 raw() const { return x_; }
 
   static inline bool TidsAreEqual(const Shadow s1, const Shadow s2) {
     u64 shifted_xor = (s1.x_ ^ s2.x_) >> kTidShift;
@@ -408,6 +411,8 @@ class ScopedReport {
   ScopedReport(const ScopedReport&);
   void operator = (const ScopedReport&);
 };
+
+void RestoreStack(int tid, const u64 epoch, StackTrace *stk);
 
 void StatAggregate(u64 *dst, u64 *src);
 void StatOutput(u64 *stat);

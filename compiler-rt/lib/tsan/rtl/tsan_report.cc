@@ -109,8 +109,11 @@ void PrintReport(const ReportDesc *rep) {
   TsanPrintf("==================\n");
   PrintHeader(rep->typ);
 
-  for (uptr i = 0; i < rep->stacks.Size(); i++)
+  for (uptr i = 0; i < rep->stacks.Size(); i++) {
+    if (i)
+      TsanPrintf("  and:\n");
     PrintStack(rep->stacks[i]);
+  }
 
   for (uptr i = 0; i < rep->mops.Size(); i++)
     PrintMop(rep->mops[i], i == 0);

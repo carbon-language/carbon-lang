@@ -60,6 +60,7 @@ struct SyncVar {
   SyncClock read_clock;  // Used for rw mutexes only.
   StackTrace creation_stack;
   int owner_tid;  // Set only by exclusive owners.
+  u64 last_lock;
   int recursion;
   bool is_rw;
   bool is_recursive;
