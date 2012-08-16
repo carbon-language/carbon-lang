@@ -740,7 +740,7 @@ TSAN_INTERCEPTOR(int, pthread_create,
   atomic_store(&p.tid, 0, memory_order_relaxed);
   int res = REAL(pthread_create)(th, attr, __tsan_thread_start_func, &p);
   if (res == 0) {
-    int tid = ThreadCreate(cur_thread(), pc, *(uptr*)th, detached);
+    int tid = ThreadCreate(thr, pc, *(uptr*)th, detached);
     CHECK_NE(tid, 0);
     atomic_store(&p.tid, tid, memory_order_release);
     while (atomic_load(&p.tid, memory_order_acquire) != 0)
@@ -756,7 +756,7 @@ TSAN_INTERCEPTOR(int, pthread_join, void *th, void **ret) {
   int tid = ThreadTid(thr, pc, (uptr)th);
   int res = REAL(pthread_join)(th, ret);
   if (res == 0) {
-    ThreadJoin(cur_thread(), pc, tid);
+    ThreadJoin(thr, pc, tid);
   }
   return res;
 }
@@ -766,7 +766,7 @@ TSAN_INTERCEPTOR(int, pthread_detach, void *th) {
   int tid = ThreadTid(thr, pc, (uptr)th);
   int res = REAL(pthread_detach)(th);
   if (res == 0) {
-    ThreadDetach(cur_thread(), pc, tid);
+    ThreadDetach(thr, pc, tid);
   }
   return res;
 }
@@ -782,7 +782,7 @@ TSAN_INTERCEPTOR(int, pthread_mutex_init, void *m, void *a) {
         recursive = (type == PTHREAD_MUTEX_RECURSIVE
             || type == PTHREAD_MUTEX_RECURSIVE_NP);
     }
-    MutexCreate(cur_thread(), pc, (uptr)m, false, recursive);
+    MutexCreate(thr, pc, (uptr)m, false, recursive);
   }
   return res;
 }
@@ -791,7 +791,7 @@ TSAN_INTERCEPTOR(int, pthread_mutex_destroy, void *m) {
   SCOPED_TSAN_INTERCEPTOR(pthread_mutex_destroy, m);
   int res = REAL(pthread_mutex_destroy)(m);
   if (res == 0 || res == EBUSY) {
-    MutexDestroy(cur_thread(), pc, (uptr)m);
+    MutexDestroy(thr, pc, (uptr)m);
   }
   return res;
 }
@@ -800,7 +800,7 @@ TSAN_INTERCEPTOR(int, pthread_mutex_lock, void *m) {
   SCOPED_TSAN_INTERCEPTOR(pthread_mutex_lock, m);
   int res = REAL(pthread_mutex_lock)(m);
   if (res == 0) {
-    MutexLock(cur_thread(), pc, (uptr)m);
+    MutexLock(thr, pc, (uptr)m);
   }
   return res;
 }
@@ -809,7 +809,7 @@ TSAN_INTERCEPTOR(int, pthread_mutex_trylock, void *m) {
   SCOPED_TSAN_INTERCEPTOR(pthread_mutex_trylock, m);
   int res = REAL(pthread_mutex_trylock)(m);
   if (res == 0) {
-    MutexLock(cur_thread(), pc, (uptr)m);
+    MutexLock(thr, pc, (uptr)m);
   }
   return res;
 }
@@ -818,14 +818,14 @@ TSAN_INTERCEPTOR(int, pthread_mutex_timedlock, void *m, void *abstime) {
   SCOPED_TSAN_INTERCEPTOR(pthread_mutex_timedlock, m, abstime);
   int res = REAL(pthread_mutex_timedlock)(m, abstime);
   if (res == 0) {
-    MutexLock(cur_thread(), pc, (uptr)m);
+    MutexLock(thr, pc, (uptr)m);
   }
   return res;
 }
 
 TSAN_INTERCEPTOR(int, pthread_mutex_unlock, void *m) {
   SCOPED_TSAN_INTERCEPTOR(pthread_mutex_unlock, m);
-  MutexUnlock(cur_thread(), pc, (uptr)m);
+  MutexUnlock(thr, pc, (uptr)m);
   int res = REAL(pthread_mutex_unlock)(m);
   return res;
 }
@@ -834,7 +834,7 @@ TSAN_INTERCEPTOR(int, pthread_spin_init, void *m, int pshared) {
   SCOPED_TSAN_INTERCEPTOR(pthread_spin_init, m, pshared);
   int res = REAL(pthread_spin_init)(m, pshared);
   if (res == 0) {
-    MutexCreate(cur_thread(), pc, (uptr)m, false, false);
+    MutexCreate(thr, pc, (uptr)m, false, false);
   }
   return res;
 }
@@ -843,7 +843,7 @@ TSAN_INTERCEPTOR(int, pthread_spin_destroy, void *m) {
   SCOPED_TSAN_INTERCEPTOR(pthread_spin_destroy, m);
   int res = REAL(pthread_spin_destroy)(m);
   if (res == 0) {
-    MutexDestroy(cur_thread(), pc, (uptr)m);
+    MutexDestroy(thr, pc, (uptr)m);
   }
   return res;
 }
@@ -852,7 +852,7 @@ TSAN_INTERCEPTOR(int, pthread_spin_lock, void *m) {
   SCOPED_TSAN_INTERCEPTOR(pthread_spin_lock, m);
   int res = REAL(pthread_spin_lock)(m);
   if (res == 0) {
-    MutexLock(cur_thread(), pc, (uptr)m);
+    MutexLock(thr, pc, (uptr)m);
   }
   return res;
 }
@@ -861,14 +861,14 @@ TSAN_INTERCEPTOR(int, pthread_spin_trylock, void *m) {
   SCOPED_TSAN_INTERCEPTOR(pthread_spin_trylock, m);
   int res = REAL(pthread_spin_trylock)(m);
   if (res == 0) {
-    MutexLock(cur_thread(), pc, (uptr)m);
+    MutexLock(thr, pc, (uptr)m);
   }
   return res;
 }
 
 TSAN_INTERCEPTOR(int, pthread_spin_unlock, void *m) {
   SCOPED_TSAN_INTERCEPTOR(pthread_spin_unlock, m);
-  MutexUnlock(cur_thread(), pc, (uptr)m);
+  MutexUnlock(thr, pc, (uptr)m);
   int res = REAL(pthread_spin_unlock)(m);
   return res;
 }
@@ -877,7 +877,7 @@ TSAN_INTERCEPTOR(int, pthread_rwlock_init, void *m, void *a) {
   SCOPED_TSAN_INTERCEPTOR(pthread_rwlock_init, m, a);
   int res = REAL(pthread_rwlock_init)(m, a);
   if (res == 0) {
-    MutexCreate(cur_thread(), pc, (uptr)m, true, false);
+    MutexCreate(thr, pc, (uptr)m, true, false);
   }
   return res;
 }
@@ -886,7 +886,7 @@ TSAN_INTERCEPTOR(int, pthread_rwlock_destroy, void *m) {
   SCOPED_TSAN_INTERCEPTOR(pthread_rwlock_destroy, m);
   int res = REAL(pthread_rwlock_destroy)(m);
   if (res == 0) {
-    MutexDestroy(cur_thread(), pc, (uptr)m);
+    MutexDestroy(thr, pc, (uptr)m);
   }
   return res;
 }
@@ -895,7 +895,7 @@ TSAN_INTERCEPTOR(int, pthread_rwlock_rdlock, void *m) {
   SCOPED_TSAN_INTERCEPTOR(pthread_rwlock_rdlock, m);
   int res = REAL(pthread_rwlock_rdlock)(m);
   if (res == 0) {
-    MutexReadLock(cur_thread(), pc, (uptr)m);
+    MutexReadLock(thr, pc, (uptr)m);
   }
   return res;
 }
@@ -904,7 +904,7 @@ TSAN_INTERCEPTOR(int, pthread_rwlock_tryrdlock, void *m) {
   SCOPED_TSAN_INTERCEPTOR(pthread_rwlock_tryrdlock, m);
   int res = REAL(pthread_rwlock_tryrdlock)(m);
   if (res == 0) {
-    MutexReadLock(cur_thread(), pc, (uptr)m);
+    MutexReadLock(thr, pc, (uptr)m);
   }
   return res;
 }
@@ -913,7 +913,7 @@ TSAN_INTERCEPTOR(int, pthread_rwlock_timedrdlock, void *m, void *abstime) {
   SCOPED_TSAN_INTERCEPTOR(pthread_rwlock_timedrdlock, m, abstime);
   int res = REAL(pthread_rwlock_timedrdlock)(m, abstime);
   if (res == 0) {
-    MutexReadLock(cur_thread(), pc, (uptr)m);
+    MutexReadLock(thr, pc, (uptr)m);
   }
   return res;
 }
@@ -922,7 +922,7 @@ TSAN_INTERCEPTOR(int, pthread_rwlock_wrlock, void *m) {
   SCOPED_TSAN_INTERCEPTOR(pthread_rwlock_wrlock, m);
   int res = REAL(pthread_rwlock_wrlock)(m);
   if (res == 0) {
-    MutexLock(cur_thread(), pc, (uptr)m);
+    MutexLock(thr, pc, (uptr)m);
   }
   return res;
 }
@@ -931,7 +931,7 @@ TSAN_INTERCEPTOR(int, pthread_rwlock_trywrlock, void *m) {
   SCOPED_TSAN_INTERCEPTOR(pthread_rwlock_trywrlock, m);
   int res = REAL(pthread_rwlock_trywrlock)(m);
   if (res == 0) {
-    MutexLock(cur_thread(), pc, (uptr)m);
+    MutexLock(thr, pc, (uptr)m);
   }
   return res;
 }
@@ -940,14 +940,14 @@ TSAN_INTERCEPTOR(int, pthread_rwlock_timedwrlock, void *m, void *abstime) {
   SCOPED_TSAN_INTERCEPTOR(pthread_rwlock_timedwrlock, m, abstime);
   int res = REAL(pthread_rwlock_timedwrlock)(m, abstime);
   if (res == 0) {
-    MutexLock(cur_thread(), pc, (uptr)m);
+    MutexLock(thr, pc, (uptr)m);
   }
   return res;
 }
 
 TSAN_INTERCEPTOR(int, pthread_rwlock_unlock, void *m) {
   SCOPED_TSAN_INTERCEPTOR(pthread_rwlock_unlock, m);
-  MutexReadOrWriteUnlock(cur_thread(), pc, (uptr)m);
+  MutexReadOrWriteUnlock(thr, pc, (uptr)m);
   int res = REAL(pthread_rwlock_unlock)(m);
   return res;
 }
@@ -978,17 +978,17 @@ TSAN_INTERCEPTOR(int, pthread_cond_broadcast, void *c) {
 
 TSAN_INTERCEPTOR(int, pthread_cond_wait, void *c, void *m) {
   SCOPED_TSAN_INTERCEPTOR(pthread_cond_wait, c, m);
-  MutexUnlock(cur_thread(), pc, (uptr)m);
+  MutexUnlock(thr, pc, (uptr)m);
   int res = REAL(pthread_cond_wait)(c, m);
-  MutexLock(cur_thread(), pc, (uptr)m);
+  MutexLock(thr, pc, (uptr)m);
   return res;
 }
 
 TSAN_INTERCEPTOR(int, pthread_cond_timedwait, void *c, void *m, void *abstime) {
   SCOPED_TSAN_INTERCEPTOR(pthread_cond_timedwait, c, m, abstime);
-  MutexUnlock(cur_thread(), pc, (uptr)m);
+  MutexUnlock(thr, pc, (uptr)m);
   int res = REAL(pthread_cond_timedwait)(c, m, abstime);
-  MutexLock(cur_thread(), pc, (uptr)m);
+  MutexLock(thr, pc, (uptr)m);
   return res;
 }
 
@@ -1008,12 +1008,12 @@ TSAN_INTERCEPTOR(int, pthread_barrier_destroy, void *b) {
 
 TSAN_INTERCEPTOR(int, pthread_barrier_wait, void *b) {
   SCOPED_TSAN_INTERCEPTOR(pthread_barrier_wait, b);
-  Release(cur_thread(), pc, (uptr)b);
+  Release(thr, pc, (uptr)b);
   MemoryRead1Byte(thr, pc, (uptr)b);
   int res = REAL(pthread_barrier_wait)(b);
   MemoryRead1Byte(thr, pc, (uptr)b);
   if (res == 0 || res == PTHREAD_BARRIER_SERIAL_THREAD) {
-    Acquire(cur_thread(), pc, (uptr)b);
+    Acquire(thr, pc, (uptr)b);
   }
   return res;
 }
@@ -1031,14 +1031,14 @@ TSAN_INTERCEPTOR(int, pthread_once, void *o, void (*f)()) {
     (*f)();
     CHECK_EQ(thr->in_rtl, 0);
     thr->in_rtl = old_in_rtl;
-    Release(cur_thread(), pc, (uptr)o);
+    Release(thr, pc, (uptr)o);
     atomic_store(a, 2, memory_order_release);
   } else {
     while (v != 2) {
       pthread_yield();
       v = atomic_load(a, memory_order_acquire);
     }
-    Acquire(cur_thread(), pc, (uptr)o);
+    Acquire(thr, pc, (uptr)o);
   }
   return 0;
 }
@@ -1059,7 +1059,7 @@ TSAN_INTERCEPTOR(int, sem_wait, void *s) {
   SCOPED_TSAN_INTERCEPTOR(sem_wait, s);
   int res = REAL(sem_wait)(s);
   if (res == 0) {
-    Acquire(cur_thread(), pc, (uptr)s);
+    Acquire(thr, pc, (uptr)s);
   }
   return res;
 }
@@ -1068,7 +1068,7 @@ TSAN_INTERCEPTOR(int, sem_trywait, void *s) {
   SCOPED_TSAN_INTERCEPTOR(sem_trywait, s);
   int res = REAL(sem_trywait)(s);
   if (res == 0) {
-    Acquire(cur_thread(), pc, (uptr)s);
+    Acquire(thr, pc, (uptr)s);
   }
   return res;
 }
@@ -1077,14 +1077,14 @@ TSAN_INTERCEPTOR(int, sem_timedwait, void *s, void *abstime) {
   SCOPED_TSAN_INTERCEPTOR(sem_timedwait, s, abstime);
   int res = REAL(sem_timedwait)(s, abstime);
   if (res == 0) {
-    Acquire(cur_thread(), pc, (uptr)s);
+    Acquire(thr, pc, (uptr)s);
   }
   return res;
 }
 
 TSAN_INTERCEPTOR(int, sem_post, void *s) {
   SCOPED_TSAN_INTERCEPTOR(sem_post, s);
-  Release(cur_thread(), pc, (uptr)s);
+  Release(thr, pc, (uptr)s);
   int res = REAL(sem_post)(s);
   return res;
 }
@@ -1093,7 +1093,7 @@ TSAN_INTERCEPTOR(int, sem_getvalue, void *s, int *sval) {
   SCOPED_TSAN_INTERCEPTOR(sem_getvalue, s, sval);
   int res = REAL(sem_getvalue)(s, sval);
   if (res == 0) {
-    Acquire(cur_thread(), pc, (uptr)s);
+    Acquire(thr, pc, (uptr)s);
   }
   return res;
 }
@@ -1102,7 +1102,7 @@ TSAN_INTERCEPTOR(long_t, read, int fd, void *buf, long_t sz) {
   SCOPED_TSAN_INTERCEPTOR(read, fd, buf, sz);
   int res = REAL(read)(fd, buf, sz);
   if (res >= 0) {
-    Acquire(cur_thread(), pc, fd2addr(fd));
+    Acquire(thr, pc, fd2addr(fd));
   }
   return res;
 }
@@ -1111,7 +1111,7 @@ TSAN_INTERCEPTOR(long_t, pread, int fd, void *buf, long_t sz, unsigned off) {
   SCOPED_TSAN_INTERCEPTOR(pread, fd, buf, sz, off);
   int res = REAL(pread)(fd, buf, sz, off);
   if (res >= 0) {
-    Acquire(cur_thread(), pc, fd2addr(fd));
+    Acquire(thr, pc, fd2addr(fd));
   }
   return res;
 }
@@ -1120,7 +1120,7 @@ TSAN_INTERCEPTOR(long_t, pread64, int fd, void *buf, long_t sz, u64 off) {
   SCOPED_TSAN_INTERCEPTOR(pread64, fd, buf, sz, off);
   int res = REAL(pread64)(fd, buf, sz, off);
   if (res >= 0) {
-    Acquire(cur_thread(), pc, fd2addr(fd));
+    Acquire(thr, pc, fd2addr(fd));
   }
   return res;
 }
@@ -1129,7 +1129,7 @@ TSAN_INTERCEPTOR(long_t, readv, int fd, void *vec, int cnt) {
   SCOPED_TSAN_INTERCEPTOR(readv, fd, vec, cnt);
   int res = REAL(readv)(fd, vec, cnt);
   if (res >= 0) {
-    Acquire(cur_thread(), pc, fd2addr(fd));
+    Acquire(thr, pc, fd2addr(fd));
   }
   return res;
 }
@@ -1138,56 +1138,56 @@ TSAN_INTERCEPTOR(long_t, preadv64, int fd, void *vec, int cnt, u64 off) {
   SCOPED_TSAN_INTERCEPTOR(preadv64, fd, vec, cnt, off);
   int res = REAL(preadv64)(fd, vec, cnt, off);
   if (res >= 0) {
-    Acquire(cur_thread(), pc, fd2addr(fd));
+    Acquire(thr, pc, fd2addr(fd));
   }
   return res;
 }
 
 TSAN_INTERCEPTOR(long_t, write, int fd, void *buf, long_t sz) {
   SCOPED_TSAN_INTERCEPTOR(write, fd, buf, sz);
-  Release(cur_thread(), pc, fd2addr(fd));
+  Release(thr, pc, fd2addr(fd));
   int res = REAL(write)(fd, buf, sz);
   return res;
 }
 
 TSAN_INTERCEPTOR(long_t, pwrite, int fd, void *buf, long_t sz, unsigned off) {
   SCOPED_TSAN_INTERCEPTOR(pwrite, fd, buf, sz, off);
-  Release(cur_thread(), pc, fd2addr(fd));
+  Release(thr, pc, fd2addr(fd));
   int res = REAL(pwrite)(fd, buf, sz, off);
   return res;
 }
 
 TSAN_INTERCEPTOR(long_t, pwrite64, int fd, void *buf, long_t sz, u64 off) {
   SCOPED_TSAN_INTERCEPTOR(pwrite64, fd, buf, sz, off);
-  Release(cur_thread(), pc, fd2addr(fd));
+  Release(thr, pc, fd2addr(fd));
   int res = REAL(pwrite64)(fd, buf, sz, off);
   return res;
 }
 
 TSAN_INTERCEPTOR(long_t, writev, int fd, void *vec, int cnt) {
   SCOPED_TSAN_INTERCEPTOR(writev, fd, vec, cnt);
-  Release(cur_thread(), pc, fd2addr(fd));
+  Release(thr, pc, fd2addr(fd));
   int res = REAL(writev)(fd, vec, cnt);
   return res;
 }
 
 TSAN_INTERCEPTOR(long_t, pwritev64, int fd, void *vec, int cnt, u64 off) {
   SCOPED_TSAN_INTERCEPTOR(pwritev64, fd, vec, cnt, off);
-  Release(cur_thread(), pc, fd2addr(fd));
+  Release(thr, pc, fd2addr(fd));
   int res = REAL(pwritev64)(fd, vec, cnt, off);
   return res;
 }
 
 TSAN_INTERCEPTOR(long_t, send, int fd, void *buf, long_t len, int flags) {
   SCOPED_TSAN_INTERCEPTOR(send, fd, buf, len, flags);
-  Release(cur_thread(), pc, fd2addr(fd));
+  Release(thr, pc, fd2addr(fd));
   int res = REAL(send)(fd, buf, len, flags);
   return res;
 }
 
 TSAN_INTERCEPTOR(long_t, sendmsg, int fd, void *msg, int flags) {
   SCOPED_TSAN_INTERCEPTOR(sendmsg, fd, msg, flags);
-  Release(cur_thread(), pc, fd2addr(fd));
+  Release(thr, pc, fd2addr(fd));
   int res = REAL(sendmsg)(fd, msg, flags);
   return res;
 }
@@ -1196,7 +1196,7 @@ TSAN_INTERCEPTOR(long_t, recv, int fd, void *buf, long_t len, int flags) {
   SCOPED_TSAN_INTERCEPTOR(recv, fd, buf, len, flags);
   int res = REAL(recv)(fd, buf, len, flags);
   if (res >= 0) {
-    Acquire(cur_thread(), pc, fd2addr(fd));
+    Acquire(thr, pc, fd2addr(fd));
   }
   return res;
 }
@@ -1205,14 +1205,14 @@ TSAN_INTERCEPTOR(long_t, recvmsg, int fd, void *msg, int flags) {
   SCOPED_TSAN_INTERCEPTOR(recvmsg, fd, msg, flags);
   int res = REAL(recvmsg)(fd, msg, flags);
   if (res >= 0) {
-    Acquire(cur_thread(), pc, fd2addr(fd));
+    Acquire(thr, pc, fd2addr(fd));
   }
   return res;
 }
 
 TSAN_INTERCEPTOR(int, unlink, char *path) {
   SCOPED_TSAN_INTERCEPTOR(unlink, path);
-  Release(cur_thread(), pc, file2addr(path));
+  Release(thr, pc, file2addr(path));
   int res = REAL(unlink)(path);
   return res;
 }
@@ -1220,7 +1220,7 @@ TSAN_INTERCEPTOR(int, unlink, char *path) {
 TSAN_INTERCEPTOR(void*, fopen, char *path, char *mode) {
   SCOPED_TSAN_INTERCEPTOR(fopen, path, mode);
   void *res = REAL(fopen)(path, mode);
-  Acquire(cur_thread(), pc, file2addr(path));
+  Acquire(thr, pc, file2addr(path));
   return res;
 }
 
@@ -1244,7 +1244,7 @@ TSAN_INTERCEPTOR(int, puts, const char *s) {
 
 TSAN_INTERCEPTOR(int, rmdir, char *path) {
   SCOPED_TSAN_INTERCEPTOR(rmdir, path);
-  Release(cur_thread(), pc, dir2addr(path));
+  Release(thr, pc, dir2addr(path));
   int res = REAL(rmdir)(path);
   return res;
 }
@@ -1252,14 +1252,14 @@ TSAN_INTERCEPTOR(int, rmdir, char *path) {
 TSAN_INTERCEPTOR(void*, opendir, char *path) {
   SCOPED_TSAN_INTERCEPTOR(opendir, path);
   void *res = REAL(opendir)(path);
-  Acquire(cur_thread(), pc, dir2addr(path));
+  Acquire(thr, pc, dir2addr(path));
   return res;
 }
 
 TSAN_INTERCEPTOR(int, epoll_ctl, int epfd, int op, int fd, void *ev) {
   SCOPED_TSAN_INTERCEPTOR(epoll_ctl, epfd, op, fd, ev);
   if (op == EPOLL_CTL_ADD) {
-    Release(cur_thread(), pc, epollfd2addr(epfd));
+    Release(thr, pc, epollfd2addr(epfd));
   }
   int res = REAL(epoll_ctl)(epfd, op, fd, ev);
   return res;
@@ -1269,7 +1269,7 @@ TSAN_INTERCEPTOR(int, epoll_wait, int epfd, void *ev, int cnt, int timeout) {
   SCOPED_TSAN_INTERCEPTOR(epoll_wait, epfd, ev, cnt, timeout);
   int res = REAL(epoll_wait)(epfd, ev, cnt, timeout);
   if (res > 0) {
-    Acquire(cur_thread(), pc, epollfd2addr(epfd));
+    Acquire(thr, pc, epollfd2addr(epfd));
   }
   return res;
 }
