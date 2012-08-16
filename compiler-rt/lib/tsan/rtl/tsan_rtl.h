@@ -47,7 +47,7 @@ struct MBlock {
 
 #ifndef TSAN_GO
 #if defined(TSAN_COMPAT_SHADOW) && TSAN_COMPAT_SHADOW
-const uptr kAllocatorSpace = 0x7e0000000000ULL;
+const uptr kAllocatorSpace = 0x7d0000000000ULL;
 #else
 const uptr kAllocatorSpace = 0x7d0000000000ULL;
 #endif

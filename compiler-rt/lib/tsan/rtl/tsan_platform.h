@@ -28,7 +28,7 @@ static const uptr kLinuxShadowMsk = 0x100000000000ULL;
 // when memory addresses are of the 0x2axxxxxxxxxx form.
 // The option is enabled with 'setarch x86_64 -L'.
 #elif defined(TSAN_COMPAT_SHADOW) && TSAN_COMPAT_SHADOW
-static const uptr kLinuxAppMemBeg = 0x2a0000000000ULL;
+static const uptr kLinuxAppMemBeg = 0x290000000000ULL;
 static const uptr kLinuxAppMemEnd = 0x7fffffffffffULL;
 #else
 static const uptr kLinuxAppMemBeg = 0x7cf000000000ULL;
@@ -62,9 +62,6 @@ static inline uptr ShadowToMem(uptr shadow) {
   CHECK(IsShadowMem(shadow));
 #ifdef TSAN_GO
   return (shadow & ~kLinuxShadowMsk) / kShadowCnt;
-#elif defined(TSAN_COMPAT_SHADOW) && TSAN_COMPAT_SHADOW
-  // COMPAT mapping is not quite one-to-one.
-  return (shadow / kShadowCnt) | 0x280000000000ULL;
 #else
   return (shadow / kShadowCnt) | kLinuxAppMemMsk;
 #endif
@@ -72,9 +69,10 @@ static inline uptr ShadowToMem(uptr shadow) {
 
 // For COMPAT mapping returns an alternative address
 // that mapped to the same shadow address.
+// COMPAT mapping is not quite one-to-one.
 static inline uptr AlternativeAddress(uptr addr) {
 #if defined(TSAN_COMPAT_SHADOW) && TSAN_COMPAT_SHADOW
-  return addr | kLinuxAppMemMsk;
+  return addr | 0x280000000000ULL;
 #else
   return 0;
 #endif
