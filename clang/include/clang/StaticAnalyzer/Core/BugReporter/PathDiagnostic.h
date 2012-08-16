@@ -335,17 +335,8 @@ public:
     ranges.push_back(SourceRange(B,E));
   }
 
-  typedef const SourceRange* range_iterator;
-
+  /// Return the SourceRanges associated with this PathDiagnosticPiece.
   ArrayRef<SourceRange> getRanges() const { return ranges; }
-
-  range_iterator ranges_begin() const {
-    return ranges.empty() ? NULL : &ranges[0];
-  }
-
-  range_iterator ranges_end() const {
-    return ranges_begin() + ranges.size();
-  }
 
   static inline bool classof(const PathDiagnosticPiece *P) {
     return true;

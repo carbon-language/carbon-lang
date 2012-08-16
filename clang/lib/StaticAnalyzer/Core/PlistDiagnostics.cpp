@@ -220,15 +220,16 @@ static void ReportEvent(raw_ostream &o, const PathDiagnosticPiece& P,
   EmitLocation(o, SM, LangOpts, L, FM, indent);
 
   // Output the ranges (if any).
-  PathDiagnosticPiece::range_iterator RI = P.ranges_begin(),
-  RE = P.ranges_end();
+  ArrayRef<SourceRange> Ranges = P.getRanges();
 
-  if (RI != RE) {
+  if (!Ranges.empty()) {
     Indent(o, indent) << "<key>ranges</key>\n";
     Indent(o, indent) << "<array>\n";
     ++indent;
-    for (; RI != RE; ++RI)
-      EmitRange(o, SM, LangOpts, *RI, FM, indent+1);
+    for (ArrayRef<SourceRange>::iterator I = Ranges.begin(), E = Ranges.end();
+         I != E; ++I) {
+      EmitRange(o, SM, LangOpts, *I, FM, indent+1);
+    }
     --indent;
     Indent(o, indent) << "</array>\n";
   }
@@ -369,11 +370,11 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
            I!=E; ++I) {
         const PathDiagnosticPiece *piece = I->getPtr();
         AddFID(FM, Fids, SM, piece->getLocation().asLocation());
-
-        for (PathDiagnosticPiece::range_iterator RI = piece->ranges_begin(),
-             RE= piece->ranges_end(); RI != RE; ++RI) {
-          AddFID(FM, Fids, SM, RI->getBegin());
-          AddFID(FM, Fids, SM, RI->getEnd());
+        ArrayRef<SourceRange> Ranges = piece->getRanges();
+        for (ArrayRef<SourceRange>::iterator I = Ranges.begin(),
+                                             E = Ranges.end(); I != E; ++I) {
+          AddFID(FM, Fids, SM, I->getBegin());
+          AddFID(FM, Fids, SM, I->getEnd());
         }
 
         if (const PathDiagnosticCallPiece *call =

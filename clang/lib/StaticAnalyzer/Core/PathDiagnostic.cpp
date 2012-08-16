@@ -157,13 +157,13 @@ void PathDiagnosticConsumer::HandlePathDiagnostic(PathDiagnostic *D) {
           return; // FIXME: Emit a warning?
       
         // Check the source ranges.
-        for (PathDiagnosticPiece::range_iterator RI = piece->ranges_begin(),
-             RE = piece->ranges_end();
-             RI != RE; ++RI) {
-          SourceLocation L = SMgr.getExpansionLoc(RI->getBegin());
+        ArrayRef<SourceRange> Ranges = piece->getRanges();
+        for (ArrayRef<SourceRange>::iterator I = Ranges.begin(),
+                                             E = Ranges.end(); I != E; ++I) {
+          SourceLocation L = SMgr.getExpansionLoc(I->getBegin());
           if (!L.isFileID() || SMgr.getFileID(L) != FID)
             return; // FIXME: Emit a warning?
-          L = SMgr.getExpansionLoc(RI->getEnd());
+          L = SMgr.getExpansionLoc(I->getEnd());
           if (!L.isFileID() || SMgr.getFileID(L) != FID)
             return; // FIXME: Emit a warning?
         }
@@ -718,7 +718,9 @@ void PathDiagnosticPiece::Profile(llvm::FoldingSetNodeID &ID) const {
   ID.AddString(str);
   // FIXME: Add profiling support for code hints.
   ID.AddInteger((unsigned) getDisplayHint());
-  for (range_iterator I = ranges_begin(), E = ranges_end(); I != E; ++I) {
+  ArrayRef<SourceRange> Ranges = getRanges();
+  for (ArrayRef<SourceRange>::iterator I = Ranges.begin(), E = Ranges.end();
+                                        I != E; ++I) {
     ID.AddInteger(I->getBegin().getRawEncoding());
     ID.AddInteger(I->getEnd().getRawEncoding());
   }  

@@ -482,9 +482,11 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
   R.InsertTextBefore(Loc, os.str());
 
   // Now highlight the ranges.
-  for (const SourceRange *I = P.ranges_begin(), *E = P.ranges_end();
-        I != E; ++I)
+  ArrayRef<SourceRange> Ranges = P.getRanges();
+  for (ArrayRef<SourceRange>::iterator I = Ranges.begin(),
+                                       E = Ranges.end(); I != E; ++I) {
     HighlightRange(R, LPosInfo.first, *I);
+  }
 
 #if 0
   // If there is a code insertion hint, insert that code.
