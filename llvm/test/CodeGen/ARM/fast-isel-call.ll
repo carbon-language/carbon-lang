@@ -2,6 +2,8 @@
 ; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=thumbv7-apple-ios | FileCheck %s --check-prefix=THUMB
 ; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=armv7-apple-ios -arm-long-calls | FileCheck %s --check-prefix=ARM-LONG
 ; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=thumbv7-apple-ios -arm-long-calls | FileCheck %s --check-prefix=THUMB-LONG
+; RUN: llc < %s -O0 -relocation-model=dynamic-no-pic -mtriple=armv7-apple-ios -mattr=-vfp2 | FileCheck %s --check-prefix=ARM-NOVFP
+; RUN: llc < %s -O0 -relocation-model=dynamic-no-pic -mtriple=thumbv7-apple-ios -mattr=-vfp2 | FileCheck %s --check-prefix=THUMB-NOVFP
 
 define i32 @t0(i1 zeroext %a) nounwind {
   %1 = zext i1 %a to i32
@@ -221,3 +223,67 @@ entry:
 }
 
 declare i32 @CallVariadic(i32, ...)
+
+; Test fastcc
+
+define fastcc void @fast_callee(float %i) ssp {
+entry:
+; ARM: fast_callee
+; ARM: vmov r0, s0
+; THUMB: fast_callee
+; THUMB: vmov r0, s0
+; ARM-NOVFP: fast_callee
+; ARM-NOVFP-NOT: s0
+; THUMB-NOVFP: fast_callee
+; THUMB-NOVFP-NOT: s0
+  call void @print(float %i)
+  ret void
+}
+
+define void @fast_caller() ssp {
+entry:
+; ARM: fast_caller
+; ARM: vldr s0,
+; THUMB: fast_caller
+; THUMB: vldr s0,
+; ARM-NOVFP: fast_caller
+; ARM-NOVFP: movw r0, #13107
+; ARM-NOVFP: movt r0, #16611
+; THUMB-NOVFP: fast_caller
+; THUMB-NOVFP: movw r0, #13107
+; THUMB-NOVFP: movt r0, #16611
+  call fastcc void @fast_callee(float 0x401C666660000000)
+  ret void
+}
+
+define void @no_fast_callee(float %i) ssp {
+entry:
+; ARM: no_fast_callee
+; ARM: vmov s0, r0
+; THUMB: no_fast_callee
+; THUMB: vmov s0, r0
+; ARM-NOVFP: no_fast_callee
+; ARM-NOVFP-NOT: s0
+; THUMB-NOVFP: no_fast_callee
+; THUMB-NOVFP-NOT: s0
+  call void @print(float %i)
+  ret void
+}
+
+define void @no_fast_caller() ssp {
+entry:
+; ARM: no_fast_caller
+; ARM: vmov r0, s0
+; THUMB: no_fast_caller
+; THUMB: vmov r0, s0
+; ARM-NOVFP: no_fast_caller
+; ARM-NOVFP: movw r0, #13107
+; ARM-NOVFP: movt r0, #16611
+; THUMB-NOVFP: no_fast_caller
+; THUMB-NOVFP: movw r0, #13107
+; THUMB-NOVFP: movt r0, #16611
+  call void @no_fast_callee(float 0x401C666660000000)
+  ret void
+}
+
+declare void @print(float)

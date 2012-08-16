@@ -1821,9 +1821,12 @@ CCAssignFn *ARMFastISel::CCAssignFnForCall(CallingConv::ID CC,
   default:
     llvm_unreachable("Unsupported calling convention");
   case CallingConv::Fast:
-    // Ignore fastcc. Silence compiler warnings.
-    (void)RetFastCC_ARM_APCS;
-    (void)FastCC_ARM_APCS;
+    if (Subtarget->hasVFP2() && !isVarArg) {
+      if (!Subtarget->isAAPCS_ABI())
+        return (Return ? RetFastCC_ARM_APCS : FastCC_ARM_APCS);
+      // For AAPCS ABI targets, just use VFP variant of the calling convention.
+      return (Return ? RetCC_ARM_AAPCS_VFP : CC_ARM_AAPCS_VFP);
+    }
     // Fallthrough
   case CallingConv::C:
     // Use target triple & subtarget features to do actual dispatch.
