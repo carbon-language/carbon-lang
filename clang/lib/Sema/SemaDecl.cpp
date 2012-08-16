@@ -9913,6 +9913,13 @@ void Sema::ActOnFields(Scope* S,
           }
         }
       }
+      if (isa<ObjCContainerDecl>(EnclosingDecl) &&
+          RequireNonAbstractType(FD->getLocation(), FD->getType(),
+                                 diag::err_abstract_type_in_decl,
+                                 AbstractIvarType)) {
+        // Ivars can not have abstract class types
+        FD->setInvalidDecl();
+      }
       if (Record && FDTTy->getDecl()->hasObjectMember())
         Record->setHasObjectMember(true);
     } else if (FDTy->isObjCObjectType()) {
@@ -9921,8 +9928,7 @@ void Sema::ActOnFields(Scope* S,
         << FixItHint::CreateInsertion(FD->getLocation(), "*");
       QualType T = Context.getObjCObjectPointerType(FD->getType());
       FD->setType(T);
-    } 
-    else if (!getLangOpts().CPlusPlus) {
+    } else if (!getLangOpts().CPlusPlus) {
       if (getLangOpts().ObjCAutoRefCount && Record && !ARCErrReported) {
         // It's an error in ARC if a field has lifetime.
         // We don't want to report this in a system header, though,

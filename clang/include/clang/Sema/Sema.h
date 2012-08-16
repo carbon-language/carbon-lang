@@ -4461,6 +4461,7 @@ public:
     AbstractParamType,
     AbstractVariableType,
     AbstractFieldType,
+    AbstractIvarType,
     AbstractArrayType
   };
 

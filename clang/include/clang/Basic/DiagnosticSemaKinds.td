@@ -815,7 +815,7 @@ def err_friend_def_in_local_class : Error<
   "friend function cannot be defined in a local class">;
   
 def err_abstract_type_in_decl : Error<
-  "%select{return|parameter|variable|field}0 type %1 is an abstract class">;
+  "%select{return|parameter|variable|field|ivar}0 type %1 is an abstract class">;
 def err_allocation_of_abstract_type : Error<
   "allocating an object of abstract class type %0">;
 def err_throw_abstract_type : Error<
