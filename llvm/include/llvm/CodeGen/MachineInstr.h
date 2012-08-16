@@ -420,6 +420,12 @@ public:
     return hasProperty(MCID::Bitcast, Type);
   }
 
+  /// isSelect - Return true if this instruction is a select instruction.
+  ///
+  bool isSelect(QueryType Type = IgnoreBundle) const {
+    return hasProperty(MCID::Select, Type);
+  }
+
   /// isNotDuplicable - Return true if this instruction cannot be safely
   /// duplicated.  For example, if the instruction has a unique labels attached
   /// to it, duplicating it would cause multiple definition errors.

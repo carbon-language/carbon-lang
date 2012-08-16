@@ -222,6 +222,7 @@ namespace llvm {
     bool isCompare;
     bool isMoveImm;
     bool isBitcast;
+    bool isSelect;
     bool isBarrier;
     bool isCall;
     bool canFoldAsLoad;

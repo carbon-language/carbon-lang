@@ -107,6 +107,7 @@ namespace MCID {
     Compare,
     MoveImm,
     Bitcast,
+    Select,
     DelaySlot,
     FoldableAsLoad,
     MayLoad,
@@ -280,6 +281,12 @@ public:
   ///
   bool isBitcast() const {
     return Flags & (1 << MCID::Bitcast);
+  }
+
+  /// isSelect - Return true if this is a select instruction.
+  ///
+  bool isSelect() const {
+    return Flags & (1 << MCID::Select);
   }
 
   /// isNotDuplicable - Return true if this instruction cannot be safely
