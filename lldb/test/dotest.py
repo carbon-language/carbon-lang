@@ -1097,11 +1097,11 @@ unittest2.signals.installHandler()
 # later on.
 #
 # See also TestBase.dumpSessionInfo() in lldbtest.py.
+import datetime
+# The windows platforms don't like ':' in the pathname.
+timestamp_started = datetime.datetime.now().strftime("%Y-%m-%d-%H_%M_%S")
 if not sdir_name:
-    import datetime
-    # The windows platforms don't like ':' in the pathname.
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H_%M_%S")
-    sdir_name = timestamp
+    sdir_name = timestamp_started
 os.environ["LLDB_SESSION_DIRNAME"] = os.path.join(os.getcwd(), sdir_name)
 
 if not noHeaders:
@@ -1111,8 +1111,9 @@ if not noHeaders:
 
 if not os.path.isdir(sdir_name):
     os.mkdir(sdir_name)
-fname = os.path.join(sdir_name, "svn-info")
+fname = os.path.join(sdir_name, "TestStarted")
 with open(fname, "w") as f:
+    print >> f, "Test started at: %s\n" % timestamp_started
     print >> f, svn_info
     print >> f, "Command invoked: %s\n" % getMyCommandLine()
 
@@ -1362,6 +1363,10 @@ for ia in range(len(archs) if iterArchs else 1):
 if sdir_has_content:
     sys.stderr.write("Session logs for test failures/errors/unexpected successes"
                      " can be found in directory '%s'\n" % sdir_name)
+
+fname = os.path.join(sdir_name, "TestFinished")
+with open(fname, "w") as f:
+    print >> f, "Test finished at: %s\n" % datetime.datetime.now().strftime("%Y-%m-%d-%H_%M_%S")
 
 # Terminate the test suite if ${LLDB_TESTSUITE_FORCE_FINISH} is defined.
 # This should not be necessary now.
