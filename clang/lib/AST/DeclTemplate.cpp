@@ -43,7 +43,8 @@ TemplateParameterList::Create(const ASTContext &C, SourceLocation TemplateLoc,
                               unsigned NumParams, SourceLocation RAngleLoc) {
   unsigned Size = sizeof(TemplateParameterList) 
                 + sizeof(NamedDecl *) * NumParams;
-  unsigned Align = llvm::AlignOf<TemplateParameterList>::Alignment;
+  unsigned Align = std::max(llvm::alignOf<TemplateParameterList>(),
+                            llvm::alignOf<NamedDecl*>());
   void *Mem = C.Allocate(Size, Align);
   return new (Mem) TemplateParameterList(TemplateLoc, LAngleLoc, Params,
                                          NumParams, RAngleLoc);
