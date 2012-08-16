@@ -43,7 +43,7 @@ void test3(packedfloat3 *p) {
   *p = (packedfloat3) { 3.2f, 2.3f, 0.1f };
 }
 // CHECK: @test3(
-// CHECK: bitcast <3 x float>* %.compoundliteral to <4 x float>*
+// CHECK: %{{.*}} = bitcast <3 x float>* %{{.*}} to <4 x float>*
 // CHECK: store <4 x float> {{.*}}, align 4
 // CHECK: ret void
 
