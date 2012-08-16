@@ -4,13 +4,13 @@
 
 define i32 @t1(i32 %a, i32 %b, i32 %c) nounwind {
 ; ARM: t1:
-; ARM: sub r0, r1, #-2147483647
-; ARM: movgt r0, r1
+; ARM: suble r1, r1, #-2147483647
+; ARM: mov r0, r1
 
 ; T2: t1:
 ; T2: mvn r0, #-2147483648
-; T2: add r0, r1
-; T2: movgt r0, r1
+; T2: addle.w r1, r1
+; T2: mov r0, r1
   %tmp1 = icmp sgt i32 %c, 10
   %tmp2 = select i1 %tmp1, i32 0, i32 2147483647
   %tmp3 = add i32 %tmp2, %b
@@ -19,12 +19,12 @@ define i32 @t1(i32 %a, i32 %b, i32 %c) nounwind {
 
 define i32 @t2(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
 ; ARM: t2:
-; ARM: sub r0, r1, #10
-; ARM: movgt r0, r1
+; ARM: suble r1, r1, #10
+; ARM: mov r0, r1
 
 ; T2: t2:
-; T2: sub.w r0, r1, #10
-; T2: movgt r0, r1
+; T2: suble.w r1, r1, #10
+; T2: mov r0, r1
   %tmp1 = icmp sgt i32 %c, 10
   %tmp2 = select i1 %tmp1, i32 0, i32 10
   %tmp3 = sub i32 %b, %tmp2
@@ -162,5 +162,20 @@ define i32 @t11(i32 %a, i32 %b) nounwind {
   %x = or i32 %b, 1
   %cond = icmp slt i32 %a, %b
   %tmp1 = select i1 %cond, i32 %x, i32 %a
+  ret i32 %tmp1
+}
+
+; Fold ADDri12 into movcc
+define i32 @t12(i32 %a, i32 %b) nounwind {
+; ARM: t12:
+; ARM: cmp r0, r1
+; ARM: addge r0, r1,
+
+; T2: t12:
+; T2: cmp r0, r1
+; T2: addwge r0, r1, #3000
+  %x = add i32 %b, 3000
+  %cond = icmp slt i32 %a, %b
+  %tmp1 = select i1 %cond, i32 %a, i32 %x
   ret i32 %tmp1
 }

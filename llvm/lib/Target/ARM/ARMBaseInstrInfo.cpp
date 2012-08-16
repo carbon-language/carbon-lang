@@ -1613,6 +1613,26 @@ static unsigned canFoldIntoMOVCC(unsigned Reg, MachineInstr *&MI,
   case ARM::t2ORRri: return ARM::t2ORRCCri;
   case ARM::t2ORRrr: return ARM::t2ORRCCrr;
   case ARM::t2ORRrs: return ARM::t2ORRCCrs;
+
+  // ARM ADD/SUB
+  case ARM::ADDri:   return ARM::ADDCCri;
+  case ARM::ADDrr:   return ARM::ADDCCrr;
+  case ARM::ADDrsi:  return ARM::ADDCCrsi;
+  case ARM::ADDrsr:  return ARM::ADDCCrsr;
+  case ARM::SUBri:   return ARM::SUBCCri;
+  case ARM::SUBrr:   return ARM::SUBCCrr;
+  case ARM::SUBrsi:  return ARM::SUBCCrsi;
+  case ARM::SUBrsr:  return ARM::SUBCCrsr;
+
+  // Thumb2 ADD/SUB
+  case ARM::t2ADDri:   return ARM::t2ADDCCri;
+  case ARM::t2ADDri12: return ARM::t2ADDCCri12;
+  case ARM::t2ADDrr:   return ARM::t2ADDCCrr;
+  case ARM::t2ADDrs:   return ARM::t2ADDCCrs;
+  case ARM::t2SUBri:   return ARM::t2SUBCCri;
+  case ARM::t2SUBri12: return ARM::t2SUBCCri12;
+  case ARM::t2SUBrr:   return ARM::t2SUBCCrr;
+  case ARM::t2SUBrs:   return ARM::t2SUBCCrs;
   }
 }
 

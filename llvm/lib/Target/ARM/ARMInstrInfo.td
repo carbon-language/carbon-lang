@@ -4023,6 +4023,10 @@ defm ORRCC : AsI1_bincc_irs<ORRri, ORRrr, ORRrsi, ORRrsr,
                             IIC_iBITi, IIC_iBITr, IIC_iBITsr>;
 defm EORCC : AsI1_bincc_irs<EORri, EORrr, EORrsi, EORrsr,
                             IIC_iBITi, IIC_iBITr, IIC_iBITsr>;
+defm ADDCC : AsI1_bincc_irs<ADDri, ADDrr, ADDrsi, ADDrsr,
+                            IIC_iBITi, IIC_iBITr, IIC_iBITsr>;
+defm SUBCC : AsI1_bincc_irs<SUBri, SUBrr, SUBrsi, SUBrsr,
+                            IIC_iBITi, IIC_iBITr, IIC_iBITsr>;
 
 } // neverHasSideEffects
 
