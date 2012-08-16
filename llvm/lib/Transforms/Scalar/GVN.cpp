@@ -613,8 +613,8 @@ namespace {
     void verifyRemoved(const Instruction *I) const;
     bool splitCriticalEdges();
     unsigned replaceAllDominatedUsesWith(Value *From, Value *To,
-                                         const BasicBlock *Root);
-    bool propagateEquality(Value *LHS, Value *RHS, const BasicBlock *Root);
+                                         const BasicBlockEdge &Root);
+    bool propagateEquality(Value *LHS, Value *RHS, const BasicBlockEdge &Root);
   };
 
   char GVN::ID = 0;
@@ -2004,22 +2004,13 @@ Value *GVN::findLeader(const BasicBlock *BB, uint32_t num) {
 /// use is dominated by the given basic block.  Returns the number of uses that
 /// were replaced.
 unsigned GVN::replaceAllDominatedUsesWith(Value *From, Value *To,
-                                          const BasicBlock *Root) {
+                                          const BasicBlockEdge &Root) {
   unsigned Count = 0;
   for (Value::use_iterator UI = From->use_begin(), UE = From->use_end();
        UI != UE; ) {
     Use &U = (UI++).getUse();
 
-    // If From occurs as a phi node operand then the use implicitly lives in the
-    // corresponding incoming block.  Otherwise it is the block containing the
-    // user that must be dominated by Root.
-    BasicBlock *UsingBlock;
-    if (PHINode *PN = dyn_cast<PHINode>(U.getUser()))
-      UsingBlock = PN->getIncomingBlock(U);
-    else
-      UsingBlock = cast<Instruction>(U.getUser())->getParent();
-
-    if (DT->dominates(Root, UsingBlock)) {
+    if (DT->dominates(Root, U)) {
       U.set(To);
       ++Count;
     }
@@ -2027,13 +2018,34 @@ unsigned GVN::replaceAllDominatedUsesWith(Value *From, Value *To,
   return Count;
 }
 
+/// isOnlyReachableViaThisEdge - There is an edge from 'Src' to 'Dst'.  Return
+/// true if every path from the entry block to 'Dst' passes via this edge.  In
+/// particular 'Dst' must not be reachable via another edge from 'Src'.
+static bool isOnlyReachableViaThisEdge(const BasicBlockEdge &E,
+                                       DominatorTree *DT) {
+  // While in theory it is interesting to consider the case in which Dst has
+  // more than one predecessor, because Dst might be part of a loop which is
+  // only reachable from Src, in practice it is pointless since at the time
+  // GVN runs all such loops have preheaders, which means that Dst will have
+  // been changed to have only one predecessor, namely Src.
+  const BasicBlock *Pred = E.getEnd()->getSinglePredecessor();
+  const BasicBlock *Src = E.getStart();
+  assert((!Pred || Pred == Src) && "No edge between these basic blocks!");
+  (void)Src;
+  return Pred != 0;
+}
+
 /// propagateEquality - The given values are known to be equal in every block
 /// dominated by 'Root'.  Exploit this, for example by replacing 'LHS' with
 /// 'RHS' everywhere in the scope.  Returns whether a change was made.
-bool GVN::propagateEquality(Value *LHS, Value *RHS, const BasicBlock *Root) {
+bool GVN::propagateEquality(Value *LHS, Value *RHS,
+                            const BasicBlockEdge &Root) {
   SmallVector<std::pair<Value*, Value*>, 4> Worklist;
   Worklist.push_back(std::make_pair(LHS, RHS));
   bool Changed = false;
+  // For speed, compute a conservative fast approximation to
+  // DT->dominates(Root, Root.getEnd());
+  bool RootDominatesEnd = isOnlyReachableViaThisEdge(Root, DT);
 
   while (!Worklist.empty()) {
     std::pair<Value*, Value*> Item = Worklist.pop_back_val();
@@ -2065,9 +2077,6 @@ bool GVN::propagateEquality(Value *LHS, Value *RHS, const BasicBlock *Root) {
         LVN = RVN;
       }
     }
-    assert((!isa<Instruction>(RHS) ||
-            DT->properlyDominates(cast<Instruction>(RHS)->getParent(), Root)) &&
-           "Instruction doesn't dominate scope!");
 
     // If value numbering later sees that an instruction in the scope is equal
     // to 'LHS' then ensure it will be turned into 'RHS'.  In order to preserve
@@ -2076,8 +2085,10 @@ bool GVN::propagateEquality(Value *LHS, Value *RHS, const BasicBlock *Root) {
     // if RHS is an instruction (if an instruction in the scope is morphed into
     // LHS then it will be turned into RHS by the next GVN iteration anyway, so
     // using the leader table is about compiling faster, not optimizing better).
-    if (!isa<Instruction>(RHS))
-      addToLeaderTable(LVN, RHS, Root);
+    // The leader table only tracks basic blocks, not edges. Only add to if we
+    // have the simple case where the edge dominates the end.
+    if (RootDominatesEnd && !isa<Instruction>(RHS))
+      addToLeaderTable(LVN, RHS, Root.getEnd());
 
     // Replace all occurrences of 'LHS' with 'RHS' everywhere in the scope.  As
     // LHS always has at least one use that is not dominated by Root, this will
@@ -2136,7 +2147,7 @@ bool GVN::propagateEquality(Value *LHS, Value *RHS, const BasicBlock *Root) {
       // If the number we were assigned was brand new then there is no point in
       // looking for an instruction realizing it: there cannot be one!
       if (Num < NextNum) {
-        Value *NotCmp = findLeader(Root, Num);
+        Value *NotCmp = findLeader(Root.getEnd(), Num);
         if (NotCmp && isa<Instruction>(NotCmp)) {
           unsigned NumReplacements =
             replaceAllDominatedUsesWith(NotCmp, NotVal, Root);
@@ -2146,29 +2157,16 @@ bool GVN::propagateEquality(Value *LHS, Value *RHS, const BasicBlock *Root) {
       }
       // Ensure that any instruction in scope that gets the "A < B" value number
       // is replaced with false.
-      addToLeaderTable(Num, NotVal, Root);
+      // The leader table only tracks basic blocks, not edges. Only add to if we
+      // have the simple case where the edge dominates the end.
+      if (RootDominatesEnd)
+        addToLeaderTable(Num, NotVal, Root.getEnd());
 
       continue;
     }
   }
 
   return Changed;
-}
-
-/// isOnlyReachableViaThisEdge - There is an edge from 'Src' to 'Dst'.  Return
-/// true if every path from the entry block to 'Dst' passes via this edge.  In
-/// particular 'Dst' must not be reachable via another edge from 'Src'.
-static bool isOnlyReachableViaThisEdge(BasicBlock *Src, BasicBlock *Dst,
-                                       DominatorTree *DT) {
-  // While in theory it is interesting to consider the case in which Dst has
-  // more than one predecessor, because Dst might be part of a loop which is
-  // only reachable from Src, in practice it is pointless since at the time
-  // GVN runs all such loops have preheaders, which means that Dst will have
-  // been changed to have only one predecessor, namely Src.
-  BasicBlock *Pred = Dst->getSinglePredecessor();
-  assert((!Pred || Pred == Src) && "No edge between these basic blocks!");
-  (void)Src;
-  return Pred != 0;
 }
 
 /// processInstruction - When calculating availability, handle an instruction
@@ -2210,18 +2208,20 @@ bool GVN::processInstruction(Instruction *I) {
 
     BasicBlock *TrueSucc = BI->getSuccessor(0);
     BasicBlock *FalseSucc = BI->getSuccessor(1);
+    // Avoid multiple edges early.
+    if (TrueSucc == FalseSucc)
+      return false;
+
     BasicBlock *Parent = BI->getParent();
     bool Changed = false;
 
-    if (isOnlyReachableViaThisEdge(Parent, TrueSucc, DT))
-      Changed |= propagateEquality(BranchCond,
-                                   ConstantInt::getTrue(TrueSucc->getContext()),
-                                   TrueSucc);
+    Value *TrueVal = ConstantInt::getTrue(TrueSucc->getContext());
+    BasicBlockEdge TrueE(Parent, TrueSucc);
+    Changed |= propagateEquality(BranchCond, TrueVal, TrueE);
 
-    if (isOnlyReachableViaThisEdge(Parent, FalseSucc, DT))
-      Changed |= propagateEquality(BranchCond,
-                                   ConstantInt::getFalse(FalseSucc->getContext()),
-                                   FalseSucc);
+    Value *FalseVal = ConstantInt::getFalse(FalseSucc->getContext());
+    BasicBlockEdge FalseE(Parent, FalseSucc);
+    Changed |= propagateEquality(BranchCond, FalseVal, FalseE);
 
     return Changed;
   }
@@ -2234,8 +2234,9 @@ bool GVN::processInstruction(Instruction *I) {
     for (SwitchInst::CaseIt i = SI->case_begin(), e = SI->case_end();
          i != e; ++i) {
       BasicBlock *Dst = i.getCaseSuccessor();
-      if (isOnlyReachableViaThisEdge(Parent, Dst, DT))
-        Changed |= propagateEquality(SwitchCond, i.getCaseValue(), Dst);
+      BasicBlockEdge E(Parent, Dst);
+      if (E.isSingleEdge())
+        Changed |= propagateEquality(SwitchCond, i.getCaseValue(), E);
     }
     return Changed;
   }

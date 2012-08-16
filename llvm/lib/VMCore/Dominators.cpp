@@ -39,20 +39,17 @@ static cl::opt<bool,true>
 VerifyDomInfoX("verify-dom-info", cl::location(VerifyDomInfo),
                cl::desc("Verify dominator info (time consuming)"));
 
-namespace llvm {
-  class BasicBlockEdge {
-    const BasicBlock *Start;
-    const BasicBlock *End;
-  public:
-    BasicBlockEdge(const BasicBlock *Start_, const BasicBlock *End_) :
-      Start(Start_), End(End_) { }
-    const BasicBlock *getStart() const {
-      return Start;
-    }
-    const BasicBlock *getEnd() const {
-      return End;
-    }
-  };
+bool BasicBlockEdge::isSingleEdge() const {
+  const TerminatorInst *TI = Start->getTerminator();
+  unsigned NumEdgesToEnd = 0;
+  for (unsigned int i = 0, n = TI->getNumSuccessors(); i < n; ++i) {
+    if (TI->getSuccessor(i) == End)
+      ++NumEdgesToEnd;
+    if (NumEdgesToEnd >= 2)
+      return false;
+  }
+  assert(NumEdgesToEnd == 1);
+  return true;
 }
 
 //===----------------------------------------------------------------------===//
