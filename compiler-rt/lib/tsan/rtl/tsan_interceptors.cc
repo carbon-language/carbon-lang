@@ -782,7 +782,7 @@ TSAN_INTERCEPTOR(int, pthread_mutex_init, void *m, void *a) {
         recursive = (type == PTHREAD_MUTEX_RECURSIVE
             || type == PTHREAD_MUTEX_RECURSIVE_NP);
     }
-    MutexCreate(thr, pc, (uptr)m, false, recursive);
+    MutexCreate(thr, pc, (uptr)m, false, recursive, false);
   }
   return res;
 }
@@ -834,7 +834,7 @@ TSAN_INTERCEPTOR(int, pthread_spin_init, void *m, int pshared) {
   SCOPED_TSAN_INTERCEPTOR(pthread_spin_init, m, pshared);
   int res = REAL(pthread_spin_init)(m, pshared);
   if (res == 0) {
-    MutexCreate(thr, pc, (uptr)m, false, false);
+    MutexCreate(thr, pc, (uptr)m, false, false, false);
   }
   return res;
 }
@@ -877,7 +877,7 @@ TSAN_INTERCEPTOR(int, pthread_rwlock_init, void *m, void *a) {
   SCOPED_TSAN_INTERCEPTOR(pthread_rwlock_init, m, a);
   int res = REAL(pthread_rwlock_init)(m, a);
   if (res == 0) {
-    MutexCreate(thr, pc, (uptr)m, true, false);
+    MutexCreate(thr, pc, (uptr)m, true, false, false);
   }
   return res;
 }

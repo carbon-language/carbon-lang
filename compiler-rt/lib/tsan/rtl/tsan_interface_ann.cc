@@ -52,11 +52,11 @@ class ScopedAnnotation {
     if (!flags()->enable_annotations) \
       return; \
     ThreadState *thr = cur_thread(); \
+    const uptr pc = (uptr)__builtin_return_address(0); \
     StatInc(thr, StatAnnotation); \
     StatInc(thr, Stat##typ); \
     ScopedAnnotation sa(thr, __FUNCTION__, f, l, \
         (uptr)__builtin_return_address(0)); \
-    const uptr pc = (uptr)&__FUNCTION__; \
     (void)pc; \
 /**/
 
@@ -185,20 +185,35 @@ void AnnotateCondVarWait(char *f, int l, uptr cv, uptr lock) {
   SCOPED_ANNOTATION(AnnotateCondVarWait);
 }
 
-void AnnotateRWLockCreate(char *f, int l, uptr lock) {
+void AnnotateRWLockCreate(char *f, int l, uptr m) {
   SCOPED_ANNOTATION(AnnotateRWLockCreate);
+  MutexCreate(thr, pc, m, true, true, false);
 }
 
-void AnnotateRWLockDestroy(char *f, int l, uptr lock) {
+void AnnotateRWLockCreateStatic(char *f, int l, uptr m) {
+  SCOPED_ANNOTATION(AnnotateRWLockCreateStatic);
+  MutexCreate(thr, pc, m, true, true, true);
+}
+
+void AnnotateRWLockDestroy(char *f, int l, uptr m) {
   SCOPED_ANNOTATION(AnnotateRWLockDestroy);
+  MutexDestroy(thr, pc, m);
 }
 
-void AnnotateRWLockAcquired(char *f, int l, uptr lock, uptr is_w) {
+void AnnotateRWLockAcquired(char *f, int l, uptr m, uptr is_w) {
   SCOPED_ANNOTATION(AnnotateRWLockAcquired);
+  if (is_w)
+    MutexLock(thr, pc, m);
+  else
+    MutexReadLock(thr, pc, m);
 }
 
-void AnnotateRWLockReleased(char *f, int l, uptr lock, uptr is_w) {
+void AnnotateRWLockReleased(char *f, int l, uptr m, uptr is_w) {
   SCOPED_ANNOTATION(AnnotateRWLockReleased);
+  if (is_w)
+    MutexUnlock(thr, pc, m);
+  else
+    MutexReadUnlock(thr, pc, m);
 }
 
 void AnnotateTraceMemory(char *f, int l, uptr mem) {

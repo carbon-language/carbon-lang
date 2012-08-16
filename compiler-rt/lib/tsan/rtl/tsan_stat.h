@@ -209,6 +209,7 @@ enum StatType {
   StatAnnotateMutexIsNotPHB,
   StatAnnotateCondVarWait,
   StatAnnotateRWLockCreate,
+  StatAnnotateRWLockCreateStatic,
   StatAnnotateRWLockDestroy,
   StatAnnotateRWLockAcquired,
   StatAnnotateRWLockReleased,

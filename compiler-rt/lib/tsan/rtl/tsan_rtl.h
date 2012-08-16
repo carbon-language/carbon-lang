@@ -468,7 +468,8 @@ void ThreadDetach(ThreadState *thr, uptr pc, int tid);
 void ThreadFinalize(ThreadState *thr);
 void ThreadFinalizerGoroutine(ThreadState *thr);
 
-void MutexCreate(ThreadState *thr, uptr pc, uptr addr, bool rw, bool recursive);
+void MutexCreate(ThreadState *thr, uptr pc, uptr addr,
+                 bool rw, bool recursive, bool linker_init);
 void MutexDestroy(ThreadState *thr, uptr pc, uptr addr);
 void MutexLock(ThreadState *thr, uptr pc, uptr addr);
 void MutexUnlock(ThreadState *thr, uptr pc, uptr addr);

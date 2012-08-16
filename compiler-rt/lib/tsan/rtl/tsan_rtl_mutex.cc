@@ -19,7 +19,7 @@
 namespace __tsan {
 
 void MutexCreate(ThreadState *thr, uptr pc, uptr addr,
-                 bool rw, bool recursive) {
+                 bool rw, bool recursive, bool linker_init) {
   Context *ctx = CTX();
   CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: MutexCreate %zx\n", thr->tid, addr);
