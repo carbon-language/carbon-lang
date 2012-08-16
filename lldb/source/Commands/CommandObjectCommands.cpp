@@ -792,10 +792,12 @@ public:
 "\n"
 "EXAMPLES\n"
 "\n"
-"The following example with define a regular expression command named 'f' that\n"
+"The following example will define a regular expression command named 'f' that\n"
 "will call 'finish' if there are no arguments, or 'frame select <frame-idx>' if\n"
 "a number follows 'f':\n"
-"(lldb) command regex f s/^$/finish/ 's/([0-9]+)/frame select %1/'\n"
+"\n"
+"    (lldb) command regex f s/^$/finish/ 's/([0-9]+)/frame select %1/'\n"
+"\n"
                     );
     }
     
