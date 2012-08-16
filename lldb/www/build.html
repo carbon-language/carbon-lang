@@ -21,6 +21,14 @@
     			<h1 class ="postheader">Building LLDB on Mac OS X</h1>
     			<div class="postcontent">
     			    <p>Building on Mac OS X is as easy as downloading the code and building the Xcode project or workspace:</p>
+                </div>
+                <div class="postcontent">
+                    <h2>Preliminaries</h2>
+                    <ul>
+                        <li>XCode 4.3 or newer requires the "Command Line Tools" component (XCode->Preferences->Downloads->Components).</li>
+                        <li>Mac OS X Lion or newer requires installing <a href="http://swig.org">Swig</a>.</li>
+                    </ul>
+                    <h2>Building LLDB</h2>
     			    <ul>
                         <li><a href="download.html">Download</a> the lldb sources.</li>
                         <li>Follow the code signing instructions in <b>lldb/docs/code-signing.txt</b></li>
@@ -55,6 +63,10 @@
                 </ul>
                 <p>So for example, on a Fedora system one might say:</p>
                 <code>&gt; yum install swig python-devel libedit-devel</code>
+                <p>If building using GCC instead of Clang, GCC 4.6.2 or newer is recommended.</p>
+                <ul>
+                    <li><a href="http://gcc.gnu.org">GCC</a></li>
+                </ul>
                 <h2 >Building LLDB</h2>
                 <p>We first need to checkout the source trees into the appropriate locations.  Both
                 Clang and LLDB build as subprojects of LLVM.  This means we will be checking out
