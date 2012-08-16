@@ -36,6 +36,11 @@ void test_ic_member_ptr() {
   (p->*bar)(); // expected-warning {{Called C++ object pointer is null}} expected-note{{Called C++ object pointer is null}}
 }
 
+void test_cast(const TestInstanceCall *p) {
+  if (!p) // expected-note {{Assuming pointer value is null}} expected-note {{Taking true branch}}
+    const_cast<TestInstanceCall *>(p)->foo(); // expected-warning {{Called C++ object pointer is null}} expected-note {{Called C++ object pointer is null}}
+}
+
 // CHECK: <?xml version="1.0" encoding="UTF-8"?>
 // CHECK: <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 // CHECK: <plist version="1.0">
@@ -656,6 +661,86 @@ void test_ic_member_ptr() {
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>36</integer>
 // CHECK:    <key>col</key><integer>3</integer>
+// CHECK:    <key>file</key><integer>0</integer>
+// CHECK:   </dict>
+// CHECK:   </dict>
+// CHECK:   <dict>
+// CHECK:    <key>path</key>
+// CHECK:    <array>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>40</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>40</integer>
+// CHECK:            <key>col</key><integer>4</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>41</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>41</integer>
+// CHECK:            <key>col</key><integer>14</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>41</integer>
+// CHECK:       <key>col</key><integer>5</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>41</integer>
+// CHECK:          <key>col</key><integer>5</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>41</integer>
+// CHECK:          <key>col</key><integer>37</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Called C++ object pointer is null</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Called C++ object pointer is null</string>
+// CHECK:     </dict>
+// CHECK:    </array>
+// CHECK:    <key>description</key><string>Called C++ object pointer is null</string>
+// CHECK:    <key>category</key><string>Logic error</string>
+// CHECK:    <key>type</key><string>Called C++ object pointer is null</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>test_cast</string>
+// CHECK:   <key>issue_hash</key><integer>2</integer>
+// CHECK:   <key>location</key>
+// CHECK:   <dict>
+// CHECK:    <key>line</key><integer>41</integer>
+// CHECK:    <key>col</key><integer>5</integer>
 // CHECK:    <key>file</key><integer>0</integer>
 // CHECK:   </dict>
 // CHECK:   </dict>

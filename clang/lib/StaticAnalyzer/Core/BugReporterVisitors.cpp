@@ -323,7 +323,7 @@ void bugreporter::addTrackNullOrUndefValueVisitor(const ExplodedNode *N,
   // Walk through lvalue-to-rvalue conversions.
   const Expr *Ex = dyn_cast<Expr>(S);
   if (Ex) {
-    Ex = Ex->IgnoreParenLValueCasts();
+    Ex = Ex->IgnoreParenCasts();
     if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(Ex)) {
       if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
         const VarRegion *R =
