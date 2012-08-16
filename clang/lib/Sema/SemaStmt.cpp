@@ -2792,7 +2792,8 @@ static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
                               std::vector<std::string> &AsmStrings) {
   assert (!AsmToks.empty() && "Didn't expect an empty AsmToks!");
 
-  // Assume simple asm stmt until we parse a non-register identifer.
+  // Assume simple asm stmt until we parse a non-register identifer (or we just
+  // need to bail gracefully).
   IsSimple = true;
 
   SmallString<512> Asm;
