@@ -1477,6 +1477,21 @@ void Sema::CheckCompatibleReinterpretCast(QualType SrcType, QualType DestType,
   Diag(Range.getBegin(), DiagID) << SrcType << DestType << Range;
 }
 
+static void DiagnoseCastOfObjCSEL(Sema &Self, const ExprResult &SrcExpr,
+                                  QualType DestType) {
+  QualType SrcType = SrcExpr.get()->getType();
+  if (const PointerType *SrcPtrTy = SrcType->getAs<PointerType>())
+    if (SrcPtrTy->isObjCSelType()) {
+      QualType DT = DestType;
+      if (isa<PointerType>(DestType))
+        DT = DestType->getPointeeType();
+      if (!DT.getUnqualifiedType()->isVoidType())
+        Self.Diag(SrcExpr.get()->getExprLoc(),
+                  diag::warn_cast_pointer_from_sel)
+        << SrcType << DestType << SrcExpr.get()->getSourceRange();
+    }
+}
+
 static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
                                         QualType DestType, bool CStyle,
                                         const SourceRange &OpRange,
@@ -1721,7 +1736,9 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
   if (CStyle && DestType->isObjCObjectPointerType()) {
     return TC_Success;
   }
-    
+  if (CStyle)
+    DiagnoseCastOfObjCSEL(Self, SrcExpr, DestType);
+  
   // Not casting away constness, so the only remaining check is for compatible
   // pointer categories.
 
@@ -2058,6 +2075,7 @@ void CastOperation::CheckCStyleCast() {
       return;
     }
   }
+  DiagnoseCastOfObjCSEL(Self, SrcExpr, DestType);
   
   Kind = Self.PrepareScalarCast(SrcExpr, DestType);
   if (SrcExpr.isInvalid())

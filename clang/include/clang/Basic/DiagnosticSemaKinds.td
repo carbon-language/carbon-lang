@@ -4962,6 +4962,9 @@ def err_typecheck_cast_to_union_no_type : Error<
   "cast to union type from type %0 not present in union">;
 def err_cast_pointer_from_non_pointer_int : Error<
   "operand of type %0 cannot be cast to a pointer type">;
+def warn_cast_pointer_from_sel : Warning<
+  "cast of type %0 to %1 is deprecated; use sel_getName instead">,
+  InGroup<SelTypeCast>, DefaultIgnore;
 def err_cast_pointer_to_non_pointer_int : Error<
   "pointer cannot be cast to type %0">;
 def err_typecheck_expect_scalar_operand : Error<
