@@ -2377,6 +2377,40 @@ TEST(UsingDeclaration, ThroughUsingDeclaration) {
       declarationReference(throughUsingDecl(anything()))));
 }
 
+TEST(SingleDecl, IsSingleDecl) {
+  StatementMatcher SingleDeclStmt =
+      declarationStatement(hasSingleDecl(variable(hasInitializer(anything()))));
+  EXPECT_TRUE(matches("void f() {int a = 4;}", SingleDeclStmt));
+  EXPECT_TRUE(notMatches("void f() {int a;}", SingleDeclStmt));
+  EXPECT_TRUE(notMatches("void f() {int a = 4, b = 3;}",
+                          SingleDeclStmt));
+}
+
+TEST(DeclStmt, ContainsDeclaration) {
+  DeclarationMatcher MatchesInit = variable(hasInitializer(anything()));
+
+  EXPECT_TRUE(matches("void f() {int a = 4;}",
+                      declarationStatement(containsDeclaration(0,
+                                                               MatchesInit))));
+  EXPECT_TRUE(matches("void f() {int a = 4, b = 3;}",
+                      declarationStatement(containsDeclaration(0, MatchesInit),
+                                           containsDeclaration(1,
+                                                               MatchesInit))));
+  unsigned WrongIndex = 42;
+  EXPECT_TRUE(notMatches("void f() {int a = 4, b = 3;}",
+                         declarationStatement(containsDeclaration(WrongIndex,
+                                                      MatchesInit))));
+}
+
+TEST(DeclCount, DeclCountIsCorrect) {
+  EXPECT_TRUE(matches("void f() {int i,j;}",
+                      declarationStatement(declCountIs(2))));
+  EXPECT_TRUE(notMatches("void f() {int i,j; int k;}",
+                         declarationStatement(declCountIs(3))));
+  EXPECT_TRUE(notMatches("void f() {int i,j, k, l;}",
+                         declarationStatement(declCountIs(3))));
+}
+
 TEST(While, MatchesWhileLoops) {
   EXPECT_TRUE(notMatches("void x() {}", whileStmt()));
   EXPECT_TRUE(matches("void x() { while(true); }", whileStmt()));

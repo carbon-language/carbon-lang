@@ -50,6 +50,7 @@
 #include "clang/ASTMatchers/ASTMatchersMacros.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Regex.h"
+#include <iterator>
 
 namespace clang {
 namespace ast_matchers {
@@ -1275,6 +1276,21 @@ AST_MATCHER_P(DeclRefExpr, throughUsingDecl,
   return false;
 }
 
+/// \brief Matches the Decl of a DeclStmt which has a single declaration.
+///
+/// Given
+///   int a, b;
+///   int c;
+/// declarationStatement(hasSingleDecl(anything()))
+///   matches 'int c;' but not 'int a, b;'.
+AST_MATCHER_P(DeclStmt, hasSingleDecl, internal::Matcher<Decl>, InnerMatcher) {
+  if (Node.isSingleDecl()) {
+    const Decl *FoundDecl = Node.getSingleDecl();
+    return InnerMatcher.matches(*FoundDecl, Finder, Builder);
+  }
+  return false;
+}
+
 /// \brief Matches a variable declaration that has an initializer expression
 /// that matches the given matcher.
 ///
@@ -1318,6 +1334,44 @@ AST_POLYMORPHIC_MATCHER_P2(
   return (N < Node.getNumArgs() &&
           InnerMatcher.matches(
               *Node.getArg(N)->IgnoreParenImpCasts(), Finder, Builder));
+}
+
+/// \brief Matches declaration statements that contain a specific number of
+/// declarations.
+///
+/// Example: Given
+///   int a, b;
+///   int c;
+///   int d = 2, e;
+/// declCountIs(2)
+///   matches 'int a, b;' and 'int d = 2, e;', but not 'int c;'.
+AST_MATCHER_P(DeclStmt, declCountIs, unsigned, N) {
+  return std::distance(Node.decl_begin(), Node.decl_end()) == N;
+}
+
+/// \brief Matches the n'th declaration of a declaration statement.
+///
+/// Note that this does not work for global declarations because the AST
+/// breaks up multiple-declaration DeclStmt's into multiple single-declaration
+/// DeclStmt's.
+/// Example: Given non-global declarations
+///   int a, b = 0;
+///   int c;
+///   int d = 2, e;
+/// declarationStatement(containsDeclaration(
+///       0, variable(hasInitializer(anything()))))
+///   matches only 'int d = 2, e;', and
+/// declarationStatement(containsDeclaration(1, variable()))
+///   matches 'int a, b = 0' as well as 'int d = 2, e;'
+///   but 'int c;' is not matched.
+AST_MATCHER_P2(DeclStmt, containsDeclaration, unsigned, N,
+               internal::Matcher<Decl>, InnerMatcher) {
+  const unsigned NumDecls = std::distance(Node.decl_begin(), Node.decl_end());
+  if (N >= NumDecls)
+    return false;
+  DeclStmt::const_decl_iterator Iterator = Node.decl_begin();
+  std::advance(Iterator, N);
+  return InnerMatcher.matches(**Iterator, Finder, Builder);
 }
 
 /// \brief Matches a constructor initializer.
