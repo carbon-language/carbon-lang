@@ -24,10 +24,12 @@ void MutexCreate(ThreadState *thr, uptr pc, uptr addr,
   CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: MutexCreate %zx\n", thr->tid, addr);
   StatInc(thr, StatMutexCreate);
-  MemoryWrite1Byte(thr, pc, addr);
+  if (!linker_init)
+    MemoryWrite1Byte(thr, pc, addr);
   SyncVar *s = ctx->synctab.GetAndLock(thr, pc, addr, true);
   s->is_rw = rw;
   s->is_recursive = recursive;
+  s->is_linker_init = linker_init;
   s->mtx.Unlock();
 }
 
@@ -36,16 +38,18 @@ void MutexDestroy(ThreadState *thr, uptr pc, uptr addr) {
   CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: MutexDestroy %zx\n", thr->tid, addr);
   StatInc(thr, StatMutexDestroy);
-  MemoryWrite1Byte(thr, pc, addr);
   SyncVar *s = ctx->synctab.GetAndRemove(thr, pc, addr);
   if (s == 0)
     return;
-  if (s->owner_tid != SyncVar::kInvalidTid && !s->is_broken) {
-    s->is_broken = true;
-    ScopedReport rep(ReportTypeMutexDestroyLocked);
-    rep.AddMutex(s);
-    rep.AddLocation(s->addr, 1);
-    OutputReport(rep);
+  if (!s->is_linker_init) {
+    MemoryWrite1Byte(thr, pc, addr);
+    if (s->owner_tid != SyncVar::kInvalidTid && !s->is_broken) {
+      s->is_broken = true;
+      ScopedReport rep(ReportTypeMutexDestroyLocked);
+      rep.AddMutex(s);
+      rep.AddLocation(s->addr, 1);
+      OutputReport(rep);
+    }
   }
   DestroyAndFree(s);
 }

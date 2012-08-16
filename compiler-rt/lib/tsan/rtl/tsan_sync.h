@@ -64,6 +64,7 @@ struct SyncVar {
   bool is_rw;
   bool is_recursive;
   bool is_broken;
+  bool is_linker_init;
   SyncVar *next;  // In SyncTab hashtable.
 
   uptr GetMemoryConsumption();

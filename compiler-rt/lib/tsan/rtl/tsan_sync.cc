@@ -24,7 +24,8 @@ SyncVar::SyncVar(uptr addr)
   , recursion()
   , is_rw()
   , is_recursive()
-  , is_broken() {
+  , is_broken()
+  , is_linker_init() {
 }
 
 SyncTab::Part::Part()
