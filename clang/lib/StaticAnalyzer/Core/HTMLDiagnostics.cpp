@@ -487,26 +487,6 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
                                        E = Ranges.end(); I != E; ++I) {
     HighlightRange(R, LPosInfo.first, *I);
   }
-
-#if 0
-  // If there is a code insertion hint, insert that code.
-  // FIXME: This code is disabled because it seems to mangle the HTML
-  // output. I'm leaving it here because it's generally the right idea,
-  // but needs some help from someone more familiar with the rewriter.
-  for (const FixItHint *Hint = P.fixit_begin(), *HintEnd = P.fixit_end();
-       Hint != HintEnd; ++Hint) {
-    if (Hint->RemoveRange.isValid()) {
-      HighlightRange(R, LPosInfo.first, Hint->RemoveRange,
-                     "<span class=\"CodeRemovalHint\">", "</span>");
-    }
-    if (Hint->InsertionLoc.isValid()) {
-      std::string EscapedCode = html::EscapeText(Hint->CodeToInsert, true);
-      EscapedCode = "<span class=\"CodeInsertionHint\">" + EscapedCode
-        + "</span>";
-      R.InsertTextBefore(Hint->InsertionLoc, EscapedCode);
-    }
-  }
-#endif
 }
 
 static void EmitAlphaCounter(raw_ostream &os, unsigned n) {
