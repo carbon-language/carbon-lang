@@ -82,3 +82,20 @@ void t10() {
 // CHECK: t10
 // CHECK: call void asm sideeffect "push ebx\0Amov ebx, 0x07\0Apop ebx", "~{ebx},~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
 }
+
+unsigned t11(void) {
+  unsigned i = 1, j;
+  __asm {
+    mov eax, i
+    mov j, eax
+  }
+  return j;
+// CHECK: t11
+// CHECK: entry:
+// CHECK: [[I:%[a-zA-Z0-9]+]] = alloca i32, align 4
+// CHECK: [[J:%[a-zA-Z0-9]+]] = alloca i32, align 4
+// CHECK: store i32 1, i32* [[I]], align 4
+// CHECK: call void asm sideeffect "mov eax, i\0Amov j, eax", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
+// CHECK: [[RET:%[a-zA-Z0-9]+]] = load i32* [[J]], align 4
+// CHECK: ret i32 [[RET]]
+}

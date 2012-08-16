@@ -28,6 +28,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
@@ -2767,6 +2768,8 @@ static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
                               SourceLocation AsmLoc,
                               ArrayRef<Token> AsmToks,
                               const TargetInfo &TI,
+                              std::vector<llvm::BitVector> &AsmRegs,
+                              std::vector<llvm::BitVector> &AsmNames,
                               std::vector<std::string> &AsmStrings) {
   assert (!AsmToks.empty() && "Didn't expect an empty AsmToks!");
 
@@ -2792,6 +2795,8 @@ static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
 
     // Start a new asm string with the opcode.
     if (isNewAsm) {
+      AsmRegs[NumAsmStrings].resize(AsmToks.size());
+      AsmNames[NumAsmStrings].resize(AsmToks.size());
       Asm = AsmToks[i].getIdentifierInfo()->getName().str();
       continue;
     }
@@ -2821,14 +2826,28 @@ static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
     case tok::identifier: {
       StringRef Name = AsmToks[i].getIdentifierInfo()->getName();
 
-      // Valid registers don't need modification.
+      // Valid register?
       if (TI.isValidGCCRegisterName(Name)) {
+        AsmRegs[NumAsmStrings].set(i);
         Asm += Name;
         break;
       }
 
-      // TODO: Lookup the identifier.
       IsSimple = false;
+
+      // FIXME: Why are we missing this segment register?
+      if (Name == "fs") {
+        Asm += Name;
+        break;
+      }
+
+      // Not a register, so this must be a variable, function or label
+      // reference.  Track these as they are either an Input or an Output.
+      // Unfortunately, we don't know which is which until after we feed
+      // the patched asms to the AsmParser.
+      AsmNames[NumAsmStrings].set(i);
+
+      // TODO: Lookup the identifier and patch appropriately.
       break;
     }
     } // AsmToks[i].getKind()
@@ -2897,12 +2916,17 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   std::string AsmString = buildMSAsmString(*this, AsmToks, NumAsmStrings);
 
   bool IsSimple;
+  std::vector<llvm::BitVector> Regs;
+  std::vector<llvm::BitVector> Names;
   std::vector<std::string> PatchedAsmStrings;
+
+  Regs.resize(NumAsmStrings);
+  Names.resize(NumAsmStrings);
   PatchedAsmStrings.resize(NumAsmStrings);
 
   // Rewrite operands to appease the AsmParser.
-  patchMSAsmStrings(*this, IsSimple, AsmLoc, AsmToks, Context.getTargetInfo(),
-                    PatchedAsmStrings);
+  patchMSAsmStrings(*this, IsSimple, AsmLoc, AsmToks,
+                    Context.getTargetInfo(), Regs, Names, PatchedAsmStrings);
 
   // patchMSAsmStrings doesn't correctly patch non-simple asm statements.
   if (!IsSimple) {
