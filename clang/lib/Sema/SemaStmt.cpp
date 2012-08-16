@@ -2823,7 +2823,7 @@ static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
     // Check the operand(s).
     switch (AsmToks[i].getKind()) {
     default:
-      //llvm_unreachable("Unknown token.");
+      IsSimple = false;
       break;
     case tok::comma: Asm += ","; break;
     case tok::colon: Asm += ":"; break;
