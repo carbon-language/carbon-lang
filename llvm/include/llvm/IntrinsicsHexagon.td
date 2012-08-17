@@ -15,7 +15,7 @@
 //
 // All Hexagon intrinsics start with "llvm.hexagon.".
 let TargetPrefix = "hexagon" in {
-  /// Hexagon_Intrinsic - Base class for all altivec intrinsics.
+  /// Hexagon_Intrinsic - Base class for all Hexagon intrinsics.
   class Hexagon_Intrinsic<string GCCIntSuffix, list<LLVMType> ret_types,
                               list<LLVMType> param_types,
                               list<IntrinsicProperty> properties>
