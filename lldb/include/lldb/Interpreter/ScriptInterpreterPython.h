@@ -321,8 +321,10 @@ private:
                          size_t bytes_len);
 
 
+    lldb_utility::PseudoTerminal m_embedded_thread_pty;
     lldb_utility::PseudoTerminal m_embedded_python_pty;
     lldb::InputReaderSP m_embedded_thread_input_reader_sp;
+    lldb::InputReaderSP m_embedded_python_input_reader_sp;
     FILE *m_dbg_stdout;
     PyObject *m_new_sysout;
     PyObject *m_old_sysout;
