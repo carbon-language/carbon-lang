@@ -292,6 +292,32 @@ TEST(DeclarationMatcher, ClassIsDerived) {
       record(isDerivedFrom(record(hasName("X")).bind("test")))));
 }
 
+TEST(ClassTemplate, DoesNotMatchClass) {
+  DeclarationMatcher ClassX = classTemplate(hasName("X"));
+  EXPECT_TRUE(notMatches("class X;", ClassX));
+  EXPECT_TRUE(notMatches("class X {};", ClassX));
+}
+
+TEST(ClassTemplate, MatchesClassTemplate) {
+  DeclarationMatcher ClassX = classTemplate(hasName("X"));
+  EXPECT_TRUE(matches("template<typename T> class X {};", ClassX));
+  EXPECT_TRUE(matches("class Z { template<class T> class X {}; };", ClassX));
+}
+
+TEST(ClassTemplate, DoesNotMatchClassTemplateExplicitSpecialization) {
+  EXPECT_TRUE(notMatches("template<typename T> class X { };"
+                         "template<> class X<int> { int a; };",
+              classTemplate(hasName("X"),
+                            hasDescendant(field(hasName("a"))))));
+}
+
+TEST(ClassTemplate, DoesNotMatchClassTemplatePartialSpecialization) {
+  EXPECT_TRUE(notMatches("template<typename T, typename U> class X { };"
+                         "template<typename T> class X<T, int> { int a; };",
+              classTemplate(hasName("X"),
+                            hasDescendant(field(hasName("a"))))));
+}
+
 TEST(AllOf, AllOverloadsWork) {
   const char Program[] =
       "struct T { }; int f(int, T*); void g(int x) { T t; f(x, &t); }";
@@ -1015,6 +1041,27 @@ TEST(Function, MatchesFunctionDeclarations) {
       notMatches("void f(int);"
                  "template <typename T> struct S { void g(T t) { f(t); } };",
                  CallFunctionF));
+}
+
+TEST(FunctionTemplate, MatchesFunctionTemplateDeclarations) {
+  EXPECT_TRUE(
+      matches("template <typename T> void f(T t) {}",
+      functionTemplate(hasName("f"))));
+}
+
+TEST(FunctionTemplate, DoesNotMatchFunctionDeclarations) {
+  EXPECT_TRUE(
+      notMatches("void f(double d); void f(int t) {}",
+      functionTemplate(hasName("f"))));
+}
+
+TEST(FunctionTemplate, DoesNotMatchFunctionTemplateSpecializations) {
+  EXPECT_TRUE(
+      notMatches("void g(); template <typename T> void f(T t) {}"
+                 "template <> void f(int t) { g(); }",
+      functionTemplate(hasName("f"),
+                       hasDescendant(declarationReference(
+                                            to(function(hasName("g"))))))));
 }
 
 TEST(Matcher, Argument) {
@@ -2563,6 +2610,50 @@ TEST(IsTemplateInstantiation, DoesNotMatchNonTemplate) {
   EXPECT_TRUE(notMatches(
       "class A {}; class Y { A a; };",
       record(isTemplateInstantiation())));
+}
+
+TEST(IsExplicitTemplateSpecialization,
+     DoesNotMatchPrimaryTemplate) {
+  EXPECT_TRUE(notMatches(
+      "template <typename T> class X {};",
+      record(isExplicitTemplateSpecialization())));
+  EXPECT_TRUE(notMatches(
+      "template <typename T> void f(T t);",
+      function(isExplicitTemplateSpecialization())));
+}
+
+TEST(IsExplicitTemplateSpecialization,
+     DoesNotMatchExplicitTemplateInstantiations) {
+  EXPECT_TRUE(notMatches(
+      "template <typename T> class X {};"
+      "template class X<int>; extern template class X<long>;",
+      record(isExplicitTemplateSpecialization())));
+  EXPECT_TRUE(notMatches(
+      "template <typename T> void f(T t) {}"
+      "template void f(int t); extern template void f(long t);",
+      function(isExplicitTemplateSpecialization())));
+}
+
+TEST(IsExplicitTemplateSpecialization,
+     DoesNotMatchImplicitTemplateInstantiations) {
+  EXPECT_TRUE(notMatches(
+      "template <typename T> class X {}; X<int> x;",
+      record(isExplicitTemplateSpecialization())));
+  EXPECT_TRUE(notMatches(
+      "template <typename T> void f(T t); void g() { f(10); }",
+      function(isExplicitTemplateSpecialization())));
+}
+
+TEST(IsExplicitTemplateSpecialization,
+     MatchesExplicitTemplateSpecializations) {
+  EXPECT_TRUE(matches(
+      "template <typename T> class X {};"
+      "template<> class X<int> {};",
+      record(isExplicitTemplateSpecialization())));
+  EXPECT_TRUE(matches(
+      "template <typename T> void f(T t) {}"
+      "template<> void f(int t) {}",
+      function(isExplicitTemplateSpecialization())));
 }
 
 } // end namespace ast_matchers

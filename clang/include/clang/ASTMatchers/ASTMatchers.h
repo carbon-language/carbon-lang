@@ -164,6 +164,14 @@ const internal::VariadicDynCastAllOfMatcher<
   Decl,
   CXXRecordDecl> record;
 
+/// \brief Matches C++ class template declarations.
+///
+/// Example matches Z
+///   template<class T> class Z {};
+const internal::VariadicDynCastAllOfMatcher<
+  Decl,
+  ClassTemplateDecl> classTemplate;
+
 /// \brief Matches C++ class template specializations.
 ///
 /// Given
@@ -385,6 +393,13 @@ const internal::VariadicDynCastAllOfMatcher<Decl, FieldDecl> field;
 ///   void f();
 const internal::VariadicDynCastAllOfMatcher<Decl, FunctionDecl> function;
 
+/// \brief Matches C++ function template declarations.
+///
+/// Example matches f
+///   template<class T> void f(T t) {}
+const internal::VariadicDynCastAllOfMatcher<
+  Decl,
+  FunctionTemplateDecl> functionTemplate;
 
 /// \brief Matches statements.
 ///
@@ -1939,6 +1954,21 @@ inline internal::PolymorphicMatcherWithParam0<
 isTemplateInstantiation() {
   return internal::PolymorphicMatcherWithParam0<
     internal::IsTemplateInstantiationMatcher>();
+}
+
+/// \brief Matches explicit template specializations of function, class, or
+/// static member variable template instantiations.
+///
+/// Given
+///   template<typename T> void A(T t) { }
+///   template<> void A(int N) { }
+/// function(isExplicitSpecialization())
+///   matches the specialization A<int>().
+inline internal::PolymorphicMatcherWithParam0<
+  internal::IsExplicitTemplateSpecializationMatcher>
+isExplicitTemplateSpecialization() {
+  return internal::PolymorphicMatcherWithParam0<
+    internal::IsExplicitTemplateSpecializationMatcher>();
 }
 
 } // end namespace ast_matchers

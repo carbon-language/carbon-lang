@@ -858,6 +858,23 @@ class IsTemplateInstantiationMatcher : public MatcherInterface<T> {
   }
 };
 
+/// \brief Matches on explicit template specializations for FunctionDecl,
+/// VarDecl or CXXRecordDecl nodes.
+template <typename T>
+class IsExplicitTemplateSpecializationMatcher : public MatcherInterface<T> {
+  TOOLING_COMPILE_ASSERT((llvm::is_base_of<FunctionDecl, T>::value) ||
+                         (llvm::is_base_of<VarDecl, T>::value) ||
+                         (llvm::is_base_of<CXXRecordDecl, T>::value),
+                         requires_getTemplateSpecializationKind_method);
+ public:
+  virtual bool matches(const T& Node,
+                       ASTMatchFinder* Finder,
+                       BoundNodesTreeBuilder* Builder) const {
+    return (Node.getTemplateSpecializationKind() == TSK_ExplicitSpecialization);
+  }
+};
+
+
 class IsArrowMatcher : public SingleNodeMatcherInterface<MemberExpr> {
 public:
   virtual bool matchesNode(const MemberExpr &Node) const {
