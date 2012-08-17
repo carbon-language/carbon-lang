@@ -566,6 +566,9 @@ def main(builtinParameters = {}):    # Bump the GIL check interval, its more imp
     if opts.maxTests is not None:
         tests = tests[:opts.maxTests]
 
+    # Don't create more threads than tests.
+    opts.numThreads = min(len(tests), opts.numThreads)
+
     extra = ''
     if len(tests) != numTotalTests:
         extra = ' of %d' % numTotalTests
@@ -588,9 +591,6 @@ def main(builtinParameters = {}):    # Bump the GIL check interval, its more imp
                 progressBar = ProgressBar.SimpleProgressBar('Testing: ')
         else:
             print header
-
-    # Don't create more threads than tests.
-    opts.numThreads = min(len(tests), opts.numThreads)
 
     startTime = time.time()
     display = TestingProgressDisplay(opts, len(tests), progressBar)
