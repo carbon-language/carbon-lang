@@ -914,7 +914,7 @@ emitDecoderFunction(formatted_raw_ostream &OS, DecoderSet &Decoders,
   for (DecoderSet::const_iterator I = Decoders.begin(), E = Decoders.end();
        I != E; ++I, ++Index) {
     OS.indent(Indentation) << "case " << Index << ":\n";
-    OS << *I << "\n";
+    OS << *I;
     OS.indent(Indentation+2) << "return S;\n";
   }
   OS.indent(Indentation) << "}\n";
@@ -1070,25 +1070,25 @@ void FilterChooser::emitBinaryParser(raw_ostream &o, unsigned &Indentation,
 
   if (OpInfo.numFields() == 1) {
     OperandInfo::const_iterator OI = OpInfo.begin();
-    o.indent(Indentation) << "  tmp = fieldFromInstruction"
+    o.indent(Indentation) << "tmp = fieldFromInstruction"
                           << "(insn, " << OI->Base << ", " << OI->Width
                           << ");\n";
   } else {
-    o.indent(Indentation) << "  tmp = 0;\n";
+    o.indent(Indentation) << "tmp = 0;\n";
     for (OperandInfo::const_iterator OI = OpInfo.begin(), OE = OpInfo.end();
          OI != OE; ++OI) {
-      o.indent(Indentation) << "  tmp |= (fieldFromInstruction"
+      o.indent(Indentation) << "tmp |= (fieldFromInstruction"
                             << "(insn, " << OI->Base << ", " << OI->Width
                             << ") << " << OI->Offset << ");\n";
     }
   }
 
   if (Decoder != "")
-    o.indent(Indentation) << "  " << Emitter->GuardPrefix << Decoder
+    o.indent(Indentation) << Emitter->GuardPrefix << Decoder
                           << "(MI, tmp, Address, Decoder)"
                           << Emitter->GuardPostfix << "\n";
   else
-    o.indent(Indentation) << "  MI.addOperand(MCOperand::CreateImm(tmp));\n";
+    o.indent(Indentation) << "MI.addOperand(MCOperand::CreateImm(tmp));\n";
 
 }
 
@@ -1101,7 +1101,7 @@ void FilterChooser::emitDecoder(raw_ostream &OS, unsigned Indentation,
        I = InsnOperands.begin(), E = InsnOperands.end(); I != E; ++I) {
     // If a custom instruction decoder was specified, use that.
     if (I->numFields() == 0 && I->Decoder.size()) {
-      OS.indent(Indentation) << "  " << Emitter->GuardPrefix << I->Decoder
+      OS.indent(Indentation) << Emitter->GuardPrefix << I->Decoder
         << "(MI, insn, Address, Decoder)"
         << Emitter->GuardPostfix << "\n";
       break;
@@ -1118,7 +1118,7 @@ unsigned FilterChooser::getDecoderIndex(DecoderSet &Decoders,
   // FIXME: emitDecoder() function can take a buffer directly rather than
   // a stream.
   raw_svector_ostream S(Decoder);
-  unsigned I = 0;
+  unsigned I = 4;
   emitDecoder(S, I, Opc);
   S.flush();
 
