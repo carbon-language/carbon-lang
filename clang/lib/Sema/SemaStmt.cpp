@@ -3010,7 +3010,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
     // Tell SrcMgr about this buffer, which is what the parser will pick up.
     SrcMgr.AddNewSourceBuffer(Buffer, llvm::SMLoc());
 
-    OwningPtr<llvm::MCStreamer> Str;
+    OwningPtr<llvm::MCStreamer> Str(createNullStreamer(Ctx));
     OwningPtr<llvm::MCAsmParser>
       Parser(createMCAsmParser(SrcMgr, Ctx, *Str.get(), *MAI));
     OwningPtr<llvm::MCTargetAsmParser>
