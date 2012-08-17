@@ -1903,6 +1903,43 @@ void CastOperation::CheckCXXCStyleCast(bool FunctionalStyle,
     SrcExpr = ExprError();
 }
 
+/// DiagnoseBadFunctionCast - Warn whenever a function call is cast to a 
+///  non-matching type. Such as enum function call to int, int call to
+/// pointer; etc. Cast to 'void' is an exception.
+static void DiagnoseBadFunctionCast(Sema &Self, const ExprResult &SrcExpr,
+                                  QualType DestType) {
+  if (Self.Diags.getDiagnosticLevel(diag::warn_bad_function_cast,
+                                    SrcExpr.get()->getExprLoc()) 
+        == DiagnosticsEngine::Ignored)
+    return;
+  
+  if (!isa<CallExpr>(SrcExpr.get()))
+    return;
+  
+  QualType SrcType = SrcExpr.get()->getType();
+  if (DestType.getUnqualifiedType()->isVoidType())
+    return;
+  if ((SrcType->isAnyPointerType() || SrcType->isBlockPointerType())
+      && (DestType->isAnyPointerType() || DestType->isBlockPointerType()))
+    return;
+  if (SrcType->isIntegerType() && DestType->isIntegerType() &&
+      (SrcType->isBooleanType() == DestType->isBooleanType()) &&
+      (SrcType->isEnumeralType() == DestType->isEnumeralType()))
+    return;
+  if (SrcType->isRealFloatingType() && DestType->isRealFloatingType())
+    return;
+  if (SrcType->isEnumeralType() && DestType->isEnumeralType())
+    return;
+  if (SrcType->isComplexType() && DestType->isComplexType())
+    return;
+  if (SrcType->isComplexIntegerType() && DestType->isComplexIntegerType())
+    return;
+  
+  Self.Diag(SrcExpr.get()->getExprLoc(),
+            diag::warn_bad_function_cast)
+            << SrcType << DestType << SrcExpr.get()->getSourceRange();
+}
+
 /// Check the semantics of a C-style cast operation, in C.
 void CastOperation::CheckCStyleCast() {
   assert(!Self.getLangOpts().CPlusPlus);
@@ -2076,7 +2113,7 @@ void CastOperation::CheckCStyleCast() {
     }
   }
   DiagnoseCastOfObjCSEL(Self, SrcExpr, DestType);
-  
+  DiagnoseBadFunctionCast(Self, SrcExpr, DestType);
   Kind = Self.PrepareScalarCast(SrcExpr, DestType);
   if (SrcExpr.isInvalid())
     return;
