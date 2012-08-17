@@ -186,6 +186,25 @@ supported by the target, or if the compiler determines that a more specific
 model can be used.
 </p>
 
+<h4>Type safety attributes</h4>
+<p>Clang now supports type safety attributes that allow checking during compile
+time that 'void *' function arguments and arguments for variadic functions are
+of a particular type which is determined by some other argument to the same
+function call.</p>
+
+<p>Usecases include:</p>
+<ul>
+<li>MPI library implementations, where these attributes enable checking that
+  buffer type matches the passed <code>MPI_Datatype</code>;</li>
+<li> HDF5 library -- similar usecase as for MPI;</li>
+<li> checking types of variadic functions' arguments for functions like
+<code>fcntl()</code> and <code>ioctl()</code>.</li>
+</ul>
+
+<p>See entries for <code>argument_with_type_tag</code>,
+<code>pointer_with_type_tag</code> and <code>type_tag_for_datatype</code>
+attributes in Clang language extensions documentation.</p>
+
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="newflags">New Compiler Flags</h3>
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
