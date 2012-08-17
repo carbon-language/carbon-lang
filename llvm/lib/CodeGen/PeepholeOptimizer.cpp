@@ -496,11 +496,11 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
     ImmDefMIs.clear();
     FoldAsLoadDefReg = 0;
 
-    bool First = true;
-    MachineBasicBlock::iterator PMII;
     for (MachineBasicBlock::iterator
            MII = I->begin(), MIE = I->end(); MII != MIE; ) {
       MachineInstr *MI = &*MII;
+      // We may be erasing MI below, increment MII now.
+      ++MII;
       LocalMIs.insert(MI);
 
       // If there exists an instruction which belongs to the following
@@ -509,7 +509,6 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
           MI->isKill() || MI->isInlineAsm() || MI->isDebugValue() ||
           MI->hasUnmodeledSideEffects()) {
         FoldAsLoadDefReg = 0;
-        ++MII;
         continue;
       }
       if (MI->mayStore() || MI->isCall())
@@ -521,7 +520,6 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
         // MI is deleted.
         LocalMIs.erase(MI);
         Changed = true;
-        MII = First ? I->begin() : llvm::next(PMII);
         continue;
       }
 
@@ -553,14 +551,9 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
 
           // MI is replaced with FoldMI.
           Changed = true;
-          PMII = FoldMI;
-          MII = llvm::next(PMII);
           continue;
         }
       }
-      First = false;
-      PMII = MII;
-      ++MII;
     }
   }
 
