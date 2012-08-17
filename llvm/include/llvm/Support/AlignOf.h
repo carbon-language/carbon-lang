@@ -107,8 +107,8 @@ LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(8192);
 // Any larger and MSVC complains.
 #undef LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT
 
-/// \brief This class template exposes a typedef for type containing a suitable
-/// aligned character array to hold elements of any of up to four types.
+/// \brief This union template exposes a suitably aligned and sized character
+/// array member which can hold elements of any of up to four types.
 ///
 /// These types may be arrays, structs, or any other types. The goal is to
 /// produce a union type containing a character array which, when used, forms
@@ -116,7 +116,8 @@ LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(8192);
 /// than four types can be added at the cost of more boiler plate.
 template <typename T1,
           typename T2 = char, typename T3 = char, typename T4 = char>
-class AlignedCharArray {
+union AlignedCharArrayUnion {
+private:
   class AlignerImpl {
     T1 t1; T2 t2; T3 t3; T4 t4;
 
@@ -127,6 +128,12 @@ class AlignedCharArray {
   };
 
 public:
+  /// \brief The character array buffer for use by clients.
+  ///
+  /// No other member of this union should be referenced. The exist purely to
+  /// constrain the layout of this character array.
+  char buffer[sizeof(SizerImpl)];
+
   // Sadly, Clang and GCC both fail to align a character array properly even
   // with an explicit alignment attribute. To work around this, we union
   // the character array that will actually be used with a struct that contains
@@ -134,16 +141,10 @@ public:
   // and GCC will properly register the alignment of a struct containing an
   // aligned member, and this alignment should carry over to the character
   // array in the union.
-  union union_type {
-    // This is the only member of the union which should be used by clients:
-    char buffer[sizeof(SizerImpl)];
-
-    // This member of the union only exists to force the alignment.
-    struct {
-      typename llvm::AlignedCharArrayImpl<AlignOf<AlignerImpl>::Alignment>::type
-        nonce_inner_member;
-    } nonce_member;
-  };
+  struct {
+    typename llvm::AlignedCharArrayImpl<AlignOf<AlignerImpl>::Alignment>::type
+      nonce_inner_member;
+  } nonce_member;
 };
 
 } // end namespace llvm

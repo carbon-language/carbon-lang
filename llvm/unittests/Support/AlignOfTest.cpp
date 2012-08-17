@@ -178,150 +178,150 @@ TEST(AlignOfTest, BasicAlignedArray) {
   // types because of the bugs mentioned above where GCC and Clang both
   // disregard the arbitrary alignment specifier until the type is used to
   // declare a member of a struct.
-  EXPECT_LE(1u, alignOf<AlignedCharArray<SA1>::union_type>());
-  EXPECT_LE(2u, alignOf<AlignedCharArray<SA2>::union_type>());
-  EXPECT_LE(4u, alignOf<AlignedCharArray<SA4>::union_type>());
-  EXPECT_LE(8u, alignOf<AlignedCharArray<SA8>::union_type>());
+  EXPECT_LE(1u, alignOf<AlignedCharArrayUnion<SA1> >());
+  EXPECT_LE(2u, alignOf<AlignedCharArrayUnion<SA2> >());
+  EXPECT_LE(4u, alignOf<AlignedCharArrayUnion<SA4> >());
+  EXPECT_LE(8u, alignOf<AlignedCharArrayUnion<SA8> >());
 
-  EXPECT_LE(1u, sizeof(AlignedCharArray<SA1>::union_type));
-  EXPECT_LE(2u, sizeof(AlignedCharArray<SA2>::union_type));
-  EXPECT_LE(4u, sizeof(AlignedCharArray<SA4>::union_type));
-  EXPECT_LE(8u, sizeof(AlignedCharArray<SA8>::union_type));
+  EXPECT_LE(1u, sizeof(AlignedCharArrayUnion<SA1>));
+  EXPECT_LE(2u, sizeof(AlignedCharArrayUnion<SA2>));
+  EXPECT_LE(4u, sizeof(AlignedCharArrayUnion<SA4>));
+  EXPECT_LE(8u, sizeof(AlignedCharArrayUnion<SA8>));
 
-  EXPECT_EQ(1u, (alignOf<AlignedCharArray<SA1>::union_type>()));
-  EXPECT_EQ(2u, (alignOf<AlignedCharArray<SA1, SA2>::union_type>()));
-  EXPECT_EQ(4u, (alignOf<AlignedCharArray<SA1, SA2, SA4>::union_type>()));
-  EXPECT_EQ(8u, (alignOf<AlignedCharArray<SA1, SA2, SA4, SA8>::union_type>()));
+  EXPECT_EQ(1u, (alignOf<AlignedCharArrayUnion<SA1> >()));
+  EXPECT_EQ(2u, (alignOf<AlignedCharArrayUnion<SA1, SA2> >()));
+  EXPECT_EQ(4u, (alignOf<AlignedCharArrayUnion<SA1, SA2, SA4> >()));
+  EXPECT_EQ(8u, (alignOf<AlignedCharArrayUnion<SA1, SA2, SA4, SA8> >()));
 
-  EXPECT_EQ(1u, sizeof(AlignedCharArray<SA1>::union_type));
-  EXPECT_EQ(2u, sizeof(AlignedCharArray<SA1, SA2>::union_type));
-  EXPECT_EQ(4u, sizeof(AlignedCharArray<SA1, SA2, SA4>::union_type));
-  EXPECT_EQ(8u, sizeof(AlignedCharArray<SA1, SA2, SA4, SA8>::union_type));
+  EXPECT_EQ(1u, sizeof(AlignedCharArrayUnion<SA1>));
+  EXPECT_EQ(2u, sizeof(AlignedCharArrayUnion<SA1, SA2>));
+  EXPECT_EQ(4u, sizeof(AlignedCharArrayUnion<SA1, SA2, SA4>));
+  EXPECT_EQ(8u, sizeof(AlignedCharArrayUnion<SA1, SA2, SA4, SA8>));
 
-  EXPECT_EQ(1u, (alignOf<AlignedCharArray<SA1[1]>::union_type>()));
-  EXPECT_EQ(2u, (alignOf<AlignedCharArray<SA1[2], SA2[1]>::union_type>()));
-  EXPECT_EQ(4u, (alignOf<AlignedCharArray<SA1[42], SA2[55],
-                                          SA4[13]>::union_type>()));
-  EXPECT_EQ(8u, (alignOf<AlignedCharArray<SA1[2], SA2[1],
-                                          SA4, SA8>::union_type>()));
+  EXPECT_EQ(1u, (alignOf<AlignedCharArrayUnion<SA1[1]> >()));
+  EXPECT_EQ(2u, (alignOf<AlignedCharArrayUnion<SA1[2], SA2[1]> >()));
+  EXPECT_EQ(4u, (alignOf<AlignedCharArrayUnion<SA1[42], SA2[55],
+                                               SA4[13]> >()));
+  EXPECT_EQ(8u, (alignOf<AlignedCharArrayUnion<SA1[2], SA2[1],
+                                               SA4, SA8> >()));
 
-  EXPECT_EQ(1u,  sizeof(AlignedCharArray<SA1[1]>::union_type));
-  EXPECT_EQ(2u,  sizeof(AlignedCharArray<SA1[2], SA2[1]>::union_type));
-  EXPECT_EQ(4u,  sizeof(AlignedCharArray<SA1[3], SA2[2], SA4>::union_type));
-  EXPECT_EQ(16u, sizeof(AlignedCharArray<SA1, SA2[3],
-                                         SA4[3], SA8>::union_type));
+  EXPECT_EQ(1u,  sizeof(AlignedCharArrayUnion<SA1[1]>));
+  EXPECT_EQ(2u,  sizeof(AlignedCharArrayUnion<SA1[2], SA2[1]>));
+  EXPECT_EQ(4u,  sizeof(AlignedCharArrayUnion<SA1[3], SA2[2], SA4>));
+  EXPECT_EQ(16u, sizeof(AlignedCharArrayUnion<SA1, SA2[3],
+                                              SA4[3], SA8>));
 
   // For other tests we simply assert that the alignment of the union mathes
   // that of the fundamental type and hope that we have any weird type
   // productions that would trigger bugs.
-  EXPECT_EQ(alignOf<char>(), alignOf<AlignedCharArray<char>::union_type>());
-  EXPECT_EQ(alignOf<short>(), alignOf<AlignedCharArray<short>::union_type>());
-  EXPECT_EQ(alignOf<int>(), alignOf<AlignedCharArray<int>::union_type>());
-  EXPECT_EQ(alignOf<long>(), alignOf<AlignedCharArray<long>::union_type>());
+  EXPECT_EQ(alignOf<char>(), alignOf<AlignedCharArrayUnion<char> >());
+  EXPECT_EQ(alignOf<short>(), alignOf<AlignedCharArrayUnion<short> >());
+  EXPECT_EQ(alignOf<int>(), alignOf<AlignedCharArrayUnion<int> >());
+  EXPECT_EQ(alignOf<long>(), alignOf<AlignedCharArrayUnion<long> >());
   EXPECT_EQ(alignOf<long long>(),
-            alignOf<AlignedCharArray<long long>::union_type>());
-  EXPECT_EQ(alignOf<float>(), alignOf<AlignedCharArray<float>::union_type>());
-  EXPECT_EQ(alignOf<double>(), alignOf<AlignedCharArray<double>::union_type>());
+            alignOf<AlignedCharArrayUnion<long long> >());
+  EXPECT_EQ(alignOf<float>(), alignOf<AlignedCharArrayUnion<float> >());
+  EXPECT_EQ(alignOf<double>(), alignOf<AlignedCharArrayUnion<double> >());
   EXPECT_EQ(alignOf<long double>(),
-            alignOf<AlignedCharArray<long double>::union_type>());
-  EXPECT_EQ(alignOf<void *>(), alignOf<AlignedCharArray<void *>::union_type>());
-  EXPECT_EQ(alignOf<int *>(), alignOf<AlignedCharArray<int *>::union_type>());
+            alignOf<AlignedCharArrayUnion<long double> >());
+  EXPECT_EQ(alignOf<void *>(), alignOf<AlignedCharArrayUnion<void *> >());
+  EXPECT_EQ(alignOf<int *>(), alignOf<AlignedCharArrayUnion<int *> >());
   EXPECT_EQ(alignOf<double (*)(double)>(),
-            alignOf<AlignedCharArray<double (*)(double)>::union_type>());
+            alignOf<AlignedCharArrayUnion<double (*)(double)> >());
   EXPECT_EQ(alignOf<double (S6::*)()>(),
-            alignOf<AlignedCharArray<double (S6::*)()>::union_type>());
-  EXPECT_EQ(alignOf<S1>(), alignOf<AlignedCharArray<S1>::union_type>());
-  EXPECT_EQ(alignOf<S2>(), alignOf<AlignedCharArray<S2>::union_type>());
-  EXPECT_EQ(alignOf<S3>(), alignOf<AlignedCharArray<S3>::union_type>());
-  EXPECT_EQ(alignOf<S4>(), alignOf<AlignedCharArray<S4>::union_type>());
-  EXPECT_EQ(alignOf<S5>(), alignOf<AlignedCharArray<S5>::union_type>());
-  EXPECT_EQ(alignOf<S6>(), alignOf<AlignedCharArray<S6>::union_type>());
-  EXPECT_EQ(alignOf<D1>(), alignOf<AlignedCharArray<D1>::union_type>());
-  EXPECT_EQ(alignOf<D2>(), alignOf<AlignedCharArray<D2>::union_type>());
-  EXPECT_EQ(alignOf<D3>(), alignOf<AlignedCharArray<D3>::union_type>());
-  EXPECT_EQ(alignOf<D4>(), alignOf<AlignedCharArray<D4>::union_type>());
-  EXPECT_EQ(alignOf<D5>(), alignOf<AlignedCharArray<D5>::union_type>());
-  EXPECT_EQ(alignOf<D6>(), alignOf<AlignedCharArray<D6>::union_type>());
-  EXPECT_EQ(alignOf<D7>(), alignOf<AlignedCharArray<D7>::union_type>());
-  EXPECT_EQ(alignOf<D8>(), alignOf<AlignedCharArray<D8>::union_type>());
-  EXPECT_EQ(alignOf<D9>(), alignOf<AlignedCharArray<D9>::union_type>());
-  EXPECT_EQ(alignOf<V1>(), alignOf<AlignedCharArray<V1>::union_type>());
-  EXPECT_EQ(alignOf<V2>(), alignOf<AlignedCharArray<V2>::union_type>());
-  EXPECT_EQ(alignOf<V3>(), alignOf<AlignedCharArray<V3>::union_type>());
-  EXPECT_EQ(alignOf<V4>(), alignOf<AlignedCharArray<V4>::union_type>());
-  EXPECT_EQ(alignOf<V5>(), alignOf<AlignedCharArray<V5>::union_type>());
-  EXPECT_EQ(alignOf<V6>(), alignOf<AlignedCharArray<V6>::union_type>());
-  EXPECT_EQ(alignOf<V7>(), alignOf<AlignedCharArray<V7>::union_type>());
+            alignOf<AlignedCharArrayUnion<double (S6::*)()> >());
+  EXPECT_EQ(alignOf<S1>(), alignOf<AlignedCharArrayUnion<S1> >());
+  EXPECT_EQ(alignOf<S2>(), alignOf<AlignedCharArrayUnion<S2> >());
+  EXPECT_EQ(alignOf<S3>(), alignOf<AlignedCharArrayUnion<S3> >());
+  EXPECT_EQ(alignOf<S4>(), alignOf<AlignedCharArrayUnion<S4> >());
+  EXPECT_EQ(alignOf<S5>(), alignOf<AlignedCharArrayUnion<S5> >());
+  EXPECT_EQ(alignOf<S6>(), alignOf<AlignedCharArrayUnion<S6> >());
+  EXPECT_EQ(alignOf<D1>(), alignOf<AlignedCharArrayUnion<D1> >());
+  EXPECT_EQ(alignOf<D2>(), alignOf<AlignedCharArrayUnion<D2> >());
+  EXPECT_EQ(alignOf<D3>(), alignOf<AlignedCharArrayUnion<D3> >());
+  EXPECT_EQ(alignOf<D4>(), alignOf<AlignedCharArrayUnion<D4> >());
+  EXPECT_EQ(alignOf<D5>(), alignOf<AlignedCharArrayUnion<D5> >());
+  EXPECT_EQ(alignOf<D6>(), alignOf<AlignedCharArrayUnion<D6> >());
+  EXPECT_EQ(alignOf<D7>(), alignOf<AlignedCharArrayUnion<D7> >());
+  EXPECT_EQ(alignOf<D8>(), alignOf<AlignedCharArrayUnion<D8> >());
+  EXPECT_EQ(alignOf<D9>(), alignOf<AlignedCharArrayUnion<D9> >());
+  EXPECT_EQ(alignOf<V1>(), alignOf<AlignedCharArrayUnion<V1> >());
+  EXPECT_EQ(alignOf<V2>(), alignOf<AlignedCharArrayUnion<V2> >());
+  EXPECT_EQ(alignOf<V3>(), alignOf<AlignedCharArrayUnion<V3> >());
+  EXPECT_EQ(alignOf<V4>(), alignOf<AlignedCharArrayUnion<V4> >());
+  EXPECT_EQ(alignOf<V5>(), alignOf<AlignedCharArrayUnion<V5> >());
+  EXPECT_EQ(alignOf<V6>(), alignOf<AlignedCharArrayUnion<V6> >());
+  EXPECT_EQ(alignOf<V7>(), alignOf<AlignedCharArrayUnion<V7> >());
 
   // Some versions of MSVC get this wrong somewhat disturbingly. The failure
   // appears to be benign: alignOf<V8>() produces a preposterous value: 12
 #ifndef _MSC_VER
-  EXPECT_EQ(alignOf<V8>(), alignOf<AlignedCharArray<V8>::union_type>());
+  EXPECT_EQ(alignOf<V8>(), alignOf<AlignedCharArrayUnion<V8> >());
 #endif
 
-  EXPECT_EQ(sizeof(char), sizeof(AlignedCharArray<char>::union_type));
-  EXPECT_EQ(sizeof(char[1]), sizeof(AlignedCharArray<char[1]>::union_type));
-  EXPECT_EQ(sizeof(char[2]), sizeof(AlignedCharArray<char[2]>::union_type));
-  EXPECT_EQ(sizeof(char[3]), sizeof(AlignedCharArray<char[3]>::union_type));
-  EXPECT_EQ(sizeof(char[4]), sizeof(AlignedCharArray<char[4]>::union_type));
-  EXPECT_EQ(sizeof(char[5]), sizeof(AlignedCharArray<char[5]>::union_type));
-  EXPECT_EQ(sizeof(char[8]), sizeof(AlignedCharArray<char[8]>::union_type));
-  EXPECT_EQ(sizeof(char[13]), sizeof(AlignedCharArray<char[13]>::union_type));
-  EXPECT_EQ(sizeof(char[16]), sizeof(AlignedCharArray<char[16]>::union_type));
-  EXPECT_EQ(sizeof(char[21]), sizeof(AlignedCharArray<char[21]>::union_type));
-  EXPECT_EQ(sizeof(char[32]), sizeof(AlignedCharArray<char[32]>::union_type));
-  EXPECT_EQ(sizeof(short), sizeof(AlignedCharArray<short>::union_type));
-  EXPECT_EQ(sizeof(int), sizeof(AlignedCharArray<int>::union_type));
-  EXPECT_EQ(sizeof(long), sizeof(AlignedCharArray<long>::union_type));
+  EXPECT_EQ(sizeof(char), sizeof(AlignedCharArrayUnion<char>));
+  EXPECT_EQ(sizeof(char[1]), sizeof(AlignedCharArrayUnion<char[1]>));
+  EXPECT_EQ(sizeof(char[2]), sizeof(AlignedCharArrayUnion<char[2]>));
+  EXPECT_EQ(sizeof(char[3]), sizeof(AlignedCharArrayUnion<char[3]>));
+  EXPECT_EQ(sizeof(char[4]), sizeof(AlignedCharArrayUnion<char[4]>));
+  EXPECT_EQ(sizeof(char[5]), sizeof(AlignedCharArrayUnion<char[5]>));
+  EXPECT_EQ(sizeof(char[8]), sizeof(AlignedCharArrayUnion<char[8]>));
+  EXPECT_EQ(sizeof(char[13]), sizeof(AlignedCharArrayUnion<char[13]>));
+  EXPECT_EQ(sizeof(char[16]), sizeof(AlignedCharArrayUnion<char[16]>));
+  EXPECT_EQ(sizeof(char[21]), sizeof(AlignedCharArrayUnion<char[21]>));
+  EXPECT_EQ(sizeof(char[32]), sizeof(AlignedCharArrayUnion<char[32]>));
+  EXPECT_EQ(sizeof(short), sizeof(AlignedCharArrayUnion<short>));
+  EXPECT_EQ(sizeof(int), sizeof(AlignedCharArrayUnion<int>));
+  EXPECT_EQ(sizeof(long), sizeof(AlignedCharArrayUnion<long>));
   EXPECT_EQ(sizeof(long long),
-            sizeof(AlignedCharArray<long long>::union_type));
-  EXPECT_EQ(sizeof(float), sizeof(AlignedCharArray<float>::union_type));
-  EXPECT_EQ(sizeof(double), sizeof(AlignedCharArray<double>::union_type));
+            sizeof(AlignedCharArrayUnion<long long>));
+  EXPECT_EQ(sizeof(float), sizeof(AlignedCharArrayUnion<float>));
+  EXPECT_EQ(sizeof(double), sizeof(AlignedCharArrayUnion<double>));
   EXPECT_EQ(sizeof(long double),
-            sizeof(AlignedCharArray<long double>::union_type));
-  EXPECT_EQ(sizeof(void *), sizeof(AlignedCharArray<void *>::union_type));
-  EXPECT_EQ(sizeof(int *), sizeof(AlignedCharArray<int *>::union_type));
+            sizeof(AlignedCharArrayUnion<long double>));
+  EXPECT_EQ(sizeof(void *), sizeof(AlignedCharArrayUnion<void *>));
+  EXPECT_EQ(sizeof(int *), sizeof(AlignedCharArrayUnion<int *>));
   EXPECT_EQ(sizeof(double (*)(double)),
-            sizeof(AlignedCharArray<double (*)(double)>::union_type));
+            sizeof(AlignedCharArrayUnion<double (*)(double)>));
   EXPECT_EQ(sizeof(double (S6::*)()),
-            sizeof(AlignedCharArray<double (S6::*)()>::union_type));
-  EXPECT_EQ(sizeof(S1), sizeof(AlignedCharArray<S1>::union_type));
-  EXPECT_EQ(sizeof(S2), sizeof(AlignedCharArray<S2>::union_type));
-  EXPECT_EQ(sizeof(S3), sizeof(AlignedCharArray<S3>::union_type));
-  EXPECT_EQ(sizeof(S4), sizeof(AlignedCharArray<S4>::union_type));
-  EXPECT_EQ(sizeof(S5), sizeof(AlignedCharArray<S5>::union_type));
-  EXPECT_EQ(sizeof(S6), sizeof(AlignedCharArray<S6>::union_type));
-  EXPECT_EQ(sizeof(D1), sizeof(AlignedCharArray<D1>::union_type));
-  EXPECT_EQ(sizeof(D2), sizeof(AlignedCharArray<D2>::union_type));
-  EXPECT_EQ(sizeof(D3), sizeof(AlignedCharArray<D3>::union_type));
-  EXPECT_EQ(sizeof(D4), sizeof(AlignedCharArray<D4>::union_type));
-  EXPECT_EQ(sizeof(D5), sizeof(AlignedCharArray<D5>::union_type));
-  EXPECT_EQ(sizeof(D6), sizeof(AlignedCharArray<D6>::union_type));
-  EXPECT_EQ(sizeof(D7), sizeof(AlignedCharArray<D7>::union_type));
-  EXPECT_EQ(sizeof(D8), sizeof(AlignedCharArray<D8>::union_type));
-  EXPECT_EQ(sizeof(D9), sizeof(AlignedCharArray<D9>::union_type));
-  EXPECT_EQ(sizeof(D9[1]), sizeof(AlignedCharArray<D9[1]>::union_type));
-  EXPECT_EQ(sizeof(D9[2]), sizeof(AlignedCharArray<D9[2]>::union_type));
-  EXPECT_EQ(sizeof(D9[3]), sizeof(AlignedCharArray<D9[3]>::union_type));
-  EXPECT_EQ(sizeof(D9[4]), sizeof(AlignedCharArray<D9[4]>::union_type));
-  EXPECT_EQ(sizeof(D9[5]), sizeof(AlignedCharArray<D9[5]>::union_type));
-  EXPECT_EQ(sizeof(D9[8]), sizeof(AlignedCharArray<D9[8]>::union_type));
-  EXPECT_EQ(sizeof(D9[13]), sizeof(AlignedCharArray<D9[13]>::union_type));
-  EXPECT_EQ(sizeof(D9[16]), sizeof(AlignedCharArray<D9[16]>::union_type));
-  EXPECT_EQ(sizeof(D9[21]), sizeof(AlignedCharArray<D9[21]>::union_type));
-  EXPECT_EQ(sizeof(D9[32]), sizeof(AlignedCharArray<D9[32]>::union_type));
-  EXPECT_EQ(sizeof(V1), sizeof(AlignedCharArray<V1>::union_type));
-  EXPECT_EQ(sizeof(V2), sizeof(AlignedCharArray<V2>::union_type));
-  EXPECT_EQ(sizeof(V3), sizeof(AlignedCharArray<V3>::union_type));
-  EXPECT_EQ(sizeof(V4), sizeof(AlignedCharArray<V4>::union_type));
-  EXPECT_EQ(sizeof(V5), sizeof(AlignedCharArray<V5>::union_type));
-  EXPECT_EQ(sizeof(V6), sizeof(AlignedCharArray<V6>::union_type));
-  EXPECT_EQ(sizeof(V7), sizeof(AlignedCharArray<V7>::union_type));
+            sizeof(AlignedCharArrayUnion<double (S6::*)()>));
+  EXPECT_EQ(sizeof(S1), sizeof(AlignedCharArrayUnion<S1>));
+  EXPECT_EQ(sizeof(S2), sizeof(AlignedCharArrayUnion<S2>));
+  EXPECT_EQ(sizeof(S3), sizeof(AlignedCharArrayUnion<S3>));
+  EXPECT_EQ(sizeof(S4), sizeof(AlignedCharArrayUnion<S4>));
+  EXPECT_EQ(sizeof(S5), sizeof(AlignedCharArrayUnion<S5>));
+  EXPECT_EQ(sizeof(S6), sizeof(AlignedCharArrayUnion<S6>));
+  EXPECT_EQ(sizeof(D1), sizeof(AlignedCharArrayUnion<D1>));
+  EXPECT_EQ(sizeof(D2), sizeof(AlignedCharArrayUnion<D2>));
+  EXPECT_EQ(sizeof(D3), sizeof(AlignedCharArrayUnion<D3>));
+  EXPECT_EQ(sizeof(D4), sizeof(AlignedCharArrayUnion<D4>));
+  EXPECT_EQ(sizeof(D5), sizeof(AlignedCharArrayUnion<D5>));
+  EXPECT_EQ(sizeof(D6), sizeof(AlignedCharArrayUnion<D6>));
+  EXPECT_EQ(sizeof(D7), sizeof(AlignedCharArrayUnion<D7>));
+  EXPECT_EQ(sizeof(D8), sizeof(AlignedCharArrayUnion<D8>));
+  EXPECT_EQ(sizeof(D9), sizeof(AlignedCharArrayUnion<D9>));
+  EXPECT_EQ(sizeof(D9[1]), sizeof(AlignedCharArrayUnion<D9[1]>));
+  EXPECT_EQ(sizeof(D9[2]), sizeof(AlignedCharArrayUnion<D9[2]>));
+  EXPECT_EQ(sizeof(D9[3]), sizeof(AlignedCharArrayUnion<D9[3]>));
+  EXPECT_EQ(sizeof(D9[4]), sizeof(AlignedCharArrayUnion<D9[4]>));
+  EXPECT_EQ(sizeof(D9[5]), sizeof(AlignedCharArrayUnion<D9[5]>));
+  EXPECT_EQ(sizeof(D9[8]), sizeof(AlignedCharArrayUnion<D9[8]>));
+  EXPECT_EQ(sizeof(D9[13]), sizeof(AlignedCharArrayUnion<D9[13]>));
+  EXPECT_EQ(sizeof(D9[16]), sizeof(AlignedCharArrayUnion<D9[16]>));
+  EXPECT_EQ(sizeof(D9[21]), sizeof(AlignedCharArrayUnion<D9[21]>));
+  EXPECT_EQ(sizeof(D9[32]), sizeof(AlignedCharArrayUnion<D9[32]>));
+  EXPECT_EQ(sizeof(V1), sizeof(AlignedCharArrayUnion<V1>));
+  EXPECT_EQ(sizeof(V2), sizeof(AlignedCharArrayUnion<V2>));
+  EXPECT_EQ(sizeof(V3), sizeof(AlignedCharArrayUnion<V3>));
+  EXPECT_EQ(sizeof(V4), sizeof(AlignedCharArrayUnion<V4>));
+  EXPECT_EQ(sizeof(V5), sizeof(AlignedCharArrayUnion<V5>));
+  EXPECT_EQ(sizeof(V6), sizeof(AlignedCharArrayUnion<V6>));
+  EXPECT_EQ(sizeof(V7), sizeof(AlignedCharArrayUnion<V7>));
 
   // Some versions of MSVC also get this wrong. The failure again appears to be
   // benign: sizeof(V8) is only 52 bytes, but our array reserves 56.
 #ifndef _MSC_VER
-  EXPECT_EQ(sizeof(V8), sizeof(AlignedCharArray<V8>::union_type));
+  EXPECT_EQ(sizeof(V8), sizeof(AlignedCharArrayUnion<V8>));
 #endif
 }
 

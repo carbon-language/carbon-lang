@@ -687,8 +687,7 @@ class SmallDenseMap
 
   /// A "union" of an inline bucket array and the struct representing
   /// a large bucket. This union will be discriminated by the 'Small' bit.
-  typename AlignedCharArray<BucketT[InlineBuckets], LargeRep>::union_type
-    storage;
+  AlignedCharArrayUnion<BucketT[InlineBuckets], LargeRep> storage;
 
 public:
   explicit SmallDenseMap(unsigned NumInitBuckets = 0) {
@@ -834,8 +833,7 @@ public:
         return; // Nothing to do.
 
       // First move the inline buckets into a temporary storage.
-      typename AlignedCharArray<BucketT[InlineBuckets]>::union_type
-        TmpStorage;
+      AlignedCharArrayUnion<BucketT[InlineBuckets]> TmpStorage;
       BucketT *TmpBegin = reinterpret_cast<BucketT *>(TmpStorage.buffer);
       BucketT *TmpEnd = TmpBegin;
 
