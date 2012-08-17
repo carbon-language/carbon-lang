@@ -12888,16 +12888,31 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     // String/text processing lowering.
   case X86::PCMPISTRM128REG:
   case X86::VPCMPISTRM128REG:
-    return EmitPCMP(MI, BB, 3, false /* in-mem */);
   case X86::PCMPISTRM128MEM:
   case X86::VPCMPISTRM128MEM:
-    return EmitPCMP(MI, BB, 3, true /* in-mem */);
   case X86::PCMPESTRM128REG:
   case X86::VPCMPESTRM128REG:
-    return EmitPCMP(MI, BB, 5, false /* in mem */);
   case X86::PCMPESTRM128MEM:
-  case X86::VPCMPESTRM128MEM:
-    return EmitPCMP(MI, BB, 5, true /* in mem */);
+  case X86::VPCMPESTRM128MEM: {
+    unsigned NumArgs;
+    bool MemArg;
+    switch (MI->getOpcode()) {
+    default: llvm_unreachable("illegal opcode!");
+    case X86::PCMPISTRM128REG:
+    case X86::VPCMPISTRM128REG:
+      NumArgs = 3; MemArg = false; break;
+    case X86::PCMPISTRM128MEM:
+    case X86::VPCMPISTRM128MEM:
+      NumArgs = 3; MemArg = true; break;
+    case X86::PCMPESTRM128REG:
+    case X86::VPCMPESTRM128REG:
+      NumArgs = 5; MemArg = false; break;
+    case X86::PCMPESTRM128MEM:
+    case X86::VPCMPESTRM128MEM:
+      NumArgs = 5; MemArg = true; break;
+    }
+    return EmitPCMP(MI, BB, NumArgs, MemArg);
+  }
 
     // Thread synchronization.
   case X86::MONITOR:
