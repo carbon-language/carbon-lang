@@ -1575,6 +1575,13 @@ void Verifier::visitLandingPadInst(LandingPadInst &LPI) {
 
 void Verifier::verifyDominatesUse(Instruction &I, unsigned i) {
   Instruction *Op = cast<Instruction>(I.getOperand(i));
+  // If the we have an invalid invoke, don't try to compute the dominance.
+  // We already reject it in the invoke specific checks and the dominance
+  // computation doesn't handle multiple edges.
+  if (InvokeInst *II = dyn_cast<InvokeInst>(Op)) {
+    if (II->getNormalDest() == II->getUnwindDest())
+      return;
+  }
 
   const Use &U = I.getOperandUse(i);
   Assert2(InstsInThisBlock.count(Op) || DT->dominates(Op, U),

@@ -19,7 +19,6 @@ L2:		; preds = %0
 	br label %L
 L:		; preds = %L2, %L1, %L1
 ; CHECK: The unwind destination does not have a landingpad instruction
-; CHECK: Instruction does not dominate all uses
 	ret i32 %A
 }
 
