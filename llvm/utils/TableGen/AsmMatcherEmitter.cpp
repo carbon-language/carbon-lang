@@ -2447,7 +2447,9 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   emitSubtargetFeatureFlagEnumeration(Info, OS);
 
   // Emit the function to match a register name to number.
-  emitMatchRegisterName(Target, AsmParser, OS);
+  // This should be omitted for Mips target
+  if (AsmParser->getValueAsBit("ShouldEmitMatchRegisterName"))
+    emitMatchRegisterName(Target, AsmParser, OS);
 
   OS << "#endif // GET_REGISTER_MATCHER\n\n";
 

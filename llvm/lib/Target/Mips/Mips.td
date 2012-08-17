@@ -95,9 +95,20 @@ def MipsAsmWriter : AsmWriter {
   bit isMCAsmWriter = 1;
 }
 
-def Mips : Target {
-  let InstructionSet = MipsInstrInfo;
-
-  let AssemblyWriters = [MipsAsmWriter];
+def MipsAsmParser : AsmParser {
+  let ShouldEmitMatchRegisterName = 0;
 }
 
+def MipsAsmParserVariant : AsmParserVariant {
+  int Variant = 0;
+
+  // Recognize hard coded registers.
+  string RegisterPrefix = "$";
+}
+
+def Mips : Target {
+  let InstructionSet = MipsInstrInfo;
+  let AssemblyParsers = [MipsAsmParser];
+  let AssemblyWriters = [MipsAsmWriter];
+  let AssemblyParserVariants = [MipsAsmParserVariant];
+}

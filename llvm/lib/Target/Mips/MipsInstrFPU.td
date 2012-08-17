@@ -103,7 +103,7 @@ class FPStore<bits<6> op, string opstr, RegisterClass RC, Operand MemOpnd>:
 class FPIdxLoad<bits<6> funct, string opstr, RegisterClass DRC,
                 RegisterClass PRC, SDPatternOperator FOp = null_frag>:
   FFMemIdx<funct, (outs DRC:$fd), (ins PRC:$base, PRC:$index),
-           !strconcat(opstr, "\t$fd, $index($base)"),
+           !strconcat(opstr, "\t$fd, ${index}(${base})"),
            [(set DRC:$fd, (FOp (add PRC:$base, PRC:$index)))]> {
   let fs = 0;
 }
@@ -112,7 +112,7 @@ class FPIdxLoad<bits<6> funct, string opstr, RegisterClass DRC,
 class FPIdxStore<bits<6> funct, string opstr, RegisterClass DRC,
                  RegisterClass PRC, SDPatternOperator FOp= null_frag>:
   FFMemIdx<funct, (outs), (ins DRC:$fs, PRC:$base, PRC:$index),
-           !strconcat(opstr, "\t$fs, $index($base)"),
+           !strconcat(opstr, "\t$fs, ${index}(${base})"),
            [(FOp DRC:$fs, (add PRC:$base, PRC:$index))]> {
   let fd = 0;
 }

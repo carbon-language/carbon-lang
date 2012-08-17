@@ -239,6 +239,9 @@ let Namespace = "Mips" in {
   // fcc0 register
   def FCC0 : Register<"fcc0">;
 
+  // PC register
+  def PC : Register<"pc">;
+
   // Hardware register $29
   def HWR29 : Register<"29">;
   def HWR29_64 : Register<"29">;

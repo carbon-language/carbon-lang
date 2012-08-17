@@ -753,6 +753,10 @@ class AsmParser {
   // function of the AsmParser class to call on every matched instruction.
   // This can be used to perform target specific instruction post-processing.
   string AsmParserInstCleanup  = "";
+
+  //ShouldEmitMatchRegisterName - Set to false if the target needs a hand
+  //written register name matcher
+  bit ShouldEmitMatchRegisterName = 1;
 }
 def DefaultAsmParser : AsmParser;
 
