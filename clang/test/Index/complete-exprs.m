@@ -21,7 +21,7 @@ __strong id global;
 // CHECK-CC1: NotImplemented:{ResultType NSString *}{TypedText @"}{Placeholder string}{Text "} (40)
 // CHECK-CC1: NotImplemented:{ResultType id}{TypedText @(}{Placeholder expression}{RightParen )} (40)
 // CHECK-CC1: NotImplemented:{ResultType NSArray *}{TypedText @[}{Placeholder objects, ...}{RightBracket ]} (40)
-// CHECK-CC1: NotImplemented:{ResultType NSDictionary *}{TypedText @{}{Placeholder key}{HorizontalSpace  }{Colon :}{HorizontalSpace  }{Placeholder object, ...}{RightBrace }} (40)
+// CHECK-CC1: NotImplemented:{ResultType NSDictionary *}{TypedText @{}{Placeholder key}{Colon :}{HorizontalSpace  }{Placeholder object, ...}{RightBrace }} (40)
 // CHECK-CC1: NotImplemented:{ResultType SEL}{TypedText _cmd} (80)
 // CHECK-CC1: TypedefDecl:{TypedText BOOL} (50)
 // CHECK-CC1: macro definition:{TypedText bool} (51)
@@ -43,7 +43,7 @@ __strong id global;
 // RUN: c-index-test -code-completion-at=%s:16:5 %s | FileCheck -check-prefix=CHECK-CC4 %s
 // RUN: c-index-test -code-completion-at=%s:16:14 %s | FileCheck -check-prefix=CHECK-CC4 %s
 // CHECK-CC4: NotImplemented:{ResultType NSArray *}{TypedText @[}{Placeholder objects, ...}{RightBracket ]} (40)
-// CHECK-CC4: NotImplemented:{ResultType NSDictionary *}{TypedText @{}{Placeholder key}{HorizontalSpace  }{Colon :}{HorizontalSpace  }{Placeholder object, ...}{RightBrace }} (40)
+// CHECK-CC4: NotImplemented:{ResultType NSDictionary *}{TypedText @{}{Placeholder key}{Colon :}{HorizontalSpace  }{Placeholder object, ...}{RightBrace }} (40)
 // CHECK-CC4: NotImplemented:{ResultType SEL}{TypedText _cmd} (80)
 // CHECK-CC4: macro definition:{TypedText bool} (51)
 // CHECK-CC4: macro definition:{TypedText NO} (65)
