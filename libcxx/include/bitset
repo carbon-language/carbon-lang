@@ -159,7 +159,7 @@ protected:
     friend class __bit_const_reference<__bitset>;
     friend class __bit_iterator<__bitset, false>;
     friend class __bit_iterator<__bitset, true>;
-    friend class __bit_array<__bitset>;
+    friend struct __bit_array<__bitset>;
 
     __storage_type __first_[_N_words];
 
@@ -435,7 +435,7 @@ protected:
     friend class __bit_const_reference<__bitset>;
     friend class __bit_iterator<__bitset, false>;
     friend class __bit_iterator<__bitset, true>;
-    friend class __bit_array<__bitset>;
+    friend struct __bit_array<__bitset>;
 
     __storage_type __first_;
 

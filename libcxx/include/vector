@@ -2318,7 +2318,7 @@ private:
     friend class __bit_const_reference<vector>;
     friend class __bit_iterator<vector, false>;
     friend class __bit_iterator<vector, true>;
-    friend class __bit_array<vector>;
+    friend struct __bit_array<vector>;
     friend struct _LIBCPP_VISIBLE hash<vector>;
 };
 
