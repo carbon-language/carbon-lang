@@ -378,8 +378,7 @@ def Most : DiagGroup<"most", [
     ObjCMissingSuperCalls,
     OverloadedVirtual,
     PrivateExtern,
-    SelTypeCast,
-    BadFunctionCast
+    SelTypeCast
  ]>;
 
 // Thread Safety warnings 
