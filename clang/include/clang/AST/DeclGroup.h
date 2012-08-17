@@ -26,7 +26,11 @@ class DeclGroupIterator;
 
 class DeclGroup {
   // FIXME: Include a TypeSpecifier object.
-  unsigned NumDecls;
+  union {
+    unsigned NumDecls;
+
+    Decl *Aligner;
+  };
 
 private:
   DeclGroup() : NumDecls(0) {}
