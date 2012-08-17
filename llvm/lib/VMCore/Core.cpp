@@ -1084,6 +1084,8 @@ LLVMLinkage LLVMGetLinkage(LLVMValueRef Global) {
     return LLVMLinkOnceAnyLinkage;
   case GlobalValue::LinkOnceODRLinkage:
     return LLVMLinkOnceODRLinkage;
+  case GlobalValue::LinkOnceODRAutoHideLinkage:
+    return LLVMLinkOnceODRAutoHideLinkage;
   case GlobalValue::WeakAnyLinkage:
     return LLVMWeakAnyLinkage;
   case GlobalValue::WeakODRLinkage:
@@ -1098,8 +1100,6 @@ LLVMLinkage LLVMGetLinkage(LLVMValueRef Global) {
     return LLVMLinkerPrivateLinkage;
   case GlobalValue::LinkerPrivateWeakLinkage:
     return LLVMLinkerPrivateWeakLinkage;
-  case GlobalValue::LinkerPrivateWeakDefAutoLinkage:
-    return LLVMLinkerPrivateWeakDefAutoLinkage;
   case GlobalValue::DLLImportLinkage:
     return LLVMDLLImportLinkage;
   case GlobalValue::DLLExportLinkage:
@@ -1129,6 +1129,9 @@ void LLVMSetLinkage(LLVMValueRef Global, LLVMLinkage Linkage) {
   case LLVMLinkOnceODRLinkage:
     GV->setLinkage(GlobalValue::LinkOnceODRLinkage);
     break;
+  case LLVMLinkOnceODRAutoHideLinkage:
+    GV->setLinkage(GlobalValue::LinkOnceODRAutoHideLinkage);
+    break;
   case LLVMWeakAnyLinkage:
     GV->setLinkage(GlobalValue::WeakAnyLinkage);
     break;
@@ -1149,9 +1152,6 @@ void LLVMSetLinkage(LLVMValueRef Global, LLVMLinkage Linkage) {
     break;
   case LLVMLinkerPrivateWeakLinkage:
     GV->setLinkage(GlobalValue::LinkerPrivateWeakLinkage);
-    break;
-  case LLVMLinkerPrivateWeakDefAutoLinkage:
-    GV->setLinkage(GlobalValue::LinkerPrivateWeakDefAutoLinkage);
     break;
   case LLVMDLLImportLinkage:
     GV->setLinkage(GlobalValue::DLLImportLinkage);

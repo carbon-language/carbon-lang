@@ -183,8 +183,7 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
   ManglerPrefixTy PrefixTy = Mangler::Default;
   if (GV->hasPrivateLinkage() || isImplicitlyPrivate)
     PrefixTy = Mangler::Private;
-  else if (GV->hasLinkerPrivateLinkage() || GV->hasLinkerPrivateWeakLinkage() ||
-           GV->hasLinkerPrivateWeakDefAutoLinkage())
+  else if (GV->hasLinkerPrivateLinkage() || GV->hasLinkerPrivateWeakLinkage())
     PrefixTy = Mangler::LinkerPrivate;
   
   // If this global has a name, handle it simply.

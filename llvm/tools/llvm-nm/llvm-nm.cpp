@@ -256,7 +256,6 @@ static void DumpSymbolNameForGlobalValue(GlobalValue &GV) {
   if (GV.hasPrivateLinkage() ||
       GV.hasLinkerPrivateLinkage() ||
       GV.hasLinkerPrivateWeakLinkage() ||
-      GV.hasLinkerPrivateWeakDefAutoLinkage() ||
       GV.hasAvailableExternallyLinkage())
     return;
   char TypeChar = TypeCharForSymbol(GV);

@@ -282,6 +282,7 @@ typedef enum {
   LLVMLinkOnceAnyLinkage, /**< Keep one copy of function when linking (inline)*/
   LLVMLinkOnceODRLinkage, /**< Same, but only replaced by something
                             equivalent. */
+  LLVMLinkOnceODRAutoHideLinkage, /**< Like LinkOnceODR, but possibly hidden. */
   LLVMWeakAnyLinkage,     /**< Keep one copy of function when linking (weak) */
   LLVMWeakODRLinkage,     /**< Same, but only replaced by something
                             equivalent. */
@@ -295,9 +296,7 @@ typedef enum {
   LLVMGhostLinkage,       /**< Obsolete */
   LLVMCommonLinkage,      /**< Tentative definitions */
   LLVMLinkerPrivateLinkage, /**< Like Private, but linker removes. */
-  LLVMLinkerPrivateWeakLinkage, /**< Like LinkerPrivate, but is weak. */
-  LLVMLinkerPrivateWeakDefAutoLinkage /**< Like LinkerPrivateWeak, but possibly
-                                           hidden. */
+  LLVMLinkerPrivateWeakLinkage /**< Like LinkerPrivate, but is weak. */
 } LLVMLinkage;
 
 typedef enum {

@@ -487,8 +487,7 @@ void LTOModule::addDefinedSymbol(GlobalValue *def, bool isFunction) {
 
   // set definition part
   if (def->hasWeakLinkage() || def->hasLinkOnceLinkage() ||
-      def->hasLinkerPrivateWeakLinkage() ||
-      def->hasLinkerPrivateWeakDefAutoLinkage())
+      def->hasLinkerPrivateWeakLinkage())
     attr |= LTO_SYMBOL_DEFINITION_WEAK;
   else if (def->hasCommonLinkage())
     attr |= LTO_SYMBOL_DEFINITION_TENTATIVE;
@@ -504,7 +503,7 @@ void LTOModule::addDefinedSymbol(GlobalValue *def, bool isFunction) {
            def->hasLinkOnceLinkage() || def->hasCommonLinkage() ||
            def->hasLinkerPrivateWeakLinkage())
     attr |= LTO_SYMBOL_SCOPE_DEFAULT;
-  else if (def->hasLinkerPrivateWeakDefAutoLinkage())
+  else if (def->hasLinkOnceODRAutoHideLinkage())
     attr |= LTO_SYMBOL_SCOPE_DEFAULT_CAN_BE_HIDDEN;
   else
     attr |= LTO_SYMBOL_SCOPE_INTERNAL;

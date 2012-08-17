@@ -184,12 +184,13 @@ bool LLParser::ParseTopLevelEntities() {
     case lltok::kw_private:             // OptionalLinkage
     case lltok::kw_linker_private:      // OptionalLinkage
     case lltok::kw_linker_private_weak: // OptionalLinkage
-    case lltok::kw_linker_private_weak_def_auto: // OptionalLinkage
+    case lltok::kw_linker_private_weak_def_auto: // FIXME: backwards compat.
     case lltok::kw_internal:            // OptionalLinkage
     case lltok::kw_weak:                // OptionalLinkage
     case lltok::kw_weak_odr:            // OptionalLinkage
     case lltok::kw_linkonce:            // OptionalLinkage
     case lltok::kw_linkonce_odr:        // OptionalLinkage
+    case lltok::kw_linkonce_odr_auto_hide: // OptionalLinkage
     case lltok::kw_appending:           // OptionalLinkage
     case lltok::kw_dllexport:           // OptionalLinkage
     case lltok::kw_common:              // OptionalLinkage
@@ -576,8 +577,7 @@ bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc,
       Linkage != GlobalValue::InternalLinkage &&
       Linkage != GlobalValue::PrivateLinkage &&
       Linkage != GlobalValue::LinkerPrivateLinkage &&
-      Linkage != GlobalValue::LinkerPrivateWeakLinkage &&
-      Linkage != GlobalValue::LinkerPrivateWeakDefAutoLinkage)
+      Linkage != GlobalValue::LinkerPrivateWeakLinkage)
     return Error(LinkageLoc, "invalid linkage type for alias");
 
   Constant *Aliasee;
@@ -990,12 +990,12 @@ bool LLParser::ParseOptionalAttrs(Attributes &Attrs, unsigned AttrKind) {
 ///   ::= 'private'
 ///   ::= 'linker_private'
 ///   ::= 'linker_private_weak'
-///   ::= 'linker_private_weak_def_auto'
 ///   ::= 'internal'
 ///   ::= 'weak'
 ///   ::= 'weak_odr'
 ///   ::= 'linkonce'
 ///   ::= 'linkonce_odr'
+///   ::= 'linkonce_odr_auto_hide'
 ///   ::= 'available_externally'
 ///   ::= 'appending'
 ///   ::= 'dllexport'
@@ -1012,14 +1012,15 @@ bool LLParser::ParseOptionalLinkage(unsigned &Res, bool &HasLinkage) {
   case lltok::kw_linker_private_weak:
     Res = GlobalValue::LinkerPrivateWeakLinkage;
     break;
-  case lltok::kw_linker_private_weak_def_auto:
-    Res = GlobalValue::LinkerPrivateWeakDefAutoLinkage;
-    break;
   case lltok::kw_internal:       Res = GlobalValue::InternalLinkage;      break;
   case lltok::kw_weak:           Res = GlobalValue::WeakAnyLinkage;       break;
   case lltok::kw_weak_odr:       Res = GlobalValue::WeakODRLinkage;       break;
   case lltok::kw_linkonce:       Res = GlobalValue::LinkOnceAnyLinkage;   break;
   case lltok::kw_linkonce_odr:   Res = GlobalValue::LinkOnceODRLinkage;   break;
+  case lltok::kw_linkonce_odr_auto_hide:
+  case lltok::kw_linker_private_weak_def_auto: // FIXME: For backwards compat.
+    Res = GlobalValue::LinkOnceODRAutoHideLinkage;
+    break;
   case lltok::kw_available_externally:
     Res = GlobalValue::AvailableExternallyLinkage;
     break;
@@ -2653,11 +2654,11 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   case GlobalValue::PrivateLinkage:
   case GlobalValue::LinkerPrivateLinkage:
   case GlobalValue::LinkerPrivateWeakLinkage:
-  case GlobalValue::LinkerPrivateWeakDefAutoLinkage:
   case GlobalValue::InternalLinkage:
   case GlobalValue::AvailableExternallyLinkage:
   case GlobalValue::LinkOnceAnyLinkage:
   case GlobalValue::LinkOnceODRLinkage:
+  case GlobalValue::LinkOnceODRAutoHideLinkage:
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:
   case GlobalValue::DLLExportLinkage:

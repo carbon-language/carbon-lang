@@ -400,8 +400,8 @@ void Verifier::visitGlobalValue(GlobalValue &GV) {
             "Only global arrays can have appending linkage!", GVar);
   }
 
-  Assert1(!GV.hasLinkerPrivateWeakDefAutoLinkage() || GV.hasDefaultVisibility(),
-          "linker_private_weak_def_auto can only have default visibility!",
+  Assert1(!GV.hasLinkOnceODRAutoHideLinkage() || GV.hasDefaultVisibility(),
+          "linkonce_odr_auto_hide can only have default visibility!",
           &GV);
 }
 
