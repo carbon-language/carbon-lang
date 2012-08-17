@@ -150,9 +150,7 @@ static bit_value_t bitFromBits(const BitsInit &bits, unsigned index) {
 }
 // Prints the bit value for each position.
 static void dumpBits(raw_ostream &o, const BitsInit &bits) {
-  unsigned index;
-
-  for (index = bits.getNumBits(); index > 0; index--) {
+  for (unsigned index = bits.getNumBits(); index > 0; --index) {
     switch (bitFromBits(bits, index - 1)) {
     case BIT_TRUE:
       o << "1";
@@ -557,11 +555,9 @@ void Filter::recurse() {
   // Starts by inheriting our parent filter chooser's filter bit values.
   std::vector<bit_value_t> BitValueArray(Owner->FilterBitValues);
 
-  unsigned bitIndex;
-
   if (VariableInstructions.size()) {
     // Conservatively marks each segment position as BIT_UNSET.
-    for (bitIndex = 0; bitIndex < NumBits; bitIndex++)
+    for (unsigned bitIndex = 0; bitIndex < NumBits; ++bitIndex)
       BitValueArray[StartBit + bitIndex] = BIT_UNSET;
 
     // Delegates to an inferior filter chooser for further processing on this
@@ -590,7 +586,7 @@ void Filter::recurse() {
        mapIterator++) {
 
     // Marks all the segment positions with either BIT_TRUE or BIT_FALSE.
-    for (bitIndex = 0; bitIndex < NumBits; bitIndex++) {
+    for (unsigned bitIndex = 0; bitIndex < NumBits; ++bitIndex) {
       if (mapIterator->first & (1ULL << bitIndex))
         BitValueArray[StartBit + bitIndex] = BIT_TRUE;
       else
@@ -946,9 +942,7 @@ bool FilterChooser::fieldFromInsn(uint64_t &Field, insn_t &Insn,
 /// filter array as a series of chars.
 void FilterChooser::dumpFilterArray(raw_ostream &o,
                                  const std::vector<bit_value_t> &filter) const {
-  unsigned bitIndex;
-
-  for (bitIndex = BitWidth; bitIndex > 0; bitIndex--) {
+  for (unsigned bitIndex = BitWidth; bitIndex > 0; bitIndex--) {
     switch (filter[bitIndex - 1]) {
     case BIT_UNFILTERED:
       o << ".";
@@ -1233,7 +1227,7 @@ void FilterChooser::emitPredicateTableEntry(DecoderTableInfo &TableInfo,
 
   TableInfo.Table.push_back(MCD::OPC_CheckPredicate);
   // Predicate index
-  for (int i = 0, e = PBytes.size(); i != e; ++i)
+  for (unsigned i = 0, e = PBytes.size(); i != e; ++i)
     TableInfo.Table.push_back(PBytes[i]);
   // Push location for NumToSkip backpatching.
   TableInfo.FixupStack.back().push_back(TableInfo.Table.size());
@@ -1289,7 +1283,7 @@ void FilterChooser::emitSoftFailTableEntry(DecoderTableInfo &TableInfo,
   if (NeedPositiveMask) {
     encodeULEB128(PositiveMask.getZExtValue(), S);
     S.flush();
-    for (int i = 0, e = MaskBytes.size(); i != e; ++i)
+    for (unsigned i = 0, e = MaskBytes.size(); i != e; ++i)
       TableInfo.Table.push_back(MaskBytes[i]);
   } else
     TableInfo.Table.push_back(0);
@@ -1298,7 +1292,7 @@ void FilterChooser::emitSoftFailTableEntry(DecoderTableInfo &TableInfo,
     S.resync();
     encodeULEB128(NegativeMask.getZExtValue(), S);
     S.flush();
-    for (int i = 0, e = MaskBytes.size(); i != e; ++i)
+    for (unsigned i = 0, e = MaskBytes.size(); i != e; ++i)
       TableInfo.Table.push_back(MaskBytes[i]);
   } else
     TableInfo.Table.push_back(0);
@@ -1317,14 +1311,13 @@ void FilterChooser::emitSingletonTableEntry(DecoderTableInfo &TableInfo,
   getIslands(StartBits, EndBits, FieldVals, Insn);
 
   unsigned Size = StartBits.size();
-  unsigned I, NumBits;
 
   // Emit the predicate table entry if one is needed.
   emitPredicateTableEntry(TableInfo, Opc);
 
   // Check any additional encoding fields needed.
-  for (I = Size; I != 0; --I) {
-    NumBits = EndBits[I-1] - StartBits[I-1] + 1;
+  for (unsigned I = Size; I != 0; --I) {
+    unsigned NumBits = EndBits[I-1] - StartBits[I-1] + 1;
     TableInfo.Table.push_back(MCD::OPC_CheckField);
     TableInfo.Table.push_back(StartBits[I-1]);
     TableInfo.Table.push_back(NumBits);
@@ -1359,7 +1352,7 @@ void FilterChooser::emitSingletonTableEntry(DecoderTableInfo &TableInfo,
   S.flush();
 
   // Decoder index
-  for (int i = 0, e = Bytes.size(); i != e; ++i)
+  for (unsigned i = 0, e = Bytes.size(); i != e; ++i)
     TableInfo.Table.push_back(Bytes[i]);
 }
 
@@ -1439,7 +1432,7 @@ bool FilterChooser::filterProcessor(bool AllowMixed, bool Greedy) {
     }
   }
 
-  unsigned BitIndex, InsnIndex;
+  unsigned BitIndex;
 
   // We maintain BIT_WIDTH copies of the bitAttrs automaton.
   // The automaton consumes the corresponding bit from each
@@ -1469,7 +1462,7 @@ bool FilterChooser::filterProcessor(bool AllowMixed, bool Greedy) {
     else
       bitAttrs.push_back(ATTR_NONE);
 
-  for (InsnIndex = 0; InsnIndex < numInstructions; ++InsnIndex) {
+  for (unsigned InsnIndex = 0; InsnIndex < numInstructions; ++InsnIndex) {
     insn_t insn;
 
     insnWithID(insn, Opcodes[InsnIndex]);
@@ -1520,7 +1513,7 @@ bool FilterChooser::filterProcessor(bool AllowMixed, bool Greedy) {
   bitAttr_t RA = ATTR_NONE;
   unsigned StartBit = 0;
 
-  for (BitIndex = 0; BitIndex < BitWidth; BitIndex++) {
+  for (BitIndex = 0; BitIndex < BitWidth; ++BitIndex) {
     bitAttr_t bitAttr = bitAttrs[BitIndex];
 
     assert(bitAttr != ATTR_NONE && "Bit without attributes");
