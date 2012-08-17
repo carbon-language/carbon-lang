@@ -385,7 +385,6 @@ static DecodeStatus DecodeLDR(MCInst &Inst, unsigned Val,
 static DecodeStatus DecodeMRRC2(llvm::MCInst &Inst, unsigned Val,
                                 uint64_t Address, const void *Decoder);
 #include "ARMGenDisassemblerTables.inc"
-#include "ARMGenInstrInfo.inc"
 #include "ARMGenEDInfo.inc"
 
 static MCDisassembler *createARMDisassembler(const Target &T, const MCSubtargetInfo &STI) {
