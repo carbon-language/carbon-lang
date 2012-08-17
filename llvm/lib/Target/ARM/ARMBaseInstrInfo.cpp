@@ -3354,9 +3354,16 @@ enum ARMExeDomain {
 //
 std::pair<uint16_t, uint16_t>
 ARMBaseInstrInfo::getExecutionDomain(const MachineInstr *MI) const {
-  // VMOVD is a VFP instruction, but can be changed to NEON if it isn't
-  // predicated.
+  // VMOVD, VMOVRS and VMOVSR are VFP instructions, but can be changed to NEON
+  // if they are not predicated.
   if (MI->getOpcode() == ARM::VMOVD && !isPredicated(MI))
+    return std::make_pair(ExeVFP, (1<<ExeVFP) | (1<<ExeNEON));
+
+  // Cortex-A9 is particularly picky about mixing the two and wants these
+  // converted.
+  if (Subtarget.isCortexA9() && !isPredicated(MI) &&
+      (MI->getOpcode() == ARM::VMOVRS ||
+       MI->getOpcode() == ARM::VMOVSR))
     return std::make_pair(ExeVFP, (1<<ExeVFP) | (1<<ExeNEON));
 
   // No other instructions can be swizzled, so just determine their domain.
@@ -3378,22 +3385,97 @@ ARMBaseInstrInfo::getExecutionDomain(const MachineInstr *MI) const {
 
 void
 ARMBaseInstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
-  // We only know how to change VMOVD into VORR.
-  assert(MI->getOpcode() == ARM::VMOVD && "Can only swizzle VMOVD");
-  if (Domain != ExeNEON)
-    return;
+  unsigned DstReg, SrcReg, DReg;
+  unsigned Lane;
+  MachineInstrBuilder MIB(MI);
+  const TargetRegisterInfo *TRI = &getRegisterInfo();
+  bool isKill;
+  switch (MI->getOpcode()) {
+    default:
+      llvm_unreachable("cannot handle opcode!");
+      break;
+    case ARM::VMOVD:
+      if (Domain != ExeNEON)
+        break;
 
-  // Zap the predicate operands.
-  assert(!isPredicated(MI) && "Cannot predicate a VORRd");
-  MI->RemoveOperand(3);
-  MI->RemoveOperand(2);
+      // Zap the predicate operands.
+      assert(!isPredicated(MI) && "Cannot predicate a VORRd");
+      MI->RemoveOperand(3);
+      MI->RemoveOperand(2);
 
-  // Change to a VORRd which requires two identical use operands.
-  MI->setDesc(get(ARM::VORRd));
+      // Change to a VORRd which requires two identical use operands.
+      MI->setDesc(get(ARM::VORRd));
 
-  // Add the extra source operand and new predicates.
-  // This will go before any implicit ops.
-  AddDefaultPred(MachineInstrBuilder(MI).addOperand(MI->getOperand(1)));
+      // Add the extra source operand and new predicates.
+      // This will go before any implicit ops.
+      AddDefaultPred(MachineInstrBuilder(MI).addOperand(MI->getOperand(1)));
+      break;
+    case ARM::VMOVRS:
+      if (Domain != ExeNEON)
+        break;
+      assert(!isPredicated(MI) && "Cannot predicate a VGETLN");
+
+      DstReg = MI->getOperand(0).getReg();
+      SrcReg = MI->getOperand(1).getReg();
+
+      DReg = TRI->getMatchingSuperReg(SrcReg, ARM::ssub_0, &ARM::DPRRegClass);
+      Lane = 0;
+      if (DReg == ARM::NoRegister) {
+        DReg = TRI->getMatchingSuperReg(SrcReg, ARM::ssub_1, &ARM::DPRRegClass);
+        Lane = 1;
+        assert(DReg && "S-register with no D super-register?");
+      }
+
+      MI->RemoveOperand(3);
+      MI->RemoveOperand(2);
+      MI->RemoveOperand(1);
+
+      MI->setDesc(get(ARM::VGETLNi32));
+      MIB.addReg(DReg);
+      MIB.addImm(Lane);
+
+      MIB->getOperand(1).setIsUndef();
+      MIB.addReg(SrcReg, RegState::Implicit);
+
+      AddDefaultPred(MIB);
+      break;
+    case ARM::VMOVSR:
+      if (Domain != ExeNEON)
+        break;
+      assert(!isPredicated(MI) && "Cannot predicate a VSETLN");
+
+      DstReg = MI->getOperand(0).getReg();
+      SrcReg = MI->getOperand(1).getReg();
+      DReg = TRI->getMatchingSuperReg(DstReg, ARM::ssub_0, &ARM::DPRRegClass);
+      Lane = 0;
+      if (DReg == ARM::NoRegister) {
+        DReg = TRI->getMatchingSuperReg(DstReg, ARM::ssub_1, &ARM::DPRRegClass);
+        Lane = 1;
+        assert(DReg && "S-register with no D super-register?");
+      }
+      isKill = MI->getOperand(0).isKill();
+
+      MI->RemoveOperand(3);
+      MI->RemoveOperand(2);
+      MI->RemoveOperand(1);
+      MI->RemoveOperand(0);
+
+      MI->setDesc(get(ARM::VSETLNi32));
+      MIB.addReg(DReg);
+      MIB.addReg(DReg);
+      MIB.addReg(SrcReg);
+      MIB.addImm(Lane);
+
+      MIB->getOperand(1).setIsUndef();
+
+      if (isKill)
+        MIB->addRegisterKilled(DstReg, TRI, true);
+      MIB->addRegisterDefined(DstReg, TRI);
+
+      AddDefaultPred(MIB);
+      break;
+  }
+
 }
 
 bool ARMBaseInstrInfo::hasNOP() const {

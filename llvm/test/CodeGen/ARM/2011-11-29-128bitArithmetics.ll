@@ -33,16 +33,16 @@ define void @test_cos(<4 x float>* %X) nounwind {
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}
 ; CHECK:      vldmia r{{[0-9][0-9]?}}, {{.*}}
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}cosf
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}cosf
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}cosf
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}cosf
 
 ; CHECK:      vstmia  {{.*}}
@@ -64,16 +64,16 @@ define void @test_exp(<4 x float>* %X) nounwind {
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}
 ; CHECK:      vldmia r{{[0-9][0-9]?}}, {{.*}}
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}expf
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}expf
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}expf
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}expf
 
 ; CHECK:      vstmia  {{.*}}
@@ -95,16 +95,16 @@ define void @test_exp2(<4 x float>* %X) nounwind {
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}
 ; CHECK:      vldmia r{{[0-9][0-9]?}}, {{.*}}
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}exp2f
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}exp2f
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}exp2f
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}exp2f
 
 ; CHECK:      vstmia  {{.*}}
@@ -126,16 +126,16 @@ define void @test_log10(<4 x float>* %X) nounwind {
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}
 ; CHECK:      vldmia r{{[0-9][0-9]?}}, {{.*}}
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}log10f
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}log10f
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}log10f
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}log10f
 
 ; CHECK:      vstmia  {{.*}}
@@ -157,16 +157,16 @@ define void @test_log(<4 x float>* %X) nounwind {
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}
 ; CHECK:      vldmia r{{[0-9][0-9]?}}, {{.*}}
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}logf
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}logf
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}logf
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}logf
 
 ; CHECK:      vstmia  {{.*}}
@@ -188,16 +188,16 @@ define void @test_log2(<4 x float>* %X) nounwind {
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}
 ; CHECK:      vldmia r{{[0-9][0-9]?}}, {{.*}}
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}log2f
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}log2f
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}log2f
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}log2f
 
 ; CHECK:      vstmia  {{.*}}
@@ -220,16 +220,16 @@ define void @test_pow(<4 x float>* %X) nounwind {
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}
 ; CHECK:      vldmia r{{[0-9][0-9]?}}, {{.*}}
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}powf
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}powf
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}powf
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}powf
 
 ; CHECK:      vstmia  {{.*}}
@@ -277,16 +277,16 @@ define void @test_sin(<4 x float>* %X) nounwind {
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}
 ; CHECK:      vldmia r{{[0-9][0-9]?}}, {{.*}}
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}sinf
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}sinf
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}sinf
 
-; CHECK:      {{[v]?mov}}  r0, {{[r|s][0-9]+}}
+; CHECK:      {{[mov|vmov.32]}}  r0,
 ; CHECK:      bl  {{.*}}sinf
 
 ; CHECK:      vstmia  {{.*}}
