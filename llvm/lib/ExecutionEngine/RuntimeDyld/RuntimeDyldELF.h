@@ -42,6 +42,12 @@ protected:
                             uint32_t Type,
                             int32_t Addend);
 
+  void resolveMIPSRelocation(uint8_t *LocalAddress,
+                            uint32_t FinalAddress,
+                            uint32_t Value,
+                            uint32_t Type,
+                            int32_t Addend);
+
   virtual void resolveRelocation(uint8_t *LocalAddress,
                                  uint64_t FinalAddress,
                                  uint64_t Value,

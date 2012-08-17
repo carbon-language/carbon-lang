@@ -108,7 +108,8 @@ bool RuntimeDyldImpl::loadObject(const MemoryBuffer *InputBuffer) {
       CommonSymbols[*i] = Size;
     } else {
       if (SymType == object::SymbolRef::ST_Function ||
-          SymType == object::SymbolRef::ST_Data) {
+          SymType == object::SymbolRef::ST_Data ||
+          SymType == object::SymbolRef::ST_Unknown) {
         uint64_t FileOffset;
         StringRef SectionData;
         section_iterator si = obj->end_sections();
@@ -333,15 +334,31 @@ void RuntimeDyldImpl::addRelocationForSymbol(const RelocationEntry &RE,
 }
 
 uint8_t *RuntimeDyldImpl::createStubFunction(uint8_t *Addr) {
-  // TODO: There is only ARM far stub now. We should add the Thumb stub,
-  // and stubs for branches Thumb - ARM and ARM - Thumb.
   if (Arch == Triple::arm) {
+    // TODO: There is only ARM far stub now. We should add the Thumb stub,
+    // and stubs for branches Thumb - ARM and ARM - Thumb.
     uint32_t *StubAddr = (uint32_t*)Addr;
     *StubAddr = 0xe51ff004; // ldr pc,<label>
     return (uint8_t*)++StubAddr;
-  }
-  else
+  } else if (Arch == Triple::mipsel) {
+    uint32_t *StubAddr = (uint32_t*)Addr;
+    // 0:   3c190000        lui     t9,%hi(addr).
+    // 4:   27390000        addiu   t9,t9,%lo(addr).
+    // 8:   03200008        jr      t9.
+    // c:   00000000        nop.
+    const unsigned LuiT9Instr = 0x3c190000, AdduiT9Instr = 0x27390000;
+    const unsigned JrT9Instr = 0x03200008, NopInstr = 0x0;
+
+    *StubAddr = LuiT9Instr;
+    StubAddr++;
+    *StubAddr = AdduiT9Instr;
+    StubAddr++;
+    *StubAddr = JrT9Instr;
+    StubAddr++;
+    *StubAddr = NopInstr;
     return Addr;
+  }
+  return Addr;
 }
 
 // Assign an address to a symbol name and resolve all the relocations

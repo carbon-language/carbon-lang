@@ -161,6 +161,8 @@ protected:
   inline unsigned getMaxStubSize() {
     if (Arch == Triple::arm || Arch == Triple::thumb)
       return 8; // 32-bit instruction and 32-bit address
+    else if (Arch == Triple::mipsel)
+      return 16;
     else
       return 0;
   }

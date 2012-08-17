@@ -20,6 +20,7 @@
 #include "MipsJITInfo.h"
 #include "MipsSelectionDAGInfo.h"
 #include "MipsSubtarget.h"
+#include "MipsELFWriterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameLowering.h"
@@ -36,6 +37,7 @@ class MipsTargetMachine : public LLVMTargetMachine {
   MipsTargetLowering  TLInfo;
   MipsSelectionDAGInfo TSInfo;
   MipsJITInfo JITInfo;
+  MipsELFWriterInfo   ELFWriterInfo;
 
 public:
   MipsTargetMachine(const Target &T, StringRef TT,
@@ -67,6 +69,10 @@ public:
 
   virtual const MipsSelectionDAGInfo* getSelectionDAGInfo() const {
     return &TSInfo;
+  }
+
+  virtual const MipsELFWriterInfo *getELFWriterInfo() const {
+      return &ELFWriterInfo;
   }
 
   // Pass Pipeline Configuration

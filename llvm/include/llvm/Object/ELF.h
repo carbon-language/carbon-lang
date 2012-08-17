@@ -2044,6 +2044,9 @@ unsigned ELFObjectFile<target_endianness, is64Bits>::getArch() const {
     return Triple::arm;
   case ELF::EM_HEXAGON:
     return Triple::hexagon;
+  case ELF::EM_MIPS:
+    return (target_endianness == support::little) ?
+           Triple::mipsel : Triple::mips;
   default:
     return Triple::UnknownArch;
   }
