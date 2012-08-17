@@ -473,6 +473,10 @@ ObjectSizeOffsetVisitor::visitExtractValueInst(ExtractValueInst&) {
 }
 
 SizeOffsetType ObjectSizeOffsetVisitor::visitGEPOperator(GEPOperator &GEP) {
+  // Ignore self-referencing GEPs, they can occur in unreachable code.
+  if (&GEP == GEP.getPointerOperand())
+    return unknown();
+
   SizeOffsetType PtrData = compute(GEP.getPointerOperand());
   if (!bothKnown(PtrData) || !GEP.hasAllConstantIndices())
     return unknown();
