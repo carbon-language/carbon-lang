@@ -6973,6 +6973,27 @@ void ARMTargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
 //                           ARM Optimization Hooks
 //===----------------------------------------------------------------------===//
 
+// Helper function that checks if N is a null or all ones constant.
+static inline bool isZeroOrAllOnes(SDValue N, bool AllOnes) {
+  ConstantSDNode *C = dyn_cast<ConstantSDNode>(N);
+  if (!C)
+    return false;
+  return AllOnes ? C->isAllOnesValue() : C->isNullValue();
+}
+
+// Combine a constant select operand into its use:
+//
+//   (add (select cc, 0, c), x) -> (select cc, x, (add, x, c))
+//   (sub x, (select cc, 0, c)) -> (select cc, x, (sub, x, c))
+//
+// The transform is rejected if the select doesn't have a constant operand that
+// is null.
+//
+// @param N       The node to transform.
+// @param Slct    The N operand that is a select.
+// @param OtherOp The other N operand (x above).
+// @param DCI     Context.
+// @returns The new node, or SDValue() on failure.
 static
 SDValue combineSelectAndUse(SDNode *N, SDValue Slct, SDValue OtherOp,
                             TargetLowering::DAGCombinerInfo &DCI) {
@@ -6998,16 +7019,12 @@ SDValue combineSelectAndUse(SDNode *N, SDValue Slct, SDValue OtherOp,
   assert ((Opc == ISD::ADD || (Opc == ISD::SUB && Slct == N->getOperand(1))) &&
           "Bad input!");
 
-  if (LHS.getOpcode() == ISD::Constant &&
-      cast<ConstantSDNode>(LHS)->isNullValue()) {
+  if (isZeroOrAllOnes(LHS, false)) {
     DoXform = true;
-  } else if (CC != ISD::SETCC_INVALID &&
-             RHS.getOpcode() == ISD::Constant &&
-             cast<ConstantSDNode>(RHS)->isNullValue()) {
+  } else if (CC != ISD::SETCC_INVALID && isZeroOrAllOnes(RHS, false)) {
     std::swap(LHS, RHS);
     SDValue Op0 = Slct.getOperand(0);
-    EVT OpVT = isSlctCC ? Op0.getValueType() :
-                          Op0.getOperand(0).getValueType();
+    EVT OpVT = isSlctCC ? Op0.getValueType() : Op0.getOperand(0).getValueType();
     bool isInt = OpVT.isInteger();
     CC = ISD::getSetCCInverse(CC, isInt);
 
@@ -7018,19 +7035,19 @@ SDValue combineSelectAndUse(SDNode *N, SDValue Slct, SDValue OtherOp,
     InvCC = true;
   }
 
-  if (DoXform) {
-    SDValue Result = DAG.getNode(Opc, RHS.getDebugLoc(), VT, OtherOp, RHS);
-    if (isSlctCC)
-      return DAG.getSelectCC(N->getDebugLoc(), OtherOp, Result,
-                             Slct.getOperand(0), Slct.getOperand(1), CC);
-    SDValue CCOp = Slct.getOperand(0);
-    if (InvCC)
-      CCOp = DAG.getSetCC(Slct.getDebugLoc(), CCOp.getValueType(),
-                          CCOp.getOperand(0), CCOp.getOperand(1), CC);
-    return DAG.getNode(ISD::SELECT, N->getDebugLoc(), VT,
-                       CCOp, OtherOp, Result);
-  }
-  return SDValue();
+  if (!DoXform)
+    return SDValue();
+
+  SDValue Result = DAG.getNode(Opc, RHS.getDebugLoc(), VT, OtherOp, RHS);
+  if (isSlctCC)
+    return DAG.getSelectCC(N->getDebugLoc(), OtherOp, Result,
+                           Slct.getOperand(0), Slct.getOperand(1), CC);
+  SDValue CCOp = Slct.getOperand(0);
+  if (InvCC)
+    CCOp = DAG.getSetCC(Slct.getDebugLoc(), CCOp.getValueType(),
+                        CCOp.getOperand(0), CCOp.getOperand(1), CC);
+  return DAG.getNode(ISD::SELECT, N->getDebugLoc(), VT,
+                     CCOp, OtherOp, Result);
 }
 
 // AddCombineToVPADDL- For pair-wise add on neon, use the vpaddl instruction
@@ -7297,16 +7314,8 @@ static SDValue PerformMULCombine(SDNode *N,
 }
 
 static bool isCMOVWithZeroOrAllOnesLHS(SDValue N, bool AllOnes) {
-  if (N.getOpcode() != ARMISD::CMOV || !N.getNode()->hasOneUse())
-    return false;
-
-  SDValue FalseVal = N.getOperand(0);
-  ConstantSDNode *C = dyn_cast<ConstantSDNode>(FalseVal);
-  if (!C)
-    return false;
-  if (AllOnes)
-    return C->isAllOnesValue();
-  return C->isNullValue();
+  return N.getOpcode() == ARMISD::CMOV && N.getNode()->hasOneUse() &&
+    isZeroOrAllOnes(N.getOperand(0), AllOnes);
 }
 
 /// formConditionalOp - Combine an operation with a conditional move operand
