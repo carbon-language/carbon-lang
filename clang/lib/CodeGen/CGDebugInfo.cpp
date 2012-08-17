@@ -368,17 +368,19 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
     
     llvm::DIType ISATy = DBuilder.createPointerType(OCTy, Size);
 
-    SmallVector<llvm::Value *, 16> EltTys;
+    llvm::MDNode *ObjTy = DBuilder.createStructType(TheCU, "objc_object", 
+                                                    getOrCreateMainFile(),
+                                                    0, 0, 0, 0, llvm::DIArray());
+    SmallVector<llvm::Value *, 1> EltTys;
     llvm::DIType FieldTy = 
-      DBuilder.createMemberType(getOrCreateMainFile(), "isa",
+      DBuilder.createMemberType(llvm::DIDescriptor(ObjTy), "isa",
                                 getOrCreateMainFile(), 0, Size,
                                 0, 0, 0, ISATy);
     EltTys.push_back(FieldTy);
     llvm::DIArray Elements = DBuilder.getOrCreateArray(EltTys);
-    
-    return DBuilder.createStructType(TheCU, "objc_object", 
-                                     getOrCreateMainFile(),
-                                     0, 0, 0, 0, Elements);
+
+    ObjTy->replaceOperandWith(10, Elements);
+    return llvm::DIType(ObjTy);
   }
   case BuiltinType::ObjCSel: {
     return
