@@ -47,8 +47,12 @@ const interpose_substitution substitutions[]
   INTERPOSE_FUNCTION(strncpy),
   INTERPOSE_FUNCTION(pthread_create),
   INTERPOSE_FUNCTION(longjmp),
+#if ASAN_INTERCEPT__LONGJMP
   INTERPOSE_FUNCTION(_longjmp),
+#endif
+#if ASAN_INTERCEPT_SIGLONGJMP
   INTERPOSE_FUNCTION(siglongjmp),
+#endif
 #if ASAN_INTERCEPT_STRDUP
   INTERPOSE_FUNCTION(strdup),
 #endif
