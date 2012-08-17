@@ -385,4 +385,11 @@ TEST(RecursiveASTVisitor, VisitsImplicitCopyConstructors) {
       "int main() { Simple s; Simple t(s); }\n"));
 }
 
+TEST(RecursiveASTVisitor, VisitsExtension) {
+  DeclRefExprVisitor Visitor;
+  Visitor.ExpectMatch("s", 1, 24);
+  EXPECT_TRUE(Visitor.runOver(
+    "int s = __extension__ (s);\n"));
+}
+
 } // end namespace clang

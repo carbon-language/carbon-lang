@@ -5518,6 +5518,13 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
   if (Attr)
     ProcessDeclAttributeList(S, Specialization, Attr);
 
+  // Add alignment attributes if necessary; these attributes are checked when
+  // the ASTContext lays out the structure.
+  if (TUK == TUK_Definition) {
+    AddAlignmentAttributesForRecord(Specialization);
+    AddMsStructLayoutForRecord(Specialization);
+  }
+
   if (ModulePrivateLoc.isValid())
     Diag(Specialization->getLocation(), diag::err_module_private_specialization)
       << (isPartialSpecialization? 1 : 0)
