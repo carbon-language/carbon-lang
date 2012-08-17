@@ -179,3 +179,14 @@ define i32 @t12(i32 %a, i32 %b) nounwind {
   %tmp1 = select i1 %cond, i32 %a, i32 %x
   ret i32 %tmp1
 }
+
+; Handle frame index operands.
+define void @pr13628() nounwind uwtable align 2 {
+  %x3 = alloca i8, i32 256, align 8
+  %x4 = load i8* undef, align 1
+  %x5 = icmp ne i8 %x4, 0
+  %x6 = select i1 %x5, i8* %x3, i8* null
+  call void @bar(i8* %x6) nounwind
+  ret void
+}
+declare void @bar(i8*)

@@ -1583,6 +1583,9 @@ static unsigned canFoldIntoMOVCC(unsigned Reg, MachineInstr *&MI,
   // predicated instructions which will be reading CPSR.
   for (unsigned i = 1, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
+    // Reject frame index operands, PEI can't handle the predicated pseudos.
+    if (MO.isFI() || MO.isCPI() || MO.isJTI())
+      return 0;
     if (!MO.isReg())
       continue;
     if (TargetRegisterInfo::isPhysicalRegister(MO.getReg()))
