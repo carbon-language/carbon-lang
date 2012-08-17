@@ -145,6 +145,9 @@ DiagnosticsEngine::GetDiagStatePointForLoc(SourceLocation L) const {
   assert(DiagStatePoints.front().Loc.isInvalid() &&
          "Should have created a DiagStatePoint for command-line");
 
+  if (!SourceMgr)
+    return DiagStatePoints.end() - 1;
+
   FullSourceLoc Loc(L, *SourceMgr);
   if (Loc.isInvalid())
     return DiagStatePoints.end() - 1;
