@@ -17,7 +17,7 @@ void foo()
         [x isEqual : obj];
 }
 
-// CHECK: [[TMP:%.*]] = alloca i8
+// CHECK: [[TMP:%.*]] = alloca i8{{$}}
 // CHECK: [[FIVE:%.*]] = call i8* @objc_retain
 // CHECK-NEXT:  [[SIX:%.*]] = bitcast
 // CHECK-NEXT:  [[SEVEN:%.*]]  = icmp eq i8* [[SIX]], null
@@ -25,8 +25,8 @@ void foo()
 // CHECK:  [[FN:%.*]] = load i8** getelementptr inbounds
 // CHECK-NEXT:  [[EIGHT:%.*]] = bitcast i8* [[FN]]
 // CHECK-NEXT:  [[CALL:%.*]] = call signext i8 [[EIGHT]]
-// CHECK-NEXT  store i8 [[CALL]], i8* [[TMP]]
-// CHECK-NEXT  br label [[CONT:%.*]]
+// CHECK-NEXT:  store i8 [[CALL]], i8* [[TMP]]
+// CHECK-NEXT:  br label [[CONT:%.*]]
 // CHECK:   call void @objc_release(i8* [[FIVE]]) nounwind
 // CHECK-NEXT:   call void @llvm.memset
-// CHECK-NEXT  br label [[CONT]]
+// CHECK-NEXT:  br label [[CONT]]
