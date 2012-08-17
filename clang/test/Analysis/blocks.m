@@ -26,10 +26,12 @@ typedef struct _NSZone NSZone;
 @protocol NSCoding  - (void)encodeWithCoder:(NSCoder *)aCoder; @end
 @interface NSObject <NSObject> {}
 + (id)alloc;
+- (id)copy;
 @end
 extern id NSAllocateObject(Class aClass, NSUInteger extraBytes, NSZone *zone);
-@interface NSString : NSObject <NSCopying, NSMutableCopying, NSCoding>    - (NSUInteger)length;
-- ( const char *)UTF8String;
+@interface NSString : NSObject <NSCopying, NSMutableCopying, NSCoding>
+- (NSUInteger)length;
+- (const char *)UTF8String;
 - (id)initWithFormat:(NSString *)format arguments:(va_list)argList __attribute__((format(__NSString__, 1, 0)));
 @end
 @class NSString, NSData;
@@ -85,4 +87,10 @@ void test2_b() {
 void test2_c() {
   typedef void (^myblock)(void);
   myblock f = ^() { f(); }; // expected-warning{{Variable 'f' is uninitialized when captured by block}}
+}
+
+
+void testMessaging() {
+  // <rdar://problem/12119814>
+  [[^(){} copy] release];
 }
