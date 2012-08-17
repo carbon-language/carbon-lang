@@ -349,7 +349,7 @@ INTERCEPTOR(int, strcmp, const char *s1, const char *s2) {
 
 INTERCEPTOR(char*, strcpy, char *to, const char *from) {  // NOLINT
 #if MAC_INTERPOSE_FUNCTIONS
-  if (!asan_inited) return REAL(strcpy)(to, from);
+  if (!asan_inited) return REAL(strcpy)(to, from);  // NOLINT
 #endif
   // strcpy is called from malloc_default_purgeable_zone()
   // in __asan::ReplaceSystemAlloc() on Mac.
@@ -618,7 +618,7 @@ void InitializeAsanInterceptors() {
     ASAN_INTERCEPT_FUNC(memcpy);
   } else {
 #if !MAC_INTERPOSE_FUNCTIONS
-    // If we're using dynamic interceptors on Mac, these two are just plain 
+    // If we're using dynamic interceptors on Mac, these two are just plain
     // functions.
     *(uptr*)&REAL(memcpy) = (uptr)REAL(memmove);
 #endif
