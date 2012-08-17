@@ -378,3 +378,22 @@ namespace statics {
     }
   }
 }
+
+namespace references {
+  int &a = a; // expected-warning{{variable 'a' is uninitialized when used within its own initialization}}
+
+  struct S {
+    S() : a(a) {} // expected-warning{{field is uninitialized when used here}}
+    int &a;
+  };
+
+  void f() {
+    int &a = a; // expected-warning{{variable 'a' is uninitialized when used within its own initialization}}
+  }
+
+  struct T {
+    T() : a(b), b(a) {} // FIXME: Warn here.
+    int &a, &b;
+    int &c = c; // FIXME: Warn here.
+  };
+}

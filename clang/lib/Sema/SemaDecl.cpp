@@ -6174,6 +6174,7 @@ namespace {
     Decl *OrigDecl;
     bool isRecordType;
     bool isPODType;
+    bool isReferenceType;
 
   public:
     typedef EvaluatedExprVisitor<SelfReferenceChecker> Inherited;
@@ -6182,9 +6183,11 @@ namespace {
                                                     S(S), OrigDecl(OrigDecl) {
       isPODType = false;
       isRecordType = false;
+      isReferenceType = false;
       if (ValueDecl *VD = dyn_cast<ValueDecl>(OrigDecl)) {
         isPODType = VD->getType().isPODType(S.Context);
         isRecordType = VD->getType()->isRecordType();
+        isReferenceType = VD->getType()->isReferenceType();
       }
     }
 
@@ -6192,9 +6195,9 @@ namespace {
     // to determine which DeclRefExpr's to check.  Assume that the casts
     // are present and continue visiting the expression.
     void HandleExpr(Expr *E) {
-      // Skip checking T a = a where T is not a record type.  Doing so is a
-      // way to silence uninitialized warnings.
-      if (isRecordType)
+      // Skip checking T a = a where T is not a record or reference type.
+      // Doing so is a way to silence uninitialized warnings.
+      if (isRecordType || isReferenceType)
         if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
           HandleDeclRefExpr(DRE);
 
@@ -6309,11 +6312,11 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
   }
 
   // Check for self-references within variable initializers.
-  // Variables declared within a function/method body are handled
-  // by a dataflow analysis.
+  // Variables declared within a function/method body (except for references)
+  // are handled by a dataflow analysis.
   // Record types initialized by initializer list are handled here.
   // Initialization by constructors are handled in TryConstructorInitialization.
-  if (!VDecl->hasLocalStorage() &&
+  if ((!VDecl->hasLocalStorage() || VDecl->getType()->isReferenceType()) &&
       (isa<InitListExpr>(Init) || !VDecl->getType()->isRecordType()))
     CheckSelfReference(RealDecl, Init);
 

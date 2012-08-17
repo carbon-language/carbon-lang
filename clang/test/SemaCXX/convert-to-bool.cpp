@@ -62,6 +62,5 @@ struct C {
 
 void test_copy_init_conversions(C c) {
   A &a = c; // expected-error{{no viable conversion from 'C' to 'A'}}
-  B &b = b; // okay
+  B &b = c; // okay
 }
-
