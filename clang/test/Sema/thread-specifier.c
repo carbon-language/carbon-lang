@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i686-pc-linux-gnu -fsyntax-only -verify -pedantic %s
+// RUN: %clang_cc1 -triple i686-pc-linux-gnu -fsyntax-only -Wno-private-extern -verify -pedantic %s
 
 __thread int t1;
 __thread extern int t2; // expected-warning {{'__thread' before 'extern'}}

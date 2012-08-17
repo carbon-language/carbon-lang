@@ -6758,8 +6758,10 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
                                  AbstractVariableType))
         Var->setInvalidDecl();
       if (!Type->isDependentType() && !Var->isInvalidDecl() &&
-          Var->getStorageClass() == SC_PrivateExtern)
+          Var->getStorageClass() == SC_PrivateExtern) {
         Diag(Var->getLocation(), diag::warn_private_extern);
+        Diag(Var->getLocation(), diag::note_private_extern);
+      }
         
       return;
 

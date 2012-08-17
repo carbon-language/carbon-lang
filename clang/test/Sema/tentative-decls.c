@@ -33,7 +33,8 @@ static int i3 = 5;
 extern int i3;
 
 // rdar://7703982
-__private_extern__ int pExtern; // expected-warning {{Use of __private_extern__ on tentative definition has unexpected behaviour}}
+__private_extern__ int pExtern; // expected-warning {{use of __private_extern__ on a declaration may not produce external symbol private to the linkage unit and is deprecated}} \
+// expected-note {{use __attribute__((visibility("hidden"))) attribute instead}}
 int pExtern = 0;
 
 int i4;
