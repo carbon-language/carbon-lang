@@ -620,7 +620,7 @@ entry:
 ; CHECK-NOT: load
 ; CHECK: load i16*
 ; CHECK-NOT: load
-; CHECK-ret i32
+; CHECK: ret i32
 }
 
 define i32 @test_widening2() nounwind ssp noredzone {
@@ -644,7 +644,7 @@ entry:
 ; CHECK-NOT: load
 ; CHECK: load i32*
 ; CHECK-NOT: load
-; CHECK-ret i32
+; CHECK: ret i32
 }
 
 declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind

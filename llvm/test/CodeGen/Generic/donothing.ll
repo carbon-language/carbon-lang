@@ -7,7 +7,7 @@ declare void @llvm.donothing() readnone
 ; CHECK: f1
 define void @f1() nounwind uwtable ssp {
 entry:
-; CHECK-NOT donothing
+; CHECK-NOT: donothing
   invoke void @llvm.donothing()
   to label %invoke.cont unwind label %lpad
 
@@ -25,7 +25,7 @@ lpad:
 ; CHECK: f2
 define void @f2() nounwind {
 entry:
-; CHECK-NOT donothing
+; CHECK-NOT: donothing
   call void @llvm.donothing()
   ret void
 }

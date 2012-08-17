@@ -33,7 +33,6 @@ define void @outer2(i32 %N) {
 ;
 ; CHECK: @outer2
 ; CHECK-NOT: call void @inner2
-; CHECK alloca i32, i32 %N
 ; CHECK-NOT: call void @inner2
 ; CHECK: ret void
 

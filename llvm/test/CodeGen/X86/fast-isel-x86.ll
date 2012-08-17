@@ -57,6 +57,6 @@ entry:
 ; CHECK: subl $28
 ; CHECK: leal (%esp), %ecx
 ; CHECK: calll _test4fastccsret
-; CHECK addl $28
+; CHECK: addl $28
 }
 declare fastcc void @test4fastccsret(%struct.a* sret)

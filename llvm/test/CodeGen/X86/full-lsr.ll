@@ -10,7 +10,7 @@ define void @foo(float* nocapture %A, float* nocapture %B, float* nocapture %C, 
 ; CHECK: foo
 ; CHECK: addl
 ; CHECK: addl
-; CEHCK: addl
+; CHECK: addl
 
 entry:
 	%0 = icmp sgt i32 %N, 0		; <i1> [#uses=1]

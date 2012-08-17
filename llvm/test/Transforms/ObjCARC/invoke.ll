@@ -76,12 +76,12 @@ done:
 ; CHECK: define void @test2() {
 ; CHECK: invoke.cont:
 ; CHECK-NEXT: call i8* @objc_retain
-; CHEK-NOT: @objc
+; CHECK-NOT: @objc_r
 ; CHECK: finally.cont:
 ; CHECK-NEXT: call void @objc_release
-; CHEK-NOT: @objc
+; CHECK-NOT: @objc
 ; CHECK: finally.rethrow:
-; CHEK-NOT: @objc
+; CHECK-NOT: @objc
 ; CHECK: }
 define void @test2() {
 entry:

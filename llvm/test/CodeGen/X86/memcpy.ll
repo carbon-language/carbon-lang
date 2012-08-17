@@ -65,18 +65,18 @@ entry:
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %A, i8* %B, i64 64, i32 1, i1 false)
   ret void
 ; LINUX: test4:
-; LINUX movq
-; LINUX movq
-; LINUX movq
-; LINUX movq
-; LINUX movq
-; LINUX movq
-; LINUX movq
-; LINUX movq
-; LINUX movq
-; LINUX movq
-; LINUX movq
-; LINUX movq
+; LINUX: movq
+; LINUX: movq
+; LINUX: movq
+; LINUX: movq
+; LINUX: movq
+; LINUX: movq
+; LINUX: movq
+; LINUX: movq
+; LINUX: movq
+; LINUX: movq
+; LINUX: movq
+; LINUX: movq
 }
 
 

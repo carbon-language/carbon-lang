@@ -3,7 +3,7 @@
 ; PR5329
 
 @llvm.global_ctors = appending global [3 x { i32, void ()* }] [{ i32, void ()* } { i32 2000, void ()* @construct_2 }, { i32, void ()* } { i32 3000, void ()* @construct_3 }, { i32, void ()* } { i32 1000, void ()* @construct_1 }]
-; CHECK-DEFAULT  .section        .ctors.64535,"aw",@progbits
+; CHECK-DEFAULT: .section        .ctors.64535,"aw",@progbits
 ; CHECK-DEFAULT: .long construct_1
 ; CHECK-DEFAULT: .section        .ctors.63535,"aw",@progbits
 ; CHECK-DEFAULT: .long construct_2
