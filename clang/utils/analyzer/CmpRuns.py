@@ -146,7 +146,9 @@ def loadResults(path, opts, root = "", deleteEmpty=True):
             for d in data['diagnostics']:
                 # FIXME: Why is this named files, when does it have multiple
                 # files?
-                assert len(d['HTMLDiagnostics_files']) == 1
+                # TODO: Add the assert back in after we fix the 
+                # plist-html output.
+                # assert len(d['HTMLDiagnostics_files']) == 1
                 htmlFiles.append(d.pop('HTMLDiagnostics_files')[0])
         else:
             htmlFiles = [None] * len(data['diagnostics'])
