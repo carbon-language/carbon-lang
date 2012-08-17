@@ -95,10 +95,14 @@ namespace __asan {
 // See http://code.google.com/p/address-sanitizer/issues/detail?id=87
 // and http://opensource.apple.com/source/CF/CF-550.43/CFRuntime.c
 INTERCEPTOR(void, __CFInitialize) {
+  // If the runtime is built as dynamic library, __CFInitialize wrapper may be
+  // called before __asan_init.
+#if !MAC_INTERPOSE_FUNCTIONS
   CHECK(flags()->replace_cfallocator);
   CHECK(asan_inited);
+#endif
   REAL(__CFInitialize)();
-  if (!cf_asan) ReplaceCFAllocator();
+  if (!cf_asan && asan_inited) ReplaceCFAllocator();
 }
 
 namespace {

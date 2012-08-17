@@ -22,6 +22,11 @@ set(ASAN_SOURCES
   asan_win.cc
   )
 
+set(ASAN_DYLIB_SOURCES
+  ${ASAN_SOURCES}
+  dynamic/asan_interceptors_dynamic.cc
+  )
+
 include_directories(..)
 
 set(ASAN_CFLAGS
@@ -33,6 +38,12 @@ set(ASAN_CFLAGS
   -fomit-frame-pointer
   -O3
   )
+
+set(ASAN_DYLIB_DEFINITIONS
+  ${ASAN_COMMON_DEFINITIONS}
+  MAC_INTERPOSE_FUNCTIONS=1
+  )
+
 if (SUPPORTS_NO_VARIADIC_MACROS_FLAG)
   list(APPEND ASAN_CFLAGS -Wno-variadic-macros)
 endif ()
@@ -88,6 +99,24 @@ endif()
 set_property(TARGET ${ASAN_RUNTIME_LIBRARIES} APPEND PROPERTY
   COMPILE_DEFINITIONS ${ASAN_COMMON_DEFINITIONS})
 add_clang_runtime_static_library(${ASAN_RUNTIME_LIBRARIES})
+
+set(ASAN_DYNAMIC_RUNTIME_LIBRARIES)
+if(APPLE)
+  # Build universal binary on APPLE.
+  add_library(clang_rt.asan_osx_dynamic SHARED
+    ${ASAN_DYLIB_SOURCES}
+    $<TARGET_OBJECTS:RTInterception.osx>
+    $<TARGET_OBJECTS:RTSanitizerCommon.osx>
+    )
+  set_target_compile_flags(clang_rt.asan_osx_dynamic ${ASAN_CFLAGS})
+  filter_available_targets(ASAN_TARGETS x86_64 i386)
+  set_target_properties(clang_rt.asan_osx_dynamic PROPERTIES
+    COMPILE_DEFINITIONS ${ASAN_DYLIB_DEFINITIONS}
+    OSX_ARCHITECTURES "${ASAN_TARGETS}"
+    LINK_FLAGS "-framework Foundation")
+  list(APPEND ASAN_DYNAMIC_RUNTIME_LIBRARIES clang_rt.asan_osx_dynamic)
+endif()
+
 
 if(LLVM_INCLUDE_TESTS)
   add_subdirectory(tests)

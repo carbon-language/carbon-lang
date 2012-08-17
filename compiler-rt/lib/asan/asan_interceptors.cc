@@ -206,6 +206,9 @@ static inline int CharCaseCmp(unsigned char c1, unsigned char c2) {
 }
 
 INTERCEPTOR(int, memcmp, const void *a1, const void *a2, uptr size) {
+#if MAC_INTERPOSE_FUNCTIONS
+  if (!asan_inited) return REAL(memcmp)(a1, a2, size);
+#endif
   ENSURE_ASAN_INITED();
   unsigned char c1 = 0, c2 = 0;
   const unsigned char *s1 = (const unsigned char*)a1;
@@ -265,6 +268,9 @@ INTERCEPTOR(void*, memset, void *block, int c, uptr size) {
 }
 
 INTERCEPTOR(char*, strchr, const char *str, int c) {
+#if MAC_INTERPOSE_FUNCTIONS
+  if (!asan_inited) return REAL(strchr)(str, c);
+#endif
   ENSURE_ASAN_INITED();
   char *result = REAL(strchr)(str, c);
   if (flags()->replace_str) {
@@ -322,6 +328,9 @@ INTERCEPTOR(char*, strncat, char *to, const char *from, uptr size) {
 }
 
 INTERCEPTOR(int, strcmp, const char *s1, const char *s2) {
+#if MAC_INTERPOSE_FUNCTIONS
+  if (!asan_inited) return REAL(strcmp)(s1, s2);
+#endif
   if (asan_init_is_running) {
     return REAL(strcmp)(s1, s2);
   }
@@ -339,6 +348,9 @@ INTERCEPTOR(int, strcmp, const char *s1, const char *s2) {
 }
 
 INTERCEPTOR(char*, strcpy, char *to, const char *from) {  // NOLINT
+#if MAC_INTERPOSE_FUNCTIONS
+  if (!asan_inited) return REAL(strcpy)(to, from);
+#endif
   // strcpy is called from malloc_default_purgeable_zone()
   // in __asan::ReplaceSystemAlloc() on Mac.
   if (asan_init_is_running) {
@@ -356,6 +368,9 @@ INTERCEPTOR(char*, strcpy, char *to, const char *from) {  // NOLINT
 
 #if ASAN_INTERCEPT_STRDUP
 INTERCEPTOR(char*, strdup, const char *s) {
+#if MAC_INTERPOSE_FUNCTIONS
+  if (!asan_inited) return REAL(strdup)(s);
+#endif
   ENSURE_ASAN_INITED();
   if (flags()->replace_str) {
     uptr length = REAL(strlen)(s);
@@ -366,6 +381,9 @@ INTERCEPTOR(char*, strdup, const char *s) {
 #endif
 
 INTERCEPTOR(uptr, strlen, const char *s) {
+#if MAC_INTERPOSE_FUNCTIONS
+  if (!asan_inited) return REAL(strlen)(s);
+#endif
   // strlen is called from malloc_default_purgeable_zone()
   // in __asan::ReplaceSystemAlloc() on Mac.
   if (asan_init_is_running) {
@@ -410,6 +428,9 @@ INTERCEPTOR(int, strncasecmp, const char *s1, const char *s2, uptr n) {
 #endif  // ASAN_INTERCEPT_STRCASECMP_AND_STRNCASECMP
 
 INTERCEPTOR(int, strncmp, const char *s1, const char *s2, uptr size) {
+#if MAC_INTERPOSE_FUNCTIONS
+  if (!asan_inited) return REAL(strncmp)(s1, s2, size);
+#endif
   // strncmp is called from malloc_default_purgeable_zone()
   // in __asan::ReplaceSystemAlloc() on Mac.
   if (asan_init_is_running) {
@@ -486,6 +507,9 @@ INTERCEPTOR(long, strtol, const char *nptr,  // NOLINT
 }
 
 INTERCEPTOR(int, atoi, const char *nptr) {
+#if MAC_INTERPOSE_FUNCTIONS
+  if (!asan_inited) return REAL(atoi)(nptr);
+#endif
   ENSURE_ASAN_INITED();
   if (!flags()->replace_str) {
     return REAL(atoi)(nptr);
@@ -502,6 +526,9 @@ INTERCEPTOR(int, atoi, const char *nptr) {
 }
 
 INTERCEPTOR(long, atol, const char *nptr) {  // NOLINT
+#if MAC_INTERPOSE_FUNCTIONS
+  if (!asan_inited) return REAL(atol)(nptr);
+#endif
   ENSURE_ASAN_INITED();
   if (!flags()->replace_str) {
     return REAL(atol)(nptr);
@@ -580,6 +607,9 @@ void InitializeAsanInterceptors() {
   static bool was_called_once;
   CHECK(was_called_once == false);
   was_called_once = true;
+#if MAC_INTERPOSE_FUNCTIONS
+  return;
+#endif
   // Intercept mem* functions.
   ASAN_INTERCEPT_FUNC(memcmp);
   ASAN_INTERCEPT_FUNC(memmove);
@@ -587,7 +617,11 @@ void InitializeAsanInterceptors() {
   if (PLATFORM_HAS_DIFFERENT_MEMCPY_AND_MEMMOVE) {
     ASAN_INTERCEPT_FUNC(memcpy);
   } else {
-    REAL(memcpy) = REAL(memmove);
+#if !MAC_INTERPOSE_FUNCTIONS
+    // If we're using dynamic interceptors on Mac, these two are just plain 
+    // functions.
+    *(uptr*)&REAL(memcpy) = (uptr)REAL(memmove);
+#endif
   }
 
   // Intercept str* functions.
