@@ -37,9 +37,13 @@ public:
 
   virtual ~TestVisitor() { }
 
+  enum Language { Lang_C, Lang_CXX };
+
   /// \brief Runs the current AST visitor over the given code.
-  bool runOver(StringRef Code) {
-    return tooling::runToolOnCode(CreateTestAction(), Code);
+  bool runOver(StringRef Code, Language L = Lang_CXX) {
+    // FIXME: The input language is determined based on the provided filename.
+    static const StringRef Filenames[] = { "input.c", "input.cc" };
+    return tooling::runToolOnCode(CreateTestAction(), Code, Filenames[L]);
   }
 
   bool shouldVisitTemplateInstantiations() const {
