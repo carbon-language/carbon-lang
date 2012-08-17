@@ -37,4 +37,7 @@ public:
   int n __attribute__((aligned(1+1)));
 };
 
+// Used to fail with -ast-dump-filter X
+template<template<typename T> class C> class Z {};
+
 }

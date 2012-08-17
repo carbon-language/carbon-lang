@@ -58,6 +58,8 @@ namespace {
     bool shouldWalkTypesOfTypeLocs() const { return false; }
 
     bool TraverseDecl(Decl *D) {
+      if (D == NULL)
+        return false;
       if (filterMatches(D)) {
         Out.changeColor(llvm::raw_ostream::BLUE) <<
             (Dump ? "Dumping " : "Printing ") << getName(D) << ":\n";
@@ -66,6 +68,7 @@ namespace {
           D->dump(Out);
         else
           D->print(Out, /*Indentation=*/0, /*PrintInstantiation=*/true);
+        Out << "\n";
         // Don't traverse child nodes to avoid output duplication.
         return true;
       }
@@ -89,8 +92,6 @@ namespace {
 
   class ASTDeclNodeLister : public ASTConsumer,
                      public RecursiveASTVisitor<ASTDeclNodeLister> {
-    typedef RecursiveASTVisitor<ASTDeclNodeLister> base;
-
   public:
     ASTDeclNodeLister(raw_ostream *Out = NULL)
         : Out(Out ? *Out : llvm::outs()) {}
