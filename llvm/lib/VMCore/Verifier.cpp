@@ -1378,6 +1378,15 @@ void Verifier::visitLoadInst(LoadInst &LI) {
             "Load cannot have Release ordering", &LI);
     Assert1(LI.getAlignment() != 0,
             "Atomic load must specify explicit alignment", &LI);
+    if (!ElTy->isPointerTy()) {
+      Assert2(ElTy->isIntegerTy(),
+              "atomic store operand must have integer type!",
+              &LI, ElTy);
+      unsigned Size = ElTy->getPrimitiveSizeInBits();
+      Assert2(Size >= 8 && !(Size & (Size - 1)),
+              "atomic store operand must be power-of-two byte-sized integer",
+              &LI, ElTy);
+    }
   } else {
     Assert1(LI.getSynchScope() == CrossThread,
             "Non-atomic load cannot have SynchronizationScope specified", &LI);
@@ -1444,6 +1453,15 @@ void Verifier::visitStoreInst(StoreInst &SI) {
             "Store cannot have Acquire ordering", &SI);
     Assert1(SI.getAlignment() != 0,
             "Atomic store must specify explicit alignment", &SI);
+    if (!ElTy->isPointerTy()) {
+      Assert2(ElTy->isIntegerTy(),
+              "atomic store operand must have integer type!",
+              &SI, ElTy);
+      unsigned Size = ElTy->getPrimitiveSizeInBits();
+      Assert2(Size >= 8 && !(Size & (Size - 1)),
+              "atomic store operand must be power-of-two byte-sized integer",
+              &SI, ElTy);
+    }
   } else {
     Assert1(SI.getSynchScope() == CrossThread,
             "Non-atomic store cannot have SynchronizationScope specified", &SI);
@@ -1471,6 +1489,13 @@ void Verifier::visitAtomicCmpXchgInst(AtomicCmpXchgInst &CXI) {
   PointerType *PTy = dyn_cast<PointerType>(CXI.getOperand(0)->getType());
   Assert1(PTy, "First cmpxchg operand must be a pointer.", &CXI);
   Type *ElTy = PTy->getElementType();
+  Assert2(ElTy->isIntegerTy(),
+          "cmpxchg operand must have integer type!",
+          &CXI, ElTy);
+  unsigned Size = ElTy->getPrimitiveSizeInBits();
+  Assert2(Size >= 8 && !(Size & (Size - 1)),
+          "cmpxchg operand must be power-of-two byte-sized integer",
+          &CXI, ElTy);
   Assert2(ElTy == CXI.getOperand(1)->getType(),
           "Expected value type does not match pointer operand type!",
           &CXI, ElTy);
@@ -1488,6 +1513,13 @@ void Verifier::visitAtomicRMWInst(AtomicRMWInst &RMWI) {
   PointerType *PTy = dyn_cast<PointerType>(RMWI.getOperand(0)->getType());
   Assert1(PTy, "First atomicrmw operand must be a pointer.", &RMWI);
   Type *ElTy = PTy->getElementType();
+  Assert2(ElTy->isIntegerTy(),
+          "atomicrmw operand must have integer type!",
+          &RMWI, ElTy);
+  unsigned Size = ElTy->getPrimitiveSizeInBits();
+  Assert2(Size >= 8 && !(Size & (Size - 1)),
+          "atomicrmw operand must be power-of-two byte-sized integer",
+          &RMWI, ElTy);
   Assert2(ElTy == RMWI.getOperand(1)->getType(),
           "Argument value type does not match pointer operand type!",
           &RMWI, ElTy);
