@@ -39,7 +39,7 @@ SSAUpdater::SSAUpdater(SmallVectorImpl<PHINode*> *NewPHI)
   : AV(0), ProtoType(0), ProtoName(), InsertedPHIs(NewPHI) {}
 
 SSAUpdater::~SSAUpdater() {
-  delete &getAvailableVals(AV);
+  delete static_cast<AvailableValsTy*>(AV);
 }
 
 /// Initialize - Reset this object to get ready for a new set of SSA
