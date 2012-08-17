@@ -358,11 +358,16 @@ ObjectSizeOffsetVisitor::ObjectSizeOffsetVisitor(const TargetData *TD,
 
 SizeOffsetType ObjectSizeOffsetVisitor::compute(Value *V) {
   V = V->stripPointerCasts();
+  if (Instruction *I = dyn_cast<Instruction>(V)) {
+    // If we have already seen this instruction, bail out. Cycles can happen in
+    // unreachable code after constant propagation.
+    if (!SeenInsts.insert(I))
+      return unknown();
 
-  if (GEPOperator *GEP = dyn_cast<GEPOperator>(V))
-    return visitGEPOperator(*GEP);
-  if (Instruction *I = dyn_cast<Instruction>(V))
+    if (GEPOperator *GEP = dyn_cast<GEPOperator>(V))
+      return visitGEPOperator(*GEP);
     return visit(*I);
+  }
   if (Argument *A = dyn_cast<Argument>(V))
     return visitArgument(*A);
   if (ConstantPointerNull *P = dyn_cast<ConstantPointerNull>(V))
@@ -371,9 +376,12 @@ SizeOffsetType ObjectSizeOffsetVisitor::compute(Value *V) {
     return visitGlobalVariable(*GV);
   if (UndefValue *UV = dyn_cast<UndefValue>(V))
     return visitUndefValue(*UV);
-  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
     if (CE->getOpcode() == Instruction::IntToPtr)
       return unknown(); // clueless
+    if (CE->getOpcode() == Instruction::GetElementPtr)
+      return visitGEPOperator(cast<GEPOperator>(*CE));
+  }
 
   DEBUG(dbgs() << "ObjectSizeOffsetVisitor::compute() unhandled value: " << *V
         << '\n');
@@ -473,10 +481,6 @@ ObjectSizeOffsetVisitor::visitExtractValueInst(ExtractValueInst&) {
 }
 
 SizeOffsetType ObjectSizeOffsetVisitor::visitGEPOperator(GEPOperator &GEP) {
-  // Ignore self-referencing GEPs, they can occur in unreachable code.
-  if (&GEP == GEP.getPointerOperand())
-    return unknown();
-
   SizeOffsetType PtrData = compute(GEP.getPointerOperand());
   if (!bothKnown(PtrData) || !GEP.hasAllConstantIndices())
     return unknown();
@@ -510,10 +514,6 @@ SizeOffsetType ObjectSizeOffsetVisitor::visitPHINode(PHINode&) {
 }
 
 SizeOffsetType ObjectSizeOffsetVisitor::visitSelectInst(SelectInst &I) {
-  // ignore malformed self-looping selects
-  if (I.getTrueValue() == &I || I.getFalseValue() == &I)
-    return unknown();
-
   SizeOffsetType TrueSide  = compute(I.getTrueValue());
   SizeOffsetType FalseSide = compute(I.getFalseValue());
   if (bothKnown(TrueSide) && bothKnown(FalseSide) && TrueSide == FalseSide)
@@ -533,8 +533,7 @@ SizeOffsetType ObjectSizeOffsetVisitor::visitInstruction(Instruction &I) {
 
 ObjectSizeOffsetEvaluator::ObjectSizeOffsetEvaluator(const TargetData *TD,
                                                      LLVMContext &Context)
-: TD(TD), Context(Context), Builder(Context, TargetFolder(TD)),
-Visitor(TD, Context) {
+: TD(TD), Context(Context), Builder(Context, TargetFolder(TD)) {
   IntTy = TD->getIntPtrType(Context);
   Zero = ConstantInt::get(IntTy, 0);
 }
@@ -559,6 +558,7 @@ SizeOffsetEvalType ObjectSizeOffsetEvaluator::compute(Value *V) {
 }
 
 SizeOffsetEvalType ObjectSizeOffsetEvaluator::compute_(Value *V) {
+  ObjectSizeOffsetVisitor Visitor(TD, Context);
   SizeOffsetType Const = Visitor.compute(V);
   if (Visitor.bothKnown(Const))
     return std::make_pair(ConstantInt::get(Context, Const.first),
@@ -719,10 +719,6 @@ SizeOffsetEvalType ObjectSizeOffsetEvaluator::visitPHINode(PHINode &PHI) {
 }
 
 SizeOffsetEvalType ObjectSizeOffsetEvaluator::visitSelectInst(SelectInst &I) {
-  // ignore malformed self-looping selects
-  if (I.getTrueValue() == &I || I.getFalseValue() == &I)
-    return unknown();
-
   SizeOffsetEvalType TrueSide  = compute_(I.getTrueValue());
   SizeOffsetEvalType FalseSide = compute_(I.getFalseValue());
 

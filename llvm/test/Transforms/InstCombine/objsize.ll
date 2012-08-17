@@ -247,7 +247,8 @@ entry:
 
 ; technically reachable, but this malformed IR may appear as a result of constant propagation
 xpto:
-  %gep = getelementptr i8* %gep, i32 1
+  %gep2 = getelementptr i8* %gep, i32 1
+  %gep = getelementptr i8* %gep2, i32 1
   %o = call i32 @llvm.objectsize.i32(i8* %gep, i1 true)
 ; CHECK: ret i32 undef
   ret i32 %o

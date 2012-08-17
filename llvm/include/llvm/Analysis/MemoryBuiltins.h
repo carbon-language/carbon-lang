@@ -146,6 +146,7 @@ class ObjectSizeOffsetVisitor
   bool RoundToAlign;
   unsigned IntTyBits;
   APInt Zero;
+  SmallPtrSet<Instruction *, 8> SeenInsts;
 
   APInt align(APInt Size, uint64_t Align);
 
@@ -203,7 +204,6 @@ class ObjectSizeOffsetEvaluator
   const TargetData *TD;
   LLVMContext &Context;
   BuilderTy Builder;
-  ObjectSizeOffsetVisitor Visitor;
   IntegerType *IntTy;
   Value *Zero;
   CacheMapTy CacheMap;
