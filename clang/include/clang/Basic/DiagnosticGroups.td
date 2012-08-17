@@ -343,6 +343,8 @@ def FormatNonLiteral : DiagGroup<"format-nonliteral", [FormatSecurity]>;
 def Format2 : DiagGroup<"format=2",
                         [FormatNonLiteral, FormatSecurity, FormatY2K]>;
 
+def TypeSafety : DiagGroup<"type-safety">;
+
 def Extra : DiagGroup<"extra", [
     MissingFieldInitializers,
     IgnoredQualifiers,

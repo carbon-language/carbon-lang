@@ -7031,6 +7031,42 @@ void
 Sema::FinalizeDeclaration(Decl *ThisDecl) {
   // Note that we are no longer parsing the initializer for this declaration.
   ParsingInitForAutoVars.erase(ThisDecl);
+
+  // Now we have parsed the initializer and can update the table of magic
+  // tag values.
+  if (ThisDecl && ThisDecl->hasAttr<TypeTagForDatatypeAttr>()) {
+    const VarDecl *VD = dyn_cast<VarDecl>(ThisDecl);
+    if (VD && VD->getType()->isIntegralOrEnumerationType()) {
+      for (specific_attr_iterator<TypeTagForDatatypeAttr>
+               I = ThisDecl->specific_attr_begin<TypeTagForDatatypeAttr>(),
+               E = ThisDecl->specific_attr_end<TypeTagForDatatypeAttr>();
+           I != E; ++I) {
+        const Expr *MagicValueExpr = VD->getInit();
+        if (!MagicValueExpr) {
+          continue;
+        }
+        llvm::APSInt MagicValueInt;
+        if (!MagicValueExpr->isIntegerConstantExpr(MagicValueInt, Context)) {
+          Diag(I->getRange().getBegin(),
+               diag::err_type_tag_for_datatype_not_ice)
+            << LangOpts.CPlusPlus << MagicValueExpr->getSourceRange();
+          continue;
+        }
+        if (MagicValueInt.getActiveBits() > 64) {
+          Diag(I->getRange().getBegin(),
+               diag::err_type_tag_for_datatype_too_large)
+            << LangOpts.CPlusPlus << MagicValueExpr->getSourceRange();
+          continue;
+        }
+        uint64_t MagicValue = MagicValueInt.getZExtValue();
+        RegisterTypeTagForDatatype(I->getArgumentKind(),
+                                   MagicValue,
+                                   I->getMatchingCType(),
+                                   I->getLayoutCompatible(),
+                                   I->getMustBeNull());
+      }
+    }
+  }
 }
 
 Sema::DeclGroupPtrTy

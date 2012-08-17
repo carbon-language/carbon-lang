@@ -19,6 +19,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/VersionTuple.h"
+#include "clang/Sema/Ownership.h"
 #include <cassert>
 
 namespace clang {
@@ -87,6 +88,10 @@ private:
   /// availability attribute.
   unsigned IsAvailability : 1;
 
+  /// True if this has extra information associated with a
+  /// type_tag_for_datatype attribute.
+  unsigned IsTypeTagForDatatype : 1;
+
   unsigned AttrKind : 8;
 
   /// \brief The location of the 'unavailable' keyword in an
@@ -119,6 +124,22 @@ private:
     return reinterpret_cast<const AvailabilityChange*>(this+1)[index];
   }
 
+public:
+  struct TypeTagForDatatypeData {
+    ParsedType *MatchingCType;
+    unsigned LayoutCompatible : 1;
+    unsigned MustBeNull : 1;
+  };
+
+private:
+  TypeTagForDatatypeData &getTypeTagForDatatypeDataSlot() {
+    return *reinterpret_cast<TypeTagForDatatypeData *>(this + 1);
+  }
+
+  const TypeTagForDatatypeData &getTypeTagForDatatypeDataSlot() const {
+    return *reinterpret_cast<const TypeTagForDatatypeData *>(this + 1);
+  }
+
   AttributeList(const AttributeList &); // DO NOT IMPLEMENT
   void operator=(const AttributeList &); // DO NOT IMPLEMENT
   void operator delete(void *); // DO NOT IMPLEMENT
@@ -126,6 +147,7 @@ private:
 
   size_t allocated_size() const;
 
+  /// Constructor for attributes with expression arguments.
   AttributeList(IdentifierInfo *attrName, SourceRange attrRange,
                 IdentifierInfo *scopeName, SourceLocation scopeLoc,
                 IdentifierInfo *parmName, SourceLocation parmLoc,
@@ -134,12 +156,13 @@ private:
     : AttrName(attrName), ScopeName(scopeName), ParmName(parmName),
       AttrRange(attrRange), ScopeLoc(scopeLoc), ParmLoc(parmLoc),
       NumArgs(numArgs), SyntaxUsed(syntaxUsed), Invalid(false),
-      UsedAsTypeAttr(false), IsAvailability(false), 
-      NextInPosition(0), NextInPool(0) {
+      UsedAsTypeAttr(false), IsAvailability(false),
+      IsTypeTagForDatatype(false), NextInPosition(0), NextInPool(0) {
     if (numArgs) memcpy(getArgsBuffer(), args, numArgs * sizeof(Expr*));
     AttrKind = getKind(getName(), getScopeName(), syntaxUsed);
   }
 
+  /// Constructor for availability attributes.
   AttributeList(IdentifierInfo *attrName, SourceRange attrRange,
                 IdentifierInfo *scopeName, SourceLocation scopeLoc,
                 IdentifierInfo *parmName, SourceLocation parmLoc,
@@ -153,11 +176,31 @@ private:
       AttrRange(attrRange), ScopeLoc(scopeLoc), ParmLoc(parmLoc),
       NumArgs(0), SyntaxUsed(syntaxUsed),
       Invalid(false), UsedAsTypeAttr(false), IsAvailability(true),
+      IsTypeTagForDatatype(false),
       UnavailableLoc(unavailable), MessageExpr(messageExpr),
       NextInPosition(0), NextInPool(0) {
     new (&getAvailabilitySlot(IntroducedSlot)) AvailabilityChange(introduced);
     new (&getAvailabilitySlot(DeprecatedSlot)) AvailabilityChange(deprecated);
     new (&getAvailabilitySlot(ObsoletedSlot)) AvailabilityChange(obsoleted);
+    AttrKind = getKind(getName(), getScopeName(), syntaxUsed);
+  }
+
+  /// Constructor for type_tag_for_datatype attribute.
+  AttributeList(IdentifierInfo *attrName, SourceRange attrRange,
+                IdentifierInfo *scopeName, SourceLocation scopeLoc,
+                IdentifierInfo *argumentKindName,
+                SourceLocation argumentKindLoc,
+                ParsedType matchingCType, bool layoutCompatible,
+                bool mustBeNull, Syntax syntaxUsed)
+    : AttrName(attrName), ScopeName(scopeName), ParmName(argumentKindName),
+      AttrRange(attrRange), ScopeLoc(scopeLoc), ParmLoc(argumentKindLoc),
+      NumArgs(0), SyntaxUsed(syntaxUsed),
+      Invalid(false), UsedAsTypeAttr(false), IsAvailability(false),
+      IsTypeTagForDatatype(true), NextInPosition(NULL), NextInPool(NULL) {
+    TypeTagForDatatypeData &ExtraData = getTypeTagForDatatypeDataSlot();
+    new (&ExtraData.MatchingCType) ParsedType(matchingCType);
+    ExtraData.LayoutCompatible = layoutCompatible;
+    ExtraData.MustBeNull = mustBeNull;
     AttrKind = getKind(getName(), getScopeName(), syntaxUsed);
   }
 
@@ -279,6 +322,24 @@ public:
     assert(getKind() == AT_Availability && "Not an availability attribute");
     return MessageExpr;
   }
+
+  const ParsedType &getMatchingCType() const {
+    assert(getKind() == AT_TypeTagForDatatype &&
+           "Not a type_tag_for_datatype attribute");
+    return *getTypeTagForDatatypeDataSlot().MatchingCType;
+  }
+
+  bool getLayoutCompatible() const {
+    assert(getKind() == AT_TypeTagForDatatype &&
+           "Not a type_tag_for_datatype attribute");
+    return getTypeTagForDatatypeDataSlot().LayoutCompatible;
+  }
+
+  bool getMustBeNull() const {
+    assert(getKind() == AT_TypeTagForDatatype &&
+           "Not a type_tag_for_datatype attribute");
+    return getTypeTagForDatatypeDataSlot().MustBeNull;
+  }
 };
 
 /// A factory, from which one makes pools, from which one creates
@@ -294,7 +355,11 @@ public:
     AvailabilityAllocSize =
       sizeof(AttributeList)
       + ((3 * sizeof(AvailabilityChange) + sizeof(void*) - 1)
-         / sizeof(void*) * sizeof(void*))
+         / sizeof(void*) * sizeof(void*)),
+    TypeTagForDatatypeAllocSize =
+      sizeof(AttributeList)
+      + (sizeof(AttributeList::TypeTagForDatatypeData) + sizeof(void *) - 1)
+        / sizeof(void*) * sizeof(void*)
   };
 
 private:
@@ -411,6 +476,21 @@ public:
 
   AttributeList *createIntegerAttribute(ASTContext &C, IdentifierInfo *Name,
                                         SourceLocation TokLoc, int Arg);
+
+  AttributeList *createTypeTagForDatatype(
+                    IdentifierInfo *attrName, SourceRange attrRange,
+                    IdentifierInfo *scopeName, SourceLocation scopeLoc,
+                    IdentifierInfo *argumentKindName,
+                    SourceLocation argumentKindLoc,
+                    ParsedType matchingCType, bool layoutCompatible,
+                    bool mustBeNull, AttributeList::Syntax syntax) {
+    void *memory = allocate(AttributeFactory::TypeTagForDatatypeAllocSize);
+    return add(new (memory) AttributeList(attrName, attrRange,
+                                          scopeName, scopeLoc,
+                                          argumentKindName, argumentKindLoc,
+                                          matchingCType, layoutCompatible,
+                                          mustBeNull, syntax));
+  }
 };
 
 /// addAttributeLists - Add two AttributeLists together
@@ -503,7 +583,7 @@ public:
   /// dependencies on this method, it may not be long-lived.
   AttributeList *&getListRef() { return list; }
 
-
+  /// Add attribute with expression arguments.
   AttributeList *addNew(IdentifierInfo *attrName, SourceRange attrRange,
                         IdentifierInfo *scopeName, SourceLocation scopeLoc,
                         IdentifierInfo *parmName, SourceLocation parmLoc,
@@ -516,6 +596,7 @@ public:
     return attr;
   }
 
+  /// Add availability attribute.
   AttributeList *addNew(IdentifierInfo *attrName, SourceRange attrRange,
                         IdentifierInfo *scopeName, SourceLocation scopeLoc,
                         IdentifierInfo *parmName, SourceLocation parmLoc,
@@ -529,6 +610,24 @@ public:
       pool.create(attrName, attrRange, scopeName, scopeLoc, parmName, parmLoc,
                   introduced, deprecated, obsoleted, unavailable,
                   MessageExpr, syntax);
+    add(attr);
+    return attr;
+  }
+
+  /// Add type_tag_for_datatype attribute.
+  AttributeList *addNewTypeTagForDatatype(
+                        IdentifierInfo *attrName, SourceRange attrRange,
+                        IdentifierInfo *scopeName, SourceLocation scopeLoc,
+                        IdentifierInfo *argumentKindName,
+                        SourceLocation argumentKindLoc,
+                        ParsedType matchingCType, bool layoutCompatible,
+                        bool mustBeNull, AttributeList::Syntax syntax) {
+    AttributeList *attr =
+      pool.createTypeTagForDatatype(attrName, attrRange,
+                                    scopeName, scopeLoc,
+                                    argumentKindName, argumentKindLoc,
+                                    matchingCType, layoutCompatible,
+                                    mustBeNull, syntax);
     add(attr);
     return attr;
   }

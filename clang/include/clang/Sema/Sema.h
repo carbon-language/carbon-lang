@@ -7145,6 +7145,42 @@ private:
   void CheckBitFieldInitialization(SourceLocation InitLoc, FieldDecl *Field,
                                    Expr *Init);
 
+public:
+  /// \brief Register a magic integral constant to be used as a type tag.
+  void RegisterTypeTagForDatatype(const IdentifierInfo *ArgumentKind,
+                                  uint64_t MagicValue, QualType Type,
+                                  bool LayoutCompatible, bool MustBeNull);
+
+  struct TypeTagData {
+    TypeTagData() {}
+
+    TypeTagData(QualType Type, bool LayoutCompatible, bool MustBeNull) :
+        Type(Type), LayoutCompatible(LayoutCompatible),
+        MustBeNull(MustBeNull)
+    {}
+
+    QualType Type;
+
+    /// If true, \c Type should be compared with other expression's types for
+    /// layout-compatibility.
+    unsigned LayoutCompatible : 1;
+    unsigned MustBeNull : 1;
+  };
+
+  /// A pair of ArgumentKind identifier and magic value.  This uniquely
+  /// identifies the magic value.
+  typedef std::pair<const IdentifierInfo *, uint64_t> TypeTagMagicValue;
+
+private:
+  /// \brief A map from magic value to type information.
+  OwningPtr<llvm::DenseMap<TypeTagMagicValue, TypeTagData> >
+      TypeTagForDatatypeMagicValues;
+
+  /// \brief Peform checks on a call of a function with argument_with_type_tag
+  /// or pointer_with_type_tag attributes.
+  void CheckArgumentWithTypeTag(const ArgumentWithTypeTagAttr *Attr,
+                                const Expr * const *ExprArgs);
+
   /// \brief The parser's current scope.
   ///
   /// The parser maintains this state here.

@@ -21,6 +21,8 @@ using namespace clang;
 
 size_t AttributeList::allocated_size() const {
   if (IsAvailability) return AttributeFactory::AvailabilityAllocSize;
+  else if (IsTypeTagForDatatype)
+    return AttributeFactory::TypeTagForDatatypeAllocSize;
   return (sizeof(AttributeList) + NumArgs * sizeof(Expr*));
 }
 
