@@ -1,6 +1,6 @@
 // Note: the run lines follow their respective tests, since line/column
 // matter in this test.
-
+struct X { X(); ~X(); };
 enum class Color {
   Red = 17,
   Green,
@@ -9,7 +9,7 @@ enum class Color {
 int Greeby();
 void f(Color color) {
   switch (color) {
-  case Color::Green:
+  case Color::Green: { X x; }
   case Color::Red;
   }
 }
