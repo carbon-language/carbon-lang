@@ -1,4 +1,4 @@
-//===--- SemaStmtAsm.cpp - Semantic Analysis for Statements ---------------===//
+//===--- SemaStmtAsm.cpp - Semantic Analysis for Asm Statements -----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
