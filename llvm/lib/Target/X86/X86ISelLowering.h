@@ -864,9 +864,6 @@ namespace llvm {
                    const SmallVectorImpl<ISD::OutputArg> &Outs,
                    LLVMContext &Context) const;
 
-    void ReplaceATOMIC_BINARY_64(SDNode *N, SmallVectorImpl<SDValue> &Results,
-                                 SelectionDAG &DAG, unsigned NewOp) const;
-
     /// Utility function to emit string processing sse4.2 instructions
     /// that return in xmm0.
     /// This takes the instruction to expand, the associated machine basic

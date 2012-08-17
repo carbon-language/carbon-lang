@@ -11202,9 +11202,9 @@ static void ReplaceATOMIC_LOAD(SDNode *Node,
   Results.push_back(Swap.getValue(1));
 }
 
-void X86TargetLowering::
+static void
 ReplaceATOMIC_BINARY_64(SDNode *Node, SmallVectorImpl<SDValue>&Results,
-                        SelectionDAG &DAG, unsigned NewOp) const {
+                        SelectionDAG &DAG, unsigned NewOp) {
   DebugLoc dl = Node->getDebugLoc();
   assert (Node->getValueType(0) == MVT::i64 &&
           "Only know how to expand i64 atomics");
@@ -11325,26 +11325,40 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     return;
   }
   case ISD::ATOMIC_LOAD_ADD:
-    ReplaceATOMIC_BINARY_64(N, Results, DAG, X86ISD::ATOMADD64_DAG);
-    return;
   case ISD::ATOMIC_LOAD_AND:
-    ReplaceATOMIC_BINARY_64(N, Results, DAG, X86ISD::ATOMAND64_DAG);
-    return;
   case ISD::ATOMIC_LOAD_NAND:
-    ReplaceATOMIC_BINARY_64(N, Results, DAG, X86ISD::ATOMNAND64_DAG);
-    return;
   case ISD::ATOMIC_LOAD_OR:
-    ReplaceATOMIC_BINARY_64(N, Results, DAG, X86ISD::ATOMOR64_DAG);
-    return;
   case ISD::ATOMIC_LOAD_SUB:
-    ReplaceATOMIC_BINARY_64(N, Results, DAG, X86ISD::ATOMSUB64_DAG);
-    return;
   case ISD::ATOMIC_LOAD_XOR:
-    ReplaceATOMIC_BINARY_64(N, Results, DAG, X86ISD::ATOMXOR64_DAG);
+  case ISD::ATOMIC_SWAP: {
+    unsigned Opc;
+    switch (N->getOpcode()) {
+    default: llvm_unreachable("Unexpected opcode");
+    case ISD::ATOMIC_LOAD_ADD:
+      Opc = X86ISD::ATOMADD64_DAG;
+      break;
+    case ISD::ATOMIC_LOAD_AND:
+      Opc = X86ISD::ATOMAND64_DAG;
+      break;
+    case ISD::ATOMIC_LOAD_NAND:
+      Opc = X86ISD::ATOMNAND64_DAG;
+      break;
+    case ISD::ATOMIC_LOAD_OR:
+      Opc = X86ISD::ATOMOR64_DAG;
+      break;
+    case ISD::ATOMIC_LOAD_SUB:
+      Opc = X86ISD::ATOMSUB64_DAG;
+      break;
+    case ISD::ATOMIC_LOAD_XOR:
+      Opc = X86ISD::ATOMXOR64_DAG;
+      break;
+    case ISD::ATOMIC_SWAP:
+      Opc = X86ISD::ATOMSWAP64_DAG;
+      break;
+    }
+    ReplaceATOMIC_BINARY_64(N, Results, DAG, Opc);
     return;
-  case ISD::ATOMIC_SWAP:
-    ReplaceATOMIC_BINARY_64(N, Results, DAG, X86ISD::ATOMSWAP64_DAG);
-    return;
+  }
   case ISD::ATOMIC_LOAD:
     ReplaceATOMIC_LOAD(N, Results, DAG);
   }
