@@ -1,0 +1,96 @@
+Inlining
+========
+
+Inlining Modes
+-----------------------
+-analyzer-ipa=none - All inlining is disabled.
+-analyzer-ipa=inlining - Turns on inlining when we can confidently find the function/method body corresponding to the call. (C functions, static functions, devirtualized C++ methods, ObjC class methods, ObjC instance methods when we are confident about the dynamic type of the instance).
+-analyzer-ipa=dynamic - Inline instance methods for which the type is determined at runtime and we are not 100% sure that our type info is correct. For virtual calls, inline the most plausible definition.
+-analyzer-ipa=dynamic-bifurcate - Same as -analyzer-ipa=dynamic, but the path is split. We inline on one branch and do not inline on the other. This mode does not drop the coverage in cases when the parent class has code that is only exercised when some of its methods are overriden.
+
+Currently, -analyzer-ipa=inlining is the default mode.
+
+Basics of Implementation
+-----------------------
+
+The low-level mechanism of inlining a function is handled in ExprEngine::inlineCall and ExprEngine::processCallExit. If the conditions are right for inlining, a CallEnter node is created and added to the analysis work list. The CallEnter node marks the change to a new LocationContext representing the called function, and its state includes the contents of the new stack frame. When the CallEnter node is actually processed, its single successor will be a edge to the first CFG block in the function.
+
+Exiting an inlined function is a bit more work, fortunately broken up into reasonable steps:
+1. The CoreEngine realizes we're at the end of an inlined call and generates a CallExitBegin node.
+2. ExprEngine takes over (in processCallExit) and finds the return value of the function, if it has one. This is bound to the expression that triggered the call. (In the case of calls without origin expressions, such as destructors, this step is skipped.)
+3. Dead symbols and bindings are cleaned out from the state, including any local bindings.
+4. A CallExitEnd node is generated, which marks the transition back to the caller's LocationContext.
+5. Custom post-call checks are processed and the final nodes are pushed back onto the work list, so that evaluation of the caller can continue.
+
+Retry Without Inlining
+-----------------------
+
+In some cases, we would like to retry analyzes without inlining the particular call. Currently, we use this technique to recover the coverage in case we stop analyzing a path due to exceeding the maximum block count inside an inlined function. When this situation is detected, we walk up the path to find the first node before inlining was started and enqueue it on the WorkList with a special ReplayWithoutInlining bit added to it (ExprEngine::replayWithoutInlining).
+
+Deciding when to inline
+-----------------------
+In general, we try to inline as much as possible, since it provides a better summary of what actually happens in the program. However, there are some cases where we choose not to inline:
+- if there is no definition available (of course)
+- if we can't create a CFG or compute variable liveness for the function
+- if we reach a cutoff of maximum stack depth (to avoid infinite recursion)
+- if the function is variadic
+- in C++, we don't inline constructors unless we know the destructor will be inlined as well
+- in C++, we don't inline allocators (custom operator new implementations), since we don't properly handle deallocators (at the time of this writing)
+- "Dynamic" calls are handled specially; see below.
+- Engine:FunctionSummaries map stores additional information about declarations, some of which is collected at runtime based on previous analyzes of the function. We do not inline functions which were not profitable to inline in a different context (for example, if the maximum block count was exceeded, see Retry Without Inlining).
+
+
+Dynamic calls and devirtualization
+----------------------------------
+"Dynamic" calls are those that are resolved at runtime, such as C++ virtual method calls and Objective-C message sends. Due to the path-sensitive nature of the analyzer, we may be able to figure out the dynamic type of the object whose method is being called and thus "devirtualize" the call, i.e. find the actual method that will be called at runtime. (Obviously this is not always possible.) This is handled by CallEvent's getRuntimeDefinition method.
+
+Type information is tracked as DynamicTypeInfo, stored within the program state. If no DynamicTypeInfo has been explicitly set for a region, it will be inferred from the region's type or associated symbol. Information from symbolic regions is weaker than from true typed regions; a C++ object declared "A obj" is known to have the class 'A', but a reference "A &ref" may dynamically be a subclass of 'A'. The DynamicTypePropagation checker gathers and propagates the type information.
+
+(Warning: not all of the existing analyzer code has been retrofitted to use DynamicTypeInfo, nor is it universally appropriate. In particular, DynamicTypeInfo always applies to a region with all casts stripped off, but sometimes the information provided by casts can be useful.)
+
+When asked to provide a definition, the CallEvents for dynamic calls will use the type info in their state to provide the best definition of the method to be called. In some cases this devirtualization can be perfect or near-perfect, and we can inline the definition as usual. In others we can make a guess, but report that our guess may not be the method actually called at runtime.
+
+The -analyzer-ipa option has four different modes: none, inlining, dynamic, and dynamic-bifurcate. Under -analyzer-ipa=dynamic, all dynamic calls are inlined, whether we are certain or not that this will actually be the definition used at runtime. Under -analyzer-ipa=inlining, only "near-perfect" devirtualized calls are inlined*, and other dynamic calls are evaluated conservatively (as if no definition were available).
+
+* Currently, no Objective-C messages are not inlined under -analyzer-ipa=inlining, even if we are reasonably confident of the type of the receiver. We plan to enable this once we have tested our heuristics more thoroughly.
+
+The last option, -analyzer-ipa=dynamic-bifurcate, behaves similarly to "dynamic", but performs a conservative invalidation in the general virtual case in /addition/ to inlining. The details of this are discussed below.
+
+
+Bifurcation
+-----------
+ExprEngine::BifurcateCall implements the -analyzer-ipa=dynamic-bifurcate mode. When a call is made on a region with dynamic type information, we bifurcate the path and add the region's processing mode to the GDM. Currently, there are 2 modes: DynamicDispatchModeInlined and DynamicDispatchModeConservative. Going forward, we consult the state of the region to make decisions on whether the calls should be inlined or not, which ensures that we have at most one split per region. The modes model the cases when the dynamic type information is perfectly correct and when the info is not correct (i.e. where the region is a subclass of the type we store in DynamicTypeInfo).
+
+Bifurcation mode allows for increased coverage in cases where the parent method contains code which is only executed when the class is subclassed. The disadvantages of this mode are a (considerable?) performance hit and the possibility of false positives on the path where the conservative mode is used.
+
+
+Objective-C Message Heuristics
+------------------------------
+We rely on a set of heuristics to partition the set of ObjC method calls into ones that require bifurcation and ones that do not (can or cannot be a subclass). Below are the cases when we consider that the dynamic type of the object is precise (cannot be a subclass):
+ - If the object was created with +alloc or +new and initialized with an -init method.
+ - If the calls are property accesses using dot syntax. This is based on the assumption that children rarely override properties, or do so in an essentially compatible way.
+ - If the class interface is declared inside the main source file. In this case it is unlikely that it will be subclassed.
+ - If the method is not declared outside of main source file, either by the receiver's class or by any superclasses.
+
+
+C++ Inlining Caveats
+--------------------
+C++11 [class.cdtor]p4 describes how the vtable of an object is modified as it is being constructed or destructed; that is, the type of the object depends on which base constructors have been completed. This is tracked using dynamic type info in the DynamicTypePropagation checker.
+
+Temporaries are poorly modelled right now because we're not confident in the placement
+
+'new' is poorly modelled due to some nasty CFG/design issues (elaborated in PR12014). 'delete' is essentially not modelled at all.
+
+Arrays of objects are modeled very poorly right now. We run only the first constructor and first destructor. Because of this, we don't inline any constructors or destructors for arrays.
+
+
+CallEvent
+=========
+
+A CallEvent represents a specific call to a function, method, or other body of code. It is path-sensitive, containing both the current state (ProgramStateRef) and stack space (LocationContext), and provides uniform access to the argument values and return type of a call, no matter how the call is written in the source or what sort of code body is being invoked.
+
+(For those familiar with Cocoa, CallEvent is roughly equivalent to NSInvocation.)
+
+CallEvent should be used whenever there is logic dealing with function calls that does not care how the call occurred. Examples include checking that arguments satisfy preconditions (such as __attribute__((nonnull))), and attempting to inline a call.
+
+CallEvents are reference-counted objects managed by a CallEventManager. While there is no inherent issue with persisting them (say, in the state's GDM), they are intended for short-lived use, and can be recreated from CFGElements or StackFrameContexts fairly easily.
