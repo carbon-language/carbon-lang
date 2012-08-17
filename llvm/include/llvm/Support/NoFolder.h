@@ -181,6 +181,12 @@ public:
                                 ArrayRef<Constant *> IdxList) const {
     return ConstantExpr::getGetElementPtr(C, IdxList);
   }
+  Constant *CreateGetElementPtr(Constant *C, Constant *Idx) const {
+    // This form of the function only exists to avoid ambiguous overload
+    // warnings about whether to convert Idx to ArrayRef<Constant *> or
+    // ArrayRef<Value *>.
+    return ConstantExpr::getGetElementPtr(C, Idx);
+  }
   Instruction *CreateGetElementPtr(Constant *C,
                                    ArrayRef<Value *> IdxList) const {
     return GetElementPtrInst::Create(C, IdxList);
@@ -189,6 +195,12 @@ public:
   Constant *CreateInBoundsGetElementPtr(Constant *C,
                                         ArrayRef<Constant *> IdxList) const {
     return ConstantExpr::getInBoundsGetElementPtr(C, IdxList);
+  }
+  Constant *CreateInBoundsGetElementPtr(Constant *C, Constant *Idx) const {
+    // This form of the function only exists to avoid ambiguous overload
+    // warnings about whether to convert Idx to ArrayRef<Constant *> or
+    // ArrayRef<Value *>.
+    return ConstantExpr::getInBoundsGetElementPtr(C, Idx);
   }
   Instruction *CreateInBoundsGetElementPtr(Constant *C,
                                            ArrayRef<Value *> IdxList) const {
