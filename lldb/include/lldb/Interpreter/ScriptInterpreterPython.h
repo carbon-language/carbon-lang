@@ -253,10 +253,7 @@ private:
                 FILE* wait_msg_handle = NULL);
         
     	~Locker ();
-    
-        static bool
-        CurrentThreadHasPythonLock ();
-        
+
 	private:
         
         bool
@@ -270,17 +267,14 @@ private:
         
         bool
         DoTearDownSession ();
-        
-        static bool
-        TryGetPythonLock (uint32_t seconds_to_wait);
-        
+
         static void
         ReleasePythonLock ();
         
     	bool                     m_need_session;
-    	bool                     m_release_lock;
     	ScriptInterpreterPython *m_python_interpreter;
     	FILE*                    m_tmp_fh;
+        PyGILState_STATE         m_GILState;
 	};
     
     class PythonInputReaderManager
@@ -335,7 +329,6 @@ private:
     bool m_session_is_active;
     bool m_pty_slave_is_open;
     bool m_valid_session;
-                         
 };
 } // namespace lldb_private
 

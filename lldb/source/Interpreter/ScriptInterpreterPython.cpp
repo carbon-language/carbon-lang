@@ -128,73 +128,18 @@ _check_and_flush (FILE *stream)
   return fflush (stream) || prev_fail ? EOF : 0;
 }
 
-static Predicate<lldb::tid_t> &
-PythonMutexPredicate ()
-{
-    static lldb_private::Predicate<lldb::tid_t> g_interpreter_is_running (LLDB_INVALID_THREAD_ID);
-    return g_interpreter_is_running;
-}
-
-bool
-ScriptInterpreterPython::Locker::CurrentThreadHasPythonLock ()
-{
-    TimeValue timeout;
-
-    timeout = TimeValue::Now();  // Don't wait any time.
-
-    return PythonMutexPredicate().WaitForValueEqualTo (Host::GetCurrentThreadID(), &timeout, NULL);
-}
-
-bool
-ScriptInterpreterPython::Locker::TryGetPythonLock (uint32_t seconds_to_wait)
-{
-    
-    TimeValue timeout;
-    
-    if (seconds_to_wait != UINT32_MAX)
-    {
-        timeout = TimeValue::Now();
-        timeout.OffsetWithSeconds (seconds_to_wait);
-    }
-    
-    return PythonMutexPredicate().WaitForValueEqualToAndSetValueTo (LLDB_INVALID_THREAD_ID, 
-                                                                    Host::GetCurrentThreadID(), &timeout, NULL);
-}
-
-void
-ScriptInterpreterPython::Locker::ReleasePythonLock ()
-{
-    PythonMutexPredicate().SetValue (LLDB_INVALID_THREAD_ID, eBroadcastAlways);
-}
-
 ScriptInterpreterPython::Locker::Locker (ScriptInterpreterPython *py_interpreter,
                                          uint16_t on_entry,
                                          uint16_t on_leave,
                                          FILE* wait_msg_handle) :
     m_need_session( (on_leave & TearDownSession) == TearDownSession ),
-    m_release_lock ( false ), // decide in constructor body
     m_python_interpreter(py_interpreter),
     m_tmp_fh(wait_msg_handle)
 {
     if (m_python_interpreter && !m_tmp_fh)
         m_tmp_fh = (m_python_interpreter->m_dbg_stdout ? m_python_interpreter->m_dbg_stdout : stdout);
-    
-    if ( (on_entry & AcquireLock) == AcquireLock )
-    {
-        if (CurrentThreadHasPythonLock())
-        {
-            if ( (on_leave & FreeLock) == FreeLock )
-                m_release_lock = true;
-        }
-        else
-        {
-            DoAcquireLock();
-            if ( (on_leave & FreeLock) == FreeLock )
-                m_release_lock = true;
-            if ( (on_leave & FreeAcquiredLock) == FreeAcquiredLock )
-                m_release_lock = true;
-        }
-    }
+
+    DoAcquireLock();
     if ( (on_entry & InitSession) == InitSession )
         DoInitSession();
 }
@@ -202,13 +147,10 @@ ScriptInterpreterPython::Locker::Locker (ScriptInterpreterPython *py_interpreter
 bool
 ScriptInterpreterPython::Locker::DoAcquireLock()
 {
-    if (!CurrentThreadHasPythonLock())
-    {
-        while (!TryGetPythonLock (1))
-            if (m_tmp_fh)
-                fprintf (m_tmp_fh, 
-                         "Python interpreter locked on another thread; waiting to acquire lock...\n");
-    }
+    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT | LIBLLDB_LOG_VERBOSE));
+    m_GILState = PyGILState_Ensure();
+    if (log)
+        log->Printf("Ensured PyGILState. Previous state = %slocked\n", m_GILState == PyGILState_UNLOCKED ? "un" : "");
     return true;
 }
 
@@ -224,7 +166,10 @@ ScriptInterpreterPython::Locker::DoInitSession()
 bool
 ScriptInterpreterPython::Locker::DoFreeLock()
 {
-    ReleasePythonLock ();
+    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT | LIBLLDB_LOG_VERBOSE));
+    if (log)
+        log->Printf("Releasing PyGILState. Returning to state = %slocked\n", m_GILState == PyGILState_UNLOCKED ? "un" : "");
+    PyGILState_Release(m_GILState);
     return true;
 }
 
@@ -241,8 +186,7 @@ ScriptInterpreterPython::Locker::~Locker()
 {
     if (m_need_session)
         DoTearDownSession();
-    if (m_release_lock)
-        DoFreeLock();
+    DoFreeLock();
 }
 
 class ForceDisableSyntheticChildren
@@ -357,13 +301,7 @@ ScriptInterpreterPython::PythonInputReaderManager::InputReaderCallback
                 input_fd = STDIN_FILENO;
             
             script_interpreter->SaveTerminalState(input_fd);
-            
-            {
-                ScriptInterpreterPython::Locker locker(script_interpreter,
-                                                       ScriptInterpreterPython::Locker::AcquireLock | ScriptInterpreterPython::Locker::InitSession,
-                                                       ScriptInterpreterPython::Locker::FreeAcquiredLock);
-            }
-            
+
             char error_str[1024];
             if (script_interpreter->m_embedded_thread_pty.OpenFirstAvailableMaster (O_RDWR|O_NOCTTY, error_str, 
                                                                                     sizeof(error_str)))
@@ -377,6 +315,9 @@ ScriptInterpreterPython::PythonInputReaderManager::InputReaderCallback
                     const char *pty_slave_name = script_interpreter->m_embedded_thread_pty.GetSlaveName (error_str, sizeof (error_str));
                     if (pty_slave_name != NULL && PyThreadState_GetDict() != NULL)
                     {
+                        ScriptInterpreterPython::Locker locker(script_interpreter,
+                                                               ScriptInterpreterPython::Locker::AcquireLock | ScriptInterpreterPython::Locker::InitSession,
+                                                               ScriptInterpreterPython::Locker::FreeAcquiredLock);
                         run_string.Printf ("run_one_line (%s, 'save_stderr = sys.stderr')", script_interpreter->m_dictionary_name.c_str());
                         PyRun_SimpleString (run_string.GetData());
                         run_string.Clear ();
@@ -428,20 +369,9 @@ ScriptInterpreterPython::PythonInputReaderManager::InputReaderCallback
             
         case eInputReaderReactivate:
         {
-            // Don't try and acquire the interpreter lock here because code like
-            // this:
-            //
-            // (lldb) script
-            // >>> v = lldb.frame.EvaluateExpression("collection->get_at_index(12)")
-            //
-            // This will cause the process to run. The interpreter lock is taken
-            // by the input reader for the "script" command. If we try and acquire
-            // the lock here, when the process runs it might deactivate this input
-            // reader (if STDIN is hooked up to the inferior process) and 
-            // reactivate it when the process stops which will deadlock.
-            //ScriptInterpreterPython::Locker locker(script_interpreter,
-            //                                       ScriptInterpreterPython::Locker::AcquireLock | ScriptInterpreterPython::Locker::InitSession,
-            //                                       ScriptInterpreterPython::Locker::FreeAcquiredLock);
+            ScriptInterpreterPython::Locker locker(script_interpreter,
+                                                   ScriptInterpreterPython::Locker::AcquireLock | ScriptInterpreterPython::Locker::InitSession,
+                                                   ScriptInterpreterPython::Locker::FreeAcquiredLock);
         }
             break;
             
@@ -484,6 +414,9 @@ ScriptInterpreterPython::PythonInputReaderManager::InputReaderCallback
             const char *pty_slave_name = script_interpreter->m_embedded_thread_pty.GetSlaveName (error_str, sizeof (error_str));
             if (pty_slave_name != NULL && PyThreadState_GetDict() != NULL)
             {
+                ScriptInterpreterPython::Locker locker(script_interpreter,
+                                                       ScriptInterpreterPython::Locker::AcquireLock | ScriptInterpreterPython::Locker::InitSession,
+                                                       ScriptInterpreterPython::Locker::FreeAcquiredLock);
                 run_string.Printf ("run_one_line (%s, 'sys.stdin = save_stdin')", script_interpreter->m_dictionary_name.c_str());
                 PyRun_SimpleString (run_string.GetData());
                 run_string.Clear();
@@ -531,14 +464,14 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
         g_initialized = true;
         ScriptInterpreterPython::InitializePrivate ();
     }
-    
-    Locker locker(this,
-                  ScriptInterpreterPython::Locker::AcquireLock,
-                  ScriptInterpreterPython::Locker::FreeAcquiredLock);
 
     m_dictionary_name.append("_dict");
     StreamString run_string;
     run_string.Printf ("%s = dict()", m_dictionary_name.c_str());
+
+    Locker locker(this,
+                  ScriptInterpreterPython::Locker::AcquireLock,
+                  ScriptInterpreterPython::Locker::FreeAcquiredLock);
     PyRun_SimpleString (run_string.GetData());
 
     run_string.Clear();
@@ -957,20 +890,9 @@ ScriptInterpreterPython::InputReaderCallback
 
     case eInputReaderReactivate:
         {
-            // Don't try and acquire the interpreter lock here because code like
-            // this:
-            //
-            // (lldb) script
-            // >>> v = lldb.frame.EvaluateExpression("collection->get_at_index(12)")
-            //
-            // This will cause the process to run. The interpreter lock is taken
-            // by the input reader for the "script" command. If we try and acquire
-            // the lock here, when the process runs it might deactivate this input
-            // reader (if STDIN is hooked up to the inferior process) and 
-            // reactivate it when the process stops which will deadlock.
-            //ScriptInterpreterPython::Locker locker(script_interpreter,
-            //                                       ScriptInterpreterPython::Locker::AcquireLock | ScriptInterpreterPython::Locker::InitSession,
-            //                                       ScriptInterpreterPython::Locker::FreeAcquiredLock);
+            ScriptInterpreterPython::Locker locker(script_interpreter,
+                                                   ScriptInterpreterPython::Locker::AcquireLock | ScriptInterpreterPython::Locker::InitSession,
+                                                   ScriptInterpreterPython::Locker::FreeAcquiredLock);
         }
         break;
         
@@ -1012,7 +934,12 @@ ScriptInterpreterPython::InputReaderCallback
         break;
         
     case eInputReaderDone:
-        script_interpreter->LeaveSession ();
+        {
+            Locker locker(script_interpreter,
+                          ScriptInterpreterPython::Locker::AcquireLock,
+                          ScriptInterpreterPython::Locker::FreeAcquiredLock);
+            script_interpreter->LeaveSession ();
+        }
 
         // Restore terminal settings if they were validly saved
         if (log)
@@ -2033,14 +1960,18 @@ ScriptInterpreterPython::RunEmbeddedPythonInterpreter (lldb::thread_arg_t baton)
     char error_str[1024];
     const char *pty_slave_name = script_interpreter->m_embedded_python_pty.GetSlaveName (error_str, sizeof (error_str));
 
-    Locker locker(script_interpreter,
-                  ScriptInterpreterPython::Locker::AcquireLock | ScriptInterpreterPython::Locker::InitSession,
-                  ScriptInterpreterPython::Locker::FreeAcquiredLock | ScriptInterpreterPython::Locker::TearDownSession);
-
     if (pty_slave_name != NULL)
     {
         StreamString run_string;
-        
+
+        // Ensure we have the GIL before running any Python code.
+        // Since we're only running a few one-liners and then dropping to the interpreter (which will release the GIL when needed),
+        // we can just release the GIL after finishing our work.
+        // If finer-grained locking is desirable, we can lock and unlock the GIL only when calling a python function.
+        Locker locker(script_interpreter,
+                      ScriptInterpreterPython::Locker::AcquireLock | ScriptInterpreterPython::Locker::InitSession,
+                      ScriptInterpreterPython::Locker::FreeAcquiredLock | ScriptInterpreterPython::Locker::TearDownSession);
+
         run_string.Printf ("run_one_line (%s, 'save_stderr = sys.stderr')", script_interpreter->m_dictionary_name.c_str());
         PyRun_SimpleString (run_string.GetData());
         run_string.Clear ();
@@ -2060,36 +1991,25 @@ ScriptInterpreterPython::RunEmbeddedPythonInterpreter (lldb::thread_arg_t baton)
 
         // The following call drops into the embedded interpreter loop and stays there until the
         // user chooses to exit from the Python interpreter.
+        // This embedded interpreter will, as any Python code that performs I/O, unlock the GIL before
+        // a system call that can hang, and lock it when the syscall has returned.
 
-        // When in the embedded interpreter, the user can call arbitrary system and Python stuff, which may require
-        // the ability to run multi-threaded stuff, so we need to surround the call to the embedded interpreter with
-        // calls to Py_BEGIN_ALLOW_THREADS and Py_END_ALLOW_THREADS.
+        // We need to surround the call to the embedded interpreter with calls to PyGILState_Ensure and 
+        // PyGILState_Release (using the Locker above). This is because Python has a global lock which must be held whenever we want
+        // to touch any Python objects. Otherwise, if the user calls Python code, the interpreter state will be off,
+        // and things could hang (it's happened before).
 
-        // We ALSO need to surround the call to the embedded interpreter with calls to PyGILState_Ensure and 
-        // PyGILState_Release.  This is because this embedded interpreter is being run on a DIFFERENT THREAD than
-        // the thread on which the call to Py_Initialize (and PyEval_InitThreads) was called.  Those initializations 
-        // called PyGILState_Ensure on *that* thread, but it also needs to be called on *this* thread.  Otherwise,
-        // if the user calls Python code that does threading stuff, the interpreter state will be off, and things could
-        // hang (it's happened before).
-
-        Py_BEGIN_ALLOW_THREADS
-        PyGILState_STATE gstate = PyGILState_Ensure();
-        
         run_string.Printf ("run_python_interpreter (%s)", script_interpreter->m_dictionary_name.c_str());
         PyRun_SimpleString (run_string.GetData());
         run_string.Clear ();
-        
-        PyGILState_Release (gstate);
-        Py_END_ALLOW_THREADS
-        
+
         run_string.Printf ("run_one_line (%s, 'sys.stdin = save_stdin')", script_interpreter->m_dictionary_name.c_str());
         PyRun_SimpleString (run_string.GetData());
         run_string.Clear();
-        
+
         run_string.Printf ("run_one_line (%s, 'sys.stderr = save_stderr')", script_interpreter->m_dictionary_name.c_str());
         PyRun_SimpleString (run_string.GetData());
         run_string.Clear();
-        
     }
     
     if (script_interpreter->m_embedded_python_input_reader_sp)
@@ -2261,8 +2181,6 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
     lldb::DebuggerSP debugger_sp = m_interpreter.GetDebugger().shared_from_this();
 
     {
-        Locker py_lock(this);
-        
         FileSpec target_file(pathname, true);
         
         // TODO: would we want to reject any other value?
@@ -2275,6 +2193,9 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
         
         const char* directory = target_file.GetDirectory().GetCString();
         std::string basename(target_file.GetFilename().GetCString());
+
+        // Before executing Pyton code, lock the GIL.
+        Locker py_lock(this);
         
         // now make sure that Python has "directory" in the search path
         StreamString command_stream;
@@ -2457,7 +2378,18 @@ ScriptInterpreterPython::InitializePrivate ()
     TerminalState stdin_tty_state;
     stdin_tty_state.Save(STDIN_FILENO, false);
 
-    PyEval_InitThreads ();
+    PyGILState_STATE gstate;
+    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT | LIBLLDB_LOG_VERBOSE));
+    bool threads_already_initialized = false;
+    if (PyEval_ThreadsInitialized ()) {
+        gstate = PyGILState_Ensure ();
+        if (log)
+            log->Printf("Ensured PyGILState. Previous state = %slocked\n", gstate == PyGILState_UNLOCKED ? "un" : "");
+        threads_already_initialized = true;
+    } else {
+        // InitThreads acquires the GIL if it hasn't been called before.
+        PyEval_InitThreads ();
+    }
     Py_InitializeEx (0);
 
     // Initialize SWIG after setting up python
@@ -2499,6 +2431,15 @@ ScriptInterpreterPython::InitializePrivate ()
     }
 
     PyRun_SimpleString ("sys.dont_write_bytecode = 1; import lldb.embedded_interpreter; from lldb.embedded_interpreter import run_python_interpreter; from lldb.embedded_interpreter import run_one_line; from termios import *");
+
+    if (threads_already_initialized) {
+        if (log)
+            log->Printf("Releasing PyGILState. Returning to state = %slocked\n", gstate == PyGILState_UNLOCKED ? "un" : "");
+        PyGILState_Release (gstate);
+    } else {
+        // We initialized the threads in this function, just unlock the GIL.
+        PyEval_SaveThread();
+    }
 
     stdin_tty_state.Restore();
 }

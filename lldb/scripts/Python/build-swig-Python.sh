@@ -289,7 +289,7 @@ fi
 
 # Build the SWIG C++ wrapper file for Python.
 
-$SWIG -c++ -shadow -python -I"/usr/include" -I"${SRC_ROOT}/include" -I./. -outdir "${CONFIG_BUILD_DIR}" -o "${swig_output_file}" "${swig_input_file}"
+$SWIG -c++ -shadow -python -threads -I"/usr/include" -I"${SRC_ROOT}/include" -I./. -outdir "${CONFIG_BUILD_DIR}" -o "${swig_output_file}" "${swig_input_file}"
 
 # Implement the iterator protocol and/or eq/ne operators for some lldb objects.
 # Append global variable to lldb Python module.
