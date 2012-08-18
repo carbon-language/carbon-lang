@@ -1762,7 +1762,7 @@ class CodeCompletionResults(ClangObject):
         return self._as_parameter_
 
     def __del__(self):
-        CodeCompletionResults_dispose(self)
+	lib.clang_disposeCodeCompleteResults(self)
 
     @property
     def results(self):
