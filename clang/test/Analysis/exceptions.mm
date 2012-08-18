@@ -21,3 +21,18 @@ int testObjC() {
   return a; // no-warning
 }
 
+
+void inlinedCXX() {
+  clang_analyzer_checkInlined(true); // expected-warning{{TRUE}}
+  throw -1;
+}
+
+int testCXX() {
+  int a; // uninitialized
+  // FIXME: this should be reported as a leak, because C++ exceptions are
+  // often not fatal.
+  void *mem = malloc(4);
+  inlinedCXX();
+  free(mem);
+  return a; // no-warning
+}

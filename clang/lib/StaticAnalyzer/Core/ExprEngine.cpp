@@ -607,11 +607,6 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::AtomicExprClass:
       // Fall through.
 
-    // Currently all handling of 'throw' just falls to the CFG.  We
-    // can consider doing more if necessary.
-    case Stmt::CXXThrowExprClass:
-      // Fall through.
-      
     // Cases we intentionally don't evaluate, since they don't need
     // to be explicitly evaluated.
     case Stmt::AddrLabelExprClass:
@@ -886,12 +881,12 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
       Bldr.addNodes(Dst);
       break;
 
-    case Stmt::ObjCAtThrowStmtClass: {
+    case Stmt::ObjCAtThrowStmtClass:
+    case Stmt::CXXThrowExprClass:
       // FIXME: This is not complete.  We basically treat @throw as
       // an abort.
       Bldr.generateNode(S, Pred, Pred->getState(), /*IsSink=*/true);
       break;
-    }
 
     case Stmt::ReturnStmtClass:
       Bldr.takeNodes(Pred);
