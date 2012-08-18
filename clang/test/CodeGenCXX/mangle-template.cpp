@@ -170,3 +170,15 @@ namespace test12 {
     test<const int&, n>();
   }
 }
+
+// rdar://problem/12072531
+// Test the boundary condition of minimal signed integers.
+namespace test13 {
+  template <char c> char returnChar() { return c; }
+  template char returnChar<-128>();
+  // CHECK: @_ZN6test1310returnCharILcn128EEEcv()
+
+  template <short s> short returnShort() { return s; }
+  template short returnShort<-32768>();
+  // CHECK: @_ZN6test1311returnShortILsn32768EEEsv()
+}
