@@ -1034,6 +1034,12 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
         return true;
     }
 
+    uint32_t pc_regnum;
+    if (!m_thread.GetRegisterContext()->ConvertBetweenRegisterKinds (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, eRegisterKindLLDB, pc_regnum))
+    {
+        pc_regnum = LLDB_INVALID_REGNUM;
+    }
+
     // Look through the available UnwindPlans for the register location.
 
     UnwindPlan::Row::RegisterLocation unwindplan_regloc;
@@ -1078,20 +1084,35 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
             UnwindPlan::RowSP active_row = m_full_unwind_plan_sp->GetRowForFunctionOffset (m_current_offset);
             unwindplan_registerkind = m_full_unwind_plan_sp->GetRegisterKind ();
             uint32_t row_regnum;
-            if (!m_thread.GetRegisterContext()->ConvertBetweenRegisterKinds (eRegisterKindLLDB, lldb_regnum, unwindplan_registerkind, row_regnum))
+
+            // If we're fetching the saved pc and this UnwindPlan defines a ReturnAddress register (e.g. lr on arm),
+            // look for the return address register number in the UnwindPlan's row.
+            if (lldb_regnum == pc_regnum && m_full_unwind_plan_sp->GetReturnAddressRegister() != LLDB_INVALID_REGNUM)
             {
-                if (log)
+               row_regnum = m_full_unwind_plan_sp->GetReturnAddressRegister();
+               if (log)
+               {
+                   log->Printf("%*sFrame %u requested caller's saved PC but this UnwindPlan uses a RA reg; getting reg %d instead",
+                               m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number, row_regnum);
+               }
+            }
+            else
+            {
+                if (!m_thread.GetRegisterContext()->ConvertBetweenRegisterKinds (eRegisterKindLLDB, lldb_regnum, unwindplan_registerkind, row_regnum))
                 {
-                    if (unwindplan_registerkind == eRegisterKindGeneric)
-                        log->Printf("%*sFrame %u could not convert lldb regnum %d into eRegisterKindGeneric reg numbering scheme",
-                                    m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
-                                    lldb_regnum);
-                    else
-                        log->Printf("%*sFrame %u could not convert lldb regnum %d into %d RegisterKind reg numbering scheme",
-                                    m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
-                                    lldb_regnum, (int) unwindplan_registerkind);
+                    if (log)
+                    {
+                        if (unwindplan_registerkind == eRegisterKindGeneric)
+                            log->Printf("%*sFrame %u could not convert lldb regnum %d into eRegisterKindGeneric reg numbering scheme",
+                                        m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
+                                        lldb_regnum);
+                        else
+                            log->Printf("%*sFrame %u could not convert lldb regnum %d into %d RegisterKind reg numbering scheme",
+                                        m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
+                                        lldb_regnum, (int) unwindplan_registerkind);
+                    }
+                    return false;
                 }
-                return false;
             }
 
             if (active_row->GetRegisterInfo (row_regnum, unwindplan_regloc))

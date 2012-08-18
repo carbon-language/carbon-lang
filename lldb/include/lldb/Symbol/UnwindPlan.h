@@ -348,6 +348,7 @@ public:
         m_row_list (), 
         m_plan_valid_address_range (), 
         m_register_kind (reg_kind), 
+        m_return_addr_register (LLDB_INVALID_REGNUM),
         m_source_name ()
     {
     }
@@ -381,6 +382,18 @@ public:
         m_register_kind = kind;
     }
     
+    void
+    SetReturnAddressRegister (uint32_t regnum)
+    {
+        m_return_addr_register = regnum;
+    }
+    
+    uint32_t
+    GetReturnAddressRegister (void)
+    {
+        return m_return_addr_register;
+    }
+
     uint32_t
     GetInitialCFARegister () const
     {
@@ -441,7 +454,9 @@ private:
     collection m_row_list;
     AddressRange m_plan_valid_address_range;
     lldb::RegisterKind m_register_kind;   // The RegisterKind these register numbers are in terms of - will need to be
-                                // translated to lldb native reg nums at unwind time
+                                          // translated to lldb native reg nums at unwind time
+    uint32_t m_return_addr_register;      // The register that has the return address for the caller frame
+                                          // e.g. the lr on arm
     lldb_private::ConstString m_source_name;  // for logging, where this UnwindPlan originated from
 }; // class UnwindPlan
 

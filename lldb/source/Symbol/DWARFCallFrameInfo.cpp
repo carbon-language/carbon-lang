@@ -407,6 +407,7 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
     UnwindPlan::RowSP row(cie_initial_row);
 
     unwind_plan.SetRegisterKind (m_reg_kind);
+    unwind_plan.SetReturnAddressRegister (cie->return_addr_reg_num);
 
     UnwindPlan::Row::RegisterLocation reg_location;
     while (m_cfi_data.ValidOffset(offset) && offset < end_offset)
