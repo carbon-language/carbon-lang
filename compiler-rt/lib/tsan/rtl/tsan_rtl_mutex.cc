@@ -42,23 +42,21 @@ void MutexDestroy(ThreadState *thr, uptr pc, uptr addr) {
   SyncVar *s = ctx->synctab.GetAndRemove(thr, pc, addr);
   if (s == 0)
     return;
-  if (!s->is_linker_init) {
-    MemoryWrite1Byte(thr, pc, addr);
-    if (flags()->report_destroy_locked
-        && s->owner_tid != SyncVar::kInvalidTid
-        && !s->is_broken) {
-      s->is_broken = true;
-      ScopedReport rep(ReportTypeMutexDestroyLocked);
-      rep.AddMutex(s);
-      StackTrace trace;
-      trace.ObtainCurrent(thr, pc);
-      rep.AddStack(&trace);
-      FastState last(s->last_lock);
-      RestoreStack(last.tid(), last.epoch(), &trace);
-      rep.AddStack(&trace);
-      rep.AddLocation(s->addr, 1);
-      OutputReport(rep);
-    }
+  MemoryWrite1Byte(thr, pc, addr);
+  if (flags()->report_destroy_locked
+      && s->owner_tid != SyncVar::kInvalidTid
+      && !s->is_broken) {
+    s->is_broken = true;
+    ScopedReport rep(ReportTypeMutexDestroyLocked);
+    rep.AddMutex(s);
+    StackTrace trace;
+    trace.ObtainCurrent(thr, pc);
+    rep.AddStack(&trace);
+    FastState last(s->last_lock);
+    RestoreStack(last.tid(), last.epoch(), &trace);
+    rep.AddStack(&trace);
+    rep.AddLocation(s->addr, 1);
+    OutputReport(rep);
   }
   DestroyAndFree(s);
 }

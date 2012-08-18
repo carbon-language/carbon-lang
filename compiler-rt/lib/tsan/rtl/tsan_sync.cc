@@ -123,6 +123,8 @@ SyncVar* SyncTab::GetAndRemove(ThreadState *thr, uptr pc, uptr addr) {
       res = *prev;
       while (res) {
         if (res->addr == addr) {
+          if (res->is_linker_init)
+            return 0;
           *prev = res->next;
           break;
         }
@@ -147,6 +149,8 @@ SyncVar* SyncTab::GetAndRemove(ThreadState *thr, uptr pc, uptr addr) {
     res = *prev;
     while (res) {
       if (res->addr == addr) {
+        if (res->is_linker_init)
+          return 0;
         *prev = res->next;
         break;
       }
