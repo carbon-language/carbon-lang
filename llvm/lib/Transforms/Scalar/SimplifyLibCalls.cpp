@@ -1641,6 +1641,8 @@ void SimplifyLibCalls::InitOptimizations() {
   Optimizations["llvm.exp2.f64"] = &Exp2;
   Optimizations["llvm.exp2.f32"] = &Exp2;
 
+  if (TLI->has(LibFunc::fabs) && TLI->has(LibFunc::fabsf))
+    Optimizations["fabs"] = &UnaryDoubleFP;
   if (TLI->has(LibFunc::floor) && TLI->has(LibFunc::floorf))
     Optimizations["floor"] = &UnaryDoubleFP;
   if (TLI->has(LibFunc::ceil) && TLI->has(LibFunc::ceilf))
@@ -1651,6 +1653,8 @@ void SimplifyLibCalls::InitOptimizations() {
     Optimizations["rint"] = &UnaryDoubleFP;
   if (TLI->has(LibFunc::nearbyint) && TLI->has(LibFunc::nearbyintf))
     Optimizations["nearbyint"] = &UnaryDoubleFP;
+  if (TLI->has(LibFunc::trunc) && TLI->has(LibFunc::truncf))
+    Optimizations["trunc"] = &UnaryDoubleFP;
 
   // Integer Optimizations
   Optimizations["ffs"] = &FFS;
