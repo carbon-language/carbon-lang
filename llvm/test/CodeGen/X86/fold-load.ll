@@ -57,13 +57,13 @@ entry:
   %0 = load i32* %P, align 4
   %1 = load i32* %Q, align 4
   %2 = xor i32 %0, %1
-  %3 = and i32 %2, 65535
+  %3 = and i32 %2, 89947
   %4 = icmp eq i32 %3, 0
   br i1 %4, label %exit, label %land.end
 
 exit:
   %shr.i.i19 = xor i32 %1, %0
-  %5 = and i32 %shr.i.i19, 2147418112
+  %5 = and i32 %shr.i.i19, 3456789123
   %6 = icmp eq i32 %5, 0
   br label %land.end
 
