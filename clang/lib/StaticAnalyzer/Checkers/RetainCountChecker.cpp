@@ -40,24 +40,6 @@ using namespace clang;
 using namespace ento;
 using llvm::StrInStrNoCase;
 
-namespace {
-/// Wrapper around different kinds of node builder, so that helper functions
-/// can have a common interface.
-class GenericNodeBuilderRefCount {
-  CheckerContext *C;
-  const ProgramPointTag *tag;
-public:
-  GenericNodeBuilderRefCount(CheckerContext &c,
-                             const ProgramPointTag *t = 0)
-  : C(&c), tag(t){}
-
-  ExplodedNode *MakeNode(ProgramStateRef state, ExplodedNode *Pred,
-                         bool MarkAsSink = false) {
-    return C->addTransition(state, Pred, tag, MarkAsSink);
-  }
-};
-} // end anonymous namespace
-
 //===----------------------------------------------------------------------===//
 // Primitives used for constructing summaries for function/method calls.
 //===----------------------------------------------------------------------===//
@@ -2515,13 +2497,12 @@ public:
                                     SmallVectorImpl<SymbolRef> &Leaked) const;
 
   std::pair<ExplodedNode *, ProgramStateRef >
-  handleAutoreleaseCounts(ProgramStateRef state, 
-                          GenericNodeBuilderRefCount Bd, ExplodedNode *Pred,
-                          CheckerContext &Ctx, SymbolRef Sym, RefVal V) const;
+  handleAutoreleaseCounts(ProgramStateRef state, ExplodedNode *Pred,
+                          const ProgramPointTag *Tag, CheckerContext &Ctx,
+                          SymbolRef Sym, RefVal V) const;
 
   ExplodedNode *processLeaks(ProgramStateRef state,
                              SmallVectorImpl<SymbolRef> &Leaked,
-                             GenericNodeBuilderRefCount &Builder,
                              CheckerContext &Ctx,
                              ExplodedNode *Pred = 0) const;
 };
@@ -3196,8 +3177,8 @@ void RetainCountChecker::checkPreStmt(const ReturnStmt *S,
   // Update the autorelease counts.
   static SimpleProgramPointTag
          AutoreleaseTag("RetainCountChecker : Autorelease");
-  GenericNodeBuilderRefCount Bd(C, &AutoreleaseTag);
-  llvm::tie(Pred, state) = handleAutoreleaseCounts(state, Bd, Pred, C, Sym, X);
+  llvm::tie(Pred, state) = handleAutoreleaseCounts(state, Pred, &AutoreleaseTag,
+                                                   C, Sym, X);
 
   // Did we cache out?
   if (!Pred)
@@ -3410,8 +3391,8 @@ RetainCountChecker::checkRegionChanges(ProgramStateRef state,
 
 std::pair<ExplodedNode *, ProgramStateRef >
 RetainCountChecker::handleAutoreleaseCounts(ProgramStateRef state, 
-                                            GenericNodeBuilderRefCount Bd,
                                             ExplodedNode *Pred,
+                                            const ProgramPointTag *Tag,
                                             CheckerContext &Ctx,
                                             SymbolRef Sym, RefVal V) const {
   unsigned ACnt = V.getAutoreleaseCount();
@@ -3440,7 +3421,7 @@ RetainCountChecker::handleAutoreleaseCounts(ProgramStateRef state,
       V.setAutoreleaseCount(0);
     }
     state = setRefBinding(state, Sym, V);
-    ExplodedNode *N = Bd.MakeNode(state, Pred);
+    ExplodedNode *N = Ctx.addTransition(state, Pred, Tag);
     if (N == 0)
       state = 0;
     return std::make_pair(N, state);
@@ -3451,7 +3432,8 @@ RetainCountChecker::handleAutoreleaseCounts(ProgramStateRef state,
   V = V ^ RefVal::ErrorOverAutorelease;
   state = setRefBinding(state, Sym, V);
 
-  if (ExplodedNode *N = Bd.MakeNode(state, Pred, true)) {
+  ExplodedNode *N = Ctx.addTransition(state, Pred, Tag, /*IsSink=*/true);
+  if (N) {
     SmallString<128> sbuf;
     llvm::raw_svector_ostream os(sbuf);
     os << "Object over-autoreleased: object was sent -autorelease ";
@@ -3492,14 +3474,13 @@ RetainCountChecker::handleSymbolDeath(ProgramStateRef state,
 ExplodedNode *
 RetainCountChecker::processLeaks(ProgramStateRef state,
                                  SmallVectorImpl<SymbolRef> &Leaked,
-                                 GenericNodeBuilderRefCount &Builder,
                                  CheckerContext &Ctx,
                                  ExplodedNode *Pred) const {
   if (Leaked.empty())
     return Pred;
 
   // Generate an intermediate node representing the leak point.
-  ExplodedNode *N = Builder.MakeNode(state, Pred);
+  ExplodedNode *N = Ctx.addTransition(state, Pred);
 
   if (N) {
     for (SmallVectorImpl<SymbolRef>::iterator
@@ -3522,13 +3503,12 @@ RetainCountChecker::processLeaks(ProgramStateRef state,
 
 void RetainCountChecker::checkEndPath(CheckerContext &Ctx) const {
   ProgramStateRef state = Ctx.getState();
-  GenericNodeBuilderRefCount Bd(Ctx);
   RefBindings B = state->get<RefBindings>();
   ExplodedNode *Pred = Ctx.getPredecessor();
 
   for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
-    llvm::tie(Pred, state) = handleAutoreleaseCounts(state, Bd, Pred, Ctx,
-                                                     I->first, I->second);
+    llvm::tie(Pred, state) = handleAutoreleaseCounts(state, Pred, /*Tag=*/0,
+                                                     Ctx, I->first, I->second);
     if (!state)
       return;
   }
@@ -3546,7 +3526,7 @@ void RetainCountChecker::checkEndPath(CheckerContext &Ctx) const {
   for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I)
     state = handleSymbolDeath(state, I->first, I->second, Leaked);
 
-  processLeaks(state, Leaked, Bd, Ctx, Pred);
+  processLeaks(state, Leaked, Ctx, Pred);
 }
 
 const ProgramPointTag *
@@ -3576,8 +3556,8 @@ void RetainCountChecker::checkDeadSymbols(SymbolReaper &SymReaper,
     if (const RefVal *T = B.lookup(Sym)){
       // Use the symbol as the tag.
       // FIXME: This might not be as unique as we would like.
-      GenericNodeBuilderRefCount Bd(C, getDeadSymbolTag(Sym));
-      llvm::tie(Pred, state) = handleAutoreleaseCounts(state, Bd, Pred, C,
+      const ProgramPointTag *Tag = getDeadSymbolTag(Sym);
+      llvm::tie(Pred, state) = handleAutoreleaseCounts(state, Pred, Tag, C,
                                                        Sym, *T);
       if (!state)
         return;
@@ -3593,10 +3573,7 @@ void RetainCountChecker::checkDeadSymbols(SymbolReaper &SymReaper,
       state = handleSymbolDeath(state, *I, *T, Leaked);
   }
 
-  {
-    GenericNodeBuilderRefCount Bd(C, this);
-    Pred = processLeaks(state, Leaked, Bd, C, Pred);
-  }
+  Pred = processLeaks(state, Leaked, C, Pred);
 
   // Did we cache out?
   if (!Pred)
