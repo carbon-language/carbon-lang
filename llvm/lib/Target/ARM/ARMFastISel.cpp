@@ -100,51 +100,53 @@ class ARMFastISel : public FastISel {
     }
 
     // Code from FastISel.cpp.
-    virtual unsigned FastEmitInst_(unsigned MachineInstOpcode,
-                                   const TargetRegisterClass *RC);
-    virtual unsigned FastEmitInst_r(unsigned MachineInstOpcode,
-                                    const TargetRegisterClass *RC,
-                                    unsigned Op0, bool Op0IsKill);
-    virtual unsigned FastEmitInst_rr(unsigned MachineInstOpcode,
-                                     const TargetRegisterClass *RC,
-                                     unsigned Op0, bool Op0IsKill,
-                                     unsigned Op1, bool Op1IsKill);
-    virtual unsigned FastEmitInst_rrr(unsigned MachineInstOpcode,
-                                      const TargetRegisterClass *RC,
-                                      unsigned Op0, bool Op0IsKill,
-                                      unsigned Op1, bool Op1IsKill,
-                                      unsigned Op2, bool Op2IsKill);
-    virtual unsigned FastEmitInst_ri(unsigned MachineInstOpcode,
-                                     const TargetRegisterClass *RC,
-                                     unsigned Op0, bool Op0IsKill,
-                                     uint64_t Imm);
-    virtual unsigned FastEmitInst_rf(unsigned MachineInstOpcode,
-                                     const TargetRegisterClass *RC,
-                                     unsigned Op0, bool Op0IsKill,
-                                     const ConstantFP *FPImm);
-    virtual unsigned FastEmitInst_rri(unsigned MachineInstOpcode,
-                                      const TargetRegisterClass *RC,
-                                      unsigned Op0, bool Op0IsKill,
-                                      unsigned Op1, bool Op1IsKill,
-                                      uint64_t Imm);
-    virtual unsigned FastEmitInst_i(unsigned MachineInstOpcode,
-                                    const TargetRegisterClass *RC,
-                                    uint64_t Imm);
-    virtual unsigned FastEmitInst_ii(unsigned MachineInstOpcode,
-                                     const TargetRegisterClass *RC,
-                                     uint64_t Imm1, uint64_t Imm2);
+  private:
+    unsigned FastEmitInst_(unsigned MachineInstOpcode,
+                           const TargetRegisterClass *RC);
+    unsigned FastEmitInst_r(unsigned MachineInstOpcode,
+                            const TargetRegisterClass *RC,
+                            unsigned Op0, bool Op0IsKill);
+    unsigned FastEmitInst_rr(unsigned MachineInstOpcode,
+                             const TargetRegisterClass *RC,
+                             unsigned Op0, bool Op0IsKill,
+                             unsigned Op1, bool Op1IsKill);
+    unsigned FastEmitInst_rrr(unsigned MachineInstOpcode,
+                              const TargetRegisterClass *RC,
+                              unsigned Op0, bool Op0IsKill,
+                              unsigned Op1, bool Op1IsKill,
+                              unsigned Op2, bool Op2IsKill);
+    unsigned FastEmitInst_ri(unsigned MachineInstOpcode,
+                             const TargetRegisterClass *RC,
+                             unsigned Op0, bool Op0IsKill,
+                             uint64_t Imm);
+    unsigned FastEmitInst_rf(unsigned MachineInstOpcode,
+                             const TargetRegisterClass *RC,
+                             unsigned Op0, bool Op0IsKill,
+                             const ConstantFP *FPImm);
+    unsigned FastEmitInst_rri(unsigned MachineInstOpcode,
+                              const TargetRegisterClass *RC,
+                              unsigned Op0, bool Op0IsKill,
+                              unsigned Op1, bool Op1IsKill,
+                              uint64_t Imm);
+    unsigned FastEmitInst_i(unsigned MachineInstOpcode,
+                            const TargetRegisterClass *RC,
+                            uint64_t Imm);
+    unsigned FastEmitInst_ii(unsigned MachineInstOpcode,
+                             const TargetRegisterClass *RC,
+                             uint64_t Imm1, uint64_t Imm2);
 
-    virtual unsigned FastEmitInst_extractsubreg(MVT RetVT,
-                                                unsigned Op0, bool Op0IsKill,
-                                                uint32_t Idx);
+    unsigned FastEmitInst_extractsubreg(MVT RetVT,
+                                        unsigned Op0, bool Op0IsKill,
+                                        uint32_t Idx);
 
     // Backend specific FastISel code.
+  private:
     virtual bool TargetSelectInstruction(const Instruction *I);
     virtual unsigned TargetMaterializeConstant(const Constant *C);
     virtual unsigned TargetMaterializeAlloca(const AllocaInst *AI);
     virtual bool TryToFoldLoad(MachineInstr *MI, unsigned OpNo,
                                const LoadInst *LI);
-
+  private:
   #include "ARMGenFastISel.inc"
 
     // Instruction selection routines.
