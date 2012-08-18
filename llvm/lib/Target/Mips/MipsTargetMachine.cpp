@@ -43,7 +43,6 @@ MipsTargetMachine(const Target &T, StringRef TT,
                   bool isLittle)
   : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
     Subtarget(TT, CPU, FS, isLittle),
-    ELFWriterInfo(false, isLittle),
     DataLayout(isLittle ?
                (Subtarget.isABI_N64() ?
                 "e-p:64:64:64-i8:8:32-i16:16:32-i64:64:64-f128:128:128-n32" :
@@ -53,7 +52,8 @@ MipsTargetMachine(const Target &T, StringRef TT,
                 "E-p:32:32:32-i8:8:32-i16:16:32-i64:64:64-n32")),
     InstrInfo(MipsInstrInfo::create(*this)),
     FrameLowering(MipsFrameLowering::create(*this, Subtarget)),
-    TLInfo(*this), TSInfo(*this), JITInfo() {
+    TLInfo(*this), TSInfo(*this), JITInfo(),
+    ELFWriterInfo(false, isLittle) {
 }
 
 void MipsebTargetMachine::anchor() { }
