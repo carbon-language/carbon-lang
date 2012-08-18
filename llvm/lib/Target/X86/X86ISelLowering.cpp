@@ -8283,18 +8283,7 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
 
   unsigned Opcode = 0;
   unsigned NumOperands = 0;
-
-  // Truncate operations may prevent the merge of the SETCC instruction
-  // and the arithmetic intruction before it. Attempt to truncate the operands
-  // of the arithmetic instruction and use a reduced bit-width instruction.
-  bool NeedTruncation = false;
-  unsigned InOpcode = Op.getNode()->getOpcode();
-  if (Op->getOpcode() == ISD::TRUNCATE && Op->hasOneUse()) {
-    NeedTruncation = true;
-    InOpcode = Op->getOperand(0)->getOpcode();
-  }
-
-  switch (InOpcode) {
+  switch (Op.getNode()->getOpcode()) {
   case ISD::ADD:
     // Due to an isel shortcoming, be conservative if this add is likely to be
     // selected as part of a load-modify-store instruction. When the root node
@@ -8350,7 +8339,7 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
 
       if (User->getOpcode() != ISD::BRCOND &&
           User->getOpcode() != ISD::SETCC &&
-          !(User->getOpcode() == ISD::SELECT && UOpNo == 0)) {
+          (User->getOpcode() != ISD::SELECT || UOpNo != 0)) {
         NonFlagUse = true;
         break;
       }
@@ -8371,9 +8360,11 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
         goto default_case;
 
     // Otherwise use a regular EFLAGS-setting instruction.
-    switch (InOpcode) {
+    switch (Op.getNode()->getOpcode()) {
     default: llvm_unreachable("unexpected operator!");
-    case ISD::SUB: Opcode = X86ISD::SUB; break;
+    case ISD::SUB:
+      Opcode = X86ISD::SUB;
+      break;
     case ISD::OR:  Opcode = X86ISD::OR;  break;
     case ISD::XOR: Opcode = X86ISD::XOR; break;
     case ISD::AND: Opcode = X86ISD::AND; break;
@@ -8392,34 +8383,6 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
   default:
   default_case:
     break;
-  }
-
-  if (NeedTruncation) {
-    SDValue WideVal = Op->getOperand(0);
-    EVT VT = Op.getValueType();
-    EVT WideVT = WideVal.getValueType();
-    unsigned ConvertedOp = 0;
-
-    // Use a target machine opcode to prevent further DAGCombine
-    // optimizations that may separate the arithmetic operations from the
-    // setcc node.
-    switch (WideVal.getOpcode()) {
-      default: break;
-      case ISD::ADD: ConvertedOp = X86ISD::ADD; break;
-      case ISD::SUB: ConvertedOp = X86ISD::SUB; break;
-      case ISD::AND: ConvertedOp = X86ISD::AND; break;
-      case ISD::OR:  ConvertedOp = X86ISD::OR;  break;
-      case ISD::XOR: ConvertedOp = X86ISD::XOR; break;
-    }
-
-    if (ConvertedOp && WideVal.hasOneUse()) {
-      const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-      if (TLI.isOperationLegal(WideVal.getOpcode(), WideVT)) {
-        SDValue V0 = DAG.getNode(ISD::TRUNCATE, dl, VT, WideVal.getOperand(0));
-        SDValue V1 = DAG.getNode(ISD::TRUNCATE, dl, VT, WideVal.getOperand(1));
-        Op = DAG.getNode(ConvertedOp, dl, VT, V0, V1);
-      }
-    }
   }
 
   if (Opcode == 0)
