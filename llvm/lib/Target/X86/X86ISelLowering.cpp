@@ -12919,167 +12919,177 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     return EmitMonitor(MI, BB);
 
     // Atomic Lowering.
-  case X86::ATOMAND32:
-    return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::AND32rr,
-                                               X86::AND32ri, X86::MOV32rm,
-                                               X86::LCMPXCHG32,
-                                               X86::NOT32r, X86::EAX,
-                                               &X86::GR32RegClass);
-  case X86::ATOMOR32:
-    return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::OR32rr,
-                                               X86::OR32ri, X86::MOV32rm,
-                                               X86::LCMPXCHG32,
-                                               X86::NOT32r, X86::EAX,
-                                               &X86::GR32RegClass);
-  case X86::ATOMXOR32:
-    return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::XOR32rr,
-                                               X86::XOR32ri, X86::MOV32rm,
-                                               X86::LCMPXCHG32,
-                                               X86::NOT32r, X86::EAX,
-                                               &X86::GR32RegClass);
-  case X86::ATOMNAND32:
-    return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::AND32rr,
-                                               X86::AND32ri, X86::MOV32rm,
-                                               X86::LCMPXCHG32,
-                                               X86::NOT32r, X86::EAX,
-                                               &X86::GR32RegClass, true);
   case X86::ATOMMIN32:
-    return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVL32rr);
   case X86::ATOMMAX32:
-    return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVG32rr);
   case X86::ATOMUMIN32:
-    return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVB32rr);
   case X86::ATOMUMAX32:
-    return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVA32rr);
+  case X86::ATOMMIN16:
+  case X86::ATOMMAX16:
+  case X86::ATOMUMIN16:
+  case X86::ATOMUMAX16:
+  case X86::ATOMMIN64:
+  case X86::ATOMMAX64:
+  case X86::ATOMUMIN64:
+  case X86::ATOMUMAX64: {
+    unsigned Opc;
+    switch (MI->getOpcode()) {
+    default: llvm_unreachable("illegal opcode!");
+    case X86::ATOMMIN32:  Opc = X86::CMOVL32rr; break;
+    case X86::ATOMMAX32:  Opc = X86::CMOVG32rr; break;
+    case X86::ATOMUMIN32: Opc = X86::CMOVB32rr; break;
+    case X86::ATOMUMAX32: Opc = X86::CMOVA32rr; break;
+    case X86::ATOMMIN16:  Opc = X86::CMOVL16rr; break;
+    case X86::ATOMMAX16:  Opc = X86::CMOVG16rr; break;
+    case X86::ATOMUMIN16: Opc = X86::CMOVB16rr; break;
+    case X86::ATOMUMAX16: Opc = X86::CMOVA16rr; break;
+    case X86::ATOMMIN64:  Opc = X86::CMOVL64rr; break;
+    case X86::ATOMMAX64:  Opc = X86::CMOVG64rr; break;
+    case X86::ATOMUMIN64: Opc = X86::CMOVB64rr; break;
+    case X86::ATOMUMAX64: Opc = X86::CMOVA64rr; break;
+    // FIXME: There are no CMOV8 instructions; MIN/MAX need some other way.
+    }
+    return EmitAtomicMinMaxWithCustomInserter(MI, BB, Opc);
+  }
+
+  case X86::ATOMAND32:
+  case X86::ATOMOR32:
+  case X86::ATOMXOR32:
+  case X86::ATOMNAND32: {
+    bool Invert = false;
+    unsigned RegOpc, ImmOpc;
+    switch (MI->getOpcode()) {
+    default: llvm_unreachable("illegal opcode!");
+    case X86::ATOMAND32:
+      RegOpc = X86::AND32rr; ImmOpc = X86::AND32ri; break;
+    case X86::ATOMOR32:
+      RegOpc = X86::OR32rr;  ImmOpc = X86::OR32ri; break;
+    case X86::ATOMXOR32:
+      RegOpc = X86::XOR32rr; ImmOpc = X86::XOR32ri; break;
+    case X86::ATOMNAND32:
+      RegOpc = X86::AND32rr; ImmOpc = X86::AND32ri; Invert = true; break;
+    }
+    return EmitAtomicBitwiseWithCustomInserter(MI, BB, RegOpc, ImmOpc,
+                                               X86::MOV32rm, X86::LCMPXCHG32,
+                                               X86::NOT32r, X86::EAX,
+                                               &X86::GR32RegClass, Invert);
+  }
 
   case X86::ATOMAND16:
-    return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::AND16rr,
-                                               X86::AND16ri, X86::MOV16rm,
-                                               X86::LCMPXCHG16,
-                                               X86::NOT16r, X86::AX,
-                                               &X86::GR16RegClass);
   case X86::ATOMOR16:
-    return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::OR16rr,
-                                               X86::OR16ri, X86::MOV16rm,
-                                               X86::LCMPXCHG16,
-                                               X86::NOT16r, X86::AX,
-                                               &X86::GR16RegClass);
   case X86::ATOMXOR16:
-    return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::XOR16rr,
-                                               X86::XOR16ri, X86::MOV16rm,
-                                               X86::LCMPXCHG16,
+  case X86::ATOMNAND16: {
+    bool Invert = false;
+    unsigned RegOpc, ImmOpc;
+    switch (MI->getOpcode()) {
+    default: llvm_unreachable("illegal opcode!");
+    case X86::ATOMAND16:
+      RegOpc = X86::AND16rr; ImmOpc = X86::AND16ri; break;
+    case X86::ATOMOR16:
+      RegOpc = X86::OR16rr;  ImmOpc = X86::OR16ri; break;
+    case X86::ATOMXOR16:
+      RegOpc = X86::XOR16rr; ImmOpc = X86::XOR16ri; break;
+    case X86::ATOMNAND16:
+      RegOpc = X86::AND16rr; ImmOpc = X86::AND16ri; Invert = true; break;
+    }
+    return EmitAtomicBitwiseWithCustomInserter(MI, BB, RegOpc, ImmOpc,
+                                               X86::MOV16rm, X86::LCMPXCHG16,
                                                X86::NOT16r, X86::AX,
-                                               &X86::GR16RegClass);
-  case X86::ATOMNAND16:
-    return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::AND16rr,
-                                               X86::AND16ri, X86::MOV16rm,
-                                               X86::LCMPXCHG16,
-                                               X86::NOT16r, X86::AX,
-                                               &X86::GR16RegClass, true);
-  case X86::ATOMMIN16:
-    return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVL16rr);
-  case X86::ATOMMAX16:
-    return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVG16rr);
-  case X86::ATOMUMIN16:
-    return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVB16rr);
-  case X86::ATOMUMAX16:
-    return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVA16rr);
+                                               &X86::GR16RegClass, Invert);
+  }
 
   case X86::ATOMAND8:
-    return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::AND8rr,
-                                               X86::AND8ri, X86::MOV8rm,
-                                               X86::LCMPXCHG8,
-                                               X86::NOT8r, X86::AL,
-                                               &X86::GR8RegClass);
   case X86::ATOMOR8:
-    return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::OR8rr,
-                                               X86::OR8ri, X86::MOV8rm,
-                                               X86::LCMPXCHG8,
-                                               X86::NOT8r, X86::AL,
-                                               &X86::GR8RegClass);
   case X86::ATOMXOR8:
-    return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::XOR8rr,
-                                               X86::XOR8ri, X86::MOV8rm,
-                                               X86::LCMPXCHG8,
+  case X86::ATOMNAND8: {
+    bool Invert = false;
+    unsigned RegOpc, ImmOpc;
+    switch (MI->getOpcode()) {
+    default: llvm_unreachable("illegal opcode!");
+    case X86::ATOMAND8:
+      RegOpc = X86::AND8rr; ImmOpc = X86::AND8ri; break;
+    case X86::ATOMOR8:
+      RegOpc = X86::OR8rr;  ImmOpc = X86::OR8ri; break;
+    case X86::ATOMXOR8:
+      RegOpc = X86::XOR8rr; ImmOpc = X86::XOR8ri; break;
+    case X86::ATOMNAND8:
+      RegOpc = X86::AND8rr; ImmOpc = X86::AND8ri; Invert = true; break;
+    }
+    return EmitAtomicBitwiseWithCustomInserter(MI, BB, RegOpc, ImmOpc,
+                                               X86::MOV8rm, X86::LCMPXCHG8,
                                                X86::NOT8r, X86::AL,
-                                               &X86::GR8RegClass);
-  case X86::ATOMNAND8:
-    return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::AND8rr,
-                                               X86::AND8ri, X86::MOV8rm,
-                                               X86::LCMPXCHG8,
-                                               X86::NOT8r, X86::AL,
-                                               &X86::GR8RegClass, true);
-  // FIXME: There are no CMOV8 instructions; MIN/MAX need some other way.
+                                               &X86::GR8RegClass, Invert);
+  }
+
   // This group is for 64-bit host.
   case X86::ATOMAND64:
-    return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::AND64rr,
-                                               X86::AND64ri32, X86::MOV64rm,
-                                               X86::LCMPXCHG64,
-                                               X86::NOT64r, X86::RAX,
-                                               &X86::GR64RegClass);
   case X86::ATOMOR64:
-    return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::OR64rr,
-                                               X86::OR64ri32, X86::MOV64rm,
-                                               X86::LCMPXCHG64,
-                                               X86::NOT64r, X86::RAX,
-                                               &X86::GR64RegClass);
   case X86::ATOMXOR64:
-    return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::XOR64rr,
-                                               X86::XOR64ri32, X86::MOV64rm,
-                                               X86::LCMPXCHG64,
+  case X86::ATOMNAND64: {
+    bool Invert = false;
+    unsigned RegOpc, ImmOpc;
+    switch (MI->getOpcode()) {
+    default: llvm_unreachable("illegal opcode!");
+    case X86::ATOMAND64:
+      RegOpc = X86::AND64rr; ImmOpc = X86::AND64ri32; break;
+    case X86::ATOMOR64:
+      RegOpc = X86::OR64rr;  ImmOpc = X86::OR64ri32; break;
+    case X86::ATOMXOR64:
+      RegOpc = X86::XOR64rr; ImmOpc = X86::XOR64ri32; break;
+    case X86::ATOMNAND64:
+      RegOpc = X86::AND64rr; ImmOpc = X86::AND64ri32; Invert = true; break;
+    }
+    return EmitAtomicBitwiseWithCustomInserter(MI, BB, RegOpc, ImmOpc,
+                                               X86::MOV64rm, X86::LCMPXCHG64,
                                                X86::NOT64r, X86::RAX,
-                                               &X86::GR64RegClass);
-  case X86::ATOMNAND64:
-    return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::AND64rr,
-                                               X86::AND64ri32, X86::MOV64rm,
-                                               X86::LCMPXCHG64,
-                                               X86::NOT64r, X86::RAX,
-                                               &X86::GR64RegClass, true);
-  case X86::ATOMMIN64:
-    return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVL64rr);
-  case X86::ATOMMAX64:
-    return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVG64rr);
-  case X86::ATOMUMIN64:
-    return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVB64rr);
-  case X86::ATOMUMAX64:
-    return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVA64rr);
+                                               &X86::GR64RegClass, Invert);
+  }
 
   // This group does 64-bit operations on a 32-bit host.
   case X86::ATOMAND6432:
-    return EmitAtomicBit6432WithCustomInserter(MI, BB,
-                                               X86::AND32rr, X86::AND32rr,
-                                               X86::AND32ri, X86::AND32ri,
-                                               false);
   case X86::ATOMOR6432:
-    return EmitAtomicBit6432WithCustomInserter(MI, BB,
-                                               X86::OR32rr, X86::OR32rr,
-                                               X86::OR32ri, X86::OR32ri,
-                                               false);
   case X86::ATOMXOR6432:
-    return EmitAtomicBit6432WithCustomInserter(MI, BB,
-                                               X86::XOR32rr, X86::XOR32rr,
-                                               X86::XOR32ri, X86::XOR32ri,
-                                               false);
   case X86::ATOMNAND6432:
-    return EmitAtomicBit6432WithCustomInserter(MI, BB,
-                                               X86::AND32rr, X86::AND32rr,
-                                               X86::AND32ri, X86::AND32ri,
-                                               true);
   case X86::ATOMADD6432:
-    return EmitAtomicBit6432WithCustomInserter(MI, BB,
-                                               X86::ADD32rr, X86::ADC32rr,
-                                               X86::ADD32ri, X86::ADC32ri,
-                                               false);
   case X86::ATOMSUB6432:
-    return EmitAtomicBit6432WithCustomInserter(MI, BB,
-                                               X86::SUB32rr, X86::SBB32rr,
-                                               X86::SUB32ri, X86::SBB32ri,
-                                               false);
-  case X86::ATOMSWAP6432:
-    return EmitAtomicBit6432WithCustomInserter(MI, BB,
-                                               X86::MOV32rr, X86::MOV32rr,
-                                               X86::MOV32ri, X86::MOV32ri,
-                                               false);
+  case X86::ATOMSWAP6432: {
+    bool Invert = false;
+    unsigned RegOpcL, RegOpcH, ImmOpcL, ImmOpcH;
+    switch (MI->getOpcode()) {
+    default: llvm_unreachable("illegal opcode!");
+    case X86::ATOMAND6432:
+      RegOpcL = RegOpcH = X86::AND32rr;
+      ImmOpcL = ImmOpcH = X86::AND32ri;
+      break;
+    case X86::ATOMOR6432:
+      RegOpcL = RegOpcH = X86::OR32rr;
+      ImmOpcL = ImmOpcH = X86::OR32ri;
+      break;
+    case X86::ATOMXOR6432:
+      RegOpcL = RegOpcH = X86::XOR32rr;
+      ImmOpcL = ImmOpcH = X86::XOR32ri;
+      break;
+    case X86::ATOMNAND6432:
+      RegOpcL = RegOpcH = X86::AND32rr;
+      ImmOpcL = ImmOpcH = X86::AND32ri;
+      Invert = true;
+      break;
+    case X86::ATOMADD6432:
+      RegOpcL = X86::ADD32rr; RegOpcH = X86::ADC32rr;
+      ImmOpcL = X86::ADD32ri; ImmOpcH = X86::ADC32ri;
+      break;
+    case X86::ATOMSUB6432:
+      RegOpcL = X86::SUB32rr; RegOpcH = X86::SBB32rr;
+      ImmOpcL = X86::SUB32ri; ImmOpcH = X86::SBB32ri;
+      break;
+    case X86::ATOMSWAP6432:
+      RegOpcL = RegOpcH = X86::MOV32rr;
+      ImmOpcL = ImmOpcH = X86::MOV32ri;
+      break;
+    }
+    return EmitAtomicBit6432WithCustomInserter(MI, BB, RegOpcL, RegOpcH,
+                                               ImmOpcL, ImmOpcH, Invert);
+  }
+
   case X86::VASTART_SAVE_XMM_REGS:
     return EmitVAStartSaveXMMRegsWithCustomInserter(MI, BB);
 
