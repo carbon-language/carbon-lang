@@ -25,3 +25,20 @@ namespace greatergreater {
     (void)(&t<S<int>>==p); // expected-error {{use '> >'}} expected-error {{use '> ='}}
   }
 }
+
+namespace PR5925 {
+  template <typename x>
+  class foo { // expected-note {{here}}
+  };
+  void bar(foo *X) { // expected-error {{requires template arguments}}
+  }
+}
+
+namespace PR13210 {
+  template <class T>
+  class C {}; // expected-note {{here}}
+
+  void f() {
+    new C(); // expected-error {{requires template arguments}}
+  }
+}

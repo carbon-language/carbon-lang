@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wno-unused-comparison %s
 
 // PR8439
 class A
@@ -43,3 +43,22 @@ namespace PR11134 {
   };
 }
 
+namespace AddrOfMember {
+  struct A { int X; };
+  typedef int (A::*P);
+  template<typename T> struct S : T {
+    void f() {
+      P(&T::X) // expected-error {{cannot cast from type 'int *' to member pointer type 'P'}}
+          == &A::X;
+    }
+  };
+
+  void g() {
+    S<A>().f(); // ok, &T::X is 'int (A::*)', not 'int *', even though T is a base class
+  }
+
+  struct B : A { static int X; };
+  void h() {
+    S<B>().f(); // expected-note {{here}}
+  }
+}

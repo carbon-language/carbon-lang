@@ -119,6 +119,9 @@ void CodeCompleteConsumer::() { // expected-error {{xpected unqualified-id}}
 
 ;
 
+// PR4111
+void f(sqrgl); // expected-error {{unknown type name 'sqrgl'}}
+
 // PR8380
 extern ""      // expected-error {{unknown linkage language}}
 test6a { ;// expected-error {{C++ requires a type specifier for all declarations}} \

@@ -724,6 +724,14 @@ public:
       CachedTokens[CachedLexPos-1] = Tok;
   }
 
+  /// TypoCorrectToken - Update the current token to represent the provided
+  /// identifier, in order to cache an action performed by typo correction.
+  void TypoCorrectToken(const Token &Tok) {
+    assert(Tok.getIdentifierInfo() && "Expected identifier token");
+    if (CachedLexPos != 0 && isBacktrackEnabled())
+      CachedTokens[CachedLexPos-1] = Tok;
+  }
+
   /// \brief Recompute the current lexer kind based on the CurLexer/CurPTHLexer/
   /// CurTokenLexer pointers.
   void recomputeCurLexerKind();

@@ -93,8 +93,7 @@ void f3() {
 }
 
 // make sure the following doesn't hit any asserts
-void f4(undef::C); // expected-error {{use of undeclared identifier 'undef'}} \
-                      expected-error {{variable has incomplete type 'void'}}
+void f4(undef::C); // expected-error {{use of undeclared identifier 'undef'}}
 
 typedef void C2::f5(int); // expected-error{{typedef declarator cannot be qualified}}
 

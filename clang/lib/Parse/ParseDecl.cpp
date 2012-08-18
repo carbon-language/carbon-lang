@@ -3165,6 +3165,8 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
       // anything that's a simple-type-specifier followed by '(' as an
       // expression. This suffices because function types are not valid
       // underlying types anyway.
+      EnterExpressionEvaluationContext Unevaluated(Actions,
+                                                   Sema::ConstantEvaluated);
       TPResult TPR = isExpressionOrTypeSpecifierSimple(NextToken().getKind());
       // If the next token starts an expression, we know we're parsing a
       // bit-field. This is the common case.
@@ -4374,9 +4376,15 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
       // In such a case, check if we actually have a function declarator; if it
       // is not, the declarator has been fully parsed.
       bool IsAmbiguous = false;
-      if (getLangOpts().CPlusPlus && D.mayBeFollowedByCXXDirectInit() &&
-          !isCXXFunctionDeclarator(&IsAmbiguous))
-        break;
+      if (getLangOpts().CPlusPlus && D.mayBeFollowedByCXXDirectInit()) {
+        // The name of the declarator, if any, is tentatively declared within
+        // a possible direct initializer.
+        TentativelyDeclaredIdentifiers.push_back(D.getIdentifier());
+        bool IsFunctionDecl = isCXXFunctionDeclarator(&IsAmbiguous);
+        TentativelyDeclaredIdentifiers.pop_back();
+        if (!IsFunctionDecl)
+          break;
+      }
       ParsedAttributes attrs(AttrFactory);
       BalancedDelimiterTracker T(*this, tok::l_paren);
       T.consumeOpen();

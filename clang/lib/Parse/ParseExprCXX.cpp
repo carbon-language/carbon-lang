@@ -988,6 +988,21 @@ ExprResult Parser::ParseCXXTypeid() {
 
   ExprResult Result;
 
+  // C++0x [expr.typeid]p3:
+  //   When typeid is applied to an expression other than an lvalue of a
+  //   polymorphic class type [...] The expression is an unevaluated
+  //   operand (Clause 5).
+  //
+  // Note that we can't tell whether the expression is an lvalue of a
+  // polymorphic class type until after we've parsed the expression; we
+  // speculatively assume the subexpression is unevaluated, and fix it up
+  // later.
+  //
+  // We enter the unevaluated context before trying to determine whether we
+  // have a type-id, because the tentative parse logic will try to resolve
+  // names, and must treat them as unevaluated.
+  EnterExpressionEvaluationContext Unevaluated(Actions, Sema::Unevaluated);
+
   if (isTypeIdInParens()) {
     TypeResult Ty = ParseTypeName();
 
@@ -1000,16 +1015,6 @@ ExprResult Parser::ParseCXXTypeid() {
     Result = Actions.ActOnCXXTypeid(OpLoc, LParenLoc, /*isType=*/true,
                                     Ty.get().getAsOpaquePtr(), RParenLoc);
   } else {
-    // C++0x [expr.typeid]p3:
-    //   When typeid is applied to an expression other than an lvalue of a
-    //   polymorphic class type [...] The expression is an unevaluated
-    //   operand (Clause 5).
-    //
-    // Note that we can't tell whether the expression is an lvalue of a
-    // polymorphic class type until after we've parsed the expression; we
-    // speculatively assume the subexpression is unevaluated, and fix it up
-    // later.
-    EnterExpressionEvaluationContext Unevaluated(Actions, Sema::Unevaluated);
     Result = ParseExpression();
 
     // Match the ')'.

@@ -1203,7 +1203,7 @@ public:
       assert(Kind == NC_TypeTemplate || Kind == NC_FunctionTemplate);
       return Kind == NC_TypeTemplate? TNK_Type_template : TNK_Function_template;
     }
-};
+  };
 
   /// \brief Perform name lookup on the given name, classifying it based on
   /// the results of name lookup and the following token.
@@ -1223,11 +1223,19 @@ public:
   ///
   /// \param NextToken The token following the identifier. Used to help
   /// disambiguate the name.
+  ///
+  /// \param IsAddressOfOperand True if this name is the operand of a unary
+  ///        address of ('&') expression, assuming it is classified as an
+  ///        expression.
+  ///
+  /// \param CCC The correction callback, if typo correction is desired.
   NameClassification ClassifyName(Scope *S,
                                   CXXScopeSpec &SS,
                                   IdentifierInfo *&Name,
                                   SourceLocation NameLoc,
-                                  const Token &NextToken);
+                                  const Token &NextToken,
+                                  bool IsAddressOfOperand,
+                                  CorrectionCandidateCallback *CCC = 0);
 
   Decl *ActOnDeclarator(Scope *S, Declarator &D);
 

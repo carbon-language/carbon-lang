@@ -1301,6 +1301,143 @@ TemplateIdAnnotation *Parser::takeTemplateIdAnnotation(const Token &tok) {
   return Id;
 }
 
+void Parser::AnnotateScopeToken(CXXScopeSpec &SS, bool IsNewAnnotation) {
+  // Push the current token back into the token stream (or revert it if it is
+  // cached) and use an annotation scope token for current token.
+  if (PP.isBacktrackEnabled())
+    PP.RevertCachedTokens(1);
+  else
+    PP.EnterToken(Tok);
+  Tok.setKind(tok::annot_cxxscope);
+  Tok.setAnnotationValue(Actions.SaveNestedNameSpecifierAnnotation(SS));
+  Tok.setAnnotationRange(SS.getRange());
+
+  // In case the tokens were cached, have Preprocessor replace them
+  // with the annotation token.  We don't need to do this if we've
+  // just reverted back to a prior state.
+  if (IsNewAnnotation)
+    PP.AnnotateCachedTokens(Tok);
+}
+
+/// \brief Attempt to classify the name at the current token position. This may
+/// form a type, scope or primary expression annotation, or replace the token
+/// with a typo-corrected keyword. This is only appropriate when the current
+/// name must refer to an entity which has already been declared.
+///
+/// \param IsAddressOfOperand Must be \c true if the name is preceded by an '&'
+///        and might possibly have a dependent nested name specifier.
+/// \param CCC Indicates how to perform typo-correction for this name. If NULL,
+///        no typo correction will be performed.
+Parser::AnnotatedNameKind
+Parser::TryAnnotateName(bool IsAddressOfOperand,
+                        CorrectionCandidateCallback *CCC) {
+  assert(Tok.is(tok::identifier) || Tok.is(tok::annot_cxxscope));
+
+  const bool EnteringContext = false;
+  const bool WasScopeAnnotation = Tok.is(tok::annot_cxxscope);
+
+  CXXScopeSpec SS;
+  if (getLangOpts().CPlusPlus &&
+      ParseOptionalCXXScopeSpecifier(SS, ParsedType(), EnteringContext))
+    return ANK_Error;
+
+  if (Tok.isNot(tok::identifier) || SS.isInvalid()) {
+    if (TryAnnotateTypeOrScopeTokenAfterScopeSpec(EnteringContext, false, SS,
+                                                  !WasScopeAnnotation))
+      return ANK_Error;
+    return ANK_Unresolved;
+  }
+
+  IdentifierInfo *Name = Tok.getIdentifierInfo();
+  SourceLocation NameLoc = Tok.getLocation();
+
+  // FIXME: Move the tentative declaration logic into ClassifyName so we can
+  // typo-correct to tentatively-declared identifiers.
+  if (isTentativelyDeclared(Name)) {
+    // Identifier has been tentatively declared, and thus cannot be resolved as
+    // an expression. Fall back to annotating it as a type.
+    if (TryAnnotateTypeOrScopeTokenAfterScopeSpec(EnteringContext, false, SS,
+                                                  !WasScopeAnnotation))
+      return ANK_Error;
+    return Tok.is(tok::annot_typename) ? ANK_Success : ANK_TentativeDecl;
+  }
+
+  Token Next = NextToken();
+
+  // Look up and classify the identifier. We don't perform any typo-correction
+  // after a scope specifier, because in general we can't recover from typos
+  // there (eg, after correcting 'A::tempalte B<X>::C', we would need to jump
+  // back into scope specifier parsing).
+  Sema::NameClassification Classification
+    = Actions.ClassifyName(getCurScope(), SS, Name, NameLoc, Next,
+                           IsAddressOfOperand, SS.isEmpty() ? CCC : 0);
+
+  switch (Classification.getKind()) {
+  case Sema::NC_Error:
+    return ANK_Error;
+
+  case Sema::NC_Keyword:
+    // The identifier was typo-corrected to a keyword.
+    Tok.setIdentifierInfo(Name);
+    Tok.setKind(Name->getTokenID());
+    PP.TypoCorrectToken(Tok);
+    if (SS.isNotEmpty())
+      AnnotateScopeToken(SS, !WasScopeAnnotation);
+    // We've "annotated" this as a keyword.
+    return ANK_Success;
+
+  case Sema::NC_Unknown:
+    // It's not something we know about. Leave it unannotated.
+    break;
+
+  case Sema::NC_Type:
+    Tok.setKind(tok::annot_typename);
+    setTypeAnnotation(Tok, Classification.getType());
+    Tok.setAnnotationEndLoc(NameLoc);
+    if (SS.isNotEmpty())
+      Tok.setLocation(SS.getBeginLoc());
+    PP.AnnotateCachedTokens(Tok);
+    return ANK_Success;
+
+  case Sema::NC_Expression:
+    Tok.setKind(tok::annot_primary_expr);
+    setExprAnnotation(Tok, Classification.getExpression());
+    Tok.setAnnotationEndLoc(NameLoc);
+    if (SS.isNotEmpty())
+      Tok.setLocation(SS.getBeginLoc());
+    PP.AnnotateCachedTokens(Tok);
+    return ANK_Success;
+
+  case Sema::NC_TypeTemplate:
+    if (Next.isNot(tok::less)) {
+      // This may be a type template being used as a template template argument.
+      if (SS.isNotEmpty())
+        AnnotateScopeToken(SS, !WasScopeAnnotation);
+      return ANK_TemplateName;
+    }
+    // Fall through.
+  case Sema::NC_FunctionTemplate: {
+    // We have a type or function template followed by '<'.
+    ConsumeToken();
+    UnqualifiedId Id;
+    Id.setIdentifier(Name, NameLoc);
+    if (AnnotateTemplateIdToken(
+            TemplateTy::make(Classification.getTemplateName()),
+            Classification.getTemplateNameKind(), SS, SourceLocation(), Id))
+      return ANK_Error;
+    return ANK_Success;
+  }
+
+  case Sema::NC_NestedNameSpecifier:
+    llvm_unreachable("already parsed nested name specifier");
+  }
+
+  // Unable to classify the name, but maybe we can annotate a scope specifier.
+  if (SS.isNotEmpty())
+    AnnotateScopeToken(SS, !WasScopeAnnotation);
+  return ANK_Unresolved;
+}
+
 /// TryAnnotateTypeOrScopeToken - If the current token position is on a
 /// typename (possibly qualified in C++) or a C++ scope specifier not followed
 /// by a typename, TryAnnotateTypeOrScopeToken will replace one or more tokens
@@ -1404,13 +1541,24 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext, bool NeedType) {
   }
 
   // Remembers whether the token was originally a scope annotation.
-  bool wasScopeAnnotation = Tok.is(tok::annot_cxxscope);
+  bool WasScopeAnnotation = Tok.is(tok::annot_cxxscope);
 
   CXXScopeSpec SS;
   if (getLangOpts().CPlusPlus)
     if (ParseOptionalCXXScopeSpecifier(SS, ParsedType(), EnteringContext))
       return true;
 
+  return TryAnnotateTypeOrScopeTokenAfterScopeSpec(EnteringContext, NeedType,
+                                                   SS, !WasScopeAnnotation);
+}
+
+/// \brief Try to annotate a type or scope token, having already parsed an
+/// optional scope specifier. \p IsNewScope should be \c true unless the scope
+/// specifier was extracted from an existing tok::annot_cxxscope annotation.
+bool Parser::TryAnnotateTypeOrScopeTokenAfterScopeSpec(bool EnteringContext,
+                                                       bool NeedType,
+                                                       CXXScopeSpec &SS,
+                                                       bool IsNewScope) {
   if (Tok.is(tok::identifier)) {
     IdentifierInfo *CorrectedII = 0;
     // Determine whether the identifier is a type name.
@@ -1492,21 +1640,7 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext, bool NeedType) {
     return false;
 
   // A C++ scope specifier that isn't followed by a typename.
-  // Push the current token back into the token stream (or revert it if it is
-  // cached) and use an annotation scope token for current token.
-  if (PP.isBacktrackEnabled())
-    PP.RevertCachedTokens(1);
-  else
-    PP.EnterToken(Tok);
-  Tok.setKind(tok::annot_cxxscope);
-  Tok.setAnnotationValue(Actions.SaveNestedNameSpecifierAnnotation(SS));
-  Tok.setAnnotationRange(SS.getRange());
-
-  // In case the tokens were cached, have Preprocessor replace them
-  // with the annotation token.  We don't need to do this if we've
-  // just reverted back to the state we were in before being called.
-  if (!wasScopeAnnotation)
-    PP.AnnotateCachedTokens(Tok);
+  AnnotateScopeToken(SS, IsNewScope);
   return false;
 }
 
@@ -1529,19 +1663,7 @@ bool Parser::TryAnnotateCXXScopeToken(bool EnteringContext) {
   if (SS.isEmpty())
     return false;
 
-  // Push the current token back into the token stream (or revert it if it is
-  // cached) and use an annotation scope token for current token.
-  if (PP.isBacktrackEnabled())
-    PP.RevertCachedTokens(1);
-  else
-    PP.EnterToken(Tok);
-  Tok.setKind(tok::annot_cxxscope);
-  Tok.setAnnotationValue(Actions.SaveNestedNameSpecifierAnnotation(SS));
-  Tok.setAnnotationRange(SS.getRange());
-
-  // In case the tokens were cached, have Preprocessor replace them with the
-  // annotation token.
-  PP.AnnotateCachedTokens(Tok);
+  AnnotateScopeToken(SS, true);
   return false;
 }
 

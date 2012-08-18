@@ -30,6 +30,7 @@ namespace clang {
   class PragmaHandler;
   class Scope;
   class BalancedDelimiterTracker;
+  class CorrectionCandidateCallback;
   class DeclGroupRef;
   class DiagnosticBuilder;
   class Parser;
@@ -203,6 +204,9 @@ class Parser : public CodeCompletionHandler {
   /// \brief Gathers and cleans up TemplateIdAnnotations when parsing of a
   /// top-level declaration is finished.
   SmallVector<TemplateIdAnnotation *, 16> TemplateIds;
+
+  /// \brief Identifiers which have been declared within a tentative parse.
+  SmallVector<IdentifierInfo *, 8> TentativelyDeclaredIdentifiers;
 
   IdentifierInfo *getSEHExceptKeyword();
 
@@ -482,7 +486,28 @@ private:
   // find a type name by attempting typo correction.
   bool TryAnnotateTypeOrScopeToken(bool EnteringContext = false,
                                    bool NeedType = false);
+  bool TryAnnotateTypeOrScopeTokenAfterScopeSpec(bool EnteringContext,
+                                                 bool NeedType,
+                                                 CXXScopeSpec &SS,
+                                                 bool IsNewScope);
   bool TryAnnotateCXXScopeToken(bool EnteringContext = false);
+  enum AnnotatedNameKind {
+    /// Annotation has failed and emitted an error.
+    ANK_Error,
+    /// The identifier is a tentatively-declared name.
+    ANK_TentativeDecl,
+    /// The identifier is a template name. FIXME: Add an annotation for that.
+    ANK_TemplateName,
+    /// The identifier can't be resolved.
+    ANK_Unresolved,
+    /// Annotation was successful.
+    ANK_Success
+  };
+  AnnotatedNameKind TryAnnotateName(bool IsAddressOfOperand,
+                                    CorrectionCandidateCallback *CCC = 0);
+
+  /// Push a tok::annot_cxxscope token onto the token stream.
+  void AnnotateScopeToken(CXXScopeSpec &SS, bool IsNewAnnotation);
 
   /// TryAltiVecToken - Check for context-sensitive AltiVec identifier tokens,
   /// replacing them with the non-context-sensitive keywords.  This returns
@@ -529,12 +554,15 @@ private:
   class TentativeParsingAction {
     Parser &P;
     Token PrevTok;
+    size_t PrevTentativelyDeclaredIdentifierCount;
     unsigned short PrevParenCount, PrevBracketCount, PrevBraceCount;
     bool isActive;
 
   public:
     explicit TentativeParsingAction(Parser& p) : P(p) {
       PrevTok = P.Tok;
+      PrevTentativelyDeclaredIdentifierCount =
+          P.TentativelyDeclaredIdentifiers.size();
       PrevParenCount = P.ParenCount;
       PrevBracketCount = P.BracketCount;
       PrevBraceCount = P.BraceCount;
@@ -543,6 +571,8 @@ private:
     }
     void Commit() {
       assert(isActive && "Parsing action was finished!");
+      P.TentativelyDeclaredIdentifiers.resize(
+          PrevTentativelyDeclaredIdentifierCount);
       P.PP.CommitBacktrackedTokens();
       isActive = false;
     }
@@ -550,6 +580,8 @@ private:
       assert(isActive && "Parsing action was finished!");
       P.PP.Backtrack();
       P.Tok = PrevTok;
+      P.TentativelyDeclaredIdentifiers.resize(
+          PrevTentativelyDeclaredIdentifierCount);
       P.ParenCount = PrevParenCount;
       P.BracketCount = PrevBracketCount;
       P.BraceCount = PrevBraceCount;
@@ -1706,6 +1738,11 @@ private:
   TPResult
   isCXXDeclarationSpecifier(TPResult BracedCastResult = TPResult::False(),
                             bool *HasMissingTypename = 0);
+
+  /// \brief Determine whether an identifier has been tentatively declared as a
+  /// non-type. Such tentative declarations should not be found to name a type
+  /// during a tentative parse, but also should not be annotated as a non-type.
+  bool isTentativelyDeclared(IdentifierInfo *II);
 
   // "Tentative parsing" functions, used for disambiguation. If a parsing error
   // is encountered they will return TPResult::Error().

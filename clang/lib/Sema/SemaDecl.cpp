@@ -562,11 +562,28 @@ static bool isTagTypeWithMissingTag(Sema &SemaRef, LookupResult &Result,
   return false;
 }
 
+/// Build a ParsedType for a simple-type-specifier with a nested-name-specifier.
+static ParsedType buildNestedType(Sema &S, CXXScopeSpec &SS,
+                                  QualType T, SourceLocation NameLoc) {
+  ASTContext &Context = S.Context;
+
+  TypeLocBuilder Builder;
+  Builder.pushTypeSpec(T).setNameLoc(NameLoc);
+
+  T = S.getElaboratedType(ETK_None, SS, T);
+  ElaboratedTypeLoc ElabTL = Builder.push<ElaboratedTypeLoc>(T);
+  ElabTL.setElaboratedKeywordLoc(SourceLocation());
+  ElabTL.setQualifierLoc(SS.getWithLocInContext(Context));
+  return S.CreateParsedType(T, Builder.getTypeSourceInfo(Context, T));
+}
+
 Sema::NameClassification Sema::ClassifyName(Scope *S,
                                             CXXScopeSpec &SS,
                                             IdentifierInfo *&Name,
                                             SourceLocation NameLoc,
-                                            const Token &NextToken) {
+                                            const Token &NextToken,
+                                            bool IsAddressOfOperand,
+                                            CorrectionCandidateCallback *CCC) {
   DeclarationNameInfo NameInfo(Name, NameLoc);
   ObjCMethodDecl *CurMethod = getCurMethodDecl();
   
@@ -632,25 +649,11 @@ Corrected:
 
     // Perform typo correction to determine if there is another name that is
     // close to this name.
-    if (!SecondTry) {
+    if (!SecondTry && CCC) {
       SecondTry = true;
-      CorrectionCandidateCallback DefaultValidator;
-      // Try to limit which sets of keywords should be included in typo
-      // correction based on what the next token is.
-      DefaultValidator.WantTypeSpecifiers =
-          NextToken.is(tok::l_paren) || NextToken.is(tok::less) ||
-          NextToken.is(tok::identifier) || NextToken.is(tok::star) ||
-          NextToken.is(tok::amp) || NextToken.is(tok::l_square);
-      DefaultValidator.WantExpressionKeywords =
-          NextToken.is(tok::l_paren) || NextToken.is(tok::identifier) ||
-          NextToken.is(tok::arrow) || NextToken.is(tok::period);
-      DefaultValidator.WantRemainingKeywords =
-          NextToken.is(tok::l_paren) || NextToken.is(tok::semi) ||
-          NextToken.is(tok::identifier) || NextToken.is(tok::l_brace);
-      DefaultValidator.WantCXXNamedCasts = false;
       if (TypoCorrection Corrected = CorrectTypo(Result.getLookupNameInfo(),
                                                  Result.getLookupKind(), S, 
-                                                 &SS, DefaultValidator)) {
+                                                 &SS, *CCC)) {
         unsigned UnqualifiedDiag = diag::err_undeclared_var_use_suggest;
         unsigned QualifiedDiag = diag::err_no_member_suggest;
         std::string CorrectedStr(Corrected.getAsString(getLangOpts()));
@@ -731,8 +734,9 @@ Corrected:
     // perform some heroics to see if we actually have a 
     // template-argument-list, which would indicate a missing 'template'
     // keyword here.
-    return BuildDependentDeclRefExpr(SS, /*TemplateKWLoc=*/SourceLocation(),
-                                     NameInfo, /*TemplateArgs=*/0);
+    return ActOnDependentIdExpression(SS, /*TemplateKWLoc=*/SourceLocation(),
+                                      NameInfo, IsAddressOfOperand,
+                                      /*TemplateArgs=*/0);
   }
 
   case LookupResult::Found:
@@ -808,14 +812,16 @@ Corrected:
       return NameClassification::TypeTemplate(Template);
     }
   }
-  
+
   NamedDecl *FirstDecl = (*Result.begin())->getUnderlyingDecl();
   if (TypeDecl *Type = dyn_cast<TypeDecl>(FirstDecl)) {
     DiagnoseUseOfDecl(Type, NameLoc);
     QualType T = Context.getTypeDeclType(Type);
+    if (SS.isNotEmpty())
+      return buildNestedType(*this, SS, T, NameLoc);
     return ParsedType::make(T);
   }
-  
+
   ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(FirstDecl);
   if (!Class) {
     // FIXME: It's unfortunate that we don't have a Type node for handling this.
@@ -838,10 +844,14 @@ Corrected:
     return ParsedType::make(T);
   }
 
+  // We can have a type template here if we're classifying a template argument.
+  if (isa<TemplateDecl>(FirstDecl) && !isa<FunctionTemplateDecl>(FirstDecl))
+    return NameClassification::TypeTemplate(
+        TemplateName(cast<TemplateDecl>(FirstDecl)));
+
   // Check for a tag type hidden by a non-type decl in a few cases where it
   // seems likely a type is wanted instead of the non-type that was found.
-  if (!getLangOpts().ObjC1 && FirstDecl && !isa<ClassTemplateDecl>(FirstDecl) &&
-      !isa<TypeAliasTemplateDecl>(FirstDecl)) {
+  if (!getLangOpts().ObjC1) {
     bool NextIsOp = NextToken.is(tok::amp) || NextToken.is(tok::star);
     if ((NextToken.is(tok::identifier) ||
          (NextIsOp && FirstDecl->isFunctionOrFunctionTemplate())) &&
@@ -850,12 +860,14 @@ Corrected:
       if (TypeDecl *Type = dyn_cast<TypeDecl>(FirstDecl)) {
         DiagnoseUseOfDecl(Type, NameLoc);
         QualType T = Context.getTypeDeclType(Type);
+        if (SS.isNotEmpty())
+          return buildNestedType(*this, SS, T, NameLoc);
         return ParsedType::make(T);
       }
     }
   }
   
-  if (!Result.empty() && (*Result.begin())->isCXXClassMember())
+  if (FirstDecl->isCXXClassMember())
     return BuildPossibleImplicitMemberExpr(SS, SourceLocation(), Result, 0);
 
   bool ADL = UseArgumentDependentLookup(SS, Result, NextToken.is(tok::l_paren));

@@ -6,6 +6,8 @@ namespace N {
   };
 
   typedef Wibble foo;
+
+  int zeppelin; // expected-note{{declared here}}
 }
 using namespace N;
 
@@ -14,6 +16,13 @@ foo::bar x; // expected-error{{no type named 'bar' in 'N::Wibble'}}
 void f() {
   foo::bar  = 4; // expected-error{{no member named 'bar' in 'N::Wibble'}}
 }
+
+int f(foo::bar); // expected-error{{no type named 'bar' in 'N::Wibble'}}
+
+int f(doulbe); // expected-error{{did you mean 'double'?}}
+
+int fun(zapotron); // expected-error{{unknown type name 'zapotron'}}
+int var(zepelin); // expected-error{{did you mean 'zeppelin'?}}
 
 template<typename T>
 struct A {
@@ -58,6 +67,20 @@ void f(int, T::type, int) { } // expected-error{{missing 'typename'}}
 
 template<typename T>
 void f(int, T::type x, char) { } // expected-error{{missing 'typename'}}
+
+int *p;
+
+// FIXME: We should assume that 'undeclared' is a type, not a parameter name
+//        here, and produce an 'unknown type name' diagnostic instead.
+int f1(undeclared, int); // expected-error{{requires a type specifier}}
+
+int f2(undeclared, 0); // expected-error{{undeclared identifier}}
+
+int f3(undeclared *p, int); // expected-error{{unknown type name 'undeclared'}}
+
+int f4(undeclared *p, 0); // expected-error{{undeclared identifier}}
+
+int *test(UnknownType *fool) { return 0; } // expected-error{{unknown type name 'UnknownType'}}
 
 template<typename T> int A<T>::n(T::value); // ok
 template<typename T>

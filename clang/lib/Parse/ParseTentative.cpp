@@ -623,6 +623,8 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
     // declarator-id
     if (Tok.is(tok::annot_cxxscope))
       ConsumeToken();
+    else
+      TentativelyDeclaredIdentifiers.push_back(Tok.getIdentifierInfo());
     ConsumeToken();
   } else if (Tok.is(tok::l_paren)) {
     ConsumeParen();
@@ -824,6 +826,12 @@ Parser::isExpressionOrTypeSpecifierSimple(tok::TokenKind Kind) {
   return TPResult::Ambiguous();
 }
 
+bool Parser::isTentativelyDeclared(IdentifierInfo *II) {
+  return std::find(TentativelyDeclaredIdentifiers.begin(),
+                   TentativelyDeclaredIdentifiers.end(), II)
+      != TentativelyDeclaredIdentifiers.end();
+}
+
 /// isCXXDeclarationSpecifier - Returns TPResult::True() if it is a declaration
 /// specifier, TPResult::False() if it is not, TPResult::Ambiguous() if it could
 /// be either a decl-specifier or a function-style cast, and TPResult::Error()
@@ -831,7 +839,10 @@ Parser::isExpressionOrTypeSpecifierSimple(tok::TokenKind Kind) {
 ///
 /// If HasMissingTypename is provided, a name with a dependent scope specifier
 /// will be treated as ambiguous if the 'typename' keyword is missing. If this
-/// happens, *HasMissingTypename will be set to 'true'.
+/// happens, *HasMissingTypename will be set to 'true'. This will also be used
+/// as an indicator that undeclared identifiers (which will trigger a later
+/// parse error) should be treated as types. Returns TPResult::Ambiguous() in
+/// such cases.
 ///
 ///         decl-specifier:
 ///           storage-class-specifier
@@ -927,22 +938,64 @@ Parser::TPResult
 Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult,
                                   bool *HasMissingTypename) {
   switch (Tok.getKind()) {
-  case tok::identifier:   // foo::bar
+  case tok::identifier: {
     // Check for need to substitute AltiVec __vector keyword
     // for "vector" identifier.
     if (TryAltiVecVectorToken())
       return TPResult::True();
-    // Fall through.
+
+    const Token &Next = NextToken();
+    // In 'foo bar', 'foo' is always a type name outside of Objective-C.
+    if (!getLangOpts().ObjC1 && Next.is(tok::identifier))
+      return TPResult::True();
+
+    if (Next.isNot(tok::coloncolon) && Next.isNot(tok::less)) {
+      // Determine whether this is a valid expression. If not, we will hit
+      // a parse error one way or another. In that case, tell the caller that
+      // this is ambiguous. Typo-correct to type and expression keywords and
+      // to types and identifiers, in order to try to recover from errors.
+      CorrectionCandidateCallback TypoCorrection;
+      TypoCorrection.WantRemainingKeywords = false;
+      switch (TryAnnotateName(false /* no nested name specifier */,
+                              &TypoCorrection)) {
+      case ANK_Error:
+        return TPResult::Error();
+      case ANK_TentativeDecl:
+        return TPResult::False();
+      case ANK_TemplateName:
+        // A bare type template-name which can't be a template template
+        // argument is an error, and was probably intended to be a type.
+        return GreaterThanIsOperator ? TPResult::True() : TPResult::False();
+      case ANK_Unresolved:
+        return HasMissingTypename ? TPResult::Ambiguous() : TPResult::False();
+      case ANK_Success:
+        break;
+      }
+      assert(Tok.isNot(tok::identifier) &&
+             "TryAnnotateName succeeded without producing an annotation");
+    } else {
+      // This might possibly be a type with a dependent scope specifier and
+      // a missing 'typename' keyword. Don't use TryAnnotateName in this case,
+      // since it will annotate as a primary expression, and we want to use the
+      // "missing 'typename'" logic.
+      if (TryAnnotateTypeOrScopeToken())
+        return TPResult::Error();
+      // If annotation failed, assume it's a non-type.
+      // FIXME: If this happens due to an undeclared identifier, treat it as
+      // ambiguous.
+      if (Tok.is(tok::identifier))
+        return TPResult::False();
+    }
+
+    // We annotated this token as something. Recurse to handle whatever we got.
+    return isCXXDeclarationSpecifier(BracedCastResult, HasMissingTypename);
+  }
+
   case tok::kw_typename:  // typename T::type
     // Annotate typenames and C++ scope specifiers.  If we get one, just
     // recurse to handle whatever we get.
     if (TryAnnotateTypeOrScopeToken())
       return TPResult::Error();
-    if (Tok.is(tok::identifier)) {
-      const Token &Next = NextToken();
-      return (!getLangOpts().ObjC1 && Next.is(tok::identifier)) ?
-          TPResult::True() : TPResult::False();
-    }
     return isCXXDeclarationSpecifier(BracedCastResult, HasMissingTypename);
 
   case tok::coloncolon: {    // ::foo::bar
@@ -1072,6 +1125,28 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult,
             // expression.
             *HasMissingTypename = true;
             return TPResult::Ambiguous();
+          }
+        } else {
+          // Try to resolve the name. If it doesn't exist, assume it was
+          // intended to name a type and keep disambiguating.
+          switch (TryAnnotateName(false /* SS is not dependent */)) {
+          case ANK_Error:
+            return TPResult::Error();
+          case ANK_TentativeDecl:
+            return TPResult::False();
+          case ANK_TemplateName:
+            // A bare type template-name which can't be a template template
+            // argument is an error, and was probably intended to be a type.
+            return GreaterThanIsOperator ? TPResult::True() : TPResult::False();
+          case ANK_Unresolved:
+            return HasMissingTypename ? TPResult::Ambiguous()
+                                      : TPResult::False();
+          case ANK_Success:
+            // Annotated it, check again.
+            assert(Tok.isNot(tok::annot_cxxscope) ||
+                   NextToken().isNot(tok::identifier));
+            return isCXXDeclarationSpecifier(BracedCastResult,
+                                             HasMissingTypename);
           }
         }
       }

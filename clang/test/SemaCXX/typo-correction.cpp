@@ -116,14 +116,14 @@ void TestRedecl::add_in(int i) {} // expected-error{{out-of-line definition of '
 
 // Test the improved typo correction for the Parser::ParseCastExpr =>
 // Sema::ActOnIdExpression => Sema::DiagnoseEmptyLookup call path.
-class SomeNetMessage;
+class SomeNetMessage; // expected-note 2{{'SomeNetMessage'}}
 class Message {};
 void foo(Message&);
 void foo(SomeNetMessage&);
 void doit(void *data) {
   Message somenetmsg; // expected-note{{'somenetmsg' declared here}}
   foo(somenetmessage); // expected-error{{use of undeclared identifier 'somenetmessage'; did you mean 'somenetmsg'?}}
-  foo((somenetmessage)data); // expected-error{{use of undeclared identifier 'somenetmessage'; did you mean 'SomeNetMessage'?}}
+  foo((somenetmessage)data); // expected-error{{unknown type name 'somenetmessage'; did you mean 'SomeNetMessage'?}} expected-error{{incomplete type}}
 }
 
 // Test the typo-correction callback in BuildRecoveryCallExpr.
@@ -172,7 +172,7 @@ void Child::add_types(int value) {} // expected-error{{out-of-line definition of
 // Sema::ActOnIdExpression by Parser::ParseCastExpression to allow type names as
 // potential corrections for template arguments.
 namespace clash {
-class ConstructExpr {}; // expected-note{{'clash::ConstructExpr' declared here}}
+class ConstructExpr {}; // expected-note 2{{'clash::ConstructExpr' declared here}}
 }
 class ClashTool {
   bool HaveConstructExpr();
@@ -180,7 +180,7 @@ class ClashTool {
 
   void test() {
     ConstructExpr *expr = // expected-error{{unknown type name 'ConstructExpr'; did you mean 'clash::ConstructExpr'?}}
-        getExprAs<ConstructExpr>(); // expected-error{{use of undeclared identifier 'ConstructExpr'; did you mean 'clash::ConstructExpr'?}}
+        getExprAs<ConstructExpr>(); // expected-error{{unknown type name 'ConstructExpr'; did you mean 'clash::ConstructExpr'?}}
   }
 };
 
@@ -219,6 +219,8 @@ namespace PR13051 {
     f(&S<int>::foo); // expected-error-re{{no member named 'foo' in 'PR13051::S<int>'$}}
   }
 }
+
+inf f(doulbe); // expected-error{{'int'}} expected-error{{'double'}}
 
 namespace PR6325 {
 class foo { }; // expected-note{{'foo' declared here}}

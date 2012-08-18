@@ -40,7 +40,7 @@ typedef N::C<float> c2;
 // PR5655
 template<typename T> struct Foo { }; // expected-note{{template is declared here}}
 
-void f(void) { Foo bar; } // expected-error{{without a template argument list}}
+void f(void) { Foo bar; } // expected-error{{use of class template Foo requires template arguments}}
 
 // rdar://problem/8254267
 template <typename T> class Party;
