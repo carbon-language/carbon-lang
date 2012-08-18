@@ -239,7 +239,6 @@ private:
 
   /// SelectCMOVOp - Select CMOV instructions for ARM.
   SDNode *SelectCMOVOp(SDNode *N);
-  SDNode *SelectConditionalOp(SDNode *N);
   SDNode *SelectT2CMOVShiftOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
                               ARMCC::CondCodes CCVal, SDValue CCR,
                               SDValue InFlag);
@@ -2363,121 +2362,6 @@ SDNode *ARMDAGToDAGISel::SelectCMOVOp(SDNode *N) {
   return CurDAG->SelectNodeTo(N, Opc, VT, Ops, 5);
 }
 
-SDNode *ARMDAGToDAGISel::SelectConditionalOp(SDNode *N) {
-  SDValue FalseVal = N->getOperand(0);
-  SDValue TrueVal  = N->getOperand(1);
-  ARMCC::CondCodes CCVal =
-    (ARMCC::CondCodes)cast<ConstantSDNode>(N->getOperand(2))->getZExtValue();
-  SDValue CCR = N->getOperand(3);
-  assert(CCR.getOpcode() == ISD::Register);
-  SDValue InFlag = N->getOperand(4);
-  SDValue CC = CurDAG->getTargetConstant(CCVal, MVT::i32);
-  SDValue Reg0 = CurDAG->getRegister(0, MVT::i32);
-
-  if (Subtarget->isThumb()) {
-    SDValue CPTmp0;
-    SDValue CPTmp1;
-    if (SelectT2ShifterOperandReg(TrueVal, CPTmp0, CPTmp1)) {
-      unsigned Opc;
-      switch (N->getOpcode()) {
-      default: llvm_unreachable("Unexpected node");
-      case ARMISD::CAND: Opc = ARM::t2ANDCCrs; break;
-      case ARMISD::COR:  Opc = ARM::t2ORRCCrs; break;
-      case ARMISD::CXOR: Opc = ARM::t2EORCCrs; break;
-      }
-      SDValue Ops[] = {
-        FalseVal, FalseVal, CPTmp0, CPTmp1, CC, CCR, Reg0, InFlag
-      };
-      return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 8);
-    }
-
-    ConstantSDNode *T = dyn_cast<ConstantSDNode>(TrueVal);
-    if (T) {
-      unsigned TrueImm = T->getZExtValue();
-      if (is_t2_so_imm(TrueImm)) {
-        unsigned Opc;
-        switch (N->getOpcode()) {
-        default: llvm_unreachable("Unexpected node");
-        case ARMISD::CAND: Opc = ARM::t2ANDCCri; break;
-        case ARMISD::COR:  Opc = ARM::t2ORRCCri; break;
-        case ARMISD::CXOR: Opc = ARM::t2EORCCri; break;
-        }
-        SDValue True = CurDAG->getTargetConstant(TrueImm, MVT::i32);
-        SDValue Ops[] = { FalseVal, FalseVal, True, CC, CCR, Reg0, InFlag };
-        return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 7);
-      }
-    }
-
-    unsigned Opc;
-    switch (N->getOpcode()) {
-    default: llvm_unreachable("Unexpected node");
-    case ARMISD::CAND: Opc = ARM::t2ANDCCrr; break;
-    case ARMISD::COR:  Opc = ARM::t2ORRCCrr; break;
-    case ARMISD::CXOR: Opc = ARM::t2EORCCrr; break;
-    }
-    SDValue Ops[] = { FalseVal, FalseVal, TrueVal, CC, CCR, Reg0, InFlag };
-    return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 7);
-  }
-
-  SDValue CPTmp0;
-  SDValue CPTmp1;
-  SDValue CPTmp2;
-  if (SelectImmShifterOperand(TrueVal, CPTmp0, CPTmp2)) {
-    unsigned Opc;
-    switch (N->getOpcode()) {
-    default: llvm_unreachable("Unexpected node");
-    case ARMISD::CAND: Opc = ARM::ANDCCrsi; break;
-    case ARMISD::COR:  Opc = ARM::ORRCCrsi; break;
-    case ARMISD::CXOR: Opc = ARM::EORCCrsi; break;
-    }
-    SDValue Ops[] = {
-      FalseVal, FalseVal, CPTmp0, CPTmp2, CC, CCR, Reg0, InFlag
-    };
-    return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 8);
-  }
-
-  if (SelectRegShifterOperand(TrueVal, CPTmp0, CPTmp1, CPTmp2)) {
-    unsigned Opc;
-    switch (N->getOpcode()) {
-    default: llvm_unreachable("Unexpected node");
-    case ARMISD::CAND: Opc = ARM::ANDCCrsr; break;
-    case ARMISD::COR:  Opc = ARM::ORRCCrsr; break;
-    case ARMISD::CXOR: Opc = ARM::EORCCrsr; break;
-    }
-    SDValue Ops[] = {
-      FalseVal, FalseVal, CPTmp0, CPTmp1, CPTmp2, CC, CCR, Reg0, InFlag
-    };
-    return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 9);
-  }
-
-  ConstantSDNode *T = dyn_cast<ConstantSDNode>(TrueVal);
-  if (T) {
-    unsigned TrueImm = T->getZExtValue();
-    if (is_so_imm(TrueImm)) {
-      unsigned Opc;
-      switch (N->getOpcode()) {
-      default: llvm_unreachable("Unexpected node");
-      case ARMISD::CAND: Opc = ARM::ANDCCri; break;
-      case ARMISD::COR:  Opc = ARM::ORRCCri; break;
-      case ARMISD::CXOR: Opc = ARM::EORCCri; break;
-      }
-      SDValue True = CurDAG->getTargetConstant(TrueImm, MVT::i32);
-      SDValue Ops[] = { FalseVal, FalseVal, True, CC, CCR, Reg0, InFlag };
-      return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 7);
-    }
-  }
-
-  unsigned Opc;
-  switch (N->getOpcode()) {
-  default: llvm_unreachable("Unexpected node");
-  case ARMISD::CAND: Opc = ARM::ANDCCrr; break;
-  case ARMISD::COR:  Opc = ARM::ORRCCrr; break;
-  case ARMISD::CXOR: Opc = ARM::EORCCrr; break;
-  }
-  SDValue Ops[] = { FalseVal, FalseVal, TrueVal, CC, CCR, Reg0, InFlag };
-  return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 7);
-}
-
 /// Target-specific DAG combining for ISD::XOR.
 /// Target-independent combining lowers SELECT_CC nodes of the form
 /// select_cc setg[ge] X,  0,  X, -X
@@ -2805,10 +2689,6 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
   }
   case ARMISD::CMOV:
     return SelectCMOVOp(N);
-  case ARMISD::CAND:
-  case ARMISD::COR:
-  case ARMISD::CXOR:
-    return SelectConditionalOp(N);
   case ARMISD::VZIP: {
     unsigned Opc = 0;
     EVT VT = N->getValueType(0);

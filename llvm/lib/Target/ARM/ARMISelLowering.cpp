@@ -898,9 +898,6 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::FMSTAT:        return "ARMISD::FMSTAT";
 
   case ARMISD::CMOV:          return "ARMISD::CMOV";
-  case ARMISD::CAND:          return "ARMISD::CAND";
-  case ARMISD::COR:           return "ARMISD::COR";
-  case ARMISD::CXOR:          return "ARMISD::CXOR";
 
   case ARMISD::RBIT:          return "ARMISD::RBIT";
 
@@ -7371,41 +7368,6 @@ static SDValue PerformMULCombine(SDNode *N,
   return SDValue();
 }
 
-static bool isCMOVWithZeroOrAllOnesLHS(SDValue N, bool AllOnes) {
-  return N.getOpcode() == ARMISD::CMOV && N.getNode()->hasOneUse() &&
-    isZeroOrAllOnes(N.getOperand(0), AllOnes);
-}
-
-/// formConditionalOp - Combine an operation with a conditional move operand
-/// to form a conditional op. e.g. (or x, (cmov 0, y, cond)) => (or.cond x, y)
-/// (and x, (cmov -1, y, cond)) => (and.cond, x, y)
-static SDValue formConditionalOp(SDNode *N, SelectionDAG &DAG,
-                                 bool Commutable) {
-  SDValue N0 = N->getOperand(0);
-  SDValue N1 = N->getOperand(1);
-
-  bool isAND = N->getOpcode() == ISD::AND;
-  bool isCand = isCMOVWithZeroOrAllOnesLHS(N1, isAND);
-  if (!isCand && Commutable) {
-    isCand = isCMOVWithZeroOrAllOnesLHS(N0, isAND);
-    if (isCand)
-      std::swap(N0, N1);
-  }
-  if (!isCand)
-    return SDValue();
-
-  unsigned Opc = 0;
-  switch (N->getOpcode()) {
-  default: llvm_unreachable("Unexpected node");
-  case ISD::AND: Opc = ARMISD::CAND; break;
-  case ISD::OR:  Opc = ARMISD::COR; break;
-  case ISD::XOR: Opc = ARMISD::CXOR; break;
-  }
-  return DAG.getNode(Opc, N->getDebugLoc(), N->getValueType(0), N0,
-                     N1.getOperand(1), N1.getOperand(2), N1.getOperand(3),
-                     N1.getOperand(4));
-}
-
 static SDValue PerformANDCombine(SDNode *N,
                                  TargetLowering::DAGCombinerInfo &DCI,
                                  const ARMSubtarget *Subtarget) {
@@ -7444,10 +7406,6 @@ static SDValue PerformANDCombine(SDNode *N,
     SDValue Result = combineSelectAndUseCommutative(N, true, DCI);
     if (Result.getNode())
       return Result;
-    // (and x, (cmov -1, y, cond)) => (and.cond x, y)
-    SDValue CAND = formConditionalOp(N, DAG, true);
-    if (CAND.getNode())
-      return CAND;
   }
 
   return SDValue();
@@ -7491,12 +7449,7 @@ static SDValue PerformORCombine(SDNode *N,
     SDValue Result = combineSelectAndUseCommutative(N, false, DCI);
     if (Result.getNode())
       return Result;
-    // (or x, (cmov 0, y, cond)) => (or.cond x, y)
-    SDValue COR = formConditionalOp(N, DAG, true);
-    if (COR.getNode())
-      return COR;
   }
-
 
   // The code below optimizes (or (and X, Y), Z).
   // The AND operand needs to have a single user to make these optimizations
@@ -7663,10 +7616,6 @@ static SDValue PerformXORCombine(SDNode *N,
     SDValue Result = combineSelectAndUseCommutative(N, false, DCI);
     if (Result.getNode())
       return Result;
-    // (xor x, (cmov 0, y, cond)) => (xor.cond x, y)
-    SDValue CXOR = formConditionalOp(N, DAG, true);
-    if (CXOR.getNode())
-      return CXOR;
   }
 
   return SDValue();
