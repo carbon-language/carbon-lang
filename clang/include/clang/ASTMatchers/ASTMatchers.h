@@ -1361,7 +1361,7 @@ AST_POLYMORPHIC_MATCHER_P2(
 /// declCountIs(2)
 ///   matches 'int a, b;' and 'int d = 2, e;', but not 'int c;'.
 AST_MATCHER_P(DeclStmt, declCountIs, unsigned, N) {
-  return std::distance(Node.decl_begin(), Node.decl_end()) == N;
+  return std::distance(Node.decl_begin(), Node.decl_end()) == (ptrdiff_t)N;
 }
 
 /// \brief Matches the n'th declaration of a declaration statement.
