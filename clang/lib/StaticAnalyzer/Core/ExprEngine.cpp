@@ -889,7 +889,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::ObjCAtThrowStmtClass: {
       // FIXME: This is not complete.  We basically treat @throw as
       // an abort.
-      Bldr.generateNode(S, Pred, Pred->getState());
+      Bldr.generateNode(S, Pred, Pred->getState(), /*IsSink=*/true);
       break;
     }
 
