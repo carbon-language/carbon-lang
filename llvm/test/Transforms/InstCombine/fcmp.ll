@@ -69,3 +69,85 @@ define float @test8(float %x) nounwind readnone optsize ssp {
 ; CHECK: @test8
 ; CHECK-NEXT: fcmp olt float %x, 0.000000e+00
 }
+
+declare double @fabs(double) nounwind readnone
+
+define i32 @test9(double %a) nounwind {
+  %call = tail call double @fabs(double %a) nounwind
+  %cmp = fcmp olt double %call, 0.000000e+00
+  %conv = zext i1 %cmp to i32
+  ret i32 %conv
+; CHECK: @test9
+; CHECK-NOT: fabs
+; CHECK: ret i32 0
+}
+
+define i32 @test10(double %a) nounwind {
+  %call = tail call double @fabs(double %a) nounwind
+  %cmp = fcmp ole double %call, 0.000000e+00
+  %conv = zext i1 %cmp to i32
+  ret i32 %conv
+; CHECK: @test10
+; CHECK-NOT: fabs
+; CHECK: fcmp oeq double %a, 0.000000e+00
+}
+
+define i32 @test11(double %a) nounwind {
+  %call = tail call double @fabs(double %a) nounwind
+  %cmp = fcmp ogt double %call, 0.000000e+00
+  %conv = zext i1 %cmp to i32
+  ret i32 %conv
+; CHECK: @test11
+; CHECK-NOT: fabs
+; CHECK: fcmp one double %a, 0.000000e+00
+}
+
+define i32 @test12(double %a) nounwind {
+  %call = tail call double @fabs(double %a) nounwind
+  %cmp = fcmp oge double %call, 0.000000e+00
+  %conv = zext i1 %cmp to i32
+  ret i32 %conv
+; CHECK: @test12
+; CHECK-NOT: fabs
+; CHECK: fcmp ord double %a, 0.000000e+00
+}
+
+define i32 @test13(double %a) nounwind {
+  %call = tail call double @fabs(double %a) nounwind
+  %cmp = fcmp une double %call, 0.000000e+00
+  %conv = zext i1 %cmp to i32
+  ret i32 %conv
+; CHECK: @test13
+; CHECK-NOT: fabs
+; CHECK: fcmp une double %a, 0.000000e+00
+}
+
+define i32 @test14(double %a) nounwind {
+  %call = tail call double @fabs(double %a) nounwind
+  %cmp = fcmp oeq double %call, 0.000000e+00
+  %conv = zext i1 %cmp to i32
+  ret i32 %conv
+; CHECK: @test14
+; CHECK-NOT: fabs
+; CHECK: fcmp oeq double %a, 0.000000e+00
+}
+
+define i32 @test15(double %a) nounwind {
+  %call = tail call double @fabs(double %a) nounwind
+  %cmp = fcmp one double %call, 0.000000e+00
+  %conv = zext i1 %cmp to i32
+  ret i32 %conv
+; CHECK: @test15
+; CHECK-NOT: fabs
+; CHECK: fcmp one double %a, 0.000000e+00
+}
+
+define i32 @test16(double %a) nounwind {
+  %call = tail call double @fabs(double %a) nounwind
+  %cmp = fcmp ueq double %call, 0.000000e+00
+  %conv = zext i1 %cmp to i32
+  ret i32 %conv
+; CHECK: @test16
+; CHECK-NOT: fabs
+; CHECK: fcmp ueq double %a, 0.000000e+00
+}
