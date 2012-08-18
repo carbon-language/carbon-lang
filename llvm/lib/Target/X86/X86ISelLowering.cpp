@@ -8283,7 +8283,33 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
 
   unsigned Opcode = 0;
   unsigned NumOperands = 0;
-  switch (Op.getNode()->getOpcode()) {
+
+  // Truncate operations may prevent the merge of the SETCC instruction
+  // and the arithmetic intruction before it. Attempt to truncate the operands
+  // of the arithmetic instruction and use a reduced bit-width instruction.
+  bool NeedTruncation = false;
+  SDValue ArithOp = Op;
+  if (Op->getOpcode() == ISD::TRUNCATE && Op->hasOneUse()) {
+    SDValue Arith = Op->getOperand(0);
+    // Both the trunc and the arithmetic op need to have one user each.
+    if (Arith->hasOneUse())
+      switch (Arith.getOpcode()) {
+        default: break;
+        case ISD::ADD:
+        case ISD::SUB:
+        case ISD::AND:
+        case ISD::OR:
+        case ISD::XOR: {
+          NeedTruncation = true;
+          ArithOp = Arith;
+        }
+      }
+  }
+
+  // NOTICE: In the code below we use ArithOp to hold the arithmetic operation
+  // which may be the result of a CAST.  We use the variable 'Op', which is the
+  // non-casted variable when we check for possible users.
+  switch (ArithOp.getOpcode()) {
   case ISD::ADD:
     // Due to an isel shortcoming, be conservative if this add is likely to be
     // selected as part of a load-modify-store instruction. When the root node
@@ -8303,7 +8329,7 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
         goto default_case;
 
     if (ConstantSDNode *C =
-        dyn_cast<ConstantSDNode>(Op.getNode()->getOperand(1))) {
+        dyn_cast<ConstantSDNode>(ArithOp.getNode()->getOperand(1))) {
       // An add of one will be selected as an INC.
       if (C->getAPIntValue() == 1) {
         Opcode = X86ISD::INC;
@@ -8339,7 +8365,7 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
 
       if (User->getOpcode() != ISD::BRCOND &&
           User->getOpcode() != ISD::SETCC &&
-          (User->getOpcode() != ISD::SELECT || UOpNo != 0)) {
+          !(User->getOpcode() == ISD::SELECT && UOpNo == 0)) {
         NonFlagUse = true;
         break;
       }
@@ -8360,11 +8386,9 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
         goto default_case;
 
     // Otherwise use a regular EFLAGS-setting instruction.
-    switch (Op.getNode()->getOpcode()) {
+    switch (ArithOp.getOpcode()) {
     default: llvm_unreachable("unexpected operator!");
-    case ISD::SUB:
-      Opcode = X86ISD::SUB;
-      break;
+    case ISD::SUB: Opcode = X86ISD::SUB; break;
     case ISD::OR:  Opcode = X86ISD::OR;  break;
     case ISD::XOR: Opcode = X86ISD::XOR; break;
     case ISD::AND: Opcode = X86ISD::AND; break;
@@ -8385,18 +8409,39 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
     break;
   }
 
+  // If we found that truncation is beneficial, perform the truncation and
+  // update 'Op'.
+  if (NeedTruncation) {
+    EVT VT = Op.getValueType();
+    SDValue WideVal = Op->getOperand(0);
+    EVT WideVT = WideVal.getValueType();
+    unsigned ConvertedOp = 0;
+    // Use a target machine opcode to prevent further DAGCombine
+    // optimizations that may separate the arithmetic operations
+    // from the setcc node.
+    switch (WideVal.getOpcode()) {
+      default: break;
+      case ISD::ADD: ConvertedOp = X86ISD::ADD; break;
+      case ISD::SUB: ConvertedOp = X86ISD::SUB; break;
+      case ISD::AND: ConvertedOp = X86ISD::AND; break;
+      case ISD::OR:  ConvertedOp = X86ISD::OR;  break;
+      case ISD::XOR: ConvertedOp = X86ISD::XOR; break;
+    }
+
+    if (ConvertedOp) {
+      const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+      if (TLI.isOperationLegal(WideVal.getOpcode(), WideVT)) {
+        SDValue V0 = DAG.getNode(ISD::TRUNCATE, dl, VT, WideVal.getOperand(0));
+        SDValue V1 = DAG.getNode(ISD::TRUNCATE, dl, VT, WideVal.getOperand(1));
+        Op = DAG.getNode(ConvertedOp, dl, VT, V0, V1);
+      }
+    }
+  }
+
   if (Opcode == 0)
     // Emit a CMP with 0, which is the TEST pattern.
     return DAG.getNode(X86ISD::CMP, dl, MVT::i32, Op,
                        DAG.getConstant(0, Op.getValueType()));
-
-  if (Opcode == X86ISD::CMP) {
-    SDValue New = DAG.getNode(Opcode, dl, MVT::i32, Op.getOperand(0),
-                              Op.getOperand(1));
-    // We can't replace usage of SUB with CMP.
-    // The SUB node will be removed later because there is no use of it.
-    return SDValue(New.getNode(), 0);
-  }
 
   SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::i32);
   SmallVector<SDValue, 4> Ops;
