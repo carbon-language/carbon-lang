@@ -151,3 +151,11 @@ define i32 @test16(double %a) nounwind {
 ; CHECK-NOT: fabs
 ; CHECK: fcmp ueq double %a, 0.000000e+00
 }
+
+; Don't crash.
+define i32 @test17(double %a, double (double)* %p) nounwind {
+  %call = tail call double %p(double %a) nounwind
+  %cmp = fcmp ueq double %call, 0.000000e+00
+  %conv = zext i1 %cmp to i32
+  ret i32 %conv
+}

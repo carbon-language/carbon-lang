@@ -2990,7 +2990,7 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
         CallInst *CI = cast<CallInst>(LHSI);
         LibFunc::Func Func;
         // Various optimization for fabs compared with zero.
-        if (RHSC->isNullValue() &&
+        if (RHSC->isNullValue() && CI->getCalledFunction() &&
             TLI->getLibFunc(CI->getCalledFunction()->getName(), Func) &&
             TLI->has(Func)) {
           if (Func == LibFunc::fabs || Func == LibFunc::fabsf ||
