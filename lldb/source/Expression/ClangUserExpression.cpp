@@ -556,7 +556,8 @@ ClangUserExpression::Execute (Stream &error_stream,
         lldb::addr_t object_ptr = 0;
         lldb::addr_t cmd_ptr = 0;
         
-        if (!PrepareToExecuteJITExpression (error_stream, exe_ctx, struct_address, object_ptr, cmd_ptr)) {
+        if (!PrepareToExecuteJITExpression (error_stream, exe_ctx, struct_address, object_ptr, cmd_ptr))
+        {
             error_stream.Printf("Errored out in %s, couldn't PrepareToExecuteJITExpression", __FUNCTION__);
             return eExecutionSetupError;
         }
@@ -632,8 +633,10 @@ ClangUserExpression::Execute (Stream &error_stream,
         if  (FinalizeJITExecution (error_stream, exe_ctx, result, function_stack_pointer))
             return eExecutionCompleted;
         else
+        {
             error_stream.Printf("Errored out in %s: Couldn't FinalizeJITExpression", __FUNCTION__);
             return eExecutionSetupError;
+        }
     }
     else
     {
