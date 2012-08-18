@@ -2014,14 +2014,14 @@ TEST(Member, MatchesInMemberFunctionCall) {
 }
 
 TEST(Member, MatchesMemberAllocationFunction) {
-  EXPECT_TRUE(matches("namespace std { typedef unsigned long size_t; }"
+  EXPECT_TRUE(matches("namespace std { typedef typeof(sizeof(int)) size_t; }"
                       "class X { void *operator new(std::size_t); };",
                       method(ofClass(hasName("X")))));
 
   EXPECT_TRUE(matches("class X { void operator delete(void*); };",
                       method(ofClass(hasName("X")))));
 
-  EXPECT_TRUE(matches("namespace std { typedef unsigned long size_t; }"
+  EXPECT_TRUE(matches("namespace std { typedef typeof(sizeof(int)) size_t; }"
                       "class X { void operator delete[](void*, std::size_t); };",
                       method(ofClass(hasName("X")))));
 }
