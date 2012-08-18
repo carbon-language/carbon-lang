@@ -6981,6 +6981,65 @@ static inline bool isZeroOrAllOnes(SDValue N, bool AllOnes) {
   return AllOnes ? C->isAllOnesValue() : C->isNullValue();
 }
 
+// Return true if N is conditionally 0 or all ones.
+// Detects these expressions where cc is an i1 value:
+//
+//   (select cc 0, y)   [AllOnes=0]
+//   (select cc y, 0)   [AllOnes=0]
+//   (zext cc)          [AllOnes=0]
+//   (sext cc)          [AllOnes=0/1]
+//   (select cc -1, y)  [AllOnes=1]
+//   (select cc y, -1)  [AllOnes=1]
+//
+// Invert is set when N is the null/all ones constant when CC is false.
+// OtherOp is set to the alternative value of N.
+static bool isConditionalZeroOrAllOnes(SDNode *N, bool AllOnes,
+                                       SDValue &CC, bool &Invert,
+                                       SDValue &OtherOp,
+                                       SelectionDAG &DAG) {
+  switch (N->getOpcode()) {
+  default: return false;
+  case ISD::SELECT: {
+    CC = N->getOperand(0);
+    SDValue N1 = N->getOperand(1);
+    SDValue N2 = N->getOperand(2);
+    if (isZeroOrAllOnes(N1, AllOnes)) {
+      Invert = false;
+      OtherOp = N2;
+      return true;
+    }
+    if (isZeroOrAllOnes(N2, AllOnes)) {
+      Invert = true;
+      OtherOp = N1;
+      return true;
+    }
+    return false;
+  }
+  case ISD::ZERO_EXTEND:
+    // (zext cc) can never be the all ones value.
+    if (AllOnes)
+      return false;
+    // Fall through.
+  case ISD::SIGN_EXTEND: {
+    EVT VT = N->getValueType(0);
+    CC = N->getOperand(0);
+    if (CC.getValueType() != MVT::i1)
+      return false;
+    Invert = !AllOnes;
+    if (AllOnes)
+      // When looking for an AllOnes constant, N is an sext, and the 'other'
+      // value is 0.
+      OtherOp = DAG.getConstant(0, VT);
+    else if (N->getOpcode() == ISD::ZERO_EXTEND)
+      // When looking for a 0 constant, N can be zext or sext.
+      OtherOp = DAG.getConstant(1, VT);
+    else
+      OtherOp = DAG.getConstant(APInt::getAllOnesValue(VT.getSizeInBits()), VT);
+    return true;
+  }
+  }
+}
+
 // Combine a constant select operand into its use:
 //
 //   (add (select cc, 0, c), x)  -> (select cc, x, (add, x, c))
@@ -6991,6 +7050,13 @@ static inline bool isZeroOrAllOnes(SDValue N, bool AllOnes) {
 //
 // The transform is rejected if the select doesn't have a constant operand that
 // is null, or all ones when AllOnes is set.
+//
+// Also recognize sext/zext from i1:
+//
+//   (add (zext cc), x) -> (select cc (add x, 1), x)
+//   (add (sext cc), x) -> (select cc (add x, -1), x)
+//
+// These transformations eventually create predicated instructions.
 //
 // @param N       The node to transform.
 // @param Slct    The N operand that is a select.
@@ -7003,53 +7069,24 @@ SDValue combineSelectAndUse(SDNode *N, SDValue Slct, SDValue OtherOp,
                             TargetLowering::DAGCombinerInfo &DCI,
                             bool AllOnes = false) {
   SelectionDAG &DAG = DCI.DAG;
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   EVT VT = N->getValueType(0);
-  unsigned Opc = N->getOpcode();
-  bool isSlctCC = Slct.getOpcode() == ISD::SELECT_CC;
-  SDValue LHS = isSlctCC ? Slct.getOperand(2) : Slct.getOperand(1);
-  SDValue RHS = isSlctCC ? Slct.getOperand(3) : Slct.getOperand(2);
-  ISD::CondCode CC = ISD::SETCC_INVALID;
-
-  if (isSlctCC) {
-    CC = cast<CondCodeSDNode>(Slct.getOperand(4))->get();
-  } else {
-    SDValue CCOp = Slct.getOperand(0);
-    if (CCOp.getOpcode() == ISD::SETCC)
-      CC = cast<CondCodeSDNode>(CCOp.getOperand(2))->get();
-  }
-
-  bool DoXform = false;
-  bool InvCC = false;
-  if (isZeroOrAllOnes(LHS, AllOnes)) {
-    DoXform = true;
-  } else if (CC != ISD::SETCC_INVALID && isZeroOrAllOnes(RHS, AllOnes)) {
-    std::swap(LHS, RHS);
-    SDValue Op0 = Slct.getOperand(0);
-    EVT OpVT = isSlctCC ? Op0.getValueType() : Op0.getOperand(0).getValueType();
-    bool isInt = OpVT.isInteger();
-    CC = ISD::getSetCCInverse(CC, isInt);
-
-    if (!TLI.isCondCodeLegal(CC, OpVT))
-      return SDValue();         // Inverse operator isn't legal.
-
-    DoXform = true;
-    InvCC = true;
-  }
-
-  if (!DoXform)
+  SDValue NonConstantVal;
+  SDValue CCOp;
+  bool SwapSelectOps;
+  if (!isConditionalZeroOrAllOnes(Slct.getNode(), AllOnes, CCOp, SwapSelectOps,
+                                  NonConstantVal, DAG))
     return SDValue();
 
-  SDValue Result = DAG.getNode(Opc, RHS.getDebugLoc(), VT, OtherOp, RHS);
-  if (isSlctCC)
-    return DAG.getSelectCC(N->getDebugLoc(), OtherOp, Result,
-                           Slct.getOperand(0), Slct.getOperand(1), CC);
-  SDValue CCOp = Slct.getOperand(0);
-  if (InvCC)
-    CCOp = DAG.getSetCC(Slct.getDebugLoc(), CCOp.getValueType(),
-                        CCOp.getOperand(0), CCOp.getOperand(1), CC);
+  // Slct is now know to be the desired identity constant when CC is true.
+  SDValue TrueVal = OtherOp;
+  SDValue FalseVal = DAG.getNode(N->getOpcode(), N->getDebugLoc(), VT,
+                                 OtherOp, NonConstantVal);
+  // Unless SwapSelectOps says CC should be false.
+  if (SwapSelectOps)
+    std::swap(TrueVal, FalseVal);
+
   return DAG.getNode(ISD::SELECT, N->getDebugLoc(), VT,
-                     CCOp, OtherOp, Result);
+                     CCOp, TrueVal, FalseVal);
 }
 
 // Attempt combineSelectAndUse on each operand of a commutative operator N.
@@ -7058,12 +7095,12 @@ SDValue combineSelectAndUseCommutative(SDNode *N, bool AllOnes,
                                        TargetLowering::DAGCombinerInfo &DCI) {
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
-  if (N0.getOpcode() == ISD::SELECT && N0.getNode()->hasOneUse()) {
+  if (N0.getNode()->hasOneUse()) {
     SDValue Result = combineSelectAndUse(N, N0, N1, DCI, AllOnes);
     if (Result.getNode())
       return Result;
   }
-  if (N1.getOpcode() == ISD::SELECT && N1.getNode()->hasOneUse()) {
+  if (N1.getNode()->hasOneUse()) {
     SDValue Result = combineSelectAndUse(N, N1, N0, DCI, AllOnes);
     if (Result.getNode())
       return Result;
@@ -7174,7 +7211,7 @@ static SDValue PerformADDCombineWithOperands(SDNode *N, SDValue N0, SDValue N1,
     return Result;
 
   // fold (add (select cc, 0, c), x) -> (select cc, x, (add, x, c))
-  if (N0.getOpcode() == ISD::SELECT && N0.getNode()->hasOneUse()) {
+  if (N0.getNode()->hasOneUse()) {
     SDValue Result = combineSelectAndUse(N, N0, N1, DCI);
     if (Result.getNode()) return Result;
   }
@@ -7206,7 +7243,7 @@ static SDValue PerformSUBCombine(SDNode *N,
   SDValue N1 = N->getOperand(1);
 
   // fold (sub x, (select cc, 0, c)) -> (select cc, x, (sub, x, c))
-  if (N1.getOpcode() == ISD::SELECT && N1.getNode()->hasOneUse()) {
+  if (N1.getNode()->hasOneUse()) {
     SDValue Result = combineSelectAndUse(N, N1, N0, DCI);
     if (Result.getNode()) return Result;
   }

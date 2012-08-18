@@ -190,3 +190,35 @@ define void @pr13628() nounwind uwtable align 2 {
   ret void
 }
 declare void @bar(i8*)
+
+; Fold zext i1 into predicated add
+define i32 @t13(i32 %c, i32 %a) nounwind readnone ssp {
+entry:
+; ARM: t13
+; ARM: cmp r1, #10
+; ARM: addgt r0, r0, #1
+
+; T2: t13
+; T2: cmp r1, #10
+; T2: addgt.w r0, r0, #1
+  %cmp = icmp sgt i32 %a, 10
+  %conv = zext i1 %cmp to i32
+  %add = add i32 %conv, %c
+  ret i32 %add
+}
+
+; Fold sext i1 into predicated sub
+define i32 @t14(i32 %c, i32 %a) nounwind readnone ssp {
+entry:
+; ARM: t14
+; ARM: cmp r1, #10
+; ARM: subgt r0, r0, #1
+
+; T2: t14
+; T2: cmp r1, #10
+; T2: subgt.w r0, r0, #1
+  %cmp = icmp sgt i32 %a, 10
+  %conv = sext i1 %cmp to i32
+  %add = add i32 %conv, %c
+  ret i32 %add
+}
