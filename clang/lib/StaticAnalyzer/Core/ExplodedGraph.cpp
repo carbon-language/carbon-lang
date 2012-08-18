@@ -162,9 +162,8 @@ void ExplodedGraph::reclaimRecentlyAllocatedNodes() {
 // ExplodedNode.
 //===----------------------------------------------------------------------===//
 
-static inline BumpVector<ExplodedNode*>& getVector(void *P) {
-  return *reinterpret_cast<BumpVector<ExplodedNode*>*>(P);
-}
+typedef BumpVector<ExplodedNode *> ExplodedNodeVector;
+typedef llvm::PointerUnion<ExplodedNode *, ExplodedNodeVector *> GroupStorage;
 
 void ExplodedNode::addPredecessor(ExplodedNode *V, ExplodedGraph &G) {
   assert (!V->isSink());
@@ -176,71 +175,75 @@ void ExplodedNode::addPredecessor(ExplodedNode *V, ExplodedGraph &G) {
 }
 
 void ExplodedNode::NodeGroup::replaceNode(ExplodedNode *node) {
-  assert(getKind() == Size1);
-  P = reinterpret_cast<uintptr_t>(node);
-  assert(getKind() == Size1);
+  GroupStorage &Storage = reinterpret_cast<GroupStorage&>(P);
+  assert(Storage.is<ExplodedNode *>());
+  Storage = node;
+  assert(Storage.is<ExplodedNode *>());
 }
 
 void ExplodedNode::NodeGroup::addNode(ExplodedNode *N, ExplodedGraph &G) {
-  assert((reinterpret_cast<uintptr_t>(N) & Mask) == 0x0);
   assert(!getFlag());
 
-  if (getKind() == Size1) {
-    if (ExplodedNode *NOld = getNode()) {
-      BumpVectorContext &Ctx = G.getNodeAllocator();
-      BumpVector<ExplodedNode*> *V = 
-        G.getAllocator().Allocate<BumpVector<ExplodedNode*> >();
-      new (V) BumpVector<ExplodedNode*>(Ctx, 4);
-      
-      assert((reinterpret_cast<uintptr_t>(V) & Mask) == 0x0);
-      V->push_back(NOld, Ctx);
-      V->push_back(N, Ctx);
-      P = reinterpret_cast<uintptr_t>(V) | SizeOther;
-      assert(getPtr() == (void*) V);
-      assert(getKind() == SizeOther);
-    }
-    else {
-      P = reinterpret_cast<uintptr_t>(N);
-      assert(getKind() == Size1);
-    }
+  GroupStorage &Storage = reinterpret_cast<GroupStorage&>(P);
+  if (Storage.isNull()) {
+    Storage = N;
+    assert(Storage.is<ExplodedNode *>());
+    return;
   }
-  else {
-    assert(getKind() == SizeOther);
-    getVector(getPtr()).push_back(N, G.getNodeAllocator());
+
+  ExplodedNodeVector *V = Storage.dyn_cast<ExplodedNodeVector *>();
+
+  if (!V) {
+    // Switch from single-node to multi-node representation.
+    ExplodedNode *Old = Storage.get<ExplodedNode *>();
+
+    BumpVectorContext &Ctx = G.getNodeAllocator();
+    V = G.getAllocator().Allocate<ExplodedNodeVector>();
+    new (V) ExplodedNodeVector(Ctx, 4);
+    V->push_back(Old, Ctx);
+
+    Storage = V;
+    assert(!getFlag());
+    assert(Storage.is<ExplodedNodeVector *>());
   }
+
+  V->push_back(N, G.getNodeAllocator());
 }
 
 unsigned ExplodedNode::NodeGroup::size() const {
   if (getFlag())
     return 0;
 
-  if (getKind() == Size1)
-    return getNode() ? 1 : 0;
-  else
-    return getVector(getPtr()).size();
+  const GroupStorage &Storage = reinterpret_cast<const GroupStorage &>(P);
+  if (Storage.isNull())
+    return 0;
+  if (ExplodedNodeVector *V = Storage.dyn_cast<ExplodedNodeVector *>())
+    return V->size();
+  return 1;
 }
 
-ExplodedNode **ExplodedNode::NodeGroup::begin() const {
+ExplodedNode * const *ExplodedNode::NodeGroup::begin() const {
   if (getFlag())
-    return NULL;
+    return 0;
 
-  if (getKind() == Size1)
-    return (ExplodedNode**) (getPtr() ? &P : NULL);
-  else
-    return const_cast<ExplodedNode**>(&*(getVector(getPtr()).begin()));
+  const GroupStorage &Storage = reinterpret_cast<const GroupStorage &>(P);
+  if (Storage.isNull())
+    return 0;
+  if (ExplodedNodeVector *V = Storage.dyn_cast<ExplodedNodeVector *>())
+    return V->begin();
+  return Storage.getAddrOfPtr1();
 }
 
-ExplodedNode** ExplodedNode::NodeGroup::end() const {
+ExplodedNode * const *ExplodedNode::NodeGroup::end() const {
   if (getFlag())
-    return NULL;
+    return 0;
 
-  if (getKind() == Size1)
-    return (ExplodedNode**) (getPtr() ? &P+1 : NULL);
-  else {
-    // Dereferencing end() is undefined behaviour. The vector is not empty, so
-    // we can dereference the last elem and then add 1 to the result.
-    return const_cast<ExplodedNode**>(getVector(getPtr()).end());
-  }
+  const GroupStorage &Storage = reinterpret_cast<const GroupStorage &>(P);
+  if (Storage.isNull())
+    return 0;
+  if (ExplodedNodeVector *V = Storage.dyn_cast<ExplodedNodeVector *>())
+    return V->end();
+  return Storage.getAddrOfPtr1() + 1;
 }
 
 ExplodedNode *ExplodedGraph::getNode(const ProgramPoint &L,
@@ -338,7 +341,8 @@ ExplodedGraph::TrimInternal(const ExplodedNode* const* BeginSources,
     }
 
     // Visit our predecessors and enqueue them.
-    for (ExplodedNode** I=N->Preds.begin(), **E=N->Preds.end(); I!=E; ++I)
+    for (ExplodedNode::pred_iterator I = N->Preds.begin(), E = N->Preds.end();
+         I != E; ++I)
       WL1.push_back(*I);
   }
 
@@ -375,7 +379,8 @@ ExplodedGraph::TrimInternal(const ExplodedNode* const* BeginSources,
 
     // Walk through the predecessors of 'N' and hook up their corresponding
     // nodes in the new graph (if any) to the freshly created node.
-    for (ExplodedNode **I=N->Preds.begin(), **E=N->Preds.end(); I!=E; ++I) {
+    for (ExplodedNode::pred_iterator I = N->Preds.begin(), E = N->Preds.end();
+         I != E; ++I) {
       Pass2Ty::iterator PI = Pass2.find(*I);
       if (PI == Pass2.end())
         continue;
@@ -387,7 +392,8 @@ ExplodedGraph::TrimInternal(const ExplodedNode* const* BeginSources,
     // been created, we should hook them up as successors.  Otherwise, enqueue
     // the new nodes from the original graph that should have nodes created
     // in the new graph.
-    for (ExplodedNode **I=N->Succs.begin(), **E=N->Succs.end(); I!=E; ++I) {
+    for (ExplodedNode::succ_iterator I = N->Succs.begin(), E = N->Succs.end();
+         I != E; ++I) {
       Pass2Ty::iterator PI = Pass2.find(*I);
       if (PI != Pass2.end()) {
         PI->second->addPredecessor(NewN, *G);

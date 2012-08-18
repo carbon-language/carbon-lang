@@ -61,44 +61,30 @@ class ExplodedNode : public llvm::FoldingSetNode {
   friend class EndOfFunctionNodeBuilder;
 
   class NodeGroup {
-    enum { Size1 = 0x0, SizeOther = 0x1, AuxFlag = 0x2, Mask = 0x3 };
+    // Conceptually a discriminated union. If the low bit is set, the node is
+    // a sink. If the low bit is not set, the pointer refers to the storage
+    // for the nodes in the group.
     uintptr_t P;
-
-    unsigned getKind() const {
-      return P & 0x1;
-    }
-
-    void *getPtr() const {
-      assert (!getFlag());
-      return reinterpret_cast<void*>(P & ~Mask);
-    }
-
-    ExplodedNode *getNode() const {
-      return reinterpret_cast<ExplodedNode*>(getPtr());
-    }
     
   public:
-    NodeGroup() : P(0) {}
+    NodeGroup(bool Flag = false) : P(Flag) {
+      assert(getFlag() == Flag);
+    }
 
-    ExplodedNode **begin() const;
+    ExplodedNode * const *begin() const;
 
-    ExplodedNode **end() const;
+    ExplodedNode * const *end() const;
 
     unsigned size() const;
 
-    bool empty() const { return (P & ~Mask) == 0; }
+    bool empty() const { return P == 0 || getFlag() != 0; }
 
     void addNode(ExplodedNode *N, ExplodedGraph &G);
 
     void replaceNode(ExplodedNode *node);
 
-    void setFlag() {
-      assert(P == 0);
-      P = AuxFlag;
-    }
-
     bool getFlag() const {
-      return P & AuxFlag ? true : false;
+      return (P & 1);
     }
   };
 
@@ -119,9 +105,8 @@ public:
 
   explicit ExplodedNode(const ProgramPoint &loc, ProgramStateRef state,
                         bool IsSink)
-    : Location(loc), State(state) {
-    if (IsSink)
-      Succs.setFlag();
+    : Location(loc), State(state), Succs(IsSink) {
+    assert(isSink() == IsSink);
   }
   
   ~ExplodedNode() {}
@@ -190,9 +175,9 @@ public:
   }
 
   // Iterators over successor and predecessor vertices.
-  typedef ExplodedNode**       succ_iterator;
+  typedef ExplodedNode*       const *       succ_iterator;
   typedef const ExplodedNode* const * const_succ_iterator;
-  typedef ExplodedNode**       pred_iterator;
+  typedef ExplodedNode*       const *       pred_iterator;
   typedef const ExplodedNode* const * const_pred_iterator;
 
   pred_iterator pred_begin() { return Preds.begin(); }
