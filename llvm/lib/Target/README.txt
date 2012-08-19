@@ -2367,8 +2367,3 @@ unsigned foo(unsigned x, unsigned y) { return x > y && x != 0; }
 should fold to x > y.
 
 //===---------------------------------------------------------------------===//
-
-int f(double x) { return __builtin_fabs(x) < 0.0; }
-should fold to false.
-
-//===---------------------------------------------------------------------===//
