@@ -195,6 +195,9 @@ namespace llvm {
       ///
       FMAX, FMIN,
 
+      /// FMAXC, FMINC - Commutative FMIN and FMAX.
+      FMAXC, FMINC,
+
       /// FRSQRT, FRCP - Floating point reciprocal-sqrt and reciprocal
       /// approximation.  Note that these typically require refinement
       /// in order to obtain suitable precision.

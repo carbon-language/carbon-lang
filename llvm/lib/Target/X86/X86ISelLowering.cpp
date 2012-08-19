@@ -11463,6 +11463,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FHSUB:              return "X86ISD::FHSUB";
   case X86ISD::FMAX:               return "X86ISD::FMAX";
   case X86ISD::FMIN:               return "X86ISD::FMIN";
+  case X86ISD::FMAXC:              return "X86ISD::FMAXC";
+  case X86ISD::FMINC:              return "X86ISD::FMINC";
   case X86ISD::FRSQRT:             return "X86ISD::FRSQRT";
   case X86ISD::FRCP:               return "X86ISD::FRCP";
   case X86ISD::TLSADDR:            return "X86ISD::TLSADDR";
@@ -15368,6 +15370,29 @@ static SDValue PerformFORCombine(SDNode *N, SelectionDAG &DAG) {
   return SDValue();
 }
 
+/// PerformFMinFMaxCombine - Do target-specific dag combines on X86ISD::FMIN and
+/// X86ISD::FMAX nodes.
+static SDValue PerformFMinFMaxCombine(SDNode *N, SelectionDAG &DAG) {
+  assert(N->getOpcode() == X86ISD::FMIN || N->getOpcode() == X86ISD::FMAX);
+
+  // Only perform optimizations if UnsafeMath is used.
+  if (!DAG.getTarget().Options.UnsafeFPMath)
+    return SDValue();
+
+  // If we run in unsafe-math mode, then convert the FMAX and FMIN nodes
+  // into FMINC and MMAXC, which are Commutative operations.
+  unsigned NewOp = 0;
+  switch (N->getOpcode()) {
+    default: llvm_unreachable("unknown opcode");
+    case X86ISD::FMIN:  NewOp = X86ISD::FMINC; break;
+    case X86ISD::FMAX:  NewOp = X86ISD::FMAXC; break;
+  }
+
+  return DAG.getNode(NewOp, N->getDebugLoc(), N->getValueType(0),
+                     N->getOperand(0), N->getOperand(1));
+}
+
+
 /// PerformFANDCombine - Do target-specific dag combines on X86ISD::FAND nodes.
 static SDValue PerformFANDCombine(SDNode *N, SelectionDAG &DAG) {
   // FAND(0.0, x) -> 0.0
@@ -15849,6 +15874,8 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::FSUB:           return PerformFSUBCombine(N, DAG, Subtarget);
   case X86ISD::FXOR:
   case X86ISD::FOR:         return PerformFORCombine(N, DAG);
+  case X86ISD::FMIN:
+  case X86ISD::FMAX:        return PerformFMinFMaxCombine(N, DAG);
   case X86ISD::FAND:        return PerformFANDCombine(N, DAG);
   case X86ISD::BT:          return PerformBTCombine(N, DAG, DCI);
   case X86ISD::VZEXT_MOVL:  return PerformVZEXT_MOVLCombine(N, DAG);

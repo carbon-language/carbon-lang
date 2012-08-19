@@ -29,6 +29,13 @@ def SDTX86VFCMP : SDTypeProfile<1, 3, [SDTCisInt<0>, SDTCisSameAs<1, 2>,
 
 def X86fmin    : SDNode<"X86ISD::FMIN",      SDTFPBinOp>;
 def X86fmax    : SDNode<"X86ISD::FMAX",      SDTFPBinOp>;
+
+// Commutative and Associative FMIN and FMAX.
+def X86fminc    : SDNode<"X86ISD::FMINC", SDTFPBinOp,
+    [SDNPCommutative, SDNPAssociative]>;
+def X86fmaxc    : SDNode<"X86ISD::FMAXC", SDTFPBinOp,
+    [SDNPCommutative, SDNPAssociative]>;
+
 def X86fand    : SDNode<"X86ISD::FAND",      SDTFPBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
 def X86for     : SDNode<"X86ISD::FOR",       SDTFPBinOp,
@@ -73,11 +80,12 @@ def X86vzmovl  : SDNode<"X86ISD::VZEXT_MOVL",
                  SDTypeProfile<1, 1, [SDTCisSameAs<0,1>]>>;
 
 def X86vzmovly  : SDNode<"X86ISD::VZEXT_MOVL",
-                 SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisVec<1>, 
+                 SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisVec<1>,
                                       SDTCisOpSmallerThanOp<1, 0> ]>>;
 
 def X86vsmovl  : SDNode<"X86ISD::VSEXT_MOVL",
-                 SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisInt<1>, SDTCisInt<0>]>>;
+                 SDTypeProfile<1, 1,
+                 [SDTCisVec<0>, SDTCisInt<1>, SDTCisInt<0>]>>;
 
 def X86vzload  : SDNode<"X86ISD::VZEXT_LOAD", SDTLoad,
                         [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
