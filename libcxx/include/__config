@@ -276,6 +276,7 @@ namespace std {
 #elif defined(__GNUC__)
 
 #define _ALIGNAS(x) __attribute__((__aligned__(x)))
+#define _ALIGNAS_TYPE(x) __attribute__((__aligned__(__alignof(x))))
 
 #define _LIBCPP_NORETURN __attribute__((noreturn))
 
@@ -412,6 +413,7 @@ template <unsigned> struct __static_assert_check {};
 #define _LIBCPP_DECLARE_STRONG_ENUM_EPILOG(x) \
     _ __v_; \
     _LIBCPP_ALWAYS_INLINE x(_ __v) : __v_(__v) {} \
+    _LIBCPP_ALWAYS_INLINE explicit x(int __v) : __v_(static_cast<_>(__v)) {} \
     _LIBCPP_ALWAYS_INLINE operator int() const {return __v_;} \
     };
 #else  // _LIBCPP_HAS_NO_STRONG_ENUMS
