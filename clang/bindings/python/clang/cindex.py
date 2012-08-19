@@ -1657,16 +1657,16 @@ class CompletionChunk:
     def __repr__(self):
         return "{'" + self.spelling + "', " + str(self.kind) + "}"
 
-    @property
+    @CachedProperty
     def spelling(self):
         return lib.clang_getCompletionChunkText(self.cs, self.key).spelling
 
-    @property
+    @CachedProperty
     def kind(self):
         res = lib.clang_getCompletionChunkKind(self.cs, self.key)
         return completionChunkKindMap[res]
 
-    @property
+    @CachedProperty
     def string(self):
         res = lib.clang_getCompletionChunkCompletionString(self.cs, self.key)
 
