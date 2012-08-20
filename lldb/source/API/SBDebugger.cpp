@@ -794,13 +794,13 @@ SBDebugger::SetSelectedTarget (SBTarget &sb_target)
 }
 
 void
-SBDebugger::DispatchInput (void *baton, const void *data, size_t data_len)
+SBDebugger::DispatchInput (const void *data, size_t data_len)
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
-        log->Printf ("SBDebugger(%p)::DispatchInput (baton=%p, data=\"%.*s\", size_t=%zu)", m_opaque_sp.get(),
-                     baton, (int) data_len, (const char *) data, data_len);
+        log->Printf ("SBDebugger(%p)::DispatchInput (data=\"%.*s\", size_t=%zu)", m_opaque_sp.get(),
+                     (int) data_len, (const char *) data, data_len);
 
     if (m_opaque_sp)
         m_opaque_sp->DispatchInput ((const char *) data, data_len);

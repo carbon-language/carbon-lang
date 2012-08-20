@@ -194,7 +194,7 @@ public:
     SetLoggingCallback (lldb::LogOutputCallback log_callback, void *baton);
     
     void
-    DispatchInput (void *baton, const void *data, size_t data_len);
+    DispatchInput (const void *data, size_t data_len);
 
     void
     DispatchInputInterrupt ();

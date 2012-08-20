@@ -113,6 +113,22 @@
    }
 }
 
+// For SBDebugger::DispatchInput
+%typemap(in) (const void *data, size_t data_len) {
+   if (PyString_Check($input)) {
+      $1 = static_cast<void *>(PyString_AsString($input));
+      $2 = PyString_Size($input);
+   }
+   else if(PyByteArray_Check($input)) {
+      $1 = static_cast<void *>(PyByteArray_AsString($input));
+      $2 = PyByteArray_Size($input);
+   }
+   else {
+      PyErr_SetString(PyExc_ValueError, "Expecting a string or byte array");
+      return NULL;
+   }
+}
+
 // typemap for an incoming buffer
 // See also SBProcess::ReadMemory.
 %typemap(in) (void *buf, size_t size) {
