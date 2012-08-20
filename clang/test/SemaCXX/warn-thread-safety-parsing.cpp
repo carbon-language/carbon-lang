@@ -1255,7 +1255,7 @@ public:
   void foo4(FooLate *f) EXCLUSIVE_LOCKS_REQUIRED(f->mu);
 
   static void foo5()    EXCLUSIVE_LOCKS_REQUIRED(mu); // \
-    // expected-error {{'this' cannot be implicitly used in a static member function declaration}}
+    // expected-error {{invalid use of member 'mu' in static member function}}
 
   template <class T>
   void foo6() EXCLUSIVE_LOCKS_REQUIRED(T::statmu) { }
@@ -1439,4 +1439,29 @@ void Foo::bar(Mutex* mu) LOCKS_EXCLUDED(mu) { } // \
 }
 
 } // end namespace InvalidDeclTest
+
+
+namespace StaticScopeTest {
+
+class FooStream;
+
+class Foo {
+  mutable Mutex mu;
+  int a GUARDED_BY(mu);
+
+  static int si GUARDED_BY(mu); // \
+    // expected-error {{invalid use of non-static data member 'mu'}}
+
+  static void foo() EXCLUSIVE_LOCKS_REQUIRED(mu); // \
+    // expected-error {{invalid use of member 'mu' in static member function}}
+
+  friend FooStream& operator<<(FooStream& s, const Foo& f)
+    EXCLUSIVE_LOCKS_REQUIRED(mu); // \
+    // expected-error {{invalid use of non-static data member 'mu'}}
+};
+
+
+} // end namespace StaticScopeTest
+
+
 
