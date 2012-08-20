@@ -131,33 +131,11 @@ OptTable::~OptTable() {
 
 Option *OptTable::CreateOption(unsigned id) const {
   const Info &info = getInfo(id);
-  const OptionGroup *Group =
-    cast_or_null<OptionGroup>(getOption(info.GroupID));
+  const Option *Group = getOption(info.GroupID);
   const Option *Alias = getOption(info.AliasID);
 
-  Option *Opt = 0;
-  switch (info.Kind) {
-  case Option::InputClass:
-    Opt = new InputOption(id); break;
-  case Option::UnknownClass:
-    Opt = new UnknownOption(id); break;
-  case Option::GroupClass:
-    Opt = new OptionGroup(id, info.Name, Group); break;
-  case Option::FlagClass:
-    Opt = new FlagOption(id, info.Name, Group, Alias); break;
-  case Option::JoinedClass:
-    Opt = new JoinedOption(id, info.Name, Group, Alias); break;
-  case Option::SeparateClass:
-    Opt = new SeparateOption(id, info.Name, Group, Alias); break;
-  case Option::CommaJoinedClass:
-    Opt = new CommaJoinedOption(id, info.Name, Group, Alias); break;
-  case Option::MultiArgClass:
-    Opt = new MultiArgOption(id, info.Name, Group, Alias, info.Param); break;
-  case Option::JoinedOrSeparateClass:
-    Opt = new JoinedOrSeparateOption(id, info.Name, Group, Alias); break;
-  case Option::JoinedAndSeparateClass:
-    Opt = new JoinedAndSeparateOption(id, info.Name, Group, Alias); break;
-  }
+  Option *Opt = new Option(Option::OptionClass(info.Kind),
+                           id, info.Name, Group, Alias, info.Param);
 
   if (info.Flags & DriverOption)
     Opt->setDriverOption(true);

@@ -981,7 +981,7 @@ void Driver::BuildInputs(const ToolChain &TC, const DerivedArgList &Args,
        it != ie; ++it) {
     Arg *A = *it;
 
-    if (isa<InputOption>(A->getOption())) {
+    if (A->getOption().getKind() == Option::InputClass) {
       const char *Value = A->getValue(Args);
       types::ID Ty = types::TY_INVALID;
 
@@ -1337,7 +1337,7 @@ void Driver::BuildJobs(Compilation &C) const {
       // Suppress the warning automatically if this is just a flag, and it is an
       // instance of an argument we already claimed.
       const Option &Opt = A->getOption();
-      if (isa<FlagOption>(Opt)) {
+      if (Opt.getKind() == Option::FlagClass) {
         bool DuplicateClaimed = false;
 
         for (arg_iterator it = C.getArgs().filtered_begin(&Opt),

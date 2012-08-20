@@ -18,9 +18,9 @@
 using namespace clang::driver;
 
 Option::Option(OptionClass _Kind, OptSpecifier _ID, const char *_Name,
-               const OptionGroup *_Group, const Option *_Alias)
+               const Option *_Group, const Option *_Alias, unsigned Args)
   : Kind(_Kind), ID(_ID.getID()), Name(_Name), Group(_Group), Alias(_Alias),
-    Unsupported(false), LinkerInput(false), NoOptAsInput(false),
+    NumArgs(Args), Unsupported(false), LinkerInput(false), NoOptAsInput(false),
     DriverOption(false), NoArgumentUnused(false), NoForward(false) {
 
   // Multi-level aliases are not supported, and alias options cannot
@@ -87,8 +87,8 @@ void Option::dump() const {
     Alias->dump();
   }
 
-  if (const MultiArgOption *MOA = dyn_cast<MultiArgOption>(this))
-    llvm::errs() << " NumArgs:" << MOA->getNumArgs();
+  if (Kind == MultiArgClass)
+    llvm::errs() << " NumArgs:" << NumArgs;
 
   llvm::errs() << ">\n";
 }
@@ -107,174 +107,98 @@ bool Option::matches(OptSpecifier Opt) const {
   return false;
 }
 
-OptionGroup::OptionGroup(OptSpecifier ID, const char *Name,
-                         const OptionGroup *Group)
-  : Option(Option::GroupClass, ID, Name, Group, 0) {
-}
+Arg *Option::accept(const ArgList &Args, unsigned &Index) const {
+  switch (Kind) {
+  case FlagClass:
+    if (getName().size() != strlen(Args.getArgString(Index)))
+      return 0;
 
-Arg *OptionGroup::accept(const ArgList &Args, unsigned &Index) const {
-  llvm_unreachable("accept() should never be called on an OptionGroup");
-}
-
-InputOption::InputOption(OptSpecifier ID)
-  : Option(Option::InputClass, ID, "<input>", 0, 0) {
-}
-
-Arg *InputOption::accept(const ArgList &Args, unsigned &Index) const {
-  llvm_unreachable("accept() should never be called on an InputOption");
-}
-
-UnknownOption::UnknownOption(OptSpecifier ID)
-  : Option(Option::UnknownClass, ID, "<unknown>", 0, 0) {
-}
-
-Arg *UnknownOption::accept(const ArgList &Args, unsigned &Index) const {
-  llvm_unreachable("accept() should never be called on an UnknownOption");
-}
-
-FlagOption::FlagOption(OptSpecifier ID, const char *Name,
-                       const OptionGroup *Group, const Option *Alias)
-  : Option(Option::FlagClass, ID, Name, Group, Alias) {
-}
-
-Arg *FlagOption::accept(const ArgList &Args, unsigned &Index) const {
-  // Matches iff this is an exact match.
-  // FIXME: Avoid strlen.
-  if (getName().size() != strlen(Args.getArgString(Index)))
-    return 0;
-
-  return new Arg(getUnaliasedOption(), Index++);
-}
-
-JoinedOption::JoinedOption(OptSpecifier ID, const char *Name,
-                           const OptionGroup *Group, const Option *Alias)
-  : Option(Option::JoinedClass, ID, Name, Group, Alias) {
-}
-
-Arg *JoinedOption::accept(const ArgList &Args, unsigned &Index) const {
-  // Always matches.
-  const char *Value = Args.getArgString(Index) + getName().size();
-  return new Arg(getUnaliasedOption(), Index++, Value);
-}
-
-CommaJoinedOption::CommaJoinedOption(OptSpecifier ID, const char *Name,
-                                     const OptionGroup *Group,
-                                     const Option *Alias)
-  : Option(Option::CommaJoinedClass, ID, Name, Group, Alias) {
-}
-
-Arg *CommaJoinedOption::accept(const ArgList &Args,
-                               unsigned &Index) const {
-  // Always matches.
-  const char *Str = Args.getArgString(Index) + getName().size();
-  Arg *A = new Arg(getUnaliasedOption(), Index++);
-
-  // Parse out the comma separated values.
-  const char *Prev = Str;
-  for (;; ++Str) {
-    char c = *Str;
-
-    if (!c || c == ',') {
-      if (Prev != Str) {
-        char *Value = new char[Str - Prev + 1];
-        memcpy(Value, Prev, Str - Prev);
-        Value[Str - Prev] = '\0';
-        A->getValues().push_back(Value);
-      }
-
-      if (!c)
-        break;
-
-      Prev = Str + 1;
-    }
-  }
-  A->setOwnsValues(true);
-
-  return A;
-}
-
-SeparateOption::SeparateOption(OptSpecifier ID, const char *Name,
-                               const OptionGroup *Group, const Option *Alias)
-  : Option(Option::SeparateClass, ID, Name, Group, Alias) {
-}
-
-Arg *SeparateOption::accept(const ArgList &Args, unsigned &Index) const {
-  // Matches iff this is an exact match.
-  // FIXME: Avoid strlen.
-  if (getName().size() != strlen(Args.getArgString(Index)))
-    return 0;
-
-  Index += 2;
-  if (Index > Args.getNumInputArgStrings())
-    return 0;
-
-  return new Arg(getUnaliasedOption(), Index - 2, Args.getArgString(Index - 1));
-}
-
-MultiArgOption::MultiArgOption(OptSpecifier ID, const char *Name,
-                               const OptionGroup *Group, const Option *Alias,
-                               unsigned _NumArgs)
-  : Option(Option::MultiArgClass, ID, Name, Group, Alias), NumArgs(_NumArgs) {
-  assert(NumArgs > 1  && "Invalid MultiArgOption!");
-}
-
-Arg *MultiArgOption::accept(const ArgList &Args, unsigned &Index) const {
-  // Matches iff this is an exact match.
-  // FIXME: Avoid strlen.
-  if (getName().size() != strlen(Args.getArgString(Index)))
-    return 0;
-
-  Index += 1 + NumArgs;
-  if (Index > Args.getNumInputArgStrings())
-    return 0;
-
-  Arg *A = new Arg(getUnaliasedOption(), Index - 1 - NumArgs,
-                   Args.getArgString(Index - NumArgs));
-  for (unsigned i = 1; i != NumArgs; ++i)
-    A->getValues().push_back(Args.getArgString(Index - NumArgs + i));
-  return A;
-}
-
-JoinedOrSeparateOption::JoinedOrSeparateOption(OptSpecifier ID,
-                                               const char *Name,
-                                               const OptionGroup *Group,
-                                               const Option *Alias)
-  : Option(Option::JoinedOrSeparateClass, ID, Name, Group, Alias) {
-}
-
-Arg *JoinedOrSeparateOption::accept(const ArgList &Args,
-                                    unsigned &Index) const {
-  // If this is not an exact match, it is a joined arg.
-  // FIXME: Avoid strlen.
-  if (getName().size() != strlen(Args.getArgString(Index))) {
+    return new Arg(getUnaliasedOption(), Index++);
+  case JoinedClass: {
     const char *Value = Args.getArgString(Index) + getName().size();
-    return new Arg(this, Index++, Value);
+    return new Arg(getUnaliasedOption(), Index++, Value);
   }
+  case CommaJoinedClass: {
+    // Always matches.
+    const char *Str = Args.getArgString(Index) + getName().size();
+    Arg *A = new Arg(getUnaliasedOption(), Index++);
 
-  // Otherwise it must be separate.
-  Index += 2;
-  if (Index > Args.getNumInputArgStrings())
-    return 0;
+    // Parse out the comma separated values.
+    const char *Prev = Str;
+    for (;; ++Str) {
+      char c = *Str;
 
-  return new Arg(getUnaliasedOption(), Index - 2, Args.getArgString(Index - 1));
-}
+      if (!c || c == ',') {
+        if (Prev != Str) {
+          char *Value = new char[Str - Prev + 1];
+          memcpy(Value, Prev, Str - Prev);
+          Value[Str - Prev] = '\0';
+          A->getValues().push_back(Value);
+        }
 
-JoinedAndSeparateOption::JoinedAndSeparateOption(OptSpecifier ID,
-                                                 const char *Name,
-                                                 const OptionGroup *Group,
-                                                 const Option *Alias)
-  : Option(Option::JoinedAndSeparateClass, ID, Name, Group, Alias) {
-}
+        if (!c)
+          break;
 
-Arg *JoinedAndSeparateOption::accept(const ArgList &Args,
-                                     unsigned &Index) const {
-  // Always matches.
+        Prev = Str + 1;
+      }
+    }
+    A->setOwnsValues(true);
 
-  Index += 2;
-  if (Index > Args.getNumInputArgStrings())
-    return 0;
+    return A;
+  }
+  case SeparateClass:
+    // Matches iff this is an exact match.
+    // FIXME: Avoid strlen.
+    if (getName().size() != strlen(Args.getArgString(Index)))
+      return 0;
 
-  return new Arg(getUnaliasedOption(), Index - 2,
-                 Args.getArgString(Index-2)+getName().size(),
-                 Args.getArgString(Index-1));
+    Index += 2;
+    if (Index > Args.getNumInputArgStrings())
+      return 0;
+
+    return new Arg(getUnaliasedOption(),
+                   Index - 2, Args.getArgString(Index - 1));
+  case MultiArgClass: {
+    // Matches iff this is an exact match.
+    // FIXME: Avoid strlen.
+    if (getName().size() != strlen(Args.getArgString(Index)))
+      return 0;
+
+    Index += 1 + NumArgs;
+    if (Index > Args.getNumInputArgStrings())
+      return 0;
+
+    Arg *A = new Arg(getUnaliasedOption(), Index - 1 - NumArgs,
+                      Args.getArgString(Index - NumArgs));
+    for (unsigned i = 1; i != NumArgs; ++i)
+      A->getValues().push_back(Args.getArgString(Index - NumArgs + i));
+    return A;
+  }
+  case JoinedOrSeparateClass: {
+    // If this is not an exact match, it is a joined arg.
+    // FIXME: Avoid strlen.
+    if (getName().size() != strlen(Args.getArgString(Index))) {
+      const char *Value = Args.getArgString(Index) + getName().size();
+      return new Arg(this, Index++, Value);
+    }
+
+    // Otherwise it must be separate.
+    Index += 2;
+    if (Index > Args.getNumInputArgStrings())
+      return 0;
+
+    return new Arg(getUnaliasedOption(),
+                   Index - 2, Args.getArgString(Index - 1));
+  }
+  case JoinedAndSeparateClass:
+    // Always matches.
+    Index += 2;
+    if (Index > Args.getNumInputArgStrings())
+      return 0;
+
+    return new Arg(getUnaliasedOption(), Index - 2,
+                   Args.getArgString(Index-2)+getName().size(),
+                   Args.getArgString(Index-1));
+  }
+  llvm_unreachable("Invalid option kind!");
 }
