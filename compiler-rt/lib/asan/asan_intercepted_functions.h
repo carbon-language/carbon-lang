@@ -59,7 +59,7 @@ using __sanitizer::uptr;
 
 // On Darwin siglongjmp tailcalls longjmp, so we don't want to intercept it
 // there.
-#if !defined(_WIN32) && (!defined(__APPLE__) || defined(DYNAMIC_MAC_WRAPPERS))
+#if !defined(_WIN32) && (!defined(__APPLE__) || MAC_INTERPOSE_FUNCTIONS)
 # define ASAN_INTERCEPT_SIGLONGJMP 1
 #else
 # define ASAN_INTERCEPT_SIGLONGJMP 0
