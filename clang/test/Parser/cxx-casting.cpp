@@ -89,3 +89,6 @@ void test3() {
               // expected-error {{expected expression}} \
               // expected-error {{expected unqualified-id}}
 }
+
+// PR13619. Must be at end of file.
+int n = reinterpret_cast // expected-error {{expected '<'}} expected-error {{expected ';'}}
