@@ -50,6 +50,9 @@ class CGDebugInfo {
   llvm::DICompileUnit TheCU;
   SourceLocation CurLoc, PrevLoc;
   llvm::DIType VTablePtrType;
+  llvm::DIType ClassTy;
+  llvm::DIType ObjTy;
+  llvm::DIType SelTy;
   
   /// TypeCache - Cache of previously constructed Types.
   llvm::DenseMap<void *, llvm::WeakVH> TypeCache;

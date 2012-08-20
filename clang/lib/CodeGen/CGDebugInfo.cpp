@@ -351,42 +351,56 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
   case BuiltinType::Void:
     return llvm::DIType();
   case BuiltinType::ObjCClass:
-    return DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type,
-                                      "objc_class", TheCU,
-                                      getOrCreateMainFile(), 0);
+    if (ClassTy.Verify())
+      return ClassTy;
+    ClassTy = DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type,
+                                         "objc_class", TheCU,
+                                         getOrCreateMainFile(), 0);
+    return ClassTy;
   case BuiltinType::ObjCId: {
     // typedef struct objc_class *Class;
     // typedef struct objc_object {
     //  Class isa;
     // } *id;
 
-    // TODO: Cache these two types to avoid duplicates.
-    llvm::DIType OCTy =
-      DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type,
-                                 "objc_class", TheCU, getOrCreateMainFile(), 0);
+    if (ObjTy.Verify())
+      return ObjTy;
+
+    if (!ClassTy.Verify())
+      ClassTy = DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type,
+                                           "objc_class", TheCU,
+                                           getOrCreateMainFile(), 0);
+
     unsigned Size = CGM.getContext().getTypeSize(CGM.getContext().VoidPtrTy);
     
-    llvm::DIType ISATy = DBuilder.createPointerType(OCTy, Size);
+    llvm::DIType ISATy = DBuilder.createPointerType(ClassTy, Size);
 
-    llvm::MDNode *ObjTy = DBuilder.createStructType(TheCU, "objc_object", 
+    llvm::DIType FwdTy =  DBuilder.createStructType(TheCU, "objc_object", 
                                                     getOrCreateMainFile(),
-                                                    0, 0, 0, 0, llvm::DIArray());
+                                                    0, 0, 0, 0,
+                                                    llvm::DIArray());
+
+    llvm::TrackingVH<llvm::MDNode> ObjNode(FwdTy);
     SmallVector<llvm::Value *, 1> EltTys;
     llvm::DIType FieldTy = 
-      DBuilder.createMemberType(llvm::DIDescriptor(ObjTy), "isa",
+      DBuilder.createMemberType(llvm::DIDescriptor(ObjNode), "isa",
                                 getOrCreateMainFile(), 0, Size,
                                 0, 0, 0, ISATy);
     EltTys.push_back(FieldTy);
     llvm::DIArray Elements = DBuilder.getOrCreateArray(EltTys);
 
-    ObjTy->replaceOperandWith(10, Elements);
-    return llvm::DIType(ObjTy);
+    ObjNode->replaceOperandWith(10, Elements);
+    ObjTy = llvm::DIType(ObjNode);
+    return ObjTy;
   }
   case BuiltinType::ObjCSel: {
-    return
+    if (SelTy.Verify())
+      return SelTy;
+    SelTy =
       DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type,
                                  "objc_selector", TheCU, getOrCreateMainFile(),
                                  0);
+    return SelTy;
   }
   case BuiltinType::UChar:
   case BuiltinType::Char_U: Encoding = llvm::dwarf::DW_ATE_unsigned_char; break;
