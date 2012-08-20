@@ -835,6 +835,7 @@ gdb_remote_commands = {
     'QStartNoAckMode'         : { 'cmd' : cmd_query_packet  , 'rsp' : rsp_ok_means_supported  , 'name' : "query if no ack mode is supported"},
     'QThreadSuffixSupported'  : { 'cmd' : cmd_query_packet  , 'rsp' : rsp_ok_means_supported  , 'name' : "query if thread suffix is supported" },
     'QListThreadsInStopReply' : { 'cmd' : cmd_query_packet  , 'rsp' : rsp_ok_means_supported  , 'name' : "query if threads in stop reply packets are supported" },
+    'qVAttachOrWaitSupported' : { 'cmd' : cmd_query_packet  , 'rsp' : rsp_ok_means_supported  , 'name' : "query if threads attach with optional wait is supported" },
     'qHostInfo'               : { 'cmd' : cmd_query_packet  , 'rsp' : rsp_dump_key_value_pairs, 'name' : "get host information" },
     'vCont'                   : { 'cmd' : cmd_vCont         , 'rsp' : rsp_vCont               , 'name' : "extended continue command" },
     'vAttach'                 : { 'cmd' : cmd_vAttach       , 'rsp' : rsp_stop_reply          , 'name' : "attach to process" },
