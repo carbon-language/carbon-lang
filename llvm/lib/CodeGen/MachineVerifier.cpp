@@ -73,8 +73,10 @@ namespace {
     typedef SmallVector<const uint32_t*, 4> RegMaskVector;
     typedef DenseSet<unsigned> RegSet;
     typedef DenseMap<unsigned, const MachineInstr*> RegMap;
+    typedef SmallPtrSet<const MachineBasicBlock*, 8> BlockSet;
 
     const MachineInstr *FirstTerminator;
+    BlockSet FunctionBlocks;
 
     BitVector regsReserved;
     BitVector regsAllocatable;
@@ -116,6 +118,9 @@ namespace {
       // Vregs that must pass through MBB because they are needed by a successor
       // block. This set is disjoint from regsLiveOut.
       RegSet vregsRequired;
+
+      // Set versions of block's predecessor and successor lists.
+      BlockSet Preds, Succs;
 
       BBInfo() : reachable(false) {}
 
@@ -434,6 +439,22 @@ void MachineVerifier::visitMachineFunctionBefore() {
   regsAllocatable = TRI->getAllocatableSet(*MF);
 
   markReachable(&MF->front());
+
+  // Build a set of the basic blocks in the function.
+  FunctionBlocks.clear();
+  for (MachineFunction::const_iterator
+       I = MF->begin(), E = MF->end(); I != E; ++I) {
+    FunctionBlocks.insert(I);
+    BBInfo &MInfo = MBBInfoMap[I];
+
+    MInfo.Preds.insert(I->pred_begin(), I->pred_end());
+    if (MInfo.Preds.size() != I->pred_size())
+      report("MBB has duplicate entries in its predecessor list.", I);
+
+    MInfo.Succs.insert(I->succ_begin(), I->succ_end());
+    if (MInfo.Succs.size() != I->succ_size())
+      report("MBB has duplicate entries in its successor list.", I);
+  }
 }
 
 // Does iterator point to a and b as the first two elements?
@@ -470,6 +491,25 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
        E = MBB->succ_end(); I != E; ++I) {
     if ((*I)->isLandingPad())
       LandingPadSuccs.insert(*I);
+    if (!FunctionBlocks.count(*I))
+      report("MBB has successor that isn't part of the function.", MBB);
+    if (!MBBInfoMap[*I].Preds.count(MBB)) {
+      report("Inconsistent CFG", MBB);
+      *OS << "MBB is not in the predecessor list of the successor BB#"
+          << (*I)->getNumber() << ".\n";
+    }
+  }
+
+  // Check the predecessor list.
+  for (MachineBasicBlock::const_pred_iterator I = MBB->pred_begin(),
+       E = MBB->pred_end(); I != E; ++I) {
+    if (!FunctionBlocks.count(*I))
+      report("MBB has predecessor that isn't part of the function.", MBB);
+    if (!MBBInfoMap[*I].Succs.count(MBB)) {
+      report("Inconsistent CFG", MBB);
+      *OS << "MBB is not in the successor list of the predecessor BB#"
+          << (*I)->getNumber() << ".\n";
+    }
   }
 
   const MCAsmInfo *AsmInfo = TM->getMCAsmInfo();
