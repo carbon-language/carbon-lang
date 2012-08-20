@@ -19,6 +19,11 @@
 
 namespace __asan {
 
+#if !MAC_INTERPOSE_FUNCTIONS
+# error \
+  Dynamic interposing library should be built with -DMAC_INTERPOSE_FUNCTIONS
+#endif
+
 #define INTERPOSE_FUNCTION(function) \
     { reinterpret_cast<const uptr>(WRAP(function)), \
       reinterpret_cast<const uptr>(function) }
@@ -86,6 +91,9 @@ const interpose_substitution substitutions[]
   INTERPOSE_FUNCTION(dispatch_after_f),
   INTERPOSE_FUNCTION(dispatch_barrier_async_f),
   INTERPOSE_FUNCTION(dispatch_group_async_f),
+
+  INTERPOSE_FUNCTION(dispatch_async),
+  INTERPOSE_FUNCTION(dispatch_after),
 
   INTERPOSE_FUNCTION(__CFInitialize),
   INTERPOSE_FUNCTION(CFStringCreateCopy),

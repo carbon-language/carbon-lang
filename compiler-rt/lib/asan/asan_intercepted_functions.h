@@ -198,6 +198,12 @@ DECLARE_FUNCTION_AND_WRAPPER(void, __CFInitialize);
 DECLARE_FUNCTION_AND_WRAPPER(CFStringRef, CFStringCreateCopy,
                              CFAllocatorRef alloc, CFStringRef str);
 DECLARE_FUNCTION_AND_WRAPPER(void, free, void* ptr);
+#if MAC_INTERPOSE_FUNCTIONS
+DECLARE_FUNCTION_AND_WRAPPER(void, dispatch_async,
+                             dispatch_queue_t dq, void (^work)(void));
+DECLARE_FUNCTION_AND_WRAPPER(void, dispatch_after,
+                             dispatch_queue_t dq, void (^work)(void));
+#endif  // MAC_INTERPOSE_FUNCTIONS
 #endif  // __APPLE__
 }  // extern "C"
 #endif

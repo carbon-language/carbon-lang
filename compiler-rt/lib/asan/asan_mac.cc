@@ -241,6 +241,8 @@ int pthread_workqueue_additem_np(pthread_workqueue_t workq,
     pthread_workitem_handle_t * itemhandlep, unsigned int *gencountp);
 }  // extern "C"
 
+// For use by only those functions that allocated the context via
+// alloc_asan_context().
 extern "C"
 void asan_dispatch_call_block_and_release(void *block) {
   GET_STACK_TRACE_HERE(kStackTraceMax);
@@ -311,6 +313,66 @@ INTERCEPTOR(void, dispatch_after_f, dispatch_time_t when,
   return REAL(dispatch_after_f)(when, dq, (void*)asan_ctxt,
                                 asan_dispatch_call_block_and_release);
 }
+
+#if MAC_INTERPOSE_FUNCTIONS
+// dispatch_async and TODO tailcall the corresponding dispatch_*_f functions.
+// When wrapping functions with mach_override, they are intercepted
+// automatically. But with dylib interposition this does not work, because the
+// calls within the same library are not interposed.
+// Therefore we need to re-implement dispatch_async and friends.
+
+// See dispatch/dispatch.h.
+#define DISPATCH_TIME_FOREVER (~0ull)
+typedef void (^dispatch_block_t)(void);
+
+// See
+// http://www.opensource.apple.com/source/libdispatch/libdispatch-228.18/src/init.c
+// for the implementation of _dispatch_call_block_copy_and_release().
+static void _dispatch_call_block_and_release(void *block) {
+  void (^b)(void) = (dispatch_block_t)block;
+  b();
+  _Block_release(b);
+}
+
+// See
+// http://www.opensource.apple.com/source/libdispatch/libdispatch-228.18/src/internal.h
+#define fastpath(x) ((typeof(x))__builtin_expect((long)(x), ~0l))
+
+// See
+// http://www.opensource.apple.com/source/libdispatch/libdispatch-228.18/src/init.c
+static dispatch_block_t _dispatch_Block_copy(dispatch_block_t db) {
+  dispatch_block_t rval;
+  if (fastpath(db)) { 
+    while (!fastpath(rval = Block_copy(db))) {
+      sleep(1);
+    }
+    return rval;
+  }
+  CHECK(0 && "NULL was passed where a block should have been");
+  return (dispatch_block_t)NULL;  // Unreachable.
+}
+
+// See
+// http://www.opensource.apple.com/source/libdispatch/libdispatch-228.18/src/queue.c
+// for the implementation of dispatch_async(), dispatch_sync(),
+// dispatch_after().
+INTERCEPTOR(void, dispatch_async,
+            dispatch_queue_t dq, dispatch_block_t work) {
+  WRAP(dispatch_async_f)(dq, _dispatch_Block_copy(work),
+                         _dispatch_call_block_and_release);
+}
+
+INTERCEPTOR(void, dispatch_after,
+            dispatch_time_t when, dispatch_queue_t queue,
+            dispatch_block_t work) {
+  if (when == DISPATCH_TIME_FOREVER) {
+    CHECK(0 && "dispatch_after() called with 'when' == infinity");
+    return;  // Unreachable.
+  }
+  WRAP(dispatch_after_f)(when, queue, _dispatch_Block_copy(work),
+                         _dispatch_call_block_and_release);
+}
+#endif
 
 INTERCEPTOR(void, dispatch_group_async_f, dispatch_group_t group,
                                           dispatch_queue_t dq, void *ctxt,
