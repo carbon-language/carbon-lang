@@ -279,32 +279,25 @@ asan_block_context_t *alloc_asan_context(void *ctxt, dispatch_function_t func,
   return asan_ctxt;
 }
 
-// TODO(glider): can we reduce code duplication by introducing a macro?
-INTERCEPTOR(void, dispatch_async_f, dispatch_queue_t dq, void *ctxt,
-                                    dispatch_function_t func) {
-  GET_STACK_TRACE_HERE(kStackTraceMax);
-  asan_block_context_t *asan_ctxt = alloc_asan_context(ctxt, func, &stack);
-  if (flags()->verbosity >= 2) {
-    Report("dispatch_async_f(): context: %p, pthread_self: %p\n",
-        asan_ctxt, pthread_self());
-    PRINT_CURRENT_STACK();
-  }
-  return REAL(dispatch_async_f)(dq, (void*)asan_ctxt,
-                                asan_dispatch_call_block_and_release);
-}
+// Define interceptor for dispatch_*_f function with the three most common
+// parameters: dispatch_queue_t, context, dispatch_function_t.
+#define INTERCEPT_DISPATCH_X_F_3(dispatch_x_f)                                \
+  INTERCEPTOR(void, dispatch_x_f, dispatch_queue_t dq, void *ctxt,            \
+                                  dispatch_function_t func) {                 \
+    GET_STACK_TRACE_HERE(kStackTraceMax);                                     \
+    asan_block_context_t *asan_ctxt = alloc_asan_context(ctxt, func, &stack); \
+    if (flags()->verbosity >= 2) {                                            \
+      Report(#dispatch_x_f "(): context: %p, pthread_self: %p\n",             \
+             asan_ctxt, pthread_self());                                      \
+       PRINT_CURRENT_STACK();                                                 \
+     }                                                                        \
+     return REAL(dispatch_x_f)(dq, (void*)asan_ctxt,                          \
+                               asan_dispatch_call_block_and_release);         \
+   }
 
-INTERCEPTOR(void, dispatch_sync_f, dispatch_queue_t dq, void *ctxt,
-                                   dispatch_function_t func) {
-  GET_STACK_TRACE_HERE(kStackTraceMax);
-  asan_block_context_t *asan_ctxt = alloc_asan_context(ctxt, func, &stack);
-  if (flags()->verbosity >= 2) {
-    Report("dispatch_sync_f(): context: %p, pthread_self: %p\n",
-        asan_ctxt, pthread_self());
-    PRINT_CURRENT_STACK();
-  }
-  return REAL(dispatch_sync_f)(dq, (void*)asan_ctxt,
-                               asan_dispatch_call_block_and_release);
-}
+INTERCEPT_DISPATCH_X_F_3(dispatch_async_f)
+INTERCEPT_DISPATCH_X_F_3(dispatch_sync_f)
+INTERCEPT_DISPATCH_X_F_3(dispatch_barrier_async_f)
 
 INTERCEPTOR(void, dispatch_after_f, dispatch_time_t when,
                                     dispatch_queue_t dq, void *ctxt,
@@ -317,19 +310,6 @@ INTERCEPTOR(void, dispatch_after_f, dispatch_time_t when,
   }
   return REAL(dispatch_after_f)(when, dq, (void*)asan_ctxt,
                                 asan_dispatch_call_block_and_release);
-}
-
-INTERCEPTOR(void, dispatch_barrier_async_f, dispatch_queue_t dq, void *ctxt,
-                                            dispatch_function_t func) {
-  GET_STACK_TRACE_HERE(kStackTraceMax);
-  asan_block_context_t *asan_ctxt = alloc_asan_context(ctxt, func, &stack);
-  if (flags()->verbosity >= 2) {
-    Report("dispatch_barrier_async_f(): context: %p, pthread_self: %p\n",
-           asan_ctxt, pthread_self());
-    PRINT_CURRENT_STACK();
-  }
-  REAL(dispatch_barrier_async_f)(dq, (void*)asan_ctxt,
-                                 asan_dispatch_call_block_and_release);
 }
 
 INTERCEPTOR(void, dispatch_group_async_f, dispatch_group_t group,
