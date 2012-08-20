@@ -456,7 +456,8 @@ void TargetPassConfig::addMachinePasses() {
   printAndVerify("After Instruction Selection");
 
   // Expand pseudo-instructions emitted by ISel.
-  addPass(&ExpandISelPseudosID);
+  if (addPass(&ExpandISelPseudosID))
+    printAndVerify("After ExpandISelPseudos");
 
   // Add passes that optimize machine instructions in SSA form.
   if (getOptLevel() != CodeGenOpt::None) {
