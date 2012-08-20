@@ -6151,13 +6151,12 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
   }
 
   // Add the jump table entries as successors to the MBB.
-  MachineBasicBlock *PrevMBB = 0;
+  SmallPtrSet<MachineBasicBlock*, 8> SeenMBBs;
   for (std::vector<MachineBasicBlock*>::iterator
          I = LPadList.begin(), E = LPadList.end(); I != E; ++I) {
     MachineBasicBlock *CurMBB = *I;
-    if (PrevMBB != CurMBB)
+    if (SeenMBBs.insert(CurMBB))
       DispContBB->addSuccessor(CurMBB);
-    PrevMBB = CurMBB;
   }
 
   // N.B. the order the invoke BBs are processed in doesn't matter here.
