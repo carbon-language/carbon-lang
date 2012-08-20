@@ -136,7 +136,7 @@ let ExeDomain = SSEPackedSingle in {
   defm VFMSUBADDPS : fma3p_forms<0x97, 0xA7, 0xB7, "vfmsubadd", "ps",
                                  memopv4f32, memopv8f32,
                                  int_x86_fma_vfmsubadd_ps,
-                                 int_x86_fma_vfmaddsub_ps_256, X86Fmsubadd,
+                                 int_x86_fma_vfmsubadd_ps_256, X86Fmsubadd,
                                  v4f32, v8f32>;
 }
 
