@@ -613,7 +613,16 @@ PropertyImplStrategy::PropertyImplStrategy(CodeGenModule &CGM,
     // which translates to objc_storeStrong.  This isn't required, but
     // it's slightly nicer.
     } else if (CGM.getLangOpts().ObjCAutoRefCount && !IsAtomic) {
-      Kind = Expression;
+      // Using standard expression emission for the setter is only
+      // acceptable if the ivar is __strong, which won't be true if
+      // the property is annotated with __attribute__((NSObject)).
+      // TODO: falling all the way back to objc_setProperty here is
+      // just laziness, though;  we could still use objc_storeStrong
+      // if we hacked it right.
+      if (ivarType.getObjCLifetime() == Qualifiers::OCL_Strong)
+        Kind = Expression;
+      else
+        Kind = SetPropertyAndExpressionGet;
       return;
 
     // Otherwise, we need to at least use setProperty.  However, if

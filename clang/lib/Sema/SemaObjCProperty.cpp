@@ -43,7 +43,7 @@ static Qualifiers::ObjCLifetime getImpliedARCOwnership(
   if (attrs & (ObjCPropertyDecl::OBJC_PR_retain |
                ObjCPropertyDecl::OBJC_PR_strong |
                ObjCPropertyDecl::OBJC_PR_copy)) {
-    return type->getObjCARCImplicitLifetime();
+    return Qualifiers::OCL_Strong;
   } else if (attrs & ObjCPropertyDecl::OBJC_PR_weak) {
     return Qualifiers::OCL_Weak;
   } else if (attrs & ObjCPropertyDecl::OBJC_PR_unsafe_unretained) {
@@ -542,6 +542,23 @@ static void checkARCPropertyImpl(Sema &S, SourceLocation propertyImplLoc,
   if (ivarLifetime == Qualifiers::OCL_None ||
       ivarLifetime == Qualifiers::OCL_Autoreleasing)
     return;
+
+  // If the ivar is private, and it's implicitly __unsafe_unretained
+  // becaues of its type, then pretend it was actually implicitly
+  // __strong.  This is only sound because we're processing the
+  // property implementation before parsing any method bodies.
+  if (ivarLifetime == Qualifiers::OCL_ExplicitNone &&
+      propertyLifetime == Qualifiers::OCL_Strong &&
+      ivar->getAccessControl() == ObjCIvarDecl::Private) {
+    SplitQualType split = ivarType.split();
+    if (split.Quals.hasObjCLifetime()) {
+      assert(ivarType->isObjCARCImplicitlyUnretainedType());
+      split.Quals.setObjCLifetime(Qualifiers::OCL_Strong);
+      ivarType = S.Context.getQualifiedType(split);
+      ivar->setType(ivarType);
+      return;
+    }
+  }
 
   switch (propertyLifetime) {
   case Qualifiers::OCL_Strong:

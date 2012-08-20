@@ -888,6 +888,15 @@ from non-ARC practice was acceptable because we had conservatively
 banned the synthesis in order to give ourselves exactly this
 leeway.</p></div>
 
+<p>Applying <tt>__attribute__((NSObject))</tt> to a property not of
+retainable object pointer type has the same behavior it does outside
+of ARC:  it requires the property type to be some sort of pointer and
+permits the use of modifiers other than <tt>assign</tt>.  These
+modifiers only affect the synthesized getter and setter; direct
+accesses to the ivar (even if synthesized) still have primitive
+semantics, and the value in the ivar will not be automatically
+released during deallocation.</p>
+
 </div> <!-- ownership.spelling.property -->
 
 </div> <!-- ownership.spelling -->
