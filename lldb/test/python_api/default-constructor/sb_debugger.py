@@ -32,7 +32,10 @@ def fuzz_obj(obj):
     obj.GetSourceManager()
     obj.SetSelectedTarget(lldb.SBTarget())
     obj.SetCurrentPlatformSDKRoot("tmp/sdk-root")
-    obj.DispatchInput(None, 0)
+    try:
+        obj.DispatchInput(None)
+    except Exception:
+        pass
     obj.DispatchInputInterrupt()
     obj.DispatchInputEndOfFile()
     obj.PushInputReader(lldb.SBInputReader())

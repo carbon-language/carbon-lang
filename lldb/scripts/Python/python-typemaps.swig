@@ -351,9 +351,15 @@
 }
 
 %typemap(in) FILE * {
-   if (!PyFile_Check($input)) {
+   if ($input == Py_None)
+      $1 = NULL;
+   else if (!PyFile_Check($input)) {
       int fd = PyObject_AsFileDescriptor($input);
       PyObject *py_mode = PyObject_GetAttrString($input, "mode");
+      if (!py_mode) {
+         PyErr_SetString(PyExc_TypeError,"not a file-like object");
+         return NULL;
+      }
       const char *mode = PyString_AsString(py_mode);
       if (-1 != fd && mode) {
          FILE *f;
@@ -366,7 +372,8 @@
          return NULL;
       }
    }
-   $1 = PyFile_AsFile($input);
+   else
+      $1 = PyFile_AsFile($input);
 }
 
 %typemap(out) FILE * {
