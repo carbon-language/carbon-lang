@@ -2248,7 +2248,7 @@ isTemplateInstantiation() {
 ///   template<typename T> void A(T t) { }
 ///   template<> void A(int N) { }
 /// \endcode
-/// function(isExplicitSpecialization())
+/// function(isExplicitTemplateSpecialization())
 ///   matches the specialization A<int>().
 ///
 /// Usable as: Matcher<FunctionDecl>, Matcher<VarDecl>, Matcher<CXXRecordDecl>
