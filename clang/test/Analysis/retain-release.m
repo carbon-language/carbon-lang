@@ -1855,3 +1855,17 @@ id makeCollectableNonLeak() {
   [objCObject release]; // +1
   return [objCObject autorelease]; // +0
 }
+
+void consumeAndStopTracking(id NS_CONSUMED obj, void (^callback)(void));
+void testConsumeAndStopTracking() {
+  id retained = [@[] retain]; // +1
+  consumeAndStopTracking(retained, ^{}); // no-warning
+
+  id doubleRetained = [[@[] retain] retain]; // +2
+  consumeAndStopTracking(doubleRetained, ^{
+    [doubleRetained release];
+  }); // no-warning
+
+  id unretained = @[]; // +0
+  consumeAndStopTracking(unretained, ^{}); // expected-warning {{Incorrect decrement of the reference count of an object that is not owned at this point by the caller}}
+}
