@@ -220,6 +220,9 @@ void DeclPrinter::Print(AccessSpecifier AS) {
 //----------------------------------------------------------------------------
 
 void DeclPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
+  if (Policy.DontRecurseInDeclContext)
+    return;
+
   if (Indent)
     Indentation += Policy.Indentation;
 
