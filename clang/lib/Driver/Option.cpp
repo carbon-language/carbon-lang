@@ -199,6 +199,7 @@ Arg *Option::accept(const ArgList &Args, unsigned &Index) const {
     return new Arg(getUnaliasedOption(), Index - 2,
                    Args.getArgString(Index-2)+getName().size(),
                    Args.getArgString(Index-1));
+  default:
+    llvm_unreachable("Invalid option kind!");
   }
-  llvm_unreachable("Invalid option kind!");
 }
