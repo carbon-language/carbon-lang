@@ -297,7 +297,6 @@ void ASTStmtReader::VisitAsmStmt(AsmStmt *S) {
   S->setRParenLoc(ReadSourceLocation(Record, Idx));
   S->setVolatile(Record[Idx++]);
   S->setSimple(Record[Idx++]);
-  S->setMSAsm(Record[Idx++]);
 
   S->setAsmString(cast_or_null<StringLiteral>(Reader.ReadSubStmt()));
 

@@ -1172,12 +1172,11 @@ public:
                                   MultiExprArg Exprs,
                                   Expr *AsmString,
                                   MultiExprArg Clobbers,
-                                  SourceLocation RParenLoc,
-                                  bool MSAsm) {
+                                  SourceLocation RParenLoc) {
     return getSema().ActOnAsmStmt(AsmLoc, IsSimple, IsVolatile, NumOutputs,
                                   NumInputs, Names, move(Constraints),
                                   Exprs, AsmString, Clobbers,
-                                  RParenLoc, MSAsm);
+                                  RParenLoc);
   }
 
   /// \brief Build a new MS style inline asm statement.
@@ -5600,8 +5599,7 @@ TreeTransform<Derived>::TransformAsmStmt(AsmStmt *S) {
                                      move_arg(Exprs),
                                      AsmString.get(),
                                      move_arg(Clobbers),
-                                     S->getRParenLoc(),
-                                     S->isMSAsm());
+                                     S->getRParenLoc());
 }
 
 template<typename Derived>

@@ -559,14 +559,13 @@ QualType CXXCatchStmt::getCaughtType() const {
 //===----------------------------------------------------------------------===//
 
 AsmStmt::AsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple,
-                 bool isvolatile, bool msasm,
-                 unsigned numoutputs, unsigned numinputs,
+                 bool isvolatile, unsigned numoutputs, unsigned numinputs,
                  IdentifierInfo **names, StringLiteral **constraints,
                  Expr **exprs, StringLiteral *asmstr, unsigned numclobbers,
                  StringLiteral **clobbers, SourceLocation rparenloc)
   : Stmt(AsmStmtClass), AsmLoc(asmloc), RParenLoc(rparenloc), AsmStr(asmstr)
-  , IsSimple(issimple), IsVolatile(isvolatile), MSAsm(msasm)
-  , NumOutputs(numoutputs), NumInputs(numinputs), NumClobbers(numclobbers) {
+  , IsSimple(issimple), IsVolatile(isvolatile), NumOutputs(numoutputs)
+  , NumInputs(numinputs), NumClobbers(numclobbers) {
 
   unsigned NumExprs = NumOutputs + NumInputs;
 

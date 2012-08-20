@@ -1385,10 +1385,10 @@ class AsmStmt : public Stmt {
 
 public:
   AsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple, bool isvolatile,
-          bool msasm, unsigned numoutputs, unsigned numinputs,
-          IdentifierInfo **names, StringLiteral **constraints,
-          Expr **exprs, StringLiteral *asmstr, unsigned numclobbers,
-          StringLiteral **clobbers, SourceLocation rparenloc);
+          unsigned numoutputs, unsigned numinputs, IdentifierInfo **names,
+          StringLiteral **constraints, Expr **exprs, StringLiteral *asmstr,
+          unsigned numclobbers, StringLiteral **clobbers,
+          SourceLocation rparenloc);
 
   /// \brief Build an empty inline-assembly statement.
   explicit AsmStmt(EmptyShell Empty) : Stmt(AsmStmtClass, Empty),
@@ -1403,8 +1403,6 @@ public:
   void setVolatile(bool V) { IsVolatile = V; }
   bool isSimple() const { return IsSimple; }
   void setSimple(bool V) { IsSimple = V; }
-  bool isMSAsm() const { return MSAsm; }
-  void setMSAsm(bool V) { MSAsm = V; }
 
   //===--- Asm String Analysis ---===//
 

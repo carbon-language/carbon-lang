@@ -94,7 +94,7 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
                               unsigned NumInputs, IdentifierInfo **Names,
                               MultiExprArg constraints, MultiExprArg exprs,
                               Expr *asmString, MultiExprArg clobbers,
-                              SourceLocation RParenLoc, bool MSAsm) {
+                              SourceLocation RParenLoc) {
   unsigned NumClobbers = clobbers.size();
   StringLiteral **Constraints =
     reinterpret_cast<StringLiteral**>(constraints.get());
@@ -199,9 +199,9 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
   }
 
   AsmStmt *NS =
-    new (Context) AsmStmt(Context, AsmLoc, IsSimple, IsVolatile, MSAsm,
-                          NumOutputs, NumInputs, Names, Constraints, Exprs,
-                          AsmString, NumClobbers, Clobbers, RParenLoc);
+    new (Context) AsmStmt(Context, AsmLoc, IsSimple, IsVolatile, NumOutputs,
+                          NumInputs, Names, Constraints, Exprs, AsmString,
+                          NumClobbers, Clobbers, RParenLoc);
   // Validate the asm string, ensuring it makes sense given the operands we
   // have.
   SmallVector<AsmStmt::AsmStringPiece, 8> Pieces;

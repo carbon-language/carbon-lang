@@ -227,7 +227,6 @@ void ASTStmtWriter::VisitAsmStmt(AsmStmt *S) {
   Writer.AddSourceLocation(S->getRParenLoc(), Record);
   Record.push_back(S->isVolatile());
   Record.push_back(S->isSimple());
-  Record.push_back(S->isMSAsm());
   Writer.AddStmt(S->getAsmString());
 
   // Outputs

@@ -2544,8 +2544,7 @@ public:
                           MultiExprArg Exprs,
                           Expr *AsmString,
                           MultiExprArg Clobbers,
-                          SourceLocation RParenLoc,
-                          bool MSAsm = false);
+                          SourceLocation RParenLoc);
 
   StmtResult ActOnMSAsmStmt(SourceLocation AsmLoc,
                             SourceLocation LBraceLoc,
