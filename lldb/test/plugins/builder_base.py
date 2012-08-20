@@ -101,6 +101,8 @@ def buildDwarf(sender=None, architecture=None, compiler=None, dictionary=None, c
 
 def cleanup(sender=None, dictionary=None):
     """Perform a platform-specific cleanup after the test."""
+    #import traceback
+    #traceback.print_stack()
     if os.path.isfile("Makefile"):
         lldbtest.system(["/bin/sh", "-c", "make clean"+getCmdLine(dictionary)],
                         sender=sender)

@@ -100,8 +100,7 @@ class UUIDMismatchWarningCase(TestBase):
                 print "\n\nContents of child_read.txt:"
                 print from_child
 
-            # Test that str_input completes to our patterns.
-            # If each pattern matches from_child, the completion mechanism works!
+            # Test that lldb emits the "UUID mismatch detected!" message.
             self.expect(from_child, msg="UUID mismatch expected!", exe=False,
                 substrs = ['warning: UUID mismatch detected'])
 
