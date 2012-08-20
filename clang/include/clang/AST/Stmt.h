@@ -1371,7 +1371,6 @@ class AsmStmt : public Stmt {
 
   bool IsSimple;
   bool IsVolatile;
-  bool MSAsm;
 
   unsigned NumOutputs;
   unsigned NumInputs;
