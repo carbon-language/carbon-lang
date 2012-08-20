@@ -1723,10 +1723,10 @@ void InitListExpr::setArrayFiller(Expr *filler) {
 bool InitListExpr::isStringLiteralInit() const {
   if (getNumInits() != 1)
     return false;
-  const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(getType());
-  if (!CAT || !CAT->getElementType()->isIntegerType())
+  const ArrayType *AT = getType()->getAsArrayTypeUnsafe();
+  if (!AT || !AT->getElementType()->isIntegerType())
     return false;
-  const Expr *Init = getInit(0)->IgnoreParenImpCasts();
+  const Expr *Init = getInit(0)->IgnoreParens();
   return isa<StringLiteral>(Init) || isa<ObjCEncodeExpr>(Init);
 }
 

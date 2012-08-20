@@ -144,3 +144,18 @@ void g28() {
   static v12i16 b = (v2f80){1,2};
   static v2f80 c = (v12i16){0,0,0,-32768,16383,0,0,0,0,-32768,16384,0};
 }
+
+// PR13643
+void g29() {
+  typedef char DCC_PASSWD[2];
+  typedef struct
+  {
+      DCC_PASSWD passwd;
+  } DCC_SRVR_NM;
+  // CHECK: @g29.a = internal global %struct.DCC_SRVR_NM { [2 x i8] c"@\00" }, align 1
+  // CHECK: @g29.b = internal global [1 x i32] [i32 ptrtoint ([5 x i8]* @.str to i32)], align 4
+  // CHECK: @g29.c = internal global [1 x i32] [i32 97], align 4
+  static DCC_SRVR_NM a = { {"@"} };
+  static int b[1] = { "asdf" };
+  static int c[1] = { L"a" };
+}
