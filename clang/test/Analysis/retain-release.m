@@ -1748,7 +1748,7 @@ extern id NSApp;
 @end
 //===----------------------------------------------------------------------===//
 // Test returning allocated memory in a struct.
-// 
+//
 // We currently don't have a general way to track pointers that "escape".
 // Here we test that RetainCountChecker doesn't get excited about returning
 // allocated CF objects in struct fields.
@@ -1856,7 +1856,10 @@ id makeCollectableNonLeak() {
   return [objCObject autorelease]; // +0
 }
 
+
 void consumeAndStopTracking(id NS_CONSUMED obj, void (^callback)(void));
+void CFConsumeAndStopTracking(CFTypeRef CF_CONSUMED obj, void (^callback)(void));
+
 void testConsumeAndStopTracking() {
   id retained = [@[] retain]; // +1
   consumeAndStopTracking(retained, ^{}); // no-warning
@@ -1868,4 +1871,17 @@ void testConsumeAndStopTracking() {
 
   id unretained = @[]; // +0
   consumeAndStopTracking(unretained, ^{}); // expected-warning {{Incorrect decrement of the reference count of an object that is not owned at this point by the caller}}
+}
+
+void testCFConsumeAndStopTracking() {
+  id retained = [@[] retain]; // +1
+  CFConsumeAndStopTracking((CFTypeRef)retained, ^{}); // no-warning
+
+  id doubleRetained = [[@[] retain] retain]; // +2
+  CFConsumeAndStopTracking((CFTypeRef)doubleRetained, ^{
+    [doubleRetained release];
+  }); // no-warning
+
+  id unretained = @[]; // +0
+  CFConsumeAndStopTracking((CFTypeRef)unretained, ^{}); // expected-warning {{Incorrect decrement of the reference count of an object that is not owned at this point by the caller}}
 }

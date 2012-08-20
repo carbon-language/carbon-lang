@@ -107,9 +107,14 @@ NSFastEnumerationState;
 @end  @interface NSNumber : NSValue  - (char)charValue;
 - (id)initWithInt:(int)value;
 @end   @class NSString;
-@interface NSArray : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>  - (NSUInteger)count;
-@end  @interface NSArray (NSArrayCreation)  + (id)array;
-@end       @interface NSAutoreleasePool : NSObject {
+@interface NSArray : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>
+- (NSUInteger)count;
+@end
+@interface NSArray (NSArrayCreation)
++ (id)array;
++ (id)arrayWithObjects:(const id [])objects count:(NSUInteger)cnt;
+@end
+       @interface NSAutoreleasePool : NSObject {
 }
 - (void)drain;
 - (id)init;
@@ -385,3 +390,45 @@ CFDateRef returnsRetainedCFDate()  {
   return (NSDate*) returnsRetainedCFDate(); // expected-warning{{leak}}
 }
 @end
+
+
+#if __has_feature(attribute_ns_consumed)
+#define NS_CONSUMED __attribute__((ns_consumed))
+#endif
+#if __has_feature(attribute_cf_consumed)
+#define CF_CONSUMED __attribute__((cf_consumed))
+#endif
+
+void consumeAndStopTracking(id NS_CONSUMED obj, void (^callback)(void));
+void CFConsumeAndStopTracking(CFTypeRef CF_CONSUMED obj, void (^callback)(void));
+
+void testConsumeAndStopTracking() {
+  id retained = [@[] retain]; // +0, GC
+  consumeAndStopTracking(retained, ^{}); // no-warning
+
+  id doubleRetained = [[@[] retain] retain]; // +0, GC
+  consumeAndStopTracking(doubleRetained, ^{
+    [doubleRetained release];
+  }); // no-warning
+
+  id unretained = @[]; // +0
+  consumeAndStopTracking(unretained, ^{}); // no-warning, GC
+}
+
+void testCFConsumeAndStopTrackingMsg() {
+  id retained = [@[] retain]; // +0, GC
+  CFConsumeAndStopTracking((CFTypeRef)retained, ^{}); // expected-warning {{Incorrect decrement of the reference count of an object that is not owned at this point by the caller}}
+}
+
+void testCFConsumeAndStopTracking() {
+  CFTypeRef retained = returnsRetainedCFDate(); // +1
+  CFConsumeAndStopTracking(retained, ^{}); // no-warning
+
+  CFTypeRef doubleRetained = CFRetain(returnsRetainedCFDate()); // +2
+  CFConsumeAndStopTracking(doubleRetained, ^{
+    CFRelease(doubleRetained);
+  }); // no-warning
+
+  id unretained = @[]; // +0
+  CFConsumeAndStopTracking((CFTypeRef)unretained, ^{}); // expected-warning {{Incorrect decrement of the reference count of an object that is not owned at this point by the caller}}
+}
