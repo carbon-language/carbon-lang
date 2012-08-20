@@ -60,10 +60,20 @@ class ExplodedNode : public llvm::FoldingSetNode {
   friend class SwitchNodeBuilder;
   friend class EndOfFunctionNodeBuilder;
 
+  /// Efficiently stores a list of ExplodedNodes, or an optional flag.
+  ///
+  /// NodeGroup provides opaque storage for a list of ExplodedNodes, optimizing
+  /// for the case when there is only one node in the group. This is a fairly
+  /// common case in an ExplodedGraph, where most nodes have only one
+  /// predecessor and many have only one successor. It can also be used to
+  /// store a flag rather than a node list, which ExplodedNode uses to mark
+  /// whether a node is a sink. If the flag is set, the group is implicitly
+  /// empty and no nodes may be added.
   class NodeGroup {
     // Conceptually a discriminated union. If the low bit is set, the node is
     // a sink. If the low bit is not set, the pointer refers to the storage
     // for the nodes in the group.
+    // This is not a PointerIntPair in order to keep the storage type opaque.
     uintptr_t P;
     
   public:
@@ -79,10 +89,19 @@ class ExplodedNode : public llvm::FoldingSetNode {
 
     bool empty() const { return P == 0 || getFlag() != 0; }
 
+    /// Adds a node to the list.
+    ///
+    /// The group must not have been created with its flag set.
     void addNode(ExplodedNode *N, ExplodedGraph &G);
 
+    /// Replaces the single node in this group with a new node.
+    ///
+    /// Note that this should only be used when you know the group was not
+    /// created with its flag set, and that the group is empty or contains
+    /// only a single node.
     void replaceNode(ExplodedNode *node);
 
+    /// Returns whether this group was created with its flag set.
     bool getFlag() const {
       return (P & 1);
     }
