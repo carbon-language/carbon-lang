@@ -21,7 +21,7 @@
 // CHECK-CC1-NEXT: {TypedText unsafe_unretained}
 // CHECK-CC1-NOT: {TypedText weak}
 
-// RUN: c-index-test -code-completion-at=%s:7:11 %s -fobjc-arc -fobjc-runtime-has-weak | FileCheck -check-prefix=CHECK-CC1-ARC %s
+// RUN: c-index-test -code-completion-at=%s:7:11 %s -fobjc-arc -fobjc-runtime=macosx-10.7 | FileCheck -check-prefix=CHECK-CC1-ARC %s
 // CHECK-CC1-ARC: {TypedText assign}
 // CHECK-CC1-ARC-NEXT: {TypedText atomic}
 // CHECK-CC1-ARC-NEXT: {TypedText copy}
