@@ -351,6 +351,8 @@ public:
   /// parameter is stored in Weights list and it may be used by
   /// MachineBranchProbabilityInfo analysis to calculate branch probability.
   ///
+  /// Note that duplicate Machine CFG edges are not allowed.
+  ///
   void addSuccessor(MachineBasicBlock *succ, uint32_t weight = 0);
 
   /// removeSuccessor - Remove successor from the successors list of this
