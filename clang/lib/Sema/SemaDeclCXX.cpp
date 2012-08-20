@@ -2080,7 +2080,10 @@ namespace {
         }
 
         if (VD == ME->getMemberDecl() && isa<CXXThisExpr>(Base)) {
-          S.Diag(ME->getExprLoc(), diag::warn_field_is_uninit);
+          unsigned diag = VD->getType()->isReferenceType()
+              ? diag::warn_reference_field_is_uninit
+              : diag::warn_field_is_uninit;
+          S.Diag(ME->getExprLoc(), diag);
           return;
         }
       }

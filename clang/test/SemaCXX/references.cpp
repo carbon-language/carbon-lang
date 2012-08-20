@@ -136,4 +136,4 @@ namespace PR8608 {
 }
 
 // The following crashed trying to recursively evaluate the LValue.
-const int &do_not_crash = do_not_crash; // expected-warning{{variable 'do_not_crash' is uninitialized when used within its own initialization}}
+const int &do_not_crash = do_not_crash; // expected-warning{{reference 'do_not_crash' is not yet bound to a value when used within its own initialization}}

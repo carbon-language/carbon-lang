@@ -1216,8 +1216,15 @@ def note_uninit_reference_member : Note<
   "uninitialized reference member is here">;
 def warn_field_is_uninit : Warning<"field is uninitialized when used here">,
   InGroup<Uninitialized>;
+def warn_reference_field_is_uninit : Warning<
+  "reference is not yet bound to a value when used here">,
+  InGroup<Uninitialized>;
 def warn_uninit_self_reference_in_init : Warning<
   "variable %0 is uninitialized when used within its own initialization">,
+  InGroup<Uninitialized>;
+def warn_uninit_self_reference_in_reference_init : Warning<
+  "reference %0 is not yet bound to a value when used within its own"
+  " initialization">,
   InGroup<Uninitialized>;
 def warn_uninit_var : Warning<
   "variable %0 is uninitialized when %select{used here|captured by block}1">,

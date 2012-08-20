@@ -380,15 +380,15 @@ namespace statics {
 }
 
 namespace references {
-  int &a = a; // expected-warning{{variable 'a' is uninitialized when used within its own initialization}}
+  int &a = a; // expected-warning{{reference 'a' is not yet bound to a value when used within its own initialization}}
 
   struct S {
-    S() : a(a) {} // expected-warning{{field is uninitialized when used here}}
+    S() : a(a) {} // expected-warning{{reference is not yet bound to a value when used here}}
     int &a;
   };
 
   void f() {
-    int &a = a; // expected-warning{{variable 'a' is uninitialized when used within its own initialization}}
+    int &a = a; // expected-warning{{reference 'a' is not yet bound to a value when used within its own initialization}}
   }
 
   struct T {
