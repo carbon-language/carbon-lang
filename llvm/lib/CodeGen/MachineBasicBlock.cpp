@@ -942,12 +942,11 @@ MachineBasicBlock::findDebugLoc(instr_iterator MBBI) {
 
 /// getSuccWeight - Return weight of the edge from this block to MBB.
 ///
-uint32_t MachineBasicBlock::getSuccWeight(const MachineBasicBlock *succ) const {
+uint32_t MachineBasicBlock::getSuccWeight(const_succ_iterator Succ) const {
   if (Weights.empty())
     return 0;
 
-  const_succ_iterator I = std::find(Successors.begin(), Successors.end(), succ);
-  return *getWeightIterator(I);
+  return *getWeightIterator(Succ);
 }
 
 /// getWeightIterator - Return wight iterator corresonding to the I successor
