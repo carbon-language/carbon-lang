@@ -54,3 +54,11 @@ entry:
   %f1 = fpext <8 x float> %v1 to <8 x double>
   ret <8 x double> %f1
 }
+
+define void @test_vector_creation() nounwind {
+  %1 = insertelement <4 x double> undef, double 0.000000e+00, i32 2
+  %2 = load double addrspace(1)* null
+  %3 = insertelement <4 x double> %1, double %2, i32 3
+  store <4 x double> %3, <4 x double>* undef
+  ret void
+}

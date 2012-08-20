@@ -5180,6 +5180,10 @@ X86TargetLowering::LowerVectorFpExtend(SDValue &Op, SelectionDAG &DAG) const {
     Mask.push_back(cast<ConstantSDNode>(L2In.getOperand(1))->getZExtValue());
   }
 
+  // Quit if all operands of BUILD_VECTOR are undefined.
+  if (!VecIn.getNode())
+    return SDValue();
+
   // Fill the remaining mask as undef.
   for (unsigned i = NumElts; i < VecInVT.getVectorNumElements(); ++i)
     Mask.push_back(-1);
