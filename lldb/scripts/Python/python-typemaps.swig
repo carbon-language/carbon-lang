@@ -333,3 +333,38 @@
 %typemap(freearg) (uint32_t *versions) {
     free($1);
 }
+
+%typemap(in) FILE * {
+   if (!PyFile_Check($input)) {
+      int fd = PyObject_AsFileDescriptor($input);
+      PyObject *py_mode = PyObject_GetAttrString($input, "mode");
+      const char *mode = PyString_AsString(py_mode);
+      if (-1 != fd && mode) {
+         FILE *f;
+         if ((f = fdopen(fd, mode)))
+            $1 = f;
+         else
+            PyErr_SetString(PyExc_TypeError, strerror(errno));
+      } else {
+         PyErr_SetString(PyExc_TypeError,"not a file-like object");
+         return NULL;
+      }
+   }
+   $1 = PyFile_AsFile($input);
+}
+
+%typemap(out) FILE * {
+   char mode[4] = {0};
+#ifdef __MACOSX__
+   int i = 0;
+   short flags = $1->_flags;
+
+   if (flags & __SRD)
+      mode[i++] = 'r';
+   else if (flags & __SWR)
+      mode[i++] = 'w';
+   else // if (flags & __SRW)
+      mode[i++] = 'a';
+#endif
+   $result = PyFile_FromFile($1, const_cast<char*>(""), mode, fclose);
+}
