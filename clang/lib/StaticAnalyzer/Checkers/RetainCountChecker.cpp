@@ -3432,7 +3432,7 @@ RetainCountChecker::handleAutoreleaseCounts(ProgramStateRef state,
   V = V ^ RefVal::ErrorOverAutorelease;
   state = setRefBinding(state, Sym, V);
 
-  ExplodedNode *N = Ctx.addTransition(state, Pred, Tag, /*IsSink=*/true);
+  ExplodedNode *N = Ctx.generateSink(state, Pred, Tag);
   if (N) {
     SmallString<128> sbuf;
     llvm::raw_svector_ostream os(sbuf);

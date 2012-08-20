@@ -211,8 +211,7 @@ void ExprEngine::VisitBlockExpr(const BlockExpr *BE, ExplodedNode *Pred,
   StmtNodeBuilder Bldr(Pred, Tmp, *currentBuilderContext);
   Bldr.generateNode(BE, Pred,
                     State->BindExpr(BE, Pred->getLocationContext(), V),
-                    false, 0,
-                    ProgramPoint::PostLValueKind);
+                    0, ProgramPoint::PostLValueKind);
   
   // FIXME: Move all post/pre visits to ::Visit().
   getCheckerManager().runCheckersForPostStmt(Dst, Tmp, BE, *this);
@@ -347,7 +346,7 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
           if (T->isReferenceType()) {
             // A bad_cast exception is thrown if input value is a reference.
             // Currently, we model this, by generating a sink.
-            Bldr.generateNode(CastE, Pred, state, true);
+            Bldr.generateSink(CastE, Pred, state);
             continue;
           } else {
             // If the cast fails on a pointer, bind to 0.

@@ -144,20 +144,15 @@ public:
   /// \brief Generates a new transition in the program state graph
   /// (ExplodedGraph). Uses the default CheckerContext predecessor node.
   ///
-  /// @param State The state of the generated node.
+  /// @param State The state of the generated node. If not specified, the state
+  ///        will not be changed, but the new node will have the checker's tag.
   /// @param Tag The tag is used to uniquely identify the creation site. If no
   ///        tag is specified, a default tag, unique to the given checker,
   ///        will be used. Tags are used to prevent states generated at
   ///        different sites from caching out.
-  ExplodedNode *addTransition(ProgramStateRef State,
+  ExplodedNode *addTransition(ProgramStateRef State = 0,
                               const ProgramPointTag *Tag = 0) {
-    return addTransitionImpl(State, false, 0, Tag);
-  }
-
-  /// \brief Generates a default transition (containing checker tag but no
-  /// checker state changes).
-  ExplodedNode *addTransition() {
-    return addTransition(getState());
+    return addTransitionImpl(State ? State : getState(), false, 0, Tag);
   }
 
   /// \brief Generates a new transition with the given predecessor.
@@ -170,16 +165,17 @@ public:
   /// @param IsSink Mark the new node as sink, which will stop exploration of
   ///               the given path.
   ExplodedNode *addTransition(ProgramStateRef State,
-                             ExplodedNode *Pred,
-                             const ProgramPointTag *Tag = 0,
-                             bool IsSink = false) {
-    return addTransitionImpl(State, IsSink, Pred, Tag);
+                              ExplodedNode *Pred,
+                              const ProgramPointTag *Tag = 0) {
+    return addTransitionImpl(State, false, Pred, Tag);
   }
 
-  /// \brief Generate a sink node. Generating sink stops exploration of the
+  /// \brief Generate a sink node. Generating a sink stops exploration of the
   /// given path.
-  ExplodedNode *generateSink(ProgramStateRef state = 0) {
-    return addTransitionImpl(state ? state : getState(), true);
+  ExplodedNode *generateSink(ProgramStateRef State = 0,
+                             ExplodedNode *Pred = 0,
+                             const ProgramPointTag *Tag = 0) {
+    return addTransitionImpl(State ? State : getState(), true, Pred, Tag);
   }
 
   /// \brief Emit the diagnostics report.
@@ -226,9 +222,15 @@ private:
       return Pred;
 
     Changed = true;
-    ExplodedNode *node = NB.generateNode(Tag ? Location.withTag(Tag) : Location,
-                                        State,
-                                        P ? P : Pred, MarkAsSink);
+    const ProgramPoint &LocalLoc = (Tag ? Location.withTag(Tag) : Location);
+    if (!P)
+      P = Pred;
+
+    ExplodedNode *node;
+    if (MarkAsSink)
+      node = NB.generateSink(LocalLoc, State, P);
+    else
+      node = NB.generateNode(LocalLoc, State, P);
     return node;
   }
 };

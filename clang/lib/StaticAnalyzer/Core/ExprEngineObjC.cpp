@@ -187,7 +187,7 @@ void ExprEngine::VisitObjCMessage(const ObjCMessageExpr *ME,
         if (Msg->getSelector() == RaiseSel) {
           // If we raise an exception, for now treat it as a sink.
           // Eventually we will want to handle exceptions properly.
-          Bldr.generateNode(currentStmt, Pred, State, true);
+          Bldr.generateSink(currentStmt, Pred, State);
           continue;
         }
         
@@ -237,7 +237,7 @@ void ExprEngine::VisitObjCMessage(const ObjCMessageExpr *ME,
           if (RaisesException) {
             // If we raise an exception, for now treat it as a sink.
             // Eventually we will want to handle exceptions properly.
-            Bldr.generateNode(currentStmt, Pred, Pred->getState(), true);
+            Bldr.generateSink(currentStmt, Pred, Pred->getState());
             continue;
           }
 

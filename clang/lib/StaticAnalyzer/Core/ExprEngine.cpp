@@ -277,7 +277,7 @@ void ExprEngine::removeDead(ExplodedNode *Pred, ExplodedNodeSet &Out,
     // up. Since no symbols are dead, we can optimize and not clean out
     // the constraint manager.
     StmtNodeBuilder Bldr(Pred, Out, *currentBuilderContext);
-    Bldr.generateNode(DiagnosticStmt, Pred, CleanedState, false, &cleanupTag,K);
+    Bldr.generateNode(DiagnosticStmt, Pred, CleanedState, &cleanupTag, K);
 
   } else {
     // Call checkers with the non-cleaned state so that they could query the
@@ -309,8 +309,7 @@ void ExprEngine::removeDead(ExplodedNode *Pred, ExplodedNodeSet &Out,
       // generate a transition to that state.
       ProgramStateRef CleanedCheckerSt =
         StateMgr.getPersistentStateWithGDM(CleanedState, CheckerState);
-      Bldr.generateNode(DiagnosticStmt, *I, CleanedCheckerSt, false,
-                        &cleanupTag, K);
+      Bldr.generateNode(DiagnosticStmt, *I, CleanedCheckerSt, &cleanupTag, K);
     }
   }
 }
@@ -525,8 +524,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::SEHExceptStmtClass:
     case Stmt::LambdaExprClass:
     case Stmt::SEHFinallyStmtClass: {
-      const ExplodedNode *node = Bldr.generateNode(S, Pred, Pred->getState(),
-                                                   /* sink */ true);
+      const ExplodedNode *node = Bldr.generateSink(S, Pred, Pred->getState());
       Engine.addAbortedBlock(node, currentBuilderContext->getBlock());
       break;
     }
@@ -885,7 +883,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::CXXThrowExprClass:
       // FIXME: This is not complete.  We basically treat @throw as
       // an abort.
-      Bldr.generateNode(S, Pred, Pred->getState(), /*IsSink=*/true);
+      Bldr.generateSink(S, Pred, Pred->getState());
       break;
 
     case Stmt::ReturnStmtClass:
@@ -1033,7 +1031,7 @@ void ExprEngine::processCFGBlockEntrance(const BlockEdge &L,
   if (nodeBuilder.getContext().getCurrentBlockCount() >= AMgr.getMaxVisit()) {
     static SimpleProgramPointTag tag("ExprEngine : Block count exceeded");
     const ExplodedNode *Sink =
-                   nodeBuilder.generateNode(pred->getState(), pred, &tag, true);
+                   nodeBuilder.generateSink(pred->getState(), pred, &tag);
 
     // Check if we stopped at the top level function or not.
     // Root node should have the location context of the top most function.
@@ -1417,7 +1415,7 @@ void ExprEngine::VisitCommonDeclRefExpr(const Expr *Ex, const NamedDecl *D,
         V = UnknownVal();
     }
 
-    Bldr.generateNode(Ex, Pred, state->BindExpr(Ex, LCtx, V), false, 0,
+    Bldr.generateNode(Ex, Pred, state->BindExpr(Ex, LCtx, V), 0,
                       ProgramPoint::PostLValueKind);
     return;
   }
@@ -1429,19 +1427,18 @@ void ExprEngine::VisitCommonDeclRefExpr(const Expr *Ex, const NamedDecl *D,
   }
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     SVal V = svalBuilder.getFunctionPointer(FD);
-    Bldr.generateNode(Ex, Pred, state->BindExpr(Ex, LCtx, V), false, 0,
+    Bldr.generateNode(Ex, Pred, state->BindExpr(Ex, LCtx, V), 0,
                       ProgramPoint::PostLValueKind);
     return;
   }
   if (isa<FieldDecl>(D)) {
-    // FIXME: Compute lvalue of fields.
-    Bldr.generateNode(Ex, Pred, state->BindExpr(Ex, LCtx, UnknownVal()),
-		      false, 0, ProgramPoint::PostLValueKind);
+    // FIXME: Compute lvalue of field pointers-to-member.
+    Bldr.generateNode(Ex, Pred, state->BindExpr(Ex, LCtx, UnknownVal()), 0,
+		      ProgramPoint::PostLValueKind);
     return;
   }
 
-  assert (false &&
-          "ValueDecl support for this ValueDecl not implemented.");
+  llvm_unreachable("Support for this Decl not implemented.");
 }
 
 /// VisitArraySubscriptExpr - Transfer function for array accesses
@@ -1466,8 +1463,8 @@ void ExprEngine::VisitLvalArraySubscriptExpr(const ArraySubscriptExpr *A,
                               state->getSVal(Idx, LCtx),
                               state->getSVal(Base, LCtx));
     assert(A->isGLValue());
-    Bldr.generateNode(A, *it, state->BindExpr(A, LCtx, V),
-                      false, 0, ProgramPoint::PostLValueKind);
+    Bldr.generateNode(A, *it, state->BindExpr(A, LCtx, V), 0, 
+                      ProgramPoint::PostLValueKind);
   }
 }
 
@@ -1530,7 +1527,7 @@ void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
         L = UnknownVal();
     }
 
-    Bldr.generateNode(M, Pred, state->BindExpr(M, LCtx, L), false, 0,
+    Bldr.generateNode(M, Pred, state->BindExpr(M, LCtx, L), 0,
                       ProgramPoint::PostLValueKind);
   } else {
     Bldr.takeNodes(Pred);
@@ -1574,7 +1571,7 @@ void ExprEngine::evalBind(ExplodedNodeSet &Dst, const Stmt *StoreE,
       LocReg = LocRegVal->getRegion();
 
     const ProgramPoint L = PostStore(StoreE, LC, LocReg, 0);
-    Bldr.generateNode(L, PredI, state, false);
+    Bldr.generateNode(L, state, PredI);
   }
 
   Dst.insert(TmpDst);
@@ -1679,8 +1676,7 @@ void ExprEngine::evalLoadCommon(ExplodedNodeSet &Dst,
       // This is important.  We must nuke the old binding.
       Bldr.generateNode(NodeEx, *NI,
                         state->BindExpr(BoundEx, LCtx, UnknownVal()),
-                        false, tag,
-                        ProgramPoint::PostLoadKind);
+                        tag, ProgramPoint::PostLoadKind);
     }
     else {
       if (LoadTy.isNull())
@@ -1688,7 +1684,7 @@ void ExprEngine::evalLoadCommon(ExplodedNodeSet &Dst,
       SVal V = state->getSVal(cast<Loc>(location), LoadTy);
       Bldr.generateNode(NodeEx, *NI,
                         state->bindExprAndLocation(BoundEx, LCtx, location, V),
-                        false, tag, ProgramPoint::PostLoadKind);
+                        tag, ProgramPoint::PostLoadKind);
     }
   }
 }
@@ -1720,9 +1716,8 @@ void ExprEngine::evalLocation(ExplodedNodeSet &Dst,
     // instead "int *p" is noted as
     // "Variable 'p' initialized to a null pointer value"
     
-    // FIXME: why is 'tag' not used instead of etag?
-    static SimpleProgramPointTag etag("ExprEngine: Location");
-    Bldr.generateNode(NodeEx, Pred, state, false, &etag);
+    static SimpleProgramPointTag tag("ExprEngine: Location");
+    Bldr.generateNode(NodeEx, Pred, state, &tag);
   }
   ExplodedNodeSet Tmp;
   getCheckerManager().runCheckersForLocation(Tmp, Src, location, isLoad,
@@ -1763,14 +1758,14 @@ void ExprEngine::evalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
       if (ProgramStateRef StateTrue = state->assume(*SEV, true)) {
         SVal Val = svalBuilder.makeIntVal(1U, Ex->getType());        
         StateTrue = StateTrue->BindExpr(Ex, Pred->getLocationContext(), Val);
-        Bldr.generateNode(Ex, Pred, StateTrue, false, tags.first);
+        Bldr.generateNode(Ex, Pred, StateTrue, tags.first);
       }
 
       // Next, assume that the condition is false.
       if (ProgramStateRef StateFalse = state->assume(*SEV, false)) {
         SVal Val = svalBuilder.makeIntVal(0U, Ex->getType());
         StateFalse = StateFalse->BindExpr(Ex, Pred->getLocationContext(), Val);
-        Bldr.generateNode(Ex, Pred, StateFalse, false, tags.second);
+        Bldr.generateNode(Ex, Pred, StateFalse, tags.second);
       }
     }
   }

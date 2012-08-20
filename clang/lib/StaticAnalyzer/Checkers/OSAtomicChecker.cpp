@@ -192,8 +192,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(const CallExpr *CE,
         QualType T = CE->getType();
         if (!T->isVoidType())
           Res = Eng.getSValBuilder().makeTruthVal(true, T);
-        B.generateNode(CE, predNew, stateNew->BindExpr(CE, LCtx, Res),
-                       false, this);
+        B.generateNode(CE, predNew, stateNew->BindExpr(CE, LCtx, Res), this);
       }
     }
 
@@ -205,8 +204,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(const CallExpr *CE,
       if (!T->isVoidType())
         Res = Eng.getSValBuilder().makeTruthVal(false, CE->getType());
       StmtNodeBuilder B(N, Dst, Eng.getBuilderContext());    
-      B.generateNode(CE, N, stateNotEqual->BindExpr(CE, LCtx, Res),
-                     false, this);
+      B.generateNode(CE, N, stateNotEqual->BindExpr(CE, LCtx, Res), this);
     }
   }
 
