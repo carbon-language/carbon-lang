@@ -40,27 +40,26 @@ EnableIEEERndNear(
 
 HexagonSubtarget::HexagonSubtarget(StringRef TT, StringRef CPU, StringRef FS):
   HexagonGenSubtargetInfo(TT, CPU, FS),
-  HexagonArchVersion(V2),
   CPUString(CPU.str()) {
-  ParseSubtargetFeatures(CPU, FS);
 
-  switch(HexagonArchVersion) {
-  case HexagonSubtarget::V2:
-    break;
-  case HexagonSubtarget::V3:
-    EnableV3 = true;
-    break;
-  case HexagonSubtarget::V4:
-    break;
-  case HexagonSubtarget::V5:
-    break;
-  default:
-    // If the programmer has not specified a Hexagon version, default
-    // to -mv4.
+  // If the programmer has not specified a Hexagon version, default to -mv4.
+  if (CPUString.empty())
     CPUString = "hexagonv4";
-    HexagonArchVersion = HexagonSubtarget::V4;
-    break;
+
+  if (CPUString == "hexagonv2") {
+    HexagonArchVersion = V2;
+  } else if (CPUString == "hexagonv3") {
+    EnableV3 = true;
+    HexagonArchVersion = V3;
+  } else if (CPUString == "hexagonv4") {
+    HexagonArchVersion = V4;
+  } else if (CPUString == "hexagonv5") {
+    HexagonArchVersion = V5;
+  } else {
+    llvm_unreachable("Unrecognized Hexagon processor version");
   }
+
+  ParseSubtargetFeatures(CPUString, FS);
 
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUString);
