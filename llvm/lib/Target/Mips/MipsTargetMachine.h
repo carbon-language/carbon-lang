@@ -72,7 +72,7 @@ public:
   }
 
   virtual const MipsELFWriterInfo *getELFWriterInfo() const {
-      return &ELFWriterInfo;
+    return &ELFWriterInfo;
   }
 
   // Pass Pipeline Configuration

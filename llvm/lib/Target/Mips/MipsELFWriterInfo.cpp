@@ -1,4 +1,4 @@
-//===-- MipsELFWriterInfo.cpp - ELF Writer Info for the Mips backend --------===//
+//===-- MipsELFWriterInfo.cpp - ELF Writer Info for the Mips backend ------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -27,54 +27,54 @@ using namespace llvm;
 
 MipsELFWriterInfo::MipsELFWriterInfo(bool is64Bit_, bool isLittleEndian_)
   : TargetELFWriterInfo(is64Bit_, isLittleEndian_) {
-    EMachine = EM_MIPS;
-  }
+  EMachine = EM_MIPS;
+}
 
 MipsELFWriterInfo::~MipsELFWriterInfo() {}
 
 unsigned MipsELFWriterInfo::getRelocationType(unsigned MachineRelTy) const {
-    switch(MachineRelTy) {
-    case Mips::reloc_mips_pc16:
-      return ELF::R_MIPS_GOT16;
-    case Mips::reloc_mips_hi:
-      return ELF::R_MIPS_HI16;
-    case Mips::reloc_mips_lo:
-      return ELF::R_MIPS_LO16;
-    case Mips::reloc_mips_26:
-      return ELF::R_MIPS_26;
-    default:
-      llvm_unreachable("unknown Mips machine relocation type");
-    }
+  switch(MachineRelTy) {
+  case Mips::reloc_mips_pc16:
+    return ELF::R_MIPS_GOT16;
+  case Mips::reloc_mips_hi:
+    return ELF::R_MIPS_HI16;
+  case Mips::reloc_mips_lo:
+    return ELF::R_MIPS_LO16;
+  case Mips::reloc_mips_26:
+    return ELF::R_MIPS_26;
+  default:
+    llvm_unreachable("unknown Mips machine relocation type");
+  }
 }
 
 long int MipsELFWriterInfo::getDefaultAddendForRelTy(unsigned RelTy,
-                                                    long int Modifier) const {
-    switch(RelTy) {
-    case ELF::R_MIPS_26: return Modifier;
-    default:
-      llvm_unreachable("unknown Mips relocation type");
-    }
+                                                     long int Modifier) const {
+  switch(RelTy) {
+  case ELF::R_MIPS_26: return Modifier;
+  default:
+    llvm_unreachable("unknown Mips relocation type");
+  }
 }
 
 unsigned MipsELFWriterInfo::getRelocationTySize(unsigned RelTy) const {
-    switch(RelTy) {
-    case ELF::R_MIPS_GOT16:
-    case ELF::R_MIPS_26:
-        return 32;
-    default:
-      llvm_unreachable("unknown Mips relocation type");
-    }
+  switch(RelTy) {
+  case ELF::R_MIPS_GOT16:
+  case ELF::R_MIPS_26:
+      return 32;
+  default:
+    llvm_unreachable("unknown Mips relocation type");
+  }
 }
 
 bool MipsELFWriterInfo::isPCRelativeRel(unsigned RelTy) const {
-    switch(RelTy) {
-    case ELF::R_MIPS_GOT16:
-        return true;
-    case ELF::R_MIPS_26:
-        return false;
-    default:
-      llvm_unreachable("unknown Mips relocation type");
-    }
+  switch(RelTy) {
+  case ELF::R_MIPS_GOT16:
+      return true;
+  case ELF::R_MIPS_26:
+      return false;
+  default:
+    llvm_unreachable("unknown Mips relocation type");
+  }
 }
 
 unsigned MipsELFWriterInfo::getAbsoluteLabelMachineRelTy() const {
@@ -82,8 +82,8 @@ unsigned MipsELFWriterInfo::getAbsoluteLabelMachineRelTy() const {
 }
 
 long int MipsELFWriterInfo::computeRelocation(unsigned SymOffset,
-                                             unsigned RelOffset,
-                                             unsigned RelTy) const {
+                                              unsigned RelOffset,
+                                              unsigned RelTy) const {
 
   if (RelTy == ELF::R_MIPS_GOT16)
     return SymOffset - (RelOffset + 4);

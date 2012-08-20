@@ -307,10 +307,10 @@ void RuntimeDyldELF::resolveARMRelocation(uint8_t *LocalAddress,
 }
 
 void RuntimeDyldELF::resolveMIPSRelocation(uint8_t *LocalAddress,
-                                          uint32_t FinalAddress,
-                                          uint32_t Value,
-                                          uint32_t Type,
-                                          int32_t Addend) {
+                                           uint32_t FinalAddress,
+                                           uint32_t Value,
+                                           uint32_t Type,
+                                           int32_t Addend) {
   uint32_t* TargetPtr = (uint32_t*)LocalAddress;
   Value += Addend;
 
@@ -367,8 +367,8 @@ void RuntimeDyldELF::resolveRelocation(uint8_t *LocalAddress,
   case Triple::mips:    // Fall through.
   case Triple::mipsel:
     resolveMIPSRelocation(LocalAddress, (uint32_t)(FinalAddress & 0xffffffffL),
-                         (uint32_t)(Value & 0xffffffffL), Type,
-                         (uint32_t)(Addend & 0xffffffffL));
+                          (uint32_t)(Value & 0xffffffffL), Type,
+                          (uint32_t)(Addend & 0xffffffffL));
     break;
   default: llvm_unreachable("Unsupported CPU type!");
   }
