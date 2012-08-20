@@ -580,7 +580,15 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
       ++MBBI;
       if (MBBI == MF->end()) {
         report("MBB conditionally falls through out of function!", MBB);
-      } if (MBB->succ_size() != 2) {
+      } if (MBB->succ_size() == 1) {
+        // A conditional branch with only one successor is weird, but allowed.
+        if (&*MBBI != TBB)
+          report("MBB exits via conditional branch/fall-through but only has "
+                 "one CFG successor!", MBB);
+        else if (TBB != *MBB->succ_begin())
+          report("MBB exits via conditional branch/fall-through but the CFG "
+                 "successor don't match the actual successor!", MBB);
+      } else if (MBB->succ_size() != 2) {
         report("MBB exits via conditional branch/fall-through but doesn't have "
                "exactly two CFG successors!", MBB);
       } else if (!matchPair(MBB->succ_begin(), TBB, MBBI)) {
@@ -600,7 +608,15 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
     } else if (TBB && FBB) {
       // Block conditionally branches somewhere, otherwise branches
       // somewhere else.
-      if (MBB->succ_size() != 2) {
+      if (MBB->succ_size() == 1) {
+        // A conditional branch with only one successor is weird, but allowed.
+        if (FBB != TBB)
+          report("MBB exits via conditional branch/branch through but only has "
+                 "one CFG successor!", MBB);
+        else if (TBB != *MBB->succ_begin())
+          report("MBB exits via conditional branch/branch through but the CFG "
+                 "successor don't match the actual successor!", MBB);
+      } else if (MBB->succ_size() != 2) {
         report("MBB exits via conditional branch/branch but doesn't have "
                "exactly two CFG successors!", MBB);
       } else if (!matchPair(MBB->succ_begin(), TBB, FBB)) {

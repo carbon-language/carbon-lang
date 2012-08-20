@@ -1601,7 +1601,10 @@ void SelectionDAGBuilder::visitSwitchCase(CaseBlock &CB,
 
   // Update successor info
   addSuccessorWithWeight(SwitchBB, CB.TrueBB, CB.TrueWeight);
-  addSuccessorWithWeight(SwitchBB, CB.FalseBB, CB.FalseWeight);
+  // TrueBB and FalseBB are always different unless the incoming IR is
+  // degenerate. This only happens when running llc on weird IR.
+  if (CB.TrueBB != CB.FalseBB)
+    addSuccessorWithWeight(SwitchBB, CB.FalseBB, CB.FalseWeight);
 
   // Set NextBlock to be the MBB immediately after the current one, if any.
   // This is used to avoid emitting unnecessary branches to the next block.
