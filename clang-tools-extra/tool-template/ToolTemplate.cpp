@@ -1,4 +1,4 @@
-//===- tools/extra/ToolTemplate.cpp - Template for refactoring tool ===//
+//===---- tools/extra/ToolTemplate.cpp - Template for refactoring tool ----===//
 //
 //                     The LLVM Compiler Infrastructure
 //
