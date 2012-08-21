@@ -26,30 +26,6 @@ namespace llvm {
   /// The type parameter T determines the type of the nodes of the graph.
   template <typename T>
   class MaximumSpanningTree {
-
-    // A comparing class for comparing weighted edges.
-    template <typename CT>
-    struct EdgeWeightCompare {
-      bool operator()(typename MaximumSpanningTree<CT>::EdgeWeight X, 
-                      typename MaximumSpanningTree<CT>::EdgeWeight Y) const {
-        if (X.second > Y.second) return true;
-        if (X.second < Y.second) return false;
-        if (const BasicBlock *BBX = dyn_cast<BasicBlock>(X.first.first)) {
-          if (const BasicBlock *BBY = dyn_cast<BasicBlock>(Y.first.first)) {
-            if (BBX->size() > BBY->size()) return true;
-            if (BBX->size() < BBY->size()) return false;
-          }
-        }
-        if (const BasicBlock *BBX = dyn_cast<BasicBlock>(X.first.second)) {
-          if (const BasicBlock *BBY = dyn_cast<BasicBlock>(Y.first.second)) {
-            if (BBX->size() > BBY->size()) return true;
-            if (BBX->size() < BBY->size()) return false;
-          }
-        }
-        return false;
-      }
-    };
-
   public:
     typedef std::pair<const T*, const T*> Edge;
     typedef std::pair<Edge, double> EdgeWeight;
@@ -59,6 +35,33 @@ namespace llvm {
 
     MaxSpanTree MST;
 
+  private:
+    // A comparing class for comparing weighted edges.
+    struct EdgeWeightCompare {
+      static bool getBlockSize(const T *X) {
+        const BasicBlock *BB = dyn_cast_or_null<BasicBlock>(X);
+        return BB ? BB->size() : 0;
+      }
+
+      bool operator()(EdgeWeight X, EdgeWeight Y) const {
+        if (X.second > Y.second) return true;
+        if (X.second < Y.second) return false;
+
+        // Equal edge weights: break ties by comparing block sizes.
+        size_t XSizeA = getBlockSize(X.first.first);
+        size_t YSizeA = getBlockSize(Y.first.first);
+        if (XSizeA > YSizeA) return true;
+        if (XSizeA < YSizeA) return false;
+
+        size_t XSizeB = getBlockSize(X.first.second);
+        size_t YSizeB = getBlockSize(Y.first.second);
+        if (XSizeB > YSizeB) return true;
+        if (XSizeB < YSizeB) return false;
+
+        return false;
+      }
+    };
+
   public:
     static char ID; // Class identification, replacement for typeinfo
 
@@ -66,7 +69,7 @@ namespace llvm {
     /// spanning tree.
     MaximumSpanningTree(EdgeWeights &EdgeVector) {
 
-      std::stable_sort(EdgeVector.begin(), EdgeVector.end(), EdgeWeightCompare<T>());
+      std::stable_sort(EdgeVector.begin(), EdgeVector.end(), EdgeWeightCompare());
 
       // Create spanning tree, Forest contains a special data structure
       // that makes checking if two nodes are already in a common (sub-)tree
