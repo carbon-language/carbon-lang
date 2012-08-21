@@ -273,6 +273,10 @@ namespace macho {
     uint16_t Flags;
     uint32_t Value;
   };
+  // Despite containing a uint64_t, this structure is only 4-byte aligned within
+  // a MachO file.
+#pragma pack(push)
+#pragma pack(4)
   struct Symbol64TableEntry {
     uint32_t StringIndex;
     uint8_t Type;
@@ -280,6 +284,7 @@ namespace macho {
     uint16_t Flags;
     uint64_t Value;
   };
+#pragma pack(pop)
 
   /// @}
   /// @name Data-in-code Table Entry
