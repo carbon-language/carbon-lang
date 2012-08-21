@@ -220,6 +220,7 @@ bool CodeGenPrepare::EliminateFallThrough(Function &F) {
     BranchInst *Term = dyn_cast<BranchInst>(SinglePred->getTerminator());
     if (Term && !Term->isConditional()) {
       Changed = true;
+      DEBUG(dbgs() << "To merge:\n"<< *SinglePred << "\n\n\n");
       // Remember if SinglePred was the entry block of the function.
       // If so, we will need to move BB back to the entry position.
       bool isEntry = SinglePred == &SinglePred->getParent()->getEntryBlock();
@@ -230,7 +231,6 @@ bool CodeGenPrepare::EliminateFallThrough(Function &F) {
 
       // We have erased a block. Update the iterator.
       I = BB;
-      DEBUG(dbgs() << "Merged:\n"<< *SinglePred << "\n\n\n");
     }
   }
   return Changed;
