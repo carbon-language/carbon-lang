@@ -1454,6 +1454,14 @@ void AsmParser::DiagHandler(const SMDiagnostic &Diag, void *Context) {
     NewDiag.print(0, OS);
 }
 
+// FIXME: This is mostly duplicated from the function in AsmLexer.cpp. The
+// difference being that that function accepts '@' as part of identifiers and
+// we can't do that. AsmLexer.cpp should probably be changed to handle
+// '@' as a special case when needed.
+static bool isIdentifierChar(char c) {
+  return isalnum(c) || c == '_' || c == '$' || c == '.';
+}
+
 bool AsmParser::expandMacro(raw_svector_ostream &OS, StringRef Body,
                             const MacroParameters &Parameters,
                             const MacroArguments &A,
@@ -1518,7 +1526,7 @@ bool AsmParser::expandMacro(raw_svector_ostream &OS, StringRef Body,
       Pos += 2;
     } else {
       unsigned I = Pos + 1;
-      while (isalnum(Body[I]) && I + 1 != End)
+      while (isIdentifierChar(Body[I]) && I + 1 != End)
         ++I;
 
       const char *Begin = Body.data() + Pos +1;

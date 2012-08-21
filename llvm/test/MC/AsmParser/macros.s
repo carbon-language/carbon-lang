@@ -37,3 +37,24 @@ test3 1,2 3
 
 // CHECK: .globl	"ab)(,) -- (cd)"
 test4 a b)(,),(cd)
+
+.macro test5 _a
+.globl "\_a"
+.endm
+
+test5 zed1
+// CHECK: .globl zed1
+
+.macro test6 $a
+.globl "\$a"
+.endm
+
+test6 zed2
+// CHECK: .globl zed2
+
+.macro test7 .a
+.globl "\.a"
+.endm
+
+test7 zed3
+// CHECK: .globl zed3
