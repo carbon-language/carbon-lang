@@ -1,5 +1,5 @@
-// RUN: %clang_cc1  -fsyntax-only -verify -Weverything %s
-// RUN: %clang_cc1 -x objective-c++ -fsyntax-only -verify -Weverything %s
+// RUN: %clang_cc1  -fsyntax-only -triple x86_64-apple-darwin11 -fobjc-runtime-has-weak -verify -Weverything %s
+// RUN: %clang_cc1 -x objective-c++ -triple x86_64-apple-darwin11 -fobjc-runtime-has-weak -fsyntax-only -verify -Weverything %s
 // rdar://12103400
 
 @class NSString;
