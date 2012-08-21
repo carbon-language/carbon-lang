@@ -37,7 +37,8 @@ extern "C" {
     uptr beg;                // The address of the global.
     uptr size;               // The original size of the global.
     uptr size_with_redzone;  // The size with the redzone.
-    const char *name;          // Name as a C string.
+    const char *name;        // Name as a C string.
+    uptr has_dynamic_init;   // Non-zero if the global has dynamic initializer.
   };
 
   // These two functions should be called by the instrumented code.
