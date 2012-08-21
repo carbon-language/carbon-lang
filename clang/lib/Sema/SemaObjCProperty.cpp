@@ -102,6 +102,15 @@ static void checkARCPropertyDecl(Sema &S, ObjCPropertyDecl *property) {
     << propertyLifetime;
 }
 
+static unsigned deduceWeakPropertyFromType(Sema &S, QualType T) {
+  if ((S.getLangOpts().getGC() != LangOptions::NonGC && 
+       T.isObjCGCWeak()) ||
+      (S.getLangOpts().ObjCAutoRefCount &&
+       T.getObjCLifetime() == Qualifiers::OCL_Weak))
+    return ObjCDeclSpec::DQ_PR_weak;
+  return 0;
+}
+
 Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
                           SourceLocation LParenLoc,
                           FieldDeclarator &FD,
@@ -114,12 +123,8 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
   unsigned Attributes = ODS.getPropertyAttributes();
   TypeSourceInfo *TSI = GetTypeForDeclarator(FD.D, S);
   QualType T = TSI->getType();
-  if ((getLangOpts().getGC() != LangOptions::NonGC && 
-       T.isObjCGCWeak()) ||
-      (getLangOpts().ObjCAutoRefCount &&
-       T.getObjCLifetime() == Qualifiers::OCL_Weak))
-    Attributes |= ObjCDeclSpec::DQ_PR_weak;
-
+  Attributes |= deduceWeakPropertyFromType(*this, T);
+  
   bool isReadWrite = ((Attributes & ObjCDeclSpec::DQ_PR_readwrite) ||
                       // default is readwrite!
                       !(Attributes & ObjCDeclSpec::DQ_PR_readonly));
@@ -236,6 +241,15 @@ static bool LocPropertyAttribute( ASTContext &Context, const char *attrName,
   
 }
 
+static unsigned getMemoryModel(unsigned attr) {
+  return attr & (ObjCPropertyDecl::OBJC_PR_assign |
+                 ObjCPropertyDecl::OBJC_PR_retain |
+                 ObjCPropertyDecl::OBJC_PR_copy   |
+                 ObjCPropertyDecl::OBJC_PR_weak   |
+                 ObjCPropertyDecl::OBJC_PR_strong |
+                 ObjCPropertyDecl::OBJC_PR_unsafe_unretained);
+}
+
 Decl *
 Sema::HandlePropertyInClassExtension(Scope *S,
                                      SourceLocation AtLoc,
@@ -342,13 +356,11 @@ Sema::HandlePropertyInClassExtension(Scope *S,
   // with continuation class's readwrite property attribute!
   unsigned PIkind = PIDecl->getPropertyAttributesAsWritten();
   if (isReadWrite && (PIkind & ObjCPropertyDecl::OBJC_PR_readonly)) {
-    unsigned retainCopyNonatomic =
-    (ObjCPropertyDecl::OBJC_PR_retain |
-     ObjCPropertyDecl::OBJC_PR_strong |
-     ObjCPropertyDecl::OBJC_PR_copy |
-     ObjCPropertyDecl::OBJC_PR_nonatomic);
-    if ((Attributes & retainCopyNonatomic) !=
-        (PIkind & retainCopyNonatomic)) {
+    PIkind |= deduceWeakPropertyFromType(*this, PIDecl->getType());
+    unsigned ClassExtensionMemoryModel = getMemoryModel(Attributes);
+    unsigned PrimaryClassMemoryModel = getMemoryModel(PIkind);
+    if (PrimaryClassMemoryModel && ClassExtensionMemoryModel &&
+        (PrimaryClassMemoryModel != ClassExtensionMemoryModel)) {
       Diag(AtLoc, diag::warn_property_attr_mismatch);
       Diag(PIDecl->getLocation(), diag::note_property_declare);
     }

@@ -5,13 +5,13 @@
   id _object;
   id _object1;
 }
-@property(readonly) id object;	// expected-note {{property declared here}}
+@property(readonly) id object;
 @property(readwrite, assign) id object1; // expected-note {{property declared here}}
 @property (readonly) int indentLevel;
 @end
 
 @interface ReadOnly ()
-@property(readwrite, copy) id object;	// expected-warning {{property attribute in class extension does not match the primary class}}
+@property(readwrite, copy) id object; // Ok. declaring memory model in class extension - primary has none.
 @property(readonly) id object1; // expected-error {{illegal redeclaration of property in class extension 'ReadOnly' (attribute must be 'readwrite', while its primary must be 'readonly')}}
 @property (readwrite, assign) int indentLevel; // OK. assign the default in any case.
 @end
