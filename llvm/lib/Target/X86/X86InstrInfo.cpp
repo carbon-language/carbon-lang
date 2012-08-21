@@ -2704,19 +2704,18 @@ static unsigned CopyToFromAsymmetricReg(unsigned DestReg, unsigned SrcReg,
   // SrcReg(GR64)  -> DestReg(VR64)
 
   if (X86::GR64RegClass.contains(DestReg)) {
-    if (X86::VR128RegClass.contains(SrcReg)) {
+    if (X86::VR128RegClass.contains(SrcReg))
       // Copy from a VR128 register to a GR64 register.
       return HasAVX ? X86::VMOVPQIto64rr : X86::MOVPQIto64rr;
-    } else if (X86::VR64RegClass.contains(SrcReg)) {
+    if (X86::VR64RegClass.contains(SrcReg))
       // Copy from a VR64 register to a GR64 register.
       return X86::MOVSDto64rr;
-    }
   } else if (X86::GR64RegClass.contains(SrcReg)) {
     // Copy from a GR64 register to a VR128 register.
     if (X86::VR128RegClass.contains(DestReg))
       return HasAVX ? X86::VMOV64toPQIrr : X86::MOV64toPQIrr;
     // Copy from a GR64 register to a VR64 register.
-    else if (X86::VR64RegClass.contains(DestReg))
+    if (X86::VR64RegClass.contains(DestReg))
       return X86::MOV64toSDrr;
   }
 
@@ -2724,12 +2723,12 @@ static unsigned CopyToFromAsymmetricReg(unsigned DestReg, unsigned SrcReg,
   // SrcReg(GR32) -> DestReg(FR32)
 
   if (X86::GR32RegClass.contains(DestReg) && X86::FR32RegClass.contains(SrcReg))
-      // Copy from a FR32 register to a GR32 register.
-      return HasAVX ? X86::VMOVSS2DIrr : X86::MOVSS2DIrr;
+    // Copy from a FR32 register to a GR32 register.
+    return HasAVX ? X86::VMOVSS2DIrr : X86::MOVSS2DIrr;
 
   if (X86::FR32RegClass.contains(DestReg) && X86::GR32RegClass.contains(SrcReg))
-      // Copy from a GR32 register to a FR32 register.
-      return HasAVX ? X86::VMOVDI2SSrr : X86::MOVDI2SSrr;
+    // Copy from a GR32 register to a FR32 register.
+    return HasAVX ? X86::VMOVDI2SSrr : X86::MOVDI2SSrr;
 
   return 0;
 }
@@ -2740,7 +2739,7 @@ void X86InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                bool KillSrc) const {
   // First deal with the normal symmetric copies.
   bool HasAVX = TM.getSubtarget<X86Subtarget>().hasAVX();
-  unsigned Opc = 0;
+  unsigned Opc;
   if (X86::GR64RegClass.contains(DestReg, SrcReg))
     Opc = X86::MOV64rr;
   else if (X86::GR32RegClass.contains(DestReg, SrcReg))
@@ -2779,7 +2778,8 @@ void X86InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
       BuildMI(MBB, MI, DL, get(X86::PUSHF64));
       BuildMI(MBB, MI, DL, get(X86::POP64r), DestReg);
       return;
-    } else if (X86::GR32RegClass.contains(DestReg)) {
+    }
+    if (X86::GR32RegClass.contains(DestReg)) {
       BuildMI(MBB, MI, DL, get(X86::PUSHF32));
       BuildMI(MBB, MI, DL, get(X86::POP32r), DestReg);
       return;
@@ -2791,7 +2791,8 @@ void X86InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
         .addReg(SrcReg, getKillRegState(KillSrc));
       BuildMI(MBB, MI, DL, get(X86::POPF64));
       return;
-    } else if (X86::GR32RegClass.contains(SrcReg)) {
+    }
+    if (X86::GR32RegClass.contains(SrcReg)) {
       BuildMI(MBB, MI, DL, get(X86::PUSH32r))
         .addReg(SrcReg, getKillRegState(KillSrc));
       BuildMI(MBB, MI, DL, get(X86::POPF32));
