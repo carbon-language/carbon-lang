@@ -245,23 +245,27 @@ let Predicates = [HasFMA] in {
 
 let Constraints = "$src1 = $dst" in {
 multiclass fma3s_rm<bits<8> opc, string OpcodeStr, X86MemOperand x86memop,
-                    RegisterClass RC> {
-let neverHasSideEffects = 1 in {
-  def r : FMA3<opc, MRMSrcReg, (outs RC:$dst),
-               (ins RC:$src1, RC:$src2, RC:$src3),
-               !strconcat(OpcodeStr,
-                          "\t{$src3, $src2, $dst|$dst, $src2, $src3}"), []>;
-  let mayLoad = 1 in
-  def m : FMA3<opc, MRMSrcMem, (outs RC:$dst),
-               (ins RC:$src1, RC:$src2, x86memop:$src3),
-               !strconcat(OpcodeStr,
-                          "\t{$src3, $src2, $dst|$dst, $src2, $src3}"), []>;
-} // neverHasSideEffects = 1
+                    RegisterClass RC, ValueType OpVT, PatFrag mem_frag,
+                    SDPatternOperator OpNode = null_frag, bit MayLoad = 1> {
+  def r     : FMA3<opc, MRMSrcReg, (outs RC:$dst),
+                   (ins RC:$src1, RC:$src2, RC:$src3),
+                   !strconcat(OpcodeStr,
+                              "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+                   [(set RC:$dst,
+                     (OpVT (OpNode RC:$src2, RC:$src1, RC:$src3)))]>;
+  let mayLoad = MayLoad in
+  def m     : FMA3<opc, MRMSrcMem, (outs RC:$dst),
+                   (ins RC:$src1, RC:$src2, x86memop:$src3),
+                   !strconcat(OpcodeStr,
+                              "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+                   [(set RC:$dst,
+                     (OpVT (OpNode RC:$src2, RC:$src1,
+                            (mem_frag addr:$src3))))]>;
 }
 
 multiclass fma3s_rm_int<bits<8> opc, string OpcodeStr, Operand memop,
                         ComplexPattern mem_cpat, Intrinsic IntId,
-                        RegisterClass RC, SDNode OpNode, ValueType OpVT> {
+                        RegisterClass RC> {
   def r_Int : FMA3<opc, MRMSrcReg, (outs VR128:$dst),
                    (ins VR128:$src1, VR128:$src2, VR128:$src3),
                    !strconcat(OpcodeStr,
@@ -274,44 +278,45 @@ multiclass fma3s_rm_int<bits<8> opc, string OpcodeStr, Operand memop,
                               "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
                    [(set VR128:$dst,
                      (IntId VR128:$src2, VR128:$src1, mem_cpat:$src3))]>;
-  def r     : FMA3<opc, MRMSrcReg, (outs RC:$dst),
-                   (ins RC:$src1, RC:$src2, RC:$src3),
-                   !strconcat(OpcodeStr,
-                              "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
-                   [(set RC:$dst,
-                     (OpVT (OpNode RC:$src2, RC:$src1, RC:$src3)))]>;
-  let mayLoad = 1 in
-  def m     : FMA3<opc, MRMSrcMem, (outs RC:$dst),
-                   (ins RC:$src1, RC:$src2, memop:$src3),
-                   !strconcat(OpcodeStr,
-                              "\t{$src3, $src2, $dst|$dst, $src2, $src3}"), []>;
 }
 } // Constraints = "$src1 = $dst"
 
 multiclass fma3s_forms<bits<8> opc132, bits<8> opc213, bits<8> opc231,
-                       string OpStr, Intrinsic IntF32, Intrinsic IntF64,
-                       SDNode OpNode> {
-  defm SSr132 : fma3s_rm<opc132, !strconcat(OpStr, "132ss"), f32mem, FR32>;
-  defm SSr231 : fma3s_rm<opc231, !strconcat(OpStr, "231ss"), f32mem, FR32>;
-  defm SDr132 : fma3s_rm<opc132, !strconcat(OpStr, "132sd"), f64mem, FR64>,
-                        VEX_W;
-  defm SDr231 : fma3s_rm<opc231, !strconcat(OpStr, "231sd"), f64mem, FR64>,
-                        VEX_W;
-  defm SSr213 : fma3s_rm_int <opc213, !strconcat(OpStr, "213ss"), ssmem,
-                              sse_load_f32, IntF32, FR32, OpNode, f32>;
-  defm SDr213 : fma3s_rm_int <opc213, !strconcat(OpStr, "213sd"), sdmem,
-                              sse_load_f64, IntF64, FR64, OpNode, f64>, VEX_W;
+                       string OpStr, string PackTy, Intrinsic Int,
+                       SDNode OpNode, RegisterClass RC, ValueType OpVT,
+                       X86MemOperand x86memop, Operand memop, PatFrag mem_frag,
+                       ComplexPattern mem_cpat> {
+let neverHasSideEffects = 1 in {
+  defm r132 : fma3s_rm<opc132, !strconcat(OpStr, !strconcat("132", PackTy)),
+                       x86memop, RC, OpVT, mem_frag>;
+  defm r231 : fma3s_rm<opc231, !strconcat(OpStr, !strconcat("231", PackTy)),
+                       x86memop, RC, OpVT, mem_frag>;
 }
 
-defm VFMADD : fma3s_forms<0x99, 0xA9, 0xB9, "vfmadd", int_x86_fma_vfmadd_ss,
-                          int_x86_fma_vfmadd_sd, X86Fmadd>, VEX_LIG;
-defm VFMSUB : fma3s_forms<0x9B, 0xAB, 0xBB, "vfmsub", int_x86_fma_vfmsub_ss,
-                          int_x86_fma_vfmsub_sd, X86Fmsub>, VEX_LIG;
+defm r213 : fma3s_rm<opc213, !strconcat(OpStr, !strconcat("213", PackTy)),
+                     x86memop, RC, OpVT, mem_frag, OpNode, 0>,
+            fma3s_rm_int<opc213, !strconcat(OpStr, !strconcat("213", PackTy)),
+                         memop, mem_cpat, Int, RC>;
+}
 
-defm VFNMADD : fma3s_forms<0x9D, 0xAD, 0xBD, "vfnmadd", int_x86_fma_vfnmadd_ss,
-                           int_x86_fma_vfnmadd_sd, X86Fnmadd>, VEX_LIG;
-defm VFNMSUB : fma3s_forms<0x9F, 0xAF, 0xBF, "vfnmsub", int_x86_fma_vfnmsub_ss,
-                           int_x86_fma_vfnmsub_sd, X86Fnmsub>, VEX_LIG;
+multiclass fma3s<bits<8> opc132, bits<8> opc213, bits<8> opc231,
+                 string OpStr, Intrinsic IntF32, Intrinsic IntF64,
+                 SDNode OpNode> {
+  defm SS : fma3s_forms<opc132, opc213, opc231, OpStr, "ss", IntF32, OpNode,
+                        FR32, f32, f32mem, ssmem, loadf32, sse_load_f32>;
+  defm SD : fma3s_forms<opc132, opc213, opc231, OpStr, "sd", IntF64, OpNode,
+                        FR64, f64, f64mem, sdmem, loadf64, sse_load_f64>, VEX_W;
+}
+
+defm VFMADD : fma3s<0x99, 0xA9, 0xB9, "vfmadd", int_x86_fma_vfmadd_ss,
+                    int_x86_fma_vfmadd_sd, X86Fmadd>, VEX_LIG;
+defm VFMSUB : fma3s<0x9B, 0xAB, 0xBB, "vfmsub", int_x86_fma_vfmsub_ss,
+                    int_x86_fma_vfmsub_sd, X86Fmsub>, VEX_LIG;
+
+defm VFNMADD : fma3s<0x9D, 0xAD, 0xBD, "vfnmadd", int_x86_fma_vfnmadd_ss,
+                     int_x86_fma_vfnmadd_sd, X86Fnmadd>, VEX_LIG;
+defm VFNMSUB : fma3s<0x9F, 0xAF, 0xBF, "vfnmsub", int_x86_fma_vfnmsub_ss,
+                     int_x86_fma_vfnmsub_sd, X86Fnmsub>, VEX_LIG;
 
 
 //===----------------------------------------------------------------------===//
