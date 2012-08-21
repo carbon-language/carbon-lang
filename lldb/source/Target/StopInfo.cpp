@@ -454,12 +454,18 @@ public:
             watchpoint(w)
         {
             if (process && watchpoint)
+            {
+                watchpoint->TurnOnEphemeralMode();
                 process->DisableWatchpoint(watchpoint);
+            }
         }
         ~WatchpointSentry()
         {
             if (process && watchpoint)
+            {
                 process->EnableWatchpoint(watchpoint);
+                watchpoint->TurnOffEphemeralMode();
+            }
         }
     private:
         Process *process;
