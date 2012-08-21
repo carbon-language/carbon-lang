@@ -2718,8 +2718,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  }\n\n";
 
   OS << "  // Okay, we had no match.  Try to return a useful error code.\n";
-  OS << "  if (HadMatchOtherThanPredicate || !HadMatchOtherThanFeatures)";
-  OS << "  return RetCode;\n";
+  OS << "  if (HadMatchOtherThanPredicate || !HadMatchOtherThanFeatures)\n";
+  OS << "    return RetCode;\n\n";
   OS << "  // Missing feature matches return which features were missing\n";
   OS << "  ErrorInfo = MissingFeatures;\n";
   OS << "  return Match_MissingFeature;\n";
