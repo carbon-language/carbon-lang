@@ -89,7 +89,8 @@ public:
   MatchInstruction(SMLoc IDLoc,
                    SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                    SmallVectorImpl<MCInst> &MCInsts,
-                   unsigned &OrigErrorInfo) {
+                   unsigned &OrigErrorInfo,
+                   bool matchingInlineAsm = false) {
     OrigErrorInfo = ~0x0;
     return true;
   }
