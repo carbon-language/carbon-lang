@@ -1558,8 +1558,6 @@ bool AsmParser::ParseMacroArgument(MacroArgument &MA) {
   unsigned ParenLevel = 0;
 
   for (;;) {
-    SMLoc LastTokenLoc;
-
     if (Lexer.is(AsmToken::Eof) || Lexer.is(AsmToken::Equal))
       return TokError("unexpected token in macro instantiation");
 
