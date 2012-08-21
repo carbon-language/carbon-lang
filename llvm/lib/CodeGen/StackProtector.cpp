@@ -28,15 +28,9 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/Triple.h"
 using namespace llvm;
-
-// SSPBufferSize - The lower bound for a buffer to be considered for stack
-// smashing protection.
-static cl::opt<unsigned>
-SSPBufferSize("stack-protector-buffer-size", cl::init(8),
-              cl::desc("Lower bound for a buffer to be considered for "
-                       "stack protection"));
 
 namespace {
   class StackProtector : public FunctionPass {
@@ -111,8 +105,8 @@ bool StackProtector::runOnFunction(Function &Fn) {
 bool StackProtector::ContainsProtectableArray(Type *Ty, bool InStruct) const {
   if (!Ty) return false;
   if (ArrayType *AT = dyn_cast<ArrayType>(Ty)) {
+    const TargetMachine &TM = TLI->getTargetMachine();
     if (!AT->getElementType()->isIntegerTy(8)) {
-      const TargetMachine &TM = TLI->getTargetMachine();
       Triple Trip(TM.getTargetTriple());
 
       // If we're on a non-Darwin platform or we're inside of a structure, don't
@@ -123,7 +117,7 @@ bool StackProtector::ContainsProtectableArray(Type *Ty, bool InStruct) const {
 
     // If an array has more than SSPBufferSize bytes of allocated space, then we
     // emit stack protectors.
-    if (SSPBufferSize <= TLI->getTargetData()->getTypeAllocSize(AT))
+    if (TM.Options.SSPBufferSize <= TLI->getTargetData()->getTypeAllocSize(AT))
       return true;
   }
 

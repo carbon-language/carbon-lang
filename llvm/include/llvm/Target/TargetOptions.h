@@ -155,6 +155,10 @@ namespace llvm {
     /// automatically realigned, if needed.
     unsigned RealignStack : 1;
 
+    /// SSPBufferSize - The minimum size of buffers that will receive stack
+    /// smashing protection when -fstack-protection is used.
+    unsigned SSPBufferSize;
+
     /// EnableFastISel - This flag enables fast-path instruction selection
     /// which trades away generated code quality in favor of reducing
     /// compile time.
