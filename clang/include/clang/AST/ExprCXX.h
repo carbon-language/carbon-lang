@@ -1281,9 +1281,9 @@ private:
   
   /// \brief Retrieve the complete set of array-index variables.
   VarDecl **getArrayIndexVars() const {
-    unsigned ArrayIndexSize = sizeof(unsigned) * (NumCaptures + 1);
-    unsigned Align = llvm::alignOf<VarDecl*>();
-    ArrayIndexSize = (ArrayIndexSize + Align - 1) & ~(Align - 1);
+    unsigned ArrayIndexSize =
+        llvm::RoundUpToAlignment(sizeof(unsigned) * (NumCaptures + 1),
+                                 llvm::alignOf<VarDecl*>());
     return reinterpret_cast<VarDecl **>(
         reinterpret_cast<char*>(getArrayIndexStarts()) + ArrayIndexSize);
   }

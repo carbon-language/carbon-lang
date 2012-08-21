@@ -65,8 +65,7 @@ inline void Emit64(raw_ostream& Out, uint64_t V) {
 
 inline void Pad(raw_ostream& Out, unsigned A) {
   Offset off = (Offset) Out.tell();
-  uint32_t n = ((uintptr_t)(off+A-1) & ~(uintptr_t)(A-1)) - off;
-  for (; n ; --n)
+  for (uint32_t n = llvm::OffsetToAlignment(off, A); n; --n)
     Emit8(Out, 0);
 }
 

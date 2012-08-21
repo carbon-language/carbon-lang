@@ -880,8 +880,7 @@ LambdaExpr *LambdaExpr::Create(ASTContext &Context,
   if (!ArrayIndexVars.empty()) {
     Size += sizeof(unsigned) * (Captures.size() + 1);
     // Realign for following VarDecl array.
-    unsigned Align = llvm::alignOf<VarDecl*>();
-    Size = (Size + Align - 1) & ~(Align - 1);
+    Size = llvm::RoundUpToAlignment(Size, llvm::alignOf<VarDecl*>());
     Size += sizeof(VarDecl *) * ArrayIndexVars.size();
   }
   void *Mem = Context.Allocate(Size);
