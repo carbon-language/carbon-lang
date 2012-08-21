@@ -375,6 +375,7 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
   Options.DisableTailCalls = CodeGenOpts.DisableTailCalls;
   Options.TrapFuncName = CodeGenOpts.TrapFuncName;
   Options.PositionIndependentExecutable = LangOpts.PIELevel != 0;
+  Options.SSPBufferSize = CodeGenOpts.SSPBufferSize;
 
   TargetMachine *TM = TheTarget->createTargetMachine(Triple, TargetOpts.CPU,
                                                      FeaturesStr, Options,

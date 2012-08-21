@@ -185,6 +185,9 @@ public:
   /// The run-time penalty for bounds checking, or 0 to disable.
   unsigned char BoundsChecking;
 
+  /// The lower bound for a buffer to be considered for stack protection.
+  unsigned SSPBufferSize;
+
   /// The default TLS model to use.
   TLSModel DefaultTLSModel;
 
@@ -241,6 +244,7 @@ public:
     StackRealignment = 0;
     StackAlignment = 0;
     BoundsChecking = 0;
+    SSPBufferSize = 8;
     UseInitArray = 0;
 
     DebugInfo = NoDebugInfo;

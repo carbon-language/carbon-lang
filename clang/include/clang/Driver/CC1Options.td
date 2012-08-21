@@ -415,6 +415,8 @@ def static_define : Flag<"-static-define">,
   HelpText<"Should __STATIC__ be defined">;
 def stack_protector : Separate<"-stack-protector">,
   HelpText<"Enable stack protectors">;
+def stack_protector_buffer_size : Separate<"-stack-protector-buffer-size">,
+  HelpText<"Lower bound for a buffer to be considered for stack protection">;
 def fvisibility : Separate<"-fvisibility">,
   HelpText<"Default symbol visibility">;
 def ftemplate_depth : Separate<"-ftemplate-depth">,
