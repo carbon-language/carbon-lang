@@ -446,6 +446,26 @@ public:
         return m_should_stop;
     }
     
+    // Make sure watchpoint is properly disabled and subsequently enabled while performing watchpoint actions.
+    class WatchpointSentry {
+    public:
+        WatchpointSentry(Process *p, Watchpoint *w):
+            process(p),
+            watchpoint(w)
+        {
+            if (process && watchpoint)
+                process->DisableWatchpoint(watchpoint);
+        }
+        ~WatchpointSentry()
+        {
+            if (process && watchpoint)
+                process->EnableWatchpoint(watchpoint);
+        }
+    private:
+        Process *process;
+        Watchpoint *watchpoint;
+    };
+
     // Perform any action that is associated with this stop.  This is done as the
     // Event is removed from the event queue.
     virtual void
@@ -462,6 +482,9 @@ public:
         {
             ExecutionContext exe_ctx (m_thread.GetStackFrameAtIndex(0));
             Process* process = exe_ctx.GetProcessPtr();
+
+            WatchpointSentry sentry(process, wp_sp.get());
+
             {
                 // check if this process is running on an architecture where watchpoints trigger
 				// before the associated instruction runs. if so, disable the WP, single-step and then

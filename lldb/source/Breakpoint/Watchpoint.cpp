@@ -313,7 +313,9 @@ Watchpoint::SetEnabled(bool enabled)
     if (!enabled)
     {
         SetHardwareIndex(LLDB_INVALID_INDEX32);
-        ClearSnapshots();
+        // Don't clear the snapshots for now.
+        // Within StopInfo.cpp, we purposely do disable/enable watchpoint while performing watchpoint actions.
+        //ClearSnapshots();
     }
     m_enabled = enabled;
 }
