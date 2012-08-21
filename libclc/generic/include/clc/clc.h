@@ -53,6 +53,7 @@
 #include <clc/math/native_log2.h>
 #include <clc/math/native_sin.h>
 #include <clc/math/native_sqrt.h>
+#include <clc/math/rsqrt.h>
 
 /* 6.11.3 Integer Functions */
 #include <clc/integer/abs.h>
