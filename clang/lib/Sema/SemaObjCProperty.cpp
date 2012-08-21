@@ -241,7 +241,7 @@ static bool LocPropertyAttribute( ASTContext &Context, const char *attrName,
   
 }
 
-static unsigned getMemoryModel(unsigned attr) {
+static unsigned getOwnershipRule(unsigned attr) {
   return attr & (ObjCPropertyDecl::OBJC_PR_assign |
                  ObjCPropertyDecl::OBJC_PR_retain |
                  ObjCPropertyDecl::OBJC_PR_copy   |
@@ -357,8 +357,8 @@ Sema::HandlePropertyInClassExtension(Scope *S,
   unsigned PIkind = PIDecl->getPropertyAttributesAsWritten();
   if (isReadWrite && (PIkind & ObjCPropertyDecl::OBJC_PR_readonly)) {
     PIkind |= deduceWeakPropertyFromType(*this, PIDecl->getType());
-    unsigned ClassExtensionMemoryModel = getMemoryModel(Attributes);
-    unsigned PrimaryClassMemoryModel = getMemoryModel(PIkind);
+    unsigned ClassExtensionMemoryModel = getOwnershipRule(Attributes);
+    unsigned PrimaryClassMemoryModel = getOwnershipRule(PIkind);
     if (PrimaryClassMemoryModel && ClassExtensionMemoryModel &&
         (PrimaryClassMemoryModel != ClassExtensionMemoryModel)) {
       Diag(AtLoc, diag::warn_property_attr_mismatch);
