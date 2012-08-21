@@ -589,8 +589,10 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
     assert (!HadError && "Unexpected error parsing instruction");
 
     // Match the MCInstr.
+    unsigned ErrorInfo;
     SmallVector<llvm::MCInst, 2> Instrs;
-    HadError = TargetParser->MatchInstruction(IDLoc, Operands, Instrs);
+    HadError = TargetParser->MatchInstruction(IDLoc, Operands, Instrs,
+                                              ErrorInfo);
     assert (!HadError && "Unexpected error matching instruction");
     assert ((Instrs.size() == 1) && "Expected only a single instruction.");
 
