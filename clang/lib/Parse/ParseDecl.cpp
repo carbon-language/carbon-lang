@@ -4351,7 +4351,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     D.SetIdentifier(0, Tok.getLocation());
   } else {
     if (Tok.getKind() == tok::annot_pragma_parser_crash)
-      *(volatile int*) 0x11 = 0;
+      LLVM_BUILTIN_TRAP;
     if (D.getContext() == Declarator::MemberContext)
       Diag(Tok, diag::err_expected_member_name_or_semi)
         << D.getDeclSpec().getSourceRange();

@@ -1009,7 +1009,7 @@ struct PragmaDebugHandler : public PragmaHandler {
     if (II->isStr("assert")) {
       llvm_unreachable("This is an assertion!");
     } else if (II->isStr("crash")) {
-      *(volatile int*) 0x11 = 0;
+      LLVM_BUILTIN_TRAP;
     } else if (II->isStr("parser_crash")) {
       Token Crasher;
       Crasher.setKind(tok::annot_pragma_parser_crash);
