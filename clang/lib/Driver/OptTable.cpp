@@ -129,38 +129,16 @@ OptTable::~OptTable() {
   delete[] Options;
 }
 
+bool OptTable::isOptionHelpHidden(OptSpecifier id) const {
+  return getInfo(id).Flags & options::HelpHidden;
+}
+
 Option *OptTable::CreateOption(unsigned id) const {
   const Info &info = getInfo(id);
   const Option *Group = getOption(info.GroupID);
   const Option *Alias = getOption(info.AliasID);
 
-  Option *Opt = new Option(Option::OptionClass(info.Kind),
-                           id, info.Name, Group, Alias, info.Param);
-
-  if (info.Flags & DriverOption)
-    Opt->setDriverOption(true);
-  if (info.Flags & LinkerInput)
-    Opt->setLinkerInput(true);
-  if (info.Flags & NoArgumentUnused)
-    Opt->setNoArgumentUnused(true);
-  if (info.Flags & NoForward)
-    Opt->setNoForward(true);
-  if (info.Flags & RenderAsInput)
-    Opt->setNoOptAsInput(true);
-  if (info.Flags & RenderJoined) {
-    assert((info.Kind == Option::JoinedOrSeparateClass ||
-            info.Kind == Option::SeparateClass) && "Invalid option.");
-    Opt->setRenderStyle(Option::RenderJoinedStyle);
-  }
-  if (info.Flags & RenderSeparate) {
-    assert((info.Kind == Option::JoinedOrSeparateClass ||
-            info.Kind == Option::JoinedClass) && "Invalid option.");
-    Opt->setRenderStyle(Option::RenderSeparateStyle);
-  }
-  if (info.Flags & Unsupported)
-    Opt->setUnsupported(true);
-  if (info.Flags & CC1Option)
-    Opt->setIsCC1Option(true);
+  Option *Opt = new Option(&info, id, Group, Alias);
 
   return Opt;
 }

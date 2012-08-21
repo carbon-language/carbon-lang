@@ -17,42 +17,15 @@
 #include <algorithm>
 using namespace clang::driver;
 
-Option::Option(OptionClass _Kind, OptSpecifier _ID, const char *_Name,
-               const Option *_Group, const Option *_Alias, unsigned Args)
-  : Kind(_Kind), ID(_ID.getID()), Name(_Name), Group(_Group), Alias(_Alias),
-    NumArgs(Args), Unsupported(false), LinkerInput(false), NoOptAsInput(false),
-    DriverOption(false), NoArgumentUnused(false), NoForward(false) {
+Option::Option(const OptTable::Info *info, OptSpecifier _ID,
+               const Option *_Group, const Option *_Alias)
+  : Info(info), ID(_ID.getID()), Group(_Group), Alias(_Alias) {
 
   // Multi-level aliases are not supported, and alias options cannot
   // have groups. This just simplifies option tracking, it is not an
   // inherent limitation.
   assert((!Alias || (!Alias->Alias && !Group)) &&
          "Multi-level aliases and aliases with groups are unsupported.");
-
-  // Initialize rendering options based on the class.
-  switch (Kind) {
-  case GroupClass:
-  case InputClass:
-  case UnknownClass:
-    RenderStyle = RenderValuesStyle;
-    break;
-
-  case JoinedClass:
-  case JoinedAndSeparateClass:
-    RenderStyle = RenderJoinedStyle;
-    break;
-
-  case CommaJoinedClass:
-    RenderStyle = RenderCommaJoinedStyle;
-    break;
-
-  case FlagClass:
-  case SeparateClass:
-  case MultiArgClass:
-  case JoinedOrSeparateClass:
-    RenderStyle = RenderSeparateStyle;
-    break;
-  }
 }
 
 Option::~Option() {
@@ -60,7 +33,7 @@ Option::~Option() {
 
 void Option::dump() const {
   llvm::errs() << "<";
-  switch (Kind) {
+  switch (getKind()) {
 #define P(N) case N: llvm::errs() << #N; break
     P(GroupClass);
     P(InputClass);
@@ -75,7 +48,7 @@ void Option::dump() const {
 #undef P
   }
 
-  llvm::errs() << " Name:\"" << Name << '"';
+  llvm::errs() << " Name:\"" << getName() << '"';
 
   if (Group) {
     llvm::errs() << " Group:";
@@ -87,8 +60,8 @@ void Option::dump() const {
     Alias->dump();
   }
 
-  if (Kind == MultiArgClass)
-    llvm::errs() << " NumArgs:" << NumArgs;
+  if (getKind() == MultiArgClass)
+    llvm::errs() << " NumArgs:" << getNumArgs();
 
   llvm::errs() << ">\n";
 }
@@ -108,7 +81,7 @@ bool Option::matches(OptSpecifier Opt) const {
 }
 
 Arg *Option::accept(const ArgList &Args, unsigned &Index) const {
-  switch (Kind) {
+  switch (getKind()) {
   case FlagClass:
     if (getName().size() != strlen(Args.getArgString(Index)))
       return 0;
@@ -164,14 +137,14 @@ Arg *Option::accept(const ArgList &Args, unsigned &Index) const {
     if (getName().size() != strlen(Args.getArgString(Index)))
       return 0;
 
-    Index += 1 + NumArgs;
+    Index += 1 + getNumArgs();
     if (Index > Args.getNumInputArgStrings())
       return 0;
 
-    Arg *A = new Arg(getUnaliasedOption(), Index - 1 - NumArgs,
-                      Args.getArgString(Index - NumArgs));
-    for (unsigned i = 1; i != NumArgs; ++i)
-      A->getValues().push_back(Args.getArgString(Index - NumArgs + i));
+    Arg *A = new Arg(getUnaliasedOption(), Index - 1 - getNumArgs(),
+                      Args.getArgString(Index - getNumArgs()));
+    for (unsigned i = 1; i != getNumArgs(); ++i)
+      A->getValues().push_back(Args.getArgString(Index - getNumArgs() + i));
     return A;
   }
   case JoinedOrSeparateClass: {

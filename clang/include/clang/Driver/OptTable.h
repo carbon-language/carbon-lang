@@ -15,21 +15,6 @@
 
 namespace clang {
 namespace driver {
-namespace options {
-  enum DriverFlag {
-    DriverOption     = (1 << 0),
-    HelpHidden       = (1 << 1),
-    LinkerInput      = (1 << 2),
-    NoArgumentUnused = (1 << 3),
-    NoForward        = (1 << 4),
-    RenderAsInput    = (1 << 5),
-    RenderJoined     = (1 << 6),
-    RenderSeparate   = (1 << 7),
-    Unsupported      = (1 << 8),
-    CC1Option        = (1 << 9)
-  };
-}
-
   class Arg;
   class ArgList;
   class InputArgList;
@@ -123,9 +108,7 @@ namespace options {
     }
 
     /// \brief Should the help for the given option be hidden by default.
-    bool isOptionHelpHidden(OptSpecifier id) const {
-      return getInfo(id).Flags & options::HelpHidden;
-    }
+    bool isOptionHelpHidden(OptSpecifier id) const;
 
     /// \brief Get the help text to use to describe this option.
     const char *getOptionHelpText(OptSpecifier id) const {
