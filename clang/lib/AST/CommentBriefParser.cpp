@@ -15,6 +15,11 @@ namespace clang {
 namespace comments {
 
 namespace {
+inline bool isWhitespace(char C) {
+  return C == ' ' || C == '\n' || C == '\r' ||
+         C == '\t' || C == '\f' || C == '\v';
+}
+
 /// Convert all whitespace into spaces, remove leading and trailing spaces,
 /// compress multiple spaces into one.
 void cleanupBrief(std::string &S) {
@@ -23,8 +28,7 @@ void cleanupBrief(std::string &S) {
   for (std::string::iterator I = S.begin(), E = S.end();
        I != E; ++I) {
     const char C = *I;
-    if (C == ' ' || C == '\n' || C == '\r' ||
-        C == '\t' || C == '\v' || C == '\f') {
+    if (isWhitespace(C)) {
       if (!PrevWasSpace) {
         *O++ = ' ';
         PrevWasSpace = true;
@@ -39,6 +43,15 @@ void cleanupBrief(std::string &S) {
     --O;
 
   S.resize(O - S.begin());
+}
+
+bool isWhitespace(StringRef Text) {
+  for (StringRef::const_iterator I = Text.begin(), E = Text.end();
+       I != E; ++I) {
+    if (!isWhitespace(*I))
+      return false;
+  }
+  return true;
 }
 } // unnamed namespace
 
@@ -75,7 +88,11 @@ std::string BriefParser::Parse() {
       }
       if (Traits.isReturnsCommand(Name)) {
         InReturns = true;
+        InBrief = false;
+        InFirstParagraph = false;
         ReturnsParagraph += "Returns ";
+        ConsumeToken();
+        continue;
       }
       // Block commands implicitly start a new paragraph.
       if (Traits.isBlockCommand(Name)) {
@@ -93,13 +110,29 @@ std::string BriefParser::Parse() {
         ReturnsParagraph += ' ';
       ConsumeToken();
 
+      // If the next token is a whitespace only text, ignore it.  Thus we allow
+      // two paragraphs to be separated by line that has only whitespace in it.
+      //
+      // We don't need to add a space to the parsed text because we just added
+      // a space for the newline.
+      if (Tok.is(tok::text)) {
+        if (isWhitespace(Tok.getText()))
+          ConsumeToken();
+      }
+
       if (Tok.is(tok::newline)) {
         ConsumeToken();
-        // We found a paragraph end.
-        InFirstParagraph = false;
-        InReturns = false;
+        // We found a paragraph end.  This ends the brief description if
+        // \\brief command or its equivalent was explicitly used.
+        // Stop scanning text because an explicit \\brief paragraph is the
+        // preffered one.
         if (InBrief)
           break;
+        // End first paragraph if we found some non-whitespace text.
+        if (InFirstParagraph && !isWhitespace(FirstParagraphOrBrief))
+          InFirstParagraph = false;
+        // End the \\returns paragraph because we found the paragraph end.
+        InReturns = false;
       }
       continue;
     }
