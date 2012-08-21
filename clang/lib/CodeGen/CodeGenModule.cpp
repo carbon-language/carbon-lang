@@ -1682,6 +1682,18 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   if (NeedsGlobalCtor || NeedsGlobalDtor)
     EmitCXXGlobalVarDeclInitFunc(D, GV, NeedsGlobalCtor);
 
+  // If we are compiling with ASan, add metadata indicating dynamically
+  // initialized globals.
+  if (LangOpts.AddressSanitizer && NeedsGlobalCtor) {
+    llvm::Module &M = getModule();
+
+    llvm::NamedMDNode *DynamicInitializers =
+        M.getOrInsertNamedMetadata("llvm.asan.dynamically_initialized_globals");
+    llvm::Value *GlobalToAdd[] = { GV };
+    llvm::MDNode *ThisGlobal = llvm::MDNode::get(VMContext, GlobalToAdd);
+    DynamicInitializers->addOperand(ThisGlobal);
+  }
+
   // Emit global variable debug information.
   if (CGDebugInfo *DI = getModuleDebugInfo())
     if (getCodeGenOpts().DebugInfo >= CodeGenOptions::LimitedDebugInfo)
