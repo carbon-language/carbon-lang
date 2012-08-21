@@ -532,6 +532,15 @@ uintptr_t X86JITInfo::getPICJumpTableEntry(uintptr_t BB, uintptr_t Entry) {
 #endif
 }
 
+template<typename T> void addUnaligned(void *Pos, T Delta) {
+  T Value;
+  std::memcpy(reinterpret_cast<char*>(&Value), reinterpret_cast<char*>(Pos),
+              sizeof(T));
+  Value += Delta;
+  std::memcpy(reinterpret_cast<char*>(Pos), reinterpret_cast<char*>(&Value),
+              sizeof(T));
+}
+
 /// relocate - Before the JIT can run a block of code that has been emitted,
 /// it must rewrite the code to contain the actual addresses of any
 /// referenced global symbols.
@@ -545,24 +554,24 @@ void X86JITInfo::relocate(void *Function, MachineRelocation *MR,
       // PC relative relocation, add the relocated value to the value already in
       // memory, after we adjust it for where the PC is.
       ResultPtr = ResultPtr -(intptr_t)RelocPos - 4 - MR->getConstantVal();
-      *((unsigned*)RelocPos) += (unsigned)ResultPtr;
+      addUnaligned<unsigned>(RelocPos, ResultPtr);
       break;
     }
     case X86::reloc_picrel_word: {
       // PIC base relative relocation, add the relocated value to the value
       // already in memory, after we adjust it for where the PIC base is.
       ResultPtr = ResultPtr - ((intptr_t)Function + MR->getConstantVal());
-      *((unsigned*)RelocPos) += (unsigned)ResultPtr;
+      addUnaligned<unsigned>(RelocPos, ResultPtr);
       break;
     }
     case X86::reloc_absolute_word:
     case X86::reloc_absolute_word_sext:
       // Absolute relocation, just add the relocated value to the value already
       // in memory.
-      *((unsigned*)RelocPos) += (unsigned)ResultPtr;
+      addUnaligned<unsigned>(RelocPos, ResultPtr);
       break;
     case X86::reloc_absolute_dword:
-      *((intptr_t*)RelocPos) += ResultPtr;
+      addUnaligned<intptr_t>(RelocPos, ResultPtr);
       break;
     }
   }
