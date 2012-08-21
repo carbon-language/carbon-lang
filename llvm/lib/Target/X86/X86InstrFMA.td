@@ -16,60 +16,39 @@
 //===----------------------------------------------------------------------===//
 
 let Constraints = "$src1 = $dst" in {
-multiclass fma3p_rm<bits<8> opc, string OpcodeStr> {
-let neverHasSideEffects = 1 in {
-  def r : FMA3<opc, MRMSrcReg, (outs VR128:$dst),
-               (ins VR128:$src1, VR128:$src2, VR128:$src3),
-               !strconcat(OpcodeStr,
-                          "\t{$src3, $src2, $dst|$dst, $src2, $src3}"), []>;
-  let mayLoad = 1 in
-  def m : FMA3<opc, MRMSrcMem, (outs VR128:$dst),
-               (ins VR128:$src1, VR128:$src2, f128mem:$src3),
-               !strconcat(OpcodeStr,
-                          "\t{$src3, $src2, $dst|$dst, $src2, $src3}"), []>;
-  def rY : FMA3<opc, MRMSrcReg, (outs VR256:$dst),
-                (ins VR256:$src1, VR256:$src2, VR256:$src3),
-                !strconcat(OpcodeStr,
-                           "\t{$src3, $src2, $dst|$dst, $src2, $src3}"), []>;
-  let mayLoad = 1 in
-  def mY : FMA3<opc, MRMSrcMem, (outs VR256:$dst),
-                (ins VR256:$src1, VR256:$src2, f256mem:$src3),
-                !strconcat(OpcodeStr,
-                           "\t{$src3, $src2, $dst|$dst, $src2, $src3}"), []>;
-} // neverHasSideEffects = 1
-}
-
-// Intrinsic for 213 pattern
-multiclass fma3p_rm_int<bits<8> opc, string OpcodeStr,
-                        PatFrag MemFrag128, PatFrag MemFrag256,
-                        SDNode Op213, ValueType OpVT128, ValueType OpVT256> {
+multiclass fma3p_rm<bits<8> opc, string OpcodeStr,
+                    PatFrag MemFrag128, PatFrag MemFrag256,
+                    ValueType OpVT128, ValueType OpVT256,
+                    SDPatternOperator Op = null_frag, bit MayLoad = 1> {
   def r     : FMA3<opc, MRMSrcReg, (outs VR128:$dst),
                    (ins VR128:$src1, VR128:$src2, VR128:$src3),
                    !strconcat(OpcodeStr,
                               "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
-                   [(set VR128:$dst, (OpVT128 (Op213 VR128:$src2,
+                   [(set VR128:$dst, (OpVT128 (Op VR128:$src2,
                                                VR128:$src1, VR128:$src3)))]>;
 
+  let mayLoad = MayLoad in
   def m     : FMA3<opc, MRMSrcMem, (outs VR128:$dst),
                    (ins VR128:$src1, VR128:$src2, f128mem:$src3),
                    !strconcat(OpcodeStr,
                               "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
-                   [(set VR128:$dst, (OpVT128 (Op213 VR128:$src2, VR128:$src1,
+                   [(set VR128:$dst, (OpVT128 (Op VR128:$src2, VR128:$src1,
                                                (MemFrag128 addr:$src3))))]>;
 
   def rY    : FMA3<opc, MRMSrcReg, (outs VR256:$dst),
                    (ins VR256:$src1, VR256:$src2, VR256:$src3),
                    !strconcat(OpcodeStr,
                               "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
-                   [(set VR256:$dst, (OpVT256 (Op213 VR256:$src2, VR256:$src1,
+                   [(set VR256:$dst, (OpVT256 (Op VR256:$src2, VR256:$src1,
                                                VR256:$src3)))]>;
 
+  let mayLoad = MayLoad in
   def mY    : FMA3<opc, MRMSrcMem, (outs VR256:$dst),
                    (ins VR256:$src1, VR256:$src2, f256mem:$src3),
                    !strconcat(OpcodeStr,
                               "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
                    [(set VR256:$dst,
-                     (OpVT256 (Op213 VR256:$src2, VR256:$src1,
+                     (OpVT256 (Op VR256:$src2, VR256:$src1,
                                (MemFrag256 addr:$src3))))]>;
 }
 } // Constraints = "$src1 = $dst"
@@ -78,13 +57,17 @@ multiclass fma3p_forms<bits<8> opc132, bits<8> opc213, bits<8> opc231,
                        string OpcodeStr, string PackTy,
                        PatFrag MemFrag128, PatFrag MemFrag256,
                        SDNode Op, ValueType OpTy128, ValueType OpTy256> {
-  defm r213 : fma3p_rm_int <opc213, !strconcat(OpcodeStr,
-                            !strconcat("213", PackTy)), MemFrag128, MemFrag256,
-                            Op, OpTy128, OpTy256>;
-  defm r132 : fma3p_rm <opc132,
-                        !strconcat(OpcodeStr, !strconcat("132", PackTy))>;
-  defm r231 : fma3p_rm <opc231,
-                        !strconcat(OpcodeStr, !strconcat("231", PackTy))>;
+  defm r213 : fma3p_rm<opc213,
+                       !strconcat(OpcodeStr, !strconcat("213", PackTy)),
+                       MemFrag128, MemFrag256, OpTy128, OpTy256, Op, 0>;
+let neverHasSideEffects = 1 in {
+  defm r132 : fma3p_rm<opc132,
+                       !strconcat(OpcodeStr, !strconcat("132", PackTy)),
+                       MemFrag128, MemFrag256, OpTy128, OpTy256>;
+  defm r231 : fma3p_rm<opc231,
+                       !strconcat(OpcodeStr, !strconcat("231", PackTy)),
+                       MemFrag128, MemFrag256, OpTy128, OpTy256>;
+} // neverHasSideEffects = 1
 }
 
 // Fused Multiply-Add
