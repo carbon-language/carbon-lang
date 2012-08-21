@@ -155,6 +155,7 @@ public:
   }
 
   void EmitVBR(uint32_t Val, unsigned NumBits) {
+    assert(NumBits <= 32 && "Too many bits to emit!");
     uint32_t Threshold = 1U << (NumBits-1);
 
     // Emit the bits with VBR encoding, NumBits-1 bits at a time.
@@ -167,10 +168,11 @@ public:
   }
 
   void EmitVBR64(uint64_t Val, unsigned NumBits) {
+    assert(NumBits <= 32 && "Too many bits to emit!");
     if ((uint32_t)Val == Val)
       return EmitVBR((uint32_t)Val, NumBits);
 
-    uint64_t Threshold = 1U << (NumBits-1);
+    uint64_t Threshold = uint64_t(1U << (NumBits-1));
 
     // Emit the bits with VBR encoding, NumBits-1 bits at a time.
     while (Val >= Threshold) {
