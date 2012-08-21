@@ -2096,57 +2096,25 @@ X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
     MI->getOperand(3).setImm(Size-Amt);
     return TargetInstrInfoImpl::commuteInstruction(MI, NewMI);
   }
-  case X86::CMOVB16rr:
-  case X86::CMOVB32rr:
-  case X86::CMOVB64rr:
-  case X86::CMOVAE16rr:
-  case X86::CMOVAE32rr:
-  case X86::CMOVAE64rr:
-  case X86::CMOVE16rr:
-  case X86::CMOVE32rr:
-  case X86::CMOVE64rr:
-  case X86::CMOVNE16rr:
-  case X86::CMOVNE32rr:
-  case X86::CMOVNE64rr:
-  case X86::CMOVBE16rr:
-  case X86::CMOVBE32rr:
-  case X86::CMOVBE64rr:
-  case X86::CMOVA16rr:
-  case X86::CMOVA32rr:
-  case X86::CMOVA64rr:
-  case X86::CMOVL16rr:
-  case X86::CMOVL32rr:
-  case X86::CMOVL64rr:
-  case X86::CMOVGE16rr:
-  case X86::CMOVGE32rr:
-  case X86::CMOVGE64rr:
-  case X86::CMOVLE16rr:
-  case X86::CMOVLE32rr:
-  case X86::CMOVLE64rr:
-  case X86::CMOVG16rr:
-  case X86::CMOVG32rr:
-  case X86::CMOVG64rr:
-  case X86::CMOVS16rr:
-  case X86::CMOVS32rr:
-  case X86::CMOVS64rr:
-  case X86::CMOVNS16rr:
-  case X86::CMOVNS32rr:
-  case X86::CMOVNS64rr:
-  case X86::CMOVP16rr:
-  case X86::CMOVP32rr:
-  case X86::CMOVP64rr:
-  case X86::CMOVNP16rr:
-  case X86::CMOVNP32rr:
-  case X86::CMOVNP64rr:
-  case X86::CMOVO16rr:
-  case X86::CMOVO32rr:
-  case X86::CMOVO64rr:
-  case X86::CMOVNO16rr:
-  case X86::CMOVNO32rr:
-  case X86::CMOVNO64rr: {
-    unsigned Opc = 0;
+  case X86::CMOVB16rr:  case X86::CMOVB32rr:  case X86::CMOVB64rr:
+  case X86::CMOVAE16rr: case X86::CMOVAE32rr: case X86::CMOVAE64rr:
+  case X86::CMOVE16rr:  case X86::CMOVE32rr:  case X86::CMOVE64rr:
+  case X86::CMOVNE16rr: case X86::CMOVNE32rr: case X86::CMOVNE64rr:
+  case X86::CMOVBE16rr: case X86::CMOVBE32rr: case X86::CMOVBE64rr:
+  case X86::CMOVA16rr:  case X86::CMOVA32rr:  case X86::CMOVA64rr:
+  case X86::CMOVL16rr:  case X86::CMOVL32rr:  case X86::CMOVL64rr:
+  case X86::CMOVGE16rr: case X86::CMOVGE32rr: case X86::CMOVGE64rr:
+  case X86::CMOVLE16rr: case X86::CMOVLE32rr: case X86::CMOVLE64rr:
+  case X86::CMOVG16rr:  case X86::CMOVG32rr:  case X86::CMOVG64rr:
+  case X86::CMOVS16rr:  case X86::CMOVS32rr:  case X86::CMOVS64rr:
+  case X86::CMOVNS16rr: case X86::CMOVNS32rr: case X86::CMOVNS64rr:
+  case X86::CMOVP16rr:  case X86::CMOVP32rr:  case X86::CMOVP64rr:
+  case X86::CMOVNP16rr: case X86::CMOVNP32rr: case X86::CMOVNP64rr:
+  case X86::CMOVO16rr:  case X86::CMOVO32rr:  case X86::CMOVO64rr:
+  case X86::CMOVNO16rr: case X86::CMOVNO32rr: case X86::CMOVNO64rr: {
+    unsigned Opc;
     switch (MI->getOpcode()) {
-    default: break;
+    default: llvm_unreachable("Unreachable!");
     case X86::CMOVB16rr:  Opc = X86::CMOVAE16rr; break;
     case X86::CMOVB32rr:  Opc = X86::CMOVAE32rr; break;
     case X86::CMOVB64rr:  Opc = X86::CMOVAE64rr; break;
