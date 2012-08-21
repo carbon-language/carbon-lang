@@ -1458,69 +1458,69 @@ X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI,
                                                 AliasAnalysis *AA) const {
   switch (MI->getOpcode()) {
   default: break;
-    case X86::MOV8rm:
-    case X86::MOV16rm:
-    case X86::MOV32rm:
-    case X86::MOV64rm:
-    case X86::LD_Fp64m:
-    case X86::MOVSSrm:
-    case X86::MOVSDrm:
-    case X86::MOVAPSrm:
-    case X86::MOVUPSrm:
-    case X86::MOVAPDrm:
-    case X86::MOVDQArm:
-    case X86::VMOVSSrm:
-    case X86::VMOVSDrm:
-    case X86::VMOVAPSrm:
-    case X86::VMOVUPSrm:
-    case X86::VMOVAPDrm:
-    case X86::VMOVDQArm:
-    case X86::VMOVAPSYrm:
-    case X86::VMOVUPSYrm:
-    case X86::VMOVAPDYrm:
-    case X86::VMOVDQAYrm:
-    case X86::MMX_MOVD64rm:
-    case X86::MMX_MOVQ64rm:
-    case X86::FsVMOVAPSrm:
-    case X86::FsVMOVAPDrm:
-    case X86::FsMOVAPSrm:
-    case X86::FsMOVAPDrm: {
-      // Loads from constant pools are trivially rematerializable.
-      if (MI->getOperand(1).isReg() &&
-          MI->getOperand(2).isImm() &&
-          MI->getOperand(3).isReg() && MI->getOperand(3).getReg() == 0 &&
-          MI->isInvariantLoad(AA)) {
-        unsigned BaseReg = MI->getOperand(1).getReg();
-        if (BaseReg == 0 || BaseReg == X86::RIP)
-          return true;
-        // Allow re-materialization of PIC load.
-        if (!ReMatPICStubLoad && MI->getOperand(4).isGlobal())
-          return false;
-        const MachineFunction &MF = *MI->getParent()->getParent();
-        const MachineRegisterInfo &MRI = MF.getRegInfo();
-        return regIsPICBase(BaseReg, MRI);
-      }
-      return false;
+  case X86::MOV8rm:
+  case X86::MOV16rm:
+  case X86::MOV32rm:
+  case X86::MOV64rm:
+  case X86::LD_Fp64m:
+  case X86::MOVSSrm:
+  case X86::MOVSDrm:
+  case X86::MOVAPSrm:
+  case X86::MOVUPSrm:
+  case X86::MOVAPDrm:
+  case X86::MOVDQArm:
+  case X86::VMOVSSrm:
+  case X86::VMOVSDrm:
+  case X86::VMOVAPSrm:
+  case X86::VMOVUPSrm:
+  case X86::VMOVAPDrm:
+  case X86::VMOVDQArm:
+  case X86::VMOVAPSYrm:
+  case X86::VMOVUPSYrm:
+  case X86::VMOVAPDYrm:
+  case X86::VMOVDQAYrm:
+  case X86::MMX_MOVD64rm:
+  case X86::MMX_MOVQ64rm:
+  case X86::FsVMOVAPSrm:
+  case X86::FsVMOVAPDrm:
+  case X86::FsMOVAPSrm:
+  case X86::FsMOVAPDrm: {
+    // Loads from constant pools are trivially rematerializable.
+    if (MI->getOperand(1).isReg() &&
+        MI->getOperand(2).isImm() &&
+        MI->getOperand(3).isReg() && MI->getOperand(3).getReg() == 0 &&
+        MI->isInvariantLoad(AA)) {
+      unsigned BaseReg = MI->getOperand(1).getReg();
+      if (BaseReg == 0 || BaseReg == X86::RIP)
+        return true;
+      // Allow re-materialization of PIC load.
+      if (!ReMatPICStubLoad && MI->getOperand(4).isGlobal())
+        return false;
+      const MachineFunction &MF = *MI->getParent()->getParent();
+      const MachineRegisterInfo &MRI = MF.getRegInfo();
+      return regIsPICBase(BaseReg, MRI);
     }
+    return false;
+  }
 
-     case X86::LEA32r:
-     case X86::LEA64r: {
-       if (MI->getOperand(2).isImm() &&
-           MI->getOperand(3).isReg() && MI->getOperand(3).getReg() == 0 &&
-           !MI->getOperand(4).isReg()) {
-         // lea fi#, lea GV, etc. are all rematerializable.
-         if (!MI->getOperand(1).isReg())
-           return true;
-         unsigned BaseReg = MI->getOperand(1).getReg();
-         if (BaseReg == 0)
-           return true;
-         // Allow re-materialization of lea PICBase + x.
-         const MachineFunction &MF = *MI->getParent()->getParent();
-         const MachineRegisterInfo &MRI = MF.getRegInfo();
-         return regIsPICBase(BaseReg, MRI);
-       }
-       return false;
-     }
+  case X86::LEA32r:
+  case X86::LEA64r: {
+    if (MI->getOperand(2).isImm() &&
+        MI->getOperand(3).isReg() && MI->getOperand(3).getReg() == 0 &&
+        !MI->getOperand(4).isReg()) {
+      // lea fi#, lea GV, etc. are all rematerializable.
+      if (!MI->getOperand(1).isReg())
+        return true;
+      unsigned BaseReg = MI->getOperand(1).getReg();
+      if (BaseReg == 0)
+        return true;
+      // Allow re-materialization of lea PICBase + x.
+      const MachineFunction &MF = *MI->getParent()->getParent();
+      const MachineRegisterInfo &MRI = MF.getRegInfo();
+      return regIsPICBase(BaseReg, MRI);
+    }
+    return false;
+  }
   }
 
   // All other instructions marked M_REMATERIALIZABLE are always trivially
