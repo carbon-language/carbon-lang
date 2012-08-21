@@ -23,8 +23,8 @@ namespace llvm {
 // blah blah. Purely in get-it-up-and-limping mode for now.
 
 class MCJIT : public ExecutionEngine {
-  MCJIT(Module *M, TargetMachine *tm, TargetJITInfo &tji,
-        RTDyldMemoryManager *MemMgr, bool AllocateGVsWithCode);
+  MCJIT(Module *M, TargetMachine *tm, RTDyldMemoryManager *MemMgr,
+        bool AllocateGVsWithCode);
 
   TargetMachine *TM;
   MCContext *Ctx;

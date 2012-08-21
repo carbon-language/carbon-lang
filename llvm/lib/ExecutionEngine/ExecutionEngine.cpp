@@ -501,7 +501,8 @@ ExecutionEngine *EngineBuilder::create(TargetMachine *TM) {
     return 0;
   }
 
-  if ((WhichEngine & EngineKind::JIT) && ExecutionEngine::JITCtor == 0) {
+  if ((WhichEngine & EngineKind::JIT) && ExecutionEngine::JITCtor == 0 &&
+      ExecutionEngine::MCJITCtor == 0) {
     if (ErrorStr)
       *ErrorStr = "JIT has not been linked in.";
   }

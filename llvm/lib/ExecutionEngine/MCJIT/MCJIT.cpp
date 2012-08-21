@@ -44,18 +44,12 @@ ExecutionEngine *MCJIT::createJIT(Module *M,
   // FIXME: Don't do this here.
   sys::DynamicLibrary::LoadLibraryPermanently(0, NULL);
 
-  // If the target supports JIT code generation, create the JIT.
-  if (TargetJITInfo *TJ = TM->getJITInfo())
-    return new MCJIT(M, TM, *TJ, new MCJITMemoryManager(JMM), GVsWithCode);
-
-  if (ErrorStr)
-    *ErrorStr = "target does not support JIT code generation";
-  return 0;
+  return new MCJIT(M, TM, new MCJITMemoryManager(JMM), GVsWithCode);
 }
 
-MCJIT::MCJIT(Module *m, TargetMachine *tm, TargetJITInfo &tji,
-             RTDyldMemoryManager *MM, bool AllocateGVsWithCode)
-  : ExecutionEngine(m), TM(tm), Ctx(0), MemMgr(MM), Dyld(MM), 
+MCJIT::MCJIT(Module *m, TargetMachine *tm, RTDyldMemoryManager *MM,
+             bool AllocateGVsWithCode)
+  : ExecutionEngine(m), TM(tm), Ctx(0), MemMgr(MM), Dyld(MM),
     isCompiled(false), M(m), OS(Buffer)  {
 
   setTargetData(TM->getTargetData());
