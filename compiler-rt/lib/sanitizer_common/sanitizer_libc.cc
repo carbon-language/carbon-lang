@@ -56,6 +56,15 @@ void *internal_memset(void* s, int c, uptr n) {
   return s;
 }
 
+uptr internal_strcspn(const char *s, const char *reject) {
+  uptr i;
+  for (i = 0; s[i]; i++) {
+    if (internal_strchr(reject, s[i]) != 0)
+      return i;
+  }
+  return i;
+}
+
 char* internal_strdup(const char *s) {
   uptr len = internal_strlen(s);
   char *s2 = (char*)InternalAlloc(len + 1);
