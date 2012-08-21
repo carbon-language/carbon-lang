@@ -3075,8 +3075,8 @@ bool GenericAsmParser::ParseDirectiveMacro(StringRef Directive,
 
   MacroParameters Parameters;
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    for(;;) {
-      StringRef Parameter;
+    for (;;) {
+      MacroParameter Parameter;
       if (getParser().ParseIdentifier(Parameter))
         return TokError("expected identifier in directive");
       Parameters.push_back(Parameter);
@@ -3321,9 +3321,8 @@ bool AsmParser::ParseDirectiveIrp(SMLoc DirectiveLoc) {
   SmallString<256> Buf;
   raw_svector_ostream OS(Buf);
 
-  for (std::vector<MacroArgument>::iterator i = A.begin(), e = A.end(); i != e;
-       ++i) {
-    std::vector<MacroArgument> Args;
+  for (MacroArguments::iterator i = A.begin(), e = A.end(); i != e; ++i) {
+    MacroArguments Args;
     Args.push_back(*i);
 
     if (expandMacro(OS, M->Body, Parameters, Args, getTok().getLoc()))
