@@ -137,11 +137,32 @@ SBValue::GetName()
 const char *
 SBValue::GetTypeName ()
 {
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     const char *name = NULL;
     lldb::ValueObjectSP value_sp(GetSP());
     if (value_sp)
-        name = value_sp->GetQualifiedTypeName().GetCString();
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    {
+        // For a dynamic type we might have to run code to determine the type we are going to report,
+        // and we might not have updated the type before we get asked this.  So make sure to get the API lock.
+        
+        ProcessSP process_sp(value_sp->GetProcessSP());
+        Process::StopLocker stop_locker;
+        if (process_sp && !stop_locker.TryLock(&process_sp->GetRunLock()))
+        {
+            if (log)
+                log->Printf ("SBValue(%p)::GetTypeName() => error: process is running", value_sp.get());
+        }
+        else
+        {
+            TargetSP target_sp(value_sp->GetTargetSP());
+            if (target_sp)
+            {
+                Mutex::Locker api_locker (target_sp->GetAPIMutex());
+                name = value_sp->GetQualifiedTypeName().GetCString();
+            }
+        }
+    }
+    
     if (log)
     {
         if (name)
@@ -156,13 +177,33 @@ SBValue::GetTypeName ()
 size_t
 SBValue::GetByteSize ()
 {
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     size_t result = 0;
 
     lldb::ValueObjectSP value_sp(GetSP());
     if (value_sp)
-        result = value_sp->GetByteSize();
+    {
+        // For a dynamic type we might have to run code to determine the type we are going to report,
+        // and we might not have updated the type before we get asked this.  So make sure to get the API lock.
+        
+        ProcessSP process_sp(value_sp->GetProcessSP());
+        Process::StopLocker stop_locker;
+        if (process_sp && !stop_locker.TryLock(&process_sp->GetRunLock()))
+        {
+            if (log)
+                log->Printf ("SBValue(%p)::GetTypeName() => error: process is running", value_sp.get());
+        }
+        else
+        {
+            TargetSP target_sp(value_sp->GetTargetSP());
+            if (target_sp)
+            {
+                Mutex::Locker api_locker (target_sp->GetAPIMutex());
+                result = value_sp->GetByteSize();
+            }
+        }
+    }
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBValue(%p)::GetByteSize () => %zu", value_sp.get(), result);
 
