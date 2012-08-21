@@ -446,6 +446,7 @@ static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
         // TODO: Patch identifier with valid operand.  One potential idea is to
         // probe the backend with type information to guess the possible
         // operand.
+        Asm += getSpelling(SemaRef, AsmToks[i]);
         break;
       }
       }
