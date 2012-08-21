@@ -421,12 +421,6 @@ static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
         break;
       }
 
-      // FIXME: Why are we missing this segment register?
-      if (Name == "fs") {
-        Asm += Name;
-        break;
-      }
-
       // Lookup the identifier.
       // TODO: Someone with more experience with clang should verify this the
       // proper way of doing a symbol lookup.

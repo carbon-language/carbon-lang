@@ -47,50 +47,44 @@ void t6(void) {
 // CHECK: call void asm sideeffect "int 0x2c", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
 }
 
-void* t7(void) {
-  __asm mov eax, fs:[0x10]
-// CHECK: t7
-// CHECK: call void asm sideeffect "mov eax, fs:[0x10]", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
-}
-
-void t8() {
+void t7() {
   __asm {
     int 0x2c ; } asm comments are fun! }{
   }
   __asm {}
-// CHECK: t8
+// CHECK: t7
 // CHECK: call void asm sideeffect "int 0x2c", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
 // CHECK: call void asm sideeffect "", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
 }
-int t9() {
+int t8() {
   __asm int 3 ; } comments for single-line asm
   __asm {}
   __asm int 4
   return 10;
-// CHECK: t9
+// CHECK: t8
 // CHECK: call void asm sideeffect "int 3", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
 // CHECK: call void asm sideeffect "", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
 // CHECK: call void asm sideeffect "int 4", "~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
 // CHECK: ret i32 10
 }
-void t10() {
+void t9() {
   __asm {
     push ebx
     mov ebx, 0x07
     pop ebx
   }
-// CHECK: t10
+// CHECK: t9
 // CHECK: call void asm sideeffect "push ebx\0Amov ebx, 0x07\0Apop ebx", "~{ebx},~{dirflag},~{fpsr},~{flags}"() nounwind ia_nsdialect
 }
 
-unsigned t11(void) {
+unsigned t10(void) {
   unsigned i = 1, j;
   __asm {
     mov eax, i
     mov j, eax
   }
   return j;
-// CHECK: t11
+// CHECK: t10
 // CHECK: [[I:%[a-zA-Z0-9]+]] = alloca i32, align 4
 // CHECK: [[J:%[a-zA-Z0-9]+]] = alloca i32, align 4
 // CHECK: store i32 1, i32* [[I]], align 4
@@ -99,12 +93,12 @@ unsigned t11(void) {
 // CHECK: ret i32 [[RET]]
 }
 
-void t12(void) {
+void t11(void) {
   __asm EVEN
   __asm ALIGN
 }
 
-void t13(void) {
+void t12(void) {
   __asm {
     _emit 0x4A
     _emit 0x43
@@ -112,7 +106,7 @@ void t13(void) {
   }
 }
 
-void t14(void) {
+void t13(void) {
   unsigned arr[10];
   __asm LENGTH arr ; sizeof(arr)/sizeof(arr[0])
   __asm SIZE arr   ; sizeof(arr)
