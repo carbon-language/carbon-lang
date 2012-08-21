@@ -483,6 +483,8 @@ public:
             ExecutionContext exe_ctx (m_thread.GetStackFrameAtIndex(0));
             Process* process = exe_ctx.GetProcessPtr();
 
+            // This sentry object makes sure the current watchpoint is disabled while performing watchpoint actions,
+            // and it is then enabled after we are finished.
             WatchpointSentry sentry(process, wp_sp.get());
 
             {
@@ -496,8 +498,6 @@ public:
                     {
                         if (!wp_triggers_after)
                         {
-                            process->DisableWatchpoint(wp_sp.get());
-                            
                             ThreadPlan *new_plan = m_thread.QueueThreadPlanForStepSingleInstruction(false, // step-over
                                                                                                     false, // abort_other_plans
                                                                                                     true); // stop_other_threads
@@ -508,8 +508,6 @@ public:
                             process->WaitForProcessToStop (NULL);
                             process->GetThreadList().SetSelectedThreadByID (m_thread.GetID());
                             MakeStopInfoValid(); // make sure we do not fail to stop because of the single-step taken above
-                            
-                            process->EnableWatchpoint(wp_sp.get());
                         }
                     }
                 }
