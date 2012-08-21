@@ -296,13 +296,30 @@ TEST(DeclPrinter, TestFunctionDecl1) {
 
 TEST(DeclPrinter, TestFunctionDecl2) {
   ASSERT_TRUE(PrintedDeclMatches(
+    "void A() {}",
+    "A",
+    "void A()"));
+    // Should be: with semicolon
+}
+
+TEST(DeclPrinter, TestFunctionDecl3) {
+  ASSERT_TRUE(PrintedDeclMatches(
+    "void Z();"
+    "void A() { Z(); }",
+    "A",
+    "void A()"));
+    // Should be: with semicolon
+}
+
+TEST(DeclPrinter, TestFunctionDecl4) {
+  ASSERT_TRUE(PrintedDeclMatches(
     "extern void A();",
     "A",
     "extern void A()"));
     // Should be: with semicolon
 }
 
-TEST(DeclPrinter, TestFunctionDecl3) {
+TEST(DeclPrinter, TestFunctionDecl5) {
   ASSERT_TRUE(PrintedDeclMatches(
     "static void A();",
     "A",
@@ -310,7 +327,7 @@ TEST(DeclPrinter, TestFunctionDecl3) {
     // Should be: with semicolon
 }
 
-TEST(DeclPrinter, TestFunctionDecl4) {
+TEST(DeclPrinter, TestFunctionDecl6) {
   ASSERT_TRUE(PrintedDeclMatches(
     "inline void A();",
     "A",
@@ -318,7 +335,7 @@ TEST(DeclPrinter, TestFunctionDecl4) {
     // Should be: with semicolon
 }
 
-TEST(DeclPrinter, TestFunctionDecl5) {
+TEST(DeclPrinter, TestFunctionDecl7) {
   ASSERT_TRUE(PrintedDeclCXX11Matches(
     "constexpr int A(int a);",
     "A",
@@ -326,7 +343,7 @@ TEST(DeclPrinter, TestFunctionDecl5) {
     // WRONG; Should be: "constexpr int A(int a);"
 }
 
-TEST(DeclPrinter, TestFunctionDecl6) {
+TEST(DeclPrinter, TestFunctionDecl8) {
   ASSERT_TRUE(PrintedDeclMatches(
     "void A(int a);",
     "A",
@@ -334,7 +351,7 @@ TEST(DeclPrinter, TestFunctionDecl6) {
     // Should be: with semicolon
 }
 
-TEST(DeclPrinter, TestFunctionDecl7) {
+TEST(DeclPrinter, TestFunctionDecl9) {
   ASSERT_TRUE(PrintedDeclMatches(
     "void A(...);",
     "A",
@@ -342,7 +359,7 @@ TEST(DeclPrinter, TestFunctionDecl7) {
     // Should be: with semicolon
 }
 
-TEST(DeclPrinter, TestFunctionDecl8) {
+TEST(DeclPrinter, TestFunctionDecl10) {
   ASSERT_TRUE(PrintedDeclMatches(
     "void A(int a, ...);",
     "A",
@@ -350,7 +367,7 @@ TEST(DeclPrinter, TestFunctionDecl8) {
     // Should be: with semicolon
 }
 
-TEST(DeclPrinter, TestFunctionDecl9) {
+TEST(DeclPrinter, TestFunctionDecl11) {
   ASSERT_TRUE(PrintedDeclMatches(
     "typedef long size_t;"
     "typedef int *pInt;"
@@ -360,7 +377,7 @@ TEST(DeclPrinter, TestFunctionDecl9) {
     // Should be: with semicolon
 }
 
-TEST(DeclPrinter, TestFunctionDecl10) {
+TEST(DeclPrinter, TestFunctionDecl12) {
   ASSERT_TRUE(PrintedDeclMatches(
     "void A(int a, int b = 0);",
     "A",
@@ -368,7 +385,7 @@ TEST(DeclPrinter, TestFunctionDecl10) {
     // Should be: with semicolon
 }
 
-TEST(DeclPrinter, TestFunctionDecl11) {
+TEST(DeclPrinter, TestFunctionDecl13) {
   ASSERT_TRUE(PrintedDeclMatches(
     "void (*A(int a))(int b);",
     "A",
@@ -376,14 +393,14 @@ TEST(DeclPrinter, TestFunctionDecl11) {
     // Should be: with semicolon, with parameter name (?)
 }
 
-TEST(DeclPrinter, TestFunctionDecl12) {
+TEST(DeclPrinter, TestFunctionDecl14) {
   ASSERT_TRUE(PrintedDeclMatches(
     "template<typename T>"
     "void A(T t) { }"
     "template<>"
     "void A(int N) { }",
     function(hasName("A"), isExplicitTemplateSpecialization()).bind("id"),
-    "void A(int N) {\n}\n\n"));
+    "void A(int N)"));
     // WRONG; Should be: "template <> void A(int N);"));
 }
 
@@ -1004,8 +1021,8 @@ TEST(DeclPrinter, TestFunctionTemplateDecl2) {
     "template<typename T>"
     "void A(T &t) { }",
     functionTemplate(hasName("A")).bind("id"),
-    "template <typename T> void A(T &t) {\n}\n\n"));
-    // Should be: without body, with semicolon
+    "template <typename T> void A(T &t)"));
+    // Should be: with semicolon
 }
 
 TEST(DeclPrinter, TestFunctionTemplateDecl3) {
@@ -1031,8 +1048,8 @@ TEST(DeclPrinter, TestFunctionTemplateDecl5) {
   ASSERT_TRUE(PrintedDeclMatches(
     "struct Z { template<typename T> void A(T t) {} };",
     functionTemplate(hasName("A")).bind("id"),
-    "template <typename T> void A(T t) {\n}\n\n"));
-    // Should be: without body, with semicolon
+    "template <typename T> void A(T t)"));
+    // Should be: with semicolon
 }
 
 TEST(DeclPrinter, TestFunctionTemplateDecl6) {
@@ -1041,8 +1058,8 @@ TEST(DeclPrinter, TestFunctionTemplateDecl6) {
     "  template<typename U> void A(U t) {}"
     "};",
     functionTemplate(hasName("A")).bind("id"),
-    "template <typename U> void A(U t) {\n}\n\n"));
-    // Should be: without body, with semicolon
+    "template <typename U> void A(U t)"));
+    // Should be: with semicolon
 }
 
 TEST(DeclPrinter, TestTemplateArgumentList1) {
