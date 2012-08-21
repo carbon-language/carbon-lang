@@ -39,7 +39,7 @@ struct PrintingPolicy {
       SuppressUnwrittenScope(false), SuppressInitializers(false),
       ConstantArraySizeAsWritten(false), AnonymousTagLocations(true),
       SuppressStrongLifetime(false), Bool(LO.Bool),
-      DontRecurseInDeclContext(false), DumpSourceManager(0) { }
+      TerseOutput(false), DumpSourceManager(0) { }
 
   /// \brief What language we're printing.
   LangOptions LangOpts;
@@ -134,13 +134,12 @@ struct PrintingPolicy {
   /// doesn't actually have 'bool' (because, e.g., it is defined as a macro).
   unsigned Bool : 1;
 
-  /// \brief Don't print contents of DeclContexts.  Used to provide a 'terse'
-  /// output.
+  /// \brief Provide a 'terse' output.
   ///
   /// For example, in this mode we don't print function bodies, class members,
   /// declarations inside namespaces etc.  Effectively, this should print
   /// only the requested declaration.
-  unsigned DontRecurseInDeclContext : 1;
+  unsigned TerseOutput : 1;
 
   /// \brief If we are "dumping" rather than "pretty-printing", this points to
   /// a SourceManager which will be used to dump SourceLocations. Dumping

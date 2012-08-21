@@ -220,7 +220,7 @@ void DeclPrinter::Print(AccessSpecifier AS) {
 //----------------------------------------------------------------------------
 
 void DeclPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
-  if (Policy.DontRecurseInDeclContext)
+  if (Policy.TerseOutput)
     return;
 
   if (Indent)

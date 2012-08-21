@@ -32,7 +32,7 @@ namespace {
 
 void PrintDecl(raw_ostream &Out, const ASTContext *Context, const Decl *D) {
   PrintingPolicy Policy = Context->getPrintingPolicy();
-  Policy.DontRecurseInDeclContext = true;
+  Policy.TerseOutput = true;
   D->print(Out, Policy, /*Indentation*/ 0, /*PrintInstantiation*/ false);
 }
 
