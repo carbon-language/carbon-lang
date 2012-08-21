@@ -56,7 +56,6 @@ STATISTIC(NumReplaced,  "Number of allocas broken up");
 STATISTIC(NumPromoted,  "Number of allocas promoted");
 STATISTIC(NumAdjusted,  "Number of scalar allocas adjusted to allow promotion");
 STATISTIC(NumConverted, "Number of aggregates converted to scalar");
-STATISTIC(NumGlobals,   "Number of allocas copied from constant global");
 
 namespace {
   struct SROA : public FunctionPass {
@@ -183,9 +182,6 @@ namespace {
     void RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
                                       SmallVector<AllocaInst*, 32> &NewElts);
     bool ShouldAttemptScalarRepl(AllocaInst *AI);
-
-    static MemTransferInst *isOnlyCopiedFromConstantGlobal(
-        AllocaInst *AI, SmallVector<Instruction*, 4> &ToDelete);
   };
 
   // SROA_DT - SROA that uses DominatorTree.
@@ -1465,26 +1461,6 @@ bool SROA::ShouldAttemptScalarRepl(AllocaInst *AI) {
   return false;
 }
 
-/// getPointeeAlignment - Compute the minimum alignment of the value pointed
-/// to by the given pointer.
-static unsigned getPointeeAlignment(Value *V, const TargetData &TD) {
-  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
-    if (CE->getOpcode() == Instruction::BitCast ||
-        (CE->getOpcode() == Instruction::GetElementPtr &&
-         cast<GEPOperator>(CE)->hasAllZeroIndices()))
-      return getPointeeAlignment(CE->getOperand(0), TD);
-
-  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
-    if (!GV->isDeclaration())
-      return TD.getPreferredAlignment(GV);
-
-  if (PointerType *PT = dyn_cast<PointerType>(V->getType()))
-    return TD.getABITypeAlignment(PT->getElementType());
-
-  return 0;
-}
-
-
 // performScalarRepl - This algorithm is a simple worklist driven algorithm,
 // which runs on all of the alloca instructions in the function, removing them
 // if they are only used by getelementptr instructions.
@@ -1515,29 +1491,6 @@ bool SROA::performScalarRepl(Function &F) {
     // If this alloca is impossible for us to promote, reject it early.
     if (AI->isArrayAllocation() || !AI->getAllocatedType()->isSized())
       continue;
-
-    // Check to see if this allocation is only modified by a memcpy/memmove from
-    // a constant global whose alignment is equal to or exceeds that of the
-    // allocation.  If this is the case, we can change all users to use
-    // the constant global instead.  This is commonly produced by the CFE by
-    // constructs like "void foo() { int A[] = {1,2,3,4,5,6,7,8,9...}; }" if 'A'
-    // is only subsequently read.
-    SmallVector<Instruction *, 4> ToDelete;
-    if (MemTransferInst *Copy = isOnlyCopiedFromConstantGlobal(AI, ToDelete)) {
-      if (AI->getAlignment() <= getPointeeAlignment(Copy->getSource(), *TD)) {
-        DEBUG(dbgs() << "Found alloca equal to global: " << *AI << '\n');
-        DEBUG(dbgs() << "  memcpy = " << *Copy << '\n');
-        for (unsigned i = 0, e = ToDelete.size(); i != e; ++i)
-          ToDelete[i]->eraseFromParent();
-        Constant *TheSrc = cast<Constant>(Copy->getSource());
-        AI->replaceAllUsesWith(ConstantExpr::getBitCast(TheSrc, AI->getType()));
-        Copy->eraseFromParent();  // Don't mutate the global.
-        AI->eraseFromParent();
-        ++NumGlobals;
-        Changed = true;
-        continue;
-      }
-    }
 
     // Check to see if we can perform the core SROA transformation.  We cannot
     // transform the allocation instruction if it is an array allocation
@@ -2655,135 +2608,4 @@ bool SROA::isSafeAllocaToScalarRepl(AllocaInst *AI) {
   }
 
   return true;
-}
-
-
-
-/// PointsToConstantGlobal - Return true if V (possibly indirectly) points to
-/// some part of a constant global variable.  This intentionally only accepts
-/// constant expressions because we don't can't rewrite arbitrary instructions.
-static bool PointsToConstantGlobal(Value *V) {
-  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
-    return GV->isConstant();
-  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
-    if (CE->getOpcode() == Instruction::BitCast ||
-        CE->getOpcode() == Instruction::GetElementPtr)
-      return PointsToConstantGlobal(CE->getOperand(0));
-  return false;
-}
-
-/// isOnlyCopiedFromConstantGlobal - Recursively walk the uses of a (derived)
-/// pointer to an alloca.  Ignore any reads of the pointer, return false if we
-/// see any stores or other unknown uses.  If we see pointer arithmetic, keep
-/// track of whether it moves the pointer (with isOffset) but otherwise traverse
-/// the uses.  If we see a memcpy/memmove that targets an unoffseted pointer to
-/// the alloca, and if the source pointer is a pointer to a constant global, we
-/// can optimize this.
-static bool
-isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
-                               bool isOffset,
-                               SmallVector<Instruction *, 4> &LifetimeMarkers) {
-  // We track lifetime intrinsics as we encounter them.  If we decide to go
-  // ahead and replace the value with the global, this lets the caller quickly
-  // eliminate the markers.
-
-  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI!=E; ++UI) {
-    User *U = cast<Instruction>(*UI);
-
-    if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
-      // Ignore non-volatile loads, they are always ok.
-      if (!LI->isSimple()) return false;
-      continue;
-    }
-
-    if (BitCastInst *BCI = dyn_cast<BitCastInst>(U)) {
-      // If uses of the bitcast are ok, we are ok.
-      if (!isOnlyCopiedFromConstantGlobal(BCI, TheCopy, isOffset,
-                                          LifetimeMarkers))
-        return false;
-      continue;
-    }
-    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(U)) {
-      // If the GEP has all zero indices, it doesn't offset the pointer.  If it
-      // doesn't, it does.
-      if (!isOnlyCopiedFromConstantGlobal(GEP, TheCopy,
-                                          isOffset || !GEP->hasAllZeroIndices(),
-                                          LifetimeMarkers))
-        return false;
-      continue;
-    }
-
-    if (CallSite CS = U) {
-      // If this is the function being called then we treat it like a load and
-      // ignore it.
-      if (CS.isCallee(UI))
-        continue;
-
-      // If this is a readonly/readnone call site, then we know it is just a
-      // load (but one that potentially returns the value itself), so we can
-      // ignore it if we know that the value isn't captured.
-      unsigned ArgNo = CS.getArgumentNo(UI);
-      if (CS.onlyReadsMemory() &&
-          (CS.getInstruction()->use_empty() || CS.doesNotCapture(ArgNo)))
-        continue;
-
-      // If this is being passed as a byval argument, the caller is making a
-      // copy, so it is only a read of the alloca.
-      if (CS.isByValArgument(ArgNo))
-        continue;
-    }
-
-    // Lifetime intrinsics can be handled by the caller.
-    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(U)) {
-      if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
-          II->getIntrinsicID() == Intrinsic::lifetime_end) {
-        assert(II->use_empty() && "Lifetime markers have no result to use!");
-        LifetimeMarkers.push_back(II);
-        continue;
-      }
-    }
-
-    // If this is isn't our memcpy/memmove, reject it as something we can't
-    // handle.
-    MemTransferInst *MI = dyn_cast<MemTransferInst>(U);
-    if (MI == 0)
-      return false;
-
-    // If the transfer is using the alloca as a source of the transfer, then
-    // ignore it since it is a load (unless the transfer is volatile).
-    if (UI.getOperandNo() == 1) {
-      if (MI->isVolatile()) return false;
-      continue;
-    }
-
-    // If we already have seen a copy, reject the second one.
-    if (TheCopy) return false;
-
-    // If the pointer has been offset from the start of the alloca, we can't
-    // safely handle this.
-    if (isOffset) return false;
-
-    // If the memintrinsic isn't using the alloca as the dest, reject it.
-    if (UI.getOperandNo() != 0) return false;
-
-    // If the source of the memcpy/move is not a constant global, reject it.
-    if (!PointsToConstantGlobal(MI->getSource()))
-      return false;
-
-    // Otherwise, the transform is safe.  Remember the copy instruction.
-    TheCopy = MI;
-  }
-  return true;
-}
-
-/// isOnlyCopiedFromConstantGlobal - Return true if the specified alloca is only
-/// modified by a copy from a constant global.  If we can prove this, we can
-/// replace any uses of the alloca with uses of the global directly.
-MemTransferInst *
-SROA::isOnlyCopiedFromConstantGlobal(AllocaInst *AI,
-                                     SmallVector<Instruction*, 4> &ToDelete) {
-  MemTransferInst *TheCopy = 0;
-  if (::isOnlyCopiedFromConstantGlobal(AI, TheCopy, false, ToDelete))
-    return TheCopy;
-  return 0;
 }

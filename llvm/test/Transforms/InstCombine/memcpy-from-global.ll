@@ -1,4 +1,4 @@
-; RUN: opt < %s -scalarrepl -S | FileCheck %s
+; RUN: opt < %s -instcombine -S | FileCheck %s
 target datalayout = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64"
 @C.0.1248 = internal constant [128 x float] [ float -1.000000e+00, float -1.000000e+00, float -1.000000e+00, float 0.000000e+00, float -1.000000e+00, float -1.000000e+00, float 0.000000e+00, float -1.000000e+00, float -1.000000e+00, float -1.000000e+00, float 0.000000e+00, float 1.000000e+00, float -1.000000e+00, float -1.000000e+00, float 1.000000e+00, float 0.000000e+00, float -1.000000e+00, float 0.000000e+00, float -1.000000e+00, float -1.000000e+00, float -1.000000e+00, float 0.000000e+00, float -1.000000e+00, float 1.000000e+00, float -1.000000e+00, float 0.000000e+00, float 1.000000e+00, float -1.000000e+00, float -1.000000e+00, float 0.000000e+00, float 1.000000e+00, float 1.000000e+00, float -1.000000e+00, float 1.000000e+00, float -1.000000e+00, float 0.000000e+00, float -1.000000e+00, float 1.000000e+00, float 0.000000e+00, float -1.000000e+00, float -1.000000e+00, float 1.000000e+00, float 0.000000e+00, float 1.000000e+00, float -1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 0.000000e+00, float 0.000000e+00, float -1.000000e+00, float -1.000000e+00, float -1.000000e+00, float 0.000000e+00, float -1.000000e+00, float -1.000000e+00, float 1.000000e+00, float 0.000000e+00, float -1.000000e+00, float 1.000000e+00, float -1.000000e+00, float 0.000000e+00, float -1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float -1.000000e+00, float -1.000000e+00, float 0.000000e+00, float 1.000000e+00, float -1.000000e+00, float 0.000000e+00, float -1.000000e+00, float 1.000000e+00, float -1.000000e+00, float 0.000000e+00, float 1.000000e+00, float 1.000000e+00, float -1.000000e+00, float 1.000000e+00, float 0.000000e+00, float 1.000000e+00, float 0.000000e+00, float -1.000000e+00, float -1.000000e+00, float 1.000000e+00, float 0.000000e+00, float -1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 0.000000e+00, float 1.000000e+00, float -1.000000e+00, float 1.000000e+00, float 0.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float -1.000000e+00, float 0.000000e+00, float 1.000000e+00, float 1.000000e+00, float 0.000000e+00, float -1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 0.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 0.000000e+00, float 0.000000e+00, float 1.000000e+00, float -1.000000e+00, float -1.000000e+00, float 0.000000e+00, float 1.000000e+00, float -1.000000e+00, float 1.000000e+00, float 0.000000e+00, float 1.000000e+00, float 1.000000e+00, float -1.000000e+00, float 0.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00 ], align 32		; <[128 x float]*> [#uses=1]
 
@@ -6,12 +6,10 @@ define float @test1(i32 %hash, float %x, float %y, float %z, float %w) {
 entry:
 	%lookupTable = alloca [128 x float], align 16		; <[128 x float]*> [#uses=5]
 	%lookupTable1 = bitcast [128 x float]* %lookupTable to i8*		; <i8*> [#uses=1]
-	call void @llvm.memcpy.i32( i8* %lookupTable1, i8* bitcast ([128 x float]* @C.0.1248 to i8*), i32 512, i32 16 )
+	call void @llvm.memcpy.p0i8.p0i8.i64(i8* %lookupTable1, i8* bitcast ([128 x float]* @C.0.1248 to i8*), i64 512, i32 16, i1 false)
         
 ; CHECK: @test1
 ; CHECK-NOT: alloca
-; CHECK-NOT: call{{.*}}@llvm.memcpy
-; CHECK: %lookupTable1 = bitcast [128 x float]* @C.0.1248 to i8*
 ; CHECK-NOT: call{{.*}}@llvm.memcpy
         
 	%tmp3 = shl i32 %hash, 2		; <i32> [#uses=1]
@@ -38,10 +36,6 @@ entry:
 	ret float %tmp43
 }
 
-declare void @llvm.memcpy.i32(i8*, i8*, i32, i32)
-
-
-
 declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
 
 %T = type { i8, [123 x i8] }
@@ -59,10 +53,11 @@ define void @test2() {
 ; CHECK: @test2
 
 ; %A alloca is deleted
-; CHECK-NEXT: %B = alloca %T
+; CHECK-NEXT: alloca [124 x i8]
+; CHECK-NEXT: getelementptr inbounds [124 x i8]*
 
 ; use @G instead of %A
-; CHECK-NEXT: %a = bitcast %T* @G to i8*
+; CHECK-NEXT: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %{{.*}}, i8* getelementptr inbounds (%T* @G, i64 0, i32 0)
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* bitcast (%T* @G to i8*), i64 124, i32 4, i1 false)
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %b, i8* %a, i64 124, i32 4, i1 false)
   call void @bar(i8* %b)
@@ -79,8 +74,7 @@ define void @test3() {
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* bitcast (%T* @G to i8*), i64 124, i32 4, i1 false)
   call void @bar(i8* %a) readonly
 ; CHECK: @test3
-; CHECK-NEXT: %a = bitcast %T* @G to i8*
-; CHECK-NEXT: call void @bar(i8* %a)
+; CHECK-NEXT: call void @bar(i8* getelementptr inbounds (%T* @G, i64 0, i32 0))
   ret void
 }
 
@@ -90,8 +84,7 @@ define void @test4() {
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* bitcast (%T* @G to i8*), i64 124, i32 4, i1 false)
   call void @baz(i8* byval %a) 
 ; CHECK: @test4
-; CHECK-NEXT: %a = bitcast %T* @G to i8*
-; CHECK-NEXT: call void @baz(i8* byval %a)
+; CHECK-NEXT: call void @baz(i8* byval getelementptr inbounds (%T* @G, i64 0, i32 0))
   ret void
 }
 
@@ -103,8 +96,7 @@ define void @test5() {
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* bitcast (%T* @G to i8*), i64 124, i32 4, i1 false)
   call void @baz(i8* byval %a) 
 ; CHECK: @test5
-; CHECK-NEXT: %a = bitcast %T* @G to i8*
-; CHECK-NEXT: call void @baz(i8* byval %a)
+; CHECK-NEXT: call void @baz(i8* byval getelementptr inbounds (%T* @G, i64 0, i32 0))
   ret void
 }
 
@@ -118,8 +110,7 @@ define void @test6() {
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* bitcast ([2 x %U]* @H to i8*), i64 20, i32 16, i1 false)
   call void @bar(i8* %a) readonly
 ; CHECK: @test6
-; CHECK-NEXT: %a = bitcast
-; CHECK-NEXT: call void @bar(i8* %a)
+; CHECK-NEXT: call void @bar(i8* bitcast ([2 x %U]* @H to i8*))
   ret void
 }
 
@@ -129,8 +120,7 @@ define void @test7() {
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* bitcast (%U* getelementptr ([2 x %U]* @H, i64 0, i32 0) to i8*), i64 20, i32 4, i1 false)
   call void @bar(i8* %a) readonly
 ; CHECK: @test7
-; CHECK-NEXT: %a = bitcast
-; CHECK-NEXT: call void @bar(i8* %a)
+; CHECK-NEXT: call void @bar(i8* bitcast ([2 x %U]* @H to i8*))
   ret void
 }
 
