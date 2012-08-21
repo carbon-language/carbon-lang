@@ -295,7 +295,7 @@ asan_block_context_t *alloc_asan_context(void *ctxt, dispatch_function_t func,
      }                                                                        \
      return REAL(dispatch_x_f)(dq, (void*)asan_ctxt,                          \
                                asan_dispatch_call_block_and_release);         \
-   }
+  }
 
 INTERCEPT_DISPATCH_X_F_3(dispatch_async_f)
 INTERCEPT_DISPATCH_X_F_3(dispatch_sync_f)
@@ -336,13 +336,13 @@ static void _dispatch_call_block_and_release(void *block) {
 
 // See
 // http://www.opensource.apple.com/source/libdispatch/libdispatch-228.18/src/internal.h
-#define fastpath(x) ((typeof(x))__builtin_expect((long)(x), ~0l))
+#define fastpath(x) ((typeof(x))__builtin_expect((uptr)(x), ~0l))
 
 // See
 // http://www.opensource.apple.com/source/libdispatch/libdispatch-228.18/src/init.c
 static dispatch_block_t _dispatch_Block_copy(dispatch_block_t db) {
   dispatch_block_t rval;
-  if (fastpath(db)) { 
+  if (fastpath(db)) {
     while (!fastpath(rval = Block_copy(db))) {
       sleep(1);
     }
