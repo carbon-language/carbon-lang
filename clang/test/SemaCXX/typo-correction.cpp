@@ -155,7 +155,7 @@ void Test3() {
 struct R {};
 bool begun(R);
 void RangeTest() {
-  for (auto b : R()) {} // expected-error {{use of undeclared identifier 'begin'}} expected-note {{range has type}}
+  for (auto b : R()) {} // expected-error {{invalid range expression of type 'R'}}
 }
 
 // PR 12019 - Avoid infinite mutual recursion in DiagnoseInvalidRedeclaration

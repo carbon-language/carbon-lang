@@ -31,10 +31,10 @@ NS::iter end(NS::NoADL);
 void f() {
   int a[] = {1, 2, 3};
   for (auto b : S()) {} // ok
-  for (auto b : T()) {} // expected-error {{no matching function for call to 'begin'}} expected-note {{range has type}}
+  for (auto b : T()) {} // expected-error {{invalid range expression of type 'T'}}
   for (auto b : a) {} // ok
   for (int b : NS::ADL()) {} // ok
-  for (int b : NS::NoADL()) {} // expected-error {{no matching function for call to 'begin'}} expected-note {{range has type}}
+  for (int b : NS::NoADL()) {} // expected-error {{invalid range expression of type 'NS::NoADL'}}
 }
 
 void PR11601() {

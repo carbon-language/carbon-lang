@@ -9695,20 +9695,15 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
                                RParenLoc);
 }
 
-/// ResolveOverloadedCallFn - Given the call expression that calls Fn
-/// (which eventually refers to the declaration Func) and the call
-/// arguments Args/NumArgs, attempt to resolve the function call down
-/// to a specific function. If overload resolution succeeds, returns
-/// the function declaration produced by overload
-/// resolution. Otherwise, emits diagnostics, deletes all of the
-/// arguments and Fn, and returns NULL.
-ExprResult
-Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
-                              SourceLocation LParenLoc,
-                              Expr **Args, unsigned NumArgs,
-                              SourceLocation RParenLoc,
-                              Expr *ExecConfig,
-                              bool AllowTypoCorrection) {
+/// \brief Constructs and populates an OverloadedCandidateSet from
+/// the given function.
+/// \returns true when an the ExprResult output parameter has been set.
+bool Sema::buildOverloadedCallSet(Scope *S, Expr *Fn,
+                                  UnresolvedLookupExpr *ULE,
+                                  Expr **Args, unsigned NumArgs,
+                                  SourceLocation RParenLoc,
+                                  OverloadCandidateSet *CandidateSet,
+                                  ExprResult *Result) {
 #ifndef NDEBUG
   if (ULE->requiresADL()) {
     // To do ADL, we must have found an unqualified name.
@@ -9730,20 +9725,20 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
 #endif
 
   UnbridgedCastsSet UnbridgedCasts;
-  if (checkArgPlaceholdersForOverload(*this, Args, NumArgs, UnbridgedCasts))
-    return ExprError();
-
-  OverloadCandidateSet CandidateSet(Fn->getExprLoc());
+  if (checkArgPlaceholdersForOverload(*this, Args, NumArgs, UnbridgedCasts)) {
+    *Result = ExprError();
+    return true;
+  }
 
   // Add the functions denoted by the callee to the set of candidate
   // functions, including those from argument-dependent lookup.
   AddOverloadedCallCandidates(ULE, llvm::makeArrayRef(Args, NumArgs),
-                              CandidateSet);
+                              *CandidateSet);
 
   // If we found nothing, try to recover.
   // BuildRecoveryCallExpr diagnoses the error itself, so we just bail
   // out if it fails.
-  if (CandidateSet.empty()) {
+  if (CandidateSet->empty()) {
     // In Microsoft mode, if we are inside a template class member function then
     // create a type dependent CallExpr. The goal is to postpone name lookup
     // to instantiation time to be able to search into type dependent base
@@ -9754,32 +9749,50 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
                                           Context.DependentTy, VK_RValue,
                                           RParenLoc);
       CE->setTypeDependent(true);
-      return Owned(CE);
+      *Result = Owned(CE);
+      return true;
     }
-    return BuildRecoveryCallExpr(*this, S, Fn, ULE, LParenLoc,
-                                 llvm::MutableArrayRef<Expr *>(Args, NumArgs),
-                                 RParenLoc, /*EmptyLookup=*/true,
-                                 AllowTypoCorrection);
+    return false;
   }
 
   UnbridgedCasts.restore();
+  return false;
+}
 
-  OverloadCandidateSet::iterator Best;
-  switch (CandidateSet.BestViableFunction(*this, Fn->getLocStart(), Best)) {
+/// FinishOverloadedCallExpr - given an OverloadCandidateSet, builds and returns
+/// the completed call expression. If overload resolution fails, emits
+/// diagnostics and returns ExprError()
+static ExprResult FinishOverloadedCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
+                                           UnresolvedLookupExpr *ULE,
+                                           SourceLocation LParenLoc,
+                                           Expr **Args, unsigned NumArgs,
+                                           SourceLocation RParenLoc,
+                                           Expr *ExecConfig,
+                                           OverloadCandidateSet *CandidateSet,
+                                           OverloadCandidateSet::iterator *Best,
+                                           OverloadingResult OverloadResult,
+                                           bool AllowTypoCorrection) {
+  if (CandidateSet->empty())
+    return BuildRecoveryCallExpr(SemaRef, S, Fn, ULE, LParenLoc,
+                                 llvm::MutableArrayRef<Expr *>(Args, NumArgs),
+                                 RParenLoc, /*EmptyLookup=*/true,
+                                 AllowTypoCorrection);
+
+  switch (OverloadResult) {
   case OR_Success: {
-    FunctionDecl *FDecl = Best->Function;
-    MarkFunctionReferenced(Fn->getExprLoc(), FDecl);
-    CheckUnresolvedLookupAccess(ULE, Best->FoundDecl);
-    DiagnoseUseOfDecl(FDecl, ULE->getNameLoc());
-    Fn = FixOverloadedFunctionReference(Fn, Best->FoundDecl, FDecl);
-    return BuildResolvedCallExpr(Fn, FDecl, LParenLoc, Args, NumArgs, RParenLoc,
-                                 ExecConfig);
+    FunctionDecl *FDecl = (*Best)->Function;
+    SemaRef.MarkFunctionReferenced(Fn->getExprLoc(), FDecl);
+    SemaRef.CheckUnresolvedLookupAccess(ULE, (*Best)->FoundDecl);
+    SemaRef.DiagnoseUseOfDecl(FDecl, ULE->getNameLoc());
+    Fn = SemaRef.FixOverloadedFunctionReference(Fn, (*Best)->FoundDecl, FDecl);
+    return SemaRef.BuildResolvedCallExpr(Fn, FDecl, LParenLoc, Args, NumArgs,
+                                         RParenLoc, ExecConfig);
   }
 
   case OR_No_Viable_Function: {
     // Try to recover by looking for viable functions which the user might
     // have meant to call.
-    ExprResult Recovery = BuildRecoveryCallExpr(*this, S, Fn, ULE, LParenLoc,
+    ExprResult Recovery = BuildRecoveryCallExpr(SemaRef, S, Fn, ULE, LParenLoc,
                                   llvm::MutableArrayRef<Expr *>(Args, NumArgs),
                                                 RParenLoc,
                                                 /*EmptyLookup=*/false,
@@ -9787,42 +9800,71 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
     if (!Recovery.isInvalid())
       return Recovery;
 
-    Diag(Fn->getLocStart(),
+    SemaRef.Diag(Fn->getLocStart(),
          diag::err_ovl_no_viable_function_in_call)
       << ULE->getName() << Fn->getSourceRange();
-    CandidateSet.NoteCandidates(*this, OCD_AllCandidates,
-                                llvm::makeArrayRef(Args, NumArgs));
+    CandidateSet->NoteCandidates(SemaRef, OCD_AllCandidates,
+                                 llvm::makeArrayRef(Args, NumArgs));
     break;
   }
 
   case OR_Ambiguous:
-    Diag(Fn->getLocStart(), diag::err_ovl_ambiguous_call)
+    SemaRef.Diag(Fn->getLocStart(), diag::err_ovl_ambiguous_call)
       << ULE->getName() << Fn->getSourceRange();
-    CandidateSet.NoteCandidates(*this, OCD_ViableCandidates,
-                                llvm::makeArrayRef(Args, NumArgs));
+    CandidateSet->NoteCandidates(SemaRef, OCD_ViableCandidates,
+                                 llvm::makeArrayRef(Args, NumArgs));
     break;
 
-  case OR_Deleted:
-    {
-      Diag(Fn->getLocStart(), diag::err_ovl_deleted_call)
-        << Best->Function->isDeleted()
-        << ULE->getName()
-        << getDeletedOrUnavailableSuffix(Best->Function)
-        << Fn->getSourceRange();
-      CandidateSet.NoteCandidates(*this, OCD_AllCandidates,
-                                  llvm::makeArrayRef(Args, NumArgs));
+  case OR_Deleted: {
+    SemaRef.Diag(Fn->getLocStart(), diag::err_ovl_deleted_call)
+      << (*Best)->Function->isDeleted()
+      << ULE->getName()
+      << SemaRef.getDeletedOrUnavailableSuffix((*Best)->Function)
+      << Fn->getSourceRange();
+    CandidateSet->NoteCandidates(SemaRef, OCD_AllCandidates,
+                                 llvm::makeArrayRef(Args, NumArgs));
 
-      // We emitted an error for the unvailable/deleted function call but keep
-      // the call in the AST.
-      FunctionDecl *FDecl = Best->Function;
-      Fn = FixOverloadedFunctionReference(Fn, Best->FoundDecl, FDecl);
-      return BuildResolvedCallExpr(Fn, FDecl, LParenLoc, Args, NumArgs,
-                                   RParenLoc, ExecConfig);
-    }
+    // We emitted an error for the unvailable/deleted function call but keep
+    // the call in the AST.
+    FunctionDecl *FDecl = (*Best)->Function;
+    Fn = SemaRef.FixOverloadedFunctionReference(Fn, (*Best)->FoundDecl, FDecl);
+    return SemaRef.BuildResolvedCallExpr(Fn, FDecl, LParenLoc, Args, NumArgs,
+                                 RParenLoc, ExecConfig);
+  }
   }
 
   // Overload resolution failed.
   return ExprError();
+}
+
+/// BuildOverloadedCallExpr - Given the call expression that calls Fn
+/// (which eventually refers to the declaration Func) and the call
+/// arguments Args/NumArgs, attempt to resolve the function call down
+/// to a specific function. If overload resolution succeeds, returns
+/// the call expression produced by overload resolution.
+/// Otherwise, emits diagnostics and returns ExprError.
+ExprResult Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn,
+                                         UnresolvedLookupExpr *ULE,
+                                         SourceLocation LParenLoc,
+                                         Expr **Args, unsigned NumArgs,
+                                         SourceLocation RParenLoc,
+                                         Expr *ExecConfig,
+                                         bool AllowTypoCorrection) {
+  OverloadCandidateSet CandidateSet(Fn->getExprLoc());
+  ExprResult result;
+
+  if (buildOverloadedCallSet(S, Fn, ULE, Args, NumArgs, LParenLoc,
+                             &CandidateSet, &result))
+    return result;
+
+  OverloadCandidateSet::iterator Best;
+  OverloadingResult OverloadResult =
+      CandidateSet.BestViableFunction(*this, Fn->getLocStart(), Best);
+
+  return FinishOverloadedCallExpr(*this, S, Fn, ULE, LParenLoc, Args, NumArgs,
+                                  RParenLoc, ExecConfig, &CandidateSet,
+                                  &Best, OverloadResult,
+                                  AllowTypoCorrection);
 }
 
 static bool IsOverloaded(const UnresolvedSetImpl &Functions) {
@@ -11198,6 +11240,83 @@ ExprResult Sema::BuildLiteralOperatorCall(LookupResult &R,
 
   return MaybeBindToTemporary(UDL);
 }
+
+/// Build a call to 'begin' or 'end' for a C++11 for-range statement. If the
+/// given LookupResult is non-empty, it is assumed to describe a member which
+/// will be invoked. Otherwise, the function will be found via argument
+/// dependent lookup.
+/// CallExpr is set to a valid expression and FRS_Success returned on success,
+/// otherwise CallExpr is set to ExprError() and some non-success value
+/// is returned.
+Sema::ForRangeStatus
+Sema::BuildForRangeBeginEndCall(Scope *S, SourceLocation Loc,
+                                SourceLocation RangeLoc, VarDecl *Decl,
+                                BeginEndFunction BEF,
+                                const DeclarationNameInfo &NameInfo,
+                                LookupResult &MemberLookup,
+                                OverloadCandidateSet *CandidateSet,
+                                Expr *Range, ExprResult *CallExpr) {
+  CandidateSet->clear();
+  if (!MemberLookup.empty()) {
+    ExprResult MemberRef =
+        BuildMemberReferenceExpr(Range, Range->getType(), Loc,
+                                 /*IsPtr=*/false, CXXScopeSpec(),
+                                 /*TemplateKWLoc=*/SourceLocation(),
+                                 /*FirstQualifierInScope=*/0,
+                                 MemberLookup,
+                                 /*TemplateArgs=*/0);
+    if (MemberRef.isInvalid()) {
+      *CallExpr = ExprError();
+      Diag(Range->getLocStart(), diag::note_in_for_range)
+          << RangeLoc << BEF << Range->getType();
+      return FRS_DiagnosticIssued;
+    }
+    *CallExpr = ActOnCallExpr(S, MemberRef.get(), Loc, MultiExprArg(), Loc, 0);
+    if (CallExpr->isInvalid()) {
+      *CallExpr = ExprError();
+      Diag(Range->getLocStart(), diag::note_in_for_range)
+          << RangeLoc << BEF << Range->getType();
+      return FRS_DiagnosticIssued;
+    }
+  } else {
+    UnresolvedSet<0> FoundNames;
+    // C++11 [stmt.ranged]p1: For the purposes of this name lookup, namespace
+    // std is an associated namespace.
+    UnresolvedLookupExpr *Fn =
+      UnresolvedLookupExpr::Create(Context, /*NamingClass=*/0,
+                                   NestedNameSpecifierLoc(), NameInfo,
+                                   /*NeedsADL=*/true, /*Overloaded=*/false,
+                                   FoundNames.begin(), FoundNames.end(),
+                                   /*LookInStdNamespace=*/true);
+
+    bool CandidateSetError = buildOverloadedCallSet(S, Fn, Fn, &Range, 1, Loc,
+                                                    CandidateSet, CallExpr);
+    if (CandidateSet->empty() || CandidateSetError) {
+      *CallExpr = ExprError();
+      return FRS_NoViableFunction;
+    }
+    OverloadCandidateSet::iterator Best;
+    OverloadingResult OverloadResult =
+        CandidateSet->BestViableFunction(*this, Fn->getLocStart(), Best);
+
+    if (OverloadResult == OR_No_Viable_Function) {
+      *CallExpr = ExprError();
+      return FRS_NoViableFunction;
+    }
+    *CallExpr = FinishOverloadedCallExpr(*this, S, Fn, Fn, Loc, &Range, 1,
+                                         Loc, 0, CandidateSet, &Best,
+                                         OverloadResult,
+                                         /*AllowTypoCorrection=*/false);
+    if (CallExpr->isInvalid() || OverloadResult != OR_Success) {
+      *CallExpr = ExprError();
+      Diag(Range->getLocStart(), diag::note_in_for_range)
+          << RangeLoc << BEF << Range->getType();
+      return FRS_DiagnosticIssued;
+    }
+  }
+  return FRS_Success;
+}
+
 
 /// FixOverloadedFunctionReference - E is an expression that refers to
 /// a C++ overloaded function (possibly with some parentheses and

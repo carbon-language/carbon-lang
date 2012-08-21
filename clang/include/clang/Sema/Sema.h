@@ -1924,6 +1924,30 @@ public:
                                    OverloadCandidateSet &CandidateSet,
                                    bool PartialOverloading = false);
 
+  // An enum used to represent the different possible results of building a
+  // range-based for loop.
+  enum ForRangeStatus {
+    FRS_Success,
+    FRS_NoViableFunction,
+    FRS_DiagnosticIssued
+  };
+
+  // An enum to represent whether something is dealing with a call to begin()
+  // or a call to end() in a range-based for loop.
+  enum BeginEndFunction {
+    BEF_begin,
+    BEF_end
+  };
+
+  ForRangeStatus BuildForRangeBeginEndCall(Scope *S, SourceLocation Loc,
+                                           SourceLocation RangeLoc,
+                                           VarDecl *Decl,
+                                           BeginEndFunction BEF,
+                                           const DeclarationNameInfo &NameInfo,
+                                           LookupResult &MemberLookup,
+                                           OverloadCandidateSet *CandidateSet,
+                                           Expr *Range, ExprResult *CallExpr);
+
   ExprResult BuildOverloadedCallExpr(Scope *S, Expr *Fn,
                                      UnresolvedLookupExpr *ULE,
                                      SourceLocation LParenLoc,
@@ -1931,6 +1955,12 @@ public:
                                      SourceLocation RParenLoc,
                                      Expr *ExecConfig,
                                      bool AllowTypoCorrection=true);
+
+  bool buildOverloadedCallSet(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
+                              Expr **Args, unsigned NumArgs,
+                              SourceLocation RParenLoc,
+                              OverloadCandidateSet *CandidateSet,
+                              ExprResult *Result);
 
   ExprResult CreateOverloadedUnaryOp(SourceLocation OpLoc,
                                      unsigned Opc,
@@ -2512,13 +2542,15 @@ public:
 
   StmtResult ActOnCXXForRangeStmt(SourceLocation ForLoc, Stmt *LoopVar,
                                   SourceLocation ColonLoc, Expr *Collection,
-                                  SourceLocation RParenLoc);
+                                  SourceLocation RParenLoc,
+                                  bool ShouldTryDeref);
   StmtResult BuildCXXForRangeStmt(SourceLocation ForLoc,
                                   SourceLocation ColonLoc,
                                   Stmt *RangeDecl, Stmt *BeginEndDecl,
                                   Expr *Cond, Expr *Inc,
                                   Stmt *LoopVarDecl,
-                                  SourceLocation RParenLoc);
+                                  SourceLocation RParenLoc,
+                                  bool ShouldTryDeref);
   StmtResult FinishCXXForRangeStmt(Stmt *ForRange, Stmt *Body);
 
   StmtResult ActOnGotoStmt(SourceLocation GotoLoc,

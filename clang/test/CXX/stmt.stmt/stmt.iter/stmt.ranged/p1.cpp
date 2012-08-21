@@ -3,7 +3,7 @@
 struct pr12960 {
   int begin;
   void foo(int x) {
-    for (int& it : x) { // expected-error {{use of undeclared identifier 'begin'}} expected-note {{range has type 'int'}}
+    for (int& it : x) { // expected-error {{invalid range expression of type 'int'; no viable 'begin' function available}}
     }
   }
 };
@@ -116,9 +116,9 @@ void g() {
   struct NoEndADL {
     null_t alt_begin();
   };
-  for (auto u : NoBeginADL()) { // expected-error {{no matching function for call to 'begin'}} expected-note {{range has type 'NoBeginADL'}}
+  for (auto u : NoBeginADL()) { // expected-error {{invalid range expression of type 'NoBeginADL'; no viable 'begin' function available}}
   }
-  for (auto u : NoEndADL()) { // expected-error {{no matching function for call to 'end'}} expected-note {{range has type 'NoEndADL'}}
+  for (auto u : NoEndADL()) { // expected-error {{invalid range expression of type 'NoEndADL'; no viable 'end' function available}}
   }
 
   struct NoBegin {
@@ -156,8 +156,7 @@ void g() {
   for (int n : NoCopy()) { // ok
   }
 
-  for (int n : 42) { // expected-error {{no matching function for call to 'begin'}} \
-                        expected-note {{range has type 'int'}}
+  for (int n : 42) { // expected-error {{invalid range expression of type 'int'; no viable 'begin' function available}}
   }
 
   for (auto a : *also_incomplete) { // expected-error {{cannot use incomplete type 'struct Incomplete' as a range}}
@@ -179,9 +178,10 @@ template void h<A(&)[13], int>(A(&)[13]); // expected-note {{requested here}}
 
 template<typename T>
 void i(T t) {
-  for (auto u : t) { // expected-error {{no matching function for call to 'begin'}} \
+  for (auto u : t) { // expected-error {{invalid range expression of type 'A *'; no viable 'begin' function available}} \
                         expected-error {{member function 'begin' not viable}} \
-                        expected-note {{range has type}}
+                        expected-note {{when looking up 'begin' function}}
+
   }
 }
 template void i<A[13]>(A*); // expected-note {{requested here}}
@@ -204,9 +204,10 @@ void end(VoidBeginADL);
 void j() {
   for (auto u : NS::ADL()) {
   }
-  for (auto u : NS::NoADL()) { // expected-error {{no matching function for call to 'begin'}} expected-note {{range has type}}
+  for (auto u : NS::NoADL()) { // expected-error {{invalid range expression of type 'NS::NoADL'; no viable 'begin' function available}}
   }
   for (auto a : VoidBeginADL()) { // expected-error {{cannot use type 'void' as an iterator}}
+
   }
 }
 
@@ -215,4 +216,3 @@ void example() {
   for (int &x : array)
     x *= 2;
 }
-

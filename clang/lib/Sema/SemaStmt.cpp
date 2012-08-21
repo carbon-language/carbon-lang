@@ -1549,25 +1549,6 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
                                                    ForLoc, RParenLoc));
 }
 
-namespace {
-
-enum BeginEndFunction {
-  BEF_begin,
-  BEF_end
-};
-
-/// Build a variable declaration for a for-range statement.
-static VarDecl *BuildForRangeVarDecl(Sema &SemaRef, SourceLocation Loc,
-                                     QualType Type, const char *Name) {
-  DeclContext *DC = SemaRef.CurContext;
-  IdentifierInfo *II = &SemaRef.PP.getIdentifierTable().get(Name);
-  TypeSourceInfo *TInfo = SemaRef.Context.getTrivialTypeSourceInfo(Type, Loc);
-  VarDecl *Decl = VarDecl::Create(SemaRef.Context, DC, Loc, Loc, II, Type,
-                                  TInfo, SC_Auto, SC_None);
-  Decl->setImplicit();
-  return Decl;
-}
-
 /// Finish building a variable declaration for a for-range statement.
 /// \return true if an error occurs.
 static bool FinishForRangeVarDecl(Sema &SemaRef, VarDecl *Decl, Expr *Init,
@@ -1600,12 +1581,14 @@ static bool FinishForRangeVarDecl(Sema &SemaRef, VarDecl *Decl, Expr *Init,
   return false;
 }
 
+namespace {
+
 /// Produce a note indicating which begin/end function was implicitly called
-/// by a C++0x for-range statement. This is often not obvious from the code,
+/// by a C++11 for-range statement. This is often not obvious from the code,
 /// nor from the diagnostics produced when analysing the implicit expressions
 /// required in a for-range statement.
 void NoteForRangeBeginEndFunction(Sema &SemaRef, Expr *E,
-                                  BeginEndFunction BEF) {
+                                  Sema::BeginEndFunction BEF) {
   CallExpr *CE = dyn_cast<CallExpr>(E);
   if (!CE)
     return;
@@ -1626,56 +1609,16 @@ void NoteForRangeBeginEndFunction(Sema &SemaRef, Expr *E,
     << BEF << IsTemplate << Description << E->getType();
 }
 
-/// Build a call to 'begin' or 'end' for a C++0x for-range statement. If the
-/// given LookupResult is non-empty, it is assumed to describe a member which
-/// will be invoked. Otherwise, the function will be found via argument
-/// dependent lookup.
-static ExprResult BuildForRangeBeginEndCall(Sema &SemaRef, Scope *S,
-                                            SourceLocation Loc,
-                                            VarDecl *Decl,
-                                            BeginEndFunction BEF,
-                                            const DeclarationNameInfo &NameInfo,
-                                            LookupResult &MemberLookup,
-                                            Expr *Range) {
-  ExprResult CallExpr;
-  if (!MemberLookup.empty()) {
-    ExprResult MemberRef =
-      SemaRef.BuildMemberReferenceExpr(Range, Range->getType(), Loc,
-                                       /*IsPtr=*/false, CXXScopeSpec(),
-                                       /*TemplateKWLoc=*/SourceLocation(),
-                                       /*FirstQualifierInScope=*/0,
-                                       MemberLookup,
-                                       /*TemplateArgs=*/0);
-    if (MemberRef.isInvalid())
-      return ExprError();
-    CallExpr = SemaRef.ActOnCallExpr(S, MemberRef.get(), Loc, MultiExprArg(),
-                                     Loc, 0);
-    if (CallExpr.isInvalid())
-      return ExprError();
-  } else {
-    UnresolvedSet<0> FoundNames;
-    // C++0x [stmt.ranged]p1: For the purposes of this name lookup, namespace
-    // std is an associated namespace.
-    UnresolvedLookupExpr *Fn =
-      UnresolvedLookupExpr::Create(SemaRef.Context, /*NamingClass=*/0,
-                                   NestedNameSpecifierLoc(), NameInfo,
-                                   /*NeedsADL=*/true, /*Overloaded=*/false,
-                                   FoundNames.begin(), FoundNames.end(),
-                                   /*LookInStdNamespace=*/true);
-    CallExpr = SemaRef.BuildOverloadedCallExpr(S, Fn, Fn, Loc, &Range, 1, Loc,
-                                               0, /*AllowTypoCorrection=*/false);
-    if (CallExpr.isInvalid()) {
-      SemaRef.Diag(Range->getLocStart(), diag::note_for_range_type)
-        << Range->getType();
-      return ExprError();
-    }
-  }
-  if (FinishForRangeVarDecl(SemaRef, Decl, CallExpr.get(), Loc,
-                            diag::err_for_range_iter_deduction_failure)) {
-    NoteForRangeBeginEndFunction(SemaRef, CallExpr.get(), BEF);
-    return ExprError();
-  }
-  return CallExpr;
+/// Build a variable declaration for a for-range statement.
+VarDecl *BuildForRangeVarDecl(Sema &SemaRef, SourceLocation Loc,
+                              QualType Type, const char *Name) {
+  DeclContext *DC = SemaRef.CurContext;
+  IdentifierInfo *II = &SemaRef.PP.getIdentifierTable().get(Name);
+  TypeSourceInfo *TInfo = SemaRef.Context.getTrivialTypeSourceInfo(Type, Loc);
+  VarDecl *Decl = VarDecl::Create(SemaRef.Context, DC, Loc, Loc, II, Type,
+                                  TInfo, SC_Auto, SC_None);
+  Decl->setImplicit();
+  return Decl;
 }
 
 }
@@ -1706,7 +1649,7 @@ static bool ObjCEnumerationCollection(Expr *Collection) {
 StmtResult
 Sema::ActOnCXXForRangeStmt(SourceLocation ForLoc,
                            Stmt *First, SourceLocation ColonLoc, Expr *Range,
-                           SourceLocation RParenLoc) {
+                           SourceLocation RParenLoc, bool ShouldTryDeref) {
   if (!First || !Range)
     return StmtError();
 
@@ -1744,7 +1687,111 @@ Sema::ActOnCXXForRangeStmt(SourceLocation ForLoc,
 
   return BuildCXXForRangeStmt(ForLoc, ColonLoc, RangeDecl.get(),
                               /*BeginEndDecl=*/0, /*Cond=*/0, /*Inc=*/0, DS,
-                              RParenLoc);
+                              RParenLoc, ShouldTryDeref);
+}
+
+/// \brief Create the initialization, compare, and increment steps for
+/// the range-based for loop expression.
+/// This function does not handle array-based for loops,
+/// which are created in Sema::BuildCXXForRangeStmt.
+///
+/// \returns a ForRangeStatus indicating success or what kind of error occurred.
+/// BeginExpr and EndExpr are set and FRS_Success is returned on success;
+/// CandidateSet and BEF are set and some non-success value is returned on
+/// failure.
+static Sema::ForRangeStatus BuildNonArrayForRange(Sema &SemaRef, Scope *S,
+                                            Expr *BeginRange, Expr *EndRange,
+                                            QualType RangeType,
+                                            VarDecl *BeginVar,
+                                            VarDecl *EndVar,
+                                            SourceLocation ColonLoc,
+                                            OverloadCandidateSet *CandidateSet,
+                                            ExprResult *BeginExpr,
+                                            ExprResult *EndExpr,
+                                            Sema::BeginEndFunction *BEF) {
+  DeclarationNameInfo BeginNameInfo(
+      &SemaRef.PP.getIdentifierTable().get("begin"), ColonLoc);
+  DeclarationNameInfo EndNameInfo(&SemaRef.PP.getIdentifierTable().get("end"),
+                                  ColonLoc);
+
+  LookupResult BeginMemberLookup(SemaRef, BeginNameInfo,
+                                 Sema::LookupMemberName);
+  LookupResult EndMemberLookup(SemaRef, EndNameInfo, Sema::LookupMemberName);
+
+  if (CXXRecordDecl *D = RangeType->getAsCXXRecordDecl()) {
+    // - if _RangeT is a class type, the unqualified-ids begin and end are
+    //   looked up in the scope of class _RangeT as if by class member access
+    //   lookup (3.4.5), and if either (or both) finds at least one
+    //   declaration, begin-expr and end-expr are __range.begin() and
+    //   __range.end(), respectively;
+    SemaRef.LookupQualifiedName(BeginMemberLookup, D);
+    SemaRef.LookupQualifiedName(EndMemberLookup, D);
+
+    if (BeginMemberLookup.empty() != EndMemberLookup.empty()) {
+      SourceLocation RangeLoc = BeginVar->getLocation();
+      *BEF = BeginMemberLookup.empty() ? Sema::BEF_end : Sema::BEF_begin;
+
+      SemaRef.Diag(RangeLoc, diag::err_for_range_member_begin_end_mismatch)
+          << RangeLoc << BeginRange->getType() << *BEF;
+      return Sema::FRS_DiagnosticIssued;
+    }
+  } else {
+    // - otherwise, begin-expr and end-expr are begin(__range) and
+    //   end(__range), respectively, where begin and end are looked up with
+    //   argument-dependent lookup (3.4.2). For the purposes of this name
+    //   lookup, namespace std is an associated namespace.
+
+  }
+
+  *BEF = Sema::BEF_begin;
+  Sema::ForRangeStatus RangeStatus =
+      SemaRef.BuildForRangeBeginEndCall(S, ColonLoc, ColonLoc, BeginVar,
+                                        Sema::BEF_begin, BeginNameInfo,
+                                        BeginMemberLookup, CandidateSet,
+                                        BeginRange, BeginExpr);
+
+  if (RangeStatus != Sema::FRS_Success)
+    return RangeStatus;
+  if (FinishForRangeVarDecl(SemaRef, BeginVar, BeginExpr->get(), ColonLoc,
+                            diag::err_for_range_iter_deduction_failure)) {
+    NoteForRangeBeginEndFunction(SemaRef, BeginExpr->get(), *BEF);
+    return Sema::FRS_DiagnosticIssued;
+  }
+
+  *BEF = Sema::BEF_end;
+  RangeStatus =
+      SemaRef.BuildForRangeBeginEndCall(S, ColonLoc, ColonLoc, EndVar,
+                                        Sema::BEF_end, EndNameInfo,
+                                        EndMemberLookup, CandidateSet,
+                                        EndRange, EndExpr);
+  if (RangeStatus != Sema::FRS_Success)
+    return RangeStatus;
+  if (FinishForRangeVarDecl(SemaRef, EndVar, EndExpr->get(), ColonLoc,
+                            diag::err_for_range_iter_deduction_failure)) {
+    NoteForRangeBeginEndFunction(SemaRef, EndExpr->get(), *BEF);
+    return Sema::FRS_DiagnosticIssued;
+  }
+  return Sema::FRS_Success;
+}
+
+/// Speculatively attempt to dereference an invalid range expression.
+/// This function will not emit diagnostics, but returns StmtError if
+/// an error occurs.
+static StmtResult RebuildForRangeWithDereference(Sema &SemaRef, Scope *S,
+                                                 SourceLocation ForLoc,
+                                                 Stmt *LoopVarDecl,
+                                                 SourceLocation ColonLoc,
+                                                 Expr *Range,
+                                                 SourceLocation RangeLoc,
+                                                 SourceLocation RParenLoc) {
+  Sema::SFINAETrap Trap(SemaRef);
+  ExprResult AdjustedRange = SemaRef.BuildUnaryOp(S, RangeLoc, UO_Deref, Range);
+  StmtResult SR =
+    SemaRef.ActOnCXXForRangeStmt(ForLoc, LoopVarDecl, ColonLoc,
+                                 AdjustedRange.get(), RParenLoc, false);
+  if (Trap.hasErrorOccurred())
+    return StmtError();
+  return SR;
 }
 
 /// BuildCXXForRangeStmt - Build or instantiate a C++0x for-range statement.
@@ -1752,7 +1799,7 @@ StmtResult
 Sema::BuildCXXForRangeStmt(SourceLocation ForLoc, SourceLocation ColonLoc,
                            Stmt *RangeDecl, Stmt *BeginEnd, Expr *Cond,
                            Expr *Inc, Stmt *LoopVarDecl,
-                           SourceLocation RParenLoc) {
+                           SourceLocation RParenLoc, bool ShouldTryDeref) {
   Scope *S = getCurScope();
 
   DeclStmt *RangeDS = cast<DeclStmt>(RangeDecl);
@@ -1838,50 +1885,49 @@ Sema::BuildCXXForRangeStmt(SourceLocation ForLoc, SourceLocation ColonLoc,
         return StmtError();
       }
     } else {
-      DeclarationNameInfo BeginNameInfo(&PP.getIdentifierTable().get("begin"),
-                                        ColonLoc);
-      DeclarationNameInfo EndNameInfo(&PP.getIdentifierTable().get("end"),
-                                      ColonLoc);
+      OverloadCandidateSet CandidateSet(RangeLoc);
+      Sema::BeginEndFunction BEFFailure;
+      ForRangeStatus RangeStatus =
+          BuildNonArrayForRange(*this, S, BeginRangeRef.get(),
+                                EndRangeRef.get(), RangeType,
+                                BeginVar, EndVar, ColonLoc, &CandidateSet,
+                                &BeginExpr, &EndExpr, &BEFFailure);
 
-      LookupResult BeginMemberLookup(*this, BeginNameInfo, LookupMemberName);
-      LookupResult EndMemberLookup(*this, EndNameInfo, LookupMemberName);
-
-      if (CXXRecordDecl *D = RangeType->getAsCXXRecordDecl()) {
-        // - if _RangeT is a class type, the unqualified-ids begin and end are
-        //   looked up in the scope of class _RangeT as if by class member access
-        //   lookup (3.4.5), and if either (or both) finds at least one
-        //   declaration, begin-expr and end-expr are __range.begin() and
-        //   __range.end(), respectively;
-        LookupQualifiedName(BeginMemberLookup, D);
-        LookupQualifiedName(EndMemberLookup, D);
-
-        if (BeginMemberLookup.empty() != EndMemberLookup.empty()) {
-          Diag(ColonLoc, diag::err_for_range_member_begin_end_mismatch)
-            << RangeType << BeginMemberLookup.empty();
-          return StmtError();
+      // If building the range failed, try dereferencing the range expression
+      // unless a diagnostic was issued or the end function is problematic.
+      if (ShouldTryDeref && RangeStatus == FRS_NoViableFunction &&
+          BEFFailure == BEF_begin) {
+        StmtResult SR = RebuildForRangeWithDereference(*this, S, ForLoc,
+                                                       LoopVarDecl, ColonLoc,
+                                                       Range, RangeLoc,
+                                                       RParenLoc);
+        if (!SR.isInvalid()) {
+          // The attempt to dereference would succeed; return the result of
+          // recovery.
+          Diag(RangeLoc, diag::err_for_range_dereference)
+              << RangeLoc << RangeType
+              << FixItHint::CreateInsertion(RangeLoc, "*");
+          return SR;
         }
-      } else {
-        // - otherwise, begin-expr and end-expr are begin(__range) and
-        //   end(__range), respectively, where begin and end are looked up with
-        //   argument-dependent lookup (3.4.2). For the purposes of this name
-        //   lookup, namespace std is an associated namespace.
       }
 
-      BeginExpr = BuildForRangeBeginEndCall(*this, S, ColonLoc, BeginVar,
-                                            BEF_begin, BeginNameInfo,
-                                            BeginMemberLookup,
-                                            BeginRangeRef.get());
-      if (BeginExpr.isInvalid())
-        return StmtError();
-
-      EndExpr = BuildForRangeBeginEndCall(*this, S, ColonLoc, EndVar,
-                                          BEF_end, EndNameInfo,
-                                          EndMemberLookup, EndRangeRef.get());
-      if (EndExpr.isInvalid())
+      // Otherwise, emit diagnostics if we haven't already.
+      if (RangeStatus == FRS_NoViableFunction) {
+        Expr *Range = BEFFailure ?  EndRangeRef.get() : BeginRangeRef.get();
+        Diag(Range->getLocStart(), diag::err_for_range_invalid)
+            << RangeLoc << Range->getType() << BEFFailure;
+        CandidateSet.NoteCandidates(*this, OCD_AllCandidates,
+                                    llvm::makeArrayRef(&Range, /*NumArgs=*/1));
+      }
+      // Return an error if no fix was discovered.
+      if (RangeStatus != FRS_Success)
         return StmtError();
     }
 
-    // C++0x [decl.spec.auto]p6: BeginType and EndType must be the same.
+    assert(!BeginExpr.isInvalid() && !EndExpr.isInvalid() &&
+           "invalid range expression in for loop");
+
+    // C++11 [dcl.spec.auto]p7: BeginType and EndType must be the same.
     QualType BeginType = BeginVar->getType(), EndType = EndVar->getType();
     if (!Context.hasSameType(BeginType, EndType)) {
       Diag(RangeLoc, diag::err_for_range_begin_end_types_differ)
