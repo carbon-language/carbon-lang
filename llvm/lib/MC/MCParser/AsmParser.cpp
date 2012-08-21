@@ -3071,14 +3071,14 @@ bool GenericAsmParser::ParseDirectiveMacro(StringRef Directive,
                                            SMLoc DirectiveLoc) {
   StringRef Name;
   if (getParser().ParseIdentifier(Name))
-    return TokError("expected identifier in directive");
+    return TokError("expected identifier in '.macro' directive");
 
   MacroParameters Parameters;
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     for (;;) {
       MacroParameter Parameter;
       if (getParser().ParseIdentifier(Parameter))
-        return TokError("expected identifier in directive");
+        return TokError("expected identifier in '.macro' directive");
       Parameters.push_back(Parameter);
 
       if (getLexer().isNot(AsmToken::Comma))
