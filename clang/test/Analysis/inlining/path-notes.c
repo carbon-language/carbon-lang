@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-ipa=inlining -analyzer-output=text -verify %s
-// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-ipa=inlining -analyzer-output=plist-multi-file %s -o - | FileCheck %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-output=text -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-output=plist-multi-file %s -o - | FileCheck %s
 
 void zero(int **p) {
   *p = 0;

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-ipa=inlining -analyzer-store region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core -verify %s
 
 // Test parameter 'a' is registered to LiveVariables analysis data although it
 // is not referenced in the function body. 

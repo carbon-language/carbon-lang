@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -analyzer-store region -cfg-add-implicit-dtors -std=c++11 -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -analyzer-ipa=inlining -cfg-add-implicit-dtors -std=c++11 -verify %s
 
 // We don't inline constructors unless we have destructors turned on.
 

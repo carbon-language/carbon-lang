@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-ipa=inlining -analyzer-store region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core -verify %s
 
 int g(int a) {    
   return a;

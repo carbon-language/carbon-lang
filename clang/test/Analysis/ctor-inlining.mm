@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -fobjc-arc -cfg-add-implicit-dtors -Wno-null-dereference -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -fobjc-arc -analyzer-ipa=inlining -cfg-add-implicit-dtors -Wno-null-dereference -verify %s
 
 void clang_analyzer_eval(bool);
 

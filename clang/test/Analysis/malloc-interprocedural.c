@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=unix.Malloc -analyzer-ipa=inlining -analyzer-inline-max-stack-depth=5 -analyzer-inline-max-function-size=6 -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=unix.Malloc -analyzer-inline-max-stack-depth=5 -analyzer-inline-max-function-size=6 -verify %s
 
 #include "system-header-simulator.h"
 
