@@ -592,7 +592,8 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
     unsigned ErrorInfo;
     SmallVector<llvm::MCInst, 2> Instrs;
     HadError = TargetParser->MatchInstruction(IDLoc, Operands, Instrs,
-                                              ErrorInfo);
+                                              ErrorInfo,
+                                              /*matchingInlineAsm*/ true);
     assert (!HadError && "Unexpected error matching instruction");
     assert ((Instrs.size() == 1) && "Expected only a single instruction.");
 
