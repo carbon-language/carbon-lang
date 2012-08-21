@@ -3021,12 +3021,8 @@ case "$enableval" in
   yes)
 $as_echo "#define GPU_CODEGEN 1" >>confdefs.h
  ;;
-  no)
-$as_echo "#define GPU_CODEGEN 0" >>confdefs.h
- ;;
-  default)
-$as_echo "#define GPU_CODEGEN 0" >>confdefs.h
- ;;
+  no) ;;
+  default) ;;
   *) as_fn_error $? "Invalid setting for --enable-polly-gpu-codegen. Use \"yes\" or \"no\"" "$LINENO" 5 ;;
 esac
 
