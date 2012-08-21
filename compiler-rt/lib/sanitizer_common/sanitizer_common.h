@@ -53,6 +53,30 @@ void InternalFree(void *p);
 // returns a pointer to the beginning of the block.
 void *InternalAllocBlock(void *p);
 
+// InternalScopedBuffer can be used instead of large stack arrays to
+// keep frame size low.
+template<typename T>
+class InternalScopedBuffer {
+ public:
+  explicit InternalScopedBuffer(uptr cnt) {
+    cnt_ = cnt;
+    ptr_ = (T*)InternalAlloc(cnt * sizeof(T));
+  }
+  ~InternalScopedBuffer() {
+    InternalFree(ptr_);
+  }
+  T &operator[](uptr i) { return ptr_[i]; }
+  T *data() { return ptr_; }
+  uptr size() { return cnt_ * sizeof(T); }
+
+ private:
+  T *ptr_;
+  uptr cnt_;
+  // Disallow evil constructors.
+  InternalScopedBuffer(const InternalScopedBuffer&);
+  void operator=(const InternalScopedBuffer&);
+};
+
 // IO
 void RawWrite(const char *buffer);
 void Printf(const char *format, ...);

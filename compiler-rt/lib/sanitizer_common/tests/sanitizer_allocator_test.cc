@@ -53,4 +53,18 @@ TEST(Allocator, Stress) {
   }
 }
 
+TEST(Allocator, ScopedBuffer) {
+  const int kSize = 512;
+  {
+    InternalScopedBuffer<int> int_buf(kSize);
+    EXPECT_EQ(sizeof(int) * kSize, int_buf.size());  // NOLINT
+  }
+  InternalScopedBuffer<char> char_buf(kSize);
+  EXPECT_EQ(sizeof(char) * kSize, char_buf.size());  // NOLINT
+  memset(char_buf.data(), 'c', kSize);
+  for (int i = 0; i < kSize; i++) {
+    EXPECT_EQ('c', char_buf[i]);
+  }
+}
+
 }  // namespace __sanitizer
