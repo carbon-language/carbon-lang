@@ -2344,7 +2344,7 @@ static X86::CondCode getSwappedCondition(X86::CondCode CC) {
 /// whether it has memory operand.
 static unsigned getSETFromCond(X86::CondCode CC,
                                bool HasMemoryOperand) {
-  static const unsigned Opc[16][2] = {
+  static const uint16_t Opc[16][2] = {
     { X86::SETAr,  X86::SETAm  },
     { X86::SETAEr, X86::SETAEm },
     { X86::SETBr,  X86::SETBm  },
@@ -2371,7 +2371,7 @@ static unsigned getSETFromCond(X86::CondCode CC,
 /// register size in bytes, and operand type.
 static unsigned getCMovFromCond(X86::CondCode CC, unsigned RegBytes,
                                 bool HasMemoryOperand) {
-  static const unsigned Opc[32][3] = {
+  static const uint16_t Opc[32][3] = {
     { X86::CMOVA16rr,  X86::CMOVA32rr,  X86::CMOVA64rr  },
     { X86::CMOVAE16rr, X86::CMOVAE32rr, X86::CMOVAE64rr },
     { X86::CMOVB16rr,  X86::CMOVB32rr,  X86::CMOVB64rr  },
