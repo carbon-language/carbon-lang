@@ -109,7 +109,7 @@ public:
     AnalysisConstraintsOpt = RangeConstraintsModel;
     AnalysisDiagOpt = PD_HTML;
     AnalysisPurgeOpt = PurgeStmt;
-    IPAMode = Inlining;
+    IPAMode = BasicInlining;
     ShowCheckerHelp = 0;
     AnalyzeAll = 0;
     AnalyzerDisplayProgress = 0;

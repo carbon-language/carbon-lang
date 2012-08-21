@@ -22,8 +22,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/SaveAndRestore.h"
 
-#define CXX_INLINING_ENABLED 1
-
 using namespace clang;
 using namespace ento;
 
@@ -305,6 +303,20 @@ template<> struct ProgramStateTrait<DynamicDispatchBifurcationMap>
 
 }}
 
+static bool shouldInlineCXX(AnalysisManager &AMgr) {
+  switch (AMgr.IPAMode) {
+  case None:
+  case BasicInlining:
+    return false;
+  case Inlining:
+  case DynamicDispatch:
+  case DynamicDispatchBifurcate:
+    return true;
+  case NumIPAModes:
+    llvm_unreachable("not actually a valid option");
+  }
+}
+
 bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
                             NodeBuilder &Bldr, ExplodedNode *Pred,
                             ProgramStateRef State) {
@@ -320,11 +332,11 @@ bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
     break;
   case CE_CXXMember:
   case CE_CXXMemberOperator:
-    if (!CXX_INLINING_ENABLED)
+    if (!shouldInlineCXX(getAnalysisManager()))
       return false;
     break;
   case CE_CXXConstructor: {
-    if (!CXX_INLINING_ENABLED)
+    if (!shouldInlineCXX(getAnalysisManager()))
       return false;
 
     // Only inline constructors and destructors if we built the CFGs for them
@@ -351,7 +363,7 @@ bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
     break;
   }
   case CE_CXXDestructor: {
-    if (!CXX_INLINING_ENABLED)
+    if (!shouldInlineCXX(getAnalysisManager()))
       return false;
 
     // Only inline constructors and destructors if we built the CFGs for them
@@ -371,7 +383,7 @@ bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
     break;
   }
   case CE_CXXAllocator:
-    if (!CXX_INLINING_ENABLED)
+    if (!shouldInlineCXX(getAnalysisManager()))
       return false;
 
     // Do not inline allocators until we model deallocators.

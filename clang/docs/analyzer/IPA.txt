@@ -3,12 +3,13 @@ Inlining
 
 Inlining Modes
 -----------------------
--analyzer-ipa=none - All inlining is disabled.
+-analyzer-ipa=none - All inlining is disabled. This is the only mode available in LLVM 3.1 and earlier and in Xcode 4.3 and earlier.
+-analyzer-ipa=basic-inlining - Turns on inlining for C functions, C++ static member functions, and blocks -- essentially, the calls that behave like simple C function calls. This is essentially the mode used in Xcode 4.4.
 -analyzer-ipa=inlining - Turns on inlining when we can confidently find the function/method body corresponding to the call. (C functions, static functions, devirtualized C++ methods, ObjC class methods, ObjC instance methods when we are confident about the dynamic type of the instance).
 -analyzer-ipa=dynamic - Inline instance methods for which the type is determined at runtime and we are not 100% sure that our type info is correct. For virtual calls, inline the most plausible definition.
 -analyzer-ipa=dynamic-bifurcate - Same as -analyzer-ipa=dynamic, but the path is split. We inline on one branch and do not inline on the other. This mode does not drop the coverage in cases when the parent class has code that is only exercised when some of its methods are overriden.
 
-Currently, -analyzer-ipa=inlining is the default mode.
+Currently, -analyzer-ipa=basic-inlining is the default mode.
 
 Basics of Implementation
 -----------------------
@@ -50,7 +51,7 @@ Type information is tracked as DynamicTypeInfo, stored within the program state.
 
 When asked to provide a definition, the CallEvents for dynamic calls will use the type info in their state to provide the best definition of the method to be called. In some cases this devirtualization can be perfect or near-perfect, and we can inline the definition as usual. In others we can make a guess, but report that our guess may not be the method actually called at runtime.
 
-The -analyzer-ipa option has four different modes: none, inlining, dynamic, and dynamic-bifurcate. Under -analyzer-ipa=dynamic, all dynamic calls are inlined, whether we are certain or not that this will actually be the definition used at runtime. Under -analyzer-ipa=inlining, only "near-perfect" devirtualized calls are inlined*, and other dynamic calls are evaluated conservatively (as if no definition were available).
+The -analyzer-ipa option has five different modes: none, basic-inlining, inlining, dynamic, and dynamic-bifurcate. Under -analyzer-ipa=dynamic, all dynamic calls are inlined, whether we are certain or not that this will actually be the definition used at runtime. Under -analyzer-ipa=inlining, only "near-perfect" devirtualized calls are inlined*, and other dynamic calls are evaluated conservatively (as if no definition were available). Under -analyzer-ipa=basic-inlining, only simple calls (C functions and a few others) are inlined, and no devirtualization is performed.
 
 * Currently, no Objective-C messages are not inlined under -analyzer-ipa=inlining, even if we are reasonably confident of the type of the receiver. We plan to enable this once we have tested our heuristics more thoroughly.
 
