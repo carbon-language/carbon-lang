@@ -459,22 +459,41 @@ static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
   AsmStrings[NumAsmStrings] = Asm.c_str();
 }
 
+// Break the AsmSting into pieces.
+static void buildMSAsmPieces(StringRef Asm, std::vector<StringRef> &Pieces) {
+  std::pair<StringRef,StringRef> Split = Asm.split(' ');
+
+  // Mnemonic
+  Pieces.push_back(Split.first);
+  Asm = Split.second;
+
+  // Operands
+  while (!Asm.empty()) {
+    Split = Asm.split(", ");
+    Pieces.push_back(Split.first);
+    Asm = Split.second;
+  }
+}
+
 // Build the unmodified MSAsmString.
 static std::string buildMSAsmString(Sema &SemaRef,
                                     ArrayRef<Token> AsmToks,
-                                    unsigned &NumAsmStrings) {
+                                    std::vector<std::string> &AsmStrings) {
   assert (!AsmToks.empty() && "Didn't expect an empty AsmToks!");
-  NumAsmStrings = 0;
 
+  SmallString<512> Res;
   SmallString<512> Asm;
   for (unsigned i = 0, e = AsmToks.size(); i < e; ++i) {
     bool isNewAsm = i == 0 || AsmToks[i].isAtStartOfLine() ||
       AsmToks[i].is(tok::kw_asm);
 
     if (isNewAsm) {
-      ++NumAsmStrings;
-      if (i)
-        Asm += '\n';
+      if (i) {
+        AsmStrings.push_back(Asm.c_str());
+        Res += Asm;
+        Asm.clear();
+        Res += '\n';
+      }
       if (AsmToks[i].is(tok::kw_asm)) {
         i++; // Skip __asm
         assert (i != e && "Expected another token");
@@ -486,7 +505,9 @@ static std::string buildMSAsmString(Sema &SemaRef,
 
     Asm += getSpelling(SemaRef, AsmToks[i]);
   }
-  return Asm.c_str();
+  AsmStrings.push_back(Asm.c_str());
+  Res += Asm;
+  return Res.c_str();
 }
 
 StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
@@ -511,7 +532,14 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   }
 
   unsigned NumAsmStrings;
-  std::string AsmString = buildMSAsmString(*this, AsmToks, NumAsmStrings);
+  std::vector<std::string> AsmStrings;
+  std::string AsmString = buildMSAsmString(*this, AsmToks, AsmStrings);
+  NumAsmStrings = AsmStrings.size();
+
+  std::vector<std::vector<StringRef> > Pieces;
+  Pieces.resize(NumAsmStrings);
+  for (unsigned i = 0; i != NumAsmStrings; ++i)
+    buildMSAsmPieces(AsmStrings[i], Pieces[i]);
 
   bool IsSimple;
   std::vector<llvm::BitVector> Regs;
