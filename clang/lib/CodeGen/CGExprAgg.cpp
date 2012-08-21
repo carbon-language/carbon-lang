@@ -1300,9 +1300,9 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   // implementation handles this case safely.  If there is a libc that does not
   // safely handle this, we can add a target hook.
 
-  // Get size and alignment info for this aggregate.
+  // Get data size and alignment info for this aggregate.
   std::pair<CharUnits, CharUnits> TypeInfo = 
-    getContext().getTypeInfoInChars(Ty);
+    getContext().getTypeInfoDataSizeInChars(Ty);
 
   if (alignment.isZero())
     alignment = TypeInfo.second;

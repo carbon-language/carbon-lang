@@ -1427,6 +1427,10 @@ public:
   /// characters. This method does not work on incomplete types.
   CharUnits getTypeAlignInChars(QualType T) const;
   CharUnits getTypeAlignInChars(const Type *T) const;
+  
+  // getTypeInfoDataSizeInChars - Return the size of a type, in chars. If the
+  // type is a record, its data size is returned.
+  std::pair<CharUnits, CharUnits> getTypeInfoDataSizeInChars(QualType T) const;
 
   std::pair<CharUnits, CharUnits> getTypeInfoInChars(const Type *T) const;
   std::pair<CharUnits, CharUnits> getTypeInfoInChars(QualType T) const;

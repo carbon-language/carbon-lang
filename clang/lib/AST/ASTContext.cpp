@@ -1080,6 +1080,27 @@ CharUnits ASTContext::getDeclAlign(const Decl *D, bool RefAsPointee) const {
   return toCharUnitsFromBits(Align);
 }
 
+// getTypeInfoDataSizeInChars - Return the size of a type, in
+// chars. If the type is a record, its data size is returned.  This is
+// the size of the memcpy that's performed when assigning this type
+// using a trivial copy/move assignment operator.
+std::pair<CharUnits, CharUnits>
+ASTContext::getTypeInfoDataSizeInChars(QualType T) const {
+  std::pair<CharUnits, CharUnits> sizeAndAlign = getTypeInfoInChars(T);
+
+  // In C++, objects can sometimes be allocated into the tail padding
+  // of a base-class subobject.  We decide whether that's possible
+  // during class layout, so here we can just trust the layout results.
+  if (getLangOpts().CPlusPlus) {
+    if (const RecordType *RT = T->getAs<RecordType>()) {
+      const ASTRecordLayout &layout = getASTRecordLayout(RT->getDecl());
+      sizeAndAlign.first = layout.getDataSize();
+    }
+  }
+
+  return sizeAndAlign;
+}
+
 std::pair<CharUnits, CharUnits>
 ASTContext::getTypeInfoInChars(const Type *T) const {
   std::pair<uint64_t, unsigned> Info = getTypeInfo(T);
