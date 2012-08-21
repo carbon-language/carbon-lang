@@ -31,16 +31,28 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "__memcpy_chk",
     "acos",
     "acosf",
+    "acosh",
+    "acoshf",
+    "acoshl",
     "acosl",
     "asin",
     "asinf",
+    "asinh",
+    "asinhf",
+    "asinhl",
     "asinl",
     "atan",
     "atan2",
     "atan2f",
     "atan2l",
     "atanf",
+    "atanh",
+    "atanhf",
+    "atanhl",
     "atanl",
+    "cbrt",
+    "cbrtf",
+    "cbrtl",
     "ceil",
     "ceilf",
     "ceill",
@@ -54,6 +66,9 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "coshl",
     "cosl",
     "exp",
+    "exp10",
+    "exp10f",
+    "exp10l",
     "exp2",
     "exp2f",
     "exp2l",
@@ -86,6 +101,9 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "log2",
     "log2f",
     "log2l",
+    "logb",
+    "logbf",
+    "logbl",
     "logf",
     "logl",
     "memchr",
@@ -205,6 +223,21 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T,
     TLI.setUnavailable(LibFunc::tanhl);
 
     // Win32 only has C89 math
+    TLI.setUnavailable(LibFunc::acosh);
+    TLI.setUnavailable(LibFunc::acoshf);
+    TLI.setUnavailable(LibFunc::acoshl);
+    TLI.setUnavailable(LibFunc::asinh);
+    TLI.setUnavailable(LibFunc::asinhf);
+    TLI.setUnavailable(LibFunc::asinhl);
+    TLI.setUnavailable(LibFunc::atanh);
+    TLI.setUnavailable(LibFunc::atanhf);
+    TLI.setUnavailable(LibFunc::atanhl);
+    TLI.setUnavailable(LibFunc::cbrt);
+    TLI.setUnavailable(LibFunc::cbrtf);
+    TLI.setUnavailable(LibFunc::cbrtl);
+    TLI.setUnavailable(LibFunc::exp10);
+    TLI.setUnavailable(LibFunc::exp10f);
+    TLI.setUnavailable(LibFunc::exp10l);
     TLI.setUnavailable(LibFunc::exp2);
     TLI.setUnavailable(LibFunc::exp2f);
     TLI.setUnavailable(LibFunc::exp2l);
@@ -217,6 +250,9 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T,
     TLI.setUnavailable(LibFunc::log1p);
     TLI.setUnavailable(LibFunc::log1pf);
     TLI.setUnavailable(LibFunc::log1pl);
+    TLI.setUnavailable(LibFunc::logb);
+    TLI.setUnavailable(LibFunc::logbf);
+    TLI.setUnavailable(LibFunc::logbl);
     TLI.setUnavailable(LibFunc::nearbyint);
     TLI.setUnavailable(LibFunc::nearbyintf);
     TLI.setUnavailable(LibFunc::nearbyintl);

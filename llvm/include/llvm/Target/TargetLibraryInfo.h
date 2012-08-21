@@ -33,12 +33,24 @@ namespace llvm {
       acos,
       /// float acosf(float x);
       acosf,
+      /// double acosh(double x);
+      acosh,
+      /// float acoshf(float x);
+      acoshf,
+      /// long double acoshl(long double x);
+      acoshl,
       /// long double acosl(long double x);
       acosl,
       /// double asin(double x);
       asin,
       /// float asinf(float x);
       asinf,
+      /// double asinh(double x);
+      asinh,
+      /// float asinhf(float x);
+      asinhf,
+      /// long double asinhl(long double x);
+      asinhl,
       /// long double asinl(long double x);
       asinl,
       /// double atan(double x);
@@ -51,8 +63,20 @@ namespace llvm {
       atan2l,
       /// float atanf(float x);
       atanf,
+      /// double atanh(double x);
+      atanh,
+      /// float atanhf(float x);
+      atanhf,
+      /// long double atanhl(long double x);
+      atanhl,
       /// long double atanl(long double x);
       atanl,
+      /// double cbrt(double x);
+      cbrt,
+      /// float cbrtf(float x);
+      cbrtf,
+      /// long double cbrtl(long double x);
+      cbrtl,
       /// double ceil(double x);
       ceil,
       /// float ceilf(float x);
@@ -79,6 +103,12 @@ namespace llvm {
       cosl,
       /// double exp(double x);
       exp,
+      /// double exp10(double x);
+      exp10,
+      /// float exp10f(float x);
+      exp10f,
+      /// long double exp10l(long double x);
+      exp10l,
       /// double exp2(double x);
       exp2,
       /// float exp2f(float x);
@@ -144,6 +174,12 @@ namespace llvm {
       log2f,
       /// double long double log2l(long double x);
       log2l,
+      /// double logb(double x);
+      logb,
+      /// float logbf(float x);
+      logbf,
+      /// long double logbl(long double x);
+      logbl,
       /// float logf(float x);
       logf,
       /// long double logl(long double x);
