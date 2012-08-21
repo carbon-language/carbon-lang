@@ -1,3 +1,4 @@
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core,debug.ExprInspection -analyzer-store=region -analyzer-constraints=basic -verify -Wno-null-dereference %s
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core,debug.ExprInspection -analyzer-store=region -analyzer-constraints=range -verify -Wno-null-dereference %s
 
 void clang_analyzer_eval(bool);
@@ -110,6 +111,16 @@ void testRetroactiveNullReference(int *x) {
   y = 5; // expected-warning{{Dereference of null pointer}}
 }
 
+void testReferenceAddress(int &x) {
+  clang_analyzer_eval(&x != 0); // expected-warning{{TRUE}}
+  clang_analyzer_eval(&ref() != 0); // expected-warning{{TRUE}}
+
+  struct S { int &x; };
+
+  extern S *getS();
+  clang_analyzer_eval(&getS()->x != 0); // expected-warning{{TRUE}}
+}
+
 
 // ------------------------------------
 // False negatives
@@ -127,5 +138,11 @@ namespace rdar11212286 {
     B *x = 0;
     return *x; // should warn here!
   }
+}
 
+void testReferenceFieldAddress() {
+  struct S { int &x; };
+
+  extern S getS();
+  clang_analyzer_eval(&getS().x != 0); // expected-warning{{UNKNOWN}}
 }
