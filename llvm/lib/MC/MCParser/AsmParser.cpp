@@ -1581,7 +1581,7 @@ bool AsmParser::ParseMacroArgument(MacroArgument &MA) {
     Lex();
   }
   if (ParenLevel != 0)
-    return TokError("unbalanced parenthesises in macro argument");
+    return TokError("unbalanced parentheses in macro argument");
   return false;
 }
 
