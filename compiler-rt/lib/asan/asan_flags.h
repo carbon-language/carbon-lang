@@ -43,6 +43,8 @@ struct Flags {
   // on globals, 1 - detect buffer overflow, 2 - print data about registered
   // globals).
   int  report_globals;
+  // If set, attempts to catch initialization order issues.
+  bool check_initialization_order;
   // Max number of stack frames kept for each allocation.
   int  malloc_context_size;
   // If set, uses custom wrappers and replacements for libc string functions

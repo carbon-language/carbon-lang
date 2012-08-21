@@ -48,6 +48,14 @@ extern "C" {
   void __asan_unregister_globals(__asan_global *globals, uptr n)
       SANITIZER_INTERFACE_ATTRIBUTE;
 
+  // These two functions should be called before and after dynamic initializers
+  // run, respectively.  They should be called with parameters describing all
+  // dynamically initialized globals defined in the calling TU.
+  void __asan_before_dynamic_init(uptr first_addr, uptr last_addr)
+      SANITIZER_INTERFACE_ATTRIBUTE;
+  void __asan_after_dynamic_init()
+      SANITIZER_INTERFACE_ATTRIBUTE;
+
   // These two functions are used by the instrumented code in the
   // use-after-return mode. __asan_stack_malloc allocates size bytes of
   // fake stack and __asan_stack_free poisons it. real_stack is a pointer to

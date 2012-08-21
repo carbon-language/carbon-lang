@@ -31,8 +31,9 @@ struct ListOfGlobals {
 };
 
 static AsanLock mu_for_globals(LINKER_INITIALIZED);
-static ListOfGlobals *list_of_globals;
 static LowLevelAllocator allocator_for_globals(LINKER_INITIALIZED);
+static ListOfGlobals *list_of_all_globals;
+static ListOfGlobals *list_of_dynamic_init_globals;
 
 void PoisonRedZones(const Global &g)  {
   uptr shadow_rz_size = kGlobalAndStackRedzone >> SHADOW_SCALE;
@@ -63,7 +64,7 @@ bool DescribeAddressIfGlobal(uptr addr) {
   if (!flags()->report_globals) return false;
   ScopedLock lock(&mu_for_globals);
   bool res = false;
-  for (ListOfGlobals *l = list_of_globals; l; l = l->next) {
+  for (ListOfGlobals *l = list_of_all_globals; l; l = l->next) {
     const Global &g = *l->g;
     if (flags()->report_globals >= 2)
       Report("Search Global: beg=%p size=%zu name=%s\n",
@@ -78,6 +79,10 @@ bool DescribeAddressIfGlobal(uptr addr) {
 // so we store the globals in a map.
 static void RegisterGlobal(const Global *g) {
   CHECK(asan_inited);
+  if (flags()->report_globals >= 2)
+    Report("Added Global: beg=%p size=%zu/%zu name=%s dyn.init=%zu\n",
+           (void*)g->beg, g->size, g->size_with_redzone, g->name,
+           g->has_dynamic_init);
   CHECK(flags()->report_globals);
   CHECK(AddrIsInMem(g->beg));
   CHECK(AddrIsAlignedByGranularity(g->beg));
@@ -86,11 +91,14 @@ static void RegisterGlobal(const Global *g) {
   ListOfGlobals *l =
       (ListOfGlobals*)allocator_for_globals.Allocate(sizeof(ListOfGlobals));
   l->g = g;
-  l->next = list_of_globals;
-  list_of_globals = l;
-  if (flags()->report_globals >= 2)
-    Report("Added Global: beg=%p size=%zu name=%s\n",
-           (void*)g->beg, g->size, g->name);
+  l->next = list_of_all_globals;
+  list_of_all_globals = l;
+  if (g->has_dynamic_init) {
+    l = (ListOfGlobals*)allocator_for_globals.Allocate(sizeof(ListOfGlobals));
+    l->g = g;
+    l->next = list_of_dynamic_init_globals;
+    list_of_dynamic_init_globals = l;
+  }
 }
 
 static void UnregisterGlobal(const Global *g) {
@@ -103,6 +111,30 @@ static void UnregisterGlobal(const Global *g) {
   // We unpoison the shadow memory for the global but we do not remove it from
   // the list because that would require O(n^2) time with the current list
   // implementation. It might not be worth doing anyway.
+}
+
+// Poison all shadow memory for a single global.
+static void PoisonGlobalAndRedzones(const Global *g) {
+  CHECK(asan_inited);
+  CHECK(flags()->check_initialization_order);
+  CHECK(AddrIsInMem(g->beg));
+  CHECK(AddrIsAlignedByGranularity(g->beg));
+  CHECK(AddrIsAlignedByGranularity(g->size_with_redzone));
+  if (flags()->report_globals >= 3)
+    Printf("DynInitPoison  : %s\n", g->name);
+  PoisonShadow(g->beg, g->size_with_redzone, kAsanInitializationOrderMagic);
+}
+
+static void UnpoisonGlobal(const Global *g) {
+  CHECK(asan_inited);
+  CHECK(flags()->check_initialization_order);
+  CHECK(AddrIsInMem(g->beg));
+  CHECK(AddrIsAlignedByGranularity(g->beg));
+  CHECK(AddrIsAlignedByGranularity(g->size_with_redzone));
+  if (flags()->report_globals >= 3)
+    Printf("DynInitUnpoison: %s\n", g->name);
+  PoisonShadow(g->beg, g->size_with_redzone, 0);
+  PoisonRedZones(*g);
 }
 
 }  // namespace __asan
@@ -133,11 +165,44 @@ void __asan_register_globals(__asan_global *globals, uptr n) {
 }
 
 // Unregister an array of globals.
-// We must do it when a shared objects gets dlclosed.
+// We must do this when a shared objects gets dlclosed.
 void __asan_unregister_globals(__asan_global *globals, uptr n) {
   if (!flags()->report_globals) return;
   ScopedLock lock(&mu_for_globals);
   for (uptr i = 0; i < n; i++) {
     UnregisterGlobal(&globals[i]);
   }
+}
+
+// This method runs immediately prior to dynamic initialization in each TU,
+// when all dynamically initialized globals are unpoisoned.  This method
+// poisons all global variables not defined in this TU, so that a dynamic
+// initializer can only touch global variables in the same TU.
+void __asan_before_dynamic_init(uptr first_addr, uptr last_addr) {
+  if (!flags()->check_initialization_order) return;
+  CHECK(list_of_dynamic_init_globals);
+  ScopedLock lock(&mu_for_globals);
+  bool from_current_tu = false;
+  // The list looks like:
+  // a => ... => b => last_addr => ... => first_addr => c => ...
+  // The globals of the current TU reside between last_addr and first_addr.
+  for (ListOfGlobals *l = list_of_dynamic_init_globals; l; l = l->next) {
+    if (l->g->beg == last_addr)
+      from_current_tu = true;
+    if (!from_current_tu)
+      PoisonGlobalAndRedzones(l->g);
+    if (l->g->beg == first_addr)
+      from_current_tu = false;
+  }
+  CHECK(!from_current_tu);
+}
+
+// This method runs immediately after dynamic initialization in each TU, when
+// all dynamically initialized globals except for those defined in the current
+// TU are poisoned.  It simply unpoisons all dynamically initialized globals.
+void __asan_after_dynamic_init() {
+  if (!flags()->check_initialization_order) return;
+  ScopedLock lock(&mu_for_globals);
+  for (ListOfGlobals *l = list_of_dynamic_init_globals; l; l = l->next)
+    UnpoisonGlobal(l->g);
 }

@@ -79,6 +79,7 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
 
   ParseFlag(str, &f->debug, "debug");
   ParseFlag(str, &f->report_globals, "report_globals");
+  ParseFlag(str, &f->check_initialization_order, "initialization_order");
   ParseFlag(str, &f->malloc_context_size, "malloc_context_size");
   CHECK(f->malloc_context_size <= kMallocContextSize);
 
@@ -116,6 +117,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->redzone = (ASAN_LOW_MEMORY) ? 64 : 128;
   f->debug = false;
   f->report_globals = 1;
+  f->check_initialization_order = true;
   f->malloc_context_size = kMallocContextSize;
   f->replace_str = true;
   f->replace_intrin = true;

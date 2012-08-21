@@ -371,6 +371,9 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
       case kAsanStackLeftRedzoneMagic:
         bug_descr = "stack-buffer-underflow";
         break;
+      case kAsanInitializationOrderMagic:
+        bug_descr = "initialization-order-fiasco";
+        break;
       case kAsanStackMidRedzoneMagic:
       case kAsanStackRightRedzoneMagic:
       case kAsanStackPartialRedzoneMagic:
