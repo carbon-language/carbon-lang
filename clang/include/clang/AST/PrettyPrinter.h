@@ -134,7 +134,12 @@ struct PrintingPolicy {
   /// doesn't actually have 'bool' (because, e.g., it is defined as a macro).
   unsigned Bool : 1;
 
-  /// Don't print contents of DeclContexts.  Used to provide a 'terse' output.
+  /// \brief Don't print contents of DeclContexts.  Used to provide a 'terse'
+  /// output.
+  ///
+  /// For example, in this mode we don't print function bodies, class members,
+  /// declarations inside namespaces etc.  Effectively, this should print
+  /// only the requested declaration.
   unsigned DontRecurseInDeclContext : 1;
 
   /// \brief If we are "dumping" rather than "pretty-printing", this points to
