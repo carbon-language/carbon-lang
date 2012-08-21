@@ -1747,7 +1747,7 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
 bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
   DEBUG(dbgs() << "********** GREEDY REGISTER ALLOCATION **********\n"
                << "********** Function: "
-               << ((Value*)mf.getFunction())->getName() << '\n');
+               << mf.getFunction()->getName() << '\n');
 
   MF = &mf;
   if (VerifyEnabled)
