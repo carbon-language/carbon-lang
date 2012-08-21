@@ -338,125 +338,16 @@ static StringRef getSpelling(Sema &SemaRef, Token AsmTok) {
   return Asm;
 }
 
-static void patchMSAsmStrings(Sema &SemaRef, bool &IsSimple,
-                              SourceLocation AsmLoc,
-                              ArrayRef<Token> AsmToks,
-                              const TargetInfo &TI,
-                              std::vector<llvm::BitVector> &AsmRegs,
-                              std::vector<llvm::BitVector> &AsmNames,
-                              std::vector<std::string> &AsmStrings) {
-  assert (!AsmToks.empty() && "Didn't expect an empty AsmToks!");
+static bool isSimpleMSAsm(std::vector<StringRef> &Pieces,
+                          const TargetInfo &TI) {
+  if (isMSAsmKeyword(Pieces[0]))
+      return false;
 
-  // Assume simple asm stmt until we parse a non-register identifer (or we just
-  // need to bail gracefully).
-  IsSimple = true;
+  for (unsigned i = 1, e = Pieces.size(); i != e; ++i)
+    if (!TI.isValidGCCRegisterName(Pieces[i]))
+      return false;
 
-  SmallString<512> Asm;
-  unsigned NumAsmStrings = 0;
-  for (unsigned i = 0, e = AsmToks.size(); i != e; ++i) {
-
-    // Determine if this should be considered a new asm.
-    bool isNewAsm = i == 0 || AsmToks[i].isAtStartOfLine() ||
-      AsmToks[i].is(tok::kw_asm);
-
-    // Emit the previous asm string.
-    if (i && isNewAsm) {
-      AsmStrings[NumAsmStrings++] = Asm.c_str();
-      if (AsmToks[i].is(tok::kw_asm)) {
-        ++i; // Skip __asm
-        assert (i != e && "Expected another token.");
-      }
-    }
-
-    // Start a new asm string with the opcode.
-    if (isNewAsm) {
-      AsmRegs[NumAsmStrings].resize(AsmToks.size());
-      AsmNames[NumAsmStrings].resize(AsmToks.size());
-
-      StringRef Piece = AsmToks[i].getIdentifierInfo()->getName();
-      // MS-style inline asm keywords require special handling.
-      if (isMSAsmKeyword(Piece))
-        IsSimple = false;
-
-      // TODO: Verify this is a valid opcode.
-      Asm = Piece;
-      continue;
-    }
-
-    if (i && AsmToks[i].hasLeadingSpace())
-      Asm += ' ';
-
-    // Check the operand(s).
-    switch (AsmToks[i].getKind()) {
-    default:
-      IsSimple = false;
-      Asm += getSpelling(SemaRef, AsmToks[i]);
-      break;
-    case tok::comma: Asm += ","; break;
-    case tok::colon: Asm += ":"; break;
-    case tok::l_square: Asm += "["; break;
-    case tok::r_square: Asm += "]"; break;
-    case tok::l_brace: Asm += "{"; break;
-    case tok::r_brace: Asm += "}"; break;
-    case tok::numeric_constant:
-      Asm += getSpelling(SemaRef, AsmToks[i]);
-      break;
-    case tok::identifier: {
-      IdentifierInfo *II = AsmToks[i].getIdentifierInfo();
-      StringRef Name = II->getName();
-
-      // Valid register?
-      if (TI.isValidGCCRegisterName(Name)) {
-        AsmRegs[NumAsmStrings].set(i);
-        Asm += Name;
-        break;
-      }
-
-      IsSimple = false;
-
-      // MS-style inline asm keywords require special handling.
-      if (isMSAsmKeyword(Name)) {
-        IsSimple = false;
-        Asm += Name;
-        break;
-      }
-
-      // Lookup the identifier.
-      // TODO: Someone with more experience with clang should verify this the
-      // proper way of doing a symbol lookup.
-      DeclarationName DeclName(II);
-      Scope *CurScope = SemaRef.getCurScope();
-      LookupResult R(SemaRef, DeclName, AsmLoc, Sema::LookupOrdinaryName);
-      if (!SemaRef.LookupName(R, CurScope, false/*AllowBuiltinCreation*/))
-        break;
-
-      assert (R.isSingleResult() && "Expected a single result?!");
-      NamedDecl *Decl = R.getFoundDecl();
-      switch (Decl->getKind()) {
-      default:
-        assert(0 && "Unknown decl kind.");
-        break;
-      case Decl::Var: {
-      case Decl::ParmVar:
-        AsmNames[NumAsmStrings].set(i);
-
-        VarDecl *Var = cast<VarDecl>(Decl);
-        QualType Ty = Var->getType();
-        (void)Ty; // Avoid warning.
-        // TODO: Patch identifier with valid operand.  One potential idea is to
-        // probe the backend with type information to guess the possible
-        // operand.
-        Asm += getSpelling(SemaRef, AsmToks[i]);
-        break;
-      }
-      }
-      break;
-    }
-    }
-  }
-
-  // Emit the final (and possibly only) asm string.
-  AsmStrings[NumAsmStrings] = Asm.c_str();
+  return true;
 }
 
 // Break the AsmSting into pieces.
@@ -538,23 +429,15 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
 
   std::vector<std::vector<StringRef> > Pieces;
   Pieces.resize(NumAsmStrings);
-  for (unsigned i = 0; i != NumAsmStrings; ++i)
+
+  bool IsSimple = true;
+  for (unsigned i = 0; i != NumAsmStrings; ++i) {
     buildMSAsmPieces(AsmStrings[i], Pieces[i]);
+    if (IsSimple)
+      IsSimple = isSimpleMSAsm(Pieces[i], Context.getTargetInfo());
+  }
 
-  bool IsSimple;
-  std::vector<llvm::BitVector> Regs;
-  std::vector<llvm::BitVector> Names;
-  std::vector<std::string> PatchedAsmStrings;
-
-  Regs.resize(NumAsmStrings);
-  Names.resize(NumAsmStrings);
-  PatchedAsmStrings.resize(NumAsmStrings);
-
-  // Rewrite operands to appease the AsmParser.
-  patchMSAsmStrings(*this, IsSimple, AsmLoc, AsmToks,
-                    Context.getTargetInfo(), Regs, Names, PatchedAsmStrings);
-
-  // patchMSAsmStrings doesn't correctly patch non-simple asm statements.
+  // AsmParser doesn't fully support non-simple asm statements.
   if (!IsSimple) {
     MSAsmStmt *NS =
       new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc, /*IsSimple*/ true,
@@ -579,11 +462,11 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   OwningPtr<llvm::MCSubtargetInfo>
     STI(TheTarget->createMCSubtargetInfo(TT, "", ""));
 
-  for (unsigned i = 0, e = PatchedAsmStrings.size(); i != e; ++i) {
+  for (unsigned i = 0, e = AsmStrings.size(); i != e; ++i) {
     llvm::SourceMgr SrcMgr;
     llvm::MCContext Ctx(*MAI, *MRI, MOFI.get(), &SrcMgr);
     llvm::MemoryBuffer *Buffer =
-      llvm::MemoryBuffer::getMemBuffer(PatchedAsmStrings[i], "<inline asm>");
+      llvm::MemoryBuffer::getMemBuffer(AsmStrings[i], "<inline asm>");
 
     // Tell SrcMgr about this buffer, which is what the parser will pick up.
     SrcMgr.AddNewSourceBuffer(Buffer, llvm::SMLoc());
