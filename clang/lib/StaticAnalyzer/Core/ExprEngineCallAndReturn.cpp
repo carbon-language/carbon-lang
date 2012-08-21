@@ -315,6 +315,7 @@ static bool shouldInlineCXX(AnalysisManager &AMgr) {
   case NumIPAModes:
     llvm_unreachable("not actually a valid option");
   }
+  llvm_unreachable("bogus IPAMode");
 }
 
 bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
