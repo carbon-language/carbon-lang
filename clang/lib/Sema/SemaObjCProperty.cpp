@@ -880,7 +880,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
                 Diag(property->getLocation(), diag::note_property_declare);
                 err = true;
               }
-            if (!err && !getLangOpts().ObjCRuntimeHasWeak) {
+            if (!err && !getLangOpts().ObjCARCWeak) {
               Diag(PropertyDiagLoc, diag::err_arc_weak_no_runtime);
               Diag(property->getLocation(), diag::note_property_declare);
             }

@@ -354,7 +354,7 @@ public:
 
   virtual bool SupportsObjCGC() const;
 
-  virtual bool SupportsObjCARC() const;
+  virtual void CheckObjCARC() const;
 
   virtual bool UseDwarfDebugFlags() const;
 

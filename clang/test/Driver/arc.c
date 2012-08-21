@@ -8,10 +8,10 @@
 // Just to test clang is working.
 # foo
 
-// CHECK: error: -fobjc-arc is not supported with legacy abi
+// CHECK: error: -fobjc-arc is not supported on platforms using the legacy runtime
 // CHECK-NOT: invalid preprocessing directive
 
-// NOTOBJC-NOT: error: -fobjc-arc is not supported with legacy abi
+// NOTOBJC-NOT: error: -fobjc-arc is not supported on platforms using the legacy runtime
 // NOTOBJC: invalid preprocessing directive
 
-// UNSUPPORTED: error: -fobjc-arc is not supported on current deployment target
+// UNSUPPORTED: error: -fobjc-arc is not supported on versions of Mac OS prior to 10.6

@@ -247,7 +247,7 @@ static void AddObjCXXARCLibstdcxxDefines(const LangOptions &LangOpts,
         << "};\n"
         << "\n";
       
-    if (LangOpts.ObjCRuntimeHasWeak) {
+    if (LangOpts.ObjCARCWeak) {
       Out << "template<typename _Tp>\n"
           << "struct __is_scalar<__attribute__((objc_ownership(weak))) _Tp> {\n"
           << "  enum { __value = 0 };\n"

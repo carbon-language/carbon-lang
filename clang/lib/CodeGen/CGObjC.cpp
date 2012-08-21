@@ -1706,7 +1706,7 @@ static llvm::Constant *createARCRuntimeFunction(CodeGenModule &CGM,
   // references to the runtime support library.  We don't really
   // permit this to fail, but we need a particular relocation style.
   if (llvm::Function *f = dyn_cast<llvm::Function>(fn)) {
-    if (!CGM.getLangOpts().ObjCRuntime.hasARC())
+    if (!CGM.getLangOpts().ObjCRuntime.hasNativeARC())
       f->setLinkage(llvm::Function::ExternalWeakLinkage);
     // set nonlazybind attribute for these APIs for performance.
     if (fnName == "objc_retain" || fnName  == "objc_release")
@@ -2739,7 +2739,7 @@ void CodeGenFunction::EmitObjCAutoreleasePoolStmt(
 
   // Keep track of the current cleanup stack depth.
   RunCleanupsScope Scope(*this);
-  if (CGM.getLangOpts().ObjCRuntime.hasARC()) {
+  if (CGM.getLangOpts().ObjCRuntime.hasNativeARC()) {
     llvm::Value *token = EmitObjCAutoreleasePoolPush();
     EHStack.pushCleanup<CallObjCAutoreleasePoolObject>(NormalCleanup, token);
   } else {

@@ -237,7 +237,7 @@ createInvocationForMigration(CompilerInvocation &origCI) {
   WarnOpts.push_back("error=arc-unsafe-retained-assign");
   CInvok->getDiagnosticOpts().Warnings = llvm_move(WarnOpts);
 
-  CInvok->getLangOpts()->ObjCRuntimeHasWeak = HasARCRuntime(origCI);
+  CInvok->getLangOpts()->ObjCARCWeak = HasARCRuntime(origCI);
 
   return CInvok.take();
 }
