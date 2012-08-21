@@ -1294,8 +1294,7 @@ X86InstrInfo::isCoalescableExtInstr(const MachineInstr &MI,
     SrcReg = MI.getOperand(1).getReg();
     DstReg = MI.getOperand(0).getReg();
     switch (MI.getOpcode()) {
-    default:
-      llvm_unreachable(0);
+    default: llvm_unreachable("Unreachable!");
     case X86::MOVSX16rr8:
     case X86::MOVZX16rr8:
     case X86::MOVSX32rr8:
@@ -1630,7 +1629,7 @@ void X86InstrInfo::reMaterialize(MachineBasicBlock &MBB,
   case X86::MOV64r0: {
     if (!isSafeToClobberEFLAGS(MBB, I)) {
       switch (Opc) {
-      default: break;
+      default: llvm_unreachable("Unreachable!");
       case X86::MOV8r0:  Opc = X86::MOV8ri;  break;
       case X86::MOV16r0: Opc = X86::MOV16ri; break;
       case X86::MOV32r0: Opc = X86::MOV32ri; break;
@@ -1703,8 +1702,7 @@ X86InstrInfo::convertToThreeAddressWithLEA(unsigned MIOpc,
   MachineInstrBuilder MIB = BuildMI(*MFI, MBBI, MI->getDebugLoc(),
                                     get(Opc), leaOutReg);
   switch (MIOpc) {
-  default:
-    llvm_unreachable(0);
+  default: llvm_unreachable("Unreachable!");
   case X86::SHL16ri: {
     unsigned ShAmt = MI->getOperand(2).getImm();
     MIB.addReg(0).addImm(1 << ShAmt)
@@ -3137,7 +3135,7 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
       return false;
     // There is no use of the destination register, we can replace SUB with CMP.
     switch (CmpInstr->getOpcode()) {
-    default: llvm_unreachable(0);
+    default: llvm_unreachable("Unreachable!");
     case X86::SUB64rm:   NewOpcode = X86::CMP64rm;   break;
     case X86::SUB32rm:   NewOpcode = X86::CMP32rm;   break;
     case X86::SUB16rm:   NewOpcode = X86::CMP16rm;   break;
@@ -4046,7 +4044,6 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
                getUndefRegState(MO.isUndef()));
   }
   // Change CMP32ri r, 0 back to TEST32rr r, r, etc.
-  unsigned NewOpc = 0;
   switch (DataMI->getOpcode()) {
   default: break;
   case X86::CMP64ri32:
@@ -4059,8 +4056,9 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
     MachineOperand &MO0 = DataMI->getOperand(0);
     MachineOperand &MO1 = DataMI->getOperand(1);
     if (MO1.getImm() == 0) {
+      unsigned NewOpc;
       switch (DataMI->getOpcode()) {
-      default: break;
+      default: llvm_unreachable("Unreachable!");
       case X86::CMP64ri8:
       case X86::CMP64ri32: NewOpc = X86::TEST64rr; break;
       case X86::CMP32ri8:
