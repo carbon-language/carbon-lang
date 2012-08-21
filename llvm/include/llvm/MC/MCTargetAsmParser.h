@@ -88,7 +88,9 @@ public:
   virtual bool
   MatchInstruction(SMLoc IDLoc,
                    SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                   SmallVectorImpl<MCInst> &MCInsts) {
+                   SmallVectorImpl<MCInst> &MCInsts,
+                   unsigned &OrigErrorInfo) {
+    OrigErrorInfo = ~0x0;
     return true;
   }
 

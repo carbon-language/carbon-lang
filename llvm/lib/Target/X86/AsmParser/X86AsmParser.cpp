@@ -67,7 +67,8 @@ private:
 
   bool MatchInstruction(SMLoc IDLoc,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                        SmallVectorImpl<MCInst> &MCInsts);
+                        SmallVectorImpl<MCInst> &MCInsts,
+                        unsigned &OrigErrorInfo);
 
   /// isSrcOp - Returns true if operand is either (%rsi) or %ds:%(rsi)
   /// in 64bit mode or (%esi) or %es:(%esi) in 32bit mode.
@@ -1513,7 +1514,8 @@ MatchAndEmitInstruction(SMLoc IDLoc,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                         MCStreamer &Out) {
   SmallVector<MCInst, 2> Insts;
-  bool Error = MatchInstruction(IDLoc, Operands, Insts);
+  unsigned ErrorInfo;
+  bool Error = MatchInstruction(IDLoc, Operands, Insts, ErrorInfo);
   if (!Error)
     for (unsigned i = 0, e = Insts.size(); i != e; ++i)
       Out.EmitInstruction(Insts[i]);
@@ -1523,7 +1525,8 @@ MatchAndEmitInstruction(SMLoc IDLoc,
 bool X86AsmParser::
 MatchInstruction(SMLoc IDLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                 SmallVectorImpl<MCInst> &MCInsts) {
+                 SmallVectorImpl<MCInst> &MCInsts,
+                 unsigned &OrigErrorInfo) {
   assert(!Operands.empty() && "Unexpect empty operand list!");
   X86Operand *Op = static_cast<X86Operand*>(Operands[0]);
   assert(Op->isToken() && "Leading operand should always be a mnemonic!");
@@ -1558,7 +1561,6 @@ MatchInstruction(SMLoc IDLoc,
   }
 
   bool WasOriginallyInvalidOperand = false;
-  unsigned OrigErrorInfo;
   MCInst Inst;
 
   // First, try a direct match.
