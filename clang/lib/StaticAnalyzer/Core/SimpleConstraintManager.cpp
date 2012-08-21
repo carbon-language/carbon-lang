@@ -84,14 +84,9 @@ ProgramStateRef SimpleConstraintManager::assumeAux(ProgramStateRef state,
     const SubRegion *SubR = dyn_cast<SubRegion>(R);
 
     while (SubR) {
-      // FIXME: now we only find the first symbolic region.
-      if (const SymbolicRegion *SymR = dyn_cast<SymbolicRegion>(SubR)) {
-        const llvm::APSInt &zero = getBasicVals().getZeroWithPtrWidth();
-        if (Assumption)
-          return assumeSymNE(state, SymR->getSymbol(), zero, zero);
-        else
-          return assumeSymEQ(state, SymR->getSymbol(), zero, zero);
-      }
+      if (const SymbolicRegion *SymR = dyn_cast<SymbolicRegion>(SubR))
+        return assumeAuxForSymbol(state, SymR->getSymbol(), Assumption);
+
       SubR = dyn_cast<SubRegion>(SubR->getSuperRegion());
     }
 
@@ -138,9 +133,12 @@ SimpleConstraintManager::assumeAuxForSymbol(ProgramStateRef State,
   BasicValueFactory &BVF = getBasicVals();
   QualType T = Sym->getType(BVF.getContext());
 
-  // None of the constraint solvers currently support non-integer types.
-  if (!T->isIntegerType())
+  // Don't do anything if this isn't a type we can constrain.
+  if (!(T->isIntegralOrEnumerationType() || Loc::isLocType(T)))
     return State;
+
+  if (T->isReferenceType())
+    return Assumption ? State : NULL;
 
   const llvm::APSInt &zero = BVF.getValue(0, T);
   if (Assumption)
@@ -160,8 +158,6 @@ ProgramStateRef SimpleConstraintManager::assumeAux(ProgramStateRef state,
     SymbolRef sym = Cond.getAsSymExpr();
     return assumeAuxForSymbol(state, sym, Assumption);
   }
-
-  BasicValueFactory &BasicVals = getBasicVals();
 
   switch (Cond.getSubKind()) {
   default:
@@ -185,12 +181,9 @@ ProgramStateRef SimpleConstraintManager::assumeAux(ProgramStateRef state,
 
       BinaryOperator::Opcode op = SE->getOpcode();
       // Implicitly compare non-comparison expressions to 0.
-      if (!BinaryOperator::isComparisonOp(op)) {
-        QualType T = SE->getType(BasicVals.getContext());
-        const llvm::APSInt &zero = BasicVals.getValue(0, T);
-        op = (Assumption ? BO_NE : BO_EQ);
-        return assumeSymRel(state, SE, op, zero);
-      }
+      if (!BinaryOperator::isComparisonOp(op))
+        return assumeAuxForSymbol(state, SE, Assumption);
+
       // From here on out, op is the real comparison we'll be testing.
       if (!Assumption)
         op = NegateComparison(op);
@@ -238,8 +231,25 @@ ProgramStateRef SimpleConstraintManager::assumeSymRel(ProgramStateRef state,
   BasicValueFactory &BVF = getBasicVals();
   ASTContext &Ctx = BVF.getContext();
 
+  // Special case for references, which cannot be null.
+  QualType Ty = LHS->getType(Ctx);
+  if (Ty->isReferenceType() && Int == 0) {
+    switch (op) {
+    case BO_EQ:
+    case BO_LE:
+    case BO_LT:
+      return NULL;
+    case BO_NE:
+    case BO_GT:
+    case BO_GE:
+      return state;
+    default:
+      llvm_unreachable("We should only be handling comparisons here.");
+    }
+  }
+
   // Get the type used for calculating wraparound.
-  APSIntType WraparoundType = BVF.getAPSIntType(LHS->getType(Ctx));
+  APSIntType WraparoundType = BVF.getAPSIntType(Ty);
 
   // We only handle simple comparisons of the form "$sym == constant"
   // or "($sym+constant1) == constant2".

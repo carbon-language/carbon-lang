@@ -119,6 +119,9 @@ void testReferenceAddress(int &x) {
 
   extern S *getS();
   clang_analyzer_eval(&getS()->x != 0); // expected-warning{{TRUE}}
+
+  // This actually takes a different path, because it's not a BinaryOperator.
+  clang_analyzer_eval(&getS()->x); // expected-warning{{TRUE}}
 }
 
 

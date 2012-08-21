@@ -363,11 +363,6 @@ const llvm::APSInt* BasicConstraintManager::getSymVal(ProgramStateRef state,
 bool BasicConstraintManager::isNotEqual(ProgramStateRef state,
                                         SymbolRef sym,
                                         const llvm::APSInt& V) const {
-  // Special case: references are known to be non-zero.
-  if (sym->getType(getBasicVals().getContext())->isReferenceType())
-    if (V == 0)
-      return true;
-
   // Retrieve the NE-set associated with the given symbol.
   const ConstNotEqTy::data_type* T = state->get<ConstNotEq>(sym);
 
