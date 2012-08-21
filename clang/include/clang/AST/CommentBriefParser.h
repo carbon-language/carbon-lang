@@ -44,8 +44,7 @@ class BriefParser {
 public:
   BriefParser(Lexer &L, const CommandTraits &Traits);
 
-  /// Return \\brief paragraph, if it exists; otherwise return the first
-  /// paragraph.
+  /// Return the best "brief description" we can find.
   std::string Parse();
 };
 
