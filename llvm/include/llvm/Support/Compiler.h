@@ -187,4 +187,13 @@
 # define LLVM_BUILTIN_UNREACHABLE __builtin_unreachable()
 #endif
 
+// LLVM_BUILTIN_TRAP - On compilers which support it, expands to an expression
+// which causes the program to exit abnormally.
+#if defined(__clang__) || (__GNUC__ > 4) \
+ || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
+# define LLVM_BUILTIN_TRAP __builtin_trap()
+#else
+# define LLVM_BUILTIN_TRAP *(volatile int*)0x11 = 0
+#endif
+
 #endif
