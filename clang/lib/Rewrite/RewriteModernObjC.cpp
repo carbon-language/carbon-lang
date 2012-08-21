@@ -3140,7 +3140,14 @@ Expr *RewriteModernObjC::SynthMsgSendStretCallExpr(FunctionDecl *MsgSendStretFla
   str += "\t"; str += returnType.getAsString(Context->getPrintingPolicy());
   str += " s;\n";
   str += "};\n\n";
-  SourceLocation FunLocStart = getFunctionSourceLocation(*this, CurFunctionDef);
+  SourceLocation FunLocStart;
+  if (CurFunctionDef)
+    FunLocStart = getFunctionSourceLocation(*this, CurFunctionDef);
+  else {
+    assert(CurMethodDef && "SynthMsgSendStretCallExpr - CurMethodDef is null");
+    FunLocStart = CurMethodDef->getLocStart();
+  }
+
   InsertText(FunLocStart, str);
   ++stretCount;
   
