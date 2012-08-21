@@ -3464,12 +3464,10 @@ ARMBaseInstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
       MI->RemoveOperand(0);
 
       MI->setDesc(get(ARM::VSETLNi32));
-      MIB.addReg(DReg);
-      MIB.addReg(DReg);
+      MIB.addReg(DReg, RegState::Define);
+      MIB.addReg(DReg, RegState::Undef);
       MIB.addReg(SrcReg);
       MIB.addImm(Lane);
-
-      MIB->getOperand(1).setIsUndef();
 
       if (isKill)
         MIB->addRegisterKilled(DstReg, TRI, true);
