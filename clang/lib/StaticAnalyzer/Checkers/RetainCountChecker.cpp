@@ -3072,7 +3072,7 @@ bool RetainCountChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
     // If the receiver is unknown, conjure a return value.
     SValBuilder &SVB = C.getSValBuilder();
     unsigned Count = C.getCurrentBlockCount();
-    RetVal = SVB.getConjuredSymbolVal(0, CE, LCtx, ResultTy, Count);
+    RetVal = SVB.conjureSymbolVal(0, CE, LCtx, ResultTy, Count);
   }
   state = state->BindExpr(CE, LCtx, RetVal, false);
 

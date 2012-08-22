@@ -187,11 +187,11 @@ SymbolManager::getRegionValueSymbol(const TypedValueRegion* R) {
   return cast<SymbolRegionValue>(SD);
 }
 
-const SymbolConjured*
-SymbolManager::getConjuredSymbol(const Stmt *E, const LocationContext *LCtx,
-                                 QualType T, unsigned Count,
-                                 const void *SymbolTag) {
-
+const SymbolConjured* SymbolManager::conjureSymbol(const Stmt *E,
+                                                   const LocationContext *LCtx,
+                                                   QualType T,
+                                                   unsigned Count,
+                                                   const void *SymbolTag) {
   llvm::FoldingSetNodeID profile;
   SymbolConjured::Profile(profile, E, T, Count, LCtx, SymbolTag);
   void *InsertPos;

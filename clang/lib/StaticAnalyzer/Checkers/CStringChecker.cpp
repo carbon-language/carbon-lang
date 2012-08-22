@@ -958,8 +958,7 @@ void CStringChecker::evalCopyCommon(CheckerContext &C,
         // If we don't know how much we copied, we can at least
         // conjure a return value for later.
         unsigned Count = C.getCurrentBlockCount();
-        SVal result =
-          C.getSValBuilder().getConjuredSymbolVal(NULL, CE, LCtx, Count);
+        SVal result = C.getSValBuilder().conjureSymbolVal(0, CE, LCtx, Count);
         state = state->BindExpr(CE, LCtx, result);
       }
 
@@ -1094,7 +1093,7 @@ void CStringChecker::evalMemcmp(CheckerContext &C, const CallExpr *CE) const {
       if (state) {
         // The return value is the comparison result, which we don't know.
         unsigned Count = C.getCurrentBlockCount();
-        SVal CmpV = svalBuilder.getConjuredSymbolVal(NULL, CE, LCtx, Count);
+        SVal CmpV = svalBuilder.conjureSymbolVal(0, CE, LCtx, Count);
         state = state->BindExpr(CE, LCtx, CmpV);
         C.addTransition(state);
       }
@@ -1207,7 +1206,7 @@ void CStringChecker::evalstrLengthCommon(CheckerContext &C, const CallExpr *CE,
       // All we know is the return value is the min of the string length
       // and the limit. This is better than nothing.
       unsigned Count = C.getCurrentBlockCount();
-      result = C.getSValBuilder().getConjuredSymbolVal(NULL, CE, LCtx, Count);
+      result = C.getSValBuilder().conjureSymbolVal(0, CE, LCtx, Count);
       NonLoc *resultNL = cast<NonLoc>(&result);
 
       if (strLengthNL) {
@@ -1235,7 +1234,7 @@ void CStringChecker::evalstrLengthCommon(CheckerContext &C, const CallExpr *CE,
     // value, so it can be used in constraints, at least.
     if (result.isUnknown()) {
       unsigned Count = C.getCurrentBlockCount();
-      result = C.getSValBuilder().getConjuredSymbolVal(NULL, CE, LCtx, Count);
+      result = C.getSValBuilder().conjureSymbolVal(0, CE, LCtx, Count);
     }
   }
 
@@ -1613,7 +1612,7 @@ void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
   // overflow, we still need a result. Conjure a return value.
   if (returnEnd && Result.isUnknown()) {
     unsigned Count = C.getCurrentBlockCount();
-    Result = svalBuilder.getConjuredSymbolVal(NULL, CE, LCtx, Count);
+    Result = svalBuilder.conjureSymbolVal(0, CE, LCtx, Count);
   }
 
   // Set the return value.
@@ -1771,7 +1770,7 @@ void CStringChecker::evalStrcmpCommon(CheckerContext &C, const CallExpr *CE,
   if (!canComputeResult) {
     // Conjure a symbolic value. It's the best we can do.
     unsigned Count = C.getCurrentBlockCount();
-    SVal resultVal = svalBuilder.getConjuredSymbolVal(NULL, CE, LCtx, Count);
+    SVal resultVal = svalBuilder.conjureSymbolVal(0, CE, LCtx, Count);
     state = state->BindExpr(CE, LCtx, resultVal);
   }
 

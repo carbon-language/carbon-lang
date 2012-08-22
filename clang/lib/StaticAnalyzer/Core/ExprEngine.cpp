@@ -649,8 +649,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
            it != et; ++it) {      
         ExplodedNode *N = *it;
         const LocationContext *LCtx = N->getLocationContext();
-        SVal result =
-          svalBuilder.getConjuredSymbolVal(0, Ex, LCtx, resultType, 
+        SVal result = svalBuilder.conjureSymbolVal(0, Ex, LCtx, resultType,
                                  currentBuilderContext->getCurrentBlockCount());
         ProgramStateRef state = N->getState()->BindExpr(Ex, LCtx, result);
         Bldr2.generateNode(S, N, state);

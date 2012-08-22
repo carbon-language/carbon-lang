@@ -725,7 +725,7 @@ void invalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
     // Invalidate the region by setting its default value to
     // conjured symbol. The type of the symbol is irrelavant.
     DefinedOrUnknownSVal V =
-      svalBuilder.getConjuredSymbolVal(baseR, Ex, LCtx, Ctx.IntTy, Count);
+      svalBuilder.conjureSymbolVal(baseR, Ex, LCtx, Ctx.IntTy, Count);
     B = RM.addBinding(B, baseR, BindingKey::Default, V);
     return;
   }
@@ -740,8 +740,8 @@ void invalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
   if (T->isStructureOrClassType()) {
     // Invalidate the region by setting its default value to
     // conjured symbol. The type of the symbol is irrelavant.
-    DefinedOrUnknownSVal V =
-      svalBuilder.getConjuredSymbolVal(baseR, Ex, LCtx, Ctx.IntTy, Count);
+    DefinedOrUnknownSVal V = svalBuilder.conjureSymbolVal(baseR, Ex, LCtx,
+                                                          Ctx.IntTy, Count);
     B = RM.addBinding(B, baseR, BindingKey::Default, V);
     return;
   }
@@ -749,7 +749,7 @@ void invalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
   if (const ArrayType *AT = Ctx.getAsArrayType(T)) {
       // Set the default value of the array to conjured symbol.
     DefinedOrUnknownSVal V =
-    svalBuilder.getConjuredSymbolVal(baseR, Ex, LCtx,
+    svalBuilder.conjureSymbolVal(baseR, Ex, LCtx,
                                      AT->getElementType(), Count);
     B = RM.addBinding(B, baseR, BindingKey::Default, V);
     return;
@@ -765,8 +765,8 @@ void invalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
   }
   
 
-  DefinedOrUnknownSVal V = svalBuilder.getConjuredSymbolVal(baseR, Ex, LCtx,
-                                                            T,Count);
+  DefinedOrUnknownSVal V = svalBuilder.conjureSymbolVal(baseR, Ex, LCtx,
+                                                        T,Count);
   assert(SymbolManager::canSymbolicate(T) || V.isUnknown());
   B = RM.addBinding(B, baseR, BindingKey::Direct, V);
 }
@@ -780,10 +780,9 @@ RegionBindings RegionStoreManager::invalidateGlobalRegion(MemRegion::Kind K,
   // Bind the globals memory space to a new symbol that we will use to derive
   // the bindings for all globals.
   const GlobalsSpaceRegion *GS = MRMgr.getGlobalsRegion(K);
-  SVal V =
-      svalBuilder.getConjuredSymbolVal(/* SymbolTag = */ (void*) GS, Ex, LCtx,
-          /* symbol type, doesn't matter */ Ctx.IntTy,
-          Count);
+  SVal V = svalBuilder.conjureSymbolVal(/* SymbolTag = */ (void*) GS, Ex, LCtx,
+                                        /* type does not matter */ Ctx.IntTy,
+                                        Count);
 
   B = removeBinding(B, GS);
   B = addBinding(B, BindingKey::Make(GS, BindingKey::Default), V);

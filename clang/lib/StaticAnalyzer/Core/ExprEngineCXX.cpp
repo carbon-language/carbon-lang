@@ -202,8 +202,9 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
   
   unsigned blockCount = currentBuilderContext->getCurrentBlockCount();
   const LocationContext *LCtx = Pred->getLocationContext();
-  DefinedOrUnknownSVal symVal =
-    svalBuilder.getConjuredSymbolVal(0, CNE, LCtx, CNE->getType(), blockCount);
+  DefinedOrUnknownSVal symVal = svalBuilder.conjureSymbolVal(0, CNE, LCtx,
+                                                             CNE->getType(),
+                                                             blockCount);
   ProgramStateRef State = Pred->getState();
 
   CallEventManager &CEMgr = getStateManager().getCallEventManager();
@@ -274,7 +275,7 @@ void ExprEngine::VisitCXXCatchStmt(const CXXCatchStmt *CS,
   }
 
   const LocationContext *LCtx = Pred->getLocationContext();
-  SVal V = svalBuilder.getConjuredSymbolVal(CS, LCtx, VD->getType(),
+  SVal V = svalBuilder.conjureSymbolVal(CS, LCtx, VD->getType(),
                                  currentBuilderContext->getCurrentBlockCount());
   ProgramStateRef state = Pred->getState();
   state = state->bindLoc(state->getLValue(VD, LCtx), V);

@@ -46,7 +46,7 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
       // FIXME: Handle structs.
       if (RightV.isUnknown()) {
         unsigned Count = currentBuilderContext->getCurrentBlockCount();
-        RightV = svalBuilder.getConjuredSymbolVal(NULL, B->getRHS(), LCtx, Count);
+        RightV = svalBuilder.conjureSymbolVal(0, B->getRHS(), LCtx, Count);
       }
       // Simulate the effects of a "store":  bind the value of the RHS
       // to the L-Value represented by the LHS.
@@ -68,13 +68,13 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
         unsigned Count = currentBuilderContext->getCurrentBlockCount();
         if (isa<Loc>(LeftV) &&
             RHS->getType()->isIntegerType() && RightV.isUnknown()) {
-          RightV = svalBuilder.getConjuredSymbolVal(RHS, LCtx,
-                                                    RHS->getType(), Count);
+          RightV = svalBuilder.conjureSymbolVal(RHS, LCtx, RHS->getType(),
+                                                Count);
         }
         if (isa<Loc>(RightV) &&
             LHS->getType()->isIntegerType() && LeftV.isUnknown()) {
-          LeftV = svalBuilder.getConjuredSymbolVal(LHS, LCtx,
-                                                   LHS->getType(), Count);
+          LeftV = svalBuilder.conjureSymbolVal(LHS, LCtx, LHS->getType(),
+                                               Count);
         }
       }
 
@@ -151,9 +151,7 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
         // The symbolic value is actually for the type of the left-hand side
         // expression, not the computation type, as this is the value the
         // LValue on the LHS will bind to.
-        LHSVal = svalBuilder.getConjuredSymbolVal(NULL, B->getRHS(), LCtx,
-						  LTy, Count);
-        
+        LHSVal = svalBuilder.conjureSymbolVal(0, B->getRHS(), LCtx, LTy, Count);
         // However, we need to convert the symbol to the computation type.
         Result = svalBuilder.evalCast(LHSVal, CTy, LTy);
       }
@@ -355,8 +353,8 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
         } else {
           // If we don't know if the cast succeeded, conjure a new symbol.
           if (val.isUnknown()) {
-            DefinedOrUnknownSVal NewSym = svalBuilder.getConjuredSymbolVal(NULL,
-                                 CastE, LCtx, resultType,
+            DefinedOrUnknownSVal NewSym =
+              svalBuilder.conjureSymbolVal(0, CastE, LCtx, resultType,
                                  currentBuilderContext->getCurrentBlockCount());
             state = state->BindExpr(CastE, LCtx, NewSym);
           } else 
@@ -383,7 +381,7 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
         if (CastE->isGLValue())
           resultType = getContext().getPointerType(resultType);
         const LocationContext *LCtx = Pred->getLocationContext();
-        SVal result = svalBuilder.getConjuredSymbolVal(NULL, CastE, LCtx,
+        SVal result = svalBuilder.conjureSymbolVal(0, CastE, LCtx,
                     resultType, currentBuilderContext->getCurrentBlockCount());
         ProgramStateRef state = Pred->getState()->BindExpr(CastE, LCtx,
                                                                result);
@@ -477,8 +475,8 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
             Ty = getContext().getPointerType(Ty);
           }
 
-          InitVal = svalBuilder.getConjuredSymbolVal(NULL, InitEx, LC, Ty,
-                                   currentBuilderContext->getCurrentBlockCount());
+          InitVal = svalBuilder.conjureSymbolVal(0, InitEx, LC, Ty,
+                                 currentBuilderContext->getCurrentBlockCount());
         }
         B.takeNodes(N);
         ExplodedNodeSet Dst2;
@@ -865,7 +863,7 @@ void ExprEngine::VisitIncrementDecrementOperator(const UnaryOperator* U,
     // Conjure a new symbol if necessary to recover precision.
     if (Result.isUnknown()){
       DefinedOrUnknownSVal SymVal =
-	svalBuilder.getConjuredSymbolVal(NULL, Ex, LCtx,
+        svalBuilder.conjureSymbolVal(0, Ex, LCtx,
                                currentBuilderContext->getCurrentBlockCount());
       Result = SymVal;
       

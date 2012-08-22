@@ -534,7 +534,7 @@ ProgramStateRef ExprEngine::bindReturnValue(const CallEvent &Call,
   QualType ResultTy = Call.getResultType();
   SValBuilder &SVB = getSValBuilder();
   unsigned Count = currentBuilderContext->getCurrentBlockCount();
-  SVal R = SVB.getConjuredSymbolVal(0, E, LCtx, ResultTy, Count);
+  SVal R = SVB.conjureSymbolVal(0, E, LCtx, ResultTy, Count);
   return State->BindExpr(E, LCtx, R);
 }
 

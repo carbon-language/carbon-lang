@@ -223,7 +223,7 @@ void StreamChecker::OpenFileAux(CheckerContext &C, const CallExpr *CE) const {
   SValBuilder &svalBuilder = C.getSValBuilder();
   const LocationContext *LCtx = C.getPredecessor()->getLocationContext();
   DefinedSVal RetVal =
-    cast<DefinedSVal>(svalBuilder.getConjuredSymbolVal(0, CE, LCtx, Count));
+    cast<DefinedSVal>(svalBuilder.conjureSymbolVal(0, CE, LCtx, Count));
   state = state->BindExpr(CE, C.getLocationContext(), RetVal);
   
   ConstraintManager &CM = C.getConstraintManager();

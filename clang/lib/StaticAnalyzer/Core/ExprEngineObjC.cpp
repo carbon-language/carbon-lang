@@ -113,7 +113,7 @@ void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S,
         QualType T = R->getValueType();
         assert(Loc::isLocType(T));
         unsigned Count = currentBuilderContext->getCurrentBlockCount();
-        SymbolRef Sym = SymMgr.getConjuredSymbol(elem, LCtx, T, Count);
+        SymbolRef Sym = SymMgr.conjureSymbol(elem, LCtx, T, Count);
         SVal V = svalBuilder.makeLoc(Sym);
         hasElems = hasElems->bindLoc(elementV, V);
         
