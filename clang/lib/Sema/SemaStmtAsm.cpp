@@ -546,20 +546,28 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
       TheTarget->createMCInstPrinter(1, *MAI, *MII, *MRI, *STI);
 
     // Build the list of clobbers.
-    for (unsigned i = 0, e = Desc.getNumDefs(); i != e; ++i) {
-      const llvm::MCOperand &Op = Inst.getOperand(i);
-      if (!Op.isReg())
+    unsigned NumDefs = Desc.getNumDefs();
+    for (unsigned j = 0, e = Inst.getNumOperands(); j != e; ++j) {
+      const llvm::MCOperand &Op = Inst.getOperand(j);
+
+      // Immediate.
+      if (Op.isImm() || Op.isFPImm())
         continue;
 
-      std::string Reg;
-      llvm::raw_string_ostream OS(Reg);
-      IP->printRegName(OS, Op.getReg());
+      bool isDef = NumDefs && (j < NumDefs);
 
-      StringRef Clobber(OS.str());
-      if (!Context.getTargetInfo().isValidClobber(Clobber))
-        return StmtError(Diag(AsmLoc, diag::err_asm_unknown_register_name) <<
-                         Clobber);
-      ClobberRegs.insert(Reg);
+      // Register/Clobber.
+      if (Op.isReg() && isDef) {
+        std::string Reg;
+        llvm::raw_string_ostream OS(Reg);
+        IP->printRegName(OS, Op.getReg());
+
+        StringRef Clobber(OS.str());
+        if (!Context.getTargetInfo().isValidClobber(Clobber))
+          return StmtError(Diag(AsmLoc, diag::err_asm_unknown_register_name) <<
+                           Clobber);
+        ClobberRegs.insert(Reg);
+      }
     }
   }
   for (std::set<std::string>::iterator I = ClobberRegs.begin(),
