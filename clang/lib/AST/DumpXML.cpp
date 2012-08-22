@@ -1023,7 +1023,7 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
 }
 
 void Decl::dumpXML() const {
-  dump(llvm::errs());
+  dumpXML(llvm::errs());
 }
 
 void Decl::dumpXML(raw_ostream &out) const {
