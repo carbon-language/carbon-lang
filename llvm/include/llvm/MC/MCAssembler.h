@@ -176,7 +176,7 @@ public:
   typedef SmallVectorImpl<MCFixup>::iterator fixup_iterator;
 
 public:
-  MCInstFragment(MCInst _Inst, MCSectionData *SD = 0)
+  MCInstFragment(const MCInst &_Inst, MCSectionData *SD = 0)
     : MCFragment(FT_Inst, SD), Inst(_Inst) {
   }
 
