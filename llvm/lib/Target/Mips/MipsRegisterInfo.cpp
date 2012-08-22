@@ -42,9 +42,8 @@
 
 using namespace llvm;
 
-MipsRegisterInfo::MipsRegisterInfo(const MipsSubtarget &ST,
-                                   const TargetInstrInfo &tii)
-  : MipsGenRegisterInfo(Mips::RA), Subtarget(ST), TII(tii) {}
+MipsRegisterInfo::MipsRegisterInfo(const MipsSubtarget &ST)
+  : MipsGenRegisterInfo(Mips::RA), Subtarget(ST) {}
 
 unsigned MipsRegisterInfo::getPICCallReg() { return Mips::T9; }
 

@@ -39,8 +39,8 @@
 using namespace llvm;
 
 Mips16RegisterInfo::Mips16RegisterInfo(const MipsSubtarget &ST,
-                                       const TargetInstrInfo &TII)
-  : MipsRegisterInfo(ST, TII) {}
+                                       const Mips16InstrInfo &I)
+  : MipsRegisterInfo(ST), TII(I) {}
 
 // This function eliminate ADJCALLSTACKDOWN,
 // ADJCALLSTACKUP pseudo instructions

@@ -40,8 +40,8 @@
 using namespace llvm;
 
 MipsSERegisterInfo::MipsSERegisterInfo(const MipsSubtarget &ST,
-                                       const TargetInstrInfo &TII)
-  : MipsRegisterInfo(ST, TII) {}
+                                       const MipsSEInstrInfo &I)
+  : MipsRegisterInfo(ST), TII(I) {}
 
 // This function eliminate ADJCALLSTACKDOWN,
 // ADJCALLSTACKUP pseudo instructions
