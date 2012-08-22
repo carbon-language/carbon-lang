@@ -31,38 +31,59 @@ These checkers will print out information about the analyzer state in the form o
 ExprInspection checks
 ---------------------
 
-// Prints TRUE if the argument is known to have a non-zero value,
-//        FALSE if the argument is known to have a zero or null value, and
-//        UNKNOWN if the argument isn't sufficiently constrained on this path.
-// You can use this to test other values by using expressions like "x == 5".
-// Note that this functionality is currently DISABLED in inlined functions,
-// since different calls to the same inlined function could provide different
-// information, making it difficult to write proper -verify directives.
-//
-// In C, the argument can be typed as 'int' or as '_Bool'.
-void clang_analyzer_eval(bool);
+- void clang_analyzer_eval(bool);
+
+Prints TRUE if the argument is known to have a non-zero value,
+       FALSE if the argument is known to have a zero or null value, and
+       UNKNOWN if the argument isn't sufficiently constrained on this path.
+You can use this to test other values by using expressions like "x == 5".
+Note that this functionality is currently DISABLED in inlined functions,
+since different calls to the same inlined function could provide different
+information, making it difficult to write proper -verify directives.
+
+In C, the argument can be typed as 'int' or as '_Bool'.
+
+Example usage:
+  clang_analyzer_eval(x); // expected-warning{{UNKNOWN}}
+  if (!x) return;
+  clang_analyzer_eval(x); // expected-warning{{TRUE}}
 
 
-// If a call occurs within an inlined function, prints TRUE or FALSE according to
-// the value of its argument. If a call occurs outside an inlined function,
-// nothing is printed.
-//
-// The intended use of this checker is to assert that a function is inlined at
-// least once (by passing 'true' and expecting a warning), or to assert that a
-// function is never inlined (by passing 'false' and expecting no warning). The
-// argument is technically unnecessary but is intended to clarify intent.
-//
-// You might wonder why we can't print TRUE if a function is ever inlined and
-// FALSE if it is not. The problem is that any inlined function could conceivably
-// also be analyzed as a top-level function (in which case both TRUE and FALSE
-// would be printed), depending on the value of the -analyzer-inlining option.
-//
-// In C, the argument can be typed as 'int' or as '_Bool'.
-void clang_analyzer_checkInlined(bool);
+- void clang_analyzer_checkInlined(bool);
+
+If a call occurs within an inlined function, prints TRUE or FALSE according to
+the value of its argument. If a call occurs outside an inlined function,
+nothing is printed.
+
+The intended use of this checker is to assert that a function is inlined at
+least once (by passing 'true' and expecting a warning), or to assert that a
+function is never inlined (by passing 'false' and expecting no warning). The
+argument is technically unnecessary but is intended to clarify intent.
+
+You might wonder why we can't print TRUE if a function is ever inlined and
+FALSE if it is not. The problem is that any inlined function could conceivably
+also be analyzed as a top-level function (in which case both TRUE and FALSE
+would be printed), depending on the value of the -analyzer-inlining option.
+
+In C, the argument can be typed as 'int' or as '_Bool'.
+
+Example usage:
+  int inlined() {
+    clang_analyzer_checkInlined(true); // expected-warning{{TRUE}}
+    return 42;
+  }
+
+  void topLevel() {
+    clang_analyzer_checkInlined(false); // no-warning (not inlined)
+    int value = inlined();
+    // This assertion will not be valid if the previous call was not inlined.
+    clang_analyzer_eval(value == 42); // expected-warning{{TRUE}}
+  }
+
 
 
 Statistics
 ==========
-The debug.Stats checker collects various information about the analysis, such as how many blocks were reached and if the analyzer timed out. There is also an additional -analyzer-stats flag, which enables various statistics within the analyzer engine.
+The debug.Stats checker collects various information about the analysis of each function, such as how many blocks were reached and if the analyzer timed out.
 
-(FIXME: We should probably just have the debug.Stats checker enabled when -analyzer-stats is passed. We can't do the other way around because by the time checkers are enabled it's a bit too late to start a timer.)
+There is also an additional -analyzer-stats flag, which enables various statistics within the analyzer engine. Note the Stats checker (which produces at least one bug report per function) may actually change the values reported by -analyzer-stats.
