@@ -1,5 +1,3 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.cstring,debug.ExprInspection -analyzer-constraints=basic -triple i386-apple-darwin9 -verify %s
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.cstring,debug.ExprInspection -analyzer-constraints=basic -triple x86_64-apple-darwin9 -verify %s
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.cstring,debug.ExprInspection -analyzer-constraints=range -triple i386-apple-darwin9 -verify %s
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.cstring,debug.ExprInspection -analyzer-constraints=range -triple x86_64-apple-darwin9 -verify %s
 

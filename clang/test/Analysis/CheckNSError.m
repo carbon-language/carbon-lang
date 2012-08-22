@@ -1,4 +1,3 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,osx.cocoa.NSError,osx.coreFoundation.CFError -analyzer-store=region -analyzer-constraints=basic -verify -Wno-objc-root-class %s
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,osx.cocoa.NSError,osx.coreFoundation.CFError -analyzer-store=region -analyzer-constraints=range -verify -Wno-objc-root-class %s
 
 

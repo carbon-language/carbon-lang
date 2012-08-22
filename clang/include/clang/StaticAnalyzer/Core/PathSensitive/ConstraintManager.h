@@ -69,8 +69,6 @@ protected:
   virtual bool canReasonAbout(SVal X) const = 0;
 };
 
-ConstraintManager* CreateBasicConstraintManager(ProgramStateManager& statemgr,
-                                                SubEngine &subengine);
 ConstraintManager* CreateRangeConstraintManager(ProgramStateManager& statemgr,
                                                 SubEngine &subengine);
 

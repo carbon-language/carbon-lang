@@ -1,9 +1,8 @@
 set(LLVM_LINK_COMPONENTS support)
 
 add_clang_library(clangStaticAnalyzerCore
-  AnalysisManager.cpp
   APSIntType.cpp
-  BasicConstraintManager.cpp
+  AnalysisManager.cpp
   BasicValueFactory.cpp
   BlockCounter.cpp
   BugReporter.cpp
