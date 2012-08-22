@@ -2631,7 +2631,7 @@ void ASTReader::makeModuleVisible(Module *Mod,
     
     for (unsigned I = 0, N = Mod->Imports.size(); I != N; ++I) {
       Module *Imported = Mod->Imports[I];
-      if (Visited.count(Imported))
+      if (!Visited.insert(Imported))
         continue;
       
       bool Acceptable = UnrestrictedWildcard;
@@ -2649,7 +2649,6 @@ void ASTReader::makeModuleVisible(Module *Mod,
       if (!Acceptable)
         continue;
       
-      Visited.insert(Imported);
       Stack.push_back(Imported);
     }
   }

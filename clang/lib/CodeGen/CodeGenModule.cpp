@@ -1051,12 +1051,10 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
   // Lookup the entry, lazily creating it if necessary.
   llvm::GlobalValue *Entry = GetGlobalValue(MangledName);
   if (Entry) {
-    if (WeakRefReferences.count(Entry)) {
+    if (WeakRefReferences.erase(Entry)) {
       const FunctionDecl *FD = cast_or_null<FunctionDecl>(D.getDecl());
       if (FD && !FD->hasAttr<WeakAttr>())
         Entry->setLinkage(llvm::Function::ExternalLinkage);
-
-      WeakRefReferences.erase(Entry);
     }
 
     if (Entry->getType()->getElementType() == Ty)
@@ -1197,11 +1195,9 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
   // Lookup the entry, lazily creating it if necessary.
   llvm::GlobalValue *Entry = GetGlobalValue(MangledName);
   if (Entry) {
-    if (WeakRefReferences.count(Entry)) {
+    if (WeakRefReferences.erase(Entry)) {
       if (D && !D->hasAttr<WeakAttr>())
         Entry->setLinkage(llvm::Function::ExternalLinkage);
-
-      WeakRefReferences.erase(Entry);
     }
 
     if (UnnamedAddr)
