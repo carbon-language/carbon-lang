@@ -37,8 +37,6 @@ define double @acosh_test2(float %f) nounwind readnone {
 ; CHECK: call double @acosh(double %conv)
 }
 
-
-
 define float @asin_test(float %f) nounwind readnone {
 ; CHECK: asin_test
     %conv = fpext float %f to double
