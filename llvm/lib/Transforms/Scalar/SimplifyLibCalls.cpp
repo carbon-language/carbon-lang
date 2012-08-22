@@ -1551,6 +1551,8 @@ namespace {
       initializeSimplifyLibCallsPass(*PassRegistry::getPassRegistry());
     }
     void AddOpt(LibFunc::Func F, LibCallOptimization* Opt);
+    void AddOpt(LibFunc::Func F1, LibFunc::Func F2, LibCallOptimization* Opt);
+
     void InitOptimizations();
     bool runOnFunction(Function &F);
 
@@ -1584,6 +1586,12 @@ FunctionPass *llvm::createSimplifyLibCallsPass() {
 void SimplifyLibCalls::AddOpt(LibFunc::Func F, LibCallOptimization* Opt) {
   if (TLI->has(F))
     Optimizations[TLI->getName(F)] = Opt;
+}
+
+void SimplifyLibCalls::AddOpt(LibFunc::Func F1, LibFunc::Func F2,
+                              LibCallOptimization* Opt) {
+  if (TLI->has(F1) && TLI->has(F2))
+    Optimizations[TLI->getName(F1)] = Opt;
 }
 
 /// Optimizations - Populate the Optimizations map with all the optimizations
@@ -1641,20 +1649,13 @@ void SimplifyLibCalls::InitOptimizations() {
   Optimizations["llvm.exp2.f64"] = &Exp2;
   Optimizations["llvm.exp2.f32"] = &Exp2;
 
-  if (TLI->has(LibFunc::fabs) && TLI->has(LibFunc::fabsf))
-    Optimizations["fabs"] = &UnaryDoubleFP;
-  if (TLI->has(LibFunc::floor) && TLI->has(LibFunc::floorf))
-    Optimizations["floor"] = &UnaryDoubleFP;
-  if (TLI->has(LibFunc::ceil) && TLI->has(LibFunc::ceilf))
-    Optimizations["ceil"] = &UnaryDoubleFP;
-  if (TLI->has(LibFunc::round) && TLI->has(LibFunc::roundf))
-    Optimizations["round"] = &UnaryDoubleFP;
-  if (TLI->has(LibFunc::rint) && TLI->has(LibFunc::rintf))
-    Optimizations["rint"] = &UnaryDoubleFP;
-  if (TLI->has(LibFunc::nearbyint) && TLI->has(LibFunc::nearbyintf))
-    Optimizations["nearbyint"] = &UnaryDoubleFP;
-  if (TLI->has(LibFunc::trunc) && TLI->has(LibFunc::truncf))
-    Optimizations["trunc"] = &UnaryDoubleFP;
+  AddOpt(LibFunc::ceil, LibFunc::ceilf, &UnaryDoubleFP);
+  AddOpt(LibFunc::fabs, LibFunc::fabsf, &UnaryDoubleFP);
+  AddOpt(LibFunc::floor, LibFunc::floorf, &UnaryDoubleFP);
+  AddOpt(LibFunc::rint, LibFunc::rintf, &UnaryDoubleFP);
+  AddOpt(LibFunc::round, LibFunc::roundf, &UnaryDoubleFP);
+  AddOpt(LibFunc::nearbyint, LibFunc::nearbyintf, &UnaryDoubleFP);
+  AddOpt(LibFunc::trunc, LibFunc::truncf, &UnaryDoubleFP);
 
   // Integer Optimizations
   Optimizations["ffs"] = &FFS;
