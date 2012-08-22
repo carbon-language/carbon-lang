@@ -68,15 +68,22 @@ public:
   }
 };
 
+/// \class RuntimeDefinition 
 /// \brief Defines the runtime definition of the called function.
+/// 
+/// Encapsulates the information we have about which Decl will be used 
+/// when the call is executed on the given path. When dealing with dynamic
+/// dispatch, the information is based on DynamicTypeInfo and might not be 
+/// precise.
 class RuntimeDefinition {
-  /// The Declaration of the function which will be called at runtime.
-  /// 0 if not available.
+  /// The Declaration of the function which could be called at runtime.
+  /// NULL if not available.
   const Decl *D;
 
   /// The region representing an object (ObjC/C++) on which the method is
   /// called. With dynamic dispatch, the method definition depends on the
-  /// runtime type of this object. 0 when there is no dynamic dispatch.
+  /// runtime type of this object. NULL when the DynamicTypeInfo is
+  /// precise.
   const MemRegion *R;
 
 public:
@@ -84,8 +91,15 @@ public:
   RuntimeDefinition(const Decl *InD): D(InD), R(0) {}
   RuntimeDefinition(const Decl *InD, const MemRegion *InR): D(InD), R(InR) {}
   const Decl *getDecl() { return D; }
-  const MemRegion *getDispatchRegion() { return R; }
+    
+  /// \brief Check if the definition we have is precise. 
+  /// If not, it is possible that the call dispatches to another definition at 
+  /// execution time.
   bool mayHaveOtherDefinitions() { return R != 0; }
+  
+  /// When other definitions are possible, returns the region whose runtime type 
+  /// determines the method definition.
+  const MemRegion *getDispatchRegion() { return R; }
 };
 
 /// \brief Represents an abstract call to a function or method along a
