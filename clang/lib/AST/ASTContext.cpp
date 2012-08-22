@@ -370,6 +370,10 @@ comments::FullComment *ASTContext::getCommentForDecl(const Decl *D) const {
   if (!RC)
     return NULL;
 
+  // If the RawComment was attached to other redeclaration of this Decl, we
+  // should parse the comment in context of that other Decl.  This is important
+  // because comments can contain references to parameter names which can be
+  // different across redeclarations.
   if (D != OriginalDecl)
     return getCommentForDecl(OriginalDecl);
 
