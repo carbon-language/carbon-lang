@@ -199,34 +199,30 @@ Bifurcation
 ExprEngine::BifurcateCall implements the -analyzer-ipa=dynamic-bifurcate
 mode.
 
-When a call is made on a region with dynamic type information, ExprEngine
-bifurcate's the path marks the MemRegion (derived from a RuntimeDefinition
+When a call is made on a region with imprecise dynamic type information 
+(RuntimeDefinition::mayHaveOtherDefinitions() evaluates to TRUE), ExprEngine
+bifurcates the path and marks the MemRegion (derived from a RuntimeDefinition
 object) with a path-sensitive "mode" in the ProgramState.
 
 Currently, there are 2 modes: 
 
  DynamicDispatchModeInlined - Models the case where the dynamic type information
-   is perfectly constrained so that a given definition of a method is expected
-   to be the code actually called.  When this mode is set, no birfucation
-   of the path is needed when calling this dynamically dispatched method because
-   the definition is considered fully resolved.
-
-   ***TMK/COMMENT*** - this isn't technically what is happening.  Since the
-      "mode" is associated with a MemRegion, that "mode" applies to all method
-      calls involving that region as the "receiver".  This means that once we
-      decide to inline calls for a given receiver object we always inline.
+   of the receiver (MemoryRegion) is assumed to be perfectly constrained so 
+   that a given definition of a method is expected to be the code actually 
+   called. When this mode is set, ExprEngine uses the Decl from 
+   RuntimeDefinition to inline any dynamically dispatched call sent to this 
+   receiver because the function definition is considered to be fully resolved.
 
  DynamicDispatchModeConservative - Models the case where the dynamic type
-   information is imperfect, and implies that the method definition could be
-   overriden in a subclass.  In such cases, ExprEngine does not inline the
-   method, even if a candidate definition is available.  This serves to be
-   conservative about simulating the effects of a call.
+   information is assumed to be incorrect, for example, implies that the method 
+   definition is overriden in a subclass. In such cases, ExprEngine does not 
+   inline the methods sent to the receiver (MemoryRegion), even if a candidate 
+   definition is available. This mode is conservative about simulating the 
+   effects of a call.
 
-Going forward, ExprEngine consult the mode of the MemRegion to make decisions on
-whether the calls should be inlined or not, which ensures that there is at most
-one split per region.
-
-  ***TMK/COMMENT*** isn't this what is happening?
+Going forward along the symbolic execution path, ExprEngine consults the mode 
+of the receiver's MemRegion to make decisions on whether the calls should be 
+inlined or not, which ensures that there is at most one split per region.
 
 At a high level, "bifurcation mode" allows for increased semantic coverage in
 cases where the parent method contains code which is only executed when the
@@ -237,13 +233,9 @@ conservative mode is used.
 Objective-C Message Heuristics
 ------------------------------
 
-ExprEngine relies on a set of heuristics to partition the set of Objective-C method
-calls into those that require bifurcation and those that do not. (can or cannot be
-a subclass).
-
-  ***TMK/COMMENT*** what does the "can or cannot be a subclass" even mean?
-
-Below are the cases when the DynamicTypeInfo of the object is considered precise
+ExprEngine relies on a set of heuristics to partition the set of Objective-C 
+method calls into those that require bifurcation and those that do not. Below 
+are the cases when the DynamicTypeInfo of the object is considered precise
 (cannot be a subclass):
 
  - If the object was created with +alloc or +new and initialized with an -init
