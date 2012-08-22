@@ -2,7 +2,7 @@ set(LLVM_LINK_COMPONENTS support)
 
 add_clang_library(clangTooling
   ArgumentsAdjusters.cpp
-  CommandLineClangTool.cpp
+  CommonOptionsParser.cpp
   CompilationDatabase.cpp
   Refactoring.cpp
   RefactoringCallbacks.cpp
