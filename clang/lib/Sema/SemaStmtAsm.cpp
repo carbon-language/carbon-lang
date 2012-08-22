@@ -360,7 +360,14 @@ static bool isSimpleMSAsm(std::vector<StringRef> &Pieces,
   for (unsigned i = 1, e = Pieces.size(); i != e; ++i)
     if (!TI.isValidGCCRegisterName(Pieces[i]))
       return false;
+  return true;
+}
 
+static bool isSimpleMSAsm(std::vector<std::vector<StringRef> > Pieces,
+                          const TargetInfo &TI) {
+  for (unsigned i = 0, e = Pieces.size(); i != e; ++i)
+    if (!isSimpleMSAsm(Pieces[i], TI))
+      return false;
   return true;
 }
 
@@ -447,12 +454,11 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   std::vector<std::vector<StringRef> > Pieces;
   Pieces.resize(NumAsmStrings);
 
-  bool IsSimple = true;
-  for (unsigned i = 0; i != NumAsmStrings; ++i) {
+
+  for (unsigned i = 0; i != NumAsmStrings; ++i)
     buildMSAsmPieces(AsmStrings[i], Pieces[i]);
-    if (IsSimple)
-      IsSimple = isSimpleMSAsm(Pieces[i], Context.getTargetInfo());
-  }
+
+  bool IsSimple = isSimpleMSAsm(Pieces, Context.getTargetInfo());
 
   // AsmParser doesn't fully support these asm statements.
   if (bailOnMSAsm(Pieces)) { DEF_SIMPLE_MSASM; return Owned(NS); }
