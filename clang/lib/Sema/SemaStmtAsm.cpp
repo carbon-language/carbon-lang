@@ -450,17 +450,12 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
     return Owned(NS);
   }
 
-  unsigned NumAsmStrings;
   std::vector<std::string> AsmStrings;
   std::vector<std::pair<unsigned,unsigned> > AsmTokRanges;
   std::string AsmString = buildMSAsmString(*this, AsmToks, AsmStrings, AsmTokRanges);
-  NumAsmStrings = AsmStrings.size();
 
-  std::vector<std::vector<StringRef> > Pieces;
-  Pieces.resize(NumAsmStrings);
-
-
-  for (unsigned i = 0; i != NumAsmStrings; ++i)
+  std::vector<std::vector<StringRef> > Pieces(AsmStrings.size());
+  for (unsigned i = 0, e = AsmStrings.size(); i != e; ++i)
     buildMSAsmPieces(AsmStrings[i], Pieces[i]);
 
   bool IsSimple = isSimpleMSAsm(Pieces, Context.getTargetInfo());
