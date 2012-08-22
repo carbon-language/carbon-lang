@@ -831,7 +831,7 @@ LLDBSwigPythonCallModuleInit
 // I used runtime as a hack to make SWIG place it where it's needed.
 // This is needed to use LLDBSwigPythonCallSBInputReaderCallback in the
 // typemaps and in the extensions (SBInputReader.__del__()).
-#include "SBInputReader.h"
+#include "lldb/API/SBInputReader.h"
 
 size_t
 LLDBSwigPythonCallSBInputReaderCallback(void *baton,
