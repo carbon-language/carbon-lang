@@ -1,4 +1,4 @@
-; RUN: llc -march=mipsel  -enable-mips-delay-filler < %s | FileCheck %s
+; RUN: llc -march=mipsel < %s | FileCheck %s
 
 define void @foo1() nounwind {
 entry:

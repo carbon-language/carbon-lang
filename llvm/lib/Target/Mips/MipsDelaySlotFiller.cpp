@@ -30,10 +30,11 @@ STATISTIC(FilledSlots, "Number of delay slots filled");
 STATISTIC(UsefulSlots, "Number of delay slots filled with instructions that"
                        " are not NOP.");
 
-static cl::opt<bool> EnableDelaySlotFiller(
-  "enable-mips-delay-filler",
+static cl::opt<bool> DisableDelaySlotFiller(
+  "disable-mips-delay-filler",
   cl::init(false),
-  cl::desc("Fill the Mips delay slots useful instructions."),
+  cl::desc("Disable the delay slot filler, which attempts to fill the Mips"
+           "delay slots with useful instructions."),
   cl::Hidden);
 
 // This option can be used to silence complaints by machine verifier passes.
@@ -114,7 +115,7 @@ runOnMachineBasicBlock(MachineBasicBlock &MBB) {
 
       InstrIter D;
 
-      if (EnableDelaySlotFiller && findDelayInstr(MBB, I, D)) {
+      if (!DisableDelaySlotFiller && findDelayInstr(MBB, I, D)) {
         MBB.splice(llvm::next(I), &MBB, D);
         ++UsefulSlots;
       } else

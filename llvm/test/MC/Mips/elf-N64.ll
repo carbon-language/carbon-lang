@@ -1,4 +1,4 @@
-; RUN: llc -filetype=obj -march=mips64el -mcpu=mips64 %s -o - | elf-dump --dump-section-data  | FileCheck %s
+; RUN: llc -filetype=obj -march=mips64el -mcpu=mips64 -disable-mips-delay-filler %s -o - | elf-dump --dump-section-data  | FileCheck %s
 
 ; Check for N64 relocation production.
 ;
