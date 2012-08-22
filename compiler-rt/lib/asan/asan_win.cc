@@ -55,7 +55,7 @@ void AsanStackTrace::GetStackTrace(uptr max_s, uptr pc, uptr bp) {
     trace[i] = (uptr)tmp[i + offset];
 }
 
-bool __asan_WinSymbolize(const void *addr, char *out_buffer, int buffer_size) {
+bool WinSymbolize(const void *addr, char *out_buffer, int buffer_size) {
   ScopedLock lock(&dbghelp_lock);
   if (!dbghelp_initialized) {
     SymSetOptions(SYMOPT_DEFERRED_LOADS |

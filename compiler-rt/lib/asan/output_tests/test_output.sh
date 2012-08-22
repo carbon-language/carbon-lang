@@ -50,7 +50,7 @@ rm ./a.out
 echo "Checking the presense of interface symbols in compiled file"
 $CC -g -faddress-sanitizer -dead_strip -O2 $C_TEST.c
 nm ./a.out | egrep " [TW] " | sed "s/.* T //" | sed "s/.* W //" | grep "__asan_" | sed "s/___asan_/__asan_/" > symbols.txt
-cat $ASAN_INTERFACE_H | sed "s/\/\/.*//" | grep "__asan_.*("  | sed "s/.* __asan_/__asan_/;s/(.*//" > interface.txt
+cat $ASAN_INTERFACE_H | sed "s/\/\/.*//" | sed "s/typedef.*//" | grep "__asan_.*("  | sed "s/.* __asan_/__asan_/;s/(.*//" > interface.txt
 for i in __asan_report_{load,store}{1,2,4,8,16}
 do
   echo $i >> interface.txt

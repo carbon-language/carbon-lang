@@ -156,10 +156,7 @@ enum LinkerInitialized { LINKER_INITIALIZED = 0 };
 #endif
 
 #ifdef _WIN32
-# ifndef ASAN_USE_EXTERNAL_SYMBOLIZER
-#  define ASAN_USE_EXTERNAL_SYMBOLIZER __asan_WinSymbolize
-bool __asan_WinSymbolize(const void *addr, char *out_buffer, int buffer_size);
-# endif
+bool WinSymbolize(const void *addr, char *out_buffer, int buffer_size);
 #endif  // _WIN32
 
 // These magic values are written to shadow for better error reporting.

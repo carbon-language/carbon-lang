@@ -12,6 +12,7 @@
 // Code for ASan stack trace.
 //===----------------------------------------------------------------------===//
 #include "asan_interceptors.h"
+#include "asan_interface.h"
 #include "asan_lock.h"
 #include "asan_stack.h"
 #include "asan_thread.h"
@@ -19,12 +20,9 @@
 #include "sanitizer_common/sanitizer_procmaps.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
 
-#ifdef ASAN_USE_EXTERNAL_SYMBOLIZER
-extern bool
-ASAN_USE_EXTERNAL_SYMBOLIZER(const void *pc, char *out, int out_size);
-#endif
-
 namespace __asan {
+
+static __asan_symbolize_callback symbolize_callback;
 
 static const char *StripPathPrefix(const char *filepath) {
   const char *path_prefix = flags()->strip_path_prefix;
@@ -45,25 +43,21 @@ static uptr patch_pc(uptr pc) {
   return pc - 1;
 }
 
-#if defined(ASAN_USE_EXTERNAL_SYMBOLIZER)
-void AsanStackTrace::PrintStack(uptr *addr, uptr size) {
-  for (uptr i = 0; i < size && addr[i]; i++) {
-    uptr pc = patch_pc(addr[i]);
-    char buff[4096];
-    ASAN_USE_EXTERNAL_SYMBOLIZER((void*)pc, buff, sizeof(buff));
-    // We can't know anything about the string returned by external
-    // symbolizer, but if it starts with filename, try to strip path prefix
-    // from it.
-    AsanPrintf("  #%zu 0x%zx %s\n", i, pc, StripPathPrefix(buff));
-  }
-}
-
-#else  // ASAN_USE_EXTERNAL_SYMBOLIZER
 void AsanStackTrace::PrintStack(uptr *addr, uptr size) {
   ProcessMaps proc_maps;
   uptr frame_num = 0;
   for (uptr i = 0; i < size && addr[i]; i++) {
     uptr pc = patch_pc(addr[i]);
+    if (symbolize_callback) {
+      char buff[4096];
+      symbolize_callback((void*)pc, buff, sizeof(buff));
+      // We can't know anything about the string returned by external
+      // symbolizer, but if it starts with filename, try to strip path prefix
+      // from it.
+      AsanPrintf("  #%zu 0x%zx %s\n", frame_num, pc, StripPathPrefix(buff));
+      frame_num++;
+      continue;
+    }
     AddressInfo addr_frames[64];
     uptr addr_frames_num = 0;
     if (flags()->symbolize) {
@@ -102,7 +96,6 @@ void AsanStackTrace::PrintStack(uptr *addr, uptr size) {
     }
   }
 }
-#endif  // ASAN_USE_EXTERNAL_SYMBOLIZER
 
 uptr AsanStackTrace::GetCurrentPc() {
   return GET_CALLER_PC();
@@ -240,3 +233,11 @@ void AsanStackTrace::UncompressStack(AsanStackTrace *stack,
 }
 
 }  // namespace __asan
+
+// ------------------ Interface -------------- {{{1
+using namespace __asan;  // NOLINT
+
+void NOINLINE __asan_set_symbolize_callback(
+    __asan_symbolize_callback callback) {
+  symbolize_callback = callback;
+}

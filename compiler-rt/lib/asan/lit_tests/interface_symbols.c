@@ -3,8 +3,9 @@
 // RUN: %clang -faddress-sanitizer -dead_strip -O2 %s -o %t.exe
 // RUN: nm %t.exe | egrep " [TW] " | sed "s/.* T //" | sed "s/.* W //" \
 // RUN:    | grep "__asan_" | sed "s/___asan_/__asan_/" > %t.symbols
-// RUN: cat %p/../asan_interface.h | sed "s/\/\/.*//" | grep "__asan_.*(" \
-// RUN:    | sed "s/.* __asan_/__asan_/;s/(.*//" > %t.interface
+// RUN: cat %p/../asan_interface.h | sed "s/\/\/.*//" | sed "s/typedef.*//" \
+// RUN:    | grep "__asan_.*(" | sed "s/.* __asan_/__asan_/;s/(.*//" \
+// RUN:    > %t.interface
 // RUN: echo __asan_report_load1 >> %t.interface
 // RUN: echo __asan_report_load2 >> %t.interface
 // RUN: echo __asan_report_load4 >> %t.interface
