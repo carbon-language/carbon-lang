@@ -14,6 +14,7 @@
 #ifndef LLVM_ADT_SMALLVECTOR_H
 #define LLVM_ADT_SMALLVECTOR_H
 
+#include "llvm/Support/AlignOf.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/type_traits.h"
 #include <algorithm>
@@ -32,22 +33,52 @@ class SmallVectorBase {
 protected:
   void *BeginX, *EndX, *CapacityX;
 
+protected:
+  SmallVectorBase(void *FirstEl, size_t Size)
+    : BeginX(FirstEl), EndX(FirstEl), CapacityX((char*)FirstEl+Size) {}
+
+  /// grow_pod - This is an implementation of the grow() method which only works
+  /// on POD-like data types and is out of line to reduce code duplication.
+  void grow_pod(void *FirstEl, size_t MinSizeInBytes, size_t TSize);
+
+public:
+  /// size_in_bytes - This returns size()*sizeof(T).
+  size_t size_in_bytes() const {
+    return size_t((char*)EndX - (char*)BeginX);
+  }
+
+  /// capacity_in_bytes - This returns capacity()*sizeof(T).
+  size_t capacity_in_bytes() const {
+    return size_t((char*)CapacityX - (char*)BeginX);
+  }
+
+  bool empty() const { return BeginX == EndX; }
+};
+
+template <typename T, unsigned N> struct SmallVectorStorage;
+
+/// SmallVectorTemplateCommon - This is the part of SmallVectorTemplateBase
+/// which does not depend on whether the type T is a POD. The extra dummy
+/// template argument is used by ArrayRef to avoid unnecessarily requiring T
+/// to be complete.
+template <typename T, typename = void>
+class SmallVectorTemplateCommon : public SmallVectorBase {
+private:
+  template <typename, unsigned> friend struct SmallVectorStorage;
+
   // Allocate raw space for N elements of type T.  If T has a ctor or dtor, we
   // don't want it to be automatically run, so we need to represent the space as
-  // something else.  An array of char would work great, but might not be
-  // aligned sufficiently.  Instead we use some number of union instances for
-  // the space, which guarantee maximal alignment.
-  union U {
-    double D;
-    long double LD;
-    long long L;
-    void *P;
-  } FirstEl;
+  // something else.  Use an array of char of sufficient alignment.
+  typedef llvm::AlignedCharArrayUnion<T> U;
+  U FirstEl;
   // Space after 'FirstEl' is clobbered, do not add any instance vars after it.
 
 protected:
-  SmallVectorBase(size_t Size)
-    : BeginX(&FirstEl), EndX(&FirstEl), CapacityX((char*)&FirstEl+Size) {}
+  SmallVectorTemplateCommon(size_t Size) : SmallVectorBase(&FirstEl, Size) {}
+
+  void grow_pod(size_t MinSizeInBytes, size_t TSize) {
+    SmallVectorBase::grow_pod(&FirstEl, MinSizeInBytes, TSize);
+  }
 
   /// isSmall - Return true if this is a smallvector which has not had dynamic
   /// memory allocated for it.
@@ -59,30 +90,6 @@ protected:
   void resetToSmall() {
     BeginX = EndX = CapacityX = &FirstEl;
   }
-
-  /// grow_pod - This is an implementation of the grow() method which only works
-  /// on POD-like data types and is out of line to reduce code duplication.
-  void grow_pod(size_t MinSizeInBytes, size_t TSize);
-
-public:
-  /// size_in_bytes - This returns size()*sizeof(T).
-  size_t size_in_bytes() const {
-    return size_t((char*)EndX - (char*)BeginX);
-  }
-  
-  /// capacity_in_bytes - This returns capacity()*sizeof(T).
-  size_t capacity_in_bytes() const {
-    return size_t((char*)CapacityX - (char*)BeginX);
-  }
-
-  bool empty() const { return BeginX == EndX; }
-};
-
-
-template <typename T>
-class SmallVectorTemplateCommon : public SmallVectorBase {
-protected:
-  SmallVectorTemplateCommon(size_t Size) : SmallVectorBase(Size) {}
 
   void setEnd(T *P) { this->EndX = P; }
 public:
@@ -844,6 +851,17 @@ SmallVectorImpl<T> &SmallVectorImpl<T>::operator=(SmallVectorImpl<T> &&RHS) {
 }
 #endif
 
+/// Storage for the SmallVector elements which aren't contained in
+/// SmallVectorTemplateCommon. There are 'N-1' elements here. The remaining '1'
+/// element is in the base class. This is specialized for the N=1 and N=0 cases
+/// to avoid allocating unnecessary storage.
+template <typename T, unsigned N>
+struct SmallVectorStorage {
+  typename SmallVectorTemplateCommon<T>::U InlineElts[N - 1];
+};
+template <typename T> struct SmallVectorStorage<T, 1> {};
+template <typename T> struct SmallVectorStorage<T, 0> {};
+
 /// SmallVector - This is a 'vector' (really, a variable-sized array), optimized
 /// for the case when the array is small.  It contains some number of elements
 /// in-place, which allows it to avoid heap allocation when the actual number of
@@ -854,41 +872,23 @@ SmallVectorImpl<T> &SmallVectorImpl<T>::operator=(SmallVectorImpl<T> &&RHS) {
 ///
 template <typename T, unsigned N>
 class SmallVector : public SmallVectorImpl<T> {
-  /// InlineElts - These are 'N-1' elements that are stored inline in the body
-  /// of the vector.  The extra '1' element is stored in SmallVectorImpl.
-  typedef typename SmallVectorImpl<T>::U U;
-  enum {
-    // MinUs - The number of U's require to cover N T's.
-    MinUs = (static_cast<unsigned int>(sizeof(T))*N +
-             static_cast<unsigned int>(sizeof(U)) - 1) /
-            static_cast<unsigned int>(sizeof(U)),
-
-    // NumInlineEltsElts - The number of elements actually in this array.  There
-    // is already one in the parent class, and we have to round up to avoid
-    // having a zero-element array.
-    NumInlineEltsElts = MinUs > 1 ? (MinUs - 1) : 1,
-
-    // NumTsAvailable - The number of T's we actually have space for, which may
-    // be more than N due to rounding.
-    NumTsAvailable = (NumInlineEltsElts+1)*static_cast<unsigned int>(sizeof(U))/
-                     static_cast<unsigned int>(sizeof(T))
-  };
-  U InlineElts[NumInlineEltsElts];
+  /// Storage - Inline space for elements which aren't stored in the base class.
+  SmallVectorStorage<T, N> Storage;
 public:
-  SmallVector() : SmallVectorImpl<T>(NumTsAvailable) {
+  SmallVector() : SmallVectorImpl<T>(N) {
   }
 
   explicit SmallVector(unsigned Size, const T &Value = T())
-    : SmallVectorImpl<T>(NumTsAvailable) {
+    : SmallVectorImpl<T>(N) {
     this->assign(Size, Value);
   }
 
   template<typename ItTy>
-  SmallVector(ItTy S, ItTy E) : SmallVectorImpl<T>(NumTsAvailable) {
+  SmallVector(ItTy S, ItTy E) : SmallVectorImpl<T>(N) {
     this->append(S, E);
   }
 
-  SmallVector(const SmallVector &RHS) : SmallVectorImpl<T>(NumTsAvailable) {
+  SmallVector(const SmallVector &RHS) : SmallVectorImpl<T>(N) {
     if (!RHS.empty())
       SmallVectorImpl<T>::operator=(RHS);
   }
@@ -899,7 +899,7 @@ public:
   }
 
 #if LLVM_USE_RVALUE_REFERENCES
-  SmallVector(SmallVector &&RHS) : SmallVectorImpl<T>(NumTsAvailable) {
+  SmallVector(SmallVector &&RHS) : SmallVectorImpl<T>(N) {
     if (!RHS.empty())
       SmallVectorImpl<T>::operator=(::std::move(RHS));
   }
@@ -910,48 +910,6 @@ public:
   }
 #endif
 
-};
-
-/// Specialize SmallVector at N=0.  This specialization guarantees
-/// that it can be instantiated at an incomplete T if none of its
-/// members are required.
-template <typename T>
-class SmallVector<T,0> : public SmallVectorImpl<T> {
-public:
-  SmallVector() : SmallVectorImpl<T>(0) {
-  }
-
-  explicit SmallVector(unsigned Size, const T &Value = T())
-    : SmallVectorImpl<T>(0) {
-    this->assign(Size, Value);
-  }
-
-  template<typename ItTy>
-  SmallVector(ItTy S, ItTy E) : SmallVectorImpl<T>(0) {
-    this->append(S, E);
-  }
-
-  SmallVector(const SmallVector &RHS) : SmallVectorImpl<T>(0) {
-    if (!RHS.empty())
-      SmallVectorImpl<T>::operator=(RHS);
-  }
-
-  const SmallVector &operator=(const SmallVector &RHS) {
-    SmallVectorImpl<T>::operator=(RHS);
-    return *this;
-  }
-
-#if LLVM_USE_RVALUE_REFERENCES
-  SmallVector(SmallVector &&RHS) : SmallVectorImpl<T>(0) {
-    if (!RHS.empty())
-      SmallVectorImpl<T>::operator=(::std::move(RHS));
-  }
-
-  const SmallVector &operator=(SmallVector &&RHS) {
-    SmallVectorImpl<T>::operator=(::std::move(RHS));
-    return *this;
-  }
-#endif
 };
 
 template<typename T, unsigned N>
