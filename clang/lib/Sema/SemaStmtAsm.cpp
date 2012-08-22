@@ -24,6 +24,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -31,6 +32,7 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
@@ -328,6 +330,19 @@ static bool isMSAsmKeyword(StringRef Name) {
   return Ret;
 }
 
+// getIdentifierInfo - Given a Name and a range of tokens, find the associated
+// IdentifierInfo*.
+static IdentifierInfo *getIdentifierInfo(StringRef Name,
+                                         ArrayRef<Token> AsmToks,
+                                         unsigned Begin, unsigned End) {
+  for (unsigned i = Begin; i <= End; ++i) {
+    IdentifierInfo *II = AsmToks[i].getIdentifierInfo();
+    if (II && II->getName() == Name)
+      return II;
+  }
+  return 0;
+}
+
 // getSpelling - Get the spelling of the AsmTok token.
 static StringRef getSpelling(Sema &SemaRef, Token AsmTok) {
   StringRef Asm;
@@ -545,7 +560,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
     llvm::MCInstPrinter *IP =
       TheTarget->createMCInstPrinter(1, *MAI, *MII, *MRI, *STI);
 
-    // Build the list of clobbers.
+    // Build the list of clobbers, outputs and inputs.
     unsigned NumDefs = Desc.getNumDefs();
     for (unsigned j = 0, e = Inst.getNumOperands(); j != e; ++j) {
       const llvm::MCOperand &Op = Inst.getOperand(j);
@@ -567,6 +582,18 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
           return StmtError(Diag(AsmLoc, diag::err_asm_unknown_register_name) <<
                            Clobber);
         ClobberRegs.insert(Reg);
+        continue;
+      }
+      // Expr/Input or Output.
+      if (Op.isExpr()) {
+        const llvm::MCExpr *Expr = Op.getExpr();
+        const llvm::MCSymbolRefExpr *SymRef;
+        if ((SymRef = dyn_cast<llvm::MCSymbolRefExpr>(Expr))) {
+          StringRef Name = SymRef->getSymbol().getName();
+          IdentifierInfo *II = getIdentifierInfo(Name, AsmToks, AsmTokRanges[i].first, AsmTokRanges[i].second);
+          if (II)
+            isDef ? Outputs.push_back(II) : Inputs.push_back(II);
+        }
       }
     }
   }
