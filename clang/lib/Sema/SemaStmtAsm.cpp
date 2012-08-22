@@ -387,6 +387,12 @@ static void buildMSAsmPieces(StringRef Asm, std::vector<StringRef> &Pieces) {
   }
 }
 
+static void buildMSAsmPieces(std::vector<std::string> &AsmStrings,
+                             std::vector<std::vector<StringRef> > &Pieces) {
+  for (unsigned i = 0, e = AsmStrings.size(); i != e; ++i)
+    buildMSAsmPieces(AsmStrings[i], Pieces[i]);
+}
+
 // Build the unmodified MSAsmString.
 static std::string buildMSAsmString(Sema &SemaRef, ArrayRef<Token> AsmToks,
                                     std::vector<std::string> &AsmStrings,
@@ -455,8 +461,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   std::string AsmString = buildMSAsmString(*this, AsmToks, AsmStrings, AsmTokRanges);
 
   std::vector<std::vector<StringRef> > Pieces(AsmStrings.size());
-  for (unsigned i = 0, e = AsmStrings.size(); i != e; ++i)
-    buildMSAsmPieces(AsmStrings[i], Pieces[i]);
+  buildMSAsmPieces(AsmStrings, Pieces);
 
   bool IsSimple = isSimpleMSAsm(Pieces, Context.getTargetInfo());
 
