@@ -148,10 +148,6 @@ public:
   virtual StoreRef removeDeadBindings(Store store, const StackFrameContext *LCtx,
                                       SymbolReaper& SymReaper) = 0;
 
-  virtual StoreRef BindDecl(Store store, const VarRegion *VR, SVal initVal) = 0;
-
-  virtual StoreRef BindDeclWithNoInit(Store store, const VarRegion *VR) = 0;
-  
   virtual bool includedInBindings(Store store,
                                   const MemRegion *region) const = 0;
   

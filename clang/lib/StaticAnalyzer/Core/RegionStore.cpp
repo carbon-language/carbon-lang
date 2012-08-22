@@ -280,12 +280,6 @@ public: // Part of public interface to class.
                                const CompoundLiteralExpr *CL,
                                const LocationContext *LC, SVal V);
 
-  StoreRef BindDecl(Store store, const VarRegion *VR, SVal InitVal);
-
-  StoreRef BindDeclWithNoInit(Store store, const VarRegion *) {
-    return StoreRef(store, *this);
-  }
-
   /// BindStruct - Bind a compound value to a structure.
   StoreRef BindStruct(Store store, const TypedValueRegion* R, SVal V);
 
@@ -1567,6 +1561,8 @@ StoreRef RegionStoreManager::Bind(Store store, Loc L, SVal V) {
   // Check if the region is a struct region.
   if (const TypedValueRegion* TR = dyn_cast<TypedValueRegion>(R)) {
     QualType Ty = TR->getValueType();
+    if (Ty->isArrayType())
+      return BindArray(store, TR, V);
     if (Ty->isStructureOrClassType())
       return BindStruct(store, TR, V);
     if (Ty->isVectorType())
@@ -1594,19 +1590,6 @@ StoreRef RegionStoreManager::Bind(Store store, Loc L, SVal V) {
   B = removeSubRegionBindings(B, cast<SubRegion>(R));
   BindingKey Key = BindingKey::Make(R, BindingKey::Direct);
   return StoreRef(addBinding(B, Key, V).getRootWithoutRetain(), *this);
-}
-
-StoreRef RegionStoreManager::BindDecl(Store store, const VarRegion *VR,
-                                      SVal InitVal) {
-
-  QualType T = VR->getDecl()->getType();
-
-  if (T->isArrayType())
-    return BindArray(store, VR, InitVal);
-  if (T->isStructureOrClassType())
-    return BindStruct(store, VR, InitVal);
-
-  return Bind(store, svalBuilder.makeLoc(VR), InitVal);
 }
 
 // FIXME: this method should be merged into Bind().

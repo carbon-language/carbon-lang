@@ -487,7 +487,7 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
       }
     }
     else {
-      B.generateNode(DS, N,state->bindDeclWithNoInit(state->getRegion(VD, LC)));
+      B.generateNode(DS, N, state);
     }
   }
 }

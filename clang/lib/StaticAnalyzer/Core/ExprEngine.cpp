@@ -1540,7 +1540,8 @@ void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
 ///  This method is used by evalStore and (soon) VisitDeclStmt, and others.
 void ExprEngine::evalBind(ExplodedNodeSet &Dst, const Stmt *StoreE,
                           ExplodedNode *Pred,
-                          SVal location, SVal Val, bool atDeclInit) {
+                          SVal location, SVal Val,
+                          bool atDeclInit) {
 
   // Do a previsit of the bind.
   ExplodedNodeSet CheckedSet;
@@ -1548,6 +1549,13 @@ void ExprEngine::evalBind(ExplodedNodeSet &Dst, const Stmt *StoreE,
                                          StoreE, *this,
                                          ProgramPoint::PostStmtKind);
 
+  // If the location is not a 'Loc', it will already be handled by
+  // the checkers.  There is nothing left to do.
+  if (!isa<Loc>(location)) {
+    Dst = CheckedSet;
+    return;
+  }
+  
   ExplodedNodeSet TmpDst;
   StmtNodeBuilder Bldr(CheckedSet, TmpDst, *currentBuilderContext);
 
@@ -1556,24 +1564,20 @@ void ExprEngine::evalBind(ExplodedNodeSet &Dst, const Stmt *StoreE,
        I!=E; ++I) {
     ExplodedNode *PredI = *I;
     ProgramStateRef state = PredI->getState();
-
-    if (atDeclInit) {
-      const VarRegion *VR =
-        cast<VarRegion>(cast<loc::MemRegionVal>(location).getRegion());
-
-      state = state->bindDecl(VR, Val);
-    } else {
-      state = state->bindLoc(location, Val);
-    }
-
+    
+    // When binding the value, pass on the hint that this is a initialization.
+    // For initializations, we do not need to inform clients of region
+    // changes.
+    state = state->bindLoc(cast<Loc>(location),
+                           Val, /* notifyChanges = */ !atDeclInit);
+    
     const MemRegion *LocReg = 0;
-    if (loc::MemRegionVal *LocRegVal = dyn_cast<loc::MemRegionVal>(&location))
+    if (loc::MemRegionVal *LocRegVal = dyn_cast<loc::MemRegionVal>(&location)) {
       LocReg = LocRegVal->getRegion();
-
+    }
     const ProgramPoint L = PostStore(StoreE, LC, LocReg, 0);
     Bldr.generateNode(L, state, PredI);
   }
-
   Dst.insert(TmpDst);
 }
 

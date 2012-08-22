@@ -228,12 +228,10 @@ public:
   ProgramStateRef bindExprAndLocation(const Stmt *S,
                                           const LocationContext *LCtx,
                                           SVal location, SVal V) const;
-  
-  ProgramStateRef bindDecl(const VarRegion *VR, SVal V) const;
 
-  ProgramStateRef bindDeclWithNoInit(const VarRegion *VR) const;
-
-  ProgramStateRef bindLoc(Loc location, SVal V) const;
+  ProgramStateRef bindLoc(Loc location,
+                          SVal V,
+                          bool notifyChanges = true) const;
 
   ProgramStateRef bindLoc(SVal location, SVal V) const;
 
