@@ -272,7 +272,7 @@ bool is_separator(char value);
 /// ignored if the user or system has set the typical environment variable
 /// (e.g., TEMP on Windows, TMPDIR on *nix) to specify a temporary directory.
 ///
-/// @param Result Holds the resulting path name.
+/// @param result Holds the resulting path name.
 void system_temp_directory(bool erasedOnReboot, SmallVectorImpl<char> &result);
 
 /// @brief Has root name?

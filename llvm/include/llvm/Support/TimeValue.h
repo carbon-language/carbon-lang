@@ -165,7 +165,6 @@ namespace sys {
 
     /// Determines if two TimeValue objects represent the same moment in time.
     /// @brief True iff *this == that.
-    /// @brief True if this == that.
     int operator == (const TimeValue &that) const {
       return (this->seconds_ == that.seconds_) &&
              (this->nanos_ == that.nanos_);

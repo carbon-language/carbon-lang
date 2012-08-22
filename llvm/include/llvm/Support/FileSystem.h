@@ -432,7 +432,7 @@ error_code is_other(const Twine &path, bool &result);
 /// @brief Does status represent a symlink?
 ///
 /// @param status A file_status previously returned from stat.
-/// @param result status.type() == symlink_file.
+/// @returns status.type() == symlink_file.
 bool is_symlink(file_status status);
 
 /// @brief Is path a symlink?
@@ -461,7 +461,7 @@ error_code permissions(const Twine &path, perms prms);
 
 /// @brief Is status available?
 ///
-/// @param path Input path.
+/// @param s Input file status.
 /// @results True if status() != status_error.
 bool status_known(file_status s);
 
@@ -486,7 +486,7 @@ error_code status_known(const Twine &path, bool &result);
 /// clang-%%-%%-%%-%%-%%.s => /tmp/clang-a0-b1-c2-d3-e4.s
 ///
 /// @param model Name to base unique path off of.
-/// @param result_fs Set to the opened file's file descriptor.
+/// @param result_fd Set to the opened file's file descriptor.
 /// @param result_path Set to the opened file's absolute path.
 /// @param makeAbsolute If true and @model is not an absolute path, a temp
 ///        directory will be prepended.
@@ -586,9 +586,9 @@ class mapped_file_region {
 
 public:
   enum mapmode {
-    readonly, //< May only access map via const_data as read only.
-    readwrite, //< May access map via data and modify it. Written to path.
-    priv //< May modify via data, but changes are lost on destruction.
+    readonly, ///< May only access map via const_data as read only.
+    readwrite, ///< May access map via data and modify it. Written to path.
+    priv ///< May modify via data, but changes are lost on destruction.
   };
 
 private:
@@ -658,7 +658,7 @@ public:
 ///
 /// @param path Path to file to map.
 /// @param file_offset Byte offset in file where mapping should begin.
-/// @param size_t Byte length of range of the file to map.
+/// @param size Byte length of range of the file to map.
 /// @param map_writable If true, the file will be mapped in r/w such
 ///        that changes to the mapped buffer will be flushed back
 ///        to the file.  If false, the file will be mapped read-only

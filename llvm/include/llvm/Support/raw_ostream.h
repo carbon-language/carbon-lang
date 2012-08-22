@@ -210,13 +210,16 @@ public:
 
   /// Changes the foreground color of text that will be output from this point
   /// forward.
-  /// @param colors ANSI color to use, the special SAVEDCOLOR can be used to
+  /// @param Color ANSI color to use, the special SAVEDCOLOR can be used to
   /// change only the bold attribute, and keep colors untouched
-  /// @param bold bold/brighter text, default false
-  /// @param bg if true change the background, default: change foreground
+  /// @param Bold bold/brighter text, default false
+  /// @param BG if true change the background, default: change foreground
   /// @returns itself so it can be used within << invocations
-  virtual raw_ostream &changeColor(enum Colors, bool = false, bool = false) {
-    return *this; }
+  virtual raw_ostream &changeColor(enum Colors Color,
+                                   bool Bold = false,
+                                   bool BG = false) {
+    return *this;
+  }
 
   /// Resets the colors to terminal defaults. Call this when you are done
   /// outputting colored text, or before program exit.
