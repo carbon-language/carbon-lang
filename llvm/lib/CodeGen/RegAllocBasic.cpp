@@ -20,7 +20,6 @@
 #include "VirtRegMap.h"
 #include "LiveRegMatrix.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Function.h"
 #include "llvm/PassAnalysisSupport.h"
 #include "llvm/CodeGen/CalcSpillWeights.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
@@ -273,7 +272,7 @@ unsigned RABasic::selectOrSplit(LiveInterval &VirtReg,
 bool RABasic::runOnMachineFunction(MachineFunction &mf) {
   DEBUG(dbgs() << "********** BASIC REGISTER ALLOCATION **********\n"
                << "********** Function: "
-               << ((Value*)mf.getFunction())->getName() << '\n');
+               << mf.getName() << '\n');
 
   MF = &mf;
   RegAllocBase::init(getAnalysis<VirtRegMap>(),

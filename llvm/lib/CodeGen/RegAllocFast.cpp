@@ -1110,8 +1110,7 @@ void RAFast::AllocateBasicBlock() {
 ///
 bool RAFast::runOnMachineFunction(MachineFunction &Fn) {
   DEBUG(dbgs() << "********** FAST REGISTER ALLOCATION **********\n"
-               << "********** Function: "
-               << ((Value*)Fn.getFunction())->getName() << '\n');
+               << "********** Function: " << Fn.getName() << '\n');
   MF = &Fn;
   MRI = &MF->getRegInfo();
   TM = &Fn.getTarget();

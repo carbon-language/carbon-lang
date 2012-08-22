@@ -18,7 +18,6 @@
 
 #define DEBUG_TYPE "early-ifcvt"
 #include "MachineTraceMetrics.h"
-#include "llvm/Function.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/SetVector.h"
@@ -775,8 +774,7 @@ bool EarlyIfConverter::tryConvertIf(MachineBasicBlock *MBB) {
 
 bool EarlyIfConverter::runOnMachineFunction(MachineFunction &MF) {
   DEBUG(dbgs() << "********** EARLY IF-CONVERSION **********\n"
-               << "********** Function: "
-               << ((Value*)MF.getFunction())->getName() << '\n');
+               << "********** Function: " << MF.getName() << '\n');
   TII = MF.getTarget().getInstrInfo();
   TRI = MF.getTarget().getRegisterInfo();
   SchedModel = MF.getTarget().getInstrItineraryData()->SchedModel;

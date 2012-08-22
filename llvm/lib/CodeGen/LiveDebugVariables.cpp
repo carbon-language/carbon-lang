@@ -687,8 +687,7 @@ bool LDVImpl::runOnMachineFunction(MachineFunction &mf) {
   clear();
   LS.initialize(mf);
   DEBUG(dbgs() << "********** COMPUTING LIVE DEBUG VARIABLES: "
-               << ((Value*)mf.getFunction())->getName()
-               << " **********\n");
+               << mf.getName() << " **********\n");
 
   bool Changed = collectDebugValues(mf);
   computeIntervals();

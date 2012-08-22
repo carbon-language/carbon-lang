@@ -189,8 +189,7 @@ bool ExpandPostRA::LowerCopy(MachineInstr *MI) {
 bool ExpandPostRA::runOnMachineFunction(MachineFunction &MF) {
   DEBUG(dbgs() << "Machine Function\n"
                << "********** EXPANDING POST-RA PSEUDO INSTRS **********\n"
-               << "********** Function: "
-               << MF.getName() << '\n');
+               << "********** Function: " << MF.getName() << '\n');
   TRI = MF.getTarget().getRegisterInfo();
   TII = MF.getTarget().getInstrInfo();
 

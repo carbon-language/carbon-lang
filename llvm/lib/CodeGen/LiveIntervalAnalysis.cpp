@@ -382,8 +382,7 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
 /// which a variable is live
 void LiveIntervals::computeIntervals() {
   DEBUG(dbgs() << "********** COMPUTING LIVE INTERVALS **********\n"
-               << "********** Function: "
-               << ((Value*)MF->getFunction())->getName() << '\n');
+               << "********** Function: " << MF->getName() << '\n');
 
   RegMaskBlocks.resize(MF->getNumBlockIDs());
 

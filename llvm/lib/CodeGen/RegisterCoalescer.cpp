@@ -1564,8 +1564,7 @@ bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
   Loops = &getAnalysis<MachineLoopInfo>();
 
   DEBUG(dbgs() << "********** SIMPLE REGISTER COALESCING **********\n"
-               << "********** Function: "
-               << MF->getName() << '\n');
+               << "********** Function: " << MF->getName() << '\n');
 
   if (VerifyCoalescing)
     MF->verify(this, "Before register coalescing");

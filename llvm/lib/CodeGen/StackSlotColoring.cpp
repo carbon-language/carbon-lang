@@ -390,8 +390,7 @@ bool StackSlotColoring::RemoveDeadStores(MachineBasicBlock* MBB) {
 bool StackSlotColoring::runOnMachineFunction(MachineFunction &MF) {
   DEBUG({
       dbgs() << "********** Stack Slot Coloring **********\n"
-             << "********** Function: "
-             << MF.getName() << '\n';
+             << "********** Function: " << MF.getName() << '\n';
     });
 
   MFI = MF.getFrameInfo();

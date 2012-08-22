@@ -41,8 +41,7 @@ void CalculateSpillWeights::getAnalysisUsage(AnalysisUsage &au) const {
 bool CalculateSpillWeights::runOnMachineFunction(MachineFunction &MF) {
 
   DEBUG(dbgs() << "********** Compute Spill Weights **********\n"
-               << "********** Function: "
-               << MF.getName() << '\n');
+               << "********** Function: " << MF.getName() << '\n');
 
   LiveIntervals &LIS = getAnalysis<LiveIntervals>();
   MachineRegisterInfo &MRI = MF.getRegInfo();

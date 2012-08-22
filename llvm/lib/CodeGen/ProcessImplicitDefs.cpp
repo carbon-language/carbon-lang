@@ -137,8 +137,7 @@ void ProcessImplicitDefs::processImplicitDef(MachineInstr *MI) {
 bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &MF) {
 
   DEBUG(dbgs() << "********** PROCESS IMPLICIT DEFS **********\n"
-               << "********** Function: "
-               << ((Value*)MF.getFunction())->getName() << '\n');
+               << "********** Function: " << MF.getName() << '\n');
 
   bool Changed = false;
 
