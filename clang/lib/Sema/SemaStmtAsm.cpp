@@ -338,6 +338,20 @@ static StringRef getSpelling(Sema &SemaRef, Token AsmTok) {
   return Asm;
 }
 
+static bool bailOnMSAsm(std::vector<StringRef> Piece) {
+  for (unsigned i = 0, e = Piece.size(); i != e; ++i)
+    if (isMSAsmKeyword(Piece[i]))
+      return true;
+  return false;
+}
+
+static bool bailOnMSAsm(std::vector<std::vector<StringRef> > Pieces) {
+  for (unsigned i = 0, e = Pieces.size(); i != e; ++i)
+    if (bailOnMSAsm(Pieces[i]))
+      return true;
+  return false;
+}
+
 static bool isSimpleMSAsm(std::vector<StringRef> &Pieces,
                           const TargetInfo &TI) {
   if (isMSAsmKeyword(Pieces[0]))
@@ -401,6 +415,12 @@ static std::string buildMSAsmString(Sema &SemaRef,
   return Res.c_str();
 }
 
+#define DEF_SIMPLE_MSASM                                                   \
+  MSAsmStmt *NS =                                                          \
+    new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc, /*IsSimple*/ true, \
+                            /*IsVolatile*/ true, AsmToks, Inputs, Outputs, \
+                            AsmString, Clobbers, EndLoc);
+
 StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
                                 SourceLocation LBraceLoc,
                                 ArrayRef<Token> AsmToks,
@@ -415,10 +435,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   // Empty asm statements don't need to instantiate the AsmParser, etc.
   if (AsmToks.empty()) {
     StringRef AsmString;
-    MSAsmStmt *NS =
-      new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc, /*IsSimple*/ true,
-                              /*IsVolatile*/ true, AsmToks, Inputs, Outputs,
-                              AsmString, Clobbers, EndLoc);
+    DEF_SIMPLE_MSASM;
     return Owned(NS);
   }
 
@@ -437,14 +454,8 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
       IsSimple = isSimpleMSAsm(Pieces[i], Context.getTargetInfo());
   }
 
-  // AsmParser doesn't fully support non-simple asm statements.
-  if (!IsSimple) {
-    MSAsmStmt *NS =
-      new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc, /*IsSimple*/ true,
-                              /*IsVolatile*/ true, AsmToks, Inputs, Outputs,
-                              AsmString, Clobbers, EndLoc);
-    return Owned(NS);
-  }
+  // AsmParser doesn't fully support these asm statements.
+  if (bailOnMSAsm(Pieces)) { DEF_SIMPLE_MSASM; return Owned(NS); }
 
   // Initialize targets and assembly printers/parsers.
   llvm::InitializeAllTargetInfos();
@@ -497,7 +508,8 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
     SmallVector<llvm::MCParsedAsmOperand*, 8> Operands;
     bool HadError = TargetParser->ParseInstruction(Opcode.str(), IDLoc,
                                                    Operands);
-    assert (!HadError && "Unexpected error parsing instruction");
+    // If we had an error parsing the operands, fail gracefully.
+    if (HadError) { DEF_SIMPLE_MSASM; return Owned(NS); }
 
     // Match the MCInstr.
     unsigned ErrorInfo;
@@ -505,8 +517,8 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
     HadError = TargetParser->MatchInstruction(IDLoc, Operands, Instrs,
                                               ErrorInfo,
                                               /*matchingInlineAsm*/ true);
-    assert (!HadError && "Unexpected error matching instruction");
-    assert ((Instrs.size() == 1) && "Expected only a single instruction.");
+    // If we had an error parsing the operands, fail gracefully.
+    if (HadError) { DEF_SIMPLE_MSASM; return Owned(NS); }
 
     // Get the instruction descriptor.
     llvm::MCInst Inst = Instrs[0];

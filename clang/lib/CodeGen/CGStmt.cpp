@@ -1687,8 +1687,6 @@ void CodeGenFunction::EmitMSAsmStmt(const MSAsmStmt &S) {
   if (!CGM.getCodeGenOpts().EmitMicrosoftInlineAsm)
     return;
 
-  assert (S.isSimple() && "CodeGen can only handle simple MSAsmStmts.");
-
   std::vector<llvm::Value*> Args;
   std::vector<llvm::Type *> ArgTypes;
   std::string Constraints;
