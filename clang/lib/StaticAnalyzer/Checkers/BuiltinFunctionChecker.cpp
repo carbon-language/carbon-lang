@@ -55,7 +55,7 @@ bool BuiltinFunctionChecker::evalCall(const CallExpr *CE,
     // FIXME: Refactor into StoreManager itself?
     MemRegionManager& RM = C.getStoreManager().getRegionManager();
     const AllocaRegion* R =
-      RM.getAllocaRegion(CE, C.getCurrentBlockCount(), C.getLocationContext());
+      RM.getAllocaRegion(CE, C.blockCount(), C.getLocationContext());
 
     // Set the extent of the region in bytes. This enables us to use the
     // SVal of the argument directly. If we save the extent in bits, we

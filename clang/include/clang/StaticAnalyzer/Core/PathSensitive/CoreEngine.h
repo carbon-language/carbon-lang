@@ -196,7 +196,7 @@ struct NodeBuilderContext {
 
   /// \brief Returns the number of times the current basic block has been
   /// visited on the exploded graph path.
-  unsigned getCurrentBlockCount() const {
+  unsigned blockCount() const {
     return Eng.WList->getBlockCounter().getNumVisited(
                     Pred->getLocationContext()->getCurrentStackFrame(),
                     Block->getBlockID());

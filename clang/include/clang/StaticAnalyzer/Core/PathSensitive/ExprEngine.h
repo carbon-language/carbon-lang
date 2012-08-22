@@ -70,10 +70,10 @@ class ExprEngine : public SubEngine {
   ///  variables and symbols (as determined by a liveness analysis).
   ProgramStateRef CleanedState;
 
-  /// currentStmt - The current block-level statement.
-  const Stmt *currentStmt;
-  unsigned int currentStmtIdx;
-  const NodeBuilderContext *currentBuilderContext;
+  /// currStmt - The current block-level statement.
+  const Stmt *currStmt;
+  unsigned int currStmtIdx;
+  const NodeBuilderContext *currBldrCtx;
 
   /// Obj-C Class Identifiers.
   IdentifierInfo* NSExceptionII;
@@ -126,8 +126,8 @@ public:
   BugReporter& getBugReporter() { return BR; }
 
   const NodeBuilderContext &getBuilderContext() {
-    assert(currentBuilderContext);
-    return *currentBuilderContext;
+    assert(currBldrCtx);
+    return *currBldrCtx;
   }
 
   bool isObjCGCEnabled() { return ObjCGCEnabled; }

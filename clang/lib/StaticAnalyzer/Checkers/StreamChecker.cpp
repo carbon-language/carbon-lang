@@ -219,11 +219,11 @@ void StreamChecker::Tmpfile(CheckerContext &C, const CallExpr *CE) const {
 
 void StreamChecker::OpenFileAux(CheckerContext &C, const CallExpr *CE) const {
   ProgramStateRef state = C.getState();
-  unsigned Count = C.getCurrentBlockCount();
   SValBuilder &svalBuilder = C.getSValBuilder();
   const LocationContext *LCtx = C.getPredecessor()->getLocationContext();
   DefinedSVal RetVal =
-    cast<DefinedSVal>(svalBuilder.conjureSymbolVal(0, CE, LCtx, Count));
+    cast<DefinedSVal>(svalBuilder.conjureSymbolVal(0, CE, LCtx,
+                                                   C.blockCount()));
   state = state->BindExpr(CE, C.getLocationContext(), RetVal);
   
   ConstraintManager &CM = C.getConstraintManager();

@@ -3449,12 +3449,12 @@ class StmtPrinterHelper : public PrinterHelper  {
   StmtMapTy StmtMap;
   DeclMapTy DeclMap;
   signed currentBlock;
-  unsigned currentStmt;
+  unsigned currStmt;
   const LangOptions &LangOpts;
 public:
 
   StmtPrinterHelper(const CFG* cfg, const LangOptions &LO)
-    : currentBlock(0), currentStmt(0), LangOpts(LO)
+    : currentBlock(0), currStmt(0), LangOpts(LO)
   {
     for (CFG::const_iterator I = cfg->begin(), E = cfg->end(); I != E; ++I ) {
       unsigned j = 1;
@@ -3515,7 +3515,7 @@ public:
 
   const LangOptions &getLangOpts() const { return LangOpts; }
   void setBlockID(signed i) { currentBlock = i; }
-  void setStmtID(unsigned i) { currentStmt = i; }
+  void setStmtID(unsigned i) { currStmt = i; }
 
   virtual bool handledStmt(Stmt *S, raw_ostream &OS) {
     StmtMapTy::iterator I = StmtMap.find(S);
@@ -3524,7 +3524,7 @@ public:
       return false;
 
     if (currentBlock >= 0 && I->second.first == (unsigned) currentBlock
-                          && I->second.second == currentStmt) {
+                          && I->second.second == currStmt) {
       return false;
     }
 
@@ -3539,7 +3539,7 @@ public:
       return false;
 
     if (currentBlock >= 0 && I->second.first == (unsigned) currentBlock
-                          && I->second.second == currentStmt) {
+                          && I->second.second == currStmt) {
       return false;
     }
 

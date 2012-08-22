@@ -3071,8 +3071,7 @@ bool RetainCountChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
   if (RetVal.isUnknown()) {
     // If the receiver is unknown, conjure a return value.
     SValBuilder &SVB = C.getSValBuilder();
-    unsigned Count = C.getCurrentBlockCount();
-    RetVal = SVB.conjureSymbolVal(0, CE, LCtx, ResultTy, Count);
+    RetVal = SVB.conjureSymbolVal(0, CE, LCtx, ResultTy, C.blockCount());
   }
   state = state->BindExpr(CE, LCtx, RetVal, false);
 
@@ -3086,8 +3085,7 @@ bool RetainCountChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
       Binding = getRefBinding(state, Sym);
 
     // Invalidate the argument region.
-    unsigned Count = C.getCurrentBlockCount();
-    state = state->invalidateRegions(ArgRegion, CE, Count, LCtx);
+    state = state->invalidateRegions(ArgRegion, CE, C.blockCount(), LCtx);
 
     // Restore the refcount status of the argument.
     if (Binding)

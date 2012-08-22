@@ -25,7 +25,7 @@ using namespace ento;
 void ExprEngine::CreateCXXTemporaryObject(const MaterializeTemporaryExpr *ME,
                                           ExplodedNode *Pred,
                                           ExplodedNodeSet &Dst) {
-  StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Pred, Dst, *currBldrCtx);
   const Expr *tempExpr = ME->GetTemporaryExpr()->IgnoreParens();
   ProgramStateRef state = Pred->getState();
   const LocationContext *LCtx = Pred->getLocationContext();
@@ -53,9 +53,9 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
   case CXXConstructExpr::CK_Complete: {
     // See if we're constructing an existing region by looking at the next
     // element in the CFG.
-    const CFGBlock *B = currentBuilderContext->getBlock();
-    if (currentStmtIdx + 1 < B->size()) {
-      CFGElement Next = (*B)[currentStmtIdx+1];
+    const CFGBlock *B = currBldrCtx->getBlock();
+    if (currStmtIdx + 1 < B->size()) {
+      CFGElement Next = (*B)[currStmtIdx+1];
 
       // Is this a constructor for a local variable?
       if (const CFGStmt *StmtElem = dyn_cast<CFGStmt>(&Next)) {
@@ -137,7 +137,7 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
                                             *Call, *this);
 
   ExplodedNodeSet DstInvalidated;
-  StmtNodeBuilder Bldr(DstPreCall, DstInvalidated, *currentBuilderContext);
+  StmtNodeBuilder Bldr(DstPreCall, DstInvalidated, *currBldrCtx);
   for (ExplodedNodeSet::iterator I = DstPreCall.begin(), E = DstPreCall.end();
        I != E; ++I)
     defaultEvalCall(Bldr, *I, *Call);
@@ -182,7 +182,7 @@ void ExprEngine::VisitCXXDestructor(QualType ObjectType,
                                             *Call, *this);
 
   ExplodedNodeSet DstInvalidated;
-  StmtNodeBuilder Bldr(DstPreCall, DstInvalidated, *currentBuilderContext);
+  StmtNodeBuilder Bldr(DstPreCall, DstInvalidated, *currBldrCtx);
   for (ExplodedNodeSet::iterator I = DstPreCall.begin(), E = DstPreCall.end();
        I != E; ++I)
     defaultEvalCall(Bldr, *I, *Call);
@@ -198,9 +198,9 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
   // Also, we need to decide how allocators actually work -- they're not
   // really part of the CXXNewExpr because they happen BEFORE the
   // CXXConstructExpr subexpression. See PR12014 for some discussion.
-  StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Pred, Dst, *currBldrCtx);
   
-  unsigned blockCount = currentBuilderContext->getCurrentBlockCount();
+  unsigned blockCount = currBldrCtx->blockCount();
   const LocationContext *LCtx = Pred->getLocationContext();
   DefinedOrUnknownSVal symVal = svalBuilder.conjureSymbolVal(0, CNE, LCtx,
                                                              CNE->getType(),
@@ -260,7 +260,7 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
 
 void ExprEngine::VisitCXXDeleteExpr(const CXXDeleteExpr *CDE, 
                                     ExplodedNode *Pred, ExplodedNodeSet &Dst) {
-  StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Pred, Dst, *currBldrCtx);
   ProgramStateRef state = Pred->getState();
   Bldr.generateNode(CDE, Pred, state);
 }
@@ -276,17 +276,17 @@ void ExprEngine::VisitCXXCatchStmt(const CXXCatchStmt *CS,
 
   const LocationContext *LCtx = Pred->getLocationContext();
   SVal V = svalBuilder.conjureSymbolVal(CS, LCtx, VD->getType(),
-                                 currentBuilderContext->getCurrentBlockCount());
+                                        currBldrCtx->blockCount());
   ProgramStateRef state = Pred->getState();
   state = state->bindLoc(state->getLValue(VD, LCtx), V);
 
-  StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Pred, Dst, *currBldrCtx);
   Bldr.generateNode(CS, Pred, state);
 }
 
 void ExprEngine::VisitCXXThisExpr(const CXXThisExpr *TE, ExplodedNode *Pred,
                                     ExplodedNodeSet &Dst) {
-  StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Pred, Dst, *currBldrCtx);
 
   // Get the this object region from StoreManager.
   const LocationContext *LCtx = Pred->getLocationContext();

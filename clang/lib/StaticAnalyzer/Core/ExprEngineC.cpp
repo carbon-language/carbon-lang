@@ -45,7 +45,7 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
       // EXPERIMENTAL: "Conjured" symbols.
       // FIXME: Handle structs.
       if (RightV.isUnknown()) {
-        unsigned Count = currentBuilderContext->getCurrentBlockCount();
+        unsigned Count = currBldrCtx->blockCount();
         RightV = svalBuilder.conjureSymbolVal(0, B->getRHS(), LCtx, Count);
       }
       // Simulate the effects of a "store":  bind the value of the RHS
@@ -57,7 +57,7 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
     }
       
     if (!B->isAssignmentOp()) {
-      StmtNodeBuilder Bldr(*it, Tmp2, *currentBuilderContext);
+      StmtNodeBuilder Bldr(*it, Tmp2, *currBldrCtx);
 
       if (B->isAdditiveOp()) {
         // If one of the operands is a location, conjure a symbol for the other
@@ -65,7 +65,7 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
         // results in an ElementRegion.
         // TODO: This can be removed after we enable history tracking with
         // SymSymExpr.
-        unsigned Count = currentBuilderContext->getCurrentBlockCount();
+        unsigned Count = currBldrCtx->blockCount();
         if (isa<Loc>(LeftV) &&
             RHS->getType()->isIntegerType() && RightV.isUnknown()) {
           RightV = svalBuilder.conjureSymbolVal(RHS, LCtx, RHS->getType(),
@@ -145,13 +145,11 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
       SVal LHSVal;
       
       if (Result.isUnknown()) {
-        
-        unsigned Count = currentBuilderContext->getCurrentBlockCount();
-        
         // The symbolic value is actually for the type of the left-hand side
         // expression, not the computation type, as this is the value the
         // LValue on the LHS will bind to.
-        LHSVal = svalBuilder.conjureSymbolVal(0, B->getRHS(), LCtx, LTy, Count);
+        LHSVal = svalBuilder.conjureSymbolVal(0, B->getRHS(), LCtx, LTy,
+                                              currBldrCtx->blockCount());
         // However, we need to convert the symbol to the computation type.
         Result = svalBuilder.evalCast(LHSVal, CTy, LTy);
       }
@@ -206,7 +204,7 @@ void ExprEngine::VisitBlockExpr(const BlockExpr *BE, ExplodedNode *Pred,
   }
   
   ExplodedNodeSet Tmp;
-  StmtNodeBuilder Bldr(Pred, Tmp, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Pred, Tmp, *currBldrCtx);
   Bldr.generateNode(BE, Pred,
                     State->BindExpr(BE, Pred->getLocationContext(), V),
                     0, ProgramPoint::PostLValueKind);
@@ -239,7 +237,7 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
   if (const ExplicitCastExpr *ExCast=dyn_cast_or_null<ExplicitCastExpr>(CastE))
     T = ExCast->getTypeAsWritten();
   
-  StmtNodeBuilder Bldr(dstPreStmt, Dst, *currentBuilderContext);
+  StmtNodeBuilder Bldr(dstPreStmt, Dst, *currBldrCtx);
   for (ExplodedNodeSet::iterator I = dstPreStmt.begin(), E = dstPreStmt.end();
        I != E; ++I) {
     
@@ -355,7 +353,7 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
           if (val.isUnknown()) {
             DefinedOrUnknownSVal NewSym =
               svalBuilder.conjureSymbolVal(0, CastE, LCtx, resultType,
-                                 currentBuilderContext->getCurrentBlockCount());
+                                           currBldrCtx->blockCount());
             state = state->BindExpr(CastE, LCtx, NewSym);
           } else 
             // Else, bind to the derived region value.
@@ -382,7 +380,8 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
           resultType = getContext().getPointerType(resultType);
         const LocationContext *LCtx = Pred->getLocationContext();
         SVal result = svalBuilder.conjureSymbolVal(0, CastE, LCtx,
-                    resultType, currentBuilderContext->getCurrentBlockCount());
+                                                   resultType,
+                                                   currBldrCtx->blockCount());
         ProgramStateRef state = Pred->getState()->BindExpr(CastE, LCtx,
                                                                result);
         Bldr.generateNode(CastE, Pred, state);
@@ -395,7 +394,7 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
 void ExprEngine::VisitCompoundLiteralExpr(const CompoundLiteralExpr *CL,
                                           ExplodedNode *Pred,
                                           ExplodedNodeSet &Dst) {
-  StmtNodeBuilder B(Pred, Dst, *currentBuilderContext);
+  StmtNodeBuilder B(Pred, Dst, *currBldrCtx);
 
   const InitListExpr *ILE 
     = cast<InitListExpr>(CL->getInitializer()->IgnoreParens());
@@ -439,7 +438,7 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
   ExplodedNodeSet dstPreVisit;
   getCheckerManager().runCheckersForPreStmt(dstPreVisit, Pred, DS, *this);
   
-  StmtNodeBuilder B(dstPreVisit, Dst, *currentBuilderContext);
+  StmtNodeBuilder B(dstPreVisit, Dst, *currBldrCtx);
   const VarDecl *VD = dyn_cast<VarDecl>(D);
   for (ExplodedNodeSet::iterator I = dstPreVisit.begin(), E = dstPreVisit.end();
        I!=E; ++I) {
@@ -476,7 +475,7 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
           }
 
           InitVal = svalBuilder.conjureSymbolVal(0, InitEx, LC, Ty,
-                                 currentBuilderContext->getCurrentBlockCount());
+                                                 currBldrCtx->blockCount());
         }
         B.takeNodes(N);
         ExplodedNodeSet Dst2;
@@ -495,7 +494,7 @@ void ExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode *Pred,
   assert(B->getOpcode() == BO_LAnd ||
          B->getOpcode() == BO_LOr);
 
-  StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Pred, Dst, *currBldrCtx);
   ProgramStateRef state = Pred->getState();
 
   ExplodedNode *N = Pred;
@@ -558,7 +557,7 @@ void ExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode *Pred,
 void ExprEngine::VisitInitListExpr(const InitListExpr *IE,
                                    ExplodedNode *Pred,
                                    ExplodedNodeSet &Dst) {
-  StmtNodeBuilder B(Pred, Dst, *currentBuilderContext);
+  StmtNodeBuilder B(Pred, Dst, *currBldrCtx);
 
   ProgramStateRef state = Pred->getState();
   const LocationContext *LCtx = Pred->getLocationContext();
@@ -605,7 +604,7 @@ void ExprEngine::VisitGuardedExpr(const Expr *Ex,
                                   const Expr *R,
                                   ExplodedNode *Pred,
                                   ExplodedNodeSet &Dst) {
-  StmtNodeBuilder B(Pred, Dst, *currentBuilderContext);
+  StmtNodeBuilder B(Pred, Dst, *currBldrCtx);
   ProgramStateRef state = Pred->getState();
   const LocationContext *LCtx = Pred->getLocationContext();
   const CFGBlock *SrcBlock = 0;
@@ -646,7 +645,7 @@ void ExprEngine::VisitGuardedExpr(const Expr *Ex,
 void ExprEngine::
 VisitOffsetOfExpr(const OffsetOfExpr *OOE, 
                   ExplodedNode *Pred, ExplodedNodeSet &Dst) {
-  StmtNodeBuilder B(Pred, Dst, *currentBuilderContext);
+  StmtNodeBuilder B(Pred, Dst, *currBldrCtx);
   APSInt IV;
   if (OOE->EvaluateAsInt(IV, getContext())) {
     assert(IV.getBitWidth() == getContext().getTypeSize(OOE->getType()));
@@ -665,7 +664,7 @@ void ExprEngine::
 VisitUnaryExprOrTypeTraitExpr(const UnaryExprOrTypeTraitExpr *Ex,
                               ExplodedNode *Pred,
                               ExplodedNodeSet &Dst) {
-  StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Pred, Dst, *currBldrCtx);
 
   QualType T = Ex->getTypeOfArgument();
   
@@ -698,7 +697,7 @@ VisitUnaryExprOrTypeTraitExpr(const UnaryExprOrTypeTraitExpr *Ex,
 void ExprEngine::VisitUnaryOperator(const UnaryOperator* U, 
                                     ExplodedNode *Pred,
                                     ExplodedNodeSet &Dst) {
-  StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Pred, Dst, *currBldrCtx);
   switch (U->getOpcode()) {
     default: {
       Bldr.takeNodes(Pred);
@@ -831,7 +830,7 @@ void ExprEngine::VisitIncrementDecrementOperator(const UnaryOperator* U,
   evalLoad(Tmp, U, Ex, Pred, state, loc);
   
   ExplodedNodeSet Dst2;
-  StmtNodeBuilder Bldr(Tmp, Dst2, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Tmp, Dst2, *currBldrCtx);
   for (ExplodedNodeSet::iterator I=Tmp.begin(), E=Tmp.end();I!=E;++I) {
     
     state = (*I)->getState();
@@ -863,8 +862,7 @@ void ExprEngine::VisitIncrementDecrementOperator(const UnaryOperator* U,
     // Conjure a new symbol if necessary to recover precision.
     if (Result.isUnknown()){
       DefinedOrUnknownSVal SymVal =
-        svalBuilder.conjureSymbolVal(0, Ex, LCtx,
-                               currentBuilderContext->getCurrentBlockCount());
+        svalBuilder.conjureSymbolVal(0, Ex, LCtx, currBldrCtx->blockCount());
       Result = SymVal;
       
       // If the value is a location, ++/-- should always preserve

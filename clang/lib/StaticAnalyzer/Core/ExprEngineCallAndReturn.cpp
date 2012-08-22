@@ -173,14 +173,14 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
       return;
 
     NodeBuilderContext Ctx(getCoreEngine(), Blk, BindedRetNode);
-    currentBuilderContext = &Ctx;
+    currBldrCtx = &Ctx;
     // Here, we call the Symbol Reaper with 0 statement and caller location
     // context, telling it to clean up everything in the callee's context
     // (and it's children). We use LastStmt as a diagnostic statement, which
     // which the PreStmtPurge Dead point will be associated.
     removeDead(BindedRetNode, CleanedNodes, 0, callerCtx, LastSt,
                ProgramPoint::PostStmtPurgeDeadSymbolsKind);
-    currentBuilderContext = 0;
+    currBldrCtx = 0;
   } else {
     CleanedNodes.Add(CEBNode);
   }
@@ -202,9 +202,9 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
     // result onto the work list.
     // CEENode -> Dst -> WorkList
     NodeBuilderContext Ctx(Engine, calleeCtx->getCallSiteBlock(), CEENode);
-    SaveAndRestore<const NodeBuilderContext*> NBCSave(currentBuilderContext,
+    SaveAndRestore<const NodeBuilderContext*> NBCSave(currBldrCtx,
         &Ctx);
-    SaveAndRestore<unsigned> CBISave(currentStmtIdx, calleeCtx->getIndex());
+    SaveAndRestore<unsigned> CBISave(currStmtIdx, calleeCtx->getIndex());
 
     CallEventRef<> UpdatedCall = Call.cloneWithState(CEEState);
 
@@ -419,8 +419,8 @@ bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
   AnalysisDeclContext *CalleeADC = AMgr.getAnalysisDeclContext(D);
   const StackFrameContext *CalleeSFC =
     CalleeADC->getStackFrame(ParentOfCallee, CallE,
-                             currentBuilderContext->getBlock(),
-                             currentStmtIdx);
+                             currBldrCtx->getBlock(),
+                             currStmtIdx);
   
   CallEnter Loc(CallE, CalleeSFC, CurLC);
 
@@ -533,7 +533,7 @@ ProgramStateRef ExprEngine::bindReturnValue(const CallEvent &Call,
   // Conjure a symbol if the return value is unknown.
   QualType ResultTy = Call.getResultType();
   SValBuilder &SVB = getSValBuilder();
-  unsigned Count = currentBuilderContext->getCurrentBlockCount();
+  unsigned Count = currBldrCtx->blockCount();
   SVal R = SVB.conjureSymbolVal(0, E, LCtx, ResultTy, Count);
   return State->BindExpr(E, LCtx, R);
 }
@@ -542,8 +542,7 @@ ProgramStateRef ExprEngine::bindReturnValue(const CallEvent &Call,
 // a conjured return value.
 void ExprEngine::conservativeEvalCall(const CallEvent &Call, NodeBuilder &Bldr,
                                       ExplodedNode *Pred, ProgramStateRef State) {
-  unsigned Count = currentBuilderContext->getCurrentBlockCount();
-  State = Call.invalidateRegions(Count, State);
+  State = Call.invalidateRegions(currBldrCtx->blockCount(), State);
   State = bindReturnValue(Call, Pred->getLocationContext(), State);
 
   // And make the result node.
@@ -643,7 +642,7 @@ void ExprEngine::VisitReturnStmt(const ReturnStmt *RS, ExplodedNode *Pred,
   ExplodedNodeSet dstPreVisit;
   getCheckerManager().runCheckersForPreStmt(dstPreVisit, Pred, RS, *this);
 
-  StmtNodeBuilder B(dstPreVisit, Dst, *currentBuilderContext);
+  StmtNodeBuilder B(dstPreVisit, Dst, *currBldrCtx);
   
   if (RS->getRetValue()) {
     for (ExplodedNodeSet::iterator it = dstPreVisit.begin(),

@@ -28,7 +28,7 @@ void ExprEngine::VisitLvalObjCIvarRefExpr(const ObjCIvarRefExpr *Ex,
   SVal location = state->getLValue(Ex->getDecl(), baseVal);
   
   ExplodedNodeSet dstIvar;
-  StmtNodeBuilder Bldr(Pred, dstIvar, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Pred, dstIvar, *currBldrCtx);
   Bldr.generateNode(Ex, Pred, state->BindExpr(Ex, LCtx, location));
   
   // Perform the post-condition check of the ObjCIvarRefExpr and store
@@ -88,7 +88,7 @@ void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S,
   evalLocation(dstLocation, S, elem, Pred, state, elementV, NULL, false);
 
   ExplodedNodeSet Tmp;
-  StmtNodeBuilder Bldr(Pred, Tmp, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Pred, Tmp, *currBldrCtx);
 
   for (ExplodedNodeSet::iterator NI = dstLocation.begin(),
        NE = dstLocation.end(); NI!=NE; ++NI) {
@@ -112,8 +112,8 @@ void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S,
         //  For now, just 'conjure' up a symbolic value.
         QualType T = R->getValueType();
         assert(Loc::isLocType(T));
-        unsigned Count = currentBuilderContext->getCurrentBlockCount();
-        SymbolRef Sym = SymMgr.conjureSymbol(elem, LCtx, T, Count);
+        SymbolRef Sym = SymMgr.conjureSymbol(elem, LCtx, T,
+                                             currBldrCtx->blockCount());
         SVal V = svalBuilder.makeLoc(Sym);
         hasElems = hasElems->bindLoc(elementV, V);
         
@@ -157,7 +157,7 @@ void ExprEngine::VisitObjCMessage(const ObjCMessageExpr *ME,
 
   // Proceed with evaluate the message expression.
   ExplodedNodeSet dstEval;
-  StmtNodeBuilder Bldr(dstGenericPrevisit, dstEval, *currentBuilderContext);
+  StmtNodeBuilder Bldr(dstGenericPrevisit, dstEval, *currBldrCtx);
 
   for (ExplodedNodeSet::iterator DI = dstGenericPrevisit.begin(),
        DE = dstGenericPrevisit.end(); DI != DE; ++DI) {
@@ -187,13 +187,13 @@ void ExprEngine::VisitObjCMessage(const ObjCMessageExpr *ME,
         if (Msg->getSelector() == RaiseSel) {
           // If we raise an exception, for now treat it as a sink.
           // Eventually we will want to handle exceptions properly.
-          Bldr.generateSink(currentStmt, Pred, State);
+          Bldr.generateSink(currStmt, Pred, State);
           continue;
         }
         
         // Generate a transition to non-Nil state.
         if (notNilState != State)
-          Pred = Bldr.generateNode(currentStmt, Pred, notNilState);
+          Pred = Bldr.generateNode(currStmt, Pred, notNilState);
       }
     } else {
       // Check for special class methods.
@@ -237,7 +237,7 @@ void ExprEngine::VisitObjCMessage(const ObjCMessageExpr *ME,
           if (RaisesException) {
             // If we raise an exception, for now treat it as a sink.
             // Eventually we will want to handle exceptions properly.
-            Bldr.generateSink(currentStmt, Pred, Pred->getState());
+            Bldr.generateSink(currStmt, Pred, Pred->getState());
             continue;
           }
 

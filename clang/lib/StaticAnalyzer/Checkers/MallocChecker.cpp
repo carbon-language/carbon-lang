@@ -526,7 +526,7 @@ ProgramStateRef MallocChecker::MallocMemAux(CheckerContext &C,
   // Bind the return value to the symbolic value from the heap region.
   // TODO: We could rewrite post visit to eval call; 'malloc' does not have
   // side effects other than what we model here.
-  unsigned Count = C.getCurrentBlockCount();
+  unsigned Count = C.blockCount();
   SValBuilder &svalBuilder = C.getSValBuilder();
   const LocationContext *LCtx = C.getPredecessor()->getLocationContext();
   DefinedSVal RetVal =
