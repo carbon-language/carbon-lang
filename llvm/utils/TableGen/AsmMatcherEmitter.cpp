@@ -1638,34 +1638,63 @@ void MatchableInfo::buildAliasResultOperands() {
   }
 }
 
+static unsigned getConverterOperandID(const std::string &Name,
+                                      SetVector<std::string> &Table,
+                                      bool &IsNew) {
+  IsNew = Table.insert(Name);
+
+  unsigned ID = IsNew ? Table.size() - 1 :
+    std::find(Table.begin(), Table.end(), Name) - Table.begin();
+
+  assert(ID < Table.size());
+
+  return ID;
+}
+
+
 static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
                                 std::vector<MatchableInfo*> &Infos,
                                 raw_ostream &OS) {
-  // Write the convert function to a separate stream, so we can drop it after
-  // the enum.
-  std::string ConvertFnBody;
-  raw_string_ostream CvtOS(ConvertFnBody);
-
-  // Function we have already generated.
-  std::set<std::string> GeneratedFns;
-
-  // Start the unified conversion function.
-  CvtOS << "bool " << Target.getName() << ClassName << "::\n";
-  CvtOS << "ConvertToMCInst(unsigned Kind, MCInst &Inst, "
-        << "unsigned Opcode,\n"
-        << "                      const SmallVectorImpl<MCParsedAsmOperand*"
-        << "> &Operands) {\n";
-  CvtOS << "  Inst.setOpcode(Opcode);\n";
-  CvtOS << "  switch (Kind) {\n";
-  CvtOS << "  default:\n";
-
-  // Start the enum, which we will generate inline.
-
-  OS << "// Unified function for converting operands to MCInst instances.\n\n";
-  OS << "enum ConversionKind {\n";
+  SetVector<std::string> OperandConversionKinds;
+  SetVector<std::string> InstructionConversionKinds;
+  std::vector<std::vector<uint8_t> > ConversionTable;
+  size_t MaxRowLength = 2; // minimum is custom converter plus terminator.
 
   // TargetOperandClass - This is the target's operand class, like X86Operand.
   std::string TargetOperandClass = Target.getName() + "Operand";
+
+  // Write the convert function to a separate stream, so we can drop it after
+  // the enum. We'll build up the conversion handlers for the individual
+  // operand types opportunistically as we encounter them.
+  std::string ConvertFnBody;
+  raw_string_ostream CvtOS(ConvertFnBody);
+  // Start the unified conversion function.
+  CvtOS << "bool " << Target.getName() << ClassName << "::\n"
+        << "ConvertToMCInst(unsigned Kind, MCInst &Inst, "
+        << "unsigned Opcode,\n"
+        << "                      const SmallVectorImpl<MCParsedAsmOperand*"
+        << "> &Operands) {\n"
+        << "  if (Kind >= CVT_NUM_SIGNATURES) return false;\n"
+        << "  uint8_t *Converter = ConversionTable[Kind];\n"
+        << "  Inst.setOpcode(Opcode);\n"
+        << "  for (uint8_t *p = Converter; *p; p+= 2) {\n"
+        << "    switch (*p) {\n"
+        << "    default: llvm_unreachable(\"invalid conversion entry!\");\n"
+        << "    case CVT_Reg:\n"
+        << "      static_cast<" << TargetOperandClass
+        << "*>(Operands[*(p + 1)])->addRegOperands(Inst, 1);\n"
+        << "      break;\n"
+        << "    case CVT_Tied:\n"
+        << "      Inst.addOperand(Inst.getOperand(*(p + 1)));\n"
+        << "      break;\n";
+
+
+  // Pre-populate the operand conversion kinds with the standard always
+  // available entries.
+  OperandConversionKinds.insert("CVT_Done");
+  OperandConversionKinds.insert("CVT_Reg");
+  OperandConversionKinds.insert("CVT_Tied");
+  enum { CVT_Done, CVT_Reg, CVT_Tied };
 
   for (std::vector<MatchableInfo*>::const_iterator it = Infos.begin(),
          ie = Infos.end(); it != ie; ++it) {
@@ -1679,24 +1708,34 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
       II.ConversionFnKind = Signature;
 
       // Check if we have already generated this signature.
-      if (!GeneratedFns.insert(Signature).second)
+      if (!InstructionConversionKinds.insert(Signature))
         continue;
 
-      // If not, emit it now.  Add to the enum list.
-      OS << "  " << Signature << ",\n";
+      // Remember this converter for the kind enum.
+      unsigned KindID = OperandConversionKinds.size();
+      OperandConversionKinds.insert("CVT_" + AsmMatchConverter);
 
-      CvtOS << "  case " << Signature << ":\n";
-      CvtOS << "    return " << AsmMatchConverter
+      // Add the converter row for this instruction.
+      ConversionTable.push_back(std::vector<uint8_t>());
+      ConversionTable.back().push_back(KindID);
+      ConversionTable.back().push_back(CVT_Done);
+
+      // Add the handler to the conversion driver function.
+      CvtOS << "    case CVT_" << AsmMatchConverter << ":\n"
+            << "      return " << AsmMatchConverter
             << "(Inst, Opcode, Operands);\n";
+
       continue;
     }
 
     // Build the conversion function signature.
     std::string Signature = "Convert";
-    std::string CaseBody;
-    raw_string_ostream CaseOS(CaseBody);
+
+    std::vector<uint8_t> ConversionRow;
 
     // Compute the convert enum and the case body.
+    MaxRowLength = std::max(MaxRowLength, II.ResOperands.size()*2 + 1 );
+
     for (unsigned i = 0, e = II.ResOperands.size(); i != e; ++i) {
       const MatchableInfo::ResOperand &OpInfo = II.ResOperands[i];
 
@@ -1709,16 +1748,36 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
         // Registers are always converted the same, don't duplicate the
         // conversion function based on them.
         Signature += "__";
-        if (Op.Class->isRegisterClass())
-          Signature += "Reg";
-        else
-          Signature += Op.Class->ClassName;
+        std::string Class;
+        Class = Op.Class->isRegisterClass() ? "Reg" : Op.Class->ClassName;
+        Signature += Class;
         Signature += utostr(OpInfo.MINumOperands);
         Signature += "_" + itostr(OpInfo.AsmOperandNum);
 
-        CaseOS << "    ((" << TargetOperandClass << "*)Operands["
-               << (OpInfo.AsmOperandNum+1) << "])->" << Op.Class->RenderMethod
-               << "(Inst, " << OpInfo.MINumOperands << ");\n";
+        // Add the conversion kind, if necessary, and get the associated ID
+        // the index of its entry in the vector).
+        std::string Name = "CVT_" + (Op.Class->isRegisterClass() ? "Reg" :
+                                     Op.Class->RenderMethod);
+
+        bool IsNewConverter = false;
+        unsigned ID = getConverterOperandID(Name, OperandConversionKinds,
+                                            IsNewConverter);
+
+        // Add the operand entry to the instruction kind conversion row.
+        ConversionRow.push_back(ID);
+        ConversionRow.push_back(OpInfo.AsmOperandNum + 1);
+
+        if (!IsNewConverter)
+          break;
+
+        // This is a new operand kind. Add a handler for it to the
+        // converter driver.
+        CvtOS << "    case " << Name << ":\n"
+              << "      static_cast<" << TargetOperandClass
+              << "*>(Operands[*(p + 1)])->"
+              << Op.Class->RenderMethod << "(Inst, " << OpInfo.MINumOperands
+              << ");\n"
+              << "      break;\n";
         break;
       }
 
@@ -1728,55 +1787,118 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
         //assert(OpInfo.MINumOperands == 1 && "Not a singular MCOperand");
         unsigned TiedOp = OpInfo.TiedOperandNum;
         assert(i > TiedOp && "Tied operand precedes its target!");
-        CaseOS << "    Inst.addOperand(Inst.getOperand(" << TiedOp << "));\n";
         Signature += "__Tie" + utostr(TiedOp);
+        ConversionRow.push_back(CVT_Tied);
+        ConversionRow.push_back(TiedOp);
         break;
       }
       case MatchableInfo::ResOperand::ImmOperand: {
         int64_t Val = OpInfo.ImmVal;
-        CaseOS << "    Inst.addOperand(MCOperand::CreateImm(" << Val << "));\n";
-        Signature += "__imm" + itostr(Val);
+        std::string Ty = "imm_" + itostr(Val);
+        Signature += "__" + Ty;
+
+        std::string Name = "CVT_" + Ty;
+        bool IsNewConverter = false;
+        unsigned ID = getConverterOperandID(Name, OperandConversionKinds,
+                                            IsNewConverter);
+        // Add the operand entry to the instruction kind conversion row.
+        ConversionRow.push_back(ID);
+        ConversionRow.push_back(0);
+
+        if (!IsNewConverter)
+          break;
+
+        CvtOS << "    case " << Name << ":\n"
+              << "      Inst.addOperand(MCOperand::CreateImm(" << Val << "));\n"
+              << "      break;\n";
+
         break;
       }
       case MatchableInfo::ResOperand::RegOperand: {
+        std::string Reg, Name;
         if (OpInfo.Register == 0) {
-          CaseOS << "    Inst.addOperand(MCOperand::CreateReg(0));\n";
-          Signature += "__reg0";
+          Name = "reg0";
+          Reg = "0";
         } else {
-          std::string N = getQualifiedName(OpInfo.Register);
-          CaseOS << "    Inst.addOperand(MCOperand::CreateReg(" << N << "));\n";
-          Signature += "__reg" + OpInfo.Register->getName();
+          Reg = getQualifiedName(OpInfo.Register);
+          Name = "reg" + OpInfo.Register->getName();
         }
+        Signature += "__" + Name;
+        Name = "CVT_" + Name;
+        bool IsNewConverter = false;
+        unsigned ID = getConverterOperandID(Name, OperandConversionKinds,
+                                            IsNewConverter);
+        // Add the operand entry to the instruction kind conversion row.
+        ConversionRow.push_back(ID);
+        ConversionRow.push_back(0);
+
+        if (!IsNewConverter)
+          break;
+        CvtOS << "    case " << Name << ":\n"
+              << "      Inst.addOperand(MCOperand::CreateReg(" << Reg << "));\n"
+              << "      break;\n";
       }
       }
     }
 
+    // If there were no operands, add to the signature to that effect
+    if (Signature == "Convert")
+      Signature += "_NoOperands";
+
     II.ConversionFnKind = Signature;
 
-    // Check if we have already generated this signature.
-    if (!GeneratedFns.insert(Signature).second)
+    // Save the signature. If we already have it, don't add a new row
+    // to the table.
+    if (!InstructionConversionKinds.insert(Signature))
       continue;
 
-    // If not, emit it now.  Add to the enum list.
-    OS << "  " << Signature << ",\n";
-
-    CvtOS << "  case " << Signature << ":\n";
-    CvtOS << CaseOS.str();
-    CvtOS << "    return true;\n";
+    // Add the row to the table.
+    ConversionTable.push_back(ConversionRow);
   }
 
-  // Finish the convert function.
+  // Finish up the converter driver function.
+  CvtOS << "    }\n  }\n  return true;\n}\n\n";
 
-  CvtOS << "  }\n";
-  CvtOS << "  return false;\n";
-  CvtOS << "}\n\n";
+  OS << "namespace {\n";
 
-  // Finish the enum, and drop the convert function after it.
-
-  OS << "  NumConversionVariants\n";
+  // Output the operand conversion kind enum.
+  OS << "enum OperatorConversionKind {\n";
+  for (unsigned i = 0, e = OperandConversionKinds.size(); i != e; ++i)
+    OS << "  " << OperandConversionKinds[i] << ",\n";
+  OS << "  CVT_NUM_CONVERTERS\n";
   OS << "};\n\n";
 
+  // Output the instruction conversion kind enum.
+  OS << "enum InstructionConversionKind {\n";
+  for (SetVector<std::string>::const_iterator
+         i = InstructionConversionKinds.begin(),
+         e = InstructionConversionKinds.end(); i != e; ++i)
+    OS << "  " << *i << ",\n";
+  OS << "  CVT_NUM_SIGNATURES\n";
+  OS << "};\n\n";
+
+
+  OS << "} // end anonymous namespace\n\n";
+
+  // Output the conversion table.
+  OS << "static uint8_t ConversionTable[CVT_NUM_SIGNATURES]["
+     << MaxRowLength << "] = {\n";
+
+  for (unsigned Row = 0, ERow = ConversionTable.size(); Row != ERow; ++Row) {
+    assert(ConversionTable[Row].size() % 2 == 0 && "bad conversion row!");
+    OS << "  // " << InstructionConversionKinds[Row] << "\n";
+    OS << "  { ";
+    for (unsigned i = 0, e = ConversionTable[Row].size(); i != e; i += 2)
+      OS << OperandConversionKinds[ConversionTable[Row][i]] << ", "
+         << (unsigned)(ConversionTable[Row][i + 1]) << ", ";
+    OS << "CVT_Done },\n";
+  }
+
+  OS << "};\n\n";
+
+  // Spit out the conversion driver function.
   OS << CvtOS.str();
+
 }
 
 /// emitMatchClassEnumeration - Emit the enumeration for match class kinds.
