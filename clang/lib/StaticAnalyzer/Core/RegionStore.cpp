@@ -477,12 +477,8 @@ public:
   }
 
   bool AddToWorkList(const MemRegion *R, const ClusterBindings *C) {
-    if (C) {
-      if (Visited.count(C))
-        return false;
-      Visited.insert(C);
-    }
-
+    if (C && !Visited.insert(C))
+      return false;
     WL.push_back(R);
     return true;
   }
