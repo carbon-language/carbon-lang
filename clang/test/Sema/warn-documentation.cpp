@@ -38,13 +38,13 @@ int test_html7(int);
 int test_html8(int);
 
 // expected-warning@+2 {{HTML start tag prematurely ended, expected attribute name or '>'}} expected-note@+1 {{HTML tag started here}}
-/** Aaa bbb<ccc ddd eee
+/** Aaa bbb<img ddd eee
  * fff ggg.
  */
 int test_html9(int);
 
 // expected-warning@+1 {{HTML start tag prematurely ended, expected attribute name or '>'}}
-/** Aaa bbb<ccc ddd eee 42%
+/** Aaa bbb<img ddd eee 42%
  * fff ggg.
  */
 int test_html10(int);
