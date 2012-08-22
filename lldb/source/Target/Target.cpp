@@ -2422,7 +2422,11 @@ TargetProperties::GetExpressionPrefixContentsAsCString ()
     const uint32_t idx = ePropertyExprPrefix;
     OptionValueFileSpec *file = m_collection_sp->GetPropertyAtIndexAsOptionValueFileSpec (NULL, false, idx);
     if (file)
-        return (const char *)file->GetFileContents()->GetBytes();
+    {
+        DataBufferSP data_sp(file->GetFileContents());
+        if (data_sp)
+            return (const char *) data_sp->GetBytes();
+    }
     return NULL;
 }
 
