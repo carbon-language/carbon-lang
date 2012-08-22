@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin12 -S -o - -emit-llvm %s | FileCheck %s -check-prefix=CHECK-NOERRNO
-// RUN: %clang_cc1 -triple x86_64-linux-gnu -S -o - -emit-llvm %s | FileCheck %s -check-prefix=CHECK-ERRNO
+// RUN: %clang_cc1 -triple x86_64-linux-gnu -S -o - -emit-llvm -fmath-errno %s | FileCheck %s -check-prefix=CHECK-ERRNO
 
 // Prototypes.
 double acos(double);
@@ -159,18 +159,33 @@ void *use[] = {
 // CHECK-NOERRNO: declare x86_fp80 @truncl(x86_fp80) nounwind readnone
 // CHECK-NOERRNO: declare float @truncf(float) nounwind readnone
 
+// CHECK-ERRNO: declare double @ceil(double) nounwind readnone
+// CHECK-ERRNO: declare x86_fp80 @ceill(x86_fp80) nounwind readnone
+// CHECK-ERRNO: declare float @ceilf(float) nounwind readnone
 // CHECK-ERRNO: declare double @copysign(double, double) nounwind readnone
 // CHECK-ERRNO: declare x86_fp80 @copysignl(x86_fp80, x86_fp80) nounwind readnone
 // CHECK-ERRNO: declare float @copysignf(float, float) nounwind readnone
 // CHECK-ERRNO: declare double @fabs(double) nounwind readnone
 // CHECK-ERRNO: declare x86_fp80 @fabsl(x86_fp80) nounwind readnone
 // CHECK-ERRNO: declare float @fabsf(float) nounwind readnone
+// CHECK-ERRNO: declare double @floor(double) nounwind readnone
+// CHECK-ERRNO: declare x86_fp80 @floorl(x86_fp80) nounwind readnone
+// CHECK-ERRNO: declare float @floorf(float) nounwind readnone
 // CHECK-ERRNO: declare double @fmax(double, double) nounwind readnone
 // CHECK-ERRNO: declare x86_fp80 @fmaxl(x86_fp80, x86_fp80) nounwind readnone
 // CHECK-ERRNO: declare float @fmaxf(float, float) nounwind readnone
 // CHECK-ERRNO: declare double @fmin(double, double) nounwind readnone
 // CHECK-ERRNO: declare x86_fp80 @fminl(x86_fp80, x86_fp80) nounwind readnone
 // CHECK-ERRNO: declare float @fminf(float, float) nounwind readnone
+// CHECK-ERRNO: declare double @nearbyint(double) nounwind readnone
+// CHECK-ERRNO: declare x86_fp80 @nearbyintl(x86_fp80) nounwind readnone
+// CHECK-ERRNO: declare float @nearbyintf(float) nounwind readnone
+// CHECK-ERRNO: declare double @rint(double) nounwind readnone
+// CHECK-ERRNO: declare x86_fp80 @rintl(x86_fp80) nounwind readnone
+// CHECK-ERRNO: declare float @rintf(float) nounwind readnone
+// CHECK-ERRNO: declare double @round(double) nounwind readnone
+// CHECK-ERRNO: declare x86_fp80 @roundl(x86_fp80) nounwind readnone
+// CHECK-ERRNO: declare float @roundf(float) nounwind readnone
 // CHECK-ERRNO: declare double @trunc(double) nounwind readnone
 // CHECK-ERRNO: declare x86_fp80 @truncl(x86_fp80) nounwind readnone
 // CHECK-ERRNO: declare float @truncf(float) nounwind readnone
