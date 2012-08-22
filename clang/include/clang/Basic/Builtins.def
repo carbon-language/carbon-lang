@@ -830,6 +830,10 @@ LIBBUILTIN(ceil, "dd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(ceill, "LdLd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(ceilf, "ff", "fe", "math.h", ALL_LANGUAGES)
 
+LIBBUILTIN(copysign, "ddd", "fc", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(copysignl, "LdLdLd", "fc", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(copysignf, "fff", "fc", "math.h", ALL_LANGUAGES)
+
 LIBBUILTIN(cos, "dd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(cosl, "LdLd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(cosf, "ff", "fe", "math.h", ALL_LANGUAGES)
@@ -838,9 +842,13 @@ LIBBUILTIN(exp, "dd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(expl, "LdLd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(expf, "ff", "fe", "math.h", ALL_LANGUAGES)
 
-LIBBUILTIN(fabs, "dd", "fe", "math.h", ALL_LANGUAGES)
-LIBBUILTIN(fabsl, "LdLd", "fe", "math.h", ALL_LANGUAGES)
-LIBBUILTIN(fabsf, "ff", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(exp2, "dd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(exp2l, "LdLd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(exp2f, "ff", "fe", "math.h", ALL_LANGUAGES)
+
+LIBBUILTIN(fabs, "dd", "fc", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(fabsl, "LdLd", "fc", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(fabsf, "ff", "fc", "math.h", ALL_LANGUAGES)
 
 LIBBUILTIN(floor, "dd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(floorl, "LdLd", "fe", "math.h", ALL_LANGUAGES)
@@ -850,21 +858,33 @@ LIBBUILTIN(fma, "dddd", "fc", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(fmal, "LdLdLdLd", "fc", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(fmaf, "ffff", "fc", "math.h", ALL_LANGUAGES)
 
-LIBBUILTIN(fmax, "ddd", "fe", "math.h", ALL_LANGUAGES)
-LIBBUILTIN(fmaxl, "LdLdLd", "fe", "math.h", ALL_LANGUAGES)
-LIBBUILTIN(fmaxf, "fff", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(fmax, "ddd", "fc", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(fmaxl, "LdLdLd", "fc", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(fmaxf, "fff", "fc", "math.h", ALL_LANGUAGES)
 
-LIBBUILTIN(fmin, "ddd", "fe", "math.h", ALL_LANGUAGES)
-LIBBUILTIN(fminl, "LdLdLd", "fe", "math.h", ALL_LANGUAGES)
-LIBBUILTIN(fminf, "fff", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(fmin, "ddd", "fc", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(fminl, "LdLdLd", "fc", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(fminf, "fff", "fc", "math.h", ALL_LANGUAGES)
 
 LIBBUILTIN(log, "dd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(logl, "LdLd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(logf, "ff", "fe", "math.h", ALL_LANGUAGES)
 
+LIBBUILTIN(log2, "dd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(log2l, "LdLd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(log2f, "ff", "fe", "math.h", ALL_LANGUAGES)
+
+LIBBUILTIN(nearbyint, "dd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(nearbyintl, "LdLd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(nearbyintf, "ff", "fe", "math.h", ALL_LANGUAGES)
+
 LIBBUILTIN(pow, "ddd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(powl, "LdLdLd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(powf, "fff", "fe", "math.h", ALL_LANGUAGES)
+
+LIBBUILTIN(rint, "dd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(rintl, "LdLd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(rintf, "ff", "fe", "math.h", ALL_LANGUAGES)
 
 LIBBUILTIN(round, "dd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(roundl, "LdLd", "fe", "math.h", ALL_LANGUAGES)
@@ -881,6 +901,10 @@ LIBBUILTIN(sqrtf, "ff", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(tan, "dd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(tanl, "LdLd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(tanf, "ff", "fe", "math.h", ALL_LANGUAGES)
+
+LIBBUILTIN(trunc, "dd", "fc", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(truncl, "LdLd", "fc", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(truncf, "ff", "fc", "math.h", ALL_LANGUAGES)
 
 // Blocks runtime Builtin math library functions
 LIBBUILTIN(_Block_object_assign, "vv*vC*iC", "f", "Blocks.h", ALL_LANGUAGES)
