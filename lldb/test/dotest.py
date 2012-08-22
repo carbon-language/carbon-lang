@@ -221,7 +221,7 @@ where options:
 -c   : read a config file specified after this option
        the architectures and compilers (note the plurals) specified via '-A' and '-C'
        will override those specified via a config file
-       (see also lldb-trunk/example/test/usage-config)
+       (see also lldb-trunk/examples/test/usage-config)
 -d   : delay startup for 10 seconds (in order for the debugger to attach)
 -e   : specify the full path of an executable used for benchmark purpose;
        see also '-x', which provides the breakpoint sepcification
@@ -678,7 +678,7 @@ def parseOptionsAndInitTestdirs():
     # which will reassign the two file objects to sys.stderr and sys.stdout,
     # respectively.
     #
-    # See also lldb-trunk/example/test/usage-config.
+    # See also lldb-trunk/examples/test/usage-config.
     global config, pre_flight, post_flight
     if configFile:
         # Pass config (a dictionary) as the locals namespace for side-effect.
