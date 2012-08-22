@@ -825,6 +825,7 @@ void SelectionDAGBuilder::init(GCFunctionInfo *gfi, AliasAnalysis &aa,
   GFI = gfi;
   LibInfo = li;
   TD = DAG.getTarget().getTargetData();
+  Context = DAG.getContext();
   LPadToCallSiteMap.clear();
 }
 

@@ -325,7 +325,7 @@ public:
                       CodeGenOpt::Level ol)
     : SDNodeOrder(0), TM(dag.getTarget()), TLI(dag.getTargetLoweringInfo()),
       DAG(dag), FuncInfo(funcinfo), OptLevel(ol),
-      HasTailCall(false), Context(dag.getContext()) {
+      HasTailCall(false) {
   }
 
   void init(GCFunctionInfo *gfi, AliasAnalysis &aa,
