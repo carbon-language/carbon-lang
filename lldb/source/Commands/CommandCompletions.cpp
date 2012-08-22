@@ -422,11 +422,6 @@ CommandCompletions::SettingsNames (CommandInterpreter &interpreter,
     
     size_t exact_matches_idx = SIZE_MAX;
     const size_t num_matches = g_property_names.AutoComplete (partial_setting_name, matches, exact_matches_idx);
-//    return UserSettingsController::CompleteSettingsNames (root_settings,
-//                                                          partial_setting_name_pieces,
-//                                                          word_complete,
-//                                                          matches);
-//
     word_complete = exact_matches_idx != SIZE_MAX;
     return num_matches;
 }

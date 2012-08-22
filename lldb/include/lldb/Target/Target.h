@@ -37,325 +37,93 @@
 
 namespace lldb_private {
 
-//----------------------------------------------------------------------
-// TargetInstanceSettings
-//----------------------------------------------------------------------
 extern OptionEnumValueElement g_dynamic_value_types[];
-//class TargetInstanceSettings : public InstanceSettings
-//{
-//public:
-//    static OptionEnumValueElement g_dynamic_value_types[];
-//
-//    TargetInstanceSettings (const lldb::UserSettingsControllerSP &owner_sp, bool live_instance = true, const char *name = NULL);
-//
-//    TargetInstanceSettings (const TargetInstanceSettings &rhs);
-//
-//    virtual
-//    ~TargetInstanceSettings ();
-//
-//    TargetInstanceSettings&
-//    operator= (const TargetInstanceSettings &rhs);
-//
-//    void
-//    UpdateInstanceSettingsVariable (const ConstString &var_name,
-//                                    const char *index_value,
-//                                    const char *value,
-//                                    const ConstString &instance_name,
-//                                    const SettingEntry &entry,
-//                                    VarSetOperationType op,
-//                                    Error &err,
-//                                    bool pending);
-//
-//    bool
-//    GetInstanceSettingsValue (const SettingEntry &entry,
-//                              const ConstString &var_name,
-//                              StringList &value,
-//                              Error *err);
-//
-//    lldb::DynamicValueType
-//    GetPreferDynamicValue()
-//    {
-//        return (lldb::DynamicValueType) g_dynamic_value_types[m_prefer_dynamic_value].value;
-//    }
-//    
-//    bool
-//    GetEnableSyntheticValue ()
-//    {
-//        return m_enable_synthetic_value;
-//    }
-//
-//    void
-//    SetEnableSyntheticValue (bool b)
-//    {
-//        m_enable_synthetic_value = b;
-//    }
-//    
-//    bool
-//    GetSkipPrologue()
-//    {
-//        return m_skip_prologue;
-//    }
-//
-//    PathMappingList &
-//    GetSourcePathMap ()
-//    {
-//        return m_source_map;
-//    }
-//    
-//    FileSpecList &
-//    GetExecutableSearchPaths ()
-//    {
-//        return m_exe_search_paths;
-//    }
-//
-//    const FileSpecList &
-//    GetExecutableSearchPaths () const
-//    {
-//        return m_exe_search_paths;
-//    }
-//
-//    
-//    uint32_t
-//    GetMaximumNumberOfChildrenToDisplay()
-//    {
-//        return m_max_children_display;
-//    }
-//    uint32_t
-//    GetMaximumSizeOfStringSummary()
-//    {
-//        return m_max_strlen_length;
-//    }
-//    
-//    bool
-//    GetBreakpointsConsultPlatformAvoidList ()
-//    {
-//        return m_breakpoints_use_platform_avoid;
-//    }
-//        
-//    const Args &
-//    GetRunArguments () const
-//    {
-//        return m_run_args;
-//    }
-//    
-//    void
-//    SetRunArguments (const Args &args)
-//    {
-//        m_run_args = args;
-//    }
-//    
-//    void
-//    GetHostEnvironmentIfNeeded ();
-//    
-//    size_t
-//    GetEnvironmentAsArgs (Args &env);
-//    
-//    const char *
-//    GetStandardInputPath () const
-//    {
-//        if (m_input_path.empty())
-//            return NULL;
-//        return m_input_path.c_str();
-//    }
-//    
-//    void
-//    SetStandardInputPath (const char *path)
-//    {
-//        if (path && path[0])
-//            m_input_path.assign (path);
-//        else
-//        {
-//            // Make sure we deallocate memory in string...
-//            std::string tmp;
-//            tmp.swap (m_input_path);
-//        }
-//    }
-//    
-//    const char *
-//    GetStandardOutputPath () const
-//    {
-//        if (m_output_path.empty())
-//            return NULL;
-//        return m_output_path.c_str();
-//    }
-//    
-//    void
-//    SetStandardOutputPath (const char *path)
-//    {
-//        if (path && path[0])
-//            m_output_path.assign (path);
-//        else
-//        {
-//            // Make sure we deallocate memory in string...
-//            std::string tmp;
-//            tmp.swap (m_output_path);
-//        }
-//    }
-//    
-//    const char *
-//    GetStandardErrorPath () const
-//    {
-//        if (m_error_path.empty())
-//            return NULL;
-//        return m_error_path.c_str();
-//    }
-//    
-//    void
-//    SetStandardErrorPath (const char *path)
-//    {
-//        if (path && path[0])
-//            m_error_path.assign (path);
-//        else
-//        {
-//            // Make sure we deallocate memory in string...
-//            std::string tmp;
-//            tmp.swap (m_error_path);
-//        }
-//    }
-//    
-//    bool
-//    GetDisableASLR () const
-//    {
-//        return m_disable_aslr;
-//    }
-//    
-//    void
-//    SetDisableASLR (bool b)
-//    {
-//        m_disable_aslr = b;
-//    }
-//    
-//    bool
-//    GetDisableSTDIO () const
-//    {
-//        return m_disable_stdio;
-//    }
-//    
-//    void
-//    SetDisableSTDIO (bool b)
-//    {
-//        m_disable_stdio = b;
-//    }
-//
-//
-//protected:
-//
-//    void
-//    CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,
-//                          bool pending);
-//
-//    const ConstString
-//    CreateInstanceName ();
-//    
-//    OptionValueFileSpec m_expr_prefix_file;
-//    std::string m_expr_prefix_contents;
-//    int m_prefer_dynamic_value;
-//    OptionValueBoolean m_enable_synthetic_value;
-//    OptionValueBoolean m_skip_prologue;
-//    PathMappingList m_source_map;
-//    FileSpecList m_exe_search_paths;
-//    uint32_t m_max_children_display;
-//    uint32_t m_max_strlen_length;
-//    OptionValueBoolean m_breakpoints_use_platform_avoid;
-//    typedef std::map<std::string, std::string> dictionary;
-//    Args m_run_args;
-//    dictionary m_env_vars;
-//    std::string m_input_path;
-//    std::string m_output_path;
-//    std::string m_error_path;
-//    bool m_disable_aslr;
-//    bool m_disable_stdio;
-//    bool m_inherit_host_env;
-//    bool m_got_host_env;
-//
-//
-//};
-    class TargetProperties;
-    typedef STD_SHARED_PTR(TargetProperties) TargetPropertiesSP;
 
-    class TargetProperties : public Properties
-    {
-    public:
-        TargetProperties(Target *target);
+//----------------------------------------------------------------------
+// TargetProperties
+//----------------------------------------------------------------------
+class TargetProperties : public Properties
+{
+public:
+    TargetProperties(Target *target);
 
-        virtual
-        ~TargetProperties();
-        
-        virtual lldb::OptionValuePropertiesSP
-        GetValueProperties () const
-        {
-            return m_collection_sp;
-        }
+    virtual
+    ~TargetProperties();
+    
+    ArchSpec
+    GetDefaultArchitecture () const;
+    
+    void
+    SetDefaultArchitecture (const ArchSpec& arch);
 
-        ArchSpec
-        GetDefaultArchitecture () const;
-        
-        void
-        SetDefaultArchitecture (const ArchSpec& arch);
+    lldb::DynamicValueType
+    GetPreferDynamicValue() const;
+    
+    bool
+    GetDisableASLR () const;
+    
+    void
+    SetDisableASLR (bool b);
+    
+    bool
+    GetDisableSTDIO () const;
+    
+    void
+    SetDisableSTDIO (bool b);
+    
+    bool
+    GetRunArguments (Args &args) const;
+    
+    void
+    SetRunArguments (const Args &args);
+    
+    size_t
+    GetEnvironmentAsArgs (Args &env) const;
+    
+    bool
+    GetSkipPrologue() const;
+    
+    PathMappingList &
+    GetSourcePathMap () const;
+    
+    FileSpecList &
+    GetExecutableSearchPaths ();
+    
+    bool
+    GetEnableSyntheticValue () const;
+    
+    uint32_t
+    GetMaximumNumberOfChildrenToDisplay() const;
+    
+    uint32_t
+    GetMaximumSizeOfStringSummary() const;
+    
+    FileSpec
+    GetStandardInputPath () const;
+    
+    void
+    SetStandardInputPath (const char *path);
+    
+    FileSpec
+    GetStandardOutputPath () const;
+    
+    void
+    SetStandardOutputPath (const char *path);
+    
+    FileSpec
+    GetStandardErrorPath () const;
+    
+    void
+    SetStandardErrorPath (const char *path);
+    
+    bool
+    GetBreakpointsConsultPlatformAvoidList ();
+    
+    const char *
+    GetExpressionPrefixContentsAsCString ();
+};
 
-        lldb::DynamicValueType
-        GetPreferDynamicValue() const;
-        
-        bool
-        GetDisableASLR () const;
-        
-        void
-        SetDisableASLR (bool b);
-        
-        bool
-        GetDisableSTDIO () const;
-        
-        void
-        SetDisableSTDIO (bool b);
-        
-        bool
-        GetRunArguments (Args &args) const;
-        
-        void
-        SetRunArguments (const Args &args);
-        
-        size_t
-        GetEnvironmentAsArgs (Args &env) const;
-        
-        bool
-        GetSkipPrologue() const;
-        
-        PathMappingList &
-        GetSourcePathMap () const;
-        
-        FileSpecList &
-        GetExecutableSearchPaths () const;
-        
-        bool
-        GetEnableSyntheticValue () const;
-        
-        uint32_t
-        GetMaximumNumberOfChildrenToDisplay() const;
-        
-        uint32_t
-        GetMaximumSizeOfStringSummary() const;
-        
-        FileSpec
-        GetStandardInputPath () const;
-        
-        void
-        SetStandardInputPath (const char *path);
-        
-        FileSpec
-        GetStandardOutputPath () const;
-        
-        void
-        SetStandardOutputPath (const char *path);
-        
-        FileSpec
-        GetStandardErrorPath () const;
-        
-        void
-        SetStandardErrorPath (const char *path);
-        
-        bool
-        GetBreakpointsConsultPlatformAvoidList ();
-    };
+typedef STD_SHARED_PTR(TargetProperties) TargetPropertiesSP;
 
 //----------------------------------------------------------------------
 // Target
@@ -551,9 +319,9 @@ public:
     // Use this to create breakpoint that matches regex against the source lines in files given in source_file_list:
     lldb::BreakpointSP
     CreateSourceRegexBreakpoint (const FileSpecList *containingModules,
-                      const FileSpecList *source_file_list,
-                      RegularExpression &source_regex,
-                      bool internal = false);
+                                 const FileSpecList *source_file_list,
+                                 RegularExpression &source_regex,
+                                 bool internal = false);
 
     // Use this to create a breakpoint from a load address
     lldb::BreakpointSP
@@ -570,10 +338,10 @@ public:
     // setting, else we use the values passed in
     lldb::BreakpointSP
     CreateFuncRegexBreakpoint (const FileSpecList *containingModules,
-                      const FileSpecList *containingSourceFiles,
-                      RegularExpression &func_regexp,
-                      LazyBool skip_prologue = eLazyBoolCalculate,
-                      bool internal = false);
+                               const FileSpecList *containingSourceFiles,
+                               RegularExpression &func_regexp,
+                               LazyBool skip_prologue = eLazyBoolCalculate,
+                               bool internal = false);
 
     // Use this to create a function breakpoint by name in containingModule, or all modules if it is NULL
     // When "skip_prologue is set to eLazyBoolCalculate, we use the current target 
@@ -980,9 +748,6 @@ public:
     ClangASTImporter *
     GetClangASTImporter();
     
-    const char *
-    GetExpressionPrefixContentsAsCString ();
-    
     // Since expressions results can persist beyond the lifetime of a process,
     // and the const expression results are available after a process is gone,
     // we provide a way for expressions to be evaluated from the Target itself.
@@ -1186,51 +951,6 @@ public:
         return m_source_manager;
     }
 
-    //------------------------------------------------------------------
-    // Target::SettingsController
-    //------------------------------------------------------------------
-//    class SettingsController : public UserSettingsController
-//    {
-//    public:
-//        SettingsController ();
-//        
-//        virtual
-//        ~SettingsController ();
-//        
-//        bool
-//        SetGlobalVariable (const ConstString &var_name,
-//                           const char *index_value,
-//                           const char *value,
-//                           const SettingEntry &entry,
-//                           const VarSetOperationType op,
-//                           Error&err);
-//        
-//        bool
-//        GetGlobalVariable (const ConstString &var_name,
-//                           StringList &value,
-//                           Error &err);
-//        
-//        static SettingEntry global_settings_table[];
-//        static SettingEntry instance_settings_table[];
-//        
-//        ArchSpec &
-//        GetArchitecture ()
-//        {
-//            return m_default_architecture;
-//        }
-//    protected:
-//        
-//        lldb::InstanceSettingsSP
-//        CreateInstanceSettings (const char *instance_name);
-//        
-//    private:
-//        
-//        // Class-wide settings.
-//        ArchSpec m_default_architecture;
-//        
-//        DISALLOW_COPY_AND_ASSIGN (SettingsController);
-//    };
-    
     //------------------------------------------------------------------
     // Methods.
     //------------------------------------------------------------------

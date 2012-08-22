@@ -25,14 +25,16 @@ public:
     OptionValueFileSpec () :
         OptionValue(),
         m_current_value (),
-        m_default_value ()
+        m_default_value (),
+        m_data_sp()
     {
     }
     
     OptionValueFileSpec (const FileSpec &value) :
         OptionValue(),
         m_current_value (value),
-        m_default_value (value)
+        m_default_value (value),
+        m_data_sp()
     {
     }
     
@@ -40,7 +42,8 @@ public:
                          const FileSpec &default_value) :
         OptionValue(),
         m_current_value (current_value),
-        m_default_value (default_value)
+        m_default_value (default_value),
+        m_data_sp()
     {
     }
     
@@ -71,6 +74,7 @@ public:
     {
         m_current_value = m_default_value;
         m_value_was_set = false;
+        m_data_sp.reset();
         return true;
     }
     
@@ -108,9 +112,12 @@ public:
     }
     
     void
-    SetCurrentValue (const FileSpec &value)
+    SetCurrentValue (const FileSpec &value, bool set_value_was_set)
     {
         m_current_value = value;
+        if (set_value_was_set)
+            m_value_was_set = true;
+        m_data_sp.reset();
     }
     
     void
@@ -119,9 +126,13 @@ public:
         m_default_value = value;
     }
     
+    const lldb::DataBufferSP &
+    GetFileContents();
+    
 protected:
     FileSpec m_current_value;
     FileSpec m_default_value;
+    lldb::DataBufferSP m_data_sp;
 };
 
 } // namespace lldb_private

@@ -407,6 +407,20 @@ OptionValueProperties::SetPropertyAtIndexAsEnumeration (const ExecutionContext *
 }
 
 
+OptionValueFileSpec *
+OptionValueProperties::GetPropertyAtIndexAsOptionValueFileSpec (const ExecutionContext *exe_ctx, bool will_modify, uint32_t idx) const
+{
+    const Property *property = GetPropertyAtIndex (exe_ctx, false, idx);
+    if (property)
+    {
+        OptionValue *value = property->GetValue().get();
+        if (value)
+            return value->GetAsFileSpec();
+    }
+    return NULL;
+}
+
+
 FileSpec
 OptionValueProperties::GetPropertyAtIndexAsFileSpec (const ExecutionContext *exe_ctx, uint32_t idx) const
 {

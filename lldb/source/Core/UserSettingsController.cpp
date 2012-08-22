@@ -21,50 +21,6 @@
 using namespace lldb;
 using namespace lldb_private;
 
-//static void
-//DumpSettingEntry (CommandInterpreter &interpreter, 
-//                  Stream &strm,
-//                  const uint32_t max_len, 
-//                  const SettingEntry &entry)
-//{
-//    StreamString description;
-//
-//    if (entry.description)
-//        description.Printf ("%s", entry.description);
-//    
-//    if (entry.default_value && entry.default_value[0])
-//        description.Printf (" (default: %s)", entry.default_value);
-//    
-//    interpreter.OutputFormattedHelpText (strm, 
-//                                         entry.var_name, 
-//                                         "--", 
-//                                         description.GetData(), 
-//                                         max_len);
-//    
-//    if (entry.enum_values && entry.enum_values[0].string_value)
-//    {
-//        interpreter.OutputFormattedHelpText (strm, 
-//                                             "", 
-//                                             "  ", 
-//                                             "Enumeration values:", 
-//                                             max_len);
-//        for (uint32_t enum_idx=0; entry.enum_values[enum_idx].string_value != NULL; ++enum_idx)
-//        {
-//            description.Clear();
-//            if (entry.enum_values[enum_idx].usage)
-//                description.Printf ("%s = %s", 
-//                                    entry.enum_values[enum_idx].string_value,
-//                                    entry.enum_values[enum_idx].usage);
-//            else
-//                description.Printf ("%s", entry.enum_values[enum_idx].string_value);
-//            interpreter.OutputFormattedHelpText (strm, 
-//                                                 "", 
-//                                                 "  ", 
-//                                                 description.GetData(), 
-//                                                 max_len);
-//        }
-//    }
-//}
 
 lldb::OptionValueSP
 Properties::GetPropertyValue (const ExecutionContext *exe_ctx,

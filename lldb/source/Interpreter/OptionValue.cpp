@@ -379,7 +379,7 @@ OptionValue::SetFileSpecValue (const FileSpec &file_spec)
     OptionValueFileSpec *option_value = GetAsFileSpec ();
     if (option_value)
     {
-        option_value->SetCurrentValue(file_spec);
+        option_value->SetCurrentValue(file_spec, false);
         return true;
     }
     return false;

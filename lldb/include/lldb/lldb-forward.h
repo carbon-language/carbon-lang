@@ -112,7 +112,6 @@ class   Function;
 class   FunctionInfo;
 class   InlineFunctionInfo;
 class   InputReader;
-class   InstanceSettings;
 class   Instruction;
 class   InstructionList;
 class   LanguageRuntime;
@@ -239,7 +238,6 @@ class   Unwind;
 class   UnwindAssembly;
 class   UnwindPlan;
 class   UnwindTable;
-class   UserSettingsController;
 class   VMRange;
 class   Value;
 class   TypeFormatImpl;
@@ -292,7 +290,6 @@ namespace lldb {
     typedef STD_SHARED_PTR(lldb_private::FuncUnwinders) FuncUnwindersSP;
     typedef STD_SHARED_PTR(lldb_private::InlineFunctionInfo) InlineFunctionInfoSP;
     typedef STD_SHARED_PTR(lldb_private::InputReader) InputReaderSP;
-    typedef STD_SHARED_PTR(lldb_private::InstanceSettings) InstanceSettingsSP;
     typedef STD_SHARED_PTR(lldb_private::Instruction) InstructionSP;
     typedef STD_SHARED_PTR(lldb_private::LanguageRuntime) LanguageRuntimeSP;
     typedef STD_SHARED_PTR(lldb_private::LineTable) LineTableSP;
@@ -367,8 +364,6 @@ namespace lldb {
 #ifndef LLDB_DISABLE_PYTHON
     typedef STD_SHARED_PTR(lldb_private::TypeSyntheticImpl) TypeSyntheticImplSP;
 #endif
-    typedef STD_SHARED_PTR(lldb_private::UserSettingsController) UserSettingsControllerSP;
-    typedef STD_WEAK_PTR(  lldb_private::UserSettingsController) UserSettingsControllerWP;
     typedef STD_SHARED_PTR(lldb_private::UnwindPlan) UnwindPlanSP;
     typedef lldb_private::SharingPtr<lldb_private::ValueObject> ValueObjectSP;
     typedef STD_SHARED_PTR(lldb_private::Value) ValueSP;

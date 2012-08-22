@@ -47,102 +47,14 @@ namespace lldb_private {
     
     typedef STD_SHARED_PTR(ThreadProperties) ThreadPropertiesSP;
 
-//class ThreadInstanceSettings : public InstanceSettings
-//{
-//public:
-//
-//    ThreadInstanceSettings (const lldb::UserSettingsControllerSP &owner_sp, bool live_instance = true, const char *name = NULL);
-//  
-//    ThreadInstanceSettings (const ThreadInstanceSettings &rhs);
-//
-//    virtual
-//    ~ThreadInstanceSettings ();
-//  
-//    ThreadInstanceSettings&
-//    operator= (const ThreadInstanceSettings &rhs);
-//  
-//
-//    void
-//    UpdateInstanceSettingsVariable (const ConstString &var_name,
-//                                    const char *index_value,
-//                                    const char *value,
-//                                    const ConstString &instance_name,
-//                                    const SettingEntry &entry,
-//                                    VarSetOperationType op,
-//                                    Error &err,
-//                                    bool pending);
-//
-//    bool
-//    GetInstanceSettingsValue (const SettingEntry &entry,
-//                              const ConstString &var_name,
-//                              StringList &value,
-//                              Error *err);
-//
-//    RegularExpression *
-//    GetSymbolsToAvoidRegexp()
-//    {
-//        return m_avoid_regexp_ap.get();
-//    }
-//
-//    static const ConstString &
-//    StepAvoidRegexpVarName ();
-//    
-//    bool
-//    GetTraceEnabledState()
-//    {
-//        return m_trace_enabled;
-//    }
-//    static const ConstString &
-//    GetTraceThreadVarName ();
-//
-//protected:
-//
-//    void
-//    CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,
-//                          bool pending);
-//
-//    const ConstString
-//    CreateInstanceName ();
-//
-//private:
-//
-//    std::auto_ptr<RegularExpression> m_avoid_regexp_ap;
-//    bool m_trace_enabled;
-//};
 
-class Thread :
+    class Thread :
     public STD_ENABLE_SHARED_FROM_THIS(Thread),
     public ThreadProperties,
     public UserID,
-    public ExecutionContextScope//,
-                                //public ThreadInstanceSettings
+    public ExecutionContextScope
 {
 public:
-
-//    class SettingsController : public UserSettingsController
-//    {
-//    public:
-//        
-//        SettingsController ();
-//
-//        virtual
-//        ~SettingsController ();
-//        
-//        static SettingEntry global_settings_table[];
-//        static SettingEntry instance_settings_table[];
-//
-//    protected:
-//
-//        lldb::InstanceSettingsSP
-//        CreateInstanceSettings (const char *instance_name);
-//
-//    private:
-//
-//        // Class-wide settings.
-//
-//        DISALLOW_COPY_AND_ASSIGN (SettingsController);
-//    };
-
     // TODO: You shouldn't just checkpoint the register state alone, so this should get 
     // moved to protected.  To do that ThreadStateCheckpoint needs to be returned as a token...
     class RegisterCheckpoint

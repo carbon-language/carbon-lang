@@ -908,55 +908,62 @@ SBDebugger::FindDebuggerWithID (int id)
 const char *
 SBDebugger::GetInstanceName()
 {
-    // TODO: SETTINGS -- fill this in
-//    if (m_opaque_sp)
-//        return m_opaque_sp->GetInstanceName().AsCString();
-//    else
+    if (m_opaque_sp)
+        return m_opaque_sp->GetInstanceName().AsCString();
+    else
         return NULL;
 }
 
 SBError
 SBDebugger::SetInternalVariable (const char *var_name, const char *value, const char *debugger_instance_name)
 {
-    // TODO: SETTINGS -- fill this in
-//    UserSettingsControllerSP root_settings_controller = Debugger::GetSettingsController();
-//
-//    Error err = root_settings_controller->SetVariable (var_name, 
-//                                                       value, 
-//                                                       eVarSetOperationAssign, 
-//                                                       true,
-//                                                       debugger_instance_name);
-//    SBError sb_error;
-//    sb_error.SetError (err);
-//
-//    return sb_error;
-    return SBError();
+    SBError sb_error;
+    DebuggerSP debugger_sp(Debugger::FindDebuggerWithInstanceName (ConstString(debugger_instance_name)));
+    Error error;
+    if (debugger_sp)
+    {
+        ExecutionContext exe_ctx (debugger_sp->GetCommandInterpreter().GetExecutionContext());
+        error = debugger_sp->SetPropertyValue (&exe_ctx,
+                                               eVarSetOperationAssign,
+                                               var_name,
+                                               value);
+    }
+    else
+    {
+        error.SetErrorStringWithFormat ("invalid debugger instance name '%s'", debugger_instance_name);
+    }
+    if (error.Fail())
+        sb_error.SetError(error);
+    return sb_error;
 }
 
 SBStringList
 SBDebugger::GetInternalVariableValue (const char *var_name, const char *debugger_instance_name)
 {
     SBStringList ret_value;
-    // TODO: SETTINGS -- fill this in
-//    SettableVariableType var_type;
-//    Error err;
-//
-//    UserSettingsControllerSP root_settings_controller = Debugger::GetSettingsController();
-//
-//    StringList value = root_settings_controller->GetVariable (var_name, var_type, debugger_instance_name, err);
-//    
-//    if (err.Success())
-//    {
-//        for (unsigned i = 0; i != value.GetSize(); ++i)
-//            ret_value.AppendString (value.GetStringAtIndex(i));
-//    }
-//    else
-//    {
-//        ret_value.AppendString (err.AsCString());
-//    }
-//
-//
-    return ret_value;
+    DebuggerSP debugger_sp(Debugger::FindDebuggerWithInstanceName (ConstString(debugger_instance_name)));
+    Error error;
+    if (debugger_sp)
+    {
+        ExecutionContext exe_ctx (debugger_sp->GetCommandInterpreter().GetExecutionContext());
+        lldb::OptionValueSP value_sp (debugger_sp->GetPropertyValue (&exe_ctx,
+                                                                     var_name,
+                                                                     false,
+                                                                     error));
+        if (value_sp)
+        {
+            StreamString value_strm;
+            value_sp->DumpValue (&exe_ctx, value_strm, OptionValue::eDumpOptionValue);
+            const std::string &value_str = value_strm.GetString();
+            if (!value_str.empty())
+            {
+                StringList string_list;
+                string_list.SplitIntoLines(value_str.c_str(), value_str.size());
+                return SBStringList(&string_list);
+            }
+        }
+    }
+    return SBStringList();
 }
 
 uint32_t

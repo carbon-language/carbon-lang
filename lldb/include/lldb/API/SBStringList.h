@@ -50,6 +50,7 @@ public:
 
 protected:
     friend class SBCommandInterpreter;
+    friend class SBDebugger;
 
     SBStringList (const lldb_private::StringList *lldb_strings);
 

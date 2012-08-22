@@ -211,6 +211,9 @@ public:
     bool
     SetPropertyAtIndexAsString (const ExecutionContext *exe_ctx, uint32_t idx, const char *new_value);
     
+    OptionValueFileSpec *
+    GetPropertyAtIndexAsOptionValueFileSpec (const ExecutionContext *exe_ctx, bool will_modify, uint32_t idx) const;
+
     FileSpec
     GetPropertyAtIndexAsFileSpec (const ExecutionContext *exe_ctx, uint32_t idx) const;
     

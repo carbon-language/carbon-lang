@@ -216,8 +216,6 @@ TargetList::CreateTarget
 
     if (target_sp)
     {
-        //target_sp->UpdateInstanceName();
-
         Mutex::Locker locker(m_target_list_mutex);
         m_selected_target_idx = m_target_list.size();
         m_target_list.push_back(target_sp);
