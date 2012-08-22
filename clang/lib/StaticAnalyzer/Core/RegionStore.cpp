@@ -266,7 +266,18 @@ public: // Part of public interface to class.
                       .getRootWithoutRetain(), *this);
   }
 
-  StoreRef BindCompoundLiteral(Store store, const CompoundLiteralExpr *CL,
+  /// \brief Create a new store that binds a value to a compound literal.
+  ///
+  /// \param ST The original store whose bindings are the basis for the new
+  ///        store.
+  ///
+  /// \param CL The compound literal to bind (the binding key).
+  ///
+  /// \param LC The LocationContext for the binding.
+  ///
+  /// \param V The value to bind to the compound literal.
+  StoreRef bindCompoundLiteral(Store ST,
+                               const CompoundLiteralExpr *CL,
                                const LocationContext *LC, SVal V);
 
   StoreRef BindDecl(Store store, const VarRegion *VR, SVal InitVal);
@@ -1599,12 +1610,11 @@ StoreRef RegionStoreManager::BindDecl(Store store, const VarRegion *VR,
 }
 
 // FIXME: this method should be merged into Bind().
-StoreRef RegionStoreManager::BindCompoundLiteral(Store store,
+StoreRef RegionStoreManager::bindCompoundLiteral(Store ST,
                                                  const CompoundLiteralExpr *CL,
                                                  const LocationContext *LC,
                                                  SVal V) {
-  return Bind(store, loc::MemRegionVal(MRMgr.getCompoundLiteralRegion(CL, LC)),
-              V);
+  return Bind(ST, loc::MemRegionVal(MRMgr.getCompoundLiteralRegion(CL, LC)), V);
 }
 
 StoreRef RegionStoreManager::setImplicitDefaultValue(Store store,

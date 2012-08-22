@@ -210,11 +210,13 @@ public:
   // Binding and retrieving values to/from the environment and symbolic store.
   //==---------------------------------------------------------------------==//
 
-  /// BindCompoundLiteral - Return the state that has the bindings currently
-  ///  in this state plus the bindings for the CompoundLiteral.
+  /// \brief Create a new state with the specified CompoundLiteral binding.
+  /// \param CL the compound literal expression (the binding key)
+  /// \param LC the LocationContext of the binding
+  /// \param V the value to bind.
   ProgramStateRef bindCompoundLiteral(const CompoundLiteralExpr *CL,
-                                     const LocationContext *LC,
-                                     SVal V) const;
+                                      const LocationContext *LC,
+                                      SVal V) const;
 
   /// Create a new state by binding the value 'V' to the statement 'S' in the
   /// state's environment.

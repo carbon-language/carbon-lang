@@ -129,7 +129,7 @@ ProgramStateRef ProgramState::bindCompoundLiteral(const CompoundLiteralExpr *CL,
                                             const LocationContext *LC,
                                             SVal V) const {
   const StoreRef &newStore = 
-    getStateManager().StoreMgr->BindCompoundLiteral(getStore(), CL, LC, V);
+    getStateManager().StoreMgr->bindCompoundLiteral(getStore(), CL, LC, V);
   return makeWithStore(newStore);
 }
 
