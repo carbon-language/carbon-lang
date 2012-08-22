@@ -380,7 +380,17 @@ RangeConstraintManager::GetRange(ProgramStateRef state, SymbolRef sym) {
   // given symbol type.
   BasicValueFactory &BV = getBasicVals();
   QualType T = sym->getType(BV.getContext());
-  return RangeSet(F, BV.getMinValue(T), BV.getMaxValue(T));
+
+  RangeSet Result(F, BV.getMinValue(T), BV.getMaxValue(T));
+
+  // Special case: references are known to be non-zero.
+  if (T->isReferenceType()) {
+    APSIntType IntType = BV.getAPSIntType(T);
+    Result = Result.Intersect(BV, F, ++IntType.getZeroValue(),
+                                     --IntType.getZeroValue());
+  }
+
+  return Result;
 }
 
 //===------------------------------------------------------------------------===
