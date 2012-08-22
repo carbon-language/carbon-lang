@@ -788,45 +788,38 @@ static u8 *Reallocate(u8 *old_ptr, uptr new_size,
 
 }  // namespace __asan
 
-// Malloc hooks declaration.
-// ASAN_NEW_HOOK(ptr, size) is called immediately after
-//   allocation of "size" bytes, which returned "ptr".
-// ASAN_DELETE_HOOK(ptr) is called immediately before
-//   deallocation of "ptr".
-// If ASAN_NEW_HOOK or ASAN_DELETE_HOOK is defined, user
-// program must provide implementation of this hook.
-// If macro is undefined, the hook is no-op.
-#ifdef ASAN_NEW_HOOK
-extern "C" void ASAN_NEW_HOOK(void *ptr, uptr size);
-#else
-static inline void ASAN_NEW_HOOK(void *ptr, uptr size) { }
-#endif
-
-#ifdef ASAN_DELETE_HOOK
-extern "C" void ASAN_DELETE_HOOK(void *ptr);
-#else
-static inline void ASAN_DELETE_HOOK(void *ptr) { }
-#endif
+// Default (no-op) implementation of malloc hooks.
+extern "C" {
+SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
+void __asan_malloc_hook(void *ptr, uptr size) {
+  (void)ptr;
+  (void)size;
+}
+SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
+void __asan_free_hook(void *ptr) {
+  (void)ptr;
+}
+}  // extern "C"
 
 namespace __asan {
 
 SANITIZER_INTERFACE_ATTRIBUTE
 void *asan_memalign(uptr alignment, uptr size, AsanStackTrace *stack) {
   void *ptr = (void*)Allocate(alignment, size, stack);
-  ASAN_NEW_HOOK(ptr, size);
+  __asan_malloc_hook(ptr, size);
   return ptr;
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE
 void asan_free(void *ptr, AsanStackTrace *stack) {
-  ASAN_DELETE_HOOK(ptr);
+  __asan_free_hook(ptr);
   Deallocate((u8*)ptr, stack);
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE
 void *asan_malloc(uptr size, AsanStackTrace *stack) {
   void *ptr = (void*)Allocate(0, size, stack);
-  ASAN_NEW_HOOK(ptr, size);
+  __asan_malloc_hook(ptr, size);
   return ptr;
 }
 
@@ -834,17 +827,17 @@ void *asan_calloc(uptr nmemb, uptr size, AsanStackTrace *stack) {
   void *ptr = (void*)Allocate(0, nmemb * size, stack);
   if (ptr)
     REAL(memset)(ptr, 0, nmemb * size);
-  ASAN_NEW_HOOK(ptr, nmemb * size);
+  __asan_malloc_hook(ptr, nmemb * size);
   return ptr;
 }
 
 void *asan_realloc(void *p, uptr size, AsanStackTrace *stack) {
   if (p == 0) {
     void *ptr = (void*)Allocate(0, size, stack);
-    ASAN_NEW_HOOK(ptr, size);
+    __asan_malloc_hook(ptr, size);
     return ptr;
   } else if (size == 0) {
-    ASAN_DELETE_HOOK(p);
+    __asan_free_hook(p);
     Deallocate((u8*)p, stack);
     return 0;
   }
@@ -853,7 +846,7 @@ void *asan_realloc(void *p, uptr size, AsanStackTrace *stack) {
 
 void *asan_valloc(uptr size, AsanStackTrace *stack) {
   void *ptr = (void*)Allocate(kPageSize, size, stack);
-  ASAN_NEW_HOOK(ptr, size);
+  __asan_malloc_hook(ptr, size);
   return ptr;
 }
 
@@ -864,7 +857,7 @@ void *asan_pvalloc(uptr size, AsanStackTrace *stack) {
     size = kPageSize;
   }
   void *ptr = (void*)Allocate(kPageSize, size, stack);
-  ASAN_NEW_HOOK(ptr, size);
+  __asan_malloc_hook(ptr, size);
   return ptr;
 }
 
@@ -872,7 +865,7 @@ int asan_posix_memalign(void **memptr, uptr alignment, uptr size,
                           AsanStackTrace *stack) {
   void *ptr = Allocate(alignment, size, stack);
   CHECK(IsAligned((uptr)ptr, alignment));
-  ASAN_NEW_HOOK(ptr, size);
+  __asan_malloc_hook(ptr, size);
   *memptr = ptr;
   return 0;
 }

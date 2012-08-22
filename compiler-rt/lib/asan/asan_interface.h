@@ -175,6 +175,17 @@ extern "C" {
   // ASan runtime options. See asan_flags.h for details.
   const char* __asan_default_options()
       SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE;
+
+  // Malloc hooks that may be overriden by user.
+  // __asan_malloc_hook(ptr, size) is called immediately after
+  //   allocation of "size" bytes, which returned "ptr".
+  // __asan_free_hook(ptr) is called immediately before
+  //   deallocation of "ptr".
+  // If user doesn't provide implementations of these hooks, they are no-op.
+  void __asan_malloc_hook(void *ptr, uptr size)
+      SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE;
+  void __asan_free_hook(void *ptr)
+      SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE;
 }  // extern "C"
 
 #endif  // ASAN_INTERFACE_H
