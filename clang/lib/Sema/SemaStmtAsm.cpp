@@ -398,7 +398,9 @@ static void buildMSAsmPieces(std::vector<std::string> &AsmStrings,
     buildMSAsmPieces(AsmStrings[i], Pieces[i]);
 }
 
-// Build the unmodified MSAsmString.
+// Build the unmodified AsmString used by the IR.  Also build the individual
+// asm instruction(s) and place them in the AsmStrings vector; these are fed
+// to the AsmParser.
 static std::string buildMSAsmString(Sema &SemaRef, ArrayRef<Token> AsmToks,
                                     std::vector<std::string> &AsmStrings,
                      std::vector<std::pair<unsigned,unsigned> > &AsmTokRanges) {
