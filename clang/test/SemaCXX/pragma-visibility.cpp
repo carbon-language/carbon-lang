@@ -21,3 +21,10 @@ void f() {
   #pragma GCC visibility push(protected)
   #pragma GCC visibility pop
 }
+
+namespace pr13662 {
+#pragma GCC visibility push(hidden)
+  template<class T> class __attribute__((__visibility__("default"))) foo;
+  class bar { template<class T> friend class foo; };
+#pragma GCC visibility pop
+}

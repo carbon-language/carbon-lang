@@ -1104,6 +1104,9 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   if (Attr)
     ProcessDeclAttributeList(S, NewClass, Attr);
 
+  if (PrevClassTemplate)
+    mergeDeclAttributes(NewClass, PrevClassTemplate->getTemplatedDecl());
+
   AddPushedVisibilityAttribute(NewClass);
 
   if (TUK != TUK_Friend)
@@ -1138,8 +1141,6 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
     NewTemplate->setInvalidDecl();
     NewClass->setInvalidDecl();
   }
-  if (PrevClassTemplate)
-    mergeDeclAttributes(NewClass, PrevClassTemplate->getTemplatedDecl());
 
   ActOnDocumentableDecl(NewTemplate);
 
