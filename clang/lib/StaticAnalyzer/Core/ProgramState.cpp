@@ -192,11 +192,12 @@ ProgramState::invalidateRegionsImpl(ArrayRef<const MemRegion *> Regions,
   return makeWithStore(newStore);
 }
 
-ProgramStateRef ProgramState::unbindLoc(Loc LV) const {
+ProgramStateRef ProgramState::killBinding(Loc LV) const {
   assert(!isa<loc::MemRegionVal>(LV) && "Use invalidateRegion instead.");
 
   Store OldStore = getStore();
-  const StoreRef &newStore = getStateManager().StoreMgr->Remove(OldStore, LV);
+  const StoreRef &newStore =
+    getStateManager().StoreMgr->killBinding(OldStore, LV);
 
   if (newStore.getStore() == OldStore)
     return this;

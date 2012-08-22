@@ -67,7 +67,13 @@ public:
   virtual StoreRef Bind(Store store, Loc loc, SVal val) = 0;
 
   virtual StoreRef BindDefault(Store store, const MemRegion *R, SVal V);
-  virtual StoreRef Remove(Store St, Loc L) = 0;
+
+  /// \brief Create a new store with the specified binding removed.
+  ///
+  /// \brief \param ST the original store, that is the basis for the new store.
+  ///
+  /// \brief \param L the location whose binding should be removed.
+  virtual StoreRef killBinding(Store St, Loc L) = 0;
 
   /// \brief Create a new store that binds a value to a compound literal.
   ///

@@ -833,7 +833,7 @@ ProgramStateRef CStringChecker::InvalidateBuffer(CheckerContext &C,
   // If we have a non-region value by chance, just remove the binding.
   // FIXME: is this necessary or correct? This handles the non-Region
   //  cases.  Is it ever valid to store to these?
-  return state->unbindLoc(*L);
+  return state->killBinding(*L);
 }
 
 bool CStringChecker::SummarizeRegion(raw_ostream &os, ASTContext &Ctx,

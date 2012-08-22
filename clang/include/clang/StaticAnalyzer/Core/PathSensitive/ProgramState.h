@@ -237,7 +237,7 @@ public:
 
   ProgramStateRef bindDefault(SVal loc, SVal V) const;
 
-  ProgramStateRef unbindLoc(Loc LV) const;
+  ProgramStateRef killBinding(Loc LV) const;
 
   /// invalidateRegions - Returns the state with bindings for the given regions
   ///  cleared from the store. The regions are provided as a continuous array

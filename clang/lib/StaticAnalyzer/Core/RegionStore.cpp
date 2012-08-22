@@ -244,7 +244,7 @@ public:   // Made public for helper classes.
 
   RegionBindings removeBinding(RegionBindings B, BindingKey K);
   RegionBindings removeBinding(RegionBindings B, const MemRegion *R,
-                        BindingKey::Kind k);
+                               BindingKey::Kind k);
 
   RegionBindings removeBinding(RegionBindings B, const MemRegion *R) {
     return removeBinding(removeBinding(B, R, BindingKey::Direct), R,
@@ -292,7 +292,12 @@ public: // Part of public interface to class.
   /// as a Default binding.
   StoreRef BindAggregate(Store store, const TypedRegion *R, SVal DefaultVal);
 
-  StoreRef Remove(Store store, Loc LV);
+  /// \brief Create a new store with the specified binding removed.
+  ///
+  /// \brief \param ST the original store, that is the basis for the new store.
+  ///
+  /// \brief \param L the location whose binding should be removed.
+  StoreRef killBinding(Store ST, Loc LV);
 
   void incrementReferenceCount(Store store) {
     GetRegionBindings(store).manualRetain();    
@@ -1540,14 +1545,14 @@ bool RegionStoreManager::includedInBindings(Store store,
 // Binding values to regions.
 //===----------------------------------------------------------------------===//
 
-StoreRef RegionStoreManager::Remove(Store store, Loc L) {
+StoreRef RegionStoreManager::killBinding(Store ST, Loc L) {
   if (isa<loc::MemRegionVal>(L))
     if (const MemRegion* R = cast<loc::MemRegionVal>(L).getRegion())
-      return StoreRef(removeBinding(GetRegionBindings(store),
+      return StoreRef(removeBinding(GetRegionBindings(ST),
                                     R).getRootWithoutRetain(),
                       *this);
 
-  return StoreRef(store, *this);
+  return StoreRef(ST, *this);
 }
 
 StoreRef RegionStoreManager::Bind(Store store, Loc L, SVal V) {
@@ -1852,7 +1857,7 @@ RegionBindings RegionStoreManager::removeBinding(RegionBindings B,
 
 RegionBindings RegionStoreManager::removeBinding(RegionBindings B,
                                                  const MemRegion *R,
-                                                BindingKey::Kind k){
+                                                 BindingKey::Kind k){
   return removeBinding(B, BindingKey::Make(R, k));
 }
 
