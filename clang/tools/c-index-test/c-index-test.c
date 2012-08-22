@@ -554,6 +554,19 @@ static void PrintCursorComments(CXTranslationUnit TU,
   }
 }
 
+typedef struct {
+  unsigned line;
+  unsigned col;
+} LineCol;
+
+static int lineCol_cmp(const void *p1, const void *p2) {
+  const LineCol *lhs = p1;
+  const LineCol *rhs = p2;
+  if (lhs->line != rhs->line)
+    return (int)lhs->line - (int)rhs->line;
+  return (int)lhs->col - (int)rhs->col;
+}
+
 static void PrintCursor(CXCursor Cursor,
                         CommentXMLValidationData *ValidationData) {
   CXTranslationUnit TU = clang_Cursor_getTranslationUnit(Cursor);
@@ -718,13 +731,21 @@ static void PrintCursor(CXCursor Cursor,
     clang_getOverriddenCursors(Cursor, &overridden, &num_overridden);
     if (num_overridden) {      
       unsigned I;
+      LineCol lineCols[50];
+      assert(num_overridden <= 50);
       printf(" [Overrides ");
       for (I = 0; I != num_overridden; ++I) {
         CXSourceLocation Loc = clang_getCursorLocation(overridden[I]);
         clang_getSpellingLocation(Loc, 0, &line, &column, 0);
+        lineCols[I].line = line;
+        lineCols[I].col = column;
+      }
+      // Make the order of the override list deterministic.
+      qsort(lineCols, num_overridden, sizeof(LineCol), lineCol_cmp);
+      for (I = 0; I != num_overridden; ++I) {
         if (I)
           printf(", ");
-        printf("@%d:%d", line, column);
+        printf("@%d:%d", lineCols[I].line, lineCols[I].col);
       }
       printf("]");
       clang_disposeOverriddenCursors(overridden);

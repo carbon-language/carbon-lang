@@ -99,11 +99,11 @@
 // RUN: c-index-test -test-load-source local %s | FileCheck %s
 // CHECK: overrides.m:12:9: ObjCInstanceMethodDecl=protoMethod:12:9 [Overrides @3:9]
 // CHECK: overrides.m:22:9: ObjCInstanceMethodDecl=method:22:9 [Overrides @16:9]
-// CHECK: overrides.m:23:9: ObjCInstanceMethodDecl=protoMethod:23:9 [Overrides @12:9, @8:9, @32:9, @17:9]
+// CHECK: overrides.m:23:9: ObjCInstanceMethodDecl=protoMethod:23:9 [Overrides @8:9, @12:9, @17:9, @32:9]
 // CHECK: overrides.m:27:9: ObjCInstanceMethodDecl=method:27:9 (Definition) [Overrides @16:9]
 // CHECK: overrides.m:28:9: ObjCClassMethodDecl=methodWithParam::28:9 (Definition) [Overrides @18:9]
 // CHECK: overrides.m:32:9: ObjCInstanceMethodDecl=protoMethod:32:9 [Overrides @8:9]
-// CHECK: overrides.m:36:9: ObjCInstanceMethodDecl=protoMethod:36:9 [Overrides @12:9, @8:9, @32:9, @17:9]
+// CHECK: overrides.m:36:9: ObjCInstanceMethodDecl=protoMethod:36:9 [Overrides @8:9, @12:9, @17:9, @32:9]
 // CHECK: overrides.m:50:8: ObjCInstanceMethodDecl=meth:50:8 (Definition) [Overrides @43:8]
 // CHECK: overrides.m:55:8: ObjCInstanceMethodDecl=kol:55:8 Extent=[55:1 - 55:12]
 // CHECK: overrides.m:65:26: ObjCInstanceMethodDecl=prop1:65:26 [Overrides @59:25] Extent=[65:26 - 65:31]
