@@ -15,8 +15,8 @@ elseif (UNIX)
   set(CLANG_RUNTIME_LIB_DIR
       ${LLVM_BINARY_DIR}/lib/clang/${CLANG_VERSION}/lib/linux)
 endif()
-function(add_clang_runtime_static_library target_names)
-  set_target_properties(${target_names} PROPERTIES
+function(add_clang_runtime_static_library)
+  set_target_properties(${ARGN} PROPERTIES
                         ARCHIVE_OUTPUT_DIRECTORY ${CLANG_RUNTIME_LIB_DIR})
 endfunction()
 
