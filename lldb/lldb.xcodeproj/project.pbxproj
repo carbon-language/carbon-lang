@@ -11,6 +11,7 @@
 			isa = PBXAggregateTarget;
 			buildConfigurationList = 26CEF3AD14FD58BF007286B2 /* Build configuration list for PBXAggregateTarget "desktop_no_xpc" */;
 			buildPhases = (
+				AF90106415AB7D2900FF120D /* CopyFiles */,
 			);
 			dependencies = (
 				26CEF3B014FD591F007286B2 /* PBXTargetDependency */,
@@ -23,6 +24,7 @@
 			isa = PBXAggregateTarget;
 			buildConfigurationList = 26CEF3B214FD592B007286B2 /* Build configuration list for PBXAggregateTarget "desktop" */;
 			buildPhases = (
+				AF90106415AB7D2900FF120D /* CopyFiles */,
 			);
 			dependencies = (
 				26CEF3BB14FD595B007286B2 /* PBXTargetDependency */,
@@ -3412,7 +3414,6 @@
 				26680205115FD0ED008E1FE4 /* Frameworks */,
 				261B5A7511C3FA6F00AABD0A /* Fixup Framework Headers */,
 				9A19ACE2116563A700E0D453 /* Finish swig wrapper classes (lldb) */,
-				AF90106415AB7D2900FF120D /* CopyFiles */,
 			);
 			buildRules = (
 			);
