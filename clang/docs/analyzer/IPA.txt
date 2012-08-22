@@ -21,7 +21,7 @@ Inlining
   -analyzer-ipa=dynamic-bifurcate - Same as -analyzer-ipa=dynamic, but the path
    is split. We inline on one branch and do not inline on the other. This mode
    does not drop the coverage in cases when the parent class has code that is
-   only exercised when some of its methods are overriden.
+   only exercised when some of its methods are overridden.
 
 Currently, -analyzer-ipa=basic-inlining is the default mode.
 
@@ -60,10 +60,10 @@ reasonable steps:
 Retry Without Inlining
 ----------------------
 
-In some cases, we would like to retry analyzes without inlining the particular
+In some cases, we would like to retry analysis without inlining a particular
 call.
 
-Currently, we use this technique to recover the coverage in case we stop
+Currently, we use this technique to recover coverage in case we stop
 analyzing a path due to exceeding the maximum block count inside an inlined
 function.
 
@@ -82,7 +82,7 @@ some cases, however, where the analyzer chooses not to inline:
 - If there is no definition available for the called function or method.  In
   this case, there is no opportunity to inline.
 
-- If we the CFG cannot be constructed for a called function, or the liveness
+- If the CFG cannot be constructed for a called function, or the liveness
   cannot be computed.  These are prerequisites for analyzing a function body,
   with or without inlining.
 
@@ -95,22 +95,22 @@ some cases, however, where the analyzer chooses not to inline:
 
   Tracked by: <rdar://problem/12147064> Support inlining of variadic functions
 
-- In C++, ExprEngine does not inline constructors unless the destructor is
-  guaranteed to be inlined as well.
+- In C++, constructors are not inlined unless the destructor call will be
+  processed by the ExprEngine. Thus, if the CFG was built without nodes for
+  implicit destructors, or if the destructors for the given object are not
+  represented in the CFG, the constructor will not be inlined. See "C++ Caveats"
+  below.
 
-  **TMK/COMMENT** This needs to be a bit more precise.  How do we know the
-                  destructor is guaranteed to be inlined?
-
-- In C++, ExprEngine does not inline custom implementations of operator 'new'
-  implementations).  This is due to a lack of complete handling of destructors.
+- In C++, ExprEngine does not inline custom implementations of operator 'new'.
+  See "C++ Caveats" below.
 
 - Calls resulting in "dynamic dispatch" are specially handled.  See more below.
 
-- Engine::FunctionSummaries map stores additional information about
-  declarations, some of which is collected at runtime based on previous analyzes
-  of the function. We do not inline functions which were not profitable to
-  inline in a different context (for example, if the maximum block count was
-  exceeded, see Retry Without Inlining).
+- The FunctionSummaries map stores additional information about declarations,
+  some of which is collected at runtime based on previous analyses.
+  We do not inline functions which were not profitable to inline in a different
+  context (for example, if the maximum block count was exceeded; see
+  "Retry Without Inlining").
 
 
 Dynamic Calls and Devirtualization
@@ -118,33 +118,19 @@ Dynamic Calls and Devirtualization
 
 "Dynamic" calls are those that are resolved at runtime, such as C++ virtual
 method calls and Objective-C message sends. Due to the path-sensitive nature of
-the analyzer, the analyzer may be able to reason about the dynamic type of the
+the analysis, the analyzer may be able to reason about the dynamic type of the
 object whose method is being called and thus "devirtualize" the call. 
 
 This path-sensitive devirtualization occurs when the analyzer can determine what
 method would actually be called at runtime.  This is possible when the type
-information is constrained enough for a simulated C++/Objective-C object in
-order to make such a decision.
-
- == RuntimeDefinition ==
-
-The basis of this devirtualization is CallEvent's getRuntimeDefinition() method,
-which returns a RuntimeDefinition object.  The "runtime" + "defintion"
-corresponds to the definition of the called method as would be computed at
-runtime.  In the case of no dynamic dispatch, this object resolves to a Decl*
-for the called function.  In the case of dynamic dispatch, the RuntimeDefinition
-object also includes an optional MemRegion* corresponding to the object being
-called (i.e., the "receiver" in Objective-C parlance).  This information is
-later consulted by ExprEngine (along with tracked dynamic type information) to
-potentially resolve the called method.
+information is constrained enough for a simulated C++/Objective-C object that
+the analyzer can make such a decision.
 
  == DynamicTypeInfo ==
 
-In addition to RuntimeDefinition, the analyzer needs to track the potential
-runtime type of a simulated C++/Objective-C object.  As the analyzer analyzes a
-path, it may accrue more information to refine the knowledge about the type of
-an object.  This can then be used to make better decisions about the target
-method of a call.
+As the analyzer analyzes a path, it may accrue information to refine the
+knowledge about the type of an object.  This can then be used to make better
+decisions about the target method of a call.
 
 Such type information is tracked as DynamicTypeInfo.  This is path-sensitive
 data that is stored in ProgramState, which defines a mapping from MemRegions to
@@ -164,25 +150,34 @@ information for a region.
   WARNING: Not all of the existing analyzer code has been retrofitted to use
            DynamicTypeInfo, nor is it universally appropriate. In particular,
            DynamicTypeInfo always applies to a region with all casts stripped
-           off, but sometimes the information provided by casts can be useful.)
+           off, but sometimes the information provided by casts can be useful.
 
 
-When asked to provide a definition, the CallEvents for dynamic calls will use
-the DynamicTypeInfo in their ProgramState to provide the best definition of the
-method to be called. In some cases this devirtualization can be perfect or
-near-perfect, and the analyzer can inline the definition as usual. In other
-cases ExprEngine can make a guess, but report that our guess may not be the
-method actually called at runtime.
+ == RuntimeDefinition ==
 
-  **TMK/COMMENT**: what does it mean to "report" that our guess may not be the
-                   method actually called?
+The basis of devirtualization is CallEvent's getRuntimeDefinition() method,
+which returns a RuntimeDefinition object.  When asked to provide a definition,
+the CallEvents for dynamic calls will use the DynamicTypeInfo in their
+ProgramState to attempt to devirtualize the call.  In the case of no dynamic
+dispatch, or perfectly constrained devirtualization, the resulting
+RuntimeDefinition contains a Decl corresponding to the definition of the called
+function, and RuntimeDefinition::mayHaveOtherDefinitions will return FALSE.
 
-The -analyzer-ipa option has four different modes: none, inlining, dynamic, and
-dynamic-bifurcate. Under -analyzer-ipa=dynamic, all dynamic calls are inlined,
-whether we are certain or not that this will actually be the definition used at
-runtime. Under -analyzer-ipa=inlining, only "near-perfect" devirtualized calls
-are inlined*, and other dynamic calls are evaluated conservatively (as if no
-definition were available).
+In the case of dynamic dispatch where our information is not perfect, CallEvent
+can make a guess, but RuntimeDefinition::mayHaveOtherDefinitions will return
+TRUE. The RuntimeDefinition object will then also include a MemRegion
+corresponding to the object being called (i.e., the "receiver" in Objective-C
+parlance), which ExprEngine uses to decide whether or not the call should be
+inlined.
+
+ == Inlining Dynamic Calls ==
+
+The -analyzer-ipa option has five different modes: none, basic-inlining,
+inlining, dynamic, and dynamic-bifurcate. Under -analyzer-ipa=dynamic, all
+dynamic calls are inlined, whether we are certain or not that this will actually
+be the definition used at runtime. Under -analyzer-ipa=inlining, only
+"near-perfect" devirtualized calls are inlined*, and other dynamic calls are
+evaluated conservatively (as if no definition were available). 
 
 * Currently, no Objective-C messages are not inlined under
   -analyzer-ipa=inlining, even if we are reasonably confident of the type of the
@@ -193,16 +188,21 @@ The last option, -analyzer-ipa=dynamic-bifurcate, behaves similarly to
 "dynamic", but performs a conservative invalidation in the general virtual case
 in *addition* to inlining. The details of this are discussed below.
 
+As stated above, -analyzer-ipa=basic-inlining does not inline any C++ member
+functions or Objective-C method calls, even if they are non-virtual or can be
+safely devirtualized.
+
+
 Bifurcation
 -----------
 
 ExprEngine::BifurcateCall implements the -analyzer-ipa=dynamic-bifurcate
 mode.
 
-When a call is made on a region with imprecise dynamic type information 
+When a call is made on an object with imprecise dynamic type information 
 (RuntimeDefinition::mayHaveOtherDefinitions() evaluates to TRUE), ExprEngine
-bifurcates the path and marks the MemRegion (derived from a RuntimeDefinition
-object) with a path-sensitive "mode" in the ProgramState.
+bifurcates the path and marks the object's region (retrieved from the
+RuntimeDefinition object) with a path-sensitive "mode" in the ProgramState.
 
 Currently, there are 2 modes: 
 
@@ -251,7 +251,7 @@ are the cases when the DynamicTypeInfo of the object is considered precise
  - If the method is not declared outside of main source file, either by the
    receiver's class or by any superclasses.
 
-C++ Inlining Caveats
+C++ Caveats
 --------------------
 
 C++11 [class.cdtor]p4 describes how the vtable of an object is modified as it is
@@ -261,18 +261,20 @@ DynamicTypeInfo in the DynamicTypePropagation checker.
 
 There are several limitations in the current implementation:
 
-- Temporaries are poorly modelled right now because we're not confident in the
-  placement
+- Temporaries are poorly modeled right now because we're not confident in the
+  placement of their destructors in the CFG. We currently won't inline their
+  constructors, and don't process their destructors at all.
 
-- 'new' is poorly modelled due to some nasty CFG/design issues.  This is tracked
-  in PR12014.  'delete' is not modelled at all.
+- 'new' is poorly modeled due to some nasty CFG/design issues.  This is tracked
+  in PR12014.  'delete' is not modeled at all.
 
 - Arrays of objects are modeled very poorly right now.  ExprEngine currently
-  only simualtes the first constructor and first destructor. Because of this,
+  only simulates the first constructor and first destructor. Because of this,
   ExprEngine does not inline any constructors or destructors for arrays.
 
+
 CallEvent
----------
+=========
 
 A CallEvent represents a specific call to a function, method, or other body of
 code. It is path-sensitive, containing both the current state (ProgramStateRef)
@@ -292,4 +294,4 @@ __attribute__((nonnull))), and attempting to inline a call.
 CallEvents are reference-counted objects managed by a CallEventManager. While
 there is no inherent issue with persisting them (say, in a ProgramState's GDM),
 they are intended for short-lived use, and can be recreated from CFGElements or
-StackFrameContexts fairly easily.
+non-top-level StackFrameContexts fairly easily.
