@@ -397,6 +397,10 @@ def ObjCLoopChecker : Checker<"Loops">,
   HelpText<"Improved modeling of loops using Cocoa collection types">,
   DescFile<"BasicObjCFoundationChecks.cpp">;
 
+def ObjCNonNilReturnValueChecker : Checker<"NonNilReturnValue">,
+  HelpText<"Model the APIs that are guaranteed to return a non-nil value">,
+  DescFile<"BasicObjCFoundationChecks.cpp">;
+
 def NSErrorChecker : Checker<"NSError">,
   HelpText<"Check usage of NSError** parameters">,
   DescFile<"NSErrorChecker.cpp">;
