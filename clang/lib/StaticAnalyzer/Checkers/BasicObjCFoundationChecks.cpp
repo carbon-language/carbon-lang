@@ -725,7 +725,9 @@ class ObjCNonNilReturnValueChecker
     mutable bool Initialized;
     mutable Selector ObjectAtIndex;
     mutable Selector ObjectAtIndexedSubscript;
+
 public:
+  ObjCNonNilReturnValueChecker() : Initialized(false) {}
   void checkPostObjCMessage(const ObjCMethodCall &M, CheckerContext &C) const;
 };
 }
