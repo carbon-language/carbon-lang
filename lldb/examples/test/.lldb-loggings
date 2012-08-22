@@ -3,7 +3,11 @@ def pre_flight(self):
     import lldb
     import lldbtest
 
-    dest = os.path.join("/tmp", "lldb_log-%s-%s-%s.txt" % (self.getArchitecture(), self.getCompiler(), self.id()))
+    dname = os.path.join(os.environ["LLDB_TEST"],
+                         os.environ["LLDB_SESSION_DIRNAME"])
+    if not os.path.isdir(dname):
+        os.mkdir(dname)
+    dest = os.path.join(dname, "lldb_log-%s-%s-%s.txt" % (self.getArchitecture(), self.getCompiler(), self.id()))
     print "\nEnabling lldb logging for test case:", self
     print "with log destination:", dest
     self.runCmd("log enable -f %s gdb-remote packets process" % dest)
