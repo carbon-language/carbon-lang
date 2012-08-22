@@ -1690,11 +1690,11 @@ void SimplifyLibCalls::InitOptimizations() {
 
   AddOpt(LibFunc::ceil, LibFunc::ceilf, &UnaryDoubleFP);
   AddOpt(LibFunc::fabs, LibFunc::fabsf, &UnaryDoubleFP);
-  AddOpt(LibFunc::floor, LibFunc::floorf, &UnsafeUnaryDoubleFP);
-  AddOpt(LibFunc::rint, LibFunc::rintf, &UnsafeUnaryDoubleFP);
-  AddOpt(LibFunc::round, LibFunc::roundf, &UnsafeUnaryDoubleFP);
-  AddOpt(LibFunc::nearbyint, LibFunc::nearbyintf, &UnsafeUnaryDoubleFP);
-  AddOpt(LibFunc::trunc, LibFunc::truncf, &UnsafeUnaryDoubleFP);
+  AddOpt(LibFunc::floor, LibFunc::floorf, &UnaryDoubleFP);
+  AddOpt(LibFunc::rint, LibFunc::rintf, &UnaryDoubleFP);
+  AddOpt(LibFunc::round, LibFunc::roundf, &UnaryDoubleFP);
+  AddOpt(LibFunc::nearbyint, LibFunc::nearbyintf, &UnaryDoubleFP);
+  AddOpt(LibFunc::trunc, LibFunc::truncf, &UnaryDoubleFP);
 
   if(UnsafeFPShrink) {
     AddOpt(LibFunc::acos, LibFunc::acosf, &UnsafeUnaryDoubleFP);
