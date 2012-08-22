@@ -42,7 +42,7 @@ MipsTargetMachine(const Target &T, StringRef TT,
                   CodeGenOpt::Level OL,
                   bool isLittle)
   : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-    Subtarget(TT, CPU, FS, isLittle),
+    Subtarget(TT, CPU, FS, isLittle, RM),
     DataLayout(isLittle ?
                (Subtarget.isABI_N64() ?
                 "e-p:64:64:64-i8:8:32-i16:16:32-i64:64:64-f128:128:128-n32" :

@@ -131,6 +131,12 @@ getReservedRegs(const MachineFunction &MF) const {
     Reserved.set(Mips::RA_64);
   }
 
+  // Reserve GP if small section is used.
+  if (Subtarget.useSmallSection()) {
+    Reserved.set(Mips::GP);
+    Reserved.set(Mips::GP_64);
+  }
+
   return Reserved;
 }
 
