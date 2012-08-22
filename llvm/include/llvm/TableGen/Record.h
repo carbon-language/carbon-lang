@@ -1301,7 +1301,9 @@ class Record {
   // Unique record ID.
   unsigned ID;
   Init *Name;
-  SMLoc Loc;
+  // Location where record was instantiated, followed by the location of
+  // multiclass prototypes used.
+  SmallVector<SMLoc, 4> Locs;
   std::vector<Init *> TemplateArgs;
   std::vector<RecordVal> Values;
   std::vector<Record*> SuperClasses;
@@ -1317,13 +1319,15 @@ class Record {
 public:
 
   // Constructs a record.
-  explicit Record(const std::string &N, SMLoc loc, RecordKeeper &records) :
-    ID(LastID++), Name(StringInit::get(N)), Loc(loc), TrackedRecords(records),
-      TheInit(0) {
+  explicit Record(const std::string &N, ArrayRef<SMLoc> locs,
+                  RecordKeeper &records) :
+    ID(LastID++), Name(StringInit::get(N)), Locs(locs.begin(), locs.end()),
+    TrackedRecords(records), TheInit(0) {
     init();
   }
-  explicit Record(Init *N, SMLoc loc, RecordKeeper &records) :
-    ID(LastID++), Name(N), Loc(loc), TrackedRecords(records), TheInit(0) {
+  explicit Record(Init *N, ArrayRef<SMLoc> locs, RecordKeeper &records) :
+    ID(LastID++), Name(N), Locs(locs.begin(), locs.end()),
+    TrackedRecords(records), TheInit(0) {
     init();
   }
   ~Record() {}
@@ -1345,7 +1349,7 @@ public:
   void setName(Init *Name);               // Also updates RecordKeeper.
   void setName(const std::string &Name);  // Also updates RecordKeeper.
 
-  SMLoc getLoc() const { return Loc; }
+  ArrayRef<SMLoc> getLoc() const { return Locs; }
 
   /// get the corresponding DefInit.
   DefInit *getDefInit();

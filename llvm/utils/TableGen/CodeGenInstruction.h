@@ -319,7 +319,7 @@ namespace llvm {
     CodeGenInstAlias(Record *R, CodeGenTarget &T);
 
     bool tryAliasOpMatch(DagInit *Result, unsigned AliasOpNo,
-                         Record *InstOpRec, bool hasSubOps, SMLoc Loc,
+                         Record *InstOpRec, bool hasSubOps, ArrayRef<SMLoc> Loc,
                          CodeGenTarget &T, ResultOperand &ResOp);
   };
 }

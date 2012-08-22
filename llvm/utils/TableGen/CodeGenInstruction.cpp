@@ -409,7 +409,7 @@ FlattenAsmStringVariants(StringRef Cur, unsigned Variant) {
 /// successful match, with ResOp set to the result operand to be used.
 bool CodeGenInstAlias::tryAliasOpMatch(DagInit *Result, unsigned AliasOpNo,
                                        Record *InstOpRec, bool hasSubOps,
-                                       SMLoc Loc, CodeGenTarget &T,
+                                       ArrayRef<SMLoc> Loc, CodeGenTarget &T,
                                        ResultOperand &ResOp) {
   Init *Arg = Result->getArg(AliasOpNo);
   DefInit *ADI = dynamic_cast<DefInit*>(Arg);

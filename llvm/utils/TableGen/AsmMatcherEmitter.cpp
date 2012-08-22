@@ -666,7 +666,7 @@ void MatchableInfo::dump() {
 }
 
 static std::pair<StringRef, StringRef>
-parseTwoOperandConstraint(StringRef S, SMLoc Loc) {
+parseTwoOperandConstraint(StringRef S, ArrayRef<SMLoc> Loc) {
   // Split via the '='.
   std::pair<StringRef, StringRef> Ops = S.split('=');
   if (Ops.second == "")

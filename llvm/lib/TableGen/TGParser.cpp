@@ -2277,7 +2277,10 @@ InstantiateMulticlassDef(MultiClass &MC,
                      DefName, StringRecTy::get())->Fold(DefProto, &MC);
   }
 
-  Record *CurRec = new Record(DefName, DefmPrefixLoc, Records);
+  // Make a trail of SMLocs from the multiclass instantiations.
+  SmallVector<SMLoc, 4> Locs(1, DefmPrefixLoc);
+  Locs.append(DefProto->getLoc().begin(), DefProto->getLoc().end());
+  Record *CurRec = new Record(DefName, Locs, Records);
 
   SubClassReference Ref;
   Ref.RefLoc = DefmPrefixLoc;

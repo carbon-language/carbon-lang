@@ -298,7 +298,7 @@ CodeGenRegister::computeSubRegs(CodeGenRegBank &RegBank) {
   for (SubRegMap::const_iterator SI = SubRegs.begin(), SE = SubRegs.end();
        SI != SE; ++SI) {
     if (SI->second == this) {
-      SMLoc Loc;
+      ArrayRef<SMLoc> Loc;
       if (TheDef)
         Loc = TheDef->getLoc();
       throw TGError(Loc, "Register " + getName() +
@@ -310,7 +310,7 @@ CodeGenRegister::computeSubRegs(CodeGenRegBank &RegBank) {
     if (Ins->second == SI->first)
       continue;
     // Trouble: Two different names for SI->second.
-    SMLoc Loc;
+    ArrayRef<SMLoc> Loc;
     if (TheDef)
       Loc = TheDef->getLoc();
     throw TGError(Loc, "Sub-register can't have two names: " +

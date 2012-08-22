@@ -20,21 +20,22 @@
 namespace llvm {
 
 class TGError {
-  SMLoc Loc;
+  SmallVector<SMLoc, 4> Locs;
   std::string Message;
 public:
-  TGError(SMLoc loc, const std::string &message) : Loc(loc), Message(message) {}
+  TGError(ArrayRef<SMLoc> locs, const std::string &message)
+    : Locs(locs.begin(), locs.end()), Message(message) {}
 
-  SMLoc getLoc() const { return Loc; }
+  ArrayRef<SMLoc> getLoc() const { return Locs; }
   const std::string &getMessage() const { return Message; }
 };
 
-void PrintWarning(SMLoc WarningLoc, const Twine &Msg);
+void PrintWarning(ArrayRef<SMLoc> WarningLoc, const Twine &Msg);
 void PrintWarning(const char *Loc, const Twine &Msg);
 void PrintWarning(const Twine &Msg);
 void PrintWarning(const TGError &Warning);
 
-void PrintError(SMLoc ErrorLoc, const Twine &Msg);
+void PrintError(ArrayRef<SMLoc> ErrorLoc, const Twine &Msg);
 void PrintError(const char *Loc, const Twine &Msg);
 void PrintError(const Twine &Msg);
 void PrintError(const TGError &Error);
