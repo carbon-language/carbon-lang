@@ -1677,8 +1677,10 @@ MatchInstruction(SMLoc IDLoc,
   if ((Match1 == Match_MnemonicFail) && (Match2 == Match_MnemonicFail) &&
       (Match3 == Match_MnemonicFail) && (Match4 == Match_MnemonicFail)) {
     if (!WasOriginallyInvalidOperand) {
+      ArrayRef<SMRange> Ranges = matchingInlineAsm ? EmptyRanges :
+        Op->getLocRange();
       return Error(IDLoc, "invalid instruction mnemonic '" + Base + "'",
-                   Op->getLocRange(), matchingInlineAsm);
+                   Ranges, matchingInlineAsm);
     }
 
     // Recover location info for the operand if we know which was the problem.
