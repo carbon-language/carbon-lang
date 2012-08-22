@@ -996,14 +996,13 @@ static void UpdatePredRedefs(MachineInstr *MI, SmallSet<unsigned,4> &Redefs,
   }
   for (unsigned i = 0, e = Defs.size(); i != e; ++i) {
     unsigned Reg = Defs[i];
-    if (Redefs.count(Reg)) {
+    if (!Redefs.insert(Reg)) {
       if (AddImpUse)
         // Treat predicated update as read + write.
         MI->addOperand(MachineOperand::CreateReg(Reg, false/*IsDef*/,
                                               true/*IsImp*/,false/*IsKill*/,
                                               false/*IsDead*/,true/*IsUndef*/));
     } else {
-      Redefs.insert(Reg);
       for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
         Redefs.insert(*SubRegs);
     }

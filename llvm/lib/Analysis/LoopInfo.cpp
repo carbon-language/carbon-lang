@@ -429,8 +429,8 @@ void UnloopUpdater::updateSubloopParents() {
     Unloop->removeChildLoop(llvm::prior(Unloop->end()));
 
     assert(SubloopParents.count(Subloop) && "DFS failed to visit subloop");
-    if (SubloopParents[Subloop])
-      SubloopParents[Subloop]->addChildLoop(Subloop);
+    if (Loop *Parent = SubloopParents[Subloop])
+      Parent->addChildLoop(Subloop);
     else
       LI->addTopLevelLoop(Subloop);
   }
@@ -456,9 +456,8 @@ Loop *UnloopUpdater::getNearestLoop(BasicBlock *BB, Loop *BBLoop) {
       assert(Subloop && "subloop is not an ancestor of the original loop");
     }
     // Get the current nearest parent of the Subloop exits, initially Unloop.
-    if (!SubloopParents.count(Subloop))
-      SubloopParents[Subloop] = Unloop;
-    NearLoop = SubloopParents[Subloop];
+    NearLoop =
+      SubloopParents.insert(std::make_pair(Subloop, Unloop)).first->second;
   }
 
   succ_iterator I = succ_begin(BB), E = succ_end(BB);

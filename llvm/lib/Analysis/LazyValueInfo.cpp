@@ -470,8 +470,10 @@ bool LazyValueInfoCache::hasBlockValue(Value *Val, BasicBlock *BB) {
     return true;
 
   LVIValueHandle ValHandle(Val, this);
-  if (!ValueCache.count(ValHandle)) return false;
-  return ValueCache[ValHandle].count(BB);
+  std::map<LVIValueHandle, ValueCacheEntryTy>::iterator I =
+    ValueCache.find(ValHandle);
+  if (I == ValueCache.end()) return false;
+  return I->second.count(BB);
 }
 
 LVILatticeVal LazyValueInfoCache::getBlockValue(Value *Val, BasicBlock *BB) {

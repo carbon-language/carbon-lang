@@ -396,8 +396,7 @@ void MachObjectWriter::BindIndirectSymbols(MCAssembler &Asm) {
       continue;
 
     // Initialize the section indirect symbol base, if necessary.
-    if (!IndirectSymBase.count(it->SectionData))
-      IndirectSymBase[it->SectionData] = IndirectIndex;
+    IndirectSymBase.insert(std::make_pair(it->SectionData, IndirectIndex));
 
     Asm.getOrCreateSymbolData(*it->Symbol);
   }
@@ -414,8 +413,7 @@ void MachObjectWriter::BindIndirectSymbols(MCAssembler &Asm) {
       continue;
 
     // Initialize the section indirect symbol base, if necessary.
-    if (!IndirectSymBase.count(it->SectionData))
-      IndirectSymBase[it->SectionData] = IndirectIndex;
+    IndirectSymBase.insert(std::make_pair(it->SectionData, IndirectIndex));
 
     // Set the symbol type to undefined lazy, but only on construction.
     //
