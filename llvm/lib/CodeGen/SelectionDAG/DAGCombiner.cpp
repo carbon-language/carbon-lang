@@ -7876,29 +7876,9 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
       if (VecIn1.getValueType().getSizeInBits()*2 != VT.getSizeInBits())
         return SDValue();
 
-      // If the element type of the input vector is not the same as
-      // the output element type, make concat_vectors based on input element
-      // type and then bitcast it to the output vector type.
-      //
-      // In another words avoid nodes like this:
-      //  <NODE> v16i8 = concat_vectors v4i16 v4i16
-      // Replace it with this one:
-      //  <NODE0> v8i16 = concat_vectors v4i16 v4i16
-      //  <NODE1> v16i8 = bitcast NODE0
-      EVT ItemType = VecIn1.getValueType().getVectorElementType();
-      if (ItemType != VT.getVectorElementType()) {
-        EVT ConcatVT = EVT::getVectorVT(*DAG.getContext(),
-                                ItemType,
-                                VecIn1.getValueType().getVectorNumElements()*2);
-        // Widen the input vector by adding undef values.
-        VecIn1 = DAG.getNode(ISD::CONCAT_VECTORS, dl, ConcatVT,
-                             VecIn1, DAG.getUNDEF(VecIn1.getValueType()));
-        VecIn1 = DAG.getNode(ISD::BITCAST, dl, VT, VecIn1);
-      } else
-        // Widen the input vector by adding undef values.
-        VecIn1 = DAG.getNode(ISD::CONCAT_VECTORS, dl, VT,
-                             VecIn1, DAG.getUNDEF(VecIn1.getValueType()));
-
+      // Widen the input vector by adding undef values.
+      VecIn1 = DAG.getNode(ISD::CONCAT_VECTORS, N->getDebugLoc(), VT,
+                           VecIn1, DAG.getUNDEF(VecIn1.getValueType()));
     }
 
     // If VecIn2 is unused then change it to undef.
