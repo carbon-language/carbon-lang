@@ -102,7 +102,8 @@ SBProcess::Clear ()
 bool
 SBProcess::IsValid() const
 {
-    return m_opaque_wp.lock().get() != NULL;
+    ProcessSP process_sp(m_opaque_wp.lock());
+    return ((bool) process_sp && process_sp->IsValid());
 }
 
 bool

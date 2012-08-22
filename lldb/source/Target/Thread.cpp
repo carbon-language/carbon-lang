@@ -708,7 +708,7 @@ Thread::PopPlan ()
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
-    if (m_plan_stack.empty())
+    if (m_plan_stack.size() <= 1)
         return;
     else
     {

@@ -921,6 +921,7 @@ Process::Process(Target &target, Listener &listener) :
     m_next_event_action_ap(),
     m_run_lock (),
     m_currently_handling_event(false),
+    m_finalize_called(false),
     m_can_jit(eCanJITDontKnow)
 {
     CheckInWithManager ();
@@ -1016,6 +1017,7 @@ Process::Finalize()
     m_allocated_memory_cache.Clear();
     m_language_runtimes.clear();
     m_next_event_action_ap.reset();
+    m_finalize_called = true;
 }
 
 void

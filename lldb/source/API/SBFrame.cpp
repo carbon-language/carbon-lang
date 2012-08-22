@@ -108,7 +108,9 @@ SBFrame::GetSymbolContext (uint32_t resolve_scope) const
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBSymbolContext sb_sym_ctx;
-    ExecutionContext exe_ctx(m_opaque_sp.get());
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
     StackFrame *frame = exe_ctx.GetFramePtr();
     Target *target = exe_ctx.GetTargetPtr();
     if (frame && target)
@@ -116,7 +118,6 @@ SBFrame::GetSymbolContext (uint32_t resolve_scope) const
         Process::StopLocker stop_locker;
         if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            Mutex::Locker api_locker (target->GetAPIMutex());
             sb_sym_ctx.SetSymbolContext(&frame->GetSymbolContext (resolve_scope));
         }
         else
@@ -139,7 +140,9 @@ SBFrame::GetModule () const
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBModule sb_module;
     ModuleSP module_sp;
-    ExecutionContext exe_ctx(m_opaque_sp.get());
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
     StackFrame *frame = exe_ctx.GetFramePtr();
     Target *target = exe_ctx.GetTargetPtr();
     if (frame && target)
@@ -147,7 +150,6 @@ SBFrame::GetModule () const
         Process::StopLocker stop_locker;
         if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            Mutex::Locker api_locker (target->GetAPIMutex());
             module_sp = frame->GetSymbolContext (eSymbolContextModule).module_sp;
             sb_module.SetSP (module_sp);
         }
@@ -170,7 +172,9 @@ SBFrame::GetCompileUnit () const
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBCompileUnit sb_comp_unit;
-    ExecutionContext exe_ctx(m_opaque_sp.get());
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
     StackFrame *frame = exe_ctx.GetFramePtr();
     Target *target = exe_ctx.GetTargetPtr();
     if (frame && target)
@@ -178,7 +182,6 @@ SBFrame::GetCompileUnit () const
         Process::StopLocker stop_locker;
         if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            Mutex::Locker api_locker (target->GetAPIMutex());
             sb_comp_unit.reset (frame->GetSymbolContext (eSymbolContextCompUnit).comp_unit);
         }
         else
@@ -199,7 +202,9 @@ SBFrame::GetFunction () const
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBFunction sb_function;
-    ExecutionContext exe_ctx(m_opaque_sp.get());
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
     StackFrame *frame = exe_ctx.GetFramePtr();
     Target *target = exe_ctx.GetTargetPtr();
     if (frame && target)
@@ -207,7 +212,6 @@ SBFrame::GetFunction () const
         Process::StopLocker stop_locker;
         if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            Mutex::Locker api_locker (target->GetAPIMutex());
             sb_function.reset(frame->GetSymbolContext (eSymbolContextFunction).function);
         }
         else
@@ -228,7 +232,9 @@ SBFrame::GetSymbol () const
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBSymbol sb_symbol;
-    ExecutionContext exe_ctx(m_opaque_sp.get());
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
     StackFrame *frame = exe_ctx.GetFramePtr();
     Target *target = exe_ctx.GetTargetPtr();
     if (frame && target)
@@ -236,7 +242,6 @@ SBFrame::GetSymbol () const
         Process::StopLocker stop_locker;
         if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            Mutex::Locker api_locker (target->GetAPIMutex());
             sb_symbol.reset(frame->GetSymbolContext (eSymbolContextSymbol).symbol);
         }
         else
@@ -256,7 +261,9 @@ SBFrame::GetBlock () const
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBBlock sb_block;
-    ExecutionContext exe_ctx(m_opaque_sp.get());
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
     StackFrame *frame = exe_ctx.GetFramePtr();
     Target *target = exe_ctx.GetTargetPtr();
     if (frame && target)
@@ -264,7 +271,6 @@ SBFrame::GetBlock () const
         Process::StopLocker stop_locker;
         if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            Mutex::Locker api_locker (target->GetAPIMutex());
             sb_block.SetPtr (frame->GetSymbolContext (eSymbolContextBlock).block);
         }
         else
@@ -283,7 +289,9 @@ SBBlock
 SBFrame::GetFrameBlock () const
 {
     SBBlock sb_block;
-    ExecutionContext exe_ctx(m_opaque_sp.get());
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
     StackFrame *frame = exe_ctx.GetFramePtr();
     Target *target = exe_ctx.GetTargetPtr();
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -292,7 +300,6 @@ SBFrame::GetFrameBlock () const
         Process::StopLocker stop_locker;
         if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            Mutex::Locker api_locker (target->GetAPIMutex());
             sb_block.SetPtr(frame->GetFrameBlock ());
         }
         else
@@ -312,7 +319,9 @@ SBFrame::GetLineEntry () const
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBLineEntry sb_line_entry;
-    ExecutionContext exe_ctx(m_opaque_sp.get());
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
     StackFrame *frame = exe_ctx.GetFramePtr();
     Target *target = exe_ctx.GetTargetPtr();
     if (frame && target)
@@ -320,7 +329,6 @@ SBFrame::GetLineEntry () const
         Process::StopLocker stop_locker;
         if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            Mutex::Locker api_locker (target->GetAPIMutex());
             sb_line_entry.SetLineEntry (frame->GetSymbolContext (eSymbolContextLineEntry).line_entry);
         }
         else
@@ -357,7 +365,9 @@ SBFrame::GetPC () const
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     addr_t addr = LLDB_INVALID_ADDRESS;
-    ExecutionContext exe_ctx(m_opaque_sp.get());
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
     StackFrame *frame = exe_ctx.GetFramePtr();
     Target *target = exe_ctx.GetTargetPtr();
     if (frame && target)
@@ -365,7 +375,6 @@ SBFrame::GetPC () const
         Process::StopLocker stop_locker;
         if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            Mutex::Locker api_locker (target->GetAPIMutex());
             addr = frame->GetFrameCodeAddress().GetOpcodeLoadAddress (target);
         }
         else
@@ -386,7 +395,9 @@ SBFrame::SetPC (addr_t new_pc)
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     bool ret_val = false;
-    ExecutionContext exe_ctx(m_opaque_sp.get());
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
     StackFrame *frame = exe_ctx.GetFramePtr();
     Target *target = exe_ctx.GetTargetPtr();
     if (frame && target)
@@ -394,7 +405,6 @@ SBFrame::SetPC (addr_t new_pc)
         Process::StopLocker stop_locker;
         if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            Mutex::Locker api_locker (target->GetAPIMutex());
             ret_val = frame->GetRegisterContext()->SetPC (new_pc);
         }
         else
@@ -416,7 +426,9 @@ SBFrame::GetSP () const
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     addr_t addr = LLDB_INVALID_ADDRESS;
-    ExecutionContext exe_ctx(m_opaque_sp.get());
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
     StackFrame *frame = exe_ctx.GetFramePtr();
     Target *target = exe_ctx.GetTargetPtr();
     if (frame && target)
@@ -424,7 +436,6 @@ SBFrame::GetSP () const
         Process::StopLocker stop_locker;
         if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            Mutex::Locker api_locker (target->GetAPIMutex());
             addr = frame->GetRegisterContext()->GetSP();
         }
         else
@@ -445,7 +456,9 @@ SBFrame::GetFP () const
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     addr_t addr = LLDB_INVALID_ADDRESS;
-    ExecutionContext exe_ctx(m_opaque_sp.get());
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
     StackFrame *frame = exe_ctx.GetFramePtr();
     Target *target = exe_ctx.GetTargetPtr();
     if (frame && target)
@@ -453,7 +466,6 @@ SBFrame::GetFP () const
         Process::StopLocker stop_locker;
         if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            Mutex::Locker api_locker (target->GetAPIMutex());
             addr = frame->GetRegisterContext()->GetFP();
         }
         else
@@ -474,7 +486,9 @@ SBFrame::GetPCAddress () const
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBAddress sb_addr;
-    ExecutionContext exe_ctx(m_opaque_sp.get());
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
     StackFrame *frame = exe_ctx.GetFramePtr();
     Target *target = exe_ctx.GetTargetPtr();
     if (frame && target)
@@ -482,7 +496,6 @@ SBFrame::GetPCAddress () const
         Process::StopLocker stop_locker;
         if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            Mutex::Locker api_locker (target->GetAPIMutex());
             sb_addr.SetAddress (&frame->GetFrameCodeAddress());
         }
         else
@@ -521,7 +534,9 @@ lldb::SBValue
 SBFrame::GetValueForVariablePath (const char *var_path, DynamicValueType use_dynamic)
 {
     SBValue sb_value;
-    ExecutionContext exe_ctx(m_opaque_sp.get());
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
     StackFrame *frame = exe_ctx.GetFramePtr();
     Target *target = exe_ctx.GetTargetPtr();
     if (frame && target && var_path && var_path[0])
@@ -529,7 +544,6 @@ SBFrame::GetValueForVariablePath (const char *var_path, DynamicValueType use_dyn
         Process::StopLocker stop_locker;
         if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            Mutex::Locker api_locker (target->GetAPIMutex());
             VariableSP var_sp;
             Error error;
             ValueObjectSP value_sp (frame->GetValueForVariableExpressionPath (var_path, 
@@ -572,7 +586,9 @@ SBFrame::FindVariable (const char *name, lldb::DynamicValueType use_dynamic)
     VariableSP var_sp;
     SBValue sb_value;
     ValueObjectSP value_sp;
-    ExecutionContext exe_ctx(m_opaque_sp.get());
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
     StackFrame *frame = exe_ctx.GetFramePtr();
     Target *target = exe_ctx.GetTargetPtr();
     if (frame && target && name && name[0])
@@ -581,7 +597,6 @@ SBFrame::FindVariable (const char *name, lldb::DynamicValueType use_dynamic)
         if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
             VariableList variable_list;
-            Mutex::Locker api_locker (target->GetAPIMutex());
             SymbolContext sc (frame->GetSymbolContext (eSymbolContextBlock));
 
             if (sc.block)
@@ -640,7 +655,9 @@ SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueTy
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBValue sb_value;
     ValueObjectSP value_sp;
-    ExecutionContext exe_ctx(m_opaque_sp.get());
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
     StackFrame *frame = exe_ctx.GetFramePtr();
     Target *target = exe_ctx.GetTargetPtr();
     if (frame && target && name && name[0])
@@ -648,8 +665,6 @@ SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueTy
         Process::StopLocker stop_locker;
         if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            Mutex::Locker api_locker (target->GetAPIMutex());
-        
             switch (value_type)
             {
             case eValueTypeVariableGlobal:      // global variable
@@ -810,7 +825,9 @@ SBFrame::Disassemble () const
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     const char *disassembly = NULL;
-    ExecutionContext exe_ctx(m_opaque_sp.get());
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
     StackFrame *frame = exe_ctx.GetFramePtr();
     Target *target = exe_ctx.GetTargetPtr();
     if (frame && target)
@@ -818,7 +835,6 @@ SBFrame::Disassemble () const
         Process::StopLocker stop_locker;
         if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            Mutex::Locker api_locker (target->GetAPIMutex());
             disassembly = frame->Disassemble();
         }
         else
@@ -863,7 +879,9 @@ SBFrame::GetVariables (bool arguments,
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBValueList value_list;
-    ExecutionContext exe_ctx(m_opaque_sp.get());
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
     StackFrame *frame = exe_ctx.GetFramePtr();
     Target *target = exe_ctx.GetTargetPtr();
 
@@ -883,7 +901,6 @@ SBFrame::GetVariables (bool arguments,
 
             size_t i;
             VariableList *variable_list = NULL;
-            Mutex::Locker api_locker (target->GetAPIMutex());
             variable_list = frame->GetVariableList(true);
             if (variable_list)
             {
@@ -948,7 +965,9 @@ SBFrame::GetRegisters ()
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBValueList value_list;
-    ExecutionContext exe_ctx(m_opaque_sp.get());
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
     StackFrame *frame = exe_ctx.GetFramePtr();
     Target *target = exe_ctx.GetTargetPtr();
     if (frame && target)
@@ -956,7 +975,6 @@ SBFrame::GetRegisters ()
         Process::StopLocker stop_locker;
         if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            Mutex::Locker api_locker (target->GetAPIMutex());
             RegisterContextSP reg_ctx (frame->GetRegisterContext());
             if (reg_ctx)
             {
@@ -985,7 +1003,9 @@ SBFrame::GetDescription (SBStream &description)
 {
     Stream &strm = description.ref();
 
-    ExecutionContext exe_ctx(m_opaque_sp.get());
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
     StackFrame *frame = exe_ctx.GetFramePtr();
     Target *target = exe_ctx.GetTargetPtr();
     if (frame && target)
@@ -993,7 +1013,6 @@ SBFrame::GetDescription (SBStream &description)
         Process::StopLocker stop_locker;
         if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            Mutex::Locker api_locker (target->GetAPIMutex());
             frame->DumpUsingSettingsFormat (&strm);
         }
         else
@@ -1042,16 +1061,16 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
     SBValue expr_result;
     ValueObjectSP expr_value_sp;
 
-    ExecutionContext exe_ctx(m_opaque_sp.get());
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
     StackFrame *frame = exe_ctx.GetFramePtr();
     Target *target = exe_ctx.GetTargetPtr();
     if (log)
         log->Printf ("SBFrame(%p)::EvaluateExpression (expr=\"%s\")...", frame, expr);
 
     if (frame && target)
-    {
-        Mutex::Locker api_locker (target->GetAPIMutex());
-            
+    {            
         Process::StopLocker stop_locker;
         if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {

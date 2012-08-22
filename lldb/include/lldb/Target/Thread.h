@@ -692,7 +692,7 @@ public:
     bool
     IsValid () const
     {
-        return m_destroy_called;
+        return !m_destroy_called;
     }
 
     // When you implement this method, make sure you don't overwrite the m_actual_stop_info if it claims to be

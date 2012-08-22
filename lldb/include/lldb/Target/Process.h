@@ -1563,6 +1563,20 @@ public:
     //------------------------------------------------------------------
     virtual void
     Finalize();
+    
+    
+    //------------------------------------------------------------------
+    /// Return whether this object is valid (i.e. has not been finalized.)
+    ///
+    /// @return
+    ///     Returns \b true if this Process has not been finalized
+    ///     and \b false otherwise.
+    //------------------------------------------------------------------
+    bool
+    IsValid() const
+    {
+        return !m_finalize_called;
+    }
 
     //------------------------------------------------------------------
     /// Launch a new process.
@@ -3366,6 +3380,7 @@ protected:
     std::vector<PreResumeCallbackAndBaton> m_pre_resume_actions;
     ReadWriteLock               m_run_lock;
     Predicate<bool>             m_currently_handling_event;
+    bool                        m_finalize_called;
 
     enum {
         eCanJITDontKnow= 0,
