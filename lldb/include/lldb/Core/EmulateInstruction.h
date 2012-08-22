@@ -18,7 +18,6 @@
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Core/Opcode.h"
 #include "lldb/Core/RegisterValue.h"
-#include "lldb/Interpreter/NamedOptionValue.h"
 
 //----------------------------------------------------------------------
 /// @class EmulateInstruction EmulateInstruction.h "lldb/Core/EmulateInstruction.h"

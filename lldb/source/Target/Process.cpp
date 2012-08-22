@@ -41,6 +41,109 @@
 using namespace lldb;
 using namespace lldb_private;
 
+
+// Comment out line below to disable memory caching, overriding the process setting
+// target.process.disable-memory-cache
+#define ENABLE_MEMORY_CACHING
+
+#ifdef ENABLE_MEMORY_CACHING
+#define DISABLE_MEM_CACHE_DEFAULT false
+#else
+#define DISABLE_MEM_CACHE_DEFAULT true
+#endif
+
+class ProcessOptionValueProperties : public OptionValueProperties
+{
+public:
+    ProcessOptionValueProperties (const ConstString &name) :
+        OptionValueProperties (name)
+    {
+    }
+    
+    // This constructor is used when creating ProcessOptionValueProperties when it
+    // is part of a new lldb_private::Process instance. It will copy all current
+    // global property values as needed
+    ProcessOptionValueProperties (ProcessProperties *global_properties) :
+        OptionValueProperties(*global_properties->GetValueProperties())
+    {
+    }
+    
+    virtual const Property *
+    GetPropertyAtIndex (const ExecutionContext *exe_ctx, bool will_modify, uint32_t idx) const
+    {
+        // When gettings the value for a key from the process options, we will always
+        // try and grab the setting from the current process if there is one. Else we just
+        // use the one from this instance.
+        if (exe_ctx)
+        {
+            Process *process = exe_ctx->GetProcessPtr();
+            if (process)
+            {
+                ProcessOptionValueProperties *instance_properties = static_cast<ProcessOptionValueProperties *>(process->GetValueProperties().get());
+                if (this != instance_properties)
+                    return instance_properties->ProtectedGetPropertyAtIndex (idx);
+            }
+        }
+        return ProtectedGetPropertyAtIndex (idx);
+    }
+};
+
+static PropertyDefinition
+g_properties[] =
+{
+    { "disable-memory-cache" , OptionValue::eTypeBoolean, false, DISABLE_MEM_CACHE_DEFAULT, NULL, NULL, "Disable reading and caching of memory in fixed-size units." },
+    { "extra-startup-command", OptionValue::eTypeArray  , false, OptionValue::eTypeString, NULL, NULL, "A list containing extra commands understood by the particular process plugin used." },
+    {  NULL                  , OptionValue::eTypeInvalid, false, 0, NULL, NULL, NULL  }
+};
+
+enum {
+    ePropertyDisableMemCache,
+    ePropertyExtraStartCommand
+};
+
+ProcessProperties::ProcessProperties (bool is_global) :
+    Properties ()
+{
+    if (is_global)
+    {
+        m_collection_sp.reset (new ProcessOptionValueProperties(ConstString("process")));
+        m_collection_sp->Initialize(g_properties);
+        m_collection_sp->AppendProperty(ConstString("thread"),
+                                        ConstString("Settings specify to threads."),
+                                        true,
+                                        Thread::GetGlobalProperties()->GetValueProperties());
+    }
+    else
+        m_collection_sp.reset (new ProcessOptionValueProperties(Process::GetGlobalProperties().get()));
+}
+
+ProcessProperties::~ProcessProperties()
+{
+}
+
+bool
+ProcessProperties::GetDisableMemoryCache() const
+{
+    const uint32_t idx = ePropertyDisableMemCache;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
+}
+
+Args
+ProcessProperties::GetExtraStartupCommands () const
+{
+    Args args;
+    const uint32_t idx = ePropertyExtraStartCommand;
+    m_collection_sp->GetPropertyAtIndexAsArgs(NULL, idx, args);
+    return args;
+}
+
+void
+ProcessProperties::SetExtraStartupCommands (const Args &args)
+{
+    const uint32_t idx = ePropertyExtraStartCommand;
+    m_collection_sp->SetPropertyAtIndexFromArgs(NULL, idx, args);
+}
+
 void
 ProcessInstanceInfo::Dump (Stream &s, Platform *platform) const
 {
@@ -270,9 +373,9 @@ ProcessLaunchInfo::FinalizeFileActions (Target *target, bool default_to_use_pty)
             // (lldb) settings set target.input-path
             // (lldb) settings set target.output-path
             // (lldb) settings set target.error-path
-            const char *in_path = NULL;
-            const char *out_path = NULL;
-            const char *err_path = NULL;
+            FileSpec in_path;
+            FileSpec out_path;
+            FileSpec err_path;
             if (target)
             {
                 in_path = target->GetStandardInputPath();
@@ -280,23 +383,28 @@ ProcessLaunchInfo::FinalizeFileActions (Target *target, bool default_to_use_pty)
                 err_path = target->GetStandardErrorPath();
             }
             
-            if (default_to_use_pty && (!in_path && !out_path && !err_path))
+            if (in_path || out_path || err_path)
+            {
+                char path[PATH_MAX];
+                if (in_path && in_path.GetPath(path, sizeof(path)))
+                    AppendOpenFileAction(STDIN_FILENO, path, true, false);
+                
+                if (out_path && out_path.GetPath(path, sizeof(path)))
+                    AppendOpenFileAction(STDOUT_FILENO, path, false, true);
+                
+                if (err_path && err_path.GetPath(path, sizeof(path)))
+                    AppendOpenFileAction(STDERR_FILENO, path, false, true);
+            }
+            else if (default_to_use_pty)
             {
                 if (m_pty.OpenFirstAvailableMaster (O_RDWR|O_NOCTTY, NULL, 0))
                 {
-                    in_path = out_path = err_path = m_pty.GetSlaveName (NULL, 0);
+                    const char *slave_path = m_pty.GetSlaveName (NULL, 0);
+                    AppendOpenFileAction(STDIN_FILENO, slave_path, true, false);
+                    AppendOpenFileAction(STDOUT_FILENO, slave_path, false, true);
+                    AppendOpenFileAction(STDERR_FILENO, slave_path, false, true);
                 }
             }
-
-            if (in_path)
-                AppendOpenFileAction(STDIN_FILENO, in_path, true, false);
-            
-            if (out_path)
-                AppendOpenFileAction(STDOUT_FILENO, out_path, false, true);
-
-            if (err_path)
-                AppendOpenFileAction(STDERR_FILENO, err_path, false, true);
-
         }
     }
 }
@@ -779,9 +887,9 @@ Process::GetStaticBroadcasterClass ()
 // Process constructor
 //----------------------------------------------------------------------
 Process::Process(Target &target, Listener &listener) :
+    ProcessProperties (false),
     UserID (LLDB_INVALID_PROCESS_ID),
     Broadcaster (&(target.GetDebugger()), "lldb.process"),
-    ProcessInstanceSettings (GetSettingsController()),
     m_target (target),
     m_public_state (eStateUnloaded),
     m_private_state (eStateUnloaded),
@@ -815,8 +923,6 @@ Process::Process(Target &target, Listener &listener) :
     m_currently_handling_event(false),
     m_can_jit(eCanJITDontKnow)
 {
-    UpdateInstanceName();
-    
     CheckInWithManager ();
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
@@ -853,6 +959,15 @@ Process::~Process()
     if (log)
         log->Printf ("%p Process::~Process()", this);
     StopPrivateStateThread();
+}
+
+const ProcessPropertiesSP &
+Process::GetGlobalProperties()
+{
+    static ProcessPropertiesSP g_settings_sp;
+    if (!g_settings_sp)
+        g_settings_sp.reset (new ProcessProperties (true));
+    return g_settings_sp;
 }
 
 void
@@ -1945,9 +2060,6 @@ Process::DisableSoftwareBreakpoint (BreakpointSite *bp_site)
 
 }
 
-// Comment out line below to disable memory caching, overriding the process setting
-// target.process.disable-memory-cache
-#define ENABLE_MEMORY_CACHING
 // Uncomment to verify memory caching works after making changes to caching code
 //#define VERIFY_MEMORY_READS
 
@@ -3921,88 +4033,66 @@ Process::PopProcessInputReader ()
 void
 Process::SettingsInitialize ()
 {
-    static std::vector<OptionEnumValueElement> g_plugins;
-    
-    int i=0; 
-    const char *name;
-    OptionEnumValueElement option_enum;
-    while ((name = PluginManager::GetProcessPluginNameAtIndex (i)) != NULL)
-    {
-        if (name)
-        {
-            option_enum.value = i;
-            option_enum.string_value = name;
-            option_enum.usage = PluginManager::GetProcessPluginDescriptionAtIndex (i);
-            g_plugins.push_back (option_enum);
-        }
-        ++i;
-    }
-    option_enum.value = 0;
-    option_enum.string_value = NULL;
-    option_enum.usage = NULL;
-    g_plugins.push_back (option_enum);
-    
-    for (i=0; (name = SettingsController::instance_settings_table[i].var_name); ++i)
-    {
-        if (::strcmp (name, "plugin") == 0)
-        {
-            SettingsController::instance_settings_table[i].enum_values = &g_plugins[0];
-            break;
-        }
-    }
-    UserSettingsControllerSP &usc = GetSettingsController();
-    UserSettingsController::InitializeSettingsController (usc,
-                                                          SettingsController::global_settings_table,
-                                                          SettingsController::instance_settings_table);
-                                                          
-    // Now call SettingsInitialize() for each 'child' of Process settings
-    Thread::SettingsInitialize ();
+//    static std::vector<OptionEnumValueElement> g_plugins;
+//    
+//    int i=0; 
+//    const char *name;
+//    OptionEnumValueElement option_enum;
+//    while ((name = PluginManager::GetProcessPluginNameAtIndex (i)) != NULL)
+//    {
+//        if (name)
+//        {
+//            option_enum.value = i;
+//            option_enum.string_value = name;
+//            option_enum.usage = PluginManager::GetProcessPluginDescriptionAtIndex (i);
+//            g_plugins.push_back (option_enum);
+//        }
+//        ++i;
+//    }
+//    option_enum.value = 0;
+//    option_enum.string_value = NULL;
+//    option_enum.usage = NULL;
+//    g_plugins.push_back (option_enum);
+//    
+//    for (i=0; (name = SettingsController::instance_settings_table[i].var_name); ++i)
+//    {
+//        if (::strcmp (name, "plugin") == 0)
+//        {
+//            SettingsController::instance_settings_table[i].enum_values = &g_plugins[0];
+//            break;
+//        }
+//    }
+//    UserSettingsControllerSP &usc = GetSettingsController();
+//    UserSettingsController::InitializeSettingsController (usc,
+//                                                          SettingsController::global_settings_table,
+//                                                          SettingsController::instance_settings_table);
+//                                                          
+//    // Now call SettingsInitialize() for each 'child' of Process settings
+//    Thread::SettingsInitialize ();
 }
 
 void
 Process::SettingsTerminate ()
 {
-    // Must call SettingsTerminate() on each 'child' of Process settings before terminating Process settings.
-    
-    Thread::SettingsTerminate ();
-    
-    // Now terminate Process Settings.
-    
-    UserSettingsControllerSP &usc = GetSettingsController();
-    UserSettingsController::FinalizeSettingsController (usc);
-    usc.reset();
+//    // Must call SettingsTerminate() on each 'child' of Process settings before terminating Process settings.
+//    
+//    Thread::SettingsTerminate ();
+//    
+//    // Now terminate Process Settings.
+//    
+//    UserSettingsControllerSP &usc = GetSettingsController();
+//    UserSettingsController::FinalizeSettingsController (usc);
+//    usc.reset();
 }
 
-UserSettingsControllerSP &
-Process::GetSettingsController ()
-{
-    static UserSettingsControllerSP g_settings_controller_sp;
-    if (!g_settings_controller_sp)
-    {
-        g_settings_controller_sp.reset (new Process::SettingsController);
-        // The first shared pointer to Process::SettingsController in
-        // g_settings_controller_sp must be fully created above so that 
-        // the TargetInstanceSettings can use a weak_ptr to refer back 
-        // to the master setttings controller
-        InstanceSettingsSP default_instance_settings_sp (new ProcessInstanceSettings (g_settings_controller_sp, 
-                                                                                      false,
-                                                                                      InstanceSettings::GetDefaultName().AsCString()));
-        g_settings_controller_sp->SetDefaultInstanceSettings (default_instance_settings_sp);
-    }
-    return g_settings_controller_sp;
-
-}
-
-void
-Process::UpdateInstanceName ()
-{
-    Module *module = GetTarget().GetExecutableModulePointer();
-    if (module && module->GetFileSpec().GetFilename())
-    {
-        GetSettingsController()->RenameInstanceSettings (GetInstanceName().AsCString(),
-                                                         module->GetFileSpec().GetFilename().AsCString());
-    }
-}
+//PropertiesSP &
+//Process::GetProperties ()
+//{
+//    static PropertiesSP g_settings_sp;
+//    if (!g_settings_sp)
+//        g_settings_sp.reset (new ProcessProperties());
+//    return g_settings_sp;
+//}
 
 ExecutionResults
 Process::RunThreadPlan (ExecutionContext &exe_ctx,
@@ -4840,217 +4930,217 @@ Process::Flush ()
 // class Process::SettingsController
 //--------------------------------------------------------------
 
-Process::SettingsController::SettingsController () :
-    UserSettingsController ("process", Target::GetSettingsController())
-{
-}
-
-Process::SettingsController::~SettingsController ()
-{
-}
-
-lldb::InstanceSettingsSP
-Process::SettingsController::CreateInstanceSettings (const char *instance_name)
-{
-    lldb::InstanceSettingsSP new_settings_sp (new ProcessInstanceSettings (GetSettingsController(),
-                                                                           false, 
-                                                                           instance_name));
-    return new_settings_sp;
-}
+//Process::SettingsController::SettingsController () :
+//    UserSettingsController ("process", Target::GetSettingsController())
+//{
+//}
+//
+//Process::SettingsController::~SettingsController ()
+//{
+//}
+//
+//lldb::InstanceSettingsSP
+//Process::SettingsController::CreateInstanceSettings (const char *instance_name)
+//{
+//    lldb::InstanceSettingsSP new_settings_sp (new ProcessInstanceSettings (GetSettingsController(),
+//                                                                           false, 
+//                                                                           instance_name));
+//    return new_settings_sp;
+//}
 
 //--------------------------------------------------------------
 // class ProcessInstanceSettings
 //--------------------------------------------------------------
-
-ProcessInstanceSettings::ProcessInstanceSettings
-(
-    const UserSettingsControllerSP &owner_sp, 
-    bool live_instance, 
-    const char *name
-) :
-    InstanceSettings (owner_sp, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance)
-{
-    // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
-    // until the vtables for ProcessInstanceSettings are properly set up, i.e. AFTER all the initializers.
-    // For this reason it has to be called here, rather than in the initializer or in the parent constructor.
-    // This is true for CreateInstanceName() too.
-    
-    if (GetInstanceName () == InstanceSettings::InvalidName())
-    {
-        ChangeInstanceName (std::string (CreateInstanceName().AsCString()));
-        owner_sp->RegisterInstanceSettings (this);
-    }
-    
-    if (live_instance)
-    {
-        const lldb::InstanceSettingsSP &pending_settings = owner_sp->FindPendingSettings (m_instance_name);
-        CopyInstanceSettings (pending_settings,false);
-    }
-}
-
-ProcessInstanceSettings::ProcessInstanceSettings (const ProcessInstanceSettings &rhs) :
-    InstanceSettings (Process::GetSettingsController(), CreateInstanceName().AsCString()),
-    m_disable_memory_cache(rhs.m_disable_memory_cache),
-    m_extra_startup_commands (rhs.m_extra_startup_commands)
-{
-    if (m_instance_name != InstanceSettings::GetDefaultName())
-    {
-        UserSettingsControllerSP owner_sp (m_owner_wp.lock());
-        if (owner_sp)
-        {
-            CopyInstanceSettings (owner_sp->FindPendingSettings (m_instance_name), false);
-            owner_sp->RemovePendingSettings (m_instance_name);
-        }
-    }
-}
-
-ProcessInstanceSettings::~ProcessInstanceSettings ()
-{
-}
-
-ProcessInstanceSettings&
-ProcessInstanceSettings::operator= (const ProcessInstanceSettings &rhs)
-{
-    if (this != &rhs)
-    {
-        m_disable_memory_cache = rhs.m_disable_memory_cache;
-        m_extra_startup_commands = rhs.m_extra_startup_commands;
-    }
-
-    return *this;
-}
-
-
-void
-ProcessInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_name,
-                                                         const char *index_value,
-                                                         const char *value,
-                                                         const ConstString &instance_name,
-                                                         const SettingEntry &entry,
-                                                         VarSetOperationType op,
-                                                         Error &err,
-                                                         bool pending)
-{
-    if (var_name == GetDisableMemoryCacheVarName())
-    {
-        bool success;
-        bool result = Args::StringToBoolean(value, false, &success);
-        
-        if (success)
-        {
-            m_disable_memory_cache = result;
-        }
-        else
-        {
-            err.SetErrorStringWithFormat ("Bad value \"%s\" for %s, should be Boolean.", value, GetDisableMemoryCacheVarName().AsCString());
-        }
-        
-    }
-    else if (var_name == GetExtraStartupCommandVarName())
-    {
-        UserSettingsController::UpdateStringArrayVariable (op, index_value, m_extra_startup_commands, value, err);
-    }
-}
-
-void
-ProcessInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,
-                                               bool pending)
-{
-    if (new_settings.get() == NULL)
-        return;
-    
-    ProcessInstanceSettings *new_settings_ptr = static_cast <ProcessInstanceSettings *> (new_settings.get());
-    
-    if (!new_settings_ptr)
-        return;
-    
-    *this = *new_settings_ptr;
-}
-
-bool
-ProcessInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
-                                                   const ConstString &var_name,
-                                                   StringList &value,
-                                                   Error *err)
-{
-    if (var_name == GetDisableMemoryCacheVarName())
-    {
-        value.AppendString(m_disable_memory_cache ? "true" : "false");
-        return true;
-    }
-    else if (var_name == GetExtraStartupCommandVarName())
-    {
-        if (m_extra_startup_commands.GetArgumentCount() > 0)
-        {
-            for (int i = 0; i < m_extra_startup_commands.GetArgumentCount(); ++i)
-                value.AppendString (m_extra_startup_commands.GetArgumentAtIndex (i));
-        }
-        return true;
-    }
-    else
-    {
-        if (err)
-            err->SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
-        return false;
-    }
-}
-
-const ConstString
-ProcessInstanceSettings::CreateInstanceName ()
-{
-    static int instance_count = 1;
-    StreamString sstr;
-
-    sstr.Printf ("process_%d", instance_count);
-    ++instance_count;
-
-    const ConstString ret_val (sstr.GetData());
-    return ret_val;
-}
-
-const ConstString &
-ProcessInstanceSettings::GetDisableMemoryCacheVarName () const
-{
-    static ConstString disable_memory_cache_var_name ("disable-memory-cache");
-    
-    return disable_memory_cache_var_name;
-}
-
-const ConstString &
-ProcessInstanceSettings::GetExtraStartupCommandVarName () const
-{
-    static ConstString extra_startup_command_var_name ("extra-startup-command");
-    
-    return extra_startup_command_var_name;
-}
-
-//--------------------------------------------------
-// SettingsController Variable Tables
-//--------------------------------------------------
-
-SettingEntry
-Process::SettingsController::global_settings_table[] =
-{
-  //{ "var-name",    var-type  ,        "default", enum-table, init'd, hidden, "help-text"},
-    {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
-};
-
-
-SettingEntry
-Process::SettingsController::instance_settings_table[] =
-{
-  //{ "var-name",       var-type,              "default",       enum-table, init'd, hidden, "help-text"},
-    {  "disable-memory-cache", eSetVarTypeBoolean,
-#ifdef ENABLE_MEMORY_CACHING
-        "false",
-#else
-        "true",
-#endif
-        NULL,       false,  false,  "Disable reading and caching of memory in fixed-size units." },
-    { "extra-startup-command", eSetVarTypeArray, NULL, NULL, false,  false,  "A list containing extra commands understood by the particular process plugin used." },
-    {  NULL,            eSetVarTypeNone,        NULL,           NULL,       false,  false,  NULL }
-};
-
-
+//
+//ProcessInstanceSettings::ProcessInstanceSettings
+//(
+//    const UserSettingsControllerSP &owner_sp, 
+//    bool live_instance, 
+//    const char *name
+//) :
+//    InstanceSettings (owner_sp, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance)
+//{
+//    // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
+//    // until the vtables for ProcessInstanceSettings are properly set up, i.e. AFTER all the initializers.
+//    // For this reason it has to be called here, rather than in the initializer or in the parent constructor.
+//    // This is true for CreateInstanceName() too.
+//    
+//    if (GetInstanceName () == InstanceSettings::InvalidName())
+//    {
+//        ChangeInstanceName (std::string (CreateInstanceName().AsCString()));
+//        owner_sp->RegisterInstanceSettings (this);
+//    }
+//    
+//    if (live_instance)
+//    {
+//        const lldb::InstanceSettingsSP &pending_settings = owner_sp->FindPendingSettings (m_instance_name);
+//        CopyInstanceSettings (pending_settings,false);
+//    }
+//}
+//
+//ProcessInstanceSettings::ProcessInstanceSettings (const ProcessInstanceSettings &rhs) :
+//    InstanceSettings (Process::GetSettingsController(), CreateInstanceName().AsCString()),
+//    m_disable_memory_cache(rhs.m_disable_memory_cache),
+//    m_extra_startup_commands (rhs.m_extra_startup_commands)
+//{
+//    if (m_instance_name != InstanceSettings::GetDefaultName())
+//    {
+//        UserSettingsControllerSP owner_sp (m_owner_wp.lock());
+//        if (owner_sp)
+//        {
+//            CopyInstanceSettings (owner_sp->FindPendingSettings (m_instance_name), false);
+//            owner_sp->RemovePendingSettings (m_instance_name);
+//        }
+//    }
+//}
+//
+//ProcessInstanceSettings::~ProcessInstanceSettings ()
+//{
+//}
+//
+//ProcessInstanceSettings&
+//ProcessInstanceSettings::operator= (const ProcessInstanceSettings &rhs)
+//{
+//    if (this != &rhs)
+//    {
+//        m_disable_memory_cache = rhs.m_disable_memory_cache;
+//        m_extra_startup_commands = rhs.m_extra_startup_commands;
+//    }
+//
+//    return *this;
+//}
+//
+//
+//void
+//ProcessInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_name,
+//                                                         const char *index_value,
+//                                                         const char *value,
+//                                                         const ConstString &instance_name,
+//                                                         const SettingEntry &entry,
+//                                                         VarSetOperationType op,
+//                                                         Error &err,
+//                                                         bool pending)
+//{
+//    if (var_name == GetDisableMemoryCacheVarName())
+//    {
+//        bool success;
+//        bool result = Args::StringToBoolean(value, false, &success);
+//        
+//        if (success)
+//        {
+//            m_disable_memory_cache = result;
+//        }
+//        else
+//        {
+//            err.SetErrorStringWithFormat ("Bad value \"%s\" for %s, should be Boolean.", value, GetDisableMemoryCacheVarName().AsCString());
+//        }
+//        
+//    }
+//    else if (var_name == GetExtraStartupCommandVarName())
+//    {
+//        UserSettingsController::UpdateStringArrayVariable (op, index_value, m_extra_startup_commands, value, err);
+//    }
+//}
+//
+//void
+//ProcessInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,
+//                                               bool pending)
+//{
+//    if (new_settings.get() == NULL)
+//        return;
+//    
+//    ProcessInstanceSettings *new_settings_ptr = static_cast <ProcessInstanceSettings *> (new_settings.get());
+//    
+//    if (!new_settings_ptr)
+//        return;
+//    
+//    *this = *new_settings_ptr;
+//}
+//
+//bool
+//ProcessInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
+//                                                   const ConstString &var_name,
+//                                                   StringList &value,
+//                                                   Error *err)
+//{
+//    if (var_name == GetDisableMemoryCacheVarName())
+//    {
+//        value.AppendString(m_disable_memory_cache ? "true" : "false");
+//        return true;
+//    }
+//    else if (var_name == GetExtraStartupCommandVarName())
+//    {
+//        if (m_extra_startup_commands.GetArgumentCount() > 0)
+//        {
+//            for (int i = 0; i < m_extra_startup_commands.GetArgumentCount(); ++i)
+//                value.AppendString (m_extra_startup_commands.GetArgumentAtIndex (i));
+//        }
+//        return true;
+//    }
+//    else
+//    {
+//        if (err)
+//            err->SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
+//        return false;
+//    }
+//}
+//
+//const ConstString
+//ProcessInstanceSettings::CreateInstanceName ()
+//{
+//    static int instance_count = 1;
+//    StreamString sstr;
+//
+//    sstr.Printf ("process_%d", instance_count);
+//    ++instance_count;
+//
+//    const ConstString ret_val (sstr.GetData());
+//    return ret_val;
+//}
+//
+//const ConstString &
+//ProcessInstanceSettings::GetDisableMemoryCacheVarName () const
+//{
+//    static ConstString disable_memory_cache_var_name ("disable-memory-cache");
+//    
+//    return disable_memory_cache_var_name;
+//}
+//
+//const ConstString &
+//ProcessInstanceSettings::GetExtraStartupCommandVarName () const
+//{
+//    static ConstString extra_startup_command_var_name ("extra-startup-command");
+//    
+//    return extra_startup_command_var_name;
+//}
+//
+////--------------------------------------------------
+//// SettingsController Variable Tables
+////--------------------------------------------------
+//
+//SettingEntry
+//Process::SettingsController::global_settings_table[] =
+//{
+//  //{ "var-name",    var-type  ,        "default", enum-table, init'd, hidden, "help-text"},
+//    {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
+//};
+//
+//
+//SettingEntry
+//Process::SettingsController::instance_settings_table[] =
+//{
+//  //{ "var-name",       var-type,              "default",       enum-table, init'd, hidden, "help-text"},
+//    {  "disable-memory-cache", eSetVarTypeBoolean,
+//#ifdef ENABLE_MEMORY_CACHING
+//        "false",
+//#else
+//        "true",
+//#endif
+//        NULL,       false,  false,  "Disable reading and caching of memory in fixed-size units." },
+//    { "extra-startup-command", eSetVarTypeArray, NULL, NULL, false,  false,  "A list containing extra commands understood by the particular process plugin used." },
+//    {  NULL,            eSetVarTypeNone,        NULL,           NULL,       false,  false,  NULL }
+//};
+//
+//
 
 

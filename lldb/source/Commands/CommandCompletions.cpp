@@ -405,15 +405,30 @@ CommandCompletions::SettingsNames (CommandInterpreter &interpreter,
                                    bool &word_complete,
                                    StringList &matches)
 {
-    lldb::UserSettingsControllerSP root_settings = Debugger::GetSettingsController();
-    Args partial_setting_name_pieces = UserSettingsController::BreakNameIntoPieces (partial_setting_name);
-
-    return UserSettingsController::CompleteSettingsNames (root_settings,
-                                                          partial_setting_name_pieces,
-                                                          word_complete,
-                                                          matches);
-
-    //return matches.GetSize();
+    // Cache the full setting name list
+    static StringList g_property_names;
+    if (g_property_names.GetSize() == 0)
+    {
+        // Generate the full setting name list on demand
+        lldb::OptionValuePropertiesSP properties_sp (interpreter.GetDebugger().GetValueProperties());
+        if (properties_sp)
+        {
+            StreamString strm;
+            properties_sp->DumpValue(NULL, strm, OptionValue::eDumpOptionName);
+            const std::string &str = strm.GetString();
+            g_property_names.SplitIntoLines(str.c_str(), str.size());
+        }
+    }
+    
+    size_t exact_matches_idx = SIZE_MAX;
+    const size_t num_matches = g_property_names.AutoComplete (partial_setting_name, matches, exact_matches_idx);
+//    return UserSettingsController::CompleteSettingsNames (root_settings,
+//                                                          partial_setting_name_pieces,
+//                                                          word_complete,
+//                                                          matches);
+//
+    word_complete = exact_matches_idx != SIZE_MAX;
+    return num_matches;
 }
 
 

@@ -22,7 +22,7 @@
 #include "lldb/Core/EmulateInstruction.h"
 #include "lldb/Core/Opcode.h"
 #include "lldb/Core/PluginInterface.h"
-#include "lldb/Interpreter/NamedOptionValue.h"
+#include "lldb/Interpreter/OptionValue.h"
 
 namespace lldb_private {
 

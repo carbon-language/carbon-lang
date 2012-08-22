@@ -86,9 +86,14 @@ public:
 
     bool
     Replace (const ConstString &path, 
-             const ConstString &new_path, 
+             const ConstString &replacement, 
              bool notify);
-    
+
+    bool
+    Replace (const ConstString &path,
+             const ConstString &replacement,
+             uint32_t index,
+             bool notify);
     bool
     RemapPath (const ConstString &path, ConstString &new_path) const;
 

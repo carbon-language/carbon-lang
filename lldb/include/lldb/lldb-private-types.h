@@ -39,17 +39,17 @@ namespace lldb_private
     //----------------------------------------------------------------------
     typedef struct
     {
-        const char * name;          // Name of this register set
-        const char * short_name;    // A short name for this register set
+        const char *name;           // Name of this register set
+        const char *short_name;     // A short name for this register set
         size_t num_registers;       // The number of registers in REGISTERS array below
         const uint32_t *registers;  // An array of register numbers in this set
     } RegisterSet;
 
     typedef struct
     {
-        int value;
-        const char * string_value;
-        const char * usage;
+        int64_t value;
+        const char *string_value;
+        const char *usage;
     } OptionEnumValueElement;
     
     typedef struct
@@ -57,13 +57,13 @@ namespace lldb_private
         uint32_t usage_mask;                     // Used to mark options that can be used together.  If (1 << n & usage_mask) != 0
                                                  // then this option belongs to option set n.
         bool required;                           // This option is required (in the current usage level)
-        const char * long_option;                // Full name for this option.
+        const char *long_option;                 // Full name for this option.
         char short_option;                       // Single character for this option.
         int option_has_arg;                      // no_argument, required_argument or optional_argument
         OptionEnumValueElement *enum_values;     // If non-NULL an array of enum values.
         uint32_t completion_type;                // Cookie the option class can use to do define the argument completion.
         lldb::CommandArgumentType argument_type; // Type of argument this option takes
-        const char *  usage_text;                // Full text explaining what this options does and what (if any) argument to
+        const char *usage_text;                  // Full text explaining what this options does and what (if any) argument to
                                                  // pass it.
     } OptionDefinition;
 

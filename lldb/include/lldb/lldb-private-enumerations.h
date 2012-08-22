@@ -59,16 +59,16 @@ typedef enum ArchitectureType
 ///
 //----------------------------------------------------------------------
 
-typedef enum SettableVariableType
-{
-    eSetVarTypeInt,
-    eSetVarTypeBoolean,
-    eSetVarTypeString,
-    eSetVarTypeArray,
-    eSetVarTypeDictionary,
-    eSetVarTypeEnum,
-    eSetVarTypeNone
-} SettableVariableType;
+//typedef enum SettableVariableType
+//{
+//    eSetVarTypeInt,
+//    eSetVarTypeBoolean,
+//    eSetVarTypeString,
+//    eSetVarTypeArray,
+//    eSetVarTypeDictionary,
+//    eSetVarTypeEnum,
+//    eSetVarTypeNone
+//} SettableVariableType;
 
 typedef enum VarSetOperationType
 {

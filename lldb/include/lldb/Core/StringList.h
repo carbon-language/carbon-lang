@@ -31,6 +31,9 @@ public:
     ~StringList ();
 
     void
+    AppendString (const std::string &s);
+    
+    void
     AppendString (const char *str);
 
     void
@@ -81,7 +84,19 @@ public:
 
     StringList&
     operator << (StringList strings);
-        
+    
+    // This string list contains a list of valid auto completion
+    // strings, and the "s" is passed in. "matches" is filled in
+    // with zero or more string values that start with "s", and
+    // the first string to exactly match one of the string
+    // values in this collection, will have "exact_matches_idx"
+    // filled in to match the index, or "exact_matches_idx" will
+    // have SIZE_MAX
+    size_t
+    AutoComplete (const char *s,
+                  StringList &matches,
+                  size_t &exact_matches_idx) const;
+
 private:
 
     STLStringArray m_strings;

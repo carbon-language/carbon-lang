@@ -1350,7 +1350,7 @@ StackFrame::GetStatus (Stream& strm,
     {
         ExecutionContext exe_ctx (shared_from_this());
         bool have_source = false;
-        DebuggerInstanceSettings::StopDisassemblyType disasm_display = DebuggerInstanceSettings::eStopDisassemblyTypeNever;
+        Debugger::StopDisassemblyType disasm_display = Debugger::eStopDisassemblyTypeNever;
         Target *target = exe_ctx.GetTargetPtr();
         if (target)
         {
@@ -1378,14 +1378,14 @@ StackFrame::GetStatus (Stream& strm,
             }
             switch (disasm_display)
             {
-            case DebuggerInstanceSettings::eStopDisassemblyTypeNever:
+            case Debugger::eStopDisassemblyTypeNever:
                 break;
                 
-            case DebuggerInstanceSettings::eStopDisassemblyTypeNoSource:
+            case Debugger::eStopDisassemblyTypeNoSource:
                 if (have_source)
                     break;
                 // Fall through to next case
-            case DebuggerInstanceSettings::eStopDisassemblyTypeAlways:
+            case Debugger::eStopDisassemblyTypeAlways:
                 if (target)
                 {
                     const uint32_t disasm_lines = debugger.GetDisassemblyLineCount();

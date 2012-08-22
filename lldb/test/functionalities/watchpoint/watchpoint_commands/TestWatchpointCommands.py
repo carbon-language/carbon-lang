@@ -187,7 +187,7 @@ class WatchpointCommandsTestCase(TestBase):
         self.expect("watchpoint delete",
             substrs = ['All watchpoints removed.'])
         # Restore the original setting of auto-confirm.
-        self.runCmd("settings set -r auto-confirm")
+        self.runCmd("settings clear auto-confirm")
 
         # Use the '-v' option to do verbose listing of the watchpoint.
         self.runCmd("watchpoint list -v")

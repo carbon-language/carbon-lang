@@ -168,9 +168,9 @@ protected:
         
         if (launch_args.GetArgumentCount() == 0)
         {
-            const Args &process_args = target->GetRunArguments();
-            if (process_args.GetArgumentCount() > 0)
-                m_options.launch_info.GetArguments().AppendArguments (process_args);
+            Args target_setting_args;
+            if (target->GetRunArguments(target_setting_args) > 0)
+                m_options.launch_info.GetArguments().AppendArguments (target_setting_args);
         }
         else
         {

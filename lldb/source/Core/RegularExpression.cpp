@@ -184,6 +184,8 @@ RegularExpression::IsValid () const
 const char*
 RegularExpression::GetText () const
 {
+    if (m_re.empty())
+        return NULL;
     return m_re.c_str();
 }
 

@@ -185,6 +185,44 @@ public:
     uint32_t
     GetSize () const;
 
+    bool
+    Insert (uint32_t idx, const FileSpec &file)
+    {
+        if (idx < m_files.size())
+        {
+            m_files.insert(m_files.begin() + idx, file);
+            return true;
+        }
+        else if (idx == m_files.size())
+        {
+            m_files.push_back(file);
+            return true;
+        }
+        return false;
+    }
+
+    bool
+    Replace (uint32_t idx, const FileSpec &file)
+    {
+        if (idx < m_files.size())
+        {
+            m_files[idx] = file;
+            return true;
+        }
+        return false;
+    }
+
+    bool
+    Remove (uint32_t idx)
+    {
+        if (idx < m_files.size())
+        {
+            m_files.erase(m_files.begin() + idx);
+            return true;
+        }
+        return false;
+    }
+
     static size_t GetFilesMatchingPartialPath (const char *path, bool dir_okay, FileSpecList &matches);
 
 protected:

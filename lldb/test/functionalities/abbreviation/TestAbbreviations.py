@@ -47,7 +47,7 @@ class AbbreviationsTestCase(TestBase):
                     startstr = 'prompt (string) = "[with-three-trailing-spaces]   "')
 
 
-        self.runCmd("settings set -r prompt")
+        self.runCmd("settings clear prompt")
         self.expect("settings show prompt",
                     startstr = 'prompt (string) = "(lldb) "')
 
@@ -59,7 +59,7 @@ class AbbreviationsTestCase(TestBase):
         self.expect("se sh prompt",
                     startstr = 'prompt (string) = "Sycamore> "')
 
-        self.runCmd("se se -r prompt")
+        self.runCmd("se cl prompt")
         self.expect("set sh prompt",
                     startstr = 'prompt (string) = "(lldb) "')
 

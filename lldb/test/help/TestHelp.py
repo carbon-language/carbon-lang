@@ -87,7 +87,10 @@ class HelpCommandTestCase(TestBase):
 
     def test_help_should_not_hang_emacsshell(self):
         """Command 'settings set term-width 0' should not hang the help command."""
-        self.runCmd("settings set term-width 0")
+        self.expect("settings set term-width 0",
+                    COMMAND_FAILED_AS_EXPECTED, error=True,
+            substrs = ['error: 0 is out of range, valid values must be between'])
+        # self.runCmd("settings set term-width 0")
         self.expect("help",
             startstr = 'The following is a list of built-in, permanent debugger commands')
 

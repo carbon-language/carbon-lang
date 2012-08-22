@@ -16,6 +16,8 @@
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Interpreter/OptionValueArray.h"
+#include "lldb/Interpreter/OptionValueDictionary.h"
 #include "lldb/Symbol/UnwindPlan.h"
 
 #include "Plugins/Process/Utility/ARMDefines.h"

@@ -60,6 +60,8 @@ public:
     {
     }
 
+    explicit ConstString (const llvm::StringRef &s);
+
     //------------------------------------------------------------------
     /// Construct with C String value
     ///
@@ -374,6 +376,9 @@ public:
     //------------------------------------------------------------------
     void
     SetCString (const char *cstr);
+
+    void
+    SetString (const llvm::StringRef &s);
 
     //------------------------------------------------------------------
     /// Set the C string value and its mangled counterpart.

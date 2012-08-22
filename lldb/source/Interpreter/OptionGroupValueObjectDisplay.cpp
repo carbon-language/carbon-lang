@@ -31,8 +31,7 @@ OptionGroupValueObjectDisplay::~OptionGroupValueObjectDisplay ()
 static OptionDefinition
 g_option_table[] =
 {
-    { LLDB_OPT_SET_1, false, "dynamic-type",     'd', required_argument, TargetInstanceSettings::g_dynamic_value_types, 
-                                                                              0, eArgTypeNone,      "Show the object as its full dynamic type, not its static type, if available."},
+    { LLDB_OPT_SET_1, false, "dynamic-type",     'd', required_argument, g_dynamic_value_types, 0, eArgTypeNone,      "Show the object as its full dynamic type, not its static type, if available."},
     { LLDB_OPT_SET_1, false, "synthetic-type",   'S', required_argument, NULL, 0, eArgTypeBoolean,   "Show the object obeying its synthetic provider, if available."},
     { LLDB_OPT_SET_1, false, "depth",            'D', required_argument, NULL, 0, eArgTypeCount,     "Set the max recurse depth when dumping aggregate types (default is infinity)."},
     { LLDB_OPT_SET_1, false, "flat",             'F', no_argument,       NULL, 0, eArgTypeNone,      "Display results in a flat format that uses expression paths for each variable or member."},
@@ -73,7 +72,7 @@ OptionGroupValueObjectDisplay::SetOptionValue (CommandInterpreter &interpreter,
         case 'd':
             {
                 int32_t result;
-                result = Args::StringToOptionEnum (option_arg, TargetInstanceSettings::g_dynamic_value_types, 2, error);
+                result = Args::StringToOptionEnum (option_arg, g_dynamic_value_types, 2, error);
                 if (error.Success())
                     use_dynamic = (lldb::DynamicValueType) result;
             }

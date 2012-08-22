@@ -28,12 +28,12 @@ class SettingsCommandTestCase(TestBase):
                        "executable's environment"])
 
     def test_append_target_env_vars(self):
-        """Test that 'replace target.run-args' works."""
+        """Test that 'append target.run-args' works."""
         # Append the env-vars.
         self.runCmd('settings append target.env-vars MY_ENV_VAR=YES')
         # And add hooks to restore the settings during tearDown().
         self.addTearDownHook(
-            lambda: self.runCmd("settings set -r target.env-vars"))
+            lambda: self.runCmd("settings clear target.env-vars"))
 
         # Check it immediately!
         self.expect('settings show target.env-vars',
@@ -45,7 +45,7 @@ class SettingsCommandTestCase(TestBase):
         self.runCmd('settings set target.run-args a b c')
         # And add hooks to restore the settings during tearDown().
         self.addTearDownHook(
-            lambda: self.runCmd("settings set -r target.run-args"))
+            lambda: self.runCmd("settings clear target.run-args"))
 
         # Now insert-before the index-0 element with '__a__'.
         self.runCmd('settings insert-before target.run-args 0 __a__')
@@ -53,7 +53,7 @@ class SettingsCommandTestCase(TestBase):
         self.runCmd('settings insert-after target.run-args 1 __A__')
         # Check it immediately!
         self.expect('settings show target.run-args',
-            substrs = ['target.run-args (array) = ',
+            substrs = ['target.run-args',
                        '[0]: "__a__"',
                        '[1]: "a"',
                        '[2]: "__A__"',
@@ -66,13 +66,13 @@ class SettingsCommandTestCase(TestBase):
         self.runCmd('settings set target.run-args a b c')
         # And add hooks to restore the settings during tearDown().
         self.addTearDownHook(
-            lambda: self.runCmd("settings set -r target.run-args"))
+            lambda: self.runCmd("settings clear target.run-args"))
 
         # Now replace the index-0 element with 'A', instead.
         self.runCmd('settings replace target.run-args 0 A')
         # Check it immediately!
         self.expect('settings show target.run-args',
-            substrs = ['target.run-args (array) = ',
+            substrs = ['target.run-args (arguments) =',
                        '[0]: "A"',
                        '[1]: "b"',
                        '[2]: "c"'])
@@ -92,7 +92,7 @@ class SettingsCommandTestCase(TestBase):
             substrs = ['prompt (string) = "lldb2"'])
 
         # Use '-r' option to reset to the original default prompt.
-        self.runCmd("settings set -r prompt")
+        self.runCmd("settings clear prompt")
 
     def test_set_term_width(self):
         """Test that 'set term-width' actually changes the term-width."""
@@ -118,7 +118,6 @@ class SettingsCommandTestCase(TestBase):
         def cleanup():
             format_string = "frame #${frame.index}: ${frame.pc}{ ${module.file.basename}{`${function.name}${function.pc-offset}}}{ at ${line.file.basename}:${line.number}}\n"
             self.runCmd("settings set frame-format %s" % format_string, check=False)
-            self.runCmd('command unalias hello', check=False)
 
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
@@ -155,7 +154,7 @@ class SettingsCommandTestCase(TestBase):
             startstr = "All breakpoints removed")
 
         # Restore the original setting of auto-confirm.
-        self.runCmd("settings set -r auto-confirm")
+        self.runCmd("settings clear auto-confirm")
         self.expect("settings show auto-confirm", SETTING_MSG("auto-confirm"),
             startstr = "auto-confirm (boolean) = false")
 
@@ -181,10 +180,10 @@ class SettingsCommandTestCase(TestBase):
         # And add hooks to restore the settings during tearDown().
         self.runCmd('settings set target.run-args A B C')
         self.addTearDownHook(
-            lambda: self.runCmd("settings set -r target.run-args"))
+            lambda: self.runCmd("settings clear target.run-args"))
         self.runCmd('settings set target.env-vars ["MY_ENV_VAR"]=YES')
         self.addTearDownHook(
-            lambda: self.runCmd("settings set -r target.env-vars"))
+            lambda: self.runCmd("settings clear target.env-vars"))
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -241,17 +240,17 @@ class SettingsCommandTestCase(TestBase):
         self.runCmd("settings set target.output-path stdout.txt")
         # And add hooks to restore the original settings during tearDown().
         self.addTearDownHook(
-            lambda: self.runCmd("settings set -r target.output-path"))
+            lambda: self.runCmd("settings clear target.output-path"))
         self.addTearDownHook(
-            lambda: self.runCmd("settings set -r target.error-path"))
+            lambda: self.runCmd("settings clear target.error-path"))
 
         self.expect("settings show target.error-path",
                     SETTING_MSG("target.error-path"),
-            startstr = 'target.error-path (string) = "stderr.txt"')
+            startstr = 'target.error-path (file) = "stderr.txt"')
 
         self.expect("settings show target.output-path",
                     SETTING_MSG("target.output-path"),
-            startstr = 'target.output-path (string) = "stdout.txt"')
+            startstr = 'target.output-path (file) = "stdout.txt"')
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -278,21 +277,21 @@ class SettingsCommandTestCase(TestBase):
             startstr = "This message should go to standard out.")
 
     def test_print_dictionary_setting(self):
-        self.runCmd ("settings set -r target.env-vars")
+        self.runCmd ("settings clear target.env-vars")
         self.runCmd ("settings set target.env-vars [\"MY_VAR\"]=some-value")
         self.expect ("settings show target.env-vars",
                      substrs = [ "MY_VAR=some-value" ])
-        self.runCmd ("settings set -r target.env-vars")
+        self.runCmd ("settings clear target.env-vars")
 
     def test_print_array_setting(self):
-        self.runCmd ("settings set -r target.run-args")
+        self.runCmd ("settings clear target.run-args")
         self.runCmd ("settings set target.run-args gobbledy-gook")
         self.expect ("settings show target.run-args",
                      substrs = [ '[0]: "gobbledy-gook"' ])
-        self.runCmd ("settings set -r target.run-args")
+        self.runCmd ("settings clear target.run-args")
 
     def test_settings_with_quotes (self):
-        self.runCmd ("settings set -r target.run-args")
+        self.runCmd ("settings clear target.run-args")
         self.runCmd ("settings set target.run-args a b c")
         self.expect ("settings show target.run-args",
                      substrs = [ '[0]: "a"',
@@ -301,35 +300,51 @@ class SettingsCommandTestCase(TestBase):
         self.runCmd ("settings set target.run-args 'a b c'")
         self.expect ("settings show target.run-args",
                      substrs = [ '[0]: "a b c"' ])
-        self.runCmd ("settings set -r target.run-args")
-        self.runCmd ("settings set -r target.env-vars")
+        self.runCmd ("settings clear target.run-args")
+        self.runCmd ("settings clear target.env-vars")
         self.runCmd ('settings set target.env-vars ["MY_FILE"]="this is a file name with spaces.txt"')
         self.expect ("settings show target.env-vars",
                      substrs = [ 'MY_FILE=this is a file name with spaces.txt' ])
-        self.runCmd ("settings set -r target.env-vars")
+        self.runCmd ("settings clear target.env-vars")
 
 
     def test_all_settings_exist (self):
         self.expect ("settings show",
-                     substrs = [ "frame-format (string) = ",
-                                 "prompt (string) = ",
-                                 "script-lang (string) = ",
-                                 "term-width (int) = ",
-                                 "thread-format (string) = ",
-                                 "use-external-editor (boolean) = ",
-                                 "auto-confirm (boolean) = ",
-                                 "target.default-arch (string) =",
-                                 "target.expr-prefix (string) = ",
-                                 "target.run-args (array) =",
-                                 "target.env-vars (dictionary) =",
-                                 "target.inherit-env (boolean) = ",
-                                 "target.input-path (string) = ",
-                                 "target.output-path (string) = ",
-                                 "target.error-path (string) = ",
-                                 "target.disable-aslr (boolean) = ",
-                                 "target.disable-stdio (boolean) = ",
-                                 "target.process.thread.step-avoid-regexp (string) =",
-                                 "target.process.thread.trace-thread (boolean) =" ])
+                     substrs = [ "auto-confirm",
+                                 "frame-format",
+                                 "notify-void",
+                                 "prompt",
+                                 "script-lang",
+                                 "stop-disassembly-count",
+                                 "stop-disassembly-display",
+                                 "stop-line-count-after",
+                                 "stop-line-count-before",
+                                 "term-width",
+                                 "thread-format",
+                                 "use-external-editor",
+                                 "target.default-arch",
+                                 "target.expr-prefix",
+                                 "target.prefer-dynamic-value",
+                                 "target.enable-synthetic-value",
+                                 "target.skip-prologue",
+                                 "target.source-map",
+                                 "target.exec-search-paths",
+                                 "target.max-children-count",
+                                 "target.max-string-summary-length",
+                                 "target.breakpoints-use-platform-avoid-list",
+                                 "target.run-args",
+                                 "target.env-vars",
+                                 "target.inherit-env",
+                                 "target.input-path",
+                                 "target.output-path",
+                                 "target.error-path",
+                                 "target.disable-aslr",
+                                 "target.disable-stdio",
+                                 "target.process.disable-memory-cache",
+                                 "target.process.extra-startup-command",
+                                 "target.process.thread.step-avoid-regexp",
+                                 "target.process.thread.trace-thread"])
+                                 
         
 
 if __name__ == '__main__':

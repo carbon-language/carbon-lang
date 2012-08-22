@@ -71,7 +71,7 @@ class StopHookCmdTestCase(TestBase):
                        'expr ptr'])
 
         self.runCmd("settings set auto-confirm true")
-        self.addTearDownHook(lambda: self.runCmd("settings set -r auto-confirm"))
+        self.addTearDownHook(lambda: self.runCmd("settings clear auto-confirm"))
 
         self.runCmd('target stop-hook delete')
 

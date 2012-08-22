@@ -908,50 +908,54 @@ SBDebugger::FindDebuggerWithID (int id)
 const char *
 SBDebugger::GetInstanceName()
 {
-    if (m_opaque_sp)
-        return m_opaque_sp->GetInstanceName().AsCString();
-    else
+    // TODO: SETTINGS -- fill this in
+//    if (m_opaque_sp)
+//        return m_opaque_sp->GetInstanceName().AsCString();
+//    else
         return NULL;
 }
 
 SBError
 SBDebugger::SetInternalVariable (const char *var_name, const char *value, const char *debugger_instance_name)
 {
-    UserSettingsControllerSP root_settings_controller = Debugger::GetSettingsController();
-
-    Error err = root_settings_controller->SetVariable (var_name, 
-                                                       value, 
-                                                       eVarSetOperationAssign, 
-                                                       true,
-                                                       debugger_instance_name);
-    SBError sb_error;
-    sb_error.SetError (err);
-
-    return sb_error;
+    // TODO: SETTINGS -- fill this in
+//    UserSettingsControllerSP root_settings_controller = Debugger::GetSettingsController();
+//
+//    Error err = root_settings_controller->SetVariable (var_name, 
+//                                                       value, 
+//                                                       eVarSetOperationAssign, 
+//                                                       true,
+//                                                       debugger_instance_name);
+//    SBError sb_error;
+//    sb_error.SetError (err);
+//
+//    return sb_error;
+    return SBError();
 }
 
 SBStringList
 SBDebugger::GetInternalVariableValue (const char *var_name, const char *debugger_instance_name)
 {
     SBStringList ret_value;
-    SettableVariableType var_type;
-    Error err;
-
-    UserSettingsControllerSP root_settings_controller = Debugger::GetSettingsController();
-
-    StringList value = root_settings_controller->GetVariable (var_name, var_type, debugger_instance_name, err);
-    
-    if (err.Success())
-    {
-        for (unsigned i = 0; i != value.GetSize(); ++i)
-            ret_value.AppendString (value.GetStringAtIndex(i));
-    }
-    else
-    {
-        ret_value.AppendString (err.AsCString());
-    }
-
-
+    // TODO: SETTINGS -- fill this in
+//    SettableVariableType var_type;
+//    Error err;
+//
+//    UserSettingsControllerSP root_settings_controller = Debugger::GetSettingsController();
+//
+//    StringList value = root_settings_controller->GetVariable (var_name, var_type, debugger_instance_name, err);
+//    
+//    if (err.Success())
+//    {
+//        for (unsigned i = 0; i != value.GetSize(); ++i)
+//            ret_value.AppendString (value.GetStringAtIndex(i));
+//    }
+//    else
+//    {
+//        ret_value.AppendString (err.AsCString());
+//    }
+//
+//
     return ret_value;
 }
 

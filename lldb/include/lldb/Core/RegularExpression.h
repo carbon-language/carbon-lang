@@ -168,6 +168,21 @@ public:
     bool
     IsValid () const;
     
+    void
+    Clear ()
+    {
+        Free();
+        m_re.clear();
+        m_compile_flags = 0;
+        m_comp_err = 1;
+    }
+    
+    int
+    GetErrorCode() const
+    {
+        return m_comp_err;
+    }
+
     bool
     operator < (const RegularExpression& rhs) const;
 

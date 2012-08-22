@@ -48,74 +48,92 @@
 
 namespace lldb_private {
 
-//----------------------------------------------------------------------
-// ProcessInstanceSettings
-//----------------------------------------------------------------------
-class ProcessInstanceSettings : public InstanceSettings
-{
-public:
-
-    ProcessInstanceSettings (const lldb::UserSettingsControllerSP &owner_sp, bool live_instance = true, const char *name = NULL);
-  
-    ProcessInstanceSettings (const ProcessInstanceSettings &rhs);
-
-    virtual
-    ~ProcessInstanceSettings ();
-  
-    ProcessInstanceSettings&
-    operator= (const ProcessInstanceSettings &rhs);
-  
-
-    void
-    UpdateInstanceSettingsVariable (const ConstString &var_name,
-                                    const char *index_value,
-                                    const char *value,
-                                    const ConstString &instance_name,
-                                    const SettingEntry &entry,
-                                    VarSetOperationType op,
-                                    Error &err,
-                                    bool pending);
-
-    bool
-    GetInstanceSettingsValue (const SettingEntry &entry,
-                              const ConstString &var_name,
-                              StringList &value,
-                              Error *err);
-
-    bool GetDisableMemoryCache() const
+    class ProcessProperties : public Properties
     {
-        return m_disable_memory_cache;
-    }
-    
-    const Args &
-    GetExtraStartupCommands () const
-    {
-        return m_extra_startup_commands;
-    }
-    
-    void
-    SetExtraStartupCommands (const Args &args)
-    {
-        m_extra_startup_commands = args;
-    }
-    
-protected:
-    const ConstString &
-    GetDisableMemoryCacheVarName () const;
-    
-    const ConstString &
-    GetExtraStartupCommandVarName () const;
+    public:
+        ProcessProperties(bool is_global);
 
-    void
-    CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,
-                          bool pending);
+        virtual
+        ~ProcessProperties();
+        
+        bool GetDisableMemoryCache() const;
 
-    const ConstString
-    CreateInstanceName ();
+        Args //&
+        GetExtraStartupCommands () const;
+
+        void
+        SetExtraStartupCommands (const Args &args);
+    };
     
-    bool        m_disable_memory_cache;
-    Args        m_extra_startup_commands;
-};
+    typedef STD_SHARED_PTR(ProcessProperties) ProcessPropertiesSP;
+////----------------------------------------------------------------------
+//// ProcessInstanceSettings
+////----------------------------------------------------------------------
+//class ProcessInstanceSettings : public InstanceSettings
+//{
+//public:
+//
+//    ProcessInstanceSettings (const lldb::UserSettingsControllerSP &owner_sp, bool live_instance = true, const char *name = NULL);
+//  
+//    ProcessInstanceSettings (const ProcessInstanceSettings &rhs);
+//
+//    virtual
+//    ~ProcessInstanceSettings ();
+//  
+//    ProcessInstanceSettings&
+//    operator= (const ProcessInstanceSettings &rhs);
+//  
+//
+//    void
+//    UpdateInstanceSettingsVariable (const ConstString &var_name,
+//                                    const char *index_value,
+//                                    const char *value,
+//                                    const ConstString &instance_name,
+//                                    const SettingEntry &entry,
+//                                    VarSetOperationType op,
+//                                    Error &err,
+//                                    bool pending);
+//
+//    bool
+//    GetInstanceSettingsValue (const SettingEntry &entry,
+//                              const ConstString &var_name,
+//                              StringList &value,
+//                              Error *err);
+//
+//    bool GetDisableMemoryCache() const
+//    {
+//        return m_disable_memory_cache;
+//    }
+//    
+//    const Args &
+//    GetExtraStartupCommands () const
+//    {
+//        return m_extra_startup_commands;
+//    }
+//    
+//    void
+//    SetExtraStartupCommands (const Args &args)
+//    {
+//        m_extra_startup_commands = args;
+//    }
+//    
+//protected:
+//    const ConstString &
+//    GetDisableMemoryCacheVarName () const;
+//    
+//    const ConstString &
+//    GetExtraStartupCommandVarName () const;
+//
+//    void
+//    CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,
+//                          bool pending);
+//
+//    const ConstString
+//    CreateInstanceName ();
+//    
+//    bool        m_disable_memory_cache;
+//    Args        m_extra_startup_commands;
+//};
 
 //----------------------------------------------------------------------
 // ProcessInfo
@@ -1344,11 +1362,11 @@ protected:
 //----------------------------------------------------------------------
 class Process :
     public STD_ENABLE_SHARED_FROM_THIS(Process),
+    public ProcessProperties,
     public UserID,
     public Broadcaster,
     public ExecutionContextScope,
-    public PluginInterface,
-    public ProcessInstanceSettings
+    public PluginInterface
 {
 friend class ThreadList;
 friend class ClangFunction; // For WaitForStateChangeEventsPrivate
@@ -1507,29 +1525,29 @@ public:
 
     };
 
-    class SettingsController : public UserSettingsController
-    {
-    public:
-        
-        SettingsController ();
-
-        virtual
-        ~SettingsController ();
-
-        static SettingEntry global_settings_table[];
-        static SettingEntry instance_settings_table[];
-
-    protected:
-
-        lldb::InstanceSettingsSP
-        CreateInstanceSettings (const char *instance_name);
-
-    private:
-
-        // Class-wide settings.
-
-        DISALLOW_COPY_AND_ASSIGN (SettingsController);
-    };
+//    class SettingsController : public UserSettingsController
+//    {
+//    public:
+//        
+//        SettingsController ();
+//
+//        virtual
+//        ~SettingsController ();
+//
+//        static SettingEntry global_settings_table[];
+//        static SettingEntry instance_settings_table[];
+//
+//    protected:
+//
+//        lldb::InstanceSettingsSP
+//        CreateInstanceSettings (const char *instance_name);
+//
+//    private:
+//
+//        // Class-wide settings.
+//
+//        DISALLOW_COPY_AND_ASSIGN (SettingsController);
+//    };
 
 
 #endif
@@ -1539,14 +1557,30 @@ public:
 
     static void
     SettingsTerminate ();
-
-    static lldb::UserSettingsControllerSP &
-    GetSettingsController ();
-
-    void
-    UpdateInstanceName ();
-
     
+    static const ProcessPropertiesSP &
+    GetGlobalProperties();
+
+    const Args //&
+    GetExtraStartupCommands () const
+    {
+        // TODO: SETTINGS
+        return Args();
+    }
+    
+    void
+    SetExtraStartupCommands (const Args &args)
+    {
+        // TODO: SETTINGS
+    }
+
+    bool
+    GetDisableMemoryCache() const
+    {
+        // TODO: SETTINGS
+        return false;
+    }
+
     //------------------------------------------------------------------
     /// Construct with a shared pointer to a target, and the Process listener.
     //------------------------------------------------------------------

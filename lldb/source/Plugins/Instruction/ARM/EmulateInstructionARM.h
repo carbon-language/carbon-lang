@@ -12,7 +12,6 @@
 
 #include "lldb/Core/EmulateInstruction.h"
 #include "lldb/Core/Error.h"
-#include "lldb/Interpreter/NamedOptionValue.h"
 #include "Plugins/Process/Utility/ARMDefines.h"
 
 namespace lldb_private {

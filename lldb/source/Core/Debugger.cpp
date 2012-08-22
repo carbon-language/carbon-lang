@@ -29,6 +29,8 @@
 #include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/Host/Terminal.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/OptionValueSInt64.h"
+#include "lldb/Interpreter/OptionValueString.h"
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/TargetList.h"
 #include "lldb/Target/Process.h"
@@ -63,124 +65,289 @@ GetDebuggerList()
     static DebuggerList g_list;
     return g_list;
 }
-
-
-static const ConstString &
-PromptVarName ()
-{
-    static ConstString g_const_string ("prompt");
-    return g_const_string;
-}
-
-static const ConstString &
-GetNotifyVoidName ()
-{
-    static ConstString g_const_string ("notify-void");
-    return g_const_string;
-}
-
-static const ConstString &
-GetFrameFormatName ()
-{
-    static ConstString g_const_string ("frame-format");
-    return g_const_string;
-}
-
-static const ConstString &
-GetThreadFormatName ()
-{
-    static ConstString g_const_string ("thread-format");
-    return g_const_string;
-}
-
-static const ConstString &
-ScriptLangVarName ()
-{
-    static ConstString g_const_string ("script-lang");
-    return g_const_string;
-}
-
-static const ConstString &
-TermWidthVarName ()
-{
-    static ConstString g_const_string ("term-width");
-    return g_const_string;
-}
-
-static const ConstString &
-UseExternalEditorVarName ()
-{
-    static ConstString g_const_string ("use-external-editor");
-    return g_const_string;
-}
-
-static const ConstString &
-AutoConfirmName ()
-{
-    static ConstString g_const_string ("auto-confirm");
-    return g_const_string;
-}
-
-static const ConstString &
-StopSourceContextBeforeName ()
-{
-    static ConstString g_const_string ("stop-line-count-before");
-    return g_const_string;
-}
-
-static const ConstString &
-StopSourceContextAfterName ()
-{
-    static ConstString g_const_string ("stop-line-count-after");
-    return g_const_string;
-}
-
-static const ConstString &
-StopDisassemblyCountName ()
-{
-    static ConstString g_const_string ("stop-disassembly-count");
-    return g_const_string;
-}
-
-static const ConstString &
-StopDisassemblyDisplayName ()
-{
-    static ConstString g_const_string ("stop-disassembly-display");
-    return g_const_string;
-}
+//
+//
+//static const ConstString &
+//PromptVarName ()
+//{
+//    static ConstString g_const_string ("prompt");
+//    return g_const_string;
+//}
+//
+//static const ConstString &
+//GetNotifyVoidName ()
+//{
+//    static ConstString g_const_string ("notify-void");
+//    return g_const_string;
+//}
+//
+//static const ConstString &
+//GetFrameFormatName ()
+//{
+//    static ConstString g_const_string ("frame-format");
+//    return g_const_string;
+//}
+//
+//static const ConstString &
+//GetThreadFormatName ()
+//{
+//    static ConstString g_const_string ("thread-format");
+//    return g_const_string;
+//}
+//
+//static const ConstString &
+//ScriptLangVarName ()
+//{
+//    static ConstString g_const_string ("script-lang");
+//    return g_const_string;
+//}
+//
+//static const ConstString &
+//TermWidthVarName ()
+//{
+//    static ConstString g_const_string ("term-width");
+//    return g_const_string;
+//}
+//
+//static const ConstString &
+//UseExternalEditorVarName ()
+//{
+//    static ConstString g_const_string ("use-external-editor");
+//    return g_const_string;
+//}
+//
+//static const ConstString &
+//AutoConfirmName ()
+//{
+//    static ConstString g_const_string ("auto-confirm");
+//    return g_const_string;
+//}
+//
+//static const ConstString &
+//StopSourceContextBeforeName ()
+//{
+//    static ConstString g_const_string ("stop-line-count-before");
+//    return g_const_string;
+//}
+//
+//static const ConstString &
+//StopSourceContextAfterName ()
+//{
+//    static ConstString g_const_string ("stop-line-count-after");
+//    return g_const_string;
+//}
+//
+//static const ConstString &
+//StopDisassemblyCountName ()
+//{
+//    static ConstString g_const_string ("stop-disassembly-count");
+//    return g_const_string;
+//}
+//
+//static const ConstString &
+//StopDisassemblyDisplayName ()
+//{
+//    static ConstString g_const_string ("stop-disassembly-display");
+//    return g_const_string;
+//}
 
 OptionEnumValueElement
-DebuggerInstanceSettings::g_show_disassembly_enum_values[] =
+g_show_disassembly_enum_values[] =
 {
-    { eStopDisassemblyTypeNever,    "never",     "Never show disassembly when displaying a stop context."},
-    { eStopDisassemblyTypeNoSource, "no-source", "Show disassembly when there is no source information, or the source file is missing when displaying a stop context."},
-    { eStopDisassemblyTypeAlways,   "always",    "Always show disassembly when displaying a stop context."},
+    { Debugger::eStopDisassemblyTypeNever,    "never",     "Never show disassembly when displaying a stop context."},
+    { Debugger::eStopDisassemblyTypeNoSource, "no-source", "Show disassembly when there is no source information, or the source file is missing when displaying a stop context."},
+    { Debugger::eStopDisassemblyTypeAlways,   "always",    "Always show disassembly when displaying a stop context."},
     { 0, NULL, NULL }
 };
 
+OptionEnumValueElement
+g_language_enumerators[] =
+{
+    { eScriptLanguageNone,      "none",     "Disable scripting languages."},
+    { eScriptLanguagePython,    "python",   "Select python as the default scripting language."},
+    { eScriptLanguageDefault,   "default",  "Select the lldb default as the default scripting language."},
+};
 
+#define MODULE_WITH_FUNC "{ ${module.file.basename}{`${function.name-with-args}${function.pc-offset}}}"
+#define FILE_AND_LINE "{ at ${line.file.basename}:${line.number}}"
+
+#define DEFAULT_THREAD_FORMAT "thread #${thread.index}: tid = ${thread.id}"\
+    "{, ${frame.pc}}"\
+    MODULE_WITH_FUNC\
+    FILE_AND_LINE\
+    "{, stop reason = ${thread.stop-reason}}"\
+    "{\\nReturn value: ${thread.return-value}}"\
+    "\\n"
+
+#define DEFAULT_FRAME_FORMAT "frame #${frame.index}: ${frame.pc}"\
+    MODULE_WITH_FUNC\
+    FILE_AND_LINE\
+    "\\n"
+
+
+
+PropertyDefinition
+g_instance_settings_table[] =
+{
+{   "auto-confirm",             OptionValue::eTypeBoolean, true, false, NULL, NULL, "If true all confirmation prompts will receive their default reply." },
+{   "frame-format",             OptionValue::eTypeString , true, 0    , DEFAULT_FRAME_FORMAT, NULL, "The default frame format string to use when displaying stack frame information for threads." },
+{   "notify-void",              OptionValue::eTypeBoolean, true, false, NULL, NULL, "Notify the user explicitly if an expression returns void (default: false)." },
+{   "prompt",                   OptionValue::eTypeString , true, 0    , "(lldb) ", NULL, "The debugger command line prompt displayed for the user." },
+{   "script-lang",              OptionValue::eTypeEnum   , true, eScriptLanguagePython, NULL, g_language_enumerators, "The script language to be used for evaluating user-written scripts." },
+{   "stop-disassembly-count",   OptionValue::eTypeSInt64 , true, 4    , NULL, NULL, "The number of disassembly lines to show when displaying a stopped context." },
+{   "stop-disassembly-display", OptionValue::eTypeEnum   , true, Debugger::eStopDisassemblyTypeNoSource, NULL, g_show_disassembly_enum_values, "Control when to display disassembly when displaying a stopped context." },
+{   "stop-line-count-after",    OptionValue::eTypeSInt64 , true, 3    , NULL, NULL, "The number of sources lines to display that come after the current source line when displaying a stopped context." },
+{   "stop-line-count-before",   OptionValue::eTypeSInt64 , true, 3    , NULL, NULL, "The number of sources lines to display that come before the current source line when displaying a stopped context." },
+{   "term-width",               OptionValue::eTypeSInt64 , true, 80   , NULL, NULL, "The maximum number of columns to use for displaying text." },
+{   "thread-format",            OptionValue::eTypeString , true, 0    , DEFAULT_THREAD_FORMAT, NULL, "The default thread format string to use when displaying thread information." },
+{   "use-external-editor",      OptionValue::eTypeBoolean, true, false, NULL, NULL, "Whether to use an external editor or not." },
+{   NULL,                       OptionValue::eTypeInvalid, true, 0    , NULL, NULL, NULL }
+};
+
+enum
+{
+    ePropertyAutoConfirm = 0,
+    ePropertyFrameFormat,
+    ePropertyNotiftVoid,
+    ePropertyPrompt,
+    ePropertyScriptLanguage,
+    ePropertyStopDisassemblyCount,
+    ePropertyStopDisassemblyDisplay,
+    ePropertyStopLineCountAfter,
+    ePropertyStopLineCountBefore,
+    ePropertyTerminalWidth,
+    ePropertyThreadFormat,
+    ePropertyUseExternalEditor
+};
+
+//
+//const char *
+//Debugger::GetFrameFormat() const
+//{
+//    return m_properties_sp->GetFrameFormat();
+//}
+//const char *
+//Debugger::GetThreadFormat() const
+//{
+//    return m_properties_sp->GetThreadFormat();
+//}
+//
+bool
+Debugger::GetAutoConfirm () const
+{
+    const uint32_t idx = ePropertyAutoConfirm;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_instance_settings_table[idx].default_uint_value != 0);
+}
+
+const char *
+Debugger::GetFrameFormat() const
+{
+    const uint32_t idx = ePropertyFrameFormat;
+    return m_collection_sp->GetPropertyAtIndexAsString (NULL, idx, g_instance_settings_table[idx].default_cstr_value);
+}
+
+bool
+Debugger::GetNotifyVoid () const
+{
+    const uint32_t idx = ePropertyNotiftVoid;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_instance_settings_table[idx].default_uint_value != 0);
+}
+
+const char *
+Debugger::GetPrompt() const
+{
+    const uint32_t idx = ePropertyPrompt;
+    return m_collection_sp->GetPropertyAtIndexAsString (NULL, idx, g_instance_settings_table[idx].default_cstr_value);
+}
+
+void
+Debugger::SetPrompt(const char *p)
+{
+    const uint32_t idx = ePropertyPrompt;
+    m_collection_sp->SetPropertyAtIndexAsString (NULL, idx, p);
+    const char *new_prompt = GetPrompt();
+    EventSP prompt_change_event_sp (new Event(CommandInterpreter::eBroadcastBitResetPrompt, new EventDataBytes (new_prompt)));;
+    GetCommandInterpreter().BroadcastEvent (prompt_change_event_sp);
+}
+
+const char *
+Debugger::GetThreadFormat() const
+{
+    const uint32_t idx = ePropertyThreadFormat;
+    return m_collection_sp->GetPropertyAtIndexAsString (NULL, idx, g_instance_settings_table[idx].default_cstr_value);
+}
+
+lldb::ScriptLanguage
+Debugger::GetScriptLanguage() const
+{
+    const uint32_t idx = ePropertyScriptLanguage;
+    return (lldb::ScriptLanguage)m_collection_sp->GetPropertyAtIndexAsEnumeration (NULL, idx, g_instance_settings_table[idx].default_uint_value);
+}
+
+bool
+Debugger::SetScriptLanguage (lldb::ScriptLanguage script_lang)
+{
+    const uint32_t idx = ePropertyScriptLanguage;
+    return m_collection_sp->SetPropertyAtIndexAsEnumeration (NULL, idx, script_lang);
+}
+
+uint32_t
+Debugger::GetTerminalWidth () const
+{
+    const uint32_t idx = ePropertyTerminalWidth;
+    return m_collection_sp->GetPropertyAtIndexAsSInt64 (NULL, idx, g_instance_settings_table[idx].default_uint_value);
+}
+
+bool
+Debugger::SetTerminalWidth (uint32_t term_width)
+{
+    const uint32_t idx = ePropertyTerminalWidth;
+    return m_collection_sp->SetPropertyAtIndexAsSInt64 (NULL, idx, term_width);
+}
+
+bool
+Debugger::GetUseExternalEditor () const
+{
+    const uint32_t idx = ePropertyUseExternalEditor;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_instance_settings_table[idx].default_uint_value != 0);
+}
+
+bool
+Debugger::SetUseExternalEditor (bool b)
+{
+    const uint32_t idx = ePropertyUseExternalEditor;
+    return m_collection_sp->SetPropertyAtIndexAsBoolean (NULL, idx, b);
+}
+
+uint32_t
+Debugger::GetStopSourceLineCount (bool before) const
+{
+    const uint32_t idx = before ? ePropertyStopLineCountBefore : ePropertyStopLineCountAfter;
+    return m_collection_sp->GetPropertyAtIndexAsSInt64 (NULL, idx, g_instance_settings_table[idx].default_uint_value);
+}
+
+Debugger::StopDisassemblyType
+Debugger::GetStopDisassemblyDisplay () const
+{
+    const uint32_t idx = ePropertyStopDisassemblyDisplay;
+    return (Debugger::StopDisassemblyType)m_collection_sp->GetPropertyAtIndexAsEnumeration (NULL, idx, g_instance_settings_table[idx].default_uint_value);
+}
+
+uint32_t
+Debugger::GetDisassemblyLineCount () const
+{
+    const uint32_t idx = ePropertyStopDisassemblyCount;
+    return m_collection_sp->GetPropertyAtIndexAsSInt64 (NULL, idx, g_instance_settings_table[idx].default_uint_value);
+}
 
 #pragma mark Debugger
 
-UserSettingsControllerSP &
-Debugger::GetSettingsController ()
-{
-    static UserSettingsControllerSP g_settings_controller_sp;
-    if (!g_settings_controller_sp)
-    {
-        g_settings_controller_sp.reset (new Debugger::SettingsController);
-    
-        // The first shared pointer to Debugger::SettingsController in
-        // g_settings_controller_sp must be fully created above so that 
-        // the DebuggerInstanceSettings can use a weak_ptr to refer back 
-        // to the master setttings controller
-        InstanceSettingsSP default_instance_settings_sp (new DebuggerInstanceSettings (g_settings_controller_sp, 
-                                                                                       false, 
-                                                                                       InstanceSettings::GetDefaultName().AsCString()));
-        g_settings_controller_sp->SetDefaultInstanceSettings (default_instance_settings_sp);
-    }
-    return g_settings_controller_sp;
-}
+//const DebuggerPropertiesSP &
+//Debugger::GetSettings() const
+//{
+//    return m_properties_sp;
+//}
+//
 
 int
 Debugger::TestDebuggerRefCount ()
@@ -216,33 +383,33 @@ Debugger::Terminate ()
 void
 Debugger::SettingsInitialize ()
 {
-    static bool g_initialized = false;
-    
-    if (!g_initialized)
-    {
-        g_initialized = true;
-        UserSettingsController::InitializeSettingsController (GetSettingsController(),
-                                                              SettingsController::global_settings_table,
-                                                              SettingsController::instance_settings_table);
-        // Now call SettingsInitialize for each settings 'child' of Debugger
-        Target::SettingsInitialize ();
-    }
+//    static bool g_initialized = false;
+//    
+//    if (!g_initialized)
+//    {
+//        g_initialized = true;
+//        UserSettingsController::InitializeSettingsController (GetSettingsController(),
+//                                                              SettingsController::global_settings_table,
+//                                                              SettingsController::instance_settings_table);
+//        // Now call SettingsInitialize for each settings 'child' of Debugger
+//        Target::SettingsInitialize ();
+//    }
 }
 
 void
 Debugger::SettingsTerminate ()
 {
-
-    // Must call SettingsTerminate() for each settings 'child' of Debugger, before terminating the Debugger's 
-    // Settings.
-
-    Target::SettingsTerminate ();
-
-    // Now terminate the Debugger Settings.
-
-    UserSettingsControllerSP &usc = GetSettingsController();
-    UserSettingsController::FinalizeSettingsController (usc);
-    usc.reset();
+//
+//    // Must call SettingsTerminate() for each settings 'child' of Debugger, before terminating the Debugger's 
+//    // Settings.
+//
+//    Target::SettingsTerminate ();
+//
+//    // Now terminate the Debugger Settings.
+//
+//    UserSettingsControllerSP &usc = GetSettingsController();
+//    UserSettingsController::FinalizeSettingsController (usc);
+//    usc.reset();
 }
 
 DebuggerSP
@@ -285,22 +452,22 @@ DebuggerSP
 Debugger::FindDebuggerWithInstanceName (const ConstString &instance_name)
 {
     DebuggerSP debugger_sp;
-   
-    if (g_shared_debugger_refcount > 0)
-    {
-        Mutex::Locker locker (GetDebuggerListMutex ());
-        DebuggerList &debugger_list = GetDebuggerList();
-        DebuggerList::iterator pos, end = debugger_list.end();
-
-        for (pos = debugger_list.begin(); pos != end; ++pos)
-        {
-            if ((*pos).get()->m_instance_name == instance_name)
-            {
-                debugger_sp = *pos;
-                break;
-            }
-        }
-    }
+    // TODO: SETTINGS
+//    if (g_shared_debugger_refcount > 0)
+//    {
+//        Mutex::Locker locker (GetDebuggerListMutex ());
+//        DebuggerList &debugger_list = GetDebuggerList();
+//        DebuggerList::iterator pos, end = debugger_list.end();
+//
+//        for (pos = debugger_list.begin(); pos != end; ++pos)
+//        {
+//            if ((*pos).get()->m_instance_name == instance_name)
+//            {
+//                debugger_sp = *pos;
+//                break;
+//            }
+//        }
+//    }
     return debugger_sp;
 }
 
@@ -342,10 +509,9 @@ Debugger::FindTargetWithProcess (Process *process)
     return target_sp;
 }
 
-
 Debugger::Debugger (lldb::LogOutputCallback log_callback, void *baton) :
     UserID (g_unique_id++),
-    DebuggerInstanceSettings (GetSettingsController()),
+    Properties(OptionValuePropertiesSP(new OptionValueProperties())), 
     m_input_comm("debugger.input"),
     m_input_file (),
     m_output_file (),
@@ -357,8 +523,12 @@ Debugger::Debugger (lldb::LogOutputCallback log_callback, void *baton) :
     m_source_file_cache(),
     m_command_interpreter_ap (new CommandInterpreter (*this, eScriptLanguageDefault, false)),
     m_input_reader_stack (),
-    m_input_reader_data ()
+    m_input_reader_data (),
+    m_instance_name()
 {
+    char instance_cstr[256];
+    snprintf(instance_cstr, sizeof(instance_cstr), "debugger_%d", (int)GetID());
+    m_instance_name.SetCString(instance_cstr);
     if (log_callback)
         m_log_callback_stream_sp.reset (new StreamCallback (log_callback, baton));
     m_command_interpreter_ap->Initialize ();
@@ -366,6 +536,15 @@ Debugger::Debugger (lldb::LogOutputCallback log_callback, void *baton) :
     PlatformSP default_platform_sp (Platform::GetDefaultPlatform());
     assert (default_platform_sp.get());
     m_platform_list.Append (default_platform_sp, true);
+    
+    m_collection_sp->Initialize (g_instance_settings_table);
+    m_collection_sp->AppendProperty (ConstString("target"),
+                                     ConstString("Settings specify to debugging targets."),
+                                     true,
+                                     Target::GetGlobalProperties()->GetValueProperties());
+    OptionValueSInt64 *term_width = m_collection_sp->GetPropertyAtIndexAsOptionValueSInt64 (NULL, ePropertyTerminalWidth);
+    term_width->SetMinimumValue(10);
+    term_width->SetMaximumValue(1024);
 }
 
 Debugger::~Debugger ()
@@ -1767,6 +1946,29 @@ Debugger::FormatPrompt
                             }
                             else if (::strncmp (var_name_begin, "target.", strlen("target.")) == 0)
                             {
+                                // TODO: hookup properties
+//                                if (!target_properties_sp)
+//                                {
+//                                    Target *target = Target::GetTargetFromContexts (exe_ctx, sc);
+//                                    if (target)
+//                                        target_properties_sp = target->GetProperties();
+//                                }
+//
+//                                if (target_properties_sp)
+//                                {
+//                                    var_name_begin += ::strlen ("target.");
+//                                    const char *end_property = strchr(var_name_begin, '}');
+//                                    if (end_property)
+//                                    {
+//                                        ConstString property_name(var_name_begin, end_property - var_name_begin);
+//                                        std::string property_value (target_properties_sp->GetPropertyValue(property_name));
+//                                        if (!property_value.empty())
+//                                        {
+//                                            s.PutCString (property_value.c_str());
+//                                            var_success = true;
+//                                        }
+//                                    }
+//                                }                                        
                                 Target *target = Target::GetTargetFromContexts (exe_ctx, sc);
                                 if (target)
                                 {
@@ -1780,7 +1982,7 @@ Debugger::FormatPrompt
                                             var_success = true;
                                         }
                                     }
-                                }                                        
+                                }
                             }
                             break;
                             
@@ -2395,459 +2597,797 @@ Debugger::EnableLog (const char *channel, const char **categories, const char *l
 // class Debugger::SettingsController
 //--------------------------------------------------
 
-Debugger::SettingsController::SettingsController () :
-    UserSettingsController ("", UserSettingsControllerSP())
-{
-}
-
-Debugger::SettingsController::~SettingsController ()
-{
-}
-
-
-InstanceSettingsSP
-Debugger::SettingsController::CreateInstanceSettings (const char *instance_name)
-{
-    InstanceSettingsSP new_settings_sp (new DebuggerInstanceSettings (GetSettingsController(),
-                                                                      false, 
-                                                                      instance_name));
-    return new_settings_sp;
-}
+//Debugger::SettingsController::SettingsController () :
+//    UserSettingsController ("", UserSettingsControllerSP())
+//{
+//}
+//
+//Debugger::SettingsController::~SettingsController ()
+//{
+//}
+//
+//
+//InstanceSettingsSP
+//Debugger::SettingsController::CreateInstanceSettings (const char *instance_name)
+//{
+//    InstanceSettingsSP new_settings_sp (new DebuggerInstanceSettings (GetSettingsController(),
+//                                                                      false, 
+//                                                                      instance_name));
+//    return new_settings_sp;
+//}
 
 #pragma mark DebuggerInstanceSettings
 //--------------------------------------------------
 //  class DebuggerInstanceSettings
 //--------------------------------------------------
 
-DebuggerInstanceSettings::DebuggerInstanceSettings 
-(
-    const UserSettingsControllerSP &m_owner_sp, 
-    bool live_instance,
-    const char *name
-) :
-    InstanceSettings (m_owner_sp, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance),
-    m_term_width (80),
-    m_stop_source_before_count (3),
-    m_stop_source_after_count (3),
-    m_stop_disassembly_count (4),
-    m_stop_disassembly_display (eStopDisassemblyTypeNoSource),
-    m_prompt (),
-    m_notify_void (false),
-    m_frame_format (),
-    m_thread_format (),    
-    m_script_lang (),
-    m_use_external_editor (false),
-    m_auto_confirm_on (false)
-{
-    // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
-    // until the vtables for DebuggerInstanceSettings are properly set up, i.e. AFTER all the initializers.
-    // For this reason it has to be called here, rather than in the initializer or in the parent constructor.
-    // The same is true of CreateInstanceName().
+//DebuggerInstanceSettings::DebuggerInstanceSettings
+//(
+//    const UserSettingsControllerSP &m_owner_sp, 
+//    bool live_instance,
+//    const char *name
+//) :
+//    InstanceSettings (m_owner_sp, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance),
+//    m_term_width (80),
+//    m_stop_source_before_count (3),
+//    m_stop_source_after_count (3),
+//    m_stop_disassembly_count (4),
+//    m_stop_disassembly_display (eStopDisassemblyTypeNoSource),
+//    m_prompt (),
+//    m_frame_format (),
+//    m_thread_format (),    
+//    m_script_lang (),
+//    m_use_external_editor (false),
+//    m_auto_confirm_on (false)
+//{
+//    // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
+//    // until the vtables for DebuggerInstanceSettings are properly set up, i.e. AFTER all the initializers.
+//    // For this reason it has to be called here, rather than in the initializer or in the parent constructor.
+//    // The same is true of CreateInstanceName().
+//
+//    if (GetInstanceName() == InstanceSettings::InvalidName())
+//    {
+//        ChangeInstanceName (std::string (CreateInstanceName().AsCString()));
+//        m_owner_sp->RegisterInstanceSettings (this);
+//    }
+//
+//    if (live_instance)
+//    {
+//        const InstanceSettingsSP &pending_settings = m_owner_sp->FindPendingSettings (m_instance_name);
+//        CopyInstanceSettings (pending_settings, false);
+//    }
+//}
+//
+//DebuggerInstanceSettings::DebuggerInstanceSettings (const DebuggerInstanceSettings &rhs) :
+//    InstanceSettings (Debugger::GetSettingsController(), CreateInstanceName ().AsCString()),
+//    m_prompt (rhs.m_prompt),
+//    m_frame_format (rhs.m_frame_format),
+//    m_thread_format (rhs.m_thread_format),
+//    m_script_lang (rhs.m_script_lang),
+//    m_use_external_editor (rhs.m_use_external_editor),
+//    m_auto_confirm_on(rhs.m_auto_confirm_on)
+//{
+//    UserSettingsControllerSP owner_sp (m_owner_wp.lock());
+//    if (owner_sp)
+//    {
+//        CopyInstanceSettings (owner_sp->FindPendingSettings (m_instance_name), false);
+//        owner_sp->RemovePendingSettings (m_instance_name);
+//    }
+//}
+//
+//DebuggerInstanceSettings::~DebuggerInstanceSettings ()
+//{
+//}
+//
+//DebuggerInstanceSettings&
+//DebuggerInstanceSettings::operator= (const DebuggerInstanceSettings &rhs)
+//{
+//    if (this != &rhs)
+//    {
+//        m_term_width = rhs.m_term_width;
+//        m_prompt = rhs.m_prompt;
+//        m_frame_format = rhs.m_frame_format;
+//        m_thread_format = rhs.m_thread_format;
+//        m_script_lang = rhs.m_script_lang;
+//        m_use_external_editor = rhs.m_use_external_editor;
+//        m_auto_confirm_on = rhs.m_auto_confirm_on;
+//    }
+//
+//    return *this;
+//}
+//
+//bool
+//DebuggerInstanceSettings::ValidTermWidthValue (const char *value, Error err)
+//{
+//    bool valid = false;
+//
+//    // Verify we have a value string.
+//    if (value == NULL || value[0] == '\0')
+//    {
+//        err.SetErrorString ("missing value, can't set terminal width without a value");
+//    }
+//    else
+//    {
+//        char *end = NULL;
+//        const uint32_t width = ::strtoul (value, &end, 0);
+//        
+//        if (end && end[0] == '\0')
+//        {
+//            return ValidTermWidthValue (width, err);
+//        }
+//        else
+//            err.SetErrorStringWithFormat ("'%s' is not a valid unsigned integer string", value);
+//    }
+//
+//    return valid;
+//}
+//
+//bool
+//DebuggerInstanceSettings::ValidTermWidthValue (uint32_t value, Error err)
+//{
+//    if (value >= 10 && value <= 1024)
+//        return true;
+//    else
+//    {
+//        err.SetErrorString ("invalid term-width value; value must be between 10 and 1024");
+//        return false;
+//    }
+//}
+//
+//void
+//DebuggerInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_name,
+//                                                          const char *index_value,
+//                                                          const char *value,
+//                                                          const ConstString &instance_name,
+//                                                          const SettingEntry &entry,
+//                                                          VarSetOperationType op,
+//                                                          Error &err,
+//                                                          bool pending)
+//{
+//
+//    if (var_name == TermWidthVarName())
+//    {
+//        if (ValidTermWidthValue (value, err))
+//        {
+//            m_term_width = ::strtoul (value, NULL, 0);
+//        }
+//    }
+//    else if (var_name == PromptVarName())
+//    {
+//        UserSettingsController::UpdateStringVariable (op, m_prompt, value, err);
+//        if (!pending)
+//        {
+//            // 'instance_name' is actually (probably) in the form '[<instance_name>]';  if so, we need to
+//            // strip off the brackets before passing it to BroadcastPromptChange.
+//
+//            std::string tmp_instance_name (instance_name.AsCString());
+//            if ((tmp_instance_name[0] == '[') 
+//                && (tmp_instance_name[instance_name.GetLength() - 1] == ']'))
+//                tmp_instance_name = tmp_instance_name.substr (1, instance_name.GetLength() - 2);
+//            ConstString new_name (tmp_instance_name.c_str());
+//
+//            BroadcastPromptChange (new_name, m_prompt.c_str());
+//        }
+//    }
+//    else if (var_name == GetFrameFormatName())
+//    {
+//        UserSettingsController::UpdateStringVariable (op, m_frame_format, value, err);
+//    }
+//    else if (var_name == GetThreadFormatName())
+//    {
+//        UserSettingsController::UpdateStringVariable (op, m_thread_format, value, err);
+//    }
+//    else if (var_name == ScriptLangVarName())
+//    {
+//        bool success;
+//        m_script_lang = Args::StringToScriptLanguage (value, eScriptLanguageDefault,
+//                                                      &success);
+//    }
+//    else if (var_name == UseExternalEditorVarName ())
+//    {
+//        UserSettingsController::UpdateBooleanVariable (op, m_use_external_editor, value, false, err);
+//    }
+//    else if (var_name == AutoConfirmName ())
+//    {
+//        UserSettingsController::UpdateBooleanVariable (op, m_auto_confirm_on, value, false, err);
+//    }
+//    else if (var_name == StopSourceContextBeforeName ())
+//    {
+//        uint32_t new_value = Args::StringToUInt32(value, UINT32_MAX, 10, NULL);
+//        if (new_value != UINT32_MAX)
+//            m_stop_source_before_count = new_value;
+//        else
+//            err.SetErrorStringWithFormat("invalid unsigned string value '%s' for the '%s' setting", value, StopSourceContextBeforeName ().GetCString());
+//    }
+//    else if (var_name == StopSourceContextAfterName ())
+//    {
+//        uint32_t new_value = Args::StringToUInt32(value, UINT32_MAX, 10, NULL);
+//        if (new_value != UINT32_MAX)
+//            m_stop_source_after_count = new_value;
+//        else
+//            err.SetErrorStringWithFormat("invalid unsigned string value '%s' for the '%s' setting", value, StopSourceContextAfterName ().GetCString());
+//    }
+//    else if (var_name == StopDisassemblyCountName ())
+//    {
+//        uint32_t new_value = Args::StringToUInt32(value, UINT32_MAX, 10, NULL);
+//        if (new_value != UINT32_MAX)
+//            m_stop_disassembly_count = new_value;
+//        else
+//            err.SetErrorStringWithFormat("invalid unsigned string value '%s' for the '%s' setting", value, StopDisassemblyCountName ().GetCString());
+//    }
+//    else if (var_name == StopDisassemblyDisplayName ())
+//    {
+//        int new_value;
+//        UserSettingsController::UpdateEnumVariable (g_show_disassembly_enum_values, &new_value, value, err);
+//        if (err.Success())
+//            m_stop_disassembly_display = (StopDisassemblyType)new_value;
+//    }
+//}
+//
+//bool
+//DebuggerInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
+//                                                    const ConstString &var_name,
+//                                                    StringList &value,
+//                                                    Error *err)
+//{
+//    if (var_name == PromptVarName())
+//    {
+//        value.AppendString (m_prompt.c_str(), m_prompt.size());
+//        
+//    }
+//    else if (var_name == ScriptLangVarName())
+//    {
+//        value.AppendString (ScriptInterpreter::LanguageToString (m_script_lang).c_str());
+//    }
+//    else if (var_name == TermWidthVarName())
+//    {
+//        StreamString width_str;
+//        width_str.Printf ("%u", m_term_width);
+//        value.AppendString (width_str.GetData());
+//    }
+//    else if (var_name == GetFrameFormatName ())
+//    {
+//        value.AppendString(m_frame_format.c_str(), m_frame_format.size());
+//    }
+//    else if (var_name == GetThreadFormatName ())
+//    {
+//        value.AppendString(m_thread_format.c_str(), m_thread_format.size());
+//    }
+//    else if (var_name == UseExternalEditorVarName())
+//    {
+//        if (m_use_external_editor)
+//            value.AppendString ("true");
+//        else
+//            value.AppendString ("false");
+//    }
+//    else if (var_name == AutoConfirmName())
+//    {
+//        if (m_auto_confirm_on)
+//            value.AppendString ("true");
+//        else
+//            value.AppendString ("false");
+//    }
+//    else if (var_name == StopSourceContextAfterName ())
+//    {
+//        StreamString strm;
+//        strm.Printf ("%u", m_stop_source_after_count);
+//        value.AppendString (strm.GetData());
+//    }
+//    else if (var_name == StopSourceContextBeforeName ())
+//    {
+//        StreamString strm;
+//        strm.Printf ("%u", m_stop_source_before_count);
+//        value.AppendString (strm.GetData());
+//    }
+//    else if (var_name == StopDisassemblyCountName ())
+//    {
+//        StreamString strm;
+//        strm.Printf ("%u", m_stop_disassembly_count);
+//        value.AppendString (strm.GetData());
+//    }
+//    else if (var_name == StopDisassemblyDisplayName ())
+//    {
+//        if (m_stop_disassembly_display >= eStopDisassemblyTypeNever && m_stop_disassembly_display <= eStopDisassemblyTypeAlways)
+//            value.AppendString (g_show_disassembly_enum_values[m_stop_disassembly_display].string_value);
+//        else
+//            value.AppendString ("<invalid>");
+//    }
+//    else
+//    {
+//        if (err)
+//            err->SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
+//        return false;
+//    }
+//    return true;
+//}
+//
+//void
+//DebuggerInstanceSettings::CopyInstanceSettings (const InstanceSettingsSP &new_settings,
+//                                                bool pending)
+//{
+//    if (new_settings.get() == NULL)
+//        return;
+//
+//    DebuggerInstanceSettings *new_debugger_settings = (DebuggerInstanceSettings *) new_settings.get();
+//
+//    m_prompt = new_debugger_settings->m_prompt;
+//    if (!pending)
+//    {
+//        // 'instance_name' is actually (probably) in the form '[<instance_name>]';  if so, we need to
+//        // strip off the brackets before passing it to BroadcastPromptChange.
+//
+//        std::string tmp_instance_name (m_instance_name.AsCString());
+//        if ((tmp_instance_name[0] == '[')
+//            && (tmp_instance_name[m_instance_name.GetLength() - 1] == ']'))
+//            tmp_instance_name = tmp_instance_name.substr (1, m_instance_name.GetLength() - 2);
+//        ConstString new_name (tmp_instance_name.c_str());
+//
+//        BroadcastPromptChange (new_name, m_prompt.c_str());
+//    }
+//    m_frame_format = new_debugger_settings->m_frame_format;
+//    m_thread_format = new_debugger_settings->m_thread_format;
+//    m_term_width = new_debugger_settings->m_term_width;
+//    m_script_lang = new_debugger_settings->m_script_lang;
+//    m_use_external_editor = new_debugger_settings->m_use_external_editor;
+//    m_auto_confirm_on = new_debugger_settings->m_auto_confirm_on;
+//}
+//
+//
+//bool
+//DebuggerInstanceSettings::BroadcastPromptChange (const ConstString &instance_name, const char *new_prompt)
+//{
+//    std::string tmp_prompt;
+//    
+//    if (new_prompt != NULL)
+//    {
+//        tmp_prompt = new_prompt ;
+//        int len = tmp_prompt.size();
+//        if (len > 1
+//            && (tmp_prompt[0] == '\'' || tmp_prompt[0] == '"')
+//            && (tmp_prompt[len-1] == tmp_prompt[0]))
+//        {
+//            tmp_prompt = tmp_prompt.substr(1,len-2);
+//        }
+//        len = tmp_prompt.size();
+//        if (tmp_prompt[len-1] != ' ')
+//            tmp_prompt.append(" ");
+//    }
+//    EventSP new_event_sp;
+//    new_event_sp.reset (new Event(CommandInterpreter::eBroadcastBitResetPrompt, 
+//                                  new EventDataBytes (tmp_prompt.c_str())));
+//
+//    if (instance_name.GetLength() != 0)
+//    {
+//        // Set prompt for a particular instance.
+//        Debugger *dbg = Debugger::FindDebuggerWithInstanceName (instance_name).get();
+//        if (dbg != NULL)
+//        {
+//            dbg->GetCommandInterpreter().BroadcastEvent (new_event_sp);
+//        }
+//    }
+//
+//    return true;
+//}
+//
+//const ConstString
+//DebuggerInstanceSettings::CreateInstanceName ()
+//{
+//    static int instance_count = 1;
+//    StreamString sstr;
+//
+//    sstr.Printf ("debugger_%d", instance_count);
+//    ++instance_count;
+//
+//    const ConstString ret_val (sstr.GetData());
+//
+//    return ret_val;
+//}
+//
+//
 
-    if (GetInstanceName() == InstanceSettings::InvalidName())
-    {
-        ChangeInstanceName (std::string (CreateInstanceName().AsCString()));
-        m_owner_sp->RegisterInstanceSettings (this);
-    }
-
-    if (live_instance)
-    {
-        const InstanceSettingsSP &pending_settings = m_owner_sp->FindPendingSettings (m_instance_name);
-        CopyInstanceSettings (pending_settings, false);
-    }
-}
-
-DebuggerInstanceSettings::DebuggerInstanceSettings (const DebuggerInstanceSettings &rhs) :
-    InstanceSettings (Debugger::GetSettingsController(), CreateInstanceName ().AsCString()),
-    m_prompt (rhs.m_prompt),
-    m_notify_void (rhs.m_notify_void),
-    m_frame_format (rhs.m_frame_format),
-    m_thread_format (rhs.m_thread_format),
-    m_script_lang (rhs.m_script_lang),
-    m_use_external_editor (rhs.m_use_external_editor),
-    m_auto_confirm_on(rhs.m_auto_confirm_on)
-{
-    UserSettingsControllerSP owner_sp (m_owner_wp.lock());
-    if (owner_sp)
-    {
-        CopyInstanceSettings (owner_sp->FindPendingSettings (m_instance_name), false);
-        owner_sp->RemovePendingSettings (m_instance_name);
-    }
-}
-
-DebuggerInstanceSettings::~DebuggerInstanceSettings ()
-{
-}
-
-DebuggerInstanceSettings&
-DebuggerInstanceSettings::operator= (const DebuggerInstanceSettings &rhs)
-{
-    if (this != &rhs)
-    {
-        m_term_width = rhs.m_term_width;
-        m_prompt = rhs.m_prompt;
-        m_notify_void = rhs.m_notify_void;
-        m_frame_format = rhs.m_frame_format;
-        m_thread_format = rhs.m_thread_format;
-        m_script_lang = rhs.m_script_lang;
-        m_use_external_editor = rhs.m_use_external_editor;
-        m_auto_confirm_on = rhs.m_auto_confirm_on;
-    }
-
-    return *this;
-}
-
-bool
-DebuggerInstanceSettings::ValidTermWidthValue (const char *value, Error err)
-{
-    bool valid = false;
-
-    // Verify we have a value string.
-    if (value == NULL || value[0] == '\0')
-    {
-        err.SetErrorString ("missing value, can't set terminal width without a value");
-    }
-    else
-    {
-        char *end = NULL;
-        const uint32_t width = ::strtoul (value, &end, 0);
-        
-        if (end && end[0] == '\0')
-        {
-            return ValidTermWidthValue (width, err);
-        }
-        else
-            err.SetErrorStringWithFormat ("'%s' is not a valid unsigned integer string", value);
-    }
-
-    return valid;
-}
-
-bool
-DebuggerInstanceSettings::ValidTermWidthValue (uint32_t value, Error err)
-{
-    if (value >= 10 && value <= 1024)
-        return true;
-    else
-    {
-        err.SetErrorString ("invalid term-width value; value must be between 10 and 1024");
-        return false;
-    }
-}
-
-void
-DebuggerInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_name,
-                                                          const char *index_value,
-                                                          const char *value,
-                                                          const ConstString &instance_name,
-                                                          const SettingEntry &entry,
-                                                          VarSetOperationType op,
-                                                          Error &err,
-                                                          bool pending)
-{
-
-    if (var_name == TermWidthVarName())
-    {
-        if (ValidTermWidthValue (value, err))
-        {
-            m_term_width = ::strtoul (value, NULL, 0);
-        }
-    }
-    else if (var_name == PromptVarName())
-    {
-        UserSettingsController::UpdateStringVariable (op, m_prompt, value, err);
-        if (!pending)
-        {
-            // 'instance_name' is actually (probably) in the form '[<instance_name>]';  if so, we need to
-            // strip off the brackets before passing it to BroadcastPromptChange.
-
-            std::string tmp_instance_name (instance_name.AsCString());
-            if ((tmp_instance_name[0] == '[') 
-                && (tmp_instance_name[instance_name.GetLength() - 1] == ']'))
-                tmp_instance_name = tmp_instance_name.substr (1, instance_name.GetLength() - 2);
-            ConstString new_name (tmp_instance_name.c_str());
-
-            BroadcastPromptChange (new_name, m_prompt.c_str());
-        }
-    }
-    else if (var_name == GetNotifyVoidName())
-    {
-        UserSettingsController::UpdateBooleanVariable (op, m_notify_void, value, false, err);
-    }
-    else if (var_name == GetFrameFormatName())
-    {
-        UserSettingsController::UpdateStringVariable (op, m_frame_format, value, err);
-    }
-    else if (var_name == GetThreadFormatName())
-    {
-        UserSettingsController::UpdateStringVariable (op, m_thread_format, value, err);
-    }
-    else if (var_name == ScriptLangVarName())
-    {
-        bool success;
-        m_script_lang = Args::StringToScriptLanguage (value, eScriptLanguageDefault,
-                                                      &success);
-    }
-    else if (var_name == UseExternalEditorVarName ())
-    {
-        UserSettingsController::UpdateBooleanVariable (op, m_use_external_editor, value, false, err);
-    }
-    else if (var_name == AutoConfirmName ())
-    {
-        UserSettingsController::UpdateBooleanVariable (op, m_auto_confirm_on, value, false, err);
-    }
-    else if (var_name == StopSourceContextBeforeName ())
-    {
-        uint32_t new_value = Args::StringToUInt32(value, UINT32_MAX, 10, NULL);
-        if (new_value != UINT32_MAX)
-            m_stop_source_before_count = new_value;
-        else
-            err.SetErrorStringWithFormat("invalid unsigned string value '%s' for the '%s' setting", value, StopSourceContextBeforeName ().GetCString());
-    }
-    else if (var_name == StopSourceContextAfterName ())
-    {
-        uint32_t new_value = Args::StringToUInt32(value, UINT32_MAX, 10, NULL);
-        if (new_value != UINT32_MAX)
-            m_stop_source_after_count = new_value;
-        else
-            err.SetErrorStringWithFormat("invalid unsigned string value '%s' for the '%s' setting", value, StopSourceContextAfterName ().GetCString());
-    }
-    else if (var_name == StopDisassemblyCountName ())
-    {
-        uint32_t new_value = Args::StringToUInt32(value, UINT32_MAX, 10, NULL);
-        if (new_value != UINT32_MAX)
-            m_stop_disassembly_count = new_value;
-        else
-            err.SetErrorStringWithFormat("invalid unsigned string value '%s' for the '%s' setting", value, StopDisassemblyCountName ().GetCString());
-    }
-    else if (var_name == StopDisassemblyDisplayName ())
-    {
-        int new_value;
-        UserSettingsController::UpdateEnumVariable (g_show_disassembly_enum_values, &new_value, value, err);
-        if (err.Success())
-            m_stop_disassembly_display = (StopDisassemblyType)new_value;
-    }
-}
-
-bool
-DebuggerInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
-                                                    const ConstString &var_name,
-                                                    StringList &value,
-                                                    Error *err)
-{
-    if (var_name == PromptVarName())
-    {
-        value.AppendString (m_prompt.c_str(), m_prompt.size());
-    }
-    else if (var_name == GetNotifyVoidName())
-    {
-        value.AppendString (m_notify_void ? "true" : "false");
-    }
-    else if (var_name == ScriptLangVarName())
-    {
-        value.AppendString (ScriptInterpreter::LanguageToString (m_script_lang).c_str());
-    }
-    else if (var_name == TermWidthVarName())
-    {
-        StreamString width_str;
-        width_str.Printf ("%u", m_term_width);
-        value.AppendString (width_str.GetData());
-    }
-    else if (var_name == GetFrameFormatName ())
-    {
-        value.AppendString(m_frame_format.c_str(), m_frame_format.size());
-    }
-    else if (var_name == GetThreadFormatName ())
-    {
-        value.AppendString(m_thread_format.c_str(), m_thread_format.size());
-    }
-    else if (var_name == UseExternalEditorVarName())
-    {
-        if (m_use_external_editor)
-            value.AppendString ("true");
-        else
-            value.AppendString ("false");
-    }
-    else if (var_name == AutoConfirmName())
-    {
-        if (m_auto_confirm_on)
-            value.AppendString ("true");
-        else
-            value.AppendString ("false");
-    }
-    else if (var_name == StopSourceContextAfterName ())
-    {
-        StreamString strm;
-        strm.Printf ("%u", m_stop_source_after_count);
-        value.AppendString (strm.GetData());
-    }
-    else if (var_name == StopSourceContextBeforeName ())
-    {
-        StreamString strm;
-        strm.Printf ("%u", m_stop_source_before_count);
-        value.AppendString (strm.GetData());
-    }
-    else if (var_name == StopDisassemblyCountName ())
-    {
-        StreamString strm;
-        strm.Printf ("%u", m_stop_disassembly_count);
-        value.AppendString (strm.GetData());
-    }
-    else if (var_name == StopDisassemblyDisplayName ())
-    {
-        if (m_stop_disassembly_display >= eStopDisassemblyTypeNever && m_stop_disassembly_display <= eStopDisassemblyTypeAlways)
-            value.AppendString (g_show_disassembly_enum_values[m_stop_disassembly_display].string_value);
-        else
-            value.AppendString ("<invalid>");
-    }
-    else
-    {
-        if (err)
-            err->SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
-        return false;
-    }
-    return true;
-}
-
-void
-DebuggerInstanceSettings::CopyInstanceSettings (const InstanceSettingsSP &new_settings,
-                                                bool pending)
-{
-    if (new_settings.get() == NULL)
-        return;
-
-    DebuggerInstanceSettings *new_debugger_settings = (DebuggerInstanceSettings *) new_settings.get();
-
-    m_prompt = new_debugger_settings->m_prompt;
-    if (!pending)
-    {
-        // 'instance_name' is actually (probably) in the form '[<instance_name>]';  if so, we need to
-        // strip off the brackets before passing it to BroadcastPromptChange.
-
-        std::string tmp_instance_name (m_instance_name.AsCString());
-        if ((tmp_instance_name[0] == '[')
-            && (tmp_instance_name[m_instance_name.GetLength() - 1] == ']'))
-            tmp_instance_name = tmp_instance_name.substr (1, m_instance_name.GetLength() - 2);
-        ConstString new_name (tmp_instance_name.c_str());
-
-        BroadcastPromptChange (new_name, m_prompt.c_str());
-    }
-    m_notify_void = new_debugger_settings->m_notify_void;
-    m_frame_format = new_debugger_settings->m_frame_format;
-    m_thread_format = new_debugger_settings->m_thread_format;
-    m_term_width = new_debugger_settings->m_term_width;
-    m_script_lang = new_debugger_settings->m_script_lang;
-    m_use_external_editor = new_debugger_settings->m_use_external_editor;
-    m_auto_confirm_on = new_debugger_settings->m_auto_confirm_on;
-}
-
-
-bool
-DebuggerInstanceSettings::BroadcastPromptChange (const ConstString &instance_name, const char *new_prompt)
-{
-    std::string tmp_prompt;
-    
-    if (new_prompt != NULL)
-    {
-        tmp_prompt = new_prompt ;
-        int len = tmp_prompt.size();
-        if (len > 1
-            && (tmp_prompt[0] == '\'' || tmp_prompt[0] == '"')
-            && (tmp_prompt[len-1] == tmp_prompt[0]))
-        {
-            tmp_prompt = tmp_prompt.substr(1,len-2);
-        }
-        len = tmp_prompt.size();
-        if (tmp_prompt[len-1] != ' ')
-            tmp_prompt.append(" ");
-    }
-    EventSP new_event_sp;
-    new_event_sp.reset (new Event(CommandInterpreter::eBroadcastBitResetPrompt, 
-                                  new EventDataBytes (tmp_prompt.c_str())));
-
-    if (instance_name.GetLength() != 0)
-    {
-        // Set prompt for a particular instance.
-        Debugger *dbg = Debugger::FindDebuggerWithInstanceName (instance_name).get();
-        if (dbg != NULL)
-        {
-            dbg->GetCommandInterpreter().BroadcastEvent (new_event_sp);
-        }
-    }
-
-    return true;
-}
-
-const ConstString
-DebuggerInstanceSettings::CreateInstanceName ()
-{
-    static int instance_count = 1;
-    StreamString sstr;
-
-    sstr.Printf ("debugger_%d", instance_count);
-    ++instance_count;
-
-    const ConstString ret_val (sstr.GetData());
-
-    return ret_val;
-}
-
+//DebuggerInstanceSettings::DebuggerInstanceSettings
+//(
+//    const UserSettingsControllerSP &m_owner_sp, 
+//    bool live_instance,
+//    const char *name
+//) :
+//    InstanceSettings (m_owner_sp, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance),
+//    m_term_width (80),
+//    m_stop_source_before_count (3),
+//    m_stop_source_after_count (3),
+//    m_stop_disassembly_count (4),
+//    m_stop_disassembly_display (eStopDisassemblyTypeNoSource),
+//    m_prompt (),
+//    m_notify_void (false),
+//    m_frame_format (),
+//    m_thread_format (),    
+//    m_script_lang (),
+//    m_use_external_editor (false),
+//    m_auto_confirm_on (false)
+//{
+//    // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
+//    // until the vtables for DebuggerInstanceSettings are properly set up, i.e. AFTER all the initializers.
+//    // For this reason it has to be called here, rather than in the initializer or in the parent constructor.
+//    // The same is true of CreateInstanceName().
+//
+//    if (GetInstanceName() == InstanceSettings::InvalidName())
+//    {
+//        ChangeInstanceName (std::string (CreateInstanceName().AsCString()));
+//        m_owner_sp->RegisterInstanceSettings (this);
+//    }
+//
+//    if (live_instance)
+//    {
+//        const InstanceSettingsSP &pending_settings = m_owner_sp->FindPendingSettings (m_instance_name);
+//        CopyInstanceSettings (pending_settings, false);
+//    }
+//}
+//
+//DebuggerInstanceSettings::DebuggerInstanceSettings (const DebuggerInstanceSettings &rhs) :
+//    InstanceSettings (Debugger::GetSettingsController(), CreateInstanceName ().AsCString()),
+//    m_prompt (rhs.m_prompt),
+//    m_notify_void (rhs.m_notify_void),
+//    m_frame_format (rhs.m_frame_format),
+//    m_thread_format (rhs.m_thread_format),
+//    m_script_lang (rhs.m_script_lang),
+//    m_use_external_editor (rhs.m_use_external_editor),
+//    m_auto_confirm_on(rhs.m_auto_confirm_on)
+//{
+//    UserSettingsControllerSP owner_sp (m_owner_wp.lock());
+//    if (owner_sp)
+//    {
+//        CopyInstanceSettings (owner_sp->FindPendingSettings (m_instance_name), false);
+//        owner_sp->RemovePendingSettings (m_instance_name);
+//    }
+//}
+//
+//DebuggerInstanceSettings::~DebuggerInstanceSettings ()
+//{
+//}
+//
+//DebuggerInstanceSettings&
+//DebuggerInstanceSettings::operator= (const DebuggerInstanceSettings &rhs)
+//{
+//    if (this != &rhs)
+//    {
+//        m_term_width = rhs.m_term_width;
+//        m_prompt = rhs.m_prompt;
+//        m_notify_void = rhs.m_notify_void;
+//        m_frame_format = rhs.m_frame_format;
+//        m_thread_format = rhs.m_thread_format;
+//        m_script_lang = rhs.m_script_lang;
+//        m_use_external_editor = rhs.m_use_external_editor;
+//        m_auto_confirm_on = rhs.m_auto_confirm_on;
+//    }
+//
+//    return *this;
+//}
+//
+//bool
+//DebuggerInstanceSettings::ValidTermWidthValue (const char *value, Error err)
+//{
+//    bool valid = false;
+//
+//    // Verify we have a value string.
+//    if (value == NULL || value[0] == '\0')
+//    {
+//        err.SetErrorString ("missing value, can't set terminal width without a value");
+//    }
+//    else
+//    {
+//        char *end = NULL;
+//        const uint32_t width = ::strtoul (value, &end, 0);
+//        
+//        if (end && end[0] == '\0')
+//        {
+//            return ValidTermWidthValue (width, err);
+//        }
+//        else
+//            err.SetErrorStringWithFormat ("'%s' is not a valid unsigned integer string", value);
+//    }
+//
+//    return valid;
+//}
+//
+//bool
+//DebuggerInstanceSettings::ValidTermWidthValue (uint32_t value, Error err)
+//{
+//    if (value >= 10 && value <= 1024)
+//        return true;
+//    else
+//    {
+//        err.SetErrorString ("invalid term-width value; value must be between 10 and 1024");
+//        return false;
+//    }
+//}
+//
+//void
+//DebuggerInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_name,
+//                                                          const char *index_value,
+//                                                          const char *value,
+//                                                          const ConstString &instance_name,
+//                                                          const SettingEntry &entry,
+//                                                          VarSetOperationType op,
+//                                                          Error &err,
+//                                                          bool pending)
+//{
+//
+//    if (var_name == TermWidthVarName())
+//    {
+//        if (ValidTermWidthValue (value, err))
+//        {
+//            m_term_width = ::strtoul (value, NULL, 0);
+//        }
+//    }
+//    else if (var_name == PromptVarName())
+//    {
+//        UserSettingsController::UpdateStringVariable (op, m_prompt, value, err);
+//        if (!pending)
+//        {
+//            // 'instance_name' is actually (probably) in the form '[<instance_name>]';  if so, we need to
+//            // strip off the brackets before passing it to BroadcastPromptChange.
+//
+//            std::string tmp_instance_name (instance_name.AsCString());
+//            if ((tmp_instance_name[0] == '[') 
+//                && (tmp_instance_name[instance_name.GetLength() - 1] == ']'))
+//                tmp_instance_name = tmp_instance_name.substr (1, instance_name.GetLength() - 2);
+//            ConstString new_name (tmp_instance_name.c_str());
+//
+//            BroadcastPromptChange (new_name, m_prompt.c_str());
+//        }
+//    }
+//    else if (var_name == GetNotifyVoidName())
+//    {
+//        UserSettingsController::UpdateBooleanVariable (op, m_notify_void, value, false, err);
+//    }
+//    else if (var_name == GetFrameFormatName())
+//    {
+//        UserSettingsController::UpdateStringVariable (op, m_frame_format, value, err);
+//    }
+//    else if (var_name == GetThreadFormatName())
+//    {
+//        UserSettingsController::UpdateStringVariable (op, m_thread_format, value, err);
+//    }
+//    else if (var_name == ScriptLangVarName())
+//    {
+//        bool success;
+//        m_script_lang = Args::StringToScriptLanguage (value, eScriptLanguageDefault,
+//                                                      &success);
+//    }
+//    else if (var_name == UseExternalEditorVarName ())
+//    {
+//        UserSettingsController::UpdateBooleanVariable (op, m_use_external_editor, value, false, err);
+//    }
+//    else if (var_name == AutoConfirmName ())
+//    {
+//        UserSettingsController::UpdateBooleanVariable (op, m_auto_confirm_on, value, false, err);
+//    }
+//    else if (var_name == StopSourceContextBeforeName ())
+//    {
+//        uint32_t new_value = Args::StringToUInt32(value, UINT32_MAX, 10, NULL);
+//        if (new_value != UINT32_MAX)
+//            m_stop_source_before_count = new_value;
+//        else
+//            err.SetErrorStringWithFormat("invalid unsigned string value '%s' for the '%s' setting", value, StopSourceContextBeforeName ().GetCString());
+//    }
+//    else if (var_name == StopSourceContextAfterName ())
+//    {
+//        uint32_t new_value = Args::StringToUInt32(value, UINT32_MAX, 10, NULL);
+//        if (new_value != UINT32_MAX)
+//            m_stop_source_after_count = new_value;
+//        else
+//            err.SetErrorStringWithFormat("invalid unsigned string value '%s' for the '%s' setting", value, StopSourceContextAfterName ().GetCString());
+//    }
+//    else if (var_name == StopDisassemblyCountName ())
+//    {
+//        uint32_t new_value = Args::StringToUInt32(value, UINT32_MAX, 10, NULL);
+//        if (new_value != UINT32_MAX)
+//            m_stop_disassembly_count = new_value;
+//        else
+//            err.SetErrorStringWithFormat("invalid unsigned string value '%s' for the '%s' setting", value, StopDisassemblyCountName ().GetCString());
+//    }
+//    else if (var_name == StopDisassemblyDisplayName ())
+//    {
+//        int new_value;
+//        UserSettingsController::UpdateEnumVariable (g_show_disassembly_enum_values, &new_value, value, err);
+//        if (err.Success())
+//            m_stop_disassembly_display = (StopDisassemblyType)new_value;
+//    }
+//}
+//
+//bool
+//DebuggerInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
+//                                                    const ConstString &var_name,
+//                                                    StringList &value,
+//                                                    Error *err)
+//{
+//    if (var_name == PromptVarName())
+//    {
+//        value.AppendString (m_prompt.c_str(), m_prompt.size());
+//    }
+//    else if (var_name == GetNotifyVoidName())
+//    {
+//        value.AppendString (m_notify_void ? "true" : "false");
+//    }
+//    else if (var_name == ScriptLangVarName())
+//    {
+//        value.AppendString (ScriptInterpreter::LanguageToString (m_script_lang).c_str());
+//    }
+//    else if (var_name == TermWidthVarName())
+//    {
+//        StreamString width_str;
+//        width_str.Printf ("%u", m_term_width);
+//        value.AppendString (width_str.GetData());
+//    }
+//    else if (var_name == GetFrameFormatName ())
+//    {
+//        value.AppendString(m_frame_format.c_str(), m_frame_format.size());
+//    }
+//    else if (var_name == GetThreadFormatName ())
+//    {
+//        value.AppendString(m_thread_format.c_str(), m_thread_format.size());
+//    }
+//    else if (var_name == UseExternalEditorVarName())
+//    {
+//        if (m_use_external_editor)
+//            value.AppendString ("true");
+//        else
+//            value.AppendString ("false");
+//    }
+//    else if (var_name == AutoConfirmName())
+//    {
+//        if (m_auto_confirm_on)
+//            value.AppendString ("true");
+//        else
+//            value.AppendString ("false");
+//    }
+//    else if (var_name == StopSourceContextAfterName ())
+//    {
+//        StreamString strm;
+//        strm.Printf ("%u", m_stop_source_after_count);
+//        value.AppendString (strm.GetData());
+//    }
+//    else if (var_name == StopSourceContextBeforeName ())
+//    {
+//        StreamString strm;
+//        strm.Printf ("%u", m_stop_source_before_count);
+//        value.AppendString (strm.GetData());
+//    }
+//    else if (var_name == StopDisassemblyCountName ())
+//    {
+//        StreamString strm;
+//        strm.Printf ("%u", m_stop_disassembly_count);
+//        value.AppendString (strm.GetData());
+//    }
+//    else if (var_name == StopDisassemblyDisplayName ())
+//    {
+//        if (m_stop_disassembly_display >= eStopDisassemblyTypeNever && m_stop_disassembly_display <= eStopDisassemblyTypeAlways)
+//            value.AppendString (g_show_disassembly_enum_values[m_stop_disassembly_display].string_value);
+//        else
+//            value.AppendString ("<invalid>");
+//    }
+//    else
+//    {
+//        if (err)
+//            err->SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
+//        return false;
+//    }
+//    return true;
+//}
+//
+//void
+//DebuggerInstanceSettings::CopyInstanceSettings (const InstanceSettingsSP &new_settings,
+//                                                bool pending)
+//{
+//    if (new_settings.get() == NULL)
+//        return;
+//
+//    DebuggerInstanceSettings *new_debugger_settings = (DebuggerInstanceSettings *) new_settings.get();
+//
+//    m_prompt = new_debugger_settings->m_prompt;
+//    if (!pending)
+//    {
+//        // 'instance_name' is actually (probably) in the form '[<instance_name>]';  if so, we need to
+//        // strip off the brackets before passing it to BroadcastPromptChange.
+//
+//        std::string tmp_instance_name (m_instance_name.AsCString());
+//        if ((tmp_instance_name[0] == '[')
+//            && (tmp_instance_name[m_instance_name.GetLength() - 1] == ']'))
+//            tmp_instance_name = tmp_instance_name.substr (1, m_instance_name.GetLength() - 2);
+//        ConstString new_name (tmp_instance_name.c_str());
+//
+//        BroadcastPromptChange (new_name, m_prompt.c_str());
+//    }
+//    m_notify_void = new_debugger_settings->m_notify_void;
+//    m_frame_format = new_debugger_settings->m_frame_format;
+//    m_thread_format = new_debugger_settings->m_thread_format;
+//    m_term_width = new_debugger_settings->m_term_width;
+//    m_script_lang = new_debugger_settings->m_script_lang;
+//    m_use_external_editor = new_debugger_settings->m_use_external_editor;
+//    m_auto_confirm_on = new_debugger_settings->m_auto_confirm_on;
+//}
+//
+//
+//bool
+//DebuggerInstanceSettings::BroadcastPromptChange (const ConstString &instance_name, const char *new_prompt)
+//{
+//    std::string tmp_prompt;
+//    
+//    if (new_prompt != NULL)
+//    {
+//        tmp_prompt = new_prompt ;
+//        int len = tmp_prompt.size();
+//        if (len > 1
+//            && (tmp_prompt[0] == '\'' || tmp_prompt[0] == '"')
+//            && (tmp_prompt[len-1] == tmp_prompt[0]))
+//        {
+//            tmp_prompt = tmp_prompt.substr(1,len-2);
+//        }
+//        len = tmp_prompt.size();
+//        if (tmp_prompt[len-1] != ' ')
+//            tmp_prompt.append(" ");
+//    }
+//    EventSP new_event_sp;
+//    new_event_sp.reset (new Event(CommandInterpreter::eBroadcastBitResetPrompt, 
+//                                  new EventDataBytes (tmp_prompt.c_str())));
+//
+//    if (instance_name.GetLength() != 0)
+//    {
+//        // Set prompt for a particular instance.
+//        Debugger *dbg = Debugger::FindDebuggerWithInstanceName (instance_name).get();
+//        if (dbg != NULL)
+//        {
+//            dbg->GetCommandInterpreter().BroadcastEvent (new_event_sp);
+//        }
+//    }
+//
+//    return true;
+//}
+//
+//const ConstString
+//DebuggerInstanceSettings::CreateInstanceName ()
+//{
+//    static int instance_count = 1;
+//    StreamString sstr;
+//
+//    sstr.Printf ("debugger_%d", instance_count);
+//    ++instance_count;
+//
+//    const ConstString ret_val (sstr.GetData());
+//
+//    return ret_val;
+//}
+//
 
 //--------------------------------------------------
 // SettingsController Variable Tables
 //--------------------------------------------------
 
+//
+//SettingEntry
+//Debugger::SettingsController::global_settings_table[] =
+//{
+//  //{ "var-name",    var-type,      "default", enum-table, init'd, hidden, "help-text"},
+//  // The Debugger level global table should always be empty; all Debugger settable variables should be instance
+//  // variables.
+//    {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
+//};
 
-SettingEntry
-Debugger::SettingsController::global_settings_table[] =
-{
-  //{ "var-name",    var-type,      "default", enum-table, init'd, hidden, "help-text"},
-  // The Debugger level global table should always be empty; all Debugger settable variables should be instance
-  // variables.
-    {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
-};
-
-#define MODULE_WITH_FUNC "{ ${module.file.basename}{`${function.name-with-args}${function.pc-offset}}}"
-#define FILE_AND_LINE "{ at ${line.file.basename}:${line.number}}"
-
-#define DEFAULT_THREAD_FORMAT "thread #${thread.index}: tid = ${thread.id}"\
-    "{, ${frame.pc}}"\
-    MODULE_WITH_FUNC\
-    FILE_AND_LINE\
-    "{, stop reason = ${thread.stop-reason}}"\
-    "{\\nReturn value: ${thread.return-value}}"\
-    "\\n"
-
-//#define DEFAULT_THREAD_FORMAT "thread #${thread.index}: tid = ${thread.id}"\
-//    "{, ${frame.pc}}"\
-//    MODULE_WITH_FUNC\
-//    FILE_AND_LINE\
-//    "{, stop reason = ${thread.stop-reason}}"\
-//    "{, name = ${thread.name}}"\
-//    "{, queue = ${thread.queue}}"\
-//    "\\n"
-
-#define DEFAULT_FRAME_FORMAT "frame #${frame.index}: ${frame.pc}"\
-    MODULE_WITH_FUNC\
-    FILE_AND_LINE\
-    "\\n"
-
-SettingEntry
-Debugger::SettingsController::instance_settings_table[] =
-{
-//  NAME                    Setting variable type   Default                 Enum  Init'd Hidden Help
-//  ======================= ======================= ======================  ====  ====== ====== ======================
-{   "frame-format",         eSetVarTypeString,      DEFAULT_FRAME_FORMAT,   NULL, false, false, "The default frame format string to use when displaying thread information." },
-{   "prompt",               eSetVarTypeString,      "(lldb) ",              NULL, false, false, "The debugger command line prompt displayed for the user." },
-{   "notify-void",          eSetVarTypeBoolean,     "false",                NULL, false, false, "Notify the user explicitly if an expression returns void." },
-{   "script-lang",          eSetVarTypeString,      "python",               NULL, false, false, "The script language to be used for evaluating user-written scripts." },
-{   "term-width",           eSetVarTypeInt,         "80"    ,               NULL, false, false, "The maximum number of columns to use for displaying text." },
-{   "thread-format",        eSetVarTypeString,      DEFAULT_THREAD_FORMAT,  NULL, false, false, "The default thread format string to use when displaying thread information." },
-{   "use-external-editor",  eSetVarTypeBoolean,     "false",                NULL, false, false, "Whether to use an external editor or not." },
-{   "auto-confirm",         eSetVarTypeBoolean,     "false",                NULL, false, false, "If true all confirmation prompts will receive their default reply." },
-{   "stop-line-count-before",eSetVarTypeInt,        "3",                    NULL, false, false, "The number of sources lines to display that come before the current source line when displaying a stopped context." },
-{   "stop-line-count-after", eSetVarTypeInt,        "3",                    NULL, false, false, "The number of sources lines to display that come after the current source line when displaying a stopped context." },
-{   "stop-disassembly-count",  eSetVarTypeInt,      "0",                    NULL, false, false, "The number of disassembly lines to show when displaying a stopped context." },
-{   "stop-disassembly-display", eSetVarTypeEnum,    "no-source",           g_show_disassembly_enum_values, false, false, "Control when to display disassembly when displaying a stopped context." },
-{   NULL,                   eSetVarTypeNone,        NULL,                   NULL, false, false, NULL }
-};
+//SettingEntry
+//Debugger::SettingsController::instance_settings_table[] =
+//{
+////  NAME                    Setting variable type   Default                 Enum  Init'd Hidden Help
+////  ======================= ======================= ======================  ====  ====== ====== ======================
+//{   "frame-format",         eSetVarTypeString,      DEFAULT_FRAME_FORMAT,   NULL, false, false, "The default frame format string to use when displaying thread information." },
+//{   "prompt",               eSetVarTypeString,      "(lldb) ",              NULL, false, false, "The debugger command line prompt displayed for the user." },
+//{   "script-lang",          eSetVarTypeString,      "python",               NULL, false, false, "The script language to be used for evaluating user-written scripts." },
+//{   "term-width",           eSetVarTypeInt,         "80"    ,               NULL, false, false, "The maximum number of columns to use for displaying text." },
+//{   "thread-format",        eSetVarTypeString,      DEFAULT_THREAD_FORMAT,  NULL, false, false, "The default thread format string to use when displaying thread information." },
+//{   "use-external-editor",  eSetVarTypeBoolean,     "false",                NULL, false, false, "Whether to use an external editor or not." },
+//{   "auto-confirm",         eSetVarTypeBoolean,     "false",                NULL, false, false, "If true all confirmation prompts will receive their default reply." },
+//{   "stop-line-count-before",eSetVarTypeInt,        "3",                    NULL, false, false, "The number of sources lines to display that come before the current source line when displaying a stopped context." },
+//{   "stop-line-count-after", eSetVarTypeInt,        "3",                    NULL, false, false, "The number of sources lines to display that come after the current source line when displaying a stopped context." },
+//{   "stop-disassembly-count",  eSetVarTypeInt,      "0",                    NULL, false, false, "The number of disassembly lines to show when displaying a stopped context." },
+//{   "stop-disassembly-display", eSetVarTypeEnum,    "no-source",           g_show_disassembly_enum_values, false, false, "Control when to display disassembly when displaying a stopped context." },
+//{   NULL,                   eSetVarTypeNone,        NULL,                   NULL, false, false, NULL }
+//};

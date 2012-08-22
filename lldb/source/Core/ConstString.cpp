@@ -205,6 +205,11 @@ ConstString::ConstString (const char *cstr, size_t cstr_len) :
 {
 }
 
+ConstString::ConstString (const llvm::StringRef &s) :
+    m_string (StringPool().GetConstCStringWithLength (s.data(), s.size()))
+{
+}
+
 bool
 ConstString::operator < (const ConstString& rhs) const
 {
@@ -281,6 +286,12 @@ void
 ConstString::SetCString (const char *cstr)
 {
     m_string = StringPool().GetConstCString (cstr);
+}
+
+void
+ConstString::SetString (const llvm::StringRef &s)
+{
+    m_string = StringPool().GetConstCStringWithLength (s.data(), s.size());
 }
 
 void

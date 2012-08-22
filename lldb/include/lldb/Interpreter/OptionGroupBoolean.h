@@ -15,7 +15,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Interpreter/Options.h"
-#include "lldb/Interpreter/NamedOptionValue.h"
+#include "lldb/Interpreter/OptionValueBoolean.h"
 
 namespace lldb_private {
     //-------------------------------------------------------------------------

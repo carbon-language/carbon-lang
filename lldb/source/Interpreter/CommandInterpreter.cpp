@@ -84,17 +84,10 @@ CommandInterpreter::CommandInterpreter
     m_truncation_warning(eNoTruncation),
     m_command_source_depth (0)
 {
-    const char *dbg_name = debugger.GetInstanceName().AsCString();
-    std::string lang_name = ScriptInterpreter::LanguageToString (script_language);
-    StreamString var_name;
-    var_name.Printf ("[%s].script-lang", dbg_name);
-    debugger.GetSettingsController()->SetVariable (var_name.GetData(), lang_name.c_str(), 
-                                                   eVarSetOperationAssign, false, 
-                                                   m_debugger.GetInstanceName().AsCString());                                                   
+    debugger.SetScriptLanguage (script_language);
     SetEventName (eBroadcastBitThreadShouldExit, "thread-should-exit");
     SetEventName (eBroadcastBitResetPrompt, "reset-prompt");
-    SetEventName (eBroadcastBitQuitCommandReceived, "quit");
-    
+    SetEventName (eBroadcastBitQuitCommandReceived, "quit");    
     CheckInWithManager ();
 }
 
@@ -2505,6 +2498,7 @@ CommandInterpreter::OutputFormattedHelpText (Stream &strm,
                 while (end > start
                        && text[end] != ' ' && text[end] != '\t' && text[end] != '\n')
                     end--;
+                assert (end > 0);
             }
 
             sub_len = end - start;

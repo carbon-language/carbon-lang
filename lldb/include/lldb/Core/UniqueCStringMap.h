@@ -146,6 +146,27 @@ public:
     }
 
     //------------------------------------------------------------------
+    // Find the value for the unique string in the map.
+    //
+    // Return the value for \a unique_cstr if one is found, return
+    // \a fail_value otherwise. This method works well for simple type
+    // T values and only if there is a sensible failure value that can
+    // be returned and that won't match any existing values.
+    //------------------------------------------------------------------
+    T
+    Find (const char *unique_cstr, T fail_value) const
+    {
+        Entry search_entry (unique_cstr);
+        const_iterator end = m_map.end();
+        const_iterator pos = std::lower_bound (m_map.begin(), end, search_entry);
+        if (pos != end)
+        {
+            if (pos->cstring == unique_cstr)
+                return pos->value;
+        }
+        return fail_value;
+    }
+    //------------------------------------------------------------------
     // Get a pointer to the first entry that matches "name". NULL will
     // be returned if there is no entry that matches "name".
     //

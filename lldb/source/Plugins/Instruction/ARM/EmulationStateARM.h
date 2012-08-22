@@ -14,7 +14,6 @@
 
 #include "lldb/Core/EmulateInstruction.h"
 #include "lldb/Core/Opcode.h"
-#include "lldb/Interpreter/NamedOptionValue.h"
 
 class EmulationStateARM {
 public: 

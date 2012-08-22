@@ -25,6 +25,7 @@
 #include "lldb/Interpreter/OptionGroupFormat.h"
 #include "lldb/Interpreter/OptionGroupOutputFile.h"
 #include "lldb/Interpreter/OptionGroupValueObjectDisplay.h"
+#include "lldb/Interpreter/OptionValueString.h"
 #include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/StackFrame.h"

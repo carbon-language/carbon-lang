@@ -685,3 +685,10 @@ Platform::SetThreadCreationBreakpoint (lldb_private::Target &target)
     return lldb::BreakpointSP();
 }
 
+size_t
+Platform::GetEnvironment (StringList &environment)
+{
+    environment.Clear();
+    return false;
+}
+

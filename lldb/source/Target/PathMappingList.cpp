@@ -112,6 +112,21 @@ PathMappingList::Insert (const ConstString &path,
 }
 
 bool
+PathMappingList::Replace (const ConstString &path,
+                          const ConstString &replacement,
+                          uint32_t index,
+                          bool notify)
+{
+    iterator insert_iter;
+    if (index >= m_pairs.size())
+        return false;
+    m_pairs[index] = pair(path, replacement);
+    if (notify && m_callback)
+        m_callback (*this, m_callback_baton);
+    return true;
+}
+
+bool
 PathMappingList::Remove (off_t index, bool notify)
 {
     if (index >= m_pairs.size())

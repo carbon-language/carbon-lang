@@ -21,11 +21,13 @@ using namespace lldb;
 using namespace lldb_private;
 #include "llvm/ADT/StringRef.h"
 
-static inline void StripLeadingSpaces(llvm::StringRef &Str)
+static inline void StripLeadingSpaces(llvm::StringRef &s)
 {
-    while (!Str.empty() && isspace(Str[0]))
-        Str = Str.substr(1);
+    const size_t non_space = s.find_first_not_of(' ');
+    if (non_space > 0)
+        s = s.substr(non_space);
 }
+
 
 //-------------------------------------------------------------------------
 // CommandObjectSettingsSet
@@ -68,8 +70,8 @@ public:
 "When setting a dictionary or array variable, you can set multiple entries \n\
 at once by giving the values to the set command.  For example: \n\
 \n\
-(lldb) settings set target.run-args value1  value2 value3 \n\
-(lldb) settings set target.env-vars [\"MYPATH\"]=~/.:/usr/bin  [\"SOME_ENV_VAR\"]=12345 \n\
+(lldb) settings set target.run-args value1 value2 value3 \n\
+(lldb) settings set target.env-vars MYPATH=~/.:/usr/bin  SOME_ENV_VAR=12345 \n\
 \n\
 (lldb) settings show target.run-args \n\
   [0]: 'value1' \n\
@@ -78,8 +80,6 @@ at once by giving the values to the set command.  For example: \n\
 (lldb) settings show target.env-vars \n\
   'MYPATH=~/.:/usr/bin'\n\
   'SOME_ENV_VAR=12345' \n\
-\n\
-Note the special syntax for setting a dictionary element: [\"<key>\"]=<value> \n\
 \n\
 Warning:  The 'set' command re-sets the entire array or dictionary.  If you \n\
 just want to add, remove or update individual values (or add something to \n\
@@ -108,8 +108,7 @@ insert-before or insert-after.\n");
 
         CommandOptions (CommandInterpreter &interpreter) :
             Options (interpreter),
-            m_override (true),
-            m_reset (false)
+            m_global (false)
         {
         }
 
@@ -124,11 +123,8 @@ insert-before or insert-after.\n");
 
             switch (short_option)
             {
-                case 'n':
-                    m_override = false;
-                    break;
-                case 'r':
-                    m_reset = true;
+                case 'g':
+                    m_global = true;
                     break;
                 default:
                     error.SetErrorStringWithFormat ("unrecognized options '%c'", short_option);
@@ -141,8 +137,7 @@ insert-before or insert-after.\n");
         void
         OptionParsingStarting ()
         {
-            m_override = true;
-            m_reset = false;
+            m_global = false;
         }
         
         const OptionDefinition*
@@ -157,9 +152,7 @@ insert-before or insert-after.\n");
 
         // Instance variables to hold the values for command options.
 
-        bool m_override;
-        bool m_reset;
-
+        bool m_global;
     };
 
     virtual int
@@ -172,15 +165,20 @@ insert-before or insert-after.\n");
                               bool &word_complete,
                               StringList &matches)
     {
-        std::string completion_str (input.GetArgumentAtIndex (cursor_index));
-        completion_str.erase (cursor_char_position);
+        std::string completion_str (input.GetArgumentAtIndex (cursor_index), cursor_char_position);
 
-        // Attempting to complete variable name
-        llvm::StringRef prev_str(cursor_index == 2 ? input.GetArgumentAtIndex(1) : "");
-        if (cursor_index == 1 ||
-            (cursor_index == 2 && prev_str.startswith("-")) // "settings set -r th", followed by Tab.
-            )
+        const size_t argc = input.GetArgumentCount();
+        const char *arg = NULL;
+        int setting_var_idx;
+        for (setting_var_idx = 1; setting_var_idx < argc; ++setting_var_idx)
         {
+            arg = input.GetArgumentAtIndex(setting_var_idx);
+            if (arg && arg[0] != '-')
+                break; // We found our setting variable name index
+        }
+        if (cursor_index == setting_var_idx)
+        {
+            // Attempting to complete setting variable name
             CommandCompletions::InvokeCommonCompletionCallbacks (m_interpreter,
                                                                  CommandCompletions::eSettingsNameCompletion,
                                                                  completion_str.c_str(),
@@ -189,39 +187,37 @@ insert-before or insert-after.\n");
                                                                  NULL,
                                                                  word_complete,
                                                                  matches);
-            // If there is only 1 match which fulfills the completion request, do an early return.
-            if (matches.GetSize() == 1 && completion_str.compare(matches.GetStringAtIndex(0)) != 0)
-                return 1;
         }
-
-        // Attempting to complete value
-        if ((cursor_index == 2)   // Partly into the variable's value
-            || (cursor_index == 1  // Or at the end of a completed valid variable name
-                && matches.GetSize() == 1
-                && completion_str.compare (matches.GetStringAtIndex(0)) == 0))
+        else
         {
-            matches.Clear();
-            UserSettingsControllerSP usc_sp = Debugger::GetSettingsController();
-            if (cursor_index == 1)
+            arg = input.GetArgumentAtIndex(cursor_index);
+            
+            if (arg)
             {
-                // The user is at the end of the variable name, which is complete and valid.
-                UserSettingsController::CompleteSettingsValue (usc_sp,
-                                                               input.GetArgumentAtIndex (1), // variable name
-                                                               NULL,                         // empty value string
-                                                               word_complete,
-                                                               matches);
-            }
-            else
-            {
-                // The user is partly into the variable value.
-                UserSettingsController::CompleteSettingsValue (usc_sp,
-                                                               input.GetArgumentAtIndex (1),  // variable name
-                                                               completion_str.c_str(),        // partial value string
-                                                               word_complete,
-                                                               matches);
+                if (arg[0] == '-')
+                {
+                    // Complete option name
+                }
+                else
+                {
+                    ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
+
+                    // Complete setting value
+                    const char *setting_var_name = input.GetArgumentAtIndex(setting_var_idx);
+                    Error error;
+                    lldb::OptionValueSP value_sp (m_interpreter.GetDebugger().GetPropertyValue(&exe_ctx, setting_var_name, false, error));
+                    if (value_sp)
+                    {
+                        value_sp->AutoComplete (m_interpreter,
+                                                completion_str.c_str(),
+                                                match_start_point,
+                                                max_return_elements,
+                                                word_complete,
+                                                matches);
+                    }
+                }
             }
         }
-
         return matches.GetSize();
     }
     
@@ -229,16 +225,14 @@ protected:
     virtual bool
     DoExecute (const char *command, CommandReturnObject &result)
     {
-        UserSettingsControllerSP usc_sp (Debugger::GetSettingsController ());
-
         Args cmd_args(command);
 
         // Process possible options.
         if (!ParseOptions (cmd_args, result))
             return false;
 
-        const int argc = cmd_args.GetArgumentCount ();
-        if ((argc < 2) && (!m_options.m_reset))
+        const size_t argc = cmd_args.GetArgumentCount ();
+        if ((argc < 2) && (!m_options.m_global))
         {
             result.AppendError ("'settings set' takes more arguments");
             result.SetStatus (eReturnStatusFailed);
@@ -248,7 +242,7 @@ protected:
         const char *var_name = cmd_args.GetArgumentAtIndex (0);
         if ((var_name == NULL) || (var_name[0] == '\0'))
         {
-            result.AppendError ("'settings set' command requires a valid variable name; No value supplied");
+            result.AppendError ("'settings set' command requires a valid variable name");
             result.SetStatus (eReturnStatusFailed);
             return false;
         }
@@ -260,27 +254,33 @@ protected:
         StripLeadingSpaces(var_value_str);
         std::string var_value_string = var_value_str.str();
 
-        if (!m_options.m_reset
-            && var_value_string.empty())
+        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
+        Error error;
+        if (m_options.m_global)
         {
-            result.AppendError ("'settings set' command requires a valid variable value unless using '--reset' option;"
-                                " No value supplied");
+            error = m_interpreter.GetDebugger().SetPropertyValue (NULL,
+                                                                  eVarSetOperationAssign,
+                                                                  var_name,
+                                                                  var_value_string.c_str());
+        }
+        
+        if (error.Success())
+        {
+            error = m_interpreter.GetDebugger().SetPropertyValue (&exe_ctx,
+                                                                  eVarSetOperationAssign,
+                                                                  var_name,
+                                                                  var_value_string.c_str());
+        }
+
+        if (error.Fail())
+        {
+            result.AppendError (error.AsCString());
             result.SetStatus (eReturnStatusFailed);
+            return false;
         }
         else
         {
-          Error err = usc_sp->SetVariable (var_name_string.c_str(), 
-                                           var_value_string.c_str(), 
-                                           eVarSetOperationAssign, 
-                                           m_options.m_override, 
-                                           m_interpreter.GetDebugger().GetInstanceName().AsCString());
-            if (err.Fail ())
-            {
-                result.AppendError (err.AsCString());
-                result.SetStatus (eReturnStatusFailed);
-            }
-            else
-                result.SetStatus (eReturnStatusSuccessFinishNoResult);
+            result.SetStatus (eReturnStatusSuccessFinishResult);
         }
 
         return result.Succeeded();
@@ -292,8 +292,7 @@ private:
 OptionDefinition
 CommandObjectSettingsSet::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_1, false, "no-override", 'n', no_argument, NULL, NULL, eArgTypeNone, "Prevents already existing instances and pending settings from being assigned this new value.  Using this option means that only the default or specified instance setting values will be updated." },
-    { LLDB_OPT_SET_2, false, "reset", 'r', no_argument,   NULL, NULL, eArgTypeNone, "Causes value to be reset to the original default for this variable.  No value needs to be specified when this option is used." },
+    { LLDB_OPT_SET_2, false, "global", 'g', no_argument,   NULL, NULL, eArgTypeNone, "Apply the new value to the global default value." },
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
@@ -339,8 +338,7 @@ public:
                               bool &word_complete,
                               StringList &matches)
     {
-        std::string completion_str (input.GetArgumentAtIndex (cursor_index));
-        completion_str.erase (cursor_char_position);
+        std::string completion_str (input.GetArgumentAtIndex (cursor_index), cursor_char_position);
 
         CommandCompletions::InvokeCommonCompletionCallbacks (m_interpreter,
                                                              CommandCompletions::eSettingsNameCompletion,
@@ -355,51 +353,33 @@ public:
 
 protected:
     virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& args, CommandReturnObject &result)
     {
-        UserSettingsControllerSP usc_sp (Debugger::GetSettingsController ());
-        const char *current_prefix = usc_sp->GetLevelName().GetCString();
+        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
+        result.SetStatus (eReturnStatusSuccessFinishResult);
 
-        Error err;
-
-        if (command.GetArgumentCount())
+        const size_t argc = args.GetArgumentCount ();
+        if (argc > 0)
         {
-            // The user requested to see the value of a particular variable.
-            SettableVariableType var_type;
-            const char *variable_name = command.GetArgumentAtIndex (0);
-            StringList value = usc_sp->GetVariable (variable_name, 
-                                                    var_type,
-                                                    m_interpreter.GetDebugger().GetInstanceName().AsCString(),
-                                                    err);
-            
-            if (err.Fail ())
+            for (size_t i=0; i<argc; ++i)
             {
-                result.AppendError (err.AsCString());
-                result.SetStatus (eReturnStatusFailed);
-                  
-            }
-            else
-            {
-                UserSettingsController::DumpValue(m_interpreter, usc_sp, variable_name, result.GetOutputStream());
-                result.SetStatus (eReturnStatusSuccessFinishResult);
+                const char *property_path = args.GetArgumentAtIndex (i);
+
+                Error error(m_interpreter.GetDebugger().DumpPropertyValue (&exe_ctx, result.GetOutputStream(), property_path, OptionValue::eDumpGroupValue));
+                if (error.Success())
+                {
+                    result.GetOutputStream().EOL();
+                }
+                else
+                {
+                    result.AppendError (error.AsCString());
+                    result.SetStatus (eReturnStatusFailed);
+                }
             }
         }
         else
         {
-            UserSettingsController::GetAllVariableValues (m_interpreter, 
-                                                          usc_sp, 
-                                                          current_prefix, 
-                                                          result.GetOutputStream(), 
-                                                          err);
-            if (err.Fail ())
-            {
-                result.AppendError (err.AsCString());
-                result.SetStatus (eReturnStatusFailed);
-            }
-            else
-            {
-                result.SetStatus (eReturnStatusSuccessFinishNoResult);
-            }
+            m_interpreter.GetDebugger().DumpAllPropertyValues (& exe_ctx, result.GetOutputStream(), OptionValue::eDumpGroupValue);
         }
 
         return result.Succeeded();
@@ -451,8 +431,7 @@ public:
                               bool &word_complete,
                               StringList &matches)
     {
-        std::string completion_str (input.GetArgumentAtIndex (cursor_index));
-        completion_str.erase (cursor_char_position);
+        std::string completion_str (input.GetArgumentAtIndex (cursor_index), cursor_char_position);
 
         CommandCompletions::InvokeCommonCompletionCallbacks (m_interpreter,
                                                              CommandCompletions::eSettingsNameCompletion,
@@ -467,46 +446,37 @@ public:
 
 protected:
     virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& args, CommandReturnObject &result)
     {
-        UserSettingsControllerSP usc_sp (Debugger::GetSettingsController ());
-        const char *current_prefix = usc_sp->GetLevelName().GetCString();
+        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
+        result.SetStatus (eReturnStatusSuccessFinishResult);
 
-        Error err;
+        const bool will_modify = false;
+        const size_t argc = args.GetArgumentCount ();
+        if (argc > 0)
+        {
+            const bool dump_qualified_name = true;
 
-        if (command.GetArgumentCount() == 0)
-        {
-            UserSettingsController::FindAllSettingsDescriptions (m_interpreter, 
-                                                                 usc_sp, 
-                                                                 current_prefix, 
-                                                                 result.GetOutputStream(), 
-                                                                 err);
-        }
-        else if (command.GetArgumentCount() == 1)
-        {
-            const char *search_name = command.GetArgumentAtIndex (0);
-            UserSettingsController::FindSettingsDescriptions (m_interpreter, 
-                                                              usc_sp, 
-                                                              current_prefix,
-                                                              search_name, 
-                                                              result.GetOutputStream(), 
-                                                              err);
+            for (size_t i=0; i<argc; ++i)
+            {
+                const char *property_path = args.GetArgumentAtIndex (i);
+                
+                const Property *property = m_interpreter.GetDebugger().GetValueProperties()->GetPropertyAtPath (&exe_ctx, will_modify, property_path);
+
+                if (property)
+                {
+                    property->DumpDescription (m_interpreter, result.GetOutputStream(), 0, dump_qualified_name);
+                }
+                else
+                {
+                    result.AppendErrorWithFormat ("invalid property path '%s'", property_path);
+                    result.SetStatus (eReturnStatusFailed);
+                }
+            }
         }
         else
         {
-            result.AppendError ("Too many aguments for 'settings list' command.\n");
-            result.SetStatus (eReturnStatusFailed);
-            return false;
-        }
-
-        if (err.Fail ())
-        {
-            result.AppendError (err.AsCString());
-            result.SetStatus (eReturnStatusFailed);
-        }
-        else
-        {
-            result.SetStatus (eReturnStatusSuccessFinishNoResult);
+            m_interpreter.GetDebugger().DumpAllDescriptions (m_interpreter, result.GetOutputStream());
         }
 
         return result.Succeeded();
@@ -517,14 +487,14 @@ protected:
 // CommandObjectSettingsRemove
 //-------------------------------------------------------------------------
 
-class CommandObjectSettingsRemove : public CommandObjectParsed
+class CommandObjectSettingsRemove : public CommandObjectRaw
 {
 public:
     CommandObjectSettingsRemove (CommandInterpreter &interpreter) :
-        CommandObjectParsed (interpreter,
-                             "settings remove",
-                             "Remove the specified element from an internal debugger settings array or dictionary variable.",
-                             NULL)
+        CommandObjectRaw (interpreter,
+                          "settings remove",
+                          "Remove the specified element from an array or dictionary settings variable.",
+                          NULL)
     {
         CommandArgumentEntry arg1;
         CommandArgumentEntry arg2;
@@ -569,8 +539,7 @@ public:
                               bool &word_complete,
                               StringList &matches)
     {
-        std::string completion_str (input.GetArgumentAtIndex (cursor_index));
-        completion_str.erase (cursor_char_position);
+        std::string completion_str (input.GetArgumentAtIndex (cursor_index), cursor_char_position);
 
         // Attempting to complete variable name
         if (cursor_index < 2)
@@ -588,56 +557,51 @@ public:
 
 protected:
     virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (const char *command, CommandReturnObject &result)
     {
-        UserSettingsControllerSP usc_sp (Debugger::GetSettingsController ());
-
-        const int argc = command.GetArgumentCount ();
-
-        if (argc != 2)
+        result.SetStatus (eReturnStatusSuccessFinishNoResult);
+     
+        Args cmd_args(command);
+        
+        // Process possible options.
+        if (!ParseOptions (cmd_args, result))
+            return false;
+        
+        const size_t argc = cmd_args.GetArgumentCount ();
+        if (argc == 0)
         {
-            result.AppendError ("'settings remove' takes two arguments");
+            result.AppendError ("'settings set' takes an array or dictionary item, or an array followed by one or more indexes, or a dictionary followed by one or more key names to remove");
             result.SetStatus (eReturnStatusFailed);
             return false;
         }
-
-        const char *var_name = command.GetArgumentAtIndex (0);
-        std::string var_name_string;
+        
+        const char *var_name = cmd_args.GetArgumentAtIndex (0);
         if ((var_name == NULL) || (var_name[0] == '\0'))
         {
-            result.AppendError ("'settings remove' command requires a valid variable name; No value supplied");
+            result.AppendError ("'settings set' command requires a valid variable name");
             result.SetStatus (eReturnStatusFailed);
             return false;
         }
-
-        var_name_string = var_name;
-        command.Shift();
-
-        const char *index_value = command.GetArgumentAtIndex (0);
-        std::string index_value_string;
-        if ((index_value == NULL) || (index_value[0] == '\0'))
+        
+        // Split the raw command into var_name and value pair.
+        std::string var_name_string = var_name;
+        llvm::StringRef raw_str(command);
+        llvm::StringRef var_value_str = raw_str.split(var_name).second;
+        StripLeadingSpaces(var_value_str);
+        std::string var_value_string = var_value_str.str();
+        
+        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
+        Error error (m_interpreter.GetDebugger().SetPropertyValue (&exe_ctx,
+                                                                   eVarSetOperationRemove,
+                                                                   var_name,
+                                                                   var_value_string.c_str()));
+        if (error.Fail())
         {
-            result.AppendError ("'settings remove' command requires an index or key value; no value supplied");
+            result.AppendError (error.AsCString());
             result.SetStatus (eReturnStatusFailed);
             return false;
         }
-
-        index_value_string = index_value;
-
-        Error err = usc_sp->SetVariable (var_name_string.c_str(), 
-                                         NULL, 
-                                         eVarSetOperationRemove,  
-                                         true, 
-                                         m_interpreter.GetDebugger().GetInstanceName().AsCString(),
-                                         index_value_string.c_str());
-        if (err.Fail ())
-        {
-            result.AppendError (err.AsCString());
-            result.SetStatus (eReturnStatusFailed);
-        }
-        else
-            result.SetStatus (eReturnStatusSuccessFinishNoResult);
-
+        
         return result.Succeeded();
     }
 };
@@ -713,8 +677,7 @@ public:
                               bool &word_complete,
                               StringList &matches)
     {
-        std::string completion_str (input.GetArgumentAtIndex (cursor_index));
-        completion_str.erase (cursor_char_position);
+        std::string completion_str (input.GetArgumentAtIndex (cursor_index), cursor_char_position);
 
         // Attempting to complete variable name
         if (cursor_index < 2)
@@ -734,18 +697,9 @@ protected:
     virtual bool
     DoExecute (const char *command, CommandReturnObject &result)
     {
-        UserSettingsControllerSP usc_sp (Debugger::GetSettingsController ());
+        result.SetStatus (eReturnStatusSuccessFinishNoResult);
 
         Args cmd_args(command);
-        const int argc = cmd_args.GetArgumentCount ();
-
-        if (argc < 3)
-        {
-            result.AppendError ("'settings replace' takes more arguments");
-            result.SetStatus (eReturnStatusFailed);
-            return false;
-        }
-
         const char *var_name = cmd_args.GetArgumentAtIndex (0);
         std::string var_name_string;
         if ((var_name == NULL) || (var_name[0] == '\0'))
@@ -756,46 +710,28 @@ protected:
         }
 
         var_name_string = var_name;
-        cmd_args.Shift();
-
-        const char *index_value = cmd_args.GetArgumentAtIndex (0);
-        std::string index_value_string;
-        if ((index_value == NULL) || (index_value[0] == '\0'))
-        {
-            result.AppendError ("'settings insert-before' command requires an index value; no value supplied");
-            result.SetStatus (eReturnStatusFailed);
-            return false;
-        }
-
-        index_value_string = index_value;
-        cmd_args.Shift();
 
         // Split the raw command into var_name, index_value, and value triple.
         llvm::StringRef raw_str(command);
-        llvm::StringRef var_value_str = raw_str.split(var_name).second.split(index_value).second;
+        llvm::StringRef var_value_str = raw_str.split(var_name).second;
         StripLeadingSpaces(var_value_str);
         std::string var_value_string = var_value_str.str();
 
-        if (var_value_string.empty())
+        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
+        Error error(m_interpreter.GetDebugger().SetPropertyValue (&exe_ctx,
+                                                                  eVarSetOperationReplace,
+                                                                  var_name,
+                                                                  var_value_string.c_str()));
+        if (error.Fail())
         {
-            result.AppendError ("'settings replace' command requires a valid variable value; no value supplied");
+            result.AppendError (error.AsCString());
             result.SetStatus (eReturnStatusFailed);
+            return false;
         }
         else
         {
-            Error err = usc_sp->SetVariable (var_name_string.c_str(), 
-                                             var_value_string.c_str(), 
-                                             eVarSetOperationReplace, 
-                                             true, 
-                                             m_interpreter.GetDebugger().GetInstanceName().AsCString(),
-                                             index_value_string.c_str());
-            if (err.Fail ())
-            {
-                result.AppendError (err.AsCString());
-                result.SetStatus (eReturnStatusFailed);
-            }
-            else
-                result.SetStatus (eReturnStatusSuccessFinishNoResult);
+            result.SetStatus (eReturnStatusSuccessFinishNoResult);
+
         }
 
         return result.Succeeded();
@@ -866,8 +802,7 @@ public:
                               bool &word_complete,
                               StringList &matches)
     {
-        std::string completion_str (input.GetArgumentAtIndex (cursor_index));
-        completion_str.erase (cursor_char_position);
+        std::string completion_str (input.GetArgumentAtIndex (cursor_index), cursor_char_position);
 
         // Attempting to complete variable name
         if (cursor_index < 2)
@@ -887,10 +822,10 @@ protected:
     virtual bool
     DoExecute (const char *command, CommandReturnObject &result)
     {
-        UserSettingsControllerSP usc_sp (Debugger::GetSettingsController ());
+        result.SetStatus (eReturnStatusSuccessFinishNoResult);
 
         Args cmd_args(command);
-        const int argc = cmd_args.GetArgumentCount ();
+        const size_t argc = cmd_args.GetArgumentCount ();
 
         if (argc < 3)
         {
@@ -909,47 +844,23 @@ protected:
         }
 
         var_name_string = var_name;
-        cmd_args.Shift();
-
-        const char *index_value = cmd_args.GetArgumentAtIndex (0);
-        std::string index_value_string;
-        if ((index_value == NULL) || (index_value[0] == '\0'))
-        {
-            result.AppendError ("'settings insert-before' command requires an index value; no value supplied");
-            result.SetStatus (eReturnStatusFailed);
-            return false;
-        }
-
-        index_value_string = index_value;
-        cmd_args.Shift();
 
         // Split the raw command into var_name, index_value, and value triple.
         llvm::StringRef raw_str(command);
-        llvm::StringRef var_value_str = raw_str.split(var_name).second.split(index_value).second;
+        llvm::StringRef var_value_str = raw_str.split(var_name).second;
         StripLeadingSpaces(var_value_str);
         std::string var_value_string = var_value_str.str();
 
-        if (var_value_string.empty())
+        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
+        Error error(m_interpreter.GetDebugger().SetPropertyValue (&exe_ctx,
+                                                                  eVarSetOperationInsertBefore,
+                                                                  var_name,
+                                                                  var_value_string.c_str()));
+        if (error.Fail())
         {
-            result.AppendError ("'settings insert-before' command requires a valid variable value;"
-                                " No value supplied");
+            result.AppendError (error.AsCString());
             result.SetStatus (eReturnStatusFailed);
-        }
-        else
-        {
-            Error err = usc_sp->SetVariable (var_name_string.c_str(), 
-                                             var_value_string.c_str(), 
-                                             eVarSetOperationInsertBefore,
-                                             true, 
-                                             m_interpreter.GetDebugger().GetInstanceName().AsCString(),
-                                             index_value_string.c_str());
-            if (err.Fail ())
-            {
-                result.AppendError (err.AsCString());
-                result.SetStatus (eReturnStatusFailed);
-            }
-            else
-                result.SetStatus (eReturnStatusSuccessFinishNoResult);
+            return false;
         }
 
         return result.Succeeded();
@@ -1020,8 +931,7 @@ public:
                               bool &word_complete,
                               StringList &matches)
     {
-        std::string completion_str (input.GetArgumentAtIndex (cursor_index));
-        completion_str.erase (cursor_char_position);
+        std::string completion_str (input.GetArgumentAtIndex (cursor_index), cursor_char_position);
 
         // Attempting to complete variable name
         if (cursor_index < 2)
@@ -1041,10 +951,10 @@ protected:
     virtual bool
     DoExecute (const char *command, CommandReturnObject &result)
     {
-        UserSettingsControllerSP usc_sp (Debugger::GetSettingsController ());
+        result.SetStatus (eReturnStatusSuccessFinishNoResult);
 
         Args cmd_args(command);
-        const int argc = cmd_args.GetArgumentCount ();
+        const size_t argc = cmd_args.GetArgumentCount ();
 
         if (argc < 3)
         {
@@ -1063,47 +973,23 @@ protected:
         }
 
         var_name_string = var_name;
-        cmd_args.Shift();
-
-        const char *index_value = cmd_args.GetArgumentAtIndex (0);
-        std::string index_value_string;
-        if ((index_value == NULL) || (index_value[0] == '\0'))
-        {
-            result.AppendError ("'settings insert-after' command requires an index value; no value supplied");
-            result.SetStatus (eReturnStatusFailed);
-            return false;
-        }
-
-        index_value_string = index_value;
-        cmd_args.Shift();
 
         // Split the raw command into var_name, index_value, and value triple.
         llvm::StringRef raw_str(command);
-        llvm::StringRef var_value_str = raw_str.split(var_name).second.split(index_value).second;
+        llvm::StringRef var_value_str = raw_str.split(var_name).second;
         StripLeadingSpaces(var_value_str);
         std::string var_value_string = var_value_str.str();
 
-        if (var_value_string.empty())
+        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
+        Error error(m_interpreter.GetDebugger().SetPropertyValue (&exe_ctx,
+                                                                  eVarSetOperationInsertAfter,
+                                                                  var_name,
+                                                                  var_value_string.c_str()));
+        if (error.Fail())
         {
-            result.AppendError ("'settings insert-after' command requires a valid variable value;"
-                                " No value supplied");
+            result.AppendError (error.AsCString());
             result.SetStatus (eReturnStatusFailed);
-        }
-        else
-        {
-            Error err = usc_sp->SetVariable (var_name_string.c_str(), 
-                                             var_value_string.c_str(), 
-                                             eVarSetOperationInsertAfter,
-                                             true, 
-                                             m_interpreter.GetDebugger().GetInstanceName().AsCString(), 
-                                             index_value_string.c_str());
-            if (err.Fail ())
-            {
-                result.AppendError (err.AsCString());
-                result.SetStatus (eReturnStatusFailed);
-            }
-            else
-                result.SetStatus (eReturnStatusSuccessFinishNoResult);
+            return false;
         }
 
         return result.Succeeded();
@@ -1164,8 +1050,7 @@ public:
                               bool &word_complete,
                               StringList &matches)
     {
-        std::string completion_str (input.GetArgumentAtIndex (cursor_index));
-        completion_str.erase (cursor_char_position);
+        std::string completion_str (input.GetArgumentAtIndex (cursor_index), cursor_char_position);
 
         // Attempting to complete variable name
         if (cursor_index < 2)
@@ -1185,10 +1070,9 @@ protected:
     virtual bool
     DoExecute (const char *command, CommandReturnObject &result)
     {
-        UserSettingsControllerSP usc_sp (Debugger::GetSettingsController ());
-
+        result.SetStatus (eReturnStatusSuccessFinishNoResult);
         Args cmd_args(command);
-        const int argc = cmd_args.GetArgumentCount ();
+        const size_t argc = cmd_args.GetArgumentCount ();
 
         if (argc < 2)
         {
@@ -1216,26 +1100,16 @@ protected:
         StripLeadingSpaces(var_value_str);
         std::string var_value_string = var_value_str.str();
 
-        if (var_value_string.empty())
+        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
+        Error error(m_interpreter.GetDebugger().SetPropertyValue (&exe_ctx,
+                                                                  eVarSetOperationAppend,
+                                                                  var_name,
+                                                                  var_value_string.c_str()));
+        if (error.Fail())
         {
-            result.AppendError ("'settings append' command requires a valid variable value;"
-                                " No value supplied");
+            result.AppendError (error.AsCString());
             result.SetStatus (eReturnStatusFailed);
-        }
-        else
-        {
-            Error err = usc_sp->SetVariable (var_name_string.c_str(), 
-                                             var_value_string.c_str(), 
-                                             eVarSetOperationAppend, 
-                                             true, 
-                                             m_interpreter.GetDebugger().GetInstanceName().AsCString());
-            if (err.Fail ())
-            {
-                result.AppendError (err.AsCString());
-                result.SetStatus (eReturnStatusFailed);
-            }
-            else
-                result.SetStatus (eReturnStatusSuccessFinishNoResult);
+            return false;
         }
 
         return result.Succeeded();
@@ -1282,8 +1156,7 @@ public:
                               bool &word_complete,
                               StringList &matches)
     {
-        std::string completion_str (input.GetArgumentAtIndex (cursor_index));
-        completion_str.erase (cursor_char_position);
+        std::string completion_str (input.GetArgumentAtIndex (cursor_index), cursor_char_position);
 
         // Attempting to complete variable name
         if (cursor_index < 2)
@@ -1303,9 +1176,8 @@ protected:
     virtual bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        UserSettingsControllerSP usc_sp (Debugger::GetSettingsController ());
-
-        const int argc = command.GetArgumentCount ();
+        result.SetStatus (eReturnStatusSuccessFinishNoResult);
+        const size_t argc = command.GetArgumentCount ();
 
         if (argc != 1)
         {
@@ -1321,20 +1193,18 @@ protected:
             result.SetStatus (eReturnStatusFailed);
             return false;
         }
-
-        Error err = usc_sp->SetVariable (var_name, 
-                                         NULL, 
-                                         eVarSetOperationClear, 
-                                         false, 
-                                         m_interpreter.GetDebugger().GetInstanceName().AsCString());
-
-        if (err.Fail ())
+        
+        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
+        Error error (m_interpreter.GetDebugger().SetPropertyValue (&exe_ctx,
+                                                                   eVarSetOperationClear,
+                                                                   var_name,
+                                                                   NULL));
+        if (error.Fail())
         {
-            result.AppendError (err.AsCString());
+            result.AppendError (error.AsCString());
             result.SetStatus (eReturnStatusFailed);
+            return false;
         }
-        else
-            result.SetStatus (eReturnStatusSuccessFinishNoResult);
 
         return result.Succeeded();
     }

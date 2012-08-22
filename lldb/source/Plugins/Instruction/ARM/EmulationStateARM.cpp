@@ -11,6 +11,8 @@
 
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Scalar.h"
+#include "lldb/Interpreter/OptionValueArray.h"
+#include "lldb/Interpreter/OptionValueDictionary.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/RegisterContext.h"
 

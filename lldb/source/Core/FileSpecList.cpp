@@ -94,7 +94,7 @@ FileSpecList::Dump(Stream *s, const char *separator_cstr) const
     for (pos = m_files.begin(); pos != end; ++pos)
     {
         pos->Dump(s);
-        if (separator_cstr)
+        if (separator_cstr && ((pos + 1) != end))
             s->PutCString(separator_cstr);
     }
 }

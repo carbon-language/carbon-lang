@@ -234,9 +234,7 @@ ThreadPlanStepInRange::FrameMatchesAvoidRegexp ()
 {
     StackFrame *frame = GetThread().GetStackFrameAtIndex(0).get();
 
-    RegularExpression *avoid_regexp_to_use;
-    
-    avoid_regexp_to_use = m_avoid_regexp_ap.get();
+    const RegularExpression *avoid_regexp_to_use = m_avoid_regexp_ap.get();
     if (avoid_regexp_to_use == NULL)
         avoid_regexp_to_use = GetThread().GetSymbolsToAvoidRegexp();
         

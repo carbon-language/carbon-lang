@@ -86,27 +86,22 @@ CommandObjectApropos::DoExecute (Args& args, CommandReturnObject &result)
                 for (size_t i = 0; i < commands_found.GetSize(); ++i)
                     m_interpreter.OutputFormattedHelpText (result.GetOutputStream(), 
                                                            commands_found.GetStringAtIndex(i),
-                                                           "--", commands_help.
-                                                           GetStringAtIndex(i), 
+                                                           "--",
+                                                           commands_help.GetStringAtIndex(i),
                                                            max_len);
                 
             }
             
             
-            StreamString settings_search_results;
-            lldb::UserSettingsControllerSP root = Debugger::GetSettingsController ();
-            const char *settings_prefix = root->GetLevelName().GetCString();
-             
-            UserSettingsController::SearchAllSettingsDescriptions (m_interpreter, 
-                                                                   root, 
-                                                                   settings_prefix, 
-                                                                   search_word,
-                                                                   settings_search_results);
-            
-            if (settings_search_results.GetSize() > 0)
+            std::vector<const Property *> properties;
+            const size_t num_properties = m_interpreter.GetDebugger().Apropos(search_word, properties);
+            if (num_properties)
             {
+                const bool dump_qualified_name = true;
                 result.AppendMessageWithFormat ("\nThe following settings variables may relate to '%s': \n\n", search_word);
-                result.AppendMessageWithFormat ("%s", settings_search_results.GetData());
+                for (size_t i=0; i<num_properties; ++i)
+                    properties[i]->DumpDescription (m_interpreter, result.GetOutputStream(), 0, dump_qualified_name);
+
             }
             
             result.SetStatus (eReturnStatusSuccessFinishNoResult);

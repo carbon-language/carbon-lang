@@ -523,15 +523,9 @@ FileSpec::Equal (const FileSpec& a, const FileSpec& b, bool full)
 void
 FileSpec::Dump(Stream *s) const
 {
-    if (m_filename)
-        m_directory.Dump(s, "");    // Provide a default for m_directory when we dump it in case it is invalid
-
+    m_directory.Dump(s);
     if (m_directory)
-    {
-        // If dirname was valid, then we need to print a slash between
-        // the directory and the filename
         s->PutChar('/');
-    }
     m_filename.Dump(s);
 }
 

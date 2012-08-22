@@ -49,6 +49,33 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		260A248E15D06C50009981B0 /* OptionValues.h in Headers */ = {isa = PBXBuildFile; fileRef = 260A248D15D06C4F009981B0 /* OptionValues.h */; };
+		260CC62E15D04377002BF2E0 /* OptionValueArgs.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62115D04377002BF2E0 /* OptionValueArgs.h */; };
+		260CC62F15D04377002BF2E0 /* OptionValueArray.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62215D04377002BF2E0 /* OptionValueArray.h */; };
+		260CC63015D04377002BF2E0 /* OptionValueBoolean.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62315D04377002BF2E0 /* OptionValueBoolean.h */; };
+		260CC63115D04377002BF2E0 /* OptionValueProperties.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62415D04377002BF2E0 /* OptionValueProperties.h */; };
+		260CC63215D04377002BF2E0 /* OptionValueDictionary.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62515D04377002BF2E0 /* OptionValueDictionary.h */; };
+		260CC63315D04377002BF2E0 /* OptionValueEnumeration.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62615D04377002BF2E0 /* OptionValueEnumeration.h */; };
+		260CC63415D04377002BF2E0 /* OptionValueFileSpec.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62715D04377002BF2E0 /* OptionValueFileSpec.h */; };
+		260CC63515D04377002BF2E0 /* OptionValueFileSpecList.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62815D04377002BF2E0 /* OptionValueFileSpecList.h */; };
+		260CC63615D04377002BF2E0 /* OptionValueFormat.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62915D04377002BF2E0 /* OptionValueFormat.h */; };
+		260CC63715D04377002BF2E0 /* OptionValueSInt64.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62A15D04377002BF2E0 /* OptionValueSInt64.h */; };
+		260CC63815D04377002BF2E0 /* OptionValueString.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62B15D04377002BF2E0 /* OptionValueString.h */; };
+		260CC63915D04377002BF2E0 /* OptionValueUInt64.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62C15D04377002BF2E0 /* OptionValueUInt64.h */; };
+		260CC63A15D04377002BF2E0 /* OptionValueUUID.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62D15D04377002BF2E0 /* OptionValueUUID.h */; };
+		260CC64815D0440D002BF2E0 /* OptionValueArgs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260CC63B15D0440D002BF2E0 /* OptionValueArgs.cpp */; };
+		260CC64915D0440D002BF2E0 /* OptionValueArray.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260CC63C15D0440D002BF2E0 /* OptionValueArray.cpp */; };
+		260CC64A15D0440D002BF2E0 /* OptionValueBoolean.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260CC63D15D0440D002BF2E0 /* OptionValueBoolean.cpp */; };
+		260CC64B15D0440D002BF2E0 /* OptionValueProperties.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260CC63E15D0440D002BF2E0 /* OptionValueProperties.cpp */; };
+		260CC64C15D0440D002BF2E0 /* OptionValueDictionary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260CC63F15D0440D002BF2E0 /* OptionValueDictionary.cpp */; };
+		260CC64D15D0440D002BF2E0 /* OptionValueEnumeration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260CC64015D0440D002BF2E0 /* OptionValueEnumeration.cpp */; };
+		260CC64E15D0440D002BF2E0 /* OptionValueFileSpec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260CC64115D0440D002BF2E0 /* OptionValueFileSpec.cpp */; };
+		260CC64F15D0440D002BF2E0 /* OptionValueFileSpecLIst.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260CC64215D0440D002BF2E0 /* OptionValueFileSpecLIst.cpp */; };
+		260CC65015D0440D002BF2E0 /* OptionValueFormat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260CC64315D0440D002BF2E0 /* OptionValueFormat.cpp */; };
+		260CC65115D0440D002BF2E0 /* OptionValueSInt64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260CC64415D0440D002BF2E0 /* OptionValueSInt64.cpp */; };
+		260CC65215D0440D002BF2E0 /* OptionValueString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260CC64515D0440D002BF2E0 /* OptionValueString.cpp */; };
+		260CC65315D0440D002BF2E0 /* OptionValueUInt64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260CC64615D0440D002BF2E0 /* OptionValueUInt64.cpp */; };
+		260CC65415D0440D002BF2E0 /* OptionValueUUID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260CC64715D0440D002BF2E0 /* OptionValueUUID.cpp */; };
 		260E07C6136FA69E00CF21D3 /* OptionGroupUUID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260E07C5136FA69E00CF21D3 /* OptionGroupUUID.cpp */; };
 		260E07C8136FAB9200CF21D3 /* OptionGroupFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260E07C7136FAB9200CF21D3 /* OptionGroupFile.cpp */; };
 		261744781168585B005ADD65 /* SBType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 261744771168585B005ADD65 /* SBType.cpp */; };
@@ -61,9 +88,12 @@
 		26368A3C126B697600E8659F /* darwin-debug.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26368A3B126B697600E8659F /* darwin-debug.cpp */; };
 		26368AF7126B960500E8659F /* darwin-debug in Resources */ = {isa = PBXBuildFile; fileRef = 26579F68126A25920007C5CB /* darwin-debug */; };
 		263E949F13661AEA00E7D1CE /* UnwindAssembly-x86.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 263E949D13661AE400E7D1CE /* UnwindAssembly-x86.cpp */; };
+		2640E19F15DC78FD00F23B50 /* Property.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2640E19E15DC78FD00F23B50 /* Property.cpp */; };
 		2642FBAE13D003B400ED6808 /* CommunicationKDP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2642FBA813D003B400ED6808 /* CommunicationKDP.cpp */; };
 		2642FBB013D003B400ED6808 /* ProcessKDP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2642FBAA13D003B400ED6808 /* ProcessKDP.cpp */; };
 		2642FBB213D003B400ED6808 /* ProcessKDPLog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2642FBAC13D003B400ED6808 /* ProcessKDPLog.cpp */; };
+		26491E3B15E1DB8600CBFFC2 /* OptionValueRegex.h in Headers */ = {isa = PBXBuildFile; fileRef = 26491E3A15E1DB8600CBFFC2 /* OptionValueRegex.h */; };
+		26491E3E15E1DB9F00CBFFC2 /* OptionValueRegex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26491E3D15E1DB9F00CBFFC2 /* OptionValueRegex.cpp */; };
 		264A97BF133918BC0017F0BE /* PlatformRemoteGDBServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264A97BD133918BC0017F0BE /* PlatformRemoteGDBServer.cpp */; };
 		264D8D5013661BD7003A368F /* UnwindAssembly.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264D8D4F13661BD7003A368F /* UnwindAssembly.cpp */; };
 		265205A813D3E3F700132FE2 /* RegisterContextKDP_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 265205A213D3E3F700132FE2 /* RegisterContextKDP_arm.cpp */; };
@@ -378,13 +408,16 @@
 		26957D9813D381C900670048 /* RegisterContextDarwin_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26957D9213D381C900670048 /* RegisterContextDarwin_arm.cpp */; };
 		26957D9A13D381C900670048 /* RegisterContextDarwin_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26957D9413D381C900670048 /* RegisterContextDarwin_i386.cpp */; };
 		26957D9C13D381C900670048 /* RegisterContextDarwin_x86_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26957D9613D381C900670048 /* RegisterContextDarwin_x86_64.cpp */; };
+		2697A39315E404B1003E682C /* OptionValueArch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2697A39215E404B1003E682C /* OptionValueArch.cpp */; };
+		2697A39515E404BA003E682C /* OptionValueArch.h in Headers */ = {isa = PBXBuildFile; fileRef = 2697A39415E404BA003E682C /* OptionValueArch.h */; };
 		2697A54D133A6305004E4240 /* PlatformDarwin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2697A54B133A6305004E4240 /* PlatformDarwin.cpp */; };
 		26A527C114E24F5F00F3A14A /* ProcessMachCore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A527BD14E24F5F00F3A14A /* ProcessMachCore.cpp */; };
 		26A527C214E24F5F00F3A14A /* ProcessMachCore.h in Headers */ = {isa = PBXBuildFile; fileRef = 26A527BE14E24F5F00F3A14A /* ProcessMachCore.h */; };
 		26A527C314E24F5F00F3A14A /* ThreadMachCore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A527BF14E24F5F00F3A14A /* ThreadMachCore.cpp */; };
 		26A527C414E24F5F00F3A14A /* ThreadMachCore.h in Headers */ = {isa = PBXBuildFile; fileRef = 26A527C014E24F5F00F3A14A /* ThreadMachCore.h */; };
 		26A69C5F137A17A500262477 /* RegisterValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C6886E137880C400407EDF /* RegisterValue.cpp */; };
-		26A7A035135E6E4200FB369E /* NamedOptionValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A7A034135E6E4200FB369E /* NamedOptionValue.cpp */; };
+		26A7A035135E6E4200FB369E /* OptionValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A7A034135E6E4200FB369E /* OptionValue.cpp */; };
+		26ACEC2815E077AE00E94760 /* Property.h in Headers */ = {isa = PBXBuildFile; fileRef = 26ACEC2715E077AE00E94760 /* Property.h */; };
 		26B1EFAE154638AF00E2DAC7 /* DWARFDeclContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26B1EFAC154638AF00E2DAC7 /* DWARFDeclContext.cpp */; };
 		26B1EFAF154638AF00E2DAC7 /* DWARFDeclContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B1EFAD154638AF00E2DAC7 /* DWARFDeclContext.h */; };
 		26B1FCB813381071002886E2 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C39010F3FA26009D5894 /* CoreFoundation.framework */; };
@@ -405,6 +438,8 @@
 		26D5E15F135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D5E15E135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp */; };
 		26D5E163135BB054006EA0A7 /* OptionGroupPlatform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D5E162135BB054006EA0A7 /* OptionGroupPlatform.cpp */; };
 		26D7E45D13D5E30A007FD12B /* SocketAddress.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D7E45C13D5E30A007FD12B /* SocketAddress.cpp */; };
+		26DAED6015D327A200E15819 /* OptionValuePathMappings.h in Headers */ = {isa = PBXBuildFile; fileRef = 26DAED5F15D327A200E15819 /* OptionValuePathMappings.h */; };
+		26DAED6315D327C200E15819 /* OptionValuePathMappings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DAED6215D327C200E15819 /* OptionValuePathMappings.cpp */; };
 		26DB3E161379E7AD0080DC73 /* ABIMacOSX_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DB3E071379E7AD0080DC73 /* ABIMacOSX_arm.cpp */; };
 		26DB3E1C1379E7AD0080DC73 /* ABIMacOSX_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DB3E0F1379E7AD0080DC73 /* ABIMacOSX_i386.cpp */; };
 		26DB3E1F1379E7AD0080DC73 /* ABISysV_x86_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DB3E131379E7AD0080DC73 /* ABISysV_x86_64.cpp */; };
@@ -661,6 +696,7 @@
 		260223E8115F06E500A601A2 /* SBCommunication.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBCommunication.cpp; path = source/API/SBCommunication.cpp; sourceTree = "<group>"; };
 		26022531115F27FA00A601A2 /* SBFileSpec.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBFileSpec.h; path = include/lldb/API/SBFileSpec.h; sourceTree = "<group>"; };
 		26022532115F281400A601A2 /* SBFileSpec.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBFileSpec.cpp; path = source/API/SBFileSpec.cpp; sourceTree = "<group>"; };
+		260A248D15D06C4F009981B0 /* OptionValues.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionValues.h; path = include/lldb/Interpreter/OptionValues.h; sourceTree = "<group>"; };
 		260C6EA013011578005E16B0 /* File.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = File.h; path = include/lldb/Host/File.h; sourceTree = "<group>"; };
 		260C6EA213011581005E16B0 /* File.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = File.cpp; sourceTree = "<group>"; };
 		260C847110F50EFC00BB2B04 /* ThreadPlanBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadPlanBase.cpp; path = source/Target/ThreadPlanBase.cpp; sourceTree = "<group>"; };
@@ -731,6 +767,32 @@
 		260C89DF10F57C5600BB2B04 /* SymbolFileSymtab.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SymbolFileSymtab.h; sourceTree = "<group>"; };
 		260C89E210F57C5600BB2B04 /* SymbolVendorMacOSX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SymbolVendorMacOSX.cpp; sourceTree = "<group>"; };
 		260C89E310F57C5600BB2B04 /* SymbolVendorMacOSX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SymbolVendorMacOSX.h; sourceTree = "<group>"; };
+		260CC62115D04377002BF2E0 /* OptionValueArgs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionValueArgs.h; path = include/lldb/Interpreter/OptionValueArgs.h; sourceTree = "<group>"; };
+		260CC62215D04377002BF2E0 /* OptionValueArray.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionValueArray.h; path = include/lldb/Interpreter/OptionValueArray.h; sourceTree = "<group>"; };
+		260CC62315D04377002BF2E0 /* OptionValueBoolean.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionValueBoolean.h; path = include/lldb/Interpreter/OptionValueBoolean.h; sourceTree = "<group>"; };
+		260CC62415D04377002BF2E0 /* OptionValueProperties.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionValueProperties.h; path = include/lldb/Interpreter/OptionValueProperties.h; sourceTree = "<group>"; };
+		260CC62515D04377002BF2E0 /* OptionValueDictionary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionValueDictionary.h; path = include/lldb/Interpreter/OptionValueDictionary.h; sourceTree = "<group>"; };
+		260CC62615D04377002BF2E0 /* OptionValueEnumeration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionValueEnumeration.h; path = include/lldb/Interpreter/OptionValueEnumeration.h; sourceTree = "<group>"; };
+		260CC62715D04377002BF2E0 /* OptionValueFileSpec.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionValueFileSpec.h; path = include/lldb/Interpreter/OptionValueFileSpec.h; sourceTree = "<group>"; };
+		260CC62815D04377002BF2E0 /* OptionValueFileSpecList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionValueFileSpecList.h; path = include/lldb/Interpreter/OptionValueFileSpecList.h; sourceTree = "<group>"; };
+		260CC62915D04377002BF2E0 /* OptionValueFormat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionValueFormat.h; path = include/lldb/Interpreter/OptionValueFormat.h; sourceTree = "<group>"; };
+		260CC62A15D04377002BF2E0 /* OptionValueSInt64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionValueSInt64.h; path = include/lldb/Interpreter/OptionValueSInt64.h; sourceTree = "<group>"; };
+		260CC62B15D04377002BF2E0 /* OptionValueString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionValueString.h; path = include/lldb/Interpreter/OptionValueString.h; sourceTree = "<group>"; };
+		260CC62C15D04377002BF2E0 /* OptionValueUInt64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionValueUInt64.h; path = include/lldb/Interpreter/OptionValueUInt64.h; sourceTree = "<group>"; };
+		260CC62D15D04377002BF2E0 /* OptionValueUUID.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionValueUUID.h; path = include/lldb/Interpreter/OptionValueUUID.h; sourceTree = "<group>"; };
+		260CC63B15D0440D002BF2E0 /* OptionValueArgs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionValueArgs.cpp; path = source/Interpreter/OptionValueArgs.cpp; sourceTree = "<group>"; };
+		260CC63C15D0440D002BF2E0 /* OptionValueArray.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionValueArray.cpp; path = source/Interpreter/OptionValueArray.cpp; sourceTree = "<group>"; };
+		260CC63D15D0440D002BF2E0 /* OptionValueBoolean.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionValueBoolean.cpp; path = source/Interpreter/OptionValueBoolean.cpp; sourceTree = "<group>"; };
+		260CC63E15D0440D002BF2E0 /* OptionValueProperties.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionValueProperties.cpp; path = source/Interpreter/OptionValueProperties.cpp; sourceTree = "<group>"; };
+		260CC63F15D0440D002BF2E0 /* OptionValueDictionary.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionValueDictionary.cpp; path = source/Interpreter/OptionValueDictionary.cpp; sourceTree = "<group>"; };
+		260CC64015D0440D002BF2E0 /* OptionValueEnumeration.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionValueEnumeration.cpp; path = source/Interpreter/OptionValueEnumeration.cpp; sourceTree = "<group>"; };
+		260CC64115D0440D002BF2E0 /* OptionValueFileSpec.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionValueFileSpec.cpp; path = source/Interpreter/OptionValueFileSpec.cpp; sourceTree = "<group>"; };
+		260CC64215D0440D002BF2E0 /* OptionValueFileSpecLIst.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionValueFileSpecLIst.cpp; path = source/Interpreter/OptionValueFileSpecLIst.cpp; sourceTree = "<group>"; };
+		260CC64315D0440D002BF2E0 /* OptionValueFormat.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionValueFormat.cpp; path = source/Interpreter/OptionValueFormat.cpp; sourceTree = "<group>"; };
+		260CC64415D0440D002BF2E0 /* OptionValueSInt64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionValueSInt64.cpp; path = source/Interpreter/OptionValueSInt64.cpp; sourceTree = "<group>"; };
+		260CC64515D0440D002BF2E0 /* OptionValueString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionValueString.cpp; path = source/Interpreter/OptionValueString.cpp; sourceTree = "<group>"; };
+		260CC64615D0440D002BF2E0 /* OptionValueUInt64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionValueUInt64.cpp; path = source/Interpreter/OptionValueUInt64.cpp; sourceTree = "<group>"; };
+		260CC64715D0440D002BF2E0 /* OptionValueUUID.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionValueUUID.cpp; path = source/Interpreter/OptionValueUUID.cpp; sourceTree = "<group>"; };
 		260E07C3136FA68900CF21D3 /* OptionGroupUUID.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupUUID.h; path = include/lldb/Interpreter/OptionGroupUUID.h; sourceTree = "<group>"; };
 		260E07C5136FA69E00CF21D3 /* OptionGroupUUID.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionGroupUUID.cpp; path = source/Interpreter/OptionGroupUUID.cpp; sourceTree = "<group>"; };
 		260E07C7136FAB9200CF21D3 /* OptionGroupFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionGroupFile.cpp; path = source/Interpreter/OptionGroupFile.cpp; sourceTree = "<group>"; };
@@ -814,6 +876,7 @@
 		263E949D13661AE400E7D1CE /* UnwindAssembly-x86.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "UnwindAssembly-x86.cpp"; sourceTree = "<group>"; };
 		263E949E13661AE400E7D1CE /* UnwindAssembly-x86.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UnwindAssembly-x86.h"; sourceTree = "<group>"; };
 		263FEDA5112CC1DA00E4C208 /* ThreadSafeSTLMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadSafeSTLMap.h; path = include/lldb/Core/ThreadSafeSTLMap.h; sourceTree = "<group>"; };
+		2640E19E15DC78FD00F23B50 /* Property.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Property.cpp; path = source/Interpreter/Property.cpp; sourceTree = "<group>"; };
 		26424E3C125986CB0016D82C /* ValueObjectConstResult.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectConstResult.cpp; path = source/Core/ValueObjectConstResult.cpp; sourceTree = "<group>"; };
 		26424E3E125986D30016D82C /* ValueObjectConstResult.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ValueObjectConstResult.h; path = include/lldb/Core/ValueObjectConstResult.h; sourceTree = "<group>"; };
 		2642FBA813D003B400ED6808 /* CommunicationKDP.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CommunicationKDP.cpp; sourceTree = "<group>"; };
@@ -825,6 +888,8 @@
 		264334381110F63100CDB6C6 /* ValueObjectRegister.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectRegister.cpp; path = source/Core/ValueObjectRegister.cpp; sourceTree = "<group>"; };
 		2643343A1110F63C00CDB6C6 /* ValueObjectRegister.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ValueObjectRegister.h; path = include/lldb/Core/ValueObjectRegister.h; sourceTree = "<group>"; };
 		264723A511FA076E00DE380C /* CleanUp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CleanUp.h; path = include/lldb/Utility/CleanUp.h; sourceTree = "<group>"; };
+		26491E3A15E1DB8600CBFFC2 /* OptionValueRegex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionValueRegex.h; path = include/lldb/Interpreter/OptionValueRegex.h; sourceTree = "<group>"; };
+		26491E3D15E1DB9F00CBFFC2 /* OptionValueRegex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionValueRegex.cpp; path = source/Interpreter/OptionValueRegex.cpp; sourceTree = "<group>"; };
 		264A43BB1320B3B4005B4096 /* Platform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Platform.h; path = include/lldb/Target/Platform.h; sourceTree = "<group>"; };
 		264A43BD1320BCEB005B4096 /* Platform.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Platform.cpp; path = source/Target/Platform.cpp; sourceTree = "<group>"; };
 		264A97BD133918BC0017F0BE /* PlatformRemoteGDBServer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PlatformRemoteGDBServer.cpp; path = "gdb-server/PlatformRemoteGDBServer.cpp"; sourceTree = "<group>"; };
@@ -922,6 +987,8 @@
 		26957D9513D381C900670048 /* RegisterContextDarwin_i386.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextDarwin_i386.h; path = Utility/RegisterContextDarwin_i386.h; sourceTree = "<group>"; };
 		26957D9613D381C900670048 /* RegisterContextDarwin_x86_64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextDarwin_x86_64.cpp; path = Utility/RegisterContextDarwin_x86_64.cpp; sourceTree = "<group>"; };
 		26957D9713D381C900670048 /* RegisterContextDarwin_x86_64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextDarwin_x86_64.h; path = Utility/RegisterContextDarwin_x86_64.h; sourceTree = "<group>"; };
+		2697A39215E404B1003E682C /* OptionValueArch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionValueArch.cpp; path = source/Interpreter/OptionValueArch.cpp; sourceTree = "<group>"; };
+		2697A39415E404BA003E682C /* OptionValueArch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionValueArch.h; path = include/lldb/Interpreter/OptionValueArch.h; sourceTree = "<group>"; };
 		2697A54B133A6305004E4240 /* PlatformDarwin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformDarwin.cpp; sourceTree = "<group>"; };
 		2697A54C133A6305004E4240 /* PlatformDarwin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlatformDarwin.h; sourceTree = "<group>"; };
 		269FF07D12494F7D00225026 /* FuncUnwinders.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FuncUnwinders.h; path = include/lldb/Symbol/FuncUnwinders.h; sourceTree = "<group>"; };
@@ -937,8 +1004,9 @@
 		26A527BE14E24F5F00F3A14A /* ProcessMachCore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProcessMachCore.h; sourceTree = "<group>"; };
 		26A527BF14E24F5F00F3A14A /* ThreadMachCore.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ThreadMachCore.cpp; sourceTree = "<group>"; };
 		26A527C014E24F5F00F3A14A /* ThreadMachCore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ThreadMachCore.h; sourceTree = "<group>"; };
-		26A7A034135E6E4200FB369E /* NamedOptionValue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NamedOptionValue.cpp; path = source/Interpreter/NamedOptionValue.cpp; sourceTree = "<group>"; };
-		26A7A036135E6E5300FB369E /* NamedOptionValue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = NamedOptionValue.h; path = include/lldb/Interpreter/NamedOptionValue.h; sourceTree = "<group>"; };
+		26A7A034135E6E4200FB369E /* OptionValue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionValue.cpp; path = source/Interpreter/OptionValue.cpp; sourceTree = "<group>"; };
+		26A7A036135E6E5300FB369E /* OptionValue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionValue.h; path = include/lldb/Interpreter/OptionValue.h; sourceTree = "<group>"; };
+		26ACEC2715E077AE00E94760 /* Property.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Property.h; path = include/lldb/Interpreter/Property.h; sourceTree = "<group>"; };
 		26B167A41123BF5500DC7B4F /* ThreadSafeValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadSafeValue.h; path = include/lldb/Core/ThreadSafeValue.h; sourceTree = "<group>"; };
 		26B1EFAC154638AF00E2DAC7 /* DWARFDeclContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DWARFDeclContext.cpp; sourceTree = "<group>"; };
 		26B1EFAD154638AF00E2DAC7 /* DWARFDeclContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DWARFDeclContext.h; sourceTree = "<group>"; };
@@ -1232,6 +1300,8 @@
 		26D7E45C13D5E30A007FD12B /* SocketAddress.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SocketAddress.cpp; path = source/Host/common/SocketAddress.cpp; sourceTree = "<group>"; };
 		26D9FDC612F784E60003F2EE /* EmulateInstruction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EmulateInstruction.h; path = include/lldb/Core/EmulateInstruction.h; sourceTree = "<group>"; };
 		26D9FDC812F784FD0003F2EE /* EmulateInstruction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = EmulateInstruction.cpp; path = source/Core/EmulateInstruction.cpp; sourceTree = "<group>"; };
+		26DAED5F15D327A200E15819 /* OptionValuePathMappings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionValuePathMappings.h; path = include/lldb/Interpreter/OptionValuePathMappings.h; sourceTree = "<group>"; };
+		26DAED6215D327C200E15819 /* OptionValuePathMappings.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionValuePathMappings.cpp; path = source/Interpreter/OptionValuePathMappings.cpp; sourceTree = "<group>"; };
 		26DAFD9711529BC7005A394E /* ExecutionContextScope.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExecutionContextScope.h; path = include/lldb/Target/ExecutionContextScope.h; sourceTree = "<group>"; };
 		26DB3E071379E7AD0080DC73 /* ABIMacOSX_arm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ABIMacOSX_arm.cpp; sourceTree = "<group>"; };
 		26DB3E081379E7AD0080DC73 /* ABIMacOSX_arm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ABIMacOSX_arm.h; sourceTree = "<group>"; };
@@ -2756,8 +2826,41 @@
 				26BC7DE410F1B7F900F91463 /* CommandReturnObject.h */,
 				26BC7F0A10F1B8DD00F91463 /* CommandReturnObject.cpp */,
 				94005E0513F45A1B001EF42D /* embedded_interpreter.py */,
-				26A7A036135E6E5300FB369E /* NamedOptionValue.h */,
-				26A7A034135E6E4200FB369E /* NamedOptionValue.cpp */,
+				26A7A036135E6E5300FB369E /* OptionValue.h */,
+				26A7A034135E6E4200FB369E /* OptionValue.cpp */,
+				260A248D15D06C4F009981B0 /* OptionValues.h */,
+				2697A39415E404BA003E682C /* OptionValueArch.h */,
+				2697A39215E404B1003E682C /* OptionValueArch.cpp */,
+				260CC62115D04377002BF2E0 /* OptionValueArgs.h */,
+				260CC63B15D0440D002BF2E0 /* OptionValueArgs.cpp */,
+				260CC62215D04377002BF2E0 /* OptionValueArray.h */,
+				260CC63C15D0440D002BF2E0 /* OptionValueArray.cpp */,
+				260CC62315D04377002BF2E0 /* OptionValueBoolean.h */,
+				260CC63D15D0440D002BF2E0 /* OptionValueBoolean.cpp */,
+				260CC62515D04377002BF2E0 /* OptionValueDictionary.h */,
+				260CC63F15D0440D002BF2E0 /* OptionValueDictionary.cpp */,
+				260CC62615D04377002BF2E0 /* OptionValueEnumeration.h */,
+				260CC64015D0440D002BF2E0 /* OptionValueEnumeration.cpp */,
+				260CC62715D04377002BF2E0 /* OptionValueFileSpec.h */,
+				260CC64115D0440D002BF2E0 /* OptionValueFileSpec.cpp */,
+				260CC62815D04377002BF2E0 /* OptionValueFileSpecList.h */,
+				260CC64215D0440D002BF2E0 /* OptionValueFileSpecLIst.cpp */,
+				260CC62915D04377002BF2E0 /* OptionValueFormat.h */,
+				260CC64315D0440D002BF2E0 /* OptionValueFormat.cpp */,
+				26DAED5F15D327A200E15819 /* OptionValuePathMappings.h */,
+				26DAED6215D327C200E15819 /* OptionValuePathMappings.cpp */,
+				260CC62415D04377002BF2E0 /* OptionValueProperties.h */,
+				260CC63E15D0440D002BF2E0 /* OptionValueProperties.cpp */,
+				26491E3A15E1DB8600CBFFC2 /* OptionValueRegex.h */,
+				26491E3D15E1DB9F00CBFFC2 /* OptionValueRegex.cpp */,
+				260CC62A15D04377002BF2E0 /* OptionValueSInt64.h */,
+				260CC64415D0440D002BF2E0 /* OptionValueSInt64.cpp */,
+				260CC62B15D04377002BF2E0 /* OptionValueString.h */,
+				260CC64515D0440D002BF2E0 /* OptionValueString.cpp */,
+				260CC62C15D04377002BF2E0 /* OptionValueUInt64.h */,
+				260CC64615D0440D002BF2E0 /* OptionValueUInt64.cpp */,
+				260CC62D15D04377002BF2E0 /* OptionValueUUID.h */,
+				260CC64715D0440D002BF2E0 /* OptionValueUUID.cpp */,
 				26BC7D6D10F1B77400F91463 /* Options.h */,
 				26BC7E8610F1B85900F91463 /* Options.cpp */,
 				26D5E160135BAEB0006EA0A7 /* OptionGroupArchitecture.h */,
@@ -2779,9 +2882,11 @@
 				267C0128136880C7006E963E /* OptionGroupValueObjectDisplay.h */,
 				267C012A136880DF006E963E /* OptionGroupValueObjectDisplay.cpp */,
 				26ED3D6F13C5638A0017D45E /* OptionGroupVariable.h */,
-				B2462248141AD39B00F3D409 /* OptionGroupWatchpoint.h */,
 				26ED3D6C13C563810017D45E /* OptionGroupVariable.cpp */,
+				B2462248141AD39B00F3D409 /* OptionGroupWatchpoint.h */,
 				B2462246141AD37D00F3D409 /* OptionGroupWatchpoint.cpp */,
+				26ACEC2715E077AE00E94760 /* Property.h */,
+				2640E19E15DC78FD00F23B50 /* Property.cpp */,
 				26BC7DE510F1B7F900F91463 /* ScriptInterpreter.h */,
 				9A82010B10FFB49800182560 /* ScriptInterpreter.cpp */,
 				9A2771FB1135A35C00E6ADB6 /* ScriptInterpreterNone.h */,
@@ -3239,6 +3344,24 @@
 				2694E9A514FC0BBD0076DE67 /* PlatformLinux.h in Headers */,
 				2663E379152BD1890091EC22 /* ReadWriteLock.h in Headers */,
 				26B1EFAF154638AF00E2DAC7 /* DWARFDeclContext.h in Headers */,
+				260CC62E15D04377002BF2E0 /* OptionValueArgs.h in Headers */,
+				260CC62F15D04377002BF2E0 /* OptionValueArray.h in Headers */,
+				260CC63015D04377002BF2E0 /* OptionValueBoolean.h in Headers */,
+				260CC63115D04377002BF2E0 /* OptionValueProperties.h in Headers */,
+				260CC63215D04377002BF2E0 /* OptionValueDictionary.h in Headers */,
+				260CC63315D04377002BF2E0 /* OptionValueEnumeration.h in Headers */,
+				260CC63415D04377002BF2E0 /* OptionValueFileSpec.h in Headers */,
+				260CC63515D04377002BF2E0 /* OptionValueFileSpecList.h in Headers */,
+				260CC63615D04377002BF2E0 /* OptionValueFormat.h in Headers */,
+				260CC63715D04377002BF2E0 /* OptionValueSInt64.h in Headers */,
+				260CC63815D04377002BF2E0 /* OptionValueString.h in Headers */,
+				260CC63915D04377002BF2E0 /* OptionValueUInt64.h in Headers */,
+				260CC63A15D04377002BF2E0 /* OptionValueUUID.h in Headers */,
+				260A248E15D06C50009981B0 /* OptionValues.h in Headers */,
+				26DAED6015D327A200E15819 /* OptionValuePathMappings.h in Headers */,
+				26ACEC2815E077AE00E94760 /* Property.h in Headers */,
+				26491E3B15E1DB8600CBFFC2 /* OptionValueRegex.h in Headers */,
+				2697A39515E404BA003E682C /* OptionValueArch.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3858,7 +3981,7 @@
 				26D5E15F135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp in Sources */,
 				26D5E163135BB054006EA0A7 /* OptionGroupPlatform.cpp in Sources */,
 				26BD407F135D2AE000237D80 /* FileLineResolver.cpp in Sources */,
-				26A7A035135E6E4200FB369E /* NamedOptionValue.cpp in Sources */,
+				26A7A035135E6E4200FB369E /* OptionValue.cpp in Sources */,
 				9A22A161135E30370024DDC3 /* EmulateInstructionARM.cpp in Sources */,
 				9A22A163135E30370024DDC3 /* EmulationStateARM.cpp in Sources */,
 				9A4F35101368A51A00823F52 /* StreamAsynchronousIO.cpp in Sources */,
@@ -3938,8 +4061,25 @@
 				2694E9A414FC0BBD0076DE67 /* PlatformLinux.cpp in Sources */,
 				26B1EFAE154638AF00E2DAC7 /* DWARFDeclContext.cpp in Sources */,
 				B21EB71515CC99F100E60059 /* cxa_demangle.cpp in Sources */,
+				260CC64815D0440D002BF2E0 /* OptionValueArgs.cpp in Sources */,
+				260CC64915D0440D002BF2E0 /* OptionValueArray.cpp in Sources */,
+				260CC64A15D0440D002BF2E0 /* OptionValueBoolean.cpp in Sources */,
+				260CC64B15D0440D002BF2E0 /* OptionValueProperties.cpp in Sources */,
+				260CC64C15D0440D002BF2E0 /* OptionValueDictionary.cpp in Sources */,
+				260CC64D15D0440D002BF2E0 /* OptionValueEnumeration.cpp in Sources */,
+				260CC64E15D0440D002BF2E0 /* OptionValueFileSpec.cpp in Sources */,
+				260CC64F15D0440D002BF2E0 /* OptionValueFileSpecLIst.cpp in Sources */,
+				260CC65015D0440D002BF2E0 /* OptionValueFormat.cpp in Sources */,
+				260CC65115D0440D002BF2E0 /* OptionValueSInt64.cpp in Sources */,
+				260CC65215D0440D002BF2E0 /* OptionValueString.cpp in Sources */,
+				260CC65315D0440D002BF2E0 /* OptionValueUInt64.cpp in Sources */,
+				260CC65415D0440D002BF2E0 /* OptionValueUUID.cpp in Sources */,
+				26DAED6315D327C200E15819 /* OptionValuePathMappings.cpp in Sources */,
 				B2B7CCEB15D1BD6700EEFB57 /* CommandObjectWatchpointCommand.cpp in Sources */,
 				B2B7CCF015D1C20F00EEFB57 /* WatchpointOptions.cpp in Sources */,
+				2640E19F15DC78FD00F23B50 /* Property.cpp in Sources */,
+				26491E3E15E1DB9F00CBFFC2 /* OptionValueRegex.cpp in Sources */,
+				2697A39315E404B1003E682C /* OptionValueArch.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -4252,13 +4392,11 @@
 					Foundation,
 					"-v",
 					"-t",
-					"-Wl,-v",
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-lllvmclang",
 					"-v",
 					"-t",
-					"-Wl,-v",
 					"-framework",
 					Foundation,
 				);
@@ -4313,13 +4451,11 @@
 					AppKit,
 					"-v",
 					"-t",
-					"-Wl,-v",
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-lllvmclang",
 					"-v",
 					"-t",
-					"-Wl,-v",
 					"-framework",
 					Foundation,
 				);

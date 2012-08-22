@@ -31,6 +31,8 @@
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/OptionGroupWatchpoint.h"
+#include "lldb/Interpreter/OptionValues.h"
+#include "lldb/Interpreter/Property.h"
 #include "lldb/lldb-private-log.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/Process.h"
@@ -52,9 +54,10 @@ Target::GetStaticBroadcasterClass ()
 // Target constructor
 //----------------------------------------------------------------------
 Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::PlatformSP &platform_sp) :
+    TargetProperties (this),
     Broadcaster (&debugger, "lldb.target"),
+//TargetInstanceSettings (GetSettingsController()),
     ExecutionContextScope (),
-    TargetInstanceSettings (GetSettingsController()),
     m_debugger (debugger),
     m_platform_sp (platform_sp),
     m_mutex (Mutex::eMutexTypeRecursive), 
@@ -964,7 +967,7 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
         }
     }
 
-    UpdateInstanceName();
+//    UpdateInstanceName();
 }
 
 
@@ -996,7 +999,7 @@ Target::SetArchitecture (const ArchSpec &arch_spec)
             ModuleSpec module_spec (executable_sp->GetFileSpec(), arch_spec);
             Error error = ModuleList::GetSharedModule (module_spec, 
                                                        executable_sp, 
-                                                       &GetExecutableSearchPaths(),
+                                                       NULL, // &GetExecutableSearchPaths(),        // TODO: SETTINGS
                                                        NULL, 
                                                        NULL);
                                           
@@ -1051,9 +1054,7 @@ bool
 Target::ModuleIsExcludedForNonModuleSpecificSearches (const FileSpec &module_file_spec)
 {
 
-    if (!m_breakpoints_use_platform_avoid)
-        return false;
-    else
+    if (GetBreakpointsConsultPlatformAvoidList())
     {
         ModuleList matchingModules;
         ModuleSpec module_spec (module_file_spec);
@@ -1070,22 +1071,19 @@ Target::ModuleIsExcludedForNonModuleSpecificSearches (const FileSpec &module_fil
             }
             return true;
         }
-        else
-            return false;
     }
+    return false;
 }
 
 bool
 Target::ModuleIsExcludedForNonModuleSpecificSearches (const lldb::ModuleSP &module_sp)
 {
-    if (!m_breakpoints_use_platform_avoid)
-        return false;
-    else if (GetPlatform())
+    if (GetBreakpointsConsultPlatformAvoidList())
     {
-        return GetPlatform()->ModuleIsExcludedForNonModuleSpecificSearches (*this, module_sp);
+        if (m_platform_sp)
+            return m_platform_sp->ModuleIsExcludedForNonModuleSpecificSearches (*this, module_sp);
     }
-    else
-        return false;
+    return false;
 }
 
 size_t
@@ -1352,7 +1350,7 @@ Target::GetSharedModule (const ModuleSpec &module_spec, Error *error_ptr)
                 transformed_spec.GetFileSpec().GetFilename() = module_spec.GetFileSpec().GetFilename();
                 error = ModuleList::GetSharedModule (transformed_spec, 
                                                      module_sp, 
-                                                     &GetExecutableSearchPaths(),
+                                                     NULL, // TODO: SETTINGS &GetExecutableSearchPaths(),
                                                      &old_module_sp, 
                                                      &did_create_module);
             }
@@ -1373,8 +1371,8 @@ Target::GetSharedModule (const ModuleSpec &module_spec, Error *error_ptr)
                 // We have a UUID, it is OK to check the global module list...
                 error = ModuleList::GetSharedModule (module_spec,
                                                      module_sp, 
-                                                     &GetExecutableSearchPaths(),
-                                                     &old_module_sp, 
+                                                     NULL, // TODO: SETTINGS &GetExecutableSearchPaths(),
+                                                     &old_module_sp,
                                                      &did_create_module);
             }
 
@@ -1387,8 +1385,8 @@ Target::GetSharedModule (const ModuleSpec &module_spec, Error *error_ptr)
                     FileSpec platform_file_spec;        
                     error = m_platform_sp->GetSharedModule (module_spec, 
                                                             module_sp, 
-                                                            &GetExecutableSearchPaths(),
-                                                            &old_module_sp, 
+                                                            NULL, // TODO: SETTINGS &GetExecutableSearchPaths(),
+                                                            &old_module_sp,
                                                             &did_create_module);
                 }
                 else
@@ -1529,12 +1527,12 @@ Target::GetClangASTImporter()
 void
 Target::SettingsInitialize ()
 {
-    UserSettingsController::InitializeSettingsController (GetSettingsController(),
-                                                          SettingsController::global_settings_table,
-                                                          SettingsController::instance_settings_table);
-                                                          
-    // Now call SettingsInitialize() on each 'child' setting of Target
-    Process::SettingsInitialize ();
+//    UserSettingsController::InitializeSettingsController (GetSettingsController(),
+//                                                          SettingsController::global_settings_table,
+//                                                          SettingsController::instance_settings_table);
+//                                                          
+//    // Now call SettingsInitialize() on each 'child' setting of Target
+//    Process::SettingsInitialize ();
 }
 
 void
@@ -1542,65 +1540,59 @@ Target::SettingsTerminate ()
 {
 
     // Must call SettingsTerminate() on each settings 'child' of Target, before terminating Target's Settings.
-    
-    Process::SettingsTerminate ();
-    
-    // Now terminate Target Settings.
-    
-    UserSettingsControllerSP &usc = GetSettingsController();
-    UserSettingsController::FinalizeSettingsController (usc);
-    usc.reset();
+//    
+//    Process::SettingsTerminate ();
+//    
+//    // Now terminate Target Settings.
+//    
+//    UserSettingsControllerSP &usc = GetSettingsController();
+//    UserSettingsController::FinalizeSettingsController (usc);
+//    usc.reset();
 }
 
-UserSettingsControllerSP &
-Target::GetSettingsController ()
-{
-    static UserSettingsControllerSP g_settings_controller_sp;
-    if (!g_settings_controller_sp)
-    {
-        g_settings_controller_sp.reset (new Target::SettingsController);
-        // The first shared pointer to Target::SettingsController in
-        // g_settings_controller_sp must be fully created above so that 
-        // the TargetInstanceSettings can use a weak_ptr to refer back 
-        // to the master setttings controller
-        InstanceSettingsSP default_instance_settings_sp (new TargetInstanceSettings (g_settings_controller_sp, 
-                                                                                     false,
-                                                                                     InstanceSettings::GetDefaultName().AsCString()));
-        g_settings_controller_sp->SetDefaultInstanceSettings (default_instance_settings_sp);
-    }
-    return g_settings_controller_sp;
-}
+//UserSettingsControllerSP &
+//Target::GetSettingsController ()
+//{
+//    static UserSettingsControllerSP g_settings_controller_sp;
+//    if (!g_settings_controller_sp)
+//    {
+//        g_settings_controller_sp.reset (new Target::SettingsController);
+//        // The first shared pointer to Target::SettingsController in
+//        // g_settings_controller_sp must be fully created above so that 
+//        // the TargetInstanceSettings can use a weak_ptr to refer back 
+//        // to the master setttings controller
+//        InstanceSettingsSP default_instance_settings_sp (new TargetInstanceSettings (g_settings_controller_sp, 
+//                                                                                     false,
+//                                                                                     InstanceSettings::GetDefaultName().AsCString()));
+//        g_settings_controller_sp->SetDefaultInstanceSettings (default_instance_settings_sp);
+//    }
+//    return g_settings_controller_sp;
+//}
 
 FileSpecList
 Target::GetDefaultExecutableSearchPaths ()
 {
-    lldb::UserSettingsControllerSP settings_controller_sp (GetSettingsController());
-    if (settings_controller_sp)
-    {
-        lldb::InstanceSettingsSP instance_settings_sp (settings_controller_sp->GetDefaultInstanceSettings ());
-        if (instance_settings_sp)
-            return static_cast<TargetInstanceSettings *>(instance_settings_sp.get())->GetExecutableSearchPaths ();
-    }
+    TargetPropertiesSP properties_sp(Target::GetGlobalProperties());
+    if (properties_sp)
+        return properties_sp->GetExecutableSearchPaths();
     return FileSpecList();
 }
-
 
 ArchSpec
 Target::GetDefaultArchitecture ()
 {
-    lldb::UserSettingsControllerSP settings_controller_sp (GetSettingsController());
-    if (settings_controller_sp)
-        return static_cast<Target::SettingsController *>(settings_controller_sp.get())->GetArchitecture ();
+    TargetPropertiesSP properties_sp(Target::GetGlobalProperties());
+    if (properties_sp)
+        return properties_sp->GetDefaultArchitecture();
     return ArchSpec();
 }
 
 void
-Target::SetDefaultArchitecture (const ArchSpec& arch)
+Target::SetDefaultArchitecture (const ArchSpec &arch)
 {
-    lldb::UserSettingsControllerSP settings_controller_sp (GetSettingsController());
-
-    if (settings_controller_sp)
-        static_cast<Target::SettingsController *>(settings_controller_sp.get())->GetArchitecture () = arch;
+    TargetPropertiesSP properties_sp(Target::GetGlobalProperties());
+    if (properties_sp)
+        return properties_sp->SetDefaultArchitecture(arch);
 }
 
 Target *
@@ -1619,26 +1611,27 @@ Target::GetTargetFromContexts (const ExecutionContext *exe_ctx_ptr, const Symbol
 }
 
 
-void
-Target::UpdateInstanceName ()
-{
-    StreamString sstr;
-    
-    Module *exe_module = GetExecutableModulePointer();
-    if (exe_module)
-    {
-        sstr.Printf ("%s_%s", 
-                     exe_module->GetFileSpec().GetFilename().AsCString(), 
-                     exe_module->GetArchitecture().GetArchitectureName());
-        GetSettingsController()->RenameInstanceSettings (GetInstanceName().AsCString(), sstr.GetData());
-    }
-}
-
+//void
+//Target::UpdateInstanceName ()
+//{
+//    StreamString sstr;
+//    
+//    Module *exe_module = GetExecutableModulePointer();
+//    if (exe_module)
+//    {
+//        sstr.Printf ("%s_%s", 
+//                     exe_module->GetFileSpec().GetFilename().AsCString(), 
+//                     exe_module->GetArchitecture().GetArchitectureName());
+//        GetSettingsController()->RenameInstanceSettings (GetInstanceName().AsCString(), sstr.GetData());
+//    }
+//}
+//
 const char *
 Target::GetExpressionPrefixContentsAsCString ()
 {
-    if (!m_expr_prefix_contents.empty())
-        return m_expr_prefix_contents.c_str();
+    // TODO: SETTINGS
+//    if (!m_expr_prefix_contents.empty())
+//        return m_expr_prefix_contents.c_str();
     return NULL;
 }
 
@@ -2152,795 +2145,1174 @@ Target::StopHook::GetDescription (Stream *s, lldb::DescriptionLevel level) const
 // class Target::SettingsController
 //--------------------------------------------------------------
 
-Target::SettingsController::SettingsController () :
-    UserSettingsController ("target", Debugger::GetSettingsController()),
-    m_default_architecture ()
+//Target::SettingsController::SettingsController () :
+//    UserSettingsController ("target", Debugger::GetSettingsController()),
+//    m_default_architecture ()
+//{
+//}
+//
+//Target::SettingsController::~SettingsController ()
+//{
+//}
+//
+//lldb::InstanceSettingsSP
+//Target::SettingsController::CreateInstanceSettings (const char *instance_name)
+//{
+//    lldb::InstanceSettingsSP new_settings_sp (new TargetInstanceSettings (GetSettingsController(),
+//                                                                          false, 
+//                                                                          instance_name));
+//    return new_settings_sp;
+//}
+//
+//
+//#define TSC_DEFAULT_ARCH        "default-arch"
+//#define TSC_EXPR_PREFIX         "expr-prefix"
+//#define TSC_PREFER_DYNAMIC      "prefer-dynamic-value"
+//#define TSC_ENABLE_SYNTHETIC    "enable-synthetic-value"
+//#define TSC_SKIP_PROLOGUE       "skip-prologue"
+//#define TSC_SOURCE_MAP          "source-map"
+//#define TSC_EXE_SEARCH_PATHS    "exec-search-paths"
+//#define TSC_MAX_CHILDREN        "max-children-count"
+//#define TSC_MAX_STRLENSUMMARY   "max-string-summary-length"
+//#define TSC_PLATFORM_AVOID      "breakpoints-use-platform-avoid-list"
+//#define TSC_RUN_ARGS            "run-args"
+//#define TSC_ENV_VARS            "env-vars"
+//#define TSC_INHERIT_ENV         "inherit-env"
+//#define TSC_STDIN_PATH          "input-path"
+//#define TSC_STDOUT_PATH         "output-path"
+//#define TSC_STDERR_PATH         "error-path"
+//#define TSC_DISABLE_ASLR        "disable-aslr"
+//#define TSC_DISABLE_STDIO       "disable-stdio"
+//
+//
+//static const ConstString &
+//GetSettingNameForDefaultArch ()
+//{
+//    static ConstString g_const_string (TSC_DEFAULT_ARCH);
+//    return g_const_string;
+//}
+//
+//static const ConstString &
+//GetSettingNameForExpressionPrefix ()
+//{
+//    static ConstString g_const_string (TSC_EXPR_PREFIX);
+//    return g_const_string;
+//}
+//
+//static const ConstString &
+//GetSettingNameForPreferDynamicValue ()
+//{
+//    static ConstString g_const_string (TSC_PREFER_DYNAMIC);
+//    return g_const_string;
+//}
+//
+//static const ConstString &
+//GetSettingNameForEnableSyntheticValue ()
+//{
+//    static ConstString g_const_string (TSC_ENABLE_SYNTHETIC);
+//    return g_const_string;
+//}
+//
+//static const ConstString &
+//GetSettingNameForSourcePathMap ()
+//{
+//    static ConstString g_const_string (TSC_SOURCE_MAP);
+//    return g_const_string;
+//}
+//
+//static const ConstString &
+//GetSettingNameForExecutableSearchPaths ()
+//{
+//    static ConstString g_const_string (TSC_EXE_SEARCH_PATHS);
+//    return g_const_string;
+//}
+//
+//static const ConstString &
+//GetSettingNameForSkipPrologue ()
+//{
+//    static ConstString g_const_string (TSC_SKIP_PROLOGUE);
+//    return g_const_string;
+//}
+//
+//static const ConstString &
+//GetSettingNameForMaxChildren ()
+//{
+//    static ConstString g_const_string (TSC_MAX_CHILDREN);
+//    return g_const_string;
+//}
+//
+//static const ConstString &
+//GetSettingNameForMaxStringSummaryLength ()
+//{
+//    static ConstString g_const_string (TSC_MAX_STRLENSUMMARY);
+//    return g_const_string;
+//}
+//
+//static const ConstString &
+//GetSettingNameForPlatformAvoid ()
+//{
+//    static ConstString g_const_string (TSC_PLATFORM_AVOID);
+//    return g_const_string;
+//}
+//
+//const ConstString &
+//GetSettingNameForRunArgs ()
+//{
+//    static ConstString g_const_string (TSC_RUN_ARGS);
+//    return g_const_string;
+//}
+//
+//const ConstString &
+//GetSettingNameForEnvVars ()
+//{
+//    static ConstString g_const_string (TSC_ENV_VARS);
+//    return g_const_string;
+//}
+//
+//const ConstString &
+//GetSettingNameForInheritHostEnv ()
+//{
+//    static ConstString g_const_string (TSC_INHERIT_ENV);
+//    return g_const_string;
+//}
+//
+//const ConstString &
+//GetSettingNameForInputPath ()
+//{
+//    static ConstString g_const_string (TSC_STDIN_PATH);
+//    return g_const_string;
+//}
+//
+//const ConstString &
+//GetSettingNameForOutputPath ()
+//{
+//    static ConstString g_const_string (TSC_STDOUT_PATH);
+//    return g_const_string;
+//}
+//
+//const ConstString &
+//GetSettingNameForErrorPath ()
+//{
+//    static ConstString g_const_string (TSC_STDERR_PATH);
+//    return g_const_string;
+//}
+//
+//const ConstString &
+//GetSettingNameForDisableASLR ()
+//{
+//    static ConstString g_const_string (TSC_DISABLE_ASLR);
+//    return g_const_string;
+//}
+//
+//const ConstString &
+//GetSettingNameForDisableSTDIO ()
+//{
+//    static ConstString g_const_string (TSC_DISABLE_STDIO);
+//    return g_const_string;
+//}
+//
+//bool
+//Target::SettingsController::SetGlobalVariable (const ConstString &var_name,
+//                                               const char *index_value,
+//                                               const char *value,
+//                                               const SettingEntry &entry,
+//                                               const VarSetOperationType op,
+//                                               Error&err)
+//{
+//    if (var_name == GetSettingNameForDefaultArch())
+//    {
+//        m_default_architecture.SetTriple (value);
+//        if (!m_default_architecture.IsValid())
+//            err.SetErrorStringWithFormat ("'%s' is not a valid architecture or triple.", value);
+//    }
+//    return true;
+//}
+//
+//
+//bool
+//Target::SettingsController::GetGlobalVariable (const ConstString &var_name,
+//                                               StringList &value,
+//                                               Error &err)
+//{
+//    if (var_name == GetSettingNameForDefaultArch())
+//    {
+//        // If the arch is invalid (the default), don't show a string for it
+//        if (m_default_architecture.IsValid())
+//            value.AppendString (m_default_architecture.GetArchitectureName());
+//        return true;
+//    }
+//    else
+//        err.SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
+//
+//    return false;
+//}
+
+
+//--------------------------------------------------------------
+// class TargetProperties
+//--------------------------------------------------------------
+
+OptionEnumValueElement
+lldb_private::g_dynamic_value_types[] =
 {
-}
+    { eNoDynamicValues,      "no-dynamic-values", "Don't calculate the dynamic type of values"},
+    { eDynamicCanRunTarget,  "run-target",        "Calculate the dynamic type of values even if you have to run the target."},
+    { eDynamicDontRunTarget, "no-run-target",     "Calculate the dynamic type of values, but don't run the target."},
+    { 0, NULL, NULL }
+};
 
-Target::SettingsController::~SettingsController ()
+static PropertyDefinition
+g_properties[] =
 {
-}
-
-lldb::InstanceSettingsSP
-Target::SettingsController::CreateInstanceSettings (const char *instance_name)
+    { "default-arch"                       , OptionValue::eTypeArch      , true , 0                         , NULL, NULL, "Default architecture to choose, when there's a choice." },
+    { "expr-prefix"                        , OptionValue::eTypeFileSpec  , false, 0                         , NULL, NULL, "Path to a file containing expressions to be prepended to all expressions." },
+    { "prefer-dynamic-value"               , OptionValue::eTypeEnum      , false, eNoDynamicValues          , NULL, g_dynamic_value_types, "Should printed values be shown as their dynamic value." },
+    { "enable-synthetic-value"             , OptionValue::eTypeBoolean   , false, true                      , NULL, NULL, "Should synthetic values be used by default whenever available." },
+    { "skip-prologue"                      , OptionValue::eTypeBoolean   , false, true                      , NULL, NULL, "Skip function prologues when setting breakpoints by name." },
+    { "source-map"                         , OptionValue::eTypePathMap   , false, 0                         , NULL, NULL, "Source path remappings used to track the change of location between a source file when built, and "
+      "where it exists on the current system.  It consists of an array of duples, the first element of each duple is "
+      "some part (starting at the root) of the path to the file when it was built, "
+      "and the second is where the remainder of the original build hierarchy is rooted on the local system.  "
+      "Each element of the array is checked in order and the first one that results in a match wins." },
+    { "exec-search-paths"                  , OptionValue::eTypeFileSpecList, false, 0                       , NULL, NULL, "Executable search paths to use when locating executable files whose paths don't match the local file system." },
+    { "max-children-count"                 , OptionValue::eTypeSInt64    , false, 256                       , NULL, NULL, "Maximum number of children to expand in any level of depth." },
+    { "max-string-summary-length"          , OptionValue::eTypeSInt64    , false, 1024                      , NULL, NULL, "Maximum number of characters to show when using %s in summary strings." },
+    { "breakpoints-use-platform-avoid-list", OptionValue::eTypeBoolean   , false, true                      , NULL, NULL, "Consult the platform module avoid list when setting non-module specific breakpoints." },
+    { "run-args"                           , OptionValue::eTypeArgs      , false, 0                         , NULL, NULL, "A list containing all the arguments to be passed to the executable when it is run." },
+    { "env-vars"                           , OptionValue::eTypeDictionary, false, OptionValue::eTypeString  , NULL, NULL, "A list of all the environment variables to be passed to the executable's environment, and their values." },
+    { "inherit-env"                        , OptionValue::eTypeBoolean   , false, true                      , NULL, NULL, "Inherit the environment from the process that is running LLDB." },
+    { "input-path"                         , OptionValue::eTypeFileSpec  , false, 0                         , NULL, NULL, "The file/path to be used by the executable program for reading its standard input." },
+    { "output-path"                        , OptionValue::eTypeFileSpec  , false, 0                         , NULL, NULL, "The file/path to be used by the executable program for writing its standard output." },
+    { "error-path"                         , OptionValue::eTypeFileSpec  , false, 0                         , NULL, NULL, "The file/path to be used by the executable program for writing its standard error." },
+    { "disable-aslr"                       , OptionValue::eTypeBoolean   , false, true                      , NULL, NULL, "Disable Address Space Layout Randomization (ASLR)" },
+    { "disable-stdio"                      , OptionValue::eTypeBoolean   , false, false                     , NULL, NULL, "Disable stdin/stdout for process (e.g. for a GUI application)" },
+    { NULL                                 , OptionValue::eTypeInvalid   , false, 0                         , NULL, NULL, NULL }
+};
+enum
 {
-    lldb::InstanceSettingsSP new_settings_sp (new TargetInstanceSettings (GetSettingsController(),
-                                                                          false, 
-                                                                          instance_name));
-    return new_settings_sp;
-}
+    ePropertyDefaultArch,
+    ePropertyExprPrefix,
+    ePropertyPreferDynamic,
+    ePropertyEnableSynthetic,
+    ePropertySkipPrologue,
+    ePropertySourceMap,
+    ePropertyExecutableSearchPaths,
+    ePropertyMaxChildrenCount,
+    ePropertyMaxSummaryLength,
+    ePropertyBreakpointUseAvoidList,
+    ePropertyRunArgs,
+    ePropertyEnvVars,
+    ePropertyInheritEnv,
+    ePropertyInputPath,
+    ePropertyOutputPath,
+    ePropertyErrorPath,
+    ePropertyDisableASLR,
+    ePropertyDisableSTDIO
+};
 
 
-#define TSC_DEFAULT_ARCH        "default-arch"
-#define TSC_EXPR_PREFIX         "expr-prefix"
-#define TSC_PREFER_DYNAMIC      "prefer-dynamic-value"
-#define TSC_ENABLE_SYNTHETIC    "enable-synthetic-value"
-#define TSC_SKIP_PROLOGUE       "skip-prologue"
-#define TSC_SOURCE_MAP          "source-map"
-#define TSC_EXE_SEARCH_PATHS    "exec-search-paths"
-#define TSC_MAX_CHILDREN        "max-children-count"
-#define TSC_MAX_STRLENSUMMARY   "max-string-summary-length"
-#define TSC_PLATFORM_AVOID      "breakpoints-use-platform-avoid-list"
-#define TSC_RUN_ARGS            "run-args"
-#define TSC_ENV_VARS            "env-vars"
-#define TSC_INHERIT_ENV         "inherit-env"
-#define TSC_STDIN_PATH          "input-path"
-#define TSC_STDOUT_PATH         "output-path"
-#define TSC_STDERR_PATH         "error-path"
-#define TSC_DISABLE_ASLR        "disable-aslr"
-#define TSC_DISABLE_STDIO       "disable-stdio"
-
-
-static const ConstString &
-GetSettingNameForDefaultArch ()
+class TargetOptionValueProperties : public OptionValueProperties
 {
-    static ConstString g_const_string (TSC_DEFAULT_ARCH);
-    return g_const_string;
-}
-
-static const ConstString &
-GetSettingNameForExpressionPrefix ()
-{
-    static ConstString g_const_string (TSC_EXPR_PREFIX);
-    return g_const_string;
-}
-
-static const ConstString &
-GetSettingNameForPreferDynamicValue ()
-{
-    static ConstString g_const_string (TSC_PREFER_DYNAMIC);
-    return g_const_string;
-}
-
-static const ConstString &
-GetSettingNameForEnableSyntheticValue ()
-{
-    static ConstString g_const_string (TSC_ENABLE_SYNTHETIC);
-    return g_const_string;
-}
-
-static const ConstString &
-GetSettingNameForSourcePathMap ()
-{
-    static ConstString g_const_string (TSC_SOURCE_MAP);
-    return g_const_string;
-}
-
-static const ConstString &
-GetSettingNameForExecutableSearchPaths ()
-{
-    static ConstString g_const_string (TSC_EXE_SEARCH_PATHS);
-    return g_const_string;
-}
-
-static const ConstString &
-GetSettingNameForSkipPrologue ()
-{
-    static ConstString g_const_string (TSC_SKIP_PROLOGUE);
-    return g_const_string;
-}
-
-static const ConstString &
-GetSettingNameForMaxChildren ()
-{
-    static ConstString g_const_string (TSC_MAX_CHILDREN);
-    return g_const_string;
-}
-
-static const ConstString &
-GetSettingNameForMaxStringSummaryLength ()
-{
-    static ConstString g_const_string (TSC_MAX_STRLENSUMMARY);
-    return g_const_string;
-}
-
-static const ConstString &
-GetSettingNameForPlatformAvoid ()
-{
-    static ConstString g_const_string (TSC_PLATFORM_AVOID);
-    return g_const_string;
-}
-
-const ConstString &
-GetSettingNameForRunArgs ()
-{
-    static ConstString g_const_string (TSC_RUN_ARGS);
-    return g_const_string;
-}
-
-const ConstString &
-GetSettingNameForEnvVars ()
-{
-    static ConstString g_const_string (TSC_ENV_VARS);
-    return g_const_string;
-}
-
-const ConstString &
-GetSettingNameForInheritHostEnv ()
-{
-    static ConstString g_const_string (TSC_INHERIT_ENV);
-    return g_const_string;
-}
-
-const ConstString &
-GetSettingNameForInputPath ()
-{
-    static ConstString g_const_string (TSC_STDIN_PATH);
-    return g_const_string;
-}
-
-const ConstString &
-GetSettingNameForOutputPath ()
-{
-    static ConstString g_const_string (TSC_STDOUT_PATH);
-    return g_const_string;
-}
-
-const ConstString &
-GetSettingNameForErrorPath ()
-{
-    static ConstString g_const_string (TSC_STDERR_PATH);
-    return g_const_string;
-}
-
-const ConstString &
-GetSettingNameForDisableASLR ()
-{
-    static ConstString g_const_string (TSC_DISABLE_ASLR);
-    return g_const_string;
-}
-
-const ConstString &
-GetSettingNameForDisableSTDIO ()
-{
-    static ConstString g_const_string (TSC_DISABLE_STDIO);
-    return g_const_string;
-}
-
-bool
-Target::SettingsController::SetGlobalVariable (const ConstString &var_name,
-                                               const char *index_value,
-                                               const char *value,
-                                               const SettingEntry &entry,
-                                               const VarSetOperationType op,
-                                               Error&err)
-{
-    if (var_name == GetSettingNameForDefaultArch())
+public:
+    TargetOptionValueProperties (const ConstString &name) :
+        OptionValueProperties (name),
+        m_target (NULL),
+        m_got_host_env (false)
     {
-        m_default_architecture.SetTriple (value);
-        if (!m_default_architecture.IsValid())
-            err.SetErrorStringWithFormat ("'%s' is not a valid architecture or triple.", value);
     }
-    return true;
-}
 
-
-bool
-Target::SettingsController::GetGlobalVariable (const ConstString &var_name,
-                                               StringList &value,
-                                               Error &err)
-{
-    if (var_name == GetSettingNameForDefaultArch())
+    // This constructor is used when creating TargetOptionValueProperties when it
+    // is part of a new lldb_private::Target instance. It will copy all current
+    // global property values as needed
+    TargetOptionValueProperties (Target *target, const TargetPropertiesSP &target_properties_sp) :
+        OptionValueProperties(*target_properties_sp->GetValueProperties()),
+        m_target (target),
+        m_got_host_env (false)
     {
-        // If the arch is invalid (the default), don't show a string for it
-        if (m_default_architecture.IsValid())
-            value.AppendString (m_default_architecture.GetArchitectureName());
-        return true;
+    }
+
+    virtual const Property *
+    GetPropertyAtIndex (const ExecutionContext *exe_ctx, bool will_modify, uint32_t idx) const
+    {
+        // When gettings the value for a key from the target options, we will always
+        // try and grab the setting from the current target if there is one. Else we just
+        // use the one from this instance.
+        if (idx == ePropertyEnvVars)
+            GetHostEnvironmentIfNeeded ();
+            
+        if (exe_ctx)
+        {
+            Target *target = exe_ctx->GetTargetPtr();
+            if (target)
+            {
+                TargetOptionValueProperties *target_properties = static_cast<TargetOptionValueProperties *>(target->GetValueProperties().get());
+                if (this != target_properties)
+                    return target_properties->ProtectedGetPropertyAtIndex (idx);
+            }
+        }
+        return ProtectedGetPropertyAtIndex (idx);
+    }
+protected:
+    
+    void
+    GetHostEnvironmentIfNeeded () const
+    {
+        if (!m_got_host_env)
+        {
+            if (m_target)
+            {
+                m_got_host_env = true;
+                const uint32_t idx = ePropertyInheritEnv;
+                if (GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0))
+                {
+                    PlatformSP platform_sp (m_target->GetPlatform());
+                    if (platform_sp)
+                    {
+                        StringList env;
+                        if (platform_sp->GetEnvironment(env))
+                        {
+                            OptionValueDictionary *env_dict = GetPropertyAtIndexAsOptionValueDictionary (NULL, ePropertyEnvVars);
+                            if (env_dict)
+                            {
+                                const bool can_replace = false;
+                                const size_t envc = env.GetSize();
+                                for (size_t idx=0; idx<envc; idx++)
+                                {
+                                    const char *env_entry = env.GetStringAtIndex (idx);
+                                    if (env_entry)
+                                    {
+                                        const char *equal_pos = ::strchr(env_entry, '=');
+                                        ConstString key;
+                                        // It is ok to have environment variables with no values
+                                        const char *value = NULL;
+                                        if (equal_pos)
+                                        {
+                                            key.SetCStringWithLength(env_entry, equal_pos - env_entry);
+                                            if (equal_pos[1])
+                                                value = equal_pos + 1;
+                                        }
+                                        else
+                                        {
+                                            key.SetCString(env_entry);
+                                        }
+                                        // Don't allow existing keys to be replaced with ones we get from the platform environment
+                                        env_dict->SetValueForKey(key, OptionValueSP(new OptionValueString(value)), can_replace);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Target *m_target;
+    mutable bool m_got_host_env;
+};
+
+TargetProperties::TargetProperties (Target *target) :
+    Properties ()
+{
+    if (target)
+    {
+        m_collection_sp.reset (new TargetOptionValueProperties(target, Target::GetGlobalProperties()));
     }
     else
-        err.SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
-
-    return false;
+    {
+        m_collection_sp.reset (new TargetOptionValueProperties(ConstString("target")));
+        m_collection_sp->Initialize(g_properties);
+        m_collection_sp->AppendProperty(ConstString("process"),
+                                        ConstString("Settings specify to processes."),
+                                        true,
+                                        Process::GetGlobalProperties()->GetValueProperties());
+    }
 }
+
+TargetProperties::~TargetProperties ()
+{
+}
+ArchSpec
+TargetProperties::GetDefaultArchitecture () const
+{
+    OptionValueArch *value = m_collection_sp->GetPropertyAtIndexAsOptionValueArch (NULL, ePropertyDefaultArch);
+    if (value)
+        return value->GetCurrentValue();
+    return ArchSpec();
+}
+
+void
+TargetProperties::SetDefaultArchitecture (const ArchSpec& arch)
+{
+    OptionValueArch *value = m_collection_sp->GetPropertyAtIndexAsOptionValueArch (NULL, ePropertyDefaultArch);
+    if (value)
+        return value->SetCurrentValue(arch, true);
+}
+
+lldb::DynamicValueType
+TargetProperties::GetPreferDynamicValue() const
+{
+    const uint32_t idx = ePropertyPreferDynamic;
+    return (lldb::DynamicValueType)m_collection_sp->GetPropertyAtIndexAsEnumeration (NULL, idx, g_properties[idx].default_uint_value);
+}
+
+bool
+TargetProperties::GetDisableASLR () const
+{
+    const uint32_t idx = ePropertyDisableASLR;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
+}
+
+void
+TargetProperties::SetDisableASLR (bool b)
+{
+    const uint32_t idx = ePropertyDisableASLR;
+    m_collection_sp->SetPropertyAtIndexAsBoolean (NULL, idx, b);
+}
+
+bool
+TargetProperties::GetDisableSTDIO () const
+{
+    const uint32_t idx = ePropertyDisableSTDIO;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
+}
+
+void
+TargetProperties::SetDisableSTDIO (bool b)
+{
+    const uint32_t idx = ePropertyDisableSTDIO;
+    m_collection_sp->SetPropertyAtIndexAsBoolean (NULL, idx, b);
+}
+
+bool
+TargetProperties::GetRunArguments (Args &args) const
+{
+    const uint32_t idx = ePropertyRunArgs;
+    return m_collection_sp->GetPropertyAtIndexAsArgs (NULL, idx, args);
+}
+
+void
+TargetProperties::SetRunArguments (const Args &args)
+{
+    const uint32_t idx = ePropertyRunArgs;
+    m_collection_sp->SetPropertyAtIndexFromArgs (NULL, idx, args);
+}
+
+size_t
+TargetProperties::GetEnvironmentAsArgs (Args &env) const
+{
+    const uint32_t idx = ePropertyEnvVars;
+    return m_collection_sp->GetPropertyAtIndexAsArgs (NULL, idx, env);
+}
+
+bool
+TargetProperties::GetSkipPrologue() const
+{
+    const uint32_t idx = ePropertySkipPrologue;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
+}
+
+PathMappingList &
+TargetProperties::GetSourcePathMap () const
+{
+    const uint32_t idx = ePropertySourceMap;
+    OptionValuePathMappings *option_value = m_collection_sp->GetPropertyAtIndexAsOptionValuePathMappings (NULL, false, idx);
+    assert(option_value);
+    return option_value->GetCurrentValue();
+}
+
+FileSpecList &
+TargetProperties::GetExecutableSearchPaths () const
+{
+    const uint32_t idx = ePropertyExecutableSearchPaths;
+    OptionValueFileSpecList *option_value = m_collection_sp->GetPropertyAtIndexAsOptionValueFileSpecList (NULL, false, idx);
+    assert(option_value);
+    return option_value->GetCurrentValue();
+}
+
+bool
+TargetProperties::GetEnableSyntheticValue () const
+{
+    const uint32_t idx = ePropertyEnableSynthetic;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
+}
+
+uint32_t
+TargetProperties::GetMaximumNumberOfChildrenToDisplay() const
+{
+    const uint32_t idx = ePropertyMaxChildrenCount;
+    return m_collection_sp->GetPropertyAtIndexAsSInt64 (NULL, idx, g_properties[idx].default_uint_value);
+}
+
+uint32_t
+TargetProperties::GetMaximumSizeOfStringSummary() const
+{
+    const uint32_t idx = ePropertyMaxSummaryLength;
+    return m_collection_sp->GetPropertyAtIndexAsSInt64 (NULL, idx, g_properties[idx].default_uint_value);
+}
+
+FileSpec
+TargetProperties::GetStandardInputPath () const
+{
+    const uint32_t idx = ePropertyInputPath;
+    return m_collection_sp->GetPropertyAtIndexAsFileSpec (NULL, idx);
+}
+
+void
+TargetProperties::SetStandardInputPath (const char *p)
+{
+    const uint32_t idx = ePropertyInputPath;
+    m_collection_sp->SetPropertyAtIndexAsString (NULL, idx, p);
+}
+
+FileSpec
+TargetProperties::GetStandardOutputPath () const
+{
+    const uint32_t idx = ePropertyOutputPath;
+    return m_collection_sp->GetPropertyAtIndexAsFileSpec (NULL, idx);
+}
+
+void
+TargetProperties::SetStandardOutputPath (const char *p)
+{
+    const uint32_t idx = ePropertyOutputPath;
+    m_collection_sp->SetPropertyAtIndexAsString (NULL, idx, p);
+}
+
+FileSpec
+TargetProperties::GetStandardErrorPath () const
+{
+    const uint32_t idx = ePropertyErrorPath;
+    return m_collection_sp->GetPropertyAtIndexAsFileSpec(NULL, idx);
+}
+
+void
+TargetProperties::SetStandardErrorPath (const char *p)
+{
+    const uint32_t idx = ePropertyErrorPath;
+    m_collection_sp->SetPropertyAtIndexAsString (NULL, idx, p);
+}
+
+bool
+TargetProperties::GetBreakpointsConsultPlatformAvoidList ()
+{
+    const uint32_t idx = ePropertyBreakpointUseAvoidList;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
+}
+
+const TargetPropertiesSP &
+Target::GetGlobalProperties()
+{
+    static TargetPropertiesSP g_settings_sp;
+    if (!g_settings_sp)
+    {
+        g_settings_sp.reset (new TargetProperties (NULL));
+    }
+    return g_settings_sp;
+}
+
+// TODO: SETTINGS
+//bool
+//TargetProperties::GetRunArguments (Args &args) const
+//{
+//    if (m_run_args)
+//    {
+//        m_run_args->GetArgs(args);
+//        return true;
+//    }
+//    else if (m_parent_sp)
+//    {
+//        return m_parent_sp->GetRunArguments(args);
+//    }
+//    return false;
+//}
+//
+//void
+//TargetProperties::SetRunArguments (const Args &args)
+//{
+//    // TODO: SETTINGS
+//}
+
 
 //--------------------------------------------------------------
 // class TargetInstanceSettings
 //--------------------------------------------------------------
 
-TargetInstanceSettings::TargetInstanceSettings
-(
-    const lldb::UserSettingsControllerSP &owner_sp, 
-    bool live_instance, 
-    const char *name
-) :
-    InstanceSettings (owner_sp, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance),
-    m_expr_prefix_file (),
-    m_expr_prefix_contents (),
-    m_prefer_dynamic_value (2),
-    m_enable_synthetic_value(true, true),
-    m_skip_prologue (true, true),
-    m_source_map (NULL, NULL),
-    m_exe_search_paths (),
-    m_max_children_display(256),
-    m_max_strlen_length(1024),
-    m_breakpoints_use_platform_avoid (true, true),
-    m_run_args (),
-    m_env_vars (),
-    m_input_path (),
-    m_output_path (),
-    m_error_path (),
-    m_disable_aslr (true),
-    m_disable_stdio (false),
-    m_inherit_host_env (true),
-    m_got_host_env (false)
-{
-    // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
-    // until the vtables for TargetInstanceSettings are properly set up, i.e. AFTER all the initializers.
-    // For this reason it has to be called here, rather than in the initializer or in the parent constructor.
-    // This is true for CreateInstanceName() too.
-
-    if (GetInstanceName () == InstanceSettings::InvalidName())
-    {
-        ChangeInstanceName (std::string (CreateInstanceName().AsCString()));
-        owner_sp->RegisterInstanceSettings (this);
-    }
-
-    if (live_instance)
-    {
-        const lldb::InstanceSettingsSP &pending_settings = owner_sp->FindPendingSettings (m_instance_name);
-        CopyInstanceSettings (pending_settings,false);
-    }
-}
-
-TargetInstanceSettings::TargetInstanceSettings (const TargetInstanceSettings &rhs) :
-    InstanceSettings (Target::GetSettingsController(), CreateInstanceName().AsCString()),
-    m_expr_prefix_file (rhs.m_expr_prefix_file),
-    m_expr_prefix_contents (rhs.m_expr_prefix_contents),
-    m_prefer_dynamic_value (rhs.m_prefer_dynamic_value),
-    m_enable_synthetic_value(rhs.m_enable_synthetic_value),
-    m_skip_prologue (rhs.m_skip_prologue),
-    m_source_map (rhs.m_source_map),
-    m_exe_search_paths (rhs.m_exe_search_paths),
-    m_max_children_display (rhs.m_max_children_display),
-    m_max_strlen_length (rhs.m_max_strlen_length),
-    m_breakpoints_use_platform_avoid (rhs.m_breakpoints_use_platform_avoid),
-    m_run_args (rhs.m_run_args),
-    m_env_vars (rhs.m_env_vars),
-    m_input_path (rhs.m_input_path),
-    m_output_path (rhs.m_output_path),
-    m_error_path (rhs.m_error_path),
-    m_disable_aslr (rhs.m_disable_aslr),
-    m_disable_stdio (rhs.m_disable_stdio),
-    m_inherit_host_env (rhs.m_inherit_host_env)
-{
-    if (m_instance_name != InstanceSettings::GetDefaultName())
-    {
-        UserSettingsControllerSP owner_sp (m_owner_wp.lock());
-        if (owner_sp)
-            CopyInstanceSettings (owner_sp->FindPendingSettings (m_instance_name),false);
-    }
-}
-
-TargetInstanceSettings::~TargetInstanceSettings ()
-{
-}
-
-TargetInstanceSettings&
-TargetInstanceSettings::operator= (const TargetInstanceSettings &rhs)
-{
-    if (this != &rhs)
-    {
-        m_expr_prefix_file = rhs.m_expr_prefix_file;
-        m_expr_prefix_contents = rhs.m_expr_prefix_contents;
-        m_prefer_dynamic_value = rhs.m_prefer_dynamic_value;
-        m_enable_synthetic_value = rhs.m_enable_synthetic_value;
-        m_skip_prologue = rhs.m_skip_prologue;
-        m_source_map = rhs.m_source_map;
-        m_exe_search_paths = rhs.m_exe_search_paths;
-        m_max_children_display = rhs.m_max_children_display;
-        m_max_strlen_length = rhs.m_max_strlen_length;
-        m_breakpoints_use_platform_avoid = rhs.m_breakpoints_use_platform_avoid;
-        m_run_args = rhs.m_run_args;
-        m_env_vars = rhs.m_env_vars;
-        m_input_path = rhs.m_input_path;
-        m_output_path = rhs.m_output_path;
-        m_error_path = rhs.m_error_path;
-        m_disable_aslr = rhs.m_disable_aslr;
-        m_disable_stdio = rhs.m_disable_stdio;
-        m_inherit_host_env = rhs.m_inherit_host_env;
-    }
-
-    return *this;
-}
-
-void
-TargetInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_name,
-                                                        const char *index_value,
-                                                        const char *value,
-                                                        const ConstString &instance_name,
-                                                        const SettingEntry &entry,
-                                                        VarSetOperationType op,
-                                                        Error &err,
-                                                        bool pending)
-{
-    if (var_name == GetSettingNameForExpressionPrefix ())
-    {
-        err = UserSettingsController::UpdateFileSpecOptionValue (value, op, m_expr_prefix_file);
-        if (err.Success())
-        {
-            switch (op)
-            {
-            default:
-                break;
-            case eVarSetOperationAssign:
-            case eVarSetOperationAppend:
-                {
-                    m_expr_prefix_contents.clear();
-
-                    if (!m_expr_prefix_file.GetCurrentValue().Exists())
-                    {
-                        err.SetErrorToGenericError ();
-                        err.SetErrorStringWithFormat ("%s does not exist", value);
-                        return;
-                    }
-            
-                    DataBufferSP file_data_sp (m_expr_prefix_file.GetCurrentValue().ReadFileContents(0, SIZE_MAX, &err));
-                    
-                    if (err.Success())
-                    {
-                        if (file_data_sp && file_data_sp->GetByteSize() > 0)
-                        {
-                            m_expr_prefix_contents.assign((const char*)file_data_sp->GetBytes(), file_data_sp->GetByteSize());
-                        }
-                        else
-                        {
-                            err.SetErrorStringWithFormat ("couldn't read data from '%s'", value);
-                        }
-                    }
-                }
-                break;
-            case eVarSetOperationClear:
-                m_expr_prefix_contents.clear();
-            }
-        }
-    }
-    else if (var_name == GetSettingNameForPreferDynamicValue())
-    {
-        int new_value;
-        UserSettingsController::UpdateEnumVariable (g_dynamic_value_types, &new_value, value, err);
-        if (err.Success())
-            m_prefer_dynamic_value = new_value;
-    }
-    else if (var_name == GetSettingNameForEnableSyntheticValue())
-    {
-        bool ok;
-        bool new_value = Args::StringToBoolean(value, true, &ok);
-        if (ok)
-            m_enable_synthetic_value.SetCurrentValue(new_value);
-    }
-    else if (var_name == GetSettingNameForSkipPrologue())
-    {
-        err = UserSettingsController::UpdateBooleanOptionValue (value, op, m_skip_prologue);
-    }
-    else if (var_name == GetSettingNameForMaxChildren())
-    {
-        bool ok;
-        uint32_t new_value = Args::StringToUInt32(value, 0, 10, &ok);
-        if (ok)
-            m_max_children_display = new_value;
-    }
-    else if (var_name == GetSettingNameForMaxStringSummaryLength())
-    {
-        bool ok;
-        uint32_t new_value = Args::StringToUInt32(value, 0, 10, &ok);
-        if (ok)
-            m_max_strlen_length = new_value;
-    }
-    else if (var_name == GetSettingNameForExecutableSearchPaths())
-    {
-        switch (op)
-        {
-            case eVarSetOperationReplace:
-            case eVarSetOperationInsertBefore:
-            case eVarSetOperationInsertAfter:
-            case eVarSetOperationRemove:
-            default:
-                break;
-            case eVarSetOperationAssign:
-                m_exe_search_paths.Clear();
-                // Fall through to append....
-            case eVarSetOperationAppend:
-            {   
-                Args args(value);
-                const uint32_t argc = args.GetArgumentCount();
-                if (argc > 0)
-                {
-                    const char *exe_search_path_dir;
-                    for (uint32_t idx = 0; (exe_search_path_dir = args.GetArgumentAtIndex(idx)) != NULL; ++idx)
-                    {
-                        FileSpec file_spec;
-                        file_spec.GetDirectory().SetCString(exe_search_path_dir);
-                        FileSpec::FileType file_type = file_spec.GetFileType();
-                        if (file_type == FileSpec::eFileTypeDirectory || file_type == FileSpec::eFileTypeInvalid)
-                        {
-                            m_exe_search_paths.Append(file_spec);
-                        }
-                        else
-                        {
-                            err.SetErrorStringWithFormat("executable search path '%s' exists, but it does not resolve to a directory", exe_search_path_dir);
-                        }
-                    }
-                }
-            }
-                break;
-                
-            case eVarSetOperationClear:
-                m_exe_search_paths.Clear();
-                break;
-        }
-    }
-    else if (var_name == GetSettingNameForSourcePathMap ())
-    {
-        switch (op)
-        {
-            case eVarSetOperationReplace:
-            case eVarSetOperationInsertBefore:
-            case eVarSetOperationInsertAfter:
-            case eVarSetOperationRemove:
-            default:
-                break;
-            case eVarSetOperationAssign:
-                m_source_map.Clear(true);
-                // Fall through to append....
-            case eVarSetOperationAppend:
-                {   
-                    Args args(value);
-                    const uint32_t argc = args.GetArgumentCount();
-                    if (argc & 1 || argc == 0)
-                    {
-                        err.SetErrorStringWithFormat ("an even number of paths must be supplied to to the source-map setting: %u arguments given", argc);
-                    }
-                    else
-                    {
-                        char resolved_new_path[PATH_MAX];
-                        FileSpec file_spec;
-                        const char *old_path;
-                        for (uint32_t idx = 0; (old_path = args.GetArgumentAtIndex(idx)) != NULL; idx += 2)
-                        {
-                            const char *new_path = args.GetArgumentAtIndex(idx+1);
-                            assert (new_path); // We have an even number of paths, this shouldn't happen!
-
-                            file_spec.SetFile(new_path, true);
-                            if (file_spec.Exists())
-                            {
-                                if (file_spec.GetPath (resolved_new_path, sizeof(resolved_new_path)) >= sizeof(resolved_new_path))
-                                {
-                                    err.SetErrorStringWithFormat("new path '%s' is too long", new_path);
-                                    return;
-                                }
-                            }
-                            else
-                            {
-                                err.SetErrorStringWithFormat("new path '%s' doesn't exist", new_path);
-                                return;
-                            }
-                            m_source_map.Append(ConstString (old_path), ConstString (resolved_new_path), true);
-                        }
-                    }
-                }
-                break;
-
-            case eVarSetOperationClear:
-                m_source_map.Clear(true);
-                break;
-        }        
-    }
-    else if (var_name == GetSettingNameForPlatformAvoid ())
-    {
-        err = UserSettingsController::UpdateBooleanOptionValue (value, op, m_breakpoints_use_platform_avoid);
-    }
-    else if (var_name == GetSettingNameForRunArgs())
-    {
-        UserSettingsController::UpdateStringArrayVariable (op, index_value, m_run_args, value, err);
-    }
-    else if (var_name == GetSettingNameForEnvVars())
-    {
-        // This is nice for local debugging, but it is isn't correct for
-        // remote debugging. We need to stop process.env-vars from being 
-        // populated with the host environment and add this as a launch option
-        // and get the correct environment from the Target's platform.
-        // GetHostEnvironmentIfNeeded ();
-        UserSettingsController::UpdateDictionaryVariable (op, index_value, m_env_vars, value, err);
-    }
-    else if (var_name == GetSettingNameForInputPath())
-    {
-        UserSettingsController::UpdateStringVariable (op, m_input_path, value, err);
-    }
-    else if (var_name == GetSettingNameForOutputPath())
-    {
-        UserSettingsController::UpdateStringVariable (op, m_output_path, value, err);
-    }
-    else if (var_name == GetSettingNameForErrorPath())
-    {
-        UserSettingsController::UpdateStringVariable (op, m_error_path, value, err);
-    }
-    else if (var_name == GetSettingNameForDisableASLR())
-    {
-        UserSettingsController::UpdateBooleanVariable (op, m_disable_aslr, value, true, err);
-    }
-    else if (var_name == GetSettingNameForDisableSTDIO ())
-    {
-        UserSettingsController::UpdateBooleanVariable (op, m_disable_stdio, value, false, err);
-    }
-}
-
-void
-TargetInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings, bool pending)
-{
-    TargetInstanceSettings *new_settings_ptr = static_cast <TargetInstanceSettings *> (new_settings.get());
-    
-    if (!new_settings_ptr)
-        return;
-    
-    *this = *new_settings_ptr;
-}
-
-bool
-TargetInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
-                                                  const ConstString &var_name,
-                                                  StringList &value,
-                                                  Error *err)
-{
-    if (var_name == GetSettingNameForExpressionPrefix ())
-    {
-        char path[PATH_MAX];
-        const size_t path_len = m_expr_prefix_file.GetCurrentValue().GetPath (path, sizeof(path));
-        if (path_len > 0)
-            value.AppendString (path, path_len);
-    }
-    else if (var_name == GetSettingNameForPreferDynamicValue())
-    {
-        value.AppendString (g_dynamic_value_types[m_prefer_dynamic_value].string_value);
-    }
-    else if (var_name == GetSettingNameForEnableSyntheticValue())
-    {
-        if (m_skip_prologue)
-            value.AppendString ("true");
-        else
-            value.AppendString ("false");
-    }
-    else if (var_name == GetSettingNameForSkipPrologue())
-    {
-        if (m_skip_prologue)
-            value.AppendString ("true");
-        else
-            value.AppendString ("false");
-    }
-    else if (var_name == GetSettingNameForExecutableSearchPaths())
-    {
-        if (m_exe_search_paths.GetSize())
-        {
-            for (size_t i = 0, n = m_exe_search_paths.GetSize(); i < n; ++i) 
-            {
-                value.AppendString(m_exe_search_paths.GetFileSpecAtIndex (i).GetDirectory().AsCString());
-            }
-        }
-    }
-    else if (var_name == GetSettingNameForSourcePathMap ())
-    {
-        if (m_source_map.GetSize())
-        {
-            size_t i;
-            for (i = 0; i < m_source_map.GetSize(); ++i) {
-                StreamString sstr;
-                m_source_map.Dump(&sstr, i);
-                value.AppendString(sstr.GetData());
-            }
-        }
-    }
-    else if (var_name == GetSettingNameForMaxChildren())
-    {
-        StreamString count_str;
-        count_str.Printf ("%d", m_max_children_display);
-        value.AppendString (count_str.GetData());
-    }
-    else if (var_name == GetSettingNameForMaxStringSummaryLength())
-    {
-        StreamString count_str;
-        count_str.Printf ("%d", m_max_strlen_length);
-        value.AppendString (count_str.GetData());
-    }
-    else if (var_name == GetSettingNameForPlatformAvoid())
-    {
-        if (m_breakpoints_use_platform_avoid)
-            value.AppendString ("true");
-        else
-            value.AppendString ("false");
-    }
-    else if (var_name == GetSettingNameForRunArgs())
-    {
-        if (m_run_args.GetArgumentCount() > 0)
-        {
-            for (int i = 0; i < m_run_args.GetArgumentCount(); ++i)
-                value.AppendString (m_run_args.GetArgumentAtIndex (i));
-        }
-    }
-    else if (var_name == GetSettingNameForEnvVars())
-    {
-        GetHostEnvironmentIfNeeded ();
-        
-        if (m_env_vars.size() > 0)
-        {
-            std::map<std::string, std::string>::iterator pos;
-            for (pos = m_env_vars.begin(); pos != m_env_vars.end(); ++pos)
-            {
-                StreamString value_str;
-                value_str.Printf ("%s=%s", pos->first.c_str(), pos->second.c_str());
-                value.AppendString (value_str.GetData());
-            }
-        }
-    }
-    else if (var_name == GetSettingNameForInputPath())
-    {
-        value.AppendString (m_input_path.c_str());
-    }
-    else if (var_name == GetSettingNameForOutputPath())
-    {
-        value.AppendString (m_output_path.c_str());
-    }
-    else if (var_name == GetSettingNameForErrorPath())
-    {
-        value.AppendString (m_error_path.c_str());
-    }
-    else if (var_name == GetSettingNameForInheritHostEnv())
-    {
-        if (m_inherit_host_env)
-            value.AppendString ("true");
-        else
-            value.AppendString ("false");
-    }
-    else if (var_name == GetSettingNameForDisableASLR())
-    {
-        if (m_disable_aslr)
-            value.AppendString ("true");
-        else
-            value.AppendString ("false");
-    }
-    else if (var_name == GetSettingNameForDisableSTDIO())
-    {
-        if (m_disable_stdio)
-            value.AppendString ("true");
-        else
-            value.AppendString ("false");
-    }
-    else 
-    {
-        if (err)
-            err->SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
-        return false;
-    }
-    return true;
-}
-
-void
-Target::TargetInstanceSettings::GetHostEnvironmentIfNeeded ()
-{
-    if (m_inherit_host_env && !m_got_host_env)
-    {
-        m_got_host_env = true;
-        StringList host_env;
-        const size_t host_env_count = Host::GetEnvironment (host_env);
-        for (size_t idx=0; idx<host_env_count; idx++)
-        {
-            const char *env_entry = host_env.GetStringAtIndex (idx);
-            if (env_entry)
-            {
-                const char *equal_pos = ::strchr(env_entry, '=');
-                if (equal_pos)
-                {
-                    std::string key (env_entry, equal_pos - env_entry);
-                    std::string value (equal_pos + 1);
-                    if (m_env_vars.find (key) == m_env_vars.end())
-                        m_env_vars[key] = value;
-                }
-            }
-        }
-    }
-}
-
-
-size_t
-Target::TargetInstanceSettings::GetEnvironmentAsArgs (Args &env)
-{
-    GetHostEnvironmentIfNeeded ();
-    
-    dictionary::const_iterator pos, end = m_env_vars.end();
-    for (pos = m_env_vars.begin(); pos != end; ++pos)
-    {
-        std::string env_var_equal_value (pos->first);
-        env_var_equal_value.append(1, '=');
-        env_var_equal_value.append (pos->second);
-        env.AppendArgument (env_var_equal_value.c_str());
-    }
-    return env.GetArgumentCount();
-}
-
-
-const ConstString
-TargetInstanceSettings::CreateInstanceName ()
-{
-    StreamString sstr;
-    static int instance_count = 1;
-    
-    sstr.Printf ("target_%d", instance_count);
-    ++instance_count;
-
-    const ConstString ret_val (sstr.GetData());
-    return ret_val;
-}
-
-//--------------------------------------------------
-// Target::SettingsController Variable Tables
-//--------------------------------------------------
-OptionEnumValueElement
-TargetInstanceSettings::g_dynamic_value_types[] =
-{
-{ eNoDynamicValues,      "no-dynamic-values", "Don't calculate the dynamic type of values"},
-{ eDynamicCanRunTarget,  "run-target",        "Calculate the dynamic type of values even if you have to run the target."},
-{ eDynamicDontRunTarget, "no-run-target",     "Calculate the dynamic type of values, but don't run the target."},
-{ 0, NULL, NULL }
-};
-
-SettingEntry
-Target::SettingsController::global_settings_table[] =
-{
-    // var-name           var-type           default      enum  init'd hidden help-text
-    // =================  ================== ===========  ====  ====== ====== =========================================================================
-    { TSC_DEFAULT_ARCH  , eSetVarTypeString , NULL      , NULL, false, false, "Default architecture to choose, when there's a choice." },
-    { NULL              , eSetVarTypeNone   , NULL      , NULL, false, false, NULL }
-};
-
-SettingEntry
-Target::SettingsController::instance_settings_table[] =
-{
-    // var-name             var-type            default         enum                    init'd hidden help-text
-    // =================    ==================  =============== ======================= ====== ====== =========================================================================
-    { TSC_EXPR_PREFIX       , eSetVarTypeString , NULL          , NULL,                  false, false, "Path to a file containing expressions to be prepended to all expressions." },
-    { TSC_PREFER_DYNAMIC    , eSetVarTypeEnum   , NULL          , g_dynamic_value_types, false, false, "Should printed values be shown as their dynamic value." },
-    { TSC_ENABLE_SYNTHETIC  , eSetVarTypeBoolean, "true"        , NULL,                  false, false, "Should synthetic values be used by default whenever available." },
-    { TSC_SKIP_PROLOGUE     , eSetVarTypeBoolean, "true"        , NULL,                  false, false, "Skip function prologues when setting breakpoints by name." },
-    { TSC_SOURCE_MAP        , eSetVarTypeArray  , NULL          , NULL,                  false, false, "Source path remappings used to track the change of location between a source file when built, and "
-                                                                                                       "where it exists on the current system.  It consists of an array of duples, the first element of each duple is "
-                                                                                                       "some part (starting at the root) of the path to the file when it was built, "
-                                                                                                       "and the second is where the remainder of the original build hierarchy is rooted on the local system.  "
-                                                                                                       "Each element of the array is checked in order and the first one that results in a match wins." },
-    { TSC_EXE_SEARCH_PATHS  , eSetVarTypeArray  , NULL          , NULL,                  false, false, "Executable search paths to use when locating executable files whose paths don't match the local file system." },
-    { TSC_MAX_CHILDREN      , eSetVarTypeInt    , "256"         , NULL,                  true,  false, "Maximum number of children to expand in any level of depth." },
-    { TSC_MAX_STRLENSUMMARY , eSetVarTypeInt    , "1024"        , NULL,                  true,  false, "Maximum number of characters to show when using %s in summary strings." },
-    { TSC_PLATFORM_AVOID    , eSetVarTypeBoolean, "true"        , NULL,                  false, false, "Consult the platform module avoid list when setting non-module specific breakpoints." },
-    { TSC_RUN_ARGS          , eSetVarTypeArray  , NULL          , NULL,                  false,  false,  "A list containing all the arguments to be passed to the executable when it is run." },
-    { TSC_ENV_VARS          , eSetVarTypeDictionary, NULL       , NULL,                  false,  false,  "A list of all the environment variables to be passed to the executable's environment, and their values." },
-    { TSC_INHERIT_ENV       , eSetVarTypeBoolean, "true"        , NULL,                  false,  false,  "Inherit the environment from the process that is running LLDB." },
-    { TSC_STDIN_PATH        , eSetVarTypeString , NULL          , NULL,                  false,  false,  "The file/path to be used by the executable program for reading its standard input." },
-    { TSC_STDOUT_PATH       , eSetVarTypeString , NULL          , NULL,                  false,  false,  "The file/path to be used by the executable program for writing its standard output." },
-    { TSC_STDERR_PATH       , eSetVarTypeString , NULL          , NULL,                  false,  false,  "The file/path to be used by the executable program for writing its standard error." },
-//    { "plugin",         eSetVarTypeEnum,        NULL,           NULL,                  false,  false,  "The plugin to be used to run the process." }, 
-    { TSC_DISABLE_ASLR      , eSetVarTypeBoolean, "true"        , NULL,                  false,  false,  "Disable Address Space Layout Randomization (ASLR)" },
-    { TSC_DISABLE_STDIO     , eSetVarTypeBoolean, "false"       , NULL,                  false,  false,  "Disable stdin/stdout for process (e.g. for a GUI application)" },
-    { NULL                  , eSetVarTypeNone   , NULL          , NULL,                  false, false, NULL }
-};
-
+//TargetInstanceSettings::TargetInstanceSettings
+//(
+//    const lldb::UserSettingsControllerSP &owner_sp, 
+//    bool live_instance, 
+//    const char *name
+//) :
+//    InstanceSettings (owner_sp, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance),
+//    m_expr_prefix_file (),
+//    m_expr_prefix_contents (),
+//    m_prefer_dynamic_value (2),
+//    m_enable_synthetic_value(true, true),
+//    m_skip_prologue (true, true),
+//    m_source_map (NULL, NULL),
+//    m_exe_search_paths (),
+//    m_max_children_display(256),
+//    m_max_strlen_length(1024),
+//    m_breakpoints_use_platform_avoid (true, true),
+//    m_run_args (),
+//    m_env_vars (),
+//    m_input_path (),
+//    m_output_path (),
+//    m_error_path (),
+//    m_disable_aslr (true),
+//    m_disable_stdio (false),
+//    m_inherit_host_env (true),
+//    m_got_host_env (false)
+//{
+//    // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
+//    // until the vtables for TargetInstanceSettings are properly set up, i.e. AFTER all the initializers.
+//    // For this reason it has to be called here, rather than in the initializer or in the parent constructor.
+//    // This is true for CreateInstanceName() too.
+//
+//    if (GetInstanceName () == InstanceSettings::InvalidName())
+//    {
+//        ChangeInstanceName (std::string (CreateInstanceName().AsCString()));
+//        owner_sp->RegisterInstanceSettings (this);
+//    }
+//
+//    if (live_instance)
+//    {
+//        const lldb::InstanceSettingsSP &pending_settings = owner_sp->FindPendingSettings (m_instance_name);
+//        CopyInstanceSettings (pending_settings,false);
+//    }
+//}
+//
+//TargetInstanceSettings::TargetInstanceSettings (const TargetInstanceSettings &rhs) :
+//    InstanceSettings (Target::GetSettingsController(), CreateInstanceName().AsCString()),
+//    m_expr_prefix_file (rhs.m_expr_prefix_file),
+//    m_expr_prefix_contents (rhs.m_expr_prefix_contents),
+//    m_prefer_dynamic_value (rhs.m_prefer_dynamic_value),
+//    m_enable_synthetic_value(rhs.m_enable_synthetic_value),
+//    m_skip_prologue (rhs.m_skip_prologue),
+//    m_source_map (rhs.m_source_map),
+//    m_exe_search_paths (rhs.m_exe_search_paths),
+//    m_max_children_display (rhs.m_max_children_display),
+//    m_max_strlen_length (rhs.m_max_strlen_length),
+//    m_breakpoints_use_platform_avoid (rhs.m_breakpoints_use_platform_avoid),
+//    m_run_args (rhs.m_run_args),
+//    m_env_vars (rhs.m_env_vars),
+//    m_input_path (rhs.m_input_path),
+//    m_output_path (rhs.m_output_path),
+//    m_error_path (rhs.m_error_path),
+//    m_disable_aslr (rhs.m_disable_aslr),
+//    m_disable_stdio (rhs.m_disable_stdio),
+//    m_inherit_host_env (rhs.m_inherit_host_env)
+//{
+//    if (m_instance_name != InstanceSettings::GetDefaultName())
+//    {
+//        UserSettingsControllerSP owner_sp (m_owner_wp.lock());
+//        if (owner_sp)
+//            CopyInstanceSettings (owner_sp->FindPendingSettings (m_instance_name),false);
+//    }
+//}
+//
+//TargetInstanceSettings::~TargetInstanceSettings ()
+//{
+//}
+//
+//TargetInstanceSettings&
+//TargetInstanceSettings::operator= (const TargetInstanceSettings &rhs)
+//{
+//    if (this != &rhs)
+//    {
+//        m_expr_prefix_file = rhs.m_expr_prefix_file;
+//        m_expr_prefix_contents = rhs.m_expr_prefix_contents;
+//        m_prefer_dynamic_value = rhs.m_prefer_dynamic_value;
+//        m_enable_synthetic_value = rhs.m_enable_synthetic_value;
+//        m_skip_prologue = rhs.m_skip_prologue;
+//        m_source_map = rhs.m_source_map;
+//        m_exe_search_paths = rhs.m_exe_search_paths;
+//        m_max_children_display = rhs.m_max_children_display;
+//        m_max_strlen_length = rhs.m_max_strlen_length;
+//        m_breakpoints_use_platform_avoid = rhs.m_breakpoints_use_platform_avoid;
+//        m_run_args = rhs.m_run_args;
+//        m_env_vars = rhs.m_env_vars;
+//        m_input_path = rhs.m_input_path;
+//        m_output_path = rhs.m_output_path;
+//        m_error_path = rhs.m_error_path;
+//        m_disable_aslr = rhs.m_disable_aslr;
+//        m_disable_stdio = rhs.m_disable_stdio;
+//        m_inherit_host_env = rhs.m_inherit_host_env;
+//    }
+//
+//    return *this;
+//}
+//
+//void
+//TargetInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_name,
+//                                                        const char *index_value,
+//                                                        const char *value,
+//                                                        const ConstString &instance_name,
+//                                                        const SettingEntry &entry,
+//                                                        VarSetOperationType op,
+//                                                        Error &err,
+//                                                        bool pending)
+//{
+//    if (var_name == GetSettingNameForExpressionPrefix ())
+//    {
+//        err = UserSettingsController::UpdateFileSpecOptionValue (value, op, m_expr_prefix_file);
+//        if (err.Success())
+//        {
+//            switch (op)
+//            {
+//            default:
+//                break;
+//            case eVarSetOperationAssign:
+//            case eVarSetOperationAppend:
+//                {
+//                    m_expr_prefix_contents.clear();
+//
+//                    if (!m_expr_prefix_file.GetCurrentValue().Exists())
+//                    {
+//                        err.SetErrorToGenericError ();
+//                        err.SetErrorStringWithFormat ("%s does not exist", value);
+//                        return;
+//                    }
+//            
+//                    DataBufferSP file_data_sp (m_expr_prefix_file.GetCurrentValue().ReadFileContents(0, SIZE_MAX, &err));
+//                    
+//                    if (err.Success())
+//                    {
+//                        if (file_data_sp && file_data_sp->GetByteSize() > 0)
+//                        {
+//                            m_expr_prefix_contents.assign((const char*)file_data_sp->GetBytes(), file_data_sp->GetByteSize());
+//                        }
+//                        else
+//                        {
+//                            err.SetErrorStringWithFormat ("couldn't read data from '%s'", value);
+//                        }
+//                    }
+//                }
+//                break;
+//            case eVarSetOperationClear:
+//                m_expr_prefix_contents.clear();
+//            }
+//        }
+//    }
+//    else if (var_name == GetSettingNameForPreferDynamicValue())
+//    {
+//        int new_value;
+//        UserSettingsController::UpdateEnumVariable (g_dynamic_value_types, &new_value, value, err);
+//        if (err.Success())
+//            m_prefer_dynamic_value = new_value;
+//    }
+//    else if (var_name == GetSettingNameForEnableSyntheticValue())
+//    {
+//        bool ok;
+//        bool new_value = Args::StringToBoolean(value, true, &ok);
+//        if (ok)
+//            m_enable_synthetic_value.SetCurrentValue(new_value);
+//    }
+//    else if (var_name == GetSettingNameForSkipPrologue())
+//    {
+//        err = UserSettingsController::UpdateBooleanOptionValue (value, op, m_skip_prologue);
+//    }
+//    else if (var_name == GetSettingNameForMaxChildren())
+//    {
+//        bool ok;
+//        uint32_t new_value = Args::StringToUInt32(value, 0, 10, &ok);
+//        if (ok)
+//            m_max_children_display = new_value;
+//    }
+//    else if (var_name == GetSettingNameForMaxStringSummaryLength())
+//    {
+//        bool ok;
+//        uint32_t new_value = Args::StringToUInt32(value, 0, 10, &ok);
+//        if (ok)
+//            m_max_strlen_length = new_value;
+//    }
+//    else if (var_name == GetSettingNameForExecutableSearchPaths())
+//    {
+//        switch (op)
+//        {
+//            case eVarSetOperationReplace:
+//            case eVarSetOperationInsertBefore:
+//            case eVarSetOperationInsertAfter:
+//            case eVarSetOperationRemove:
+//            default:
+//                break;
+//            case eVarSetOperationAssign:
+//                m_exe_search_paths.Clear();
+//                // Fall through to append....
+//            case eVarSetOperationAppend:
+//            {   
+//                Args args(value);
+//                const uint32_t argc = args.GetArgumentCount();
+//                if (argc > 0)
+//                {
+//                    const char *exe_search_path_dir;
+//                    for (uint32_t idx = 0; (exe_search_path_dir = args.GetArgumentAtIndex(idx)) != NULL; ++idx)
+//                    {
+//                        FileSpec file_spec;
+//                        file_spec.GetDirectory().SetCString(exe_search_path_dir);
+//                        FileSpec::FileType file_type = file_spec.GetFileType();
+//                        if (file_type == FileSpec::eFileTypeDirectory || file_type == FileSpec::eFileTypeInvalid)
+//                        {
+//                            m_exe_search_paths.Append(file_spec);
+//                        }
+//                        else
+//                        {
+//                            err.SetErrorStringWithFormat("executable search path '%s' exists, but it does not resolve to a directory", exe_search_path_dir);
+//                        }
+//                    }
+//                }
+//            }
+//                break;
+//                
+//            case eVarSetOperationClear:
+//                m_exe_search_paths.Clear();
+//                break;
+//        }
+//    }
+//    else if (var_name == GetSettingNameForSourcePathMap ())
+//    {
+//        switch (op)
+//        {
+//            case eVarSetOperationReplace:
+//            case eVarSetOperationInsertBefore:
+//            case eVarSetOperationInsertAfter:
+//            case eVarSetOperationRemove:
+//            default:
+//                break;
+//            case eVarSetOperationAssign:
+//                m_source_map.Clear(true);
+//                // Fall through to append....
+//            case eVarSetOperationAppend:
+//                {   
+//                    Args args(value);
+//                    const uint32_t argc = args.GetArgumentCount();
+//                    if (argc & 1 || argc == 0)
+//                    {
+//                        err.SetErrorStringWithFormat ("an even number of paths must be supplied to to the source-map setting: %u arguments given", argc);
+//                    }
+//                    else
+//                    {
+//                        char resolved_new_path[PATH_MAX];
+//                        FileSpec file_spec;
+//                        const char *old_path;
+//                        for (uint32_t idx = 0; (old_path = args.GetArgumentAtIndex(idx)) != NULL; idx += 2)
+//                        {
+//                            const char *new_path = args.GetArgumentAtIndex(idx+1);
+//                            assert (new_path); // We have an even number of paths, this shouldn't happen!
+//
+//                            file_spec.SetFile(new_path, true);
+//                            if (file_spec.Exists())
+//                            {
+//                                if (file_spec.GetPath (resolved_new_path, sizeof(resolved_new_path)) >= sizeof(resolved_new_path))
+//                                {
+//                                    err.SetErrorStringWithFormat("new path '%s' is too long", new_path);
+//                                    return;
+//                                }
+//                            }
+//                            else
+//                            {
+//                                err.SetErrorStringWithFormat("new path '%s' doesn't exist", new_path);
+//                                return;
+//                            }
+//                            m_source_map.Append(ConstString (old_path), ConstString (resolved_new_path), true);
+//                        }
+//                    }
+//                }
+//                break;
+//
+//            case eVarSetOperationClear:
+//                m_source_map.Clear(true);
+//                break;
+//        }        
+//    }
+//    else if (var_name == GetSettingNameForPlatformAvoid ())
+//    {
+//        err = UserSettingsController::UpdateBooleanOptionValue (value, op, m_breakpoints_use_platform_avoid);
+//    }
+//    else if (var_name == GetSettingNameForRunArgs())
+//    {
+//        UserSettingsController::UpdateStringArrayVariable (op, index_value, m_run_args, value, err);
+//    }
+//    else if (var_name == GetSettingNameForEnvVars())
+//    {
+//        // This is nice for local debugging, but it is isn't correct for
+//        // remote debugging. We need to stop process.env-vars from being 
+//        // populated with the host environment and add this as a launch option
+//        // and get the correct environment from the Target's platform.
+//        // GetHostEnvironmentIfNeeded ();
+//        UserSettingsController::UpdateDictionaryVariable (op, index_value, m_env_vars, value, err);
+//    }
+//    else if (var_name == GetSettingNameForInputPath())
+//    {
+//        UserSettingsController::UpdateStringVariable (op, m_input_path, value, err);
+//    }
+//    else if (var_name == GetSettingNameForOutputPath())
+//    {
+//        UserSettingsController::UpdateStringVariable (op, m_output_path, value, err);
+//    }
+//    else if (var_name == GetSettingNameForErrorPath())
+//    {
+//        UserSettingsController::UpdateStringVariable (op, m_error_path, value, err);
+//    }
+//    else if (var_name == GetSettingNameForDisableASLR())
+//    {
+//        UserSettingsController::UpdateBooleanVariable (op, m_disable_aslr, value, true, err);
+//    }
+//    else if (var_name == GetSettingNameForDisableSTDIO ())
+//    {
+//        UserSettingsController::UpdateBooleanVariable (op, m_disable_stdio, value, false, err);
+//    }
+//}
+//
+//void
+//TargetInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings, bool pending)
+//{
+//    TargetInstanceSettings *new_settings_ptr = static_cast <TargetInstanceSettings *> (new_settings.get());
+//    
+//    if (!new_settings_ptr)
+//        return;
+//    
+//    *this = *new_settings_ptr;
+//}
+//
+//bool
+//TargetInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
+//                                                  const ConstString &var_name,
+//                                                  StringList &value,
+//                                                  Error *err)
+//{
+//    if (var_name == GetSettingNameForExpressionPrefix ())
+//    {
+//        char path[PATH_MAX];
+//        const size_t path_len = m_expr_prefix_file.GetCurrentValue().GetPath (path, sizeof(path));
+//        if (path_len > 0)
+//            value.AppendString (path, path_len);
+//    }
+//    else if (var_name == GetSettingNameForPreferDynamicValue())
+//    {
+//        value.AppendString (g_dynamic_value_types[m_prefer_dynamic_value].string_value);
+//    }
+//    else if (var_name == GetSettingNameForEnableSyntheticValue())
+//    {
+//        if (m_skip_prologue)
+//            value.AppendString ("true");
+//        else
+//            value.AppendString ("false");
+//    }
+//    else if (var_name == GetSettingNameForSkipPrologue())
+//    {
+//        if (m_skip_prologue)
+//            value.AppendString ("true");
+//        else
+//            value.AppendString ("false");
+//    }
+//    else if (var_name == GetSettingNameForExecutableSearchPaths())
+//    {
+//        if (m_exe_search_paths.GetSize())
+//        {
+//            for (size_t i = 0, n = m_exe_search_paths.GetSize(); i < n; ++i) 
+//            {
+//                value.AppendString(m_exe_search_paths.GetFileSpecAtIndex (i).GetDirectory().AsCString());
+//            }
+//        }
+//    }
+//    else if (var_name == GetSettingNameForSourcePathMap ())
+//    {
+//        if (m_source_map.GetSize())
+//        {
+//            size_t i;
+//            for (i = 0; i < m_source_map.GetSize(); ++i) {
+//                StreamString sstr;
+//                m_source_map.Dump(&sstr, i);
+//                value.AppendString(sstr.GetData());
+//            }
+//        }
+//    }
+//    else if (var_name == GetSettingNameForMaxChildren())
+//    {
+//        StreamString count_str;
+//        count_str.Printf ("%d", m_max_children_display);
+//        value.AppendString (count_str.GetData());
+//    }
+//    else if (var_name == GetSettingNameForMaxStringSummaryLength())
+//    {
+//        StreamString count_str;
+//        count_str.Printf ("%d", m_max_strlen_length);
+//        value.AppendString (count_str.GetData());
+//    }
+//    else if (var_name == GetSettingNameForPlatformAvoid())
+//    {
+//        if (m_breakpoints_use_platform_avoid)
+//            value.AppendString ("true");
+//        else
+//            value.AppendString ("false");
+//    }
+//    else if (var_name == GetSettingNameForRunArgs())
+//    {
+//        if (m_run_args.GetArgumentCount() > 0)
+//        {
+//            for (int i = 0; i < m_run_args.GetArgumentCount(); ++i)
+//                value.AppendString (m_run_args.GetArgumentAtIndex (i));
+//        }
+//    }
+//    else if (var_name == GetSettingNameForEnvVars())
+//    {
+//        GetHostEnvironmentIfNeeded ();
+//        
+//        if (m_env_vars.size() > 0)
+//        {
+//            std::map<std::string, std::string>::iterator pos;
+//            for (pos = m_env_vars.begin(); pos != m_env_vars.end(); ++pos)
+//            {
+//                StreamString value_str;
+//                value_str.Printf ("%s=%s", pos->first.c_str(), pos->second.c_str());
+//                value.AppendString (value_str.GetData());
+//            }
+//        }
+//    }
+//    else if (var_name == GetSettingNameForInputPath())
+//    {
+//        value.AppendString (m_input_path.c_str());
+//    }
+//    else if (var_name == GetSettingNameForOutputPath())
+//    {
+//        value.AppendString (m_output_path.c_str());
+//    }
+//    else if (var_name == GetSettingNameForErrorPath())
+//    {
+//        value.AppendString (m_error_path.c_str());
+//    }
+//    else if (var_name == GetSettingNameForInheritHostEnv())
+//    {
+//        if (m_inherit_host_env)
+//            value.AppendString ("true");
+//        else
+//            value.AppendString ("false");
+//    }
+//    else if (var_name == GetSettingNameForDisableASLR())
+//    {
+//        if (m_disable_aslr)
+//            value.AppendString ("true");
+//        else
+//            value.AppendString ("false");
+//    }
+//    else if (var_name == GetSettingNameForDisableSTDIO())
+//    {
+//        if (m_disable_stdio)
+//            value.AppendString ("true");
+//        else
+//            value.AppendString ("false");
+//    }
+//    else 
+//    {
+//        if (err)
+//            err->SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
+//        return false;
+//    }
+//    return true;
+//}
+//
+//void
+//Target::TargetInstanceSettings::GetHostEnvironmentIfNeeded ()
+//{
+//    if (m_inherit_host_env && !m_got_host_env)
+//    {
+//        m_got_host_env = true;
+//        StringList host_env;
+//        const size_t host_env_count = Host::GetEnvironment (host_env);
+//        for (size_t idx=0; idx<host_env_count; idx++)
+//        {
+//            const char *env_entry = host_env.GetStringAtIndex (idx);
+//            if (env_entry)
+//            {
+//                const char *equal_pos = ::strchr(env_entry, '=');
+//                if (equal_pos)
+//                {
+//                    std::string key (env_entry, equal_pos - env_entry);
+//                    std::string value (equal_pos + 1);
+//                    if (m_env_vars.find (key) == m_env_vars.end())
+//                        m_env_vars[key] = value;
+//                }
+//            }
+//        }
+//    }
+//}
+//
+//
+//size_t
+//Target::TargetInstanceSettings::GetEnvironmentAsArgs (Args &env)
+//{
+//    GetHostEnvironmentIfNeeded ();
+//    
+//    dictionary::const_iterator pos, end = m_env_vars.end();
+//    for (pos = m_env_vars.begin(); pos != end; ++pos)
+//    {
+//        std::string env_var_equal_value (pos->first);
+//        env_var_equal_value.append(1, '=');
+//        env_var_equal_value.append (pos->second);
+//        env.AppendArgument (env_var_equal_value.c_str());
+//    }
+//    return env.GetArgumentCount();
+//}
+//
+//
+//const ConstString
+//TargetInstanceSettings::CreateInstanceName ()
+//{
+//    StreamString sstr;
+//    static int instance_count = 1;
+//    
+//    sstr.Printf ("target_%d", instance_count);
+//    ++instance_count;
+//
+//    const ConstString ret_val (sstr.GetData());
+//    return ret_val;
+//}
+//
+////--------------------------------------------------
+//// Target::SettingsController Variable Tables
+////--------------------------------------------------
+//
+//
+//SettingEntry
+//Target::SettingsController::global_settings_table[] =
+//{
+//    // var-name           var-type           default      enum  init'd hidden help-text
+//    // =================  ================== ===========  ====  ====== ====== =========================================================================
+//    { TSC_DEFAULT_ARCH  , eSetVarTypeString , NULL      , NULL, false, false, "Default architecture to choose, when there's a choice." },
+//    { NULL              , eSetVarTypeNone   , NULL      , NULL, false, false, NULL }
+//};
+//
+//SettingEntry
+//Target::SettingsController::instance_settings_table[] =
+//{
+//    // var-name             var-type            default         enum                    init'd hidden help-text
+//    // =================    ==================  =============== ======================= ====== ====== =========================================================================
+//    { TSC_EXPR_PREFIX       , eSetVarTypeString , NULL          , NULL,                  false, false, "Path to a file containing expressions to be prepended to all expressions." },
+//    { TSC_PREFER_DYNAMIC    , eSetVarTypeEnum   , NULL          , g_dynamic_value_types, false, false, "Should printed values be shown as their dynamic value." },
+//    { TSC_ENABLE_SYNTHETIC  , eSetVarTypeBoolean, "true"        , NULL,                  false, false, "Should synthetic values be used by default whenever available." },
+//    { TSC_SKIP_PROLOGUE     , eSetVarTypeBoolean, "true"        , NULL,                  false, false, "Skip function prologues when setting breakpoints by name." },
+//    { TSC_SOURCE_MAP        , eSetVarTypeArray  , NULL          , NULL,                  false, false, "Source path remappings used to track the change of location between a source file when built, and "
+//                                                                                                       "where it exists on the current system.  It consists of an array of duples, the first element of each duple is "
+//                                                                                                       "some part (starting at the root) of the path to the file when it was built, "
+//                                                                                                       "and the second is where the remainder of the original build hierarchy is rooted on the local system.  "
+//                                                                                                       "Each element of the array is checked in order and the first one that results in a match wins." },
+//    { TSC_EXE_SEARCH_PATHS  , eSetVarTypeArray  , NULL          , NULL,                  false, false, "Executable search paths to use when locating executable files whose paths don't match the local file system." },
+//    { TSC_MAX_CHILDREN      , eSetVarTypeInt    , "256"         , NULL,                  true,  false, "Maximum number of children to expand in any level of depth." },
+//    { TSC_MAX_STRLENSUMMARY , eSetVarTypeInt    , "1024"        , NULL,                  true,  false, "Maximum number of characters to show when using %s in summary strings." },
+//    { TSC_PLATFORM_AVOID    , eSetVarTypeBoolean, "true"        , NULL,                  false, false, "Consult the platform module avoid list when setting non-module specific breakpoints." },
+//    { TSC_RUN_ARGS          , eSetVarTypeArray  , NULL          , NULL,                  false,  false,  "A list containing all the arguments to be passed to the executable when it is run." },
+//    { TSC_ENV_VARS          , eSetVarTypeDictionary, NULL       , NULL,                  false,  false,  "A list of all the environment variables to be passed to the executable's environment, and their values." },
+//    { TSC_INHERIT_ENV       , eSetVarTypeBoolean, "true"        , NULL,                  false,  false,  "Inherit the environment from the process that is running LLDB." },
+//    { TSC_STDIN_PATH        , eSetVarTypeString , NULL          , NULL,                  false,  false,  "The file/path to be used by the executable program for reading its standard input." },
+//    { TSC_STDOUT_PATH       , eSetVarTypeString , NULL          , NULL,                  false,  false,  "The file/path to be used by the executable program for writing its standard output." },
+//    { TSC_STDERR_PATH       , eSetVarTypeString , NULL          , NULL,                  false,  false,  "The file/path to be used by the executable program for writing its standard error." },
+////    { "plugin",         eSetVarTypeEnum,        NULL,           NULL,                  false,  false,  "The plugin to be used to run the process." }, 
+//    { TSC_DISABLE_ASLR      , eSetVarTypeBoolean, "true"        , NULL,                  false,  false,  "Disable Address Space Layout Randomization (ASLR)" },
+//    { TSC_DISABLE_STDIO     , eSetVarTypeBoolean, "false"       , NULL,                  false,  false,  "Disable stdin/stdout for process (e.g. for a GUI application)" },
+//    { NULL                  , eSetVarTypeNone   , NULL          , NULL,                  false, false, NULL }
+//};
+//
 const ConstString &
 Target::TargetEventData::GetFlavorString ()
 {

@@ -459,7 +459,10 @@ namespace lldb_private {
         {
             return false;
         }
-                
+        
+        virtual size_t
+        GetEnvironment (StringList &environment);
+        
     protected:
         bool m_is_host;
         // Set to true when we are able to actually set the OS version while 
