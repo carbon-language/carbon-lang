@@ -18,7 +18,9 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Section.h"
+#include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
+#include "lldb/Host/Host.h"
 #include "lldb/Host/Symbols.h"
 #include "lldb/Symbol/ObjectFile.h"
 
@@ -50,6 +52,20 @@ UUIDsMatch(Module *module, ObjectFile *ofile)
         lldb_private::UUID dsym_uuid;
         if (ofile->GetUUID(&dsym_uuid))
             return dsym_uuid == module->GetUUID();
+
+        // Emit some warning messages since the UUIDs do not match!
+        const FileSpec &m_file_spec = module->GetFileSpec();
+        const FileSpec &o_file_spec = ofile->GetFileSpec();
+        StreamString ss_m_path, ss_o_path;
+        m_file_spec.Dump(&ss_m_path);
+        o_file_spec.Dump(&ss_o_path);
+
+        StreamString ss_m_uuid, ss_o_uuid;
+        module->GetUUID().Dump(&ss_m_uuid);
+        dsym_uuid.Dump(&ss_o_uuid);
+        Host::SystemLog (Host::eSystemLogWarning, 
+                         "warning: UUID mismatch detected between module '%s' (%s) and:\n\t'%s' (%s)\n", 
+                         ss_m_path.GetData(), ss_m_uuid.GetData(), ss_o_path.GetData(), ss_o_uuid.GetData());
     }
     return false;
 }

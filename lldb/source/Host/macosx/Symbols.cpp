@@ -22,6 +22,7 @@
 #include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/UUID.h"
 #include "lldb/Host/Endian.h"
@@ -126,9 +127,12 @@ SkinnyMachOFileContainsArchAndUUID
             path_buf[0] = '\0';
             const char *path = file_spec.GetPath(path_buf, PATH_MAX) ? path_buf
                                                                      : file_spec.GetFilename().AsCString();
+            StreamString ss_m_uuid, ss_o_uuid;
+            uuid->Dump(&ss_m_uuid);
+            file_uuid.Dump(&ss_o_uuid);
             Host::SystemLog (Host::eSystemLogWarning, 
-                             "warning: UUID mismatch detected between binary and:\n\t'%s'\n", 
-                             path);
+                             "warning: UUID mismatch detected between binary (%s) and:\n\t'%s' (%s)\n", 
+                             ss_m_uuid.GetData(), path, ss_o_uuid.GetData());
             return false;
         }
         data_offset = cmd_offset + cmd_size;

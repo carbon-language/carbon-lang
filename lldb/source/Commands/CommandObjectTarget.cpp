@@ -4047,6 +4047,10 @@ protected:
                         if (symfile_spec.Exists())
                         {
                             ModuleSP symfile_module_sp (new Module (symfile_spec, target->GetArchitecture()));
+                            const UUID &symfile_uuid = symfile_module_sp->GetUUID();
+                            StreamString ss_symfile_uuid;
+                            symfile_module_sp->GetUUID().Dump(&ss_symfile_uuid);
+
                             if (symfile_module_sp)
                             {
                                 // We now have a module that represents a symbol file
@@ -4054,7 +4058,7 @@ protected:
                                 // current target, so we need to find that module in the
                                 // target
                                 
-                                ModuleSP old_module_sp (target->GetImages().FindModule (symfile_module_sp->GetUUID()));
+                                ModuleSP old_module_sp (target->GetImages().FindModule (symfile_uuid));
                                 if (old_module_sp)
                                 {
                                     // The module has not yet created its symbol vendor, we can just
@@ -4062,12 +4066,27 @@ protected:
                                     // when it decides to create it!
                                     old_module_sp->SetSymbolFileFileSpec (symfile_module_sp->GetFileSpec());
 
+                                    // Provide feedback that the symfile has been successfully added.
+                                    const FileSpec &module_fs = old_module_sp->GetFileSpec();
+                                    result.AppendMessageWithFormat("symbol file '%s' with UUID %s has been successfully added to the '%s/%s' module\n",
+                                                                   symfile_path, ss_symfile_uuid.GetData(),
+                                                                   module_fs.GetDirectory().AsCString(), module_fs.GetFilename().AsCString());
+
                                     // Let clients know something changed in the module
                                     // if it is currently loaded
                                     ModuleList module_list;
                                     module_list.Append (old_module_sp);
                                     target->ModulesDidLoad (module_list);
                                     flush = true;
+                                }
+                                else
+                                {
+                                    result.AppendErrorWithFormat ("symbol file '%s' with UUID %s does not match any existing module%s\n",
+                                                                  symfile_path, ss_symfile_uuid.GetData(),
+                                                                  (symfile_spec.GetFileType() != FileSpec::eFileTypeRegular)
+                                                                      ? "\n       please specify the full path to the symbol file"
+                                                                      : "");
+                                    break;
                                 }
                             }
                             else
