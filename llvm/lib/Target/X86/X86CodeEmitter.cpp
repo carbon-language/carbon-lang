@@ -26,7 +26,6 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/Function.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCExpr.h"
@@ -134,8 +133,7 @@ bool Emitter<CodeEmitter>::runOnMachineFunction(MachineFunction &MF) {
   IsPIC = TM.getRelocationModel() == Reloc::PIC_;
 
   do {
-    DEBUG(dbgs() << "JITTing function '"
-          << MF.getFunction()->getName() << "'\n");
+    DEBUG(dbgs() << "JITTing function '" << MF.getName() << "'\n");
     MCE.startFunction(MF);
     for (MachineFunction::iterator MBB = MF.begin(), E = MF.end();
          MBB != E; ++MBB) {

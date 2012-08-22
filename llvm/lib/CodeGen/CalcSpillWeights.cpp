@@ -9,7 +9,6 @@
 
 #define DEBUG_TYPE "calcspillweights"
 
-#include "llvm/Function.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/CodeGen/CalcSpillWeights.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
@@ -43,7 +42,7 @@ bool CalculateSpillWeights::runOnMachineFunction(MachineFunction &MF) {
 
   DEBUG(dbgs() << "********** Compute Spill Weights **********\n"
                << "********** Function: "
-               << MF.getFunction()->getName() << '\n');
+               << MF.getName() << '\n');
 
   LiveIntervals &LIS = getAnalysis<LiveIntervals>();
   MachineRegisterInfo &MRI = MF.getRegInfo();

@@ -243,7 +243,7 @@ StringRef MachineBasicBlock::getName() const {
 std::string MachineBasicBlock::getFullName() const {
   std::string Name;
   if (getParent())
-    Name = (getParent()->getFunction()->getName() + ":").str();
+    Name = (getParent()->getName() + ":").str();
   if (getBasicBlock())
     Name += getBasicBlock()->getName();
   else

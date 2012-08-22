@@ -13,7 +13,6 @@
 
 #define DEBUG_TYPE "ifcvt"
 #include "BranchFolding.h"
-#include "llvm/Function.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
@@ -282,7 +281,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   }
 
   DEBUG(dbgs() << "\nIfcvt: function (" << ++FnNum <<  ") \'"
-               << MF.getFunction()->getName() << "\'");
+               << MF.getName() << "\'");
 
   if (FnNum < IfCvtFnStart || (IfCvtFnStop != -1 && FnNum > IfCvtFnStop)) {
     DEBUG(dbgs() << " skipped\n");

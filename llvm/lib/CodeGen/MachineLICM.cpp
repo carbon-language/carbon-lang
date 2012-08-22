@@ -334,7 +334,7 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
     DEBUG(dbgs() << "******** Pre-regalloc Machine LICM: ");
   else
     DEBUG(dbgs() << "******** Post-regalloc Machine LICM: ");
-  DEBUG(dbgs() << MF.getFunction()->getName() << " ********\n");
+  DEBUG(dbgs() << MF.getName() << " ********\n");
 
   if (PreRegAlloc) {
     // Estimate register pressure during pre-regalloc pass.

@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "stackcoloring"
-#include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
@@ -392,7 +391,7 @@ bool StackSlotColoring::runOnMachineFunction(MachineFunction &MF) {
   DEBUG({
       dbgs() << "********** Stack Slot Coloring **********\n"
              << "********** Function: "
-             << MF.getFunction()->getName() << '\n';
+             << MF.getName() << '\n';
     });
 
   MFI = MF.getFrameInfo();

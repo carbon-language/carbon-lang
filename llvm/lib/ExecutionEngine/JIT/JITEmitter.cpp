@@ -780,7 +780,7 @@ static unsigned GetConstantPoolSizeInBytes(MachineConstantPool *MCP,
 
 void JITEmitter::startFunction(MachineFunction &F) {
   DEBUG(dbgs() << "JIT: Starting CodeGen of Function "
-        << F.getFunction()->getName() << "\n");
+        << F.getName() << "\n");
 
   uintptr_t ActualSize = 0;
   // Set the memory writable, if it's not already
@@ -929,7 +929,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
   PrevDL = DebugLoc();
 
   DEBUG(dbgs() << "JIT: Finished CodeGen of [" << (void*)FnStart
-        << "] Function: " << F.getFunction()->getName()
+        << "] Function: " << F.getName()
         << ": " << (FnEnd-FnStart) << " bytes of text, "
         << Relocations.size() << " relocations\n");
 

@@ -252,7 +252,7 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
         continue;
       }
       DEBUG(dbgs() << "********** MI Scheduling **********\n");
-      DEBUG(dbgs() << MF->getFunction()->getName()
+      DEBUG(dbgs() << MF->getName()
             << ":BB#" << MBB->getNumber() << "\n  From: " << *I << "    To: ";
             if (RegionEnd != MBB->end()) dbgs() << *RegionEnd;
             else dbgs() << "End";

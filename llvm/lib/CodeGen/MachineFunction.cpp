@@ -288,6 +288,11 @@ void MachineFunction::dump() const {
   print(dbgs());
 }
 
+StringRef MachineFunction::getName() const {
+  assert(getFunction() && "No function!");
+  return getFunction()->getName();
+}
+
 void MachineFunction::print(raw_ostream &OS, SlotIndexes *Indexes) const {
   OS << "# Machine code for function " << Fn->getName() << ": ";
   if (RegInfo) {
@@ -344,7 +349,7 @@ namespace llvm {
   DOTGraphTraits (bool isSimple=false) : DefaultDOTGraphTraits(isSimple) {}
 
     static std::string getGraphName(const MachineFunction *F) {
-      return "CFG for '" + F->getFunction()->getName().str() + "' function";
+      return "CFG for '" + F->getName().str() + "' function";
     }
 
     std::string getNodeLabel(const MachineBasicBlock *Node,

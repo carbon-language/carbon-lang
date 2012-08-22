@@ -159,7 +159,7 @@ void PEI::initShrinkWrappingInfo() {
   // via --shrink-wrap-func=<funcname>.
 #ifndef NDEBUG
   if (ShrinkWrapFunc != "") {
-    std::string MFName = MF->getFunction()->getName().str();
+    std::string MFName = MF->getName().str();
     ShrinkWrapThisFunction = (MFName == ShrinkWrapFunc);
   }
 #endif
@@ -187,7 +187,7 @@ void PEI::placeCSRSpillsAndRestores(MachineFunction &Fn) {
 
   DEBUG(if (ShrinkWrapThisFunction) {
       dbgs() << "Place CSR spills/restores for "
-             << MF->getFunction()->getName() << "\n";
+             << MF->getName() << "\n";
     });
 
   if (calculateSets(Fn))
@@ -364,7 +364,7 @@ bool PEI::calculateSets(MachineFunction &Fn) {
   // If no CSRs used, we are done.
   if (CSI.empty()) {
     DEBUG(if (ShrinkWrapThisFunction)
-            dbgs() << "DISABLED: " << Fn.getFunction()->getName()
+            dbgs() << "DISABLED: " << Fn.getName()
                    << ": uses no callee-saved registers\n");
     return false;
   }
@@ -384,7 +384,7 @@ bool PEI::calculateSets(MachineFunction &Fn) {
   // implementation to functions with <= 500 MBBs.
   if (Fn.size() > 500) {
     DEBUG(if (ShrinkWrapThisFunction)
-            dbgs() << "DISABLED: " << Fn.getFunction()->getName()
+            dbgs() << "DISABLED: " << Fn.getName()
                    << ": too large (" << Fn.size() << " MBBs)\n");
     ShrinkWrapThisFunction = false;
   }
@@ -466,7 +466,7 @@ bool PEI::calculateSets(MachineFunction &Fn) {
   }
 
   if (allCSRUsesInEntryBlock) {
-    DEBUG(dbgs() << "DISABLED: " << Fn.getFunction()->getName()
+    DEBUG(dbgs() << "DISABLED: " << Fn.getName()
                  << ": all CSRs used in EntryBlock\n");
     ShrinkWrapThisFunction = false;
   } else {
@@ -478,7 +478,7 @@ bool PEI::calculateSets(MachineFunction &Fn) {
         allCSRsUsedInEntryFanout = false;
     }
     if (allCSRsUsedInEntryFanout) {
-      DEBUG(dbgs() << "DISABLED: " << Fn.getFunction()->getName()
+      DEBUG(dbgs() << "DISABLED: " << Fn.getName()
                    << ": all CSRs used in imm successors of EntryBlock\n");
       ShrinkWrapThisFunction = false;
     }
@@ -505,7 +505,7 @@ bool PEI::calculateSets(MachineFunction &Fn) {
       if (dominatesExitNodes) {
         CSRUsedInChokePoints |= CSRUsed[MBB];
         if (CSRUsedInChokePoints == UsedCSRegs) {
-          DEBUG(dbgs() << "DISABLED: " << Fn.getFunction()->getName()
+          DEBUG(dbgs() << "DISABLED: " << Fn.getName()
                        << ": all CSRs used in choke point(s) at "
                        << getBasicBlockName(MBB) << "\n");
           ShrinkWrapThisFunction = false;
@@ -521,7 +521,7 @@ bool PEI::calculateSets(MachineFunction &Fn) {
     return false;
 
   DEBUG({
-      dbgs() << "ENABLED: " << Fn.getFunction()->getName();
+      dbgs() << "ENABLED: " << Fn.getName();
       if (HasFastExitPath)
         dbgs() << " (fast exit path)";
       dbgs() << "\n";
@@ -861,7 +861,7 @@ void PEI::placeSpillsAndRestores(MachineFunction &Fn) {
   DEBUG(if (ShrinkWrapDebugging >= BasicInfo) {
       dbgs() << "-----------------------------------------------------------\n";
       dbgs() << "total iterations = " << iterations << " ( "
-           << Fn.getFunction()->getName()
+           << Fn.getName()
            << " " << numSRReducedThisFunc
            << " " << Fn.size()
            << " )\n";
@@ -984,7 +984,7 @@ void PEI::verifySpillRestorePlacement() {
       if (isReturnBlock(SBB) || SBB->succ_size() == 0) {
         if (restored != spilled) {
           CSRegSet notRestored = (spilled - restored);
-          DEBUG(dbgs() << MF->getFunction()->getName() << ": "
+          DEBUG(dbgs() << MF->getName() << ": "
                        << stringifyCSRegSet(notRestored)
                        << " spilled at " << getBasicBlockName(MBB)
                        << " are never restored on path to return "
@@ -1032,7 +1032,7 @@ void PEI::verifySpillRestorePlacement() {
     }
     if (spilled != restored) {
       CSRegSet notSpilled = (restored - spilled);
-      DEBUG(dbgs() << MF->getFunction()->getName() << ": "
+      DEBUG(dbgs() << MF->getName() << ": "
                    << stringifyCSRegSet(notSpilled)
                    << " restored at " << getBasicBlockName(MBB)
                    << " are never spilled\n");

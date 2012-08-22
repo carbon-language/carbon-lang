@@ -24,7 +24,6 @@
 #include "VirtRegMap.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Function.h"
 #include "llvm/PassAnalysisSupport.h"
 #include "llvm/CodeGen/CalcSpillWeights.h"
 #include "llvm/CodeGen/EdgeBundles.h"
@@ -1747,7 +1746,7 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
 bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
   DEBUG(dbgs() << "********** GREEDY REGISTER ALLOCATION **********\n"
                << "********** Function: "
-               << mf.getFunction()->getName() << '\n');
+               << mf.getName() << '\n');
 
   MF = &mf;
   if (VerifyEnabled)

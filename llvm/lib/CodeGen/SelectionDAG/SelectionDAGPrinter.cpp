@@ -14,7 +14,6 @@
 #include "ScheduleDAGSDNodes.h"
 #include "llvm/Constants.h"
 #include "llvm/DebugInfo.h"
-#include "llvm/Function.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -73,7 +72,7 @@ namespace llvm {
     }
 
     static std::string getGraphName(const SelectionDAG *G) {
-      return G->getMachineFunction().getFunction()->getName();
+      return G->getMachineFunction().getName();
     }
 
     static bool renderGraphFromBottomUp() {
@@ -146,7 +145,7 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
 void SelectionDAG::viewGraph(const std::string &Title) {
 // This code is only for debugging!
 #ifndef NDEBUG
-  ViewGraph(this, "dag." + getMachineFunction().getFunction()->getName(),
+  ViewGraph(this, "dag." + getMachineFunction().getName(),
             false, Title);
 #else
   errs() << "SelectionDAG::viewGraph is only available in debug builds on "

@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Constants.h"
-#include "llvm/Function.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -35,7 +34,7 @@ namespace llvm {
   DOTGraphTraits (bool isSimple=false) : DefaultDOTGraphTraits(isSimple) {}
 
     static std::string getGraphName(const ScheduleDAG *G) {
-      return G->MF.getFunction()->getName();
+      return G->MF.getName();
     }
 
     static bool renderGraphFromBottomUp() {

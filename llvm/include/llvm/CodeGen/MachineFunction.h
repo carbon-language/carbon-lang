@@ -138,15 +138,19 @@ public:
   MachineModuleInfo &getMMI() const { return MMI; }
   GCModuleInfo *getGMI() const { return GMI; }
   MCContext &getContext() const { return Ctx; }
-  
+
   /// getFunction - Return the LLVM function that this machine code represents
   ///
   const Function *getFunction() const { return Fn; }
 
+  /// getName - Return the name of the corresponding LLVM function.
+  ///
+  StringRef getName() const;
+
   /// getFunctionNumber - Return a unique ID for the current function.
   ///
   unsigned getFunctionNumber() const { return FunctionNumber; }
-  
+
   /// getTarget - Return the target machine this machine code is compiled with
   ///
   const TargetMachine &getTarget() const { return Target; }

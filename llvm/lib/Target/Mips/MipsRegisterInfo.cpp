@@ -22,7 +22,6 @@
 #include "llvm/Constants.h"
 #include "llvm/DebugInfo.h"
 #include "llvm/Type.h"
-#include "llvm/Function.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -166,7 +165,7 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
            "Instr doesn't have FrameIndex operand!");
   }
 
-  DEBUG(errs() << "\nFunction : " << MF.getFunction()->getName() << "\n";
+  DEBUG(errs() << "\nFunction : " << MF.getName() << "\n";
         errs() << "<--------->\n" << MI);
 
   int FrameIndex = MI.getOperand(i).getIndex();

@@ -556,7 +556,7 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
 
   mri->freezeReservedRegs(MF);
 
-  DEBUG(dbgs() << "PBQP Register Allocating for " << mf->getFunction()->getName() << "\n");
+  DEBUG(dbgs() << "PBQP Register Allocating for " << mf->getName() << "\n");
 
   // Allocator main loop:
   //
@@ -570,11 +570,12 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
   // Find the vreg intervals in need of allocation.
   findVRegIntervalsToAlloc();
 
+#ifndef NDEBUG
   const Function* func = mf->getFunction();
   std::string fqn =
     func->getParent()->getModuleIdentifier() + "." +
     func->getName().str();
-  (void)fqn;
+#endif
 
   // If there are non-empty intervals allocate them using pbqp.
   if (!vregsToAlloc.empty()) {

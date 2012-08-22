@@ -176,7 +176,7 @@ XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   #ifndef NDEBUG
   DEBUG(errs() << "\nFunction         : " 
-        << MF.getFunction()->getName() << "\n");
+        << MF.getName() << "\n");
   DEBUG(errs() << "<--------->\n");
   DEBUG(MI.print(errs()));
   DEBUG(errs() << "FrameIndex         : " << FrameIndex << "\n");

@@ -140,7 +140,7 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
 
   unsigned oi = i == 2 ? 1 : 2;
 
-  DEBUG(dbgs() << "\nFunction : " << MF.getFunction()->getName() << "\n";
+  DEBUG(dbgs() << "\nFunction : " << MF.getName() << "\n";
         dbgs() << "<--------->\n" << MI);
 
   int FrameIndex = MI.getOperand(i).getIndex();

@@ -23,8 +23,8 @@
 // the verifier errors.
 //===----------------------------------------------------------------------===//
 
+#include "llvm/BasicBlock.h"
 #include "llvm/Instructions.h"
-#include "llvm/Function.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
@@ -357,7 +357,7 @@ void MachineVerifier::report(const char *msg, const MachineFunction *MF) {
     MF->print(*OS, Indexes);
   }
   *OS << "*** Bad machine code: " << msg << " ***\n"
-      << "- function:    " << MF->getFunction()->getName() << "\n";
+      << "- function:    " << MF->getName() << "\n";
 }
 
 void MachineVerifier::report(const char *msg, const MachineBasicBlock *MBB) {

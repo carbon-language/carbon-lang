@@ -1373,7 +1373,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &Func) {
 
   DEBUG(dbgs() << "********** REWRITING TWO-ADDR INSTRS **********\n");
   DEBUG(dbgs() << "********** Function: "
-        << MF->getFunction()->getName() << '\n');
+        << MF->getName() << '\n');
 
   // This pass takes the function out of SSA form.
   MRI->leaveSSA();
