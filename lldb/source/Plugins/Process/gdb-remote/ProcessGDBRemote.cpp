@@ -1839,6 +1839,8 @@ ProcessGDBRemote::DoDestroy ()
 
             StringExtractorGDBRemote response;
             bool send_async = true;
+            const uint32_t old_packet_timeout = m_gdb_comm.SetPacketTimeout (3);
+
             if (m_gdb_comm.SendPacketAndWaitForResponse("k", 1, response, send_async))
             {
                 char packet_cmd = response.GetChar(0);
@@ -1863,6 +1865,8 @@ ProcessGDBRemote::DoDestroy ()
                     log->Printf ("ProcessGDBRemote::DoDestroy - failed to send k packet");
                 exit_string.assign("failed to send the k packet");
             }
+
+            m_gdb_comm.SetPacketTimeout(old_packet_timeout);
         }
         else
         {
@@ -2404,8 +2408,8 @@ ProcessGDBRemote::StartDebugserverProcess (const char *debugserver_url, const Pr
                 ::snprintf (arg_cstr, sizeof(arg_cstr), "--log-flags=%s", env_debugserver_log_flags);
                 debugserver_args.AppendArgument(arg_cstr);
             }
-//            debugserver_args.AppendArgument("--log-file=/tmp/debugserver.txt");
-//            debugserver_args.AppendArgument("--log-flags=0x802e0e");
+            debugserver_args.AppendArgument("--log-file=/tmp/debugserver.txt");
+            debugserver_args.AppendArgument("--log-flags=0x802e0e");
 
             // We currently send down all arguments, attach pids, or attach 
             // process names in dedicated GDB server packets, so we don't need
