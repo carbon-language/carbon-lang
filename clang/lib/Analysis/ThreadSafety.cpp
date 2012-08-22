@@ -70,27 +70,27 @@ namespace {
 class SExpr {
 private:
   enum ExprOp {
-    EOP_Nop,      //< No-op
-    EOP_Wildcard, //< Matches anything.
-    EOP_This,     //< This keyword.
-    EOP_NVar,     //< Named variable.
-    EOP_LVar,     //< Local variable.
-    EOP_Dot,      //< Field access
-    EOP_Call,     //< Function call
-    EOP_MCall,    //< Method call
-    EOP_Index,    //< Array index
-    EOP_Unary,    //< Unary operation
-    EOP_Binary,   //< Binary operation
-    EOP_Unknown   //< Catchall for everything else
+    EOP_Nop,      ///< No-op
+    EOP_Wildcard, ///< Matches anything.
+    EOP_This,     ///< This keyword.
+    EOP_NVar,     ///< Named variable.
+    EOP_LVar,     ///< Local variable.
+    EOP_Dot,      ///< Field access
+    EOP_Call,     ///< Function call
+    EOP_MCall,    ///< Method call
+    EOP_Index,    ///< Array index
+    EOP_Unary,    ///< Unary operation
+    EOP_Binary,   ///< Binary operation
+    EOP_Unknown   ///< Catchall for everything else
   };
 
 
   class SExprNode {
    private:
-    unsigned char  Op;     //< Opcode of the root node
-    unsigned char  Flags;  //< Additional opcode-specific data
-    unsigned short Sz;     //< Number of child nodes
-    const void*    Data;   //< Additional opcode-specific data
+    unsigned char  Op;     ///< Opcode of the root node
+    unsigned char  Flags;  ///< Additional opcode-specific data
+    unsigned short Sz;     ///< Number of child nodes
+    const void*    Data;   ///< Additional opcode-specific data
 
    public:
     SExprNode(ExprOp O, unsigned F, const void* D)
@@ -1385,7 +1385,7 @@ void ThreadSafetyAnalyzer::addLock(FactSet &FSet, const SExpr &Mutex,
 
 
 /// \brief Remove a lock from the lockset, warning if the lock is not there.
-/// \param LockExp The lock expression corresponding to the lock to be removed
+/// \param Mutex The lock expression corresponding to the lock to be removed
 /// \param UnlockLoc The source location of the unlock (only used in error msg)
 void ThreadSafetyAnalyzer::removeLock(FactSet &FSet,
                                       const SExpr &Mutex,
@@ -1973,8 +1973,8 @@ void BuildLockset::VisitDeclStmt(DeclStmt *S) {
 /// are the same. In the event of a difference, we use the intersection of these
 /// two locksets at the start of D.
 ///
-/// \param LSet1 The first lockset.
-/// \param LSet2 The second lockset.
+/// \param FSet1 The first lockset.
+/// \param FSet2 The second lockset.
 /// \param JoinLoc The location of the join point for error reporting
 /// \param LEK1 The error message to report if a mutex is missing from LSet1
 /// \param LEK2 The error message to report if a mutex is missing from Lset2

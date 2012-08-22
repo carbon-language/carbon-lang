@@ -1303,7 +1303,7 @@ public:
 
   /// \brief Function type used by forallBases() as a callback.
   ///
-  /// \param Base the definition of the base class
+  /// \param BaseDefinition the definition of the base class
   ///
   /// \returns true if this base matched the search criteria
   typedef bool ForallBasesCallback(const CXXRecordDecl *BaseDefinition,

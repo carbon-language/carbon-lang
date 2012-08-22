@@ -293,11 +293,9 @@ public: // Part of public interface to class.
   StoreRef BindAggregate(Store store, const TypedRegion *R, SVal DefaultVal);
 
   /// \brief Create a new store with the specified binding removed.
-  ///
-  /// \brief \param ST the original store, that is the basis for the new store.
-  ///
-  /// \brief \param L the location whose binding should be removed.
-  StoreRef killBinding(Store ST, Loc LV);
+  /// \param ST the original store, that is the basis for the new store.
+  /// \param L the location whose binding should be removed.
+  StoreRef killBinding(Store ST, Loc L);
 
   void incrementReferenceCount(Store store) {
     GetRegionBindings(store).manualRetain();    

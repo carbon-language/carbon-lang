@@ -220,15 +220,6 @@ public:
   /// Reasons why an expression might not be an l-value.
   LValueClassification ClassifyLValue(ASTContext &Ctx) const;
 
-  /// isModifiableLvalue - C99 6.3.2.1: an lvalue that does not have array type,
-  /// does not have an incomplete type, does not have a const-qualified type,
-  /// and if it is a structure or union, does not have any member (including,
-  /// recursively, any member or element of all contained aggregates or unions)
-  /// with a const-qualified type.
-  ///
-  /// \param Loc [in,out] - A source location which *may* be filled
-  /// in with the location of the expression making this a
-  /// non-modifiable lvalue, if specified.
   enum isModifiableLvalueResult {
     MLV_Valid,
     MLV_NotObjectType,
@@ -247,6 +238,15 @@ public:
     MLV_ClassTemporary,
     MLV_ArrayTemporary
   };
+  /// isModifiableLvalue - C99 6.3.2.1: an lvalue that does not have array type,
+  /// does not have an incomplete type, does not have a const-qualified type,
+  /// and if it is a structure or union, does not have any member (including,
+  /// recursively, any member or element of all contained aggregates or unions)
+  /// with a const-qualified type.
+  ///
+  /// \param Loc [in,out] - A source location which *may* be filled
+  /// in with the location of the expression making this a
+  /// non-modifiable lvalue, if specified.
   isModifiableLvalueResult isModifiableLvalue(ASTContext &Ctx,
                                               SourceLocation *Loc = 0) const;
 
