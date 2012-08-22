@@ -21,34 +21,34 @@
 
 namespace lldb_private {
 
-    class ThreadProperties : public Properties
-    {
-    public:
-        ThreadProperties(bool is_global);
-        
-        virtual
-        ~ThreadProperties();
-        
-        //------------------------------------------------------------------
-        /// The regular expression returned determines symbols that this
-        /// thread won't stop in during "step-in" operations.
-        ///
-        /// @return
-        ///    A pointer to a regular expression to compare against symbols,
-        ///    or NULL if all symbols are allowed.
-        ///
-        //------------------------------------------------------------------
-        const RegularExpression *
-        GetSymbolsToAvoidRegexp();
-        
-        bool
-        GetTraceEnabledState() const;
-    };
+class ThreadProperties : public Properties
+{
+public:
+    ThreadProperties(bool is_global);
     
-    typedef STD_SHARED_PTR(ThreadProperties) ThreadPropertiesSP;
+    virtual
+    ~ThreadProperties();
+    
+    //------------------------------------------------------------------
+    /// The regular expression returned determines symbols that this
+    /// thread won't stop in during "step-in" operations.
+    ///
+    /// @return
+    ///    A pointer to a regular expression to compare against symbols,
+    ///    or NULL if all symbols are allowed.
+    ///
+    //------------------------------------------------------------------
+    const RegularExpression *
+    GetSymbolsToAvoidRegexp();
+    
+    bool
+    GetTraceEnabledState() const;
+};
+
+typedef STD_SHARED_PTR(ThreadProperties) ThreadPropertiesSP;
 
 
-    class Thread :
+class Thread :
     public STD_ENABLE_SHARED_FROM_THIS(Thread),
     public ThreadProperties,
     public UserID,
