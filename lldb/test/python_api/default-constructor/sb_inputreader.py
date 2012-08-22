@@ -6,7 +6,10 @@ import sys
 import lldb
 
 def fuzz_obj(obj):
-    obj.Initialize(lldb.SBDebugger.Create(), None, None, 0, "$", "^", True)
+    try:
+        obj.Initialize(lldb.SBDebugger.Create(), None, 0, "$", "^", True)
+    except Exception:
+        pass
     obj.IsActive()
     obj.IsDone()
     obj.SetIsDone(True)

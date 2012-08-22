@@ -823,5 +823,61 @@ LLDBSwigPythonCallModuleInit
     }
     return retval;
 }
+%}
 
+
+%runtime %{
+// Forward declaration to be inserted at the start of LLDBWrapPython.h
+// I used runtime as a hack to make SWIG place it where it's needed.
+// This is needed to use LLDBSwigPythonCallSBInputReaderCallback in the
+// typemaps and in the extensions (SBInputReader.__del__()).
+#include "SBInputReader.h"
+
+size_t
+LLDBSwigPythonCallSBInputReaderCallback(void *baton,
+                                        lldb::SBInputReader *reader,
+                                        lldb::InputReaderAction notification,
+                                        const char*bytes,
+                                        size_t bytes_len);
+%}
+
+%wrapper %{
+// For the InputReader Callback functions
+SWIGEXPORT size_t
+LLDBSwigPythonCallSBInputReaderCallback(void *baton,
+                                        lldb::SBInputReader *reader,
+                                        lldb::InputReaderAction notification,
+                                        const char*bytes,
+                                        size_t bytes_len) {
+    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+
+    PyObject *py_InputReader = SWIG_NewPointerObj(reader, SWIGTYPE_p_lldb__SBInputReader, false);
+    PyObject *py_Notification = PyInt_FromLong(notification);
+    PyObject *py_Bytes = PyBytes_FromStringAndSize(bytes, bytes_len);
+
+    PyObject *tuple = PyTuple_Pack(3, py_InputReader, py_Notification, py_Bytes);
+    PyObject *res = PyObject_Call(reinterpret_cast<PyObject*>(baton), tuple, NULL);
+    Py_DECREF(tuple);
+    Py_DECREF(py_InputReader);
+    Py_DECREF(py_Notification);
+    Py_DECREF(py_Bytes);
+
+    if (res == NULL) {
+      PyObject *exc = PyErr_Occurred();
+      if (exc) {
+        ::puts("\nErroring out at LLDBSwigPythonCallSBInputReaderCallback");
+        PyErr_Print();
+      }
+      return 0;
+    }
+
+    size_t result = 0;
+    // If the callback misbehaves and returns Py_None, assume it returned 0
+    if (res != Py_None)
+      result = static_cast<size_t>(PyInt_AsSsize_t(res));
+
+    Py_DECREF(res);
+    SWIG_PYTHON_THREAD_END_BLOCK;
+    return result;
+}
 %}

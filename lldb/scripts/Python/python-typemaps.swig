@@ -350,6 +350,27 @@
     free($1);
 }
 
+// For lldb::SBInputReader::Callback
+%typemap(in) (lldb::SBInputReader::Callback callback, void *callback_baton) {
+  if (!PyCallable_Check(reinterpret_cast<PyObject*>($input))) {
+    PyErr_SetString(PyExc_TypeError, "Need a callable object!");
+    return NULL;
+  }
+
+  // Don't lose the callback reference
+  Py_INCREF($input);
+  $1 = LLDBSwigPythonCallSBInputReaderCallback;
+  $2 = $input;
+}
+
+%typemap(typecheck) (lldb::SBInputReader::Callback callback, void *baton) {
+  if (!PyCallable_Check(reinterpret_cast<PyObject*>($input))) {
+    $1 = 0;
+  } else {
+    $1 = 1;
+  }
+}
+
 %typemap(in) FILE * {
    if ($input == Py_None)
       $1 = NULL;
