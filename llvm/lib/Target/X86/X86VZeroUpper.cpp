@@ -84,7 +84,7 @@ namespace {
     //  2) All states must be clean for the result to be clean
     //  3) If none above and one unknown, the result state is also unknown
     //
-    unsigned computeState(unsigned PrevState, unsigned CurState) {
+    static unsigned computeState(unsigned PrevState, unsigned CurState) {
       if (PrevState == ST_INIT)
         return CurState;
 
