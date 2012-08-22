@@ -120,9 +120,9 @@ static void MemoryProfileThread(void *arg) {
   ScopedInRtl in_rtl;
   fd_t fd = (fd_t)(uptr)arg;
   for (int i = 0; ; i++) {
-    InternalScopedBuf<char> buf(4096);
-    WriteMemoryProfile(buf.Ptr(), buf.Size(), i);
-    internal_write(fd, buf.Ptr(), internal_strlen(buf.Ptr()));
+    InternalScopedBuffer<char> buf(4096);
+    WriteMemoryProfile(buf, buf.size(), i);
+    internal_write(fd, buf, internal_strlen(buf));
     SleepForSeconds(1);
   }
 }
@@ -130,10 +130,10 @@ static void MemoryProfileThread(void *arg) {
 static void InitializeMemoryProfile() {
   if (flags()->profile_memory == 0 || flags()->profile_memory[0] == 0)
     return;
-  InternalScopedBuf<char> filename(4096);
-  internal_snprintf(filename.Ptr(), filename.Size(), "%s.%d",
+  InternalScopedBuffer<char> filename(4096);
+  internal_snprintf(filename, filename.size(), "%s.%d",
       flags()->profile_memory, GetPid());
-  fd_t fd = internal_open(filename.Ptr(), true);
+  fd_t fd = internal_open(filename, true);
   if (fd == kInvalidFd) {
     TsanPrintf("Failed to open memory profile file '%s'\n", &filename[0]);
     Die();

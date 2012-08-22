@@ -85,10 +85,10 @@ static void NOINLINE InitModule(ModuleDesc *m) {
 
 static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
   DlIteratePhdrCtx *ctx = (DlIteratePhdrCtx*)arg;
-  InternalScopedBuf<char> tmp(128);
+  InternalScopedBuffer<char> tmp(128);
   if (ctx->is_first) {
-    internal_snprintf(tmp.Ptr(), tmp.Size(), "/proc/%d/exe", GetPid());
-    info->dlpi_name = tmp.Ptr();
+    internal_snprintf(tmp, tmp.size(), "/proc/%d/exe", GetPid());
+    info->dlpi_name = tmp.data();
   }
   ctx->is_first = false;
   if (info->dlpi_name == 0 || info->dlpi_name[0] == 0)
@@ -159,14 +159,14 @@ ReportStack *SymbolizeCodeAddr2Line(uptr addr) {
         m->out_fd, errno);
     Die();
   }
-  InternalScopedBuf<char> func(1024);
-  ssize_t len = internal_read(m->inp_fd, func, func.Size() - 1);
+  InternalScopedBuffer<char> func(1024);
+  ssize_t len = internal_read(m->inp_fd, func, func.size() - 1);
   if (len <= 0) {
     TsanPrintf("ThreadSanitizer: can't read from symbolizer (%d, %d)\n",
         m->inp_fd, errno);
     Die();
   }
-  func.Ptr()[len] = 0;
+  func.data()[len] = 0;
   ReportStack *res = NewReportStackEntry(addr);
   res->module = internal_strdup(m->name);
   res->offset = offset;

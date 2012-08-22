@@ -71,45 +71,5 @@ void DestroyAndFree(T *&p) {
   p = 0;
 }
 
-template<typename T>
-class InternalScopedBuf {
- public:
-  explicit InternalScopedBuf(uptr cnt) {
-    cnt_ = cnt;
-    ptr_ = (T*)internal_alloc(MBlockScopedBuf, cnt * sizeof(T));
-  }
-
-  ~InternalScopedBuf() {
-    internal_free(ptr_);
-  }
-
-  operator T *() {
-    return ptr_;
-  }
-
-  T &operator[](uptr i) {
-    return ptr_[i];
-  }
-
-  T *Ptr() {
-    return ptr_;
-  }
-
-  uptr Count() {
-    return cnt_;
-  }
-
-  uptr Size() {
-    return cnt_ * sizeof(T);
-  }
-
- private:
-  T *ptr_;
-  uptr cnt_;
-
-  InternalScopedBuf(const InternalScopedBuf&);
-  void operator = (const InternalScopedBuf&);
-};
-
 }  // namespace __tsan
 #endif  // TSAN_MMAN_H

@@ -47,7 +47,7 @@ static ReportStack *NewReportStackEntry(const AddressInfo &info) {
 ReportStack *SymbolizeCode(uptr addr) {
   if (flags()->use_internal_symbolizer) {
     static const uptr kMaxAddrFrames = 16;
-    InternalScopedBuf<AddressInfo> addr_frames(kMaxAddrFrames);
+    InternalScopedBuffer<AddressInfo> addr_frames(kMaxAddrFrames);
     for (uptr i = 0; i < kMaxAddrFrames; i++)
       new(&addr_frames[i]) AddressInfo();
     uptr addr_frames_num = __sanitizer::SymbolizeCode(addr, addr_frames,

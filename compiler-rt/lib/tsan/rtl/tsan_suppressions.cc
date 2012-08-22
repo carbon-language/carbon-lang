@@ -26,27 +26,27 @@ static Suppression *g_suppressions;
 static char *ReadFile(const char *filename) {
   if (filename == 0 || filename[0] == 0)
     return 0;
-  InternalScopedBuf<char> tmp(4*1024);
+  InternalScopedBuffer<char> tmp(4*1024);
   if (filename[0] == '/')
-    internal_snprintf(tmp, tmp.Size(), "%s", filename);
+    internal_snprintf(tmp, tmp.size(), "%s", filename);
   else
-    internal_snprintf(tmp, tmp.Size(), "%s/%s", GetPwd(), filename);
+    internal_snprintf(tmp, tmp.size(), "%s/%s", GetPwd(), filename);
   fd_t fd = internal_open(tmp, false);
   if (fd == kInvalidFd) {
     TsanPrintf("ThreadSanitizer: failed to open suppressions file '%s'\n",
-        tmp.Ptr());
+               tmp.data());
     Die();
   }
   const uptr fsize = internal_filesize(fd);
   if (fsize == (uptr)-1) {
     TsanPrintf("ThreadSanitizer: failed to stat suppressions file '%s'\n",
-        tmp.Ptr());
+               tmp.data());
     Die();
   }
   char *buf = (char*)internal_alloc(MBlockSuppression, fsize + 1);
   if (fsize != internal_read(fd, buf, fsize)) {
     TsanPrintf("ThreadSanitizer: failed to read suppressions file '%s'\n",
-        tmp.Ptr());
+               tmp.data());
     Die();
   }
   internal_close(fd);

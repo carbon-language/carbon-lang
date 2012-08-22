@@ -65,6 +65,7 @@ class InternalScopedBuffer {
   ~InternalScopedBuffer() {
     InternalFree(ptr_);
   }
+  operator T*() { return ptr_; }
   T &operator[](uptr i) { return ptr_[i]; }
   T *data() { return ptr_; }
   uptr size() { return cnt_ * sizeof(T); }
