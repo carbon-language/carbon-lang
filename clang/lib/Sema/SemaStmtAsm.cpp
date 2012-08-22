@@ -328,6 +328,7 @@ static bool isMSAsmKeyword(StringRef Name) {
   return Ret;
 }
 
+// getSpelling - Get the spelling of the AsmTok token.
 static StringRef getSpelling(Sema &SemaRef, Token AsmTok) {
   StringRef Asm;
   SmallString<512> TokenBuf;
@@ -338,6 +339,7 @@ static StringRef getSpelling(Sema &SemaRef, Token AsmTok) {
   return Asm;
 }
 
+// Determine if we should bail on this MSAsm instruction.
 static bool bailOnMSAsm(std::vector<StringRef> Piece) {
   for (unsigned i = 0, e = Piece.size(); i != e; ++i)
     if (isMSAsmKeyword(Piece[i]))
@@ -345,6 +347,7 @@ static bool bailOnMSAsm(std::vector<StringRef> Piece) {
   return false;
 }
 
+// Determine if we should bail on this MSAsm block.
 static bool bailOnMSAsm(std::vector<std::vector<StringRef> > Pieces) {
   for (unsigned i = 0, e = Pieces.size(); i != e; ++i)
     if (bailOnMSAsm(Pieces[i]))
@@ -352,6 +355,7 @@ static bool bailOnMSAsm(std::vector<std::vector<StringRef> > Pieces) {
   return false;
 }
 
+// Determine if this is a simple MSAsm instruction.
 static bool isSimpleMSAsm(std::vector<StringRef> &Pieces,
                           const TargetInfo &TI) {
   if (isMSAsmKeyword(Pieces[0]))
@@ -363,6 +367,7 @@ static bool isSimpleMSAsm(std::vector<StringRef> &Pieces,
   return true;
 }
 
+// Determine if this is a simple MSAsm block.
 static bool isSimpleMSAsm(std::vector<std::vector<StringRef> > Pieces,
                           const TargetInfo &TI) {
   for (unsigned i = 0, e = Pieces.size(); i != e; ++i)
@@ -371,7 +376,7 @@ static bool isSimpleMSAsm(std::vector<std::vector<StringRef> > Pieces,
   return true;
 }
 
-// Break the AsmSting into pieces.
+// Break the AsmSting into pieces (i.e., mnemonic and operands).
 static void buildMSAsmPieces(StringRef Asm, std::vector<StringRef> &Pieces) {
   std::pair<StringRef,StringRef> Split = Asm.split(' ');
 
