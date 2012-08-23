@@ -58,6 +58,10 @@ static cl::opt<bool> DwarfAccelTables("dwarf-accel-tables", cl::Hidden,
      cl::desc("Output prototype dwarf accelerator tables."),
      cl::init(false));
 
+static cl::opt<bool> DarwinGDBCompat("darwin-gdb-compat", cl::Hidden,
+     cl::desc("Compatibility with Darwin gdb."),
+     cl::init(false));
+
 namespace {
   const char *DWARFGroupName = "DWARF Emission";
   const char *DbgTimerName = "DWARF Debug Writer";
@@ -135,9 +139,12 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   DwarfDebugRangeSectionSym = DwarfDebugLocSectionSym = 0;
   FunctionBeginSym = FunctionEndSym = 0;
 
-  // Turn on accelerator tables for Darwin.
-  if (Triple(M->getTargetTriple()).isOSDarwin())
+  // Turn on accelerator tables and older gdb compatibility
+  // for Darwin.
+  if (Triple(M->getTargetTriple()).isOSDarwin()) {
     DwarfAccelTables = true;
+    DarwinGDBCompat = true;
+  }
   
   {
     NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
