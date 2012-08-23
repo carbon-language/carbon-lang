@@ -209,6 +209,7 @@ typedef void* pthread_workitem_handle_t;
 
 typedef void* dispatch_group_t;
 typedef void* dispatch_queue_t;
+typedef void* dispatch_source_t;
 typedef u64 dispatch_time_t;
 typedef void (*dispatch_function_t)(void *block);
 typedef void* (*worker_t)(void *block);
@@ -241,6 +242,17 @@ int pthread_workqueue_additem_np(pthread_workqueue_t workq,
     pthread_workitem_handle_t * itemhandlep, unsigned int *gencountp);
 }  // extern "C"
 
+static ALWAYS_INLINE
+void asan_register_worker_thread(int parent_tid, AsanStackTrace *stack) {
+  AsanThread *t = asanThreadRegistry().GetCurrent();
+  if (!t) {
+    t = AsanThread::Create(parent_tid, 0, 0, stack);
+    asanThreadRegistry().RegisterThread(t);
+    t->Init();
+    asanThreadRegistry().SetCurrent(t);
+  }
+}
+
 // For use by only those functions that allocated the context via
 // alloc_asan_context().
 extern "C"
@@ -252,13 +264,7 @@ void asan_dispatch_call_block_and_release(void *block) {
            "context: %p, pthread_self: %p\n",
            block, pthread_self());
   }
-  AsanThread *t = asanThreadRegistry().GetCurrent();
-  if (!t) {
-    t = AsanThread::Create(context->parent_tid, 0, 0, &stack);
-    asanThreadRegistry().RegisterThread(t);
-    t->Init();
-    asanThreadRegistry().SetCurrent(t);
-  }
+  asan_register_worker_thread(context->parent_tid, &stack);
   // Call the original dispatcher for the block.
   context->func(context->block);
   asan_free(context, &stack);
@@ -314,66 +320,6 @@ INTERCEPTOR(void, dispatch_after_f, dispatch_time_t when,
                                 asan_dispatch_call_block_and_release);
 }
 
-#if MAC_INTERPOSE_FUNCTIONS
-// dispatch_async and TODO tailcall the corresponding dispatch_*_f functions.
-// When wrapping functions with mach_override, they are intercepted
-// automatically. But with dylib interposition this does not work, because the
-// calls within the same library are not interposed.
-// Therefore we need to re-implement dispatch_async and friends.
-
-// See dispatch/dispatch.h.
-#define DISPATCH_TIME_FOREVER (~0ull)
-typedef void (^dispatch_block_t)(void);
-
-// See
-// http://www.opensource.apple.com/source/libdispatch/libdispatch-228.18/src/init.c
-// for the implementation of _dispatch_call_block_copy_and_release().
-static void _dispatch_call_block_and_release(void *block) {
-  void (^b)(void) = (dispatch_block_t)block;
-  b();
-  _Block_release(b);
-}
-
-// See
-// http://www.opensource.apple.com/source/libdispatch/libdispatch-228.18/src/internal.h
-#define fastpath(x) ((typeof(x))__builtin_expect((uptr)(x), ~0l))
-
-// See
-// http://www.opensource.apple.com/source/libdispatch/libdispatch-228.18/src/init.c
-static dispatch_block_t _dispatch_Block_copy(dispatch_block_t db) {
-  dispatch_block_t rval;
-  if (fastpath(db)) {
-    while (!fastpath(rval = Block_copy(db))) {
-      sleep(1);
-    }
-    return rval;
-  }
-  CHECK(0 && "NULL was passed where a block should have been");
-  return (dispatch_block_t)NULL;  // Unreachable.
-}
-
-// See
-// http://www.opensource.apple.com/source/libdispatch/libdispatch-228.18/src/queue.c
-// for the implementation of dispatch_async(), dispatch_sync(),
-// dispatch_after().
-INTERCEPTOR(void, dispatch_async,
-            dispatch_queue_t dq, dispatch_block_t work) {
-  WRAP(dispatch_async_f)(dq, _dispatch_Block_copy(work),
-                         _dispatch_call_block_and_release);
-}
-
-INTERCEPTOR(void, dispatch_after,
-            dispatch_time_t when, dispatch_queue_t queue,
-            dispatch_block_t work) {
-  if (when == DISPATCH_TIME_FOREVER) {
-    CHECK(0 && "dispatch_after() called with 'when' == infinity");
-    return;  // Unreachable.
-  }
-  WRAP(dispatch_after_f)(when, queue, _dispatch_Block_copy(work),
-                         _dispatch_call_block_and_release);
-}
-#endif
-
 INTERCEPTOR(void, dispatch_group_async_f, dispatch_group_t group,
                                           dispatch_queue_t dq, void *ctxt,
                                           dispatch_function_t func) {
@@ -387,6 +333,66 @@ INTERCEPTOR(void, dispatch_group_async_f, dispatch_group_t group,
   REAL(dispatch_group_async_f)(group, dq, (void*)asan_ctxt,
                                asan_dispatch_call_block_and_release);
 }
+
+#if MAC_INTERPOSE_FUNCTIONS
+// dispatch_async, dispatch_group_async and others tailcall the corresponding
+// dispatch_*_f functions. When wrapping functions with mach_override, those
+// dispatch_*_f are intercepted automatically. But with dylib interposition
+// this does not work, because the calls within the same library are not
+// interposed.
+// Therefore we need to re-implement dispatch_async and friends.
+
+extern "C" {
+// FIXME: consolidate these declarations with asan_intercepted_functions.h.
+void dispatch_async(dispatch_queue_t dq, void(^work)(void));
+void dispatch_group_async(dispatch_group_t dg, dispatch_queue_t dq,
+                          void(^work)(void));
+void dispatch_after(dispatch_time_t when, dispatch_queue_t queue,
+                    void(^work)(void));
+void dispatch_source_set_cancel_handler(dispatch_source_t ds,
+                                        void(^work)(void));
+void dispatch_source_set_event_handler(dispatch_source_t ds, void(^work)(void));
+}
+
+#define GET_ASAN_BLOCK(work) \
+  void (^asan_block)(void);  \
+  int parent_tid = asanThreadRegistry().GetCurrentTidOrInvalid(); \
+  asan_block = ^(void) { \
+    GET_STACK_TRACE_HERE(kStackTraceMax); \
+    asan_register_worker_thread(parent_tid, &stack); \
+    work(); \
+  }
+
+INTERCEPTOR(void, dispatch_async,
+            dispatch_queue_t dq, void(^work)(void)) {
+  GET_ASAN_BLOCK(work);
+  REAL(dispatch_async)(dq, asan_block);
+}
+
+INTERCEPTOR(void, dispatch_group_async,
+            dispatch_group_t dg, dispatch_queue_t dq, void(^work)(void)) {
+  GET_ASAN_BLOCK(work);
+  REAL(dispatch_group_async)(dg, dq, asan_block);
+}
+
+INTERCEPTOR(void, dispatch_after,
+            dispatch_time_t when, dispatch_queue_t queue, void(^work)(void)) {
+  GET_ASAN_BLOCK(work);
+  REAL(dispatch_after)(when, queue, asan_block);
+}
+
+INTERCEPTOR(void, dispatch_source_set_cancel_handler,
+            dispatch_source_t ds, void(^work)(void)) {
+  GET_ASAN_BLOCK(work);
+  REAL(dispatch_source_set_cancel_handler)(ds, asan_block);
+}
+
+INTERCEPTOR(void, dispatch_source_set_event_handler,
+            dispatch_source_t ds, void(^work)(void)) {
+  GET_ASAN_BLOCK(work);
+  REAL(dispatch_source_set_event_handler)(ds, asan_block);
+}
+#endif
 
 // The following stuff has been extremely helpful while looking for the
 // unhandled functions that spawned jobs on Chromium shutdown. If the verbosity

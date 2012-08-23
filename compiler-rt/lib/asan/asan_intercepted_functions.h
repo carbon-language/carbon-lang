@@ -172,6 +172,7 @@ typedef void* pthread_workitem_handle_t;
 
 typedef void* dispatch_group_t;
 typedef void* dispatch_queue_t;
+typedef void* dispatch_source_t;
 typedef u64 dispatch_time_t;
 typedef void (*dispatch_function_t)(void *block);
 typedef void* (*worker_t)(void *block);
@@ -199,10 +200,17 @@ DECLARE_FUNCTION_AND_WRAPPER(CFStringRef, CFStringCreateCopy,
                              CFAllocatorRef alloc, CFStringRef str);
 DECLARE_FUNCTION_AND_WRAPPER(void, free, void* ptr);
 #if MAC_INTERPOSE_FUNCTIONS
+DECLARE_FUNCTION_AND_WRAPPER(void, dispatch_group_async,
+                             dispatch_group_t dg,
+                             dispatch_queue_t dq, void (^work)(void));
 DECLARE_FUNCTION_AND_WRAPPER(void, dispatch_async,
                              dispatch_queue_t dq, void (^work)(void));
 DECLARE_FUNCTION_AND_WRAPPER(void, dispatch_after,
                              dispatch_queue_t dq, void (^work)(void));
+DECLARE_FUNCTION_AND_WRAPPER(void, dispatch_source_set_event_handler,
+                             dispatch_source_t ds, void (^work)(void));
+DECLARE_FUNCTION_AND_WRAPPER(void, dispatch_source_set_cancel_handler,
+                             dispatch_source_t ds, void (^work)(void));
 #endif  // MAC_INTERPOSE_FUNCTIONS
 #endif  // __APPLE__
 }  // extern "C"

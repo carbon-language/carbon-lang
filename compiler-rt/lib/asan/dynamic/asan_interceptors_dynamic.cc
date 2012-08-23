@@ -92,8 +92,11 @@ const interpose_substitution substitutions[]
   INTERPOSE_FUNCTION(dispatch_barrier_async_f),
   INTERPOSE_FUNCTION(dispatch_group_async_f),
 
+  INTERPOSE_FUNCTION(dispatch_group_async),
   INTERPOSE_FUNCTION(dispatch_async),
   INTERPOSE_FUNCTION(dispatch_after),
+  INTERPOSE_FUNCTION(dispatch_source_set_event_handler),
+  INTERPOSE_FUNCTION(dispatch_source_set_cancel_handler),
 
   INTERPOSE_FUNCTION(__CFInitialize),
   INTERPOSE_FUNCTION(CFStringCreateCopy),
