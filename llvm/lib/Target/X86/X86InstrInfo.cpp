@@ -3557,14 +3557,16 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     OpcodeTablePtr = &RegOp2MemOpTable2Addr;
     isTwoAddrFold = true;
   } else if (i == 0) { // If operand 0
-    if (MI->getOpcode() == X86::MOV64r0)
-      NewMI = MakeM0Inst(*this, X86::MOV64mi32, MOs, MI);
-    else if (MI->getOpcode() == X86::MOV32r0)
-      NewMI = MakeM0Inst(*this, X86::MOV32mi, MOs, MI);
-    else if (MI->getOpcode() == X86::MOV16r0)
-      NewMI = MakeM0Inst(*this, X86::MOV16mi, MOs, MI);
-    else if (MI->getOpcode() == X86::MOV8r0)
-      NewMI = MakeM0Inst(*this, X86::MOV8mi, MOs, MI);
+    unsigned Opc = 0;
+    switch (MI->getOpcode()) {
+    default: break;
+    case X86::MOV64r0: Opc = X86::MOV64mi32; break;
+    case X86::MOV32r0: Opc = X86::MOV32mi;   break;
+    case X86::MOV16r0: Opc = X86::MOV16mi;   break;
+    case X86::MOV8r0:  Opc = X86::MOV8mi;    break;
+    }
+    if (Opc)
+       NewMI = MakeM0Inst(*this, Opc, MOs, MI);
     if (NewMI)
       return NewMI;
 
