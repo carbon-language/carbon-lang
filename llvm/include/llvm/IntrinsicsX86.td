@@ -219,7 +219,7 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse_storeu_ps : GCCBuiltin<"__builtin_ia32_storeups">,
               Intrinsic<[], [llvm_ptr_ty,
-                         llvm_v4f32_ty], []>;
+                         llvm_v4f32_ty], [IntrReadWriteArgMem]>;
 }
 
 // Cacheability support ops
@@ -502,13 +502,13 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse2_storeu_pd : GCCBuiltin<"__builtin_ia32_storeupd">,
               Intrinsic<[], [llvm_ptr_ty,
-                         llvm_v2f64_ty], []>;
+                         llvm_v2f64_ty], [IntrReadWriteArgMem]>;
   def int_x86_sse2_storeu_dq : GCCBuiltin<"__builtin_ia32_storedqu">,
               Intrinsic<[], [llvm_ptr_ty,
-                         llvm_v16i8_ty], []>;
+                         llvm_v16i8_ty], [IntrReadWriteArgMem]>;
   def int_x86_sse2_storel_dq : GCCBuiltin<"__builtin_ia32_storelv4si">,
               Intrinsic<[], [llvm_ptr_ty,
-                         llvm_v4i32_ty], []>;
+                         llvm_v4i32_ty], [IntrReadWriteArgMem]>;
 }
 
 // Misc.
@@ -1294,11 +1294,11 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 // SIMD store ops
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_avx_storeu_pd_256 : GCCBuiltin<"__builtin_ia32_storeupd256">,
-        Intrinsic<[], [llvm_ptr_ty, llvm_v4f64_ty], []>;
+        Intrinsic<[], [llvm_ptr_ty, llvm_v4f64_ty], [IntrReadWriteArgMem]>;
   def int_x86_avx_storeu_ps_256 : GCCBuiltin<"__builtin_ia32_storeups256">,
-        Intrinsic<[], [llvm_ptr_ty, llvm_v8f32_ty], []>;
+        Intrinsic<[], [llvm_ptr_ty, llvm_v8f32_ty], [IntrReadWriteArgMem]>;
   def int_x86_avx_storeu_dq_256 : GCCBuiltin<"__builtin_ia32_storedqu256">,
-        Intrinsic<[], [llvm_ptr_ty, llvm_v32i8_ty], []>;
+        Intrinsic<[], [llvm_ptr_ty, llvm_v32i8_ty], [IntrReadWriteArgMem]>;
 }
 
 // Conditional load ops
@@ -1317,18 +1317,18 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_avx_maskstore_pd : GCCBuiltin<"__builtin_ia32_maskstorepd">,
         Intrinsic<[], [llvm_ptr_ty,
-                  llvm_v2f64_ty, llvm_v2f64_ty], []>;
+                  llvm_v2f64_ty, llvm_v2f64_ty], [IntrReadWriteArgMem]>;
   def int_x86_avx_maskstore_ps : GCCBuiltin<"__builtin_ia32_maskstoreps">,
         Intrinsic<[], [llvm_ptr_ty,
-                  llvm_v4f32_ty, llvm_v4f32_ty], []>;
+                  llvm_v4f32_ty, llvm_v4f32_ty], [IntrReadWriteArgMem]>;
   def int_x86_avx_maskstore_pd_256 :
         GCCBuiltin<"__builtin_ia32_maskstorepd256">,
         Intrinsic<[], [llvm_ptr_ty,
-                  llvm_v4f64_ty, llvm_v4f64_ty], []>;
+                  llvm_v4f64_ty, llvm_v4f64_ty], [IntrReadWriteArgMem]>;
   def int_x86_avx_maskstore_ps_256 :
         GCCBuiltin<"__builtin_ia32_maskstoreps256">,
         Intrinsic<[], [llvm_ptr_ty,
-                  llvm_v8f32_ty, llvm_v8f32_ty], []>;
+                  llvm_v8f32_ty, llvm_v8f32_ty], [IntrReadWriteArgMem]>;
 }
 
 //===----------------------------------------------------------------------===//
