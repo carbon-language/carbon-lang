@@ -88,7 +88,7 @@ class AbbreviationsTestCase(TestBase):
 
         # By default, the setting interpreter.expand-regex-aliases is false.
         self.expect("_regexp-b product", matching=False,
-                    substrs = [ "breakpoint set --name 'product'" ])
+                    substrs = [ "breakpoint set --name" ])
 
         self.expect("br s -n sum",
                     startstr = "Breakpoint created: 2: name = 'sum', locations = 1")
