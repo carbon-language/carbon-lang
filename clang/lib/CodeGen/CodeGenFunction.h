@@ -2552,12 +2552,10 @@ private:
                         SmallVector<llvm::Value*, 16> &Args,
                         llvm::FunctionType *IRFuncTy);
 
-  llvm::Value* EmitAsmInput(const AsmStmt &S,
-                            const TargetInfo::ConstraintInfo &Info,
+  llvm::Value* EmitAsmInput(const TargetInfo::ConstraintInfo &Info,
                             const Expr *InputExpr, std::string &ConstraintStr);
 
-  llvm::Value* EmitAsmInputLValue(const AsmStmt &S,
-                                  const TargetInfo::ConstraintInfo &Info,
+  llvm::Value* EmitAsmInputLValue(const TargetInfo::ConstraintInfo &Info,
                                   LValue InputValue, QualType InputType,
                                   std::string &ConstraintStr);
 

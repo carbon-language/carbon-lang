@@ -1323,8 +1323,7 @@ AddVariableConstraints(const std::string &Constraint, const Expr &AsmExpr,
 }
 
 llvm::Value*
-CodeGenFunction::EmitAsmInputLValue(const AsmStmt &S,
-                                    const TargetInfo::ConstraintInfo &Info,
+CodeGenFunction::EmitAsmInputLValue(const TargetInfo::ConstraintInfo &Info,
                                     LValue InputValue, QualType InputType,
                                     std::string &ConstraintStr) {
   llvm::Value *Arg;
@@ -1353,7 +1352,7 @@ CodeGenFunction::EmitAsmInputLValue(const AsmStmt &S,
   return Arg;
 }
 
-llvm::Value* CodeGenFunction::EmitAsmInput(const AsmStmt &S,
+llvm::Value* CodeGenFunction::EmitAsmInput(
                                          const TargetInfo::ConstraintInfo &Info,
                                            const Expr *InputExpr,
                                            std::string &ConstraintStr) {
@@ -1363,7 +1362,7 @@ llvm::Value* CodeGenFunction::EmitAsmInput(const AsmStmt &S,
 
   InputExpr = InputExpr->IgnoreParenNoopCasts(getContext());
   LValue Dest = EmitLValue(InputExpr);
-  return EmitAsmInputLValue(S, Info, Dest, InputExpr->getType(), ConstraintStr);
+  return EmitAsmInputLValue(Info, Dest, InputExpr->getType(), ConstraintStr);
 }
 
 /// getAsmSrcLocInfo - Return the !srcloc metadata node to attach to an inline
@@ -1511,7 +1510,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
       InOutConstraints += ',';
 
       const Expr *InputExpr = S.getOutputExpr(i);
-      llvm::Value *Arg = EmitAsmInputLValue(S, Info, Dest, InputExpr->getType(),
+      llvm::Value *Arg = EmitAsmInputLValue(Info, Dest, InputExpr->getType(),
                                             InOutConstraints);
 
       if (llvm::Type* AdjTy =
@@ -1549,7 +1548,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
                             *InputExpr->IgnoreParenNoopCasts(getContext()),
                             Target, CGM, S);
 
-    llvm::Value *Arg = EmitAsmInput(S, Info, InputExpr, Constraints);
+    llvm::Value *Arg = EmitAsmInput(Info, InputExpr, Constraints);
 
     // If this input argument is tied to a larger output result, extend the
     // input to be the same size as the output.  The LLVM backend wants to see
