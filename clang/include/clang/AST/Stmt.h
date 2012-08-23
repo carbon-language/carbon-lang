@@ -424,12 +424,12 @@ public:
 
   /// \brief Produce a unique representation of the given statement.
   ///
-  /// \brief ID once the profiling operation is complete, will contain
+  /// \param ID once the profiling operation is complete, will contain
   /// the unique representation of the given statement.
   ///
-  /// \brief Context the AST context in which the statement resides
+  /// \param Context the AST context in which the statement resides
   ///
-  /// \brief Canonical whether the profile should be based on the canonical
+  /// \param Canonical whether the profile should be based on the canonical
   /// representation of this statement (e.g., where non-type template
   /// parameters are identified by index/level rather than their
   /// declaration pointers) or the exact representation of the statement as

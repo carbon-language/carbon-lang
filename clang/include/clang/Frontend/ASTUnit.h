@@ -679,7 +679,7 @@ public:
   /// (e.g. because the PCH could not be loaded), this accepts the ASTUnit
   /// mainly to allow the caller to see the diagnostics.
   /// This will only receive an ASTUnit if a new one was created. If an already
-  /// created ASTUnit was passed in \param Unit then the caller can check that.
+  /// created ASTUnit was passed in \p Unit then the caller can check that.
   ///
   static ASTUnit *LoadFromCompilerInvocationAction(CompilerInvocation *CI,
                               IntrusiveRefCntPtr<DiagnosticsEngine> Diags,

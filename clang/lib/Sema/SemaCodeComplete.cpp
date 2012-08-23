@@ -5044,7 +5044,7 @@ static ObjCInterfaceDecl *GetAssumedMessageSendExprType(Expr *E) {
 ///
 /// \param S The semantic analysis object.
 ///
-/// \param S NeedSuperKeyword Whether we need to prefix this completion with
+/// \param NeedSuperKeyword Whether we need to prefix this completion with
 /// the "super" keyword. Otherwise, we just need to provide the arguments.
 ///
 /// \param SelIdents The identifiers in the selector that have already been

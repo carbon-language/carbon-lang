@@ -250,11 +250,11 @@ inline UnqualTypeLoc TypeLoc::getUnqualifiedLoc() const {
 /// to a particular Type subclass.  It is accepted for a single
 /// TypeLoc class to correspond to multiple Type classes.
 ///
-/// \param Base a class from which to derive
-/// \param Derived the class deriving from this one
-/// \param TypeClass the concrete Type subclass associated with this
+/// \tparam Base a class from which to derive
+/// \tparam Derived the class deriving from this one
+/// \tparam TypeClass the concrete Type subclass associated with this
 ///   location type
-/// \param LocalData the structure type of local location data for
+/// \tparam LocalData the structure type of local location data for
 ///   this type
 ///
 /// sizeof(LocalData) needs to be a multiple of sizeof(void*) or

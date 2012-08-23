@@ -665,10 +665,10 @@ protected:
   ///               a new symbolic region will be used.
   /// \param St The path-sensitive state at this point in the program.
   /// \param LCtx The location context at this point in the program.
-  CXXConstructorCall(const CXXConstructExpr *CE, const MemRegion *target,
+  CXXConstructorCall(const CXXConstructExpr *CE, const MemRegion *Target,
                      ProgramStateRef St, const LocationContext *LCtx)
     : AnyFunctionCall(CE, St, LCtx) {
-    Data = target;
+    Data = Target;
   }
 
   CXXConstructorCall(const CXXConstructorCall &Other) : AnyFunctionCall(Other){}

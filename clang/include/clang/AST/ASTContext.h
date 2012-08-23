@@ -1886,9 +1886,9 @@ public:
   /// \brief Add a deallocation callback that will be invoked when the 
   /// ASTContext is destroyed.
   ///
-  /// \brief Callback A callback function that will be invoked on destruction.
+  /// \param Callback A callback function that will be invoked on destruction.
   ///
-  /// \brief Data Pointer data that will be provided to the callback function
+  /// \param Data Pointer data that will be provided to the callback function
   /// when it is called.
   void AddDeallocation(void (*Callback)(void*), void *Data);
 

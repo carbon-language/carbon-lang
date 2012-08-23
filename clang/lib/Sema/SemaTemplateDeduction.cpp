@@ -2996,8 +2996,6 @@ DeduceTemplateArgumentByListElement(Sema &S,
 ///
 /// \param Args the function call arguments
 ///
-/// \param NumArgs the number of arguments in Args
-///
 /// \param Name the name of the function being called. This is only significant
 /// when the function template is a conversion function template, in which
 /// case this routine will also perform template argument deduction based on

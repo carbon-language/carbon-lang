@@ -3272,7 +3272,7 @@ enum CXCommentKind {
    * \brief A \\param or \\arg command that describes the function parameter
    * (name, passing direction, description).
    *
-   * \brief For example: \\param [in] ParamName description.
+   * For example: \\param [in] ParamName description.
    */
   CXComment_ParamCommand = 7,
 
@@ -3280,7 +3280,7 @@ enum CXCommentKind {
    * \brief A \\tparam command that describes a template parameter (name and
    * description).
    *
-   * \brief For example: \\tparam T description.
+   * For example: \\tparam T description.
    */
   CXComment_TParamCommand = 8,
 
@@ -3379,7 +3379,7 @@ CINDEX_LINKAGE unsigned clang_Comment_getNumChildren(CXComment Comment);
 /**
  * \param Comment AST node of any kind.
  *
- * \param ArgIdx argument index (zero-based).
+ * \param ChildIdx child index (zero-based).
  *
  * \returns the specified child of the AST node.
  */

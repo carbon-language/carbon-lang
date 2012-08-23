@@ -162,8 +162,6 @@ public:
   /// @param Pred The transition will be generated from the specified Pred node
   ///             to the newly generated node.
   /// @param Tag The tag to uniquely identify the creation site.
-  /// @param IsSink Mark the new node as sink, which will stop exploration of
-  ///               the given path.
   ExplodedNode *addTransition(ProgramStateRef State,
                               ExplodedNode *Pred,
                               const ProgramPointTag *Tag = 0) {

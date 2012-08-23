@@ -292,7 +292,7 @@ OpaqueValueExpr *PseudoOpBuilder::capture(Expr *e) {
 /// operation.  This routine is safe against expressions which may
 /// already be captured.
 ///
-/// \param Returns the captured expression, which will be the
+/// \returns the captured expression, which will be the
 ///   same as the input if the input was already captured
 OpaqueValueExpr *PseudoOpBuilder::captureValueAsResult(Expr *e) {
   assert(ResultIndex == PseudoObjectExpr::NoResult);
@@ -617,7 +617,7 @@ ExprResult ObjCPropertyOpBuilder::buildGet() {
 
 /// Store to an Objective-C property reference.
 ///
-/// \param bindSetValueAsResult - If true, capture the actual
+/// \param captureSetValueAsResult If true, capture the actual
 ///   value being set as the value of the property operation.
 ExprResult ObjCPropertyOpBuilder::buildSet(Expr *op, SourceLocation opcLoc,
                                            bool captureSetValueAsResult) {
@@ -1255,7 +1255,7 @@ ExprResult ObjCSubscriptOpBuilder::buildGet() {
 /// Store into the container the "op" object at "Index"'ed location
 /// by building this messaging expression:
 /// - (void)setObject:(id)object atIndexedSubscript:(NSInteger)index;
-/// \param bindSetValueAsResult - If true, capture the actual
+/// \param captureSetValueAsResult If true, capture the actual
 ///   value being set as the value of the property operation.
 ExprResult ObjCSubscriptOpBuilder::buildSet(Expr *op, SourceLocation opcLoc,
                                            bool captureSetValueAsResult) {

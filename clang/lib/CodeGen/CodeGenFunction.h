@@ -222,8 +222,7 @@ public:
     /// immediately-enclosing context of the cleanup scope.  For
     /// EH cleanups, this is run in a terminate context.
     ///
-    // \param IsForEHCleanup true if this is for an EH cleanup, false
-    ///  if for a normal cleanup.
+    // \param flags cleanup kind.
     virtual void Emit(CodeGenFunction &CGF, Flags flags) = 0;
   };
 
@@ -1631,7 +1630,7 @@ public:
   /// aggregate expression, the aggloc/agglocvolatile arguments indicate where
   /// the result should be returned.
   ///
-  /// \param IgnoreResult - True if the resulting value isn't used.
+  /// \param ignoreResult True if the resulting value isn't used.
   RValue EmitAnyExpr(const Expr *E,
                      AggValueSlot aggSlot = AggValueSlot::ignored(),
                      bool ignoreResult = false);

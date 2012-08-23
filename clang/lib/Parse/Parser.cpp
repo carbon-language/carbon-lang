@@ -135,7 +135,7 @@ DiagnosticBuilder Parser::Diag(const Token &Tok, unsigned DiagID) {
 /// given range.
 ///
 /// \param Loc The location where we'll emit the diagnostic.
-/// \param Loc The kind of diagnostic to emit.
+/// \param DK The kind of diagnostic to emit.
 /// \param ParenRange Source range enclosing code that should be parenthesized.
 void Parser::SuggestParentheses(SourceLocation Loc, unsigned DK,
                                 SourceRange ParenRange) {

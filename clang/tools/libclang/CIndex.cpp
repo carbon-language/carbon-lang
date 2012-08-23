@@ -145,8 +145,8 @@ RangeComparisonResult CursorVisitor::CompareRegionOfInterest(SourceRange R) {
 ///
 /// \param Cursor the cursor to visit.
 ///
-/// \param CheckRegionOfInterest if true, then the caller already checked that
-/// this cursor is within the region of interest.
+/// \param CheckedRegionOfInterest if true, then the caller already checked
+/// that this cursor is within the region of interest.
 ///
 /// \returns true if the visitation should be aborted, false if it
 /// should continue.

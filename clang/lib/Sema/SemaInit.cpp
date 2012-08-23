@@ -1562,7 +1562,7 @@ class FieldInitializerValidatorCCC : public CorrectionCandidateCallback {
 ///
 /// @param DesigIdx  The index of the current designator.
 ///
-/// @param DeclType  The type of the "current object" (C99 6.7.8p17),
+/// @param CurrentObjectType The type of the "current object" (C99 6.7.8p17),
 /// into which the designation in @p DIE should refer.
 ///
 /// @param NextField  If non-NULL and the first designator in @p DIE is

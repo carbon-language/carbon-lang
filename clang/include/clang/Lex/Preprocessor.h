@@ -1111,10 +1111,10 @@ public:
   /// from a macro as multiple tokens, which need to be glued together.  This
   /// occurs for code like:
   /// \code
-  ///    \#define FOO <a/b.h>
+  ///    \#define FOO <x/y.h>
   ///    \#include FOO
   /// \endcode
-  /// because in this case, "<a/b.h>" is returned as 7 tokens, not one.
+  /// because in this case, "<x/y.h>" is returned as 7 tokens, not one.
   ///
   /// This code concatenates and consumes tokens up to the '>' token.  It
   /// returns false if the > was found, otherwise it returns true if it finds
