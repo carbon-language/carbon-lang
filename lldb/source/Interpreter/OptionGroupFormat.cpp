@@ -161,9 +161,9 @@ OptionGroupFormat::SetOptionValue (CommandInterpreter &interpreter,
 
                 if (count_enabled)
                 {
-                    // Count is enabled and was not set, set it to the default
+                    // Count is enabled and was not set, set it to the default for gdb format statements (which is 1).
                     if (count == 0)
-                        count = m_count.GetDefaultValue();
+                        count = 1;
                 }
                 else
                 {
