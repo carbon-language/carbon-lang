@@ -54,13 +54,29 @@ static cl::opt<bool> UnknownLocations("use-unknown-locations", cl::Hidden,
      cl::desc("Make an absence of debug location information explicit."),
      cl::init(false));
 
-static cl::opt<bool> DwarfAccelTables("dwarf-accel-tables", cl::Hidden,
-     cl::desc("Output prototype dwarf accelerator tables."),
-     cl::init(false));
+namespace {
+  enum DefaultOnOff {
+    Default, Enable, Disable
+  };
+}
 
-static cl::opt<bool> DarwinGDBCompat("darwin-gdb-compat", cl::Hidden,
+static cl::opt<DefaultOnOff> DwarfAccelTables("dwarf-accel-tables", cl::Hidden,
+     cl::desc("Output prototype dwarf accelerator tables."),
+     cl::values(
+                clEnumVal(Default, "Default for platform"),
+                clEnumVal(Enable, "Enabled"),
+                clEnumVal(Disable, "Disabled"),
+                clEnumValEnd),
+     cl::init(Default));
+
+static cl::opt<DefaultOnOff> DarwinGDBCompat("darwin-gdb-compat", cl::Hidden,
      cl::desc("Compatibility with Darwin gdb."),
-     cl::init(false));
+     cl::values(
+                clEnumVal(Default, "Default for platform"),
+                clEnumVal(Enable, "Enabled"),
+                clEnumVal(Disable, "Disabled"),
+                clEnumValEnd),
+     cl::init(Default));
 
 namespace {
   const char *DWARFGroupName = "DWARF Emission";
@@ -141,13 +157,23 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
 
   // Turn on accelerator tables and older gdb compatibility
   // for Darwin.
-  if (Triple(M->getTargetTriple()).isOSDarwin()) {
-    DwarfAccelTables = true;
-    DarwinGDBCompat = true;
-  }
+  bool isDarwin = Triple(M->getTargetTriple()).isOSDarwin();
+  if (DarwinGDBCompat == Default) {
+    if (isDarwin)
+      isDarwinGDBCompat = true;
+    else
+      isDarwinGDBCompat = false;
+  } else
+    isDarwinGDBCompat = DarwinGDBCompat == Enable ? true : false;
 
-  isDarwinGDBCompat = DarwinGDBCompat;
-  
+  if (DwarfAccelTables == Default) {
+    if (isDarwin)
+      hasDwarfAccelTables = true;
+    else
+      hasDwarfAccelTables = false;
+  } else
+    hasDwarfAccelTables = DwarfAccelTables == Enable ? true : false;
+
   {
     NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
     beginModule(M);
@@ -826,7 +852,7 @@ void DwarfDebug::endModule() {
   emitAbbreviations();
 
   // Emit info into the dwarf accelerator table sections.
-  if (DwarfAccelTables) {
+  if (useDwarfAccelTables()) {
     emitAccelNames();
     emitAccelObjC();
     emitAccelNamespaces();
@@ -836,7 +862,7 @@ void DwarfDebug::endModule() {
   // Emit info into a debug pubtypes section.
   // TODO: When we don't need the option anymore we can
   // remove all of the code that adds to the table.
-  if (DarwinGDBCompat)
+  if (useDarwinGDBCompat())
     emitDebugPubTypes();
 
   // Emit info into a debug loc section.
@@ -855,7 +881,7 @@ void DwarfDebug::endModule() {
   // TODO: When we don't need the option anymore we
   // can remove all of the code that this section
   // depends upon.
-  if (DarwinGDBCompat)
+  if (useDarwinGDBCompat())
     emitDebugInlineInfo();
 
   // Emit info into a debug str section.

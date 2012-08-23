@@ -309,7 +309,7 @@ class DwarfDebug {
 
   // A holder for the DarwinGDBCompat flag so that the compile unit can use it.
   bool isDarwinGDBCompat;
-
+  bool hasDwarfAccelTables;
 private:
 
   /// assignAbbrevNumber - Define a unique number for the abbreviation.
@@ -527,6 +527,7 @@ public:
   /// useDarwinGDBCompat - returns whether or not to limit some of our debug
   /// output to the limitations of darwin gdb.
   bool useDarwinGDBCompat() { return isDarwinGDBCompat; }
+  bool useDwarfAccelTables() { return hasDwarfAccelTables; }
 };
 } // End of namespace llvm
 
