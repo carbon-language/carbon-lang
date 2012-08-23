@@ -1999,9 +1999,11 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
     for (unsigned I = 0; I < Depth; ++I)
       TemplateArgLists.addOuterTemplateArguments(0, 0);
 
+    LocalInstantiationScope Scope(*this);
     InstantiatingTemplate Inst(*this, TemplateLoc, Template);
     if (Inst)
       return QualType();
+
     CanonType = SubstType(Pattern->getUnderlyingType(),
                           TemplateArgLists, AliasTemplate->getLocation(),
                           AliasTemplate->getDeclName());

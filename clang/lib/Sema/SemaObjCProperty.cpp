@@ -886,12 +886,14 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
           if (lifetime == Qualifiers::OCL_Weak) {
             bool err = false;
             if (const ObjCObjectPointerType *ObjT =
-                PropertyIvarType->getAs<ObjCObjectPointerType>())
-              if (ObjT->getInterfaceDecl()->isArcWeakrefUnavailable()) {
+                PropertyIvarType->getAs<ObjCObjectPointerType>()) {
+              const ObjCInterfaceDecl *ObjI = ObjT->getInterfaceDecl();
+              if (ObjI && ObjI->isArcWeakrefUnavailable()) {
                 Diag(PropertyDiagLoc, diag::err_arc_weak_unavailable_property);
                 Diag(property->getLocation(), diag::note_property_declare);
                 err = true;
               }
+            }
             if (!err && !getLangOpts().ObjCARCWeak) {
               Diag(PropertyDiagLoc, diag::err_arc_weak_no_runtime);
               Diag(property->getLocation(), diag::note_property_declare);

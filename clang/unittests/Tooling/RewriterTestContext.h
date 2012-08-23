@@ -35,7 +35,7 @@ namespace clang {
 class RewriterTestContext {
  public:
   RewriterTestContext()
-      : Diagnostics(llvm::IntrusiveRefCntPtr<DiagnosticIDs>()),
+      : Diagnostics(llvm::IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs)),
         DiagnosticPrinter(llvm::outs(), DiagnosticOptions()),
         Files((FileSystemOptions())),
         Sources(Diagnostics, Files),

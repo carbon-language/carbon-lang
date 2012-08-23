@@ -33,11 +33,11 @@ namespace clang {
     char Data[1];  //  Variable sized.
 
     void addRef() {
-      if (this) ++RefCount;
+      ++RefCount;
     }
 
     void dropRef() {
-      if (this && --RefCount == 0)
+      if (--RefCount == 0)
         delete [] (char*)this;
     }
   };
@@ -63,22 +63,27 @@ namespace clang {
 
     RopePiece(RopeRefCountString *Str, unsigned Start, unsigned End)
       : StrData(Str), StartOffs(Start), EndOffs(End) {
-      StrData->addRef();
+      if (StrData)
+        StrData->addRef();
     }
     RopePiece(const RopePiece &RP)
       : StrData(RP.StrData), StartOffs(RP.StartOffs), EndOffs(RP.EndOffs) {
-      StrData->addRef();
+      if (StrData)
+        StrData->addRef();
     }
 
     ~RopePiece() {
-      StrData->dropRef();
+      if (StrData)
+        StrData->dropRef();
     }
 
     void operator=(const RopePiece &RHS) {
       if (StrData != RHS.StrData) {
-        StrData->dropRef();
+        if (StrData)
+          StrData->dropRef();
         StrData = RHS.StrData;
-        StrData->addRef();
+        if (StrData)
+          StrData->addRef();
       }
       StartOffs = RHS.StartOffs;
       EndOffs = RHS.EndOffs;
@@ -191,7 +196,8 @@ public:
 
   ~RewriteRope() {
     // If we had an allocation buffer, drop our reference to it.
-    AllocBuffer->dropRef();
+    if (AllocBuffer)
+      AllocBuffer->dropRef();
   }
 
   typedef RopePieceBTree::iterator iterator;

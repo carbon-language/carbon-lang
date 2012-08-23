@@ -570,6 +570,9 @@ static void PrepareArgumentPackDeduction(Sema &S,
     SavedPacks[I] = Deduced[PackIndices[I]];
     Deduced[PackIndices[I]] = TemplateArgument();
 
+    if (!S.CurrentInstantiationScope)
+      continue;
+
     // If the template arugment pack was explicitly specified, add that to
     // the set of deduced arguments.
     const TemplateArgument *ExplicitArgs;
@@ -2601,7 +2604,8 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
       // explicitly-specified set (C++0x [temp.arg.explicit]p9).
       const TemplateArgument *ExplicitArgs;
       unsigned NumExplicitArgs;
-      if (CurrentInstantiationScope->getPartiallySubstitutedPack(&ExplicitArgs,
+      if (CurrentInstantiationScope &&
+          CurrentInstantiationScope->getPartiallySubstitutedPack(&ExplicitArgs,
                                                              &NumExplicitArgs)
           == Param)
         Builder.push_back(TemplateArgument(ExplicitArgs, NumExplicitArgs));

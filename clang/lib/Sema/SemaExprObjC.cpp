@@ -3101,8 +3101,8 @@ bool Sema::CheckObjCARCUnavailableWeakConversion(QualType castType,
       canExprType->isObjCObjectPointerType()) {
     if (const ObjCObjectPointerType *ObjT =
         canExprType->getAs<ObjCObjectPointerType>())
-      if (ObjT->getInterfaceDecl()->isArcWeakrefUnavailable())
-        return false;
+      if (const ObjCInterfaceDecl *ObjI = ObjT->getInterfaceDecl())
+        return !ObjI->isArcWeakrefUnavailable();
   }
   return true;
 }

@@ -10438,10 +10438,10 @@ void Sema::SetDeclDefaulted(Decl *Dcl, SourceLocation DefaultLoc) {
     // If this definition appears within the record, do the checking when
     // the record is complete.
     const FunctionDecl *Primary = MD;
-    if (MD->getTemplatedKind() != FunctionDecl::TK_NonTemplate)
+    if (const FunctionDecl *Pattern = MD->getTemplateInstantiationPattern())
       // Find the uninstantiated declaration that actually had the '= default'
       // on it.
-      MD->getTemplateInstantiationPattern()->isDefined(Primary);
+      Pattern->isDefined(Primary);
 
     if (Primary == Primary->getCanonicalDecl())
       return;
@@ -10966,14 +10966,16 @@ void DelegatingCycleHelper(CXXConstructorDecl* Ctor,
   if (Ctor->isInvalidDecl())
     return;
 
-  const FunctionDecl *FNTarget = 0;
-  CXXConstructorDecl *Target;
-  
-  // We ignore the result here since if we don't have a body, Target will be
-  // null below.
-  (void)Ctor->getTargetConstructor()->hasBody(FNTarget);
-  Target
-= const_cast<CXXConstructorDecl*>(cast_or_null<CXXConstructorDecl>(FNTarget));
+  CXXConstructorDecl *Target = Ctor->getTargetConstructor();
+
+  // Target may not be determinable yet, for instance if this is a dependent
+  // call in an uninstantiated template.
+  if (Target) {
+    const FunctionDecl *FNTarget = 0;
+    (void)Target->hasBody(FNTarget);
+    Target = const_cast<CXXConstructorDecl*>(
+      cast_or_null<CXXConstructorDecl>(FNTarget));
+  }
 
   CXXConstructorDecl *Canonical = Ctor->getCanonicalDecl(),
                      // Avoid dereferencing a null pointer here.
@@ -10997,17 +10999,18 @@ void DelegatingCycleHelper(CXXConstructorDecl* Ctor,
              diag::warn_delegating_ctor_cycle)
         << Ctor;
 
-      // Don't add a note for a function delegating directo to itself.
+      // Don't add a note for a function delegating directly to itself.
       if (TCanonical != Canonical)
         S.Diag(Target->getLocation(), diag::note_it_delegates_to);
 
       CXXConstructorDecl *C = Target;
       while (C->getCanonicalDecl() != Canonical) {
+        const FunctionDecl *FNTarget = 0;
         (void)C->getTargetConstructor()->hasBody(FNTarget);
         assert(FNTarget && "Ctor cycle through bodiless function");
 
-        C
-       = const_cast<CXXConstructorDecl*>(cast<CXXConstructorDecl>(FNTarget));
+        C = const_cast<CXXConstructorDecl*>(
+          cast<CXXConstructorDecl>(FNTarget));
         S.Diag(C->getLocation(), diag::note_which_delegates_to);
       }
     }
@@ -11030,9 +11033,8 @@ void Sema::CheckDelegatingCtorCycles() {
   for (DelegatingCtorDeclsType::iterator
          I = DelegatingCtorDecls.begin(ExternalSource),
          E = DelegatingCtorDecls.end();
-       I != E; ++I) {
-   DelegatingCycleHelper(*I, Valid, Invalid, Current, *this);
-  }
+       I != E; ++I)
+    DelegatingCycleHelper(*I, Valid, Invalid, Current, *this);
 
   for (CI = Invalid.begin(), CE = Invalid.end(); CI != CE; ++CI)
     (*CI)->setInvalidDecl();
