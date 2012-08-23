@@ -25,13 +25,11 @@ void CXXBasePaths::ComputeDeclsFound() {
   assert(NumDeclsFound == 0 && !DeclsFound &&
          "Already computed the set of declarations");
 
+  llvm::SmallPtrSet<NamedDecl *, 8> KnownDecls;
   SmallVector<NamedDecl *, 8> Decls;
   for (paths_iterator Path = begin(), PathEnd = end(); Path != PathEnd; ++Path)
-    Decls.push_back(*Path->Decls.first);
-
-  // Eliminate duplicated decls.
-  llvm::array_pod_sort(Decls.begin(), Decls.end());
-  Decls.erase(std::unique(Decls.begin(), Decls.end()), Decls.end());
+    if (KnownDecls.insert(*Path->Decls.first))
+      Decls.push_back(*Path->Decls.first);
 
   NumDeclsFound = Decls.size();
   DeclsFound = new NamedDecl * [NumDeclsFound];
