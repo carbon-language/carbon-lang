@@ -13,6 +13,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Core/StringList.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -128,4 +129,38 @@ OptionValueEnumeration::DeepCopy () const
 {
     return OptionValueSP(new OptionValueEnumeration(*this));
 }
+
+size_t
+OptionValueEnumeration::AutoComplete (CommandInterpreter &interpreter,
+                                      const char *s,
+                                      int match_start_point,
+                                      int max_return_elements,
+                                      bool &word_complete,
+                                      StringList &matches)
+{
+    word_complete = false;
+    matches.Clear();
+    
+    const uint32_t num_enumerators = m_enumerations.GetSize();
+    if (s && s[0])
+    {
+        const size_t s_len = strlen(s);
+        for (size_t i=0; i<num_enumerators; ++i)
+        {
+            const char *name = m_enumerations.GetCStringAtIndex(i);
+            if (::strncmp(s, name, s_len) == 0)
+                matches.AppendString(name);
+        }
+    }
+    else
+    {
+        // only suggest "true" or "false" by default
+        for (size_t i=0; i<num_enumerators; ++i)
+            matches.AppendString(m_enumerations.GetCStringAtIndex(i));
+    }
+    return matches.GetSize();
+}
+
+
+
 

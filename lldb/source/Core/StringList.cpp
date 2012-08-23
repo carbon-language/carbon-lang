@@ -280,6 +280,11 @@ StringList::AutoComplete (const char *s, StringList &matches, size_t &exact_idx)
             }
         }
     }
+    else
+    {
+        // No string, so it matches everything
+        matches = *this;
+    }
     return matches.GetSize();
 }
 

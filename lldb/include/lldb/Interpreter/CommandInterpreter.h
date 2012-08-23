@@ -26,7 +26,9 @@
 
 namespace lldb_private {
 
-class CommandInterpreter : public Broadcaster
+class CommandInterpreter :
+    public Broadcaster,
+    public Properties
 {
 public:
     typedef std::map<std::string, OptionArgVectorSP> OptionArgMap;
@@ -448,6 +450,12 @@ public:
     {
         return "*** Some of your variables have more members than the debugger will show by default. To show all of them, you can either use the --show-all-children option to %s or raise the limit by changing the target.max-children-count setting.\n";
     }
+    
+    //------------------------------------------------------------------
+    // Properties
+    //------------------------------------------------------------------
+    bool
+    GetExpandRegexAliases () const;
     
 protected:
     friend class Debugger;

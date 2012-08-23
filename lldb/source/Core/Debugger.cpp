@@ -101,8 +101,8 @@ g_language_enumerators[] =
 
 
 
-PropertyDefinition
-g_instance_settings_table[] =
+static PropertyDefinition
+g_properties[] =
 {
 {   "auto-confirm",             OptionValue::eTypeBoolean, true, false, NULL, NULL, "If true all confirmation prompts will receive their default reply." },
 {   "frame-format",             OptionValue::eTypeString , true, 0    , DEFAULT_FRAME_FORMAT, NULL, "The default frame format string to use when displaying stack frame information for threads." },
@@ -151,28 +151,28 @@ bool
 Debugger::GetAutoConfirm () const
 {
     const uint32_t idx = ePropertyAutoConfirm;
-    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_instance_settings_table[idx].default_uint_value != 0);
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
 }
 
 const char *
 Debugger::GetFrameFormat() const
 {
     const uint32_t idx = ePropertyFrameFormat;
-    return m_collection_sp->GetPropertyAtIndexAsString (NULL, idx, g_instance_settings_table[idx].default_cstr_value);
+    return m_collection_sp->GetPropertyAtIndexAsString (NULL, idx, g_properties[idx].default_cstr_value);
 }
 
 bool
 Debugger::GetNotifyVoid () const
 {
     const uint32_t idx = ePropertyNotiftVoid;
-    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_instance_settings_table[idx].default_uint_value != 0);
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
 }
 
 const char *
 Debugger::GetPrompt() const
 {
     const uint32_t idx = ePropertyPrompt;
-    return m_collection_sp->GetPropertyAtIndexAsString (NULL, idx, g_instance_settings_table[idx].default_cstr_value);
+    return m_collection_sp->GetPropertyAtIndexAsString (NULL, idx, g_properties[idx].default_cstr_value);
 }
 
 void
@@ -189,14 +189,14 @@ const char *
 Debugger::GetThreadFormat() const
 {
     const uint32_t idx = ePropertyThreadFormat;
-    return m_collection_sp->GetPropertyAtIndexAsString (NULL, idx, g_instance_settings_table[idx].default_cstr_value);
+    return m_collection_sp->GetPropertyAtIndexAsString (NULL, idx, g_properties[idx].default_cstr_value);
 }
 
 lldb::ScriptLanguage
 Debugger::GetScriptLanguage() const
 {
     const uint32_t idx = ePropertyScriptLanguage;
-    return (lldb::ScriptLanguage)m_collection_sp->GetPropertyAtIndexAsEnumeration (NULL, idx, g_instance_settings_table[idx].default_uint_value);
+    return (lldb::ScriptLanguage)m_collection_sp->GetPropertyAtIndexAsEnumeration (NULL, idx, g_properties[idx].default_uint_value);
 }
 
 bool
@@ -210,7 +210,7 @@ uint32_t
 Debugger::GetTerminalWidth () const
 {
     const uint32_t idx = ePropertyTerminalWidth;
-    return m_collection_sp->GetPropertyAtIndexAsSInt64 (NULL, idx, g_instance_settings_table[idx].default_uint_value);
+    return m_collection_sp->GetPropertyAtIndexAsSInt64 (NULL, idx, g_properties[idx].default_uint_value);
 }
 
 bool
@@ -224,7 +224,7 @@ bool
 Debugger::GetUseExternalEditor () const
 {
     const uint32_t idx = ePropertyUseExternalEditor;
-    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_instance_settings_table[idx].default_uint_value != 0);
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
 }
 
 bool
@@ -238,21 +238,21 @@ uint32_t
 Debugger::GetStopSourceLineCount (bool before) const
 {
     const uint32_t idx = before ? ePropertyStopLineCountBefore : ePropertyStopLineCountAfter;
-    return m_collection_sp->GetPropertyAtIndexAsSInt64 (NULL, idx, g_instance_settings_table[idx].default_uint_value);
+    return m_collection_sp->GetPropertyAtIndexAsSInt64 (NULL, idx, g_properties[idx].default_uint_value);
 }
 
 Debugger::StopDisassemblyType
 Debugger::GetStopDisassemblyDisplay () const
 {
     const uint32_t idx = ePropertyStopDisassemblyDisplay;
-    return (Debugger::StopDisassemblyType)m_collection_sp->GetPropertyAtIndexAsEnumeration (NULL, idx, g_instance_settings_table[idx].default_uint_value);
+    return (Debugger::StopDisassemblyType)m_collection_sp->GetPropertyAtIndexAsEnumeration (NULL, idx, g_properties[idx].default_uint_value);
 }
 
 uint32_t
 Debugger::GetDisassemblyLineCount () const
 {
     const uint32_t idx = ePropertyStopDisassemblyCount;
-    return m_collection_sp->GetPropertyAtIndexAsSInt64 (NULL, idx, g_instance_settings_table[idx].default_uint_value);
+    return m_collection_sp->GetPropertyAtIndexAsSInt64 (NULL, idx, g_properties[idx].default_uint_value);
 }
 
 #pragma mark Debugger
@@ -431,11 +431,18 @@ Debugger::Debugger (lldb::LogOutputCallback log_callback, void *baton) :
     assert (default_platform_sp.get());
     m_platform_list.Append (default_platform_sp, true);
     
-    m_collection_sp->Initialize (g_instance_settings_table);
+    m_collection_sp->Initialize (g_properties);
     m_collection_sp->AppendProperty (ConstString("target"),
                                      ConstString("Settings specify to debugging targets."),
                                      true,
                                      Target::GetGlobalProperties()->GetValueProperties());
+    if (m_command_interpreter_ap.get())
+    {
+        m_collection_sp->AppendProperty (ConstString("interpreter"),
+                                         ConstString("Settings specify to the debugger's command interpreter."),
+                                         true,
+                                         m_command_interpreter_ap->GetValueProperties());
+    }
     OptionValueSInt64 *term_width = m_collection_sp->GetPropertyAtIndexAsOptionValueSInt64 (NULL, ePropertyTerminalWidth);
     term_width->SetMinimumValue(10);
     term_width->SetMaximumValue(1024);

@@ -64,7 +64,15 @@ public:
         m_value_was_set = false;
         return true;
     }
-    
+
+    virtual size_t
+    AutoComplete (CommandInterpreter &interpreter,
+                  const char *s,
+                  int match_start_point,
+                  int max_return_elements,
+                  bool &word_complete,
+                  StringList &matches);
+
     //---------------------------------------------------------------------
     // Subclass specific functions
     //---------------------------------------------------------------------

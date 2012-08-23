@@ -59,6 +59,19 @@
 using namespace lldb;
 using namespace lldb_private;
 
+
+static PropertyDefinition
+g_properties[] =
+{
+    { "expand-regex-aliases", OptionValue::eTypeBoolean, true, false, NULL, NULL, "If true, regular expression alias commands will show the expanded command that will be executed. This can be used to debug new regular expression alias commands." },
+    { NULL                  , OptionValue::eTypeInvalid, true, 0    , NULL, NULL, NULL }
+};
+
+enum
+{
+    ePropertyExpandRegexAliases = 0
+};
+
 ConstString &
 CommandInterpreter::GetStaticBroadcasterClass ()
 {
@@ -73,6 +86,7 @@ CommandInterpreter::CommandInterpreter
     bool synchronous_execution
 ) :
     Broadcaster (&debugger, "lldb.command-interpreter"),
+    Properties(OptionValuePropertiesSP(new OptionValueProperties(ConstString("interpreter")))),
     m_debugger (debugger),
     m_synchronous_execution (synchronous_execution),
     m_skip_lldbinit_files (false),
@@ -89,7 +103,17 @@ CommandInterpreter::CommandInterpreter
     SetEventName (eBroadcastBitResetPrompt, "reset-prompt");
     SetEventName (eBroadcastBitQuitCommandReceived, "quit");    
     CheckInWithManager ();
+    m_collection_sp->Initialize (g_properties);
 }
+
+bool
+CommandInterpreter::GetExpandRegexAliases () const
+{
+    const uint32_t idx = ePropertyExpandRegexAliases;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
+}
+
+
 
 void
 CommandInterpreter::Initialize ()
