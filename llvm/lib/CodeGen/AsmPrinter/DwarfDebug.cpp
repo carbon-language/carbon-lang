@@ -145,6 +145,8 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
     DwarfAccelTables = true;
     DarwinGDBCompat = true;
   }
+
+  isDarwinGDBCompat = DarwinGDBCompat;
   
   {
     NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);

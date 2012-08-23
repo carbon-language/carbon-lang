@@ -307,6 +307,9 @@ class DwarfDebug {
   // table for the same directory as DW_at_comp_dir.
   StringRef CompilationDir;
 
+  // A holder for the DarwinGDBCompat flag so that the compile unit can use it.
+  bool isDarwinGDBCompat;
+
 private:
 
   /// assignAbbrevNumber - Define a unique number for the abbreviation.
@@ -520,6 +523,10 @@ public:
   /// getStringPoolEntry - returns an entry into the string pool with the given
   /// string text.
   MCSymbol *getStringPoolEntry(StringRef Str);
+
+  /// useDarwinGDBCompat - returns whether or not to limit some of our debug
+  /// output to the limitations of darwin gdb.
+  bool useDarwinGDBCompat() { return isDarwinGDBCompat; }
 };
 } // End of namespace llvm
 
