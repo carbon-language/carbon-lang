@@ -67,8 +67,6 @@ RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
     return NULL;
 
   // User can not attach documentation to implicit instantiations.
-  // FIXME: all these implicit instantiations shoud be marked as implicit
-  // declarations and get caught by condition above.
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     if (FD->getTemplateSpecializationKind() == TSK_ImplicitInstantiation)
       return NULL;
