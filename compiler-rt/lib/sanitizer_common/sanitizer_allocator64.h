@@ -53,6 +53,13 @@ class DefaultSizeClassMap {
   static const uptr u3 = u2 + (l4 - l3) / s3;
   static const uptr u4 = u3 + (l5 - l4) / s4;
 
+  // Max cached in local cache blocks.
+  static const uptr c0 = 256;
+  static const uptr c1 = 64;
+  static const uptr c2 = 16;
+  static const uptr c3 = 4;
+  static const uptr c4 = 1;
+
  public:
   static const uptr kNumClasses = u4 + 1;
   static const uptr kMaxSize = l5;
@@ -75,6 +82,15 @@ class DefaultSizeClassMap {
     if (size <= l3) return u1 + (size - l2 + s2 - 1) / s2;
     if (size <= l4) return u2 + (size - l3 + s3 - 1) / s3;
     if (size <= l5) return u3 + (size - l4 + s4 - 1) / s4;
+    return 0;
+  }
+
+  static uptr MaxCached(uptr class_id) {
+    if (class_id <= u0) return c0;
+    if (class_id <= u1) return c1;
+    if (class_id <= u2) return c2;
+    if (class_id <= u3) return c3;
+    if (class_id <= u4) return c4;
     return 0;
   }
 };
@@ -131,10 +147,13 @@ class SizeClassAllocator64 {
       PopulateFreeList(class_id, region);
     }
     CHECK(!region->free_list.empty());
-    // Just take as many chunks as we have in the free list now.
-    // FIXME: this might be too much.
-    free_list->append_front(&region->free_list);
-    CHECK(region->free_list.empty());
+    const uptr count = SizeClassMap::MaxCached(class_id);
+    for (uptr i = 0; i < count && !region->free_list.empty(); i++) {
+      AllocatorListNode *node = region->free_list.front();
+      region->free_list.pop_front();
+      free_list->push_front(node);
+    }
+    CHECK(!free_list->empty());
   }
 
   // Swallow the entire free_list for the given class_id.
@@ -184,6 +203,7 @@ class SizeClassAllocator64 {
   static uptr AllocSize() { return kSpaceSize + AdditionalSize(); }
 
   static const uptr kNumClasses = 256;  // Power of two <= 256
+  typedef SizeClassMap SizeClassMapT;
 
  private:
   COMPILER_CHECK(kSpaceBeg % kSpaceSize == 0);
@@ -285,7 +305,10 @@ struct SizeClassAllocatorLocalCache {
 
   void Deallocate(SizeClassAllocator *allocator, uptr class_id, void *p) {
     CHECK_LT(class_id, kNumClasses);
-    free_lists_[class_id].push_front(reinterpret_cast<AllocatorListNode*>(p));
+    AllocatorFreeList *free_list = &free_lists_[class_id];
+    free_list->push_front(reinterpret_cast<AllocatorListNode*>(p));
+    if (free_list->size() >= 2 * SizeClassMap::MaxCached(class_id))
+      DrainHalf(allocator, class_id);
   }
 
   void Drain(SizeClassAllocator *allocator) {
@@ -296,7 +319,21 @@ struct SizeClassAllocatorLocalCache {
   }
 
   // private:
+  typedef typename SizeClassAllocator::SizeClassMapT SizeClassMap;
   AllocatorFreeList free_lists_[kNumClasses];
+
+  void DrainHalf(SizeClassAllocator *allocator, uptr class_id) {
+    AllocatorFreeList *free_list = &free_lists_[class_id];
+    AllocatorFreeList half;
+    half.clear();
+    const uptr count = free_list->size() / 2;
+    for (uptr i = 0; i < count; i++) {
+      AllocatorListNode *node = free_list->front();
+      free_list->pop_front();
+      half.push_front(node);
+    }
+    allocator->BulkDeallocate(class_id, &half);
+  }
 };
 
 // This class can (de)allocate only large chunks of memory using mmap/unmap.
