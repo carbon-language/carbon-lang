@@ -104,16 +104,27 @@ bool Parser::isCXXSimpleDeclaration(bool AllowForRangeDecl) {
   // isCXXDeclarationSpecifier will return TPResult::Ambiguous() only in such
   // a case.
 
-  TPResult TPR = isCXXDeclarationSpecifier();
+  bool InvalidAsDeclaration = false;
+  TPResult TPR = isCXXDeclarationSpecifier(TPResult::False(),
+                                           &InvalidAsDeclaration);
   if (TPR != TPResult::Ambiguous())
     return TPR != TPResult::False(); // Returns true for TPResult::True() or
                                      // TPResult::Error().
 
+  // FIXME: TryParseSimpleDeclaration doesn't look past the first initializer,
+  // and so gets some cases wrong. We can't carry on if we've already seen
+  // something which makes this statement invalid as a declaration in this case,
+  // since it can cause us to misparse valid code. Revisit this once
+  // TryParseInitDeclaratorList is fixed.
+  if (InvalidAsDeclaration)
+    return false;
+
   // FIXME: Add statistics about the number of ambiguous statements encountered
   // and how they were resolved (number of declarations+number of expressions).
 
-  // Ok, we have a simple-type-specifier/typename-specifier followed by a '('.
-  // We need tentative parsing...
+  // Ok, we have a simple-type-specifier/typename-specifier followed by a '(',
+  // or an identifier which doesn't resolve as anything. We need tentative
+  // parsing...
 
   TentativeParsingAction PA(*this);
   TPR = TryParseSimpleDeclaration(AllowForRangeDecl);
@@ -140,20 +151,28 @@ bool Parser::isCXXSimpleDeclaration(bool AllowForRangeDecl) {
 ///    attribute-specifier-seqopt type-specifier-seq declarator
 ///
 Parser::TPResult Parser::TryParseSimpleDeclaration(bool AllowForRangeDecl) {
-  // We know that we have a simple-type-specifier/typename-specifier followed
-  // by a '('.
-  assert(isCXXDeclarationSpecifier() == TPResult::Ambiguous());
-
   if (Tok.is(tok::kw_typeof))
     TryParseTypeofSpecifier();
   else {
+    if (Tok.is(tok::annot_cxxscope))
+      ConsumeToken();
     ConsumeToken();
-    
+
     if (getLangOpts().ObjC1 && Tok.is(tok::less))
       TryParseProtocolQualifiers();
   }
-  
-  assert(Tok.is(tok::l_paren) && "Expected '('");
+
+  // Two decl-specifiers in a row conclusively disambiguate this as being a
+  // simple-declaration. Don't bother calling isCXXDeclarationSpecifier in the
+  // overwhelmingly common case that the next token is a '('.
+  if (Tok.isNot(tok::l_paren)) {
+    TPResult TPR = isCXXDeclarationSpecifier();
+    if (TPR == TPResult::Ambiguous())
+      return TPResult::True();
+    if (TPR == TPResult::True() || TPR == TPResult::Error())
+      return TPR;
+    assert(TPR == TPResult::False());
+  }
 
   TPResult TPR = TryParseInitDeclaratorList();
   if (TPR != TPResult::Ambiguous())

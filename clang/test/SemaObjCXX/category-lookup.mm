@@ -6,5 +6,5 @@
 @end
 
 void f() {
-  NSScriptClassDescription *f; // expected-error {{use of undeclared identifier 'NSScriptClassDescription'}}
+  NSScriptClassDescription *f; // expected-error {{unknown type name 'NSScriptClassDescription'}}
 }

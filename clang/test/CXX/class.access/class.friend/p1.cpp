@@ -20,7 +20,7 @@ void test1() {
   g()->f();
   S::f();
   X::g(); // expected-error{{no member named 'g' in 'X'}}
-  X::S x_s; // expected-error{{no member named 'S' in 'X'}}
+  X::S x_s; // expected-error{{no type named 'S' in 'X'}}
   X x;
   x.g(); // expected-error{{no member named 'g' in 'X'}}
 }
@@ -44,16 +44,16 @@ namespace N {
     S s;
     S::f();
     X::g(); // expected-error{{no member named 'g' in 'N::X'}}
-    X::S x_s; // expected-error{{no member named 'S' in 'N::X'}}
+    X::S x_s; // expected-error{{no type named 'S' in 'N::X'}}
     X x;
     x.g(); // expected-error{{no member named 'g' in 'N::X'}}
 
     g2();
     S2 s2;
     ::g2(); // expected-error{{no member named 'g2' in the global namespace}}
-    ::S2 g_s2; // expected-error{{no member named 'S2' in the global namespace}}
+    ::S2 g_s2; // expected-error{{no type named 'S2' in the global namespace}}
     X::g2(); // expected-error{{no member named 'g2' in 'N::X'}}
-    X::S2 x_s2; // expected-error{{no member named 'S2' in 'N::X'}}
+    X::S2 x_s2; // expected-error{{no type named 'S2' in 'N::X'}}
     x.g2(); // expected-error{{no member named 'g2' in 'N::X'}}
   }
 }

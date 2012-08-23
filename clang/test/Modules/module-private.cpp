@@ -12,9 +12,12 @@ void test() {
 }
 
 int test_broken() {
-  HiddenStruct hidden; // expected-error{{use of undeclared identifier 'HiddenStruct'}}
+  HiddenStruct hidden; // \
+  // expected-error{{must use 'struct' tag to refer to type 'HiddenStruct' in this scope}} \
+  // expected-error{{definition of 'struct HiddenStruct' must be imported}}
+  // expected-note@3 {{previous definition is here}}
 
-  Integer i; // expected-error{{use of undeclared identifier 'Integer'}}
+  Integer i; // expected-error{{unknown type name 'Integer'}}
 
   int *ip = 0;
   f1(ip); // expected-error{{use of undeclared identifier 'f1'}}
