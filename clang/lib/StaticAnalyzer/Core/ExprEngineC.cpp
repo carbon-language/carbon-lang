@@ -242,7 +242,9 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
        I != E; ++I) {
     
     Pred = *I;
-    
+    ProgramStateRef state = Pred->getState();
+    const LocationContext *LCtx = Pred->getLocationContext();
+
     switch (CastE->getCastKind()) {
       case CK_LValueToRValue:
         llvm_unreachable("LValueToRValue casts handled earlier.");
@@ -262,6 +264,7 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
       case CK_NonAtomicToAtomic:
         // True no-ops.
       case CK_NoOp:
+      case CK_UserDefinedConversion:
       case CK_FunctionToPointerDecay: {
         // Copy the SVal of Ex to CastE.
         ProgramStateRef state = Pred->getState();
@@ -299,8 +302,6 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
       case CK_AnyPointerToBlockPointerCast:  
       case CK_ObjCObjectLValueCast: {
         // Delegate to SValBuilder to process.
-        ProgramStateRef state = Pred->getState();
-        const LocationContext *LCtx = Pred->getLocationContext();
         SVal V = state->getSVal(Ex, LCtx);
         V = svalBuilder.evalCast(V, T, ExTy);
         state = state->BindExpr(CastE, LCtx, V);
@@ -310,8 +311,6 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
       case CK_DerivedToBase:
       case CK_UncheckedDerivedToBase: {
         // For DerivedToBase cast, delegate to the store manager.
-        ProgramStateRef state = Pred->getState();
-        const LocationContext *LCtx = Pred->getLocationContext();
         SVal val = state->getSVal(Ex, LCtx);
         val = getStoreManager().evalDerivedToBase(val, CastE);
         state = state->BindExpr(CastE, LCtx, val);
@@ -320,8 +319,6 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
       }
       // Handle C++ dyn_cast.
       case CK_Dynamic: {
-        ProgramStateRef state = Pred->getState();
-        const LocationContext *LCtx = Pred->getLocationContext();
         SVal val = state->getSVal(Ex, LCtx);
 
         // Compute the type of the result.
@@ -369,7 +366,6 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
       case CK_BaseToDerivedMemberPointer:
       case CK_DerivedToBaseMemberPointer:
       case CK_ReinterpretMemberPointer:
-      case CK_UserDefinedConversion:
       case CK_ConstructorConversion:
       case CK_VectorSplat:
       case CK_MemberPointerToBoolean:
@@ -378,12 +374,10 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
         QualType resultType = CastE->getType();
         if (CastE->isGLValue())
           resultType = getContext().getPointerType(resultType);
-        const LocationContext *LCtx = Pred->getLocationContext();
         SVal result = svalBuilder.conjureSymbolVal(0, CastE, LCtx,
                                                    resultType,
                                                    currBldrCtx->blockCount());
-        ProgramStateRef state = Pred->getState()->BindExpr(CastE, LCtx,
-                                                               result);
+        state = state->BindExpr(CastE, LCtx, result);
         Bldr.generateNode(CastE, Pred, state);
         continue;
       }

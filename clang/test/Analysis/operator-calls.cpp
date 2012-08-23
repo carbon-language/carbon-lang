@@ -30,3 +30,22 @@ struct IntComparable {
 void testMemberOperator(IntComparable B) {
   clang_analyzer_eval(B == 0); // expected-warning{{TRUE}}
 }
+
+
+
+namespace UserDefinedConversions {
+  class Convertible {
+  public:
+    operator int() const {
+      return 42;
+    }
+    operator bool() const {
+      return true;
+    }
+  };
+
+  void test(const Convertible &obj) {
+    clang_analyzer_eval((int)obj == 42); // expected-warning{{TRUE}}
+    clang_analyzer_eval(obj); // expected-warning{{TRUE}}
+  }
+}
