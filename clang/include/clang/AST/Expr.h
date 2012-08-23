@@ -3308,7 +3308,7 @@ public:
 
   void setExprs(ASTContext &C, Expr ** Exprs, unsigned NumExprs);
 
-  unsigned getShuffleMaskIdx(ASTContext &Ctx, unsigned N) {
+  unsigned getShuffleMaskIdx(ASTContext &Ctx, unsigned N) const {
     assert((N < NumExprs - 2) && "Shuffle idx out of range!");
     return getExpr(N+2)->EvaluateKnownConstInt(Ctx).getZExtValue();
   }

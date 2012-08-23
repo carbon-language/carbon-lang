@@ -1583,7 +1583,7 @@ public:
   }
 
   /// \brief Returns the CXXConstructExpr from this new-expression, or NULL.
-  const CXXConstructExpr* getConstructExpr() {
+  const CXXConstructExpr* getConstructExpr() const {
     return dyn_cast_or_null<CXXConstructExpr>(getInitializer());
   }
 
