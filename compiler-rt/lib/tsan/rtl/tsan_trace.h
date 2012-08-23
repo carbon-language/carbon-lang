@@ -19,9 +19,13 @@
 
 namespace __tsan {
 
+const int kTracePartSize = 16 * 1024;
+#ifndef TSAN_HISTORY_SIZE  // in kibitraces
 const int kTraceParts = 8;
-const int kTraceSize = 128*1024;
-const int kTracePartSize = kTraceSize / kTraceParts;
+#else
+const int kTraceParts = TSAN_HISTORY_SIZE * 1024 / kTracePartSize;
+#endif
+const int kTraceSize = kTracePartSize * kTraceParts;
 
 // Must fit into 3 bits.
 enum EventType {
