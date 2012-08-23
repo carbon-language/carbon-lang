@@ -953,7 +953,7 @@ static void NoteLValueLocation(EvalInfo &Info, APValue::LValueBase Base) {
   if (VD)
     Info.Note(VD->getLocation(), diag::note_declared_at);
   else
-    Info.Note(Base.dyn_cast<const Expr*>()->getExprLoc(),
+    Info.Note(Base.get<const Expr*>()->getExprLoc(),
               diag::note_constexpr_temporary_here);
 }
 
@@ -2586,7 +2586,7 @@ public:
     const FieldDecl *FD = dyn_cast<FieldDecl>(E->getMemberDecl());
     if (!FD) return Error(E);
     assert(!FD->getType()->isReferenceType() && "prvalue reference?");
-    assert(BaseTy->getAs<RecordType>()->getDecl()->getCanonicalDecl() ==
+    assert(BaseTy->castAs<RecordType>()->getDecl()->getCanonicalDecl() ==
            FD->getParent()->getCanonicalDecl() && "record / field mismatch");
 
     SubobjectDesignator Designator(BaseTy);
@@ -2665,7 +2665,7 @@ public:
     if (E->isArrow()) {
       if (!EvaluatePointer(E->getBase(), Result, this->Info))
         return false;
-      BaseTy = E->getBase()->getType()->getAs<PointerType>()->getPointeeType();
+      BaseTy = E->getBase()->getType()->castAs<PointerType>()->getPointeeType();
     } else if (E->getBase()->isRValue()) {
       assert(E->getBase()->getType()->isRecordType());
       if (!EvaluateTemporary(E->getBase(), Result, this->Info))
@@ -3036,7 +3036,7 @@ bool PointerExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   if (E->getOpcode() == BO_Sub)
     AdditionalOffset = -AdditionalOffset;
 
-  QualType Pointee = PExp->getType()->getAs<PointerType>()->getPointeeType();
+  QualType Pointee = PExp->getType()->castAs<PointerType>()->getPointeeType();
   return HandleLValueArrayAdjustment(Info, E, Result, Pointee,
                                      AdditionalOffset);
 }
@@ -5176,7 +5176,7 @@ bool IntExprEvaluator::VisitUnaryExprOrTypeTraitExpr(
     QualType Ty = E->getTypeOfArgument();
 
     if (Ty->isVectorType()) {
-      unsigned n = Ty->getAs<VectorType>()->getNumElements();
+      unsigned n = Ty->castAs<VectorType>()->getNumElements();
 
       // The vec_step built-in functions that take a 3-component
       // vector return 4. (OpenCL 1.1 spec 6.11.12)
@@ -5753,7 +5753,7 @@ static bool EvaluateComplex(const Expr *E, ComplexValue &Result,
 }
 
 bool ComplexExprEvaluator::ZeroInitialization(const Expr *E) {
-  QualType ElemTy = E->getType()->getAs<ComplexType>()->getElementType();
+  QualType ElemTy = E->getType()->castAs<ComplexType>()->getElementType();
   if (ElemTy->isRealFloatingType()) {
     Result.makeComplexFloat();
     APFloat Zero = APFloat::getZero(Info.Ctx.getFloatTypeSemantics(ElemTy));
@@ -5911,9 +5911,9 @@ bool ComplexExprEvaluator::VisitCastExpr(const CastExpr *E) {
     if (!Visit(E->getSubExpr()))
       return false;
 
-    QualType To = E->getType()->getAs<ComplexType>()->getElementType();
+    QualType To = E->getType()->castAs<ComplexType>()->getElementType();
     QualType From
-      = E->getSubExpr()->getType()->getAs<ComplexType>()->getElementType();
+      = E->getSubExpr()->getType()->castAs<ComplexType>()->getElementType();
     Result.makeComplexFloat();
     return HandleIntToFloatCast(Info, E, From, Result.IntReal,
                                 To, Result.FloatReal) &&

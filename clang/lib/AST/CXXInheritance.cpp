@@ -363,8 +363,8 @@ bool CXXRecordDecl::FindBaseClass(const CXXBaseSpecifier *Specifier,
                                   void *BaseRecord) {
   assert(((Decl *)BaseRecord)->getCanonicalDecl() == BaseRecord &&
          "User data for FindBaseClass is not canonical!");
-  return Specifier->getType()->getAs<RecordType>()->getDecl()
-           ->getCanonicalDecl() == BaseRecord;
+  return Specifier->getType()->castAs<RecordType>()->getDecl()
+            ->getCanonicalDecl() == BaseRecord;
 }
 
 bool CXXRecordDecl::FindVirtualBaseClass(const CXXBaseSpecifier *Specifier, 
@@ -373,14 +373,15 @@ bool CXXRecordDecl::FindVirtualBaseClass(const CXXBaseSpecifier *Specifier,
   assert(((Decl *)BaseRecord)->getCanonicalDecl() == BaseRecord &&
          "User data for FindBaseClass is not canonical!");
   return Specifier->isVirtual() &&
-         Specifier->getType()->getAs<RecordType>()->getDecl()
-           ->getCanonicalDecl() == BaseRecord;
+         Specifier->getType()->castAs<RecordType>()->getDecl()
+            ->getCanonicalDecl() == BaseRecord;
 }
 
 bool CXXRecordDecl::FindTagMember(const CXXBaseSpecifier *Specifier, 
                                   CXXBasePath &Path,
                                   void *Name) {
-  RecordDecl *BaseRecord = Specifier->getType()->getAs<RecordType>()->getDecl();
+  RecordDecl *BaseRecord =
+    Specifier->getType()->castAs<RecordType>()->getDecl();
 
   DeclarationName N = DeclarationName::getFromOpaquePtr(Name);
   for (Path.Decls = BaseRecord->lookup(N);
@@ -396,7 +397,8 @@ bool CXXRecordDecl::FindTagMember(const CXXBaseSpecifier *Specifier,
 bool CXXRecordDecl::FindOrdinaryMember(const CXXBaseSpecifier *Specifier, 
                                        CXXBasePath &Path,
                                        void *Name) {
-  RecordDecl *BaseRecord = Specifier->getType()->getAs<RecordType>()->getDecl();
+  RecordDecl *BaseRecord =
+    Specifier->getType()->castAs<RecordType>()->getDecl();
   
   const unsigned IDNS = IDNS_Ordinary | IDNS_Tag | IDNS_Member;
   DeclarationName N = DeclarationName::getFromOpaquePtr(Name);
@@ -414,7 +416,8 @@ bool CXXRecordDecl::
 FindNestedNameSpecifierMember(const CXXBaseSpecifier *Specifier, 
                               CXXBasePath &Path,
                               void *Name) {
-  RecordDecl *BaseRecord = Specifier->getType()->getAs<RecordType>()->getDecl();
+  RecordDecl *BaseRecord =
+    Specifier->getType()->castAs<RecordType>()->getDecl();
   
   DeclarationName N = DeclarationName::getFromOpaquePtr(Name);
   for (Path.Decls = BaseRecord->lookup(N);
@@ -692,7 +695,7 @@ AddIndirectPrimaryBases(const CXXRecordDecl *RD, ASTContext &Context,
            "Cannot get indirect primary bases for class with dependent bases.");
 
     const CXXRecordDecl *BaseDecl =
-      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+      cast<CXXRecordDecl>(I->getType()->castAs<RecordType>()->getDecl());
 
     // Only bases with virtual bases participate in computing the
     // indirect primary virtual base classes.
