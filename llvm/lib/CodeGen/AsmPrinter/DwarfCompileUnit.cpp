@@ -1028,8 +1028,10 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   // AT_specification code in order to work around a bug in older
   // gdbs that requires the linkage name to resolve multiple template
   // functions.
+  // TODO: Remove this set of code when we get rid of the old gdb
+  // compatibility.
   StringRef LinkageName = SP.getLinkageName();
-  if (!LinkageName.empty())
+  if (!LinkageName.empty() && DD->useDarwinGDBCompat())
     addString(SPDie, dwarf::DW_AT_MIPS_linkage_name,
               getRealLinkageName(LinkageName));
 
@@ -1042,6 +1044,11 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
 
     return SPDie;
   }
+
+  // Add the linkage name if we have one.
+  if (!LinkageName.empty() && !DD->useDarwinGDBCompat())
+    addString(SPDie, dwarf::DW_AT_MIPS_linkage_name,
+              getRealLinkageName(LinkageName));
 
   // Constructors and operators for anonymous aggregates do not have names.
   if (!SP.getName().empty())
