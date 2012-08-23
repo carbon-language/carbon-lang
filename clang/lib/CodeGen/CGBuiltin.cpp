@@ -1486,13 +1486,33 @@ CodeGenFunction::EmitPointerWithAlignment(const Expr *Addr) {
       return Ptr;
     } else if (ICE->getCastKind() == CK_ArrayToPointerDecay) {
       LValue LV = EmitLValue(ICE->getSubExpr());
-      return std::make_pair(LV.getAddress(), LV.getAlignment().getQuantity());
+      unsigned Align = LV.getAlignment().getQuantity();
+      if (!Align) {
+        // FIXME: Once LValues are fixed to always set alignment,
+        // zap this code.
+        QualType PtTy = ICE->getSubExpr()->getType();
+        if (!PtTy->isIncompleteType())
+          Align = getContext().getTypeAlignInChars(PtTy).getQuantity();
+        else
+          Align = 1;
+      }
+      return std::make_pair(LV.getAddress(), Align);
     }
   }
   if (const UnaryOperator *UO = dyn_cast<UnaryOperator>(Addr)) {
     if (UO->getOpcode() == UO_AddrOf) {
       LValue LV = EmitLValue(UO->getSubExpr());
-      return std::make_pair(LV.getAddress(), LV.getAlignment().getQuantity());
+      unsigned Align = LV.getAlignment().getQuantity();
+      if (!Align) {
+        // FIXME: Once LValues are fixed to always set alignment,
+        // zap this code.
+        QualType PtTy = UO->getSubExpr()->getType();
+        if (!PtTy->isIncompleteType())
+          Align = getContext().getTypeAlignInChars(PtTy).getQuantity();
+        else
+          Align = 1;
+      }
+      return std::make_pair(LV.getAddress(), Align);
     }
   }
 
