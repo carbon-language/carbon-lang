@@ -177,6 +177,10 @@ public:
   ///
   bool isLittleEndianEncoding() const;
 
+  /// guessInstructionProperties - should we just guess unset instruction
+  /// properties?
+  bool guessInstructionProperties() const;
+
 private:
   void ComputeInstrsByEnum() const;
 };

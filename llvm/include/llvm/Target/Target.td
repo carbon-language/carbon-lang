@@ -631,6 +631,17 @@ class InstrInfo {
   // Sparc manual specifies its instructions in the format [31..0] (big), while
   // PowerPC specifies them using the format [0..31] (little).
   bit isLittleEndianEncoding = 0;
+
+  // The instruction properties mayLoad, mayStore, and hasSideEffects are unset
+  // by default, and TableGen will infer their value from the instruction
+  // pattern when possible.
+  //
+  // Normally, TableGen will issue an error it it can't infer the value of a
+  // property that hasn't been set explicitly. When guessInstructionProperties
+  // is set, it will guess a safe value instead.
+  //
+  // This option is a temporary migration help. It will go away.
+  bit guessInstructionProperties = 1;
 }
 
 // Standard Pseudo Instructions.

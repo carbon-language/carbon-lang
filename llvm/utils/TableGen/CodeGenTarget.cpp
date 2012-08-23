@@ -334,6 +334,15 @@ bool CodeGenTarget::isLittleEndianEncoding() const {
   return getInstructionSet()->getValueAsBit("isLittleEndianEncoding");
 }
 
+/// guessInstructionProperties - Return true if it's OK to guess instruction
+/// properties instead of raising an error.
+///
+/// This is configurable as a temporary migration aid. It will eventually be
+/// permanently false.
+bool CodeGenTarget::guessInstructionProperties() const {
+  return getInstructionSet()->getValueAsBit("guessInstructionProperties");
+}
+
 //===----------------------------------------------------------------------===//
 // ComplexPattern implementation
 //
