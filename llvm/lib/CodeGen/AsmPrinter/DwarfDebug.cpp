@@ -850,7 +850,11 @@ void DwarfDebug::endModule() {
   emitDebugMacInfo();
 
   // Emit inline info.
-  emitDebugInlineInfo();
+  // TODO: When we don't need the option anymore we
+  // can remove all of the code that this section
+  // depends upon.
+  if (DarwinGDBCompat)
+    emitDebugInlineInfo();
 
   // Emit info into a debug str section.
   emitDebugStr();
