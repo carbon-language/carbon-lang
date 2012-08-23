@@ -1479,6 +1479,13 @@ public:
   inline ddiag_iterator ddiag_end() const;
 
   // Low-level accessors
+    
+  /// \brief Mark the lookup table as needing to be built.  This should be
+  /// used only if setHasExternalLexicalStorage() has been called.
+  void setMustBuildLookupTable() {
+    assert(ExternalLexicalStorage && "Requires external lexical storage");
+    LookupPtr.setInt(true);
+  }
 
   /// \brief Retrieve the internal representation of the lookup structure.
   /// This may omit some names if we are lazily building the structure.
