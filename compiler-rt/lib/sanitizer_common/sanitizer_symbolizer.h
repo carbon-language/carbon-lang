@@ -52,40 +52,20 @@ struct AddressInfo {
 // This function should NOT be called from two threads simultaneously.
 uptr SymbolizeCode(uptr address, AddressInfo *frames, uptr max_frames);
 
-// Debug info routines
-struct DWARFSection {
-  const char *data;
-  uptr size;
-  DWARFSection() {
-    data = 0;
-    size = 0;
-  }
-};
-// Returns true on success.
-bool FindDWARFSection(uptr object_file_addr, const char *section_name,
-                      DWARFSection *section);
-bool IsFullNameOfDWARFSection(const char *full_name, const char *short_name);
+// Starts external symbolizer program in a subprocess. Sanitizer communicates
+// with external symbolizer via pipes.
+bool InitializeExternalSymbolizer(const char *path_to_symbolizer);
 
-class DWARFContext;
-DWARFContext *getDWARFContext(DWARFSection debug_info,
-                              DWARFSection debug_abbrev,
-                              DWARFSection debug_aranges,
-                              DWARFSection debug_line,
-                              DWARFSection debug_str);
-void getLineInfoFromContext(DWARFContext *context, AddressInfo *info);
-
-class ModuleDIContext {
+class LoadedModule {
  public:
-  ModuleDIContext(const char *module_name, uptr base_address);
+  LoadedModule(const char *module_name, uptr base_address);
   void addAddressRange(uptr beg, uptr end);
   bool containsAddress(uptr address) const;
-  void getAddressInfo(AddressInfo *info);
 
   const char *full_name() const { return full_name_; }
+  uptr base_address() const { return base_address_; }
 
  private:
-  void CreateDWARFContext();
-
   struct AddressRange {
     uptr beg;
     uptr end;
@@ -96,13 +76,17 @@ class ModuleDIContext {
   static const uptr kMaxNumberOfAddressRanges = 8;
   AddressRange ranges_[kMaxNumberOfAddressRanges];
   uptr n_ranges_;
-  uptr mapped_addr_;
-  uptr mapped_size_;
-  DWARFContext *dwarf_context_;
 };
 
-// OS-dependent function that gets the linked list of all loaded modules.
-uptr GetListOfModules(ModuleDIContext *modules, uptr max_modules);
+// Creates external symbolizer connected via pipe, user should write
+// to output_fd and read from input_fd.
+bool StartSymbolizerSubprocess(const char *path_to_symbolizer,
+                               int *input_fd, int *output_fd);
+
+// OS-dependent function that fills array with descriptions of at most
+// "max_modules" currently loaded modules. Returns the number of
+// initialized modules.
+uptr GetListOfModules(LoadedModule *modules, uptr max_modules);
 
 }  // namespace __sanitizer
 

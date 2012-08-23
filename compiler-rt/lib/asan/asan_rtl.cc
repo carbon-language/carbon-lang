@@ -25,6 +25,7 @@
 #include "sanitizer_common/sanitizer_atomic.h"
 #include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_libc.h"
+#include "sanitizer_common/sanitizer_symbolizer.h"
 
 namespace __sanitizer {
 using namespace __asan;
@@ -360,6 +361,13 @@ void __asan_init() {
   }
 
   InstallSignalHandlers();
+  // Start symbolizer process if necessary.
+  if (flags()->symbolize) {
+    const char *external_symbolizer = GetEnv("ASAN_SYMBOLIZER_PATH");
+    if (external_symbolizer) {
+      InitializeExternalSymbolizer(external_symbolizer);
+    }
+  }
 #ifdef _WIN32
   __asan_set_symbolize_callback(WinSymbolize);
 #endif  // _WIN32

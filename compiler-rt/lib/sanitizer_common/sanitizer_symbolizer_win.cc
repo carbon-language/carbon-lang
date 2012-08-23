@@ -19,13 +19,13 @@
 
 namespace __sanitizer {
 
-bool FindDWARFSection(uptr object_file_addr, const char *section_name,
-                      DWARFSection *section) {
+bool StartSymbolizerSubprocess(const char *path_to_symbolizer,
+                               int *input_fd, int *output_fd) {
   UNIMPLEMENTED();
   return false;
 }
 
-uptr GetListOfModules(ModuleDIContext *modules, uptr max_modules) {
+uptr GetListOfModules(LoadedModule *modules, uptr max_modules) {
   UNIMPLEMENTED();
   return 0;
 };

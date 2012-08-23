@@ -12,7 +12,6 @@ set(SANITIZER_SOURCES
   sanitizer_printf.cc
   sanitizer_symbolizer.cc
   sanitizer_symbolizer_linux.cc
-  sanitizer_symbolizer_llvm.cc
   sanitizer_symbolizer_mac.cc
   sanitizer_symbolizer_win.cc
   sanitizer_win.cc
