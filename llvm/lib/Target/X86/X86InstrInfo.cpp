@@ -1786,10 +1786,8 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   MachineInstr *MI = MBBI;
   MachineFunction &MF = *MI->getParent()->getParent();
   // All instructions input are two-addr instructions.  Get the known operands.
-  unsigned Dest = MI->getOperand(0).getReg();
-  unsigned Src = MI->getOperand(1).getReg();
-  bool isDead = MI->getOperand(0).isDead();
-  bool isKill = MI->getOperand(1).isKill();
+  const MachineOperand &Dest = MI->getOperand(0);
+  const MachineOperand &Src = MI->getOperand(1);
 
   MachineInstr *NewMI = NULL;
   // FIXME: 16-bit LEA's are really slow on Athlons, but not bad on P4's.  When
@@ -1807,11 +1805,9 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     unsigned B = MI->getOperand(1).getReg();
     unsigned C = MI->getOperand(2).getReg();
     if (B != C) return 0;
-    unsigned A = MI->getOperand(0).getReg();
     unsigned M = MI->getOperand(3).getImm();
     NewMI = BuildMI(MF, MI->getDebugLoc(), get(X86::PSHUFDri))
-      .addReg(A, RegState::Define | getDeadRegState(isDead))
-      .addReg(B, getKillRegState(isKill)).addImm(M);
+      .addOperand(Dest).addOperand(Src).addImm(M);
     break;
   }
   case X86::SHUFPDrri: {
@@ -1821,15 +1817,13 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     unsigned B = MI->getOperand(1).getReg();
     unsigned C = MI->getOperand(2).getReg();
     if (B != C) return 0;
-    unsigned A = MI->getOperand(0).getReg();
     unsigned M = MI->getOperand(3).getImm();
 
     // Convert to PSHUFD mask.
     M = ((M & 1) << 1) | ((M & 1) << 3) | ((M & 2) << 4) | ((M & 2) << 6)| 0x44;
 
     NewMI = BuildMI(MF, MI->getDebugLoc(), get(X86::PSHUFDri))
-      .addReg(A, RegState::Define | getDeadRegState(isDead))
-      .addReg(B, getKillRegState(isKill)).addImm(M);
+      .addOperand(Dest).addOperand(Src).addImm(M);
     break;
   }
   case X86::SHL64ri: {
@@ -1840,15 +1834,14 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     if (ShAmt == 0 || ShAmt >= 4) return 0;
 
     // LEA can't handle RSP.
-    if (TargetRegisterInfo::isVirtualRegister(Src) &&
-        !MF.getRegInfo().constrainRegClass(Src, &X86::GR64_NOSPRegClass))
+    if (TargetRegisterInfo::isVirtualRegister(Src.getReg()) &&
+        !MF.getRegInfo().constrainRegClass(Src.getReg(),
+                                           &X86::GR64_NOSPRegClass))
       return 0;
 
     NewMI = BuildMI(MF, MI->getDebugLoc(), get(X86::LEA64r))
-      .addReg(Dest, RegState::Define | getDeadRegState(isDead))
-      .addReg(0).addImm(1 << ShAmt)
-      .addReg(Src, getKillRegState(isKill))
-      .addImm(0).addReg(0);
+      .addOperand(Dest)
+      .addReg(0).addImm(1 << ShAmt).addOperand(Src).addImm(0).addReg(0);
     break;
   }
   case X86::SHL32ri: {
@@ -1859,15 +1852,15 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     if (ShAmt == 0 || ShAmt >= 4) return 0;
 
     // LEA can't handle ESP.
-    if (TargetRegisterInfo::isVirtualRegister(Src) &&
-        !MF.getRegInfo().constrainRegClass(Src, &X86::GR32_NOSPRegClass))
+    if (TargetRegisterInfo::isVirtualRegister(Src.getReg()) &&
+        !MF.getRegInfo().constrainRegClass(Src.getReg(),
+                                           &X86::GR32_NOSPRegClass))
       return 0;
 
     unsigned Opc = is64Bit ? X86::LEA64_32r : X86::LEA32r;
     NewMI = BuildMI(MF, MI->getDebugLoc(), get(Opc))
-      .addReg(Dest, RegState::Define | getDeadRegState(isDead))
-      .addReg(0).addImm(1 << ShAmt)
-      .addReg(Src, getKillRegState(isKill)).addImm(0).addReg(0);
+      .addOperand(Dest)
+      .addReg(0).addImm(1 << ShAmt).addOperand(Src).addImm(0).addReg(0);
     break;
   }
   case X86::SHL16ri: {
@@ -1880,10 +1873,8 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     if (DisableLEA16)
       return is64Bit ? convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV) : 0;
     NewMI = BuildMI(MF, MI->getDebugLoc(), get(X86::LEA16r))
-      .addReg(Dest, RegState::Define | getDeadRegState(isDead))
-      .addReg(0).addImm(1 << ShAmt)
-      .addReg(Src, getKillRegState(isKill))
-      .addImm(0).addReg(0);
+      .addOperand(Dest)
+      .addReg(0).addImm(1 << ShAmt).addOperand(Src).addImm(0).addReg(0);
     break;
   }
   default: {
@@ -1906,14 +1897,12 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
         (const TargetRegisterClass*)&X86::GR32_NOSPRegClass;
 
       // LEA can't handle RSP.
-      if (TargetRegisterInfo::isVirtualRegister(Src) &&
-          !MF.getRegInfo().constrainRegClass(Src, RC))
+      if (TargetRegisterInfo::isVirtualRegister(Src.getReg()) &&
+          !MF.getRegInfo().constrainRegClass(Src.getReg(), RC))
         return 0;
 
-      NewMI = addRegOffset(BuildMI(MF, MI->getDebugLoc(), get(Opc))
-                              .addReg(Dest, RegState::Define |
-                                      getDeadRegState(isDead)),
-                              Src, isKill, 1);
+      NewMI = addOffset(BuildMI(MF, MI->getDebugLoc(), get(Opc))
+                        .addOperand(Dest).addOperand(Src), 1);
       break;
     }
     case X86::INC16r:
@@ -1921,10 +1910,8 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       if (DisableLEA16)
         return is64Bit ? convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV) : 0;
       assert(MI->getNumOperands() >= 2 && "Unknown inc instruction!");
-      NewMI = addRegOffset(BuildMI(MF, MI->getDebugLoc(), get(X86::LEA16r))
-                           .addReg(Dest, RegState::Define |
-                                   getDeadRegState(isDead)),
-                           Src, isKill, 1);
+      NewMI = addOffset(BuildMI(MF, MI->getDebugLoc(), get(X86::LEA16r))
+                        .addOperand(Dest).addOperand(Src), 1);
       break;
     case X86::DEC64r:
     case X86::DEC32r:
@@ -1936,14 +1923,12 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
         (const TargetRegisterClass*)&X86::GR64_NOSPRegClass :
         (const TargetRegisterClass*)&X86::GR32_NOSPRegClass;
       // LEA can't handle RSP.
-      if (TargetRegisterInfo::isVirtualRegister(Src) &&
-          !MF.getRegInfo().constrainRegClass(Src, RC))
+      if (TargetRegisterInfo::isVirtualRegister(Src.getReg()) &&
+          !MF.getRegInfo().constrainRegClass(Src.getReg(), RC))
         return 0;
 
-      NewMI = addRegOffset(BuildMI(MF, MI->getDebugLoc(), get(Opc))
-                              .addReg(Dest, RegState::Define |
-                                      getDeadRegState(isDead)),
-                              Src, isKill, -1);
+      NewMI = addOffset(BuildMI(MF, MI->getDebugLoc(), get(Opc))
+                        .addOperand(Dest).addOperand(Src), -1);
       break;
     }
     case X86::DEC16r:
@@ -1951,10 +1936,8 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       if (DisableLEA16)
         return is64Bit ? convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV) : 0;
       assert(MI->getNumOperands() >= 2 && "Unknown dec instruction!");
-      NewMI = addRegOffset(BuildMI(MF, MI->getDebugLoc(), get(X86::LEA16r))
-                           .addReg(Dest, RegState::Define |
-                                   getDeadRegState(isDead)),
-                           Src, isKill, -1);
+      NewMI = addOffset(BuildMI(MF, MI->getDebugLoc(), get(X86::LEA16r))
+                        .addOperand(Dest).addOperand(Src), -1);
       break;
     case X86::ADD64rr:
     case X86::ADD64rr_DB:
@@ -1981,9 +1964,8 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
         return 0;
 
       NewMI = addRegReg(BuildMI(MF, MI->getDebugLoc(), get(Opc))
-                        .addReg(Dest, RegState::Define |
-                                getDeadRegState(isDead)),
-                        Src, isKill, Src2, isKill2);
+                        .addOperand(Dest),
+                        Src.getReg(), Src.isKill(), Src2, isKill2);
 
       // Preserve undefness of the operands.
       bool isUndef = MI->getOperand(1).isUndef();
@@ -2003,9 +1985,15 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       unsigned Src2 = MI->getOperand(2).getReg();
       bool isKill2 = MI->getOperand(2).isKill();
       NewMI = addRegReg(BuildMI(MF, MI->getDebugLoc(), get(X86::LEA16r))
-                        .addReg(Dest, RegState::Define |
-                                getDeadRegState(isDead)),
-                        Src, isKill, Src2, isKill2);
+                        .addOperand(Dest),
+                        Src.getReg(), Src.isKill(), Src2, isKill2);
+
+      // Preserve undefness of the operands.
+      bool isUndef = MI->getOperand(1).isUndef();
+      bool isUndef2 = MI->getOperand(2).isUndef();
+      NewMI->getOperand(1).setIsUndef(isUndef);
+      NewMI->getOperand(3).setIsUndef(isUndef2);
+
       if (LV && isKill2)
         LV->replaceKillInstruction(Src2, MI, NewMI);
       break;
@@ -2015,10 +2003,9 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     case X86::ADD64ri32_DB:
     case X86::ADD64ri8_DB:
       assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
-      NewMI = addRegOffset(BuildMI(MF, MI->getDebugLoc(), get(X86::LEA64r))
-                              .addReg(Dest, RegState::Define |
-                                      getDeadRegState(isDead)),
-                              Src, isKill, MI->getOperand(2).getImm());
+      NewMI = addOffset(BuildMI(MF, MI->getDebugLoc(), get(X86::LEA64r))
+                        .addOperand(Dest).addOperand(Src),
+                        MI->getOperand(2).getImm());
       break;
     case X86::ADD32ri:
     case X86::ADD32ri8:
@@ -2026,10 +2013,9 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     case X86::ADD32ri8_DB: {
       assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
       unsigned Opc = is64Bit ? X86::LEA64_32r : X86::LEA32r;
-      NewMI = addRegOffset(BuildMI(MF, MI->getDebugLoc(), get(Opc))
-                              .addReg(Dest, RegState::Define |
-                                      getDeadRegState(isDead)),
-                                Src, isKill, MI->getOperand(2).getImm());
+      NewMI = addOffset(BuildMI(MF, MI->getDebugLoc(), get(Opc))
+                        .addOperand(Dest).addOperand(Src),
+                        MI->getOperand(2).getImm());
       break;
     }
     case X86::ADD16ri:
@@ -2039,10 +2025,9 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       if (DisableLEA16)
         return is64Bit ? convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV) : 0;
       assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
-      NewMI = addRegOffset(BuildMI(MF, MI->getDebugLoc(), get(X86::LEA16r))
-                              .addReg(Dest, RegState::Define |
-                                      getDeadRegState(isDead)),
-                              Src, isKill, MI->getOperand(2).getImm());
+      NewMI = addOffset(BuildMI(MF, MI->getDebugLoc(), get(X86::LEA16r))
+                        .addOperand(Dest).addOperand(Src),
+                        MI->getOperand(2).getImm());
       break;
     }
   }
@@ -2051,10 +2036,10 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   if (!NewMI) return 0;
 
   if (LV) {  // Update live variables
-    if (isKill)
-      LV->replaceKillInstruction(Src, MI, NewMI);
-    if (isDead)
-      LV->replaceKillInstruction(Dest, MI, NewMI);
+    if (Src.isKill())
+      LV->replaceKillInstruction(Src.getReg(), MI, NewMI);
+    if (Dest.isDead())
+      LV->replaceKillInstruction(Dest.getReg(), MI, NewMI);
   }
 
   MFI->insert(MBBI, NewMI);          // Insert the new inst
