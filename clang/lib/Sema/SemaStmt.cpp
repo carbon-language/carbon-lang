@@ -254,7 +254,7 @@ StmtResult
 Sema::ActOnCompoundStmt(SourceLocation L, SourceLocation R,
                         MultiStmtArg elts, bool isStmtExpr) {
   unsigned NumElts = elts.size();
-  Stmt **Elts = reinterpret_cast<Stmt**>(elts.release());
+  Stmt **Elts = elts.get();
   // If we're in C89 mode, check that we don't have any decls after stmts.  If
   // so, emit an extension diagnostic.
   if (!getLangOpts().C99 && !getLangOpts().CPlusPlus) {
@@ -2539,7 +2539,7 @@ Sema::ActOnObjCAtTryStmt(SourceLocation AtLoc, Stmt *Try,
   getCurFunction()->setHasBranchProtectedScope();
   unsigned NumCatchStmts = CatchStmts.size();
   return Owned(ObjCAtTryStmt::Create(Context, AtLoc, Try,
-                                     CatchStmts.release(),
+                                     CatchStmts.get(),
                                      NumCatchStmts,
                                      Finally));
 }

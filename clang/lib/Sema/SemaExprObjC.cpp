@@ -1788,7 +1788,7 @@ ExprResult Sema::ActOnSuperMessage(Scope *S,
     SuperTy = Context.getObjCObjectPointerType(SuperTy);
     return BuildInstanceMessage(0, SuperTy, SuperLoc,
                                 Sel, /*Method=*/0,
-                                LBracLoc, SelectorLocs, RBracLoc, move(Args));
+                                LBracLoc, SelectorLocs, RBracLoc, Args);
   }
   
   // Since we are in a class method, this is a class message to
@@ -1796,7 +1796,7 @@ ExprResult Sema::ActOnSuperMessage(Scope *S,
   return BuildClassMessage(/*ReceiverTypeInfo=*/0,
                            Context.getObjCInterfaceType(Super),
                            SuperLoc, Sel, /*Method=*/0,
-                           LBracLoc, SelectorLocs, RBracLoc, move(Args));
+                           LBracLoc, SelectorLocs, RBracLoc, Args);
 }
 
 
@@ -1911,7 +1911,7 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
     // If the receiver type is dependent, we can't type-check anything
     // at this point. Build a dependent expression.
     unsigned NumArgs = ArgsIn.size();
-    Expr **Args = reinterpret_cast<Expr **>(ArgsIn.release());
+    Expr **Args = ArgsIn.get();
     assert(SuperLoc.isInvalid() && "Message to super with dependent type");
     return Owned(ObjCMessageExpr::Create(Context, ReceiverType,
                                          VK_RValue, LBracLoc, ReceiverTypeInfo,
@@ -1965,7 +1965,7 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
   ExprValueKind VK = VK_RValue;
 
   unsigned NumArgs = ArgsIn.size();
-  Expr **Args = reinterpret_cast<Expr **>(ArgsIn.release());
+  Expr **Args = ArgsIn.get();
   if (CheckMessageArgumentTypes(ReceiverType, Args, NumArgs, Sel, Method, true,
                                 SuperLoc.isValid(), LBracLoc, RBracLoc, 
                                 ReturnType, VK))
@@ -2016,7 +2016,7 @@ ExprResult Sema::ActOnClassMessage(Scope *S,
 
   return BuildClassMessage(ReceiverTypeInfo, ReceiverType, 
                            /*SuperLoc=*/SourceLocation(), Sel, /*Method=*/0,
-                           LBracLoc, SelectorLocs, RBracLoc, move(Args));
+                           LBracLoc, SelectorLocs, RBracLoc, Args);
 }
 
 ExprResult Sema::BuildInstanceMessageImplicit(Expr *Receiver,
@@ -2095,7 +2095,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
       // If the receiver is type-dependent, we can't type-check anything
       // at this point. Build a dependent expression.
       unsigned NumArgs = ArgsIn.size();
-      Expr **Args = reinterpret_cast<Expr **>(ArgsIn.release());
+      Expr **Args = ArgsIn.get();
       assert(SuperLoc.isInvalid() && "Message to super with dependent type");
       return Owned(ObjCMessageExpr::Create(Context, Context.DependentTy,
                                            VK_RValue, LBracLoc, Receiver, Sel, 
@@ -2282,7 +2282,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
                                       LBracLoc,
                                       SelectorLocs,
                                       RBracLoc,
-                                      move(ArgsIn));
+                                      ArgsIn);
         } else {
           // Reject other random receiver types (e.g. structs).
           Diag(Loc, diag::err_bad_receiver_type)
@@ -2295,7 +2295,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
 
   // Check the message arguments.
   unsigned NumArgs = ArgsIn.size();
-  Expr **Args = reinterpret_cast<Expr **>(ArgsIn.release());
+  Expr **Args = ArgsIn.get();
   QualType ReturnType;
   ExprValueKind VK = VK_RValue;
   bool ClassMessage = (ReceiverType->isObjCClassType() ||
@@ -2448,7 +2448,7 @@ ExprResult Sema::ActOnInstanceMessage(Scope *S,
 
   return BuildInstanceMessage(Receiver, Receiver->getType(),
                               /*SuperLoc=*/SourceLocation(), Sel, /*Method=*/0, 
-                              LBracLoc, SelectorLocs, RBracLoc, move(Args));
+                              LBracLoc, SelectorLocs, RBracLoc, Args);
 }
 
 enum ARCConversionTypeClass {

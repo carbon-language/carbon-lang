@@ -942,8 +942,6 @@ bool Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
       Tok.setLocation(TemplateKWLoc);
     else
       Tok.setLocation(TemplateNameLoc);
-
-    TemplateArgsPtr.release();
   }
 
   // Common fields for the annotation token

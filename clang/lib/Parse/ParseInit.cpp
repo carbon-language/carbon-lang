@@ -313,7 +313,7 @@ ExprResult Parser::ParseInitializerWithPotentialDesignator() {
       Idx = ParseAssignmentExpression();
       if (Idx.isInvalid()) {
         SkipUntil(tok::r_square);
-        return move(Idx);
+        return Idx;
       }
     }
 
@@ -341,7 +341,7 @@ ExprResult Parser::ParseInitializerWithPotentialDesignator() {
       ExprResult RHS(ParseConstantExpression());
       if (RHS.isInvalid()) {
         SkipUntil(tok::r_square);
-        return move(RHS);
+        return RHS;
       }
       Desig.AddDesignator(Designator::getArrayRange(Idx.release(),
                                                     RHS.release(),
@@ -476,7 +476,7 @@ ExprResult Parser::ParseBraceInitializer() {
   bool closed = !T.consumeClose();
 
   if (InitExprsOk && closed)
-    return Actions.ActOnInitList(LBraceLoc, move_arg(InitExprs),
+    return Actions.ActOnInitList(LBraceLoc, InitExprs,
                                  T.getCloseLocation());
 
   return ExprError(); // an error occurred.

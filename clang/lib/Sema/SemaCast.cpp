@@ -227,7 +227,7 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
     CheckExtraCXXDefaultArguments(D);
   }
 
-  return BuildCXXNamedCast(OpLoc, Kind, TInfo, move(E),
+  return BuildCXXNamedCast(OpLoc, Kind, TInfo, E,
                            SourceRange(LAngleBracketLoc, RAngleBracketLoc),
                            SourceRange(LParenLoc, RParenLoc));
 }
@@ -1343,7 +1343,7 @@ TryStaticImplicitCast(Sema &Self, ExprResult &SrcExpr, QualType DestType,
   else
     Kind = CK_NoOp;
   
-  SrcExpr = move(Result);
+  SrcExpr = Result;
   return TC_Success;
 }
 
@@ -1513,7 +1513,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
           SingleFunctionExpr,
           Expr::getValueKindForType(DestType) == VK_RValue // Convert Fun to Ptr 
         ) && SingleFunctionExpr.isUsable()) {
-      SrcExpr = move(SingleFunctionExpr);
+      SrcExpr = SingleFunctionExpr;
       SrcType = SrcExpr.get()->getType();
     } else {
       return TC_NotApplicable;

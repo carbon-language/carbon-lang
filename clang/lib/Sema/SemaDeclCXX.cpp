@@ -1548,7 +1548,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
     // Member field could not be with "template" keyword.
     // So TemplateParameterLists should be empty in this case.
     if (TemplateParameterLists.size()) {
-      TemplateParameterList* TemplateParams = TemplateParameterLists.get()[0];
+      TemplateParameterList* TemplateParams = TemplateParameterLists[0];
       if (TemplateParams->size()) {
         // There is no such thing as a member field template.
         Diag(D.getIdentifierLoc(), diag::err_template_member)
@@ -1588,7 +1588,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   } else {
     assert(InitStyle == ICIS_NoInit);
 
-    Member = HandleDeclarator(S, D, move(TemplateParameterLists));
+    Member = HandleDeclarator(S, D, TemplateParameterLists);
     if (!Member) {
       return 0;
     }
@@ -6565,10 +6565,10 @@ Decl *Sema::ActOnAliasDeclaration(Scope *S,
 
     if (TemplateParamLists.size() != 1) {
       Diag(UsingLoc, diag::err_alias_template_extra_headers)
-        << SourceRange(TemplateParamLists.get()[1]->getTemplateLoc(),
-         TemplateParamLists.get()[TemplateParamLists.size()-1]->getRAngleLoc());
+        << SourceRange(TemplateParamLists[1]->getTemplateLoc(),
+         TemplateParamLists[TemplateParamLists.size()-1]->getRAngleLoc());
     }
-    TemplateParameterList *TemplateParams = TemplateParamLists.get()[0];
+    TemplateParameterList *TemplateParams = TemplateParamLists[0];
 
     // Only consider previous declarations in the same scope.
     FilterLookupForScope(Previous, CurContext, S, /*ConsiderLinkage*/false,
@@ -7882,12 +7882,12 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
       if (NeedsCollectableMemCpy)
         Call = ActOnCallExpr(/*Scope=*/0,
                              CollectableMemCpyRef,
-                             Loc, move_arg(CallArgs), 
+                             Loc, CallArgs,
                              Loc);
       else
         Call = ActOnCallExpr(/*Scope=*/0,
                              BuiltinMemCpyRef,
-                             Loc, move_arg(CallArgs), 
+                             Loc, CallArgs,
                              Loc);
           
       assert(!Call.isInvalid() && "Call to __builtin_memcpy cannot fail!");
@@ -7937,7 +7937,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
   StmtResult Body;
   {
     CompoundScopeRAII CompoundScope(*this);
-    Body = ActOnCompoundStmt(Loc, Loc, move_arg(Statements),
+    Body = ActOnCompoundStmt(Loc, Loc, Statements,
                              /*isStmtExpr=*/false);
     assert(!Body.isInvalid() && "Compound statement creation cannot fail");
   }
@@ -8431,12 +8431,12 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
       if (NeedsCollectableMemCpy)
         Call = ActOnCallExpr(/*Scope=*/0,
                              CollectableMemCpyRef,
-                             Loc, move_arg(CallArgs), 
+                             Loc, CallArgs,
                              Loc);
       else
         Call = ActOnCallExpr(/*Scope=*/0,
                              BuiltinMemCpyRef,
-                             Loc, move_arg(CallArgs), 
+                             Loc, CallArgs,
                              Loc);
           
       assert(!Call.isInvalid() && "Call to __builtin_memcpy cannot fail!");
@@ -8486,7 +8486,7 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
   StmtResult Body;
   {
     CompoundScopeRAII CompoundScope(*this);
-    Body = ActOnCompoundStmt(Loc, Loc, move_arg(Statements),
+    Body = ActOnCompoundStmt(Loc, Loc, Statements,
                              /*isStmtExpr=*/false);
     assert(!Body.isInvalid() && "Compound statement creation cannot fail");
   }
@@ -9017,12 +9017,12 @@ static bool hasOneRealArgument(MultiExprArg Args) {
     return false;
     
   default:
-    if (!Args.get()[1]->isDefaultArgument())
+    if (!Args[1]->isDefaultArgument())
       return false;
     
     // fall through
   case 1:
-    return !Args.get()[0]->isDefaultArgument();
+    return !Args[0]->isDefaultArgument();
   }
   
   return false;
@@ -9055,7 +9055,7 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
   }
 
   return BuildCXXConstructExpr(ConstructLoc, DeclInitType, Constructor,
-                               Elidable, move(ExprArgs), HadMultipleCandidates,
+                               Elidable, ExprArgs, HadMultipleCandidates,
                                RequiresZeroInit, ConstructKind, ParenRange);
 }
 
@@ -9070,7 +9070,7 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                             unsigned ConstructKind,
                             SourceRange ParenRange) {
   unsigned NumExprs = ExprArgs.size();
-  Expr **Exprs = (Expr **)ExprArgs.release();
+  Expr **Exprs = ExprArgs.get();
 
   MarkFunctionReferenced(ConstructLoc, Constructor);
   return Owned(CXXConstructExpr::Create(Context, DeclInitType, ConstructLoc,
@@ -9088,7 +9088,7 @@ bool Sema::InitializeVarWithConstructor(VarDecl *VD,
   // FIXME: Provide the correct paren SourceRange when available.
   ExprResult TempResult =
     BuildCXXConstructExpr(VD->getLocation(), VD->getType(), Constructor,
-                          move(Exprs), HadMultipleCandidates, false,
+                          Exprs, HadMultipleCandidates, false,
                           CXXConstructExpr::CK_Complete, SourceRange());
   if (TempResult.isInvalid())
     return true;
@@ -9919,7 +9919,7 @@ Decl *Sema::ActOnTemplatedFriendTag(Scope *S, SourceLocation FriendLoc,
                                 TemplateParams, AS_public,
                                 /*ModulePrivateLoc=*/SourceLocation(),
                                 TempParamLists.size() - 1,
-                   (TemplateParameterList**) TempParamLists.release()).take();
+                                TempParamLists.get()).take();
     } else {
       // The "template<>" header is extraneous.
       Diag(TemplateParams->getTemplateLoc(), diag::err_template_tag_noparams)
@@ -9932,7 +9932,7 @@ Decl *Sema::ActOnTemplatedFriendTag(Scope *S, SourceLocation FriendLoc,
 
   bool isAllExplicitSpecializations = true;
   for (unsigned I = TempParamLists.size(); I-- > 0; ) {
-    if (TempParamLists.get()[I]->size()) {
+    if (TempParamLists[I]->size()) {
       isAllExplicitSpecializations = false;
       break;
     }
@@ -10079,7 +10079,7 @@ Decl *Sema::ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
   if (unsigned NumTempParamLists = TempParams.size())
     D = FriendTemplateDecl::Create(Context, CurContext, Loc,
                                    NumTempParamLists,
-                                   TempParams.release(),
+                                   TempParams.get(),
                                    TSI,
                                    DS.getFriendSpecLoc());
   else
@@ -10321,7 +10321,7 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D,
   
   bool AddToScope = true;
   NamedDecl *ND = ActOnFunctionDeclarator(DCScope, D, DC, TInfo, Previous,
-                                          move(TemplateParams), AddToScope);
+                                          TemplateParams, AddToScope);
   if (!ND) return 0;
 
   assert(ND->getDeclContext() == DC);

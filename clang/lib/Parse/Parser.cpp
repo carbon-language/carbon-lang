@@ -981,7 +981,7 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
 
     D.setFunctionDefinitionKind(FDK_Definition);
     Decl *DP = Actions.HandleDeclarator(ParentScope, D,
-                                        move(TemplateParameterLists));
+                                        TemplateParameterLists);
     D.complete(DP);
     D.getMutableDeclSpec().abort();
 
@@ -1015,7 +1015,7 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
     
     D.setFunctionDefinitionKind(FDK_Definition);
     Decl *FuncDecl = Actions.HandleDeclarator(ParentScope, D,
-                                        move(TemplateParameterLists));
+                                        TemplateParameterLists);
     D.complete(FuncDecl);
     D.getMutableDeclSpec().abort();
     if (FuncDecl) {
@@ -1288,7 +1288,7 @@ Parser::ExprResult Parser::ParseSimpleAsm(SourceLocation *EndLoc) {
       *EndLoc = T.getCloseLocation();
   }
 
-  return move(Result);
+  return Result;
 }
 
 /// \brief Get the TemplateIdAnnotation from the token and put it in the

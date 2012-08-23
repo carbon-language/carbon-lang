@@ -30,6 +30,7 @@ namespace clang {
   class DeclGroupRef;
   class Expr;
   class NestedNameSpecifier;
+  class ParsedTemplateArgument;
   class QualType;
   class Sema;
   class Stmt;
@@ -112,96 +113,6 @@ namespace llvm {
   struct isPodLike<clang::OpaquePtr<T> > { static const bool value = true; };
 }
 
-
-
-// -------------------------- About Move Emulation -------------------------- //
-// The smart pointer classes in this file attempt to emulate move semantics
-// as they appear in C++0x with rvalue references. Since C++03 doesn't have
-// rvalue references, some tricks are needed to get similar results.
-// Move semantics in C++0x have the following properties:
-// 1) "Moving" means transferring the value of an object to another object,
-//    similar to copying, but without caring what happens to the old object.
-//    In particular, this means that the new object can steal the old object's
-//    resources instead of creating a copy.
-// 2) Since moving can modify the source object, it must either be explicitly
-//    requested by the user, or the modifications must be unnoticeable.
-// 3) As such, C++0x moving is only allowed in three contexts:
-//    * By explicitly using std::move() to request it.
-//    * From a temporary object, since that object cannot be accessed
-//      afterwards anyway, thus making the state unobservable.
-//    * On function return, since the object is not observable afterwards.
-//
-// To sum up: moving from a named object should only be possible with an
-// explicit std::move(), or on function return. Moving from a temporary should
-// be implicitly done. Moving from a const object is forbidden.
-//
-// The emulation is not perfect, and has the following shortcomings:
-// * move() is not in namespace std.
-// * move() is required on function return.
-// * There are difficulties with implicit conversions.
-// * Microsoft's compiler must be given the /Za switch to successfully compile.
-//
-// -------------------------- Implementation -------------------------------- //
-// The move emulation relies on the peculiar reference binding semantics of
-// C++03: as a rule, a non-const reference may not bind to a temporary object,
-// except for the implicit object parameter in a member function call, which
-// can refer to a temporary even when not being const.
-// The moveable object has five important functions to facilitate moving:
-// * A private, unimplemented constructor taking a non-const reference to its
-//   own class. This constructor serves a two-fold purpose.
-//   - It prevents the creation of a copy constructor that takes a const
-//     reference. Temporaries would be able to bind to the argument of such a
-//     constructor, and that would be bad.
-//   - Named objects will bind to the non-const reference, but since it's
-//     private, this will fail to compile. This prevents implicit moving from
-//     named objects.
-//   There's also a copy assignment operator for the same purpose.
-// * An implicit, non-const conversion operator to a special mover type. This
-//   type represents the rvalue reference of C++0x. Being a non-const member,
-//   its implicit this parameter can bind to temporaries.
-// * A constructor that takes an object of this mover type. This constructor
-//   performs the actual move operation. There is an equivalent assignment
-//   operator.
-// There is also a free move() function that takes a non-const reference to
-// an object and returns a temporary. Internally, this function uses explicit
-// constructor calls to move the value from the referenced object to the return
-// value.
-//
-// There are now three possible scenarios of use.
-// * Copying from a const object. Constructor overload resolution will find the
-//   non-const copy constructor, and the move constructor. The first is not
-//   viable because the const object cannot be bound to the non-const reference.
-//   The second fails because the conversion to the mover object is non-const.
-//   Moving from a const object fails as intended.
-// * Copying from a named object. Constructor overload resolution will select
-//   the non-const copy constructor, but fail as intended, because this
-//   constructor is private.
-// * Copying from a temporary. Constructor overload resolution cannot select
-//   the non-const copy constructor, because the temporary cannot be bound to
-//   the non-const reference. It thus selects the move constructor. The
-//   temporary can be bound to the implicit this parameter of the conversion
-//   operator, because of the special binding rule. Construction succeeds.
-//   Note that the Microsoft compiler, as an extension, allows binding
-//   temporaries against non-const references. The compiler thus selects the
-//   non-const copy constructor and fails, because the constructor is private.
-//   Passing /Za (disable extensions) disables this behaviour.
-// The free move() function is used to move from a named object.
-//
-// Note that when passing an object of a different type (the classes below
-// have OwningResult and OwningPtr, which should be mixable), you get a problem.
-// Argument passing and function return use copy initialization rules. The
-// effect of this is that, when the source object is not already of the target
-// type, the compiler will first seek a way to convert the source object to the
-// target type, and only then attempt to copy the resulting object. This means
-// that when passing an OwningResult where an OwningPtr is expected, the
-// compiler will first seek a conversion from OwningResult to OwningPtr, then
-// copy the OwningPtr. The resulting conversion sequence is:
-// OwningResult object -> ResultMover -> OwningResult argument to
-// OwningPtr(OwningResult) -> OwningPtr -> PtrMover -> final OwningPtr
-// This conversion sequence is too complex to be allowed. Thus the special
-// move_* functions, which help the compiler out with some explicit
-// conversions.
-
 namespace clang {
   // Basic
   class DiagnosticBuilder;
@@ -239,6 +150,7 @@ namespace clang {
     bool isUsable() const { return !Invalid && Val; }
 
     PtrTy get() const { return Val; }
+    // FIXME: Replace with get.
     PtrTy release() const { return Val; }
     PtrTy take() const { return Val; }
     template <typename T> T *takeAs() { return static_cast<T*>(get()); }
@@ -282,6 +194,7 @@ namespace clang {
       void *VP = reinterpret_cast<void *>(PtrWithInvalid & ~0x01);
       return PtrTraits::getFromVoidPointer(VP);
     }
+    // FIXME: Replace with get.
     PtrTy take() const { return get(); }
     PtrTy release() const { return get(); }
     template <typename T> T *takeAs() { return static_cast<T*>(get()); }
@@ -300,23 +213,21 @@ namespace clang {
     }
   };
 
-  /// ASTMultiPtr - A moveable smart pointer to multiple AST nodes. Only owns
-  /// the individual pointers, not the array holding them.
-  template <typename PtrTy> class ASTMultiPtr;
-
+  /// ASTMultiPtr - A pointer to multiple AST nodes.
   template <class PtrTy>
   class ASTMultiPtr {
     PtrTy *Nodes;
     unsigned Count;
 
   public:
-    // Normal copying implicitly defined
     ASTMultiPtr() : Nodes(0), Count(0) {}
+    ASTMultiPtr(SmallVectorImpl<PtrTy> &v)
+      : Nodes(v.data()), Count(v.size()) {}
+    ASTMultiPtr(PtrTy *nodes, unsigned count) : Nodes(nodes), Count(count) {}
+    // FIXME: Remove these.
     explicit ASTMultiPtr(Sema &) : Nodes(0), Count(0) {}
     ASTMultiPtr(Sema &, PtrTy *nodes, unsigned count)
       : Nodes(nodes), Count(count) {}
-    // Fake mover in Parse/AstGuard.h needs this:
-    ASTMultiPtr(PtrTy *nodes, unsigned count) : Nodes(nodes), Count(count) {}
 
     /// Access to the raw pointers.
     PtrTy *get() const { return Nodes; }
@@ -324,47 +235,8 @@ namespace clang {
     /// Access to the count.
     unsigned size() const { return Count; }
 
-    PtrTy *release() {
-      return Nodes;
-    }
-  };
-
-  class ParsedTemplateArgument;
-    
-  class ASTTemplateArgsPtr {
-    ParsedTemplateArgument *Args;
-    mutable unsigned Count;
-
-  public:
-    ASTTemplateArgsPtr(Sema &actions, ParsedTemplateArgument *args,
-                       unsigned count) :
-      Args(args), Count(count) { }
-
-    // FIXME: Lame, not-fully-type-safe emulation of 'move semantics'.
-    ASTTemplateArgsPtr(ASTTemplateArgsPtr &Other) :
-      Args(Other.Args), Count(Other.Count) {
-    }
-
-    // FIXME: Lame, not-fully-type-safe emulation of 'move semantics'.
-    ASTTemplateArgsPtr& operator=(ASTTemplateArgsPtr &Other)  {
-      Args = Other.Args;
-      Count = Other.Count;
-      return *this;
-    }
-
-    ParsedTemplateArgument *getArgs() const { return Args; }
-    unsigned size() const { return Count; }
-
-    void reset(ParsedTemplateArgument *args, unsigned count) {
-      Args = args;
-      Count = count;
-    }
-
-    const ParsedTemplateArgument &operator[](unsigned Arg) const;
-
-    ParsedTemplateArgument *release() const {
-      return Args;
-    }
+    /// Access to the elements.
+    const PtrTy &operator[](unsigned Arg) const { return Nodes[Arg]; }
   };
 
   /// \brief A small vector that owns a set of AST nodes.
@@ -397,22 +269,6 @@ namespace clang {
   /// A SmallVector of types.
   typedef ASTOwningVector<ParsedType, 12> TypeVector;
 
-  template <class T, unsigned N> inline
-  ASTMultiPtr<T> move_arg(ASTOwningVector<T, N> &vec) {
-    return ASTMultiPtr<T>(vec.take(), vec.size());
-  }
-
-  // These versions are hopefully no-ops.
-  template <class T, bool C>
-  inline ActionResult<T,C> move(ActionResult<T,C> &ptr) {
-    return ptr;
-  }
-
-  template <class T> inline
-  ASTMultiPtr<T>& move(ASTMultiPtr<T> &ptr) {
-    return ptr;
-  }
-
   // We can re-use the low bit of expression, statement, base, and
   // member-initializer pointers for the "invalid" flag of
   // ActionResult.
@@ -438,11 +294,9 @@ namespace clang {
   typedef ActionResult<Decl*> DeclResult;
   typedef OpaquePtr<TemplateName> ParsedTemplateTy;
 
-  inline Expr *move(Expr *E) { return E; }
-  inline Stmt *move(Stmt *S) { return S; }
-
   typedef ASTMultiPtr<Expr*> MultiExprArg;
   typedef ASTMultiPtr<Stmt*> MultiStmtArg;
+  typedef ASTMultiPtr<ParsedTemplateArgument> ASTTemplateArgsPtr;
   typedef ASTMultiPtr<ParsedType> MultiTypeArg;
   typedef ASTMultiPtr<TemplateParameterList*> MultiTemplateParamsArg;
 

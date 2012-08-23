@@ -1894,7 +1894,7 @@ StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
   }
   
   return Actions.ActOnObjCAtTryStmt(atLoc, TryBody.take(), 
-                                    move_arg(CatchStmts),
+                                    CatchStmts,
                                     FinallyStmt.take());
 }
 
@@ -2061,13 +2061,13 @@ ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
 
     ExprResult Lit(Actions.ActOnNumericConstant(Tok));
     if (Lit.isInvalid()) {
-      return move(Lit);
+      return Lit;
     }
     ConsumeToken(); // Consume the literal token.
 
     Lit = Actions.ActOnUnaryOp(getCurScope(), OpLoc, Kind, Lit.take());
     if (Lit.isInvalid())
-      return move(Lit);
+      return Lit;
 
     return ParsePostfixExpressionSuffix(
              Actions.BuildObjCNumericLiteral(AtLoc, Lit.take()));
@@ -2346,7 +2346,7 @@ ExprResult Parser::ParseObjCMessageExpression() {
   ExprResult Res(ParseExpression());
   if (Res.isInvalid()) {
     SkipUntil(tok::r_square);
-    return move(Res);
+    return Res;
   }
 
   return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(),
@@ -2465,7 +2465,7 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
         // stop at the ']' when it skips to the ';'.  We want it to skip beyond
         // the enclosing expression.
         SkipUntil(tok::r_square);
-        return move(Res);
+        return Res;
       }
 
       // We have a valid expression.
@@ -2512,7 +2512,7 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
         // stop at the ']' when it skips to the ';'.  We want it to skip beyond
         // the enclosing expression.
         SkipUntil(tok::r_square);
-        return move(Res);
+        return Res;
       }
 
       // We have a valid expression.
@@ -2570,7 +2570,7 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
 
 ExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
   ExprResult Res(ParseStringLiteralExpression());
-  if (Res.isInvalid()) return move(Res);
+  if (Res.isInvalid()) return Res;
 
   // @"foo" @"bar" is a valid concatenated string.  Eat any subsequent string
   // expressions.  At this point, we know that the only valid thing that starts
@@ -2589,7 +2589,7 @@ ExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
 
     ExprResult Lit(ParseStringLiteralExpression());
     if (Lit.isInvalid())
-      return move(Lit);
+      return Lit;
 
     AtStrings.push_back(Lit.release());
   }
@@ -2615,7 +2615,7 @@ ExprResult Parser::ParseObjCBooleanLiteral(SourceLocation AtLoc,
 ExprResult Parser::ParseObjCCharacterLiteral(SourceLocation AtLoc) {
   ExprResult Lit(Actions.ActOnCharacterConstant(Tok));
   if (Lit.isInvalid()) {
-    return move(Lit);
+    return Lit;
   }
   ConsumeToken(); // Consume the literal token.
   return Owned(Actions.BuildObjCNumericLiteral(AtLoc, Lit.take()));
@@ -2629,7 +2629,7 @@ ExprResult Parser::ParseObjCCharacterLiteral(SourceLocation AtLoc) {
 ExprResult Parser::ParseObjCNumericLiteral(SourceLocation AtLoc) {
   ExprResult Lit(Actions.ActOnNumericConstant(Tok));
   if (Lit.isInvalid()) {
-    return move(Lit);
+    return Lit;
   }
   ConsumeToken(); // Consume the literal token.
   return Owned(Actions.BuildObjCNumericLiteral(AtLoc, Lit.take()));
@@ -2672,7 +2672,7 @@ ExprResult Parser::ParseObjCArrayLiteral(SourceLocation AtLoc) {
       // stop at the ']' when it skips to the ';'.  We want it to skip beyond
       // the enclosing expression.
       SkipUntil(tok::r_square);
-      return move(Res);
+      return Res;
     }    
     
     // Parse the ellipsis that indicates a pack expansion.
@@ -2707,7 +2707,7 @@ ExprResult Parser::ParseObjCDictionaryLiteral(SourceLocation AtLoc) {
         // stop at the '}' when it skips to the ';'.  We want it to skip beyond
         // the enclosing expression.
         SkipUntil(tok::r_brace);
-        return move(KeyExpr);
+        return KeyExpr;
       }
     }
 
@@ -2723,7 +2723,7 @@ ExprResult Parser::ParseObjCDictionaryLiteral(SourceLocation AtLoc) {
       // stop at the '}' when it skips to the ';'.  We want it to skip beyond
       // the enclosing expression.
       SkipUntil(tok::r_brace);
-      return move(ValueExpr);
+      return ValueExpr;
     }
     
     // Parse the ellipsis that designates this as a pack expansion.

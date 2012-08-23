@@ -2140,7 +2140,6 @@ Sema::ActOnTemplateIdType(CXXScopeSpec &SS, SourceLocation TemplateKWLoc,
   }
   
   QualType Result = CheckTemplateIdType(Template, TemplateLoc, TemplateArgs);
-  TemplateArgsIn.release();
 
   if (Result.isNull())
     return true;
@@ -4527,7 +4526,7 @@ Sema::BuildExpressionFromDeclTemplateArgument(const TemplateArgument &Arg,
       assert(!RefExpr.isInvalid() &&
              Context.hasSameType(((Expr*) RefExpr.get())->getType(),
                                  ParamType.getUnqualifiedType()));
-      return move(RefExpr);
+      return RefExpr;
     }
   }
 
@@ -4545,7 +4544,7 @@ Sema::BuildExpressionFromDeclTemplateArgument(const TemplateArgument &Arg,
       if (RefExpr.isInvalid())
         return ExprError();
 
-      return move(RefExpr);
+      return RefExpr;
     }
 
     // Take the address of everything else
@@ -5176,7 +5175,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
   // NOTE: KWLoc is the location of the tag keyword. This will instead
   // store the location of the outermost template keyword in the declaration.
   SourceLocation TemplateKWLoc = TemplateParameterLists.size() > 0
-    ? TemplateParameterLists.get()[0]->getTemplateLoc() : SourceLocation();
+    ? TemplateParameterLists[0]->getTemplateLoc() : SourceLocation();
 
   // Find the class template we're specializing
   TemplateName Name = TemplateD.getAsVal<TemplateName>();
@@ -5357,7 +5356,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
     if (TemplateParameterLists.size() > 0) {
       Specialization->setTemplateParameterListsInfo(Context,
                                               TemplateParameterLists.size(),
-                    (TemplateParameterList**) TemplateParameterLists.release());
+                    (TemplateParameterList**) TemplateParameterLists.get());
     }
     PrevDecl = 0;
     CanonType = Context.getTypeDeclType(Specialization);
@@ -5385,7 +5384,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                 TemplateParams,
                                 AS_none, /*ModulePrivateLoc=*/SourceLocation(),
                                 TemplateParameterLists.size() - 1,
-                  (TemplateParameterList**) TemplateParameterLists.release());
+                  (TemplateParameterList**) TemplateParameterLists.get());
     }
 
     // Create a new class template partial specialization declaration node.
@@ -5409,7 +5408,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
     if (TemplateParameterLists.size() > 1 && SS.isSet()) {
       Partial->setTemplateParameterListsInfo(Context,
                                              TemplateParameterLists.size() - 1,
-                    (TemplateParameterList**) TemplateParameterLists.release());
+                    (TemplateParameterList**) TemplateParameterLists.get());
     }
 
     if (!PrevPartial)
@@ -5464,7 +5463,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
     if (TemplateParameterLists.size() > 0) {
       Specialization->setTemplateParameterListsInfo(Context,
                                               TemplateParameterLists.size(),
-                    (TemplateParameterList**) TemplateParameterLists.release());
+                    (TemplateParameterList**) TemplateParameterLists.get());
     }
 
     if (!PrevDecl)
@@ -5547,7 +5546,6 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
     Specialization->setTypeAsWritten(WrittenTy);
     Specialization->setTemplateKeywordLoc(TemplateKWLoc);
   }
-  TemplateArgsIn.release();
 
   // C++ [temp.expl.spec]p9:
   //   A template explicit specialization is in the scope of the
@@ -5582,7 +5580,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
 Decl *Sema::ActOnTemplateDeclarator(Scope *S,
                               MultiTemplateParamsArg TemplateParameterLists,
                                     Declarator &D) {
-  Decl *NewDecl = HandleDeclarator(S, D, move(TemplateParameterLists));
+  Decl *NewDecl = HandleDeclarator(S, D, TemplateParameterLists);
   ActOnDocumentableDecl(NewDecl);
   return NewDecl;
 }
@@ -5601,7 +5599,7 @@ Decl *Sema::ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope,
 
   D.setFunctionDefinitionKind(FDK_Definition);
   Decl *DP = HandleDeclarator(ParentScope, D,
-                              move(TemplateParameterLists));
+                              TemplateParameterLists);
   if (FunctionTemplateDecl *FunctionTemplate
         = dyn_cast_or_null<FunctionTemplateDecl>(DP))
     return ActOnStartOfFunctionDef(FnBodyScope,
@@ -6402,7 +6400,6 @@ Sema::ActOnExplicitInstantiation(Scope *S,
                                                 TemplateArgs,
                                   Context.getTypeDeclType(Specialization));
   Specialization->setTypeAsWritten(WrittenTy);
-  TemplateArgsIn.release();
 
   // Set source locations for keywords.
   Specialization->setExternLoc(ExternLoc);
@@ -6737,7 +6734,6 @@ DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
                                        TemplateId->NumArgs);
     translateTemplateArguments(TemplateArgsPtr, TemplateArgs);
     HasExplicitTemplateArgs = true;
-    TemplateArgsPtr.release();
   }
 
   // C++ [temp.explicit]p1:

@@ -49,7 +49,7 @@ CreateFunctionRefExpr(Sema &S, FunctionDecl *Fn, bool HadMultipleCandidates,
   E = S.DefaultFunctionArrayConversion(E.take());
   if (E.isInvalid())
     return ExprError();
-  return move(E);
+  return E;
 }
 
 static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
@@ -10312,7 +10312,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
       if (Result.isInvalid())
         CandidateSet.NoteCandidates(*this, OCD_AllCandidates, Args,
                                     BinaryOperator::getOpcodeStr(Opc), OpLoc);
-      return move(Result);
+      return Result;
     }
 
     case OR_Ambiguous:
@@ -11008,7 +11008,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
   if (ObjRes.isInvalid())
     IsError = true;
   else
-    Object = move(ObjRes);
+    Object = ObjRes;
   TheCall->setArg(0, Object.take());
 
   // Check the argument types.

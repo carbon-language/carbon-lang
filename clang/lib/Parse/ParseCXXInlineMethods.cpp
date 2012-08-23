@@ -42,10 +42,10 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
   D.setFunctionDefinitionKind(DefinitionKind);
   if (D.getDeclSpec().isFriendSpecified())
     FnD = Actions.ActOnFriendFunctionDecl(getCurScope(), D,
-                                          move(TemplateParams));
+                                          TemplateParams);
   else {
     FnD = Actions.ActOnCXXMemberDeclarator(getCurScope(), AS, D,
-                                           move(TemplateParams), 0, 
+                                           TemplateParams, 0,
                                            VS, ICIS_NoInit);
     if (FnD) {
       Actions.ProcessDeclAttributeList(getCurScope(), FnD, AccessAttrs,

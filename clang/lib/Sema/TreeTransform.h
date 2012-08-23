@@ -1174,7 +1174,7 @@ public:
                                   MultiExprArg Clobbers,
                                   SourceLocation RParenLoc) {
     return getSema().ActOnAsmStmt(AsmLoc, IsSimple, IsVolatile, NumOutputs,
-                                  NumInputs, Names, move(Constraints),
+                                  NumInputs, Names, Constraints,
                                   Exprs, AsmString, Clobbers,
                                   RParenLoc);
   }
@@ -1198,7 +1198,7 @@ public:
                                         Stmt *TryBody,
                                         MultiStmtArg CatchStmts,
                                         Stmt *Finally) {
-    return getSema().ActOnObjCAtTryStmt(AtLoc, TryBody, move(CatchStmts),
+    return getSema().ActOnObjCAtTryStmt(AtLoc, TryBody, CatchStmts,
                                         Finally);
   }
 
@@ -1324,7 +1324,7 @@ public:
   StmtResult RebuildCXXTryStmt(SourceLocation TryLoc,
                                Stmt *TryBlock,
                                MultiStmtArg Handlers) {
-    return getSema().ActOnCXXTryBlock(TryLoc, TryBlock, move(Handlers));
+    return getSema().ActOnCXXTryBlock(TryLoc, TryBlock, Handlers);
   }
 
   /// \brief Build a new C++0x range-based for statement.
@@ -1477,7 +1477,7 @@ public:
     if (Result.isInvalid())
       return ExprError();
 
-    return move(Result);
+    return Result;
   }
 
   /// \brief Build a new array subscript expression.
@@ -1502,7 +1502,7 @@ public:
                                    SourceLocation RParenLoc,
                                    Expr *ExecConfig = 0) {
     return getSema().ActOnCallExpr(/*Scope=*/0, Callee, LParenLoc,
-                                   move(Args), RParenLoc, ExecConfig);
+                                   Args, RParenLoc, ExecConfig);
   }
 
   /// \brief Build a new member access expression.
@@ -1637,15 +1637,15 @@ public:
                              SourceLocation RBraceLoc,
                              QualType ResultTy) {
     ExprResult Result
-      = SemaRef.ActOnInitList(LBraceLoc, move(Inits), RBraceLoc);
+      = SemaRef.ActOnInitList(LBraceLoc, Inits, RBraceLoc);
     if (Result.isInvalid() || ResultTy->isDependentType())
-      return move(Result);
+      return Result;
 
     // Patch in the result type we were given, which may have been computed
     // when the initial InitListExpr was built.
     InitListExpr *ILE = cast<InitListExpr>((Expr *)Result.get());
     ILE->setType(ResultTy);
-    return move(Result);
+    return Result;
   }
 
   /// \brief Build a new designated initializer expression.
@@ -1663,8 +1663,7 @@ public:
     if (Result.isInvalid())
       return ExprError();
 
-    ArrayExprs.release();
-    return move(Result);
+    return Result;
   }
 
   /// \brief Build a new value-initialized expression.
@@ -1695,7 +1694,7 @@ public:
   ExprResult RebuildParenListExpr(SourceLocation LParenLoc,
                                   MultiExprArg SubExprs,
                                   SourceLocation RParenLoc) {
-    return getSema().ActOnParenListExpr(LParenLoc, RParenLoc, move(SubExprs));
+    return getSema().ActOnParenListExpr(LParenLoc, RParenLoc, SubExprs);
   }
 
   /// \brief Build a new address-of-label expression.
@@ -1994,7 +1993,7 @@ public:
                                Expr *Initializer) {
     return getSema().BuildCXXNew(StartLoc, UseGlobal,
                                  PlacementLParen,
-                                 move(PlacementArgs),
+                                 PlacementArgs,
                                  PlacementRParen,
                                  TypeIdParens,
                                  AllocatedType,
@@ -2120,12 +2119,12 @@ public:
                              CXXConstructExpr::ConstructionKind ConstructKind,
                                      SourceRange ParenRange) {
     ASTOwningVector<Expr*> ConvertedArgs(SemaRef);
-    if (getSema().CompleteConstructorCall(Constructor, move(Args), Loc,
+    if (getSema().CompleteConstructorCall(Constructor, Args, Loc,
                                           ConvertedArgs))
       return ExprError();
 
     return getSema().BuildCXXConstructExpr(Loc, T, Constructor, IsElidable,
-                                           move_arg(ConvertedArgs),
+                                           ConvertedArgs,
                                            HadMultipleCandidates,
                                            RequiresZeroInit, ConstructKind,
                                            ParenRange);
@@ -2141,7 +2140,7 @@ public:
                                            SourceLocation RParenLoc) {
     return getSema().BuildCXXTypeConstructExpr(TSInfo,
                                                LParenLoc,
-                                               move(Args),
+                                               Args,
                                                RParenLoc);
   }
 
@@ -2155,7 +2154,7 @@ public:
                                                SourceLocation RParenLoc) {
     return getSema().BuildCXXTypeConstructExpr(TSInfo,
                                                LParenLoc,
-                                               move(Args),
+                                               Args,
                                                RParenLoc);
   }
 
@@ -2287,7 +2286,7 @@ public:
                                      ReceiverTypeInfo->getType(),
                                      /*SuperLoc=*/SourceLocation(),
                                      Sel, Method, LBracLoc, SelectorLocs,
-                                     RBracLoc, move(Args));
+                                     RBracLoc, Args);
   }
 
   /// \brief Build a new Objective-C instance message.
@@ -2302,7 +2301,7 @@ public:
                                         Receiver->getType(),
                                         /*SuperLoc=*/SourceLocation(),
                                         Sel, Method, LBracLoc, SelectorLocs,
-                                        RBracLoc, move(Args));
+                                        RBracLoc, Args);
   }
 
   /// \brief Build a new Objective-C ivar reference expression.
@@ -2325,7 +2324,7 @@ public:
       return ExprError();
 
     if (Result.get())
-      return move(Result);
+      return Result;
 
     return getSema().BuildMemberReferenceExpr(Base.get(), Base.get()->getType(),
                                               /*FIXME:*/IvarLoc, IsArrow,
@@ -2354,7 +2353,7 @@ public:
       return ExprError();
 
     if (Result.get())
-      return move(Result);
+      return Result;
 
     return getSema().BuildMemberReferenceExpr(Base.get(), Base.get()->getType(),
                                               /*FIXME:*/PropertyLoc, IsArrow,
@@ -2397,7 +2396,7 @@ public:
       return ExprError();
 
     if (Result.get())
-      return move(Result);
+      return Result;
 
     return getSema().BuildMemberReferenceExpr(Base.get(), Base.get()->getType(),
                                               /*FIXME:*/IsaLoc, IsArrow,
@@ -2433,7 +2432,7 @@ public:
 
     // Build the CallExpr
     unsigned NumSubExprs = SubExprs.size();
-    Expr **Subs = (Expr **)SubExprs.release();
+    Expr **Subs = SubExprs.get();
     ExprResult TheCall = SemaRef.Owned(
       new (SemaRef.Context) CallExpr(SemaRef.Context, Callee.take(),
                                                        Subs, NumSubExprs,
@@ -2515,7 +2514,7 @@ public:
     // analysis here because we can't actually build an AtomicExpr until
     // we are sure it is semantically sound.
     unsigned NumSubExprs = SubExprs.size();
-    Expr **Subs = (Expr **)SubExprs.release();
+    Expr **Subs = SubExprs.get();
     return new (SemaRef.Context) AtomicExpr(BuiltinLoc, Subs,
                                             NumSubExprs, RetTy, Op,
                                             RParenLoc);
@@ -5125,7 +5124,7 @@ TreeTransform<Derived>::TransformCompoundStmt(CompoundStmt *S,
     return SemaRef.Owned(S);
 
   return getDerived().RebuildCompoundStmt(S->getLBracLoc(),
-                                          move_arg(Statements),
+                                          Statements,
                                           S->getRBracLoc(),
                                           IsStmtExpr);
 }
@@ -5595,10 +5594,10 @@ TreeTransform<Derived>::TransformAsmStmt(AsmStmt *S) {
                                      S->getNumOutputs(),
                                      S->getNumInputs(),
                                      Names.data(),
-                                     move_arg(Constraints),
-                                     move_arg(Exprs),
+                                     Constraints,
+                                     Exprs,
                                      AsmString.get(),
-                                     move_arg(Clobbers),
+                                     Clobbers,
                                      S->getRParenLoc());
 }
 
@@ -5649,7 +5648,7 @@ TreeTransform<Derived>::TransformObjCAtTryStmt(ObjCAtTryStmt *S) {
 
   // Build a new statement.
   return getDerived().RebuildObjCAtTryStmt(S->getAtTryLoc(), TryBody.get(),
-                                           move_arg(CatchStmts), Finally.get());
+                                           CatchStmts, Finally.get());
 }
 
 template<typename Derived>
@@ -5870,7 +5869,7 @@ TreeTransform<Derived>::TransformCXXTryStmt(CXXTryStmt *S) {
     return SemaRef.Owned(S);
 
   return getDerived().RebuildCXXTryStmt(S->getTryLoc(), TryBlock.get(),
-                                        move_arg(Handlers));
+                                        Handlers);
 }
 
 template<typename Derived>
@@ -6398,7 +6397,7 @@ TreeTransform<Derived>::TransformCallExpr(CallExpr *E) {
   SourceLocation FakeLParenLoc
     = ((Expr *)Callee.get())->getSourceRange().getBegin();
   return getDerived().RebuildCallExpr(Callee.get(), FakeLParenLoc,
-                                      move_arg(Args),
+                                      Args,
                                       E->getRParenLoc());
 }
 
@@ -6651,7 +6650,7 @@ TreeTransform<Derived>::TransformInitListExpr(InitListExpr *E) {
   if (!getDerived().AlwaysRebuild() && !InitChanged)
     return SemaRef.Owned(E);
 
-  return getDerived().RebuildInitList(E->getLBraceLoc(), move_arg(Inits),
+  return getDerived().RebuildInitList(E->getLBraceLoc(), Inits,
                                       E->getRBraceLoc(), E->getType());
 }
 
@@ -6718,7 +6717,7 @@ TreeTransform<Derived>::TransformDesignatedInitExpr(DesignatedInitExpr *E) {
       !ExprChanged)
     return SemaRef.Owned(E);
 
-  return getDerived().RebuildDesignatedInitExpr(Desig, move_arg(ArrayExprs),
+  return getDerived().RebuildDesignatedInitExpr(Desig, ArrayExprs,
                                                 E->getEqualOrColonLoc(),
                                                 E->usesGNUSyntax(), Init.get());
 }
@@ -6772,7 +6771,7 @@ TreeTransform<Derived>::TransformParenListExpr(ParenListExpr *E) {
     return ExprError();
 
   return getDerived().RebuildParenListExpr(E->getLParenLoc(),
-                                           move_arg(Inits),
+                                           Inits,
                                            E->getRParenLoc());
 }
 
@@ -6879,7 +6878,7 @@ TreeTransform<Derived>::TransformCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
       return ExprError();
 
     return getDerived().RebuildCallExpr(Object.get(), FakeLParenLoc,
-                                        move_arg(Args),
+                                        Args,
                                         E->getLocEnd());
   }
 
@@ -6962,7 +6961,7 @@ TreeTransform<Derived>::TransformCUDAKernelCallExpr(CUDAKernelCallExpr *E) {
   SourceLocation FakeLParenLoc
     = ((Expr *)Callee.get())->getSourceRange().getBegin();
   return getDerived().RebuildCallExpr(Callee.get(), FakeLParenLoc,
-                                      move_arg(Args),
+                                      Args,
                                       E->getRParenLoc(), EC.get());
 }
 
@@ -7311,7 +7310,7 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
   return getDerived().RebuildCXXNewExpr(E->getLocStart(),
                                         E->isGlobalNew(),
                                         /*FIXME:*/E->getLocStart(),
-                                        move_arg(PlacementArgs),
+                                        PlacementArgs,
                                         /*FIXME:*/E->getLocStart(),
                                         E->getTypeIdParens(),
                                         AllocType,
@@ -7811,7 +7810,7 @@ TreeTransform<Derived>::TransformCXXConstructExpr(CXXConstructExpr *E) {
 
   return getDerived().RebuildCXXConstructExpr(T, /*FIXME:*/E->getLocStart(),
                                               Constructor, E->isElidable(),
-                                              move_arg(Args),
+                                              Args,
                                               E->hadMultipleCandidates(),
                                               E->requiresZeroInitialization(),
                                               E->getConstructionKind(),
@@ -7872,7 +7871,7 @@ TreeTransform<Derived>::TransformCXXTemporaryObjectExpr(
 
   return getDerived().RebuildCXXTemporaryObjectExpr(T,
                                           /*FIXME:*/T->getTypeLoc().getEndLoc(),
-                                                    move_arg(Args),
+                                                    Args,
                                                     E->getLocEnd());
 }
 
@@ -8050,7 +8049,7 @@ TreeTransform<Derived>::TransformCXXUnresolvedConstructExpr(
   // FIXME: we're faking the locations of the commas
   return getDerived().RebuildCXXUnresolvedConstructExpr(T,
                                                         E->getLParenLoc(),
-                                                        move_arg(Args),
+                                                        Args,
                                                         E->getRParenLoc());
 }
 
@@ -8600,7 +8599,7 @@ TreeTransform<Derived>::TransformObjCMessageExpr(ObjCMessageExpr *E) {
                                                SelLocs,
                                                E->getMethodDecl(),
                                                E->getLeftLoc(),
-                                               move_arg(Args),
+                                               Args,
                                                E->getRightLoc());
   }
 
@@ -8625,7 +8624,7 @@ TreeTransform<Derived>::TransformObjCMessageExpr(ObjCMessageExpr *E) {
                                              SelLocs,
                                              E->getMethodDecl(),
                                              E->getLeftLoc(),
-                                             move_arg(Args),
+                                             Args,
                                              E->getRightLoc());
 }
 
@@ -8749,7 +8748,7 @@ TreeTransform<Derived>::TransformShuffleVectorExpr(ShuffleVectorExpr *E) {
     return SemaRef.Owned(E);
 
   return getDerived().RebuildShuffleVectorExpr(E->getBuiltinLoc(),
-                                               move_arg(SubExprs),
+                                               SubExprs,
                                                E->getRParenLoc());
 }
 
@@ -8862,7 +8861,7 @@ TreeTransform<Derived>::TransformAtomicExpr(AtomicExpr *E) {
       !ArgumentChanged)
     return SemaRef.Owned(E);
 
-  return getDerived().RebuildAtomicExpr(E->getBuiltinLoc(), move_arg(SubExprs),
+  return getDerived().RebuildAtomicExpr(E->getBuiltinLoc(), SubExprs,
                                         RetTy, E->getOp(), E->getRParenLoc());
 }
 
@@ -9183,7 +9182,7 @@ TreeTransform<Derived>::RebuildCXXOperatorCallExpr(OverloadedOperatorKind Op,
       if (Result.isInvalid())
         return ExprError();
 
-      return move(Result);
+      return Result;
     }
   }
 
@@ -9238,7 +9237,7 @@ TreeTransform<Derived>::RebuildCXXOperatorCallExpr(OverloadedOperatorKind Op,
   if (Result.isInvalid())
     return ExprError();
 
-  return move(Result);
+  return Result;
 }
 
 template<typename Derived>

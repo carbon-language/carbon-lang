@@ -2052,11 +2052,11 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     if (DS.isFriendSpecified()) {
       // TODO: handle initializers, bitfields, 'delete'
       ThisDecl = Actions.ActOnFriendFunctionDecl(getCurScope(), DeclaratorInfo,
-                                                 move(TemplateParams));
+                                                 TemplateParams);
     } else {
       ThisDecl = Actions.ActOnCXXMemberDeclarator(getCurScope(), AS,
                                                   DeclaratorInfo,
-                                                  move(TemplateParams),
+                                                  TemplateParams,
                                                   BitfieldSize.release(),
                                                   VS, HasInClassInit);
       if (AccessAttrs)

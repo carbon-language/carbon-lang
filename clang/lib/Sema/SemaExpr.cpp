@@ -502,7 +502,7 @@ ExprResult Sema::DefaultFunctionArrayLvalueConversion(Expr *E) {
   Res = DefaultLvalueConversion(Res.take());
   if (Res.isInvalid())
     return ExprError();
-  return move(Res);
+  return Res;
 }
 
 
@@ -1098,8 +1098,8 @@ Sema::ActOnGenericSelectionExpr(SourceLocation KeyLoc,
   unsigned NumAssocs = ArgTypes.size();
   assert(NumAssocs == ArgExprs.size());
 
-  ParsedType *ParsedTypes = ArgTypes.release();
-  Expr **Exprs = ArgExprs.release();
+  ParsedType *ParsedTypes = ArgTypes.get();
+  Expr **Exprs = ArgExprs.get();
 
   TypeSourceInfo **Types = new TypeSourceInfo*[NumAssocs];
   for (unsigned i = 0; i < NumAssocs; ++i) {
@@ -1432,7 +1432,6 @@ Sema::DecomposeUnqualifiedId(const UnqualifiedId &Id,
                                        Id.TemplateId->getTemplateArgs(),
                                        Id.TemplateId->NumArgs);
     translateTemplateArguments(TemplateArgsPtr, Buffer);
-    TemplateArgsPtr.release();
 
     TemplateName TName = Id.TemplateId->Template.get();
     SourceLocation TNameLoc = Id.TemplateId->TemplateNameLoc;
@@ -1797,7 +1796,7 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
         // lookup fails and no expression will be built to reference it.
         if (!E.isInvalid() && !E.get())
           return ExprError();
-        return move(E);
+        return E;
       }
     }
   }
@@ -3140,7 +3139,7 @@ Sema::ActOnUnaryExprOrTypeTraitExpr(SourceLocation OpLoc,
 
   Expr *ArgEx = (Expr *)TyOrEx;
   ExprResult Result = CreateUnaryExprOrTypeTraitExpr(ArgEx, OpLoc, ExprKind);
-  return move(Result);
+  return Result;
 }
 
 static QualType CheckRealImagOperand(Sema &S, ExprResult &V, SourceLocation Loc,
@@ -3167,7 +3166,7 @@ static QualType CheckRealImagOperand(Sema &S, ExprResult &V, SourceLocation Loc,
   ExprResult PR = S.CheckPlaceholderExpr(V.get());
   if (PR.isInvalid()) return QualType();
   if (PR.get() != V.get()) {
-    V = move(PR);
+    V = PR;
     return CheckRealImagOperand(S, V, Loc, IsReal);
   }
 
@@ -3783,7 +3782,7 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
   if (Result.isInvalid()) return ExprError();
   Fn = Result.take();
 
-  Expr **Args = ArgExprs.release();
+  Expr **Args = ArgExprs.get();
 
   if (getLangOpts().CPlusPlus) {
     // If this is a pseudo-destructor expression, build the call immediately.
@@ -4168,7 +4167,7 @@ ExprResult
 Sema::ActOnInitList(SourceLocation LBraceLoc, MultiExprArg InitArgList,
                     SourceLocation RBraceLoc) {
   unsigned NumInit = InitArgList.size();
-  Expr **InitList = InitArgList.release();
+  Expr **InitList = InitArgList.get();
 
   // Immediately handle non-overload placeholders.  Overloads can be
   // resolved contextually, but everything else here can't.
@@ -4604,7 +4603,7 @@ ExprResult Sema::ActOnParenListExpr(SourceLocation L,
                                     SourceLocation R,
                                     MultiExprArg Val) {
   unsigned nexprs = Val.size();
-  Expr **exprs = reinterpret_cast<Expr**>(Val.release());
+  Expr **exprs = Val.get();
   assert((exprs != 0) && "ActOnParenOrParenListExpr() missing expr list");
   Expr *expr = new (Context) ParenListExpr(Context, L, exprs, nexprs, R);
   return Owned(expr);
@@ -4884,11 +4883,11 @@ QualType Sema::CheckConditionalOperands(ExprResult &Cond, ExprResult &LHS,
 
   ExprResult LHSResult = CheckPlaceholderExpr(LHS.get());
   if (!LHSResult.isUsable()) return QualType();
-  LHS = move(LHSResult);
+  LHS = LHSResult;
 
   ExprResult RHSResult = CheckPlaceholderExpr(RHS.get());
   if (!RHSResult.isUsable()) return QualType();
-  RHS = move(RHSResult);
+  RHS = RHSResult;
 
   // C++ is sufficiently different to merit its own checker.
   if (getLangOpts().CPlusPlus)
@@ -5910,7 +5909,7 @@ Sema::CheckSingleAssignmentConstraints(QualType LHSType, ExprResult &RHS,
           !CheckObjCARCUnavailableWeakConversion(LHSType,
                                                  RHS.get()->getType()))
         result = IncompatibleObjCWeakRef;
-      RHS = move(Res);
+      RHS = Res;
       return result;
     }
 
@@ -7419,12 +7418,12 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
   ExprResult LHSRes = PerformContextuallyConvertToBool(LHS.get());
   if (LHSRes.isInvalid())
     return InvalidOperands(Loc, LHS, RHS);
-  LHS = move(LHSRes);
+  LHS = LHSRes;
 
   ExprResult RHSRes = PerformContextuallyConvertToBool(RHS.get());
   if (RHSRes.isInvalid())
     return InvalidOperands(Loc, LHS, RHS);
-  RHS = move(RHSRes);
+  RHS = RHSRes;
 
   // C++ [expr.log.and]p2
   // C++ [expr.log.or]p2

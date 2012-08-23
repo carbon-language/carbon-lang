@@ -266,11 +266,11 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   case Builtin::BI__sync_swap_4:
   case Builtin::BI__sync_swap_8:
   case Builtin::BI__sync_swap_16:
-    return SemaBuiltinAtomicOverloaded(move(TheCallResult));
+    return SemaBuiltinAtomicOverloaded(TheCallResult);
 #define BUILTIN(ID, TYPE, ATTRS)
 #define ATOMIC_BUILTIN(ID, TYPE, ATTRS) \
   case Builtin::BI##ID: \
-    return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::AO##ID);
+    return SemaAtomicOpsOverloaded(TheCallResult, AtomicExpr::AO##ID);
 #include "clang/Basic/Builtins.def"
   case Builtin::BI__builtin_annotation:
     if (SemaBuiltinAnnotation(*this, TheCall))
@@ -299,7 +299,7 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
     }
   }
 
-  return move(TheCallResult);
+  return TheCallResult;
 }
 
 // Get the valid immediate range for the specified NEON type code.
@@ -1243,7 +1243,7 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
   // gracefully.
   TheCall->setType(ResultType);
 
-  return move(TheCallResult);
+  return TheCallResult;
 }
 
 /// CheckObjCString - Checks that the argument to the builtin

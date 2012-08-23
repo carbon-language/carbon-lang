@@ -708,7 +708,7 @@ Corrected:
         if (ObjCIvarDecl *Ivar = Result.getAsSingle<ObjCIvarDecl>()) {
           Result.clear();
           ExprResult E(LookupInObjCMethod(Result, S, Ivar->getIdentifier()));
-          return move(E);
+          return E;
         }
         
         goto Corrected;
@@ -3722,11 +3722,11 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
     New = ActOnTypedefDeclarator(S, D, DC, TInfo, Previous);
   } else if (R->isFunctionType()) {
     New = ActOnFunctionDeclarator(S, D, DC, TInfo, Previous,
-                                  move(TemplateParamLists),
+                                  TemplateParamLists,
                                   AddToScope);
   } else {
     New = ActOnVariableDeclarator(S, D, DC, TInfo, Previous,
-                                  move(TemplateParamLists));
+                                  TemplateParamLists);
   }
 
   if (New == 0)
@@ -4256,7 +4256,7 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     if (TemplateParamLists.size() > 0 && D.getCXXScopeSpec().isSet()) {
       NewVD->setTemplateParameterListsInfo(Context,
                                            TemplateParamLists.size(),
-                                           TemplateParamLists.release());
+                                           TemplateParamLists.get());
     }
 
     if (D.getDeclSpec().isConstexprSpecified())
@@ -5208,7 +5208,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         if (TemplateParamLists.size() > 1) {
           NewFD->setTemplateParameterListsInfo(Context,
                                                TemplateParamLists.size() - 1,
-                                               TemplateParamLists.release());
+                                               TemplateParamLists.get());
         }
       } else {
         // This is a function template specialization.
@@ -5216,7 +5216,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         // For source fidelity, store all the template param lists.
         NewFD->setTemplateParameterListsInfo(Context,
                                              TemplateParamLists.size(),
-                                             TemplateParamLists.release());
+                                             TemplateParamLists.get());
 
         // C++0x [temp.expl.spec]p20 forbids "template<> friend void foo(int);".
         if (isFriend) {
@@ -5248,7 +5248,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         // For source fidelity, store all the template param lists.
         NewFD->setTemplateParameterListsInfo(Context,
                                              TemplateParamLists.size(),
-                                             TemplateParamLists.release());
+                                             TemplateParamLists.get());
     }
 
     if (Invalid) {
@@ -5527,7 +5527,6 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
                                          TemplateId->NumArgs);
       translateTemplateArguments(TemplateArgsPtr,
                                  TemplateArgs);
-      TemplateArgsPtr.release();
     
       HasExplicitTemplateArgs = true;
     
@@ -7724,7 +7723,7 @@ void Sema::computeNRVO(Stmt *Body, FunctionScopeInfo *Scope) {
 }
 
 Decl *Sema::ActOnFinishFunctionBody(Decl *D, Stmt *BodyArg) {
-  return ActOnFinishFunctionBody(D, move(BodyArg), false);
+  return ActOnFinishFunctionBody(D, BodyArg, false);
 }
 
 Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
@@ -8310,8 +8309,8 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
                                                SS, Name, NameLoc, Attr,
                                                TemplateParams, AS,
                                                ModulePrivateLoc,
-                                           TemplateParameterLists.size() - 1,
-                 (TemplateParameterList**) TemplateParameterLists.release());
+                                               TemplateParameterLists.size()-1,
+                                               TemplateParameterLists.get());
         return Result.get();
       } else {
         // The "template<>" header is extraneous.
@@ -8860,7 +8859,7 @@ CreateNewDecl:
       if (TemplateParameterLists.size() > 0) {
         New->setTemplateParameterListsInfo(Context,
                                            TemplateParameterLists.size(),
-                    (TemplateParameterList**) TemplateParameterLists.release());
+                                           TemplateParameterLists.get());
       }
     }
     else

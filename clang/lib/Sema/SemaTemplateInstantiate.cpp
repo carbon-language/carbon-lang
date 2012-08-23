@@ -835,7 +835,7 @@ namespace {
       ExprResult Result =
           TreeTransform<TemplateInstantiator>::TransformCallExpr(CE);
       getSema().CallsUndergoingInstantiation.pop_back();
-      return move(Result);
+      return Result;
     }
 
     ExprResult TransformLambdaExpr(LambdaExpr *E) {

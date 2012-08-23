@@ -232,7 +232,7 @@ Retry:
     bool msAsm = false;
     Res = ParseAsmStatement(msAsm);
     Res = Actions.ActOnFinishFullStmt(Res.get());
-    if (msAsm) return move(Res);
+    if (msAsm) return Res;
     SemiError = "asm";
     break;
   }
@@ -267,7 +267,7 @@ Retry:
     SkipUntil(tok::r_brace, true, true);
   }
 
-  return move(Res);
+  return Res;
 }
 
 /// \brief Parse an expression statement.
@@ -324,7 +324,7 @@ StmtResult Parser::ParseSEHTryBlockCommon(SourceLocation TryLoc) {
 
   StmtResult TryBlock(ParseCompoundStatement());
   if(TryBlock.isInvalid())
-    return move(TryBlock);
+    return TryBlock;
 
   StmtResult Handler;
   if (Tok.is(tok::identifier) &&
@@ -339,7 +339,7 @@ StmtResult Parser::ParseSEHTryBlockCommon(SourceLocation TryLoc) {
   }
 
   if(Handler.isInvalid())
-    return move(Handler);
+    return Handler;
 
   return Actions.ActOnSEHTryBlock(false /* IsCXXTry */,
                                   TryLoc,
@@ -384,7 +384,7 @@ StmtResult Parser::ParseSEHExceptBlock(SourceLocation ExceptLoc) {
   StmtResult Block(ParseCompoundStatement());
 
   if(Block.isInvalid())
-    return move(Block);
+    return Block;
 
   return Actions.ActOnSEHExceptBlock(ExceptLoc, FilterExpr.take(), Block.take());
 }
@@ -401,7 +401,7 @@ StmtResult Parser::ParseSEHFinallyBlock(SourceLocation FinallyBlock) {
 
   StmtResult Block(ParseCompoundStatement());
   if(Block.isInvalid())
-    return move(Block);
+    return Block;
 
   return Actions.ActOnSEHFinallyBlock(FinallyBlock,Block.take());
 }
@@ -546,7 +546,7 @@ StmtResult Parser::ParseCaseStatement(bool MissingCase, ExprResult Expr) {
       // Otherwise we link it into the current chain.
       Stmt *NextDeepest = Case.get();
       if (TopLevelCase.isInvalid())
-        TopLevelCase = move(Case);
+        TopLevelCase = Case;
       else
         Actions.ActOnCaseStmtBody(DeepestParsedCaseStmt, Case.get());
       DeepestParsedCaseStmt = NextDeepest;
@@ -579,7 +579,7 @@ StmtResult Parser::ParseCaseStatement(bool MissingCase, ExprResult Expr) {
   Actions.ActOnCaseStmtBody(DeepestParsedCaseStmt, SubStmt.get());
 
   // Return the top level parsed statement tree.
-  return move(TopLevelCase);
+  return TopLevelCase;
 }
 
 /// ParseDefaultStatement
@@ -793,7 +793,7 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
   }
 
   return Actions.ActOnCompoundStmt(T.getOpenLocation(), CloseLoc,
-                                   move_arg(Stmts), isStmtExpr);
+                                   Stmts, isStmtExpr);
 }
 
 /// ParseParenExprOrCondition:
@@ -1039,7 +1039,7 @@ StmtResult Parser::ParseSwitchStatement(SourceLocation *TrailingElseLoc) {
       SkipUntil(tok::r_brace, false, false);
     } else
       SkipUntil(tok::semi);
-    return move(Switch);
+    return Switch;
   }
 
   // C99 6.8.4p3 - In C99, the body of the switch statement is a scope, even if
@@ -1523,7 +1523,7 @@ StmtResult Parser::ParseGotoStatement() {
     return StmtError();
   }
 
-  return move(Res);
+  return Res;
 }
 
 /// ParseContinueStatement
@@ -1758,8 +1758,8 @@ StmtResult Parser::ParseAsmStatement(bool &msAsm) {
     T.consumeClose();
     return Actions.ActOnAsmStmt(AsmLoc, /*isSimple*/ true, isVolatile,
                                 /*NumOutputs*/ 0, /*NumInputs*/ 0, 0,
-                                move_arg(Constraints), move_arg(Exprs),
-                                AsmString.take(), move_arg(Clobbers),
+                                Constraints, Exprs,
+                                AsmString.take(), Clobbers,
                                 T.getCloseLocation());
   }
 
@@ -1823,8 +1823,8 @@ StmtResult Parser::ParseAsmStatement(bool &msAsm) {
   T.consumeClose();
   return Actions.ActOnAsmStmt(AsmLoc, false, isVolatile,
                               NumOutputs, NumInputs, Names.data(),
-                              move_arg(Constraints), move_arg(Exprs),
-                              AsmString.take(), move_arg(Clobbers),
+                              Constraints, Exprs,
+                              AsmString.take(), Clobbers,
                               T.getCloseLocation());
 }
 
@@ -2017,7 +2017,7 @@ StmtResult Parser::ParseCXXTryBlockCommon(SourceLocation TryLoc) {
   StmtResult TryBlock(ParseCompoundStatement(/*isStmtExpr=*/false,
                                              Scope::DeclScope|Scope::TryScope));
   if (TryBlock.isInvalid())
-    return move(TryBlock);
+    return TryBlock;
 
   // Borland allows SEH-handlers with 'try'
 
@@ -2035,7 +2035,7 @@ StmtResult Parser::ParseCXXTryBlockCommon(SourceLocation TryLoc) {
       Handler = ParseSEHFinallyBlock(Loc);
     }
     if(Handler.isInvalid())
-      return move(Handler);
+      return Handler;
 
     return Actions.ActOnSEHTryBlock(true /* IsCXXTry */,
                                     TryLoc,
@@ -2060,7 +2060,7 @@ StmtResult Parser::ParseCXXTryBlockCommon(SourceLocation TryLoc) {
     if (Handlers.empty())
       return StmtError();
 
-    return Actions.ActOnCXXTryBlock(TryLoc, TryBlock.take(),move_arg(Handlers));
+    return Actions.ActOnCXXTryBlock(TryLoc, TryBlock.take(),Handlers);
   }
 }
 
@@ -2112,7 +2112,7 @@ StmtResult Parser::ParseCXXCatchBlock() {
   // FIXME: Possible draft standard bug: attribute-specifier should be allowed?
   StmtResult Block(ParseCompoundStatement());
   if (Block.isInvalid())
-    return move(Block);
+    return Block;
 
   return Actions.ActOnCXXCatchBlock(CatchLoc, ExceptionDecl, Block.take());
 }

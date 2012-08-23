@@ -966,7 +966,7 @@ ExprResult Parser::ParseCXXCasts() {
                                        T.getOpenLocation(), Result.take(), 
                                        T.getCloseLocation());
 
-  return move(Result);
+  return Result;
 }
 
 /// ParseCXXTypeid - This handles the C++ typeid expression.
@@ -1032,7 +1032,7 @@ ExprResult Parser::ParseCXXTypeid() {
     }
   }
 
-  return move(Result);
+  return Result;
 }
 
 /// ParseCXXUuidof - This handles the Microsoft C++ __uuidof expression.
@@ -1080,7 +1080,7 @@ ExprResult Parser::ParseCXXUuidof() {
     }
   }
 
-  return move(Result);
+  return Result;
 }
 
 /// \brief Parse a C++ pseudo-destructor expression after the base,
@@ -1202,7 +1202,7 @@ ExprResult Parser::ParseThrowExpression() {
 
   default:
     ExprResult Expr(ParseAssignmentExpression());
-    if (Expr.isInvalid()) return move(Expr);
+    if (Expr.isInvalid()) return Expr;
     return Actions.ActOnCXXThrow(getCurScope(), ThrowLoc, Expr.take());
   }
 }
@@ -1271,7 +1271,7 @@ Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
     assert((Exprs.size() == 0 || Exprs.size()-1 == CommaLocs.size())&&
            "Unexpected number of commas!");
     return Actions.ActOnCXXTypeConstructExpr(TypeRep, T.getOpenLocation(), 
-                                             move_arg(Exprs),
+                                             Exprs,
                                              T.getCloseLocation());
   }
 }
@@ -2304,7 +2304,7 @@ Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
     }
     Initializer = Actions.ActOnParenListExpr(ConstructorLParen,
                                              ConstructorRParen,
-                                             move_arg(ConstructorArgs));
+                                             ConstructorArgs);
   } else if (Tok.is(tok::l_brace) && getLangOpts().CPlusPlus0x) {
     Diag(Tok.getLocation(),
          diag::warn_cxx98_compat_generalized_initializer_lists);
@@ -2314,7 +2314,7 @@ Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
     return Initializer;
 
   return Actions.ActOnCXXNew(Start, UseGlobal, PlacementLParen,
-                             move_arg(PlacementArgs), PlacementRParen,
+                             PlacementArgs, PlacementRParen,
                              TypeIdParens, DeclaratorInfo, Initializer.take());
 }
 
@@ -2428,7 +2428,7 @@ Parser::ParseCXXDeleteExpression(bool UseGlobal, SourceLocation Start) {
 
   ExprResult Operand(ParseCastExpression(false));
   if (Operand.isInvalid())
-    return move(Operand);
+    return Operand;
 
   return Actions.ActOnCXXDelete(Start, UseGlobal, ArrayDelete, Operand.take());
 }
@@ -2810,7 +2810,7 @@ Parser::ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
       Result = Actions.ActOnCastExpr(getCurScope(), Tracker.getOpenLocation(),
                                     DeclaratorInfo, CastTy,
                                     Tracker.getCloseLocation(), Result.take());
-    return move(Result);
+    return Result;
   }
 
   // Not a compound literal, and not followed by a cast-expression.
@@ -2829,5 +2829,5 @@ Parser::ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
   }
 
   Tracker.consumeClose();
-  return move(Result);
+  return Result;
 }

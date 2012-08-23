@@ -815,8 +815,6 @@ Sema::BuildCXXTypeConstructExpr(TypeSourceInfo *TInfo,
   if (Ty->isDependentType() ||
       CallExpr::hasAnyTypeDependentArguments(
         llvm::makeArrayRef(Exprs, NumExprs))) {
-    exprs.release();
-
     return Owned(CXXUnresolvedConstructExpr::Create(Context, TInfo,
                                                     LParenLoc,
                                                     Exprs, NumExprs,
@@ -835,7 +833,6 @@ Sema::BuildCXXTypeConstructExpr(TypeSourceInfo *TInfo,
   // corresponding cast expression.
   if (NumExprs == 1 && !ListInitialization) {
     Expr *Arg = Exprs[0];
-    exprs.release();
     return BuildCXXFunctionalCastExpr(TInfo, LParenLoc, Arg, RParenLoc);
   }
 
@@ -865,7 +862,7 @@ Sema::BuildCXXTypeConstructExpr(TypeSourceInfo *TInfo,
                : InitializationKind::CreateValue(TyBeginLoc,
                                                  LParenLoc, RParenLoc);
   InitializationSequence InitSeq(*this, Entity, Kind, Exprs, NumExprs);
-  ExprResult Result = InitSeq.Perform(*this, Entity, Kind, move(exprs));
+  ExprResult Result = InitSeq.Perform(*this, Entity, Kind, exprs);
 
   if (!Result.isInvalid() && ListInitialization &&
       isa<InitListExpr>(Result.get())) {
@@ -881,7 +878,7 @@ Sema::BuildCXXTypeConstructExpr(TypeSourceInfo *TInfo,
   }
 
   // FIXME: Improve AST representation?
-  return move(Result);
+  return Result;
 }
 
 /// doesUsualArrayDeleteWantSize - Answers whether the usual
@@ -1013,7 +1010,7 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
 
   return BuildCXXNew(StartLoc, UseGlobal,
                      PlacementLParen,
-                     move(PlacementArgs),
+                     PlacementArgs,
                      PlacementRParen,
                      TypeIdParens,
                      AllocType,
@@ -1431,8 +1428,6 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
       }
     }
   }
-
-  PlacementArgs.release();
 
   return Owned(new (Context) CXXNewExpr(Context, UseGlobal, OperatorNew,
                                         OperatorDelete,
@@ -2100,7 +2095,7 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
                             ObjectPtrConversions.front()->getConversionType(),
                                     AA_Converting);
         if (Res.isUsable()) {
-          Ex = move(Res);
+          Ex = Res;
           Type = Ex.get()->getType();
         }
       }
@@ -2287,7 +2282,7 @@ ExprResult Sema::CheckConditionVariable(VarDecl *ConditionVar,
       return ExprError();
   }
 
-  return move(Condition);
+  return Condition;
 }
 
 /// CheckCXXBooleanCondition - Returns true if a conversion to bool is invalid.
@@ -2367,7 +2362,7 @@ static ExprResult BuildCXXCastArgument(Sema &S,
     
     ExprResult Result
       = S.BuildCXXConstructExpr(CastLoc, Ty, cast<CXXConstructorDecl>(Method),
-                                move_arg(ConstructorArgs), 
+                                ConstructorArgs, 
                                 HadMultipleCandidates, /*ZeroInit*/ false, 
                                 CXXConstructExpr::CK_Complete, SourceRange());
     if (Result.isInvalid())
@@ -2519,7 +2514,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
         return ExprError();
       return BuildCXXConstructExpr(/*FIXME:ConstructLoc*/SourceLocation(),
                                    ToType, SCS.CopyConstructor,
-                                   move_arg(ConstructorArgs),
+                                   ConstructorArgs,
                                    /*HadMultipleCandidates*/ false,
                                    /*ZeroInit*/ false,
                                    CXXConstructExpr::CK_Complete,
@@ -3774,7 +3769,7 @@ ExprResult Sema::ActOnExpressionTrait(ExpressionTrait ET,
 
   ExprResult Result = BuildExpressionTrait(ET, KWLoc, Queried, RParen);
 
-  return move(Result);
+  return Result;
 }
 
 static bool EvaluateExpressionTrait(ExpressionTrait ET, Expr *E) {
@@ -4056,14 +4051,14 @@ static bool FindConditionalOverload(Sema &Self, ExprResult &LHS, ExprResult &RHS
                                        Best->Conversions[0], Sema::AA_Converting);
       if (LHSRes.isInvalid())
         break;
-      LHS = move(LHSRes);
+      LHS = LHSRes;
 
       ExprResult RHSRes =
         Self.PerformImplicitConversion(RHS.get(), Best->BuiltinTypes.ParamTypes[1],
                                        Best->Conversions[1], Sema::AA_Converting);
       if (RHSRes.isInvalid())
         break;
-      RHS = move(RHSRes);
+      RHS = RHSRes;
       if (Best->Function)
         Self.MarkFunctionReferenced(QuestionLoc, Best->Function);
       return false;
@@ -4129,7 +4124,7 @@ QualType Sema::CXXCheckConditionalOperands(ExprResult &Cond, ExprResult &LHS,
     ExprResult CondRes = CheckCXXBooleanCondition(Cond.take());
     if (CondRes.isInvalid())
       return QualType();
-    Cond = move(CondRes);
+    Cond = CondRes;
   }
 
   // Assume r-value.
@@ -4991,7 +4986,7 @@ Sema::ActOnStartCXXMemberReference(Scope *S, Expr *Base, SourceLocation OpLoc,
   //   type C (or of pointer to a class type C), the unqualified-id is looked
   //   up in the scope of class C. [...]
   ObjectType = ParsedType::make(BaseType);
-  return move(Base);
+  return Base;
 }
 
 ExprResult Sema::DiagnoseDtorReference(SourceLocation NameLoc,
