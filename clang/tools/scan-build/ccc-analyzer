@@ -346,6 +346,7 @@ my %LinkerOptionMap = (
 
 my %CompilerLinkerOptionMap = (
   '-fobjc-arc' => 0,
+  '-fno-objc-arc' => 0,
   '-fobjc-abi-version' => 0, # This is really a 1 argument, but always has '='
   '-fobjc-legacy-dispatch' => 0,
   '-mios-simulator-version-min' => 0, # This really has 1 argument, but always has '='
