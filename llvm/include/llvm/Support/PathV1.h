@@ -683,8 +683,8 @@ namespace sys {
       /// This function returns status information about the file. The type of
       /// path (file or directory) is updated to reflect the actual contents
       /// of the file system.
-      /// @returns 0 on failure, with Error explaining why (if non-zero)
-      /// @returns a pointer to a FileStatus structure on success.
+      /// @returns 0 on failure, with Error explaining why (if non-zero),
+      /// otherwise returns a pointer to a FileStatus structure on success.
       /// @brief Get file status.
       const FileStatus *getFileStatus(
         bool forceUpdate = false, ///< Force an update from the file system

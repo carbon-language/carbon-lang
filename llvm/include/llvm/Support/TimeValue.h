@@ -153,7 +153,6 @@ namespace sys {
 
     /// Determine if \p this is greater than or equal to \p that.
     /// @returns True iff *this >= that.
-    /// @brief True if this >= that.
     int operator >= (const TimeValue &that) const {
       if ( this->seconds_ > that.seconds_ ) {
           return 1;
@@ -164,7 +163,7 @@ namespace sys {
     }
 
     /// Determines if two TimeValue objects represent the same moment in time.
-    /// @brief True iff *this == that.
+    /// @returns True iff *this == that.
     int operator == (const TimeValue &that) const {
       return (this->seconds_ == that.seconds_) &&
              (this->nanos_ == that.nanos_);
@@ -172,8 +171,7 @@ namespace sys {
 
     /// Determines if two TimeValue objects represent times that are not the
     /// same.
-    /// @return True iff *this != that.
-    /// @brief True if this != that.
+    /// @returns True iff *this != that.
     int operator != (const TimeValue &that) const { return !(*this == that); }
 
     /// Adds two TimeValue objects together.

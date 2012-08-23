@@ -145,7 +145,7 @@ public:
   /// GetMessage - Return an SMDiagnostic at the specified location with the
   /// specified string.
   ///
-  /// @param Type - If non-null, the kind of message (e.g., "error") which is
+  /// @param Msg If non-null, the kind of message (e.g., "error") which is
   /// prefixed to the message.
   SMDiagnostic GetMessage(SMLoc Loc, DiagKind Kind, const Twine &Msg, 
                           ArrayRef<SMRange> Ranges = ArrayRef<SMRange>()) const;

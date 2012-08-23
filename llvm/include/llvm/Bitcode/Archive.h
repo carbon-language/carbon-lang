@@ -415,8 +415,8 @@ class Archive {
     /// name will be truncated at 15 characters. If \p Compress is specified,
     /// all archive members will be compressed before being written. If
     /// \p PrintSymTab is true, the symbol table will be printed to std::cout.
-    /// @returns true if an error occurred, \p error set to error message
-    /// @returns false if the writing succeeded.
+    /// @returns true if an error occurred, \p error set to error message;
+    /// returns false if the writing succeeded.
     /// @brief Write (possibly modified) archive contents to disk
     bool writeToDisk(
       bool CreateSymbolTable=false,   ///< Create Symbol table
@@ -480,8 +480,8 @@ class Archive {
     /// Writes one ArchiveMember to an ofstream. If an error occurs, returns
     /// false, otherwise true. If an error occurs and error is non-null then
     /// it will be set to an error message.
-    /// @returns false Writing member succeeded
-    /// @returns true Writing member failed, \p error set to error message
+    /// @returns false if writing member succeeded,
+    /// returns true if writing member failed, \p error set to error message.
     bool writeMember(
       const ArchiveMember& member, ///< The member to be written
       std::ofstream& ARFile,       ///< The file to write member onto

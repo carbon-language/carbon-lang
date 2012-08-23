@@ -78,11 +78,11 @@ public:
   /// values. If not given, then only non-symbolic expressions will be
   /// evaluated.
   /// @result - True on success.
+  bool EvaluateAsAbsolute(int64_t &Res, const MCAsmLayout &Layout,
+                          const SectionAddrMap &Addrs) const;
   bool EvaluateAsAbsolute(int64_t &Res) const;
   bool EvaluateAsAbsolute(int64_t &Res, const MCAssembler &Asm) const;
   bool EvaluateAsAbsolute(int64_t &Res, const MCAsmLayout &Layout) const;
-  bool EvaluateAsAbsolute(int64_t &Res, const MCAsmLayout &Layout,
-                          const SectionAddrMap &Addrs) const;
 
   /// EvaluateAsRelocatable - Try to evaluate the expression to a relocatable
   /// value, i.e. an expression of the fixed form (a - b + constant).

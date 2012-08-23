@@ -166,7 +166,7 @@ public:
   ///
   /// @param Symbol - The common symbol to emit.
   /// @param Size - The size of the common symbol.
-  /// @param Size - The alignment of the common symbol in bytes.
+  /// @param ByteAlignment - The alignment of the common symbol in bytes.
   virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                      unsigned ByteAlignment);
 

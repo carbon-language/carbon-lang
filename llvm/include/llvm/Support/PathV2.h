@@ -133,7 +133,7 @@ void replace_extension(SmallVectorImpl<char> &path, const Twine &extension);
 /// foo   + bar/f => foo/bar/f
 ///
 /// @param path Set to \a path + \a component.
-/// @param component The component to be appended to \a path.
+/// @param a The component to be appended to \a path.
 void append(SmallVectorImpl<char> &path, const Twine &a,
                                          const Twine &b = "",
                                          const Twine &c = "",

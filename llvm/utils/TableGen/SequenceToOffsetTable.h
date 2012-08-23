@@ -29,8 +29,8 @@ namespace llvm {
 /// Compute the layout of a table that contains all the sequences, possibly by
 /// reusing entries.
 ///
-/// @param SeqT The sequence container. (vector or string).
-/// @param Less A stable comparator for SeqT elements.
+/// @tparam SeqT The sequence container. (vector or string).
+/// @tparam Less A stable comparator for SeqT elements.
 template<typename SeqT, typename Less = std::less<typename SeqT::value_type> >
 class SequenceToOffsetTable {
   typedef typename SeqT::value_type ElemT;

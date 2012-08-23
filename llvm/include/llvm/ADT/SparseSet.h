@@ -110,9 +110,9 @@ struct SparseSetValFunctor<KeyT, KeyT, KeyFunctorT> {
 /// For sets that may grow to thousands of elements, SparseT should be set to
 /// uint16_t or uint32_t.
 ///
-/// @param ValueT      The type of objects in the set.
-/// @param KeyFunctorT A functor that computes an unsigned index from KeyT.
-/// @param SparseT     An unsigned integer type. See above.
+/// @tparam ValueT      The type of objects in the set.
+/// @tparam KeyFunctorT A functor that computes an unsigned index from KeyT.
+/// @tparam SparseT     An unsigned integer type. See above.
 ///
 template<typename ValueT,
          typename KeyFunctorT = llvm::identity<unsigned>,

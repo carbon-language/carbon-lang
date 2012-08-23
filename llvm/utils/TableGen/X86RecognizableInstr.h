@@ -143,7 +143,7 @@ private:
   /// @param hasREX_WPrefix - Indicates whether the instruction has a REX.W
   ///                         prefix.  If it does, 32-bit register operands stay
   ///                         32-bit regardless of the operand size.
-  /// @param hasOpSizePrefix- Indicates whether the instruction has an OpSize
+  /// @param hasOpSizePrefix  Indicates whether the instruction has an OpSize
   ///                         prefix.  If it does not, then 16-bit register
   ///                         operands stay 16-bit.
   /// @return               - The operand's type.

@@ -113,7 +113,7 @@ namespace PBQP {
     }
 
     /// \brief Add the given node to the list of nodes to be optimally reduced.
-    /// @return nItr Node iterator to be added.
+    /// @param nItr Node iterator to be added.
     ///
     /// You probably don't want to over-ride this, except perhaps to record
     /// statistics before calling this implementation. HeuristicBase relies on

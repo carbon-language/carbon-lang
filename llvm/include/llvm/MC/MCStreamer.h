@@ -581,9 +581,6 @@ namespace llvm {
   ///
   /// \param ShowInst - Whether to show the MCInst representation inline with
   /// the assembly.
-  ///
-  /// \param DecodeLSDA - If true, emit comments that translates the LSDA into a
-  /// human readable format. Only usable with CFI.
   MCStreamer *createAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
                                 bool isVerboseAsm,
                                 bool useLoc,

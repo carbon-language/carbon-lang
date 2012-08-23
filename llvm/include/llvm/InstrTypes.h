@@ -581,8 +581,8 @@ public:
 
   /// Determine how a pair of casts can be eliminated, if they can be at all.
   /// This is a helper function for both CastInst and ConstantExpr.
-  /// @returns 0 if the CastInst pair can't be eliminated
-  /// @returns Instruction::CastOps value for a cast that can replace
+  /// @returns 0 if the CastInst pair can't be eliminated, otherwise
+  /// returns Instruction::CastOps value for a cast that can replace
   /// the pair, casting SrcTy to DstTy.
   /// @brief Determine if a cast pair is eliminable
   static unsigned isEliminableCastPair(

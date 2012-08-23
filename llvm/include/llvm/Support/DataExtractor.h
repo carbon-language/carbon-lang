@@ -99,8 +99,8 @@ public:
   ///     enough bytes to extract this value, the offset will be left
   ///     unmodified.
   ///
-  /// @param[in] byte_size
-  ///     The size in byte of the integer to extract.
+  /// @param[in] size
+  ///     The size in bytes of the integer to extract.
   ///
   /// @return
   ///     The sign extended signed integer value that was extracted,

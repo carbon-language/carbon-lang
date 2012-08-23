@@ -1238,8 +1238,8 @@ public:
   /// countLeadingZeros - This function is an APInt version of the
   /// countLeadingZeros_{32,64} functions in MathExtras.h. It counts the number
   /// of zeros from the most significant bit to the first one bit.
-  /// @returns BitWidth if the value is zero.
-  /// @returns the number of zeros from the most significant bit to the first
+  /// @returns BitWidth if the value is zero, otherwise
+  /// returns the number of zeros from the most significant bit to the first
   /// one bits.
   unsigned countLeadingZeros() const {
     if (isSingleWord()) {
@@ -1252,8 +1252,8 @@ public:
   /// countLeadingOnes - This function is an APInt version of the
   /// countLeadingOnes_{32,64} functions in MathExtras.h. It counts the number
   /// of ones from the most significant bit to the first zero bit.
-  /// @returns 0 if the high order bit is not set
-  /// @returns the number of 1 bits from the most significant to the least
+  /// @returns 0 if the high order bit is not set, otherwise
+  /// returns the number of 1 bits from the most significant to the least
   /// @brief Count the number of leading one bits.
   unsigned countLeadingOnes() const;
 
@@ -1266,8 +1266,8 @@ public:
   /// countTrailingZeros - This function is an APInt version of the
   /// countTrailingZeros_{32,64} functions in MathExtras.h. It counts
   /// the number of zeros from the least significant bit to the first set bit.
-  /// @returns BitWidth if the value is zero.
-  /// @returns the number of zeros from the least significant bit to the first
+  /// @returns BitWidth if the value is zero, otherwise
+  /// returns the number of zeros from the least significant bit to the first
   /// one bit.
   /// @brief Count the number of trailing zero bits.
   unsigned countTrailingZeros() const;
@@ -1275,8 +1275,8 @@ public:
   /// countTrailingOnes - This function is an APInt version of the
   /// countTrailingOnes_{32,64} functions in MathExtras.h. It counts
   /// the number of ones from the least significant bit to the first zero bit.
-  /// @returns BitWidth if the value is all ones.
-  /// @returns the number of ones from the least significant bit to the first
+  /// @returns BitWidth if the value is all ones, otherwise
+  /// returns the number of ones from the least significant bit to the first
   /// zero bit.
   /// @brief Count the number of trailing one bits.
   unsigned countTrailingOnes() const {
@@ -1288,8 +1288,8 @@ public:
   /// countPopulation - This function is an APInt version of the
   /// countPopulation_{32,64} functions in MathExtras.h. It counts the number
   /// of 1 bits in the APInt value.
-  /// @returns 0 if the value is zero.
-  /// @returns the number of set bits.
+  /// @returns 0 if the value is zero, otherwise returns the number of set
+  /// bits.
   /// @brief Count the number of bits set.
   unsigned countPopulation() const {
     if (isSingleWord())
