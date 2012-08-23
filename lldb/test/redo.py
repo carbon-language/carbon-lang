@@ -121,7 +121,7 @@ def main():
 
     index = 1
     while index < len(sys.argv):
-        if sys.argv[index].startswith('-h'):
+        if sys.argv[index].startswith('-h') or sys.argv[index].startswith('--help'):
             usage()
 
         if sys.argv[index].startswith('-'):
