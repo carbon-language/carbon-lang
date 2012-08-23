@@ -633,13 +633,16 @@ static const char *
 RegisterNameHelpTextCallback ()
 {
     return "Register names can be specified using the architecture specific names.  "
-    "They can also be specified using generic names.\n"
+    "They can also be specified using generic names.  Not all generic entities have "
+    "registers backing them on all architectures.  When they don't the generic name "
+    "will return an error.\n"
     "The generic names defined in lldb are:\n"
     "\n"
     "pc       - program counter register\n"
     "ra       - return address register\n"
     "fp       - frame pointer register\n"
     "sp       - stack pointer register\n"
+    "flags    - the flags register\n"
     "arg{1-6} - integer argument passing registers.\n";
 }
 
