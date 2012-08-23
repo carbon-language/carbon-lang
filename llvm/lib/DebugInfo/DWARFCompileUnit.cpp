@@ -199,9 +199,9 @@ size_t DWARFCompileUnit::extractDIEsIfNeeded(bool cu_die_only) {
   // Give a little bit of info if we encounter corrupt DWARF (our offset
   // should always terminate at or before the start of the next compilation
   // unit header).
-  if (offset > next_cu_offset) {
-    fprintf (stderr, "warning: DWARF compile unit extends beyond its bounds cu 0x%8.8x at 0x%8.8x'\n", getOffset(), offset);
-  }
+  if (offset > next_cu_offset)
+    fprintf (stderr, "warning: DWARF compile unit extends beyond its"
+                     "bounds cu 0x%8.8x at 0x%8.8x'\n", getOffset(), offset);
 
   setDIERelations();
   return DieArray.size();
