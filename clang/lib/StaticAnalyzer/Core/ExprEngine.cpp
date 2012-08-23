@@ -1428,7 +1428,12 @@ void ExprEngine::VisitCommonDeclRefExpr(const Expr *Ex, const NamedDecl *D,
   }
   if (isa<FieldDecl>(D)) {
     // FIXME: Compute lvalue of field pointers-to-member.
-    Bldr.generateNode(Ex, Pred, state->BindExpr(Ex, LCtx, UnknownVal()), 0,
+    // Right now we just use a non-null void pointer, so that it gives proper
+    // results in boolean contexts.
+    SVal V = svalBuilder.conjureSymbolVal(Ex, LCtx, getContext().VoidPtrTy,
+                                          currBldrCtx->blockCount());
+    state = state->assume(cast<DefinedOrUnknownSVal>(V), true);
+    Bldr.generateNode(Ex, Pred, state->BindExpr(Ex, LCtx, V), 0,
 		      ProgramPoint::PostLValueKind);
     return;
   }

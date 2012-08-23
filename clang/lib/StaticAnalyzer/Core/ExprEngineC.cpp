@@ -274,6 +274,9 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
         Bldr.generateNode(CastE, Pred, state);
         continue;
       }
+      case CK_MemberPointerToBoolean:
+        // FIXME: For now, member pointers are represented by void *.
+        // FALLTHROUGH
       case CK_Dependent:
       case CK_ArrayToPointerDecay:
       case CK_BitCast:
@@ -359,16 +362,21 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
         Bldr.generateNode(CastE, Pred, state);
         continue;
       }
+      case CK_NullToMemberPointer: {
+        // FIXME: For now, member pointers are represented by void *.
+        SVal V = svalBuilder.makeIntValWithPtrWidth(0, true);
+        state = state->BindExpr(CastE, LCtx, V);
+        Bldr.generateNode(CastE, Pred, state);
+        continue;
+      }
       // Various C++ casts that are not handled yet.
       case CK_ToUnion:
       case CK_BaseToDerived:
-      case CK_NullToMemberPointer:
       case CK_BaseToDerivedMemberPointer:
       case CK_DerivedToBaseMemberPointer:
       case CK_ReinterpretMemberPointer:
       case CK_ConstructorConversion:
       case CK_VectorSplat:
-      case CK_MemberPointerToBoolean:
       case CK_LValueBitCast: {
         // Recover some path-sensitivty by conjuring a new value.
         QualType resultType = CastE->getType();
