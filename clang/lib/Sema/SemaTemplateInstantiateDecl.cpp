@@ -3031,7 +3031,7 @@ ExprResult Sema::SubstInitializer(Expr *Init,
       isa<CXXTemporaryObjectExpr>(Construct))
     return SubstExpr(Init, TemplateArgs);
 
-  ASTOwningVector<Expr*> NewArgs(*this);
+  SmallVector<Expr*, 8> NewArgs;
   if (SubstExprs(Construct->getArgs(), Construct->getNumArgs(), true,
                  TemplateArgs, NewArgs))
     return ExprError();

@@ -2571,7 +2571,7 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
     T.consumeOpen();
 
     // Parse the optional expression-list.
-    ExprVector ArgExprs(Actions);
+    ExprVector ArgExprs;
     CommaLocsTy CommaLocs;
     if (Tok.isNot(tok::r_paren) && ParseExpressionList(ArgExprs, CommaLocs)) {
       SkipUntil(tok::r_paren);
@@ -2586,7 +2586,7 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
 
     return Actions.ActOnMemInitializer(ConstructorDecl, getCurScope(), SS, II,
                                        TemplateTypeTy, DS, IdLoc,
-                                       T.getOpenLocation(), ArgExprs.take(),
+                                       T.getOpenLocation(), ArgExprs.data(),
                                        ArgExprs.size(), T.getCloseLocation(),
                                        EllipsisLoc);
   }

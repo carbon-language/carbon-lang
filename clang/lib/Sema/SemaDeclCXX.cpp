@@ -7669,7 +7669,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
   //   which they were declared in the class definition.
   
   // The statements that form the synthesized function body.
-  ASTOwningVector<Stmt*> Statements(*this);
+  SmallVector<Stmt*, 8> Statements;
   
   // The parameter for the "other" object, which we are copying from.
   ParmVarDecl *Other = CopyAssignOperator->getParamDecl(0);
@@ -7874,7 +7874,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
         assert(BuiltinMemCpyRef && "Builtin reference cannot fail");
       }
           
-      ASTOwningVector<Expr*> CallArgs(*this);
+      SmallVector<Expr*, 8> CallArgs;
       CallArgs.push_back(To.takeAs<Expr>());
       CallArgs.push_back(From.takeAs<Expr>());
       CallArgs.push_back(IntegerLiteral::Create(Context, Size, SizeType, Loc));
@@ -8210,7 +8210,7 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
   //   definition.
 
   // The statements that form the synthesized function body.
-  ASTOwningVector<Stmt*> Statements(*this);
+  SmallVector<Stmt*, 8> Statements;
 
   // The parameter for the "other" object, which we are move from.
   ParmVarDecl *Other = MoveAssignOperator->getParamDecl(0);
@@ -8423,7 +8423,7 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
         assert(BuiltinMemCpyRef && "Builtin reference cannot fail");
       }
           
-      ASTOwningVector<Expr*> CallArgs(*this);
+      SmallVector<Expr*, 8> CallArgs;
       CallArgs.push_back(To.takeAs<Expr>());
       CallArgs.push_back(From.takeAs<Expr>());
       CallArgs.push_back(IntegerLiteral::Create(Context, Size, SizeType, Loc));
@@ -9138,7 +9138,7 @@ bool
 Sema::CompleteConstructorCall(CXXConstructorDecl *Constructor,
                               MultiExprArg ArgsPtr,
                               SourceLocation Loc,
-                              ASTOwningVector<Expr*> &ConvertedArgs,
+                              SmallVectorImpl<Expr*> &ConvertedArgs,
                               bool AllowExplicit) {
   // FIXME: This duplicates a lot of code from Sema::ConvertArgumentsForCall.
   unsigned NumArgs = ArgsPtr.size();

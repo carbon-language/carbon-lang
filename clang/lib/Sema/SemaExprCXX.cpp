@@ -2349,7 +2349,7 @@ static ExprResult BuildCXXCastArgument(Sema &S,
   default: llvm_unreachable("Unhandled cast kind!");
   case CK_ConstructorConversion: {
     CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(Method);
-    ASTOwningVector<Expr*> ConstructorArgs(S);
+    SmallVector<Expr*, 8> ConstructorArgs;
 
     if (S.CompleteConstructorCall(Constructor,
                                   MultiExprArg(&From, 1),
@@ -2506,7 +2506,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
     // FIXME: When can ToType be a reference type?
     assert(!ToType->isReferenceType());
     if (SCS.Second == ICK_Derived_To_Base) {
-      ASTOwningVector<Expr*> ConstructorArgs(*this);
+      SmallVector<Expr*, 8> ConstructorArgs;
       if (CompleteConstructorCall(cast<CXXConstructorDecl>(SCS.CopyConstructor),
                                   MultiExprArg(*this, &From, 1),
                                   /*FIXME:ConstructLoc*/SourceLocation(),

@@ -693,7 +693,7 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
     // A function definition cannot start with any of these keywords.
     {
       SourceLocation DeclEnd;
-      StmtVector Stmts(Actions);
+      StmtVector Stmts;
       return ParseDeclaration(Stmts, Declarator::FileContext, DeclEnd, attrs);
     }
 
@@ -704,7 +704,7 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
       Diag(ConsumeToken(), diag::warn_static_inline_explicit_inst_ignored)
         << 0;
       SourceLocation DeclEnd;
-      StmtVector Stmts(Actions);
+      StmtVector Stmts;
       return ParseDeclaration(Stmts, Declarator::FileContext, DeclEnd, attrs);  
     }
     goto dont_know;
@@ -716,7 +716,7 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
       // Inline namespaces. Allowed as an extension even in C++03.
       if (NextKind == tok::kw_namespace) {
         SourceLocation DeclEnd;
-        StmtVector Stmts(Actions);
+        StmtVector Stmts;
         return ParseDeclaration(Stmts, Declarator::FileContext, DeclEnd, attrs);
       }
       
@@ -726,7 +726,7 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
         Diag(ConsumeToken(), diag::warn_static_inline_explicit_inst_ignored)
           << 1;
         SourceLocation DeclEnd;
-        StmtVector Stmts(Actions);
+        StmtVector Stmts;
         return ParseDeclaration(Stmts, Declarator::FileContext, DeclEnd, attrs);  
       }
     }

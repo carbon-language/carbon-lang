@@ -239,35 +239,10 @@ namespace clang {
     const PtrTy &operator[](unsigned Arg) const { return Nodes[Arg]; }
   };
 
-  /// \brief A small vector that owns a set of AST nodes.
-  template <class PtrTy, unsigned N = 8>
-  class ASTOwningVector : public SmallVector<PtrTy, N> {
-    ASTOwningVector(ASTOwningVector &); // do not implement
-    ASTOwningVector &operator=(ASTOwningVector &); // do not implement
-
-  public:
-    explicit ASTOwningVector(Sema &Actions)
-    { }
-
-    PtrTy *take() {
-      return &this->front();
-    }
-
-    template<typename T> T **takeAs() { return reinterpret_cast<T**>(take()); }
-  };
-
   /// An opaque type for threading parsed type information through the
   /// parser.
   typedef OpaquePtr<QualType> ParsedType;
   typedef UnionOpaquePtr<QualType> UnionParsedType;
-
-  /// A SmallVector of statements, with stack size 32 (as that is the only one
-  /// used.)
-  typedef ASTOwningVector<Stmt*, 32> StmtVector;
-  /// A SmallVector of expressions, with stack size 12 (the maximum used.)
-  typedef ASTOwningVector<Expr*, 12> ExprVector;
-  /// A SmallVector of types.
-  typedef ASTOwningVector<ParsedType, 12> TypeVector;
 
   // We can re-use the low bit of expression, statement, base, and
   // member-initializer pointers for the "invalid" flag of

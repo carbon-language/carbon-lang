@@ -1341,7 +1341,7 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       BalancedDelimiterTracker PT(*this, tok::l_paren);
 
       if (OpKind == tok::lesslessless) {
-        ExprVector ExecConfigExprs(Actions);
+        ExprVector ExecConfigExprs;
         CommaLocsTy ExecConfigCommaLocs;
         SourceLocation OpenLoc = ConsumeToken();
 
@@ -1384,7 +1384,7 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
         Loc = PT.getOpenLocation();
       }
 
-      ExprVector ArgExprs(Actions);
+      ExprVector ArgExprs;
       CommaLocsTy CommaLocs;
       
       if (Tok.is(tok::code_completion)) {
@@ -2093,7 +2093,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
     // Parse the expression-list.
     InMessageExpressionRAIIObject InMessage(*this, false);
     
-    ExprVector ArgExprs(Actions);
+    ExprVector ArgExprs;
     CommaLocsTy CommaLocs;
 
     if (!ParseExpressionList(ArgExprs, CommaLocs)) {
@@ -2211,8 +2211,8 @@ ExprResult Parser::ParseGenericSelectionExpression() {
   }
 
   SourceLocation DefaultLoc;
-  TypeVector Types(Actions);
-  ExprVector Exprs(Actions);
+  TypeVector Types;
+  ExprVector Exprs;
   while (1) {
     ParsedType Ty;
     if (Tok.is(tok::kw_default)) {

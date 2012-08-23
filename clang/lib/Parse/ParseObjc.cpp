@@ -1806,7 +1806,7 @@ StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
     Diag(Tok, diag::err_expected_lbrace);
     return StmtError();
   }
-  StmtVector CatchStmts(Actions);
+  StmtVector CatchStmts;
   StmtResult FinallyStmt;
   ParseScope TryScope(this, Scope::DeclScope);
   StmtResult TryBody(ParseCompoundStatementBody());
@@ -2418,7 +2418,7 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
 
   SmallVector<IdentifierInfo *, 12> KeyIdents;
   SmallVector<SourceLocation, 12> KeyLocs;
-  ExprVector KeyExprs(Actions);
+  ExprVector KeyExprs;
 
   if (Tok.is(tok::colon)) {
     while (1) {
@@ -2551,21 +2551,12 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
 
   if (SuperLoc.isValid())
     return Actions.ActOnSuperMessage(getCurScope(), SuperLoc, Sel,
-                                     LBracLoc, KeyLocs, RBracLoc,
-                                     MultiExprArg(Actions, 
-                                                  KeyExprs.take(),
-                                                  KeyExprs.size()));
+                                     LBracLoc, KeyLocs, RBracLoc, KeyExprs);
   else if (ReceiverType)
     return Actions.ActOnClassMessage(getCurScope(), ReceiverType, Sel,
-                                     LBracLoc, KeyLocs, RBracLoc,
-                                     MultiExprArg(Actions, 
-                                                  KeyExprs.take(), 
-                                                  KeyExprs.size()));
+                                     LBracLoc, KeyLocs, RBracLoc, KeyExprs);
   return Actions.ActOnInstanceMessage(getCurScope(), ReceiverExpr, Sel,
-                                      LBracLoc, KeyLocs, RBracLoc,
-                                      MultiExprArg(Actions, 
-                                                   KeyExprs.take(), 
-                                                   KeyExprs.size()));
+                                      LBracLoc, KeyLocs, RBracLoc, KeyExprs);
 }
 
 ExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
@@ -2576,7 +2567,7 @@ ExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
   // expressions.  At this point, we know that the only valid thing that starts
   // with '@' is an @"".
   SmallVector<SourceLocation, 4> AtLocs;
-  ExprVector AtStrings(Actions);
+  ExprVector AtStrings;
   AtLocs.push_back(AtLoc);
   AtStrings.push_back(Res.release());
 
@@ -2594,7 +2585,7 @@ ExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
     AtStrings.push_back(Lit.release());
   }
 
-  return Owned(Actions.ParseObjCStringLiteral(&AtLocs[0], AtStrings.take(),
+  return Owned(Actions.ParseObjCStringLiteral(&AtLocs[0], AtStrings.data(),
                                               AtStrings.size()));
 }
 
@@ -2661,7 +2652,7 @@ Parser::ParseObjCBoxedExpr(SourceLocation AtLoc) {
 }
 
 ExprResult Parser::ParseObjCArrayLiteral(SourceLocation AtLoc) {
-  ExprVector ElementExprs(Actions);                   // array elements.
+  ExprVector ElementExprs;                   // array elements.
   ConsumeBracket(); // consume the l_square.
 
   while (Tok.isNot(tok::r_square)) {
@@ -2689,7 +2680,7 @@ ExprResult Parser::ParseObjCArrayLiteral(SourceLocation AtLoc) {
      return ExprError(Diag(Tok, diag::err_expected_rsquare_or_comma));
   }
   SourceLocation EndLoc = ConsumeBracket(); // location of ']'
-  MultiExprArg Args(Actions, ElementExprs.take(), ElementExprs.size());
+  MultiExprArg Args(ElementExprs);
   return Owned(Actions.BuildObjCArrayLiteral(SourceRange(AtLoc, EndLoc), Args));
 }
 

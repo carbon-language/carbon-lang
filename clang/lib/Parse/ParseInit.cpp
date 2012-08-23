@@ -405,7 +405,7 @@ ExprResult Parser::ParseBraceInitializer() {
 
   /// InitExprs - This is the actual list of expressions contained in the
   /// initializer.
-  ExprVector InitExprs(Actions);
+  ExprVector InitExprs;
 
   if (Tok.is(tok::r_brace)) {
     // Empty initializers are a C++ feature and a GNU extension to C.

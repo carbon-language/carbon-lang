@@ -2118,7 +2118,7 @@ public:
                                      bool RequiresZeroInit,
                              CXXConstructExpr::ConstructionKind ConstructKind,
                                      SourceRange ParenRange) {
-    ASTOwningVector<Expr*> ConvertedArgs(SemaRef);
+    SmallVector<Expr*, 8> ConvertedArgs;
     if (getSema().CompleteConstructorCall(Constructor, Args, Loc,
                                           ConvertedArgs))
       return ExprError();
@@ -5097,7 +5097,7 @@ TreeTransform<Derived>::TransformCompoundStmt(CompoundStmt *S,
 
   bool SubStmtInvalid = false;
   bool SubStmtChanged = false;
-  ASTOwningVector<Stmt*> Statements(getSema());
+  SmallVector<Stmt*, 8> Statements;
   for (CompoundStmt::body_iterator B = S->body_begin(), BEnd = S->body_end();
        B != BEnd; ++B) {
     StmtResult Result = getDerived().TransformStmt(*B);
@@ -5533,12 +5533,12 @@ template<typename Derived>
 StmtResult
 TreeTransform<Derived>::TransformAsmStmt(AsmStmt *S) {
 
-  ASTOwningVector<Expr*> Constraints(getSema());
-  ASTOwningVector<Expr*> Exprs(getSema());
+  SmallVector<Expr*, 8> Constraints;
+  SmallVector<Expr*, 8> Exprs;
   SmallVector<IdentifierInfo *, 4> Names;
 
   ExprResult AsmString;
-  ASTOwningVector<Expr*> Clobbers(getSema());
+  SmallVector<Expr*, 8> Clobbers;
 
   bool ExprsChanged = false;
 
@@ -5621,7 +5621,7 @@ TreeTransform<Derived>::TransformObjCAtTryStmt(ObjCAtTryStmt *S) {
 
   // Transform the @catch statements (if present).
   bool AnyCatchChanged = false;
-  ASTOwningVector<Stmt*> CatchStmts(SemaRef);
+  SmallVector<Stmt*, 8> CatchStmts;
   for (unsigned I = 0, N = S->getNumCatchStmts(); I != N; ++I) {
     StmtResult Catch = getDerived().TransformStmt(S->getCatchStmt(I));
     if (Catch.isInvalid())
@@ -5852,7 +5852,7 @@ TreeTransform<Derived>::TransformCXXTryStmt(CXXTryStmt *S) {
 
   // Transform the handlers.
   bool HandlerChanged = false;
-  ASTOwningVector<Stmt*> Handlers(SemaRef);
+  SmallVector<Stmt*, 8> Handlers;
   for (unsigned I = 0, N = S->getNumHandlers(); I != N; ++I) {
     StmtResult Handler
       = getDerived().TransformCXXCatchStmt(S->getHandler(I));
@@ -6383,7 +6383,7 @@ TreeTransform<Derived>::TransformCallExpr(CallExpr *E) {
 
   // Transform arguments.
   bool ArgChanged = false;
-  ASTOwningVector<Expr*> Args(SemaRef);
+  SmallVector<Expr*, 8> Args;
   if (getDerived().TransformExprs(E->getArgs(), E->getNumArgs(), true, Args,
                                   &ArgChanged))
     return ExprError();
@@ -6642,7 +6642,7 @@ ExprResult
 TreeTransform<Derived>::TransformInitListExpr(InitListExpr *E) {
   bool InitChanged = false;
 
-  ASTOwningVector<Expr*, 4> Inits(SemaRef);
+  SmallVector<Expr*, 4> Inits;
   if (getDerived().TransformExprs(E->getInits(), E->getNumInits(), false,
                                   Inits, &InitChanged))
     return ExprError();
@@ -6665,7 +6665,7 @@ TreeTransform<Derived>::TransformDesignatedInitExpr(DesignatedInitExpr *E) {
     return ExprError();
 
   // transform the designators.
-  ASTOwningVector<Expr*, 4> ArrayExprs(SemaRef);
+  SmallVector<Expr*, 4> ArrayExprs;
   bool ExprChanged = false;
   for (DesignatedInitExpr::designators_iterator D = E->designators_begin(),
                                              DEnd = E->designators_end();
@@ -6765,7 +6765,7 @@ template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformParenListExpr(ParenListExpr *E) {
   bool ArgumentChanged = false;
-  ASTOwningVector<Expr*, 4> Inits(SemaRef);
+  SmallVector<Expr*, 4> Inits;
   if (TransformExprs(E->getExprs(), E->getNumExprs(), true, Inits,
                      &ArgumentChanged))
     return ExprError();
@@ -6872,7 +6872,7 @@ TreeTransform<Derived>::TransformCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
                               static_cast<Expr *>(Object.get())->getLocEnd());
 
     // Transform the call arguments.
-    ASTOwningVector<Expr*> Args(SemaRef);
+    SmallVector<Expr*, 8> Args;
     if (getDerived().TransformExprs(E->getArgs() + 1, E->getNumArgs() - 1, true,
                                     Args))
       return ExprError();
@@ -6947,7 +6947,7 @@ TreeTransform<Derived>::TransformCUDAKernelCallExpr(CUDAKernelCallExpr *E) {
 
   // Transform arguments.
   bool ArgChanged = false;
-  ASTOwningVector<Expr*> Args(SemaRef);
+  SmallVector<Expr*, 8> Args;
   if (getDerived().TransformExprs(E->getArgs(), E->getNumArgs(), true, Args,
                                   &ArgChanged))
     return ExprError();
@@ -7219,7 +7219,7 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
 
   // Transform the placement arguments (if any).
   bool ArgumentChanged = false;
-  ASTOwningVector<Expr*> PlacementArgs(SemaRef);
+  SmallVector<Expr*, 8> PlacementArgs;
   if (getDerived().TransformExprs(E->getPlacementArgs(),
                                   E->getNumPlacementArgs(), true,
                                   PlacementArgs, &ArgumentChanged))
@@ -7793,7 +7793,7 @@ TreeTransform<Derived>::TransformCXXConstructExpr(CXXConstructExpr *E) {
     return ExprError();
 
   bool ArgumentChanged = false;
-  ASTOwningVector<Expr*> Args(SemaRef);
+  SmallVector<Expr*, 8> Args;
   if (getDerived().TransformExprs(E->getArgs(), E->getNumArgs(), true, Args,
                                   &ArgumentChanged))
     return ExprError();
@@ -7854,7 +7854,7 @@ TreeTransform<Derived>::TransformCXXTemporaryObjectExpr(
     return ExprError();
 
   bool ArgumentChanged = false;
-  ASTOwningVector<Expr*> Args(SemaRef);
+  SmallVector<Expr*, 8> Args;
   Args.reserve(E->getNumArgs());
   if (TransformExprs(E->getArgs(), E->getNumArgs(), true, Args,
                      &ArgumentChanged))
@@ -8035,7 +8035,7 @@ TreeTransform<Derived>::TransformCXXUnresolvedConstructExpr(
     return ExprError();
 
   bool ArgumentChanged = false;
-  ASTOwningVector<Expr*> Args(SemaRef);
+  SmallVector<Expr*, 8> Args;
   Args.reserve(E->arg_size());
   if (getDerived().TransformExprs(E->arg_begin(), E->arg_size(), true, Args,
                                   &ArgumentChanged))
@@ -8573,7 +8573,7 @@ ExprResult
 TreeTransform<Derived>::TransformObjCMessageExpr(ObjCMessageExpr *E) {
   // Transform arguments.
   bool ArgChanged = false;
-  ASTOwningVector<Expr*> Args(SemaRef);
+  SmallVector<Expr*, 8> Args;
   Args.reserve(E->getNumArgs());
   if (getDerived().TransformExprs(E->getArgs(), E->getNumArgs(), false, Args,
                                   &ArgChanged))
@@ -8737,7 +8737,7 @@ template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformShuffleVectorExpr(ShuffleVectorExpr *E) {
   bool ArgumentChanged = false;
-  ASTOwningVector<Expr*> SubExprs(SemaRef);
+  SmallVector<Expr*, 8> SubExprs;
   SubExprs.reserve(E->getNumSubExprs());
   if (getDerived().TransformExprs(E->getSubExprs(), E->getNumSubExprs(), false,
                                   SubExprs, &ArgumentChanged))
@@ -8851,7 +8851,7 @@ ExprResult
 TreeTransform<Derived>::TransformAtomicExpr(AtomicExpr *E) {
   QualType RetTy = getDerived().TransformType(E->getType());
   bool ArgumentChanged = false;
-  ASTOwningVector<Expr*> SubExprs(SemaRef);
+  SmallVector<Expr*, 8> SubExprs;
   SubExprs.reserve(E->getNumSubExprs());
   if (getDerived().TransformExprs(E->getSubExprs(), E->getNumSubExprs(), false,
                                   SubExprs, &ArgumentChanged))
