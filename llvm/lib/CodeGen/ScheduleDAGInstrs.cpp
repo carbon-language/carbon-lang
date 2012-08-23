@@ -209,7 +209,7 @@ void ScheduleDAGInstrs::addSchedBarrierDeps() {
       if (Reg == 0) continue;
 
       if (TRI->isPhysicalRegister(Reg))
-        Uses[Reg].push_back(&ExitSU);
+        Uses[Reg].push_back(PhysRegSUOper(&ExitSU, -1));
       else {
         assert(!IsPostRA && "Virtual register encountered after regalloc.");
         addVRegUseDeps(&ExitSU, i);
@@ -225,15 +225,15 @@ void ScheduleDAGInstrs::addSchedBarrierDeps() {
              E = (*SI)->livein_end(); I != E; ++I) {
         unsigned Reg = *I;
         if (!Uses.contains(Reg))
-          Uses[Reg].push_back(&ExitSU);
+          Uses[Reg].push_back(PhysRegSUOper(&ExitSU, -1));
       }
   }
 }
 
 /// MO is an operand of SU's instruction that defines a physical register. Add
 /// data dependencies from SU to any uses of the physical register.
-void ScheduleDAGInstrs::addPhysRegDataDeps(SUnit *SU,
-                                           const MachineOperand &MO) {
+void ScheduleDAGInstrs::addPhysRegDataDeps(SUnit *SU, unsigned OperIdx) {
+  const MachineOperand &MO = SU->getInstr()->getOperand(OperIdx);
   assert(MO.isDef() && "expect physreg def");
 
   // Ask the target if address-backscheduling is desirable, and if so how much.
@@ -245,11 +245,13 @@ void ScheduleDAGInstrs::addPhysRegDataDeps(SUnit *SU,
        Alias.isValid(); ++Alias) {
     if (!Uses.contains(*Alias))
       continue;
-    std::vector<SUnit*> &UseList = Uses[*Alias];
+    std::vector<PhysRegSUOper> &UseList = Uses[*Alias];
     for (unsigned i = 0, e = UseList.size(); i != e; ++i) {
-      SUnit *UseSU = UseList[i];
+      SUnit *UseSU = UseList[i].SU;
       if (UseSU == SU)
         continue;
+      MachineInstr *UseMI = UseSU->getInstr();
+      int UseOp = UseList[i].OpIdx;
       unsigned LDataLatency = DataLatency;
       // Optionally add in a special extra latency for nodes that
       // feed addresses.
@@ -258,7 +260,6 @@ void ScheduleDAGInstrs::addPhysRegDataDeps(SUnit *SU,
       // adjustSchedDependency for the targets that care about it.
       if (SpecialAddressLatency != 0 && !UnitLatencies &&
           UseSU != &ExitSU) {
-        MachineInstr *UseMI = UseSU->getInstr();
         const MCInstrDesc &UseMCID = UseMI->getDesc();
         int RegUseIndex = UseMI->findRegisterUseOperandIdx(*Alias);
         assert(RegUseIndex >= 0 && "UseMI doesn't use register!");
@@ -273,8 +274,15 @@ void ScheduleDAGInstrs::addPhysRegDataDeps(SUnit *SU,
       // perform its own adjustments.
       SDep dep(SU, SDep::Data, LDataLatency, *Alias);
       if (!UnitLatencies) {
-        unsigned Latency = computeOperandLatency(SU, UseSU, dep);
+        unsigned Latency =
+          TII->computeOperandLatency(InstrItins, SU->getInstr(), OperIdx,
+                                     (UseOp < 0 ? 0 : UseMI), UseOp);
         dep.setLatency(Latency);
+        unsigned MinLatency =
+          TII->computeOperandLatency(InstrItins, SU->getInstr(), OperIdx,
+                                     (UseOp < 0 ? 0 : UseMI), UseOp,
+                                     /*FindMin=*/true);
+        dep.setMinLatency(MinLatency);
 
         ST.adjustSchedDependency(SU, UseSU, dep);
       }
@@ -301,9 +309,9 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
        Alias.isValid(); ++Alias) {
     if (!Defs.contains(*Alias))
       continue;
-    std::vector<SUnit *> &DefList = Defs[*Alias];
+    std::vector<PhysRegSUOper> &DefList = Defs[*Alias];
     for (unsigned i = 0, e = DefList.size(); i != e; ++i) {
-      SUnit *DefSU = DefList[i];
+      SUnit *DefSU = DefList[i].SU;
       if (DefSU == &ExitSU)
         continue;
       if (DefSU != SU &&
@@ -324,14 +332,14 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
     // Either insert a new Reg2SUnits entry with an empty SUnits list, or
     // retrieve the existing SUnits list for this register's uses.
     // Push this SUnit on the use list.
-    Uses[MO.getReg()].push_back(SU);
+    Uses[MO.getReg()].push_back(PhysRegSUOper(SU, OperIdx));
   }
   else {
-    addPhysRegDataDeps(SU, MO);
+    addPhysRegDataDeps(SU, OperIdx);
 
     // Either insert a new Reg2SUnits entry with an empty SUnits list, or
     // retrieve the existing SUnits list for this register's defs.
-    std::vector<SUnit *> &DefList = Defs[MO.getReg()];
+    std::vector<PhysRegSUOper> &DefList = Defs[MO.getReg()];
 
     // If a def is going to wrap back around to the top of the loop,
     // backschedule it.
@@ -393,11 +401,11 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
     // the block. Instead, we leave only one call at the back of the
     // DefList.
     if (SU->isCall) {
-      while (!DefList.empty() && DefList.back()->isCall)
+      while (!DefList.empty() && DefList.back().SU->isCall)
         DefList.pop_back();
     }
     // Defs are pushed in the order they are visited and never reordered.
-    DefList.push_back(SU);
+    DefList.push_back(PhysRegSUOper(SU, OperIdx));
   }
 }
 
@@ -468,8 +476,14 @@ void ScheduleDAGInstrs::addVRegUseDeps(SUnit *SU, unsigned OperIdx) {
       if (!UnitLatencies) {
         // Adjust the dependence latency using operand def/use information, then
         // allow the target to perform its own adjustments.
-        unsigned Latency = computeOperandLatency(DefSU, SU, const_cast<SDep &>(dep));
+        int DefOp = Def->findRegisterDefOperandIdx(Reg);
+        unsigned Latency =
+          TII->computeOperandLatency(InstrItins, Def, DefOp, MI, OperIdx);
         dep.setLatency(Latency);
+        unsigned MinLatency =
+          TII->computeOperandLatency(InstrItins, Def, DefOp, MI, OperIdx,
+                                     /*FindMin=*/true);
+        dep.setMinLatency(MinLatency);
 
         const TargetSubtargetInfo &ST = TM.getSubtarget<TargetSubtargetInfo>();
         ST.adjustSchedDependency(DefSU, SU, const_cast<SDep &>(dep));
@@ -995,17 +1009,6 @@ void ScheduleDAGInstrs::computeLatency(SUnit *SU) {
   } else {
     SU->Latency = TII->getInstrLatency(InstrItins, SU->getInstr());
   }
-}
-
-unsigned ScheduleDAGInstrs::computeOperandLatency(SUnit *Def, SUnit *Use,
-                                                  const SDep& dep,
-                                                  bool FindMin) const {
-  // For a data dependency with a known register...
-  if ((dep.getKind() != SDep::Data) || (dep.getReg() == 0))
-    return 1;
-
-  return TII->computeOperandLatency(InstrItins, TRI, Def->getInstr(),
-                                    Use->getInstr(), dep.getReg(), FindMin);
 }
 
 void ScheduleDAGInstrs::dumpNode(const SUnit *SU) const {

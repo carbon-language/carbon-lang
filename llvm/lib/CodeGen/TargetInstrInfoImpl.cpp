@@ -645,9 +645,16 @@ static int computeDefOperandLatency(
 }
 
 /// computeOperandLatency - Compute and return the latency of the given data
-/// dependent def and use when the operand indices are already known.
+/// dependent def and use when the operand indices are already known. UseMI may
+/// be NULL for an unknown use.
 ///
-/// FindMin may be set to get the minimum vs. expected latency.
+/// FindMin may be set to get the minimum vs. expected latency. Minimum
+/// latency is used for scheduling groups, while expected latency is for
+/// instruction cost and critical path.
+///
+/// Depending on the subtarget's itinerary properties, this may or may not need
+/// to call getOperandLatency(). For most subtargets, we don't need DefIdx or
+/// UseIdx to compute min latency.
 unsigned TargetInstrInfo::
 computeOperandLatency(const InstrItineraryData *ItinData,
                       const MachineInstr *DefMI, unsigned DefIdx,
@@ -660,84 +667,16 @@ computeOperandLatency(const InstrItineraryData *ItinData,
 
   assert(ItinData && !ItinData->isEmpty() && "computeDefOperandLatency fail");
 
-  int OperLatency = getOperandLatency(ItinData, DefMI, DefIdx, UseMI, UseIdx);
+  int OperLatency = 0;
+  if (UseMI)
+    OperLatency = getOperandLatency(ItinData, DefMI, DefIdx, UseMI, UseIdx);
+  else {
+    unsigned DefClass = DefMI->getDesc().getSchedClass();
+    OperLatency = ItinData->getOperandCycle(DefClass, DefIdx);
+  }
   if (OperLatency >= 0)
     return OperLatency;
 
-  // No operand latency was found.
-  unsigned InstrLatency = getInstrLatency(ItinData, DefMI);
-
-  // Expected latency is the max of the stage latency and itinerary props.
-  if (!FindMin)
-    InstrLatency = std::max(InstrLatency,
-                            defaultDefLatency(ItinData->SchedModel, DefMI));
-  return InstrLatency;
-}
-
-/// computeOperandLatency - Compute and return the latency of the given data
-/// dependent def and use. DefMI must be a valid def. UseMI may be NULL for an
-/// unknown use. Depending on the subtarget's itinerary properties, this may or
-/// may not need to call getOperandLatency().
-///
-/// FindMin may be set to get the minimum vs. expected latency. Minimum
-/// latency is used for scheduling groups, while expected latency is for
-/// instruction cost and critical path.
-///
-/// For most subtargets, we don't need DefIdx or UseIdx to compute min latency.
-/// DefMI must be a valid definition, but UseMI may be NULL for an unknown use.
-unsigned TargetInstrInfo::
-computeOperandLatency(const InstrItineraryData *ItinData,
-                      const TargetRegisterInfo *TRI,
-                      const MachineInstr *DefMI, const MachineInstr *UseMI,
-                      unsigned Reg, bool FindMin) const {
-
-  int DefLatency = computeDefOperandLatency(this, ItinData, DefMI, FindMin);
-  if (DefLatency >= 0)
-    return DefLatency;
-
-  assert(ItinData && !ItinData->isEmpty() && "computeDefOperandLatency fail");
-
-  // Find the definition of the register in the defining instruction.
-  int DefIdx = DefMI->findRegisterDefOperandIdx(Reg);
-  if (DefIdx != -1) {
-    const MachineOperand &MO = DefMI->getOperand(DefIdx);
-    if (MO.isReg() && MO.isImplicit() &&
-        DefIdx >= (int)DefMI->getDesc().getNumOperands()) {
-      // This is an implicit def, getOperandLatency() won't return the correct
-      // latency. e.g.
-      //   %D6<def>, %D7<def> = VLD1q16 %R2<kill>, 0, ..., %Q3<imp-def>
-      //   %Q1<def> = VMULv8i16 %Q1<kill>, %Q3<kill>, ...
-      // What we want is to compute latency between def of %D6/%D7 and use of
-      // %Q3 instead.
-      unsigned Op2 = DefMI->findRegisterDefOperandIdx(Reg, false, true, TRI);
-      if (DefMI->getOperand(Op2).isReg())
-        DefIdx = Op2;
-    }
-    // For all uses of the register, calculate the maxmimum latency
-    int OperLatency = -1;
-
-    // UseMI is null, then it must be a scheduling barrier.
-    if (!UseMI) {
-      unsigned DefClass = DefMI->getDesc().getSchedClass();
-      OperLatency = ItinData->getOperandCycle(DefClass, DefIdx);
-    }
-    else {
-      for (unsigned i = 0, e = UseMI->getNumOperands(); i != e; ++i) {
-        const MachineOperand &MO = UseMI->getOperand(i);
-        if (!MO.isReg() || !MO.isUse())
-          continue;
-        unsigned MOReg = MO.getReg();
-        if (MOReg != Reg)
-          continue;
-
-        int UseCycle = getOperandLatency(ItinData, DefMI, DefIdx, UseMI, i);
-        OperLatency = std::max(OperLatency, UseCycle);
-      }
-    }
-    // If we found an operand latency, we're done.
-    if (OperLatency >= 0)
-      return OperLatency;
-  }
   // No operand latency was found.
   unsigned InstrLatency = getInstrLatency(ItinData, DefMI);
 

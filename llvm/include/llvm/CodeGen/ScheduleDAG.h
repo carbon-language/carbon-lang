@@ -85,6 +85,8 @@ namespace llvm {
     /// the value of the Latency field of the predecessor, however advanced
     /// models may provide additional information about specific edges.
     unsigned Latency;
+    /// Record MinLatency seperately from "expected" Latency.
+    unsigned MinLatency;
 
   public:
     /// SDep - Construct a null SDep. This is only for use by container
@@ -96,7 +98,7 @@ namespace llvm {
     SDep(SUnit *S, Kind kind, unsigned latency = 1, unsigned Reg = 0,
          bool isNormalMemory = false, bool isMustAlias = false,
          bool isArtificial = false)
-      : Dep(S, kind), Contents(), Latency(latency) {
+      : Dep(S, kind), Contents(), Latency(latency), MinLatency(latency) {
       switch (kind) {
       case Anti:
       case Output:
@@ -135,7 +137,8 @@ namespace llvm {
     }
 
     bool operator==(const SDep &Other) const {
-      return overlaps(Other) && Latency == Other.Latency;
+      return overlaps(Other)
+        && Latency == Other.Latency && MinLatency == Other.MinLatency;
     }
 
     bool operator!=(const SDep &Other) const {
@@ -153,6 +156,18 @@ namespace llvm {
     /// setLatency - Set the latency for this edge.
     void setLatency(unsigned Lat) {
       Latency = Lat;
+    }
+
+    /// getMinLatency - Return the minimum latency for this edge. Minimum
+    /// latency is used for scheduling groups, while normal (expected) latency
+    /// is for instruction cost and critical path.
+    unsigned getMinLatency() const {
+      return MinLatency;
+    }
+
+    /// setMinLatency - Set the minimum latency for this edge.
+    void setMinLatency(unsigned Lat) {
+      MinLatency = Lat;
     }
 
     //// getSUnit - Return the SUnit to which this edge points.

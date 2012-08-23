@@ -108,6 +108,15 @@ namespace llvm {
     }
   };
 
+  /// Record a physical register access.
+  /// For non data-dependent uses, OpIdx == -1.
+  struct PhysRegSUOper {
+    SUnit *SU;
+    int OpIdx;
+
+    PhysRegSUOper(SUnit *su, int op): SU(su), OpIdx(op) {}
+  };
+
   /// Combine a SparseSet with a 1x1 vector to track physical registers.
   /// The SparseSet allows iterating over the (few) live registers for quickly
   /// comparing against a regmask or clearing the set.
@@ -116,7 +125,7 @@ namespace llvm {
   /// cleared between scheduling regions without freeing unused entries.
   class Reg2SUnitsMap {
     SparseSet<unsigned> PhysRegSet;
-    std::vector<std::vector<SUnit*> > SUnits;
+    std::vector<std::vector<PhysRegSUOper> > SUnits;
   public:
     typedef SparseSet<unsigned>::const_iterator const_iterator;
 
@@ -140,7 +149,7 @@ namespace llvm {
 
     /// If this register is mapped, return its existing SUnits vector.
     /// Otherwise map the register and return an empty SUnits vector.
-    std::vector<SUnit *> &operator[](unsigned Reg) {
+    std::vector<PhysRegSUOper> &operator[](unsigned Reg) {
       bool New = PhysRegSet.insert(Reg).second;
       assert((!New || SUnits[Reg].empty()) && "stale SUnits vector");
       (void)New;
@@ -288,16 +297,6 @@ namespace llvm {
     ///
     virtual void computeLatency(SUnit *SU);
 
-    /// computeOperandLatency - Return dependence edge latency using
-    /// operand use/def information
-    ///
-    /// FindMin may be set to get the minimum vs. expected latency. Minimum
-    /// latency is used for scheduling groups, while expected latency is for
-    /// instruction cost and critical path.
-    virtual unsigned computeOperandLatency(SUnit *Def, SUnit *Use,
-                                           const SDep& dep,
-                                           bool FindMin = false) const;
-
     /// schedule - Order nodes according to selected style, filling
     /// in the Sequence member.
     ///
@@ -319,7 +318,7 @@ namespace llvm {
 
   protected:
     void initSUnits();
-    void addPhysRegDataDeps(SUnit *SU, const MachineOperand &MO);
+    void addPhysRegDataDeps(SUnit *SU, unsigned OperIdx);
     void addPhysRegDeps(SUnit *SU, unsigned OperIdx);
     void addVRegDefDeps(SUnit *SU, unsigned OperIdx);
     void addVRegUseDeps(SUnit *SU, unsigned OperIdx);

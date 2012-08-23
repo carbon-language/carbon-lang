@@ -905,13 +905,12 @@ void ConvergingScheduler::releaseTopNode(SUnit *SU) {
   for (SUnit::succ_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
     unsigned PredReadyCycle = I->getSUnit()->TopReadyCycle;
-    unsigned Latency =
-      DAG->computeOperandLatency(I->getSUnit(), SU, *I, /*FindMin=*/true);
+    unsigned MinLatency = I->getMinLatency();
 #ifndef NDEBUG
-    Top.MaxMinLatency = std::max(Latency, Top.MaxMinLatency);
+    Top.MaxMinLatency = std::max(MinLatency, Top.MaxMinLatency);
 #endif
-    if (SU->TopReadyCycle < PredReadyCycle + Latency)
-      SU->TopReadyCycle = PredReadyCycle + Latency;
+    if (SU->TopReadyCycle < PredReadyCycle + MinLatency)
+      SU->TopReadyCycle = PredReadyCycle + MinLatency;
   }
   Top.releaseNode(SU, SU->TopReadyCycle);
 }
@@ -925,13 +924,12 @@ void ConvergingScheduler::releaseBottomNode(SUnit *SU) {
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
     unsigned SuccReadyCycle = I->getSUnit()->BotReadyCycle;
-    unsigned Latency =
-      DAG->computeOperandLatency(SU, I->getSUnit(), *I, /*FindMin=*/true);
+    unsigned MinLatency = I->getMinLatency();
 #ifndef NDEBUG
-    Bot.MaxMinLatency = std::max(Latency, Bot.MaxMinLatency);
+    Bot.MaxMinLatency = std::max(MinLatency, Bot.MaxMinLatency);
 #endif
-    if (SU->BotReadyCycle < SuccReadyCycle + Latency)
-      SU->BotReadyCycle = SuccReadyCycle + Latency;
+    if (SU->BotReadyCycle < SuccReadyCycle + MinLatency)
+      SU->BotReadyCycle = SuccReadyCycle + MinLatency;
   }
   Bot.releaseNode(SU, SU->BotReadyCycle);
 }

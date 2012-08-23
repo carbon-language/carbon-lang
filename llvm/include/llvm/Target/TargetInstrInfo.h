@@ -794,20 +794,6 @@ public:
                                  const MachineInstr *UseMI, unsigned UseIdx,
                                  bool FindMin = false) const;
 
-  /// computeOperandLatency - Compute and return the latency of the given data
-  /// dependent def and use. DefMI must be a valid def. UseMI may be NULL for
-  /// an unknown use. If the subtarget allows, this may or may not need to call
-  /// getOperandLatency().
-  ///
-  /// FindMin may be set to get the minimum vs. expected latency. Minimum
-  /// latency is used for scheduling groups, while expected latency is for
-  /// instruction cost and critical path.
-  unsigned computeOperandLatency(const InstrItineraryData *ItinData,
-                                 const TargetRegisterInfo *TRI,
-                                 const MachineInstr *DefMI,
-                                 const MachineInstr *UseMI,
-                                 unsigned Reg, bool FindMin) const;
-
   /// getOutputLatency - Compute and return the output dependency latency of a
   /// a given pair of defs which both target the same register. This is usually
   /// one.
