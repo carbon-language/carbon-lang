@@ -94,7 +94,9 @@ void DWARFCompileUnit::dump(raw_ostream &OS) {
      << " (next CU at " << format("0x%08x", getNextCompileUnitOffset())
      << ")\n";
 
-  getCompileUnitDIE(false)->dump(OS, this, -1U);
+  const DWARFDebugInfoEntryMinimal *CU = getCompileUnitDIE(false);
+  assert(CU && "Null Compile Unit?");
+  CU->dump(OS, this, -1U);
 }
 
 const char *DWARFCompileUnit::getCompilationDir() {
