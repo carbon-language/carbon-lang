@@ -99,6 +99,9 @@ SVal Environment::getSVal(const EnvironmentEntry &Entry,
       case Stmt::SubstNonTypeTemplateParmExprClass:
         E = cast<SubstNonTypeTemplateParmExpr>(E)->getReplacement();
         continue;
+      case Stmt::CXXDefaultArgExprClass:
+        E = cast<CXXDefaultArgExpr>(E)->getExpr();
+        continue;
       case Stmt::ObjCStringLiteralClass: {
         MemRegionManager &MRMgr = svalBuilder.getRegionManager();
         const ObjCStringLiteral *SL = cast<ObjCStringLiteral>(E);

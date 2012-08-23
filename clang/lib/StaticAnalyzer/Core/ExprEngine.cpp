@@ -529,11 +529,6 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
       break;
     }
     
-    // We don't handle default arguments either yet, but we can fake it
-    // for now by just skipping them.
-    case Stmt::CXXDefaultArgExprClass:
-      break;
-
     case Stmt::ParenExprClass:
       llvm_unreachable("ParenExprs already handled.");
     case Stmt::GenericSelectionExprClass:
@@ -619,6 +614,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::StringLiteralClass:
     case Stmt::ObjCStringLiteralClass:
     case Stmt::CXXBindTemporaryExprClass:
+    case Stmt::CXXDefaultArgExprClass:
     case Stmt::SubstNonTypeTemplateParmExprClass:
     case Stmt::CXXNullPtrLiteralExprClass: {
       Bldr.takeNodes(Pred);

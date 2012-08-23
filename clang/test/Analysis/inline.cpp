@@ -193,3 +193,37 @@ namespace Invalidation {
     }
   };
 }
+
+namespace DefaultArgs {
+  int takesDefaultArgs(int i = 42) {
+    return -i;
+  }
+
+  void testFunction() {
+    clang_analyzer_eval(takesDefaultArgs(1) == -1); // expected-warning{{TRUE}}
+    clang_analyzer_eval(takesDefaultArgs() == -42); // expected-warning{{TRUE}}
+  }
+
+  class Secret {
+  public:
+    static const int value = 42;
+    int get(int i = value) {
+      return i;
+    }
+  };
+
+  void testMethod() {
+    Secret obj;
+    clang_analyzer_eval(obj.get(1) == 1); // expected-warning{{TRUE}}
+
+    // FIXME: Should be 'TRUE'. See PR13673 or <rdar://problem/11720796>.
+    clang_analyzer_eval(obj.get() == 42); // expected-warning{{UNKNOWN}}
+
+    // FIXME: Even if we constrain the variable, we still have a problem.
+    // See PR13385 or <rdar://problem/12156507>.
+    if (Secret::value != 42)
+      return;
+    clang_analyzer_eval(Secret::value == 42); // expected-warning{{TRUE}}
+    clang_analyzer_eval(obj.get() == 42); // expected-warning{{UNKNOWN}}
+  }
+}
