@@ -823,7 +823,7 @@ void DwarfDebug::endModule() {
   // Corresponding abbreviations into a abbrev section.
   emitAbbreviations();
 
-  // Emit info into a dwarf accelerator table sections.
+  // Emit info into the dwarf accelerator table sections.
   if (DwarfAccelTables) {
     emitAccelNames();
     emitAccelObjC();
