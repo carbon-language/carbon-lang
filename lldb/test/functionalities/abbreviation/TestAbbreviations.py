@@ -87,8 +87,7 @@ class AbbreviationsTestCase(TestBase):
                     patterns = [ "Current executable set to .*a.out.*" ])
 
         self.expect("_regexp-b product",
-                    substrs = [ "breakpoint set --name 'product'",
-                                "Breakpoint created: 1: name = 'product', locations = 1" ])
+                    substrs = [ "Breakpoint created: 1: name = 'product', locations = 1" ])
 
         self.expect("br s -n sum",
                     startstr = "Breakpoint created: 2: name = 'sum', locations = 1")

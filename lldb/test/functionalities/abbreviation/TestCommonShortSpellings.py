@@ -32,6 +32,10 @@ class CommonShortSpellingsTestCase(TestBase):
         self.expect("br s -n sum",
             startstr = "Breakpoint created: 1: name = 'sum', locations = 1")
 
+        self.runCmd("settings set interpreter.expand-regex-aliases true")
+        self.addTearDownHook(
+            lambda: self.runCmd("settings set interpreter.expand-regex-aliases false"))
+        
         # disp -> display
         self.expect("disp a",
             startstr = "target stop-hook add -o")
