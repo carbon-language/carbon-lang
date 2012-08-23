@@ -1657,6 +1657,44 @@ public:
   std::string *getAsmString() { return &AsmStr; }
   void setAsmString(StringRef &E) { AsmStr = E.str(); }
 
+  //===--- Output operands ---===//
+
+  unsigned getNumOutputs() const { return NumOutputs; }
+
+  IdentifierInfo *getOutputIdentifier(unsigned i) const {
+    return Names[i];
+  }
+
+  StringRef getOutputName(unsigned i) const {
+    if (IdentifierInfo *II = getOutputIdentifier(i))
+      return II->getName();
+
+    return StringRef();
+  }
+
+  const Expr *getOutputExpr(unsigned i) const {
+    return const_cast<MSAsmStmt*>(this)->getOutputExpr(i);
+  }
+
+  //===--- Input operands ---===//
+
+  unsigned getNumInputs() const { return NumInputs; }
+
+  IdentifierInfo *getInputIdentifier(unsigned i) const {
+    return Names[i + NumOutputs];
+  }
+
+  StringRef getInputName(unsigned i) const {
+    if (IdentifierInfo *II = getInputIdentifier(i))
+      return II->getName();
+
+    return StringRef();
+  }
+
+  const Expr *getInputExpr(unsigned i) const {
+    return const_cast<MSAsmStmt*>(this)->getInputExpr(i);
+  }
+
   //===--- Other ---===//
 
   unsigned getNumClobbers() const { return NumClobbers; }
