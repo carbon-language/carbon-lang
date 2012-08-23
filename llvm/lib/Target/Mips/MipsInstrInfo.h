@@ -88,18 +88,6 @@ private:
                    const SmallVectorImpl<MachineOperand>& Cond) const;
 };
 
-namespace Mips {
-  /// Emit a series of instructions to load an immediate. All instructions
-  /// except for the last one are emitted. The function returns the number of
-  /// MachineInstrs generated. The opcode-immediate pair of the last
-  /// instruction is returned in LastInst, if it is not 0.
-  unsigned
-  loadImmediate(int64_t Imm, bool IsN64, const TargetInstrInfo &TII,
-                MachineBasicBlock& MBB, MachineBasicBlock::iterator II,
-                DebugLoc DL, bool LastInstrIsADDiu,
-                MipsAnalyzeImmediate::Inst *LastInst);
-}
-
 /// Create MipsInstrInfo objects.
 const MipsInstrInfo *createMips16InstrInfo(MipsTargetMachine &TM);
 const MipsInstrInfo *createMipsSEInstrInfo(MipsTargetMachine &TM);

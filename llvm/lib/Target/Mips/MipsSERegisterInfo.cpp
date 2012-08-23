@@ -122,15 +122,14 @@ void MipsSERegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
     DebugLoc DL = II->getDebugLoc();
     unsigned ADDu = Subtarget.isABI_N64() ? Mips::DADDu : Mips::ADDu;
     unsigned ATReg = Subtarget.isABI_N64() ? Mips::AT_64 : Mips::AT;
-    MipsAnalyzeImmediate::Inst LastInst(0, 0);
+    unsigned NewImm;
 
     MipsFI->setEmitNOAT();
-    Mips::loadImmediate(Offset, Subtarget.isABI_N64(), TII, MBB, II, DL, true,
-                        &LastInst);
-    BuildMI(MBB, II, DL, TII.get(ADDu), ATReg).addReg(FrameReg).addReg(ATReg);
+    unsigned Reg = TII.loadImmediate(Offset, MBB, II, DL, &NewImm);
+    BuildMI(MBB, II, DL, TII.get(ADDu), ATReg).addReg(FrameReg).addReg(Reg);
 
     FrameReg = ATReg;
-    Offset = SignExtend64<16>(LastInst.ImmOpnd);
+    Offset = SignExtend64<16>(NewImm);
   }
 
   MI.getOperand(OpNo).ChangeToRegister(FrameReg, false);
