@@ -1,6 +1,6 @@
-; RUN: llc -O0 -asm-verbose < %s > %t
-; RUN: grep "External Name" %t | grep -v X
-; RUN: grep "External Name" %t | grep Y | count 1
+; RUN: llc -O0 -asm-verbose < %s | FileCheck %s
+; CHECK-NOT: .asciz "X" ## External Name
+; CHECK: .asciz "Y" ## External Name
 ; Test to check type with no definition is listed in pubtypes section.
 %struct.X = type opaque
 %struct.Y = type { i32 }
