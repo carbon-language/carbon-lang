@@ -86,8 +86,9 @@ class AbbreviationsTestCase(TestBase):
         self.expect("fil " + exe,
                     patterns = [ "Current executable set to .*a.out.*" ])
 
-        self.expect("_regexp-b product",
-                    substrs = [ "Breakpoint created: 1: name = 'product', locations = 1" ])
+        # By default, the setting interpreter.expand-regex-aliases is false.
+        self.expect("_regexp-b product", matching=False,
+                    substrs = [ "breakpoint set --name 'product'" ])
 
         self.expect("br s -n sum",
                     startstr = "Breakpoint created: 2: name = 'sum', locations = 1")
