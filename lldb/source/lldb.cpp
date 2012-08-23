@@ -40,6 +40,9 @@
 #include "Plugins/DynamicLoader/POSIX-DYLD/DynamicLoaderPOSIXDYLD.h"
 #include "Plugins/Platform/FreeBSD/PlatformFreeBSD.h"
 #include "Plugins/Platform/Linux/PlatformLinux.h"
+#ifndef LLDB_DISABLE_PYTHON
+#include "Plugins/OperatingSystem/Python/OperatingSystemPython.h"
+#endif
 #if defined (__APPLE__)
 #include "Plugins/DynamicLoader/MacOSX-DYLD/DynamicLoaderMacOSXDYLD.h"
 #include "Plugins/DynamicLoader/Darwin-Kernel/DynamicLoaderDarwinKernel.h"
@@ -105,6 +108,10 @@ lldb_private::Initialize ()
         DynamicLoaderPOSIXDYLD::Initialize ();
         PlatformFreeBSD::Initialize();
         PlatformLinux::Initialize();
+#ifndef LLDB_DISABLE_PYTHON
+        OperatingSystemPython::Initialize();
+#endif
+
 #if defined (__APPLE__)
         //----------------------------------------------------------------------
         // Apple/Darwin hosted plugins
@@ -182,6 +189,10 @@ lldb_private::Terminate ()
     DynamicLoaderPOSIXDYLD::Terminate ();
     PlatformFreeBSD::Terminate();
     PlatformLinux::Terminate();
+#ifndef LLDB_DISABLE_PYTHON
+    OperatingSystemPython::Terminate();
+#endif
+
 #if defined (__APPLE__)
     DynamicLoaderMacOSXDYLD::Terminate();
     DynamicLoaderDarwinKernel::Terminate();
