@@ -193,8 +193,9 @@ namespace PBQP {
     ///        reduce list.
     /// @return True if a reduction takes place, false if the heuristic reduce
     ///         list is empty.
-    void heuristicReduce() {
+    bool heuristicReduce() {
       llvm_unreachable("Must be implemented in derived class.");
+      return false;
     }
 
     /// \brief Prepare a change in the costs on the given edge.
