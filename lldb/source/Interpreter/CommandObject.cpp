@@ -630,6 +630,20 @@ CommandObject::LookupArgumentName (const char *arg_name)
 }
 
 static const char *
+RegisterNameHelpTextCallback ()
+{
+    return "Register names can be specified using the architecture specific names.  "
+    "They can also be specified using generic names.\n"
+    "The generic names defined in lldb are:\n"
+    "\n"
+    "pc       - program counter register\n"
+    "ra       - return address register\n"
+    "fp       - frame pointer register\n"
+    "sp       - stack pointer register\n"
+    "arg{1-6} - integer argument passing registers.\n";
+}
+
+static const char *
 BreakpointIDHelpTextCallback ()
 {
     return "Breakpoint ID's consist major and minor numbers;  the major number "
@@ -941,7 +955,7 @@ CommandObject::g_arguments_data[] =
     { eArgTypePythonFunction, "python-function", CommandCompletions::eNoCompletion, { NULL, false }, "The name of a Python function." },
     { eArgTypePythonScript, "python-script", CommandCompletions::eNoCompletion, { NULL, false }, "Source code written in Python." },
     { eArgTypeQueueName, "queue-name", CommandCompletions::eNoCompletion, { NULL, false }, "The name of the thread queue." },
-    { eArgTypeRegisterName, "register-name", CommandCompletions::eNoCompletion, { NULL, false }, "A register name." },
+    { eArgTypeRegisterName, "register-name", CommandCompletions::eNoCompletion, { RegisterNameHelpTextCallback, true }, NULL },
     { eArgTypeRegularExpression, "regular-expression", CommandCompletions::eNoCompletion, { NULL, false }, "A regular expression." },
     { eArgTypeRunArgs, "run-args", CommandCompletions::eNoCompletion, { NULL, false }, "Arguments to be passed to the target program when it starts executing." },
     { eArgTypeRunMode, "run-mode", CommandCompletions::eNoCompletion, { NULL, false }, "Help text goes here." },
