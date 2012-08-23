@@ -156,6 +156,9 @@ public:
     void
     TurnOffEphemeralMode();
 
+    bool
+    IsDisabledDuringEphemeralMode();
+
 private:
     friend class Target;
     friend class WatchpointList;
@@ -170,6 +173,10 @@ private:
     bool        m_is_ephemeral;        // True if the watchpoint is in the ephemeral mode, meaning that it is
                                        // undergoing a pair of temporary disable/enable actions to avoid recursively
                                        // triggering further watchpoint events.
+    uint32_t    m_disabled_count;      // Keep track of the count that the watchpoint is disabled while in ephemeral mode.
+                                       // At the end of the ephemeral mode when the watchpoint is to be enabled agian,
+                                       // we check the count, if it is more than 1, it means the user-supplied actions
+                                       // actually want the watchpoint to be disabled!
     uint32_t    m_watch_read:1,        // 1 if we stop when the watched data is read from
                 m_watch_write:1,       // 1 if we stop when the watched data is written to
                 m_watch_was_read:1,    // Set to 1 when watchpoint is hit for a read access

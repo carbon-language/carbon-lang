@@ -39,6 +39,21 @@ class WatchpointLLDBCommandTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.watchpoint_command()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
+    def test_watchpoint_command_can_disable_a_watchpoint_with_dsym(self):
+        """Test that 'watchpoint command' action can disable a watchpoint after it is triggered."""
+        self.buildDsym(dictionary=self.d)
+        self.setTearDownCleanup(dictionary=self.d)
+        self.watchpoint_command_can_disable_a_watchpoint()
+
+    @dwarf_test
+    def test_watchpoint_command_can_disable_a_watchpoint_with_dwarf(self):
+        """Test that 'watchpoint command' action can disable a watchpoint after it is triggered."""
+        self.buildDwarf(dictionary=self.d)
+        self.setTearDownCleanup(dictionary=self.d)
+        self.watchpoint_command_can_disable_a_watchpoint()
+
     def watchpoint_command(self):
         """Do 'watchpoint command add'."""
         exe = os.path.join(os.getcwd(), self.exe_name)
@@ -89,6 +104,59 @@ class WatchpointLLDBCommandTestCase(TestBase):
         # The watchpoint command "forced" our global variable 'cookie' to become 777.
         self.expect("frame variable -g cookie",
             substrs = ['(int32_t)', 'cookie = 777'])
+
+    def watchpoint_command_can_disable_a_watchpoint(self):
+        """Test that 'watchpoint command' action can disable a watchpoint after it is triggered."""
+        exe = os.path.join(os.getcwd(), self.exe_name)
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+
+        # Add a breakpoint to set a watchpoint when stopped on the breakpoint.
+        self.expect("breakpoint set -l %d" % self.line, BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='%s', line = %d, locations = 1" %
+                       (self.source, self.line))
+
+        # Run the program.
+        self.runCmd("run", RUN_SUCCEEDED)
+
+        # We should be stopped again due to the breakpoint.
+        # The stop reason of the thread should be breakpoint.
+        self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
+            substrs = ['stopped',
+                       'stop reason = breakpoint'])
+
+        # Now let's set a write-type watchpoint for 'global'.
+        self.expect("watchpoint set variable -w write global", WATCHPOINT_CREATED,
+            substrs = ['Watchpoint created', 'size = 4', 'type = w',
+                       '%s:%d' % (self.source, self.decl)])
+
+        self.runCmd('watchpoint command add 1 -o "watchpoint disable 1"')
+
+        # List the watchpoint command we just added.
+        self.expect("watchpoint command list 1",
+            substrs = ['watchpoint disable 1'])
+
+        # Use the '-v' option to do verbose listing of the watchpoint.
+        # The hit count should be 0 initially.
+        self.expect("watchpoint list -v",
+            substrs = ['hit_count = 0'])
+
+        self.runCmd("process continue")
+
+        # We should be stopped again due to the watchpoint (write type).
+        # The stop reason of the thread should be watchpoint.
+        self.expect("thread backtrace", STOPPED_DUE_TO_WATCHPOINT,
+            substrs = ['stop reason = watchpoint'])
+
+        # Check that the watchpoint has been disabled.
+        self.expect("watchpoint list -v",
+            substrs = ['disabled'])
+
+        self.runCmd("process continue")
+
+        # There should be no more watchpoint hit and the process status should
+        # be 'exited'.
+        self.expect("process status",
+            substrs = ['exited'])
 
 
 if __name__ == '__main__':

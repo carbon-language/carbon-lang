@@ -30,6 +30,7 @@ Watchpoint::Watchpoint (lldb::addr_t addr, size_t size, bool hardware) :
     m_is_hardware(hardware),
     m_is_watch_variable(false),
     m_is_ephemeral(false),
+    m_disabled_count(0),
     m_watch_read(0),
     m_watch_write(0),
     m_watch_was_read(0),
@@ -322,6 +323,14 @@ void
 Watchpoint::TurnOffEphemeralMode()
 {
     m_is_ephemeral = false;
+    // Leaving ephemeral mode, reset the m_disabled_count!
+    m_disabled_count = 0;
+}
+
+bool
+Watchpoint::IsDisabledDuringEphemeralMode()
+{
+    return m_disabled_count > 1;
 }
 
 void
@@ -331,6 +340,9 @@ Watchpoint::SetEnabled(bool enabled)
     {
         if (!m_is_ephemeral)
             SetHardwareIndex(LLDB_INVALID_INDEX32);
+        else
+            ++m_disabled_count;
+
         // Don't clear the snapshots for now.
         // Within StopInfo.cpp, we purposely do disable/enable watchpoint while performing watchpoint actions.
         //ClearSnapshots();

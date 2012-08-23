@@ -463,7 +463,8 @@ public:
         {
             if (process && watchpoint)
             {
-                process->EnableWatchpoint(watchpoint);
+                if (!watchpoint->IsDisabledDuringEphemeralMode())
+                    process->EnableWatchpoint(watchpoint);
                 watchpoint->TurnOffEphemeralMode();
             }
         }

@@ -2281,6 +2281,10 @@ ProcessGDBRemote::DisableWatchpoint (Watchpoint *wp)
         {
             if (log)
                 log->Printf ("ProcessGDBRemote::DisableWatchpoint (watchID = %llu) addr = 0x%8.8llx -- SUCCESS (already disabled)", watchID, (uint64_t)addr);
+            // See also 'class WatchpointSentry' within StopInfo.cpp.
+            // This disabling attempt might come from the user-supplied actions, we'll route it in order for
+            // the watchpoint object to intelligently process this action.
+            wp->SetEnabled(false);
             return error;
         }
         
