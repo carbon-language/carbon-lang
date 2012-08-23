@@ -506,11 +506,11 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   OwningPtr<llvm::MCSubtargetInfo>
     STI(TheTarget->createMCSubtargetInfo(TT, "", ""));
 
-  for (unsigned i = 0, e = AsmStrings.size(); i != e; ++i) {
+  for (unsigned StrIdx = 0, e = AsmStrings.size(); StrIdx != e; ++StrIdx) {
     llvm::SourceMgr SrcMgr;
     llvm::MCContext Ctx(*MAI, *MRI, MOFI.get(), &SrcMgr);
     llvm::MemoryBuffer *Buffer =
-      llvm::MemoryBuffer::getMemBuffer(AsmStrings[i], "<inline asm>");
+      llvm::MemoryBuffer::getMemBuffer(AsmStrings[StrIdx], "<inline asm>");
 
     // Tell SrcMgr about this buffer, which is what the parser will pick up.
     SrcMgr.AddNewSourceBuffer(Buffer, llvm::SMLoc());
@@ -562,14 +562,14 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
 
     // Build the list of clobbers, outputs and inputs.
     unsigned NumDefs = Desc.getNumDefs();
-    for (unsigned j = 0, e = Inst.getNumOperands(); j != e; ++j) {
-      const llvm::MCOperand &Op = Inst.getOperand(j);
+    for (unsigned i = 0, e = Inst.getNumOperands(); i != e; ++i) {
+      const llvm::MCOperand &Op = Inst.getOperand(i);
 
       // Immediate.
       if (Op.isImm() || Op.isFPImm())
         continue;
 
-      bool isDef = NumDefs && (j < NumDefs);
+      bool isDef = NumDefs && (i < NumDefs);
 
       // Register/Clobber.
       if (Op.isReg() && isDef) {
@@ -591,8 +591,8 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
         if ((SymRef = dyn_cast<llvm::MCSymbolRefExpr>(Expr))) {
           StringRef Name = SymRef->getSymbol().getName();
           IdentifierInfo *II = getIdentifierInfo(Name, AsmToks,
-                                                 AsmTokRanges[i].first,
-                                                 AsmTokRanges[i].second);
+                                                 AsmTokRanges[StrIdx].first,
+                                                 AsmTokRanges[StrIdx].second);
           if (II)
             isDef ? Outputs.push_back(II) : Inputs.push_back(II);
         }
