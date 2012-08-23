@@ -1,4 +1,4 @@
-; RUN: llc -O0 -asm-verbose < %s | FileCheck %s
+; RUN: llc -O0 -asm-verbose -darwin-gdb-compat < %s | FileCheck %s
 ; CHECK-NOT: .asciz "X" ## External Name
 ; CHECK: .asciz "Y" ## External Name
 ; Test to check type with no definition is listed in pubtypes section.

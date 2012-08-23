@@ -832,7 +832,10 @@ void DwarfDebug::endModule() {
   }
   
   // Emit info into a debug pubtypes section.
-  emitDebugPubTypes();
+  // TODO: When we don't need the option anymore we can
+  // remove all of the code that adds to the table.
+  if (DarwinGDBCompat)
+    emitDebugPubTypes();
 
   // Emit info into a debug loc section.
   emitDebugLoc();
