@@ -34,7 +34,7 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
           Tok.is(tok::equal)) &&
          "Current token not a '{', ':', '=', or 'try'!");
 
-  MultiTemplateParamsArg TemplateParams(Actions,
+  MultiTemplateParamsArg TemplateParams(
           TemplateInfo.TemplateParams ? TemplateInfo.TemplateParams->data() : 0,
           TemplateInfo.TemplateParams ? TemplateInfo.TemplateParams->size() : 0);
 

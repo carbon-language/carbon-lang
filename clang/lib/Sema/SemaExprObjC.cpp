@@ -345,7 +345,7 @@ static ExprResult CheckObjCCollectionLiteralElement(Sema &S, Expr *Element,
                                        SourceLocation());
     InitializationSequence Seq(S, Entity, Kind, &Element, 1);
     if (!Seq.Failed())
-      return Seq.Perform(S, Entity, Kind, MultiExprArg(S, &Element, 1));
+      return Seq.Perform(S, Entity, Kind, Element);
   }
 
   Expr *OrigElement = Element;
@@ -708,7 +708,7 @@ ExprResult Sema::BuildObjCArrayLiteral(SourceRange SR, MultiExprArg Elements) {
 
   // Check that each of the elements provided is valid in a collection literal,
   // performing conversions as necessary.
-  Expr **ElementsBuffer = Elements.get();
+  Expr **ElementsBuffer = Elements.data();
   for (unsigned I = 0, N = Elements.size(); I != N; ++I) {
     ExprResult Converted = CheckObjCCollectionLiteralElement(*this,
                                                              ElementsBuffer[I],
@@ -724,10 +724,8 @@ ExprResult Sema::BuildObjCArrayLiteral(SourceRange SR, MultiExprArg Elements) {
                                     Context.getObjCInterfaceType(NSArrayDecl));
 
   return MaybeBindToTemporary(
-           ObjCArrayLiteral::Create(Context, 
-                                    llvm::makeArrayRef(Elements.get(), 
-                                                       Elements.size()), 
-                                    Ty, ArrayWithObjectsMethod, SR));
+           ObjCArrayLiteral::Create(Context, Elements, Ty,
+                                    ArrayWithObjectsMethod, SR));
 }
 
 ExprResult Sema::BuildObjCDictionaryLiteral(SourceRange SR, 
@@ -1911,7 +1909,7 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
     // If the receiver type is dependent, we can't type-check anything
     // at this point. Build a dependent expression.
     unsigned NumArgs = ArgsIn.size();
-    Expr **Args = ArgsIn.get();
+    Expr **Args = ArgsIn.data();
     assert(SuperLoc.isInvalid() && "Message to super with dependent type");
     return Owned(ObjCMessageExpr::Create(Context, ReceiverType,
                                          VK_RValue, LBracLoc, ReceiverTypeInfo,
@@ -1965,7 +1963,7 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
   ExprValueKind VK = VK_RValue;
 
   unsigned NumArgs = ArgsIn.size();
-  Expr **Args = ArgsIn.get();
+  Expr **Args = ArgsIn.data();
   if (CheckMessageArgumentTypes(ReceiverType, Args, NumArgs, Sel, Method, true,
                                 SuperLoc.isValid(), LBracLoc, RBracLoc, 
                                 ReturnType, VK))
@@ -2095,7 +2093,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
       // If the receiver is type-dependent, we can't type-check anything
       // at this point. Build a dependent expression.
       unsigned NumArgs = ArgsIn.size();
-      Expr **Args = ArgsIn.get();
+      Expr **Args = ArgsIn.data();
       assert(SuperLoc.isInvalid() && "Message to super with dependent type");
       return Owned(ObjCMessageExpr::Create(Context, Context.DependentTy,
                                            VK_RValue, LBracLoc, Receiver, Sel, 
@@ -2295,7 +2293,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
 
   // Check the message arguments.
   unsigned NumArgs = ArgsIn.size();
-  Expr **Args = ArgsIn.get();
+  Expr **Args = ArgsIn.data();
   QualType ReturnType;
   ExprValueKind VK = VK_RValue;
   bool ClassMessage = (ReceiverType->isObjCClassType() ||

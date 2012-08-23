@@ -972,9 +972,7 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
   if (getLangOpts().DelayedTemplateParsing &&
       Tok.isNot(tok::equal) &&
       TemplateInfo.Kind == ParsedTemplateInfo::Template) {
-    MultiTemplateParamsArg TemplateParameterLists(Actions,
-                                         TemplateInfo.TemplateParams->data(),
-                                         TemplateInfo.TemplateParams->size());
+    MultiTemplateParamsArg TemplateParameterLists(*TemplateInfo.TemplateParams);
     
     ParseScope BodyScope(this, Scope::FnScope|Scope::DeclScope);
     Scope *ParentScope = getCurScope()->getParent();
@@ -1009,13 +1007,12 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
            (Tok.is(tok::l_brace) || Tok.is(tok::kw_try) ||
             Tok.is(tok::colon)) && 
       Actions.CurContext->isTranslationUnit()) {
-    MultiTemplateParamsArg TemplateParameterLists(Actions, 0, 0);
     ParseScope BodyScope(this, Scope::FnScope|Scope::DeclScope);
     Scope *ParentScope = getCurScope()->getParent();
     
     D.setFunctionDefinitionKind(FDK_Definition);
     Decl *FuncDecl = Actions.HandleDeclarator(ParentScope, D,
-                                        TemplateParameterLists);
+                                              MultiTemplateParamsArg());
     D.complete(FuncDecl);
     D.getMutableDeclSpec().abort();
     if (FuncDecl) {
@@ -1033,10 +1030,7 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
   // specified Declarator for the function.
   Decl *Res = TemplateInfo.TemplateParams?
       Actions.ActOnStartOfFunctionTemplateDef(getCurScope(),
-                              MultiTemplateParamsArg(Actions,
-                                          TemplateInfo.TemplateParams->data(),
-                                         TemplateInfo.TemplateParams->size()),
-                                              D)
+                                              *TemplateInfo.TemplateParams, D)
     : Actions.ActOnStartOfFunctionDef(getCurScope(), D);
 
   // Break out of the ParsingDeclarator context before we parse the body.
@@ -1514,8 +1508,7 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext, bool NeedType) {
         return true;
       }
 
-      ASTTemplateArgsPtr TemplateArgsPtr(Actions,
-                                         TemplateId->getTemplateArgs(),
+      ASTTemplateArgsPtr TemplateArgsPtr(TemplateId->getTemplateArgs(),
                                          TemplateId->NumArgs);
 
       Ty = Actions.ActOnTypenameType(getCurScope(), TypenameLoc, SS,

@@ -412,8 +412,7 @@ ExprResult Parser::ParseBraceInitializer() {
     if (!getLangOpts().CPlusPlus)
       Diag(LBraceLoc, diag::ext_gnu_empty_initializer);
     // Match the '}'.
-    return Actions.ActOnInitList(LBraceLoc, MultiExprArg(Actions),
-                                 ConsumeBrace());
+    return Actions.ActOnInitList(LBraceLoc, MultiExprArg(), ConsumeBrace());
   }
 
   bool InitExprsOk = true;

@@ -1972,8 +1972,7 @@ public:
                                            SourceLocation LParenLoc,
                                            SourceLocation RParenLoc) {
     return getSema().BuildCXXTypeConstructExpr(TSInfo, LParenLoc,
-                                               MultiExprArg(getSema(), 0, 0),
-                                               RParenLoc);
+                                               MultiExprArg(), RParenLoc);
   }
 
   /// \brief Build a new C++ "new" expression.
@@ -2432,7 +2431,7 @@ public:
 
     // Build the CallExpr
     unsigned NumSubExprs = SubExprs.size();
-    Expr **Subs = SubExprs.get();
+    Expr **Subs = SubExprs.data();
     ExprResult TheCall = SemaRef.Owned(
       new (SemaRef.Context) CallExpr(SemaRef.Context, Callee.take(),
                                                        Subs, NumSubExprs,
@@ -2514,7 +2513,7 @@ public:
     // analysis here because we can't actually build an AtomicExpr until
     // we are sure it is semantically sound.
     unsigned NumSubExprs = SubExprs.size();
-    Expr **Subs = SubExprs.get();
+    Expr **Subs = SubExprs.data();
     return new (SemaRef.Context) AtomicExpr(BuiltinLoc, Subs,
                                             NumSubExprs, RetTy, Op,
                                             RParenLoc);

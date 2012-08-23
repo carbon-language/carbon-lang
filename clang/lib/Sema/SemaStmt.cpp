@@ -254,7 +254,7 @@ StmtResult
 Sema::ActOnCompoundStmt(SourceLocation L, SourceLocation R,
                         MultiStmtArg elts, bool isStmtExpr) {
   unsigned NumElts = elts.size();
-  Stmt **Elts = elts.get();
+  Stmt **Elts = elts.data();
   // If we're in C89 mode, check that we don't have any decls after stmts.  If
   // so, emit an extension diagnostic.
   if (!getLangOpts().C99 && !getLangOpts().CPlusPlus) {
@@ -2539,7 +2539,7 @@ Sema::ActOnObjCAtTryStmt(SourceLocation AtLoc, Stmt *Try,
   getCurFunction()->setHasBranchProtectedScope();
   unsigned NumCatchStmts = CatchStmts.size();
   return Owned(ObjCAtTryStmt::Create(Context, AtLoc, Try,
-                                     CatchStmts.get(),
+                                     CatchStmts.data(),
                                      NumCatchStmts,
                                      Finally));
 }
@@ -2674,7 +2674,7 @@ Sema::ActOnCXXTryBlock(SourceLocation TryLoc, Stmt *TryBlock,
   unsigned NumHandlers = RawHandlers.size();
   assert(NumHandlers > 0 &&
          "The parser shouldn't call this if there are no handlers.");
-  Stmt **Handlers = RawHandlers.get();
+  Stmt **Handlers = RawHandlers.data();
 
   SmallVector<TypeWithHandler, 8> TypesWithHandlers;
 

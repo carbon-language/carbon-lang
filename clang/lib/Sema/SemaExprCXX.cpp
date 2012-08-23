@@ -809,7 +809,7 @@ Sema::BuildCXXTypeConstructExpr(TypeSourceInfo *TInfo,
                                 SourceLocation RParenLoc) {
   QualType Ty = TInfo->getType();
   unsigned NumExprs = exprs.size();
-  Expr **Exprs = (Expr**)exprs.get();
+  Expr **Exprs = exprs.data();
   SourceLocation TyBeginLoc = TInfo->getTypeLoc().getBeginLoc();
 
   if (Ty->isDependentType() ||
@@ -1290,7 +1290,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
 
   FunctionDecl *OperatorNew = 0;
   FunctionDecl *OperatorDelete = 0;
-  Expr **PlaceArgs = (Expr**)PlacementArgs.get();
+  Expr **PlaceArgs = PlacementArgs.data();
   unsigned NumPlaceArgs = PlacementArgs.size();
 
   if (!AllocType->isDependentType() &&
@@ -2351,9 +2351,7 @@ static ExprResult BuildCXXCastArgument(Sema &S,
     CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(Method);
     SmallVector<Expr*, 8> ConstructorArgs;
 
-    if (S.CompleteConstructorCall(Constructor,
-                                  MultiExprArg(&From, 1),
-                                  CastLoc, ConstructorArgs))
+    if (S.CompleteConstructorCall(Constructor, From, CastLoc, ConstructorArgs))
       return ExprError();
 
     S.CheckConstructorAccess(CastLoc, Constructor,
@@ -2508,8 +2506,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
     if (SCS.Second == ICK_Derived_To_Base) {
       SmallVector<Expr*, 8> ConstructorArgs;
       if (CompleteConstructorCall(cast<CXXConstructorDecl>(SCS.CopyConstructor),
-                                  MultiExprArg(*this, &From, 1),
-                                  /*FIXME:ConstructLoc*/SourceLocation(),
+                                  From, /*FIXME:ConstructLoc*/SourceLocation(),
                                   ConstructorArgs))
         return ExprError();
       return BuildCXXConstructExpr(/*FIXME:ConstructLoc*/SourceLocation(),
@@ -2522,8 +2519,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
     }
     return BuildCXXConstructExpr(/*FIXME:ConstructLoc*/SourceLocation(),
                                  ToType, SCS.CopyConstructor,
-                                 MultiExprArg(*this, &From, 1),
-                                 /*HadMultipleCandidates*/ false,
+                                 From, /*HadMultipleCandidates*/ false,
                                  /*ZeroInit*/ false,
                                  CXXConstructExpr::CK_Complete,
                                  SourceRange());
@@ -3412,9 +3408,7 @@ static bool evaluateTypeTrait(Sema &S, TypeTrait Kind, SourceLocation KWLoc,
     if (Init.Failed())
       return false;
     
-    ExprResult Result = Init.Perform(S, To, InitKind, 
-                                     MultiExprArg(ArgExprs.data(), 
-                                                  ArgExprs.size()));
+    ExprResult Result = Init.Perform(S, To, InitKind, ArgExprs);
     if (Result.isInvalid() || SFINAE.hasErrorOccurred())
       return false;
 
@@ -3572,7 +3566,7 @@ static bool EvaluateBinaryTypeTrait(Sema &Self, BinaryTypeTrait BTT,
     if (Init.Failed())
       return false;
 
-    ExprResult Result = Init.Perform(Self, To, Kind, MultiExprArg(&FromPtr, 1));
+    ExprResult Result = Init.Perform(Self, To, Kind, FromPtr);
     return !Result.isInvalid() && !SFINAE.hasErrorOccurred();
   }
       
@@ -4099,7 +4093,7 @@ static bool ConvertForConditional(Sema &Self, ExprResult &E, QualType T) {
                                                            SourceLocation());
   Expr *Arg = E.take();
   InitializationSequence InitSeq(Self, Entity, Kind, &Arg, 1);
-  ExprResult Result = InitSeq.Perform(Self, Entity, Kind, MultiExprArg(&Arg, 1));
+  ExprResult Result = InitSeq.Perform(Self, Entity, Kind, Arg);
   if (Result.isInvalid())
     return true;
 
@@ -4561,14 +4555,14 @@ QualType Sema::FindCompositePointerType(SourceLocation Loc,
 
     // Convert E1 to Composite1
     ExprResult E1Result
-      = E1ToC1.Perform(*this, Entity1, Kind, MultiExprArg(*this,&E1,1));
+      = E1ToC1.Perform(*this, Entity1, Kind, E1);
     if (E1Result.isInvalid())
       return QualType();
     E1 = E1Result.takeAs<Expr>();
 
     // Convert E2 to Composite1
     ExprResult E2Result
-      = E2ToC1.Perform(*this, Entity1, Kind, MultiExprArg(*this,&E2,1));
+      = E2ToC1.Perform(*this, Entity1, Kind, E2);
     if (E2Result.isInvalid())
       return QualType();
     E2 = E2Result.takeAs<Expr>();
@@ -4586,14 +4580,14 @@ QualType Sema::FindCompositePointerType(SourceLocation Loc,
 
   // Convert E1 to Composite2
   ExprResult E1Result
-    = E1ToC2.Perform(*this, Entity2, Kind, MultiExprArg(*this, &E1, 1));
+    = E1ToC2.Perform(*this, Entity2, Kind, E1);
   if (E1Result.isInvalid())
     return QualType();
   E1 = E1Result.takeAs<Expr>();
 
   // Convert E2 to Composite2
   ExprResult E2Result
-    = E2ToC2.Perform(*this, Entity2, Kind, MultiExprArg(*this, &E2, 1));
+    = E2ToC2.Perform(*this, Entity2, Kind, E2);
   if (E2Result.isInvalid())
     return QualType();
   E2 = E2Result.takeAs<Expr>();
@@ -5198,8 +5192,7 @@ ExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, Expr *Base,
   } else {
     // Resolve the template-id to a type.
     TemplateIdAnnotation *TemplateId = SecondTypeName.TemplateId;
-    ASTTemplateArgsPtr TemplateArgsPtr(*this,
-                                       TemplateId->getTemplateArgs(),
+    ASTTemplateArgsPtr TemplateArgsPtr(TemplateId->getTemplateArgs(),
                                        TemplateId->NumArgs);
     TypeResult T = ActOnTemplateIdType(TemplateId->SS,
                                        TemplateId->TemplateKWLoc,
@@ -5248,8 +5241,7 @@ ExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, Expr *Base,
     } else {
       // Resolve the template-id to a type.
       TemplateIdAnnotation *TemplateId = FirstTypeName.TemplateId;
-      ASTTemplateArgsPtr TemplateArgsPtr(*this,
-                                         TemplateId->getTemplateArgs(),
+      ASTTemplateArgsPtr TemplateArgsPtr(TemplateId->getTemplateArgs(),
                                          TemplateId->NumArgs);
       TypeResult T = ActOnTemplateIdType(TemplateId->SS,
                                          TemplateId->TemplateKWLoc,

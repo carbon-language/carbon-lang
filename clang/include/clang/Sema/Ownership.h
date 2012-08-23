@@ -15,7 +15,7 @@
 #define LLVM_CLANG_SEMA_OWNERSHIP_H
 
 #include "clang/Basic/LLVM.h"
-#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/PointerIntPair.h"
 
 //===----------------------------------------------------------------------===//
@@ -32,7 +32,6 @@ namespace clang {
   class NestedNameSpecifier;
   class ParsedTemplateArgument;
   class QualType;
-  class Sema;
   class Stmt;
   class TemplateName;
   class TemplateParameterList;
@@ -213,32 +212,6 @@ namespace clang {
     }
   };
 
-  /// ASTMultiPtr - A pointer to multiple AST nodes.
-  template <class PtrTy>
-  class ASTMultiPtr {
-    PtrTy *Nodes;
-    unsigned Count;
-
-  public:
-    ASTMultiPtr() : Nodes(0), Count(0) {}
-    ASTMultiPtr(SmallVectorImpl<PtrTy> &v)
-      : Nodes(v.data()), Count(v.size()) {}
-    ASTMultiPtr(PtrTy *nodes, unsigned count) : Nodes(nodes), Count(count) {}
-    // FIXME: Remove these.
-    explicit ASTMultiPtr(Sema &) : Nodes(0), Count(0) {}
-    ASTMultiPtr(Sema &, PtrTy *nodes, unsigned count)
-      : Nodes(nodes), Count(count) {}
-
-    /// Access to the raw pointers.
-    PtrTy *get() const { return Nodes; }
-
-    /// Access to the count.
-    unsigned size() const { return Count; }
-
-    /// Access to the elements.
-    const PtrTy &operator[](unsigned Arg) const { return Nodes[Arg]; }
-  };
-
   /// An opaque type for threading parsed type information through the
   /// parser.
   typedef OpaquePtr<QualType> ParsedType;
@@ -269,11 +242,11 @@ namespace clang {
   typedef ActionResult<Decl*> DeclResult;
   typedef OpaquePtr<TemplateName> ParsedTemplateTy;
 
-  typedef ASTMultiPtr<Expr*> MultiExprArg;
-  typedef ASTMultiPtr<Stmt*> MultiStmtArg;
-  typedef ASTMultiPtr<ParsedTemplateArgument> ASTTemplateArgsPtr;
-  typedef ASTMultiPtr<ParsedType> MultiTypeArg;
-  typedef ASTMultiPtr<TemplateParameterList*> MultiTemplateParamsArg;
+  typedef llvm::MutableArrayRef<Expr*> MultiExprArg;
+  typedef llvm::MutableArrayRef<Stmt*> MultiStmtArg;
+  typedef llvm::MutableArrayRef<ParsedTemplateArgument> ASTTemplateArgsPtr;
+  typedef llvm::MutableArrayRef<ParsedType> MultiTypeArg;
+  typedef llvm::MutableArrayRef<TemplateParameterList*> MultiTemplateParamsArg;
 
   inline ExprResult ExprError() { return ExprResult(true); }
   inline StmtResult StmtError() { return StmtResult(true); }
