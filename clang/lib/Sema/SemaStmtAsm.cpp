@@ -590,7 +590,9 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
         const llvm::MCSymbolRefExpr *SymRef;
         if ((SymRef = dyn_cast<llvm::MCSymbolRefExpr>(Expr))) {
           StringRef Name = SymRef->getSymbol().getName();
-          IdentifierInfo *II = getIdentifierInfo(Name, AsmToks, AsmTokRanges[i].first, AsmTokRanges[i].second);
+          IdentifierInfo *II = getIdentifierInfo(Name, AsmToks,
+                                                 AsmTokRanges[i].first,
+                                                 AsmTokRanges[i].second);
           if (II)
             isDef ? Outputs.push_back(II) : Inputs.push_back(II);
         }
