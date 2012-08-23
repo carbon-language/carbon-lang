@@ -19,13 +19,24 @@
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Flags.h"
 #include "lldb/Interpreter/OptionValue.h"
+#if defined (__APPLE__)
+#include <Python/Python.h>
+#else
+#include <Python.h>
+#endif
 
 namespace lldb_private {
     
     class PythonRefCountedObject
     {
     public:
-        PythonRefCountedObject (PyObject* obj) : m_object(obj)
+        PythonRefCountedObject (PyObject* obj = NULL) : m_object(obj)
+        {
+            Py_XINCREF(m_object);
+        }
+        
+        PythonRefCountedObject (const PythonRefCountedObject &rhs) :
+            m_object(rhs.m_object)
         {
             Py_XINCREF(m_object);
         }
@@ -34,22 +45,33 @@ namespace lldb_private {
         {
             Py_XDECREF(m_object);
         }
-        
+
+        const PythonRefCountedObject &
+        operator = (const PythonRefCountedObject &rhs)
+        {
+            if (this != &rhs)
+                Reset (rhs.m_object);
+            return *this;
+        }
+
         void
         Reset (PyObject* object = NULL)
         {
-            Py_XDECREF(m_object);
-            m_object = object;
-            Py_XINCREF(m_object);
+            if (object != m_object)
+            {
+                Py_XDECREF(m_object);
+                m_object = object;
+                Py_XINCREF(m_object);
+            }
         }
         
         PyObject*
-        GetPyhonObject ()
+        GetPyhonObject () const
         {
             return m_object;
         }
         
-        operator bool ()
+        operator bool () const
         {
             return m_object != NULL;
         }
@@ -62,7 +84,8 @@ namespace lldb_private {
     {
     public:
         
-        PythonDataString (PyObject* object);
+        PythonDataString (bool create_empty);
+        PythonDataString (PyObject* object = NULL);
         PythonDataString (const char* string);
         ~PythonDataString ();
         
@@ -72,13 +95,16 @@ namespace lldb_private {
         void
         SetString (const char* string);
         
-        operator bool ()
+        operator bool () const
         {
             return m_object.operator bool();
         }
         
         PyObject*
-        GetPythonObject() { return m_object.GetPyhonObject(); }
+        GetPythonObject() const
+        {
+            return m_object.GetPyhonObject();
+        }
     private:
         PythonRefCountedObject m_object;
     };
@@ -87,6 +113,7 @@ namespace lldb_private {
     {
     public:
         
+        PythonDataInteger (bool create_empty = true);
         PythonDataInteger (PyObject* object);
         PythonDataInteger (int64_t value);
         ~PythonDataInteger ();
@@ -97,13 +124,16 @@ namespace lldb_private {
         void
         SetInteger (int64_t value);
         
-        operator bool ()
+        operator bool () const
         {
             return m_object.operator bool();
         }
         
         PyObject*
-        GetPythonObject() { return m_object.GetPyhonObject(); }
+        GetPythonObject() const
+        {
+            return m_object.GetPyhonObject();
+        }
     private:
         PythonRefCountedObject m_object;
     };
@@ -112,29 +142,33 @@ namespace lldb_private {
     {
     public:
         
-        PythonDataArray (uint32_t count);
+        PythonDataArray (bool create_empty = true);
         PythonDataArray (PyObject* object);
+        PythonDataArray (uint32_t count);
         ~PythonDataArray ();
         
         uint32_t
         GetSize();
         
-        PythonDataObject*
+        PythonDataObject
         GetItemAtIndex (uint32_t index);
         
         void
-        SetItemAtIndex (uint32_t index, PythonDataObject* object);
+        SetItemAtIndex (uint32_t index, const PythonDataObject &object);
         
         void
-        AppendItem (PythonDataObject* object);
+        AppendItem (const PythonDataObject &object);
         
-        operator bool ()
+        operator bool () const
         {
             return m_object.operator bool();
         }
         
         PyObject*
-        GetPythonObject() { return m_object.GetPyhonObject(); }
+        GetPythonObject() const
+        {
+            return m_object.GetPyhonObject();
+        }
     private:
         PythonRefCountedObject m_object;
     };
@@ -143,36 +177,42 @@ namespace lldb_private {
     {
     public:
         
-        PythonDataDictionary ();
+        PythonDataDictionary (bool create_empty = true);
         PythonDataDictionary (PyObject* object);
         ~PythonDataDictionary ();
         
         uint32_t GetSize();
         
-        PythonDataObject*
-        GetItemForKey (PythonDataString* key);
-        
+        PythonDataObject
+        GetItemForKey (const PythonDataString &key);
+
+        PythonDataObject
+        GetItemForKey (const char *key);
+
         typedef bool (*DictionaryIteratorCallback)(PythonDataString* key, PythonDataDictionary* dict);
         
-        PythonDataArray*
+        PythonDataArray
         GetKeys ();
         
-        PythonDataString*
+        PythonDataString
         GetKeyAtPosition (uint32_t pos);
         
-        PythonDataObject*
+        PythonDataObject
         GetValueAtPosition (uint32_t pos);
         
         void
-        SetItemForKey (PythonDataString* key, PythonDataObject* value);
+        SetItemForKey (const PythonDataString &key, const PythonDataObject& value);
         
-        operator bool ()
+        operator bool () const
         {
             return m_object.operator bool();
         }
         
         PyObject*
-        GetPythonObject() { return m_object.GetPyhonObject(); }
+        GetPythonObject() const
+        {
+            return m_object.GetPyhonObject();
+        }
     private:
         PythonRefCountedObject m_object;
     };
@@ -181,29 +221,33 @@ namespace lldb_private {
     {
     public:
         
+        PythonDataObject ();
         PythonDataObject (PyObject* object);
         
         ~PythonDataObject ();
         
-        PythonDataString*
+        PythonDataString
         GetStringObject ();
         
-        PythonDataInteger*
+        PythonDataInteger
         GetIntegerObject ();
         
-        PythonDataArray*
+        PythonDataArray
         GetArrayObject();
         
-        PythonDataDictionary*
+        PythonDataDictionary
         GetDictionaryObject();
         
-        operator bool ()
+        operator bool () const
         {
             return m_object.operator bool();
         }
         
         PyObject*
-        GetPythonObject() { return m_object.GetPyhonObject(); }
+        GetPythonObject() const
+        {
+            return m_object.GetPyhonObject();
+        }
         
     private:
         PythonRefCountedObject m_object;

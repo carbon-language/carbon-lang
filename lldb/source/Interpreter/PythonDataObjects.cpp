@@ -26,45 +26,63 @@
 using namespace lldb_private;
 using namespace lldb;
 
-PythonDataObject::PythonDataObject (PyObject* object) : m_object(object)
+PythonDataObject::PythonDataObject (PyObject* object) :
+    m_object(object)
 {
 }
 
-PythonDataString*
+PythonDataObject::PythonDataObject () :
+    m_object()
+{
+}
+
+PythonDataObject::~PythonDataObject ()
+{
+}
+
+PythonDataString
 PythonDataObject::GetStringObject ()
 {
-    return new PythonDataString(GetPythonObject());
+    return PythonDataString(GetPythonObject());
 }
     
-PythonDataInteger*
+PythonDataInteger
 PythonDataObject::GetIntegerObject ()
 {
-    return new PythonDataInteger(GetPythonObject());
+    return PythonDataInteger(GetPythonObject());
 }
 
-PythonDataArray*
+PythonDataArray
 PythonDataObject::GetArrayObject()
 {
-    return new PythonDataArray(GetPythonObject());
+    return PythonDataArray(GetPythonObject());
 }
 
-PythonDataDictionary*
+PythonDataDictionary
 PythonDataObject::GetDictionaryObject()
 {
-    return new PythonDataDictionary(GetPythonObject());
+    return PythonDataDictionary(GetPythonObject());
 }
 
-PythonDataInteger::PythonDataInteger (PyObject* object) : m_object(object)
+PythonDataInteger::PythonDataInteger (bool create_empty) :
+    m_object(create_empty ? PyInt_FromLong(0) : NULL)
 {
-    if (!PyInt_Check(GetPythonObject()))
+}
+
+PythonDataInteger::PythonDataInteger (PyObject* object) :
+    m_object(object)
+{
+    if (object && !PyInt_Check(GetPythonObject()))
         m_object.Reset();
 }
 
-PythonDataInteger::~PythonDataInteger ()
+PythonDataInteger::PythonDataInteger (int64_t value) :
+    m_object(PyInt_FromLong(value))
 {
 }
 
-PythonDataInteger::PythonDataInteger (int64_t value) : m_object(PyInt_FromLong(value))
+
+PythonDataInteger::~PythonDataInteger ()
 {
 }
 
@@ -83,12 +101,20 @@ PythonDataInteger::SetInteger (int64_t value)
     m_object.Reset(PyInt_FromLong(value));
 }
 
-PythonDataString::PythonDataString (PyObject* object) : m_object(object)
+PythonDataString::PythonDataString (bool create_empty) :
+    m_object(create_empty ? PyString_FromString("") : NULL)
 {
-    if (!PyString_Check(GetPythonObject()))
-        m_object.Reset();}
+}
 
-PythonDataString::PythonDataString (const char* string) : m_object(PyString_FromString(string))
+PythonDataString::PythonDataString (PyObject* object) :
+    m_object(object)
+{
+    if (object && !PyString_Check(GetPythonObject()))
+        m_object.Reset();
+}
+
+PythonDataString::PythonDataString (const char* string) :
+    m_object(PyString_FromString(string))
 {
 }
 
@@ -110,13 +136,20 @@ PythonDataString::SetString (const char* string)
     m_object.Reset(PyString_FromString(string));
 }
 
-PythonDataArray::PythonDataArray (uint32_t count) : m_object(PyList_New(count))
+PythonDataArray::PythonDataArray (bool create_empty) :
+    m_object(create_empty ? PyList_New(0) : NULL)
 {
 }
 
-PythonDataArray::PythonDataArray (PyObject* object) : m_object(object)
+PythonDataArray::PythonDataArray (uint32_t count) :
+    m_object(PyList_New(count))
 {
-    if (!PyList_Check(GetPythonObject()))
+}
+
+PythonDataArray::PythonDataArray (PyObject* object) :
+    m_object(object)
+{
+    if (object && !PyList_Check(GetPythonObject()))
         m_object.Reset();
 }
 
@@ -132,35 +165,37 @@ PythonDataArray::GetSize()
     return 0;
 }
 
-PythonDataObject*
+PythonDataObject
 PythonDataArray::GetItemAtIndex (uint32_t index)
 {
     if (m_object)
-        return new PythonDataObject(PyList_GetItem(GetPythonObject(), index));
+        return PythonDataObject(PyList_GetItem(GetPythonObject(), index));
     return NULL;
 }
 
 void
-PythonDataArray::SetItemAtIndex (uint32_t index, PythonDataObject* object)
+PythonDataArray::SetItemAtIndex (uint32_t index, const PythonDataObject & object)
 {
-    if (m_object && object && *object)
-        PyList_SetItem(GetPythonObject(), index, object->GetPythonObject());
+    if (m_object && object)
+        PyList_SetItem(GetPythonObject(), index, object.GetPythonObject());
 }
 
 void
-PythonDataArray::AppendItem (PythonDataObject* object)
+PythonDataArray::AppendItem (const PythonDataObject &object)
 {
-    if (m_object && object && *object)
-        PyList_Append(GetPythonObject(), object->GetPythonObject());
+    if (m_object && object)
+        PyList_Append(GetPythonObject(), object.GetPythonObject());
 }
 
-PythonDataDictionary::PythonDataDictionary () : m_object(PyDict_New())
+PythonDataDictionary::PythonDataDictionary (bool create_empty) :
+    m_object(create_empty ? PyDict_New() : NULL)
 {
 }
 
-PythonDataDictionary::PythonDataDictionary (PyObject* object) : m_object(object)
+PythonDataDictionary::PythonDataDictionary (PyObject* object) :
+    m_object(object)
 {
-    if (!PyDict_Check(GetPythonObject()))
+    if (object && !PyDict_Check(GetPythonObject()))
         m_object.Reset();
 }
 
@@ -176,39 +211,52 @@ PythonDataDictionary::GetSize()
     return 0;
 }
 
-PythonDataObject*
-PythonDataDictionary::GetItemForKey (PythonDataString* key)
+PythonDataObject
+PythonDataDictionary::GetItemForKey (const char *key)
 {
-    if (m_object && key && *key)
-        return new PythonDataObject(PyDict_GetItem(GetPythonObject(), key->GetPythonObject()));
+    if (key && key[0])
+    {
+        PythonDataString python_key(key);
+        return GetItemForKey(python_key);
+    }
     return NULL;
 }
 
-PythonDataArray*
+
+PythonDataObject
+PythonDataDictionary::GetItemForKey (const PythonDataString &key)
+{
+    if (m_object && key)
+        return PythonDataObject(PyDict_GetItem(GetPythonObject(), key.GetPythonObject()));
+    return PythonDataObject();
+}
+
+PythonDataArray
 PythonDataDictionary::GetKeys ()
 {
     if (m_object)
-        return new PythonDataArray(PyDict_Keys(GetPythonObject()));
-    return NULL;
+        return PythonDataArray(PyDict_Keys(GetPythonObject()));
+    return PythonDataArray();
 }
 
-PythonDataString*
+PythonDataString
 PythonDataDictionary::GetKeyAtPosition (uint32_t pos)
 {
     PyObject *key, *value;
     Py_ssize_t pos_iter = 0;
     
-    if (!m_object)
-        return NULL;
-    
-    while (PyDict_Next(GetPythonObject(), &pos_iter, &key, &value)) {
-        if (pos-- == 0)
-            return new PythonDataString(key);
+    if (m_object)
+    {
+        while (PyDict_Next(GetPythonObject(), &pos_iter, &key, &value))
+        {
+            if (pos-- == 0)
+                return PythonDataString(key);
+        }
     }
-    return NULL;
+    return PythonDataString();
 }
 
-PythonDataObject*
+PythonDataObject
 PythonDataDictionary::GetValueAtPosition (uint32_t pos)
 {
     PyObject *key, *value;
@@ -219,16 +267,16 @@ PythonDataDictionary::GetValueAtPosition (uint32_t pos)
     
     while (PyDict_Next(GetPythonObject(), &pos_iter, &key, &value)) {
         if (pos-- == 0)
-            return new PythonDataObject(value);
+            return PythonDataObject(value);
     }
-    return NULL;
+    return PythonDataObject();
 }
 
 void
-PythonDataDictionary::SetItemForKey (PythonDataString* key, PythonDataObject* value)
+PythonDataDictionary::SetItemForKey (const PythonDataString &key, const PythonDataObject &value)
 {
-    if (m_object && key && value && *key && *value)
-        PyDict_SetItem(GetPythonObject(), key->GetPythonObject(), value->GetPythonObject());
+    if (m_object && key && value)
+        PyDict_SetItem(GetPythonObject(), key.GetPythonObject(), value.GetPythonObject());
 }
 
 #endif
