@@ -226,7 +226,10 @@ namespace llvm {
     bool isBarrier;
     bool isCall;
     bool canFoldAsLoad;
-    bool mayLoad, mayStore;
+    bool mayLoad;
+    bool mayLoad_Unset;
+    bool mayStore;
+    bool mayStore_Unset;
     bool isPredicable;
     bool isConvertibleToThreeAddress;
     bool isCommutable;
@@ -238,6 +241,7 @@ namespace llvm {
     bool hasCtrlDep;
     bool isNotDuplicable;
     bool hasSideEffects;
+    bool hasSideEffects_Unset;
     bool neverHasSideEffects;
     bool isAsCheapAsAMove;
     bool hasExtraSrcRegAllocReq;

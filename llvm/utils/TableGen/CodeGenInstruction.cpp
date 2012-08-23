@@ -301,8 +301,6 @@ CodeGenInstruction::CodeGenInstruction(Record *R) : TheDef(R), Operands(R) {
   isBarrier    = R->getValueAsBit("isBarrier");
   isCall       = R->getValueAsBit("isCall");
   canFoldAsLoad = R->getValueAsBit("canFoldAsLoad");
-  mayLoad      = R->getValueAsBit("mayLoad");
-  mayStore     = R->getValueAsBit("mayStore");
   isPredicable = Operands.isPredicable || R->getValueAsBit("isPredicable");
   isConvertibleToThreeAddress = R->getValueAsBit("isConvertibleToThreeAddress");
   isCommutable = R->getValueAsBit("isCommutable");
@@ -313,8 +311,13 @@ CodeGenInstruction::CodeGenInstruction(Record *R) : TheDef(R), Operands(R) {
   hasPostISelHook = R->getValueAsBit("hasPostISelHook");
   hasCtrlDep   = R->getValueAsBit("hasCtrlDep");
   isNotDuplicable = R->getValueAsBit("isNotDuplicable");
-  hasSideEffects = R->getValueAsBit("hasSideEffects");
+
+  mayLoad      = R->getValueAsBitOrUnset("mayLoad", mayLoad_Unset);
+  mayStore     = R->getValueAsBitOrUnset("mayStore", mayStore_Unset);
+  hasSideEffects = R->getValueAsBitOrUnset("hasSideEffects",
+                                           hasSideEffects_Unset);
   neverHasSideEffects = R->getValueAsBit("neverHasSideEffects");
+
   isAsCheapAsAMove = R->getValueAsBit("isAsCheapAsAMove");
   hasExtraSrcRegAllocReq = R->getValueAsBit("hasExtraSrcRegAllocReq");
   hasExtraDefRegAllocReq = R->getValueAsBit("hasExtraDefRegAllocReq");

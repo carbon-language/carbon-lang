@@ -343,8 +343,8 @@ class Instruction {
   bit isBarrier    = 0;     // Can control flow fall through this instruction?
   bit isCall       = 0;     // Is this instruction a call instruction?
   bit canFoldAsLoad = 0;    // Can this be folded as a simple memory operand?
-  bit mayLoad      = 0;     // Is it possible for this inst to read memory?
-  bit mayStore     = 0;     // Is it possible for this inst to write memory?
+  bit mayLoad      = ?;     // Is it possible for this inst to read memory?
+  bit mayStore     = ?;     // Is it possible for this inst to write memory?
   bit isConvertibleToThreeAddress = 0;  // Can this 2-addr instruction promote?
   bit isCommutable = 0;     // Is this 3 operand instruction commutable?
   bit isTerminator = 0;     // Is this part of the terminator for a basic block?
@@ -369,7 +369,7 @@ class Instruction {
   //
   //  neverHasSideEffects - Set on an instruction with no pattern if it has no
   //    side effects.
-  bit hasSideEffects = 0;
+  bit hasSideEffects = ?;
   bit neverHasSideEffects = 0;
 
   // Is this instruction a "real" instruction (with a distinct machine

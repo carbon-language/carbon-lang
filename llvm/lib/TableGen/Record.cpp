@@ -1963,6 +1963,23 @@ bool Record::getValueAsBit(StringRef FieldName) const {
         "' does not have a bit initializer!";
 }
 
+bool Record::getValueAsBitOrUnset(StringRef FieldName, bool &Unset) const {
+  const RecordVal *R = getValue(FieldName);
+  if (R == 0 || R->getValue() == 0)
+    throw "Record `" + getName() + "' does not have a field named `" +
+      FieldName.str() + "'!\n";
+
+  if (R->getValue() == UnsetInit::get()) {
+    Unset = true;
+    return false;
+  }
+  Unset = false;
+  if (BitInit *BI = dynamic_cast<BitInit*>(R->getValue()))
+    return BI->getValue();
+  throw "Record `" + getName() + "', field `" + FieldName.str() +
+        "' does not have a bit initializer!";
+}
+
 /// getValueAsDag - This method looks up the specified field and returns its
 /// value as an Dag, throwing an exception if the field does not exist or if
 /// the value is not the right type.

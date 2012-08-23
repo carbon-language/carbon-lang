@@ -1511,6 +1511,12 @@ public:
   ///
   bool getValueAsBit(StringRef FieldName) const;
 
+  /// getValueAsBitOrUnset - This method looks up the specified field and
+  /// returns its value as a bit. If the field is unset, sets Unset to true and
+  /// retunrs false.
+  ///
+  bool getValueAsBitOrUnset(StringRef FieldName, bool &Unset) const;
+
   /// getValueAsInt - This method looks up the specified field and returns its
   /// value as an int64_t, throwing an exception if the field does not exist or
   /// if the value is not the right type.
