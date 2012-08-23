@@ -362,11 +362,12 @@ CommandInterpreter::LoadCommandDictionary ()
     std::auto_ptr<CommandObjectRegexCommand>
     break_regex_cmd_ap(new CommandObjectRegexCommand (*this,
                                                       "_regexp-break",
-                                                      "Set a breakpoint using a regular expression to specify the location.",
-                                                      "_regexp-break [<filename>:<linenum>]\n_regexp-break [<address>]\n_regexp-break <...>", 2));
+                                                      "Set a breakpoint using a regular expression to specify the location, where <linenum> is in decimal and <address> is in hex.",
+                                                      "_regexp-break [<filename>:<linenum>]\n_regexp-break [<linenum>]\n_regexp-break [<address>]\n_regexp-break <...>", 2));
     if (break_regex_cmd_ap.get())
     {
         if (break_regex_cmd_ap->AddRegexCommand("^(.*[^[:space:]])[[:space:]]*:[[:space:]]*([[:digit:]]+)[[:space:]]*$", "breakpoint set --file '%1' --line %2") &&
+            break_regex_cmd_ap->AddRegexCommand("^([[:digit:]]+)[[:space:]]*$", "breakpoint set --line %1") &&
             break_regex_cmd_ap->AddRegexCommand("^(0x[[:xdigit:]]+)[[:space:]]*$", "breakpoint set --address %1") &&
             break_regex_cmd_ap->AddRegexCommand("^[\"']?([-+]\\[.*\\])[\"']?[[:space:]]*$", "breakpoint set --name '%1'") &&
             break_regex_cmd_ap->AddRegexCommand("^$", "breakpoint list --full") &&
