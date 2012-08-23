@@ -191,7 +191,7 @@ public:
   MCInst &getInst() { return Inst; }
   const MCInst &getInst() const { return Inst; }
 
-  void setInst(MCInst Value) { Inst = Value; }
+  void setInst(const MCInst& Value) { Inst = Value; }
 
   /// @}
   /// @name Fixup Access
