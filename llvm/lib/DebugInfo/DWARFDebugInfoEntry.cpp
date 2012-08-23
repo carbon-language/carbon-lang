@@ -1,4 +1,4 @@
-//===-- DWARFDebugInfoEntry.cpp --------------------------------------------===//
+//===-- DWARFDebugInfoEntry.cpp -------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
