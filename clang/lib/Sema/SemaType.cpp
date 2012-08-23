@@ -3611,11 +3611,12 @@ static bool handleObjCOwnershipTypeAttr(TypeProcessingState &state,
     while (const PointerType *ptr = T->getAs<PointerType>())
       T = ptr->getPointeeType();
     if (const ObjCObjectPointerType *ObjT = T->getAs<ObjCObjectPointerType>()) {
-      ObjCInterfaceDecl *Class = ObjT->getInterfaceDecl();
-      if (Class->isArcWeakrefUnavailable()) {
-          S.Diag(AttrLoc, diag::err_arc_unsupported_weak_class);
-          S.Diag(ObjT->getInterfaceDecl()->getLocation(),
-                 diag::note_class_declared);
+      if (ObjCInterfaceDecl *Class = ObjT->getInterfaceDecl()) {
+        if (Class->isArcWeakrefUnavailable()) {
+            S.Diag(AttrLoc, diag::err_arc_unsupported_weak_class);
+            S.Diag(ObjT->getInterfaceDecl()->getLocation(),
+                   diag::note_class_declared);
+        }
       }
     }
   }
