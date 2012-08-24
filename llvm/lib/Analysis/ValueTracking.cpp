@@ -1614,7 +1614,7 @@ Value *llvm::GetPointerBaseWithConstantOffset(Value *Ptr, int64_t &Offset,
   // right.
   unsigned PtrSize = TD.getPointerSizeInBits();
   if (PtrSize < 64)
-    Offset = (Offset << (64-PtrSize)) >> (64-PtrSize);
+    Offset = SignExtend64(Offset, PtrSize);
   
   return GetPointerBaseWithConstantOffset(GEP->getPointerOperand(), Offset, TD);
 }

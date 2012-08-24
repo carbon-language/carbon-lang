@@ -3170,7 +3170,7 @@ static DecodeStatus DecodeT2Imm8S4(MCInst &Inst, unsigned Val,
     int imm = Val & 0xFF;
 
     if (!(Val & 0x100)) imm *= -1;
-    Inst.addOperand(MCOperand::CreateImm(imm << 2));
+    Inst.addOperand(MCOperand::CreateImm(imm * 4));
   }
 
   return MCDisassembler::Success;

@@ -1011,7 +1011,7 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
           AM.IndexReg = ShVal.getNode()->getOperand(0);
           ConstantSDNode *AddVal =
             cast<ConstantSDNode>(ShVal.getNode()->getOperand(1));
-          uint64_t Disp = AddVal->getSExtValue() << Val;
+          uint64_t Disp = (uint64_t)AddVal->getSExtValue() << Val;
           if (!FoldOffsetIntoAddress(Disp, AM))
             return false;
         }
@@ -2116,7 +2116,8 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
 
     // Make sure that we don't change the operation by removing bits.
     // This only matters for OR and XOR, AND is unaffected.
-    if (Opcode != ISD::AND && ((Val >> ShlVal) << ShlVal) != Val)
+    uint64_t RemovedBitsMask = (1ULL << ShlVal) - 1;
+    if (Opcode != ISD::AND && (Val & RemovedBitsMask) != 0)
       break;
 
     unsigned ShlOp, Op;

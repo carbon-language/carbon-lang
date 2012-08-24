@@ -1410,19 +1410,13 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       // Make sure that the value is representable for this type.
       if (Size >= 32) return MadeChange;
 
-      int Val = (II->getValue() << (32-Size)) >> (32-Size);
-      if (Val == II->getValue()) return MadeChange;
-
-      // If sign-extended doesn't fit, does it fit as unsigned?
-      unsigned ValueMask;
-      unsigned UnsignedVal;
-      ValueMask = unsigned(~uint32_t(0UL) >> (32-Size));
-      UnsignedVal = unsigned(II->getValue());
-
-      if ((ValueMask & UnsignedVal) == UnsignedVal)
+      // Check that the value doesn't use more bits than we have. It must either
+      // be a sign- or zero-extended equivalent of the original.
+      int64_t SignBitAndAbove = II->getValue() >> (Size - 1);
+      if (SignBitAndAbove == -1 || SignBitAndAbove == 0 || SignBitAndAbove == 1)
         return MadeChange;
 
-      TP.error("Integer value '" + itostr(II->getValue())+
+      TP.error("Integer value '" + itostr(II->getValue()) +
                "' is out of range for type '" + getEnumName(getType(0)) + "'!");
       return MadeChange;
     }
@@ -3400,4 +3394,3 @@ void CodeGenDAGPatterns::GenerateVariants() {
     DEBUG(errs() << "\n");
   }
 }
-

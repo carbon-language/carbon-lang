@@ -463,10 +463,22 @@ template <unsigned B> inline int32_t SignExtend32(uint32_t x) {
   return int32_t(x << (32 - B)) >> (32 - B);
 }
 
+/// \brief Sign extend number in the bottom B bits of X to a 32-bit int.
+/// Requires 0 < B <= 32.
+inline int32_t SignExtend32(uint32_t X, unsigned B) {
+  return int32_t(X << (32 - B)) >> (32 - B);
+}
+
 /// SignExtend64 - Sign extend B-bit number x to 64-bit int.
 /// Usage int64_t r = SignExtend64<5>(x);
 template <unsigned B> inline int64_t SignExtend64(uint64_t x) {
   return int64_t(x << (64 - B)) >> (64 - B);
+}
+
+/// \brief Sign extend number in the bottom B bits of X to a 64-bit int.
+/// Requires 0 < B <= 64.
+inline int64_t SignExtend64(uint64_t X, unsigned B) {
+  return int64_t(X << (64 - B)) >> (64 - B);
 }
 
 } // End llvm namespace

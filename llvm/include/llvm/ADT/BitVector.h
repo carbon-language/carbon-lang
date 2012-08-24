@@ -172,7 +172,7 @@ public:
     unsigned BitPos = Prev % BITWORD_SIZE;
     BitWord Copy = Bits[WordPos];
     // Mask off previous bits.
-    Copy &= ~0L << BitPos;
+    Copy &= ~0UL << BitPos;
 
     if (Copy != 0) {
       if (sizeof(BitWord) == 4)
@@ -451,8 +451,11 @@ private:
     //  Then set any stray high bits of the last used word.
     unsigned ExtraBits = Size % BITWORD_SIZE;
     if (ExtraBits) {
-      Bits[UsedWords-1] &= ~(~0L << ExtraBits);
-      Bits[UsedWords-1] |= (0 - (BitWord)t) << ExtraBits;
+      BitWord ExtraBitMask = ~0UL << ExtraBits;
+      if (t)
+        Bits[UsedWords-1] |= ExtraBitMask;
+      else
+        Bits[UsedWords-1] &= ~ExtraBitMask;
     }
   }
 

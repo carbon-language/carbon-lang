@@ -137,7 +137,7 @@ void PPCInstPrinter::printPredicateOperand(const MCInst *MI, unsigned OpNo,
 void PPCInstPrinter::printS5ImmOperand(const MCInst *MI, unsigned OpNo,
                                        raw_ostream &O) {
   char Value = MI->getOperand(OpNo).getImm();
-  Value = (Value << (32-5)) >> (32-5);
+  Value = SignExtend32<5>(Value);
   O << (int)Value;
 }
 

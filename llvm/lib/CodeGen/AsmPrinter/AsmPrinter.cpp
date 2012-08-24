@@ -1475,10 +1475,9 @@ static const MCExpr *LowerConstant(const Constant *CV, AsmPrinter &AP) {
       return Base;
 
     // Truncate/sext the offset to the pointer size.
-    if (TD.getPointerSizeInBits() != 64) {
-      int SExtAmount = 64-TD.getPointerSizeInBits();
-      Offset = (Offset << SExtAmount) >> SExtAmount;
-    }
+    unsigned Width = TD.getPointerSizeInBits();
+    if (Width < 64)
+      Offset = SignExtend64(Offset, Width);
 
     return MCBinaryExpr::CreateAdd(Base, MCConstantExpr::Create(Offset, Ctx),
                                    Ctx);

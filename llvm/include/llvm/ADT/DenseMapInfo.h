@@ -31,12 +31,12 @@ struct DenseMapInfo {
 template<typename T>
 struct DenseMapInfo<T*> {
   static inline T* getEmptyKey() {
-    intptr_t Val = -1;
+    uintptr_t Val = static_cast<uintptr_t>(-1);
     Val <<= PointerLikeTypeTraits<T*>::NumLowBitsAvailable;
     return reinterpret_cast<T*>(Val);
   }
   static inline T* getTombstoneKey() {
-    intptr_t Val = -2;
+    uintptr_t Val = static_cast<uintptr_t>(-2);
     Val <<= PointerLikeTypeTraits<T*>::NumLowBitsAvailable;
     return reinterpret_cast<T*>(Val);
   }
@@ -105,7 +105,7 @@ template<> struct DenseMapInfo<int> {
 // Provide DenseMapInfo for longs.
 template<> struct DenseMapInfo<long> {
   static inline long getEmptyKey() {
-    return (1UL << (sizeof(long) * 8 - 1)) - 1L;
+    return (1UL << (sizeof(long) * 8 - 1)) - 1UL;
   }
   static inline long getTombstoneKey() { return getEmptyKey() - 1L; }
   static unsigned getHashValue(const long& Val) {

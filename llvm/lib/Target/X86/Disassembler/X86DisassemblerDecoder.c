@@ -200,7 +200,7 @@ static void unconsumeByte(struct InternalInstruction* insn) {
                              insn->readerCursor + offset);        \
       if (ret)                                                    \
         return ret;                                               \
-      combined = combined | ((type)byte << ((type)offset * 8));   \
+      combined = combined | ((uint64_t)byte << (offset * 8));     \
     }                                                             \
     *ptr = combined;                                              \
     insn->readerCursor += sizeof(type);                           \
