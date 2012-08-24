@@ -129,7 +129,7 @@ X("json-compilation-database", "Reads JSON formatted compilation databases");
 
 // This anchor is used to force the linker to link in the generated object file
 // and thus register the JSONCompilationDatabasePlugin.
-int JSONAnchorSource = 0;
+volatile int JSONAnchorSource = 0;
 
 JSONCompilationDatabase *
 JSONCompilationDatabase::loadFromFile(StringRef FilePath,
