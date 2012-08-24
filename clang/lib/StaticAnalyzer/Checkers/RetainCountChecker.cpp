@@ -1358,22 +1358,6 @@ RetainSummaryManager::updateSummaryFromAnnotations(const RetainSummary *&Summ,
 const RetainSummary *
 RetainSummaryManager::getStandardMethodSummary(const ObjCMethodDecl *MD,
                                                Selector S, QualType RetTy) {
-
-  if (MD) {
-    // Scan the method decl for 'void*' arguments.  These should be treated
-    // as 'StopTracking' because they are often used with delegates.
-    // Delegates are a frequent form of false positives with the retain
-    // count checker.
-    unsigned i = 0;
-    for (ObjCMethodDecl::param_const_iterator I = MD->param_begin(),
-         E = MD->param_end(); I != E; ++I, ++i)
-      if (const ParmVarDecl *PD = *I) {
-        QualType Ty = Ctx.getCanonicalType(PD->getType());
-        if (Ty.getLocalUnqualifiedType() == Ctx.VoidPtrTy)
-          ScratchArgs = AF.add(ScratchArgs, i, StopTracking);
-      }
-  }
-
   // Any special effects?
   ArgEffect ReceiverEff = DoNothing;
   RetEffect ResultEff = RetEffect::MakeNoRet();
