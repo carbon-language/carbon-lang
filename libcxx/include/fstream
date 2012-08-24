@@ -234,6 +234,7 @@ private:
     FILE* __file_;
     const codecvt<char_type, char, state_type>* __cv_;
     state_type __st_;
+    state_type __st_last_;
     ios_base::openmode __om_;
     ios_base::openmode __cm_;
     bool __owns_eb_;
@@ -255,6 +256,7 @@ basic_filebuf<_CharT, _Traits>::basic_filebuf()
       __file_(0),
       __cv_(nullptr),
       __st_(),
+      __st_last_(),
       __om_(0),
       __cm_(0),
       __owns_eb_(false),
@@ -293,6 +295,7 @@ basic_filebuf<_CharT, _Traits>::basic_filebuf(basic_filebuf&& __rhs)
     __file_ = __rhs.__file_;
     __cv_ = __rhs.__cv_;
     __st_ = __rhs.__st_;
+    __st_last_ = __rhs.__st_last_;
     __om_ = __rhs.__om_;
     __cm_ = __rhs.__cm_;
     __owns_eb_ = __rhs.__owns_eb_;
@@ -325,6 +328,7 @@ basic_filebuf<_CharT, _Traits>::basic_filebuf(basic_filebuf&& __rhs)
     __rhs.__ibs_ = 0;
     __rhs.__file_ = 0;
     __rhs.__st_ = state_type();
+    __rhs.__st_last_ = state_type();
     __rhs.__om_ = 0;
     __rhs.__cm_ = 0;
     __rhs.__owns_eb_ = false;
@@ -402,6 +406,7 @@ basic_filebuf<_CharT, _Traits>::swap(basic_filebuf& __rhs)
     _VSTD::swap(__file_, __rhs.__file_);
     _VSTD::swap(__cv_, __rhs.__cv_);
     _VSTD::swap(__st_, __rhs.__st_);
+    _VSTD::swap(__st_last_, __rhs.__st_last_);
     _VSTD::swap(__om_, __rhs.__om_);
     _VSTD::swap(__cm_, __rhs.__cm_);
     _VSTD::swap(__owns_eb_, __rhs.__owns_eb_);
@@ -599,7 +604,7 @@ basic_filebuf<_CharT, _Traits>::underflow()
             size_t __nmemb = _VSTD::min(static_cast<size_t>(__ibs_ - __unget_sz),
                                  static_cast<size_t>(__extbufend_ - __extbufnext_));
             codecvt_base::result __r;
-            state_type __svs = __st_;
+            __st_last_ = __st_;
             size_t __nr = fread((void*)__extbufnext_, 1, __nmemb, __file_);
             if (__nr != 0)
             {
@@ -816,7 +821,7 @@ basic_filebuf<_CharT, _Traits>::seekpos(pos_type __sp, ios_base::openmode)
         return pos_type(off_type(-1));
     if (fseeko(__file_, __sp, SEEK_SET))
         return pos_type(off_type(-1));
-    __st_ = __sp.state;
+    __st_ = __sp.state();
     return __sp;
 }
 
@@ -852,6 +857,8 @@ basic_filebuf<_CharT, _Traits>::sync()
     else if (__cm_ & ios_base::in)
     {
         off_type __c;
+        state_type __state = __st_last_;
+        bool __update_st = false;
         if (__always_noconv_)
             __c = this->egptr() - this->gptr();
         else
@@ -864,32 +871,19 @@ basic_filebuf<_CharT, _Traits>::sync()
             {
                 if (this->gptr() != this->egptr())
                 {
-                    reverse(this->gptr(), this->egptr());
-                    codecvt_base::result __r;
-                    const char_type* __e = this->gptr();
-                    char* __extbe;
-                    do
-                    {
-                        __r = __cv_->out(__st_, __e, this->egptr(), __e,
-                                         __extbuf_, __extbuf_ + __ebs_, __extbe);
-                        switch (__r)
-                        {
-                        case codecvt_base::noconv:
-                            __c += this->egptr() - this->gptr();
-                            break;
-                        case codecvt_base::ok:
-                        case codecvt_base::partial:
-                            __c += __extbe - __extbuf_;
-                            break;
-                        default:
-                            return -1;
-                        }
-                    } while (__r == codecvt_base::partial);
+                    const int __off =  __cv_->length(__state, __extbuf_,
+                                                     __extbufnext_,
+                                                     this->gptr() - this->eback());
+                    __c += __extbufnext_ - __extbuf_ - __off;
+                    __update_st = true;
                 }
             }
         }
         if (fseeko(__file_, -__c, SEEK_CUR))
             return -1;
+        if (__update_st)
+            __st_ = __state;
+        __extbufnext_ = __extbufend_ = __extbuf_;
         this->setg(0, 0, 0);
         __cm_ = 0;
     }
