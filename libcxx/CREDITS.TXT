@@ -54,3 +54,7 @@ D: Minor patches.
 N: Andrew Morrow
 E: andrew.c.morrow@gmail.com
 D: Minor patches and Linux fixes.
+
+N: Hyeon-bin Jeong
+E: tuhertz@gmail.com
+D: Minor patches and bug fixes.
