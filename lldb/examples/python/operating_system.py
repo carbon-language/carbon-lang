@@ -7,9 +7,11 @@ class PlugIn(object):
     
     def __init__(self, process):
         '''Initialization needs a valid.SBProcess object'''
+        self.process = None
+        self.registers = None
+        self.threads = None
         if type(process) is lldb.SBProcess and process.IsValid():
             self.process = process
-            self.registers = None # Will be an dictionary containing info for each register
             self.threads = None # Will be an dictionary containing info for each thread
     
     def get_thread_info(self):
@@ -22,14 +24,14 @@ class PlugIn(object):
         return self.threads
     
     def get_register_info(self):
-        if self.register_info == None:
-            self.register_info = dict()            
+        if self.registers == None:
+            self.registers = dict()            
             triple = self.process.target.triple
             if triple:
                 arch = triple.split('-')[0]
                 if arch == 'x86_64':
-                    self.register_info['sets'] = ['GPR', 'FPU', 'EXC']
-                    self.register_info['registers'] = [
+                    self.registers['sets'] = ['GPR', 'FPU', 'EXC']
+                    self.registers['registers'] = [
                         { 'name':'rax'       , 'bitsize' :  64, 'offset' :   0, 'encoding':'uint'  , 'format':'hex'         , 'set': 0, 'gcc' : 0, 'dwarf' : 0},
                         { 'name':'rbx'       , 'bitsize' :  64, 'offset' :   8, 'encoding':'uint'  , 'format':'hex'         , 'set': 0, 'gcc' : 3, 'dwarf' : 3},
                         { 'name':'rcx'       , 'bitsize' :  64, 'offset' :  16, 'encoding':'uint'  , 'format':'hex'         , 'set': 0, 'gcc' : 2, 'dwarf' : 2, 'generic':'arg4', 'alt-name':'arg4', },
@@ -52,7 +54,7 @@ class PlugIn(object):
                         { 'name':'fs'        , 'bitsize' :  64, 'offset' : 152, 'encoding':'uint'  , 'format':'hex'         , 'set': 0                          },
                         { 'name':'gs'        , 'bitsize' :  64, 'offset' : 160, 'encoding':'uint'  , 'format':'hex'         , 'set': 0                          },
                         ]
-        return self.register_info
+        return self.registers
             
     def get_register_data(self, tid):
         if tid == 0x111111111:

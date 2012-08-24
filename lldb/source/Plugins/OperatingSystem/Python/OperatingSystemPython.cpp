@@ -95,7 +95,7 @@ OperatingSystemPython::OperatingSystemPython (lldb_private::Process *process) :
         {
             m_python_object = object_sp->GetObject();
             
-            // GetDynamicRegisterInfo (); // Only for testing should this be done here
+            //GetDynamicRegisterInfo (); // COMMENT THIS LINE OUT PRIOR TO CHECKIN!!!
         }
     }
 }
@@ -156,9 +156,9 @@ OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list, ThreadList
     auto object_sp = m_interpreter->OSPlugin_QueryForThreadsInfo(m_interpreter->MakeScriptObject(m_python_object));
     if (!object_sp)
         return NULL;
-    PythonDataObject dictionary_data_obj((PyObject*)object_sp->GetObject());
-    PythonDataDictionary dictionary = dictionary_data_obj.GetDictionaryObject();
-    if(!dictionary)
+    PythonDataObject pyobj((PyObject*)object_sp->GetObject());
+    PythonDataArray array = pyobj.GetArrayObject();
+    if(!array)
         return NULL;
     
     // TODO: read from the dict

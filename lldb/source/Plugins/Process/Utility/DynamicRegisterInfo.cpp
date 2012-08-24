@@ -132,18 +132,24 @@ DynamicRegisterInfo::SetRegisterInfo (const lldb_private::PythonDataDictionary &
                     reg_info.encoding = eEncodingUint;
 
                 const int64_t set = reg_info_dict.GetItemForKeyAsInteger(set_pystr, -1);
-                if (set == -1)
+                if (set >= m_sets.size())
                 {
                     Clear();
                     return 0;
                 }
 
-                m_set_reg_nums[set].push_back(i);
                 reg_info.kinds[lldb::eRegisterKindLLDB]    = i;
                 reg_info.kinds[lldb::eRegisterKindGDB]     = i;
                 reg_info.kinds[lldb::eRegisterKindGCC]     = reg_info_dict.GetItemForKeyAsInteger(gcc_pystr, LLDB_INVALID_REGNUM);
                 reg_info.kinds[lldb::eRegisterKindDWARF]   = reg_info_dict.GetItemForKeyAsInteger(dwarf_pystr, LLDB_INVALID_REGNUM);
                 reg_info.kinds[lldb::eRegisterKindGeneric] = Args::StringToGenericRegister (reg_info_dict.GetItemForKeyAsString(generic_pystr));
+                const size_t end_reg_offset = reg_info.byte_offset + reg_info.byte_size;
+                if (m_reg_data_byte_size < end_reg_offset)
+                    m_reg_data_byte_size = end_reg_offset;
+
+                m_regs.push_back (reg_info);
+                m_set_reg_nums[set].push_back(i);
+
             }
             else
             {
