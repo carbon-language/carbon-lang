@@ -1,4 +1,4 @@
-//===-- FunctionBlackList.h - blacklist for sanitizers ----------*- C++ -*-===//
+//===-- BlackList.h - blacklist for sanitizers ------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -34,9 +34,9 @@ class Module;
 class Regex;
 class StringRef;
 
-class FunctionBlackList {
+class BlackList {
  public:
-  FunctionBlackList(const StringRef Path);
+  BlackList(const StringRef Path);
   // Returns whether either this function or it's source file are blacklisted.
   bool isIn(const Function &F);
   // Returns whether either this global or it's source file are blacklisted.

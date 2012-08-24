@@ -1,4 +1,4 @@
-//===-- FunctionBlackList.cpp - blacklist for sanitizers -----------------===//
+//===-- BlackList.cpp - blacklist for sanitizers --------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -16,7 +16,7 @@
 #include <utility>
 #include <string>
 
-#include "FunctionBlackList.h"
+#include "BlackList.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
@@ -30,7 +30,7 @@
 
 namespace llvm {
 
-FunctionBlackList::FunctionBlackList(const StringRef Path) {
+BlackList::BlackList(const StringRef Path) {
   // Validate and open blacklist file.
   if (!Path.size()) return;
   OwningPtr<MemoryBuffer> File;
@@ -77,19 +77,19 @@ FunctionBlackList::FunctionBlackList(const StringRef Path) {
   }
 }
 
-bool FunctionBlackList::isIn(const Function &F) {
+bool BlackList::isIn(const Function &F) {
   return isIn(*F.getParent()) || inSection("fun", F.getName());
 }
 
-bool FunctionBlackList::isIn(const GlobalVariable &G) {
+bool BlackList::isIn(const GlobalVariable &G) {
   return isIn(*G.getParent()) || inSection("global", G.getName());
 }
 
-bool FunctionBlackList::isIn(const Module &M) {
+bool BlackList::isIn(const Module &M) {
   return inSection("src", M.getModuleIdentifier());
 }
 
-bool FunctionBlackList::inSection(const StringRef Section,
+bool BlackList::inSection(const StringRef Section,
                                   const StringRef Query) {
   Regex *FunctionRegex = Entries[Section];
   return FunctionRegex ? FunctionRegex->match(Query) : false;

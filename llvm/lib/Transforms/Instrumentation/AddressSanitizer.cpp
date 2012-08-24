@@ -15,7 +15,7 @@
 
 #define DEBUG_TYPE "asan"
 
-#include "FunctionBlackList.h"
+#include "BlackList.h"
 #include "llvm/Function.h"
 #include "llvm/IRBuilder.h"
 #include "llvm/InlineAsm.h"
@@ -217,7 +217,7 @@ struct AddressSanitizer : public ModulePass {
   Function *AsanCtorFunction;
   Function *AsanInitFunction;
   Instruction *CtorInsertBefore;
-  OwningPtr<FunctionBlackList> BL;
+  OwningPtr<BlackList> BL;
   // This array is indexed by AccessIsWrite and log2(AccessSize).
   Function *AsanErrorCallback[2][kNumberOfAccessSizes];
   InlineAsm *EmptyAsm;
@@ -736,7 +736,7 @@ bool AddressSanitizer::runOnModule(Module &M) {
   TD = getAnalysisIfAvailable<TargetData>();
   if (!TD)
     return false;
-  BL.reset(new FunctionBlackList(ClBlackListFile));
+  BL.reset(new BlackList(ClBlackListFile));
 
   C = &(M.getContext());
   LongSize = TD->getPointerSizeInBits();

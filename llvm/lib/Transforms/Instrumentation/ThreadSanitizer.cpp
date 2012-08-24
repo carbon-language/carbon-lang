@@ -21,7 +21,7 @@
 
 #define DEBUG_TYPE "tsan"
 
-#include "FunctionBlackList.h"
+#include "BlackList.h"
 #include "llvm/Function.h"
 #include "llvm/IRBuilder.h"
 #include "llvm/Intrinsics.h"
@@ -77,7 +77,7 @@ struct ThreadSanitizer : public FunctionPass {
   int getMemoryAccessFuncIndex(Value *Addr);
 
   TargetData *TD;
-  OwningPtr<FunctionBlackList> BL;
+  OwningPtr<BlackList> BL;
   IntegerType *OrdTy;
   // Callbacks to run-time library are computed in doInitialization.
   Function *TsanFuncEntry;
@@ -121,7 +121,7 @@ bool ThreadSanitizer::doInitialization(Module &M) {
   TD = getAnalysisIfAvailable<TargetData>();
   if (!TD)
     return false;
-  BL.reset(new FunctionBlackList(ClBlackListFile));
+  BL.reset(new BlackList(ClBlackListFile));
 
   // Always insert a call to __tsan_init into the module's CTORs.
   IRBuilder<> IRB(M.getContext());
