@@ -2667,13 +2667,6 @@ void Sema::ArgumentDependentLookup(DeclarationName Name, bool Operator,
       T2 = Args[1]->getType();
   }
 
-  // Try to complete all associated classes, in case they contain a
-  // declaration of a friend function.
-  for (AssociatedClassSet::iterator C = AssociatedClasses.begin(),
-                                    CEnd = AssociatedClasses.end();
-       C != CEnd; ++C)
-    RequireCompleteType(Loc, Context.getRecordType(*C), 0);
-
   // C++ [basic.lookup.argdep]p3:
   //   Let X be the lookup set produced by unqualified lookup (3.4.1)
   //   and let Y be the lookup set produced by argument dependent
