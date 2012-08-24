@@ -126,6 +126,7 @@ bool DWARFDebugInfoEntryMinimal::extractFast(const DWARFCompileUnit *cu,
           switch (form) {
           // Blocks if inlined data that have a length field and the data bytes
           // inlined in the .debug_info.
+          case DW_FORM_exprloc:
           case DW_FORM_block:
             form_size = debug_info_data.getULEB128(&offset);
             break;
@@ -148,6 +149,11 @@ bool DWARFDebugInfoEntryMinimal::extractFast(const DWARFCompileUnit *cu,
           case DW_FORM_addr:
           case DW_FORM_ref_addr:
             form_size = cu->getAddressByteSize();
+            break;
+
+          // 0 sized form.
+          case DW_FORM_flag_present:
+            form_size = 0;
             break;
 
           // 1 byte values
@@ -173,6 +179,7 @@ bool DWARFDebugInfoEntryMinimal::extractFast(const DWARFCompileUnit *cu,
           // 8 byte values
           case DW_FORM_data8:
           case DW_FORM_ref8:
+          case DW_FORM_ref_sig8:
             form_size = 8;
             break;
 
@@ -186,6 +193,13 @@ bool DWARFDebugInfoEntryMinimal::extractFast(const DWARFCompileUnit *cu,
           case DW_FORM_indirect:
             form_is_indirect = true;
             form = debug_info_data.getULEB128(&offset);
+            break;
+
+          case DW_FORM_sec_offset:
+            if (cu->getAddressByteSize() == 4)
+              debug_info_data.getU32(offset_ptr);
+            else
+              debug_info_data.getU64(offset_ptr);
             break;
 
           default:
@@ -249,6 +263,7 @@ DWARFDebugInfoEntryMinimal::extract(const DWARFCompileUnit *cu,
               switch (form) {
               // Blocks if inlined data that have a length field and the data
               // bytes // inlined in the .debug_info
+              case DW_FORM_exprloc:
               case DW_FORM_block:
                 form_size = debug_info_data.getULEB128(&offset);
                 break;
@@ -271,6 +286,11 @@ DWARFDebugInfoEntryMinimal::extract(const DWARFCompileUnit *cu,
               case DW_FORM_addr:
               case DW_FORM_ref_addr:
                 form_size = cu_addr_size;
+                break;
+
+              // 0 byte value
+              case DW_FORM_flag_present:
+                form_size = 0;
                 break;
 
               // 1 byte values
@@ -299,6 +319,7 @@ DWARFDebugInfoEntryMinimal::extract(const DWARFCompileUnit *cu,
               // 8 byte values
               case DW_FORM_data8:
               case DW_FORM_ref8:
+              case DW_FORM_ref_sig8:
                 form_size = 8;
                 break;
 
@@ -314,6 +335,13 @@ DWARFDebugInfoEntryMinimal::extract(const DWARFCompileUnit *cu,
                 form_is_indirect = true;
                 break;
 
+              case DW_FORM_sec_offset:
+                if (cu->getAddressByteSize() == 4)
+                  debug_info_data.getU32(offset_ptr);
+                else
+                  debug_info_data.getU64(offset_ptr);
+                break;
+                
               default:
                 *offset_ptr = offset;
                 return false;

@@ -41,6 +41,10 @@ static const uint8_t form_sizes_addr4[] = {
   8, // 0x14 DW_FORM_ref8
   0, // 0x15 DW_FORM_ref_udata
   0, // 0x16 DW_FORM_indirect
+  4, // 0x17 DW_FORM_sec_offset
+  0, // 0x18 DW_FORM_exprloc
+  0, // 0x19 DW_FORM_flag_present
+  8, // 0x20 DW_FORM_ref_sig8
 };
 
 static const uint8_t form_sizes_addr8[] = {
@@ -67,6 +71,10 @@ static const uint8_t form_sizes_addr8[] = {
   8, // 0x14 DW_FORM_ref8
   0, // 0x15 DW_FORM_ref_udata
   0, // 0x16 DW_FORM_indirect
+  8, // 0x17 DW_FORM_sec_offset
+  0, // 0x18 DW_FORM_exprloc
+  0, // 0x19 DW_FORM_flag_present
+  8, // 0x20 DW_FORM_ref_sig8
 };
 
 const uint8_t *
@@ -93,6 +101,7 @@ DWARFFormValue::extractValue(DataExtractor data, uint32_t *offset_ptr,
     case DW_FORM_ref_addr:
       Value.uval = data.getUnsigned(offset_ptr, cu->getAddressByteSize());
       break;
+    case DW_FORM_exprloc:
     case DW_FORM_block:
       Value.uval = data.getULEB128(offset_ptr);
       is_block = true;
@@ -147,6 +156,18 @@ DWARFFormValue::extractValue(DataExtractor data, uint32_t *offset_ptr,
       Form = data.getULEB128(offset_ptr);
       indirect = true;
       break;
+    case DW_FORM_sec_offset:
+      if (cu->getAddressByteSize() == 4)
+        Value.uval = data.getU32(offset_ptr);
+      else
+        Value.uval = data.getU64(offset_ptr);
+      break;
+    case DW_FORM_flag_present:
+      Value.uval = 1;
+      break;
+    case DW_FORM_ref_sig8:
+      Value.uval = data.getU64(offset_ptr);
+      break;
     default:
       return false;
     }
@@ -179,6 +200,7 @@ DWARFFormValue::skipValue(uint16_t form, DataExtractor debug_info_data,
     switch (form) {
     // Blocks if inlined data that have a length field and the data bytes
     // inlined in the .debug_info
+    case DW_FORM_exprloc:
     case DW_FORM_block: {
       uint64_t size = debug_info_data.getULEB128(offset_ptr);
       *offset_ptr += size;
@@ -211,6 +233,10 @@ DWARFFormValue::skipValue(uint16_t form, DataExtractor debug_info_data,
       *offset_ptr += cu->getAddressByteSize();
       return true;
 
+    // 0 byte values - implied from the form.
+    case DW_FORM_flag_present:
+      return true;
+      
     // 1 byte values
     case DW_FORM_data1:
     case DW_FORM_flag:
@@ -234,6 +260,7 @@ DWARFFormValue::skipValue(uint16_t form, DataExtractor debug_info_data,
     // 8 byte values
     case DW_FORM_data8:
     case DW_FORM_ref8:
+    case DW_FORM_ref_sig8:
       *offset_ptr += 8;
       return true;
 
@@ -249,6 +276,15 @@ DWARFFormValue::skipValue(uint16_t form, DataExtractor debug_info_data,
       indirect = true;
       form = debug_info_data.getULEB128(offset_ptr);
       break;
+
+    // 4 for DWARF32, 8 for DWARF64.
+    case DW_FORM_sec_offset:
+      if (cu->getAddressByteSize() == 4)
+        *offset_ptr += 4;
+      else
+        *offset_ptr += 8;
+      return true;
+      
     default:
       return false;
     }
@@ -264,22 +300,26 @@ DWARFFormValue::dump(raw_ostream &OS, const DWARFCompileUnit *cu) const {
 
   switch (Form) {
   case DW_FORM_addr:      OS << format("0x%016" PRIx64, uvalue); break;
+  case DW_FORM_flag_present: OS << "true"; break;
   case DW_FORM_flag:
   case DW_FORM_data1:     OS << format("0x%02x", (uint8_t)uvalue); break;
   case DW_FORM_data2:     OS << format("0x%04x", (uint16_t)uvalue); break;
   case DW_FORM_data4:     OS << format("0x%08x", (uint32_t)uvalue); break;
+  case DW_FORM_ref_sig8:
   case DW_FORM_data8:     OS << format("0x%016" PRIx64, uvalue); break;
   case DW_FORM_string:
     OS << '"';
     OS.write_escaped(getAsCString(NULL));
     OS << '"';
     break;
+  case DW_FORM_exprloc:
   case DW_FORM_block:
   case DW_FORM_block1:
   case DW_FORM_block2:
   case DW_FORM_block4:
     if (uvalue > 0) {
       switch (Form) {
+      case DW_FORM_exprloc:
       case DW_FORM_block:  OS << format("<0x%" PRIx64 "> ", uvalue);     break;
       case DW_FORM_block1: OS << format("<0x%2.2x> ", (uint8_t)uvalue);  break;
       case DW_FORM_block2: OS << format("<0x%4.4x> ", (uint16_t)uvalue); break;
@@ -342,6 +382,14 @@ DWARFFormValue::dump(raw_ostream &OS, const DWARFCompileUnit *cu) const {
   case DW_FORM_indirect:
     OS << "DW_FORM_indirect";
     break;
+
+  case DW_FORM_sec_offset:
+    if (cu->getAddressByteSize() == 4)
+      OS << format("0x%08x", (uint32_t)uvalue);
+    else
+      OS << format("0x%016" PRIx64, uvalue);
+    break;
+    
   default:
     OS << format("DW_FORM(0x%4.4x)", Form);
     break;
@@ -404,6 +452,7 @@ const uint8_t *DWARFFormValue::BlockData() const {
 
 bool DWARFFormValue::isBlockForm(uint16_t form) {
   switch (form) {
+  case DW_FORM_exprloc:
   case DW_FORM_block:
   case DW_FORM_block1:
   case DW_FORM_block2:
