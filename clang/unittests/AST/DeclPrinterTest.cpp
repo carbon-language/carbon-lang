@@ -22,6 +22,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Tooling/Tooling.h"
+#include "llvm/ADT/SmallString.h"
 #include "gtest/gtest.h"
 
 using namespace clang;
@@ -1237,4 +1238,3 @@ TEST(DeclPrinter, TestTemplateArgumentList15) {
     "Z<sizeof...(T)> A"));
     // Should be: with semicolon, without extra space in "> >"
 }
-

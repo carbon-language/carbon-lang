@@ -7,141 +7,60 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file contains multiple implementations for CompilationDatabases.
+//  This file contains implementations of the CompilationDatabase base class
+//  and the FixedCompilationDatabase.
 //
 //===----------------------------------------------------------------------===//
 
+#include <sstream>
 #include "clang/Tooling/CompilationDatabase.h"
+#include "clang/Tooling/CompilationDatabasePluginRegistry.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Support/YAMLParser.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/system_error.h"
 
-#ifdef USE_CUSTOM_COMPILATION_DATABASE
-#include "CustomCompilationDatabase.h"
-#endif
-
 namespace clang {
 namespace tooling {
-
-namespace {
-
-/// \brief A parser for escaped strings of command line arguments.
-///
-/// Assumes \-escaping for quoted arguments (see the documentation of
-/// unescapeCommandLine(...)).
-class CommandLineArgumentParser {
- public:
-  CommandLineArgumentParser(StringRef CommandLine)
-      : Input(CommandLine), Position(Input.begin()-1) {}
-
-  std::vector<std::string> parse() {
-    bool HasMoreInput = true;
-    while (HasMoreInput && nextNonWhitespace()) {
-      std::string Argument;
-      HasMoreInput = parseStringInto(Argument);
-      CommandLine.push_back(Argument);
-    }
-    return CommandLine;
-  }
-
- private:
-  // All private methods return true if there is more input available.
-
-  bool parseStringInto(std::string &String) {
-    do {
-      if (*Position == '"') {
-        if (!parseQuotedStringInto(String)) return false;
-      } else {
-        if (!parseFreeStringInto(String)) return false;
-      }
-    } while (*Position != ' ');
-    return true;
-  }
-
-  bool parseQuotedStringInto(std::string &String) {
-    if (!next()) return false;
-    while (*Position != '"') {
-      if (!skipEscapeCharacter()) return false;
-      String.push_back(*Position);
-      if (!next()) return false;
-    }
-    return next();
-  }
-
-  bool parseFreeStringInto(std::string &String) {
-    do {
-      if (!skipEscapeCharacter()) return false;
-      String.push_back(*Position);
-      if (!next()) return false;
-    } while (*Position != ' ' && *Position != '"');
-    return true;
-  }
-
-  bool skipEscapeCharacter() {
-    if (*Position == '\\') {
-      return next();
-    }
-    return true;
-  }
-
-  bool nextNonWhitespace() {
-    do {
-      if (!next()) return false;
-    } while (*Position == ' ');
-    return true;
-  }
-
-  bool next() {
-    ++Position;
-    return Position != Input.end();
-  }
-
-  const StringRef Input;
-  StringRef::iterator Position;
-  std::vector<std::string> CommandLine;
-};
-
-std::vector<std::string> unescapeCommandLine(
-    StringRef EscapedCommandLine) {
-  CommandLineArgumentParser parser(EscapedCommandLine);
-  return parser.parse();
-}
-
-} // end namespace
 
 CompilationDatabase::~CompilationDatabase() {}
 
 CompilationDatabase *
 CompilationDatabase::loadFromDirectory(StringRef BuildDirectory,
                                        std::string &ErrorMessage) {
-  llvm::SmallString<1024> JSONDatabasePath(BuildDirectory);
-  llvm::sys::path::append(JSONDatabasePath, "compile_commands.json");
-  llvm::OwningPtr<CompilationDatabase> Database(
-    JSONCompilationDatabase::loadFromFile(JSONDatabasePath, ErrorMessage));
-  if (!Database) {
-    return NULL;
+  std::stringstream ErrorStream;
+  for (CompilationDatabasePluginRegistry::iterator
+       It = CompilationDatabasePluginRegistry::begin(),
+       Ie = CompilationDatabasePluginRegistry::end();
+       It != Ie; ++It) {
+    std::string DatabaseErrorMessage;
+    OwningPtr<CompilationDatabasePlugin> Plugin(It->instantiate());
+    if (CompilationDatabase *DB =
+        Plugin->loadFromDirectory(BuildDirectory, DatabaseErrorMessage))
+      return DB;
+    else
+      ErrorStream << It->getName() << ": " << DatabaseErrorMessage << "\n";
   }
-  return Database.take();
+  ErrorMessage = ErrorStream.str();
+  return NULL;
 }
 
 static CompilationDatabase *
-findCompilationDatabaseFromDirectory(StringRef Directory) {
-#ifdef USE_CUSTOM_COMPILATION_DATABASE
-  if (CompilationDatabase *DB =
-      ::clang::tooling::findCompilationDatabaseForDirectory(Directory))
-    return DB;
-#endif
+findCompilationDatabaseFromDirectory(StringRef Directory,
+                                     std::string &ErrorMessage) {
+  std::stringstream ErrorStream;
   while (!Directory.empty()) {
     std::string LoadErrorMessage;
 
     if (CompilationDatabase *DB =
            CompilationDatabase::loadFromDirectory(Directory, LoadErrorMessage))
       return DB;
+    ErrorStream << "No compilation database found in " << Directory.str()
+                << "\n" << LoadErrorMessage;
 
     Directory = llvm::sys::path::parent_path(Directory);
   }
+  ErrorMessage = ErrorStream.str();
   return NULL;
 }
 
@@ -151,11 +70,12 @@ CompilationDatabase::autoDetectFromSource(StringRef SourceFile,
   llvm::SmallString<1024> AbsolutePath(getAbsolutePath(SourceFile));
   StringRef Directory = llvm::sys::path::parent_path(AbsolutePath);
 
-  CompilationDatabase *DB = findCompilationDatabaseFromDirectory(Directory);
+  CompilationDatabase *DB = findCompilationDatabaseFromDirectory(Directory,
+                                                                 ErrorMessage);
 
   if (!DB)
     ErrorMessage = ("Could not auto-detect compilation database for file \"" +
-                   SourceFile + "\"").str();
+                   SourceFile + "\"\n" + ErrorMessage).str();
   return DB;
 }
 
@@ -164,13 +84,16 @@ CompilationDatabase::autoDetectFromDirectory(StringRef SourceDir,
                                              std::string &ErrorMessage) {
   llvm::SmallString<1024> AbsolutePath(getAbsolutePath(SourceDir));
 
-  CompilationDatabase *DB = findCompilationDatabaseFromDirectory(AbsolutePath);
+  CompilationDatabase *DB = findCompilationDatabaseFromDirectory(AbsolutePath,
+                                                                 ErrorMessage);
 
   if (!DB)
     ErrorMessage = ("Could not auto-detect compilation database from directory \"" +
-                   SourceDir + "\"").str();
+                   SourceDir + "\"\n" + ErrorMessage).str();
   return DB;
 }
+
+CompilationDatabasePlugin::~CompilationDatabasePlugin() {}
 
 FixedCompilationDatabase *
 FixedCompilationDatabase::loadFromCommandLine(int &Argc,
@@ -204,153 +127,10 @@ FixedCompilationDatabase::getAllFiles() const {
   return std::vector<std::string>();
 }
 
-JSONCompilationDatabase *
-JSONCompilationDatabase::loadFromFile(StringRef FilePath,
-                                      std::string &ErrorMessage) {
-  llvm::OwningPtr<llvm::MemoryBuffer> DatabaseBuffer;
-  llvm::error_code Result =
-    llvm::MemoryBuffer::getFile(FilePath, DatabaseBuffer);
-  if (Result != 0) {
-    ErrorMessage = "Error while opening JSON database: " + Result.message();
-    return NULL;
-  }
-  llvm::OwningPtr<JSONCompilationDatabase> Database(
-    new JSONCompilationDatabase(DatabaseBuffer.take()));
-  if (!Database->parse(ErrorMessage))
-    return NULL;
-  return Database.take();
-}
-
-JSONCompilationDatabase *
-JSONCompilationDatabase::loadFromBuffer(StringRef DatabaseString,
-                                        std::string &ErrorMessage) {
-  llvm::OwningPtr<llvm::MemoryBuffer> DatabaseBuffer(
-      llvm::MemoryBuffer::getMemBuffer(DatabaseString));
-  llvm::OwningPtr<JSONCompilationDatabase> Database(
-    new JSONCompilationDatabase(DatabaseBuffer.take()));
-  if (!Database->parse(ErrorMessage))
-    return NULL;
-  return Database.take();
-}
-
-std::vector<CompileCommand>
-JSONCompilationDatabase::getCompileCommands(StringRef FilePath) const {
-  llvm::SmallString<128> NativeFilePath;
-  llvm::sys::path::native(FilePath, NativeFilePath);
-  llvm::StringMap< std::vector<CompileCommandRef> >::const_iterator
-    CommandsRefI = IndexByFile.find(NativeFilePath);
-  if (CommandsRefI == IndexByFile.end())
-    return std::vector<CompileCommand>();
-  const std::vector<CompileCommandRef> &CommandsRef = CommandsRefI->getValue();
-  std::vector<CompileCommand> Commands;
-  for (int I = 0, E = CommandsRef.size(); I != E; ++I) {
-    llvm::SmallString<8> DirectoryStorage;
-    llvm::SmallString<1024> CommandStorage;
-    Commands.push_back(CompileCommand(
-      // FIXME: Escape correctly:
-      CommandsRef[I].first->getValue(DirectoryStorage),
-      unescapeCommandLine(CommandsRef[I].second->getValue(CommandStorage))));
-  }
-  return Commands;
-}
-
-std::vector<std::string>
-JSONCompilationDatabase::getAllFiles() const {
-  std::vector<std::string> Result;
-
-  llvm::StringMap< std::vector<CompileCommandRef> >::const_iterator
-    CommandsRefI = IndexByFile.begin();
-  const llvm::StringMap< std::vector<CompileCommandRef> >::const_iterator
-    CommandsRefEnd = IndexByFile.end();
-  for (; CommandsRefI != CommandsRefEnd; ++CommandsRefI) {
-    Result.push_back(CommandsRefI->first().str());
-  }
-
-  return Result;
-}
-
-bool JSONCompilationDatabase::parse(std::string &ErrorMessage) {
-  llvm::yaml::document_iterator I = YAMLStream.begin();
-  if (I == YAMLStream.end()) {
-    ErrorMessage = "Error while parsing YAML.";
-    return false;
-  }
-  llvm::yaml::Node *Root = I->getRoot();
-  if (Root == NULL) {
-    ErrorMessage = "Error while parsing YAML.";
-    return false;
-  }
-  llvm::yaml::SequenceNode *Array =
-    llvm::dyn_cast<llvm::yaml::SequenceNode>(Root);
-  if (Array == NULL) {
-    ErrorMessage = "Expected array.";
-    return false;
-  }
-  for (llvm::yaml::SequenceNode::iterator AI = Array->begin(),
-                                          AE = Array->end();
-       AI != AE; ++AI) {
-    llvm::yaml::MappingNode *Object =
-      llvm::dyn_cast<llvm::yaml::MappingNode>(&*AI);
-    if (Object == NULL) {
-      ErrorMessage = "Expected object.";
-      return false;
-    }
-    llvm::yaml::ScalarNode *Directory = NULL;
-    llvm::yaml::ScalarNode *Command = NULL;
-    llvm::yaml::ScalarNode *File = NULL;
-    for (llvm::yaml::MappingNode::iterator KVI = Object->begin(),
-                                           KVE = Object->end();
-         KVI != KVE; ++KVI) {
-      llvm::yaml::Node *Value = (*KVI).getValue();
-      if (Value == NULL) {
-        ErrorMessage = "Expected value.";
-        return false;
-      }
-      llvm::yaml::ScalarNode *ValueString =
-        llvm::dyn_cast<llvm::yaml::ScalarNode>(Value);
-      if (ValueString == NULL) {
-        ErrorMessage = "Expected string as value.";
-        return false;
-      }
-      llvm::yaml::ScalarNode *KeyString =
-        llvm::dyn_cast<llvm::yaml::ScalarNode>((*KVI).getKey());
-      if (KeyString == NULL) {
-        ErrorMessage = "Expected strings as key.";
-        return false;
-      }
-      llvm::SmallString<8> KeyStorage;
-      if (KeyString->getValue(KeyStorage) == "directory") {
-        Directory = ValueString;
-      } else if (KeyString->getValue(KeyStorage) == "command") {
-        Command = ValueString;
-      } else if (KeyString->getValue(KeyStorage) == "file") {
-        File = ValueString;
-      } else {
-        ErrorMessage = ("Unknown key: \"" +
-                        KeyString->getRawValue() + "\"").str();
-        return false;
-      }
-    }
-    if (!File) {
-      ErrorMessage = "Missing key: \"file\".";
-      return false;
-    }
-    if (!Command) {
-      ErrorMessage = "Missing key: \"command\".";
-      return false;
-    }
-    if (!Directory) {
-      ErrorMessage = "Missing key: \"directory\".";
-      return false;
-    }
-    llvm::SmallString<8> FileStorage;
-    llvm::SmallString<128> NativeFilePath;
-    llvm::sys::path::native(File->getValue(FileStorage), NativeFilePath);
-    IndexByFile[NativeFilePath].push_back(
-      CompileCommandRef(Directory, Command));
-  }
-  return true;
-}
+// This anchor is used to force the linker to link in the generated object file
+// and thus register the JSONCompilationDatabasePlugin.
+extern volatile int JSONAnchorSource;
+static int JSONAnchorDest = JSONAnchorSource;
 
 } // end namespace tooling
 } // end namespace clang

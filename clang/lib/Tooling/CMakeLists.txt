@@ -4,6 +4,7 @@ add_clang_library(clangTooling
   ArgumentsAdjusters.cpp
   CommonOptionsParser.cpp
   CompilationDatabase.cpp
+  JSONCompilationDatabase.cpp
   Refactoring.cpp
   RefactoringCallbacks.cpp
   Tooling.cpp
