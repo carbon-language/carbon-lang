@@ -2683,14 +2683,12 @@ multiclass sse12_fp_alias_pack_logical<bits<8> opc, string OpcodeStr,
 }
 
 // Alias bitwise logical operations using SSE logical ops on packed FP values.
-let mayLoad = 0 in {
-  defm FsAND  : sse12_fp_alias_pack_logical<0x54, "and", X86fand,
-                SSE_BIT_ITINS_P>;
-  defm FsOR   : sse12_fp_alias_pack_logical<0x56, "or", X86for,
-                SSE_BIT_ITINS_P>;
-  defm FsXOR  : sse12_fp_alias_pack_logical<0x57, "xor", X86fxor,
-                SSE_BIT_ITINS_P>;
-}
+defm FsAND  : sse12_fp_alias_pack_logical<0x54, "and", X86fand,
+              SSE_BIT_ITINS_P>;
+defm FsOR   : sse12_fp_alias_pack_logical<0x56, "or", X86for,
+              SSE_BIT_ITINS_P>;
+defm FsXOR  : sse12_fp_alias_pack_logical<0x57, "xor", X86fxor,
+              SSE_BIT_ITINS_P>;
 
 let neverHasSideEffects = 1, Pattern = []<dag>, isCommutable = 0 in
   defm FsANDN : sse12_fp_alias_pack_logical<0x55, "andn", undef,
@@ -2794,27 +2792,23 @@ multiclass basic_sse12_fp_binop_s<bits<8> opc, string OpcodeStr, SDNode OpNode,
 multiclass basic_sse12_fp_binop_p<bits<8> opc, string OpcodeStr, SDNode OpNode,
                                    SizeItins itins,
                                    bit Is2Addr = 1> {
-  let mayLoad = 0 in {
   defm PS : sse12_fp_packed<opc, !strconcat(OpcodeStr, "ps"), OpNode, VR128,
               v4f32, f128mem, memopv4f32, SSEPackedSingle, itins.s, Is2Addr>,
               TB;
   defm PD : sse12_fp_packed<opc, !strconcat(OpcodeStr, "pd"), OpNode, VR128,
               v2f64, f128mem, memopv2f64, SSEPackedDouble, itins.d, Is2Addr>,
               TB, OpSize;
-  }
 }
 
 multiclass basic_sse12_fp_binop_p_y<bits<8> opc, string OpcodeStr,
                                     SDNode OpNode,
                                     SizeItins itins> {
-  let mayLoad = 0 in {
-    defm PSY : sse12_fp_packed<opc, !strconcat(OpcodeStr, "ps"), OpNode, VR256,
+  defm PSY : sse12_fp_packed<opc, !strconcat(OpcodeStr, "ps"), OpNode, VR256,
                 v8f32, f256mem, memopv8f32, SSEPackedSingle, itins.s, 0>,
                 TB;
-    defm PDY : sse12_fp_packed<opc, !strconcat(OpcodeStr, "pd"), OpNode, VR256,
+  defm PDY : sse12_fp_packed<opc, !strconcat(OpcodeStr, "pd"), OpNode, VR256,
                 v4f64, f256mem, memopv4f64, SSEPackedDouble, itins.d, 0>,
                 TB, OpSize;
-  }
 }
 
 multiclass basic_sse12_fp_binop_s_int<bits<8> opc, string OpcodeStr,
