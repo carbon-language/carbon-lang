@@ -115,7 +115,9 @@ runOnMachineBasicBlock(MachineBasicBlock &MBB) {
 
       InstrIter D;
 
-      if (!DisableDelaySlotFiller && findDelayInstr(MBB, I, D)) {
+      // Delay slot filling is disabled at -O0.
+      if (!DisableDelaySlotFiller && (TM.getOptLevel() != CodeGenOpt::None) &&
+          findDelayInstr(MBB, I, D)) {
         MBB.splice(llvm::next(I), &MBB, D);
         ++UsefulSlots;
       } else
