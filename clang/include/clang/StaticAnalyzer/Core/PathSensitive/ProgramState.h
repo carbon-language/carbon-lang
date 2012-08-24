@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the state of the program along the analyzes path.
+// This file defines the state of the program along the analysisa path.
 //
 //===----------------------------------------------------------------------===//
 

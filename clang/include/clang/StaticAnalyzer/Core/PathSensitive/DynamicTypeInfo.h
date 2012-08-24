@@ -33,8 +33,8 @@ public:
   /// \brief Returns the currently inferred upper bound on the runtime type.
   QualType getType() const { return T; }
 
-  /// \brief Returns false if the type T is the only type in the lattice
-  /// (the type information is precise), true otherwise.
+  /// \brief Returns false if the type information is precise (the type T is
+  /// the only type in the lattice), true otherwise.
   bool canBeASubClass() const { return CanBeASubClass; }
 
   void Profile(llvm::FoldingSetNodeID &ID) const {
