@@ -261,12 +261,12 @@ basic_filebuf<_CharT, _Traits>::basic_filebuf()
       __owns_ib_(false),
       __always_noconv_(false)
 {
-    setbuf(0, 4096);
     if (has_facet<codecvt<char_type, char, state_type> >(this->getloc()))
     {
         __cv_ = &use_facet<codecvt<char_type, char, state_type> >(this->getloc());
         __always_noconv_ = __cv_->always_noconv();
     }
+    setbuf(0, 4096);
 }
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
