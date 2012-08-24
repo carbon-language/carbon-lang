@@ -286,7 +286,7 @@ void ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
     }
   }
 
-  double fraction = floor(BBWeight/Edges.size());
+  double fraction = Edges.size() ? floor(BBWeight/Edges.size()) : 0.0;
   // Finally we know what flow is still not leaving the block, distribute this
   // flow onto the empty edges.
   for (SmallVector<Edge, 8>::iterator ei = Edges.begin(), ee = Edges.end();
