@@ -2383,6 +2383,10 @@ public:
     AnalyzeNode(Pat->getTree(0));
   }
 
+  void Analyze(const PatternToMatch *Pat) {
+    AnalyzeNode(Pat->getSrcPattern());
+  }
+
 private:
   bool IsNodeBitcast(const TreePatternNode *N) const {
     if (hasSideEffects || mayLoad || mayStore || isVariadic)
@@ -2540,6 +2544,17 @@ static bool hasNullFragReference(ListInit *LI) {
       return true;
   }
   return false;
+}
+
+/// Get all the instructions in a tree.
+static void
+getInstructionsInTree(TreePatternNode *Tree, SmallVectorImpl<Record*> &Instrs) {
+  if (Tree->isLeaf())
+    return;
+  if (Tree->getOperator()->isSubClassOf("Instruction"))
+    Instrs.push_back(Tree->getOperator());
+  for (unsigned i = 0, e = Tree->getNumChildren(); i != e; ++i)
+    getInstructionsInTree(Tree->getChild(i), Instrs);
 }
 
 /// ParseInstructions - Parse all of the instructions, inlining and resolving
@@ -2868,6 +2883,30 @@ void CodeGenDAGPatterns::InferInstructionFlags() {
     InstAnalyzer PatInfo(*this);
     PatInfo.Analyze(Pattern);
     Errors += InferFromPattern(InstInfo, PatInfo, InstInfo.TheDef);
+  }
+
+  // Second, look for single-instruction patterns defined outside the
+  // instruction.
+  for (ptm_iterator I = ptm_begin(), E = ptm_end(); I != E; ++I) {
+    const PatternToMatch &PTM = *I;
+
+    // We can only infer from single-instruction patterns, otherwise we won't
+    // know which instruction should get the flags.
+    SmallVector<Record*, 8> PatInstrs;
+    getInstructionsInTree(PTM.getDstPattern(), PatInstrs);
+    if (PatInstrs.size() != 1)
+      continue;
+
+    // Get the single instruction.
+    CodeGenInstruction &InstInfo = Target.getInstruction(PatInstrs.front());
+
+    // Only infer properties from the first pattern. We'll verify the others.
+    if (InstInfo.InferredFrom)
+      continue;
+
+    InstAnalyzer PatInfo(*this);
+    PatInfo.Analyze(&PTM);
+    Errors += InferFromPattern(InstInfo, PatInfo, PTM.getSrcRecord());
   }
 
   if (Errors)
