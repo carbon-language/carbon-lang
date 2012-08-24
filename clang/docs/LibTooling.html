@@ -21,19 +21,20 @@ a tool using LibTooling.</p>
 <h2 id="intro">Introduction</h2>
 <!-- ======================================================================= -->
 
-<p>Tools built with LibTooling, like Clang Plugins, run FrontendActions over
-code. <!-- See FIXME for a tutorial on how to write FrontendActions. -->
+<p>Tools built with LibTooling, like Clang Plugins, run
+<code>FrontendActions</code> over code.
+<!-- See FIXME for a tutorial on how to write FrontendActions. -->
 In this tutorial, we'll demonstrate the different ways of running clang's
-SyntaxOnlyAction, which runs a quick syntax check, over a bunch of
+<code>SyntaxOnlyAction</code>, which runs a quick syntax check, over a bunch of
 code.</p>
 
 <!-- ======================================================================= -->
 <h2 id="runoncode">Parsing a code snippet in memory.</h2>
 <!-- ======================================================================= -->
 
-<p>If you ever wanted to run a FrontendAction over some sample code, for example
-to unit test parts of the Clang AST, runToolOnCode is what you looked for. Let
-me give you an example:
+<p>If you ever wanted to run a <code>FrontendAction</code> over some sample
+code, for example to unit test parts of the Clang AST,
+<code>runToolOnCode</code> is what you looked for. Let me give you an example:
 <pre>
   #include "clang/Tooling/Tooling.h"
 
@@ -48,53 +49,44 @@ me give you an example:
 <h2 id="standalonetool">Writing a standalone tool.</h2>
 <!-- ======================================================================= -->
 
-<p>Once you unit tested your FrontendAction to the point where it cannot
-possibly break, it's time to create a standalone tool. For a standalone tool
-to run clang, it first needs to figure out what command line arguments to use
-for a specified file. To that end we create a CompilationDatabase.</p>
+<p>Once you unit tested your <code>FrontendAction</code> to the point where it
+cannot possibly break, it's time to create a standalone tool. For a standalone
+tool to run clang, it first needs to figure out what command line arguments to
+use for a specified file. To that end we create a
+<code>CompilationDatabase</code>. There are different ways to create a
+compilation database, and we need to support all of them depending on
+command-line options. There's the <code>CommonOptionsParser</code> class
+that takes the responsibility to parse command-line parameters related to
+compilation databases and inputs, so that all tools share the implementation.
+</p>
 
-<h3 id="compilationdb">Creating a compilation database.</h3>
-<p>CompilationDatabase provides static factory functions to help with parsing
-compile commands from a build directory or the command line. The following code
-allows for both explicit specification of a compile command line, as well as
-retrieving the compile commands lines from a database.
+<h3 id="parsingcommonoptions">Parsing common tools options.</h3>
+<p><code>CompilationDatabase</code> can be read from a build directory or the
+command line. Using <code>CommonOptionsParser</code> allows for explicit
+specification of a compile command line, specification of build path using the
+<code>-p</code> command-line option, and automatic location of the compilation
+database using source files paths.
 <pre>
+#include "clang/Tooling/CommonOptionsParser.h"
+
+using namespace clang::tooling;
+
 int main(int argc, const char **argv) {
-  // First, try to create a fixed compile command database from the command line
-  // arguments.
-  llvm::OwningPtr&lt;CompilationDatabase> Compilations(
-    FixedCompilationDatabase::loadFromCommandLine(argc, argv));
+  // CommonOptionsParser constructor will parse arguments and create a
+  // CompilationDatabase. In case of error it will terminate the program.
+  CommonOptionsParser OptionsParser(argc, argv);
 
-  // Next, use normal llvm command line parsing to get the tool specific
-  // parameters.
-  cl::ParseCommandLineOptions(argc, argv);
-
-  if (!Compilations) {
-    // In case the user did not specify the compile command line via positional
-    // command line arguments after "--", try to load the compile commands from
-    // a database in the specified build directory or auto-detect it from a
-    // source file.
-    std::string ErrorMessage;
-    if (!BuildPath.empty()) {
-      Compilations.reset(
-         CompilationDatabase::autoDetectFromDirectory(BuildPath, ErrorMessage));
-    } else {
-      Compilations.reset(CompilationDatabase::autoDetectFromSource(
-          SourcePaths[0], ErrorMessage));
-    }
-    // If there is still no valid compile command database, we don't know how
-    // to run the tool.
-    if (!Compilations)
-      llvm::report_fatal_error(ErrorMessage);
-  }
+  // Use OptionsParser.GetCompilations() and OptionsParser.GetSourcePathList()
+  // to retrieve CompilationDatabase and the list of input file paths.
 }
 </pre>
 </p>
 
 <h3 id="tool">Creating and running a ClangTool.</h3>
-<p>Once we have a CompilationDatabase, we can create a ClangTool and run our
-FrontendAction over some code. For example, to run the SyntaxOnlyAction over
-the files "a.cc" and "b.cc" one would write:
+<p>Once we have a <code>CompilationDatabase</code>, we can create a
+<code>ClangTool</code> and run our <code>FrontendAction</code> over some code.
+For example, to run the <code>SyntaxOnlyAction</code> over the files "a.cc" and
+"b.cc" one would write:
 <pre>
   // A clang tool can run over a number of sources in the same process...
   std::vector&lt;std::string> Sources;
@@ -103,7 +95,7 @@ the files "a.cc" and "b.cc" one would write:
 
   // We hand the CompilationDatabase we created and the sources to run over into
   // the tool constructor.
-  ClangTool Tool(*Compilations, Sources);
+  ClangTool Tool(OptionsParser.GetCompilations(), Sources);
 
   // The ClangTool needs a new FrontendAction for each translation unit we run
   // on. Thus, it takes a FrontendActionFactory as parameter. To create a
@@ -117,40 +109,28 @@ the files "a.cc" and "b.cc" one would write:
 <p>Now we combine the two previous steps into our first real tool. This example
 tool is also checked into the clang tree at tools/clang-check/ClangCheck.cpp.
 <pre>
-#include "llvm/Support/CommandLine.h"
+// Declares clang::SyntaxOnlyAction.
 #include "clang/Frontend/FrontendActions.h"
-#include "clang/Tooling/CompilationDatabase.h"
-#include "clang/Tooling/Tooling.h"
+#include "clang/Tooling/CommonOptionsParser.h"
+// Declares llvm::cl::extrahelp.
+#include "llvm/Support/CommandLine.h"
 
 using namespace clang::tooling;
 using namespace llvm;
 
-cl::opt&lt;std::string> BuildPath(
-  "p",
-  cl::desc("&lt;build-path>"),
-  cl::Optional);
+// CommonOptionsParser declares HelpMessage with a description of the common
+// command-line options related to the compilation database and input files.
+// It's nice to have this help message in all tools.
+static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
 
-cl::list&lt;std::string> SourcePaths(
-  cl::Positional,
-  cl::desc("&lt;source0> [... &lt;sourceN>]"),
-  cl::OneOrMore);
+// A help message for this specific tool can be added afterwards.
+static cl::extrahelp MoreHelp("\nMore help text...");
 
 int main(int argc, const char **argv) {
-  llvm::OwningPtr&lt;CompilationDatabase> Compilations(
-    FixedCompilationDatabase::loadFromCommandLine(argc, argv));
-  cl::ParseCommandLineOptions(argc, argv);
-  if (!Compilations) {
-    std::string ErrorMessage;
-    Compilations.reset(
-      !BuildPath.empty() ?
-        CompilationDatabase::autoDetectFromDirectory(BuildPath, ErrorMessage) :
-        CompilationDatabase::autoDetectFromSource(SourcePaths[0], ErrorMessage)
-      );
-    if (!Compilations)
-      llvm::report_fatal_error(ErrorMessage);
-  }
-  ClangTool Tool(*Compilations, SourcePaths);
-  return Tool.run(newFrontendActionFactory&lt;clang::SyntaxOnlyAction>());
+  CommonOptionsParser OptionsParser(argc, argv);
+  ClangTool Tool(OptionsParser.GetCompilations(),
+                 OptionsParser.GetSourcePathList());
+  return Tool.run(newFrontendActionFactory&lt;clang::SyntaxOnlyAction&gt;());
 }
 </pre>
 </p>

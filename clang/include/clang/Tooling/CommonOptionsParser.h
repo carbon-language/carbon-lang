@@ -28,13 +28,9 @@
 #define LLVM_TOOLS_CLANG_INCLUDE_CLANG_TOOLING_COMMONOPTIONSPARSER_H
 
 #include "clang/Tooling/CompilationDatabase.h"
-#include "clang/Frontend/FrontendActions.h"
 
 namespace clang {
 namespace tooling {
-
-extern const char *const CommonHelpMessage;
-
 /// \brief A parser for options common to all command-line Clang tools.
 ///
 /// Parses a common subset of command-line arguments, locates and loads a
@@ -43,13 +39,14 @@ extern const char *const CommonHelpMessage;
 ///
 /// An example of usage:
 /// \code
-/// #include "llvm/Support/CommandLine.h"
+/// #include "clang/Frontend/FrontendActions.h"
 /// #include "clang/Tooling/CommonOptionsParser.h"
+/// #include "llvm/Support/CommandLine.h"
 ///
 /// using namespace clang::tooling;
 /// using namespace llvm;
 ///
-/// static cl::extrahelp CommonHelp(CommonHelpMessage);
+/// static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
 /// static cl::extrahelp MoreHelp("\nMore help text...");
 /// static cl:opt<bool> YourOwnOption(...);
 /// ...
@@ -78,6 +75,8 @@ public:
   std::vector<std::string> GetSourcePathList() {
     return SourcePathList;
   }
+
+  static const char *const HelpMessage;
 
 private:
   llvm::OwningPtr<CompilationDatabase> Compilations;

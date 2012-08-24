@@ -31,7 +31,7 @@
 using namespace clang::tooling;
 using namespace llvm;
 
-const char *const clang::tooling::CommonHelpMessage =
+const char *const CommonOptionsParser::HelpMessage =
     "\n"
     "-p <build-path> is used to read a compile command database.\n"
     "\n"

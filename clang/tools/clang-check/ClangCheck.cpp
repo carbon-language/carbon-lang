@@ -28,7 +28,7 @@ using namespace clang::driver;
 using namespace clang::tooling;
 using namespace llvm;
 
-static cl::extrahelp CommonHelp(CommonHelpMessage);
+static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
 static cl::extrahelp MoreHelp(
     "\tFor example, to run clang-check on all files in a subtree of the\n"
     "\tsource tree, use:\n"
