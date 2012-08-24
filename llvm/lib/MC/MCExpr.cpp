@@ -197,7 +197,8 @@ StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
   case VK_ARM_GOTTPOFF: return "(gottpoff)";
   case VK_ARM_TLSGD: return "(tlsgd)";
   case VK_ARM_TARGET1: return "(target1)";
-  case VK_PPC_TOC: return "toc";
+  case VK_PPC_TOC: return "tocbase";
+  case VK_PPC_TOC_ENTRY: return "toc";
   case VK_PPC_DARWIN_HA16: return "ha16";
   case VK_PPC_DARWIN_LO16: return "lo16";
   case VK_PPC_GAS_HA16: return "ha";

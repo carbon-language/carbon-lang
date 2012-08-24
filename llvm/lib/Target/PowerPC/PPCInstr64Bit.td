@@ -624,6 +624,14 @@ def LDtoc: Pseudo<(outs G8RC:$rD), (ins tocentry:$disp, G8RC:$reg),
                   "",
                   [(set G8RC:$rD,
                      (PPCtoc_entry tglobaladdr:$disp, G8RC:$reg))]>, isPPC64;
+def LDtocJTI: Pseudo<(outs G8RC:$rD), (ins tocentry:$disp, G8RC:$reg),
+                  "",
+                  [(set G8RC:$rD,
+                     (PPCtoc_entry tjumptable:$disp, G8RC:$reg))]>, isPPC64;
+def LDtocCPT: Pseudo<(outs G8RC:$rD), (ins tocentry:$disp, G8RC:$reg),
+                  "",
+                  [(set G8RC:$rD,
+                     (PPCtoc_entry tconstpool:$disp, G8RC:$reg))]>, isPPC64;
 
 let hasSideEffects = 1 in { 
 let RST = 2, DS_RA = 0 in // FIXME: Should be a pseudo.

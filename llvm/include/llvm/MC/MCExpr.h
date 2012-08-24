@@ -171,7 +171,8 @@ public:
     VK_ARM_GOTTPOFF,
     VK_ARM_TARGET1,
 
-    VK_PPC_TOC,
+    VK_PPC_TOC,          // TOC base
+    VK_PPC_TOC_ENTRY,    // TOC entry
     VK_PPC_DARWIN_HA16,  // ha16(symbol)
     VK_PPC_DARWIN_LO16,  // lo16(symbol)
     VK_PPC_GAS_HA16,     // symbol@ha
