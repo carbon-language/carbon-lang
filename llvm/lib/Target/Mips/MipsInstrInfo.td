@@ -74,9 +74,10 @@ def MipsRet : SDNode<"MipsISD::Ret", SDTNone, [SDNPHasChain, SDNPOptInGlue]>;
 
 // These are target-independent nodes, but have target-specific formats.
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_MipsCallSeqStart,
-                           [SDNPHasChain, SDNPOutGlue]>;
+                           [SDNPHasChain, SDNPSideEffect, SDNPOutGlue]>;
 def callseq_end   : SDNode<"ISD::CALLSEQ_END", SDT_MipsCallSeqEnd,
-                           [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
+                           [SDNPHasChain, SDNPSideEffect,
+                            SDNPOptInGlue, SDNPOutGlue]>;
 
 // MAdd*/MSub* nodes
 def MipsMAdd      : SDNode<"MipsISD::MAdd", SDT_MipsMAddMSub,
@@ -110,7 +111,7 @@ def MipsWrapper    : SDNode<"MipsISD::Wrapper", SDTIntBinOp>;
 def MipsDynAlloc  : SDNode<"MipsISD::DynAlloc", SDT_MipsDynAlloc,
                            [SDNPHasChain, SDNPInGlue]>;
 
-def MipsSync : SDNode<"MipsISD::Sync", SDT_Sync, [SDNPHasChain]>;
+def MipsSync : SDNode<"MipsISD::Sync", SDT_Sync, [SDNPHasChain,SDNPSideEffect]>;
 
 def MipsExt :  SDNode<"MipsISD::Ext", SDT_Ext>;
 def MipsIns :  SDNode<"MipsISD::Ins", SDT_Ins>;

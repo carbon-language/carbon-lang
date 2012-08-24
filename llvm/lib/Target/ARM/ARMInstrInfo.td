@@ -90,9 +90,10 @@ def ARMWrapperPIC    : SDNode<"ARMISD::WrapperPIC",  SDTIntUnaryOp>;
 def ARMWrapperJT     : SDNode<"ARMISD::WrapperJT",   SDTIntBinOp>;
 
 def ARMcallseq_start : SDNode<"ISD::CALLSEQ_START", SDT_ARMCallSeqStart,
-                              [SDNPHasChain, SDNPOutGlue]>;
+                              [SDNPHasChain, SDNPSideEffect, SDNPOutGlue]>;
 def ARMcallseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_ARMCallSeqEnd,
-                              [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
+                              [SDNPHasChain, SDNPSideEffect,
+                               SDNPOptInGlue, SDNPOutGlue]>;
 def ARMcopystructbyval : SDNode<"ARMISD::COPY_STRUCT_BYVAL" ,
                                 SDT_ARMStructByVal,
                                 [SDNPHasChain, SDNPInGlue, SDNPOutGlue,
@@ -148,14 +149,16 @@ def ARMsube          : SDNode<"ARMISD::SUBE",  SDTBinaryArithWithFlagsInOut>;
 
 def ARMthread_pointer: SDNode<"ARMISD::THREAD_POINTER", SDT_ARMThreadPointer>;
 def ARMeh_sjlj_setjmp: SDNode<"ARMISD::EH_SJLJ_SETJMP",
-                               SDT_ARMEH_SJLJ_Setjmp, [SDNPHasChain]>;
+                               SDT_ARMEH_SJLJ_Setjmp,
+                               [SDNPHasChain, SDNPSideEffect]>;
 def ARMeh_sjlj_longjmp: SDNode<"ARMISD::EH_SJLJ_LONGJMP",
-                               SDT_ARMEH_SJLJ_Longjmp, [SDNPHasChain]>;
+                               SDT_ARMEH_SJLJ_Longjmp,
+                               [SDNPHasChain, SDNPSideEffect]>;
 
 def ARMMemBarrier     : SDNode<"ARMISD::MEMBARRIER", SDT_ARMMEMBARRIER,
-                               [SDNPHasChain]>;
+                               [SDNPHasChain, SDNPSideEffect]>;
 def ARMMemBarrierMCR  : SDNode<"ARMISD::MEMBARRIER_MCR", SDT_ARMMEMBARRIER,
-                               [SDNPHasChain]>;
+                               [SDNPHasChain, SDNPSideEffect]>;
 def ARMPreload        : SDNode<"ARMISD::PRELOAD", SDT_ARMPREFETCH,
                                [SDNPHasChain, SDNPMayLoad, SDNPMayStore]>;
 
