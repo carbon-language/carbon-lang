@@ -1185,8 +1185,9 @@ Sema::CreateGenericSelectionExpr(SourceLocation KeyLoc,
   if (IsResultDependent)
     return Owned(new (Context) GenericSelectionExpr(
                    Context, KeyLoc, ControllingExpr,
-                   Types, Exprs, NumAssocs, DefaultLoc,
-                   RParenLoc, ContainsUnexpandedParameterPack));
+                   llvm::makeArrayRef(Types, NumAssocs),
+                   llvm::makeArrayRef(Exprs, NumAssocs),
+                   DefaultLoc, RParenLoc, ContainsUnexpandedParameterPack));
 
   SmallVector<unsigned, 1> CompatIndices;
   unsigned DefaultIndex = -1U;
@@ -1240,8 +1241,9 @@ Sema::CreateGenericSelectionExpr(SourceLocation KeyLoc,
 
   return Owned(new (Context) GenericSelectionExpr(
                  Context, KeyLoc, ControllingExpr,
-                 Types, Exprs, NumAssocs, DefaultLoc,
-                 RParenLoc, ContainsUnexpandedParameterPack,
+                 llvm::makeArrayRef(Types, NumAssocs),
+                 llvm::makeArrayRef(Exprs, NumAssocs),
+                 DefaultLoc, RParenLoc, ContainsUnexpandedParameterPack,
                  ResultIndex));
 }
 
@@ -3773,28 +3775,25 @@ ExprResult
 Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
                     MultiExprArg ArgExprs, SourceLocation RParenLoc,
                     Expr *ExecConfig, bool IsExecConfig) {
-  unsigned NumArgs = ArgExprs.size();
-
   // Since this might be a postfix expression, get rid of ParenListExprs.
   ExprResult Result = MaybeConvertParenListExprToParenExpr(S, Fn);
   if (Result.isInvalid()) return ExprError();
   Fn = Result.take();
 
-  Expr **Args = ArgExprs.data();
-
   if (getLangOpts().CPlusPlus) {
     // If this is a pseudo-destructor expression, build the call immediately.
     if (isa<CXXPseudoDestructorExpr>(Fn)) {
-      if (NumArgs > 0) {
+      if (!ArgExprs.empty()) {
         // Pseudo-destructor calls should not have any arguments.
         Diag(Fn->getLocStart(), diag::err_pseudo_dtor_call_with_args)
           << FixItHint::CreateRemoval(
-                                    SourceRange(Args[0]->getLocStart(),
-                                                Args[NumArgs-1]->getLocEnd()));
+                                    SourceRange(ArgExprs[0]->getLocStart(),
+                                                ArgExprs.back()->getLocEnd()));
       }
 
-      return Owned(new (Context) CallExpr(Context, Fn, 0, 0, Context.VoidTy,
-                                          VK_RValue, RParenLoc));
+      return Owned(new (Context) CallExpr(Context, Fn, MultiExprArg(),
+                                          Context.VoidTy, VK_RValue,
+                                          RParenLoc));
     }
 
     // Determine whether this is a dependent call inside a C++ template,
@@ -3804,17 +3803,16 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
     bool Dependent = false;
     if (Fn->isTypeDependent())
       Dependent = true;
-    else if (Expr::hasAnyTypeDependentArguments(
-        llvm::makeArrayRef(Args, NumArgs)))
+    else if (Expr::hasAnyTypeDependentArguments(ArgExprs))
       Dependent = true;
 
     if (Dependent) {
       if (ExecConfig) {
         return Owned(new (Context) CUDAKernelCallExpr(
-            Context, Fn, cast<CallExpr>(ExecConfig), Args, NumArgs,
+            Context, Fn, cast<CallExpr>(ExecConfig), ArgExprs,
             Context.DependentTy, VK_RValue, RParenLoc));
       } else {
-        return Owned(new (Context) CallExpr(Context, Fn, Args, NumArgs,
+        return Owned(new (Context) CallExpr(Context, Fn, ArgExprs,
                                             Context.DependentTy, VK_RValue,
                                             RParenLoc));
       }
@@ -3822,8 +3820,9 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
 
     // Determine whether this is a call to an object (C++ [over.call.object]).
     if (Fn->getType()->isRecordType())
-      return Owned(BuildCallToObjectOfClassType(S, Fn, LParenLoc, Args, NumArgs,
-                                                RParenLoc));
+      return Owned(BuildCallToObjectOfClassType(S, Fn, LParenLoc,
+                                                ArgExprs.data(),
+                                                ArgExprs.size(), RParenLoc));
 
     if (Fn->getType() == Context.UnknownAnyTy) {
       ExprResult result = rebuildUnknownAnyFunction(*this, Fn);
@@ -3832,8 +3831,8 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
     }
 
     if (Fn->getType() == Context.BoundMemberTy) {
-      return BuildCallToMemberFunction(S, Fn, LParenLoc, Args, NumArgs,
-                                       RParenLoc);
+      return BuildCallToMemberFunction(S, Fn, LParenLoc, ArgExprs.data(),
+                                       ArgExprs.size(), RParenLoc);
     }
   }
 
@@ -3846,11 +3845,11 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
       OverloadExpr *ovl = find.Expression;
       if (isa<UnresolvedLookupExpr>(ovl)) {
         UnresolvedLookupExpr *ULE = cast<UnresolvedLookupExpr>(ovl);
-        return BuildOverloadedCallExpr(S, Fn, ULE, LParenLoc, Args, NumArgs,
-                                       RParenLoc, ExecConfig);
+        return BuildOverloadedCallExpr(S, Fn, ULE, LParenLoc, ArgExprs.data(),
+                                       ArgExprs.size(), RParenLoc, ExecConfig);
       } else {
-        return BuildCallToMemberFunction(S, Fn, LParenLoc, Args, NumArgs,
-                                         RParenLoc);
+        return BuildCallToMemberFunction(S, Fn, LParenLoc, ArgExprs.data(),
+                                         ArgExprs.size(), RParenLoc);
       }
     }
   }
@@ -3874,8 +3873,9 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
   else if (isa<MemberExpr>(NakedFn))
     NDecl = cast<MemberExpr>(NakedFn)->getMemberDecl();
 
-  return BuildResolvedCallExpr(Fn, NDecl, LParenLoc, Args, NumArgs, RParenLoc,
-                               ExecConfig, IsExecConfig);
+  return BuildResolvedCallExpr(Fn, NDecl, LParenLoc, ArgExprs.data(),
+                               ArgExprs.size(), RParenLoc, ExecConfig,
+                               IsExecConfig);
 }
 
 ExprResult
@@ -3942,13 +3942,13 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
   if (Config)
     TheCall = new (Context) CUDAKernelCallExpr(Context, Fn,
                                                cast<CallExpr>(Config),
-                                               Args, NumArgs,
+                                               llvm::makeArrayRef(Args,NumArgs),
                                                Context.BoolTy,
                                                VK_RValue,
                                                RParenLoc);
   else
     TheCall = new (Context) CallExpr(Context, Fn,
-                                     Args, NumArgs,
+                                     llvm::makeArrayRef(Args, NumArgs),
                                      Context.BoolTy,
                                      VK_RValue,
                                      RParenLoc);
@@ -4163,28 +4163,25 @@ Sema::BuildCompoundLiteralExpr(SourceLocation LParenLoc, TypeSourceInfo *TInfo,
 ExprResult
 Sema::ActOnInitList(SourceLocation LBraceLoc, MultiExprArg InitArgList,
                     SourceLocation RBraceLoc) {
-  unsigned NumInit = InitArgList.size();
-  Expr **InitList = InitArgList.data();
-
   // Immediately handle non-overload placeholders.  Overloads can be
   // resolved contextually, but everything else here can't.
-  for (unsigned I = 0; I != NumInit; ++I) {
-    if (InitList[I]->getType()->isNonOverloadPlaceholderType()) {
-      ExprResult result = CheckPlaceholderExpr(InitList[I]);
+  for (unsigned I = 0, E = InitArgList.size(); I != E; ++I) {
+    if (InitArgList[I]->getType()->isNonOverloadPlaceholderType()) {
+      ExprResult result = CheckPlaceholderExpr(InitArgList[I]);
 
       // Ignore failures; dropping the entire initializer list because
       // of one failure would be terrible for indexing/etc.
       if (result.isInvalid()) continue;
 
-      InitList[I] = result.take();
+      InitArgList[I] = result.take();
     }
   }
 
   // Semantic analysis for initializers is done by ActOnDeclarator() and
   // CheckInitializer() - it requires knowledge of the object being intialized.
 
-  InitListExpr *E = new (Context) InitListExpr(Context, LBraceLoc, InitList,
-                                               NumInit, RBraceLoc);
+  InitListExpr *E = new (Context) InitListExpr(Context, LBraceLoc, InitArgList,
+                                               RBraceLoc);
   E->setType(Context.VoidTy); // FIXME: just a place holder for now.
   return Owned(E);
 }
@@ -4571,8 +4568,7 @@ ExprResult Sema::BuildVectorLiteral(SourceLocation LParenLoc,
   // FIXME: This means that pretty-printing the final AST will produce curly
   // braces instead of the original commas.
   InitListExpr *initE = new (Context) InitListExpr(Context, LParenLoc,
-                                                   &initExprs[0],
-                                                   initExprs.size(), RParenLoc);
+                                                   initExprs, RParenLoc);
   initE->setType(Ty);
   return BuildCompoundLiteralExpr(LParenLoc, TInfo, RParenLoc, initE);
 }
@@ -4599,10 +4595,8 @@ Sema::MaybeConvertParenListExprToParenExpr(Scope *S, Expr *OrigExpr) {
 ExprResult Sema::ActOnParenListExpr(SourceLocation L,
                                     SourceLocation R,
                                     MultiExprArg Val) {
-  unsigned nexprs = Val.size();
-  Expr **exprs = Val.data();
-  assert((exprs != 0) && "ActOnParenOrParenListExpr() missing expr list");
-  Expr *expr = new (Context) ParenListExpr(Context, L, exprs, nexprs, R);
+  assert(Val.data() != 0 && "ActOnParenOrParenListExpr() missing expr list");
+  Expr *expr = new (Context) ParenListExpr(Context, L, Val, R);
   return Owned(expr);
 }
 
@@ -5807,8 +5801,7 @@ static void ConstructTransparentUnion(Sema &S, ASTContext &C,
   // of the transparent union.
   Expr *E = EResult.take();
   InitListExpr *Initializer = new (C) InitListExpr(C, SourceLocation(),
-                                                   &E, 1,
-                                                   SourceLocation());
+                                                   E, SourceLocation());
   Initializer->setType(UnionType);
   Initializer->setInitializedFieldInUnion(Field);
 
@@ -9142,8 +9135,7 @@ ExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
   }
   
   return Owned(OffsetOfExpr::Create(Context, Context.getSizeType(), BuiltinLoc, 
-                                    TInfo, Comps.data(), Comps.size(),
-                                    Exprs.data(), Exprs.size(), RParenLoc));  
+                                    TInfo, Comps, Exprs, RParenLoc));
 }
 
 ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,

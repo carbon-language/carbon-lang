@@ -808,18 +808,17 @@ Sema::BuildCXXTypeConstructExpr(TypeSourceInfo *TInfo,
                                 MultiExprArg exprs,
                                 SourceLocation RParenLoc) {
   QualType Ty = TInfo->getType();
-  unsigned NumExprs = exprs.size();
-  Expr **Exprs = exprs.data();
   SourceLocation TyBeginLoc = TInfo->getTypeLoc().getBeginLoc();
 
-  if (Ty->isDependentType() ||
-      CallExpr::hasAnyTypeDependentArguments(
-        llvm::makeArrayRef(Exprs, NumExprs))) {
+  if (Ty->isDependentType() || CallExpr::hasAnyTypeDependentArguments(exprs)) {
     return Owned(CXXUnresolvedConstructExpr::Create(Context, TInfo,
                                                     LParenLoc,
-                                                    Exprs, NumExprs,
+                                                    exprs,
                                                     RParenLoc));
   }
+
+  unsigned NumExprs = exprs.size();
+  Expr **Exprs = exprs.data();
 
   bool ListInitialization = LParenLoc.isInvalid();
   assert((!ListInitialization || (NumExprs == 1 && isa<InitListExpr>(Exprs[0])))
@@ -1432,7 +1431,8 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   return Owned(new (Context) CXXNewExpr(Context, UseGlobal, OperatorNew,
                                         OperatorDelete,
                                         UsualArrayDeleteWantsSize,
-                                        PlaceArgs, NumPlaceArgs, TypeIdParens,
+                                   llvm::makeArrayRef(PlaceArgs, NumPlaceArgs),
+                                        TypeIdParens,
                                         ArraySize, initStyle, Initializer,
                                         ResultType, AllocTypeInfo,
                                         StartLoc, DirectInitRange));
@@ -5340,7 +5340,7 @@ ExprResult Sema::BuildCXXMemberCallExpr(Expr *E, NamedDecl *FoundDecl,
 
   MarkFunctionReferenced(Exp.get()->getLocStart(), Method);
   CXXMemberCallExpr *CE =
-    new (Context) CXXMemberCallExpr(Context, ME, 0, 0, ResultType, VK,
+    new (Context) CXXMemberCallExpr(Context, ME, MultiExprArg(), ResultType, VK,
                                     Exp.get()->getLocEnd());
   return CE;
 }

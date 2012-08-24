@@ -1469,10 +1469,10 @@ CodeGenModule::MaybeEmitGlobalStdInitializerListInitializer(const VarDecl *D,
   // Now clone the InitListExpr to initialize the array instead.
   // Incredible hack: we want to use the existing InitListExpr here, so we need
   // to tell it that it no longer initializes a std::initializer_list.
-  Expr *arrayInit = new (ctx) InitListExpr(ctx, init->getLBraceLoc(),
-                                    const_cast<InitListExpr*>(init)->getInits(),
-                                                   init->getNumInits(),
-                                                   init->getRBraceLoc());
+  ArrayRef<Expr*> Inits(const_cast<InitListExpr*>(init)->getInits(),
+                        init->getNumInits());
+  Expr *arrayInit = new (ctx) InitListExpr(ctx, init->getLBraceLoc(), Inits,
+                                           init->getRBraceLoc());
   arrayInit->setType(arrayType);
 
   if (!cleanups.empty())

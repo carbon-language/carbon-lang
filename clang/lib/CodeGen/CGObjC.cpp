@@ -2854,7 +2854,7 @@ CodeGenFunction::GenerateObjCAtomicSetterCopyHelperFunction(
   Expr *Args[2] = { &DST, &SRC };
   CallExpr *CalleeExp = cast<CallExpr>(PID->getSetterCXXAssignment());
   CXXOperatorCallExpr TheCall(C, OO_Equal, CalleeExp->getCallee(),
-                              Args, 2, DestTy->getPointeeType(), 
+                              Args, DestTy->getPointeeType(),
                               VK_LValue, SourceLocation());
   
   EmitStmt(&TheCall);
@@ -2949,7 +2949,7 @@ CodeGenFunction::GenerateObjCAtomicGetterCopyHelperFunction(
     CXXConstructExpr::Create(C, Ty, SourceLocation(),
                              CXXConstExpr->getConstructor(),
                              CXXConstExpr->isElidable(),
-                             &ConstructorArgs[0], ConstructorArgs.size(),
+                             ConstructorArgs,
                              CXXConstExpr->hadMultipleCandidates(),
                              CXXConstExpr->isListInitialization(),
                              CXXConstExpr->requiresZeroInitialization(),

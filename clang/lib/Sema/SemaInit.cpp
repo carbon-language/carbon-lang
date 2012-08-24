@@ -1521,8 +1521,8 @@ static DesignatedInitExpr *CloneDesignatedInitExpr(Sema &SemaRef,
   for (unsigned I = 0; I < NumIndexExprs; ++I)
     IndexExprs[I] = DIE->getSubExpr(I + 1);
   return DesignatedInitExpr::Create(SemaRef.Context, DIE->designators_begin(),
-                                    DIE->size(), IndexExprs.data(),
-                                    NumIndexExprs, DIE->getEqualOrColonLoc(),
+                                    DIE->size(), IndexExprs,
+                                    DIE->getEqualOrColonLoc(),
                                     DIE->usesGNUSyntax(), DIE->getInit());
 }
 
@@ -2068,7 +2068,7 @@ InitListChecker::getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
 
   InitListExpr *Result
     = new (SemaRef.Context) InitListExpr(SemaRef.Context,
-                                         InitRange.getBegin(), 0, 0,
+                                         InitRange.getBegin(), MultiExprArg(),
                                          InitRange.getEnd());
 
   QualType ResultType = CurrentObjectType;
@@ -2261,8 +2261,8 @@ ExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
   DesignatedInitExpr *DIE
     = DesignatedInitExpr::Create(Context,
                                  Designators.data(), Designators.size(),
-                                 InitExpressions.data(), InitExpressions.size(),
-                                 Loc, GNUSyntax, Init.takeAs<Expr>());
+                                 InitExpressions, Loc, GNUSyntax,
+                                 Init.takeAs<Expr>());
 
   if (!getLangOpts().C99)
     Diag(DIE->getLocStart(), diag::ext_designated_init)
@@ -4660,8 +4660,6 @@ PerformConstructorInitialization(Sema &S,
         (Kind.getKind() == InitializationKind::IK_Direct ||
          Kind.getKind() == InitializationKind::IK_Value)))) {
     // An explicitly-constructed temporary, e.g., X(1, 2).
-    unsigned NumExprs = ConstructorArgs.size();
-    Expr **Exprs = ConstructorArgs.data();
     S.MarkFunctionReferenced(Loc, Constructor);
     S.DiagnoseUseOfDecl(Constructor, Loc);
 
@@ -4675,8 +4673,7 @@ PerformConstructorInitialization(Sema &S,
     CurInit = S.Owned(new (S.Context) CXXTemporaryObjectExpr(S.Context,
                                                              Constructor,
                                                              TSInfo,
-                                                             Exprs,
-                                                             NumExprs,
+                                                             ConstructorArgs,
                                                              ParenRange,
                                                      HadMultipleCandidates,
                                          ConstructorInitRequiresZeroInit));
@@ -5214,7 +5211,7 @@ InitializationSequence::Perform(Sema &S,
       Expr *E = CurInit.take();
       InitListExpr *Syntactic = Step->WrappingSyntacticList;
       InitListExpr *ILE = new (S.Context) InitListExpr(S.Context,
-          Syntactic->getLBraceLoc(), &E, 1, Syntactic->getRBraceLoc());
+          Syntactic->getLBraceLoc(), E, Syntactic->getRBraceLoc());
       ILE->setSyntacticForm(Syntactic);
       ILE->setType(E->getType());
       ILE->setValueKind(E->getValueKind());
@@ -5398,7 +5395,7 @@ InitializationSequence::Perform(Sema &S,
       }
       InitListExpr *Semantic = new (S.Context)
           InitListExpr(S.Context, ILE->getLBraceLoc(),
-                       Converted.data(), NumInits, ILE->getRBraceLoc());
+                       Converted, ILE->getRBraceLoc());
       Semantic->setSyntacticForm(ILE);
       Semantic->setType(Dest);
       Semantic->setInitializesStdInitializerList();

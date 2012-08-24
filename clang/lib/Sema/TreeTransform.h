@@ -2430,12 +2430,9 @@ public:
       return ExprError();
 
     // Build the CallExpr
-    unsigned NumSubExprs = SubExprs.size();
-    Expr **Subs = SubExprs.data();
     ExprResult TheCall = SemaRef.Owned(
-      new (SemaRef.Context) CallExpr(SemaRef.Context, Callee.take(),
-                                                       Subs, NumSubExprs,
-                                                   Builtin->getCallResultType(),
+      new (SemaRef.Context) CallExpr(SemaRef.Context, Callee.take(), SubExprs,
+                                     Builtin->getCallResultType(),
                             Expr::getValueKindForType(Builtin->getResultType()),
                                      RParenLoc));
 
@@ -2512,10 +2509,7 @@ public:
     // Just create the expression; there is not any interesting semantic
     // analysis here because we can't actually build an AtomicExpr until
     // we are sure it is semantically sound.
-    unsigned NumSubExprs = SubExprs.size();
-    Expr **Subs = SubExprs.data();
-    return new (SemaRef.Context) AtomicExpr(BuiltinLoc, Subs,
-                                            NumSubExprs, RetTy, Op,
+    return new (SemaRef.Context) AtomicExpr(BuiltinLoc, SubExprs, RetTy, Op,
                                             RParenLoc);
   }
 

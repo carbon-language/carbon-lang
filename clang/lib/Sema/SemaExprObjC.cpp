@@ -3077,8 +3077,8 @@ Expr *Sema::stripARCUnbridgedCast(Expr *e) {
 
     return new (Context) GenericSelectionExpr(Context, gse->getGenericLoc(),
                                               gse->getControllingExpr(),
-                                              subTypes.data(), subExprs.data(),
-                                              n, gse->getDefaultLoc(),
+                                              subTypes, subExprs,
+                                              gse->getDefaultLoc(),
                                               gse->getRParenLoc(),
                                        gse->containsUnexpandedParameterPack(),
                                               gse->getResultIndex());

@@ -1794,7 +1794,8 @@ Sema::ActOnMemInitializer(Decl *ConstructorD,
                           Expr **Args, unsigned NumArgs,
                           SourceLocation RParenLoc,
                           SourceLocation EllipsisLoc) {
-  Expr *List = new (Context) ParenListExpr(Context, LParenLoc, Args, NumArgs,
+  Expr *List = new (Context) ParenListExpr(Context, LParenLoc,
+                                           llvm::makeArrayRef(Args, NumArgs),
                                            RParenLoc);
   return BuildMemInitializer(ConstructorD, S, SS, MemberOrBase, TemplateTypeTy,
                              DS, IdLoc, List, EllipsisLoc);
@@ -9066,12 +9067,9 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                             bool RequiresZeroInit,
                             unsigned ConstructKind,
                             SourceRange ParenRange) {
-  unsigned NumExprs = ExprArgs.size();
-  Expr **Exprs = ExprArgs.data();
-
   MarkFunctionReferenced(ConstructLoc, Constructor);
   return Owned(CXXConstructExpr::Create(Context, DeclInitType, ConstructLoc,
-                                        Constructor, Elidable, Exprs, NumExprs,
+                                        Constructor, Elidable, ExprArgs,
                                         HadMultipleCandidates, /*FIXME*/false,
                                         RequiresZeroInit,
               static_cast<CXXConstructExpr::ConstructionKind>(ConstructKind),

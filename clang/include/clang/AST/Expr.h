@@ -1757,8 +1757,7 @@ private:
 
   OffsetOfExpr(ASTContext &C, QualType type,
                SourceLocation OperatorLoc, TypeSourceInfo *tsi,
-               OffsetOfNode* compsPtr, unsigned numComps,
-               Expr** exprsPtr, unsigned numExprs,
+               ArrayRef<OffsetOfNode> comps, ArrayRef<Expr*> exprs,
                SourceLocation RParenLoc);
 
   explicit OffsetOfExpr(unsigned numComps, unsigned numExprs)
@@ -1769,9 +1768,8 @@ public:
 
   static OffsetOfExpr *Create(ASTContext &C, QualType type,
                               SourceLocation OperatorLoc, TypeSourceInfo *tsi,
-                              OffsetOfNode* compsPtr, unsigned numComps,
-                              Expr** exprsPtr, unsigned numExprs,
-                              SourceLocation RParenLoc);
+                              ArrayRef<OffsetOfNode> comps,
+                              ArrayRef<Expr*> exprs, SourceLocation RParenLoc);
 
   static OffsetOfExpr *CreateEmpty(ASTContext &C,
                                    unsigned NumComps, unsigned NumExprs);
@@ -2041,7 +2039,7 @@ class CallExpr : public Expr {
 protected:
   // These versions of the constructor are for derived classes.
   CallExpr(ASTContext& C, StmtClass SC, Expr *fn, unsigned NumPreArgs,
-           Expr **args, unsigned numargs, QualType t, ExprValueKind VK,
+           ArrayRef<Expr*> args, QualType t, ExprValueKind VK,
            SourceLocation rparenloc);
   CallExpr(ASTContext &C, StmtClass SC, unsigned NumPreArgs, EmptyShell Empty);
 
@@ -2061,7 +2059,7 @@ protected:
   unsigned getNumPreArgs() const { return CallExprBits.NumPreArgs; }
 
 public:
-  CallExpr(ASTContext& C, Expr *fn, Expr **args, unsigned numargs, QualType t,
+  CallExpr(ASTContext& C, Expr *fn, ArrayRef<Expr*> args, QualType t,
            ExprValueKind VK, SourceLocation rparenloc);
 
   /// \brief Build an empty call expression.
@@ -3266,9 +3264,8 @@ class ShuffleVectorExpr : public Expr {
   unsigned NumExprs;
 
 public:
-  ShuffleVectorExpr(ASTContext &C, Expr **args, unsigned nexpr,
-                    QualType Type, SourceLocation BLoc,
-                    SourceLocation RP);
+  ShuffleVectorExpr(ASTContext &C, ArrayRef<Expr*> args, QualType Type,
+                    SourceLocation BLoc, SourceLocation RP);
 
   /// \brief Build an empty vector-shuffle expression.
   explicit ShuffleVectorExpr(EmptyShell Empty)
@@ -3528,8 +3525,7 @@ class InitListExpr : public Expr {
 
 public:
   InitListExpr(ASTContext &C, SourceLocation lbraceloc,
-               Expr **initexprs, unsigned numinits,
-               SourceLocation rbraceloc);
+               ArrayRef<Expr*> initExprs, SourceLocation rbraceloc);
 
   /// \brief Build an empty initializer list.
   explicit InitListExpr(ASTContext &C, EmptyShell Empty)
@@ -3723,8 +3719,7 @@ private:
   DesignatedInitExpr(ASTContext &C, QualType Ty, unsigned NumDesignators,
                      const Designator *Designators,
                      SourceLocation EqualOrColonLoc, bool GNUSyntax,
-                     Expr **IndexExprs, unsigned NumIndexExprs,
-                     Expr *Init);
+                     ArrayRef<Expr*> IndexExprs, Expr *Init);
 
   explicit DesignatedInitExpr(unsigned NumSubExprs)
     : Expr(DesignatedInitExprClass, EmptyShell()),
@@ -3885,7 +3880,7 @@ public:
 
   static DesignatedInitExpr *Create(ASTContext &C, Designator *Designators,
                                     unsigned NumDesignators,
-                                    Expr **IndexExprs, unsigned NumIndexExprs,
+                                    ArrayRef<Expr*> IndexExprs,
                                     SourceLocation EqualOrColonLoc,
                                     bool GNUSyntax, Expr *Init);
 
@@ -4032,8 +4027,8 @@ class ParenListExpr : public Expr {
   SourceLocation LParenLoc, RParenLoc;
 
 public:
-  ParenListExpr(ASTContext& C, SourceLocation lparenloc, Expr **exprs,
-                unsigned numexprs, SourceLocation rparenloc);
+  ParenListExpr(ASTContext& C, SourceLocation lparenloc, ArrayRef<Expr*> exprs,
+                SourceLocation rparenloc);
 
   /// \brief Build an empty paren list.
   explicit ParenListExpr(EmptyShell Empty) : Expr(ParenListExprClass, Empty) { }
@@ -4109,18 +4104,18 @@ class GenericSelectionExpr : public Expr {
 public:
   GenericSelectionExpr(ASTContext &Context,
                        SourceLocation GenericLoc, Expr *ControllingExpr,
-                       TypeSourceInfo **AssocTypes, Expr **AssocExprs,
-                       unsigned NumAssocs, SourceLocation DefaultLoc,
-                       SourceLocation RParenLoc,
+                       ArrayRef<TypeSourceInfo*> AssocTypes,
+                       ArrayRef<Expr*> AssocExprs,
+                       SourceLocation DefaultLoc, SourceLocation RParenLoc,
                        bool ContainsUnexpandedParameterPack,
                        unsigned ResultIndex);
 
   /// This constructor is used in the result-dependent case.
   GenericSelectionExpr(ASTContext &Context,
                        SourceLocation GenericLoc, Expr *ControllingExpr,
-                       TypeSourceInfo **AssocTypes, Expr **AssocExprs,
-                       unsigned NumAssocs, SourceLocation DefaultLoc,
-                       SourceLocation RParenLoc,
+                       ArrayRef<TypeSourceInfo*> AssocTypes,
+                       ArrayRef<Expr*> AssocExprs,
+                       SourceLocation DefaultLoc, SourceLocation RParenLoc,
                        bool ContainsUnexpandedParameterPack);
 
   explicit GenericSelectionExpr(EmptyShell Empty)
@@ -4501,7 +4496,7 @@ private:
   friend class ASTStmtReader;
 
 public:
-  AtomicExpr(SourceLocation BLoc, Expr **args, unsigned nexpr, QualType t,
+  AtomicExpr(SourceLocation BLoc, ArrayRef<Expr*> args, QualType t,
              AtomicOp op, SourceLocation RP);
 
   /// \brief Determine the number of arguments the specified atomic builtin

@@ -2059,7 +2059,7 @@ CallExpr *RewriteObjC::SynthesizeCallToFunctionDecl(
   const FunctionType *FT = msgSendType->getAs<FunctionType>();
 
   CallExpr *Exp =  
-    new (Context) CallExpr(*Context, ICE, args, nargs, 
+    new (Context) CallExpr(*Context, ICE, llvm::makeArrayRef(args, nargs),
                            FT->getCallResultType(*Context),
                            VK_RValue, EndLoc);
   return Exp;
@@ -2661,8 +2661,7 @@ CallExpr *RewriteObjC::SynthMsgSendStretCallExpr(FunctionDecl *MsgSendStretFlavo
   ParenExpr *PE = new (Context) ParenExpr(SourceLocation(), SourceLocation(), cast);
   
   const FunctionType *FT = msgSendType->getAs<FunctionType>();
-  CallExpr *STCE = new (Context) CallExpr(*Context, PE, &MsgExprs[0],
-                                          MsgExprs.size(),
+  CallExpr *STCE = new (Context) CallExpr(*Context, PE, MsgExprs,
                                           FT->getResultType(), VK_RValue,
                                           SourceLocation());
   return STCE;
@@ -2766,8 +2765,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
       DeclRefExpr *DRE = new (Context) DeclRefExpr(SuperContructorFunctionDecl,
                                                    false, superType, VK_LValue,
                                                    SourceLocation());
-      SuperRep = new (Context) CallExpr(*Context, DRE, &InitExprs[0],
-                                        InitExprs.size(),
+      SuperRep = new (Context) CallExpr(*Context, DRE, InitExprs,
                                         superType, VK_LValue,
                                         SourceLocation());
       // The code for super is a little tricky to prevent collision with
@@ -2786,8 +2784,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     } else {
       // (struct objc_super) { <exprs from above> }
       InitListExpr *ILE =
-        new (Context) InitListExpr(*Context, SourceLocation(),
-                                   &InitExprs[0], InitExprs.size(),
+        new (Context) InitListExpr(*Context, SourceLocation(), InitExprs,
                                    SourceLocation());
       TypeSourceInfo *superTInfo
         = Context->getTrivialTypeSourceInfo(superType);
@@ -2876,8 +2873,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
       DeclRefExpr *DRE = new (Context) DeclRefExpr(SuperContructorFunctionDecl,
                                                    false, superType, VK_LValue,
                                                    SourceLocation());
-      SuperRep = new (Context) CallExpr(*Context, DRE, &InitExprs[0],
-                                        InitExprs.size(),
+      SuperRep = new (Context) CallExpr(*Context, DRE, InitExprs,
                                         superType, VK_LValue, SourceLocation());
       // The code for super is a little tricky to prevent collision with
       // the structure definition in the header. The rewriter has it's own
@@ -2895,8 +2891,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     } else {
       // (struct objc_super) { <exprs from above> }
       InitListExpr *ILE =
-        new (Context) InitListExpr(*Context, SourceLocation(),
-                                   &InitExprs[0], InitExprs.size(),
+        new (Context) InitListExpr(*Context, SourceLocation(), InitExprs,
                                    SourceLocation());
       TypeSourceInfo *superTInfo
         = Context->getTrivialTypeSourceInfo(superType);
@@ -3050,8 +3045,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
   ParenExpr *PE = new (Context) ParenExpr(StartLoc, EndLoc, cast);
 
   const FunctionType *FT = msgSendType->getAs<FunctionType>();
-  CallExpr *CE = new (Context) CallExpr(*Context, PE, &MsgExprs[0],
-                                        MsgExprs.size(),
+  CallExpr *CE = new (Context) CallExpr(*Context, PE, MsgExprs,
                                         FT->getResultType(), VK_RValue,
                                         EndLoc);
   Stmt *ReplacingStmt = CE;
@@ -3923,8 +3917,7 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp) {
        E = Exp->arg_end(); I != E; ++I) {
     BlkExprs.push_back(*I);
   }
-  CallExpr *CE = new (Context) CallExpr(*Context, PE, &BlkExprs[0],
-                                        BlkExprs.size(),
+  CallExpr *CE = new (Context) CallExpr(*Context, PE, BlkExprs,
                                         Exp->getType(), VK_RValue,
                                         SourceLocation());
   return CE;
@@ -4651,7 +4644,7 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
                                            Context->IntTy, SourceLocation());
     InitExprs.push_back(FlagExp);
   }
-  NewRep = new (Context) CallExpr(*Context, DRE, &InitExprs[0], InitExprs.size(),
+  NewRep = new (Context) CallExpr(*Context, DRE, InitExprs,
                                   FType, VK_LValue, SourceLocation());
   NewRep = new (Context) UnaryOperator(NewRep, UO_AddrOf,
                              Context->getPointerType(NewRep->getType()),

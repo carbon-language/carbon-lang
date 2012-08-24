@@ -5703,7 +5703,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   // there are 0 arguments (i.e., nothing is allocated using ASTContext's
   // allocator).
   QualType CallResultType = ConversionType.getNonLValueExprType(Context);
-  CallExpr Call(Context, &ConversionFn, 0, 0, CallResultType, VK,
+  CallExpr Call(Context, &ConversionFn, MultiExprArg(), CallResultType, VK,
                 From->getLocStart());
   ImplicitConversionSequence ICS =
     TryCopyInitialization(*this, &Call, ToType,
@@ -9745,9 +9745,10 @@ bool Sema::buildOverloadedCallSet(Scope *S, Expr *Fn,
     // classes.
     if (getLangOpts().MicrosoftMode && CurContext->isDependentContext() && 
         (isa<FunctionDecl>(CurContext) || isa<CXXRecordDecl>(CurContext))) {
-      CallExpr *CE = new (Context) CallExpr(Context, Fn, Args, NumArgs,
-                                          Context.DependentTy, VK_RValue,
-                                          RParenLoc);
+      CallExpr *CE = new (Context) CallExpr(Context, Fn,
+                                            llvm::makeArrayRef(Args, NumArgs),
+                                            Context.DependentTy, VK_RValue,
+                                            RParenLoc);
       CE->setTypeDependent(true);
       *Result = Owned(CE);
       return true;
@@ -9931,7 +9932,7 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
                                      /*ADL*/ true, IsOverloaded(Fns),
                                      Fns.begin(), Fns.end());
     return Owned(new (Context) CXXOperatorCallExpr(Context, Op, Fn,
-                                                  &Args[0], NumArgs,
+                                              llvm::makeArrayRef(Args, NumArgs),
                                                    Context.DependentTy,
                                                    VK_RValue,
                                                    OpLoc));
@@ -10010,7 +10011,8 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
       Args[0] = Input;
       CallExpr *TheCall =
         new (Context) CXXOperatorCallExpr(Context, Op, FnExpr.take(),
-                                          Args, NumArgs, ResultTy, VK, OpLoc);
+                                          llvm::makeArrayRef(Args, NumArgs),
+                                          ResultTy, VK, OpLoc);
 
       if (CheckCallReturnType(FnDecl->getResultType(), OpLoc, TheCall,
                               FnDecl))
@@ -10132,7 +10134,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
                                      /*ADL*/ true, IsOverloaded(Fns),
                                      Fns.begin(), Fns.end());
     return Owned(new (Context) CXXOperatorCallExpr(Context, Op, Fn,
-                                                   Args, 2,
+                                                   Args,
                                                    Context.DependentTy,
                                                    VK_RValue,
                                                    OpLoc));
@@ -10250,7 +10252,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
 
         CXXOperatorCallExpr *TheCall =
           new (Context) CXXOperatorCallExpr(Context, Op, FnExpr.take(),
-                                            Args, 2, ResultTy, VK, OpLoc);
+                                            Args, ResultTy, VK, OpLoc);
 
         if (CheckCallReturnType(FnDecl->getResultType(), OpLoc, TheCall,
                                 FnDecl))
@@ -10379,7 +10381,7 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
     // Can't add any actual overloads yet
 
     return Owned(new (Context) CXXOperatorCallExpr(Context, OO_Subscript, Fn,
-                                                   Args, 2,
+                                                   Args,
                                                    Context.DependentTy,
                                                    VK_RValue,
                                                    RLoc));
@@ -10458,7 +10460,7 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
 
         CXXOperatorCallExpr *TheCall =
           new (Context) CXXOperatorCallExpr(Context, OO_Subscript,
-                                            FnExpr.take(), Args, 2,
+                                            FnExpr.take(), Args,
                                             ResultTy, VK, RLoc);
 
         if (CheckCallReturnType(FnDecl->getResultType(), LLoc, TheCall,
@@ -10576,7 +10578,8 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
     }
               
     CXXMemberCallExpr *call
-      = new (Context) CXXMemberCallExpr(Context, MemExprE, Args, NumArgs,
+      = new (Context) CXXMemberCallExpr(Context, MemExprE,
+                                        llvm::makeArrayRef(Args, NumArgs),
                                         resultType, valueKind, RParenLoc);
 
     if (CheckCallReturnType(proto->getResultType(),
@@ -10718,7 +10721,8 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
 
   assert(Method && "Member call to something that isn't a method?");
   CXXMemberCallExpr *TheCall =
-    new (Context) CXXMemberCallExpr(Context, MemExprE, Args, NumArgs,
+    new (Context) CXXMemberCallExpr(Context, MemExprE,
+                                    llvm::makeArrayRef(Args, NumArgs),
                                     ResultType, VK, RParenLoc);
 
   // Check for a valid return type.
@@ -10984,7 +10988,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
 
   CXXOperatorCallExpr *TheCall =
     new (Context) CXXOperatorCallExpr(Context, OO_Call, NewFn.take(),
-                                      MethodArgs, NumArgs + 1,
+                                      llvm::makeArrayRef(MethodArgs, NumArgs+1),
                                       ResultTy, VK, RParenLoc);
   delete [] MethodArgs;
 
@@ -11158,7 +11162,7 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc) {
   ResultTy = ResultTy.getNonLValueExprType(Context);
   CXXOperatorCallExpr *TheCall =
     new (Context) CXXOperatorCallExpr(Context, OO_Arrow, FnExpr.take(),
-                                      &Base, 1, ResultTy, VK, OpLoc);
+                                      Base, ResultTy, VK, OpLoc);
 
   if (CheckCallReturnType(Method->getResultType(), OpLoc, TheCall,
                           Method))
@@ -11229,7 +11233,8 @@ ExprResult Sema::BuildLiteralOperatorCall(LookupResult &R,
   ResultTy = ResultTy.getNonLValueExprType(Context);
 
   UserDefinedLiteral *UDL =
-    new (Context) UserDefinedLiteral(Context, Fn.take(), ConvArgs, Args.size(),
+    new (Context) UserDefinedLiteral(Context, Fn.take(),
+                                     llvm::makeArrayRef(ConvArgs, Args.size()),
                                      ResultTy, VK, LitEndLoc, UDSuffixLoc);
 
   if (CheckCallReturnType(FD->getResultType(), UDSuffixLoc, UDL, FD))

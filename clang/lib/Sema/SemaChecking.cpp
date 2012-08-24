@@ -885,8 +885,7 @@ ExprResult Sema::SemaAtomicOpsOverloaded(ExprResult TheCallResult,
   }
 
   return Owned(new (Context) AtomicExpr(TheCall->getCallee()->getLocStart(),
-                                        SubExprs.data(), SubExprs.size(),
-                                        ResultType, Op,
+                                        SubExprs, ResultType, Op,
                                         TheCall->getRParenLoc()));
 }
 
@@ -1503,8 +1502,7 @@ ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
     TheCall->setArg(i, 0);
   }
 
-  return Owned(new (Context) ShuffleVectorExpr(Context, exprs.begin(),
-                                            exprs.size(), resType,
+  return Owned(new (Context) ShuffleVectorExpr(Context, exprs, resType,
                                             TheCall->getCallee()->getLocStart(),
                                             TheCall->getRParenLoc()));
 }
