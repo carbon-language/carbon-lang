@@ -60,7 +60,6 @@ endif
 CLANG_FLAGS=
 CLANG_VERSION=3.2
 CLANG_BUILD=$(ROOT)/../../../../build/Release+Asserts
-CLANG_BUILD=/Users/glider/src/asan/llvm/llvm_cmake_build
 CLANG_CC=$(CLANG_BUILD)/bin/clang $(CLANG_FLAGS)
 CLANG_CXX=$(CLANG_BUILD)/bin/clang++ $(CLANG_FLAGS)
 FILE_CHECK=$(CLANG_BUILD)/bin/FileCheck
@@ -147,9 +146,7 @@ CLANG_ASAN_CXX=$(CLANG_CXX) \
 		-mllvm -asan-use-after-return=$(ASAN_UAR) \
 		$(COMMON_ASAN_DEFINES)
 
-#CLANG_ASAN_LD=$(CLANG_CXX) -faddress-sanitizer
-#CLANG_ASAN_LD=$(CLANG_CXX) -L/Users/glider/src/asan/llvm/llvm_cmake_build/projects/compiler-rt/lib/asan/lib -lclang_rt.asan_osx_dynamic #-faddress-sanitizer
-CLANG_ASAN_LD=$(CLANG_CXX) -faddress-sanitizer -faddress-sanitizer-dynamic-runtime
+CLANG_ASAN_LD=$(CLANG_CXX) -faddress-sanitizer
 
 GCC_ASAN_PATH=SET_FROM_COMMAND_LINE
 GCC_ASAN_CXX=$(GCC_ASAN_PATH)/g++ \

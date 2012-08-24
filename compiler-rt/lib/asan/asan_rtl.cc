@@ -307,7 +307,6 @@ void __asan_init() {
   // Re-exec ourselves if we need to set additional env or command line args.
   MaybeReexec();
 
-
   if (flags()->atexit) {
     Atexit(asan_atexit);
   }
