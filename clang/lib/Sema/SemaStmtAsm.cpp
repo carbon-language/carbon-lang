@@ -465,8 +465,6 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
                                 SourceLocation LBraceLoc,
                                 ArrayRef<Token> AsmToks,
                                 SourceLocation EndLoc) {
-  // MS-style inline assembly is not fully supported, so emit a warning.
-  Diag(AsmLoc, diag::warn_unsupported_msasm);
   SmallVector<StringRef,4> Clobbers;
   std::set<std::string> ClobberRegs;
   SmallVector<IdentifierInfo*, 4> Inputs;

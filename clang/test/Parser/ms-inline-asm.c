@@ -6,7 +6,7 @@
 void t1(void) { M } // expected-warning {{MS-style inline assembly is not supported}}
 void t2(void) { __asm int 0x2c } // expected-warning {{MS-style inline assembly is not supported}}
 void t3(void) { __asm M2 0x2c } // expected-warning {{MS-style inline assembly is not supported}}
-void* t4(void) { __asm mov eax, fs:[0x10] } // expected-warning {{MS-style inline assembly is not supported}}
+void t4(void) { __asm mov eax, fs:[0x10] } // expected-warning {{MS-style inline assembly is not supported}}
 void t5() {
   __asm { // expected-warning {{MS-style inline assembly is not supported}}
     int 0x2c ; } asm comments are fun! }{
@@ -20,7 +20,7 @@ int t6() {
   __asm int 4 // expected-warning {{MS-style inline assembly is not supported}}
   return 10;
 }
-int t7() {
+void t7() {
   __asm { // expected-warning {{MS-style inline assembly is not supported}}
     push ebx
     mov ebx, 0x07
@@ -34,5 +34,5 @@ void t9() {
   __asm nop __asm nop ; __asm nop // expected-warning {{MS-style inline assembly is not supported}}
 }
 int t_fail() { // expected-note {{to match this}}
-  __asm
-  __asm { // expected-error 3 {{expected}} expected-note {{to match this}}
+  __asm // expected-warning {{MS-style inline assembly is not supported}}
+  __asm { // expected-warning {{MS-style inline assembly is not supported}} expected-error 3 {{expected}} expected-note {{to match this}}

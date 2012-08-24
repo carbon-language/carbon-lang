@@ -162,6 +162,9 @@ VALUE_LANGOPT(MSCVersion, 32, 0,
 
 LANGOPT(ApplePragmaPack, 1, 0, "Apple gcc-compatible #pragma pack handling")
 
+BENIGN_LANGOPT(EmitMicrosoftInlineAsm , 1, 0, 
+               "Enable emission of MS-style inline assembly.")
+
 #undef LANGOPT
 #undef VALUE_LANGOPT
 #undef BENIGN_LANGOPT

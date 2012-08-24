@@ -5073,9 +5073,6 @@ let CategoryName = "Inline Assembly Issue" in {
     "invalid use of a cast in a inline asm context requiring an l-value: "
     "accepted due to -fheinous-gnu-extensions, but clang may remove support "
     "for this in the future">;
-
-  def warn_unsupported_msasm : ExtWarn<
-    "MS-style inline assembly is not supported">, InGroup<Microsoft>;
 }
 
 let CategoryName = "Semantic Issue" in {

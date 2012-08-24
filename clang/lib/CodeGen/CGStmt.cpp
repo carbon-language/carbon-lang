@@ -1668,10 +1668,6 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
 }
 
 void CodeGenFunction::EmitMSAsmStmt(const MSAsmStmt &S) {
-  // MS-style inline assembly is not fully supported, so sema emits a warning.
-  if (!CGM.getCodeGenOpts().EmitMicrosoftInlineAsm)
-    return;
-
   std::vector<llvm::Value*> Args;
   std::vector<llvm::Type *> ArgTypes;
   std::string Constraints;

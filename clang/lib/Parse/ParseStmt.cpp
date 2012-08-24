@@ -1596,6 +1596,9 @@ StmtResult Parser::ParseReturnStatement() {
 ///         ms-asm-line '\n' ms-asm-instruction-block
 ///
 StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
+  // MS-style inline assembly is not fully supported, so emit a warning.
+  Diag(AsmLoc, diag::warn_unsupported_msasm);
+
   SourceManager &SrcMgr = PP.getSourceManager();
   SourceLocation EndLoc = AsmLoc;
   SmallVector<Token, 4> AsmToks;
@@ -1686,6 +1689,21 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
     // Empty __asm.
     Diag(Tok, diag::err_expected_lbrace);
     return StmtError();
+  }
+
+  // If MS-style inline assembly is disabled, then build an empty asm.
+  if (!getLangOpts().EmitMicrosoftInlineAsm) {
+    Token t;
+    t.setKind(tok::string_literal);
+    t.setLiteralData("\"/*FIXME: not done*/\"");
+    t.clearFlag(Token::NeedsCleaning);
+    t.setLength(21);
+    ExprResult AsmString(Actions.ActOnStringLiteral(&t, 1));
+    ExprVector Constraints;
+    ExprVector Exprs;
+    ExprVector Clobbers;
+    return Actions.ActOnAsmStmt(AsmLoc, true, true, 0, 0, 0, Constraints, Exprs,
+                                AsmString.take(), Clobbers, EndLoc);
   }
 
   // FIXME: We should be passing source locations for better diagnostics.
