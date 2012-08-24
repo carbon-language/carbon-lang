@@ -2231,12 +2231,20 @@ bool GVN::processInstruction(Instruction *I) {
     Value *SwitchCond = SI->getCondition();
     BasicBlock *Parent = SI->getParent();
     bool Changed = false;
+
+    // Remember how many outgoing edges there are to every successor.
+    SmallDenseMap<BasicBlock *, unsigned, 16> SwitchEdges;
+    for (unsigned i = 0, n = SI->getNumSuccessors(); i != n; ++i)
+      ++SwitchEdges[SI->getSuccessor(i)];
+
     for (SwitchInst::CaseIt i = SI->case_begin(), e = SI->case_end();
          i != e; ++i) {
       BasicBlock *Dst = i.getCaseSuccessor();
-      BasicBlockEdge E(Parent, Dst);
-      if (E.isSingleEdge())
+      // If there is only a single edge, propagate the case value into it.
+      if (SwitchEdges.lookup(Dst) == 1) {
+        BasicBlockEdge E(Parent, Dst);
         Changed |= propagateEquality(SwitchCond, i.getCaseValue(), E);
+      }
     }
     return Changed;
   }
