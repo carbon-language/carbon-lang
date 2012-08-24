@@ -249,6 +249,14 @@ namespace llvm {
     bool isCodeGenOnly;
     bool isPseudo;
 
+    /// Are there any undefined flags?
+    bool hasUndefFlags() const {
+      return mayLoad_Unset || mayStore_Unset || hasSideEffects_Unset;
+    }
+
+    // The record used to infer instruction flags, or NULL if no flag values
+    // have been inferred.
+    Record *InferredFrom;
 
     CodeGenInstruction(Record *R);
 

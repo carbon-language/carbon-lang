@@ -2367,36 +2367,25 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
 
 class InstAnalyzer {
   const CodeGenDAGPatterns &CDP;
-  bool &mayStore;
-  bool &mayLoad;
-  bool &IsBitcast;
-  bool &HasSideEffects;
-  bool &IsVariadic;
 public:
-  InstAnalyzer(const CodeGenDAGPatterns &cdp,
-               bool &maystore, bool &mayload, bool &isbc, bool &hse, bool &isv)
-    : CDP(cdp), mayStore(maystore), mayLoad(mayload), IsBitcast(isbc),
-      HasSideEffects(hse), IsVariadic(isv) {
-  }
+  bool hasSideEffects;
+  bool mayStore;
+  bool mayLoad;
+  bool isBitcast;
+  bool isVariadic;
 
-  /// Analyze - Analyze the specified instruction, returning true if the
-  /// instruction had a pattern.
-  bool Analyze(Record *InstRecord) {
-    const TreePattern *Pattern = CDP.getInstruction(InstRecord).getPattern();
-    if (Pattern == 0) {
-      HasSideEffects = 1;
-      return false;  // No pattern.
-    }
+  InstAnalyzer(const CodeGenDAGPatterns &cdp)
+    : CDP(cdp), hasSideEffects(false), mayStore(false), mayLoad(false),
+      isBitcast(false), isVariadic(false) {}
 
-    // FIXME: Assume only the first tree is the pattern. The others are clobber
-    // nodes.
-    AnalyzeNode(Pattern->getTree(0));
-    return true;
+  void Analyze(const TreePattern *Pat) {
+    // Assume only the first tree is the pattern. The others are clobber nodes.
+    AnalyzeNode(Pat->getTree(0));
   }
 
 private:
   bool IsNodeBitcast(const TreePatternNode *N) const {
-    if (HasSideEffects || mayLoad || mayStore || IsVariadic)
+    if (hasSideEffects || mayLoad || mayStore || isVariadic)
       return false;
 
     if (N->getNumChildren() != 2)
@@ -2427,7 +2416,7 @@ private:
           const ComplexPattern &CP = CDP.getComplexPattern(LeafRec);
           if (CP.hasProperty(SDNPMayStore)) mayStore = true;
           if (CP.hasProperty(SDNPMayLoad)) mayLoad = true;
-          if (CP.hasProperty(SDNPSideEffect)) HasSideEffects = true;
+          if (CP.hasProperty(SDNPSideEffect)) hasSideEffects = true;
         }
       }
       return;
@@ -2439,7 +2428,7 @@ private:
 
     // Ignore set nodes, which are not SDNodes.
     if (N->getOperator()->getName() == "set") {
-      IsBitcast = IsNodeBitcast(N);
+      isBitcast = IsNodeBitcast(N);
       return;
     }
 
@@ -2449,8 +2438,8 @@ private:
     // Notice properties of the node.
     if (OpInfo.hasProperty(SDNPMayStore)) mayStore = true;
     if (OpInfo.hasProperty(SDNPMayLoad)) mayLoad = true;
-    if (OpInfo.hasProperty(SDNPSideEffect)) HasSideEffects = true;
-    if (OpInfo.hasProperty(SDNPVariadic)) IsVariadic = true;
+    if (OpInfo.hasProperty(SDNPSideEffect)) hasSideEffects = true;
+    if (OpInfo.hasProperty(SDNPVariadic)) isVariadic = true;
 
     if (const CodeGenIntrinsic *IntInfo = N->getIntrinsicInfo(CDP)) {
       // If this is an intrinsic, analyze it.
@@ -2462,62 +2451,27 @@ private:
 
       if (IntInfo->ModRef >= CodeGenIntrinsic::ReadWriteMem)
         // WriteMem intrinsics can have other strange effects.
-        HasSideEffects = true;
+        hasSideEffects = true;
     }
   }
 
 };
 
-static void InferFromPattern(const CodeGenInstruction &Inst,
-                             bool &MayStore, bool &MayLoad,
-                             bool &IsBitcast,
-                             bool &HasSideEffects, bool &IsVariadic,
-                             const CodeGenDAGPatterns &CDP) {
-  MayStore = MayLoad = IsBitcast = HasSideEffects = IsVariadic = false;
+static void InferFromPattern(CodeGenInstruction &InstInfo,
+                             const InstAnalyzer &PatInfo,
+                             Record *PatDef) {
+  // Remember where InstInfo got its flags.
+  if (InstInfo.hasUndefFlags())
+      InstInfo.InferredFrom = PatDef;
 
-  bool HadPattern =
-    InstAnalyzer(CDP, MayStore, MayLoad, IsBitcast, HasSideEffects, IsVariadic)
-    .Analyze(Inst.TheDef);
+  // Transfer inferred flags.
+  InstInfo.hasSideEffects |= PatInfo.hasSideEffects;
+  InstInfo.mayStore |= PatInfo.mayStore;
+  InstInfo.mayLoad |= PatInfo.mayLoad;
 
-  // InstAnalyzer only correctly analyzes mayStore/mayLoad so far.
-  if (Inst.mayStore) {  // If the .td file explicitly sets mayStore, use it.
-    // If we decided that this is a store from the pattern, then the .td file
-    // entry is redundant.
-    if (MayStore)
-      PrintWarning(Inst.TheDef->getLoc(),
-                   "mayStore flag explicitly set on "
-                   "instruction, but flag already inferred from pattern.");
-    MayStore = true;
-  }
-
-  if (Inst.mayLoad) {  // If the .td file explicitly sets mayLoad, use it.
-    // If we decided that this is a load from the pattern, then the .td file
-    // entry is redundant.
-    if (MayLoad)
-      PrintWarning(Inst.TheDef->getLoc(),
-                   "mayLoad flag explicitly set on "
-                   "instruction, but flag already inferred from pattern.");
-    MayLoad = true;
-  }
-
-  if (Inst.neverHasSideEffects) {
-    if (HadPattern)
-      PrintWarning(Inst.TheDef->getLoc(),
-                   "neverHasSideEffects flag explicitly set on "
-                   "instruction, but flag already inferred from pattern.");
-    HasSideEffects = false;
-  }
-
-  if (Inst.hasSideEffects) {
-    if (HasSideEffects)
-      PrintWarning(Inst.TheDef->getLoc(),
-                   "hasSideEffects flag explicitly set on "
-                   "instruction, but flag already inferred from pattern.");
-    HasSideEffects = true;
-  }
-
-  if (Inst.Operands.isVariadic)
-    IsVariadic = true;  // Can warn if we want.
+  // These flags are silently added without any verification.
+  InstInfo.isBitcast |= PatInfo.isBitcast;
+  InstInfo.Operands.isVariadic |= PatInfo.isVariadic;
 }
 
 /// hasNullFragReference - Return true if the DAG has any reference to the
@@ -2852,24 +2806,60 @@ void CodeGenDAGPatterns::AddPatternToMatch(const TreePattern *Pattern,
 void CodeGenDAGPatterns::InferInstructionFlags() {
   const std::vector<const CodeGenInstruction*> &Instructions =
     Target.getInstructionsByEnumValue();
+
+  // First try to infer flags from the primary instruction pattern, if any.
+  SmallVector<CodeGenInstruction*, 8> Revisit;
   for (unsigned i = 0, e = Instructions.size(); i != e; ++i) {
     CodeGenInstruction &InstInfo =
       const_cast<CodeGenInstruction &>(*Instructions[i]);
-    // Determine properties of the instruction from its pattern.
-    bool MayStore, MayLoad, IsBitcast, HasSideEffects, IsVariadic;
-    InferFromPattern(InstInfo, MayStore, MayLoad, IsBitcast,
-                     HasSideEffects, IsVariadic, *this);
-    InstInfo.mayStore = MayStore;
-    InstInfo.mayLoad = MayLoad;
-    InstInfo.isBitcast = IsBitcast;
-    InstInfo.hasSideEffects = HasSideEffects;
-    InstInfo.Operands.isVariadic = IsVariadic;
 
-    // Sanity checks.
-    if (InstInfo.isReMaterializable && InstInfo.hasSideEffects)
-      throw TGError(InstInfo.TheDef->getLoc(), "The instruction " +
-                    InstInfo.TheDef->getName() +
-                    " is rematerializable AND has unmodeled side effects?");
+    // Treat neverHasSideEffects = 1 as the equivalent of hasSideEffects = 0.
+    // This flag is obsolete and will be removed.
+    if (InstInfo.neverHasSideEffects) {
+      assert(!InstInfo.hasSideEffects);
+      InstInfo.hasSideEffects_Unset = false;
+    }
+
+    // Get the primary instruction pattern.
+    const TreePattern *Pattern = getInstruction(InstInfo.TheDef).getPattern();
+    if (!Pattern) {
+      if (InstInfo.hasUndefFlags())
+        Revisit.push_back(&InstInfo);
+      continue;
+    }
+    InstAnalyzer PatInfo(*this);
+    PatInfo.Analyze(Pattern);
+    InferFromPattern(InstInfo, PatInfo, InstInfo.TheDef);
+  }
+
+  // Revisit instructions with undefined flags and no pattern.
+  if (Target.guessInstructionProperties()) {
+    for (unsigned i = 0, e = Revisit.size(); i != e; ++i) {
+      CodeGenInstruction &InstInfo = *Revisit[i];
+      if (InstInfo.InferredFrom)
+        continue;
+      // The mayLoad and mayStore flags default to false.
+      // Conservatively assume hasSideEffects if it wasn't explicit.
+      if (InstInfo.hasSideEffects_Unset)
+        InstInfo.hasSideEffects = true;
+    }
+    return;
+  }
+
+  // Complain about any flags that are still undefined.
+  for (unsigned i = 0, e = Revisit.size(); i != e; ++i) {
+    CodeGenInstruction &InstInfo = *Revisit[i];
+    if (InstInfo.InferredFrom)
+      continue;
+    if (InstInfo.hasSideEffects_Unset)
+      PrintError(InstInfo.TheDef->getLoc(),
+                 "Can't infer hasSideEffects from patterns");
+    if (InstInfo.mayStore_Unset)
+      PrintError(InstInfo.TheDef->getLoc(),
+                 "Can't infer mayStore from patterns");
+    if (InstInfo.mayLoad_Unset)
+      PrintError(InstInfo.TheDef->getLoc(),
+                 "Can't infer mayLoad from patterns");
   }
 }
 

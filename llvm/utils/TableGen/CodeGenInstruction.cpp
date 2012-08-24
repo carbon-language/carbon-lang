@@ -287,7 +287,8 @@ void CGIOperandList::ProcessDisableEncoding(std::string DisableEncoding) {
 // CodeGenInstruction Implementation
 //===----------------------------------------------------------------------===//
 
-CodeGenInstruction::CodeGenInstruction(Record *R) : TheDef(R), Operands(R) {
+CodeGenInstruction::CodeGenInstruction(Record *R)
+  : TheDef(R), Operands(R), InferredFrom(0) {
   Namespace = R->getValueAsString("Namespace");
   AsmString = R->getValueAsString("AsmString");
 
