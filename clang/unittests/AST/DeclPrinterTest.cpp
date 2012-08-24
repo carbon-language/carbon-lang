@@ -517,7 +517,7 @@ TEST(DeclPrinter, TestCXXConstructorDecl11) {
     "};",
     constructor(ofClass(hasName("A"))).bind("id"),
     "A<T...>(T &&ts...) : T(ts)"));
-    // Should be: "A(T&&... ts) : T(ts)..."
+    // WRONG; Should be: "A(T&&... ts) : T(ts)..."
 }
 
 
