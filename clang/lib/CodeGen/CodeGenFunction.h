@@ -1833,7 +1833,29 @@ public:
   void EmitStdInitializerListCleanup(llvm::Value *loc,
                                      const InitListExpr *init);
 
-  void EmitCheck(llvm::Value *, unsigned Size);
+  /// \brief Situations in which we might emit a check for the suitability of a
+  ///        pointer or glvalue.
+  enum CheckType {
+    /// Checking the operand of a load. Must be suitably sized and aligned.
+    CT_Load,
+    /// Checking the destination of a store. Must be suitably sized and aligned.
+    CT_Store,
+    /// Checking the bound value in a reference binding. Must be suitably sized
+    /// and aligned, but is not required to refer to an object (until the
+    /// reference is used), per core issue 453.
+    CT_ReferenceBinding,
+    /// Checking the object expression in a non-static data member access. Must
+    /// be an object within its lifetime.
+    CT_MemberAccess,
+    /// Checking the 'this' pointer for a call to a non-static member function.
+    /// Must be an object within its lifetime.
+    CT_MemberCall
+  };
+
+  /// EmitCheck - Emit a check that \p V is the address of storage of the
+  /// appropriate size and alignment for an object of type \p Type.
+  void EmitCheck(CheckType CT, llvm::Value *V,
+                 QualType Type, CharUnits Alignment = CharUnits::Zero());
 
   llvm::Value *EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
                                        bool isInc, bool isPre);
@@ -2036,7 +2058,7 @@ public:
   /// checking code to guard against undefined behavior.  This is only
   /// suitable when we know that the address will be used to access the
   /// object.
-  LValue EmitCheckedLValue(const Expr *E);
+  LValue EmitCheckedLValue(const Expr *E, CheckType CT);
 
   /// EmitToMemory - Change a scalar value from its value
   /// representation to its in-memory representation.

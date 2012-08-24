@@ -33,6 +33,11 @@ RValue CodeGenFunction::EmitCXXMemberCall(const CXXMethodDecl *MD,
   assert(MD->isInstance() &&
          "Trying to emit a member call expr on a static method!");
 
+  // C++11 [class.mfct.non-static]p2:
+  //   If a non-static member function of a class X is called for an object that
+  //   is not of type X, or of a type derived from X, the behavior is undefined.
+  EmitCheck(CT_MemberCall, This, getContext().getRecordType(MD->getParent()));
+
   CallArgList Args;
 
   // Push the this ptr.
@@ -336,6 +341,8 @@ CodeGenFunction::EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E,
     This = EmitScalarExpr(BaseExpr);
   else 
     This = EmitLValue(BaseExpr).getAddress();
+
+  EmitCheck(CT_MemberCall, This, QualType(MPT->getClass(), 0));
 
   // Ask the ABI to load the callee.  Note that This is modified.
   llvm::Value *Callee =

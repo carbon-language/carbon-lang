@@ -80,7 +80,9 @@ public:
 
   llvm::Type *ConvertType(QualType T) { return CGF.ConvertType(T); }
   LValue EmitLValue(const Expr *E) { return CGF.EmitLValue(E); }
-  LValue EmitCheckedLValue(const Expr *E) { return CGF.EmitCheckedLValue(E); }
+  LValue EmitCheckedLValue(const Expr *E, CodeGenFunction::CheckType CT) {
+    return CGF.EmitCheckedLValue(E, CT);
+  }
 
   Value *EmitLoadOfLValue(LValue LV) {
     return CGF.EmitLoadOfLValue(LV).getScalarVal();
@@ -90,7 +92,7 @@ public:
   /// value l-value, this method emits the address of the l-value, then loads
   /// and returns the result.
   Value *EmitLoadOfLValue(const Expr *E) {
-    return EmitLoadOfLValue(EmitCheckedLValue(E));
+    return EmitLoadOfLValue(EmitCheckedLValue(E, CodeGenFunction::CT_Load));
   }
 
   /// EmitConversionToBool - Convert the specified expression value to a
@@ -1680,7 +1682,7 @@ LValue ScalarExprEmitter::EmitCompoundAssignLValue(
   OpInfo.Opcode = E->getOpcode();
   OpInfo.E = E;
   // Load/convert the LHS.
-  LValue LHSLV = EmitCheckedLValue(E->getLHS());
+  LValue LHSLV = EmitCheckedLValue(E->getLHS(), CodeGenFunction::CT_Store);
   OpInfo.LHS = EmitLoadOfLValue(LHSLV);
 
   llvm::PHINode *atomicPHI = 0;
@@ -2326,7 +2328,7 @@ Value *ScalarExprEmitter::VisitBinAssign(const BinaryOperator *E) {
 
   case Qualifiers::OCL_Weak:
     RHS = Visit(E->getRHS());
-    LHS = EmitCheckedLValue(E->getLHS());    
+    LHS = EmitCheckedLValue(E->getLHS(), CodeGenFunction::CT_Store);
     RHS = CGF.EmitARCStoreWeak(LHS.getAddress(), RHS, Ignore);
     break;
 
@@ -2336,7 +2338,7 @@ Value *ScalarExprEmitter::VisitBinAssign(const BinaryOperator *E) {
     // __block variables need to have the rhs evaluated first, plus
     // this should improve codegen just a little.
     RHS = Visit(E->getRHS());
-    LHS = EmitCheckedLValue(E->getLHS());
+    LHS = EmitCheckedLValue(E->getLHS(), CodeGenFunction::CT_Store);
 
     // Store the value into the LHS.  Bit-fields are handled specially
     // because the result is altered by the store, i.e., [C99 6.5.16p1]
