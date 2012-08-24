@@ -2457,12 +2457,43 @@ private:
 
 };
 
-static void InferFromPattern(CodeGenInstruction &InstInfo,
+static bool InferFromPattern(CodeGenInstruction &InstInfo,
                              const InstAnalyzer &PatInfo,
                              Record *PatDef) {
+  bool Error = false;
+
   // Remember where InstInfo got its flags.
   if (InstInfo.hasUndefFlags())
       InstInfo.InferredFrom = PatDef;
+
+  // Check explicitly set flags for consistency.
+  if (InstInfo.hasSideEffects != PatInfo.hasSideEffects &&
+      !InstInfo.hasSideEffects_Unset) {
+    // Allow explicitly setting hasSideEffects = 1 on instructions, even when
+    // the pattern has no side effects. That could be useful for div/rem
+    // instructions that may trap.
+    if (!InstInfo.hasSideEffects) {
+      Error = true;
+      PrintError(PatDef->getLoc(), "Pattern doesn't match hasSideEffects = " +
+                 Twine(InstInfo.hasSideEffects));
+    }
+  }
+
+  if (InstInfo.mayStore != PatInfo.mayStore && !InstInfo.mayStore_Unset) {
+    Error = true;
+    PrintError(PatDef->getLoc(), "Pattern doesn't match mayStore = " +
+               Twine(InstInfo.mayStore));
+  }
+
+  if (InstInfo.mayLoad != PatInfo.mayLoad && !InstInfo.mayLoad_Unset) {
+    // Allow explicitly setting mayLoad = 1, even when the pattern has no loads.
+    // Some targets translate imediates to loads.
+    if (!InstInfo.mayLoad) {
+      Error = true;
+      PrintError(PatDef->getLoc(), "Pattern doesn't match mayLoad = " +
+                 Twine(InstInfo.mayLoad));
+    }
+  }
 
   // Transfer inferred flags.
   InstInfo.hasSideEffects |= PatInfo.hasSideEffects;
@@ -2472,6 +2503,8 @@ static void InferFromPattern(CodeGenInstruction &InstInfo,
   // These flags are silently added without any verification.
   InstInfo.isBitcast |= PatInfo.isBitcast;
   InstInfo.Operands.isVariadic |= PatInfo.isVariadic;
+
+  return Error;
 }
 
 /// hasNullFragReference - Return true if the DAG has any reference to the
@@ -2809,6 +2842,7 @@ void CodeGenDAGPatterns::InferInstructionFlags() {
 
   // First try to infer flags from the primary instruction pattern, if any.
   SmallVector<CodeGenInstruction*, 8> Revisit;
+  unsigned Errors = 0;
   for (unsigned i = 0, e = Instructions.size(); i != e; ++i) {
     CodeGenInstruction &InstInfo =
       const_cast<CodeGenInstruction &>(*Instructions[i]);
@@ -2829,8 +2863,11 @@ void CodeGenDAGPatterns::InferInstructionFlags() {
     }
     InstAnalyzer PatInfo(*this);
     PatInfo.Analyze(Pattern);
-    InferFromPattern(InstInfo, PatInfo, InstInfo.TheDef);
+    Errors += InferFromPattern(InstInfo, PatInfo, InstInfo.TheDef);
   }
+
+  if (Errors)
+    throw "pattern conflicts";
 
   // Revisit instructions with undefined flags and no pattern.
   if (Target.guessInstructionProperties()) {
