@@ -1001,6 +1001,8 @@ namespace clang {
       STMT_DECL,
       /// \brief An AsmStmt record.
       STMT_ASM,
+      /// \brief A MS-style AsmStmt record.
+      STMT_MSASM,
       /// \brief A PredefinedExpr record.
       EXPR_PREDEFINED,
       /// \brief A DeclRefExpr record.

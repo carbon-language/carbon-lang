@@ -1704,6 +1704,10 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
       S = new (Context) AsmStmt(Empty);
       break;
 
+    case STMT_MSASM:
+      S = new (Context) MSAsmStmt(Empty);
+      break;
+
     case EXPR_PREDEFINED:
       S = new (Context) PredefinedExpr(Empty);
       break;

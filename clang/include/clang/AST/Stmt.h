@@ -1637,6 +1637,11 @@ public:
             StringRef asmstr, ArrayRef<StringRef> clobbers,
             SourceLocation endloc);
 
+  /// \brief Build an empty MS-style inline-assembly statement.
+  explicit MSAsmStmt(EmptyShell Empty) : Stmt(MSAsmStmtClass, Empty),
+    NumAsmToks(0), NumInputs(0), NumOutputs(0), NumClobbers(0), AsmToks(0),
+    Names(0), Exprs(0), Clobbers(0) { }
+
   SourceLocation getAsmLoc() const { return AsmLoc; }
   void setAsmLoc(SourceLocation L) { AsmLoc = L; }
   SourceLocation getLBraceLoc() const { return LBraceLoc; }
