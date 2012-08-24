@@ -2772,9 +2772,6 @@ void Parser::DeallocateParsedClasses(Parser::ParsingClass *Class) {
 /// This routine should be called when we have finished parsing the
 /// definition of a class, but have not yet popped the Scope
 /// associated with the class's definition.
-///
-/// \returns true if the class we've popped is a top-level class,
-/// false otherwise.
 void Parser::PopParsingClass(Sema::ParsingClassState state) {
   assert(!ClassStack.empty() && "Mismatched push/pop for class parsing");
 

@@ -1791,7 +1791,7 @@ void Sema::CheckLookupAccess(const LookupResult &R) {
 /// specifiers into account, but no member access expressions and such.
 ///
 /// \param Decl the declaration to check if it can be accessed
-/// \param Class the class/context from which to start the search
+/// \param Ctx the class/context from which to start the search
 /// \return true if the Decl is accessible from the Class, false otherwise.
 bool Sema::IsSimplyAccessible(NamedDecl *Decl, DeclContext *Ctx) {
   if (CXXRecordDecl *Class = dyn_cast<CXXRecordDecl>(Ctx)) {

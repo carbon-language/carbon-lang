@@ -1285,11 +1285,11 @@ Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
 /// [GNU]   type-specifier-seq declarator simple-asm-expr[opt] attributes[opt]
 ///             '=' assignment-expression
 ///
-/// \param ExprResult if the condition was parsed as an expression, the
-/// parsed expression.
+/// \param ExprOut if the condition was parsed as an expression, the parsed
+/// expression.
 ///
-/// \param DeclResult if the condition was parsed as a declaration, the
-/// parsed declaration.
+/// \param DeclOut if the condition was parsed as a declaration, the parsed
+/// declaration.
 ///
 /// \param Loc The location of the start of the statement that requires this
 /// condition, e.g., the "for" in a for loop.
@@ -1766,7 +1766,7 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
 ///         ptr-operator conversion-declarator[opt]
 /// \endcode
 ///
-/// \param The nested-name-specifier that preceded this unqualified-id. If
+/// \param SS The nested-name-specifier that preceded this unqualified-id. If
 /// non-empty, then we are parsing the unqualified-id of a qualified-id.
 ///
 /// \param EnteringContext whether we are entering the scope of the 
@@ -1985,7 +1985,7 @@ bool Parser::ParseUnqualifiedIdOperator(CXXScopeSpec &SS, bool EnteringContext,
 ///
 /// \endcode
 ///
-/// \param The nested-name-specifier that preceded this unqualified-id. If
+/// \param SS The nested-name-specifier that preceded this unqualified-id. If
 /// non-empty, then we are parsing the unqualified-id of a qualified-id.
 ///
 /// \param EnteringContext whether we are entering the scope of the 
