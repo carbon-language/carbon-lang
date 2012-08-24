@@ -1080,8 +1080,8 @@ ADVANCED OPTIONS:
  
    Generate internal analyzer statistics.
  
- -with-analyzer [Xcode|path to clang] 
- -with-analyzer=[Xcode|path to clang]
+ --with-analyzer [Xcode|path to clang] 
+ --with-analyzer=[Xcode|path to clang]
  
    scan-build uses the 'clang' executable relative to itself for static
    analysis. One can override this behavior with this option by using the
@@ -1435,12 +1435,12 @@ while (@ARGV) {
     push @PluginsToLoad, "-load", shift @ARGV;
     next;
   }
-  if ($arg eq "-with-analyzer") {
+  if ($arg eq "--with-analyzer") {
  	shift @ARGV;
   	$AnalyzerDiscoveryMethod = shift @ARGV;
 	next;
   }
-  if ($arg =~ /^-with-analyzer=(.+)$/) {
+  if ($arg =~ /^--with-analyzer=(.+)$/) {
     shift @ARGV;
 	$AnalyzerDiscoveryMethod = $1;
 	next;
@@ -1473,7 +1473,7 @@ if (!defined $AnalyzerDiscoveryMethod) {
   }
 } 
 else {  
-  if ($AnalyzerDiscoveryMethod =~ /^[X,x]code$/) {
+  if ($AnalyzerDiscoveryMethod =~ /^[Xx]code$/) {
 	my $xcrun = `which xcrun`;
     chomp $xcrun;
 	if ($xcrun eq "") {
