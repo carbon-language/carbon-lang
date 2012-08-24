@@ -783,7 +783,7 @@ getT2Imm8s4OpValue(const MCInst &MI, unsigned OpIdx,
 
   // Immediate is always encoded as positive. The 'U' bit controls add vs sub.
   if (Imm8 < 0)
-    Imm8 = -Imm8;
+    Imm8 = -(uint32_t)Imm8;
 
   // Scaled by 4.
   Imm8 /= 4;
