@@ -596,7 +596,7 @@ basic_filebuf<_CharT, _Traits>::underflow()
             memmove(__extbuf_, __extbufnext_, __extbufend_ - __extbufnext_);
             __extbufnext_ = __extbuf_ + (__extbufend_ - __extbufnext_);
             __extbufend_ = __extbuf_ + (__extbuf_ == __extbuf_min_ ? sizeof(__extbuf_min_) : __ebs_);
-            size_t __nmemb = _VSTD::min(static_cast<size_t>(this->egptr() - this->eback() - __unget_sz),
+            size_t __nmemb = _VSTD::min(static_cast<size_t>(__ibs_ - __unget_sz),
                                  static_cast<size_t>(__extbufend_ - __extbufnext_));
             codecvt_base::result __r;
             state_type __svs = __st_;
@@ -611,7 +611,7 @@ basic_filebuf<_CharT, _Traits>::underflow()
                 char_type*  __inext;
                 __r = __cv_->in(__st_, __extbuf_, __extbufend_, __extbufnext_,
                                        this->eback() + __unget_sz,
-                                       this->egptr(), __inext);
+                                       this->eback() + __ibs_, __inext);
                 if (__r == codecvt_base::noconv)
                 {
                     this->setg((char_type*)__extbuf_, (char_type*)__extbuf_, (char_type*)__extbufend_);
@@ -816,6 +816,7 @@ basic_filebuf<_CharT, _Traits>::seekpos(pos_type __sp, ios_base::openmode)
         return pos_type(off_type(-1));
     if (fseeko(__file_, __sp, SEEK_SET))
         return pos_type(off_type(-1));
+    __st_ = __sp.state;
     return __sp;
 }
 
