@@ -52,7 +52,31 @@ class PathDiagnostic;
 
 class PathDiagnosticConsumer {
 public:
-  typedef std::vector<std::pair<StringRef, std::string> > FilesMade;
+  class PDFileEntry : public llvm::FoldingSetNode {
+  public:
+    PDFileEntry(llvm::FoldingSetNodeID &NodeID) : NodeID(NodeID) {}
+
+    typedef std::vector<std::pair<StringRef, StringRef> > ConsumerFiles;
+    
+    /// \brief A vector of <consumer,file> pairs.
+    ConsumerFiles files;
+    
+    /// \brief A precomputed hash tag used for uniquing PDFileEntry objects.
+    const llvm::FoldingSetNodeID NodeID;
+
+    /// \brief Used for profiling in the FoldingSet.
+    void Profile(llvm::FoldingSetNodeID &ID) { ID = NodeID; }
+  };
+  
+  struct FilesMade : public llvm::FoldingSet<PDFileEntry> {
+    llvm::BumpPtrAllocator Alloc;
+    
+    void addDiagnostic(const PathDiagnostic &PD,
+                       StringRef ConsumerName,
+                       StringRef fileName);
+    
+    PDFileEntry::ConsumerFiles *getFiles(const PathDiagnostic &PD);
+  };
 
 private:
   virtual void anchor();

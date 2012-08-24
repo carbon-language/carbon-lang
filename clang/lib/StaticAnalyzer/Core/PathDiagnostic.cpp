@@ -271,6 +271,46 @@ void PathDiagnosticConsumer::FlushDiagnostics(
   }
 }
 
+static void ProfileDiagnostic(const PathDiagnostic &PD,
+                              llvm::FoldingSetNodeID &NodeID) {
+  NodeID.AddString(PD.getBugType());
+  NodeID.AddString(PD.getDescription());
+  NodeID.Add(PD.getLocation());
+}
+
+void PathDiagnosticConsumer::FilesMade::addDiagnostic(const PathDiagnostic &PD,
+                                                      StringRef ConsumerName,
+                                                      StringRef FileName) {
+  llvm::FoldingSetNodeID NodeID;
+  ProfileDiagnostic(PD, NodeID);
+  void *InsertPos;
+  PDFileEntry *Entry = FindNodeOrInsertPos(NodeID, InsertPos);
+  if (!Entry) {
+    Entry = Alloc.Allocate<PDFileEntry>();
+    Entry = new (Entry) PDFileEntry(NodeID);
+    InsertNode(Entry, InsertPos);
+  }
+  
+  // Allocate persistent storage for the file name.
+  char *FileName_cstr = (char*) Alloc.Allocate(FileName.size(), 1);
+  memcpy(FileName_cstr, FileName.data(), FileName.size());
+
+  Entry->files.push_back(std::make_pair(ConsumerName,
+                                        StringRef(FileName_cstr,
+                                                  FileName.size())));
+}
+
+PathDiagnosticConsumer::PDFileEntry::ConsumerFiles *
+PathDiagnosticConsumer::FilesMade::getFiles(const PathDiagnostic &PD) {
+  llvm::FoldingSetNodeID NodeID;
+  ProfileDiagnostic(PD, NodeID);
+  void *InsertPos;
+  PDFileEntry *Entry = FindNodeOrInsertPos(NodeID, InsertPos);
+  if (!Entry)
+    return 0;
+  return &Entry->files;
+}
+
 //===----------------------------------------------------------------------===//
 // PathDiagnosticLocation methods.
 //===----------------------------------------------------------------------===//

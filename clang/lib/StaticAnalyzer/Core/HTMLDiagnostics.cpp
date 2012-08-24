@@ -267,8 +267,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
   }
 
   if (filesMade) {
-    filesMade->push_back(std::make_pair(StringRef(getName()),
-                                        llvm::sys::path::filename(H.str())));
+    filesMade->addDiagnostic(D, getName(), llvm::sys::path::filename(H.str()));
   }
 
   // Emit the HTML to disk.

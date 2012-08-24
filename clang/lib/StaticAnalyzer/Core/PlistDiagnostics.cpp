@@ -499,17 +499,21 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
     // Output the diagnostic to the sub-diagnostic client, if any.
     if (!filesMade->empty()) {
       StringRef lastName;
-      for (FilesMade::iterator I = filesMade->begin(), E = filesMade->end();
-           I != E; ++I) {
-        StringRef newName = I->first;
+      PDFileEntry::ConsumerFiles *files = filesMade->getFiles(*D);
+      if (!files)
+        continue;
+      for (PDFileEntry::ConsumerFiles::const_iterator CI = files->begin(),
+              CE = files->end(); CI != CE; ++CI) {
+        StringRef newName = CI->first;
         if (newName != lastName) {
-          if (!lastName.empty())
+          if (!lastName.empty()) {
             o << "  </array>\n";
+          }
           lastName = newName;
           o <<  "  <key>" << lastName << "_files</key>\n";
           o << "  <array>\n";
         }
-        o << "   <string>" << I->second << "</string>\n";
+        o << "   <string>" << CI->second << "</string>\n";
       }
       o << "  </array>\n";
     }
@@ -521,10 +525,5 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
   o << " </array>\n";
 
   // Finish.
-  o << "</dict>\n</plist>";
-  
-  if (filesMade) {
-    StringRef Name(getName());
-    filesMade->push_back(std::make_pair(Name, OutputFile));
-  }
+  o << "</dict>\n</plist>";  
 }
