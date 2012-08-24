@@ -21,7 +21,7 @@
 #ifdef SCOPLIB_FOUND
 #include "polly/ScopInfo.h"
 #include "polly/Dependences.h"
-#include "polly/CodeGeneration.h"
+#include "polly/CodeGen/CodeGeneration.h"
 #include "polly/ScheduleOptimizer.h"
 
 #include "llvm/Support/Path.h"
@@ -155,7 +155,7 @@ bool Pocc::runOnScop(Scop &S) {
   } else
     fclose(poccFile);
 
-  if (!EnablePollyVector)
+  if (!PollyVectorizerChoice != VECTORIZER_NONE)
     return false;
 
   // Find the innermost dimension that is not a constant dimension. This
