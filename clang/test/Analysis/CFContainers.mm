@@ -94,7 +94,7 @@ CFSetRef CFSetCreate(CFAllocatorRef allocator, const void **values, CFIndex numV
 #define NULL __null
 
 // Done with the headers. 
-// Test experimental.osx.cocoa.ContainerAPI checker.
+// Test alpha.osx.cocoa.ContainerAPI checker.
 void testContainers(int **xNoWarn, CFIndex count) {
   int x[] = { 1, 2, 3 };
   CFArrayRef foo = CFArrayCreate(kCFAllocatorDefault, (const void **) x, sizeof(x) / sizeof(x[0]), 0);// expected-warning {{The first argument to 'CFArrayCreate' must be a C array of pointer-sized}}

@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=experimental.core.FixedAddr,experimental.core.PointerArithm,experimental.core.PointerSub,debug.ExprInspection -analyzer-store=region -verify -triple x86_64-apple-darwin9 %s
-// RUN: %clang_cc1 -analyze -analyzer-checker=experimental.core.FixedAddr,experimental.core.PointerArithm,experimental.core.PointerSub,debug.ExprInspection -analyzer-store=region -verify -triple i686-apple-darwin9 %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=alpha.core.FixedAddr,alpha.core.PointerArithm,alpha.core.PointerSub,debug.ExprInspection -analyzer-store=region -verify -triple x86_64-apple-darwin9 %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=alpha.core.FixedAddr,alpha.core.PointerArithm,alpha.core.PointerSub,debug.ExprInspection -analyzer-store=region -verify -triple i686-apple-darwin9 %s
 
 void clang_analyzer_eval(int);
 

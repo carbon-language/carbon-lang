@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=experimental.security.MallocOverflow -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=alpha.security.MallocOverflow -verify %s
 
 class A {
 public:

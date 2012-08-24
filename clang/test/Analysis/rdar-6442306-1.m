@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core %s -analyzer-store=region -verify
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.core %s -analyzer-store=region -verify
 
 typedef int bar_return_t;
 typedef struct {

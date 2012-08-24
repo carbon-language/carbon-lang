@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix,osx,experimental.unix,experimental.security.taint -analyzer-store region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix,osx,alpha.unix,alpha.security.taint -analyzer-store region -verify %s
 
 class Evil {
 public:

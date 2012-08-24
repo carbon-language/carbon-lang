@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core.BoolAssignment -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.core.BoolAssignment -analyzer-store=region -verify %s
 
 // Test C++'s bool
 

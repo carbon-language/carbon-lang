@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core -analyzer-store=region -analyzer-constraints=range -verify -triple x86_64-apple-darwin9 %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.core -analyzer-store=region -analyzer-constraints=range -verify -triple x86_64-apple-darwin9 %s
 
 //===----------------------------------------------------------------------===//
 // Delta-debugging produced forward declarations.

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c99 -analyze -analyzer-checker=core,experimental.core.BoolAssignment -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -std=c99 -analyze -analyzer-checker=core,alpha.core.BoolAssignment -analyzer-store=region -verify %s
 
 // Test stdbool.h's _Bool
 

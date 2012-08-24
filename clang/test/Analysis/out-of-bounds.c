@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -Wno-array-bounds -analyze -analyzer-checker=core,experimental.security.ArrayBoundV2 -verify %s
+// RUN: %clang_cc1 -Wno-array-bounds -analyze -analyzer-checker=core,alpha.security.ArrayBoundV2 -verify %s
 
 // Tests doing an out-of-bounds access after the end of an array using:
 // - constant integer index

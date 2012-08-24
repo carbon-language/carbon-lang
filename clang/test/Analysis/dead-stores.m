@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=experimental.core -analyzer-checker=deadcode.DeadStores,osx.cocoa.RetainCount -fblocks -verify -Wno-objc-root-class %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=alpha.core -analyzer-checker=deadcode.DeadStores,osx.cocoa.RetainCount -fblocks -verify -Wno-objc-root-class %s
 
 typedef signed char BOOL;
 typedef unsigned int NSUInteger;

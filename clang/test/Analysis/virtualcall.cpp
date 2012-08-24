@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=experimental.cplusplus.VirtualCall -analyzer-store region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=alpha.cplusplus.VirtualCall -analyzer-store region -verify %s
 
 class A {
 public:

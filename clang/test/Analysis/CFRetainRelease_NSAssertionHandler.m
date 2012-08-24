@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,osx.cocoa.RetainCount,experimental.core -verify %s -analyzer-constraints=range -analyzer-store=region
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,osx.cocoa.RetainCount,alpha.core -verify %s -analyzer-constraints=range -analyzer-store=region
 
 typedef struct objc_selector *SEL;
 typedef signed char BOOL;
