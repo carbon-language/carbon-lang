@@ -93,44 +93,13 @@ if (grep /^--help-checkers$/, @ARGV) {
 }
 
 ##----------------------------------------------------------------------------##
-# Some initial preprocessing of Clang options.
+# Declaration of Clang options.  Populated later.
 ##----------------------------------------------------------------------------##
 
-# Find 'clang'
-my $ClangSB = Cwd::realpath("$RealBin/bin/clang");
-if (!defined $ClangSB || ! -x $ClangSB) {
-  $ClangSB = Cwd::realpath("$RealBin/clang");
-}
 my $Clang;
-my $howFound = "from path";
-if (!defined $ClangSB || ! -x $ClangSB) {
-  # Default to looking for 'clang' in the path, or xcrun
-  # on OS X.
-  my $xcrun = `which xcrun`;
-  chomp $xcrun;
-  if ($xcrun ne "") {
-    $Clang = `$xcrun -toolchain XcodeDefault -find clang`;
-    chomp $Clang;  
-    if ($Clang eq "") {
-      DieDiag("No 'clang' executable found by 'xcrun'\n");
-    }
-    $howFound = "found using 'xcrun'";
-  }
-  else {
-    $Clang = `which clang`;
-    chomp $Clang;
-    if ($Clang eq "") {
-      DieDiag("No 'clang' executable found in path\n");
-    }
-  }
-}
-else {
-  $Clang = $ClangSB;
-}
-my $ClangCXX = $Clang;
-$ClangCXX =~ s/\-\d+\.\d+$//;
-$ClangCXX .= "++";
-my $ClangVersion = HtmlEscape(`$Clang --version`);
+my $ClangSB;
+my $ClangCXX;
+my $ClangVersion;
 
 ##----------------------------------------------------------------------------##
 # GetHTMLRunDir - Construct an HTML directory name for the current sub-run.
@@ -1110,7 +1079,14 @@ ADVANCED OPTIONS:
  -internal-stats
  
    Generate internal analyzer statistics.
-
+ 
+ -with-analyzer [Xcode|path to clang] 
+ -with-analyzer=[Xcode|path to clang]
+ 
+   scan-build uses the 'clang' executable relative to itself for static
+   analysis. One can override this behavior with this option by using the
+   'clang' packaged with Xcode (on OS X) or from the PATH.
+  
 CONTROLLING CHECKERS:
 
  A default group of checkers are always run unless explicitly disabled.
@@ -1291,6 +1267,7 @@ if (!@ARGV) {
 
 
 my $displayHelp = 0;
+my $AnalyzerDiscoveryMethod;
 
 while (@ARGV) {
   
@@ -1458,6 +1435,16 @@ while (@ARGV) {
     push @PluginsToLoad, "-load", shift @ARGV;
     next;
   }
+  if ($arg eq "-with-analyzer") {
+ 	shift @ARGV;
+  	$AnalyzerDiscoveryMethod = shift @ARGV;
+	next;
+  }
+  if ($arg =~ /^-with-analyzer=(.+)$/) {
+    shift @ARGV;
+	$AnalyzerDiscoveryMethod = $1;
+	next;
+  }
   
   DieDiag("unrecognized option '$arg'\n") if ($arg =~ /^-/);
   
@@ -1473,6 +1460,43 @@ if ($displayHelp) {
   DisplayHelp();
   exit 1;
 }
+
+# Find 'clang'
+if (!defined $AnalyzerDiscoveryMethod) {
+  $Clang = Cwd::realpath("$RealBin/bin/clang");
+  if (!defined $Clang || ! -x $Clang) {
+    $Clang = Cwd::realpath("$RealBin/clang");
+  }
+  if (!defined $Clang || ! -x $Clang) {
+    DieDiag("error: Cannot find an executable 'clang' relative to scan-build." .
+   	        "  Consider using --with-analyzer to pick a version of 'clang' to use for static analysis.\n");
+  }
+} 
+else {  
+  if ($AnalyzerDiscoveryMethod =~ /^[X,x]code$/) {
+	my $xcrun = `which xcrun`;
+    chomp $xcrun;
+	if ($xcrun eq "") {
+  	  DieDiag("Cannot find 'xcrun' to find 'clang' for analysis.\n");
+	}
+    $Clang = `$xcrun -toolchain XcodeDefault -find clang`;
+    chomp $Clang;  
+    if ($Clang eq "") {
+      DieDiag("No 'clang' executable found by 'xcrun'\n"); 
+    }
+  }
+  else {
+    $Clang = Cwd::realpath($AnalyzerDiscoveryMethod);
+	if (! -x $Clang) {
+   	  DieDiag("Cannot find an executable clang at '$Clang'\n");
+	}
+  }
+}
+
+$ClangCXX = $Clang;
+$ClangCXX =~ s/\-\d+\.\d+$//;
+$ClangCXX .= "++";
+$ClangVersion = HtmlEscape(`$Clang --version`);
 
 # Determine where results go.
 $CmdArgs = HtmlEscape(join(' ', map(ShellEscape($_), @ARGV)));
@@ -1497,10 +1521,7 @@ if (!defined $CmdCXX || ! -x $CmdCXX) {
   DieDiag("Executable 'c++-analyzer' does not exist at '$CmdCXX'\n") if(! -x $CmdCXX);
 }
 
-if (!defined $ClangSB || ! -x $ClangSB) {
-  Diag("'clang' executable not found in '$RealBin/bin'.\n");
-  Diag("Using 'clang' $howFound: $Clang\n");
-}
+Diag("Using '$Clang' for static analysis\n");
 
 SetHtmlEnv(\@ARGV, $HtmlDir);
 if ($AnalyzeHeaders) { push @AnalysesToRun,"-analyzer-opt-analyze-headers"; }
