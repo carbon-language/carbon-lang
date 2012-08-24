@@ -132,10 +132,16 @@ CommandInterpreter::Initialize ()
         AddAlias ("exit", cmd_obj_sp);
     }
     
-    cmd_obj_sp = GetCommandSPExact ("process attach", false);
+    cmd_obj_sp = GetCommandSPExact ("_regexp-attach",false);
     if (cmd_obj_sp)
     {
         AddAlias ("attach", cmd_obj_sp);
+    }
+
+    cmd_obj_sp = GetCommandSPExact ("process detach",false);
+    if (cmd_obj_sp)
+    {
+        AddAlias ("detach", cmd_obj_sp);
     }
 
     cmd_obj_sp = GetCommandSPExact ("process continue", false);
@@ -380,6 +386,21 @@ CommandInterpreter::LoadCommandDictionary ()
         }
     }
 
+    std::auto_ptr<CommandObjectRegexCommand>
+    attach_regex_cmd_ap(new CommandObjectRegexCommand (*this,
+                                                       "_regexp-attach",
+                                                       "Attach to a process id if in decimal, otherwise treat the argument as a process name to attach to.",
+                                                       "_regexp-attach [<pid>]\n_regexp-attach [<process-name>]", 2));
+    if (attach_regex_cmd_ap.get())
+    {
+        if (attach_regex_cmd_ap->AddRegexCommand("^([0-9]+)$", "process attach --pid %1") &&
+            attach_regex_cmd_ap->AddRegexCommand("^(.*[^[:space:]])[[:space:]]*$", "process attach --name '%1'"))
+        {
+            CommandObjectSP attach_regex_cmd_sp(attach_regex_cmd_ap.release());
+            m_command_dict[attach_regex_cmd_sp->GetCommandName ()] = attach_regex_cmd_sp;
+        }
+    }
+    
     std::auto_ptr<CommandObjectRegexCommand>
     down_regex_cmd_ap(new CommandObjectRegexCommand (*this,
                                                      "_regexp-down",

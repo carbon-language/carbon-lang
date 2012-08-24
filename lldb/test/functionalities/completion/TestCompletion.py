@@ -18,6 +18,14 @@ class CommandLineCompletionTestCase(TestBase):
         os.remove("child_send.txt")
         os.remove("child_read.txt")
 
+    def test_at(self):
+        """Test that 'at' completes to 'attach '."""
+        self.complete_from_to('at', 'attach ')
+
+    def test_de(self):
+        """Test that 'de' completes to 'detach '."""
+        self.complete_from_to('de', 'detach ')
+
     def test_process_attach_dash_dash_con(self):
         """Test that 'process attach --con' completes to 'process attach --continue '."""
         self.complete_from_to('process attach --con', 'process attach --continue ')
