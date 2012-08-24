@@ -779,7 +779,7 @@ LLDBSWIGPythonCreateOSPlugin
                 
             if (PyCallable_Check (pfunc))
             {
-                PyObject *argList = Py_BuildValue("S", SBProc_PyObj);
+                PyObject *argList = Py_BuildValue("(O)", SBProc_PyObj);
 
                 if (PyErr_Occurred ())
                 {

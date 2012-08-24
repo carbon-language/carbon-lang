@@ -1717,7 +1717,7 @@ ScriptInterpreterPython::CreateOSPlugin (std::string class_name,
     void* ret_val;
     
     {
-        Locker py_lock(this);
+        Locker py_lock(this,Locker::AcquireLock,Locker::FreeLock);
         ret_val = g_swig_create_os_plugin    (class_name,
                                               m_dictionary_name.c_str(),
                                               process_sp);
@@ -1729,6 +1729,8 @@ ScriptInterpreterPython::CreateOSPlugin (std::string class_name,
 lldb::ScriptInterpreterObjectSP
 ScriptInterpreterPython::OSPlugin_QueryForRegisterInfo (lldb::ScriptInterpreterObjectSP object)
 {
+    Locker py_lock(this,Locker::AcquireLock,Locker::FreeLock);
+    
     static char callee_name[] = "get_register_info";
     
     if (!object)
@@ -1786,6 +1788,8 @@ ScriptInterpreterPython::OSPlugin_QueryForRegisterInfo (lldb::ScriptInterpreterO
 lldb::ScriptInterpreterObjectSP
 ScriptInterpreterPython::OSPlugin_QueryForThreadsInfo (lldb::ScriptInterpreterObjectSP object)
 {
+    Locker py_lock(this,Locker::AcquireLock,Locker::FreeLock);
+
     static char callee_name[] = "get_thread_info";
     
     if (!object)
@@ -1844,6 +1848,8 @@ lldb::ScriptInterpreterObjectSP
 ScriptInterpreterPython::OSPlugin_QueryForThreadInfo (lldb::ScriptInterpreterObjectSP object,
                                                       lldb::tid_t thread_id)
 {
+    Locker py_lock(this,Locker::AcquireLock,Locker::FreeLock);
+
     static char callee_name[] = "get_register_data";
     static char param_format[] = "l";
     
