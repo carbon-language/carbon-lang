@@ -20,6 +20,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTDiagnostic.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
@@ -546,6 +547,26 @@ unsigned AsmStmt::AnalyzeAsmString(SmallVectorImpl<AsmStringPiece>&Pieces,
     DiagOffs = CurPtr-StrStart-1;
     return diag::err_asm_invalid_escape;
   }
+}
+/// GenerateAsmString - Assemble final asm string.
+std::string AsmStmt::GenerateAsmString(ASTContext &C) const {
+  // Analyze the asm string to decompose it into its pieces.  We know that Sema
+  // has already done this, so it is guaranteed to be successful.
+  SmallVector<AsmStmt::AsmStringPiece, 4> Pieces;
+  unsigned DiagOffs;
+  AnalyzeAsmString(Pieces, C, DiagOffs);
+
+  std::string AsmString;
+  for (unsigned i = 0, e = Pieces.size(); i != e; ++i) {
+    if (Pieces[i].isString())
+      AsmString += Pieces[i].getString();
+    else if (Pieces[i].getModifier() == '\0')
+      AsmString += '$' + llvm::utostr(Pieces[i].getOperandNo());
+    else
+      AsmString += "${" + llvm::utostr(Pieces[i].getOperandNo()) + ':' +
+                   Pieces[i].getModifier() + '}';
+  }
+  return AsmString;
 }
 
 Expr *MSAsmStmt::getOutputExpr(unsigned i) {

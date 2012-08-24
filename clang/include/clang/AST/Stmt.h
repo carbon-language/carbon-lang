@@ -1458,6 +1458,8 @@ public:
   unsigned AnalyzeAsmString(SmallVectorImpl<AsmStringPiece> &Pieces,
                             ASTContext &C, unsigned &DiagOffs) const;
 
+  /// GenerateAsmString - Assemble final asm string.
+  std::string GenerateAsmString(ASTContext &C) const;
 
   //===--- Output operands ---===//
 

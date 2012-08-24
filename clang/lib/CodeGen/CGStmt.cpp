@@ -1395,23 +1395,8 @@ static llvm::MDNode *getAsmSrcLocInfo(const StringLiteral *Str,
 }
 
 void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
-  // Analyze the asm string to decompose it into its pieces.  We know that Sema
-  // has already done this, so it is guaranteed to be successful.
-  SmallVector<AsmStmt::AsmStringPiece, 4> Pieces;
-  unsigned DiagOffs;
-  S.AnalyzeAsmString(Pieces, getContext(), DiagOffs);
-
-  // Assemble the pieces into the final asm string.
-  std::string AsmString;
-  for (unsigned i = 0, e = Pieces.size(); i != e; ++i) {
-    if (Pieces[i].isString())
-      AsmString += Pieces[i].getString();
-    else if (Pieces[i].getModifier() == '\0')
-      AsmString += '$' + llvm::utostr(Pieces[i].getOperandNo());
-    else
-      AsmString += "${" + llvm::utostr(Pieces[i].getOperandNo()) + ':' +
-                   Pieces[i].getModifier() + '}';
-  }
+  // Assemble the final asm string.
+  std::string AsmString = S.GenerateAsmString(getContext());
 
   // Get all the output and input constraints together.
   SmallVector<TargetInfo::ConstraintInfo, 4> OutputConstraintInfos;
