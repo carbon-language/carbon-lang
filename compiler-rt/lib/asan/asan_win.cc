@@ -153,6 +153,10 @@ void AsanTSDSet(void *tsd) {
 }
 
 // ---------------------- Various stuff ---------------- {{{1
+void MaybeReexec() {
+  // No need to re-exec on Windows.
+}
+
 void *AsanDoesNotSupportStaticLinkage() {
 #if defined(_DEBUG)
 #error Please build the runtime with a non-debug CRT: /MD or /MT

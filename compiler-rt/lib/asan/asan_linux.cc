@@ -40,6 +40,10 @@ extern "C" void* _DYNAMIC;
 
 namespace __asan {
 
+void MaybeReexec() {
+  // No need to re-exec on Linux.
+}
+
 void *AsanDoesNotSupportStaticLinkage() {
   // This will fail to link with -static.
   return &_DYNAMIC;  // defined in link.h

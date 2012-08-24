@@ -23,7 +23,8 @@
 #include "asan_thread_registry.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
-#include <crt_externs.h>  // for _NSGetEnviron
+#include <crt_externs.h>  // for _NSGetArgv
+#include <dlfcn.h>  // for dladdr()
 #include <mach-o/dyld.h>
 #include <mach-o/loader.h>
 #include <sys/mman.h>
@@ -81,6 +82,42 @@ bool PlatformHasDifferentMemcpyAndMemmove() {
   // TODO(glider): need to check dynamically that memcpy() and memmove() are
   // actually the same function.
   return GetMacosVersion() == MACOS_VERSION_SNOW_LEOPARD;
+}
+
+extern "C"
+void __asan_init();
+
+static const char kDyldInsertLibraries[] = "DYLD_INSERT_LIBRARIES";
+
+void MaybeReexec() {
+  if (!flags()->allow_reexec) return;
+#if MAC_INTERPOSE_FUNCTIONS
+  // If the program is linked with the dynamic ASan runtime library, make sure
+  // the library is preloaded so that the wrappers work. If it is not, set
+  // DYLD_INSERT_LIBRARIES and re-exec ourselves.
+  Dl_info info;
+  int result = dladdr((void*)__asan_init, &info);
+  const char *dyld_insert_libraries = GetEnv(kDyldInsertLibraries);
+  if (!dyld_insert_libraries ||
+      !REAL(strstr)(dyld_insert_libraries, info.dli_fname)) {
+    // DYLD_INSERT_LIBRARIES is not set or does not contain the runtime
+    // library.
+    char program_name[1024];
+    uint32_t buf_size = sizeof(program_name);
+    _NSGetExecutablePath(program_name, &buf_size);
+    // Ok to use setenv() since the wrappers don't depend on the value of
+    // asan_inited.
+    setenv(kDyldInsertLibraries, info.dli_fname, /*overwrite*/0);
+    if (flags()->verbosity >= 1) {
+      Report("exec()-ing the program with\n");
+      Report("%s=%s\n", kDyldInsertLibraries, info.dli_fname);
+      Report("to enable ASan wrappers.\n");
+      Report("Set ASAN_OPTIONS=allow_reexec=0 to disable this.\n");
+    }
+    execv(program_name, *_NSGetArgv());
+  }
+#endif  // MAC_INTERPOSE_FUNCTIONS
+  // If we're not using the dynamic runtime, do nothing.
 }
 
 // No-op. Mac does not support static linkage anyway.

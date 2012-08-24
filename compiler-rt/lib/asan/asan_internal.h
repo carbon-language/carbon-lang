@@ -100,6 +100,7 @@ void *AsanDoesNotSupportStaticLinkage();
 
 void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp);
 
+void MaybeReexec();
 bool AsanInterceptsSignal(int signum);
 void SetAlternateSignalStack();
 void UnsetAlternateSignalStack();

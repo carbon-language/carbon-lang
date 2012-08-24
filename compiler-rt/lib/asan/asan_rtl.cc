@@ -101,6 +101,7 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->atexit, "atexit");
   ParseFlag(str, &f->disable_core, "disable_core");
   ParseFlag(str, &f->strip_path_prefix, "strip_path_prefix");
+  ParseFlag(str, &f->allow_reexec, "allow_reexec");
 }
 
 extern "C" {
@@ -137,6 +138,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->atexit = false;
   f->disable_core = (__WORDSIZE == 64);
   f->strip_path_prefix = "";
+  f->allow_reexec = true;
 
   // Override from user-specified string.
   ParseFlagsFromString(f, __asan_default_options());
@@ -293,13 +295,18 @@ void __asan_init() {
   // Make sure we are not statically linked.
   AsanDoesNotSupportStaticLinkage();
 
-  // Initialize flags.
+  // Initialize flags. This must be done early, because most of the
+  // initialization steps look at flags().
   const char *options = GetEnv("ASAN_OPTIONS");
   InitializeFlags(flags(), options);
 
   if (flags()->verbosity && options) {
     Report("Parsed ASAN_OPTIONS: %s\n", options);
   }
+
+  // Re-exec ourselves if we need to set additional env or command line args.
+  MaybeReexec();
+
 
   if (flags()->atexit) {
     Atexit(asan_atexit);

@@ -24,6 +24,7 @@ DECLARE_REAL(char*, strchr, const char *str, int c)
 DECLARE_REAL(uptr, strlen, const char *s)
 DECLARE_REAL(char*, strncpy, char *to, const char *from, uptr size)
 DECLARE_REAL(uptr, strnlen, const char *s, uptr maxlen)
+DECLARE_REAL(char*, strstr, const char *s1, const char *s2)
 struct sigaction;
 DECLARE_REAL(int, sigaction, int signum, const struct sigaction *act,
                              struct sigaction *oldact)
