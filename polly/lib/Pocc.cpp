@@ -155,7 +155,7 @@ bool Pocc::runOnScop(Scop &S) {
   } else
     fclose(poccFile);
 
-  if (!PollyVectorizerChoice != VECTORIZER_NONE)
+  if (PollyVectorizerChoice == VECTORIZER_NONE)
     return false;
 
   // Find the innermost dimension that is not a constant dimension. This
