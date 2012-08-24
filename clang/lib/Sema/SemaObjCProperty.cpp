@@ -661,7 +661,13 @@ DiagnoseClassAndClassExtPropertyMismatch(Sema &S, ObjCInterfaceDecl *ClassDecl,
       // property.
       if (Attributes & ObjCDeclSpec::DQ_PR_readonly) {
         if (!classExtPropertyAttr ||
-            (classExtPropertyAttr & ObjCDeclSpec::DQ_PR_readwrite))
+            (classExtPropertyAttr & 
+              (ObjCDeclSpec::DQ_PR_readwrite|
+               ObjCDeclSpec::DQ_PR_assign |
+               ObjCDeclSpec::DQ_PR_unsafe_unretained |
+               ObjCDeclSpec::DQ_PR_copy |
+               ObjCDeclSpec::DQ_PR_retain |
+               ObjCDeclSpec::DQ_PR_strong)))
           continue;
         warn = true;
         break;
