@@ -55,3 +55,32 @@
 - (IBAction)doSomething2:(id)sender {} // expected-warning {{attributes on method implementation and its declaration must match}}
 - (IBAction)doSomething3:(id)sender {}
 @end
+
+// rdar://11593375
+@interface NSObject @end
+
+@interface Test : NSObject
+-(id)method __attribute__((deprecated));
+-(id)method1;
+-(id)method2 __attribute__((aligned(16)));
+- (id) method3: (int)arg1 __attribute__((aligned(16)))  __attribute__((deprecated)) __attribute__((unavailable)); // expected-note {{method 'method3:' declared here}}
+- (id) method4: (int)arg1 __attribute__((aligned(16)))  __attribute__((deprecated)) __attribute__((unavailable)); 
+@end
+
+@implementation Test
+-(id)method __attribute__((aligned(16))) __attribute__((aligned(16))) __attribute__((deprecated)) {
+    return self;
+}
+-(id)method1 __attribute__((aligned(16))) {
+    return self;
+}
+-(id)method2 {
+    return self;
+}
+- (id) method3: (int)arg1 __attribute__((deprecated)) __attribute__((unavailable)) {  // expected-warning {{attributes on method implementation and its declaration must match}}
+        return self;
+}
+- (id) method4: (int)arg1 __attribute__((aligned(16))) __attribute__((deprecated)) __attribute__((unavailable)) {
+  return self;
+}
+@end

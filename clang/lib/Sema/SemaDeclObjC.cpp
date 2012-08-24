@@ -2435,26 +2435,49 @@ CvtQTToAstBitMask(ObjCDeclSpec::ObjCDeclQualifier PQTVal) {
 }
 
 static inline
+unsigned countAlignAttr(const AttrVec &A) {
+  unsigned count=0;
+  for (AttrVec::const_iterator i = A.begin(), e = A.end(); i != e; ++i)
+    if ((*i)->getKind() == attr::Aligned)
+      ++count;
+  return count;
+}
+
+static inline
 bool containsInvalidMethodImplAttribute(ObjCMethodDecl *IMD,
                                         const AttrVec &A) {
   // If method is only declared in implementation (private method),
   // No need to issue any diagnostics on method definition with attributes.
   if (!IMD)
     return false;
-
+  
   // method declared in interface has no attribute. 
-  // But implementation has attributes. This is invalid
+  // But implementation has attributes. This is invalid.
+  // Except when implementation has 'Align' attribute which is
+  // immaterial to method declared in interface.
   if (!IMD->hasAttrs())
-    return true;
+    return (A.size() > countAlignAttr(A));
 
   const AttrVec &D = IMD->getAttrs();
-  if (D.size() != A.size())
-    return true;
 
+  unsigned countAlignOnImpl = countAlignAttr(A);
+  if (!countAlignOnImpl && (A.size() != D.size()))
+    return true;
+  else if (countAlignOnImpl) {
+    unsigned countAlignOnDecl = countAlignAttr(D);
+    if (countAlignOnDecl && (A.size() != D.size()))
+      return true;
+    else if (!countAlignOnDecl && 
+             ((A.size()-countAlignOnImpl) != D.size()))
+      return true;
+  }
+  
   // attributes on method declaration and definition must match exactly.
   // Note that we have at most a couple of attributes on methods, so this
   // n*n search is good enough.
   for (AttrVec::const_iterator i = A.begin(), e = A.end(); i != e; ++i) {
+    if ((*i)->getKind() == attr::Aligned)
+      continue;
     bool match = false;
     for (AttrVec::const_iterator i1 = D.begin(), e1 = D.end(); i1 != e1; ++i1) {
       if ((*i)->getKind() == (*i1)->getKind()) {
@@ -2465,6 +2488,7 @@ bool containsInvalidMethodImplAttribute(ObjCMethodDecl *IMD,
     if (!match)
       return true;
   }
+  
   return false;
 }
 
