@@ -147,11 +147,15 @@ class SizeClassAllocator64 {
       PopulateFreeList(class_id, region);
     }
     CHECK(!region->free_list.empty());
-    const uptr count = SizeClassMap::MaxCached(class_id);
-    for (uptr i = 0; i < count && !region->free_list.empty(); i++) {
-      AllocatorListNode *node = region->free_list.front();
-      region->free_list.pop_front();
-      free_list->push_front(node);
+    uptr count = SizeClassMap::MaxCached(class_id);
+    if (region->free_list.size() <= count) {
+      free_list->append_front(&region->free_list);
+    } else {
+      for (uptr i = 0; i < count; i++) {
+        AllocatorListNode *node = region->free_list.front();
+        region->free_list.pop_front();
+        free_list->push_front(node);
+      }
     }
     CHECK(!free_list->empty());
   }
