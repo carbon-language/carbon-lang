@@ -2502,7 +2502,11 @@ static bool InferFromPattern(CodeGenInstruction &InstInfo,
 
   // These flags are silently added without any verification.
   InstInfo.isBitcast |= PatInfo.isBitcast;
-  InstInfo.Operands.isVariadic |= PatInfo.isVariadic;
+
+  // Don't infer isVariadic. This flag means something different on SDNodes and
+  // instructions. For example, a CALL SDNode is variadic because it has the
+  // call arguments as operands, but a CALL instruction is not variadic - it
+  // has argument registers as implicit, not explicit uses.
 
   return Error;
 }
