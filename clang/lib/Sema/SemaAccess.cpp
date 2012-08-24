@@ -97,14 +97,19 @@ struct EffectiveContext {
     // functions (which can gain privileges through friendship), but we
     // take that as an oversight.
     while (true) {
+      // We want to add canonical declarations to the EC lists for
+      // simplicity of checking, but we need to walk up through the
+      // actual current DC chain.  Otherwise, something like a local
+      // extern or friend which happens to be the canonical
+      // declaration will really mess us up.
+
       if (isa<CXXRecordDecl>(DC)) {
-        CXXRecordDecl *Record = cast<CXXRecordDecl>(DC)->getCanonicalDecl();
-        Records.push_back(Record);
+        CXXRecordDecl *Record = cast<CXXRecordDecl>(DC);
+        Records.push_back(Record->getCanonicalDecl());
         DC = Record->getDeclContext();
       } else if (isa<FunctionDecl>(DC)) {
-        FunctionDecl *Function = cast<FunctionDecl>(DC)->getCanonicalDecl();
-        Functions.push_back(Function);
-        
+        FunctionDecl *Function = cast<FunctionDecl>(DC);
+        Functions.push_back(Function->getCanonicalDecl());
         if (Function->getFriendObjectKind())
           DC = Function->getLexicalDeclContext();
         else

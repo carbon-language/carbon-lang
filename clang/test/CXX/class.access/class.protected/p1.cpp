@@ -423,7 +423,7 @@ namespace test12 {
 // This friendship is not considered because a public member of A is
 // inaccessible in C.
 namespace test13 {
-  class A { protected: int foo(); }; // expected-note {{can only access this member on an object of type}}
+  class A { protected: int foo(); }; // expected-note {{declared protected here}}
   class B : private virtual A {};
   class C : private B { friend void test(); };
   class D : public virtual A {};

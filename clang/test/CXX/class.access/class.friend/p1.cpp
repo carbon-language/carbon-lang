@@ -356,3 +356,19 @@ namespace PR9103 {
     }
   };
 }
+
+// PR13642.  When computing the effective context, we were walking up
+// the DC chain for the canonical decl, which is unfortunate if that's
+// (e.g.) a friend declaration.
+namespace test14 {
+  class A {
+    class B { // expected-note {{implicitly declared private here}}
+      static int i;
+      friend void c();
+    };
+  };
+
+  void c() {
+    A::B::i = 5; // expected-error {{'B' is a private member of 'test14::A'}}
+  }
+}
