@@ -1784,6 +1784,122 @@ ScriptInterpreterPython::OSPlugin_QueryForRegisterInfo (lldb::ScriptInterpreterO
 }
 
 lldb::ScriptInterpreterObjectSP
+ScriptInterpreterPython::OSPlugin_QueryForThreadsInfo (lldb::ScriptInterpreterObjectSP object)
+{
+    static char callee_name[] = "get_thread_info";
+    
+    if (!object)
+        return lldb::ScriptInterpreterObjectSP();
+    
+    PyObject* implementor = (PyObject*)object->GetObject();
+    
+    if (implementor == NULL || implementor == Py_None)
+        return lldb::ScriptInterpreterObjectSP();
+    
+    PyObject* pmeth  = PyObject_GetAttrString(implementor, callee_name);
+    
+    if (PyErr_Occurred())
+    {
+        PyErr_Clear();
+    }
+    
+    if (pmeth == NULL || pmeth == Py_None)
+    {
+        Py_XDECREF(pmeth);
+        return lldb::ScriptInterpreterObjectSP();
+    }
+    
+    if (PyCallable_Check(pmeth) == 0)
+    {
+        if (PyErr_Occurred())
+        {
+            PyErr_Clear();
+        }
+        
+        Py_XDECREF(pmeth);
+        return lldb::ScriptInterpreterObjectSP();
+    }
+    
+    if (PyErr_Occurred())
+    {
+        PyErr_Clear();
+    }
+    
+    Py_XDECREF(pmeth);
+    
+    // right now we know this function exists and is callable..
+    PyObject* py_return = PyObject_CallMethod(implementor, callee_name, NULL);
+    
+    // if it fails, print the error but otherwise go on
+    if (PyErr_Occurred())
+    {
+        PyErr_Print();
+        PyErr_Clear();
+    }
+    
+    return MakeScriptObject(py_return);
+}
+
+lldb::ScriptInterpreterObjectSP
+ScriptInterpreterPython::OSPlugin_QueryForThreadInfo (lldb::ScriptInterpreterObjectSP object,
+                                                      lldb::tid_t thread_id)
+{
+    static char callee_name[] = "get_register_data";
+    static char param_format[] = "l";
+    
+    if (!object)
+        return lldb::ScriptInterpreterObjectSP();
+    
+    PyObject* implementor = (PyObject*)object->GetObject();
+    
+    if (implementor == NULL || implementor == Py_None)
+        return lldb::ScriptInterpreterObjectSP();
+
+    PyObject* pmeth  = PyObject_GetAttrString(implementor, callee_name);
+    
+    if (PyErr_Occurred())
+    {
+        PyErr_Clear();
+    }
+    
+    if (pmeth == NULL || pmeth == Py_None)
+    {
+        Py_XDECREF(pmeth);
+        return lldb::ScriptInterpreterObjectSP();
+    }
+    
+    if (PyCallable_Check(pmeth) == 0)
+    {
+        if (PyErr_Occurred())
+        {
+            PyErr_Clear();
+        }
+        
+        Py_XDECREF(pmeth);
+        return lldb::ScriptInterpreterObjectSP();
+    }
+    
+    if (PyErr_Occurred())
+    {
+        PyErr_Clear();
+    }
+    
+    Py_XDECREF(pmeth);
+    
+    // right now we know this function exists and is callable..
+    PyObject* py_return = PyObject_CallMethod(implementor, callee_name, param_format, thread_id);
+
+    // if it fails, print the error but otherwise go on
+    if (PyErr_Occurred())
+    {
+        PyErr_Print();
+        PyErr_Clear();
+    }
+    
+    return MakeScriptObject(py_return);
+}
+
+lldb::ScriptInterpreterObjectSP
 ScriptInterpreterPython::CreateSyntheticScriptedProvider (std::string class_name,
                                                           lldb::ValueObjectSP valobj)
 {

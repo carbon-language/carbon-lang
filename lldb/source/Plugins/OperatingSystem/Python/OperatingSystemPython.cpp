@@ -199,8 +199,19 @@ OperatingSystemPython::GetPluginVersion()
 bool
 OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
-    // TODO: python: call "dict get_thread_info()" on the
-    // python object that represents our instance of the OperatingSystem plug-in
+    
+    if (!m_interpreter || !m_python_object)
+        return NULL;
+    auto object_sp = m_interpreter->OSPlugin_QueryForThreadsInfo(m_interpreter->MakeScriptObject(m_python_object));
+    if (!object_sp)
+        return NULL;
+    PythonDataObject dictionary_data_obj((PyObject*)object_sp->GetObject());
+    PythonDataDictionary dictionary = dictionary_data_obj.GetDictionaryObject();
+    if(!dictionary)
+        return NULL;
+    
+    // TODO: read from the dict
+    
     // and parse the returned dictionary. We need to pass in the a Dictionary
     // with the same kind of info we want back so we can reuse old threads, but
     // only create new ones.
@@ -227,8 +238,17 @@ OperatingSystemPython::ThreadWasSelected (Thread *thread)
 RegisterContextSP
 OperatingSystemPython::CreateRegisterContextForThread (Thread *thread)
 {
-    // TODO: python: call "bytes get_register_context_data(SBThread thread)"
-    // and populate resulting data into thread
+
+    if (!m_interpreter || !m_python_object || !thread)
+        return NULL;
+    auto object_sp = m_interpreter->OSPlugin_QueryForThreadInfo(m_interpreter->MakeScriptObject(m_python_object),
+                                                                thread->GetID());
+    if (!object_sp)
+        return NULL;
+    PythonDataObject pack_info_data_obj((PyObject*)object_sp->GetObject());
+    if(!pack_info_data_obj)
+        return NULL;
+
     RegisterContextSP reg_ctx_sp;
 //    bytes b = get_register_context_data(thread)
 //    if (b)

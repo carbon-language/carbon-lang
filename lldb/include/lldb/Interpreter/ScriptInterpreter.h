@@ -212,6 +212,19 @@ public:
         return lldb::ScriptInterpreterObjectSP();
     }
     
+    virtual lldb::ScriptInterpreterObjectSP
+    OSPlugin_QueryForThreadsInfo (lldb::ScriptInterpreterObjectSP object)
+    {
+        return lldb::ScriptInterpreterObjectSP();
+    }
+    
+    virtual lldb::ScriptInterpreterObjectSP
+    OSPlugin_QueryForThreadInfo (lldb::ScriptInterpreterObjectSP object,
+                                 lldb::tid_t thread_id)
+    {
+        return lldb::ScriptInterpreterObjectSP();
+    }
+    
     virtual bool
     GenerateFunction(const char *signature, const StringList &input)
     {

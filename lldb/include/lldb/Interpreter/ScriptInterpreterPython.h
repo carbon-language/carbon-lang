@@ -83,6 +83,13 @@ public:
     virtual lldb::ScriptInterpreterObjectSP
     OSPlugin_QueryForRegisterInfo (lldb::ScriptInterpreterObjectSP object);
     
+    virtual lldb::ScriptInterpreterObjectSP
+    OSPlugin_QueryForThreadsInfo (lldb::ScriptInterpreterObjectSP object);
+    
+    virtual lldb::ScriptInterpreterObjectSP
+    OSPlugin_QueryForThreadInfo (lldb::ScriptInterpreterObjectSP object,
+                                 lldb::tid_t thread_id);
+    
     virtual uint32_t
     CalculateNumChildren (const lldb::ScriptInterpreterObjectSP& implementor);
     
