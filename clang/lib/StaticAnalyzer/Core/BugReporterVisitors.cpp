@@ -296,6 +296,49 @@ TrackConstraintBRVisitor::VisitNode(const ExplodedNode *N,
   return NULL;
 }
 
+namespace {
+class ReturnNullVisitor : public BugReporterVisitorImpl<ReturnNullVisitor> {
+  const ExplodedNode *ReturnNode;
+public:
+  ReturnNullVisitor(const ExplodedNode *N) : ReturnNode(N) {}
+
+  virtual void Profile(llvm::FoldingSetNodeID &ID) const {
+    static int Tag = 0;
+    ID.AddPointer(&Tag);
+    ID.Add(*ReturnNode);
+  }
+
+  PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
+                                 const ExplodedNode *PrevN,
+                                 BugReporterContext &BRC,
+                                 BugReport &BR) {
+    if (ReturnNode != BRC.getNodeResolver().getOriginalNode(N))
+      return 0;
+
+    StmtPoint SP = cast<StmtPoint>(ReturnNode->getLocation());
+    const ReturnStmt *Ret = cast<ReturnStmt>(SP.getStmt());
+    PathDiagnosticLocation L(Ret, BRC.getSourceManager(),
+                             N->getLocationContext());
+
+    SmallString<64> Msg;
+    llvm::raw_svector_ostream Out(Msg);
+
+    if (Loc::isLocType(Ret->getRetValue()->getType()))
+      Out << "Returning null pointer";
+    else
+      Out << "Returning zero";
+
+    // FIXME: We should have a more generalized printing mechanism.
+    const Expr *RetE = Ret->getRetValue()->IgnoreParenCasts();
+    if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(RetE))
+      if (const DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(DR->getDecl()))
+        Out << " (loaded from '" << *DD << "')";
+
+    return new PathDiagnosticEventPiece(L, Out.str());
+  }
+};
+} // end anonymous namespace
+
 void bugreporter::addTrackNullOrUndefValueVisitor(const ExplodedNode *N,
                                                   const Stmt *S,
                                                   BugReport *report) {
@@ -310,6 +353,9 @@ void bugreporter::addTrackNullOrUndefValueVisitor(const ExplodedNode *N,
     const ProgramPoint &pp = N->getLocation();
     if (const PostStmt *ps = dyn_cast<PostStmt>(&pp)) {
       if (ps->getStmt() == S)
+        break;
+    } else if (const CallExitEnd *CEE = dyn_cast<CallExitEnd>(&pp)) {
+      if (CEE->getCalleeContext()->getCallSite() == S)
         break;
     }
     N = N->getFirstPred();
@@ -363,6 +409,28 @@ void bugreporter::addTrackNullOrUndefValueVisitor(const ExplodedNode *N,
       report->markInteresting(R);
       report->addVisitor(new TrackConstraintBRVisitor(loc::MemRegionVal(R),
                                                       false));
+    }
+  } else {
+    // Walk backwards to just before the post-statement checks.
+    ProgramPoint PP = N->getLocation();
+    while (N && isa<PostStmt>(PP = N->getLocation()))
+      N = N->getFirstPred();
+
+    if (N && isa<CallExitEnd>(PP)) {
+      // Find a ReturnStmt, if there is one.
+      do {
+        N = N->getFirstPred();
+        PP = N->getLocation();
+      } while (!isa<StmtPoint>(PP) && !isa<CallEnter>(PP));
+
+      if (const StmtPoint *SP = dyn_cast<StmtPoint>(&PP)) {
+        if (const ReturnStmt *Ret = SP->getStmtAs<ReturnStmt>()) {
+          if (const Expr *RetE = Ret->getRetValue()) {
+            report->addVisitor(new ReturnNullVisitor(N));
+            addTrackNullOrUndefValueVisitor(N, RetE, report);
+          }
+        }
+      }
     }
   }
 }
