@@ -467,6 +467,30 @@ private:
         CachedBoolEvals[S] = Result; // update or insert
         return Result;
       }
+      else {
+        switch (Bop->getOpcode()) {
+          default: break;
+          // For 'x & 0' and 'x * 0', we can determine that
+          // the value is always false.
+          case BO_Mul:
+          case BO_And: {
+            // If either operand is zero, we know the value
+            // must be false.
+            llvm::APSInt IntVal;
+            if (Bop->getLHS()->EvaluateAsInt(IntVal, *Context)) {
+              if (IntVal.getBoolValue() == false) {
+                return TryResult(false);
+              }
+            }
+            if (Bop->getRHS()->EvaluateAsInt(IntVal, *Context)) {
+              if (IntVal.getBoolValue() == false) {
+                return TryResult(false);
+              }
+            }
+          }
+          break;
+        }
+      }
     }
 
     return evaluateAsBooleanConditionNoCache(S);
