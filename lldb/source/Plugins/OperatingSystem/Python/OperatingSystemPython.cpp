@@ -228,7 +228,6 @@ OperatingSystemPython::CreateRegisterContextForThread (Thread *thread)
                                                   reg_context_data.GetSize()));
         if (data_sp->GetByteSize())
         {
-            printf("got %zu bytes of reg ctx data\n", data_sp->GetByteSize());
             RegisterContextMemory *reg_ctx_memory = new RegisterContextMemory (*thread, 0, *GetDynamicRegisterInfo (), LLDB_INVALID_ADDRESS);
             if (reg_ctx_memory)
             {
