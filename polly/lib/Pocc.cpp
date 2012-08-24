@@ -19,10 +19,10 @@
 #include "polly/LinkAllPasses.h"
 
 #ifdef SCOPLIB_FOUND
-#include "polly/ScopInfo.h"
-#include "polly/Dependences.h"
 #include "polly/CodeGen/CodeGeneration.h"
+#include "polly/Dependences.h"
 #include "polly/ScheduleOptimizer.h"
+#include "polly/ScopInfo.h"
 
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
