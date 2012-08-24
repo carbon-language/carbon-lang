@@ -77,8 +77,8 @@ int main(int argc, const char **argv) {
   ClangTool SyntaxTool(*Compilations, SourcePaths);
 
   // First, let's check to make sure there were no errors.
-  if (int result = SyntaxTool.run(
-      newFrontendActionFactory<clang::SyntaxOnlyAction>())) {
+  if (int result =
+        SyntaxTool.run(newFrontendActionFactory<clang::SyntaxOnlyAction>())) {
     llvm::errs() << "Error compiling files.\n";
     return result;
   }

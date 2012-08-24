@@ -20,14 +20,18 @@ namespace loop_migrate {
 
 /// A map used to walk the AST in reverse: maps child Stmt to parent Stmt.
 typedef llvm::DenseMap<const Stmt*, const Stmt*> StmtParentMap;
+
 /// A map used to walk the AST in reverse:
 ///  maps VarDecl to the to parent DeclStmt.
 typedef llvm::DenseMap<const VarDecl*, const DeclStmt*> DeclParentMap;
+
 /// A map used to track which variables have been removed by a refactoring pass.
 /// It maps the parent ForStmt to the removed index variable's VarDecl.
 typedef llvm::DenseMap<const ForStmt*, const VarDecl *> ReplacedVarsMap;
+
 /// A map used to remember the variable names generated in a Stmt
 typedef llvm::DenseMap<const Stmt*, std::string> StmtGeneratedVarNameMap;
+
 /// A vector used to store the AST subtrees of an Expr.
 typedef llvm::SmallVector<const Expr *, 16> ComponentVector;
 
@@ -42,12 +46,10 @@ class StmtAncestorASTVisitor :
 
   /// \brief Run the analysis on the TranslationUnitDecl.
   ///
-  /// In case we're running this analysis multiple times, don't repeat the
-  /// work unless RunEvenIfNotEmpty is set to true.
-  void gatherAncestors(const TranslationUnitDecl *TUD, bool RunEvenIfNotEmpty) {
-    if (RunEvenIfNotEmpty || StmtAncestors.empty()) {
+  /// In case we're running this analysis multiple times, don't repeat the work.
+  void gatherAncestors(const TranslationUnitDecl *TUD) {
+    if (StmtAncestors.empty())
       TraverseDecl(const_cast<TranslationUnitDecl *>(TUD));
-    }
   }
 
   /// Accessor for StmtAncestors.
@@ -110,8 +112,33 @@ class DependencyFinderASTVisitor :
     StmtParents(StmtParents), DeclParents(DeclParents),
     ContainingStmt(ContainingStmt), ReplacedVars(ReplacedVars) { }
 
-  /// Run the analysis on Body, and return true iff the expression depends on
-  /// some variable declared within ContainingStmt.
+  /// \brief Run the analysis on Body, and return true iff the expression
+  /// depends on some variable declared within ContainingStmt.
+  ///
+  /// This is intended to protect against hoisting the container expression
+  /// outside of an inner context if part of that expression is declared in that
+  /// inner context.
+  ///
+  /// For example,
+  ///   const int N = 10, M = 20;
+  ///   int arr[N][M];
+  ///   int getRow();
+  ///
+  ///   for (int i = 0; i < M; ++i) {
+  ///     int k = getRow();
+  ///     printf("%d:", arr[k][i]);
+  ///   }
+  ///
+  /// At first glance, this loop looks like it could be changed to
+  ///   for (int elem : arr[k]) {
+  ///     int k = getIndex();
+  ///     printf("%d:", elem);
+  ///   }
+  /// But this is malformed, since `k` is used before it is defined!
+  ///
+  /// In order to avoid this, this class looks at the container expression
+  /// `arr[k]` and decides whether or not it contains a sub-expression declared
+  /// within the the loop body.
   bool dependsOnOutsideVariable(const Stmt *Body) {
     DependsOnOutsideVariable = false;
     TraverseStmt(const_cast<Stmt *>(Body));

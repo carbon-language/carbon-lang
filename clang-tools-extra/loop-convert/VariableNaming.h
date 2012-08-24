@@ -20,8 +20,8 @@
 
 namespace clang {
 namespace loop_migrate {
-/// \brief VariableNamer - Create names for generated variables within
-/// a particular statement.
+
+/// \brief Create names for generated variables within a particular statement.
 ///
 /// VariableNamer uses a DeclContext as a reference point, checking for any
 /// conflicting declarations higher up in the context or within SourceStmt.
@@ -29,13 +29,11 @@ namespace loop_migrate {
 /// index, if they exist.
 class VariableNamer {
  public:
-  VariableNamer(ASTContext *Context, StmtGeneratedVarNameMap *GeneratedDecls,
-                const StmtParentMap *ReverseAST, const DeclContext *LoopContext,
-                const Stmt *SourceStmt, const VarDecl *OldIndex,
-                const VarDecl *TheContainer) :
-  Context(Context), GeneratedDecls(GeneratedDecls), ReverseAST(ReverseAST),
-  LoopContext(LoopContext), SourceStmt(SourceStmt), OldIndex(OldIndex),
-  TheContainer(TheContainer) { }
+  VariableNamer(StmtGeneratedVarNameMap *GeneratedDecls,
+                const StmtParentMap *ReverseAST, const Stmt *SourceStmt,
+                const VarDecl *OldIndex, const VarDecl *TheContainer) :
+  GeneratedDecls(GeneratedDecls), ReverseAST(ReverseAST),
+  SourceStmt(SourceStmt), OldIndex(OldIndex), TheContainer(TheContainer) { }
 
   /// \brief Generate a new index name.
   ///
@@ -45,17 +43,15 @@ class VariableNamer {
   std::string createIndexName();
 
  private:
-  ASTContext *Context;
   StmtGeneratedVarNameMap *GeneratedDecls;
   const StmtParentMap *ReverseAST;
-  const DeclContext *LoopContext;
   const Stmt *SourceStmt;
   const VarDecl *OldIndex;
   const VarDecl *TheContainer;
 
   // Determine whether or not a declaration that would conflict with Symbol
   // exists in an outer context or in any statement contained in SourceStmt.
-  bool declarationExists(const std::string &Symbol);
+  bool declarationExists(const StringRef Symbol);
 };
 
 } // namespace loop_migrate

@@ -23,6 +23,7 @@ namespace clang {
 namespace loop_migrate {
 
 struct Usage;
+class Confidence;
 // The main computational result of ForLoopIndexUseVisitor.
 typedef llvm::SmallVector<Usage, 8> UsageResult;
 
@@ -75,11 +76,21 @@ class LoopFixer : public ast_matchers::MatchFinder::MatchCallback {
   /// \brief Computes the changes needed to convert a given for loop, and
   /// applies it if this->CountOnly is false.
   void doConversion(ASTContext *Context,
-                    const VarDecl *IndexVar, const VarDecl *EndVar,
+                    const VarDecl *IndexVar,
                     const Expr *ContainerExpr, const UsageResult &Usages,
                     const DeclStmt *AliasDecl, const ForStmt *TheLoop,
                     bool ContainerNeedsDereference);
 
+  /// \brief Given a loop header that would be convertible, discover all usages
+  /// of the index variable and convert the loop if possible.
+  void FindAndVerifyUsages(ASTContext *Context,
+                           const VarDecl *LoopVar,
+                           const VarDecl *EndVar,
+                           const Expr *ContainerExpr,
+                           const Expr *BoundExpr,
+                           bool ContainerNeedsDereference,
+                           const ForStmt *TheLoop,
+                           Confidence ConfidenceLevel);
 };
 
 } // namespace loop_migrate

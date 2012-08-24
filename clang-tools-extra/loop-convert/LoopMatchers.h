@@ -36,6 +36,7 @@ extern const char EndVarName[];
 ast_matchers::StatementMatcher makeArrayLoopMatcher();
 ast_matchers::StatementMatcher makeIteratorLoopMatcher();
 ast_matchers::StatementMatcher makePseudoArrayLoopMatcher();
+
 } //namespace loop_migrate
 } //namespace clang
 
