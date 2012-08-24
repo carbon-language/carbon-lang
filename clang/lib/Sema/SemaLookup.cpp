@@ -1725,15 +1725,17 @@ bool Sema::DiagnoseAmbiguousLookup(LookupResult &Result) {
 
 namespace {
   struct AssociatedLookup {
-    AssociatedLookup(Sema &S,
+    AssociatedLookup(Sema &S, SourceLocation InstantiationLoc,
                      Sema::AssociatedNamespaceSet &Namespaces,
                      Sema::AssociatedClassSet &Classes)
-      : S(S), Namespaces(Namespaces), Classes(Classes) {
+      : S(S), Namespaces(Namespaces), Classes(Classes),
+        InstantiationLoc(InstantiationLoc) {
     }
 
     Sema &S;
     Sema::AssociatedNamespaceSet &Namespaces;
     Sema::AssociatedClassSet &Classes;
+    SourceLocation InstantiationLoc;
   };
 }
 
@@ -1864,8 +1866,10 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result,
 
   // Only recurse into base classes for complete types.
   if (!Class->hasDefinition()) {
-    // FIXME: we might need to instantiate templates here
-    return;
+    QualType type = Result.S.Context.getTypeDeclType(Class);
+    if (Result.S.RequireCompleteType(Result.InstantiationLoc, type,
+                                     /*no diagnostic*/ 0))
+      return;
   }
 
   // Add direct and indirect base classes along with their associated
@@ -2069,13 +2073,15 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result, QualType Ty) {
 /// namespaces searched by argument-dependent lookup
 /// (C++ [basic.lookup.argdep]) for a given set of arguments.
 void
-Sema::FindAssociatedClassesAndNamespaces(llvm::ArrayRef<Expr *> Args,
+Sema::FindAssociatedClassesAndNamespaces(SourceLocation InstantiationLoc,
+                                         llvm::ArrayRef<Expr *> Args,
                                  AssociatedNamespaceSet &AssociatedNamespaces,
                                  AssociatedClassSet &AssociatedClasses) {
   AssociatedNamespaces.clear();
   AssociatedClasses.clear();
 
-  AssociatedLookup Result(*this, AssociatedNamespaces, AssociatedClasses);
+  AssociatedLookup Result(*this, InstantiationLoc,
+                          AssociatedNamespaces, AssociatedClasses);
 
   // C++ [basic.lookup.koenig]p2:
   //   For each argument type T in the function call, there is a set
@@ -2648,7 +2654,7 @@ void Sema::ArgumentDependentLookup(DeclarationName Name, bool Operator,
   // arguments we have.
   AssociatedNamespaceSet AssociatedNamespaces;
   AssociatedClassSet AssociatedClasses;
-  FindAssociatedClassesAndNamespaces(Args,
+  FindAssociatedClassesAndNamespaces(Loc, Args,
                                      AssociatedNamespaces,
                                      AssociatedClasses);
   if (StdNamespaceIsAssociated && StdNamespace)

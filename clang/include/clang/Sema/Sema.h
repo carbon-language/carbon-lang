@@ -2186,7 +2186,8 @@ public:
                              bool EnteringContext = false,
                              const ObjCObjectPointerType *OPT = 0);
 
-  void FindAssociatedClassesAndNamespaces(llvm::ArrayRef<Expr *> Args,
+  void FindAssociatedClassesAndNamespaces(SourceLocation InstantiationLoc,
+                                          llvm::ArrayRef<Expr *> Args,
                                    AssociatedNamespaceSet &AssociatedNamespaces,
                                    AssociatedClassSet &AssociatedClasses);
 

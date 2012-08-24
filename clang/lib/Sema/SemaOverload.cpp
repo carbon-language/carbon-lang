@@ -9509,7 +9509,7 @@ DiagnoseTwoPhaseLookup(Sema &SemaRef, SourceLocation FnLoc,
       // declaring the function there instead.
       Sema::AssociatedNamespaceSet AssociatedNamespaces;
       Sema::AssociatedClassSet AssociatedClasses;
-      SemaRef.FindAssociatedClassesAndNamespaces(Args,
+      SemaRef.FindAssociatedClassesAndNamespaces(FnLoc, Args,
                                                  AssociatedNamespaces,
                                                  AssociatedClasses);
       // Never suggest declaring a function within namespace 'std'. 
