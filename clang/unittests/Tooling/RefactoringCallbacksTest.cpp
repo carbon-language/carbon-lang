@@ -40,28 +40,28 @@ TEST(RefactoringCallbacksTest, ReplacesStmtsWithString) {
   std::string Code = "void f() { int i = 1; }";
   std::string Expected = "void f() { ; }";
   ReplaceStmtWithText Callback("id", ";");
-  expectRewritten(Code, Expected, id("id", declarationStatement()), Callback);
+  expectRewritten(Code, Expected, id("id", declStmt()), Callback);
 }
 
 TEST(RefactoringCallbacksTest, ReplacesStmtsInCalledMacros) {
   std::string Code = "#define A void f() { int i = 1; }\nA";
   std::string Expected = "#define A void f() { ; }\nA";
   ReplaceStmtWithText Callback("id", ";");
-  expectRewritten(Code, Expected, id("id", declarationStatement()), Callback);
+  expectRewritten(Code, Expected, id("id", declStmt()), Callback);
 }
 
 TEST(RefactoringCallbacksTest, IgnoresStmtsInUncalledMacros) {
   std::string Code = "#define A void f() { int i = 1; }";
   std::string Expected = "#define A void f() { int i = 1; }";
   ReplaceStmtWithText Callback("id", ";");
-  expectRewritten(Code, Expected, id("id", declarationStatement()), Callback);
+  expectRewritten(Code, Expected, id("id", declStmt()), Callback);
 }
 
 TEST(RefactoringCallbacksTest, ReplacesInteger) {
   std::string Code = "void f() { int i = 1; }";
   std::string Expected = "void f() { int i = 2; }";
   ReplaceStmtWithText Callback("id", "2");
-  expectRewritten(Code, Expected, id("id", expression(integerLiteral())),
+  expectRewritten(Code, Expected, id("id", expr(integerLiteral())),
                   Callback);
 }
 
@@ -72,7 +72,7 @@ TEST(RefactoringCallbacksTest, ReplacesStmtWithStmt) {
   expectRewritten(Code, Expected,
       id("always-false", conditionalOperator(
           hasCondition(boolLiteral(equals(false))),
-          hasFalseExpression(id("should-be", expression())))),
+          hasFalseExpression(id("should-be", expr())))),
       Callback);
 }
 
@@ -82,8 +82,8 @@ TEST(RefactoringCallbacksTest, ReplacesIfStmt) {
   ReplaceIfStmtWithItsBody Callback("id", true);
   expectRewritten(Code, Expected,
       id("id", ifStmt(
-          hasCondition(implicitCast(hasSourceExpression(
-              declarationReference(to(variable(hasName("a"))))))))),
+          hasCondition(implicitCastExpr(hasSourceExpression(
+              declRefExpr(to(varDecl(hasName("a"))))))))),
       Callback);
 }
 
