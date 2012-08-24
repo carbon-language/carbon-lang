@@ -6,13 +6,16 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//  This file defines a utility class for RecursiveASTVisitor related tests.
-//
+///
+/// \file
+/// \brief Defines utility templates for RecursiveASTVisitor related tests.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_TEST_VISITOR_H
 #define LLVM_CLANG_TEST_VISITOR_H
+
+#include <vector>
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTConsumer.h"
@@ -29,7 +32,7 @@ namespace clang {
 /// This is a drop-in replacement for RecursiveASTVisitor itself, with the
 /// additional capability of running it over a snippet of code.
 ///
-/// Visits template instantiations by default.
+/// Visits template instantiations (but not implicit code) by default.
 template <typename T>
 class TestVisitor : public RecursiveASTVisitor<T> {
 public:
@@ -85,63 +88,126 @@ protected:
   ASTContext *Context;
 };
 
-
-/// \brief A RecursiveASTVisitor for testing the RecursiveASTVisitor itself.
+/// \brief A RecursiveASTVisitor to check that certain matches are (or are
+/// not) observed during visitation.
 ///
-/// Allows simple creation of test visitors running matches on only a small
+/// This is a RecursiveASTVisitor for testing the RecursiveASTVisitor itself,
+/// and allows simple creation of test visitors running matches on only a small
 /// subset of the Visit* methods.
 template <typename T, template <typename> class Visitor = TestVisitor>
 class ExpectedLocationVisitor : public Visitor<T> {
 public:
-  ExpectedLocationVisitor()
-    : ExpectedLine(0), ExpectedColumn(0), Found(false) {}
-
-  virtual ~ExpectedLocationVisitor() {
-    EXPECT_TRUE(Found)
-      << "Expected \"" << ExpectedMatch << "\" at " << ExpectedLine
-      << ":" << ExpectedColumn << PartialMatches;
+  /// \brief Expect 'Match' *not* to occur at the given 'Line' and 'Column'.
+  ///
+  /// Any number of matches can be disallowed.
+  void DisallowMatch(Twine Match, unsigned Line, unsigned Column) {
+    DisallowedMatches.push_back(MatchCandidate(Match, Line, Column));
   }
 
   /// \brief Expect 'Match' to occur at the given 'Line' and 'Column'.
+  ///
+  /// Any number of expected matches can be set by calling this repeatedly.
+  /// Each is expected to be matched exactly once.
   void ExpectMatch(Twine Match, unsigned Line, unsigned Column) {
-    ExpectedMatch = Match.str();
-    ExpectedLine = Line;
-    ExpectedColumn = Column;
+    ExpectedMatches.push_back(ExpectedMatch(Match, Line, Column));
+  }
+
+  /// \brief Checks that all expected matches have been found.
+  virtual ~ExpectedLocationVisitor() {
+    for (typename std::vector<ExpectedMatch>::const_iterator
+             It = ExpectedMatches.begin(), End = ExpectedMatches.end();
+         It != End; ++It) {
+      It->ExpectFound();
+    }
   }
 
 protected:
-  /// \brief Convenience method to simplify writing test visitors.
-  ///
-  /// Sets 'Found' to true if 'Name' and 'Location' match the expected
-  /// values. If only a partial match is found, record the information
-  /// to produce nice error output when a test fails.
+  /// \brief Checks an actual match against expected and disallowed matches.
   ///
   /// Implementations are required to call this with appropriate values
   /// for 'Name' during visitation.
   void Match(StringRef Name, SourceLocation Location) {
-    FullSourceLoc FullLocation = this->Context->getFullLoc(Location);
-    if (Name == ExpectedMatch &&
-        FullLocation.isValid() &&
-        FullLocation.getSpellingLineNumber() == ExpectedLine &&
-        FullLocation.getSpellingColumnNumber() == ExpectedColumn) {
-      EXPECT_TRUE(!Found);
-      Found = true;
-    } else if (Name == ExpectedMatch ||
-               (FullLocation.isValid() &&
-                FullLocation.getSpellingLineNumber() == ExpectedLine &&
-                FullLocation.getSpellingColumnNumber() == ExpectedColumn)) {
-      // If we did not match, record information about partial matches.
-      llvm::raw_string_ostream Stream(PartialMatches);
-      Stream << ", partial match: \"" << Name << "\" at ";
-      Location.print(Stream, this->Context->getSourceManager());
+    const FullSourceLoc FullLocation = this->Context->getFullLoc(Location);
+
+    for (typename std::vector<MatchCandidate>::const_iterator
+             It = DisallowedMatches.begin(), End = DisallowedMatches.end();
+         It != End; ++It) {
+      EXPECT_FALSE(It->Matches(Name, FullLocation))
+          << "Matched disallowed " << *It;
+    }
+
+    for (typename std::vector<ExpectedMatch>::iterator
+             It = ExpectedMatches.begin(), End = ExpectedMatches.end();
+         It != End; ++It) {
+      It->UpdateFor(Name, FullLocation, this->Context->getSourceManager());
     }
   }
 
-  std::string ExpectedMatch;
-  unsigned ExpectedLine;
-  unsigned ExpectedColumn;
-  std::string PartialMatches;
-  bool Found;
+ private:
+  struct MatchCandidate {
+    std::string ExpectedName;
+    unsigned LineNumber;
+    unsigned ColumnNumber;
+
+    MatchCandidate(Twine Name, unsigned LineNumber, unsigned ColumnNumber)
+      : ExpectedName(Name.str()), LineNumber(LineNumber),
+        ColumnNumber(ColumnNumber) {
+    }
+
+    bool Matches(StringRef Name, FullSourceLoc const &Location) const {
+      return MatchesName(Name) && MatchesLocation(Location);
+    }
+
+    bool PartiallyMatches(StringRef Name, FullSourceLoc const &Location) const {
+      return MatchesName(Name) || MatchesLocation(Location);
+    }
+
+    bool MatchesName(StringRef Name) const {
+      return Name == ExpectedName;
+    }
+
+    bool MatchesLocation(FullSourceLoc const &Location) const {
+      return Location.isValid() &&
+          Location.getSpellingLineNumber() == LineNumber &&
+          Location.getSpellingColumnNumber() == ColumnNumber;
+    }
+
+    friend std::ostream &operator<<(std::ostream &Stream,
+                                    MatchCandidate const &Match) {
+      return Stream << Match.ExpectedName
+                    << " at " << Match.LineNumber << ":" << Match.ColumnNumber;
+    }
+  };
+
+  struct ExpectedMatch {
+    ExpectedMatch(Twine Name, unsigned LineNumber, unsigned ColumnNumber)
+      : Candidate(Name, LineNumber, ColumnNumber), Found(false) {}
+
+    void UpdateFor(StringRef Name, FullSourceLoc Location, SourceManager &SM) {
+      if (Candidate.Matches(Name, Location)) {
+        EXPECT_TRUE(!Found);
+        Found = true;
+      } else if (!Found && Candidate.PartiallyMatches(Name, Location)) {
+        llvm::raw_string_ostream Stream(PartialMatches);
+        Stream << ", partial match: \"" << Name << "\" at ";
+        Location.print(Stream, SM);
+      }
+    }
+
+    void ExpectFound() const {
+      EXPECT_TRUE(Found)
+          << "Expected \"" << Candidate.ExpectedName
+          << "\" at " << Candidate.LineNumber
+          << ":" << Candidate.ColumnNumber << PartialMatches;
+    }
+
+    MatchCandidate Candidate;
+    std::string PartialMatches;
+    bool Found;
+  };
+
+  std::vector<MatchCandidate> DisallowedMatches;
+  std::vector<ExpectedMatch> ExpectedMatches;
 };
 }
 

@@ -799,7 +799,7 @@ bool RecursiveASTVisitor<Derived>::TraverseConstructorInitializer(
   if (TypeSourceInfo *TInfo = Init->getTypeSourceInfo())
     TRY_TO(TraverseTypeLoc(TInfo->getTypeLoc()));
 
-  if (Init->isWritten())
+  if (Init->isWritten() || getDerived().shouldVisitImplicitCode())
     TRY_TO(TraverseStmt(Init->getInit()));
   return true;
 }
