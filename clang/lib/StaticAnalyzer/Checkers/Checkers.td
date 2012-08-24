@@ -13,33 +13,33 @@ include "clang/StaticAnalyzer/Checkers/CheckerBase.td"
 // Packages.
 //===----------------------------------------------------------------------===//
 
-def Experimental : Package<"experimental">;
+def Alpha : Package<"alpha">;
 
 def Core : Package<"core">;
 def CoreBuiltin : Package<"builtin">, InPackage<Core>;
 def CoreUninitialized  : Package<"uninitialized">, InPackage<Core>;
-def CoreExperimental : Package<"core">, InPackage<Experimental>, Hidden;
+def CoreAlpha : Package<"core">, InPackage<Alpha>, Hidden;
 
 def Cplusplus : Package<"cplusplus">;
-def CplusplusExperimental : Package<"cplusplus">, InPackage<Experimental>, Hidden;
+def CplusplusAlpha : Package<"cplusplus">, InPackage<Alpha>, Hidden;
 
 def DeadCode : Package<"deadcode">;
-def DeadCodeExperimental : Package<"deadcode">, InPackage<Experimental>, Hidden;
+def DeadCodeAlpha : Package<"deadcode">, InPackage<Alpha>, Hidden;
 
 def Security : Package <"security">;
 def InsecureAPI : Package<"insecureAPI">, InPackage<Security>;
-def SecurityExperimental : Package<"security">, InPackage<Experimental>, Hidden;
-def Taint : Package<"taint">, InPackage<SecurityExperimental>, Hidden;  
+def SecurityAlpha : Package<"security">, InPackage<Alpha>, Hidden;
+def Taint : Package<"taint">, InPackage<SecurityAlpha>, Hidden;  
 
 def Unix : Package<"unix">;
-def UnixExperimental : Package<"unix">, InPackage<Experimental>, Hidden;
+def UnixAlpha : Package<"unix">, InPackage<Alpha>, Hidden;
 def CString : Package<"cstring">, InPackage<Unix>, Hidden;
-def CStringExperimental : Package<"cstring">, InPackage<UnixExperimental>, Hidden;
+def CStringAlpha : Package<"cstring">, InPackage<UnixAlpha>, Hidden;
 
 def OSX : Package<"osx">;
-def OSXExperimental : Package<"osx">, InPackage<Experimental>, Hidden;
+def OSXAlpha : Package<"osx">, InPackage<Alpha>, Hidden;
 def Cocoa : Package<"cocoa">, InPackage<OSX>;
-def CocoaExperimental : Package<"cocoa">, InPackage<OSXExperimental>, Hidden;
+def CocoaAlpha : Package<"cocoa">, InPackage<OSXAlpha>, Hidden;
 def CoreFoundation : Package<"coreFoundation">, InPackage<OSX>;
 def Containers : Package<"containers">, InPackage<CoreFoundation>;
 
@@ -90,7 +90,7 @@ def DynamicTypePropagation : Checker<"DynamicTypePropagation">,
 
 } // end "core"
 
-let ParentPackage = CoreExperimental in {
+let ParentPackage = CoreAlpha in {
 
 def BoolAssignmentChecker : Checker<"BoolAssignment">,
   HelpText<"Warn about assigning non-{0,1} values to Boolean variables">,
@@ -170,7 +170,7 @@ def ReturnUndefChecker : Checker<"UndefReturn">,
 // C++ checkers.
 //===----------------------------------------------------------------------===//
 
-let ParentPackage = CplusplusExperimental in {
+let ParentPackage = CplusplusAlpha in {
 
 def VirtualCallChecker : Checker<"VirtualCall">,
   HelpText<"Check virtual function calls during construction or destruction">, 
@@ -189,7 +189,7 @@ def DeadStoresChecker : Checker<"DeadStores">,
   DescFile<"DeadStoresChecker.cpp">;
 } // end DeadCode
 
-let ParentPackage = DeadCodeExperimental in {
+let ParentPackage = DeadCodeAlpha in {
 
 def IdempotentOperationChecker : Checker<"IdempotentOperations">,
   HelpText<"Warn about idempotent operations">,
@@ -237,7 +237,7 @@ let ParentPackage = Security in {
     DescFile<"CheckSecuritySyntaxOnly.cpp">;
 }
 
-let ParentPackage = SecurityExperimental in {
+let ParentPackage = SecurityAlpha in {
 
 def ArrayBoundChecker : Checker<"ArrayBound">,
   HelpText<"Warn about buffer overflows (older checker)">,
@@ -289,7 +289,7 @@ def MallocSizeofChecker : Checker<"MallocSizeof">,
   
 } // end "unix"
 
-let ParentPackage = UnixExperimental in {
+let ParentPackage = UnixAlpha in {
 
 def ChrootChecker : Checker<"Chroot">,
   HelpText<"Check improper use of chroot">,
@@ -320,7 +320,7 @@ def CStringSyntaxChecker : Checker<"BadSizeArg">,
   DescFile<"CStringSyntaxChecker.cpp">;  
 }
 
-let ParentPackage = CStringExperimental in {
+let ParentPackage = CStringAlpha in {
 
 def CStringOutOfBounds : Checker<"OutOfBounds">,
   HelpText<"Check for out-of-bounds access in string functions">,
@@ -411,13 +411,13 @@ def RetainCountChecker : Checker<"RetainCount">,
 
 } // end "osx.cocoa"
 
-let ParentPackage = CocoaExperimental in {
+let ParentPackage = CocoaAlpha in {
 
 def ObjCDeallocChecker : Checker<"Dealloc">,
   HelpText<"Warn about Objective-C classes that lack a correct implementation of -dealloc">,
   DescFile<"CheckObjCDealloc.cpp">;
 
-} // end "cocoa.experimental"
+} // end "cocoa.alpha"
 
 let ParentPackage = CoreFoundation in {
 
