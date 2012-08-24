@@ -19,7 +19,7 @@ let Constraints = "$src1 = $dst" in {
 multiclass fma3p_rm<bits<8> opc, string OpcodeStr,
                     PatFrag MemFrag128, PatFrag MemFrag256,
                     ValueType OpVT128, ValueType OpVT256,
-                    SDPatternOperator Op = null_frag, bit MayLoad = 1> {
+                    SDPatternOperator Op = null_frag> {
   def r     : FMA3<opc, MRMSrcReg, (outs VR128:$dst),
                    (ins VR128:$src1, VR128:$src2, VR128:$src3),
                    !strconcat(OpcodeStr,
@@ -27,7 +27,7 @@ multiclass fma3p_rm<bits<8> opc, string OpcodeStr,
                    [(set VR128:$dst, (OpVT128 (Op VR128:$src2,
                                                VR128:$src1, VR128:$src3)))]>;
 
-  let mayLoad = MayLoad in
+  let mayLoad = 1 in
   def m     : FMA3<opc, MRMSrcMem, (outs VR128:$dst),
                    (ins VR128:$src1, VR128:$src2, f128mem:$src3),
                    !strconcat(OpcodeStr,
@@ -42,7 +42,7 @@ multiclass fma3p_rm<bits<8> opc, string OpcodeStr,
                    [(set VR256:$dst, (OpVT256 (Op VR256:$src2, VR256:$src1,
                                                VR256:$src3)))]>;
 
-  let mayLoad = MayLoad in
+  let mayLoad = 1 in
   def mY    : FMA3<opc, MRMSrcMem, (outs VR256:$dst),
                    (ins VR256:$src1, VR256:$src2, f256mem:$src3),
                    !strconcat(OpcodeStr,
@@ -59,7 +59,7 @@ multiclass fma3p_forms<bits<8> opc132, bits<8> opc213, bits<8> opc231,
                        SDNode Op, ValueType OpTy128, ValueType OpTy256> {
   defm r213 : fma3p_rm<opc213,
                        !strconcat(OpcodeStr, !strconcat("213", PackTy)),
-                       MemFrag128, MemFrag256, OpTy128, OpTy256, Op, 0>;
+                       MemFrag128, MemFrag256, OpTy128, OpTy256, Op>;
 let neverHasSideEffects = 1 in {
   defm r132 : fma3p_rm<opc132,
                        !strconcat(OpcodeStr, !strconcat("132", PackTy)),
@@ -115,14 +115,14 @@ let ExeDomain = SSEPackedDouble in {
 let Constraints = "$src1 = $dst" in {
 multiclass fma3s_rm<bits<8> opc, string OpcodeStr, X86MemOperand x86memop,
                     RegisterClass RC, ValueType OpVT, PatFrag mem_frag,
-                    SDPatternOperator OpNode = null_frag, bit MayLoad = 1> {
+                    SDPatternOperator OpNode = null_frag> {
   def r     : FMA3<opc, MRMSrcReg, (outs RC:$dst),
                    (ins RC:$src1, RC:$src2, RC:$src3),
                    !strconcat(OpcodeStr,
                               "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
                    [(set RC:$dst,
                      (OpVT (OpNode RC:$src2, RC:$src1, RC:$src3)))]>;
-  let mayLoad = MayLoad in
+  let mayLoad = 1 in
   def m     : FMA3<opc, MRMSrcMem, (outs RC:$dst),
                    (ins RC:$src1, RC:$src2, x86memop:$src3),
                    !strconcat(OpcodeStr,
@@ -163,7 +163,7 @@ let neverHasSideEffects = 1 in {
 }
 
 defm r213 : fma3s_rm<opc213, !strconcat(OpStr, !strconcat("213", PackTy)),
-                     x86memop, RC, OpVT, mem_frag, OpNode, 0>,
+                     x86memop, RC, OpVT, mem_frag, OpNode>,
             fma3s_rm_int<opc213, !strconcat(OpStr, !strconcat("213", PackTy)),
                          memop, mem_cpat, Int, RC>;
 }
