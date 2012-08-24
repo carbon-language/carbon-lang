@@ -1263,6 +1263,7 @@ basic_istream<_CharT, _Traits>::putback(char_type __c)
     try
     {
 #endif  // _LIBCPP_NO_EXCEPTIONS
+        this->clear(this->rdstate() & ~ios_base::eofbit);
         sentry __sen(*this, true);
         if (__sen)
         {
@@ -1290,6 +1291,7 @@ basic_istream<_CharT, _Traits>::unget()
     try
     {
 #endif  // _LIBCPP_NO_EXCEPTIONS
+        this->clear(this->rdstate() & ~ios_base::eofbit);
         sentry __sen(*this, true);
         if (__sen)
         {
@@ -1368,6 +1370,7 @@ basic_istream<_CharT, _Traits>::seekg(pos_type __pos)
     try
     {
 #endif  // _LIBCPP_NO_EXCEPTIONS
+        this->clear(this->rdstate() & ~ios_base::eofbit);
         sentry __sen(*this, true);
         if (__sen)
             if (this->rdbuf()->pubseekpos(__pos, ios_base::in) == pos_type(-1))
