@@ -142,56 +142,6 @@ void Sema::actOnParamCommandParamNameArg(ParamCommandComment *Command,
                                                      ArgLocEnd),
                                          Arg);
   Command->setArgs(llvm::makeArrayRef(A, 1));
-
-  if (!isFunctionDecl()) {
-    // We already warned that this \\param is not attached to a function decl.
-    return;
-  }
-
-  ArrayRef<const ParmVarDecl *> ParamVars = getParamVars();
-
-  // Check that referenced parameter name is in the function decl.
-  const unsigned ResolvedParamIndex = resolveParmVarReference(Arg, ParamVars);
-  if (ResolvedParamIndex != ParamCommandComment::InvalidParamIndex) {
-    Command->setParamIndex(ResolvedParamIndex);
-    if (ParamVarDocs[ResolvedParamIndex]) {
-      SourceRange ArgRange(ArgLocBegin, ArgLocEnd);
-      Diag(ArgLocBegin, diag::warn_doc_param_duplicate)
-        << Arg << ArgRange;
-      ParamCommandComment *PrevCommand = ParamVarDocs[ResolvedParamIndex];
-      Diag(PrevCommand->getLocation(), diag::note_doc_param_previous)
-        << PrevCommand->getParamNameRange();
-    }
-    ParamVarDocs[ResolvedParamIndex] = Command;
-    return;
-  }
-
-  SourceRange ArgRange(ArgLocBegin, ArgLocEnd);
-  Diag(ArgLocBegin, diag::warn_doc_param_not_found)
-    << Arg << ArgRange;
-
-  // No parameters -- can't suggest a correction.
-  if (ParamVars.size() == 0)
-    return;
-
-  unsigned CorrectedParamIndex = ParamCommandComment::InvalidParamIndex;
-  if (ParamVars.size() == 1) {
-    // If function has only one parameter then only that parameter
-    // can be documented.
-    CorrectedParamIndex = 0;
-  } else {
-    // Do typo correction.
-    CorrectedParamIndex = correctTypoInParmVarReference(Arg, ParamVars);
-  }
-  if (CorrectedParamIndex != ParamCommandComment::InvalidParamIndex) {
-    const ParmVarDecl *CorrectedPVD = ParamVars[CorrectedParamIndex];
-    if (const IdentifierInfo *CorrectedII = CorrectedPVD->getIdentifier())
-      Diag(ArgLocBegin, diag::note_doc_param_name_suggestion)
-        << CorrectedII->getName()
-        << FixItHint::CreateReplacement(ArgRange, CorrectedII->getName());
-  }
-
-  return;
 }
 
 void Sema::actOnParamCommandFinish(ParamCommandComment *Command,
@@ -445,7 +395,9 @@ HTMLEndTagComment *Sema::actOnHTMLEndTag(SourceLocation LocBegin,
 
 FullComment *Sema::actOnFullComment(
                               ArrayRef<BlockContentComment *> Blocks) {
-  return new (Allocator) FullComment(Blocks, ThisDeclInfo);
+  FullComment *FC = new (Allocator) FullComment(Blocks, ThisDeclInfo);
+  resolveParamCommandIndexes(FC);
+  return FC;
 }
 
 void Sema::checkBlockCommandEmptyParagraph(BlockCommandComment *Command) {
@@ -529,6 +481,91 @@ void Sema::checkBlockCommandDuplicate(const BlockCommandComment *Command) {
         << Name;
 }
 
+void Sema::resolveParamCommandIndexes(const FullComment *FC) {
+  if (!isFunctionDecl()) {
+    // We already warned that \\param commands are not attached to a function
+    // decl.
+    return;
+  }
+
+  llvm::SmallVector<ParamCommandComment *, 8> UnresolvedParamCommands;
+
+  // Comment AST nodes that correspond to \c ParamVars for which we have
+  // found a \\param command or NULL if no documentation was found so far.
+  llvm::SmallVector<ParamCommandComment *, 8> ParamVarDocs;
+
+  ArrayRef<const ParmVarDecl *> ParamVars = getParamVars();
+  ParamVarDocs.resize(ParamVars.size(), NULL);
+
+  // First pass over all \\param commands: resolve all parameter names.
+  for (Comment::child_iterator I = FC->child_begin(), E = FC->child_end();
+       I != E; ++I) {
+    ParamCommandComment *PCC = dyn_cast<ParamCommandComment>(*I);
+    if (!PCC || !PCC->hasParamName())
+      continue;
+    StringRef ParamName = PCC->getParamName();
+
+    // Check that referenced parameter name is in the function decl.
+    const unsigned ResolvedParamIndex = resolveParmVarReference(ParamName,
+                                                                ParamVars);
+    if (ResolvedParamIndex == ParamCommandComment::InvalidParamIndex) {
+      UnresolvedParamCommands.push_back(PCC);
+      continue;
+    }
+    PCC->setParamIndex(ResolvedParamIndex);
+    if (ParamVarDocs[ResolvedParamIndex]) {
+      SourceRange ArgRange = PCC->getParamNameRange();
+      Diag(ArgRange.getBegin(), diag::warn_doc_param_duplicate)
+        << ParamName << ArgRange;
+      ParamCommandComment *PrevCommand = ParamVarDocs[ResolvedParamIndex];
+      Diag(PrevCommand->getLocation(), diag::note_doc_param_previous)
+        << PrevCommand->getParamNameRange();
+    }
+    ParamVarDocs[ResolvedParamIndex] = PCC;
+  }
+
+  // Find parameter declarations that have no corresponding \\param.
+  llvm::SmallVector<const ParmVarDecl *, 8> OrphanedParamDecls;
+  for (unsigned i = 0, e = ParamVarDocs.size(); i != e; ++i) {
+    if (!ParamVarDocs[i])
+      OrphanedParamDecls.push_back(ParamVars[i]);
+  }
+
+  // Second pass over unresolved \\param commands: do typo correction.
+  // Suggest corrections from a set of parameter declarations that have no
+  // corresponding \\param.
+  for (unsigned i = 0, e = UnresolvedParamCommands.size(); i != e; ++i) {
+    const ParamCommandComment *PCC = UnresolvedParamCommands[i];
+
+    SourceRange ArgRange = PCC->getParamNameRange();
+    StringRef ParamName = PCC->getParamName();
+    Diag(ArgRange.getBegin(), diag::warn_doc_param_not_found)
+      << ParamName << ArgRange;
+
+    // All parameters documented -- can't suggest a correction.
+    if (OrphanedParamDecls.size() == 0)
+      continue;
+
+    unsigned CorrectedParamIndex = ParamCommandComment::InvalidParamIndex;
+    if (OrphanedParamDecls.size() == 1) {
+      // If one parameter is not documented then that parameter is the only
+      // possible suggestion.
+      CorrectedParamIndex = 0;
+    } else {
+      // Do typo correction.
+      CorrectedParamIndex = correctTypoInParmVarReference(ParamName,
+                                                          OrphanedParamDecls);
+    }
+    if (CorrectedParamIndex != ParamCommandComment::InvalidParamIndex) {
+      const ParmVarDecl *CorrectedPVD = OrphanedParamDecls[CorrectedParamIndex];
+      if (const IdentifierInfo *CorrectedII = CorrectedPVD->getIdentifier())
+        Diag(ArgRange.getBegin(), diag::note_doc_param_name_suggestion)
+          << CorrectedII->getName()
+          << FixItHint::CreateReplacement(ArgRange, CorrectedII->getName());
+    }
+  }
+}
+
 bool Sema::isFunctionDecl() {
   if (!ThisDeclInfo)
     return false;
@@ -553,7 +590,6 @@ ArrayRef<const ParmVarDecl *> Sema::getParamVars() {
 
 void Sema::inspectThisDecl() {
   ThisDeclInfo->fill();
-  ParamVarDocs.resize(ThisDeclInfo->ParamVars.size(), NULL);
 }
 
 unsigned Sema::resolveParmVarReference(StringRef Name,

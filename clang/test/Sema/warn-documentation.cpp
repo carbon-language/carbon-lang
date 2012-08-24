@@ -218,9 +218,32 @@ int test_param12(int a);
 /// \param aab Blah blah.
 int test_param13(int aaa, int bbb);
 
+// expected-warning@+2 {{parameter 'aab' not found in the function declaration}} expected-note@+2 {{did you mean 'bbb'?}}
+/// \param aaa Blah blah.
+/// \param aab Blah blah.
+int test_param14(int aaa, int bbb);
+
 // expected-warning@+1 {{parameter 'aab' not found in the function declaration}}
 /// \param aab Blah blah.
-int test_param14(int bbb, int ccc);
+int test_param15(int bbb, int ccc);
+
+// expected-warning@+1 {{parameter 'aab' not found in the function declaration}}
+/// \param aab Ccc.
+/// \param aaa Aaa.
+/// \param bbb Bbb.
+int test_param16(int aaa, int bbb);
+
+// expected-warning@+2 {{parameter 'aab' not found in the function declaration}}
+/// \param aaa Aaa.
+/// \param aab Ccc.
+/// \param bbb Bbb.
+int test_param17(int aaa, int bbb);
+
+// expected-warning@+3 {{parameter 'aab' not found in the function declaration}}
+/// \param aaa Aaa.
+/// \param bbb Bbb.
+/// \param aab Ccc.
+int test_param18(int aaa, int bbb);
 
 class C {
   // expected-warning@+1 {{parameter 'aaa' not found in the function declaration}}
@@ -229,50 +252,51 @@ class C {
 
   // expected-warning@+1 {{parameter 'aaa' not found in the function declaration}}
   /// \param aaa Blah blah.
- int test_param15(int bbb, int ccc);
+ int test_param19(int bbb, int ccc);
 };
 
 // expected-warning@+1 {{parameter 'aab' not found in the function declaration}}
 /// \param aab Blah blah.
 template<typename T>
-void test_param16(int bbb, int ccc);
+void test_param20(int bbb, int ccc);
 
 // expected-warning@+3 {{parameter 'a' is already documented}}
 // expected-note@+1 {{previous documentation}}
 /// \param a Aaa.
 /// \param a Aaa.
-int test_param17(int a);
+int test_param21(int a);
 
 // expected-warning@+4 {{parameter 'x2' is already documented}}
 // expected-note@+2 {{previous documentation}}
 /// \param x1 Aaa.
 /// \param x2 Bbb.
 /// \param x2 Ccc.
-int test_param18(int x1, int x2, int x3);
+int test_param22(int x1, int x2, int x3);
 
-// expected-warning@+2 {{parameter 'bbb' not found in the function declaration}} expected-note@+2 {{did you mean 'aaa'?}}
+// expected-warning@+2 {{parameter 'bbb' not found in the function declaration}} expected-note@+2 {{did you mean 'ccc'?}}
 /// \param aaa Meow.
 /// \param bbb Bbb.
 /// \returns aaa.
-typedef int test_param19(int aaa);
+typedef int test_param23(int aaa, int ccc);
 
-// expected-warning@+2 {{parameter 'bbb' not found in the function declaration}} expected-note@+2 {{did you mean 'aaa'?}}
+// expected-warning@+2 {{parameter 'bbb' not found in the function declaration}} expected-note@+2 {{did you mean 'ccc'?}}
 /// \param aaa Meow.
 /// \param bbb Bbb.
 /// \returns aaa.
-typedef int (*test_param20)(int aaa);
+typedef int (*test_param24)(int aaa, int ccc);
 
-// expected-warning@+2 {{parameter 'bbb' not found in the function declaration}} expected-note@+2 {{did you mean 'aaa'?}}
+// expected-warning@+2 {{parameter 'bbb' not found in the function declaration}} expected-note@+2 {{did you mean 'ccc'?}}
 /// \param aaa Meow.
 /// \param bbb Bbb.
 /// \returns aaa.
-typedef int (* const test_param21)(int aaa);
+typedef int (* const test_param25)(int aaa, int ccc);
 
-// expected-warning@+2 {{parameter 'bbb' not found in the function declaration}} expected-note@+2 {{did you mean 'aaa'?}}
+// expected-warning@+2 {{parameter 'bbb' not found in the function declaration}} expected-note@+2 {{did you mean 'ccc'?}}
 /// \param aaa Meow.
 /// \param bbb Bbb.
 /// \returns aaa.
-typedef int (C::*test_param22)(int aaa);
+typedef int (C::*test_param26)(int aaa, int ccc);
+
 
 // expected-warning@+1 {{'\tparam' command used in a comment that is not attached to a template declaration}}
 /// \tparam T Aaa

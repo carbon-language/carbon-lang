@@ -91,9 +91,9 @@ int b;
 - (void)test2:(NSString *)aaa;
 @end
 
-// expected-warning@+2 {{parameter 'bbb' not found in the function declaration}} expected-note@+2 {{did you mean 'aaa'?}}
+// expected-warning@+2 {{parameter 'bbb' not found in the function declaration}} expected-note@+2 {{did you mean 'ccc'?}}
 /// \param aaa Meow.
 /// \param bbb Bbb.
 /// \returns aaa.
-typedef int (^test_param1)(int aaa);
+typedef int (^test_param1)(int aaa, int ccc);
 
