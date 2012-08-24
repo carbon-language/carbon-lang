@@ -184,21 +184,27 @@ namespace lldb_private {
         uint32_t GetSize();
         
         PythonDataObject
-        GetItemForKey (const PythonDataString &key);
+        GetItemForKey (const PythonDataString &key) const;
+        
+        const char *
+        GetItemForKeyAsString (const PythonDataString &key, const char *fail_value = NULL) const;
+
+        int64_t
+        GetItemForKeyAsInteger (const PythonDataString &key, int64_t fail_value = 0) const;
 
         PythonDataObject
-        GetItemForKey (const char *key);
+        GetItemForKey (const char *key) const;
 
         typedef bool (*DictionaryIteratorCallback)(PythonDataString* key, PythonDataDictionary* dict);
         
         PythonDataArray
-        GetKeys ();
+        GetKeys () const;
         
         PythonDataString
-        GetKeyAtPosition (uint32_t pos);
+        GetKeyAtPosition (uint32_t pos) const;
         
         PythonDataObject
-        GetValueAtPosition (uint32_t pos);
+        GetValueAtPosition (uint32_t pos) const;
         
         void
         SetItemForKey (const PythonDataString &key, const PythonDataObject& value);

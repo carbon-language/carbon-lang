@@ -12,13 +12,12 @@
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
-#include "llvm/ADT/Triple.h"
-
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Interpreter/PythonDataObjects.h"
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
@@ -56,7 +55,7 @@ OperatingSystem *
 OperatingSystemPython::CreateInstance (Process *process, bool force)
 {
     // Python OperatingSystem plug-ins must be requested by name, so force must be true
-    //if (force)
+    if (force)
         return new OperatingSystemPython (process);
     return NULL;
 }
@@ -93,7 +92,11 @@ OperatingSystemPython::OperatingSystemPython (lldb_private::Process *process) :
         // TODO: hardcoded is not good
         auto object_sp = m_interpreter->CreateOSPlugin("operating_system.PlugIn",process->CalculateProcess());
         if (object_sp)
+        {
             m_python_object = object_sp->GetObject();
+            
+            // GetDynamicRegisterInfo (); // Only for testing should this be done here
+        }
     }
 }
 
@@ -104,74 +107,22 @@ OperatingSystemPython::~OperatingSystemPython ()
 DynamicRegisterInfo *
 OperatingSystemPython::GetDynamicRegisterInfo ()
 {
-    if (!m_interpreter || !m_python_object)
-        return NULL;
-    auto object_sp = m_interpreter->OSPlugin_QueryForRegisterInfo(m_interpreter->MakeScriptObject(m_python_object));
-    if (!object_sp)
-        return NULL;
-    PythonDataObject dictionary_data_obj((PyObject*)object_sp->GetObject());
-    PythonDataDictionary dictionary = dictionary_data_obj.GetDictionaryObject();
-    if(!dictionary)
-        return NULL;
-    
-    // TODO: iterate over the dictionary
-    if (m_register_info_ap.get() == NULL && m_thread_list_valobj_sp)
+    if (m_register_info_ap.get() == NULL)
     {
-//        static ConstString g_gpr_member_name("gpr");
-//        m_register_info_ap.reset (new DynamicRegisterInfo());
-//        ConstString empty_name;
-//        const bool can_create = true;
-//        AddressType addr_type;
-//        addr_t base_addr = LLDB_INVALID_ADDRESS;
-//        ValueObjectSP gpr_valobj_sp (m_thread_list_valobj_sp->GetChildMemberWithName(GetThreadGPRMemberName (), can_create));
-//        
-//        if (gpr_valobj_sp->IsPointerType ())
-//            base_addr = gpr_valobj_sp->GetPointerValue (&addr_type);
-//        else
-//            base_addr = gpr_valobj_sp->GetAddressOf (true, &addr_type);
-//
-//        ValueObjectSP child_valobj_sp;
-//        if (gpr_valobj_sp)
-//        {
-//            ABI *abi = m_process->GetABI().get();
-//            assert (abi);
-//            uint32_t num_children = gpr_valobj_sp->GetNumChildren();
-//            
-//            ConstString gpr_name (gpr_valobj_sp->GetName());
-//            uint32_t reg_num = 0;
-//            for (uint32_t i=0; i<num_children; ++i)
-//            {
-//                child_valobj_sp = gpr_valobj_sp->GetChildAtIndex(i, can_create);
-//
-//                ConstString reg_name(child_valobj_sp->GetName());
-//                if (reg_name)
-//                {
-//                    const char *reg_name_cstr = reg_name.GetCString();
-//                    while (reg_name_cstr[0] == '_')
-//                        ++reg_name_cstr;
-//                    if (reg_name_cstr != reg_name.GetCString())
-//                        reg_name.SetCString (reg_name_cstr);
-//                }
-//                
-//                RegisterInfo reg_info;
-//                if (abi->GetRegisterInfoByName(reg_name, reg_info))
-//                {
-//                    // Adjust the byte size and the offset to match the layout of registers in our struct
-//                    reg_info.byte_size = child_valobj_sp->GetByteSize();
-//                    reg_info.byte_offset = child_valobj_sp->GetAddressOf(true, &addr_type) - base_addr;
-//                    reg_info.kinds[eRegisterKindLLDB] = reg_num++;
-//                    m_register_info_ap->AddRegister (reg_info, reg_name, empty_name, gpr_name);
-//                }
-//                else
-//                {
-//                    printf ("not able to find register info for %s\n", reg_name.GetCString()); // REMOVE THIS printf before checkin!!!
-//                }
-//            }
-//            
-//            m_register_info_ap->Finalize();
-//        }
+        if (!m_interpreter || !m_python_object)
+            return NULL;
+        auto object_sp = m_interpreter->OSPlugin_QueryForRegisterInfo(m_interpreter->MakeScriptObject(m_python_object));
+        if (!object_sp)
+            return NULL;
+        PythonDataObject dictionary_data_obj((PyObject*)object_sp->GetObject());
+        PythonDataDictionary dictionary = dictionary_data_obj.GetDictionaryObject();
+        if (!dictionary)
+            return NULL;
+        
+        m_register_info_ap.reset (new DynamicRegisterInfo (dictionary));
+        assert (m_register_info_ap->GetNumRegisters() > 0);
+        assert (m_register_info_ap->GetNumRegisterSets() > 0);
     }
-    assert (m_register_info_ap.get());
     return m_register_info_ap.get();
 }
 

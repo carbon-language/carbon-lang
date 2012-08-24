@@ -212,7 +212,7 @@ PythonDataDictionary::GetSize()
 }
 
 PythonDataObject
-PythonDataDictionary::GetItemForKey (const char *key)
+PythonDataDictionary::GetItemForKey (const char *key) const
 {
     if (key && key[0])
     {
@@ -224,15 +224,40 @@ PythonDataDictionary::GetItemForKey (const char *key)
 
 
 PythonDataObject
-PythonDataDictionary::GetItemForKey (const PythonDataString &key)
+PythonDataDictionary::GetItemForKey (const PythonDataString &key) const
 {
     if (m_object && key)
         return PythonDataObject(PyDict_GetItem(GetPythonObject(), key.GetPythonObject()));
     return PythonDataObject();
 }
 
+
+const char *
+PythonDataDictionary::GetItemForKeyAsString (const PythonDataString &key, const char *fail_value) const
+{
+    if (m_object && key)
+    {
+        PyObject *object = PyDict_GetItem(GetPythonObject(), key.GetPythonObject());
+        if (object && PyString_Check(object))
+            return PyString_AsString(object);
+    }
+    return fail_value;
+}
+
+int64_t
+PythonDataDictionary::GetItemForKeyAsInteger (const PythonDataString &key, int64_t fail_value) const
+{
+    if (m_object && key)
+    {
+        PyObject *object = PyDict_GetItem(GetPythonObject(), key.GetPythonObject());
+        if (object && PyInt_Check(object))
+            return PyInt_AsLong(object);
+    }
+    return fail_value;
+}
+
 PythonDataArray
-PythonDataDictionary::GetKeys ()
+PythonDataDictionary::GetKeys () const
 {
     if (m_object)
         return PythonDataArray(PyDict_Keys(GetPythonObject()));
@@ -240,7 +265,7 @@ PythonDataDictionary::GetKeys ()
 }
 
 PythonDataString
-PythonDataDictionary::GetKeyAtPosition (uint32_t pos)
+PythonDataDictionary::GetKeyAtPosition (uint32_t pos) const
 {
     PyObject *key, *value;
     Py_ssize_t pos_iter = 0;
@@ -257,7 +282,7 @@ PythonDataDictionary::GetKeyAtPosition (uint32_t pos)
 }
 
 PythonDataObject
-PythonDataDictionary::GetValueAtPosition (uint32_t pos)
+PythonDataDictionary::GetValueAtPosition (uint32_t pos) const
 {
     PyObject *key, *value;
     Py_ssize_t pos_iter = 0;

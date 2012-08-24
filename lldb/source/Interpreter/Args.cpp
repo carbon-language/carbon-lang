@@ -1007,6 +1007,60 @@ Args::StringToFormat
     return error;
 }
 
+lldb::Encoding
+Args::StringToEncoding (const char *s, lldb::Encoding fail_value)
+{
+    if (s && s[0])
+    {
+        if (strcmp(s, "uint") == 0)
+            return eEncodingUint;
+        else if (strcmp(s, "sint") == 0)
+            return eEncodingSint;
+        else if (strcmp(s, "ieee754") == 0)
+            return eEncodingIEEE754;
+        else if (strcmp(s, "vector") == 0)
+            return eEncodingVector;
+    }
+    return fail_value;
+}
+
+uint32_t
+Args::StringToGenericRegister (const char *s)
+{
+    if (s && s[0])
+    {
+        if (strcmp(s, "pc") == 0)
+            return LLDB_REGNUM_GENERIC_PC;
+        else if (strcmp(s, "sp") == 0)
+            return LLDB_REGNUM_GENERIC_SP;
+        else if (strcmp(s, "fp") == 0)
+            return LLDB_REGNUM_GENERIC_FP;
+        else if (strcmp(s, "ra") == 0)
+            return LLDB_REGNUM_GENERIC_RA;
+        else if (strcmp(s, "flags") == 0)
+            return LLDB_REGNUM_GENERIC_FLAGS;
+        else if (strncmp(s, "arg", 3) == 0)
+        {
+            if (s[3] && s[4] == '\0')
+            {
+                switch (s[3])
+                {
+                    case '1': return LLDB_REGNUM_GENERIC_ARG1;
+                    case '2': return LLDB_REGNUM_GENERIC_ARG2;
+                    case '3': return LLDB_REGNUM_GENERIC_ARG3;
+                    case '4': return LLDB_REGNUM_GENERIC_ARG4;
+                    case '5': return LLDB_REGNUM_GENERIC_ARG5;
+                    case '6': return LLDB_REGNUM_GENERIC_ARG6;
+                    case '7': return LLDB_REGNUM_GENERIC_ARG7;
+                    case '8': return LLDB_REGNUM_GENERIC_ARG8;
+                }
+            }
+        }
+    }
+    return LLDB_INVALID_REGNUM;
+}
+
+
 void
 Args::LongestCommonPrefix (std::string &common_prefix)
 {

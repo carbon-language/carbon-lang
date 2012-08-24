@@ -24,8 +24,13 @@ class DynamicRegisterInfo
 public:
     DynamicRegisterInfo ();
 
+    DynamicRegisterInfo (const lldb_private::PythonDataDictionary &dict);
+    
     virtual 
     ~DynamicRegisterInfo ();
+
+    size_t
+    SetRegisterInfo (const lldb_private::PythonDataDictionary &dict);
 
     void
     AddRegister (lldb_private::RegisterInfo &reg_info, 
@@ -73,8 +78,6 @@ protected:
     reg_collection m_regs;
     set_collection m_sets;
     set_reg_num_collection m_set_reg_nums;
-    name_collection m_reg_names;
-    name_collection m_reg_alt_names;
     name_collection m_set_names;
     size_t m_reg_data_byte_size;   // The number of bytes required to store all registers
 };

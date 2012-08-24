@@ -300,18 +300,16 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
                     }
                     else if (name.compare("encoding") == 0)
                     {
-                        if (value.compare("uint") == 0)
-                            reg_info.encoding = eEncodingUint;
-                        else if (value.compare("sint") == 0)
-                            reg_info.encoding = eEncodingSint;
-                        else if (value.compare("ieee754") == 0)
-                            reg_info.encoding = eEncodingIEEE754;
-                        else if (value.compare("vector") == 0)
-                            reg_info.encoding = eEncodingVector;
+                        const Encoding encoding = Args::StringToEncoding (value.c_str());
+                        if (encoding != eEncodingInvalid)
+                            reg_info.encoding = encoding;
                     }
                     else if (name.compare("format") == 0)
                     {
-                        if (value.compare("binary") == 0)
+                        Format format = eFormatInvalid;
+                        if (Args::StringToFormat (value.c_str(), format, NULL).Success())
+                            reg_info.format = format;
+                        else if (value.compare("binary") == 0)
                             reg_info.format = eFormatBinary;
                         else if (value.compare("decimal") == 0)
                             reg_info.format = eFormatDecimal;
@@ -350,33 +348,7 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
                     }
                     else if (name.compare("generic") == 0)
                     {
-                        if (value.compare("pc") == 0)
-                            reg_info.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_PC;
-                        else if (value.compare("sp") == 0)
-                            reg_info.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_SP;
-                        else if (value.compare("fp") == 0)
-                            reg_info.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_FP;
-                        else if (value.compare("ra") == 0)
-                            reg_info.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_RA;
-                        else if (value.compare("flags") == 0)
-                            reg_info.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_FLAGS;
-                        else if (value.find("arg") == 0)
-                        {
-                            if (value.size() == 4)
-                            {
-                                switch (value[3])
-                                {
-                                    case '1': reg_info.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_ARG1; break;
-                                    case '2': reg_info.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_ARG2; break;
-                                    case '3': reg_info.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_ARG3; break;
-                                    case '4': reg_info.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_ARG4; break;
-                                    case '5': reg_info.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_ARG5; break;
-                                    case '6': reg_info.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_ARG6; break;
-                                    case '7': reg_info.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_ARG7; break;
-                                    case '8': reg_info.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_ARG8; break;
-                                }
-                            }
-                        }
+                        reg_info.kinds[eRegisterKindGeneric] = Args::StringToGenericRegister (value.c_str());
                     }
                 }
 

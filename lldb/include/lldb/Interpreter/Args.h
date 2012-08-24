@@ -398,6 +398,13 @@ public:
                     lldb::Format &format,
                     uint32_t *byte_size_ptr); // If non-NULL, then a byte size can precede the format character
 
+    static lldb::Encoding
+    StringToEncoding (const char *s,
+                      lldb::Encoding fail_value = lldb::eEncodingInvalid);
+
+    static uint32_t
+    StringToGenericRegister (const char *s);
+    
     static const char *
     StringToVersion (const char *s, uint32_t &major, uint32_t &minor, uint32_t &update);
 
