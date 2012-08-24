@@ -498,6 +498,29 @@ TEST(DeclPrinter, TestCXXConstructorDecl9) {
     // WRONG; Should be: "A() = delete;"
 }
 
+TEST(DeclPrinter, TestCXXConstructorDecl10) {
+  ASSERT_TRUE(PrintedDeclCXX11Matches(
+    "template<typename... T>"
+    "struct A {"
+    "  A(const A &a);"
+    "};",
+    constructor(ofClass(hasName("A"))).bind("id"),
+    ""));
+    // WRONG; Should be: "A(const A &a);"
+}
+
+TEST(DeclPrinter, TestCXXConstructorDecl11) {
+  ASSERT_TRUE(PrintedDeclCXX11Matches(
+    "template<typename... T>"
+    "struct A : public T... {"
+    "  A(T&&... ts) : T(ts)... {}"
+    "};",
+    constructor(ofClass(hasName("A"))).bind("id"),
+    "A<T...>(T &&ts...) : T(ts)"));
+    // Should be: "A(T&&... ts) : T(ts)..."
+}
+
+
 TEST(DeclPrinter, TestCXXDestructorDecl1) {
   ASSERT_TRUE(PrintedDeclMatches(
     "struct A {"
