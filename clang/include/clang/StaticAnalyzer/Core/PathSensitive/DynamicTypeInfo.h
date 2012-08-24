@@ -13,13 +13,10 @@
 
 namespace clang {
 namespace ento {
-/// \class DynamicTypeInfo
-///
+
 /// \brief Stores the currently inferred strictest bound on the runtime type
 /// of a region in a given state along the analysis path.
 class DynamicTypeInfo {
-public:
-
 private:
   QualType T;
   bool CanBeASubClass;
@@ -30,7 +27,7 @@ public:
   DynamicTypeInfo(QualType WithType, bool CanBeSub = true)
     : T(WithType), CanBeASubClass(CanBeSub) {}
 
-  /// \brief Return true if no dynamic type info is available.
+  /// \brief Return false if no dynamic type info is available.
   bool isValid() const { return !T.isNull(); }
 
   /// \brief Returns the currently inferred upper bound on the runtime type.
@@ -41,7 +38,7 @@ public:
   bool canBeASubClass() const { return CanBeASubClass; }
 
   void Profile(llvm::FoldingSetNodeID &ID) const {
-    T.Profile(ID);
+    ID.Add(T);
     ID.AddInteger((unsigned)CanBeASubClass);
   }
   bool operator==(const DynamicTypeInfo &X) const {
@@ -49,6 +46,7 @@ public:
   }
 };
 
-}} // end clang::ento namespace
+} // end ento
+} // end clang
 
 #endif
