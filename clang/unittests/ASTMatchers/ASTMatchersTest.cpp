@@ -1296,6 +1296,41 @@ TEST(Matcher, BindTemporaryExpression) {
                  TempExpression));
 }
 
+TEST(MaterializeTemporaryExpr, MatchesTemporary) {
+  std::string ClassString =
+      "class string { public: string(); int length(); }; ";
+
+  EXPECT_TRUE(
+      matches(ClassString +
+              "string GetStringByValue();"
+              "void FunctionTakesString(string s);"
+              "void run() { FunctionTakesString(GetStringByValue()); }",
+              materializeTemporaryExpr()));
+
+  EXPECT_TRUE(
+      notMatches(ClassString +
+                 "string* GetStringPointer(); "
+                 "void FunctionTakesStringPtr(string* s);"
+                 "void run() {"
+                 "  string* s = GetStringPointer();"
+                 "  FunctionTakesStringPtr(GetStringPointer());"
+                 "  FunctionTakesStringPtr(s);"
+                 "}",
+                 materializeTemporaryExpr()));
+
+  EXPECT_TRUE(
+      notMatches(ClassString +
+                 "string GetStringByValue();"
+                 "void run() { int k = GetStringByValue().length(); }",
+                 materializeTemporaryExpr()));
+
+  EXPECT_TRUE(
+      notMatches(ClassString +
+                 "string GetStringByValue();"
+                 "void run() { GetStringByValue(); }",
+                 materializeTemporaryExpr()));
+}
+
 TEST(ConstructorDeclaration, SimpleCase) {
   EXPECT_TRUE(matches("class Foo { Foo(int i); };",
                       constructorDecl(ofClass(hasName("Foo")))));

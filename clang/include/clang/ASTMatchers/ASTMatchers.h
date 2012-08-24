@@ -552,6 +552,28 @@ const internal::VariadicDynCastAllOfMatcher<
   Stmt,
   CXXBindTemporaryExpr> bindTemporaryExpr;
 
+/// \brief Matches nodes where temporaries are materialized.
+///
+/// Example: Given
+/// \code
+///   struct T {void func()};
+///   T f();
+///   void g(T);
+/// \endcode
+/// materializeTemporaryExpr() matches 'f()' in these statements
+/// \code
+///   T u(f());
+///   g(f());
+/// \endcode
+/// but does not match
+/// \code
+///   f();
+///   f().func();
+/// \endcode
+const internal::VariadicDynCastAllOfMatcher<
+  Stmt,
+  MaterializeTemporaryExpr> materializeTemporaryExpr;
+
 /// \brief Matches new expressions.
 ///
 /// Given
