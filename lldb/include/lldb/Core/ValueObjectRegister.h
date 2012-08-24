@@ -162,6 +162,9 @@ public:
 
     virtual bool
     ResolveValue (Scalar &scalar);
+    
+    virtual void
+    GetExpressionPath (Stream &s, bool qualify_cxx_base_classes, GetExpressionPathFormat epformat = eGetExpressionPathFormatDereferencePointers);
 
 protected:
     virtual bool
