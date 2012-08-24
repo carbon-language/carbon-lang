@@ -76,6 +76,13 @@ public:
     CreateSyntheticScriptedProvider (std::string class_name,
                                      lldb::ValueObjectSP valobj);
     
+    virtual lldb::ScriptInterpreterObjectSP
+    CreateOSPlugin (std::string class_name,
+                    lldb::ProcessSP process_sp);
+    
+    virtual lldb::ScriptInterpreterObjectSP
+    OSPlugin_QueryForRegisterInfo (lldb::ScriptInterpreterObjectSP object);
+    
     virtual uint32_t
     CalculateNumChildren (const lldb::ScriptInterpreterObjectSP& implementor);
     

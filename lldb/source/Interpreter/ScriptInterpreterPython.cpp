@@ -55,6 +55,7 @@ static ScriptInterpreter::SWIGPythonCastPyObjectToSBValue g_swig_cast_to_sbvalue
 static ScriptInterpreter::SWIGPythonUpdateSynthProviderInstance g_swig_update_provider = NULL;
 static ScriptInterpreter::SWIGPythonCallCommand g_swig_call_command = NULL;
 static ScriptInterpreter::SWIGPythonCallModuleInit g_swig_call_module_init = NULL;
+static ScriptInterpreter::SWIGPythonCreateOSPlugin g_swig_create_os_plugin = NULL;
 
 // these are the Pythonic implementations of the required callbacks
 // these are scripting-language specific, which is why they belong here
@@ -120,6 +121,13 @@ extern "C" bool           LLDBSwigPythonCallModuleInit
  const char *session_dictionary_name,
  lldb::DebuggerSP& debugger
  );
+
+extern "C" void*        LLDBSWIGPythonCreateOSPlugin
+(
+ const std::string python_class_name,
+ const char *session_dictionary_name,
+ const lldb::ProcessSP& process_sp
+);
 
 static int
 _check_and_flush (FILE *stream)
@@ -1697,6 +1705,85 @@ ScriptInterpreterPython::GenerateTypeSynthClass (StringList &user_input, std::st
 }
 
 lldb::ScriptInterpreterObjectSP
+ScriptInterpreterPython::CreateOSPlugin (std::string class_name,
+                lldb::ProcessSP process_sp)
+{
+    if (class_name.empty())
+        return lldb::ScriptInterpreterObjectSP();
+    
+    if (!process_sp)
+        return lldb::ScriptInterpreterObjectSP();
+        
+    void* ret_val;
+    
+    {
+        Locker py_lock(this);
+        ret_val = g_swig_create_os_plugin    (class_name,
+                                              m_dictionary_name.c_str(),
+                                              process_sp);
+    }
+    
+    return MakeScriptObject(ret_val);
+}
+
+lldb::ScriptInterpreterObjectSP
+ScriptInterpreterPython::OSPlugin_QueryForRegisterInfo (lldb::ScriptInterpreterObjectSP object)
+{
+    static char callee_name[] = "get_register_info";
+    
+    if (!object)
+        return lldb::ScriptInterpreterObjectSP();
+    
+    PyObject* implementor = (PyObject*)object->GetObject();
+    
+    if (implementor == NULL || implementor == Py_None)
+        return lldb::ScriptInterpreterObjectSP();
+    
+    PyObject* pmeth  = PyObject_GetAttrString(implementor, callee_name);
+    
+    if (PyErr_Occurred())
+    {
+        PyErr_Clear();
+    }
+    
+    if (pmeth == NULL || pmeth == Py_None)
+    {
+        Py_XDECREF(pmeth);
+        return lldb::ScriptInterpreterObjectSP();
+    }
+    
+    if (PyCallable_Check(pmeth) == 0)
+    {
+        if (PyErr_Occurred())
+        {
+            PyErr_Clear();
+        }
+        
+        Py_XDECREF(pmeth);
+        return lldb::ScriptInterpreterObjectSP();
+    }
+    
+    if (PyErr_Occurred())
+    {
+        PyErr_Clear();
+    }
+    
+    Py_XDECREF(pmeth);
+    
+    // right now we know this function exists and is callable..
+    PyObject* py_return = PyObject_CallMethod(implementor, callee_name, NULL);
+    
+    // if it fails, print the error but otherwise go on
+    if (PyErr_Occurred())
+    {
+        PyErr_Print();
+        PyErr_Clear();
+    }
+    
+    return MakeScriptObject(py_return);
+}
+
+lldb::ScriptInterpreterObjectSP
 ScriptInterpreterPython::CreateSyntheticScriptedProvider (std::string class_name,
                                                           lldb::ValueObjectSP valobj)
 {
@@ -2366,6 +2453,7 @@ ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback python_swig_ini
     g_swig_update_provider = LLDBSwigPython_UpdateSynthProviderInstance;
     g_swig_call_command = LLDBSwigPythonCallCommand;
     g_swig_call_module_init = LLDBSwigPythonCallModuleInit;
+    g_swig_create_os_plugin = LLDBSWIGPythonCreateOSPlugin;
 }
 
 void

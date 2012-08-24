@@ -16,10 +16,13 @@
 
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/DataBufferHeap.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/ValueObjectVariable.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/PythonDataObjects.h"
 #include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/VariableList.h"
@@ -53,7 +56,7 @@ OperatingSystem *
 OperatingSystemPython::CreateInstance (Process *process, bool force)
 {
     // Python OperatingSystem plug-ins must be requested by name, so force must be true
-    if (force)
+    //if (force)
         return new OperatingSystemPython (process);
     return NULL;
 }
@@ -75,14 +78,23 @@ OperatingSystemPython::GetPluginDescriptionStatic()
 OperatingSystemPython::OperatingSystemPython (lldb_private::Process *process) :
     OperatingSystem (process),
     m_thread_list_valobj_sp (),
-    m_register_info_ap ()
+    m_register_info_ap (),
+    m_interpreter(NULL),
+    m_python_object(NULL)
 {
-    // TODO: python: create a new python class the implements the necessary
-    // python class that will cache a SBProcess that contains the "process"
-    // argument above and implements:
-    // dict get_thread_info()
-    // dict get_register_info()
-    // Bytes get_register_context_data(SBThread thread)
+    if (!process)
+        return;
+    lldb::TargetSP target_sp = process->CalculateTarget();
+    if (!target_sp)
+        return;
+    m_interpreter = target_sp->GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
+    if (m_interpreter)
+    {
+        // TODO: hardcoded is not good
+        auto object_sp = m_interpreter->CreateOSPlugin("operating_system.PlugIn",process->CalculateProcess());
+        if (object_sp)
+            m_python_object = object_sp->GetObject();
+    }
 }
 
 OperatingSystemPython::~OperatingSystemPython ()
@@ -92,10 +104,17 @@ OperatingSystemPython::~OperatingSystemPython ()
 DynamicRegisterInfo *
 OperatingSystemPython::GetDynamicRegisterInfo ()
 {
-    // TODO: python: call get_register_info() on the python object that
-    // represents our instance of the OperatingSystem plug-in
+    if (!m_interpreter || !m_python_object)
+        return NULL;
+    auto object_sp = m_interpreter->OSPlugin_QueryForRegisterInfo(m_interpreter->MakeScriptObject(m_python_object));
+    if (!object_sp)
+        return NULL;
+    PythonDataObject dictionary_data_obj((PyObject*)object_sp->GetObject());
+    PythonDataDictionary dictionary = dictionary_data_obj.GetDictionaryObject();
+    if(!dictionary)
+        return NULL;
     
-    // Example code below shows creating a new DynamicRegisterInfo()
+    // TODO: iterate over the dictionary
     if (m_register_info_ap.get() == NULL && m_thread_list_valobj_sp)
     {
 //        static ConstString g_gpr_member_name("gpr");

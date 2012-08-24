@@ -82,6 +82,10 @@ public:
     typedef void* (*SWIGPythonCreateSyntheticProvider) (const std::string python_class_name,
                                                         const char *session_dictionary_name,
                                                         const lldb::ValueObjectSP& valobj_sp);
+
+    typedef void* (*SWIGPythonCreateOSPlugin) (const std::string python_class_name,
+                                               const char *session_dictionary_name,
+                                               const lldb::ProcessSP& process_sp);
     
     typedef uint32_t       (*SWIGPythonCalculateNumChildren)        (void *implementor);
     typedef void*          (*SWIGPythonGetChildAtIndex)             (void *implementor, uint32_t idx);
@@ -191,6 +195,19 @@ public:
     virtual lldb::ScriptInterpreterObjectSP
     CreateSyntheticScriptedProvider (std::string class_name,
                                      lldb::ValueObjectSP valobj)
+    {
+        return lldb::ScriptInterpreterObjectSP();
+    }
+    
+    virtual lldb::ScriptInterpreterObjectSP
+    CreateOSPlugin (std::string class_name,
+                    lldb::ProcessSP process_sp)
+    {
+        return lldb::ScriptInterpreterObjectSP();
+    }
+    
+    virtual lldb::ScriptInterpreterObjectSP
+    OSPlugin_QueryForRegisterInfo (lldb::ScriptInterpreterObjectSP object)
     {
         return lldb::ScriptInterpreterObjectSP();
     }

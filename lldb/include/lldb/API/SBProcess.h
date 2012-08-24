@@ -40,6 +40,8 @@ public:
     const lldb::SBProcess&
     operator = (const lldb::SBProcess& rhs);
 
+    SBProcess (const lldb::ProcessSP &process_sp);
+    
     ~SBProcess();
 
     static const char *
@@ -216,8 +218,6 @@ protected:
     friend class SBTarget;
     friend class SBThread;
     friend class SBValue;
-
-    SBProcess (const lldb::ProcessSP &process_sp);
 
     lldb::ProcessSP
     GetSP() const;

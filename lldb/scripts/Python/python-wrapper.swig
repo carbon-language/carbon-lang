@@ -742,6 +742,103 @@ LLDBSwigPythonCallCommand
     return retval;
 }
 
+SWIGEXPORT void*
+LLDBSWIGPythonCreateOSPlugin
+(
+    const std::string python_class_name,
+    const char *session_dictionary_name,
+    const lldb::ProcessSP& process_sp
+)
+{
+    PyObject* retval = NULL;
+
+    if (python_class_name.empty() || !session_dictionary_name)
+        Py_RETURN_NONE;
+
+    // I do not want the SBValue to be deallocated when going out of scope because python
+    // has ownership of it and will manage memory for this object by itself
+    lldb::SBProcess *process_sb = new lldb::SBProcess(process_sp);
+
+    PyObject *SBProc_PyObj = SWIG_NewPointerObj((void *)process_sb, SWIGTYPE_p_lldb__SBProcess, 0);
+
+    if (SBProc_PyObj == NULL)
+        Py_RETURN_NONE;
+
+    const char* python_function_name = python_class_name.c_str();
+
+    PyObject *session_dict, *pfunc;
+    PyObject *pvalue;
+    
+    session_dict = FindSessionDictionary (session_dictionary_name);
+    if (session_dict != NULL)
+    {
+        pfunc = ResolvePythonName (python_function_name, session_dict);
+        if (pfunc != NULL)
+        {
+            // Set up the arguments and call the function.
+                
+            if (PyCallable_Check (pfunc))
+            {
+                PyObject *argList = Py_BuildValue("S", SBProc_PyObj);
+
+                if (PyErr_Occurred ())
+                {
+                    PyErr_Print();
+                    PyErr_Clear();
+                    return retval;
+                }
+
+                if (argList == NULL)
+                {
+                    return retval;
+                }
+
+                Py_INCREF(SBProc_PyObj);
+
+                pvalue = PyObject_CallObject(pfunc, argList);
+
+                Py_DECREF(argList);
+
+                if (pvalue != NULL)
+                {
+                    if (pvalue != Py_None)
+                        retval = pvalue;
+                    else
+                    {
+                        retval = Py_None;
+                        Py_INCREF(retval);
+                    }
+                }
+                else if (PyErr_Occurred ())
+                {
+                    PyErr_Print();
+                    PyErr_Clear();
+                }
+                Py_INCREF (session_dict);
+            }
+            else if (PyErr_Occurred())
+            {
+                PyErr_Print();
+                PyErr_Clear();
+            }
+        }
+        else if (PyErr_Occurred())
+        {
+            PyErr_Print();
+            PyErr_Clear();
+        }
+    }
+    else if (PyErr_Occurred ())
+    {
+        PyErr_Print();
+        PyErr_Clear ();
+    }
+    if (retval)
+        return retval;
+    else
+        Py_RETURN_NONE;
+}
+
 SWIGEXPORT bool
 LLDBSwigPythonCallModuleInit 
 (

@@ -14,6 +14,7 @@
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
+#include "lldb/Interpreter/ScriptInterpreter.h"
 #include "lldb/Target/OperatingSystem.h"
 
 class DynamicRegisterInfo;
@@ -82,6 +83,8 @@ protected:
 
     lldb::ValueObjectSP m_thread_list_valobj_sp;
     std::auto_ptr<DynamicRegisterInfo> m_register_info_ap;
+    lldb_private::ScriptInterpreter *m_interpreter;
+    void* m_python_object;
     
 };
 
