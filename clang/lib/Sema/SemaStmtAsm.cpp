@@ -430,7 +430,7 @@ static std::string buildMSAsmString(Sema &SemaRef, ArrayRef<Token> AsmToks,
 
     if (isNewAsm) {
       if (i) {
-        AsmStrings.push_back(Asm.c_str());
+        AsmStrings.push_back(Asm.str());
         AsmTokRanges.push_back(std::make_pair(startTok, i-1));
         startTok = i;
         Res += Asm;
@@ -448,10 +448,10 @@ static std::string buildMSAsmString(Sema &SemaRef, ArrayRef<Token> AsmToks,
 
     Asm += getSpelling(SemaRef, AsmToks[i]);
   }
-  AsmStrings.push_back(Asm.c_str());
+  AsmStrings.push_back(Asm.str());
   AsmTokRanges.push_back(std::make_pair(startTok, AsmToks.size()-1));
   Res += Asm;
-  return Res.c_str();
+  return Res.str();
 }
 
 #define DEF_SIMPLE_MSASM                                                   \
