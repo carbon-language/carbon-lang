@@ -1631,6 +1631,7 @@ public:
   MSAsmStmt(ASTContext &C, SourceLocation asmloc, SourceLocation lbraceloc,
             bool issimple, bool isvolatile, ArrayRef<Token> asmtoks,
             ArrayRef<IdentifierInfo*> inputs, ArrayRef<IdentifierInfo*> outputs,
+            ArrayRef<Expr*> inputexprs, ArrayRef<Expr*> outputexprs,
             StringRef asmstr, ArrayRef<StringRef> clobbers,
             SourceLocation endloc);
 
@@ -1672,6 +1673,8 @@ public:
     return StringRef();
   }
 
+  Expr *getOutputExpr(unsigned i);
+
   const Expr *getOutputExpr(unsigned i) const {
     return const_cast<MSAsmStmt*>(this)->getOutputExpr(i);
   }
@@ -1690,6 +1693,9 @@ public:
 
     return StringRef();
   }
+
+  Expr *getInputExpr(unsigned i);
+  void setInputExpr(unsigned i, Expr *E);
 
   const Expr *getInputExpr(unsigned i) const {
     return const_cast<MSAsmStmt*>(this)->getInputExpr(i);

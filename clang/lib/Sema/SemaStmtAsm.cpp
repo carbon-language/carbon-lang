@@ -458,7 +458,8 @@ static std::string buildMSAsmString(Sema &SemaRef, ArrayRef<Token> AsmToks,
   MSAsmStmt *NS =                                                          \
     new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc, /*IsSimple*/ true, \
                             /*IsVolatile*/ true, AsmToks, Inputs, Outputs, \
-                            AsmString, Clobbers, EndLoc);
+                            InputExprs, OutputExprs, AsmString, Clobbers,  \
+                            EndLoc);
 
 StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
                                 SourceLocation LBraceLoc,
@@ -470,6 +471,8 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   std::set<std::string> ClobberRegs;
   SmallVector<IdentifierInfo*, 4> Inputs;
   SmallVector<IdentifierInfo*, 4> Outputs;
+  SmallVector<Expr*, 4> InputExprs;
+  SmallVector<Expr*, 4> OutputExprs;
 
   // Empty asm statements don't need to instantiate the AsmParser, etc.
   if (AsmToks.empty()) {
@@ -593,8 +596,16 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
           IdentifierInfo *II = getIdentifierInfo(Name, AsmToks,
                                                  AsmTokRanges[StrIdx].first,
                                                  AsmTokRanges[StrIdx].second);
-          if (II)
-            isDef ? Outputs.push_back(II) : Inputs.push_back(II);
+          if (II) {
+            // FIXME: Compute the InputExpr/OutputExpr using ActOnIdExpression().
+            if (isDef) {
+              Outputs.push_back(II);
+              OutputExprs.push_back(0);
+            } else {
+              Inputs.push_back(II);
+              InputExprs.push_back(0);
+            }
+          }
         }
       }
     }
@@ -606,6 +617,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   MSAsmStmt *NS =
     new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc, IsSimple,
                             /*IsVolatile*/ true, AsmToks, Inputs, Outputs,
-                            AsmString, Clobbers, EndLoc);
+                            InputExprs, OutputExprs, AsmString, Clobbers,
+                            EndLoc);
   return Owned(NS);
 }
