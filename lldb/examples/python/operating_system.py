@@ -10,6 +10,7 @@ class PlugIn(object):
         if type(process) is lldb.SBProcess and process.IsValid():
             self.process = process
             self.registers = None # Will be an dictionary containing info for each register
+            self.threads = None # Will be an dictionary containing info for each thread
     
     def get_thread_info(self):
         if not self.threads:
