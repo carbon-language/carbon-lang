@@ -55,7 +55,8 @@ unsigned InstrEmitter::CountResults(SDNode *Node) {
 ///
 /// Also count physreg RegisterSDNode and RegisterMaskSDNode operands preceding
 /// the chain and glue. These operands may be implicit on the machine instr.
-static unsigned countOperands(SDNode *Node, unsigned &NumImpUses) {
+static unsigned countOperands(SDNode *Node, unsigned NumExpUses,
+                              unsigned &NumImpUses) {
   unsigned N = Node->getNumOperands();
   while (N && Node->getOperand(N - 1).getValueType() == MVT::Glue)
     --N;
@@ -63,7 +64,8 @@ static unsigned countOperands(SDNode *Node, unsigned &NumImpUses) {
     --N; // Ignore chain if it exists.
 
   // Count RegisterSDNode and RegisterMaskSDNode operands for NumImpUses.
-  for (unsigned I = N; I; --I) {
+  NumImpUses = N - NumExpUses;
+  for (unsigned I = N; I > NumExpUses; --I) {
     if (isa<RegisterMaskSDNode>(Node->getOperand(I - 1)))
       continue;
     if (RegisterSDNode *RN = dyn_cast<RegisterSDNode>(Node->getOperand(I - 1)))
@@ -720,7 +722,8 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
   const MCInstrDesc &II = TII->get(Opc);
   unsigned NumResults = CountResults(Node);
   unsigned NumImpUses = 0;
-  unsigned NodeOperands = countOperands(Node, NumImpUses);
+  unsigned NodeOperands =
+    countOperands(Node, II.getNumOperands() - II.getNumDefs(), NumImpUses);
   bool HasPhysRegOuts = NumResults > II.getNumDefs() && II.getImplicitDefs()!=0;
 #ifndef NDEBUG
   unsigned NumMIOperands = NodeOperands + NumResults;
