@@ -15,7 +15,7 @@
 #ifndef PROFILING_H
 #define PROFILING_H
 
-#include "llvm/Analysis/ProfileInfoTypes.h" /* for enum ProfilingType */
+#include "llvm/Analysis/ProfileDataTypes.h" /* for enum ProfilingType */
 
 /* save_arguments - Save argc and argv as passed into the program for the file
  * we output.
