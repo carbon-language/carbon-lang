@@ -483,7 +483,8 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
 
   std::vector<std::string> AsmStrings;
   std::vector<std::pair<unsigned,unsigned> > AsmTokRanges;
-  std::string AsmString = buildMSAsmString(*this, AsmToks, AsmStrings, AsmTokRanges);
+  std::string AsmString = buildMSAsmString(*this, AsmToks, AsmStrings,
+                                           AsmTokRanges);
 
   std::vector<std::vector<StringRef> > Pieces(AsmStrings.size());
   buildMSAsmPieces(AsmStrings, Pieces);
