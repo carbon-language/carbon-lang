@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declaration several RecursiveASTVisitors used to build
-// and check data structures used in loop migration.
+// This file contains the declarations of several RecursiveASTVisitors used to
+// build and check data structures used in loop migration.
 //
 //===----------------------------------------------------------------------===//
-#ifndef _LLVM_TOOLS_CLANG_TOOLS_LOOP_CONVERT_STMT_ANCESTOR_H_
-#define _LLVM_TOOLS_CLANG_TOOLS_LOOP_CONVERT_STMT_ANCESTOR_H_
+#ifndef _LLVM_TOOLS_CLANG_TOOLS_EXTRA_LOOP_CONVERT_STMT_ANCESTOR_H_
+#define _LLVM_TOOLS_CLANG_TOOLS_EXTRA_LOOP_CONVERT_STMT_ANCESTOR_H_
 #include "clang/AST/RecursiveASTVisitor.h"
 
 namespace clang {
@@ -120,6 +120,7 @@ class DependencyFinderASTVisitor :
   /// inner context.
   ///
   /// For example,
+  /// \code
   ///   const int N = 10, M = 20;
   ///   int arr[N][M];
   ///   int getRow();
@@ -128,21 +129,23 @@ class DependencyFinderASTVisitor :
   ///     int k = getRow();
   ///     printf("%d:", arr[k][i]);
   ///   }
-  ///
+  /// \endcode
   /// At first glance, this loop looks like it could be changed to
+  /// \code
   ///   for (int elem : arr[k]) {
   ///     int k = getIndex();
   ///     printf("%d:", elem);
   ///   }
+  /// \endcode
   /// But this is malformed, since `k` is used before it is defined!
   ///
   /// In order to avoid this, this class looks at the container expression
   /// `arr[k]` and decides whether or not it contains a sub-expression declared
   /// within the the loop body.
-  bool dependsOnOutsideVariable(const Stmt *Body) {
-    DependsOnOutsideVariable = false;
+  bool dependsOnInsideVariable(const Stmt *Body) {
+    DependsOnInsideVariable = false;
     TraverseStmt(const_cast<Stmt *>(Body));
-    return DependsOnOutsideVariable;
+    return DependsOnInsideVariable;
   }
 
   friend class RecursiveASTVisitor<DependencyFinderASTVisitor>;
@@ -152,7 +155,7 @@ class DependencyFinderASTVisitor :
   const DeclParentMap *DeclParents;
   const Stmt *ContainingStmt;
   const ReplacedVarsMap *ReplacedVars;
-  bool DependsOnOutsideVariable;
+  bool DependsOnInsideVariable;
 
   bool VisitVarDecl(VarDecl *VD);
   bool VisitDeclRefExpr(DeclRefExpr *DRE);
@@ -193,4 +196,4 @@ class DeclFinderASTVisitor : public RecursiveASTVisitor<DeclFinderASTVisitor> {
 
 } // namespace for_migrate
 } // namespace clang
-#endif //_LLVM_TOOLS_CLANG_TOOLS_LOOP_CONVERT_STMT_ANCESTOR_H_
+#endif // _LLVM_TOOLS_CLANG_TOOLS_EXTRA_LOOP_CONVERT_STMT_ANCESTOR_H_

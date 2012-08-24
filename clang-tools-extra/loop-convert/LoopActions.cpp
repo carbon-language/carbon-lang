@@ -1,3 +1,15 @@
+//===-- loop-convert/LoopActions.cpp - C++11 For loop migration -*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file defines matchers and callbacks for use in migrating C++ for loops.
+//
+//===----------------------------------------------------------------------===//
 #include "LoopActions.h"
 #include "LoopMatchers.h"
 #include "VariableNaming.h"
@@ -163,7 +175,6 @@ class ForLoopIndexUseVisitor
       std::pair<const Expr *, llvm::FoldingSetNodeID>, 16> DependentExprs;
 };
 
-// FIXME: Determine how not to break in the presence of problematic macros.
 /// \brief Obtain the original source code text from a SourceRange.
 static StringRef getStringFromRange(SourceManager &SourceMgr,
                                     const LangOptions &LangOpts,
@@ -308,16 +319,22 @@ static bool isIndexInSubscriptExpr(const Expr *IndexExpr,
 /// both the container and the index match.
 /// If the loop has index variable `index` and iterates over `container`, then
 /// isIndexInSubscriptExpr returns true for
+/// \code
 ///   container[index]
 ///   container.at(index)
 ///   container->at(index)
+/// \endcode
 /// but not for
+/// \code
 ///   container[notIndex]
 ///   notContainer[index]
+/// \endcode
 /// If PermitDeref is true, then isIndexInSubscriptExpr additionally returns
 /// true on these expressions:
+/// \code
 ///   (*container)[index]
 ///   (*container).at(index)
+/// \endcode
 static bool isIndexInSubscriptExpr(ASTContext *Context, const Expr *IndexExpr,
                                    const VarDecl *IndexVar, const Expr *Obj,
                                    const Expr *SourceExpr, bool PermitDeref) {
@@ -367,15 +384,19 @@ static bool isDereferenceOfUop(const UnaryOperator *Uop,
 /// the loop object.
 ///
 /// This is intended to find cases such as
+/// \code
 ///   for (int i = 0; i < arraySize(arr); ++i) {
 ///     T t = arr[i];
 ///     // use t, do not use i
 ///   }
+/// \endcode
 /// and
+/// \code
 ///   for (iterator i = container.begin(), e = container.end(); i != e; ++i) {
 ///     T t = *i;
 ///     // use t, do not use i
 ///   }
+/// \code
 static bool isAliasDecl(const Decl *TheDecl, const VarDecl *IndexVar) {
   const VarDecl *VDecl = dyn_cast<VarDecl>(TheDecl);
   if (!VDecl)
@@ -415,23 +436,28 @@ static bool isAliasDecl(const Decl *TheDecl, const VarDecl *IndexVar) {
 /// the same as the statically computable size of ArrayType.
 ///
 /// Given
+/// \code
 ///   const int N = 5;
 ///   int arr[N];
+/// \endcode
 /// This is intended to permit
+/// \code
 ///   for (int i = 0; i < N; ++i) {  /* use arr[i] */ }
 ///   for (int i = 0; i < arraysize(arr); ++i) { /* use arr[i] */ }
+/// \endcode
 static bool arrayMatchesBoundExpr(ASTContext *Context,
                                   const QualType &ArrayType,
                                   const Expr *ConditionExpr) {
-  const Type *T = ArrayType.getCanonicalType().getTypePtr();
-  if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(T)) {
-    llvm::APSInt ConditionSize;
-    if (!ConditionExpr->isIntegerConstantExpr(ConditionSize, *Context))
-      return false;
-    llvm::APSInt ArraySize(CAT->getSize());
-    return llvm::APSInt::isSameValue(ConditionSize, ArraySize);
-  }
-  return false;
+  if (!ConditionExpr || ConditionExpr->isValueDependent())
+    return false;
+  const ConstantArrayType *CAT = Context->getAsConstantArrayType(ArrayType);
+  if (!CAT)
+    return false;
+  llvm::APSInt ConditionSize;
+  if (!ConditionExpr->isIntegerConstantExpr(ConditionSize, *Context))
+    return false;
+  llvm::APSInt ArraySize(CAT->getSize());
+  return llvm::APSInt::isSameValue(ConditionSize, ArraySize);
 }
 
 /// \brief If the unary operator is a dereference of IndexVar, include it
@@ -440,9 +466,11 @@ static bool arrayMatchesBoundExpr(ASTContext *Context,
 /// For example, if container.begin() and container.end() both return pointers
 /// to int, this makes sure that the initialization for `k` is not counted as an
 /// unconvertible use of the iterator `i`.
+/// \code
 ///   for (int *i = container.begin(), *e = container.end(); i != e; ++i) {
 ///     int k = *i + 2;
 ///   }
+/// \endcode
 bool ForLoopIndexUseVisitor::TraverseUnaryDeref(UnaryOperator *Uop) {
   // If we dereference an iterator that's actually a pointer, count the
   // occurrence.
@@ -458,20 +486,26 @@ bool ForLoopIndexUseVisitor::TraverseUnaryDeref(UnaryOperator *Uop) {
 /// IndexVar, include it as a valid usage and prune the traversal.
 ///
 /// For example, given
+/// \code
 ///   struct Foo { int bar(); int x; };
 ///   vector<Foo> v;
+/// \endcode
 /// the following uses will be considered convertible:
+/// \code
 ///   for (vector<Foo>::iterator i = v.begin(), e = v.end(); i != e; ++i) {
 ///     int b = i->bar();
 ///     int k = i->x + 1;
 ///   }
+/// \endcode
 /// though
+/// \code
 ///   for (vector<Foo>::iterator i = v.begin(), e = v.end(); i != e; ++i) {
 ///     int k = i.insert(1);
 ///   }
 ///   for (vector<Foo>::iterator i = v.begin(), e = v.end(); i != e; ++i) {
 ///     int b = e->bar();
 ///   }
+/// \endcode
 /// will not.
 bool ForLoopIndexUseVisitor::TraverseMemberExpr(MemberExpr *Member) {
   const Expr *Base = Member->getBase();
@@ -527,7 +561,10 @@ bool ForLoopIndexUseVisitor::TraverseMemberExpr(MemberExpr *Member) {
 /// operator->(). The one exception is allowing vector::at() for pseudoarrays.
 bool ForLoopIndexUseVisitor::TraverseCXXMemberCallExpr(
     CXXMemberCallExpr *MemberCall) {
-  MemberExpr *Member = cast<MemberExpr>(MemberCall->getCallee());
+  MemberExpr *Member =
+      dyn_cast<MemberExpr>(MemberCall->getCallee()->IgnoreParenImpCasts());
+  if (!Member)
+    return VisitorBase::TraverseCXXMemberCallExpr(MemberCall);
   // We specifically allow an accessor named "at" to let STL in, though
   // this is restricted to pseudo-arrays by requiring a single, integer
   // argument.
@@ -552,16 +589,20 @@ bool ForLoopIndexUseVisitor::TraverseCXXMemberCallExpr(
 /// include it as a valid usage and prune the traversal.
 ///
 /// For example, given
+/// \code
 ///   struct Foo { int bar(); int x; };
 ///   vector<Foo> v;
 ///   void f(Foo);
+/// \endcode
 /// the following uses will be considered convertible:
+/// \code
 ///   for (vector<Foo>::iterator i = v.begin(), e = v.end(); i != e; ++i) {
 ///     f(*i);
 ///   }
 ///   for (int i = 0; i < v.size(); ++i) {
 ///      int i = v[i] + 1;
 ///   }
+/// \endcode
 bool ForLoopIndexUseVisitor::TraverseCXXOperatorCallExpr(
     CXXOperatorCallExpr *OpCall) {
   switch (OpCall->getOperator()) {
@@ -594,12 +635,18 @@ bool ForLoopIndexUseVisitor::TraverseCXXOperatorCallExpr(
 /// AST traversal.
 ///
 /// For example, given
+/// \code
 ///   const int N = 5;
 ///   int arr[N];
+/// \endcode
 /// This is intended to permit
+/// \code
 ///   for (int i = 0; i < N; ++i) {  /* use arr[i] */ }
+/// \endcode
 /// but not
+/// \code
 ///   for (int i = 0; i < N; ++i) {  /* use notArr[i] */ }
+/// \endcode
 /// and further checking needs to be done later to ensure that exactly one array
 /// is referenced.
 bool ForLoopIndexUseVisitor::TraverseArraySubscriptExpr(
@@ -637,6 +684,7 @@ bool ForLoopIndexUseVisitor::TraverseArraySubscriptExpr(
 /// our confidence in the transformation.
 ///
 /// For example, these are not permitted:
+/// \code
 ///   for (int i = 0; i < N; ++i) {  printf("arr[%d] = %d", i, arr[i]); }
 ///   for (vector<int>::iterator i = container.begin(), e = container.end();
 ///        i != e; ++i)
@@ -648,14 +696,17 @@ bool ForLoopIndexUseVisitor::TraverseArraySubscriptExpr(
 ///        i != e; ++i)
 ///     if (i + 1 != e)
 ///       printf("%d", *i);
+/// \endcode
 ///
-///  And these will raise the risk level:
+/// And these will raise the risk level:
+/// \code
 ///    int arr[10][20];
 ///    int l = 5;
 ///    for (int j = 0; j < 20; ++j)
 ///      int k = arr[l][j] + l; // using l outside arr[l] is considered risky
 ///    for (int i = 0; i < obj.getVector().size(); ++i)
 ///      obj.foo(10); // using `obj` is considered risky
+/// \endcode
 bool ForLoopIndexUseVisitor::VisitDeclRefExpr(DeclRefExpr *DRE) {
   const ValueDecl *TheDecl = DRE->getDecl();
   if (areSameVariable(IndexVar, TheDecl) || areSameVariable(EndVar, TheDecl))
@@ -679,12 +730,11 @@ bool ForLoopIndexUseVisitor::VisitDeclStmt(DeclStmt *DS) {
 //// \brief Apply the source transformations necessary to migrate the loop!
 void LoopFixer::doConversion(ASTContext *Context,
                              const VarDecl *IndexVar,
-                             const Expr *ContainerExpr,
+                             const VarDecl *MaybeContainer,
+                             StringRef ContainerString,
                              const UsageResult &Usages,
-                             const DeclStmt *AliasDecl,
-                             const ForStmt *TheLoop,
+                             const DeclStmt *AliasDecl, const ForStmt *TheLoop,
                              bool ContainerNeedsDereference) {
-  const VarDecl *MaybeContainer = getReferencedVariable(ContainerExpr);
   std::string VarName;
 
   if (Usages.size() == 1 && AliasDecl) {
@@ -718,9 +768,6 @@ void LoopFixer::doConversion(ASTContext *Context,
 
   // Now, we need to construct the new range expresion.
   SourceRange ParenRange(TheLoop->getLParenLoc(), TheLoop->getRParenLoc());
-  StringRef ContainerString =
-      getStringFromRange(Context->getSourceManager(), Context->getLangOpts(),
-                         ContainerExpr->getSourceRange());
 
   QualType AutoRefType =
       Context->getLValueReferenceType(Context->getAutoDeductType());
@@ -749,7 +796,9 @@ static const Expr *getContainerFromBeginEndCall(const Expr* Init, bool IsBegin,
   if (!TheCall || TheCall->getNumArgs() != 0)
       return NULL;
 
-  const MemberExpr *Member = cast<MemberExpr>(TheCall->getCallee());
+  const MemberExpr *Member = dyn_cast<MemberExpr>(TheCall->getCallee());
+  if (!Member)
+    return NULL;
   const std::string Name = Member->getMemberDecl()->getName();
   const std::string TargetName = IsBegin ? "begin" : "end";
   if (Name != TargetName)
@@ -792,10 +841,52 @@ static const Expr *findContainer(ASTContext *Context, const Expr *BeginExpr,
   return BeginContainerExpr;
 }
 
+StringRef LoopFixer::checkDeferralsAndRejections(ASTContext *Context,
+                                                 const Expr *ContainerExpr,
+                                                 Confidence ConfidenceLevel,
+                                                 const ForStmt *TheLoop) {
+  // If we already modified the range of this for loop, don't do any further
+  // updates on this iteration.
+  // FIXME: Once Replacements can detect conflicting edits, replace this
+  // implementation and rely on conflicting edit detection instead.
+  if (ReplacedVarRanges->count(TheLoop)) {
+    ++*DeferredChanges;
+    return "";
+  }
+
+  ParentFinder->gatherAncestors(Context->getTranslationUnitDecl());
+  // Ensure that we do not try to move an expression dependent on a local
+  // variable declared inside the loop outside of it!
+  DependencyFinderASTVisitor
+      DependencyFinder(&ParentFinder->getStmtToParentStmtMap(),
+                       &ParentFinder->getDeclToParentStmtMap(),
+                       ReplacedVarRanges, TheLoop);
+
+  // Not all of these are actually deferred changes.
+  // FIXME: Determine when the external dependency isn't an expression converted
+  // by another loop.
+  if (DependencyFinder.dependsOnInsideVariable(ContainerExpr)) {
+    ++*DeferredChanges;
+    return "";
+  }
+  if (ConfidenceLevel.get() < RequiredConfidenceLevel) {
+    ++*RejectedChanges;
+    return "";
+  }
+
+  StringRef ContainerString =
+      getStringFromRange(Context->getSourceManager(), Context->getLangOpts(),
+                         ContainerExpr->getSourceRange());
+  // In case someone is using an evil macro, reject this change.
+  if (ContainerString.empty())
+    ++*RejectedChanges;
+  return ContainerString;
+}
+
 /// \brief Given that we have verified that the loop's header appears to be
 /// convertible, run the complete analysis on the loop to determine if the
 /// loop's body is convertible.
-void LoopFixer::FindAndVerifyUsages(ASTContext *Context,
+void LoopFixer::findAndVerifyUsages(ASTContext *Context,
                                     const VarDecl *LoopVar,
                                     const VarDecl *EndVar,
                                     const Expr *ContainerExpr,
@@ -826,36 +917,14 @@ void LoopFixer::FindAndVerifyUsages(ASTContext *Context,
       ConfidenceLevel.lowerTo(TCK_Risky);
   }
 
-  // If we already modified the range of this for loop, don't do any further
-  // updates on this iteration.
-  // FIXME: Once Replacements can detect conflicting edits, replace this
-  // implementation and rely on conflicting edit detection instead.
-  if (ReplacedVarRanges->count(TheLoop)) {
-    ++*DeferredChanges;
+  std::string ContainerString =
+      checkDeferralsAndRejections(Context, ContainerExpr,
+                                  ConfidenceLevel, TheLoop);
+  if (ContainerString.empty())
     return;
-  }
 
-  ParentFinder->gatherAncestors(Context->getTranslationUnitDecl());
-  // Ensure that we do not try to move an expression dependent on a local
-  // variable declared inside the loop outside of it!
-  DependencyFinderASTVisitor
-      DependencyFinder(&ParentFinder->getStmtToParentStmtMap(),
-                       &ParentFinder->getDeclToParentStmtMap(),
-                       ReplacedVarRanges, TheLoop);
-
-  // Not all of these are actually deferred changes.
-  // FIXME: Determine when the external dependency isn't an expression converted
-  // by another loop.
-  if (DependencyFinder.dependsOnOutsideVariable(ContainerExpr)) {
-    ++*DeferredChanges;
-    return;
-  }
-  if (ConfidenceLevel.get() < RequiredConfidenceLevel) {
-    ++*RejectedChanges;
-    return;
-  }
-
-  doConversion(Context, LoopVar, ContainerExpr, Finder.getUsages(),
+  doConversion(Context, LoopVar, getReferencedVariable(ContainerExpr),
+               ContainerString, Finder.getUsages(),
                Finder.getAliasDecl(), TheLoop, ContainerNeedsDereference);
   ++*AcceptedChanges;
 }
@@ -890,13 +959,8 @@ void LoopFixer::run(const MatchFinder::MatchResult &Result) {
   const Expr *BoundExpr = Nodes.getStmtAs<Expr>(ConditionBoundName);
   // If the loop calls end()/size() after each iteration, lower our confidence
   // level.
-  if (FixerKind == LFK_Array && !BoundExpr)
-      return;
-  if (FixerKind != LFK_Array && !EndVar) {
-    if (!EndCall)
-      return;
+  if (FixerKind != LFK_Array && !EndVar)
     ConfidenceLevel.lowerTo(TCK_Reasonable);
-  }
 
   const Expr *ContainerExpr = NULL;
   bool ContainerNeedsDereference = false;
@@ -907,15 +971,19 @@ void LoopFixer::run(const MatchFinder::MatchResult &Result) {
                                   EndVar ? EndVar->getInit() : EndCall,
                                   &ContainerNeedsDereference);
   else if (FixerKind == LFK_PseudoArray) {
+    if (!EndCall)
+      return;
     ContainerExpr = EndCall->getImplicitObjectArgument();
-    ContainerNeedsDereference =
-        cast<MemberExpr>(EndCall->getCallee())->isArrow();
+    const MemberExpr *Member = dyn_cast<MemberExpr>(EndCall->getCallee());
+    if (!Member)
+      return;
+    ContainerNeedsDereference = Member->isArrow();
   }
-  // We must know the container being iterated over by now for non-array loops.
-  if (!ContainerExpr && FixerKind != LFK_Array)
+  // We must know the container or an array length bound.
+  if (!ContainerExpr && !BoundExpr)
     return;
 
-  FindAndVerifyUsages(Context, LoopVar, EndVar, ContainerExpr, BoundExpr,
+  findAndVerifyUsages(Context, LoopVar, EndVar, ContainerExpr, BoundExpr,
                       ContainerNeedsDereference, TheLoop, ConfidenceLevel);
 }
 

@@ -12,8 +12,8 @@
 // conflict with existing ones.
 //
 //===----------------------------------------------------------------------===//
-#ifndef _LLVM_TOOLS_CLANG_TOOLS_LOOP_VARIABLE_NAMING_H_
-#define _LLVM_TOOLS_CLANG_TOOLS_LOOP_VARIABLE_NAMING_H_
+#ifndef _LLVM_TOOLS_CLANG_TOOLS_EXTRA_LOOP_VARIABLE_NAMING_H_
+#define _LLVM_TOOLS_CLANG_TOOLS_EXTRA_LOOP_VARIABLE_NAMING_H_
 
 #include "StmtAncestor.h"
 #include "clang/AST/ASTContext.h"
@@ -56,4 +56,4 @@ class VariableNamer {
 
 } // namespace loop_migrate
 } // namespace clang
-#endif //_LLVM_TOOLS_CLANG_TOOLS_LOOP_VARIABLE_NAMING_H_
+#endif // _LLVM_TOOLS_CLANG_TOOLS_EXTRA_LOOP_VARIABLE_NAMING_H_

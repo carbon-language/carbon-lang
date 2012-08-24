@@ -1,3 +1,17 @@
+//===-- loop-convert/VariableNaming.h - Gererate variable names -*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file contains the definitino of the VariableNamer class, which is
+// responsible for generating new variable names and ensuring that they do not
+// conflict with existing ones.
+//
+//===----------------------------------------------------------------------===//
 #include "VariableNaming.h"
 
 namespace clang {

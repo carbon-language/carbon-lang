@@ -1,3 +1,16 @@
+//===-- loop-convert/StmtAncestor.cpp - AST property visitors ---*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file contains the definitions of several RecursiveASTVisitors used to
+// build and check data structures used in loop migration.
+//
+//===----------------------------------------------------------------------===//
 #include "StmtAncestor.h"
 
 namespace clang {
@@ -56,7 +69,7 @@ bool DependencyFinderASTVisitor::VisitVarDecl(VarDecl *VD) {
   // First, see if the variable was declared within an inner scope of the loop.
   while (Curr != NULL) {
     if (Curr == ContainingStmt) {
-      DependsOnOutsideVariable = true;
+      DependsOnInsideVariable = true;
       return false;
     }
     Curr = StmtParents->lookup(Curr);
@@ -67,7 +80,7 @@ bool DependencyFinderASTVisitor::VisitVarDecl(VarDecl *VD) {
   for (ReplacedVarsMap::const_iterator I = ReplacedVars->begin(),
                                        E = ReplacedVars->end(); I != E; ++I)
     if ((*I).second == VD) {
-      DependsOnOutsideVariable = true;
+      DependsOnInsideVariable = true;
       return false;
     }
   return true;
