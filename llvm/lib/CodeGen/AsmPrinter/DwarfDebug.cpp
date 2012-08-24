@@ -317,7 +317,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU,
     if (SP.isDefinition() && !SP.getContext().isCompileUnit() &&
         !SP.getContext().isFile() &&
         !isSubprogramContext(SP.getContext())) {
-      SPCU->addUInt(SPDie, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
+      SPCU->addFlag(SPDie, dwarf::DW_AT_declaration);
       
       // Add arguments.
       DICompositeType SPTy = SP.getType();
@@ -329,7 +329,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU,
           DIType ATy = DIType(DIType(Args.getElement(i)));
           SPCU->addType(Arg, ATy);
           if (ATy.isArtificial())
-            SPCU->addUInt(Arg, dwarf::DW_AT_artificial, dwarf::DW_FORM_flag, 1);
+            SPCU->addFlag(Arg, dwarf::DW_AT_artificial);
           SPDie->addChild(Arg);
         }
       DIE *SPDeclDie = SPDie;
@@ -610,7 +610,7 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
   if (!CompilationDir.empty())
     NewCU->addString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
   if (DIUnit.isOptimized())
-    NewCU->addUInt(Die, dwarf::DW_AT_APPLE_optimized, dwarf::DW_FORM_flag, 1);
+    NewCU->addFlag(Die, dwarf::DW_AT_APPLE_optimized);
 
   StringRef Flags = DIUnit.getFlags();
   if (!Flags.empty())
@@ -1481,8 +1481,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   DIE *CurFnDIE = constructScopeDIE(TheCU, FnScope);
   
   if (!MF->getTarget().Options.DisableFramePointerElim(*MF))
-    TheCU->addUInt(CurFnDIE, dwarf::DW_AT_APPLE_omit_frame_ptr,
-                   dwarf::DW_FORM_flag, 1);
+    TheCU->addFlag(CurFnDIE, dwarf::DW_AT_APPLE_omit_frame_ptr);
 
   DebugFrames.push_back(FunctionDebugFrameInfo(Asm->getFunctionNumber(),
                                                MMI->getFrameMoves()));

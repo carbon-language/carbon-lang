@@ -16,8 +16,8 @@
 
 ; Verify that we refer to 'yyyy' with a relocation.
 ; LINUX:      .long   .Lstring3               # DW_AT_name
-; LINUX-NEXT: .long   39                      # DW_AT_type
-; LINUX-NEXT: .byte   1                       # DW_AT_external
+; LINUX-NEXT: .long   38                      # DW_AT_type
+; LINUX-NEXT:                                 # DW_AT_external
 ; LINUX-NEXT: .byte   1                       # DW_AT_decl_file
 ; LINUX-NEXT: .byte   1                       # DW_AT_decl_line
 ; LINUX-NEXT: .byte   9                       # DW_AT_location
