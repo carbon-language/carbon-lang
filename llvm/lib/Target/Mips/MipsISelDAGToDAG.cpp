@@ -337,8 +337,9 @@ SelectAddr(SDNode *Parent, SDValue Addr, SDValue &Base, SDValue &Offset) {
     // Generate:
     //  lui $2, %hi($CPI1_0)
     //  lwc1 $f0, %lo($CPI1_0)($2)
-    if (Addr.getOperand(1).getOpcode() == MipsISD::Lo) {
-      SDValue LoVal = Addr.getOperand(1), Opnd0 = LoVal.getOperand(0);
+    if (Addr.getOperand(1).getOpcode() == MipsISD::Lo ||
+        Addr.getOperand(1).getOpcode() == MipsISD::GPRel) {
+      SDValue Opnd0 = Addr.getOperand(1).getOperand(0);
       if (isa<ConstantPoolSDNode>(Opnd0) || isa<GlobalAddressSDNode>(Opnd0) ||
           isa<JumpTableSDNode>(Opnd0)) {
         Base = Addr.getOperand(0);
