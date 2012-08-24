@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines SymbolRef, ExprBindKey, and ProgramState*.
+// This file defines the state of the program along the analyzes path.
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,6 +16,7 @@
 
 #include "clang/Basic/LLVM.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ConstraintManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/DynamicTypeInfo.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/Environment.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/Store.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SValBuilder.h"
@@ -53,38 +54,6 @@ template <typename T> struct ProgramStateTrait {
   static inline void *MakeVoidPtr(data_type D) { return (void*) D; }
   static inline data_type MakeData(void *const* P) {
     return P ? (data_type) *P : (data_type) 0;
-  }
-};
-
-/// \class DynamicTypeInfo
-///
-/// \brief Stores the currently inferred strictest bound on the runtime type
-/// of a region in a given state along the analysis path.
-class DynamicTypeInfo {
-  QualType T;
-  bool CanBeASubClass;
-
-public:
-  DynamicTypeInfo() : T(QualType()) {}
-  DynamicTypeInfo(QualType WithType, bool CanBeSub = true)
-    : T(WithType), CanBeASubClass(CanBeSub) {}
-
-  /// \brief Return true if no dynamic type info is available.
-  bool isValid() const { return !T.isNull(); }
-
-  /// \brief Returns the currently inferred upper bound on the runtime type.
-  QualType getType() const { return T; }
-
-  /// \brief Returns false if the type T is the only type in the lattice
-  /// (the type information is precise), true otherwise.
-  bool canBeASubClass() const { return CanBeASubClass; }
-  
-  void Profile(llvm::FoldingSetNodeID &ID) const {
-    T.Profile(ID);
-    ID.AddInteger((unsigned)CanBeASubClass);
-  }
-  bool operator==(const DynamicTypeInfo &X) const {
-    return T == X.T && CanBeASubClass == X.CanBeASubClass;
   }
 };
 
@@ -827,7 +796,7 @@ public:
   bool scan(const SymExpr *sym);
 };
 
-} // end GR namespace
+} // end ento namespace
 
 } // end clang namespace
 
