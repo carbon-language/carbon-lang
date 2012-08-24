@@ -21,8 +21,26 @@ ThreadMemory::ThreadMemory (const ProcessSP &process_sp,
                               tid_t tid, 
                               const ValueObjectSP &thread_info_valobj_sp) :
     Thread (process_sp, tid),
-    m_thread_info_valobj_sp (thread_info_valobj_sp)
+    m_thread_info_valobj_sp (thread_info_valobj_sp),
+    m_name(),
+    m_queue()
 {
+}
+
+
+ThreadMemory::ThreadMemory (const lldb::ProcessSP &process_sp,
+                            lldb::tid_t tid,
+                            const char *name,
+                            const char *queue) :
+    Thread (process_sp, tid),
+    m_thread_info_valobj_sp (),
+    m_name(),
+    m_queue()
+{
+    if (name)
+        m_name = name;
+    if (queue)
+        m_queue = queue;
 }
 
 

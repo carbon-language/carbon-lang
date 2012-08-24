@@ -123,11 +123,19 @@ PythonDataString::~PythonDataString ()
 }
 
 const char*
-PythonDataString::GetString()
+PythonDataString::GetString() const
 {
     if (m_object)
         return PyString_AsString(GetPythonObject());
     return NULL;
+}
+
+size_t
+PythonDataString::GetSize() const
+{
+    if (m_object)
+        return PyString_Size(GetPythonObject());
+    return 0;
 }
 
 void

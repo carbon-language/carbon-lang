@@ -90,8 +90,11 @@ namespace lldb_private {
         ~PythonDataString ();
         
         const char*
-        GetString();
-        
+        GetString() const;
+
+        size_t
+        GetSize() const;
+
         void
         SetString (const char* string);
         

@@ -61,7 +61,8 @@ RegisterContextMemory::~RegisterContextMemory()
 void
 RegisterContextMemory::InvalidateAllRegisters ()
 {
-    SetAllRegisterValid (false);
+    if (m_reg_data_addr != LLDB_INVALID_ADDRESS)
+        SetAllRegisterValid (false);
 }
 
 void
@@ -163,4 +164,11 @@ RegisterContextMemory::WriteAllRegisterValues (const DataBufferSP &data_sp)
         }
     }
     return false;
+}
+
+void
+RegisterContextMemory::SetAllRegisterData  (const lldb::DataBufferSP &data_sp)
+{
+    m_reg_data.SetData(data_sp);
+    SetAllRegisterValid (true);    
 }

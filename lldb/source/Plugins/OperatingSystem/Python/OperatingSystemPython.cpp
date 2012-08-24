@@ -157,27 +157,50 @@ OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list, ThreadList
     if (!object_sp)
         return NULL;
     PythonDataObject pyobj((PyObject*)object_sp->GetObject());
-    PythonDataArray array = pyobj.GetArrayObject();
-    if(!array)
-        return NULL;
-    
-    // TODO: read from the dict
-    
-    // and parse the returned dictionary. We need to pass in the a Dictionary
-    // with the same kind of info we want back so we can reuse old threads, but
-    // only create new ones.
-    
-    // Make any constant strings once and cache the uniqued C string values
-    // so we don't have to rehash them each time through this function call
-//    dict thread_info_dict = python.get_thread_info()
-//    for thread_info in thread_info_dict:
-//    {
-//        ThreadSP thread_sp (old_thread_list.FindThreadByID (tid, false));
-//        if (!thread_sp)
-//            thread_sp.reset (new ThreadMemory (m_process->shared_from_this(), tid, valobj_sp));
-//        new_thread_list.AddThread(thread_sp);
-//    }
-    new_thread_list = old_thread_list;
+    PythonDataArray threads_array (pyobj.GetArrayObject());
+    if (threads_array)
+    {
+//        const uint32_t num_old_threads = old_thread_list.GetSize(false);
+//        for (uint32_t i=0; i<num_old_threads; ++i)
+//        {
+//            ThreadSP old_thread_sp(old_thread_list.GetThreadAtIndex(i, false));
+//            if (old_thread_sp->GetID() < 0x10000)
+//                new_thread_list.AddThread (old_thread_sp);
+//        }
+
+        PythonDataString tid_pystr("tid");
+        PythonDataString name_pystr("name");
+        PythonDataString queue_pystr("queue");
+        PythonDataString state_pystr("state");
+        PythonDataString stop_reason_pystr("stop_reason");
+        
+        const uint32_t num_threads = threads_array.GetSize();
+        for (uint32_t i=0; i<num_threads; ++i)
+        {
+            PythonDataDictionary thread_dict(threads_array.GetItemAtIndex(i).GetDictionaryObject());
+            if (thread_dict)
+            {
+                const tid_t tid = thread_dict.GetItemForKeyAsInteger(tid_pystr, LLDB_INVALID_THREAD_ID);
+                const char *name = thread_dict.GetItemForKeyAsString (name_pystr);
+                const char *queue = thread_dict.GetItemForKeyAsString (queue_pystr);
+                //const char *state = thread_dict.GetItemForKeyAsString (state_pystr);
+                //const char *stop_reason = thread_dict.GetItemForKeyAsString (stop_reason_pystr);
+                
+                ThreadSP thread_sp (old_thread_list.FindThreadByID (tid, false));
+                if (!thread_sp)
+                    thread_sp.reset (new ThreadMemory (m_process->shared_from_this(),
+                                                       tid,
+                                                       name,
+                                                       queue));
+                new_thread_list.AddThread(thread_sp);
+
+            }
+        }
+    }
+    else
+    {
+        new_thread_list = old_thread_list;
+    }
     return new_thread_list.GetSize(false) > 0;
 }
 
@@ -189,24 +212,31 @@ OperatingSystemPython::ThreadWasSelected (Thread *thread)
 RegisterContextSP
 OperatingSystemPython::CreateRegisterContextForThread (Thread *thread)
 {
-
+    RegisterContextSP reg_ctx_sp;
     if (!m_interpreter || !m_python_object || !thread)
         return NULL;
-    auto object_sp = m_interpreter->OSPlugin_QueryForThreadInfo(m_interpreter->MakeScriptObject(m_python_object),
-                                                                thread->GetID());
-    if (!object_sp)
-        return NULL;
-    PythonDataObject pack_info_data_obj((PyObject*)object_sp->GetObject());
-    if(!pack_info_data_obj)
-        return NULL;
+    auto object_sp = m_interpreter->OSPlugin_QueryForRegisterContextData (m_interpreter->MakeScriptObject(m_python_object),
+                                                                          thread->GetID());
 
-    RegisterContextSP reg_ctx_sp;
-//    bytes b = get_register_context_data(thread)
-//    if (b)
-//    {
-//        reg_ctx_sp.reset (new RegisterContextMemory (*thread, 0, *GetDynamicRegisterInfo (), base_addr));
-//        // set bytes
-//    }
+           if (!object_sp)
+        return NULL;
+    
+    PythonDataString reg_context_data((PyObject*)object_sp->GetObject());
+    if (reg_context_data)
+    {
+        DataBufferSP data_sp (new DataBufferHeap (reg_context_data.GetString(),
+                                                  reg_context_data.GetSize()));
+        if (data_sp->GetByteSize())
+        {
+            printf("got %zu bytes of reg ctx data\n", data_sp->GetByteSize());
+            RegisterContextMemory *reg_ctx_memory = new RegisterContextMemory (*thread, 0, *GetDynamicRegisterInfo (), LLDB_INVALID_ADDRESS);
+            if (reg_ctx_memory)
+            {
+                reg_ctx_sp.reset(reg_ctx_memory);
+                reg_ctx_memory->SetAllRegisterData (data_sp);
+            }
+        }
+    }
     return reg_ctx_sp;
 }
 

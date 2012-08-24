@@ -1845,8 +1845,8 @@ ScriptInterpreterPython::OSPlugin_QueryForThreadsInfo (lldb::ScriptInterpreterOb
 }
 
 lldb::ScriptInterpreterObjectSP
-ScriptInterpreterPython::OSPlugin_QueryForThreadInfo (lldb::ScriptInterpreterObjectSP object,
-                                                      lldb::tid_t thread_id)
+ScriptInterpreterPython::OSPlugin_QueryForRegisterContextData (lldb::ScriptInterpreterObjectSP object,
+                                                               lldb::tid_t thread_id)
 {
     Locker py_lock(this,Locker::AcquireLock,Locker::FreeLock);
 

@@ -219,8 +219,8 @@ public:
     }
     
     virtual lldb::ScriptInterpreterObjectSP
-    OSPlugin_QueryForThreadInfo (lldb::ScriptInterpreterObjectSP object,
-                                 lldb::tid_t thread_id)
+    OSPlugin_QueryForRegisterContextData (lldb::ScriptInterpreterObjectSP object,
+                                          lldb::tid_t thread_id)
     {
         return lldb::ScriptInterpreterObjectSP();
     }

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import lldb
+import struct
 
 class PlugIn(object):
     """Class that provides data for an instance of a LLDB 'OperatingSystemPython' plug-in class"""
@@ -58,9 +59,9 @@ class PlugIn(object):
             
     def get_register_data(self, tid):
         if tid == 0x111111111:
-            return pack('Q',1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21);
+            return struct.pack('21Q',1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21);
         elif tid == 0x222222222:
-            return pack('Q',11,12,13,14,15,16,17,18,19,110,111,112,113,114,115,116,117,118,119,120,121);
+            return struct.pack('21Q',11,12,13,14,15,16,17,18,19,110,111,112,113,114,115,116,117,118,119,120,121);
         elif tid == 0x333333333:
-            return pack('Q',21,22,23,24,25,26,27,28,29,210,211,212,213,214,215,216,217,218,219,220,221);
+            return struct.pack('21Q',21,22,23,24,25,26,27,28,29,210,211,212,213,214,215,216,217,218,219,220,221);
     

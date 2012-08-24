@@ -80,6 +80,8 @@ public:
     virtual bool
     WriteAllRegisterValues (const lldb::DataBufferSP &data_sp);
 
+    void
+    SetAllRegisterData  (const lldb::DataBufferSP &data_sp);
 protected:
     
     void
