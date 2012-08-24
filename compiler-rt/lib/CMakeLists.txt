@@ -19,6 +19,10 @@ function(add_clang_runtime_static_library)
   set_target_properties(${ARGN} PROPERTIES
                         ARCHIVE_OUTPUT_DIRECTORY ${CLANG_RUNTIME_LIB_DIR})
 endfunction()
+function(add_clang_runtime_shared_library)
+  set_target_properties(${ARGN} PROPERTIES
+                        LIBRARY_OUTPUT_DIRECTORY ${CLANG_RUNTIME_LIB_DIR})
+endfunction()
 
 # First, add the subdirectories which contain feature-based runtime libraries
 # and several convenience helper libraries.

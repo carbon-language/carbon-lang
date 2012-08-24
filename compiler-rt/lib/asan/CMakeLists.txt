@@ -116,6 +116,7 @@ if(APPLE)
     LINK_FLAGS "-framework Foundation")
   list(APPEND ASAN_DYNAMIC_RUNTIME_LIBRARIES clang_rt.asan_osx_dynamic)
 endif()
+add_clang_runtime_shared_library(${ASAN_DYNAMIC_RUNTIME_LIBRARIES})
 
 
 if(LLVM_INCLUDE_TESTS)
