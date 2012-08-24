@@ -250,6 +250,29 @@ int test_param17(int a);
 /// \param x2 Ccc.
 int test_param18(int x1, int x2, int x3);
 
+// expected-warning@+2 {{parameter 'bbb' not found in the function declaration}} expected-note@+2 {{did you mean 'aaa'?}}
+/// \param aaa Meow.
+/// \param bbb Bbb.
+/// \returns aaa.
+typedef int test_param19(int aaa);
+
+// expected-warning@+2 {{parameter 'bbb' not found in the function declaration}} expected-note@+2 {{did you mean 'aaa'?}}
+/// \param aaa Meow.
+/// \param bbb Bbb.
+/// \returns aaa.
+typedef int (*test_param20)(int aaa);
+
+// expected-warning@+2 {{parameter 'bbb' not found in the function declaration}} expected-note@+2 {{did you mean 'aaa'?}}
+/// \param aaa Meow.
+/// \param bbb Bbb.
+/// \returns aaa.
+typedef int (* const test_param21)(int aaa);
+
+// expected-warning@+2 {{parameter 'bbb' not found in the function declaration}} expected-note@+2 {{did you mean 'aaa'?}}
+/// \param aaa Meow.
+/// \param bbb Bbb.
+/// \returns aaa.
+typedef int (C::*test_param22)(int aaa);
 
 // expected-warning@+1 {{'\tparam' command used in a comment that is not attached to a template declaration}}
 /// \tparam T Aaa

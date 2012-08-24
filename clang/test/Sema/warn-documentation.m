@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -Wno-objc-root-class -Wdocumentation -Wdocumentation-pedantic -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fblocks -Wno-objc-root-class -Wdocumentation -Wdocumentation-pedantic -verify %s
 
 @class NSString;
 
@@ -90,4 +90,10 @@ int b;
 /// \returns Aaa
 - (void)test2:(NSString *)aaa;
 @end
+
+// expected-warning@+2 {{parameter 'bbb' not found in the function declaration}} expected-note@+2 {{did you mean 'aaa'?}}
+/// \param aaa Meow.
+/// \param bbb Bbb.
+/// \returns aaa.
+typedef int (^test_param1)(int aaa);
 

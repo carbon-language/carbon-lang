@@ -240,7 +240,58 @@ void DeclInfo::fill() {
   case Decl::Namespace:
     Kind = NamespaceKind;
     break;
-  case Decl::Typedef:
+  case Decl::Typedef: {
+    Kind = TypedefKind;
+    // If this is a typedef to something we consider a function, extract
+    // arguments and return type.
+    const TypedefDecl *TD = cast<TypedefDecl>(ThisDecl);
+    const TypeSourceInfo *TSI = TD->getTypeSourceInfo();
+    if (!TSI)
+      break;
+    TypeLoc TL = TSI->getTypeLoc().getUnqualifiedLoc();
+    while (true) {
+      TL = TL.IgnoreParens();
+      // Look through typedefs.
+      if (TypedefTypeLoc *TypedefTL = dyn_cast<TypedefTypeLoc>(&TL)) {
+        TSI = TypedefTL->getTypedefNameDecl()->getTypeSourceInfo();
+        if (TSI)
+          break;
+        TL = TSI->getTypeLoc().getUnqualifiedLoc();
+        continue;
+      }
+      // Look through qualified types.
+      if (QualifiedTypeLoc *QualifiedTL = dyn_cast<QualifiedTypeLoc>(&TL)) {
+        TL = QualifiedTL->getUnqualifiedLoc();
+        continue;
+      }
+      // Look through pointer types.
+      if (PointerTypeLoc *PointerTL = dyn_cast<PointerTypeLoc>(&TL)) {
+        TL = PointerTL->getPointeeLoc().getUnqualifiedLoc();
+        continue;
+      }
+      if (BlockPointerTypeLoc *BlockPointerTL =
+              dyn_cast<BlockPointerTypeLoc>(&TL)) {
+        TL = BlockPointerTL->getPointeeLoc().getUnqualifiedLoc();
+        continue;
+      }
+      if (MemberPointerTypeLoc *MemberPointerTL =
+              dyn_cast<MemberPointerTypeLoc>(&TL)) {
+        TL = MemberPointerTL->getPointeeLoc().getUnqualifiedLoc();
+        continue;
+      }
+      // Is this a typedef for a function type?
+      if (FunctionTypeLoc *FTL = dyn_cast<FunctionTypeLoc>(&TL)) {
+        Kind = FunctionKind;
+        ArrayRef<ParmVarDecl *> Params = FTL->getParams();
+        ParamVars = ArrayRef<const ParmVarDecl *>(Params.data(),
+                                                  Params.size());
+        ResultType = FTL->getResultLoc().getType();
+        break;
+      }
+      break;
+    }
+    break;
+  }
   case Decl::TypeAlias:
     Kind = TypedefKind;
     break;
