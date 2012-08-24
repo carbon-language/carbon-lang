@@ -430,6 +430,39 @@ total 365848
         <p>A template has been created in the source repository that can help you to create
             lldb command quickly:</p>
         <a href="http://llvm.org/svn/llvm-project/lldb/trunk/examples/python/cmdtemplate.py">cmdtemplate.py</a>
+		<p>
+		A commonly required facility is being able to create a command that does some token substitution, and then runs a different debugger command
+		(usually, it po'es the result of an expression evaluated on its argument). For instance, given the following program:
+		<code><pre><tt>
+#import &lt;Foundation/Foundation.h&gt;
+NSString*
+ModifyString(NSString* src)
+{
+	return [src stringByAppendingString:@"foobar"];
+}
+
+int main()
+{
+	NSString* aString = @"Hello world";
+	NSString* anotherString = @"Let's be friends";
+	return 1;
+}
+		</tt></pre></code>
+		you may want a pofoo X command, that equates po [ModifyString(X) capitalizedString].
+		The following debugger interaction shows how to achieve that goal:
+		<code><pre><tt>
+(lldb) <b>script</b>
+Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.
+>>> <b>def pofoo_funct(debugger, command, result, internal_dict):</b>
+...	<b>cmd = "po [ModifyString(" + command + ") capitalizedString]"</b>
+...	<b>lldb.debugger.HandleCommand(cmd)</b>
+... 
+>>> ^D
+(lldb) <b>command script add pofoo -f pofoo_funct</b>
+(lldb) <b>pofoo aString</b>
+$1 = 0x000000010010aa00 Hello Worldfoobar
+(lldb) <b>pofoo anotherString</b>
+$2 = 0x000000010010aba0 Let's Be Friendsfoobar</tt></pre></code>
         </div>
 		<div class="post">
 			<h1 class ="postheader">Using the lldb.py module in python</h1>
