@@ -1,4 +1,4 @@
-##===- tools/extra/remove-cstr-calls/Makefile --------------*- Makefile -*-===##
+##===-------- tools/toolTemplate/Makefile ------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -9,7 +9,7 @@
 
 CLANG_LEVEL := ../../..
 
-TOOLNAME = remove-cstr-calls
+TOOLNAME = tool-template
 NO_INSTALL = 1
 
 # No plugins, optimize startup time.

@@ -191,8 +191,8 @@ int main(int argc, const char **argv) {
   ast_matchers::MatchFinder Finder;
   FixCStrCall Callback(&Tool.getReplacements());
   Finder.addMatcher(
-      constructorCall(
-          hasDeclaration(method(hasName(StringConstructor))),
+      constructExpr(
+          hasDeclaration(methodDecl(hasName(StringConstructor))),
           argumentCountIs(2),
           // The first argument must have the form x.c_str() or p->c_str()
           // where the method is string::c_str().  We can use the copy
@@ -200,23 +200,23 @@ int main(int argc, const char **argv) {
           // the string object).
           hasArgument(
               0,
-              id("call", memberCall(
-                  callee(id("member", memberExpression())),
-                  callee(method(hasName(StringCStrMethod))),
-                  on(id("arg", expression()))))),
+              id("call", memberCallExpr(
+                  callee(id("member", memberExpr())),
+                  callee(methodDecl(hasName(StringCStrMethod))),
+                  on(id("arg", expr()))))),
           // The second argument is the alloc object which must not be
           // present explicitly.
           hasArgument(
               1,
-              defaultArgument())),
+              defaultArgExpr())),
       &Callback);
   Finder.addMatcher(
-      constructorCall(
+      constructExpr(
           // Implicit constructors of these classes are overloaded
           // wrt. string types and they internally make a StringRef
           // referring to the argument.  Passing a string directly to
           // them is preferred to passing a char pointer.
-          hasDeclaration(method(anyOf(
+          hasDeclaration(methodDecl(anyOf(
               hasName("::llvm::StringRef::StringRef"),
               hasName("::llvm::Twine::Twine")))),
           argumentCountIs(1),
@@ -227,10 +227,10 @@ int main(int argc, const char **argv) {
           // directly.
           hasArgument(
               0,
-              id("call", memberCall(
-                  callee(id("member", memberExpression())),
-                  callee(method(hasName(StringCStrMethod))),
-                  on(id("arg", expression())))))),
+              id("call", memberCallExpr(
+                  callee(id("member", memberExpr())),
+                  callee(methodDecl(hasName(StringCStrMethod))),
+                  on(id("arg", expr())))))),
       &Callback);
   return Tool.run(newFrontendActionFactory(&Finder));
 }
