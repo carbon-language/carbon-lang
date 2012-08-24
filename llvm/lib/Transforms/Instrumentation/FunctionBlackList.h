@@ -1,4 +1,4 @@
-//===-- FunctionBlackList.cpp - blacklist of functions ----------*- C++ -*-===//
+//===-- FunctionBlackList.h - blacklist for sanitizers ----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,31 +7,46 @@
 //===----------------------------------------------------------------------===//
 //
 // This is a utility class for instrumentation passes (like AddressSanitizer
-// or ThreadSanitizer) to avoid instrumenting some functions based on
-// user-supplied blacklist.
+// or ThreadSanitizer) to avoid instrumenting some functions or global
+// variables based on a user-supplied blacklist.
+//
+// The blacklist disables instrumentation of various functions and global
+// variables.  Each line contains a prefix, followed by a wild card expression.
+// ---
+// fun:*_ZN4base6subtle*
+// global:*global_with_initialization_problems*
+// src:file_with_tricky_code.cc
+// ---
+// Note that the wild card is in fact an llvm::Regex, but * is automatically
+// replaced with .*
+// This is similar to the "ignore" feature of ThreadSanitizer.
+// http://code.google.com/p/data-race-test/wiki/ThreadSanitizerIgnores
 //
 //===----------------------------------------------------------------------===//
 //
 
-#include <string>
+#include "llvm/ADT/StringMap.h"
 
 namespace llvm {
 class Function;
+class GlobalVariable;
+class Module;
 class Regex;
+class StringRef;
 
-// Blacklisted functions are not instrumented.
-// The blacklist file contains one or more lines like this:
-// ---
-// fun:FunctionWildCard
-// ---
-// This is similar to the "ignore" feature of ThreadSanitizer.
-// http://code.google.com/p/data-race-test/wiki/ThreadSanitizerIgnores
 class FunctionBlackList {
  public:
-  FunctionBlackList(const std::string &Path);
+  FunctionBlackList(const StringRef Path);
+  // Returns whether either this function or it's source file are blacklisted.
   bool isIn(const Function &F);
+  // Returns whether either this global or it's source file are blacklisted.
+  bool isIn(const GlobalVariable &G);
+  // Returns whether this module is blacklisted by filename.
+  bool isIn(const Module &M);
  private:
-  Regex *Functions;
+  StringMap<Regex*> Entries;
+
+  bool inSection(const StringRef Section, const StringRef Query);
 };
 
 }  // namespace llvm
