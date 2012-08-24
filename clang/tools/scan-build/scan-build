@@ -102,12 +102,26 @@ if (!defined $ClangSB || ! -x $ClangSB) {
   $ClangSB = Cwd::realpath("$RealBin/clang");
 }
 my $Clang;
+my $howFound = "from path";
 if (!defined $ClangSB || ! -x $ClangSB) {
-  # Default to looking for 'clang' in the path.
-  $Clang = `which clang`;
-  chomp $Clang;
-  if ($Clang eq "") {
-    DieDiag("No 'clang' executable found in path.\n");
+  # Default to looking for 'clang' in the path, or xcrun
+  # on OS X.
+  my $xcrun = `which xcrun`;
+  chomp $xcrun;
+  if ($xcrun ne "") {
+    $Clang = `$xcrun -toolchain XcodeDefault -find clang`;
+    chomp $Clang;  
+    if ($Clang eq "") {
+      DieDiag("No 'clang' executable found by 'xcrun'\n");
+    }
+    $howFound = "found using 'xcrun'";
+  }
+  else {
+    $Clang = `which clang`;
+    chomp $Clang;
+    if ($Clang eq "") {
+      DieDiag("No 'clang' executable found in path\n");
+    }
   }
 }
 else {
@@ -1459,7 +1473,7 @@ if (!defined $CmdCXX || ! -x $CmdCXX) {
 
 if (!defined $ClangSB || ! -x $ClangSB) {
   Diag("'clang' executable not found in '$RealBin/bin'.\n");
-  Diag("Using 'clang' from path: $Clang\n");
+  Diag("Using 'clang' $howFound: $Clang\n");
 }
 
 SetHtmlEnv(\@ARGV, $HtmlDir);
