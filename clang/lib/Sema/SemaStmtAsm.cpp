@@ -598,13 +598,20 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
                                                  AsmTokRanges[StrIdx].first,
                                                  AsmTokRanges[StrIdx].second);
           if (II) {
-            // FIXME: Compute the InputExpr/OutputExpr using ActOnIdExpression().
-            if (isDef) {
-              Outputs.push_back(II);
-              OutputExprs.push_back(0);
-            } else {
-              Inputs.push_back(II);
-              InputExprs.push_back(0);
+            CXXScopeSpec SS;
+            UnqualifiedId Id;
+            SourceLocation Loc;
+            Id.setIdentifier(II, AsmLoc);
+            ExprResult Result = ActOnIdExpression(getCurScope(), SS, Loc, Id,
+                                                  false, false);
+            if (!Result.isInvalid()) {
+              if (isDef) {
+                Outputs.push_back(II);
+                OutputExprs.push_back(Result.take());
+              } else {
+                Inputs.push_back(II);
+                InputExprs.push_back(Result.take());
+              }
             }
           }
         }
