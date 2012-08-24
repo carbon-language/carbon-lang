@@ -10077,6 +10077,78 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
     SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::i32);
     return DAG.getNode(Opcode, dl, VTs, NewOps.data(), NewOps.size());
   }
+  case Intrinsic::x86_fma_vfmadd_ps:
+  case Intrinsic::x86_fma_vfmadd_pd:
+  case Intrinsic::x86_fma_vfmsub_ps:
+  case Intrinsic::x86_fma_vfmsub_pd:
+  case Intrinsic::x86_fma_vfnmadd_ps:
+  case Intrinsic::x86_fma_vfnmadd_pd:
+  case Intrinsic::x86_fma_vfnmsub_ps:
+  case Intrinsic::x86_fma_vfnmsub_pd:
+  case Intrinsic::x86_fma_vfmaddsub_ps:
+  case Intrinsic::x86_fma_vfmaddsub_pd:
+  case Intrinsic::x86_fma_vfmsubadd_ps:
+  case Intrinsic::x86_fma_vfmsubadd_pd:
+  case Intrinsic::x86_fma_vfmadd_ps_256:
+  case Intrinsic::x86_fma_vfmadd_pd_256:
+  case Intrinsic::x86_fma_vfmsub_ps_256:
+  case Intrinsic::x86_fma_vfmsub_pd_256:
+  case Intrinsic::x86_fma_vfnmadd_ps_256:
+  case Intrinsic::x86_fma_vfnmadd_pd_256:
+  case Intrinsic::x86_fma_vfnmsub_ps_256:
+  case Intrinsic::x86_fma_vfnmsub_pd_256:
+  case Intrinsic::x86_fma_vfmaddsub_ps_256:
+  case Intrinsic::x86_fma_vfmaddsub_pd_256:
+  case Intrinsic::x86_fma_vfmsubadd_ps_256:
+  case Intrinsic::x86_fma_vfmsubadd_pd_256: {
+    // Only lower intrinsics if FMA is enabled. FMA4 still uses patterns.
+    if (!Subtarget->hasFMA())
+      return SDValue();
+
+    unsigned Opc;
+    switch (IntNo) {
+    default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
+    case Intrinsic::x86_fma_vfmadd_ps:
+    case Intrinsic::x86_fma_vfmadd_pd:
+    case Intrinsic::x86_fma_vfmadd_ps_256:
+    case Intrinsic::x86_fma_vfmadd_pd_256:
+      Opc = X86ISD::FMADD;
+      break;
+    case Intrinsic::x86_fma_vfmsub_ps:
+    case Intrinsic::x86_fma_vfmsub_pd:
+    case Intrinsic::x86_fma_vfmsub_ps_256:
+    case Intrinsic::x86_fma_vfmsub_pd_256:
+      Opc = X86ISD::FMSUB;
+      break;
+    case Intrinsic::x86_fma_vfnmadd_ps:
+    case Intrinsic::x86_fma_vfnmadd_pd:
+    case Intrinsic::x86_fma_vfnmadd_ps_256:
+    case Intrinsic::x86_fma_vfnmadd_pd_256:
+      Opc = X86ISD::FNMADD;
+      break;
+    case Intrinsic::x86_fma_vfnmsub_ps:
+    case Intrinsic::x86_fma_vfnmsub_pd:
+    case Intrinsic::x86_fma_vfnmsub_ps_256:
+    case Intrinsic::x86_fma_vfnmsub_pd_256:
+      Opc = X86ISD::FNMSUB;
+      break;
+    case Intrinsic::x86_fma_vfmaddsub_ps:
+    case Intrinsic::x86_fma_vfmaddsub_pd:
+    case Intrinsic::x86_fma_vfmaddsub_ps_256:
+    case Intrinsic::x86_fma_vfmaddsub_pd_256:
+      Opc = X86ISD::FMADDSUB;
+      break;
+    case Intrinsic::x86_fma_vfmsubadd_ps:
+    case Intrinsic::x86_fma_vfmsubadd_pd:
+    case Intrinsic::x86_fma_vfmsubadd_ps_256:
+    case Intrinsic::x86_fma_vfmsubadd_pd_256:
+      Opc = X86ISD::FMSUBADD;
+      break;
+    }
+
+    return DAG.getNode(Opc, dl, Op.getValueType(), Op.getOperand(1),
+                       Op.getOperand(2), Op.getOperand(3));
+  }
   }
 }
 
