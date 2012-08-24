@@ -886,7 +886,7 @@ void RTTIBuilder::BuildVMIClassTypeInfo(const CXXRecordDecl *RD) {
       Offset = Layout.getBaseClassOffset(BaseDecl);
     };
     
-    OffsetFlags = Offset.getQuantity() << 8;
+    OffsetFlags = uint64_t(Offset.getQuantity()) << 8;
     
     // The low-order byte of __offset_flags contains flags, as given by the 
     // masks from the enumeration __offset_flags_masks.

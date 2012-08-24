@@ -147,9 +147,10 @@ private:
     assert((ComponentKind == CK_VCallOffset ||
             ComponentKind == CK_VBaseOffset ||
             ComponentKind == CK_OffsetToTop) && "Invalid component kind!");
-    assert(Offset.getQuantity() <= ((1LL << 56) - 1) && "Offset is too big!");
+    assert(Offset.getQuantity() < (1LL << 56) && "Offset is too big!");
+    assert(Offset.getQuantity() >= -(1LL << 56) && "Offset is too small!");
 
-    Value = ((Offset.getQuantity() << 3) | ComponentKind);
+    Value = (uint64_t(Offset.getQuantity()) << 3) | ComponentKind;
   }
 
   VTableComponent(Kind ComponentKind, uintptr_t Ptr) {
