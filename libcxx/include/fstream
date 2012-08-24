@@ -253,15 +253,20 @@ basic_filebuf<_CharT, _Traits>::basic_filebuf()
       __intbuf_(0),
       __ibs_(0),
       __file_(0),
-      __cv_(&use_facet<codecvt<char_type, char, state_type> >(this->getloc())),
+      __cv_(nullptr),
       __st_(),
       __om_(0),
       __cm_(0),
       __owns_eb_(false),
       __owns_ib_(false),
-      __always_noconv_(__cv_->always_noconv())
+      __always_noconv_(false)
 {
     setbuf(0, 4096);
+    if (has_facet<codecvt<char_type, char, state_type> >(this->getloc()))
+    {
+        __cv_ = &use_facet<codecvt<char_type, char, state_type> >(this->getloc());
+        __always_noconv_ = __cv_->always_noconv();
+    }
 }
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -598,6 +603,10 @@ basic_filebuf<_CharT, _Traits>::underflow()
             size_t __nr = fread((void*)__extbufnext_, 1, __nmemb, __file_);
             if (__nr != 0)
             {
+#ifndef _LIBCPP_NO_EXCEPTIONS
+                if (!__cv_)
+                    throw bad_cast();
+#endif
                 __extbufend_ = __extbufnext_ + __nr;
                 char_type*  __inext;
                 __r = __cv_->in(__st_, __extbuf_, __extbufend_, __extbufnext_,
@@ -676,6 +685,10 @@ basic_filebuf<_CharT, _Traits>::overflow(int_type __c)
             codecvt_base::result __r;
             do
             {
+#ifndef _LIBCPP_NO_EXCEPTIONS
+                if (!__cv_)
+                    throw bad_cast();
+#endif
                 const char_type* __e;
                 __r = __cv_->out(__st_, this->pbase(), this->pptr(), __e,
                                         __extbuf_, __extbuf_ + __ebs_, __extbe);
@@ -765,6 +778,10 @@ typename basic_filebuf<_CharT, _Traits>::pos_type
 basic_filebuf<_CharT, _Traits>::seekoff(off_type __off, ios_base::seekdir __way,
                                         ios_base::openmode)
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
+    if (!__cv_)
+        throw bad_cast();
+#endif
     int __width = __cv_->encoding();
     if (__file_ == 0 || (__width <= 0 && __off != 0) || sync())
         return pos_type(off_type(-1));
@@ -808,6 +825,10 @@ basic_filebuf<_CharT, _Traits>::sync()
 {
     if (__file_ == 0)
         return 0;
+#ifndef _LIBCPP_NO_EXCEPTIONS
+    if (!__cv_)
+        throw bad_cast();
+#endif
     if (__cm_ & ios_base::out)
     {
         if (this->pptr() != this->pbase())
