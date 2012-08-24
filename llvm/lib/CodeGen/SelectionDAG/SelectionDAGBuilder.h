@@ -150,9 +150,11 @@ private:
     uint64_t Mask;
     MachineBasicBlock* BB;
     unsigned Bits;
+    uint32_t ExtraWeight;
 
-    CaseBits(uint64_t mask, MachineBasicBlock* bb, unsigned bits):
-      Mask(mask), BB(bb), Bits(bits) { }
+    CaseBits(uint64_t mask, MachineBasicBlock* bb, unsigned bits,
+             uint32_t Weight):
+      Mask(mask), BB(bb), Bits(bits), ExtraWeight(Weight) { }
   };
 
   typedef std::vector<Case>           CaseVector;
@@ -247,11 +249,13 @@ private:
   typedef std::pair<JumpTableHeader, JumpTable> JumpTableBlock;
 
   struct BitTestCase {
-    BitTestCase(uint64_t M, MachineBasicBlock* T, MachineBasicBlock* Tr):
-      Mask(M), ThisBB(T), TargetBB(Tr) { }
+    BitTestCase(uint64_t M, MachineBasicBlock* T, MachineBasicBlock* Tr,
+                uint32_t Weight):
+      Mask(M), ThisBB(T), TargetBB(Tr), ExtraWeight(Weight) { }
     uint64_t Mask;
     MachineBasicBlock *ThisBB;
     MachineBasicBlock *TargetBB;
+    uint32_t ExtraWeight;
   };
 
   typedef SmallVector<BitTestCase, 3> BitTestInfo;
@@ -452,6 +456,7 @@ public:
   void visitBitTestHeader(BitTestBlock &B, MachineBasicBlock *SwitchBB);
   void visitBitTestCase(BitTestBlock &BB,
                         MachineBasicBlock* NextMBB,
+                        uint32_t BranchWeightToNext,
                         unsigned Reg,
                         BitTestCase &B,
                         MachineBasicBlock *SwitchBB);

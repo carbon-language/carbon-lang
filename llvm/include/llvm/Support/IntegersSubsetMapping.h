@@ -42,6 +42,7 @@ public:
   struct RangeEx : public RangeTy {
     RangeEx() : Weight(1) {}
     RangeEx(const RangeTy &R) : RangeTy(R), Weight(1) {}
+    RangeEx(const RangeTy &R, unsigned W) : RangeTy(R), Weight(W) {}
     RangeEx(const IntTy &C) : RangeTy(C), Weight(1) {}
     RangeEx(const IntTy &L, const IntTy &H) : RangeTy(L, H), Weight(1) {}
     RangeEx(const IntTy &L, const IntTy &H, unsigned W) :
@@ -316,13 +317,13 @@ public:
     Items.clear();
     const IntTy *Low = &OldItems.begin()->first.getLow();
     const IntTy *High = &OldItems.begin()->first.getHigh();
-    unsigned Weight = 1;
+    unsigned Weight = OldItems.begin()->first.Weight;
     SuccessorClass *Successor = OldItems.begin()->second;
     for (CaseItemIt j = OldItems.begin(), i = j++, e = OldItems.end();
          j != e; i = j++) {
       if (isJoinable(i, j)) {
         const IntTy *CurHigh = &j->first.getHigh();
-        ++Weight;
+        Weight += j->first.Weight;
         if (*CurHigh > *High)
           High = CurHigh;
       } else {
@@ -330,7 +331,7 @@ public:
         add(R, Successor);
         Low = &j->first.getLow();
         High = &j->first.getHigh(); 
-        Weight = 1;
+        Weight = j->first.Weight;
         Successor = j->second;
       }
     }
@@ -362,10 +363,17 @@ public:
   
   /// Adds all ranges and values from given ranges set to the current
   /// mapping.
-  void add(const IntegersSubsetTy &CRS, SuccessorClass *S = 0) {
+  void add(const IntegersSubsetTy &CRS, SuccessorClass *S = 0,
+           unsigned Weight = 0) {
+    unsigned ItemWeight = 1;
+    if (Weight)
+      // Weight is associated with CRS, for now we perform a division to
+      // get the weight for each item.
+      ItemWeight = Weight / CRS.getNumItems();
     for (unsigned i = 0, e = CRS.getNumItems(); i < e; ++i) {
       RangeTy R = CRS.getItem(i);
-      add(R, S);
+      RangeEx REx(R, ItemWeight);
+      add(REx, S);
     }
   }
   

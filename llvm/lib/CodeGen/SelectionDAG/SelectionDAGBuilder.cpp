@@ -1766,6 +1766,7 @@ void SelectionDAGBuilder::visitBitTestHeader(BitTestBlock &B,
 /// visitBitTestCase - this function produces one "bit test"
 void SelectionDAGBuilder::visitBitTestCase(BitTestBlock &BB,
                                            MachineBasicBlock* NextMBB,
+                                           uint32_t BranchWeightToNext,
                                            unsigned Reg,
                                            BitTestCase &B,
                                            MachineBasicBlock *SwitchBB) {
@@ -1803,8 +1804,10 @@ void SelectionDAGBuilder::visitBitTestCase(BitTestBlock &BB,
                        ISD::SETNE);
   }
 
-  addSuccessorWithWeight(SwitchBB, B.TargetBB);
-  addSuccessorWithWeight(SwitchBB, NextMBB);
+  // The branch weight from SwitchBB to B.TargetBB is B.ExtraWeight.
+  addSuccessorWithWeight(SwitchBB, B.TargetBB, B.ExtraWeight);
+  // The branch weight from SwitchBB to NextMBB is BranchWeightToNext.
+  addSuccessorWithWeight(SwitchBB, NextMBB, BranchWeightToNext);
 
   SDValue BrAnd = DAG.getNode(ISD::BRCOND, getCurDebugLoc(),
                               MVT::Other, getControlRoot(),
@@ -1927,6 +1930,7 @@ bool SelectionDAGBuilder::handleSmallSwitchRange(CaseRec& CR,
   if (++BBI != FuncInfo.MF->end())
     NextBlock = BBI;
 
+  BranchProbabilityInfo *BPI = FuncInfo.BPI;
   // If any two of the cases has the same destination, and if one value
   // is the same as the other, but has one bit unset that the other has set,
   // use bit manipulation to do two compares at once.  For example:
@@ -1960,8 +1964,12 @@ bool SelectionDAGBuilder::handleSmallSwitchRange(CaseRec& CR,
                                     ISD::SETEQ);
 
         // Update successor info.
-        addSuccessorWithWeight(SwitchBB, Small.BB);
-        addSuccessorWithWeight(SwitchBB, Default);
+        // Both Small and Big will jump to Small.BB, so we sum up the weights.
+        addSuccessorWithWeight(SwitchBB, Small.BB,
+                               Small.ExtraWeight + Big.ExtraWeight);
+        addSuccessorWithWeight(SwitchBB, Default,
+          // The default destination is the first successor in IR.
+          BPI ? BPI->getEdgeWeight(SwitchBB->getBasicBlock(), (unsigned)0) : 0);
 
         // Insert the true branch.
         SDValue BrCond = DAG.getNode(ISD::BRCOND, DL, MVT::Other,
@@ -1979,14 +1987,13 @@ bool SelectionDAGBuilder::handleSmallSwitchRange(CaseRec& CR,
   }
 
   // Order cases by weight so the most likely case will be checked first.
-  BranchProbabilityInfo *BPI = FuncInfo.BPI;
+  uint32_t UnhandledWeights = 0;
   if (BPI) {
     for (CaseItr I = CR.Range.first, IE = CR.Range.second; I != IE; ++I) {
-      uint32_t IWeight = BPI->getEdgeWeight(SwitchBB->getBasicBlock(),
-                                            I->BB->getBasicBlock());
+      uint32_t IWeight = I->ExtraWeight;
+      UnhandledWeights += IWeight;
       for (CaseItr J = CR.Range.first; J < I; ++J) {
-        uint32_t JWeight = BPI->getEdgeWeight(SwitchBB->getBasicBlock(),
-                                              J->BB->getBasicBlock());
+        uint32_t JWeight = J->ExtraWeight;
         if (IWeight > JWeight)
           std::swap(*I, *J);
       }
@@ -2035,10 +2042,12 @@ bool SelectionDAGBuilder::handleSmallSwitchRange(CaseRec& CR,
       LHS = I->Low; MHS = SV; RHS = I->High;
     }
 
-    uint32_t ExtraWeight = I->ExtraWeight;
+    // The false weight should be sum of all un-handled cases.
+    UnhandledWeights -= I->ExtraWeight;
     CaseBlock CB(CC, LHS, RHS, MHS, /* truebb */ I->BB, /* falsebb */ FallThrough,
                  /* me */ CurBlock,
-                 /* trueweight */ ExtraWeight / 2, /* falseweight */ ExtraWeight / 2);
+                 /* trueweight */ I->ExtraWeight,
+                 /* falseweight */ UnhandledWeights);
 
     // If emitting the first comparison, just call visitSwitchCase to emit the
     // code into the current block.  Otherwise, push the CaseBlock onto the
@@ -2138,13 +2147,28 @@ bool SelectionDAGBuilder::handleJTSwitchCase(CaseRec &CR,
     }
   }
 
+  // Calculate weight for each unique destination in CR.
+  DenseMap<MachineBasicBlock*, uint32_t> DestWeights;
+  if (FuncInfo.BPI)
+    for (CaseItr I = CR.Range.first, E = CR.Range.second; I != E; ++I) {
+      DenseMap<MachineBasicBlock*, uint32_t>::iterator Itr =
+          DestWeights.find(I->BB);
+      if (Itr != DestWeights.end()) 
+        Itr->second += I->ExtraWeight;
+      else
+        DestWeights[I->BB] = I->ExtraWeight;
+    }
+
   // Update successor info. Add one edge to each unique successor.
   BitVector SuccsHandled(CR.CaseBB->getParent()->getNumBlockIDs());
   for (std::vector<MachineBasicBlock*>::iterator I = DestBBs.begin(),
          E = DestBBs.end(); I != E; ++I) {
     if (!SuccsHandled[(*I)->getNumber()]) {
       SuccsHandled[(*I)->getNumber()] = true;
-      addSuccessorWithWeight(JumpTableBB, *I);
+      DenseMap<MachineBasicBlock*, uint32_t>::iterator Itr =
+          DestWeights.find(*I);
+      addSuccessorWithWeight(JumpTableBB, *I,
+                             Itr != DestWeights.end() ? Itr->second : 0);
     }
   }
 
@@ -2375,7 +2399,7 @@ bool SelectionDAGBuilder::handleBitTestsSwitchCase(CaseRec& CR,
 
     if (i == count) {
       assert((count < 3) && "Too much destinations to test!");
-      CasesBits.push_back(CaseBits(0, Dest, 0));
+      CasesBits.push_back(CaseBits(0, Dest, 0, 0/*Weight*/));
       count++;
     }
 
@@ -2384,6 +2408,7 @@ bool SelectionDAGBuilder::handleBitTestsSwitchCase(CaseRec& CR,
 
     uint64_t lo = (lowValue - lowBound).getZExtValue();
     uint64_t hi = (highValue - lowBound).getZExtValue();
+    CasesBits[i].ExtraWeight += I->ExtraWeight;
 
     for (uint64_t j = lo; j <= hi; j++) {
       CasesBits[i].Mask |=  1ULL << j;
@@ -2411,7 +2436,7 @@ bool SelectionDAGBuilder::handleBitTestsSwitchCase(CaseRec& CR,
     CurMF->insert(BBI, CaseBB);
     BTC.push_back(BitTestCase(CasesBits[i].Mask,
                               CaseBB,
-                              CasesBits[i].BB));
+                              CasesBits[i].BB, CasesBits[i].ExtraWeight));
 
     // Put SV in a virtual register to make it available from the new blocks.
     ExportFromCurrentBlock(SV);
@@ -2439,30 +2464,25 @@ size_t SelectionDAGBuilder::Clusterify(CaseVector& Cases,
   
   Clusterifier TheClusterifier;
 
+  BranchProbabilityInfo *BPI = FuncInfo.BPI;
   // Start with "simple" cases
   for (SwitchInst::ConstCaseIt i = SI.case_begin(), e = SI.case_end();
        i != e; ++i) {
     const BasicBlock *SuccBB = i.getCaseSuccessor();
     MachineBasicBlock *SMBB = FuncInfo.MBBMap[SuccBB];
 
-    TheClusterifier.add(i.getCaseValueEx(), SMBB);
+    TheClusterifier.add(i.getCaseValueEx(), SMBB, 
+        BPI ? BPI->getEdgeWeight(SI.getParent(), i.getSuccessorIndex()) : 0);
   }
   
   TheClusterifier.optimize();
   
-  BranchProbabilityInfo *BPI = FuncInfo.BPI;
   size_t numCmps = 0;
   for (Clusterifier::RangeIterator i = TheClusterifier.begin(),
        e = TheClusterifier.end(); i != e; ++i, ++numCmps) {
     Clusterifier::Cluster &C = *i;
-    unsigned W = 0;
-    if (BPI) {
-      W = BPI->getEdgeWeight(SI.getParent(), C.second->getBasicBlock());
-      if (!W)
-        W = 16;
-      W *= C.first.Weight;
-      BPI->setEdgeWeight(SI.getParent(), C.second->getBasicBlock(), W);  
-    }
+    // Update edge weight for the cluster.
+    unsigned W = C.first.Weight;
 
     // FIXME: Currently work with ConstantInt based numbers.
     // Changing it to APInt based is a pretty heavy for this commit.

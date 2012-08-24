@@ -88,3 +88,30 @@ exit:
 }
 
 !1 = metadata !{metadata !"branch_weights", i32 4, i32 4, i32 64, i32 4, i32 4}
+
+define i32 @test4(i32 %x) nounwind uwtable readnone ssp {
+; CHECK: Printing analysis {{.*}} for function 'test4'
+entry:
+  %conv = sext i32 %x to i64
+  switch i64 %conv, label %return [
+    i64 0, label %sw.bb
+    i64 1, label %sw.bb
+    i64 2, label %sw.bb
+    i64 5, label %sw.bb1
+  ], !prof !2
+; CHECK: edge entry -> return probability is 7 / 85
+; CHECK: edge entry -> sw.bb probability is 14 / 85
+; CHECK: edge entry -> sw.bb1 probability is 64 / 85
+
+sw.bb:
+  br label %return
+
+sw.bb1:
+  br label %return
+
+return:
+  %retval.0 = phi i32 [ 5, %sw.bb1 ], [ 1, %sw.bb ], [ 0, %entry ]
+  ret i32 %retval.0
+}
+
+!2 = metadata !{metadata !"branch_weights", i32 7, i32 6, i32 4, i32 4, i32 64}

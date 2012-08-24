@@ -1209,7 +1209,12 @@ SelectionDAGISel::FinishBasicBlock() {
       CodeGenAndEmitDAG();
     }
 
+    uint32_t UnhandledWeight = 0;
+    for (unsigned j = 0, ej = SDB->BitTestCases[i].Cases.size(); j != ej; ++j)
+      UnhandledWeight += SDB->BitTestCases[i].Cases[j].ExtraWeight;
+
     for (unsigned j = 0, ej = SDB->BitTestCases[i].Cases.size(); j != ej; ++j) {
+      UnhandledWeight -= SDB->BitTestCases[i].Cases[j].ExtraWeight;
       // Set the current basic block to the mbb we wish to insert the code into
       FuncInfo->MBB = SDB->BitTestCases[i].Cases[j].ThisBB;
       FuncInfo->InsertPt = FuncInfo->MBB->end();
@@ -1217,12 +1222,14 @@ SelectionDAGISel::FinishBasicBlock() {
       if (j+1 != ej)
         SDB->visitBitTestCase(SDB->BitTestCases[i],
                               SDB->BitTestCases[i].Cases[j+1].ThisBB,
+                              UnhandledWeight,
                               SDB->BitTestCases[i].Reg,
                               SDB->BitTestCases[i].Cases[j],
                               FuncInfo->MBB);
       else
         SDB->visitBitTestCase(SDB->BitTestCases[i],
                               SDB->BitTestCases[i].Default,
+                              UnhandledWeight,
                               SDB->BitTestCases[i].Reg,
                               SDB->BitTestCases[i].Cases[j],
                               FuncInfo->MBB);
