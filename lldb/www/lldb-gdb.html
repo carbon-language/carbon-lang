@@ -494,6 +494,64 @@
                     <p>
                 </div>
 
+
+
+
+            <h1 class ="postheader">Evaluating expressions</h1>
+                <div class="post">
+                    <p>
+                    <table class="stats" width="620" cellspacing="0">
+                    <tr>
+                        <td class="hed" width="50%">LLDB</td>
+                        <td class="hed" width="50%">GDB</td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Evaluating a generalized expression in the current frame.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> expr (int) printf ("Print nine: %d.", 4 + 5)<br>
+                              or using the print alias:<br>
+                            <b>(lldb)</b> print (int) printf ("Print nine: %d.", 4 + 5)<br>
+                        </td>
+                        <td class="content">
+                            <b>(gdb)</b> print (int) printf ("Print nine: %d.", 4 + 5)<br>
+                              or if you don't want to see void returns: <br>
+                            <b>(gdb)</b> call (int) printf ("Print nine: %d.", 4 + 5)<br>
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Printing the ObjC "description" of an object.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> expr -o -- [SomeClass returnAnObject]<br>
+                              or using the po alias:<br>
+                            <b>(lldb)</b> po [SomeClass returnAnObject]<br>
+                        </td>
+                        <td class="content">
+                            <b>(gdb)</b> po [SomeClass returnAnObject]<br>
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Print the dynamic type of the result of an expression.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> expr -d 1 -- [SomeClass returnAnObject]<br>
+                            <b>(lldb)</b> expr -d 1 -- someCPPObjectPtrOrReference<br>
+                              or set dynamic type printing to be the default:
+                            <b>(lldb)</b> settings set target.prefer-dynamic run-target<br>
+                        </td>
+                        <td class="content">
+                            <b>(gdb)</b> set print object 1<br>
+                            <b>(gdb)</b> p someCPPObjectPtrOrReference<br>
+                              only works for C++ objects.<br>
+                        </td>
+                    </tr>
+
+
+                    </table>
+                    <p>
+                </div>
+
             <h1 class ="postheader">Examining Thread State</h1>
                 <div class="post">
                     <p>
