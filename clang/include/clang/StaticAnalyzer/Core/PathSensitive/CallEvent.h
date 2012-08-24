@@ -153,16 +153,6 @@ protected:
     : State(Original.State), LCtx(Original.LCtx), Origin(Original.Origin),
       Data(Original.Data), Location(Original.Location), RefCount(0) {}
 
-
-  ProgramStateRef getState() const {
-    return State;
-  }
-
-  const LocationContext *getLocationContext() const {
-    return LCtx;
-  }
-
-
   /// Copies this CallEvent, with vtable intact, into a new block of memory.
   virtual void cloneTo(void *Dest) const = 0;
 
@@ -190,6 +180,16 @@ public:
   /// called. May be null.
   virtual const Decl *getDecl() const {
     return Origin.dyn_cast<const Decl *>();
+  }
+
+  /// \brief The state in which the call is being evaluated.
+  ProgramStateRef getState() const {
+    return State;
+  }
+
+  /// \brief The context in which the call is being evaluated.
+  const LocationContext *getLocationContext() const {
+    return LCtx;
   }
 
   /// \brief Returns the definition of the function or method that will be
@@ -810,6 +810,9 @@ public:
   /// \brief Returns the value of the receiver at the time of this call.
   SVal getReceiverSVal() const;
 
+  /// \brief Return the value of 'self' if available.
+  SVal getSelfSVal() const;
+
   /// \brief Get the interface for the receiver.
   ///
   /// This works whether this is an instance message or a class message.
@@ -817,6 +820,9 @@ public:
   const ObjCInterfaceDecl *getReceiverInterface() const {
     return getOriginExpr()->getReceiverInterface();
   }
+
+  /// \brief Checks if the receiver refers to 'self' or 'super'.
+  bool isReceiverSelfOrSuper() const;
 
   /// Returns how the message was written in the source (property access,
   /// subscript, or explicit message send).
