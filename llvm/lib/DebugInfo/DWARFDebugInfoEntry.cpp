@@ -101,7 +101,7 @@ bool DWARFDebugInfoEntryMinimal::extractFast(const DWARFCompileUnit *cu,
   DataExtractor debug_info_data = cu->getDebugInfoExtractor();
   uint64_t abbrCode = debug_info_data.getULEB128(offset_ptr);
 
-  assert (fixed_form_sizes); // For best performance this should be specified!
+  assert(fixed_form_sizes); // For best performance this should be specified!
 
   if (abbrCode) {
     uint32_t offset = *offset_ptr;
