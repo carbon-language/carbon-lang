@@ -56,7 +56,7 @@ OperatingSystem *
 OperatingSystemPython::CreateInstance (Process *process, bool force)
 {
     // Python OperatingSystem plug-ins must be requested by name, so force must be true
-    //if (force)
+    if (force)
         return new OperatingSystemPython (process);
     return NULL;
 }
