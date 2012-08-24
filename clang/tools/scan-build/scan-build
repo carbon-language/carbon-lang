@@ -1154,16 +1154,7 @@ if (!$foundCheckers) {
 }
 else {
   print("\nAVAILABLE CHECKERS:\n\n");
-  my $skip = 0;
   while(<FROM_CHILD>) {
-    if (/experimental/) {
-      $skip = 1;
-      next;
-    }
-    if ($skip) {
-      next if (!/^\s\s[^\s]/);
-      $skip = 0;
-    }
     s/^\s\s//;
     if (/^([^\s]+)/) {
       # Is the checker enabled?
