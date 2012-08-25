@@ -250,3 +250,13 @@ namespace PR11757 {
   // CHECK-NEXT: call void @_ZN7PR117571XC1Ev({{.*}}* [[CASTED]])
   // CHECK-NEXT: ret {{.*}} [[CASTED]]
 }
+
+namespace PR13380 {
+  struct A { A() {} };
+  struct B : public A { int x; };
+  // CHECK: define i8* @_ZN7PR133801fEv
+  // CHECK: call noalias i8* @_Znam(
+  // CHECK: call void @llvm.memset.p0i8
+  // CHECK-NEXT: call void @_ZN7PR133801BC1Ev
+  void* f() { return new B[2](); }
+}

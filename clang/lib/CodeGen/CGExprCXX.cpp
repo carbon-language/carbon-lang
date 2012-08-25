@@ -956,7 +956,6 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
   if (E->isArray()) {
     if (const CXXConstructExpr *CCE = dyn_cast_or_null<CXXConstructExpr>(Init)){
       CXXConstructorDecl *Ctor = CCE->getConstructor();
-      bool RequiresZeroInitialization = false;
       if (Ctor->isTrivial()) {
         // If new expression did not specify value-initialization, then there
         // is no initialization.
@@ -969,13 +968,11 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
           EmitZeroMemSet(CGF, ElementType, NewPtr, AllocSizeWithoutCookie);
           return;
         }
-
-        RequiresZeroInitialization = true;
       }
 
       CGF.EmitCXXAggrConstructorCall(Ctor, NumElements, NewPtr,
                                      CCE->arg_begin(),  CCE->arg_end(),
-                                     RequiresZeroInitialization);
+                                     CCE->requiresZeroInitialization());
       return;
     } else if (Init && isa<ImplicitValueInitExpr>(Init) &&
                CGF.CGM.getTypes().isZeroInitializable(ElementType)) {
