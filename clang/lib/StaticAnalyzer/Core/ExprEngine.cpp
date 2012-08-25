@@ -662,9 +662,9 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
       Bldr.addNodes(Dst);
       break;
 
-    case Stmt::AsmStmtClass:
+    case Stmt::GCCAsmStmtClass:
       Bldr.takeNodes(Pred);
-      VisitAsmStmt(cast<AsmStmt>(S), Pred, Dst);
+      VisitGCCAsmStmt(cast<GCCAsmStmt>(S), Pred, Dst);
       Bldr.addNodes(Dst);
       break;
 
@@ -1775,8 +1775,8 @@ void ExprEngine::evalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
   }
 }
 
-void ExprEngine::VisitAsmStmt(const AsmStmt *A, ExplodedNode *Pred,
-                              ExplodedNodeSet &Dst) {
+void ExprEngine::VisitGCCAsmStmt(const GCCAsmStmt *A, ExplodedNode *Pred,
+                                 ExplodedNodeSet &Dst) {
   StmtNodeBuilder Bldr(Pred, Dst, *currBldrCtx);
   // We have processed both the inputs and the outputs.  All of the outputs
   // should evaluate to Locs.  Nuke all of their values.
@@ -1787,7 +1787,7 @@ void ExprEngine::VisitAsmStmt(const AsmStmt *A, ExplodedNode *Pred,
 
   ProgramStateRef state = Pred->getState();
 
-  for (AsmStmt::const_outputs_iterator OI = A->begin_outputs(),
+  for (GCCAsmStmt::const_outputs_iterator OI = A->begin_outputs(),
        OE = A->end_outputs(); OI != OE; ++OI) {
     SVal X = state->getSVal(*OI, Pred->getLocationContext());
     assert (!isa<NonLoc>(X));  // Should be an Lval, or unknown, undef.

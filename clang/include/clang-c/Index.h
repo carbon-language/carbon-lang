@@ -1904,9 +1904,9 @@ enum CXCursorKind {
    */
   CXCursor_ReturnStmt                    = 214,
 
-  /** \brief A GNU inline assembly statement extension.
+  /** \brief A GCC inline assembly statement extension.
    */
-  CXCursor_AsmStmt                       = 215,
+  CXCursor_GCCAsmStmt                    = 215,
 
   /** \brief Objective-C's overall \@try-\@catch-\@finally statement.
    */

@@ -283,13 +283,14 @@ public:
                                    ExplodedNode *Pred,
                                    ExplodedNodeSet &Dst);
 
-  /// VisitAsmStmt - Transfer function logic for inline asm.
-  void VisitAsmStmt(const AsmStmt *A, ExplodedNode *Pred, ExplodedNodeSet &Dst);
+  /// VisitGCCAsmStmt - Transfer function logic for inline asm.
+  void VisitGCCAsmStmt(const GCCAsmStmt *A, ExplodedNode *Pred,
+                       ExplodedNodeSet &Dst);
 
   /// VisitMSAsmStmt - Transfer function logic for MS inline asm.
   void VisitMSAsmStmt(const MSAsmStmt *A, ExplodedNode *Pred,
                       ExplodedNodeSet &Dst);
-  
+
   /// VisitBlockExpr - Transfer function logic for BlockExprs.
   void VisitBlockExpr(const BlockExpr *BE, ExplodedNode *Pred, 
                       ExplodedNodeSet &Dst);

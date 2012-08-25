@@ -132,7 +132,7 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::ReturnStmtClass:   EmitReturnStmt(cast<ReturnStmt>(*S));     break;
 
   case Stmt::SwitchStmtClass:   EmitSwitchStmt(cast<SwitchStmt>(*S));     break;
-  case Stmt::AsmStmtClass:      EmitAsmStmt(cast<AsmStmt>(*S));           break;
+  case Stmt::GCCAsmStmtClass:   EmitGCCAsmStmt(cast<GCCAsmStmt>(*S));     break;
   case Stmt::MSAsmStmtClass:    EmitMSAsmStmt(cast<MSAsmStmt>(*S));       break;
 
   case Stmt::ObjCAtTryStmtClass:
@@ -1295,7 +1295,7 @@ SimplifyConstraint(const char *Constraint, const TargetInfo &Target,
 static std::string
 AddVariableConstraints(const std::string &Constraint, const Expr &AsmExpr,
                        const TargetInfo &Target, CodeGenModule &CGM,
-                       const AsmStmt &Stmt) {
+                       const GCCAsmStmt &Stmt) {
   const DeclRefExpr *AsmDeclRef = dyn_cast<DeclRefExpr>(&AsmExpr);
   if (!AsmDeclRef)
     return Constraint;
@@ -1395,7 +1395,7 @@ static llvm::MDNode *getAsmSrcLocInfo(const StringLiteral *Str,
   return llvm::MDNode::get(CGF.getLLVMContext(), Locs);
 }
 
-void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
+void CodeGenFunction::EmitGCCAsmStmt(const GCCAsmStmt &S) {
   // Assemble the final asm string.
   std::string AsmString = S.GenerateAsmString(getContext());
 

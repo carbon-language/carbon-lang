@@ -218,7 +218,7 @@ void ASTStmtWriter::VisitDeclStmt(DeclStmt *S) {
   Code = serialization::STMT_DECL;
 }
 
-void ASTStmtWriter::VisitAsmStmt(AsmStmt *S) {
+void ASTStmtWriter::VisitGCCAsmStmt(GCCAsmStmt *S) {
   VisitStmt(S);
   Record.push_back(S->getNumOutputs());
   Record.push_back(S->getNumInputs());
@@ -247,7 +247,7 @@ void ASTStmtWriter::VisitAsmStmt(AsmStmt *S) {
   for (unsigned I = 0, N = S->getNumClobbers(); I != N; ++I)
     Writer.AddStmt(S->getClobber(I));
 
-  Code = serialization::STMT_ASM;
+  Code = serialization::STMT_GCCASM;
 }
 
 void ASTStmtWriter::VisitMSAsmStmt(MSAsmStmt *S) {

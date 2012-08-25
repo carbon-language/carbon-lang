@@ -29,7 +29,7 @@ def CaseStmt : DStmt<SwitchCase>;
 def DefaultStmt : DStmt<SwitchCase>;
 
 // GNU Extensions
-def AsmStmt : Stmt;
+def GCCAsmStmt : Stmt;
 
 // MS Extensions
 def MSAsmStmt : Stmt;

@@ -1702,8 +1702,8 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
     ExprVector Constraints;
     ExprVector Exprs;
     ExprVector Clobbers;
-    return Actions.ActOnAsmStmt(AsmLoc, true, true, 0, 0, 0, Constraints, Exprs,
-                                AsmString.take(), Clobbers, EndLoc);
+    return Actions.ActOnGCCAsmStmt(AsmLoc, true, true, 0, 0, 0, Constraints,
+                                   Exprs, AsmString.take(), Clobbers, EndLoc);
   }
 
   // FIXME: We should be passing source locations for better diagnostics.
@@ -1774,11 +1774,10 @@ StmtResult Parser::ParseAsmStatement(bool &msAsm) {
   if (Tok.is(tok::r_paren)) {
     // We have a simple asm expression like 'asm("foo")'.
     T.consumeClose();
-    return Actions.ActOnAsmStmt(AsmLoc, /*isSimple*/ true, isVolatile,
-                                /*NumOutputs*/ 0, /*NumInputs*/ 0, 0,
-                                Constraints, Exprs,
-                                AsmString.take(), Clobbers,
-                                T.getCloseLocation());
+    return Actions.ActOnGCCAsmStmt(AsmLoc, /*isSimple*/ true, isVolatile,
+                                   /*NumOutputs*/ 0, /*NumInputs*/ 0, 0,
+                                   Constraints, Exprs, AsmString.take(),
+                                   Clobbers, T.getCloseLocation());
   }
 
   // Parse Outputs, if present.
@@ -1839,11 +1838,10 @@ StmtResult Parser::ParseAsmStatement(bool &msAsm) {
   }
 
   T.consumeClose();
-  return Actions.ActOnAsmStmt(AsmLoc, false, isVolatile,
-                              NumOutputs, NumInputs, Names.data(),
-                              Constraints, Exprs,
-                              AsmString.take(), Clobbers,
-                              T.getCloseLocation());
+  return Actions.ActOnGCCAsmStmt(AsmLoc, false, isVolatile, NumOutputs,
+                                 NumInputs, Names.data(), Constraints, Exprs,
+                                 AsmString.take(), Clobbers,
+                                 T.getCloseLocation());
 }
 
 /// ParseAsmOperands - Parse the asm-operands production as used by

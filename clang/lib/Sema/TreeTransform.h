@@ -1162,31 +1162,23 @@ public:
   ///
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
-  StmtResult RebuildAsmStmt(SourceLocation AsmLoc,
-                                  bool IsSimple,
-                                  bool IsVolatile,
-                                  unsigned NumOutputs,
-                                  unsigned NumInputs,
-                                  IdentifierInfo **Names,
-                                  MultiExprArg Constraints,
-                                  MultiExprArg Exprs,
-                                  Expr *AsmString,
-                                  MultiExprArg Clobbers,
-                                  SourceLocation RParenLoc) {
-    return getSema().ActOnAsmStmt(AsmLoc, IsSimple, IsVolatile, NumOutputs,
-                                  NumInputs, Names, Constraints,
-                                  Exprs, AsmString, Clobbers,
-                                  RParenLoc);
+  StmtResult RebuildGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
+                               bool IsVolatile, unsigned NumOutputs,
+                               unsigned NumInputs, IdentifierInfo **Names,
+                               MultiExprArg Constraints, MultiExprArg Exprs,
+                               Expr *AsmString, MultiExprArg Clobbers,
+                               SourceLocation RParenLoc) {
+    return getSema().ActOnGCCAsmStmt(AsmLoc, IsSimple, IsVolatile, NumOutputs,
+                                     NumInputs, Names, Constraints, Exprs,
+                                     AsmString, Clobbers, RParenLoc);
   }
 
   /// \brief Build a new MS style inline asm statement.
   ///
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
-  StmtResult RebuildMSAsmStmt(SourceLocation AsmLoc,
-                              SourceLocation LBraceLoc,
-                              ArrayRef<Token> AsmToks,
-                              SourceLocation EndLoc) {
+  StmtResult RebuildMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
+                              ArrayRef<Token> AsmToks, SourceLocation EndLoc) {
     return getSema().ActOnMSAsmStmt(AsmLoc, LBraceLoc, AsmToks, EndLoc);
   }
 
@@ -5524,7 +5516,7 @@ TreeTransform<Derived>::TransformDeclStmt(DeclStmt *S) {
 
 template<typename Derived>
 StmtResult
-TreeTransform<Derived>::TransformAsmStmt(AsmStmt *S) {
+TreeTransform<Derived>::TransformGCCAsmStmt(GCCAsmStmt *S) {
 
   SmallVector<Expr*, 8> Constraints;
   SmallVector<Expr*, 8> Exprs;
@@ -5580,18 +5572,11 @@ TreeTransform<Derived>::TransformAsmStmt(AsmStmt *S) {
 
   // No need to transform the asm string literal.
   AsmString = SemaRef.Owned(S->getAsmString());
-
-  return getDerived().RebuildAsmStmt(S->getAsmLoc(),
-                                     S->isSimple(),
-                                     S->isVolatile(),
-                                     S->getNumOutputs(),
-                                     S->getNumInputs(),
-                                     Names.data(),
-                                     Constraints,
-                                     Exprs,
-                                     AsmString.get(),
-                                     Clobbers,
-                                     S->getRParenLoc());
+  return getDerived().RebuildGCCAsmStmt(S->getAsmLoc(), S->isSimple(),
+                                        S->isVolatile(), S->getNumOutputs(),
+                                        S->getNumInputs(), Names.data(),
+                                        Constraints, Exprs, AsmString.get(),
+                                        Clobbers, S->getRParenLoc());
 }
 
 template<typename Derived>

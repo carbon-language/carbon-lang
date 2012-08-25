@@ -4,6 +4,6 @@
 
 class AnalysisDeclContext {};
 static ControlFlowKind CheckFallThrough(AnalysisDeclContext &AC) {
-  if (const AsmStmt *AS = dyn_cast<AsmStmt>(S)) {}
+  if (const GCCAsmStmt *AS = dyn_cast<GCCAsmStmt>(S)) {}
   bool NoReturnEdge = false;
 }

@@ -78,9 +78,9 @@ static bool CheckAsmLValue(const Expr *E, Sema &S) {
 /// isOperandMentioned - Return true if the specified operand # is mentioned
 /// anywhere in the decomposed asm string.
 static bool isOperandMentioned(unsigned OpNo,
-                         ArrayRef<AsmStmt::AsmStringPiece> AsmStrPieces) {
+                         ArrayRef<GCCAsmStmt::AsmStringPiece> AsmStrPieces) {
   for (unsigned p = 0, e = AsmStrPieces.size(); p != e; ++p) {
-    const AsmStmt::AsmStringPiece &Piece = AsmStrPieces[p];
+    const GCCAsmStmt::AsmStringPiece &Piece = AsmStrPieces[p];
     if (!Piece.isOperand()) continue;
 
     // If this is a reference to the input and if the input was the smaller
@@ -91,12 +91,12 @@ static bool isOperandMentioned(unsigned OpNo,
   return false;
 }
 
-StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
-                              bool IsVolatile, unsigned NumOutputs,
-                              unsigned NumInputs, IdentifierInfo **Names,
-                              MultiExprArg constraints, MultiExprArg exprs,
-                              Expr *asmString, MultiExprArg clobbers,
-                              SourceLocation RParenLoc) {
+StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
+                                 bool IsVolatile, unsigned NumOutputs,
+                                 unsigned NumInputs, IdentifierInfo **Names,
+                                 MultiExprArg constraints, MultiExprArg exprs,
+                                 Expr *asmString, MultiExprArg clobbers,
+                                 SourceLocation RParenLoc) {
   unsigned NumClobbers = clobbers.size();
   StringLiteral **Constraints =
     reinterpret_cast<StringLiteral**>(constraints.data());
@@ -200,13 +200,13 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
                   diag::err_asm_unknown_register_name) << Clobber);
   }
 
-  AsmStmt *NS =
-    new (Context) AsmStmt(Context, AsmLoc, IsSimple, IsVolatile, NumOutputs,
-                          NumInputs, Names, Constraints, Exprs, AsmString,
-                          NumClobbers, Clobbers, RParenLoc);
+  GCCAsmStmt *NS =
+    new (Context) GCCAsmStmt(Context, AsmLoc, IsSimple, IsVolatile, NumOutputs,
+                             NumInputs, Names, Constraints, Exprs, AsmString,
+                             NumClobbers, Clobbers, RParenLoc);
   // Validate the asm string, ensuring it makes sense given the operands we
   // have.
-  SmallVector<AsmStmt::AsmStringPiece, 8> Pieces;
+  SmallVector<GCCAsmStmt::AsmStringPiece, 8> Pieces;
   unsigned DiagOffs;
   if (unsigned DiagID = NS->AnalyzeAsmString(Pieces, Context, DiagOffs)) {
     Diag(getLocationOfStringLiteralByte(AsmString, DiagOffs), DiagID)

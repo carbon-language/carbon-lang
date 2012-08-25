@@ -321,20 +321,20 @@ bool Stmt::hasImplicitControlFlow() const {
   }
 }
 
-Expr *AsmStmt::getOutputExpr(unsigned i) {
+Expr *GCCAsmStmt::getOutputExpr(unsigned i) {
   return cast<Expr>(Exprs[i]);
 }
 
 /// getOutputConstraint - Return the constraint string for the specified
 /// output operand.  All output constraints are known to be non-empty (either
 /// '=' or '+').
-StringRef AsmStmt::getOutputConstraint(unsigned i) const {
+StringRef GCCAsmStmt::getOutputConstraint(unsigned i) const {
   return getOutputConstraintLiteral(i)->getString();
 }
 
 /// getNumPlusOperands - Return the number of output operands that have a "+"
 /// constraint.
-unsigned AsmStmt::getNumPlusOperands() const {
+unsigned GCCAsmStmt::getNumPlusOperands() const {
   unsigned Res = 0;
   for (unsigned i = 0, e = getNumOutputs(); i != e; ++i)
     if (isOutputPlusConstraint(i))
@@ -342,22 +342,22 @@ unsigned AsmStmt::getNumPlusOperands() const {
   return Res;
 }
 
-Expr *AsmStmt::getInputExpr(unsigned i) {
+Expr *GCCAsmStmt::getInputExpr(unsigned i) {
   return cast<Expr>(Exprs[i + NumOutputs]);
 }
-void AsmStmt::setInputExpr(unsigned i, Expr *E) {
+void GCCAsmStmt::setInputExpr(unsigned i, Expr *E) {
   Exprs[i + NumOutputs] = E;
 }
 
 
 /// getInputConstraint - Return the specified input constraint.  Unlike output
 /// constraints, these can be empty.
-StringRef AsmStmt::getInputConstraint(unsigned i) const {
+StringRef GCCAsmStmt::getInputConstraint(unsigned i) const {
   return getInputConstraintLiteral(i)->getString();
 }
 
 
-void AsmStmt::setOutputsAndInputsAndClobbers(ASTContext &C,
+void GCCAsmStmt::setOutputsAndInputsAndClobbers(ASTContext &C,
                                              IdentifierInfo **Names,
                                              StringLiteral **Constraints,
                                              Stmt **Exprs,
@@ -391,7 +391,7 @@ void AsmStmt::setOutputsAndInputsAndClobbers(ASTContext &C,
 /// getNamedOperand - Given a symbolic operand reference like %[foo],
 /// translate this into a numeric value needed to reference the same operand.
 /// This returns -1 if the operand name is invalid.
-int AsmStmt::getNamedOperand(StringRef SymbolicName) const {
+int GCCAsmStmt::getNamedOperand(StringRef SymbolicName) const {
   unsigned NumPlusOperands = 0;
 
   // Check if this is an output operand.
@@ -411,7 +411,7 @@ int AsmStmt::getNamedOperand(StringRef SymbolicName) const {
 /// AnalyzeAsmString - Analyze the asm string of the current asm, decomposing
 /// it into pieces.  If the asm string is erroneous, emit errors and return
 /// true, otherwise return false.
-unsigned AsmStmt::AnalyzeAsmString(SmallVectorImpl<AsmStringPiece>&Pieces,
+unsigned GCCAsmStmt::AnalyzeAsmString(SmallVectorImpl<AsmStringPiece>&Pieces,
                                    ASTContext &C, unsigned &DiagOffs) const {
   StringRef Str = getAsmString()->getString();
   const char *StrStart = Str.begin();
@@ -549,10 +549,10 @@ unsigned AsmStmt::AnalyzeAsmString(SmallVectorImpl<AsmStringPiece>&Pieces,
   }
 }
 /// GenerateAsmString - Assemble final asm string.
-std::string AsmStmt::GenerateAsmString(ASTContext &C) const {
+std::string GCCAsmStmt::GenerateAsmString(ASTContext &C) const {
   // Analyze the asm string to decompose it into its pieces.  We know that Sema
   // has already done this, so it is guaranteed to be successful.
-  SmallVector<AsmStmt::AsmStringPiece, 4> Pieces;
+  SmallVector<GCCAsmStmt::AsmStringPiece, 4> Pieces;
   unsigned DiagOffs;
   AnalyzeAsmString(Pieces, C, DiagOffs);
 
@@ -590,12 +590,13 @@ QualType CXXCatchStmt::getCaughtType() const {
 // Constructors
 //===----------------------------------------------------------------------===//
 
-AsmStmt::AsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple,
-                 bool isvolatile, unsigned numoutputs, unsigned numinputs,
-                 IdentifierInfo **names, StringLiteral **constraints,
-                 Expr **exprs, StringLiteral *asmstr, unsigned numclobbers,
-                 StringLiteral **clobbers, SourceLocation rparenloc)
-  : Stmt(AsmStmtClass), AsmLoc(asmloc), RParenLoc(rparenloc), AsmStr(asmstr)
+GCCAsmStmt::GCCAsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple,
+                       bool isvolatile, unsigned numoutputs, unsigned numinputs,
+                       IdentifierInfo **names, StringLiteral **constraints,
+                       Expr **exprs, StringLiteral *asmstr,
+                       unsigned numclobbers, StringLiteral **clobbers,
+                       SourceLocation rparenloc)
+  : Stmt(GCCAsmStmtClass), AsmLoc(asmloc), RParenLoc(rparenloc), AsmStr(asmstr)
   , IsSimple(issimple), IsVolatile(isvolatile), NumOutputs(numoutputs)
   , NumInputs(numinputs), NumClobbers(numclobbers) {
 

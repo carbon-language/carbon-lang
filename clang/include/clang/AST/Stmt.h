@@ -1363,9 +1363,9 @@ public:
   }
 };
 
-/// AsmStmt - This represents a GNU inline-assembly statement extension.
+/// AsmStmt - This represents a GCC inline-assembly statement extension.
 ///
-class AsmStmt : public Stmt {
+class GCCAsmStmt : public Stmt {
   SourceLocation AsmLoc, RParenLoc;
   StringLiteral *AsmStr;
 
@@ -1383,14 +1383,14 @@ class AsmStmt : public Stmt {
   StringLiteral **Clobbers;
 
 public:
-  AsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple, bool isvolatile,
-          unsigned numoutputs, unsigned numinputs, IdentifierInfo **names,
-          StringLiteral **constraints, Expr **exprs, StringLiteral *asmstr,
-          unsigned numclobbers, StringLiteral **clobbers,
-          SourceLocation rparenloc);
+  GCCAsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple,
+             bool isvolatile, unsigned numoutputs, unsigned numinputs,
+             IdentifierInfo **names, StringLiteral **constraints, Expr **exprs,
+             StringLiteral *asmstr, unsigned numclobbers,
+             StringLiteral **clobbers, SourceLocation rparenloc);
 
   /// \brief Build an empty inline-assembly statement.
-  explicit AsmStmt(EmptyShell Empty) : Stmt(AsmStmtClass, Empty),
+  explicit GCCAsmStmt(EmptyShell Empty) : Stmt(GCCAsmStmtClass, Empty),
     Names(0), Constraints(0), Exprs(0), Clobbers(0) { }
 
   SourceLocation getAsmLoc() const { return AsmLoc; }
@@ -1491,7 +1491,7 @@ public:
   Expr *getOutputExpr(unsigned i);
 
   const Expr *getOutputExpr(unsigned i) const {
-    return const_cast<AsmStmt*>(this)->getOutputExpr(i);
+    return const_cast<GCCAsmStmt*>(this)->getOutputExpr(i);
   }
 
   /// isOutputPlusConstraint - Return true if the specified output constraint
@@ -1535,7 +1535,7 @@ public:
   void setInputExpr(unsigned i, Expr *E);
 
   const Expr *getInputExpr(unsigned i) const {
-    return const_cast<AsmStmt*>(this)->getInputExpr(i);
+    return const_cast<GCCAsmStmt*>(this)->getInputExpr(i);
   }
 
   void setOutputsAndInputsAndClobbers(ASTContext &C,
@@ -1562,8 +1562,10 @@ public:
     return SourceRange(AsmLoc, RParenLoc);
   }
 
-  static bool classof(const Stmt *T) {return T->getStmtClass() == AsmStmtClass;}
-  static bool classof(const AsmStmt *) { return true; }
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == GCCAsmStmtClass;
+  }
+  static bool classof(const GCCAsmStmt *) { return true; }
 
   // Input expr iterators.
 
@@ -1610,7 +1612,7 @@ public:
   }
 };
 
-/// MSAsmStmt - This represents a MS inline-assembly statement extension.
+/// MSAsmStmt - This represents a Microsoft inline-assembly statement extension.
 ///
 class MSAsmStmt : public Stmt {
   SourceLocation AsmLoc, LBraceLoc, EndLoc;

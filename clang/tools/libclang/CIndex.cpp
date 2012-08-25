@@ -3510,8 +3510,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
       return createCXString("BreakStmt");
   case CXCursor_ReturnStmt:
       return createCXString("ReturnStmt");
-  case CXCursor_AsmStmt:
-      return createCXString("AsmStmt");
+  case CXCursor_GCCAsmStmt:
+      return createCXString("GCCAsmStmt");
   case CXCursor_MSAsmStmt:
       return createCXString("MSAsmStmt");
   case CXCursor_ObjCAtTryStmt:

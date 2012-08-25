@@ -288,7 +288,7 @@ void ASTStmtReader::VisitDeclStmt(DeclStmt *S) {
   }
 }
 
-void ASTStmtReader::VisitAsmStmt(AsmStmt *S) {
+void ASTStmtReader::VisitGCCAsmStmt(GCCAsmStmt *S) {
   VisitStmt(S);
   unsigned NumOutputs = Record[Idx++];
   unsigned NumInputs = Record[Idx++];
@@ -1700,8 +1700,8 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
       S = new (Context) DeclStmt(Empty);
       break;
 
-    case STMT_ASM:
-      S = new (Context) AsmStmt(Empty);
+    case STMT_GCCASM:
+      S = new (Context) GCCAsmStmt(Empty);
       break;
 
     case STMT_MSASM:

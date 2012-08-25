@@ -999,8 +999,8 @@ namespace clang {
       STMT_RETURN,
       /// \brief A DeclStmt record.
       STMT_DECL,
-      /// \brief An AsmStmt record.
-      STMT_ASM,
+      /// \brief A GCC-style AsmStmt record.
+      STMT_GCCASM,
       /// \brief A MS-style AsmStmt record.
       STMT_MSASM,
       /// \brief A PredefinedExpr record.
