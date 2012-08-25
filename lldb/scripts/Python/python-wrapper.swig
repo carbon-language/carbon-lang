@@ -929,6 +929,7 @@ LLDBSwigPythonCallModuleInit
 // This is needed to use LLDBSwigPythonCallSBInputReaderCallback in the
 // typemaps and in the extensions (SBInputReader.__del__()).
 #include "lldb/API/SBInputReader.h"
+#include "lldb/API/SBDebugger.h"
 
 size_t
 LLDBSwigPythonCallSBInputReaderCallback(void *baton,
@@ -936,6 +937,8 @@ LLDBSwigPythonCallSBInputReaderCallback(void *baton,
                                         lldb::InputReaderAction notification,
                                         const char*bytes,
                                         size_t bytes_len);
+
+void LLDBSwigPythonCallPythonLogOutputCallback(const char *str, void *baton);
 %}
 
 %wrapper %{
@@ -946,35 +949,46 @@ LLDBSwigPythonCallSBInputReaderCallback(void *baton,
                                         lldb::InputReaderAction notification,
                                         const char*bytes,
                                         size_t bytes_len) {
-    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-
-    PyObject *py_InputReader = SWIG_NewPointerObj(reader, SWIGTYPE_p_lldb__SBInputReader, false);
-    PyObject *py_Notification = PyInt_FromLong(notification);
-    PyObject *py_Bytes = PyBytes_FromStringAndSize(bytes, bytes_len);
-
-    PyObject *tuple = PyTuple_Pack(3, py_InputReader, py_Notification, py_Bytes);
-    PyObject *res = PyObject_Call(reinterpret_cast<PyObject*>(baton), tuple, NULL);
-    Py_DECREF(tuple);
-    Py_DECREF(py_InputReader);
-    Py_DECREF(py_Notification);
-    Py_DECREF(py_Bytes);
-
-    if (res == NULL) {
-      PyObject *exc = PyErr_Occurred();
-      if (exc) {
-        ::puts("\nErroring out at LLDBSwigPythonCallSBInputReaderCallback");
-        PyErr_Print();
-      }
-      return 0;
+    if (baton != Py_None) {
+        SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+    
+        PyObject *py_InputReader = SWIG_NewPointerObj(reader, SWIGTYPE_p_lldb__SBInputReader, false);
+        PyObject *py_Notification = PyInt_FromLong(notification);
+        PyObject *py_Bytes = PyBytes_FromStringAndSize(bytes, bytes_len);
+    
+        PyObject *tuple = PyTuple_Pack(3, py_InputReader, py_Notification, py_Bytes);
+        PyObject *res = PyObject_Call(reinterpret_cast<PyObject*>(baton), tuple, NULL);
+        Py_DECREF(tuple);
+        Py_DECREF(py_InputReader);
+        Py_DECREF(py_Notification);
+        Py_DECREF(py_Bytes);
+    
+        if (res == NULL) {
+          PyObject *exc = PyErr_Occurred();
+          if (exc) {
+            ::puts("\nErroring out at LLDBSwigPythonCallSBInputReaderCallback");
+            PyErr_Print();
+          }
+          return 0;
+        }
+    
+        size_t result = 0;
+        // If the callback misbehaves and returns Py_None, assume it returned 0
+        if (res != Py_None)
+          result = static_cast<size_t>(PyInt_AsSsize_t(res));
+    
+        Py_DECREF(res);
+        SWIG_PYTHON_THREAD_END_BLOCK;
+        return result;
     }
+}
 
-    size_t result = 0;
-    // If the callback misbehaves and returns Py_None, assume it returned 0
-    if (res != Py_None)
-      result = static_cast<size_t>(PyInt_AsSsize_t(res));
-
-    Py_DECREF(res);
-    SWIG_PYTHON_THREAD_END_BLOCK;
-    return result;
+// For the LogOutputCallback functions
+void LLDBSwigPythonCallPythonLogOutputCallback(const char *str, void *baton) {
+    if (baton != Py_None) {
+      SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+      PyObject_CallFunction(reinterpret_cast<PyObject*>(baton), const_cast<char*>("s"), str);
+      SWIG_PYTHON_THREAD_END_BLOCK;
+    }
 }
 %}

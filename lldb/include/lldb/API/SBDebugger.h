@@ -33,7 +33,7 @@ public:
     Create(bool source_init_files);
 
     static lldb::SBDebugger
-    Create(bool source_init_files, lldb::LogOutputCallback callback, void *baton);
+    Create(bool source_init_files, lldb::LogOutputCallback log_callback, void *baton);
 
     static void
     Destroy (lldb::SBDebugger &debugger);

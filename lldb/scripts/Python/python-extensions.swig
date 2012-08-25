@@ -484,6 +484,15 @@
         }
 }
 
+
+// %extend lldb::SBDebugger {
+//         // FIXME: We can't get the callback and baton
+//         PyObject *lldb::SBDebugger (){
+//             // Only call Py_XDECREF if we have a Python object (or NULL)
+//             if (LLDBSwigPythonCallPythonLogOutputCallback == $self->GetLogOutPutCallback())
+//                 Py_XDECREF($self->GetCallbackBaton());
+//         }
+// }
 // %extend lldb::SBInputReader {
 //         // FIXME: m_callback_function is private and we have no other
 //         // way to access it.
@@ -686,4 +695,3 @@ class value(object):
     def __neq__(self, other):
         return not self.__eq__(other)
 %}
-

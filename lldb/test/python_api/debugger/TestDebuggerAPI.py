@@ -2,11 +2,10 @@
 Test Debugger APIs.
 """
 
-import os, time
-import re
-import unittest2
-import lldb, lldbutil
-from lldbtest import *
+import os
+import lldb
+from lldbtest import TestBase, python_api_test
+
 
 class DebuggerAPITestCase(TestBase):
 
@@ -25,6 +24,9 @@ class DebuggerAPITestCase(TestBase):
         self.dbg.FindTargetWithFileAndArch(None, None)
         self.dbg.SetInternalVariable(None, None, None)
         self.dbg.GetInternalVariableValue(None, None)
+        # FIXME (filcab): We must first allow for the swig bindings to know if
+        # a Python callback is set. (Check python-typemaps.swig)
+        #self.dbg.SetLoggingCallback(None)
         self.dbg.SetPrompt(None)
         self.dbg.SetCurrentPlatform(None)
         self.dbg.SetCurrentPlatformSDKRoot(None)
@@ -35,4 +37,3 @@ class DebuggerAPITestCase(TestBase):
         target = lldb.SBTarget()
         self.assertFalse(target.IsValid())
         self.dbg.DeleteTarget(target)
-        
