@@ -66,3 +66,23 @@ void member_access(S *p) {
   // CHECK-NEXT: icmp eq i64 %[[MISALIGN]], 0
   k = p->f();
 }
+
+// CHECK: @_Z12lsh_overflow
+int lsh_overflow(int a, int b) {
+  // CHECK: %[[INBOUNDS:.*]] = icmp ule i32 %[[RHS:.*]], 31
+  // CHECK-NEXT: br i1 %[[INBOUNDS]]
+
+  // CHECK: %[[SHIFTED_OUT_WIDTH:.*]] = sub nuw nsw i32 31, %[[RHS]]
+  // CHECK-NEXT: %[[SHIFTED_OUT:.*]] = lshr i32 %[[LHS:.*]], %[[SHIFTED_OUT_WIDTH]]
+
+  // This is present for C++11 but not for C: C++ core issue 1457 allows a '1'
+  // to be shifted into the sign bit, but not out of it.
+  // CHECK-NEXT: %[[SHIFTED_OUT_NOT_SIGN:.*]] = lshr i32 %[[SHIFTED_OUT]], 1
+
+  // CHECK-NEXT: %[[NO_OVERFLOW:.*]] = icmp eq i32 %[[SHIFTED_OUT_NOT_SIGN]], 0
+  // CHECK-NEXT: br i1 %[[NO_OVERFLOW]]
+
+  // CHECK: %[[RET:.*]] = shl i32 %[[LHS]], %[[RHS]]
+  // CHECK-NEXT: ret i32 %[[RET]]
+  return a << b;
+}
