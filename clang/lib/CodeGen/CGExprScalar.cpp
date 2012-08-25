@@ -2123,7 +2123,7 @@ Value *ScalarExprEmitter::EmitShl(const BinOpInfo &Ops) {
     llvm::BasicBlock *Cont = CGF.createBasicBlock("shl.cont");
     llvm::BasicBlock *Trap = CGF.getTrapBB();
     llvm::Value *WidthMinusOne =
-      llvm::ConstantInt::get(RHS->getType(), Width - 1, "shl.width");
+      llvm::ConstantInt::get(RHS->getType(), Width - 1);
     CGF.Builder.CreateCondBr(Builder.CreateICmpULE(RHS, WidthMinusOne),
                              Cont, Trap);
     CGF.EmitBlock(Cont);
