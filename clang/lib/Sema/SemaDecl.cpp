@@ -1920,6 +1920,19 @@ static bool canRedefineFunction(const FunctionDecl *FD,
           FD->getStorageClass() == SC_Extern);
 }
 
+/// Is the given calling convention the ABI default for the given
+/// declaration?
+static bool isABIDefaultCC(Sema &S, CallingConv CC, FunctionDecl *D) {
+  CallingConv ABIDefaultCC;
+  if (isa<CXXMethodDecl>(D) && cast<CXXMethodDecl>(D)->isInstance()) {
+    ABIDefaultCC = S.Context.getDefaultCXXMethodCallConv(D->isVariadic());
+  } else {
+    // Free C function or a static method.
+    ABIDefaultCC = (S.Context.getLangOpts().MRTD ? CC_X86StdCall : CC_C);
+  }
+  return ABIDefaultCC == CC;
+}
+
 /// MergeFunctionDecl - We just parsed a function 'New' from
 /// declarator D which has the same name and scope as a previous
 /// declaration 'Old'.  Figure out how to resolve this situation,
@@ -1988,6 +2001,9 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S) {
   // later declared or defined without one, the second decl assumes the
   // calling convention of the first.
   //
+  // It's OK if a function is first declared without a calling convention,
+  // but is later declared or defined with the default calling convention.
+  //
   // For the new decl, we have to look at the NON-canonical type to tell the
   // difference between a function that really doesn't have a calling
   // convention and one that is declared cdecl. That's because in
@@ -2001,10 +2017,22 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S) {
   FunctionType::ExtInfo OldTypeInfo = OldType->getExtInfo();
   FunctionType::ExtInfo NewTypeInfo = NewType->getExtInfo();
   bool RequiresAdjustment = false;
-  if (OldTypeInfo.getCC() != CC_Default &&
-      NewTypeInfo.getCC() == CC_Default) {
+  if (OldTypeInfo.getCC() == NewTypeInfo.getCC()) {
+    // Fast path: nothing to do.
+
+  // Inherit the CC from the previous declaration if it was specified
+  // there but not here.
+  } else if (NewTypeInfo.getCC() == CC_Default) {
     NewTypeInfo = NewTypeInfo.withCallingConv(OldTypeInfo.getCC());
     RequiresAdjustment = true;
+
+  // Don't complain about mismatches when the default CC is
+  // effectively the same as the explict one.
+  } else if (OldTypeInfo.getCC() == CC_Default &&
+             isABIDefaultCC(*this, NewTypeInfo.getCC(), New)) {
+    NewTypeInfo = NewTypeInfo.withCallingConv(OldTypeInfo.getCC());
+    RequiresAdjustment = true;
+
   } else if (!Context.isSameCallConv(OldTypeInfo.getCC(),
                                      NewTypeInfo.getCC())) {
     // Calling conventions really aren't compatible, so complain.
