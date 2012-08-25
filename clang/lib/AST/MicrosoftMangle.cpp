@@ -1059,6 +1059,8 @@ void MicrosoftCXXNameMangler::mangleType(const FunctionProtoType *T,
                                          SourceRange) {
   // Structors only appear in decls, so at this point we know it's not a
   // structor type.
+  // FIXME: This may not be lambda-friendly.
+  Out << "$$A6";
   mangleType(T, NULL, false, false);
 }
 void MicrosoftCXXNameMangler::mangleType(const FunctionNoProtoType *T,
@@ -1214,7 +1216,7 @@ void MicrosoftCXXNameMangler::mangleCallingConvention(const FunctionType *T,
   if (CC == CC_Default) {
     if (IsInstMethod) {
       const FunctionProtoType *FPT =
-        T->getCanonicalTypeUnqualified().getAs<FunctionProtoType>();
+        T->getCanonicalTypeUnqualified().castAs<FunctionProtoType>();
       bool isVariadic = FPT->isVariadic();
       CC = getASTContext().getDefaultCXXMethodCallConv(isVariadic);
     } else {
@@ -1497,7 +1499,9 @@ void MicrosoftCXXNameMangler::mangleType(const ObjCObjectType *T,
 void MicrosoftCXXNameMangler::mangleType(const BlockPointerType *T,
                                          SourceRange Range) {
   Out << "_E";
-  mangleType(T->getPointeeType(), Range);
+
+  QualType pointee = T->getPointeeType();
+  mangleType(pointee->castAs<FunctionProtoType>(), NULL, false, false);
 }
 
 void MicrosoftCXXNameMangler::mangleType(const InjectedClassNameType *T,

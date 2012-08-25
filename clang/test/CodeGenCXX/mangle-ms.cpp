@@ -128,6 +128,10 @@ void zeta(int (*)(int, int)) {}
 void eta(int (^)(int, int)) {}
 // CHECK: @"\01?eta@@YAXP_EAHHH@Z@Z"
 
+typedef int theta_arg(int,int);
+void theta(theta_arg^ block) {}
+// CHECK: @"\01?theta@@YAXP_EAHHH@Z@Z"
+
 void operator_new_delete() {
   char *ptr = new char;
 // CHECK: @"\01??2@YAPAXI@Z"
