@@ -1080,8 +1080,8 @@ ADVANCED OPTIONS:
  
    Generate internal analyzer statistics.
  
- --with-analyzer [Xcode|path to clang] 
- --with-analyzer=[Xcode|path to clang]
+ --use-analyzer [Xcode|path to clang] 
+ --use-analyzer=[Xcode|path to clang]
  
    scan-build uses the 'clang' executable relative to itself for static
    analysis. One can override this behavior with this option by using the
@@ -1435,12 +1435,12 @@ while (@ARGV) {
     push @PluginsToLoad, "-load", shift @ARGV;
     next;
   }
-  if ($arg eq "--with-analyzer") {
+  if ($arg eq "--use-analyzer") {
  	shift @ARGV;
   	$AnalyzerDiscoveryMethod = shift @ARGV;
 	next;
   }
-  if ($arg =~ /^--with-analyzer=(.+)$/) {
+  if ($arg =~ /^--use-analyzer=(.+)$/) {
     shift @ARGV;
 	$AnalyzerDiscoveryMethod = $1;
 	next;
@@ -1469,7 +1469,7 @@ if (!defined $AnalyzerDiscoveryMethod) {
   }
   if (!defined $Clang || ! -x $Clang) {
     DieDiag("error: Cannot find an executable 'clang' relative to scan-build." .
-   	        "  Consider using --with-analyzer to pick a version of 'clang' to use for static analysis.\n");
+   	        "  Consider using --use-analyzer to pick a version of 'clang' to use for static analysis.\n");
   }
 } 
 else {  
