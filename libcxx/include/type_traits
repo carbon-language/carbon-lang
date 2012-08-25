@@ -607,6 +607,20 @@ template <class _Tp> struct __libcpp_abstract<_Tp, false> : public false_type {}
 
 template <class _Tp> struct _LIBCPP_VISIBLE is_abstract : public __libcpp_abstract<_Tp> {};
 
+// is_base_of
+
+#ifdef _LIBCP_HAS_IS_BASE_OF
+
+template <class _Bp, class _Dp>
+struct _LIBCPP_VISIBLE is_base_of
+    : public integral_constant<bool, __is_base_of(_Bp, _Dp)> {};
+
+#else  // __has_feature(is_base_of)
+
+#error is_base_of not implemented.
+
+#endif  // __has_feature(is_base_of)
+
 // is_convertible
 
 #if __has_feature(is_convertible_to)
@@ -660,7 +674,10 @@ struct __is_convertible
         sizeof(__is_convertible_imp::__test<_T2>(__is_convertible_imp::__source<_T1>())) == 1
          && !(!is_function<_T1>::value && !is_reference<_T1>::value && is_reference<_T2>::value
               && (!is_const<typename remove_reference<_T2>::type>::value
-                  || is_volatile<typename remove_reference<_T2>::type>::value))
+                  || is_volatile<typename remove_reference<_T2>::type>::value)
+                  && (is_same<typename remove_cv<_T1>::type,
+                              typename remove_cv<typename remove_reference<_T2>::type>::type>::value
+                      || is_base_of<typename remove_reference<_T2>::type, _T1>::value))
 #endif
     >
 {};
@@ -722,20 +739,6 @@ template <class _T1, class _T2> struct _LIBCPP_VISIBLE is_convertible
 };
 
 #endif  // __has_feature(is_convertible_to)
-
-// is_base_of
-
-#ifdef _LIBCP_HAS_IS_BASE_OF
-
-template <class _Bp, class _Dp>
-struct _LIBCPP_VISIBLE is_base_of
-    : public integral_constant<bool, __is_base_of(_Bp, _Dp)> {};
-
-#else  // __has_feature(is_base_of)
-
-#error is_base_of not implemented.
-
-#endif  // __has_feature(is_base_of)
 
 // is_empty
 
