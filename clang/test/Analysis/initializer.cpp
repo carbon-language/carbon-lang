@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -analyzer-ipa=inlining -cfg-add-implicit-dtors -std=c++11 -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc,debug.ExprInspection -analyzer-ipa=inlining -cfg-add-implicit-dtors -std=c++11 -verify %s
 
 // We don't inline constructors unless we have destructors turned on.
 
@@ -57,10 +57,6 @@ void testDelegatingConstructor() {
 }
 
 
-// ------------------------------------
-// False negatives
-// ------------------------------------
-
 struct RefWrapper {
   RefWrapper(int *p) : x(*p) {}
   RefWrapper(int &r) : x(r) {}
@@ -69,10 +65,20 @@ struct RefWrapper {
 
 void testReferenceMember() {
   int *p = 0;
-  RefWrapper X(p); // should warn in the constructor
+  RefWrapper X(p); // expected-warning@61 {{Dereference of null pointer}}
 }
 
 void testReferenceMember2() {
   int *p = 0;
-  RefWrapper X(*p); // should warn here
+  // FIXME: We should warn here, since we're creating the reference here.
+  RefWrapper X(*p); // expected-warning@62 {{Dereference of null pointer}}
 }
+
+
+extern "C" char *strdup(const char *);
+
+class StringWrapper {
+  char *str;
+public:
+  StringWrapper(const char *input) : str(strdup(input)) {} // no-warning
+};

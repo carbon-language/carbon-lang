@@ -314,20 +314,19 @@ namespace {
     SVal Val;
     const Stmt *S;
     ExprEngine &Eng;
-    ProgramPoint::Kind PointKind;
+    const ProgramPoint &PP;
 
     CheckersTy::const_iterator checkers_begin() { return Checkers.begin(); }
     CheckersTy::const_iterator checkers_end() { return Checkers.end(); }
 
     CheckBindContext(const CheckersTy &checkers,
                      SVal loc, SVal val, const Stmt *s, ExprEngine &eng,
-                     ProgramPoint::Kind PK)
-      : Checkers(checkers), Loc(loc), Val(val), S(s), Eng(eng), PointKind(PK) {}
+                     const ProgramPoint &pp)
+      : Checkers(checkers), Loc(loc), Val(val), S(s), Eng(eng), PP(pp) {}
 
     void runChecker(CheckerManager::CheckBindFunc checkFn,
                     NodeBuilder &Bldr, ExplodedNode *Pred) {
-      const ProgramPoint &L = ProgramPoint::getProgramPoint(S, PointKind,
-                                Pred->getLocationContext(), checkFn.Checker);
+      const ProgramPoint &L = PP.withTag(checkFn.Checker);
       CheckerContext C(Bldr, Eng, Pred, L);
 
       checkFn(Loc, Val, S, C);
@@ -340,8 +339,8 @@ void CheckerManager::runCheckersForBind(ExplodedNodeSet &Dst,
                                         const ExplodedNodeSet &Src,
                                         SVal location, SVal val,
                                         const Stmt *S, ExprEngine &Eng,
-                                        ProgramPoint::Kind PointKind) {
-  CheckBindContext C(BindCheckers, location, val, S, Eng, PointKind);
+                                        const ProgramPoint &PP) {
+  CheckBindContext C(BindCheckers, location, val, S, Eng, PP);
   expandGraphWithCheckers(C, Dst, Src);
 }
 

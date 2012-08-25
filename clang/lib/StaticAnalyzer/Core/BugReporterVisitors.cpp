@@ -32,7 +32,11 @@ using namespace ento;
 const Stmt *bugreporter::GetDerefExpr(const ExplodedNode *N) {
   // Pattern match for a few useful cases (do something smarter later):
   //   a[0], p->f, *p
-  const Stmt *S = N->getLocationAs<PostStmt>()->getStmt();
+  const PostStmt *Loc = N->getLocationAs<PostStmt>();
+  if (!Loc)
+    return 0;
+
+  const Stmt *S = Loc->getStmt();
 
   while (true) {
     if (const BinaryOperator *B = dyn_cast<BinaryOperator>(S)) {

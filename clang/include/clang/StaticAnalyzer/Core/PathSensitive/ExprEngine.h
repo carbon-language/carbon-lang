@@ -434,7 +434,8 @@ protected:
   /// evalBind - Handle the semantics of binding a value to a specific location.
   ///  This method is used by evalStore, VisitDeclStmt, and others.
   void evalBind(ExplodedNodeSet &Dst, const Stmt *StoreE, ExplodedNode *Pred,
-                SVal location, SVal Val, bool atDeclInit = false);
+                SVal location, SVal Val, bool atDeclInit = false,
+                const ProgramPoint *PP = 0);
 
 public:
   // FIXME: 'tag' should be removed, and a LocationContext should be used

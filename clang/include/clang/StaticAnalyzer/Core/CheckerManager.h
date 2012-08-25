@@ -258,7 +258,7 @@ public:
                           const ExplodedNodeSet &Src,
                           SVal location, SVal val,
                           const Stmt *S, ExprEngine &Eng,
-                          ProgramPoint::Kind PointKind);
+                          const ProgramPoint &PP);
 
   /// \brief Run checkers for end of analysis.
   void runCheckersForEndAnalysis(ExplodedGraph &G, BugReporter &BR,
