@@ -880,18 +880,30 @@ on runtime code generation to check for undefined behavior.</dt>
 <dd>This option, which defaults to off, controls whether or not Clang
 adds runtime checks for undefined runtime behavior.  If a check fails,
 <tt>__builtin_trap()</tt> is used to indicate failure.
-The checks are:
+The currently implemented checks include:
 <ul>
 <li>Subscripting where the static type of one operand is a variable
     which is decayed from an array type and the other operand is
     greater than the size of the array or less than zero.</li>
 <li>Shift operators where the amount shifted is greater or equal to the
     promoted bit-width of the left-hand-side or less than zero.</li>
-<li>If control flow reaches __builtin_unreachable.
-<li>When llvm implements more __builtin_object_size support, reads and
-    writes for objects that __builtin_object_size indicates we aren't
-    accessing valid memory.  Bit-fields and vectors are not yet checked.
+<li>If control flow reaches __builtin_unreachable.</li>
+<li>Reads and writes for objects which are inappropriately aligned or are not
+    large enough (in cases where the size can be determined).
+<li>Signed integer overflow, including all the checks added by <tt>-ftrapv</tt>
+    and also checking for signed left shift overflow.</li>
+<li>Binding a reference to a storage location which is not of an appropriate
+    alignment or size (in cases where the size can be determined), or binding
+    a reference to an empty glvalue (a dereferenced null pointer).
+<li>Class member access or member function call where the <tt>this</tt>
+    pointer is not of an appropriate alignment or size (in cases where the size
+    can be determined), or where it is null.</li>
 </ul>
+
+<p>The sizes of objects are determined using <tt>__builtin_object_size</tt>, and
+consequently may be able to detect more problems at higher optimization levels.
+Bit-fields and vectors are not yet checked.</p>
+
 </dd>
 
 <dt id="opt_faddress-sanitizer"><b>-f[no-]address-sanitizer</b>:
