@@ -637,7 +637,7 @@ protected:
     void set_rdbuf(basic_streambuf<char_type, traits_type>* __sb);
 private:
     basic_ostream<char_type, traits_type>* __tie_;
-    char_type __fill_;
+     mutable int_type __fill_;
 };
 
 template <class _CharT, class _Traits>
@@ -659,7 +659,7 @@ basic_ios<_CharT, _Traits>::init(basic_streambuf<char_type, traits_type>* __sb)
 {
     ios_base::init(__sb);
     __tie_ = 0;
-    __fill_ = widen(' ');
+    __fill_ = traits_type::eof();
 }
 
 template <class _CharT, class _Traits>
@@ -731,6 +731,8 @@ inline _LIBCPP_INLINE_VISIBILITY
 _CharT
 basic_ios<_CharT, _Traits>::fill() const
 {
+    if (traits_type::eq_int_type(traits_type::eof(), __fill_))
+        __fill_ = widen(' ');
     return __fill_;
 }
 
