@@ -14,4 +14,4 @@
 // NOTOBJC-NOT: error: -fobjc-arc is not supported on platforms using the legacy runtime
 // NOTOBJC: invalid preprocessing directive
 
-// UNSUPPORTED: error: -fobjc-arc is not supported on versions of Mac OS prior to 10.6
+// UNSUPPORTED: error: -fobjc-arc is not supported on versions of OS X prior to 10.6

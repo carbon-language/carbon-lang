@@ -93,8 +93,8 @@ def err_drv_objc_gc_arr : Error<
   "cannot specify both '-fobjc-arc' and '%0'">;
 def err_arc_unsupported_on_runtime : Error<
   "-fobjc-arc is not supported on platforms using the legacy runtime">;
-def err_arc_unsupported_on_toolchain : Error<
-  "-fobjc-arc is not supported on %select{versions of Mac OS prior to 10.6}0">;
+def err_arc_unsupported_on_toolchain : Error< // feel free to generalize this
+  "-fobjc-arc is not supported on versions of OS X prior to 10.6">;
 def err_drv_mg_requires_m_or_mm : Error<
   "option '-MG' requires '-M' or '-MM'">;
 def err_drv_asan_android_requires_pie : Error<
