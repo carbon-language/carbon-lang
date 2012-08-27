@@ -1443,6 +1443,8 @@ public:
 
   //===--- Other ---===//
 
+  unsigned getNumClobbers() const { return NumClobbers; }
+
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == GCCAsmStmtClass ||
       T->getStmtClass() == MSAsmStmtClass;
@@ -1643,7 +1645,6 @@ public:
   /// This returns -1 if the operand name is invalid.
   int getNamedOperand(StringRef SymbolicName) const;
 
-  unsigned getNumClobbers() const { return NumClobbers; }
   StringLiteral *getClobberStringLiteral(unsigned i) { return Clobbers[i]; }
   const StringLiteral *getClobberStringLiteral(unsigned i) const {
     return Clobbers[i];
@@ -1720,7 +1721,6 @@ public:
 
   //===--- Other ---===//
 
-  unsigned getNumClobbers() const { return NumClobbers; }
   StringRef getClobber(unsigned i) const { return Clobbers[i]; }
 
   SourceRange getSourceRange() const LLVM_READONLY {
