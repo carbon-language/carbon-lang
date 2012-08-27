@@ -18,13 +18,14 @@
 
 namespace __sanitizer {
 
-static char *GetFlagValue(const char *env, const char *name) {
+static bool GetFlagValue(const char *env, const char *name,
+                         const char **value, int *value_length) {
   if (env == 0)
-    return 0;
+    return false;
   const char *pos = internal_strstr(env, name);
   const char *end;
   if (pos == 0)
-    return 0;
+    return false;
   pos += internal_strlen(name);
   if (pos[0] != '=') {
     end = pos;
@@ -42,41 +43,54 @@ static char *GetFlagValue(const char *env, const char *name) {
     if (end == 0)
       end = pos + internal_strlen(pos);
   }
-  int len = end - pos;
-  char *f = (char*)InternalAlloc(len + 1);
-  internal_memcpy(f, pos, len);
-  f[len] = '\0';
-  return f;
+  *value = pos;
+  *value_length = end - pos;
+  return true;
+}
+
+static bool StartsWith(const char *flag, int flag_length, const char *value) {
+  if (!flag || !value)
+    return false;
+  int value_length = internal_strlen(value);
+  return (flag_length >= value_length) &&
+         (0 == internal_strncmp(flag, value, value_length));
 }
 
 void ParseFlag(const char *env, bool *flag, const char *name) {
-  char *val = GetFlagValue(env, name);
-  if (val == 0)
+  const char *value;
+  int value_length;
+  if (!GetFlagValue(env, name, &value, &value_length))
     return;
-  if (0 == internal_strcmp(val, "0") ||
-      0 == internal_strcmp(val, "no") ||
-      0 == internal_strcmp(val, "false"))
+  if (StartsWith(value, value_length, "0") ||
+      StartsWith(value, value_length, "no") ||
+      StartsWith(value, value_length, "false"))
     *flag = false;
-  if (0 == internal_strcmp(val, "1") ||
-      0 == internal_strcmp(val, "yes") ||
-      0 == internal_strcmp(val, "true"))
+  if (StartsWith(value, value_length, "1") ||
+      StartsWith(value, value_length, "yes") ||
+      StartsWith(value, value_length, "true"))
     *flag = true;
-  InternalFree(val);
 }
 
 void ParseFlag(const char *env, int *flag, const char *name) {
-  char *val = GetFlagValue(env, name);
-  if (val == 0)
+  const char *value;
+  int value_length;
+  if (!GetFlagValue(env, name, &value, &value_length))
     return;
-  *flag = internal_atoll(val);
-  InternalFree(val);
+  *flag = internal_atoll(value);
 }
 
+static LowLevelAllocator allocator_for_flags;
+
 void ParseFlag(const char *env, const char **flag, const char *name) {
-  const char *val = GetFlagValue(env, name);
-  if (val == 0)
+  const char *value;
+  int value_length;
+  if (!GetFlagValue(env, name, &value, &value_length))
     return;
-  *flag = val;
+  // Copy the flag value.
+  char *value_copy = (char*)(allocator_for_flags.Allocate(value_length + 1));
+  internal_memcpy(value_copy, value, value_length);
+  value_copy[value_length] = '\0';
+  *flag = value_copy;
 }
 
 }  // namespace __sanitizer

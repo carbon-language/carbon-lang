@@ -281,9 +281,6 @@ void __asan_init() {
   CHECK(!asan_init_is_running && "ASan init calls itself!");
   asan_init_is_running = true;
 
-  // Setup internal allocator callback.
-  SetLowLevelAllocateCallback(OnLowLevelAllocate);
-
   // Make sure we are not statically linked.
   AsanDoesNotSupportStaticLinkage();
 
@@ -298,6 +295,9 @@ void __asan_init() {
 
   // Re-exec ourselves if we need to set additional env or command line args.
   MaybeReexec();
+
+  // Setup internal allocator callback.
+  SetLowLevelAllocateCallback(OnLowLevelAllocate);
 
   if (flags()->atexit) {
     Atexit(asan_atexit);

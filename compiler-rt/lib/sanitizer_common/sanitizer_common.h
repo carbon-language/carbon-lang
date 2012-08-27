@@ -81,7 +81,6 @@ class InternalScopedBuffer {
 // Simple low-level (mmap-based) allocator for internal use.
 class LowLevelAllocator {
  public:
-  explicit LowLevelAllocator(LinkerInitialized) {}
   // 'size' must be a power of two. Requires an external lock.
   void *Allocate(uptr size);
  private:

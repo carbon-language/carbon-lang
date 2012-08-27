@@ -31,7 +31,7 @@ struct ListOfGlobals {
 };
 
 static AsanLock mu_for_globals(LINKER_INITIALIZED);
-static LowLevelAllocator allocator_for_globals(LINKER_INITIALIZED);
+static LowLevelAllocator allocator_for_globals;
 static ListOfGlobals *list_of_all_globals;
 static ListOfGlobals *list_of_dynamic_init_globals;
 

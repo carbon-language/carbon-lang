@@ -27,7 +27,7 @@ AsanThread::AsanThread(LinkerInitialized x)
       stats_(x) { }
 
 static AsanLock mu_for_thread_summary(LINKER_INITIALIZED);
-static LowLevelAllocator allocator_for_thread_summary(LINKER_INITIALIZED);
+static LowLevelAllocator allocator_for_thread_summary;
 
 AsanThread *AsanThread::Create(u32 parent_tid, thread_callback_t start_routine,
                                void *arg, AsanStackTrace *stack) {
