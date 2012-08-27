@@ -1368,7 +1368,12 @@ public:
 class AsmStmt : public Stmt {
 protected:
   SourceLocation AsmLoc;
+  /// \brief True if the assembly statement does not have any input or output
+  /// operands.
   bool IsSimple;
+
+  /// \brief If true, treat this inline assembly as having side effects.
+  /// This assembly statement should not be optimized, deleted or moved.
   bool IsVolatile;
 
   unsigned NumOutputs;
