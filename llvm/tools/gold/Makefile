@@ -24,6 +24,8 @@ include $(LEVEL)/Makefile.config
 # Because off_t is used in the public API, the largefile parts are required for
 # ABI compatibility.
 CXXFLAGS += -I$(BINUTILS_INCDIR) -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
-CXXFLAGS += -L$(SharedLibDir)/$(SharedPrefix) -lLTO
+LDFLAGS += -L$(SharedLibDir)/$(SharedPrefix)
 
 include $(LEVEL)/Makefile.common
+
+LIBS += -lLTO
