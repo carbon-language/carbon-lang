@@ -981,6 +981,7 @@ LLDBSwigPythonCallSBInputReaderCallback(void *baton,
         SWIG_PYTHON_THREAD_END_BLOCK;
         return result;
     }
+    return 0;
 }
 
 // For the LogOutputCallback functions
