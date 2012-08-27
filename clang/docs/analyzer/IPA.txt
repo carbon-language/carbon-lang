@@ -98,11 +98,12 @@ some cases, however, where the analyzer chooses not to inline:
 - In C++, constructors are not inlined unless the destructor call will be
   processed by the ExprEngine. Thus, if the CFG was built without nodes for
   implicit destructors, or if the destructors for the given object are not
-  represented in the CFG, the constructor will not be inlined. See "C++ Caveats"
-  below.
-
-- In C++, ExprEngine does not inline custom implementations of operator 'new'.
+  represented in the CFG, the constructor will not be inlined. (As an exception,
+  constructors for objects with trivial constructors can still be inlined.)
   See "C++ Caveats" below.
+
+- In C++, ExprEngine does not inline custom implementations of operator 'new'
+  or operator 'delete'. See "C++ Caveats" below.
 
 - Calls resulting in "dynamic dispatch" are specially handled.  See more below.
 
@@ -263,7 +264,8 @@ There are several limitations in the current implementation:
 
 - Temporaries are poorly modeled right now because we're not confident in the
   placement of their destructors in the CFG. We currently won't inline their
-  constructors, and don't process their destructors at all.
+  constructors unless the destructor is trivial, and don't process their
+  destructors at all, not even to invalidate the region.
 
 - 'new' is poorly modeled due to some nasty CFG/design issues.  This is tracked
   in PR12014.  'delete' is not modeled at all.
