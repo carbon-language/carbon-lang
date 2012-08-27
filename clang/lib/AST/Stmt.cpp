@@ -548,8 +548,9 @@ unsigned GCCAsmStmt::AnalyzeAsmString(SmallVectorImpl<AsmStringPiece>&Pieces,
     return diag::err_asm_invalid_escape;
   }
 }
-/// GenerateAsmString - Assemble final asm string.
-std::string GCCAsmStmt::GenerateAsmString(ASTContext &C) const {
+
+/// Assemble final IR asm string (GCC-style).
+std::string GCCAsmStmt::generateAsmString(ASTContext &C) const {
   // Analyze the asm string to decompose it into its pieces.  We know that Sema
   // has already done this, so it is guaranteed to be successful.
   SmallVector<GCCAsmStmt::AsmStringPiece, 4> Pieces;
@@ -567,6 +568,12 @@ std::string GCCAsmStmt::GenerateAsmString(ASTContext &C) const {
                    Pieces[i].getModifier() + '}';
   }
   return AsmString;
+}
+
+/// Assemble final IR asm string (MS-style).
+std::string MSAsmStmt::generateAsmString(ASTContext &C) const {
+  // FIXME: This needs to be translated into the IR string representation.
+  return std::string();
 }
 
 Expr *MSAsmStmt::getOutputExpr(unsigned i) {

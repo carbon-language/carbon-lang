@@ -1398,6 +1398,11 @@ public:
 
   SourceRange getSourceRange() const LLVM_READONLY { return SourceRange(); }
 
+  //===--- Asm String Analysis ---===//
+
+  /// Assemble final IR asm string.
+  virtual std::string generateAsmString(ASTContext &C) const = 0;
+
   //===--- Output operands ---===//
 
   unsigned getNumOutputs() const { return NumOutputs; }
@@ -1517,8 +1522,8 @@ public:
   unsigned AnalyzeAsmString(SmallVectorImpl<AsmStringPiece> &Pieces,
                             ASTContext &C, unsigned &DiagOffs) const;
 
-  /// GenerateAsmString - Assemble final asm string.
-  std::string GenerateAsmString(ASTContext &C) const;
+  /// Assemble final IR asm string.
+  std::string generateAsmString(ASTContext &C) const;
 
   //===--- Output operands ---===//
 
@@ -1684,6 +1689,9 @@ public:
   const std::string *getAsmString() const { return &AsmStr; }
   std::string *getAsmString() { return &AsmStr; }
   void setAsmString(StringRef &E) { AsmStr = E.str(); }
+
+  /// Assemble final IR asm string.
+  std::string generateAsmString(ASTContext &C) const;
 
   //===--- Output operands ---===//
 
