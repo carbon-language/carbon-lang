@@ -969,7 +969,7 @@ void MicrosoftCXXNameMangler::mangleType(QualType T, SourceRange Range) {
     return;
 #define TYPE(CLASS, PARENT) \
   case Type::CLASS: \
-    mangleType(static_cast<const CLASS##Type*>(T.getTypePtr()), Range); \
+    mangleType(cast<CLASS##Type>(T), Range); \
     break;
 #include "clang/AST/TypeNodes.def"
 #undef ABSTRACT_TYPE
@@ -1262,10 +1262,10 @@ void MicrosoftCXXNameMangler::mangleType(const UnresolvedUsingType *T,
 // <class-type>  ::= V <name>
 // <enum-type>   ::= W <size> <name>
 void MicrosoftCXXNameMangler::mangleType(const EnumType *T, SourceRange) {
-  mangleType(static_cast<const TagType*>(T));
+  mangleType(cast<TagType>(T));
 }
 void MicrosoftCXXNameMangler::mangleType(const RecordType *T, SourceRange) {
-  mangleType(static_cast<const TagType*>(T));
+  mangleType(cast<TagType>(T));
 }
 void MicrosoftCXXNameMangler::mangleType(const TagType *T) {
   switch (T->getDecl()->getTagKind()) {
@@ -1306,19 +1306,19 @@ void MicrosoftCXXNameMangler::mangleType(const ArrayType *T, bool IsGlobal) {
 }
 void MicrosoftCXXNameMangler::mangleType(const ConstantArrayType *T,
                                          SourceRange) {
-  mangleType(static_cast<const ArrayType *>(T), false);
+  mangleType(cast<ArrayType>(T), false);
 }
 void MicrosoftCXXNameMangler::mangleType(const VariableArrayType *T,
                                          SourceRange) {
-  mangleType(static_cast<const ArrayType *>(T), false);
+  mangleType(cast<ArrayType>(T), false);
 }
 void MicrosoftCXXNameMangler::mangleType(const DependentSizedArrayType *T,
                                          SourceRange) {
-  mangleType(static_cast<const ArrayType *>(T), false);
+  mangleType(cast<ArrayType>(T), false);
 }
 void MicrosoftCXXNameMangler::mangleType(const IncompleteArrayType *T,
                                          SourceRange) {
-  mangleType(static_cast<const ArrayType *>(T), false);
+  mangleType(cast<ArrayType>(T), false);
 }
 void MicrosoftCXXNameMangler::mangleExtraDimensions(QualType ElementTy) {
   SmallVector<llvm::APInt, 3> Dimensions;
