@@ -14,6 +14,8 @@
 
 // The format of this database matches clang/Basic/Builtins.def.
 
+// MIPS DSP Rev 1
+
 // Add/subtract with optional saturation
 BUILTIN(__builtin_mips_addu_qb, "V4ScV4ScV4Sc", "n")
 BUILTIN(__builtin_mips_addu_s_qb, "V4ScV4ScV4Sc", "n")
@@ -121,5 +123,66 @@ BUILTIN(__builtin_mips_bposge32, "i", "n")
 BUILTIN(__builtin_mips_lbux, "iv*i", "n")
 BUILTIN(__builtin_mips_lhx, "iv*i", "n")
 BUILTIN(__builtin_mips_lwx, "iv*i", "n")
+
+// MIPS DSP Rev 2
+
+BUILTIN(__builtin_mips_absq_s_qb, "V4ScV4Sc", "n")
+
+BUILTIN(__builtin_mips_addqh_ph, "V2sV2sV2s", "nc")
+BUILTIN(__builtin_mips_addqh_r_ph, "V2sV2sV2s", "nc")
+BUILTIN(__builtin_mips_addqh_w, "iii", "nc")
+BUILTIN(__builtin_mips_addqh_r_w, "iii", "nc")
+
+BUILTIN(__builtin_mips_addu_ph, "V2sV2sV2s", "n")
+BUILTIN(__builtin_mips_addu_s_ph, "V2sV2sV2s", "n")
+
+BUILTIN(__builtin_mips_adduh_qb, "V4ScV4ScV4Sc", "nc")
+BUILTIN(__builtin_mips_adduh_r_qb, "V4ScV4ScV4Sc", "nc")
+
+BUILTIN(__builtin_mips_append, "iiiIi", "nc")
+BUILTIN(__builtin_mips_balign, "iiiIi", "nc")
+
+BUILTIN(__builtin_mips_cmpgdu_eq_qb, "iV4ScV4Sc", "n")
+BUILTIN(__builtin_mips_cmpgdu_lt_qb, "iV4ScV4Sc", "n")
+BUILTIN(__builtin_mips_cmpgdu_le_qb, "iV4ScV4Sc", "n")
+
+BUILTIN(__builtin_mips_dpa_w_ph, "LLiLLiV2sV2s", "nc")
+BUILTIN(__builtin_mips_dps_w_ph, "LLiLLiV2sV2s", "nc")
+
+BUILTIN(__builtin_mips_dpaqx_s_w_ph, "LLiLLiV2sV2s", "n")
+BUILTIN(__builtin_mips_dpaqx_sa_w_ph, "LLiLLiV2sV2s", "n")
+BUILTIN(__builtin_mips_dpax_w_ph, "LLiLLiV2sV2s", "nc")
+BUILTIN(__builtin_mips_dpsx_w_ph, "LLiLLiV2sV2s", "nc")
+BUILTIN(__builtin_mips_dpsqx_s_w_ph, "LLiLLiV2sV2s", "n")
+BUILTIN(__builtin_mips_dpsqx_sa_w_ph, "LLiLLiV2sV2s", "n")
+
+BUILTIN(__builtin_mips_mul_ph, "V2sV2sV2s", "n")
+BUILTIN(__builtin_mips_mul_s_ph, "V2sV2sV2s", "n")
+
+BUILTIN(__builtin_mips_mulq_rs_w, "iii", "n")
+BUILTIN(__builtin_mips_mulq_s_ph, "V2sV2sV2s", "n")
+BUILTIN(__builtin_mips_mulq_s_w, "iii", "n")
+BUILTIN(__builtin_mips_mulsa_w_ph, "LLiLLiV2sV2s", "nc")
+
+BUILTIN(__builtin_mips_precr_qb_ph, "V4ScV2sV2s", "n")
+BUILTIN(__builtin_mips_precr_sra_ph_w, "V2siiIi", "nc")
+BUILTIN(__builtin_mips_precr_sra_r_ph_w, "V2siiIi", "nc")
+
+BUILTIN(__builtin_mips_prepend, "iiiIi", "nc")
+
+BUILTIN(__builtin_mips_shra_qb, "V4ScV4Sci", "nc")
+BUILTIN(__builtin_mips_shra_r_qb, "V4ScV4Sci", "nc")
+BUILTIN(__builtin_mips_shrl_ph, "V2sV2si", "nc")
+
+BUILTIN(__builtin_mips_subqh_ph, "V2sV2sV2s", "nc")
+BUILTIN(__builtin_mips_subqh_r_ph, "V2sV2sV2s", "nc")
+BUILTIN(__builtin_mips_subqh_w, "iii", "nc")
+BUILTIN(__builtin_mips_subqh_r_w, "iii", "nc")
+
+BUILTIN(__builtin_mips_subu_ph, "V2sV2sV2s", "n")
+BUILTIN(__builtin_mips_subu_s_ph, "V2sV2sV2s", "n")
+
+BUILTIN(__builtin_mips_subuh_qb, "V4ScV4ScV4Sc", "nc")
+BUILTIN(__builtin_mips_subuh_r_qb, "V4ScV4ScV4Sc", "nc")
 
 #undef BUILTIN

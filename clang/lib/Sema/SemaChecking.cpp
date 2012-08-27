@@ -437,6 +437,11 @@ bool Sema::CheckMipsBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   default: return false;
   case Mips::BI__builtin_mips_wrdsp: i = 1; l = 0; u = 63; break;
   case Mips::BI__builtin_mips_rddsp: i = 0; l = 0; u = 63; break;
+  case Mips::BI__builtin_mips_append: i = 2; l = 0; u = 31; break;
+  case Mips::BI__builtin_mips_balign: i = 2; l = 0; u = 3; break;
+  case Mips::BI__builtin_mips_precr_sra_ph_w: i = 2; l = 0; u = 31; break;
+  case Mips::BI__builtin_mips_precr_sra_r_ph_w: i = 2; l = 0; u = 31; break;
+  case Mips::BI__builtin_mips_prepend: i = 2; l = 0; u = 31; break;
   };
 
   // We can't check the value of a dependent argument.
