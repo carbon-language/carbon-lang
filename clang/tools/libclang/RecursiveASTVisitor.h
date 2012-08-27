@@ -1762,7 +1762,7 @@ DEF_TRAVERSE_STMT(GCCAsmStmt, {
       StmtQueue.queue(S->getOutputConstraintLiteral(I));
     }
     for (unsigned I = 0, E = S->getNumClobbers(); I < E; ++I) {
-      StmtQueue.queue(S->getClobber(I));
+      StmtQueue.queue(S->getClobberStringLiteral(I));
     }
     // children() iterates over inputExpr and outputExpr.
   })

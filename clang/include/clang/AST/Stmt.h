@@ -1644,8 +1644,10 @@ public:
   int getNamedOperand(StringRef SymbolicName) const;
 
   unsigned getNumClobbers() const { return NumClobbers; }
-  StringLiteral *getClobber(unsigned i) { return Clobbers[i]; }
-  const StringLiteral *getClobber(unsigned i) const { return Clobbers[i]; }
+  StringLiteral *getClobberStringLiteral(unsigned i) { return Clobbers[i]; }
+  const StringLiteral *getClobberStringLiteral(unsigned i) const {
+    return Clobbers[i];
+  }
 
   SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(AsmLoc, RParenLoc);

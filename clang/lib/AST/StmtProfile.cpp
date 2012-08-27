@@ -175,7 +175,7 @@ void StmtProfiler::VisitGCCAsmStmt(const GCCAsmStmt *S) {
   }
   ID.AddInteger(S->getNumClobbers());
   for (unsigned I = 0, N = S->getNumClobbers(); I != N; ++I)
-    VisitStringLiteral(S->getClobber(I));
+    VisitStringLiteral(S->getClobberStringLiteral(I));
 }
 
 void StmtProfiler::VisitMSAsmStmt(const MSAsmStmt *S) {

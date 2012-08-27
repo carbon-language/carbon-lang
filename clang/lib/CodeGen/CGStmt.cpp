@@ -1581,7 +1581,7 @@ void CodeGenFunction::EmitGCCAsmStmt(const GCCAsmStmt &S) {
 
   // Clobbers
   for (unsigned i = 0, e = S.getNumClobbers(); i != e; i++) {
-    StringRef Clobber = S.getClobber(i)->getString();
+    StringRef Clobber = S.getClobberStringLiteral(i)->getString();
 
     if (Clobber != "memory" && Clobber != "cc")
     Clobber = Target.getNormalizedGCCRegisterName(Clobber);

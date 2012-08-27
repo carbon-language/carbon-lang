@@ -422,7 +422,7 @@ void StmtPrinter::VisitGCCAsmStmt(GCCAsmStmt *Node) {
     if (i != 0)
       OS << ", ";
 
-    VisitStringLiteral(Node->getClobber(i));
+    VisitStringLiteral(Node->getClobberStringLiteral(i));
   }
 
   OS << ");\n";

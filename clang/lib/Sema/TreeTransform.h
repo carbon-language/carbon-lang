@@ -5568,7 +5568,7 @@ TreeTransform<Derived>::TransformGCCAsmStmt(GCCAsmStmt *S) {
 
   // Go through the clobbers.
   for (unsigned I = 0, E = S->getNumClobbers(); I != E; ++I)
-    Clobbers.push_back(S->getClobber(I));
+    Clobbers.push_back(S->getClobberStringLiteral(I));
 
   // No need to transform the asm string literal.
   AsmString = SemaRef.Owned(S->getAsmString());

@@ -245,7 +245,7 @@ void ASTStmtWriter::VisitGCCAsmStmt(GCCAsmStmt *S) {
 
   // Clobbers
   for (unsigned I = 0, N = S->getNumClobbers(); I != N; ++I)
-    Writer.AddStmt(S->getClobber(I));
+    Writer.AddStmt(S->getClobberStringLiteral(I));
 
   Code = serialization::STMT_GCCASM;
 }

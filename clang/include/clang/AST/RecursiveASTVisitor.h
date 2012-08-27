@@ -1836,7 +1836,7 @@ DEF_TRAVERSE_STMT(GCCAsmStmt, {
       TRY_TO(TraverseStmt(S->getOutputConstraintLiteral(I)));
     }
     for (unsigned I = 0, E = S->getNumClobbers(); I < E; ++I) {
-      TRY_TO(TraverseStmt(S->getClobber(I)));
+      TRY_TO(TraverseStmt(S->getClobberStringLiteral(I)));
     }
     // children() iterates over inputExpr and outputExpr.
   })
