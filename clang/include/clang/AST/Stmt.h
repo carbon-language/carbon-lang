@@ -1376,6 +1376,7 @@ protected:
   unsigned NumClobbers;
 
   IdentifierInfo **Names;
+  Stmt **Exprs;
 
   AsmStmt(StmtClass SC, SourceLocation asmloc, bool issimple, bool isvolatile,
           unsigned numoutputs, unsigned numinputs, unsigned numclobbers) :
@@ -1385,7 +1386,7 @@ protected:
 public:
   /// \brief Build an empty inline-assembly statement.
   explicit AsmStmt(StmtClass SC, EmptyShell Empty) :
-    Stmt(SC, Empty), Names(0) { }
+    Stmt(SC, Empty), Names(0), Exprs(0) { }
 
   SourceLocation getAsmLoc() const { return AsmLoc; }
   void setAsmLoc(SourceLocation L) { AsmLoc = L; }
@@ -1440,6 +1441,50 @@ public:
       T->getStmtClass() == MSAsmStmtClass;
   }
   static bool classof(const AsmStmt *) { return true; }
+
+  // Input expr iterators.
+
+  typedef ExprIterator inputs_iterator;
+  typedef ConstExprIterator const_inputs_iterator;
+
+  inputs_iterator begin_inputs() {
+    return &Exprs[0] + NumOutputs;
+  }
+
+  inputs_iterator end_inputs() {
+    return &Exprs[0] + NumOutputs + NumInputs;
+  }
+
+  const_inputs_iterator begin_inputs() const {
+    return &Exprs[0] + NumOutputs;
+  }
+
+  const_inputs_iterator end_inputs() const {
+    return &Exprs[0] + NumOutputs + NumInputs;
+  }
+
+  // Output expr iterators.
+
+  typedef ExprIterator outputs_iterator;
+  typedef ConstExprIterator const_outputs_iterator;
+
+  outputs_iterator begin_outputs() {
+    return &Exprs[0];
+  }
+  outputs_iterator end_outputs() {
+    return &Exprs[0] + NumOutputs;
+  }
+
+  const_outputs_iterator begin_outputs() const {
+    return &Exprs[0];
+  }
+  const_outputs_iterator end_outputs() const {
+    return &Exprs[0] + NumOutputs;
+  }
+
+  child_range children() {
+    return child_range(&Exprs[0], &Exprs[0] + NumOutputs + NumInputs);
+  }
 };
 
 /// This represents a GCC inline-assembly statement extension.
@@ -1450,7 +1495,6 @@ class GCCAsmStmt : public AsmStmt {
 
   // FIXME: If we wanted to, we could allocate all of these in one big array.
   StringLiteral **Constraints;
-  Stmt **Exprs;
   StringLiteral **Clobbers;
 
 public:
@@ -1462,7 +1506,7 @@ public:
 
   /// \brief Build an empty inline-assembly statement.
   explicit GCCAsmStmt(EmptyShell Empty) : AsmStmt(GCCAsmStmtClass, Empty),
-    Constraints(0), Exprs(0), Clobbers(0) { }
+    Constraints(0), Clobbers(0) { }
 
   SourceLocation getRParenLoc() const { return RParenLoc; }
   void setRParenLoc(SourceLocation L) { RParenLoc = L; }
@@ -1604,50 +1648,6 @@ public:
     return T->getStmtClass() == GCCAsmStmtClass;
   }
   static bool classof(const GCCAsmStmt *) { return true; }
-
-  // Input expr iterators.
-
-  typedef ExprIterator inputs_iterator;
-  typedef ConstExprIterator const_inputs_iterator;
-
-  inputs_iterator begin_inputs() {
-    return &Exprs[0] + NumOutputs;
-  }
-
-  inputs_iterator end_inputs() {
-    return &Exprs[0] + NumOutputs + NumInputs;
-  }
-
-  const_inputs_iterator begin_inputs() const {
-    return &Exprs[0] + NumOutputs;
-  }
-
-  const_inputs_iterator end_inputs() const {
-    return &Exprs[0] + NumOutputs + NumInputs;
-  }
-
-  // Output expr iterators.
-
-  typedef ExprIterator outputs_iterator;
-  typedef ConstExprIterator const_outputs_iterator;
-
-  outputs_iterator begin_outputs() {
-    return &Exprs[0];
-  }
-  outputs_iterator end_outputs() {
-    return &Exprs[0] + NumOutputs;
-  }
-
-  const_outputs_iterator begin_outputs() const {
-    return &Exprs[0];
-  }
-  const_outputs_iterator end_outputs() const {
-    return &Exprs[0] + NumOutputs;
-  }
-
-  child_range children() {
-    return child_range(&Exprs[0], &Exprs[0] + NumOutputs + NumInputs);
-  }
 };
 
 /// This represents a Microsoft inline-assembly statement extension.
@@ -1659,7 +1659,6 @@ class MSAsmStmt : public AsmStmt {
   unsigned NumAsmToks;
 
   Token *AsmToks;
-  Stmt **Exprs;
   StringRef *Clobbers;
 
 public:
@@ -1672,7 +1671,7 @@ public:
 
   /// \brief Build an empty MS-style inline-assembly statement.
   explicit MSAsmStmt(EmptyShell Empty) : AsmStmt(MSAsmStmtClass, Empty),
-    NumAsmToks(0), AsmToks(0), Exprs(0), Clobbers(0) { }
+    NumAsmToks(0), AsmToks(0), Clobbers(0) { }
 
   SourceLocation getLBraceLoc() const { return LBraceLoc; }
   void setLBraceLoc(SourceLocation L) { LBraceLoc = L; }
