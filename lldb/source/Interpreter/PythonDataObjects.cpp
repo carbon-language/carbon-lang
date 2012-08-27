@@ -21,7 +21,7 @@
 #include <Python.h>
 #endif
 
-#include "PythonDataObjects.h"
+#include "lldb/Interpreter/PythonDataObjects.h"
 
 using namespace lldb_private;
 using namespace lldb;
