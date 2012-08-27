@@ -20,6 +20,7 @@ namespace __sanitizer {
 
 #ifdef _WIN32
 class MemoryMappingLayout {
+ public:
   MemoryMappingLayout() {
     UNIMPLEMENTED();
   }

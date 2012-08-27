@@ -77,6 +77,7 @@ bool MemoryRangeIsAvailable(uptr range_start, uptr range_end) {
 
 void *MapFileToMemory(const char *file_name, uptr *buff_size) {
   UNIMPLEMENTED();
+  return 0;
 }
 
 const char *GetEnv(const char *name) {
