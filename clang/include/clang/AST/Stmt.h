@@ -1393,6 +1393,8 @@ public:
   explicit AsmStmt(StmtClass SC, EmptyShell Empty) :
     Stmt(SC, Empty), Names(0), Exprs(0) { }
 
+  virtual ~AsmStmt() { }
+
   SourceLocation getAsmLoc() const { return AsmLoc; }
   void setAsmLoc(SourceLocation L) { AsmLoc = L; }
 
