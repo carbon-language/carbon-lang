@@ -86,7 +86,8 @@ void ParseFlag(const char *env, const char **flag, const char *name) {
   int value_length;
   if (!GetFlagValue(env, name, &value, &value_length))
     return;
-  // Copy the flag value.
+  // Copy the flag value. Don't use locks here, as flags are parsed at
+  // tool startup.
   char *value_copy = (char*)(allocator_for_flags.Allocate(value_length + 1));
   internal_memcpy(value_copy, value, value_length);
   value_copy[value_length] = '\0';

@@ -78,10 +78,12 @@ class InternalScopedBuffer {
   void operator=(const InternalScopedBuffer&);
 };
 
-// Simple low-level (mmap-based) allocator for internal use.
+// Simple low-level (mmap-based) allocator for internal use. Doesn't have
+// constructor, so all instances of LowLevelAllocator should be
+// linker initialized.
 class LowLevelAllocator {
  public:
-  // 'size' must be a power of two. Requires an external lock.
+  // Requires an external lock.
   void *Allocate(uptr size);
  private:
   char *allocated_end_;

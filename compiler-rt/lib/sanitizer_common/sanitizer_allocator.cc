@@ -60,7 +60,8 @@ void *InternalAllocBlock(void *p) {
 static LowLevelAllocateCallback low_level_alloc_callback;
 
 void *LowLevelAllocator::Allocate(uptr size) {
-  CHECK((size & (size - 1)) == 0 && "size must be a power of two");
+  // Align allocation size.
+  size = RoundUpTo(size, 8);
   if (allocated_end_ - allocated_current_ < (sptr)size) {
     uptr size_to_allocate = Max(size, kPageSize);
     allocated_current_ =

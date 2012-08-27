@@ -66,6 +66,7 @@ TEST(SanitizerCommon, StrFlags) {
   TestStrFlag("zzz", "--flag_name=", "");
   TestStrFlag("", "--flag_name=abc", "abc");
   TestStrFlag("", "--flag_name='abc zxc'", "abc zxc");
+  TestStrFlag("", "--flag_name='abc zxcc'", "abc zxcc");
   TestStrFlag("", "--flag_name=\"abc qwe\" asd", "abc qwe");
 }
 
