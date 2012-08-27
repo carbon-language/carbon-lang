@@ -2747,8 +2747,9 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
 
   // Merge the states from each successor to compute the initial state
   // for the current block.
-  for (BBState::edge_iterator SI(MyStates.succ_begin()),
-       SE(MyStates.succ_end()); SI != SE; ++SI) {
+  BBState::edge_iterator SI(MyStates.succ_begin()),
+                         SE(MyStates.succ_end());
+  if (SI != SE) {
     const BasicBlock *Succ = *SI;
     DenseMap<const BasicBlock *, BBState>::iterator I = BBStates.find(Succ);
     assert(I != BBStates.end());
@@ -2760,7 +2761,6 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
       assert(I != BBStates.end());
       MyStates.MergeSucc(I->second);
     }
-    break;
   }
 
   // Visit all the instructions, bottom-up.
@@ -2935,8 +2935,9 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
 
   // Merge the states from each predecessor to compute the initial state
   // for the current block.
-  for (BBState::edge_iterator PI(MyStates.pred_begin()),
-       PE(MyStates.pred_end()); PI != PE; ++PI) {
+  BBState::edge_iterator PI(MyStates.pred_begin()),
+                         PE(MyStates.pred_end());
+  if (PI != PE) {
     const BasicBlock *Pred = *PI;
     DenseMap<const BasicBlock *, BBState>::iterator I = BBStates.find(Pred);
     assert(I != BBStates.end());
@@ -2948,7 +2949,6 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
       assert(I != BBStates.end());
       MyStates.MergePred(I->second);
     }
-    break;
   }
 
   // Visit all the instructions, top-down.
