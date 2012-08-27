@@ -135,7 +135,7 @@ void InitializeShadowMemory() {
 #ifndef TSAN_GO
 static void CheckPIE() {
   // Ensure that the binary is indeed compiled with -pie.
-  ProcessMaps proc_maps;
+  MemoryMappingLayout proc_maps;
   uptr start, end;
   if (proc_maps.Next(&start, &end,
                      /*offset*/0, /*filename*/0, /*filename_size*/0)) {

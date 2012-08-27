@@ -44,7 +44,7 @@ static uptr patch_pc(uptr pc) {
 }
 
 void AsanStackTrace::PrintStack(uptr *addr, uptr size) {
-  ProcessMaps proc_maps;
+  MemoryMappingLayout proc_maps;
   uptr frame_num = 0;
   for (uptr i = 0; i < size && addr[i]; i++) {
     uptr pc = patch_pc(addr[i]);

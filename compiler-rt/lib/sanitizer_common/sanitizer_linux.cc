@@ -96,7 +96,7 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
     CHECK_EQ(getrlimit(RLIMIT_STACK, &rl), 0);
 
     // Find the mapping that contains a stack variable.
-    ProcessMaps proc_maps;
+    MemoryMappingLayout proc_maps;
     uptr start, end, offset;
     uptr prev_end = 0;
     while (proc_maps.Next(&start, &end, &offset, 0, 0)) {
@@ -161,7 +161,7 @@ const char *GetEnv(const char *name) {
 }
 
 // ----------------- sanitizer_procmaps.h
-ProcessMaps::ProcessMaps() {
+MemoryMappingLayout::MemoryMappingLayout() {
   proc_self_maps_buff_len_ =
       ReadFileToBuffer("/proc/self/maps", &proc_self_maps_buff_,
                        &proc_self_maps_buff_mmaped_size_, 1 << 26);
@@ -170,11 +170,11 @@ ProcessMaps::ProcessMaps() {
   Reset();
 }
 
-ProcessMaps::~ProcessMaps() {
+MemoryMappingLayout::~MemoryMappingLayout() {
   UnmapOrDie(proc_self_maps_buff_, proc_self_maps_buff_mmaped_size_);
 }
 
-void ProcessMaps::Reset() {
+void MemoryMappingLayout::Reset() {
   current_ = proc_self_maps_buff_;
 }
 
@@ -207,8 +207,8 @@ static bool IsDecimal(char c) {
   return c >= '0' && c <= '9';
 }
 
-bool ProcessMaps::Next(uptr *start, uptr *end, uptr *offset,
-                       char filename[], uptr filename_size) {
+bool MemoryMappingLayout::Next(uptr *start, uptr *end, uptr *offset,
+                               char filename[], uptr filename_size) {
   char *last = proc_self_maps_buff_ + proc_self_maps_buff_len_;
   if (current_ >= last) return false;
   uptr dummy;
@@ -253,10 +253,10 @@ bool ProcessMaps::Next(uptr *start, uptr *end, uptr *offset,
   return true;
 }
 
-// Gets the object name and the offset by walking ProcessMaps.
-bool ProcessMaps::GetObjectNameAndOffset(uptr addr, uptr *offset,
-                                         char filename[],
-                                         uptr filename_size) {
+// Gets the object name and the offset by walking MemoryMappingLayout.
+bool MemoryMappingLayout::GetObjectNameAndOffset(uptr addr, uptr *offset,
+                                                 char filename[],
+                                                 uptr filename_size) {
   return IterateForObjectNameAndOffset(addr, offset, filename, filename_size);
 }
 

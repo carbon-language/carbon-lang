@@ -108,11 +108,11 @@ const char *GetEnv(const char *name) {
 
 // ----------------- sanitizer_procmaps.h
 
-ProcessMaps::ProcessMaps() {
+MemoryMappingLayout::MemoryMappingLayout() {
   Reset();
 }
 
-ProcessMaps::~ProcessMaps() {
+MemoryMappingLayout::~MemoryMappingLayout() {
 }
 
 // More information about Mach-O headers can be found in mach-o/loader.h
@@ -129,11 +129,12 @@ ProcessMaps::~ProcessMaps() {
 // Because these fields are taken from the images as is, one needs to add
 // _dyld_get_image_vmaddr_slide() to get the actual addresses at runtime.
 
-void ProcessMaps::Reset() {
+void MemoryMappingLayout::Reset() {
   // Count down from the top.
   // TODO(glider): as per man 3 dyld, iterating over the headers with
   // _dyld_image_count is thread-unsafe. We need to register callbacks for
-  // adding and removing images which will invalidate the ProcessMaps state.
+  // adding and removing images which will invalidate the MemoryMappingLayout
+  // state.
   current_image_ = _dyld_image_count();
   current_load_cmd_count_ = -1;
   current_load_cmd_addr_ = 0;
@@ -148,7 +149,7 @@ void ProcessMaps::Reset() {
 // segment.
 // Note that the segment addresses are not necessarily sorted.
 template<u32 kLCSegment, typename SegmentCommand>
-bool ProcessMaps::NextSegmentLoad(
+bool MemoryMappingLayout::NextSegmentLoad(
     uptr *start, uptr *end, uptr *offset,
     char filename[], uptr filename_size) {
   const char* lc = current_load_cmd_addr_;
@@ -168,8 +169,8 @@ bool ProcessMaps::NextSegmentLoad(
   return false;
 }
 
-bool ProcessMaps::Next(uptr *start, uptr *end, uptr *offset,
-                       char filename[], uptr filename_size) {
+bool MemoryMappingLayout::Next(uptr *start, uptr *end, uptr *offset,
+                               char filename[], uptr filename_size) {
   for (; current_image_ >= 0; current_image_--) {
     const mach_header* hdr = _dyld_get_image_header(current_image_);
     if (!hdr) continue;
@@ -219,9 +220,9 @@ bool ProcessMaps::Next(uptr *start, uptr *end, uptr *offset,
   return false;
 }
 
-bool ProcessMaps::GetObjectNameAndOffset(uptr addr, uptr *offset,
-                                         char filename[],
-                                         uptr filename_size) {
+bool MemoryMappingLayout::GetObjectNameAndOffset(uptr addr, uptr *offset,
+                                                 char filename[],
+                                                 uptr filename_size) {
   return IterateForObjectNameAndOffset(addr, offset, filename, filename_size);
 }
 

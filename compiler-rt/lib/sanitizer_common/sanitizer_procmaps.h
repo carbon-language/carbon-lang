@@ -18,9 +18,18 @@
 
 namespace __sanitizer {
 
-class ProcessMaps {
+#ifdef _WIN32
+class MemoryMappingLayout {
+  MemoryMappingLayout() {
+    UNIMPLEMENTED();
+  }
+};
+
+#else  // _WIN32
+
+class MemoryMappingLayout {
  public:
-  ProcessMaps();
+  MemoryMappingLayout();
   bool Next(uptr *start, uptr *end, uptr *offset,
             char filename[], uptr filename_size);
   void Reset();
@@ -28,7 +37,7 @@ class ProcessMaps {
   // address 'addr'. Returns true on success.
   bool GetObjectNameAndOffset(uptr addr, uptr *offset,
                               char filename[], uptr filename_size);
-  ~ProcessMaps();
+  ~MemoryMappingLayout();
 
  private:
   // Default implementation of GetObjectNameAndOffset.
@@ -76,6 +85,8 @@ class ProcessMaps {
   char *current_load_cmd_addr_;
 #endif
 };
+
+#endif  // _WIN32
 
 }  // namespace __sanitizer
 
