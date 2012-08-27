@@ -270,9 +270,10 @@ class ELFObjectWriter : public MCObjectWriter {
 
     /// ComputeSymbolTable - Compute the symbol table data
     ///
-    /// \param StringTable [out] - The string table data.
-    /// \param StringIndexMap [out] - Map from symbol names to offsets in the
-    /// string table.
+    /// \param Asm - The assembler.
+    /// \param SectionIndexMap - Maps a section to its index.
+    /// \param RevGroupMap - Maps a signature symbol to the group section.
+    /// \param NumRegularSections - Number of non-relocation sections.
     void ComputeSymbolTable(MCAssembler &Asm,
                             const SectionIndexMapTy &SectionIndexMap,
                             RevGroupMapTy RevGroupMap,
