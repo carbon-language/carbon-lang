@@ -596,9 +596,8 @@ GCCAsmStmt::GCCAsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple,
                        Expr **exprs, StringLiteral *asmstr,
                        unsigned numclobbers, StringLiteral **clobbers,
                        SourceLocation rparenloc)
-  : AsmStmt(GCCAsmStmtClass, issimple, isvolatile), AsmLoc(asmloc)
-  , RParenLoc(rparenloc), AsmStr(asmstr), NumOutputs(numoutputs)
-  , NumInputs(numinputs), NumClobbers(numclobbers) {
+  : AsmStmt(GCCAsmStmtClass, asmloc, issimple, isvolatile, numoutputs,
+            numinputs, numclobbers), RParenLoc(rparenloc), AsmStr(asmstr) {
 
   unsigned NumExprs = NumOutputs + NumInputs;
 
@@ -622,10 +621,9 @@ MSAsmStmt::MSAsmStmt(ASTContext &C, SourceLocation asmloc,
                      ArrayRef<Expr*> inputexprs, ArrayRef<Expr*> outputexprs,
                      StringRef asmstr, ArrayRef<StringRef> clobbers,
                      SourceLocation endloc)
-  : AsmStmt(MSAsmStmtClass, issimple, isvolatile), AsmLoc(asmloc),
-    LBraceLoc(lbraceloc), EndLoc(endloc), AsmStr(asmstr.str()),
-    NumAsmToks(asmtoks.size()), NumInputs(inputs.size()),
-    NumOutputs(outputs.size()), NumClobbers(clobbers.size()) {
+  : AsmStmt(MSAsmStmtClass, asmloc, issimple, isvolatile, outputs.size(), inputs.size(),
+            clobbers.size()), LBraceLoc(lbraceloc), EndLoc(endloc),
+    AsmStr(asmstr.str()), NumAsmToks(asmtoks.size()) {
   assert (inputs.size() == inputexprs.size() && "Input expr size mismatch!");
   assert (outputs.size() == outputexprs.size() && "Input expr size mismatch!");
 
