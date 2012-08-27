@@ -20,7 +20,7 @@
 
 namespace __asan {
 
-static AsanThreadRegistry asan_thread_registry(__asan::LINKER_INITIALIZED);
+static AsanThreadRegistry asan_thread_registry(LINKER_INITIALIZED);
 
 AsanThreadRegistry &asanThreadRegistry() {
   return asan_thread_registry;

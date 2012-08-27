@@ -172,21 +172,9 @@ static void ReserveShadowMemoryRange(uptr beg, uptr end) {
   CHECK(res == (void*)beg && "ReserveShadowMemoryRange failed");
 }
 
-// ---------------------- LowLevelAllocator ------------- {{{1
-void *LowLevelAllocator::Allocate(uptr size) {
-  CHECK((size & (size - 1)) == 0 && "size must be a power of two");
-  if (allocated_end_ - allocated_current_ < (sptr)size) {
-    uptr size_to_allocate = Max(size, kPageSize);
-    allocated_current_ =
-        (char*)MmapOrDie(size_to_allocate, __FUNCTION__);
-    allocated_end_ = allocated_current_ + size_to_allocate;
-    PoisonShadow((uptr)allocated_current_, size_to_allocate,
-                 kAsanInternalHeapMagic);
-  }
-  CHECK(allocated_end_ - allocated_current_ >= (sptr)size);
-  void *res = allocated_current_;
-  allocated_current_ += size;
-  return res;
+// --------------- LowLevelAllocateCallbac ---------- {{{1
+static void OnLowLevelAllocate(uptr ptr, uptr size) {
+  PoisonShadow(ptr, size, kAsanInternalHeapMagic);
 }
 
 // -------------------------- Run-time entry ------------------- {{{1
@@ -290,7 +278,11 @@ void NOINLINE __asan_set_death_callback(void (*callback)(void)) {
 
 void __asan_init() {
   if (asan_inited) return;
+  CHECK(!asan_init_is_running && "ASan init calls itself!");
   asan_init_is_running = true;
+
+  // Setup internal allocator callback.
+  SetLowLevelAllocateCallback(OnLowLevelAllocate);
 
   // Make sure we are not statically linked.
   AsanDoesNotSupportStaticLinkage();

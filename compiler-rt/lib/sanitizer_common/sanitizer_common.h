@@ -78,6 +78,21 @@ class InternalScopedBuffer {
   void operator=(const InternalScopedBuffer&);
 };
 
+// Simple low-level (mmap-based) allocator for internal use.
+class LowLevelAllocator {
+ public:
+  explicit LowLevelAllocator(LinkerInitialized) {}
+  // 'size' must be a power of two. Requires an external lock.
+  void *Allocate(uptr size);
+ private:
+  char *allocated_end_;
+  char *allocated_current_;
+};
+typedef void (*LowLevelAllocateCallback)(uptr ptr, uptr size);
+// Allows to register tool-specific callbacks for LowLevelAllocator.
+// Passing NULL removes the callback.
+void SetLowLevelAllocateCallback(LowLevelAllocateCallback callback);
+
 // IO
 void RawWrite(const char *buffer);
 void Printf(const char *format, ...);

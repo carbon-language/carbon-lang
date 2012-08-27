@@ -141,8 +141,6 @@ extern int asan_inited;
 extern bool asan_init_is_running;
 extern void (*death_callback)(void);
 
-enum LinkerInitialized { LINKER_INITIALIZED = 0 };
-
 #define ASAN_ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 
 #if !defined(_WIN32) || defined(__clang__)
@@ -176,19 +174,6 @@ const int kAsanInternalHeapMagic = 0xfe;
 
 static const uptr kCurrentStackFrameMagic = 0x41B58AB3;
 static const uptr kRetiredStackFrameMagic = 0x45E0360E;
-
-// -------------------------- LowLevelAllocator ----- {{{1
-// A simple low-level memory allocator for internal use.
-class LowLevelAllocator {
- public:
-  explicit LowLevelAllocator(LinkerInitialized) {}
-  // 'size' must be a power of two.
-  // Requires an external lock.
-  void *Allocate(uptr size);
- private:
-  char *allocated_end_;
-  char *allocated_current_;
-};
 
 }  // namespace __asan
 

@@ -160,4 +160,6 @@ void NORETURN CheckFailed(const char *file, int line, const char *cond,
 #undef UINT64_MAX
 #define UINT64_MAX             (__UINT64_C(18446744073709551615))
 
+enum LinkerInitialized { LINKER_INITIALIZED = 0 };
+
 #endif  // SANITIZER_DEFS_H
