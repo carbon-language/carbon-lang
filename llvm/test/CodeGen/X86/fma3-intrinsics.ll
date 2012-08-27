@@ -1,4 +1,5 @@
-; RUN: llc < %s -mtriple=x86_64-pc-win32 -mcpu=core-avx2 -mattr=avx2,+fma | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-pc-win32 -mcpu=core-avx2 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-pc-win32 -mattr=+fma,+fma4 | FileCheck %s
 
 define <4 x float> @test_x86_fmadd_ss(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2) {
   ; CHECK: fmadd213ss %xmm
