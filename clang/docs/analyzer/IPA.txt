@@ -103,7 +103,8 @@ some cases, however, where the analyzer chooses not to inline:
   See "C++ Caveats" below.
 
 - In C++, ExprEngine does not inline custom implementations of operator 'new'
-  or operator 'delete'. See "C++ Caveats" below.
+  or operator 'delete', nor does it inline the constructors and destructors
+  associated with these. See "C++ Caveats" below.
 
 - Calls resulting in "dynamic dispatch" are specially handled.  See more below.
 
