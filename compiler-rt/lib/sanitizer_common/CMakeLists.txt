@@ -50,6 +50,12 @@ else()
       ${SANITIZER_CFLAGS} ${TARGET_I386_CFLAGS})
     list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.i386)
   endif()
+  if(CAN_TARGET_ARM_ANDROID)
+    add_library(RTSanitizerCommon.arm.android OBJECT ${SANITIZER_SOURCES})
+    set_target_compile_flags(RTSanitizerCommon.arm.android
+      ${SANITIZER_CFLAGS} ${TARGET_ARM_ANDROID_CFLAGS})
+    list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.arm.android)
+  endif()
 endif()
 
 set_property(TARGET ${SANITIZER_RUNTIME_LIBRARIES} APPEND PROPERTY

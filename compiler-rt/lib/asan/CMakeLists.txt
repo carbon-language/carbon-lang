@@ -94,6 +94,17 @@ else()
       )
     list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-i386)
   endif()
+  if(CAN_TARGET_ARM_ANDROID)
+    add_library(clang_rt.asan-arm-android STATIC
+      ${ASAN_SOURCES}
+      $<TARGET_OBJECTS:RTInterception.arm.android>
+      $<TARGET_OBJECTS:RTSanitizerCommon.arm.android>
+      )
+    set_target_compile_flags(clang_rt.asan-arm-android
+      ${ASAN_CFLAGS} ${TARGET_ARM_ANDROID_CFLAGS}
+      )
+    list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-arm-android)
+  endif()
 endif()
 
 set_property(TARGET ${ASAN_RUNTIME_LIBRARIES} APPEND PROPERTY

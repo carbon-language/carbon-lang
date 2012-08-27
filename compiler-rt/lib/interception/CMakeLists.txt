@@ -43,4 +43,9 @@ else()
     set_target_compile_flags(RTInterception.i386
       ${INTERCEPTION_CFLAGS} ${TARGET_I386_CFLAGS})
   endif()
+  if(CAN_TARGET_ARM_ANDROID)
+    add_library(RTInterception.arm.android OBJECT ${INTERCEPTION_SOURCES})
+    set_target_compile_flags(RTInterception.arm.android
+      ${INTERCEPTION_CFLAGS} ${TARGET_ARM_ANDROID_CFLAGS})
+  endif()
 endif()

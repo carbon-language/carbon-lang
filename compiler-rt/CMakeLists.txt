@@ -48,6 +48,20 @@ try_compile(CAN_TARGET_I386 ${CMAKE_BINARY_DIR} ${SIMPLE_SOURCE32}
             COMPILE_DEFINITIONS "${TARGET_I386_CFLAGS}"
             CMAKE_FLAGS "-DCMAKE_EXE_LINKER_FLAGS:STRING=${TARGET_I386_CFLAGS}")
 
+if(LLVM_ANDROID_TOOLCHAIN_DIR)
+  if(EXISTS ${LLVM_ANDROID_TOOLCHAIN_DIR}/arm-linux-androideabi)
+    set(CAN_TARGET_ARM_ANDROID 1)
+    set(TARGET_ARM_ANDROID_CFLAGS
+      -target arm-linux-androideabi
+      --sysroot=${LLVM_ANDROID_TOOLCHAIN_DIR}/sysroot
+      -B${LLVM_ANDROID_TOOLCHAIN_DIR}
+      )
+  else()
+    set(CAN_TARGET_ARM_ANDROID 0)
+  endif()
+  # TODO: support i686 and MIPS Android toolchains
+endif()
+
 function(filter_available_targets out_var)
   set(archs)
   foreach(arch ${ARGN})
