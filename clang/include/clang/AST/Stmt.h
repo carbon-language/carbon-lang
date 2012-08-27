@@ -1363,7 +1363,7 @@ public:
   }
 };
 
-/// GCCAsmStmt - This represents a GCC inline-assembly statement extension.
+/// This represents a GCC inline-assembly statement extension.
 ///
 class GCCAsmStmt : public Stmt {
   SourceLocation AsmLoc, RParenLoc;
@@ -1612,7 +1612,7 @@ public:
   }
 };
 
-/// MSAsmStmt - This represents a Microsoft inline-assembly statement extension.
+/// This represents a Microsoft inline-assembly statement extension.
 ///
 class MSAsmStmt : public Stmt {
   SourceLocation AsmLoc, LBraceLoc, EndLoc;
