@@ -14,9 +14,13 @@
 //===----------------------------------------------------------------------===//
 // MIPS DSP data types
 def mips_v2q15_ty: LLVMType<v2i16>;
+def mips_v4q7_ty: LLVMType<v4i8>;
 def mips_q31_ty: LLVMType<i32>;
 
 let TargetPrefix = "mips" in {  // All intrinsics start with "llvm.mips.".
+
+//===----------------------------------------------------------------------===//
+// MIPS DSP Rev 1
 
 //===----------------------------------------------------------------------===//
 // Addition/subtraction
@@ -261,4 +265,125 @@ def int_mips_lhx: GCCBuiltin<"__builtin_mips_lhx">,
   Intrinsic<[llvm_i32_ty], [llvm_ptr_ty, llvm_i32_ty], [IntrReadArgMem]>;
 def int_mips_lwx: GCCBuiltin<"__builtin_mips_lwx">,
   Intrinsic<[llvm_i32_ty], [llvm_ptr_ty, llvm_i32_ty], [IntrReadArgMem]>;
+
+//===----------------------------------------------------------------------===//
+// MIPS DSP Rev 2
+
+def int_mips_absq_s_qb: GCCBuiltin<"__builtin_mips_absq_s_qb">,
+  Intrinsic<[mips_v4q7_ty], [mips_v4q7_ty], []>;
+
+def int_mips_addqh_ph: GCCBuiltin<"__builtin_mips_addqh_ph">,
+  Intrinsic<[mips_v2q15_ty], [mips_v2q15_ty, mips_v2q15_ty],
+            [IntrNoMem, Commutative]>;
+def int_mips_addqh_r_ph: GCCBuiltin<"__builtin_mips_addqh_r_ph">,
+  Intrinsic<[mips_v2q15_ty], [mips_v2q15_ty, mips_v2q15_ty],
+            [IntrNoMem, Commutative]>;
+def int_mips_addqh_w: GCCBuiltin<"__builtin_mips_addqh_w">,
+  Intrinsic<[mips_q31_ty], [mips_q31_ty, mips_q31_ty],
+            [IntrNoMem, Commutative]>;
+def int_mips_addqh_r_w: GCCBuiltin<"__builtin_mips_addqh_r_w">,
+  Intrinsic<[mips_q31_ty], [mips_q31_ty, mips_q31_ty],
+            [IntrNoMem, Commutative]>;
+
+def int_mips_addu_ph: GCCBuiltin<"__builtin_mips_addu_ph">,
+  Intrinsic<[llvm_v2i16_ty], [llvm_v2i16_ty, llvm_v2i16_ty], [Commutative]>;
+def int_mips_addu_s_ph: GCCBuiltin<"__builtin_mips_addu_s_ph">,
+  Intrinsic<[llvm_v2i16_ty], [llvm_v2i16_ty, llvm_v2i16_ty], [Commutative]>;
+
+def int_mips_adduh_qb: GCCBuiltin<"__builtin_mips_adduh_qb">,
+  Intrinsic<[llvm_v4i8_ty], [llvm_v4i8_ty, llvm_v4i8_ty],
+            [IntrNoMem, Commutative]>;
+def int_mips_adduh_r_qb: GCCBuiltin<"__builtin_mips_adduh_r_qb">,
+  Intrinsic<[llvm_v4i8_ty], [llvm_v4i8_ty, llvm_v4i8_ty],
+            [IntrNoMem, Commutative]>;
+
+def int_mips_append: GCCBuiltin<"__builtin_mips_append">,
+  Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+  [IntrNoMem]>;
+def int_mips_balign: GCCBuiltin<"__builtin_mips_balign">,
+  Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+  [IntrNoMem]>;
+
+def int_mips_cmpgdu_eq_qb: GCCBuiltin<"__builtin_mips_cmpgdu_eq_qb">,
+  Intrinsic<[llvm_i32_ty], [llvm_v4i8_ty, llvm_v4i8_ty], [Commutative]>;
+def int_mips_cmpgdu_lt_qb: GCCBuiltin<"__builtin_mips_cmpgdu_lt_qb">,
+  Intrinsic<[llvm_i32_ty], [llvm_v4i8_ty, llvm_v4i8_ty], [Commutative]>;
+def int_mips_cmpgdu_le_qb: GCCBuiltin<"__builtin_mips_cmpgdu_le_qb">,
+  Intrinsic<[llvm_i32_ty], [llvm_v4i8_ty, llvm_v4i8_ty], [Commutative]>;
+
+def int_mips_dpa_w_ph: GCCBuiltin<"__builtin_mips_dpa_w_ph">,
+  Intrinsic<[llvm_i64_ty], [llvm_i64_ty, llvm_v2i16_ty, llvm_v2i16_ty],
+            [IntrNoMem]>;
+def int_mips_dps_w_ph: GCCBuiltin<"__builtin_mips_dps_w_ph">,
+  Intrinsic<[llvm_i64_ty], [llvm_i64_ty, llvm_v2i16_ty, llvm_v2i16_ty],
+            [IntrNoMem]>;
+
+def int_mips_dpaqx_s_w_ph: GCCBuiltin<"__builtin_mips_dpaqx_s_w_ph">,
+  Intrinsic<[llvm_i64_ty], [llvm_i64_ty, mips_v2q15_ty, mips_v2q15_ty], []>;
+def int_mips_dpaqx_sa_w_ph: GCCBuiltin<"__builtin_mips_dpaqx_sa_w_ph">,
+  Intrinsic<[llvm_i64_ty], [llvm_i64_ty, mips_v2q15_ty, mips_v2q15_ty], []>;
+def int_mips_dpax_w_ph: GCCBuiltin<"__builtin_mips_dpax_w_ph">,
+  Intrinsic<[llvm_i64_ty], [llvm_i64_ty, llvm_v2i16_ty, llvm_v2i16_ty],
+            [IntrNoMem]>;
+def int_mips_dpsx_w_ph: GCCBuiltin<"__builtin_mips_dpsx_w_ph">,
+  Intrinsic<[llvm_i64_ty], [llvm_i64_ty, llvm_v2i16_ty, llvm_v2i16_ty],
+            [IntrNoMem]>;
+def int_mips_dpsqx_s_w_ph: GCCBuiltin<"__builtin_mips_dpsqx_s_w_ph">,
+  Intrinsic<[llvm_i64_ty], [llvm_i64_ty, mips_v2q15_ty, mips_v2q15_ty], []>;
+def int_mips_dpsqx_sa_w_ph: GCCBuiltin<"__builtin_mips_dpsqx_sa_w_ph">,
+  Intrinsic<[llvm_i64_ty], [llvm_i64_ty, mips_v2q15_ty, mips_v2q15_ty], []>;
+
+def int_mips_mul_ph: GCCBuiltin<"__builtin_mips_mul_ph">,
+  Intrinsic<[llvm_v2i16_ty], [llvm_v2i16_ty, llvm_v2i16_ty], [Commutative]>;
+def int_mips_mul_s_ph: GCCBuiltin<"__builtin_mips_mul_s_ph">,
+  Intrinsic<[llvm_v2i16_ty], [llvm_v2i16_ty, llvm_v2i16_ty], [Commutative]>;
+
+def int_mips_mulq_rs_w: GCCBuiltin<"__builtin_mips_mulq_rs_w">,
+  Intrinsic<[mips_q31_ty], [mips_q31_ty, mips_q31_ty], [Commutative]>;
+def int_mips_mulq_s_ph: GCCBuiltin<"__builtin_mips_mulq_s_ph">,
+  Intrinsic<[mips_v2q15_ty], [mips_v2q15_ty, mips_v2q15_ty], [Commutative]>;
+def int_mips_mulq_s_w: GCCBuiltin<"__builtin_mips_mulq_s_w">,
+  Intrinsic<[mips_q31_ty], [mips_q31_ty, mips_q31_ty], [Commutative]>;
+def int_mips_mulsa_w_ph: GCCBuiltin<"__builtin_mips_mulsa_w_ph">,
+  Intrinsic<[llvm_i64_ty], [llvm_i64_ty, llvm_v2i16_ty, llvm_v2i16_ty],
+            [IntrNoMem]>;
+
+def int_mips_precr_qb_ph: GCCBuiltin<"__builtin_mips_precr_qb_ph">,
+  Intrinsic<[llvm_v4i8_ty], [llvm_v2i16_ty, llvm_v2i16_ty], []>;
+def int_mips_precr_sra_ph_w: GCCBuiltin<"__builtin_mips_precr_sra_ph_w">,
+  Intrinsic<[llvm_v2i16_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+            [IntrNoMem]>;
+def int_mips_precr_sra_r_ph_w: GCCBuiltin<"__builtin_mips_precr_sra_r_ph_w">,
+  Intrinsic<[llvm_v2i16_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+            [IntrNoMem]>;
+
+def int_mips_prepend: GCCBuiltin<"__builtin_mips_prepend">,
+  Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+  [IntrNoMem]>;
+
+def int_mips_shra_qb: GCCBuiltin<"__builtin_mips_shra_qb">,
+  Intrinsic<[llvm_v4i8_ty], [llvm_v4i8_ty, llvm_i32_ty], [IntrNoMem]>;
+def int_mips_shra_r_qb: GCCBuiltin<"__builtin_mips_shra_r_qb">,
+  Intrinsic<[llvm_v4i8_ty], [llvm_v4i8_ty, llvm_i32_ty], [IntrNoMem]>;
+def int_mips_shrl_ph: GCCBuiltin<"__builtin_mips_shrl_ph">,
+  Intrinsic<[llvm_v2i16_ty], [llvm_v2i16_ty, llvm_i32_ty], [IntrNoMem]>;
+
+def int_mips_subqh_ph: GCCBuiltin<"__builtin_mips_subqh_ph">,
+  Intrinsic<[mips_v2q15_ty], [mips_v2q15_ty, mips_v2q15_ty], [IntrNoMem]>;
+def int_mips_subqh_r_ph: GCCBuiltin<"__builtin_mips_subqh_r_ph">,
+  Intrinsic<[mips_v2q15_ty], [mips_v2q15_ty, mips_v2q15_ty], [IntrNoMem]>;
+def int_mips_subqh_w: GCCBuiltin<"__builtin_mips_subqh_w">,
+  Intrinsic<[mips_q31_ty], [mips_q31_ty, mips_q31_ty], [IntrNoMem]>;
+def int_mips_subqh_r_w: GCCBuiltin<"__builtin_mips_subqh_r_w">,
+  Intrinsic<[mips_q31_ty], [mips_q31_ty, mips_q31_ty], [IntrNoMem]>;
+
+def int_mips_subu_ph: GCCBuiltin<"__builtin_mips_subu_ph">,
+  Intrinsic<[llvm_v2i16_ty], [llvm_v2i16_ty, llvm_v2i16_ty], []>;
+def int_mips_subu_s_ph: GCCBuiltin<"__builtin_mips_subu_s_ph">,
+  Intrinsic<[llvm_v2i16_ty], [llvm_v2i16_ty, llvm_v2i16_ty], []>;
+
+def int_mips_subuh_qb: GCCBuiltin<"__builtin_mips_subuh_qb">,
+  Intrinsic<[llvm_v4i8_ty], [llvm_v4i8_ty, llvm_v4i8_ty], [IntrNoMem]>;
+def int_mips_subuh_r_qb: GCCBuiltin<"__builtin_mips_subuh_r_qb">,
+  Intrinsic<[llvm_v4i8_ty], [llvm_v4i8_ty, llvm_v4i8_ty], [IntrNoMem]>;
 }
