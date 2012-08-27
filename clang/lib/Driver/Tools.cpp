@@ -941,6 +941,13 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
   AddTargetFeature(Args, CmdArgs,
                    options::OPT_mdspr2, options::OPT_mno_dspr2,
                    "dspr2");
+
+  if (Arg *A = Args.getLastArg(options::OPT_G)) {
+    StringRef v = A->getValue(Args);
+    CmdArgs.push_back("-mllvm");
+    CmdArgs.push_back(Args.MakeArgString("-mips-ssection-threshold=" + v));
+    A->claim();
+  }
 }
 
 /// getPPCTargetCPU - Get the (LLVM) name of the PowerPC cpu we are targeting.

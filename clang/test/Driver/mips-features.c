@@ -37,3 +37,9 @@
 // RUN:     -mdspr2 -mno-dspr2 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-NOMDSPR2 %s
 // CHECK-NOMDSPR2: "-target-feature" "-dspr2"
+//
+// -G
+// RUN: %clang -target mips-linux-gnu -### -c %s \
+// RUN:     -G 16 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-MIPS-G %s
+// CHECK-MIPS-G: "-mllvm" "-mips-ssection-threshold=16"
