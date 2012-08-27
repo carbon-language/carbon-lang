@@ -223,7 +223,10 @@ protected:
   void resolveRelocationEntry(const RelocationEntry &RE, uint64_t Value);
 
   /// \brief A object file specific relocation resolver
-  /// \param Address Address to apply the relocation action
+  /// \param LocalAddress The address to apply the relocation action
+  /// \param FinalAddress If the linker prepare code for remote executon then
+  ///                     FinalAddress has the remote address to apply the
+  ///                     relocation action, otherwise is same as LocalAddress
   /// \param Value Target symbol address to apply the relocation action
   /// \param Type object file specific relocation type
   /// \param Addend A constant addend used to compute the value to be stored
