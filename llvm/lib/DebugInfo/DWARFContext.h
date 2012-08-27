@@ -13,6 +13,7 @@
 #include "DWARFCompileUnit.h"
 #include "DWARFDebugAranges.h"
 #include "DWARFDebugLine.h"
+#include "DWARFDebugRangeList.h"
 #include "llvm/DebugInfo/DIContext.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
@@ -76,6 +77,7 @@ public:
   virtual StringRef getARangeSection() = 0;
   virtual StringRef getLineSection() = 0;
   virtual StringRef getStringSection() = 0;
+  virtual StringRef getRangeSection() = 0;
 
   static bool isSupportedVersion(unsigned version) {
     return version == 2 || version == 3;
@@ -93,19 +95,22 @@ class DWARFContextInMemory : public DWARFContext {
   StringRef ARangeSection;
   StringRef LineSection;
   StringRef StringSection;
+  StringRef RangeSection;
 public:
   DWARFContextInMemory(bool isLittleEndian,
                        StringRef infoSection,
                        StringRef abbrevSection,
                        StringRef aRangeSection,
                        StringRef lineSection,
-                       StringRef stringSection)
+                       StringRef stringSection,
+                       StringRef rangeSection)
     : DWARFContext(isLittleEndian),
       InfoSection(infoSection),
       AbbrevSection(abbrevSection),
       ARangeSection(aRangeSection),
       LineSection(lineSection),
-      StringSection(stringSection)
+      StringSection(stringSection),
+      RangeSection(rangeSection)
     {}
 
   virtual StringRef getInfoSection() { return InfoSection; }
@@ -113,6 +118,7 @@ public:
   virtual StringRef getARangeSection() { return ARangeSection; }
   virtual StringRef getLineSection() { return LineSection; }
   virtual StringRef getStringSection() { return StringSection; }
+  virtual StringRef getRangeSection() { return RangeSection; }
 };
 
 }

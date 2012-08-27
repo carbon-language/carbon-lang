@@ -81,7 +81,8 @@ public:
                                     StringRef abbrevSection,
                                     StringRef aRangeSection = StringRef(),
                                     StringRef lineSection = StringRef(),
-                                    StringRef stringSection = StringRef());
+                                    StringRef stringSection = StringRef(),
+                                    StringRef rangeSection = StringRef());
 
   virtual void dump(raw_ostream &OS) = 0;
 

@@ -59,6 +59,7 @@ static void DumpInput(const StringRef &Filename) {
   StringRef DebugLineSection;
   StringRef DebugArangesSection;
   StringRef DebugStringSection;
+  StringRef DebugRangesSection;
 
   error_code ec;
   for (section_iterator i = Obj->begin_sections(),
@@ -82,6 +83,8 @@ static void DumpInput(const StringRef &Filename) {
       DebugArangesSection = data;
     else if (name == "debug_str")
       DebugStringSection = data;
+    else if (name == "debug_ranges")
+      DebugRangesSection = data;
   }
 
   OwningPtr<DIContext> dictx(DIContext::getDWARFContext(/*FIXME*/true,
@@ -89,7 +92,8 @@ static void DumpInput(const StringRef &Filename) {
                                                         DebugAbbrevSection,
                                                         DebugArangesSection,
                                                         DebugLineSection,
-                                                        DebugStringSection));
+                                                        DebugStringSection,
+                                                        DebugRangesSection));
   if (Address == -1ULL) {
     outs() << Filename
            << ":\tfile format " << Obj->getFileFormatName() << "\n\n";

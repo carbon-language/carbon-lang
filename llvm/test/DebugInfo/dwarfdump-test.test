@@ -17,6 +17,8 @@ RUN:   --address=0x56d --functions | FileCheck %s -check-prefix INCLUDE_TEST_2
 RUN: llvm-dwarfdump %p/Inputs/dwarfdump-test4.elf-x86-64 \
 RUN:   --address=0x55c --functions \
 RUN:   | FileCheck %s -check-prefix MANY_SEQ_IN_LINE_TABLE
+RUN: llvm-dwarfdump %p/Inputs/dwarfdump-test4.elf-x86-64 \
+RUN:   | FileCheck %s -check-prefix DEBUG_RANGES
 
 MAIN: main
 MAIN-NEXT: /tmp/dbginfo{{[/\\]}}dwarfdump-test.cc:16:10
@@ -44,3 +46,11 @@ INCLUDE_TEST_2-NEXT: /tmp/include{{[/\\]}}decl.h:5:0
 
 MANY_SEQ_IN_LINE_TABLE: _Z1cv
 MANY_SEQ_IN_LINE_TABLE-NEXT: /tmp/dbginfo/sequences{{[/\\]}}c.cc:2:0
+
+DEBUG_RANGES:      .debug_ranges contents:
+DEBUG_RANGES-NEXT: 00000000 000000000000055c 0000000000000567
+DEBUG_RANGES-NEXT: 00000000 0000000000000567 000000000000056d
+DEBUG_RANGES-NEXT: 00000000 <End of list>
+DEBUG_RANGES-NEXT: 00000030 0000000000000570 000000000000057b
+DEBUG_RANGES-NEXT: 00000030 0000000000000567 000000000000056d
+DEBUG_RANGES-NEXT: 00000030 <End of list>

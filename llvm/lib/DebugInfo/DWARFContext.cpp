@@ -32,15 +32,17 @@ void DWARFContext::dump(raw_ostream &OS) {
   while (set.extract(arangesData, &offset))
     set.dump(OS);
 
+  uint8_t savedAddressByteSize = 0;
   OS << "\n.debug_lines contents:\n";
   for (unsigned i = 0, e = getNumCompileUnits(); i != e; ++i) {
     DWARFCompileUnit *cu = getCompileUnitAtIndex(i);
+    savedAddressByteSize = cu->getAddressByteSize();
     unsigned stmtOffset =
       cu->getCompileUnitDIE()->getAttributeValueAsUnsigned(cu, DW_AT_stmt_list,
                                                            -1U);
     if (stmtOffset != -1U) {
       DataExtractor lineData(getLineSection(), isLittleEndian(),
-                             cu->getAddressByteSize());
+                             savedAddressByteSize);
       DWARFDebugLine::DumpingState state(OS);
       DWARFDebugLine::parseStatementTable(lineData, &stmtOffset, state);
     }
@@ -54,6 +56,18 @@ void DWARFContext::dump(raw_ostream &OS) {
     OS << format("0x%8.8x: \"%s\"\n", lastOffset, s);
     lastOffset = offset;
   }
+
+  OS << "\n.debug_ranges contents:\n";
+  // In fact, different compile units may have different address byte
+  // sizes, but for simplicity we just use the address byte size of the last
+  // compile unit (there is no easy and fast way to associate address range
+  // list and the compile unit it describes).
+  DataExtractor rangesData(getRangeSection(), isLittleEndian(),
+                           savedAddressByteSize);
+  offset = 0;
+  DWARFDebugRangeList rangeList;
+  while (rangeList.extract(rangesData, &offset))
+    rangeList.dump(OS);
 }
 
 const DWARFDebugAbbrev *DWARFContext::getDebugAbbrev() {
