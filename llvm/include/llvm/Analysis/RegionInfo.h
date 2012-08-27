@@ -473,27 +473,6 @@ public:
   const_iterator end() const { return children.end(); }
   //@}
 
-  /// @name BasicBlock Node Iterators
-  ///
-  /// These iterators iterate over all BasicBlock RegionNodes that are
-  /// contained in this Region. The iterator also iterates over BasicBlock
-  /// RegionNodes that are elements of a subregion of this Region. It is
-  /// therefore called a flat iterator.
-  //@{
-  typedef df_iterator<RegionNode*, SmallPtrSet<RegionNode*, 8>, false,
-                      GraphTraits<FlatIt<RegionNode*> > > block_node_iterator;
-
-  typedef df_iterator<const RegionNode*, SmallPtrSet<const RegionNode*, 8>,
-                      false, GraphTraits<FlatIt<const RegionNode*> > >
-            const_block_node_iterator;
-
-  block_node_iterator block_node_begin();
-  block_node_iterator block_node_end();
-
-  const_block_node_iterator block_node_begin() const;
-  const_block_node_iterator block_node_end() const;
-  //@}
-
   /// @name BasicBlock Iterators
   ///
   /// These iterators iterate over all BasicBlocks that are contained in this

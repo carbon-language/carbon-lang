@@ -195,10 +195,9 @@ public:
 
   virtual bool runOnRegion(Region *R, RGPassManager &RGM) {
     Out << Banner;
-    for (Region::block_node_iterator I = R->block_node_begin(),
-                                     E = R->block_node_end();
+    for (Region::block_iterator I = R->block_begin(), E = R->block_end();
          I != E; ++I)
-      (*I)->getEntry()->print(Out);
+      (*I)->print(Out);
 
     return false;
   }

@@ -47,7 +47,7 @@ static cl::opt<enum Region::PrintStyle> printStyle("print-region-style",
   cl::values(
     clEnumValN(Region::PrintNone, "none",  "print no details"),
     clEnumValN(Region::PrintBB, "bb",
-               "print regions in detail with block_node_iterator"),
+               "print regions in detail with block_iterator"),
     clEnumValN(Region::PrintRN, "rn",
                "print regions in detail with element_iterator"),
     clEnumValEnd));
@@ -246,22 +246,6 @@ void Region::verifyRegionNest() const {
   verifyRegion();
 }
 
-Region::block_node_iterator Region::block_node_begin() {
-  return GraphTraits<FlatIt<Region*> >::nodes_begin(this);
-}
-
-Region::block_node_iterator Region::block_node_end() {
-  return GraphTraits<FlatIt<Region*> >::nodes_end(this);
-}
-
-Region::const_block_node_iterator Region::block_node_begin() const {
-  return GraphTraits<FlatIt<const Region*> >::nodes_begin(this);
-}
-
-Region::const_block_node_iterator Region::block_node_end() const {
-  return GraphTraits<FlatIt<const Region*> >::nodes_end(this);
-}
-
 Region::element_iterator Region::element_begin() {
   return GraphTraits<Region*>::nodes_begin(this);
 }
@@ -425,10 +409,8 @@ void Region::print(raw_ostream &OS, bool print_tree, unsigned level,
     OS.indent(level*2 + 2);
 
     if (Style == PrintBB) {
-      for (const_block_node_iterator I = block_node_begin(),
-                                     E = block_node_end();
-           I != E; ++I)
-        OS << **I << ", "; // TODO: remove the last ","
+      for (const_block_iterator I = block_begin(), E = block_end(); I != E; ++I)
+        OS << (*I)->getName() << ", "; // TODO: remove the last ","
     } else if (Style == PrintRN) {
       for (const_element_iterator I = element_begin(), E = element_end(); I!=E; ++I)
         OS << **I << ", "; // TODO: remove the last ",
