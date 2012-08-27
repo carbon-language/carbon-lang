@@ -3,7 +3,7 @@ import lldb.formatters.Logger
 
 # C++ STL formatters for LLDB
 # These formatters are based upon the version of the GNU libstdc++
-# as it ships with Mac OS X 10.6.8 thru 10.7.3
+# as it ships with Mac OS X 10.6.8 thru 10.8.0
 # You are encouraged to look at the STL implementation for your platform
 # before relying on these formatters to do the right thing for your setup
 

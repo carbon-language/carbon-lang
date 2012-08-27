@@ -796,14 +796,30 @@ FormatManager::LoadLibcxxFormatters()
     libcxx_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::map<.+> >(( )?&)?$")),
                                                        SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
                                                                                                  "lldb.formatters.cpp.libcxx.stdmap_SynthProvider")));
+    libcxx_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::__1::)deque<.+>(( )?&)?$")),
+                                                          SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
+                                                                                                    "lldb.formatters.cpp.libcxx.stddeque_SynthProvider")));
+    libcxx_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::__1::)shared_ptr<.+>(( )?&)?$")),
+                                                          SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
+                                                                                                    "lldb.formatters.cpp.libcxx.stdsharedptr_SynthProvider")));
+    libcxx_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::__1::)weak_ptr<.+>(( )?&)?$")),
+                                                          SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
+                                                                                                    "lldb.formatters.cpp.libcxx.stdsharedptr_SynthProvider")));
     
-    stl_summary_flags.SetDontShowChildren(false);
-    libcxx_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::vector<.+>(( )?&)?")),
+    stl_summary_flags.SetDontShowChildren(false);stl_summary_flags.SetSkipPointers(true);
+    libcxx_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::vector<.+>(( )?&)?$")),
                                                         TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "size=${svar%#}")));
     libcxx_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::list<.+>(( )?&)?$")),
                                                         TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "size=${svar%#}")));
     libcxx_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::map<.+> >(( )?&)?$")),
                                                         TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "size=${svar%#}")));
+    libcxx_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::deque<.+>(( )?&)?$")),
+                                                        TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "size=${svar%#}")));
+    libcxx_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::shared_ptr<.+>(( )?&)?$")),
+                                                        TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "{${var.__ptr_%S}} (strong=${var.count} weak=${var.weak_count})")));
+    libcxx_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::weak_ptr<.+>(( )?&)?$")),
+                                                        TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "{${var.__ptr_%S}} (strong=${var.count} weak=${var.weak_count})")));
+
 #endif
 }
 
