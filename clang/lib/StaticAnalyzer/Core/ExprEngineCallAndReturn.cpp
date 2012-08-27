@@ -28,6 +28,9 @@ using namespace ento;
 STATISTIC(NumOfDynamicDispatchPathSplits,
   "The # of times we split the path due to imprecise dynamic dispatch info");
 
+STATISTIC(NumInlinedCalls,
+  "The # of times we inlined a call");
+
 void ExprEngine::processCallEnter(CallEnter CE, ExplodedNode *Pred) {
   // Get the entry block in the CFG of the callee.
   const StackFrameContext *calleeCtx = CE.getCalleeContext();
@@ -441,6 +444,8 @@ bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
   // If we decided to inline the call, the successor has been manually
   // added onto the work list so remove it from the node builder.
   Bldr.takeNodes(Pred);
+
+  NumInlinedCalls++;
 
   return true;
 }

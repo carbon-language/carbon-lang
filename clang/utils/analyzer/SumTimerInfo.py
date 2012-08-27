@@ -28,6 +28,8 @@ if __name__ == '__main__':
     ReachableBlocks = 0
     ReachedMaxSteps = 0
     NumSteps = 0
+    NumInlinedCallSites = 0
+    NumBifurcatedCallSites = 0
     MaxCFGSize = 0
     Mode = 1
     for line in f:
@@ -39,25 +41,31 @@ if __name__ == '__main__':
           Count = Count + 1
           if (float(s[6]) > MaxTime) :
             MaxTime = float(s[6])
-        if ((("warning generated." in line) or ("warnings generated." in line)) and Mode == 1) :
+        if ((("warning generated." in line) or ("warnings generated" in line)) and Mode == 1) :
           s = line.split()
           Warnings = Warnings + int(s[0])
-        if (("The # of functions analysed (as top level)." in line) and (Mode == 1)) :
+        if (("The # of functions analysed (as top level)" in line) and (Mode == 1)) :
           s = line.split()
           FunctionsAnalyzed = FunctionsAnalyzed + int(s[0])
         if (("The % of reachable basic blocks" in line) and (Mode == 1)) :
           s = line.split()
           ReachableBlocks = ReachableBlocks + int(s[0])
-        if (("The # of times we reached the max number of steps." in line) and (Mode == 1)) :
+        if (("The # of times we reached the max number of steps" in line) and (Mode == 1)) :
           s = line.split()
           ReachedMaxSteps = ReachedMaxSteps + int(s[0])
         if (("The maximum number of basic blocks in a function" in line) and (Mode == 1)) :
           s = line.split()
           if (MaxCFGSize < int(s[0])) :
             MaxCFGSize = int(s[0])
-        if (("The # of steps executed." in line) and (Mode == 1)) :
+        if (("The # of steps executed" in line) and (Mode == 1)) :
           s = line.split()
           NumSteps = NumSteps + int(s[0])
+        if (("The # of times we inlined a call" in line) and (Mode == 1)) :
+          s = line.split()
+          NumInlinedCallSites = NumInlinedCallSites + int(s[0])
+        if (("The # of times we split the path due to imprecise dynamic dispatch info" in line) and (Mode == 1)) :
+          s = line.split()
+          NumBifurcatedCallSites = NumBifurcatedCallSites + int(s[0])
         if ((")  Total" in line) and (Mode == 1)) :
           s = line.split()
           TotalTime = TotalTime + float(s[6])
@@ -69,6 +77,7 @@ if __name__ == '__main__':
     print "Reachable Blocks %d" % (ReachableBlocks)
     print "Reached Max Steps %d" % (ReachedMaxSteps)
     print "Number of Steps %d" % (NumSteps)
+    print "Number of Inlined calls %d (bifurcated %d)" % (NumInlinedCallSites, NumBifurcatedCallSites)
     print "MaxTime %f" % (MaxTime)
     print "TotalTime %f" % (TotalTime)
     print "Max CFG Size %d" % (MaxCFGSize)
