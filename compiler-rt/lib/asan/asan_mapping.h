@@ -25,7 +25,7 @@ extern __attribute__((visibility("default"))) uptr __asan_mapping_offset;
 # define SHADOW_SCALE (__asan_mapping_scale)
 # define SHADOW_OFFSET (__asan_mapping_offset)
 #else
-# ifdef ANDROID
+# if ASAN_ANDROID
 #  define SHADOW_SCALE (3)
 #  define SHADOW_OFFSET (0)
 # else

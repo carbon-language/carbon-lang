@@ -20,7 +20,7 @@
 #include "asan_internal.h"
 #include "asan_stack.h"
 
-#ifdef ANDROID
+#if ASAN_ANDROID
 DECLARE_REAL_AND_INTERCEPTOR(void*, malloc, uptr size);
 DECLARE_REAL_AND_INTERCEPTOR(void, free, void *ptr);
 DECLARE_REAL_AND_INTERCEPTOR(void*, calloc, uptr nmemb, uptr size);

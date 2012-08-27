@@ -48,6 +48,13 @@ extern "C" void* _ReturnAddress(void);
 # define ASAN_WINDOWS 0
 #endif
 
+#if defined(__ANDROID__) || defined(ANDROID)
+# define ASAN_ANDROID 1
+#else
+# define ASAN_ANDROID 0
+#endif
+
+
 #define ASAN_POSIX (ASAN_LINUX || ASAN_MAC)
 
 #if __has_feature(address_sanitizer)

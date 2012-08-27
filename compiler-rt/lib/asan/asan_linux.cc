@@ -31,7 +31,7 @@
 #include <unistd.h>
 #include <unwind.h>
 
-#ifndef ANDROID
+#if !ASAN_ANDROID
 // FIXME: where to get ucontext on Android?
 #include <sys/ucontext.h>
 #endif
@@ -50,7 +50,7 @@ void *AsanDoesNotSupportStaticLinkage() {
 }
 
 void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
-#ifdef ANDROID
+#if ASAN_ANDROID
   *pc = *sp = *bp = 0;
 #elif defined(__arm__)
   ucontext_t *ucontext = (ucontext_t*)context;

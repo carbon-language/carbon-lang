@@ -20,11 +20,14 @@
 
 #include <elf.h>
 #include <errno.h>
-#include <link.h>
 #include <poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#if !defined(__ANDROID__) && !defined(ANDROID)
+#include <link.h>
+#endif
 
 namespace __sanitizer {
 
@@ -99,7 +102,7 @@ bool StartSymbolizerSubprocess(const char *path_to_symbolizer,
   return true;
 }
 
-#ifdef ANDROID
+#if defined(__ANDROID__) || defined(ANDROID)
 uptr GetListOfModules(LoadedModule *modules, uptr max_modules) {
   UNIMPLEMENTED();
 }

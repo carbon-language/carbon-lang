@@ -32,7 +32,7 @@ using namespace __asan;  // NOLINT
   GET_STACK_TRACE_HERE_FOR_MALLOC;\
   return asan_memalign(0, size, &stack);
 
-#ifdef ANDROID
+#if ASAN_ANDROID
 void *operator new(size_t size) { OPERATOR_NEW_BODY; }
 void *operator new[](size_t size) { OPERATOR_NEW_BODY; }
 #else
