@@ -36,7 +36,10 @@ const Stmt *bugreporter::GetDerefExpr(const ExplodedNode *N) {
   if (!Loc)
     return 0;
 
-  const Stmt *S = Loc->getStmt();
+  const Expr *S = dyn_cast<Expr>(Loc->getStmt());
+  if (!S)
+    return 0;
+  S = S->IgnoreParenCasts();
 
   while (true) {
     if (const BinaryOperator *B = dyn_cast<BinaryOperator>(S)) {
@@ -316,6 +319,7 @@ public:
                                  const ExplodedNode *PrevN,
                                  BugReporterContext &BRC,
                                  BugReport &BR) {
+    // Only print a message at the interesting return statement.
     if (ReturnNode != BRC.getNodeResolver().getOriginalNode(N))
       return 0;
 
@@ -351,8 +355,7 @@ void bugreporter::addTrackNullOrUndefValueVisitor(const ExplodedNode *N,
 
   ProgramStateManager &StateMgr = N->getState()->getStateManager();
 
-  // Walk through nodes until we get one that matches the statement
-  // exactly.
+  // Walk through nodes until we get one that matches the statement exactly.
   while (N) {
     const ProgramPoint &pp = N->getLocation();
     if (const PostStmt *ps = dyn_cast<PostStmt>(&pp)) {
@@ -370,20 +373,26 @@ void bugreporter::addTrackNullOrUndefValueVisitor(const ExplodedNode *N,
   
   ProgramStateRef state = N->getState();
 
-  // Walk through lvalue-to-rvalue conversions.
-  const Expr *Ex = dyn_cast<Expr>(S);
-  if (Ex) {
+  // See if the expression we're interested refers to a variable. 
+  // If so, we can track both its contents and constraints on its value.
+  if (const Expr *Ex = dyn_cast<Expr>(S)) {
+    // Strip off parens and casts. Note that this will never have issues with
+    // C++ user-defined implicit conversions, because those have a constructor
+    // or function call inside.
     Ex = Ex->IgnoreParenCasts();
     if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(Ex)) {
+      // FIXME: Right now we only track VarDecls because it's non-trivial to
+      // get a MemRegion for any other DeclRefExprs. <rdar://problem/12114812>
       if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
         const VarRegion *R =
           StateMgr.getRegionManager().getVarRegion(VD, N->getLocationContext());
 
-        // What did we load?
+        // Mark both the variable region and its contents as interesting.
         SVal V = state->getRawSVal(loc::MemRegionVal(R));
         report->markInteresting(R);
         report->markInteresting(V);
 
+        // If the contents are symbolic, find out when they became null.
         if (V.getAsLocSymbol()) {
           BugReporterVisitor *ConstraintTracker
             = new TrackConstraintBRVisitor(cast<loc::MemRegionVal>(V), false);
@@ -396,6 +405,8 @@ void bugreporter::addTrackNullOrUndefValueVisitor(const ExplodedNode *N,
     }
   }
 
+  // If the expression does NOT refer to a variable, we can still track
+  // constraints on its contents.
   SVal V = state->getSValAsScalarOrLoc(S, N->getLocationContext());
 
   // Uncomment this to find cases where we aren't properly getting the
@@ -404,29 +415,36 @@ void bugreporter::addTrackNullOrUndefValueVisitor(const ExplodedNode *N,
 
   // Is it a symbolic value?
   if (loc::MemRegionVal *L = dyn_cast<loc::MemRegionVal>(&V)) {
-    const SubRegion *R = cast<SubRegion>(L->getRegion());
-    while (R && !isa<SymbolicRegion>(R)) {
-      R = dyn_cast<SubRegion>(R->getSuperRegion());
-    }
-
-    if (R) {
-      report->markInteresting(R);
-      report->addVisitor(new TrackConstraintBRVisitor(loc::MemRegionVal(R),
+    const MemRegion *Base = L->getRegion()->getBaseRegion();
+    if (isa<SymbolicRegion>(Base)) {
+      report->markInteresting(Base);
+      report->addVisitor(new TrackConstraintBRVisitor(loc::MemRegionVal(Base),
                                                       false));
     }
-  } else {
+  } else if (isa<loc::ConcreteInt>(V)) {
+    // Otherwise, if it's a null constant, we want to know where it came from.
+    // In particular, if it came from an inlined function call,
+    // we need to make sure that function isn't pruned in our output.
+    
     // Walk backwards to just before the post-statement checks.
     ProgramPoint PP = N->getLocation();
     while (N && isa<PostStmt>(PP = N->getLocation()))
       N = N->getFirstPred();
 
+    // If we found an inlined call before the post-statement checks, look
+    // for a return statement within the call.
     if (N && isa<CallExitEnd>(PP)) {
-      // Find a ReturnStmt, if there is one.
+      // Walk backwards within the inlined function until we find a statement.
+      // This will look through multiple levels of inlining, but stop if the
+      // last thing that happened was an empty function being inlined.
+      // FIXME: This may not work in the presence of destructors.
       do {
         N = N->getFirstPred();
         PP = N->getLocation();
       } while (!isa<StmtPoint>(PP) && !isa<CallEnter>(PP));
 
+      // If the last statement we found is a 'return <expr>', make sure we
+      // show this return...and recursively track the value being returned.
       if (const StmtPoint *SP = dyn_cast<StmtPoint>(&PP)) {
         if (const ReturnStmt *Ret = SP->getStmtAs<ReturnStmt>()) {
           if (const Expr *RetE = Ret->getRetValue()) {
