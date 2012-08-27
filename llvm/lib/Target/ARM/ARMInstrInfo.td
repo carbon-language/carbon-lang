@@ -4199,6 +4199,37 @@ let usesCustomInserter = 1 in {
 }
 }
 
+// Pseudo-instructions for atomic loads.
+// These are marked with mayStore so they can't be reordered.
+let mayLoad = 1, mayStore = 1, hasSideEffects = 0 in {
+def ATOMIC_LDRBrs : ARMPseudoExpand<(outs GPRnopc:$Rt),
+                                     (ins ldst_so_reg:$shift, pred:$p),
+                                     4, IIC_iLoad_bh_r, [],
+                             (LDRBrs GPRnopc:$Rt, ldst_so_reg:$shift, pred:$p)>;
+def ATOMIC_LDRBi12 : ARMPseudoExpand<(outs GPRnopc:$Rt),
+                                      (ins addrmode_imm12:$addr, pred:$p),
+                                      4, IIC_iLoad_bh_si, [],
+                         (LDRBi12 GPRnopc:$Rt, addrmode_imm12:$addr, pred:$p)> {
+  let AM = AddrMode_i12;
+}
+def ATOMIC_LDRH : ARMPseudoExpand<(outs GPR:$Rt),
+                                   (ins addrmode3:$addr, pred:$p),
+                                   4, IIC_iLoad_bh_r, [],
+                                   (LDRH GPR:$Rt, addrmode3:$addr, pred:$p)> {
+  let AM = AddrMode3;
+}
+def ATOMIC_LDRi12 : ARMPseudoExpand<(outs GPR:$Rt),
+                                     (ins addrmode_imm12:$addr, pred:$p),
+                                     4, IIC_iLoad_si, [],
+                              (LDRi12 GPR:$Rt, addrmode_imm12:$addr, pred:$p)> {
+  let AM = AddrMode_i12;
+}
+def ATOMIC_LDRrs : ARMPseudoExpand<(outs GPR:$Rt),
+                                    (ins ldst_so_reg:$shift, pred:$p),
+                                    4, IIC_iLoad_r, [],
+                                  (LDRrs GPR:$Rt, ldst_so_reg:$shift, pred:$p)>;
+}
+
 let usesCustomInserter = 1 in {
     def COPY_STRUCT_BYVAL_I32 : PseudoInst<
       (outs), (ins GPR:$dst, GPR:$src, i32imm:$size, i32imm:$alignment),
@@ -4902,15 +4933,15 @@ def : ARMV6Pat<(add GPR:$Rn, (sext_inreg GPRnopc:$Rm, i16)),
 
 // Atomic load/store patterns
 def : ARMPat<(atomic_load_8 ldst_so_reg:$src),
-             (LDRBrs ldst_so_reg:$src)>;
+             (ATOMIC_LDRBrs ldst_so_reg:$src)>;
 def : ARMPat<(atomic_load_8 addrmode_imm12:$src),
-             (LDRBi12 addrmode_imm12:$src)>;
+             (ATOMIC_LDRBi12 addrmode_imm12:$src)>;
 def : ARMPat<(atomic_load_16 addrmode3:$src),
-             (LDRH addrmode3:$src)>;
+             (ATOMIC_LDRH addrmode3:$src)>;
 def : ARMPat<(atomic_load_32 ldst_so_reg:$src),
-             (LDRrs ldst_so_reg:$src)>;
+             (ATOMIC_LDRrs ldst_so_reg:$src)>;
 def : ARMPat<(atomic_load_32 addrmode_imm12:$src),
-             (LDRi12 addrmode_imm12:$src)>;
+             (ATOMIC_LDRi12 addrmode_imm12:$src)>;
 def : ARMPat<(atomic_store_8 ldst_so_reg:$ptr, GPR:$val),
              (STRBrs GPR:$val, ldst_so_reg:$ptr)>;
 def : ARMPat<(atomic_store_8 addrmode_imm12:$ptr, GPR:$val),
