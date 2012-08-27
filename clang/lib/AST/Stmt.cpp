@@ -321,6 +321,10 @@ bool Stmt::hasImplicitControlFlow() const {
   }
 }
 
+StringRef GCCAsmStmt::getClobber(unsigned i) const {
+  return getClobberStringLiteral(i)->getString();
+}
+
 Expr *GCCAsmStmt::getOutputExpr(unsigned i) {
   return cast<Expr>(Exprs[i]);
 }
