@@ -28,11 +28,10 @@ def SwitchCase : Stmt<1>;
 def CaseStmt : DStmt<SwitchCase>;
 def DefaultStmt : DStmt<SwitchCase>;
 
-// GNU Extensions
-def GCCAsmStmt : Stmt;
-
-// MS Extensions
-def MSAsmStmt : Stmt;
+// Asm statements
+def AsmStmt : Stmt<1>;
+def GCCAsmStmt : DStmt<AsmStmt>;
+def MSAsmStmt : DStmt<AsmStmt>;
 
 // Obj-C statements
 def ObjCAtTryStmt : Stmt;

@@ -596,8 +596,8 @@ GCCAsmStmt::GCCAsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple,
                        Expr **exprs, StringLiteral *asmstr,
                        unsigned numclobbers, StringLiteral **clobbers,
                        SourceLocation rparenloc)
-  : Stmt(GCCAsmStmtClass), AsmLoc(asmloc), RParenLoc(rparenloc), AsmStr(asmstr)
-  , IsSimple(issimple), IsVolatile(isvolatile), NumOutputs(numoutputs)
+  : AsmStmt(GCCAsmStmtClass, issimple, isvolatile), AsmLoc(asmloc)
+  , RParenLoc(rparenloc), AsmStr(asmstr), NumOutputs(numoutputs)
   , NumInputs(numinputs), NumClobbers(numclobbers) {
 
   unsigned NumExprs = NumOutputs + NumInputs;
@@ -622,8 +622,8 @@ MSAsmStmt::MSAsmStmt(ASTContext &C, SourceLocation asmloc,
                      ArrayRef<Expr*> inputexprs, ArrayRef<Expr*> outputexprs,
                      StringRef asmstr, ArrayRef<StringRef> clobbers,
                      SourceLocation endloc)
-  : Stmt(MSAsmStmtClass), AsmLoc(asmloc), LBraceLoc(lbraceloc), EndLoc(endloc),
-    AsmStr(asmstr.str()), IsSimple(issimple), IsVolatile(isvolatile),
+  : AsmStmt(MSAsmStmtClass, issimple, isvolatile), AsmLoc(asmloc),
+    LBraceLoc(lbraceloc), EndLoc(endloc), AsmStr(asmstr.str()),
     NumAsmToks(asmtoks.size()), NumInputs(inputs.size()),
     NumOutputs(outputs.size()), NumClobbers(clobbers.size()) {
   assert (inputs.size() == inputexprs.size() && "Input expr size mismatch!");

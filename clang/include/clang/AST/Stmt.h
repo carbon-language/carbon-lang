@@ -1363,14 +1363,41 @@ public:
   }
 };
 
-/// This represents a GCC inline-assembly statement extension.
+/// AsmStmt is the base class for GCCAsmStmt and MSAsmStmt.
 ///
-class GCCAsmStmt : public Stmt {
-  SourceLocation AsmLoc, RParenLoc;
-  StringLiteral *AsmStr;
-
+class AsmStmt : public Stmt {
+protected:
   bool IsSimple;
   bool IsVolatile;
+
+  AsmStmt(StmtClass SC, bool issimple, bool isvolatile) :
+    Stmt (SC), IsSimple(issimple), IsVolatile(isvolatile) { }
+
+public:
+  /// \brief Build an empty inline-assembly statement.
+  explicit AsmStmt(StmtClass SC, EmptyShell Empty) :
+    Stmt(SC, Empty) { }
+
+  bool isSimple() const { return IsSimple; }
+  void setSimple(bool V) { IsSimple = V; }
+
+  bool isVolatile() const { return IsVolatile; }
+  void setVolatile(bool V) { IsVolatile = V; }
+
+  SourceRange getSourceRange() const LLVM_READONLY { return SourceRange(); }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == GCCAsmStmtClass ||
+      T->getStmtClass() == MSAsmStmtClass;
+  }
+  static bool classof(const AsmStmt *) { return true; }
+};
+
+/// This represents a GCC inline-assembly statement extension.
+///
+class GCCAsmStmt : public AsmStmt {
+  SourceLocation AsmLoc, RParenLoc;
+  StringLiteral *AsmStr;
 
   unsigned NumOutputs;
   unsigned NumInputs;
@@ -1390,18 +1417,13 @@ public:
              StringLiteral **clobbers, SourceLocation rparenloc);
 
   /// \brief Build an empty inline-assembly statement.
-  explicit GCCAsmStmt(EmptyShell Empty) : Stmt(GCCAsmStmtClass, Empty),
+  explicit GCCAsmStmt(EmptyShell Empty) : AsmStmt(GCCAsmStmtClass, Empty),
     Names(0), Constraints(0), Exprs(0), Clobbers(0) { }
 
   SourceLocation getAsmLoc() const { return AsmLoc; }
   void setAsmLoc(SourceLocation L) { AsmLoc = L; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
   void setRParenLoc(SourceLocation L) { RParenLoc = L; }
-
-  bool isVolatile() const { return IsVolatile; }
-  void setVolatile(bool V) { IsVolatile = V; }
-  bool isSimple() const { return IsSimple; }
-  void setSimple(bool V) { IsSimple = V; }
 
   //===--- Asm String Analysis ---===//
 
@@ -1614,12 +1636,9 @@ public:
 
 /// This represents a Microsoft inline-assembly statement extension.
 ///
-class MSAsmStmt : public Stmt {
+class MSAsmStmt : public AsmStmt {
   SourceLocation AsmLoc, LBraceLoc, EndLoc;
   std::string AsmStr;
-
-  bool IsSimple;
-  bool IsVolatile;
 
   unsigned NumAsmToks;
   unsigned NumInputs;
@@ -1640,7 +1659,7 @@ public:
             SourceLocation endloc);
 
   /// \brief Build an empty MS-style inline-assembly statement.
-  explicit MSAsmStmt(EmptyShell Empty) : Stmt(MSAsmStmtClass, Empty),
+  explicit MSAsmStmt(EmptyShell Empty) : AsmStmt(MSAsmStmtClass, Empty),
     NumAsmToks(0), NumInputs(0), NumOutputs(0), NumClobbers(0), AsmToks(0),
     Names(0), Exprs(0), Clobbers(0) { }
 
@@ -1655,11 +1674,6 @@ public:
 
   unsigned getNumAsmToks() { return NumAsmToks; }
   Token *getAsmToks() { return AsmToks; }
-
-  bool isVolatile() const { return IsVolatile; }
-  void setVolatile(bool V) { IsVolatile = V; }
-  bool isSimple() const { return IsSimple; }
-  void setSimple(bool V) { IsSimple = V; }
 
   //===--- Asm String Analysis ---===//
 
