@@ -704,9 +704,8 @@ static bool canEmitInitWithFewStoresAfterMemset(llvm::Constant *Init,
 /// stores that would be required.
 static void emitStoresForInitAfterMemset(llvm::Constant *Init, llvm::Value *Loc,
                                          bool isVolatile, CGBuilderTy &Builder) {
-  // Zero doesn't require a store.
-  if (Init->isNullValue() || isa<llvm::UndefValue>(Init))
-    return;
+  assert(!Init->isNullValue() && !isa<llvm::UndefValue>(Init) &&
+         "called emitStoresForInitAfterMemset for zero or undef value.");
 
   if (isa<llvm::ConstantInt>(Init) || isa<llvm::ConstantFP>(Init) ||
       isa<llvm::ConstantVector>(Init) || isa<llvm::BlockAddress>(Init) ||
@@ -1062,7 +1061,8 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
                 CGM.getTargetData().getTypeAllocSize(constant->getType()))) {
     Builder.CreateMemSet(Loc, llvm::ConstantInt::get(Int8Ty, 0), SizeVal,
                          alignment.getQuantity(), isVolatile);
-    if (!constant->isNullValue()) {
+    // Zero and undef don't require a stores.
+    if (!constant->isNullValue() && !isa<llvm::UndefValue>(constant)) {
       Loc = Builder.CreateBitCast(Loc, constant->getType()->getPointerTo());
       emitStoresForInitAfterMemset(constant, Loc, isVolatile, Builder);
     }
