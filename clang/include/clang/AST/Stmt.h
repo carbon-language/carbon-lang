@@ -1363,7 +1363,7 @@ public:
   }
 };
 
-/// AsmStmt - This represents a GCC inline-assembly statement extension.
+/// GCCAsmStmt - This represents a GCC inline-assembly statement extension.
 ///
 class GCCAsmStmt : public Stmt {
   SourceLocation AsmLoc, RParenLoc;
