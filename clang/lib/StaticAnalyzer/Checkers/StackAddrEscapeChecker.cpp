@@ -118,8 +118,9 @@ void StackAddrEscapeChecker::checkPreStmt(const ReturnStmt *RS,
   const Expr *RetE = RS->getRetValue();
   if (!RetE)
     return;
- 
-  SVal V = C.getState()->getSVal(RetE, C.getLocationContext());
+
+  const LocationContext *LCtx = C.getLocationContext();
+  SVal V = C.getState()->getSVal(RetE, LCtx);
   const MemRegion *R = V.getAsRegion();
 
   if (!R)
@@ -132,13 +133,19 @@ void StackAddrEscapeChecker::checkPreStmt(const ReturnStmt *RS,
     return;
 
   // Return stack memory in an ancestor stack frame is fine.
-  const StackFrameContext *SFC = SS->getStackFrame();
-  if (SFC != C.getLocationContext()->getCurrentStackFrame())
+  const StackFrameContext *CurFrame = LCtx->getCurrentStackFrame();
+  const StackFrameContext *MemFrame = SS->getStackFrame();
+  if (MemFrame != CurFrame)
     return;
 
   // Automatic reference counting automatically copies blocks.
   if (C.getASTContext().getLangOpts().ObjCAutoRefCount &&
       isa<BlockDataRegion>(R))
+    return;
+
+  // Returning a record by value is fine. (In this case, the returned
+  // expression will be a copy-constructor.)
+  if (isa<CXXConstructExpr>(RetE) && RetE->getType()->isRecordType())
     return;
 
   EmitStackError(C, R, RetE);

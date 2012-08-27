@@ -264,6 +264,7 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
       case CK_NonAtomicToAtomic:
         // True no-ops.
       case CK_NoOp:
+      case CK_ConstructorConversion:
       case CK_UserDefinedConversion:
       case CK_FunctionToPointerDecay: {
         // Copy the SVal of Ex to CastE.
@@ -375,7 +376,6 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
       case CK_BaseToDerivedMemberPointer:
       case CK_DerivedToBaseMemberPointer:
       case CK_ReinterpretMemberPointer:
-      case CK_ConstructorConversion:
       case CK_VectorSplat:
       case CK_LValueBitCast: {
         // Recover some path-sensitivty by conjuring a new value.

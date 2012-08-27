@@ -15,23 +15,22 @@ void testNullObject(A *a) {
   clang_analyzer_eval(a); // expected-warning{{TRUE}}
 }
 
-
-// FIXME: These require constructor inlining to be enabled.
-
 void f1() {
   A x(3);
-  // should be TRUE
-  clang_analyzer_eval(x.getx() == 3); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(x.getx() == 3); // expected-warning{{TRUE}}
 }
 
 void f2() {
   const A &x = A(3);
-  // should be TRUE
-  clang_analyzer_eval(x.getx() == 3); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(x.getx() == 3); // expected-warning{{TRUE}}
 }
 
 void f3() {
   const A &x = (A)3;
-  // should be TRUE
-  clang_analyzer_eval(x.getx() == 3); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(x.getx() == 3); // expected-warning{{TRUE}}
+}
+
+void f4() {
+  A x = 3;
+  clang_analyzer_eval(x.getx() == 3); // expected-warning{{TRUE}}
 }

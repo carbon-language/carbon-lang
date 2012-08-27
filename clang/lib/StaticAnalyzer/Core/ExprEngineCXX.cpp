@@ -32,13 +32,20 @@ void ExprEngine::CreateCXXTemporaryObject(const MaterializeTemporaryExpr *ME,
 
   // Bind the temporary object to the value of the expression. Then bind
   // the expression to the location of the object.
-  SVal V = state->getSVal(tempExpr, Pred->getLocationContext());
+  SVal V = state->getSVal(tempExpr, LCtx);
 
-  const MemRegion *R =
-    svalBuilder.getRegionManager().getCXXTempObjectRegion(ME, LCtx);
+  // If the object is a record, the constructor will have already created
+  // a temporary object region. If it is not, we need to copy the value over.
+  if (!ME->getType()->isRecordType()) {
+    const MemRegion *R =
+      svalBuilder.getRegionManager().getCXXTempObjectRegion(ME, LCtx);
 
-  state = state->bindLoc(loc::MemRegionVal(R), V);
-  Bldr.generateNode(ME, Pred, state->BindExpr(ME, LCtx, loc::MemRegionVal(R)));
+    SVal L = loc::MemRegionVal(R);
+    state = state->bindLoc(L, V);
+    V = L;
+  }
+
+  Bldr.generateNode(ME, Pred, state->BindExpr(ME, LCtx, V));
 }
 
 void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
@@ -101,8 +108,12 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
       // FIXME: This will eventually need to handle new-expressions as well.
     }
 
-    // If we couldn't find an existing region to construct into, we'll just
-    // generate a symbolic region, which is fine.
+    // If we couldn't find an existing region to construct into, assume we're
+    // constructing a temporary.
+    if (!Target) {
+      MemRegionManager &MRMgr = getSValBuilder().getRegionManager();
+      Target = MRMgr.getCXXTempObjectRegion(CE, LCtx);
+    }
 
     break;
   }

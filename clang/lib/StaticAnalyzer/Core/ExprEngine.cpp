@@ -839,12 +839,8 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
 
     case Expr::MaterializeTemporaryExprClass: {
       Bldr.takeNodes(Pred);
-      const MaterializeTemporaryExpr *Materialize
-                                            = cast<MaterializeTemporaryExpr>(S);
-      if (Materialize->getType()->isRecordType())
-        Dst.Add(Pred);
-      else
-        CreateCXXTemporaryObject(Materialize, Pred, Dst);
+      const MaterializeTemporaryExpr *MTE = cast<MaterializeTemporaryExpr>(S);
+      CreateCXXTemporaryObject(MTE, Pred, Dst);
       Bldr.addNodes(Dst);
       break;
     }

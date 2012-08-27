@@ -74,6 +74,18 @@ void testScalarInitialization() {
 }
 
 
+struct PtrWrapper {
+  int *x;
+
+  PtrWrapper(int *input) : x(input) {}
+};
+
+PtrWrapper *testNewInvalidation() {
+  // Ensure that we don't consider this a leak.
+  return new PtrWrapper(static_cast<int *>(malloc(4)));
+}
+
+
 //--------------------------------
 // Incorrectly-modelled behavior
 //--------------------------------

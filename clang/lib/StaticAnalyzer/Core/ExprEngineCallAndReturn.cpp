@@ -340,18 +340,22 @@ bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
     if (!shouldInlineCXX(getAnalysisManager()))
       return false;
 
-    // Only inline constructors and destructors if we built the CFGs for them
-    // properly.
-    const AnalysisDeclContext *ADC = CallerSFC->getAnalysisDeclContext();
-    if (!ADC->getCFGBuildOptions().AddImplicitDtors ||
-        !ADC->getCFGBuildOptions().AddInitializers)
-      return false;
-
     const CXXConstructorCall &Ctor = cast<CXXConstructorCall>(Call);
 
     // FIXME: We don't handle constructors or destructors for arrays properly.
     const MemRegion *Target = Ctor.getCXXThisVal().getAsRegion();
     if (Target && isa<ElementRegion>(Target))
+      return false;
+
+    // If the destructor is trivial, it's always safe to inline the constructor.
+    if (Ctor.getDecl()->getParent()->hasTrivialDestructor())
+      break;
+    
+    // For other types, only inline constructors if we built the CFGs for the
+    // destructor properly.
+    const AnalysisDeclContext *ADC = CallerSFC->getAnalysisDeclContext();
+    assert(ADC->getCFGBuildOptions().AddInitializers && "No CFG initializers");
+    if (!ADC->getCFGBuildOptions().AddImplicitDtors)
       return false;
 
     // FIXME: This is a hack. We don't handle temporary destructors
@@ -370,8 +374,7 @@ bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
     // Only inline constructors and destructors if we built the CFGs for them
     // properly.
     const AnalysisDeclContext *ADC = CallerSFC->getAnalysisDeclContext();
-    if (!ADC->getCFGBuildOptions().AddImplicitDtors ||
-        !ADC->getCFGBuildOptions().AddInitializers)
+    if (!ADC->getCFGBuildOptions().AddImplicitDtors)
       return false;
 
     const CXXDestructorCall &Dtor = cast<CXXDestructorCall>(Call);
