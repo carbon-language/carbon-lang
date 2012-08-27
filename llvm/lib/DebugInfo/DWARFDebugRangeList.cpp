@@ -50,8 +50,8 @@ bool DWARFDebugRangeList::extract(DataExtractor data, uint32_t *offset_ptr) {
 void DWARFDebugRangeList::dump(raw_ostream &OS) const {
   for (int i = 0, n = Entries.size(); i != n; ++i) {
     const char *format_str = (AddressSize == 4
-                              ? "%08x %08"PRIx64" %08"PRIx64"\n"
-                              : "%08x %016"PRIx64" %016"PRIx64"\n");
+                              ? "%08x %08"  PRIx64 " %08"  PRIx64 "\n"
+                              : "%08x %016" PRIx64 " %016" PRIx64 "\n");
     OS << format(format_str, Offset, Entries[i].StartAddress,
                                      Entries[i].EndAddress);
   }
