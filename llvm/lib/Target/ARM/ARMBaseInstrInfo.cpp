@@ -712,11 +712,12 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
       unsigned Dst = TRI->getSubReg(DestReg, BeginIdx + i*Spacing);
       unsigned Src = TRI->getSubReg(SrcReg,  BeginIdx + i*Spacing);
       assert(Dst && Src && "Bad sub-register");
-      Mov = AddDefaultPred(BuildMI(MBB, I, I->getDebugLoc(), get(Opc), Dst)
-                             .addReg(Src));
+      Mov = BuildMI(MBB, I, I->getDebugLoc(), get(Opc), Dst)
+        .addReg(Src);
       // VORR takes two source operands.
       if (Opc == ARM::VORRq)
         Mov.addReg(Src);
+      Mov = AddDefaultPred(Mov);
     }
     // Add implicit super-register defs and kills to the last instruction.
     Mov->addRegisterDefined(DestReg, TRI);
