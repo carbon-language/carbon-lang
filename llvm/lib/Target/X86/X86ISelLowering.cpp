@@ -9943,62 +9943,6 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
                                Op.getOperand(1), Op.getOperand(2), DAG);
   }
 
-  // Fix vector shift instructions where the last operand is a non-immediate
-  // i32 value.
-  case Intrinsic::x86_mmx_pslli_w:
-  case Intrinsic::x86_mmx_pslli_d:
-  case Intrinsic::x86_mmx_pslli_q:
-  case Intrinsic::x86_mmx_psrli_w:
-  case Intrinsic::x86_mmx_psrli_d:
-  case Intrinsic::x86_mmx_psrli_q:
-  case Intrinsic::x86_mmx_psrai_w:
-  case Intrinsic::x86_mmx_psrai_d: {
-    SDValue ShAmt = Op.getOperand(2);
-    if (isa<ConstantSDNode>(ShAmt))
-      return SDValue();
-
-    unsigned NewIntNo;
-    switch (IntNo) {
-    default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
-    case Intrinsic::x86_mmx_pslli_w:
-      NewIntNo = Intrinsic::x86_mmx_psll_w;
-      break;
-    case Intrinsic::x86_mmx_pslli_d:
-      NewIntNo = Intrinsic::x86_mmx_psll_d;
-      break;
-    case Intrinsic::x86_mmx_pslli_q:
-      NewIntNo = Intrinsic::x86_mmx_psll_q;
-      break;
-    case Intrinsic::x86_mmx_psrli_w:
-      NewIntNo = Intrinsic::x86_mmx_psrl_w;
-      break;
-    case Intrinsic::x86_mmx_psrli_d:
-      NewIntNo = Intrinsic::x86_mmx_psrl_d;
-      break;
-    case Intrinsic::x86_mmx_psrli_q:
-      NewIntNo = Intrinsic::x86_mmx_psrl_q;
-      break;
-    case Intrinsic::x86_mmx_psrai_w:
-      NewIntNo = Intrinsic::x86_mmx_psra_w;
-      break;
-    case Intrinsic::x86_mmx_psrai_d:
-      NewIntNo = Intrinsic::x86_mmx_psra_d;
-      break;
-    }
-
-    // The vector shift intrinsics with scalars uses 32b shift amounts but
-    // the sse2/mmx shift instructions reads 64 bits. Set the upper 32 bits
-    // to be zero.
-    ShAmt =  DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v2i32, ShAmt,
-                         DAG.getConstant(0, MVT::i32));
-// FIXME this must be lowered to get rid of the invalid type.
-
-    EVT VT = Op.getValueType();
-    ShAmt = DAG.getNode(ISD::BITCAST, dl, VT, ShAmt);
-    return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                       DAG.getConstant(NewIntNo, MVT::i32),
-                       Op.getOperand(1), ShAmt);
-  }
   case Intrinsic::x86_sse42_pcmpistria128:
   case Intrinsic::x86_sse42_pcmpestria128:
   case Intrinsic::x86_sse42_pcmpistric128:
