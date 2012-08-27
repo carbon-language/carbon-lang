@@ -1553,19 +1553,6 @@ public:
 
   //===--- Input operands ---===//
 
-  unsigned getNumInputs() const { return NumInputs; }
-
-  IdentifierInfo *getInputIdentifier(unsigned i) const {
-    return Names[i + NumOutputs];
-  }
-
-  StringRef getInputName(unsigned i) const {
-    if (IdentifierInfo *II = getInputIdentifier(i))
-      return II->getName();
-
-    return StringRef();
-  }
-
   /// getInputConstraint - Return the specified input constraint.  Unlike output
   /// constraints, these can be empty.
   StringRef getInputConstraint(unsigned i) const;
@@ -1707,19 +1694,6 @@ public:
   }
 
   //===--- Input operands ---===//
-
-  unsigned getNumInputs() const { return NumInputs; }
-
-  IdentifierInfo *getInputIdentifier(unsigned i) const {
-    return Names[i + NumOutputs];
-  }
-
-  StringRef getInputName(unsigned i) const {
-    if (IdentifierInfo *II = getInputIdentifier(i))
-      return II->getName();
-
-    return StringRef();
-  }
 
   Expr *getInputExpr(unsigned i);
   void setInputExpr(unsigned i, Expr *E);
