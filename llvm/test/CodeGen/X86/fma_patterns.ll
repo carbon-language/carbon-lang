@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=core-avx2 -mattr=avx2,+fma -fp-contract=fast | FileCheck %s
+; RUN: llc < %s -mcpu=bdver2 -mattr=-fma4 -fp-contract=fast | FileCheck %s
 
 ; CHECK: test_x86_fmadd_ps
 ; CHECK: vfmadd213ps     %xmm2, %xmm0, %xmm1

@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -march=x86-64 -mattr=+avx,+fma4 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=bdver2 -mattr=+avx,-fma | FileCheck %s
 
 ; VFMADD
 define < 4 x float > @test_x86_fma_vfmadd_ss(< 4 x float > %a0, < 4 x float > %a1, < 4 x float > %a2) {

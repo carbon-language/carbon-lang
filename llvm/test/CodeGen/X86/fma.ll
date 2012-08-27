@@ -1,11 +1,13 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin10  -mattr=+fma  | FileCheck %s --check-prefix=CHECK-FMA-INST
-; RUN: llc < %s -mtriple=i386-apple-darwin10               | FileCheck %s --check-prefix=CHECK-FMA-CALL
-; RUN: llc < %s -mtriple=x86_64-apple-darwin10 -mattr=+fma | FileCheck %s --check-prefix=CHECK-FMA-INST
-; RUN: llc < %s -mtriple=x86_64-apple-darwin10             | FileCheck %s --check-prefix=CHECK-FMA-CALL
+; RUN: llc < %s -mtriple=i386-apple-darwin10  -mattr=+fma,-fma4  | FileCheck %s --check-prefix=CHECK-FMA-INST
+; RUN: llc < %s -mtriple=i386-apple-darwin10  -mattr=-fma,-fma4  | FileCheck %s --check-prefix=CHECK-FMA-CALL
+; RUN: llc < %s -mtriple=x86_64-apple-darwin10 -mattr=+fma,-fma4 | FileCheck %s --check-prefix=CHECK-FMA-INST
+; RUN: llc < %s -mtriple=x86_64-apple-darwin10  -mattr=-fma,-fma4 | FileCheck %s --check-prefix=CHECK-FMA-CALL
+; RUN: llc < %s -mcpu=bdver2 -mattr=-fma4  | FileCheck %s --check-prefix=CHECK-FMA-INST
+; RUN: llc < %s -mcpu=bdver2 -mattr=-fma,-fma4 | FileCheck %s --check-prefix=CHECK-FMA-CALL
 
 ; CHECK: test_f32
 ; CHECK-FMA-INST: vfmadd213ss
-; CHECK-FMA-CALL: _fmaf
+; CHECK-FMA-CALL: fmaf
 
 define float @test_f32(float %a, float %b, float %c) nounwind readnone ssp {
 entry:
@@ -15,7 +17,7 @@ entry:
 
 ; CHECK: test_f64
 ; CHECK-FMA-INST: vfmadd213sd
-; CHECK-FMA-CALL: _fma
+; CHECK-FMA-CALL: fma
 
 define double @test_f64(double %a, double %b, double %c) nounwind readnone ssp {
 entry:
@@ -24,7 +26,7 @@ entry:
 }
 
 ; CHECK: test_f80
-; CHECK: _fmal
+; CHECK: fmal
 
 define x86_fp80 @test_f80(x86_fp80 %a, x86_fp80 %b, x86_fp80 %c) nounwind readnone ssp {
 entry:
