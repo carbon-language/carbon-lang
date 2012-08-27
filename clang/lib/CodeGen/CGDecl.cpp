@@ -719,10 +719,11 @@ static void emitStoresForInitAfterMemset(llvm::Constant *Init, llvm::Value *Loc,
         dyn_cast<llvm::ConstantDataSequential>(Init)) {
     for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i) {
       llvm::Constant *Elt = CDS->getElementAsConstant(i);
-      
-      // Get a pointer to the element and emit it.
-      emitStoresForInitAfterMemset(Elt, Builder.CreateConstGEP2_32(Loc, 0, i),
-                                   isVolatile, Builder);
+
+      // If necessary, get a pointer to the element and emit it.
+      if (!Elt->isNullValue() && !isa<llvm::UndefValue>(Elt))
+        emitStoresForInitAfterMemset(Elt, Builder.CreateConstGEP2_32(Loc, 0, i),
+                                     isVolatile, Builder);
     }
     return;
   }
@@ -732,9 +733,11 @@ static void emitStoresForInitAfterMemset(llvm::Constant *Init, llvm::Value *Loc,
 
   for (unsigned i = 0, e = Init->getNumOperands(); i != e; ++i) {
     llvm::Constant *Elt = cast<llvm::Constant>(Init->getOperand(i));
-    // Get a pointer to the element and emit it.
-    emitStoresForInitAfterMemset(Elt, Builder.CreateConstGEP2_32(Loc, 0, i),
-                                 isVolatile, Builder);
+
+    // If necessary, get a pointer to the element and emit it.
+    if (!Elt->isNullValue() && !isa<llvm::UndefValue>(Elt))
+      emitStoresForInitAfterMemset(Elt, Builder.CreateConstGEP2_32(Loc, 0, i),
+                                   isVolatile, Builder);
   }
 }
 

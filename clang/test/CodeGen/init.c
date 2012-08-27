@@ -69,6 +69,8 @@ char test8(int X) {
 // CHECK: store i8 97
 // CHECK: store i8 98
 // CHECK: store i8 99
+// CHECK-NOT: getelementptr
+// CHECK: load
 }
 
 void bar(void*);
