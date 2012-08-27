@@ -383,7 +383,8 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
 // load of an all-zeros value if folding it would be beneficial.
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
     isPseudo = 1, neverHasSideEffects = 1 in {
-def V_SET0 : I<0, Pseudo, (outs VR128:$dst), (ins), "", []>;
+def V_SET0 : I<0, Pseudo, (outs VR128:$dst), (ins), "",
+               [(set VR128:$dst, (v4f32 immAllZerosV))]>;
 }
 
 def : Pat<(v4f32 immAllZerosV), (V_SET0)>;
@@ -409,13 +410,12 @@ def AVX_SET0PSY : PSI<0x57, MRMInitReg, (outs VR256:$dst), (ins), "",
 def AVX_SET0PDY : PDI<0x57, MRMInitReg, (outs VR256:$dst), (ins), "",
                    [(set VR256:$dst, (v4f64 immAllZerosV))]>, VEX_4V;
 }
-let Predicates = [HasAVX2], neverHasSideEffects = 1 in
+let Predicates = [HasAVX2] in
 def AVX2_SET0   : PDI<0xef, MRMInitReg, (outs VR256:$dst), (ins), "",
-                   []>, VEX_4V;
+                   [(set VR256:$dst, (v4i64 immAllZerosV))]>, VEX_4V;
 }
 
 let Predicates = [HasAVX2] in {
-  def : Pat<(v4i64 immAllZerosV), (AVX2_SET0)>;
   def : Pat<(v8i32 immAllZerosV), (AVX2_SET0)>;
   def : Pat<(v16i16 immAllZerosV), (AVX2_SET0)>;
   def : Pat<(v32i8 immAllZerosV), (AVX2_SET0)>;
