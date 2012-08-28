@@ -20,10 +20,10 @@ namespace __asan {
 
 static __asan_symbolize_callback symbolize_callback;
 
-static const char *StripPathPrefix(const char *filepath) {
-  const char *path_prefix = flags()->strip_path_prefix;
-  if (filepath == internal_strstr(filepath, path_prefix))
-    return filepath + internal_strlen(path_prefix);
+static const char *StripPathPrefix(const char *filepath,
+                                   const char *strip_file_prefix) {
+  if (filepath == internal_strstr(filepath, strip_file_prefix))
+    return filepath + internal_strlen(strip_file_prefix);
   return filepath;
 }
 
@@ -39,7 +39,9 @@ static uptr patch_pc(uptr pc) {
   return pc - 1;
 }
 
-void StackTrace::PrintStack(uptr *addr, uptr size) {
+void StackTrace::PrintStack(uptr *addr, uptr size,
+                            bool symbolize, const char *strip_file_prefix,
+                            SymbolizeCallback symbolize_callback ) {
   MemoryMappingLayout proc_maps;
   uptr frame_num = 0;
   for (uptr i = 0; i < size && addr[i]; i++) {
@@ -50,15 +52,14 @@ void StackTrace::PrintStack(uptr *addr, uptr size) {
       // We can't know anything about the string returned by external
       // symbolizer, but if it starts with filename, try to strip path prefix
       // from it.
-      Printf("  #%zu 0x%zx %s\n", frame_num, pc, StripPathPrefix(buff));
+      Printf("  #%zu 0x%zx %s\n", frame_num, pc,
+             StripPathPrefix(buff, strip_file_prefix));
       frame_num++;
       continue;
     }
     AddressInfo addr_frames[64];
-    uptr addr_frames_num = 0;
-    if (flags()->symbolize) {
-      addr_frames_num = SymbolizeCode(pc, addr_frames, ARRAY_SIZE(addr_frames));
-    }
+    uptr addr_frames_num =
+      symbolize ? SymbolizeCode(pc, addr_frames, ARRAY_SIZE(addr_frames)) : 0;
     if (addr_frames_num > 0) {
       for (uptr j = 0; j < addr_frames_num; j++) {
         AddressInfo &info = addr_frames[j];
@@ -67,11 +68,11 @@ void StackTrace::PrintStack(uptr *addr, uptr size) {
           Printf(" in %s", info.function);
         }
         if (info.file) {
-          Printf(" %s:%d:%d", StripPathPrefix(info.file), info.line,
-                                  info.column);
+          Printf(" %s:%d:%d", StripPathPrefix(info.file, strip_file_prefix),
+                 info.line, info.column);
         } else if (info.module) {
-          Printf(" (%s+0x%zx)", StripPathPrefix(info.module),
-                                    info.module_offset);
+          Printf(" (%s+0x%zx)", StripPathPrefix(info.module, strip_file_prefix),
+                 info.module_offset);
         }
         Printf("\n");
         info.Clear();
@@ -82,8 +83,8 @@ void StackTrace::PrintStack(uptr *addr, uptr size) {
       char filename[4096];
       if (proc_maps.GetObjectNameAndOffset(pc, &offset,
                                            filename, sizeof(filename))) {
-        Printf("    #%zu 0x%zx (%s+0x%zx)\n",
-                   frame_num, pc, StripPathPrefix(filename), offset);
+        Printf("    #%zu 0x%zx (%s+0x%zx)\n", frame_num, pc,
+               StripPathPrefix(filename, strip_file_prefix), offset);
       } else {
         Printf("    #%zu 0x%zx\n", frame_num, pc);
       }
@@ -221,6 +222,12 @@ void StackTrace::UncompressStack(StackTrace *stack,
   }
 #endif  // __WORDSIZE
 }
+
+void PrintStack(StackTrace *stack) {
+  stack->PrintStack(stack->trace, stack->size, flags()->symbolize,
+                    flags()->strip_path_prefix, symbolize_callback);
+}
+
 
 }  // namespace __asan
 

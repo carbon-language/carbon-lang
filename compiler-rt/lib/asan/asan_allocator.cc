@@ -605,17 +605,17 @@ void DescribeHeapAddress(uptr addr, uptr access_size) {
     StackTrace free_stack;
     StackTrace::UncompressStack(&free_stack, m->compressed_free_stack(),
                                     m->compressed_free_stack_size());
-    free_stack.PrintStack();
+    PrintStack(&free_stack);
     Printf("previously allocated by thread T%d here:\n",
                alloc_thread->tid());
 
-    alloc_stack.PrintStack();
+    PrintStack(&alloc_stack);
     t->summary()->Announce();
     free_thread->Announce();
     alloc_thread->Announce();
   } else {
     Printf("allocated by thread T%d here:\n", alloc_thread->tid());
-    alloc_stack.PrintStack();
+    PrintStack(&alloc_stack);
     t->summary()->Announce();
     alloc_thread->Announce();
   }

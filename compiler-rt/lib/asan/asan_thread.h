@@ -45,7 +45,7 @@ class AsanThreadSummary {
     if (!announced_) {
       announced_ = true;
       Printf("Thread T%d created by T%d here:\n", tid_, parent_tid_);
-      stack_.PrintStack();
+      PrintStack(&stack_);
     }
   }
   u32 tid() { return tid_; }

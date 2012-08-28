@@ -258,13 +258,13 @@ void ReportSIGSEGV(uptr pc, uptr sp, uptr bp, uptr addr) {
              asanThreadRegistry().GetCurrentTidOrInvalid());
   Printf("AddressSanitizer can not provide additional info.\n");
   GET_STACK_TRACE_WITH_PC_AND_BP(kStackTraceMax, pc, bp);
-  stack.PrintStack();
+  PrintStack(&stack);
 }
 
 void ReportDoubleFree(uptr addr, StackTrace *stack) {
   ScopedInErrorReport in_report;
   Report("ERROR: AddressSanitizer attempting double-free on %p:\n", addr);
-  stack->PrintStack();
+  PrintStack(stack);
   DescribeHeapAddress(addr, 1);
 }
 
@@ -272,7 +272,7 @@ void ReportFreeNotMalloced(uptr addr, StackTrace *stack) {
   ScopedInErrorReport in_report;
   Report("ERROR: AddressSanitizer attempting free on address "
              "which was not malloc()-ed: %p\n", addr);
-  stack->PrintStack();
+  PrintStack(stack);
   DescribeHeapAddress(addr, 1);
 }
 
@@ -281,7 +281,7 @@ void ReportMallocUsableSizeNotOwned(uptr addr, StackTrace *stack) {
   Report("ERROR: AddressSanitizer attempting to call "
              "malloc_usable_size() for pointer which is "
              "not owned: %p\n", addr);
-  stack->PrintStack();
+  PrintStack(stack);
   DescribeHeapAddress(addr, 1);
 }
 
@@ -290,7 +290,7 @@ void ReportAsanGetAllocatedSizeNotOwned(uptr addr, StackTrace *stack) {
   Report("ERROR: AddressSanitizer attempting to call "
              "__asan_get_allocated_size() for pointer which is "
              "not owned: %p\n", addr);
-  stack->PrintStack();
+  PrintStack(stack);
   DescribeHeapAddress(addr, 1);
 }
 
@@ -301,7 +301,7 @@ void ReportStringFunctionMemoryRangesOverlap(
   Report("ERROR: AddressSanitizer %s-param-overlap: "
              "memory ranges [%p,%p) and [%p, %p) overlap\n", \
              function, offset1, offset1 + length1, offset2, offset2 + length2);
-  stack->PrintStack();
+  PrintStack(stack);
   DescribeAddress((uptr)offset1, length1);
   DescribeAddress((uptr)offset2, length2);
 }
@@ -315,7 +315,7 @@ void WarnMacFreeUnallocated(
              "AddressSanitizer is ignoring this error on Mac OS now.\n",
              addr);
   PrintZoneForPointer(addr, zone_ptr, zone_name);
-  stack->PrintStack();
+  PrintStack(stack);
   DescribeHeapAddress(addr, 1);
 }
 
@@ -326,7 +326,7 @@ void ReportMacMzReallocUnknown(
              "This is an unrecoverable problem, exiting now.\n",
              addr);
   PrintZoneForPointer(addr, zone_ptr, zone_name);
-  stack->PrintStack();
+  PrintStack(stack);
   DescribeHeapAddress(addr, 1);
 }
 
@@ -337,7 +337,7 @@ void ReportMacCfReallocUnknown(
              "This is an unrecoverable problem, exiting now.\n",
              addr);
   PrintZoneForPointer(addr, zone_ptr, zone_name);
-  stack->PrintStack();
+  PrintStack(stack);
   DescribeHeapAddress(addr, 1);
 }
 
@@ -401,7 +401,7 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
              access_size, (void*)addr, curr_tid);
 
   GET_STACK_TRACE_WITH_PC_AND_BP(kStackTraceMax, pc, bp);
-  stack.PrintStack();
+  PrintStack(&stack);
 
   DescribeAddress(addr, access_size);
 

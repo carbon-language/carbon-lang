@@ -21,13 +21,14 @@ namespace __asan {
 static const uptr kStackTraceMax = 64;
 
 struct StackTrace {
+  typedef bool (*SymbolizeCallback)(const void *pc, char *out_buffer,
+                                     int out_size);
   uptr size;
   uptr max_size;
   uptr trace[kStackTraceMax];
-  static void PrintStack(uptr *addr, uptr size);
-  void PrintStack() {
-    PrintStack(this->trace, this->size);
-  }
+  static void PrintStack(uptr *addr, uptr size,
+                         bool symbolize, const char *strip_file_prefix,
+                         SymbolizeCallback symbolize_callback);
   void CopyTo(uptr *dst, uptr dst_size) {
     for (uptr i = 0; i < size && i < dst_size; i++)
       dst[i] = trace[i];
@@ -53,7 +54,8 @@ struct StackTrace {
                               u32 *compressed, uptr size);
 };
 
-void GetStackTrace(StackTrace *trace, uptr max_s, uptr pc, uptr bp);
+void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp);
+void PrintStack(StackTrace *stack);
 
 
 
@@ -100,7 +102,7 @@ void GetStackTrace(StackTrace *trace, uptr max_s, uptr pc, uptr bp);
 #define PRINT_CURRENT_STACK()                    \
   {                                              \
     GET_STACK_TRACE_HERE(kStackTraceMax);        \
-    stack.PrintStack();                          \
+    PrintStack(&stack);                          \
   }
 
 #endif  // ASAN_STACK_H
