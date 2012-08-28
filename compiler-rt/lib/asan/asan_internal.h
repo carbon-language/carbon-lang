@@ -17,6 +17,7 @@
 #include "asan_flags.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_internal_defs.h"
+#include "sanitizer_common/sanitizer_stacktrace.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
 #if !defined(__linux__) && !defined(__APPLE__) && !defined(_WIN32)
@@ -93,7 +94,7 @@ extern "C" void* _ReturnAddress(void);
 namespace __asan {
 
 class AsanThread;
-struct StackTrace;
+using __sanitizer::StackTrace;
 
 // asan_rtl.cc
 void NORETURN ShowStatsAndAbort();
@@ -144,17 +145,6 @@ extern int asan_inited;
 // Used to avoid infinite recursion in __asan_init().
 extern bool asan_init_is_running;
 extern void (*death_callback)(void);
-
-#if !defined(_WIN32) || defined(__clang__)
-# define GET_CALLER_PC() (uptr)__builtin_return_address(0)
-# define GET_CURRENT_FRAME() (uptr)__builtin_frame_address(0)
-#else
-# define GET_CALLER_PC() (uptr)_ReturnAddress()
-// CaptureStackBackTrace doesn't need to know BP on Windows.
-// FIXME: This macro is still used when printing error reports though it's not
-// clear if the BP value is needed in the ASan reports on Windows.
-# define GET_CURRENT_FRAME() (uptr)0xDEADBEEF
-#endif
 
 #ifdef _WIN32
 bool WinSymbolize(const void *addr, char *out_buffer, int buffer_size);

@@ -10,6 +10,7 @@ set(SANITIZER_SOURCES
   sanitizer_mac.cc
   sanitizer_posix.cc
   sanitizer_printf.cc
+  sanitizer_stacktrace.cc
   sanitizer_symbolizer.cc
   sanitizer_symbolizer_linux.cc
   sanitizer_symbolizer_mac.cc
