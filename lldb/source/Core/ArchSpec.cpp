@@ -862,6 +862,15 @@ cores_match (const ArchSpec::Core core1, const ArchSpec::Core core2, bool try_in
             return true;
         break;
 
+    case ArchSpec::eCore_arm_armv7:
+    case ArchSpec::eCore_arm_armv7f:
+    case ArchSpec::eCore_arm_armv7k:
+    case ArchSpec::eCore_arm_armv7s:
+        try_inverse = false;
+        if (core2 == ArchSpec::eCore_arm_armv7)
+            return true;
+        break;
+
     default:
         break;
     }
