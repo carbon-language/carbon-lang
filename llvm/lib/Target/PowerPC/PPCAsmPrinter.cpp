@@ -109,6 +109,8 @@ namespace {
     bool doFinalization(Module &M);
 
     virtual void EmitFunctionEntryLabel();
+
+    void EmitFunctionBodyEnd();
   };
 
   /// PPCDarwinAsmPrinter - PowerPC assembly printer, customized for Darwin/Mac
@@ -448,6 +450,19 @@ bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
   }
 
   return AsmPrinter::doFinalization(M);
+}
+
+/// EmitFunctionBodyEnd - Print the traceback table before the .size
+/// directive.
+///
+void PPCLinuxAsmPrinter::EmitFunctionBodyEnd() {
+  // Only the 64-bit target requires a traceback table.  For now,
+  // we only emit the word of zeroes that GDB requires to find
+  // the end of the function.
+  // FIXME: Eventually we should add the eight-byte mandatory fields
+  // described in the PPC64 ELF ABI.
+  if (Subtarget.isPPC64())
+    OutStreamer.EmitIntValue(0, 4/*size*/);
 }
 
 void PPCDarwinAsmPrinter::EmitStartOfAsmFile(Module &M) {
