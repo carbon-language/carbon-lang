@@ -462,6 +462,16 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
     }
   }
 
+  // Udiv ((Lshl x, c1) , c2) ->  x / (C1 * 1<<C2);
+  if (Constant *C = dyn_cast<Constant>(Op1)) {
+    Value *X = 0, *C1 = 0;
+    if (match(Op0, m_LShr(m_Value(X), m_Value(C1)))) {
+      uint64_t NC = cast<ConstantInt>(C)->getZExtValue() *
+                    (1<< cast<ConstantInt>(C1)->getZExtValue());
+      return BinaryOperator::CreateUDiv(X, ConstantInt::get(I.getType(), NC));
+    }
+  }
+
   // X udiv (C1 << N), where C1 is "1<<C2"  -->  X >> (N+C2)
   { const APInt *CI; Value *N;
     if (match(Op1, m_Shl(m_Power2(CI), m_Value(N))) ||
@@ -531,6 +541,16 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
       if (match(Sub->getOperand(0), m_Zero()) && Sub->hasNoSignedWrap())
         return BinaryOperator::CreateSDiv(Sub->getOperand(1),
                                           ConstantExpr::getNeg(RHS));
+  }
+
+  // Sdiv ((Ashl x, c1) , c2) ->  x / (C1 * 1<<C2);
+  if (Constant *C = dyn_cast<Constant>(Op1)) {
+    Value *X = 0, *C1 = 0;
+    if (match(Op0, m_AShr(m_Value(X), m_Value(C1)))) {
+      uint64_t NC = cast<ConstantInt>(C)->getZExtValue() *
+                    (1<< cast<ConstantInt>(C1)->getZExtValue());
+      return BinaryOperator::CreateSDiv(X, ConstantInt::get(I.getType(), NC));
+    }
   }
 
   // If the sign bits of both operands are zero (i.e. we can prove they are

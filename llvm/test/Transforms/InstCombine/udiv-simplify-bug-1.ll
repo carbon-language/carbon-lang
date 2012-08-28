@@ -6,9 +6,9 @@
 ; The udiv instructions shouldn't be optimized away, and the
 ; sext instructions should be optimized to zext.
 
-define i64 @bar(i32 %x) nounwind {
+define i64 @bar(i32 %x, i32 %g) nounwind {
   %y = lshr i32 %x, 30
-  %r = udiv i32 %y, 3
+  %r = udiv i32 %y, %g
   %z = sext i32 %r to i64
   ret i64 %z
 }
