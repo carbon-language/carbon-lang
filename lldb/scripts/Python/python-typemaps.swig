@@ -369,11 +369,8 @@
 }
 
 %typemap(typecheck) (lldb::SBInputReader::Callback callback, void *baton) {
-  if (!($input == Py_None || PyCallable_Check(reinterpret_cast<PyObject*>($input)))) {
-    $1 = 0;
-  } else {
-    $1 = 1;
-  }
+  $1 = $input == Py_None;
+  $1 = $1 || PyCallable_Check(reinterpret_cast<PyObject*>($input));
 }
 
 // For Log::LogOutputCallback
@@ -395,11 +392,8 @@
 }
 
 %typemap(typecheck) (lldb::LogOutputCallback log_callback, void *baton) {
-  if (!($input == Py_None || PyCallable_Check(reinterpret_cast<PyObject*>($input)))) {
-    $1 = 0;
-  } else {
-    $1 = 1;
-  }
+  $1 = $input == Py_None;
+  $1 = $1 || PyCallable_Check(reinterpret_cast<PyObject*>($input));
 }
 
 %typemap(in) FILE * {
