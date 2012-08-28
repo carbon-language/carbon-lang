@@ -100,7 +100,6 @@ class FindLastStoreBRVisitor
   const MemRegion *R;
   SVal V;
   bool satisfied;
-  const ExplodedNode *StoreSite;
 
 public:
   /// \brief Convenience method to create a visitor given only the MemRegion.
@@ -114,7 +113,7 @@ public:
   static void registerStatementVarDecls(BugReport &BR, const Stmt *S);
 
   FindLastStoreBRVisitor(SVal v, const MemRegion *r)
-  : R(r), V(v), satisfied(false), StoreSite(0) {
+  : R(r), V(v), satisfied(false) {
     assert (!V.isUnknown() && "Cannot track unknown value.");
 
     // TODO: Does it make sense to allow undef values here?

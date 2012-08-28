@@ -245,79 +245,63 @@ void FindLastStoreBRVisitor ::Profile(llvm::FoldingSetNodeID &ID) const {
   ID.Add(V);
 }
 
-PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *N,
-                                                     const ExplodedNode *PrevN,
-                                                     BugReporterContext &BRC,
-                                                     BugReport &BR) {
+PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
+                                                       const ExplodedNode *Pred,
+                                                       BugReporterContext &BRC,
+                                                       BugReport &BR) {
 
   if (satisfied)
     return NULL;
 
-  if (!StoreSite) {
-    // Make sure the region is actually bound to value V here.
-    // This is necessary because the region may not actually be live at the
-    // report's error node.
-    if (N->getState()->getSVal(R) != V)
-      return NULL;
+  const ExplodedNode *StoreSite = 0;
+  const Expr *InitE = 0;
 
-    const ExplodedNode *Node = N, *Last = N;
-    const Expr *InitE = 0;
-
-    // Now look for the store of V.
-    for ( ; Node ; Node = Node->getFirstPred()) {
-      if (const VarRegion *VR = dyn_cast<VarRegion>(R)) {
-        if (const PostStmt *P = Node->getLocationAs<PostStmt>())
-          if (const DeclStmt *DS = P->getStmtAs<DeclStmt>())
-            if (DS->getSingleDecl() == VR->getDecl()) {
-              // Record the last seen initialization point.
-              Last = Node;
-              InitE = VR->getDecl()->getInit();
-              break;
-            }
-      }
-
-      // Does the region still bind to value V?  If not, we are done
-      // looking for store sites.
-      SVal Current = Node->getState()->getSVal(R);
-      if (Current != V) {
-        // If this is an assignment expression, we can track the value
-        // being assigned.
-        if (const StmtPoint *SP = Last->getLocationAs<StmtPoint>()) {
-          const Stmt *S = SP->getStmt();
-          if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(S))
-            if (BO->isAssignmentOp())
-              InitE = BO->getRHS();
+  // First see if we reached the declaration of the region.
+  if (const VarRegion *VR = dyn_cast<VarRegion>(R)) {
+    if (const PostStmt *P = Pred->getLocationAs<PostStmt>()) {
+      if (const DeclStmt *DS = P->getStmtAs<DeclStmt>()) {
+        if (DS->getSingleDecl() == VR->getDecl()) {
+          StoreSite = Pred;
+          InitE = VR->getDecl()->getInit();
         }
-
-        break;
       }
-
-      Last = Node;
-    }
-
-    if (!Node) {
-      satisfied = true;
-      return NULL;
-    }
-
-    StoreSite = Last;
-
-    // If the value that was stored came from an inlined call, make sure we
-    // step into the call.
-    if (InitE) {
-      InitE = InitE->IgnoreParenCasts();
-      ReturnVisitor::addVisitorIfNecessary(StoreSite, InitE, BR);
     }
   }
 
-  if (StoreSite != N)
-    return NULL;
+  // Otherwise, check that Succ has this binding and Pred does not, i.e. this is
+  // where the binding first occurred.
+  if (!StoreSite) {
+    if (Succ->getState()->getSVal(R) != V)
+      return NULL;
+    if (Pred->getState()->getSVal(R) == V)
+      return NULL;
 
+    StoreSite = Succ;
+
+    // If this is an assignment expression, we can track the value
+    // being assigned.
+    if (const PostStmt *P = Succ->getLocationAs<PostStmt>())
+      if (const BinaryOperator *BO = P->getStmtAs<BinaryOperator>())
+        if (BO->isAssignmentOp())
+          InitE = BO->getRHS();
+  }
+
+  if (!StoreSite)
+    return NULL;
   satisfied = true;
+
+  // If the value that was stored came from an inlined call, make sure we
+  // step into the call.
+  if (InitE) {
+    InitE = InitE->IgnoreParenCasts();
+    ReturnVisitor::addVisitorIfNecessary(StoreSite, InitE, BR);
+  }
+
+  // Okay, we've found the binding. Emit an appropriate message.
   SmallString<256> sbuf;
   llvm::raw_svector_ostream os(sbuf);
 
-  if (const PostStmt *PS = N->getLocationAs<PostStmt>()) {
+  if (const PostStmt *PS = StoreSite->getLocationAs<PostStmt>()) {
     if (const DeclStmt *DS = PS->getStmtAs<DeclStmt>()) {
 
       if (const VarRegion *VR = dyn_cast<VarRegion>(R)) {
@@ -391,7 +375,7 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *N,
   }
 
   // Construct a new PathDiagnosticPiece.
-  ProgramPoint P = N->getLocation();
+  ProgramPoint P = StoreSite->getLocation();
   PathDiagnosticLocation L =
     PathDiagnosticLocation::create(P, BRC.getSourceManager());
   if (!L.isValid())
