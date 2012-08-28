@@ -44,6 +44,8 @@ add_llvm_library(LLVMAnalysis
   ProfileInfoLoader.cpp
   ProfileInfoLoaderPass.cpp
   ProfileVerifierPass.cpp
+  ProfileDataLoader.cpp
+  ProfileDataLoaderPass.cpp
   RegionInfo.cpp
   RegionPass.cpp
   RegionPrinter.cpp

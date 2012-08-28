@@ -61,6 +61,7 @@ void llvm::initializeAnalysis(PassRegistry &Registry) {
   initializePathProfileLoaderPassPass(Registry);
   initializeProfileVerifierPassPass(Registry);
   initializePathProfileVerifierPass(Registry);
+  initializeProfileMetadataLoaderPassPass(Registry);
   initializeRegionInfoPass(Registry);
   initializeRegionViewerPass(Registry);
   initializeRegionPrinterPass(Registry);

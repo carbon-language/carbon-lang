@@ -107,6 +107,7 @@ namespace {
       (void) llvm::createProfileVerifierPass();
       (void) llvm::createPathProfileVerifierPass();
       (void) llvm::createProfileLoaderPass();
+      (void) llvm::createProfileMetadataLoaderPass();
       (void) llvm::createPathProfileLoaderPass();
       (void) llvm::createPromoteMemoryToRegisterPass();
       (void) llvm::createDemoteRegisterToMemoryPass();

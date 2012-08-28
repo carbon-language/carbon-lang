@@ -103,6 +103,14 @@ namespace llvm {
 
   //===--------------------------------------------------------------------===//
   //
+  // createProfileMetadataLoaderPass - This pass loads information from a
+  // profile dump file and sets branch weight metadata.
+  //
+  ModulePass *createProfileMetadataLoaderPass();
+  extern char &ProfileMetadataLoaderPassID;
+
+  //===--------------------------------------------------------------------===//
+  //
   // createNoProfileInfoPass - This pass implements the default "no profile".
   //
   ImmutablePass *createNoProfileInfoPass();
