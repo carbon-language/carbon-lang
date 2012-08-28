@@ -466,10 +466,6 @@ int main(int argc, char **argv, char * const *envp) {
     exit(1);
   }
 
-  // Clear instruction cache before code will be executed.
-  if (JMM)
-    JMM->invalidateInstructionCache();
-
   // The following functions have no effect if their respective profiling
   // support wasn't enabled in the build configuration.
   EE->RegisterJITEventListener(
@@ -523,6 +519,10 @@ int main(int argc, char **argv, char * const *envp) {
         EE->getPointerToFunction(Fn);
     }
   }
+
+  // Clear instruction cache before code will be executed.
+  if (JMM)
+    JMM->invalidateInstructionCache();
 
   // Run main.
   int Result = EE->runFunctionAsMain(EntryFn, InputArgv, envp);
