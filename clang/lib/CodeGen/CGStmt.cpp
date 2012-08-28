@@ -132,8 +132,8 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::ReturnStmtClass:   EmitReturnStmt(cast<ReturnStmt>(*S));     break;
 
   case Stmt::SwitchStmtClass:   EmitSwitchStmt(cast<SwitchStmt>(*S));     break;
-  case Stmt::GCCAsmStmtClass:   EmitAsmStmt(cast<AsmStmt>(*S));           break;
-  case Stmt::MSAsmStmtClass:    EmitMSAsmStmt(cast<MSAsmStmt>(*S));       break;
+  case Stmt::GCCAsmStmtClass:   // Intentional fall-through.
+  case Stmt::MSAsmStmtClass:    EmitAsmStmt(cast<AsmStmt>(*S));           break;
 
   case Stmt::ObjCAtTryStmtClass:
     EmitObjCAtTryStmt(cast<ObjCAtTryStmt>(*S));
@@ -1619,6 +1619,10 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   llvm::CallInst *Result = Builder.CreateCall(IA, Args);
   Result->addAttribute(~0, llvm::Attribute::NoUnwind);
 
+  // Add the inline asm non-standard dialect attribute on MS-style inline asms.
+  if (isa<MSAsmStmt>(&S))
+    Result->addAttribute(~0, llvm::Attribute::IANSDialect);
+
   // Slap the source location of the inline asm into a !srcloc metadata on the
   // call.  FIXME: Handle metadata for MS-style inline asms.
   if (const GCCAsmStmt *gccAsmStmt = dyn_cast<GCCAsmStmt>(&S))
@@ -1667,42 +1671,4 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
 
     EmitStoreThroughLValue(RValue::get(Tmp), ResultRegDests[i]);
   }
-}
-
-void CodeGenFunction::EmitMSAsmStmt(const MSAsmStmt &S) {
-  std::vector<llvm::Value*> Args;
-  std::vector<llvm::Type *> ArgTypes;
-  std::string Constraints;
-
-  // Clobbers
-  for (unsigned i = 0, e = S.getNumClobbers(); i != e; ++i) {
-    StringRef Clobber = S.getClobber(i);
-
-    if (Clobber != "memory" && Clobber != "cc")
-      Clobber = Target.getNormalizedGCCRegisterName(Clobber);
-
-    if (i != 0)
-      Constraints += ',';
-
-    Constraints += "~{";
-    Constraints += Clobber;
-    Constraints += '}';
-  }
-
-  // Add machine specific clobbers
-  std::string MachineClobbers = Target.getClobbers();
-  if (!MachineClobbers.empty()) {
-    if (!Constraints.empty())
-      Constraints += ',';
-    Constraints += MachineClobbers;
-  }
-
-  llvm::FunctionType *FTy =
-    llvm::FunctionType::get(VoidTy, ArgTypes, false);
-
-  llvm::InlineAsm *IA =
-    llvm::InlineAsm::get(FTy, *S.getAsmString(), Constraints, true);
-  llvm::CallInst *Result = Builder.CreateCall(IA, Args);
-  Result->addAttribute(~0, llvm::Attribute::NoUnwind);
-  Result->addAttribute(~0, llvm::Attribute::IANSDialect);
 }
