@@ -53,13 +53,13 @@ const char *const CommonOptionsParser::HelpMessage =
     "\tsuffix of a path in the compile command database.\n"
     "\n";
 
-static cl::opt<std::string> BuildPath(
-    "p", cl::desc("Build path"), cl::Optional);
-
-static cl::list<std::string> SourcePaths(
-    cl::Positional, cl::desc("<source0> [... <sourceN>]"), cl::OneOrMore);
-
 CommonOptionsParser::CommonOptionsParser(int &argc, const char **argv) {
+  static cl::opt<std::string> BuildPath(
+      "p", cl::desc("Build path"), cl::Optional);
+
+  static cl::list<std::string> SourcePaths(
+      cl::Positional, cl::desc("<source0> [... <sourceN>]"), cl::OneOrMore);
+
   Compilations.reset(FixedCompilationDatabase::loadFromCommandLine(argc,
                                                                    argv));
   cl::ParseCommandLineOptions(argc, argv);
