@@ -3089,20 +3089,20 @@ multiclass sse2_fp_unop_s<bits<8> opc, string OpcodeStr,
 }
 
 /// sse2_fp_unop_s_avx - AVX SSE2 unops in scalar form.
+let hasSideEffects = 0 in
 multiclass sse2_fp_unop_s_avx<bits<8> opc, string OpcodeStr> {
-  let neverHasSideEffects = 1 in {
   def SDr : SDI<opc, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src1, FR64:$src2),
                !strconcat(OpcodeStr,
                           "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
-  let mayLoad = 1 in
+  let mayLoad = 1 in {
   def SDm : SDI<opc, MRMSrcMem, (outs FR64:$dst), (ins FR64:$src1,f64mem:$src2),
                !strconcat(OpcodeStr,
                           "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
-  }
   def SDm_Int : SDI<opc, MRMSrcMem, (outs VR128:$dst),
                (ins VR128:$src1, sdmem:$src2),
                !strconcat(OpcodeStr,
                           "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
+  }
 }
 
 /// sse2_fp_unop_p - SSE2 unops in vector forms.
