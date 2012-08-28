@@ -240,7 +240,7 @@ static bool shouldRemoveDeadBindings(AnalysisManager &AMgr,
     return true;
     
   // Run before processing a call.
-  if (CallEvent::mayBeInlined(S.getStmt()))
+  if (CallEvent::isCallStmt(S.getStmt()))
     return true;
 
   // Is this an expression that is consumed by another expression?  If so,

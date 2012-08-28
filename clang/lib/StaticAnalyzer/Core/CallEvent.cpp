@@ -230,10 +230,10 @@ void CallEvent::dump(raw_ostream &Out) const {
 }
 
 
-bool CallEvent::mayBeInlined(const Stmt *S) {
-  // FIXME: Kill this.
+bool CallEvent::isCallStmt(const Stmt *S) {
   return isa<CallExpr>(S) || isa<ObjCMessageExpr>(S)
-                          || isa<CXXConstructExpr>(S);
+                          || isa<CXXConstructExpr>(S)
+                          || isa<CXXNewExpr>(S);
 }
 
 static void addParameterValuesToBindings(const StackFrameContext *CalleeCtx,

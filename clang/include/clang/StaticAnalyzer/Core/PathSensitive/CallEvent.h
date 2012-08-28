@@ -291,12 +291,9 @@ public:
     return cloneWithState<CallEvent>(NewState);
   }
 
-  /// \brief Returns true if this is a statement that can be considered for
-  /// inlining.
-  ///
-  /// FIXME: This should go away once CallEvents are cheap and easy to
-  /// construct from ExplodedNodes.
-  static bool mayBeInlined(const Stmt *S);
+  /// \brief Returns true if this is a statement is a function or method call
+  /// of some kind.
+  static bool isCallStmt(const Stmt *S);
 
   // Iterator access to formal parameters and their types.
 private:

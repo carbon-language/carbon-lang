@@ -115,7 +115,7 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
   // Condition 9.
   const ProgramPoint SuccLoc = succ->getLocation();
   if (const StmtPoint *SP = dyn_cast<StmtPoint>(&SuccLoc))
-    if (CallEvent::mayBeInlined(SP->getStmt()))
+    if (CallEvent::isCallStmt(SP->getStmt()))
       return false;
 
   return true;
