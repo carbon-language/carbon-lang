@@ -548,22 +548,22 @@ else
   LLVM_CONFIG := $(LLVMToolDir)/llvm-config$(EXEEXT)
 endif
 ifndef LLVMDIS
-LLVMDIS  := $(LLVMToolDir)/$(program_prefix)llvm-dis$(EXEEXT)
+LLVMDIS  := $(LLVMToolDir)/llvm-dis$(EXEEXT)
 endif
 ifndef LLI
-LLI      := $(LLVMToolDir)/$(program_prefix)lli$(EXEEXT)
+LLI      := $(LLVMToolDir)/lli$(EXEEXT)
 endif
 ifndef LLC
-LLC      := $(LLVMToolDir)/$(program_prefix)llc$(EXEEXT)
+LLC      := $(LLVMToolDir)/llc$(EXEEXT)
 endif
 ifndef LOPT
-LOPT     := $(LLVMToolDir)/$(program_prefix)opt$(EXEEXT)
+LOPT     := $(LLVMToolDir)/opt$(EXEEXT)
 endif
 ifndef LBUGPOINT
-LBUGPOINT := $(LLVMToolDir)/$(program_prefix)bugpoint$(EXEEXT)
+LBUGPOINT := $(LLVMToolDir)/bugpoint$(EXEEXT)
 endif
 ifndef LLVMLINK
-LLVMLINK      := $(LLVMToolDir)/$(program_prefix)llvm-link$(EXEEXT)
+LLVMLINK      := $(LLVMToolDir)/llvm-link$(EXEEXT)
 endif
 
 #--------------------------------------------------------------------
@@ -1541,7 +1541,7 @@ ToolBinDir = $(DESTDIR)$(PROJ_internal_prefix)/bin
 else
 ToolBinDir = $(DESTDIR)$(PROJ_bindir)
 endif
-DestTool = $(ToolBinDir)/$(program_prefix)$(TOOLEXENAME)
+DestTool = $(ToolBinDir)/$(TOOLEXENAME)
 
 install-local:: $(DestTool)
 
@@ -1556,7 +1556,7 @@ uninstall-local::
 
 # TOOLALIAS install.
 ifdef TOOLALIAS
-DestToolAlias = $(ToolBinDir)/$(program_prefix)$(TOOLALIAS)$(EXEEXT)
+DestToolAlias = $(ToolBinDir)/$(TOOLALIAS)$(EXEEXT)
 
 install-local:: $(DestToolAlias)
 

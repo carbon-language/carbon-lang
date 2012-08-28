@@ -40,9 +40,6 @@ dnl in the output of --version option of the generated configure script.
 AC_SUBST(LLVM_COPYRIGHT,["Copyright (c) 2003-2012 University of Illinois at Urbana-Champaign."])
 AC_COPYRIGHT([Copyright (c) 2003-2012 University of Illinois at Urbana-Champaign.])
 
-dnl Add --program-prefix value to Makefile.rules. Already an ARG variable.
-AC_SUBST([program_prefix])
-
 dnl Indicate that we require autoconf 2.60 or later.
 AC_PREREQ(2.60)
 
