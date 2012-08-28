@@ -841,7 +841,8 @@ CallEventManager::getCaller(const StackFrameContext *CalleeCtx,
       return getSimpleCall(CE, State, CallerCtx);
 
     switch (CallSite->getStmtClass()) {
-    case Stmt::CXXConstructExprClass: {
+    case Stmt::CXXConstructExprClass:
+    case Stmt::CXXTemporaryObjectExprClass: {
       SValBuilder &SVB = State->getStateManager().getSValBuilder();
       const CXXMethodDecl *Ctor = cast<CXXMethodDecl>(CalleeCtx->getDecl());
       Loc ThisPtr = SVB.getCXXThis(Ctor, CalleeCtx);
