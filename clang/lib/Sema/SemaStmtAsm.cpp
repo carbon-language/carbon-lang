@@ -468,7 +468,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   SmallVector<StringRef, 4> Constraints;
   std::vector<std::string> InputConstraints;
   std::vector<std::string> OutputConstraints;
-  SmallVector<StringRef,4> Clobbers;
+  SmallVector<StringRef, 4> Clobbers;
   std::set<std::string> ClobberRegs;
   SmallVector<IdentifierInfo*, 4> Inputs;
   SmallVector<IdentifierInfo*, 4> Outputs;
