@@ -44,3 +44,27 @@
 // CHECK-LDFLAGS9: --hash-style=both
 // CHECK-LDFLAGS9: --enable-new-dtags
 
+// RUN: %clang -no-canonical-prefixes -target x86_64-pc-freebsd8 -static %s \
+// RUN:   --sysroot=%S/Inputs/multiarch_freebsd64_tree -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-STATIC %s
+// CHECK-STATIC: crt1.o
+// CHECK-STATIC: crtbeginT.o
+
+// RUN: %clang -no-canonical-prefixes -target x86_64-pc-freebsd8 -shared %s \
+// RUN:   --sysroot=%S/Inputs/multiarch_freebsd64_tree -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-SHARED %s
+// CHECK-SHARED: crti.o
+// CHECK-SHARED: crtbeginS.o
+
+// RUN: %clang -no-canonical-prefixes -target x86_64-pc-freebsd8 -pie %s \
+// RUN:   --sysroot=%S/Inputs/multiarch_freebsd64_tree -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-PIE %s
+// CHECK-PIE: pie
+// CHECK-PIE: Scrt1.o
+// CHECK-PIE: crtbeginS.o
+
+// RUN: %clang -no-canonical-prefixes -target x86_64-pc-freebsd8 %s \
+// RUN:   --sysroot=%S/Inputs/multiarch_freebsd64_tree -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NORMAL %s
+// CHECK-NORMAL: crt1.o
+// CHECK-NORMAL: crtbegin.o
