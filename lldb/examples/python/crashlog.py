@@ -316,7 +316,8 @@ class CrashLog(symbolication.Symbolicator):
 
             elif parse_mode == PARSE_MODE_THREGS:
                 stripped_line = line.strip()
-                reg_values = re.split('  +', stripped_line);
+                # "r12: 0x00007fff6b5939c8  r13: 0x0000000007000006  r14: 0x0000000000002a03  r15: 0x0000000000000c00"
+                reg_values = re.findall ('([a-zA-Z0-9]+: 0[Xx][0-9a-fA-F]+) *', stripped_line);
                 for reg_value in reg_values:
                     #print 'reg_value = "%s"' % reg_value
                     (reg, value) = reg_value.split(': ')
