@@ -24,10 +24,14 @@ class MemoryMappingLayout {
   MemoryMappingLayout() {
     UNIMPLEMENTED();
   }
+  bool GetObjectNameAndOffset(uptr addr, uptr *offset,
+                              char filename[], uptr filename_size) {
+    UNIMPLEMENTED();
+    return false;
+  }
 };
 
 #else  // _WIN32
-
 class MemoryMappingLayout {
  public:
   MemoryMappingLayout();
@@ -71,12 +75,12 @@ class MemoryMappingLayout {
     return false;
   }
 
-#if defined __linux__
+# if defined __linux__
   char *proc_self_maps_buff_;
   uptr proc_self_maps_buff_mmaped_size_;
   uptr proc_self_maps_buff_len_;
   char *current_;
-#elif defined __APPLE__
+# elif defined __APPLE__
   template<u32 kLCSegment, typename SegmentCommand>
   bool NextSegmentLoad(uptr *start, uptr *end, uptr *offset,
                        char filename[], uptr filename_size);
@@ -84,7 +88,7 @@ class MemoryMappingLayout {
   u32 current_magic_;
   int current_load_cmd_count_;
   char *current_load_cmd_addr_;
-#endif
+# endif
 };
 
 #endif  // _WIN32
