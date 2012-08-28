@@ -4320,6 +4320,14 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   // Handle attributes prior to checking for duplicates in MergeVarDecl
   ProcessDeclAttributes(S, NewVD, D);
 
+  if (getLangOpts().CUDA) {
+    // CUDA B.2.5: "__shared__ and __constant__ variables have implied static
+    // storage [duration]."
+    if (SC == SC_None && S->getFnParent() != 0 &&
+       (NewVD->hasAttr<CUDASharedAttr>() || NewVD->hasAttr<CUDAConstantAttr>()))
+      NewVD->setStorageClass(SC_Static);
+  }
+
   // In auto-retain/release, infer strong retension for variables of
   // retainable type.
   if (getLangOpts().ObjCAutoRefCount && inferObjCARCLifetime(NewVD))
