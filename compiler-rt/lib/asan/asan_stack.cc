@@ -31,7 +31,7 @@ static const char *StripPathPrefix(const char *filepath) {
   return filepath;
 }
 
-// ----------------------- AsanStackTrace ----------------------------- {{{1
+// ----------------------- StackTrace ----------------------------- {{{1
 // PCs in stack traces are actually the return addresses, that is,
 // addresses of the next instructions after the call. That's why we
 // decrement them.
@@ -43,7 +43,7 @@ static uptr patch_pc(uptr pc) {
   return pc - 1;
 }
 
-void AsanStackTrace::PrintStack(uptr *addr, uptr size) {
+void StackTrace::PrintStack(uptr *addr, uptr size) {
   MemoryMappingLayout proc_maps;
   uptr frame_num = 0;
   for (uptr i = 0; i < size && addr[i]; i++) {
@@ -61,8 +61,7 @@ void AsanStackTrace::PrintStack(uptr *addr, uptr size) {
     AddressInfo addr_frames[64];
     uptr addr_frames_num = 0;
     if (flags()->symbolize) {
-      addr_frames_num = SymbolizeCode(pc, addr_frames,
-                                      ASAN_ARRAY_SIZE(addr_frames));
+      addr_frames_num = SymbolizeCode(pc, addr_frames, ARRAY_SIZE(addr_frames));
     }
     if (addr_frames_num > 0) {
       for (uptr j = 0; j < addr_frames_num; j++) {
@@ -97,11 +96,11 @@ void AsanStackTrace::PrintStack(uptr *addr, uptr size) {
   }
 }
 
-uptr AsanStackTrace::GetCurrentPc() {
+uptr StackTrace::GetCurrentPc() {
   return GET_CALLER_PC();
 }
 
-void AsanStackTrace::FastUnwindStack(uptr pc, uptr bp) {
+void StackTrace::FastUnwindStack(uptr pc, uptr bp) {
   CHECK(size == 0 && trace[0] == pc);
   size = 1;
   if (!asan_inited) return;
@@ -128,8 +127,7 @@ void AsanStackTrace::FastUnwindStack(uptr pc, uptr bp) {
 // On 64-bits we compress stack traces: if a given pc differes slightly from
 // the previous one, we record a 31-bit offset instead of the full pc.
 SANITIZER_INTERFACE_ATTRIBUTE
-uptr AsanStackTrace::CompressStack(AsanStackTrace *stack,
-                                   u32 *compressed, uptr size) {
+uptr StackTrace::CompressStack(StackTrace *stack, u32 *compressed, uptr size) {
 #if __WORDSIZE == 32
   // Don't compress, just copy.
   uptr res = 0;
@@ -175,7 +173,7 @@ uptr AsanStackTrace::CompressStack(AsanStackTrace *stack,
 
   // debug-only code
 #if 0
-  AsanStackTrace check_stack;
+  StackTrace check_stack;
   UncompressStack(&check_stack, compressed, size);
   if (res < check_stack.size) {
     Printf("res %zu check_stack.size %zu; c_size %zu\n", res,
@@ -192,8 +190,8 @@ uptr AsanStackTrace::CompressStack(AsanStackTrace *stack,
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE
-void AsanStackTrace::UncompressStack(AsanStackTrace *stack,
-                                     u32 *compressed, uptr size) {
+void StackTrace::UncompressStack(StackTrace *stack,
+                                 u32 *compressed, uptr size) {
 #if __WORDSIZE == 32
   // Don't uncompress, just copy.
   stack->size = 0;

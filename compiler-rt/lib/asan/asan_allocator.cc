@@ -566,7 +566,7 @@ class MallocInfo {
     pg->size_of_chunk = size;
     pg->last_chunk = (uptr)(mem + size * (n_chunks - 1));
     int idx = atomic_fetch_add(&n_page_groups_, 1, memory_order_relaxed);
-    CHECK(idx < (int)ASAN_ARRAY_SIZE(page_groups_));
+    CHECK(idx < (int)ARRAY_SIZE(page_groups_));
     page_groups_[idx] = pg;
     return res;
   }
@@ -593,8 +593,8 @@ void DescribeHeapAddress(uptr addr, uptr access_size) {
   CHECK(m->alloc_tid >= 0);
   AsanThreadSummary *alloc_thread =
       asanThreadRegistry().FindByTid(m->alloc_tid);
-  AsanStackTrace alloc_stack;
-  AsanStackTrace::UncompressStack(&alloc_stack, m->compressed_alloc_stack(),
+  StackTrace alloc_stack;
+  StackTrace::UncompressStack(&alloc_stack, m->compressed_alloc_stack(),
                                   m->compressed_alloc_stack_size());
   AsanThread *t = asanThreadRegistry().GetCurrent();
   CHECK(t);
@@ -602,8 +602,8 @@ void DescribeHeapAddress(uptr addr, uptr access_size) {
     AsanThreadSummary *free_thread =
         asanThreadRegistry().FindByTid(m->free_tid);
     Printf("freed by thread T%d here:\n", free_thread->tid());
-    AsanStackTrace free_stack;
-    AsanStackTrace::UncompressStack(&free_stack, m->compressed_free_stack(),
+    StackTrace free_stack;
+    StackTrace::UncompressStack(&free_stack, m->compressed_free_stack(),
                                     m->compressed_free_stack_size());
     free_stack.PrintStack();
     Printf("previously allocated by thread T%d here:\n",
@@ -621,7 +621,7 @@ void DescribeHeapAddress(uptr addr, uptr access_size) {
   }
 }
 
-static u8 *Allocate(uptr alignment, uptr size, AsanStackTrace *stack) {
+static u8 *Allocate(uptr alignment, uptr size, StackTrace *stack) {
   __asan_init();
   CHECK(stack);
   if (size == 0) {
@@ -699,7 +699,7 @@ static u8 *Allocate(uptr alignment, uptr size, AsanStackTrace *stack) {
   CHECK(m->Beg() == addr);
   m->alloc_tid = t ? t->tid() : 0;
   m->free_tid   = kInvalidTid;
-  AsanStackTrace::CompressStack(stack, m->compressed_alloc_stack(),
+  StackTrace::CompressStack(stack, m->compressed_alloc_stack(),
                                 m->compressed_alloc_stack_size());
   PoisonShadow(addr, rounded_size, 0);
   if (size < rounded_size) {
@@ -712,7 +712,7 @@ static u8 *Allocate(uptr alignment, uptr size, AsanStackTrace *stack) {
   return (u8*)addr;
 }
 
-static void Deallocate(u8 *ptr, AsanStackTrace *stack) {
+static void Deallocate(u8 *ptr, StackTrace *stack) {
   if (!ptr) return;
   CHECK(stack);
 
@@ -739,7 +739,7 @@ static void Deallocate(u8 *ptr, AsanStackTrace *stack) {
   CHECK(m->alloc_tid >= 0);
   AsanThread *t = asanThreadRegistry().GetCurrent();
   m->free_tid = t ? t->tid() : 0;
-  AsanStackTrace::CompressStack(stack, m->compressed_free_stack(),
+  StackTrace::CompressStack(stack, m->compressed_free_stack(),
                                 m->compressed_free_stack_size());
   uptr rounded_size = RoundUpTo(m->used_size, REDZONE);
   PoisonShadow((uptr)ptr, rounded_size, kAsanHeapFreeMagic);
@@ -765,7 +765,7 @@ static void Deallocate(u8 *ptr, AsanStackTrace *stack) {
 }
 
 static u8 *Reallocate(u8 *old_ptr, uptr new_size,
-                           AsanStackTrace *stack) {
+                           StackTrace *stack) {
   CHECK(old_ptr && new_size);
 
   // Statistics.
@@ -804,26 +804,26 @@ void __asan_free_hook(void *ptr) {
 namespace __asan {
 
 SANITIZER_INTERFACE_ATTRIBUTE
-void *asan_memalign(uptr alignment, uptr size, AsanStackTrace *stack) {
+void *asan_memalign(uptr alignment, uptr size, StackTrace *stack) {
   void *ptr = (void*)Allocate(alignment, size, stack);
   __asan_malloc_hook(ptr, size);
   return ptr;
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE
-void asan_free(void *ptr, AsanStackTrace *stack) {
+void asan_free(void *ptr, StackTrace *stack) {
   __asan_free_hook(ptr);
   Deallocate((u8*)ptr, stack);
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE
-void *asan_malloc(uptr size, AsanStackTrace *stack) {
+void *asan_malloc(uptr size, StackTrace *stack) {
   void *ptr = (void*)Allocate(0, size, stack);
   __asan_malloc_hook(ptr, size);
   return ptr;
 }
 
-void *asan_calloc(uptr nmemb, uptr size, AsanStackTrace *stack) {
+void *asan_calloc(uptr nmemb, uptr size, StackTrace *stack) {
   void *ptr = (void*)Allocate(0, nmemb * size, stack);
   if (ptr)
     REAL(memset)(ptr, 0, nmemb * size);
@@ -831,7 +831,7 @@ void *asan_calloc(uptr nmemb, uptr size, AsanStackTrace *stack) {
   return ptr;
 }
 
-void *asan_realloc(void *p, uptr size, AsanStackTrace *stack) {
+void *asan_realloc(void *p, uptr size, StackTrace *stack) {
   if (p == 0) {
     void *ptr = (void*)Allocate(0, size, stack);
     __asan_malloc_hook(ptr, size);
@@ -844,13 +844,13 @@ void *asan_realloc(void *p, uptr size, AsanStackTrace *stack) {
   return Reallocate((u8*)p, size, stack);
 }
 
-void *asan_valloc(uptr size, AsanStackTrace *stack) {
+void *asan_valloc(uptr size, StackTrace *stack) {
   void *ptr = (void*)Allocate(kPageSize, size, stack);
   __asan_malloc_hook(ptr, size);
   return ptr;
 }
 
-void *asan_pvalloc(uptr size, AsanStackTrace *stack) {
+void *asan_pvalloc(uptr size, StackTrace *stack) {
   size = RoundUpTo(size, kPageSize);
   if (size == 0) {
     // pvalloc(0) should allocate one page.
@@ -862,7 +862,7 @@ void *asan_pvalloc(uptr size, AsanStackTrace *stack) {
 }
 
 int asan_posix_memalign(void **memptr, uptr alignment, uptr size,
-                          AsanStackTrace *stack) {
+                          StackTrace *stack) {
   void *ptr = Allocate(alignment, size, stack);
   CHECK(IsAligned((uptr)ptr, alignment));
   __asan_malloc_hook(ptr, size);
@@ -870,7 +870,7 @@ int asan_posix_memalign(void **memptr, uptr alignment, uptr size,
   return 0;
 }
 
-uptr asan_malloc_usable_size(void *ptr, AsanStackTrace *stack) {
+uptr asan_malloc_usable_size(void *ptr, StackTrace *stack) {
   CHECK(stack);
   if (ptr == 0) return 0;
   uptr usable_size = malloc_info.AllocationSize((uptr)ptr);

@@ -93,7 +93,7 @@ extern "C" void* _ReturnAddress(void);
 namespace __asan {
 
 class AsanThread;
-struct AsanStackTrace;
+struct StackTrace;
 
 // asan_rtl.cc
 void NORETURN ShowStatsAndAbort();
@@ -144,8 +144,6 @@ extern int asan_inited;
 // Used to avoid infinite recursion in __asan_init().
 extern bool asan_init_is_running;
 extern void (*death_callback)(void);
-
-#define ASAN_ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 
 #if !defined(_WIN32) || defined(__clang__)
 # define GET_CALLER_PC() (uptr)__builtin_return_address(0)

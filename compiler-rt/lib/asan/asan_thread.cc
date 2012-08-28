@@ -30,7 +30,7 @@ static AsanLock mu_for_thread_summary(LINKER_INITIALIZED);
 static LowLevelAllocator allocator_for_thread_summary;
 
 AsanThread *AsanThread::Create(u32 parent_tid, thread_callback_t start_routine,
-                               void *arg, AsanStackTrace *stack) {
+                               void *arg, StackTrace *stack) {
   uptr size = RoundUpTo(sizeof(AsanThread), kPageSize);
   AsanThread *thread = (AsanThread*)MmapOrDie(size, __FUNCTION__);
   thread->start_routine_ = start_routine;

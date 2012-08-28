@@ -32,7 +32,7 @@ static AsanLock dbghelp_lock(LINKER_INITIALIZED);
 static bool dbghelp_initialized = false;
 #pragma comment(lib, "dbghelp.lib")
 
-void AsanStackTrace::GetStackTrace(uptr max_s, uptr pc, uptr bp) {
+void StackTrace::GetStackTrace(uptr max_s, uptr pc, uptr bp) {
   max_size = max_s;
   void *tmp[kStackTraceMax];
 

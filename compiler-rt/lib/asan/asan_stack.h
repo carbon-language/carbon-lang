@@ -20,7 +20,7 @@ namespace __asan {
 
 static const uptr kStackTraceMax = 64;
 
-struct AsanStackTrace {
+struct StackTrace {
   uptr size;
   uptr max_size;
   uptr trace[kStackTraceMax];
@@ -49,9 +49,9 @@ struct AsanStackTrace {
 
   static uptr GetCurrentPc();
 
-  static uptr CompressStack(AsanStackTrace *stack,
+  static uptr CompressStack(StackTrace *stack,
                             u32 *compressed, uptr size);
-  static void UncompressStack(AsanStackTrace *stack,
+  static void UncompressStack(StackTrace *stack,
                               u32 *compressed, uptr size);
 };
 
@@ -69,7 +69,7 @@ struct AsanStackTrace {
 // function in the top frame.
 #define GET_CURRENT_PC_BP_SP \
   uptr bp = GET_CURRENT_FRAME();              \
-  uptr pc = AsanStackTrace::GetCurrentPc();   \
+  uptr pc = StackTrace::GetCurrentPc();   \
   uptr local_stack;                           \
   uptr sp = (uptr)&local_stack
 
@@ -78,7 +78,7 @@ struct AsanStackTrace {
 // The bp may refer to the current frame or to the caller's frame.
 // fast_unwind is currently unused.
 #define GET_STACK_TRACE_WITH_PC_AND_BP(max_s, pc, bp)               \
-  AsanStackTrace stack;                                             \
+  StackTrace stack;                                             \
   stack.GetStackTrace(max_s, pc, bp)
 
 // NOTE: A Rule of thumb is to retrieve stack trace in the interceptors
@@ -87,7 +87,7 @@ struct AsanStackTrace {
 
 #define GET_STACK_TRACE_HERE(max_size)                        \
   GET_STACK_TRACE_WITH_PC_AND_BP(max_size,                    \
-      AsanStackTrace::GetCurrentPc(), GET_CURRENT_FRAME())
+      StackTrace::GetCurrentPc(), GET_CURRENT_FRAME())
 
 #define GET_STACK_TRACE_HERE_FOR_MALLOC                             \
   GET_STACK_TRACE_HERE(flags()->malloc_context_size)

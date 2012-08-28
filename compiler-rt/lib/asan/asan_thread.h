@@ -31,7 +31,7 @@ class AsanThread;
 class AsanThreadSummary {
  public:
   explicit AsanThreadSummary(LinkerInitialized) { }  // for T0.
-  void Init(u32 parent_tid, AsanStackTrace *stack) {
+  void Init(u32 parent_tid, StackTrace *stack) {
     parent_tid_ = parent_tid;
     announced_ = false;
     tid_ = kInvalidTid;
@@ -58,7 +58,7 @@ class AsanThreadSummary {
   u32 tid_;
   u32 parent_tid_;
   bool announced_;
-  AsanStackTrace stack_;
+  StackTrace stack_;
   AsanThread *thread_;
 };
 
@@ -67,7 +67,7 @@ class AsanThread {
  public:
   explicit AsanThread(LinkerInitialized);  // for T0.
   static AsanThread *Create(u32 parent_tid, thread_callback_t start_routine,
-                            void *arg, AsanStackTrace *stack);
+                            void *arg, StackTrace *stack);
   void Destroy();
 
   void Init();  // Should be called from the thread itself.

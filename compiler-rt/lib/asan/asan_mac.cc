@@ -152,7 +152,7 @@ void AsanLock::Unlock() {
   OSSpinLockUnlock((OSSpinLock*)&opaque_storage_);
 }
 
-void AsanStackTrace::GetStackTrace(uptr max_s, uptr pc, uptr bp) {
+void StackTrace::GetStackTrace(uptr max_s, uptr pc, uptr bp) {
   size = 0;
   trace[0] = pc;
   if ((max_s) > 1) {
@@ -280,7 +280,7 @@ int pthread_workqueue_additem_np(pthread_workqueue_t workq,
 }  // extern "C"
 
 static ALWAYS_INLINE
-void asan_register_worker_thread(int parent_tid, AsanStackTrace *stack) {
+void asan_register_worker_thread(int parent_tid, StackTrace *stack) {
   AsanThread *t = asanThreadRegistry().GetCurrent();
   if (!t) {
     t = AsanThread::Create(parent_tid, 0, 0, stack);
@@ -315,7 +315,7 @@ using namespace __asan;  // NOLINT
 // The caller retains control of the allocated context.
 extern "C"
 asan_block_context_t *alloc_asan_context(void *ctxt, dispatch_function_t func,
-                                         AsanStackTrace *stack) {
+                                         StackTrace *stack) {
   asan_block_context_t *asan_ctxt =
       (asan_block_context_t*) asan_malloc(sizeof(asan_block_context_t), stack);
   asan_ctxt->block = ctxt;

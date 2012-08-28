@@ -137,18 +137,18 @@ class FakeStack {
   FakeFrameLifo call_stack_;
 };
 
-void *asan_memalign(uptr alignment, uptr size, AsanStackTrace *stack);
-void asan_free(void *ptr, AsanStackTrace *stack);
+void *asan_memalign(uptr alignment, uptr size, StackTrace *stack);
+void asan_free(void *ptr, StackTrace *stack);
 
-void *asan_malloc(uptr size, AsanStackTrace *stack);
-void *asan_calloc(uptr nmemb, uptr size, AsanStackTrace *stack);
-void *asan_realloc(void *p, uptr size, AsanStackTrace *stack);
-void *asan_valloc(uptr size, AsanStackTrace *stack);
-void *asan_pvalloc(uptr size, AsanStackTrace *stack);
+void *asan_malloc(uptr size, StackTrace *stack);
+void *asan_calloc(uptr nmemb, uptr size, StackTrace *stack);
+void *asan_realloc(void *p, uptr size, StackTrace *stack);
+void *asan_valloc(uptr size, StackTrace *stack);
+void *asan_pvalloc(uptr size, StackTrace *stack);
 
 int asan_posix_memalign(void **memptr, uptr alignment, uptr size,
-                          AsanStackTrace *stack);
-uptr asan_malloc_usable_size(void *ptr, AsanStackTrace *stack);
+                          StackTrace *stack);
+uptr asan_malloc_usable_size(void *ptr, StackTrace *stack);
 
 uptr asan_mz_size(const void *ptr);
 void asan_mz_force_lock();

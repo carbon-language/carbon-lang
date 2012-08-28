@@ -261,14 +261,14 @@ void ReportSIGSEGV(uptr pc, uptr sp, uptr bp, uptr addr) {
   stack.PrintStack();
 }
 
-void ReportDoubleFree(uptr addr, AsanStackTrace *stack) {
+void ReportDoubleFree(uptr addr, StackTrace *stack) {
   ScopedInErrorReport in_report;
   Report("ERROR: AddressSanitizer attempting double-free on %p:\n", addr);
   stack->PrintStack();
   DescribeHeapAddress(addr, 1);
 }
 
-void ReportFreeNotMalloced(uptr addr, AsanStackTrace *stack) {
+void ReportFreeNotMalloced(uptr addr, StackTrace *stack) {
   ScopedInErrorReport in_report;
   Report("ERROR: AddressSanitizer attempting free on address "
              "which was not malloc()-ed: %p\n", addr);
@@ -276,7 +276,7 @@ void ReportFreeNotMalloced(uptr addr, AsanStackTrace *stack) {
   DescribeHeapAddress(addr, 1);
 }
 
-void ReportMallocUsableSizeNotOwned(uptr addr, AsanStackTrace *stack) {
+void ReportMallocUsableSizeNotOwned(uptr addr, StackTrace *stack) {
   ScopedInErrorReport in_report;
   Report("ERROR: AddressSanitizer attempting to call "
              "malloc_usable_size() for pointer which is "
@@ -285,7 +285,7 @@ void ReportMallocUsableSizeNotOwned(uptr addr, AsanStackTrace *stack) {
   DescribeHeapAddress(addr, 1);
 }
 
-void ReportAsanGetAllocatedSizeNotOwned(uptr addr, AsanStackTrace *stack) {
+void ReportAsanGetAllocatedSizeNotOwned(uptr addr, StackTrace *stack) {
   ScopedInErrorReport in_report;
   Report("ERROR: AddressSanitizer attempting to call "
              "__asan_get_allocated_size() for pointer which is "
@@ -296,7 +296,7 @@ void ReportAsanGetAllocatedSizeNotOwned(uptr addr, AsanStackTrace *stack) {
 
 void ReportStringFunctionMemoryRangesOverlap(
     const char *function, const char *offset1, uptr length1,
-    const char *offset2, uptr length2, AsanStackTrace *stack) {
+    const char *offset2, uptr length2, StackTrace *stack) {
   ScopedInErrorReport in_report;
   Report("ERROR: AddressSanitizer %s-param-overlap: "
              "memory ranges [%p,%p) and [%p, %p) overlap\n", \
@@ -309,7 +309,7 @@ void ReportStringFunctionMemoryRangesOverlap(
 // ----------------------- Mac-specific reports ----------------- {{{1
 
 void WarnMacFreeUnallocated(
-    uptr addr, uptr zone_ptr, const char *zone_name, AsanStackTrace *stack) {
+    uptr addr, uptr zone_ptr, const char *zone_name, StackTrace *stack) {
   // Just print a warning here.
   Printf("free_common(%p) -- attempting to free unallocated memory.\n"
              "AddressSanitizer is ignoring this error on Mac OS now.\n",
@@ -320,7 +320,7 @@ void WarnMacFreeUnallocated(
 }
 
 void ReportMacMzReallocUnknown(
-    uptr addr, uptr zone_ptr, const char *zone_name, AsanStackTrace *stack) {
+    uptr addr, uptr zone_ptr, const char *zone_name, StackTrace *stack) {
   ScopedInErrorReport in_report;
   Printf("mz_realloc(%p) -- attempting to realloc unallocated memory.\n"
              "This is an unrecoverable problem, exiting now.\n",
@@ -331,7 +331,7 @@ void ReportMacMzReallocUnknown(
 }
 
 void ReportMacCfReallocUnknown(
-    uptr addr, uptr zone_ptr, const char *zone_name, AsanStackTrace *stack) {
+    uptr addr, uptr zone_ptr, const char *zone_name, StackTrace *stack) {
   ScopedInErrorReport in_report;
   Printf("cf_realloc(%p) -- attempting to realloc unallocated memory.\n"
              "This is an unrecoverable problem, exiting now.\n",

@@ -123,7 +123,7 @@ uptr Unwind_GetIP(struct _Unwind_Context *ctx) {
 
 _Unwind_Reason_Code Unwind_Trace(struct _Unwind_Context *ctx,
     void *param) {
-  AsanStackTrace *b = (AsanStackTrace*)param;
+  StackTrace *b = (StackTrace*)param;
   CHECK(b->size < b->max_size);
   uptr pc = Unwind_GetIP(ctx);
   b->trace[b->size++] = pc;
@@ -131,7 +131,7 @@ _Unwind_Reason_Code Unwind_Trace(struct _Unwind_Context *ctx,
   return UNWIND_CONTINUE;
 }
 
-void AsanStackTrace::GetStackTrace(uptr max_s, uptr pc, uptr bp) {
+void StackTrace::GetStackTrace(uptr max_s, uptr pc, uptr bp) {
   size = 0;
   trace[0] = pc;
   if ((max_s) > 1) {
