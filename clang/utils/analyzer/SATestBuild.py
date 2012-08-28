@@ -42,6 +42,7 @@ import os
 import csv
 import sys
 import glob
+import math
 import shutil
 import time
 import plistlib
@@ -50,6 +51,26 @@ from subprocess import check_call, CalledProcessError
 #------------------------------------------------------------------------------
 # Helper functions.
 #------------------------------------------------------------------------------
+
+def detectCPUs():
+    """
+    Detects the number of CPUs on a system. Cribbed from pp.
+    """
+    # Linux, Unix and MacOS:
+    if hasattr(os, "sysconf"):
+        if os.sysconf_names.has_key("SC_NPROCESSORS_ONLN"):
+            # Linux & Unix:
+            ncpus = os.sysconf("SC_NPROCESSORS_ONLN")
+            if isinstance(ncpus, int) and ncpus > 0:
+                return ncpus
+        else: # OSX:
+            return int(capture(['sysctl', '-n', 'hw.ncpu']))
+    # Windows:
+    if os.environ.has_key("NUMBER_OF_PROCESSORS"):
+        ncpus = int(os.environ["NUMBER_OF_PROCESSORS"])
+        if ncpus > 0:
+            return ncpus
+    return 1 # Default
 
 def which(command, paths = None):
    """which(command, [paths]) - Look up the given command in the paths string
@@ -120,6 +141,9 @@ if not Clang:
     print "Error: cannot find 'clang' in PATH"
     sys.exit(-1)
 
+# Number of jobs.
+Jobs = math.ceil(detectCPUs() * 0.75)
+
 # Project map stores info about all the "registered" projects.
 ProjectMapFile = "projectMap.csv"
 
@@ -186,6 +210,11 @@ def runScanBuild(Dir, SBOutputDir, PBuildLogFile):
         SBCommandFile = open(BuildScriptPath, "r")
         SBPrefix = "scan-build " + SBOptions + " "
         for Command in SBCommandFile:
+            # If using 'make', auto imply a -jX argument
+            # to speed up analysis.  xcodebuild will
+            # automatically use the maximum number of cores.
+            if Command.startsWith("make "):
+                Command += "-j" + Jobs
             SBCommand = SBPrefix + Command
             if Verbose == 1:        
                 print "  Executing: %s" % (SBCommand,)
