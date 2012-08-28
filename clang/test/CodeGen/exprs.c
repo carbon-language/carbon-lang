@@ -182,5 +182,5 @@ void f17() {
   __int128 x = 2;
   x--;
   extfunc(x);
-// CHECK: add nsw i128 %0, -1
+// CHECK: add nsw i128 %{{.}}, -1
 }
