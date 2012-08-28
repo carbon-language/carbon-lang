@@ -566,6 +566,16 @@ bool CursorVisitor::VisitDeclContext(DeclContext *DC) {
       continue;
     CXCursor Cursor = MakeCXCursor(D, TU, RegionOfInterest);
 
+    // Ignore synthesized ivars here, otherwise if we have something like:
+    //   @synthesize prop = _prop;
+    // and '_prop' is not declared, we will encounter a '_prop' ivar before
+    // encountering the 'prop' synthesize declaration and we will think that
+    // we passed the region-of-interest.
+    if (ObjCIvarDecl *ivarD = dyn_cast<ObjCIvarDecl>(D)) {
+      if (ivarD->getSynthesize())
+        continue;
+    }
+
     // FIXME: ObjCClassRef/ObjCProtocolRef for forward class/protocol
     // declarations is a mismatch with the compiler semantics.
     if (Cursor.kind == CXCursor_ObjCInterfaceDecl) {
