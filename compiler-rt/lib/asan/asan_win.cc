@@ -32,15 +32,15 @@ static AsanLock dbghelp_lock(LINKER_INITIALIZED);
 static bool dbghelp_initialized = false;
 #pragma comment(lib, "dbghelp.lib")
 
-void StackTrace::GetStackTrace(uptr max_s, uptr pc, uptr bp) {
-  max_size = max_s;
+void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp) {
+  stack->max_size = max_s;
   void *tmp[kStackTraceMax];
 
   // FIXME: CaptureStackBackTrace might be too slow for us.
   // FIXME: Compare with StackWalk64.
   // FIXME: Look at LLVMUnhandledExceptionFilter in Signals.inc
-  uptr cs_ret = CaptureStackBackTrace(1, max_size, tmp, 0),
-         offset = 0;
+  uptr cs_ret = CaptureStackBackTrace(1, stack->max_size, tmp, 0);
+  uptr offset = 0;
   // Skip the RTL frames by searching for the PC in the stacktrace.
   // FIXME: this doesn't work well for the malloc/free stacks yet.
   for (uptr i = 0; i < cs_ret; i++) {
@@ -50,9 +50,9 @@ void StackTrace::GetStackTrace(uptr max_s, uptr pc, uptr bp) {
     break;
   }
 
-  size = cs_ret - offset;
-  for (uptr i = 0; i < size; i++)
-    trace[i] = (uptr)tmp[i + offset];
+  stack->size = cs_ret - offset;
+  for (uptr i = 0; i < stack->size; i++)
+    stack->trace[i] = (uptr)tmp[i + offset];
 }
 
 bool WinSymbolize(const void *addr, char *out_buffer, int buffer_size) {
