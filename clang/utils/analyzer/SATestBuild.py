@@ -47,34 +47,9 @@ import time
 import plistlib
 from subprocess import check_call, CalledProcessError
 
-# Project map stores info about all the "registered" projects.
-ProjectMapFile = "projectMap.csv"
-
-# Names of the project specific scripts.
-# The script that needs to be executed before the build can start.
-CleanupScript = "cleanup_run_static_analyzer.sh"
-# This is a file containing commands for scan-build.  
-BuildScript = "run_static_analyzer.cmd"
-
-# The log file name.
-LogFolderName = "Logs"
-BuildLogName = "run_static_analyzer.log"
-# Summary file - contains the summary of the failures. Ex: This info can be be  
-# displayed when buildbot detects a build failure.
-NumOfFailuresInSummary = 10
-FailuresSummaryFileName = "failures.txt"
-# Summary of the result diffs.
-DiffsSummaryFileName = "diffs.txt"
-
-# The scan-build result directory.
-SBOutputDirName = "ScanBuildResults"
-SBOutputDirReferencePrefix = "Ref"
-
-# The list of checkers used during analyzes.
-# Currently, consists of all the non experimental checkers.
-Checkers="alpha.security.taint,core,deadcode,security,unix,osx"
-
-Verbose = 1
+#------------------------------------------------------------------------------
+# Helper functions.
+#------------------------------------------------------------------------------
 
 def which(command, paths = None):
    """which(command, [paths]) - Look up the given command in the paths string
@@ -107,12 +82,6 @@ def which(command, paths = None):
 
    return None
 
-# Find Clang for static analysis.
-Clang = which("clang", os.environ['PATH'])
-if not Clang:
-    print "Error: cannot find 'clang' in PATH"
-    sys.exit(-1)
-
 # Make sure we flush the output after every print statement.
 class flushfile(object):
     def __init__(self, f):
@@ -140,6 +109,49 @@ def getSBOutputDirName(IsReferenceBuild) :
         return SBOutputDirReferencePrefix + SBOutputDirName
     else :
         return SBOutputDirName
+
+#------------------------------------------------------------------------------
+# Configuration setup.
+#------------------------------------------------------------------------------
+
+# Find Clang for static analysis.
+Clang = which("clang", os.environ['PATH'])
+if not Clang:
+    print "Error: cannot find 'clang' in PATH"
+    sys.exit(-1)
+
+# Project map stores info about all the "registered" projects.
+ProjectMapFile = "projectMap.csv"
+
+# Names of the project specific scripts.
+# The script that needs to be executed before the build can start.
+CleanupScript = "cleanup_run_static_analyzer.sh"
+# This is a file containing commands for scan-build.  
+BuildScript = "run_static_analyzer.cmd"
+
+# The log file name.
+LogFolderName = "Logs"
+BuildLogName = "run_static_analyzer.log"
+# Summary file - contains the summary of the failures. Ex: This info can be be  
+# displayed when buildbot detects a build failure.
+NumOfFailuresInSummary = 10
+FailuresSummaryFileName = "failures.txt"
+# Summary of the result diffs.
+DiffsSummaryFileName = "diffs.txt"
+
+# The scan-build result directory.
+SBOutputDirName = "ScanBuildResults"
+SBOutputDirReferencePrefix = "Ref"
+
+# The list of checkers used during analyzes.
+# Currently, consists of all the non experimental checkers.
+Checkers="alpha.security.taint,core,deadcode,security,unix,osx"
+
+Verbose = 1
+
+#------------------------------------------------------------------------------
+# Test harness logic.
+#------------------------------------------------------------------------------
 
 # Run pre-processing script if any.
 def runCleanupScript(Dir, PBuildLogFile):
