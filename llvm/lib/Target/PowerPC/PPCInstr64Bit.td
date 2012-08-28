@@ -296,12 +296,14 @@ def MFLR8  : XFXForm_1_ext<31, 339, 8, (outs G8RC:$rT), (ins),
 
 let PPC970_Unit = 1 in {  // FXU Operations.
 
+let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in {
 def LI8  : DForm_2_r0<14, (outs G8RC:$rD), (ins symbolLo64:$imm),
                       "li $rD, $imm", IntSimple,
                       [(set G8RC:$rD, immSExt16:$imm)]>;
 def LIS8 : DForm_2_r0<15, (outs G8RC:$rD), (ins symbolHi64:$imm),
                       "lis $rD, $imm", IntSimple,
                       [(set G8RC:$rD, imm16ShiftedSExt:$imm)]>;
+}
 
 // Logical ops.
 def NAND8: XForm_6<31, 476, (outs G8RC:$rA), (ins G8RC:$rS, G8RC:$rB),

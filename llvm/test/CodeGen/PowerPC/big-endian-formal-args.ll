@@ -2,10 +2,10 @@
 
 declare void @bar(i64 %x, i64 %y)
 
-; CHECK: li {{[53]}}, 0
+; CHECK: li 3, 0
 ; CHECK: li 4, 2
+; CHECK: li 5, 0
 ; CHECK: li 6, 3
-; CHECK: mr {{[53]}}, {{[53]}}
 
 define void @foo() {
   call void @bar(i64 2, i64 3)
