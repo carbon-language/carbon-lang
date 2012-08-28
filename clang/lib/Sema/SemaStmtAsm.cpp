@@ -538,8 +538,8 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
 
     // Canonicalize the opcode to lower case.
     SmallString<128> Opcode;
-    for (unsigned j = 0, e = IDVal.size(); j != e; ++j)
-      Opcode.push_back(tolower(IDVal[j]));
+    for (unsigned i = 0, e = IDVal.size(); i != e; ++i)
+      Opcode.push_back(tolower(IDVal[i]));
 
     // Parse the operands.
     llvm::SMLoc IDLoc;
