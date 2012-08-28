@@ -60,12 +60,15 @@ private:
   /// union.
   unsigned char OpKind; // MachineOperandType
 
-  /// SubReg - Subregister number, only valid for MO_Register.  A value of 0
-  /// indicates the MO_Register has no subReg.
-  unsigned char SubReg;
+  // This union is discriminated by OpKind.
+  union {
+    /// SubReg - Subregister number, only valid for MO_Register.  A value of 0
+    /// indicates the MO_Register has no subReg.
+    unsigned char SubReg;
 
-  /// TargetFlags - This is a set of target-specific operand flags.
-  unsigned char TargetFlags;
+    /// TargetFlags - This is a set of target-specific operand flags.
+    unsigned char TargetFlags;
+  };
 
   /// IsDef/IsImp/IsKill/IsDead flags - These are only valid for MO_Register
   /// operands.
@@ -176,9 +179,17 @@ public:
   ///
   MachineOperandType getType() const { return (MachineOperandType)OpKind; }
 
-  unsigned char getTargetFlags() const { return TargetFlags; }
-  void setTargetFlags(unsigned char F) { TargetFlags = F; }
-  void addTargetFlag(unsigned char F) { TargetFlags |= F; }
+  unsigned char getTargetFlags() const {
+    return isReg() ? 0 : TargetFlags;
+  }
+  void setTargetFlags(unsigned char F) {
+    assert(!isReg() && "Register operands can't have target flags");
+    TargetFlags = F;
+  }
+  void addTargetFlag(unsigned char F) {
+    assert(!isReg() && "Register operands can't have target flags");
+    TargetFlags |= F;
+  }
 
 
   /// getParent - Return the instruction that this operand belongs to.

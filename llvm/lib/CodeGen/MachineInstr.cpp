@@ -208,8 +208,8 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
 hash_code llvm::hash_value(const MachineOperand &MO) {
   switch (MO.getType()) {
   case MachineOperand::MO_Register:
-    return hash_combine(MO.getType(), MO.getTargetFlags(), MO.getReg(),
-                        MO.getSubReg(), MO.isDef());
+    // Register operands don't have target flags.
+    return hash_combine(MO.getType(), MO.getReg(), MO.getSubReg(), MO.isDef());
   case MachineOperand::MO_Immediate:
     return hash_combine(MO.getType(), MO.getTargetFlags(), MO.getImm());
   case MachineOperand::MO_CImmediate:
