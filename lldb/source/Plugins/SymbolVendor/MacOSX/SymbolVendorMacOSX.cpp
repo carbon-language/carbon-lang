@@ -50,8 +50,17 @@ UUIDsMatch(Module *module, ObjectFile *ofile)
     {
         // Make sure the UUIDs match
         lldb_private::UUID dsym_uuid;
-        if (ofile->GetUUID(&dsym_uuid))
-            return dsym_uuid == module->GetUUID();
+
+        if (!ofile->GetUUID(&dsym_uuid))
+        {
+            Host::SystemLog (Host::eSystemLogWarning, 
+                             "warning: failed to get the uuid for object file: '%s'\n", 
+                             ofile->GetFileSpec().GetFilename().GetCString());
+            return false;
+        }
+
+        if (dsym_uuid == module->GetUUID())
+            return true;
 
         // Emit some warning messages since the UUIDs do not match!
         const FileSpec &m_file_spec = module->GetFileSpec();
