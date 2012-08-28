@@ -321,6 +321,16 @@ bool Stmt::hasImplicitControlFlow() const {
   }
 }
 
+/// getNumPlusOperands - Return the number of output operands that have a "+"
+/// constraint.
+unsigned AsmStmt::getNumPlusOperands() const {
+  unsigned Res = 0;
+  for (unsigned i = 0, e = getNumOutputs(); i != e; ++i)
+    if (isOutputPlusConstraint(i))
+      ++Res;
+  return Res;
+}
+
 StringRef GCCAsmStmt::getClobber(unsigned i) const {
   return getClobberStringLiteral(i)->getString();
 }
@@ -336,16 +346,6 @@ StringRef GCCAsmStmt::getOutputConstraint(unsigned i) const {
   return getOutputConstraintLiteral(i)->getString();
 }
 
-/// getNumPlusOperands - Return the number of output operands that have a "+"
-/// constraint.
-unsigned GCCAsmStmt::getNumPlusOperands() const {
-  unsigned Res = 0;
-  for (unsigned i = 0, e = getNumOutputs(); i != e; ++i)
-    if (isOutputPlusConstraint(i))
-      ++Res;
-  return Res;
-}
-
 Expr *GCCAsmStmt::getInputExpr(unsigned i) {
   return cast<Expr>(Exprs[i + NumOutputs]);
 }
@@ -353,13 +353,11 @@ void GCCAsmStmt::setInputExpr(unsigned i, Expr *E) {
   Exprs[i + NumOutputs] = E;
 }
 
-
 /// getInputConstraint - Return the specified input constraint.  Unlike output
 /// constraints, these can be empty.
 StringRef GCCAsmStmt::getInputConstraint(unsigned i) const {
   return getInputConstraintLiteral(i)->getString();
 }
-
 
 void GCCAsmStmt::setOutputsAndInputsAndClobbers(ASTContext &C,
                                              IdentifierInfo **Names,
@@ -584,11 +582,26 @@ Expr *MSAsmStmt::getOutputExpr(unsigned i) {
   return cast<Expr>(Exprs[i]);
 }
 
+/// getOutputConstraint - Return the constraint string for the specified
+/// output operand.  All output constraints are known to be non-empty (either
+/// '=' or '+').
+StringRef MSAsmStmt::getOutputConstraint(unsigned i) const {
+  // FIXME: Compute constraints.
+  return StringRef();
+}
+
 Expr *MSAsmStmt::getInputExpr(unsigned i) {
   return cast<Expr>(Exprs[i + NumOutputs]);
 }
 void MSAsmStmt::setInputExpr(unsigned i, Expr *E) {
   Exprs[i + NumOutputs] = E;
+}
+
+/// getInputConstraint - Return the specified input constraint.  Unlike output
+/// constraints, these can be empty.
+StringRef MSAsmStmt::getInputConstraint(unsigned i) const {
+  // FIXME: Compute constraints.
+  return StringRef();
 }
 
 QualType CXXCatchStmt::getCaughtType() const {

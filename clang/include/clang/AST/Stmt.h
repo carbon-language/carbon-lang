@@ -1426,6 +1426,24 @@ public:
     return StringRef();
   }
 
+  /// getOutputConstraint - Return the constraint string for the specified
+  /// output operand.  All output constraints are known to be non-empty (either
+  /// '=' or '+').
+  virtual StringRef getOutputConstraint(unsigned i) const = 0;
+
+  /// isOutputPlusConstraint - Return true if the specified output constraint
+  /// is a "+" constraint (which is both an input and an output) or false if it
+  /// is an "=" constraint (just an output).
+  bool isOutputPlusConstraint(unsigned i) const {
+    return getOutputConstraint(i)[0] == '+';
+  }
+
+  virtual const Expr *getOutputExpr(unsigned i) const = 0;
+
+  /// getNumPlusOperands - Return the number of output operands that have a "+"
+  /// constraint.
+  unsigned getNumPlusOperands() const;
+
   //===--- Input operands ---===//
 
   unsigned getNumInputs() const { return NumInputs; }
@@ -1440,6 +1458,12 @@ public:
 
     return StringRef();
   }
+
+  /// getInputConstraint - Return the specified input constraint.  Unlike output
+  /// constraints, these can be empty.
+  virtual StringRef getInputConstraint(unsigned i) const = 0;
+
+  virtual const Expr *getInputExpr(unsigned i) const = 0;
 
   //===--- Other ---===//
 
@@ -1581,9 +1605,6 @@ public:
 
   //===--- Output operands ---===//
 
-  /// getOutputConstraint - Return the constraint string for the specified
-  /// output operand.  All output constraints are known to be non-empty (either
-  /// '=' or '+').
   StringRef getOutputConstraint(unsigned i) const;
 
   const StringLiteral *getOutputConstraintLiteral(unsigned i) const {
@@ -1599,21 +1620,8 @@ public:
     return const_cast<GCCAsmStmt*>(this)->getOutputExpr(i);
   }
 
-  /// isOutputPlusConstraint - Return true if the specified output constraint
-  /// is a "+" constraint (which is both an input and an output) or false if it
-  /// is an "=" constraint (just an output).
-  bool isOutputPlusConstraint(unsigned i) const {
-    return getOutputConstraint(i)[0] == '+';
-  }
-
-  /// getNumPlusOperands - Return the number of output operands that have a "+"
-  /// constraint.
-  unsigned getNumPlusOperands() const;
-
   //===--- Input operands ---===//
 
-  /// getInputConstraint - Return the specified input constraint.  Unlike output
-  /// constraints, these can be empty.
   StringRef getInputConstraint(unsigned i) const;
 
   const StringLiteral *getInputConstraintLiteral(unsigned i) const {
@@ -1706,6 +1714,8 @@ public:
 
   //===--- Output operands ---===//
 
+  StringRef getOutputConstraint(unsigned i) const;
+
   Expr *getOutputExpr(unsigned i);
 
   const Expr *getOutputExpr(unsigned i) const {
@@ -1713,6 +1723,8 @@ public:
   }
 
   //===--- Input operands ---===//
+
+  StringRef getInputConstraint(unsigned i) const;
 
   Expr *getInputExpr(unsigned i);
   void setInputExpr(unsigned i, Expr *E);
