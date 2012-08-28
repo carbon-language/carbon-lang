@@ -464,11 +464,11 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
 
   // Udiv ((Lshl x, C1) , C2) ->  x / (C2 * 1<<C1);
   if (ConstantInt *C2 = dyn_cast<ConstantInt>(Op1)) {
-    Value *X = 0, *C1 = 0;
-    if (match(Op0, m_LShr(m_Value(X), m_Value(C1))) && C2->getBitWidth() < 65) {
-      uint64_t NC = cast<ConstantInt>(C2)->getZExtValue() *
-                    (1<< cast<ConstantInt>(C1)->getZExtValue());
-      return BinaryOperator::CreateUDiv(X, ConstantInt::get(I.getType(), NC));
+    Value *X;
+    ConstantInt *C1;
+    if (match(Op0, m_LShr(m_Value(X), m_ConstantInt(C1)))) {
+      APInt NC = C2->getValue().shl(C1->getZExtValue());
+      return BinaryOperator::CreateUDiv(X, Builder->getInt(NC));
     }
   }
 
@@ -545,11 +545,11 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
 
   // Sdiv ((Ashl x, C1) , C2) ->  x / (C2 * 1<<C1);
   if (ConstantInt *C2 = dyn_cast<ConstantInt>(Op1)) {
-    Value *X = 0, *C1 = 0;
-    if (match(Op0, m_AShr(m_Value(X), m_Value(C1))) && C2->getBitWidth() < 65) {
-      uint64_t NC = cast<ConstantInt>(C2)->getZExtValue() *
-                    (1<< cast<ConstantInt>(C1)->getZExtValue());
-      return BinaryOperator::CreateSDiv(X, ConstantInt::get(I.getType(), NC));
+    Value *X;
+    ConstantInt *C1;
+    if (match(Op0, m_AShr(m_Value(X), m_ConstantInt(C1)))) {
+      APInt NC = C2->getValue().shl(C1->getZExtValue());
+      return BinaryOperator::CreateSDiv(X, Builder->getInt(NC));
     }
   }
 
