@@ -31,11 +31,11 @@ class DiagnosticBuilder;
 enum ConflictMarkerKind {
   /// Not within a conflict marker.
   CMK_None,
-  /// A normal or diff3 conflict marker, initiated by at least 7 <s,
-  /// separated by at least 7 =s or |s, and terminated by at least 7 >s.
+  /// A normal or diff3 conflict marker, initiated by at least 7 "<"s,
+  /// separated by at least 7 "="s or "|"s, and terminated by at least 7 ">"s.
   CMK_Normal,
-  /// A Perforce-style conflict marker, initiated by 4 >s, separated by 4 =s,
-  /// and terminated by 4 <s.
+  /// A Perforce-style conflict marker, initiated by 4 ">"s,
+  /// separated by 4 "="s, and terminated by 4 "<"s.
   CMK_Perforce
 };
 
