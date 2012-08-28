@@ -66,16 +66,16 @@ void isdoxy15(void);
 /// Doxygen comment.  IS_DOXYGEN_END
 void isdoxy16(void);
 
-/// isdoxy17 IS_DOXYGEN_START
-// Not a Doxygen comment, but still picked up.
-/// IS_DOXYGEN_END
+/// NOT_DOXYGEN
+// NOT_DOXYGEN
+/// isdoxy17 IS_DOXYGEN_START IS_DOXYGEN_END
 void isdoxy17(void);
 
 unsigned
 // NOT_DOXYGEN
-/// isdoxy18 IS_DOXYGEN_START
-// Not a Doxygen comment, but still picked up.
-/// IS_DOXYGEN_END
+/// NOT_DOXYGEN
+// NOT_DOXYGEN
+/// isdoxy18 IS_DOXYGEN_START IS_DOXYGEN_END
 // NOT_DOXYGEN
 int isdoxy18(void);
 
@@ -168,7 +168,7 @@ class test42 {
 ///\brief
 ///
 /// Some malformed command.
-/* \*/
+/** \*/
 /**
  * \brief Aaa aaaaaaa aaaa.
  * IS_DOXYGEN_END
@@ -937,7 +937,7 @@ enum class comment_to_xml_conversion_17 {
 // CHECK: annotate-comments.cpp:412:14: VarDecl=comment_to_xml_conversion_05:{{.*}} FullCommentAsXML=[<Variable file="{{[^"]+}}annotate-comments.cpp" line="412" column="14"><Name>comment_to_xml_conversion_05</Name><USR>c:@C@comment_to_xml_conversion_01@comment_to_xml_conversion_05</USR><Abstract><Para> Aaa.</Para></Abstract></Variable>]
 // CHECK: annotate-comments.cpp:415:8: CXXMethod=operator():{{.*}} FullCommentAsXML=[<Function isInstanceMethod="1" file="{{[^"]+}}annotate-comments.cpp" line="415" column="8"><Name>operator()</Name><USR>c:@C@comment_to_xml_conversion_01@F@operator()#I#</USR><Parameters><Parameter><Name>aaa</Name><Index>0</Index><Direction isExplicit="0">in</Direction><Discussion><Para> Blah blah.</Para></Discussion></Parameter></Parameters></Function>]
 // CHECK: annotate-comments.cpp:418:3: CXXConversion=operator _Bool:{{.*}} FullCommentAsXML=[<Function isInstanceMethod="1" file="{{[^"]+}}annotate-comments.cpp" line="418" column="3"><Name>operator _Bool</Name><USR>c:@C@comment_to_xml_conversion_01@F@operator _Bool#</USR><Abstract><Para> Aaa.</Para></Abstract></Function>]
-// CHECK: annotate-comments.cpp:421:15: TypedefDecl=comment_to_xml_conversion_06:{{.*}} FullCommentAsXML=[<Typedef file="{{[^"]+}}annotate-comments.cpp" line="421" column="15"><Name>comment_to_xml_conversion_06</Name><USR>c:annotate-comments.cpp@8492@C@comment_to_xml_conversion_01@T@comment_to_xml_conversion_06</USR><Abstract><Para> Aaa.</Para></Abstract></Typedef>]
+// CHECK: annotate-comments.cpp:421:15: TypedefDecl=comment_to_xml_conversion_06:{{.*}} FullCommentAsXML=[<Typedef file="{{[^"]+}}annotate-comments.cpp" line="421" column="15"><Name>comment_to_xml_conversion_06</Name><USR>c:annotate-comments.cpp@8453@C@comment_to_xml_conversion_01@T@comment_to_xml_conversion_06</USR><Abstract><Para> Aaa.</Para></Abstract></Typedef>]
 // CHECK: annotate-comments.cpp:424:9: TypeAliasDecl=comment_to_xml_conversion_07:{{.*}} FullCommentAsXML=[<Typedef file="{{[^"]+}}annotate-comments.cpp" line="424" column="9"><Name>comment_to_xml_conversion_07</Name><USR>c:@C@comment_to_xml_conversion_01@comment_to_xml_conversion_07</USR><Abstract><Para> Aaa.</Para></Abstract></Typedef>]
 // CHECK: annotate-comments.cpp:431:3: UnexposedDecl=comment_to_xml_conversion_09:{{.*}} FullCommentAsXML=[<Typedef file="{{[^"]+}}annotate-comments.cpp" line="431" column="3"><Name>comment_to_xml_conversion_09</Name><USR>c:@C@comment_to_xml_conversion_01@comment_to_xml_conversion_09</USR><Abstract><Para> Aaa.</Para></Abstract></Typedef>]
 // CHECK: annotate-comments.cpp:436:6: FunctionTemplate=comment_to_xml_conversion_10:{{.*}} FullCommentAsXML=[<Function templateKind="template" file="{{[^"]+}}annotate-comments.cpp" line="436" column="6"><Name>comment_to_xml_conversion_10</Name><USR>c:@FT@&gt;2#T#Tcomment_to_xml_conversion_10#t0.0#t0.1#</USR><Abstract><Para> Aaa.</Para></Abstract></Function>]
