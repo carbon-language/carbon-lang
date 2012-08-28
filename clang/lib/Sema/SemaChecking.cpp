@@ -4356,6 +4356,46 @@ std::string PrettyPrintInRange(const llvm::APSInt &Value, IntRange Range) {
   return ValueInRange.toString(10);
 }
 
+static bool IsImplicitBoolFloatConversion(Sema &S, Expr *Ex, bool ToBool) {
+  if (!isa<ImplicitCastExpr>(Ex))
+    return false;
+
+  Expr *InnerE = Ex->IgnoreParenImpCasts();
+  const Type *Target = S.Context.getCanonicalType(Ex->getType()).getTypePtr();
+  const Type *Source =
+    S.Context.getCanonicalType(InnerE->getType()).getTypePtr();
+  if (Target->isDependentType())
+    return false;
+
+  const BuiltinType *FloatCandidateBT =
+    dyn_cast<BuiltinType>(ToBool ? Source : Target);
+  const Type *BoolCandidateType = ToBool ? Target : Source;
+
+  return (BoolCandidateType->isSpecificBuiltinType(BuiltinType::Bool) &&
+          FloatCandidateBT && (FloatCandidateBT->isFloatingPoint()));
+}
+
+void CheckImplicitArgumentConversions(Sema &S, CallExpr *TheCall,
+                                      SourceLocation CC) {
+  unsigned NumArgs = TheCall->getNumArgs();
+  for (unsigned i = 0; i < NumArgs; ++i) {
+    Expr *CurrA = TheCall->getArg(i);
+    if (!IsImplicitBoolFloatConversion(S, CurrA, true))
+      continue;
+
+    bool IsSwapped = ((i > 0) &&
+        IsImplicitBoolFloatConversion(S, TheCall->getArg(i - 1), false));
+    IsSwapped |= ((i < (NumArgs - 1)) &&
+        IsImplicitBoolFloatConversion(S, TheCall->getArg(i + 1), false));
+    if (IsSwapped) {
+      // Warn on this floating-point to bool conversion.
+      DiagnoseImpCast(S, CurrA->IgnoreParenImpCasts(),
+                      CurrA->getType(), CC,
+                      diag::warn_impcast_floating_point_to_bool);
+    }
+  }
+}
+
 void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
                              SourceLocation CC, bool *ICContext = 0) {
   if (E->isTypeDependent() || E->isValueDependent()) return;
@@ -4491,6 +4531,26 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
       }
     }
 
+    // If the target is bool, warn if expr is a function or method call.
+    if (Target->isSpecificBuiltinType(BuiltinType::Bool) &&
+        isa<CallExpr>(E)) {
+      // Check last argument of function call to see if it is an
+      // implicit cast from a type matching the type the result
+      // is being cast to.
+      CallExpr *CEx = cast<CallExpr>(E);
+      unsigned NumArgs = CEx->getNumArgs();
+      if (NumArgs > 0) {
+        Expr *LastA = CEx->getArg(NumArgs - 1);
+        Expr *InnerE = LastA->IgnoreParenImpCasts();
+        const Type *InnerType =
+          S.Context.getCanonicalType(InnerE->getType()).getTypePtr();
+        if (isa<ImplicitCastExpr>(LastA) && (InnerType == Target)) {
+          // Warn on this floating-point to bool conversion
+          DiagnoseImpCast(S, E, T, CC,
+                          diag::warn_impcast_floating_point_to_bool);
+        }
+      }
+    }
     return;
   }
 
@@ -4660,6 +4720,10 @@ void AnalyzeImplicitConversions(Sema &S, Expr *OrigE, SourceLocation CC) {
     CheckConditionalOperator(S, CO, CC, T);
     return;
   }
+
+  // Check implicit argument conversions for function calls.
+  if (CallExpr *Call = dyn_cast<CallExpr>(E))
+    CheckImplicitArgumentConversions(S, Call, CC);
 
   // Go ahead and check any implicit conversions we might have skipped.
   // The non-canonical typecheck is just an optimization;

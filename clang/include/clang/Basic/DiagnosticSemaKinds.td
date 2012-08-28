@@ -1930,6 +1930,9 @@ def warn_non_literal_null_pointer : Warning<
 def warn_impcast_null_pointer_to_integer : Warning<
     "implicit conversion of NULL constant to %0">,
     InGroup<NullConversion>;
+def warn_impcast_floating_point_to_bool : Warning<
+    "implicit conversion turns floating-point number into bool: %0 to %1">,
+    InGroup<ImplicitConversionFloatingPointToBool>;
 def warn_impcast_function_to_bool : Warning<
     "address of function %q0 will always evaluate to 'true'">,
     InGroup<BoolConversion>;
