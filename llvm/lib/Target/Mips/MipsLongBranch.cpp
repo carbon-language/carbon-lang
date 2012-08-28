@@ -257,10 +257,10 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
     LongBrMBB->addSuccessor(BalTgtMBB);
     BalTgtMBB->addSuccessor(TgtMBB);
 
-    uint64_t TgtAddress = MBBInfos[TgtMBB->getNumber()].Address;
-    uint64_t Offset = TgtAddress - (I.Address + I.Size - 20);
-    uint64_t Lo = Offset & 0xffff;
-    uint64_t Hi = ((Offset + 0x8000) >> 16) & 0xffff;
+    int64_t TgtAddress = MBBInfos[TgtMBB->getNumber()].Address;
+    int64_t Offset = TgtAddress - (I.Address + I.Size - 20);
+    int64_t Lo = SignExtend64<16>(Offset & 0xffff);
+    int64_t Hi = SignExtend64<16>(((Offset + 0x8000) >> 16) & 0xffff);
 
     if (ABI != MipsSubtarget::N64) {
       // $longbr:
@@ -317,8 +317,9 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
       // $fallthrough:
       //
 
-      uint64_t Higher = ((Offset + 0x80008000) >> 32) & 0xffff;
-      uint64_t Highest = ((Offset + 0x800080008000LL) >> 48) & 0xffff;
+      int64_t Higher = SignExtend64<16>(((Offset + 0x80008000) >> 32) & 0xffff);
+      int64_t Highest =
+        SignExtend64<16>(((Offset + 0x800080008000LL) >> 48) & 0xffff);
 
       Pos = LongBrMBB->begin();
 
@@ -412,7 +413,7 @@ bool MipsLongBranch::runOnMachineFunction(MachineFunction &F) {
         continue;
 
       I->HasLongBranch = true;
-      I->Size += LongBranchSeqSize;
+      I->Size += LongBranchSeqSize * 4;
       ++LongBranches;
       EverMadeChange = MadeChange = true;
     }
@@ -427,7 +428,7 @@ bool MipsLongBranch::runOnMachineFunction(MachineFunction &F) {
 
     uint64_t Address = 0;
 
-    for (I = MBBInfos.begin(); I != E; ++I, Address += I->Size)
+    for (I = MBBInfos.begin(); I != E; Address += I->Size, ++I)
       I->Address = Address;
   }
 
