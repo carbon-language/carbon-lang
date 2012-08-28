@@ -152,12 +152,14 @@ void AsanLock::Unlock() {
   OSSpinLockUnlock((OSSpinLock*)&opaque_storage_);
 }
 
-void StackTrace::GetStackTrace(uptr max_s, uptr pc, uptr bp) {
-  size = 0;
-  trace[0] = pc;
+void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp) {
+  stack->size = 0;
+  stack->trace[0] = pc;
   if ((max_s) > 1) {
-    max_size = max_s;
-    FastUnwindStack(pc, bp);
+    stack->max_size = max_s;
+    if (!asan_inited) return;
+    if (AsanThread *t = asanThreadRegistry().GetCurrent())
+      stack->FastUnwindStack(pc, bp, t->stack_top(), t->stack_bottom());
   }
 }
 

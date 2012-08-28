@@ -17,6 +17,7 @@
 #include "asan_internal.h"
 #include "asan_lock.h"
 #include "asan_thread.h"
+#include "asan_thread_registry.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_procmaps.h"
 
@@ -131,15 +132,17 @@ _Unwind_Reason_Code Unwind_Trace(struct _Unwind_Context *ctx,
   return UNWIND_CONTINUE;
 }
 
-void StackTrace::GetStackTrace(uptr max_s, uptr pc, uptr bp) {
-  size = 0;
-  trace[0] = pc;
+void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp) {
+  stack->size = 0;
+  stack->trace[0] = pc;
   if ((max_s) > 1) {
-    max_size = max_s;
+    stack->max_size = max_s;
 #ifdef __arm__
-    _Unwind_Backtrace(Unwind_Trace, this);
+    _Unwind_Backtrace(Unwind_Trace, stack);
 #else
-     FastUnwindStack(pc, bp);
+    if (!asan_inited) return;
+    if (AsanThread *t = asanThreadRegistry().GetCurrent())
+      stack->FastUnwindStack(pc, bp, t->stack_top(), t->stack_bottom());
 #endif
   }
 }

@@ -43,9 +43,7 @@ struct StackTrace {
     }
   }
 
-  void GetStackTrace(uptr max_s, uptr pc, uptr bp);
-
-  void FastUnwindStack(uptr pc, uptr bp);
+  void FastUnwindStack(uptr pc, uptr bp, uptr stack_top, uptr stack_bottom);
 
   static uptr GetCurrentPc();
 
@@ -54,6 +52,10 @@ struct StackTrace {
   static void UncompressStack(StackTrace *stack,
                               u32 *compressed, uptr size);
 };
+
+void GetStackTrace(StackTrace *trace, uptr max_s, uptr pc, uptr bp);
+
+
 
 }  // namespace __asan
 
@@ -79,7 +81,7 @@ struct StackTrace {
 // fast_unwind is currently unused.
 #define GET_STACK_TRACE_WITH_PC_AND_BP(max_s, pc, bp)               \
   StackTrace stack;                                             \
-  stack.GetStackTrace(max_s, pc, bp)
+  GetStackTrace(&stack, max_s, pc, bp)
 
 // NOTE: A Rule of thumb is to retrieve stack trace in the interceptors
 // as early as possible (in functions exposed to the user), as we generally

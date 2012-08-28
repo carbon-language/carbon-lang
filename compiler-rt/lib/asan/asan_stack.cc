@@ -11,12 +11,8 @@
 //
 // Code for ASan stack trace.
 //===----------------------------------------------------------------------===//
-#include "asan_interceptors.h"
 #include "asan_interface.h"
-#include "asan_lock.h"
 #include "asan_stack.h"
-#include "asan_thread.h"
-#include "asan_thread_registry.h"
 #include "sanitizer_common/sanitizer_procmaps.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
 
@@ -100,19 +96,15 @@ uptr StackTrace::GetCurrentPc() {
   return GET_CALLER_PC();
 }
 
-void StackTrace::FastUnwindStack(uptr pc, uptr bp) {
+void StackTrace::FastUnwindStack(uptr pc, uptr bp,
+                                 uptr stack_top, uptr stack_bottom) {
   CHECK(size == 0 && trace[0] == pc);
   size = 1;
-  if (!asan_inited) return;
-  AsanThread *t = asanThreadRegistry().GetCurrent();
-  if (!t) return;
   uptr *frame = (uptr*)bp;
   uptr *prev_frame = frame;
-  uptr *top = (uptr*)t->stack_top();
-  uptr *bottom = (uptr*)t->stack_bottom();
   while (frame >= prev_frame &&
-         frame < top - 2 &&
-         frame > bottom &&
+         frame < (uptr*)stack_top - 2 &&
+         frame > (uptr*)stack_bottom &&
          size < max_size) {
     uptr pc1 = frame[1];
     if (pc1 != pc) {
