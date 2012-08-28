@@ -975,6 +975,7 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
 
   case ISD::AND: {
     unsigned Imm, Imm2, SH, MB, ME;
+    uint64_t Imm64;
 
     // If this is an and of a value rotated between 0 and 31 bits and then and'd
     // with a mask, emit rlwinm
@@ -992,6 +993,14 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
       SDValue Val = N->getOperand(0);
       SDValue Ops[] = { Val, getI32Imm(0), getI32Imm(MB), getI32Imm(ME) };
       return CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Ops, 4);
+    }
+    // If this is a 64-bit zero-extension mask, emit rldicl.
+    if (isInt64Immediate(N->getOperand(1).getNode(), Imm64) &&
+        isMask_64(Imm64)) {
+      SDValue Val = N->getOperand(0);
+      MB = 64 - CountTrailingOnes_64(Imm64);
+      SDValue Ops[] = { Val, getI32Imm(0), getI32Imm(MB) };
+      return CurDAG->SelectNodeTo(N, PPC::RLDICL, MVT::i64, Ops, 3);
     }
     // AND X, 0 -> 0, not "rlwinm 32".
     if (isInt32Immediate(N->getOperand(1), Imm) && (Imm == 0)) {
