@@ -58,33 +58,37 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     return;
   }
 
-  // Direct object specific instruction lowering
-  if (!OutStreamer.hasRawTextSupport())
-    switch (MI->getOpcode()) {
-    case Mips::DSLL:
-    case Mips::DSRL:
-    case Mips::DSRA:
-      assert(MI->getNumOperands() == 3 &&
-             "Invalid no. of machine operands for shift!");
-      assert(MI->getOperand(2).isImm());
-      int64_t Shift = MI->getOperand(2).getImm();
-      if (Shift > 31) {
-        MCInst TmpInst0;
-        MCInstLowering.LowerLargeShift(MI, TmpInst0, Shift - 32);
-        OutStreamer.EmitInstruction(TmpInst0);
-        return;
-      }
-      break;
-    }
-
   MachineBasicBlock::const_instr_iterator I = MI;
   MachineBasicBlock::const_instr_iterator E = MI->getParent()->instr_end();
 
   do {
     MCInst TmpInst0;
+
+    // Direct object specific instruction lowering
+    if (!OutStreamer.hasRawTextSupport())
+      switch (I->getOpcode()) {
+      // If shift amount is >= 32 it the inst needs to be lowered further
+      case Mips::DSLL:
+      case Mips::DSRL:
+      case Mips::DSRA:
+      {
+        assert(I->getNumOperands() == 3 &&
+            "Invalid no. of machine operands for shift!");
+        assert(I->getOperand(2).isImm());
+        int64_t Shift = I->getOperand(2).getImm();
+        if (Shift > 31) {
+          MCInst TmpInst0;
+          MCInstLowering.LowerLargeShift(I, TmpInst0, Shift - 32);
+          OutStreamer.EmitInstruction(TmpInst0);
+          return;
+        }
+      }
+      }
+
     MCInstLowering.Lower(I++, TmpInst0);
     OutStreamer.EmitInstruction(TmpInst0);
-  } while ((I != E) && I->isInsideBundle());
+
+  } while ((I != E) && I->isInsideBundle()); // Delay slot check
 }
 
 //===----------------------------------------------------------------------===//
