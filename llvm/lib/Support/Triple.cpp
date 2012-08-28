@@ -95,6 +95,7 @@ const char *Triple::getVendorTypeName(VendorType Kind) {
   case SCEI: return "scei";
   case BGP: return "bgp";
   case BGQ: return "bgq";
+  case Freescale: return "fsl";
   }
 
   llvm_unreachable("Invalid VendorType!");
@@ -269,6 +270,7 @@ static Triple::VendorType parseVendor(StringRef VendorName) {
     .Case("scei", Triple::SCEI)
     .Case("bgp", Triple::BGP)
     .Case("bgq", Triple::BGQ)
+    .Case("fsl", Triple::Freescale)
     .Default(Triple::UnknownVendor);
 }
 

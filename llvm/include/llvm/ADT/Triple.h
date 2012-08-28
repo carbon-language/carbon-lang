@@ -74,7 +74,8 @@ public:
     PC,
     SCEI,
     BGP,
-    BGQ
+    BGQ,
+    Freescale
   };
   enum OSType {
     UnknownOS,
