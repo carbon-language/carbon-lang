@@ -321,6 +321,60 @@ bool Stmt::hasImplicitControlFlow() const {
   }
 }
 
+std::string AsmStmt::generateAsmString(ASTContext &C) const {
+  StmtClass stmtClass = getStmtClass();
+  if (stmtClass == Stmt::GCCAsmStmtClass)
+    return static_cast<const GCCAsmStmt*>(this)->generateAsmString(C);
+  if (stmtClass == Stmt::MSAsmStmtClass)
+    return static_cast<const MSAsmStmt*>(this)->generateAsmString(C);
+  llvm_unreachable("unknown asm statement kind!");
+}
+
+StringRef AsmStmt::getOutputConstraint(unsigned i) const {
+  StmtClass stmtClass = getStmtClass();
+  if (stmtClass == Stmt::GCCAsmStmtClass)
+    return static_cast<const GCCAsmStmt*>(this)->getOutputConstraint(i);
+  if (stmtClass == Stmt::MSAsmStmtClass)
+    return static_cast<const MSAsmStmt*>(this)->getOutputConstraint(i);
+  llvm_unreachable("unknown asm statement kind!");
+}
+
+const Expr *AsmStmt::getOutputExpr(unsigned i) const {
+  StmtClass stmtClass = getStmtClass();
+  if (stmtClass == Stmt::GCCAsmStmtClass)
+    return static_cast<const GCCAsmStmt*>(this)->getOutputExpr(i);
+  if (stmtClass == Stmt::MSAsmStmtClass)
+    return static_cast<const MSAsmStmt*>(this)->getOutputExpr(i);
+  llvm_unreachable("unknown asm statement kind!");
+}
+
+StringRef AsmStmt::getInputConstraint(unsigned i) const {
+  StmtClass stmtClass = getStmtClass();
+  if (stmtClass == Stmt::GCCAsmStmtClass)
+    return static_cast<const GCCAsmStmt*>(this)->getInputConstraint(i);
+  if (stmtClass == Stmt::MSAsmStmtClass)
+    return static_cast<const MSAsmStmt*>(this)->getInputConstraint(i);
+  llvm_unreachable("unknown asm statement kind!");
+}
+
+const Expr *AsmStmt::getInputExpr(unsigned i) const {
+  StmtClass stmtClass = getStmtClass();
+  if (stmtClass == Stmt::GCCAsmStmtClass)
+    return static_cast<const GCCAsmStmt*>(this)->getInputExpr(i);
+  if (stmtClass == Stmt::MSAsmStmtClass)
+    return static_cast<const MSAsmStmt*>(this)->getInputExpr(i);
+  llvm_unreachable("unknown asm statement kind!");
+}
+
+StringRef AsmStmt::getClobber(unsigned i) const {
+  StmtClass stmtClass = getStmtClass();
+  if (stmtClass == Stmt::GCCAsmStmtClass)
+    return static_cast<const GCCAsmStmt*>(this)->getClobber(i);
+  if (stmtClass == Stmt::MSAsmStmtClass)
+    return static_cast<const MSAsmStmt*>(this)->getClobber(i);
+  llvm_unreachable("unknown asm statement kind!");
+}
+
 /// getNumPlusOperands - Return the number of output operands that have a "+"
 /// constraint.
 unsigned AsmStmt::getNumPlusOperands() const {
