@@ -83,6 +83,17 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
           return;
         }
       }
+      break;
+      // Double extract instruction is chosen by pos and size operands
+      case Mips::DEXT:
+        assert(Subtarget->hasMips64() &&
+                    "DEXT is a MIPS64 instruction");
+        {
+          MCInst TmpInst0;
+          MCInstLowering.LowerDEXT(I, TmpInst0);
+          OutStreamer.EmitInstruction(TmpInst0);
+          return;
+        }
       }
 
     MCInstLowering.Lower(I++, TmpInst0);

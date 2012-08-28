@@ -110,9 +110,9 @@ def DSLLV    : shift_rotate_reg<0x14, 0x00, "dsllv", shl, CPU64Regs>;
 def DSRLV    : shift_rotate_reg<0x16, 0x00, "dsrlv", srl, CPU64Regs>;
 def DSRAV    : shift_rotate_reg<0x17, 0x00, "dsrav", sra, CPU64Regs>;
 let Pattern = []<dag> in {
-def DSLL32   : shift_rotate_imm64<0x3c, 0x00, "dsll32", shl>;
-def DSRL32   : shift_rotate_imm64<0x3e, 0x00, "dsrl32", srl>;
-def DSRA32   : shift_rotate_imm64<0x3f, 0x00, "dsra32", sra>;
+  def DSLL32   : shift_rotate_imm64<0x3c, 0x00, "dsll32", shl>;
+  def DSRL32   : shift_rotate_imm64<0x3e, 0x00, "dsrl32", srl>;
+  def DSRA32   : shift_rotate_imm64<0x3f, 0x00, "dsra32", sra>;
 }
 }
 // Rotate Instructions
@@ -217,6 +217,10 @@ let DecoderNamespace = "Mips64" in {
 def RDHWR64 : ReadHardware<CPU64Regs, HWRegs64>;
 
 def DEXT : ExtBase<3, "dext", CPU64Regs>;
+let Pattern = []<dag> in {
+  def DEXTU : ExtBase<2, "dextu", CPU64Regs>;
+  def DEXTM : ExtBase<1, "dextm", CPU64Regs>;
+}
 def DINS : InsBase<7, "dins", CPU64Regs>;
 
 let isCodeGenOnly = 1, rs = 0, shamt = 0 in {

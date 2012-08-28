@@ -189,3 +189,38 @@ void MipsMCInstLower::LowerLargeShift(const MachineInstr *MI,
     break;
   }
 }
+
+// Pick a DEXT instruction variant based on the pos and size operands
+void MipsMCInstLower::LowerDEXT(const MachineInstr *MI,  MCInst& Inst) {
+
+  assert(MI->getNumOperands() == 4 && "Invalid no. of machine operands for DEXT!");
+  assert(MI->getOperand(2).isImm());
+  int64_t pos = MI->getOperand(2).getImm();
+  assert(MI->getOperand(3).isImm());
+  int64_t size = MI->getOperand(3).getImm();
+
+  // rt
+  Inst.addOperand(LowerOperand(MI->getOperand(0)));
+  // rs
+  Inst.addOperand(LowerOperand(MI->getOperand(1)));
+
+  // DEXT
+  if ((pos < 32) && (size <= 32)) {
+    Inst.addOperand(MCOperand::CreateImm(pos));
+    Inst.addOperand(MCOperand::CreateImm(size));
+    Inst.setOpcode(Mips::DEXT);
+  }
+  // DEXTU
+  else if ((pos < 64) && (size <= 32)) {
+    Inst.addOperand(MCOperand::CreateImm(pos - 32));
+    Inst.addOperand(MCOperand::CreateImm(size));
+    Inst.setOpcode(Mips::DEXTU);
+  }
+  // DEXTM
+  else {
+    Inst.addOperand(MCOperand::CreateImm(pos));
+    Inst.addOperand(MCOperand::CreateImm(size - 32));
+    Inst.setOpcode(Mips::DEXTM);
+  }
+  return;
+}
