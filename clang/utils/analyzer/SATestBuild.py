@@ -76,6 +76,43 @@ Checkers="alpha.security.taint,core,deadcode,security,unix,osx"
 
 Verbose = 1
 
+def which(command, paths = None):
+   """which(command, [paths]) - Look up the given command in the paths string
+   (or the PATH environment variable, if unspecified)."""
+
+   if paths is None:
+       paths = os.environ.get('PATH','')
+
+   # Check for absolute match first.
+   if os.path.exists(command):
+       return command
+
+   # Would be nice if Python had a lib function for this.
+   if not paths:
+       paths = os.defpath
+
+   # Get suffixes to search.
+   # On Cygwin, 'PATHEXT' may exist but it should not be used.
+   if os.pathsep == ';':
+       pathext = os.environ.get('PATHEXT', '').split(';')
+   else:
+       pathext = ['']
+
+   # Search the paths...
+   for path in paths.split(os.pathsep):
+       for ext in pathext:
+           p = os.path.join(path, command + ext)
+           if os.path.exists(p):
+               return p
+
+   return None
+
+# Find Clang for static analysis.
+Clang = which("clang", os.environ['PATH'])
+if not Clang:
+    print "Error: cannot find 'clang' in PATH"
+    sys.exit(-1)
+
 # Make sure we flush the output after every print statement.
 class flushfile(object):
     def __init__(self, f):
@@ -129,8 +166,9 @@ def runScanBuild(Dir, SBOutputDir, PBuildLogFile):
     BuildScriptPath = os.path.join(Dir, BuildScript)
     if not os.path.exists(BuildScriptPath):
         print "Error: build script is not defined: %s" % BuildScriptPath
-        sys.exit(-1)       
-    SBOptions = "-plist-html -o " + SBOutputDir + " "
+        sys.exit(-1)
+    SBOptions = "--use-analyzer " + Clang + " "
+    SBOptions += "-plist-html -o " + SBOutputDir + " "
     SBOptions += "-enable-checker " + Checkers + " "  
     try:
         SBCommandFile = open(BuildScriptPath, "r")
@@ -160,7 +198,7 @@ def isValidSingleInputFile(FileName):
         (Ext == ".m") | (Ext == "")) :
         return True
     return False
-
+   
 # Run analysis on a set of preprocessed files.
 def runAnalyzePreprocessed(Dir, SBOutputDir):
     if os.path.exists(os.path.join(Dir, BuildScript)):
@@ -168,7 +206,7 @@ def runAnalyzePreprocessed(Dir, SBOutputDir):
                BuildScript
         raise Exception()       
 
-    CmdPrefix = "clang -cc1 -analyze -analyzer-output=plist -w "
+    CmdPrefix = Clang + " -cc1 -analyze -analyzer-output=plist -w "
     CmdPrefix += "-analyzer-checker=" + Checkers +" -fcxx-exceptions -fblocks "   
     
     PlistPath = os.path.join(Dir, SBOutputDir, "date")
