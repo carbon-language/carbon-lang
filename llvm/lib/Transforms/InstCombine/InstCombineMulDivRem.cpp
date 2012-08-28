@@ -467,7 +467,7 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
     Value *X;
     ConstantInt *C1;
     if (match(Op0, m_LShr(m_Value(X), m_ConstantInt(C1)))) {
-      APInt NC = C2->getValue().shl(C1->getZExtValue());
+      APInt NC = C2->getValue().shl(C1->getLimitedValue(C1->getBitWidth()-1));
       return BinaryOperator::CreateUDiv(X, Builder->getInt(NC));
     }
   }
@@ -548,7 +548,7 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
     Value *X;
     ConstantInt *C1;
     if (match(Op0, m_AShr(m_Value(X), m_ConstantInt(C1)))) {
-      APInt NC = C2->getValue().shl(C1->getZExtValue());
+      APInt NC = C2->getValue().shl(C1->getLimitedValue(C1->getBitWidth()-1));
       return BinaryOperator::CreateSDiv(X, Builder->getInt(NC));
     }
   }
