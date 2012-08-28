@@ -40,6 +40,7 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginObjectContainerBSDArchive.a \
 	lldbPluginObjectFileELF.a \
 	lldbPluginObjectFilePECOFF.a \
+	lldbPluginOperatingSystemPython.a \
 	lldbPluginPlatformGDBServer.a \
 	lldbPluginProcessGDBRemote.a \
 	lldbPluginSymbolFileDWARF.a \

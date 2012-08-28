@@ -214,12 +214,12 @@ OperatingSystemPython::CreateRegisterContextForThread (Thread *thread)
 {
     RegisterContextSP reg_ctx_sp;
     if (!m_interpreter || !m_python_object || !thread)
-        return NULL;
+        return RegisterContextSP();
     auto object_sp = m_interpreter->OSPlugin_QueryForRegisterContextData (m_interpreter->MakeScriptObject(m_python_object),
                                                                           thread->GetID());
 
            if (!object_sp)
-        return NULL;
+        return RegisterContextSP();
     
     PythonDataString reg_context_data((PyObject*)object_sp->GetObject());
     if (reg_context_data)
