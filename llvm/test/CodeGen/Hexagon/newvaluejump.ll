@@ -1,7 +1,4 @@
 ; RUN: llc -march=hexagon -mcpu=hexagonv4 < %s | FileCheck %s
-; XFAIL: *
-; This is xfailed into we have atomic load pseudos. PR13693.
-
 ; Check that we generate new value jump.
 
 @i = global i32 0, align 4

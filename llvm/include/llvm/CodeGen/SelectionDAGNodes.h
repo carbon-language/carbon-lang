@@ -1011,11 +1011,6 @@ class AtomicSDNode : public MemSDNode {
     SubclassData |= SynchScope << 12;
     assert(getOrdering() == Ordering && "Ordering encoding error!");
     assert(getSynchScope() == SynchScope && "Synch-scope encoding error!");
-
-    assert((readMem() || getOrdering() <= Monotonic) &&
-           "Acquire/Release MachineMemOperand must be a load!");
-    assert((writeMem() || getOrdering() <= Monotonic) &&
-           "Acquire/Release MachineMemOperand must be a store!");
   }
 
 public:
