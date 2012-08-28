@@ -168,6 +168,8 @@ enum LinkerInitialized { LINKER_INITIALIZED = 0 };
 # define GET_CALLER_PC() (uptr)__builtin_return_address(0)
 # define GET_CURRENT_FRAME() (uptr)__builtin_frame_address(0)
 #else
+extern "C" void* _ReturnAddress(void);
+# pragma intrinsic(_ReturnAddress)
 # define GET_CALLER_PC() (uptr)_ReturnAddress()
 // CaptureStackBackTrace doesn't need to know BP on Windows.
 // FIXME: This macro is still used when printing error reports though it's not

@@ -24,11 +24,6 @@
 # error "This operating system is not supported by AddressSanitizer"
 #endif
 
-#if defined(_WIN32)
-extern "C" void* _ReturnAddress(void);
-# pragma intrinsic(_ReturnAddress)
-#endif  // defined(_WIN32)
-
 #define ASAN_DEFAULT_FAILURE_EXITCODE 1
 
 #if defined(__linux__)
