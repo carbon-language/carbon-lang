@@ -66,22 +66,31 @@ static std::pair<const Stmt*,
   const StackFrameContext *SF =
           Node->getLocation().getLocationContext()->getCurrentStackFrame();
 
-  // Back up through the ExplodedGraph until we reach a statement node.
+  // Back up through the ExplodedGraph until we reach a statement node in this
+  // stack frame.
   while (Node) {
     const ProgramPoint &PP = Node->getLocation();
 
-    if (const StmtPoint *SP = dyn_cast<StmtPoint>(&PP)) {
-      S = SP->getStmt();
-      break;
-    } else if (const CallExitEnd *CEE = dyn_cast<CallExitEnd>(&PP)) {
-      S = CEE->getCalleeContext()->getCallSite();
-      if (S)
+    if (PP.getLocationContext()->getCurrentStackFrame() == SF) {
+      if (const StmtPoint *SP = dyn_cast<StmtPoint>(&PP)) {
+        S = SP->getStmt();
         break;
-      // If we have an implicit call, we'll probably end up with a
-      // StmtPoint inside the callee, which is acceptable.
-      // (It's possible a function ONLY contains implicit calls -- such as an
-      // implicitly-generated destructor -- so we shouldn't just skip back to
-      // the CallEnter node and keep going.)
+      } else if (const CallExitEnd *CEE = dyn_cast<CallExitEnd>(&PP)) {
+        S = CEE->getCalleeContext()->getCallSite();
+        if (S)
+          break;
+
+        // If there is no statement, this is an implicitly-generated call.
+        // We'll walk backwards over it and then continue the loop to find
+        // an actual statement.
+        const CallEnter *CE;
+        do {
+          Node = Node->getFirstPred();
+          CE = Node->getLocationAs<CallEnter>();
+        } while (!CE || CE->getCalleeContext() != CEE->getCalleeContext());
+
+        // Continue searching the graph.
+      }
     } else if (const CallEnter *CE = dyn_cast<CallEnter>(&PP)) {
       // If we reached the CallEnter for this function, it has no statements.
       if (CE->getCalleeContext() == SF)
