@@ -118,6 +118,8 @@ include "PPCScheduleG4.td"
 include "PPCScheduleG4Plus.td"
 include "PPCScheduleG5.td"
 include "PPCScheduleA2.td"
+include "PPCScheduleE500mc.td"
+include "PPCScheduleE5500.td"
 
 //===----------------------------------------------------------------------===//
 // Instruction to itinerary class map - When add new opcodes to the supported

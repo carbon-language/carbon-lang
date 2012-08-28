@@ -54,7 +54,8 @@ ScheduleHazardRecognizer *PPCInstrInfo::CreateTargetHazardRecognizer(
   const TargetMachine *TM,
   const ScheduleDAG *DAG) const {
   unsigned Directive = TM->getSubtarget<PPCSubtarget>().getDarwinDirective();
-  if (Directive == PPC::DIR_440 || Directive == PPC::DIR_A2) {
+  if (Directive == PPC::DIR_440 || Directive == PPC::DIR_A2 ||
+      Directive == PPC::DIR_E500mc || Directive == PPC::DIR_E5500) {
     const InstrItineraryData *II = TM->getInstrItineraryData();
     return new PPCScoreboardHazardRecognizer(II, DAG);
   }
@@ -70,7 +71,8 @@ ScheduleHazardRecognizer *PPCInstrInfo::CreateTargetPostRAHazardRecognizer(
   unsigned Directive = TM.getSubtarget<PPCSubtarget>().getDarwinDirective();
 
   // Most subtargets use a PPC970 recognizer.
-  if (Directive != PPC::DIR_440 && Directive != PPC::DIR_A2) {
+  if (Directive != PPC::DIR_440 && Directive != PPC::DIR_A2 &&
+      Directive != PPC::DIR_E500mc && Directive != PPC::DIR_E5500) {
     const TargetInstrInfo *TII = TM.getInstrInfo();
     assert(TII && "No InstrInfo?");
 

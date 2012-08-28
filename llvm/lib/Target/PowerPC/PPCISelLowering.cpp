@@ -449,6 +449,21 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setSchedulingPreference(Sched::Hybrid);
 
   computeRegisterProperties();
+
+  // The Freescale cores does better with aggressive inlining of memcpy and
+  // friends. Gcc uses same threshold of 128 bytes (= 32 word stores).
+  if (Subtarget->getDarwinDirective() == PPC::DIR_E500mc ||
+      Subtarget->getDarwinDirective() == PPC::DIR_E5500) {
+    maxStoresPerMemset = 32;
+    maxStoresPerMemsetOptSize = 16;
+    maxStoresPerMemcpy = 32;
+    maxStoresPerMemcpyOptSize = 8;
+    maxStoresPerMemmove = 32;
+    maxStoresPerMemmoveOptSize = 8;
+
+    setPrefFunctionAlignment(4);
+    benefitFromCodePlacementOpt = true;
+  }
 }
 
 /// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
