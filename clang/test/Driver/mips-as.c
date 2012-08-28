@@ -1,3 +1,5 @@
+// REQUIRES: mips-registered-target
+//
 // Check passing options to the assembler for MIPS targets.
 //
 // RUN: %clang -target mips-linux-gnu -### \
