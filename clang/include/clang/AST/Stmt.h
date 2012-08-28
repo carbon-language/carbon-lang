@@ -1677,6 +1677,7 @@ class MSAsmStmt : public AsmStmt {
   unsigned NumAsmToks;
 
   Token *AsmToks;
+  StringRef *Constraints;
   StringRef *Clobbers;
 
 public:
@@ -1684,12 +1685,12 @@ public:
             bool issimple, bool isvolatile, ArrayRef<Token> asmtoks,
             ArrayRef<IdentifierInfo*> inputs, ArrayRef<IdentifierInfo*> outputs,
             ArrayRef<Expr*> inputexprs, ArrayRef<Expr*> outputexprs,
-            StringRef asmstr, ArrayRef<StringRef> clobbers,
-            SourceLocation endloc);
+            StringRef asmstr, ArrayRef<StringRef> constraints, 
+            ArrayRef<StringRef> clobbers, SourceLocation endloc);
 
   /// \brief Build an empty MS-style inline-assembly statement.
   explicit MSAsmStmt(EmptyShell Empty) : AsmStmt(MSAsmStmtClass, Empty),
-    NumAsmToks(0), AsmToks(0), Clobbers(0) { }
+    NumAsmToks(0), AsmToks(0), Constraints(0), Clobbers(0) { }
 
   SourceLocation getLBraceLoc() const { return LBraceLoc; }
   void setLBraceLoc(SourceLocation L) { LBraceLoc = L; }
@@ -1712,7 +1713,9 @@ public:
 
   //===--- Output operands ---===//
 
-  StringRef getOutputConstraint(unsigned i) const;
+  StringRef getOutputConstraint(unsigned i) const {
+    return Constraints[i];
+  }
 
   Expr *getOutputExpr(unsigned i);
 
@@ -1722,7 +1725,9 @@ public:
 
   //===--- Input operands ---===//
 
-  StringRef getInputConstraint(unsigned i) const;
+  StringRef getInputConstraint(unsigned i) const {
+    return Constraints[i + NumOutputs];
+  }
 
   Expr *getInputExpr(unsigned i);
   void setInputExpr(unsigned i, Expr *E);
