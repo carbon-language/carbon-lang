@@ -14128,7 +14128,7 @@ static SDValue checkFlaggedOrCombine(SDValue Or, X86::CondCode &CC,
       Opnds.push_back(I->getOperand(0));
       Opnds.push_back(I->getOperand(1));
       // Re-evaluate the number of nodes to be traversed.
-      e = Opnds.size();
+      e += 2;
       continue;
     }
 
