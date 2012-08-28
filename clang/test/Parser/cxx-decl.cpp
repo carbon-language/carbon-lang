@@ -1,5 +1,7 @@
 // RUN: %clang_cc1 -verify -fsyntax-only -triple i386-linux -pedantic %s
 
+const char const *x10; // expected-warning {{duplicate 'const' declaration specifier}}
+
 int x(*g); // expected-error {{use of undeclared identifier 'g'}}
 
 struct Type {

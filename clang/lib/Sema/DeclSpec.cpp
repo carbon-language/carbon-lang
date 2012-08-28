@@ -325,10 +325,14 @@ unsigned DeclSpec::getParsedSpecifiers() const {
 
 template <class T> static bool BadSpecifier(T TNew, T TPrev,
                                             const char *&PrevSpec,
-                                            unsigned &DiagID) {
+                                            unsigned &DiagID,
+                                            bool IsExtension = true) {
   PrevSpec = DeclSpec::getSpecifierName(TPrev);
-  DiagID = (TNew == TPrev ? diag::ext_duplicate_declspec
-            : diag::err_invalid_decl_spec_combination);
+  if (TNew != TPrev)
+    DiagID = diag::err_invalid_decl_spec_combination;
+  else
+    DiagID = IsExtension ? diag::ext_duplicate_declspec : 
+                           diag::warn_duplicate_declspec;    
   return true;
 }
 
@@ -673,9 +677,15 @@ bool DeclSpec::SetTypeQual(TQ T, SourceLocation Loc, const char *&PrevSpec,
                            unsigned &DiagID, const LangOptions &Lang,
                            bool IsTypeSpec) {
   // Duplicates are permitted in C99, and are permitted in C++11 unless the
-  // cv-qualifier appears as a type-specifier.
-  if ((TypeQualifiers & T) && !Lang.C99 && (!Lang.CPlusPlus0x || IsTypeSpec))
-    return BadSpecifier(T, T, PrevSpec, DiagID);
+  // cv-qualifier appears as a type-specifier.  However, since this is likely 
+  // not what the user intended, we will always warn.  We do not need to set the
+  // qualifier's location since we already have it.
+  if (TypeQualifiers & T) {
+    bool IsExtension = false;
+    if (Lang.C99 || (Lang.CPlusPlus0x && !IsTypeSpec))
+      IsExtension = true;
+    return BadSpecifier(T, T, PrevSpec, DiagID, IsExtension);
+  }
   TypeQualifiers |= T;
 
   switch (T) {

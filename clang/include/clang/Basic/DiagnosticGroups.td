@@ -197,6 +197,7 @@ def StringPlusInt : DiagGroup<"string-plus-int">;
 def StrncatSize : DiagGroup<"strncat-size">;
 def TautologicalCompare : DiagGroup<"tautological-compare">;
 def HeaderHygiene : DiagGroup<"header-hygiene">;
+def DuplicateDeclSpecifiers : DiagGroup<"duplicate-decl-specifiers">;
 
 // Preprocessor warnings.
 def : DiagGroup<"builtin-macro-redefined">;
