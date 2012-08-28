@@ -322,56 +322,50 @@ bool Stmt::hasImplicitControlFlow() const {
 }
 
 std::string AsmStmt::generateAsmString(ASTContext &C) const {
-  StmtClass stmtClass = getStmtClass();
-  if (stmtClass == Stmt::GCCAsmStmtClass)
-    return static_cast<const GCCAsmStmt*>(this)->generateAsmString(C);
-  if (stmtClass == Stmt::MSAsmStmtClass)
-    return static_cast<const MSAsmStmt*>(this)->generateAsmString(C);
+  if (const GCCAsmStmt *gccAsmStmt = dyn_cast<GCCAsmStmt>(this))
+    return gccAsmStmt->generateAsmString(C);
+  if (const MSAsmStmt *msAsmStmt = dyn_cast<MSAsmStmt>(this))
+    return msAsmStmt->generateAsmString(C);
   llvm_unreachable("unknown asm statement kind!");
 }
 
 StringRef AsmStmt::getOutputConstraint(unsigned i) const {
-  StmtClass stmtClass = getStmtClass();
-  if (stmtClass == Stmt::GCCAsmStmtClass)
-    return static_cast<const GCCAsmStmt*>(this)->getOutputConstraint(i);
-  if (stmtClass == Stmt::MSAsmStmtClass)
-    return static_cast<const MSAsmStmt*>(this)->getOutputConstraint(i);
+  if (const GCCAsmStmt *gccAsmStmt = dyn_cast<GCCAsmStmt>(this))
+    return gccAsmStmt->getOutputConstraint(i);
+  if (const MSAsmStmt *msAsmStmt = dyn_cast<MSAsmStmt>(this))
+    return msAsmStmt->getOutputConstraint(i);
   llvm_unreachable("unknown asm statement kind!");
 }
 
 const Expr *AsmStmt::getOutputExpr(unsigned i) const {
-  StmtClass stmtClass = getStmtClass();
-  if (stmtClass == Stmt::GCCAsmStmtClass)
-    return static_cast<const GCCAsmStmt*>(this)->getOutputExpr(i);
-  if (stmtClass == Stmt::MSAsmStmtClass)
-    return static_cast<const MSAsmStmt*>(this)->getOutputExpr(i);
+  if (const GCCAsmStmt *gccAsmStmt = dyn_cast<GCCAsmStmt>(this))
+    return gccAsmStmt->getOutputExpr(i);
+  if (const MSAsmStmt *msAsmStmt = dyn_cast<MSAsmStmt>(this))
+    return msAsmStmt->getOutputExpr(i);
   llvm_unreachable("unknown asm statement kind!");
 }
 
 StringRef AsmStmt::getInputConstraint(unsigned i) const {
-  StmtClass stmtClass = getStmtClass();
-  if (stmtClass == Stmt::GCCAsmStmtClass)
-    return static_cast<const GCCAsmStmt*>(this)->getInputConstraint(i);
-  if (stmtClass == Stmt::MSAsmStmtClass)
-    return static_cast<const MSAsmStmt*>(this)->getInputConstraint(i);
+  if (const GCCAsmStmt *gccAsmStmt = dyn_cast<GCCAsmStmt>(this))
+    return gccAsmStmt->getInputConstraint(i);
+  if (const MSAsmStmt *msAsmStmt = dyn_cast<MSAsmStmt>(this))
+    return msAsmStmt->getInputConstraint(i);
   llvm_unreachable("unknown asm statement kind!");
 }
 
 const Expr *AsmStmt::getInputExpr(unsigned i) const {
-  StmtClass stmtClass = getStmtClass();
-  if (stmtClass == Stmt::GCCAsmStmtClass)
-    return static_cast<const GCCAsmStmt*>(this)->getInputExpr(i);
-  if (stmtClass == Stmt::MSAsmStmtClass)
-    return static_cast<const MSAsmStmt*>(this)->getInputExpr(i);
+  if (const GCCAsmStmt *gccAsmStmt = dyn_cast<GCCAsmStmt>(this))
+    return gccAsmStmt->getInputExpr(i);
+  if (const MSAsmStmt *msAsmStmt = dyn_cast<MSAsmStmt>(this))
+    return msAsmStmt->getInputExpr(i);
   llvm_unreachable("unknown asm statement kind!");
 }
 
 StringRef AsmStmt::getClobber(unsigned i) const {
-  StmtClass stmtClass = getStmtClass();
-  if (stmtClass == Stmt::GCCAsmStmtClass)
-    return static_cast<const GCCAsmStmt*>(this)->getClobber(i);
-  if (stmtClass == Stmt::MSAsmStmtClass)
-    return static_cast<const MSAsmStmt*>(this)->getClobber(i);
+  if (const GCCAsmStmt *gccAsmStmt = dyn_cast<GCCAsmStmt>(this))
+    return gccAsmStmt->getClobber(i);
+  if (const MSAsmStmt *msAsmStmt = dyn_cast<MSAsmStmt>(this))
+    return msAsmStmt->getClobber(i);
   llvm_unreachable("unknown asm statement kind!");
 }
 
