@@ -17,6 +17,7 @@
 #include "asan_mapping.h"
 #include "asan_stack.h"
 #include "asan_test_utils.h"
+#include "asan_test_config.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -677,11 +678,15 @@ TEST(AddressSanitizerInterface, DISABLED_InvalidPoisonAndUnpoisonCallsTest) {
 
 static void ErrorReportCallbackOneToZ(const char *report) {
   write(2, "ABCDEF", 6);
+  write(2, report, strlen(report));
+  write(2, "ABCDEF", 6);
+  _exit(1);
 }
 
 TEST(AddressSanitizerInterface, SetErrorReportCallbackTest) {
   __asan_set_error_report_callback(ErrorReportCallbackOneToZ);
-  EXPECT_DEATH(__asan_report_error(0, 0, 0, 0, true, 1), "ABCDEF");
+  EXPECT_DEATH(__asan_report_error(0, 0, 0, 0, true, 1),
+               ASAN_PCRE_DOTALL "ABCDEF.*AddressSanitizer.*WRITE.*ABCDEF");
   __asan_set_error_report_callback(NULL);
 }
 

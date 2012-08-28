@@ -237,7 +237,7 @@ install_clang: | $(INSTALL_DIR)
 #	cp -v $(CLANG_BUILD)/lib/libasan*.a $(INSTALL_DIR)/lib
 
 $(BIN)/asan_noinst_test$(SUFF).o: tests/asan_noinst_test.cc $(RTL_HDR) $(MAKEFILE)
-	$(CLEANROOM_CXX) $(PIE) $(CFLAGS) $(GTEST_INCLUDE) -I. -I.. -g -c $< -O2 -o $@
+	$(CLEANROOM_CXX) $(COMMON_ASAN_DEFINES) $(PIE) $(CFLAGS) $(GTEST_INCLUDE) -I. -I.. -g -c $< -O2 -o $@
 
 $(BIN)/asan_break_optimization$(SUFF).o: tests/asan_break_optimization.cc $(MAKEFILE)
 	$(CLEANROOM_CXX) $(PIE) $(CFLAGS) -c $< -O0 -o $@
