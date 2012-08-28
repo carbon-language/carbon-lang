@@ -1,5 +1,5 @@
-; RUN: llc -march=x86-64 -mattr=+sse41,-avx < %s | FileCheck %s --check-prefix SSE41
-; RUN: llc -march=x86-64 -mattr=+avx < %s | FileCheck %s --check-prefix AVX
+; RUN: llc -mtriple=x86_64-unknown-unknown -mattr=+sse41,-avx < %s | FileCheck %s --check-prefix SSE41
+; RUN: llc -mtriple=x86_64-unknown-unknown -mattr=+avx < %s | FileCheck %s --check-prefix AVX
 
 define i32 @veccond(<4 x i32> %input) {
 entry:
