@@ -517,6 +517,8 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::FADDRTZ:         return "PPCISD::FADDRTZ";
   case PPCISD::MTFSF:           return "PPCISD::MTFSF";
   case PPCISD::TC_RETURN:       return "PPCISD::TC_RETURN";
+  case PPCISD::CR6SET:          return "PPCISD::CR6SET";
+  case PPCISD::CR6UNSET:        return "PPCISD::CR6UNSET";
   }
 }
 
@@ -2834,6 +2836,10 @@ PPCTargetLowering::FinishCall(CallingConv::ID CallConv, DebugLoc dl,
                                  isTailCall, RegsToPass, Ops, NodeTys,
                                  PPCSubTarget);
 
+  // Add implicit use of CR bit 6 for 32-bit SVR4 vararg calls
+  if (isVarArg && PPCSubTarget.isSVR4ABI() && !PPCSubTarget.isPPC64())
+    Ops.push_back(DAG.getRegister(PPC::CR1EQ, MVT::i32));
+
   // When performing tail call optimization the callee pops its arguments off
   // the stack. Account for this here so these bytes can be pushed back on in
   // PPCRegisterInfo::eliminateCallFramePseudoInstr.
@@ -3131,20 +3137,20 @@ PPCTargetLowering::LowerCall_SVR4(SDValue Chain, SDValue Callee,
     Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
                         &MemOpChains[0], MemOpChains.size());
 
-  // Set CR6 to true if this is a vararg call with floating args passed in
-  // registers.
-  if (isVarArg) {
-    SDValue SetCR(DAG.getMachineNode(seenFloatArg ? PPC::CRSET : PPC::CRUNSET,
-                                     dl, MVT::i32), 0);
-    RegsToPass.push_back(std::make_pair(unsigned(PPC::CR1EQ), SetCR));
-  }
-
   // Build a sequence of copy-to-reg nodes chained together with token chain
   // and flag operands which copy the outgoing args into the appropriate regs.
   SDValue InFlag;
   for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
     Chain = DAG.getCopyToReg(Chain, dl, RegsToPass[i].first,
                              RegsToPass[i].second, InFlag);
+    InFlag = Chain.getValue(1);
+  }
+
+  // Set CR bit 6 to true if this is a vararg call with floating args passed in
+  // registers.
+  if (isVarArg) {
+    Chain = DAG.getNode(seenFloatArg ? PPCISD::CR6SET : PPCISD::CR6UNSET,
+                        dl, DAG.getVTList(MVT::Other, MVT::Glue), Chain);
     InFlag = Chain.getValue(1);
   }
 

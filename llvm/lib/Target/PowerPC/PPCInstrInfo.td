@@ -155,6 +155,12 @@ def PPClbrx       : SDNode<"PPCISD::LBRX", SDT_PPClbrx,
 def PPCstbrx      : SDNode<"PPCISD::STBRX", SDT_PPCstbrx,
                            [SDNPHasChain, SDNPMayStore]>;
 
+// Instructions to set/unset CR bit 6 for SVR4 vararg calls
+def PPCcr6set   : SDNode<"PPCISD::CR6SET", SDTNone,
+                         [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
+def PPCcr6unset : SDNode<"PPCISD::CR6UNSET", SDTNone,
+                         [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
+
 // Instructions to support atomic operations
 def PPClarx      : SDNode<"PPCISD::LARX", SDT_PPClarx,
                           [SDNPHasChain, SDNPMayLoad]>;
@@ -1144,6 +1150,16 @@ def CRSET  : XLForm_1_ext<19, 289, (outs CRBITRC:$dst), (ins),
 def CRUNSET: XLForm_1_ext<19, 193, (outs CRBITRC:$dst), (ins),
               "crxor $dst, $dst, $dst", BrCR,
               []>;
+
+let Defs = [CR1EQ], CRD = 6 in {
+def CR6SET  : XLForm_1_ext<19, 289, (outs), (ins),
+              "creqv 6, 6, 6", BrCR,
+              [(PPCcr6set)]>;
+
+def CR6UNSET: XLForm_1_ext<19, 193, (outs), (ins),
+              "crxor 6, 6, 6", BrCR,
+              [(PPCcr6unset)]>;
+}
 
 // XFX-Form instructions.  Instructions that deal with SPRs.
 //

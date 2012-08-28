@@ -174,6 +174,10 @@ namespace llvm {
       ///   operand #3 optional in flag
       TC_RETURN,
 
+      /// ch, gl = CR6[UN]SET ch, inglue - Toggle CR bit 6 for SVR4 vararg calls
+      CR6SET,
+      CR6UNSET,
+
       /// STD_32 - This is the STD instruction for use with "32-bit" registers.
       STD_32 = ISD::FIRST_TARGET_MEMORY_OPCODE,
 
