@@ -174,3 +174,13 @@ void f16() {
  lbl:
   ;
 }
+
+// PR13704: negative increment in i128 is not preserved.
+// CHECK: define void @f17()
+void f17() {
+  extern void extfunc(__int128);
+  __int128 x = 2;
+  x--;
+  extfunc(x);
+// CHECK: add nsw i128 %0, -1
+}
