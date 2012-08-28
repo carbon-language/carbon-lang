@@ -27,29 +27,29 @@ AsanStats::AsanStats() {
 
 static void PrintMallocStatsArray(const char *prefix,
                                   uptr (&array)[kNumberOfSizeClasses]) {
-  AsanPrintf("%s", prefix);
+  Printf("%s", prefix);
   for (uptr i = 0; i < kNumberOfSizeClasses; i++) {
     if (!array[i]) continue;
-    AsanPrintf("%zu:%zu; ", i, array[i]);
+    Printf("%zu:%zu; ", i, array[i]);
   }
-  AsanPrintf("\n");
+  Printf("\n");
 }
 
 void AsanStats::Print() {
-  AsanPrintf("Stats: %zuM malloced (%zuM for red zones) by %zu calls\n",
+  Printf("Stats: %zuM malloced (%zuM for red zones) by %zu calls\n",
              malloced>>20, malloced_redzones>>20, mallocs);
-  AsanPrintf("Stats: %zuM realloced by %zu calls\n", realloced>>20, reallocs);
-  AsanPrintf("Stats: %zuM freed by %zu calls\n", freed>>20, frees);
-  AsanPrintf("Stats: %zuM really freed by %zu calls\n",
+  Printf("Stats: %zuM realloced by %zu calls\n", realloced>>20, reallocs);
+  Printf("Stats: %zuM freed by %zu calls\n", freed>>20, frees);
+  Printf("Stats: %zuM really freed by %zu calls\n",
              really_freed>>20, real_frees);
-  AsanPrintf("Stats: %zuM (%zu full pages) mmaped in %zu calls\n",
+  Printf("Stats: %zuM (%zu full pages) mmaped in %zu calls\n",
              mmaped>>20, mmaped / kPageSize, mmaps);
 
   PrintMallocStatsArray("  mmaps   by size class: ", mmaped_by_size);
   PrintMallocStatsArray("  mallocs by size class: ", malloced_by_size);
   PrintMallocStatsArray("  frees   by size class: ", freed_by_size);
   PrintMallocStatsArray("  rfrees  by size class: ", really_freed_by_size);
-  AsanPrintf("Stats: malloc large: %zu small slow: %zu\n",
+  Printf("Stats: malloc large: %zu small slow: %zu\n",
              malloc_large, malloc_small_slow);
 }
 

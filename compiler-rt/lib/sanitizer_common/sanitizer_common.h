@@ -98,6 +98,7 @@ void SetLowLevelAllocateCallback(LowLevelAllocateCallback callback);
 void RawWrite(const char *buffer);
 void Printf(const char *format, ...);
 void Report(const char *format, ...);
+void SetPrintfAndReportCallback(void (*callback)(const char *));
 
 // Opens the file 'file_name" and reads up to 'max_len' bytes.
 // The resulting buffer is mmaped and stored in '*buff'.

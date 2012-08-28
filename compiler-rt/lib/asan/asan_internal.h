@@ -120,9 +120,6 @@ void *AsanTSDGet();
 void AsanTSDSet(void *tsd);
 
 void AppendToErrorMessageBuffer(const char *buffer);
-// asan_printf.cc
-void AsanPrintf(const char *format, ...);
-void AsanReport(const char *format, ...);
 
 // asan_poisoning.cc
 // Poisons the shadow memory for "size" bytes starting from "addr".

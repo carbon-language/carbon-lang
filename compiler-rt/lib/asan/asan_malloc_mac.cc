@@ -231,7 +231,7 @@ void *cf_realloc(void *ptr, CFIndex size, CFOptionFlags hint, void *info) {
 
 void mz_destroy(malloc_zone_t* zone) {
   // A no-op -- we will not be destroyed!
-  AsanPrintf("mz_destroy() called -- ignoring\n");
+  Printf("mz_destroy() called -- ignoring\n");
 }
   // from AvailabilityMacros.h
 #if defined(MAC_OS_X_VERSION_10_6) && \

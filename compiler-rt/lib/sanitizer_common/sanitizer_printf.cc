@@ -142,6 +142,11 @@ int VSNPrintf(char *buff, int buff_length,
   return result;
 }
 
+static void (*PrintfAndReportCallback)(const char *);
+void SetPrintfAndReportCallback(void (*callback)(const char *)) {
+  PrintfAndReportCallback = callback;
+}
+
 void Printf(const char *format, ...) {
   const int kLen = 1024 * 4;
   char *buffer = (char*)MmapOrDie(kLen, __FUNCTION__);
@@ -151,6 +156,8 @@ void Printf(const char *format, ...) {
   va_end(args);
   RAW_CHECK_MSG(needed_length < kLen, "Buffer in Printf is too short!\n");
   RawWrite(buffer);
+  if (PrintfAndReportCallback)
+    PrintfAndReportCallback(buffer);
   UnmapOrDie(buffer, kLen);
 }
 
@@ -179,6 +186,8 @@ void Report(const char *format, ...) {
   va_end(args);
   RAW_CHECK_MSG(needed_length < kLen, "Buffer in Report is too short!\n");
   RawWrite(buffer);
+  if (PrintfAndReportCallback)
+    PrintfAndReportCallback(buffer);
   UnmapOrDie(buffer, kLen);
 }
 

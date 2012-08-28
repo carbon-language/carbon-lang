@@ -51,7 +51,7 @@ void Die() {
 
 SANITIZER_INTERFACE_ATTRIBUTE
 void CheckFailed(const char *file, int line, const char *cond, u64 v1, u64 v2) {
-  AsanReport("AddressSanitizer CHECK failed: %s:%d \"%s\" (0x%zx, 0x%zx)\n",
+  Report("AddressSanitizer CHECK failed: %s:%d \"%s\" (0x%zx, 0x%zx)\n",
              file, line, cond, (uptr)v1, (uptr)v2);
   PRINT_CURRENT_STACK();
   ShowStatsAndAbort();
@@ -248,7 +248,7 @@ static NOINLINE void force_interface_symbols() {
 }
 
 static void asan_atexit() {
-  AsanPrintf("AddressSanitizer exit stats:\n");
+  Printf("AddressSanitizer exit stats:\n");
   __asan_print_accumulated_stats();
 }
 
@@ -283,6 +283,8 @@ void __asan_init() {
 
   // Make sure we are not statically linked.
   AsanDoesNotSupportStaticLinkage();
+
+  SetPrintfAndReportCallback(AppendToErrorMessageBuffer);
 
   // Initialize flags. This must be done early, because most of the
   // initialization steps look at flags().

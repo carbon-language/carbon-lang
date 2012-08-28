@@ -229,17 +229,17 @@ struct AsanChunk: public ChunkBase {
 
   void DescribeAddress(uptr addr, uptr access_size) {
     uptr offset;
-    AsanPrintf("%p is located ", (void*)addr);
+    Printf("%p is located ", (void*)addr);
     if (AddrIsInside(addr, access_size, &offset)) {
-      AsanPrintf("%zu bytes inside of", offset);
+      Printf("%zu bytes inside of", offset);
     } else if (AddrIsAtLeft(addr, access_size, &offset)) {
-      AsanPrintf("%zu bytes to the left of", offset);
+      Printf("%zu bytes to the left of", offset);
     } else if (AddrIsAtRight(addr, access_size, &offset)) {
-      AsanPrintf("%zu bytes to the right of", offset);
+      Printf("%zu bytes to the right of", offset);
     } else {
-      AsanPrintf(" somewhere around (this is AddressSanitizer bug!)");
+      Printf(" somewhere around (this is AddressSanitizer bug!)");
     }
-    AsanPrintf(" %zu-byte region [%p,%p)\n",
+    Printf(" %zu-byte region [%p,%p)\n",
                used_size, (void*)Beg(), (void*)(Beg() + used_size));
   }
 };
@@ -601,12 +601,12 @@ void DescribeHeapAddress(uptr addr, uptr access_size) {
   if (m->free_tid != kInvalidTid) {
     AsanThreadSummary *free_thread =
         asanThreadRegistry().FindByTid(m->free_tid);
-    AsanPrintf("freed by thread T%d here:\n", free_thread->tid());
+    Printf("freed by thread T%d here:\n", free_thread->tid());
     AsanStackTrace free_stack;
     AsanStackTrace::UncompressStack(&free_stack, m->compressed_free_stack(),
                                     m->compressed_free_stack_size());
     free_stack.PrintStack();
-    AsanPrintf("previously allocated by thread T%d here:\n",
+    Printf("previously allocated by thread T%d here:\n",
                alloc_thread->tid());
 
     alloc_stack.PrintStack();
@@ -614,7 +614,7 @@ void DescribeHeapAddress(uptr addr, uptr access_size) {
     free_thread->Announce();
     alloc_thread->Announce();
   } else {
-    AsanPrintf("allocated by thread T%d here:\n", alloc_thread->tid());
+    Printf("allocated by thread T%d here:\n", alloc_thread->tid());
     alloc_stack.PrintStack();
     t->summary()->Announce();
     alloc_thread->Announce();

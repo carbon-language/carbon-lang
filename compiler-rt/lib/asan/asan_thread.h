@@ -44,7 +44,7 @@ class AsanThreadSummary {
     if (tid_ == 0) return;  // no need to announce the main thread.
     if (!announced_) {
       announced_ = true;
-      AsanPrintf("Thread T%d created by T%d here:\n", tid_, parent_tid_);
+      Printf("Thread T%d created by T%d here:\n", tid_, parent_tid_);
       stack_.PrintStack();
     }
   }
