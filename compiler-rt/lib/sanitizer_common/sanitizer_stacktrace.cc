@@ -11,10 +11,10 @@
 // run-time libraries.
 //===----------------------------------------------------------------------===//
 
-#include "sanitizer_common/sanitizer_common.h"
-#include "sanitizer_common/sanitizer_procmaps.h"
-#include "sanitizer_common/sanitizer_stacktrace.h"
-#include "sanitizer_common/sanitizer_symbolizer.h"
+#include "sanitizer_common.h"
+#include "sanitizer_procmaps.h"
+#include "sanitizer_stacktrace.h"
+#include "sanitizer_symbolizer.h"
 
 namespace __sanitizer {
 static const char *StripPathPrefix(const char *filepath,
@@ -146,7 +146,7 @@ uptr StackTrace::CompressStack(StackTrace *stack, u32 *compressed, uptr size) {
     } else {
       uptr hi = pc >> 32;
       uptr lo = (pc << 32) >> 32;
-      CHECK((hi & (1 << 31)) == 0);
+      CHECK_EQ((hi & (1 << 31)), 0);
       if (c_index + 1 >= size) break;
       // Printf("C co[%zu] hi/lo: %zx %zx\n", c_index, hi, lo);
       compressed[c_index++] = hi;
@@ -172,7 +172,7 @@ uptr StackTrace::CompressStack(StackTrace *stack, u32 *compressed, uptr size) {
   // |res| may be greater than check_stack.size, because
   // UncompressStack(CompressStack(stack)) eliminates the 0x0 frames.
   CHECK(res >= check_stack.size);
-  CHECK(0 == REAL(memcmp)(check_stack.trace, stack->trace,
+  CHECK_EQ(0, REAL(memcmp)(check_stack.trace, stack->trace,
                           check_stack.size * sizeof(uptr)));
 #endif
 

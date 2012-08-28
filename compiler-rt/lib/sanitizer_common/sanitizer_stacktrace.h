@@ -13,7 +13,7 @@
 #ifndef SANITIZER_STACKTRACE_H
 #define SANITIZER_STACKTRACE_H
 
-#include "sanitizer_common/sanitizer_internal_defs.h"
+#include "sanitizer_internal_defs.h"
 
 namespace __sanitizer {
 
