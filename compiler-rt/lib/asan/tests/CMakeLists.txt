@@ -15,9 +15,16 @@ include_directories(..)
 include_directories(../..)
 
 set(ASAN_UNITTEST_COMMON_CFLAGS
+  # Use -D instead of definitions to please custom compile command.
+  -DASAN_HAS_BLACKLIST=1
+  -DASAN_HAS_EXCEPTIONS=1
+  -DASAN_NEEDS_SEGV=1
+  -DASAN_UAR=0
   -Wall
   -Wno-format
   -fvisibility=hidden
+  -g
+  -O2
 )
 # Support 64-bit and 32-bit builds.
 if(LLVM_BUILD_32_BITS)
@@ -38,13 +45,7 @@ set(ASAN_UNITTEST_INSTRUMENTED_CFLAGS
   ${ASAN_UNITTEST_COMMON_CFLAGS}
   ${ASAN_GTEST_INCLUDE_CFLAGS}
   -faddress-sanitizer
-  -O2
-  -g
   -mllvm "-asan-blacklist=${CMAKE_CURRENT_SOURCE_DIR}/asan_test.ignore"
-  -DASAN_HAS_BLACKLIST=1
-  -DASAN_HAS_EXCEPTIONS=1
-  -DASAN_NEEDS_SEGV=1
-  -DASAN_UAR=0
 )
 
 add_custom_target(AsanUnitTests)
