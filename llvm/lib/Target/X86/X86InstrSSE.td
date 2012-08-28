@@ -436,19 +436,13 @@ def : Pat<(bc_v4i64 (v8f32 immAllZerosV)),
 
 // We set canFoldAsLoad because this can be converted to a constant-pool
 // load of an all-ones value if folding it would be beneficial.
-// FIXME: Change encoding to pseudo! This is blocked right now by the x86
-// JIT implementation, it does not expand the instructions below like
-// X86MCInstLower does.
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
-    isCodeGenOnly = 1, ExeDomain = SSEPackedInt in {
-  let Predicates = [HasAVX] in
-  def AVX_SETALLONES : PDI<0x76, MRMInitReg, (outs VR128:$dst), (ins), "",
-                         [(set VR128:$dst, (v4i32 immAllOnesV))]>, VEX_4V;
-  def V_SETALLONES : PDI<0x76, MRMInitReg, (outs VR128:$dst), (ins), "",
-                         [(set VR128:$dst, (v4i32 immAllOnesV))]>;
+    isPseudo = 1 in {
+  def V_SETALLONES : I<0, Pseudo, (outs VR128:$dst), (ins), "",
+                       [(set VR128:$dst, (v4i32 immAllOnesV))]>;
   let Predicates = [HasAVX2] in
-  def AVX2_SETALLONES : PDI<0x76, MRMInitReg, (outs VR256:$dst), (ins), "",
-                          [(set VR256:$dst, (v8i32 immAllOnesV))]>, VEX_4V;
+  def AVX2_SETALLONES : I<0, Pseudo, (outs VR256:$dst), (ins), "",
+                          [(set VR256:$dst, (v8i32 immAllOnesV))]>;
 }
 
 

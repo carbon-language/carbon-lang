@@ -3432,6 +3432,10 @@ bool X86InstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
   case X86::AVX_SET0:
     assert(HasAVX && "AVX not supported");
     return Expand2AddrUndef(MI, get(X86::VXORPSYrr));
+  case X86::V_SETALLONES:
+    return Expand2AddrUndef(MI, get(HasAVX ? X86::VPCMPEQDrr : X86::PCMPEQDrr));
+  case X86::AVX2_SETALLONES:
+    return Expand2AddrUndef(MI, get(X86::VPCMPEQDYrr));
   case X86::TEST8ri_NOREX:
     MI->setDesc(get(X86::TEST8ri));
     return true;
@@ -3789,7 +3793,6 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
       break;
     case X86::V_SET0:
     case X86::V_SETALLONES:
-    case X86::AVX_SETALLONES:
       Alignment = 16;
       break;
     case X86::FsFLD0SD:
@@ -3825,7 +3828,6 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   switch (LoadMI->getOpcode()) {
   case X86::V_SET0:
   case X86::V_SETALLONES:
-  case X86::AVX_SETALLONES:
   case X86::AVX2_SETALLONES:
   case X86::AVX_SET0:
   case X86::FsFLD0SD:
@@ -3864,8 +3866,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     else
       Ty = VectorType::get(Type::getInt32Ty(MF.getFunction()->getContext()), 4);
 
-    bool IsAllOnes = (Opc == X86::V_SETALLONES || Opc == X86::AVX_SETALLONES ||
-                      Opc == X86::AVX2_SETALLONES);
+    bool IsAllOnes = (Opc == X86::V_SETALLONES || Opc == X86::AVX2_SETALLONES);
     const Constant *C = IsAllOnes ? Constant::getAllOnesValue(Ty) :
                                     Constant::getNullValue(Ty);
     unsigned CPI = MCP.getConstantPoolIndex(C, Alignment);
