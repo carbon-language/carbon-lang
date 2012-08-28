@@ -2027,6 +2027,9 @@ CodeGenDAGPatterns::CodeGenDAGPatterns(RecordKeeper &R) :
   // stores, and side effects in many cases by examining an
   // instruction's pattern.
   InferInstructionFlags();
+
+  // Verify that instruction flags match the patterns.
+  VerifyInstructionFlags();
 }
 
 CodeGenDAGPatterns::~CodeGenDAGPatterns() {
@@ -2405,6 +2408,7 @@ private:
     return OpInfo.getEnumName() == "ISD::BITCAST";
   }
 
+public:
   void AnalyzeNode(const TreePatternNode *N) {
     if (N->isLeaf()) {
       if (DefInit *DI = dynamic_cast<DefInit*>(N->getLeafValue())) {
@@ -2935,6 +2939,73 @@ void CodeGenDAGPatterns::InferInstructionFlags() {
       PrintError(InstInfo.TheDef->getLoc(),
                  "Can't infer mayLoad from patterns");
   }
+}
+
+
+/// Verify instruction flags against pattern node properties.
+void CodeGenDAGPatterns::VerifyInstructionFlags() {
+  unsigned Errors = 0;
+  for (ptm_iterator I = ptm_begin(), E = ptm_end(); I != E; ++I) {
+    const PatternToMatch &PTM = *I;
+    SmallVector<Record*, 8> Instrs;
+    getInstructionsInTree(PTM.getDstPattern(), Instrs);
+    if (Instrs.empty())
+      continue;
+
+    // Count the number of instructions with each flag set.
+    unsigned NumSideEffects = 0;
+    unsigned NumStores = 0;
+    unsigned NumLoads = 0;
+    for (unsigned i = 0, e = Instrs.size(); i != e; ++i) {
+      const CodeGenInstruction &InstInfo = Target.getInstruction(Instrs[i]);
+      NumSideEffects += InstInfo.hasSideEffects;
+      NumStores += InstInfo.mayStore;
+      NumLoads += InstInfo.mayLoad;
+    }
+
+    // Analyze the source pattern.
+    InstAnalyzer PatInfo(*this);
+    PatInfo.Analyze(&PTM);
+
+    // Collect error messages.
+    SmallVector<std::string, 4> Msgs;
+
+    // Check for missing flags in the output.
+    // Permit extra flags for now at least.
+    if (PatInfo.hasSideEffects && !NumSideEffects)
+      Msgs.push_back("pattern has side effects, but hasSideEffects isn't set");
+
+    // Don't verify store flags on instructions with side effects. At least for
+    // intrinsics, side effects implies mayStore.
+    if (!PatInfo.hasSideEffects && PatInfo.mayStore && !NumStores)
+      Msgs.push_back("pattern may store, but mayStore isn't set");
+
+    // Similarly, mayStore implies mayLoad on intrinsics.
+    if (!PatInfo.mayStore && PatInfo.mayLoad && !NumLoads)
+      Msgs.push_back("pattern may load, but mayLoad isn't set");
+
+    // Print error messages.
+    if (Msgs.empty())
+      continue;
+    ++Errors;
+
+    for (unsigned i = 0, e = Msgs.size(); i != e; ++i)
+      PrintError(PTM.getSrcRecord()->getLoc(), Twine(Msgs[i]) + " on the " +
+                 (Instrs.size() == 1 ?
+                  "instruction" : "output instructions"));
+    // Provide the location of the relevant instruction definitions.
+    for (unsigned i = 0, e = Instrs.size(); i != e; ++i) {
+      if (Instrs[i] != PTM.getSrcRecord())
+        PrintError(Instrs[i]->getLoc(), "defined here");
+      const CodeGenInstruction &InstInfo = Target.getInstruction(Instrs[i]);
+      if (InstInfo.InferredFrom &&
+          InstInfo.InferredFrom != InstInfo.TheDef &&
+          InstInfo.InferredFrom != PTM.getSrcRecord())
+        PrintError(InstInfo.InferredFrom->getLoc(), "inferred from patttern");
+    }
+  }
+  if (Errors)
+    throw "Errors in DAG patterns";
 }
 
 /// Given a pattern result with an unresolved type, see if we can find one
