@@ -7487,7 +7487,8 @@ TreeTransform<Derived>::TransformUnresolvedLookupExpr(
   // If we have template arguments, rebuild them, then rebuild the
   // templateid expression.
   TemplateArgumentListInfo TransArgs(Old->getLAngleLoc(), Old->getRAngleLoc());
-  if (getDerived().TransformTemplateArguments(Old->getTemplateArgs(),
+  if (Old->hasExplicitTemplateArgs() &&
+      getDerived().TransformTemplateArguments(Old->getTemplateArgs(),
                                               Old->getNumTemplateArgs(),
                                               TransArgs))
     return ExprError();
