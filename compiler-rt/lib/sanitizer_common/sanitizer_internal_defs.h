@@ -134,6 +134,8 @@ void NORETURN CheckFailed(const char *file, int line, const char *cond,
 
 #define COMPILER_CHECK(pred) IMPL_COMPILER_ASSERT(pred, __LINE__)
 
+#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
+
 #define IMPL_PASTE(a, b) a##b
 #define IMPL_COMPILER_ASSERT(pred, line) \
     typedef char IMPL_PASTE(assertion_failed_##_, line)[2*(int)(pred)-1];
