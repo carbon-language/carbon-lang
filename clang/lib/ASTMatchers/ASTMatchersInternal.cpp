@@ -18,18 +18,30 @@ namespace clang {
 namespace ast_matchers {
 namespace internal {
 
+void BoundNodesMap::copyTo(BoundNodesTreeBuilder *Builder) const {
+  for (IDToNodeMap::const_iterator It = NodeMap.begin();
+       It != NodeMap.end();
+       ++It) {
+    Builder->setBinding(It->first, It->second.second);
+  }
+}
+
+void BoundNodesMap::copyTo(BoundNodesMap *Other) const {
+  copy(NodeMap.begin(), NodeMap.end(),
+       inserter(Other->NodeMap, Other->NodeMap.begin()));
+}
+
+
 BoundNodesTree::BoundNodesTree() {}
 
 BoundNodesTree::BoundNodesTree(
-  const std::map<std::string, const Decl*>& DeclBindings,
-  const std::map<std::string, const Stmt*>& StmtBindings,
+  const BoundNodesMap& Bindings,
   const std::vector<BoundNodesTree> RecursiveBindings)
-  : DeclBindings(DeclBindings), StmtBindings(StmtBindings),
+  : Bindings(Bindings),
     RecursiveBindings(RecursiveBindings) {}
 
 void BoundNodesTree::copyTo(BoundNodesTreeBuilder* Builder) const {
-  copyBindingsTo(DeclBindings, Builder);
-  copyBindingsTo(StmtBindings, Builder);
+  Bindings.copyTo(Builder);
   for (std::vector<BoundNodesTree>::const_iterator
          I = RecursiveBindings.begin(),
          E = RecursiveBindings.end();
@@ -38,63 +50,33 @@ void BoundNodesTree::copyTo(BoundNodesTreeBuilder* Builder) const {
   }
 }
 
-template <typename T>
-void BoundNodesTree::copyBindingsTo(
-    const T& Bindings, BoundNodesTreeBuilder* Builder) const {
-  for (typename T::const_iterator I = Bindings.begin(),
-                                  E = Bindings.end();
-       I != E; ++I) {
-    Builder->setBinding(I->first, I->second);
-  }
-}
-
 void BoundNodesTree::visitMatches(Visitor* ResultVisitor) {
-  std::map<std::string, const Decl*> AggregatedDeclBindings;
-  std::map<std::string, const Stmt*> AggregatedStmtBindings;
-  visitMatchesRecursively(ResultVisitor, AggregatedDeclBindings,
-                          AggregatedStmtBindings);
+  BoundNodesMap AggregatedBindings;
+  visitMatchesRecursively(ResultVisitor, &AggregatedBindings);
 }
 
 void BoundNodesTree::
 visitMatchesRecursively(Visitor* ResultVisitor,
-                        std::map<std::string, const Decl*>
-                          AggregatedDeclBindings,
-                        std::map<std::string, const Stmt*>
-                          AggregatedStmtBindings) {
-  copy(DeclBindings.begin(), DeclBindings.end(),
-       inserter(AggregatedDeclBindings, AggregatedDeclBindings.begin()));
-  copy(StmtBindings.begin(), StmtBindings.end(),
-       inserter(AggregatedStmtBindings, AggregatedStmtBindings.begin()));
+                        BoundNodesMap* AggregatedBindings) {
+  Bindings.copyTo(AggregatedBindings);
   if (RecursiveBindings.empty()) {
-    ResultVisitor->visitMatch(BoundNodes(AggregatedDeclBindings,
-                                         AggregatedStmtBindings));
+    ResultVisitor->visitMatch(BoundNodes(*AggregatedBindings));
   } else {
     for (unsigned I = 0; I < RecursiveBindings.size(); ++I) {
       RecursiveBindings[I].visitMatchesRecursively(ResultVisitor,
-                                                   AggregatedDeclBindings,
-                                                   AggregatedStmtBindings);
+                                                   AggregatedBindings);
     }
   }
 }
 
 BoundNodesTreeBuilder::BoundNodesTreeBuilder() {}
 
-void BoundNodesTreeBuilder::setBinding(const std::string &Id,
-                                       const Decl *Node) {
-  DeclBindings[Id] = Node;
-}
-
-void BoundNodesTreeBuilder::setBinding(const std::string &Id,
-                                       const Stmt *Node) {
-  StmtBindings[Id] = Node;
-}
-
 void BoundNodesTreeBuilder::addMatch(const BoundNodesTree& Bindings) {
   RecursiveBindings.push_back(Bindings);
 }
 
 BoundNodesTree BoundNodesTreeBuilder::build() const {
-  return BoundNodesTree(DeclBindings, StmtBindings, RecursiveBindings);
+  return BoundNodesTree(Bindings, RecursiveBindings);
 }
 
 } // end namespace internal

@@ -67,35 +67,29 @@ public:
   /// \brief Returns the AST node bound to \c ID.
   /// Returns NULL if there was no node bound to \c ID or if there is a node but
   /// it cannot be converted to the specified type.
-  /// FIXME: We'll need one of those for every base type.
+  template <typename T>
+  const T *getNodeAs(StringRef ID) const {
+    return MyBoundNodes.getNodeAs<T>(ID);
+  }
+
+  /// \brief Deprecated. Please use \c getNodeAs instead.
   /// @{
   template <typename T>
   const T *getDeclAs(StringRef ID) const {
-    return getNodeAs<T>(DeclBindings, ID);
+    return getNodeAs<T>(ID);
   }
   template <typename T>
   const T *getStmtAs(StringRef ID) const {
-    return getNodeAs<T>(StmtBindings, ID);
+    return getNodeAs<T>(ID);
   }
   /// @}
 
 private:
   /// \brief Create BoundNodes from a pre-filled map of bindings.
-  BoundNodes(const std::map<std::string, const Decl*> &DeclBindings,
-             const std::map<std::string, const Stmt*> &StmtBindings)
-      : DeclBindings(DeclBindings), StmtBindings(StmtBindings) {}
+  BoundNodes(internal::BoundNodesMap &MyBoundNodes)
+      : MyBoundNodes(MyBoundNodes) {}
 
-  template <typename T, typename MapT>
-  const T *getNodeAs(const MapT &Bindings, StringRef ID) const {
-    typename MapT::const_iterator It = Bindings.find(ID);
-    if (It == Bindings.end()) {
-      return NULL;
-    }
-    return llvm::dyn_cast<T>(It->second);
-  }
-
-  std::map<std::string, const Decl*> DeclBindings;
-  std::map<std::string, const Stmt*> StmtBindings;
+  internal::BoundNodesMap MyBoundNodes;
 
   friend class internal::BoundNodesTree;
 };
