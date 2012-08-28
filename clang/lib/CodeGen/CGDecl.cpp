@@ -184,12 +184,14 @@ CodeGenFunction::CreateStaticVarDecl(const VarDecl &D,
     Name = GetStaticDeclName(*this, D, Separator);
 
   llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(Ty);
+  unsigned AddrSpace =
+   CGM.GetGlobalVarAddressSpace(&D, CGM.getContext().getTargetAddressSpace(Ty));
   llvm::GlobalVariable *GV =
     new llvm::GlobalVariable(CGM.getModule(), LTy,
                              Ty.isConstant(getContext()), Linkage,
                              CGM.EmitNullConstant(D.getType()), Name, 0,
                              llvm::GlobalVariable::NotThreadLocal,
-                             CGM.getContext().getTargetAddressSpace(Ty));
+                             AddrSpace);
   GV->setAlignment(getContext().getDeclAlign(&D).getQuantity());
   if (Linkage != llvm::GlobalValue::InternalLinkage)
     GV->setVisibility(CurFn->getVisibility());

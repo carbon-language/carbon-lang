@@ -20,5 +20,9 @@ __device__ void foo() {
 
   // CHECK: load i32* bitcast (i32 addrspace(3)* @k to i32*)
   k++;
+
+  static int li;
+  // CHECK: load i32 addrspace(1)* @_ZZ3foovE2li
+  li++;
 }
 
