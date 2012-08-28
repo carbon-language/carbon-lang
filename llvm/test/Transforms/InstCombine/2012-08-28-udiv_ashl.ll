@@ -48,3 +48,10 @@ entry:
   %div1 = sdiv i32 %div, 100
   ret i32 %div1
 }
+
+define i80 @no_crash_i80(i80 %x) {
+entry:
+  %div = lshr i80 %x, 2
+  %div1 = udiv i80 %div, 100
+  ret i80 %div1
+}
