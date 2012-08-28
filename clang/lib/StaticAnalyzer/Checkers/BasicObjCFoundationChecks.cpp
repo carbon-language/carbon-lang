@@ -432,7 +432,7 @@ void CFRetainReleaseChecker::checkPreStmt(const CallExpr *CE,
 
     BugReport *report = new BugReport(*BT, description, N);
     report->addRange(Arg->getSourceRange());
-    bugreporter::addTrackNullOrUndefValueVisitor(N, Arg, report);
+    bugreporter::trackNullOrUndefValue(N, Arg, *report);
     C.EmitReport(report);
     return;
   }

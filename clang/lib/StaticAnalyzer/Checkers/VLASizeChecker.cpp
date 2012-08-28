@@ -69,7 +69,7 @@ void VLASizeChecker::reportBug(VLASize_Kind Kind,
 
   BugReport *report = new BugReport(*BT, os.str(), N);
   report->addRange(SizeE->getSourceRange());
-  bugreporter::addTrackNullOrUndefValueVisitor(N, SizeE, report);
+  bugreporter::trackNullOrUndefValue(N, SizeE, *report);
   C.EmitReport(report);
   return;
 }

@@ -42,7 +42,7 @@ UndefinedArraySubscriptChecker::checkPreStmt(const ArraySubscriptExpr *A,
       // Generate a report for this bug.
       BugReport *R = new BugReport(*BT, BT->getName(), N);
       R->addRange(A->getIdx()->getSourceRange());
-      bugreporter::addTrackNullOrUndefValueVisitor(N, A->getIdx(), R);
+      bugreporter::trackNullOrUndefValue(N, A->getIdx(), *R);
       C.EmitReport(R);
     }
   }

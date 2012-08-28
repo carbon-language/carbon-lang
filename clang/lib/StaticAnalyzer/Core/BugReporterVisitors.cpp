@@ -210,7 +210,7 @@ public:
     llvm::tie(StNonZero, StZero) = State->assume(cast<DefinedSVal>(V));
     if (StZero && !StNonZero) {
       // If we're returning 0, we should track where that 0 came from.
-      bugreporter::addTrackNullOrUndefValueVisitor(N, RetE, &BR);
+      bugreporter::trackNullOrUndefValue(N, RetE, BR);
 
       if (isa<Loc>(V)) {
         if (RetE->getType()->isObjCObjectPointerType())
@@ -435,9 +435,8 @@ TrackConstraintBRVisitor::VisitNode(const ExplodedNode *N,
   return NULL;
 }
 
-void bugreporter::addTrackNullOrUndefValueVisitor(const ExplodedNode *N,
-                                                  const Stmt *S,
-                                                  BugReport *report) {
+void bugreporter::trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S,
+                                        BugReport &report) {
   if (!S || !N)
     return;
 
@@ -477,17 +476,17 @@ void bugreporter::addTrackNullOrUndefValueVisitor(const ExplodedNode *N,
 
         // Mark both the variable region and its contents as interesting.
         SVal V = state->getRawSVal(loc::MemRegionVal(R));
-        report->markInteresting(R);
-        report->markInteresting(V);
+        report.markInteresting(R);
+        report.markInteresting(V);
 
         // If the contents are symbolic, find out when they became null.
         if (V.getAsLocSymbol()) {
           BugReporterVisitor *ConstraintTracker
             = new TrackConstraintBRVisitor(cast<loc::MemRegionVal>(V), false);
-          report->addVisitor(ConstraintTracker);
+          report.addVisitor(ConstraintTracker);
         }
 
-        report->addVisitor(new FindLastStoreBRVisitor(V, R));
+        report.addVisitor(new FindLastStoreBRVisitor(V, R));
         return;
       }
     }
@@ -505,14 +504,14 @@ void bugreporter::addTrackNullOrUndefValueVisitor(const ExplodedNode *N,
   if (loc::MemRegionVal *L = dyn_cast<loc::MemRegionVal>(&V)) {
     const MemRegion *Base = L->getRegion()->getBaseRegion();
     if (isa<SymbolicRegion>(Base)) {
-      report->markInteresting(Base);
-      report->addVisitor(new TrackConstraintBRVisitor(loc::MemRegionVal(Base),
+      report.markInteresting(Base);
+      report.addVisitor(new TrackConstraintBRVisitor(loc::MemRegionVal(Base),
                                                       false));
     }
   } else {
     // Otherwise, if the value came from an inlined function call,
     // we should at least make sure that function isn't pruned in our output.
-    ReturnVisitor::addVisitorIfNecessary(N, S, *report);
+    ReturnVisitor::addVisitorIfNecessary(N, S, report);
   }
 }
 
@@ -555,7 +554,7 @@ PathDiagnosticPiece *NilReceiverBRVisitor::VisitNode(const ExplodedNode *N,
   // The receiver was nil, and hence the method was skipped.
   // Register a BugReporterVisitor to issue a message telling us how
   // the receiver was null.
-  bugreporter::addTrackNullOrUndefValueVisitor(N, Receiver, &BR);
+  bugreporter::trackNullOrUndefValue(N, Receiver, BR);
   // Issue a message saying that the method was skipped.
   PathDiagnosticLocation L(Receiver, BRC.getSourceManager(),
                                      N->getLocationContext());
