@@ -2927,7 +2927,7 @@ let Constraints = "$src1 = $dst" in {
   }
 }
 
-let isCommutable = 1, isCodeGenOnly = 1 in {
+let isCodeGenOnly = 1 in {
   defm VMAXC: basic_sse12_fp_binop_s<0x5F, "max", X86fmaxc, SSE_ALU_ITINS_S, 0>,
        VEX_4V, VEX_LIG;
   defm VMAXC: basic_sse12_fp_binop_p<0x5F, "max", X86fmaxc, SSE_ALU_ITINS_P, 0>,
