@@ -4049,7 +4049,7 @@ protected:
                             ModuleSP symfile_module_sp (new Module (symfile_spec, target->GetArchitecture()));
                             const UUID &symfile_uuid = symfile_module_sp->GetUUID();
                             StreamString ss_symfile_uuid;
-                            symfile_module_sp->GetUUID().Dump(&ss_symfile_uuid);
+                            symfile_uuid.Dump(&ss_symfile_uuid);
 
                             if (symfile_module_sp)
                             {
