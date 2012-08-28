@@ -237,9 +237,8 @@ for name in os.listdir(command_guide_path):
     # Otherwise, automatically extract the description.
     file_subpath = os.path.join(command_guide_subpath, name)
     with open(os.path.join(command_guide_path, name)) as f:
-        it = iter(f)
-        title = it.next()[:-1]
-        header = it.next()[:-1]
+        title = f.readline().rstrip('\n')
+        header = f.readline().rstrip('\n')
 
         if len(header) != len(title):
             print >>sys.stderr, (
