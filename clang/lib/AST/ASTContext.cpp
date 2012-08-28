@@ -5800,7 +5800,7 @@ ASTContext::ProtocolCompatibleWithProtocol(ObjCProtocolDecl *lProto,
   return false;
 }
 
-/// QualifiedIdConformsQualifiedId - compare id<p,...> with id<p1,...>
+/// QualifiedIdConformsQualifiedId - compare id<pr,...> with id<pr1,...>
 /// return true if lhs's protocols conform to rhs's protocol; false
 /// otherwise.
 bool ASTContext::QualifiedIdConformsQualifiedId(QualType lhs, QualType rhs) {
@@ -5809,8 +5809,8 @@ bool ASTContext::QualifiedIdConformsQualifiedId(QualType lhs, QualType rhs) {
   return false;
 }
 
-/// ObjCQualifiedClassTypesAreCompatible - compare  Class<p,...> and
-/// Class<p1, ...>.
+/// ObjCQualifiedClassTypesAreCompatible - compare  Class<pr,...> and
+/// Class<pr1, ...>.
 bool ASTContext::ObjCQualifiedClassTypesAreCompatible(QualType lhs, 
                                                       QualType rhs) {
   const ObjCObjectPointerType *lhsQID = lhs->getAs<ObjCObjectPointerType>();
