@@ -262,7 +262,7 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
     OS << PrintReg(getReg(), TRI, getSubReg());
 
     if (isDef() || isKill() || isDead() || isImplicit() || isUndef() ||
-        isInternalRead() || isEarlyClobber()) {
+        isInternalRead() || isEarlyClobber() || isTied()) {
       OS << '<';
       bool NeedComma = false;
       if (isDef()) {
@@ -282,27 +282,30 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
           NeedComma = true;
       }
 
-      if (isKill() || isDead() || (isUndef() && isUse()) || isInternalRead()) {
+      if (isKill()) {
         if (NeedComma) OS << ',';
-        NeedComma = false;
-        if (isKill()) {
-          OS << "kill";
-          NeedComma = true;
-        }
-        if (isDead()) {
-          OS << "dead";
-          NeedComma = true;
-        }
-        if (isUndef() && isUse()) {
-          if (NeedComma) OS << ',';
-          OS << "undef";
-          NeedComma = true;
-        }
-        if (isInternalRead()) {
-          if (NeedComma) OS << ',';
-          OS << "internal";
-          NeedComma = true;
-        }
+        OS << "kill";
+        NeedComma = true;
+      }
+      if (isDead()) {
+        if (NeedComma) OS << ',';
+        OS << "dead";
+        NeedComma = true;
+      }
+      if (isUndef() && isUse()) {
+        if (NeedComma) OS << ',';
+        OS << "undef";
+        NeedComma = true;
+      }
+      if (isInternalRead()) {
+        if (NeedComma) OS << ',';
+        OS << "internal";
+        NeedComma = true;
+      }
+      if (isTied()) {
+        if (NeedComma) OS << ',';
+        OS << "tied";
+        NeedComma = true;
       }
       OS << '>';
     }
@@ -711,6 +714,16 @@ void MachineInstr::addOperand(const MachineOperand &Op) {
     // Add the new operand to RegInfo.
     if (RegInfo)
       RegInfo->addRegOperandToUseList(&Operands[OpNo]);
+    // Set the IsTied bit if MC indicates this use is tied to a def.
+    if (Operands[OpNo].isUse()) {
+      int DefIdx = MCID->getOperandConstraint(OpNo, MCOI::TIED_TO);
+      if (DefIdx != -1) {
+        MachineOperand &DefMO = getOperand(DefIdx);
+        assert(DefMO.isDef() && "Use tied to operand that isn't a def");
+        DefMO.IsTied = true;
+        Operands[OpNo].IsTied = true;
+      }
+    }
     // If the register operand is flagged as early, mark the operand as such.
     if (MCID->getOperandConstraint(OpNo, MCOI::EARLY_CLOBBER) != -1)
       Operands[OpNo].setIsEarlyClobber(true);

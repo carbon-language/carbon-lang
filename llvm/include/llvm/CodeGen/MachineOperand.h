@@ -124,6 +124,14 @@ private:
   /// model the GCC inline asm '&' constraint modifier.
   bool IsEarlyClobber : 1;
 
+  /// IsTied - True if this MO_Register operand is tied to another operand on
+  /// the instruction. Tied operands form def-use pairs that must be assigned
+  /// the same physical register by the register allocator, but they will have
+  /// different virtual registers while the code is in SSA form.
+  ///
+  /// See MachineInstr::isRegTiedToUseOperand() and isRegTiedToDefOperand().
+  bool IsTied : 1;
+
   /// IsDebug - True if this MO_Register 'use' operand is in a debug pseudo,
   /// not a real instruction.  Such uses should be ignored during codegen.
   bool IsDebug : 1;
@@ -299,6 +307,11 @@ public:
     return IsEarlyClobber;
   }
 
+  bool isTied() const {
+    assert(isReg() && "Wrong MachineOperand accessor");
+    return IsTied;
+  }
+
   bool isDebug() const {
     assert(isReg() && "Wrong MachineOperand accessor");
     return IsDebug;
@@ -375,6 +388,11 @@ public:
   void setIsEarlyClobber(bool Val = true) {
     assert(isReg() && IsDef && "Wrong MachineOperand accessor");
     IsEarlyClobber = Val;
+  }
+
+  void setIsTied(bool Val = true) {
+    assert(isReg() && "Wrong MachineOperand accessor");
+    IsTied = Val;
   }
 
   void setIsDebug(bool Val = true) {
@@ -559,6 +577,7 @@ public:
     Op.IsUndef = isUndef;
     Op.IsInternalRead = isInternalRead;
     Op.IsEarlyClobber = isEarlyClobber;
+    Op.IsTied = false;
     Op.IsDebug = isDebug;
     Op.SmallContents.RegNo = Reg;
     Op.Contents.Reg.Prev = 0;
