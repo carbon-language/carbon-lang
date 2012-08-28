@@ -681,41 +681,6 @@ def tSTRspi : T1pIs<(outs), (ins tGPR:$Rt, t_addrmode_sp:$addr), IIC_iStore_i,
   let Inst{7-0} = addr;
 }
 
-// Atomic loads. These pseudos expand to the loads above, but the have mayStore
-// = 1 so they can't be reordered.
-let mayLoad = 1, mayStore = 1, hasSideEffects = 0 in {
-let AM = AddrModeT1_1 in {
-def ATOMIC_tLDRBi : tPseudoExpand<(outs tGPR:$Rt),
-                                   (ins t_addrmode_is1:$addr, pred:$p),
-                                   2, IIC_iLoad_bh_i, [],
-                              (tLDRBi tGPR:$Rt, t_addrmode_is1:$addr, pred:$p)>;
-def ATOMIC_tLDRBr : tPseudoExpand<(outs tGPR:$Rt),
-                                   (ins t_addrmode_rrs1:$addr, pred:$p),
-                                   2, IIC_iLoad_bh_r, [],
-                             (tLDRBr tGPR:$Rt, t_addrmode_rrs1:$addr, pred:$p)>;
-}
-let AM = AddrModeT1_2 in {
-def ATOMIC_tLDRHi : tPseudoExpand<(outs tGPR:$Rt),
-                                   (ins t_addrmode_is2:$addr, pred:$p),
-                                   2, IIC_iLoad_bh_i, [],
-                              (tLDRHi tGPR:$Rt, t_addrmode_is2:$addr, pred:$p)>;
-def ATOMIC_tLDRHr : tPseudoExpand<(outs tGPR:$Rt),
-                                   (ins t_addrmode_rrs2:$addr, pred:$p),
-                                   2, IIC_iLoad_bh_r, [],
-                             (tLDRHr tGPR:$Rt, t_addrmode_rrs2:$addr, pred:$p)>;
-}
-let AM = AddrModeT1_4 in {
-def ATOMIC_tLDRi  : tPseudoExpand<(outs tGPR:$Rt),
-                                   (ins t_addrmode_is4:$addr, pred:$p),
-                                   2, IIC_iLoad_i, [],
-                               (tLDRi tGPR:$Rt, t_addrmode_is4:$addr, pred:$p)>;
-def ATOMIC_tLDRr  : tPseudoExpand<(outs tGPR:$Rt),
-                                   (ins t_addrmode_rrs4:$addr, pred:$p),
-                                   2, IIC_iLoad_r, [],
-                              (tLDRr tGPR:$Rt, t_addrmode_rrs4:$addr, pred:$p)>;
-}
-}
-
 //===----------------------------------------------------------------------===//
 //  Load / store multiple Instructions.
 //
@@ -1369,17 +1334,17 @@ def : T1Pat<(sextloadi16 t_addrmode_is2:$addr),
             (tASRri (tLSLri (tLDRHi t_addrmode_is2:$addr), 16), 16)>;
 
 def : T1Pat<(atomic_load_8 t_addrmode_is1:$src),
-             (ATOMIC_tLDRBi t_addrmode_is1:$src)>;
+             (tLDRBi t_addrmode_is1:$src)>;
 def : T1Pat<(atomic_load_8 t_addrmode_rrs1:$src),
-             (ATOMIC_tLDRBr t_addrmode_rrs1:$src)>;
+             (tLDRBr t_addrmode_rrs1:$src)>;
 def : T1Pat<(atomic_load_16 t_addrmode_is2:$src),
-             (ATOMIC_tLDRHi t_addrmode_is2:$src)>;
+             (tLDRHi t_addrmode_is2:$src)>;
 def : T1Pat<(atomic_load_16 t_addrmode_rrs2:$src),
-             (ATOMIC_tLDRHr t_addrmode_rrs2:$src)>;
+             (tLDRHr t_addrmode_rrs2:$src)>;
 def : T1Pat<(atomic_load_32 t_addrmode_is4:$src),
-             (ATOMIC_tLDRi t_addrmode_is4:$src)>;
+             (tLDRi t_addrmode_is4:$src)>;
 def : T1Pat<(atomic_load_32 t_addrmode_rrs4:$src),
-             (ATOMIC_tLDRr t_addrmode_rrs4:$src)>;
+             (tLDRr t_addrmode_rrs4:$src)>;
 def : T1Pat<(atomic_store_8 t_addrmode_is1:$ptr, tGPR:$val),
              (tSTRBi tGPR:$val, t_addrmode_is1:$ptr)>;
 def : T1Pat<(atomic_store_8 t_addrmode_rrs1:$ptr, tGPR:$val),

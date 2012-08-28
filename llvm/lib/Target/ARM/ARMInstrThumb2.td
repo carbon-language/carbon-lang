@@ -1590,46 +1590,6 @@ defm t2PLD  : T2Ipl<0, 0, "pld">,  Requires<[IsThumb2]>;
 defm t2PLDW : T2Ipl<1, 0, "pldw">, Requires<[IsThumb2,HasV7,HasMP]>;
 defm t2PLI  : T2Ipl<0, 1, "pli">,  Requires<[IsThumb2,HasV7]>;
 
-// Pseudos for atomic loads. Setting mayStore prevents reordering.
-let mayLoad = 1, mayStore = 1, hasSideEffects = 0 in {
-def ATOMIC_t2LDRBi12 : t2PseudoExpand<(outs rGPR:$Rt),
-                                       (ins t2addrmode_imm12:$addr, pred:$p),
-                                       4, IIC_iLoad_bh_i, [],
-                         (t2LDRBi12 rGPR:$Rt, t2addrmode_imm12:$addr, pred:$p)>;
-def ATOMIC_t2LDRBi8  : t2PseudoExpand<(outs rGPR:$Rt),
-                                       (ins t2addrmode_negimm8:$addr, pred:$p),
-                                       4, IIC_iLoad_bh_i, [],
-                        (t2LDRBi8 rGPR:$Rt, t2addrmode_negimm8:$addr, pred:$p)>;
-def ATOMIC_t2LDRBs   : t2PseudoExpand<(outs rGPR:$Rt),
-                                       (ins t2addrmode_so_reg:$addr, pred:$p),
-                                       4, IIC_iLoad_bh_si, [],
-                          (t2LDRBs rGPR:$Rt, t2addrmode_so_reg:$addr, pred:$p)>;
-def ATOMIC_t2LDRHi12 : t2PseudoExpand<(outs rGPR:$Rt),
-                                       (ins t2addrmode_imm12:$addr, pred:$p),
-                                       4, IIC_iLoad_bh_i, [],
-                         (t2LDRHi12 rGPR:$Rt, t2addrmode_imm12:$addr, pred:$p)>;
-def ATOMIC_t2LDRHi8  : t2PseudoExpand<(outs rGPR:$Rt),
-                                       (ins t2addrmode_negimm8:$addr, pred:$p),
-                                       4, IIC_iLoad_bh_i, [],
-                        (t2LDRHi8 rGPR:$Rt, t2addrmode_negimm8:$addr, pred:$p)>;
-def ATOMIC_t2LDRHs   : t2PseudoExpand<(outs rGPR:$Rt),
-                                       (ins t2addrmode_so_reg:$addr, pred:$p),
-                                       4, IIC_iLoad_bh_si, [],
-                          (t2LDRHs rGPR:$Rt, t2addrmode_so_reg:$addr, pred:$p)>;
-def ATOMIC_t2LDRi12  : t2PseudoExpand<(outs GPR:$Rt),
-                                       (ins t2addrmode_imm12:$addr, pred:$p),
-                                       4, IIC_iLoad_i, [],
-                           (t2LDRi12 GPR:$Rt, t2addrmode_imm12:$addr, pred:$p)>;
-def ATOMIC_t2LDRi8   : t2PseudoExpand<(outs GPR:$Rt),
-                                       (ins t2addrmode_negimm8:$addr, pred:$p),
-                                       4, IIC_iLoad_i, [],
-                          (t2LDRi8 GPR:$Rt, t2addrmode_negimm8:$addr, pred:$p)>;
-def ATOMIC_t2LDRs    : t2PseudoExpand<(outs GPR:$Rt),
-                                       (ins t2addrmode_so_reg:$addr, pred:$p),
-                                       4, IIC_iLoad_si, [],
-                            (t2LDRs GPR:$Rt, t2addrmode_so_reg:$addr, pred:$p)>;
-}
-
 //===----------------------------------------------------------------------===//
 //  Load / store multiple Instructions.
 //
@@ -4008,24 +3968,24 @@ def : T2Pat<(add rGPR:$Rn, (sext_inreg rGPR:$Rm, i16)),
            Requires<[HasT2ExtractPack, IsThumb2]>;
 
 // Atomic load/store patterns
-def : T2Pat<(atomic_load_8     t2addrmode_imm12:$addr),
-            (ATOMIC_t2LDRBi12 t2addrmode_imm12:$addr)>;
-def : T2Pat<(atomic_load_8    t2addrmode_negimm8:$addr),
-            (ATOMIC_t2LDRBi8 t2addrmode_negimm8:$addr)>;
+def : T2Pat<(atomic_load_8   t2addrmode_imm12:$addr),
+            (t2LDRBi12  t2addrmode_imm12:$addr)>;
+def : T2Pat<(atomic_load_8   t2addrmode_negimm8:$addr),
+            (t2LDRBi8   t2addrmode_negimm8:$addr)>;
 def : T2Pat<(atomic_load_8   t2addrmode_so_reg:$addr),
-            (ATOMIC_t2LDRBs t2addrmode_so_reg:$addr)>;
-def : T2Pat<(atomic_load_16    t2addrmode_imm12:$addr),
-            (ATOMIC_t2LDRHi12 t2addrmode_imm12:$addr)>;
-def : T2Pat<(atomic_load_16   t2addrmode_negimm8:$addr),
-            (ATOMIC_t2LDRHi8 t2addrmode_negimm8:$addr)>;
+            (t2LDRBs    t2addrmode_so_reg:$addr)>;
+def : T2Pat<(atomic_load_16  t2addrmode_imm12:$addr),
+            (t2LDRHi12  t2addrmode_imm12:$addr)>;
+def : T2Pat<(atomic_load_16  t2addrmode_negimm8:$addr),
+            (t2LDRHi8   t2addrmode_negimm8:$addr)>;
 def : T2Pat<(atomic_load_16  t2addrmode_so_reg:$addr),
-            (ATOMIC_t2LDRHs t2addrmode_so_reg:$addr)>;
-def : T2Pat<(atomic_load_32   t2addrmode_imm12:$addr),
-            (ATOMIC_t2LDRi12 t2addrmode_imm12:$addr)>;
+            (t2LDRHs    t2addrmode_so_reg:$addr)>;
+def : T2Pat<(atomic_load_32  t2addrmode_imm12:$addr),
+            (t2LDRi12   t2addrmode_imm12:$addr)>;
 def : T2Pat<(atomic_load_32  t2addrmode_negimm8:$addr),
-            (ATOMIC_t2LDRi8 t2addrmode_negimm8:$addr)>;
+            (t2LDRi8    t2addrmode_negimm8:$addr)>;
 def : T2Pat<(atomic_load_32  t2addrmode_so_reg:$addr),
-            (ATOMIC_t2LDRs  t2addrmode_so_reg:$addr)>;
+            (t2LDRs     t2addrmode_so_reg:$addr)>;
 def : T2Pat<(atomic_store_8  t2addrmode_imm12:$addr, GPR:$val),
             (t2STRBi12  GPR:$val, t2addrmode_imm12:$addr)>;
 def : T2Pat<(atomic_store_8  t2addrmode_negimm8:$addr, GPR:$val),

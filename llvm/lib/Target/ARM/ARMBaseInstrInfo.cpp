@@ -2778,8 +2778,8 @@ static int adjustDefLatency(const ARMSubtarget &Subtarget,
     // variants are one cycle cheaper.
     switch (DefMCID->getOpcode()) {
     default: break;
-    case ARM::LDRrs: case ARM::ATOMIC_LDRrs:
-    case ARM::LDRBrs: case ARM::ATOMIC_LDRBrs: {
+    case ARM::LDRrs:
+    case ARM::LDRBrs: {
       unsigned ShOpVal = DefMI->getOperand(3).getImm();
       unsigned ShImm = ARM_AM::getAM2Offset(ShOpVal);
       if (ShImm == 0 ||
@@ -2787,9 +2787,9 @@ static int adjustDefLatency(const ARMSubtarget &Subtarget,
         --Adjust;
       break;
     }
-    case ARM::t2LDRs: case ARM::ATOMIC_t2LDRs:
-    case ARM::t2LDRBs: case ARM::ATOMIC_t2LDRBs:
-    case ARM::t2LDRHs: case ARM::ATOMIC_t2LDRHs:
+    case ARM::t2LDRs:
+    case ARM::t2LDRBs:
+    case ARM::t2LDRHs:
     case ARM::t2LDRSHs: {
       // Thumb2 mode: lsl only.
       unsigned ShAmt = DefMI->getOperand(3).getImm();
@@ -3046,8 +3046,8 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
     // variants are one cycle cheaper.
     switch (DefMCID.getOpcode()) {
     default: break;
-    case ARM::LDRrs: case ARM::ATOMIC_LDRrs:
-    case ARM::LDRBrs: case ARM::ATOMIC_LDRBrs: {
+    case ARM::LDRrs:
+    case ARM::LDRBrs: {
       unsigned ShOpVal =
         cast<ConstantSDNode>(DefNode->getOperand(2))->getZExtValue();
       unsigned ShImm = ARM_AM::getAM2Offset(ShOpVal);
@@ -3056,9 +3056,9 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
         --Latency;
       break;
     }
-    case ARM::t2LDRs: case ARM::ATOMIC_t2LDRs:
-    case ARM::t2LDRBs: case ARM::ATOMIC_t2LDRBs:
-    case ARM::t2LDRHs: case ARM::ATOMIC_t2LDRHs:
+    case ARM::t2LDRs:
+    case ARM::t2LDRBs:
+    case ARM::t2LDRHs:
     case ARM::t2LDRSHs: {
       // Thumb2 mode: lsl only.
       unsigned ShAmt =

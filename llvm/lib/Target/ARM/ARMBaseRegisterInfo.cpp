@@ -870,14 +870,10 @@ needsFrameBaseReg(MachineInstr *MI, int64_t Offset) const {
   // return false for everything else.
   unsigned Opc = MI->getOpcode();
   switch (Opc) {
-  case ARM::LDRi12: case ARM::ATOMIC_LDRi12:
-  case ARM::LDRH: case ARM::ATOMIC_LDRH:
-  case ARM::LDRBi12: case ARM::ATOMIC_LDRBi12:
+  case ARM::LDRi12: case ARM::LDRH: case ARM::LDRBi12:
   case ARM::STRi12: case ARM::STRH: case ARM::STRBi12:
-  case ARM::t2LDRi12: case ARM::ATOMIC_t2LDRi12:
-  case ARM::t2LDRi8: case ARM::ATOMIC_t2LDRi8:
-  case ARM::t2STRi12:
-  case ARM::t2STRi8:
+  case ARM::t2LDRi12: case ARM::t2LDRi8:
+  case ARM::t2STRi12: case ARM::t2STRi8:
   case ARM::VLDRS: case ARM::VLDRD:
   case ARM::VSTRS: case ARM::VSTRD:
   case ARM::tSTRspi: case ARM::tLDRspi:

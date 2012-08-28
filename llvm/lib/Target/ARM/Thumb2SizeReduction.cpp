@@ -114,22 +114,6 @@ namespace {
     { ARM::t2LDRHs, ARM::tLDRHr,  0,             0,   0,    1,   0,  0,0, 0,1 },
     { ARM::t2LDRSBs,ARM::tLDRSB,  0,             0,   0,    1,   0,  0,0, 0,1 },
     { ARM::t2LDRSHs,ARM::tLDRSH,  0,             0,   0,    1,   0,  0,0, 0,1 },
-
-    // At this point it is safe to translate acquire loads to normal loads.
-    // There is no risk of reordering loads.
-    { ARM::ATOMIC_t2LDRi12,
-                    ARM::tLDRi,   ARM::tLDRspi,  5,   8,    1,   0,  0,0, 0,1 },
-    { ARM::ATOMIC_t2LDRs,
-                    ARM::tLDRr,   0,             0,   0,    1,   0,  0,0, 0,1 },
-    { ARM::ATOMIC_t2LDRBi12,
-                    ARM::tLDRBi,  0,             5,   0,    1,   0,  0,0, 0,1 },
-    { ARM::ATOMIC_t2LDRBs,
-                    ARM::tLDRBr,  0,             0,   0,    1,   0,  0,0, 0,1 },
-    { ARM::ATOMIC_t2LDRHi12,
-                    ARM::tLDRHi,  0,             5,   0,    1,   0,  0,0, 0,1 },
-    { ARM::ATOMIC_t2LDRHs,
-                    ARM::tLDRHr,  0,             0,   0,    1,   0,  0,0, 0,1 },
-
     { ARM::t2STRi12,ARM::tSTRi,   ARM::tSTRspi,  5,   8,    1,   0,  0,0, 0,1 },
     { ARM::t2STRs,  ARM::tSTRr,   0,             0,   0,    1,   0,  0,0, 0,1 },
     { ARM::t2STRBi12,ARM::tSTRBi, 0,             5,   0,    1,   0,  0,0, 0,1 },
@@ -357,7 +341,7 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
   switch (Entry.WideOpc) {
   default:
     llvm_unreachable("Unexpected Thumb2 load / store opcode!");
-  case ARM::t2LDRi12: case ARM::ATOMIC_t2LDRi12:
+  case ARM::t2LDRi12:
   case ARM::t2STRi12:
     if (MI->getOperand(1).getReg() == ARM::SP) {
       Opc = Entry.NarrowOpc2;
@@ -369,7 +353,7 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
     HasImmOffset = true;
     HasOffReg = false;
     break;
-  case ARM::t2LDRBi12: case ARM::ATOMIC_t2LDRBi12:
+  case ARM::t2LDRBi12:
   case ARM::t2STRBi12:
     HasImmOffset = true;
     HasOffReg = false;
@@ -380,9 +364,9 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
     HasImmOffset = true;
     HasOffReg = false;
     break;
-  case ARM::t2LDRs: case ARM::ATOMIC_t2LDRs:
-  case ARM::t2LDRBs: case ARM::ATOMIC_t2LDRBs:
-  case ARM::t2LDRHs: case ARM::ATOMIC_t2LDRHs:
+  case ARM::t2LDRs:
+  case ARM::t2LDRBs:
+  case ARM::t2LDRHs:
   case ARM::t2LDRSBs:
   case ARM::t2LDRSHs:
   case ARM::t2STRs:
