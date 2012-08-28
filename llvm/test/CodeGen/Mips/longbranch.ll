@@ -6,9 +6,15 @@
 define void @foo1(i32 %s) nounwind {
 entry:
 ; O32: bal
+; O32: lui $at, 0
+; O32: addiu $at, $at, {{[0-9]+}} 
+; N64: lui $at, 0
+; N64: daddiu $at, $at, 0
+; N64: dsll $at, $at, 16
+; N64: daddiu $at, $at, 0
 ; N64: bal
-; N64: highest
-; N64: higher
+; N64: dsll $at, $at, 16
+; N64: daddiu $at, $at, {{[0-9]+}}  
 
   %tobool = icmp eq i32 %s, 0
   br i1 %tobool, label %if.end, label %if.then
