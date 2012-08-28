@@ -20,6 +20,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CallEvent.h"
 #include "llvm/ADT/SmallString.h"
 
 using namespace clang;
@@ -110,6 +111,133 @@ BugReporterVisitor::getDefaultEndPath(BugReporterContext &BRC,
 }
 
 
+namespace {
+/// Emits an extra note at the return statement of an interesting stack frame.
+///
+/// The returned value is marked as an interesting value, and if it's null,
+/// adds a visitor to track where it became null.
+///
+/// This visitor is intended to be used when another visitor discovers that an
+/// interesting value comes from an inlined function call.
+class ReturnVisitor : public BugReporterVisitorImpl<ReturnVisitor> {
+  const StackFrameContext *StackFrame;
+  bool Satisfied;
+public:
+  ReturnVisitor(const StackFrameContext *Frame)
+    : StackFrame(Frame), Satisfied(false) {}
+
+  virtual void Profile(llvm::FoldingSetNodeID &ID) const {
+    static int Tag = 0;
+    ID.AddPointer(&Tag);
+    ID.AddPointer(StackFrame);
+  }
+
+  /// Adds a ReturnVisitor if the given statement represents a call that was
+  /// inlined.
+  ///
+  /// This will search back through the ExplodedGraph, starting from the given
+  /// node, looking for when the given statement was processed. If it turns out
+  /// the statement is a call that was inlined, we add the visitor to the
+  /// bug report, so it can print a note later.
+  static void addVisitorIfNecessary(const ExplodedNode *Node, const Stmt *S,
+                                    BugReport &BR) {
+    if (!CallEvent::isCallStmt(S))
+      return;
+    
+    // First, find when we processed the statement.
+    do {
+      if (const CallExitEnd *CEE = Node->getLocationAs<CallExitEnd>())
+        if (CEE->getCalleeContext()->getCallSite() == S)
+          break;
+      if (const StmtPoint *SP = Node->getLocationAs<StmtPoint>())
+        if (SP->getStmt() == S)
+          break;
+
+      Node = Node->getFirstPred();
+    } while (Node);
+
+    // Next, step over any post-statement checks.
+    while (Node && isa<PostStmt>(Node->getLocation()))
+      Node = Node->getFirstPred();
+
+    // Finally, see if we inlined the call.
+    if (Node)
+      if (const CallExitEnd *CEE = Node->getLocationAs<CallExitEnd>())
+        if (CEE->getCalleeContext()->getCallSite() == S)
+          BR.addVisitor(new ReturnVisitor(CEE->getCalleeContext()));
+
+  }
+
+  PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
+                                 const ExplodedNode *PrevN,
+                                 BugReporterContext &BRC,
+                                 BugReport &BR) {
+    if (Satisfied)
+      return 0;
+
+    // Only print a message at the interesting return statement.
+    if (N->getLocationContext() != StackFrame)
+      return 0;
+
+    const StmtPoint *SP = N->getLocationAs<StmtPoint>();
+    if (!SP)
+      return 0;
+
+    const ReturnStmt *Ret = dyn_cast<ReturnStmt>(SP->getStmt());
+    if (!Ret)
+      return 0;
+
+    // Okay, we're at the right return statement, but do we have the return
+    // value available?
+    ProgramStateRef State = N->getState();
+    SVal V = State->getSVal(Ret, StackFrame);
+    if (V.isUnknownOrUndef())
+      return 0;
+
+    // Don't print any more notes after this one.
+    Satisfied = true;
+
+    // Build an appropriate message based on the return value.
+    SmallString<64> Msg;
+    llvm::raw_svector_ostream Out(Msg);
+
+    const Expr *RetE = Ret->getRetValue();
+    assert(RetE && "Tracking a return value for a void function");
+    RetE = RetE->IgnoreParenCasts();
+
+    // See if we know that the return value is 0.
+    ProgramStateRef StNonZero, StZero;
+    llvm::tie(StNonZero, StZero) = State->assume(cast<DefinedSVal>(V));
+    if (StZero && !StNonZero) {
+      // If we're returning 0, we should track where that 0 came from.
+      bugreporter::addTrackNullOrUndefValueVisitor(N, RetE, &BR);
+
+      if (isa<Loc>(V)) {
+        if (RetE->getType()->isObjCObjectPointerType())
+          Out << "Returning nil";
+        else
+          Out << "Returning null pointer";
+      } else {
+        Out << "Returning zero";
+      }
+    } else {
+      // FIXME: We can probably do better than this.
+      BR.markInteresting(V);
+      Out << "Value returned here";
+    }
+
+    // FIXME: We should have a more generalized location printing mechanism.
+    if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(RetE))
+      if (const DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(DR->getDecl()))
+        Out << " (loaded from '" << *DD << "')";
+
+    PathDiagnosticLocation L(Ret, BRC.getSourceManager(), StackFrame);
+    return new PathDiagnosticEventPiece(L, Out.str());
+  }
+};
+} // end anonymous namespace
+
+
 void FindLastStoreBRVisitor ::Profile(llvm::FoldingSetNodeID &ID) const {
   static int tag = 0;
   ID.AddPointer(&tag);
@@ -133,6 +261,7 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *N,
       return NULL;
 
     const ExplodedNode *Node = N, *Last = N;
+    const Expr *InitE = 0;
 
     // Now look for the store of V.
     for ( ; Node ; Node = Node->getFirstPred()) {
@@ -142,14 +271,26 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *N,
             if (DS->getSingleDecl() == VR->getDecl()) {
               // Record the last seen initialization point.
               Last = Node;
+              InitE = VR->getDecl()->getInit();
               break;
             }
       }
 
       // Does the region still bind to value V?  If not, we are done
       // looking for store sites.
-      if (Node->getState()->getSVal(R) != V)
+      SVal Current = Node->getState()->getSVal(R);
+      if (Current != V) {
+        // If this is an assignment expression, we can track the value
+        // being assigned.
+        if (const StmtPoint *SP = Last->getLocationAs<StmtPoint>()) {
+          const Stmt *S = SP->getStmt();
+          if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(S))
+            if (BO->isAssignmentOp())
+              InitE = BO->getRHS();
+        }
+
         break;
+      }
 
       Last = Node;
     }
@@ -160,6 +301,13 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *N,
     }
 
     StoreSite = Last;
+
+    // If the value that was stored came from an inlined call, make sure we
+    // step into the call.
+    if (InitE) {
+      InitE = InitE->IgnoreParenCasts();
+      ReturnVisitor::addVisitorIfNecessary(StoreSite, InitE, BR);
+    }
   }
 
   if (StoreSite != N)
@@ -303,50 +451,6 @@ TrackConstraintBRVisitor::VisitNode(const ExplodedNode *N,
   return NULL;
 }
 
-namespace {
-class ReturnNullVisitor : public BugReporterVisitorImpl<ReturnNullVisitor> {
-  const ExplodedNode *ReturnNode;
-public:
-  ReturnNullVisitor(const ExplodedNode *N) : ReturnNode(N) {}
-
-  virtual void Profile(llvm::FoldingSetNodeID &ID) const {
-    static int Tag = 0;
-    ID.AddPointer(&Tag);
-    ID.Add(*ReturnNode);
-  }
-
-  PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
-                                 const ExplodedNode *PrevN,
-                                 BugReporterContext &BRC,
-                                 BugReport &BR) {
-    // Only print a message at the interesting return statement.
-    if (ReturnNode != BRC.getNodeResolver().getOriginalNode(N))
-      return 0;
-
-    StmtPoint SP = cast<StmtPoint>(ReturnNode->getLocation());
-    const ReturnStmt *Ret = cast<ReturnStmt>(SP.getStmt());
-    PathDiagnosticLocation L(Ret, BRC.getSourceManager(),
-                             N->getLocationContext());
-
-    SmallString<64> Msg;
-    llvm::raw_svector_ostream Out(Msg);
-
-    if (Loc::isLocType(Ret->getRetValue()->getType()))
-      Out << "Returning null pointer";
-    else
-      Out << "Returning zero";
-
-    // FIXME: We should have a more generalized printing mechanism.
-    const Expr *RetE = Ret->getRetValue()->IgnoreParenCasts();
-    if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(RetE))
-      if (const DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(DR->getDecl()))
-        Out << " (loaded from '" << *DD << "')";
-
-    return new PathDiagnosticEventPiece(L, Out.str());
-  }
-};
-} // end anonymous namespace
-
 void bugreporter::addTrackNullOrUndefValueVisitor(const ExplodedNode *N,
                                                   const Stmt *S,
                                                   BugReport *report) {
@@ -421,39 +525,10 @@ void bugreporter::addTrackNullOrUndefValueVisitor(const ExplodedNode *N,
       report->addVisitor(new TrackConstraintBRVisitor(loc::MemRegionVal(Base),
                                                       false));
     }
-  } else if (isa<loc::ConcreteInt>(V)) {
-    // Otherwise, if it's a null constant, we want to know where it came from.
-    // In particular, if it came from an inlined function call,
-    // we need to make sure that function isn't pruned in our output.
-    
-    // Walk backwards to just before the post-statement checks.
-    ProgramPoint PP = N->getLocation();
-    while (N && isa<PostStmt>(PP = N->getLocation()))
-      N = N->getFirstPred();
-
-    // If we found an inlined call before the post-statement checks, look
-    // for a return statement within the call.
-    if (N && isa<CallExitEnd>(PP)) {
-      // Walk backwards within the inlined function until we find a statement.
-      // This will look through multiple levels of inlining, but stop if the
-      // last thing that happened was an empty function being inlined.
-      // FIXME: This may not work in the presence of destructors.
-      do {
-        N = N->getFirstPred();
-        PP = N->getLocation();
-      } while (!isa<StmtPoint>(PP) && !isa<CallEnter>(PP));
-
-      // If the last statement we found is a 'return <expr>', make sure we
-      // show this return...and recursively track the value being returned.
-      if (const StmtPoint *SP = dyn_cast<StmtPoint>(&PP)) {
-        if (const ReturnStmt *Ret = SP->getStmtAs<ReturnStmt>()) {
-          if (const Expr *RetE = Ret->getRetValue()) {
-            report->addVisitor(new ReturnNullVisitor(N));
-            addTrackNullOrUndefValueVisitor(N, RetE, report);
-          }
-        }
-      }
-    }
+  } else {
+    // Otherwise, if the value came from an inlined function call,
+    // we should at least make sure that function isn't pruned in our output.
+    ReturnVisitor::addVisitorIfNecessary(N, S, *report);
   }
 }
 
