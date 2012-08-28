@@ -382,12 +382,11 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
 // We set canFoldAsLoad because this can be converted to a constant-pool
 // load of an all-zeros value if folding it would be beneficial.
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
-    isPseudo = 1, neverHasSideEffects = 1 in {
+    isPseudo = 1 in {
 def V_SET0 : I<0, Pseudo, (outs VR128:$dst), (ins), "",
                [(set VR128:$dst, (v4f32 immAllZerosV))]>;
 }
 
-def : Pat<(v4f32 immAllZerosV), (V_SET0)>;
 def : Pat<(v2f64 immAllZerosV), (V_SET0)>;
 def : Pat<(v4i32 immAllZerosV), (V_SET0)>;
 def : Pat<(v2i64 immAllZerosV), (V_SET0)>;
@@ -395,30 +394,24 @@ def : Pat<(v8i16 immAllZerosV), (V_SET0)>;
 def : Pat<(v16i8 immAllZerosV), (V_SET0)>;
 
 
-// The same as done above but for AVX.  The 256-bit ISA does not support PI,
+// The same as done above but for AVX.  The 256-bit AVX1 ISA doesn't support PI,
 // and doesn't need it because on sandy bridge the register is set to zero
 // at the rename stage without using any execution unit, so SET0PSY
 // and SET0PDY can be used for vector int instructions without penalty
-// FIXME: Change encoding to pseudo! This is blocked right now by the x86
-// JIT implementatioan, it does not expand the instructions below like
-// X86MCInstLower does.
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
-    isCodeGenOnly = 1 in {
-let Predicates = [HasAVX] in {
-def AVX_SET0PSY : PSI<0x57, MRMInitReg, (outs VR256:$dst), (ins), "",
-                   [(set VR256:$dst, (v8f32 immAllZerosV))]>, VEX_4V;
-def AVX_SET0PDY : PDI<0x57, MRMInitReg, (outs VR256:$dst), (ins), "",
-                   [(set VR256:$dst, (v4f64 immAllZerosV))]>, VEX_4V;
-}
-let Predicates = [HasAVX2] in
-def AVX2_SET0   : PDI<0xef, MRMInitReg, (outs VR256:$dst), (ins), "",
-                   [(set VR256:$dst, (v4i64 immAllZerosV))]>, VEX_4V;
+    isPseudo = 1, Predicates = [HasAVX] in {
+def AVX_SET0 : I<0, Pseudo, (outs VR256:$dst), (ins), "",
+                 [(set VR256:$dst, (v8f32 immAllZerosV))]>;
 }
 
+let Predicates = [HasAVX] in
+  def : Pat<(v4f64 immAllZerosV), (AVX_SET0)>;
+
 let Predicates = [HasAVX2] in {
-  def : Pat<(v8i32 immAllZerosV), (AVX2_SET0)>;
-  def : Pat<(v16i16 immAllZerosV), (AVX2_SET0)>;
-  def : Pat<(v32i8 immAllZerosV), (AVX2_SET0)>;
+  def : Pat<(v4i64 immAllZerosV), (AVX_SET0)>;
+  def : Pat<(v8i32 immAllZerosV), (AVX_SET0)>;
+  def : Pat<(v16i16 immAllZerosV), (AVX_SET0)>;
+  def : Pat<(v32i8 immAllZerosV), (AVX_SET0)>;
 }
 
 // AVX1 has no support for 256-bit integer instructions, but since the 128-bit

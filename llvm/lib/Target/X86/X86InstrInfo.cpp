@@ -3429,6 +3429,9 @@ bool X86InstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
   case X86::FsFLD0SS:
   case X86::FsFLD0SD:
     return Expand2AddrUndef(MI, get(HasAVX ? X86::VXORPSrr : X86::XORPSrr));
+  case X86::AVX_SET0:
+    assert(HasAVX && "AVX not supported");
+    return Expand2AddrUndef(MI, get(X86::VXORPSYrr));
   case X86::TEST8ri_NOREX:
     MI->setDesc(get(X86::TEST8ri));
     return true;
@@ -3780,10 +3783,8 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     Alignment = (*LoadMI->memoperands_begin())->getAlignment();
   else
     switch (LoadMI->getOpcode()) {
-    case X86::AVX_SET0PSY:
-    case X86::AVX_SET0PDY:
     case X86::AVX2_SETALLONES:
-    case X86::AVX2_SET0:
+    case X86::AVX_SET0:
       Alignment = 32;
       break;
     case X86::V_SET0:
@@ -3824,11 +3825,9 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   switch (LoadMI->getOpcode()) {
   case X86::V_SET0:
   case X86::V_SETALLONES:
-  case X86::AVX_SET0PSY:
-  case X86::AVX_SET0PDY:
   case X86::AVX_SETALLONES:
   case X86::AVX2_SETALLONES:
-  case X86::AVX2_SET0:
+  case X86::AVX_SET0:
   case X86::FsFLD0SD:
   case X86::FsFLD0SS: {
     // Folding a V_SET0 or V_SETALLONES as a load, to ease register pressure.
@@ -3860,9 +3859,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
       Ty = Type::getFloatTy(MF.getFunction()->getContext());
     else if (Opc == X86::FsFLD0SD)
       Ty = Type::getDoubleTy(MF.getFunction()->getContext());
-    else if (Opc == X86::AVX_SET0PSY || Opc == X86::AVX_SET0PDY)
-      Ty = VectorType::get(Type::getFloatTy(MF.getFunction()->getContext()), 8);
-    else if (Opc == X86::AVX2_SETALLONES || Opc == X86::AVX2_SET0)
+    else if (Opc == X86::AVX2_SETALLONES || Opc == X86::AVX_SET0)
       Ty = VectorType::get(Type::getInt32Ty(MF.getFunction()->getContext()), 8);
     else
       Ty = VectorType::get(Type::getInt32Ty(MF.getFunction()->getContext()), 4);
