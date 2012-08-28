@@ -40,6 +40,7 @@ def IntMulHWU    : InstrItinClass;
 def IntMulLI     : InstrItinClass;
 def IntRFID      : InstrItinClass;
 def IntRotateD   : InstrItinClass;
+def IntRotateDI  : InstrItinClass;
 def IntRotate    : InstrItinClass;
 def IntShift     : InstrItinClass;
 def IntTrapD     : InstrItinClass;
@@ -52,15 +53,18 @@ def LdStDCBA     : InstrItinClass;
 def LdStDCBF     : InstrItinClass;
 def LdStDCBI     : InstrItinClass;
 def LdStLoad     : InstrItinClass;
+def LdStLoadUpd  : InstrItinClass;
 def LdStStore    : InstrItinClass;
+def LdStStoreUpd : InstrItinClass;
 def LdStDSS      : InstrItinClass;
 def LdStICBI     : InstrItinClass;
-def LdStUX       : InstrItinClass;
 def LdStLD       : InstrItinClass;
+def LdStLDU      : InstrItinClass;
 def LdStLDARX    : InstrItinClass;
 def LdStLFD      : InstrItinClass;
 def LdStLFDU     : InstrItinClass;
 def LdStLHA      : InstrItinClass;
+def LdStLHAU     : InstrItinClass;
 def LdStLMW      : InstrItinClass;
 def LdStLVecX    : InstrItinClass;
 def LdStLWA      : InstrItinClass;
@@ -69,6 +73,9 @@ def LdStSLBIA    : InstrItinClass;
 def LdStSLBIE    : InstrItinClass;
 def LdStSTD      : InstrItinClass;
 def LdStSTDCX    : InstrItinClass;
+def LdStSTDU     : InstrItinClass;
+def LdStSTFD     : InstrItinClass;
+def LdStSTFDU    : InstrItinClass;
 def LdStSTVEBX   : InstrItinClass;
 def LdStSTWCX    : InstrItinClass;
 def LdStSync     : InstrItinClass;
@@ -86,6 +93,7 @@ def SprMTSRIN    : InstrItinClass;
 def SprRFI       : InstrItinClass;
 def SprSC        : InstrItinClass;
 def FPGeneral    : InstrItinClass;
+def FPAddSub     : InstrItinClass;
 def FPCompare    : InstrItinClass;
 def FPDivD       : InstrItinClass;
 def FPDivS       : InstrItinClass;
@@ -171,7 +179,7 @@ include "PPCScheduleA2.td"
 //    extsh      IntSimple
 //    extsw      IntSimple
 //    fabs       FPGeneral
-//    fadd       FPGeneral
+//    fadd       FPAddSub
 //    fadds      FPGeneral
 //    fcfid      FPGeneral
 //    fcmpo      FPCompare
@@ -201,35 +209,35 @@ include "PPCScheduleA2.td"
 //    fsel       FPGeneral
 //    fsqrt      FPSqrt
 //    fsqrts     FPSqrt
-//    fsub       FPGeneral
+//    fsub       FPAddSub
 //    fsubs      FPGeneral
 //    icbi       LdStICBI
 //    isync      SprISYNC
 //    lbz        LdStLoad
-//    lbzu       LdStLoad
-//    lbzux      LdStUX
+//    lbzu       LdStLoadUpd
+//    lbzux      LdStLoadUpd
 //    lbzx       LdStLoad
 //    ld         LdStLD
 //    ldarx      LdStLDARX
-//    ldu        LdStLD
-//    ldux       LdStLD
+//    ldu        LdStLDU
+//    ldux       LdStLDU
 //    ldx        LdStLD
 //    lfd        LdStLFD
 //    lfdu       LdStLFDU
 //    lfdux      LdStLFDU
-//    lfdx       LdStLFDU
-//    lfs        LdStLFDU
+//    lfdx       LdStLFD
+//    lfs        LdStLFD
 //    lfsu       LdStLFDU
 //    lfsux      LdStLFDU
-//    lfsx       LdStLFDU
+//    lfsx       LdStLFD
 //    lha        LdStLHA
-//    lhau       LdStLHA
-//    lhaux      LdStLHA
+//    lhau       LdStLHAU
+//    lhaux      LdStLHAU
 //    lhax       LdStLHA
 //    lhbrx      LdStLoad
 //    lhz        LdStLoad
-//    lhzu       LdStLoad
-//    lhzux      LdStUX
+//    lhzu       LdStLoadUpd
+//    lhzux      LdStLoadUpd
 //    lhzx       LdStLoad
 //    lmw        LdStLMW
 //    lswi       LdStLMW
@@ -243,12 +251,12 @@ include "PPCScheduleA2.td"
 //    lvxl       LdStLVecX
 //    lwa        LdStLWA
 //    lwarx      LdStLWARX
-//    lwaux      LdStLHA
+//    lwaux      LdStLHAU
 //    lwax       LdStLHA
 //    lwbrx      LdStLoad
 //    lwz        LdStLoad
-//    lwzu       LdStLoad
-//    lwzux      LdStUX
+//    lwzu       LdStLoadUpd
+//    lwzux      LdStLoadUpd
 //    lwzx       LdStLoad
 //    mcrf       BrMCR
 //    mcrfs      FPGeneral
@@ -292,10 +300,10 @@ include "PPCScheduleA2.td"
 //    rfid       IntRFID
 //    rldcl      IntRotateD
 //    rldcr      IntRotateD
-//    rldic      IntRotateD
-//    rldicl     IntRotateD
-//    rldicr     IntRotateD
-//    rldimi     IntRotateD
+//    rldic      IntRotateDI
+//    rldicl     IntRotateDI
+//    rldicr     IntRotateDI
+//    rldimi     IntRotateDI
 //    rlwimi     IntRotate
 //    rlwinm     IntGeneral
 //    rlwnm      IntGeneral
@@ -305,33 +313,33 @@ include "PPCScheduleA2.td"
 //    sld        IntRotateD
 //    slw        IntGeneral
 //    srad       IntRotateD
-//    sradi      IntRotateD
+//    sradi      IntRotateDI
 //    sraw       IntShift
 //    srawi      IntShift
 //    srd        IntRotateD
 //    srw        IntGeneral
 //    stb        LdStStore
-//    stbu       LdStStore
-//    stbux      LdStStore
+//    stbu       LdStStoreUpd
+//    stbux      LdStStoreUpd
 //    stbx       LdStStore
 //    std        LdStSTD
 //    stdcx.     LdStSTDCX
-//    stdu       LdStSTD
-//    stdux      LdStSTD
+//    stdu       LdStSTDU
+//    stdux      LdStSTDU
 //    stdx       LdStSTD
-//    stfd       LdStUX
-//    stfdu      LdStUX
-//    stfdux     LdStUX
-//    stfdx      LdStUX
-//    stfiwx     LdStUX
-//    stfs       LdStUX
-//    stfsu      LdStUX
-//    stfsux     LdStUX
-//    stfsx      LdStUX
+//    stfd       LdStSTFD
+//    stfdu      LdStSTFDU
+//    stfdux     LdStSTFDU
+//    stfdx      LdStSTFD
+//    stfiwx     LdStSTFD
+//    stfs       LdStSTFD
+//    stfsu      LdStSTFDU
+//    stfsux     LdStSTFDU
+//    stfsx      LdStSTFD
 //    sth        LdStStore
 //    sthbrx     LdStStore
-//    sthu       LdStStore
-//    sthux      LdStStore
+//    sthu       LdStStoreUpd
+//    sthux      LdStStoreUpd
 //    sthx       LdStStore
 //    stmw       LdStLMW
 //    stswi      LdStLMW
@@ -344,8 +352,8 @@ include "PPCScheduleA2.td"
 //    stw        LdStStore
 //    stwbrx     LdStStore
 //    stwcx.     LdStSTWCX
-//    stwu       LdStStore
-//    stwux      LdStStore
+//    stwu       LdStStoreUpd
+//    stwux      LdStStoreUpd
 //    stwx       LdStStore
 //    subf       IntGeneral
 //    subfc      IntGeneral
