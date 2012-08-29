@@ -64,6 +64,10 @@ public:
     return Eng.getStoreManager();
   }
 
+  const AnalysisManager::ConfigTable &getConfig() const {
+    return Eng.getAnalysisManager().Config;
+  }
+  
   /// \brief Returns the previous node in the exploded graph, which includes
   /// the state of the program before the checker ran. Note, checkers should
   /// not retain the node in their state since the nodes might get invalidated.

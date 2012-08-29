@@ -119,6 +119,11 @@ def analyzer_disable_checker_EQ : Joined<"-analyzer-disable-checker=">,
 def analyzer_checker_help : Flag<"-analyzer-checker-help">,
   HelpText<"Display the list of analyzer checkers that are available">;
 
+def analyzer_config : Separate<"-analyzer-config">,
+  HelpText<"Choose analyzer checkers to enable">;
+def analyzer_config_EQ : Joined<"-analyzer-config=">,
+  Alias<analyzer_config>;
+
 //===----------------------------------------------------------------------===//
 // Migrator Options
 //===----------------------------------------------------------------------===//

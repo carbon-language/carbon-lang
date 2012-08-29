@@ -20,6 +20,7 @@ AnalysisManager::AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags,
                                  StoreManagerCreator storemgr,
                                  ConstraintManagerCreator constraintmgr, 
                                  CheckerManager *checkerMgr,
+                                 const ConfigTable &Config,
                                  unsigned maxnodes, unsigned maxvisit,
                                  bool vizdot, bool vizubi,
                                  AnalysisPurgeMode purge,
@@ -36,7 +37,7 @@ AnalysisManager::AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags,
     Ctx(ctx), Diags(diags), LangOpts(lang),
     PathConsumers(PDC),
     CreateStoreMgr(storemgr), CreateConstraintMgr(constraintmgr),
-    CheckerMgr(checkerMgr), 
+    CheckerMgr(checkerMgr),
     MaxNodes(maxnodes), MaxVisit(maxvisit),
     VisualizeEGDot(vizdot), VisualizeEGUbi(vizubi), PurgeDead(purge),
     EagerlyAssume(eager), TrimGraph(trim),
@@ -45,7 +46,8 @@ AnalysisManager::AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags,
     InlineMaxStackDepth(inlineMaxStack),
     InlineMaxFunctionSize(inlineMaxFunctionSize),
     InliningMode(IMode),
-    NoRetryExhausted(NoRetry)
+    NoRetryExhausted(NoRetry),
+    Config(Config)
 {
   AnaCtxMgr.getCFGBuildOptions().setAllAlwaysAdd();
 }

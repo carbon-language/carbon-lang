@@ -81,6 +81,11 @@ public:
   /// strategy. We get better code coverage when retry is enabled.
   bool NoRetryExhausted;
 
+  typedef llvm::StringMap<std::string> ConfigTable;
+  
+  /// \brief A key-value table of use-specified configuration values.
+  const ConfigTable &Config;
+  
 public:
   AnalysisManager(ASTContext &ctx,DiagnosticsEngine &diags,
                   const LangOptions &lang,
@@ -88,6 +93,7 @@ public:
                   StoreManagerCreator storemgr,
                   ConstraintManagerCreator constraintmgr, 
                   CheckerManager *checkerMgr,
+                  const ConfigTable &Config,
                   unsigned maxnodes, unsigned maxvisit,
                   bool vizdot, bool vizubi, AnalysisPurgeMode purge,
                   bool eager, bool trim,

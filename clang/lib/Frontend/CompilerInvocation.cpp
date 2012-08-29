@@ -1154,6 +1154,36 @@ static bool ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
     for (unsigned i = 0, e = checkers.size(); i != e; ++i)
       Opts.CheckersControlList.push_back(std::make_pair(checkers[i], enable));
   }
+  
+  // Go through the analyzer configuration options.
+  for (arg_iterator it = Args.filtered_begin(OPT_analyzer_config),
+       ie = Args.filtered_end(); it != ie; ++it) {
+    const Arg *A = *it;
+    A->claim();
+    // We can have a list of comma separated config names, e.g:
+    // '-analyzer-config=key1:val1,key2:val2'
+    StringRef configList = A->getValue(Args);
+    SmallVector<StringRef, 4> configVals;
+    configList.split(configVals, ",");
+    for (unsigned i = 0, e = configVals.size(); i != e; ++i) {
+      StringRef key, val;
+      llvm::tie(key, val) = configVals[i].split(":");
+      if (val.empty()) {
+        Diags.Report(SourceLocation(),
+                     diag::err_analyzer_config_no_value) << configVals[i];
+        Success = false;
+        break;
+      }
+      if (val.find(':') != StringRef::npos) {
+        Diags.Report(SourceLocation(),
+                     diag::err_analyzer_config_multiple_values)
+          << configVals[i];
+        Success = false;
+        break;
+      }
+      Opts.Config[key] = val;
+    }
+  }
 
   return Success;
 }
