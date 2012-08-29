@@ -681,9 +681,9 @@ bool DeclSpec::SetTypeQual(TQ T, SourceLocation Loc, const char *&PrevSpec,
   // not what the user intended, we will always warn.  We do not need to set the
   // qualifier's location since we already have it.
   if (TypeQualifiers & T) {
-    bool IsExtension = false;
+    bool IsExtension = true;
     if (Lang.C99 || (Lang.CPlusPlus0x && !IsTypeSpec))
-      IsExtension = true;
+      IsExtension = false;
     return BadSpecifier(T, T, PrevSpec, DiagID, IsExtension);
   }
   TypeQualifiers |= T;
