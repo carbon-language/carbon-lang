@@ -6,6 +6,9 @@
 ; RUN:     | FileCheck %s
 ; RUN: rm -f %t1.prof_data
 
+; FIXME: profile_rt.dll could be built on win32.
+; REQUIRES: loadable_module
+
 ;; func_switch - Test branch probabilities for a switch instruction with an
 ;; even chance of taking each case (or no case).
 define i32 @func_switch(i32 %N) nounwind uwtable {

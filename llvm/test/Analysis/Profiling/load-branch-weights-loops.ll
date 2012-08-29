@@ -6,6 +6,9 @@
 ; RUN:     | FileCheck %s
 ; RUN: rm -f %t1.prof_data
 
+; FIXME: profile_rt.dll could be built on win32.
+; REQUIRES: loadable_module
+
 ;; func_for - Test branch probabilities for a vanilla for loop.
 define i32 @func_for(i32 %N) nounwind uwtable {
 entry:
