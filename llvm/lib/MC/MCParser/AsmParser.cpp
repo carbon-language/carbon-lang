@@ -133,13 +133,13 @@ private:
 public:
   AsmParser(SourceMgr &SM, MCContext &Ctx, MCStreamer &Out,
             const MCAsmInfo &MAI);
-  ~AsmParser();
+  virtual ~AsmParser();
 
   virtual bool Run(bool NoInitialTextSection, bool NoFinalize = false);
 
-  void AddDirectiveHandler(MCAsmParserExtension *Object,
-                           StringRef Directive,
-                           DirectiveHandler Handler) {
+  virtual void AddDirectiveHandler(MCAsmParserExtension *Object,
+                                   StringRef Directive,
+                                   DirectiveHandler Handler) {
     DirectiveMap[Directive] = std::make_pair(Object, Handler);
   }
 
@@ -166,7 +166,7 @@ public:
   virtual bool Error(SMLoc L, const Twine &Msg,
                      ArrayRef<SMRange> Ranges = ArrayRef<SMRange>());
 
-  const AsmToken &Lex();
+  virtual const AsmToken &Lex();
 
   bool ParseExpression(const MCExpr *&Res);
   virtual bool ParseExpression(const MCExpr *&Res, SMLoc &EndLoc);
@@ -207,7 +207,7 @@ private:
   /// subsequently.
   void JumpToLoc(SMLoc Loc);
 
-  void EatToEndOfStatement();
+  virtual void EatToEndOfStatement();
 
   bool ParseMacroArgument(MacroArgument &MA);
   bool ParseMacroArguments(const Macro *M, MacroArguments &A);
@@ -215,7 +215,7 @@ private:
   /// \brief Parse up to the end of statement and a return the contents from the
   /// current token until the end of the statement; the current token on exit
   /// will be either the EndOfStatement or EOF.
-  StringRef ParseStringToEndOfStatement();
+  virtual StringRef ParseStringToEndOfStatement();
 
   /// \brief Parse until the end of a statement or a comma is encountered,
   /// return the contents from the current token up to the end or comma.
@@ -230,7 +230,7 @@ private:
 
   /// ParseIdentifier - Parse an identifier or string (as a quoted identifier)
   /// and set \arg Res to the identifier contents.
-  bool ParseIdentifier(StringRef &Res);
+  virtual bool ParseIdentifier(StringRef &Res);
 
   // Directive Parsing.
 
