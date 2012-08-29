@@ -15,6 +15,7 @@ typedef struct objc_object {
 -(id)copy;
 - (Class)class;
 -(id)retain;
+- (oneway void)release;
 @end
 
 @interface SelfStaysLive : NSObject
@@ -60,6 +61,67 @@ void selfStaysLive() {
 }
 + (void) testLeak {
   Cell *sharedCell4 = [[Cell alloc] initWithInt: 3]; // expected-warning {{leak}}
+}
+@end
+  
+// We should stop tracking some objects even when we inline the call. 
+// Specialically, the objects passed into calls with delegate and callback 
+// parameters.
+@class DelegateTest;
+typedef void (*ReleaseCallbackTy) (DelegateTest *c);
+
+@interface Delegate : NSObject
+@end
+
+@interface DelegateTest : NSObject {
+  Delegate *myDel;
+}
+// Object initialized with a delagate which could potentially release it.
+- (id)initWithDelegate: (id) d;
+
+- (void) setDelegate: (id) d;
+
+// Releases object through callback.
++ (void)updateObject:(DelegateTest*)obj WithCallback:(ReleaseCallbackTy)rc;
+
++ (void)test: (Delegate *)d;
+
+@property (assign) Delegate* myDel;
+@end
+
+void releaseObj(DelegateTest *c);
+
+// Releases object through callback.
+void updateObject(DelegateTest *c, ReleaseCallbackTy rel) {
+  rel(c);
+}
+
+@implementation DelegateTest
+@synthesize myDel;
+
+- (id) initWithDelegate: (id) d {
+    if ((self = [super init]))
+      myDel = d;
+    return self;
+}
+
+- (void) setDelegate: (id) d {
+    myDel = d;
+}
+
++ (void)updateObject:(DelegateTest*)obj WithCallback:(ReleaseCallbackTy)rc {
+  rc(obj);
+}
+
++ (void) test: (Delegate *)d {
+  DelegateTest *obj1 = [[DelegateTest alloc] initWithDelegate: d]; // no-warning
+  DelegateTest *obj2 = [[DelegateTest alloc] init]; // no-warning
+  DelegateTest *obj3 = [[DelegateTest alloc] init]; // no-warning
+  updateObject(obj2, releaseObj);
+  [DelegateTest updateObject: obj3
+        WithCallback: releaseObj];
+  DelegateTest *obj4 = [[DelegateTest alloc] init]; // no-warning
+  [obj4 setDelegate: d];
 }
 @end
 
