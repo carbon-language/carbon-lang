@@ -10,3 +10,11 @@ foreach(entry ${entries})
     endif()
   endif()
 endforeach(entry)
+
+# Also add in the compiler-rt tree if present and we have a sufficiently
+# recent version of CMake.
+if(${CMAKE_VERSION} VERSION_GREATER 2.8.7 AND
+   IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/compiler-rt AND
+   EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/compiler-rt/CMakeLists.txt)
+  add_subdirectory(compiler-rt)
+endif()
