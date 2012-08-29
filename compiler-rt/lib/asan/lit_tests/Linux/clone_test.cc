@@ -29,11 +29,20 @@ int main(int argc, char **argv) {
   char *sp = child_stack + kStackSize;  // Stack grows down.
   printf("Parent: %p\n", sp);
   pid_t clone_pid = clone(Child, sp, CLONE_FILES | CLONE_VM, NULL, 0, 0, 0);
-  waitpid(clone_pid, NULL, 0);
-  for (int i = 0; i < kStackSize; i++)
-    child_stack[i] = i;
-  int ret = child_stack[argc - 1];
-  printf("PASSED\n");
-  // CHECK: PASSED
-  return ret;
+  int status;
+  pid_t wait_result = waitpid(clone_pid, &status, __WCLONE);
+  if (wait_result < 0) {
+    perror("waitpid");
+    return 0;
+  }
+  if (wait_result == clone_pid && WIFEXITED(status)) {
+    // Make sure the child stack was indeed unpoisoned.
+    for (int i = 0; i < kStackSize; i++)
+      child_stack[i] = i;
+    int ret = child_stack[argc - 1];
+    printf("PASSED\n");
+    // CHECK: PASSED
+    return ret;
+  }
+  return 0;
 }
