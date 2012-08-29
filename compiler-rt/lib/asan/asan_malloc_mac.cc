@@ -38,6 +38,30 @@ static malloc_zone_t *system_purgeable_zone = 0;
 static malloc_zone_t asan_zone;
 CFAllocatorRef cf_asan = 0;
 
+// _CFRuntimeCreateInstance() checks whether the supplied allocator is
+// kCFAllocatorSystemDefault and, if it is not, stores the allocator reference
+// at the beginning of the allocated memory and returns the pointer to the
+// allocated memory plus sizeof(CFAllocatorRef). See
+// http://www.opensource.apple.com/source/CF/CF-635.21/CFRuntime.c
+// Pointers returned by _CFRuntimeCreateInstance() can then be passed directly
+// to free() or CFAllocatorDeallocate(), which leads to false invalid free
+// reports.
+// The corresponding rdar bug is http://openradar.appspot.com/radar?id=1796404.
+void* ALWAYS_INLINE get_saved_cfallocator_ref(void *ptr) {
+  if (flags()->replace_cfallocator) {
+    // Make sure we're not hitting the previous page. This may be incorrect
+    // if ASan's malloc returns an address ending with 0xFF8, which will be
+    // then padded to a page boundary with a CFAllocatorRef.
+    uptr arith_ptr = (uptr)ptr;
+    if ((arith_ptr & 0xFFF) > sizeof(CFAllocatorRef)) {
+      CFAllocatorRef *saved =
+          (CFAllocatorRef*)(arith_ptr - sizeof(CFAllocatorRef));
+      if ((*saved == cf_asan) && asan_mz_size(saved)) ptr = (void*)saved;
+    }
+  }
+  return ptr;
+}
+
 // The free() implementation provided by OS X calls malloc_zone_from_ptr()
 // to find the owner of |ptr|. If the result is 0, an invalid free() is
 // reported. Our implementation falls back to asan_free() in this case
@@ -65,17 +89,7 @@ INTERCEPTOR(void, free, void *ptr) {
     malloc_zone_free(zone, ptr);
 #endif
   } else {
-    if (flags()->replace_cfallocator) {
-      // Make sure we're not hitting the previous page. This may be incorrect
-      // if ASan's malloc returns an address ending with 0xFF8, which will be
-      // then padded to a page boundary with a CFAllocatorRef.
-      uptr arith_ptr = (uptr)ptr;
-      if ((arith_ptr & 0xFFF) > sizeof(CFAllocatorRef)) {
-        CFAllocatorRef *saved =
-            (CFAllocatorRef*)(arith_ptr - sizeof(CFAllocatorRef));
-        if ((*saved == cf_asan) && asan_mz_size(saved)) ptr = (void*)saved;
-      }
-    }
+    if (!asan_mz_size(ptr)) ptr = get_saved_cfallocator_ref(ptr);
     GET_STACK_TRACE_HERE_FOR_FREE(ptr);
     asan_free(ptr, &stack);
   }
@@ -162,23 +176,31 @@ void *mz_valloc(malloc_zone_t *zone, size_t size) {
 
 void ALWAYS_INLINE free_common(void *context, void *ptr) {
   if (!ptr) return;
-  if (!flags()->mac_ignore_invalid_free || asan_mz_size(ptr)) {
+  if (asan_mz_size(ptr)) {
     GET_STACK_TRACE_HERE_FOR_FREE(ptr);
+    asan_free(ptr, &stack);
+  } else {
+    // If the pointer does not belong to any of the zones, use one of the
+    // fallback methods to free memory.
     malloc_zone_t *zone_ptr = malloc_zone_from_ptr(ptr);
     if (zone_ptr == system_purgeable_zone) {
-      // Allocations from malloc_default_purgeable_zone() done before
+      // allocations from malloc_default_purgeable_zone() done before
       // __asan_init() may be occasionally freed via free_common().
-      // See http://code.google.com/p/address-sanitizer/issues/detail?id=99.
+      // see http://code.google.com/p/address-sanitizer/issues/detail?id=99.
       malloc_zone_free(zone_ptr, ptr);
     } else {
-      asan_free(ptr, &stack);
+      // If the memory chunk pointer was moved to store additional
+      // CFAllocatorRef, fix it back.
+      ptr = get_saved_cfallocator_ref(ptr);
+      GET_STACK_TRACE_HERE_FOR_FREE(ptr);
+      if (!flags()->mac_ignore_invalid_free) {
+        asan_free(ptr, &stack);
+      } else {
+        GET_ZONE_FOR_PTR(ptr);
+        WarnMacFreeUnallocated((uptr)ptr, (uptr)zone_ptr, zone_name, &stack);
+        return;
+      }
     }
-  } else {
-    // Let us just leak this memory for now.
-    GET_STACK_TRACE_HERE_FOR_FREE(ptr);
-    GET_ZONE_FOR_PTR(ptr);
-    WarnMacFreeUnallocated((uptr)ptr, (uptr)zone_ptr, zone_name, &stack);
-    return;
   }
 }
 
