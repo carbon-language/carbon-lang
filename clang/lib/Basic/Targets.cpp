@@ -3701,8 +3701,8 @@ public:
     Features[CPU] = true;
   }
 
-  virtual void getArchDefines(const LangOptions &Opts,
-                              MacroBuilder &Builder) const {
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                MacroBuilder &Builder) const {
     DefineStd(Builder, "mips", Opts);
     Builder.defineMacro("_mips");
     Builder.defineMacro("__REGISTER_PREFIX__", "");
@@ -3745,8 +3745,6 @@ public:
     Builder.defineMacro("_MIPS_ARCH_" + StringRef(CPU).upper());
   }
 
-  virtual void getTargetDefines(const LangOptions &Opts,
-                                MacroBuilder &Builder) const = 0;
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                  unsigned &NumRecords) const {
     Records = BuiltinInfo;
@@ -3866,9 +3864,9 @@ public:
     } else
       return false;
   }
-  virtual void getArchDefines(const LangOptions &Opts,
-                              MacroBuilder &Builder) const {
-    MipsTargetInfoBase::getArchDefines(Opts, Builder);
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                MacroBuilder &Builder) const {
+    MipsTargetInfoBase::getTargetDefines(Opts, Builder);
 
     if (ABI == "o32") {
       Builder.defineMacro("__mips_o32");
@@ -3930,7 +3928,7 @@ public:
                                 MacroBuilder &Builder) const {
     DefineStd(Builder, "MIPSEB", Opts);
     Builder.defineMacro("_MIPSEB");
-    getArchDefines(Opts, Builder);
+    Mips32TargetInfoBase::getTargetDefines(Opts, Builder);
   }
 };
 
@@ -3945,7 +3943,7 @@ public:
                                 MacroBuilder &Builder) const {
     DefineStd(Builder, "MIPSEL", Opts);
     Builder.defineMacro("_MIPSEL");
-    getArchDefines(Opts, Builder);
+    Mips32TargetInfoBase::getTargetDefines(Opts, Builder);
   }
 };
 
@@ -3975,9 +3973,9 @@ public:
 
     return true;
   }
-  virtual void getArchDefines(const LangOptions &Opts,
-                              MacroBuilder &Builder) const {
-    MipsTargetInfoBase::getArchDefines(Opts, Builder);
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                MacroBuilder &Builder) const {
+    MipsTargetInfoBase::getTargetDefines(Opts, Builder);
 
     if (ABI == "n32") {
       Builder.defineMacro("__mips_n32");
@@ -4051,7 +4049,7 @@ public:
                                 MacroBuilder &Builder) const {
     DefineStd(Builder, "MIPSEB", Opts);
     Builder.defineMacro("_MIPSEB");
-    getArchDefines(Opts, Builder);
+    Mips64TargetInfoBase::getTargetDefines(Opts, Builder);
   }
 };
 
@@ -4075,7 +4073,7 @@ public:
                                 MacroBuilder &Builder) const {
     DefineStd(Builder, "MIPSEL", Opts);
     Builder.defineMacro("_MIPSEL");
-    getArchDefines(Opts, Builder);
+    Mips64TargetInfoBase::getTargetDefines(Opts, Builder);
   }
 };
 } // end anonymous namespace.
