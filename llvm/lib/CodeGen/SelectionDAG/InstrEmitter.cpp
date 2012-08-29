@@ -893,19 +893,23 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
                           getZExtValue();
     MI->addOperand(MachineOperand::CreateImm(ExtraInfo));
 
+    // Remember to operand index of the group flags.
+    SmallVector<unsigned, 8> GroupIdx;
+
     // Add all of the operand registers to the instruction.
     for (unsigned i = InlineAsm::Op_FirstOperand; i != NumOps;) {
       unsigned Flags =
         cast<ConstantSDNode>(Node->getOperand(i))->getZExtValue();
-      unsigned NumVals = InlineAsm::getNumOperandRegisters(Flags);
+      const unsigned NumVals = InlineAsm::getNumOperandRegisters(Flags);
 
+      GroupIdx.push_back(MI->getNumOperands());
       MI->addOperand(MachineOperand::CreateImm(Flags));
       ++i;  // Skip the ID value.
 
       switch (InlineAsm::getKind(Flags)) {
       default: llvm_unreachable("Bad flags!");
         case InlineAsm::Kind_RegDef:
-        for (; NumVals; --NumVals, ++i) {
+        for (unsigned j = 0; j != NumVals; ++j, ++i) {
           unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
           // FIXME: Add dead flags for physical and virtual registers defined.
           // For now, mark physical register defs as implicit to help fast
@@ -916,7 +920,7 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
         break;
       case InlineAsm::Kind_RegDefEarlyClobber:
       case InlineAsm::Kind_Clobber:
-        for (; NumVals; --NumVals, ++i) {
+        for (unsigned j = 0; j != NumVals; ++j, ++i) {
           unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
           MI->addOperand(MachineOperand::CreateReg(Reg, /*isDef=*/ true,
                          /*isImp=*/ TargetRegisterInfo::isPhysicalRegister(Reg),
@@ -931,9 +935,22 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
       case InlineAsm::Kind_Mem:  // Addressing mode.
         // The addressing mode has been selected, just add all of the
         // operands to the machine instruction.
-        for (; NumVals; --NumVals, ++i)
+        for (unsigned j = 0; j != NumVals; ++j, ++i)
           AddOperand(MI, Node->getOperand(i), 0, 0, VRBaseMap,
                      /*IsDebug=*/false, IsClone, IsCloned);
+
+        // Manually set isTied bits.
+        if (InlineAsm::getKind(Flags) == InlineAsm::Kind_RegUse) {
+          unsigned DefGroup = 0;
+          if (InlineAsm::isUseOperandTiedToDef(Flags, DefGroup)) {
+            unsigned DefIdx = GroupIdx[DefGroup] + 1;
+            unsigned UseIdx = GroupIdx.back() + 1;
+            for (unsigned j = 0; j != NumVals; ++j) {
+              MI->getOperand(DefIdx + j).setIsTied();
+              MI->getOperand(UseIdx + j).setIsTied();
+            }
+          }
+        }
         break;
       }
     }
