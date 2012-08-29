@@ -404,9 +404,6 @@ def runCmpResults(Dir):
     RefList = glob.glob(RefDir + "/*") 
     NewList = glob.glob(NewDir + "/*")
     
-    print "  Comparing Results: %s" % (os.path.join(RefDir, LogFolderName))
-    print "  Comparing Results: %s" % (os.path.join(NewDir, LogFolderName))
-
     # Log folders are also located in the results dir, so ignore them. 
     RefList.remove(os.path.join(RefDir, LogFolderName))
     NewList.remove(os.path.join(NewDir, LogFolderName))

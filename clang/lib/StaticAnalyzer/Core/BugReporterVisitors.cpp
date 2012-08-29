@@ -978,7 +978,7 @@ UndefOrNullArgVisitor::VisitNode(const ExplodedNode *N,
 
     // Are we tracking the argument?
     if ( !ArgReg || ArgReg != R)
-      return 0;
+      continue;
 
     // Check the function parameter type.
     const ParmVarDecl *ParamDecl = *I;
@@ -987,13 +987,13 @@ UndefOrNullArgVisitor::VisitNode(const ExplodedNode *N,
 
     if (!(T->isAnyPointerType() || T->isReferenceType())) {
       // Function can only change the value passed in by address.
-      return 0;
+      continue;
     }
     
     // If it is a const pointer value, the function does not intend to
     // change the value.
     if (T->getPointeeType().isConstQualified())
-      return 0;
+      continue;
 
     // Mark the call site (LocationContext) as interesting if the value of the 
     // argument is undefined or '0'/'NULL'.

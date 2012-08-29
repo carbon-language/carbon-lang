@@ -7,7 +7,7 @@ void foo_irrelevant(int c) {
     c++;
     return;
 }
-void foo(int *x, int c) {
+void foo(int c, int *x) {
     if (c)
            //expected-note@-1{{Assuming 'c' is not equal to 0}}
            //expected-note@-2{{Taking true branch}}
@@ -18,7 +18,7 @@ void foo(int *x, int c) {
 int use(int c) {
     int xx; //expected-note{{Variable 'xx' declared without an initial value}}
     int *y = &xx;
-    foo (y, c);
+    foo (c, y);
                 //expected-note@-1{{Calling 'foo'}}
                 //expected-note@-2{{Returning from 'foo'}}
     foo_irrelevant(c);
