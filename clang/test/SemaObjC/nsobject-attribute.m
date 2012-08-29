@@ -5,8 +5,8 @@ static int count;
 static CGColorRef tmp = 0;
 
 typedef struct S1  __attribute__ ((NSObject)) CGColorRef1; // expected-error {{__attribute ((NSObject)) is for pointer types only}}
-typedef void *  __attribute__ ((NSObject)) CGColorRef2; // expected-error {{__attribute ((NSObject)) is for pointer types only}}
-
+typedef void *  __attribute__ ((NSObject)) CGColorRef2; // no-warning
+typedef void * CFTypeRef;
 
 @interface HandTested {
 @public
@@ -14,9 +14,11 @@ typedef void *  __attribute__ ((NSObject)) CGColorRef2; // expected-error {{__at
 }
 
 @property(copy) CGColorRef x;
-// rdar: // 7809460
-typedef struct CGColor * __attribute__((NSObject)) CGColorRefNoNSObject;
+// rdar://problem/7809460
+typedef struct CGColor * __attribute__((NSObject)) CGColorRefNoNSObject; // no-warning
 @property (nonatomic, retain) CGColorRefNoNSObject color;
+// rdar://problem/12197822
+@property (strong) __attribute__((NSObject)) CFTypeRef myObj; // no-warning
 @end
 
 void setProperty(id self, id value)  {

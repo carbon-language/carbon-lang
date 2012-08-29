@@ -2268,16 +2268,14 @@ static void handleObjCNSObject(Sema &S, Decl *D, const AttributeList &Attr) {
   }
   if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D)) {
     QualType T = TD->getUnderlyingType();
-    if (!T->isPointerType() ||
-        !T->getAs<PointerType>()->getPointeeType()->isRecordType()) {
+    if (!T->isCARCBridgableType()) {
       S.Diag(TD->getLocation(), diag::err_nsobject_attribute);
       return;
     }
   }
   else if (ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(D)) {
     QualType T = PD->getType();
-    if (!T->isPointerType() ||
-        !T->getAs<PointerType>()->getPointeeType()->isRecordType()) {
+    if (!T->isCARCBridgableType()) {
       S.Diag(PD->getLocation(), diag::err_nsobject_attribute);
       return;
     }
