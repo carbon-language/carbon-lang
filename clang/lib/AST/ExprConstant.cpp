@@ -2833,7 +2833,7 @@ bool LValueExprEvaluator::VisitDeclRefExpr(const DeclRefExpr *E) {
 
 bool LValueExprEvaluator::VisitVarDecl(const Expr *E, const VarDecl *VD) {
   if (VD->isThreadSpecified())
-    return false;
+    return Error(E);
   if (!VD->getType()->isReferenceType()) {
     if (isa<ParmVarDecl>(VD)) {
       Result.set(VD, Info.CurrentCall->Index);

@@ -1374,3 +1374,10 @@ namespace ConditionalLValToRVal {
   constexpr A a(4);
   static_assert(f(a).v == 4, "");
 }
+
+namespace TLS {
+  __thread int n;
+  constexpr int &f() { // expected-error {{constexpr function never produces a constant expression}}
+    return n; // expected-note {{subexpression not valid in a constant expression}}
+  }
+}
