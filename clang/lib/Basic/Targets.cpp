@@ -3736,6 +3736,9 @@ public:
     Builder.defineMacro("_MIPS_SZPTR", Twine(getPointerWidth(0)));
     Builder.defineMacro("_MIPS_SZINT", Twine(getIntWidth()));
     Builder.defineMacro("_MIPS_SZLONG", Twine(getLongWidth()));
+
+    Builder.defineMacro("_MIPS_ARCH", "\"" + CPU + "\"");
+    Builder.defineMacro("_MIPS_ARCH_" + StringRef(CPU).upper());
   }
 
   virtual void getTargetDefines(const LangOptions &Opts,
