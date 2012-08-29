@@ -703,6 +703,35 @@ void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
         << MI->getNumExplicitOperands() << " given.\n";
   }
 
+  // Check the tied operands.
+  SmallVector<unsigned, 4> TiedDefs;
+  SmallVector<unsigned, 4> TiedUses;
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg() || !MO.isTied())
+      continue;
+    if (MO.isDef()) {
+      TiedDefs.push_back(i);
+      continue;
+    }
+    TiedUses.push_back(i);
+    if (TiedDefs.size() < TiedUses.size()) {
+      report("No tied def for tied use", &MO, i);
+      break;
+    }
+    if (i >= MCID.getNumOperands())
+      continue;
+    int DefIdx = MCID.getOperandConstraint(i, MCOI::TIED_TO);
+    if (unsigned(DefIdx) != TiedDefs[TiedUses.size() - 1]) {
+      report("Tied def doesn't match MCInstrDesc", &MO, i);
+      *OS << "Descriptor says tied def should be operand " << DefIdx << ".\n";
+    }
+  }
+  if (TiedDefs.size() > TiedUses.size()) {
+    unsigned i = TiedDefs[TiedUses.size() - 1];
+    report("No tied use for tied def", &MI->getOperand(i), i);
+  }
+
   // Check the MachineMemOperands for basic consistency.
   for (MachineInstr::mmo_iterator I = MI->memoperands_begin(),
        E = MI->memoperands_end(); I != E; ++I) {
@@ -758,6 +787,14 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
       if (MO->isImplicit())
         report("Explicit operand marked as implicit", MO, MONum);
     }
+
+    if (MCID.getOperandConstraint(MONum, MCOI::TIED_TO) != -1) {
+      if (!MO->isReg())
+        report("Tied use must be a register", MO, MONum);
+      else if (!MO->isTied())
+        report("Operand should be tied", MO, MONum);
+    } else if (MO->isReg() && MO->isTied())
+      report("Explicit operand should not be tied", MO, MONum);
   } else {
     // ARM adds %reg0 operands to indicate predicates. We'll allow that.
     if (MO->isReg() && !MO->isImplicit() && !MI->isVariadic() && MO->getReg())
