@@ -21,7 +21,7 @@
 extern "C" {
 #endif
 
-// TODO: Strip out unused entries once ProfileInfo etc has been removed.
+/* TODO: Strip out unused entries once ProfileInfo etc has been removed. */
 enum ProfilingType {
   ArgumentInfo  = 1,   /* The command line argument block */
   FunctionInfo  = 2,   /* Function profiling information  */
