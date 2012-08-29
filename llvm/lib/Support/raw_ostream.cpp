@@ -266,8 +266,8 @@ void raw_ostream::flush_nonempty() {
 
 raw_ostream &raw_ostream::write(unsigned char C) {
   // Group exceptional cases into a single branch.
-  if (BUILTIN_EXPECT(OutBufCur >= OutBufEnd, false)) {
-    if (BUILTIN_EXPECT(!OutBufStart, false)) {
+  if (LLVM_UNLIKELY(OutBufCur >= OutBufEnd)) {
+    if (LLVM_UNLIKELY(!OutBufStart)) {
       if (BufferMode == Unbuffered) {
         write_impl(reinterpret_cast<char*>(&C), 1);
         return *this;
@@ -286,8 +286,8 @@ raw_ostream &raw_ostream::write(unsigned char C) {
 
 raw_ostream &raw_ostream::write(const char *Ptr, size_t Size) {
   // Group exceptional cases into a single branch.
-  if (BUILTIN_EXPECT(size_t(OutBufEnd - OutBufCur) < Size, false)) {
-    if (BUILTIN_EXPECT(!OutBufStart, false)) {
+  if (LLVM_UNLIKELY(size_t(OutBufEnd - OutBufCur) < Size)) {
+    if (LLVM_UNLIKELY(!OutBufStart)) {
       if (BufferMode == Unbuffered) {
         write_impl(Ptr, Size);
         return *this;
@@ -302,7 +302,7 @@ raw_ostream &raw_ostream::write(const char *Ptr, size_t Size) {
     // If the buffer is empty at this point we have a string that is larger
     // than the buffer. Directly write the chunk that is a multiple of the
     // preferred buffer size and put the remainder in the buffer.
-    if (BUILTIN_EXPECT(OutBufCur == OutBufStart, false)) {
+    if (LLVM_UNLIKELY(OutBufCur == OutBufStart)) {
       size_t BytesToWrite = Size - (Size % NumBytes);
       write_impl(Ptr, BytesToWrite);
       copy_to_buffer(Ptr + BytesToWrite, Size - BytesToWrite);
@@ -523,7 +523,7 @@ void raw_fd_ostream::write_impl(const char *Ptr, size_t Size) {
     ssize_t ret;
 
     // Check whether we should attempt to use atomic writes.
-    if (BUILTIN_EXPECT(!UseAtomicWrites, true)) {
+    if (LLVM_LIKELY(!UseAtomicWrites)) {
       ret = ::write(FD, Ptr, Size);
     } else {
       // Use ::writev() where available.
