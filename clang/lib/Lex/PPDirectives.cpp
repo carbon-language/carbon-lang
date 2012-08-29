@@ -1849,7 +1849,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
   MI->setDefinitionEndLoc(LastTok.getLocation());
 
   // Finally, if this identifier already had a macro defined for it, verify that
-  // the macro bodies are identical and free the old definition.
+  // the macro bodies are identical, and issue diagnostics if they are not.
   if (MacroInfo *OtherMI = getMacroInfo(MacroNameTok.getIdentifierInfo())) {
     // It is very common for system headers to have tons of macro redefinitions
     // and for warnings to be disabled in system headers.  If this is the case,
@@ -1870,7 +1870,6 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
     }
     if (OtherMI->isWarnIfUnused())
       WarnUnusedMacroLocs.erase(OtherMI->getDefinitionLoc());
-    ReleaseMacroInfo(OtherMI);
   }
 
   setMacroInfo(MacroNameTok.getIdentifierInfo(), MI);
@@ -1921,9 +1920,11 @@ void Preprocessor::HandleUndefDirective(Token &UndefTok) {
   if (MI->isWarnIfUnused())
     WarnUnusedMacroLocs.erase(MI->getDefinitionLoc());
 
-  // Free macro definition.
-  ReleaseMacroInfo(MI);
-  setMacroInfo(MacroNameTok.getIdentifierInfo(), 0);
+  MI->setUndefLoc(MacroNameTok.getLocation());
+  IdentifierInfo *II = MacroNameTok.getIdentifierInfo();
+  II->setHasMacroDefinition(false);
+  if (II->isFromAST())
+    II->setChangedSinceDeserialization();
 }
 
 

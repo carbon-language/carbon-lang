@@ -33,15 +33,15 @@ using namespace clang;
 
 MacroInfo *Preprocessor::getInfoForMacro(IdentifierInfo *II) const {
   assert(II->hasMacroDefinition() && "Identifier is not a macro!");
-  
-  llvm::DenseMap<IdentifierInfo*, MacroInfo*>::const_iterator Pos
-    = Macros.find(II);
+
+  macro_iterator Pos = Macros.find(II);
   if (Pos == Macros.end()) {
     // Load this macro from the external source.
     getExternalSource()->LoadMacroDefinition(II);
     Pos = Macros.find(II);
   }
   assert(Pos != Macros.end() && "Identifier macro info is missing!");
+  assert(Pos->second->getUndefLoc().isInvalid() && "Macro is undefined!");
   return Pos->second;
 }
 
@@ -49,17 +49,12 @@ MacroInfo *Preprocessor::getInfoForMacro(IdentifierInfo *II) const {
 ///
 void Preprocessor::setMacroInfo(IdentifierInfo *II, MacroInfo *MI,
                                 bool LoadedFromAST) {
-  if (MI) {
-    Macros[II] = MI;
-    II->setHasMacroDefinition(true);
-    if (II->isFromAST() && !LoadedFromAST)
-      II->setChangedSinceDeserialization();
-  } else if (II->hasMacroDefinition()) {
-    Macros.erase(II);
-    II->setHasMacroDefinition(false);
-    if (II->isFromAST() && !LoadedFromAST)
-      II->setChangedSinceDeserialization();
-  }
+  assert(MI && "MacroInfo should be non-zero!");
+  MI->setPreviousDefinition(Macros[II]);
+  Macros[II] = MI;
+  II->setHasMacroDefinition(true);
+  if (II->isFromAST() && !LoadedFromAST)
+    II->setChangedSinceDeserialization();
 }
 
 /// RegisterBuiltinMacro - Register the specified identifier in the identifier

@@ -1677,10 +1677,12 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
   for (Preprocessor::macro_iterator I = PP.macro_begin(Chain == 0), 
                                     E = PP.macro_end(Chain == 0);
        I != E; ++I) {
-    const IdentifierInfo *Name = I->first;
-    if (!IsModule || I->second->isPublic()) {
-      MacroDefinitionsSeen.insert(Name);
-      MacrosToEmit.push_back(std::make_pair(I->first, I->second));
+    // FIXME: We'll need to store macro history in PCH.
+    if (I->first->hasMacroDefinition()) {
+      if (!IsModule || I->second->isPublic()) {
+        MacroDefinitionsSeen.insert(I->first);
+        MacrosToEmit.push_back(std::make_pair(I->first, I->second));
+      }
     }
   }
   

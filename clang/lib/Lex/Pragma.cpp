@@ -733,12 +733,10 @@ void Preprocessor::HandlePragmaPopMacro(Token &PopMacroTok) {
   llvm::DenseMap<IdentifierInfo*, std::vector<MacroInfo*> >::iterator iter =
     PragmaPushMacroInfo.find(IdentInfo);
   if (iter != PragmaPushMacroInfo.end()) {
-    // Release the MacroInfo currently associated with IdentInfo.
-    MacroInfo *CurrentMI = getMacroInfo(IdentInfo);
-    if (CurrentMI) {
+    // Forget the MacroInfo currently associated with IdentInfo.
+    if (MacroInfo *CurrentMI = getMacroInfo(IdentInfo)) {
       if (CurrentMI->isWarnIfUnused())
         WarnUnusedMacroLocs.erase(CurrentMI->getDefinitionLoc());
-      ReleaseMacroInfo(CurrentMI);
     }
 
     // Get the MacroInfo we want to reinstall.

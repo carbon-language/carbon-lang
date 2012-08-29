@@ -570,8 +570,12 @@ static void DoPrintMacros(Preprocessor &PP, raw_ostream *OS) {
   do PP.Lex(Tok);
   while (Tok.isNot(tok::eof));
 
-  SmallVector<id_macro_pair, 128>
-    MacrosByID(PP.macro_begin(), PP.macro_end());
+  SmallVector<id_macro_pair, 128> MacrosByID;
+  for (Preprocessor::macro_iterator I = PP.macro_begin(), E = PP.macro_end();
+       I != E; ++I) {
+    if (I->first->hasMacroDefinition())
+      MacrosByID.push_back(id_macro_pair(I->first, I->second));
+  }
   llvm::array_pod_sort(MacrosByID.begin(), MacrosByID.end(), MacroIDCompare);
 
   for (unsigned i = 0, e = MacrosByID.size(); i != e; ++i) {

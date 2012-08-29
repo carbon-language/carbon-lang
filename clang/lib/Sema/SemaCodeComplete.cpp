@@ -2904,7 +2904,11 @@ static void AddMacroResults(Preprocessor &PP, ResultBuilder &Results,
   for (Preprocessor::macro_iterator M = PP.macro_begin(), 
                                  MEnd = PP.macro_end();
        M != MEnd; ++M) {
-    Results.AddResult(Result(M->first, 
+    // FIXME: Eventually, we'd want to be able to look back to the macro
+    // definition that was actually active at the point of code completion (even
+    // if that macro has since been #undef'd).
+    if (M->first->hasMacroDefinition())
+      Results.AddResult(Result(M->first, 
                              getMacroUsagePriority(M->first->getName(),
                                                    PP.getLangOpts(),
                                                    TargetTypeIsPointer)));

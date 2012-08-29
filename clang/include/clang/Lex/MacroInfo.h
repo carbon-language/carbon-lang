@@ -32,6 +32,12 @@ class MacroInfo {
   SourceLocation Location;
   /// EndLocation - The location of the last token in the macro.
   SourceLocation EndLocation;
+  /// \brief The location where the macro was #undef'd, or an invalid location
+  /// for macros that haven't been undefined.
+  SourceLocation UndefLocation;
+  /// \brief Previous definition, the identifier of this macro was defined to,
+  /// or NULL.
+  MacroInfo *PreviousDefinition;
 
   /// Arguments - The list of arguments for a function-like macro.  This can be
   /// empty, for, e.g. "#define X()".  In a C99-style variadic macro, this
@@ -128,10 +134,31 @@ public:
   /// setDefinitionEndLoc - Set the location of the last token in the macro.
   ///
   void setDefinitionEndLoc(SourceLocation EndLoc) { EndLocation = EndLoc; }
+
   /// getDefinitionEndLoc - Return the location of the last token in the macro.
   ///
   SourceLocation getDefinitionEndLoc() const { return EndLocation; }
-  
+
+  /// \brief Set the location where macro was undefined. Can only be set once.
+  void setUndefLoc(SourceLocation UndefLoc) {
+    assert(UndefLocation.isInvalid() && "UndefLocation is already set!");
+    assert(UndefLoc.isValid() && "Invalid UndefLoc!");
+    UndefLocation = UndefLoc;
+  }
+
+  /// \brief Get the location where macro was undefined.
+  SourceLocation getUndefLoc() const { return UndefLocation; }
+
+  /// \brief Set previous definition of the macro with the same name. Can only
+  /// be set once.
+  void setPreviousDefinition(MacroInfo *PreviousDef) {
+    assert(!PreviousDefinition && "PreviousDefiniton is already set!");
+    PreviousDefinition = PreviousDef;
+  }
+
+  /// \brief Get previous definition of the macro with the same name.
+  MacroInfo *getPreviousDefinition() { return PreviousDefinition; }
+
   /// \brief Get length in characters of the macro definition.
   unsigned getDefinitionLength(SourceManager &SM) const {
     if (IsDefinitionLengthCached)

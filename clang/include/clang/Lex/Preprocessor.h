@@ -274,8 +274,9 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   };
   SmallVector<MacroExpandsInfo, 2> DelayedMacroExpandsCallbacks;
 
-  /// Macros - For each IdentifierInfo with 'HasMacro' set, we keep a mapping
-  /// to the actual definition of the macro.
+  /// Macros - For each IdentifierInfo that was associated with a macro, we
+  /// keep a mapping to the history of all macro definitions and #undefs in
+  /// the reverse order (the latest one is in the head of the list).
   llvm::DenseMap<IdentifierInfo*, MacroInfo*> Macros;
 
   /// \brief Macros that we want to warn because they are not used at the end
@@ -470,8 +471,10 @@ public:
   void setMacroInfo(IdentifierInfo *II, MacroInfo *MI,
                     bool LoadedFromAST = false);
 
-  /// macro_iterator/macro_begin/macro_end - This allows you to walk the current
-  /// state of the macro table.  This visits every currently-defined macro.
+  /// macro_iterator/macro_begin/macro_end - This allows you to walk the macro
+  /// history table. Currently defined macros have
+  /// IdentifierInfo::hasMacroDefinition() set and an empty
+  /// MacroInfo::getUndefLoc() at the head of the list.
   typedef llvm::DenseMap<IdentifierInfo*,
                          MacroInfo*>::const_iterator macro_iterator;
   macro_iterator macro_begin(bool IncludeExternalMacros = true) const;

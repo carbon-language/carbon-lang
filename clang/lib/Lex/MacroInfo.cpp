@@ -15,44 +15,46 @@
 #include "clang/Lex/Preprocessor.h"
 using namespace clang;
 
-MacroInfo::MacroInfo(SourceLocation DefLoc) : Location(DefLoc) {
-  IsFunctionLike = false;
-  IsC99Varargs = false;
-  IsGNUVarargs = false;
-  IsBuiltinMacro = false;
-  IsFromAST = false;
-  ChangedAfterLoad = false;
-  IsDisabled = false;
-  IsUsed = false;
-  IsAllowRedefinitionsWithoutWarning = false;
-  IsWarnIfUnused = false;
-  IsDefinitionLengthCached = false;
-  IsPublic = true;
-  
-  ArgumentList = 0;
-  NumArguments = 0;
+MacroInfo::MacroInfo(SourceLocation DefLoc)
+  : Location(DefLoc),
+    PreviousDefinition(0),
+    ArgumentList(0),
+    NumArguments(0),
+    IsDefinitionLengthCached(false),
+    IsFunctionLike(false),
+    IsC99Varargs(false),
+    IsGNUVarargs(false),
+    IsBuiltinMacro(false),
+    IsFromAST(false),
+    ChangedAfterLoad(false),
+    IsDisabled(false),
+    IsUsed(false),
+    IsAllowRedefinitionsWithoutWarning(false),
+    IsWarnIfUnused(false),
+    IsPublic(true) {
 }
 
-MacroInfo::MacroInfo(const MacroInfo &MI, llvm::BumpPtrAllocator &PPAllocator) {
-  Location = MI.Location;
-  EndLocation = MI.EndLocation;
-  ReplacementTokens = MI.ReplacementTokens;
-  IsFunctionLike = MI.IsFunctionLike;
-  IsC99Varargs = MI.IsC99Varargs;
-  IsGNUVarargs = MI.IsGNUVarargs;
-  IsBuiltinMacro = MI.IsBuiltinMacro;
-  IsFromAST = MI.IsFromAST;
-  ChangedAfterLoad = MI.ChangedAfterLoad;
-  IsDisabled = MI.IsDisabled;
-  IsUsed = MI.IsUsed;
-  IsAllowRedefinitionsWithoutWarning = MI.IsAllowRedefinitionsWithoutWarning;
-  IsWarnIfUnused = MI.IsWarnIfUnused;
-  IsDefinitionLengthCached = MI.IsDefinitionLengthCached;
-  DefinitionLength = MI.DefinitionLength;
-  IsPublic = MI.IsPublic;
-  
-  ArgumentList = 0;
-  NumArguments = 0;
+MacroInfo::MacroInfo(const MacroInfo &MI, llvm::BumpPtrAllocator &PPAllocator)
+  : Location(MI.Location),
+    EndLocation(MI.EndLocation),
+    UndefLocation(MI.UndefLocation),
+    PreviousDefinition(0),
+    ArgumentList(0),
+    NumArguments(0),
+    ReplacementTokens(MI.ReplacementTokens),
+    DefinitionLength(MI.DefinitionLength),
+    IsDefinitionLengthCached(MI.IsDefinitionLengthCached),
+    IsFunctionLike(MI.IsFunctionLike),
+    IsC99Varargs(MI.IsC99Varargs),
+    IsGNUVarargs(MI.IsGNUVarargs),
+    IsBuiltinMacro(MI.IsBuiltinMacro),
+    IsFromAST(MI.IsFromAST),
+    ChangedAfterLoad(MI.ChangedAfterLoad),
+    IsDisabled(MI.IsDisabled),
+    IsUsed(MI.IsUsed),
+    IsAllowRedefinitionsWithoutWarning(MI.IsAllowRedefinitionsWithoutWarning),
+    IsWarnIfUnused(MI.IsWarnIfUnused),
+    IsPublic(MI.IsPublic) {
   setArgumentList(MI.ArgumentList, MI.NumArguments, PPAllocator);
 }
 
