@@ -55,15 +55,17 @@ void *InternalAllocBlock(void *p);
 
 // InternalScopedBuffer can be used instead of large stack arrays to
 // keep frame size low.
+// FIXME: use InternalAlloc instead of MmapOrDie once
+// InternalAlloc is made libc-free.
 template<typename T>
 class InternalScopedBuffer {
  public:
   explicit InternalScopedBuffer(uptr cnt) {
     cnt_ = cnt;
-    ptr_ = (T*)InternalAlloc(cnt * sizeof(T));
+    ptr_ = (T*)MmapOrDie(cnt * sizeof(T), "InternalScopedBuffer");
   }
   ~InternalScopedBuffer() {
-    InternalFree(ptr_);
+    UnmapOrDie(ptr_, cnt_ * sizeof(T));
   }
   operator T*() { return ptr_; }
   T &operator[](uptr i) { return ptr_[i]; }

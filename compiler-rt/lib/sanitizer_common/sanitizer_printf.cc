@@ -149,16 +149,15 @@ void SetPrintfAndReportCallback(void (*callback)(const char *)) {
 
 void Printf(const char *format, ...) {
   const int kLen = 1024 * 4;
-  char *buffer = (char*)MmapOrDie(kLen, __FUNCTION__);
+  InternalScopedBuffer<char> buffer(kLen);
   va_list args;
   va_start(args, format);
-  int needed_length = VSNPrintf(buffer, kLen, format, args);
+  int needed_length = VSNPrintf(buffer.data(), kLen, format, args);
   va_end(args);
   RAW_CHECK_MSG(needed_length < kLen, "Buffer in Printf is too short!\n");
-  RawWrite(buffer);
+  RawWrite(buffer.data());
   if (PrintfAndReportCallback)
-    PrintfAndReportCallback(buffer);
-  UnmapOrDie(buffer, kLen);
+    PrintfAndReportCallback(buffer.data());
 }
 
 // Writes at most "length" symbols to "buffer" (including trailing '\0').
@@ -176,19 +175,19 @@ int internal_snprintf(char *buffer, uptr length, const char *format, ...) {
 // Like Printf, but prints the current PID before the output string.
 void Report(const char *format, ...) {
   const int kLen = 1024 * 4;
-  char *buffer = (char*)MmapOrDie(kLen, __FUNCTION__);
-  int needed_length = internal_snprintf(buffer, kLen, "==%d== ", GetPid());
+  InternalScopedBuffer<char> buffer(kLen);
+  int needed_length = internal_snprintf(buffer.data(),
+                                        kLen, "==%d== ", GetPid());
   RAW_CHECK_MSG(needed_length < kLen, "Buffer in Report is too short!\n");
   va_list args;
   va_start(args, format);
-  needed_length += VSNPrintf(buffer + needed_length, kLen - needed_length,
-                             format, args);
+  needed_length += VSNPrintf(buffer.data() + needed_length,
+                             kLen - needed_length, format, args);
   va_end(args);
   RAW_CHECK_MSG(needed_length < kLen, "Buffer in Report is too short!\n");
-  RawWrite(buffer);
+  RawWrite(buffer.data());
   if (PrintfAndReportCallback)
-    PrintfAndReportCallback(buffer);
-  UnmapOrDie(buffer, kLen);
+    PrintfAndReportCallback(buffer.data());
 }
 
 }  // namespace __sanitizer

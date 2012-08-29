@@ -40,23 +40,23 @@ void StackTrace::PrintStack(uptr *addr, uptr size,
                             bool symbolize, const char *strip_file_prefix,
                             SymbolizeCallback symbolize_callback ) {
   MemoryMappingLayout proc_maps;
+  InternalScopedBuffer<char> buff(kPageSize * 2);
+  InternalScopedBuffer<AddressInfo> addr_frames(64);
   uptr frame_num = 0;
   for (uptr i = 0; i < size && addr[i]; i++) {
     uptr pc = patch_pc(addr[i]);
     if (symbolize_callback) {
-      char buff[4096];
-      symbolize_callback((void*)pc, buff, sizeof(buff));
+      symbolize_callback((void*)pc, buff.data(), buff.size());
       // We can't know anything about the string returned by external
       // symbolizer, but if it starts with filename, try to strip path prefix
       // from it.
       Printf("  #%zu 0x%zx %s\n", frame_num, pc,
-             StripPathPrefix(buff, strip_file_prefix));
+             StripPathPrefix(buff.data(), strip_file_prefix));
       frame_num++;
       continue;
     }
-    AddressInfo addr_frames[64];
     uptr addr_frames_num =
-      symbolize ? SymbolizeCode(pc, addr_frames, ARRAY_SIZE(addr_frames)) : 0;
+      symbolize ? SymbolizeCode(pc, addr_frames.data(), addr_frames.size()) : 0;
     if (addr_frames_num > 0) {
       for (uptr j = 0; j < addr_frames_num; j++) {
         AddressInfo &info = addr_frames[j];
@@ -77,11 +77,10 @@ void StackTrace::PrintStack(uptr *addr, uptr size,
       }
     } else {
       uptr offset;
-      char filename[4096];
       if (proc_maps.GetObjectNameAndOffset(pc, &offset,
-                                           filename, sizeof(filename))) {
+                                           buff.data(), buff.size())) {
         Printf("    #%zu 0x%zx (%s+0x%zx)\n", frame_num, pc,
-               StripPathPrefix(filename, strip_file_prefix), offset);
+               StripPathPrefix(buff.data(), strip_file_prefix), offset);
       } else {
         Printf("    #%zu 0x%zx\n", frame_num, pc);
       }
