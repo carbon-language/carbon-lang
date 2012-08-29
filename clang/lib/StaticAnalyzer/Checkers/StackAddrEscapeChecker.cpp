@@ -118,6 +118,7 @@ void StackAddrEscapeChecker::checkPreStmt(const ReturnStmt *RS,
   const Expr *RetE = RS->getRetValue();
   if (!RetE)
     return;
+  RetE = RetE->IgnoreParens();
 
   const LocationContext *LCtx = C.getLocationContext();
   SVal V = C.getState()->getSVal(RetE, LCtx);
@@ -144,7 +145,10 @@ void StackAddrEscapeChecker::checkPreStmt(const ReturnStmt *RS,
     return;
 
   // Returning a record by value is fine. (In this case, the returned
-  // expression will be a copy-constructor.)
+  // expression will be a copy-constructor, possibly wrapped in an
+  // ExprWithCleanups node.)
+  if (const ExprWithCleanups *Cleanup = dyn_cast<ExprWithCleanups>(RetE))
+    RetE = Cleanup->getSubExpr();
   if (isa<CXXConstructExpr>(RetE) && RetE->getType()->isRecordType())
     return;
 
