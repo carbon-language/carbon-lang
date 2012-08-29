@@ -237,7 +237,8 @@ install_clang: | $(INSTALL_DIR)
 #	cp -v $(CLANG_BUILD)/lib/libasan*.a $(INSTALL_DIR)/lib
 
 $(BIN)/asan_noinst_test$(SUFF).o: tests/asan_noinst_test.cc $(RTL_HDR) $(MAKEFILE)
-	$(CLEANROOM_CXX) $(COMMON_ASAN_DEFINES) $(PIE) $(CFLAGS) $(GTEST_INCLUDE) -I. -I.. -g -c $< -O2 -o $@
+	$(CLEANROOM_CXX) $(COMMON_ASAN_DEFINES) $(PIE) $(CFLAGS) $(GTEST_INCLUDE) \
+		-I. -I.. -I../../include -g -c $< -O2 -o $@
 
 $(BIN)/asan_break_optimization$(SUFF).o: tests/asan_break_optimization.cc $(MAKEFILE)
 	$(CLEANROOM_CXX) $(PIE) $(CFLAGS) -c $< -O0 -o $@
@@ -249,7 +250,7 @@ $(BIN)/%_test$(SUFF).o: tests/%_test.mm $(RTL_HDR) $(MAKEFILE)
 	$(ASAN_CXX) $(GTEST_INCLUDE) -I. -I.. -g -c $< -O2 -o $@ -ObjC $(PIE) $(CFLAGS)
 
 RTL_COMMON_FLAGS=$(PIE) $(CFLAGS) -fPIC -c -O2 -fno-exceptions -funwind-tables \
-	   -Ithird_party -I.. $(ASAN_FLAGS)
+	   -Ithird_party -I.. -I../../include $(ASAN_FLAGS)
 
 $(BIN)/%$(SUFF).o: $(INTERCEPTION)/%.cc $(RTL_HDR) $(MAKEFILE)
 	$(CXX) $(RTL_COMMON_FLAGS) -o $@ -g $<
