@@ -13,7 +13,7 @@
 #ifndef SANITIZER_DEFS_H
 #define SANITIZER_DEFS_H
 
-#include "sanitizer_interface_defs.h"
+#include "sanitizer/common_interface_defs.h"
 using namespace __sanitizer;  // NOLINT
 // ----------- ATTENTION -------------
 // This header should NOT include any other headers to avoid portability issues.

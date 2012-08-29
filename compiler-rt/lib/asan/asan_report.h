@@ -12,8 +12,8 @@
 // ASan-private header for error reporting functions.
 //===----------------------------------------------------------------------===//
 
-#include "asan_interface.h"
 #include "asan_internal.h"
+#include "sanitizer/asan_interface.h"
 
 namespace __asan {
 

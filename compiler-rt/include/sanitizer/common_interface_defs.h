@@ -1,4 +1,4 @@
-//===-- sanitizer_interface_defs.h -----------------------------*- C++ -*-===//
+//===-- sanitizer/common_interface_defs.h -----------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,8 +12,8 @@
 // NOTE: This file may be included into user code.
 //===----------------------------------------------------------------------===//
 
-#ifndef SANITIZER_INTERFACE_DEFS_H
-#define SANITIZER_INTERFACE_DEFS_H
+#ifndef SANITIZER_COMMON_INTERFACE_DEFS_H
+#define SANITIZER_COMMON_INTERFACE_DEFS_H
 
 // ----------- ATTENTION -------------
 // This header should NOT include any other headers to avoid portability issues.
@@ -53,4 +53,4 @@ typedef signed   long long s64;  // NOLINT
 
 }  // namespace __sanitizer
 
-#endif  // SANITIZER_INTERFACE_DEFS_H
+#endif  // SANITIZER_COMMON_INTERFACE_DEFS_H

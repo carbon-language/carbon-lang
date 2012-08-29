@@ -100,6 +100,9 @@ function(set_target_compile_flags target)
   set_property(TARGET ${target} PROPERTY COMPILE_FLAGS "${argstring}")
 endfunction()
 
+# Add the public header's directory to the includes for all of compiler-rt.
+include_directories(include)
+
 add_subdirectory(lib)
 
 if(LLVM_INCLUDE_TESTS)

@@ -1,4 +1,4 @@
-//===-- asan_interface.h ----------------------------------------*- C++ -*-===//
+//===-- sanitizer/asan_interface.h ------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,10 +12,11 @@
 // This header can be included by the instrumented program to fetch
 // data (mostly allocator statistics) from ASan runtime library.
 //===----------------------------------------------------------------------===//
-#ifndef ASAN_INTERFACE_H
-#define ASAN_INTERFACE_H
+#ifndef SANITIZER_ASAN_INTERFACE_H
+#define SANITIZER_ASAN_INTERFACE_H
 
-#include "sanitizer_common/sanitizer_interface_defs.h"
+#include <sanitizer/common_interface_defs.h>
+
 // ----------- ATTENTION -------------
 // This header should NOT include any other headers from ASan runtime.
 // All functions in this header are extern "C" and start with __asan_.
@@ -198,4 +199,4 @@ extern "C" {
       SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE;
 }  // extern "C"
 
-#endif  // ASAN_INTERFACE_H
+#endif  // SANITIZER_ASAN_INTERFACE_H

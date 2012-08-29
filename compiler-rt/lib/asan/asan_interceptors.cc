@@ -15,7 +15,6 @@
 
 #include "asan_allocator.h"
 #include "asan_intercepted_functions.h"
-#include "asan_interface.h"
 #include "asan_internal.h"
 #include "asan_mapping.h"
 #include "asan_report.h"
@@ -23,6 +22,7 @@
 #include "asan_stats.h"
 #include "asan_thread_registry.h"
 #include "interception/interception.h"
+#include "sanitizer/asan_interface.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
 namespace __asan {

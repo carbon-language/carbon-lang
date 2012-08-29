@@ -12,11 +12,11 @@
 // Code related to statistics collected by AddressSanitizer.
 //===----------------------------------------------------------------------===//
 #include "asan_interceptors.h"
-#include "asan_interface.h"
 #include "asan_internal.h"
 #include "asan_lock.h"
 #include "asan_stats.h"
 #include "asan_thread_registry.h"
+#include "sanitizer/asan_interface.h"
 
 namespace __asan {
 

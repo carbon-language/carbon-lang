@@ -8,7 +8,7 @@ CC=$2
 FILE_CHECK=$3
 CXXFLAGS="-mno-omit-leaf-frame-pointer -fno-omit-frame-pointer -fno-optimize-sibling-calls -g"
 SYMBOLIZER=../scripts/asan_symbolize.py
-ASAN_INTERFACE_H=../asan_interface.h
+ASAN_INTERFACE_H=../../../include/sanitizer/asan_interface.h
 TMP_ASAN_REPORT=asan_report.tmp
 
 run_program() {

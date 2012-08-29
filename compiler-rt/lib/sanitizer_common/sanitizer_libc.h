@@ -18,7 +18,7 @@
 
 // ----------- ATTENTION -------------
 // This header should NOT include any other headers from sanitizer runtime.
-#include "sanitizer_interface_defs.h"
+#include "sanitizer/common_interface_defs.h"
 
 namespace __sanitizer {
 
