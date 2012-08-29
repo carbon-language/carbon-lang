@@ -13,6 +13,7 @@
 
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/Compiler.h"
 #include <cassert>
 using namespace llvm;
 
@@ -69,7 +70,7 @@ unsigned StringMapImpl::LookupBucketFor(StringRef Name) {
   while (1) {
     StringMapEntryBase *BucketItem = TheTable[BucketNo];
     // If we found an empty bucket, this key isn't in the table yet, return it.
-    if (BucketItem == 0) {
+    if (LLVM_LIKELY(BucketItem == 0)) {
       // If we found a tombstone, we want to reuse the tombstone instead of an
       // empty bucket.  This reduces probing.
       if (FirstTombstone != -1) {
@@ -84,7 +85,7 @@ unsigned StringMapImpl::LookupBucketFor(StringRef Name) {
     if (BucketItem == getTombstoneVal()) {
       // Skip over tombstones.  However, remember the first one we see.
       if (FirstTombstone == -1) FirstTombstone = BucketNo;
-    } else if (HashTable[BucketNo] == FullHashValue) {
+    } else if (LLVM_LIKELY(HashTable[BucketNo] == FullHashValue)) {
       // If the full hash value matches, check deeply for a match.  The common
       // case here is that we are only looking at the buckets (for item info
       // being non-null and for the full hash value) not at the items.  This
@@ -123,12 +124,12 @@ int StringMapImpl::FindKey(StringRef Key) const {
   while (1) {
     StringMapEntryBase *BucketItem = TheTable[BucketNo];
     // If we found an empty bucket, this key isn't in the table yet, return.
-    if (BucketItem == 0)
+    if (LLVM_LIKELY(BucketItem == 0))
       return -1;
     
     if (BucketItem == getTombstoneVal()) {
       // Ignore tombstones.
-    } else if (HashTable[BucketNo] == FullHashValue) {
+    } else if (LLVM_LIKELY(HashTable[BucketNo] == FullHashValue)) {
       // If the full hash value matches, check deeply for a match.  The common
       // case here is that we are only looking at the buckets (for item info
       // being non-null and for the full hash value) not at the items.  This
