@@ -100,6 +100,18 @@ public:
     }
 
     const char *
+    GetConstCStringWithStringRef (const llvm::StringRef &string_ref)
+    {
+        if (string_ref.data())
+        {
+            Mutex::Locker locker (m_mutex);
+            StringPoolEntryType& entry = m_string_map.GetOrCreateValue (string_ref, (StringPoolValueType)NULL);
+            return entry.getKeyData();
+        }
+        return NULL;
+    }
+
+    const char *
     GetConstCStringAndSetMangledCounterPart (const char *demangled_cstr, const char *mangled_ccstr)
     {
         if (demangled_cstr)

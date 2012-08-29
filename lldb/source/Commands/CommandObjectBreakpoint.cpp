@@ -91,7 +91,6 @@ public:
             m_filenames (),
             m_line_num (0),
             m_column (0),
-            m_check_inlines (true),
             m_func_names (),
             m_func_name_type_mask (eFunctionNameTypeNone),
             m_func_regexp (),
@@ -104,7 +103,7 @@ public:
             m_thread_name(),
             m_queue_name(),
             m_catch_bp (false),
-            m_throw_bp (false),
+            m_throw_bp (true),
             m_language (eLanguageTypeUnknown),
             m_skip_prologue (eLazyBoolCalculate)
         {
@@ -285,18 +284,19 @@ public:
             m_line_num = 0;
             m_column = 0;
             m_func_names.clear();
-            m_func_name_type_mask = 0;
+            m_func_name_type_mask = eFunctionNameTypeNone;
             m_func_regexp.clear();
-            m_load_addr = LLDB_INVALID_ADDRESS;
+            m_source_text_regexp.clear();
             m_modules.Clear();
+            m_load_addr = LLDB_INVALID_ADDRESS;
             m_ignore_count = 0;
             m_thread_id = LLDB_INVALID_THREAD_ID;
             m_thread_index = UINT32_MAX;
             m_thread_name.clear();
             m_queue_name.clear();
-            m_language = eLanguageTypeUnknown;
             m_catch_bp = false;
             m_throw_bp = true;
+            m_language = eLanguageTypeUnknown;
             m_skip_prologue = eLazyBoolCalculate;
         }
     
@@ -316,7 +316,6 @@ public:
         FileSpecList m_filenames;
         uint32_t m_line_num;
         uint32_t m_column;
-        bool m_check_inlines;
         std::vector<std::string> m_func_names;
         uint32_t m_func_name_type_mask;
         std::string m_func_regexp;
@@ -398,11 +397,14 @@ protected:
                     }
                     else
                         file = m_options.m_filenames.GetFileSpecAtIndex(0);
-                        
+                    
+                    // Only check for inline functions if 
+                    LazyBool check_inlines = eLazyBoolCalculate;
+                    
                     bp = target->CreateBreakpoint (&(m_options.m_modules),
                                                    file,
                                                    m_options.m_line_num,
-                                                   m_options.m_check_inlines,
+                                                   check_inlines,
                                                    m_options.m_skip_prologue,
                                                    internal).get();
                 }

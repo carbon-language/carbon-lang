@@ -121,10 +121,7 @@ protected:
                       lldb_private::ThreadList &new_thread_list);
     
     lldb_private::ObjectFile *
-    GetCoreObjectFile ()
-    {
-        return m_core_module_sp->GetObjectFile();
-    }
+    GetCoreObjectFile ();
 private:
     bool 
     GetDynamicLoaderAddress (lldb::addr_t addr);

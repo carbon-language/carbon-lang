@@ -10,6 +10,7 @@
 #include "InferiorCallPOSIX.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/ValueObject.h"
+#include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"

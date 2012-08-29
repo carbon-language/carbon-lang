@@ -10,6 +10,7 @@
 #include "AppleObjCSymbolVendor.h"
 
 #include "lldb/Core/Log.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 

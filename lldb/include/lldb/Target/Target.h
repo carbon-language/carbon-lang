@@ -19,6 +19,7 @@
 #include "lldb/Breakpoint/BreakpointList.h"
 #include "lldb/Breakpoint/BreakpointLocationCollection.h"
 #include "lldb/Breakpoint/WatchpointList.h"
+#include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Broadcaster.h"
 #include "lldb/Core/Event.h"
 #include "lldb/Core/ModuleList.h"
@@ -38,6 +39,14 @@
 namespace lldb_private {
 
 extern OptionEnumValueElement g_dynamic_value_types[];
+
+typedef enum InlineStrategy
+{
+    eInlineBreakpointsNever = 0,
+    eInlineBreakpointsHeaders,
+    eInlineBreakpointsAlways
+} InlineStrategy;
+
 
 //----------------------------------------------------------------------
 // TargetProperties
@@ -71,6 +80,9 @@ public:
     void
     SetDisableSTDIO (bool b);
     
+    InlineStrategy
+    GetInlineStrategy () const;
+
     bool
     GetRunArguments (Args &args) const;
     
@@ -312,7 +324,7 @@ public:
     CreateBreakpoint (const FileSpecList *containingModules,
                       const FileSpec &file,
                       uint32_t line_no,
-                      bool check_inlines,
+                      LazyBool check_inlines = eLazyBoolCalculate,
                       LazyBool skip_prologue = eLazyBoolCalculate,
                       bool internal = false);
 

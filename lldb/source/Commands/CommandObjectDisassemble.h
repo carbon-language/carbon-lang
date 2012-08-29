@@ -14,6 +14,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Core/ArchSpec.h"
 #include "lldb/Interpreter/CommandObject.h"
 #include "lldb/Interpreter/Options.h"
 

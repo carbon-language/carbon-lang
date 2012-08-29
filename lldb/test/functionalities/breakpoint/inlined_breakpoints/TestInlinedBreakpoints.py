@@ -37,9 +37,20 @@ class InlinedBreakpointsTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
+        # Set a breakpoint and fail because it is in an inlined source implemenation file
         self.expect("breakpoint set -f basic_type.cpp -l %d" % self.line,
                     BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='basic_type.cpp', line = %d, locations = 1" %
+            startstr = "Breakpoint created: 1: file ='basic_type.cpp', line = %d, locations = 0 (pending)" % self.line)
+
+        # Now enable breakpoints in implementation files and see the breakpoint set succeed
+        self.runCmd('settings set target.inline-breakpoint-strategy always')
+        # And add hooks to restore the settings during tearDown().
+        self.addTearDownHook(
+            lambda: self.runCmd("settings set target.inline-breakpoint-strategy headers"))
+
+        self.expect("breakpoint set -f basic_type.cpp -l %d" % self.line,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 2: file ='basic_type.cpp', line = %d, locations = 1" %
                         self.line)
 
         self.runCmd("run", RUN_SUCCEEDED)

@@ -175,6 +175,37 @@ public:
                 lldb::addr_t header_addr,
                 lldb::DataBufferSP &file_data_sp);
 
+    
+    //------------------------------------------------------------------
+    /// Split a path into a file path with object name.
+    ///
+    /// For paths like "/tmp/foo.a(bar.o)" we often need to split a path
+    /// up into the actual path name and into the object name so we can
+    /// make a valid object file from it.
+    ///
+    /// @param[in] path_with_object
+    ///     A path that might contain an archive path with a .o file
+    ///     specified in parens in the basename of the path.
+    ///
+    /// @param[out] archive_file
+    ///     If \b true is returned, \a file_spec will be filled in with
+    ///     the path to the archive.
+    ///
+    /// @param[out] archive_object
+    ///     If \b true is returned, \a object will be filled in with
+    ///     the name of the object inside the archive.
+    ///
+    /// @return
+    ///     \b true if the path matches the pattern of archive + object
+    ///     and \a archive_file and \a archive_object are modified,
+    ///     \b false otherwise and \a archive_file and \a archive_object
+    ///     are guaranteed to be remain unchanged.
+    //------------------------------------------------------------------
+    static bool
+    SplitArchivePathWithObject (const char *path_with_object,
+                                lldb_private::FileSpec &archive_file,
+                                lldb_private::ConstString &archive_object);
+
     //------------------------------------------------------------------
     /// Gets the address size in bytes for the current object file.
     ///

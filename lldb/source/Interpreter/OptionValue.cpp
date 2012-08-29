@@ -347,7 +347,7 @@ OptionValue::GetEnumerationValue (int64_t fail_value) const
 {
     const OptionValueEnumeration *option_value = GetAsEnumeration();
     if (option_value)
-        option_value->GetCurrentValue();
+        return option_value->GetCurrentValue();
     return fail_value;
 }
 

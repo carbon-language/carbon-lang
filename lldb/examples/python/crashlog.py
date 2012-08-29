@@ -587,6 +587,14 @@ def SymbolicateCrashLog(crash_log, options):
         print 'error: no images in crash log'
         return
 
+    if options.dump_image_list:
+        print "Binary Images:"
+        for image in crash_log.images:
+            if options.verbose:
+                print image.debug_dump()
+            else:
+                print image
+
     target = crash_log.create_target ()
     if not target:
         return
@@ -677,11 +685,6 @@ def SymbolicateCrashLog(crash_log, options):
             else:
                 print frame
         print                
-
-    if options.dump_image_list:
-        print "Binary Images:"
-        for image in crash_log.images:
-            print image
 
 def CreateSymbolicateCrashLogOptions(command_name, description, add_interactive_options):
     usage = "usage: %prog [options] <FILE> [FILE ...]"

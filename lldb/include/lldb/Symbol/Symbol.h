@@ -91,7 +91,7 @@ public:
     }
 
     const ConstString &
-    GetName ()
+    GetName () const
     {
         return m_mangled.GetName();
     }

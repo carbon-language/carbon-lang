@@ -16,6 +16,7 @@
 #include "lldb/Breakpoint/BreakpointIDList.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"

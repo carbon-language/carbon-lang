@@ -12,6 +12,7 @@
 
 // Project includes
 #include "lldb/Core/AddressResolver.h"
+#include "lldb/Symbol/SymbolContext.h"
 
 namespace lldb_private {
 

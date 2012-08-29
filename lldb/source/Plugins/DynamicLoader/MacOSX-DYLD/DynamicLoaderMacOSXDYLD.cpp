@@ -15,8 +15,11 @@
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Core/Section.h"
 #include "lldb/Core/State.h"
+#include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/RegisterContext.h"
@@ -1769,5 +1772,52 @@ uint32_t
 DynamicLoaderMacOSXDYLD::GetPluginVersion()
 {
     return 1;
+}
+
+uint32_t
+DynamicLoaderMacOSXDYLD::AddrByteSize()
+{
+    switch (m_dyld.header.magic)
+    {
+        case llvm::MachO::HeaderMagic32:
+        case llvm::MachO::HeaderMagic32Swapped:
+            return 4;
+            
+        case llvm::MachO::HeaderMagic64:
+        case llvm::MachO::HeaderMagic64Swapped:
+            return 8;
+            
+        default:
+            break;
+    }
+    return 0;
+}
+
+lldb::ByteOrder
+DynamicLoaderMacOSXDYLD::GetByteOrderFromMagic (uint32_t magic)
+{
+    switch (magic)
+    {
+        case llvm::MachO::HeaderMagic32:
+        case llvm::MachO::HeaderMagic64:
+            return lldb::endian::InlHostByteOrder();
+            
+        case llvm::MachO::HeaderMagic32Swapped:
+        case llvm::MachO::HeaderMagic64Swapped:
+            if (lldb::endian::InlHostByteOrder() == lldb::eByteOrderBig)
+                return lldb::eByteOrderLittle;
+            else
+                return lldb::eByteOrderBig;
+            
+        default:
+            break;
+    }
+    return lldb::eByteOrderInvalid;
+}
+
+lldb::ByteOrder
+DynamicLoaderMacOSXDYLD::DYLDImageInfo::GetByteOrder()
+{
+    return DynamicLoaderMacOSXDYLD::GetByteOrderFromMagic(header.magic);
 }
 

@@ -18,8 +18,12 @@
 // Other libraries and framework includes
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Core/Module.h"
+#include "lldb/Core/ModuleSpec.h"
+#include "lldb/Core/Section.h"
 #include "lldb/Core/State.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
@@ -452,3 +456,8 @@ ProcessMachCore::GetImageInfoAddress()
 }
 
 
+lldb_private::ObjectFile *
+ProcessMachCore::GetCoreObjectFile ()
+{
+    return m_core_module_sp->GetObjectFile();
+}

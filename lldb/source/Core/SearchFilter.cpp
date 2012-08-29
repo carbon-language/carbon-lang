@@ -14,6 +14,8 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/Core/SearchFilter.h"
+#include "lldb/Core/Module.h"
+#include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Target/Target.h"
 
 using namespace lldb;
@@ -368,26 +370,25 @@ SearchFilterByModule::ModulePasses (const ModuleSP &module_sp)
 bool
 SearchFilterByModule::ModulePasses (const FileSpec &spec)
 {
-    if (FileSpec::Compare(spec, m_module_spec, false) == 0)
-        return true;
-    else
-        return false;
+    // Do a full match only if "spec" has a directory
+    const bool full_match = spec.GetDirectory();
+    return FileSpec::Equal(spec, m_module_spec, full_match);
 }
 
 bool
-SearchFilterByModule::SymbolContextPasses
-(
- const SymbolContext &context,
- lldb::SymbolContextItem scope
- )
+SearchFilterByModule::SymbolContextPasses (const SymbolContext &sc,
+                                           lldb::SymbolContextItem scope)
 {
-    if (!(scope & eSymbolContextModule))
-        return false;
-
-    if (context.module_sp && FileSpec::Compare (context.module_sp->GetFileSpec(), m_module_spec, false) == 0)
-        return true;
-    else
-        return false;
+    if (scope & eSymbolContextModule)
+    {
+        if (sc.module_sp)
+        {
+            // Match the full path only if "m_module_spec" has a directory
+            const bool full_match = m_module_spec.GetDirectory();
+            return FileSpec::Equal (sc.module_sp->GetFileSpec(), m_module_spec, full_match);
+        }
+    }
+    return false;
 }
 
 bool
@@ -434,7 +435,8 @@ SearchFilterByModule::Search (Searcher &searcher)
     for (size_t i = 0; i < num_modules; i++)
     {
         Module* module = target_modules.GetModulePointerAtIndexUnlocked(i);
-        if (FileSpec::Compare (m_module_spec, module->GetFileSpec(), false) == 0)
+        const bool full_match = m_module_spec.GetDirectory();
+        if (FileSpec::Equal (m_module_spec, module->GetFileSpec(), full_match))
         {
             SymbolContext matchingContext(m_target_sp, module->shared_from_this());
             Searcher::CallbackReturn shouldContinue;
@@ -723,7 +725,7 @@ SearchFilterByModuleListAndCU::SymbolContextPasses
         return false;
     if (!(scope & eSymbolContextCompUnit))
         return false;
-    if (context.comp_unit && m_cu_spec_list.FindFileIndex(0, static_cast<FileSpec>(context.comp_unit), false) == UINT32_MAX)
+    if (context.comp_unit && m_cu_spec_list.FindFileIndex(0, context.comp_unit, false) == UINT32_MAX)
         return false;
     return true;
 }
@@ -745,7 +747,7 @@ SearchFilterByModuleListAndCU::CompUnitPasses (FileSpec &fileSpec)
 bool
 SearchFilterByModuleListAndCU::CompUnitPasses (CompileUnit &compUnit)
 {
-    return m_cu_spec_list.FindFileIndex(0, static_cast<FileSpec>(compUnit), false) != UINT32_MAX;
+    return m_cu_spec_list.FindFileIndex(0, compUnit, false) != UINT32_MAX;
 }
 
 void

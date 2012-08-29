@@ -14,6 +14,7 @@
 
 #include "lldb/Core/Address.h"
 #include "lldb/Core/DataExtractor.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Target/ExecutionContext.h"

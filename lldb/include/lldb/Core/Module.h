@@ -11,269 +11,15 @@
 #define liblldb_Module_h_
 
 #include "lldb/Core/ArchSpec.h"
-#include "lldb/Core/Section.h"
 #include "lldb/Core/UUID.h"
-#include "lldb/Symbol/ObjectFile.h"
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Host/TimeValue.h"
 #include "lldb/Symbol/ClangASTContext.h"
-#include "lldb/Symbol/CompileUnit.h"
-#include "lldb/Symbol/SymbolContext.h"
-#include "lldb/Symbol/Symtab.h"
-#include "lldb/Symbol/TypeList.h"
+#include "lldb/Symbol/SymbolContextScope.h"
 #include "lldb/Target/PathMappingList.h"
 
-
 namespace lldb_private {
-
-class ModuleSpec
-{
-public:
-    ModuleSpec () :
-        m_file (),
-        m_platform_file (),
-        m_symbol_file (),
-        m_arch (),
-        m_uuid (),
-        m_object_name (),
-        m_object_offset (0),
-        m_source_mappings ()
-    {
-    }
-
-    ModuleSpec (const FileSpec &file_spec) :
-        m_file (file_spec),
-        m_platform_file (),
-        m_symbol_file (),
-        m_arch (),
-        m_uuid (),
-        m_object_name (),
-        m_object_offset (0),
-        m_source_mappings ()
-    {
-    }
-
-    ModuleSpec (const FileSpec &file_spec, const ArchSpec &arch) :
-        m_file (file_spec),
-        m_platform_file (),
-        m_symbol_file (),
-        m_arch (arch),
-        m_uuid (),
-        m_object_name (),
-        m_object_offset (0),
-        m_source_mappings ()
-    {
-    }
-    
-    ModuleSpec (const ModuleSpec &rhs) :
-        m_file (rhs.m_file),
-        m_platform_file (rhs.m_platform_file),
-        m_symbol_file (rhs.m_symbol_file),
-        m_arch (rhs.m_arch),
-        m_uuid (rhs.m_uuid),
-        m_object_name (rhs.m_object_name),
-        m_object_offset (rhs.m_object_offset),
-        m_source_mappings (rhs.m_source_mappings)
-    {
-    }
-
-    ModuleSpec &
-    operator = (const ModuleSpec &rhs)
-    {
-        if (this != &rhs)
-        {
-            m_file = rhs.m_file;
-            m_platform_file = rhs.m_platform_file;
-            m_symbol_file = rhs.m_symbol_file;
-            m_arch = rhs.m_arch;
-            m_uuid = rhs.m_uuid;
-            m_object_name = rhs.m_object_name;
-            m_object_offset = rhs.m_object_offset;
-            m_source_mappings = rhs.m_source_mappings;
-        }
-        return *this;
-    }
-
-    FileSpec *
-    GetFileSpecPtr ()
-    {
-        if (m_file)
-            return &m_file;
-        return NULL;
-    }
-
-    const FileSpec *
-    GetFileSpecPtr () const
-    {
-        if (m_file)
-            return &m_file;
-        return NULL;
-    }
-    
-    FileSpec &
-    GetFileSpec ()
-    {
-        return m_file;
-    }
-    const FileSpec &
-    GetFileSpec () const
-    {
-        return m_file;
-    }
-
-    FileSpec *
-    GetPlatformFileSpecPtr ()
-    {
-        if (m_platform_file)
-            return &m_platform_file;
-        return NULL;
-    }
-
-    const FileSpec *
-    GetPlatformFileSpecPtr () const
-    {
-        if (m_platform_file)
-            return &m_platform_file;
-        return NULL;
-    }
-
-    FileSpec &
-    GetPlatformFileSpec ()
-    {
-        return m_platform_file;
-    }
-
-    const FileSpec &
-    GetPlatformFileSpec () const
-    {
-        return m_platform_file;
-    }
-
-    FileSpec *
-    GetSymbolFileSpecPtr ()
-    {
-        if (m_symbol_file)
-            return &m_symbol_file;
-        return NULL;
-    }
-    
-    const FileSpec *
-    GetSymbolFileSpecPtr () const
-    {
-        if (m_symbol_file)
-            return &m_symbol_file;
-        return NULL;
-    }
-    
-    FileSpec &
-    GetSymbolFileSpec ()
-    {
-        return m_symbol_file;
-    }
-    
-    const FileSpec &
-    GetSymbolFileSpec () const
-    {
-        return m_symbol_file;
-    }
-
-    
-    ArchSpec *
-    GetArchitecturePtr ()
-    {
-        if (m_arch.IsValid())
-            return &m_arch;
-        return NULL;
-    }
-    
-    const ArchSpec *
-    GetArchitecturePtr () const
-    {
-        if (m_arch.IsValid())
-            return &m_arch;
-        return NULL;
-    }
-    
-    ArchSpec &
-    GetArchitecture ()
-    {
-        return m_arch;
-    }
-    
-    const ArchSpec &
-    GetArchitecture () const
-    {
-        return m_arch;
-    }
-
-    UUID *
-    GetUUIDPtr ()
-    {
-        if (m_uuid.IsValid())
-            return &m_uuid;
-        return NULL;
-    }
-    
-    const UUID *
-    GetUUIDPtr () const
-    {
-        if (m_uuid.IsValid())
-            return &m_uuid;
-        return NULL;
-    }
-    
-    UUID &
-    GetUUID ()
-    {
-        return m_uuid;
-    }
-    
-    const UUID &
-    GetUUID () const
-    {
-        return m_uuid;
-    }
-
-    ConstString &
-    GetObjectName ()
-    {
-        return m_object_name;
-    }
-
-    const ConstString &
-    GetObjectName () const
-    {
-        return m_object_name;
-    }
-
-    uint64_t
-    GetObjectOffset () const
-    {
-        return m_object_offset;
-    }
-
-    void
-    SetObjectOffset (uint64_t object_offset)
-    {
-        m_object_offset = object_offset;
-    }
-
-    PathMappingList &
-    GetSourceMappingList () const
-    {
-        return m_source_mappings;
-    }
-
-protected:
-    FileSpec m_file;
-    FileSpec m_platform_file;
-    FileSpec m_symbol_file;
-    ArchSpec m_arch;
-    UUID m_uuid;
-    ConstString m_object_name;
-    uint64_t m_object_offset;
-    mutable PathMappingList m_source_mappings;
-};
 
 //----------------------------------------------------------------------
 /// @class Module Module.h "lldb/Core/Module.h"
@@ -299,9 +45,6 @@ class Module :
     public SymbolContextScope
 {
 public:
-    friend class ModuleList;
-    friend bool ObjectFile::SetModulesArchitecture (const ArchSpec &new_arch);
-
 	// Static functions that can track the lifetime of moodule objects.
 	// This is handy because we might have Module objects that are in
 	// shared pointers that aren't in the global module list (from 
@@ -826,7 +569,7 @@ public:
     ///     returned. The returned pointer is owned by this object and
     ///     remains valid as long as the object is around.
     //------------------------------------------------------------------
-    ObjectFile *
+    virtual ObjectFile *
     GetObjectFile ();
 
     // Load an object file from memory.
@@ -848,7 +591,7 @@ public:
     ///     will be returned. The returned pointer is owned by this
     ///     object and remains valid as long as the object is around.
     //------------------------------------------------------------------
-    SymbolVendor*
+    virtual SymbolVendor*
     GetSymbolVendor(bool can_create = true);
 
     //------------------------------------------------------------------
@@ -1179,6 +922,10 @@ protected:
     bool
     SetArchitecture (const ArchSpec &new_arch);
     
+    
+    friend class ModuleList;
+    friend class ObjectFile;
+
 private:
 
     uint32_t

@@ -43,6 +43,7 @@
 //----------------------------------------------------------------------
 // Forward Declarations for this DWARF plugin
 //----------------------------------------------------------------------
+class DebugMapModule;
 class DWARFAbbreviationDeclaration;
 class DWARFAbbreviationDeclarationSet;
 class DWARFileUnit;
@@ -62,7 +63,7 @@ class SymbolFileDWARF : public lldb_private::SymbolFile, public lldb_private::Us
 {
 public:
     friend class SymbolFileDWARFDebugMap;    
-
+    friend class DebugMapModule;
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------
@@ -95,6 +96,7 @@ public:
     virtual uint32_t        GetNumCompileUnits();
     virtual lldb::CompUnitSP ParseCompileUnitAtIndex(uint32_t index);
 
+    virtual lldb::LanguageType ParseCompileUnitLanguage (const lldb_private::SymbolContext& sc);
     virtual size_t          ParseCompileUnitFunctions (const lldb_private::SymbolContext& sc);
     virtual bool            ParseCompileUnitLineTable (const lldb_private::SymbolContext& sc);
     virtual bool            ParseCompileUnitSupportFiles (const lldb_private::SymbolContext& sc, lldb_private::FileSpecList& support_files);
@@ -301,7 +303,7 @@ protected:
 
     DISALLOW_COPY_AND_ASSIGN (SymbolFileDWARF);
     lldb::CompUnitSP        ParseCompileUnit (DWARFCompileUnit* dwarf_cu, uint32_t cu_idx);
-    DWARFCompileUnit*       GetDWARFCompileUnitForUID(lldb::user_id_t cu_uid);
+    DWARFCompileUnit*       GetDWARFCompileUnit(lldb_private::CompileUnit *comp_unit);
     DWARFCompileUnit*       GetNextUnparsedDWARFCompileUnit(DWARFCompileUnit* prev_cu);
     lldb_private::CompileUnit*      GetCompUnitForDWARFCompUnit(DWARFCompileUnit* dwarf_cu, uint32_t cu_idx = UINT32_MAX);
     bool                    GetFunction (DWARFCompileUnit* dwarf_cu, const DWARFDebugInfoEntry* func_die, lldb_private::SymbolContext& sc);
@@ -440,10 +442,13 @@ protected:
     
     void                    DumpIndexes();
 
-    void                    SetDebugMapSymfile (SymbolFileDWARFDebugMap *debug_map_symfile)
+    void                    SetDebugMapModule (const lldb::ModuleSP &module_sp)
                             {
-                                m_debug_map_symfile = debug_map_symfile;
+                                m_debug_map_module_wp = module_sp;
                             }
+    
+    SymbolFileDWARFDebugMap *
+                            GetDebugMapSymfile ();
 
     const DWARFDebugInfoEntry *
                             FindBlockContainingSpecification (dw_offset_t func_die_offset, 
@@ -532,6 +537,7 @@ protected:
                                 DWARFCompileUnit* dst_cu,
                                 const DWARFDebugInfoEntry *dst_class_die);
 
+    lldb::ModuleWP                  m_debug_map_module_wp;
     SymbolFileDWARFDebugMap *       m_debug_map_symfile;
     clang::TranslationUnitDecl *    m_clang_tu_decl;
     lldb_private::Flags             m_flags;

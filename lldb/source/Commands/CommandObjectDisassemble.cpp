@@ -14,16 +14,17 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/AddressRange.h"
+#include "lldb/Core/Disassembler.h"
+#include "lldb/Core/SourceManager.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandCompletions.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
-#include "lldb/Core/Disassembler.h"
 #include "lldb/Interpreter/Options.h"
-#include "lldb/Core/SourceManager.h"
-#include "lldb/Target/StackFrame.h"
+#include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
 
 #define DEFAULT_DISASM_BYTE_SIZE 32

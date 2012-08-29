@@ -214,7 +214,21 @@ class Image:
     
     def dump(self, prefix):
         print "%s%s" % (prefix, self)
-    
+
+    def debug_dump(self):
+        print 'path = "%s"' % (self.path)
+        print 'resolved_path = "%s"' % (self.resolved_path)
+        print 'resolved = %i' % (self.resolved)
+        print 'unavailable = %i' % (self.unavailable)
+        print 'uuid = %s' % (self.uuid)
+        print 'section_infos = %s' % (self.section_infos)
+        print 'identifier = "%s"' % (self.identifier)
+        print 'version = %s' % (self.version)
+        print 'arch = %s' % (self.arch)
+        print 'module = %s' % (self.module)
+        print 'symfile = "%s"' % (self.symfile)
+        print 'slide = %i (0x%x)' % (self.slide, self.slide)
+        
     def __str__(self):
         s = "%s %s %s" % (self.get_uuid(), self.version, self.get_resolved_path())
         for section_info in self.section_infos:

@@ -22,6 +22,9 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Event.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/Module.h"
+#include "lldb/Core/ModuleSpec.h"
+#include "lldb/Core/Section.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/ValueObject.h"
@@ -226,9 +229,9 @@ Target::GetBreakpointByID (break_id_t break_id)
 
 BreakpointSP
 Target::CreateSourceRegexBreakpoint (const FileSpecList *containingModules,
-                  const FileSpecList *source_file_spec_list,
-                  RegularExpression &source_regex,
-                  bool internal)
+                                     const FileSpecList *source_file_spec_list,
+                                     RegularExpression &source_regex,
+                                     bool internal)
 {
     SearchFilterSP filter_sp(GetSearchFilterForModuleAndCUList (containingModules, source_file_spec_list));
     BreakpointResolverSP resolver_sp(new BreakpointResolverFileRegex (NULL, source_regex));
@@ -240,13 +243,37 @@ BreakpointSP
 Target::CreateBreakpoint (const FileSpecList *containingModules,
                           const FileSpec &file,
                           uint32_t line_no,
-                          bool check_inlines,
+                          LazyBool check_inlines,
                           LazyBool skip_prologue,
                           bool internal)
 {
     SearchFilterSP filter_sp(GetSearchFilterForModuleList (containingModules));
     
-    BreakpointResolverSP resolver_sp(new BreakpointResolverFileLine (NULL, file, line_no, check_inlines,
+    if (check_inlines == eLazyBoolCalculate)
+    {
+        const InlineStrategy inline_strategy = GetInlineStrategy();
+        switch (inline_strategy)
+        {
+            case eInlineBreakpointsNever:
+                check_inlines = eLazyBoolNo;
+                break;
+                
+            case eInlineBreakpointsHeaders:
+                if (file.IsSourceImplementationFile())
+                    check_inlines = eLazyBoolNo;
+                else
+                    check_inlines = eLazyBoolYes;
+                break;
+
+            case eInlineBreakpointsAlways:
+                check_inlines = eLazyBoolYes;
+                break;
+        }
+    }
+    BreakpointResolverSP resolver_sp(new BreakpointResolverFileLine (NULL,
+                                                                     file,
+                                                                     line_no,
+                                                                     check_inlines,
                                                                      skip_prologue == eLazyBoolCalculate ? GetSkipPrologue() : skip_prologue));
     return CreateBreakpoint (filter_sp, resolver_sp, internal);
 }
@@ -2092,6 +2119,15 @@ lldb_private::g_dynamic_value_types[] =
     { 0, NULL, NULL }
 };
 
+static OptionEnumValueElement
+g_inline_breakpoint_enums[] =
+{
+    { eInlineBreakpointsNever,   "never",     "Never look for inline breakpoint locations (fastest). This setting should only be used if you know that no inlining occurs in your programs."},
+    { eInlineBreakpointsHeaders, "headers",   "Only check for inline breakpoint locations when setting breakpoints in header files, but not when setting breakpoint in implementation source files (default)."},
+    { eInlineBreakpointsAlways,  "always",    "Always look for inline breakpoint locations when setting file and line breakpoints (slower but most accurate)."},
+    { 0, NULL, NULL }
+};
+
 static PropertyDefinition
 g_properties[] =
 {
@@ -2117,6 +2153,13 @@ g_properties[] =
     { "error-path"                         , OptionValue::eTypeFileSpec  , false, 0                         , NULL, NULL, "The file/path to be used by the executable program for writing its standard error." },
     { "disable-aslr"                       , OptionValue::eTypeBoolean   , false, true                      , NULL, NULL, "Disable Address Space Layout Randomization (ASLR)" },
     { "disable-stdio"                      , OptionValue::eTypeBoolean   , false, false                     , NULL, NULL, "Disable stdin/stdout for process (e.g. for a GUI application)" },
+    { "inline-breakpoint-strategy"         , OptionValue::eTypeEnum      , false, eInlineBreakpointsHeaders , NULL, g_inline_breakpoint_enums, "The strategy to use when settings breakpoints by file and line. "
+        "Breakpoint locations can end up being inlined by the compiler, so that a compile unit 'a.c' might contain an inlined function from another source file. "
+        "Usually this is limitted to breakpoint locations from inlined functions from header or other include files, or more accurately non-implementation source files. "
+        "Sometimes code might #include implementation files and cause inlined breakpoint locations in inlined implementation files. "
+        "Always checking for inlined breakpoint locations can be expensive (memory and time), so we try to minimize the "
+        "times we look for inlined locations. This setting allows you to control exactly which strategy is used when settings "
+        "file and line breakpoints." },
     { NULL                                 , OptionValue::eTypeInvalid   , false, 0                         , NULL, NULL, NULL }
 };
 enum
@@ -2138,7 +2181,8 @@ enum
     ePropertyOutputPath,
     ePropertyErrorPath,
     ePropertyDisableASLR,
-    ePropertyDisableSTDIO
+    ePropertyDisableSTDIO,
+    ePropertyInlineStrategy
 };
 
 
@@ -2312,6 +2356,13 @@ TargetProperties::SetDisableSTDIO (bool b)
 {
     const uint32_t idx = ePropertyDisableSTDIO;
     m_collection_sp->SetPropertyAtIndexAsBoolean (NULL, idx, b);
+}
+
+InlineStrategy
+TargetProperties::GetInlineStrategy () const
+{
+    const uint32_t idx = ePropertyInlineStrategy;
+    return (InlineStrategy)m_collection_sp->GetPropertyAtIndexAsEnumeration (NULL, idx, g_properties[idx].default_uint_value);
 }
 
 bool

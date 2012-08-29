@@ -9,6 +9,7 @@
 
 #include "lldb/Symbol/Variable.h"
 
+#include "lldb/Core/Module.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/ValueObject.h"

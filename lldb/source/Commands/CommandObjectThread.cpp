@@ -13,15 +13,16 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Interpreter/Options.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/SourceManager.h"
-
 #include "lldb/Host/Host.h"
-
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
-
+#include "lldb/Interpreter/Options.h"
+#include "lldb/Symbol/CompileUnit.h"
+#include "lldb/Symbol/Function.h"
+#include "lldb/Symbol/LineTable.h"
+#include "lldb/Symbol/LineEntry.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Target.h"
@@ -31,8 +32,7 @@
 #include "lldb/Target/ThreadPlanStepOut.h"
 #include "lldb/Target/ThreadPlanStepRange.h"
 #include "lldb/Target/ThreadPlanStepInRange.h"
-#include "lldb/Symbol/LineTable.h"
-#include "lldb/Symbol/LineEntry.h"
+
 
 using namespace lldb;
 using namespace lldb_private;

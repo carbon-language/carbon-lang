@@ -22,6 +22,7 @@
 #include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/UUID.h"

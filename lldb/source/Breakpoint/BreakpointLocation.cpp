@@ -13,16 +13,18 @@
 
 // Other libraries and framework includes
 // Project includes
+#include "lldb/lldb-private-log.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Breakpoint/BreakpointID.h"
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Log.h"
-#include "lldb/Target/Target.h"
-#include "lldb/Target/ThreadPlan.h"
-#include "lldb/Target/Process.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Core/StreamString.h"
-#include "lldb/lldb-private-log.h"
+#include "lldb/Symbol/CompileUnit.h"
+#include "lldb/Symbol/Symbol.h"
+#include "lldb/Target/Target.h"
+#include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadSpec.h"
 

@@ -28,6 +28,7 @@
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataBufferMemoryMap.h"
+#include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Utility/CleanUp.h"
@@ -702,15 +703,14 @@ FileSpec::GetPath(char *path, size_t path_max_len) const
 ConstString
 FileSpec::GetFileNameExtension () const
 {
-    const char *filename = m_filename.GetCString();
-    if (filename == NULL)
-        return ConstString();
-    
-    const char* dot_pos = strrchr(filename, '.');
-    if (dot_pos == NULL)
-        return ConstString();
-    
-    return ConstString(dot_pos+1);
+    if (m_filename)
+    {
+        const char *filename = m_filename.GetCString();
+        const char* dot_pos = strrchr(filename, '.');
+        if (dot_pos && dot_pos[1] != '\0')
+            return ConstString(dot_pos+1);
+    }
+    return ConstString();
 }
 
 ConstString
@@ -943,4 +943,27 @@ FileSpec::EnumerateDirectory
     // to continue enumerating.
     return eEnumerateDirectoryResultNext;    
 }
+
+//------------------------------------------------------------------
+/// Returns true if the filespec represents an implementation source
+/// file (files with a ".c", ".cpp", ".m", ".mm" (many more)
+/// extension).
+///
+/// @return
+///     \b true if the filespec represents an implementation source
+///     file, \b false otherwise.
+//------------------------------------------------------------------
+bool
+FileSpec::IsSourceImplementationFile () const
+{
+    ConstString extension (GetFileNameExtension());
+    if (extension)
+    {
+        static RegularExpression g_source_file_regex ("^(c|m|mm|cpp|c\\+\\+|cxx|cc|cp|s|asm|f|f77|f90|f95|f03|for|ftn|fpp|ada|adb|ads)$",
+                                                      REG_EXTENDED | REG_ICASE);
+        return g_source_file_regex.Execute (extension.GetCString());
+    }
+    return false;
+}
+
 

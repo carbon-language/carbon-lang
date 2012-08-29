@@ -12,6 +12,8 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Symbol/ObjectFile.h"
+#include "lldb/Symbol/Symtab.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 

@@ -229,7 +229,7 @@ SymbolFileDWARF::CreateInstance (ObjectFile* obj_file)
 TypeList *          
 SymbolFileDWARF::GetTypeList ()
 {
-    if (m_debug_map_symfile)
+    if (GetDebugMapSymfile ())
         return m_debug_map_symfile->GetTypeList();
     return m_obj_file->GetModule()->GetTypeList();
 
@@ -263,6 +263,7 @@ GetParentSymbolContextDIE(const DWARFDebugInfoEntry *child_die)
 SymbolFileDWARF::SymbolFileDWARF(ObjectFile* objfile) :
     SymbolFile (objfile),
     UserID (0),  // Used by SymbolFileDWARFDebugMap to when this class parses .o files to contain the .o file index/ID
+    m_debug_map_module_wp (),
     m_debug_map_symfile (NULL),
     m_clang_tu_decl (NULL),
     m_flags(),
@@ -321,7 +322,7 @@ GetDWARFMachOSegmentName ()
 UniqueDWARFASTTypeMap &
 SymbolFileDWARF::GetUniqueDWARFASTTypeMap ()
 {
-    if (m_debug_map_symfile)
+    if (GetDebugMapSymfile ())
         return m_debug_map_symfile->GetUniqueDWARFASTTypeMap ();
     return m_unique_ast_type_map;
 }
@@ -329,7 +330,7 @@ SymbolFileDWARF::GetUniqueDWARFASTTypeMap ()
 ClangASTContext &       
 SymbolFileDWARF::GetClangASTContext ()
 {
-    if (m_debug_map_symfile)
+    if (GetDebugMapSymfile ())
         return m_debug_map_symfile->GetClangASTContext ();
 
     ClangASTContext &ast = m_obj_file->GetModule()->GetClangASTContext();
@@ -659,11 +660,27 @@ SymbolFileDWARF::DebugInfo() const
 }
 
 DWARFCompileUnit*
-SymbolFileDWARF::GetDWARFCompileUnitForUID(lldb::user_id_t cu_uid)
+SymbolFileDWARF::GetDWARFCompileUnit(lldb_private::CompileUnit *comp_unit)
 {
     DWARFDebugInfo* info = DebugInfo();
-    if (info && UserIDMatches(cu_uid))
-        return info->GetCompileUnit((dw_offset_t)cu_uid).get();
+    if (info)
+    {
+        if (GetDebugMapSymfile ())
+        {
+            // The debug map symbol file made the compile units for this DWARF
+            // file which is .o file with DWARF in it, and we should have
+            // only 1 compile unit which is at offset zero in the DWARF.
+            // TODO: modify to support LTO .o files where each .o file might
+            // have multiple DW_TAG_compile_unit tags.
+            return info->GetCompileUnit(0).get();
+        }
+        else
+        {
+            // Just a normal DWARF file whose user ID for the compile unit is
+            // the DWARF offset itself
+            return info->GetCompileUnit((dw_offset_t)comp_unit->GetID()).get();
+        }
+    }
     return NULL;
 }
 
@@ -704,59 +721,58 @@ SymbolFileDWARF::ParseCompileUnit (DWARFCompileUnit* dwarf_cu, uint32_t cu_idx)
         }
         else
         {
-            ModuleSP module_sp (m_obj_file->GetModule());
-            if (module_sp)
+            if (GetDebugMapSymfile ())
             {
-                const DWARFDebugInfoEntry * cu_die = dwarf_cu->GetCompileUnitDIEOnly ();
-                if (cu_die)
+                // Let the debug map create the compile unit
+                cu_sp = m_debug_map_symfile->GetCompileUnit(this);
+                dwarf_cu->SetUserData(cu_sp.get());
+            }
+            else
+            {
+                ModuleSP module_sp (m_obj_file->GetModule());
+                if (module_sp)
                 {
-                    const char * cu_die_name = cu_die->GetName(this, dwarf_cu);
-                    const char * cu_comp_dir = cu_die->GetAttributeValueAsString(this, dwarf_cu, DW_AT_comp_dir, NULL);
-                    LanguageType cu_language = (LanguageType)cu_die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_language, 0);
-                    if (cu_die_name)
+                    const DWARFDebugInfoEntry * cu_die = dwarf_cu->GetCompileUnitDIEOnly ();
+                    if (cu_die)
                     {
-                        std::string ramapped_file;
-                        FileSpec cu_file_spec;
+                        const char * cu_die_name = cu_die->GetName(this, dwarf_cu);
+                        const char * cu_comp_dir = cu_die->GetAttributeValueAsString(this, dwarf_cu, DW_AT_comp_dir, NULL);
+                        LanguageType cu_language = (LanguageType)cu_die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_language, 0);
+                        if (cu_die_name)
+                        {
+                            std::string ramapped_file;
+                            FileSpec cu_file_spec;
 
-                        if (cu_die_name[0] == '/' || cu_comp_dir == NULL || cu_comp_dir[0] == '\0')
-                        {
-                            // If we have a full path to the compile unit, we don't need to resolve
-                            // the file.  This can be expensive e.g. when the source files are NFS mounted.
-                            if (module_sp->RemapSourceFile(cu_die_name, ramapped_file))
-                                cu_file_spec.SetFile (ramapped_file.c_str(), false);
-                            else
-                                cu_file_spec.SetFile (cu_die_name, false);
-                        }
-                        else
-                        {
-                            std::string fullpath(cu_comp_dir);
-                            if (*fullpath.rbegin() != '/')
-                                fullpath += '/';
-                            fullpath += cu_die_name;
-                            if (module_sp->RemapSourceFile (fullpath.c_str(), ramapped_file))
-                                cu_file_spec.SetFile (ramapped_file.c_str(), false);
-                            else
-                                cu_file_spec.SetFile (fullpath.c_str(), false);
-                        }
-
-                        cu_sp.reset(new CompileUnit (module_sp,
-                                                     dwarf_cu,
-                                                     cu_file_spec, 
-                                                     MakeUserID(dwarf_cu->GetOffset()),
-                                                     cu_language));
-                        if (cu_sp)
-                        {
-                            dwarf_cu->SetUserData(cu_sp.get());
-                            
-                            if (m_debug_map_symfile)
+                            if (cu_die_name[0] == '/' || cu_comp_dir == NULL || cu_comp_dir[0] == '\0')
                             {
-                                // Let the symbol file register the compile unit with
-                                // the symbol vendor using its compile unit index
-                                // when we are doing DWARF in .o files + debug map
-                                m_debug_map_symfile->SetCompileUnit(this, cu_sp);
+                                // If we have a full path to the compile unit, we don't need to resolve
+                                // the file.  This can be expensive e.g. when the source files are NFS mounted.
+                                if (module_sp->RemapSourceFile(cu_die_name, ramapped_file))
+                                    cu_file_spec.SetFile (ramapped_file.c_str(), false);
+                                else
+                                    cu_file_spec.SetFile (cu_die_name, false);
                             }
                             else
                             {
+                                std::string fullpath(cu_comp_dir);
+                                if (*fullpath.rbegin() != '/')
+                                    fullpath += '/';
+                                fullpath += cu_die_name;
+                                if (module_sp->RemapSourceFile (fullpath.c_str(), ramapped_file))
+                                    cu_file_spec.SetFile (ramapped_file.c_str(), false);
+                                else
+                                    cu_file_spec.SetFile (fullpath.c_str(), false);
+                            }
+
+                            cu_sp.reset(new CompileUnit (module_sp,
+                                                         dwarf_cu,
+                                                         cu_file_spec, 
+                                                         MakeUserID(dwarf_cu->GetOffset()),
+                                                         cu_language));
+                            if (cu_sp)
+                            {
+                                dwarf_cu->SetUserData(cu_sp.get());
+                                
                                 // Figure out the compile unit index if we weren't given one
                                 if (cu_idx == UINT32_MAX)
                                     DebugInfo()->GetCompileUnit(dwarf_cu->GetOffset(), &cu_idx);
@@ -897,18 +913,33 @@ SymbolFileDWARF::ParseCompileUnitFunction (const SymbolContext& sc, DWARFCompile
     return NULL;
 }
 
+lldb::LanguageType
+SymbolFileDWARF::ParseCompileUnitLanguage (const SymbolContext& sc)
+{
+    assert (sc.comp_unit);
+    DWARFCompileUnit* dwarf_cu = GetDWARFCompileUnit(sc.comp_unit);
+    if (dwarf_cu)
+    {
+        const DWARFDebugInfoEntry *die = dwarf_cu->GetCompileUnitDIEOnly();
+        const uint32_t language = die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_language, 0);
+        if (language)
+            return (lldb::LanguageType)language;
+    }
+    return eLanguageTypeUnknown;
+}
+
 size_t
 SymbolFileDWARF::ParseCompileUnitFunctions(const SymbolContext &sc)
 {
     assert (sc.comp_unit);
     size_t functions_added = 0;
-    DWARFCompileUnit* dwarf_cu = GetDWARFCompileUnitForUID(sc.comp_unit->GetID());
+    DWARFCompileUnit* dwarf_cu = GetDWARFCompileUnit(sc.comp_unit);
     if (dwarf_cu)
     {
         DWARFDIECollection function_dies;
-        const size_t num_funtions = dwarf_cu->AppendDIEsWithTag (DW_TAG_subprogram, function_dies);
+        const size_t num_functions = dwarf_cu->AppendDIEsWithTag (DW_TAG_subprogram, function_dies);
         size_t func_idx;
-        for (func_idx = 0; func_idx < num_funtions; ++func_idx)
+        for (func_idx = 0; func_idx < num_functions; ++func_idx)
         {
             const DWARFDebugInfoEntry *die = function_dies.GetDIEPtrAtIndex(func_idx);
             if (sc.comp_unit->FindFunctionByUID (MakeUserID(die->GetOffset())).get() == NULL)
@@ -926,7 +957,7 @@ bool
 SymbolFileDWARF::ParseCompileUnitSupportFiles (const SymbolContext& sc, FileSpecList& support_files)
 {
     assert (sc.comp_unit);
-    DWARFCompileUnit* dwarf_cu = GetDWARFCompileUnitForUID(sc.comp_unit->GetID());
+    DWARFCompileUnit* dwarf_cu = GetDWARFCompileUnit(sc.comp_unit);
     assert (dwarf_cu);
     const DWARFDebugInfoEntry * cu_die = dwarf_cu->GetCompileUnitDIEOnly();
 
@@ -1129,7 +1160,7 @@ SymbolFileDWARF::ParseCompileUnitLineTable (const SymbolContext &sc)
     if (sc.comp_unit->GetLineTable() != NULL)
         return true;
 
-    DWARFCompileUnit* dwarf_cu = GetDWARFCompileUnitForUID(sc.comp_unit->GetID());
+    DWARFCompileUnit* dwarf_cu = GetDWARFCompileUnit(sc.comp_unit);
     if (dwarf_cu)
     {
         const DWARFDebugInfoEntry *dwarf_cu_die = dwarf_cu->GetCompileUnitDIEOnly();
@@ -1146,7 +1177,7 @@ SymbolFileDWARF::ParseCompileUnitLineTable (const SymbolContext &sc)
                         m_obj_file->GetSectionList(), 
                         0, 
                         0, 
-                        m_debug_map_symfile != NULL, 
+                        GetDebugMapSymfile () != NULL,
                         false, 
                         DWARFDebugLine::Row(), 
                         SectionSP(), 
@@ -2462,7 +2493,8 @@ SymbolFileDWARF::ResolveSymbolContext(const FileSpec& file_spec, uint32_t line, 
             for (cu_idx = 0; (dwarf_cu = debug_info->GetCompileUnitAtIndex(cu_idx)) != NULL; ++cu_idx)
             {
                 CompileUnit *dc_cu = GetCompUnitForDWARFCompUnit(dwarf_cu, cu_idx);
-                bool file_spec_matches_cu_file_spec = dc_cu != NULL && FileSpec::Compare(file_spec, *dc_cu, false) == 0;
+                const bool full_match = file_spec.GetDirectory();
+                bool file_spec_matches_cu_file_spec = dc_cu != NULL && FileSpec::Equal(file_spec, *dc_cu, full_match);
                 if (check_inlines || file_spec_matches_cu_file_spec)
                 {
                     SymbolContext sc (m_obj_file->GetModule());
@@ -4339,7 +4371,7 @@ SymbolFileDWARF::Supports_DW_AT_APPLE_objc_complete_type (DWARFCompileUnit *cu)
                 }
             }
         }
-        if (m_supports_DW_AT_APPLE_objc_complete_type == eLazyBoolNo && m_debug_map_symfile)
+        if (m_supports_DW_AT_APPLE_objc_complete_type == eLazyBoolNo && GetDebugMapSymfile ())
             return m_debug_map_symfile->Supports_DW_AT_APPLE_objc_complete_type (this);
     }
     return m_supports_DW_AT_APPLE_objc_complete_type == eLazyBoolYes;
@@ -5399,7 +5431,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                             // know it is false), so the real definition is in here somewhere
                             type_sp = FindCompleteObjCDefinitionTypeForDIE (die, type_name_const_str, true);
 
-                            if (!type_sp && m_debug_map_symfile)
+                            if (!type_sp && GetDebugMapSymfile ())
                             {
                                 // We weren't able to find a full declaration in
                                 // this DWARF, see if we have a declaration anywhere    
@@ -5453,7 +5485,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         //type_sp = FindDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
                         type_sp = FindDefinitionTypeForDWARFDeclContext (die_decl_ctx);
 
-                        if (!type_sp && m_debug_map_symfile)
+                        if (!type_sp && GetDebugMapSymfile ())
                         {
                             // We weren't able to find a full declaration in
                             // this DWARF, see if we have a declaration anywhere    
@@ -6333,7 +6365,7 @@ SymbolFileDWARF::ParseFunctionBlocks (const SymbolContext &sc)
 {
     assert(sc.comp_unit && sc.function);
     size_t functions_added = 0;
-    DWARFCompileUnit* dwarf_cu = GetDWARFCompileUnitForUID(sc.comp_unit->GetID());
+    DWARFCompileUnit* dwarf_cu = GetDWARFCompileUnit(sc.comp_unit);
     if (dwarf_cu)
     {
         dw_offset_t function_die_offset = sc.function->GetID();
@@ -6354,7 +6386,7 @@ SymbolFileDWARF::ParseTypes (const SymbolContext &sc)
     // At least a compile unit must be valid
     assert(sc.comp_unit);
     size_t types_added = 0;
-    DWARFCompileUnit* dwarf_cu = GetDWARFCompileUnitForUID(sc.comp_unit->GetID());
+    DWARFCompileUnit* dwarf_cu = GetDWARFCompileUnit(sc.comp_unit);
     if (dwarf_cu)
     {
         if (sc.function)
@@ -6619,7 +6651,7 @@ SymbolFileDWARF::ParseVariableDIE
                         {
                             scope = eValueTypeVariableGlobal;
 
-                            if (m_debug_map_symfile)
+                            if (GetDebugMapSymfile ())
                             {
                                 // When leaving the DWARF in the .o files on darwin,
                                 // when we have a global variable that wasn't initialized,
@@ -7152,5 +7184,21 @@ SymbolFileDWARF::LayoutRecordType (const clang::RecordDecl *record_decl,
     return success;
 }
 
+
+SymbolFileDWARFDebugMap *
+SymbolFileDWARF::GetDebugMapSymfile ()
+{
+    if (m_debug_map_symfile == NULL && !m_debug_map_module_wp.expired())
+    {
+        lldb::ModuleSP module_sp (m_debug_map_module_wp.lock());
+        if (module_sp)
+        {
+            SymbolVendor *sym_vendor = module_sp->GetSymbolVendor();
+            if (sym_vendor)
+                m_debug_map_symfile = (SymbolFileDWARFDebugMap *)sym_vendor->GetSymbolFile();
+        }
+    }
+    return m_debug_map_symfile;
+}
 
 

@@ -24,10 +24,12 @@ class SymbolFileDWARF;
 class DWARFCompileUnit;
 class DWARFDebugInfoEntry;
 class DWARFDeclContext;
+class DebugMapModule;
 
 class SymbolFileDWARFDebugMap : public lldb_private::SymbolFile
 {
 public:
+    
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------
@@ -62,6 +64,7 @@ public:
     virtual uint32_t        GetNumCompileUnits ();
     virtual lldb::CompUnitSP ParseCompileUnitAtIndex (uint32_t index);
 
+    virtual lldb::LanguageType ParseCompileUnitLanguage (const lldb_private::SymbolContext& sc);
     virtual size_t          ParseCompileUnitFunctions (const lldb_private::SymbolContext& sc);
     virtual bool            ParseCompileUnitLineTable (const lldb_private::SymbolContext& sc);
     virtual bool            ParseCompileUnitSupportFiles (const lldb_private::SymbolContext& sc, lldb_private::FileSpecList &support_files);
@@ -125,39 +128,41 @@ protected:
     };
 
     friend class SymbolFileDWARF;
-
+    friend class DebugMapModule;
     //------------------------------------------------------------------
     // Class specific types
     //------------------------------------------------------------------
     struct CompileUnitInfo
     {
         lldb_private::FileSpec so_file;
-        lldb_private::Symbol *so_symbol;
-        lldb_private::Symbol *oso_symbol;
-        lldb_private::Symbol *last_symbol;
+        lldb_private::FileSpec oso_file;
+        lldb_private::ConstString oso_object; // for archives this will be the .o file in the "oso_file"
+//        lldb_private::Symbol *so_symbol;
+//        lldb_private::Symbol *oso_symbol;
+//        lldb_private::Symbol *last_symbol;
         uint32_t first_symbol_index;
         uint32_t last_symbol_index;
+        uint32_t first_symbol_id;
+        uint32_t last_symbol_id;
         lldb::ModuleSP oso_module_sp;
         lldb::CompUnitSP oso_compile_unit_sp;
-        lldb_private::SymbolVendor *oso_symbol_vendor;
-        std::vector<uint32_t> function_indexes;
-        std::vector<uint32_t> static_indexes;
-        STD_SHARED_PTR(lldb_private::SectionList) debug_map_sections_sp;
+//        SymbolFileDWARF *oso_symfile;
         bool symbol_file_supported;
 
         CompileUnitInfo() :
             so_file (),
-            so_symbol (NULL),
-            oso_symbol (NULL),
-            last_symbol (NULL),
+            oso_file (),
+            oso_object (),
+//            so_symbol (NULL),
+//            oso_symbol (NULL),
+//            last_symbol (NULL),
             first_symbol_index (UINT32_MAX),
             last_symbol_index (UINT32_MAX),
+            first_symbol_id (UINT32_MAX),
+            last_symbol_id (UINT32_MAX),
             oso_module_sp (),
             oso_compile_unit_sp (),
-            oso_symbol_vendor (NULL),
-            function_indexes (),
-            static_indexes (),
-            debug_map_sections_sp (),
+//            oso_symfile (NULL),
             symbol_file_supported (true)
         {
         }
@@ -180,6 +185,9 @@ protected:
     CompileUnitInfo *
     GetCompUnitInfo (const lldb_private::SymbolContext& sc);
 
+    CompileUnitInfo *
+    GetCompUnitInfo (const lldb_private::Module *oso_module);
+    
     lldb_private::Module *
     GetModuleByCompUnitInfo (CompileUnitInfo *comp_unit_info);
 
@@ -226,6 +234,9 @@ protected:
 
     void
     SetCompileUnit (SymbolFileDWARF *oso_dwarf, const lldb::CompUnitSP &cu_sp);
+
+    lldb::CompUnitSP
+    GetCompileUnit (SymbolFileDWARF *oso_dwarf);
 
     lldb::TypeSP
     FindDefinitionTypeForDWARFDeclContext (const DWARFDeclContext &die_decl_ctx);    

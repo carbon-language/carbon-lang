@@ -8,8 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Symbol/CompileUnit.h"
-#include "lldb/Symbol/LineTable.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/Language.h"
+#include "lldb/Symbol/LineTable.h"
 #include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Symbol/VariableList.h"
 
@@ -20,14 +21,16 @@ CompileUnit::CompileUnit (const lldb::ModuleSP &module_sp, void *user_data, cons
     ModuleChild(module_sp),
     FileSpec (pathname, false),
     UserID(cu_sym_id),
-    Language (language),
     m_user_data (user_data),
+    m_language (language),
     m_flags (0),
     m_functions (),
     m_support_files (),
     m_line_table_ap (),
     m_variables()
 {
+    if (language != eLanguageTypeUnknown)
+        m_flags.Set(flagsParsedLanguage);
     assert(module_sp);
 }
 
@@ -35,14 +38,16 @@ CompileUnit::CompileUnit (const lldb::ModuleSP &module_sp, void *user_data, cons
     ModuleChild(module_sp),
     FileSpec (fspec),
     UserID(cu_sym_id),
-    Language (language),
     m_user_data (user_data),
+    m_language (language),
     m_flags (0),
     m_functions (),
     m_support_files (),
     m_line_table_ap (),
     m_variables()
 {
+    if (language != eLanguageTypeUnknown)
+        m_flags.Set(flagsParsedLanguage);
     assert(module_sp);
 }
 
@@ -80,7 +85,8 @@ CompileUnit::DumpSymbolContext(Stream *s)
 void
 CompileUnit::GetDescription(Stream *s, lldb::DescriptionLevel level) const
 {
-    *s << "id = " << (const UserID&)*this << ", file = \"" << (const FileSpec&)*this << "\", language = \"" << (const Language&)*this << '"';
+    Language language(m_language);
+    *s << "id = " << (const UserID&)*this << ", file = \"" << (const FileSpec&)*this << "\", language = \"" << language << '"';
 }
 
 
@@ -208,6 +214,26 @@ CompileUnit::FindFunctionByUID (lldb::user_id_t func_uid)
 }
 
 
+lldb::LanguageType
+CompileUnit::GetLanguage()
+{
+    if (m_language == eLanguageTypeUnknown)
+    {
+        if (m_flags.IsClear(flagsParsedLanguage))
+        {
+            m_flags.Set(flagsParsedLanguage);
+            SymbolVendor* symbol_vendor = GetModule()->GetSymbolVendor();
+            if (symbol_vendor)
+            {
+                SymbolContext sc;
+                CalculateSymbolContext(&sc);
+                m_language = symbol_vendor->ParseCompileUnitLanguage(sc);
+            }
+        }
+    }
+    return m_language;
+}
+
 LineTable*
 CompileUnit::GetLineTable()
 {
@@ -298,7 +324,8 @@ CompileUnit::ResolveSymbolContext
     // "file_spec" has an empty directory, then only compare the basenames
     // when finding file indexes
     std::vector<uint32_t> file_indexes;
-    bool file_spec_matches_cu_file_spec = FileSpec::Equal(file_spec, *this, !file_spec.GetDirectory().IsEmpty());
+    const bool full_match = file_spec.GetDirectory();
+    bool file_spec_matches_cu_file_spec = FileSpec::Equal(file_spec, *this, full_match);
 
     // If we are not looking for inlined functions and our file spec doesn't
     // match then we are done...

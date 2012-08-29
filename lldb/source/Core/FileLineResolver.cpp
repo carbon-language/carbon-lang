@@ -13,6 +13,7 @@
 #include "lldb/lldb-private-log.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/LineTable.h"
 
 using namespace lldb;

@@ -15,6 +15,8 @@
 // Project includes
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Core/Stream.h"
+#include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolFile.h"
 
@@ -149,6 +151,20 @@ SymbolVendor::GetNumCompileUnits()
     }
     return m_compile_units.size();
 }
+
+lldb::LanguageType
+SymbolVendor::ParseCompileUnitLanguage (const SymbolContext& sc)
+{
+    ModuleSP module_sp(GetModule());
+    if (module_sp)
+    {
+        lldb_private::Mutex::Locker locker(module_sp->GetMutex());
+        if (m_sym_file_ap.get())
+            return m_sym_file_ap->ParseCompileUnitLanguage(sc);
+    }
+    return eLanguageTypeUnknown;
+}
+
 
 size_t
 SymbolVendor::ParseCompileUnitFunctions (const SymbolContext &sc)

@@ -15,9 +15,13 @@
 // Project includes
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Symbol/ClangNamespaceDecl.h"
-#include "lldb/Target/Target.h"
+#include "lldb/Symbol/Block.h"
+#include "lldb/Symbol/Function.h"
+#include "lldb/Symbol/Symbol.h"
+#include "lldb/Symbol/SymbolContext.h"
 
 using namespace lldb;
 using namespace lldb_private;

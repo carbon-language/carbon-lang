@@ -118,45 +118,10 @@ protected:
                          lldb::user_id_t break_loc_id);
 
     uint32_t
-    AddrByteSize()
-    {
-        switch (m_dyld.header.magic)
-        {
-            case llvm::MachO::HeaderMagic32:
-            case llvm::MachO::HeaderMagic32Swapped:
-                return 4;
-
-            case llvm::MachO::HeaderMagic64:
-            case llvm::MachO::HeaderMagic64Swapped:
-                return 8;
-
-            default:
-                break;
-        }
-        return 0;
-    }
+    AddrByteSize();
 
     static lldb::ByteOrder
-    GetByteOrderFromMagic (uint32_t magic)
-    {
-        switch (magic)
-        {
-            case llvm::MachO::HeaderMagic32:
-            case llvm::MachO::HeaderMagic64:
-                return lldb::endian::InlHostByteOrder();
-
-            case llvm::MachO::HeaderMagic32Swapped:
-            case llvm::MachO::HeaderMagic64Swapped:
-                if (lldb::endian::InlHostByteOrder() == lldb::eByteOrderBig)
-                    return lldb::eByteOrderLittle;
-                else
-                    return lldb::eByteOrderBig;
-
-            default:
-                break;
-        }
-        return lldb::eByteOrderInvalid;
-    }
+    GetByteOrderFromMagic (uint32_t magic);
 
     bool
     ReadMachHeader (lldb::addr_t addr,
@@ -269,26 +234,7 @@ protected:
         }
 
         lldb::ByteOrder
-        GetByteOrder()
-        {
-            switch (header.magic)
-            {
-            case llvm::MachO::HeaderMagic32:        // MH_MAGIC
-            case llvm::MachO::HeaderMagic64:        // MH_MAGIC_64
-                return lldb::endian::InlHostByteOrder();
-
-            case llvm::MachO::HeaderMagic32Swapped: // MH_CIGAM
-            case llvm::MachO::HeaderMagic64Swapped: // MH_CIGAM_64
-                if (lldb::endian::InlHostByteOrder() == lldb::eByteOrderLittle)
-                    return lldb::eByteOrderBig;
-                else
-                    return lldb::eByteOrderLittle;
-            default:
-                assert (!"invalid header.magic value");
-                break;
-            }
-            return lldb::endian::InlHostByteOrder();
-        }
+        GetByteOrder();
 
         lldb_private::ArchSpec
         GetArchitecture () const

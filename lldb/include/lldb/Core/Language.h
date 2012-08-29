@@ -74,7 +74,7 @@ public:
     ///     The enumeration value that describes the programming
     ///     language that an object is associated with.
     //------------------------------------------------------------------
-    lldb::LanguageType
+    virtual lldb::LanguageType
     GetLanguage() const;
 
     //------------------------------------------------------------------

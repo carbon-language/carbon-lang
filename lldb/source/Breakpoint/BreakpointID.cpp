@@ -15,6 +15,7 @@
 
 #include "lldb/Breakpoint/BreakpointID.h"
 #include "lldb/Breakpoint/Breakpoint.h"
+#include "lldb/Core/Stream.h"
 
 using namespace lldb;
 using namespace lldb_private;

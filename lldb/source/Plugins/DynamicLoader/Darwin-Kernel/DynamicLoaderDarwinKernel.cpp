@@ -13,7 +13,9 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Core/Section.h"
 #include "lldb/Core/State.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
@@ -301,6 +303,31 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
     }
     return is_loaded;
 }
+
+uint32_t
+DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::GetAddressByteSize ()
+{
+    if (module_sp)
+        return module_sp->GetArchitecture().GetAddressByteSize();
+    return 0;
+}
+
+lldb::ByteOrder
+DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::GetByteOrder()
+{
+    if (module_sp)
+        return module_sp->GetArchitecture().GetByteOrder();
+    return lldb::endian::InlHostByteOrder();
+}
+
+lldb_private::ArchSpec
+DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::GetArchitecture () const
+{
+    if (module_sp)
+        return module_sp->GetArchitecture();
+    return lldb_private::ArchSpec ();
+}
+
 
 //----------------------------------------------------------------------
 // Load the kernel module and initialize the "m_kernel" member. Return
@@ -824,5 +851,27 @@ uint32_t
 DynamicLoaderDarwinKernel::GetPluginVersion()
 {
     return 1;
+}
+
+lldb::ByteOrder
+DynamicLoaderDarwinKernel::GetByteOrderFromMagic (uint32_t magic)
+{
+    switch (magic)
+    {
+        case llvm::MachO::HeaderMagic32:
+        case llvm::MachO::HeaderMagic64:
+            return lldb::endian::InlHostByteOrder();
+            
+        case llvm::MachO::HeaderMagic32Swapped:
+        case llvm::MachO::HeaderMagic64Swapped:
+            if (lldb::endian::InlHostByteOrder() == lldb::eByteOrderBig)
+                return lldb::eByteOrderLittle;
+            else
+                return lldb::eByteOrderBig;
+            
+        default:
+            break;
+    }
+    return lldb::eByteOrderInvalid;
 }
 

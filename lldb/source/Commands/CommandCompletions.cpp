@@ -21,9 +21,11 @@
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Core/FileSpecList.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandCompletions.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Utility/CleanUp.h"
 

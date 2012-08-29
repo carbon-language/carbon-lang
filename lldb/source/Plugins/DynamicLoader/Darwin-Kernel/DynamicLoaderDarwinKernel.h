@@ -119,26 +119,8 @@ protected:
     }
 
     static lldb::ByteOrder
-    GetByteOrderFromMagic (uint32_t magic)
-    {
-        switch (magic)
-        {
-            case llvm::MachO::HeaderMagic32:
-            case llvm::MachO::HeaderMagic64:
-                return lldb::endian::InlHostByteOrder();
+    GetByteOrderFromMagic (uint32_t magic);
 
-            case llvm::MachO::HeaderMagic32Swapped:
-            case llvm::MachO::HeaderMagic64Swapped:
-                if (lldb::endian::InlHostByteOrder() == lldb::eByteOrderBig)
-                    return lldb::eByteOrderLittle;
-                else
-                    return lldb::eByteOrderBig;
-
-            default:
-                break;
-        }
-        return lldb::eByteOrderInvalid;
-    }
     enum
     {
         KERNEL_MODULE_MAX_NAME = 64u,
@@ -229,28 +211,13 @@ protected:
         }
 
         uint32_t
-        GetAddressByteSize ()
-        {
-            if (module_sp)
-                return module_sp->GetArchitecture().GetAddressByteSize();
-            return 0;
-        }
+        GetAddressByteSize ();
 
         lldb::ByteOrder
-        GetByteOrder()
-        {
-            if (module_sp)
-                return module_sp->GetArchitecture().GetByteOrder();
-            return lldb::endian::InlHostByteOrder();
-        }
+        GetByteOrder();
 
         lldb_private::ArchSpec
-        GetArchitecture () const
-        {
-            if (module_sp)
-                return module_sp->GetArchitecture();
-            return lldb_private::ArchSpec ();
-        }
+        GetArchitecture () const;
 
         void
         PutToLog (lldb_private::Log *log) const;

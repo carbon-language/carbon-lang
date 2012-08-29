@@ -12,6 +12,8 @@
 
 // C Includes
 // C++ Includes
+#include <set>
+
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private.h"

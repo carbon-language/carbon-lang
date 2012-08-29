@@ -16,6 +16,7 @@
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/State.h"
+#include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StopInfo.h"

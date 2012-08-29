@@ -16,6 +16,7 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Symbol/ObjectFile.h"
 
 
 using namespace lldb;

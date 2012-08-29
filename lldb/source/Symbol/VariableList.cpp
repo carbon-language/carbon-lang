@@ -52,9 +52,12 @@ VariableList::AddVariableIfUnique (const lldb::VariableSP &var_sp)
 void
 VariableList::AddVariables(VariableList *variable_list)
 {
-    std::copy(  variable_list->m_variables.begin(), // source begin
-                variable_list->m_variables.end(),   // source end
-                back_inserter(m_variables));        // destination
+    if (variable_list)
+    {
+        std::copy(variable_list->m_variables.begin(), // source begin
+                  variable_list->m_variables.end(),   // source end
+                  back_inserter(m_variables));        // destination
+    }
 }
 
 void

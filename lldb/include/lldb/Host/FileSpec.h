@@ -330,6 +330,18 @@ public:
     const ConstString &
     GetFilename () const;
 
+    //------------------------------------------------------------------
+    /// Returns true if the filespec represents an implementation source
+    /// file (files with a ".c", ".cpp", ".m", ".mm" (many more)
+    /// extension).
+    ///
+    /// @return
+    ///     \b true if the filespec represents an implementation source
+    ///     file, \b false otherwise.
+    //------------------------------------------------------------------
+    bool
+    IsSourceImplementationFile () const;
+
     TimeValue
     GetModificationTime () const;
 

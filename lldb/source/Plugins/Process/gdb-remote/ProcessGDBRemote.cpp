@@ -31,6 +31,7 @@
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Core/InputReader.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/StreamFile.h"

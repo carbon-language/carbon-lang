@@ -15,11 +15,13 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/RegularExpression.h"
+#include "lldb/Core/Section.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/ObjectContainer.h"
 #include "lldb/Symbol/SymbolFile.h"
 #include "lldb/Target/Process.h"
+#include "Plugins/ObjectContainer/BSD-Archive/ObjectContainerBSDArchive.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -39,7 +41,7 @@ ObjectFile::FindPlugin (const lldb::ModuleSP &module_sp, const FileSpec* file, a
         if (file)
         {
             // Memory map the entire file contents
-            if (!file_data_sp)
+            if (!file_data_sp && file_size > 0)
             {
                 assert (file_offset == 0);
                 file_data_sp = file->MemoryMapFileContents(file_offset, file_size);
@@ -51,22 +53,15 @@ ObjectFile::FindPlugin (const lldb::ModuleSP &module_sp, const FileSpec* file, a
                 char path_with_object[PATH_MAX*2];
                 module_sp->GetFileSpec().GetPath(path_with_object, sizeof(path_with_object));
 
-                RegularExpression g_object_regex("(.*)\\(([^\\)]+)\\)$");
-                if (g_object_regex.Execute (path_with_object, 2))
+                FileSpec archive_file;
+                ConstString archive_object;
+                if (ObjectFile::SplitArchivePathWithObject (path_with_object, archive_file, archive_object))
                 {
-                    FileSpec archive_file;
-                    std::string path;
-                    std::string object;
-                    if (g_object_regex.GetMatchAtIndex (path_with_object, 1, path) &&
-                        g_object_regex.GetMatchAtIndex (path_with_object, 2, object))
+                    file_size = archive_file.GetByteSize();
+                    if (file_size > 0)
                     {
-                        archive_file.SetFile (path.c_str(), false);
-                        file_size = archive_file.GetByteSize();
-                        if (file_size > 0)
-                        {
-                            module_sp->SetFileSpecAndObjectName (archive_file, ConstString(object.c_str()));
-                            file_data_sp = archive_file.MemoryMapFileContents(file_offset, file_size);
-                        }
+                        module_sp->SetFileSpecAndObjectName (archive_file, archive_object);
+                        file_data_sp = archive_file.MemoryMapFileContents(file_offset, file_size);
                     }
                 }
             }
@@ -453,5 +448,25 @@ ObjectFile::MemoryMapSectionData (const Section *section, DataExtractor& section
     }
     section_data.Clear();
     return 0;
+}
+
+
+bool
+ObjectFile::SplitArchivePathWithObject (const char *path_with_object, FileSpec &archive_file, ConstString &archive_object)
+{
+    RegularExpression g_object_regex("(.*)\\(([^\\)]+)\\)$");
+    if (g_object_regex.Execute (path_with_object, 2))
+    {
+        std::string path;
+        std::string obj;
+        if (g_object_regex.GetMatchAtIndex (path_with_object, 1, path) &&
+            g_object_regex.GetMatchAtIndex (path_with_object, 2, obj))
+        {
+            archive_file.SetFile (path.c_str(), false);
+            archive_object.SetCString(obj.c_str());
+            return true;
+        }
+    }
+    return false;
 }
 

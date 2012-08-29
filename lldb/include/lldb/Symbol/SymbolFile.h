@@ -120,6 +120,7 @@ public:
     virtual uint32_t        GetNumCompileUnits() = 0;
     virtual lldb::CompUnitSP  ParseCompileUnitAtIndex(uint32_t index) = 0;
 
+    virtual lldb::LanguageType ParseCompileUnitLanguage (const SymbolContext& sc) = 0;
     virtual size_t          ParseCompileUnitFunctions (const SymbolContext& sc) = 0;
     virtual bool            ParseCompileUnitLineTable (const SymbolContext& sc) = 0;
     virtual bool            ParseCompileUnitSupportFiles (const SymbolContext& sc, FileSpecList& support_files) = 0;

@@ -107,6 +107,13 @@ class GenericTester(TestBase):
                 gl.append((var, val))
         #print "golden list:", gl
 
+        # This test uses a #include of a the "basic_type.cpp" so we need to enable
+        # always setting inlined breakpoints.
+        self.runCmd('settings set target.inline-breakpoint-strategy always')
+        # And add hooks to restore the settings during tearDown().
+        self.addTearDownHook(
+            lambda: self.runCmd("settings set target.inline-breakpoint-strategy headers"))
+
         # Bring the program to the point where we can issue a series of
         # 'frame variable -T' command.
         if blockCaptured:
@@ -183,6 +190,13 @@ class GenericTester(TestBase):
                 var, val = match.group(1), match.group(2)
                 gl.append((var, val))
         #print "golden list:", gl
+
+        # This test uses a #include of a the "basic_type.cpp" so we need to enable
+        # always setting inlined breakpoints.
+        self.runCmd('settings set target.inline-breakpoint-strategy always')
+        # And add hooks to restore the settings during tearDown().
+        self.addTearDownHook(
+            lambda: self.runCmd("settings set target.inline-breakpoint-strategy headers"))
 
         # Bring the program to the point where we can issue a series of
         # 'expr' command.

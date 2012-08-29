@@ -78,6 +78,7 @@
 		260CC65215D0440D002BF2E0 /* OptionValueString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260CC64515D0440D002BF2E0 /* OptionValueString.cpp */; };
 		260CC65315D0440D002BF2E0 /* OptionValueUInt64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260CC64615D0440D002BF2E0 /* OptionValueUInt64.cpp */; };
 		260CC65415D0440D002BF2E0 /* OptionValueUUID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260CC64715D0440D002BF2E0 /* OptionValueUUID.cpp */; };
+		260D9B2715EC369500960137 /* ModuleSpec.h in Headers */ = {isa = PBXBuildFile; fileRef = 260D9B2615EC369500960137 /* ModuleSpec.h */; };
 		260E07C6136FA69E00CF21D3 /* OptionGroupUUID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260E07C5136FA69E00CF21D3 /* OptionGroupUUID.cpp */; };
 		260E07C8136FAB9200CF21D3 /* OptionGroupFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260E07C7136FAB9200CF21D3 /* OptionGroupFile.cpp */; };
 		261744781168585B005ADD65 /* SBType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 261744771168585B005ADD65 /* SBType.cpp */; };
@@ -802,6 +803,7 @@
 		260CC64515D0440D002BF2E0 /* OptionValueString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionValueString.cpp; path = source/Interpreter/OptionValueString.cpp; sourceTree = "<group>"; };
 		260CC64615D0440D002BF2E0 /* OptionValueUInt64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionValueUInt64.cpp; path = source/Interpreter/OptionValueUInt64.cpp; sourceTree = "<group>"; };
 		260CC64715D0440D002BF2E0 /* OptionValueUUID.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionValueUUID.cpp; path = source/Interpreter/OptionValueUUID.cpp; sourceTree = "<group>"; };
+		260D9B2615EC369500960137 /* ModuleSpec.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ModuleSpec.h; path = include/lldb/Core/ModuleSpec.h; sourceTree = "<group>"; };
 		260E07C3136FA68900CF21D3 /* OptionGroupUUID.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupUUID.h; path = include/lldb/Interpreter/OptionGroupUUID.h; sourceTree = "<group>"; };
 		260E07C5136FA69E00CF21D3 /* OptionGroupUUID.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionGroupUUID.cpp; path = source/Interpreter/OptionGroupUUID.cpp; sourceTree = "<group>"; };
 		260E07C7136FAB9200CF21D3 /* OptionGroupFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionGroupFile.cpp; path = source/Interpreter/OptionGroupFile.cpp; sourceTree = "<group>"; };
@@ -2511,6 +2513,7 @@
 				26BC7E8210F1B85900F91463 /* ModuleChild.cpp */,
 				26BC7D6C10F1B77400F91463 /* ModuleList.h */,
 				26BC7E8310F1B85900F91463 /* ModuleList.cpp */,
+				260D9B2615EC369500960137 /* ModuleSpec.h */,
 				26651A15133BF9CC005B64B7 /* Opcode.h */,
 				26651A17133BF9DF005B64B7 /* Opcode.cpp */,
 				266DFE9813FD658300D0C574 /* OperatingSystem.h */,
@@ -3388,6 +3391,7 @@
 				26491E3B15E1DB8600CBFFC2 /* OptionValueRegex.h in Headers */,
 				2697A39515E404BA003E682C /* OptionValueArch.h in Headers */,
 				2698699D15E6CBD0002415FF /* OperatingSystemPython.h in Headers */,
+				260D9B2715EC369500960137 /* ModuleSpec.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

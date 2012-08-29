@@ -62,6 +62,9 @@ public:
     virtual void
     Dump(Stream *s);
 
+    virtual lldb::LanguageType
+    ParseCompileUnitLanguage (const SymbolContext& sc);
+    
     virtual size_t
     ParseCompileUnitFunctions (const SymbolContext& sc);
 

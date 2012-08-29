@@ -19,6 +19,8 @@
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Core/ValueObjectMemory.h"
 #include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Symbol/Symbol.h"
+#include "lldb/Symbol/TypeList.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StopInfo.h"

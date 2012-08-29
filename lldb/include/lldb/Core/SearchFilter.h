@@ -15,11 +15,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private.h"
-#include "lldb/Core/Stream.h"
-#include "lldb/Host/FileSpec.h"
-#include "lldb/Core/Address.h"
-#include "lldb/Symbol/SymbolContext.h"
-#include "lldb/Core/Module.h"
+#include "lldb/Core/FileSpecList.h"
 
 namespace lldb_private {
 

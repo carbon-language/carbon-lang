@@ -10,9 +10,9 @@
 #ifndef liblldb_CompUnit_h_
 #define liblldb_CompUnit_h_
 
+#include "lldb/lldb-enumerations.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Core/FileSpecList.h"
-#include "lldb/Core/Language.h"
 #include "lldb/Core/ModuleChild.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/UserID.h"
@@ -36,7 +36,6 @@ class CompileUnit :
     public ModuleChild,
     public FileSpec,
     public UserID,
-    public Language,
     public SymbolContextScope
 {
 public:
@@ -143,6 +142,15 @@ public:
     virtual void
     DumpSymbolContext(Stream *s);
 
+    lldb::LanguageType
+    GetLanguage();
+
+    void
+    SetLanguage(lldb::LanguageType language)
+    {
+        m_flags.Set(flagsParsedLanguage);
+        m_language = language;
+    }
 
     void
     GetDescription(Stream *s, lldb::DescriptionLevel level) const;
@@ -388,6 +396,7 @@ public:
 
 protected:
     void *m_user_data; ///< User data for the SymbolFile parser to store information into.
+    lldb::LanguageType m_language; ///< The programming language enumeration value.
     Flags m_flags; ///< Compile unit flags that help with partial parsing.
     std::vector<lldb::FunctionSP> m_functions; ///< The sparsely populated list of shared pointers to functions
                                          ///< that gets populated as functions get partially parsed.
@@ -398,10 +407,11 @@ protected:
 private:
     enum
     {
-        flagsParsedAllFunctions = (1 << 0), ///< Have we already parsed all our functions
-        flagsParsedVariables    = (1 << 1), ///< Have we already parsed globals and statics?
-        flagsParsedSupportFiles = (1 << 2), ///< Have we already parsed the support files for this compile unit?
-        flagsParsedLineTable    = (1 << 3)  ///< Have we parsed the line table already?
+        flagsParsedAllFunctions = (1u << 0), ///< Have we already parsed all our functions
+        flagsParsedVariables    = (1u << 1), ///< Have we already parsed globals and statics?
+        flagsParsedSupportFiles = (1u << 2), ///< Have we already parsed the support files for this compile unit?
+        flagsParsedLineTable    = (1u << 3),  ///< Have we parsed the line table already?
+        flagsParsedLanguage     = (1u << 4)   ///< Have we parsed the line table already?
     };
 
     DISALLOW_COPY_AND_ASSIGN (CompileUnit);
