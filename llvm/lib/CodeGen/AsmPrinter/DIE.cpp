@@ -209,8 +209,7 @@ void DIEInteger::EmitValue(AsmPrinter *Asm, unsigned Form) const {
 ///
 unsigned DIEInteger::SizeOf(AsmPrinter *AP, unsigned Form) const {
   switch (Form) {
-  case dwarf::DW_FORM_flag_present: // Fall thru
-    return 0;
+  case dwarf::DW_FORM_flag_present: return 0;
   case dwarf::DW_FORM_flag:  // Fall thru
   case dwarf::DW_FORM_ref1:  // Fall thru
   case dwarf::DW_FORM_data1: return sizeof(int8_t);
