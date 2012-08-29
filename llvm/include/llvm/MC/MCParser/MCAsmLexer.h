@@ -11,6 +11,7 @@
 #define LLVM_MC_MCASMLEXER_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/SMLoc.h"
 
@@ -121,8 +122,8 @@ class MCAsmLexer {
   SMLoc ErrLoc;
   std::string Err;
 
-  MCAsmLexer(const MCAsmLexer &);   // DO NOT IMPLEMENT
-  void operator=(const MCAsmLexer &);  // DO NOT IMPLEMENT
+  MCAsmLexer(const MCAsmLexer &) LLVM_DELETED_FUNCTION;
+  void operator=(const MCAsmLexer &) LLVM_DELETED_FUNCTION;
 protected: // Can only create subclasses.
   const char *TokStart;
 

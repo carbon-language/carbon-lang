@@ -47,8 +47,8 @@ namespace llvm {
   class MCStreamer {
     MCContext &Context;
 
-    MCStreamer(const MCStreamer&); // DO NOT IMPLEMENT
-    MCStreamer &operator=(const MCStreamer&); // DO NOT IMPLEMENT
+    MCStreamer(const MCStreamer&) LLVM_DELETED_FUNCTION;
+    MCStreamer &operator=(const MCStreamer&) LLVM_DELETED_FUNCTION;
 
     bool EmitEHFrame;
     bool EmitDebugFrame;

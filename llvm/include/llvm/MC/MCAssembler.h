@@ -40,8 +40,8 @@ class MCAsmBackend;
 class MCFragment : public ilist_node<MCFragment> {
   friend class MCAsmLayout;
 
-  MCFragment(const MCFragment&);     // DO NOT IMPLEMENT
-  void operator=(const MCFragment&); // DO NOT IMPLEMENT
+  MCFragment(const MCFragment&) LLVM_DELETED_FUNCTION;
+  void operator=(const MCFragment&) LLVM_DELETED_FUNCTION;
 
 public:
   enum FragmentType {

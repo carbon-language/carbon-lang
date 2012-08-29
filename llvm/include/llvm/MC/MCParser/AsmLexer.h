@@ -31,8 +31,8 @@ class AsmLexer : public MCAsmLexer {
   const MemoryBuffer *CurBuf;
   bool isAtStartOfLine;
 
-  void operator=(const AsmLexer&); // DO NOT IMPLEMENT
-  AsmLexer(const AsmLexer&);       // DO NOT IMPLEMENT
+  void operator=(const AsmLexer&) LLVM_DELETED_FUNCTION;
+  AsmLexer(const AsmLexer&) LLVM_DELETED_FUNCTION;
 
 protected:
   /// LexToken - Read the next token and return its code.

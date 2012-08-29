@@ -40,8 +40,8 @@ namespace llvm {
   /// of the sections that it creates.
   ///
   class MCContext {
-    MCContext(const MCContext&); // DO NOT IMPLEMENT
-    MCContext &operator=(const MCContext&); // DO NOT IMPLEMENT
+    MCContext(const MCContext&) LLVM_DELETED_FUNCTION;
+    MCContext &operator=(const MCContext&) LLVM_DELETED_FUNCTION;
   public:
     typedef StringMap<MCSymbol*, BumpPtrAllocator&> SymbolTable;
   private:

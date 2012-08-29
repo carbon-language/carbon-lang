@@ -19,6 +19,7 @@
 #include "llvm/MC/MachineLocation.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/Compiler.h"
 #include <vector>
 
 namespace llvm {
@@ -48,8 +49,8 @@ namespace llvm {
     MCDwarfFile(StringRef name, unsigned dirIndex)
       : Name(name), DirIndex(dirIndex) {}
 
-    MCDwarfFile(const MCDwarfFile&);       // DO NOT IMPLEMENT
-    void operator=(const MCDwarfFile&); // DO NOT IMPLEMENT
+    MCDwarfFile(const MCDwarfFile&) LLVM_DELETED_FUNCTION;
+    void operator=(const MCDwarfFile&) LLVM_DELETED_FUNCTION;
   public:
     /// getName - Get the base name of this MCDwarfFile.
     StringRef getName() const { return Name; }

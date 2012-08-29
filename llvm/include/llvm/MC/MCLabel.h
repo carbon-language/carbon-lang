@@ -14,6 +14,8 @@
 #ifndef LLVM_MC_MCLABEL_H
 #define LLVM_MC_MCLABEL_H
 
+#include "llvm/Support/Compiler.h"
+
 namespace llvm {
   class MCContext;
   class raw_ostream;
@@ -30,8 +32,8 @@ namespace llvm {
     MCLabel(unsigned instance)
       : Instance(instance) {}
 
-    MCLabel(const MCLabel&);       // DO NOT IMPLEMENT
-    void operator=(const MCLabel&); // DO NOT IMPLEMENT
+    MCLabel(const MCLabel&) LLVM_DELETED_FUNCTION;
+    void operator=(const MCLabel&) LLVM_DELETED_FUNCTION;
   public:
     /// getInstance - Get the current instance of this Directional Local Label.
     unsigned getInstance() const { return Instance; }

@@ -15,7 +15,7 @@
 #define LLVM_MC_MCSECTION_H
 
 #include "llvm/MC/SectionKind.h"
-#include "llvm/Support/Casting.h"
+#include "llvm/Support/Compiler.h"
 
 namespace llvm {
   class MCAsmInfo;
@@ -33,8 +33,8 @@ namespace llvm {
     };
 
   private:
-    MCSection(const MCSection&);      // DO NOT IMPLEMENT
-    void operator=(const MCSection&); // DO NOT IMPLEMENT
+    MCSection(const MCSection&) LLVM_DELETED_FUNCTION;
+    void operator=(const MCSection&) LLVM_DELETED_FUNCTION;
   protected:
     MCSection(SectionVariant V, SectionKind K) : Variant(V), Kind(K) {}
     SectionVariant Variant;

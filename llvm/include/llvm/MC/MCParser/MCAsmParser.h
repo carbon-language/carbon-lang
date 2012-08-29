@@ -35,8 +35,8 @@ public:
   typedef bool (*DirectiveHandler)(MCAsmParserExtension*, StringRef, SMLoc);
 
 private:
-  MCAsmParser(const MCAsmParser &);   // DO NOT IMPLEMENT
-  void operator=(const MCAsmParser &);  // DO NOT IMPLEMENT
+  MCAsmParser(const MCAsmParser &) LLVM_DELETED_FUNCTION;
+  void operator=(const MCAsmParser &) LLVM_DELETED_FUNCTION;
 
   MCTargetAsmParser *TargetParser;
 

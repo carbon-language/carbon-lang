@@ -41,8 +41,8 @@ public:
 private:
   ExprKind Kind;
 
-  MCExpr(const MCExpr&); // DO NOT IMPLEMENT
-  void operator=(const MCExpr&); // DO NOT IMPLEMENT
+  MCExpr(const MCExpr&) LLVM_DELETED_FUNCTION;
+  void operator=(const MCExpr&) LLVM_DELETED_FUNCTION;
 
   bool EvaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm,
                           const MCAsmLayout *Layout,

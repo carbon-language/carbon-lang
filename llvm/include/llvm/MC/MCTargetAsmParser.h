@@ -34,8 +34,8 @@ public:
   };
 
 private:
-  MCTargetAsmParser(const MCTargetAsmParser &);   // DO NOT IMPLEMENT
-  void operator=(const MCTargetAsmParser &);  // DO NOT IMPLEMENT
+  MCTargetAsmParser(const MCTargetAsmParser &) LLVM_DELETED_FUNCTION;
+  void operator=(const MCTargetAsmParser &) LLVM_DELETED_FUNCTION;
 protected: // Can only create subclasses.
   MCTargetAsmParser();
 

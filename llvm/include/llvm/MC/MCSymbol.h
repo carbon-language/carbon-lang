@@ -15,6 +15,7 @@
 #define LLVM_MC_MCSYMBOL_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Compiler.h"
 
 namespace llvm {
   class MCExpr;
@@ -62,8 +63,8 @@ namespace llvm {
       : Name(name), Section(0), Value(0),
         IsTemporary(isTemporary), IsUsed(false) {}
 
-    MCSymbol(const MCSymbol&);       // DO NOT IMPLEMENT
-    void operator=(const MCSymbol&); // DO NOT IMPLEMENT
+    MCSymbol(const MCSymbol&) LLVM_DELETED_FUNCTION;
+    void operator=(const MCSymbol&) LLVM_DELETED_FUNCTION;
   public:
     /// getName - Get the symbol name.
     StringRef getName() const { return Name; }

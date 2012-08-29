@@ -24,8 +24,8 @@ class MCTargetAsmLexer {
   SMLoc ErrLoc;
   std::string Err;
 
-  MCTargetAsmLexer(const MCTargetAsmLexer &);   // DO NOT IMPLEMENT
-  void operator=(const MCTargetAsmLexer &);  // DO NOT IMPLEMENT
+  MCTargetAsmLexer(const MCTargetAsmLexer &) LLVM_DELETED_FUNCTION;
+  void operator=(const MCTargetAsmLexer &) LLVM_DELETED_FUNCTION;
 protected: // Can only create subclasses.
   MCTargetAsmLexer(const Target &);
 
