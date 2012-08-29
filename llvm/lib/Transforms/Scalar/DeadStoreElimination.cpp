@@ -106,6 +106,7 @@ FunctionPass *llvm::createDeadStoreEliminationPass() { return new DSE(); }
 ///
 static void DeleteDeadInstruction(Instruction *I,
                                   MemoryDependenceAnalysis &MD,
+                                  const TargetLibraryInfo *TLI,
                                   SmallSetVector<Value*, 16> *ValueSet = 0) {
   SmallVector<Instruction*, 32> NowDeadInsts;
 
@@ -130,7 +131,7 @@ static void DeleteDeadInstruction(Instruction *I,
       if (!Op->use_empty()) continue;
 
       if (Instruction *OpI = dyn_cast<Instruction>(Op))
-        if (isInstructionTriviallyDead(OpI))
+        if (isInstructionTriviallyDead(OpI, TLI))
           NowDeadInsts.push_back(OpI);
     }
 
@@ -276,7 +277,7 @@ static Value *getStoredPointerOperand(Instruction *I) {
 
 static uint64_t getPointerSize(const Value *V, AliasAnalysis &AA) {
   uint64_t Size;
-  if (getObjectSize(V, Size, AA.getTargetData()))
+  if (getObjectSize(V, Size, AA.getTargetData(), AA.getTargetLibraryInfo()))
     return Size;
   return AliasAnalysis::UnknownSize;
 }
@@ -454,7 +455,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     Instruction *Inst = BBI++;
 
     // Handle 'free' calls specially.
-    if (CallInst *F = isFreeCall(Inst)) {
+    if (CallInst *F = isFreeCall(Inst, AA->getTargetLibraryInfo())) {
       MadeChange |= HandleFree(F);
       continue;
     }
@@ -483,7 +484,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
           // in case we need it.
           WeakVH NextInst(BBI);
 
-          DeleteDeadInstruction(SI, *MD);
+          DeleteDeadInstruction(SI, *MD, AA->getTargetLibraryInfo());
 
           if (NextInst == 0)  // Next instruction deleted.
             BBI = BB.begin();
@@ -530,7 +531,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
                 << *DepWrite << "\n  KILLER: " << *Inst << '\n');
 
           // Delete the store and now-dead instructions that feed it.
-          DeleteDeadInstruction(DepWrite, *MD);
+          DeleteDeadInstruction(DepWrite, *MD, AA->getTargetLibraryInfo());
           ++NumFastStores;
           MadeChange = true;
 
@@ -640,7 +641,7 @@ bool DSE::HandleFree(CallInst *F) {
       Instruction *Next = llvm::next(BasicBlock::iterator(Dependency));
 
       // DCE instructions only used to calculate that store
-      DeleteDeadInstruction(Dependency, *MD);
+      DeleteDeadInstruction(Dependency, *MD, AA->getTargetLibraryInfo());
       ++NumFastStores;
       MadeChange = true;
 
@@ -680,7 +681,8 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
 
     // Okay, so these are dead heap objects, but if the pointer never escapes
     // then it's leaked by this function anyways.
-    else if (isAllocLikeFn(I) && !PointerMayBeCaptured(I, true, true))
+    else if (isAllocLikeFn(I, AA->getTargetLibraryInfo()) &&
+             !PointerMayBeCaptured(I, true, true))
       DeadStackObjects.insert(I);
   }
 
@@ -724,7 +726,8 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
               dbgs() << '\n');
 
         // DCE instructions only used to calculate that store.
-        DeleteDeadInstruction(Dead, *MD, &DeadStackObjects);
+        DeleteDeadInstruction(Dead, *MD, AA->getTargetLibraryInfo(),
+                              &DeadStackObjects);
         ++NumFastStores;
         MadeChange = true;
         continue;
@@ -732,9 +735,10 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
     }
 
     // Remove any dead non-memory-mutating instructions.
-    if (isInstructionTriviallyDead(BBI)) {
+    if (isInstructionTriviallyDead(BBI, AA->getTargetLibraryInfo())) {
       Instruction *Inst = BBI++;
-      DeleteDeadInstruction(Inst, *MD, &DeadStackObjects);
+      DeleteDeadInstruction(Inst, *MD, AA->getTargetLibraryInfo(),
+                            &DeadStackObjects);
       ++NumFastOther;
       MadeChange = true;
       continue;
@@ -750,7 +754,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
     if (CallSite CS = cast<Value>(BBI)) {
       // Remove allocation function calls from the list of dead stack objects; 
       // there can't be any references before the definition.
-      if (isAllocLikeFn(BBI))
+      if (isAllocLikeFn(BBI, AA->getTargetLibraryInfo()))
         DeadStackObjects.remove(BBI);
 
       // If this call does not access memory, it can't be loading any of our

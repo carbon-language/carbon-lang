@@ -1068,7 +1068,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         // If the bitcast is of an allocation, and the allocation will be
         // converted to match the type of the cast, don't touch this.
         if (isa<AllocaInst>(BCI->getOperand(0)) ||
-            isAllocationFn(BCI->getOperand(0))) {
+            isAllocationFn(BCI->getOperand(0), TLI)) {
           // See if the bitcast simplifies, if so, don't nuke this GEP yet.
           if (Instruction *I = visitBitCast(*BCI)) {
             if (I != BCI) {
@@ -1107,7 +1107,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
 
 static bool
-isAllocSiteRemovable(Instruction *AI, SmallVectorImpl<WeakVH> &Users) {
+isAllocSiteRemovable(Instruction *AI, SmallVectorImpl<WeakVH> &Users,
+                     const TargetLibraryInfo *TLI) {
   SmallVector<Instruction*, 4> Worklist;
   Worklist.push_back(AI);
 
@@ -1163,7 +1164,7 @@ isAllocSiteRemovable(Instruction *AI, SmallVectorImpl<WeakVH> &Users) {
           }
         }
 
-        if (isFreeCall(I)) {
+        if (isFreeCall(I, TLI)) {
           Users.push_back(I);
           continue;
         }
@@ -1188,7 +1189,7 @@ Instruction *InstCombiner::visitAllocSite(Instruction &MI) {
   // to null and free calls, delete the calls and replace the comparisons with
   // true or false as appropriate.
   SmallVector<WeakVH, 64> Users;
-  if (isAllocSiteRemovable(&MI, Users)) {
+  if (isAllocSiteRemovable(&MI, Users, TLI)) {
     for (unsigned i = 0, e = Users.size(); i != e; ++i) {
       Instruction *I = cast_or_null<Instruction>(&*Users[i]);
       if (!I) continue;
@@ -1872,7 +1873,7 @@ static bool AddReachableCodeToWorklist(BasicBlock *BB,
       Instruction *Inst = BBI++;
 
       // DCE instruction if trivially dead.
-      if (isInstructionTriviallyDead(Inst)) {
+      if (isInstructionTriviallyDead(Inst, TLI)) {
         ++NumDeadInst;
         DEBUG(errs() << "IC: DCE: " << *Inst << '\n');
         Inst->eraseFromParent();
@@ -2002,7 +2003,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
     if (I == 0) continue;  // skip null values.
 
     // Check to see if we can DCE the instruction.
-    if (isInstructionTriviallyDead(I)) {
+    if (isInstructionTriviallyDead(I, TLI)) {
       DEBUG(errs() << "IC: DCE: " << *I << '\n');
       EraseInstFromFunction(*I);
       ++NumDeadInst;
@@ -2102,7 +2103,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
 
         // If the instruction was modified, it's possible that it is now dead.
         // if so, remove it.
-        if (isInstructionTriviallyDead(I)) {
+        if (isInstructionTriviallyDead(I, TLI)) {
           EraseInstFromFunction(*I);
         } else {
           Worklist.Add(I);

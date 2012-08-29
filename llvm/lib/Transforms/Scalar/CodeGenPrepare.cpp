@@ -988,7 +988,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
     WeakVH IterHandle(CurInstIterator);
     BasicBlock *BB = CurInstIterator->getParent();
 
-    RecursivelyDeleteTriviallyDeadInstructions(Repl);
+    RecursivelyDeleteTriviallyDeadInstructions(Repl, TLInfo);
 
     if (IterHandle != CurInstIterator) {
       // If the iterator instruction was recursively deleted, start over at the

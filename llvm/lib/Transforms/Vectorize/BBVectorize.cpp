@@ -601,7 +601,7 @@ namespace {
 
     // It is important to cleanup here so that future iterations of this
     // function have less work to do.
-    (void) SimplifyInstructionsInBlock(&BB, TD);
+    (void) SimplifyInstructionsInBlock(&BB, TD, AA->getTargetLibraryInfo());
     return true;
   }
 

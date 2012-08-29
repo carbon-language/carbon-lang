@@ -1436,7 +1436,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
     Instruction *DepInst = DepInfo.getInst();
 
     // Loading the allocation -> undef.
-    if (isa<AllocaInst>(DepInst) || isMallocLikeFn(DepInst) ||
+    if (isa<AllocaInst>(DepInst) || isMallocLikeFn(DepInst, TLI) ||
         // Loading immediately after lifetime begin -> undef.
         isLifetimeStart(DepInst)) {
       ValuesPerBlock.push_back(AvailableValueInBlock::get(DepBB,
@@ -1951,7 +1951,7 @@ bool GVN::processLoad(LoadInst *L) {
   // If this load really doesn't depend on anything, then we must be loading an
   // undef value.  This can happen when loading for a fresh allocation with no
   // intervening stores, for example.
-  if (isa<AllocaInst>(DepInst) || isMallocLikeFn(DepInst)) {
+  if (isa<AllocaInst>(DepInst) || isMallocLikeFn(DepInst, TLI)) {
     L->replaceAllUsesWith(UndefValue::get(L->getType()));
     markInstructionForDeletion(L);
     ++NumGVNLoad;

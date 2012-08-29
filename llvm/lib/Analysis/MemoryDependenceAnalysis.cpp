@@ -148,7 +148,7 @@ AliasAnalysis::ModRefResult GetLocation(const Instruction *Inst,
     return AliasAnalysis::ModRef;
   }
 
-  if (const CallInst *CI = isFreeCall(Inst)) {
+  if (const CallInst *CI = isFreeCall(Inst, AA->getTargetLibraryInfo())) {
     // calls to free() deallocate the entire structure
     Loc = AliasAnalysis::Location(CI->getArgOperand(0));
     return AliasAnalysis::Mod;
@@ -479,7 +479,7 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
     // a subsequent bitcast of the malloc call result.  There can be stores to
     // the malloced memory between the malloc call and its bitcast uses, and we
     // need to continue scanning until the malloc call.
-    if (isa<AllocaInst>(Inst) || isNoAliasFn(Inst)) {
+    if (isa<AllocaInst>(Inst) || isNoAliasFn(Inst, AA->getTargetLibraryInfo())){
       const Value *AccessPtr = GetUnderlyingObject(MemLoc.Ptr, TD);
       
       if (AccessPtr == Inst || AA->isMustAlias(Inst, AccessPtr))

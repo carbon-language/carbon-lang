@@ -120,7 +120,7 @@ bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
             ++NumSimplified;
           }
         }
-        LocalChanged |= RecursivelyDeleteTriviallyDeadInstructions(I);
+        LocalChanged |= RecursivelyDeleteTriviallyDeadInstructions(I, TLI);
 
         if (IsSubloopHeader && !isa<PHINode>(I))
           break;

@@ -22,6 +22,7 @@
 #include "llvm/Instruction.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/InstIterator.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
@@ -38,10 +39,11 @@ namespace {
       initializeDeadInstEliminationPass(*PassRegistry::getPassRegistry());
     }
     virtual bool runOnBasicBlock(BasicBlock &BB) {
+      TargetLibraryInfo *TLI = getAnalysisIfAvailable<TargetLibraryInfo>();
       bool Changed = false;
       for (BasicBlock::iterator DI = BB.begin(); DI != BB.end(); ) {
         Instruction *Inst = DI++;
-        if (isInstructionTriviallyDead(Inst)) {
+        if (isInstructionTriviallyDead(Inst, TLI)) {
           Inst->eraseFromParent();
           Changed = true;
           ++DIEEliminated;
@@ -87,6 +89,8 @@ char DCE::ID = 0;
 INITIALIZE_PASS(DCE, "dce", "Dead Code Elimination", false, false)
 
 bool DCE::runOnFunction(Function &F) {
+  TargetLibraryInfo *TLI = getAnalysisIfAvailable<TargetLibraryInfo>();
+
   // Start out with all of the instructions in the worklist...
   std::vector<Instruction*> WorkList;
   for (inst_iterator i = inst_begin(F), e = inst_end(F); i != e; ++i)
@@ -101,7 +105,7 @@ bool DCE::runOnFunction(Function &F) {
     Instruction *I = WorkList.back();
     WorkList.pop_back();
 
-    if (isInstructionTriviallyDead(I)) {       // If the instruction is dead.
+    if (isInstructionTriviallyDead(I, TLI)) { // If the instruction is dead.
       // Loop over all of the values that the instruction uses, if there are
       // instructions being used, add them to the worklist, because they might
       // go dead after this one is removed.

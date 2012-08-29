@@ -85,9 +85,10 @@ static bool isEscapeSource(const Value *V) {
 /// getObjectSize - Return the size of the object specified by V, or
 /// UnknownSize if unknown.
 static uint64_t getObjectSize(const Value *V, const TargetData &TD,
+                              const TargetLibraryInfo &TLI,
                               bool RoundToAlign = false) {
   uint64_t Size;
-  if (getObjectSize(V, Size, &TD, RoundToAlign))
+  if (getObjectSize(V, Size, &TD, &TLI, RoundToAlign))
     return Size;
   return AliasAnalysis::UnknownSize;
 }
@@ -95,10 +96,11 @@ static uint64_t getObjectSize(const Value *V, const TargetData &TD,
 /// isObjectSmallerThan - Return true if we can prove that the object specified
 /// by V is smaller than Size.
 static bool isObjectSmallerThan(const Value *V, uint64_t Size,
-                                const TargetData &TD) {
+                                const TargetData &TD,
+                                const TargetLibraryInfo &TLI) {
   // This function needs to use the aligned object size because we allow
   // reads a bit past the end given sufficient alignment.
-  uint64_t ObjectSize = getObjectSize(V, TD, /*RoundToAlign*/true);
+  uint64_t ObjectSize = getObjectSize(V, TD, TLI, /*RoundToAlign*/true);
   
   return ObjectSize != AliasAnalysis::UnknownSize && ObjectSize < Size;
 }
@@ -106,8 +108,8 @@ static bool isObjectSmallerThan(const Value *V, uint64_t Size,
 /// isObjectSize - Return true if we can prove that the object specified
 /// by V has size Size.
 static bool isObjectSize(const Value *V, uint64_t Size,
-                         const TargetData &TD) {
-  uint64_t ObjectSize = getObjectSize(V, TD);
+                         const TargetData &TD, const TargetLibraryInfo &TLI) {
+  uint64_t ObjectSize = getObjectSize(V, TD, TLI);
   return ObjectSize != AliasAnalysis::UnknownSize && ObjectSize == Size;
 }
 
@@ -1133,8 +1135,8 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
   // If the size of one access is larger than the entire object on the other
   // side, then we know such behavior is undefined and can assume no alias.
   if (TD)
-    if ((V1Size != UnknownSize && isObjectSmallerThan(O2, V1Size, *TD)) ||
-        (V2Size != UnknownSize && isObjectSmallerThan(O1, V2Size, *TD)))
+    if ((V1Size != UnknownSize && isObjectSmallerThan(O2, V1Size, *TD, *TLI)) ||
+        (V2Size != UnknownSize && isObjectSmallerThan(O1, V2Size, *TD, *TLI)))
       return NoAlias;
   
   // Check the cache before climbing up use-def chains. This also terminates
@@ -1184,8 +1186,8 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
   // accesses is accessing the entire object, then the accesses must
   // overlap in some way.
   if (TD && O1 == O2)
-    if ((V1Size != UnknownSize && isObjectSize(O1, V1Size, *TD)) ||
-        (V2Size != UnknownSize && isObjectSize(O2, V2Size, *TD)))
+    if ((V1Size != UnknownSize && isObjectSize(O1, V1Size, *TD, *TLI)) ||
+        (V2Size != UnknownSize && isObjectSize(O2, V2Size, *TD, *TLI)))
       return AliasCache[Locs] = PartialAlias;
 
   AliasResult Result =

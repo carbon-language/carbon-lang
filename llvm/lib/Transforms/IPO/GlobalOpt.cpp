@@ -346,7 +346,7 @@ static bool isLeakCheckerRoot(GlobalVariable *GV) {
 /// Given a value that is stored to a global but never read, determine whether
 /// it's safe to remove the store and the chain of computation that feeds the
 /// store.
-static bool IsSafeComputationToRemove(Value *V) {
+static bool IsSafeComputationToRemove(Value *V, const TargetLibraryInfo *TLI) {
   do {
     if (isa<Constant>(V))
       return true;
@@ -355,7 +355,7 @@ static bool IsSafeComputationToRemove(Value *V) {
     if (isa<LoadInst>(V) || isa<InvokeInst>(V) || isa<Argument>(V) ||
         isa<GlobalValue>(V))
       return false;
-    if (isAllocationFn(V))
+    if (isAllocationFn(V, TLI))
       return true;
 
     Instruction *I = cast<Instruction>(V);
@@ -376,7 +376,8 @@ static bool IsSafeComputationToRemove(Value *V) {
 /// of the global and clean up any that obviously don't assign the global a
 /// value that isn't dynamically allocated.
 ///
-static bool CleanupPointerRootUsers(GlobalVariable *GV) {
+static bool CleanupPointerRootUsers(GlobalVariable *GV,
+                                    const TargetLibraryInfo *TLI) {
   // A brief explanation of leak checkers.  The goal is to find bugs where
   // pointers are forgotten, causing an accumulating growth in memory
   // usage over time.  The common strategy for leak checkers is to whitelist the
@@ -432,18 +433,18 @@ static bool CleanupPointerRootUsers(GlobalVariable *GV) {
         C->destroyConstant();
         // This could have invalidated UI, start over from scratch.
         Dead.clear();
-        CleanupPointerRootUsers(GV);
+        CleanupPointerRootUsers(GV, TLI);
         return true;
       }
     }
   }
 
   for (int i = 0, e = Dead.size(); i != e; ++i) {
-    if (IsSafeComputationToRemove(Dead[i].first)) {
+    if (IsSafeComputationToRemove(Dead[i].first, TLI)) {
       Dead[i].second->eraseFromParent();
       Instruction *I = Dead[i].first;
       do {
-	if (isAllocationFn(I))
+	if (isAllocationFn(I, TLI))
 	  break;
         Instruction *J = dyn_cast<Instruction>(I->getOperand(0));
         if (!J)
@@ -975,7 +976,7 @@ static bool OptimizeAwayTrappingUsesOfLoads(GlobalVariable *GV, Constant *LV,
   // nor is the global.
   if (AllNonStoreUsesGone) {
     if (isLeakCheckerRoot(GV)) {
-      Changed |= CleanupPointerRootUsers(GV);
+      Changed |= CleanupPointerRootUsers(GV, TLI);
     } else {
       Changed = true;
       CleanupConstantGlobalUsers(GV, 0, TD, TLI);
@@ -1465,9 +1466,10 @@ static void RewriteUsesOfLoadForHeapSRoA(LoadInst *Load,
 /// PerformHeapAllocSRoA - CI is an allocation of an array of structures.  Break
 /// it up into multiple allocations of arrays of the fields.
 static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, CallInst *CI,
-                                            Value *NElems, TargetData *TD) {
+                                            Value *NElems, TargetData *TD,
+                                            const TargetLibraryInfo *TLI) {
   DEBUG(dbgs() << "SROA HEAP ALLOC: " << *GV << "  MALLOC = " << *CI << '\n');
-  Type *MAT = getMallocAllocatedType(CI);
+  Type *MAT = getMallocAllocatedType(CI, TLI);
   StructType *STy = cast<StructType>(MAT);
 
   // There is guaranteed to be at least one use of the malloc (storing
@@ -1688,7 +1690,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
   // This eliminates dynamic allocation, avoids an indirection accessing the
   // data, and exposes the resultant global to further GlobalOpt.
   // We cannot optimize the malloc if we cannot determine malloc array size.
-  Value *NElems = getMallocArraySize(CI, TD, true);
+  Value *NElems = getMallocArraySize(CI, TD, TLI, true);
   if (!NElems)
     return false;
 
@@ -1725,7 +1727,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
 
     // If this is a fixed size array, transform the Malloc to be an alloc of
     // structs.  malloc [100 x struct],1 -> malloc struct, 100
-    if (ArrayType *AT = dyn_cast<ArrayType>(getMallocAllocatedType(CI))) {
+    if (ArrayType *AT = dyn_cast<ArrayType>(getMallocAllocatedType(CI, TLI))) {
       Type *IntPtrTy = TD->getIntPtrType(CI->getContext());
       unsigned TypeSize = TD->getStructLayout(AllocSTy)->getSizeInBytes();
       Value *AllocSize = ConstantInt::get(IntPtrTy, TypeSize);
@@ -1742,7 +1744,8 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
         CI = cast<CallInst>(Malloc);
     }
 
-    GVI = PerformHeapAllocSRoA(GV, CI, getMallocArraySize(CI, TD, true), TD);
+    GVI = PerformHeapAllocSRoA(GV, CI, getMallocArraySize(CI, TD, TLI, true),
+                               TD, TLI);
     return true;
   }
 
@@ -1771,8 +1774,8 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
       // Optimize away any trapping uses of the loaded value.
       if (OptimizeAwayTrappingUsesOfLoads(GV, SOVC, TD, TLI))
         return true;
-    } else if (CallInst *CI = extractMallocCall(StoredOnceVal)) {
-      Type *MallocType = getMallocAllocatedType(CI);
+    } else if (CallInst *CI = extractMallocCall(StoredOnceVal, TLI)) {
+      Type *MallocType = getMallocAllocatedType(CI, TLI);
       if (MallocType &&
           TryToOptimizeStoreOfMallocToGlobal(GV, CI, MallocType, Ordering, GVI,
                                              TD, TLI))
@@ -1964,7 +1967,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
     bool Changed;
     if (isLeakCheckerRoot(GV)) {
       // Delete any constant stores to the global.
-      Changed = CleanupPointerRootUsers(GV);
+      Changed = CleanupPointerRootUsers(GV, TLI);
     } else {
       // Delete any stores we can find to the global.  We may not be able to
       // make it completely dead though.

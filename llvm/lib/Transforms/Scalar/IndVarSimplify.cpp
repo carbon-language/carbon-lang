@@ -44,6 +44,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/SimplifyIndVar.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -68,6 +69,7 @@ namespace {
     ScalarEvolution *SE;
     DominatorTree   *DT;
     TargetData      *TD;
+    TargetLibraryInfo *TLI;
 
     SmallVector<WeakVH, 16> DeadInsts;
     bool Changed;
@@ -414,11 +416,11 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
   // new comparison.
   NewCompare->takeName(Compare);
   Compare->replaceAllUsesWith(NewCompare);
-  RecursivelyDeleteTriviallyDeadInstructions(Compare);
+  RecursivelyDeleteTriviallyDeadInstructions(Compare, TLI);
 
   // Delete the old floating point increment.
   Incr->replaceAllUsesWith(UndefValue::get(Incr->getType()));
-  RecursivelyDeleteTriviallyDeadInstructions(Incr);
+  RecursivelyDeleteTriviallyDeadInstructions(Incr, TLI);
 
   // If the FP induction variable still has uses, this is because something else
   // in the loop uses its value.  In order to canonicalize the induction
@@ -431,7 +433,7 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
     Value *Conv = new SIToFPInst(NewPHI, PN->getType(), "indvar.conv",
                                  PN->getParent()->getFirstInsertionPt());
     PN->replaceAllUsesWith(Conv);
-    RecursivelyDeleteTriviallyDeadInstructions(PN);
+    RecursivelyDeleteTriviallyDeadInstructions(PN, TLI);
   }
   Changed = true;
 }
@@ -550,14 +552,14 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
         PN->setIncomingValue(i, ExitVal);
 
         // If this instruction is dead now, delete it.
-        RecursivelyDeleteTriviallyDeadInstructions(Inst);
+        RecursivelyDeleteTriviallyDeadInstructions(Inst, TLI);
 
         if (NumPreds == 1) {
           // Completely replace a single-pred PHI. This is safe, because the
           // NewVal won't be variant in the loop, so we don't need an LCSSA phi
           // node anymore.
           PN->replaceAllUsesWith(ExitVal);
-          RecursivelyDeleteTriviallyDeadInstructions(PN);
+          RecursivelyDeleteTriviallyDeadInstructions(PN, TLI);
         }
       }
       if (NumPreds != 1) {
@@ -1697,6 +1699,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   SE = &getAnalysis<ScalarEvolution>();
   DT = &getAnalysis<DominatorTree>();
   TD = getAnalysisIfAvailable<TargetData>();
+  TLI = getAnalysisIfAvailable<TargetLibraryInfo>();
 
   DeadInsts.clear();
   Changed = false;
@@ -1763,7 +1766,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   while (!DeadInsts.empty())
     if (Instruction *Inst =
           dyn_cast_or_null<Instruction>(&*DeadInsts.pop_back_val()))
-      RecursivelyDeleteTriviallyDeadInstructions(Inst);
+      RecursivelyDeleteTriviallyDeadInstructions(Inst, TLI);
 
   // The Rewriter may not be used from this point on.
 
@@ -1772,7 +1775,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   SinkUnusedInvariants(L);
 
   // Clean up dead instructions.
-  Changed |= DeleteDeadPHIs(L->getHeader());
+  Changed |= DeleteDeadPHIs(L->getHeader(), TLI);
   // Check a post-condition.
   assert(L->isLCSSAForm(*DT) &&
          "Indvars did not leave the loop in lcssa form!");

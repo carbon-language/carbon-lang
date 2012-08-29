@@ -24,6 +24,16 @@ void TargetLibraryInfo::anchor() { }
 
 const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
   {
+    "_ZdaPv",
+    "_ZdlPv",
+    "_Znaj",
+    "_ZnajRKSt9nothrow_t",
+    "_Znam",
+    "_ZnamRKSt9nothrow_t",
+    "_Znwj",
+    "_ZnwjRKSt9nothrow_t",
+    "_Znwm",
+    "_ZnwmRKSt9nothrow_t",
     "__cxa_atexit",
     "__cxa_guard_abort",
     "__cxa_guard_acquire",
@@ -50,6 +60,7 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "atanhf",
     "atanhl",
     "atanl",
+    "calloc",
     "cbrt",
     "cbrtf",
     "cbrtl",
@@ -89,6 +100,7 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "fmodl",
     "fputc",
     "fputs",
+    "free",
     "fwrite",
     "iprintf",
     "log",
@@ -106,6 +118,7 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "logbl",
     "logf",
     "logl",
+    "malloc",
     "memchr",
     "memcmp",
     "memcpy",
@@ -115,11 +128,14 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "nearbyint",
     "nearbyintf",
     "nearbyintl",
+    "posix_memalign",
     "pow",
     "powf",
     "powl",
     "putchar",
     "puts",
+    "realloc",
+    "reallocf",
     "rint",
     "rintf",
     "rintl",
@@ -139,10 +155,12 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "strcat",
     "strchr",
     "strcpy",
+    "strdup",
     "strlen",
     "strncat",
     "strncmp",
     "strncpy",
+    "strndup",
     "strnlen",
     "tan",
     "tanf",
@@ -152,7 +170,8 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "tanl",
     "trunc",
     "truncf",
-    "truncl"
+    "truncl",
+    "valloc"
   };
 
 /// initialize - Initialize the set of available library functions based on the

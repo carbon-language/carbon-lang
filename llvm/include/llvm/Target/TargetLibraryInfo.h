@@ -18,6 +18,26 @@ namespace llvm {
 
   namespace LibFunc {
     enum Func {
+      /// void operator delete[](void*);
+      ZdaPv,
+      /// void operator delete(void*);
+      ZdlPv,
+      /// void *new[](unsigned int);
+      Znaj,
+      /// void *new[](unsigned int, nothrow);
+      ZnajRKSt9nothrow_t,
+      /// void *new[](unsigned long);
+      Znam,
+      /// void *new[](unsigned long, nothrow);
+      ZnamRKSt9nothrow_t,
+      /// void *new(unsigned int);
+      Znwj,
+      /// void *new(unsigned int, nothrow);
+      ZnwjRKSt9nothrow_t,
+      /// void *new(unsigned long);
+      Znwm,
+      /// void *new(unsigned long, nothrow);
+      ZnwmRKSt9nothrow_t,
       /// int __cxa_atexit(void (*f)(void *), void *p, void *d);
       cxa_atexit,
       /// void __cxa_guard_abort(guard_t *guard);
@@ -71,6 +91,8 @@ namespace llvm {
       atanhl,
       /// long double atanl(long double x);
       atanl,
+      /// void *calloc(size_t count, size_t size);
+      calloc,
       /// double cbrt(double x);
       cbrt,
       /// float cbrtf(float x);
@@ -149,6 +171,8 @@ namespace llvm {
       fputc,
       /// int fputs(const char *s, FILE *stream);
       fputs,
+      /// void free(void *ptr);
+      free,
       /// size_t fwrite(const void *ptr, size_t size, size_t nitems,
       /// FILE *stream);
       fwrite,
@@ -184,6 +208,8 @@ namespace llvm {
       logf,
       /// long double logl(long double x);
       logl,
+      /// void *malloc(size_t size);
+      malloc,
       /// void *memchr(const void *s, int c, size_t n);
       memchr,
       /// int memcmp(const void *s1, const void *s2, size_t n);
@@ -202,6 +228,8 @@ namespace llvm {
       nearbyintf,
       /// long double nearbyintl(long double x);
       nearbyintl,
+      /// int posix_memalign(void **memptr, size_t alignment, size_t size);
+      posix_memalign,
       /// double pow(double x, double y);
       pow,
       /// float powf(float x, float y);
@@ -212,6 +240,10 @@ namespace llvm {
       putchar,
       /// int puts(const char *s);
       puts,
+      /// void *realloc(void *ptr, size_t size);
+      realloc,
+      /// void *reallocf(void *ptr, size_t size);
+      reallocf,
       /// double rint(double x);
       rint,
       /// float rintf(float x);
@@ -250,6 +282,8 @@ namespace llvm {
       strchr,
       /// char *strcpy(char *s1, const char *s2);
       strcpy,
+      /// char *strdup(const char *s1);
+      strdup,
       /// size_t strlen(const char *s);
       strlen,
       /// char *strncat(char *s1, const char *s2, size_t n);
@@ -258,6 +292,8 @@ namespace llvm {
       strncmp,
       /// char *strncpy(char *s1, const char *s2, size_t n);
       strncpy,
+      /// char *strndup(const char *s1, size_t n);
+      strndup,
       /// size_t strnlen(const char *s, size_t maxlen);
       strnlen,
       /// double tan(double x);
@@ -278,6 +314,8 @@ namespace llvm {
       truncf,
       /// long double truncl(long double x);
       truncl,
+      /// void *valloc(size_t size);
+      valloc,
 
       NumLibFuncs
     };

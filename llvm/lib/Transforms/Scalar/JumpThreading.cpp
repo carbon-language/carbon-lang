@@ -1455,7 +1455,7 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB,
   // At this point, the IR is fully up to date and consistent.  Do a quick scan
   // over the new instructions and zap any that are constants or dead.  This
   // frequently happens because of phi translation.
-  SimplifyInstructionsInBlock(NewBB, TD);
+  SimplifyInstructionsInBlock(NewBB, TD, TLI);
 
   // Threaded an edge!
   ++NumThreads;

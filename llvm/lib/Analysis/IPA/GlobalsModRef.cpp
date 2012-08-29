@@ -263,7 +263,7 @@ bool GlobalsModRef::AnalyzeUsesOfPointer(Value *V,
     } else if (BitCastInst *BCI = dyn_cast<BitCastInst>(U)) {
       if (AnalyzeUsesOfPointer(BCI, Readers, Writers, OkayStoreDest))
         return true;
-    } else if (isFreeCall(U)) {
+    } else if (isFreeCall(U, TLI)) {
       Writers.push_back(cast<Instruction>(U)->getParent()->getParent());
     } else if (CallInst *CI = dyn_cast<CallInst>(U)) {
       // Make sure that this is just the function being called, not that it is
@@ -329,7 +329,7 @@ bool GlobalsModRef::AnalyzeIndirectGlobalMemory(GlobalValue *GV) {
       // Check the value being stored.
       Value *Ptr = GetUnderlyingObject(SI->getOperand(0));
 
-      if (!isAllocLikeFn(Ptr))
+      if (!isAllocLikeFn(Ptr, TLI))
         return false;  // Too hard to analyze.
 
       // Analyze all uses of the allocation.  If any of them are used in a
@@ -458,7 +458,7 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
           if (SI->isVolatile())
             // Treat volatile stores as reading memory somewhere.
             FunctionEffect |= Ref;
-        } else if (isAllocationFn(&*II) || isFreeCall(&*II)) {
+        } else if (isAllocationFn(&*II, TLI) || isFreeCall(&*II, TLI)) {
           FunctionEffect |= ModRef;
         } else if (IntrinsicInst *Intrinsic = dyn_cast<IntrinsicInst>(&*II)) {
           // The callgraph doesn't include intrinsic calls.

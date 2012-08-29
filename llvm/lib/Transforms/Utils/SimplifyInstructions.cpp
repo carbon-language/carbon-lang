@@ -72,7 +72,7 @@ namespace {
                 ++NumSimplified;
                 Changed = true;
               }
-            Changed |= RecursivelyDeleteTriviallyDeadInstructions(I);
+            Changed |= RecursivelyDeleteTriviallyDeadInstructions(I, TLI);
           }
 
         // Place the list of instructions to simplify on the next loop iteration

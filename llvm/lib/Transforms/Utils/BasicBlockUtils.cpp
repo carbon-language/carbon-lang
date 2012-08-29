@@ -94,7 +94,7 @@ void llvm::FoldSingleEntryPHINodes(BasicBlock *BB, Pass *P) {
 /// is dead. Also recursively delete any operands that become dead as
 /// a result. This includes tracing the def-use list from the PHI to see if
 /// it is ultimately unused or if it reaches an unused cycle.
-bool llvm::DeleteDeadPHIs(BasicBlock *BB) {
+bool llvm::DeleteDeadPHIs(BasicBlock *BB, const TargetLibraryInfo *TLI) {
   // Recursively deleting a PHI may cause multiple PHIs to be deleted
   // or RAUW'd undef, so use an array of WeakVH for the PHIs to delete.
   SmallVector<WeakVH, 8> PHIs;
@@ -105,7 +105,7 @@ bool llvm::DeleteDeadPHIs(BasicBlock *BB) {
   bool Changed = false;
   for (unsigned i = 0, e = PHIs.size(); i != e; ++i)
     if (PHINode *PN = dyn_cast_or_null<PHINode>(PHIs[i].operator Value*()))
-      Changed |= RecursivelyDeleteDeadPHINode(PN);
+      Changed |= RecursivelyDeleteDeadPHINode(PN, TLI);
 
   return Changed;
 }

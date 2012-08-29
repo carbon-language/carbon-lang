@@ -374,7 +374,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
     Instruction *Inst = I++;
 
     // Dead instructions should just be removed.
-    if (isInstructionTriviallyDead(Inst)) {
+    if (isInstructionTriviallyDead(Inst, TLI)) {
       DEBUG(dbgs() << "EarlyCSE DCE: " << *Inst << '\n');
       Inst->eraseFromParent();
       Changed = true;

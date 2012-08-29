@@ -28,6 +28,7 @@ namespace llvm {
 class CallInst;
 class PointerType;
 class TargetData;
+class TargetLibraryInfo;
 class Type;
 class Value;
 
@@ -35,27 +36,33 @@ class Value;
 /// \brief Tests if a value is a call or invoke to a library function that
 /// allocates or reallocates memory (either malloc, calloc, realloc, or strdup
 /// like).
-bool isAllocationFn(const Value *V, bool LookThroughBitCast = false);
+bool isAllocationFn(const Value *V, const TargetLibraryInfo *TLI,
+                    bool LookThroughBitCast = false);
 
 /// \brief Tests if a value is a call or invoke to a function that returns a
 /// NoAlias pointer (including malloc/calloc/realloc/strdup-like functions).
-bool isNoAliasFn(const Value *V, bool LookThroughBitCast = false);
+bool isNoAliasFn(const Value *V, const TargetLibraryInfo *TLI,
+                 bool LookThroughBitCast = false);
 
 /// \brief Tests if a value is a call or invoke to a library function that
 /// allocates uninitialized memory (such as malloc).
-bool isMallocLikeFn(const Value *V, bool LookThroughBitCast = false);
+bool isMallocLikeFn(const Value *V, const TargetLibraryInfo *TLI,
+                    bool LookThroughBitCast = false);
 
 /// \brief Tests if a value is a call or invoke to a library function that
 /// allocates zero-filled memory (such as calloc).
-bool isCallocLikeFn(const Value *V, bool LookThroughBitCast = false);
+bool isCallocLikeFn(const Value *V, const TargetLibraryInfo *TLI,
+                    bool LookThroughBitCast = false);
 
 /// \brief Tests if a value is a call or invoke to a library function that
 /// allocates memory (either malloc, calloc, or strdup like).
-bool isAllocLikeFn(const Value *V, bool LookThroughBitCast = false);
+bool isAllocLikeFn(const Value *V, const TargetLibraryInfo *TLI,
+                   bool LookThroughBitCast = false);
 
 /// \brief Tests if a value is a call or invoke to a library function that
 /// reallocates memory (such as realloc).
-bool isReallocLikeFn(const Value *V, bool LookThroughBitCast = false);
+bool isReallocLikeFn(const Value *V, const TargetLibraryInfo *TLI,
+                     bool LookThroughBitCast = false);
 
 
 //===----------------------------------------------------------------------===//
@@ -65,29 +72,31 @@ bool isReallocLikeFn(const Value *V, bool LookThroughBitCast = false);
 /// extractMallocCall - Returns the corresponding CallInst if the instruction
 /// is a malloc call.  Since CallInst::CreateMalloc() only creates calls, we
 /// ignore InvokeInst here.
-const CallInst *extractMallocCall(const Value *I);
-static inline CallInst *extractMallocCall(Value *I) {
-  return const_cast<CallInst*>(extractMallocCall((const Value*)I));
+const CallInst *extractMallocCall(const Value *I, const TargetLibraryInfo *TLI);
+static inline CallInst *extractMallocCall(Value *I,
+                                          const TargetLibraryInfo *TLI) {
+  return const_cast<CallInst*>(extractMallocCall((const Value*)I, TLI));
 }
 
 /// isArrayMalloc - Returns the corresponding CallInst if the instruction 
 /// is a call to malloc whose array size can be determined and the array size
 /// is not constant 1.  Otherwise, return NULL.
-const CallInst *isArrayMalloc(const Value *I, const TargetData *TD);
+const CallInst *isArrayMalloc(const Value *I, const TargetData *TD,
+                              const TargetLibraryInfo *TLI);
 
 /// getMallocType - Returns the PointerType resulting from the malloc call.
 /// The PointerType depends on the number of bitcast uses of the malloc call:
 ///   0: PointerType is the malloc calls' return type.
 ///   1: PointerType is the bitcast's result type.
 ///  >1: Unique PointerType cannot be determined, return NULL.
-PointerType *getMallocType(const CallInst *CI);
+PointerType *getMallocType(const CallInst *CI, const TargetLibraryInfo *TLI);
 
 /// getMallocAllocatedType - Returns the Type allocated by malloc call.
 /// The Type depends on the number of bitcast uses of the malloc call:
 ///   0: PointerType is the malloc calls' return type.
 ///   1: PointerType is the bitcast's result type.
 ///  >1: Unique PointerType cannot be determined, return NULL.
-Type *getMallocAllocatedType(const CallInst *CI);
+Type *getMallocAllocatedType(const CallInst *CI, const TargetLibraryInfo *TLI);
 
 /// getMallocArraySize - Returns the array size of a malloc call.  If the 
 /// argument passed to malloc is a multiple of the size of the malloced type,
@@ -95,6 +104,7 @@ Type *getMallocAllocatedType(const CallInst *CI);
 /// constant 1.  Otherwise, return NULL for mallocs whose array size cannot be
 /// determined.
 Value *getMallocArraySize(CallInst *CI, const TargetData *TD,
+                          const TargetLibraryInfo *TLI,
                           bool LookThroughSExt = false);
 
 
@@ -104,9 +114,10 @@ Value *getMallocArraySize(CallInst *CI, const TargetData *TD,
 
 /// extractCallocCall - Returns the corresponding CallInst if the instruction
 /// is a calloc call.
-const CallInst *extractCallocCall(const Value *I);
-static inline CallInst *extractCallocCall(Value *I) {
-  return const_cast<CallInst*>(extractCallocCall((const Value*)I));
+const CallInst *extractCallocCall(const Value *I, const TargetLibraryInfo *TLI);
+static inline CallInst *extractCallocCall(Value *I,
+                                          const TargetLibraryInfo *TLI) {
+  return const_cast<CallInst*>(extractCallocCall((const Value*)I, TLI));
 }
 
 
@@ -115,10 +126,10 @@ static inline CallInst *extractCallocCall(Value *I) {
 //
 
 /// isFreeCall - Returns non-null if the value is a call to the builtin free()
-const CallInst *isFreeCall(const Value *I);
+const CallInst *isFreeCall(const Value *I, const TargetLibraryInfo *TLI);
   
-static inline CallInst *isFreeCall(Value *I) {
-  return const_cast<CallInst*>(isFreeCall((const Value*)I));
+static inline CallInst *isFreeCall(Value *I, const TargetLibraryInfo *TLI) {
+  return const_cast<CallInst*>(isFreeCall((const Value*)I, TLI));
 }
 
   
@@ -131,7 +142,7 @@ static inline CallInst *isFreeCall(Value *I) {
 /// If RoundToAlign is true, then Size is rounded up to the aligment of allocas,
 /// byval arguments, and global variables.
 bool getObjectSize(const Value *Ptr, uint64_t &Size, const TargetData *TD,
-                   bool RoundToAlign = false);
+                   const TargetLibraryInfo *TLI, bool RoundToAlign = false);
 
 
 
@@ -143,6 +154,7 @@ class ObjectSizeOffsetVisitor
   : public InstVisitor<ObjectSizeOffsetVisitor, SizeOffsetType> {
 
   const TargetData *TD;
+  const TargetLibraryInfo *TLI;
   bool RoundToAlign;
   unsigned IntTyBits;
   APInt Zero;
@@ -155,8 +167,8 @@ class ObjectSizeOffsetVisitor
   }
 
 public:
-  ObjectSizeOffsetVisitor(const TargetData *TD, LLVMContext &Context,
-                          bool RoundToAlign = false);
+  ObjectSizeOffsetVisitor(const TargetData *TD, const TargetLibraryInfo *TLI,
+                          LLVMContext &Context, bool RoundToAlign = false);
 
   SizeOffsetType compute(Value *V);
 
@@ -202,6 +214,7 @@ class ObjectSizeOffsetEvaluator
   typedef SmallPtrSet<const Value*, 8> PtrSetTy;
 
   const TargetData *TD;
+  const TargetLibraryInfo *TLI;
   LLVMContext &Context;
   BuilderTy Builder;
   IntegerType *IntTy;
@@ -215,7 +228,8 @@ class ObjectSizeOffsetEvaluator
   SizeOffsetEvalType compute_(Value *V);
 
 public:
-  ObjectSizeOffsetEvaluator(const TargetData *TD, LLVMContext &Context);
+  ObjectSizeOffsetEvaluator(const TargetData *TD, const TargetLibraryInfo *TLI,
+                            LLVMContext &Context);
   SizeOffsetEvalType compute(Value *V);
 
   bool knownSize(SizeOffsetEvalType SizeOffset) {

@@ -168,7 +168,7 @@ Instruction *InstCombiner::SimplifyMemSet(MemSetInst *MI) {
 /// the heavy lifting.
 ///
 Instruction *InstCombiner::visitCallInst(CallInst &CI) {
-  if (isFreeCall(&CI))
+  if (isFreeCall(&CI, TLI))
     return visitFree(CI);
 
   // If the caller function is nounwind, mark the call as nounwind, even if the
@@ -243,7 +243,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   default: break;
   case Intrinsic::objectsize: {
     uint64_t Size;
-    if (getObjectSize(II->getArgOperand(0), Size, TD))
+    if (getObjectSize(II->getArgOperand(0), Size, TD, TLI))
       return ReplaceInstUsesWith(CI, ConstantInt::get(CI.getType(), Size));
     return 0;
   }
@@ -877,7 +877,7 @@ static IntrinsicInst *FindInitTrampoline(Value *Callee) {
 // visitCallSite - Improvements for call and invoke instructions.
 //
 Instruction *InstCombiner::visitCallSite(CallSite CS) {
-  if (isAllocLikeFn(CS.getInstruction()))
+  if (isAllocLikeFn(CS.getInstruction(), TLI))
     return visitAllocSite(*CS.getInstruction());
 
   bool Changed = false;

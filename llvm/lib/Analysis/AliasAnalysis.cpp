@@ -36,6 +36,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Type.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 using namespace llvm;
 
 // Register the AliasAnalysis interface, providing a nice name to refer to.
@@ -452,6 +453,7 @@ AliasAnalysis::~AliasAnalysis() {}
 ///
 void AliasAnalysis::InitializeAliasAnalysis(Pass *P) {
   TD = P->getAnalysisIfAvailable<TargetData>();
+  TLI = P->getAnalysisIfAvailable<TargetLibraryInfo>();
   AA = &P->getAnalysis<AliasAnalysis>();
 }
 

@@ -46,6 +46,7 @@ class LoadInst;
 class StoreInst;
 class VAArgInst;
 class TargetData;
+class TargetLibraryInfo;
 class Pass;
 class AnalysisUsage;
 class MemTransferInst;
@@ -55,6 +56,7 @@ class DominatorTree;
 class AliasAnalysis {
 protected:
   const TargetData *TD;
+  const TargetLibraryInfo *TLI;
 
 private:
   AliasAnalysis *AA;       // Previous Alias Analysis to chain to.
@@ -73,7 +75,7 @@ protected:
 
 public:
   static char ID; // Class identification, replacement for typeinfo
-  AliasAnalysis() : TD(0), AA(0) {}
+  AliasAnalysis() : TD(0), TLI(0), AA(0) {}
   virtual ~AliasAnalysis();  // We want to be subclassed
 
   /// UnknownSize - This is a special value which can be used with the
@@ -85,6 +87,11 @@ public:
   /// null if no TargetData object is available.
   ///
   const TargetData *getTargetData() const { return TD; }
+
+  /// getTargetLibraryInfo - Return a pointer to the current TargetLibraryInfo
+  /// object, or null if no TargetLibraryInfo object is available.
+  ///
+  const TargetLibraryInfo *getTargetLibraryInfo() const { return TLI; }
 
   /// getTypeStoreSize - Return the TargetData store size for the given type,
   /// if known, or a conservative value otherwise.
