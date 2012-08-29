@@ -213,7 +213,7 @@ def runScanBuild(Dir, SBOutputDir, PBuildLogFile):
             # If using 'make', auto imply a -jX argument
             # to speed up analysis.  xcodebuild will
             # automatically use the maximum number of cores.
-            if Command.startsWith("make "):
+            if Command.startswith("make "):
                 Command += "-j" + Jobs
             SBCommand = SBPrefix + Command
             if Verbose == 1:        
@@ -404,6 +404,9 @@ def runCmpResults(Dir):
     RefList = glob.glob(RefDir + "/*") 
     NewList = glob.glob(NewDir + "/*")
     
+    print "  Comparing Results: %s" % (os.path.join(RefDir, LogFolderName))
+    print "  Comparing Results: %s" % (os.path.join(NewDir, LogFolderName))
+
     # Log folders are also located in the results dir, so ignore them. 
     RefList.remove(os.path.join(RefDir, LogFolderName))
     NewList.remove(os.path.join(NewDir, LogFolderName))
