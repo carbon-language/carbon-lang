@@ -1343,7 +1343,12 @@ bool MachineInstr::isSafeToMove(const TargetInstrInfo *TII,
                                 AliasAnalysis *AA,
                                 bool &SawStore) const {
   // Ignore stuff that we obviously can't move.
-  if (mayStore() || isCall()) {
+  //
+  // Treat volatile loads as stores. This is not strictly necessary for
+  // volatiles, but it is required for atomic loads. It is now allowed to move
+  // a load across an atomic load with Ordering > Monotonic.
+  if (mayStore() || isCall() ||
+      (mayLoad() && hasVolatileMemoryRef())) {
     SawStore = true;
     return false;
   }
@@ -1359,8 +1364,8 @@ bool MachineInstr::isSafeToMove(const TargetInstrInfo *TII,
   // load.
   if (mayLoad() && !isInvariantLoad(AA))
     // Otherwise, this is a real load.  If there is a store between the load and
-    // end of block, or if the load is volatile, we can't move it.
-    return !SawStore && !hasVolatileMemoryRef();
+    // end of block, we can't move it.
+    return !SawStore;
 
   return true;
 }
