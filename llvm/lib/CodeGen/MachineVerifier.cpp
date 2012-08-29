@@ -24,6 +24,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/BasicBlock.h"
+#include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveVariables.h"
@@ -212,6 +213,9 @@ namespace {
                 const LiveInterval &LI);
     void report(const char *msg, const MachineBasicBlock *MBB,
                 const LiveInterval &LI);
+
+    void verifyInlineAsm(const MachineInstr *MI);
+    void verifyTiedOperands(const MachineInstr *MI);
 
     void checkLiveness(const MachineOperand *MO, unsigned MONum);
     void markReachable(const MachineBasicBlock *MBB);
@@ -695,6 +699,81 @@ void MachineVerifier::visitMachineBundleBefore(const MachineInstr *MI) {
   }
 }
 
+// The operands on an INLINEASM instruction must follow a template.
+// Verify that the flag operands make sense.
+void MachineVerifier::verifyInlineAsm(const MachineInstr *MI) {
+  // The first two operands on INLINEASM are the asm string and global flags.
+  if (MI->getNumOperands() < 2) {
+    report("Too few operands on inline asm", MI);
+    return;
+  }
+  if (!MI->getOperand(0).isSymbol())
+    report("Asm string must be an external symbol", MI);
+  if (!MI->getOperand(1).isImm())
+    report("Asm flags must be an immediate", MI);
+  // Allowed flags are Extra_HasSideEffects = 1, and Extra_IsAlignStack = 2.
+  if (!isUInt<2>(MI->getOperand(1).getImm()))
+    report("Unknown asm flags", &MI->getOperand(1), 1);
+
+  assert(InlineAsm::MIOp_FirstOperand == 2 && "Asm format changed");
+
+  unsigned OpNo = InlineAsm::MIOp_FirstOperand;
+  unsigned NumOps;
+  for (unsigned e = MI->getNumOperands(); OpNo < e; OpNo += NumOps) {
+    const MachineOperand &MO = MI->getOperand(OpNo);
+    // There may be implicit ops after the fixed operands.
+    if (!MO.isImm())
+      break;
+    NumOps = 1 + InlineAsm::getNumOperandRegisters(MO.getImm());
+  }
+
+  if (OpNo > MI->getNumOperands())
+    report("Missing operands in last group", MI);
+
+  // An optional MDNode follows the groups.
+  if (OpNo < MI->getNumOperands() && MI->getOperand(OpNo).isMetadata())
+    ++OpNo;
+
+  // All trailing operands must be implicit registers.
+  for (unsigned e = MI->getNumOperands(); OpNo < e; ++OpNo) {
+    const MachineOperand &MO = MI->getOperand(OpNo);
+    if (!MO.isReg() || !MO.isImplicit())
+      report("Expected implicit register after groups", &MO, OpNo);
+  }
+}
+
+// Verify the consistency of tied operands.
+void MachineVerifier::verifyTiedOperands(const MachineInstr *MI) {
+  const MCInstrDesc &MCID = MI->getDesc();
+  SmallVector<unsigned, 4> Defs;
+  SmallVector<unsigned, 4> Uses;
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg() || !MO.isTied())
+      continue;
+    if (MO.isDef()) {
+      Defs.push_back(i);
+      continue;
+    }
+    Uses.push_back(i);
+    if (Defs.size() < Uses.size()) {
+      report("No tied def for tied use", &MO, i);
+      break;
+    }
+    if (i >= MCID.getNumOperands())
+      continue;
+    int DefIdx = MCID.getOperandConstraint(i, MCOI::TIED_TO);
+    if (unsigned(DefIdx) != Defs[Uses.size() - 1]) {
+      report(" def doesn't match MCInstrDesc", &MO, i);
+      *OS << "Descriptor says tied def should be operand " << DefIdx << ".\n";
+    }
+  }
+  if (Defs.size() > Uses.size()) {
+    unsigned i = Defs[Uses.size() - 1];
+    report("No tied use for tied def", &MI->getOperand(i), i);
+  }
+}
+
 void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
   const MCInstrDesc &MCID = MI->getDesc();
   if (MI->getNumOperands() < MCID.getNumOperands()) {
@@ -704,33 +783,10 @@ void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
   }
 
   // Check the tied operands.
-  SmallVector<unsigned, 4> TiedDefs;
-  SmallVector<unsigned, 4> TiedUses;
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg() || !MO.isTied())
-      continue;
-    if (MO.isDef()) {
-      TiedDefs.push_back(i);
-      continue;
-    }
-    TiedUses.push_back(i);
-    if (TiedDefs.size() < TiedUses.size()) {
-      report("No tied def for tied use", &MO, i);
-      break;
-    }
-    if (i >= MCID.getNumOperands())
-      continue;
-    int DefIdx = MCID.getOperandConstraint(i, MCOI::TIED_TO);
-    if (unsigned(DefIdx) != TiedDefs[TiedUses.size() - 1]) {
-      report("Tied def doesn't match MCInstrDesc", &MO, i);
-      *OS << "Descriptor says tied def should be operand " << DefIdx << ".\n";
-    }
-  }
-  if (TiedDefs.size() > TiedUses.size()) {
-    unsigned i = TiedDefs[TiedUses.size() - 1];
-    report("No tied use for tied def", &MI->getOperand(i), i);
-  }
+  if (MI->isInlineAsm())
+    verifyInlineAsm(MI);
+  else
+    verifyTiedOperands(MI);
 
   // Check the MachineMemOperands for basic consistency.
   for (MachineInstr::mmo_iterator I = MI->memoperands_begin(),
