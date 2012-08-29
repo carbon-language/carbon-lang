@@ -1,4 +1,4 @@
-RUN: llvm-objdump -disassemble -triple mips64el -mattr +mips64r2 %p/dext-test.elf-mips64r2 \
+RUN: llvm-objdump -disassemble -triple mips64el -mattr +mips64r2 %p/../Inputs/dext-test.elf-mips64r2 \
 RUN: | FileCheck %s
 
 CHECK: Disassembly of section .text:
