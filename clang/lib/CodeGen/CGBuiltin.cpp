@@ -1478,7 +1478,8 @@ CodeGenFunction::EmitPointerWithAlignment(const Expr *Addr) {
   assert(Addr->getType()->isPointerType());
   Addr = Addr->IgnoreParens();
   if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Addr)) {
-    if (ICE->getCastKind() == CK_BitCast || ICE->getCastKind() == CK_NoOp) {
+    if ((ICE->getCastKind() == CK_BitCast || ICE->getCastKind() == CK_NoOp) &&
+        ICE->getSubExpr()->getType()->isPointerType()) {
       std::pair<llvm::Value*, unsigned> Ptr = 
           EmitPointerWithAlignment(ICE->getSubExpr());
       Ptr.first = Builder.CreateBitCast(Ptr.first,
