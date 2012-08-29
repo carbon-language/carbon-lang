@@ -111,6 +111,7 @@ void MachineOperand::setIsDef(bool Val) {
 /// the specified value.  If an operand is known to be an immediate already,
 /// the setImm method should be used.
 void MachineOperand::ChangeToImmediate(int64_t ImmVal) {
+  assert((!isReg() || !isTied()) && "Cannot change a tied operand into an imm");
   // If this operand is currently a register operand, and if this is in a
   // function, deregister the operand from the register's use/def list.
   if (isReg() && isOnRegUseList())
@@ -136,7 +137,8 @@ void MachineOperand::ChangeToRegister(unsigned Reg, bool isDef, bool isImp,
         RegInfo = &MF->getRegInfo();
   // If this operand is already a register operand, remove it from the
   // register's use/def lists.
-  if (RegInfo && isReg())
+  bool WasReg = isReg();
+  if (RegInfo && WasReg)
     RegInfo->removeRegOperandFromUseList(this);
 
   // Change this to a register and set the reg#.
@@ -153,6 +155,9 @@ void MachineOperand::ChangeToRegister(unsigned Reg, bool isDef, bool isImp,
   IsDebug = isDebug;
   // Ensure isOnRegUseList() returns false.
   Contents.Reg.Prev = 0;
+  // Preserve the tie bit when the operand was already a register.
+  if (!WasReg)
+    IsTied = false;
 
   // If this operand is embedded in a function, add the operand to the
   // register's use/def list.
@@ -711,6 +716,8 @@ void MachineInstr::addOperand(const MachineOperand &Op) {
   if (Operands[OpNo].isReg()) {
     // Ensure isOnRegUseList() returns false, regardless of Op's status.
     Operands[OpNo].Contents.Reg.Prev = 0;
+    // Ignore existing IsTied bit. This is not a property that can be copied.
+    Operands[OpNo].IsTied = false;
     // Add the new operand to RegInfo.
     if (RegInfo)
       RegInfo->addRegOperandToUseList(&Operands[OpNo]);
@@ -743,6 +750,7 @@ void MachineInstr::addOperand(const MachineOperand &Op) {
 ///
 void MachineInstr::RemoveOperand(unsigned OpNo) {
   assert(OpNo < Operands.size() && "Invalid operand number");
+  untieRegOperand(OpNo);
   MachineRegisterInfo *RegInfo = getRegInfo();
 
   // Special case removing the last one.
@@ -1125,6 +1133,36 @@ int MachineInstr::findFirstPredOperandIdx() const {
   }
 
   return -1;
+}
+
+/// Given the index of a tied register operand, find the operand it is tied to.
+/// Defs are tied to uses and vice versa. Returns the index of the tied operand
+/// which must exist.
+unsigned MachineInstr::findTiedOperandIdx(unsigned OpIdx) const {
+  // It doesn't usually happen, but an instruction can have multiple pairs of
+  // tied operands.
+  SmallVector<unsigned, 4> Uses, Defs;
+  unsigned PairNo = ~0u;
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = getOperand(i);
+    if (!MO.isReg() || !MO.isTied())
+      continue;
+    if (MO.isUse()) {
+      if (i == OpIdx)
+        PairNo = Uses.size();
+      Uses.push_back(i);
+    } else {
+      if (i == OpIdx)
+        PairNo = Defs.size();
+      Defs.push_back(i);
+    }
+  }
+  // For each tied use there must be a tied def and vice versa.
+  assert(Uses.size() == Defs.size() && "Tied uses and defs don't match");
+  assert(PairNo < Uses.size() && "OpIdx must be a tied register operand");
+
+  // Find the matching operand.
+  return (getOperand(OpIdx).isDef() ? Uses : Defs)[PairNo];
 }
 
 /// isRegTiedToUseOperand - Given the index of a register def operand,

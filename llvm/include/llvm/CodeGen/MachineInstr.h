@@ -782,6 +782,11 @@ public:
                         const TargetInstrInfo *TII,
                         const TargetRegisterInfo *TRI) const;
 
+  /// findTiedOperandIdx - Given the index of a tied register operand, find the
+  /// operand it is tied to. Defs are tied to uses and vice versa. Returns the
+  /// index of the tied operand which must exist.
+  unsigned findTiedOperandIdx(unsigned OpIdx) const;
+
   /// isRegTiedToUseOperand - Given the index of a register def operand,
   /// check if the register def is tied to a source operand, due to either
   /// two-address elimination or inline assembly constraints. Returns the
@@ -934,6 +939,13 @@ private:
   /// return the MachineRegisterInfo object for the current function, otherwise
   /// return null.
   MachineRegisterInfo *getRegInfo();
+
+  /// untieRegOperand - Break any tie involving OpIdx.
+  void untieRegOperand(unsigned OpIdx) {
+    const MachineOperand &MO = getOperand(OpIdx);
+    if (MO.isReg() && MO.isTied())
+      getOperand(findTiedOperandIdx(OpIdx)).setIsTied(false);
+  }
 
   /// addImplicitDefUseOperands - Add all implicit def and use operands to
   /// this instruction.
