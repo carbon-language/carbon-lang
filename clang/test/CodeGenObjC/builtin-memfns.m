@@ -2,9 +2,9 @@
 
 void *memcpy(void *restrict s1, const void *restrict s2, unsigned long n);
 
-// PR13660
+// PR13697
 void test1(int *a, id b) {
-	// CHECK: @test1
-	// CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* {{.*}}, i8* {{.*}}, i64 8, i32 1, i1 false)
-	memcpy(a, b, 8);
+  // CHECK: @test1
+  // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* {{.*}}, i8* {{.*}}, i64 8, i32 1, i1 false)
+  memcpy(a, b, 8);
 }
