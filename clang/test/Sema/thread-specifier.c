@@ -21,3 +21,10 @@ __thread int t15; // expected-note {{previous definition is here}}
 int t15; // expected-error {{non-thread-local declaration of 't15' follows thread-local declaration}}
 int t16; // expected-note {{previous definition is here}}
 __thread int t16; // expected-error {{thread-local declaration of 't16' follows non-thread-local declaration}}
+
+// PR13720
+__thread int thread_int;
+int *thread_int_ptr = &thread_int; // expected-error{{initializer element is not a compile-time constant}}
+void g() {
+  int *p = &thread_int; // This is perfectly fine, though.
+}
