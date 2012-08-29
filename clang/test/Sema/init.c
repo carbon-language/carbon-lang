@@ -157,3 +157,10 @@ int PR4386_zed() __attribute((weak));
 typedef char strty[10];
 struct vortexstruct { strty s; };
 struct vortexstruct vortexvar = { "asdf" };
+
+// PR13720
+__thread int thread_int;
+int *thread_int_ptr = &thread_int; // expected-error{{initializer element is not a compile-time constant}}
+void f() {
+  int *p = &thread_int; // This is perfectly fine, though.
+}
