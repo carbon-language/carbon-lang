@@ -1377,7 +1377,16 @@ namespace ConditionalLValToRVal {
 
 namespace TLS {
   __thread int n;
-  constexpr int &f() { // expected-error {{constexpr function never produces a constant expression}}
-    return n; // expected-note {{subexpression not valid in a constant expression}}
-  }
+  int m;
+
+  constexpr bool b = &n == &n;
+
+  constexpr int *p = &n; // expected-error{{constexpr variable 'p' must be initialized by a constant expression}}
+
+  constexpr int *f() { return &n; }
+  constexpr int *q = f(); // expected-error{{constexpr variable 'q' must be initialized by a constant expression}}
+  constexpr bool c = f() == f();
+
+  constexpr int *g() { return &m; }
+  constexpr int *r = g();
 }
