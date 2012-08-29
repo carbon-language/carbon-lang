@@ -24,6 +24,7 @@
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/ADT/ImmutableSet.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallSet.h"
 
 namespace clang {
 
@@ -94,6 +95,10 @@ protected:
   /// The stack is largely used by BugReporter when generating PathDiagnostics
   /// for multiple PathDiagnosticConsumers.
   llvm::SmallVector<Regions *, 2> interestingRegions;
+
+  /// A set of location contexts that correspoind to call sites which should be
+  /// considered "interesting".
+  llvm::SmallSet<const LocationContext *, 2> InterestingLocationContexts;
 
   /// A set of custom visitors which generate "event" diagnostics at
   /// interesting points in the path.
@@ -172,10 +177,12 @@ public:
   void markInteresting(SymbolRef sym);
   void markInteresting(const MemRegion *R);
   void markInteresting(SVal V);
+  void markInteresting(const LocationContext *LC);
   
   bool isInteresting(SymbolRef sym);
   bool isInteresting(const MemRegion *R);
   bool isInteresting(SVal V);
+  bool isInteresting(const LocationContext *LC);
 
   unsigned getConfigurationChangeToken() const {
     return ConfigurationChangeToken;
@@ -342,6 +349,11 @@ private:
   /// A vector of BugReports for tracking the allocated pointers and cleanup.
   std::vector<BugReportEquivClass *> EQClassesVector;
 
+  /// A map from PathDiagnosticPiece to the LocationContext of the inlined
+  /// function call it represents.
+  llvm::DenseMap<const PathDiagnosticCallPiece*,
+                 const LocationContext*> LocationContextMap;
+
 protected:
   BugReporter(BugReporterData& d, Kind k) : BugTypes(F.getEmptySet()), kind(k),
                                             D(d) {}
@@ -382,6 +394,8 @@ public:
                                       PathDiagnosticConsumer &PC,
                                       ArrayRef<BugReport *> &bugReports) {}
 
+  bool RemoveUneededCalls(PathPieces &pieces, BugReport *R);
+
   void Register(BugType *BT);
 
   /// \brief Add the given report to the set of reports tracked by BugReporter.
@@ -411,6 +425,10 @@ public:
 
   static bool classof(const BugReporter* R) { return true; }
 
+  void addCallPieceLocationContextPair(const PathDiagnosticCallPiece *C,
+                                       const LocationContext *LC) {
+    LocationContextMap[C] = LC;
+  }
 private:
   llvm::StringMap<BugType *> StrBugTypes;
 

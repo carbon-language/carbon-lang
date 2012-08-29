@@ -53,7 +53,6 @@ void ReturnUndefChecker::checkPreStmt(const ReturnStmt *RS,
   BugReport *report = 
     new BugReport(*BT, BT->getDescription(), N);
 
-  report->disablePathPruning();
   report->addRange(RetE->getSourceRange());
   bugreporter::trackNullOrUndefValue(N, RetE, *report);
 

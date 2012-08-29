@@ -461,6 +461,7 @@ public:
 };
 
 /// Represents a point when we begin processing an inlined call.
+/// CallEnter uses the caller's location context.
 class CallEnter : public ProgramPoint {
 public:
   CallEnter(const Stmt *stmt, const StackFrameContext *calleeCtx, 

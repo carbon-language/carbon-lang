@@ -17,6 +17,7 @@
 #include "clang/AST/ExprObjC.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CallEvent.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
@@ -478,6 +479,7 @@ void bugreporter::trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S,
         SVal V = state->getRawSVal(loc::MemRegionVal(R));
         report.markInteresting(R);
         report.markInteresting(V);
+        report.addVisitor(new UndefOrNullArgVisitor(R));
 
         // If the contents are symbolic, find out when they became null.
         if (V.getAsLocSymbol()) {
@@ -503,6 +505,8 @@ void bugreporter::trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S,
   // Is it a symbolic value?
   if (loc::MemRegionVal *L = dyn_cast<loc::MemRegionVal>(&V)) {
     const MemRegion *Base = L->getRegion()->getBaseRegion();
+    report.addVisitor(new UndefOrNullArgVisitor(Base));
+    
     if (isa<SymbolicRegion>(Base)) {
       report.markInteresting(Base);
       report.addVisitor(new TrackConstraintBRVisitor(loc::MemRegionVal(Base),
@@ -950,3 +954,54 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
   return event;
 }
 
+PathDiagnosticPiece *
+UndefOrNullArgVisitor::VisitNode(const ExplodedNode *N,
+                                  const ExplodedNode *PrevN,
+                                  BugReporterContext &BRC,
+                                  BugReport &BR) {
+
+  ProgramStateRef State = N->getState();
+  ProgramPoint ProgLoc = N->getLocation();
+
+  // We are only interested in visiting CallEnter nodes.
+  CallEnter *CEnter = dyn_cast<CallEnter>(&ProgLoc);
+  if (!CEnter)
+    return 0;
+
+  // Check if one of the arguments is the region the visitor is tracking.
+  CallEventManager &CEMgr = BRC.getStateManager().getCallEventManager();
+  CallEventRef<> Call = CEMgr.getCaller(CEnter->getCalleeContext(), State);
+  unsigned Idx = 0;
+  for (CallEvent::param_iterator I = Call->param_begin(),
+                                 E = Call->param_end(); I != E; ++I, ++Idx) {
+    const MemRegion *ArgReg = Call->getArgSVal(Idx).getAsRegion();
+
+    // Are we tracking the argument?
+    if ( !ArgReg || ArgReg != R)
+      return 0;
+
+    // Check the function parameter type.
+    const ParmVarDecl *ParamDecl = *I;
+    assert(ParamDecl && "Formal parameter has no decl?");
+    QualType T = ParamDecl->getType();
+
+    if (!(T->isAnyPointerType() || T->isReferenceType())) {
+      // Function can only change the value passed in by address.
+      return 0;
+    }
+    
+    // If it is a const pointer value, the function does not intend to
+    // change the value.
+    if (T->getPointeeType().isConstQualified())
+      return 0;
+
+    // Mark the call site (LocationContext) as interesting if the value of the 
+    // argument is undefined or '0'/'NULL'.
+    SVal BoundVal = State->getSVal(ArgReg);
+    if (BoundVal.isUndef() || BoundVal.isZeroConstant()) {
+      BR.markInteresting(CEnter->getCalleeContext());
+      return 0;
+    }
+  }
+  return 0;
+}

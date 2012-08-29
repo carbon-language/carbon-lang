@@ -81,7 +81,6 @@ void UndefResultChecker::checkPostStmt(const BinaryOperator *B,
     else
       bugreporter::trackNullOrUndefValue(N, B, *report);
     
-    report->disablePathPruning();
     C.EmitReport(report);
   }
 }
