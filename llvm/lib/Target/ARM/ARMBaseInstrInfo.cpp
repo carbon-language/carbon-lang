@@ -683,7 +683,7 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   // Handle register classes that require multiple instructions.
   unsigned BeginIdx = 0;
   unsigned SubRegs = 0;
-  unsigned Spacing = 1;
+  int Spacing = 1;
 
   // Use VORRq when possible.
   if (ARM::QQPRRegClass.contains(DestReg, SrcReg))
@@ -705,8 +705,7 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   else if (ARM::DQuadSpcRegClass.contains(DestReg, SrcReg))
     Opc = ARM::VMOVD, BeginIdx = ARM::dsub_0, SubRegs = 4, Spacing = 2;
 
-  if (!Opc)
-    llvm_unreachable("Impossible reg-to-reg copy");
+  assert(Opc && "Impossible reg-to-reg copy");
 
   const TargetRegisterInfo *TRI = &getRegisterInfo();
   MachineInstrBuilder Mov;
@@ -724,8 +723,8 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     unsigned Src = TRI->getSubReg(SrcReg,  BeginIdx + i*Spacing);
     assert(Dst && Src && "Bad sub-register");
 #ifndef NDEBUG
-    DstRegs.insert(Dst);
     assert(!DstRegs.count(Src) && "destructive vector copy");
+    DstRegs.insert(Dst);
 #endif
     Mov = BuildMI(MBB, I, I->getDebugLoc(), get(Opc), Dst)
       .addReg(Src);
