@@ -29,10 +29,7 @@ set(ASAN_DYLIB_SOURCES
 include_directories(..)
 
 set(ASAN_CFLAGS
-  -fPIC
-  -fno-exceptions
-  -funwind-tables
-  -fvisibility=hidden
+  ${SANITIZER_COMMON_CFLAGS}
   -fno-builtin
   -fomit-frame-pointer
   -O3
@@ -42,10 +39,6 @@ set(ASAN_DYLIB_DEFINITIONS
   ${ASAN_COMMON_DEFINITIONS}
   MAC_INTERPOSE_FUNCTIONS=1
   )
-
-if (SUPPORTS_NO_VARIADIC_MACROS_FLAG)
-  list(APPEND ASAN_CFLAGS -Wno-variadic-macros)
-endif ()
 
 if (APPLE)
   list(APPEND ASAN_CFLAGS -mmacosx-version-min=10.5)

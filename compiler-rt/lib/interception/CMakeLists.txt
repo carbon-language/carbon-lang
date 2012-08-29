@@ -13,16 +13,7 @@ if (APPLE)
   list(APPEND INTERCEPTION_SOURCES mach_override/mach_override.c)
 endif ()
 
-set(INTERCEPTION_CFLAGS
-  -O3
-  -fPIC
-  -fno-exceptions
-  -funwind-tables
-  -fvisibility=hidden
-  )
-if(SUPPORTS_NO_VARIADIC_MACROS_FLAG)
-  list(APPEND INTERCEPTION_CFLAGS -Wno-variadic-macros)
-endif()
+set(INTERCEPTION_CFLAGS -O3 ${SANITIZER_COMMON_CFLAGS})
 
 if(APPLE)
   # Build universal binary on APPLE.

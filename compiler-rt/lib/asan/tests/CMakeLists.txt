@@ -60,7 +60,7 @@ function(add_asan_test testname)
   elseif (UNIX)
     # Linux-specific linker flags.
     set_property(TARGET ${testname} APPEND PROPERTY
-                 LINK_FLAGS "-lpthread -ldl -export-dynamic")
+                 LINK_FLAGS "-lpthread -ldl -rdynamic")
     if(LLVM_BUILD_32_BITS)
       target_link_libraries(${testname} clang_rt.asan-i386)
     else()

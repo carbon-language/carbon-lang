@@ -18,13 +18,7 @@ set(SANITIZER_SOURCES
   sanitizer_win.cc
   )
 
-set(SANITIZER_CFLAGS
-  -O3
-  -fPIC
-  -fno-exceptions
-  -funwind-tables
-  -fvisibility=hidden
-  )
+set(SANITIZER_CFLAGS -O3 ${SANITIZER_COMMON_CFLAGS})
 
 set(SANITIZER_COMMON_DEFINITIONS)
 

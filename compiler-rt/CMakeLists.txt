@@ -74,6 +74,22 @@ function(filter_available_targets out_var)
   set(${out_var} ${archs} PARENT_SCOPE)
 endfunction()
 
+# Provide some common commmandline flags for Sanitizer runtimes.
+set(SANITIZER_COMMON_CFLAGS
+  -fPIC
+  -fno-exceptions
+  -funwind-tables
+  -fvisibility=hidden
+  )
+if(SUPPORTS_NO_VARIADIC_MACROS_FLAG)
+  list(APPEND SANITIZER_COMMON_CFLAGS -Wno-variadic-macros)
+endif()
+check_cxx_compiler_flag(-Wno-c99-extensions
+  SUPPORTS_NO_C99_EXTENSIONS_FLAG)
+if(SUPPORTS_NO_C99_EXTENSIONS_FLAG)
+  list(APPEND SANITIZER_COMMON_CFLAGS -Wno-c99-extensions)
+endif()
+
 # Because compiler-rt spends a lot of time setting up custom compile flags,
 # define a handy helper function for it. The compile flags setting in CMake
 # has serious issues that make its syntax challenging at best.
