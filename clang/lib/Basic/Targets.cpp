@@ -3977,6 +3977,9 @@ public:
                                 MacroBuilder &Builder) const {
     MipsTargetInfoBase::getTargetDefines(Opts, Builder);
 
+    Builder.defineMacro("__mips64");
+    Builder.defineMacro("__mips64__");
+
     if (ABI == "n32") {
       Builder.defineMacro("__mips_n32");
       Builder.defineMacro("_ABIN32", "2");
