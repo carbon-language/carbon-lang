@@ -106,8 +106,8 @@
 #endif
 
 #if (__GNUC__ >= 4)
-#define LLVM_LIKELY(EXPR) __builtin_expect((EXPR), true)
-#define LLVM_UNLIKELY(EXPR) __builtin_expect((EXPR), false)
+#define LLVM_LIKELY(EXPR) __builtin_expect((bool)(EXPR), true)
+#define LLVM_UNLIKELY(EXPR) __builtin_expect((bool)(EXPR), false)
 #else
 #define LLVM_LIKELY(EXPR) (EXPR)
 #define LLVM_UNLIKELY(EXPR) (EXPR)
