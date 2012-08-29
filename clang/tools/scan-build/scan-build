@@ -1526,7 +1526,7 @@ Diag("Using '$Clang' for static analysis\n");
 SetHtmlEnv(\@ARGV, $HtmlDir);
 if ($AnalyzeHeaders) { push @AnalysesToRun,"-analyzer-opt-analyze-headers"; }
 if ($AnalyzerStats) { push @AnalysesToRun, '-analyzer-checker=debug.Stats'; }
-if ($MaxLoop > 0) { push @AnalysesToRun, '-analyzer-max-loop $MaxLoop'; }
+if ($MaxLoop > 0) { push @AnalysesToRun, "-analyzer-max-loop $MaxLoop"; }
 
 # Delay setting up other environment variables in case we can do true
 # interposition.
