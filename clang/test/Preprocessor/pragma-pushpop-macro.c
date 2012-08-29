@@ -31,6 +31,22 @@ int pmy1 = Y;
 #define Y 4
 int pmy2 = Y;
 
+// The sequence push, define/undef, pop caused problems if macro was not
+// previously defined.
+#pragma push_macro("PREVIOUSLY_UNDEFINED1")
+#undef PREVIOUSLY_UNDEFINED1
+#pragma pop_macro("PREVIOUSLY_UNDEFINED1")
+#ifndef PREVIOUSLY_UNDEFINED1
+int Q;
+#endif
+
+#pragma push_macro("PREVIOUSLY_UNDEFINED2")
+#define PREVIOUSLY_UNDEFINED2
+#pragma pop_macro("PREVIOUSLY_UNDEFINED2")
+#ifndef PREVIOUSLY_UNDEFINED2
+int P;
+#endif
+
 // CHECK: int pmx0 = 1
 // CHECK: int pmy0 = 2
 // CHECK: int pmx1 = 1
@@ -38,4 +54,5 @@ int pmy2 = Y;
 // CHECK: int pmx3 = 1
 // CHECK: int pmy1 = 3
 // CHECK: int pmy2 = 4
-
+// CHECK: int Q;
+// CHECK: int P;

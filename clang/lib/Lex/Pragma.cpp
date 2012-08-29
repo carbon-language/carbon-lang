@@ -737,13 +737,18 @@ void Preprocessor::HandlePragmaPopMacro(Token &PopMacroTok) {
     if (MacroInfo *CurrentMI = getMacroInfo(IdentInfo)) {
       if (CurrentMI->isWarnIfUnused())
         WarnUnusedMacroLocs.erase(CurrentMI->getDefinitionLoc());
+      CurrentMI->setUndefLoc(MessageLoc);
     }
 
     // Get the MacroInfo we want to reinstall.
     MacroInfo *MacroToReInstall = iter->second.back();
 
-    // Reinstall the previously pushed macro.
-    setMacroInfo(IdentInfo, MacroToReInstall);
+    if (MacroToReInstall) {
+      // Reinstall the previously pushed macro.
+      setMacroInfo(IdentInfo, MacroToReInstall);
+    } else if (IdentInfo->hasMacroDefinition()) {
+      clearMacroInfo(IdentInfo);
+    }
 
     // Pop PragmaPushMacroInfo stack.
     iter->second.pop_back();

@@ -1921,10 +1921,7 @@ void Preprocessor::HandleUndefDirective(Token &UndefTok) {
     WarnUnusedMacroLocs.erase(MI->getDefinitionLoc());
 
   MI->setUndefLoc(MacroNameTok.getLocation());
-  IdentifierInfo *II = MacroNameTok.getIdentifierInfo();
-  II->setHasMacroDefinition(false);
-  if (II->isFromAST())
-    II->setChangedSinceDeserialization();
+  clearMacroInfo(MacroNameTok.getIdentifierInfo());
 }
 
 
