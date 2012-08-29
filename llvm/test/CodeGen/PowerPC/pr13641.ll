@@ -8,3 +8,4 @@ define void @foo() nounwind {
 
 ; CHECK: blr
 ; CHECK-NEXT: .long 0
+; CHECK-NEXT: .quad 0

@@ -458,11 +458,15 @@ bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
 void PPCLinuxAsmPrinter::EmitFunctionBodyEnd() {
   // Only the 64-bit target requires a traceback table.  For now,
   // we only emit the word of zeroes that GDB requires to find
-  // the end of the function.
-  // FIXME: Eventually we should add the eight-byte mandatory fields
-  // described in the PPC64 ELF ABI.
-  if (Subtarget.isPPC64())
+  // the end of the function, and zeroes for the eight-byte
+  // mandatory fields.
+  // FIXME: We should fill in the eight-byte mandatory fields as described in
+  // the PPC64 ELF ABI (this is a low-priority item because GDB does not
+  // currently make use of these fields).
+  if (Subtarget.isPPC64()) {
     OutStreamer.EmitIntValue(0, 4/*size*/);
+    OutStreamer.EmitIntValue(0, 8/*size*/);
+  }
 }
 
 void PPCDarwinAsmPrinter::EmitStartOfAsmFile(Module &M) {
