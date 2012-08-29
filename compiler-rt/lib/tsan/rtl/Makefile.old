@@ -6,7 +6,7 @@ endif
 # For interception. FIXME: move interception one level higher.
 INTERCEPTION=../../interception
 COMMON=../../sanitizer_common
-INCLUDES= -I../..
+INCLUDES= -I../.. -I../../../include
 EXTRA_CXXFLAGS=-fno-exceptions
 NO_SYSROOT=--sysroot=.
 CXXFLAGS+=$(EXTRA_CXXFLAGS)
