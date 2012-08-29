@@ -502,7 +502,7 @@ void ScheduleDAGInstrs::addVRegUseDeps(SUnit *SU, unsigned OperIdx) {
 /// (like a call or something with unmodeled side effects).
 static inline bool isGlobalMemoryObject(AliasAnalysis *AA, MachineInstr *MI) {
   if (MI->isCall() || MI->hasUnmodeledSideEffects() ||
-      (MI->hasVolatileMemoryRef() &&
+      (MI->hasOrderedMemoryRef() &&
        (!MI->mayLoad() || !MI->isInvariantLoad(AA))))
     return true;
   return false;

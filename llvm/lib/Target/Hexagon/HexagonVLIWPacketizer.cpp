@@ -3474,8 +3474,8 @@ bool HexagonPacketizerList::isLegalToPacketizeTogether(SUnit *SUI, SUnit *SUJ) {
       // 1. Two loads unless they are volatile.
       // 2. Two stores in V4 unless they are volatile.
       else if ((DepType == SDep::Order) &&
-               !I->hasVolatileMemoryRef() &&
-               !J->hasVolatileMemoryRef()) {
+               !I->hasOrderedMemoryRef() &&
+               !J->hasOrderedMemoryRef()) {
         if (QRI->Subtarget.hasV4TOps() &&
             // hexagonv4 allows dual store.
             MCIDI.mayStore() && MCIDJ.mayStore()) {

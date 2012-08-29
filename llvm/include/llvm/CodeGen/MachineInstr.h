@@ -857,11 +857,11 @@ public:
   bool isSafeToReMat(const TargetInstrInfo *TII, AliasAnalysis *AA,
                      unsigned DstReg) const;
 
-  /// hasVolatileMemoryRef - Return true if this instruction may have a
-  /// volatile memory reference, or if the information describing the
-  /// memory reference is not available. Return false if it is known to
-  /// have no volatile memory references.
-  bool hasVolatileMemoryRef() const;
+  /// hasOrderedMemoryRef - Return true if this instruction may have an ordered
+  /// or volatile memory reference, or if the information describing the memory
+  /// reference is not available. Return false if it is known to have no
+  /// ordered or volatile memory references.
+  bool hasOrderedMemoryRef() const;
 
   /// isInvariantLoad - Return true if this instruction is loading from a
   /// location whose value is invariant across the function.  For example,

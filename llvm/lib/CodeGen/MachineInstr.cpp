@@ -1348,7 +1348,7 @@ bool MachineInstr::isSafeToMove(const TargetInstrInfo *TII,
   // volatiles, but it is required for atomic loads. It is now allowed to move
   // a load across an atomic load with Ordering > Monotonic.
   if (mayStore() || isCall() ||
-      (mayLoad() && hasVolatileMemoryRef())) {
+      (mayLoad() && hasOrderedMemoryRef())) {
     SawStore = true;
     return false;
   }
@@ -1396,11 +1396,11 @@ bool MachineInstr::isSafeToReMat(const TargetInstrInfo *TII,
   return true;
 }
 
-/// hasVolatileMemoryRef - Return true if this instruction may have a
-/// volatile memory reference, or if the information describing the
-/// memory reference is not available. Return false if it is known to
-/// have no volatile memory references.
-bool MachineInstr::hasVolatileMemoryRef() const {
+/// hasOrderedMemoryRef - Return true if this instruction may have an ordered
+/// or volatile memory reference, or if the information describing the memory
+/// reference is not available. Return false if it is known to have no ordered
+/// memory references.
+bool MachineInstr::hasOrderedMemoryRef() const {
   // An instruction known never to access memory won't have a volatile access.
   if (!mayStore() &&
       !mayLoad() &&
@@ -1413,9 +1413,9 @@ bool MachineInstr::hasVolatileMemoryRef() const {
   if (memoperands_empty())
     return true;
 
-  // Check the memory reference information for volatile references.
+  // Check the memory reference information for ordered references.
   for (mmo_iterator I = memoperands_begin(), E = memoperands_end(); I != E; ++I)
-    if ((*I)->isVolatile())
+    if (!(*I)->isUnordered())
       return true;
 
   return false;
