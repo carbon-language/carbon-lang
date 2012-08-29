@@ -192,7 +192,8 @@ PlatformLinux::ResolveExecutable (const FileSpec &exe_file,
                                                  NULL,
                                                  NULL);
         
-            if (exe_module_sp->GetObjectFile() == NULL)
+            // TODO find out why exe_module_sp might be NULL            
+            if (!exe_module_sp || exe_module_sp->GetObjectFile() == NULL)
             {
                 exe_module_sp.reset();
                 error.SetErrorStringWithFormat ("'%s%s%s' doesn't contain the architecture %s",
