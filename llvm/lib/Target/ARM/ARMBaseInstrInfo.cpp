@@ -710,10 +710,23 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 
   const TargetRegisterInfo *TRI = &getRegisterInfo();
   MachineInstrBuilder Mov;
+
+  // Copy register tuples backward when the first Dest reg overlaps with SrcReg.
+  if (TRI->regsOverlap(SrcReg, TRI->getSubReg(DestReg, BeginIdx))) {
+    BeginIdx = BeginIdx + ((SubRegs-1)*Spacing);
+    Spacing = -Spacing;
+  }
+#ifndef NDEBUG
+  SmallSet<unsigned, 4> DstRegs;
+#endif
   for (unsigned i = 0; i != SubRegs; ++i) {
     unsigned Dst = TRI->getSubReg(DestReg, BeginIdx + i*Spacing);
     unsigned Src = TRI->getSubReg(SrcReg,  BeginIdx + i*Spacing);
     assert(Dst && Src && "Bad sub-register");
+#ifndef NDEBUG
+    DstRegs.insert(Dst);
+    assert(!DstRegs.count(Src) && "destructive vector copy");
+#endif
     Mov = BuildMI(MBB, I, I->getDebugLoc(), get(Opc), Dst)
       .addReg(Src);
     // VORR takes two source operands.
