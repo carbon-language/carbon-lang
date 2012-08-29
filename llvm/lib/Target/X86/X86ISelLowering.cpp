@@ -10045,10 +10045,6 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
   case Intrinsic::x86_fma_vfmaddsub_pd_256:
   case Intrinsic::x86_fma_vfmsubadd_ps_256:
   case Intrinsic::x86_fma_vfmsubadd_pd_256: {
-    // Only lower intrinsics if FMA is enabled. FMA4 still uses patterns.
-    if (!Subtarget->hasFMA())
-      return SDValue();
-
     unsigned Opc;
     switch (IntNo) {
     default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.

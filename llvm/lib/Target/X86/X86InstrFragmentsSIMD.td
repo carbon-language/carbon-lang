@@ -183,8 +183,8 @@ def X86Fmadd     : SDNode<"X86ISD::FMADD",     SDTFma>;
 def X86Fnmadd    : SDNode<"X86ISD::FNMADD",    SDTFma>;
 def X86Fmsub     : SDNode<"X86ISD::FMSUB",     SDTFma>;
 def X86Fnmsub    : SDNode<"X86ISD::FNMSUB",    SDTFma>;
-def X86Fmaddsub  : SDNode<"X86ISD::FMSUBADD",  SDTFma>;
-def X86Fmsubadd  : SDNode<"X86ISD::FMADDSUB",  SDTFma>;
+def X86Fmaddsub  : SDNode<"X86ISD::FMADDSUB",  SDTFma>;
+def X86Fmsubadd  : SDNode<"X86ISD::FMSUBADD",  SDTFma>;
 
 def SDT_PCMPISTRI : SDTypeProfile<2, 3, [SDTCisVT<0, i32>, SDTCisVT<1, i32>,
                                          SDTCisVT<2, v16i8>, SDTCisVT<3, v16i8>,
