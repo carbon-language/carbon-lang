@@ -617,10 +617,7 @@ unsigned ARMFastISel::ARMMaterializeGV(const GlobalValue *GV, EVT VT) {
   if (VT != MVT::i32) return 0;
 
   Reloc::Model RelocM = TM.getRelocationModel();
-
-  // TODO: Need more magic for ARM PIC.
-  if (!isThumb2 && (RelocM == Reloc::PIC_)) return 0;
-
+  bool IsIndirect = Subtarget->GVIsIndirectSymbol(GV, RelocM);
   unsigned DestReg = createResultReg(TLI.getRegClassFor(VT));
 
   // Use movw+movt when possible, it avoids constant pool entries.
@@ -668,17 +665,30 @@ unsigned ARMFastISel::ARMMaterializeGV(const GlobalValue *GV, EVT VT) {
         .addConstantPoolIndex(Idx);
       if (RelocM == Reloc::PIC_)
         MIB.addImm(Id);
+      AddOptionalDefs(MIB);
     } else {
       // The extra immediate is for addrmode2.
       MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(ARM::LDRcp),
                     DestReg)
         .addConstantPoolIndex(Idx)
         .addImm(0);
+      AddOptionalDefs(MIB);
+
+      if (RelocM == Reloc::PIC_) {
+        unsigned Opc = IsIndirect ? ARM::PICLDR : ARM::PICADD;
+        unsigned NewDestReg = createResultReg(TLI.getRegClassFor(VT));
+
+        MachineInstrBuilder MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt,
+                                          DL, TII.get(Opc), NewDestReg)
+                                  .addReg(DestReg)
+                                  .addImm(Id);
+        AddOptionalDefs(MIB);
+        return NewDestReg;
+      }
     }
-    AddOptionalDefs(MIB);
   }
 
-  if (Subtarget->GVIsIndirectSymbol(GV, RelocM)) {
+  if (IsIndirect) {
     MachineInstrBuilder MIB;
     unsigned NewDestReg = createResultReg(TLI.getRegClassFor(VT));
     if (isThumb2)
