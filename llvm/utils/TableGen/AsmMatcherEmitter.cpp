@@ -488,6 +488,15 @@ struct MatchableInfo {
         return false;
     }
 
+    // Give matches that require more features higher precedence. This is useful
+    // because we cannot define AssemblerPredicates with the negation of
+    // processor features. For example, ARM v6 "nop" may be either a HINT or
+    // MOV. With v6, we want to match HINT. The assembler has no way to
+    // predicate MOV under "NoV6", but HINT will always match first because it
+    // requires V6 while MOV does not.
+    if (RequiredFeatures.size() != RHS.RequiredFeatures.size())
+      return RequiredFeatures.size() > RHS.RequiredFeatures.size();
+
     return false;
   }
 
