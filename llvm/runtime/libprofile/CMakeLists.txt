@@ -13,7 +13,8 @@ set_target_properties( profile_rt-static
   PROPERTIES
   OUTPUT_NAME "profile_rt" )
 
-add_llvm_loadable_module( profile_rt-shared ${SOURCES} )
+set(BUILD_SHARED_LIBS ON)
+add_llvm_library( profile_rt-shared ${SOURCES} )
 set_target_properties( profile_rt-shared
   PROPERTIES
   OUTPUT_NAME "profile_rt" )
