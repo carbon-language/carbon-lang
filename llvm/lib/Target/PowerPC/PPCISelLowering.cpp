@@ -1473,7 +1473,7 @@ SDValue PPCTargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG,
                               MachinePointerInfo(),
                               MVT::i32, false, false, 0);
 
-  return DAG.getLoad(VT, dl, InChain, Result, MachinePointerInfo(), 
+  return DAG.getLoad(VT, dl, InChain, Result, MachinePointerInfo(),
                      false, false, false, 0);
 }
 
