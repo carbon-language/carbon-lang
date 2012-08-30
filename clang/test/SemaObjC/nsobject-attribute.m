@@ -31,6 +31,7 @@ id getProperty(id self) {
 
 @implementation HandTested
 @synthesize x=x;
+@synthesize myObj;
 @dynamic color;
 @end
 
