@@ -118,11 +118,11 @@ let Constraints = "$src1 = $dst" in {
 /// Unary MMX instructions requiring SSSE3.
 multiclass SS3I_unop_rm_int_mm<bits<8> opc, string OpcodeStr,
                                Intrinsic IntId64, OpndItins itins> {
-  def rr64 : SS38I<opc, MRMSrcReg, (outs VR64:$dst), (ins VR64:$src),
+  def rr64 : MMXSS38I<opc, MRMSrcReg, (outs VR64:$dst), (ins VR64:$src),
                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                    [(set VR64:$dst, (IntId64 VR64:$src))], itins.rr>;
 
-  def rm64 : SS38I<opc, MRMSrcMem, (outs VR64:$dst), (ins i64mem:$src),
+  def rm64 : MMXSS38I<opc, MRMSrcMem, (outs VR64:$dst), (ins i64mem:$src),
                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                    [(set VR64:$dst,
                      (IntId64 (bitconvert (memopmmx addr:$src))))],
@@ -134,11 +134,11 @@ let ImmT = NoImm, Constraints = "$src1 = $dst" in {
 multiclass SS3I_binop_rm_int_mm<bits<8> opc, string OpcodeStr,
                              Intrinsic IntId64, OpndItins itins> {
   let isCommutable = 0 in
-  def rr64 : SS38I<opc, MRMSrcReg, (outs VR64:$dst),
+  def rr64 : MMXSS38I<opc, MRMSrcReg, (outs VR64:$dst),
        (ins VR64:$src1, VR64:$src2),
         !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
        [(set VR64:$dst, (IntId64 VR64:$src1, VR64:$src2))], itins.rr>;
-  def rm64 : SS38I<opc, MRMSrcMem, (outs VR64:$dst),
+  def rm64 : MMXSS38I<opc, MRMSrcMem, (outs VR64:$dst),
        (ins VR64:$src1, i64mem:$src2),
         !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
        [(set VR64:$dst,
@@ -149,11 +149,11 @@ multiclass SS3I_binop_rm_int_mm<bits<8> opc, string OpcodeStr,
 
 /// PALIGN MMX instructions (require SSSE3).
 multiclass ssse3_palign_mm<string asm, Intrinsic IntId> {
-  def R64irr  : SS3AI<0x0F, MRMSrcReg, (outs VR64:$dst),
+  def R64irr  : MMXSS3AI<0x0F, MRMSrcReg, (outs VR64:$dst),
       (ins VR64:$src1, VR64:$src2, i8imm:$src3),
       !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"), 
       [(set VR64:$dst, (IntId VR64:$src1, VR64:$src2, (i8 imm:$src3)))]>;
-  def R64irm  : SS3AI<0x0F, MRMSrcMem, (outs VR64:$dst),
+  def R64irm  : MMXSS3AI<0x0F, MRMSrcMem, (outs VR64:$dst),
       (ins VR64:$src1, i64mem:$src2, i8imm:$src3),
       !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
       [(set VR64:$dst, (IntId VR64:$src1,
@@ -163,12 +163,10 @@ multiclass ssse3_palign_mm<string asm, Intrinsic IntId> {
 multiclass sse12_cvt_pint<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
                          Intrinsic Int, X86MemOperand x86memop, PatFrag ld_frag,
                          string asm, OpndItins itins, Domain d> {
-  def irr : PI<opc, MRMSrcReg, (outs DstRC:$dst), (ins SrcRC:$src), asm,
-                        [(set DstRC:$dst, (Int SrcRC:$src))], 
-                        itins.rr, d>;
-  def irm : PI<opc, MRMSrcMem, (outs DstRC:$dst), (ins x86memop:$src), asm,
-                        [(set DstRC:$dst, (Int (ld_frag addr:$src)))], 
-                        itins.rm, d>;
+  def irr : MMXPI<opc, MRMSrcReg, (outs DstRC:$dst), (ins SrcRC:$src), asm,
+                  [(set DstRC:$dst, (Int SrcRC:$src))], itins.rr, d>;
+  def irm : MMXPI<opc, MRMSrcMem, (outs DstRC:$dst), (ins x86memop:$src), asm,
+                  [(set DstRC:$dst, (Int (ld_frag addr:$src)))], itins.rm, d>;
 }
 
 multiclass sse12_cvt_pint_3addr<bits<8> opc, RegisterClass SrcRC,
@@ -243,29 +241,30 @@ def MMX_MOVQ64mr : MMXI<0x7F, MRMDestMem, (outs), (ins i64mem:$dst, VR64:$src),
                         [(store (x86mmx VR64:$src), addr:$dst)],
                         IIC_MMX_MOVQ_RM>;
 
-def MMX_MOVDQ2Qrr : SDIi8<0xD6, MRMSrcReg, (outs VR64:$dst),
-                          (ins VR128:$src), "movdq2q\t{$src, $dst|$dst, $src}",
-                          [(set VR64:$dst,
-                            (x86mmx (bitconvert
-                            (i64 (vector_extract (v2i64 VR128:$src),
-                                  (iPTR 0))))))],
-                          IIC_MMX_MOVQ_RR>;
+def MMX_MOVDQ2Qrr : MMXSDIi8<0xD6, MRMSrcReg, (outs VR64:$dst),
+                             (ins VR128:$src), "movdq2q\t{$src, $dst|$dst, $src}",
+                             [(set VR64:$dst,
+                               (x86mmx (bitconvert
+                               (i64 (vector_extract (v2i64 VR128:$src),
+                                     (iPTR 0))))))],
+                             IIC_MMX_MOVQ_RR>;
 
-def MMX_MOVQ2DQrr : S2SIi8<0xD6, MRMSrcReg, (outs VR128:$dst),
-                            (ins VR64:$src), "movq2dq\t{$src, $dst|$dst, $src}",
-          [(set VR128:$dst,
-            (v2i64 (scalar_to_vector
-                              (i64 (bitconvert (x86mmx VR64:$src))))))],
-                           IIC_MMX_MOVQ_RR>;
+def MMX_MOVQ2DQrr : MMXS2SIi8<0xD6, MRMSrcReg, (outs VR128:$dst),
+                              (ins VR64:$src), "movq2dq\t{$src, $dst|$dst, $src}",
+                              [(set VR128:$dst,
+                                (v2i64
+                                  (scalar_to_vector
+                                    (i64 (bitconvert (x86mmx VR64:$src))))))],
+                              IIC_MMX_MOVQ_RR>;
 
 let neverHasSideEffects = 1 in
-def MMX_MOVQ2FR64rr: S2SIi8<0xD6, MRMSrcReg, (outs FR64:$dst),
-                       (ins VR64:$src), "movq2dq\t{$src, $dst|$dst, $src}", [],
-                       IIC_MMX_MOVQ_RR>;
+def MMX_MOVQ2FR64rr: MMXS2SIi8<0xD6, MRMSrcReg, (outs FR64:$dst),
+                               (ins VR64:$src), "movq2dq\t{$src, $dst|$dst, $src}",
+                               [], IIC_MMX_MOVQ_RR>;
 
-def MMX_MOVFR642Qrr: SDIi8<0xD6, MRMSrcReg, (outs VR64:$dst),
-                       (ins FR64:$src), "movdq2q\t{$src, $dst|$dst, $src}", [],
-                       IIC_MMX_MOVQ_RR>;
+def MMX_MOVFR642Qrr: MMXSDIi8<0xD6, MRMSrcReg, (outs VR64:$dst),
+                              (ins FR64:$src), "movdq2q\t{$src, $dst|$dst, $src}",
+                              [], IIC_MMX_MOVQ_RR>;
 
 def MMX_MOVNTQmr  : MMXI<0xE7, MRMDestMem, (outs), (ins i64mem:$dst, VR64:$src),
                          "movntq\t{$src, $dst|$dst, $src}",
@@ -577,6 +576,7 @@ def MMX_MASKMOVQ64: MMXI64<0xF7, MRMSrcReg, (outs), (ins VR64:$src, VR64:$mask),
                            IIC_MMX_MASKMOV>;
 
 // 64-bit bit convert.
+let Predicates = [HasSSE2] in {
 def : Pat<(x86mmx (bitconvert (i64 GR64:$src))),
           (MMX_MOVD64to64rr GR64:$src)>;
 def : Pat<(i64 (bitconvert (x86mmx VR64:$src))),
@@ -585,5 +585,6 @@ def : Pat<(f64 (bitconvert (x86mmx VR64:$src))),
           (MMX_MOVQ2FR64rr VR64:$src)>;
 def : Pat<(x86mmx (bitconvert (f64 FR64:$src))),
           (MMX_MOVFR642Qrr FR64:$src)>;
+}
 
 

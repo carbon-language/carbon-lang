@@ -1,12 +1,17 @@
-; RUN: llc %s -o - -march=x86-64 -mtriple=x86_64-unknown-linux-gnu | FileCheck %s
+; RUN: llc %s -o - -march=x86-64 -mattr=-avx -mtriple=x86_64-unknown-linux-gnu | FileCheck %s --check-prefix=SSE
+; RUN: llc %s -o - -march=x86-64 -mattr=+avx -mtriple=x86_64-unknown-linux-gnu | FileCheck %s --check-prefix=AVX
 ; PR4891
 ; PR5626
 
 ; This load should be before the call, not after.
 
-; CHECK: movaps    compl+128(%rip), %xmm0
-; CHECK: movaps  %xmm0, (%rsp)
-; CHECK: callq   killcommon
+; SSE: movaps    compl+128(%rip), %xmm0
+; SSE: movaps  %xmm0, (%rsp)
+; SSE: callq   killcommon
+
+; AVX: vmovapd    compl+128(%rip), %xmm0
+; AVX: vmovapd  %xmm0, (%rsp)
+; AVX: callq   killcommon
 
 @compl = linkonce global [20 x i64] zeroinitializer, align 64 ; <[20 x i64]*> [#uses=1]
 

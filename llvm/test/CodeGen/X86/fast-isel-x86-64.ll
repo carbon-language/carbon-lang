@@ -1,4 +1,5 @@
-; RUN: llc < %s  -fast-isel -O0 -regalloc=fast -asm-verbose=0 -fast-isel-abort | FileCheck %s
+; RUN: llc < %s -mattr=-avx -fast-isel -O0 -regalloc=fast -asm-verbose=0 -fast-isel-abort | FileCheck %s
+; RUN: llc < %s -mattr=+avx -fast-isel -O0 -regalloc=fast -asm-verbose=0 -fast-isel-abort | FileCheck %s --check-prefix=AVX
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 target triple = "x86_64-apple-darwin10.0.0"
@@ -197,6 +198,11 @@ block2:
 ; CHECK: cvtsi2sdq {{.*}} %xmm0
 ; CHECK: movb $1, %al
 ; CHECK: callq _test16callee
+
+; AVX: movabsq $1
+; AVX: vmovsd LCP{{.*}}_{{.*}}(%rip), %xmm0
+; AVX: movb $1, %al
+; AVX: callq _test16callee
   call void (...)* @test16callee(double 1.000000e+00)
   ret void
 }
