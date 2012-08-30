@@ -4150,17 +4150,6 @@ cvtLdWriteBackRegAddrMode3(MCInst &Inst, unsigned Opcode,
 bool ARMAsmParser::
 cvtThumbMultiply(MCInst &Inst, unsigned Opcode,
            const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-  // The second source operand must be the same register as the destination
-  // operand.
-  if (Operands.size() == 6 &&
-      (((ARMOperand*)Operands[3])->getReg() !=
-       ((ARMOperand*)Operands[5])->getReg()) &&
-      (((ARMOperand*)Operands[3])->getReg() !=
-       ((ARMOperand*)Operands[4])->getReg())) {
-    Error(Operands[3]->getStartLoc(),
-          "destination register must match source register");
-    return false;
-  }
   ((ARMOperand*)Operands[3])->addRegOperands(Inst, 1);
   ((ARMOperand*)Operands[1])->addCCOutOperands(Inst, 1);
   // If we have a three-operand form, make sure to set Rn to be the operand
@@ -5375,6 +5364,19 @@ validateInstruction(MCInst &Inst,
       return Error(Operands[4]->getStartLoc(),
                    "writeback operator '!' not allowed when base register "
                    "in register list");
+    break;
+  }
+  case ARM::tMUL: {
+    // The second source operand must be the same register as the destination
+    // operand.
+    if (Operands.size() == 6 &&
+        (((ARMOperand*)Operands[3])->getReg() !=
+         ((ARMOperand*)Operands[5])->getReg()) &&
+        (((ARMOperand*)Operands[3])->getReg() !=
+         ((ARMOperand*)Operands[4])->getReg())) {
+      Error(Operands[3]->getStartLoc(),
+            "destination register must match source register");
+    }
     break;
   }
   // Like for ldm/stm, push and pop have hi-reg handling version in Thumb2,
