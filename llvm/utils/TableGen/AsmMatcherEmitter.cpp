@@ -1703,7 +1703,7 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
   OpOS << "bool " << Target.getName() << ClassName << "::\n"
        << "GetMCInstOperandNum(unsigned Kind, MCInst &Inst,\n"
        << "                 const SmallVectorImpl<MCParsedAsmOperand*> &Operands,"
-       << "\n                 unsigned OperandNum, unsigned &MCOperandNum) {\n"
+       << "\n                    unsigned OperandNum, unsigned &MCOperandNum) {\n"
        << "  if (Kind >= CVT_NUM_SIGNATURES) return false;\n"
        << "  MCOperandNum = 0;\n"
        << "  uint8_t *Converter = ConversionTable[Kind];\n"
