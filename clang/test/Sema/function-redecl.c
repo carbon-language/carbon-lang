@@ -129,3 +129,7 @@ void test_x() {
 enum e0 {one}; 
 void f3(); 
 void f3(enum e0 x) {}
+
+enum incomplete_enum;
+void f4(); // expected-note {{previous declaration is here}}
+void f4(enum incomplete_enum); // expected-error {{conflicting types for 'f4'}}
