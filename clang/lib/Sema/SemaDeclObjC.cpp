@@ -282,6 +282,26 @@ void Sema::AddAnyMethodToGlobalPool(Decl *D) {
     AddFactoryMethodToGlobalPool(MDecl, true);
 }
 
+/// StrongPointerToObjCPointer - returns true when pointer to ObjC pointer
+/// is __strong, or when it is any other type. It returns false when
+/// pointer to ObjC pointer is not __strong.
+static bool
+StrongPointerToObjCPointer(Sema &S, ParmVarDecl *Param) {
+  QualType T = Param->getType();
+  if (!T->isObjCIndirectLifetimeType())
+    return true;
+  if (!T->isPointerType() && !T->isReferenceType())
+    return true;
+  T = T->isPointerType() 
+        ? T->getAs<PointerType>()->getPointeeType() 
+        : T->getAs<ReferenceType>()->getPointeeType();
+  if (T->isObjCLifetimeType()) {
+    Qualifiers::ObjCLifetime lifetime = T.getObjCLifetime();
+    return lifetime == Qualifiers::OCL_Strong;
+  }
+  return true;
+}
+
 /// ActOnStartOfObjCMethodDef - This routine sets up parameters; invisible
 /// and user declared, in the method definition's AST.
 void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
@@ -313,6 +333,12 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
         RequireCompleteType(Param->getLocation(), Param->getType(),
                             diag::err_typecheck_decl_incomplete_type))
           Param->setInvalidDecl();
+    if (!Param->isInvalidDecl() &&
+        getLangOpts().ObjCAutoRefCount &&
+        !StrongPointerToObjCPointer(*this, Param))
+      Diag(Param->getLocation(), diag::warn_arc_strong_pointer_objc_pointer) <<
+            Param->getType();
+    
     if ((*PI)->getIdentifier())
       PushOnScopeChains(*PI, FnBodyScope);
   }

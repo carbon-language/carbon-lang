@@ -3549,6 +3549,9 @@ def err_arc_illegal_selector : Error<
   "ARC forbids use of %0 in a @selector">;
 def err_arc_illegal_method_def : Error<
   "ARC forbids implementation of %0">;
+def warn_arc_strong_pointer_objc_pointer : Warning<
+  "method parameter of type %0 with no explicit ownership">,
+  InGroup<DiagGroup<"explicit-ownership-type">>, DefaultIgnore;
   
 } // end "ARC Restrictions" category
   

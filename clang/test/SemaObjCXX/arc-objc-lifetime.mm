@@ -1,4 +1,3 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin11 -fsyntax-only -fobjc-arc -fblocks -Wexplicit-ownership-type  -verify -Wno-objc-root-class %s
 // RUN: %clang_cc1 -x objective-c++ -triple x86_64-apple-darwin11 -fsyntax-only -fobjc-arc -fblocks -Wexplicit-ownership-type -verify -Wno-objc-root-class %s
 // rdar://10244607
 
@@ -48,11 +47,11 @@ typedef void (^T) ();
 @interface Radar10907090 @end
 
 @implementation Radar10907090
-- (void) MMM : (NSObject*) arg0 : (NSObject<P>**)arg : (id) arg1 : (id<P>*) arg2 {} // expected-warning {{method parameter of type 'NSObject<P> *__autoreleasing *' with no explicit ownership}} \
-					// expected-warning {{method parameter of type '__autoreleasing id<P> *' with no explicit ownership}}
+- (void) MMM : (NSObject*) arg0 : (NSObject<P>*&)arg : (id) arg1 : (id<P>&) arg2 {} // expected-warning {{method parameter of type 'NSObject<P> *__autoreleasing &' with no explicit ownership}} \
+					// expected-warning {{method parameter of type '__autoreleasing id<P> &' with no explicit ownership}}
 - (void) MM : (NSObject*) arg0 : (__strong NSObject**)arg : (id) arg1 : (__strong id*) arg2 {}
 - (void) M : (NSObject**)arg0 : (id*)arg {} // expected-warning {{method parameter of type 'NSObject *__autoreleasing *' with no explicit ownership}} \
                                             // expected-warning {{method parameter of type '__autoreleasing id *' with no explicit ownership}}
 - (void) N : (__strong NSObject***) arg0 : (__strong NSObject<P>***)arg : (float**) arg1 : (double) arg2 {} 
-- (void) BLOCK : (T*) arg0 : (T)arg  : (__strong T*) arg1 {} // expected-warning {{method parameter of type '__autoreleasing T *' (aka 'void (^__autoreleasing *)()') with no explicit ownership}}
+- (void) BLOCK : (T&) arg0 : (T)arg  : (__strong T*) arg1 {} // expected-warning {{method parameter of type '__autoreleasing T &' (aka 'void (^__autoreleasing &)()') with no explicit ownership}}
 @end
