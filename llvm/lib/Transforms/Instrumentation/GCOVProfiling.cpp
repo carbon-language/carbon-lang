@@ -91,7 +91,7 @@ namespace {
     void insertCounterWriteout(ArrayRef<std::pair<GlobalVariable*, MDNode*> >);
     void insertIndirectCounterIncrement();
 
-    std::string mangleName(DICompileUnit CU, std::string NewStem);
+    std::string mangleName(DICompileUnit CU, const char *NewStem);
 
     bool EmitNotes;
     bool EmitData;
@@ -328,7 +328,7 @@ namespace {
   };
 }
 
-std::string GCOVProfiler::mangleName(DICompileUnit CU, std::string NewStem) {
+std::string GCOVProfiler::mangleName(DICompileUnit CU, const char *NewStem) {
   if (NamedMDNode *GCov = M->getNamedMetadata("llvm.gcov")) {
     for (int i = 0, e = GCov->getNumOperands(); i != e; ++i) {
       MDNode *N = GCov->getOperand(i);
