@@ -1681,7 +1681,7 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
   CvtOS << "bool " << Target.getName() << ClassName << "::\n"
         << "ConvertToMCInst(unsigned Kind, MCInst &Inst, "
         << "unsigned Opcode,\n"
-        << "                      const SmallVectorImpl<MCParsedAsmOperand*"
+        << "                const SmallVectorImpl<MCParsedAsmOperand*"
         << "> &Operands) {\n"
         << "  if (Kind >= CVT_NUM_SIGNATURES) return false;\n"
         << "  uint8_t *Converter = ConversionTable[Kind];\n"
