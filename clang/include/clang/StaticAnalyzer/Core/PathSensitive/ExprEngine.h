@@ -90,9 +90,13 @@ class ExprEngine : public SubEngine {
   ///  destructor is called before the rest of the ExprEngine is destroyed.
   GRBugReporter BR;
 
+  /// The functions which have been analyzed through inlining. This is owned by
+  /// AnalysisConsumer. It can be null.
+  SetOfConstDecls *VisitedCallees;
+
 public:
   ExprEngine(AnalysisManager &mgr, bool gcEnabled,
-             SetOfConstDecls *VisitedCallees,
+             SetOfConstDecls *VisitedCalleesIn,
              FunctionSummariesTy *FS);
 
   ~ExprEngine();

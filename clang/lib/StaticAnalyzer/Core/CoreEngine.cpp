@@ -243,11 +243,6 @@ void CoreEngine::dispatchWorkItem(ExplodedNode* Pred, ProgramPoint Loc,
 
     case ProgramPoint::CallEnterKind: {
       CallEnter CEnter = cast<CallEnter>(Loc);
-      if (AnalyzedCallees)
-        if (const CallExpr* CE =
-            dyn_cast_or_null<CallExpr>(CEnter.getCallExpr()))
-          if (const Decl *CD = CE->getCalleeDecl())
-            AnalyzedCallees->insert(CD);
       SubEng.processCallEnter(CEnter, Pred);
       break;
     }

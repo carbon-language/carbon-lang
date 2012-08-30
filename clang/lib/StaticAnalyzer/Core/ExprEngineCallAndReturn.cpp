@@ -465,6 +465,10 @@ bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
 
   NumInlinedCalls++;
 
+  // Mark the decl as visited.
+  if (VisitedCallees)
+    VisitedCallees->insert(D);
+
   return true;
 }
 

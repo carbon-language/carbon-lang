@@ -55,11 +55,11 @@ STATISTIC(NumTimesRetriedWithoutInlining,
 //===----------------------------------------------------------------------===//
 
 ExprEngine::ExprEngine(AnalysisManager &mgr, bool gcEnabled,
-                       SetOfConstDecls *VisitedCallees,
+                       SetOfConstDecls *VisitedCalleesIn,
                        FunctionSummariesTy *FS)
   : AMgr(mgr),
     AnalysisDeclContexts(mgr.getAnalysisDeclContextManager()),
-    Engine(*this, VisitedCallees, FS),
+    Engine(*this, FS),
     G(Engine.getGraph()),
     StateMgr(getContext(), mgr.getStoreManagerCreator(),
              mgr.getConstraintManagerCreator(), G.getAllocator(),
@@ -70,7 +70,8 @@ ExprEngine::ExprEngine(AnalysisManager &mgr, bool gcEnabled,
     currStmt(NULL), currStmtIdx(0), currBldrCtx(0),
     NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
     RaiseSel(GetNullarySelector("raise", getContext())),
-    ObjCGCEnabled(gcEnabled), BR(mgr, *this)
+    ObjCGCEnabled(gcEnabled), BR(mgr, *this),
+    VisitedCallees(VisitedCalleesIn)
 {
     if (mgr.options.eagerlyTrimExplodedGraph) {
       // Enable eager node reclaimation when constructing the ExplodedGraph.

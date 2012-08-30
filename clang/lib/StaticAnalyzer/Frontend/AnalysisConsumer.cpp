@@ -348,6 +348,22 @@ void AnalysisConsumer::storeTopLevelDecls(DeclGroupRef DG) {
   }
 }
 
+static bool shouldSkipFunction(CallGraphNode *N,
+                               SmallPtrSet<CallGraphNode*,24> Visited) {
+  // We want to re-analyse the functions as top level in several cases:
+  // - The 'init' methods should be reanalyzed because
+  //   ObjCNonNilReturnValueChecker assumes that '[super init]' never returns
+  //   'nil' and unless we analyze the 'init' functions as top level, we will not
+  //   catch errors within defensive code.
+  // - We want to reanalyze all ObjC methods as top level to report Retain
+  //   Count naming convention errors more aggressively.
+  if (isa<ObjCMethodDecl>(N->getDecl()))
+    return false;
+
+  // Otherwise, if we visited the function before, do not reanalyze it.
+  return Visited.count(N);
+}
+
 void AnalysisConsumer::HandleDeclsGallGraph(const unsigned LocalTUDeclsSize) {
   // Otherwise, use the Callgraph to derive the order.
   // Build the Call Graph.
@@ -397,13 +413,13 @@ void AnalysisConsumer::HandleDeclsGallGraph(const unsigned LocalTUDeclsSize) {
     // Push the children into the queue.
     for (CallGraphNode::const_iterator CI = N->begin(),
          CE = N->end(); CI != CE; ++CI) {
-      if (!Visited.count(*CI))
+      if (!shouldSkipFunction(*CI, Visited))
         BFSQueue.push_back(*CI);
     }
 
     // Skip the functions which have been processed already or previously
     // inlined.
-    if (Visited.count(N))
+    if (shouldSkipFunction(N, Visited))
       continue;
 
     // Analyze the function.
