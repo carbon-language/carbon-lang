@@ -2014,13 +2014,17 @@ X86FastISel::TargetSelectInstruction(const Instruction *I)  {
 unsigned X86FastISel::TargetMaterializeConstant(const Constant *C) {
   MVT VT;
   if (!isTypeLegal(C->getType(), VT))
-    return false;
+    return 0;
+
+  // Can't handle alternate code models yet.
+  if (TM.getCodeModel() != CodeModel::Small)
+    return 0;
 
   // Get opcode and regclass of the output for the given load instruction.
   unsigned Opc = 0;
   const TargetRegisterClass *RC = NULL;
   switch (VT.SimpleTy) {
-  default: return false;
+  default: return 0;
   case MVT::i8:
     Opc = X86::MOV8rm;
     RC  = &X86::GR8RegClass;
@@ -2058,7 +2062,7 @@ unsigned X86FastISel::TargetMaterializeConstant(const Constant *C) {
     break;
   case MVT::f80:
     // No f80 support yet.
-    return false;
+    return 0;
   }
 
   // Materialize addresses with LEA instructions.
