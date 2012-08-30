@@ -177,11 +177,11 @@ class SizeClassAllocator64 {
   }
 
   static void *GetBlockBegin(void *p) {
-    uptr u = (uptr)p;
-    uptr s = GetActuallyAllocatedSize(p);
-    uptr regBeg = u & ~(kRegionSize - 1);
-    uptr regOff = u - regBeg;
-    uptr begin = regBeg + regOff / s * s;
+    uptr class_id = GetSizeClass(p);
+    uptr size = SizeClassMap::Size(class_id);
+    uptr chunk_idx = GetChunkIdx((uptr)p, size);
+    uptr reg_beg = (uptr)p & ~(kRegionSize - 1);
+    uptr begin = reg_beg + chunk_idx * size;
     return (void*)begin;
   }
 
@@ -194,7 +194,8 @@ class SizeClassAllocator64 {
 
   void *GetMetaData(void *p) {
     uptr class_id = GetSizeClass(p);
-    uptr chunk_idx = GetChunkIdx(reinterpret_cast<uptr>(p), class_id);
+    uptr size = SizeClassMap::Size(class_id);
+    uptr chunk_idx = GetChunkIdx(reinterpret_cast<uptr>(p), size);
     return reinterpret_cast<void*>(kSpaceBeg + (kRegionSize * (class_id + 1)) -
                                    (1 + chunk_idx) * kMetadataSize);
   }
@@ -248,12 +249,12 @@ class SizeClassAllocator64 {
     return &regions[-1 - class_id];
   }
 
-  uptr GetChunkIdx(uptr chunk, uptr class_id) {
+  static uptr GetChunkIdx(uptr chunk, uptr size) {
     u32 offset = chunk % kRegionSize;
     // Here we divide by a non-constant. This is costly.
     // We require that kRegionSize is at least 2^32 so that offset is 32-bit.
     // We save 2x by using 32-bit div, but may need to use a 256-way switch.
-    return offset / (u32)SizeClassMap::Size(class_id);
+    return offset / (u32)size;
   }
 
   void PopulateFreeList(uptr class_id, RegionInfo *region) {
