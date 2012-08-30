@@ -125,7 +125,7 @@ void SplitString(StringRef Source,
 //   X*33+c -> X*33^c
 static inline unsigned HashString(StringRef Str, unsigned Result = 0) {
   for (unsigned i = 0, e = Str.size(); i != e; ++i)
-    Result = Result * 33 + Str[i];
+    Result = Result * 33 + (unsigned char)Str[i];
   return Result;
 }
 
