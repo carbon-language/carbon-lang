@@ -91,7 +91,7 @@ namespace {
     void insertCounterWriteout(ArrayRef<std::pair<GlobalVariable*, MDNode*> >);
     void insertIndirectCounterIncrement();
 
-    std::string mangleName(DICompileUnit CU, const char *NewStem);
+    std::string mangleName(DICompileUnit CU, std::string NewStem);
 
     bool EmitNotes;
     bool EmitData;
@@ -328,10 +328,7 @@ namespace {
   };
 }
 
-std::string GCOVProfiler::mangleName(DICompileUnit CU, const char *NewStem) {
-  SmallString<128> Filename = CU.getFilename();
-  bool AsString = false;
-
+std::string GCOVProfiler::mangleName(DICompileUnit CU, std::string NewStem) {
   if (NamedMDNode *GCov = M->getNamedMetadata("llvm.gcov")) {
     for (int i = 0, e = GCov->getNumOperands(); i != e; ++i) {
       MDNode *N = GCov->getOperand(i);
@@ -340,25 +337,16 @@ std::string GCOVProfiler::mangleName(DICompileUnit CU, const char *NewStem) {
       MDNode *CompileUnit = dyn_cast<MDNode>(N->getOperand(1));
       if (!GCovFile || !CompileUnit) continue;
       if (CompileUnit == CU) {
-        Filename = GCovFile->getString();
-        AsString = true;
-        break;
+        SmallString<128> Filename = GCovFile->getString();
+        sys::path::replace_extension(Filename, NewStem);
+        return Filename.str();
       }
     }
   }
 
-  if (sys::path::is_relative(Filename.c_str())) {
-    SmallString<128> FullPath = CU.getDirectory();
-    sys::path::append(FullPath, Filename.begin(), Filename.end());
-    Filename = FullPath;
-  }
-
+  SmallString<128> Filename = CU.getFilename();
   sys::path::replace_extension(Filename, NewStem);
-
-  if (!AsString)
-    return sys::path::filename(Filename.str());
-
-  return Filename.str();
+  return sys::path::filename(Filename.str());
 }
 
 bool GCOVProfiler::runOnModule(Module &M) {
