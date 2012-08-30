@@ -19,12 +19,12 @@
 
 namespace __tsan {
 
-const int kTracePartSize = 16 * 1024;
 #ifndef TSAN_HISTORY_SIZE  // in kibitraces
-const int kTraceParts = 8;
-#else
-const int kTraceParts = TSAN_HISTORY_SIZE * 1024 / kTracePartSize;
+#define TSAN_HISTORY_SIZE 128
 #endif
+
+const int kTracePartSize = 16 * 1024;
+const int kTraceParts = TSAN_HISTORY_SIZE * 1024 / kTracePartSize;
 const int kTraceSize = kTracePartSize * kTraceParts;
 
 // Must fit into 3 bits.
