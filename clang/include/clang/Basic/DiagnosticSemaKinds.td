@@ -26,6 +26,10 @@ def warn_identical_enum_values : Warning<
 def note_identical_enum_values : Note<
   "initialize the last element with the previous element to silence "
   "this warning">;
+def warn_duplicate_enum_values : Warning<
+  "element %0 has been implicitly assigned %1 which another element has "
+  "been assigned">, InGroup<DiagGroup<"duplicate-enum">>, DefaultIgnore;
+def note_duplicate_element : Note<"element %0 also has value %1">;
 
 // Constant expressions
 def err_expr_not_ice : Error<
