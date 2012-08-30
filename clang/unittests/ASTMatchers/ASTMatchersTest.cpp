@@ -685,6 +685,18 @@ TEST(Matcher, BindTheSameNameInAlternatives) {
       new VerifyIdIsBoundToStmt<CallExpr>("x")));
 }
 
+TEST(Matcher, BindsIDForMemoizedResults) {
+  // Using the same matcher in two match expressions will make memoization
+  // kick in.
+  DeclarationMatcher ClassX = recordDecl(hasName("X")).bind("x");
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "class A { class B { class X {}; }; };",
+      DeclarationMatcher(anyOf(
+          recordDecl(hasName("A"), hasDescendant(ClassX)),
+          recordDecl(hasName("B"), hasDescendant(ClassX)))),
+      new VerifyIdIsBoundToDecl<Decl>("x", 2)));
+}
+
 TEST(HasType, TakesQualTypeMatcherAndMatchesExpr) {
   TypeMatcher ClassX = hasDeclaration(recordDecl(hasName("X")));
   EXPECT_TRUE(
