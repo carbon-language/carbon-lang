@@ -1145,6 +1145,11 @@ RetainSummaryManager::getFunctionSummary(const FunctionDecl *FD) {
       break;
 
     if (RetTy->isPointerType()) {
+      if (FD->getAttr<CFAuditedTransferAttr>()) {
+        S = getCFCreateGetRuleSummary(FD);
+        break;
+      }
+      
       // For CoreFoundation ('CF') types.
       if (cocoa::isRefType(RetTy, "CF", FName)) {
         if (isRetain(FD, FName))
