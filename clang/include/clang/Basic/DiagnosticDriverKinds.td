@@ -145,5 +145,5 @@ def note_drv_command_failed_diag_msg : Note<
 def err_analyzer_config_no_value : Error<
   "analyzer-config option '%0' has a key but no value">;
 def err_analyzer_config_multiple_values : Error<
-  "analyzer-config option '%0' should contain only one ':'">;
+  "analyzer-config option '%0' should contain only one '='">;
 }

@@ -1161,20 +1161,20 @@ static bool ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
     const Arg *A = *it;
     A->claim();
     // We can have a list of comma separated config names, e.g:
-    // '-analyzer-config=key1:val1,key2:val2'
+    // '-analyzer-config key1=val1,key2=val2'
     StringRef configList = A->getValue(Args);
     SmallVector<StringRef, 4> configVals;
     configList.split(configVals, ",");
     for (unsigned i = 0, e = configVals.size(); i != e; ++i) {
       StringRef key, val;
-      llvm::tie(key, val) = configVals[i].split(":");
+      llvm::tie(key, val) = configVals[i].split("=");
       if (val.empty()) {
         Diags.Report(SourceLocation(),
                      diag::err_analyzer_config_no_value) << configVals[i];
         Success = false;
         break;
       }
-      if (val.find(':') != StringRef::npos) {
+      if (val.find('=') != StringRef::npos) {
         Diags.Report(SourceLocation(),
                      diag::err_analyzer_config_multiple_values)
           << configVals[i];
