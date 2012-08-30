@@ -676,6 +676,10 @@ isl_space *ScopStmt::getDomainSpace() const {
   return isl_set_get_space(Domain);
 }
 
+isl_id *ScopStmt::getDomainId() const {
+  return isl_set_get_tuple_id(Domain);
+}
+
 ScopStmt::~ScopStmt() {
   while (!MemAccs.empty()) {
     delete MemAccs.back();

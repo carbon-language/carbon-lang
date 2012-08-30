@@ -309,6 +309,11 @@ public:
   /// @return The space of the iteration domain
   isl_space *getDomainSpace() const;
 
+  /// @brief Get the id of the iteration domain space
+  ///
+  /// @return The id of the iteration domain space
+  isl_id *getDomainId() const;
+
   /// @brief Get an isl string representing this domain.
   std::string getDomainStr() const;
 

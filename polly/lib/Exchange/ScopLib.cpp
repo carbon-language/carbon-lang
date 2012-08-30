@@ -652,7 +652,7 @@ isl_map *scatteringForStmt(scoplib_matrix_p m, ScopStmt *PollyStmt,
   isl_space_free(ParamSpace);
 
   Space = isl_space_set_tuple_name(Space, isl_dim_out, "scattering");
-  Space = isl_space_set_tuple_name(Space, isl_dim_in, PollyStmt->getBaseName());
+  Space = isl_space_set_tuple_id(Space, isl_dim_in, PollyStmt->getDomainId());
 
   if (scatteringDims == -1)
     return mapFromMatrix(m, Space);

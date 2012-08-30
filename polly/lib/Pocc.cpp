@@ -24,6 +24,8 @@
 #include "polly/ScheduleOptimizer.h"
 #include "polly/ScopInfo.h"
 
+#define DEBUG_TYPE "polly-opt-pocc"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -62,19 +64,16 @@ namespace {
     virtual bool runOnScop(Scop &S);
     void printScop(llvm::raw_ostream &OS) const;
     void getAnalysisUsage(AnalysisUsage &AU) const;
+
+  private:
+    bool runTransform(Scop &S);
   };
 
 }
 
 char Pocc::ID = 0;
-bool Pocc::runOnScop(Scop &S) {
+bool Pocc::runTransform(Scop &S) {
   Dependences *D = &getAnalysis<Dependences>();
-
-  // Only the final read statement in the SCoP. No need to optimize anything.
-  // (In case we would try, Pocc complains that there is no statement in the
-  //  SCoP).
-  if (S.begin() + 1 == S.end())
-    return false;
 
   // Create the scop file.
   sys::Path tempDir = sys::Path::GetTemporaryDirectory();
@@ -234,6 +233,12 @@ bool Pocc::runOnScop(Scop &S) {
 
   return false;
 }
+bool Pocc::runOnScop(Scop &S) {
+  bool Result = runTransform(S);
+  DEBUG(printScop(dbgs()));
+
+  return Result;
+}
 
 void Pocc::printScop(raw_ostream &OS) const {
   OwningPtr<MemoryBuffer> stdoutBuffer;
@@ -249,14 +254,14 @@ void Pocc::printScop(raw_ostream &OS) const {
   OS << "\n";
 
   if (error_code ec = MemoryBuffer::getFile(plutoStdout.c_str(), stdoutBuffer))
-    OS << "Could not open pocc stdout file: " + ec.message();
+    OS << "Could not open pocc stdout file: " + ec.message() << "\n";
   else {
     OS << "pocc stdout: " << stdoutBuffer->getBufferIdentifier() << "\n";
     OS << stdoutBuffer->getBuffer() << "\n";
   }
 
   if (error_code ec = MemoryBuffer::getFile(plutoStderr.c_str(), stderrBuffer))
-    OS << "Could not open pocc stderr file: " + ec.message();
+    OS << "Could not open pocc stderr file: " + ec.message() << "\n";
   else {
     OS << "pocc stderr: " << plutoStderr.c_str() << "\n";
     OS << stderrBuffer->getBuffer() << "\n";
