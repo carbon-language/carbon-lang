@@ -15,15 +15,6 @@ entry:
   ret i32 %div1
 }
 
-; CHECK: @sdiv400
-; CHECK: sdiv i32 %x, 400
-; CHECK: ret
-define i32 @sdiv400(i32 %x) {
-entry:
-  %div = ashr i32 %x, 2
-  %div1 = sdiv i32 %div, 100
-  ret i32 %div1
-}
 
 ; CHECK: @udiv400_no
 ; CHECK: ashr
@@ -57,22 +48,6 @@ define i80 @udiv_i80(i80 %x) {
   %div = lshr i80 %x, 2
   %div1 = udiv i80 %div, 100
   ret i80 %div1
-}
-
-; CHECK: @sdiv_i80
-; CHECK: sdiv i80 %x, 400
-; CHECK: ret
-define i80 @sdiv_i80(i80 %x) {
-  %div = ashr i80 %x, 2
-  %div1 = sdiv i80 %div, 100
-  ret i80 %div1
-}
-
-
-define i32 @no_crash_notconst_sdiv(i32 %x, i32 %notconst) {
-  %div = ashr i32 %x, %notconst
-  %div1 = sdiv i32 %div, 100
-  ret i32 %div1
 }
 
 define i32 @no_crash_notconst_udiv(i32 %x, i32 %notconst) {

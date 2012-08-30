@@ -543,16 +543,6 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
                                           ConstantExpr::getNeg(RHS));
   }
 
-  // Sdiv ((Ashl x, C1) , C2) ->  x / (C2 * 1<<C1);
-  if (ConstantInt *C2 = dyn_cast<ConstantInt>(Op1)) {
-    Value *X;
-    ConstantInt *C1;
-    if (match(Op0, m_AShr(m_Value(X), m_ConstantInt(C1)))) {
-      APInt NC = C2->getValue().shl(C1->getLimitedValue(C1->getBitWidth()-1));
-      return BinaryOperator::CreateSDiv(X, Builder->getInt(NC));
-    }
-  }
-
   // If the sign bits of both operands are zero (i.e. we can prove they are
   // unsigned inputs), turn this into a udiv.
   if (I.getType()->isIntegerTy()) {
