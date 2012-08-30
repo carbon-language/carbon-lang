@@ -7,13 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This header contains the structures necessary for a front-end to specify
-// various analyses.
+// This header defines various options for the static analyzer that are set
+// by the frontend and are consulted throughout the analyzer.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FRONTEND_ANALYZEROPTIONS_H
-#define LLVM_CLANG_FRONTEND_ANALYZEROPTIONS_H
+#ifndef LLVM_CLANG_ANALYZEROPTIONS_H
+#define LLVM_CLANG_ANALYZEROPTIONS_H
 
 #include <string>
 #include <vector>
