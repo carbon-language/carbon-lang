@@ -141,7 +141,7 @@ lpad.i:                                           ; preds = %for.body.i
 
 catch.i:                                          ; preds = %lpad.i
   %8 = tail call i8* @__cxa_begin_catch(i8* %6) nounwind
-  invoke void @_Z3barj(i32 0)
+  invoke void @test3(i32 0)
           to label %invoke.cont2.i unwind label %lpad1.i
 
 invoke.cont2.i:                                   ; preds = %catch.i
