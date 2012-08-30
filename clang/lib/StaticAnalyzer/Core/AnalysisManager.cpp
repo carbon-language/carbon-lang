@@ -20,35 +20,17 @@ AnalysisManager::AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags,
                                  StoreManagerCreator storemgr,
                                  ConstraintManagerCreator constraintmgr, 
                                  CheckerManager *checkerMgr,
-                                 const ConfigTable &Config,
-                                 unsigned maxnodes, unsigned maxvisit,
-                                 bool vizdot, bool vizubi,
-                                 AnalysisPurgeMode purge,
-                                 bool eager, bool trim,
-                                 bool useUnoptimizedCFG,
-                                 bool addImplicitDtors,
-                                 bool eagerlyTrimEGraph,
-                                 AnalysisIPAMode ipa,
-                                 unsigned inlineMaxStack,
-                                 unsigned inlineMaxFunctionSize,
-                                 AnalysisInliningMode IMode,
-                                 bool NoRetry)
-  : AnaCtxMgr(useUnoptimizedCFG, addImplicitDtors, /*addInitializers=*/true),
-    Ctx(ctx), Diags(diags), LangOpts(lang),
+                                 const AnalyzerOptions &Options)
+  : AnaCtxMgr(Options.UnoptimizedCFG,
+              Options.CFGAddImplicitDtors,
+              /*addInitializers=*/true),
+    Ctx(ctx),
+    Diags(diags),
+    LangOpts(lang),
     PathConsumers(PDC),
     CreateStoreMgr(storemgr), CreateConstraintMgr(constraintmgr),
     CheckerMgr(checkerMgr),
-    MaxNodes(maxnodes), MaxVisit(maxvisit),
-    VisualizeEGDot(vizdot), VisualizeEGUbi(vizubi), PurgeDead(purge),
-    EagerlyAssume(eager), TrimGraph(trim),
-    EagerlyTrimEGraph(eagerlyTrimEGraph),
-    IPAMode(ipa),
-    InlineMaxStackDepth(inlineMaxStack),
-    InlineMaxFunctionSize(inlineMaxFunctionSize),
-    InliningMode(IMode),
-    NoRetryExhausted(NoRetry),
-    Config(Config)
-{
+    options(Options) {
   AnaCtxMgr.getCFGBuildOptions().setAllAlwaysAdd();
 }
 

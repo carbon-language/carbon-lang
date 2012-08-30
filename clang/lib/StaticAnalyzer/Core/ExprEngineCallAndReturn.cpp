@@ -176,7 +176,7 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
   // that we report the issues such as leaks in the stack contexts in which
   // they occurred.
   ExplodedNodeSet CleanedNodes;
-  if (LastSt && Blk && AMgr.getPurgeMode() != PurgeNone) {
+  if (LastSt && Blk && AMgr.options.AnalysisPurgeOpt != PurgeNone) {
     static SimpleProgramPointTag retValBind("ExprEngine : Bind Return Value");
     PostStmt Loc(LastSt, calleeCtx, &retValBind);
     bool isNew;
@@ -268,13 +268,13 @@ bool ExprEngine::shouldInlineDecl(const Decl *D, ExplodedNode *Pred) {
     return false;
 
   if (getNumberStackFrames(Pred->getLocationContext())
-        == AMgr.InlineMaxStackDepth)
+        == AMgr.options.InlineMaxStackDepth)
     return false;
 
   if (Engine.FunctionSummaries->hasReachedMaxBlockCount(D))
     return false;
 
-  if (CalleeCFG->getNumBlockIDs() > AMgr.InlineMaxFunctionSize)
+  if (CalleeCFG->getNumBlockIDs() > AMgr.options.InlineMaxFunctionSize)
     return false;
 
   // Do not inline variadic calls (for now).
@@ -317,7 +317,7 @@ template<> struct ProgramStateTrait<DynamicDispatchBifurcationMap>
 }}
 
 static bool shouldInlineCXX(AnalysisManager &AMgr) {
-  switch (AMgr.IPAMode) {
+  switch (AMgr.options.IPAMode) {
   case None:
   case BasicInlining:
     return false;
@@ -424,8 +424,8 @@ bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
     break;
   }
   case CE_ObjCMessage:
-    if (!(getAnalysisManager().IPAMode == DynamicDispatch ||
-          getAnalysisManager().IPAMode == DynamicDispatchBifurcate))
+    if (!(getAnalysisManager().options.IPAMode == DynamicDispatch ||
+          getAnalysisManager().options.IPAMode == DynamicDispatchBifurcate))
       return false;
     break;
   }
@@ -600,13 +600,13 @@ void ExprEngine::defaultEvalCall(NodeBuilder &Bldr, ExplodedNode *Pred,
     if (D) {
       if (RD.mayHaveOtherDefinitions()) {
         // Explore with and without inlining the call.
-        if (getAnalysisManager().IPAMode == DynamicDispatchBifurcate) {
+        if (getAnalysisManager().options.IPAMode == DynamicDispatchBifurcate) {
           BifurcateCall(RD.getDispatchRegion(), *Call, D, Bldr, Pred);
           return;
         }
 
         // Don't inline if we're not in any dynamic dispatch mode.
-        if (getAnalysisManager().IPAMode != DynamicDispatch) {
+        if (getAnalysisManager().options.IPAMode != DynamicDispatch) {
           conservativeEvalCall(*Call, Bldr, Pred, State);
           return;
         }

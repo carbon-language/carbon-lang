@@ -77,32 +77,66 @@ NumInliningModes
 
 class AnalyzerOptions {
 public:
+  typedef llvm::StringMap<std::string> ConfigTable;
+
   /// \brief Pair of checker name and enable/disable.
   std::vector<std::pair<std::string, bool> > CheckersControlList;
-  llvm::StringMap<std::string> Config;
+  
+  /// \brief A key-value table of use-specified configuration values.
+  ConfigTable Config;
   AnalysisStores AnalysisStoreOpt;
   AnalysisConstraints AnalysisConstraintsOpt;
   AnalysisDiagClients AnalysisDiagOpt;
   AnalysisPurgeMode AnalysisPurgeOpt;
+  
+  // \brief The interprocedural analysis mode.
   AnalysisIPAMode IPAMode;
+  
   std::string AnalyzeSpecificFunction;
+  
+  /// \brief The maximum number of exploded nodes the analyzer will generate.
   unsigned MaxNodes;
+  
+  /// \brief The maximum number of times the analyzer visits a block.
   unsigned MaxLoop;
+  
+  
   unsigned ShowCheckerHelp : 1;
   unsigned AnalyzeAll : 1;
   unsigned AnalyzerDisplayProgress : 1;
   unsigned AnalyzeNestedBlocks : 1;
+  
+  /// \brief The flag regulates if we should eagerly assume evaluations of
+  /// conditionals, thus, bifurcating the path.
+  ///
+  /// EagerlyAssume - A flag indicating how the engine should handle
+  ///   expressions such as: 'x = (y != 0)'.  When this flag is true then
+  ///   the subexpression 'y != 0' will be eagerly assumed to be true or false,
+  ///   thus evaluating it to the integers 0 or 1 respectively.  The upside
+  ///   is that this can increase analysis precision until we have a better way
+  ///   to lazily evaluate such logic.  The downside is that it eagerly
+  ///   bifurcates paths.
   unsigned EagerlyAssume : 1;
+  
   unsigned TrimGraph : 1;
   unsigned VisualizeEGDot : 1;
   unsigned VisualizeEGUbi : 1;
   unsigned UnoptimizedCFG : 1;
   unsigned CFGAddImplicitDtors : 1;
-  unsigned EagerlyTrimEGraph : 1;
+  unsigned eagerlyTrimExplodedGraph : 1;
   unsigned PrintStats : 1;
+  
+  /// \brief Do not re-analyze paths leading to exhausted nodes with a different
+  /// strategy. We get better code coverage when retry is enabled.
   unsigned NoRetryExhausted : 1;
+  
+  /// \brief The inlining stack depth limit.
   unsigned InlineMaxStackDepth;
+  
+  /// \brief The mode of function selection used during inlining.
   unsigned InlineMaxFunctionSize;
+
+  /// \brief The mode of function selection used during inlining.
   AnalysisInliningMode InliningMode;
 
 public:
@@ -122,7 +156,7 @@ public:
     VisualizeEGUbi = 0;
     UnoptimizedCFG = 0;
     CFGAddImplicitDtors = 0;
-    EagerlyTrimEGraph = 0;
+    eagerlyTrimExplodedGraph = 0;
     PrintStats = 0;
     NoRetryExhausted = 0;
     // Cap the stack depth at 4 calls (5 stack frames, base + 4 calls).

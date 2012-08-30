@@ -255,22 +255,7 @@ public:
                                   CreateStoreMgr,
                                   CreateConstraintMgr,
                                   checkerMgr.get(),
-                                  Opts.Config,
-                                  Opts.MaxNodes,
-                                  Opts.MaxLoop,
-                                  Opts.VisualizeEGDot,
-                                  Opts.VisualizeEGUbi,
-                                  Opts.AnalysisPurgeOpt,
-                                  Opts.EagerlyAssume,
-                                  Opts.TrimGraph,
-                                  Opts.UnoptimizedCFG,
-                                  Opts.CFGAddImplicitDtors,
-                                  Opts.EagerlyTrimEGraph,
-                                  Opts.IPAMode,
-                                  Opts.InlineMaxStackDepth,
-                                  Opts.InlineMaxFunctionSize,
-                                  Opts.InliningMode,
-                                  Opts.NoRetryExhausted));
+                                  Opts));
   }
 
   /// \brief Store the top level decls in the set to be processed later on.
@@ -426,7 +411,7 @@ void AnalysisConsumer::HandleDeclsGallGraph(const unsigned LocalTUDeclsSize) {
     Decl *D = N->getDecl();
     assert(D);
     HandleCode(D, ANALYSIS_PATH,
-               (Mgr->InliningMode == All ? 0 : &VisitedCallees));
+               (Mgr->options.InliningMode == All ? 0 : &VisitedCallees));
 
     // Add the visited callees to the global visited set.
     for (SetOfConstDecls::iterator I = VisitedCallees.begin(),
@@ -588,22 +573,22 @@ void AnalysisConsumer::ActionExprEngine(Decl *D, bool ObjCGCEnabled,
 
   // Set the graph auditor.
   OwningPtr<ExplodedNode::Auditor> Auditor;
-  if (Mgr->shouldVisualizeUbigraph()) {
+  if (Mgr->options.VisualizeEGUbi) {
     Auditor.reset(CreateUbiViz());
     ExplodedNode::SetAuditor(Auditor.get());
   }
 
   // Execute the worklist algorithm.
   Eng.ExecuteWorkList(Mgr->getAnalysisDeclContextManager().getStackFrame(D),
-                      Mgr->getMaxNodes());
+                      Mgr->options.MaxNodes);
 
   // Release the auditor (if any) so that it doesn't monitor the graph
   // created BugReporter.
   ExplodedNode::SetAuditor(0);
 
   // Visualize the exploded graph.
-  if (Mgr->shouldVisualizeGraphviz())
-    Eng.ViewGraph(Mgr->shouldTrimGraph());
+  if (Mgr->options.VisualizeEGDot)
+    Eng.ViewGraph(Mgr->options.TrimGraph);
 
   // Display warnings.
   Eng.getBugReporter().FlushReports();

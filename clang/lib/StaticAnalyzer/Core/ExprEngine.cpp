@@ -70,12 +70,12 @@ ExprEngine::ExprEngine(AnalysisManager &mgr, bool gcEnabled,
     currStmt(NULL), currStmtIdx(0), currBldrCtx(0),
     NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
     RaiseSel(GetNullarySelector("raise", getContext())),
-    ObjCGCEnabled(gcEnabled), BR(mgr, *this) {
-  
-  if (mgr.shouldEagerlyTrimExplodedGraph()) {
-    // Enable eager node reclaimation when constructing the ExplodedGraph.  
-    G.enableNodeReclamation();
-  }
+    ObjCGCEnabled(gcEnabled), BR(mgr, *this)
+{
+    if (mgr.options.eagerlyTrimExplodedGraph) {
+      // Enable eager node reclaimation when constructing the ExplodedGraph.
+      G.enableNodeReclamation();
+    }
 }
 
 ExprEngine::~ExprEngine() {
@@ -228,7 +228,7 @@ static bool shouldRemoveDeadBindings(AnalysisManager &AMgr,
                                      const LocationContext *LC) {
   
   // Are we never purging state values?
-  if (AMgr.getPurgeMode() == PurgeNone)
+  if (AMgr.options.AnalysisPurgeOpt == PurgeNone)
     return false;
 
   // Is this the beginning of a basic block?
@@ -704,7 +704,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
 
       Bldr.takeNodes(Pred);
       
-      if (AMgr.shouldEagerlyAssume() &&
+      if (AMgr.options.EagerlyAssume &&
           (B->isRelationalOp() || B->isEqualityOp())) {
         ExplodedNodeSet Tmp;
         VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Tmp);
@@ -924,7 +924,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::UnaryOperatorClass: {
       Bldr.takeNodes(Pred);
       const UnaryOperator *U = cast<UnaryOperator>(S);
-      if (AMgr.shouldEagerlyAssume() && (U->getOpcode() == UO_LNot)) {
+      if (AMgr.options.EagerlyAssume && (U->getOpcode() == UO_LNot)) {
         ExplodedNodeSet Tmp;
         VisitUnaryOperator(U, Pred, Tmp);
         evalEagerlyAssume(Dst, Tmp, U);
@@ -1024,7 +1024,7 @@ void ExprEngine::processCFGBlockEntrance(const BlockEdge &L,
   // FIXME: Refactor this into a checker.
   ExplodedNode *pred = nodeBuilder.getContext().getPred();
   
-  if (nodeBuilder.getContext().blockCount() >= AMgr.getMaxVisit()) {
+  if (nodeBuilder.getContext().blockCount() >= AMgr.options.MaxLoop) {
     static SimpleProgramPointTag tag("ExprEngine : Block count exceeded");
     const ExplodedNode *Sink =
                    nodeBuilder.generateSink(pred->getState(), pred, &tag);
@@ -1042,7 +1042,8 @@ void ExprEngine::processCFGBlockEntrance(const BlockEdge &L,
       // no-inlining policy in the state and enqueuing the new work item on
       // the list. Replay should almost never fail. Use the stats to catch it
       // if it does.
-      if ((!AMgr.NoRetryExhausted && replayWithoutInlining(pred, CalleeLC)))
+      if ((!AMgr.options.NoRetryExhausted &&
+           replayWithoutInlining(pred, CalleeLC)))
         return;
       NumMaxBlockCountReachedInInlined++;
     } else

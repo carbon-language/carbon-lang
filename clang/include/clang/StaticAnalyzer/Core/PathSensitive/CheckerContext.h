@@ -64,8 +64,8 @@ public:
     return Eng.getStoreManager();
   }
 
-  const AnalysisManager::ConfigTable &getConfig() const {
-    return Eng.getAnalysisManager().Config;
+  const AnalyzerOptions::ConfigTable &getConfig() const {
+    return Eng.getAnalysisManager().options.Config;
   }
   
   /// \brief Returns the previous node in the exploded graph, which includes

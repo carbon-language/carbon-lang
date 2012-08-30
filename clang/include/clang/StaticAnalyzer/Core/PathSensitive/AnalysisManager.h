@@ -41,70 +41,16 @@ class AnalysisManager : public BugReporterData {
 
   CheckerManager *CheckerMgr;
 
-  /// \brief The maximum number of exploded nodes the analyzer will generate.
-  unsigned MaxNodes;
-
-  /// \brief The maximum number of times the analyzer visits a block.
-  unsigned MaxVisit;
-
-  bool VisualizeEGDot;
-  bool VisualizeEGUbi;
-  AnalysisPurgeMode PurgeDead;
-
-  /// \brief The flag regulates if we should eagerly assume evaluations of
-  /// conditionals, thus, bifurcating the path.
-  ///
-  /// EagerlyAssume - A flag indicating how the engine should handle
-  ///   expressions such as: 'x = (y != 0)'.  When this flag is true then
-  ///   the subexpression 'y != 0' will be eagerly assumed to be true or false,
-  ///   thus evaluating it to the integers 0 or 1 respectively.  The upside
-  ///   is that this can increase analysis precision until we have a better way
-  ///   to lazily evaluate such logic.  The downside is that it eagerly
-  ///   bifurcates paths.
-  bool EagerlyAssume;
-  bool TrimGraph;
-  bool EagerlyTrimEGraph;
-
 public:
-  // \brief inter-procedural analysis mode.
-  AnalysisIPAMode IPAMode;
-
-  // Settings for inlining tuning.
-  /// \brief The inlining stack depth limit.
-  unsigned InlineMaxStackDepth;
-  /// \brief The max number of basic blocks in a function being inlined.
-  unsigned InlineMaxFunctionSize;
-  /// \brief The mode of function selection used during inlining.
-  AnalysisInliningMode InliningMode;
-
-  /// \brief Do not re-analyze paths leading to exhausted nodes with a different
-  /// strategy. We get better code coverage when retry is enabled.
-  bool NoRetryExhausted;
-
-  typedef llvm::StringMap<std::string> ConfigTable;
+  const AnalyzerOptions &options;
   
-  /// \brief A key-value table of use-specified configuration values.
-  const ConfigTable &Config;
-  
-public:
   AnalysisManager(ASTContext &ctx,DiagnosticsEngine &diags,
                   const LangOptions &lang,
                   const PathDiagnosticConsumers &Consumers,
                   StoreManagerCreator storemgr,
                   ConstraintManagerCreator constraintmgr, 
                   CheckerManager *checkerMgr,
-                  const ConfigTable &Config,
-                  unsigned maxnodes, unsigned maxvisit,
-                  bool vizdot, bool vizubi, AnalysisPurgeMode purge,
-                  bool eager, bool trim,
-                  bool useUnoptimizedCFG,
-                  bool addImplicitDtors,
-                  bool eagerlyTrimEGraph,
-                  AnalysisIPAMode ipa,
-                  unsigned inlineMaxStack,
-                  unsigned inlineMaxFunctionSize,
-                  AnalysisInliningMode inliningMode,
-                  bool NoRetry);
+                  const AnalyzerOptions &Options);
 
   ~AnalysisManager();
   
@@ -148,27 +94,13 @@ public:
 
   void FlushDiagnostics();
 
-  unsigned getMaxNodes() const { return MaxNodes; }
-
-  unsigned getMaxVisit() const { return MaxVisit; }
-
-  bool shouldVisualizeGraphviz() const { return VisualizeEGDot; }
-
-  bool shouldVisualizeUbigraph() const { return VisualizeEGUbi; }
-
   bool shouldVisualize() const {
-    return VisualizeEGDot || VisualizeEGUbi;
+    return options.VisualizeEGDot || options.VisualizeEGUbi;
   }
 
-  bool shouldEagerlyTrimExplodedGraph() const { return EagerlyTrimEGraph; }
-
-  bool shouldTrimGraph() const { return TrimGraph; }
-
-  AnalysisPurgeMode getPurgeMode() const { return PurgeDead; }
-
-  bool shouldEagerlyAssume() const { return EagerlyAssume; }
-
-  bool shouldInlineCall() const { return (IPAMode != None); }
+  bool shouldInlineCall() const {
+    return options.IPAMode != None;
+  }
 
   CFG *getCFG(Decl const *D) {
     return AnaCtxMgr.getContext(D)->getCFG();
@@ -186,7 +118,6 @@ public:
   AnalysisDeclContext *getAnalysisDeclContext(const Decl *D) {
     return AnaCtxMgr.getContext(D);
   }
-
 };
 
 } // enAnaCtxMgrspace
