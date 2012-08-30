@@ -2015,7 +2015,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       C.getArgs().hasArg(options::OPT_S)) {
     if (Output.isFilename()) {
       CmdArgs.push_back("-coverage-file");
-      CmdArgs.push_back(Args.MakeArgString(Output.getFilename()));
+      SmallString<128> absFilename(Output.getFilename());
+      llvm::sys::fs::make_absolute(absFilename);
+      CmdArgs.push_back(Args.MakeArgString(absFilename));
     }
   }
 
