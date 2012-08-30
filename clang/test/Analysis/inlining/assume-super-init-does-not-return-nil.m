@@ -24,7 +24,7 @@ typedef signed char BOOL;
 @implementation Cell
 - (id) init {
   if ((self = [super init])) {
-    ;
+    return self;
   }
   // Test that this is being analyzed.
   int m;

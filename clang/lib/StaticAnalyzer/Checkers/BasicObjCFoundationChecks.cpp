@@ -736,9 +736,9 @@ ProgramStateRef assumeExprIsNonNull(const Expr *NonNullExpr,
                                     ProgramStateRef State,
                                     CheckerContext &C) {
   SVal Val = State->getSVal(NonNullExpr, C.getLocationContext());
-  if (!isa<DefinedOrUnknownSVal>(Val))
-    return State;
-  return State->assume(cast<DefinedOrUnknownSVal>(Val), true);
+  if (DefinedOrUnknownSVal *DV = dyn_cast<DefinedOrUnknownSVal>(&Val))
+    return State->assume(cast<DefinedOrUnknownSVal>(*DV), true);
+  return State;
 }
 
 void ObjCNonNilReturnValueChecker::checkPostObjCMessage(const ObjCMethodCall &M,

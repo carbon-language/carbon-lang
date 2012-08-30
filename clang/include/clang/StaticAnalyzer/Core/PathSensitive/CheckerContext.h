@@ -102,7 +102,7 @@ public:
 
   /// Returns true if the predecessor is within an inlined function/method.
   bool isWithinInlined() {
-    return (getStackFrame() != 0);
+    return (getStackFrame()->getParent() != 0);
   }
 
   BugReporter &getBugReporter() {
