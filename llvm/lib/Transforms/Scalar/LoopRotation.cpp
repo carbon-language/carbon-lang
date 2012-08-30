@@ -24,6 +24,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
+#include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
@@ -256,6 +257,7 @@ bool LoopRotate::rotateLoop(Loop *L) {
     return false;
 
   BasicBlock *OrigHeader = L->getHeader();
+  BasicBlock *OrigLatch = L->getLoopLatch();
 
   BranchInst *BI = dyn_cast<BranchInst>(OrigHeader->getTerminator());
   if (BI == 0 || BI->isUnconditional())
@@ -267,13 +269,9 @@ bool LoopRotate::rotateLoop(Loop *L) {
   if (!L->isLoopExiting(OrigHeader))
     return false;
 
-  // Updating PHInodes in loops with multiple exits adds complexity.
-  // Keep it simple, and restrict loop rotation to loops with one exit only.
-  // In future, lift this restriction and support for multiple exits if
-  // required.
-  SmallVector<BasicBlock*, 8> ExitBlocks;
-  L->getExitBlocks(ExitBlocks);
-  if (ExitBlocks.size() > 1)
+  // If the loop latch already contains a branch that leaves the loop then the
+  // loop is already rotated.
+  if (OrigLatch == 0 || L->isLoopExiting(OrigLatch))
     return false;
 
   // Check size of original header and reject loop if it is very big.
@@ -286,17 +284,18 @@ bool LoopRotate::rotateLoop(Loop *L) {
 
   // Now, this loop is suitable for rotation.
   BasicBlock *OrigPreheader = L->getLoopPreheader();
-  BasicBlock *OrigLatch = L->getLoopLatch();
 
   // If the loop could not be converted to canonical form, it must have an
   // indirectbr in it, just give up.
-  if (OrigPreheader == 0 || OrigLatch == 0)
+  if (OrigPreheader == 0)
     return false;
 
   // Anything ScalarEvolution may know about this loop or the PHI nodes
   // in its header will soon be invalidated.
   if (ScalarEvolution *SE = getAnalysisIfAvailable<ScalarEvolution>())
     SE->forgetLoop(L);
+
+  DEBUG(dbgs() << "LoopRotation: rotating "; L->dump());
 
   // Find new Loop header. NewHeader is a Header's one and only successor
   // that is inside loop.  Header's other successor is outside the
@@ -408,10 +407,16 @@ bool LoopRotate::rotateLoop(Loop *L) {
     // Update DominatorTree to reflect the CFG change we just made.  Then split
     // edges as necessary to preserve LoopSimplify form.
     if (DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>()) {
-      // Since OrigPreheader now has the conditional branch to Exit block, it is
-      // the dominator of Exit.
-      DT->changeImmediateDominator(Exit, OrigPreheader);
-      DT->changeImmediateDominator(NewHeader, OrigPreheader);
+      // Everything that was dominated by the old loop header is now dominated
+      // by the original loop preheader. Conceptually the header was merged
+      // into the preheader, even though we reuse the actual block as a new
+      // loop latch.
+      DomTreeNode *OrigHeaderNode = DT->getNode(OrigHeader);
+      SmallVector<DomTreeNode *, 8> HeaderChildren(OrigHeaderNode->begin(),
+                                                   OrigHeaderNode->end());
+      DomTreeNode *OrigPreheaderNode = DT->getNode(OrigPreheader);
+      for (unsigned I = 0, E = HeaderChildren.size(); I != E; ++I)
+        DT->changeImmediateDominator(HeaderChildren[I], OrigPreheaderNode);
 
       // Update OrigHeader to be dominated by the new header block.
       DT->changeImmediateDominator(OrigHeader, OrigLatch);
@@ -440,6 +445,46 @@ bool LoopRotate::rotateLoop(Loop *L) {
       // Update OrigHeader to be dominated by the new header block.
       DT->changeImmediateDominator(NewHeader, OrigPreheader);
       DT->changeImmediateDominator(OrigHeader, OrigLatch);
+
+      // Brute force incremental dominator tree update. Call
+      // findNearestCommonDominator on all CFG predecessors of each child of the
+      // original header.
+      DomTreeNode *OrigHeaderNode = DT->getNode(OrigHeader);
+      SmallVector<DomTreeNode *, 8> WorkList(OrigHeaderNode->begin(),
+                                             OrigHeaderNode->end());
+      while (!WorkList.empty()) {
+        DomTreeNode *Node = WorkList.pop_back_val();
+        BasicBlock *BB = Node->getBlock();
+        BasicBlock *NearestDom = 0;
+        for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE;
+             ++PI) {
+          BasicBlock *Pred = *PI;
+
+          // We have to process predecessors of a node before we touch the
+          // actual node. If one of the predecessors is in our worklist, put it
+          // and the currently processed node on the worklist and go processing
+          // the predecessor.
+          SmallVectorImpl<DomTreeNode *>::iterator I =
+            std::find(WorkList.begin(), WorkList.end(), DT->getNode(Pred));
+          if (I != WorkList.end()) {
+            WorkList.push_back(Node);
+            std::swap(*I, WorkList.back());
+            // The predecessor is now at the end of the worklist.
+            NearestDom = 0;
+            break;
+          }
+
+          // On the first iteration start with Pred, on the other iterations we
+          // narrow it down to the nearest common dominator.
+          if (!NearestDom)
+            NearestDom = Pred;
+          else
+            NearestDom = DT->findNearestCommonDominator(NearestDom, Pred);
+        }
+
+        if (NearestDom)
+          DT->changeImmediateDominator(BB, NearestDom);
+      }
     }
   }
 
@@ -451,6 +496,8 @@ bool LoopRotate::rotateLoop(Loop *L) {
   // connected by an unconditional branch.  This is just a cleanup so the
   // emitted code isn't too gross in this common case.
   MergeBlockIntoPredecessor(OrigHeader, this);
+
+  DEBUG(dbgs() << "LoopRotation: into "; L->dump());
 
   ++NumRotated;
   return true;
