@@ -704,11 +704,11 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
 
       Bldr.takeNodes(Pred);
       
-      if (AMgr.options.EagerlyAssume &&
+      if (AMgr.options.eagerlyAssumeBinOpBifurcation &&
           (B->isRelationalOp() || B->isEqualityOp())) {
         ExplodedNodeSet Tmp;
         VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Tmp);
-        evalEagerlyAssume(Dst, Tmp, cast<Expr>(S));
+        evalEagerlyAssumeBinOpBifurcation(Dst, Tmp, cast<Expr>(S));
       }
       else
         VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Dst);
@@ -924,10 +924,10 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::UnaryOperatorClass: {
       Bldr.takeNodes(Pred);
       const UnaryOperator *U = cast<UnaryOperator>(S);
-      if (AMgr.options.EagerlyAssume && (U->getOpcode() == UO_LNot)) {
+      if (AMgr.options.eagerlyAssumeBinOpBifurcation && (U->getOpcode() == UO_LNot)) {
         ExplodedNodeSet Tmp;
         VisitUnaryOperator(U, Pred, Tmp);
-        evalEagerlyAssume(Dst, Tmp, U);
+        evalEagerlyAssumeBinOpBifurcation(Dst, Tmp, U);
       }
       else
         VisitUnaryOperator(U, Pred, Dst);
@@ -1736,15 +1736,17 @@ void ExprEngine::evalLocation(ExplodedNodeSet &Dst,
 }
 
 std::pair<const ProgramPointTag *, const ProgramPointTag*>
-ExprEngine::getEagerlyAssumeTags() {
+ExprEngine::geteagerlyAssumeBinOpBifurcationTags() {
   static SimpleProgramPointTag
-         EagerlyAssumeTrue("ExprEngine : Eagerly Assume True"),
-         EagerlyAssumeFalse("ExprEngine : Eagerly Assume False");
-  return std::make_pair(&EagerlyAssumeTrue, &EagerlyAssumeFalse);
+         eagerlyAssumeBinOpBifurcationTrue("ExprEngine : Eagerly Assume True"),
+         eagerlyAssumeBinOpBifurcationFalse("ExprEngine : Eagerly Assume False");
+  return std::make_pair(&eagerlyAssumeBinOpBifurcationTrue,
+                        &eagerlyAssumeBinOpBifurcationFalse);
 }
 
-void ExprEngine::evalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
-                                   const Expr *Ex) {
+void ExprEngine::evalEagerlyAssumeBinOpBifurcation(ExplodedNodeSet &Dst,
+                                                   ExplodedNodeSet &Src,
+                                                   const Expr *Ex) {
   StmtNodeBuilder Bldr(Src, Dst, *currBldrCtx);
   
   for (ExplodedNodeSet::iterator I=Src.begin(), E=Src.end(); I!=E; ++I) {
@@ -1762,7 +1764,7 @@ void ExprEngine::evalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
     nonloc::SymbolVal *SEV = dyn_cast<nonloc::SymbolVal>(&V);
     if (SEV && SEV->isExpression()) {
       const std::pair<const ProgramPointTag *, const ProgramPointTag*> &tags =
-        getEagerlyAssumeTags();
+        geteagerlyAssumeBinOpBifurcationTags();
 
       // First assume that the condition is true.
       if (ProgramStateRef StateTrue = state->assume(*SEV, true)) {

@@ -109,14 +109,13 @@ public:
   /// \brief The flag regulates if we should eagerly assume evaluations of
   /// conditionals, thus, bifurcating the path.
   ///
-  /// EagerlyAssume - A flag indicating how the engine should handle
-  ///   expressions such as: 'x = (y != 0)'.  When this flag is true then
-  ///   the subexpression 'y != 0' will be eagerly assumed to be true or false,
-  ///   thus evaluating it to the integers 0 or 1 respectively.  The upside
-  ///   is that this can increase analysis precision until we have a better way
-  ///   to lazily evaluate such logic.  The downside is that it eagerly
-  ///   bifurcates paths.
-  unsigned EagerlyAssume : 1;
+  /// This flag indicates how the engine should handle expressions such as: 'x =
+  /// (y != 0)'.  When this flag is true then the subexpression 'y != 0' will be
+  /// eagerly assumed to be true or false, thus evaluating it to the integers 0
+  /// or 1 respectively.  The upside is that this can increase analysis
+  /// precision until we have a better way to lazily evaluate such logic.  The
+  /// downside is that it eagerly bifurcates paths.
+  unsigned eagerlyAssumeBinOpBifurcation : 1;
   
   unsigned TrimGraph : 1;
   unsigned VisualizeEGDot : 1;
@@ -150,7 +149,7 @@ public:
     AnalyzeAll = 0;
     AnalyzerDisplayProgress = 0;
     AnalyzeNestedBlocks = 0;
-    EagerlyAssume = 0;
+    eagerlyAssumeBinOpBifurcation = 0;
     TrimGraph = 0;
     VisualizeEGDot = 0;
     VisualizeEGUbi = 0;

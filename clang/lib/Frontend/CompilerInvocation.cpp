@@ -159,7 +159,7 @@ static void AnalyzerOptsToArgs(const AnalyzerOptions &Opts, ToArgsList &Res) {
     Res.push_back("-analyzer-display-progress");
   if (Opts.AnalyzeNestedBlocks)
     Res.push_back("-analyzer-opt-analyze-nested-blocks");
-  if (Opts.EagerlyAssume)
+  if (Opts.eagerlyAssumeBinOpBifurcation)
     Res.push_back("-analyzer-eagerly-assume");
   if (Opts.TrimGraph)
     Res.push_back("-trim-egraph");
@@ -1123,7 +1123,7 @@ static bool ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
   Opts.AnalyzerDisplayProgress = Args.hasArg(OPT_analyzer_display_progress);
   Opts.AnalyzeNestedBlocks =
     Args.hasArg(OPT_analyzer_opt_analyze_nested_blocks);
-  Opts.EagerlyAssume = Args.hasArg(OPT_analyzer_eagerly_assume);
+  Opts.eagerlyAssumeBinOpBifurcation = Args.hasArg(OPT_analyzer_eagerly_assume);
   Opts.AnalyzeSpecificFunction = Args.getLastArgValue(OPT_analyze_function);
   Opts.UnoptimizedCFG = Args.hasArg(OPT_analysis_UnoptimizedCFG);
   Opts.CFGAddImplicitDtors = Args.hasArg(OPT_analysis_CFGAddImplicitDtors);

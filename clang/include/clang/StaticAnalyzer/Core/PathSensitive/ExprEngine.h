@@ -396,14 +396,14 @@ public:
                                 ExplodedNode *Pred, 
                                 ExplodedNodeSet &Dst);
   
-  /// evalEagerlyAssume - Given the nodes in 'Src', eagerly assume symbolic
+  /// evalEagerlyAssumeBinOpBifurcation - Given the nodes in 'Src', eagerly assume symbolic
   ///  expressions of the form 'x != 0' and generate new nodes (stored in Dst)
   ///  with those assumptions.
-  void evalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src, 
+  void evalEagerlyAssumeBinOpBifurcation(ExplodedNodeSet &Dst, ExplodedNodeSet &Src, 
                          const Expr *Ex);
   
   std::pair<const ProgramPointTag *, const ProgramPointTag*>
-    getEagerlyAssumeTags();
+    geteagerlyAssumeBinOpBifurcationTags();
 
   SVal evalMinus(SVal X) {
     return X.isValid() ? svalBuilder.evalMinus(cast<NonLoc>(X)) : X;

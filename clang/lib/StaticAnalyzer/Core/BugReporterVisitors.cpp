@@ -646,7 +646,7 @@ PathDiagnosticPiece *ConditionBRVisitor::VisitNodeImpl(const ExplodedNode *N,
     // violation.
     const std::pair<const ProgramPointTag *, const ProgramPointTag *> &tags =      
       cast<GRBugReporter>(BRC.getBugReporter()).
-        getEngine().getEagerlyAssumeTags();
+        getEngine().geteagerlyAssumeBinOpBifurcationTags();
 
     const ProgramPointTag *tag = PS->getTag();
     if (tag == tags.first)
