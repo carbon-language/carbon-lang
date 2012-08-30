@@ -42,7 +42,7 @@ add_llvm_library(LLVMCore
 
 # Workaround: It takes over 20 minutes to compile with msvc10.
 # FIXME: Suppressing optimizations to core libraries would not be good thing.
-if( MSVC_VERSION EQUAL 1600 )
+if( MSVC_VERSION LESS 1700 )
 set_property(
   SOURCE Function.cpp
   PROPERTY COMPILE_FLAGS "/Og-"
