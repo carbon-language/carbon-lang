@@ -500,8 +500,6 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
     if (!filesMade->empty()) {
       StringRef lastName;
       PDFileEntry::ConsumerFiles *files = filesMade->getFiles(*D);
-      if (!files)
-        continue;
       for (PDFileEntry::ConsumerFiles::const_iterator CI = files->begin(),
               CE = files->end(); CI != CE; ++CI) {
         StringRef newName = CI->first;
@@ -515,7 +513,8 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
         }
         o << "   <string>" << CI->second << "</string>\n";
       }
-      o << "  </array>\n";
+      if (!lastName.empty())
+        o << "  </array>\n";
     }
 
     // Close up the entry.
