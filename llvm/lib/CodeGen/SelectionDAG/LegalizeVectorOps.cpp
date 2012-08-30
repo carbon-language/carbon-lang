@@ -64,6 +64,7 @@ class VectorLegalizer {
   // Implement vselect in terms of XOR, AND, OR when blend is not supported
   // by the target.
   SDValue ExpandVSELECT(SDValue Op);
+  SDValue ExpandSELECT(SDValue Op);
   SDValue ExpandLoad(SDValue Op);
   SDValue ExpandStore(SDValue Op);
   SDValue ExpandFNEG(SDValue Op);
@@ -261,6 +262,8 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
   case TargetLowering::Expand:
     if (Node->getOpcode() == ISD::VSELECT)
       Result = ExpandVSELECT(Op);
+    else if (Node->getOpcode() == ISD::SELECT)
+      Result = ExpandSELECT(Op);
     else if (Node->getOpcode() == ISD::UINT_TO_FP)
       Result = ExpandUINT_TO_FLOAT(Op);
     else if (Node->getOpcode() == ISD::FNEG)
@@ -436,6 +439,67 @@ SDValue VectorLegalizer::ExpandStore(SDValue Op) {
   return TF;
 }
 
+SDValue VectorLegalizer::ExpandSELECT(SDValue Op) {
+  // Lower a select instruction where the condition is a scalar and the
+  // operands are vectors. Lower this select to VSELECT and implement it
+  // using XOR AND OR. The selector bit is broadcasted. 
+  EVT VT = Op.getValueType();
+  DebugLoc DL = Op.getDebugLoc();
+
+  SDValue Mask = Op.getOperand(0);
+  SDValue Op1 = Op.getOperand(1);
+  SDValue Op2 = Op.getOperand(2);
+
+  assert(VT.isVector() && !Mask.getValueType().isVector()
+         && Op1.getValueType() == Op2.getValueType() && "Invalid type");
+
+  unsigned NumElem = VT.getVectorNumElements();
+
+  // If we can't even use the basic vector operations of
+  // AND,OR,XOR, we will have to scalarize the op.
+  // Notice that the operation may be 'promoted' which means that it is
+  // 'bitcasted' to another type which is handled.
+  // Also, we need to be able to construct a splat vector using BUILD_VECTOR.
+  if (TLI.getOperationAction(ISD::AND, VT) == TargetLowering::Expand ||
+      TLI.getOperationAction(ISD::XOR, VT) == TargetLowering::Expand ||
+      TLI.getOperationAction(ISD::OR,  VT) == TargetLowering::Expand ||
+      TLI.getOperationAction(ISD::BUILD_VECTOR,  VT) == TargetLowering::Expand)
+    return DAG.UnrollVectorOp(Op.getNode());
+
+  // Generate a mask operand.
+  EVT MaskTy = TLI.getSetCCResultType(VT);
+  assert(MaskTy.isVector() && "Invalid CC type");
+  assert(MaskTy.getSizeInBits() == Op1.getValueType().getSizeInBits()
+         && "Invalid mask size");
+
+  // What is the size of each element in the vector mask.
+  EVT BitTy = MaskTy.getScalarType();
+
+  // Turn the mask into an all-one or all-zero word.
+  Mask = DAG.getAnyExtOrTrunc(Mask, DL, BitTy);
+  Mask = DAG.getNode(ISD::SIGN_EXTEND_INREG, DL, BitTy, Mask,
+                     DAG.getValueType(MVT::i1));
+
+  // Broadcast the mask so that the entire vector is all-one or all zero.
+  SmallVector<SDValue, 8> Ops(NumElem, Mask);
+  Mask = DAG.getNode(ISD::BUILD_VECTOR, DL, MaskTy, &Ops[0], Ops.size());
+
+  // Bitcast the operands to be the same type as the mask.
+  // This is needed when we select between FP types because
+  // the mask is a vector of integers.
+  Op1 = DAG.getNode(ISD::BITCAST, DL, MaskTy, Op1);
+  Op2 = DAG.getNode(ISD::BITCAST, DL, MaskTy, Op2);
+
+  SDValue AllOnes = DAG.getConstant(
+            APInt::getAllOnesValue(BitTy.getSizeInBits()), MaskTy);
+  SDValue NotMask = DAG.getNode(ISD::XOR, DL, MaskTy, Mask, AllOnes);
+
+  Op1 = DAG.getNode(ISD::AND, DL, MaskTy, Op1, Mask);
+  Op2 = DAG.getNode(ISD::AND, DL, MaskTy, Op2, NotMask);
+  SDValue Val = DAG.getNode(ISD::OR, DL, MaskTy, Op1, Op2);
+  return DAG.getNode(ISD::BITCAST, DL, Op.getValueType(), Val);
+}
+
 SDValue VectorLegalizer::ExpandVSELECT(SDValue Op) {
   // Implement VSELECT in terms of XOR, AND, OR
   // on platforms which do not support blend natively.
@@ -455,7 +519,7 @@ SDValue VectorLegalizer::ExpandVSELECT(SDValue Op) {
       TLI.getOperationAction(ISD::OR,  VT) == TargetLowering::Expand)
     return DAG.UnrollVectorOp(Op.getNode());
 
-  assert(VT.getSizeInBits() == Op.getOperand(1).getValueType().getSizeInBits()
+  assert(VT.getSizeInBits() == Op1.getValueType().getSizeInBits()
          && "Invalid mask size");
   // Bitcast the operands to be the same type as the mask.
   // This is needed when we select between FP types because
