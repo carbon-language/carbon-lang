@@ -462,7 +462,7 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
     }
   }
 
-  // Udiv ((Lshl x, C1) , C2) ->  x / (C2 * 1<<C1);
+  // (x lshr C1) udiv C2 --> x udiv (C2 << C1)
   if (ConstantInt *C2 = dyn_cast<ConstantInt>(Op1)) {
     Value *X;
     ConstantInt *C1;
