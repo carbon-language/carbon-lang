@@ -5374,8 +5374,8 @@ validateInstruction(MCInst &Inst,
          ((ARMOperand*)Operands[5])->getReg()) &&
         (((ARMOperand*)Operands[3])->getReg() !=
          ((ARMOperand*)Operands[4])->getReg())) {
-      Error(Operands[3]->getStartLoc(),
-            "destination register must match source register");
+      return Error(Operands[3]->getStartLoc(),
+                   "destination register must match source register");
     }
     break;
   }
