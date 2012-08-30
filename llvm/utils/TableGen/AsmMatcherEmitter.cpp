@@ -2770,6 +2770,12 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "                     MCInst &Inst, unsigned &ErrorInfo, ";
   OS << "unsigned VariantID) {\n";
 
+  OS << "  // Eliminate obvious mismatches.\n";
+  OS << "  if (Operands.size() > " << (MaxNumOperands+1) << ") {\n";
+  OS << "    ErrorInfo = " << (MaxNumOperands+1) << ";\n";
+  OS << "    return Match_InvalidOperand;\n";
+  OS << "  }\n\n";
+
   // Emit code to get the available features.
   OS << "  // Get the current feature set.\n";
   OS << "  unsigned AvailableFeatures = getAvailableFeatures();\n\n";
@@ -2786,12 +2792,6 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   }
 
   // Emit code to compute the class list for this operand vector.
-  OS << "  // Eliminate obvious mismatches.\n";
-  OS << "  if (Operands.size() > " << (MaxNumOperands+1) << ") {\n";
-  OS << "    ErrorInfo = " << (MaxNumOperands+1) << ";\n";
-  OS << "    return Match_InvalidOperand;\n";
-  OS << "  }\n\n";
-
   OS << "  // Some state to try to produce better error messages.\n";
   OS << "  bool HadMatchOtherThanFeatures = false;\n";
   OS << "  bool HadMatchOtherThanPredicate = false;\n";
@@ -2856,8 +2856,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "      HadMatchOtherThanFeatures = true;\n";
   OS << "      unsigned NewMissingFeatures = it->RequiredFeatures & "
         "~AvailableFeatures;\n";
-  OS << "      if (CountPopulation_32(NewMissingFeatures) <= "
-        "CountPopulation_32(MissingFeatures))\n";
+  OS << "      if (CountPopulation_32(NewMissingFeatures) <=\n"
+        "          CountPopulation_32(MissingFeatures))\n";
   OS << "        MissingFeatures = NewMissingFeatures;\n";
   OS << "      continue;\n";
   OS << "    }\n";
