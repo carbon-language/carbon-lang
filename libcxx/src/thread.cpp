@@ -11,6 +11,7 @@
 #include "exception"
 #include "vector"
 #include "future"
+#include "limits"
 #include <sys/types.h>
 #if !_WIN32
 #if !__sun__ && !__linux__
@@ -83,11 +84,22 @@ void
 sleep_for(const chrono::nanoseconds& ns)
 {
     using namespace chrono;
-    if (ns >= nanoseconds::zero())
+    if (ns > nanoseconds::zero())
     {
+        seconds s = duration_cast<seconds>(ns);
         timespec ts;
-        ts.tv_sec = static_cast<decltype(ts.tv_sec)>(duration_cast<seconds>(ns).count());
-        ts.tv_nsec = static_cast<decltype(ts.tv_nsec)>((ns - seconds(ts.tv_sec)).count());
+        typedef decltype(ts.tv_sec) ts_sec;
+        _LIBCPP_CONSTEXPR ts_sec ts_sec_max = numeric_limits<ts_sec>::max();
+        if (s.count() < ts_sec_max)
+        {
+            ts.tv_sec = static_cast<ts_sec>(s.count());
+            ts.tv_nsec = static_cast<decltype(ts.tv_nsec)>((ns-s).count());
+        }
+        else
+        {
+            ts.tv_sec = ts_sec_max;
+            ts.tv_nsec = giga::num - 1;
+        }
         nanosleep(&ts, 0);
     }
 }

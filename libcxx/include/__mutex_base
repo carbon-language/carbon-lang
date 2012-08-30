@@ -323,11 +323,6 @@ public:
     template <class _Predicate>
         void wait(unique_lock<mutex>& __lk, _Predicate __pred);
 
-    template <class _Duration>
-        cv_status
-        wait_until(unique_lock<mutex>& __lk,
-                   const chrono::time_point<chrono::system_clock, _Duration>& __t);
-
     template <class _Clock, class _Duration>
         cv_status
         wait_until(unique_lock<mutex>& __lk,
@@ -382,28 +377,13 @@ condition_variable::wait(unique_lock<mutex>& __lk, _Predicate __pred)
         wait(__lk);
 }
 
-template <class _Duration>
-cv_status
-condition_variable::wait_until(unique_lock<mutex>& __lk,
-                 const chrono::time_point<chrono::system_clock, _Duration>& __t)
-{
-    using namespace chrono;
-    typedef time_point<system_clock, nanoseconds> __nano_sys_tmpt;
-    __do_timed_wait(__lk,
-                  __nano_sys_tmpt(__ceil<nanoseconds>(__t.time_since_epoch())));
-    return system_clock::now() < __t ? cv_status::no_timeout :
-                                       cv_status::timeout;
-}
-
 template <class _Clock, class _Duration>
 cv_status
 condition_variable::wait_until(unique_lock<mutex>& __lk,
                                const chrono::time_point<_Clock, _Duration>& __t)
 {
     using namespace chrono;
-    system_clock::time_point     __s_now = system_clock::now();
-    typename _Clock::time_point  __c_now = _Clock::now();
-    __do_timed_wait(__lk, __s_now + __ceil<nanoseconds>(__t - __c_now));
+    wait_for(__lk, __t - _Clock::now());
     return _Clock::now() < __t ? cv_status::no_timeout : cv_status::timeout;
 }
 
@@ -427,9 +407,17 @@ condition_variable::wait_for(unique_lock<mutex>& __lk,
                              const chrono::duration<_Rep, _Period>& __d)
 {
     using namespace chrono;
+    if (__d <= __d.zero())
+        return cv_status::timeout;
+    typedef time_point<system_clock, duration<long double, nano> > __sys_tpf;
+    typedef time_point<system_clock, nanoseconds> __sys_tpi;
+    __sys_tpf _Max = __sys_tpi::max();
     system_clock::time_point __s_now = system_clock::now();
     steady_clock::time_point __c_now = steady_clock::now();
-    __do_timed_wait(__lk, __s_now + __ceil<nanoseconds>(__d));
+    if (_Max - __d > __s_now)
+        __do_timed_wait(__lk, __s_now + __ceil<nanoseconds>(__d));
+    else
+        __do_timed_wait(__lk, __sys_tpi::max());
     return steady_clock::now() - __c_now < __d ? cv_status::no_timeout :
                                                  cv_status::timeout;
 }

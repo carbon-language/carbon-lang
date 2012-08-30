@@ -410,10 +410,20 @@ void
 sleep_for(const chrono::duration<_Rep, _Period>& __d)
 {
     using namespace chrono;
-    nanoseconds __ns = duration_cast<nanoseconds>(__d);
-    if (__ns < __d)
-        ++__ns;
-    sleep_for(__ns);
+    if (__d > duration<_Rep, _Period>::zero())
+    {
+        _LIBCPP_CONSTEXPR duration<long double> _Max = nanoseconds::max();
+        nanoseconds __ns;
+        if (__d < _Max)
+        {
+            __ns = duration_cast<nanoseconds>(__d);
+            if (__ns < __d)
+                ++__ns;
+        }
+        else
+            __ns = nanoseconds::max();
+        sleep_for(__ns);
+    }
 }
 
 template <class _Clock, class _Duration>
