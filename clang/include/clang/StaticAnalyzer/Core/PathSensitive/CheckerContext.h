@@ -100,6 +100,11 @@ public:
     return Pred->getStackFrame();
   }
 
+  /// Returns true if the predecessor is within an inlined function/method.
+  bool isWithinInlined() {
+    return (getStackFrame() != 0);
+  }
+
   BugReporter &getBugReporter() {
     return Eng.getBugReporter();
   }

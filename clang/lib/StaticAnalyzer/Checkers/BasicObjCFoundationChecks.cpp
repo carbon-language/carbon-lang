@@ -718,8 +718,8 @@ void ObjCLoopChecker::checkPostStmt(const ObjCForCollectionStmt *FCS,
 
 namespace {
 /// \class ObjCNonNilReturnValueChecker
-/// \brief The checker restricts the return values of APIs known to never
-/// return nil.
+/// \brief The checker restricts the return values of APIs known to
+/// never (or almost never) return 'nil'.
 class ObjCNonNilReturnValueChecker
   : public Checker<check::PostObjCMessage> {
     mutable bool Initialized;
@@ -732,9 +732,18 @@ public:
 };
 }
 
+ProgramStateRef assumeExprIsNonNull(const Expr *NonNullExpr,
+                                    ProgramStateRef State,
+                                    CheckerContext &C) {
+  SVal Val = State->getSVal(NonNullExpr, C.getLocationContext());
+  if (!isa<DefinedOrUnknownSVal>(Val))
+    return State;
+  return State->assume(cast<DefinedOrUnknownSVal>(Val), true);
+}
+
 void ObjCNonNilReturnValueChecker::checkPostObjCMessage(const ObjCMethodCall &M,
                                                         CheckerContext &C)
-                                                         const {
+                                                        const {
   ProgramStateRef State = C.getState();
 
   if (!Initialized) {
@@ -745,19 +754,34 @@ void ObjCNonNilReturnValueChecker::checkPostObjCMessage(const ObjCMethodCall &M,
 
   // Check the receiver type.
   if (const ObjCInterfaceDecl *Interface = M.getReceiverInterface()) {
+
+    // Assume that object returned from '[self init]' or '[super init]' is not
+    // 'nil' if we are processing an inlined function/method.
+    //
+    // A defensive callee will (and should) check if the object returned by
+    // '[super init]' is 'nil' before doing it's own initialization. However,
+    // since 'nil' is rarely returned in practice, we should not warn when the
+    // caller to the defensive constructor uses the object in contexts where
+    // 'nil' is not accepted.
+    if (C.isWithinInlined() &&
+        M.getDecl()->getMethodFamily() == OMF_init &&
+        M.isReceiverSelfOrSuper()) {
+      State = assumeExprIsNonNull(M.getOriginExpr(), State, C);
+    }
+
+    // Objects returned from
+    // [NSArray|NSOrderedSet]::[ObjectAtIndex|ObjectAtIndexedSubscript]
+    // are never 'nil'.
     FoundationClass Cl = findKnownClass(Interface);
     if (Cl == FC_NSArray || Cl == FC_NSOrderedSet) {
       Selector Sel = M.getSelector();
       if (Sel == ObjectAtIndex || Sel == ObjectAtIndexedSubscript) {
         // Go ahead and assume the value is non-nil.
-        SVal Val = State->getSVal(M.getOriginExpr(), C.getLocationContext());
-        if (!isa<DefinedOrUnknownSVal>(Val))
-          return;
-        State = State->assume(cast<DefinedOrUnknownSVal>(Val), true);
-        C.addTransition(State);
+        State = assumeExprIsNonNull(M.getOriginExpr(), State, C);
       }
     }
   }
+  C.addTransition(State);
 }
 
 //===----------------------------------------------------------------------===//
