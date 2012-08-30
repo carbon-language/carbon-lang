@@ -42,6 +42,8 @@ namespace __tsan {
 struct MBlock {
   Mutex mtx;
   uptr size;
+  u32 alloc_tid;
+  u32 alloc_stack_id;
   SyncVar *head;
 };
 
@@ -60,6 +62,7 @@ typedef SizeClassAllocatorLocalCache<PrimaryAllocator::kNumClasses,
 typedef LargeMmapAllocator SecondaryAllocator;
 typedef CombinedAllocator<PrimaryAllocator, AllocatorCache,
     SecondaryAllocator> Allocator;
+Allocator *allocator();
 #endif
 
 void TsanPrintf(const char *format, ...);
@@ -270,6 +273,7 @@ struct ThreadState {
 #endif
   u64 stat[StatCnt];
   const int tid;
+  const int unique_id;
   int in_rtl;
   bool is_alive;
   const uptr stk_addr;
@@ -286,7 +290,7 @@ struct ThreadState {
   // If set, malloc must not be called.
   int nomalloc;
 
-  explicit ThreadState(Context *ctx, int tid, u64 epoch,
+  explicit ThreadState(Context *ctx, int tid, int unique_id, u64 epoch,
                        uptr stk_addr, uptr stk_size,
                        uptr tls_addr, uptr tls_size);
 };

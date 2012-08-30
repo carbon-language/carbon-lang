@@ -21,7 +21,7 @@ TEST(SanitizerCommon, StackDepotBasic) {
   uptr s1[] = {1, 2, 3, 4, 5};
   u32 i1 = StackDepotPut(s1, ARRAY_SIZE(s1));
   uptr sz1 = 0;
-  uptr *sp1 = StackDepotGet(i1, &sz1);
+  const uptr *sp1 = StackDepotGet(i1, &sz1);
   EXPECT_NE(sp1, (uptr*)0);
   EXPECT_EQ(sz1, ARRAY_SIZE(s1));
   EXPECT_EQ(internal_memcmp(sp1?:s1, s1, sizeof(s1)), 0);
@@ -29,14 +29,20 @@ TEST(SanitizerCommon, StackDepotBasic) {
 
 TEST(SanitizerCommon, StackDepotAbsent) {
   uptr sz1 = 0;
-  uptr *sp1 = StackDepotGet(-10, &sz1);
+  const uptr *sp1 = StackDepotGet(-10, &sz1);
   EXPECT_EQ(sp1, (uptr*)0);
 }
 
-TEST(SanitizerCommon, StackDepotZero) {
+TEST(SanitizerCommon, StackDepotEmptyStack) {
   u32 i1 = StackDepotPut(0, 0);
   uptr sz1 = 0;
-  uptr *sp1 = StackDepotGet(i1, &sz1);
+  const uptr *sp1 = StackDepotGet(i1, &sz1);
+  EXPECT_EQ(sp1, (uptr*)0);
+}
+
+TEST(SanitizerCommon, StackDepotZeroId) {
+  uptr sz1 = 0;
+  const uptr *sp1 = StackDepotGet(0, &sz1);
   EXPECT_EQ(sp1, (uptr*)0);
 }
 
@@ -46,7 +52,7 @@ TEST(SanitizerCommon, StackDepotSame) {
   u32 i2 = StackDepotPut(s1, ARRAY_SIZE(s1));
   EXPECT_EQ(i1, i2);
   uptr sz1 = 0;
-  uptr *sp1 = StackDepotGet(i1, &sz1);
+  const uptr *sp1 = StackDepotGet(i1, &sz1);
   EXPECT_NE(sp1, (uptr*)0);
   EXPECT_EQ(sz1, ARRAY_SIZE(s1));
   EXPECT_EQ(internal_memcmp(sp1?:s1, s1, sizeof(s1)), 0);

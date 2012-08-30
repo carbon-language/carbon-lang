@@ -32,7 +32,6 @@ namespace __tsan {
 
 #ifndef TSAN_GO
 THREADLOCAL char cur_thread_placeholder[sizeof(ThreadState)] ALIGNED(64);
-char allocator_placeholder[sizeof(Allocator)] ALIGNED(64);
 #endif
 static char ctx_placeholder[sizeof(Context)] ALIGNED(64);
 
@@ -52,7 +51,7 @@ Context::Context()
 }
 
 // The objects are allocated in TLS, so one may rely on zero-initialization.
-ThreadState::ThreadState(Context *ctx, int tid, u64 epoch,
+ThreadState::ThreadState(Context *ctx, int tid, int unique_id, u64 epoch,
                          uptr stk_addr, uptr stk_size,
                          uptr tls_addr, uptr tls_size)
   : fast_state(tid, epoch)
@@ -63,6 +62,7 @@ ThreadState::ThreadState(Context *ctx, int tid, u64 epoch,
   // , in_rtl()
   , shadow_stack_pos(&shadow_stack[0])
   , tid(tid)
+  , unique_id(unique_id)
   , stk_addr(stk_addr)
   , stk_size(stk_size)
   , tls_addr(tls_addr)

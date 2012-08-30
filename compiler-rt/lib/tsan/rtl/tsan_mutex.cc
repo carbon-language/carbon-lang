@@ -141,7 +141,7 @@ void DeadlockDetector::Lock(MutexType t) {
     TsanPrintf("ThreadSanitizer: internal deadlock detected\n");
     TsanPrintf("ThreadSanitizer: can't lock %d while under %zu\n",
                t, (uptr)max_idx);
-    Die();
+    CHECK(0);
   }
 }
 
@@ -254,6 +254,10 @@ void Mutex::ReadUnlock() {
 #if TSAN_DEBUG && !TSAN_GO
   cur_thread()->deadlock_detector.Unlock(type_);
 #endif
+}
+
+void Mutex::CheckLocked() {
+  CHECK_NE(atomic_load(&state_, memory_order_relaxed), 0);
 }
 
 }  // namespace __tsan

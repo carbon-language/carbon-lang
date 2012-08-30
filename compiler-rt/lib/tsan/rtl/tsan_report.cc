@@ -58,6 +58,7 @@ static void PrintStack(const ReportStack *ent) {
     else
       TsanPrintf(" (%p)\n", (void*)ent->pc);
   }
+  TsanPrintf("\n");
 }
 
 static void PrintMop(const ReportMop *mop, bool first) {
@@ -77,8 +78,12 @@ static void PrintLocation(const ReportLocation *loc) {
     TsanPrintf("  Location is global '%s' of size %zu at %zx %s:%d\n",
                loc->name, loc->size, loc->addr, loc->file, loc->line);
   } else if (loc->type == ReportLocationHeap) {
-    TsanPrintf("  Location is heap of size %zu at %zx allocated "
-               "by thread %d:\n", loc->size, loc->addr, loc->tid);
+    TsanPrintf("  Location is heap block of size %zu at %p allocated",
+        loc->size, loc->addr);
+    if (loc->tid == 0)
+      TsanPrintf(" by main thread:\n");
+    else
+      TsanPrintf(" by thread %d:\n", loc->tid);
     PrintStack(loc->stack);
   } else if (loc->type == ReportLocationStack) {
     TsanPrintf("  Location is stack of thread %d:\n", loc->tid);

@@ -45,6 +45,8 @@ class Mutex {
   void ReadLock();
   void ReadUnlock();
 
+  void CheckLocked();
+
  private:
   atomic_uintptr_t state_;
 #if TSAN_DEBUG

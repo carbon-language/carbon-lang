@@ -20,9 +20,9 @@ namespace __sanitizer {
 // StackDepot efficiently stores huge amounts of stack traces.
 
 // Maps stack trace to an unique id.
-u32 StackDepotPut(uptr *stack, uptr size);
+u32 StackDepotPut(const uptr *stack, uptr size);
 // Retrieves a stored stack trace by the id.
-uptr *StackDepotGet(u32 id, uptr *size);
+const uptr *StackDepotGet(u32 id, uptr *size);
 
 }  // namespace __sanitizer
 

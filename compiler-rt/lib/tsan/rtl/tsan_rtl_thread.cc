@@ -171,8 +171,9 @@ void ThreadStart(ThreadState *thr, int tid) {
   tctx->status = ThreadStatusRunning;
   tctx->epoch0 = tctx->epoch1 + 1;
   tctx->epoch1 = (u64)-1;
-  new(thr) ThreadState(CTX(), tid, tctx->epoch0, stk_addr, stk_size,
-                       tls_addr, tls_size);
+  new(thr) ThreadState(CTX(), tid, tctx->unique_id,
+      tctx->epoch0, stk_addr, stk_size,
+      tls_addr, tls_size);
 #ifdef TSAN_GO
   // Setup dynamic shadow stack.
   const int kInitStackSize = 8;

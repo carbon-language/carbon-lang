@@ -176,7 +176,16 @@ class SizeClassAllocator64 {
     return (reinterpret_cast<uptr>(p) / kRegionSize) % kNumClasses;
   }
 
-  uptr GetActuallyAllocatedSize(void *p) {
+  static void *GetBlockBegin(void *p) {
+    uptr u = (uptr)p;
+    uptr s = GetActuallyAllocatedSize(p);
+    uptr regBeg = u & ~(kRegionSize - 1);
+    uptr regOff = u - regBeg;
+    uptr begin = regBeg + regOff / s * s;
+    return (void*)begin;
+  }
+
+  static uptr GetActuallyAllocatedSize(void *p) {
     CHECK(PointerIsMine(p));
     return SizeClassMap::Size(GetSizeClass(p));
   }
@@ -415,6 +424,16 @@ class LargeMmapAllocator {
     return GetHeader(p) + 1;
   }
 
+  void *GetBlockBegin(void *p) {
+    SpinMutexLock l(&mutex_);
+    for (Header *l = list_; l; l = l->next) {
+      void *b = GetUser(l);
+      if (p >= b && p < (u8*)b + l->size)
+        return b;
+    }
+    return 0;
+  }
+
  private:
   struct Header {
     uptr size;
@@ -510,6 +529,12 @@ class CombinedAllocator {
     if (primary_.PointerIsMine(p))
       return primary_.GetMetaData(p);
     return secondary_.GetMetaData(p);
+  }
+
+  void *GetBlockBegin(void *p) {
+    if (primary_.PointerIsMine(p))
+      return primary_.GetBlockBegin(p);
+    return secondary_.GetBlockBegin(p);
   }
 
   uptr GetActuallyAllocatedSize(void *p) {

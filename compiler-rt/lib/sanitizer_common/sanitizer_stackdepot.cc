@@ -33,7 +33,7 @@ static struct {
   u32 seq;
 } depot;
 
-static uptr hash(uptr *stack, uptr size) {
+static uptr hash(const uptr *stack, uptr size) {
   return 0;
 }
 
@@ -51,7 +51,7 @@ static StackDesc *allocDesc(uptr size) {
   return s;
 }
 
-u32 StackDepotPut(uptr *stack, uptr size) {
+u32 StackDepotPut(const uptr *stack, uptr size) {
   if (stack == 0 || size == 0)
     return 0;
   uptr h = hash(stack, size);
@@ -71,7 +71,7 @@ u32 StackDepotPut(uptr *stack, uptr size) {
   return s->id;
 }
 
-uptr *StackDepotGet(u32 id, uptr *size) {
+const uptr *StackDepotGet(u32 id, uptr *size) {
   if (id == 0)
     return 0;
   SpinMutexLock l(&depot.mtx);

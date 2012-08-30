@@ -13,6 +13,7 @@
 
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_placement_new.h"
+#include "sanitizer_common/sanitizer_stackdepot.h"
 #include "tsan_platform.h"
 #include "tsan_rtl.h"
 #include "tsan_suppressions.h"
@@ -150,12 +151,27 @@ void ScopedReport::AddMemoryAccess(uptr addr, Shadow s,
 }
 
 void ScopedReport::AddThread(const ThreadContext *tctx) {
+  for (uptr i = 0; i < rep_->threads.Size(); i++) {
+    if (rep_->threads[i]->id == tctx->tid)
+      return;
+  }
   void *mem = internal_alloc(MBlockReportThread, sizeof(ReportThread));
   ReportThread *rt = new(mem) ReportThread();
   rep_->threads.PushBack(rt);
   rt->id = tctx->tid;
   rt->running = (tctx->status == ThreadStatusRunning);
   rt->stack = SymbolizeStack(tctx->creation_stack);
+}
+
+static ThreadContext *FindThread(int unique_id) {
+  CTX()->thread_mtx.CheckLocked();
+  for (unsigned i = 0; i < kMaxTid; i++) {
+    ThreadContext *tctx = CTX()->threads[i];
+    if (tctx && tctx->unique_id == unique_id) {
+      return tctx;
+    }
+  }
+  return 0;
 }
 
 void ScopedReport::AddMutex(const SyncVar *s) {
@@ -167,6 +183,35 @@ void ScopedReport::AddMutex(const SyncVar *s) {
 }
 
 void ScopedReport::AddLocation(uptr addr, uptr size) {
+  if (addr == 0)
+    return;
+#ifndef TSAN_GO
+  if (allocator()->PointerIsMine((void*)addr)) {
+    MBlock *b = user_mblock(0, (void*)addr);
+    ThreadContext *tctx = FindThread(b->alloc_tid);
+    void *mem = internal_alloc(MBlockReportLoc, sizeof(ReportLocation));
+    ReportLocation *loc = new(mem) ReportLocation();
+    rep_->locs.PushBack(loc);
+    loc->type = ReportLocationHeap;
+    loc->addr = (uptr)allocator()->GetBlockBegin((void*)addr);
+    loc->size = b->size;
+    loc->tid = tctx ? tctx->tid : b->alloc_tid;
+    loc->name = 0;
+    loc->file = 0;
+    loc->line = 0;
+    loc->stack = 0;
+    uptr ssz = 0;
+    const uptr *stack = StackDepotGet(b->alloc_stack_id, &ssz);
+    if (stack) {
+      StackTrace trace;
+      trace.Init(stack, ssz);
+      loc->stack = SymbolizeStack(trace);
+    }
+    if (tctx)
+      AddThread(tctx);
+    return;
+  }
+#endif
   ReportStack *symb = SymbolizeData(addr);
   if (symb) {
     void *mem = internal_alloc(MBlockReportLoc, sizeof(ReportLocation));
@@ -181,6 +226,7 @@ void ScopedReport::AddLocation(uptr addr, uptr size) {
     loc->line = symb->line;
     loc->stack = 0;
     internal_free(symb);
+    return;
   }
 }
 
@@ -353,7 +399,7 @@ void ReportRace(ThreadState *thr) {
   }
 
   // Ensure that we have at least something for the current thread.
-  CHECK_EQ(traces[0].IsEmpty(), false);
+  DCHECK_EQ(traces[0].IsEmpty(), false);
 
   for (uptr i = 0; i < kMop; i++) {
     FastState s(thr->racy_state[i]);
@@ -362,6 +408,8 @@ void ReportRace(ThreadState *thr) {
       continue;
     rep.AddThread(tctx);
   }
+
+  rep.AddLocation(addr_min, addr_max - addr_min);
 
   if (!OutputReport(rep, rep.GetReport()->mops[0]->stack))
     return;
