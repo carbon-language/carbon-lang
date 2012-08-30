@@ -23,12 +23,13 @@ using namespace clang;
 
 /// Create a TokenLexer for the specified macro with the specified actual
 /// arguments.  Note that this ctor takes ownership of the ActualArgs pointer.
-void TokenLexer::Init(Token &Tok, SourceLocation ELEnd, MacroArgs *Actuals) {
+void TokenLexer::Init(Token &Tok, SourceLocation ELEnd, MacroInfo *MI,
+                      MacroArgs *Actuals) {
   // If the client is reusing a TokenLexer, make sure to free any memory
   // associated with it.
   destroy();
 
-  Macro = PP.getMacroInfo(Tok.getIdentifierInfo());
+  Macro = MI;
   ActualArgs = Actuals;
   CurToken = 0;
 

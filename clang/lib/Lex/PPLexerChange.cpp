@@ -157,15 +157,15 @@ void Preprocessor::EnterSourceFileWithPTH(PTHLexer *PL,
 /// EnterMacro - Add a Macro to the top of the include stack and start lexing
 /// tokens from it instead of the current buffer.
 void Preprocessor::EnterMacro(Token &Tok, SourceLocation ILEnd,
-                              MacroArgs *Args) {
+                              MacroInfo *Macro, MacroArgs *Args) {
   PushIncludeMacroStack();
   CurDirLookup = 0;
 
   if (NumCachedTokenLexers == 0) {
-    CurTokenLexer.reset(new TokenLexer(Tok, ILEnd, Args, *this));
+    CurTokenLexer.reset(new TokenLexer(Tok, ILEnd, Macro, Args, *this));
   } else {
     CurTokenLexer.reset(TokenLexerCache[--NumCachedTokenLexers]);
-    CurTokenLexer->Init(Tok, ILEnd, Args);
+    CurTokenLexer->Init(Tok, ILEnd, Macro, Args);
   }
   if (CurLexerKind != CLK_LexAfterModuleImport)
     CurLexerKind = CLK_TokenLexer;

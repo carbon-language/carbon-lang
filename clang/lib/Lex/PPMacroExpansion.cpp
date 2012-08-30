@@ -341,7 +341,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
   }
 
   // Start expanding the macro.
-  EnterMacro(Identifier, ExpansionEnd, Args);
+  EnterMacro(Identifier, ExpansionEnd, MI, Args);
 
   // Now that the macro is at the top of the include stack, ask the
   // preprocessor to read the next token from it.

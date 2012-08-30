@@ -569,7 +569,8 @@ public:
   ///
   /// ILEnd specifies the location of the ')' for a function-like macro or the
   /// identifier for an object-like macro.
-  void EnterMacro(Token &Identifier, SourceLocation ILEnd, MacroArgs *Args);
+  void EnterMacro(Token &Identifier, SourceLocation ILEnd, MacroInfo *Macro,
+                  MacroArgs *Args);
 
   /// EnterTokenStream - Add a "macro" context to the top of the include stack,
   /// which will cause the lexer to start returning the specified tokens.

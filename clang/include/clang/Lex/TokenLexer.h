@@ -22,7 +22,7 @@ namespace clang {
   class Token;
   class MacroArgs;
 
-/// TokenLexer - This implements a lexer that returns token from a macro body
+/// TokenLexer - This implements a lexer that returns tokens from a macro body
 /// or token stream instead of lexing from a character buffer.  This is used for
 /// macro expansion and _Pragma handling, for example.
 ///
@@ -98,17 +98,18 @@ public:
   /// arguments.  Note that this ctor takes ownership of the ActualArgs pointer.
   /// ILEnd specifies the location of the ')' for a function-like macro or the
   /// identifier for an object-like macro.
-  TokenLexer(Token &Tok, SourceLocation ILEnd, MacroArgs *ActualArgs,
-             Preprocessor &pp)
+  TokenLexer(Token &Tok, SourceLocation ILEnd, MacroInfo *MI,
+             MacroArgs *ActualArgs, Preprocessor &pp)
     : Macro(0), ActualArgs(0), PP(pp), OwnsTokens(false) {
-    Init(Tok, ILEnd, ActualArgs);
+    Init(Tok, ILEnd, MI, ActualArgs);
   }
 
   /// Init - Initialize this TokenLexer to expand from the specified macro
   /// with the specified argument information.  Note that this ctor takes
   /// ownership of the ActualArgs pointer.  ILEnd specifies the location of the
   /// ')' for a function-like macro or the identifier for an object-like macro.
-  void Init(Token &Tok, SourceLocation ILEnd, MacroArgs *ActualArgs);
+  void Init(Token &Tok, SourceLocation ILEnd, MacroInfo *MI,
+            MacroArgs *ActualArgs);
 
   /// Create a TokenLexer for the specified token stream.  If 'OwnsTokens' is
   /// specified, this takes ownership of the tokens and delete[]'s them when
