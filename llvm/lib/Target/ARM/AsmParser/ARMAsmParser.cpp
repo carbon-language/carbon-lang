@@ -4144,7 +4144,7 @@ cvtLdWriteBackRegAddrMode3(MCInst &Inst, unsigned Opcode,
   return true;
 }
 
-/// cvtThumbMultiple- Convert parsed operands to MCInst.
+/// cvtThumbMultiply - Convert parsed operands to MCInst.
 /// Needed here because the Asm Gen Matcher can't handle properly tied operands
 /// when they refer multiple MIOperands inside a single one.
 bool ARMAsmParser::
