@@ -18,7 +18,7 @@ namespace clang {
 namespace ast_matchers {
 
 using clang::tooling::newFrontendActionFactory;
-using clang::tooling::runToolOnCode;
+using clang::tooling::runToolOnCodeWithArgs;
 using clang::tooling::FrontendActionFactory;
 
 class BoundNodesCallback {
@@ -56,7 +56,9 @@ testing::AssertionResult matchesConditionally(const std::string &Code,
   MatchFinder Finder;
   Finder.addMatcher(AMatcher, new VerifyMatch(0, &Found));
   OwningPtr<FrontendActionFactory> Factory(newFrontendActionFactory(&Finder));
-  if (!runToolOnCode(Factory->create(), Code)) {
+  // Some tests use typeof, which is a gnu extension.
+  std::vector<std::string> Args(1, "-std=gnu++98");
+  if (!runToolOnCodeWithArgs(Factory->create(), Code, Args)) {
     return testing::AssertionFailure() << "Parsing error in \"" << Code << "\"";
   }
   if (!Found && ExpectMatch) {
@@ -91,7 +93,9 @@ matchAndVerifyResultConditionally(const std::string &Code, const T &AMatcher,
   Finder.addMatcher(
       AMatcher, new VerifyMatch(FindResultVerifier, &VerifiedResult));
   OwningPtr<FrontendActionFactory> Factory(newFrontendActionFactory(&Finder));
-  if (!runToolOnCode(Factory->create(), Code)) {
+  // Some tests use typeof, which is a gnu extension.
+  std::vector<std::string> Args(1, "-std=gnu++98");
+  if (!runToolOnCodeWithArgs(Factory->create(), Code, Args)) {
     return testing::AssertionFailure() << "Parsing error in \"" << Code << "\"";
   }
   if (!VerifiedResult && ExpectResult) {

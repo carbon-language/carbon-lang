@@ -23,8 +23,8 @@ private:
 };
 }
 
-// RUN: c-index-test -code-completion-at=%s:4:9 %s | FileCheck %s
-// RUN: c-index-test -code-completion-at=%s:13:7 %s | FileCheck %s
+// RUN: c-index-test -code-completion-at=%s:4:9 -std=c++98 %s | FileCheck %s
+// RUN: c-index-test -code-completion-at=%s:13:7 -std=c++98 %s | FileCheck %s
 // CHECK:      CXXMethod:{ResultType MyCls::Vec &}{TypedText operator=}{LeftParen (}{Placeholder const MyCls::Vec &}{RightParen )} (34)
 // CHECK-NEXT: StructDecl:{TypedText Vec}{Text ::} (75)
 // CHECK-NEXT: FieldDecl:{ResultType int}{TypedText x} (35)

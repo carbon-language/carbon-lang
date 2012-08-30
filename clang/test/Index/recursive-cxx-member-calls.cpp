@@ -1523,7 +1523,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: ";" [185:31 - 185:32] CompoundStmt=
 // CHECK-tokens: Punctuation: "}" [186:1 - 186:2] CompoundStmt=
 
-// RUN: c-index-test -test-load-source all %s 2>&1 | FileCheck %s
+// RUN: c-index-test -test-load-source all %s -std=c++98 2>&1 | FileCheck %s
 // CHECK: 1:27: TypedefDecl=__darwin_size_t:1:27 (Definition) Extent=[1:1 - 1:42]
 // CHECK: 2:25: TypedefDecl=size_t:2:25 (Definition) Extent=[2:1 - 2:31]
 // CHECK: 2:9: TypeRef=__darwin_size_t:1:27 Extent=[2:9 - 2:24]

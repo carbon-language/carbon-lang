@@ -73,6 +73,8 @@ bool runToolOnCode(clang::FrontendAction *ToolAction, const Twine &Code,
   std::vector<std::string> ArgVector;
   ArgVector.push_back("clang-tool");
   ArgVector.push_back("-fsyntax-only");
+  // operator delete (void*) grows a "noexcept" in c++11.
+  ArgVector.push_back("-std=c++98");
   ArgVector.push_back(FileNameRef.data());
   for (unsigned i = 0, e = ClangArgs.size(); i != e; ++i)
     ArgVector.push_back(ClangArgs[i]);
