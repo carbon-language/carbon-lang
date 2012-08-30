@@ -114,10 +114,15 @@ OptionValueFileSpec::AutoComplete (CommandInterpreter &interpreter,
 
 
 const lldb::DataBufferSP &
-OptionValueFileSpec::GetFileContents()
+OptionValueFileSpec::GetFileContents(bool null_terminate)
 {
     if (!m_data_sp && m_current_value)
-        m_data_sp = m_current_value.ReadFileContents();
+    {
+        if (null_terminate)
+            m_data_sp = m_current_value.ReadFileContentsAsCString();
+        else
+            m_data_sp = m_current_value.ReadFileContents();
+    }
     return m_data_sp;
 }
 

@@ -479,6 +479,21 @@ public:
     size_t
     ReadFileContents (off_t file_offset, void *dst, size_t dst_len, Error *error_ptr) const;
 
+    
+    //------------------------------------------------------------------
+    /// Read the entire contents of a file as data that can be used
+    /// as a C string.
+    ///
+    /// Read the entire contents of a file and ensure that the data
+    /// is NULL terminated so it can be used as a C string.
+    ///
+    /// @return
+    ///     A shared pointer to the data. This shared pointer can
+    ///     contain a NULL DataBuffer pointer, so the contained pointer
+    ///     must be checked prior to using it.
+    //------------------------------------------------------------------
+    lldb::DataBufferSP
+    ReadFileContentsAsCString(Error *error_ptr = NULL);
     //------------------------------------------------------------------
     /// Change the file specificed with a new path.
     ///

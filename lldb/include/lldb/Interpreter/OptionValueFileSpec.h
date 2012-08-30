@@ -127,7 +127,7 @@ public:
     }
     
     const lldb::DataBufferSP &
-    GetFileContents();
+    GetFileContents(bool null_terminate);
     
 protected:
     FileSpec m_current_value;

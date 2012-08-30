@@ -812,7 +812,37 @@ FileSpec::ReadFileContents (off_t file_offset, size_t file_size, Error *error_pt
         File file;
         error = file.Open(resolved_path, File::eOpenOptionRead);
         if (error.Success())
-            error = file.Read (file_size, file_offset, data_sp);
+        {
+            const bool null_terminate = false;
+            error = file.Read (file_size, file_offset, null_terminate, data_sp);
+        }
+    }
+    else
+    {
+        error.SetErrorString("invalid file specification");
+    }
+    if (error_ptr)
+        *error_ptr = error;
+    return data_sp;
+}
+
+DataBufferSP
+FileSpec::ReadFileContentsAsCString(Error *error_ptr)
+{
+    Error error;
+    DataBufferSP data_sp;
+    char resolved_path[PATH_MAX];
+    if (GetPath(resolved_path, sizeof(resolved_path)))
+    {
+        File file;
+        error = file.Open(resolved_path, File::eOpenOptionRead);
+        if (error.Success())
+        {
+            off_t offset = 0;
+            size_t length = SIZE_MAX;
+            const bool null_terminate = true;
+            error = file.Read (length, offset, null_terminate, data_sp);
+        }
     }
     else
     {

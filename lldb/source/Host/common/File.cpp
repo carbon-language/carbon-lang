@@ -538,7 +538,7 @@ File::Read (void *buf, size_t &num_bytes, off_t &offset)
 }
 
 Error
-File::Read (size_t &num_bytes, off_t &offset, DataBufferSP &data_buffer_sp)
+File::Read (size_t &num_bytes, off_t &offset, bool null_terminate, DataBufferSP &data_buffer_sp)
 {
     Error error;
     
@@ -557,7 +557,7 @@ File::Read (size_t &num_bytes, off_t &offset, DataBufferSP &data_buffer_sp)
                         num_bytes = bytes_left;
                         
                     std::auto_ptr<DataBufferHeap> data_heap_ap;
-                    data_heap_ap.reset(new DataBufferHeap(num_bytes, '\0'));
+                    data_heap_ap.reset(new DataBufferHeap(num_bytes + (null_terminate ? 1 : 0), '\0'));
                         
                     if (data_heap_ap.get())
                     {

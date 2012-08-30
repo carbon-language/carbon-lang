@@ -2474,7 +2474,8 @@ TargetProperties::GetExpressionPrefixContentsAsCString ()
     OptionValueFileSpec *file = m_collection_sp->GetPropertyAtIndexAsOptionValueFileSpec (NULL, false, idx);
     if (file)
     {
-        DataBufferSP data_sp(file->GetFileContents());
+        const bool null_terminate = true;
+        DataBufferSP data_sp(file->GetFileContents(null_terminate));
         if (data_sp)
             return (const char *) data_sp->GetBytes();
     }

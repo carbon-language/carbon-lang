@@ -378,6 +378,10 @@ public:
     ///     bytes. This offset gets incremented by the number of bytes
     ///     that were read.
     ///
+    /// @param[in] null_terminate
+    ///     Ensure that the data that is read is terminated with a NULL
+    ///     character so that the data can be used as a C string.
+    ///
     /// @param[out] data_buffer_sp
     ///     A data buffer to create and fill in that will contain any
     ///     data that is read from the file. This buffer will be reset
@@ -388,7 +392,10 @@ public:
     ///     failure.
     //------------------------------------------------------------------
     Error
-    Read (size_t &num_bytes, off_t &offset, lldb::DataBufferSP &data_buffer_sp);
+    Read (size_t &num_bytes,
+          off_t &offset,
+          bool null_terminate,
+          lldb::DataBufferSP &data_buffer_sp);
 
     //------------------------------------------------------------------
     /// Write bytes to a file at the specified file offset.
