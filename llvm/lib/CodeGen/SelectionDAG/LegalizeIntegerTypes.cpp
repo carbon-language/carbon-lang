@@ -2913,8 +2913,24 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BUILD_VECTOR(SDNode *N) {
 
   SmallVector<SDValue, 8> Ops;
   Ops.reserve(NumElems);
+  unsigned ExtendOp = ISD::ANY_EXTEND;
+  // Extending boolean constants needs to consider the
+  // value boolean vector constants take on this target and extend
+  // with sign or zeros appropriately.
+  if (OutVT.getVectorElementType() == MVT::i1) {
+    switch (TLI.getBooleanContents(true)) {
+      case TargetLowering::UndefinedBooleanContent:
+        break;
+      case TargetLowering::ZeroOrOneBooleanContent:
+      ExtendOp = ISD::ZERO_EXTEND;
+        break;
+      case TargetLowering::ZeroOrNegativeOneBooleanContent:
+        ExtendOp = ISD::SIGN_EXTEND;
+        break;
+    }
+  }
   for (unsigned i = 0; i != NumElems; ++i) {
-    SDValue Op = DAG.getNode(ISD::ANY_EXTEND, dl, NOutVTElem, N->getOperand(i));
+    SDValue Op = DAG.getNode(ExtendOp, dl, NOutVTElem, N->getOperand(i));
     Ops.push_back(Op);
   }
 
