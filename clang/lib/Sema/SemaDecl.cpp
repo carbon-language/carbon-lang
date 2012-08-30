@@ -9507,12 +9507,12 @@ bool Sema::CheckNontrivialField(FieldDecl *FD) {
   return false;
 }
 
-/// If the given constructor is user-provided, produce a diagnostic explaining
+/// If the given constructor is user-declared, produce a diagnostic explaining
 /// that it makes the class non-trivial.
-static bool DiagnoseNontrivialUserProvidedCtor(Sema &S, QualType QT,
+static bool diagnoseNonTrivialUserDeclaredCtor(Sema &S, QualType QT,
                                                CXXConstructorDecl *CD,
                                                Sema::CXXSpecialMember CSM) {
-  if (!CD->isUserProvided())
+  if (CD->isImplicit())
     return false;
 
   SourceLocation CtorLoc = CD->getLocation();
@@ -9535,17 +9535,17 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
     if (RD->hasUserDeclaredConstructor()) {
       typedef CXXRecordDecl::ctor_iterator ctor_iter;
       for (ctor_iter CI = RD->ctor_begin(), CE = RD->ctor_end(); CI != CE; ++CI)
-        if (DiagnoseNontrivialUserProvidedCtor(*this, QT, *CI, member))
+        if (diagnoseNonTrivialUserDeclaredCtor(*this, QT, *CI, member))
           return;
 
-      // No user-provided constructors; look for constructor templates.
+      // No user-delcared constructors; look for constructor templates.
       typedef CXXRecordDecl::specific_decl_iterator<FunctionTemplateDecl>
           tmpl_iter;
       for (tmpl_iter TI(RD->decls_begin()), TE(RD->decls_end());
            TI != TE; ++TI) {
         CXXConstructorDecl *CD =
             dyn_cast<CXXConstructorDecl>(TI->getTemplatedDecl());
-        if (CD && DiagnoseNontrivialUserProvidedCtor(*this, QT, CD, member))
+        if (CD && diagnoseNonTrivialUserDeclaredCtor(*this, QT, CD, member))
           return;
       }
     }
