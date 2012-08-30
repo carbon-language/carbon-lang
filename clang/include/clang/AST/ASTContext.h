@@ -217,6 +217,9 @@ class ASTContext : public RefCountedBase<ASTContext> {
 
   /// \brief The typedef for the predefined 'Protocol' class in Objective-C.
   mutable ObjCInterfaceDecl *ObjCProtocolClassDecl;
+  
+  /// \brief The typedef for the predefined 'BOOL' type.
+  mutable TypedefDecl *BOOLDecl;
 
   // Typedefs which may be provided defining the structure of Objective-C
   // pseudo-builtins
@@ -1256,6 +1259,21 @@ public:
   /// \brief Retrieve the Objective-C class declaration corresponding to 
   /// the predefined 'Protocol' class.
   ObjCInterfaceDecl *getObjCProtocolDecl() const;
+
+  /// \brief Retrieve declaration of 'BOOL' typedef
+  TypedefDecl *getBOOLDecl() const {
+    return BOOLDecl;
+  }
+
+  /// \brief Save declaration of 'BOOL' typedef
+  void setBOOLDecl(TypedefDecl *TD) {
+    BOOLDecl = TD;
+  }
+
+  /// \brief type of 'BOOL' type.
+  QualType getBOOLType() const {
+    return getTypeDeclType(getBOOLDecl());
+  }
   
   /// \brief Retrieve the type of the Objective-C "Protocol" class.
   QualType getObjCProtoType() const {

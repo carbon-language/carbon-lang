@@ -11771,6 +11771,18 @@ ExprResult
 Sema::ActOnObjCBoolLiteral(SourceLocation OpLoc, tok::TokenKind Kind) {
   assert((Kind == tok::kw___objc_yes || Kind == tok::kw___objc_no) &&
          "Unknown Objective-C Boolean value!");
+  QualType BoolT = Context.ObjCBuiltinBoolTy;
+  if (!Context.getBOOLDecl()) {
+    LookupResult Result(*this, &Context.Idents.get("BOOL"), SourceLocation(),
+                        Sema::LookupOrdinaryName);
+    if (LookupName(Result, getCurScope())) {
+      NamedDecl *ND = Result.getFoundDecl();
+      if (TypedefDecl *TD = dyn_cast<TypedefDecl>(ND)) 
+        Context.setBOOLDecl(TD);
+    }
+  }
+  if (Context.getBOOLDecl())
+    BoolT = Context.getBOOLType();
   return Owned(new (Context) ObjCBoolLiteralExpr(Kind == tok::kw___objc_yes,
-                                        Context.ObjCBuiltinBoolTy, OpLoc));
+                                        BoolT, OpLoc));
 }
