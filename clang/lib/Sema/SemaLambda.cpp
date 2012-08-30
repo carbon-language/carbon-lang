@@ -377,7 +377,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
   bool ExplicitResultType = true;
   bool ContainsUnexpandedParameterPack = false;
   SourceLocation EndLoc;
-  llvm::ArrayRef<ParmVarDecl *> Params;
+  llvm::SmallVector<ParmVarDecl *, 8> Params;
   if (ParamInfo.getNumTypeObjects() == 0) {
     // C++11 [expr.prim.lambda]p4:
     //   If a lambda-expression does not include a lambda-declarator, it is as 
@@ -410,11 +410,10 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     ExplicitResultType
       = MethodTyInfo->getType()->getAs<FunctionType>()->getResultType() 
                                                         != Context.DependentTy;
-    
-    TypeLoc TL = MethodTyInfo->getTypeLoc();
-    FunctionProtoTypeLoc Proto = cast<FunctionProtoTypeLoc>(TL);
-    Params = llvm::ArrayRef<ParmVarDecl *>(Proto.getParmArray(), 
-                                           Proto.getNumArgs());
+
+    Params.reserve(FTI.NumArgs);
+    for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
+      Params.push_back(cast<ParmVarDecl>(FTI.ArgInfo[i].Param));
 
     // Check for unexpanded parameter packs in the method type.
     if (MethodTyInfo->getType()->containsUnexpandedParameterPack())
