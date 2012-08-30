@@ -10,6 +10,7 @@
 #include "DWARFDebugLine.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Format.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 using namespace llvm;
@@ -512,4 +513,30 @@ DWARFDebugLine::LineTable::lookupAddress(uint64_t address) const {
       index--;
   }
   return index;
+}
+
+bool
+DWARFDebugLine::LineTable::getFileNameByIndex(uint64_t FileIndex,
+                                              bool NeedsAbsoluteFilePath,
+                                              std::string &Result) const {
+  if (FileIndex == 0 || FileIndex > Prologue.FileNames.size())
+    return false;
+  const FileNameEntry &Entry = Prologue.FileNames[FileIndex - 1];
+  const char *FileName = Entry.Name;
+  if (!NeedsAbsoluteFilePath ||
+      sys::path::is_absolute(FileName)) {
+    Result = FileName;
+    return true;
+  }
+  SmallString<16> FilePath;
+  uint64_t IncludeDirIndex = Entry.DirIdx;
+  // Be defensive about the contents of Entry.
+  if (IncludeDirIndex > 0 &&
+      IncludeDirIndex <= Prologue.IncludeDirectories.size()) {
+    const char *IncludeDir = Prologue.IncludeDirectories[IncludeDirIndex - 1];
+    sys::path::append(FilePath, IncludeDir);
+  }
+  sys::path::append(FilePath, FileName);
+  Result = FilePath.str();
+  return true;
 }

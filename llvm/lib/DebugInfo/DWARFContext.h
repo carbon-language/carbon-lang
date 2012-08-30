@@ -54,9 +54,6 @@ public:
     return &CUs[index];
   }
 
-  /// Return the compile unit that includes an offset (relative to .debug_info).
-  DWARFCompileUnit *getCompileUnitForOffset(uint32_t offset);
-
   /// Get a pointer to the parsed DebugAbbrev object.
   const DWARFDebugAbbrev *getDebugAbbrev();
 
@@ -67,8 +64,8 @@ public:
   const DWARFDebugLine::LineTable *
   getLineTableForCompileUnit(DWARFCompileUnit *cu);
 
-  virtual DILineInfo getLineInfoForAddress(uint64_t address,
-      DILineInfoSpecifier specifier = DILineInfoSpecifier());
+  virtual DILineInfo getLineInfoForAddress(uint64_t Address,
+      DILineInfoSpecifier Specifier = DILineInfoSpecifier());
 
   bool isLittleEndian() const { return IsLittleEndian; }
 
@@ -82,8 +79,22 @@ public:
   static bool isSupportedVersion(unsigned version) {
     return version == 2 || version == 3;
   }
-};
+private:
+  /// Return the compile unit that includes an offset (relative to .debug_info).
+  DWARFCompileUnit *getCompileUnitForOffset(uint32_t Offset);
 
+  /// Return the compile unit which contains instruction with provided
+  /// address.
+  DWARFCompileUnit *getCompileUnitForAddress(uint64_t Address);
+
+  /// Fetches filename, line and column number for given address and
+  /// compile unit. Returns true on success.
+  bool getFileLineInfoForCompileUnit(DWARFCompileUnit *CU,
+                                     uint64_t Address,
+                                     bool NeedsAbsoluteFilePath,
+                                     std::string &FileName,
+                                     uint32_t &Line, uint32_t &Column);
+};
 
 /// DWARFContextInMemory is the simplest possible implementation of a
 /// DWARFContext. It assumes all content is available in memory and stores

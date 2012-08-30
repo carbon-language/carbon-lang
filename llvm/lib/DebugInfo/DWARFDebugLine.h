@@ -12,6 +12,7 @@
 
 #include "llvm/Support/DataExtractor.h"
 #include <map>
+#include <string>
 #include <vector>
 
 namespace llvm {
@@ -174,6 +175,13 @@ public:
     // Returns the index of the row with file/line info for a given address,
     // or -1 if there is no such row.
     uint32_t lookupAddress(uint64_t address) const;
+
+    // Extracts filename by its index in filename table in prologue.
+    // Returns true on success.
+    bool getFileNameByIndex(uint64_t FileIndex,
+                            bool NeedsAbsoluteFilePath,
+                            std::string &Result) const;
+
     void dump(raw_ostream &OS) const;
 
     struct Prologue Prologue;
