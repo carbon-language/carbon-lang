@@ -3164,8 +3164,12 @@ PPCTargetLowering::LowerCall_SVR4(SDValue Chain, SDValue Callee,
   // Set CR bit 6 to true if this is a vararg call with floating args passed in
   // registers.
   if (isVarArg) {
+    SDVTList VTs = DAG.getVTList(MVT::Other, MVT::Glue);
+    SDValue Ops[] = { Chain, InFlag };
+
     Chain = DAG.getNode(seenFloatArg ? PPCISD::CR6SET : PPCISD::CR6UNSET,
-                        dl, DAG.getVTList(MVT::Other, MVT::Glue), Chain);
+                        dl, VTs, Ops, InFlag.getNode() ? 2 : 1);
+
     InFlag = Chain.getValue(1);
   }
 
