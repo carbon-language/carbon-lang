@@ -721,19 +721,24 @@ void MachineInstr::addOperand(const MachineOperand &Op) {
     // Add the new operand to RegInfo.
     if (RegInfo)
       RegInfo->addRegOperandToUseList(&Operands[OpNo]);
-    // Set the IsTied bit if MC indicates this use is tied to a def.
-    if (Operands[OpNo].isUse()) {
-      int DefIdx = MCID->getOperandConstraint(OpNo, MCOI::TIED_TO);
-      if (DefIdx != -1) {
-        MachineOperand &DefMO = getOperand(DefIdx);
-        assert(DefMO.isDef() && "Use tied to operand that isn't a def");
-        DefMO.IsTied = true;
-        Operands[OpNo].IsTied = true;
+    // The MCID operand information isn't accurate until we start adding
+    // explicit operands. The implicit operands are added first, then the
+    // explicits are inserted before them.
+    if (!isImpReg) {
+      // Set the IsTied bit if MC indicates this use is tied to a def.
+      if (Operands[OpNo].isUse()) {
+        int DefIdx = MCID->getOperandConstraint(OpNo, MCOI::TIED_TO);
+        if (DefIdx != -1) {
+          MachineOperand &DefMO = getOperand(DefIdx);
+          assert(DefMO.isDef() && "Use tied to operand that isn't a def");
+          DefMO.IsTied = true;
+          Operands[OpNo].IsTied = true;
+        }
       }
+      // If the register operand is flagged as early, mark the operand as such.
+      if (MCID->getOperandConstraint(OpNo, MCOI::EARLY_CLOBBER) != -1)
+        Operands[OpNo].setIsEarlyClobber(true);
     }
-    // If the register operand is flagged as early, mark the operand as such.
-    if (MCID->getOperandConstraint(OpNo, MCOI::EARLY_CLOBBER) != -1)
-      Operands[OpNo].setIsEarlyClobber(true);
   }
 
   // Re-add all the implicit ops.
