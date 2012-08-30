@@ -2,9 +2,9 @@
 
 ; CHECK: test1
 define float @test1(float %a) {
-; CHECK-NOT: vaddss
-; CHECK: vmulss
-; CHECK-NOT: vaddss
+; CHECK-NOT: addss
+; CHECK: mulss
+; CHECK-NOT: addss
 ; CHECK: ret
   %t1 = fadd float %a, %a
   %r = fadd float %t1, %t1
@@ -13,9 +13,9 @@ define float @test1(float %a) {
 
 ; CHECK: test2
 define float @test2(float %a) {
-; CHECK-NOT: vaddss
-; CHECK: vmulss
-; CHECK-NOT: vaddss
+; CHECK-NOT: addss
+; CHECK: mulss
+; CHECK-NOT: addss
 ; CHECK: ret
   %t1 = fmul float 4.0, %a
   %t2 = fadd float %a, %a
@@ -25,9 +25,9 @@ define float @test2(float %a) {
 
 ; CHECK: test3
 define float @test3(float %a) {
-; CHECK-NOT: vaddss
-; CHECK: vxorps
-; CHECK-NOT: vaddss
+; CHECK-NOT: addss
+; CHECK: xorps
+; CHECK-NOT: addss
 ; CHECK: ret
   %t1 = fmul float 2.0, %a
   %t2 = fadd float %a, %a
