@@ -98,7 +98,7 @@ public:
   unsigned MaxNodes;
   
   /// \brief The maximum number of times the analyzer visits a block.
-  unsigned MaxLoop;
+  unsigned maxBlockVisitOnPath;
   
   
   unsigned ShowCheckerHelp : 1;

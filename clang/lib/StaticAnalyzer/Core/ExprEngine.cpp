@@ -1024,7 +1024,7 @@ void ExprEngine::processCFGBlockEntrance(const BlockEdge &L,
   // FIXME: Refactor this into a checker.
   ExplodedNode *pred = nodeBuilder.getContext().getPred();
   
-  if (nodeBuilder.getContext().blockCount() >= AMgr.options.MaxLoop) {
+  if (nodeBuilder.getContext().blockCount() >= AMgr.options.maxBlockVisitOnPath) {
     static SimpleProgramPointTag tag("ExprEngine : Block count exceeded");
     const ExplodedNode *Sink =
                    nodeBuilder.generateSink(pred->getState(), pred, &tag);
