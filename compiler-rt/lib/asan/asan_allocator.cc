@@ -316,7 +316,6 @@ struct PageGroup {
 
 class MallocInfo {
  public:
-
   explicit MallocInfo(LinkerInitialized x) : mu_(x) { }
 
   AsanChunk *AllocateChunks(u8 size_class, uptr n_chunks) {

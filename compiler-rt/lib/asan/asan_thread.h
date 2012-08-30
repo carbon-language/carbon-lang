@@ -91,7 +91,6 @@ class AsanThread {
   AsanStats &stats() { return stats_; }
 
  private:
-
   void SetThreadStackTopAndBottom();
   void ClearShadowForThreadStack();
   AsanThreadSummary *summary_;

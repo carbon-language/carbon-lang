@@ -4,7 +4,7 @@
 
 struct Cache {
   int x;
-  Cache(int x)
+  explicit Cache(int x)
     : x(x) {
   }
 };

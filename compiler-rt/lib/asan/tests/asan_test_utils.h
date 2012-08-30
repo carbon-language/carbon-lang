@@ -41,7 +41,7 @@ typedef __int64          int64_t;
 #endif
 
 // Make the compiler think that something is going on there.
-extern "C" void break_optimization(void *);
+extern "C" void break_optimization(void *arg);
 
 // This function returns its parameter but in such a way that compiler
 // can not prove it.

@@ -108,6 +108,7 @@ class FakeStack {
   // Return the bottom of the maped region.
   uptr AddrIsInFakeStack(uptr addr);
   bool StackSize() { return stack_size_; }
+
  private:
   static const uptr kMinStackFrameSizeLog = 9;  // Min frame is 512B.
   static const uptr kMaxStackFrameSizeLog = 16;  // Max stack frame is 64K.
