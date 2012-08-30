@@ -99,6 +99,19 @@ inline FrontendActionFactory *newFrontendActionFactory(
 bool runToolOnCode(clang::FrontendAction *ToolAction, const Twine &Code,
                    const Twine &FileName = "input.cc");
 
+/// \brief Runs (and deletes) the tool on 'Code' with the -fsyntax-only flag and
+///        with additional other flags.
+///
+/// \param ToolAction The action to run over the code.
+/// \param Code C++ code.
+/// \param Args Additional flags to pass on.
+/// \param FileName The file name which 'Code' will be mapped as.
+///
+/// \return - True if 'ToolAction' was successfully executed.
+bool runToolOnCodeWithArgs(clang::FrontendAction *ToolAction, const Twine &Code,
+                           const std::vector<std::string> &Args,
+                           const Twine &FileName = "input.cc");
+
 /// \brief Utility to run a FrontendAction in a single clang invocation.
 class ToolInvocation {
  public:

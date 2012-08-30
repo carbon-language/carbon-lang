@@ -97,17 +97,22 @@ static clang::CompilerInvocation *newInvocation(
 
 bool runToolOnCode(clang::FrontendAction *ToolAction, const Twine &Code,
                    const Twine &FileName) {
+  return runToolOnCodeWithArgs(
+      ToolAction, Code, std::vector<std::string>(), FileName);
+}
+
+bool runToolOnCodeWithArgs(clang::FrontendAction *ToolAction, const Twine &Code,
+                           const std::vector<std::string> &Args,
+                           const Twine &FileName) {
   SmallString<16> FileNameStorage;
   StringRef FileNameRef = FileName.toNullTerminatedStringRef(FileNameStorage);
-  const char *const CommandLine[] = {
-      "clang-tool", "-fsyntax-only", FileNameRef.data()
-  };
+  std::vector<std::string> Commands;
+  Commands.push_back("clang-tool");
+  Commands.push_back("-fsyntax-only");
+  Commands.insert(Commands.end(), Args.begin(), Args.end());
+  Commands.push_back(FileNameRef.data());
   FileManager Files((FileSystemOptions()));
-  ToolInvocation Invocation(
-      std::vector<std::string>(
-          CommandLine,
-          CommandLine + llvm::array_lengthof(CommandLine)),
-      ToolAction, &Files);
+  ToolInvocation Invocation(Commands, ToolAction, &Files);
 
   SmallString<1024> CodeStorage;
   Invocation.mapVirtualFile(FileNameRef,

@@ -44,9 +44,12 @@ public:
 
   /// \brief Runs the current AST visitor over the given code.
   bool runOver(StringRef Code, Language L = Lang_CXX) {
-    // FIXME: The input language is determined based on the provided filename.
-    static const StringRef Filenames[] = { "input.c", "input.cc" };
-    return tooling::runToolOnCode(CreateTestAction(), Code, Filenames[L]);
+    std::vector<std::string> Args;
+    switch (L) {
+      case Lang_C: Args.push_back("-std=c99"); break;
+      case Lang_CXX: Args.push_back("-std=c++98"); break;
+    }
+    return tooling::runToolOnCodeWithArgs(CreateTestAction(), Code, Args);
   }
 
   bool shouldVisitTemplateInstantiations() const {
