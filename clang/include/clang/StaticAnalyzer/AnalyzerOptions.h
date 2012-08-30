@@ -118,8 +118,8 @@ public:
   unsigned eagerlyAssumeBinOpBifurcation : 1;
   
   unsigned TrimGraph : 1;
-  unsigned VisualizeEGDot : 1;
-  unsigned VisualizeEGUbi : 1;
+  unsigned visualizeExplodedGraphWithGraphViz : 1;
+  unsigned visualizeExplodedGraphWithUbiGraph : 1;
   unsigned UnoptimizedCFG : 1;
   unsigned CFGAddImplicitDtors : 1;
   unsigned eagerlyTrimExplodedGraph : 1;
@@ -151,8 +151,8 @@ public:
     AnalyzeNestedBlocks = 0;
     eagerlyAssumeBinOpBifurcation = 0;
     TrimGraph = 0;
-    VisualizeEGDot = 0;
-    VisualizeEGUbi = 0;
+    visualizeExplodedGraphWithGraphViz = 0;
+    visualizeExplodedGraphWithUbiGraph = 0;
     UnoptimizedCFG = 0;
     CFGAddImplicitDtors = 0;
     eagerlyTrimExplodedGraph = 0;

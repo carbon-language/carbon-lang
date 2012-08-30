@@ -163,9 +163,9 @@ static void AnalyzerOptsToArgs(const AnalyzerOptions &Opts, ToArgsList &Res) {
     Res.push_back("-analyzer-eagerly-assume");
   if (Opts.TrimGraph)
     Res.push_back("-trim-egraph");
-  if (Opts.VisualizeEGDot)
+  if (Opts.visualizeExplodedGraphWithGraphViz)
     Res.push_back("-analyzer-viz-egraph-graphviz");
-  if (Opts.VisualizeEGUbi)
+  if (Opts.visualizeExplodedGraphWithUbiGraph)
     Res.push_back("-analyzer-viz-egraph-ubigraph");
   if (Opts.NoRetryExhausted)
     Res.push_back("-analyzer-disable-retry-exhausted");
@@ -1116,8 +1116,10 @@ static bool ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
   }
 
   Opts.ShowCheckerHelp = Args.hasArg(OPT_analyzer_checker_help);
-  Opts.VisualizeEGDot = Args.hasArg(OPT_analyzer_viz_egraph_graphviz);
-  Opts.VisualizeEGUbi = Args.hasArg(OPT_analyzer_viz_egraph_ubigraph);
+  Opts.visualizeExplodedGraphWithGraphViz =
+    Args.hasArg(OPT_analyzer_viz_egraph_graphviz);
+  Opts.visualizeExplodedGraphWithUbiGraph =
+    Args.hasArg(OPT_analyzer_viz_egraph_ubigraph);
   Opts.NoRetryExhausted = Args.hasArg(OPT_analyzer_disable_retry_exhausted);
   Opts.AnalyzeAll = Args.hasArg(OPT_analyzer_opt_analyze_headers);
   Opts.AnalyzerDisplayProgress = Args.hasArg(OPT_analyzer_display_progress);

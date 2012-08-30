@@ -573,7 +573,7 @@ void AnalysisConsumer::ActionExprEngine(Decl *D, bool ObjCGCEnabled,
 
   // Set the graph auditor.
   OwningPtr<ExplodedNode::Auditor> Auditor;
-  if (Mgr->options.VisualizeEGUbi) {
+  if (Mgr->options.visualizeExplodedGraphWithUbiGraph) {
     Auditor.reset(CreateUbiViz());
     ExplodedNode::SetAuditor(Auditor.get());
   }
@@ -587,7 +587,7 @@ void AnalysisConsumer::ActionExprEngine(Decl *D, bool ObjCGCEnabled,
   ExplodedNode::SetAuditor(0);
 
   // Visualize the exploded graph.
-  if (Mgr->options.VisualizeEGDot)
+  if (Mgr->options.visualizeExplodedGraphWithGraphViz)
     Eng.ViewGraph(Mgr->options.TrimGraph);
 
   // Display warnings.

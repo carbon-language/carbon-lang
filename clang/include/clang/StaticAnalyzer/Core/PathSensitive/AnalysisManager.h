@@ -95,7 +95,8 @@ public:
   void FlushDiagnostics();
 
   bool shouldVisualize() const {
-    return options.VisualizeEGDot || options.VisualizeEGUbi;
+    return options.visualizeExplodedGraphWithGraphViz ||
+           options.visualizeExplodedGraphWithUbiGraph;
   }
 
   bool shouldInlineCall() const {
