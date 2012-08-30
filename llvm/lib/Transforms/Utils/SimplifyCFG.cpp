@@ -766,8 +766,8 @@ static ConstantInt* GetWeight(Instruction* I, int Pos) {
   return 0;
 }
 
-/// Scale the given weights based on the new TI's metadata. Scaling is done by
-/// multiplying every weight by the sum of the successor's weights.
+/// Scale the given weights based on the successor TI's metadata. Scaling is
+/// done by multiplying every weight by the sum of the successor's weights.
 static void ScaleWeights(Instruction* STI, MutableArrayRef<uint64_t> Weights) {
   // Sum the successor's weights
   assert(HasBranchWeights(STI));
