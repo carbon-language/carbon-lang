@@ -15601,6 +15601,10 @@ static SDValue PerformFMACombine(SDNode *N, SelectionDAG &DAG,
   DebugLoc dl = N->getDebugLoc();
   EVT VT = N->getValueType(0);
 
+  // Let legalize expand this if it isn't a legal type yet.
+  if (!DAG.getTargetLoweringInfo().isTypeLegal(VT))
+    return SDValue();
+
   EVT ScalarVT = VT.getScalarType();
   if ((ScalarVT != MVT::f32 && ScalarVT != MVT::f64) || !Subtarget->hasFMA())
     return SDValue();
