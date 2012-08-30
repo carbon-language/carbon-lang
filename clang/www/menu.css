@@ -8,9 +8,9 @@
 }
 [id=content] {
 	/* *****  EDIT THIS VALUE IF CONTENT OVERLAPS MENU ***** */
-	position:absolute;
-  left:29ex;
+	margin-left:29ex;
 	padding-right:4ex;
+	word-wrap: break-word;
 }
 
 /**************/
