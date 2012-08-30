@@ -740,7 +740,7 @@ static void PrintCursor(CXCursor Cursor,
         lineCols[I].line = line;
         lineCols[I].col = column;
       }
-      // Make the order of the override list deterministic.
+      /* Make the order of the override list deterministic. */
       qsort(lineCols, num_overridden, sizeof(LineCol), lineCol_cmp);
       for (I = 0; I != num_overridden; ++I) {
         if (I)
