@@ -8,6 +8,7 @@
 
 template<typename T>
 struct __is_pod {
+  __is_pod() {}
 };
 
 __is_pod<int> ipi;
@@ -28,6 +29,13 @@ struct test_is_signed {
 
 bool check_signed = test_is_signed::__is_signed;
 
-#if __has_feature(is_pod)
-#  error __is_pod won't work now anyway
+template<bool B> struct must_be_true {};
+template<> struct must_be_true<false>;
+
+void foo() {
+  bool b = __is_pod(int);
+  must_be_true<__is_pod(int)> mbt;
+}
+#if !__has_feature(is_pod)
+#  error __is_pod should still be available.
 #endif
