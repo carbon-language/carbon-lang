@@ -147,7 +147,7 @@ static void AnalyzerOptsToArgs(const AnalyzerOptions &Opts, ToArgsList &Res) {
                   getAnalysisPurgeModeName(Opts.AnalysisPurgeOpt));
   if (!Opts.AnalyzeSpecificFunction.empty())
     Res.push_back("-analyze-function", Opts.AnalyzeSpecificFunction);
-  if (Opts.IPAMode != BasicInlining)
+  if (Opts.IPAMode != DynamicDispatchBifurcate)
     Res.push_back("-analyzer-ipa", getAnalysisIPAModeName(Opts.IPAMode));
   if (Opts.InliningMode != NoRedundancy)
     Res.push_back("-analyzer-inlining-mode",

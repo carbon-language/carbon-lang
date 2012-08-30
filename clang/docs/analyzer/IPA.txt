@@ -23,7 +23,7 @@ Inlining
    does not drop the coverage in cases when the parent class has code that is
    only exercised when some of its methods are overridden.
 
-Currently, -analyzer-ipa=basic-inlining is the default mode.
+Currently, -analyzer-ipa=dynamic-bifurcate is the default mode.
 
 Basics of Implementation
 -----------------------

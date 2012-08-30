@@ -828,8 +828,8 @@ int RDar6320065_test() {
 @end
 
 void test_RDar6859457(RDar6859457 *x, void *bytes, NSUInteger dataLength) {
-  [x NoCopyString]; // no-warning
-  [x noCopyString]; // no-warning
+  [x NoCopyString]; // expected-warning{{leak}}
+  [x noCopyString]; // expected-warning{{leak}}
   [NSData dataWithBytesNoCopy:bytes length:dataLength];  // no-warning
   [NSData dataWithBytesNoCopy:bytes length:dataLength freeWhenDone:1]; // no-warning
 }

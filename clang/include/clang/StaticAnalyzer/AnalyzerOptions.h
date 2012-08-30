@@ -144,7 +144,7 @@ public:
     AnalysisConstraintsOpt = RangeConstraintsModel;
     AnalysisDiagOpt = PD_HTML;
     AnalysisPurgeOpt = PurgeStmt;
-    IPAMode = BasicInlining;
+    IPAMode = DynamicDispatchBifurcate;
     ShowCheckerHelp = 0;
     AnalyzeAll = 0;
     AnalyzerDisplayProgress = 0;
