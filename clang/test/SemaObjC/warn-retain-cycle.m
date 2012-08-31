@@ -24,6 +24,10 @@ void test0(Test0 *x) {
   [weakx addBlock: ^{ [x actNow]; }];
   [weakx setBlock: ^{ [x actNow]; }];
   weakx.block = ^{ [x actNow]; };
+
+  // rdar://11702054
+  x.block = ^{ (void)x.actNow; };  // expected-warning {{capturing 'x' strongly in this block is likely to lead to a retain cycle}} \
+                                   // expected-note {{block will be retained by the captured object}}
 }
 
 @interface BlockOwner

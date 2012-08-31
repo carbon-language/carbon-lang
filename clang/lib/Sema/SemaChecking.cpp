@@ -5253,6 +5253,12 @@ namespace {
       if (block->getBlockDecl()->capturesVariable(Variable))
         Visit(block->getBlockDecl()->getBody());
     }
+    
+    void VisitOpaqueValueExpr(OpaqueValueExpr *OVE) {
+      if (Capturer) return;
+      if (OVE->getSourceExpr())
+        Visit(OVE->getSourceExpr());
+    }
   };
 }
 
