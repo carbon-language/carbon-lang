@@ -215,9 +215,6 @@ public:
 
   InlineCommandComment::RenderKind
   getInlineCommandRenderKind(StringRef Name) const;
-
-  bool isHTMLEndTagOptional(StringRef Name);
-  bool isHTMLEndTagForbidden(StringRef Name);
 };
 
 } // end namespace comments

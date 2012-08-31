@@ -42,6 +42,8 @@ enum ActionType {
   GenClangDeclNodes,
   GenClangStmtNodes,
   GenClangSACheckers,
+  GenClangCommentHTMLTags,
+  GenClangCommentHTMLTagsProperties,
   GenOptParserDefs, GenOptParserImpl,
   GenArmNeon,
   GenArmNeonSema,
@@ -95,6 +97,14 @@ namespace {
                                "Generate Clang AST statement nodes"),
                     clEnumValN(GenClangSACheckers, "gen-clang-sa-checkers",
                                "Generate Clang Static Analyzer checkers"),
+                    clEnumValN(GenClangCommentHTMLTags,
+                               "gen-clang-comment-html-tags",
+                               "Generate efficient matchers for HTML tag "
+                               "names that are used in documentation comments"),
+                    clEnumValN(GenClangCommentHTMLTagsProperties,
+                               "gen-clang-comment-html-tags-properties",
+                               "Generate efficient matchers for HTML tag "
+                               "properties"),
                     clEnumValN(GenArmNeon, "gen-arm-neon",
                                "Generate arm_neon.h for clang"),
                     clEnumValN(GenArmNeonSema, "gen-arm-neon-sema",
@@ -163,6 +173,12 @@ public:
       break;
     case GenClangSACheckers:
       EmitClangSACheckers(Records, OS);
+      break;
+    case GenClangCommentHTMLTags:
+      EmitClangCommentHTMLTags(Records, OS);
+      break;
+    case GenClangCommentHTMLTagsProperties:
+      EmitClangCommentHTMLTagsProperties(Records, OS);
       break;
     case GenOptParserDefs:
       EmitOptParser(Records, OS, true);

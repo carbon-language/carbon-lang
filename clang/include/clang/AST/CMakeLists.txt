@@ -20,3 +20,11 @@ clang_tablegen(CommentNodes.inc -gen-clang-comment-nodes
   SOURCE ../Basic/CommentNodes.td
   TARGET ClangCommentNodes)
 
+clang_tablegen(CommentHTMLTags.inc -gen-clang-comment-html-tags
+  SOURCE CommentHTMLTags.td
+  TARGET ClangCommentHTMLTags)
+
+clang_tablegen(CommentHTMLTagsProperties.inc -gen-clang-comment-html-tags-properties
+  SOURCE CommentHTMLTags.td
+  TARGET ClangCommentHTMLTagsProperties)
+

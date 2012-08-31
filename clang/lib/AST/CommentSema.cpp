@@ -18,6 +18,10 @@
 namespace clang {
 namespace comments {
 
+namespace {
+#include "clang/AST/CommentHTMLTagsProperties.inc"
+} // unnamed namespace
+
 Sema::Sema(llvm::BumpPtrAllocator &Allocator, const SourceManager &SourceMgr,
            DiagnosticsEngine &Diags, const CommandTraits &Traits) :
     Allocator(Allocator), SourceMgr(SourceMgr), Diags(Diags), Traits(Traits),
@@ -743,31 +747,6 @@ Sema::getInlineCommandRenderKind(StringRef Name) const {
       .Cases("c", "p", InlineCommandComment::RenderMonospaced)
       .Cases("a", "e", "em", InlineCommandComment::RenderEmphasized)
       .Default(InlineCommandComment::RenderNormal);
-}
-
-bool Sema::isHTMLEndTagOptional(StringRef Name) {
-  return llvm::StringSwitch<bool>(Name)
-      .Case("p", true)
-      .Case("li", true)
-      .Case("dt", true)
-      .Case("dd", true)
-      .Case("tr", true)
-      .Case("th", true)
-      .Case("td", true)
-      .Case("thead", true)
-      .Case("tfoot", true)
-      .Case("tbody", true)
-      .Case("colgroup", true)
-      .Default(false);
-}
-
-bool Sema::isHTMLEndTagForbidden(StringRef Name) {
-  return llvm::StringSwitch<bool>(Name)
-      .Case("br", true)
-      .Case("hr", true)
-      .Case("img", true)
-      .Case("col", true)
-      .Default(false);
 }
 
 } // end namespace comments
