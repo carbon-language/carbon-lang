@@ -446,6 +446,9 @@ public:
 
     bool
     GetRangeContainingAddress (const Address& addr, AddressRange &range);
+    
+    bool
+    GetRangeContainingLoadAddress (lldb::addr_t load_addr, Target &target, AddressRange &range);
 
     uint32_t
     GetRangeIndexContainingAddress (const Address& addr);
