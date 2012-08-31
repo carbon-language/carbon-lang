@@ -1445,7 +1445,7 @@ def : InstAlias<"vcvtsi2sd{l}\t{$src, $src1, $dst|$dst, $src1, $src}",
 def : InstAlias<"vcvtsi2sd{l}\t{$src, $src1, $dst|$dst, $src1, $src}",
                 (VCVTSI2SDrm FR64:$dst, FR64:$src1, i32mem:$src)>;
 
-let Predicates = [HasAVX], AddedComplexity = 1 in {
+let Predicates = [HasAVX] in {
   def : Pat<(f32 (sint_to_fp (loadi32 addr:$src))),
             (VCVTSI2SSrm (f32 (IMPLICIT_DEF)), addr:$src)>;
   def : Pat<(f32 (sint_to_fp (loadi64 addr:$src))),
@@ -1698,19 +1698,17 @@ def VCVTSS2SDrm : I<0x5A, MRMSrcMem, (outs FR64:$dst),
                     XS, VEX_4V, VEX_LIG, Requires<[HasAVX, OptForSize]>;
 }
 
-let AddedComplexity = 1 in { // give AVX priority
-  def : Pat<(f64 (fextend FR32:$src)),
-            (VCVTSS2SDrr FR32:$src, FR32:$src)>, Requires<[HasAVX]>;
-  def : Pat<(fextend (loadf32 addr:$src)),
-            (VCVTSS2SDrm (f32 (IMPLICIT_DEF)), addr:$src)>, Requires<[HasAVX]>;
+def : Pat<(f64 (fextend FR32:$src)),
+    (VCVTSS2SDrr FR32:$src, FR32:$src)>, Requires<[HasAVX]>;
+def : Pat<(fextend (loadf32 addr:$src)),
+    (VCVTSS2SDrm (f32 (IMPLICIT_DEF)), addr:$src)>, Requires<[HasAVX]>;
 
-  def : Pat<(extloadf32 addr:$src),
-            (VCVTSS2SDrm (f32 (IMPLICIT_DEF)), addr:$src)>,
-            Requires<[HasAVX, OptForSize]>;
-  def : Pat<(extloadf32 addr:$src),
-            (VCVTSS2SDrr (f32 (IMPLICIT_DEF)), (VMOVSSrm addr:$src))>,
-            Requires<[HasAVX, OptForSpeed]>;
-} // AddedComplexity = 1
+def : Pat<(extloadf32 addr:$src),
+    (VCVTSS2SDrm (f32 (IMPLICIT_DEF)), addr:$src)>,
+    Requires<[HasAVX, OptForSize]>;
+def : Pat<(extloadf32 addr:$src),
+    (VCVTSS2SDrr (f32 (IMPLICIT_DEF)), (VMOVSSrm addr:$src))>,
+    Requires<[HasAVX, OptForSpeed]>;
 
 def CVTSS2SDrr : I<0x5A, MRMSrcReg, (outs FR64:$dst), (ins FR32:$src),
                    "cvtss2sd\t{$src, $dst|$dst, $src}",
@@ -2509,7 +2507,7 @@ let Predicates = [HasAVX1Only] in {
             (VUNPCKHPDYrr VR256:$src1, VR256:$src2)>;
 }
 
-let Predicates = [HasAVX], AddedComplexity = 1 in {
+let Predicates = [HasAVX] in {
   // FIXME: Instead of X86Movddup, there should be a X86Unpckl here, the
   // problem is during lowering, where it's not possible to recognize the load
   // fold cause it has two uses through a bitcast. One use disappears at isel
@@ -3180,7 +3178,6 @@ let Predicates = [HasAVX] in {
                                     SSE_RCPP>, VEX;
 }
 
-let AddedComplexity = 1 in {
 def : Pat<(f32 (fsqrt FR32:$src)),
           (VSQRTSSr (f32 (IMPLICIT_DEF)), FR32:$src)>, Requires<[HasAVX]>;
 def : Pat<(f32 (fsqrt (load addr:$src))),
@@ -3203,9 +3200,8 @@ def : Pat<(f32 (X86frcp FR32:$src)),
 def : Pat<(f32 (X86frcp (load addr:$src))),
           (VRCPSSm (f32 (IMPLICIT_DEF)), addr:$src)>,
           Requires<[HasAVX, OptForSize]>;
-}
 
-let Predicates = [HasAVX], AddedComplexity = 1 in {
+let Predicates = [HasAVX] in {
   def : Pat<(int_x86_sse_sqrt_ss VR128:$src),
             (COPY_TO_REGCLASS (VSQRTSSr (f32 (IMPLICIT_DEF)),
                                         (COPY_TO_REGCLASS VR128:$src, FR32)),
