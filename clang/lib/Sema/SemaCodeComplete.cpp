@@ -1059,10 +1059,12 @@ bool ResultBuilder::IsClassOrStruct(NamedDecl *ND) const {
   // Allow us to find class templates, too.
   if (ClassTemplateDecl *ClassTemplate = dyn_cast<ClassTemplateDecl>(ND))
     ND = ClassTemplate->getTemplatedDecl();
-  
+
+  // For purposes of this check, interfaces match too.
   if (RecordDecl *RD = dyn_cast<RecordDecl>(ND))
     return RD->getTagKind() == TTK_Class ||
-    RD->getTagKind() == TTK_Struct;
+    RD->getTagKind() == TTK_Struct ||
+    RD->getTagKind() == TTK_Interface;
   
   return false;
 }
@@ -1422,7 +1424,8 @@ static const char *GetCompletionTypeString(QualType T,
         if (!Tag->getIdentifier() && !Tag->getTypedefNameForAnonDecl()) {
           switch (Tag->getTagKind()) {
           case TTK_Struct: return "struct <anonymous>";
-          case TTK_Class:  return "class <anonymous>";            
+          case TTK_Interface: return "__interface <anonymous>";
+          case TTK_Class:  return "class <anonymous>";
           case TTK_Union:  return "union <anonymous>";
           case TTK_Enum:   return "enum <anonymous>";
           }
@@ -1449,7 +1452,7 @@ static void addThisCompletion(Sema &S, ResultBuilder &Results) {
                                                      Policy,
                                                      Allocator));
   Builder.AddTypedTextChunk("this");
-  Results.AddResult(CodeCompletionResult(Builder.TakeString()));            
+  Results.AddResult(CodeCompletionResult(Builder.TakeString()));
 }
 
 /// \brief Add language constructs that show up for "ordinary" names.
@@ -2884,6 +2887,7 @@ CXCursorKind clang::getCursorKindForDecl(Decl *D) {
     default:
       if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
         switch (TD->getTagKind()) {
+          case TTK_Interface:  // fall through
           case TTK_Struct: return CXCursor_StructDecl;
           case TTK_Class:  return CXCursor_ClassDecl;
           case TTK_Union:  return CXCursor_UnionDecl;
@@ -3601,6 +3605,7 @@ void Sema::CodeCompleteTag(Scope *S, unsigned TagSpec) {
     
   case DeclSpec::TST_struct:
   case DeclSpec::TST_class:
+  case DeclSpec::TST_interface:
     Filter = &ResultBuilder::IsClassOrStruct;
     ContextKind = CodeCompletionContext::CCC_ClassOrStructTag;
     break;

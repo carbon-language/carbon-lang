@@ -350,8 +350,8 @@ ParsedType Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
 /// isTagName() - This method is called *for error recovery purposes only*
 /// to determine if the specified name is a valid tag name ("struct foo").  If
 /// so, this returns the TST for the tag corresponding to it (TST_enum,
-/// TST_union, TST_struct, TST_class).  This is used to diagnose cases in C
-/// where the user forgot to specify the tag.
+/// TST_union, TST_struct, TST_interface, TST_class).  This is used to diagnose
+/// cases in C where the user forgot to specify the tag.
 DeclSpec::TST Sema::isTagName(IdentifierInfo &II, Scope *S) {
   // Do a tag name lookup in this scope.
   LookupResult R(*this, &II, SourceLocation(), LookupTagName);
@@ -361,6 +361,7 @@ DeclSpec::TST Sema::isTagName(IdentifierInfo &II, Scope *S) {
     if (const TagDecl *TD = R.getAsSingle<TagDecl>()) {
       switch (TD->getTagKind()) {
       case TTK_Struct: return DeclSpec::TST_struct;
+      case TTK_Interface: return DeclSpec::TST_interface;
       case TTK_Union:  return DeclSpec::TST_union;
       case TTK_Class:  return DeclSpec::TST_class;
       case TTK_Enum:   return DeclSpec::TST_enum;
@@ -536,6 +537,11 @@ static bool isTagTypeWithMissingTag(Sema &SemaRef, LookupResult &Result,
       case TTK_Struct:
         TagName = "struct";
         FixItTagName = "struct ";
+        break;
+
+      case TTK_Interface:
+        TagName = "__interface";
+        FixItTagName = "__interface ";
         break;
 
       case TTK_Union:
@@ -2604,6 +2610,7 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
   TagDecl *Tag = 0;
   if (DS.getTypeSpecType() == DeclSpec::TST_class ||
       DS.getTypeSpecType() == DeclSpec::TST_struct ||
+      DS.getTypeSpecType() == DeclSpec::TST_interface ||
       DS.getTypeSpecType() == DeclSpec::TST_union ||
       DS.getTypeSpecType() == DeclSpec::TST_enum) {
     TagD = DS.getRepAsDecl();
@@ -2642,7 +2649,8 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
       Diag(DS.getConstexprSpecLoc(), diag::err_constexpr_tag)
         << (DS.getTypeSpecType() == DeclSpec::TST_class ? 0 :
             DS.getTypeSpecType() == DeclSpec::TST_struct ? 1 :
-            DS.getTypeSpecType() == DeclSpec::TST_union ? 2 : 3);
+            DS.getTypeSpecType() == DeclSpec::TST_interface ? 2 :
+            DS.getTypeSpecType() == DeclSpec::TST_union ? 3 : 4);
     else
       Diag(DS.getConstexprSpecLoc(), diag::err_constexpr_no_declarators);
     // Don't emit warnings after this error.
@@ -2763,6 +2771,7 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
     DeclSpec::TST TypeSpecType = DS.getTypeSpecType();
     if (TypeSpecType == DeclSpec::TST_class ||
         TypeSpecType == DeclSpec::TST_struct ||
+        TypeSpecType == DeclSpec::TST_interface ||
         TypeSpecType == DeclSpec::TST_union ||
         TypeSpecType == DeclSpec::TST_enum) {
       AttributeList* attrs = DS.getAttributes().getList();
@@ -2772,7 +2781,8 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
         << attrs->getName()
         << (TypeSpecType == DeclSpec::TST_class ? 0 :
             TypeSpecType == DeclSpec::TST_struct ? 1 :
-            TypeSpecType == DeclSpec::TST_union ? 2 : 3);
+            TypeSpecType == DeclSpec::TST_union ? 2 :
+            TypeSpecType == DeclSpec::TST_interface ? 3 : 4);
         attrs = attrs->getNext();
       }
     }
@@ -5183,6 +5193,14 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       //   A function can be defined in a friend declaration of a
       //   class . . . . Such a function is implicitly inline.
       NewFD->setImplicitlyInline();
+    }
+
+    // if this is a method defined in an __interface, set pure
+    // (isVirtual will already return true)
+    if (CXXRecordDecl *Parent = dyn_cast<CXXRecordDecl>(
+        NewFD->getDeclContext())) {
+      if (Parent->getTagKind() == TTK_Interface)
+        NewFD->setPure(true);
     }
 
     SetNestedNameSpecifier(NewFD, D);
@@ -8118,6 +8136,7 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
   switch (D.getDeclSpec().getTypeSpecType()) {
   case TST_enum:
   case TST_struct:
+  case TST_interface:
   case TST_union:
   case TST_class: {
     TagDecl *tagFromDeclSpec = cast<TagDecl>(D.getDeclSpec().getRepAsDecl());
@@ -8193,6 +8212,31 @@ bool Sema::CheckEnumRedeclaration(SourceLocation EnumLoc, bool IsScoped,
   return false;
 }
 
+/// \brief Get diagnostic %select index for tag kind for
+/// redeclaration diagnostic message.
+/// WARNING: Indexes apply to particular diagnostics only!
+///
+/// \returns diagnostic %select index.
+static unsigned getRedeclDiagFromTagKind(TagTypeKind Tag)
+{
+  switch (Tag) {
+    case TTK_Struct: return 0;
+    case TTK_Interface: return 1;
+    case TTK_Class:  return 2;
+    default: assert("Invalid tag kind for redecl diagnostic!");
+  }
+  return -1;
+}
+
+/// \brief Determine if tag kind is a class-key compatible with
+/// class for redeclaration (class, struct, or __interface).
+///
+/// \returns true iff the tag kind is compatible.
+static bool isClassCompatTagKind(TagTypeKind Tag)
+{
+  return Tag == TTK_Struct || Tag == TTK_Class || Tag == TTK_Interface;
+}
+
 /// \brief Determine whether a tag with a given kind is acceptable
 /// as a redeclaration of the given tag declaration.
 ///
@@ -8215,12 +8259,11 @@ bool Sema::isAcceptableTagRedeclaration(const TagDecl *Previous,
   //   struct class-key shall be used to refer to a class (clause 9)
   //   declared using the class or struct class-key.
   TagTypeKind OldTag = Previous->getTagKind();
-  if (!isDefinition || (NewTag != TTK_Class && NewTag != TTK_Struct))
+  if (!isDefinition || !isClassCompatTagKind(NewTag))
     if (OldTag == NewTag)
       return true;
 
-  if ((OldTag == TTK_Struct || OldTag == TTK_Class) &&
-      (NewTag == TTK_Struct || NewTag == TTK_Class)) {
+  if (isClassCompatTagKind(OldTag) && isClassCompatTagKind(NewTag)) {
     // Warn about the struct/class tag mismatch.
     bool isTemplate = false;
     if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Previous))
@@ -8230,7 +8273,8 @@ bool Sema::isAcceptableTagRedeclaration(const TagDecl *Previous,
       // In a template instantiation, do not offer fix-its for tag mismatches
       // since they usually mess up the template instead of fixing the problem.
       Diag(NewTagLoc, diag::warn_struct_class_tag_mismatch)
-        << (NewTag == TTK_Class) << isTemplate << &Name;
+        << getRedeclDiagFromTagKind(NewTag) << isTemplate << &Name
+        << getRedeclDiagFromTagKind(OldTag);
       return true;
     }
 
@@ -8249,13 +8293,13 @@ bool Sema::isAcceptableTagRedeclaration(const TagDecl *Previous,
           if (!previousMismatch) {
             previousMismatch = true;
             Diag(NewTagLoc, diag::warn_struct_class_previous_tag_mismatch)
-              << (NewTag == TTK_Class) << isTemplate << &Name;
+              << getRedeclDiagFromTagKind(NewTag) << isTemplate << &Name
+              << getRedeclDiagFromTagKind(I->getTagKind());
           }
           Diag(I->getInnerLocStart(), diag::note_struct_class_suggestion)
-            << (NewTag == TTK_Class)
+            << getRedeclDiagFromTagKind(NewTag)
             << FixItHint::CreateReplacement(I->getInnerLocStart(),
-                                            NewTag == TTK_Class?
-                                            "class" : "struct");
+                 TypeWithKeyword::getTagTypeKindName(NewTag));
         }
       }
       return true;
@@ -8271,16 +8315,16 @@ bool Sema::isAcceptableTagRedeclaration(const TagDecl *Previous,
     }
 
     Diag(NewTagLoc, diag::warn_struct_class_tag_mismatch)
-      << (NewTag == TTK_Class)
-      << isTemplate << &Name;
+      << getRedeclDiagFromTagKind(NewTag) << isTemplate << &Name
+      << getRedeclDiagFromTagKind(OldTag);
     Diag(Redecl->getLocation(), diag::note_previous_use);
 
     // If there is a previous defintion, suggest a fix-it.
     if (Previous->getDefinition()) {
         Diag(NewTagLoc, diag::note_struct_class_suggestion)
-          << (Redecl->getTagKind() == TTK_Class)
+          << getRedeclDiagFromTagKind(Redecl->getTagKind())
           << FixItHint::CreateReplacement(SourceRange(NewTagLoc),
-                        Redecl->getTagKind() == TTK_Class? "class" : "struct");
+               TypeWithKeyword::getTagTypeKindName(Redecl->getTagKind()));
     }
 
     return true;

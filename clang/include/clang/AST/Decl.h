@@ -2448,7 +2448,7 @@ public:
 private:
   // FIXME: This can be packed into the bitfields in Decl.
   /// TagDeclKind - The TagKind enum.
-  unsigned TagDeclKind : 2;
+  unsigned TagDeclKind : 3;
 
   /// IsCompleteDefinition - True if this is a definition ("struct foo
   /// {};"), false if it is a declaration ("struct foo;").  It is not
@@ -2625,6 +2625,7 @@ public:
   void setTagKind(TagKind TK) { TagDeclKind = TK; }
 
   bool isStruct() const { return getTagKind() == TTK_Struct; }
+  bool isInterface() const { return getTagKind() == TTK_Interface; }
   bool isClass()  const { return getTagKind() == TTK_Class; }
   bool isUnion()  const { return getTagKind() == TTK_Union; }
   bool isEnum()   const { return getTagKind() == TTK_Enum; }

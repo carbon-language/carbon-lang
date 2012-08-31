@@ -675,6 +675,22 @@ static bool CheckConstexprParameterTypes(Sema &SemaRef,
   return true;
 }
 
+/// \brief Get diagnostic %select index for tag kind for
+/// record diagnostic message.
+/// WARNING: Indexes apply to particular diagnostics only!
+///
+/// \returns diagnostic %select index.
+static unsigned getRecordDiagFromTagKind(TagTypeKind Tag)
+{
+  switch (Tag) {
+    case TTK_Struct: return 0;
+    case TTK_Interface: return 1;
+    case TTK_Class:  return 2;
+    default: assert("Invalid tag kind for record diagnostic!");
+  }
+  return -1;
+}
+
 // CheckConstexprFunctionDecl - Check whether a function declaration satisfies
 // the requirements of a constexpr function definition or a constexpr
 // constructor definition. If so, return true. If not, produce appropriate
@@ -691,8 +707,8 @@ bool Sema::CheckConstexprFunctionDecl(const FunctionDecl *NewFD) {
     const CXXRecordDecl *RD = MD->getParent();
     if (RD->getNumVBases()) {
       Diag(NewFD->getLocation(), diag::err_constexpr_virtual_base)
-        << isa<CXXConstructorDecl>(NewFD) << RD->isStruct()
-        << RD->getNumVBases();
+        << isa<CXXConstructorDecl>(NewFD)
+        << getRecordDiagFromTagKind(RD->getTagKind()) << RD->getNumVBases();
       for (CXXRecordDecl::base_class_const_iterator I = RD->vbases_begin(),
              E = RD->vbases_end(); I != E; ++I)
         Diag(I->getLocStart(),

@@ -576,7 +576,7 @@ def err_expected_type_name_after_typename : Error<
   "expected an identifier or template-id after '::'">;
 def err_explicit_spec_non_template : Error<
   "explicit %select{specialization|instantiation}0 of non-template "
-  "%select{class|struct|union}1 %2">;
+  "%select{class|struct|union|interface}1 %2">;
   
 def err_default_template_template_parameter_not_template : Error<
   "default template argument for a template template parameter must be a class "

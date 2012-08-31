@@ -1719,8 +1719,10 @@ static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
   if (TagDecl *TagX = dyn_cast<TagDecl>(X)) {
     TagDecl *TagY = cast<TagDecl>(Y);
     return (TagX->getTagKind() == TagY->getTagKind()) ||
-      ((TagX->getTagKind() == TTK_Struct || TagX->getTagKind() == TTK_Class) &&
-       (TagY->getTagKind() == TTK_Struct || TagY->getTagKind() == TTK_Class));
+      ((TagX->getTagKind() == TTK_Struct || TagX->getTagKind() == TTK_Class ||
+        TagX->getTagKind() == TTK_Interface) &&
+       (TagY->getTagKind() == TTK_Struct || TagY->getTagKind() == TTK_Class ||
+        TagY->getTagKind() == TTK_Interface));
   }
   
   // Functions with the same type and linkage match.

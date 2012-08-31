@@ -1556,7 +1556,9 @@ public:
     CXXMethodDecl *CD =
       cast<CXXMethodDecl>(const_cast<CXXMethodDecl*>(this)->getCanonicalDecl());
 
-    if (CD->isVirtualAsWritten())
+    // Methods declared in interfaces are automatically (pure) virtual
+    if (CD->isVirtualAsWritten() ||
+        CD->getParent()->getTagKind() == TTK_Interface)
       return true;
 
     return (CD->begin_overridden_methods() != CD->end_overridden_methods());

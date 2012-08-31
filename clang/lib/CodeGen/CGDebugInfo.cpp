@@ -523,7 +523,7 @@ llvm::DIType CGDebugInfo::createRecordFwdDecl(const RecordDecl *RD,
     RDName = getClassName(RD);
     Tag = llvm::dwarf::DW_TAG_class_type;
   }
-  else if (RD->isStruct())
+  else if (RD->isStruct() || RD->isInterface())
     Tag = llvm::dwarf::DW_TAG_structure_type;
   else if (RD->isUnion())
     Tag = llvm::dwarf::DW_TAG_union_type;

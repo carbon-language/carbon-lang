@@ -174,13 +174,21 @@ void redundant_typename() {
 
 __interface MicrosoftInterface;
 __interface MicrosoftInterface {
-   virtual void foo1() = 0;
+   void foo1() = 0;
    virtual void foo2() = 0;
+};
+
+__interface MicrosoftDerivedInterface : public MicrosoftInterface {
+  void foo1();
+  void foo2() override;
+  void foo3();
 };
 
 void interface_test() {
   MicrosoftInterface* a;
   a->foo1();
+  MicrosoftDerivedInterface* b;
+  b->foo2();
 }
 
 __int64 x7 = __int64(0);

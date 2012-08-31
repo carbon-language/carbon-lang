@@ -2263,6 +2263,22 @@ RecordLayoutBuilder::updateExternalFieldOffset(const FieldDecl *Field,
   return ExternalFieldOffset;
 }
 
+/// \brief Get diagnostic %select index for tag kind for
+/// field padding diagnostic message.
+/// WARNING: Indexes apply to particular diagnostics only!
+///
+/// \returns diagnostic %select index.
+static unsigned getPaddingDiagFromTagKind(TagTypeKind Tag)
+{
+  switch (Tag) {
+    case TTK_Struct: return 0;
+    case TTK_Interface: return 1;
+    case TTK_Class:  return 2;
+    default: assert("Invalid tag kind for field padding diagnostic!");
+  }
+  return -1;
+}
+
 void RecordLayoutBuilder::CheckFieldPadding(uint64_t Offset,
                                             uint64_t UnpaddedOffset,
                                             uint64_t UnpackedOffset,
@@ -2291,14 +2307,14 @@ void RecordLayoutBuilder::CheckFieldPadding(uint64_t Offset,
     }
     if (D->getIdentifier())
       Diag(D->getLocation(), diag::warn_padded_struct_field)
-          << (D->getParent()->isStruct() ? 0 : 1) // struct|class
+          << getPaddingDiagFromTagKind(D->getParent()->getTagKind())
           << Context.getTypeDeclType(D->getParent())
           << PadSize
           << (InBits ? 1 : 0) /*(byte|bit)*/ << (PadSize > 1) // plural or not
           << D->getIdentifier();
     else
       Diag(D->getLocation(), diag::warn_padded_struct_anon_field)
-          << (D->getParent()->isStruct() ? 0 : 1) // struct|class
+          << getPaddingDiagFromTagKind(D->getParent()->getTagKind())
           << Context.getTypeDeclType(D->getParent())
           << PadSize
           << (InBits ? 1 : 0) /*(byte|bit)*/ << (PadSize > 1); // plural or not

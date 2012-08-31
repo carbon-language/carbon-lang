@@ -796,10 +796,11 @@ def warn_cxx98_compat_friend_is_member : Warning<
   "with C++98">, InGroup<CXX98Compat>, DefaultIgnore;
 def ext_unelaborated_friend_type : ExtWarn<
   "unelaborated friend declaration is a C++11 extension; specify "
-  "'%select{struct|union|class|enum}0' to befriend %1">, InGroup<CXX11>;
+  "'%select{struct|interface|union|class|enum}0' to befriend %1">,
+  InGroup<CXX11>;
 def warn_cxx98_compat_unelaborated_friend_type : Warning<
-  "befriending %1 without '%select{struct|union|class|enum}0' keyword is "
-  "incompatible with C++98">, InGroup<CXX98Compat>, DefaultIgnore;
+  "befriending %1 without '%select{struct|interface|union|class|enum}0' "
+  "keyword is incompatible with C++98">, InGroup<CXX98Compat>, DefaultIgnore;
 def err_qualified_friend_not_found : Error<
   "no function named %0 with type %1 was found in the specified scope">;
 def err_introducing_special_friend : Error<
@@ -1117,8 +1118,8 @@ def err_constructor_redeclared : Error<"constructor cannot be redeclared">;
 def err_constructor_byvalue_arg : Error<
   "copy constructor must pass its first argument by reference">;
 def warn_no_constructor_for_refconst : Warning<
-  "%select{struct|union|class|enum}0 %1 does not declare any constructor to "
-  "initialize its non-modifiable members">;
+  "%select{struct|interface|union|class|enum}0 %1 does not declare any "
+  "constructor to initialize its non-modifiable members">;
 def note_refconst_member_not_initialized : Note<
   "%select{const|reference}0 member %1 will never be initialized">;
 def ext_ms_explicit_constructor_call : ExtWarn<
@@ -1311,9 +1312,10 @@ def err_new_array_of_auto : Error<
   "cannot allocate array of 'auto'">;
 def err_auto_not_allowed : Error<
   "'auto' not allowed %select{in function prototype|in non-static struct member"
-  "|in non-static union member|in non-static class member|in exception declaration"
-  "|in template parameter|in block literal|in template argument"
-  "|in typedef|in type alias|in function return type|here}0">;
+  "|in non-static union member|in non-static class member|in interface member"
+  "|in exception declaration|in template parameter|in block literal"
+  "|in template argument|in typedef|in type alias|in function return type"
+  "|here}0">;
 def err_auto_var_requires_init : Error<
   "declaration of variable %0 with type %1 requires an initializer">;
 def err_auto_new_requires_ctor_arg : Error<
@@ -1439,7 +1441,7 @@ def err_invalid_constexpr : Error<
   "%select{function parameter|typedef|non-static data member}0 "
   "cannot be constexpr">;
 def err_constexpr_tag : Error<
-  "%select{class|struct|union|enum}0 cannot be marked constexpr">;
+  "%select{class|struct|interface|union|enum}0 cannot be marked constexpr">;
 def err_constexpr_dtor : Error<"destructor cannot be marked constexpr">;
 def err_constexpr_no_declarators : Error<
   "constexpr can only be used in variable and function declarations">;
@@ -1457,11 +1459,12 @@ def err_constexpr_redecl_mismatch : Error<
 def err_constexpr_virtual : Error<"virtual function cannot be constexpr">;
 def err_constexpr_virtual_base : Error<
   "constexpr %select{member function|constructor}0 not allowed in "
-  "%select{class|struct}1 with virtual base %plural{1:class|:classes}2">;
+  "%select{struct|interface|class}1 with virtual base "
+  "%plural{1:class|:classes}2">;
 def note_non_literal_incomplete : Note<
   "incomplete type %0 is not a literal type">;
-def note_non_literal_virtual_base : Note<"%select{class|struct}0 with virtual "
-  "base %plural{1:class|:classes}1 is not a literal type">;
+def note_non_literal_virtual_base : Note<"%select{struct|interface|class}0 "
+  "with virtual base %plural{1:class|:classes}1 is not a literal type">;
 def note_constexpr_virtual_base_here : Note<"virtual base class declared here">;
 def err_constexpr_non_literal_return : Error<
   "constexpr function's return type %0 is not a literal type">;
@@ -1700,7 +1703,9 @@ def warn_attribute_invalid_on_stmt : Warning<
   "attribute %0 cannot be specified on a statement">,
   InGroup<IgnoredAttributes>;
 def warn_declspec_attribute_ignored : Warning<
-  "attribute %0 is ignored, place it after \"%select{class|struct|union|enum}1\" to apply attribute to type declaration">, InGroup<IgnoredAttributes>;
+  "attribute %0 is ignored, place it after "
+  "\"%select{class|struct|union|interface|enum}1\" to apply attribute to "
+  "type declaration">, InGroup<IgnoredAttributes>;
 def warn_attribute_precede_definition : Warning<
   "attribute declaration must precede definition">,
   InGroup<IgnoredAttributes>;
@@ -3181,8 +3186,8 @@ def err_tag_reference_conflict : Error<
   "implicit declaration introduced by elaborated type conflicts with "
   "%select{a declaration|a typedef|a type alias|a template}0 of the same name">;
 def err_dependent_tag_decl : Error<
-  "%select{declaration|definition}0 of %select{struct|union|class|enum}1 "
-  "in a dependent scope">;
+  "%select{declaration|definition}0 of "
+  "%select{struct|interface|union|class|enum}1 in a dependent scope">;
 def err_tag_definition_of_typedef : Error<
   "definition of type %0 conflicts with %select{typedef|type alias}1 of the same name">;
 def err_conflicting_types : Error<"conflicting types for %0">;
@@ -3190,15 +3195,16 @@ def err_nested_redefinition : Error<"nested redefinition of %0">;
 def err_use_with_wrong_tag : Error<
   "use of %0 with tag type that does not match previous declaration">;
 def warn_struct_class_tag_mismatch : Warning<
-    "%select{struct|class}0%select{| template}1 %2 was previously declared "
-    "as a %select{class|struct}0%select{| template}1">,
+    "%select{struct|interface|class}0%select{| template}1 %2 was previously "
+    "declared as a %select{struct|interface|class}3%select{| template}1">,
     InGroup<MismatchedTags>, DefaultIgnore;
 def warn_struct_class_previous_tag_mismatch : Warning<
-    "%2 defined as a %select{struct|class}0%select{| template}1 here but "
-    "previously declared as a %select{class|struct}0%select{| template}1">,
+    "%2 defined as %select{a struct|an interface|a class}0%select{| template}1 "
+    "here but previously declared as "
+    "%select{a struct|an interface|a class}3%select{| template}1">,
      InGroup<MismatchedTags>, DefaultIgnore;
 def note_struct_class_suggestion : Note<
-    "did you mean %select{struct|class}0 here?">;
+    "did you mean %select{struct|interface|class}0 here?">;
 def ext_forward_ref_enum : Extension<
   "ISO C forbids forward references to 'enum' types">;
 def err_forward_ref_enum : Error<
@@ -3242,11 +3248,13 @@ def warn_array_new_too_large : Warning<"array is too large (%0 elements)">,
 
 // -Wpadded, -Wpacked
 def warn_padded_struct_field : Warning<
-  "padding %select{struct|class}0 %1 with %2 %select{byte|bit}3%select{|s}4 "
-  "to align %5">, InGroup<Padded>, DefaultIgnore;
+  "padding %select{struct|interface|class}0 %1 with %2 "
+  "%select{byte|bit}3%select{|s}4 to align %5">,
+  InGroup<Padded>, DefaultIgnore;
 def warn_padded_struct_anon_field : Warning<
-  "padding %select{struct|class}0 %1 with %2 %select{byte|bit}3%select{|s}4 "
-  "to align anonymous bit-field">, InGroup<Padded>, DefaultIgnore;
+  "padding %select{struct|interface|class}0 %1 with %2 "
+  "%select{byte|bit}3%select{|s}4 to align anonymous bit-field">,
+  InGroup<Padded>, DefaultIgnore;
 def warn_padded_struct_size : Warning<
   "padding size of %0 with %1 %select{byte|bit}2%select{|s}3 "
   "to alignment boundary">, InGroup<Padded>, DefaultIgnore;
@@ -3494,14 +3502,16 @@ def ext_flexible_array_in_array : Extension<
 def err_flexible_array_init : Error<
   "initialization of flexible array member is not allowed">;
 def ext_flexible_array_empty_aggregate_ms : Extension<
-  "flexible array member %0 in otherwise empty %select{struct|class}1 "
-  "is a Microsoft extension">, InGroup<Microsoft>;
+  "flexible array member %0 in otherwise empty "
+  "%select{struct|interface|union|class|enum}1 is a Microsoft extension">,
+  InGroup<Microsoft>;
 def ext_flexible_array_union_ms : Extension<
   "flexible array member %0 in a union is a Microsoft extension">,
   InGroup<Microsoft>;
 def ext_flexible_array_empty_aggregate_gnu : Extension<
-  "flexible array member %0 in otherwise empty %select{struct|class}1 "
-  "is a GNU extension">, InGroup<GNU>;
+  "flexible array member %0 in otherwise empty "
+  "%select{struct|interface|union|class|enum}1 is a GNU extension">,
+  InGroup<GNU>;
 def ext_flexible_array_union_gnu : Extension<
   "flexible array member %0 in a union is a GNU extension">, InGroup<GNU>;
 
@@ -4587,7 +4597,7 @@ def err_invalid_declarator_global_scope : Error<
 def err_invalid_declarator_in_function : Error<
   "definition or redeclaration of %0 not allowed inside a function">;
 def err_not_tag_in_scope : Error<
-  "no %select{struct|union|class|enum}0 named %1 in %2">;
+  "no %select{struct|interface|union|class|enum}0 named %1 in %2">;
 
 def err_no_typeid_with_fno_rtti : Error<
   "cannot use typeid with -fno-rtti">;
@@ -5938,7 +5948,7 @@ def err_module_private_local : Error<
   "%select{local variable|parameter|typedef}0 %1 cannot be declared "
   "__module_private__">;
 def err_module_private_local_class : Error<
-  "local %select{struct|union|class|enum}0 cannot be declared "
+  "local %select{struct|interface|union|class|enum}0 cannot be declared "
   "__module_private__">;
 def err_module_private_definition : Error<
   "definition of %0 must be imported before it is required">;

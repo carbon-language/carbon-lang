@@ -2998,7 +2998,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
   case UTT_IsUnion:
     return T->isUnionType();
   case UTT_IsClass:
-    return T->isClassType() || T->isStructureType();
+    return T->isClassType() || T->isStructureType() || T->isInterfaceType();
   case UTT_IsFunction:
     return T->isFunctionType();
 

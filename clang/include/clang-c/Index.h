@@ -4965,7 +4965,8 @@ typedef enum {
   CXIdxEntity_CXXConstructor        = 22,
   CXIdxEntity_CXXDestructor         = 23,
   CXIdxEntity_CXXConversionFunction = 24,
-  CXIdxEntity_CXXTypeAlias          = 25
+  CXIdxEntity_CXXTypeAlias          = 25,
+  CXIdxEntity_CXXInterface          = 26
 
 } CXIdxEntityKind;
 

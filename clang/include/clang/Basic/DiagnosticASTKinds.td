@@ -137,7 +137,7 @@ def err_odr_function_type_inconsistent : Error<
 def warn_odr_tag_type_inconsistent : Warning<
   "type %0 has incompatible definitions in different translation units">;
 def note_odr_tag_kind_here: Note<
-  "%0 is a %select{struct|union|class|enum}1 here">;
+  "%0 is a %select{struct|interface|union|class|enum}1 here">;
 def note_odr_field : Note<"field %0 has type %1 here">;
 def note_odr_missing_field : Note<"no corresponding field here">;
 def note_odr_bit_field : Note<"bit-field %0 with type %1 and length %2 here">;
