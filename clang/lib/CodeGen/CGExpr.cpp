@@ -2396,7 +2396,10 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
 
   case CK_Dependent:
     llvm_unreachable("dependent cast kind in IR gen!");
- 
+
+  case CK_BuiltinFnToFnPtr:
+    llvm_unreachable("builtin functions are handled elsewhere");
+
   // These two casts are currently treated as no-ops, although they could
   // potentially be real operations depending on the target's ABI.
   case CK_NonAtomicToAtomic:

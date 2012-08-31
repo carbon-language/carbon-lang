@@ -4466,6 +4466,10 @@ QualType ASTReader::GetType(TypeID ID) {
     case PREDEF_TYPE_VA_LIST_TAG:
       T = Context.getVaListTagType();
       break;
+
+    case PREDEF_TYPE_BUILTIN_FN:
+      T = Context.BuiltinFnTy;
+      break;
     }
 
     assert(!T.isNull() && "Unknown predefined type");

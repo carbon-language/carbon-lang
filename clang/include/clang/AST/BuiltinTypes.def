@@ -206,6 +206,8 @@ PLACEHOLDER_TYPE(PseudoObject, PseudoObjectTy)
 // unknown type, most notably explicit casts.
 PLACEHOLDER_TYPE(UnknownAny, UnknownAnyTy)
 
+PLACEHOLDER_TYPE(BuiltinFn, BuiltinFnTy)
+
 // The type of a cast which, in ARC, would normally require a
 // __bridge, but which might be okay depending on the immediate
 // context.

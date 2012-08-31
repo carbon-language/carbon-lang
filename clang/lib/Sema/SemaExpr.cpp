@@ -2416,6 +2416,14 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
     }
         
     case Decl::Function: {
+      if (unsigned BID = cast<FunctionDecl>(VD)->getBuiltinID()) {
+        if (!Context.BuiltinInfo.isPredefinedLibFunction(BID)) {
+          type = Context.BuiltinFnTy;
+          valueKind = VK_RValue;
+          break;
+        }
+      }
+
       const FunctionType *fty = type->castAs<FunctionType>();
 
       // If we're referring to a function with an __unknown_anytype
@@ -3929,9 +3937,19 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
                             SourceLocation RParenLoc,
                             Expr *Config, bool IsExecConfig) {
   FunctionDecl *FDecl = dyn_cast_or_null<FunctionDecl>(NDecl);
+  unsigned BuiltinID = (FDecl ? FDecl->getBuiltinID() : 0);
 
   // Promote the function operand.
-  ExprResult Result = UsualUnaryConversions(Fn);
+  // We special-case function promotion here because we only allow promoting
+  // builtin functions to function pointers in the callee of a call.
+  ExprResult Result;
+  if (BuiltinID &&
+      Fn->getType()->isSpecificBuiltinType(BuiltinType::BuiltinFn)) {
+    Result = ImpCastExprToType(Fn, Context.getPointerType(FDecl->getType()),
+                               CK_BuiltinFnToFnPtr).take();
+  } else {
+    Result = UsualUnaryConversions(Fn);
+  }
   if (Result.isInvalid())
     return ExprError();
   Fn = Result.take();
@@ -3952,8 +3970,6 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
                                      Context.BoolTy,
                                      VK_RValue,
                                      RParenLoc);
-
-  unsigned BuiltinID = (FDecl ? FDecl->getBuiltinID() : 0);
 
   // Bail out early if calling a builtin with custom typechecking.
   if (BuiltinID && Context.BuiltinInfo.hasCustomTypechecking(BuiltinID))
@@ -8635,6 +8651,7 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
     break;
   case UO_Deref: {
     Input = DefaultFunctionArrayLvalueConversion(Input.take());
+    if (Input.isInvalid()) return ExprError();
     resultType = CheckIndirectionOperand(*this, Input.get(), VK, OpLoc);
     break;
   }
@@ -11746,6 +11763,10 @@ ExprResult Sema::CheckPlaceholderExpr(Expr *E) {
   // Pseudo-objects.
   case BuiltinType::PseudoObject:
     return checkPseudoObjectRValue(E);
+
+  case BuiltinType::BuiltinFn:
+    Diag(E->getLocStart(), diag::err_builtin_fn_use);
+    return ExprError();
 
   // Everything else should be impossible.
 #define BUILTIN_TYPE(Id, SingletonId) \

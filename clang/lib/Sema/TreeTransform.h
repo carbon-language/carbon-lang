@@ -2413,17 +2413,16 @@ public:
 
     // Build a reference to the __builtin_shufflevector builtin
     FunctionDecl *Builtin = cast<FunctionDecl>(*Lookup.first);
-    ExprResult Callee
-      = SemaRef.Owned(new (SemaRef.Context) DeclRefExpr(Builtin, false,
-                                                        Builtin->getType(),
-                                                        VK_LValue, BuiltinLoc));
-    Callee = SemaRef.UsualUnaryConversions(Callee.take());
-    if (Callee.isInvalid())
-      return ExprError();
+    Expr *Callee = new (SemaRef.Context) DeclRefExpr(Builtin, false,
+                                                  SemaRef.Context.BuiltinFnTy,
+                                                  VK_RValue, BuiltinLoc);
+    QualType CalleePtrTy = SemaRef.Context.getPointerType(Builtin->getType());
+    Callee = SemaRef.ImpCastExprToType(Callee, CalleePtrTy,
+                                       CK_BuiltinFnToFnPtr).take();
 
     // Build the CallExpr
     ExprResult TheCall = SemaRef.Owned(
-      new (SemaRef.Context) CallExpr(SemaRef.Context, Callee.take(), SubExprs,
+      new (SemaRef.Context) CallExpr(SemaRef.Context, Callee, SubExprs,
                                      Builtin->getCallResultType(),
                             Expr::getValueKindForType(Builtin->getResultType()),
                                      RParenLoc));

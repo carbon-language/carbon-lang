@@ -7847,8 +7847,8 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
           }
         
           CollectableMemCpyRef = BuildDeclRefExpr(CollectableMemCpy, 
-                                                  CollectableMemCpy->getType(),
-                                                  VK_LValue, Loc, 0).take();
+                                                  Context.BuiltinFnTy,
+                                                  VK_RValue, Loc, 0).take();
           assert(CollectableMemCpyRef && "Builtin reference cannot fail");
         }
       }
@@ -7867,8 +7867,8 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
         }
 
         BuiltinMemCpyRef = BuildDeclRefExpr(BuiltinMemCpy, 
-                                            BuiltinMemCpy->getType(),
-                                            VK_LValue, Loc, 0).take();
+                                            Context.BuiltinFnTy,
+                                            VK_RValue, Loc, 0).take();
         assert(BuiltinMemCpyRef && "Builtin reference cannot fail");
       }
           
@@ -8396,8 +8396,8 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
           }
         
           CollectableMemCpyRef = BuildDeclRefExpr(CollectableMemCpy, 
-                                                  CollectableMemCpy->getType(),
-                                                  VK_LValue, Loc, 0).take();
+                                                  Context.BuiltinFnTy,
+                                                  VK_RValue, Loc, 0).take();
           assert(CollectableMemCpyRef && "Builtin reference cannot fail");
         }
       }
@@ -8416,8 +8416,8 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
         }
 
         BuiltinMemCpyRef = BuildDeclRefExpr(BuiltinMemCpy, 
-                                            BuiltinMemCpy->getType(),
-                                            VK_LValue, Loc, 0).take();
+                                            Context.BuiltinFnTy,
+                                            VK_RValue, Loc, 0).take();
         assert(BuiltinMemCpyRef && "Builtin reference cannot fail");
       }
           

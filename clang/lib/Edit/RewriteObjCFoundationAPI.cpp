@@ -920,6 +920,7 @@ static bool rewriteToNumericBoxedExpression(const ObjCMessageExpr *Msg,
     case CK_ARCExtendBlockObject:
     case CK_NonAtomicToAtomic:
     case CK_CopyAndAutoreleaseBlockObject:
+    case CK_BuiltinFnToFnPtr:
       return false;
     }
   }
