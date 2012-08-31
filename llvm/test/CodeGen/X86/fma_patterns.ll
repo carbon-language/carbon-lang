@@ -3,7 +3,7 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=bdver1 -fp-contract=fast | FileCheck %s --check-prefix=CHECK_FMA4
 
 ; CHECK: test_x86_fmadd_ps
-; CHECK: vfmadd213ps     %xmm2, %xmm0, %xmm1
+; CHECK: vfmadd213ps     %xmm2, %xmm1, %xmm0
 ; CHECK: ret
 ; CHECK_FMA4: test_x86_fmadd_ps
 ; CHECK_FMA4: vfmaddps     %xmm2, %xmm1, %xmm0, %xmm0
@@ -15,7 +15,7 @@ define <4 x float> @test_x86_fmadd_ps(<4 x float> %a0, <4 x float> %a1, <4 x flo
 }
 
 ; CHECK: test_x86_fmsub_ps
-; CHECK: fmsub213ps     %xmm2, %xmm0, %xmm1
+; CHECK: fmsub213ps     %xmm2, %xmm1, %xmm0
 ; CHECK: ret
 ; CHECK_FMA4: test_x86_fmsub_ps
 ; CHECK_FMA4: vfmsubps     %xmm2, %xmm1, %xmm0, %xmm0
@@ -27,7 +27,7 @@ define <4 x float> @test_x86_fmsub_ps(<4 x float> %a0, <4 x float> %a1, <4 x flo
 }
 
 ; CHECK: test_x86_fnmadd_ps
-; CHECK: fnmadd213ps     %xmm2, %xmm0, %xmm1
+; CHECK: fnmadd213ps     %xmm2, %xmm1, %xmm0
 ; CHECK: ret
 ; CHECK_FMA4: test_x86_fnmadd_ps
 ; CHECK_FMA4: vfnmaddps     %xmm2, %xmm1, %xmm0, %xmm0
@@ -39,7 +39,7 @@ define <4 x float> @test_x86_fnmadd_ps(<4 x float> %a0, <4 x float> %a1, <4 x fl
 }
 
 ; CHECK: test_x86_fnmsub_ps
-; CHECK: fnmsub213ps     %xmm2, %xmm0, %xmm1
+; CHECK: fnmsub213ps     %xmm2, %xmm1, %xmm0
 ; CHECK: ret
 ; CHECK_FMA4: test_x86_fnmsub_ps
 ; CHECK_FMA4: fnmsubps     %xmm2, %xmm1, %xmm0, %xmm0
@@ -52,7 +52,7 @@ define <4 x float> @test_x86_fnmsub_ps(<4 x float> %a0, <4 x float> %a1, <4 x fl
 }
 
 ; CHECK: test_x86_fmadd_ps_y
-; CHECK: vfmadd213ps     %ymm2, %ymm0, %ymm1
+; CHECK: vfmadd213ps     %ymm2, %ymm1, %ymm0
 ; CHECK: ret
 ; CHECK_FMA4: test_x86_fmadd_ps_y
 ; CHECK_FMA4: vfmaddps     %ymm2, %ymm1, %ymm0, %ymm0
@@ -64,7 +64,7 @@ define <8 x float> @test_x86_fmadd_ps_y(<8 x float> %a0, <8 x float> %a1, <8 x f
 }
 
 ; CHECK: test_x86_fmsub_ps_y
-; CHECK: vfmsub213ps     %ymm2, %ymm0, %ymm1
+; CHECK: vfmsub213ps     %ymm2, %ymm1, %ymm0
 ; CHECK: ret
 ; CHECK_FMA4: test_x86_fmsub_ps_y
 ; CHECK_FMA4: vfmsubps     %ymm2, %ymm1, %ymm0, %ymm0
@@ -76,7 +76,7 @@ define <8 x float> @test_x86_fmsub_ps_y(<8 x float> %a0, <8 x float> %a1, <8 x f
 }
 
 ; CHECK: test_x86_fnmadd_ps_y
-; CHECK: vfnmadd213ps     %ymm2, %ymm0, %ymm1
+; CHECK: vfnmadd213ps     %ymm2, %ymm1, %ymm0
 ; CHECK: ret
 ; CHECK_FMA4: test_x86_fnmadd_ps_y
 ; CHECK_FMA4: vfnmaddps     %ymm2, %ymm1, %ymm0, %ymm0
@@ -88,7 +88,7 @@ define <8 x float> @test_x86_fnmadd_ps_y(<8 x float> %a0, <8 x float> %a1, <8 x 
 }
 
 ; CHECK: test_x86_fnmsub_ps_y
-; CHECK: vfnmsub213ps     %ymm2, %ymm0, %ymm1
+; CHECK: vfnmsub213ps     %ymm2, %ymm1, %ymm0
 ; CHECK: ret
 define <8 x float> @test_x86_fnmsub_ps_y(<8 x float> %a0, <8 x float> %a1, <8 x float> %a2) {
   %x = fmul <8 x float> %a0, %a1
@@ -98,7 +98,7 @@ define <8 x float> @test_x86_fnmsub_ps_y(<8 x float> %a0, <8 x float> %a1, <8 x 
 }
 
 ; CHECK: test_x86_fmadd_pd_y
-; CHECK: vfmadd213pd     %ymm2, %ymm0, %ymm1
+; CHECK: vfmadd213pd     %ymm2, %ymm1, %ymm0
 ; CHECK: ret
 ; CHECK_FMA4: test_x86_fmadd_pd_y
 ; CHECK_FMA4: vfmaddpd     %ymm2, %ymm1, %ymm0, %ymm0
@@ -110,7 +110,7 @@ define <4 x double> @test_x86_fmadd_pd_y(<4 x double> %a0, <4 x double> %a1, <4 
 }
 
 ; CHECK: test_x86_fmsub_pd_y
-; CHECK: vfmsub213pd     %ymm2, %ymm0, %ymm1
+; CHECK: vfmsub213pd     %ymm2, %ymm1, %ymm0
 ; CHECK: ret
 ; CHECK_FMA4: test_x86_fmsub_pd_y
 ; CHECK_FMA4: vfmsubpd     %ymm2, %ymm1, %ymm0, %ymm0
@@ -122,7 +122,7 @@ define <4 x double> @test_x86_fmsub_pd_y(<4 x double> %a0, <4 x double> %a1, <4 
 }
 
 ; CHECK: test_x86_fmsub_pd
-; CHECK: vfmsub213pd     %xmm2, %xmm0, %xmm1
+; CHECK: vfmsub213pd     %xmm2, %xmm1, %xmm0
 ; CHECK: ret
 ; CHECK_FMA4: test_x86_fmsub_pd
 ; CHECK_FMA4: vfmsubpd     %xmm2, %xmm1, %xmm0, %xmm0
@@ -134,7 +134,7 @@ define <2 x double> @test_x86_fmsub_pd(<2 x double> %a0, <2 x double> %a1, <2 x 
 }
 
 ; CHECK: test_x86_fnmadd_ss
-; CHECK: vfnmadd213ss    %xmm2, %xmm0, %xmm1
+; CHECK: vfnmadd213ss    %xmm2, %xmm1, %xmm0
 ; CHECK: ret
 ; CHECK_FMA4: test_x86_fnmadd_ss
 ; CHECK_FMA4: vfnmaddss    %xmm2, %xmm1, %xmm0, %xmm0
@@ -146,7 +146,7 @@ define float @test_x86_fnmadd_ss(float %a0, float %a1, float %a2) {
 }
 
 ; CHECK: test_x86_fnmadd_sd
-; CHECK: vfnmadd213sd     %xmm2, %xmm0, %xmm1
+; CHECK: vfnmadd213sd     %xmm2, %xmm1, %xmm0
 ; CHECK: ret
 ; CHECK_FMA4: test_x86_fnmadd_sd
 ; CHECK_FMA4: vfnmaddsd     %xmm2, %xmm1, %xmm0, %xmm0
@@ -158,7 +158,7 @@ define double @test_x86_fnmadd_sd(double %a0, double %a1, double %a2) {
 }
 
 ; CHECK: test_x86_fmsub_sd
-; CHECK: vfmsub213sd     %xmm2, %xmm0, %xmm1
+; CHECK: vfmsub213sd     %xmm2, %xmm1, %xmm0
 ; CHECK: ret
 ; CHECK_FMA4: test_x86_fmsub_sd
 ; CHECK_FMA4: vfmsubsd     %xmm2, %xmm1, %xmm0, %xmm0
@@ -170,7 +170,7 @@ define double @test_x86_fmsub_sd(double %a0, double %a1, double %a2) {
 }
 
 ; CHECK: test_x86_fnmsub_ss
-; CHECK: vfnmsub213ss     %xmm2, %xmm0, %xmm1
+; CHECK: vfnmsub213ss     %xmm2, %xmm1, %xmm0
 ; CHECK: ret
 ; CHECK_FMA4: test_x86_fnmsub_ss
 ; CHECK_FMA4: vfnmsubss     %xmm2, %xmm1, %xmm0, %xmm0
