@@ -394,7 +394,21 @@ public:
   static std::pair<unsigned, bool>
   ComputePreamble(const llvm::MemoryBuffer *Buffer, const LangOptions &LangOpts,
                   unsigned MaxLines = 0);
-                                        
+
+  /// \brief Checks that the given token is the first token that occurs after
+  /// the given location (this excludes comments and whitespace). Returns the
+  /// location immediately after the specified token. If the token is not found
+  /// or the location is inside a macro, the returned source location will be
+  /// invalid.
+  static SourceLocation findLocationAfterToken(SourceLocation loc,
+                                         tok::TokenKind TKind,
+                                         const SourceManager &SM,
+                                         const LangOptions &LangOpts,
+                                         bool SkipTrailingWhitespaceAndNewLine);
+
+  /// \brief Returns true if the given character could appear in an identifier.
+  static bool isIdentifierBodyChar(char c, const LangOptions &LangOpts);
+
   //===--------------------------------------------------------------------===//
   // Internal implementation interfaces.
 private:
@@ -425,7 +439,6 @@ private:
 
   //===--------------------------------------------------------------------===//
   // Lexer character reading interfaces.
-public:
 
   // This lexer is built on two interfaces for reading characters, both of which
   // automatically provide phase 1/2 translation.  getAndAdvanceChar is used
@@ -465,7 +478,6 @@ public:
     return C;
   }
 
-private:
   /// ConsumeChar - When a character (identified by getCharAndSize) is consumed
   /// and added to a given token, check to see if there are diagnostics that
   /// need to be emitted or flags that need to be set on the token.  If so, do
@@ -501,7 +513,6 @@ private:
   /// getCharAndSizeSlow - Handle the slow/uncommon case of the getCharAndSize
   /// method.
   char getCharAndSizeSlow(const char *Ptr, unsigned &Size, Token *Tok = 0);
-public:
 
   /// getCharAndSizeNoWarn - Like the getCharAndSize method, but does not ever
   /// emit a warning.
@@ -527,22 +538,6 @@ public:
   /// them), skip over them and return the first non-escaped-newline found,
   /// otherwise return P.
   static const char *SkipEscapedNewLines(const char *P);
-
-  /// \brief Checks that the given token is the first token that occurs after
-  /// the given location (this excludes comments and whitespace). Returns the
-  /// location immediately after the specified token. If the token is not found
-  /// or the location is inside a macro, the returned source location will be
-  /// invalid.
-  static SourceLocation findLocationAfterToken(SourceLocation loc,
-                                         tok::TokenKind TKind,
-                                         const SourceManager &SM,
-                                         const LangOptions &LangOpts,
-                                         bool SkipTrailingWhitespaceAndNewLine);
-
-  /// \brief Returns true if the given character could appear in an identifier.
-  static bool isIdentifierBodyChar(char c, const LangOptions &LangOpts);
-
-private:
 
   /// getCharAndSizeSlowNoWarn - Same as getCharAndSizeSlow, but never emits a
   /// diagnostic.
@@ -578,6 +573,8 @@ private:
 
   bool isCodeCompletionPoint(const char *CurPtr) const;
   void cutOffLexing() { BufferPtr = BufferEnd; }
+
+  bool isHexaLiteral(const char *Start, const LangOptions &LangOpts);
 };
 
 
