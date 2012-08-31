@@ -115,7 +115,7 @@ void MutexUnlock(ThreadState *thr, uptr pc, uptr addr) {
       s->owner_tid = SyncVar::kInvalidTid;
       thr->clock.set(thr->tid, thr->fast_state.epoch());
       thr->fast_synch_epoch = thr->fast_state.epoch();
-      thr->clock.release(&s->clock);
+      thr->clock.ReleaseStore(&s->clock);
       StatInc(thr, StatSyncRelease);
     } else {
       StatInc(thr, StatMutexRecUnlock);
@@ -188,7 +188,7 @@ void MutexReadOrWriteUnlock(ThreadState *thr, uptr pc, uptr addr) {
       TraceAddEvent(thr, thr->fast_state.epoch(), EventTypeUnlock, addr);
       thr->clock.set(thr->tid, thr->fast_state.epoch());
       thr->fast_synch_epoch = thr->fast_state.epoch();
-      thr->clock.release(&s->clock);
+      thr->clock.ReleaseStore(&s->clock);
       StatInc(thr, StatSyncRelease);
     } else {
       StatInc(thr, StatMutexRecUnlock);
