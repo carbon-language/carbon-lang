@@ -5347,6 +5347,12 @@ validateInstruction(MCInst &Inst,
   case ARM::tMUL: {
     // The second source operand must be the same register as the destination
     // operand.
+    //
+    // In this case, we must directly check the parsed operands because the
+    // cvtThumbMultiply() function is written in such a way that it guarantees
+    // this first statement is always true for the new Inst.  Essentially, the
+    // destination is unconditionally copied into the second source operand
+    // without checking to see if it matches what we actually parsed.
     if (Operands.size() == 6 &&
         (((ARMOperand*)Operands[3])->getReg() !=
          ((ARMOperand*)Operands[5])->getReg()) &&
