@@ -24,6 +24,10 @@ extern "C" void _mm_pause();
 extern "C" long _InterlockedExchangeAdd(  // NOLINT
     long volatile * Addend, long Value);  // NOLINT
 #pragma intrinsic(_InterlockedExchangeAdd)
+extern "C" void *_InterlockedCompareExchangePointer(
+    void *volatile *Destination,
+    void *Exchange, void *Comparand);
+#pragma intrinsic(_InterlockedCompareExchangePointer)
 
 namespace __sanitizer {
 
@@ -105,6 +109,27 @@ INLINE u16 atomic_exchange(volatile atomic_uint16_t *a,
     mov v, cx
   }
   return v;
+}
+
+INLINE bool atomic_compare_exchange_strong(volatile uptr *a,
+                                           uptr *cmp,
+                                           uptr xchg,
+                                           memory_order mo) {
+  uptr cmpv = *cmp;
+  uptr prev = (uptr)_InterlockedCompareExchangePointer(
+      (void*volatile*)&a->val_dont_use, (void*)xchg, (void*)cmpv);
+  if (prev == cmpv)
+    return true;
+  *cmp = prev;
+  return false;
+}
+
+template<typename T>
+INLINE bool atomic_compare_exchange_weak(volatile T *a,
+                                           typename T::Type *cmp,
+                                           typename T::Type xchg,
+                                           memory_order mo) {
+  return atomic_compare_exchange_strong(a, cmp, xchg, mo);
 }
 
 }  // namespace __sanitizer
