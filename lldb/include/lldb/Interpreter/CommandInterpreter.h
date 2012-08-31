@@ -287,10 +287,10 @@ public:
     // and have it printed in a reasonable way on screen. If so, use OutputFormattedHelpText 
     void
     OutputHelpText (Stream &stream,
-                             const char *command_word,
-                             const char *separator,
-                             const char *help_text,
-                             uint32_t max_word_len);
+                    const char *command_word,
+                    const char *separator,
+                    const char *help_text,
+                    uint32_t max_word_len);
 
     Debugger &
     GetDebugger ()
