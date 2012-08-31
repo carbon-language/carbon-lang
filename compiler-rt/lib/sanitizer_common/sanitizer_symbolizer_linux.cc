@@ -122,7 +122,7 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
   if (data->current_n == data->max_n)
     return 0;
   InternalScopedBuffer<char> module_name(kMaxPathLength);
-  module_name[0] = '\0';
+  module_name.data()[0] = '\0';
   if (data->current_n == 0) {
     // First module is the binary itself.
     uptr module_name_len = readlink("/proc/self/exe",
@@ -133,7 +133,7 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
   } else if (info->dlpi_name) {
     internal_strncpy(module_name, info->dlpi_name, module_name.size());
   }
-  if (module_name[0] == '\0')
+  if (module_name.data()[0] == '\0')
     return 0;
   void *mem = &data->modules[data->current_n];
   LoadedModule *cur_module = new(mem) LoadedModule(module_name,

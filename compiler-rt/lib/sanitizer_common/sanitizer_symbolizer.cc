@@ -255,7 +255,7 @@ class Symbolizer {
   }
 
   static const uptr kMaxNumberOfModuleContexts = 4096;
-  LoadedModule *modules_; // Array of module descriptions is leaked.
+  LoadedModule *modules_;  // Array of module descriptions is leaked.
   uptr n_modules_;
 
   ExternalSymbolizer *external_symbolizer_;  // Leaked.
