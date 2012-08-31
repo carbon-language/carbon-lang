@@ -28,19 +28,19 @@ GCOVFile::~GCOVFile() {
 }
 
 /// isGCDAFile - Return true if Format identifies a .gcda file.
-static bool isGCDAFile(GCOVFormat Format) {
-  return Format == GCDA_402 || Format == GCDA_404;
+static bool isGCDAFile(GCOV::GCOVFormat Format) {
+  return Format == GCOV::GCDA_402 || Format == GCOV::GCDA_404;
 }
 
 /// isGCNOFile - Return true if Format identifies a .gcno file.
-static bool isGCNOFile(GCOVFormat Format) {
-  return Format == GCNO_402 || Format == GCNO_404;
+static bool isGCNOFile(GCOV::GCOVFormat Format) {
+  return Format == GCOV::GCNO_402 || Format == GCOV::GCNO_404;
 }
 
 /// read - Read GCOV buffer.
 bool GCOVFile::read(GCOVBuffer &Buffer) {
-  GCOVFormat Format = Buffer.readGCOVFormat();
-  if (Format == InvalidGCOV)
+  GCOV::GCOVFormat Format = Buffer.readGCOVFormat();
+  if (Format == GCOV::InvalidGCOV)
     return false;
 
   unsigned i = 0;
@@ -87,21 +87,21 @@ GCOVFunction::~GCOVFunction() {
 
 /// read - Read a aunction from the buffer. Return false if buffer cursor
 /// does not point to a function tag.
-bool GCOVFunction::read(GCOVBuffer &Buff, GCOVFormat Format) {
+bool GCOVFunction::read(GCOVBuffer &Buff, GCOV::GCOVFormat Format) {
   if (!Buff.readFunctionTag())
     return false;
 
   Buff.readInt(); // Function header length
   Ident = Buff.readInt(); 
   Buff.readInt(); // Checksum #1
-  if (Format != GCNO_402)
+  if (Format != GCOV::GCNO_402)
     Buff.readInt(); // Checksum #2
 
   Name = Buff.readString();
-  if (Format == GCNO_402 || Format == GCNO_404)
+  if (Format == GCOV::GCNO_402 || Format == GCOV::GCNO_404)
     Filename = Buff.readString();
 
-  if (Format == GCDA_402 || Format == GCDA_404) {
+  if (Format == GCOV::GCDA_402 || Format == GCOV::GCDA_404) {
     Buff.readArcTag();
     uint32_t Count = Buff.readInt() / 2;
     for (unsigned i = 0, e = Count; i != e; ++i) {
