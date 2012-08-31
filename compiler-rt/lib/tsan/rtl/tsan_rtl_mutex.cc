@@ -16,6 +16,7 @@
 #include "tsan_sync.h"
 #include "tsan_report.h"
 #include "tsan_symbolize.h"
+#include "tsan_platform.h"
 
 namespace __tsan {
 
@@ -25,7 +26,7 @@ void MutexCreate(ThreadState *thr, uptr pc, uptr addr,
   CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: MutexCreate %zx\n", thr->tid, addr);
   StatInc(thr, StatMutexCreate);
-  if (!linker_init)
+  if (!linker_init && IsAppMem(addr))
     MemoryWrite1Byte(thr, pc, addr);
   SyncVar *s = ctx->synctab.GetAndLock(thr, pc, addr, true);
   s->is_rw = rw;
@@ -42,7 +43,8 @@ void MutexDestroy(ThreadState *thr, uptr pc, uptr addr) {
   SyncVar *s = ctx->synctab.GetAndRemove(thr, pc, addr);
   if (s == 0)
     return;
-  MemoryWrite1Byte(thr, pc, addr);
+  if (IsAppMem(addr))
+    MemoryWrite1Byte(thr, pc, addr);
   if (flags()->report_destroy_locked
       && s->owner_tid != SyncVar::kInvalidTid
       && !s->is_broken) {
@@ -64,7 +66,8 @@ void MutexDestroy(ThreadState *thr, uptr pc, uptr addr) {
 void MutexLock(ThreadState *thr, uptr pc, uptr addr) {
   CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: MutexLock %zx\n", thr->tid, addr);
-  MemoryRead1Byte(thr, pc, addr);
+  if (IsAppMem(addr))
+    MemoryRead1Byte(thr, pc, addr);
   thr->fast_state.IncrementEpoch();
   TraceAddEvent(thr, thr->fast_state.epoch(), EventTypeLock, addr);
   SyncVar *s = CTX()->synctab.GetAndLock(thr, pc, addr, true);
@@ -94,7 +97,8 @@ void MutexLock(ThreadState *thr, uptr pc, uptr addr) {
 void MutexUnlock(ThreadState *thr, uptr pc, uptr addr) {
   CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: MutexUnlock %zx\n", thr->tid, addr);
-  MemoryRead1Byte(thr, pc, addr);
+  if (IsAppMem(addr))
+    MemoryRead1Byte(thr, pc, addr);
   thr->fast_state.IncrementEpoch();
   TraceAddEvent(thr, thr->fast_state.epoch(), EventTypeUnlock, addr);
   SyncVar *s = CTX()->synctab.GetAndLock(thr, pc, addr, true);
@@ -128,7 +132,8 @@ void MutexReadLock(ThreadState *thr, uptr pc, uptr addr) {
   CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: MutexReadLock %zx\n", thr->tid, addr);
   StatInc(thr, StatMutexReadLock);
-  MemoryRead1Byte(thr, pc, addr);
+  if (IsAppMem(addr))
+    MemoryRead1Byte(thr, pc, addr);
   thr->fast_state.IncrementEpoch();
   TraceAddEvent(thr, thr->fast_state.epoch(), EventTypeRLock, addr);
   SyncVar *s = CTX()->synctab.GetAndLock(thr, pc, addr, false);
@@ -145,7 +150,8 @@ void MutexReadUnlock(ThreadState *thr, uptr pc, uptr addr) {
   CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: MutexReadUnlock %zx\n", thr->tid, addr);
   StatInc(thr, StatMutexReadUnlock);
-  MemoryRead1Byte(thr, pc, addr);
+  if (IsAppMem(addr))
+    MemoryRead1Byte(thr, pc, addr);
   thr->fast_state.IncrementEpoch();
   TraceAddEvent(thr, thr->fast_state.epoch(), EventTypeRUnlock, addr);
   SyncVar *s = CTX()->synctab.GetAndLock(thr, pc, addr, true);
@@ -162,7 +168,8 @@ void MutexReadUnlock(ThreadState *thr, uptr pc, uptr addr) {
 void MutexReadOrWriteUnlock(ThreadState *thr, uptr pc, uptr addr) {
   CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: MutexReadOrWriteUnlock %zx\n", thr->tid, addr);
-  MemoryRead1Byte(thr, pc, addr);
+  if (IsAppMem(addr))
+    MemoryRead1Byte(thr, pc, addr);
   SyncVar *s = CTX()->synctab.GetAndLock(thr, pc, addr, true);
   if (s->owner_tid == SyncVar::kInvalidTid) {
     // Seems to be read unlock.
