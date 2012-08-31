@@ -19,3 +19,12 @@ entry:
 	%1 = load i64* %retval		; <i64> [#uses=1]
 	ret i64 %1
 }
+
+; The tied operands are not necessarily in the same order as the defs.
+; PR13742
+define i64 @swapped(i64 %x, i64 %y) nounwind {
+entry:
+	%x0 = call { i64, i64 } asm "foo", "=r,=r,1,0,~{dirflag},~{fpsr},~{flags}"(i64 %x, i64 %y) nounwind
+        %x1 = extractvalue { i64, i64 } %x0, 0
+        ret i64 %x1
+}
