@@ -3941,6 +3941,8 @@ bool X86InstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
     OpcodeTablePtr = &RegOp2MemOpTable1;
   } else if (OpNum == 2) {
     OpcodeTablePtr = &RegOp2MemOpTable2;
+  } else if (OpNum == 3) {
+    OpcodeTablePtr = &RegOp2MemOpTable3;
   }
 
   if (OpcodeTablePtr && OpcodeTablePtr->count(Opc))
