@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 
 namespace clang {
 class ASTConsumer;
@@ -75,7 +76,7 @@ enum AnalysisInliningMode {
 NumInliningModes
 };
 
-class AnalyzerOptions {
+class AnalyzerOptions : public llvm::RefCountedBase<AnalyzerOptions> {
 public:
   typedef llvm::StringMap<std::string> ConfigTable;
 
@@ -164,7 +165,9 @@ public:
     InliningMode = NoRedundancy;
   }
 };
-
+  
+typedef llvm::IntrusiveRefCntPtr<AnalyzerOptions> AnalyzerOptionsRef;
+  
 }
 
 #endif

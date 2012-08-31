@@ -175,7 +175,7 @@ bool clang::ExecuteCompilerInvocation(CompilerInstance *Clang) {
 
   // Honor -analyzer-checker-help.
   // This should happen AFTER plugins have been loaded!
-  if (Clang->getAnalyzerOpts().ShowCheckerHelp) {
+  if (Clang->getAnalyzerOpts()->ShowCheckerHelp) {
     ento::printCheckerHelp(llvm::outs(), Clang->getFrontendOpts().Plugins);
     return 0;
   }

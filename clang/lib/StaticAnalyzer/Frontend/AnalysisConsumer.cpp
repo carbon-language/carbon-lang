@@ -135,7 +135,7 @@ public:
   ASTContext *Ctx;
   const Preprocessor &PP;
   const std::string OutDir;
-  AnalyzerOptions Opts;
+  AnalyzerOptionsRef Opts;
   ArrayRef<std::string> Plugins;
 
   /// \brief Stores the declarations from the local translation unit.
@@ -163,19 +163,19 @@ public:
 
   AnalysisConsumer(const Preprocessor& pp,
                    const std::string& outdir,
-                   const AnalyzerOptions& opts,
+                   AnalyzerOptionsRef opts,
                    ArrayRef<std::string> plugins)
     : RecVisitorMode(ANALYSIS_ALL), RecVisitorBR(0),
       Ctx(0), PP(pp), OutDir(outdir), Opts(opts), Plugins(plugins) {
     DigestAnalyzerOptions();
-    if (Opts.PrintStats) {
+    if (Opts->PrintStats) {
       llvm::EnableStatistics();
       TUTotalTimer = new llvm::Timer("Analyzer Total Time");
     }
   }
 
   ~AnalysisConsumer() {
-    if (Opts.PrintStats)
+    if (Opts->PrintStats)
       delete TUTotalTimer;
   }
 
@@ -184,20 +184,20 @@ public:
     PathConsumers.push_back(new ClangDiagPathDiagConsumer(PP.getDiagnostics()));
 
     if (!OutDir.empty()) {
-      switch (Opts.AnalysisDiagOpt) {
+      switch (Opts->AnalysisDiagOpt) {
       default:
 #define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN, AUTOCREATE) \
         case PD_##NAME: CREATEFN(PathConsumers, OutDir, PP); break;
 #include "clang/StaticAnalyzer/Core/Analyses.def"
       }
-    } else if (Opts.AnalysisDiagOpt == PD_TEXT) {
+    } else if (Opts->AnalysisDiagOpt == PD_TEXT) {
       // Create the text client even without a specified output file since
       // it just uses diagnostic notes.
       createTextPathDiagnosticConsumer(PathConsumers, "", PP);
     }
 
     // Create the analyzer component creators.
-    switch (Opts.AnalysisStoreOpt) {
+    switch (Opts->AnalysisStoreOpt) {
     default:
       llvm_unreachable("Unknown store manager.");
 #define ANALYSIS_STORE(NAME, CMDFLAG, DESC, CREATEFN)           \
@@ -205,7 +205,7 @@ public:
 #include "clang/StaticAnalyzer/Core/Analyses.def"
     }
 
-    switch (Opts.AnalysisConstraintsOpt) {
+    switch (Opts->AnalysisConstraintsOpt) {
     default:
       llvm_unreachable("Unknown store manager.");
 #define ANALYSIS_CONSTRAINTS(NAME, CMDFLAG, DESC, CREATEFN)     \
@@ -215,7 +215,7 @@ public:
   }
 
   void DisplayFunction(const Decl *D, AnalysisMode Mode) {
-    if (!Opts.AnalyzerDisplayProgress)
+    if (!Opts->AnalyzerDisplayProgress)
       return;
 
     SourceManager &SM = Mgr->getASTContext().getSourceManager();
@@ -245,7 +245,7 @@ public:
 
   virtual void Initialize(ASTContext &Context) {
     Ctx = &Context;
-    checkerMgr.reset(createCheckerManager(Opts, PP.getLangOpts(), Plugins,
+    checkerMgr.reset(createCheckerManager(*Opts, PP.getLangOpts(), Plugins,
                                           PP.getDiagnostics()));
     Mgr.reset(new AnalysisManager(*Ctx,
                                   PP.getDiagnostics(),
@@ -254,7 +254,7 @@ public:
                                   CreateStoreMgr,
                                   CreateConstraintMgr,
                                   checkerMgr.get(),
-                                  Opts));
+                                  *Opts));
   }
 
   /// \brief Store the top level decls in the set to be processed later on.
@@ -519,15 +519,15 @@ static std::string getFunctionName(const Decl *D) {
 }
 
 bool AnalysisConsumer::skipFunction(Decl *D) {
-  if (!Opts.AnalyzeSpecificFunction.empty() &&
-      getFunctionName(D) != Opts.AnalyzeSpecificFunction)
+  if (!Opts->AnalyzeSpecificFunction.empty() &&
+      getFunctionName(D) != Opts->AnalyzeSpecificFunction)
     return true;
 
   // Don't run the actions on declarations in header files unless
   // otherwise specified.
   SourceManager &SM = Ctx->getSourceManager();
   SourceLocation SL = SM.getExpansionLoc(D->getLocation());
-  if (!Opts.AnalyzeAll && !SM.isFromMainFile(SL))
+  if (!Opts->AnalyzeAll && !SM.isFromMainFile(SL))
     return true;
 
   return false;
@@ -553,7 +553,7 @@ void AnalysisConsumer::HandleCode(Decl *D, AnalysisMode Mode,
   SmallVector<Decl*, 10> WL;
   WL.push_back(D);
 
-  if (D->hasBody() && Opts.AnalyzeNestedBlocks)
+  if (D->hasBody() && Opts->AnalyzeNestedBlocks)
     FindBlocks(cast<DeclContext>(D), WL);
 
   BugReporter BR(*Mgr);
@@ -634,7 +634,7 @@ void AnalysisConsumer::RunPathSensitiveChecks(Decl *D,
 
 ASTConsumer* ento::CreateAnalysisConsumer(const Preprocessor& pp,
                                           const std::string& outDir,
-                                          const AnalyzerOptions& opts,
+                                          AnalyzerOptionsRef opts,
                                           ArrayRef<std::string> plugins) {
   // Disable the effects of '-Werror' when using the AnalysisConsumer.
   pp.getDiagnostics().setWarningsAsErrors(false);

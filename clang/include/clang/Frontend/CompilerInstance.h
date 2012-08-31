@@ -189,10 +189,7 @@ public:
   /// @name Forwarding Methods
   /// {
 
-  AnalyzerOptions &getAnalyzerOpts() {
-    return Invocation->getAnalyzerOpts();
-  }
-  const AnalyzerOptions &getAnalyzerOpts() const {
+  AnalyzerOptionsRef getAnalyzerOpts() {
     return Invocation->getAnalyzerOpts();
   }
 

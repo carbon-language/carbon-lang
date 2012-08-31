@@ -931,7 +931,7 @@ static void TargetOptsToArgs(const TargetOptions &Opts,
 
 void CompilerInvocation::toArgs(std::vector<std::string> &Res) const {
   ToArgsList List(Res);
-  AnalyzerOptsToArgs(getAnalyzerOpts(), List);
+  AnalyzerOptsToArgs(*getAnalyzerOpts(), List);
   CodeGenOptsToArgs(getCodeGenOpts(), List);
   DependencyOutputOptsToArgs(getDependencyOutputOpts(), List);
   DiagnosticOptsToArgs(getDiagnosticOpts(), List);
@@ -2323,7 +2323,7 @@ bool CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
     }
   }
 
-  Success = ParseAnalyzerArgs(Res.getAnalyzerOpts(), *Args, Diags) && Success;
+  Success = ParseAnalyzerArgs(*Res.getAnalyzerOpts(), *Args, Diags) && Success;
   Success = ParseMigratorArgs(Res.getMigratorOpts(), *Args) && Success;
   ParseDependencyOutputArgs(Res.getDependencyOutputOpts(), *Args);
   Success = ParseDiagnosticArgs(Res.getDiagnosticOpts(), *Args, &Diags)
