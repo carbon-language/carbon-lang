@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 | FileCheck %s
+; RUN: llc < %s -march=x86 -mattr=+sse2 | FileCheck %s
 
 ; When legalizing the v4i1 constant, we need to consider the boolean contents
 ; For x86 a boolean vector constant is all ones so the constants in memory
