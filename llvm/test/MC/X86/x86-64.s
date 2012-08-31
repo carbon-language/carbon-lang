@@ -1164,6 +1164,10 @@ xsetbv // CHECK: xsetbv # encoding: [0x0f,0x01,0xd1]
 // CHECK: encoding: [0x66,0x48,0x0f,0x6e,0xc7]
 	movd %rdi,%xmm0
 
+// CHECK: movd  %xmm0, %rax
+// CHECK: encoding: [0x66,0x48,0x0f,0x7e,0xc0]
+        movd  %xmm0, %rax
+
 // CHECK: movntil %eax, (%rdi)
 // CHECK: encoding: [0x0f,0xc3,0x07]
 // CHECK: movntil
