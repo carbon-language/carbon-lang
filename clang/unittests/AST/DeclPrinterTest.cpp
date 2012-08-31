@@ -65,30 +65,9 @@ public:
   }
 };
 
-bool runToolOnCode(clang::FrontendAction *ToolAction, const Twine &Code,
-                   ArrayRef<const char *> ClangArgs) {
-  SmallString<16> FileNameStorage;
-  StringRef FileNameRef = "input.cc";
-
-  std::vector<std::string> ArgVector;
-  ArgVector.push_back("clang-tool");
-  ArgVector.push_back("-fsyntax-only");
-  ArgVector.push_back(FileNameRef.data());
-  for (unsigned i = 0, e = ClangArgs.size(); i != e; ++i)
-    ArgVector.push_back(ClangArgs[i]);
-
-  FileManager Files((FileSystemOptions()));
-  ToolInvocation Invocation(ArgVector, ToolAction, &Files);
-
-  SmallString<1024> CodeStorage;
-  Invocation.mapVirtualFile(FileNameRef,
-                            Code.toNullTerminatedStringRef(CodeStorage));
-  return Invocation.run();
-}
-
 ::testing::AssertionResult PrintedDeclMatches(
                                   StringRef Code,
-                                  ArrayRef<const char *> ClangArgs,
+                                  const std::vector<std::string> &Args,
                                   const DeclarationMatcher &NodeMatch,
                                   StringRef ExpectedPrinted) {
   PrintMatch Printer;
@@ -96,7 +75,7 @@ bool runToolOnCode(clang::FrontendAction *ToolAction, const Twine &Code,
   Finder.addMatcher(NodeMatch, &Printer);
   OwningPtr<FrontendActionFactory> Factory(newFrontendActionFactory(&Finder));
 
-  if (!runToolOnCode(Factory->create(), Code, ClangArgs))
+  if (!runToolOnCodeWithArgs(Factory->create(), Code, Args))
     return testing::AssertionFailure() << "Parsing error in \"" << Code << "\"";
 
   if (Printer.getNumFoundDecls() == 0)
@@ -119,8 +98,9 @@ bool runToolOnCode(clang::FrontendAction *ToolAction, const Twine &Code,
 ::testing::AssertionResult PrintedDeclCXX98Matches(StringRef Code,
                                                    StringRef DeclName,
                                                    StringRef ExpectedPrinted) {
+  std::vector<std::string> Args(1, "-std=c++98");
   return PrintedDeclMatches(Code,
-                            ArrayRef<const char *>("-std=c++98"),
+                            Args,
                             namedDecl(hasName(DeclName)).bind("id"),
                             ExpectedPrinted);
 }
@@ -129,8 +109,9 @@ bool runToolOnCode(clang::FrontendAction *ToolAction, const Twine &Code,
                                   StringRef Code,
                                   const DeclarationMatcher &NodeMatch,
                                   StringRef ExpectedPrinted) {
+  std::vector<std::string> Args(1, "-std=c++98");
   return PrintedDeclMatches(Code,
-                            ArrayRef<const char *>("-std=c++98"),
+                            Args,
                             NodeMatch,
                             ExpectedPrinted);
 }
@@ -138,8 +119,9 @@ bool runToolOnCode(clang::FrontendAction *ToolAction, const Twine &Code,
 ::testing::AssertionResult PrintedDeclCXX11Matches(StringRef Code,
                                                    StringRef DeclName,
                                                    StringRef ExpectedPrinted) {
+  std::vector<std::string> Args(1, "-std=c++11");
   return PrintedDeclMatches(Code,
-                            ArrayRef<const char *>("-std=c++11"),
+                            Args,
                             namedDecl(hasName(DeclName)).bind("id"),
                             ExpectedPrinted);
 }
@@ -148,8 +130,9 @@ bool runToolOnCode(clang::FrontendAction *ToolAction, const Twine &Code,
                                   StringRef Code,
                                   const DeclarationMatcher &NodeMatch,
                                   StringRef ExpectedPrinted) {
+  std::vector<std::string> Args(1, "-std=c++11");
   return PrintedDeclMatches(Code,
-                            ArrayRef<const char *>("-std=c++11"),
+                            Args,
                             NodeMatch,
                             ExpectedPrinted);
 }
