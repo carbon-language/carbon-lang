@@ -50,7 +50,7 @@ void CommentLexerTest::lexString(const char *Source,
   SourceLocation Begin = SourceMgr.getLocForStartOfFile(File);
 
   comments::CommandTraits Traits;
-  comments::Lexer L(Allocator, Traits, Begin, CommentOptions(),
+  comments::Lexer L(Allocator, Traits, Begin,
                     Source, Source + strlen(Source));
 
   while (1) {

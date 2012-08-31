@@ -144,8 +144,7 @@ const char *RawComment::extractBriefText(const ASTContext &Context) const {
   llvm::BumpPtrAllocator Allocator;
 
   comments::CommandTraits Traits;
-  comments::Lexer L(Allocator, Traits,
-                    Range.getBegin(), comments::CommentOptions(),
+  comments::Lexer L(Allocator, Traits, Range.getBegin(),
                     RawText.begin(), RawText.end());
   comments::BriefParser P(L, Traits);
 
@@ -166,7 +165,7 @@ comments::FullComment *RawComment::parse(const ASTContext &Context,
 
   comments::CommandTraits Traits;
   comments::Lexer L(Context.getAllocator(), Traits,
-                    getSourceRange().getBegin(), comments::CommentOptions(),
+                    getSourceRange().getBegin(),
                     RawText.begin(), RawText.end());
   comments::Sema S(Context.getAllocator(), Context.getSourceManager(),
                    Context.getDiagnostics(), Traits);

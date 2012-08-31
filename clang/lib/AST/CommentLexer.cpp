@@ -695,11 +695,11 @@ void Lexer::lexHTMLEndTag(Token &T) {
 }
 
 Lexer::Lexer(llvm::BumpPtrAllocator &Allocator, const CommandTraits &Traits,
-             SourceLocation FileLoc, const CommentOptions &CommOpts,
+             SourceLocation FileLoc,
              const char *BufferStart, const char *BufferEnd):
     Allocator(Allocator), Traits(Traits),
     BufferStart(BufferStart), BufferEnd(BufferEnd),
-    FileLoc(FileLoc), CommOpts(CommOpts), BufferPtr(BufferStart),
+    FileLoc(FileLoc), BufferPtr(BufferStart),
     CommentState(LCS_BeforeComment), State(LS_Normal) {
 }
 
