@@ -1,8 +1,6 @@
-// RUN: rm -rf %t.cpp
-// RUN: grep -Ev "//\s*[A-Z-]+:" %s > %t.cpp
-// RUN: loop-convert . %t.cpp -- -I %S/Inputs \
-// RUN:         || FileCheck -input-file=%t.cpp %s
-// Note that this test expects the compilation to fail!
+// RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
+// RUN: not loop-convert . %t.cpp -- -I %S/Inputs
+// RUN: FileCheck -input-file=%t.cpp %s
 
 void valid() {
   const int arr[5];

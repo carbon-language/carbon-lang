@@ -1,11 +1,9 @@
-// RUN: rm -rf %t.cpp
-// RUN: grep -Ev "//\s*[A-Z-]+:" %s > %t.cpp
-// RUN: grep -Ev "//\s*[A-Z-]+:" %S/Inputs/negative-header.h > \
+// RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
+// RUN: grep -Ev "// *[A-Z-]+:" %S/Inputs/negative-header.h > \
 // RUN:       %T/negative-header.h
-// RUN: loop-convert . %t.cpp -- -I %S/Inputs/ \
-// RUN:   && FileCheck -input-file=%t.cpp %s \
-// RUN:   && FileCheck -input-file=%T/negative-header.h \
-// RUN:                %S/Inputs/negative-header.h
+// RUN: loop-convert . %t.cpp -- -I %S/Inputs/
+// RUN: FileCheck -input-file=%t.cpp %s
+// RUN: FileCheck -input-file=%T/negative-header.h %S/Inputs/negative-header.h
 
 #include "negative-header.h"
 #include "structures.h"

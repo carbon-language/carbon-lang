@@ -1,9 +1,8 @@
-// RUN: rm -rf %t.cpp
-// RUN: grep -Ev "//\s*[A-Z-]+:" %s > %t.cpp
-// RUN: loop-convert . %t.cpp -- -I %S/Inputs \
-// RUN:         && FileCheck -input-file=%t.cpp %s
-// RUN: loop-convert . %t.cpp -A2 -- -I %S/Inputs \
-// RUN:         && FileCheck -check-prefix=RISKY -input-file=%t.cpp %s
+// RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
+// RUN: loop-convert . %t.cpp -- -I %S/Inputs
+// RUN: FileCheck -input-file=%t.cpp %s
+// RUN: loop-convert . %t.cpp -A2 -- -I %S/Inputs
+// RUN: FileCheck -check-prefix=RISKY -input-file=%t.cpp %s
 
 #include "structures.h"
 

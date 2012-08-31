@@ -1,12 +1,11 @@
-// RUN: rm -rf %t.cpp
-// RUN: grep -Ev "//\s*[A-Z-]+:" %s > %t.cpp
-// RUN: loop-convert . %t.cpp -- -I %S/Inputs \
-// RUN:         && FileCheck -input-file=%t.cpp %s
-// RUN: grep -Ev "//\s*[A-Z-]+:" %s > %t.cpp
+// RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
 // RUN: cp %t.cpp %t.base
-// RUN: loop-convert -count-only . %t.cpp -- -I %S/Inputs > %T/out \
-// RUN:         && FileCheck -check-prefix=COUNTONLY -input-file=%T/out %s \
-// RUN:         && diff %t.cpp %t.base
+// RUN: loop-convert . %t.cpp -- -I %S/Inputs
+// RUN: FileCheck -input-file=%t.cpp %s
+// RUN: cp %t.base %t.cpp
+// RUN: loop-convert -count-only . %t.cpp -- -I %S/Inputs > %T/out
+// RUN: FileCheck -check-prefix=COUNTONLY -input-file=%T/out %s
+// RUN: diff %t.cpp %t.base
 
 #include "structures.h"
 
