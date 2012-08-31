@@ -222,6 +222,10 @@ let Pattern = []<dag> in {
   def DEXTM : ExtBase<1, "dextm", CPU64Regs>;
 }
 def DINS : InsBase<7, "dins", CPU64Regs>;
+let Pattern = []<dag> in {
+  def DINSU : InsBase<6, "dinsu", CPU64Regs>;
+  def DINSM : InsBase<5, "dinsm", CPU64Regs>;
+}
 
 let isCodeGenOnly = 1, rs = 0, shamt = 0 in {
   def DSLL64_32 : FR<0x00, 0x3c, (outs CPU64Regs:$rd), (ins CPURegs:$rt),

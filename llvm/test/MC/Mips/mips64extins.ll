@@ -26,3 +26,32 @@ entry:
   ret i64 %and
 }
 
+define i64 @dins(i64 %i, i64 %j) nounwind readnone {
+entry:
+; CHECK: dins ${{[0-9]+}}, ${{[0-9]+}}, 8, 10
+  %shl2 = shl i64 %j, 8
+  %and = and i64 %shl2, 261888
+  %and3 = and i64 %i, -261889
+  %or = or i64 %and3, %and
+  ret i64 %or
+}
+
+define i64 @dinsm(i64 %i, i64 %j) nounwind readnone {
+entry:
+; CHECK: dinsm ${{[0-9]+}}, ${{[0-9]+}}, 10, 1
+  %shl4 = shl i64 %j, 10
+  %and = and i64 %shl4, 8796093021184
+  %and5 = and i64 %i, -8796093021185
+  %or = or i64 %and5, %and
+  ret i64 %or
+}
+
+define i64 @dinsu(i64 %i, i64 %j) nounwind readnone {
+entry:
+; CHECK: dinsu ${{[0-9]+}}, ${{[0-9]+}}, 8, 13
+  %shl4 = shl i64 %j, 40
+  %and = and i64 %shl4, 9006099743113216
+  %and5 = and i64 %i, -9006099743113217
+  %or = or i64 %and5, %and
+  ret i64 %or
+}
