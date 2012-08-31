@@ -1784,7 +1784,7 @@ ValueObject::IsPossibleDynamicType ()
     if (process)
         return process->IsPossibleDynamicValue(*this);
     else
-        return ClangASTContext::IsPossibleDynamicType (GetClangAST (), GetClangType());
+        return ClangASTContext::IsPossibleDynamicType (GetClangAST (), GetClangType(), NULL, true, true);
 }
 
 ValueObjectSP

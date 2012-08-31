@@ -5522,10 +5522,18 @@ ClangASTContext::IsPossibleDynamicType (clang::ASTContext *ast,
                 break;
                 
             case clang::Type::Typedef:
-                return ClangASTContext::IsPossibleDynamicType (ast, cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(), dynamic_pointee_type);
+                return ClangASTContext::IsPossibleDynamicType (ast,
+                                                               cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(),
+                                                               dynamic_pointee_type,
+                                                               check_cplusplus,
+                                                               check_objc);
             
             case clang::Type::Elaborated:
-                return ClangASTContext::IsPossibleDynamicType (ast, cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(), dynamic_pointee_type);
+                return ClangASTContext::IsPossibleDynamicType (ast,
+                                                               cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(),
+                                                               dynamic_pointee_type,
+                                                               check_cplusplus,
+                                                               check_objc);
             
             default:
                 break;
@@ -5590,23 +5598,19 @@ ClangASTContext::IsPossibleDynamicType (clang::ASTContext *ast,
                         CXXRecordDecl *cxx_record_decl = pointee_qual_type->getAsCXXRecordDecl();
                         if (cxx_record_decl)
                         {
-                            // Do NOT complete the type here like we used to do
-                            // otherwise EVERY "class *" variable we have will try
-                            // to fully complete itself and this will take a lot of
-                            // time, memory and slow down debugging. If we have a complete
-                            // type, then answer the question definitively, else we
-                            // just say that a C++ class can possibly be dynamic...
-                            if (cxx_record_decl->isCompleteDefinition())
+                            bool is_complete = cxx_record_decl->isCompleteDefinition();
+                            if (!is_complete)
+                                is_complete = ClangASTContext::GetCompleteType (ast, clang_type);
+
+                            if (is_complete)
                             {
                                 success = cxx_record_decl->isDynamicClass();
                             }
                             else
                             {
-                                // We failed to get the complete type, so we have to 
-                                // treat this as a void * which we might possibly be
-                                // able to complete
-                                success = true;
+                                success = false;
                             }
+
                             if (success)
                             {
                                 if (dynamic_pointee_type)
