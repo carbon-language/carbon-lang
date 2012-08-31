@@ -230,4 +230,21 @@ void ReleaseStore(ThreadState *thr, uptr pc, uptr addr) {
   s->mtx.Unlock();
 }
 
+#ifndef TSAN_GO
+void AfterSleep(ThreadState *thr, uptr pc) {
+  Context *ctx = CTX();
+  thr->last_sleep_stack_id = CurrentStackId(thr, pc);
+  Lock l(&ctx->thread_mtx);
+  for (unsigned i = 0; i < kMaxTid; i++) {
+    ThreadContext *tctx = ctx->threads[i];
+    if (tctx == 0)
+      continue;
+    if (tctx->status == ThreadStatusRunning)
+      thr->last_sleep_clock.set(i, tctx->thr->fast_state.epoch());
+    else
+      thr->last_sleep_clock.set(i, tctx->epoch1);
+  }
+}
+#endif
+
 }  // namespace __tsan

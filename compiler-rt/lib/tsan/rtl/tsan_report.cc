@@ -21,7 +21,8 @@ ReportDesc::ReportDesc()
     , mops(MBlockReportMop)
     , locs(MBlockReportLoc)
     , mutexes(MBlockReportMutex)
-    , threads(MBlockReportThread) {
+    , threads(MBlockReportThread)
+    , sleep() {
 }
 
 ReportDesc::~ReportDesc() {
@@ -110,6 +111,11 @@ static void PrintThread(const ReportThread *rt) {
   PrintStack(rt->stack);
 }
 
+static void PrintSleep(const ReportStack *s) {
+  TsanPrintf("  As if synchronized via sleep:\n");
+  PrintStack(s);
+}
+
 void PrintReport(const ReportDesc *rep) {
   TsanPrintf("==================\n");
   PrintHeader(rep->typ);
@@ -122,6 +128,9 @@ void PrintReport(const ReportDesc *rep) {
 
   for (uptr i = 0; i < rep->mops.Size(); i++)
     PrintMop(rep->mops[i], i == 0);
+
+  if (rep->sleep)
+    PrintSleep(rep->sleep);
 
   for (uptr i = 0; i < rep->locs.Size(); i++)
     PrintLocation(rep->locs[i]);

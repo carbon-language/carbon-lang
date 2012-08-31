@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_placement_new.h"
-#include "sanitizer_common/sanitizer_stackdepot.h"
 #include "tsan_mman.h"
 #include "tsan_rtl.h"
 #include "tsan_report.h"
@@ -51,10 +50,7 @@ void *user_alloc(ThreadState *thr, uptr pc, uptr sz, uptr align) {
   MBlock *b = (MBlock*)allocator()->GetMetaData(p);
   b->size = sz;
   b->alloc_tid = thr->unique_id;
-  b->alloc_stack_id = 0;
-  if (thr->shadow_stack_pos)  // May happen during bootstrap.
-    b->alloc_stack_id = StackDepotPut(thr->shadow_stack,
-        thr->shadow_stack_pos - thr->shadow_stack);
+  b->alloc_stack_id = CurrentStackId(thr, pc);
   if (CTX() && CTX()->initialized) {
     MemoryRangeImitateWrite(thr, pc, (uptr)p, sz);
   }

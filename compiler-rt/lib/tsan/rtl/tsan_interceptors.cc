@@ -51,7 +51,6 @@ extern "C" void *pthread_self();
 extern "C" void _exit(int status);
 extern "C" int __cxa_atexit(void (*func)(void *arg), void *arg, void *dso);
 extern "C" int *__errno_location();
-extern "C" int usleep(unsigned usec);
 const int PTHREAD_MUTEX_RECURSIVE = 1;
 const int PTHREAD_MUTEX_RECURSIVE_NP = 1;
 const int kPthreadAttrSize = 56;
@@ -213,6 +212,27 @@ static void invoke_free_hook(void *ptr) {
   __tsan_free_hook(ptr);
 }
 
+TSAN_INTERCEPTOR(unsigned, sleep, unsigned sec) {
+  SCOPED_TSAN_INTERCEPTOR(sleep, sec);
+  unsigned res = sleep(sec);
+  AfterSleep(thr, pc);
+  return res;
+}
+
+TSAN_INTERCEPTOR(int, usleep, long_t usec) {
+  SCOPED_TSAN_INTERCEPTOR(usleep, usec);
+  int res = usleep(usec);
+  AfterSleep(thr, pc);
+  return res;
+}
+
+TSAN_INTERCEPTOR(int, nanosleep, void *req, void *rem) {
+  SCOPED_TSAN_INTERCEPTOR(nanosleep, req, rem);
+  int res = nanosleep(req, rem);
+  AfterSleep(thr, pc);
+  return res;
+}
+
 class AtExitContext {
  public:
   AtExitContext()
@@ -269,7 +289,7 @@ static void finalize(void *arg) {
   {
     ScopedInRtl in_rtl;
     DestroyAndFree(atexit_ctx);
-    usleep(flags()->atexit_sleep_ms * 1000);
+    REAL(usleep)(flags()->atexit_sleep_ms * 1000);
   }
   int status = Finalize(cur_thread());
   if (status)
@@ -1572,6 +1592,9 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(raise);
   TSAN_INTERCEPT(kill);
   TSAN_INTERCEPT(pthread_kill);
+  TSAN_INTERCEPT(sleep);
+  TSAN_INTERCEPT(usleep);
+  TSAN_INTERCEPT(nanosleep);
 
   atexit_ctx = new(internal_alloc(MBlockAtExit, sizeof(AtExitContext)))
       AtExitContext();

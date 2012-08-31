@@ -37,8 +37,9 @@ int main() {
 // CHECK: WARNING: ThreadSanitizer: data race
 // ...
 // CHECK:   Location is heap block of size 99 at [[ADDR]] allocated by thread 1:
-// CHECK:     #0 alloc
-// CHECK:     #1 AllocThread
+// CHCEKL     #0 malloc
+// CHECK:     #1 alloc
+// CHECK:     #2 AllocThread
 // ...
 // CHECK:   Thread 1 (finished) created at:
 // CHECK:     #0 pthread_create

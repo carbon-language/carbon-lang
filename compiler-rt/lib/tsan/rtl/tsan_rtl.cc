@@ -15,6 +15,7 @@
 #include "sanitizer_common/sanitizer_atomic.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_libc.h"
+#include "sanitizer_common/sanitizer_stackdepot.h"
 #include "sanitizer_common/sanitizer_placement_new.h"
 #include "tsan_defs.h"
 #include "tsan_platform.h"
@@ -221,6 +222,20 @@ int Finalize(ThreadState *thr) {
 
   StatOutput(ctx->stat);
   return failed ? flags()->exitcode : 0;
+}
+
+u32 CurrentStackId(ThreadState *thr, uptr pc) {
+  if (thr->shadow_stack_pos == 0)  // May happen during bootstrap.
+    return 0;
+  if (pc) {
+    thr->shadow_stack_pos[0] = pc;
+    thr->shadow_stack_pos++;
+  }
+  u32 id = StackDepotPut(thr->shadow_stack,
+                         thr->shadow_stack_pos - thr->shadow_stack);
+  if (pc)
+    thr->shadow_stack_pos--;
+  return id;
 }
 
 void TraceSwitch(ThreadState *thr) {

@@ -85,6 +85,7 @@ class ReportDesc {
   Vector<ReportLocation*> locs;
   Vector<ReportMutex*> mutexes;
   Vector<ReportThread*> threads;
+  ReportStack *sleep;
 
   ReportDesc();
   ~ReportDesc();

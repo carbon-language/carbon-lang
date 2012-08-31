@@ -230,6 +230,16 @@ void ScopedReport::AddLocation(uptr addr, uptr size) {
   }
 }
 
+void ScopedReport::AddSleep(u32 stack_id) {
+  uptr ssz = 0;
+  const uptr *stack = StackDepotGet(stack_id, &ssz);
+  if (stack) {
+    StackTrace trace;
+    trace.Init(stack, ssz);
+    rep_->sleep = SymbolizeStack(trace);
+  }
+}
+
 const ReportDesc *ScopedReport::GetReport() const {
   return rep_;
 }
@@ -410,6 +420,14 @@ void ReportRace(ThreadState *thr) {
   }
 
   rep.AddLocation(addr_min, addr_max - addr_min);
+
+#ifndef TSAN_GO
+  {  // NOLINT
+    Shadow s(thr->racy_state[1]);
+    if (s.epoch() <= thr->last_sleep_clock.get(s.tid()))
+      rep.AddSleep(thr->last_sleep_stack_id);
+  }
+#endif
 
   if (!OutputReport(rep, rep.GetReport()->mops[0]->stack))
     return;

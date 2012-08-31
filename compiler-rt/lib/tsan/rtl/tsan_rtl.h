@@ -286,6 +286,11 @@ struct ThreadState {
   bool in_signal_handler;
   SignalContext *signal_ctx;
 
+#ifndef TSAN_GO
+  u32 last_sleep_stack_id;
+  ThreadClock last_sleep_clock;
+#endif
+
   // Set in regions of runtime that must be signal-safe and fork-safe.
   // If set, malloc must not be called.
   int nomalloc;
@@ -405,6 +410,7 @@ class ScopedReport {
   void AddThread(const ThreadContext *tctx);
   void AddMutex(const SyncVar *s);
   void AddLocation(uptr addr, uptr size);
+  void AddSleep(u32 stack_id);
 
   const ReportDesc *GetReport() const;
 
@@ -445,6 +451,8 @@ bool IsExpectedReport(uptr addr, uptr size);
 #else
 # define DPrintf2(...)
 #endif
+
+u32 CurrentStackId(ThreadState *thr, uptr pc);
 
 void Initialize(ThreadState *thr);
 int Finalize(ThreadState *thr);
@@ -489,6 +497,7 @@ void MutexReadOrWriteUnlock(ThreadState *thr, uptr pc, uptr addr);
 void Acquire(ThreadState *thr, uptr pc, uptr addr);
 void Release(ThreadState *thr, uptr pc, uptr addr);
 void ReleaseStore(ThreadState *thr, uptr pc, uptr addr);
+void AfterSleep(ThreadState *thr, uptr pc);
 
 // The hacky call uses custom calling convention and an assembly thunk.
 // It is considerably faster that a normal call for the caller
