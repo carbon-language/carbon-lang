@@ -782,6 +782,14 @@ public:
                         const TargetInstrInfo *TII,
                         const TargetRegisterInfo *TRI) const;
 
+  /// tieOperands - Add a tie between the register operands at DefIdx and
+  /// UseIdx. The tie will cause the register allocator to ensure that the two
+  /// operands are assigned the same physical register.
+  ///
+  /// Tied operands are managed automatically for explicit operands in the
+  /// MCInstrDesc. This method is for exceptional cases like inline asm.
+  void tieOperands(unsigned DefIdx, unsigned UseIdx);
+
   /// findTiedOperandIdx - Given the index of a tied register operand, find the
   /// operand it is tied to. Defs are tied to uses and vice versa. Returns the
   /// index of the tied operand which must exist.
@@ -942,9 +950,11 @@ private:
 
   /// untieRegOperand - Break any tie involving OpIdx.
   void untieRegOperand(unsigned OpIdx) {
-    const MachineOperand &MO = getOperand(OpIdx);
-    if (MO.isReg() && MO.isTied())
-      getOperand(findTiedOperandIdx(OpIdx)).setIsTied(false);
+    MachineOperand &MO = getOperand(OpIdx);
+    if (MO.isReg() && MO.isTied()) {
+      getOperand(findTiedOperandIdx(OpIdx)).IsTied = false;
+      MO.IsTied = false;
+    }
   }
 
   /// addImplicitDefUseOperands - Add all implicit def and use operands to

@@ -390,11 +390,6 @@ public:
     IsEarlyClobber = Val;
   }
 
-  void setIsTied(bool Val = true) {
-    assert(isReg() && "Wrong MachineOperand accessor");
-    IsTied = Val;
-  }
-
   void setIsDebug(bool Val = true) {
     assert(isReg() && IsDef && "Wrong MachineOperand accessor");
     IsDebug = Val;

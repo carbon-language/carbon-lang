@@ -945,12 +945,8 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
           if (InlineAsm::isUseOperandTiedToDef(Flags, DefGroup)) {
             unsigned DefIdx = GroupIdx[DefGroup] + 1;
             unsigned UseIdx = GroupIdx.back() + 1;
-            for (unsigned j = 0; j != NumVals; ++j) {
-              assert(!MI->getOperand(DefIdx + j).isTied() &&
-                     "Def is already tied to another use");
-              MI->getOperand(DefIdx + j).setIsTied();
-              MI->getOperand(UseIdx + j).setIsTied();
-            }
+            for (unsigned j = 0; j != NumVals; ++j)
+              MI->tieOperands(DefIdx + j, UseIdx + j);
           }
         }
         break;

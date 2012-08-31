@@ -728,12 +728,8 @@ void MachineInstr::addOperand(const MachineOperand &Op) {
       // Set the IsTied bit if MC indicates this use is tied to a def.
       if (Operands[OpNo].isUse()) {
         int DefIdx = MCID->getOperandConstraint(OpNo, MCOI::TIED_TO);
-        if (DefIdx != -1) {
-          MachineOperand &DefMO = getOperand(DefIdx);
-          assert(DefMO.isDef() && "Use tied to operand that isn't a def");
-          DefMO.IsTied = true;
-          Operands[OpNo].IsTied = true;
-        }
+        if (DefIdx != -1)
+          tieOperands(DefIdx, OpNo);
       }
       // If the register operand is flagged as early, mark the operand as such.
       if (MCID->getOperandConstraint(OpNo, MCOI::EARLY_CLOBBER) != -1)
@@ -1138,6 +1134,20 @@ int MachineInstr::findFirstPredOperandIdx() const {
   }
 
   return -1;
+}
+
+/// Mark operands at DefIdx and UseIdx as tied to each other.
+void MachineInstr::tieOperands(unsigned DefIdx, unsigned UseIdx) {
+  assert(DefIdx < UseIdx && "Tied defs must precede the use");
+  MachineOperand &DefMO = getOperand(DefIdx);
+  MachineOperand &UseMO = getOperand(UseIdx);
+  assert(DefMO.isDef() && "DefIdx must be a def operand");
+  assert(UseMO.isUse() && "UseIdx must be a use operand");
+  assert(!DefMO.isTied() && "Def is already tied to another use");
+  assert(!UseMO.isTied() && "Use is already tied to another def");
+
+  DefMO.IsTied = true;
+  UseMO.IsTied = true;
 }
 
 /// Given the index of a tied register operand, find the operand it is tied to.
