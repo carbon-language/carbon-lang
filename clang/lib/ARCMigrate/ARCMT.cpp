@@ -42,7 +42,7 @@ bool CapturedDiagList::clearDiagnostic(ArrayRef<unsigned> IDs,
       while (I != List.end() && I->getLevel() == DiagnosticsEngine::Note)
         ++I;
       // Clear the diagnostic and any notes following it.
-      List.erase(eraseS, I);
+      I = List.erase(eraseS, I);
       continue;
     }
 
