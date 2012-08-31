@@ -85,7 +85,7 @@ static void AtomicStore(ThreadState *thr, uptr pc, volatile T *a, T v,
     morder mo) {
   CHECK(mo & (mo_relaxed | mo_release | mo_seq_cst));
   if (mo & (mo_release | mo_seq_cst))
-    Release(thr, pc, (uptr)a);
+    ReleaseStore(thr, pc, (uptr)a);
   *a = v;
 }
 
