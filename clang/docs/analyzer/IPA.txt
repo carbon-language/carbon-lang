@@ -1,6 +1,9 @@
 Inlining
 ========
 
+There are several options that control which calls the analyzer will consider for
+inlining. The major one is -analyzer-ipa:
+
   -analyzer-ipa=none - All inlining is disabled. This is the only mode available
      in LLVM 3.1 and earlier and in Xcode 4.3 and earlier.
 
@@ -24,6 +27,23 @@ Inlining
    only exercised when some of its methods are overridden.
 
 Currently, -analyzer-ipa=dynamic-bifurcate is the default mode.
+
+
+A second setting, c++-inlining, controls which C++ member functions may be
+inlined. This option uses the analyzer's configuration table, so it is specified
+as shown here:
+
+  -analyzer-config c++-inlining=[none | methods | constructors | destructors]
+
+Each of these modes implies that all the previous member function kinds will be
+inlined as well; it doesn't make sense to inline destructors without inlining
+constructors, for example.
+
+The default c++-inlining mode is 'methods', meaning only regular member
+functions and overloaded operators will be inlined. Note that no C++ member
+functions will be inlined under -analyzer-ipa=none or
+-analyzer-ipa=basic-inlining.
+
 
 Basics of Implementation
 -----------------------

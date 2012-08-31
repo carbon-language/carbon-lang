@@ -1,6 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc,debug.ExprInspection -analyzer-ipa=inlining -cfg-add-implicit-dtors -std=c++11 -verify %s
-
-// We don't inline constructors unless we have destructors turned on.
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc,debug.ExprInspection -analyzer-ipa=inlining -analyzer-config c++-inlining=constructors -std=c++11 -verify %s
 
 void clang_analyzer_eval(bool);
 
@@ -65,13 +63,13 @@ struct RefWrapper {
 
 void testReferenceMember() {
   int *p = 0;
-  RefWrapper X(p); // expected-warning@61 {{Dereference of null pointer}}
+  RefWrapper X(p); // expected-warning@-7 {{Dereference of null pointer}}
 }
 
 void testReferenceMember2() {
   int *p = 0;
   // FIXME: We should warn here, since we're creating the reference here.
-  RefWrapper X(*p); // expected-warning@62 {{Dereference of null pointer}}
+  RefWrapper X(*p); // expected-warning@-12 {{Dereference of null pointer}}
 }
 
 

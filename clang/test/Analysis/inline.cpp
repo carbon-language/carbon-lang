@@ -267,20 +267,3 @@ namespace OperatorNew {
     clang_analyzer_eval(obj->value == 42); // expected-warning{{UNKNOWN}}
   }
 }
-
-namespace TemporaryConstructor {
-  class BoolWrapper {
-  public:
-    BoolWrapper() {
-      clang_analyzer_checkInlined(true); // expected-warning{{TRUE}}
-      value = true;
-    }
-    bool value;
-  };
-
-  void test() {
-    // PR13717 - Don't crash when a CXXTemporaryObjectExpr is inlined.
-    if (BoolWrapper().value)
-      return;
-  }
-}

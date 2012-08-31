@@ -316,21 +316,6 @@ template<> struct ProgramStateTrait<DynamicDispatchBifurcationMap>
 
 }}
 
-static bool shouldInlineCXX(AnalysisManager &AMgr) {
-  switch (AMgr.options.IPAMode) {
-  case None:
-  case BasicInlining:
-    return false;
-  case Inlining:
-  case DynamicDispatch:
-  case DynamicDispatchBifurcate:
-    return true;
-  case NumIPAModes:
-    llvm_unreachable("not actually a valid option");
-  }
-  llvm_unreachable("bogus IPAMode");
-}
-
 bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
                             NodeBuilder &Bldr, ExplodedNode *Pred,
                             ProgramStateRef State) {
@@ -340,17 +325,19 @@ bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
   const StackFrameContext *CallerSFC = CurLC->getCurrentStackFrame();
   const LocationContext *ParentOfCallee = 0;
 
+  const AnalyzerOptions &Opts = getAnalysisManager().options;
+
   // FIXME: Refactor this check into a hypothetical CallEvent::canInline.
   switch (Call.getKind()) {
   case CE_Function:
     break;
   case CE_CXXMember:
   case CE_CXXMemberOperator:
-    if (!shouldInlineCXX(getAnalysisManager()))
+    if (!Opts.mayInlineCXXMemberFunction(CIMK_MemberFunctions))
       return false;
     break;
   case CE_CXXConstructor: {
-    if (!shouldInlineCXX(getAnalysisManager()))
+    if (!Opts.mayInlineCXXMemberFunction(CIMK_Constructors))
       return false;
 
     const CXXConstructorCall &Ctor = cast<CXXConstructorCall>(Call);
@@ -369,15 +356,17 @@ bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
       if (isa<CXXNewExpr>(Parent))
         return false;
 
+    // Inlining constructors requires including initializers in the CFG.
+    const AnalysisDeclContext *ADC = CallerSFC->getAnalysisDeclContext();
+    assert(ADC->getCFGBuildOptions().AddInitializers && "No CFG initializers");
+
     // If the destructor is trivial, it's always safe to inline the constructor.
     if (Ctor.getDecl()->getParent()->hasTrivialDestructor())
       break;
     
-    // For other types, only inline constructors if we built the CFGs for the
-    // destructor properly.
-    const AnalysisDeclContext *ADC = CallerSFC->getAnalysisDeclContext();
-    assert(ADC->getCFGBuildOptions().AddInitializers && "No CFG initializers");
-    if (!ADC->getCFGBuildOptions().AddImplicitDtors)
+    // For other types, only inline constructors if destructor inlining is
+    // also enabled.
+    if (!Opts.mayInlineCXXMemberFunction(CIMK_Destructors))
       return false;
 
     // FIXME: This is a hack. We don't handle temporary destructors
@@ -389,14 +378,12 @@ bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
     break;
   }
   case CE_CXXDestructor: {
-    if (!shouldInlineCXX(getAnalysisManager()))
+    if (!Opts.mayInlineCXXMemberFunction(CIMK_Destructors))
       return false;
 
-    // Only inline constructors and destructors if we built the CFGs for them
-    // properly.
+    // Inlining destructors requires building the CFG correctly.
     const AnalysisDeclContext *ADC = CallerSFC->getAnalysisDeclContext();
-    if (!ADC->getCFGBuildOptions().AddImplicitDtors)
-      return false;
+    assert(ADC->getCFGBuildOptions().AddImplicitDtors && "No CFG destructors");
 
     const CXXDestructorCall &Dtor = cast<CXXDestructorCall>(Call);
 
@@ -408,9 +395,6 @@ bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
     break;
   }
   case CE_CXXAllocator:
-    if (!shouldInlineCXX(getAnalysisManager()))
-      return false;
-
     // Do not inline allocators until we model deallocators.
     // This is unfortunate, but basically necessary for smart pointers and such.
     return false;

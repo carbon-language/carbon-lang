@@ -76,6 +76,31 @@ enum AnalysisInliningMode {
 NumInliningModes
 };
 
+/// \brief Describes the different kinds of C++ member functions which can be
+/// considered for inlining by the analyzer.
+///
+/// These options are cumulative; enabling one kind of member function will
+/// enable all kinds with lower enum values.
+enum CXXInlineableMemberKind {
+  // Uninitialized = 0,
+
+  /// A dummy mode in which no C++ inlining is enabled.
+  CIMK_None = 1,
+
+  /// Refers to regular member function and operator calls.
+  CIMK_MemberFunctions,
+
+  /// Refers to constructors (implicit or explicit).
+  ///
+  /// Note that a constructor will not be inlined if the corresponding
+  /// destructor is non-trivial.
+  CIMK_Constructors,
+
+  /// Refers to destructors (implicit or explicit).
+  CIMK_Destructors
+};
+
+
 class AnalyzerOptions : public llvm::RefCountedBase<AnalyzerOptions> {
 public:
   typedef llvm::StringMap<std::string> ConfigTable;
@@ -139,8 +164,19 @@ public:
   /// \brief The mode of function selection used during inlining.
   AnalysisInliningMode InliningMode;
 
+private:
+  /// Controls which C++ member functions will be considered for inlining.
+  CXXInlineableMemberKind CXXMemberInliningMode;
+
 public:
-  AnalyzerOptions() {
+  /// Returns the option controlling which C++ member functions will be
+  /// considered for inlining.
+  ///
+  /// \sa CXXMemberInliningMode
+  bool mayInlineCXXMemberFunction(CXXInlineableMemberKind K) const;
+
+public:
+  AnalyzerOptions() : CXXMemberInliningMode() {
     AnalysisStoreOpt = RegionStoreModel;
     AnalysisConstraintsOpt = RangeConstraintsModel;
     AnalysisDiagOpt = PD_HTML;
