@@ -212,8 +212,8 @@ class SizeClassAllocator64 {
     UnmapOrDie(reinterpret_cast<void*>(AllocBeg()), AllocSize());
   }
 
-  static uptr AllocBeg()  { return kSpaceBeg  - AdditionalSize(); }
-  static uptr AllocEnd()  { return kSpaceBeg  + kSpaceSize; }
+  static uptr AllocBeg()  { return kSpaceBeg; }
+  static uptr AllocEnd()  { return kSpaceBeg  + kSpaceSize + AdditionalSize(); }
   static uptr AllocSize() { return kSpaceSize + AdditionalSize(); }
 
   static const uptr kNumClasses = 256;  // Power of two <= 256
@@ -245,8 +245,8 @@ class SizeClassAllocator64 {
 
   RegionInfo *GetRegionInfo(uptr class_id) {
     CHECK_LT(class_id, kNumClasses);
-    RegionInfo *regions = reinterpret_cast<RegionInfo*>(kSpaceBeg);
-    return &regions[-1 - class_id];
+    RegionInfo *regions = reinterpret_cast<RegionInfo*>(kSpaceBeg + kSpaceSize);
+    return &regions[class_id];
   }
 
   static uptr GetChunkIdx(uptr chunk, uptr size) {
