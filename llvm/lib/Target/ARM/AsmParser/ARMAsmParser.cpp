@@ -7520,9 +7520,6 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   case Match_MnemonicFail:
     return Error(IDLoc, "invalid instruction",
                  ((ARMOperand*)Operands[0])->getLocRange());
-  case Match_ConversionFail:
-    // The converter function will have already emitted a diagnostic.
-    return true;
   case Match_RequiresNotITBlock:
     return Error(IDLoc, "flag setting instruction only valid outside IT block");
   case Match_RequiresITBlock:

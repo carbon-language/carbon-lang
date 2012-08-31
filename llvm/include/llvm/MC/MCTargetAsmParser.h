@@ -25,7 +25,6 @@ template <typename T> class SmallVectorImpl;
 class MCTargetAsmParser : public MCAsmParserExtension {
 public:
   enum MatchResultTy {
-    Match_ConversionFail,
     Match_InvalidOperand,
     Match_MissingFeature,
     Match_MnemonicFail,

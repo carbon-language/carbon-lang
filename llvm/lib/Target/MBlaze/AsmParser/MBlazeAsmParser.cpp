@@ -329,8 +329,6 @@ MatchAndEmitInstruction(SMLoc IDLoc,
     return Error(IDLoc, "instruction use requires an option to be enabled");
   case Match_MnemonicFail:
       return Error(IDLoc, "unrecognized instruction mnemonic");
-  case Match_ConversionFail:
-    return Error(IDLoc, "unable to convert operands to instruction");
   case Match_InvalidOperand:
     ErrorLoc = IDLoc;
     if (ErrorInfo != ~0U) {

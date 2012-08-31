@@ -1585,9 +1585,6 @@ MatchInstruction(SMLoc IDLoc,
     Error(IDLoc, "instruction requires a CPU feature not currently enabled",
           EmptyRanges, matchingInlineAsm);
     return true;
-  case Match_ConversionFail:
-    return Error(IDLoc, "unable to convert operands to instruction",
-                 EmptyRanges, matchingInlineAsm);
   case Match_InvalidOperand:
     WasOriginallyInvalidOperand = true;
     break;
