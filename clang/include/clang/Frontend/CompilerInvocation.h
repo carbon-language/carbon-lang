@@ -13,7 +13,7 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetOptions.h"
 #include "clang/Basic/FileSystemOptions.h"
-#include "clang/StaticAnalyzer/AnalyzerOptions.h"
+#include "clang/StaticAnalyzer/Core/AnalyzerOptions.h"
 #include "clang/Frontend/MigratorOptions.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "clang/Frontend/DependencyOutputOptions.h"

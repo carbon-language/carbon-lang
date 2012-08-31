@@ -17,7 +17,7 @@
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/CheckerOptInfo.h"
 #include "clang/StaticAnalyzer/Core/CheckerRegistry.h"
-#include "clang/StaticAnalyzer/AnalyzerOptions.h"
+#include "clang/StaticAnalyzer/Core/AnalyzerOptions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/Support/DynamicLibrary.h"
