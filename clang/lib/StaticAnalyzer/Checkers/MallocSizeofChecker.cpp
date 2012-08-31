@@ -196,9 +196,13 @@ public:
           SmallString<64> buf;
           llvm::raw_svector_ostream OS(buf);
 
-          OS << "Result of '"
-             << i->AllocCall->getDirectCallee()->getIdentifier()->getName()
-             << "' is converted to a pointer of type '"
+          OS << "Result of ";
+          const FunctionDecl *Callee = i->AllocCall->getDirectCallee();
+          if (Callee && Callee->getIdentifier())
+            OS << '\'' << Callee->getIdentifier()->getName() << '\'';
+          else
+            OS << "call";
+          OS << " is converted to a pointer of type '"
              << PointeeType.getAsString() << "', which is incompatible with "
              << "sizeof operand type '" << SizeofType.getAsString() << "'";
           llvm::SmallVector<SourceRange, 4> Ranges;

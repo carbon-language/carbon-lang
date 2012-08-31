@@ -366,3 +366,22 @@ NSString * radar11152419(NSString *string1, NSString *key1, NSMapTable *map) {
     return string;
 }
 
+//===----------------------------------------------------------------------===//
+// Don't crash on non-member functions with "callbacks" but without names.
+//===----------------------------------------------------------------------===//
+
+struct IntWrapper {
+  int arg;
+};
+
+int operator>> (const IntWrapper &W, int (*f)(int)) {
+  return f(W.arg);
+}
+
+void testCallback() {
+  IntWrapper val = { 42 };
+
+  extern int process(int);
+  val >> process;
+}
+

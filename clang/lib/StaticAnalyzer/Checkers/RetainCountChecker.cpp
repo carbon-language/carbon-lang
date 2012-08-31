@@ -950,8 +950,9 @@ void RetainSummaryManager::updateSummaryForCall(const RetainSummary *&S,
       IdentifierInfo *Name = FC->getDecl()->getIdentifier();
 
       // This callback frees the associated buffer.
-      if (Name->isStr("CGBitmapContextCreateWithData"))
-        RE = S->getRetEffect();
+      if (Name)
+        if (Name->isStr("CGBitmapContextCreateWithData"))
+          RE = S->getRetEffect();
     }
 
     S = getPersistentSummary(RE, RecEffect, DefEffect);
