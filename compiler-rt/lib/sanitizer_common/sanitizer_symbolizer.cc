@@ -182,6 +182,8 @@ class ExternalSymbolizer {
   uptr times_restarted_;
 };
 
+static LowLevelAllocator symbolizer_allocator;  // Linker initialized.
+
 class Symbolizer {
  public:
   uptr SymbolizeCode(uptr addr, AddressInfo *frames, uptr max_frames) {
@@ -206,7 +208,6 @@ class Symbolizer {
           if (!external_symbolizer_->Restart()) {
             ReportExternalSymbolizerError(
                 "WARNING: Failed to use and restart external symbolizer!\n");
-            InternalFree(external_symbolizer_);
             external_symbolizer_ = 0;
             break;
           }
@@ -220,7 +221,7 @@ class Symbolizer {
     int input_fd, output_fd;
     if (!StartSymbolizerSubprocess(path_to_symbolizer, &input_fd, &output_fd))
       return false;
-    void *mem = InternalAlloc(sizeof(ExternalSymbolizer));
+    void *mem = symbolizer_allocator.Allocate(sizeof(ExternalSymbolizer));
     external_symbolizer_ = new(mem) ExternalSymbolizer(path_to_symbolizer,
                                                        input_fd, output_fd);
     return true;
@@ -229,8 +230,8 @@ class Symbolizer {
  private:
   LoadedModule *FindModuleForAddress(uptr address) {
     if (modules_ == 0) {
-      modules_ = (LoadedModule*)InternalAlloc(
-          kMaxNumberOfModuleContexts * sizeof(LoadedModule));
+      modules_ = (LoadedModule*)(symbolizer_allocator.Allocate(
+          kMaxNumberOfModuleContexts * sizeof(LoadedModule)));
       CHECK(modules_);
       n_modules_ = GetListOfModules(modules_, kMaxNumberOfModuleContexts);
       CHECK_GT(n_modules_, 0);
@@ -254,11 +255,10 @@ class Symbolizer {
   }
 
   static const uptr kMaxNumberOfModuleContexts = 4096;
-  // Array of module descriptions is leaked.
-  LoadedModule *modules_;
+  LoadedModule *modules_; // Array of module descriptions is leaked.
   uptr n_modules_;
 
-  ExternalSymbolizer *external_symbolizer_;
+  ExternalSymbolizer *external_symbolizer_;  // Leaked.
 };
 
 static Symbolizer symbolizer;  // Linker initialized.

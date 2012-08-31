@@ -121,19 +121,19 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
   DlIteratePhdrData *data = (DlIteratePhdrData*)arg;
   if (data->current_n == data->max_n)
     return 0;
-  char *module_name = 0;
+  InternalScopedBuffer<char> module_name(kMaxPathLength);
+  module_name[0] = '\0';
   if (data->current_n == 0) {
     // First module is the binary itself.
-    module_name = (char*)InternalAlloc(kMaxPathLength);
     uptr module_name_len = readlink("/proc/self/exe",
-                                    module_name, kMaxPathLength);
+                                    module_name, module_name.size());
     CHECK_NE(module_name_len, (uptr)-1);
-    CHECK_LT(module_name_len, kMaxPathLength);
+    CHECK_LT(module_name_len, module_name.size());
     module_name[module_name_len] = '\0';
   } else if (info->dlpi_name) {
-    module_name = internal_strdup(info->dlpi_name);
+    internal_strncpy(module_name, info->dlpi_name, module_name.size());
   }
-  if (module_name == 0 || module_name[0] == '\0')
+  if (module_name[0] == '\0')
     return 0;
   void *mem = &data->modules[data->current_n];
   LoadedModule *cur_module = new(mem) LoadedModule(module_name,
@@ -147,7 +147,6 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
       cur_module->addAddressRange(cur_beg, cur_end);
     }
   }
-  InternalFree(module_name);
   return 0;
 }
 
