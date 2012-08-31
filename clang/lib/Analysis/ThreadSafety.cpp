@@ -300,8 +300,9 @@ private:
     } else if (CXXMemberCallExpr *CMCE = dyn_cast<CXXMemberCallExpr>(Exp)) {
       // When calling a function with a lock_returned attribute, replace
       // the function call with the expression in lock_returned.
-      if (LockReturnedAttr* At =
-            CMCE->getMethodDecl()->getAttr<LockReturnedAttr>()) {
+      CXXMethodDecl* MD =
+        cast<CXXMethodDecl>(CMCE->getMethodDecl()->getMostRecentDecl());
+      if (LockReturnedAttr* At = MD->getAttr<LockReturnedAttr>()) {
         CallingContext LRCallCtx(CMCE->getMethodDecl());
         LRCallCtx.SelfArg = CMCE->getImplicitObjectArgument();
         LRCallCtx.SelfArrow =
@@ -330,8 +331,9 @@ private:
       NodeVec[Root].setSize(Sz + 1);
       return Sz + 1;
     } else if (CallExpr *CE = dyn_cast<CallExpr>(Exp)) {
-      if (LockReturnedAttr* At =
-            CE->getDirectCallee()->getAttr<LockReturnedAttr>()) {
+      FunctionDecl* FD =
+        cast<FunctionDecl>(CE->getDirectCallee()->getMostRecentDecl());
+      if (LockReturnedAttr* At = FD->getAttr<LockReturnedAttr>()) {
         CallingContext LRCallCtx(CE->getDirectCallee());
         LRCallCtx.NumArgs = CE->getNumArgs();
         LRCallCtx.FunArgs = CE->getArgs();
