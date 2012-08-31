@@ -6796,6 +6796,7 @@ public:
   /// \return true iff there were any incompatible types.
   bool CheckMessageArgumentTypes(QualType ReceiverType,
                                  Expr **Args, unsigned NumArgs, Selector Sel,
+                                 ArrayRef<SourceLocation> SelectorLocs,
                                  ObjCMethodDecl *Method, bool isClassMessage,
                                  bool isSuperMessage,
                                  SourceLocation lbrac, SourceLocation rbrac,
