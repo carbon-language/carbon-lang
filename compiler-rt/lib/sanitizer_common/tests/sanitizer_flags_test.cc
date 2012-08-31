@@ -14,9 +14,6 @@
 #include "sanitizer_common/sanitizer_flags.h"
 #include "gtest/gtest.h"
 
-#include "tsan_rtl.h"  // FIXME: break dependency from TSan runtime.
-using __tsan::ScopedInRtl;
-
 #include <string.h>
 
 namespace __sanitizer {
@@ -38,7 +35,6 @@ static void TestStrFlag(const char *start_value, const char *env,
 }
 
 TEST(SanitizerCommon, BooleanFlags) {
-  ScopedInRtl in_rtl;
   TestFlag(true, "--flag_name", true);
   TestFlag(false, "flag_name", false);
   TestFlag(false, "--flag_name=1", true);
@@ -51,7 +47,6 @@ TEST(SanitizerCommon, BooleanFlags) {
 }
 
 TEST(SanitizerCommon, IntFlags) {
-  ScopedInRtl in_rtl;
   TestFlag(-11, 0, -11);
   TestFlag(-11, "flag_name", 0);
   TestFlag(-11, "--flag_name=", 0);
@@ -60,7 +55,6 @@ TEST(SanitizerCommon, IntFlags) {
 }
 
 TEST(SanitizerCommon, StrFlags) {
-  ScopedInRtl in_rtl;
   TestStrFlag("zzz", 0, "zzz");
   TestStrFlag("zzz", "flag_name", "");
   TestStrFlag("zzz", "--flag_name=", "");
