@@ -3384,7 +3384,7 @@ def warn_anon_bitfield_width_exceeds_type_size : Warning<
 
 def warn_missing_braces : Warning<
   "suggest braces around initialization of subobject">,
-  InGroup<DiagGroup<"missing-braces">>, DefaultIgnore;
+  InGroup<MissingBraces>, DefaultIgnore;
 def err_missing_braces : Error<
   "cannot omit braces around initialization of subobject when using direct "
   "list-initialization">;
