@@ -12,11 +12,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Module.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Analysis/ProfileDataLoader.h"
 #include "llvm/Analysis/ProfileDataTypes.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/system_error.h"
 #include <cstdio>
 #include <cstdlib>
 using namespace llvm;
@@ -34,7 +37,8 @@ raw_ostream& operator<<(raw_ostream &O, const BasicBlock *BB) {
   return O << BB->getName();
 }
 
-raw_ostream& operator<<(raw_ostream &O, std::pair<const BasicBlock *, const BasicBlock *> E) {
+raw_ostream& operator<<(raw_ostream &O, std::pair<const BasicBlock *,
+                        const BasicBlock *> E) {
   O << "(";
 
   if (E.first)
@@ -54,10 +58,9 @@ raw_ostream& operator<<(raw_ostream &O, std::pair<const BasicBlock *, const Basi
 
 } // namespace llvm
 
-/// ByteSwap - Byteswap 'Var' if 'Really' is true.  Required when the compiler
-/// host and target have different endianness.
-static inline unsigned ByteSwap(unsigned Var, bool Really) {
-  if (!Really) return Var;
+/// ByteSwap - Byteswap 'Var'.  Required when the compiler host and target have
+/// different endianness.
+static inline unsigned ByteSwap(unsigned Var) {
   return ((Var & (255U<< 0U)) << 24U) |
          ((Var & (255U<< 8U)) <<  8U) |
          ((Var & (255U<<16U)) >>  8U) |
@@ -75,21 +78,19 @@ static unsigned AddCounts(unsigned A, unsigned B) {
   // Saturate to the maximum storable value.  This could change taken/nottaken
   // ratios, but is presumably better than wrapping and thus potentially
   // inverting ratios.
-  unsigned long long tmp = (unsigned long long)A + (unsigned long long)B;
-  if (tmp > (unsigned long long)ProfileDataLoader::MaxCount)
+  uint64_t tmp = (uint64_t)A + (uint64_t)B;
+  if (tmp > (uint64_t)ProfileDataLoader::MaxCount)
     tmp = ProfileDataLoader::MaxCount;
   return (unsigned)tmp;
 }
 
 /// ReadProfilingData - Load 'NumEntries' items of type 'T' from file 'F'
-template <typename T>
+template <typename T, unsigned N>
 static void ReadProfilingData(const char *ToolName, FILE *F,
-                              std::vector<T> &Data, size_t NumEntries) {
+                              SmallVector<T, N> &Data, size_t NumEntries) {
   // Read in the block of data...
   if (fread(&Data[0], sizeof(T), NumEntries, F) != NumEntries) {
-    errs() << ToolName << ": profiling data truncated!\n";
-    perror(0);
-    exit(1);
+    report_fatal_error(std::string(ToolName) + ": Profiling data truncated");
   }
 }
 
@@ -97,46 +98,46 @@ static void ReadProfilingData(const char *ToolName, FILE *F,
 /// packet.
 static unsigned ReadProfilingNumEntries(const char *ToolName, FILE *F,
                                         bool ShouldByteSwap) {
-  std::vector<unsigned> NumEntries(1);
-  ReadProfilingData<unsigned>(ToolName, F, NumEntries, 1);
-  return ByteSwap(NumEntries[0], ShouldByteSwap);
+  SmallVector<unsigned, 1> NumEntries(1);
+  ReadProfilingData<unsigned, 1>(ToolName, F, NumEntries, 1);
+  return ShouldByteSwap ? ByteSwap(NumEntries[0]) : NumEntries[0];
 }
 
 /// ReadProfilingBlock - Read the number of entries in the next profiling data
 /// packet and then accumulate the entries into 'Data'.
 static void ReadProfilingBlock(const char *ToolName, FILE *F,
                                bool ShouldByteSwap,
-                               std::vector<unsigned> &Data) {
+                               SmallVector<unsigned, 32> &Data) {
   // Read the number of entries...
   unsigned NumEntries = ReadProfilingNumEntries(ToolName, F, ShouldByteSwap);
 
   // Read in the data.
-  std::vector<unsigned> TempSpace(NumEntries);
-  ReadProfilingData<unsigned>(ToolName, F, TempSpace, (size_t)NumEntries);
+  SmallVector<unsigned, 8> TempSpace(NumEntries);
+  ReadProfilingData<unsigned, 8>(ToolName, F, TempSpace, (size_t)NumEntries);
 
   // Make sure we have enough space ...
   if (Data.size() < NumEntries)
     Data.resize(NumEntries, ProfileDataLoader::Uncounted);
 
   // Accumulate the data we just read into the existing data.
-  for (unsigned i = 0; i < NumEntries; ++i) {
-    Data[i] = AddCounts(ByteSwap(TempSpace[i], ShouldByteSwap), Data[i]);
-  }
+  for (unsigned i = 0; i < NumEntries; ++i)
+    Data[i] = AddCounts(ShouldByteSwap ? ByteSwap(TempSpace[i]) : TempSpace[i],
+                        Data[i]);
 }
 
 /// ReadProfilingArgBlock - Read the command line arguments that the progam was
 /// run with when the current profiling data packet(s) were generated.
 static void ReadProfilingArgBlock(const char *ToolName, FILE *F,
                                   bool ShouldByteSwap,
-                                  std::vector<std::string> &CommandLines) {
+                                  SmallVector<std::string, 1> &CommandLines) {
   // Read the number of bytes ...
   unsigned ArgLength = ReadProfilingNumEntries(ToolName, F, ShouldByteSwap);
 
   // Read in the arguments (if there are any to read).  Round up the length to
   // the nearest 4-byte multiple.
-  std::vector<char> Args(ArgLength+4);
+  SmallVector<char, 8> Args(ArgLength+4);
   if (ArgLength)
-    ReadProfilingData<char>(ToolName, F, Args, (ArgLength+3) & ~3);
+    ReadProfilingData<char, 8>(ToolName, F, Args, (ArgLength+3) & ~3);
 
   // Store the arguments.
   CommandLines.push_back(std::string(&Args[0], &Args[ArgLength]));
@@ -145,17 +146,15 @@ static void ReadProfilingArgBlock(const char *ToolName, FILE *F,
 const unsigned ProfileDataLoader::Uncounted = ~0U;
 const unsigned ProfileDataLoader::MaxCount = ~0U - 1U;
 
-/// ProfileDataLoader ctor - Read the specified profiling data file, exiting
-/// the program if the file is invalid or broken.
+/// ProfileDataLoader ctor - Read the specified profiling data file, reporting
+/// a fatal error if the file is invalid or broken.
 ProfileDataLoader::ProfileDataLoader(const char *ToolName,
                                      const std::string &Filename)
   : Filename(Filename) {
   FILE *F = fopen(Filename.c_str(), "rb");
-  if (F == 0) {
-    errs() << ToolName << ": Error opening '" << Filename << "': ";
-    perror(0);
-    exit(1);
-  }
+  if (F == 0)
+    report_fatal_error(std::string(ToolName) + ": Error opening '" +
+                       Filename + "': ");
 
   // Keep reading packets until we run out of them.
   unsigned PacketType;
@@ -165,7 +164,7 @@ ProfileDataLoader::ProfileDataLoader(const char *ToolName,
     // information.  This can happen when the compiler host and target have
     // different endianness.
     bool ShouldByteSwap = (char)PacketType == 0;
-    PacketType = ByteSwap(PacketType, ShouldByteSwap);
+    PacketType = ShouldByteSwap ? ByteSwap(PacketType) : PacketType;
 
     switch (PacketType) {
       case ArgumentInfo:
@@ -177,8 +176,9 @@ ProfileDataLoader::ProfileDataLoader(const char *ToolName,
         break;
 
       default:
-        errs() << ToolName << ": Unknown packet type #" << PacketType << "!\n";
-        exit(1);
+        report_fatal_error(std::string(ToolName)
+                           + ": Unknown profiling packet type");
+        break;
     }
   }
 

@@ -15,6 +15,7 @@
 //
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "profile-metadata-loader"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Module.h"
@@ -30,7 +31,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Format.h"
 #include "llvm/ADT/Statistic.h"
-#include <vector>
 using namespace llvm;
 
 STATISTIC(NumEdgesRead, "The # of edges read.");
@@ -63,8 +63,8 @@ namespace {
     }
 
     virtual void readEdge(unsigned, ProfileData&, ProfileData::Edge,
-                          std::vector<unsigned>&);
-    virtual unsigned matchEdges(Module&, ProfileData&, std::vector<unsigned>&);
+                          ArrayRef<unsigned>);
+    virtual unsigned matchEdges(Module&, ProfileData&, ArrayRef<unsigned>);
     virtual void setBranchWeightMetadata(Module&, ProfileData&);
 
     virtual bool runOnModule(Module &M);
@@ -92,21 +92,21 @@ ModulePass *llvm::createProfileMetadataLoaderPass(const std::string &Filename) {
 /// readEdge - Take the value from a profile counter and assign it to an edge.
 void ProfileMetadataLoaderPass::readEdge(unsigned ReadCount,
                                          ProfileData &PB, ProfileData::Edge e,
-                                         std::vector<unsigned> &Counters) {
-  if (ReadCount < Counters.size()) {
-    unsigned weight = Counters[ReadCount];
-    assert(weight != ProfileDataLoader::Uncounted);
-    PB.addEdgeWeight(e, weight);
+                                         ArrayRef<unsigned> Counters) {
+  if (ReadCount >= Counters.size()) return;
 
-    DEBUG(dbgs() << "-- Read Edge Counter for " << e
-                 << " (# "<< (ReadCount) << "): "
-                 << PB.getEdgeWeight(e) << "\n");
-  }
+  unsigned weight = Counters[ReadCount];
+  assert(weight != ProfileDataLoader::Uncounted);
+  PB.addEdgeWeight(e, weight);
+
+  DEBUG(dbgs() << "-- Read Edge Counter for " << e
+               << " (# "<< (ReadCount) << "): "
+               << PB.getEdgeWeight(e) << "\n");
 }
 
 /// matchEdges - Link every profile counter with an edge.
 unsigned ProfileMetadataLoaderPass::matchEdges(Module &M, ProfileData &PB,
-                                             std::vector<unsigned> &Counters) {
+                                               ArrayRef<unsigned> Counters) {
   if (Counters.size() == 0) return 0;
 
   unsigned ReadCount = 0;
@@ -147,7 +147,7 @@ void ProfileMetadataLoaderPass::setBranchWeightMetadata(Module &M,
       // Load the weights of all edges leading from this terminator.
       DEBUG(dbgs() << "-- Terminator with " << NumSuccessors
                    << " successors:\n");
-      std::vector<uint32_t> Weights(NumSuccessors);
+      SmallVector<uint32_t, 4> Weights(NumSuccessors);
       for (unsigned s = 0 ; s < NumSuccessors ; ++s) {
           ProfileData::Edge edge = PB.getEdge(BB, TI->getSuccessor(s));
           Weights[s] = (uint32_t)PB.getEdgeWeight(edge);
@@ -172,7 +172,7 @@ bool ProfileMetadataLoaderPass::runOnModule(Module &M) {
   ProfileDataLoader PDL("profile-data-loader", Filename);
   ProfileData PB;
 
-  std::vector<unsigned> Counters = PDL.getRawEdgeCounts();
+  ArrayRef<unsigned> Counters = PDL.getRawEdgeCounts();
 
   unsigned ReadCount = matchEdges(M, PB, Counters);
 

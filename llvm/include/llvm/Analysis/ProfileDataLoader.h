@@ -16,11 +16,11 @@
 #ifndef LLVM_ANALYSIS_PROFILEDATALOADER_H
 #define LLVM_ANALYSIS_PROFILEDATALOADER_H
 
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-#include <vector>
 #include <string>
-#include <map>
 
 namespace llvm {
 
@@ -46,14 +46,14 @@ class ProfileDataT {
   typedef std::pair<const BType*, const BType*> Edge;
 
   private:
-  typedef std::map<Edge, unsigned> EdgeWeights;
+  typedef DenseMap<Edge, unsigned> EdgeWeights;
 
   /// \brief Count the number of times a transition between two blocks is
   /// executed.
   ///
   /// As a special case, we also hold an edge from the null BasicBlock to the
   /// entry block to indicate how many times the function was entered.
-  std::map<const FType*, EdgeWeights> EdgeInformation;
+  DenseMap<const FType*, EdgeWeights> EdgeInformation;
 
   public:
   static char ID; // Class identification, replacement for typeinfo
@@ -61,9 +61,9 @@ class ProfileDataT {
   ~ProfileDataT() {};
 
   /// getFunction() - Returns the Function for an Edge.
-  static const FType* getFunction(Edge e) {
+  static const FType *getFunction(Edge e) {
     // e.first may be NULL
-    assert(   ((!e.first) || (e.first->getParent() == e.second->getParent()))
+    assert(((!e.first) || (e.first->getParent() == e.second->getParent()))
            && "A ProfileData::Edge can not be between two functions");
     assert(e.second && "A ProfileData::Edge must have a real sink");
     return e.second->getParent();
@@ -71,18 +71,18 @@ class ProfileDataT {
 
   /// getEdge() - Creates an Edge between two BasicBlocks.
   static Edge getEdge(const BType *Src, const BType *Dest) {
-    return std::make_pair(Src, Dest);
+    return Edge(Src, Dest);
   }
 
   /// getEdgeWeight - Return the number of times that a given edge was
   /// executed.
   unsigned getEdgeWeight(Edge e) const {
     const FType *f = getFunction(e);
-    assert(   (EdgeInformation.find(f) != EdgeInformation.end())
+    assert((EdgeInformation.find(f) != EdgeInformation.end())
            && "No profiling information for function");
     EdgeWeights weights = EdgeInformation.find(f)->second;
 
-    assert(   (weights.find(e) != weights.end())
+    assert((weights.find(e) != weights.end())
            && "No profiling information for edge");
     return weights.find(e)->second;
   }
@@ -106,11 +106,11 @@ private:
 
   /// A vector of the command line arguments used when the target program was
   /// run to generate profiling data.  One entry per program run.
-  std::vector<std::string> CommandLines;
+  SmallVector<std::string, 1> CommandLines;
 
   /// The raw values for how many times each edge was traversed, values from
   /// multiple program runs are accumulated.
-  std::vector<unsigned> EdgeCounts;
+  SmallVector<unsigned, 32> EdgeCounts;
 
 public:
   /// ProfileDataLoader ctor - Read the specified profiling data file, exiting
@@ -130,13 +130,13 @@ public:
 
   /// getExecution - Return the command line parameters used to generate the
   /// i'th set of profiling data.
-  const std::string& getExecution(unsigned i) const { return CommandLines[i]; }
+  const std::string &getExecution(unsigned i) const { return CommandLines[i]; }
 
-  const std::string& getFileName() const { return Filename; }
+  const std::string &getFileName() const { return Filename; }
 
   /// getRawEdgeCounts - Return the raw profiling data, this is just a list of
   /// numbers with no mappings to edges.
-  const std::vector<unsigned>& getRawEdgeCounts() const { return EdgeCounts; }
+  const SmallVector<unsigned, 32> &getRawEdgeCounts() const { return EdgeCounts; }
 };
 
 /// createProfileMetadataLoaderPass - This function returns a Pass that loads
