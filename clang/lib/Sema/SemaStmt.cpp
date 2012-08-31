@@ -160,6 +160,13 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
       !E->isUnusedResultAWarning(WarnExpr, Loc, R1, R2, Context))
     return;
 
+  // If this is a GNU statement expression expanded from a macro, it is probably
+  // unused because it is a function-like macro that can be used as either an
+  // expression or statement.  Don't warn, because it is almost certainly a
+  // false positive.
+  if (isa<StmtExpr>(E) && Loc.isMacroID())
+    return;
+
   // Okay, we have an unused result.  Depending on what the base expression is,
   // we might want to make a more specific diagnostic.  Check for one of these
   // cases now.
