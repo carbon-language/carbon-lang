@@ -5881,8 +5881,6 @@ SDValue LowerVECTOR_SHUFFLEv16i8(ShuffleVectorSDNode *SVOp,
   DebugLoc dl = SVOp->getDebugLoc();
   ArrayRef<int> MaskVals = SVOp->getMask();
 
-  bool V2IsUndef = V2.getOpcode() == ISD::UNDEF;
-
   // If we have SSSE3, case 1 is generated when all result bytes come from
   // one of  the inputs.  Otherwise, case 2 is generated.  If no SSSE3 is
   // present, fall back to case 3.
@@ -5906,7 +5904,11 @@ SDValue LowerVECTOR_SHUFFLEv16i8(ShuffleVectorSDNode *SVOp,
     V1 = DAG.getNode(X86ISD::PSHUFB, dl, MVT::v16i8, V1,
                      DAG.getNode(ISD::BUILD_VECTOR, dl,
                                  MVT::v16i8, &pshufbMask[0], 16));
-    if (V2IsUndef)
+
+    // As PSHUFB will zero elements with negative indices, it's safe to ignore
+    // the 2nd operand if it's undefined or zero.
+    if (V2.getOpcode() == ISD::UNDEF ||
+        ISD::isBuildVectorAllZeros(V2.getNode()))
       return V1;
 
     // Calculate the shuffle mask for the second input, shuffle it, and
