@@ -159,3 +159,13 @@ entry:
   store i8 %3, i8* %old
   ret void
 }
+
+; CHECK: func4
+; This function should not need to use callee-saved registers.
+; rdar://problem/12203728
+; CHECK-NOT: r4
+define i32 @func4(i32* %p) nounwind optsize ssp {
+entry:
+  %0 = atomicrmw add i32* %p, i32 1 monotonic
+  ret i32 %0
+}

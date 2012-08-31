@@ -5418,7 +5418,7 @@ ARMTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
   exitMBB->transferSuccessorsAndUpdatePHIs(BB);
 
   const TargetRegisterClass *TRC = isThumb2 ?
-    (const TargetRegisterClass*)&ARM::tGPRRegClass :
+    (const TargetRegisterClass*)&ARM::rGPRRegClass :
     (const TargetRegisterClass*)&ARM::GPRRegClass;
   unsigned scratch = MRI.createVirtualRegister(TRC);
   unsigned scratch2 = (!BinOpcode) ? incr : MRI.createVirtualRegister(TRC);
@@ -5529,7 +5529,7 @@ ARMTargetLowering::EmitAtomicBinaryMinMax(MachineInstr *MI,
   exitMBB->transferSuccessorsAndUpdatePHIs(BB);
 
   const TargetRegisterClass *TRC = isThumb2 ?
-    (const TargetRegisterClass*)&ARM::tGPRRegClass :
+    (const TargetRegisterClass*)&ARM::rGPRRegClass :
     (const TargetRegisterClass*)&ARM::GPRRegClass;
   unsigned scratch = MRI.createVirtualRegister(TRC);
   unsigned scratch2 = MRI.createVirtualRegister(TRC);
