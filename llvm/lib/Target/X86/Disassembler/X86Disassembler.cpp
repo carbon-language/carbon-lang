@@ -379,6 +379,8 @@ static void translateImmediate(MCInst &mcInst, uint64_t immediate,
   }
 
   switch (type) {
+  case TYPE_XMM32:
+  case TYPE_XMM64:
   case TYPE_XMM128:
     mcInst.addOperand(MCOperand::CreateReg(X86::XMM0 + (immediate >> 4)));
     return;

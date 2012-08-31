@@ -1145,6 +1145,8 @@ OperandEncoding RecognizableInstr::immediateEncodingFromString
   // register IDs in 8-bit immediates nowadays.
   ENCODING("VR256",           ENCODING_IB)
   ENCODING("VR128",           ENCODING_IB)
+  ENCODING("FR32",            ENCODING_IB)
+  ENCODING("FR64",            ENCODING_IB)
   errs() << "Unhandled immediate encoding " << s << "\n";
   llvm_unreachable("Unhandled immediate encoding");
 }

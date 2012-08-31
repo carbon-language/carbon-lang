@@ -1052,7 +1052,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::VSELECT,           MVT::v8i32, Legal);
     setOperationAction(ISD::VSELECT,           MVT::v8f32, Legal);
 
-    if (Subtarget->hasFMA()) {
+    if (Subtarget->hasFMA() || Subtarget->hasFMA4()) {
       setOperationAction(ISD::FMA,             MVT::v8f32, Custom);
       setOperationAction(ISD::FMA,             MVT::v4f64, Custom);
       setOperationAction(ISD::FMA,             MVT::v4f32, Custom);
@@ -15606,7 +15606,8 @@ static SDValue PerformFMACombine(SDNode *N, SelectionDAG &DAG,
     return SDValue();
 
   EVT ScalarVT = VT.getScalarType();
-  if ((ScalarVT != MVT::f32 && ScalarVT != MVT::f64) || !Subtarget->hasFMA())
+  if ((ScalarVT != MVT::f32 && ScalarVT != MVT::f64) ||
+      (!Subtarget->hasFMA() && !Subtarget->hasFMA4()))
     return SDValue();
 
   SDValue A = N->getOperand(0);
@@ -15628,9 +15629,10 @@ static SDValue PerformFMACombine(SDNode *N, SelectionDAG &DAG,
 
   unsigned Opcode;
   if (!NegMul)
-    Opcode = (!NegC)? X86ISD::FMADD : X86ISD::FMSUB;
+    Opcode = (!NegC) ? X86ISD::FMADD : X86ISD::FMSUB;
   else
-    Opcode = (!NegC)? X86ISD::FNMADD : X86ISD::FNMSUB;
+    Opcode = (!NegC) ? X86ISD::FNMADD : X86ISD::FNMSUB;
+
   return DAG.getNode(Opcode, dl, VT, A, B, C);
 }
 
