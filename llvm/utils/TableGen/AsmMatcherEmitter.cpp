@@ -1751,7 +1751,7 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
 
       // Add the handler to the conversion driver function.
       CvtOS << "    case CVT_" << AsmMatchConverter << ":\n"
-            << "      " << AsmMatchConverter << "(Inst, Opcode, Operands);\n"
+            << "      " << AsmMatchConverter << "(Inst, Operands);\n"
             << "      break;\n";
 
       // FIXME: Handle the operand number lookup for custom match functions.
