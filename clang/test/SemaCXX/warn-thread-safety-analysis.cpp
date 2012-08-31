@@ -3119,3 +3119,29 @@ void test() {
 
 } // end namespace ExistentialPatternMatching
 
+
+namespace StringIgnoreTest {
+
+class Foo {
+public:
+  Mutex mu_;
+  void lock()   EXCLUSIVE_LOCK_FUNCTION("");
+  void unlock() UNLOCK_FUNCTION("");
+  void goober() EXCLUSIVE_LOCKS_REQUIRED("");
+  void roober() SHARED_LOCKS_REQUIRED("");
+};
+
+
+class Bar : public Foo {
+public:
+  void bar(Foo* f) {
+    f->unlock();
+    f->goober();
+    f->roober();
+    f->lock();
+  };
+};
+
+} // end namespace StringIgnoreTest
+
+

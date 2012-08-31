@@ -415,14 +415,17 @@ static void checkAttrArgsAreLockableObjs(Sema &S, Decl *D,
     }
 
     if (StringLiteral *StrLit = dyn_cast<StringLiteral>(ArgExp)) {
-      // Ignore empty strings without warnings
-      if (StrLit->getLength() == 0)
+      if (StrLit->getLength() == 0) {
+        // Pass empty strings to the analyzer without warnings.
+        Args.push_back(ArgExp);
         continue;
+      }
 
       // We allow constant strings to be used as a placeholder for expressions
       // that are not valid C++ syntax, but warn that they are ignored.
       S.Diag(Attr.getLoc(), diag::warn_thread_attribute_ignored) <<
         Attr.getName();
+      Args.push_back(ArgExp);
       continue;
     }
 
