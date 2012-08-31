@@ -47,11 +47,6 @@ PrintFunctions("functions", cl::init(true),
                cl::desc("Print function names as well as line "
                         "information for a given address"));
 
-static cl::opt<bool>
-SubprocessMode("subprocess-mode", cl::init(false),
-               cl::desc("Is run as a subprocess (format of the output "
-                        "differs a bit)"));
-
 static StringRef ToolInvocationPath;
 
 static bool error(error_code ec) {
@@ -220,10 +215,7 @@ static void symbolize(const string &module_name,
   outs() << filename <<
          ":" << line_info.getLine() <<
          ":" << line_info.getColumn() <<
-         "\n";
-  if (SubprocessMode) {
-    outs() << "\n";  // Print extra empty line to mark the end of output.
-  }
+         "\n\n"; // Print extra empty line to mark the end of output.
   outs().flush();
 }
 
