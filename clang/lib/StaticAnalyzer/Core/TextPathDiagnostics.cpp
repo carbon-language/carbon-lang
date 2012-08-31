@@ -41,7 +41,6 @@ public:
   PathGenerationScheme getGenerationScheme() const { return Minimal; }
   bool supportsLogicalOpControlFlow() const { return true; }
   bool supportsAllBlockEdges() const { return true; }
-  virtual bool useVerboseDescription() const { return true; }
   virtual bool supportsCrossFileDiagnostics() const { return true; }
 };
 

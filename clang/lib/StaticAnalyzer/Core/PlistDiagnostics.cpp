@@ -47,7 +47,6 @@ namespace {
     PathGenerationScheme getGenerationScheme() const { return Extensive; }
     bool supportsLogicalOpControlFlow() const { return true; }
     bool supportsAllBlockEdges() const { return true; }
-    virtual bool useVerboseDescription() const { return false; }
     virtual bool supportsCrossFileDiagnostics() const {
       return SupportsCrossFileDiagnostics;
     }
@@ -443,7 +442,7 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
 
     // Output the bug type and bug category.
     o << "   <key>description</key>";
-    EmitString(o, D->getDescription()) << '\n';
+    EmitString(o, D->getShortDescription()) << '\n';
     o << "   <key>category</key>";
     EmitString(o, D->getCategory()) << '\n';
     o << "   <key>type</key>";

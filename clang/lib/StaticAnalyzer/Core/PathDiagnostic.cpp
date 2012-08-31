@@ -104,11 +104,12 @@ void PathPieces::flattenTo(PathPieces &Primary, PathPieces &Current,
 PathDiagnostic::~PathDiagnostic() {}
 
 PathDiagnostic::PathDiagnostic(const Decl *declWithIssue,
-                               StringRef bugtype, StringRef desc,
-                               StringRef category)
+                               StringRef bugtype, StringRef verboseDesc,
+                               StringRef shortDesc, StringRef category)
   : DeclWithIssue(declWithIssue),
     BugType(StripTrailingDots(bugtype)),
-    Desc(StripTrailingDots(desc)),
+    VerboseDesc(StripTrailingDots(verboseDesc)),
+    ShortDesc(StripTrailingDots(shortDesc)),
     Category(StripTrailingDots(category)),
     path(pathImpl) {}
 
@@ -227,8 +228,8 @@ struct CompareDiagnostics {
       return false;
     
     // Next, compare by bug description.
-    StringRef XDesc = X->getDescription();
-    StringRef YDesc = Y->getDescription();
+    StringRef XDesc = X->getVerboseDescription();
+    StringRef YDesc = Y->getVerboseDescription();
     if (XDesc < YDesc)
       return true;
     if (XDesc != YDesc)
@@ -271,18 +272,11 @@ void PathDiagnosticConsumer::FlushDiagnostics(
   }
 }
 
-static void ProfileDiagnostic(const PathDiagnostic &PD,
-                              llvm::FoldingSetNodeID &NodeID) {
-  NodeID.AddString(PD.getBugType());
-  NodeID.AddString(PD.getDescription());
-  NodeID.Add(PD.getLocation());
-}
-
 void PathDiagnosticConsumer::FilesMade::addDiagnostic(const PathDiagnostic &PD,
                                                       StringRef ConsumerName,
                                                       StringRef FileName) {
   llvm::FoldingSetNodeID NodeID;
-  ProfileDiagnostic(PD, NodeID);
+  NodeID.Add(PD);
   void *InsertPos;
   PDFileEntry *Entry = FindNodeOrInsertPos(NodeID, InsertPos);
   if (!Entry) {
@@ -303,7 +297,7 @@ void PathDiagnosticConsumer::FilesMade::addDiagnostic(const PathDiagnostic &PD,
 PathDiagnosticConsumer::PDFileEntry::ConsumerFiles *
 PathDiagnosticConsumer::FilesMade::getFiles(const PathDiagnostic &PD) {
   llvm::FoldingSetNodeID NodeID;
-  ProfileDiagnostic(PD, NodeID);
+  NodeID.Add(PD);
   void *InsertPos;
   PDFileEntry *Entry = FindNodeOrInsertPos(NodeID, InsertPos);
   if (!Entry)
@@ -627,24 +621,6 @@ void PathDiagnosticLocation::flatten() {
   }
 }
 
-PathDiagnosticLocation PathDiagnostic::getLocation() const {
-  assert(path.size() > 0 &&
-         "getLocation() requires a non-empty PathDiagnostic.");
-  
-  PathDiagnosticPiece *p = path.rbegin()->getPtr();
-  
-  while (true) {
-    if (PathDiagnosticCallPiece *cp = dyn_cast<PathDiagnosticCallPiece>(p)) {
-      assert(!cp->path.empty());
-      p = cp->path.rbegin()->getPtr();
-      continue;
-    }
-    break;
-  }
-  
-  return p->getLocation();
-}
-
 //===----------------------------------------------------------------------===//
 // Manipulation of PathDiagnosticCallPieces.
 //===----------------------------------------------------------------------===//
@@ -793,10 +769,9 @@ void PathDiagnosticMacroPiece::Profile(llvm::FoldingSetNodeID &ID) const {
 }
 
 void PathDiagnostic::Profile(llvm::FoldingSetNodeID &ID) const {
-  if (!path.empty())
-    getLocation().Profile(ID);
+  ID.Add(getLocation());
   ID.AddString(BugType);
-  ID.AddString(Desc);
+  ID.AddString(VerboseDesc);
   ID.AddString(Category);
 }
 

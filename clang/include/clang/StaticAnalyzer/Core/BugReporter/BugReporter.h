@@ -163,8 +163,10 @@ public:
 
   const StringRef getDescription() const { return Description; }
 
-  const StringRef getShortDescription() const {
-    return ShortDescription.empty() ? Description : ShortDescription;
+  const StringRef getShortDescription(bool UseFallback = true) const {
+    if (ShortDescription.empty() && UseFallback)
+      return Description;
+    return ShortDescription;
   }
 
   /// Indicates whether or not any path pruning should take place

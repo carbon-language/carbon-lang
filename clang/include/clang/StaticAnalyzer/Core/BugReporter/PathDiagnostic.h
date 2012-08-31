@@ -97,7 +97,6 @@ public:
   virtual PathGenerationScheme getGenerationScheme() const { return Minimal; }
   virtual bool supportsLogicalOpControlFlow() const { return false; }
   virtual bool supportsAllBlockEdges() const { return false; }
-  virtual bool useVerboseDescription() const { return true; }
   
   /// Return true if the PathDiagnosticConsumer supports individual
   /// PathDiagnostics that span multiple files.
@@ -653,14 +652,22 @@ public:
 class PathDiagnostic : public llvm::FoldingSetNode {
   const Decl *DeclWithIssue;
   std::string BugType;
-  std::string Desc;
+  std::string VerboseDesc;
+  std::string ShortDesc;
   std::string Category;
   std::deque<std::string> OtherDesc;
+  PathDiagnosticLocation Loc;
   PathPieces pathImpl;
   llvm::SmallVector<PathPieces *, 3> pathStack;
   
   PathDiagnostic(); // Do not implement.
 public:
+  PathDiagnostic(const Decl *DeclWithIssue, StringRef bugtype,
+                 StringRef verboseDesc, StringRef shortDesc,
+                 StringRef category);
+
+  ~PathDiagnostic();
+  
   const PathPieces &path;
 
   /// Return the path currently used by builders for constructing the 
@@ -683,16 +690,24 @@ public:
   void popActivePath() { if (!pathStack.empty()) pathStack.pop_back(); }
 
   bool isWithinCall() const { return !pathStack.empty(); }
+
+  void setEndOfPath(PathDiagnosticPiece *EndPiece) {
+    assert(!Loc.isValid() && "End location already set!");
+    Loc = EndPiece->getLocation();
+    assert(Loc.isValid() && "Invalid location for end-of-path piece");
+    getActivePath().push_back(EndPiece);
+  }
+
+  void resetPath() {
+    pathStack.clear();
+    pathImpl.clear();
+    Loc = PathDiagnosticLocation();
+  }
   
-  //  PathDiagnostic();
-  PathDiagnostic(const Decl *DeclWithIssue,
-                 StringRef bugtype,
-                 StringRef desc,
-                 StringRef category);
-
-  ~PathDiagnostic();
-
-  StringRef getDescription() const { return Desc; }
+  StringRef getVerboseDescription() const { return VerboseDesc; }
+  StringRef getShortDescription() const {
+    return ShortDesc.empty() ? VerboseDesc : ShortDesc;
+  }
   StringRef getBugType() const { return BugType; }
   StringRef getCategory() const { return Category; }
 
@@ -706,15 +721,27 @@ public:
   meta_iterator meta_end() const { return OtherDesc.end(); }
   void addMeta(StringRef s) { OtherDesc.push_back(s); }
 
-  PathDiagnosticLocation getLocation() const;
+  PathDiagnosticLocation getLocation() const {
+    assert(Loc.isValid() && "No end-of-path location set yet!");
+    return Loc;
+  }
 
   void flattenLocations() {
+    Loc.flatten();
     for (PathPieces::iterator I = pathImpl.begin(), E = pathImpl.end(); 
          I != E; ++I) (*I)->flattenLocations();
   }
-  
+
+  /// Profiles the diagnostic, independent of the path it references.
+  ///
+  /// This can be used to merge diagnostics that refer to the same issue
+  /// along different paths.
   void Profile(llvm::FoldingSetNodeID &ID) const;
-  
+
+  /// Profiles the diagnostic, including its path.
+  ///
+  /// Two diagnostics with the same issue along different paths will generate
+  /// different profiles.
   void FullProfile(llvm::FoldingSetNodeID &ID) const;
 };  
 

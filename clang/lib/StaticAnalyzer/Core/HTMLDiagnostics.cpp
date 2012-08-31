@@ -189,7 +189,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
       << (*path.rbegin())->getLocation().asLocation().getExpansionColumnNumber()
       << "</a></td></tr>\n"
          "<tr><td class=\"rowname\">Description:</td><td>"
-      << D.getDescription() << "</td></tr>\n";
+      << D.getVerboseDescription() << "</td></tr>\n";
 
     // Output any other meta data.
 
@@ -209,15 +209,15 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
     std::string s;
     llvm::raw_string_ostream os(s);
 
-    const std::string& BugDesc = D.getDescription();
+    StringRef BugDesc = D.getVerboseDescription();
     if (!BugDesc.empty())
       os << "\n<!-- BUGDESC " << BugDesc << " -->\n";
 
-    const std::string& BugType = D.getBugType();
+    StringRef BugType = D.getBugType();
     if (!BugType.empty())
       os << "\n<!-- BUGTYPE " << BugType << " -->\n";
 
-    const std::string& BugCategory = D.getCategory();
+    StringRef BugCategory = D.getCategory();
     if (!BugCategory.empty())
       os << "\n<!-- BUGCATEGORY " << BugCategory << " -->\n";
 
