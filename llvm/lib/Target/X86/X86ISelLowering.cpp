@@ -4977,6 +4977,18 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, SmallVectorImpl<SDValue> &Elts,
                                 LDBase->getAlignment(),
                                 false/*isVolatile*/, true/*ReadMem*/,
                                 false/*WriteMem*/);
+
+    // Make sure the newly-created LOAD is in the same position as LDBase in
+    // terms of dependency. We create a TokenFactor for LDBase and ResNode, and
+    // update uses of LDBase's output chain to use the TokenFactor.
+    if (LDBase->hasAnyUseOfValue(1)) {
+      SDValue NewChain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other,
+                             SDValue(LDBase, 1), SDValue(ResNode.getNode(), 1));
+      DAG.ReplaceAllUsesOfValueWith(SDValue(LDBase, 1), NewChain);
+      DAG.UpdateNodeOperands(NewChain.getNode(), SDValue(LDBase, 1),
+                             SDValue(ResNode.getNode(), 1));
+    }
+
     return DAG.getNode(ISD::BITCAST, DL, VT, ResNode);
   }
   return SDValue();
