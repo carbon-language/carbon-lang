@@ -28,8 +28,8 @@ class CommandTraits;
 
 /// Doxygen comment parser.
 class Parser {
-  Parser(const Parser&);         // DO NOT IMPLEMENT
-  void operator=(const Parser&); // DO NOT IMPLEMENT
+  Parser(const Parser &) LLVM_DELETED_FUNCTION;
+  void operator=(const Parser &) LLVM_DELETED_FUNCTION;
 
   friend class TextTokenRetokenizer;
 
