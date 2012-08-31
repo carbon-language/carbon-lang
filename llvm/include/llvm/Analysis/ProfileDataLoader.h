@@ -28,11 +28,9 @@ class ModulePass;
 class Function;
 class BasicBlock;
 
-// Helpers for dumping edges to dbgs().
+// Helper for dumping edges to dbgs().
 raw_ostream& operator<<(raw_ostream &O, std::pair<const BasicBlock *,
                                                   const BasicBlock *> E);
-raw_ostream& operator<<(raw_ostream &O, const BasicBlock *BB);
-raw_ostream& operator<<(raw_ostream &O, const Function *F);
 
 /// \brief The ProfileDataT<FType, BType> class is used to store the mapping of
 /// profiling data to control flow edges.
@@ -40,12 +38,12 @@ raw_ostream& operator<<(raw_ostream &O, const Function *F);
 /// An edge is defined by its source and sink basic blocks.
 template<class FType, class BType>
 class ProfileDataT {
-  public:
+public:
   // The profiling information defines an Edge by its source and sink basic
   // blocks.
   typedef std::pair<const BType*, const BType*> Edge;
 
-  private:
+private:
   typedef DenseMap<Edge, unsigned> EdgeWeights;
 
   /// \brief Count the number of times a transition between two blocks is
@@ -55,11 +53,7 @@ class ProfileDataT {
   /// entry block to indicate how many times the function was entered.
   DenseMap<const FType*, EdgeWeights> EdgeInformation;
 
-  public:
-  static char ID; // Class identification, replacement for typeinfo
-  ProfileDataT() {};
-  ~ProfileDataT() {};
-
+public:
   /// getFunction() - Returns the Function for an Edge.
   static const FType *getFunction(Edge e) {
     // e.first may be NULL
@@ -90,7 +84,7 @@ class ProfileDataT {
   /// addEdgeWeight - Add 'weight' to the already stored execution count for
   /// this edge.
   void addEdgeWeight(Edge e, unsigned weight) {
-      EdgeInformation[getFunction(e)][e] += weight;
+    EdgeInformation[getFunction(e)][e] += weight;
   }
 };
 
@@ -136,7 +130,7 @@ public:
 
   /// getRawEdgeCounts - Return the raw profiling data, this is just a list of
   /// numbers with no mappings to edges.
-  const SmallVector<unsigned, 32> &getRawEdgeCounts() const { return EdgeCounts; }
+  ArrayRef<unsigned> getRawEdgeCounts() const { return EdgeCounts; }
 };
 
 /// createProfileMetadataLoaderPass - This function returns a Pass that loads
