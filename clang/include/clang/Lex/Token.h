@@ -76,7 +76,8 @@ public:
     DisableExpand = 0x04,  // This identifier may never be macro expanded.
     NeedsCleaning = 0x08,   // Contained an escaped newline or trigraph.
     LeadingEmptyMacro = 0x10, // Empty macro exists before this token.
-    HasUDSuffix = 0x20     // This string or character literal has a ud-suffix.
+    HasUDSuffix = 0x20, // This string or character literal has a ud-suffix.
+    IgnoredComma = 0x40 // Flags ignored commas from nested macro expansions.
   };
 
   tok::TokenKind getKind() const { return (tok::TokenKind)Kind; }

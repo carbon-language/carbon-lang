@@ -403,7 +403,11 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
         }
       } else if (Tok.is(tok::l_paren)) {
         ++NumParens;
-      } else if (Tok.is(tok::comma) && NumParens == 0) {
+      // In Microsoft-compatibility mode, commas from nested macro expan-
+      // sions should not be considered as argument separators. We test
+      // for this with the IgnoredComma token flag.
+      } else if (Tok.is(tok::comma)
+          && !(Tok.getFlags() & Token::IgnoredComma) && NumParens == 0) {
         // Comma ends this argument if there are more fixed arguments expected.
         // However, if this is a variadic macro, and this is part of the
         // variadic part, then the comma is just an argument token.
