@@ -54,7 +54,7 @@ class CrashLog(symbolication.Symbolicator):
     """Class that does parses darwin crash logs"""
     thread_state_regex = re.compile('^Thread ([0-9]+) crashed with')
     thread_regex = re.compile('^Thread ([0-9]+)([^:]*):(.*)')
-    frame_regex = re.compile('^([0-9]+) +([^ ]+) *\t(0x[0-9a-fA-F]+) +(.*)')
+    frame_regex = re.compile('^([0-9]+) +([^ ]+) *\t?(0x[0-9a-fA-F]+) +(.*)')
     image_regex_uuid = re.compile('(0x[0-9a-fA-F]+)[- ]+(0x[0-9a-fA-F]+) +[+]?([^ ]+) +([^<]+)<([-0-9a-fA-F]+)> (.*)');
     image_regex_no_uuid = re.compile('(0x[0-9a-fA-F]+)[- ]+(0x[0-9a-fA-F]+) +[+]?([^ ]+) +([^/]+)/(.*)');
     empty_line_regex = re.compile('^$')
