@@ -200,6 +200,7 @@ defm VFNMSUB : fma3s<0x9F, 0xAF, 0xBF, "vfnmsub", int_x86_fma_vfnmsub_ss,
 multiclass fma4s<bits<8> opc, string OpcodeStr, RegisterClass RC,
                  X86MemOperand x86memop, ValueType OpVT, SDNode OpNode,
                  PatFrag mem_frag> {
+  let isCommutable = 1 in
   def rr : FMA4<opc, MRMSrcReg, (outs RC:$dst),
            (ins RC:$src1, RC:$src2, RC:$src3),
            !strconcat(OpcodeStr,
@@ -228,6 +229,7 @@ let isCodeGenOnly = 1 in
 
 multiclass fma4s_int<bits<8> opc, string OpcodeStr, Operand memop,
                      ComplexPattern mem_cpat, Intrinsic Int> {
+  let isCommutable = 1 in
   def rr_Int : FMA4<opc, MRMSrcReg, (outs VR128:$dst),
                (ins VR128:$src1, VR128:$src2, VR128:$src3),
                !strconcat(OpcodeStr,
@@ -251,6 +253,7 @@ multiclass fma4s_int<bits<8> opc, string OpcodeStr, Operand memop,
 multiclass fma4p<bits<8> opc, string OpcodeStr, SDNode OpNode,
                  ValueType OpVT128, ValueType OpVT256,
                  PatFrag ld_frag128, PatFrag ld_frag256> {
+  let isCommutable = 1 in
   def rr : FMA4<opc, MRMSrcReg, (outs VR128:$dst),
            (ins VR128:$src1, VR128:$src2, VR128:$src3),
            !strconcat(OpcodeStr,
@@ -270,6 +273,7 @@ multiclass fma4p<bits<8> opc, string OpcodeStr, SDNode OpNode,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            [(set VR128:$dst,
              (OpNode VR128:$src1, (ld_frag128 addr:$src2), VR128:$src3))]>;
+  let isCommutable = 1 in
   def rrY : FMA4<opc, MRMSrcReg, (outs VR256:$dst),
            (ins VR256:$src1, VR256:$src2, VR256:$src3),
            !strconcat(OpcodeStr,
