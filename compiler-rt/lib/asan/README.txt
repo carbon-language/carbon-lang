@@ -15,7 +15,7 @@ scripts/*        : Helper scripts.
 Temporary build instructions (verified on linux):
 
 cd lib/asan
-make -f Makefile.old get_third_party  # gets googletest and cpplint
+make -f Makefile.old get_third_party  # gets googletest
 make -f Makefile.old test -j 8 CLANG_BUILD=/path/to/Release+Asserts
 # Optional:
 # make -f Makefile.old install # installs clang and rt to lib/asan_clang_linux

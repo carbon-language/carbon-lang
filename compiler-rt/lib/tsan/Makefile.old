@@ -34,7 +34,6 @@ help:
 	@ echo "The most useful targets are:"
 	@ echo "  make install_deps  # Install third-party dependencies required for building"
 	@ echo "  make presubmit     # Run it every time before committing"
-	@ echo "  make lint          # Run the style checker"
 	@ echo
 	@ echo "For more info, see http://code.google.com/p/data-race-test/wiki/ThreadSanitizer2"
 
@@ -57,7 +56,6 @@ run: all
 	./output_tests/test_output.sh
 
 presubmit:
-	$(MAKE) -f Makefile.old lint -j 4
 	# Debug build with clang.
 	$(MAKE) -f Makefile.old clean
 	$(MAKE) -f Makefile.old run DEBUG=1 -j 16 CC=clang CXX=clang++
@@ -73,27 +71,12 @@ presubmit:
 	./check_analyze.sh
 	@ echo PRESUBMIT PASSED
 
-RTL_LINT_FITLER=-legal/copyright,-build/include,-readability/casting,-build/header_guard,-build/namespaces
-
-lint: lint_tsan lint_tests
-lint_tsan:
-	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FITLER) rtl/*.{cc,h} \
-        ../sanitizer_common/*.{cc,h}
-lint_tests:
-	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FITLER) \
-        rtl_tests/*.{cc,h} unit_tests/*.cc ../sanitizer_common/tests/*.cc
-
 install_deps:
 	rm -rf third_party
 	mkdir third_party
 	(cd third_party && \
-	svn co -r613 http://googletest.googlecode.com/svn/trunk googletest && \
-	svn co -r82 http://google-styleguide.googlecode.com/svn/trunk/cpplint cpplint \
+	svn co -r613 http://googletest.googlecode.com/svn/trunk googletest \
         )
-
-# Remove verbose printf from lint. Not strictly necessary.
-hack_cpplint:
-	sed -i "s/  sys.stderr.write('Done processing.*//g" third_party/cpplint/cpplint.py
 
 $(GTEST_LIB):
 	mkdir -p $(GTEST_BUILD_DIR) && \

@@ -196,7 +196,7 @@ GTEST_LIB=$(GTEST_MAKE_DIR)/gtest-all.o
 
 all: b64 b32
 
-test: t64 t32 output_tests lint
+test: t64 t32 output_tests
 	@echo "ALL TESTS PASSED"
 
 output_tests: b32 b64
@@ -320,27 +320,11 @@ $(GTEST_LIB):
 	$(MAKE) -f ../make/Makefile CXXFLAGS="$(PIE) $(CFLAGS) -g -w" \
 	  CXX="$(CLANG_CXX)"
 
-RTL_LINT_FILTER=-readability/casting,-readability/check,-build/include,-build/header_guard,-build/class,-legal/copyright,-build/namespaces
-# TODO(kcc): remove these filters one by one
-TEST_LINT_FILTER=-readability/casting,-build/include,-legal/copyright,-whitespace/newline,-runtime/sizeof,-runtime/int,-runtime/printf
-
-LLVM_LINT_FILTER=-,+whitespace
-
-ADDRESS_SANITIZER_CPP=../../../../lib/Transforms/Instrumentation/AddressSanitizer.cpp
-
-lint:
-	third_party/cpplint/cpplint.py --filter=$(LLVM_LINT_FILTER) $(ADDRESS_SANITIZER_CPP)
-	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FILTER) asan_*.cc asan_*.h
-	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FILTER) $(INTERCEPTION)/interception*.h $(INTERCEPTION)/interception*.cc
-	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FILTER) $(COMMON)/sanitizer_*.h $(COMMON)/sanitizer_*.cc
-	third_party/cpplint/cpplint.py --filter=$(TEST_LINT_FILTER) tests/*.cc output_tests/*.cc
-
 get_third_party:
 	rm -rf third_party
 	mkdir third_party
 	(cd third_party && \
-	svn co -r375        http://googletest.googlecode.com/svn/trunk googletest && \
-	svn co -r69 http://google-styleguide.googlecode.com/svn/trunk/cpplint cpplint \
+	svn co -r375        http://googletest.googlecode.com/svn/trunk googletest \
 	)
 
 clean:
