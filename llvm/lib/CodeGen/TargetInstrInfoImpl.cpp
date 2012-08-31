@@ -99,17 +99,8 @@ MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI,
 
   if (NewMI) {
     // Create a new instruction.
-    bool Reg0IsDead = HasDef ? MI->getOperand(0).isDead() : false;
     MachineFunction &MF = *MI->getParent()->getParent();
-    if (HasDef)
-      return BuildMI(MF, MI->getDebugLoc(), MI->getDesc())
-        .addReg(Reg0, RegState::Define | getDeadRegState(Reg0IsDead), SubReg0)
-        .addReg(Reg2, getKillRegState(Reg2IsKill), SubReg2)
-        .addReg(Reg1, getKillRegState(Reg1IsKill), SubReg1);
-    else
-      return BuildMI(MF, MI->getDebugLoc(), MI->getDesc())
-        .addReg(Reg2, getKillRegState(Reg2IsKill), SubReg2)
-        .addReg(Reg1, getKillRegState(Reg1IsKill), SubReg1);
+    MI = MF.CloneMachineInstr(MI);
   }
 
   if (HasDef) {
