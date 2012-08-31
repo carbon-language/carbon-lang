@@ -4,4 +4,3 @@
 # define P(x, y) {x, y}
 # define M(x, y) M2(x, P(x, y))
 M(a, b) // CHECK: a + {a, b}
-
