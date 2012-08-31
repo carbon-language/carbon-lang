@@ -8,10 +8,52 @@
 #   export PYTHONPATH=/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Resources/Python
 #----------------------------------------------------------------------
 
-import lldb
+import commands
 import optparse
 import os
+import platform
 import sys
+
+#----------------------------------------------------------------------
+# Code that auto imports LLDB
+#----------------------------------------------------------------------
+try: 
+    # Just try for LLDB in case PYTHONPATH is already correctly setup
+    import lldb
+except ImportError:
+    lldb_python_dirs = list()
+    # lldb is not in the PYTHONPATH, try some defaults for the current platform
+    platform_system = platform.system()
+    if platform_system == 'Darwin':
+        # On Darwin, try the currently selected Xcode directory
+        xcode_dir = commands.getoutput("xcode-select --print-path")
+        if xcode_dir:
+            lldb_python_dirs.append(os.path.realpath(xcode_dir + '/../SharedFrameworks/LLDB.framework/Resources/Python'))
+            lldb_python_dirs.append(xcode_dir + '/Library/PrivateFrameworks/LLDB.framework/Resources/Python')
+        lldb_python_dirs.append('/System/Library/PrivateFrameworks/LLDB.framework/Resources/Python')
+    success = False
+    for lldb_python_dir in lldb_python_dirs:
+        if os.path.exists(lldb_python_dir):
+            if not (sys.path.__contains__(lldb_python_dir)):
+                sys.path.append(lldb_python_dir)
+                try: 
+                    import lldb
+                except ImportError:
+                    pass
+                else:
+                    print 'imported lldb from: "%s"' % (lldb_python_dir)
+                    success = True
+                    break
+    if not success:
+        print "error: couldn't locate the 'lldb' module, please set PYTHONPATH correctly"
+        sys.exit(1)
+
+
+
+
+
+
+
 
 def print_threads(process, options):
     if options.show_threads:
@@ -31,16 +73,28 @@ def run_commands(command_interpreter, commands):
     
 def main(argv):
     description='''Debugs a program using the LLDB python API and uses asynchronous broadcast events to watch for process state changes.'''
-    parser = optparse.OptionParser(description=description, prog='process_events',usage='usage: process_events [options] program [arg1 arg2]')
+    epilog='''Examples:
+
+#----------------------------------------------------------------------
+# Run "/bin/ls" with the arguments "-lAF /tmp/", and set a breakpoint 
+# at "malloc" and backtrace and read all registers each time we stop
+#----------------------------------------------------------------------
+% ./process_events.py --breakpoint malloc --stop-command bt --stop-command 'register read' -- /bin/ls -lAF /tmp/
+
+'''
+    optparse.OptionParser.format_epilog = lambda self, formatter: self.epilog
+    parser = optparse.OptionParser(description=description, prog='process_events',usage='usage: process_events [options] program [arg1 arg2]', epilog=epilog)
     parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help="Enable verbose logging.", default=False)
-    parser.add_option('-b', '--breakpoint', action='append', type='string', dest='breakpoints', help='Breakpoint commands to create after the target has been created, the values will be sent to the "_regexp-break" command.')
-    parser.add_option('-a', '--arch', type='string', dest='arch', help='The architecture to use when creating the debug target.', default=lldb.LLDB_ARCH_DEFAULT)
-    parser.add_option('-s', '--stop-command', action='append', type='string', dest='stop_commands', help='Commands to run each time the process stops.', default=[])
-    parser.add_option('-S', '--crash-command', action='append', type='string', dest='crash_commands', help='Commands to run in case the process crashes.', default=[])
+    parser.add_option('-b', '--breakpoint', action='append', type='string', metavar='BPEXPR', dest='breakpoints', help='Breakpoint commands to create after the target has been created, the values will be sent to the "_regexp-break" command which supports breakpoints by name, file:line, and address.')
+    parser.add_option('-a', '--arch', type='string', dest='arch', help='The architecture to use when creating the debug target.', default=None)
+    parser.add_option('-l', '--launch-command', action='append', type='string', metavar='CMD', dest='launch_commands', help='LLDB command interpreter commands to run once after the process has launched. This option can be specified more than once.', default=[])
+    parser.add_option('-s', '--stop-command', action='append', type='string', metavar='CMD', dest='stop_commands', help='LLDB command interpreter commands to run each time the process stops. This option can be specified more than once.', default=[])
+    parser.add_option('-c', '--crash-command', action='append', type='string', metavar='CMD', dest='crash_commands', help='LLDB command interpreter commands to run in case the process crashes. This option can be specified more than once.', default=[])
+    parser.add_option('-x', '--exit-command', action='append', type='string', metavar='CMD', dest='exit_commands', help='LLDB command interpreter commands to run once after the process has exited. This option can be specified more than once.', default=[])
     parser.add_option('-T', '--no-threads', action='store_false', dest='show_threads', help="Don't show threads when process stops.", default=True)
-    parser.add_option('-e', '--no_stop-on-error', action='store_false', dest='stop_on_error', help="Stop executing stop or crash commands if the command returns an error.", default=True)
-    parser.add_option('-c', '--run-count', type='int', dest='run_count', help='How many times to run the process in case the process exits.', default=1)
-    parser.add_option('-t', '--event-timeout', type='int', dest='event_timeout', help='Specify the timeout in seconds to wait for process state change events.', default=5)
+    parser.add_option('-e', '--ignore-errors', action='store_false', dest='stop_on_error', help="Don't stop executing LLDB commands if the command returns an error. This applies to all of the LLDB command interpreter commands that get run for launch, stop, crash and exit.", default=True)
+    parser.add_option('-n', '--run-count', type='int', dest='run_count', metavar='N', help='How many times to run the process in case the process exits.', default=1)
+    parser.add_option('-t', '--event-timeout', type='int', dest='event_timeout', metavar='SEC', help='Specify the timeout in seconds to wait for process state change events.', default=5)
     try:
         (options, args) = parser.parse_args(argv)
     except:
@@ -50,11 +104,10 @@ def main(argv):
         sys.exit(1)
     
     exe = args.pop(0)
-    
+
     # Create a new debugger instance
     debugger = lldb.SBDebugger.Create()
     command_interpreter = debugger.GetCommandInterpreter()
-    return_obj = lldb.SBCommandReturnObject()
     # Create a target from a file and arch
     print "Creating a target for '%s'" % exe
     
@@ -63,9 +116,10 @@ def main(argv):
     if target:
         
         # Set any breakpoints that were specified in the args
-        for bp in options.breakpoints:
-            command_interpreter.HandleCommand( "_regexp-break %s" % (bp), return_obj )
-            print return_obj            
+        if options.breakpoints:
+            for bp in options.breakpoints:
+                debugger.HandleCommand( "_regexp-break %s" % (bp))
+            run_commands(command_interpreter, ['breakpoint list'])
         
         for run_idx in range(options.run_count):
             # Launch the process. Since we specified synchronous mode, we won't return
@@ -92,12 +146,13 @@ def main(argv):
                         if state == lldb.eStateStopped:
                             if stop_idx == 0:
                                 print "process %u launched" % (pid)
+                                run_commands (command_interpreter, options.launch_commands)
                             else:
                                 if options.verbose:
                                     print "process %u stopped" % (pid)
+                                run_commands (command_interpreter, options.stop_commands)
                             stop_idx += 1
                             print_threads (process, options)
-                            run_commands (command_interpreter, options.stop_commands)
                             process.Continue()
                         elif state == lldb.eStateExited:
                             exit_desc = process.GetExitDescription()
@@ -105,6 +160,7 @@ def main(argv):
                                 print "process %u exited with status %u: %s" % (pid, process.GetExitStatus (), exit_desc)
                             else:
                                 print "process %u exited with status %u" % (pid, process.GetExitStatus ())
+                            run_commands (command_interpreter, options.exit_commands)
                             done = True
                         elif state == lldb.eStateCrashed:
                             print "process %u crashed" % (pid)
