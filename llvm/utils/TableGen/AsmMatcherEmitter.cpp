@@ -1678,12 +1678,12 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
   std::string ConvertFnBody;
   raw_string_ostream CvtOS(ConvertFnBody);
   // Start the unified conversion function.
-  CvtOS << "bool " << Target.getName() << ClassName << "::\n"
+  CvtOS << "void " << Target.getName() << ClassName << "::\n"
         << "ConvertToMCInst(unsigned Kind, MCInst &Inst, "
         << "unsigned Opcode,\n"
         << "                const SmallVectorImpl<MCParsedAsmOperand*"
         << "> &Operands) {\n"
-        << "  if (Kind >= CVT_NUM_SIGNATURES) return false;\n"
+        << "  assert(Kind < CVT_NUM_SIGNATURES && \"Invalid signature!\");\n"
         << "  uint8_t *Converter = ConversionTable[Kind];\n"
         << "  Inst.setOpcode(Opcode);\n"
         << "  for (uint8_t *p = Converter; *p; p+= 2) {\n"
@@ -1700,11 +1700,11 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
   std::string OperandFnBody;
   raw_string_ostream OpOS(OperandFnBody);
   // Start the operand number lookup function.
-  OpOS << "bool " << Target.getName() << ClassName << "::\n"
+  OpOS << "void " << Target.getName() << ClassName << "::\n"
        << "GetMCInstOperandNum(unsigned Kind, MCInst &Inst,\n"
        << "                 const SmallVectorImpl<MCParsedAsmOperand*> &Operands,"
        << "\n                    unsigned OperandNum, unsigned &MCOperandNum) {\n"
-       << "  if (Kind >= CVT_NUM_SIGNATURES) return false;\n"
+       << "  assert(Kind < CVT_NUM_SIGNATURES && \"Invalid signature!\");\n"
        << "  MCOperandNum = 0;\n"
        << "  uint8_t *Converter = ConversionTable[Kind];\n"
        << "  for (uint8_t *p = Converter; *p; p+= 2) {\n"
@@ -1751,8 +1751,8 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
 
       // Add the handler to the conversion driver function.
       CvtOS << "    case CVT_" << AsmMatchConverter << ":\n"
-            << "      return " << AsmMatchConverter
-            << "(Inst, Opcode, Operands);\n";
+            << "      " << AsmMatchConverter << "(Inst, Opcode, Operands);\n"
+            << "      break;\n";
 
       // FIXME: Handle the operand number lookup for custom match functions.
       continue;
@@ -1899,10 +1899,10 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
   }
 
   // Finish up the converter driver function.
-  CvtOS << "    }\n  }\n  return true;\n}\n\n";
+  CvtOS << "    }\n  }\n  return;\n}\n\n";
 
   // Finish up the operand number lookup function.
-  OpOS << "    }\n  }\n  return true;\n}\n\n";
+  OpOS << "    }\n  }\n  return;\n}\n\n";
 
   OS << "namespace {\n";
 
@@ -2576,11 +2576,11 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  // This should be included into the middle of the declaration of\n";
   OS << "  // your subclasses implementation of MCTargetAsmParser.\n";
   OS << "  unsigned ComputeAvailableFeatures(uint64_t FeatureBits) const;\n";
-  OS << "  bool ConvertToMCInst(unsigned Kind, MCInst &Inst, "
+  OS << "  void ConvertToMCInst(unsigned Kind, MCInst &Inst, "
      << "unsigned Opcode,\n"
      << "                       const SmallVectorImpl<MCParsedAsmOperand*> "
      << "&Operands);\n";
-  OS << "  bool GetMCInstOperandNum(unsigned Kind, MCInst &Inst,\n"
+  OS << "  void GetMCInstOperandNum(unsigned Kind, MCInst &Inst,\n"
      << "                           const SmallVectorImpl<MCParsedAsmOperand*> "
      << "&Operands,\n                           unsigned OperandNum, unsigned "
      << "&MCOperandNum);\n";
@@ -2864,9 +2864,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "\n";
   OS << "    // We have selected a definite instruction, convert the parsed\n"
      << "    // operands into the appropriate MCInst.\n";
-  OS << "    if (!ConvertToMCInst(it->ConvertFn, Inst,\n"
-     << "                         it->Opcode, Operands))\n";
-  OS << "      return Match_ConversionFail;\n";
+  OS << "    ConvertToMCInst(it->ConvertFn, Inst, it->Opcode, Operands);\n";
   OS << "\n";
 
   // Verify the instruction with the target-specific match predicate function.
