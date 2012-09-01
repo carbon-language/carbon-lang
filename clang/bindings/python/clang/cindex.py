@@ -2423,424 +2423,572 @@ callbacks['translation_unit_includes'] = CFUNCTYPE(None, c_object_p,
         POINTER(SourceLocation), c_uint, py_object)
 callbacks['cursor_visit'] = CFUNCTYPE(c_int, Cursor, Cursor, py_object)
 
+# Functions strictly alphabetical order.
+functionList = [
+  ("clang_annotateTokens",
+   [TranslationUnit, POINTER(Token), c_uint, POINTER(Cursor)]),
+
+  ("clang_CompilationDatabase_dispose",
+   [c_object_p]),
+
+  ("clang_CompilationDatabase_fromDirectory",
+   [c_char_p, POINTER(c_uint)],
+   c_object_p,
+   CompilationDatabase.from_result),
+
+  ("clang_CompilationDatabase_getCompileCommands",
+   [c_object_p, c_char_p],
+   c_object_p,
+   CompileCommands.from_result),
+
+  ("clang_CompileCommands_dispose",
+   [c_object_p]),
+
+  ("clang_CompileCommands_getCommand",
+   [c_object_p, c_uint],
+   c_object_p),
+
+  ("clang_CompileCommands_getSize",
+   [c_object_p],
+   c_uint),
+
+  ("clang_CompileCommand_getArg",
+   [c_object_p, c_uint],
+   _CXString,
+   _CXString.from_result),
+
+  ("clang_CompileCommand_getDirectory",
+   [c_object_p],
+   _CXString,
+   _CXString.from_result),
+
+  ("clang_CompileCommand_getNumArgs",
+   [c_object_p],
+   c_uint),
+
+  ("clang_codeCompleteAt",
+   [TranslationUnit, c_char_p, c_int, c_int, c_void_p, c_int, c_int],
+   POINTER(CCRStructure)),
+
+  ("clang_codeCompleteGetDiagnostic",
+   [CodeCompletionResults, c_int],
+   Diagnostic),
+
+  ("clang_codeCompleteGetNumDiagnostics",
+   [CodeCompletionResults],
+   c_int),
+
+  ("clang_createIndex",
+   [c_int, c_int],
+   c_object_p),
+
+  ("clang_createTranslationUnit",
+   [Index, c_char_p],
+   c_object_p),
+
+  ("clang_CXXMethod_isStatic",
+   [Cursor],
+   bool),
+
+  ("clang_CXXMethod_isVirtual",
+   [Cursor],
+   bool),
+
+  ("clang_defaultSaveOptions",
+   [TranslationUnit],
+   c_uint),
+
+  ("clang_disposeCodeCompleteResults",
+   [CodeCompletionResults]),
+
+# ("clang_disposeCXTUResourceUsage",
+#  [CXTUResourceUsage]),
+
+  ("clang_disposeDiagnostic",
+   [Diagnostic]),
+
+  ("clang_disposeIndex",
+   [Index]),
+
+  ("clang_disposeString",
+   [_CXString]),
+
+  ("clang_disposeTokens",
+   [TranslationUnit, POINTER(Token), c_uint]),
+
+  ("clang_disposeTranslationUnit",
+   [TranslationUnit]),
+
+  ("clang_equalCursors",
+   [Cursor, Cursor],
+   bool),
+
+  ("clang_equalLocations",
+   [SourceLocation, SourceLocation],
+   bool),
+
+  ("clang_equalRanges",
+   [SourceRange, SourceRange],
+   bool),
+
+  ("clang_equalTypes",
+   [Type, Type],
+   bool),
+
+  ("clang_getArgType",
+   [Type, c_uint],
+   Type,
+   Type.from_result),
+
+  ("clang_getArrayElementType",
+   [Type],
+   Type,
+   Type.from_result),
+
+  ("clang_getArraySize",
+   [Type],
+   c_longlong),
+
+  ("clang_getCanonicalCursor",
+   [Cursor],
+   Cursor,
+   Cursor.from_cursor_result),
+
+  ("clang_getCanonicalType",
+   [Type],
+   Type,
+   Type.from_result),
+
+  ("clang_getCompletionAvailability",
+   [c_void_p],
+   c_int),
+
+  ("clang_getCompletionChunkCompletionString",
+   [c_void_p, c_int],
+   c_object_p),
+
+  ("clang_getCompletionChunkKind",
+   [c_void_p, c_int],
+   c_int),
+
+  ("clang_getCompletionChunkText",
+   [c_void_p, c_int],
+   _CXString),
+
+  ("clang_getCompletionPriority",
+   [c_void_p],
+   c_int),
+
+  ("clang_getCString",
+   [_CXString],
+   c_char_p),
+
+  ("clang_getCursor",
+   [TranslationUnit, SourceLocation],
+   Cursor),
+
+  ("clang_getCursorDefinition",
+   [Cursor],
+   Cursor,
+   Cursor.from_result),
+
+  ("clang_getCursorDisplayName",
+   [Cursor],
+   _CXString,
+   _CXString.from_result),
+
+  ("clang_getCursorExtent",
+   [Cursor],
+   SourceRange),
+
+  ("clang_getCursorLexicalParent",
+   [Cursor],
+   Cursor,
+   Cursor.from_cursor_result),
+
+  ("clang_getCursorLocation",
+   [Cursor],
+   SourceLocation),
+
+  ("clang_getCursorReferenced",
+   [Cursor],
+   Cursor,
+   Cursor.from_result),
+
+  ("clang_getCursorReferenceNameRange",
+   [Cursor, c_uint, c_uint],
+   SourceRange),
+
+  ("clang_getCursorSemanticParent",
+   [Cursor],
+   Cursor,
+   Cursor.from_cursor_result),
+
+  ("clang_getCursorSpelling",
+   [Cursor],
+   _CXString,
+   _CXString.from_result),
+
+  ("clang_getCursorType",
+   [Cursor],
+   Type,
+   Type.from_result),
+
+  ("clang_getCursorUSR",
+   [Cursor],
+   _CXString,
+   _CXString.from_result),
+
+# ("clang_getCXTUResourceUsage",
+#  [TranslationUnit],
+#  CXTUResourceUsage),
+
+  ("clang_getCXXAccessSpecifier",
+   [Cursor],
+   c_uint),
+
+  ("clang_getDeclObjCTypeEncoding",
+   [Cursor],
+   _CXString,
+   _CXString.from_result),
+
+  ("clang_getDiagnostic",
+   [c_object_p, c_uint],
+   c_object_p),
+
+  ("clang_getDiagnosticCategory",
+   [Diagnostic],
+   c_uint),
+
+  ("clang_getDiagnosticCategoryName",
+   [c_uint],
+   _CXString,
+   _CXString.from_result),
+
+  ("clang_getDiagnosticFixIt",
+   [Diagnostic, c_uint, POINTER(SourceRange)],
+   _CXString,
+   _CXString.from_result),
+
+  ("clang_getDiagnosticLocation",
+   [Diagnostic],
+   SourceLocation),
+
+  ("clang_getDiagnosticNumFixIts",
+   [Diagnostic],
+   c_uint),
+
+  ("clang_getDiagnosticNumRanges",
+   [Diagnostic],
+   c_uint),
+
+  ("clang_getDiagnosticOption",
+   [Diagnostic, POINTER(_CXString)],
+   _CXString,
+   _CXString.from_result),
+
+  ("clang_getDiagnosticRange",
+   [Diagnostic, c_uint],
+   SourceRange),
+
+  ("clang_getDiagnosticSeverity",
+   [Diagnostic],
+   c_int),
+
+  ("clang_getDiagnosticSpelling",
+   [Diagnostic],
+   _CXString,
+   _CXString.from_result),
+
+  ("clang_getElementType",
+   [Type],
+   Type,
+   Type.from_result),
+
+  ("clang_getEnumConstantDeclUnsignedValue",
+   [Cursor],
+   c_ulonglong),
+
+  ("clang_getEnumConstantDeclValue",
+   [Cursor],
+   c_longlong),
+
+  ("clang_getEnumDeclIntegerType",
+   [Cursor],
+   Type,
+   Type.from_result),
+
+  ("clang_getFile",
+   [TranslationUnit, c_char_p],
+   c_object_p),
+
+  ("clang_getFileName",
+   [File],
+   _CXString), # TODO go through _CXString.from_result?
+
+  ("clang_getFileTime",
+   [File],
+   c_uint),
+
+  ("clang_getIBOutletCollectionType",
+   [Cursor],
+   Type,
+   Type.from_result),
+
+  ("clang_getIncludedFile",
+   [Cursor],
+   File,
+   File.from_cursor_result),
+
+  ("clang_getInclusions",
+   [TranslationUnit, callbacks['translation_unit_includes'], py_object]),
+
+  ("clang_getInstantiationLocation",
+   [SourceLocation, POINTER(c_object_p), POINTER(c_uint), POINTER(c_uint),
+    POINTER(c_uint)]),
+
+  ("clang_getLocation",
+   [TranslationUnit, File, c_uint, c_uint],
+   SourceLocation),
+
+  ("clang_getLocationForOffset",
+   [TranslationUnit, File, c_uint],
+   SourceLocation),
+
+  ("clang_getNullCursor",
+   None,
+   Cursor),
+
+  ("clang_getNumArgTypes",
+   [Type],
+   c_uint),
+
+  ("clang_getNumCompletionChunks",
+   [c_void_p],
+   c_int),
+
+  ("clang_getNumDiagnostics",
+   [c_object_p],
+   c_uint),
+
+  ("clang_getNumElements",
+   [Type],
+   c_longlong),
+
+  ("clang_getNumOverloadedDecls",
+   [Cursor],
+   c_uint),
+
+  ("clang_getOverloadedDecl",
+   [Cursor, c_uint],
+   Cursor,
+   Cursor.from_cursor_result),
+
+  ("clang_getPointeeType",
+   [Type],
+   Type,
+   Type.from_result),
+
+  ("clang_getRange",
+   [SourceLocation, SourceLocation],
+   SourceRange),
+
+  ("clang_getRangeEnd",
+   [SourceRange],
+   SourceLocation),
+
+  ("clang_getRangeStart",
+   [SourceRange],
+   SourceLocation),
+
+  ("clang_getResultType",
+   [Type],
+   Type,
+   Type.from_result),
+
+  ("clang_getSpecializedCursorTemplate",
+   [Cursor],
+   Cursor,
+   Cursor.from_cursor_result),
+
+  ("clang_getTemplateCursorKind",
+   [Cursor],
+   c_uint),
+
+  ("clang_getTokenExtent",
+   [TranslationUnit, Token],
+   SourceRange),
+
+  ("clang_getTokenKind",
+   [Token],
+   c_uint),
+
+  ("clang_getTokenLocation",
+   [TranslationUnit, Token],
+   SourceLocation),
+
+  ("clang_getTokenSpelling",
+   [TranslationUnit, Token],
+   _CXString,
+   _CXString.from_result),
+
+  ("clang_getTranslationUnitCursor",
+   [TranslationUnit],
+   Cursor,
+   Cursor.from_result),
+
+  ("clang_getTranslationUnitSpelling",
+   [TranslationUnit],
+   _CXString,
+   _CXString.from_result),
+
+  ("clang_getTUResourceUsageName",
+   [c_uint],
+   c_char_p),
+
+  ("clang_getTypeDeclaration",
+   [Type],
+   Cursor,
+   Cursor.from_result),
+
+  ("clang_getTypedefDeclUnderlyingType",
+   [Cursor],
+   Type,
+   Type.from_result),
+
+  ("clang_getTypeKindSpelling",
+   [c_uint],
+   _CXString,
+   _CXString.from_result),
+
+  ("clang_hashCursor",
+   [Cursor],
+   c_uint),
+
+  ("clang_isAttribute",
+   [CursorKind],
+   bool),
+
+  ("clang_isConstQualifiedType",
+   [Type],
+   bool),
+
+  ("clang_isCursorDefinition",
+   [Cursor],
+   bool),
+
+  ("clang_isDeclaration",
+   [CursorKind],
+   bool),
+
+  ("clang_isExpression",
+   [CursorKind],
+   bool),
+
+  ("clang_isFileMultipleIncludeGuarded",
+   [TranslationUnit, File],
+   bool),
+
+  ("clang_isFunctionTypeVariadic",
+   [Type],
+   bool),
+
+  ("clang_isInvalid",
+   [CursorKind],
+   bool),
+
+  ("clang_isPODType",
+   [Type],
+   bool),
+
+  ("clang_isPreprocessing",
+   [CursorKind],
+   bool),
+
+  ("clang_isReference",
+   [CursorKind],
+   bool),
+
+  ("clang_isRestrictQualifiedType",
+   [Type],
+   bool),
+
+  ("clang_isStatement",
+   [CursorKind],
+   bool),
+
+  ("clang_isTranslationUnit",
+   [CursorKind],
+   bool),
+
+  ("clang_isUnexposed",
+   [CursorKind],
+   bool),
+
+  ("clang_isVirtualBase",
+   [Cursor],
+   bool),
+
+  ("clang_isVolatileQualifiedType",
+   [Type],
+   bool),
+
+  ("clang_parseTranslationUnit",
+   [Index, c_char_p, c_void_p, c_int, c_void_p, c_int, c_int],
+   c_object_p),
+
+  ("clang_reparseTranslationUnit",
+   [TranslationUnit, c_int, c_void_p, c_int],
+   c_int),
+
+  ("clang_saveTranslationUnit",
+   [TranslationUnit, c_char_p, c_uint],
+   c_int),
+
+  ("clang_tokenize",
+   [TranslationUnit, SourceRange, POINTER(POINTER(Token)), POINTER(c_uint)]),
+
+  ("clang_visitChildren",
+   [Cursor, callbacks['cursor_visit'], py_object],
+   c_uint),
+]
+
+class LibclangError(Exception):
+    def __init__(self, message):
+        self.m = message
+
+    def __str__(self):
+        return self.m + ". Please ensure that your python bindings are "\
+                        "compatible with your libclang.so version."
+
+def register_function(lib, item):
+    # A function may not exist, if these bindings are used with an older or
+    # incompatible version of libclang.so.
+    try:
+        func = getattr(lib, item[0])
+    except AttributeError as e:
+        raise LibclangError(str(e))
+
+    if len(item) >= 2:
+        func.argtypes = item[1]
+
+    if len(item) >= 3:
+        func.restype = item[2]
+
+    if len(item) == 4:
+        func.errcheck = item[3]
+
 def register_functions(lib):
     """Register function prototypes with a libclang library instance.
 
     This must be called as part of library instantiation so Python knows how
     to call out to the shared library.
     """
-    # Functions are registered in strictly alphabetical order.
-    lib.clang_annotateTokens.argtype = [TranslationUnit, POINTER(Token),
-                                        c_uint, POINTER(Cursor)]
 
-    lib.clang_CompilationDatabase_dispose.argtypes = [c_object_p]
+    def register(item):
+        return register_function(lib, item)
 
-    lib.clang_CompilationDatabase_fromDirectory.argtypes = [c_char_p,
-        POINTER(c_uint)]
-    lib.clang_CompilationDatabase_fromDirectory.restype = c_object_p
-    lib.clang_CompilationDatabase_fromDirectory.errcheck = CompilationDatabase.from_result
-
-    lib.clang_CompilationDatabase_getCompileCommands.argtypes = [c_object_p, c_char_p]
-    lib.clang_CompilationDatabase_getCompileCommands.restype = c_object_p
-    lib.clang_CompilationDatabase_getCompileCommands.errcheck = CompileCommands.from_result
-
-    lib.clang_CompileCommands_dispose.argtypes = [c_object_p]
-
-    lib.clang_CompileCommands_getCommand.argtypes = [c_object_p, c_uint]
-    lib.clang_CompileCommands_getCommand.restype = c_object_p
-
-    lib.clang_CompileCommands_getSize.argtypes = [c_object_p]
-    lib.clang_CompileCommands_getSize.restype = c_uint
-
-    lib.clang_CompileCommand_getArg.argtypes = [c_object_p, c_uint]
-    lib.clang_CompileCommand_getArg.restype = _CXString
-    lib.clang_CompileCommand_getArg.errcheck = _CXString.from_result
-
-    lib.clang_CompileCommand_getDirectory.argtypes = [c_object_p]
-    lib.clang_CompileCommand_getDirectory.restype = _CXString
-    lib.clang_CompileCommand_getDirectory.errcheck = _CXString.from_result
-
-    lib.clang_CompileCommand_getNumArgs.argtypes = [c_object_p]
-    lib.clang_CompileCommand_getNumArgs.restype = c_uint
-
-    lib.clang_codeCompleteAt.argtypes = [TranslationUnit, c_char_p, c_int,
-        c_int, c_void_p, c_int, c_int]
-    lib.clang_codeCompleteAt.restype = POINTER(CCRStructure)
-
-    lib.clang_codeCompleteGetDiagnostic.argtypes = [CodeCompletionResults,
-        c_int]
-    lib.clang_codeCompleteGetDiagnostic.restype = Diagnostic
-
-    lib.clang_codeCompleteGetNumDiagnostics.argtypes = [CodeCompletionResults]
-    lib.clang_codeCompleteGetNumDiagnostics.restype = c_int
-
-    lib.clang_createIndex.argtypes = [c_int, c_int]
-    lib.clang_createIndex.restype = c_object_p
-
-    lib.clang_createTranslationUnit.argtypes = [Index, c_char_p]
-    lib.clang_createTranslationUnit.restype = c_object_p
-
-    lib.clang_CXXMethod_isStatic.argtypes = [Cursor]
-    lib.clang_CXXMethod_isStatic.restype = bool
-
-    lib.clang_CXXMethod_isVirtual.argtypes = [Cursor]
-    lib.clang_CXXMethod_isVirtual.restype = bool
-
-    lib.clang_defaultSaveOptions.argtypes = [TranslationUnit]
-    lib.clang_defaultSaveOptions.restype = c_uint
-
-    lib.clang_disposeCodeCompleteResults.argtypes = [CodeCompletionResults]
-
-    #lib.clang_disposeCXTUResourceUsage.argtypes = [CXTUResourceUsage]
-
-    lib.clang_disposeDiagnostic.argtypes = [Diagnostic]
-
-    lib.clang_disposeIndex.argtypes = [Index]
-
-    lib.clang_disposeString.argtypes = [_CXString]
-
-    lib.clang_disposeTokens.argtype = [TranslationUnit, POINTER(Token), c_uint]
-
-    lib.clang_disposeTranslationUnit.argtypes = [TranslationUnit]
-
-    lib.clang_equalCursors.argtypes = [Cursor, Cursor]
-    lib.clang_equalCursors.restype = bool
-
-    lib.clang_equalLocations.argtypes = [SourceLocation, SourceLocation]
-    lib.clang_equalLocations.restype = bool
-
-    lib.clang_equalRanges.argtypes = [SourceRange, SourceRange]
-    lib.clang_equalRanges.restype = bool
-
-    lib.clang_equalTypes.argtypes = [Type, Type]
-    lib.clang_equalTypes.restype = bool
-
-    lib.clang_getArgType.argtypes = [Type, c_uint]
-    lib.clang_getArgType.restype = Type
-    lib.clang_getArgType.errcheck = Type.from_result
-
-    lib.clang_getArrayElementType.argtypes = [Type]
-    lib.clang_getArrayElementType.restype = Type
-    lib.clang_getArrayElementType.errcheck = Type.from_result
-
-    lib.clang_getArraySize.argtypes = [Type]
-    lib.clang_getArraySize.restype = c_longlong
-
-    lib.clang_getCanonicalCursor.argtypes = [Cursor]
-    lib.clang_getCanonicalCursor.restype = Cursor
-    lib.clang_getCanonicalCursor.errcheck = Cursor.from_cursor_result
-
-    lib.clang_getCanonicalType.argtypes = [Type]
-    lib.clang_getCanonicalType.restype = Type
-    lib.clang_getCanonicalType.errcheck = Type.from_result
-
-    lib.clang_getCompletionAvailability.argtypes = [c_void_p]
-    lib.clang_getCompletionAvailability.restype = c_int
-
-    lib.clang_getCompletionChunkCompletionString.argtypes = [c_void_p, c_int]
-    lib.clang_getCompletionChunkCompletionString.restype = c_object_p
-
-    lib.clang_getCompletionChunkKind.argtypes = [c_void_p, c_int]
-    lib.clang_getCompletionChunkKind.restype = c_int
-
-    lib.clang_getCompletionChunkText.argtypes = [c_void_p, c_int]
-    lib.clang_getCompletionChunkText.restype = _CXString
-
-    lib.clang_getCompletionPriority.argtypes = [c_void_p]
-    lib.clang_getCompletionPriority.restype = c_int
-
-    lib.clang_getCString.argtypes = [_CXString]
-    lib.clang_getCString.restype = c_char_p
-
-    lib.clang_getCursor.argtypes = [TranslationUnit, SourceLocation]
-    lib.clang_getCursor.restype = Cursor
-
-    lib.clang_getCursorDefinition.argtypes = [Cursor]
-    lib.clang_getCursorDefinition.restype = Cursor
-    lib.clang_getCursorDefinition.errcheck = Cursor.from_result
-
-    lib.clang_getCursorDisplayName.argtypes = [Cursor]
-    lib.clang_getCursorDisplayName.restype = _CXString
-    lib.clang_getCursorDisplayName.errcheck = _CXString.from_result
-
-    lib.clang_getCursorExtent.argtypes = [Cursor]
-    lib.clang_getCursorExtent.restype = SourceRange
-
-    lib.clang_getCursorLexicalParent.argtypes = [Cursor]
-    lib.clang_getCursorLexicalParent.restype = Cursor
-    lib.clang_getCursorLexicalParent.errcheck = Cursor.from_cursor_result
-
-    lib.clang_getCursorLocation.argtypes = [Cursor]
-    lib.clang_getCursorLocation.restype = SourceLocation
-
-    lib.clang_getCursorReferenced.argtypes = [Cursor]
-    lib.clang_getCursorReferenced.restype = Cursor
-    lib.clang_getCursorReferenced.errcheck = Cursor.from_result
-
-    lib.clang_getCursorReferenceNameRange.argtypes = [Cursor, c_uint, c_uint]
-    lib.clang_getCursorReferenceNameRange.restype = SourceRange
-
-    lib.clang_getCursorSemanticParent.argtypes = [Cursor]
-    lib.clang_getCursorSemanticParent.restype = Cursor
-    lib.clang_getCursorSemanticParent.errcheck = Cursor.from_cursor_result
-
-    lib.clang_getCursorSpelling.argtypes = [Cursor]
-    lib.clang_getCursorSpelling.restype = _CXString
-    lib.clang_getCursorSpelling.errcheck = _CXString.from_result
-
-    lib.clang_getCursorType.argtypes = [Cursor]
-    lib.clang_getCursorType.restype = Type
-    lib.clang_getCursorType.errcheck = Type.from_result
-
-    lib.clang_getCursorUSR.argtypes = [Cursor]
-    lib.clang_getCursorUSR.restype = _CXString
-    lib.clang_getCursorUSR.errcheck = _CXString.from_result
-
-    #lib.clang_getCXTUResourceUsage.argtypes = [TranslationUnit]
-    #lib.clang_getCXTUResourceUsage.restype = CXTUResourceUsage
-
-    lib.clang_getCXXAccessSpecifier.argtypes = [Cursor]
-    lib.clang_getCXXAccessSpecifier.restype = c_uint
-
-    lib.clang_getDeclObjCTypeEncoding.argtypes = [Cursor]
-    lib.clang_getDeclObjCTypeEncoding.restype = _CXString
-    lib.clang_getDeclObjCTypeEncoding.errcheck = _CXString.from_result
-
-    lib.clang_getDiagnostic.argtypes = [c_object_p, c_uint]
-    lib.clang_getDiagnostic.restype = c_object_p
-
-    lib.clang_getDiagnosticCategory.argtypes = [Diagnostic]
-    lib.clang_getDiagnosticCategory.restype = c_uint
-
-    lib.clang_getDiagnosticCategoryName.argtypes = [c_uint]
-    lib.clang_getDiagnosticCategoryName.restype = _CXString
-    lib.clang_getDiagnosticCategoryName.errcheck = _CXString.from_result
-
-    lib.clang_getDiagnosticFixIt.argtypes = [Diagnostic, c_uint,
-        POINTER(SourceRange)]
-    lib.clang_getDiagnosticFixIt.restype = _CXString
-    lib.clang_getDiagnosticFixIt.errcheck = _CXString.from_result
-
-    lib.clang_getDiagnosticLocation.argtypes = [Diagnostic]
-    lib.clang_getDiagnosticLocation.restype = SourceLocation
-
-    lib.clang_getDiagnosticNumFixIts.argtypes = [Diagnostic]
-    lib.clang_getDiagnosticNumFixIts.restype = c_uint
-
-    lib.clang_getDiagnosticNumRanges.argtypes = [Diagnostic]
-    lib.clang_getDiagnosticNumRanges.restype = c_uint
-
-    lib.clang_getDiagnosticOption.argtypes = [Diagnostic, POINTER(_CXString)]
-    lib.clang_getDiagnosticOption.restype = _CXString
-    lib.clang_getDiagnosticOption.errcheck = _CXString.from_result
-
-    lib.clang_getDiagnosticRange.argtypes = [Diagnostic, c_uint]
-    lib.clang_getDiagnosticRange.restype = SourceRange
-
-    lib.clang_getDiagnosticSeverity.argtypes = [Diagnostic]
-    lib.clang_getDiagnosticSeverity.restype = c_int
-
-    lib.clang_getDiagnosticSpelling.argtypes = [Diagnostic]
-    lib.clang_getDiagnosticSpelling.restype = _CXString
-    lib.clang_getDiagnosticSpelling.errcheck = _CXString.from_result
-
-    lib.clang_getElementType.argtypes = [Type]
-    lib.clang_getElementType.restype = Type
-    lib.clang_getElementType.errcheck = Type.from_result
-
-    lib.clang_getEnumConstantDeclUnsignedValue.argtypes = [Cursor]
-    lib.clang_getEnumConstantDeclUnsignedValue.restype = c_ulonglong
-
-    lib.clang_getEnumConstantDeclValue.argtypes = [Cursor]
-    lib.clang_getEnumConstantDeclValue.restype = c_longlong
-
-    lib.clang_getEnumDeclIntegerType.argtypes = [Cursor]
-    lib.clang_getEnumDeclIntegerType.restype = Type
-    lib.clang_getEnumDeclIntegerType.errcheck = Type.from_result
-
-    lib.clang_getFile.argtypes = [TranslationUnit, c_char_p]
-    lib.clang_getFile.restype = c_object_p
-
-    lib.clang_getFileName.argtypes = [File]
-    lib.clang_getFileName.restype = _CXString
-    # TODO go through _CXString.from_result?
-
-    lib.clang_getFileTime.argtypes = [File]
-    lib.clang_getFileTime.restype = c_uint
-
-    lib.clang_getIBOutletCollectionType.argtypes = [Cursor]
-    lib.clang_getIBOutletCollectionType.restype = Type
-    lib.clang_getIBOutletCollectionType.errcheck = Type.from_result
-
-    lib.clang_getIncludedFile.argtypes = [Cursor]
-    lib.clang_getIncludedFile.restype = File
-    lib.clang_getIncludedFile.errcheck = File.from_cursor_result
-
-    lib.clang_getInclusions.argtypes = [TranslationUnit,
-        callbacks['translation_unit_includes'], py_object]
-
-    lib.clang_getInstantiationLocation.argtypes = [SourceLocation,
-        POINTER(c_object_p), POINTER(c_uint), POINTER(c_uint), POINTER(c_uint)]
-
-    lib.clang_getLocation.argtypes = [TranslationUnit, File, c_uint, c_uint]
-    lib.clang_getLocation.restype = SourceLocation
-
-    lib.clang_getLocationForOffset.argtypes = [TranslationUnit, File, c_uint]
-    lib.clang_getLocationForOffset.restype = SourceLocation
-
-    lib.clang_getNullCursor.restype = Cursor
-
-    lib.clang_getNumArgTypes.argtypes = [Type]
-    lib.clang_getNumArgTypes.restype = c_uint
-
-    lib.clang_getNumCompletionChunks.argtypes = [c_void_p]
-    lib.clang_getNumCompletionChunks.restype = c_int
-
-    lib.clang_getNumDiagnostics.argtypes = [c_object_p]
-    lib.clang_getNumDiagnostics.restype = c_uint
-
-    lib.clang_getNumElements.argtypes = [Type]
-    lib.clang_getNumElements.restype = c_longlong
-
-    lib.clang_getNumOverloadedDecls.argtypes = [Cursor]
-    lib.clang_getNumOverloadedDecls.restyp = c_uint
-
-    lib.clang_getOverloadedDecl.argtypes = [Cursor, c_uint]
-    lib.clang_getOverloadedDecl.restype = Cursor
-    lib.clang_getOverloadedDecl.errcheck = Cursor.from_cursor_result
-
-    lib.clang_getPointeeType.argtypes = [Type]
-    lib.clang_getPointeeType.restype = Type
-    lib.clang_getPointeeType.errcheck = Type.from_result
-
-    lib.clang_getRange.argtypes = [SourceLocation, SourceLocation]
-    lib.clang_getRange.restype = SourceRange
-
-    lib.clang_getRangeEnd.argtypes = [SourceRange]
-    lib.clang_getRangeEnd.restype = SourceLocation
-
-    lib.clang_getRangeStart.argtypes = [SourceRange]
-    lib.clang_getRangeStart.restype = SourceLocation
-
-    lib.clang_getResultType.argtypes = [Type]
-    lib.clang_getResultType.restype = Type
-    lib.clang_getResultType.errcheck = Type.from_result
-
-    lib.clang_getSpecializedCursorTemplate.argtypes = [Cursor]
-    lib.clang_getSpecializedCursorTemplate.restype = Cursor
-    lib.clang_getSpecializedCursorTemplate.errcheck = Cursor.from_cursor_result
-
-    lib.clang_getTemplateCursorKind.argtypes = [Cursor]
-    lib.clang_getTemplateCursorKind.restype = c_uint
-
-    lib.clang_getTokenExtent.argtypes = [TranslationUnit, Token]
-    lib.clang_getTokenExtent.restype = SourceRange
-
-    lib.clang_getTokenKind.argtypes = [Token]
-    lib.clang_getTokenKind.restype = c_uint
-
-    lib.clang_getTokenLocation.argtype = [TranslationUnit, Token]
-    lib.clang_getTokenLocation.restype = SourceLocation
-
-    lib.clang_getTokenSpelling.argtype = [TranslationUnit, Token]
-    lib.clang_getTokenSpelling.restype = _CXString
-    lib.clang_getTokenSpelling.errcheck = _CXString.from_result
-
-    lib.clang_getTranslationUnitCursor.argtypes = [TranslationUnit]
-    lib.clang_getTranslationUnitCursor.restype = Cursor
-    lib.clang_getTranslationUnitCursor.errcheck = Cursor.from_result
-
-    lib.clang_getTranslationUnitSpelling.argtypes = [TranslationUnit]
-    lib.clang_getTranslationUnitSpelling.restype = _CXString
-    lib.clang_getTranslationUnitSpelling.errcheck = _CXString.from_result
-
-    lib.clang_getTUResourceUsageName.argtypes = [c_uint]
-    lib.clang_getTUResourceUsageName.restype = c_char_p
-
-    lib.clang_getTypeDeclaration.argtypes = [Type]
-    lib.clang_getTypeDeclaration.restype = Cursor
-    lib.clang_getTypeDeclaration.errcheck = Cursor.from_result
-
-    lib.clang_getTypedefDeclUnderlyingType.argtypes = [Cursor]
-    lib.clang_getTypedefDeclUnderlyingType.restype = Type
-    lib.clang_getTypedefDeclUnderlyingType.errcheck = Type.from_result
-
-    lib.clang_getTypeKindSpelling.argtypes = [c_uint]
-    lib.clang_getTypeKindSpelling.restype = _CXString
-    lib.clang_getTypeKindSpelling.errcheck = _CXString.from_result
-
-    lib.clang_hashCursor.argtypes = [Cursor]
-    lib.clang_hashCursor.restype = c_uint
-
-    lib.clang_isAttribute.argtypes = [CursorKind]
-    lib.clang_isAttribute.restype = bool
-
-    lib.clang_isConstQualifiedType.argtypes = [Type]
-    lib.clang_isConstQualifiedType.restype = bool
-
-    lib.clang_isCursorDefinition.argtypes = [Cursor]
-    lib.clang_isCursorDefinition.restype = bool
-
-    lib.clang_isDeclaration.argtypes = [CursorKind]
-    lib.clang_isDeclaration.restype = bool
-
-    lib.clang_isExpression.argtypes = [CursorKind]
-    lib.clang_isExpression.restype = bool
-
-    lib.clang_isFileMultipleIncludeGuarded.argtypes = [TranslationUnit, File]
-    lib.clang_isFileMultipleIncludeGuarded.restype = bool
-
-    lib.clang_isFunctionTypeVariadic.argtypes = [Type]
-    lib.clang_isFunctionTypeVariadic.restype = bool
-
-    lib.clang_isInvalid.argtypes = [CursorKind]
-    lib.clang_isInvalid.restype = bool
-
-    lib.clang_isPODType.argtypes = [Type]
-    lib.clang_isPODType.restype = bool
-
-    lib.clang_isPreprocessing.argtypes = [CursorKind]
-    lib.clang_isPreprocessing.restype = bool
-
-    lib.clang_isReference.argtypes = [CursorKind]
-    lib.clang_isReference.restype = bool
-
-    lib.clang_isRestrictQualifiedType.argtypes = [Type]
-    lib.clang_isRestrictQualifiedType.restype = bool
-
-    lib.clang_isStatement.argtypes = [CursorKind]
-    lib.clang_isStatement.restype = bool
-
-    lib.clang_isTranslationUnit.argtypes = [CursorKind]
-    lib.clang_isTranslationUnit.restype = bool
-
-    lib.clang_isUnexposed.argtypes = [CursorKind]
-    lib.clang_isUnexposed.restype = bool
-
-    lib.clang_isVirtualBase.argtypes = [Cursor]
-    lib.clang_isVirtualBase.restype = bool
-
-    lib.clang_isVolatileQualifiedType.argtypes = [Type]
-    lib.clang_isVolatileQualifiedType.restype = bool
-
-    lib.clang_parseTranslationUnit.argypes = [Index, c_char_p, c_void_p, c_int,
-        c_void_p, c_int, c_int]
-    lib.clang_parseTranslationUnit.restype = c_object_p
-
-    lib.clang_reparseTranslationUnit.argtypes = [TranslationUnit, c_int,
-        c_void_p, c_int]
-    lib.clang_reparseTranslationUnit.restype = c_int
-
-    lib.clang_saveTranslationUnit.argtypes = [TranslationUnit, c_char_p,
-        c_uint]
-    lib.clang_saveTranslationUnit.restype = c_int
-
-    lib.clang_tokenize.argtypes = [TranslationUnit, SourceRange,
-        POINTER(POINTER(Token)), POINTER(c_uint)]
-
-    lib.clang_visitChildren.argtypes = [Cursor, callbacks['cursor_visit'],
-        py_object]
-    lib.clang_visitChildren.restype = c_uint
+    map(register, functionList)
 
 register_functions(lib)
 
