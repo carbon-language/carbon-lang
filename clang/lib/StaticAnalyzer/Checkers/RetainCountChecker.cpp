@@ -947,12 +947,12 @@ void RetainSummaryManager::updateSummaryForCall(const RetainSummary *&S,
     // This can generally only happen if we know that the callback will only be
     // called when the return value is already being deallocated.
     if (const FunctionCall *FC = dyn_cast<FunctionCall>(&Call)) {
-      IdentifierInfo *Name = FC->getDecl()->getIdentifier();
-
-      // This callback frees the associated buffer.
-      if (Name)
+      if (IdentifierInfo *Name = FC->getDecl()->getIdentifier()) {
+        // When the CGBitmapContext is deallocated, the callback here will free
+        // the associated data buffer.
         if (Name->isStr("CGBitmapContextCreateWithData"))
           RE = S->getRetEffect();
+      }
     }
 
     S = getPersistentSummary(RE, RecEffect, DefEffect);
