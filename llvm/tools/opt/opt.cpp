@@ -513,10 +513,6 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  // Allocate a full target machine description only if necessary.
-  // FIXME: The choice of target should be controllable on the command line.
-  std::auto_ptr<TargetMachine> target;
-
   SMDiagnostic Err;
 
   // Load the input module...
