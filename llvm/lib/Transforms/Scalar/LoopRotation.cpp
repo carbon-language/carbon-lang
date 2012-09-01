@@ -418,6 +418,9 @@ bool LoopRotate::rotateLoop(Loop *L) {
       for (unsigned I = 0, E = HeaderChildren.size(); I != E; ++I)
         DT->changeImmediateDominator(HeaderChildren[I], OrigPreheaderNode);
 
+      assert(DT->getNode(Exit)->getIDom() == OrigPreheaderNode);
+      assert(DT->getNode(NewHeader)->getIDom() == OrigPreheaderNode);
+
       // Update OrigHeader to be dominated by the new header block.
       DT->changeImmediateDominator(OrigHeader, OrigLatch);
     }
