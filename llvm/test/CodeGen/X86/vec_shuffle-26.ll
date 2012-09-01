@@ -1,4 +1,5 @@
-; RUN: llc < %s -march=x86 -mattr=sse41 | FileCheck %s
+; RUN: llc < %s -march=x86 -mcpu=generic -mattr=sse41 | FileCheck %s
+; RUN: llc < %s -march=x86 -mcpu=atom -mattr=+sse41 | FileCheck -check-prefix=ATOM %s
 
 ; Transpose example using the more generic vector shuffle. Return float8
 ; instead of float16
@@ -17,6 +18,12 @@ entry:
 ; CHECK: unpckhps
 ; CHECK: unpcklps
 ; CHECK: unpckhps
+; Different instruction order for Atom.
+; ATOM: transpose2
+; ATOM: unpckhps
+; ATOM: unpckhps
+; ATOM: unpckhps
+; ATOM: unpcklps
 	%unpcklps = shufflevector <4 x float> %p0, <4 x float> %p2, <4 x i32> < i32 0, i32 4, i32 1, i32 5 >		; <<4 x float>> [#uses=2]
 	%unpckhps = shufflevector <4 x float> %p0, <4 x float> %p2, <4 x i32> < i32 2, i32 6, i32 3, i32 7 >		; <<4 x float>> [#uses=2]
 	%unpcklps8 = shufflevector <4 x float> %p1, <4 x float> %p3, <4 x i32> < i32 0, i32 4, i32 1, i32 5 >		; <<4 x float>> [#uses=2]
@@ -38,6 +45,10 @@ entry:
 ; CHECK: movhps ([[BASEREG:%[a-z]+]]),
 ; CHECK: extractps ${{[0-9]+}}, %xmm{{[0-9]+}}, {{[0-9]*}}([[BASEREG]])
 ; CHECK: extractps ${{[0-9]+}}, %xmm{{[0-9]+}}, {{[0-9]*}}([[BASEREG]])
+; ATOM: lo_hi_shift
+; ATOM: movhps ([[BASEREG:%[a-z]+]]),
+; ATOM: extractps ${{[0-9]+}}, %xmm{{[0-9]+}}, {{[0-9]*}}([[BASEREG]])
+; ATOM: extractps ${{[0-9]+}}, %xmm{{[0-9]+}}, {{[0-9]*}}([[BASEREG]])
   %v.i = bitcast float* %y to <4 x float>*
   %0 = load <4 x float>* %v.i, align 1
   %1 = bitcast float* %x to <1 x i64>*
