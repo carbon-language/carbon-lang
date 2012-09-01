@@ -246,8 +246,16 @@ public:
   }
 
   static inline bool isLocType(QualType T) {
+    // Why are record types included here? Because we want to make sure a
+    // record, even a record rvalue, is always represented with a region.
+    // This is especially necessary in C++, where you can call methods on
+    // struct prvalues, which then need to have a valid 'this' pointer.
+    //
+    // This necessitates a bit of extra hackery in the Store to deal with
+    // the case of binding a "struct value" into a struct region; in
+    // practice it just means "dereferencing" the value before binding.
     return T->isAnyPointerType() || T->isBlockPointerType() || 
-           T->isReferenceType();
+           T->isReferenceType() || T->isRecordType();
   }
 };
 

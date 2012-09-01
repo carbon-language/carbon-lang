@@ -116,8 +116,11 @@ void testReferenceAddress(int &x) {
 
   struct S { int &x; };
 
-  extern S *getS();
-  clang_analyzer_eval(&getS()->x != 0); // expected-warning{{TRUE}}
+  extern S getS();
+  clang_analyzer_eval(&getS().x != 0); // expected-warning{{TRUE}}
+
+  extern S *getSP();
+  clang_analyzer_eval(&getSP()->x != 0); // expected-warning{{TRUE}}
 }
 
 
@@ -149,11 +152,4 @@ namespace rdar11212286 {
     B *x = 0;
     return *x; // should warn here!
   }
-}
-
-void testReferenceFieldAddress() {
-  struct S { int &x; };
-
-  extern S getS();
-  clang_analyzer_eval(&getS().x != 0); // expected-warning{{UNKNOWN}}
 }

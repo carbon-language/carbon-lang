@@ -365,9 +365,6 @@ bool SymbolManager::canSymbolicate(QualType T) {
   if (T->isIntegerType())
     return T->isScalarType();
 
-  if (T->isRecordType() && !T->isUnionType())
-    return true;
-
   return false;
 }
 
