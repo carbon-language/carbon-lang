@@ -5814,7 +5814,7 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
                          N0.getOperand(0), N0.getOperand(1), N1);
     }
 
-    // fold (fadd x, (fmul y, z)) -> (fma x, y, z)
+    // fold (fadd x, (fmul y, z)) -> (fma y, z, x)
     // Note: Commutes FADD operands.
     if (N1.getOpcode() == ISD::FMUL && N1->hasOneUse()) {
       return DAG.getNode(ISD::FMA, N->getDebugLoc(), VT,
