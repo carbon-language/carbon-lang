@@ -15497,7 +15497,7 @@ static SDValue PerformFMinFMaxCombine(SDNode *N, SelectionDAG &DAG) {
     return SDValue();
 
   // If we run in unsafe-math mode, then convert the FMAX and FMIN nodes
-  // into FMINC and MMAXC, which are Commutative operations.
+  // into FMINC and FMAXC, which are Commutative operations.
   unsigned NewOp = 0;
   switch (N->getOpcode()) {
     default: llvm_unreachable("unknown opcode");

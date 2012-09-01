@@ -6334,7 +6334,7 @@ multiclass SS41I_binop_rm_int<bits<8> opc, string OpcodeStr,
           (bitconvert (memopv2i64 addr:$src2))))]>, OpSize;
 }
 
-/// SS41I_binop_rm_int - Simple SSE 4.1 binary operator
+/// SS41I_binop_rm_int_y - Simple SSE 4.1 binary operator
 multiclass SS41I_binop_rm_int_y<bits<8> opc, string OpcodeStr,
                                 Intrinsic IntId256> {
   let isCommutable = 1 in
