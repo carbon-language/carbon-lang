@@ -271,6 +271,18 @@ public:
     virtual lldb::StackFrameSP
     GetFrameWithConcreteFrameIndex (uint32_t unwind_idx);
     
+    bool
+    DecrementCurrentInlinedDepth()
+    {
+        return GetStackFrameList()->DecrementCurrentInlinedDepth();
+    }
+    
+    uint32_t
+    GetCurrentInlinedDepth()
+    {
+        return GetStackFrameList()->DecrementCurrentInlinedDepth();
+    }
+    
     virtual lldb::StackFrameSP
     GetFrameWithStackID (const StackID &stack_id)
     {
@@ -706,6 +718,7 @@ protected:
     friend class ThreadPlan;
     friend class ThreadList;
     friend class StackFrameList;
+    friend class StackFrame;
     
     // This is necessary to make sure thread assets get destroyed while the thread is still in good shape
     // to call virtual thread methods.  This must be called by classes that derive from Thread in their destructor.

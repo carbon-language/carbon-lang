@@ -83,11 +83,16 @@ ThreadGDBRemote::GetQueueName ()
 bool
 ThreadGDBRemote::WillResume (StateType resume_state)
 {
-    ClearStackFrames();
     // Call the Thread::WillResume first. If we stop at a signal, the stop info
     // class for signal will set the resume signal that we need below. The signal
     // stuff obeys the Process::UnixSignal defaults. 
-    Thread::WillResume(resume_state);
+    // If the thread's WillResume returns false, that means that we aren't going to actually resume,
+    // in which case we should not do the rest of our "resume" work.
+    
+    if (!Thread::WillResume(resume_state))
+        return false;
+    
+    ClearStackFrames();
 
     int signo = GetResumeSignal();
     lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (GDBR_LOG_THREAD));

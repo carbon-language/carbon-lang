@@ -256,12 +256,12 @@ ThreadPlanStepInRange::DefaultShouldStopHereCallback (ThreadPlan *current_plan, 
 {
     bool should_step_out = false;
     StackFrame *frame = current_plan->GetThread().GetStackFrameAtIndex(0).get();
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     if (flags.Test(eAvoidNoDebug))
     {
         if (!frame->HasDebugInformation())
         {
+            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
             if (log)
                 log->Printf ("Stepping out of frame with no debug info");
 
@@ -306,7 +306,6 @@ ThreadPlanStepInRange::PlanExplainsStop ()
     // The only variation is that if we are doing "step by running to next branch" in which case
     // if we hit our branch breakpoint we don't set the plan to complete.
     
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     StopInfoSP stop_info_sp = GetPrivateStopReason();
     if (stop_info_sp)
     {
@@ -320,13 +319,38 @@ ThreadPlanStepInRange::PlanExplainsStop ()
         case eStopReasonWatchpoint:
         case eStopReasonSignal:
         case eStopReasonException:
-            if (log)
-                log->PutCString ("ThreadPlanStepInRange got asked if it explains the stop for some reason other than step.");
-            SetPlanComplete(false);
+            {
+                LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+                if (log)
+                    log->PutCString ("ThreadPlanStepInRange got asked if it explains the stop for some reason other than step.");
+                SetPlanComplete(false);
+            }
             break;
         default:
             break;
         }
     }
     return true;
+}
+
+bool
+ThreadPlanStepInRange::WillResume (lldb::StateType resume_state, bool current_plan)
+{
+    if (resume_state == eStateStepping && current_plan)
+    {
+        // See if we are about to step over a virtual inlined call.
+        bool step_without_resume = m_thread.DecrementCurrentInlinedDepth();
+        if (step_without_resume)
+        {
+            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+            if (log)
+                log->Printf ("ThreadPlanStepInRange::WillResume: returning false, inline_depth: %d",
+                             m_thread.GetCurrentInlinedDepth());
+            SetStopInfo(StopInfo::CreateStopReasonToTrace(m_thread));
+        }
+        return !step_without_resume;
+    }
+    else
+        return ThreadPlan::WillResume(resume_state, current_plan);
+    
 }

@@ -52,6 +52,8 @@ public:
     virtual bool
     PlanExplainsStop ();
 
+    virtual bool WillResume (lldb::StateType resume_state, bool current_plan);
+    
 protected:
 
     virtual void

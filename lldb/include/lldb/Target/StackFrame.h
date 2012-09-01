@@ -130,10 +130,7 @@ public:
     IsInlined ();
 
     uint32_t
-    GetFrameIndex () const
-    {
-        return m_frame_index;
-    }
+    GetFrameIndex () const;
 
     uint32_t
     GetConcreteFrameIndex () const

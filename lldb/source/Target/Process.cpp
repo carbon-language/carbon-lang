@@ -2975,7 +2975,13 @@ Process::PrivateResume ()
         }
         else
         {
-            error.SetErrorStringWithFormat("Process::WillResume() thread list returned false after WillResume");
+            // Somebody wanted to run without running.  So generate a continue & a stopped event,
+            // and let the world handle them.
+            if (log)
+                log->Printf ("Process::PrivateResume() asked to simulate a start & stop.");
+            
+            SetPrivateState(eStateRunning);
+            SetPrivateState(eStateStopped);
         }
     }
     else if (log)

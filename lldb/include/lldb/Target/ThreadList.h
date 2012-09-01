@@ -92,6 +92,19 @@ public:
     void
     RefreshStateAfterStop ();
 
+    //------------------------------------------------------------------
+    /// The thread list asks tells all the threads it is about to resume.
+    /// If a thread can "resume" without having to resume the target, it
+    /// will return false for WillResume, and then the process will not be
+    /// restarted.
+    ///
+    /// @return
+    ///    \b true instructs the process to resume normally,
+    ///    \b false means start & stopped events will be generated, but
+    ///    the process will not actually run.  The thread must then return
+    ///    the correct StopInfo when asked.
+    ///
+    //------------------------------------------------------------------
     bool
     WillResume ();
 

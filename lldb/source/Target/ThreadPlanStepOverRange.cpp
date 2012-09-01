@@ -17,6 +17,8 @@
 #include "lldb/lldb-private-log.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Symbol/Block.h"
+#include "lldb/Symbol/Function.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Target.h"
@@ -40,7 +42,8 @@ ThreadPlanStepOverRange::ThreadPlanStepOverRange
     const SymbolContext &addr_context,
     lldb::RunMode stop_others
 ) :
-    ThreadPlanStepRange (ThreadPlan::eKindStepOverRange, "Step range stepping over", thread, range, addr_context, stop_others)
+    ThreadPlanStepRange (ThreadPlan::eKindStepOverRange, "Step range stepping over", thread, range, addr_context, stop_others),
+    m_first_resume(true)
 {
 }
 
@@ -116,7 +119,7 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
             // in so I left out the target check.  And sometimes the module comes in as the .o file from the
             // inlined range, so I left that out too...
             
-            bool older_ctx_is_equivalent = false;
+            bool older_ctx_is_equivalent = true;
             if (m_addr_context.comp_unit)
             {
                 if (m_addr_context.comp_unit == older_context.comp_unit)
@@ -126,10 +129,6 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
                         if (m_addr_context.block && m_addr_context.block == older_context.block)
                         {
                             older_ctx_is_equivalent = true;
-                            if (m_addr_context.line_entry.IsValid() && LineEntry::Compare(m_addr_context.line_entry, older_context.line_entry) != 0)
-                            {
-                                older_ctx_is_equivalent = false;
-                            }
                         }
                     }
                 }
@@ -213,6 +212,9 @@ ThreadPlanStepOverRange::PlanExplainsStop ()
 
         switch (reason)
         {
+        case eStopReasonTrace:
+            return true;
+            break;
         case eStopReasonBreakpoint:
             if (NextRangeBreakpointExplainsStop(stop_info_sp))
                 return true;
@@ -222,13 +224,63 @@ ThreadPlanStepOverRange::PlanExplainsStop ()
         case eStopReasonWatchpoint:
         case eStopReasonSignal:
         case eStopReasonException:
+        default:
             if (log)
                 log->PutCString ("ThreadPlanStepInRange got asked if it explains the stop for some reason other than step.");
             return false;
             break;
-        default:
-            break;
         }
     }
     return true;
+}
+
+bool
+ThreadPlanStepOverRange::WillResume (lldb::StateType resume_state, bool current_plan)
+{
+    if (resume_state != eStateSuspended && m_first_resume)
+    {
+        m_first_resume = false;
+        if (resume_state == eStateStepping && current_plan)
+        {
+            // See if we are about to step over an inlined call in the middle of the inlined stack, if so figure
+            // out its extents and reset our range to step over that.
+            bool in_inlined_stack = m_thread.DecrementCurrentInlinedDepth();
+            if (in_inlined_stack)
+            {
+                LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+                if (log)
+                    log->Printf ("ThreadPlanStepInRange::WillResume: adjusting range to the frame at inlined depth %d.",
+                                 m_thread.GetCurrentInlinedDepth());
+                StackFrameSP stack_sp = m_thread.GetStackFrameAtIndex(0);
+                if (stack_sp)
+                {
+                    Block *frame_block = stack_sp->GetFrameBlock();
+                    lldb::addr_t curr_pc = m_thread.GetRegisterContext()->GetPC();
+                    AddressRange my_range;
+                    if (frame_block->GetRangeContainingLoadAddress(curr_pc, m_thread.GetProcess()->GetTarget(), my_range))
+                    {
+                        m_address_ranges.clear();
+                        m_address_ranges.push_back(my_range);
+                        if (log)
+                        {
+                            StreamString s;
+                            const InlineFunctionInfo *inline_info = frame_block->GetInlinedFunctionInfo();
+                            const char *name;
+                            if (inline_info)
+                                name = inline_info->GetName().AsCString();
+                            else
+                                name = "<unknown-notinlined>";
+                            
+                            s.Printf ("Stepping over inlined function \"%s\" in inlined stack: ", name);
+                            DumpRanges(&s);
+                            log->PutCString(s.GetData());
+                        }
+                    }
+                    
+                }
+            }
+        }
+    }
+    
+    return ThreadPlan::WillResume(resume_state, current_plan);
 }

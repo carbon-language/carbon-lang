@@ -362,7 +362,6 @@ ThreadList::WillResume ()
     // Run through the threads and perform their momentary actions.
     // But we only do this for threads that are running, user suspended
     // threads stay where they are.
-    bool success = true;
 
     Mutex::Locker locker(m_threads_mutex);
     m_process->UpdateThreadListIfNeeded();
@@ -449,6 +448,8 @@ ThreadList::WillResume ()
 
     }
 
+    bool need_to_resume = true;
+    
     if (immediate_thread_sp)
     {
         for (pos = m_threads.begin(); pos != end; ++pos)
@@ -471,7 +472,8 @@ ThreadList::WillResume ()
                 run_state = thread_sp->GetCurrentPlan()->RunState();
             else
                 run_state = eStateSuspended;
-            thread_sp->WillResume(run_state);
+            if (!thread_sp->WillResume(run_state))
+                need_to_resume = false;
         }
     }
     else
@@ -497,13 +499,16 @@ ThreadList::WillResume ()
         {
             ThreadSP thread_sp(*pos);
             if (thread_sp == thread_to_run)
-                thread_sp->WillResume(thread_sp->GetCurrentPlan()->RunState());
+            {
+                if (!thread_sp->WillResume(thread_sp->GetCurrentPlan()->RunState()))
+                    need_to_resume = false;
+            }
             else
                 thread_sp->WillResume (eStateSuspended);
         }
     }
 
-    return success;
+    return need_to_resume;
 }
 
 void

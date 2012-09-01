@@ -349,15 +349,22 @@ Thread::WillResume (StateType resume_state)
     // plans in case a plan needs to do any special business before it runs.
     
     ThreadPlan *plan_ptr = GetCurrentPlan();
-    plan_ptr->WillResume(resume_state, true);
+    bool need_to_resume = plan_ptr->WillResume(resume_state, true);
 
     while ((plan_ptr = GetPreviousPlan(plan_ptr)) != NULL)
     {
         plan_ptr->WillResume (resume_state, false);
     }
     
-    m_actual_stop_info_sp.reset();
-    return true;
+    // If the WillResume for the plan says we are faking a resume, then it will have set an appropriate stop info.
+    // In that case, don't reset it here.
+    
+    if (need_to_resume)
+    {
+        m_actual_stop_info_sp.reset();
+    }
+
+    return need_to_resume;
 }
 
 void
@@ -409,7 +416,10 @@ Thread::ShouldStop (Event* event_ptr)
                          GetRegisterContext()->GetPC());
         return false;
     }
-
+    
+    // Adjust the stack frame's current inlined depth if it is needed.
+    GetStackFrameList()->CalculateCurrentInlinedDepth();
+    
     if (log)
     {
         log->Printf ("Thread::%s for tid = 0x%4.4llx, pc = 0x%16.16llx", 

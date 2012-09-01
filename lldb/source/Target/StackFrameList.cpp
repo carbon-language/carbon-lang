@@ -21,6 +21,7 @@
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StackFrame.h"
+#include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/Unwind.h"
@@ -45,8 +46,15 @@ StackFrameList::StackFrameList
     m_frames (),
     m_selected_frame_idx (0),
     m_concrete_frames_fetched (0),
+    m_current_inlined_depth (UINT32_MAX),
+    m_current_inlined_pc (LLDB_INVALID_ADDRESS),
     m_show_inlined_frames (show_inline_frames)
 {
+    if (prev_frames_sp)
+    {
+        m_current_inlined_depth = prev_frames_sp->m_current_inlined_depth;
+        m_current_inlined_pc =    prev_frames_sp->m_current_inlined_pc;
+    }
 }
 
 //----------------------------------------------------------------------
@@ -54,6 +62,140 @@ StackFrameList::StackFrameList
 //----------------------------------------------------------------------
 StackFrameList::~StackFrameList()
 {
+}
+
+void
+StackFrameList::CalculateCurrentInlinedDepth()
+{
+    uint32_t cur_inlined_depth = GetCurrentInlinedDepth();
+    if (cur_inlined_depth == UINT32_MAX)
+    {
+        ResetCurrentInlinedDepth();
+    }
+}
+
+uint32_t
+StackFrameList::GetCurrentInlinedDepth ()
+{
+    if (m_show_inlined_frames)
+    {
+        lldb::addr_t cur_pc = m_thread.GetRegisterContext()->GetPC();
+        if (cur_pc != m_current_inlined_pc)
+        {
+            m_current_inlined_pc = LLDB_INVALID_ADDRESS;
+            m_current_inlined_depth = UINT32_MAX;
+        }
+        return m_current_inlined_depth;
+    }
+    else
+    {
+        return UINT32_MAX;
+    }
+}
+
+static const bool LLDB_FANCY_INLINED_STEPPING = false;
+
+void
+StackFrameList::ResetCurrentInlinedDepth ()
+{
+    if (LLDB_FANCY_INLINED_STEPPING && m_show_inlined_frames)
+    {        
+        GetFramesUpTo(0);
+        if (!m_frames[0]->IsInlined())
+        {
+            m_current_inlined_depth = UINT32_MAX;
+            m_current_inlined_pc = LLDB_INVALID_ADDRESS;
+        }
+        else
+        {
+            // We only need to do something special about inlined blocks when we
+            // are at the beginning of an inlined function:
+            // FIXME: We probably also have to do something special if the PC is at the END
+            // of an inlined function, which coincides with the end of either its containing
+            // function or another inlined function.
+            
+            lldb::addr_t curr_pc = m_thread.GetRegisterContext()->GetPC();
+            Block *block_ptr = m_frames[0]->GetFrameBlock();
+            if (block_ptr)
+            {
+                Address pc_as_address;
+                pc_as_address.SetLoadAddress(curr_pc, &(m_thread.GetProcess()->GetTarget()));
+                AddressRange containing_range;
+                if (block_ptr->GetRangeContainingAddress(pc_as_address, containing_range))
+                {
+                    if (pc_as_address == containing_range.GetBaseAddress())
+                    {
+                        // If we got here because of a breakpoint hit, then set the inlined depth depending on where
+                        // the breakpoint was set.
+                        // If we got here because of a crash, then set the inlined depth to the deepest most block.
+                        // Otherwise, we stopped here naturally as the result of a step, so set ourselves in the
+                        // containing frame of the whole set of nested inlines, so the user can then "virtually"
+                        // step into the frames one by one, or next over the whole mess.
+                        // Note: We don't have to handle being somewhere in the middle of the stack here, since
+                        // ResetCurrentInlinedDepth doesn't get called if there is a valid inlined depth set.
+                        StopInfoSP stop_info_sp = m_thread.GetStopInfo();
+                        if (stop_info_sp)
+                        {
+                            switch (stop_info_sp->GetStopReason())
+                            {
+                            case eStopReasonBreakpoint:
+                                {
+                            
+                                }
+                                break;
+                            case eStopReasonWatchpoint:
+                            case eStopReasonException:
+                            case eStopReasonSignal:
+                                // In all these cases we want to stop in the deepest most frame.
+                                m_current_inlined_pc = curr_pc;
+                                m_current_inlined_depth = 0;
+                                break;
+                            default:
+                                {
+                                    // Otherwise, we should set ourselves at the container of the inlining, so that the
+                                    // user can descend into them.
+                                    // So first we check whether we have more than one inlined block sharing this PC:
+                                    int num_inlined_functions = 0;
+                                    
+                                    for  (Block *container_ptr = block_ptr->GetInlinedParent();
+                                              container_ptr != NULL;
+                                              container_ptr = container_ptr->GetInlinedParent())
+                                    {
+                                        if (!container_ptr->GetRangeContainingAddress(pc_as_address, containing_range))
+                                            break;
+                                        if (pc_as_address != containing_range.GetBaseAddress())
+                                            break;
+                                        
+                                        num_inlined_functions++;
+                                    }
+                                    m_current_inlined_pc = curr_pc;
+                                    m_current_inlined_depth = num_inlined_functions + 1;
+                                    
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+bool
+StackFrameList::DecrementCurrentInlinedDepth ()
+{
+    if (m_show_inlined_frames)
+    {
+        uint32_t current_inlined_depth = GetCurrentInlinedDepth();
+        if (current_inlined_depth != UINT32_MAX)
+        {
+            if (current_inlined_depth > 0)
+                m_current_inlined_depth--;
+            return true;
+        }
+    }
+    return false;
 }
 
 void
@@ -70,6 +212,22 @@ StackFrameList::GetFramesUpTo(uint32_t end_idx)
 #if defined (DEBUG_STACK_FRAMES)
         StreamFile s(stdout, false);
 #endif
+        // If we are hiding some frames from the outside world, we need to add those onto the total count of
+        // frames to fetch.  However, we don't need ot do that if end_idx is 0 since in that case we always
+        // get the first concrete frame and all the inlined frames below it...
+        
+        uint32_t inlined_depth = 0;
+        if (end_idx > 0)
+        {
+            inlined_depth = GetCurrentInlinedDepth();
+            if (inlined_depth != UINT32_MAX)
+            {
+                if (end_idx > 0)
+                    end_idx += inlined_depth;
+            }
+            else
+                inlined_depth = 0;
+        }
         
         StackFrameSP unwind_frame_sp;
         do
@@ -98,7 +256,7 @@ StackFrameList::GetFramesUpTo(uint32_t end_idx)
                     
                     unwind_frame_sp.reset (new StackFrame (m_thread.shared_from_this(),
                                                            m_frames.size(), 
-                                                           idx, 
+                                                           idx,
                                                            m_thread.m_reg_context_sp,
                                                            cfa,
                                                            pc,
@@ -246,7 +404,12 @@ StackFrameList::GetNumFrames (bool can_create)
 
     if (can_create)
         GetFramesUpTo (UINT32_MAX);
-    return m_frames.size();
+
+    uint32_t inlined_depth = GetCurrentInlinedDepth();
+    if (inlined_depth == UINT32_MAX)
+        return m_frames.size();
+    else
+        return m_frames.size() - inlined_depth;
 }
 
 void
@@ -278,6 +441,10 @@ StackFrameList::GetFrameAtIndex (uint32_t idx)
 {
     StackFrameSP frame_sp;
     Mutex::Locker locker (m_mutex);
+    uint32_t inlined_depth = GetCurrentInlinedDepth();
+    if (inlined_depth != UINT32_MAX)
+        idx += inlined_depth;
+    
     if (idx < m_frames.size())
         frame_sp = m_frames[idx];
 
@@ -396,6 +563,9 @@ StackFrameList::SetSelectedFrame (lldb_private::StackFrame *frame)
         if (pos->get() == frame)
         {
             m_selected_frame_idx = std::distance (begin, pos);
+            uint32_t inlined_depth = GetCurrentInlinedDepth();
+            if (inlined_depth != UINT32_MAX)
+                m_selected_frame_idx -= inlined_depth;
             break;
         }
     }

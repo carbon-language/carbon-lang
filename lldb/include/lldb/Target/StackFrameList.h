@@ -55,7 +55,19 @@ public:
     // Mark a stack frame as the current frame using the frame index
     bool
     SetSelectedFrameByIndex (uint32_t idx);
-
+    
+    uint32_t
+    GetVisibleStackFrameIndex(uint32_t idx)
+    {
+        if (m_current_inlined_depth < UINT32_MAX)
+            return idx - m_current_inlined_depth;
+        else
+            return idx;
+    }
+    
+    void
+    CalculateCurrentInlinedDepth ();
+    
     void
     SetDefaultFileAndLineToSelectedFrame();
 
@@ -104,6 +116,15 @@ protected:
         m_concrete_frames_fetched = UINT32_MAX;
     }
     
+    bool
+    DecrementCurrentInlinedDepth ();
+    
+    void
+    ResetCurrentInlinedDepth();
+
+    uint32_t
+    GetCurrentInlinedDepth ();
+    
     //------------------------------------------------------------------
     // Classes that inherit from StackFrameList can see and modify these
     //------------------------------------------------------------------
@@ -117,6 +138,8 @@ protected:
     collection m_frames;
     uint32_t m_selected_frame_idx;
     uint32_t m_concrete_frames_fetched;
+    uint32_t m_current_inlined_depth;
+    lldb::addr_t m_current_inlined_pc;
     bool m_show_inlined_frames;
 
 private:

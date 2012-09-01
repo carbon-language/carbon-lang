@@ -197,6 +197,16 @@ StackFrame::GetStackID()
     return m_id;
 }
 
+uint32_t
+StackFrame::GetFrameIndex () const
+{
+    ThreadSP thread_sp = GetThread();
+    if (thread_sp)
+        return thread_sp->GetStackFrameList()->GetVisibleStackFrameIndex(m_frame_index);
+    else
+        return m_frame_index;
+}
+
 void
 StackFrame::SetSymbolContextScope (SymbolContextScope *symbol_scope)
 {
