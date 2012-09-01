@@ -49,7 +49,7 @@ static void PrintHeader(ReportType typ) {
   TsanPrintf(" (pid=%d)\n", GetPid());
 }
 
-static void PrintStack(const ReportStack *ent) {
+void PrintStack(const ReportStack *ent) {
   for (int i = 0; ent; ent = ent->next, i++) {
     TsanPrintf("    #%d %s %s:%d", i, ent->func, ent->file, ent->line);
     if (ent->col)

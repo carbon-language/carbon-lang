@@ -435,4 +435,10 @@ void ReportRace(ThreadState *thr) {
   AddRacyStacks(thr, traces, addr_min, addr_max);
 }
 
+void PrintCurrentStack(ThreadState *thr, uptr pc) {
+  StackTrace trace;
+  trace.ObtainCurrent(thr, pc);
+  PrintStack(SymbolizeStack(trace));
+}
+
 }  // namespace __tsan

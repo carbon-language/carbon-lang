@@ -453,6 +453,7 @@ bool IsExpectedReport(uptr addr, uptr size);
 #endif
 
 u32 CurrentStackId(ThreadState *thr, uptr pc);
+void PrintCurrentStack(ThreadState *thr, uptr pc);
 
 void Initialize(ThreadState *thr);
 int Finalize(ThreadState *thr);
