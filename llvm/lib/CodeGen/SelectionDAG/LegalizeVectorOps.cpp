@@ -514,9 +514,14 @@ SDValue VectorLegalizer::ExpandVSELECT(SDValue Op) {
   // AND,OR,XOR, we will have to scalarize the op.
   // Notice that the operation may be 'promoted' which means that it is
   // 'bitcasted' to another type which is handled.
+  // This operation also isn't safe with AND, OR, XOR when the boolean
+  // type is 0/1 as we need an all ones vector constant to mask with.
+  // FIXME: Sign extend 1 to all ones if thats legal on the target.
   if (TLI.getOperationAction(ISD::AND, VT) == TargetLowering::Expand ||
       TLI.getOperationAction(ISD::XOR, VT) == TargetLowering::Expand ||
-      TLI.getOperationAction(ISD::OR,  VT) == TargetLowering::Expand)
+      TLI.getOperationAction(ISD::OR,  VT) == TargetLowering::Expand ||
+      TLI.getBooleanContents(true) !=
+      TargetLowering::ZeroOrNegativeOneBooleanContent)
     return DAG.UnrollVectorOp(Op.getNode());
 
   assert(VT.getSizeInBits() == Op1.getValueType().getSizeInBits()
