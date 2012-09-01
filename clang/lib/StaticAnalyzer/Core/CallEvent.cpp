@@ -23,10 +23,26 @@ using namespace clang;
 using namespace ento;
 
 QualType CallEvent::getResultType() const {
-  QualType ResultTy = getDeclaredResultType();
+  const Expr *E = getOriginExpr();
+  assert(E && "Calls without origin expressions do not have results");
+  QualType ResultTy = E->getType();
 
-  if (ResultTy.isNull())
-    ResultTy = getOriginExpr()->getType();
+  ASTContext &Ctx = getState()->getStateManager().getContext();
+
+  // A function that returns a reference to 'int' will have a result type
+  // of simply 'int'. Check the origin expr's value kind to recover the
+  // proper type.
+  switch (E->getValueKind()) {
+  case VK_LValue:
+    ResultTy = Ctx.getLValueReferenceType(ResultTy);
+    break;
+  case VK_XValue:
+    ResultTy = Ctx.getRValueReferenceType(ResultTy);
+    break;
+  case VK_RValue:
+    // No adjustment is necessary.
+    break;
+  }
 
   return ResultTy;
 }
@@ -285,14 +301,6 @@ void AnyFunctionCall::getInitialStackFrameContents(
                                D->param_begin(), D->param_end());
 }
 
-QualType AnyFunctionCall::getDeclaredResultType() const {
-  const FunctionDecl *D = getDecl();
-  if (!D)
-    return QualType();
-
-  return D->getResultType();
-}
-
 bool AnyFunctionCall::argumentsMayEscape() const {
   if (hasNonZeroCallbackArg())
     return true;
@@ -501,15 +509,6 @@ void BlockCall::getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
 }
 
 
-QualType BlockCall::getDeclaredResultType() const {
-  const BlockDataRegion *BR = getBlockRegion();
-  if (!BR)
-    return QualType();
-  QualType BlockTy = BR->getCodeRegion()->getLocationType();
-  return cast<FunctionType>(BlockTy->getPointeeType())->getResultType();
-}
-
-
 SVal CXXConstructorCall::getCXXThisVal() const {
   if (Data)
     return loc::MemRegionVal(static_cast<const MemRegion *>(Data));
@@ -564,14 +563,6 @@ void
 ObjCMethodCall::getExtraInvalidatedRegions(RegionList &Regions) const {
   if (const MemRegion *R = getReceiverSVal().getAsRegion())
     Regions.push_back(R);
-}
-
-QualType ObjCMethodCall::getDeclaredResultType() const {
-  const ObjCMethodDecl *D = getDecl();
-  if (!D)
-    return QualType();
-
-  return D->getResultType();
 }
 
 SVal ObjCMethodCall::getSelfSVal() const {

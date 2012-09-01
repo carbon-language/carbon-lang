@@ -121,6 +121,18 @@ void testReferenceAddress(int &x) {
 }
 
 
+void testFunctionPointerReturn(void *opaque) {
+  typedef int &(*RefFn)();
+
+  RefFn getRef = (RefFn)opaque;
+
+  // Don't crash writing to or reading from this reference.
+  int &x = getRef();
+  x = 42;
+  clang_analyzer_eval(x == 42); // expected-warning{{TRUE}}
+}
+
+
 // ------------------------------------
 // False negatives
 // ------------------------------------

@@ -168,8 +168,6 @@ protected:
   /// result of this call.
   virtual void getExtraInvalidatedRegions(RegionList &Regions) const {}
 
-  virtual QualType getDeclaredResultType() const = 0;
-
 public:
   virtual ~CallEvent() {}
 
@@ -357,8 +355,6 @@ protected:
     : CallEvent(D, St, LCtx) {}
   AnyFunctionCall(const AnyFunctionCall &Other) : CallEvent(Other) {}
 
-  virtual QualType getDeclaredResultType() const;
-
 public:
   // This function is overridden by subclasses, but they must return
   // a FunctionDecl.
@@ -452,8 +448,6 @@ protected:
   virtual void cloneTo(void *Dest) const { new (Dest) BlockCall(*this); }
 
   virtual void getExtraInvalidatedRegions(RegionList &Regions) const;
-
-  virtual QualType getDeclaredResultType() const;
 
 public:
   /// \brief Returns the region associated with this instance of the block.
@@ -771,8 +765,6 @@ protected:
   virtual void cloneTo(void *Dest) const { new (Dest) ObjCMethodCall(*this); }
 
   virtual void getExtraInvalidatedRegions(RegionList &Regions) const;
-
-  virtual QualType getDeclaredResultType() const;
 
   /// Check if the selector may have multiple definitions (may have overrides).
   virtual bool canBeOverridenInSubclass(ObjCInterfaceDecl *IDecl,
