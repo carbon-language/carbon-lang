@@ -8217,15 +8217,13 @@ bool Sema::CheckEnumRedeclaration(SourceLocation EnumLoc, bool IsScoped,
 /// WARNING: Indexes apply to particular diagnostics only!
 ///
 /// \returns diagnostic %select index.
-static unsigned getRedeclDiagFromTagKind(TagTypeKind Tag)
-{
+static unsigned getRedeclDiagFromTagKind(TagTypeKind Tag) {
   switch (Tag) {
-    case TTK_Struct: return 0;
-    case TTK_Interface: return 1;
-    case TTK_Class:  return 2;
-    default: assert("Invalid tag kind for redecl diagnostic!");
+  case TTK_Struct: return 0;
+  case TTK_Interface: return 1;
+  case TTK_Class:  return 2;
+  default: llvm_unreachable("Invalid tag kind for redecl diagnostic!");
   }
-  return -1;
 }
 
 /// \brief Determine if tag kind is a class-key compatible with

@@ -680,15 +680,13 @@ static bool CheckConstexprParameterTypes(Sema &SemaRef,
 /// WARNING: Indexes apply to particular diagnostics only!
 ///
 /// \returns diagnostic %select index.
-static unsigned getRecordDiagFromTagKind(TagTypeKind Tag)
-{
+static unsigned getRecordDiagFromTagKind(TagTypeKind Tag) {
   switch (Tag) {
-    case TTK_Struct: return 0;
-    case TTK_Interface: return 1;
-    case TTK_Class:  return 2;
-    default: assert("Invalid tag kind for record diagnostic!");
+  case TTK_Struct: return 0;
+  case TTK_Interface: return 1;
+  case TTK_Class:  return 2;
+  default: llvm_unreachable("Invalid tag kind for record diagnostic!");
   }
-  return -1;
 }
 
 // CheckConstexprFunctionDecl - Check whether a function declaration satisfies

@@ -4437,15 +4437,13 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
 /// WARNING: Indexes apply to particular diagnostics only!
 ///
 /// \returns diagnostic %select index.
-static unsigned getLiteralDiagFromTagKind(TagTypeKind Tag)
-{
+static unsigned getLiteralDiagFromTagKind(TagTypeKind Tag) {
   switch (Tag) {
-    case TTK_Struct: return 0;
-    case TTK_Interface: return 1;
-    case TTK_Class:  return 2;
-    default: assert("Invalid tag kind for literal type diagnostic!");
+  case TTK_Struct: return 0;
+  case TTK_Interface: return 1;
+  case TTK_Class:  return 2;
+  default: llvm_unreachable("Invalid tag kind for literal type diagnostic!");
   }
-  return -1;
 }
 
 /// @brief Ensure that the type T is a literal type.
