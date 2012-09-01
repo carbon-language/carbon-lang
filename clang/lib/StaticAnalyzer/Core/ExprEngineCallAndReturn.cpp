@@ -359,6 +359,7 @@ bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
     // Inlining constructors requires including initializers in the CFG.
     const AnalysisDeclContext *ADC = CallerSFC->getAnalysisDeclContext();
     assert(ADC->getCFGBuildOptions().AddInitializers && "No CFG initializers");
+    (void)ADC;
 
     // If the destructor is trivial, it's always safe to inline the constructor.
     if (Ctor.getDecl()->getParent()->hasTrivialDestructor())
@@ -384,6 +385,7 @@ bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
     // Inlining destructors requires building the CFG correctly.
     const AnalysisDeclContext *ADC = CallerSFC->getAnalysisDeclContext();
     assert(ADC->getCFGBuildOptions().AddImplicitDtors && "No CFG destructors");
+    (void)ADC;
 
     const CXXDestructorCall &Dtor = cast<CXXDestructorCall>(Call);
 
