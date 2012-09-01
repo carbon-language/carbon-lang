@@ -21,7 +21,13 @@ NO_INSTALL = 1
 # LINK_COMPONENTS before including Makefile.rules
 include $(CLANG_LEVEL)/../../Makefile.config
 
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) support mc
-USEDLIBS = clang.a
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser support mc
+USEDLIBS = clang.a \
+	   clangARCMigrate.a \
+	   clangRewriteFrontend.a \
+	   clangRewriteCore.a \
+	   clangFrontend.a clangDriver.a \
+	   clangSerialization.a clangParse.a clangSema.a \
+	   clangAnalysis.a clangEdit.a clangAST.a clangLex.a clangBasic.a
 
 include $(CLANG_LEVEL)/Makefile
