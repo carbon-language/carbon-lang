@@ -857,8 +857,10 @@ void ExprEngine::VisitIncrementDecrementOperator(const UnaryOperator* U,
     
     if (U->getType()->isAnyPointerType())
       RHS = svalBuilder.makeArrayIndex(1);
-    else
+    else if (U->getType()->isIntegralOrEnumerationType())
       RHS = svalBuilder.makeIntVal(1, U->getType());
+    else
+      RHS = UnknownVal();
     
     SVal Result = evalBinOp(state, Op, V2, RHS, U->getType());
     
