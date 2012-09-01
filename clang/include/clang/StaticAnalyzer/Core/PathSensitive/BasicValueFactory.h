@@ -73,6 +73,10 @@ class BasicValueFactory {
   llvm::FoldingSet<CompoundValData>  CompoundValDataSet;
   llvm::FoldingSet<LazyCompoundValData> LazyCompoundValDataSet;
 
+  // This is private because external clients should use the factory
+  // method that takes a QualType.
+  const llvm::APSInt& getValue(uint64_t X, unsigned BitWidth, bool isUnsigned);
+
 public:
   BasicValueFactory(ASTContext &ctx, llvm::BumpPtrAllocator& Alloc)
   : Ctx(ctx), BPAlloc(Alloc), PersistentSVals(0), PersistentSValPairs(0),
@@ -84,7 +88,6 @@ public:
 
   const llvm::APSInt& getValue(const llvm::APSInt& X);
   const llvm::APSInt& getValue(const llvm::APInt& X, bool isUnsigned);
-  const llvm::APSInt& getValue(uint64_t X, unsigned BitWidth, bool isUnsigned);
   const llvm::APSInt& getValue(uint64_t X, QualType T);
 
   /// Returns the type of the APSInt used to store values of the given QualType.

@@ -66,6 +66,10 @@ public:
     return llvm::APSInt::getMaxValue(BitWidth, IsUnsigned);
   }
 
+  llvm::APSInt getValue(uint64_t RawValue) const LLVM_READONLY {
+    return (llvm::APSInt(BitWidth, IsUnsigned) = RawValue);
+  }
+
   /// Used to classify whether a value is representable using this type.
   ///
   /// \see testInRange

@@ -262,11 +262,6 @@ public:
         BasicVals.getIntWithPtrWidth(integer, isUnsigned));
   }
 
-  NonLoc makeIntVal(uint64_t integer, unsigned bitWidth, bool isUnsigned) {
-    return nonloc::ConcreteInt(
-        BasicVals.getValue(integer, bitWidth, isUnsigned));
-  }
-
   NonLoc makeLocAsInteger(Loc loc, unsigned bits) {
     return nonloc::LocAsInteger(BasicVals.getPersistentSValWithData(loc, bits));
   }

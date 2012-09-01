@@ -101,11 +101,7 @@ const llvm::APSInt& BasicValueFactory::getValue(uint64_t X, unsigned BitWidth,
 
 const llvm::APSInt& BasicValueFactory::getValue(uint64_t X, QualType T) {
 
-  unsigned bits = Ctx.getTypeSize(T);
-  llvm::APSInt V(bits, 
-                 T->isUnsignedIntegerOrEnumerationType() || Loc::isLocType(T));
-  V = X;
-  return getValue(V);
+  return getValue(getAPSIntType(T).getValue(X));
 }
 
 const CompoundValData*
