@@ -44,10 +44,9 @@ def load_dylib():
         if not os.path.exists(libheap_dylib_path) or os.stat(heap_source_file).st_mtime > os.stat(libheap_dylib_path).st_mtime:
             # Remake the dylib
             make_command = '(cd "%s" ; make EXE="%s" ARCH=%s)' % (heap_code_directory, libheap_dylib_path, string.split(triple, '-')[0])
-            # print make_command
             (make_exit_status, make_output) = commands.getstatusoutput(make_command)
             if make_exit_status != 0:
-                print make_output
+                return 'error: make failed: %s' % (make_output)
         if os.path.exists(libheap_dylib_path):
             libheap_dylib_spec = lldb.SBFileSpec(libheap_dylib_path)
             if lldb.target.FindModule(libheap_dylib_spec):
@@ -133,7 +132,7 @@ def add_common_options(parser):
     parser.add_option('-M', '--max-matches', type='int', dest='max_matches', help='the maximum number of matches to print', default=256)
     parser.add_option('-O', '--offset', type='int', dest='offset', help='the matching data must be at this offset', default=-1)
 
-def dump_stack_history_entry(stack_history_entry, idx):
+def dump_stack_history_entry(result, stack_history_entry, idx):
     address = int(stack_history_entry.address)
     if address:
         type_flags = int(stack_history_entry.type_flags)
@@ -151,7 +150,7 @@ def dump_stack_history_entry(stack_history_entry, idx):
                 type_str = 'generic'
             else:
                 type_str = hex(type_flags)
-        print 'stack[%u]: addr = 0x%x, type=%s, frames:' % (idx, address, type_str)
+        result.AppendMessage('stack[%u]: addr = 0x%x, type=%s, frames:' % (idx, address, type_str))
         frame_idx = 0
         idx = 0
         pc = int(stack_history_entry.frames[idx])
@@ -160,18 +159,18 @@ def dump_stack_history_entry(stack_history_entry, idx):
                 frames = symbolicator.symbolicate(pc)
                 if frames:
                     for frame in frames:
-                        print '     [%u] %s' % (frame_idx, frame)
+                        result.AppendMessage('     [%u] %s' % (frame_idx, frame))
                         frame_idx += 1
                 else:
-                    print '     [%u] 0x%x' % (frame_idx, pc)
+                    result.AppendMessage('     [%u] 0x%x' % (frame_idx, pc))
                     frame_idx += 1
                 idx = idx + 1
                 pc = int(stack_history_entry.frames[idx])
             else:
                 pc = 0
-        print
+        result.AppendMessage('')
             
-def dump_stack_history_entries(addr, history):
+def dump_stack_history_entries(result, addr, history):
     # malloc_stack_entry *get_stack_history_for_address (const void * addr)
     expr = 'get_stack_history_for_address((void *)0x%x, %u)' % (addr, history)
     expr_sbvalue = lldb.frame.EvaluateExpression (expr)
@@ -181,14 +180,16 @@ def dump_stack_history_entries(addr, history):
             idx = 0;
             stack_history_entry = expr_value[idx]
             while int(stack_history_entry.address) != 0:
-                dump_stack_history_entry(stack_history_entry, idx)
+                dump_stack_history_entry(result, stack_history_entry, idx)
                 idx = idx + 1
                 stack_history_entry = expr_value[idx]
+        else:
+            result.AppendMessage('"%s" returned zero' % (expr))
     else:
-        print 'error: expression failed "%s" => %s' % (expr, expr_sbvalue.error)
+        result.AppendMessage('error: expression failed "%s" => %s' % (expr, expr_sbvalue.error))
     
 
-def display_match_results (options, arg_str_description, expr_sbvalue, print_no_matches = True):
+def display_match_results (result, options, arg_str_description, expr_sbvalue, print_no_matches = True):
     if expr_sbvalue.error.Success():
         if expr_sbvalue.unsigned:
             match_value = lldb.value(expr_sbvalue)  
@@ -198,7 +199,7 @@ def display_match_results (options, arg_str_description, expr_sbvalue, print_no_
                 print_entry = True
                 match_entry = match_value[i]; i += 1
                 if i >= options.max_matches:
-                    print 'error: the max number of matches (%u) was reached, use the --max-matches option to get more results' % (options.max_matches)
+                    result.AppendMessage('error: the max number of matches (%u) was reached, use the --max-matches option to get more results' % (options.max_matches))
                     break
                 malloc_addr = match_entry.addr.sbvalue.unsigned
                 if malloc_addr == 0:
@@ -249,38 +250,36 @@ def display_match_results (options, arg_str_description, expr_sbvalue, print_no_
                 if print_entry:
                     match_idx += 1
                     if description:
-                        print description
+                        result.AppendMessage(description)
                         if options.print_type and derefed_dynamic_value:
-                            print derefed_dynamic_value
+                            result.AppendMessage('%s' % (derefed_dynamic_value))
                         if options.print_object_description and dynamic_value:
                             desc = dynamic_value.GetObjectDescription()
                             if desc:
-                                print ', po=%s\n' % (desc)
+                                result.AppendMessage(', po=%s' % (desc))
                     if options.memory:
                         cmd_result = lldb.SBCommandReturnObject()
                         memory_command = "memory read -f %s 0x%x 0x%x" % (options.format, malloc_addr, malloc_addr + malloc_size)
                         lldb.debugger.GetCommandInterpreter().HandleCommand(memory_command, cmd_result)
-                        print cmd_result.GetOutput()
+                        result.AppendMessage(cmd_result.GetOutput())
                     if options.stack_history:
-                        dump_stack_history_entries(malloc_addr, 1)
+                        dump_stack_history_entries(result, malloc_addr, 1)
                     elif options.stack:
-                        dump_stack_history_entries(malloc_addr, 0)
+                        dump_stack_history_entries(result, malloc_addr, 0)
             return i
         elif print_no_matches:
-            print 'no matches found for %s' % (arg_str_description)
+            result.AppendMessage('no matches found for %s' % (arg_str_description))
     else:
-        print expr_sbvalue.error
+        result.AppendMessage(expr_sbvalue.error )
     return 0
     
-def heap_search(options, arg_str):
+def heap_search(result, options, arg_str):
     dylid_load_err = load_dylib()
     if dylid_load_err:
-        print dylid_load_err
+        result.AppendMessage(dylid_load_err)
         return
     expr = None
     arg_str_description = arg_str
-    if options.format == None: 
-        options.format = "Y" # 'Y' is "bytes with ASCII" format
     if options.type == 'pointer':
         expr = 'find_pointer_in_heap((void *)%s)' % (arg_str)
         arg_str_description = 'malloc block containing pointer %s' % arg_str
@@ -299,10 +298,12 @@ def heap_search(options, arg_str):
         expr = 'find_block_for_address((void *)%s)' % arg_str
         arg_str_description = 'malloc block for %s' % arg_str
     else:
-        print 'error: invalid type "%s"\nvalid values are "pointer", "cstr"' % options.type
+        result.AppendMessage('error: invalid type "%s"\nvalid values are "pointer", "cstr"' % options.type)
         return
+    if options.format == None: 
+        options.format = "Y" # 'Y' is "bytes with ASCII" format
     
-    display_match_results (options, arg_str_description, lldb.frame.EvaluateExpression (expr))
+    display_match_results (result, options, arg_str_description, lldb.frame.EvaluateExpression (expr))
     
 def ptr_refs(debugger, command, result, dict):
     command_args = shlex.split(command)
@@ -324,9 +325,9 @@ def ptr_refs(debugger, command, result, dict):
     if args:
         
         for data in args:
-            heap_search (options, data)
+            heap_search (result, options, data)
     else:
-        print 'error: no pointer arguments were given'
+        resultresult.AppendMessage('error: no pointer arguments were given')
 
 def cstr_refs(debugger, command, result, dict):
     command_args = shlex.split(command)
@@ -348,9 +349,9 @@ def cstr_refs(debugger, command, result, dict):
     if args:
 
         for data in args:
-            heap_search (options, data)
+            heap_search (result, options, data)
     else:
-        print 'error: no c string arguments were given to search for'
+        result.AppendMessage('error: no c string arguments were given to search for');
 
 def malloc_info(debugger, command, result, dict):
     command_args = shlex.split(command)
@@ -369,21 +370,21 @@ def malloc_info(debugger, command, result, dict):
     options.type = 'addr'
     if args:
         for data in args:
-            heap_search (options, data)
+            heap_search (result, options, data)
     else:
-        print 'error: no c string arguments were given to search for'
+        result.AppendMessage('error: no c string arguments were given to search for')
 
 def malloc_history(debugger, command, result, dict):
     command_args = shlex.split(command)
     usage = "usage: %prog [options] <EXPR> [EXPR ...]"
     description='''Gets the allocation history for an expression whose result is an address.
 
-    Programs should set the MallocStackLoggingNoCompact=1 in the environment to enable stack history. This can be done
-    with "process launch -v MallocStackLoggingNoCompact=1 -- [arg1 ...]"'''
+    Programs should set the MallocStackLogging=1 in the environment to enable stack history. This can be done
+    with "process launch -v MallocStackLogging=1 -- [arg1 ...]"'''
 
     dylid_load_err = load_dylib()
     if dylid_load_err:
-        print dylid_load_err
+        result.AppendMessage(dylid_load_err)
     else:
         if command_args:
             for addr_expr_str in command_args:
@@ -393,9 +394,9 @@ def malloc_history(debugger, command, result, dict):
                     if addr != 0:
                         dump_stack_history_entries (addr, 1)
                 else:
-                    print 'error: expression error for "%s": %s' % (addr_expr_str, expr_sbvalue.error)
+                    result.AppendMessage('error: expression error for "%s": %s' % (addr_expr_str, expr_sbvalue.error))
         else:
-            print 'error: no address expressions were specified'
+            result.AppendMessage('error: no address expressions were specified')
 
 def section_ptr_refs(debugger, command, result, dict):
     command_args = shlex.split(command)
@@ -414,7 +415,7 @@ def section_ptr_refs(debugger, command, result, dict):
     sections = list()
     section_modules = list()
     if not options.section_names:
-        print 'error: at least one section must be specified with the --section option'
+        result.AppendMessage('error: at least one section must be specified with the --section option')
         return
 
     for module in lldb.target.modules:
@@ -426,13 +427,13 @@ def section_ptr_refs(debugger, command, result, dict):
     if sections:
         dylid_load_err = load_dylib()
         if dylid_load_err:
-            print dylid_load_err
+            result.AppendMessage(dylid_load_err)
             return
         for expr_str in args:
             for (idx, section) in enumerate(sections):
                 expr = 'find_pointer_in_memory(0x%xllu, %ullu, (void *)%s)' % (section.addr.load_addr, section.size, expr_str)
                 arg_str_description = 'section %s.%s containing "%s"' % (section_modules[idx].file.fullpath, section.name, expr_str)
-                num_matches = display_match_results (options, arg_str_description, lldb.frame.EvaluateExpression (expr), False)
+                num_matches = display_match_results (result, options, arg_str_description, lldb.frame.EvaluateExpression (expr), False)
                 if num_matches:
                     if num_matches < options.max_matches:
                         options.max_matches = options.max_matches - num_matches
@@ -441,7 +442,7 @@ def section_ptr_refs(debugger, command, result, dict):
                 if options.max_matches == 0:
                     return
     else:
-        print 'error: no sections were found that match any of %s' % (', '.join(options.section_names))
+        result.AppendMessage('error: no sections were found that match any of %s' % (', '.join(options.section_names)))
 
 def objc_refs(debugger, command, result, dict):
     command_args = shlex.split(command)
@@ -456,7 +457,7 @@ def objc_refs(debugger, command, result, dict):
 
     dylid_load_err = load_dylib()
     if dylid_load_err:
-        print dylid_load_err
+        result.AppendMessage(dylid_load_err)
     else:
         if args:
             for class_name in args:
@@ -466,13 +467,13 @@ def objc_refs(debugger, command, result, dict):
                     isa = expr_sbvalue.unsigned
                     if isa:
                         options.type = 'isa'
-                        heap_search (options, '0x%x' % isa)
+                        heap_search (result, options, '0x%x' % isa)
                     else:
-                        print 'error: Can\'t find isa for an ObjC class named "%s"' % (class_name)
+                        result.AppendMessage('error: Can\'t find isa for an ObjC class named "%s"' % (class_name))
                 else:
-                    print 'error: expression error for "%s": %s' % (addr_expr_str, expr_sbvalue.error)
+                    result.AppendMessage('error: expression error for "%s": %s' % (addr_expr_str, expr_sbvalue.error))
         else:
-            print 'error: no address expressions were specified'
+            result.AppendMessage('error: no address expressions were specified')
 
 if __name__ == '__main__':
     lldb.debugger = lldb.SBDebugger.Create()

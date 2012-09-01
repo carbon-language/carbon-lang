@@ -132,7 +132,6 @@ __mach_stack_logging_frames_for_uniqued_stack (
 //----------------------------------------------------------------------
 
 extern "C" int stack_logging_enable_logging;
-extern "C" int stack_logging_dontcompact;
 
 //----------------------------------------------------------------------
 // Local defines
@@ -345,12 +344,9 @@ get_stack_history_for_address (const void * addr, int history)
 {
     std::vector<malloc_stack_entry> empty;
     g_malloc_stack_history.swap(empty);
-    if (!stack_logging_enable_logging || (history && !stack_logging_dontcompact))
+    if (!stack_logging_enable_logging)
     {
-        if (history)
-            strncpy(g_error_string, "error: stack history logging is not enabled, set MallocStackLoggingNoCompact=1 in the environment when launching to enable stack history logging.", sizeof(g_error_string));
-        else
-            strncpy(g_error_string, "error: stack logging is not enabled, set MallocStackLogging=1 in the environment when launching to enable stack logging.", sizeof(g_error_string));
+        strncpy(g_error_string, "error: stack logging is not enabled, set MallocStackLogging=1 in the environment when launching to enable stack logging.", sizeof(g_error_string));
         return NULL;
     }
     kern_return_t err;
