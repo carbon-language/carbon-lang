@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Rewrite/RewriteRope.h"
+#include "clang/Rewrite/Core/RewriteRope.h"
 #include "clang/Basic/LLVM.h"
 #include <algorithm>
 using namespace clang;

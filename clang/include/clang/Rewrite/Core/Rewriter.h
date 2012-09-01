@@ -16,8 +16,8 @@
 #define LLVM_CLANG_REWRITER_H
 
 #include "clang/Basic/SourceLocation.h"
-#include "clang/Rewrite/DeltaTree.h"
-#include "clang/Rewrite/RewriteRope.h"
+#include "clang/Rewrite/Core/DeltaTree.h"
+#include "clang/Rewrite/Core/RewriteRope.h"
 #include "llvm/ADT/StringRef.h"
 #include <cstring>
 #include <map>

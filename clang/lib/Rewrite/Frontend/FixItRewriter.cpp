@@ -13,7 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Rewrite/FixItRewriter.h"
+#include "clang/Rewrite/Frontend/FixItRewriter.h"
 #include "clang/Edit/Commit.h"
 #include "clang/Edit/EditsReceiver.h"
 #include "clang/Basic/FileManager.h"

@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Rewrite/FrontendActions.h"
+#include "clang/Rewrite/Frontend/FrontendActions.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/Parser.h"
@@ -16,9 +16,9 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/Utils.h"
-#include "clang/Rewrite/ASTConsumers.h"
-#include "clang/Rewrite/FixItRewriter.h"
-#include "clang/Rewrite/Rewriters.h"
+#include "clang/Rewrite/Frontend/ASTConsumers.h"
+#include "clang/Rewrite/Frontend/FixItRewriter.h"
+#include "clang/Rewrite/Frontend/Rewriters.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Path.h"

@@ -29,7 +29,8 @@ target_link_libraries(clang
   clangParse
   clangEdit
   clangARCMigrate
-  clangRewrite
+  clangRewriteCore
+  clangRewriteFrontend
   clangSema
   clangSerialization
   clangStaticAnalyzerFrontend

@@ -11,7 +11,8 @@ add_dependencies(clangFrontendTool
 target_link_libraries(clangFrontendTool
   clangDriver
   clangFrontend
-  clangRewrite
+  clangRewriteCore
+  clangRewriteFrontend
   clangCodeGen
   clangStaticAnalyzerFrontend
   clangStaticAnalyzerCheckers

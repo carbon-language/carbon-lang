@@ -14,7 +14,7 @@
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/Utils.h"
 #include "clang/AST/ASTConsumer.h"
-#include "clang/Rewrite/Rewriter.h"
+#include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Sema/SemaDiagnostic.h"
 #include "clang/Basic/DiagnosticCategories.h"
 #include "clang/Lex/Preprocessor.h"

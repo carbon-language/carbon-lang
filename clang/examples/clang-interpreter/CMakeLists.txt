@@ -29,7 +29,8 @@ target_link_libraries(clang-interpreter
   clangStaticAnalyzerCheckers
   clangStaticAnalyzerCore
   clangAnalysis
-  clangRewrite
+  clangRewriteCore
+  clangRewriteFrontend
   clangAST
   clangParse
   clangLex

@@ -37,5 +37,6 @@ target_link_libraries(clangARCMigrate
   clangAST
   clangParse
   clangFrontend
-  clangRewrite
+  clangRewriteCore
+  clangRewriteFrontend
   )

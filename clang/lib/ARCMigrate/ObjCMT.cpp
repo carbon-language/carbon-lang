@@ -18,7 +18,7 @@
 #include "clang/Edit/EditedSource.h"
 #include "clang/Edit/Commit.h"
 #include "clang/Edit/EditsReceiver.h"
-#include "clang/Rewrite/Rewriter.h"
+#include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/FileManager.h"
 #include "llvm/ADT/SmallString.h"

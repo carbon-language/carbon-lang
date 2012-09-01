@@ -43,7 +43,8 @@ set(SOURCES
 
 set(LIBRARIES
   clangARCMigrate
-  clangRewrite
+  clangRewriteCore
+  clangRewriteFrontend
   clangFrontend
   clangDriver
   clangSerialization

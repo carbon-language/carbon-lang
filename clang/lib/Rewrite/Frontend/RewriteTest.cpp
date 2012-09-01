@@ -11,9 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Rewrite/Rewriters.h"
+#include "clang/Rewrite/Frontend/Rewriters.h"
 #include "clang/Lex/Preprocessor.h"
-#include "clang/Rewrite/TokenRewriter.h"
+#include "clang/Rewrite/Core/TokenRewriter.h"
 #include "llvm/Support/raw_ostream.h"
 
 void clang::DoRewriteTest(Preprocessor &PP, raw_ostream* OS) {

@@ -18,5 +18,5 @@ add_clang_unittest(ToolingTests
 target_link_libraries(ToolingTests
   clangAST
   clangTooling
-  clangRewrite
+  clangRewriteCore
   )

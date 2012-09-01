@@ -23,7 +23,7 @@
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/FrontendPluginRegistry.h"
-#include "clang/Rewrite/FrontendActions.h"
+#include "clang/Rewrite/Frontend/FrontendActions.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/DynamicLibrary.h"
 using namespace clang;

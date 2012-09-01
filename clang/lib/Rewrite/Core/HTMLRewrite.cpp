@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/Preprocessor.h"
-#include "clang/Rewrite/Rewriter.h"
-#include "clang/Rewrite/HTMLRewrite.h"
+#include "clang/Rewrite/Core/Rewriter.h"
+#include "clang/Rewrite/Core/HTMLRewrite.h"
 #include "clang/Lex/TokenConcatenation.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/SourceManager.h"

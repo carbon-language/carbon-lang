@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Rewrite/DeltaTree.h"
+#include "clang/Rewrite/Core/DeltaTree.h"
 #include "clang/Basic/LLVM.h"
 #include <cstring>
 #include <cstdio>

@@ -24,5 +24,6 @@ target_link_libraries(clangTooling
   clangFrontend
   clangAST
   clangASTMatchers
-  clangRewrite
+  clangRewriteCore
+  clangRewriteFrontend
   )

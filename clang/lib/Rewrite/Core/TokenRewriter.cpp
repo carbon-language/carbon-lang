@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Rewrite/TokenRewriter.h"
+#include "clang/Rewrite/Core/TokenRewriter.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/ScratchBuffer.h"
 #include "clang/Basic/SourceManager.h"

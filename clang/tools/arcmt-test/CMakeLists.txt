@@ -12,5 +12,5 @@ add_clang_executable(arcmt-test
 target_link_libraries(arcmt-test
   clangARCMigrate
   clangEdit
-  clangRewrite
+  clangRewriteCore
   )
