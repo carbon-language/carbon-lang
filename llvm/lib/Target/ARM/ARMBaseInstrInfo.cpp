@@ -3484,15 +3484,24 @@ ARMBaseInstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
 
       DReg = getCorrespondingDRegAndLane(TRI, DstReg, Lane);
 
+      // If we insert both a novel <def> and an <undef> on the DReg, we break
+      // any existing dependency chain on the unused lane. Either already being
+      // present means this instruction is in that chain anyway so we can make
+      // the transformation.
+      if (!MI->definesRegister(DReg, TRI) && !MI->readsRegister(DReg, TRI))
+          break;
+
       // Convert to %DDst = VSETLNi32 %DDst, %RSrc, Lane, 14, %noreg (; imps)
       // Again DDst may be undefined at the beginning of this instruction.
       MI->setDesc(get(ARM::VSETLNi32));
-      AddDefaultPred(MIB.addReg(DReg, RegState::Define)
-                        .addReg(DReg, RegState::Undef)
-                        .addReg(SrcReg)
-                        .addImm(Lane));
+      MIB.addReg(DReg, RegState::Define)
+         .addReg(DReg, getUndefRegState(!MI->readsRegister(DReg, TRI)))
+         .addReg(SrcReg)
+         .addImm(Lane);
+      AddDefaultPred(MIB);
 
-      // The destination must be marked as set.
+      // The narrower destination must be marked as set to keep previous chains
+      // in place.
       MIB.addReg(DstReg, RegState::Define | RegState::Implicit);
       break;
     case ARM::VMOVS: {
@@ -3510,13 +3519,21 @@ ARMBaseInstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
       DDst = getCorrespondingDRegAndLane(TRI, DstReg, DstLane);
       DSrc = getCorrespondingDRegAndLane(TRI, SrcReg, SrcLane);
 
+      // If we insert both a novel <def> and an <undef> on the DReg, we break
+      // any existing dependency chain on the unused lane. Either already being
+      // present means this instruction is in that chain anyway so we can make
+      // the transformation.
+      if (!MI->definesRegister(DDst, TRI) && !MI->readsRegister(DDst, TRI))
+          break;
+
       if (DSrc == DDst) {
         // Destination can be:
         //     %DDst = VDUPLN32d %DDst, Lane, 14, %noreg (; implicits)
         MI->setDesc(get(ARM::VDUPLN32d));
-        AddDefaultPred(MIB.addReg(DDst, RegState::Define)
-                          .addReg(DDst, RegState::Undef)
-                          .addImm(SrcLane));
+        MIB.addReg(DDst, RegState::Define)
+           .addReg(DDst, getUndefRegState(!MI->readsRegister(DDst, TRI)))
+           .addImm(SrcLane);
+        AddDefaultPred(MIB);
 
         // Neither the source or the destination are naturally represented any
         // more, so add them in manually.
@@ -3540,8 +3557,18 @@ ARMBaseInstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
       MachineInstrBuilder NewMIB;
       NewMIB = BuildMI(*MI->getParent(), MI, MI->getDebugLoc(),
                        get(ARM::VEXTd32), DDst);
-      NewMIB.addReg(SrcLane == 1 && DstLane == 1 ? DSrc : DDst, RegState::Undef);
-      NewMIB.addReg(SrcLane == 0 && DstLane == 0 ? DSrc : DDst, RegState::Undef);
+
+      // On the first instruction, both DSrc and DDst may be <undef> if present.
+      // Specifically when the original instruction didn't have them as an
+      // <imp-use>.
+      unsigned CurReg = SrcLane == 1 && DstLane == 1 ? DSrc : DDst;
+      bool CurUndef = !MI->readsRegister(CurReg, TRI);
+      NewMIB.addReg(CurReg, getUndefRegState(CurUndef));
+
+      CurReg = SrcLane == 0 && DstLane == 0 ? DSrc : DDst;
+      CurUndef = !MI->readsRegister(CurReg, TRI);
+      NewMIB.addReg(CurReg, getUndefRegState(CurUndef));
+
       NewMIB.addImm(1);
       AddDefaultPred(NewMIB);
 
@@ -3550,8 +3577,17 @@ ARMBaseInstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
 
       MI->setDesc(get(ARM::VEXTd32));
       MIB.addReg(DDst, RegState::Define);
-      MIB.addReg(SrcLane == 1 && DstLane == 0 ? DSrc : DDst, RegState::Undef);
-      MIB.addReg(SrcLane == 0 && DstLane == 1 ? DSrc : DDst, RegState::Undef);
+
+      // On the second instruction, DDst has definitely been defined above, so
+      // it is not <undef>. DSrc, if present, can be <undef> as above.
+      CurReg = SrcLane == 1 && DstLane == 0 ? DSrc : DDst;
+      CurUndef = CurReg == DSrc && !MI->readsRegister(CurReg, TRI);
+      MIB.addReg(CurReg, getUndefRegState(CurUndef));
+
+      CurReg = SrcLane == 0 && DstLane == 1 ? DSrc : DDst;
+      CurUndef = CurReg == DSrc && !MI->readsRegister(CurReg, TRI);
+      MIB.addReg(CurReg, getUndefRegState(CurUndef));
+
       MIB.addImm(1);
       AddDefaultPred(MIB);
 
