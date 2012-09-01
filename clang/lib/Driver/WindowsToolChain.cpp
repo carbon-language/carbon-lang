@@ -350,7 +350,7 @@ std::vector<std::string> clang::driver::GetWindowsSystemIncludeDirs() {
   };
 
   for (unsigned i = 0; i < sizeof(FallbackPaths) / sizeof(FallbackPaths[0]); ++i)
-    Paths.push_back(Paths[i]);
+    Paths.push_back(FallbackPaths[i]);
 
   return Paths;
 }
