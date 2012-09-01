@@ -32,7 +32,7 @@ public:
               NestedNameSpecifierLocVisitKind,
               DeclarationNameInfoVisitKind,
               MemberRefVisitKind, SizeOfPackExprPartsKind,
-              LambdaExprPartsKind };
+              LambdaExprPartsKind, PostChildrenVisitKind };
 protected:
   void *data[3];
   CXCursor parent;
@@ -55,6 +55,13 @@ typedef SmallVector<VisitorJob, 10> VisitorWorkList;
 class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
                       public TypeLocVisitor<CursorVisitor, bool>
 {
+public:
+  /// \brief Callback called after child nodes of a cursor have been visited.
+  /// Return true to break visitation or false to continue.
+  typedef bool (*PostChildrenVisitorTy)(CXCursor cursor,
+                                        CXClientData client_data);
+
+private:
   /// \brief The translation unit we are traversing.
   CXTranslationUnit TU;
   ASTUnit *AU;
@@ -68,6 +75,8 @@ class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
 
   /// \brief The visitor function.
   CXCursorVisitor Visitor;
+
+  PostChildrenVisitorTy PostChildrenVisitor;
 
   /// \brief The opaque client data, to be passed along to the visitor.
   CXClientData ClientData;
@@ -137,9 +146,11 @@ public:
                 bool VisitPreprocessorLast,
                 bool VisitIncludedPreprocessingEntries = false,
                 SourceRange RegionOfInterest = SourceRange(),
-                bool VisitDeclsOnly = false)
+                bool VisitDeclsOnly = false,
+                PostChildrenVisitorTy PostChildrenVisitor = 0)
     : TU(TU), AU(static_cast<ASTUnit*>(TU->TUData)),
-      Visitor(Visitor), ClientData(ClientData),
+      Visitor(Visitor), PostChildrenVisitor(PostChildrenVisitor),
+      ClientData(ClientData),
       VisitPreprocessorLast(VisitPreprocessorLast),
       VisitIncludedEntities(VisitIncludedPreprocessingEntries),
       RegionOfInterest(RegionOfInterest),
