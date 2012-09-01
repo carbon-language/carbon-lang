@@ -106,11 +106,12 @@ CommandReturnObject::AppendWarningWithFormat (const char *format, ...)
 void
 CommandReturnObject::AppendMessage (const char *in_string, int len)
 {
-    if (!in_string)
+    if (!in_string || len == 0)
         return;
     if (len < 0)
-        len = ::strlen (in_string);
-    GetOutputStream().Printf("%*.*s\n", len, len, in_string);
+	    GetOutputStream().Printf("%s\n", in_string);
+	else
+	    GetOutputStream().Printf("%*.*s\n", len, len, in_string);
 }
 
 void

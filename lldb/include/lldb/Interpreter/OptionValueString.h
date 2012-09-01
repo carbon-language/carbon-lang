@@ -16,6 +16,7 @@
 
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Core/Flags.h"
 #include "lldb/Interpreter/OptionValue.h"
 
 namespace lldb_private {
@@ -23,17 +24,24 @@ namespace lldb_private {
 class OptionValueString : public OptionValue
 {
 public:
+    enum Options
+    {
+        eOptionEncodeCharacterEscapeSequences = (1u << 0)
+    };
+
     OptionValueString () :
         OptionValue(),
         m_current_value (),
-        m_default_value ()
+        m_default_value (),
+        m_options()
     {
     }
 
     OptionValueString (const char *value) :
         OptionValue(),
         m_current_value (),
-        m_default_value ()
+        m_default_value (),
+        m_options()
     {
         if  (value && value[0])
         {
@@ -46,7 +54,8 @@ public:
                        const char *default_value) :
         OptionValue(),
         m_current_value (),
-        m_default_value ()
+        m_default_value (),
+        m_options()
     {
         if  (current_value && current_value[0])
             m_current_value.assign (current_value);
@@ -90,6 +99,18 @@ public:
     //---------------------------------------------------------------------
     // Subclass specific functions
     //---------------------------------------------------------------------
+
+    Flags &
+    GetOptions ()
+    {
+        return m_options;
+    }
+
+    const Flags &
+    GetOptions () const
+    {
+        return m_options;
+    }
     
     const char *
     operator = (const char *value)
@@ -154,6 +175,7 @@ public:
 protected:
     std::string m_current_value;
     std::string m_default_value;
+    Flags m_options;
 };
 
 } // namespace lldb_private

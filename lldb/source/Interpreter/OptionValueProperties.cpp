@@ -526,6 +526,16 @@ OptionValueProperties::SetPropertyAtIndexAsString (const ExecutionContext *exe_c
     return false;
 }
 
+OptionValueString *
+OptionValueProperties::GetPropertyAtIndexAsOptionValueString (const ExecutionContext *exe_ctx, bool will_modify, uint32_t idx) const
+{
+    OptionValueSP value_sp(GetPropertyValueAtIndex (exe_ctx, will_modify, idx));
+    if (value_sp)
+        return value_sp->GetAsString();
+    return NULL;
+}
+
+
 uint64_t
 OptionValueProperties::GetPropertyAtIndexAsUInt64 (const ExecutionContext *exe_ctx, uint32_t idx, uint64_t fail_value) const
 {

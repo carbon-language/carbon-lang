@@ -376,11 +376,11 @@ ScriptInterpreterPython::PythonInputReaderManager::InputReaderCallback
             break;
             
         case eInputReaderReactivate:
-        {
-            ScriptInterpreterPython::Locker locker(script_interpreter,
-                                                   ScriptInterpreterPython::Locker::AcquireLock | ScriptInterpreterPython::Locker::InitSession,
-                                                   ScriptInterpreterPython::Locker::FreeAcquiredLock);
-        }
+//        {
+//            ScriptInterpreterPython::Locker locker(script_interpreter,
+//                                                   ScriptInterpreterPython::Locker::AcquireLock | ScriptInterpreterPython::Locker::InitSession,
+//                                                   ScriptInterpreterPython::Locker::FreeAcquiredLock);
+//        }
             break;
             
         case eInputReaderAsynchronousOutputWritten:

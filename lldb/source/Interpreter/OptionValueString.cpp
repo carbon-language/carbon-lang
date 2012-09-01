@@ -14,6 +14,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/Stream.h"
+#include "lldb/Interpreter/Args.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -29,10 +30,22 @@ OptionValueString::DumpValue (const ExecutionContext *exe_ctx, Stream &strm, uin
             strm.PutCString (" = ");
         if (!m_current_value.empty() || m_value_was_set)
         {
-            if (dump_mask & eDumpOptionRaw)
-                strm.Printf ("%s", m_current_value.c_str());
+            if (m_options.Test (eOptionEncodeCharacterEscapeSequences))
+            {
+                std::string expanded_escape_value;
+                Args::ExpandEscapedCharacters(m_current_value.c_str(), expanded_escape_value);
+                if (dump_mask & eDumpOptionRaw)
+                    strm.Printf ("%s", expanded_escape_value.c_str());
+                else
+                    strm.Printf ("\"%s\"", expanded_escape_value.c_str());                
+            }
             else
-                strm.Printf ("\"%s\"", m_current_value.c_str());
+            {
+                if (dump_mask & eDumpOptionRaw)
+                    strm.Printf ("%s", m_current_value.c_str());
+                else
+                    strm.Printf ("\"%s\"", m_current_value.c_str());
+            }
         }
     }
 }
@@ -53,7 +66,16 @@ OptionValueString::SetValueFromCString (const char *value_cstr,
 
     case eVarSetOperationAppend:
         if (value_cstr && value_cstr[0])
-            m_current_value += value_cstr;
+        {
+            if (m_options.Test (eOptionEncodeCharacterEscapeSequences))
+            {
+                std::string str;
+                Args::EncodeEscapeSequences (value_cstr, str);
+                m_current_value += str;
+            }
+            else
+                m_current_value += value_cstr;
+        }
         break;
 
     case eVarSetOperationClear:
@@ -63,7 +85,14 @@ OptionValueString::SetValueFromCString (const char *value_cstr,
     case eVarSetOperationReplace:
     case eVarSetOperationAssign:
         m_value_was_set = true;
-        SetCurrentValue (value_cstr);
+        if (m_options.Test (eOptionEncodeCharacterEscapeSequences))
+        {
+            Args::EncodeEscapeSequences (value_cstr, m_current_value);
+        }
+        else
+        {
+            SetCurrentValue (value_cstr);
+        }
         break;
     }
     return error;

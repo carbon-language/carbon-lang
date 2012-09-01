@@ -262,6 +262,12 @@ public:
         eStopDisassemblyTypeAlways
     };
     
+    virtual Error
+    SetPropertyValue (const ExecutionContext *exe_ctx,
+                      VarSetOperationType op,
+                      const char *property_path,
+                      const char *value);
+
     bool
     GetAutoConfirm () const;
     

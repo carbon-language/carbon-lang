@@ -112,7 +112,7 @@ g_properties[] =
 {   "auto-confirm",             OptionValue::eTypeBoolean, true, false, NULL, NULL, "If true all confirmation prompts will receive their default reply." },
 {   "frame-format",             OptionValue::eTypeString , true, 0    , DEFAULT_FRAME_FORMAT, NULL, "The default frame format string to use when displaying stack frame information for threads." },
 {   "notify-void",              OptionValue::eTypeBoolean, true, false, NULL, NULL, "Notify the user explicitly if an expression returns void (default: false)." },
-{   "prompt",                   OptionValue::eTypeString , true, 0    , "(lldb) ", NULL, "The debugger command line prompt displayed for the user." },
+{   "prompt",                   OptionValue::eTypeString , true, OptionValueString::eOptionEncodeCharacterEscapeSequences, "(lldb) ", NULL, "The debugger command line prompt displayed for the user." },
 {   "script-lang",              OptionValue::eTypeEnum   , true, eScriptLanguagePython, NULL, g_language_enumerators, "The script language to be used for evaluating user-written scripts." },
 {   "stop-disassembly-count",   OptionValue::eTypeSInt64 , true, 4    , NULL, NULL, "The number of disassembly lines to show when displaying a stopped context." },
 {   "stop-disassembly-display", OptionValue::eTypeEnum   , true, Debugger::eStopDisassemblyTypeNoSource, NULL, g_show_disassembly_enum_values, "Control when to display disassembly when displaying a stopped context." },
@@ -152,6 +152,27 @@ enum
 //    return m_properties_sp->GetThreadFormat();
 //}
 //
+
+
+Error
+Debugger::SetPropertyValue (const ExecutionContext *exe_ctx,
+                            VarSetOperationType op,
+                            const char *property_path,
+                            const char *value)
+{
+    Error error (Properties::SetPropertyValue (exe_ctx, op, property_path, value));
+    if (error.Success())
+    {
+        if (strcmp(property_path, g_properties[ePropertyPrompt].name) == 0)
+        {
+            const char *new_prompt = GetPrompt();
+            EventSP prompt_change_event_sp (new Event(CommandInterpreter::eBroadcastBitResetPrompt, new EventDataBytes (new_prompt)));
+            GetCommandInterpreter().BroadcastEvent (prompt_change_event_sp);
+        }
+    }
+    return error;
+}
+
 bool
 Debugger::GetAutoConfirm () const
 {

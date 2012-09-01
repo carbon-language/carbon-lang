@@ -154,9 +154,14 @@ Property::Property (const PropertyDefinition &definition) :
             break;
             
         case OptionValue::eTypeString:
-            // "definition.default_uint_value" is not used for a OptionValueFileSpecList
+            // "definition.default_uint_value" can contain the string option flags OR'ed together
             // "definition.default_cstr_value" can contain a default string value
-            m_value_sp.reset (new OptionValueString(definition.default_cstr_value));
+            {
+                OptionValueString *string_value = new OptionValueString(definition.default_cstr_value);
+                if (definition.default_uint_value != 0)
+                    string_value->GetOptions().Reset(definition.default_uint_value);
+                m_value_sp.reset (string_value);
+            }
             break;
     }
 }
