@@ -51,7 +51,7 @@
 #cmakedefine HAVE_ASSERT_H ${HAVE_ASSERT_H}
 
 /* Define to 1 if you have the `backtrace' function. */
-#undef HAVE_BACKTRACE
+#cmakedefine HAVE_BACKTRACE ${HAVE_BACKTRACE}
 
 /* Define to 1 if you have the `bcopy' function. */
 #undef HAVE_BCOPY
