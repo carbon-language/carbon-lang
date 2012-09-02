@@ -113,14 +113,14 @@ let test_constants () =
   ignore (define_global "const_int_string" c m);
   insist (i32_type = type_of c);
 
-  (* RUN: grep 'const_string.*"cruel\00world"' < %t.ll
+  (* RUN: grep 'const_string.*"cruel\\00world"' < %t.ll
    *)
   group "string";
   let c = const_string context "cruel\000world" in
   ignore (define_global "const_string" c m);
   insist ((array_type i8_type 11) = type_of c);
 
-  (* RUN: grep 'const_stringz.*"hi\00again\00"' < %t.ll
+  (* RUN: grep 'const_stringz.*"hi\\00again\\00"' < %t.ll
    *)
   group "stringz";
   let c = const_stringz context "hi\000again" in
@@ -187,7 +187,7 @@ let test_constants () =
   ignore (define_global "const_all_ones" c m);
 
   group "pointer null"; begin
-    (* RUN: grep "const_pointer_null = global i64* null" < %t.ll
+    (* RUN: grep "const_pointer_null = global i64\* null" < %t.ll
      *)
     let c = const_pointer_null (pointer_type i64_type) in
     ignore (define_global "const_pointer_null" c m);
@@ -542,7 +542,7 @@ let test_users () =
 (*===-- Aliases -----------------------------------------------------------===*)
 
 let test_aliases () =
-  (* RUN: grep "@alias = alias i32* @aliasee" < %t.ll
+  (* RUN: grep "@alias = alias i32\* @aliasee" < %t.ll
    *)
   let v = declare_global i32_type "aliasee" m in
   ignore (add_alias m (pointer_type i32_type) v "alias")
@@ -554,7 +554,7 @@ let test_functions () =
   let ty = function_type i32_type [| i32_type; i64_type |] in
   let ty2 = function_type i8_type [| i8_type; i64_type |] in
   
-  (* RUN: grep "declare i32 @Fn1\(i32, i64\)" < %t.ll
+  (* RUN: grep 'declare i32 @Fn1(i32, i64)' < %t.ll
    *)
   begin group "declare";
     insist (None = lookup_function "Fn1" m);
@@ -935,7 +935,7 @@ let test_builder () =
 
   group "malloc/free"; begin
       (* RUN: grep "call.*@malloc(i32 ptrtoint" < %t.ll
-       * RUN: grep "call.*@free(i8*" < %t.ll
+       * RUN: grep "call.*@free(i8\*" < %t.ll
        * RUN: grep "call.*@malloc(i32 %" < %t.ll
        *)
       let bb1 = append_block context "MallocBlock1" fn in
@@ -947,7 +947,7 @@ let test_builder () =
   end;
 
   group "indirectbr"; begin
-    (* RUN: grep "indirectbr i8* blockaddress(@X7, %IBRBlock2), [label %IBRBlock2, label %IBRBlock3]" < %t.ll
+    (* RUN: grep "indirectbr i8\* blockaddress(@X7, %IBRBlock2), \[label %IBRBlock2, label %IBRBlock3\]" < %t.ll
      *)
     let bb1 = append_block context "IBRBlock1" fn in
 
@@ -1054,10 +1054,10 @@ let test_builder () =
 
     (* RUN: grep "%build_alloca = alloca i32" < %t.ll
      * RUN: grep "%build_array_alloca = alloca i32, i32 %P2" < %t.ll
-     * RUN: grep "%build_load = load i32* %build_array_alloca" < %t.ll
-     * RUN: grep "store i32 %P2, i32* %build_alloca" < %t.ll
-     * RUN: grep "%build_gep = getelementptr i32* %build_array_alloca, i32 %P2" < %t.ll
-     * RUN: grep "%build_in_bounds_gep = getelementptr inbounds i32* %build_array_alloca, i32 %P2" < %t.ll
+     * RUN: grep "%build_load = load i32\* %build_array_alloca" < %t.ll
+     * RUN: grep "store i32 %P2, i32\* %build_alloca" < %t.ll
+     * RUN: grep "%build_gep = getelementptr i32\* %build_array_alloca, i32 %P2" < %t.ll
+     * RUN: grep "%build_in_bounds_gep = getelementptr inbounds i32\* %build_array_alloca, i32 %P2" < %t.ll
      * RUN: grep "%build_struct_gep = getelementptr inbounds.*%build_alloca2, i32 0, i32 1" < %t.ll
      *)
     let alloca = build_alloca i32_type "build_alloca" b in
@@ -1106,14 +1106,14 @@ let test_builder () =
      * RUN: grep "%build_fptrunc2 = fptrunc double %build_sitofp to float" < %t.ll
      * RUN: grep "%build_fpext = fpext float %build_fptrunc to double" < %t.ll
      * RUN: grep "%build_fpext2 = fpext float %build_fptrunc to double" < %t.ll
-     * RUN: grep "%build_inttoptr = inttoptr i32 %P1 to i8*" < %t.ll
-     * RUN: grep "%build_ptrtoint = ptrtoint i8* %build_inttoptr to i64" < %t.ll
-     * RUN: grep "%build_ptrtoint2 = ptrtoint i8* %build_inttoptr to i64" < %t.ll
+     * RUN: grep "%build_inttoptr = inttoptr i32 %P1 to i8\*" < %t.ll
+     * RUN: grep "%build_ptrtoint = ptrtoint i8\* %build_inttoptr to i64" < %t.ll
+     * RUN: grep "%build_ptrtoint2 = ptrtoint i8\* %build_inttoptr to i64" < %t.ll
      * RUN: grep "%build_bitcast = bitcast i64 %build_ptrtoint to double" < %t.ll
      * RUN: grep "%build_bitcast2 = bitcast i64 %build_ptrtoint to double" < %t.ll
      * RUN: grep "%build_bitcast3 = bitcast i64 %build_ptrtoint to double" < %t.ll
      * RUN: grep "%build_bitcast4 = bitcast i64 %build_ptrtoint to double" < %t.ll
-     * RUN: grep "%build_pointercast = bitcast i8* %build_inttoptr to i16*" < %t.ll
+     * RUN: grep "%build_pointercast = bitcast i8\* %build_inttoptr to i16*" < %t.ll
      *)
     let inst28 = build_trunc p1 i8_type "build_trunc" atentry in
     let inst29 = build_zext inst28 i32_type "build_zext" atentry in
@@ -1148,7 +1148,7 @@ let test_builder () =
      * RUN: grep "%build_fcmp_false = fcmp false float %F1, %F2" < %t.ll
      * RUN: grep "%build_fcmp_true = fcmp true float %F2, %F1" < %t.ll
      * RUN: grep "%build_is_null.*= icmp eq.*%X0,.*null" < %t.ll
-     * RUN: grep "%build_is_not_null = icmp ne i8* %X1, null" < %t.ll
+     * RUN: grep "%build_is_not_null = icmp ne i8\* %X1, null" < %t.ll
      * RUN: grep "%build_ptrdiff" < %t.ll
      *)
     ignore (build_icmp Icmp.Ne    p1 p2 "build_icmp_ne" atentry);
@@ -1167,7 +1167,7 @@ let test_builder () =
   group "miscellaneous"; begin
     (* RUN: grep "%build_call = tail call cc63 i32 @.*(i32 signext %P2, i32 %P1)" < %t.ll
      * RUN: grep "%build_select = select i1 %build_icmp, i32 %P1, i32 %P2" < %t.ll
-     * RUN: grep "%build_va_arg = va_arg i8** null, i32" < %t.ll
+     * RUN: grep "%build_va_arg = va_arg i8\*\* null, i32" < %t.ll
      * RUN: grep "%build_extractelement = extractelement <4 x i32> %Vec1, i32 %P2" < %t.ll
      * RUN: grep "%build_insertelement = insertelement <4 x i32> %Vec1, i32 %P1, i32 %P2" < %t.ll
      * RUN: grep "%build_shufflevector = shufflevector <4 x i32> %Vec1, <4 x i32> %Vec2, <4 x i32> <i32 1, i32 1, i32 0, i32 0>" < %t.ll
@@ -1240,8 +1240,8 @@ let test_builder () =
   end;
 
   group "dbg"; begin
-    (* RUN: grep "%dbg = add i32 %P1, %P2, !dbg !1" < %t.ll
-     * RUN: grep "!1 = metadata !{i32 2, i32 3, metadata !2, metadata !2}" < %t.ll
+    (* RUN: grep '%dbg = add i32 %P1, %P2, !dbg !1' < %t.ll
+     * RUN: grep '!1 = metadata !{i32 2, i32 3, metadata !2, metadata !2}' < %t.ll
      *)
     insist ((current_debug_location atentry) = None);
 
