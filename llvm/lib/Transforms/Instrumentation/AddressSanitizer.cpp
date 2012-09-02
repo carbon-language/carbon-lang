@@ -774,7 +774,7 @@ bool AddressSanitizer::runOnModule(Module &M) {
                             /*hasSideEffects=*/true);
 
   llvm::Triple targetTriple(M.getTargetTriple());
-  bool isAndroid = targetTriple.getEnvironment() == llvm::Triple::ANDROIDEABI;
+  bool isAndroid = targetTriple.getEnvironment() == llvm::Triple::Android;
 
   MappingOffset = isAndroid ? kDefaultShadowOffsetAndroid :
     (LongSize == 32 ? kDefaultShadowOffset32 : kDefaultShadowOffset64);

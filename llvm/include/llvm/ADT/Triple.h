@@ -110,7 +110,7 @@ public:
     GNUEABIHF,
     EABI,
     MachO,
-    ANDROIDEABI
+    Android
   };
 
 private:
