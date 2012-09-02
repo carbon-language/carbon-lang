@@ -82,7 +82,10 @@ public:
     SwitchScope = 0x800,
 
     /// TryScope - This is the scope of a C++ try statement.
-    TryScope = 0x1000
+    TryScope = 0x1000,
+
+    /// SEHTryScope - This is scope of a Microsoft SEH try statement.
+    SEHTryScope = 0x2000
   };
 private:
   /// The parent scope for this scope.  This is null for the translation-unit
@@ -291,6 +294,9 @@ public:
   
   /// \brief Determine whether this scope is a C++ 'try' block.
   bool isTryScope() const { return getFlags() & Scope::TryScope; }
+
+  /// \brief Determine whether this scope is a MS SEH 'try' block.
+  bool isSEHTryScope() const { return getFlags() & Scope::SEHTryScope; }
 
   /// containedInPrototypeScope - Return true if this or a parent scope
   /// is a FunctionPrototypeScope.

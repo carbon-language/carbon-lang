@@ -163,6 +163,7 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::CXXForRangeStmtClass:
     EmitCXXForRangeStmt(cast<CXXForRangeStmt>(*S));
   case Stmt::SEHTryStmtClass:
+  case Stmt::SEHLeaveStmtClass:
     // FIXME Not yet implemented
     break;
   }

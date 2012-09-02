@@ -2202,6 +2202,7 @@ DEF_TRAVERSE_STMT(UnresolvedMemberExpr, {
 })
 
 DEF_TRAVERSE_STMT(SEHTryStmt, {})
+DEF_TRAVERSE_STMT(SEHLeaveStmt, {})
 DEF_TRAVERSE_STMT(SEHExceptStmt, {})
 DEF_TRAVERSE_STMT(SEHFinallyStmt,{})
 
