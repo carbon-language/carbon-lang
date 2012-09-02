@@ -433,9 +433,11 @@ static void MemoryRangeSet(ThreadState *thr, uptr pc, uptr addr, uptr size,
     addr += offset;
     size -= offset;
   }
-  CHECK_EQ(addr % 8, 0);
-  CHECK(IsAppMem(addr));
-  CHECK(IsAppMem(addr + size - 1));
+  DCHECK_EQ(addr % 8, 0);
+  // If a user passes some insane arguments (memset(0)),
+  // let it just crash as usual.
+  if (!IsAppMem(addr) || !IsAppMem(addr + size - 1))
+    return;
   (void)thr;
   (void)pc;
   // Some programs mmap like hundreds of GBs but actually used a small part.
