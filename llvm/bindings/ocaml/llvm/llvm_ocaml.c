@@ -1277,6 +1277,9 @@ static struct custom_operations builder_ops = {
   custom_hash_default,
   custom_serialize_default,
   custom_deserialize_default
+#ifdef custom_compare_ext_default
+  , custom_compare_ext_default
+#endif
 };
 
 static value alloc_builder(LLVMBuilderRef B) {

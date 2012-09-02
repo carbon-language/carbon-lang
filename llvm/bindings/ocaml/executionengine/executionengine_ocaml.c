@@ -75,6 +75,9 @@ static struct custom_operations generic_value_ops = {
   custom_hash_default,
   custom_serialize_default,
   custom_deserialize_default
+#ifdef custom_compare_ext_default
+  , custom_compare_ext_default
+#endif
 };
 
 static value alloc_generic_value(LLVMGenericValueRef Ref) {
