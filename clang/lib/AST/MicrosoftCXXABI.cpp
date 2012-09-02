@@ -55,6 +55,16 @@ public:
 unsigned MicrosoftCXXABI::getMemberPointerSize(const MemberPointerType *MPT) const {
   QualType Pointee = MPT->getPointeeType();
   CXXRecordDecl *RD = MPT->getClass()->getAsCXXRecordDecl();
+
+  if (RD->getTypeForDecl()->isIncompleteType()) {
+    if (RD->hasAttr<SingleInheritanceAttr>())
+      return 1;
+    else if (RD->hasAttr<MultipleInheritanceAttr>())
+      return 2;
+    else
+      return 3;
+  }
+
   if (RD->getNumVBases() > 0) {
     if (Pointee->isFunctionType())
       return 3;
