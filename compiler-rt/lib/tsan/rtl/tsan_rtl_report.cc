@@ -399,6 +399,11 @@ void ReportRace(ThreadState *thr) {
     Shadow s(thr->racy_state[i]);
     RestoreStack(s.tid(), s.epoch(), &traces[i]);
   }
+  // Failure to restore stack of the current thread
+  // was observed on free() interceptor called from pthread.
+  // Just get the current shadow stack instead.
+  if (traces[0].IsEmpty())
+    traces[0].ObtainCurrent(thr, 0);
 
   if (HandleRacyStacks(thr, traces, addr_min, addr_max))
     return;
@@ -407,9 +412,6 @@ void ReportRace(ThreadState *thr) {
     Shadow s(thr->racy_state[i]);
     rep.AddMemoryAccess(addr, s, &traces[i]);
   }
-
-  // Ensure that we have at least something for the current thread.
-  DCHECK_EQ(traces[0].IsEmpty(), false);
 
   for (uptr i = 0; i < kMop; i++) {
     FastState s(thr->racy_state[i]);
