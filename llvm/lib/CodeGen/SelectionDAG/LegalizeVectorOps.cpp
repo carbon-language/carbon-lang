@@ -475,10 +475,9 @@ SDValue VectorLegalizer::ExpandSELECT(SDValue Op) {
   // What is the size of each element in the vector mask.
   EVT BitTy = MaskTy.getScalarType();
 
-  // Turn the mask into an all-one or all-zero word.
-  Mask = DAG.getAnyExtOrTrunc(Mask, DL, BitTy);
-  Mask = DAG.getNode(ISD::SIGN_EXTEND_INREG, DL, BitTy, Mask,
-                     DAG.getValueType(MVT::i1));
+  Mask = DAG.getNode(ISD::SELECT, DL, BitTy, Mask,
+          DAG.getConstant(APInt::getAllOnesValue(BitTy.getSizeInBits()), BitTy),
+          DAG.getConstant(3, BitTy));
 
   // Broadcast the mask so that the entire vector is all-one or all zero.
   SmallVector<SDValue, 8> Ops(NumElem, Mask);
