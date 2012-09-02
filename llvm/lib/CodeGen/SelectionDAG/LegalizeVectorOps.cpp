@@ -477,7 +477,7 @@ SDValue VectorLegalizer::ExpandSELECT(SDValue Op) {
 
   Mask = DAG.getNode(ISD::SELECT, DL, BitTy, Mask,
           DAG.getConstant(APInt::getAllOnesValue(BitTy.getSizeInBits()), BitTy),
-          DAG.getConstant(3, BitTy));
+          DAG.getConstant(0, BitTy));
 
   // Broadcast the mask so that the entire vector is all-one or all zero.
   SmallVector<SDValue, 8> Ops(NumElem, Mask);
