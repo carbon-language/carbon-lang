@@ -510,9 +510,12 @@ void AfterSleep(ThreadState *thr, uptr pc);
 // The caller may not create the stack frame for itself at all,
 // so we create a reserve stack frame for it (1024b must be enough).
 #define HACKY_CALL(f) \
-  __asm__ __volatile__("sub $0x400, %%rsp;" \
+  __asm__ __volatile__("sub $1024, %%rsp;" \
+                       "/*.cfi_adjust_cfa_offset 1024;*/" \
                        "call " #f "_thunk;" \
-                       "add $0x400, %%rsp;" ::: "memory");
+                       "add $1024, %%rsp;" \
+                       "/*.cfi_adjust_cfa_offset -1024;*/" \
+                       ::: "memory", "cc");
 #else
 #define HACKY_CALL(f) f()
 #endif
