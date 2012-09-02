@@ -2576,7 +2576,8 @@ public:
   bool isEABI() const {
     StringRef Env =
       getContext().getTargetInfo().getTriple().getEnvironmentName();
-    return (Env == "gnueabi" || Env == "eabi" || Env == "androideabi");
+    return (Env == "gnueabi" || Env == "eabi" ||
+            Env == "android" || Env == "androideabi");
   }
 
 private:
