@@ -198,3 +198,39 @@ declare i32 @llvm.eh.typeid.for(i8*) nounwind readnone
 declare i8* @__cxa_begin_catch(i8*)
 
 declare void @__cxa_end_catch()
+
+define void @test4() nounwind uwtable {
+entry:
+  br label %"7"
+
+"3":                                              ; preds = %"7"
+  br i1 undef, label %"31", label %"4"
+
+"4":                                              ; preds = %"3"
+  %. = select i1 undef, float 0x3F50624DE0000000, float undef
+  %0 = add i32 %1, 1
+  br label %"7"
+
+"7":                                              ; preds = %"4", %entry
+  %1 = phi i32 [ %0, %"4" ], [ 0, %entry ]
+  %2 = icmp slt i32 %1, 100
+  br i1 %2, label %"3", label %"8"
+
+"8":                                              ; preds = %"7"
+  br i1 undef, label %"9", label %"31"
+
+"9":                                              ; preds = %"8"
+  br label %"33"
+
+"27":                                             ; preds = %"31"
+  unreachable
+
+"31":                                             ; preds = %"8", %"3"
+  br i1 undef, label %"27", label %"32"
+
+"32":                                             ; preds = %"31"
+  br label %"33"
+
+"33":                                             ; preds = %"32", %"9"
+  ret void
+}

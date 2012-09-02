@@ -453,41 +453,30 @@ bool LoopRotate::rotateLoop(Loop *L) {
       // findNearestCommonDominator on all CFG predecessors of each child of the
       // original header.
       DomTreeNode *OrigHeaderNode = DT->getNode(OrigHeader);
-      SmallVector<DomTreeNode *, 8> WorkList(OrigHeaderNode->begin(),
-                                             OrigHeaderNode->end());
-      while (!WorkList.empty()) {
-        DomTreeNode *Node = WorkList.pop_back_val();
-        BasicBlock *BB = Node->getBlock();
-        BasicBlock *NearestDom = 0;
-        for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE;
-             ++PI) {
-          BasicBlock *Pred = *PI;
+      SmallVector<DomTreeNode *, 8> HeaderChildren(OrigHeaderNode->begin(),
+                                                   OrigHeaderNode->end());
+      bool Changed;
+      do {
+        Changed = false;
+        for (unsigned I = 0, E = HeaderChildren.size(); I != E; ++I) {
+          DomTreeNode *Node = HeaderChildren[I];
+          BasicBlock *BB = Node->getBlock();
 
-          // We have to process predecessors of a node before we touch the
-          // actual node. If one of the predecessors is in our worklist, put it
-          // and the currently processed node on the worklist and go processing
-          // the predecessor.
-          SmallVectorImpl<DomTreeNode *>::iterator I =
-            std::find(WorkList.begin(), WorkList.end(), DT->getNode(Pred));
-          if (I != WorkList.end()) {
-            WorkList.push_back(Node);
-            std::swap(*I, WorkList.back());
-            // The predecessor is now at the end of the worklist.
-            NearestDom = 0;
-            break;
+          pred_iterator PI = pred_begin(BB);
+          BasicBlock *NearestDom = *PI;
+          for (pred_iterator PE = pred_end(BB); PI != PE; ++PI)
+            NearestDom = DT->findNearestCommonDominator(NearestDom, *PI);
+
+          // Remember if this changes the DomTree.
+          if (Node->getIDom()->getBlock() != NearestDom) {
+            DT->changeImmediateDominator(BB, NearestDom);
+            Changed = true;
           }
-
-          // On the first iteration start with Pred, on the other iterations we
-          // narrow it down to the nearest common dominator.
-          if (!NearestDom)
-            NearestDom = Pred;
-          else
-            NearestDom = DT->findNearestCommonDominator(NearestDom, Pred);
         }
 
-        if (NearestDom)
-          DT->changeImmediateDominator(BB, NearestDom);
-      }
+      // If the dominator changed, this may have an effect on other
+      // predecessors, continue until we reach a fixpoint.
+      } while (Changed);
     }
   }
 
