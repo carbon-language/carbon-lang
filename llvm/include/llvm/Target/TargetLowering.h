@@ -107,6 +107,14 @@ public:
     ZeroOrNegativeOneBooleanContent // All bits equal to bit 0.
   };
 
+  enum SelectSupportKind {
+    ScalarValSelect,      // The target supports scalar selects (ex: cmov).
+    ScalarCondVectorVal,  // The target supports selects with a scalar condition
+                          // and vector values (ex: cmov).
+    VectorMaskSelect      // The target supports vector selects with a vector
+                          // mask (ex: x86 blends).
+  };
+
   static ISD::NodeType getExtendForContent(BooleanContent Content) {
     switch (Content) {
     case UndefinedBooleanContent:
@@ -139,6 +147,8 @@ public:
   /// isSelectExpensive - Return true if the select operation is expensive for
   /// this target.
   bool isSelectExpensive() const { return SelectIsExpensive; }
+
+  virtual bool isSelectSupported(SelectSupportKind kind) const { return true; }
 
   /// isIntDivCheap() - Return true if integer divide is usually cheaper than
   /// a sequence of several shifts, adds, and multiplies for this target.

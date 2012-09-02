@@ -257,6 +257,11 @@ namespace llvm {
 
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
+    virtual bool isSelectSupported(SelectSupportKind Kind) const {
+      // ARM does not support scalar condition selects on vectors.
+      return (Kind != ScalarCondVectorVal);
+    }
+
     /// getSetCCResultType - Return the value type to use for ISD::SETCC.
     virtual EVT getSetCCResultType(EVT VT) const;
 
