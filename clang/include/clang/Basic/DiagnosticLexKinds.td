@@ -55,7 +55,7 @@ def warn_cxx98_compat_no_newline_eof : Warning<
 
 def ext_dollar_in_identifier : Extension<"'$' in identifier">,
   InGroup<DiagGroup<"dollar-in-identifier-extension">>;
-def ext_charize_microsoft : Extension<"@# is a microsoft extension">,
+def ext_charize_microsoft : Extension<"charizing operator #@ is a Microsoft extension">,
   InGroup<Microsoft>;
 
 def ext_token_used : Extension<"extension used">,
