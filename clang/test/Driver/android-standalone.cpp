@@ -6,7 +6,7 @@
 // RUN:     -B%S/Inputs/basic_android_tree \
 // RUN:     --sysroot=%S/Inputs/basic_android_tree/sysroot \
 // RUN:   | FileCheck  %s
-// CHECK: clang" "-cc1"
+// CHECK: {{.*}}clang{{(.exe)?}}" "-cc1"
 // CHECK: "-internal-isystem" "{{.*}}/arm-linux-androideabi/include/c++/4.4.3"
 // CHECK: "-internal-isystem" "{{.*}}/arm-linux-androideabi/include/c++/4.4.3/arm-linux-androideabi"
 // CHECK: "-internal-externc-isystem" "{{.*}}/sysroot/include"
