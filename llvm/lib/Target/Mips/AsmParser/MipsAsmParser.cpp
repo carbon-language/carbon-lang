@@ -37,6 +37,11 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool ParseDirective(AsmToken DirectiveID);
 
   OperandMatchResultTy parseMemOperand(SmallVectorImpl<MCParsedAsmOperand*>&);
+
+  unsigned GetMCInstOperandNum(unsigned Kind, MCInst &Inst,
+                    const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                               unsigned OperandNum);
+
 public:
   MipsAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser)
     : MCTargetAsmParser() {
@@ -94,6 +99,14 @@ public:
     llvm_unreachable("unimplemented!");
   }
 };
+}
+
+unsigned MipsAsmParser::
+GetMCInstOperandNum(unsigned Kind, MCInst &Inst,
+                    const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                    unsigned OperandNum) {
+  assert (0 && "GetMCInstOperandNum() not supported by the Mips target.");
+  return 0;
 }
 
 bool MipsAsmParser::

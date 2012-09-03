@@ -73,6 +73,12 @@ private:
                         unsigned &OrigErrorInfo,
                         bool matchingInlineAsm = false);
 
+  unsigned GetMCInstOperandNum(unsigned Kind, MCInst &Inst,
+                    const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                    unsigned OperandNum) {
+    return GetMCInstOperandNumImpl(Kind, Inst, Operands, OperandNum);
+  }
+
   /// isSrcOp - Returns true if operand is either (%rsi) or %ds:%(rsi)
   /// in 64bit mode or (%esi) or %es:(%esi) in 32bit mode.
   bool isSrcOp(X86Operand &Op);

@@ -262,6 +262,12 @@ public:
   bool MatchAndEmitInstruction(SMLoc IDLoc,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                                MCStreamer &Out);
+
+  unsigned GetMCInstOperandNum(unsigned Kind, MCInst &Inst,
+                           const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                               unsigned OperandNum) {
+    return GetMCInstOperandNumImpl(Kind, Inst, Operands, OperandNum);
+  }
 };
 } // end anonymous namespace
 
