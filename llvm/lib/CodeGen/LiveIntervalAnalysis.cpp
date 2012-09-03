@@ -1173,7 +1173,7 @@ private:
     SlotIndex LastUse = findLastUseBefore(LI->reg, OldIdx);
     if (LastUse != NewIdx)
       moveKillFlags(LI->reg, NewIdx, LastUse);
-    LR->end = LastUse.getRegSlot();
+    LR->end = LastUse.getRegSlot(LR->end.isEarlyClobber());
   }
 
   void moveEnteringDownFrom(SlotIndex OldIdx, IntRangePair& P) {
@@ -1187,7 +1187,7 @@ private:
         assert(LR->end > OldIdx && "LiveRange does not cover original slot");
         moveKillFlags(LI->reg, LR->end, NewIdx);
       }
-      LR->end = NewIdx.getRegSlot();
+      LR->end = NewIdx.getRegSlot(LR->end.isEarlyClobber());
     }
   }
 
