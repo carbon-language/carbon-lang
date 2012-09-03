@@ -106,6 +106,9 @@ GetMCInstOperandNum(unsigned Kind, MCInst &Inst,
                     const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                     unsigned OperandNum) {
   assert (0 && "GetMCInstOperandNum() not supported by the Mips target.");
+  // The Mips backend doesn't currently include the matcher implementation, so
+  // the GetMCInstOperandNumImpl() is undefined.  This is a temporary
+  // work around.
   return 0;
 }
 
