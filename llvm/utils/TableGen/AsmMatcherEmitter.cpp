@@ -1700,12 +1700,12 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
   std::string OperandFnBody;
   raw_string_ostream OpOS(OperandFnBody);
   // Start the operand number lookup function.
-  OpOS << "void " << Target.getName() << ClassName << "::\n"
+  OpOS << "unsigned " << Target.getName() << ClassName << "::\n"
        << "GetMCInstOperandNum(unsigned Kind, MCInst &Inst,\n"
-       << "                 const SmallVectorImpl<MCParsedAsmOperand*> &Operands,"
-       << "\n                    unsigned OperandNum, unsigned &MCOperandNum) {\n"
+       << "                    const SmallVectorImpl<MCParsedAsmOperand*> "
+       << "&Operands,\n                    unsigned OperandNum) {\n"
        << "  assert(Kind < CVT_NUM_SIGNATURES && \"Invalid signature!\");\n"
-       << "  MCOperandNum = 0;\n"
+       << "  unsigned MCOperandNum = 0;\n"
        << "  uint8_t *Converter = ConversionTable[Kind];\n"
        << "  for (uint8_t *p = Converter; *p; p+= 2) {\n"
        << "    if (*(p + 1) > OperandNum) continue;\n"
@@ -1902,7 +1902,7 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
   CvtOS << "    }\n  }\n  return;\n}\n\n";
 
   // Finish up the operand number lookup function.
-  OpOS << "    }\n  }\n  return;\n}\n\n";
+  OpOS << "    }\n  }\n  return MCOperandNum;\n}\n\n";
 
   OS << "namespace {\n";
 
@@ -2578,12 +2578,11 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  unsigned ComputeAvailableFeatures(uint64_t FeatureBits) const;\n";
   OS << "  void ConvertToMCInst(unsigned Kind, MCInst &Inst, "
      << "unsigned Opcode,\n"
-     << "                       const SmallVectorImpl<MCParsedAsmOperand*> "
+     << "                          const SmallVectorImpl<MCParsedAsmOperand*> "
      << "&Operands);\n";
-  OS << "  void GetMCInstOperandNum(unsigned Kind, MCInst &Inst,\n"
-     << "                           const SmallVectorImpl<MCParsedAsmOperand*> "
-     << "&Operands,\n                           unsigned OperandNum, unsigned "
-     << "&MCOperandNum);\n";
+  OS << "  unsigned GetMCInstOperandNum(unsigned Kind, MCInst &Inst,\n         "
+     << "                      const SmallVectorImpl<MCParsedAsmOperand*> "
+     << "&Operands,\n                               unsigned OperandNum);\n";
   OS << "  bool MnemonicIsValid(StringRef Mnemonic);\n";
   OS << "  unsigned MatchInstructionImpl(\n"
      << "    const SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n"
