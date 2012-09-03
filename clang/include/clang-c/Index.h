@@ -1975,7 +1975,9 @@ enum CXCursorKind {
    */
   CXCursor_DeclStmt                      = 231,
 
-  CXCursor_LastStmt                      = CXCursor_DeclStmt,
+  CXCursor_SEHLeaveStmt                  = 232,
+
+  CXCursor_LastStmt                      = CXCursor_SEHLeaveStmt,
 
   /**
    * \brief Cursor that represents the translation unit itself.
