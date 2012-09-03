@@ -13,7 +13,7 @@
 
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     -target arm-linux-androideabi -faddress-sanitizer \
-// RUN:     --sysroot=%S/Inputs/basic_android_tree \
+// RUN:     --sysroot=%S/Inputs/basic_android_tree/sysroot \
 // RUN:   | FileCheck --check-prefix=CHECK-ANDROID %s
 // CHECK-ANDROID: "{{.*}}ld{{(.exe)?}}"
 // CHECK-ANDROID-NOT: "-lc"
@@ -22,7 +22,7 @@
 
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     -target arm-linux-androideabi -faddress-sanitizer \
-// RUN:     --sysroot=%S/Inputs/basic_android_tree \
+// RUN:     --sysroot=%S/Inputs/basic_android_tree/sysroot \
 // RUN:     -shared \
 // RUN:   | FileCheck --check-prefix=CHECK-ANDROID-SHARED %s
 // CHECK-ANDROID-SHARED: "{{.*}}ld{{(.exe)?}}"

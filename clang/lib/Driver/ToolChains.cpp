@@ -2124,6 +2124,11 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
       addPathIfExists(LibPath + "/" + MultiarchTriple, Paths);
       addPathIfExists(LibPath + "/../" + Multilib, Paths);
     }
+    // On Android, libraries in the parent prefix of the GCC installation are
+    // preferred to the ones under sysroot.
+    if (IsAndroid) {
+      addPathIfExists(LibPath + "/../" + GCCTriple.str() + "/lib", Paths);
+    }
   }
   addPathIfExists(SysRoot + "/lib/" + MultiarchTriple, Paths);
   addPathIfExists(SysRoot + "/lib/../" + Multilib, Paths);
@@ -2342,16 +2347,22 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
   StringRef LibDir = GCCInstallation.getParentLibPath();
   StringRef InstallDir = GCCInstallation.getInstallPath();
   StringRef Version = GCCInstallation.getVersion().Text;
-  if (!addLibStdCXXIncludePaths(LibDir + "/../include/c++/" + Version,
-                                (GCCInstallation.getTriple().str() +
-                                 GCCInstallation.getMultiarchSuffix()),
-                                DriverArgs, CC1Args)) {
+  StringRef TripleStr = GCCInstallation.getTriple().str();
+
+  const std::string IncludePathCandidates[] = {
+    LibDir.str() + "/../include/c++/" + Version.str(),
     // Gentoo is weird and places its headers inside the GCC install, so if the
     // first attempt to find the headers fails, try this pattern.
-    addLibStdCXXIncludePaths(InstallDir + "/include/g++-v4",
-                             (GCCInstallation.getTriple().str() +
-                              GCCInstallation.getMultiarchSuffix()),
-                             DriverArgs, CC1Args);
+    InstallDir.str() + "/include/g++-v4",
+    // Android standalone toolchain has C++ headers in yet another place.
+    LibDir.str() + "/../" + TripleStr.str() + "/include/c++/" + Version.str(),
+  };
+
+  for (unsigned i = 0; i < llvm::array_lengthof(IncludePathCandidates); ++i) {
+    if (addLibStdCXXIncludePaths(IncludePathCandidates[i], (TripleStr +
+                GCCInstallation.getMultiarchSuffix()),
+            DriverArgs, CC1Args))
+      break;
   }
 }
 
