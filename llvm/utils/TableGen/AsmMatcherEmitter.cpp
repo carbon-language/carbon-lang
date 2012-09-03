@@ -1721,7 +1721,8 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
        << "      ++MCOperandNum;\n"
        << "      break;\n"
        << "    case CVT_Tied:\n"
-       << "      //Inst.getOperand(*(p + 1)));\n"
+       << "      // FIXME: Tied operand calculation not supported.\n"
+       << "      assert (0 && \"GetMCInstOperandNumImpl() doesn't support tied operands, yet!\");\n"
        << "      break;\n";
 
   // Pre-populate the operand conversion kinds with the standard always
