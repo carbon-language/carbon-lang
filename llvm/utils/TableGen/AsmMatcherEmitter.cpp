@@ -1899,7 +1899,7 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
   }
 
   // Finish up the converter driver function.
-  CvtOS << "    }\n  }\n  return;\n}\n\n";
+  CvtOS << "    }\n  }\n}\n\n";
 
   // Finish up the operand number lookup function.
   OpOS << "    }\n  }\n  return MCOperandNum;\n}\n\n";
