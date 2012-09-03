@@ -317,7 +317,6 @@ MatchAndEmitInstruction(SMLoc IDLoc,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                         MCStreamer &Out) {
   MCInst Inst;
-  SMLoc ErrorLoc;
   unsigned ErrorInfo;
 
   switch (MatchInstructionImpl(Operands, Inst, ErrorInfo)) {
@@ -330,7 +329,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   case Match_MnemonicFail:
       return Error(IDLoc, "unrecognized instruction mnemonic");
   case Match_InvalidOperand:
-    ErrorLoc = IDLoc;
+    SMLoc ErrorLoc = IDLoc;
     if (ErrorInfo != ~0U) {
       if (ErrorInfo >= Operands.size())
         return Error(IDLoc, "too few operands for instruction");
