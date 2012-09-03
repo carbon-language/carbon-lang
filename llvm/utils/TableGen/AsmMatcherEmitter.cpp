@@ -2585,9 +2585,10 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
      << "&Operands,\n                           unsigned OperandNum, unsigned "
      << "&MCOperandNum);\n";
   OS << "  bool MnemonicIsValid(StringRef Mnemonic);\n";
-  OS << "  unsigned MatchInstructionImpl(\n";
-  OS << "    const SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n";
-  OS << "    MCInst &Inst, unsigned &ErrorInfo, unsigned VariantID = 0);\n";
+  OS << "  unsigned MatchInstructionImpl(\n"
+     << "    const SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n"
+     << "    unsigned &Kind, unsigned &Opcode, MCInst &Inst, "
+     << "unsigned &ErrorInfo,\n unsigned VariantID = 0);\n";
 
   if (Info.OperandMatchInfo.size()) {
     OS << "\n  enum OperandMatchResultTy {\n";
@@ -2767,8 +2768,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
      << Target.getName() << ClassName << "::\n"
      << "MatchInstructionImpl(const SmallVectorImpl<MCParsedAsmOperand*>"
      << " &Operands,\n";
-  OS << "                     MCInst &Inst, unsigned &ErrorInfo, ";
-  OS << "unsigned VariantID) {\n";
+  OS << "                     unsigned &Kind, unsigned &Opcode, MCInst &Inst,";
+  OS << "\n                     unsigned &ErrorInfo, unsigned VariantID) {\n";
 
   OS << "  // Eliminate obvious mismatches.\n";
   OS << "  if (Operands.size() > " << (MaxNumOperands+1) << ") {\n";
@@ -2885,6 +2886,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   if (!InsnCleanupFn.empty())
     OS << "    " << InsnCleanupFn << "(Inst);\n";
 
+  OS << "    Kind = it->ConvertFn;\n";
+  OS << "    Opcode = it->Opcode;\n";
   OS << "    return Match_Success;\n";
   OS << "  }\n\n";
 

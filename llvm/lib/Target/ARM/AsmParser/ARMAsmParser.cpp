@@ -7456,9 +7456,12 @@ MatchAndEmitInstruction(SMLoc IDLoc,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                         MCStreamer &Out) {
   MCInst Inst;
+  unsigned Kind;
+  unsigned Opcode;
   unsigned ErrorInfo;
   unsigned MatchResult;
-  MatchResult = MatchInstructionImpl(Operands, Inst, ErrorInfo);
+
+  MatchResult = MatchInstructionImpl(Operands, Kind, Opcode, Inst, ErrorInfo);
   switch (MatchResult) {
   default: break;
   case Match_Success:

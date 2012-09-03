@@ -317,9 +317,11 @@ MatchAndEmitInstruction(SMLoc IDLoc,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                         MCStreamer &Out) {
   MCInst Inst;
+  unsigned Kind;
+  unsigned Opcode;
   unsigned ErrorInfo;
 
-  switch (MatchInstructionImpl(Operands, Inst, ErrorInfo)) {
+  switch (MatchInstructionImpl(Operands, Kind, Opcode, Inst, ErrorInfo)) {
   default: break;
   case Match_Success:
     Out.EmitInstruction(Inst);
