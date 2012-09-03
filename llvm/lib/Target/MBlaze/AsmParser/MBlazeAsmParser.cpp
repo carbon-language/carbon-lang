@@ -329,7 +329,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
     return Error(IDLoc, "instruction use requires an option to be enabled");
   case Match_MnemonicFail:
       return Error(IDLoc, "unrecognized instruction mnemonic");
-  case Match_InvalidOperand:
+  case Match_InvalidOperand: {
     SMLoc ErrorLoc = IDLoc;
     if (ErrorInfo != ~0U) {
       if (ErrorInfo >= Operands.size())
@@ -340,6 +340,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
     }
 
     return Error(ErrorLoc, "invalid operand for instruction");
+  }
   }
 
   llvm_unreachable("Implement any new match types added!");
