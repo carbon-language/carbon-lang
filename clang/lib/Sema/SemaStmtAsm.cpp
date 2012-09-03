@@ -551,11 +551,10 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
 
     // Match the MCInstr.
     unsigned Kind;
-    unsigned Opcode;
     unsigned ErrorInfo;
     SmallVector<llvm::MCInst, 2> Instrs;
-    HadError = TargetParser->MatchInstruction(IDLoc, Kind, Opcode, Operands,
-                                              Instrs, ErrorInfo,
+    HadError = TargetParser->MatchInstruction(IDLoc, Kind, Operands, Instrs,
+                                              ErrorInfo,
                                               /*matchingInlineAsm*/ true);
     // If we had an error parsing the operands, fail gracefully.
     if (HadError) { DEF_SIMPLE_MSASM; return Owned(NS); }
