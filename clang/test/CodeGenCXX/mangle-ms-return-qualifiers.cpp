@@ -167,7 +167,4 @@ function_pointer* g3() { return 0; }
 // CHECK: "\01?g3@@YAPAP6AHH@ZXZ"
 
 const function_pointer* g4() { return 0; }
-// The mangling of g4 is currently "\01?g4@@YAPQ6AHH@ZXZ" which is wrong.
-// This looks related to http://llvm.org/PR13444
-// FIXME: replace CHECK-NOT with CHECK once it is fixed.
-// CHECK-NOT: "\01?g4@@YAPBQ6AHH@ZXZ"
+// CHECK: "\01?g4@@YAPBQ6AHH@ZXZ"

@@ -7,16 +7,17 @@
 // CHECK: @"\01?e@foo@@1JC"
 // CHECK: @"\01?f@foo@@2DD"
 // CHECK: @"\01?g@bar@@2HA"
-// CHECK: @"\01?h@@3QAHA"
+// CHECK: @"\01?h1@@3QAHA"
+// CHECK: @"\01?h2@@3QBHB"
 // CHECK: @"\01?i@@3PAY0BE@HA"
 // CHECK: @"\01?j@@3P6GHCE@ZA"
 // CHECK: @"\01?k@@3PTfoo@@DA"
 // CHECK: @"\01?l@@3P8foo@@AEHH@ZA"
 // CHECK: @"\01?color1@@3PANA"
+// CHECK: @"\01?color2@@3QBNB"
 
-// FIXME: The following three tests currently fail, see PR13182.
+// FIXME: The following three tests currently fail, see http://llvm.org/PR13182
 // Replace "CHECK-NOT" with "CHECK" when it is fixed.
-// CHECK-NOT: @"\01?color2@@3QBNB"
 // CHECK-NOT: @"\01?color3@@3QAY02$$CBNA"
 // CHECK-NOT: @"\01?color4@@3QAY02$$CBNA"
 
@@ -87,7 +88,8 @@ const volatile char foo::f = 'C';
 
 int bar::g;
 
-extern int * const h = &a;
+extern int * const h1 = &a;
+extern const int * const h2 = &a;
 
 int i[10][20];
 
@@ -151,7 +153,7 @@ void (redundant_parens)();
 void redundant_parens_use() { redundant_parens(); }
 // CHECK: @"\01?redundant_parens@@YAXXZ"
 
-// PR13182, PR13047
+// PR13047
 typedef double RGB[3];
 RGB color1;
 extern const RGB color2 = {};
@@ -166,3 +168,24 @@ E fooE() { return E(); }
 class X {};
 // CHECK: "\01?fooX@@YA?AVX@@XZ"
 X fooX() { return X(); }
+
+namespace PR13182 {
+  extern char s0[];
+  // CHECK: @"\01?s0@PR13182@@3PADA"
+  extern char s1[42];
+  // CHECK: @"\01?s1@PR13182@@3PADA"
+  extern const char s2[];
+  // CHECK: @"\01?s2@PR13182@@3QBDB"
+  extern const char s3[42];
+  // CHECK: @"\01?s3@PR13182@@3QBDB"
+  extern volatile char s4[];
+  // CHECK: @"\01?s4@PR13182@@3RCDC"
+  extern const volatile char s5[];
+  // CHECK: @"\01?s5@PR13182@@3SDDD"
+  extern const char* const* s6;
+  // CHECK: @"\01?s6@PR13182@@3PBQBDB"
+
+  char foo() {
+    return s0[0] + s1[0] + s2[0] + s3[0] + s4[0] + s5[0] + s6[0][0];
+  }
+}

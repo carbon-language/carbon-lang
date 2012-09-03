@@ -56,7 +56,7 @@ public:
   void mangleVariableEncoding(const VarDecl *VD);
   void mangleNumber(int64_t Number);
   void mangleNumber(const llvm::APSInt &Value);
-  void mangleType(QualType T, SourceRange Range);
+  void mangleType(QualType T, SourceRange Range, bool MangleQualifiers = true);
 
 private:
   void disableBackReferences() { UseNameBackReferences = false; }
@@ -68,6 +68,7 @@ private:
   void manglePostfix(const DeclContext *DC, bool NoFunction=false);
   void mangleOperatorName(OverloadedOperatorKind OO, SourceLocation Loc);
   void mangleQualifiers(Qualifiers Quals, bool IsMember);
+  void manglePointerQualifiers(Qualifiers Quals);
 
   void mangleUnscopedTemplateName(const TemplateDecl *ND);
   void mangleTemplateInstantiationName(const TemplateDecl *TD,
@@ -75,7 +76,7 @@ private:
   void mangleObjCMethodName(const ObjCMethodDecl *MD);
   void mangleLocalName(const FunctionDecl *FD);
 
-  void mangleTypeRepeated(QualType T, SourceRange Range);
+  void mangleArgumentType(QualType T, SourceRange Range);
 
   // Declare manglers for every type class.
 #define ABSTRACT_TYPE(CLASS, PARENT)
@@ -266,18 +267,18 @@ void MicrosoftCXXNameMangler::mangleVariableEncoding(const VarDecl *VD) {
     Out << '4';
   // Now mangle the type.
   // <variable-type> ::= <type> <cvr-qualifiers>
-  //                 ::= <type> A # pointers, references, arrays
+  //                 ::= <type> <pointee-cvr-qualifiers> # pointers, references
   // Pointers and references are odd. The type of 'int * const foo;' gets
   // mangled as 'QAHA' instead of 'PAHB', for example.
   TypeLoc TL = VD->getTypeSourceInfo()->getTypeLoc();
   QualType Ty = TL.getType();
   if (Ty->isPointerType() || Ty->isReferenceType()) {
     mangleType(Ty, TL.getSourceRange());
-    Out << 'A';
+    mangleQualifiers(Ty->getPointeeType().getQualifiers(), false);
   } else if (const ArrayType *AT = getASTContext().getAsArrayType(Ty)) {
     // Global arrays are funny, too.
     mangleType(AT, true);
-    Out << 'A';
+    mangleQualifiers(Ty.getQualifiers(), false);
   } else {
     mangleType(Ty.getLocalUnqualifiedType(), TL.getSourceRange());
     mangleQualifiers(Ty.getLocalQualifiers(), false);
@@ -879,43 +880,60 @@ void MicrosoftCXXNameMangler::mangleQualifiers(Qualifiers Quals,
   //         ::= 3 # ?
   //         ::= 4 # ?
   //         ::= 5 # not really based
+  bool HasConst = Quals.hasConst(),
+       HasVolatile = Quals.hasVolatile();
   if (!IsMember) {
-    if (!Quals.hasVolatile()) {
-      if (!Quals.hasConst())
-        Out << 'A';
-      else
-        Out << 'B';
+    if (HasConst && HasVolatile) {
+      Out << 'D';
+    } else if (HasVolatile) {
+      Out << 'C';
+    } else if (HasConst) {
+      Out << 'B';
     } else {
-      if (!Quals.hasConst())
-        Out << 'C';
-      else
-        Out << 'D';
+      Out << 'A';
     }
   } else {
-    if (!Quals.hasVolatile()) {
-      if (!Quals.hasConst())
-        Out << 'Q';
-      else
-        Out << 'R';
+    if (HasConst && HasVolatile) {
+      Out << 'T';
+    } else if (HasVolatile) {
+      Out << 'S';
+    } else if (HasConst) {
+      Out << 'R';
     } else {
-      if (!Quals.hasConst())
-        Out << 'S';
-      else
-        Out << 'T';
+      Out << 'Q';
     }
   }
 
   // FIXME: For now, just drop all extension qualifiers on the floor.
 }
 
-void MicrosoftCXXNameMangler::mangleTypeRepeated(QualType T, SourceRange Range) {
+void MicrosoftCXXNameMangler::manglePointerQualifiers(Qualifiers Quals) {
+  // <pointer-cvr-qualifiers> ::= P  # no qualifiers
+  //                          ::= Q  # const
+  //                          ::= R  # volatile
+  //                          ::= S  # const volatile
+  bool HasConst = Quals.hasConst(),
+       HasVolatile = Quals.hasVolatile();
+  if (HasConst && HasVolatile) {
+    Out << 'S';
+  } else if (HasVolatile) {
+    Out << 'R';
+  } else if (HasConst) {
+    Out << 'Q';
+  } else {
+    Out << 'P';
+  }
+}
+
+void MicrosoftCXXNameMangler::mangleArgumentType(QualType T,
+                                                 SourceRange Range) {
   void *TypePtr = getASTContext().getCanonicalType(T).getAsOpaquePtr();
   ArgBackRefMap::iterator Found = TypeBackReferences.find(TypePtr);
 
   if (Found == TypeBackReferences.end()) {
     size_t OutSizeBefore = Out.GetNumBytesInBuffer();
 
-    mangleType(T,Range);
+    mangleType(T, Range, false);
 
     // See if it's worth creating a back reference.
     // Only types longer than 1 character are considered
@@ -930,38 +948,30 @@ void MicrosoftCXXNameMangler::mangleTypeRepeated(QualType T, SourceRange Range) 
   }
 }
 
-void MicrosoftCXXNameMangler::mangleType(QualType T, SourceRange Range) {
+void MicrosoftCXXNameMangler::mangleType(QualType T, SourceRange Range,
+                                         bool MangleQualifiers) {
   // Only operate on the canonical type!
   T = getASTContext().getCanonicalType(T);
-  
+
   Qualifiers Quals = T.getLocalQualifiers();
-  if (Quals) {
-    // We have to mangle these now, while we still have enough information.
-    // <pointer-cvr-qualifiers> ::= P  # pointer
-    //                          ::= Q  # const pointer
-    //                          ::= R  # volatile pointer
-    //                          ::= S  # const volatile pointer
-    if (T->isAnyPointerType() || T->isMemberPointerType() ||
-        T->isBlockPointerType()) {
-      if (!Quals.hasVolatile())
-        Out << 'Q';
-      else {
-        if (!Quals.hasConst())
-          Out << 'R';
-        else
-          Out << 'S';
-      }
-    } else
-      // Just emit qualifiers like normal.
-      // NB: When we mangle a pointer/reference type, and the pointee
-      // type has no qualifiers, the lack of qualifier gets mangled
-      // in there.
-      mangleQualifiers(Quals, false);
-  } else if (T->isAnyPointerType() || T->isMemberPointerType() ||
-             T->isBlockPointerType()) {
-    Out << 'P';
+  // We have to mangle these now, while we still have enough information.
+  if (T->isAnyPointerType() || T->isMemberPointerType() ||
+      T->isBlockPointerType()) {
+    manglePointerQualifiers(Quals);
+  } else if (Quals && MangleQualifiers) {
+    mangleQualifiers(Quals, false);
   }
-  switch (T->getTypeClass()) {
+
+  SplitQualType split = T.split();
+  const Type *ty = split.Ty;
+
+  // If we're mangling a qualified array type, push the qualifiers to
+  // the element type.
+  if (split.Quals && isa<ArrayType>(T)) {
+    ty = Context.getASTContext().getAsArrayType(T);
+  }
+
+  switch (ty->getTypeClass()) {
 #define ABSTRACT_TYPE(CLASS, PARENT)
 #define NON_CANONICAL_TYPE(CLASS, PARENT) \
   case Type::CLASS: \
@@ -969,7 +979,7 @@ void MicrosoftCXXNameMangler::mangleType(QualType T, SourceRange Range) {
     return;
 #define TYPE(CLASS, PARENT) \
   case Type::CLASS: \
-    mangleType(cast<CLASS##Type>(T), Range); \
+    mangleType(cast<CLASS##Type>(ty), Range); \
     break;
 #include "clang/AST/TypeNodes.def"
 #undef ABSTRACT_TYPE
@@ -1119,14 +1129,14 @@ void MicrosoftCXXNameMangler::mangleType(const FunctionType *T,
              ParmEnd = D->param_end(); Parm != ParmEnd; ++Parm) {
         TypeSourceInfo *TSI = (*Parm)->getTypeSourceInfo();
         QualType Type = TSI ? TSI->getType() : (*Parm)->getType();
-        mangleTypeRepeated(Type, (*Parm)->getSourceRange());
+        mangleArgumentType(Type, (*Parm)->getSourceRange());
       }
     } else {
       // Happens for function pointer type arguments for example.
       for (FunctionProtoType::arg_type_iterator Arg = Proto->arg_type_begin(),
            ArgEnd = Proto->arg_type_end();
            Arg != ArgEnd; ++Arg)
-        mangleTypeRepeated(*Arg, SourceRange());
+        mangleArgumentType(*Arg, SourceRange());
     }
     // <builtin-type>      ::= Z  # ellipsis
     if (Proto->isVariadic())
@@ -1289,20 +1299,22 @@ void MicrosoftCXXNameMangler::mangleType(const TagType *T) {
 }
 
 // <type>       ::= <array-type>
-// <array-type> ::= P <cvr-qualifiers> [Y <dimension-count> <dimension>+]
-//                                                  <element-type> # as global
+// <array-type> ::= <pointer-cvr-qualifiers> <cvr-qualifiers>
+//                  [Y <dimension-count> <dimension>+]
+//                  <element-type> # as global
 //              ::= Q <cvr-qualifiers> [Y <dimension-count> <dimension>+]
-//                                                  <element-type> # as param
+//                  <element-type> # as param
 // It's supposed to be the other way around, but for some strange reason, it
 // isn't. Today this behavior is retained for the sole purpose of backwards
 // compatibility.
 void MicrosoftCXXNameMangler::mangleType(const ArrayType *T, bool IsGlobal) {
   // This isn't a recursive mangling, so now we have to do it all in this
   // one call.
-  if (IsGlobal)
-    Out << 'P';
-  else
+  if (IsGlobal) {
+    manglePointerQualifiers(T->getElementType().getQualifiers());
+  } else {
     Out << 'Q';
+  }
   mangleExtraDimensions(T->getElementType());
 }
 void MicrosoftCXXNameMangler::mangleType(const ConstantArrayType *T,
@@ -1412,10 +1424,8 @@ void MicrosoftCXXNameMangler::mangleType(const PointerType *T,
     Out << '6';
     mangleType(FT, NULL, false, false);
   } else {
-    if (!PointeeTy.hasQualifiers())
-      // Lack of qualifiers is mangled as 'A'.
-      Out << 'A';
-    mangleType(PointeeTy, Range);
+    mangleQualifiers(PointeeTy.getQualifiers(), false);
+    mangleType(PointeeTy, Range, false);
   }
 }
 void MicrosoftCXXNameMangler::mangleType(const ObjCObjectPointerType *T,
