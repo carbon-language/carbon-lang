@@ -40,7 +40,7 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   unsigned GetMCInstOperandNum(unsigned Kind, MCInst &Inst,
                     const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                               unsigned OperandNum);
+                               unsigned OperandNum, unsigned &NumMCOperands);
 
 public:
   MipsAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser)
@@ -104,11 +104,12 @@ public:
 unsigned MipsAsmParser::
 GetMCInstOperandNum(unsigned Kind, MCInst &Inst,
                     const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                    unsigned OperandNum) {
+                    unsigned OperandNum, unsigned &NumMCOperands) {
   assert (0 && "GetMCInstOperandNum() not supported by the Mips target.");
   // The Mips backend doesn't currently include the matcher implementation, so
   // the GetMCInstOperandNumImpl() is undefined.  This is a temporary
   // work around.
+  NumMCOperands = 0;
   return 0;
 }
 

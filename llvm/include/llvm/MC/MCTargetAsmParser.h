@@ -113,7 +113,8 @@ public:
 
   virtual unsigned GetMCInstOperandNum(unsigned Kind, MCInst &Inst,
                            const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                                       unsigned OperandNum) = 0;
+                                       unsigned OperandNum,
+                                       unsigned &NumMCOperands) = 0;
 };
 
 } // End llvm namespace

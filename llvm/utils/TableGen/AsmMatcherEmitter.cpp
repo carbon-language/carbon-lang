@@ -1703,8 +1703,10 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
   OpOS << "unsigned " << Target.getName() << ClassName << "::\n"
        << "GetMCInstOperandNumImpl(unsigned Kind, MCInst &Inst,\n"
        << "                        const SmallVectorImpl<MCParsedAsmOperand*> "
-       << "&Operands,\n                        unsigned OperandNum) {\n"
+       << "&Operands,\n                        unsigned OperandNum, unsigned "
+       << "&NumMCOperands) {\n"
        << "  assert(Kind < CVT_NUM_SIGNATURES && \"Invalid signature!\");\n"
+       << "  NumMCOperands = 0;\n"
        << "  unsigned MCOperandNum = 0;\n"
        << "  uint8_t *Converter = ConversionTable[Kind];\n"
        << "  for (uint8_t *p = Converter; *p; p+= 2) {\n"
@@ -1712,6 +1714,10 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
        << "    switch (*p) {\n"
        << "    default: llvm_unreachable(\"invalid conversion entry!\");\n"
        << "    case CVT_Reg:\n"
+       << "      if (*(p + 1) == OperandNum) {\n"
+       << "        NumMCOperands = 1;\n"
+       << "        break;\n"
+       << "      }\n"
        << "      ++MCOperandNum;\n"
        << "      break;\n"
        << "    case CVT_Tied:\n"
@@ -1811,6 +1817,10 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
 
         // Add a handler for the operand number lookup.
         OpOS << "    case " << Name << ":\n"
+             << "      if (*(p + 1) == OperandNum) {\n"
+             << "        NumMCOperands = " << OpInfo.MINumOperands << ";\n"
+             << "        break;\n"
+             << "      }\n"
              << "      MCOperandNum += " << OpInfo.MINumOperands << ";\n"
              << "      break;\n";
         break;
@@ -1848,6 +1858,10 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
               << "      break;\n";
 
         OpOS << "    case " << Name << ":\n"
+             << "      if (*(p + 1) == OperandNum) {\n"
+             << "        NumMCOperands = 1;\n"
+             << "        break;\n"
+             << "      }\n"
              << "      ++MCOperandNum;\n"
              << "      break;\n";
         break;
@@ -1877,6 +1891,10 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
               << "      break;\n";
 
         OpOS << "    case " << Name << ":\n"
+             << "      if (*(p + 1) == OperandNum) {\n"
+             << "        NumMCOperands = 1;\n"
+             << "        break;\n"
+             << "      }\n"
              << "      ++MCOperandNum;\n"
              << "      break;\n";
       }
@@ -2583,7 +2601,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  unsigned GetMCInstOperandNumImpl(unsigned Kind, MCInst &Inst,\n     "
      << "                              const "
      << "SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n                     "
-     << "          unsigned OperandNum);\n";
+     << "          unsigned OperandNum, unsigned &NumMCOperands);\n";
   OS << "  bool MnemonicIsValid(StringRef Mnemonic);\n";
   OS << "  unsigned MatchInstructionImpl(\n"
      << "    const SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n"

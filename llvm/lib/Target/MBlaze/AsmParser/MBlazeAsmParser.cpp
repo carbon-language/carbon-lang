@@ -58,8 +58,9 @@ class MBlazeAsmParser : public MCTargetAsmParser {
 
   unsigned GetMCInstOperandNum(unsigned Kind, MCInst &Inst,
                     const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                    unsigned OperandNum) {
-    return GetMCInstOperandNumImpl(Kind, Inst, Operands, OperandNum);
+                               unsigned OperandNum, unsigned &NumMCOperands) {
+    return GetMCInstOperandNumImpl(Kind, Inst, Operands, OperandNum,
+                                   NumMCOperands);
   }
 
 public:
