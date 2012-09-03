@@ -7457,11 +7457,10 @@ MatchAndEmitInstruction(SMLoc IDLoc,
                         MCStreamer &Out) {
   MCInst Inst;
   unsigned Kind;
-  unsigned Opcode;
   unsigned ErrorInfo;
   unsigned MatchResult;
 
-  MatchResult = MatchInstructionImpl(Operands, Kind, Opcode, Inst, ErrorInfo);
+  MatchResult = MatchInstructionImpl(Operands, Kind, Inst, ErrorInfo);
   switch (MatchResult) {
   default: break;
   case Match_Success:

@@ -85,7 +85,7 @@ public:
   /// On failure, the target parser is responsible for emitting a diagnostic
   /// explaining the match failure.
   virtual bool
-  MatchInstruction(SMLoc IDLoc, unsigned &Kind, unsigned &Opcode,
+  MatchInstruction(SMLoc IDLoc, unsigned &Kind,
                    SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                    SmallVectorImpl<MCInst> &MCInsts,
                    unsigned &OrigErrorInfo,

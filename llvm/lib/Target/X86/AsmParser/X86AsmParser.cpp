@@ -67,7 +67,7 @@ private:
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                                MCStreamer &Out);
 
-  bool MatchInstruction(SMLoc IDLoc,  unsigned &Kind, unsigned &Opcode,
+  bool MatchInstruction(SMLoc IDLoc,  unsigned &Kind,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                         SmallVectorImpl<MCInst> &MCInsts,
                         unsigned &OrigErrorInfo,
@@ -1517,11 +1517,10 @@ MatchAndEmitInstruction(SMLoc IDLoc,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                         MCStreamer &Out) {
   unsigned Kind;
-  unsigned Opcode;
   unsigned ErrorInfo;
   SmallVector<MCInst, 2> Insts;
 
-  bool Error = MatchInstruction(IDLoc, Kind, Opcode, Operands, Insts,
+  bool Error = MatchInstruction(IDLoc, Kind, Operands, Insts,
                                 ErrorInfo);
   if (!Error)
     for (unsigned i = 0, e = Insts.size(); i != e; ++i)
@@ -1530,7 +1529,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
 }
 
 bool X86AsmParser::
-MatchInstruction(SMLoc IDLoc, unsigned &Kind, unsigned &Opcode,
+MatchInstruction(SMLoc IDLoc, unsigned &Kind,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                  SmallVectorImpl<MCInst> &MCInsts, unsigned &OrigErrorInfo,
                  bool matchingInlineAsm) {
@@ -1572,7 +1571,7 @@ MatchInstruction(SMLoc IDLoc, unsigned &Kind, unsigned &Opcode,
   MCInst Inst;
 
   // First, try a direct match.
-  switch (MatchInstructionImpl(Operands, Kind, Opcode, Inst, OrigErrorInfo,
+  switch (MatchInstructionImpl(Operands, Kind, Inst, OrigErrorInfo,
                                isParsingIntelSyntax())) {
   default: break;
   case Match_Success:
@@ -1620,19 +1619,19 @@ MatchInstruction(SMLoc IDLoc, unsigned &Kind, unsigned &Opcode,
   Tmp[Base.size()] = Suffixes[0];
   unsigned ErrorInfoIgnore;
   unsigned Match1, Match2, Match3, Match4;
-  unsigned tKind, tOpcode;
+  unsigned tKind;
 
-  Match1 = MatchInstructionImpl(Operands, tKind, tOpcode, Inst, ErrorInfoIgnore);
-  if (Match1 == Match_Success) { Kind = tKind; Opcode = tOpcode; }
+  Match1 = MatchInstructionImpl(Operands, tKind, Inst, ErrorInfoIgnore);
+  if (Match1 == Match_Success) Kind = tKind;
   Tmp[Base.size()] = Suffixes[1];
-  Match2 = MatchInstructionImpl(Operands, tKind, tOpcode, Inst, ErrorInfoIgnore);
-  if (Match2 == Match_Success) { Kind = tKind; Opcode = tOpcode; }
+  Match2 = MatchInstructionImpl(Operands, tKind, Inst, ErrorInfoIgnore);
+  if (Match2 == Match_Success) Kind = tKind;
   Tmp[Base.size()] = Suffixes[2];
-  Match3 = MatchInstructionImpl(Operands, tKind, tOpcode, Inst, ErrorInfoIgnore);
-  if (Match3 == Match_Success) { Kind = tKind; Opcode = tOpcode; }
+  Match3 = MatchInstructionImpl(Operands, tKind, Inst, ErrorInfoIgnore);
+  if (Match3 == Match_Success) Kind = tKind;
   Tmp[Base.size()] = Suffixes[3];
-  Match4 = MatchInstructionImpl(Operands, tKind, tOpcode, Inst, ErrorInfoIgnore);
-  if (Match4 == Match_Success) { Kind = tKind; Opcode = tOpcode; }
+  Match4 = MatchInstructionImpl(Operands, tKind, Inst, ErrorInfoIgnore);
+  if (Match4 == Match_Success) Kind = tKind;
 
   // Restore the old token.
   Op->setTokenValue(Base);
