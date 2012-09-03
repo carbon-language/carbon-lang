@@ -568,14 +568,31 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
 
     // Build the list of clobbers, outputs and inputs.
     unsigned NumDefs = Desc.getNumDefs();
-    for (unsigned i = 0, e = Inst.getNumOperands(); i != e; ++i) {
-      const llvm::MCOperand &Op = Inst.getOperand(i);
+    for (unsigned i = 1, e = Operands.size(); i != e; ++i) {
+      unsigned NumMCOperands;
+      unsigned MCIdx = TargetParser->GetMCInstOperandNum(Kind, Inst, Operands, i,
+                                                         NumMCOperands);
+      assert (NumMCOperands && "Expected at least 1 MCOperand!");
+      // If we have a one-to-many mapping, then search for the MCExpr.
+      if (NumMCOperands > 1) {
+        bool foundExpr = false;
+        for (unsigned j = MCIdx, e = MCIdx + NumMCOperands; j != e; ++j) {
+          if (Inst.getOperand(j).isExpr()) {
+            foundExpr = true;
+            MCIdx = j;
+            break;
+          }
+        }
+        assert (foundExpr && "Expected for find an expression!");
+      }
+
+      const llvm::MCOperand &Op = Inst.getOperand(MCIdx);
 
       // Immediate.
       if (Op.isImm() || Op.isFPImm())
         continue;
 
-      bool isDef = NumDefs && (i < NumDefs);
+      bool isDef = NumDefs && (MCIdx < NumDefs);
 
       // Register/Clobber.
       if (Op.isReg() && isDef) {
