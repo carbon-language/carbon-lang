@@ -417,9 +417,9 @@ void PPCLinuxAsmPrinter::EmitFunctionEntryLabel() {
     OutContext.GetOrCreateSymbol(".L." + Twine(CurrentFnSym->getName()));
   MCSymbol *Symbol2 = OutContext.GetOrCreateSymbol(StringRef(".TOC.@tocbase"));
   OutStreamer.EmitValue(MCSymbolRefExpr::Create(Symbol1, OutContext),
-                        Subtarget.isPPC64() ? 8 : 4/*size*/, 0/*addrspace*/);
+                        8/*size*/, 0/*addrspace*/);
   OutStreamer.EmitValue(MCSymbolRefExpr::Create(Symbol2, OutContext),
-                        Subtarget.isPPC64() ? 8 : 4/*size*/, 0/*addrspace*/);
+                        8/*size*/, 0/*addrspace*/);
   OutStreamer.SwitchSection(Current);
 
   MCSymbol *RealFnSym = OutContext.GetOrCreateSymbol(
