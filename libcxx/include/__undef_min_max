@@ -9,11 +9,11 @@
 //===----------------------------------------------------------------------===//
 
 #ifdef min
-#warning: macro min is incompatible with C++.  #undef'ing min
+#warning: macro min is incompatible with C++.  #undefing min
 #undef min
 #endif
 
 #ifdef max
-#warning: macro max is incompatible with C++.  #undef'ing max
+#warning: macro max is incompatible with C++.  #undefing max
 #undef max
 #endif
