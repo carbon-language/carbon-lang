@@ -537,23 +537,25 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
     Parser->ParseIdentifier(IDVal);
 
     // Canonicalize the opcode to lower case.
-    SmallString<128> Opcode;
+    SmallString<128> OpcodeStr;
     for (unsigned i = 0, e = IDVal.size(); i != e; ++i)
-      Opcode.push_back(tolower(IDVal[i]));
+      OpcodeStr.push_back(tolower(IDVal[i]));
 
     // Parse the operands.
     llvm::SMLoc IDLoc;
     SmallVector<llvm::MCParsedAsmOperand*, 8> Operands;
-    bool HadError = TargetParser->ParseInstruction(Opcode.str(), IDLoc,
+    bool HadError = TargetParser->ParseInstruction(OpcodeStr.str(), IDLoc,
                                                    Operands);
     // If we had an error parsing the operands, fail gracefully.
     if (HadError) { DEF_SIMPLE_MSASM; return Owned(NS); }
 
     // Match the MCInstr.
+    unsigned Kind;
+    unsigned Opcode;
     unsigned ErrorInfo;
     SmallVector<llvm::MCInst, 2> Instrs;
-    HadError = TargetParser->MatchInstruction(IDLoc, Operands, Instrs,
-                                              ErrorInfo,
+    HadError = TargetParser->MatchInstruction(IDLoc, Kind, Opcode, Operands,
+                                              Instrs, ErrorInfo,
                                               /*matchingInlineAsm*/ true);
     // If we had an error parsing the operands, fail gracefully.
     if (HadError) { DEF_SIMPLE_MSASM; return Owned(NS); }
