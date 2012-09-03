@@ -479,12 +479,17 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
     // a subsequent bitcast of the malloc call result.  There can be stores to
     // the malloced memory between the malloc call and its bitcast uses, and we
     // need to continue scanning until the malloc call.
-    if (isa<AllocaInst>(Inst) || isNoAliasFn(Inst, AA->getTargetLibraryInfo())){
+    const TargetLibraryInfo *TLI = AA->getTargetLibraryInfo();
+    if (isa<AllocaInst>(Inst) || isNoAliasFn(Inst, TLI)) {
       const Value *AccessPtr = GetUnderlyingObject(MemLoc.Ptr, TD);
       
       if (AccessPtr == Inst || AA->isMustAlias(Inst, AccessPtr))
         return MemDepResult::getDef(Inst);
-      continue;
+      // If the allocation is not aliased and does not read memory (like
+      // strdup), it is safe to ignore.
+      if (isa<AllocaInst>(Inst) ||
+          isMallocLikeFn(Inst, TLI) || isCallocLikeFn(Inst, TLI))
+        continue;
     }
 
     // See if this instruction (e.g. a call or vaarg) mod/ref's the pointer.

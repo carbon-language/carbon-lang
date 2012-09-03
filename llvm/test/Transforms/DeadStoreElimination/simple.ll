@@ -310,3 +310,17 @@ define void @test24([2 x i32]* %a, i32 %b, i32 %c) nounwind {
   store i32 %c, i32* %4, align 4
   ret void
 }
+
+; Check another case like PR13547 where strdup is not like malloc.
+; CHECK: @test25
+; CHECK: load i8
+; CHECK: store i8 0
+; CHECK: store i8 %tmp
+define i8* @test25(i8* %p) nounwind {
+  %p.4 = getelementptr i8* %p, i64 4
+  %tmp = load i8* %p.4, align 1
+  store i8 0, i8* %p.4, align 1
+  %q = call i8* @strdup(i8* %p) nounwind optsize
+  store i8 %tmp, i8* %p.4, align 1
+  ret i8* %q
+}
