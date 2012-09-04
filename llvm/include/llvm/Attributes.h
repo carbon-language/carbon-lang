@@ -134,9 +134,6 @@ DECLARE_LLVM_ATTRIBUTE(NonLazyBind,1U<<31) ///< Function is called early and/or
                                             /// often, so lazy binding isn't
                                             /// worthwhile.
 DECLARE_LLVM_ATTRIBUTE(AddressSafety,1ULL<<32) ///< Address safety checking is on.
-DECLARE_LLVM_ATTRIBUTE(IANSDialect,1ULL<<33) ///< Inline asm non-standard dialect.
-                                           /// When not set, ATT dialect assumed.
-                                           /// When set implies the Intel dialect.
 
 #undef DECLARE_LLVM_ATTRIBUTE
 
@@ -162,8 +159,7 @@ const AttrConst FunctionOnly = {NoReturn_i | NoUnwind_i | ReadNone_i |
   ReadOnly_i | NoInline_i | AlwaysInline_i | OptimizeForSize_i |
   StackProtect_i | StackProtectReq_i | NoRedZone_i | NoImplicitFloat_i |
   Naked_i | InlineHint_i | StackAlignment_i |
-  UWTable_i | NonLazyBind_i | ReturnsTwice_i | AddressSafety_i |
-  IANSDialect_i};
+  UWTable_i | NonLazyBind_i | ReturnsTwice_i | AddressSafety_i};
 
 /// @brief Parameter attributes that do not apply to vararg call arguments.
 const AttrConst VarArgsIncompatible = {StructRet_i};

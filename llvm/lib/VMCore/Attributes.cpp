@@ -88,9 +88,6 @@ std::string Attribute::getAsString(Attributes Attrs) {
     Result += utostr(Attribute::getAlignmentFromAttrs(Attrs));
     Result += " ";
   }
-  if (Attrs & Attribute::IANSDialect)
-    Result += "ia_nsdialect ";
-
   // Trim the trailing space.
   assert(!Result.empty() && "Unknown attribute!");
   Result.erase(Result.end()-1);

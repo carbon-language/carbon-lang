@@ -1207,13 +1207,6 @@ define void @f() optsize { ... }
       may make calls to the function faster, at the cost of extra program
       startup time if the function is not called during program startup.</dd>
 
-  <dt><tt><b>ia_nsdialect</b></tt></dt>
-  <dd>This attribute indicates the associated inline assembly call is using a
-      non-standard assembly dialect.  The standard dialect is ATT, which is
-      assumed when this attribute is not present.  When present, the dialect
-      is assumed to be Intel.  Currently, ATT and Intel are the only supported
-      dialects.</dd>
-
   <dt><tt><b>inlinehint</b></tt></dt>
   <dd>This attribute indicates that the source code contained a hint that inlining
       this function is desirable (such as the "inline" keyword in C/C++).  It
