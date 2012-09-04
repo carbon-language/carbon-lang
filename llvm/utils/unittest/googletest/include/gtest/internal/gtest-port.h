@@ -230,7 +230,7 @@
 # define GTEST_OS_MAC 1
 #elif defined __linux__
 # define GTEST_OS_LINUX 1
-# ifdef ANDROID
+# if defined(ANDROID) || defined(__ANDROID__)
 #  define GTEST_OS_LINUX_ANDROID 1
 # endif  // ANDROID
 #elif defined __MVS__

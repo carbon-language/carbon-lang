@@ -49,7 +49,7 @@ LockFileManager::readLockFile(StringRef LockFileName) {
 }
 
 bool LockFileManager::processStillExecuting(StringRef Hostname, int PID) {
-#if LLVM_ON_UNIX
+#if LLVM_ON_UNIX && !defined(__ANDROID__)
   char MyHostname[256];
   MyHostname[255] = 0;
   MyHostname[0] = 0;
