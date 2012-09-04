@@ -194,6 +194,11 @@ public:
     return isNoAlias(Location(V1, V1Size), Location(V2, V2Size));
   }
   
+  /// isNoAlias - A convenience wrapper.
+  bool isNoAlias(const Value *V1, const Value *V2) {
+    return isNoAlias(Location(V1), Location(V2));
+  }
+  
   /// isMustAlias - A convenience wrapper.
   bool isMustAlias(const Location &LocA, const Location &LocB) {
     return alias(LocA, LocB) == MustAlias;

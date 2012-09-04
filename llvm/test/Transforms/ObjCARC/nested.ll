@@ -16,6 +16,10 @@ declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind
 declare i8* @objc_msgSend(i8*, i8*, ...) nonlazybind
 declare void @use(i8*)
 declare void @objc_release(i8*)
+declare i8* @def()
+declare void @__crasher_block_invoke(i8* nocapture)
+declare i8* @objc_retainBlock(i8*)
+declare void @__crasher_block_invoke1(i8* nocapture)
 
 !0 = metadata !{}
 
@@ -279,11 +283,13 @@ forcoll.empty:
   ret void
 }
 
-; Delete a nested retain+release pair.
+; TODO: Delete a nested retain+release pair.
+; The optimizer currently can't do this, because isn't isn't sophisticated enough in
+; reasnoning about nesting.
 
 ; CHECK: define void @test6(
 ; CHECK: call i8* @objc_retain
-; CHECK-NOT: @objc_retain
+; CHECK: @objc_retain
 ; CHECK: }
 define void @test6() nounwind {
 entry:
@@ -345,11 +351,13 @@ forcoll.empty:
   ret void
 }
 
-; Delete a nested retain+release pair.
+; TODO: Delete a nested retain+release pair.
+; The optimizer currently can't do this, because isn't isn't sophisticated enough in
+; reasnoning about nesting.
 
 ; CHECK: define void @test7(
 ; CHECK: call i8* @objc_retain
-; CHECK-NOT: @objc_retain
+; CHECK: @objc_retain
 ; CHECK: }
 define void @test7() nounwind {
 entry:
@@ -553,12 +561,12 @@ forcoll.empty:
   ret void
 }
 
-; Like test9, but without a split backedge. This we can optimize.
+; Like test9, but without a split backedge. TODO: optimize this.
 
 ; CHECK: define void @test9b(
 ; CHECK: call i8* @objc_retain
 ; CHECK: call i8* @objc_retain
-; CHECK-NOT: @objc_retain
+; CHECK: @objc_retain
 ; CHECK: }
 define void @test9b() nounwind {
 entry:
@@ -687,12 +695,12 @@ forcoll.empty:
   ret void
 }
 
-; Like test10, but without a split backedge. This we can optimize.
+; Like test10, but without a split backedge. TODO: optimize this.
 
 ; CHECK: define void @test10b(
 ; CHECK: call i8* @objc_retain
 ; CHECK: call i8* @objc_retain
-; CHECK-NOT: @objc_retain
+; CHECK: @objc_retain
 ; CHECK: }
 define void @test10b() nounwind {
 entry:
@@ -749,5 +757,66 @@ forcoll.empty:
   call void @objc_release(i8* %2) nounwind
   call void @objc_release(i8* %1) nounwind, !clang.imprecise_release !0
   call void @objc_release(i8* %0) nounwind, !clang.imprecise_release !0
+  ret void
+}
+
+; Pointers to strong pointers can obscure provenance relationships. Be conservative
+; in the face of escaping pointers. rdar://12150909.
+
+%struct.__block_d = type { i64, i64 }
+
+@_NSConcreteStackBlock = external global i8*
+@__block_d_tmp = external hidden constant { i64, i64, i8*, i8*, i8*, i8* }
+@__block_d_tmp5 = external hidden constant { i64, i64, i8*, i8*, i8*, i8* }
+
+; CHECK: define void @test11(
+; CHECK: tail call i8* @objc_retain(i8* %call) nounwind
+; CHECK: tail call i8* @objc_retain(i8* %call) nounwind
+; CHECK: call void @objc_release(i8* %call) nounwind, !clang.imprecise_release !0
+; CHECK: }
+define void @test11() {
+entry:
+  %block = alloca <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>, align 8
+  %block9 = alloca <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>, align 8
+  %call = call i8* @def(), !clang.arc.no_objc_arc_exceptions !0
+  %foo = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block, i64 0, i32 5
+  %block.isa = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block, i64 0, i32 0
+  store i8* bitcast (i8** @_NSConcreteStackBlock to i8*), i8** %block.isa, align 8
+  %block.flags = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block, i64 0, i32 1
+  store i32 1107296256, i32* %block.flags, align 8
+  %block.reserved = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block, i64 0, i32 2
+  store i32 0, i32* %block.reserved, align 4
+  %block.invoke = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block, i64 0, i32 3
+  store i8* bitcast (void (i8*)* @__crasher_block_invoke to i8*), i8** %block.invoke, align 8
+  %block.d = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block, i64 0, i32 4
+  store %struct.__block_d* bitcast ({ i64, i64, i8*, i8*, i8*, i8* }* @__block_d_tmp to %struct.__block_d*), %struct.__block_d** %block.d, align 8
+  %foo2 = tail call i8* @objc_retain(i8* %call) nounwind
+  store i8* %foo2, i8** %foo, align 8
+  %foo4 = bitcast <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block to i8*
+  %foo5 = call i8* @objc_retainBlock(i8* %foo4) nounwind
+  call void @use(i8* %foo5), !clang.arc.no_objc_arc_exceptions !0
+  call void @objc_release(i8* %foo5) nounwind
+  %strongdestroy = load i8** %foo, align 8
+  call void @objc_release(i8* %strongdestroy) nounwind, !clang.imprecise_release !0
+  %foo10 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block9, i64 0, i32 5
+  %block.isa11 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block9, i64 0, i32 0
+  store i8* bitcast (i8** @_NSConcreteStackBlock to i8*), i8** %block.isa11, align 8
+  %block.flags12 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block9, i64 0, i32 1
+  store i32 1107296256, i32* %block.flags12, align 8
+  %block.reserved13 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block9, i64 0, i32 2
+  store i32 0, i32* %block.reserved13, align 4
+  %block.invoke14 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block9, i64 0, i32 3
+  store i8* bitcast (void (i8*)* @__crasher_block_invoke1 to i8*), i8** %block.invoke14, align 8
+  %block.d15 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block9, i64 0, i32 4
+  store %struct.__block_d* bitcast ({ i64, i64, i8*, i8*, i8*, i8* }* @__block_d_tmp5 to %struct.__block_d*), %struct.__block_d** %block.d15, align 8
+  %foo18 = call i8* @objc_retain(i8* %call) nounwind
+  store i8* %call, i8** %foo10, align 8
+  %foo20 = bitcast <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block9 to i8*
+  %foo21 = call i8* @objc_retainBlock(i8* %foo20) nounwind
+  call void @use(i8* %foo21), !clang.arc.no_objc_arc_exceptions !0
+  call void @objc_release(i8* %foo21) nounwind
+  %strongdestroy25 = load i8** %foo10, align 8
+  call void @objc_release(i8* %strongdestroy25) nounwind, !clang.imprecise_release !0
+  call void @objc_release(i8* %call) nounwind, !clang.imprecise_release !0
   ret void
 }

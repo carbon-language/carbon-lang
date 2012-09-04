@@ -1,4 +1,4 @@
-; RUN: opt -objc-arc -S < %s | FileCheck %s
+; RUN: opt -basicaa -objc-arc -S < %s | FileCheck %s
 
 target datalayout = "e-p:64:64:64"
 
@@ -1498,7 +1498,7 @@ define i8* @test49(i8* %p) nounwind {
 }
 
 ; Do delete retain+release with intervening stores of the
-; address value;
+; address value.
 
 ; CHECK: define void @test50(
 ; CHECK-NOT: @objc_
