@@ -3506,25 +3506,26 @@ SDValue Compact8x32ShuffleNode(ShuffleVectorSDNode *SVOp,
     if (!isUndefOrEqual(Mask[i], MaskToOptimizeOdd[i]))
       MatchOddMask = false;
   }
-  static const int CompactionMaskEven[] = {0, 2, -1, -1, 4, 6, -1, -1};
-  static const int CompactionMaskOdd [] = {1, 3, -1, -1, 5, 7, -1, -1};
 
-  const int *CompactionMask;
-  if (MatchEvenMask)
-    CompactionMask = CompactionMaskEven;
-  else if (MatchOddMask)
-    CompactionMask = CompactionMaskOdd;
-  else
+  if (!MatchEvenMask && !MatchOddMask)
     return SDValue();
-
+  
   SDValue UndefNode = DAG.getNode(ISD::UNDEF, dl, VT);
 
-  SDValue Op0 = DAG.getVectorShuffle(VT, dl, SVOp->getOperand(0),
-                                     UndefNode, CompactionMask);
-  SDValue Op1 = DAG.getVectorShuffle(VT, dl, SVOp->getOperand(1),
-                                     UndefNode, CompactionMask);
-  static const int UnpackMask[] = {0, 8, 1, 9, 4, 12, 5, 13};
-  return DAG.getVectorShuffle(VT, dl, Op0, Op1, UnpackMask);
+  SDValue Op0 = SVOp->getOperand(0);
+  SDValue Op1 = SVOp->getOperand(1);
+
+  if (MatchEvenMask) {
+    // Shift the second operand right to 32 bits.
+    static const int ShiftRightMask[] = {-1, 0, -1, 2, -1, 4, -1, 6 };
+    Op1 = DAG.getVectorShuffle(VT, dl, Op1, UndefNode, ShiftRightMask);
+  } else {
+    // Shift the first operand left to 32 bits.
+    static const int ShiftLeftMask[] = {1, -1, 3, -1, 5, -1, 7, -1 };
+    Op0 = DAG.getVectorShuffle(VT, dl, Op0, UndefNode, ShiftLeftMask);
+  }
+  static const int BlendMask[] = {0, 9, 2, 11, 4, 13, 6, 15};
+  return DAG.getVectorShuffle(VT, dl, Op0, Op1, BlendMask);
 }
 
 /// isUNPCKLMask - Return true if the specified VECTOR_SHUFFLE operand

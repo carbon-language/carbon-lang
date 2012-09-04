@@ -229,9 +229,8 @@ define   <8 x float> @test17(<4 x float> %y) {
 }
 
 ; CHECK: test18
-; CHECK: vshufps
-; CHECK: vshufps
-; CHECK: vunpcklps
+; CHECK: vmovshdup
+; CHECK: vblendps
 ; CHECK: ret
 define <8 x float> @test18(<8 x float> %A, <8 x float>%B) nounwind {
   %S = shufflevector <8 x float> %A, <8 x float> %B, <8 x i32> <i32 1, i32 9, i32 3, i32 11, i32 5, i32 13, i32 7, i32 15>
@@ -239,9 +238,8 @@ define <8 x float> @test18(<8 x float> %A, <8 x float>%B) nounwind {
 }
 
 ; CHECK: test19
-; CHECK: vshufps
-; CHECK: vshufps
-; CHECK: vunpcklps
+; CHECK: vmovsldup
+; CHECK: vblendps
 ; CHECK: ret
 define <8 x float> @test19(<8 x float> %A, <8 x float>%B) nounwind {
   %S = shufflevector <8 x float> %A, <8 x float> %B, <8 x i32> <i32 0, i32 8, i32 2, i32 10, i32 4, i32 12, i32 6, i32 14>
