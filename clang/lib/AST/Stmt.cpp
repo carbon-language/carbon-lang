@@ -1006,17 +1006,6 @@ SEHFinallyStmt* SEHTryStmt::getFinallyHandler() const {
   return dyn_cast<SEHFinallyStmt>(getHandler());
 }
 
-SEHLeaveStmt::SEHLeaveStmt(SourceLocation LeaveLoc)
-  : Stmt(SEHLeaveStmtClass),
-    LeaveLoc(LeaveLoc)
-{
-}
-
-SEHLeaveStmt* SEHLeaveStmt::Create(ASTContext &C,
-                                   SourceLocation LeaveLoc) {
-  return new(C) SEHLeaveStmt(LeaveLoc);
-}
-
 SEHExceptStmt::SEHExceptStmt(SourceLocation Loc,
                              Expr *FilterExpr,
                              Stmt *Block)

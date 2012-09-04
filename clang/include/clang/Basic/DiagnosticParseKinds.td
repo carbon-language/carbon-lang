@@ -740,9 +740,6 @@ def err_seh___except_filter : Error<
 
 def err_seh___finally_block : Error<
   "%0 only allowed in __finally block">;
-
-def err_seh___try_block : Error<
-  "%0 only allowed in __try block">;
   
 } // end of Parse Issue category.
 

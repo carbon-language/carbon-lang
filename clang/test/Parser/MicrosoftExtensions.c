@@ -102,9 +102,3 @@ __declspec() void quux( void ) {
   struct S7 s;
   int i = s.t;	/* expected-warning {{'t' is deprecated}} */
 }
-
-void SEH() {
-  __try { __leave; } __except (0) {}
-  __try { } __except (0) { __leave; } // expected-error {{__leave only allowed in __try block}}
-  __try { } __finally { __leave; } // expected-error {{__leave only allowed in __try block}}
-}

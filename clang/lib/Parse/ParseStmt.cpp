@@ -183,19 +183,6 @@ Retry:
 
     return ParseExprStatement();
   }
-  
-  case tok::kw___leave: {
-    Token LeaveTok = Tok;
-    ConsumeToken();
-    if (getCurScope()->isSEHTryScope()) {
-      Res = Actions.ActOnSEHLeaveStmt(LeaveTok.getLocation());
-    } else {
-      Diag(LeaveTok, diag::err_seh___try_block)
-         << LeaveTok.getIdentifierInfo()->getName();
-      Res = StmtError();
-    }
-    break;
-  }
 
   case tok::kw_case:                // C99 6.8.1: labeled-statement
     return ParseCaseStatement();
@@ -335,9 +322,7 @@ StmtResult Parser::ParseSEHTryBlockCommon(SourceLocation TryLoc) {
   if(Tok.isNot(tok::l_brace))
     return StmtError(Diag(Tok,diag::err_expected_lbrace));
 
-  // Use the SEHTryScope to handle __leave as a statement.
-  unsigned ScopeFlags = Scope::DeclScope | Scope::SEHTryScope;
-  StmtResult TryBlock(ParseCompoundStatement(false /*isStmtExpr*/, ScopeFlags));
+  StmtResult TryBlock(ParseCompoundStatement());
   if(TryBlock.isInvalid())
     return TryBlock;
 

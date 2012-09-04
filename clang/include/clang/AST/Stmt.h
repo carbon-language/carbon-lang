@@ -1889,34 +1889,6 @@ public:
   static bool classof(SEHTryStmt *) { return true; }
 };
 
-class SEHLeaveStmt : public Stmt {
-  SourceLocation  LeaveLoc;
-
-  SEHLeaveStmt(SourceLocation LeaveLoc);
-
-  friend class ASTReader;
-  friend class ASTStmtReader;
-  explicit SEHLeaveStmt(EmptyShell E) : Stmt(SEHLeaveStmtClass, E) { }
-
-public:
-  static SEHLeaveStmt* Create(ASTContext &C,
-                              SourceLocation LeaveLoc);
-
-  SourceRange getSourceRange() const LLVM_READONLY {
-    return SourceRange(getLeaveLoc());
-  }
-
-  SourceLocation getLeaveLoc() const { return LeaveLoc; }
-
-  child_range children() { return child_range(); }
-
-  static bool classof(const Stmt *T) {
-    return T->getStmtClass() == SEHLeaveStmtClass;
-  }
-
-  static bool classof(SEHLeaveStmt *) { return true; }
-};
-
 }  // end namespace clang
 
 #endif

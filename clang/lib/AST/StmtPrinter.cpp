@@ -537,11 +537,6 @@ void StmtPrinter::VisitSEHTryStmt(SEHTryStmt *Node) {
   OS << "\n";
 }
 
-void StmtPrinter::VisitSEHLeaveStmt(SEHLeaveStmt *Node) {
-  Indent() << "__leave;";
-  OS << "\n";
-}
-
 void StmtPrinter::PrintRawSEHFinallyStmt(SEHFinallyStmt *Node) {
   OS << "__finally ";
   PrintRawCompoundStmt(Node->getBlock());
@@ -551,7 +546,7 @@ void StmtPrinter::PrintRawSEHFinallyStmt(SEHFinallyStmt *Node) {
 void StmtPrinter::PrintRawSEHExceptHandler(SEHExceptStmt *Node) {
   OS << "__except (";
   VisitExpr(Node->getFilterExpr());
-  OS << ") ";
+  OS << ")\n";
   PrintRawCompoundStmt(Node->getBlock());
   OS << "\n";
 }

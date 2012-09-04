@@ -1361,10 +1361,6 @@ public:
     return getSema().ActOnSEHTryBlock(IsCXXTry,TryLoc,TryBlock,Handler);
   }
 
-  StmtResult RebuildSEHLeaveStmt(SourceLocation LeaveLoc) {
-    return getSema().ActOnSEHLeaveStmt(LeaveLoc);
-  }
-
   StmtResult RebuildSEHExceptStmt(SourceLocation Loc,
                                   Expr *FilterExpr,
                                   Stmt *Block) {
@@ -6001,12 +5997,6 @@ TreeTransform<Derived>::TransformSEHTryStmt(SEHTryStmt *S) {
                                         S->getTryLoc(),
                                         TryBlock.take(),
                                         Handler.take());
-}
-
-template<typename Derived>
-StmtResult
-TreeTransform<Derived>::TransformSEHLeaveStmt(SEHLeaveStmt *S) {
-  return getDerived().RebuildSEHLeaveStmt(S->getLeaveLoc());
 }
 
 template<typename Derived>

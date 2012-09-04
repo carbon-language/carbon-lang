@@ -527,7 +527,6 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::PackExpansionExprClass:
     case Stmt::SubstNonTypeTemplateParmPackExprClass:
     case Stmt::SEHTryStmtClass:
-    case Stmt::SEHLeaveStmtClass:
     case Stmt::SEHExceptStmtClass:
     case Stmt::LambdaExprClass:
     case Stmt::SEHFinallyStmtClass: {

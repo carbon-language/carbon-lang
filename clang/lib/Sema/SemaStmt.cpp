@@ -2746,12 +2746,6 @@ Sema::ActOnSEHTryBlock(bool IsCXXTry,
 }
 
 StmtResult
-Sema::ActOnSEHLeaveStmt(SourceLocation LeaveLoc)
-{
-  return Owned(SEHLeaveStmt::Create(Context, LeaveLoc));
-}
-
-StmtResult
 Sema::ActOnSEHExceptBlock(SourceLocation Loc,
                           Expr *FilterExpr,
                           Stmt *Block) {

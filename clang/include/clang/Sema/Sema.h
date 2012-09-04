@@ -2622,8 +2622,6 @@ public:
                               Stmt *TryBlock,
                               Stmt *Handler);
 
-  StmtResult ActOnSEHLeaveStmt(SourceLocation LeaveLoc);
-
   StmtResult ActOnSEHExceptBlock(SourceLocation Loc,
                                  Expr *FilterExpr,
                                  Stmt *Block);

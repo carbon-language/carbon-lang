@@ -1204,7 +1204,6 @@ namespace clang {
       STMT_SEH_EXCEPT,            // SEHExceptStmt
       STMT_SEH_FINALLY,           // SEHFinallyStmt
       STMT_SEH_TRY,               // SEHTryStmt
-      STMT_SEH_LEAVE,             // SEHLeaveStmt
       
       // ARC
       EXPR_OBJC_BRIDGED_CAST,     // ObjCBridgedCastExpr
