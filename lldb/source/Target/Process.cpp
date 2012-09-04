@@ -2561,8 +2561,16 @@ Process::Launch (const ProcessLaunchInfo &launch_info)
                 SetPublicState (eStateLaunching);
                 m_should_detach = false;
 
-                // Now launch using these arguments.
-                error = DoLaunch (exe_module, launch_info);
+                if (m_run_lock.WriteTryLock())
+                {
+                    // Now launch using these arguments.
+                    error = DoLaunch (exe_module, launch_info);
+                }
+                else
+                {
+                    // This shouldn't happen
+                    error.SetErrorString("failed to acquire process run lock");
+                }
 
                 if (error.Fail())
                 {
