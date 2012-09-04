@@ -61,7 +61,7 @@ namespace llvm {
     static unsigned getHashValue(const DivOpInfo &Val) {
       return (unsigned)(reinterpret_cast<uintptr_t>(Val.Dividend) ^
                         reinterpret_cast<uintptr_t>(Val.Divisor)) ^
-                       (unsigned)Val.SignedOp;
+                        (unsigned)Val.SignedOp;
     }
   };
 
@@ -71,31 +71,29 @@ namespace llvm {
 // insertFastDiv - Substitutes the div/rem instruction with code that checks the
 // value of the operands and uses a shorter-faster div/rem instruction when
 // possible and the longer-slower div/rem instruction otherwise.
-static void insertFastDiv(Function &F,
+static bool insertFastDiv(Function &F,
                           Function::iterator &I,
                           BasicBlock::iterator &J,
                           IntegerType *BypassType,
                           bool UseDivOp,
                           bool UseSignedOp,
-                          DivCacheTy &PerBBDivCache)
-{
+                          DivCacheTy &PerBBDivCache) {
   // Get instruction operands
   Instruction *Instr = J;
   Value *Dividend = Instr->getOperand(0);
   Value *Divisor = Instr->getOperand(1);
 
-  if (dyn_cast<ConstantInt>(Divisor) != 0 ||
-      (dyn_cast<ConstantInt>(Dividend) != 0 &&
-       dyn_cast<ConstantInt>(Divisor) != 0)) {
+  if (isa<ConstantInt>(Divisor) ||
+      (isa<ConstantInt>(Dividend) && isa<ConstantInt>(Divisor))) {
     // Operations with immediate values should have
     // been solved and replaced during compile time.
-    return;
+    return false;
   }
 
   // Basic Block is split before divide
   BasicBlock *MainBB = I;
   BasicBlock *SuccessorBB = I->splitBasicBlock(J);
-  I++; //advance iterator I to successorBB
+  ++I; //advance iterator I to successorBB
 
   // Add new basic block for slow divide operation
   BasicBlock *SlowBB = BasicBlock::Create(F.getContext(), "",
@@ -118,17 +116,19 @@ static void insertFastDiv(Function &F,
                                           MainBB->getParent(), SuccessorBB);
   FastBB->moveBefore(SlowBB);
   IRBuilder<> FastBuilder(FastBB, FastBB->begin());
-  Value *ShortDivisorV = FastBuilder.CreateCast(Instruction::Trunc, Divisor, BypassType);
-  Value *ShortDividendV = FastBuilder.CreateCast(Instruction::Trunc, Dividend, BypassType);
+  Value *ShortDivisorV = FastBuilder.CreateCast(Instruction::Trunc, Divisor,
+                                                BypassType);
+  Value *ShortDividendV = FastBuilder.CreateCast(Instruction::Trunc, Dividend,
+                                                 BypassType);
 
   // udiv/urem because optimization only handles positive numbers
   Value *ShortQuotientV = FastBuilder.CreateExactUDiv(ShortDividendV,
-                                                       ShortDivisorV);
+                                                      ShortDivisorV);
   Value *ShortRemainderV = FastBuilder.CreateURem(ShortDividendV,
                                                   ShortDivisorV);
   Value *FastQuotientV = FastBuilder.CreateCast(Instruction::ZExt,
-                                                 ShortQuotientV,
-                                                 Dividend->getType());
+                                                ShortQuotientV,
+                                                Dividend->getType());
   Value *FastRemainderV = FastBuilder.CreateCast(Instruction::ZExt,
                                                  ShortRemainderV,
                                                  Dividend->getType());
@@ -144,11 +144,10 @@ static void insertFastDiv(Function &F,
   RemPhi->addIncoming(FastRemainderV, FastBB);
 
   // Replace Instr with appropriate phi node
-  if (UseDivOp) {
+  if (UseDivOp)
     Instr->replaceAllUsesWith(QuoPhi);
-  } else {
+  else
     Instr->replaceAllUsesWith(RemPhi);
-  }
   Instr->eraseFromParent();
 
   // Combine operands into a single value with OR for value testing below
@@ -174,19 +173,19 @@ static void insertFastDiv(Function &F,
   DivOpInfo Key(UseSignedOp, Dividend, Divisor);
   DivPhiNodes Value(QuoPhi, RemPhi);
   PerBBDivCache.insert(std::pair<DivOpInfo, DivPhiNodes>(Key, Value));
+  return true;
 }
 
 // reuseOrInsertFastDiv - Reuses previously computed dividend or remainder if
 // operands and operation are identical. Otherwise call insertFastDiv to perform
 // the optimization and cache the resulting dividend and remainder.
-static void reuseOrInsertFastDiv(Function &F,
+static bool reuseOrInsertFastDiv(Function &F,
                                  Function::iterator &I,
                                  BasicBlock::iterator &J,
                                  IntegerType *BypassType,
                                  bool UseDivOp,
                                  bool UseSignedOp,
-                                 DivCacheTy &PerBBDivCache)
-{
+                                 DivCacheTy &PerBBDivCache) {
   // Get instruction operands
   Instruction *Instr = J;
   DivOpInfo Key(UseSignedOp, Instr->getOperand(0), Instr->getOperand(1));
@@ -194,8 +193,8 @@ static void reuseOrInsertFastDiv(Function &F,
 
   if (CacheI == PerBBDivCache.end()) {
     // If previous instance does not exist, insert fast div
-    insertFastDiv(F, I, J, BypassType, UseDivOp, UseSignedOp, PerBBDivCache);
-    return;
+    return insertFastDiv(F, I, J, BypassType, UseDivOp, UseSignedOp,
+                         PerBBDivCache);
   }
 
   // Replace operation value with previously generated phi node
@@ -209,18 +208,18 @@ static void reuseOrInsertFastDiv(Function &F,
   }
 
   // Advance to next operation
-  J++;
+  ++J;
 
   // Remove redundant operation
   Instr->eraseFromParent();
+  return true;
 }
 
 // bypassSlowDivision - This optimization identifies DIV instructions that can
 // be profitably bypassed and carried out with a shorter, faster divide.
 bool bypassSlowDivision(Function &F,
                         Function::iterator &I,
-                        const llvm::DenseMap<Type *, Type *> &BypassTypeMap)
-{
+                        const llvm::DenseMap<Type *, Type *> &BypassTypeMap) {
   DivCacheTy DivCache;
 
   bool MadeChange = false;
@@ -230,20 +229,22 @@ bool bypassSlowDivision(Function &F,
     unsigned Opcode = J->getOpcode();
     bool UseDivOp = Opcode == Instruction::SDiv || Opcode == Instruction::UDiv;
     bool UseRemOp = Opcode == Instruction::SRem || Opcode == Instruction::URem;
-    bool UseSignedOp = Opcode == Instruction::SDiv || Opcode == Instruction::SRem;
+    bool UseSignedOp = Opcode == Instruction::SDiv ||
+                       Opcode == Instruction::SRem;
 
     // Only optimize div or rem ops
-    if (!UseDivOp && !UseRemOp) {
+    if (!UseDivOp && !UseRemOp)
       continue;
-    }
-    // Continue if div/rem type is not bypassed
-    DenseMap<Type *, Type *>::const_iterator BT = BypassTypeMap.find(J->getType());
-    if (BT == BypassTypeMap.end()) {
-      continue;
-    }
 
-    IntegerType *BypassType = (IntegerType *)BT->second;
-    reuseOrInsertFastDiv(F, I, J, BypassType, UseDivOp, UseSignedOp, DivCache);
+    // Continue if div/rem type is not bypassed
+    DenseMap<Type *, Type *>::const_iterator BT =
+      BypassTypeMap.find(J->getType());
+    if (BT == BypassTypeMap.end())
+      continue;
+
+    IntegerType *BypassType = cast<IntegerType>(BT->second);
+    MadeChange |= reuseOrInsertFastDiv(F, I, J, BypassType, UseDivOp,
+                                       UseSignedOp, DivCache);
     MadeChange = true;
   }
 
