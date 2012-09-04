@@ -485,6 +485,9 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
       
       if (AccessPtr == Inst || AA->isMustAlias(Inst, AccessPtr))
         return MemDepResult::getDef(Inst);
+      // Be conservative if the accessed pointer may alias the allocation.
+      if (AA->alias(Inst, AccessPtr) != AliasAnalysis::NoAlias)
+        return MemDepResult::getClobber(Inst);
       // If the allocation is not aliased and does not read memory (like
       // strdup), it is safe to ignore.
       if (isa<AllocaInst>(Inst) ||
