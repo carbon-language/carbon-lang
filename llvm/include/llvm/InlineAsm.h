@@ -43,10 +43,12 @@ class InlineAsm : public Value {
   std::string AsmString, Constraints;
   bool HasSideEffects;
   bool IsAlignStack;
-  
+  /// AsmDialect - 0 is AT&T (default) and 1 is the Intel dialect.
+  unsigned AsmDialect;
+
   InlineAsm(PointerType *Ty, const std::string &AsmString,
             const std::string &Constraints, bool hasSideEffects,
-            bool isAlignStack);
+            bool isAlignStack, unsigned asmDialect);
   virtual ~InlineAsm();
 
   /// When the ConstantUniqueMap merges two types and makes two InlineAsms
@@ -58,11 +60,12 @@ public:
   ///
   static InlineAsm *get(FunctionType *Ty, StringRef AsmString,
                         StringRef Constraints, bool hasSideEffects,
-                        bool isAlignStack = false);
+                        bool isAlignStack = false, unsigned asmDialect = 0);
   
   bool hasSideEffects() const { return HasSideEffects; }
   bool isAlignStack() const { return IsAlignStack; }
-  
+  unsigned getDialect() const { return AsmDialect; }
+
   /// getType - InlineAsm's are always pointers.
   ///
   PointerType *getType() const {
