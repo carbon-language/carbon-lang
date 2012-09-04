@@ -678,9 +678,9 @@ MSAsmStmt::MSAsmStmt(ASTContext &C, SourceLocation asmloc,
                      ArrayRef<Expr*> inputexprs, ArrayRef<Expr*> outputexprs,
                      StringRef asmstr, ArrayRef<StringRef> constraints,
                      ArrayRef<StringRef> clobbers, SourceLocation endloc)
-  : AsmStmt(MSAsmStmtClass, asmloc, issimple, isvolatile, outputs.size(), inputs.size(),
-            clobbers.size()), LBraceLoc(lbraceloc), EndLoc(endloc),
-    AsmStr(asmstr.str()), NumAsmToks(asmtoks.size()) {
+  : AsmStmt(MSAsmStmtClass, asmloc, issimple, isvolatile, outputs.size(),
+            inputs.size(), clobbers.size()), LBraceLoc(lbraceloc),
+            EndLoc(endloc), AsmStr(asmstr.str()), NumAsmToks(asmtoks.size()) {
   assert (inputs.size() == inputexprs.size() && "Input expr size mismatch!");
   assert (outputs.size() == outputexprs.size() && "Input expr size mismatch!");
 
@@ -689,14 +689,14 @@ MSAsmStmt::MSAsmStmt(ASTContext &C, SourceLocation asmloc,
   Names = new (C) IdentifierInfo*[NumExprs];
   for (unsigned i = 0, e = NumOutputs; i != e; ++i)
     Names[i] = outputs[i];
-  for (unsigned i = NumOutputs, e = NumExprs; i != e; ++i)
-    Names[i] = inputs[i];
+  for (unsigned i = NumOutputs, j = 0, e = NumExprs; i != e; ++i, ++j)
+    Names[i] = inputs[j];
 
   Exprs = new (C) Stmt*[NumExprs];
   for (unsigned i = 0, e = NumOutputs; i != e; ++i)
     Exprs[i] = outputexprs[i];
-  for (unsigned i = NumOutputs, e = NumExprs; i != e; ++i)
-    Exprs[i] = inputexprs[i];
+  for (unsigned i = NumOutputs, j = 0, e = NumExprs; i != e; ++i, ++j)
+    Exprs[i] = inputexprs[j];
 
   AsmToks = new (C) Token[NumAsmToks];
   for (unsigned i = 0, e = NumAsmToks; i != e; ++i)
