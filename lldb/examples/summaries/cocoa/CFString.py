@@ -5,8 +5,8 @@ part of The LLVM Compiler Infrastructure
 This file is distributed under the University of Illinois Open Source
 License. See LICENSE.TXT for details.
 """
-# synthetic children and summary provider for CFString
-# (and related NSString class)
+# example synthetic children and summary provider for CFString (and related NSString class)
+# the real code is part of the LLDB core
 import lldb
 import lldb.runtime.objc.objc_runtime
 import lldb.formatters.Logger
