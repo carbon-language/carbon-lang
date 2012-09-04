@@ -1672,9 +1672,7 @@ def warn_objc_redundant_literal_use : Warning<
 
 def err_attr_tlsmodel_arg : Error<"tls_model must be \"global-dynamic\", "
   "\"local-dynamic\", \"initial-exec\" or \"local-exec\"">;
-def warn_ms_inheritance_already_declared : Warning<
-  "ignored since inheritance model was already declared as '"
-  "%select{single|multiple|virtual}0'">, InGroup<Microsoft>;
+
 def err_only_annotate_after_access_spec : Error<
   "access specifier can only have annotation attributes">;
 

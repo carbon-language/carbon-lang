@@ -1583,6 +1583,14 @@ QualType Sema::BuildMemberPointerType(QualType T, QualType Class,
     return QualType();
   }
 
+  // In the Microsoft ABI, the class is allowed to be an incomplete
+  // type. In such cases, the compiler makes a worst-case assumption.
+  // We make no such assumption right now, so emit an error if the
+  // class isn't a complete type.
+  if (Context.getTargetInfo().getCXXABI() == CXXABI_Microsoft &&
+      RequireCompleteType(Loc, Class, diag::err_incomplete_type))
+    return QualType();
+
   return Context.getMemberPointerType(T, Class.getTypePtr());
 }
 
