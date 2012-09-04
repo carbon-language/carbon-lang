@@ -20,8 +20,14 @@ Type:
 for available options.
 """
 
-import os, signal, sys, time
+import argparse
+import os
+import platform
+import signal
 import subprocess
+import sys
+import textwrap
+import time
 import unittest2
 
 def is_exe(fpath):
@@ -101,11 +107,11 @@ pre_flight = None
 post_flight = None
 
 # The 'archs' and 'compilers' can be specified via either command line or configFile,
-# with the command line overriding the configFile.  When specified, they should be
-# of the list type.  For example, "-A x86_64^i386" => archs=['x86_64', 'i386'] and
-# "-C gcc^clang" => compilers=['gcc', 'clang'].
-archs = ['x86_64', 'i386']
-compilers = ['clang']
+# with the command line overriding the configFile.  The corresponding options can be
+# specified more than once. For example, "-A x86_64 -A i386" => archs=['x86_64', 'i386'] 
+# and "-C gcc -C clang" => compilers=['gcc', 'clang'].
+archs = None        # Must be initialized after option parsing
+compilers = None    # Must be initialized after option parsing
 
 # The arch might dictate some specific CFLAGS to be passed to the toolchain to build
 # the inferior programs.  The global variable cflags_extras provides a hook to do
@@ -192,89 +198,8 @@ testdirs = [ sys.path[0] ]
 separator = '-' * 70
 
 
-def usage():
-    print """
-Usage: dotest.py [option] [args]
-where options:
--h   : print this help message and exit.  Add '-v' for more detailed help.
--A   : specify the architecture(s) to launch for the inferior process
-       -A i386 => launch inferior with i386 architecture
-       -A x86_64^i386 => launch inferior with x86_64 and i386 architectures
--C   : specify the compiler(s) used to build the inferior executable
-       -C clang => build debuggee using clang compiler
-       -C /my/full/path/to/clang => specify a full path to the clang binary
-       -C clang^gcc => build debuggee using clang and gcc compilers
--D   : dump the Python sys.path variable
--E   : specify the extra flags to be passed to the toolchain when building the
-       inferior programs to be debugged
-       suggestions: do not lump the -A arch1^arch2 together such that the -E
-       option applies to only one of the architectures
--N   : don't do test cases marked with the @dsym decorator by passing 'dsym' as the option arg, or
-       don't do test cases marked with the @dwarf decorator by passing 'dwarf' as the option arg
--a   : don't do lldb Python API tests
-       use @python_api_test to decorate a test case as lldb Python API test
-+a   : just do lldb Python API tests
-       do not specify both '-a' and '+a' at the same time
-+b   : just do benchmark tests
-       use @benchmark_test to decorate a test case as such
--b   : read a blacklist file specified after this option
--c   : read a config file specified after this option
-       the architectures and compilers (note the plurals) specified via '-A' and '-C'
-       will override those specified via a config file
-       (see also lldb-trunk/examples/test/usage-config)
--d   : delay startup for 10 seconds (in order for the debugger to attach)
--e   : specify the full path of an executable used for benchmark purpose;
-       see also '-x', which provides the breakpoint sepcification
--F   : failfast, stop the test suite on the first error/failure
--f   : specify a filter, which consists of the test class name, a dot, followed by
-       the test method, to only admit such test into the test suite
-       e.g., -f 'ClassTypesTestCase.test_with_dwarf_and_python_api'
--g   : if specified, the filterspec by -f is not exclusive, i.e., if a test module
-       does not match the filterspec (testclass.testmethod), the whole module is
-       still admitted to the test suite
--i   : ignore (don't bailout) if 'lldb.py' module cannot be located in the build
-       tree relative to this script; use PYTHONPATH to locate the module
--k   : specify a runhook, which is an lldb command to be executed by the debugger;
-       '-k' option can occur multiple times, the commands are executed one after the
-       other to bring the debugger to a desired state, so that, for example, further
-       benchmarking can be done
--l   : don't skip long running test
--n   : don't print the headers like build dir, lldb version, and svn info at all
--p   : specify a regexp filename pattern for inclusion in the test suite
--R   : specify a dir to relocate the tests and their intermediate files to;
-       BE WARNED THAT the directory, if exists, will be deleted before running this test driver;
-       no cleanup of intermediate test files is performed in this case
--r   : similar to '-R',
-       except that the directory must not exist before running this test driver
--S   : skip the build and cleanup while running the test
-       use this option with care as you would need to build the inferior(s) by hand
-       and build the executable(s) with the correct name(s)
-       this can be used with '-# n' to stress test certain test cases for n number of
-       times
--s   : specify the name of the dir created to store the session files of tests
-       with errored or failed status; if not specified, the test driver uses the
-       timestamp as the session dir name
--t   : turn on tracing of lldb command and other detailed test executions
--u   : specify an environment variable to unset before running the test cases
-       e.g., -u DYLD_INSERT_LIBRARIES -u MallocScribble'
--v   : do verbose mode of unittest framework (print out each test case invocation)
--X   : exclude a directory from consideration for test discovery
-       -X types => if 'types' appear in the pathname components of a potential testfile
-                   it will be ignored
--x   : specify the breakpoint specification for the benchmark executable;
-       see also '-e', which provides the full path of the executable
--y   : specify the iteration count used to collect our benchmarks; an example is
-       the number of times to do 'thread step-over' to measure stepping speed
-       see also '-e' and '-x' options
--w   : insert some wait time (currently 0.5 sec) between consecutive test cases
--#   : Repeat the test suite for a specified number of times
-
-and:
-args : specify a list of directory names to search for test modules named after
-       Test*.py (test discovery)
-       if empty, search from the current working directory, instead
-"""
-
+def usage(parser):
+    parser.print_help()
     if verbose > 0:
         print """
 Examples:
@@ -398,232 +323,239 @@ def parseOptionsAndInitTestdirs():
 
     do_help = False
 
-    # Process possible trace and/or verbose flag, among other things.
-    index = 1
-    while index < len(sys.argv):
-        if sys.argv[index].startswith('-') or sys.argv[index].startswith('+'):
-            # We should continue processing...
-            pass
-        else:
-            # End of option processing.
-            break
+    parser = argparse.ArgumentParser(description='description', prefix_chars='+-', add_help=False)
+    group = None
 
-        if sys.argv[index].find('-h') != -1:
-            index += 1
-            do_help = True
-        elif sys.argv[index].startswith('-A'):
-            # Increment by 1 to fetch the ARCH spec.
-            index += 1
-            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
-                usage()
-            archs = sys.argv[index].split('^')
-            index += 1
-        elif sys.argv[index].startswith('-C'):
-            # Increment by 1 to fetch the CC spec.
-            index += 1
-            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
-                usage()
-            compilers = sys.argv[index].split('^')
-            index += 1
-        elif sys.argv[index].startswith('-D'):
-            dumpSysPath = True
-            index += 1
-        elif sys.argv[index].startswith('-E'):
-            # Increment by 1 to fetch the CFLAGS_EXTRAS spec.
-            index += 1
-            if index >= len(sys.argv):
-                usage()
-            cflags_extras = sys.argv[index]
-            os.environ["CFLAGS_EXTRAS"] = cflags_extras
-            index += 1
-        elif sys.argv[index].startswith('-N'):
-            # Increment by 1 to fetch 'dsym' or 'dwarf'.
-            index += 1
-            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
-                usage()
-            dont_do = sys.argv[index]
-            if dont_do.lower() == 'dsym':
-                dont_do_dsym_test = True
-            elif dont_do.lower() == 'dwarf':
-                dont_do_dwarf_test = True
-            else:
-                print "!!!"
-                print "Warning: -N only accepts either 'dsym' or 'dwarf' as the option arg; you passed in '%s'?" % dont_do
-                print "!!!"
-            index += 1
-        elif sys.argv[index].startswith('-a'):
-            dont_do_python_api_test = True
-            index += 1
-        elif sys.argv[index].startswith('+a'):
-            just_do_python_api_test = True
-            index += 1
-        elif sys.argv[index].startswith('+b'):
-            just_do_benchmarks_test = True
-            index += 1
-        elif sys.argv[index].startswith('-b'):
-            # Increment by 1 to fetch the blacklist file name option argument.
-            index += 1
-            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
-                usage()
-            blacklistFile = sys.argv[index]
-            if not os.path.isfile(blacklistFile):
-                print "Blacklist file:", blacklistFile, "does not exist!"
-                usage()
-            index += 1
-            # Now read the blacklist contents and assign it to blacklist.
-            execfile(blacklistFile, globals(), blacklistConfig)
-            blacklist = blacklistConfig.get('blacklist')
-        elif sys.argv[index].startswith('-c'):
-            # Increment by 1 to fetch the config file name option argument.
-            index += 1
-            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
-                usage()
-            configFile = sys.argv[index]
-            if not os.path.isfile(configFile):
-                print "Config file:", configFile, "does not exist!"
-                usage()
-            index += 1
-        elif sys.argv[index].startswith('-d'):
-            delay = True
-            index += 1
-        elif sys.argv[index].startswith('-e'):
-            # Increment by 1 to fetch the full path of the benchmark executable.
-            index += 1
-            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
-                usage()
-            bmExecutable = sys.argv[index]
-            if not is_exe(bmExecutable):
-                usage()
-            index += 1
-        elif sys.argv[index].startswith('-F'):
-            failfast = True
-            index += 1
-        elif sys.argv[index].startswith('-f'):
-            # Increment by 1 to fetch the filter spec.
-            index += 1
-            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
-                usage()
-            filters.append(sys.argv[index])
-            index += 1
-        elif sys.argv[index].startswith('-g'):
-            fs4all = False
-            index += 1
-        elif sys.argv[index].startswith('-i'):
-            ignore = True
-            index += 1
-        elif sys.argv[index].startswith('-k'):
-            # Increment by 1 to fetch the runhook lldb command.
-            index += 1
-            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
-                usage()
-            runHooks.append(sys.argv[index])
-            index += 1
-        elif sys.argv[index].startswith('-l'):
-            skip_long_running_test = False
-            index += 1
-        elif sys.argv[index].startswith('-n'):
-            noHeaders = True
-            index += 1
-        elif sys.argv[index].startswith('-p'):
-            # Increment by 1 to fetch the reg exp pattern argument.
-            index += 1
-            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
-                usage()
-            regexp = sys.argv[index]
-            index += 1
-        elif sys.argv[index].startswith('-R'):
-            # Increment by 1 to fetch the relocated directory argument.
-            index += 1
-            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
-                usage()
-            rdir = os.path.abspath(sys.argv[index])
-            if os.path.exists(rdir):
-                import shutil
-                print "Removing tree:", rdir
-                shutil.rmtree(rdir)
-            index += 1
-        elif sys.argv[index].startswith('-r'):
-            # Increment by 1 to fetch the relocated directory argument.
-            index += 1
-            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
-                usage()
-            rdir = os.path.abspath(sys.argv[index])
-            if os.path.exists(rdir):
-                print "Relocated directory:", rdir, "must not exist!"
-                usage()
-            index += 1
-        elif sys.argv[index].startswith('-S'):
-            skip_build_and_cleanup = True
-            index += 1
-        elif sys.argv[index].startswith('-s'):
-            # Increment by 1 to fetch the session dir name.
-            index += 1
-            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
-                usage()
-            sdir_name = sys.argv[index]
-            index += 1
-        elif sys.argv[index].startswith('-t'):
-            os.environ["LLDB_COMMAND_TRACE"] = "YES"
-            index += 1
-        elif sys.argv[index].startswith('-u'):
-            # Increment by 1 to fetch the environment variable to unset.
-            index += 1
-            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
-                usage()
-            unsets.append(sys.argv[index])
-            index += 1
-        elif sys.argv[index].startswith('-v'):
-            verbose = 2
-            index += 1
-        elif sys.argv[index].startswith('-w'):
-            os.environ["LLDB_WAIT_BETWEEN_TEST_CASES"] = 'YES'
-            index += 1
-        elif sys.argv[index].startswith('-X'):
-            # Increment by 1 to fetch an excluded directory.
-            index += 1
-            if index >= len(sys.argv):
-                usage()
-            excluded.add(sys.argv[index])
-            index += 1
-        elif sys.argv[index].startswith('-x'):
-            # Increment by 1 to fetch the breakpoint specification of the benchmark executable.
-            index += 1
-            if index >= len(sys.argv):
-                usage()
-            bmBreakpointSpec = sys.argv[index]
-            index += 1
-        elif sys.argv[index].startswith('-y'):
-            # Increment by 1 to fetch the the benchmark iteration count.
-            index += 1
-            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
-                usage()
-            bmIterationCount = int(sys.argv[index])
-            index += 1
-        elif sys.argv[index].startswith('-#'):
-            # Increment by 1 to fetch the repeat count argument.
-            index += 1
-            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
-                usage()
-            count = int(sys.argv[index])
-            index += 1
+    # Helper function for boolean options (group will point to the current group when executing X)
+    X = lambda optstr, helpstr, **kwargs: group.add_argument(optstr, help=helpstr, action='store_true', **kwargs)
+
+    group = parser.add_argument_group('Help')
+    group.add_argument('-h', '--help', dest='h', action='store_true', help="Print this help message and exit.  Add '-v' for more detailed help.")
+
+    # C and Python toolchain options
+    group = parser.add_argument_group('Toolchain options')
+    group.add_argument('-A', '--arch', metavar='arch', action='append', dest='archs', help=textwrap.dedent('''Specify the architecture(s) to test. This option can be specified more than once'''))
+    group.add_argument('-C', '--compiler', metavar='compiler', dest='compilers', action='append', help=textwrap.dedent('''Specify the compiler(s) used to build the inferior executables. The compiler path can be an executable basename or a full path to a compiler executable. This option can be specified multiple times.'''))
+    # FIXME? This won't work for different extra flags according to each arch.
+    group.add_argument('-E', metavar='extra-flags', help=textwrap.dedent('''Specify the extra flags to be passed to the toolchain when building the inferior programs to be debugged
+                                                           suggestions: do not lump the "-A arch1 -A arch2" together such that the -E option applies to only one of the architectures'''))
+    X('-D', 'Dump the Python sys.path variable')
+
+    # Test filtering options
+    group = parser.add_argument_group('Test filtering options')
+    group.add_argument('-N', choices=['dwarf', 'dsym'], help="Don't do test cases marked with the @dsym decorator by passing 'dsym' as the option arg, or don't do test cases marked with the @dwarf decorator by passing 'dwarf' as the option arg")
+    X('-a', "Don't do lldb Python API tests")
+    X('+a', "Just do lldb Python API tests. Do not specify along with '+a'", dest='plus_a')
+    X('+b', 'Just do benchmark tests', dest='plus_b')
+    group.add_argument('-b', metavar='blacklist', help='Read a blacklist file specified after this option')
+    group.add_argument('-f', metavar='filterspec', help='Specify a filter, which consists of the test class name, a dot, followed by the test method, to only admit such test into the test suite')  # FIXME: Example?
+    X('-g', 'If specified, the filterspec by -f is not exclusive, i.e., if a test module does not match the filterspec (testclass.testmethod), the whole module is still admitted to the test suite')
+    X('-l', "Don't skip long running tests")
+    group.add_argument('-p', metavar='pattern', help='Specify a regexp filename pattern for inclusion in the test suite')
+    group.add_argument('-X', metavar='directory', help="Exclude a directory from consideration for test discovery. -X types => if 'types' appear in the pathname components of a potential testfile, it will be ignored")
+
+    # Configuration options
+    group = parser.add_argument_group('Configuration options')
+    group.add_argument('-c', metavar='config-file', help='Read a config file specified after this option')  # FIXME: additional doc.
+    group.add_argument('-e', metavar='benchmark-exe', help='Specify the full path of an executable used for benchmark purposes (see also: -x)')
+    group.add_argument('-k', metavar='command', action='append', help="Specify a runhook, which is an lldb command to be executed by the debugger; The option can occur multiple times. The commands are executed one after the other to bring the debugger to a desired state, so that, for example, further benchmarking can be done")
+    group.add_argument('-R', metavar='dir', help='Specify a directory to relocate the tests and their intermediate files to. BE WARNED THAT the directory, if exists, will be deleted before running this test driver. No cleanup of intermediate test files is performed in this case')
+    group.add_argument('-r', metavar='dir', help="Similar to '-R', except that the directory must not exist before running this test driver")
+    group.add_argument('-s', metavar='name', help='Specify the name of the dir created to store the session files of tests with errored or failed status. If not specified, the test driver uses the timestamp as the session dir name')
+    group.add_argument('-x', metavar='breakpoint-spec', help='Specify the breakpoint specification for the benchmark executable')
+    group.add_argument('-y', type=int, metavar='count', help="Specify the iteration count used to collect our benchmarks. An example is the number of times to do 'thread step-over' to measure stepping speed.")
+    group.add_argument('-#', type=int, metavar='sharp', dest='sharp', help='Repeat the test suite for a specified number of times')
+
+    # Test-suite behaviour
+    group = parser.add_argument_group('Runtime behaviour options')
+    X('-d', 'Delay startup for 10 seconds (in order for the debugger to attach)')
+    X('-F', 'Fail fast. Stop the test suite on the first error/failure')
+    X('-i', "Ignore (don't bailout) if 'lldb.py' module cannot be located in the build tree relative to this script; use PYTHONPATH to locate the module")
+    X('-n', "Don't print the headers like build dir, lldb version, and svn info at all")
+    X('-S', "Skip the build and cleanup while running the test. Use this option with care as you would need to build the inferior(s) by hand and build the executable(s) with the correct name(s). This can be used with '-# n' to stress test certain test cases for n number of times")
+    X('-t', 'Turn on tracing of lldb command and other detailed test executions')
+    group.add_argument('-u', metavar='variable', action='append', help='Specify an environment variable to unset before running the test cases. e.g., -u DYLD_INSERT_LIBRARIES -u MallocScribble')
+    X('-v', 'Do verbose mode of unittest framework (print out each test case invocation)')
+    X('-w', 'Insert some wait time (currently 0.5 sec) between consecutive test cases')
+
+    # Remove the reference to our helper function
+    del X
+
+    group = parser.add_argument_group('Test directories')
+    group.add_argument('args', metavar='test-dir', nargs='*', help='Specify a list of directory names to search for test modules named after Test*.py (test discovery). If empty, search from the current working directory instead.')
+    args = parser.parse_args()
+
+    platform_system = platform.system()
+    platform_machine = platform.machine()
+    print args
+
+    if args.h:
+        do_help = True
+
+    if args.archs:
+        archs = args.archs
+    else:
+        if platform_system == 'Darwin' and platform_machine == 'x86_64':
+            archs = ['x86_64', 'i386']
         else:
-            print "Unknown option: ", sys.argv[index]
-            usage()
+            archs = [platform_machine]
+
+    if args.compilers:
+        compilers = args.compilers
+    else:
+        compilers = ['clang']
+
+    if args.D:
+        dumpSysPath = True
+
+    if args.E:
+        cflags_extras = args.E
+        os.environ['CFLAGS_EXTRAS'] = cflags_extras
+
+    # argparse makes sure we have correct options
+    if args.N == 'dwarf':
+        dont_do_dwarf_test = True
+    elif args.N == 'dsym':
+        dont_do_dsym_test = True
+
+    if args.a:
+        dont_do_python_api_test = True
+
+    if args.plus_a:
+        if dont_do_python_api_test:
+            print "Warning: -a and +a can't both be specified! Using only -a"
+        else:
+            just_do_python_api_test = True
+
+    if args.plus_b:
+        just_do_benchmarks_test = True
+
+    if args.b:
+        if args.b.startswith('-'):
+            usage(parser)
+        blacklistFile = args.b
+        if not os.path.isfile(blacklistFile):
+            print 'Blacklist file:', blacklistFile, 'does not exist!'
+            usage(parser)
+        # Now read the blacklist contents and assign it to blacklist.
+        execfile(blacklistFile, globals(), blacklistConfig)
+        blacklist = blacklistConfig.get('blacklist')
+
+    if args.c:
+        if args.c.startswith('-'):
+            usage(parser)
+        configFile = args.c
+        if not os.path.isfile(configFile):
+            print 'Config file:', configFile, 'does not exist!'
+            usage(parser)
+
+    if args.d:
+        delay = True
+
+    if args.e:
+        if args.e.startswith('-'):
+            usage(parser)
+        bmExecutable = args.e
+        if not is_exe(bmExecutable):
+            usage(parser)
+
+    if args.F:
+        failfast = True
+
+    if args.f:
+        if args.f.startswith('-'):
+            usage(parser)
+        filters.append(args.f)
+
+    if args.g:
+        fs4all = False
+
+    if args.i:
+        ignore = True
+
+    if args.k:
+        runHooks.extend(args.k)
+
+    if args.l:
+        skip_long_running_test = False
+
+    if args.n:
+        noHeaders = True
+
+    if args.p:
+        if args.p.startswith('-'):
+            usage(parser)
+        regexp = args.p
+
+    if args.R:
+        if args.R.startswith('-'):
+            usage(parser)
+        rdir = os.path.abspath(args.R)
+        if os.path.exists(rdir):
+            import shutil
+            print 'Removing tree:', rdir
+            shutil.rmtree(rdir)
+
+    if args.r:
+        if args.r.startswith('-'):
+            usage(parser)
+        rdir = os.path.abspath(args.r)
+        if os.path.exists(rdir):
+            print 'Relocated directory:', rdir, 'must not exist!'
+            usage(parser)
+
+    if args.S:
+        skip_build_and_cleanup = True
+
+    if args.s:
+        if args.s.startswith('-'):
+            usage(parser)
+        sdir_name = args.s
+
+    if args.t:
+        os.environ['LLDB_COMMAND_TRACE'] = 'YES'
+
+    if args.u:
+        unsets.extend(args.u)
+
+    if args.v:
+        verbose = 2
+
+    if args.w:
+        os.environ['LLDB_WAIT_BETWEEN_TEST_CASES'] = 'YES'
+
+    if args.X:
+        if args.X.startswith('-'):
+            usage(parser)
+        excluded.add(args.X)
+
+    if args.x:
+        if args.x.startswith('-'):
+            usage(parser)
+        bmBreakpointSpec = args.x
+
+    # argparse makes sure we have a number
+    if args.y:
+        bmIterationCount = args.y
+
+    # argparse makes sure we have a number
+    if args.sharp:
+        count = args.sharp
 
     if do_help == True:
-        usage()
+        usage(parser)
 
     # Do not specify both '-a' and '+a' at the same time.
     if dont_do_python_api_test and just_do_python_api_test:
-        usage()
+        usage(parser)
 
     # The simple progress bar is turned on only if verbose == 0 and LLDB_COMMAND_TRACE is not 'YES'
-    if ("LLDB_COMMAND_TRACE" not in os.environ or os.environ["LLDB_COMMAND_TRACE"]!="YES") and verbose==0:
+    if ("LLDB_COMMAND_TRACE" not in os.environ or os.environ["LLDB_COMMAND_TRACE"] != "YES") and verbose == 0:
         progress_bar = True
 
     # Gather all the dirs passed on the command line.
-    if len(sys.argv) > index:
-        testdirs = map(os.path.abspath, sys.argv[index:])
+    if len(args.args) > 0:
+        testdirs = map(os.path.abspath, args.args)
 
     # If '-r dir' is specified, the tests should be run under the relocated
     # directory.  Let's copy the testdirs over.
@@ -636,8 +568,8 @@ def parseOptionsAndInitTestdirs():
             # For example, /Volumes/data/lldb/svn/ToT/test/functionalities/watchpoint/hello_watchpoint
             # shall be split into ['/Volumes/data/lldb/svn/ToT/', 'functionalities/watchpoint/hello_watchpoint'].
             # Utilize the relative path to the 'test' directory to make our destination dir path.
-            if ("test"+os.sep) in srcdir:
-                to_split_on = "test"+os.sep
+            if ("test" + os.sep) in srcdir:
+                to_split_on = "test" + os.sep
             else:
                 to_split_on = "test"
             dstdir = os.path.join(rdir, srcdir.split(to_split_on)[1])
