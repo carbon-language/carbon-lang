@@ -14,7 +14,6 @@
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/Options.h"
-#include "clang/Driver/Util.h"
 #include "clang/Basic/Version.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Path.h"
@@ -305,56 +304,6 @@ static bool getVisualStudioDir(std::string &path) {
 
 #endif // _MSC_VER
 
-std::vector<std::string> clang::driver::GetWindowsSystemIncludeDirs() {
-  std::vector<std::string> Paths;
-
-#ifdef _MSC_VER
-  // Honor %INCLUDE%. It should know essential search paths with vcvarsall.bat.
-  if (const char *cl_include_dir = getenv("INCLUDE")) {
-    SmallVector<StringRef, 8> Dirs;
-    StringRef(cl_include_dir).split(Dirs, ";");
-    int n = 0;
-    for (SmallVectorImpl<StringRef>::iterator I = Dirs.begin(), E = Dirs.end();
-         I != E; ++I) {
-      StringRef d = *I;
-      if (d.size() == 0)
-        continue;
-      ++n;
-      Paths.push_back(d);
-    }
-    if (n) return Paths;
-  }
-
-  std::string VSDir;
-  std::string WindowsSDKDir;
-
-  // When built with access to the proper Windows APIs, try to actually find
-  // the correct include paths first.
-  if (getVisualStudioDir(VSDir)) {
-    Paths.push_back(VSDir + "\\VC\\include");
-    if (getWindowsSDKDir(WindowsSDKDir))
-      Paths.push_back(WindowsSDKDir + "\\include");
-    else
-      Paths.push_back(VSDir + "\\VC\\PlatformSDK\\Include");
-    return Paths;
-  }
-#endif // _MSC_VER
-
-  // As a fallback, select default install paths.
-  const StringRef FallbackPaths[] = {
-    "C:/Program Files/Microsoft Visual Studio 10.0/VC/include",
-    "C:/Program Files/Microsoft Visual Studio 9.0/VC/include",
-    "C:/Program Files/Microsoft Visual Studio 9.0/VC/PlatformSDK/Include",
-    "C:/Program Files/Microsoft Visual Studio 8/VC/include",
-    "C:/Program Files/Microsoft Visual Studio 8/VC/PlatformSDK/Include"
-  };
-
-  for (unsigned i = 0; i < sizeof(FallbackPaths) / sizeof(FallbackPaths[0]); ++i)
-    Paths.push_back(FallbackPaths[i]);
-
-  return Paths;
-}
-
 void Windows::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
                                         ArgStringList &CC1Args) const {
   if (DriverArgs.hasArg(options::OPT_nostdinc))
@@ -369,9 +318,48 @@ void Windows::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
   if (DriverArgs.hasArg(options::OPT_nostdlibinc))
     return;
 
-  std::vector<std::string> Paths = driver::GetWindowsSystemIncludeDirs();
-  for (size_t i = 0; i < Paths.size(); ++i)
-    addSystemInclude(DriverArgs, CC1Args, Paths[i]);
+#ifdef _MSC_VER
+  // Honor %INCLUDE%. It should know essential search paths with vcvarsall.bat.
+  if (const char *cl_include_dir = getenv("INCLUDE")) {
+    SmallVector<StringRef, 8> Dirs;
+    StringRef(cl_include_dir).split(Dirs, ";");
+    int n = 0;
+    for (SmallVectorImpl<StringRef>::iterator I = Dirs.begin(), E = Dirs.end();
+         I != E; ++I) {
+      StringRef d = *I;
+      if (d.size() == 0)
+        continue;
+      ++n;
+      addSystemInclude(DriverArgs, CC1Args, d);
+    }
+    if (n) return;
+  }
+
+  std::string VSDir;
+  std::string WindowsSDKDir;
+
+  // When built with access to the proper Windows APIs, try to actually find
+  // the correct include paths first.
+  if (getVisualStudioDir(VSDir)) {
+    addSystemInclude(DriverArgs, CC1Args, VSDir + "\\VC\\include");
+    if (getWindowsSDKDir(WindowsSDKDir))
+      addSystemInclude(DriverArgs, CC1Args, WindowsSDKDir + "\\include");
+    else
+      addSystemInclude(DriverArgs, CC1Args,
+                       VSDir + "\\VC\\PlatformSDK\\Include");
+    return;
+  }
+#endif // _MSC_VER
+
+  // As a fallback, select default install paths.
+  const StringRef Paths[] = {
+    "C:/Program Files/Microsoft Visual Studio 10.0/VC/include",
+    "C:/Program Files/Microsoft Visual Studio 9.0/VC/include",
+    "C:/Program Files/Microsoft Visual Studio 9.0/VC/PlatformSDK/Include",
+    "C:/Program Files/Microsoft Visual Studio 8/VC/include",
+    "C:/Program Files/Microsoft Visual Studio 8/VC/PlatformSDK/Include"
+  };
+  addSystemIncludes(DriverArgs, CC1Args, Paths);
 }
 
 void Windows::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
