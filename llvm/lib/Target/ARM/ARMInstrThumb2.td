@@ -523,6 +523,23 @@ class T2MulLong<bits<3> opc22_20, bits<4> opc7_4,
   let Inst{7-4}   = opc7_4;
   let Inst{3-0}   = Rm;
 }
+class T2MlaLong<bits<3> opc22_20, bits<4> opc7_4,
+                dag oops, dag iops, InstrItinClass itin,
+                string opc, string asm, list<dag> pattern>
+  : T2I<oops, iops, itin, opc, asm, pattern> {
+  bits<4> RdLo;
+  bits<4> RdHi;
+  bits<4> Rn;
+  bits<4> Rm;
+
+  let Inst{31-23} = 0b111110111;
+  let Inst{22-20} = opc22_20;
+  let Inst{19-16} = Rn;
+  let Inst{15-12} = RdLo;
+  let Inst{11-8}  = RdHi;
+  let Inst{7-4}   = opc7_4;
+  let Inst{3-0}   = Rm;
+}
 
 
 /// T2I_bin_irs - Defines a set of (op reg, {so_imm|r|so_reg}) patterns for a
@@ -2438,15 +2455,17 @@ def t2UMULL : T2MulLong<0b010, 0b0000,
 } // isCommutable
 
 // Multiply + accumulate
-def t2SMLAL : T2MulLong<0b100, 0b0000,
+def t2SMLAL : T2MlaLong<0b100, 0b0000,
                   (outs rGPR:$RdLo, rGPR:$RdHi),
-                  (ins rGPR:$Rn, rGPR:$Rm), IIC_iMAC64,
-                  "smlal", "\t$RdLo, $RdHi, $Rn, $Rm", []>;
+                  (ins rGPR:$Rn, rGPR:$Rm, rGPR:$RLo, rGPR:$RHi), IIC_iMAC64,
+                  "smlal", "\t$RdLo, $RdHi, $Rn, $Rm", []>,
+                  RegConstraint<"$RLo = $RdLo, $RHi = $RdHi">;
 
-def t2UMLAL : T2MulLong<0b110, 0b0000,
+def t2UMLAL : T2MlaLong<0b110, 0b0000,
                   (outs rGPR:$RdLo, rGPR:$RdHi),
-                  (ins rGPR:$Rn, rGPR:$Rm), IIC_iMAC64,
-                  "umlal", "\t$RdLo, $RdHi, $Rn, $Rm", []>;
+                  (ins rGPR:$Rn, rGPR:$Rm, rGPR:$RLo, rGPR:$RHi), IIC_iMAC64,
+                  "umlal", "\t$RdLo, $RdHi, $Rn, $Rm", []>,
+                  RegConstraint<"$RLo = $RdLo, $RHi = $RdHi">;
 
 def t2UMAAL : T2MulLong<0b110, 0b0110,
                   (outs rGPR:$RdLo, rGPR:$RdHi),

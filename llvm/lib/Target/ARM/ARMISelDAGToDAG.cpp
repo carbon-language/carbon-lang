@@ -2637,6 +2637,38 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
                                     dl, MVT::i32, MVT::i32, Ops, 5);
     }
   }
+  case ARMISD::UMLAL:{
+    if (Subtarget->isThumb()) {
+      SDValue Ops[] = { N->getOperand(0), N->getOperand(1), N->getOperand(2),
+                        N->getOperand(3), getAL(CurDAG),
+                        CurDAG->getRegister(0, MVT::i32)};
+      return CurDAG->getMachineNode(ARM::t2UMLAL, dl, MVT::i32, MVT::i32, Ops, 6);
+    }else{
+      SDValue Ops[] = { N->getOperand(0), N->getOperand(1), N->getOperand(2),
+                        N->getOperand(3), getAL(CurDAG),
+                        CurDAG->getRegister(0, MVT::i32),
+                        CurDAG->getRegister(0, MVT::i32) };
+      return CurDAG->getMachineNode(Subtarget->hasV6Ops() ?
+                                      ARM::UMLAL : ARM::UMLALv5,
+                                      dl, MVT::i32, MVT::i32, Ops, 7);
+    }
+  }
+  case ARMISD::SMLAL:{
+    if (Subtarget->isThumb()) {
+      SDValue Ops[] = { N->getOperand(0), N->getOperand(1), N->getOperand(2),
+                        N->getOperand(3), getAL(CurDAG),
+                        CurDAG->getRegister(0, MVT::i32)};
+      return CurDAG->getMachineNode(ARM::t2SMLAL, dl, MVT::i32, MVT::i32, Ops, 6);
+    }else{
+      SDValue Ops[] = { N->getOperand(0), N->getOperand(1), N->getOperand(2),
+                        N->getOperand(3), getAL(CurDAG),
+                        CurDAG->getRegister(0, MVT::i32),
+                        CurDAG->getRegister(0, MVT::i32) };
+      return CurDAG->getMachineNode(Subtarget->hasV6Ops() ?
+                                      ARM::SMLAL : ARM::SMLALv5,
+                                      dl, MVT::i32, MVT::i32, Ops, 7);
+    }
+  }
   case ISD::LOAD: {
     SDNode *ResNode = 0;
     if (Subtarget->isThumb() && Subtarget->hasThumb2())
