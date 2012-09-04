@@ -66,8 +66,10 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <dlfcn.h>
 #include <mach/mach.h>
 #include <malloc/malloc.h>
+#include <objc/objc-runtime.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
@@ -126,6 +128,8 @@ __mach_stack_logging_frames_for_uniqued_stack (
     uint32_t *count
 );
 
+extern "C" void *gdb_class_getClass (void *objc_class);
+
 //----------------------------------------------------------------------
 // Redefine private gloval variables prototypes from 
 // "/usr/local/include/stack_logging.h"
@@ -154,7 +158,8 @@ struct range_callback_info_t
 enum data_type_t
 {
     eDataTypeAddress,
-    eDataTypeContainsData
+    eDataTypeContainsData,
+    eDataTypeObjC
 };
 
 struct aligned_data_t
@@ -162,6 +167,12 @@ struct aligned_data_t
     const uint8_t *buffer;
     uint32_t size;
     uint32_t align;
+};
+
+struct objc_data_t
+{
+    Class match_isa; // Set to NULL for all objective C objects
+    bool match_superclasses;
 };
 
 struct range_contains_data_callback_info_t
@@ -172,6 +183,7 @@ struct range_contains_data_callback_info_t
     {
         uintptr_t addr;
         aligned_data_t data;
+        objc_data_t objc;
     };
     uint32_t match_count;
     bool done;
@@ -196,7 +208,6 @@ struct malloc_stack_entry
 // Local global variables
 //----------------------------------------------------------------------
 std::vector<malloc_match> g_matches;
-const void *g_lookup_addr = 0;
 std::vector<malloc_stack_entry> g_malloc_stack_history;
 mach_vm_address_t g_stack_frames[MAX_FRAMES];
 char g_error_string[PATH_MAX];
@@ -280,6 +291,7 @@ range_info_callback (task_t task, void *baton, unsigned type, uint64_t ptr_addr,
     switch (info->type)
     {
     case eDataTypeAddress:
+        // Check if the current malloc block contains an address specified by "info->addr"
         if (ptr_addr <= info->addr && info->addr < end_addr)
         {
             ++info->match_count;
@@ -289,6 +301,7 @@ range_info_callback (task_t task, void *baton, unsigned type, uint64_t ptr_addr,
         break;
     
     case eDataTypeContainsData:
+        // Check if the current malloc block contains data specified in "info->data"
         {
             const uint32_t size = info->data.size;
             if (size < ptr_size) // Make sure this block can contain this data
@@ -315,6 +328,82 @@ range_info_callback (task_t task, void *baton, unsigned type, uint64_t ptr_addr,
                 {
                     printf ("0x%llx: error: couldn't read %llu bytes\n", ptr_addr, ptr_size);
                 }   
+            }
+        }
+        break;
+    
+    case eDataTypeObjC:
+        // Check if the current malloc block contains an objective C object
+        // of any sort where the first pointer in the object is an OBJC class
+        // pointer (an isa)
+        {
+            struct objc_class *objc_object_ptr = NULL;
+            if (task_peek (task, ptr_addr, sizeof(void *), (void **)&objc_object_ptr) == KERN_SUCCESS)
+            {
+                const uint64_t isa_bits = (uintptr_t)objc_object_ptr->isa;
+                //printf ("objc: addr = 0x%16.16llx, size = %6llu, isa = 0x%16.16llx", ptr_addr, ptr_size, isa_bits);
+                Dl_info dl_info;
+                
+                if (isa_bits == 0 || isa_bits % sizeof(void*))
+                {
+                    //printf (" error: invalid pointer\n");
+                    return;                    
+                }
+                if (dladdr(objc_object_ptr->isa, &dl_info) == 0)
+                {
+                    //printf (" error: symbol lookup failed\n");
+                    return;                    
+                }
+                if (dl_info.dli_sname == NULL)
+                {
+                    //printf (" error: no symbol name\n");
+                    return;
+                }
+
+                if ((dl_info.dli_sname[0] == 'O' && strncmp("OBJC_CLASS_$_"    , dl_info.dli_sname, 13) == 0) ||
+                    (dl_info.dli_sname[0] == '.' && strncmp(".objc_class_name_", dl_info.dli_sname, 17) == 0))
+                {
+                    bool match = false;
+                    if (info->objc.match_isa == 0)
+                    {
+                        // Match any objective C object
+                        match = true;
+                    }
+                    else 
+                    {
+                        // Only match exact isa values in the current class or
+                        // optionally in the super classes
+                        if (info->objc.match_isa == objc_object_ptr->isa)
+                            match = true;
+                        else if (info->objc.match_superclasses)
+                        {
+                            Class super = class_getSuperclass(objc_object_ptr->isa);
+                            while (super)
+                            {
+                                match = super == info->objc.match_isa;
+                                if (match)
+                                    break;
+                                super = class_getSuperclass(super);
+                            }
+                        }
+                    }
+                    if (match)
+                    {
+                        //printf (" success\n");
+                        ++info->match_count;
+                        malloc_match match = { (void *)ptr_addr, ptr_size, 0 };
+                        g_matches.push_back(match);                        
+                    }
+                    else
+                    {
+                        //printf (" error: wrong class: %s\n", dl_info.dli_sname);                        
+                    }
+                }
+                else
+                {
+                    //printf ("\terror: symbol not objc class: %s\n", dl_info.dli_sname);
+                    return;
+                }
             }
         }
         break;
@@ -399,7 +488,6 @@ find_pointer_in_heap (const void * addr)
     {
         range_contains_data_callback_info_t data_info;
         data_info.type = eDataTypeContainsData;      // Check each block for data
-        g_lookup_addr = addr;
         data_info.data.buffer = (uint8_t *)&addr;    // What data? The pointer value passed in
         data_info.data.size = sizeof(addr);          // How many bytes? The byte size of a pointer
         data_info.data.align = sizeof(addr);         // Align to a pointer byte size
@@ -429,13 +517,40 @@ find_pointer_in_memory (uint64_t memory_addr, uint64_t memory_size, const void *
     // that is the a pointer 
     range_contains_data_callback_info_t data_info;
     data_info.type = eDataTypeContainsData;      // Check each block for data
-    g_lookup_addr = addr;
     data_info.data.buffer = (uint8_t *)&addr;    // What data? The pointer value passed in
     data_info.data.size = sizeof(addr);          // How many bytes? The byte size of a pointer
     data_info.data.align = sizeof(addr);         // Align to a pointer byte size
     data_info.match_count = 0;                   // Initialize the match count to zero
     data_info.done = false;                      // Set done to false so searching doesn't stop
     range_info_callback (mach_task_self(), &data_info, stack_logging_type_generic, memory_addr, memory_size);
+    if (g_matches.empty())
+        return NULL;
+    malloc_match match = { NULL, 0, 0 };
+    g_matches.push_back(match);
+    return g_matches.data();
+}
+
+//----------------------------------------------------------------------
+// find_objc_objects_in_memory
+//
+// Find all instances of ObjC classes 'c', or all ObjC classes if 'c' is
+// NULL. If 'c' is non NULL, then also check objects to see if they 
+// inherit from 'c'
+//----------------------------------------------------------------------
+malloc_match *
+find_objc_objects_in_memory (void *isa)
+{
+    g_matches.clear();
+    // Setup "info" to look for a malloc block that contains data
+    // that is the a pointer 
+    range_contains_data_callback_info_t data_info;
+    data_info.type = eDataTypeObjC;      // Check each block for data
+    data_info.objc.match_isa = (Class)isa;
+    data_info.objc.match_superclasses = true;
+    data_info.match_count = 0;                   // Initialize the match count to zero
+    data_info.done = false;                      // Set done to false so searching doesn't stop
+    range_callback_info_t info = { enumerate_range_in_zone, range_info_callback, &data_info };
+    foreach_zone_in_this_process (&info);
     if (g_matches.empty())
         return NULL;
     malloc_match match = { NULL, 0, 0 };
@@ -461,7 +576,6 @@ find_cstring_in_heap (const char *s)
     // that is the C string passed in aligned on a 1 byte boundary
     range_contains_data_callback_info_t data_info;
     data_info.type = eDataTypeContainsData;  // Check each block for data
-    g_lookup_addr = s;               // If an expression was used, then fill in the resolved address we are looking up
     data_info.data.buffer = (uint8_t *)s;    // What data? The C string passed in
     data_info.data.size = strlen(s);         // How many bytes? The length of the C string
     data_info.data.align = 1;                // Data doesn't need to be aligned, so set the alignment to 1
@@ -488,7 +602,6 @@ find_block_for_address (const void *addr)
     // Setup "info" to look for a malloc block that contains data
     // that is the C string passed in aligned on a 1 byte boundary
     range_contains_data_callback_info_t data_info;
-    g_lookup_addr = addr;               // If an expression was used, then fill in the resolved address we are looking up
     data_info.type = eDataTypeAddress;  // Check each block to see if the block contains the address passed in
     data_info.addr = (uintptr_t)addr;   // What data? The C string passed in
     data_info.match_count = 0;          // Initialize the match count to zero

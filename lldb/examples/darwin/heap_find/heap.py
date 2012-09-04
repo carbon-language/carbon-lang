@@ -249,14 +249,17 @@ def display_match_results (result, options, arg_str_description, expr_sbvalue, p
                                         description += ', ivar = %s' % (member_path)
                 if print_entry:
                     match_idx += 1
+                    result_output = ''
                     if description:
-                        result.AppendMessage(description)
+                        result_output += description
                         if options.print_type and derefed_dynamic_value:
-                            result.AppendMessage('%s' % (derefed_dynamic_value))
+                            result_output += '%s' % (derefed_dynamic_value)
                         if options.print_object_description and dynamic_value:
                             desc = dynamic_value.GetObjectDescription()
                             if desc:
-                                result.AppendMessage(', po=%s' % (desc))
+                                result_output += ', po=%s' % (desc)
+                    if result_output:
+                        result.AppendMessage(result_output)
                     if options.memory:
                         cmd_result = lldb.SBCommandReturnObject()
                         memory_command = "memory read -f %s 0x%x 0x%x" % (options.format, malloc_addr, malloc_addr + malloc_size)
@@ -270,7 +273,7 @@ def display_match_results (result, options, arg_str_description, expr_sbvalue, p
         elif print_no_matches:
             result.AppendMessage('no matches found for %s' % (arg_str_description))
     else:
-        result.AppendMessage(expr_sbvalue.error )
+        result.AppendMessage(str(expr_sbvalue.error))
     return 0
     
 def heap_search(result, options, arg_str):
@@ -286,7 +289,8 @@ def heap_search(result, options, arg_str):
         if options.format == None: 
             options.format = "A" # 'A' is "address" format
     elif options.type == 'isa':
-        expr = 'find_pointer_in_heap((void *)%s)' % (arg_str)
+        expr = 'find_objc_objects_in_memory ((void *)%s)' % (arg_str)
+        #result.AppendMessage ('expr -u0 -- %s' % expr) # REMOVE THIS LINE
         arg_str_description = 'objective C classes with isa %s' % arg_str
         options.offset = 0
         if options.format == None: 
@@ -473,7 +477,9 @@ def objc_refs(debugger, command, result, dict):
                 else:
                     result.AppendMessage('error: expression error for "%s": %s' % (addr_expr_str, expr_sbvalue.error))
         else:
-            result.AppendMessage('error: no address expressions were specified')
+            # Find all objective C objects by not specifying an isa
+            options.type = 'isa'
+            heap_search (result, options, '0x0')
 
 if __name__ == '__main__':
     lldb.debugger = lldb.SBDebugger.Create()

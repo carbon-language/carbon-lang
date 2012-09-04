@@ -18,7 +18,7 @@ DSYM ?= $(EXE).dSYM
 # dsym file.
 #----------------------------------------------------------------------
 $(EXE) : heap_find.cpp
-	$(CXX) $(CFLAGS) -install_name "@executable_path/libheap.dylib" -dynamiclib heap_find.cpp -o "$(EXE)"
+	$(CXX) $(CFLAGS) -install_name "@executable_path/libheap.dylib" -dynamiclib -lobjc heap_find.cpp -o "$(EXE)"
 
 #----------------------------------------------------------------------
 # Include all of the makefiles for each source file so we don't have
