@@ -2688,7 +2688,7 @@ namespace llvm {
   
   template<typename T>
   inline T **unwrap(LLVMValueRef *Vals, unsigned Length) {
-    #if DEBUG
+    #ifdef DEBUG
     for (LLVMValueRef *I = Vals, *E = Vals + Length; I != E; ++I)
       cast<T>(*I);
     #endif

@@ -40,7 +40,7 @@
 #include <string>
 #include <vector>
 
-#if HAVE_SYS_STAT_H
+#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
 
@@ -596,7 +596,7 @@ private:
   mapmode Mode;
   uint64_t Size;
   void *Mapping;
-#if LLVM_ON_WIN32
+#ifdef LLVM_ON_WIN32
   int FileDescriptor;
   void *FileHandle;
   void *FileMappingHandle;

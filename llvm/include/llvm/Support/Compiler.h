@@ -24,7 +24,7 @@
 /// does not imply the existence of any other C++ library features.
 #if (__has_feature(cxx_rvalue_references)   \
      || defined(__GXX_EXPERIMENTAL_CXX0X__) \
-     || _MSC_VER >= 1600)
+     || (defined(_MSC_VER) && _MSC_VER >= 1600))
 #define LLVM_USE_RVALUE_REFERENCES 1
 #else
 #define LLVM_USE_RVALUE_REFERENCES 0
