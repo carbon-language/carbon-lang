@@ -197,10 +197,6 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent, CXTranslationUnit TU,
     K = CXCursor_SEHTryStmt;
     break;
   
-  case Stmt::SEHLeaveStmtClass:
-    K = CXCursor_SEHLeaveStmt;
-    break;
-  
   case Stmt::SEHExceptStmtClass:
     K = CXCursor_SEHExceptStmt;
     break;

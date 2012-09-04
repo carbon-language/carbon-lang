@@ -3559,8 +3559,6 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
       return createCXString("CXXForRangeStmt");
   case CXCursor_SEHTryStmt:
       return createCXString("SEHTryStmt");
-  case CXCursor_SEHLeaveStmt:
-      return createCXString("SEHLeaveStmt");
   case CXCursor_SEHExceptStmt:
       return createCXString("SEHExceptStmt");
   case CXCursor_SEHFinallyStmt:
