@@ -1318,7 +1318,7 @@ bool MachineInstr::isSafeToMove(const TargetInstrInfo *TII,
   // Ignore stuff that we obviously can't move.
   //
   // Treat volatile loads as stores. This is not strictly necessary for
-  // volatiles, but it is required for atomic loads. It is now allowed to move
+  // volatiles, but it is required for atomic loads. It is not allowed to move
   // a load across an atomic load with Ordering > Monotonic.
   if (mayStore() || isCall() ||
       (mayLoad() && hasOrderedMemoryRef())) {
