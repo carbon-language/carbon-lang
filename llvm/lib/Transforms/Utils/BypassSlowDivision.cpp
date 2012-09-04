@@ -245,7 +245,6 @@ bool bypassSlowDivision(Function &F,
     IntegerType *BypassType = cast<IntegerType>(BT->second);
     MadeChange |= reuseOrInsertFastDiv(F, I, J, BypassType, UseDivOp,
                                        UseSignedOp, DivCache);
-    MadeChange = true;
   }
 
   return MadeChange;
