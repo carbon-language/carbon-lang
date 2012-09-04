@@ -88,6 +88,9 @@ static const char *ExtractInt(const char *str, const char *delims,
 // passed to STDIN, external symbolizer prints to STDOUT response:
 //   <function_name>
 //   <file_name>:<line_number>:<column_number>
+//   <function_name>
+//   <file_name>:<line_number>:<column_number>
+//   ...
 //   <empty line>
 class ExternalSymbolizer {
  public:
@@ -100,38 +103,68 @@ class ExternalSymbolizer {
     CHECK_NE(input_fd_, kInvalidFd);
     CHECK_NE(output_fd_, kInvalidFd);
   }
-  bool getFileLineInfo(const char *module, uptr module_offset,
-                       AddressInfo *info) {
-    CHECK(module);
+
+  // Returns the number of frames for a given address, or zero if
+  // symbolization failed.
+  uptr SymbolizeCode(uptr addr, const char *module_name, uptr module_offset,
+                     AddressInfo *frames, uptr max_frames) {
+    CHECK(module_name);
     // FIXME: Make sure this buffer always has sufficient size to hold
     // large debug info.
-    static const int kMaxBufferSize = 1024;
+    static const int kMaxBufferSize = 4096;
     InternalScopedBuffer<char> buffer(kMaxBufferSize);
-    internal_snprintf(buffer, kMaxBufferSize, "%s %zu\n",
-                      module, module_offset);
-    // FIXME: If read/write fails, we should try to respawn symbolizer
-    // subprocess.
+    internal_snprintf(buffer, kMaxBufferSize, "%s 0x%zx\n",
+                      module_name, module_offset);
     if (!writeToSymbolizer(buffer, internal_strlen(buffer)))
-      return false;
+      return 0;
+
     if (!readFromSymbolizer(buffer, kMaxBufferSize))
-      return false;
+      return 0;
     const char *str = buffer.data();
-    str = ExtractToken(str, "\n", &info->function);
-    str = ExtractToken(str, ":\n", &info->file);
-    str = ExtractInt(str, ":\n", &info->line);
-    str = ExtractInt(str, ":\n", &info->column);
-    // Functions and filenames can be "??", in which case we write 0 to address
-    // info to mark that names are unknown.
-    if (0 == internal_strcmp(info->function, "??")) {
-      InternalFree(info->function);
-      info->function = 0;
+    int frame_id;
+    CHECK_GT(max_frames, 0);
+    for (frame_id = 0; frame_id < max_frames; frame_id++) {
+      AddressInfo *info = &frames[frame_id];
+      char *function_name = 0;
+      str = ExtractToken(str, "\n", &function_name);
+      CHECK(function_name);
+      if (function_name[0] == '\0') {
+        // There are no more frames.
+        break;
+      }
+      info->Clear();
+      info->FillAddressAndModuleInfo(addr, module_name, module_offset);
+      info->function = function_name;
+      // Parse <file>:<line>:<column> buffer.
+      char *file_line_info = 0;
+      str = ExtractToken(str, "\n", &file_line_info);
+      CHECK(file_line_info);
+      const char *line_info = ExtractToken(file_line_info, ":", &info->file);
+      line_info = ExtractInt(line_info, ":", &info->line);
+      line_info = ExtractInt(line_info, "", &info->column);
+      InternalFree(file_line_info);
+
+      // Functions and filenames can be "??", in which case we write 0
+      // to address info to mark that names are unknown.
+      if (0 == internal_strcmp(info->function, "??")) {
+        InternalFree(info->function);
+        info->function = 0;
+      }
+      if (0 == internal_strcmp(info->file, "??")) {
+        InternalFree(info->file);
+        info->file = 0;
+      }
     }
-    if (0 == internal_strcmp(info->file, "??")) {
-      InternalFree(info->file);
-      info->file = 0;
+    if (frame_id == 0) {
+      // Make sure we return at least one frame.
+      AddressInfo *info = &frames[0];
+      info->Clear();
+      info->FillAddressAndModuleInfo(addr, module_name, module_offset);
+      frame_id = 1;
     }
-    return true;
+    return frame_id;
   }
+
   bool Restart() {
     if (times_restarted_ >= kMaxTimesRestarted) return false;
     times_restarted_++;
@@ -189,33 +222,44 @@ class Symbolizer {
   uptr SymbolizeCode(uptr addr, AddressInfo *frames, uptr max_frames) {
     if (max_frames == 0)
       return 0;
-    AddressInfo *info = &frames[0];
-    info->Clear();
-    info->address = addr;
     LoadedModule *module = FindModuleForAddress(addr);
-    if (module) {
-      info->module = internal_strdup(module->full_name());
-      info->module_offset = info->address - module->base_address();
-      if (external_symbolizer_ == 0) {
-        ReportExternalSymbolizerError(
-            "WARNING: Trying to symbolize code, but external "
-            "symbolizer is not initialized!\n");
-      } else {
-        while (!external_symbolizer_->getFileLineInfo(
-            info->module, info->module_offset, info)) {
-          // Try to restart symbolizer subprocess. If we don't succeed, forget
-          // about it and don't try to use it later.
-          if (!external_symbolizer_->Restart()) {
-            ReportExternalSymbolizerError(
-                "WARNING: Failed to use and restart external symbolizer!\n");
-            external_symbolizer_ = 0;
-            break;
-          }
+    if (module == 0)
+      return 0;
+    const char *module_name = module->full_name();
+    uptr module_offset = addr - module->base_address();
+    uptr actual_frames = 0;
+    if (external_symbolizer_ == 0) {
+      ReportExternalSymbolizerError(
+          "WARNING: Trying to symbolize code, but external "
+          "symbolizer is not initialized!\n");
+    } else {
+      while (true) {
+        actual_frames = external_symbolizer_->SymbolizeCode(
+            addr, module_name, module_offset, frames, max_frames);
+        if (actual_frames > 0) {
+          // Symbolization was successful.
+          break;
+        }
+        // Try to restart symbolizer subprocess. If we don't succeed, forget
+        // about it and don't try to use it later.
+        if (!external_symbolizer_->Restart()) {
+          ReportExternalSymbolizerError(
+              "WARNING: Failed to use and restart external symbolizer!\n");
+          external_symbolizer_ = 0;
+          break;
         }
       }
+    }
+    if (external_symbolizer_ == 0) {
+      // External symbolizer was not initialized or failed. Fill only data
+      // about module name and offset.
+      AddressInfo *info = &frames[0];
+      info->Clear();
+      info->FillAddressAndModuleInfo(addr, module_name, module_offset);
       return 1;
     }
-    return 0;
+    // Otherwise, the data was filled by external symbolizer.
+    return actual_frames;
   }
   bool InitializeExternalSymbolizer(const char *path_to_symbolizer) {
     int input_fd, output_fd;

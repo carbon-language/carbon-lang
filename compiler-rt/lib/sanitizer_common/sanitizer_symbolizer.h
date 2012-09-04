@@ -44,6 +44,13 @@ struct AddressInfo {
   }
   // Deletes all strings and sets all fields to zero.
   void Clear();
+
+  void FillAddressAndModuleInfo(uptr addr, const char *mod_name,
+                                uptr mod_offset) {
+    address = addr;
+    module = internal_strdup(mod_name);
+    module_offset = mod_offset;
+  }
 };
 
 // Fills at most "max_frames" elements of "frames" with descriptions
