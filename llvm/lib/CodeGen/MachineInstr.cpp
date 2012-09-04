@@ -155,9 +155,9 @@ void MachineOperand::ChangeToRegister(unsigned Reg, bool isDef, bool isImp,
   IsDebug = isDebug;
   // Ensure isOnRegUseList() returns false.
   Contents.Reg.Prev = 0;
-  // Preserve the tie bit when the operand was already a register.
+  // Preserve the tie when the operand was already a register.
   if (!WasReg)
-    IsTied = false;
+    TiedTo = 0;
 
   // If this operand is embedded in a function, add the operand to the
   // register's use/def list.
@@ -310,6 +310,8 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
       if (isTied()) {
         if (NeedComma) OS << ',';
         OS << "tied";
+        if (TiedTo != 15)
+          OS << unsigned(TiedTo - 1);
         NeedComma = true;
       }
       OS << '>';
@@ -681,6 +683,7 @@ void MachineInstr::addOperand(const MachineOperand &Op) {
   if (!isImpReg && !isInlineAsm()) {
     while (OpNo && Operands[OpNo-1].isReg() && Operands[OpNo-1].isImplicit()) {
       --OpNo;
+      assert(!Operands[OpNo].isTied() && "Cannot move tied operands");
       if (RegInfo)
         RegInfo->removeRegOperandFromUseList(&Operands[OpNo]);
     }
@@ -716,8 +719,8 @@ void MachineInstr::addOperand(const MachineOperand &Op) {
   if (Operands[OpNo].isReg()) {
     // Ensure isOnRegUseList() returns false, regardless of Op's status.
     Operands[OpNo].Contents.Reg.Prev = 0;
-    // Ignore existing IsTied bit. This is not a property that can be copied.
-    Operands[OpNo].IsTied = false;
+    // Ignore existing ties. This is not a property that can be copied.
+    Operands[OpNo].TiedTo = 0;
     // Add the new operand to RegInfo.
     if (RegInfo)
       RegInfo->addRegOperandToUseList(&Operands[OpNo]);
@@ -725,7 +728,7 @@ void MachineInstr::addOperand(const MachineOperand &Op) {
     // explicit operands. The implicit operands are added first, then the
     // explicits are inserted before them.
     if (!isImpReg) {
-      // Set the IsTied bit if MC indicates this use is tied to a def.
+      // Tie uses to defs as indicated in MCInstrDesc.
       if (Operands[OpNo].isUse()) {
         int DefIdx = MCID->getOperandConstraint(OpNo, MCOI::TIED_TO);
         if (DefIdx != -1)
@@ -773,6 +776,13 @@ void MachineInstr::RemoveOperand(unsigned OpNo) {
         RegInfo->removeRegOperandFromUseList(&Operands[i]);
     }
   }
+
+#ifndef NDEBUG
+  // Moving tied operands would break the ties.
+  for (unsigned i = OpNo + 1, e = Operands.size(); i != e; ++i)
+    if (Operands[i].isReg())
+      assert(!Operands[i].isTied() && "Cannot move tied operands");
+#endif
 
   Operands.erase(Operands.begin()+OpNo);
 
@@ -1136,9 +1146,22 @@ int MachineInstr::findFirstPredOperandIdx() const {
   return -1;
 }
 
-/// Mark operands at DefIdx and UseIdx as tied to each other.
+// MachineOperand::TiedTo is 4 bits wide.
+const unsigned TiedMax = 15;
+
+/// tieOperands - Mark operands at DefIdx and UseIdx as tied to each other.
+///
+/// Use and def operands can be tied together, indicated by a non-zero TiedTo
+/// field. TiedTo can have these values:
+///
+/// 0:              Operand is not tied to anything.
+/// 1 to TiedMax-1: Tied to getOperand(TiedTo-1).
+/// TiedMax:        Tied to an operand >= TiedMax-1.
+///
+/// The tied def must be one of the first TiedMax operands on a normal
+/// instruction. INLINEASM instructions allow more tied defs.
+///
 void MachineInstr::tieOperands(unsigned DefIdx, unsigned UseIdx) {
-  assert(DefIdx < UseIdx && "Tied defs must precede the use");
   MachineOperand &DefMO = getOperand(DefIdx);
   MachineOperand &UseMO = getOperand(UseIdx);
   assert(DefMO.isDef() && "DefIdx must be a def operand");
@@ -1146,38 +1169,76 @@ void MachineInstr::tieOperands(unsigned DefIdx, unsigned UseIdx) {
   assert(!DefMO.isTied() && "Def is already tied to another use");
   assert(!UseMO.isTied() && "Use is already tied to another def");
 
-  DefMO.IsTied = true;
-  UseMO.IsTied = true;
+  if (DefIdx < TiedMax)
+    UseMO.TiedTo = DefIdx + 1;
+  else {
+    // Inline asm can use the group descriptors to find tied operands, but on
+    // normal instruction, the tied def must be within the first TiedMax
+    // operands.
+    assert(isInlineAsm() && "DefIdx out of range");
+    UseMO.TiedTo = TiedMax;
+  }
+
+  // UseIdx can be out of range, we'll search for it in findTiedOperandIdx().
+  DefMO.TiedTo = std::min(UseIdx + 1, TiedMax);
 }
 
 /// Given the index of a tied register operand, find the operand it is tied to.
 /// Defs are tied to uses and vice versa. Returns the index of the tied operand
 /// which must exist.
 unsigned MachineInstr::findTiedOperandIdx(unsigned OpIdx) const {
-  // It doesn't usually happen, but an instruction can have multiple pairs of
-  // tied operands.
-  SmallVector<unsigned, 4> Uses, Defs;
-  unsigned PairNo = ~0u;
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = getOperand(i);
-    if (!MO.isReg() || !MO.isTied())
-      continue;
-    if (MO.isUse()) {
-      if (i == OpIdx)
-        PairNo = Uses.size();
-      Uses.push_back(i);
-    } else {
-      if (i == OpIdx)
-        PairNo = Defs.size();
-      Defs.push_back(i);
-    }
-  }
-  // For each tied use there must be a tied def and vice versa.
-  assert(Uses.size() == Defs.size() && "Tied uses and defs don't match");
-  assert(PairNo < Uses.size() && "OpIdx must be a tied register operand");
+  const MachineOperand &MO = getOperand(OpIdx);
+  assert(MO.isTied() && "Operand isn't tied");
 
-  // Find the matching operand.
-  return (getOperand(OpIdx).isDef() ? Uses : Defs)[PairNo];
+  // Normally TiedTo is in range.
+  if (MO.TiedTo < TiedMax)
+    return MO.TiedTo - 1;
+
+  // Uses on normal instructions can be out of range.
+  if (!isInlineAsm()) {
+    // Normal tied defs must be in the 0..TiedMax-1 range.
+    if (MO.isUse())
+      return TiedMax - 1;
+    // MO is a def. Search for the tied use.
+    for (unsigned i = TiedMax - 1, e = getNumOperands(); i != e; ++i) {
+      const MachineOperand &UseMO = getOperand(i);
+      if (UseMO.isReg() && UseMO.isUse() && UseMO.TiedTo == OpIdx + 1)
+        return i;
+    }
+    llvm_unreachable("Can't find tied use");
+  }
+
+  // Now deal with inline asm by parsing the operand group descriptor flags.
+  // Find the beginning of each operand group.
+  SmallVector<unsigned, 8> GroupIdx;
+  unsigned OpIdxGroup = ~0u;
+  unsigned NumOps;
+  for (unsigned i = InlineAsm::MIOp_FirstOperand, e = getNumOperands(); i < e;
+       i += NumOps) {
+    const MachineOperand &FlagMO = getOperand(i);
+    assert(FlagMO.isImm() && "Invalid tied operand on inline asm");
+    unsigned CurGroup = GroupIdx.size();
+    GroupIdx.push_back(i);
+    NumOps = 1 + InlineAsm::getNumOperandRegisters(FlagMO.getImm());
+    // OpIdx belongs to this operand group.
+    if (OpIdx > i && OpIdx < i + NumOps)
+      OpIdxGroup = CurGroup;
+    unsigned TiedGroup;
+    if (!InlineAsm::isUseOperandTiedToDef(FlagMO.getImm(), TiedGroup))
+      continue;
+    // Operands in this group are tied to operands in TiedGroup which must be
+    // earlier. Find the number of operands between the two groups.
+    unsigned Delta = i - GroupIdx[TiedGroup];
+
+    // OpIdx is a use tied to TiedGroup.
+    if (OpIdxGroup == CurGroup)
+      return OpIdx - Delta;
+
+    // OpIdx is a def tied to this use group.
+    if (OpIdxGroup == TiedGroup)
+      return OpIdx + Delta;
+  }
+  llvm_unreachable("Invalid tied operand on inline asm");
 }
 
 /// isRegTiedToUseOperand - Given the index of a register def operand,
