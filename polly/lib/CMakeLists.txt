@@ -37,6 +37,11 @@ add_polly_loadable_module(LLVMPolly
   ${POLLY_PLUTO_FILES}
   )
 
+if (TARGET intrinsics_gen)
+  # Check if we are building as part of an LLVM build
+  add_dependencies(LLVMPolly intrinsics_gen)
+endif()
+
 add_dependencies(LLVMPolly
   PollyAnalysis
   PollyCodeGen
