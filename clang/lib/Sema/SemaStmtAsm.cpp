@@ -624,7 +624,8 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
             ExprResult Result = ActOnIdExpression(getCurScope(), SS, Loc, Id,
                                                   false, false);
             if (!Result.isInvalid()) {
-              if (isDef) {
+              bool isMemDef = (i == 1) && Desc.mayStore();
+              if (isDef || isMemDef) {
                 Outputs.push_back(II);
                 OutputExprs.push_back(Result.take());
                 OutputConstraints.push_back("=r");
