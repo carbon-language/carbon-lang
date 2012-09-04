@@ -9,6 +9,8 @@
 
 
 // C Includes
+#include <stdio.h>
+
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
