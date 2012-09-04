@@ -189,7 +189,7 @@ static bool reuseOrInsertFastDiv(Function &F,
   // Get instruction operands
   Instruction *Instr = J;
   DivOpInfo Key(UseSignedOp, Instr->getOperand(0), Instr->getOperand(1));
-  DivCacheTy::const_iterator CacheI = PerBBDivCache.find(Key);
+  DivCacheTy::iterator CacheI = PerBBDivCache.find(Key);
 
   if (CacheI == PerBBDivCache.end()) {
     // If previous instance does not exist, insert fast div
@@ -198,7 +198,7 @@ static bool reuseOrInsertFastDiv(Function &F,
   }
 
   // Replace operation value with previously generated phi node
-  DivPhiNodes Value = CacheI->second;
+  DivPhiNodes &Value = CacheI->second;
   if (UseDivOp) {
     // Replace all uses of div instruction with quotient phi node
     J->replaceAllUsesWith(Value.Quotient);
