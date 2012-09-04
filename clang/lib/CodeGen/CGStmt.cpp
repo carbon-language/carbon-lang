@@ -1619,10 +1619,6 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   llvm::CallInst *Result = Builder.CreateCall(IA, Args);
   Result->addAttribute(~0, llvm::Attribute::NoUnwind);
 
-  // Add the inline asm non-standard dialect attribute on MS-style inline asms.
-  if (isa<MSAsmStmt>(&S))
-    Result->addAttribute(~0, llvm::Attribute::IANSDialect);
-
   // Slap the source location of the inline asm into a !srcloc metadata on the
   // call.  FIXME: Handle metadata for MS-style inline asms.
   if (const GCCAsmStmt *gccAsmStmt = dyn_cast<GCCAsmStmt>(&S))
