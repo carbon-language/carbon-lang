@@ -84,7 +84,6 @@ class ObjCDataFormatterTestCase(TestBase):
         self.rdar11106605_commands()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    @expectedFailurei386
     @dsym_test
     def test_expr_with_dsym_and_run_command(self):
         """Test common cases of expression parser <--> formatters interaction."""
@@ -92,7 +91,6 @@ class ObjCDataFormatterTestCase(TestBase):
         self.expr_objc_data_formatter_commands()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    @expectedFailurei386
     @dwarf_test
     def test_expr_with_dwarf_and_run_command(self):
         """Test common cases of expression parser <--> formatters interaction."""

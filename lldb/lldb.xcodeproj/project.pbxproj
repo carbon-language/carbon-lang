@@ -529,6 +529,7 @@
 		9475C18F14E5F858001BFC6D /* SBTypeNameSpecifier.h in Headers */ = {isa = PBXBuildFile; fileRef = 9475C18C14E5F826001BFC6D /* SBTypeNameSpecifier.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		949ADF031406F648004833E1 /* ValueObjectConstResultImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 949ADF021406F648004833E1 /* ValueObjectConstResultImpl.cpp */; };
 		94B6E76213D88365005F417F /* ValueObjectSyntheticFilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94B6E76113D88362005F417F /* ValueObjectSyntheticFilter.cpp */; };
+		94CDEB9D15F0258500DD2A7A /* CXXFormatterFunctions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94CDEB9C15F0258400DD2A7A /* CXXFormatterFunctions.cpp */; };
 		94EA1D5C15E6C9B400D4171A /* PythonDataObjects.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94EA1D5B15E6C9B400D4171A /* PythonDataObjects.cpp */; };
 		94FA3DE01405D50400833217 /* ValueObjectConstResultChild.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94FA3DDF1405D50300833217 /* ValueObjectConstResultChild.cpp */; };
 		9A19A6AF1163BBB200E0D453 /* SBValue.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A19A6A51163BB7E00E0D453 /* SBValue.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -1535,6 +1536,8 @@
 		94A9112D13D5DF210046D8A6 /* FormatClasses.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FormatClasses.cpp; path = source/Core/FormatClasses.cpp; sourceTree = "<group>"; };
 		94B6E76013D8833C005F417F /* ValueObjectSyntheticFilter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ValueObjectSyntheticFilter.h; path = include/lldb/Core/ValueObjectSyntheticFilter.h; sourceTree = "<group>"; };
 		94B6E76113D88362005F417F /* ValueObjectSyntheticFilter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectSyntheticFilter.cpp; path = source/Core/ValueObjectSyntheticFilter.cpp; sourceTree = "<group>"; };
+		94CDEB9A15F0226900DD2A7A /* CXXFormatterFunctions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = CXXFormatterFunctions.h; path = include/lldb/Core/CXXFormatterFunctions.h; sourceTree = "<group>"; };
+		94CDEB9C15F0258400DD2A7A /* CXXFormatterFunctions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CXXFormatterFunctions.cpp; path = source/Core/CXXFormatterFunctions.cpp; sourceTree = "<group>"; };
 		94E367CC140C4EC4001C7A5A /* modify-python-lldb.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "modify-python-lldb.py"; sourceTree = "<group>"; };
 		94E367CE140C4EEA001C7A5A /* python-typemaps.swig */ = {isa = PBXFileReference; lastKnownFileType = text; path = "python-typemaps.swig"; sourceTree = "<group>"; };
 		94EA1D5A15E6C99B00D4171A /* PythonDataObjects.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PythonDataObjects.h; path = include/lldb/Interpreter/PythonDataObjects.h; sourceTree = "<group>"; };
@@ -2455,6 +2458,8 @@
 				266603C91345B5A8004DA8B6 /* ConnectionSharedMemory.cpp */,
 				26BC7D7C10F1B77400F91463 /* ConstString.h */,
 				26BC7E9410F1B85900F91463 /* ConstString.cpp */,
+				94CDEB9A15F0226900DD2A7A /* CXXFormatterFunctions.h */,
+				94CDEB9C15F0258400DD2A7A /* CXXFormatterFunctions.cpp */,
 				26BC7D5910F1B77400F91463 /* DataBuffer.h */,
 				26BC7D5B10F1B77400F91463 /* DataBufferHeap.h */,
 				26BC7E7210F1B85900F91463 /* DataBufferHeap.cpp */,
@@ -4111,6 +4116,7 @@
 				2697A39315E404B1003E682C /* OptionValueArch.cpp in Sources */,
 				94EA1D5C15E6C9B400D4171A /* PythonDataObjects.cpp in Sources */,
 				2698699B15E6CBD0002415FF /* OperatingSystemPython.cpp in Sources */,
+				94CDEB9D15F0258500DD2A7A /* CXXFormatterFunctions.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

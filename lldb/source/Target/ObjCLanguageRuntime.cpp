@@ -262,3 +262,85 @@ ObjCLanguageRuntime::ParseMethodName (const char *name,
     }
     return result;
 }
+
+bool
+ObjCLanguageRuntime::ClassDescriptor::IsPointerValid (lldb::addr_t value,
+                                                      uint32_t ptr_size,
+                                                      bool allow_NULLs,
+                                                      bool allow_tagged,
+                                                      bool check_version_specific)
+{
+    if (!value)
+        return allow_NULLs;
+    if ( (value % 2) == 1  && allow_tagged)
+        return true;
+    if ((value % ptr_size) == 0)
+        return (check_version_specific ? CheckPointer(value,ptr_size) : true);
+    else
+        return false;
+}
+
+ObjCLanguageRuntime::ObjCISA
+ObjCLanguageRuntime::GetParentClass(ObjCLanguageRuntime::ObjCISA isa)
+{
+    if (!IsValidISA(isa))
+        return 0;
+    
+    ISAToDescriptorIterator found = m_isa_to_descriptor_cache.find(isa);
+    ISAToDescriptorIterator end = m_isa_to_descriptor_cache.end();
+    
+    if (found != end && found->second)
+    {
+        ClassDescriptorSP superclass = found->second->GetSuperclass();
+        if (!superclass || !superclass->IsValid())
+            return 0;
+        else
+        {
+            ObjCISA parent_isa = superclass->GetISA();
+            m_isa_to_descriptor_cache[parent_isa] = superclass;
+            return parent_isa;
+        }
+    }
+    
+    ClassDescriptorSP descriptor(GetClassDescriptor(isa));
+    if (!descriptor.get() || !descriptor->IsValid())
+        return 0;
+    m_isa_to_descriptor_cache[isa] = descriptor;
+    ClassDescriptorSP superclass(descriptor->GetSuperclass());
+    if (!superclass.get() || !superclass->IsValid())
+        return 0;
+    ObjCISA parent_isa = superclass->GetISA();
+    m_isa_to_descriptor_cache[parent_isa] = superclass;
+    return parent_isa;
+}
+
+// TODO: should we have a transparent_kvo parameter here to say if we
+// want to replace the KVO swizzled class with the actual user-level type?
+ConstString
+ObjCLanguageRuntime::GetActualTypeName(ObjCLanguageRuntime::ObjCISA isa)
+{
+    static const ConstString g_unknown ("unknown");
+    
+    if (!IsValidISA(isa))
+        return ConstString();
+    
+    ISAToDescriptorIterator found = m_isa_to_descriptor_cache.find(isa);
+    ISAToDescriptorIterator end = m_isa_to_descriptor_cache.end();
+    
+    if (found != end && found->second)
+        return found->second->GetClassName();
+    
+    ClassDescriptorSP descriptor(GetClassDescriptor(isa));
+    if (!descriptor.get() || !descriptor->IsValid())
+        return ConstString();
+    ConstString class_name = descriptor->GetClassName();
+    if (descriptor->IsKVO())
+    {
+        ClassDescriptorSP superclass(descriptor->GetSuperclass());
+        if (!superclass.get() || !superclass->IsValid())
+            return ConstString();
+        descriptor = superclass;
+    }
+    m_isa_to_descriptor_cache[isa] = descriptor;
+    return descriptor->GetClassName();
+}

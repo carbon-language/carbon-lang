@@ -75,18 +75,6 @@ public:
         return 0;
     }
     
-    virtual ConstString
-    GetActualTypeName(ObjCISA isa)
-    {
-        return ConstString(NULL);
-    }
-    
-    virtual ObjCISA
-    GetParentClass(ObjCISA isa)
-    {
-        return 0;
-    }
-    
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------

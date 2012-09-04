@@ -157,6 +157,42 @@ StringSummaryFormat::GetDescription()
     return sstr.GetString();
 }
 
+CXXFunctionSummaryFormat::CXXFunctionSummaryFormat (const TypeSummaryImpl::Flags& flags,
+                                                    Callback impl,
+                                                    const char* description) :
+                                                    TypeSummaryImpl(flags),
+                                                    m_impl(impl),
+                                                    m_description(description ? description : "")
+{
+}
+    
+bool
+CXXFunctionSummaryFormat::FormatObject(ValueObject *valobj,
+                                       std::string& dest)
+{
+    dest.clear();
+    StreamString stream;
+    if (!m_impl || m_impl(*valobj,stream) == false)
+        return false;
+    dest.assign(stream.GetData());
+    return true;
+}
+
+std::string
+CXXFunctionSummaryFormat::GetDescription()
+{
+    StreamString sstr;
+    sstr.Printf ("`%s (%p) `%s%s%s%s%s%s%s",      m_description.c_str(),m_impl,
+                 Cascades() ? "" : " (not cascading)",
+                 !DoesPrintChildren() ? "" : " (show children)",
+                 !DoesPrintValue() ? " (hide value)" : "",
+                 IsOneliner() ? " (one-line printout)" : "",
+                 SkipsPointers() ? " (skip pointers)" : "",
+                 SkipsReferences() ? " (skip references)" : "",
+                 HideNames() ? " (hide member names)" : "");
+    return sstr.GetString();
+}
+
 #ifndef LLDB_DISABLE_PYTHON
 
 

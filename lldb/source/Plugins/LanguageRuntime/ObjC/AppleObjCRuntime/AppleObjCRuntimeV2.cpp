@@ -104,9 +104,7 @@ AppleObjCRuntimeV2::AppleObjCRuntimeV2 (Process *process,
                                         const ModuleSP &objc_module_sp) : 
     AppleObjCRuntime (process),
     m_get_class_name_args(LLDB_INVALID_ADDRESS),
-    m_get_class_name_args_mutex(Mutex::eMutexTypeNormal),
-    m_isa_to_name_cache(),
-    m_isa_to_parent_cache()
+    m_get_class_name_args_mutex(Mutex::eMutexTypeNormal)
 {
     static const ConstString g_gdb_object_getClass("gdb_object_getClass");
     m_has_object_getClass = (objc_module_sp->FindFirstSymbolWithNameAndType(g_gdb_object_getClass, eSymbolTypeCode) != NULL);
@@ -587,6 +585,46 @@ AppleObjCRuntimeV2::IsTaggedPointer(addr_t ptr)
     return (ptr & 0x01);
 }
 
+ObjCLanguageRuntime::ClassDescriptorSP
+AppleObjCRuntimeV2::GetClassDescriptor (ObjCISA isa)
+{
+    ObjCLanguageRuntime::ISAToDescriptorIterator found = m_isa_to_descriptor_cache.find(isa);
+    ObjCLanguageRuntime::ISAToDescriptorIterator end = m_isa_to_descriptor_cache.end();
+    
+    if (found != end && found->second)
+        return found->second;
+    
+    ClassDescriptorSP descriptor = ClassDescriptorSP(new ClassDescriptorV2(isa,m_process->CalculateProcess()));
+    if (descriptor && descriptor->IsValid())
+        m_isa_to_descriptor_cache[descriptor->GetISA()] = descriptor;
+    return descriptor;
+}
+
+ObjCLanguageRuntime::ClassDescriptorSP
+AppleObjCRuntimeV2::GetClassDescriptor (ValueObject& in_value)
+{
+    uint64_t ptr_value = in_value.GetValueAsUnsigned(0);
+    if (ptr_value == 0)
+        return NULL;
+    
+    ObjCISA isa = GetISA(in_value);
+    
+    ObjCLanguageRuntime::ISAToDescriptorIterator found = m_isa_to_descriptor_cache.find(isa);
+    ObjCLanguageRuntime::ISAToDescriptorIterator end = m_isa_to_descriptor_cache.end();
+    
+    if (found != end && found->second)
+        return found->second;
+    
+    ClassDescriptorSP descriptor;
+    
+    if (ptr_value & 1)
+        return ClassDescriptorSP(new ClassDescriptorV2Tagged(in_value)); // do not save tagged pointers
+    descriptor = ClassDescriptorSP(new ClassDescriptorV2(in_value));
+    
+    if (descriptor && descriptor->IsValid())
+        m_isa_to_descriptor_cache[descriptor->GetISA()] = descriptor;
+    return descriptor;
+}
 
 // this code relies on the assumption that an Objective-C object always starts
 // with an ISA at offset 0. an ISA is effectively a pointer to an instance of
@@ -641,135 +679,25 @@ AppleObjCRuntimeV2::GetActualTypeName(ObjCLanguageRuntime::ObjCISA isa)
         return g_objc_tagged_isa_name;
     }
     
-    ISAToNameIterator found = m_isa_to_name_cache.find(isa);
-    ISAToNameIterator end = m_isa_to_name_cache.end();
+    ISAToDescriptorIterator found = m_isa_to_descriptor_cache.find(isa);
+    ISAToDescriptorIterator end = m_isa_to_descriptor_cache.end();
     
-    if (found != end)
-        return found->second;
+    if (found != end && found->second)
+        return found->second->GetClassName();
     
-    uint8_t pointer_size = m_process->GetAddressByteSize();
-    Error error;
-    
-    /*
-     struct class_t *isa;
-     struct class_t *superclass;
-     Cache cache;
-     IMP *vtable;
--->     class_rw_t data;
-     */
-    
-    addr_t rw_pointer = isa + (4 * pointer_size);
-    //printf("rw_pointer: %llx\n", rw_pointer);
-    uint64_t data_pointer =  m_process->ReadUnsignedIntegerFromMemory(rw_pointer,
-                                                                      pointer_size,
-                                                                      0,
-                                                                      error);
-    if (error.Fail())
+    ClassDescriptorSP descriptor(GetClassDescriptor(isa));
+    if (!descriptor.get() || !descriptor->IsValid())
+        return ConstString();
+    ConstString class_name = descriptor->GetClassName();
+    if (descriptor->IsKVO())
     {
-        return g_unknown;
-
+        ClassDescriptorSP superclass(descriptor->GetSuperclass());
+        if (!superclass.get() || !superclass->IsValid())
+            return ConstString();
+        descriptor = superclass;
     }
-    
-    /*
-     uint32_t flags;
-     uint32_t version;
-     
--->     const class_ro_t *ro;
-     */
-    data_pointer += 8;
-    //printf("data_pointer: %llx\n", data_pointer);
-    uint64_t ro_pointer = m_process->ReadUnsignedIntegerFromMemory(data_pointer,
-                                                                   pointer_size,
-                                                                   0,
-                                                                   error);
-    if (error.Fail())
-        return g_unknown;
-    
-    /*
-     uint32_t flags;
-     uint32_t instanceStart;
-     uint32_t instanceSize;
-     #ifdef __LP64__
-     uint32_t reserved;
-     #endif
-     
-     const uint8_t * ivarLayout;
-     
--->     const char * name;
-     */
-    ro_pointer += 12;
-    if (pointer_size == 8)
-        ro_pointer += 4;
-    ro_pointer += pointer_size;
-    //printf("ro_pointer: %llx\n", ro_pointer);
-    uint64_t name_pointer = m_process->ReadUnsignedIntegerFromMemory(ro_pointer,
-                                                                     pointer_size,
-                                                                     0,
-                                                                     error);
-    if (error.Fail())
-        return g_unknown;
-    
-    //printf("name_pointer: %llx\n", name_pointer);
-    char cstr[512];
-    if (m_process->ReadCStringFromMemory(name_pointer, cstr, sizeof(cstr), error) > 0)
-    {
-        if (::strstr(cstr, "NSKVONotify") == cstr)
-        {
-            // the ObjC runtime implements KVO by replacing the isa with a special
-            // NSKVONotifying_className that overrides the relevant methods
-            // the side effect on us is that getting the typename for a KVO-ed object
-            // will return the swizzled class instead of the actual one
-            // this swizzled class is a descendant of the real class, so just
-            // return the parent type and all should be fine
-            ConstString class_name = GetActualTypeName(GetParentClass(isa));
-            m_isa_to_name_cache[isa] = class_name;
-            return class_name;
-        }
-        else
-        {
-            ConstString class_name = ConstString(cstr);
-            m_isa_to_name_cache[isa] = class_name;
-            return class_name;
-        }
-    }
-    else
-        return g_unknown;
-}
-
-ObjCLanguageRuntime::ObjCISA
-AppleObjCRuntimeV2::GetParentClass(ObjCLanguageRuntime::ObjCISA isa)
-{
-    if (!IsValidISA(isa))
-        return 0;
-    
-    if (isa == g_objc_Tagged_ISA)
-        return 0;
-    
-    ISAToParentIterator found = m_isa_to_parent_cache.find(isa);
-    ISAToParentIterator end = m_isa_to_parent_cache.end();
-    
-    if (found != end)
-        return found->second;
-    
-    uint8_t pointer_size = m_process->GetAddressByteSize();
-    Error error;
-    /*
-     struct class_t *isa;
--->     struct class_t *superclass;
-     */
-    addr_t parent_pointer = isa + pointer_size;
-    //printf("rw_pointer: %llx\n", rw_pointer);
-    
-    uint64_t parent_isa =  m_process->ReadUnsignedIntegerFromMemory(parent_pointer,
-                                                                    pointer_size,
-                                                                    0,
-                                                                    error);
-    if (error.Fail())
-        return 0;
-    
-    m_isa_to_parent_cache[isa] = parent_isa;
-    
-    return parent_isa;
+    m_isa_to_descriptor_cache[isa] = descriptor;
+    return descriptor->GetClassName();
 }
 
 SymbolVendor *
@@ -779,4 +707,255 @@ AppleObjCRuntimeV2::GetSymbolVendor()
         m_symbol_vendor_ap.reset(new AppleObjCSymbolVendor(m_process));
     
     return m_symbol_vendor_ap.get();
+}
+
+AppleObjCRuntimeV2::ClassDescriptorV2::ClassDescriptorV2 (ValueObject &isa_pointer)
+{
+    ObjCISA ptr_value = isa_pointer.GetValueAsUnsigned(0);
+    
+    lldb::ProcessSP process_sp = isa_pointer.GetProcessSP();
+    
+    Initialize (ptr_value,process_sp);
+}
+
+AppleObjCRuntimeV2::ClassDescriptorV2::ClassDescriptorV2 (ObjCISA isa, lldb::ProcessSP process_sp)
+{
+    Initialize (isa, process_sp);
+}
+
+void
+AppleObjCRuntimeV2::ClassDescriptorV2::Initialize (ObjCISA isa, lldb::ProcessSP process_sp)
+{
+    if (!isa || !process_sp)
+    {
+        m_valid = false;
+        return;
+    }
+    
+    m_valid = true;
+    
+    Error error;
+    
+    m_isa = process_sp->ReadPointerFromMemory(isa, error);
+    
+    if (error.Fail())
+    {
+        m_valid = false;
+        return;
+    }
+    
+    uint32_t ptr_size = process_sp->GetAddressByteSize();
+    
+    if (!IsPointerValid(m_isa,ptr_size,false,false,true))
+    {
+        m_valid = false;
+        return;
+    }
+    
+    lldb::addr_t data_ptr = process_sp->ReadPointerFromMemory(m_isa + 4 * ptr_size, error);
+    
+    if (error.Fail())
+    {
+        m_valid = false;
+        return;
+    }
+    
+    if (!IsPointerValid(data_ptr,ptr_size,false,false,true))
+    {
+        m_valid = false;
+        return;
+    }
+    
+    m_parent_isa = process_sp->ReadPointerFromMemory(isa + ptr_size,error);
+    
+    if (error.Fail())
+    {
+        m_valid = false;
+        return;
+    }
+    
+    // sanity checks
+    lldb::addr_t cache_ptr = process_sp->ReadPointerFromMemory(m_isa + 2*ptr_size, error);
+    if (error.Fail())
+    {
+        m_valid = false;
+        return;
+    }
+    if (!IsPointerValid(cache_ptr,ptr_size,true,false,true))
+    {
+        m_valid = false;
+        return;
+    }
+    lldb::addr_t vtable_ptr = process_sp->ReadPointerFromMemory(m_isa + 3*ptr_size, error);
+    if (error.Fail())
+    {
+        m_valid = false;
+        return;
+    }
+    if (!IsPointerValid(vtable_ptr,ptr_size,true,false,true))
+    {
+        m_valid = false;
+        return;
+    }
+
+    // now construct the data object
+    
+    lldb::addr_t rot_pointer = process_sp->ReadPointerFromMemory(data_ptr + 8, error);
+    
+    if (error.Fail())
+    {
+        m_valid = false;
+        return;
+    }
+    
+    if (!IsPointerValid(rot_pointer,ptr_size))
+    {
+        m_valid = false;
+        return;
+    }
+    
+    // now read from the rot
+    
+    lldb::addr_t name_ptr = process_sp->ReadPointerFromMemory(rot_pointer + (ptr_size == 8 ? 24 : 16) ,error);
+    
+    if (error.Fail())
+    {
+        m_valid = false;
+        return;
+    }
+    
+    lldb::DataBufferSP buffer_sp(new DataBufferHeap(1024, 0));
+    
+    size_t count = process_sp->ReadCStringFromMemory(name_ptr, (char*)buffer_sp->GetBytes(), 1024, error);
+    
+    if (error.Fail())
+    {
+        m_valid = false;
+        return;
+    }
+    
+    if (count)
+        m_name = ConstString((char*)buffer_sp->GetBytes());
+    else
+        m_name = ConstString();
+
+    m_instance_size = process_sp->ReadUnsignedIntegerFromMemory(rot_pointer + 8, ptr_size, 0, error);
+    
+    m_process_wp = lldb::ProcessWP(process_sp);
+}
+
+AppleObjCRuntime::ClassDescriptorSP
+AppleObjCRuntimeV2::ClassDescriptorV2::GetSuperclass ()
+{
+    if (!m_valid)
+        return NULL;
+    ProcessSP process_sp = m_process_wp.lock();
+    if (!process_sp)
+        return NULL;
+    return AppleObjCRuntime::ClassDescriptorSP(new AppleObjCRuntimeV2::ClassDescriptorV2(m_parent_isa,process_sp));
+}
+
+AppleObjCRuntimeV2::ClassDescriptorV2Tagged::ClassDescriptorV2Tagged (ValueObject &isa_pointer)
+{
+    m_valid = false;
+    uint64_t value = isa_pointer.GetValueAsUnsigned(0);
+    lldb::ProcessSP process_sp = isa_pointer.GetProcessSP();
+    if (process_sp)
+        m_pointer_size = process_sp->GetAddressByteSize();
+    else
+    {
+        m_name = ConstString("");
+        m_pointer_size = 0;
+        return;
+    }
+    
+    m_valid = true;
+    m_class_bits = (value & 0xE) >> 1;
+    lldb::TargetSP target_sp = isa_pointer.GetTargetSP();
+    
+    LazyBool is_lion = IsLion(target_sp);
+    
+    // TODO: check for OSX version - for now assume Mtn Lion
+    if (is_lion == eLazyBoolCalculate)
+    {
+        // if we can't determine the matching table (e.g. we have no Foundation),
+        // assume this is not a valid tagged pointer
+        m_valid = false;
+    }
+    else if (is_lion == eLazyBoolNo)
+    {
+        switch (m_class_bits)
+        {
+            case 0:
+                m_name = ConstString("NSAtom");
+                break;
+            case 3:
+                m_name = ConstString("NSNumber");
+                break;
+            case 4:
+                m_name = ConstString("NSDateTS");
+                break;
+            case 5:
+                m_name = ConstString("NSManagedObject");
+                break;
+            case 6:
+                m_name = ConstString("NSDate");
+                break;
+            default:
+                m_valid = false;
+                break;
+        }
+    }
+    else
+    {
+        switch (m_class_bits)
+        {
+            case 1:
+                m_name = ConstString("NSNumber");
+                break;
+            case 5:
+                m_name = ConstString("NSManagedObject");
+                break;
+            case 6:
+                m_name = ConstString("NSDate");
+                break;
+            case 7:
+                m_name = ConstString("NSDateTS");
+                break;
+            default:
+                m_valid = false;
+                break;
+        }
+    }
+    if (!m_valid)
+        m_name = ConstString("");
+    else
+    {
+        m_info_bits = (value & 0xF0ULL) >> 4;
+        m_value_bits = (value & ~0x0000000000000000FFULL) >> 8;
+    }
+}
+
+LazyBool
+AppleObjCRuntimeV2::ClassDescriptorV2Tagged::IsLion (lldb::TargetSP &target_sp)
+{
+    if (!target_sp)
+        return eLazyBoolCalculate;
+    ModuleList& modules = target_sp->GetImages();
+    for (uint32_t idx = 0; idx < modules.GetSize(); idx++)
+    {
+        lldb::ModuleSP module_sp = modules.GetModuleAtIndex(idx);
+        if (!module_sp)
+            continue;
+        if (strcmp(module_sp->GetFileSpec().GetFilename().AsCString(""),"Foundation") == 0)
+        {
+            uint32_t major = UINT32_MAX;
+            module_sp->GetVersion(&major,1);
+            if (major == UINT32_MAX)
+                return eLazyBoolCalculate;
+            
+            return (major > 900 ? eLazyBoolNo : eLazyBoolYes);
+        }
+    }
+    return eLazyBoolCalculate;
 }

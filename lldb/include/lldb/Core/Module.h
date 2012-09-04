@@ -571,6 +571,9 @@ public:
     //------------------------------------------------------------------
     virtual ObjectFile *
     GetObjectFile ();
+    
+    uint32_t
+    GetVersion (uint32_t *versions, uint32_t num_versions);
 
     // Load an object file from memory.
     ObjectFile *

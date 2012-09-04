@@ -1091,6 +1091,14 @@ public:
         uint32_t m_flags;
     };
     
+    typedef enum Type
+    {
+        eTypeUnknown,
+        eTypeString,
+        eTypeScript,
+        eTypeCallback
+    } Type;
+    
     TypeSummaryImpl (const TypeSummaryImpl::Flags& flags);
     
     bool
@@ -1205,6 +1213,9 @@ public:
     virtual bool
     IsScripted() = 0;
     
+    virtual Type
+    GetType () = 0;
+    
     uint32_t&
     GetRevision ()
     {
@@ -1265,8 +1276,88 @@ struct StringSummaryFormat : public TypeSummaryImpl
     }
 
     
+    virtual Type
+    GetType ()
+    {
+        return TypeSummaryImpl::eTypeString;
+    }
+    
 private:
     DISALLOW_COPY_AND_ASSIGN(StringSummaryFormat);
+};
+
+// summaries implemented via a C++ function
+struct CXXFunctionSummaryFormat : public TypeSummaryImpl
+{
+    
+    // we should convert these to SBValue and SBStream if we ever cross
+    // the boundary towards the external world
+    typedef bool (*Callback)(ValueObject& valobj,
+                             Stream& dest);
+    
+    
+    Callback m_impl;
+    std::string m_description;
+    
+    CXXFunctionSummaryFormat(const TypeSummaryImpl::Flags& flags,
+                             Callback impl,
+                             const char* description);
+    
+    Callback
+    GetBackendFunction () const
+    {
+        return m_impl;
+    }
+    
+    const char*
+    GetTextualInfo () const
+    {
+        return m_description.c_str();
+    }
+    
+    void
+    SetBackendFunction (Callback cb_func)
+    {
+        m_impl = cb_func;
+    }
+    
+    void
+    SetTextualInfo (const char* descr)
+    {
+        if (descr)
+            m_description.assign(descr);
+        else
+            m_description.clear();
+    }
+    
+    virtual
+    ~CXXFunctionSummaryFormat()
+    {
+    }
+    
+    virtual bool
+    FormatObject(ValueObject *valobj,
+                 std::string& dest);
+    
+    virtual std::string
+    GetDescription();
+    
+    virtual bool
+    IsScripted()
+    {
+        return false;
+    }
+    
+    virtual Type
+    GetType ()
+    {
+        return TypeSummaryImpl::eTypeCallback;
+    }
+    
+    typedef STD_SHARED_PTR(CXXFunctionSummaryFormat) SharedPointer;
+
+private:
+    DISALLOW_COPY_AND_ASSIGN(CXXFunctionSummaryFormat);
 };
     
 #ifndef LLDB_DISABLE_PYTHON
@@ -1329,6 +1420,12 @@ struct ScriptSummaryFormat : public TypeSummaryImpl
     IsScripted()
     {
         return true;
+    }
+    
+    virtual Type
+    GetType ()
+    {
+        return TypeSummaryImpl::eTypeScript;
     }
     
     typedef STD_SHARED_PTR(ScriptSummaryFormat) SharedPointer;

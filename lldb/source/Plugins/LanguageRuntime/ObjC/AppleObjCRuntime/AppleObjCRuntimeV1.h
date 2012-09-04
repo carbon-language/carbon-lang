@@ -24,6 +24,63 @@ class AppleObjCRuntimeV1 :
         public AppleObjCRuntime
 {
 public:
+    
+    class ClassDescriptorV1 : public ObjCLanguageRuntime::ClassDescriptor
+    {
+    public:
+        ClassDescriptorV1 (ValueObject &isa_pointer);
+        ClassDescriptorV1 (ObjCISA isa, lldb::ProcessSP process_sp);
+        
+        virtual ConstString
+        GetClassName ()
+        {
+            return m_name;
+        }
+        
+        virtual ClassDescriptorSP
+        GetSuperclass ();
+        
+        virtual bool
+        IsValid ()
+        {
+            return m_valid;
+        }
+        
+        virtual bool
+        IsTagged ()
+        {
+            return false;   // v1 runtime does not support tagged pointers
+        }
+        
+        virtual uint64_t
+        GetInstanceSize ()
+        {
+            return m_instance_size;
+        }
+        
+        virtual ObjCISA
+        GetISA ()
+        {
+            return m_isa;
+        }
+        
+        virtual
+        ~ClassDescriptorV1 ()
+        {}
+        
+    protected:
+        void
+        Initialize (ObjCISA isa, lldb::ProcessSP process_sp);
+        
+    private:
+        ConstString m_name;
+        ObjCISA m_isa;
+        ObjCISA m_parent_isa;
+        bool m_valid;
+        lldb::ProcessWP m_process_wp;
+        uint64_t m_instance_size;
+    };
+    
     virtual ~AppleObjCRuntimeV1() { }
     
     // These are generic runtime functions:
@@ -69,26 +126,17 @@ public:
     virtual bool
     IsValidISA(ObjCISA isa)
     {
-        return false;
+        return (isa != 0) && ( (isa % 2) == 0);
     }
     
     virtual ObjCISA
-    GetISA(ValueObject& valobj)
-    {
-        return 0;
-    }
+    GetISA(ValueObject& valobj);
     
-    virtual ConstString
-    GetActualTypeName(ObjCISA isa)
-    {
-        return ConstString(NULL);
-    }
+    virtual ClassDescriptorSP
+    GetClassDescriptor (ValueObject& in_value);
     
-    virtual ObjCISA
-    GetParentClass(ObjCISA isa)
-    {
-        return 0;
-    }
+    virtual ClassDescriptorSP
+    GetClassDescriptor (ObjCISA isa);
 
 protected:
     virtual lldb::BreakpointResolverSP

@@ -1205,3 +1205,17 @@ Module::RemapSourceFile (const char *path, std::string &new_path) const
     return m_source_mappings.RemapPath(path, new_path);
 }
 
+uint32_t
+Module::GetVersion (uint32_t *versions, uint32_t num_versions)
+{
+    ObjectFile *obj_file = GetObjectFile();
+    if (obj_file)
+        return obj_file->GetVersion (versions, num_versions);
+        
+    if (versions && num_versions)
+    {
+        for (uint32_t i=0; i<num_versions; ++i)
+            versions[i] = UINT32_MAX;
+    }
+    return 0;
+}

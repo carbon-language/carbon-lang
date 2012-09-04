@@ -542,17 +542,15 @@ SBModule::GetVersion (uint32_t *versions, uint32_t num_versions)
 {
     ModuleSP module_sp (GetSP ());
     if (module_sp)
+        return module_sp->GetVersion(versions, num_versions);
+    else
     {
-        ObjectFile *obj_file = module_sp->GetObjectFile();
-        if (obj_file)
-            return obj_file->GetVersion (versions, num_versions);
+        if (versions && num_versions)
+        {
+            for (uint32_t i=0; i<num_versions; ++i)
+                versions[i] = UINT32_MAX;
+        }
+        return 0;
     }
-    
-    if (versions && num_versions)
-    {
-        for (uint32_t i=0; i<num_versions; ++i)
-            versions[i] = UINT32_MAX;
-    }
-    return 0;
 }
 

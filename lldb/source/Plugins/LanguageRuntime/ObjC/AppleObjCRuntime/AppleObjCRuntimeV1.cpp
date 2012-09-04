@@ -152,3 +152,169 @@ AppleObjCRuntimeV1::CreateObjectChecker(const char *name)
 
     return new ClangUtilityFunction(buf->contents, name);
 }
+
+// this code relies on the assumption that an Objective-C object always starts
+// with an ISA at offset 0.
+ObjCLanguageRuntime::ObjCISA
+AppleObjCRuntimeV1::GetISA(ValueObject& valobj)
+{
+    if (ClangASTType::GetMinimumLanguage(valobj.GetClangAST(),valobj.GetClangType()) != eLanguageTypeObjC)
+        return 0;
+    
+    // if we get an invalid VO (which might still happen when playing around
+    // with pointers returned by the expression parser, don't consider this
+    // a valid ObjC object)
+    if (valobj.GetValue().GetContextType() == Value::eContextTypeInvalid)
+        return 0;
+    
+    addr_t isa_pointer = valobj.GetPointerValue();
+    
+    ExecutionContext exe_ctx (valobj.GetExecutionContextRef());
+    
+    Process *process = exe_ctx.GetProcessPtr();
+    if (process)
+    {
+        uint8_t pointer_size = process->GetAddressByteSize();
+        
+        Error error;
+        return process->ReadUnsignedIntegerFromMemory (isa_pointer,
+                                                       pointer_size,
+                                                       0,
+                                                       error);
+    }
+    return 0;
+}
+
+AppleObjCRuntimeV1::ClassDescriptorV1::ClassDescriptorV1 (ValueObject &isa_pointer)
+{
+    ObjCISA ptr_value = isa_pointer.GetValueAsUnsigned(0);
+
+    lldb::ProcessSP process_sp = isa_pointer.GetProcessSP();
+
+    Initialize (ptr_value,process_sp);
+}
+
+AppleObjCRuntimeV1::ClassDescriptorV1::ClassDescriptorV1 (ObjCISA isa, lldb::ProcessSP process_sp)
+{
+    Initialize (isa, process_sp);
+}
+
+void
+AppleObjCRuntimeV1::ClassDescriptorV1::Initialize (ObjCISA isa, lldb::ProcessSP process_sp)
+{
+    if (!isa || !process_sp)
+    {
+        m_valid = false;
+        return;
+    }
+    
+    m_valid = true;
+    
+    Error error;
+    
+    m_isa = process_sp->ReadPointerFromMemory(isa, error);
+    
+    if (error.Fail())
+    {
+        m_valid = false;
+        return;
+    }
+    
+    uint32_t ptr_size = process_sp->GetAddressByteSize();
+    
+    if (!IsPointerValid(m_isa,ptr_size))
+    {
+        m_valid = false;
+        return;
+    }
+
+    m_parent_isa = process_sp->ReadPointerFromMemory(m_isa + ptr_size,error);
+    
+    if (error.Fail())
+    {
+        m_valid = false;
+        return;
+    }
+    
+    if (!IsPointerValid(m_parent_isa,ptr_size,true))
+    {
+        m_valid = false;
+        return;
+    }
+    
+    lldb::addr_t name_ptr = process_sp->ReadPointerFromMemory(m_isa + 2 * ptr_size,error);
+    
+    if (error.Fail())
+    {
+        m_valid = false;
+        return;
+    }
+    
+    lldb::DataBufferSP buffer_sp(new DataBufferHeap(1024, 0));
+    
+    size_t count = process_sp->ReadCStringFromMemory(name_ptr, (char*)buffer_sp->GetBytes(), 1024, error);
+    
+    if (error.Fail())
+    {
+        m_valid = false;
+        return;
+    }
+    
+    if (count)
+        m_name = ConstString((char*)buffer_sp->GetBytes());
+    else
+        m_name = ConstString();
+    
+    m_instance_size = process_sp->ReadUnsignedIntegerFromMemory(m_isa + 5 * ptr_size, ptr_size, 0, error);
+    
+    if (error.Fail())
+    {
+        m_valid = false;
+        return;
+    }
+    
+    m_process_wp = lldb::ProcessWP(process_sp);
+}
+
+AppleObjCRuntime::ClassDescriptorSP
+AppleObjCRuntimeV1::ClassDescriptorV1::GetSuperclass ()
+{
+    if (!m_valid)
+        return NULL;
+    ProcessSP process_sp = m_process_wp.lock();
+    if (!process_sp)
+        return NULL;
+    return ObjCLanguageRuntime::ClassDescriptorSP(new AppleObjCRuntimeV1::ClassDescriptorV1(m_parent_isa,process_sp));
+}
+
+ObjCLanguageRuntime::ClassDescriptorSP
+AppleObjCRuntimeV1::GetClassDescriptor (ValueObject& in_value)
+{
+    ObjCISA isa = GetISA(in_value);
+    
+    ObjCLanguageRuntime::ISAToDescriptorIterator found = m_isa_to_descriptor_cache.find(isa);
+    ObjCLanguageRuntime::ISAToDescriptorIterator end = m_isa_to_descriptor_cache.end();
+    
+    if (found != end && found->second)
+        return found->second;
+    
+    ClassDescriptorSP descriptor = ClassDescriptorSP(new ClassDescriptorV1(in_value));
+    if (descriptor && descriptor->IsValid())
+        m_isa_to_descriptor_cache[descriptor->GetISA()] = descriptor;
+    return descriptor;
+}
+
+ObjCLanguageRuntime::ClassDescriptorSP
+AppleObjCRuntimeV1::GetClassDescriptor (ObjCISA isa)
+{
+    ObjCLanguageRuntime::ISAToDescriptorIterator found = m_isa_to_descriptor_cache.find(isa);
+    ObjCLanguageRuntime::ISAToDescriptorIterator end = m_isa_to_descriptor_cache.end();
+    
+    if (found != end && found->second)
+        return found->second;
+    
+    ClassDescriptorSP descriptor = ClassDescriptorSP(new ClassDescriptorV1(isa,m_process->CalculateProcess()));
+    if (descriptor && descriptor->IsValid())
+        m_isa_to_descriptor_cache[descriptor->GetISA()] = descriptor;
+    return descriptor;
+}
