@@ -146,9 +146,9 @@ static bool typesCompatible(ASTContext &C, QualType A, QualType B) {
     
     if (const PointerType *ptrA = A->getAs<PointerType>())
       if (const PointerType *ptrB = B->getAs<PointerType>()) {
-	A = ptrA->getPointeeType();
-	B = ptrB->getPointeeType();
-	continue;
+        A = ptrA->getPointeeType();
+        B = ptrB->getPointeeType();
+        continue;
       }
       
     break;
