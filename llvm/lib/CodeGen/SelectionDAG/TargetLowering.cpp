@@ -898,7 +898,6 @@ const char *TargetLowering::getTargetNodeName(unsigned Opcode) const {
   return NULL;
 }
 
-
 EVT TargetLowering::getSetCCResultType(EVT VT) const {
   assert(!VT.isVector() && "No default SetCC type for vectors!");
   return PointerTy.SimpleTy;

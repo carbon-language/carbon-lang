@@ -136,6 +136,10 @@ protected:
   /// the stack pointer. This is an optimization for Intel Atom processors.
   bool UseLeaForSP;
 
+  /// HasSlowDivide - True if smaller divides are significantly faster than
+  /// full divides and should be used when possible.
+  bool HasSlowDivide;
+
   /// PostRAScheduler - True if using post-register-allocation scheduler.
   bool PostRAScheduler;
 
@@ -221,6 +225,7 @@ public:
   bool hasVectorUAMem() const { return HasVectorUAMem; }
   bool hasCmpxchg16b() const { return HasCmpxchg16b; }
   bool useLeaForSP() const { return UseLeaForSP; }
+  bool hasSlowDivide() const { return HasSlowDivide; }
 
   bool isAtom() const { return X86ProcFamily == IntelAtom; }
 

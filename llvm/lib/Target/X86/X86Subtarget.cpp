@@ -346,6 +346,7 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
   , HasVectorUAMem(false)
   , HasCmpxchg16b(false)
   , UseLeaForSP(false)
+  , HasSlowDivide(false)
   , PostRAScheduler(false)
   , stackAlignment(4)
   // FIXME: this is a known good value for Yonah. How about others?

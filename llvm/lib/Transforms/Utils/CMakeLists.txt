@@ -3,6 +3,7 @@ add_llvm_library(LLVMTransformUtils
   BasicBlockUtils.cpp
   BreakCriticalEdges.cpp
   BuildLibCalls.cpp
+  BypassSlowDivision.cpp
   CloneFunction.cpp
   CloneModule.cpp
   CmpInstAnalysis.cpp

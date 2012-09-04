@@ -43,6 +43,7 @@
 #include "llvm/Transforms/Utils/AddrModeMatcher.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/BuildLibCalls.h"
+#include "llvm/Transforms/Utils/BypassSlowDivision.h"
 #include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;
 using namespace llvm::PatternMatch;
@@ -148,7 +149,19 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   PFI = getAnalysisIfAvailable<ProfileInfo>();
   OptSize = F.hasFnAttr(Attribute::OptimizeForSize);
 
-  // First pass, eliminate blocks that contain only PHI nodes and an
+  /// This optimization identifies DIV instructions that can be
+  /// profitably bypassed and carried out with a shorter, faster divide.
+  if (TLI && TLI->isSlowDivBypassed()) {
+    const DenseMap<Type *, Type *> &BypassTypeMap = TLI->getBypassSlowDivTypes();
+
+    for (Function::iterator I = F.begin(); I != F.end(); I++) {
+      EverMadeChange |= bypassSlowDivision(F,
+                                           I,
+                                           BypassTypeMap);
+    }
+  }
+
+  // Eliminate blocks that contain only PHI nodes and an
   // unconditional branch.
   EverMadeChange |= EliminateMostlyEmptyBlocks(F);
 
