@@ -37,10 +37,7 @@ bool DWARFDebugRangeList::extract(DataExtractor data, uint32_t *offset_ptr) {
       clear();
       return false;
     }
-    // The end of any given range list is marked by an end of list entry,
-    // which consists of a 0 for the beginning address offset
-    // and a 0 for the ending address offset.
-    if (entry.StartAddress == 0 && entry.EndAddress == 0)
+    if (entry.isEndOfListEntry())
       break;
     Entries.push_back(entry);
   }
@@ -56,4 +53,15 @@ void DWARFDebugRangeList::dump(raw_ostream &OS) const {
                                      Entries[i].EndAddress);
   }
   OS << format("%08x <End of list>\n", Offset);
+}
+
+bool DWARFDebugRangeList::containsAddress(uint64_t BaseAddress,
+                                          uint64_t Address) const {
+  for (int i = 0, n = Entries.size(); i != n; ++i) {
+    if (Entries[i].isBaseAddressSelectionEntry(AddressSize))
+      BaseAddress = Entries[i].EndAddress;
+    else if (Entries[i].containsAddress(BaseAddress, Address))
+      return true;
+  }
+  return false;
 }

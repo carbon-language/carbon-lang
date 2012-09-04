@@ -75,6 +75,15 @@ DWARFCompileUnit::extract(uint32_t offset, DataExtractor debug_info_data,
   return 0;
 }
 
+bool DWARFCompileUnit::extractRangeList(uint32_t RangeListOffset,
+                                        DWARFDebugRangeList &RangeList) const {
+  // Require that compile unit is extracted.
+  assert(DieArray.size() > 0);
+  DataExtractor RangesData(Context.getRangeSection(),
+                           Context.isLittleEndian(), AddrSize);
+  return RangeList.extract(RangesData, &RangeListOffset);
+}
+
 void DWARFCompileUnit::clear() {
   Offset = 0;
   Length = 0;
@@ -246,12 +255,21 @@ DWARFCompileUnit::buildAddressRangeTable(DWARFDebugAranges *debug_aranges,
     clearDIEs(true);
 }
 
-const DWARFDebugInfoEntryMinimal*
-DWARFCompileUnit::getFunctionDIEForAddress(int64_t address) {
+DWARFDebugInfoEntryMinimal::InlinedChain
+DWARFCompileUnit::getInlinedChainForAddress(uint64_t Address) {
+  // First, find a subprogram that contains the given address (the root
+  // of inlined chain).
   extractDIEsIfNeeded(false);
+  const DWARFDebugInfoEntryMinimal *SubprogramDIE = 0;
   for (size_t i = 0, n = DieArray.size(); i != n; i++) {
-    if (DieArray[i].addressRangeContainsAddress(this, address))
-      return &DieArray[i];
+    if (DieArray[i].isSubprogramDIE() &&
+        DieArray[i].addressRangeContainsAddress(this, Address)) {
+      SubprogramDIE = &DieArray[i];
+      break;
+    }
   }
-  return 0;
+  // Get inlined chain rooted at this subprogram DIE.
+  if (!SubprogramDIE)
+    return DWARFDebugInfoEntryMinimal::InlinedChain();
+  return SubprogramDIE->getInlinedChainForAddress(this, Address);
 }

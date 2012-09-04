@@ -364,6 +364,16 @@ DWARFDebugInfoEntryMinimal::extract(const DWARFCompileUnit *cu,
   return false;
 }
 
+bool DWARFDebugInfoEntryMinimal::isSubprogramDIE() const {
+  return getTag() == DW_TAG_subprogram;
+}
+
+bool DWARFDebugInfoEntryMinimal::isSubroutineDIE() const {
+  uint32_t Tag = getTag();
+  return Tag == DW_TAG_subprogram ||
+         Tag == DW_TAG_inlined_subroutine;
+}
+
 uint32_t
 DWARFDebugInfoEntryMinimal::getAttributeValue(const DWARFCompileUnit *cu,
                                               const uint16_t attr,
@@ -446,24 +456,31 @@ DWARFDebugInfoEntryMinimal::getAttributeValueAsReference(
   return fail_value;
 }
 
+bool DWARFDebugInfoEntryMinimal::getLowAndHighPC(const DWARFCompileUnit *CU,
+    uint64_t &LowPC, uint64_t &HighPC) const {
+  HighPC = -1ULL;
+  LowPC = getAttributeValueAsUnsigned(CU, DW_AT_low_pc, -1ULL);
+  if (LowPC != -1ULL)
+    HighPC = getAttributeValueAsUnsigned(CU, DW_AT_high_pc, -1ULL);
+  return (HighPC != -1ULL);
+}
+
 void
-DWARFDebugInfoEntryMinimal::buildAddressRangeTable(const DWARFCompileUnit *cu,
-                                               DWARFDebugAranges *debug_aranges)
+DWARFDebugInfoEntryMinimal::buildAddressRangeTable(const DWARFCompileUnit *CU,
+                                               DWARFDebugAranges *DebugAranges)
                                                    const {
   if (AbbrevDecl) {
-    uint16_t tag = AbbrevDecl->getTag();
-    if (tag == DW_TAG_subprogram) {
-      uint64_t hi_pc = -1ULL;
-      uint64_t lo_pc = getAttributeValueAsUnsigned(cu, DW_AT_low_pc, -1ULL);
-      if (lo_pc != -1ULL)
-        hi_pc = getAttributeValueAsUnsigned(cu, DW_AT_high_pc, -1ULL);
-      if (hi_pc != -1ULL)
-        debug_aranges->appendRange(cu->getOffset(), lo_pc, hi_pc);
+    if (isSubprogramDIE()) {
+      uint64_t LowPC, HighPC;
+      if (getLowAndHighPC(CU, LowPC, HighPC)) {
+        DebugAranges->appendRange(CU->getOffset(), LowPC, HighPC);
+      }
+      // FIXME: try to append ranges from .debug_ranges section.
     }
 
     const DWARFDebugInfoEntryMinimal *child = getFirstChild();
     while (child) {
-      child->buildAddressRangeTable(cu, debug_aranges);
+      child->buildAddressRangeTable(CU, DebugAranges);
       child = child->getSibling();
     }
   }
@@ -471,51 +488,90 @@ DWARFDebugInfoEntryMinimal::buildAddressRangeTable(const DWARFCompileUnit *cu,
 
 bool
 DWARFDebugInfoEntryMinimal::addressRangeContainsAddress(
-    const DWARFCompileUnit *cu, const uint64_t address) const {
-  if (!isNULL() && getTag() == DW_TAG_subprogram) {
-    uint64_t hi_pc = -1ULL;
-    uint64_t lo_pc = getAttributeValueAsUnsigned(cu, DW_AT_low_pc, -1ULL);
-    if (lo_pc != -1ULL)
-      hi_pc = getAttributeValueAsUnsigned(cu, DW_AT_high_pc, -1ULL);
-    if (hi_pc != -1ULL) {
-      return (lo_pc <= address && address < hi_pc);
-    }
+    const DWARFCompileUnit *CU, const uint64_t Address) const {
+  if (isNULL())
+    return false;
+  uint64_t LowPC, HighPC;
+  if (getLowAndHighPC(CU, LowPC, HighPC))
+    return (LowPC <= Address && Address <= HighPC);
+  // Try to get address ranges from .debug_ranges section.
+  uint32_t RangesOffset = getAttributeValueAsReference(CU, DW_AT_ranges, -1U);
+  if (RangesOffset != -1U) {
+    DWARFDebugRangeList RangeList;
+    if (CU->extractRangeList(RangesOffset, RangeList))
+      return RangeList.containsAddress(CU->getBaseAddress(), Address);
   }
   return false;
 }
 
 const char*
-DWARFDebugInfoEntryMinimal::getSubprogramName(
-    const DWARFCompileUnit *cu) const {
-  if (isNULL() || getTag() != DW_TAG_subprogram)
+DWARFDebugInfoEntryMinimal::getSubroutineName(
+    const DWARFCompileUnit *CU) const {
+  if (!isSubroutineDIE())
     return 0;
   // Try to get mangled name if possible.
   if (const char *name =
-      getAttributeValueAsString(cu, DW_AT_MIPS_linkage_name, 0))
+      getAttributeValueAsString(CU, DW_AT_MIPS_linkage_name, 0))
     return name;
-  if (const char *name = getAttributeValueAsString(cu, DW_AT_linkage_name, 0))
+  if (const char *name = getAttributeValueAsString(CU, DW_AT_linkage_name, 0))
     return name;
-  if (const char *name = getAttributeValueAsString(cu, DW_AT_name, 0))
+  if (const char *name = getAttributeValueAsString(CU, DW_AT_name, 0))
     return name;
   // Try to get name from specification DIE.
   uint32_t spec_ref =
-      getAttributeValueAsReference(cu, DW_AT_specification, -1U);
+      getAttributeValueAsReference(CU, DW_AT_specification, -1U);
   if (spec_ref != -1U) {
     DWARFDebugInfoEntryMinimal spec_die;
-    if (spec_die.extract(cu, &spec_ref)) {
-      if (const char *name = spec_die.getSubprogramName(cu))
+    if (spec_die.extract(CU, &spec_ref)) {
+      if (const char *name = spec_die.getSubroutineName(CU))
         return name;
     }
   }
   // Try to get name from abstract origin DIE.
   uint32_t abs_origin_ref =
-      getAttributeValueAsReference(cu, DW_AT_abstract_origin, -1U);
+      getAttributeValueAsReference(CU, DW_AT_abstract_origin, -1U);
   if (abs_origin_ref != -1U) {
     DWARFDebugInfoEntryMinimal abs_origin_die;
-    if (abs_origin_die.extract(cu, &abs_origin_ref)) {
-      if (const char *name = abs_origin_die.getSubprogramName(cu))
+    if (abs_origin_die.extract(CU, &abs_origin_ref)) {
+      if (const char *name = abs_origin_die.getSubroutineName(CU))
         return name;
     }
   }
   return 0;
+}
+
+void DWARFDebugInfoEntryMinimal::getCallerFrame(
+    const DWARFCompileUnit *CU, uint32_t &CallFile, uint32_t &CallLine,
+    uint32_t &CallColumn) const {
+  CallFile = getAttributeValueAsUnsigned(CU, DW_AT_call_file, 0);
+  CallLine = getAttributeValueAsUnsigned(CU, DW_AT_call_line, 0);
+  CallColumn = getAttributeValueAsUnsigned(CU, DW_AT_call_column, 0);
+}
+
+DWARFDebugInfoEntryMinimal::InlinedChain
+DWARFDebugInfoEntryMinimal::getInlinedChainForAddress(
+    const DWARFCompileUnit *CU, const uint64_t Address) const {
+  DWARFDebugInfoEntryMinimal::InlinedChain InlinedChain;
+  if (isNULL())
+    return InlinedChain;
+  for (const DWARFDebugInfoEntryMinimal *DIE = this; DIE; ) {
+    // Append current DIE to inlined chain only if it has correct tag
+    // (e.g. it is not a lexical block).
+    if (DIE->isSubroutineDIE()) {
+      InlinedChain.push_back(*DIE);
+    }
+    // Try to get child which also contains provided address.
+    const DWARFDebugInfoEntryMinimal *Child = DIE->getFirstChild();
+    while (Child) {
+      if (Child->addressRangeContainsAddress(CU, Address)) {
+        // Assume there is only one such child.
+        break;
+      }
+      Child = Child->getSibling();
+    }
+    DIE = Child;
+  }
+  // Reverse the obtained chain to make the root of inlined chain last.
+  std::reverse(InlinedChain.begin(), InlinedChain.end());
+  return InlinedChain;
 }

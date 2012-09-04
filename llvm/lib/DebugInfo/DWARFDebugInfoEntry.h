@@ -11,6 +11,7 @@
 #define LLVM_DEBUGINFO_DWARFDEBUGINFOENTRY_H
 
 #include "DWARFAbbreviationDeclaration.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
@@ -19,6 +20,7 @@ class DWARFDebugAranges;
 class DWARFCompileUnit;
 class DWARFContext;
 class DWARFFormValue;
+class DWARFInlinedSubroutineChain;
 
 /// DWARFDebugInfoEntryMinimal - A DIE with only the minimum required data.
 class DWARFDebugInfoEntryMinimal {
@@ -52,6 +54,13 @@ public:
 
   uint32_t getTag() const { return AbbrevDecl ? AbbrevDecl->getTag() : 0; }
   bool isNULL() const { return AbbrevDecl == 0; }
+
+  /// Returns true if DIE represents a subprogram (not inlined).
+  bool isSubprogramDIE() const;
+  /// Returns true if DIE represents a subprogram or an inlined
+  /// subroutine.
+  bool isSubroutineDIE() const;
+
   uint32_t getOffset() const { return Offset; }
   uint32_t getNumAttributes() const {
     return !isNULL() ? AbbrevDecl->getNumAttributes() : 0;
@@ -126,17 +135,40 @@ public:
                                     const uint16_t attr,
                                     int64_t fail_value) const;
 
-  void buildAddressRangeTable(const DWARFCompileUnit *cu,
-                              DWARFDebugAranges *debug_aranges) const;
+  /// Retrieves DW_AT_low_pc and DW_AT_high_pc from CU.
+  /// Returns true if both attributes are present.
+  bool getLowAndHighPC(const DWARFCompileUnit *CU,
+                       uint64_t &LowPC, uint64_t &HighPC) const;
 
-  bool addressRangeContainsAddress(const DWARFCompileUnit *cu,
-                                   const uint64_t address) const;
+  void buildAddressRangeTable(const DWARFCompileUnit *CU,
+                              DWARFDebugAranges *DebugAranges) const;
 
-  // If a DIE represents a subprogram, returns its mangled name
-  // (or short name, if mangled is missing). This name may be fetched
-  // from specification or abstract origin for this subprogram.
-  // Returns null if no name is found.
-  const char* getSubprogramName(const DWARFCompileUnit *cu) const;
+  bool addressRangeContainsAddress(const DWARFCompileUnit *CU,
+                                   const uint64_t Address) const;
+
+  /// If a DIE represents a subprogram (or inlined subroutine),
+  /// returns its mangled name (or short name, if mangled is missing).
+  /// This name may be fetched from specification or abstract origin
+  /// for this subprogram. Returns null if no name is found.
+  const char* getSubroutineName(const DWARFCompileUnit *CU) const;
+
+  /// Retrieves values of DW_AT_call_file, DW_AT_call_line and
+  /// DW_AT_call_column from DIE (or zeroes if they are missing).
+  void getCallerFrame(const DWARFCompileUnit *CU, uint32_t &CallFile,
+                      uint32_t &CallLine, uint32_t &CallColumn) const;
+
+  /// InlinedChain - represents a chain of inlined_subroutine
+  /// DIEs, (possibly ending with subprogram DIE), all of which are contained
+  /// in some concrete inlined instance tree. Address range for each DIE
+  /// (except the last DIE) in this chain is contained in address
+  /// range for next DIE in the chain.
+  typedef SmallVector<DWARFDebugInfoEntryMinimal, 4> InlinedChain;
+
+  /// Get inlined chain for a given address, rooted at the current DIE.
+  /// Returns empty chain if address is not contained in address range
+  /// of current DIE.
+  InlinedChain getInlinedChainForAddress(const DWARFCompileUnit *CU,
+                                         const uint64_t Address) const;
 };
 
 }

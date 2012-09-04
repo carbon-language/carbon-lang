@@ -66,6 +66,8 @@ public:
 
   virtual DILineInfo getLineInfoForAddress(uint64_t Address,
       DILineInfoSpecifier Specifier = DILineInfoSpecifier());
+  virtual DIInliningInfo getInliningInfoForAddress(uint64_t Address,
+      DILineInfoSpecifier Specifier = DILineInfoSpecifier());
 
   bool isLittleEndian() const { return IsLittleEndian; }
 
@@ -86,14 +88,6 @@ private:
   /// Return the compile unit which contains instruction with provided
   /// address.
   DWARFCompileUnit *getCompileUnitForAddress(uint64_t Address);
-
-  /// Fetches filename, line and column number for given address and
-  /// compile unit. Returns true on success.
-  bool getFileLineInfoForCompileUnit(DWARFCompileUnit *CU,
-                                     uint64_t Address,
-                                     bool NeedsAbsoluteFilePath,
-                                     std::string &FileName,
-                                     uint32_t &Line, uint32_t &Column);
 };
 
 /// DWARFContextInMemory is the simplest possible implementation of a
