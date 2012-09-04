@@ -234,3 +234,11 @@ void rdar8601243() {
   (void) start;
 }
 
+
+float testFloatCast(int i) {
+  float f = i;
+
+  // Don't crash when trying to create a "zero" float.
+  return f - f;
+}
+
