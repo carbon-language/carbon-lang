@@ -47,7 +47,7 @@ PrintFunctions("functions", cl::init(true),
                         "information for a given address"));
 
 static cl::opt<bool>
-PrintInlining("inlining", cl::init(false),
+PrintInlining("inlining", cl::init(true),
               cl::desc("Print all inlined frames for a given address"));
 
 static StringRef ToolInvocationPath;

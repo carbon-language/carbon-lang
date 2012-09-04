@@ -103,6 +103,9 @@ endfunction()
 # Add the public header's directory to the includes for all of compiler-rt.
 include_directories(include)
 
+# Build utils before building compiler-rt library.
+add_subdirectory(utils)
+
 add_subdirectory(lib)
 
 if(LLVM_INCLUDE_TESTS)
