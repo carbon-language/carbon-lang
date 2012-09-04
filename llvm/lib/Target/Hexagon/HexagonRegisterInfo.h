@@ -87,6 +87,11 @@ struct HexagonRegisterInfo : public HexagonGenRegisterInfo {
   // Exception handling queries.
   unsigned getEHExceptionRegister() const;
   unsigned getEHHandlerRegister() const;
+  const RegClassWeight &getRegClassWeight(const TargetRegisterClass *RC) const;
+  unsigned getNumRegPressureSets() const;
+  const char *getRegPressureSetName(unsigned Idx) const;
+  unsigned getRegPressureSetLimit(unsigned Idx) const;
+  const int* getRegClassPressureSets(const TargetRegisterClass *RC) const;
 };
 
 } // end namespace llvm

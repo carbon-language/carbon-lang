@@ -1,4 +1,4 @@
-; RUN: llc -march=hexagon -mcpu=hexagonv4  < %s | FileCheck %s
+; RUN: llc -march=hexagon -mcpu=hexagonv4 -disable-hexagon-misched < %s | FileCheck %s
 ; Check that we generate new value store packet in V4
 
 @i = global i32 0, align 4

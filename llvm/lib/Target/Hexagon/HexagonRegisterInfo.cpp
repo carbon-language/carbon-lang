@@ -310,6 +310,58 @@ void HexagonRegisterInfo::getInitialFrameState(std::vector<MachineMove>
   Moves.push_back(MachineMove(0, Dst, Src));
 }
 
+// Get the weight in units of pressure for this register class.
+const RegClassWeight &
+HexagonRegisterInfo::getRegClassWeight(const TargetRegisterClass *RC) const {
+  // Each TargetRegisterClass has a per register weight, and weight
+  // limit which must be less than the limits of its pressure sets.
+  static const RegClassWeight RCWeightTable[] = {
+    {1, 32}, // IntRegs
+    {1, 8},  // CRRegs
+    {1, 4},  // PredRegs
+    {2, 16}, // DoubleRegs
+    {0, 0} };
+  return RCWeightTable[RC->getID()];
+}
+
+/// Get the number of dimensions of register pressure.
+unsigned HexagonRegisterInfo::getNumRegPressureSets() const {
+  return 4;
+}
+
+/// Get the name of this register unit pressure set.
+const char *HexagonRegisterInfo::getRegPressureSetName(unsigned Idx) const {
+  static const char *const RegPressureSetName[] = {
+    "IntRegsRegSet",
+    "CRRegsRegSet",
+    "PredRegsRegSet",
+    "DoubleRegsRegSet"
+  };
+  assert((Idx < 4) && "Index out of bounds");
+  return RegPressureSetName[Idx];
+}
+
+/// Get the register unit pressure limit for this dimension.
+/// This limit must be adjusted dynamically for reserved registers.
+unsigned HexagonRegisterInfo::getRegPressureSetLimit(unsigned Idx) const {
+  static const int RegPressureLimit [] = { 16, 4, 2, 8 };
+  assert((Idx < 4) && "Index out of bounds");
+  return RegPressureLimit[Idx];
+}
+
+const int*
+HexagonRegisterInfo::getRegClassPressureSets(const TargetRegisterClass *RC)
+  const {
+  static const int RCSetsTable[] = {
+    0,  -1,  // IntRegs
+    1,  -1,  // CRRegs
+    2,  -1,  // PredRegs
+    0,  -1,  // DoubleRegs
+    -1 };
+  static const unsigned RCSetStartTable[] = { 0, 2, 4, 6, 0 };
+  unsigned SetListStart = RCSetStartTable[RC->getID()];
+  return &RCSetsTable[SetListStart];
+}
 unsigned HexagonRegisterInfo::getEHExceptionRegister() const {
   llvm_unreachable("What is the exception register");
 }

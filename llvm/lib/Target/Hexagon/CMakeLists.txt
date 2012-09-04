@@ -16,6 +16,7 @@ add_llvm_target(HexagonCodeGen
   HexagonExpandPredSpillCode.cpp
   HexagonFrameLowering.cpp
   HexagonHardwareLoops.cpp
+  HexagonMachineScheduler.cpp
   HexagonMCInstLower.cpp
   HexagonInstrInfo.cpp
   HexagonISelDAGToDAG.cpp

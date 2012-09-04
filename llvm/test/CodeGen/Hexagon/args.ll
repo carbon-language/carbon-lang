@@ -1,12 +1,12 @@
-; RUN: llc -march=hexagon -mcpu=hexagonv4 -disable-dfa-sched < %s | FileCheck %s
+; RUN: llc -march=hexagon -mcpu=hexagonv4 -disable-hexagon-misched < %s | FileCheck %s
 ; CHECK: r[[T0:[0-9]+]] = #7
 ; CHECK: memw(r29 + #0) = r[[T0]]
+; CHECK: r5 = #6
 ; CHECK: r0 = #1
 ; CHECK: r1 = #2
 ; CHECK: r2 = #3
 ; CHECK: r3 = #4
 ; CHECK: r4 = #5
-; CHECK: r5 = #6
 
 
 define void @foo() nounwind {

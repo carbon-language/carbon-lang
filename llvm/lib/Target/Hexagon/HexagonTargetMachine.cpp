@@ -14,6 +14,7 @@
 #include "HexagonTargetMachine.h"
 #include "Hexagon.h"
 #include "HexagonISelLowering.h"
+#include "HexagonMachineScheduler.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/PassManager.h"
@@ -29,6 +30,11 @@ opt<bool> DisableHardwareLoops(
                         "disable-hexagon-hwloops", cl::Hidden,
                         cl::desc("Disable Hardware Loops for Hexagon target"));
 
+static cl::
+opt<bool> DisableHexagonMISched("disable-hexagon-misched",
+                                cl::Hidden, cl::ZeroOrMore, cl::init(false),
+                                cl::desc("Disable Hexagon MI Scheduling"));
+
 /// HexagonTargetMachineModule - Note that this is used on hosts that
 /// cannot link in a library unless there are references into the
 /// library.  In particular, it seems that it is not possible to get
@@ -42,6 +48,13 @@ extern "C" void LLVMInitializeHexagonTarget() {
   RegisterTargetMachine<HexagonTargetMachine> X(TheHexagonTarget);
 }
 
+static ScheduleDAGInstrs *createVLIWMachineSched(MachineSchedContext *C) {
+  return new VLIWMachineScheduler(C, new ConvergingVLIWScheduler());
+}
+
+static MachineSchedRegistry
+SchedCustomRegistry("hexagon", "Run Hexagon's custom scheduler",
+                    createVLIWMachineSched);
 
 /// HexagonTargetMachine ctor - Create an ILP32 architecture model.
 ///
@@ -83,7 +96,13 @@ namespace {
 class HexagonPassConfig : public TargetPassConfig {
 public:
   HexagonPassConfig(HexagonTargetMachine *TM, PassManagerBase &PM)
-    : TargetPassConfig(TM, PM) {}
+    : TargetPassConfig(TM, PM) {
+    // Enable MI scheduler.
+    if (!DisableHexagonMISched) {
+      enablePass(&MachineSchedulerID);
+      MachineSchedRegistry::setDefault(createVLIWMachineSched);
+    }
+  }
 
   HexagonTargetMachine &getHexagonTargetMachine() const {
     return getTM<HexagonTargetMachine>();
