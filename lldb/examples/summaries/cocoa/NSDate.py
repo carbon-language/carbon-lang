@@ -78,6 +78,8 @@ class NSTaggedDate_SummaryProvider:
 		# while all Python knows about is the "epoch", which is a platform-dependent
 		# year (1970 of *nix) whose Jan 1 at midnight is taken as reference
 		value_double = struct.unpack('d', struct.pack('Q', self.data))[0]
+		if value_double == -63114076800.0:
+			return '0001-12-30 00:00:00 +0000'
 		return xcode_format_count(osx_to_python_time(value_double))
 
 
@@ -107,6 +109,8 @@ class NSUntaggedDate_SummaryProvider:
 							self.offset(),
 							self.sys_params.types_cache.double)
 		value_double = struct.unpack('d', struct.pack('Q', value.GetValueAsUnsigned(0)))[0]
+		if value_double == -63114076800.0:
+			return '0001-12-30 00:00:00 +0000'
 		return xcode_format_count(osx_to_python_time(value_double))
 
 class NSCalendarDate_SummaryProvider:
