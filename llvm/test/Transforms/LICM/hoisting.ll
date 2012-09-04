@@ -29,7 +29,7 @@ Out:		; preds = %LoopTail
 }
 
 
-declare void @foo2(i32)
+declare void @foo2(i32) nounwind
 
 
 ;; It is ok and desirable to hoist this potentially trapping instruction.
@@ -64,3 +64,29 @@ Out:		; preds = %Loop
 	%C = sub i32 %A, %B		; <i32> [#uses=1]
 	ret i32 %C
 }
+
+; CHECK: @test4
+; CHECK: call
+; CHECK: sdiv
+; CHECK: ret
+define i32 @test4(i32 %x, i32 %y) nounwind uwtable ssp {
+entry:
+  br label %for.body
+
+for.body:                                         ; preds = %entry, %for.body
+  %i.02 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
+  %n.01 = phi i32 [ 0, %entry ], [ %add, %for.body ]
+  call void @foo_may_call_exit(i32 0)
+  %div = sdiv i32 %x, %y
+  %add = add nsw i32 %n.01, %div
+  %inc = add nsw i32 %i.02, 1
+  %cmp = icmp slt i32 %inc, 10000
+  br i1 %cmp, label %for.body, label %for.end
+
+for.end:                                          ; preds = %for.body
+  %n.0.lcssa = phi i32 [ %add, %for.body ]
+  ret i32 %n.0.lcssa
+}
+
+declare void @foo_may_call_exit(i32)
+

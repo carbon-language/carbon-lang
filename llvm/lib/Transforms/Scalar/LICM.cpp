@@ -108,6 +108,9 @@ namespace {
     BasicBlock *Preheader;   // The preheader block of the current loop...
     Loop *CurLoop;           // The current loop we are working on...
     AliasSetTracker *CurAST; // AliasSet information for the current loop...
+    bool MayThrow;           // The current loop contains an instruction which
+                             // may throw, thus preventing code motion of
+                             // instructions with side effects.
     DenseMap<Loop*, AliasSetTracker*> LoopToAliasSetMap;
 
     /// cloneBasicBlockAnalysis - Simple Analysis hook. Clone alias set info.
@@ -239,6 +242,15 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
     if (LI->getLoopFor(BB) == L)        // Ignore blocks in subloops.
       CurAST->add(*BB);                 // Incorporate the specified basic block
   }
+
+  MayThrow = false;
+  // TODO: We've already searched for instructions which may throw in subloops.
+  // We may want to reuse this information.
+  for (Loop::block_iterator BB = L->block_begin(), BBE = L->block_end();
+       (BB != BBE) && !MayThrow ; ++BB)
+    for (BasicBlock::iterator I = (*BB)->begin(), E = (*BB)->end();
+         (I != E) && !MayThrow; ++I)
+      MayThrow |= I->mayThrow();
 
   // We want to visit all of the instructions in this loop... that are not parts
   // of our subloops (they have already had their invariants hoisted out of
@@ -418,17 +430,22 @@ bool LICM::canSinkOrHoistInst(Instruction &I) {
       if (!FoundMod) return true;
     }
 
-    // FIXME: This should use mod/ref information to see if we can hoist or sink
-    // the call.
+    // FIXME: This should use mod/ref information to see if we can hoist or
+    // sink the call.
 
     return false;
   }
 
-  // Otherwise these instructions are hoistable/sinkable
-  return isa<BinaryOperator>(I) || isa<CastInst>(I) ||
-         isa<SelectInst>(I) || isa<GetElementPtrInst>(I) || isa<CmpInst>(I) ||
-         isa<InsertElementInst>(I) || isa<ExtractElementInst>(I) ||
-         isa<ShuffleVectorInst>(I);
+  // Only these instructions are hoistable/sinkable.
+  bool HoistableKind = (isa<BinaryOperator>(I) || isa<CastInst>(I) ||
+                            isa<SelectInst>(I) || isa<GetElementPtrInst>(I) ||
+                            isa<CmpInst>(I)    || isa<InsertElementInst>(I) ||
+                            isa<ExtractElementInst>(I) ||
+                            isa<ShuffleVectorInst>(I));
+  if (!HoistableKind)
+      return false;
+
+  return isSafeToExecuteUnconditionally(I);
 }
 
 /// isNotUsedInLoop - Return true if the only users of this instruction are
@@ -604,6 +621,12 @@ bool LICM::isSafeToExecuteUnconditionally(Instruction &Inst) {
 }
 
 bool LICM::isGuaranteedToExecute(Instruction &Inst) {
+
+  // Somewhere in this loop there is an instruction which may throw and make us
+  // exit the loop.
+  if (MayThrow)
+    return false;
+
   // Otherwise we have to check to make sure that the instruction dominates all
   // of the exit blocks.  If it doesn't, then there is a path out of the loop
   // which does not execute this instruction, so we can't hoist it.
