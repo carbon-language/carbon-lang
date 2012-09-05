@@ -382,8 +382,8 @@ public:
     return RegionCriticalPSets;
   }
 
-  VLIWResourceModel *getTopResourceModel() { return TopResourceModel; };
-  VLIWResourceModel *getBotResourceModel() { return BotResourceModel; };
+  VLIWResourceModel *getTopResourceModel() { return TopResourceModel; }
+  VLIWResourceModel *getBotResourceModel() { return BotResourceModel; }
 
   /// getIssueWidth - Return the max instructions per scheduling group.
   unsigned getIssueWidth() const {
