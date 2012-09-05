@@ -1481,36 +1481,36 @@ ObjectFileMachO::ParseSymtab (bool minimize)
             FileSpec dsc_filespec(dsc_path, false);
 
             // We need definitions of two structures in the on-disk DSC, copy them here manually
-struct lldb_copy_dyld_cache_header
-{
-	char		magic[16];
-	uint32_t	mappingOffset;
-	uint32_t	mappingCount;
-	uint32_t	imagesOffset;
-	uint32_t	imagesCount;
-	uint64_t	dyldBaseAddress;
-	uint64_t	codeSignatureOffset;
-	uint64_t	codeSignatureSize;
-	uint64_t	slideInfoOffset;
-	uint64_t	slideInfoSize;
-	uint64_t	localSymbolsOffset;
-	uint64_t	localSymbolsSize;
-};
-struct lldb_copy_dyld_cache_local_symbols_info
-{
-        uint32_t        nlistOffset;
-        uint32_t        nlistCount;
-        uint32_t        stringsOffset;
-        uint32_t        stringsSize;
-        uint32_t        entriesOffset;
-        uint32_t        entriesCount;
-};
-struct lldb_copy_dyld_cache_local_symbols_entry
-{
-        uint32_t        dylibOffset;
-        uint32_t        nlistStartIndex;
-        uint32_t        nlistCount;
-};
+            struct lldb_copy_dyld_cache_header
+            {
+                char		magic[16];
+                uint32_t	mappingOffset;
+                uint32_t	mappingCount;
+                uint32_t	imagesOffset;
+                uint32_t	imagesCount;
+                uint64_t	dyldBaseAddress;
+                uint64_t	codeSignatureOffset;
+                uint64_t	codeSignatureSize;
+                uint64_t	slideInfoOffset;
+                uint64_t	slideInfoSize;
+                uint64_t	localSymbolsOffset;
+                uint64_t	localSymbolsSize;
+            };
+            struct lldb_copy_dyld_cache_local_symbols_info
+            {
+                    uint32_t        nlistOffset;
+                    uint32_t        nlistCount;
+                    uint32_t        stringsOffset;
+                    uint32_t        stringsSize;
+                    uint32_t        entriesOffset;
+                    uint32_t        entriesCount;
+            };
+            struct lldb_copy_dyld_cache_local_symbols_entry
+            {
+                    uint32_t        dylibOffset;
+                    uint32_t        nlistStartIndex;
+                    uint32_t        nlistCount;
+            };
 
             /* The dyld_cache_header has a pointer to the dyld_cache_local_symbols_info structure (localSymbolsOffset).
                The dyld_cache_local_symbols_info structure gives us three things:
@@ -1830,8 +1830,12 @@ struct lldb_copy_dyld_cache_local_symbols_entry
                                                                     m_nlist_idx_to_sym_idx[nlist_idx] = sym_idx - 1;
                                                                 }
                                                             }
+                                                            else
+                                                            {
+                                                                // This could be a relative path to a N_SO
+                                                                N_SO_index = sym_idx;
+                                                            }
                                                         }
-
                                                         break;
 
                                                     case StabObjectFileName:
@@ -2548,6 +2552,11 @@ struct lldb_copy_dyld_cache_local_symbols_entry
                                 add_nlist = false;
                                 m_nlist_idx_to_sym_idx[nlist_idx] = sym_idx - 1;
                             }
+                        }
+                        else
+                        {
+                            // This could be a relative path to a N_SO
+                            N_SO_index = sym_idx;
                         }
                     }
                     
