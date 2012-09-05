@@ -1967,7 +1967,7 @@ public:
                                    PartialDiagnostic PDiag,
                                    SourceLocation StringLoc,
                                    bool IsStringLocation, Range StringRange,
-                                   FixItHint Fixit = FixItHint());
+                            ArrayRef<FixItHint> Fixit = ArrayRef<FixItHint>());
 
 protected:
   bool HandleInvalidConversionSpecifier(unsigned argIndex, SourceLocation Loc,
@@ -1994,7 +1994,7 @@ protected:
   template <typename Range>
   void EmitFormatDiagnostic(PartialDiagnostic PDiag, SourceLocation StringLoc,
                             bool IsStringLocation, Range StringRange,
-                            FixItHint Fixit = FixItHint());
+                            ArrayRef<FixItHint> Fixit = ArrayRef<FixItHint>());
 
   void CheckPositionalAndNonpositionalArgs(
       const analyze_format_string::FormatSpecifier *FS);
@@ -2185,7 +2185,7 @@ void CheckFormatHandler::EmitFormatDiagnostic(PartialDiagnostic PDiag,
                                               SourceLocation Loc,
                                               bool IsStringLocation,
                                               Range StringRange,
-                                              FixItHint FixIt) {
+                                              ArrayRef<FixItHint> FixIt) {
   EmitFormatDiagnostic(S, inFunctionCall, Args[FormatIdx], PDiag,
                        Loc, IsStringLocation, StringRange, FixIt);
 }
@@ -2224,15 +2224,27 @@ void CheckFormatHandler::EmitFormatDiagnostic(Sema &S, bool InFunctionCall,
                                               SourceLocation Loc,
                                               bool IsStringLocation,
                                               Range StringRange,
-                                              FixItHint FixIt) {
-  if (InFunctionCall)
-    S.Diag(Loc, PDiag) << StringRange << FixIt;
-  else {
+                                              ArrayRef<FixItHint> FixIt) {
+  if (InFunctionCall) {
+    const Sema::SemaDiagnosticBuilder &D = S.Diag(Loc, PDiag);
+    D << StringRange;
+    for (ArrayRef<FixItHint>::iterator I = FixIt.begin(), E = FixIt.end();
+         I != E; ++I) {
+      D << *I;
+    }
+  } else {
     S.Diag(IsStringLocation ? ArgumentExpr->getExprLoc() : Loc, PDiag)
       << ArgumentExpr->getSourceRange();
-    S.Diag(IsStringLocation ? Loc : StringRange.getBegin(),
-           diag::note_format_string_defined)
-      << StringRange << FixIt;
+
+    const Sema::SemaDiagnosticBuilder &Note =
+      S.Diag(IsStringLocation ? Loc : StringRange.getBegin(),
+             diag::note_format_string_defined);
+
+    Note << StringRange;
+    for (ArrayRef<FixItHint>::iterator I = FixIt.begin(), E = FixIt.end();
+         I != E; ++I) {
+      Note << *I;
+    }
   }
 }
 
@@ -2585,6 +2597,30 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
   return checkFormatExpr(FS, startSpecifier, specifierLen, Arg);
 }
 
+static bool requiresParensToAddCast(const Expr *E) {
+  // FIXME: We should have a general way to reason about operator
+  // precedence and whether parens are actually needed here.
+  // Take care of a few common cases where they aren't.
+  const Expr *Inside = E->IgnoreImpCasts();
+  if (const PseudoObjectExpr *POE = dyn_cast<PseudoObjectExpr>(Inside))
+    Inside = POE->getSyntacticForm()->IgnoreImpCasts();
+
+  switch (Inside->getStmtClass()) {
+  case Stmt::ArraySubscriptExprClass:
+  case Stmt::CallExprClass:
+  case Stmt::DeclRefExprClass:
+  case Stmt::MemberExprClass:
+  case Stmt::ObjCIvarRefExprClass:
+  case Stmt::ObjCMessageExprClass:
+  case Stmt::ObjCPropertyRefExprClass:
+  case Stmt::ParenExprClass:
+  case Stmt::UnaryOperatorClass:
+    return false;
+  default:
+    return true;
+  }
+}
+
 bool
 CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
                                     const char *StartSpecifier,
@@ -2598,7 +2634,9 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
                                                     ObjCContext);
   if (!AT.isValid())
     return true;
-  if (AT.matchesType(S.Context, E->getType()))
+
+  QualType IntendedTy = E->getType();
+  if (AT.matchesType(S.Context, IntendedTy))
     return true;
 
   // Look through argument promotions for our error message's reported type.
@@ -2609,6 +2647,7 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
     if (ICE->getCastKind() == CK_IntegralCast ||
         ICE->getCastKind() == CK_FloatingCast) {
       E = ICE->getSubExpr();
+      IntendedTy = E->getType();
 
       // Check if we didn't match because of an implicit cast from a 'char'
       // or 'short' to an 'int'.  This is done because printf is a varargs
@@ -2616,15 +2655,28 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
       if (ICE->getType() == S.Context.IntTy ||
           ICE->getType() == S.Context.UnsignedIntTy) {
         // All further checking is done on the subexpression.
-        if (AT.matchesType(S.Context, E->getType()))
+        if (AT.matchesType(S.Context, IntendedTy))
           return true;
       }
     }
   }
 
+  if (S.Context.getTargetInfo().getTriple().isOSDarwin()) {
+    // Special-case some of Darwin's platform-independence types.
+    if (const TypedefType *UserTy = IntendedTy->getAs<TypedefType>()) {
+      StringRef Name = UserTy->getDecl()->getName();
+      IntendedTy = llvm::StringSwitch<QualType>(Name)
+        .Case("NSInteger", S.Context.LongTy)
+        .Case("NSUInteger", S.Context.UnsignedLongTy)
+        .Case("SInt32", S.Context.IntTy)
+        .Case("UInt32", S.Context.UnsignedIntTy)
+        .Default(IntendedTy);
+    }
+  }
+
   // We may be able to offer a FixItHint if it is a supported type.
   PrintfSpecifier fixedFS = FS;
-  bool success = fixedFS.fixType(E->getType(), S.getLangOpts(),
+  bool success = fixedFS.fixType(IntendedTy, S.getLangOpts(),
                                  S.Context, ObjCContext);
 
   if (success) {
@@ -2633,16 +2685,67 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
     llvm::raw_svector_ostream os(buf);
     fixedFS.toString(os);
 
-    EmitFormatDiagnostic(
-      S.PDiag(diag::warn_printf_conversion_argument_type_mismatch)
-        << AT.getRepresentativeTypeName(S.Context) << E->getType()
-        << E->getSourceRange(),
-      E->getLocStart(),
-      /*IsStringLocation*/false,
-      getSpecifierRange(StartSpecifier, SpecifierLen),
-      FixItHint::CreateReplacement(
-        getSpecifierRange(StartSpecifier, SpecifierLen),
-        os.str()));
+    CharSourceRange SpecRange = getSpecifierRange(StartSpecifier, SpecifierLen);
+
+    if (IntendedTy != E->getType()) {
+      // The canonical type for formatting this value is different from the
+      // actual type of the expression. (This occurs, for example, with Darwin's
+      // NSInteger on 32-bit platforms, where it is typedef'd as 'int', but
+      // should be printed as 'long' for 64-bit compatibility.)
+      // Rather than emitting a normal format/argument mismatch, we want to
+      // add a cast to the recommended type (and correct the format string
+      // if necessary).
+      SmallString<16> CastBuf;
+      llvm::raw_svector_ostream CastFix(CastBuf);
+      CastFix << "(";
+      IntendedTy.print(CastFix, S.Context.getPrintingPolicy());
+      CastFix << ")";
+
+      SmallVector<FixItHint,4> Hints;
+      if (!AT.matchesType(S.Context, IntendedTy))
+        Hints.push_back(FixItHint::CreateReplacement(SpecRange, os.str()));
+
+      if (const CStyleCastExpr *CCast = dyn_cast<CStyleCastExpr>(E)) {
+        // If there's already a cast present, just replace it.
+        SourceRange CastRange(CCast->getLParenLoc(), CCast->getRParenLoc());
+        Hints.push_back(FixItHint::CreateReplacement(CastRange, CastFix.str()));
+
+      } else if (!requiresParensToAddCast(E)) {
+        // If the expression has high enough precedence,
+        // just write the C-style cast.
+        Hints.push_back(FixItHint::CreateInsertion(E->getLocStart(),
+                                                   CastFix.str()));
+      } else {
+        // Otherwise, add parens around the expression as well as the cast.
+        CastFix << "(";
+        Hints.push_back(FixItHint::CreateInsertion(E->getLocStart(),
+                                                   CastFix.str()));
+
+        SourceLocation After = S.PP.getLocForEndOfToken(E->getLocEnd());
+        Hints.push_back(FixItHint::CreateInsertion(After, ")"));
+      }
+
+      // We extract the name from the typedef because we don't want to show
+      // the underlying type in the diagnostic.
+      const TypedefType *UserTy = cast<TypedefType>(E->getType());
+      StringRef Name = UserTy->getDecl()->getName();
+
+      // Finally, emit the diagnostic.
+      EmitFormatDiagnostic(S.PDiag(diag::warn_format_argument_needs_cast)
+                             << Name << IntendedTy
+                             << E->getSourceRange(),
+                           E->getLocStart(), /*IsStringLocation=*/false,
+                           SpecRange, Hints);
+    } else {
+      EmitFormatDiagnostic(
+        S.PDiag(diag::warn_printf_conversion_argument_type_mismatch)
+          << AT.getRepresentativeTypeName(S.Context) << IntendedTy
+          << E->getSourceRange(),
+        E->getLocStart(),
+        /*IsStringLocation*/false,
+        SpecRange,
+        FixItHint::CreateReplacement(SpecRange, os.str()));
+    }
   } else {
     const CharSourceRange &CSR = getSpecifierRange(StartSpecifier,
                                                    SpecifierLen);
