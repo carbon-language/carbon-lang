@@ -184,7 +184,7 @@ bool DescribeAddressIfStack(uptr addr, uptr access_size) {
   Printf("HINT: this may be a false positive if your program uses "
              "some custom stack unwind mechanism\n"
              "      (longjmp and C++ exceptions *are* supported)\n");
-  t->summary()->Announce();
+  DescribeThread(t->summary());
   return true;
 }
 
@@ -199,6 +199,26 @@ void DescribeAddress(uptr addr, uptr access_size) {
     return;
   // Assume it is a heap address.
   DescribeHeapAddress(addr, access_size);
+}
+
+// ------------------- Thread description -------------------- {{{1
+
+void DescribeThread(AsanThreadSummary *summary) {
+  CHECK(summary);
+  // No need to announce the main thread.
+  if (summary->tid() == 0 || summary->announced()) {
+    return;
+  }
+  summary->set_announced(true);
+  Printf("Thread T%d created by T%d here:\n",
+         summary->tid(), summary->parent_tid());
+  PrintStack(summary->stack());
+  // Recursively described parent thread if needed.
+  if (flags()->print_full_thread_history) {
+    AsanThreadSummary *parent_summary =
+        asanThreadRegistry().FindByTid(summary->parent_tid());
+    DescribeThread(parent_summary);
+  }
 }
 
 // -------------------- Different kinds of reports ----------------- {{{1
@@ -238,7 +258,7 @@ class ScopedInErrorReport {
     // Make sure the current thread is announced.
     AsanThread *curr_thread = asanThreadRegistry().GetCurrent();
     if (curr_thread) {
-      curr_thread->summary()->Announce();
+      DescribeThread(curr_thread->summary());
     }
     // Print memory stats.
     __asan_print_accumulated_stats();

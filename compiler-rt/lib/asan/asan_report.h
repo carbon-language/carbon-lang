@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "asan_internal.h"
+#include "asan_thread.h"
 #include "sanitizer/asan_interface.h"
 
 namespace __asan {
@@ -26,6 +27,8 @@ bool DescribeAddressIfShadow(uptr addr);
 bool DescribeAddressIfStack(uptr addr, uptr access_size);
 // Determines memory type on its own.
 void DescribeAddress(uptr addr, uptr access_size);
+
+void DescribeThread(AsanThreadSummary *summary);
 
 // Different kinds of error reports.
 void NORETURN ReportSIGSEGV(uptr pc, uptr sp, uptr bp, uptr addr);

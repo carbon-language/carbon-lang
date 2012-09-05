@@ -40,16 +40,12 @@ class AsanThreadSummary {
     }
     thread_ = 0;
   }
-  void Announce() {
-    if (tid_ == 0) return;  // no need to announce the main thread.
-    if (!announced_) {
-      announced_ = true;
-      Printf("Thread T%d created by T%d here:\n", tid_, parent_tid_);
-      PrintStack(&stack_);
-    }
-  }
   u32 tid() { return tid_; }
   void set_tid(u32 tid) { tid_ = tid; }
+  u32 parent_tid() { return parent_tid_; }
+  bool announced() { return announced_; }
+  void set_announced(bool announced) { announced_ = announced; }
+  StackTrace *stack() { return &stack_; }
   AsanThread *thread() { return thread_; }
   void set_thread(AsanThread *thread) { thread_ = thread; }
   static void TSDDtor(void *tsd);

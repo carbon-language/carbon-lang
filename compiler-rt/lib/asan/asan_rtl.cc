@@ -102,6 +102,7 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->disable_core, "disable_core");
   ParseFlag(str, &f->strip_path_prefix, "strip_path_prefix");
   ParseFlag(str, &f->allow_reexec, "allow_reexec");
+  ParseFlag(str, &f->print_full_thread_history, "print_full_thread_history");
 }
 
 extern "C" {
@@ -139,6 +140,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->disable_core = (__WORDSIZE == 64);
   f->strip_path_prefix = "";
   f->allow_reexec = true;
+  f->print_full_thread_history = true;
 
   // Override from user-specified string.
   ParseFlagsFromString(f, __asan_default_options());
