@@ -626,7 +626,7 @@ void SubtargetEmitter::EmitProcessorLookup(raw_ostream &OS) {
     // Emit as { "cpu", procinit },
     OS << "  { "
        << "\"" << Name << "\", "
-       << "(void *)&" << ProcModelName;
+       << "(const void *)&" << ProcModelName;
 
     OS << " }";
 

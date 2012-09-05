@@ -72,7 +72,7 @@ public:
 
   /// getSchedModelForCPU - Get the machine model of a CPU.
   ///
-  MCSchedModel *getSchedModelForCPU(StringRef CPU) const;
+  const MCSchedModel *getSchedModelForCPU(StringRef CPU) const;
 
   /// getInstrItineraryForCPU - Get scheduling itinerary of a CPU.
   ///

@@ -50,7 +50,7 @@ struct SubtargetFeatureKV {
 //
 struct SubtargetInfoKV {
   const char *Key;                      // K-V key string
-  void *Value;                          // K-V pointer value
+  const void *Value;                    // K-V pointer value
 
   // Compare routine for std binary search
   bool operator<(const SubtargetInfoKV &S) const {
@@ -96,8 +96,8 @@ public:
                           size_t FeatureTableSize);
 
   /// Get scheduling itinerary of a CPU.
-  void *getItinerary(const StringRef CPU,
-                     const SubtargetInfoKV *Table, size_t TableSize);
+  const void *getItinerary(const StringRef CPU,
+                           const SubtargetInfoKV *Table, size_t TableSize);
 
   /// Print feature string.
   void print(raw_ostream &OS) const;

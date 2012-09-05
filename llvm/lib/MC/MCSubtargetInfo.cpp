@@ -70,7 +70,7 @@ uint64_t MCSubtargetInfo::ToggleFeature(StringRef FS) {
 }
 
 
-MCSchedModel *
+const MCSchedModel *
 MCSubtargetInfo::getSchedModelForCPU(StringRef CPU) const {
   assert(ProcSchedModel && "Processor machine model not available!");
 
@@ -93,11 +93,11 @@ MCSubtargetInfo::getSchedModelForCPU(StringRef CPU) const {
     return &MCSchedModel::DefaultSchedModel;
   }
   assert(Found->Value && "Missing processor SchedModel value");
-  return (MCSchedModel *)Found->Value;
+  return (const MCSchedModel *)Found->Value;
 }
 
 InstrItineraryData
 MCSubtargetInfo::getInstrItineraryForCPU(StringRef CPU) const {
-  MCSchedModel *SchedModel = getSchedModelForCPU(CPU);
+  const MCSchedModel *SchedModel = getSchedModelForCPU(CPU);
   return InstrItineraryData(SchedModel, Stages, OperandCycles, ForwardingPaths);
 }

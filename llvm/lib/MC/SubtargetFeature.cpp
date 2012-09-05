@@ -337,9 +337,9 @@ uint64_t SubtargetFeatures::getFeatureBits(const StringRef CPU,
 }
 
 /// Get scheduling itinerary of a CPU.
-void *SubtargetFeatures::getItinerary(const StringRef CPU,
-                                      const SubtargetInfoKV *Table,
-                                      size_t TableSize) {
+const void *SubtargetFeatures::getItinerary(const StringRef CPU,
+                                            const SubtargetInfoKV *Table,
+                                            size_t TableSize) {
   assert(Table && "missing table");
 #ifndef NDEBUG
   for (size_t i = 1; i < TableSize; i++) {
