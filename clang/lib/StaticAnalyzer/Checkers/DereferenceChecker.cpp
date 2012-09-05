@@ -39,7 +39,7 @@ public:
                      CheckerContext &C) const;
   void checkBind(SVal L, SVal V, const Stmt *S, CheckerContext &C) const;
 
-  static const MemRegion *AddDerefSource(raw_ostream &os,
+  static void AddDerefSource(raw_ostream &os,
                              SmallVectorImpl<SourceRange> &Ranges,
                              const Expr *Ex, const ProgramState *state,
                              const LocationContext *LCtx,
@@ -47,7 +47,7 @@ public:
 };
 } // end anonymous namespace
 
-const MemRegion *
+void
 DereferenceChecker::AddDerefSource(raw_ostream &os,
                                    SmallVectorImpl<SourceRange> &Ranges,
                                    const Expr *Ex,
@@ -55,7 +55,6 @@ DereferenceChecker::AddDerefSource(raw_ostream &os,
                                    const LocationContext *LCtx,
                                    bool loadedFrom) {
   Ex = Ex->IgnoreParenLValueCasts();
-  const MemRegion *sourceR = 0;
   switch (Ex->getStmtClass()) {
     default:
       break;
@@ -65,7 +64,6 @@ DereferenceChecker::AddDerefSource(raw_ostream &os,
         os << " (" << (loadedFrom ? "loaded from" : "from")
            << " variable '" <<  VD->getName() << "')";
         Ranges.push_back(DR->getSourceRange());
-        sourceR = state->getLValue(VD, LCtx).getAsRegion();
       }
       break;
     }
@@ -78,7 +76,6 @@ DereferenceChecker::AddDerefSource(raw_ostream &os,
       break;
     }
   }
-  return sourceR;
 }
 
 void DereferenceChecker::reportBug(ProgramStateRef State, const Stmt *S,
@@ -101,8 +98,6 @@ void DereferenceChecker::reportBug(ProgramStateRef State, const Stmt *S,
   if (const Expr *expr = dyn_cast<Expr>(S))
     S = expr->IgnoreParenLValueCasts();
 
-  const MemRegion *sourceR = 0;
-
   if (IsBind) {
     if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(S)) {
       if (BO->isAssignmentOp())
@@ -120,8 +115,8 @@ void DereferenceChecker::reportBug(ProgramStateRef State, const Stmt *S,
     llvm::raw_svector_ostream os(buf);
     os << "Array access";
     const ArraySubscriptExpr *AE = cast<ArraySubscriptExpr>(S);
-    sourceR = AddDerefSource(os, Ranges, AE->getBase()->IgnoreParenCasts(),
-                             State.getPtr(), N->getLocationContext());
+    AddDerefSource(os, Ranges, AE->getBase()->IgnoreParenCasts(),
+                   State.getPtr(), N->getLocationContext());
     os << " results in a null pointer dereference";
     break;
   }
@@ -129,8 +124,8 @@ void DereferenceChecker::reportBug(ProgramStateRef State, const Stmt *S,
     llvm::raw_svector_ostream os(buf);
     os << "Dereference of null pointer";
     const UnaryOperator *U = cast<UnaryOperator>(S);
-    sourceR = AddDerefSource(os, Ranges, U->getSubExpr()->IgnoreParens(),
-                             State.getPtr(), N->getLocationContext(), true);
+    AddDerefSource(os, Ranges, U->getSubExpr()->IgnoreParens(),
+                   State.getPtr(), N->getLocationContext(), true);
     break;
   }
   case Stmt::MemberExprClass: {
@@ -139,8 +134,8 @@ void DereferenceChecker::reportBug(ProgramStateRef State, const Stmt *S,
       llvm::raw_svector_ostream os(buf);
       os << "Access to field '" << M->getMemberNameInfo()
          << "' results in a dereference of a null pointer";
-      sourceR = AddDerefSource(os, Ranges, M->getBase()->IgnoreParenCasts(),
-                               State.getPtr(), N->getLocationContext(), true);
+      AddDerefSource(os, Ranges, M->getBase()->IgnoreParenCasts(),
+                     State.getPtr(), N->getLocationContext(), true);
     }
     break;
   }
@@ -171,11 +166,6 @@ void DereferenceChecker::reportBug(ProgramStateRef State, const Stmt *S,
   for (SmallVectorImpl<SourceRange>::iterator
        I = Ranges.begin(), E = Ranges.end(); I!=E; ++I)
     report->addRange(*I);
-
-  if (sourceR) {
-    report->markInteresting(sourceR);
-    report->markInteresting(State->getRawSVal(loc::MemRegionVal(sourceR)));
-  }
 
   C.EmitReport(report);
 }
