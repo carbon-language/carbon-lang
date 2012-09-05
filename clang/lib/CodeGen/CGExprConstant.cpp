@@ -830,11 +830,11 @@ public:
     if (ILE->getType()->isArrayType())
       return EmitArrayInitialization(ILE);
 
-    if (ILE->getType()->isRecordType())
-      return EmitStructInitialization(ILE);
-
     if (ILE->getType()->isUnionType())
       return EmitUnionInitialization(ILE);
+
+    if (ILE->getType()->isRecordType())
+      return EmitStructInitialization(ILE);
 
     return 0;
   }
