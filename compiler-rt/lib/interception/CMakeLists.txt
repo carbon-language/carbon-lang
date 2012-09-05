@@ -13,7 +13,7 @@ if (APPLE)
   list(APPEND INTERCEPTION_SOURCES mach_override/mach_override.c)
 endif ()
 
-set(INTERCEPTION_CFLAGS -O3 ${SANITIZER_COMMON_CFLAGS})
+set(INTERCEPTION_CFLAGS ${SANITIZER_COMMON_CFLAGS})
 
 if(APPLE)
   # Build universal binary on APPLE.

@@ -46,6 +46,11 @@ set(ASAN_UNITTEST_INSTRUMENTED_CFLAGS
   ${ASAN_GTEST_INCLUDE_CFLAGS}
   -faddress-sanitizer
   -mllvm "-asan-blacklist=${CMAKE_CURRENT_SOURCE_DIR}/asan_test.ignore"
+  -mllvm -asan-stack=1
+  -mllvm -asan-globals=1
+  -mllvm -asan-mapping-scale=0        # default will be used
+  -mllvm -asan-mapping-offset-log=-1  # default will be used
+  -mllvm -asan-use-after-return=0
 )
 
 function(add_asan_test testsuite testname)

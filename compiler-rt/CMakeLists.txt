@@ -77,9 +77,12 @@ endfunction()
 # Provide some common commmandline flags for Sanitizer runtimes.
 set(SANITIZER_COMMON_CFLAGS
   -fPIC
+  -fno-builtin
   -fno-exceptions
+  -fomit-frame-pointer
   -funwind-tables
   -fvisibility=hidden
+  -O3
   )
 if(SUPPORTS_NO_VARIADIC_MACROS_FLAG)
   list(APPEND SANITIZER_COMMON_CFLAGS -Wno-variadic-macros)
@@ -88,6 +91,9 @@ check_cxx_compiler_flag(-Wno-c99-extensions
   SUPPORTS_NO_C99_EXTENSIONS_FLAG)
 if(SUPPORTS_NO_C99_EXTENSIONS_FLAG)
   list(APPEND SANITIZER_COMMON_CFLAGS -Wno-c99-extensions)
+endif()
+if(APPLE)
+  list(APPEND SANITIZER_COMMON_CFLAGS -mmacosx-version-min=10.5)
 endif()
 
 # Because compiler-rt spends a lot of time setting up custom compile flags,
