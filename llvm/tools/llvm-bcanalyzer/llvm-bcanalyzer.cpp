@@ -588,15 +588,13 @@ static int AnalyzeBitcode() {
       std::reverse(FreqPairs.begin(), FreqPairs.end());
 
       outs() << "\tRecord Histogram:\n";
-      outs() << "\t\t  Count    # Bits   Bytes-Per  %% Abv  Record Kind\n";
+      outs() << "\t\t  Count    # Bits   %% Abv  Record Kind\n";
       for (unsigned i = 0, e = FreqPairs.size(); i != e; ++i) {
         const PerRecordStats &RecStats = Stats.CodeFreq[FreqPairs[i].second];
 
-        outs() <<
-            format("\t\t%7d %9lu   %9.2f",
-                   RecStats.NumInstances,
-                   (unsigned long)RecStats.TotalBits,
-                   ((double)RecStats.TotalBits/RecStats.NumInstances)/8.0);
+        outs() << format("\t\t%7d %9.2f",
+                         RecStats.NumInstances,
+                         (unsigned long)RecStats.TotalBits);
 
         if (RecStats.NumAbbrev)
           outs() <<
