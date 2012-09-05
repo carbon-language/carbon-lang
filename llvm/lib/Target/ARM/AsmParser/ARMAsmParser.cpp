@@ -263,10 +263,10 @@ public:
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                                MCStreamer &Out);
 
-  unsigned GetMCInstOperandNum(unsigned Kind, MCInst &Inst,
+  unsigned getMCInstOperandNum(unsigned Kind, MCInst &Inst,
                            const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                                unsigned OperandNum, unsigned &NumMCOperands) {
-    return GetMCInstOperandNumImpl(Kind, Inst, Operands, OperandNum, NumMCOperands);
+    return getMCInstOperandNumImpl(Kind, Inst, Operands, OperandNum, NumMCOperands);
   }
 };
 } // end anonymous namespace

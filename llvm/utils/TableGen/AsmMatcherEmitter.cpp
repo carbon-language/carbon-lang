@@ -1701,7 +1701,7 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
   raw_string_ostream OpOS(OperandFnBody);
   // Start the operand number lookup function.
   OpOS << "unsigned " << Target.getName() << ClassName << "::\n"
-       << "GetMCInstOperandNumImpl(unsigned Kind, MCInst &Inst,\n"
+       << "getMCInstOperandNumImpl(unsigned Kind, MCInst &Inst,\n"
        << "                        const SmallVectorImpl<MCParsedAsmOperand*> "
        << "&Operands,\n                        unsigned OperandNum, unsigned "
        << "&NumMCOperands) {\n"
@@ -1722,7 +1722,7 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
        << "      break;\n"
        << "    case CVT_Tied:\n"
        << "      // FIXME: Tied operand calculation not supported.\n"
-       << "      assert (0 && \"GetMCInstOperandNumImpl() doesn't support tied operands, yet!\");\n"
+       << "      assert (0 && \"getMCInstOperandNumImpl() doesn't support tied operands, yet!\");\n"
        << "      break;\n";
 
   // Pre-populate the operand conversion kinds with the standard always
@@ -2599,7 +2599,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
      << "unsigned Opcode,\n"
      << "                          const SmallVectorImpl<MCParsedAsmOperand*> "
      << "&Operands);\n";
-  OS << "  unsigned GetMCInstOperandNumImpl(unsigned Kind, MCInst &Inst,\n     "
+  OS << "  unsigned getMCInstOperandNumImpl(unsigned Kind, MCInst &Inst,\n     "
      << "                              const "
      << "SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n                     "
      << "          unsigned OperandNum, unsigned &NumMCOperands);\n";

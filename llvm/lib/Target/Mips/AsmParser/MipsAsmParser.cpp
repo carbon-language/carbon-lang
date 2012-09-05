@@ -38,7 +38,7 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   OperandMatchResultTy parseMemOperand(SmallVectorImpl<MCParsedAsmOperand*>&);
 
-  unsigned GetMCInstOperandNum(unsigned Kind, MCInst &Inst,
+  unsigned getMCInstOperandNum(unsigned Kind, MCInst &Inst,
                     const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                                unsigned OperandNum, unsigned &NumMCOperands);
 
@@ -102,12 +102,12 @@ public:
 }
 
 unsigned MipsAsmParser::
-GetMCInstOperandNum(unsigned Kind, MCInst &Inst,
+getMCInstOperandNum(unsigned Kind, MCInst &Inst,
                     const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                     unsigned OperandNum, unsigned &NumMCOperands) {
-  assert (0 && "GetMCInstOperandNum() not supported by the Mips target.");
+  assert (0 && "getMCInstOperandNum() not supported by the Mips target.");
   // The Mips backend doesn't currently include the matcher implementation, so
-  // the GetMCInstOperandNumImpl() is undefined.  This is a temporary
+  // the getMCInstOperandNumImpl() is undefined.  This is a temporary
   // work around.
   NumMCOperands = 0;
   return 0;
