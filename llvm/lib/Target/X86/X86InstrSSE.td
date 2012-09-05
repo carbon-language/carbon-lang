@@ -268,6 +268,7 @@ def : Pat<(v16i8 (extract_subvector (v32i8 VR256:$src), (i32 0))),
 
 // A 128-bit subvector insert to the first 256-bit vector position
 // is a subregister copy that needs no instruction.
+let AddedComplexity = 25 in { // to give priority over vinsertf128rm
 def : Pat<(insert_subvector undef, (v2i64 VR128:$src), (i32 0)),
           (INSERT_SUBREG (v4i64 (IMPLICIT_DEF)), VR128:$src, sub_xmm)>;
 def : Pat<(insert_subvector undef, (v2f64 VR128:$src), (i32 0)),
@@ -280,6 +281,7 @@ def : Pat<(insert_subvector undef, (v8i16 VR128:$src), (i32 0)),
           (INSERT_SUBREG (v16i16 (IMPLICIT_DEF)), VR128:$src, sub_xmm)>;
 def : Pat<(insert_subvector undef, (v16i8 VR128:$src), (i32 0)),
           (INSERT_SUBREG (v32i8 (IMPLICIT_DEF)), VR128:$src, sub_xmm)>;
+}
 
 // Implicitly promote a 32-bit scalar to a vector.
 def : Pat<(v4f32 (scalar_to_vector FR32:$src)),
@@ -1017,48 +1019,6 @@ let Predicates = [HasAVX] in {
             (VMOVUPSYmr addr:$dst, VR256:$src)>;
   def : Pat<(store (v32i8 VR256:$src), addr:$dst),
             (VMOVUPSYmr addr:$dst, VR256:$src)>;
-
-  // Special patterns for handling subvector inserts folded with loads
-  def : Pat<(insert_subvector undef, (alignedloadv4f32 addr:$src), (i32 0)),
-            (INSERT_SUBREG (v8f32 (IMPLICIT_DEF)),
-                           (v4f32 (VMOVAPSrm addr:$src)), sub_xmm)>;
-  def : Pat<(insert_subvector undef, (alignedloadv2f64 addr:$src), (i32 0)),
-            (INSERT_SUBREG (v4f64 (IMPLICIT_DEF)),
-                           (v2f64 (VMOVAPDrm addr:$src)), sub_xmm)>;
-  def : Pat<(insert_subvector undef, (alignedloadv2i64 addr:$src), (i32 0)),
-            (INSERT_SUBREG (v4i64 (IMPLICIT_DEF)),
-                           (v2i64 (VMOVAPSrm addr:$src)), sub_xmm)>;
-  def : Pat<(insert_subvector undef,
-             (bc_v4i32 (alignedloadv2i64 addr:$src)), (i32 0)),
-            (INSERT_SUBREG (v8i32 (IMPLICIT_DEF)),
-                           (v4i32 (VMOVAPSrm addr:$src)), sub_xmm)>;
-  def : Pat<(insert_subvector undef,
-             (bc_v8i16 (alignedloadv2i64 addr:$src)), (i32 0)),
-            (INSERT_SUBREG (v16i16 (IMPLICIT_DEF)),
-                           (v8i16 (VMOVAPSrm addr:$src)), sub_xmm)>;
-  def : Pat<(insert_subvector undef,
-             (bc_v16i8 (alignedloadv2i64 addr:$src)), (i32 0)),
-            (INSERT_SUBREG (v32i8 (IMPLICIT_DEF)),
-                           (v16i8 (VMOVAPSrm addr:$src)), sub_xmm)>;
-
-  def : Pat<(insert_subvector undef, (loadv4f32 addr:$src), (i32 0)),
-            (INSERT_SUBREG (v8f32 (IMPLICIT_DEF)),
-                           (v4f32 (VMOVUPSrm addr:$src)), sub_xmm)>;
-  def : Pat<(insert_subvector undef, (loadv2f64 addr:$src), (i32 0)),
-            (INSERT_SUBREG (v4f64 (IMPLICIT_DEF)),
-                           (v2f64 (VMOVUPDrm addr:$src)), sub_xmm)>;
-  def : Pat<(insert_subvector undef, (loadv2i64 addr:$src), (i32 0)),
-            (INSERT_SUBREG (v4i64 (IMPLICIT_DEF)),
-                           (v2i64 (VMOVUPSrm addr:$src)), sub_xmm)>;
-  def : Pat<(insert_subvector undef, (bc_v4i32 (loadv2i64 addr:$src)), (i32 0)),
-            (INSERT_SUBREG (v8i32 (IMPLICIT_DEF)),
-                           (v4i32 (VMOVUPSrm addr:$src)), sub_xmm)>;
-  def : Pat<(insert_subvector undef, (bc_v8i16 (loadv2i64 addr:$src)), (i32 0)),
-            (INSERT_SUBREG (v16i16 (IMPLICIT_DEF)),
-                           (v8i16 (VMOVUPSrm addr:$src)), sub_xmm)>;
-  def : Pat<(insert_subvector undef, (bc_v16i8 (loadv2i64 addr:$src)), (i32 0)),
-            (INSERT_SUBREG (v32i8 (IMPLICIT_DEF)),
-                           (v16i8 (VMOVUPSrm addr:$src)), sub_xmm)>;
 }
 
 // Use movaps / movups for SSE integer load / store (one byte shorter).
