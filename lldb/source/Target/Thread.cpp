@@ -417,9 +417,6 @@ Thread::ShouldStop (Event* event_ptr)
         return false;
     }
     
-    // Adjust the stack frame's current inlined depth if it is needed.
-    GetStackFrameList()->CalculateCurrentInlinedDepth();
-    
     if (log)
     {
         log->Printf ("Thread::%s for tid = 0x%4.4llx, pc = 0x%16.16llx", 
@@ -446,6 +443,13 @@ Thread::ShouldStop (Event* event_ptr)
             log->Printf ("StopInfo::ShouldStop async callback says we should not stop, returning ShouldStop of false.");
         return false;
     }
+
+    // If we've already been restarted, don't query the plans since the state they would examine is not current.
+    if (Process::ProcessEventData::GetRestartedFromEvent(event_ptr))
+        return false;
+
+    // Before the plans see the state of the world, calculate the current inlined depth.
+    GetStackFrameList()->CalculateCurrentInlinedDepth();
 
     // If the base plan doesn't understand why we stopped, then we have to find a plan that does.
     // If that plan is still working, then we don't need to do any more work.  If the plan that explains 
