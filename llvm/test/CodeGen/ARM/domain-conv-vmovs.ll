@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a9 -mattr=+neon,+neonfp -float-abi=hard < %s | FileCheck %s
+; RUN: llc -verify-machineinstrs -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a9 -mattr=+neon,+neonfp -float-abi=hard < %s | FileCheck %s
 
 define <2 x float> @test_vmovs_via_vext_lane0to0(float %arg, <2 x float> %in) {
 ; CHECK: test_vmovs_via_vext_lane0to0:
@@ -62,3 +62,23 @@ define float @test_vmovs_via_vdup(float, float %ret, float %lhs, float %rhs) {
   ret float %res
 }
 
+declare float @llvm.sqrt.f32(float)
+
+declare void @bar()
+
+; This is a comp
+define float @test_ineligible(float, float %in) {
+; CHECK: test_ineligible:
+
+  %sqrt = call float @llvm.sqrt.f32(float %in)
+  %val = fadd float %sqrt, %sqrt
+
+  ; This call forces a move from a callee-saved register to the return-reg. That
+  ; move is not eligible for conversion to a d-register instructions because the
+  ; use-def chains would be messed up. Primarily a compile-test (we used to
+  ; internal fault).
+  call void @bar()
+; CHECL: bl bar
+; CHECK: vmov.f32 {{s[0-9]+}}, {{s[0-9]+}}
+  ret float %val
+}

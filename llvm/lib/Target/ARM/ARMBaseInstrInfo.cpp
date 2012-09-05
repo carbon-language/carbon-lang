@@ -3479,9 +3479,6 @@ ARMBaseInstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
       DstReg = MI->getOperand(0).getReg();
       SrcReg = MI->getOperand(1).getReg();
 
-      for (unsigned i = MI->getDesc().getNumOperands(); i; --i)
-        MI->RemoveOperand(i-1);
-
       DReg = getCorrespondingDRegAndLane(TRI, DstReg, Lane);
 
       // If we insert both a novel <def> and an <undef> on the DReg, we break
@@ -3490,6 +3487,9 @@ ARMBaseInstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
       // the transformation.
       if (!MI->definesRegister(DReg, TRI) && !MI->readsRegister(DReg, TRI))
           break;
+
+      for (unsigned i = MI->getDesc().getNumOperands(); i; --i)
+        MI->RemoveOperand(i-1);
 
       // Convert to %DDst = VSETLNi32 %DDst, %RSrc, Lane, 14, %noreg (; imps)
       // Again DDst may be undefined at the beginning of this instruction.
@@ -3512,9 +3512,6 @@ ARMBaseInstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
       DstReg = MI->getOperand(0).getReg();
       SrcReg = MI->getOperand(1).getReg();
 
-      for (unsigned i = MI->getDesc().getNumOperands(); i; --i)
-        MI->RemoveOperand(i-1);
-
       unsigned DstLane = 0, SrcLane = 0, DDst, DSrc;
       DDst = getCorrespondingDRegAndLane(TRI, DstReg, DstLane);
       DSrc = getCorrespondingDRegAndLane(TRI, SrcReg, SrcLane);
@@ -3525,6 +3522,9 @@ ARMBaseInstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
       // the transformation.
       if (!MI->definesRegister(DDst, TRI) && !MI->readsRegister(DDst, TRI))
           break;
+
+      for (unsigned i = MI->getDesc().getNumOperands(); i; --i)
+        MI->RemoveOperand(i-1);
 
       if (DSrc == DDst) {
         // Destination can be:
