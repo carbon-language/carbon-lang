@@ -256,6 +256,8 @@ void trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S, BugReport &R);
 const Stmt *GetDerefExpr(const ExplodedNode *N);
 const Stmt *GetDenomExpr(const ExplodedNode *N);
 const Stmt *GetRetValExpr(const ExplodedNode *N);
+bool isDeclRefExprToReference(const Expr *E);
+
 
 } // end namespace clang
 } // end namespace ento

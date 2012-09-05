@@ -31,6 +31,13 @@ using namespace ento;
 // Utility functions.
 //===----------------------------------------------------------------------===//
 
+bool bugreporter::isDeclRefExprToReference(const Expr *E) {
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
+    return DRE->getDecl()->getType()->isReferenceType();
+  }
+  return false;
+}
+
 const Stmt *bugreporter::GetDerefExpr(const ExplodedNode *N) {
   // Pattern match for a few useful cases (do something smarter later):
   //   a[0], p->f, *p
@@ -54,7 +61,7 @@ const Stmt *bugreporter::GetDerefExpr(const ExplodedNode *N) {
         return U->getSubExpr()->IgnoreParenCasts();
     }
     else if (const MemberExpr *ME = dyn_cast<MemberExpr>(S)) {
-      if (ME->isArrow()) {
+      if (ME->isArrow() || isDeclRefExprToReference(ME->getBase())) {
         return ME->getBase()->IgnoreParenCasts();
       }
     }

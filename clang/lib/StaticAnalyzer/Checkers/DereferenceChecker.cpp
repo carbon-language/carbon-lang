@@ -130,7 +130,7 @@ void DereferenceChecker::reportBug(ProgramStateRef State, const Stmt *S,
   }
   case Stmt::MemberExprClass: {
     const MemberExpr *M = cast<MemberExpr>(S);
-    if (M->isArrow()) {
+    if (M->isArrow() || bugreporter::isDeclRefExprToReference(M->getBase())) {
       llvm::raw_svector_ostream os(buf);
       os << "Access to field '" << M->getMemberNameInfo()
          << "' results in a dereference of a null pointer";
