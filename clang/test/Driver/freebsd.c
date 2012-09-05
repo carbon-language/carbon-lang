@@ -1,4 +1,4 @@
-// REQUIRES: ppc32-registered-target,ppc64-registered-target
+// REQUIRES: ppc32-registered-target,ppc64-registered-target,mips-registered-target
 // RUN: %clang -ccc-clang-archs powerpc -no-canonical-prefixes \
 // RUN:   -target powerpc-pc-freebsd8 %s    \
 // RUN:   --sysroot=%S/Inputs/basic_freebsd_tree -### 2>&1 \
@@ -43,6 +43,34 @@
 // CHECK-LDFLAGS8: --enable-new-dtags
 // CHECK-LDFLAGS9: --hash-style=both
 // CHECK-LDFLAGS9: --enable-new-dtags
+//
+// Check that we do not pass --hash-style=gnu and --hash-style=both to linker
+// and provide correct path to the dynamic linker for MIPS platforms.
+// Also verify that we tell the assembler to target the right ISA and ABI.
+// RUN: %clang %s -### -o %t.o 2>&1 \
+// RUN:     -target mips-unknown-freebsd10.0 -ccc-clang-archs mips \
+// RUN:   | FileCheck --check-prefix=CHECK-MIPS %s
+// CHECK-MIPS: "{{.*}}ld"
+// CHECK-MIPS: "-dynamic-linker" "{{.*}}/libexec/ld-elf.so.1"
+// CHECK-MIPS-NOT: "--hash-style={{gnu|both}}"
+// RUN: %clang %s -### -o %t.o 2>&1 \
+// RUN:     -target mipsel-unknown-freebsd10.0 -ccc-clang-archs mipsel \
+// RUN:   | FileCheck --check-prefix=CHECK-MIPSEL %s
+// CHECK-MIPSEL: "{{.*}}ld"
+// CHECK-MIPSEL: "-dynamic-linker" "{{.*}}/libexec/ld-elf.so.1"
+// CHECK-MIPSEL-NOT: "--hash-style={{gnu|both}}"
+// RUN: %clang %s -### -o %t.o 2>&1 \
+// RUN:     -target mips64-unknown-freebsd10.0 -ccc-clang-archs mips64 \
+// RUN:   | FileCheck --check-prefix=CHECK-MIPS64 %s
+// CHECK-MIPS64: "{{.*}}ld"
+// CHECK-MIPS64: "-dynamic-linker" "{{.*}}/libexec/ld-elf.so.1"
+// CHECK-MIPS64-NOT: "--hash-style={{gnu|both}}"
+// RUN: %clang %s -### -o %t.o 2>&1 \
+// RUN:     -target mips64el-unknown-freebsd10.0 -ccc-clang-archs mips64el \
+// RUN:   | FileCheck --check-prefix=CHECK-MIPS64EL %s
+// CHECK-MIPS64EL: "{{.*}}ld"
+// CHECK-MIPS64EL: "-dynamic-linker" "{{.*}}/libexec/ld-elf.so.1"
+// CHECK-MIPS64EL-NOT: "--hash-style={{gnu|both}}"
 
 // RUN: %clang -no-canonical-prefixes -target x86_64-pc-freebsd8 -static %s \
 // RUN:   --sysroot=%S/Inputs/multiarch_freebsd64_tree -### 2>&1 \
