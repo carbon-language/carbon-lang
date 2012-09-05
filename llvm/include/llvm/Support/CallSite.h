@@ -81,7 +81,7 @@ public:
   InstrTy *operator->() const { return I.getPointer(); }
   operator bool() const { return I.getPointer(); }
 
-  /// getCalledValue - Return the pointer to function that is being called...
+  /// getCalledValue - Return the pointer to function that is being called.
   ///
   ValTy *getCalledValue() const {
     assert(getInstruction() && "Not a call or invoke instruction!");
@@ -95,7 +95,7 @@ public:
     return dyn_cast<FunTy>(getCalledValue());
   }
 
-  /// setCalledFunction - Set the callee to the specified value...
+  /// setCalledFunction - Set the callee to the specified value.
   ///
   void setCalledFunction(Value *V) {
     assert(getInstruction() && "Not a call or invoke instruction!");
@@ -130,7 +130,7 @@ public:
   }
 
   /// arg_iterator - The type of iterator to use when looping over actual
-  /// arguments at this call site...
+  /// arguments at this call site.
   typedef IterTy arg_iterator;
 
   /// arg_begin/arg_end - Return iterators corresponding to the actual argument
