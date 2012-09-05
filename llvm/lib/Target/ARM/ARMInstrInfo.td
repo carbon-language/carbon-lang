@@ -4016,48 +4016,6 @@ def MVNCCi : ARMPseudoInst<(outs GPR:$Rd),
  [/*(set GPR:$Rd, (ARMcmov GPR:$false, so_imm_not:$imm, imm:$cc, CCR:$ccr))*/]>,
                 RegConstraint<"$false = $Rd">;
 
-// Conditional instructions
-multiclass AsI1_bincc_irs<Instruction iri, Instruction irr, Instruction irsi,
-                          Instruction irsr,
-                          InstrItinClass iii, InstrItinClass iir,
-                          InstrItinClass iis> {
-  def ri  : ARMPseudoExpand<(outs GPR:$Rd),
-                            (ins GPR:$Rfalse, GPR:$Rn, so_imm:$imm,
-                                 pred:$p, cc_out:$s),
-                            4, iii, [],
-                       (iri GPR:$Rd, GPR:$Rn, so_imm:$imm, pred:$p, cc_out:$s)>,
-                            RegConstraint<"$Rfalse = $Rd">;
-  def rr  : ARMPseudoExpand<(outs GPR:$Rd),
-                            (ins GPR:$Rfalse, GPR:$Rn, GPR:$Rm,
-                                 pred:$p, cc_out:$s),
-                            4, iir, [],
-                           (irr GPR:$Rd, GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s)>,
-                            RegConstraint<"$Rfalse = $Rd">;
-  def rsi : ARMPseudoExpand<(outs GPR:$Rd),
-                            (ins GPR:$Rfalse, GPR:$Rn, so_reg_imm:$shift,
-                                 pred:$p, cc_out:$s),
-                            4, iis, [],
-                (irsi GPR:$Rd, GPR:$Rn, so_reg_imm:$shift, pred:$p, cc_out:$s)>,
-                            RegConstraint<"$Rfalse = $Rd">;
-  def rsr : ARMPseudoExpand<(outs GPRnopc:$Rd),
-                           (ins GPRnopc:$Rfalse, GPRnopc:$Rn, so_reg_reg:$shift,
-                                pred:$p, cc_out:$s),
-                            4, iis, [],
-                (irsr GPR:$Rd, GPR:$Rn, so_reg_reg:$shift, pred:$p, cc_out:$s)>,
-                            RegConstraint<"$Rfalse = $Rd">;
-}
-
-defm ANDCC : AsI1_bincc_irs<ANDri, ANDrr, ANDrsi, ANDrsr,
-                            IIC_iBITi, IIC_iBITr, IIC_iBITsr>;
-defm ORRCC : AsI1_bincc_irs<ORRri, ORRrr, ORRrsi, ORRrsr,
-                            IIC_iBITi, IIC_iBITr, IIC_iBITsr>;
-defm EORCC : AsI1_bincc_irs<EORri, EORrr, EORrsi, EORrsr,
-                            IIC_iBITi, IIC_iBITr, IIC_iBITsr>;
-defm ADDCC : AsI1_bincc_irs<ADDri, ADDrr, ADDrsi, ADDrsr,
-                            IIC_iBITi, IIC_iBITr, IIC_iBITsr>;
-defm SUBCC : AsI1_bincc_irs<SUBri, SUBrr, SUBrsi, SUBrsr,
-                            IIC_iBITi, IIC_iBITr, IIC_iBITsr>;
-
 } // neverHasSideEffects
 
 
