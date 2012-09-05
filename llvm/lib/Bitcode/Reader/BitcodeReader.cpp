@@ -1246,6 +1246,7 @@ bool BitcodeReader::ParseConstants() {
       break;
     }
     // This maintains backward compatibility, pre-'nsdialect'.
+    // FIXME: Remove with the 4.0 release.
     case bitc::CST_CODE_INLINEASM_OLD: {
       if (Record.size() < 2) return Error("Invalid INLINEASM record");
       std::string AsmStr, ConstrStr;
