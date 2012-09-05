@@ -17,6 +17,7 @@
 #define LLVM_CODEGEN_ASMPRINTER_H
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/InlineAsm.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 
@@ -460,7 +461,8 @@ namespace llvm {
     mutable unsigned SetCounter;
 
     /// EmitInlineAsm - Emit a blob of inline asm to the output streamer.
-    void EmitInlineAsm(StringRef Str, const MDNode *LocMDNode = 0) const;
+    void EmitInlineAsm(StringRef Str, const MDNode *LocMDNode = 0,
+                    InlineAsm::AsmDialect AsmDialect = InlineAsm::AD_ATT) const;
 
     /// EmitInlineAsm - This method formats and emits the specified machine
     /// instruction that is an inline asm.

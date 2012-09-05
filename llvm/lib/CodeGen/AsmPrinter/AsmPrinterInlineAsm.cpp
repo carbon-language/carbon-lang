@@ -68,7 +68,8 @@ static void SrcMgrDiagHandler(const SMDiagnostic &Diag, void *diagInfo) {
 }
 
 /// EmitInlineAsm - Emit a blob of inline asm to the output streamer.
-void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode) const {
+void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode,
+                               InlineAsm::AsmDialect Dialect) const {
   assert(!Str.empty() && "Can't emit empty inline asm block");
 
   // Remember if the buffer is nul terminated or not so we can avoid a copy.
@@ -126,6 +127,7 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode) const {
   if (!TAP)
     report_fatal_error("Inline asm not supported by this streamer because"
                        " we don't have an asm parser for this target\n");
+  Parser->setAssemblerDialect(Dialect);
   Parser->setTargetParser(*TAP.get());
 
   // Don't implicitly switch to the text section before the asm.
@@ -363,7 +365,7 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
     }
   }
   OS << '\n' << (char)0;  // null terminate string.
-  EmitInlineAsm(OS.str(), LocMD);
+  EmitInlineAsm(OS.str(), LocMD, MI->getInlineAsmDialect());
 
   // Emit the #NOAPP end marker.  This has to happen even if verbose-asm isn't
   // enabled, so we use EmitRawText.
