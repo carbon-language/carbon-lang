@@ -25,6 +25,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/DenseMapInfo.h"
+#include "llvm/InlineAsm.h"
 #include "llvm/Support/DebugLoc.h"
 #include <vector>
 
@@ -610,6 +611,7 @@ public:
   bool isImplicitDef() const { return getOpcode()==TargetOpcode::IMPLICIT_DEF; }
   bool isInlineAsm() const { return getOpcode() == TargetOpcode::INLINEASM; }
   bool isStackAligningInlineAsm() const;
+  InlineAsm::AsmDialect getInlineAsmDialect() const;
   bool isInsertSubreg() const {
     return getOpcode() == TargetOpcode::INSERT_SUBREG;
   }

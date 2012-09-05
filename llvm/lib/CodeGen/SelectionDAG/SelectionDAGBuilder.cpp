@@ -6078,12 +6078,16 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
   const MDNode *SrcLoc = CS.getInstruction()->getMetadata("srcloc");
   AsmNodeOperands.push_back(DAG.getMDNode(SrcLoc));
 
-  // Remember the HasSideEffect and AlignStack bits as operand 3.
+  // Remember the HasSideEffect, AlignStack and AsmDialect bits as operand 3.
   unsigned ExtraInfo = 0;
   if (IA->hasSideEffects())
     ExtraInfo |= InlineAsm::Extra_HasSideEffects;
   if (IA->isAlignStack())
     ExtraInfo |= InlineAsm::Extra_IsAlignStack;
+  if (IA->getDialect() == InlineAsm::Extra_ATTDialect)
+    ExtraInfo |= InlineAsm::Extra_ATTDialect;
+  if (IA->getDialect() == InlineAsm::Extra_IntelDialect)
+    ExtraInfo |= InlineAsm::Extra_IntelDialect;
   AsmNodeOperands.push_back(DAG.getTargetConstant(ExtraInfo,
                                                   TLI.getPointerTy()));
 

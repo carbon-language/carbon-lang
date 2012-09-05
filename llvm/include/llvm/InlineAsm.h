@@ -203,17 +203,19 @@ public:
     Op_InputChain = 0,
     Op_AsmString = 1,
     Op_MDNode = 2,
-    Op_ExtraInfo = 3,    // HasSideEffects, IsAlignStack
+    Op_ExtraInfo = 3,    // HasSideEffects, IsAlignStack, AsmDialect.
     Op_FirstOperand = 4,
 
     // Fixed operands on an INLINEASM MachineInstr.
     MIOp_AsmString = 0,
-    MIOp_ExtraInfo = 1,    // HasSideEffects, IsAlignStack
+    MIOp_ExtraInfo = 1,    // HasSideEffects, IsAlignStack, AsmDialect.
     MIOp_FirstOperand = 2,
 
     // Interpretation of the MIOp_ExtraInfo bit field.
     Extra_HasSideEffects = 1,
     Extra_IsAlignStack = 2,
+    Extra_ATTDialect = 3,   // AT&T AsmDialect.
+    Extra_IntelDialect = 4, // Intel AsmDialect.
 
     // Inline asm operands map to multiple SDNode / MachineInstr operands.
     // The first operand is an immediate describing the asm operand, the low
