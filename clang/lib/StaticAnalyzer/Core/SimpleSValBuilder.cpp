@@ -918,14 +918,8 @@ SVal SimpleSValBuilder::evalBinOpLN(ProgramStateRef state,
     else if (isa<SubRegion>(region)) {
       superR = region;
       index = rhs;
-      if (const PointerType *PT = resultTy->getAs<PointerType>()) {
-        elementType = PT->getPointeeType();
-      }
-      else {
-        const ObjCObjectPointerType *OT =
-          resultTy->getAs<ObjCObjectPointerType>();
-        elementType = OT->getPointeeType();
-      }
+      if (resultTy->isAnyPointerType())
+        elementType = resultTy->getPointeeType();
     }
 
     if (NonLoc *indexV = dyn_cast<NonLoc>(&index)) {

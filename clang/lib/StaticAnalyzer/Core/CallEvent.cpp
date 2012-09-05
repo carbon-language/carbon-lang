@@ -61,7 +61,7 @@ static bool isCallbackArg(SVal V, QualType T) {
   // Check if a callback is passed inside a struct (for both, struct passed by
   // reference and by value). Dig just one level into the struct for now.
 
-  if (isa<PointerType>(T) || isa<ReferenceType>(T))
+  if (T->isAnyPointerType() || T->isReferenceType())
     T = T->getPointeeType();
 
   if (const RecordType *RT = T->getAsStructureType()) {
@@ -408,6 +408,8 @@ RuntimeDefinition CXXInstanceCall::getRuntimeDefinition() const {
 
   // Is the type a C++ class? (This is mostly a defensive check.)
   QualType RegionType = DynType.getType()->getPointeeType();
+  assert(!RegionType.isNull() && "DynamicTypeInfo should always be a pointer.");
+
   const CXXRecordDecl *RD = RegionType->getAsCXXRecordDecl();
   if (!RD || !RD->hasDefinition())
     return RuntimeDefinition();

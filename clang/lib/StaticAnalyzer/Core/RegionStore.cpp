@@ -1575,12 +1575,8 @@ StoreRef RegionStoreManager::Bind(Store store, Loc L, SVal V) {
     // Binding directly to a symbolic region should be treated as binding
     // to element 0.
     QualType T = SR->getSymbol()->getType(Ctx);
-
-    // FIXME: Is this the right way to handle symbols that are references?
-    if (const PointerType *PT = T->getAs<PointerType>())
-      T = PT->getPointeeType();
-    else
-      T = T->getAs<ReferenceType>()->getPointeeType();
+    if (T->isAnyPointerType() || T->isReferenceType())
+      T = T->getPointeeType();
 
     R = GetElementZeroRegion(SR, T);
   }
