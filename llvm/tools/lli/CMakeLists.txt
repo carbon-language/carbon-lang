@@ -19,4 +19,6 @@ endif( LLVM_USE_INTEL_JITEVENTS )
 
 add_llvm_tool(lli
   lli.cpp
+  RecordingMemoryManager.cpp
+  RemoteTarget.cpp
   )
