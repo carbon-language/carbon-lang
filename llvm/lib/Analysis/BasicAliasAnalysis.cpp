@@ -419,13 +419,7 @@ namespace {
   /// BasicAliasAnalysis - This is the primary alias analysis implementation.
   struct BasicAliasAnalysis : public ImmutablePass, public AliasAnalysis {
     static char ID; // Class identification, replacement for typeinfo
-    BasicAliasAnalysis() : ImmutablePass(ID),
-                           // AliasCache rarely has more than 1 or 2 elements,
-                           // so start it off fairly small so that clear()
-                           // doesn't have to tromp through 64 (the default)
-                           // elements on each alias query. This really wants
-                           // something like a SmallDenseMap.
-                           AliasCache(8) {
+    BasicAliasAnalysis() : ImmutablePass(ID) {
       initializeBasicAliasAnalysisPass(*PassRegistry::getPassRegistry());
     }
 
@@ -445,7 +439,11 @@ namespace {
              "BasicAliasAnalysis doesn't support interprocedural queries.");
       AliasResult Alias = aliasCheck(LocA.Ptr, LocA.Size, LocA.TBAATag,
                                      LocB.Ptr, LocB.Size, LocB.TBAATag);
-      AliasCache.clear();
+      // AliasCache rarely has more than 1 or 2 elements, always use
+      // shrink_and_clear so it quickly returns to the inline capacity of the
+      // SmallDenseMap if it ever grows larger.
+      // FIXME: This should really be shrink_to_inline_capacity_and_clear().
+      AliasCache.shrink_and_clear();
       return Alias;
     }
 
@@ -483,7 +481,7 @@ namespace {
   private:
     // AliasCache - Track alias queries to guard against recursion.
     typedef std::pair<Location, Location> LocPair;
-    typedef DenseMap<LocPair, AliasResult> AliasCacheTy;
+    typedef SmallDenseMap<LocPair, AliasResult, 8> AliasCacheTy;
     AliasCacheTy AliasCache;
 
     // Visited - Track instructions visited by pointsToConstantMemory.
