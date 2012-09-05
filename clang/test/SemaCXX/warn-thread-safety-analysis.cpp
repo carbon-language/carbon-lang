@@ -3190,3 +3190,30 @@ void Base::bar(Inner* i) {
 
 } // end namespace LockReturnedScopeFix
 
+
+namespace TrylockWithCleanups {
+
+class MyString {
+public:
+  MyString(const char* s);
+  ~MyString();
+};
+
+struct Foo {
+  Mutex mu_;
+  int a GUARDED_BY(mu_);
+};
+
+Foo* GetAndLockFoo(const MyString& s)
+    EXCLUSIVE_TRYLOCK_FUNCTION(true, &Foo::mu_);
+
+static void test() {
+  Foo* lt = GetAndLockFoo("foo");
+  if (!lt) return;
+  int a = lt->a;
+  lt->mu_.Unlock();
+}
+
+}
+
+
