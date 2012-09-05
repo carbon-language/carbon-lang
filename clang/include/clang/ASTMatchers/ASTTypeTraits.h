@@ -17,24 +17,28 @@
 
 #include "clang/AST/Decl.h"
 #include "clang/AST/Stmt.h"
+#include "llvm/Support/AlignOf.h"
 
 namespace clang {
 namespace ast_type_traits {
 
 /// \brief A dynamically typed AST node container.
 ///
-/// Stores an AST node in a type safe way.
+/// Stores an AST node in a type safe way. This allows writing code that
+/// works with different kinds of AST nodes, despite the fact that they don't
+/// have a common base class.
+///
 /// Use \c create(Node) to create a \c DynTypedNode from an AST node,
 /// and \c get<T>() to retrieve the node as type T if the types match.
+///
+/// See \c NodeTypeTag for which node base types are currently supported;
+/// You can create DynTypedNodes for all nodes in the inheritance hierarchy of
+/// the supported base types.
 class DynTypedNode {
 public:
-  /// \brief Creates a NULL-node, which is needed to be able to use
-  /// \c DynTypedNodes in STL data structures.
-  DynTypedNode() : Tag(), Node(NULL) {}
-
   /// \brief Creates a \c DynTypedNode from \c Node.
   template <typename T>
-  static DynTypedNode create(T Node) {
+  static DynTypedNode create(const T &Node) {
     return BaseConverter<T>::create(Node);
   }
 
@@ -42,11 +46,25 @@ public:
   ///
   /// Returns NULL if the stored node does not have a type that is
   /// convertible to \c T.
+  ///
+  /// For types that have identity via their pointer in the AST
+  /// (like \c Stmt and \c Decl) the returned pointer points to the
+  /// referenced AST node.
+  /// For other types (like \c QualType) the value is stored directly
+  /// in the \c DynTypedNode, and the returned pointer points at
+  /// the storage inside DynTypedNode. For those nodes, do not
+  /// use the pointer outside the scope of the DynTypedNode.
   template <typename T>
-  T get() const {
-    return llvm::dyn_cast<typename llvm::remove_pointer<T>::type>(
-      BaseConverter<T>::get(Tag, Node));
+  const T *get() const {
+    return BaseConverter<T>::get(Tag, Storage.buffer);
   }
+
+  /// \brief Returns a pointer that identifies the stored AST node.
+  ///
+  /// Note that this is not supported by all AST nodes. For AST nodes
+  /// that don't have a pointer-defined identity inside the AST, this
+  /// method returns NULL.
+  const void *getMemoizationData() const;
 
 private:
   /// \brief Takes care of converting from and to \c T.
@@ -55,42 +73,74 @@ private:
   /// \brief Supported base node types.
   enum NodeTypeTag {
     NT_Decl,
-    NT_Stmt
+    NT_Stmt,
+    NT_QualType
   } Tag;
 
   /// \brief Stores the data of the node.
-  // FIXME: We really want to store a union, as we want to support
-  // storing TypeLoc nodes by-value.
-  // FIXME: Add QualType storage: we'll want to use QualType::getAsOpaquePtr()
-  // and getFromOpaquePtr(...) to convert to and from void*, but return the
-  // QualType objects by value.
-  void *Node;
+  ///
+  /// Note that we can store \c Decls and \c Stmts by pointer as they are
+  /// guaranteed to be unique pointers pointing to dedicated storage in the
+  /// AST. \c QualTypes on the other hand do not have storage or unique
+  /// pointers and thus need to be stored by value.
+  llvm::AlignedCharArrayUnion<Decl*, Stmt*, QualType> Storage;
+};
+template<typename T> struct DynTypedNode::BaseConverter<T,
+    typename llvm::enable_if<llvm::is_base_of<Decl, T> >::type> {
+  static const T *get(NodeTypeTag Tag, const char Storage[]) {
+    if (Tag == NT_Decl)
+      return dyn_cast<T>(*reinterpret_cast<Decl*const*>(Storage));
+    return NULL;
+  }
+  static DynTypedNode create(const Decl &Node) {
+    DynTypedNode Result;
+    Result.Tag = NT_Decl;
+    new (Result.Storage.buffer) const Decl*(&Node);
+    return Result;
+  }
+};
+template<typename T> struct DynTypedNode::BaseConverter<T,
+    typename llvm::enable_if<llvm::is_base_of<Stmt, T> >::type> {
+  static const T *get(NodeTypeTag Tag, const char Storage[]) {
+    if (Tag == NT_Stmt)
+      return dyn_cast<T>(*reinterpret_cast<Stmt*const*>(Storage));
+    return NULL;
+  }
+  static DynTypedNode create(const Stmt &Node) {
+    DynTypedNode Result;
+    Result.Tag = NT_Stmt;
+    new (Result.Storage.buffer) const Stmt*(&Node);
+    return Result;
+  }
+};
+template<> struct DynTypedNode::BaseConverter<QualType, void> {
+  static const QualType *get(NodeTypeTag Tag, const char Storage[]) {
+    if (Tag == NT_QualType)
+      return reinterpret_cast<const QualType*>(Storage);
+    return NULL;
+  }
+  static DynTypedNode create(const QualType &Node) {
+    DynTypedNode Result;
+    Result.Tag = NT_QualType;
+    new (Result.Storage.buffer) QualType(Node);
+    return Result;
+  }
+};
+// The only operation we allow on unsupported types is \c get.
+// This allows to conveniently use \c DynTypedNode when having an arbitrary
+// AST node that is not supported, but prevents misuse - a user cannot create
+// a DynTypedNode from arbitrary types.
+template <typename T, typename EnablerT> struct DynTypedNode::BaseConverter {
+  static const T *get(NodeTypeTag Tag, const char Storage[]) { return NULL; }
+};
 
-  DynTypedNode(NodeTypeTag Tag, const void *Node)
-    : Tag(Tag), Node(const_cast<void*>(Node)) {}
-};
-template<typename T> struct DynTypedNode::BaseConverter<T,
-    typename llvm::enable_if<llvm::is_base_of<
-      Decl, typename llvm::remove_pointer<T>::type > >::type > {
-  static Decl *get(NodeTypeTag Tag, void *Node) {
-    if (Tag == NT_Decl) return static_cast<Decl*>(Node);
-    return NULL;
-  }
-  static DynTypedNode create(const Decl *Node) {
-    return DynTypedNode(NT_Decl, Node);
-  }
-};
-template<typename T> struct DynTypedNode::BaseConverter<T,
-    typename llvm::enable_if<llvm::is_base_of<
-      Stmt, typename llvm::remove_pointer<T>::type > >::type > {
-  static Stmt *get(NodeTypeTag Tag, void *Node) {
-    if (Tag == NT_Stmt) return static_cast<Stmt*>(Node);
-    return NULL;
-  }
-  static DynTypedNode create(const Stmt *Node) {
-    return DynTypedNode(NT_Stmt, Node);
-  }
-};
+inline const void *DynTypedNode::getMemoizationData() const {
+  switch (Tag) {
+    case NT_Decl: return BaseConverter<Decl>::get(Tag, Storage.buffer);
+    case NT_Stmt: return BaseConverter<Stmt>::get(Tag, Storage.buffer);
+    default: return NULL;
+  };
+}
 
 } // end namespace ast_type_traits
 } // end namespace clang

@@ -1914,9 +1914,8 @@ AST_POLYMORPHIC_MATCHER_P(
   TOOLING_COMPILE_ASSERT((llvm::is_same<NodeType, Decl>::value) ||
                          (llvm::is_same<NodeType, Stmt>::value),
                          assert_node_type_is_accessible);
-  internal::TypedBaseMatcher<Decl> ChildMatcher(AMatcher);
   return Finder->matchesChildOf(
-      Node, ChildMatcher, Builder,
+      Node, AMatcher, Builder,
       ASTMatchFinder::TK_IgnoreImplicitCastsAndParentheses,
       ASTMatchFinder::BK_First);
 }

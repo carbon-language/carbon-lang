@@ -65,10 +65,11 @@ namespace ast_matchers {
 class BoundNodes {
 public:
   /// \brief Returns the AST node bound to \c ID.
+  ///
   /// Returns NULL if there was no node bound to \c ID or if there is a node but
   /// it cannot be converted to the specified type.
   template <typename T>
-  const T getNodeAs(StringRef ID) const {
+  const T *getNodeAs(StringRef ID) const {
     return MyBoundNodes.getNodeAs<T>(ID);
   }
 
@@ -76,11 +77,11 @@ public:
   /// @{
   template <typename T>
   const T *getDeclAs(StringRef ID) const {
-    return getNodeAs<T*>(ID);
+    return getNodeAs<T>(ID);
   }
   template <typename T>
   const T *getStmtAs(StringRef ID) const {
-    return getNodeAs<T*>(ID);
+    return getNodeAs<T>(ID);
   }
   /// @}
 

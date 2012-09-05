@@ -125,11 +125,10 @@ public:
   void registerTestCallbackAfterParsing(ParsingDoneTestCallback *ParsingDone);
 
 private:
-  /// \brief The MatchCallback*'s will be called every time the
-  /// UntypedBaseMatcher matches on the AST.
-  std::vector< std::pair<
-    const internal::UntypedBaseMatcher*,
-    MatchCallback*> > Triggers;
+  /// \brief For each \c DynTypedMatcher a \c MatchCallback that will be called
+  /// when it matches.
+  std::vector<std::pair<const internal::DynTypedMatcher*, MatchCallback*> >
+    MatcherCallbackPairs;
 
   /// \brief Called when parsing is done.
   ParsingDoneTestCallback *ParsingDone;
