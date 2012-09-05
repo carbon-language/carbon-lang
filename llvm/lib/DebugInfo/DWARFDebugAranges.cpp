@@ -62,7 +62,6 @@ bool DWARFDebugAranges::extract(DataExtractor debug_aranges_data) {
     uint32_t offset = 0;
 
     typedef std::vector<DWARFDebugArangeSet> SetCollection;
-    typedef SetCollection::const_iterator SetCollectionIter;
     SetCollection sets;
 
     DWARFDebugArangeSet set;
