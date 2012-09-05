@@ -416,7 +416,7 @@ struct MatchableInfo {
   SmallVector<SubtargetFeatureInfo*, 4> RequiredFeatures;
 
   /// ConversionFnKind - The enum value which is passed to the generated
-  /// ConvertToMCInst to convert parsed operands into an MCInst for this
+  /// convertToMCInst to convert parsed operands into an MCInst for this
   /// function.
   std::string ConversionFnKind;
 
@@ -1679,7 +1679,7 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
   raw_string_ostream CvtOS(ConvertFnBody);
   // Start the unified conversion function.
   CvtOS << "void " << Target.getName() << ClassName << "::\n"
-        << "ConvertToMCInst(unsigned Kind, MCInst &Inst, "
+        << "convertToMCInst(unsigned Kind, MCInst &Inst, "
         << "unsigned Opcode,\n"
         << "                const SmallVectorImpl<MCParsedAsmOperand*"
         << "> &Operands) {\n"
@@ -2595,7 +2595,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  // This should be included into the middle of the declaration of\n";
   OS << "  // your subclasses implementation of MCTargetAsmParser.\n";
   OS << "  unsigned ComputeAvailableFeatures(uint64_t FeatureBits) const;\n";
-  OS << "  void ConvertToMCInst(unsigned Kind, MCInst &Inst, "
+  OS << "  void convertToMCInst(unsigned Kind, MCInst &Inst, "
      << "unsigned Opcode,\n"
      << "                          const SmallVectorImpl<MCParsedAsmOperand*> "
      << "&Operands);\n";
@@ -2884,7 +2884,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "\n";
   OS << "    // We have selected a definite instruction, convert the parsed\n"
      << "    // operands into the appropriate MCInst.\n";
-  OS << "    ConvertToMCInst(it->ConvertFn, Inst, it->Opcode, Operands);\n";
+  OS << "    convertToMCInst(it->ConvertFn, Inst, it->Opcode, Operands);\n";
   OS << "\n";
 
   // Verify the instruction with the target-specific match predicate function.
