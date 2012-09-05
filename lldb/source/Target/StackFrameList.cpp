@@ -93,12 +93,10 @@ StackFrameList::GetCurrentInlinedDepth ()
     }
 }
 
-static const bool LLDB_FANCY_INLINED_STEPPING = false;
-
 void
 StackFrameList::ResetCurrentInlinedDepth ()
 {
-    if (LLDB_FANCY_INLINED_STEPPING && m_show_inlined_frames)
+    if (m_show_inlined_frames)
     {        
         GetFramesUpTo(0);
         if (!m_frames[0]->IsInlined())
