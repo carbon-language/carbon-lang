@@ -1614,10 +1614,11 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     llvm::FunctionType::get(ResultType, ArgTypes, false);
 
   bool HasSideEffect = S.isVolatile() || S.getNumOutputs() == 0;
+  llvm::InlineAsm::AsmDialect AsmDialect = isa<MSAsmStmt>(&S) ?
+    llvm::InlineAsm::AD_Intel : llvm::InlineAsm::AD_ATT;
   llvm::InlineAsm *IA =
     llvm::InlineAsm::get(FTy, AsmString, Constraints, HasSideEffect,
-                         /* IsAlignStack */ false,
-                         /* AsmDialect */ isa<MSAsmStmt>(&S));
+                         /* IsAlignStack */ false, AsmDialect);
   llvm::CallInst *Result = Builder.CreateCall(IA, Args);
   Result->addAttribute(~0, llvm::Attribute::NoUnwind);
 
