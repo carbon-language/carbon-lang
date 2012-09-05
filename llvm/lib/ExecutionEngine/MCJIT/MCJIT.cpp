@@ -113,6 +113,11 @@ void *MCJIT::getPointerToBasicBlock(BasicBlock *BB) {
 }
 
 void *MCJIT::getPointerToFunction(Function *F) {
+  // FIXME: This should really return a uint64_t since it's a pointer in the
+  // target address space, not our local address space. That's part of the
+  // ExecutionEngine interface, though. Fix that when the old JIT finally
+  // dies.
+
   // FIXME: Add support for per-module compilation state
   if (!isCompiled)
     emitObject(M);
@@ -126,10 +131,13 @@ void *MCJIT::getPointerToFunction(Function *F) {
 
   // FIXME: Should the Dyld be retaining module information? Probably not.
   // FIXME: Should we be using the mangler for this? Probably.
+  //
+  // This is the accessor for the target address, so make sure to check the
+  // load address of the symbol, not the local address.
   StringRef BaseName = F->getName();
   if (BaseName[0] == '\1')
-    return (void*)Dyld.getSymbolAddress(BaseName.substr(1));
-  return (void*)Dyld.getSymbolAddress((TM->getMCAsmInfo()->getGlobalPrefix()
+    return (void*)Dyld.getSymbolLoadAddress(BaseName.substr(1));
+  return (void*)Dyld.getSymbolLoadAddress((TM->getMCAsmInfo()->getGlobalPrefix()
                                        + BaseName).str());
 }
 

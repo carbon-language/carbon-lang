@@ -479,6 +479,10 @@ void *RuntimeDyld::getSymbolAddress(StringRef Name) {
   return Dyld->getSymbolAddress(Name);
 }
 
+uint64_t RuntimeDyld::getSymbolLoadAddress(StringRef Name) {
+  return Dyld->getSymbolLoadAddress(Name);
+}
+
 void RuntimeDyld::resolveRelocations() {
   Dyld->resolveRelocations();
 }
