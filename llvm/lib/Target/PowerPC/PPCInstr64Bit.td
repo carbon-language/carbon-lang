@@ -29,6 +29,9 @@ def symbolLo64 : Operand<i64> {
   let PrintMethod = "printSymbolLo";
   let EncoderMethod = "getLO16Encoding";
 }
+def tocentry : Operand<iPTR> {
+  let MIOperandInfo = (ops i32imm:$imm);
+}
 
 //===----------------------------------------------------------------------===//
 // 64-bit transformation functions.

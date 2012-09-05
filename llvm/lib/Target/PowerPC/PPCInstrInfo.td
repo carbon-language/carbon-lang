@@ -338,9 +338,6 @@ def memrix : Operand<iPTR> {   // memri where the imm is shifted 2 bits.
   let MIOperandInfo = (ops i32imm:$imm, ptr_rc:$reg);
   let EncoderMethod = "getMemRIXEncoding";
 }
-def tocentry : Operand<iPTR> {
-  let MIOperandInfo = (ops i32imm:$imm);
-}
 
 // PowerPC Predicate operand.  20 = (0<<5)|20 = always, CR0 is a dummy reg
 // that doesn't matter.
