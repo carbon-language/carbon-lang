@@ -2496,8 +2496,18 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
         // lanes of the constant together.
         EVT VT = Vector->getValueType(0);
         unsigned BitWidth = VT.getVectorElementType().getSizeInBits();
+
+        // If the splat value has been compressed to a bitlength lower
+        // than the size of the vector lane, we need to re-expand it to
+        // the lane size.
+        if (BitWidth > SplatBitSize)
+          for (SplatValue = SplatValue.zextOrTrunc(BitWidth);
+               SplatBitSize < BitWidth;
+               SplatBitSize = SplatBitSize * 2)
+            SplatValue |= SplatValue.shl(SplatBitSize);
+
         Constant = APInt::getAllOnesValue(BitWidth);
-        for (unsigned i = 0, n = VT.getVectorNumElements(); i < n; ++i)
+        for (unsigned i = 0, n = SplatBitSize/BitWidth; i < n; ++i)
           Constant &= SplatValue.lshr(i*BitWidth).zextOrTrunc(BitWidth);
       }
     }
