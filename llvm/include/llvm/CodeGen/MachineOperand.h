@@ -14,7 +14,6 @@
 #ifndef LLVM_CODEGEN_MACHINEOPERAND_H
 #define LLVM_CODEGEN_MACHINEOPERAND_H
 
-#include "llvm/ADT/Hashing.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
 
@@ -30,6 +29,7 @@ class MachineRegisterInfo;
 class MDNode;
 class TargetMachine;
 class TargetRegisterInfo;
+class hash_code;
 class raw_ostream;
 class MCSymbol;
 
