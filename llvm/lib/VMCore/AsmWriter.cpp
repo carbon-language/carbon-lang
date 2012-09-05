@@ -1029,6 +1029,8 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
       Out << "sideeffect ";
     if (IA->isAlignStack())
       Out << "alignstack ";
+    if (IA->getDialect() != 0)
+      Out << "nsdialect ";
     Out << '"';
     PrintEscapedString(IA->getAsmString(), Out);
     Out << "\", \"";

@@ -2069,16 +2069,18 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
 
   case lltok::kw_asm: {
     // ValID ::= 'asm' SideEffect? AlignStack? STRINGCONSTANT ',' STRINGCONSTANT
-    bool HasSideEffect, AlignStack;
+    bool HasSideEffect, AlignStack, NSDialect;
     Lex.Lex();
     if (ParseOptionalToken(lltok::kw_sideeffect, HasSideEffect) ||
         ParseOptionalToken(lltok::kw_alignstack, AlignStack) ||
+        ParseOptionalToken(lltok::kw_nsdialect, NSDialect) ||
         ParseStringConstant(ID.StrVal) ||
         ParseToken(lltok::comma, "expected comma in inline asm expression") ||
         ParseToken(lltok::StringConstant, "expected constraint string"))
       return true;
     ID.StrVal2 = Lex.getStrVal();
-    ID.UIntVal = unsigned(HasSideEffect) | (unsigned(AlignStack)<<1);
+    ID.UIntVal = unsigned(HasSideEffect) | (unsigned(AlignStack)<<1) |
+      (unsigned(NSDialect)<<2);
     ID.Kind = ValID::t_InlineAsm;
     return false;
   }
@@ -2495,7 +2497,8 @@ bool LLParser::ConvertValIDToValue(Type *Ty, ValID &ID, Value *&V,
       PTy ? dyn_cast<FunctionType>(PTy->getElementType()) : 0;
     if (!FTy || !InlineAsm::Verify(FTy, ID.StrVal2))
       return Error(ID.Loc, "invalid type for inline asm constraint string");
-    V = InlineAsm::get(FTy, ID.StrVal, ID.StrVal2, ID.UIntVal&1, ID.UIntVal>>1);
+    V = InlineAsm::get(FTy, ID.StrVal, ID.StrVal2, ID.UIntVal&1,
+                       (ID.UIntVal>>1)&1, (ID.UIntVal>>2)&1);
     return false;
   }
   case ValID::t_MDNode:
