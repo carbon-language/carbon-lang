@@ -1017,6 +1017,48 @@ let Predicates = [HasAVX] in {
             (VMOVUPSYmr addr:$dst, VR256:$src)>;
   def : Pat<(store (v32i8 VR256:$src), addr:$dst),
             (VMOVUPSYmr addr:$dst, VR256:$src)>;
+
+  // Special patterns for handling subvector inserts folded with loads
+  def : Pat<(insert_subvector undef, (alignedloadv4f32 addr:$src), (i32 0)),
+            (INSERT_SUBREG (v8f32 (IMPLICIT_DEF)),
+                           (v4f32 (VMOVAPSrm addr:$src)), sub_xmm)>;
+  def : Pat<(insert_subvector undef, (alignedloadv2f64 addr:$src), (i32 0)),
+            (INSERT_SUBREG (v4f64 (IMPLICIT_DEF)),
+                           (v2f64 (VMOVAPDrm addr:$src)), sub_xmm)>;
+  def : Pat<(insert_subvector undef, (alignedloadv2i64 addr:$src), (i32 0)),
+            (INSERT_SUBREG (v4i64 (IMPLICIT_DEF)),
+                           (v2i64 (VMOVAPSrm addr:$src)), sub_xmm)>;
+  def : Pat<(insert_subvector undef,
+             (bc_v4i32 (alignedloadv2i64 addr:$src)), (i32 0)),
+            (INSERT_SUBREG (v8i32 (IMPLICIT_DEF)),
+                           (v4i32 (VMOVAPSrm addr:$src)), sub_xmm)>;
+  def : Pat<(insert_subvector undef,
+             (bc_v8i16 (alignedloadv2i64 addr:$src)), (i32 0)),
+            (INSERT_SUBREG (v16i16 (IMPLICIT_DEF)),
+                           (v8i16 (VMOVAPSrm addr:$src)), sub_xmm)>;
+  def : Pat<(insert_subvector undef,
+             (bc_v16i8 (alignedloadv2i64 addr:$src)), (i32 0)),
+            (INSERT_SUBREG (v32i8 (IMPLICIT_DEF)),
+                           (v16i8 (VMOVAPSrm addr:$src)), sub_xmm)>;
+
+  def : Pat<(insert_subvector undef, (loadv4f32 addr:$src), (i32 0)),
+            (INSERT_SUBREG (v8f32 (IMPLICIT_DEF)),
+                           (v4f32 (VMOVUPSrm addr:$src)), sub_xmm)>;
+  def : Pat<(insert_subvector undef, (loadv2f64 addr:$src), (i32 0)),
+            (INSERT_SUBREG (v4f64 (IMPLICIT_DEF)),
+                           (v2f64 (VMOVUPDrm addr:$src)), sub_xmm)>;
+  def : Pat<(insert_subvector undef, (loadv2i64 addr:$src), (i32 0)),
+            (INSERT_SUBREG (v4i64 (IMPLICIT_DEF)),
+                           (v2i64 (VMOVUPSrm addr:$src)), sub_xmm)>;
+  def : Pat<(insert_subvector undef, (bc_v4i32 (loadv2i64 addr:$src)), (i32 0)),
+            (INSERT_SUBREG (v8i32 (IMPLICIT_DEF)),
+                           (v4i32 (VMOVUPSrm addr:$src)), sub_xmm)>;
+  def : Pat<(insert_subvector undef, (bc_v8i16 (loadv2i64 addr:$src)), (i32 0)),
+            (INSERT_SUBREG (v16i16 (IMPLICIT_DEF)),
+                           (v8i16 (VMOVUPSrm addr:$src)), sub_xmm)>;
+  def : Pat<(insert_subvector undef, (bc_v16i8 (loadv2i64 addr:$src)), (i32 0)),
+            (INSERT_SUBREG (v32i8 (IMPLICIT_DEF)),
+                           (v16i8 (VMOVUPSrm addr:$src)), sub_xmm)>;
 }
 
 // Use movaps / movups for SSE integer load / store (one byte shorter).
@@ -7221,11 +7263,11 @@ def : Pat<(vinsertf128_insert:$ins (v4f64 VR256:$src1), (v2f64 VR128:$src2),
           (VINSERTF128rr VR256:$src1, VR128:$src2,
                          (INSERT_get_vinsertf128_imm VR256:$ins))>;
 
-def : Pat<(vinsertf128_insert:$ins (v8f32 VR256:$src1), (loadv4f32 addr:$src2),
+def : Pat<(vinsertf128_insert:$ins (v8f32 VR256:$src1), (memopv4f32 addr:$src2),
                                    (i32 imm)),
           (VINSERTF128rm VR256:$src1, addr:$src2,
                          (INSERT_get_vinsertf128_imm VR256:$ins))>;
-def : Pat<(vinsertf128_insert:$ins (v4f64 VR256:$src1), (loadv2f64 addr:$src2),
+def : Pat<(vinsertf128_insert:$ins (v4f64 VR256:$src1), (memopv2f64 addr:$src2),
                                    (i32 imm)),
           (VINSERTF128rm VR256:$src1, addr:$src2,
                          (INSERT_get_vinsertf128_imm VR256:$ins))>;
@@ -7249,7 +7291,22 @@ def : Pat<(vinsertf128_insert:$ins (v16i16 VR256:$src1), (v8i16 VR128:$src2),
           (VINSERTF128rr VR256:$src1, VR128:$src2,
                          (INSERT_get_vinsertf128_imm VR256:$ins))>;
 
-def : Pat<(vinsertf128_insert:$ins (v4i64 VR256:$src1), (loadv2i64 addr:$src2),
+def : Pat<(vinsertf128_insert:$ins (v4i64 VR256:$src1), (memopv2i64 addr:$src2),
+                                   (i32 imm)),
+          (VINSERTF128rm VR256:$src1, addr:$src2,
+                         (INSERT_get_vinsertf128_imm VR256:$ins))>;
+def : Pat<(vinsertf128_insert:$ins (v8i32 VR256:$src1),
+                                   (bc_v4i32 (memopv2i64 addr:$src2)),
+                                   (i32 imm)),
+          (VINSERTF128rm VR256:$src1, addr:$src2,
+                         (INSERT_get_vinsertf128_imm VR256:$ins))>;
+def : Pat<(vinsertf128_insert:$ins (v32i8 VR256:$src1),
+                                   (bc_v16i8 (memopv2i64 addr:$src2)),
+                                   (i32 imm)),
+          (VINSERTF128rm VR256:$src1, addr:$src2,
+                         (INSERT_get_vinsertf128_imm VR256:$ins))>;
+def : Pat<(vinsertf128_insert:$ins (v16i16 VR256:$src1),
+                                   (bc_v8i16 (memopv2i64 addr:$src2)),
                                    (i32 imm)),
           (VINSERTF128rm VR256:$src1, addr:$src2,
                          (INSERT_get_vinsertf128_imm VR256:$ins))>;
@@ -7809,7 +7866,22 @@ def : Pat<(vinsertf128_insert:$ins (v16i16 VR256:$src1), (v8i16 VR128:$src2),
           (VINSERTI128rr VR256:$src1, VR128:$src2,
                          (INSERT_get_vinsertf128_imm VR256:$ins))>;
 
-def : Pat<(vinsertf128_insert:$ins (v4i64 VR256:$src1), (loadv2i64 addr:$src2),
+def : Pat<(vinsertf128_insert:$ins (v4i64 VR256:$src1), (memopv2i64 addr:$src2),
+                                   (i32 imm)),
+          (VINSERTI128rm VR256:$src1, addr:$src2,
+                         (INSERT_get_vinsertf128_imm VR256:$ins))>;
+def : Pat<(vinsertf128_insert:$ins (v8i32 VR256:$src1),
+                                   (bc_v4i32 (memopv2i64 addr:$src2)),
+                                   (i32 imm)),
+          (VINSERTI128rm VR256:$src1, addr:$src2,
+                         (INSERT_get_vinsertf128_imm VR256:$ins))>;
+def : Pat<(vinsertf128_insert:$ins (v32i8 VR256:$src1),
+                                   (bc_v16i8 (memopv2i64 addr:$src2)),
+                                   (i32 imm)),
+          (VINSERTI128rm VR256:$src1, addr:$src2,
+                         (INSERT_get_vinsertf128_imm VR256:$ins))>;
+def : Pat<(vinsertf128_insert:$ins (v16i16 VR256:$src1),
+                                   (bc_v8i16 (memopv2i64 addr:$src2)),
                                    (i32 imm)),
           (VINSERTI128rm VR256:$src1, addr:$src2,
                          (INSERT_get_vinsertf128_imm VR256:$ins))>;
