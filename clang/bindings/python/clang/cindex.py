@@ -2953,7 +2953,7 @@ class LibclangError(Exception):
     def __str__(self):
         return self.m
 
-def register_function(lib, item):
+def register_function(lib, item, ignore_errors):
     # A function may not exist, if these bindings are used with an older or
     # incompatible version of libclang.so.
     try:
@@ -2961,6 +2961,8 @@ def register_function(lib, item):
     except AttributeError as e:
         msg = str(e) + ". Please ensure that your python bindings are "\
                        "compatible with your libclang.so version."
+        if ignore_errors:
+            return
         raise LibclangError(msg)
 
     if len(item) >= 2:
@@ -2972,7 +2974,7 @@ def register_function(lib, item):
     if len(item) == 4:
         func.errcheck = item[3]
 
-def register_functions(lib):
+def register_functions(lib, ignore_errors):
     """Register function prototypes with a libclang library instance.
 
     This must be called as part of library instantiation so Python knows how
@@ -2980,13 +2982,14 @@ def register_functions(lib):
     """
 
     def register(item):
-        return register_function(lib, item)
+        return register_function(lib, item, ignore_errors)
 
     map(register, functionList)
 
 class Config:
     library_path = None
     library_file = None
+    compatibility_check = True
     loaded = False
 
     @staticmethod
@@ -3007,10 +3010,34 @@ class Config:
 
         Config.library_file = path
 
+    @staticmethod
+    def set_compatibility_check(check_status):
+        """ Perform compatibility check when loading libclang
+
+        The python bindings are only tested and evaluated with the version of
+        libclang they are provided with. To ensure correct behavior a (limited)
+        compatibility check is performed when loading the bindings. This check
+        will throw an exception, as soon as it fails.
+
+        In case these bindings are used with an older version of libclang, parts
+        that have been stable between releases may still work. Users of the
+        python bindings can disable the compatibility check. This will cause
+        the python bindings to load, even though they are written for a newer
+        version of libclang. Failures now arise if unsupported or incompatible
+        features are accessed. The user is required to test himself if the
+        features he is using are available and compatible between different
+        libclang versions.
+        """
+        if Config.loaded:
+            raise Exception("compatibility_check must be set before before " \
+                            "using any other functionalities in libclang.")
+
+        Config.compatibility_check = check_status
+
     @CachedProperty
     def lib(self):
         lib = self.get_cindex_library()
-        register_functions(lib)
+        register_functions(lib, not Config.compatibility_check)
         Config.loaded = True
         return lib
 
