@@ -31,10 +31,10 @@ void TsanPrintf(const char *format, ...) {
   InternalScopedBuffer<char> buffer(kMaxLen);
   va_list args;
   va_start(args, format);
-  uptr len = VSNPrintf(buffer, buffer.size(), format, args);
+  uptr len = VSNPrintf(buffer.data(), buffer.size(), format, args);
   va_end(args);
   internal_write(CTX() ? flags()->log_fileno : 2,
-      buffer, len < buffer.size() ? len : buffer.size() - 1);
+      buffer.data(), len < buffer.size() ? len : buffer.size() - 1);
 }
 
 }  // namespace __tsan

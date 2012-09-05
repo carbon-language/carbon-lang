@@ -28,10 +28,10 @@ static char *ReadFile(const char *filename) {
     return 0;
   InternalScopedBuffer<char> tmp(4*1024);
   if (filename[0] == '/')
-    internal_snprintf(tmp, tmp.size(), "%s", filename);
+    internal_snprintf(tmp.data(), tmp.size(), "%s", filename);
   else
-    internal_snprintf(tmp, tmp.size(), "%s/%s", GetPwd(), filename);
-  fd_t fd = internal_open(tmp, false);
+    internal_snprintf(tmp.data(), tmp.size(), "%s/%s", GetPwd(), filename);
+  fd_t fd = internal_open(tmp.data(), false);
   if (fd == kInvalidFd) {
     TsanPrintf("ThreadSanitizer: failed to open suppressions file '%s'\n",
                tmp.data());

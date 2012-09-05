@@ -122,8 +122,8 @@ static void MemoryProfileThread(void *arg) {
   fd_t fd = (fd_t)(uptr)arg;
   for (int i = 0; ; i++) {
     InternalScopedBuffer<char> buf(4096);
-    WriteMemoryProfile(buf, buf.size(), i);
-    internal_write(fd, buf, internal_strlen(buf));
+    WriteMemoryProfile(buf.data(), buf.size(), i);
+    internal_write(fd, buf.data(), internal_strlen(buf.data()));
     SleepForSeconds(1);
   }
 }
@@ -132,9 +132,9 @@ static void InitializeMemoryProfile() {
   if (flags()->profile_memory == 0 || flags()->profile_memory[0] == 0)
     return;
   InternalScopedBuffer<char> filename(4096);
-  internal_snprintf(filename, filename.size(), "%s.%d",
+  internal_snprintf(filename.data(), filename.size(), "%s.%d",
       flags()->profile_memory, GetPid());
-  fd_t fd = internal_open(filename, true);
+  fd_t fd = internal_open(filename.data(), true);
   if (fd == kInvalidFd) {
     TsanPrintf("Failed to open memory profile file '%s'\n", &filename[0]);
     Die();

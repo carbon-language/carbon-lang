@@ -87,7 +87,7 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
   DlIteratePhdrCtx *ctx = (DlIteratePhdrCtx*)arg;
   InternalScopedBuffer<char> tmp(128);
   if (ctx->is_first) {
-    internal_snprintf(tmp, tmp.size(), "/proc/%d/exe", GetPid());
+    internal_snprintf(tmp.data(), tmp.size(), "/proc/%d/exe", GetPid());
     info->dlpi_name = tmp.data();
   }
   ctx->is_first = false;
@@ -160,7 +160,7 @@ ReportStack *SymbolizeCodeAddr2Line(uptr addr) {
     Die();
   }
   InternalScopedBuffer<char> func(1024);
-  ssize_t len = internal_read(m->inp_fd, func, func.size() - 1);
+  ssize_t len = internal_read(m->inp_fd, func.data(), func.size() - 1);
   if (len <= 0) {
     TsanPrintf("ThreadSanitizer: can't read from symbolizer (%d, %d)\n",
         m->inp_fd, errno);
@@ -170,11 +170,11 @@ ReportStack *SymbolizeCodeAddr2Line(uptr addr) {
   ReportStack *res = NewReportStackEntry(addr);
   res->module = internal_strdup(m->name);
   res->offset = offset;
-  char *pos = (char*)internal_strchr(func, '\n');
+  char *pos = (char*)internal_strchr(func.data(), '\n');
   if (pos && func[0] != '?') {
-    res->func = (char*)internal_alloc(MBlockReportStack, pos - func + 1);
-    internal_memcpy(res->func, func, pos - func);
-    res->func[pos - func] = 0;
+    res->func = (char*)internal_alloc(MBlockReportStack, pos - func.data() + 1);
+    internal_memcpy(res->func, func.data(), pos - func.data());
+    res->func[pos - func.data()] = 0;
     char *pos2 = (char*)internal_strchr(pos, ':');
     if (pos2) {
       res->file = (char*)internal_alloc(MBlockReportStack, pos2 - pos - 1 + 1);

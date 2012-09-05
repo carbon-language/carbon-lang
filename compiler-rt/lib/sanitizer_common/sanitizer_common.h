@@ -67,7 +67,6 @@ class InternalScopedBuffer {
   ~InternalScopedBuffer() {
     UnmapOrDie(ptr_, cnt_ * sizeof(T));
   }
-  operator T*() { return ptr_; }
   T &operator[](uptr i) { return ptr_[i]; }
   T *data() { return ptr_; }
   uptr size() { return cnt_ * sizeof(T); }

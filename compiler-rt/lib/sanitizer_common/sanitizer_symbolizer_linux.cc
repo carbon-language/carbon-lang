@@ -126,17 +126,17 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
   if (data->current_n == 0) {
     // First module is the binary itself.
     uptr module_name_len = readlink("/proc/self/exe",
-                                    module_name, module_name.size());
+                                    module_name.data(), module_name.size());
     CHECK_NE(module_name_len, (uptr)-1);
     CHECK_LT(module_name_len, module_name.size());
     module_name[module_name_len] = '\0';
   } else if (info->dlpi_name) {
-    internal_strncpy(module_name, info->dlpi_name, module_name.size());
+    internal_strncpy(module_name.data(), info->dlpi_name, module_name.size());
   }
   if (module_name.data()[0] == '\0')
     return 0;
   void *mem = &data->modules[data->current_n];
-  LoadedModule *cur_module = new(mem) LoadedModule(module_name,
+  LoadedModule *cur_module = new(mem) LoadedModule(module_name.data(),
                                                    info->dlpi_addr);
   data->current_n++;
   for (int i = 0; i < info->dlpi_phnum; i++) {

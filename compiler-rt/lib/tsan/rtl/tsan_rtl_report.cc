@@ -296,7 +296,7 @@ void RestoreStack(int tid, const u64 epoch, StackTrace *stk) {
   if (pos == 0 && stack[0] == 0)
     return;
   pos++;
-  stk->Init(stack, pos);
+  stk->Init(stack.data(), pos);
 }
 
 static bool HandleRacyStacks(ThreadState *thr, const StackTrace (&traces)[2],

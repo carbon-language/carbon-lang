@@ -113,15 +113,16 @@ class ExternalSymbolizer {
     // large debug info.
     static const int kMaxBufferSize = 4096;
     InternalScopedBuffer<char> buffer(kMaxBufferSize);
-    internal_snprintf(buffer, kMaxBufferSize, "%s 0x%zx\n",
+    char *buffer_data = buffer.data();
+    internal_snprintf(buffer_data, kMaxBufferSize, "%s 0x%zx\n",
                       module_name, module_offset);
-    if (!writeToSymbolizer(buffer, internal_strlen(buffer)))
+    if (!writeToSymbolizer(buffer_data, internal_strlen(buffer_data)))
       return 0;
 
-    if (!readFromSymbolizer(buffer, kMaxBufferSize))
+    if (!readFromSymbolizer(buffer_data, kMaxBufferSize))
       return 0;
-    const char *str = buffer.data();
-    int frame_id;
+    const char *str = buffer_data;
+    uptr frame_id;
     CHECK_GT(max_frames, 0);
     for (frame_id = 0; frame_id < max_frames; frame_id++) {
       AddressInfo *info = &frames[frame_id];
