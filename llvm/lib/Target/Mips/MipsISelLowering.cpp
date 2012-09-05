@@ -1571,7 +1571,7 @@ SDValue MipsTargetLowering::LowerGlobalAddress(SDValue Op,
   if (getTargetMachine().getRelocationModel() != Reloc::PIC_ && !IsN64) {
     SDVTList VTs = DAG.getVTList(MVT::i32);
 
-    MipsTargetObjectFile &TLOF = (MipsTargetObjectFile&)getObjFileLowering();
+    const MipsTargetObjectFile &TLOF = (const MipsTargetObjectFile&)getObjFileLowering();
 
     // %gp_rel relocation
     if (TLOF.IsGlobalInSmallSection(GV, getTargetMachine())) {

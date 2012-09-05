@@ -483,7 +483,7 @@ static int AnalyzeBitcode() {
   if (MemBuf->getBufferSize() & 3)
     return Error("Bitcode stream should be a multiple of 4 bytes in length");
 
-  const unsigned char *BufPtr = (unsigned char *)MemBuf->getBufferStart();
+  const unsigned char *BufPtr = (const unsigned char *)MemBuf->getBufferStart();
   const unsigned char *EndBufPtr = BufPtr+MemBuf->getBufferSize();
 
   // If we have a wrapper header, parse it and ignore the non-bc file contents.

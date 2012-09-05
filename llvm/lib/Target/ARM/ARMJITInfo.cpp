@@ -168,7 +168,7 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
       intptr_t LazyPtr = getIndirectSymAddr(Fn);
       if (!LazyPtr) {
         // In PIC mode, the function stub is loading a lazy-ptr.
-        LazyPtr= (intptr_t)emitGlobalValueIndirectSym((GlobalValue*)F, Fn, JCE);
+        LazyPtr= (intptr_t)emitGlobalValueIndirectSym((const GlobalValue*)F, Fn, JCE);
         DEBUG(if (F)
                 errs() << "JIT: Indirect symbol emitted at [" << LazyPtr
                        << "] for GV '" << F->getName() << "'\n";

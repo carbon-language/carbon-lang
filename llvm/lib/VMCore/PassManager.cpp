@@ -1189,7 +1189,7 @@ void PMDataManager::dumpAnalysisUsage(StringRef Msg, const Pass *P,
   assert(PassDebugging >= Details);
   if (Set.empty())
     return;
-  dbgs() << (void*)P << std::string(getDepth()*2+3, ' ') << Msg << " Analyses:";
+  dbgs() << (const void*)P << std::string(getDepth()*2+3, ' ') << Msg << " Analyses:";
   for (unsigned i = 0; i != Set.size(); ++i) {
     if (i) dbgs() << ',';
     const PassInfo *PInf = PassRegistry::getPassRegistry()->getPassInfo(Set[i]);

@@ -447,8 +447,8 @@ void TargetPassConfig::addMachinePasses() {
     const PassInfo *TPI = PR->getPassInfo(PrintMachineInstrs.getValue());
     const PassInfo *IPI = PR->getPassInfo(StringRef("print-machineinstrs"));
     assert (TPI && IPI && "Pass ID not registered!");
-    const char *TID = (char *)(TPI->getTypeInfo());
-    const char *IID = (char *)(IPI->getTypeInfo());
+    const char *TID = (const char *)(TPI->getTypeInfo());
+    const char *IID = (const char *)(IPI->getTypeInfo());
     insertPass(TID, IID);
   }
 

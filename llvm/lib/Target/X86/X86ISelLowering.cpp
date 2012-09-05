@@ -2836,7 +2836,7 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
       MachineFrameInfo *MFI = MF.getFrameInfo();
       const MachineRegisterInfo *MRI = &MF.getRegInfo();
       const X86InstrInfo *TII =
-        ((X86TargetMachine&)getTargetMachine()).getInstrInfo();
+        ((const X86TargetMachine&)getTargetMachine()).getInstrInfo();
       for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
         CCValAssign &VA = ArgLocs[i];
         SDValue Arg = OutVals[i];

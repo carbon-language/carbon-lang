@@ -754,7 +754,7 @@ void MachineConstantPool::print(raw_ostream &OS) const {
     if (Constants[i].isMachineConstantPoolEntry())
       Constants[i].Val.MachineCPVal->print(OS);
     else
-      OS << *(Value*)Constants[i].Val.ConstVal;
+      OS << *(const Value*)Constants[i].Val.ConstVal;
     OS << ", align=" << Constants[i].getAlignment();
     OS << "\n";
   }

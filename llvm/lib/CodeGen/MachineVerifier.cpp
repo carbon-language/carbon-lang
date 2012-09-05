@@ -368,7 +368,7 @@ void MachineVerifier::report(const char *msg, const MachineBasicBlock *MBB) {
   report(msg, MBB->getParent());
   *OS << "- basic block: BB#" << MBB->getNumber()
       << ' ' << MBB->getName()
-      << " (" << (void*)MBB << ')';
+      << " (" << (const void*)MBB << ')';
   if (Indexes)
     *OS << " [" << Indexes->getMBBStartIdx(MBB)
         << ';' <<  Indexes->getMBBEndIdx(MBB) << ')';

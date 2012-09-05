@@ -772,7 +772,7 @@ void TargetLowering::computeRegisterProperties() {
       LegalIntReg = IntReg;
     } else {
       RegisterTypeForVT[IntReg] = TransformToType[IntReg] =
-        (MVT::SimpleValueType)LegalIntReg;
+        (const MVT::SimpleValueType)LegalIntReg;
       ValueTypeActions.setTypeAction(IVT, TypePromoteInteger);
     }
   }

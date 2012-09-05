@@ -130,7 +130,7 @@ public:
     StringRef Str = Buffer->getBuffer().slice(Cursor, Cursor+4);
     assert (Str.empty() == false && "Unexpected memory buffer end!");
     Cursor += 4;
-    Result = *(uint32_t *)(Str.data());
+    Result = *(const uint32_t *)(Str.data());
     return Result;
   }
 

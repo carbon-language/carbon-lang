@@ -150,7 +150,7 @@ DWARFFormValue::extractValue(DataExtractor data, uint32_t *offset_ptr,
       // Set the string value to also be the data for inlined cstr form
       // values only so we can tell the differnence between DW_FORM_string
       // and DW_FORM_strp form values
-      Value.data = (uint8_t*)Value.cstr;
+      Value.data = (const uint8_t*)Value.cstr;
       break;
     case DW_FORM_indirect:
       Form = data.getULEB128(offset_ptr);

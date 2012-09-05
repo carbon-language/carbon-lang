@@ -52,7 +52,7 @@ public:
   bool extractValue(DataExtractor data, uint32_t *offset_ptr,
                     const DWARFCompileUnit *cu);
   bool isInlinedCStr() const {
-    return Value.data != NULL && Value.data == (uint8_t*)Value.cstr;
+    return Value.data != NULL && Value.data == (const uint8_t*)Value.cstr;
   }
   const uint8_t *BlockData() const;
   uint64_t getReference(const DWARFCompileUnit* cu) const;

@@ -163,7 +163,7 @@ LTOModule::LTOModule(llvm::Module *m, llvm::TargetMachine *t)
 /// isBitcodeFile - Returns 'true' if the file (or memory contents) is LLVM
 /// bitcode.
 bool LTOModule::isBitcodeFile(const void *mem, size_t length) {
-  return llvm::sys::IdentifyFileType((char*)mem, length)
+  return llvm::sys::IdentifyFileType((const char*)mem, length)
     == llvm::sys::Bitcode_FileType;
 }
 
@@ -307,7 +307,7 @@ LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
 
 /// makeBuffer - Create a MemoryBuffer from a memory range.
 MemoryBuffer *LTOModule::makeBuffer(const void *mem, size_t length) {
-  const char *startPtr = (char*)mem;
+  const char *startPtr = (const char*)mem;
   return MemoryBuffer::getMemBuffer(StringRef(startPtr, length), "", false);
 }
 

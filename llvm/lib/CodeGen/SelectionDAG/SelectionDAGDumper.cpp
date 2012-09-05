@@ -331,7 +331,7 @@ void SDNode::dump(const SelectionDAG *G) const {
 }
 
 void SDNode::print_types(raw_ostream &OS, const SelectionDAG *G) const {
-  OS << (void*)this << ": ";
+  OS << (const void*)this << ": ";
 
   for (unsigned i = 0, e = getNumValues(); i != e; ++i) {
     if (i) OS << ",";
@@ -559,7 +559,7 @@ static void DumpNodesr(raw_ostream &OS, const SDNode *N, unsigned indent,
       child->printr(OS, G);
       once.insert(child);
     } else {         // Just the address. FIXME: also print the child's opcode.
-      OS << (void*)child;
+      OS << (const void*)child;
       if (unsigned RN = N->getOperand(i).getResNo())
         OS << ":" << RN;
     }
