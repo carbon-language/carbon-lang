@@ -4874,7 +4874,21 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     Res = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, DestVT,
                       getValue(I.getArgOperand(0)),
                       getValue(I.getArgOperand(1)),
-                      DAG.getConstant(Idx, MVT::i32));
+                      DAG.getIntPtrConstant(Idx));
+    setValue(&I, Res);
+    return 0;
+  }
+  case Intrinsic::x86_avx_vextractf128_pd_256:
+  case Intrinsic::x86_avx_vextractf128_ps_256:
+  case Intrinsic::x86_avx_vextractf128_si_256:
+  case Intrinsic::x86_avx2_vextracti128: {
+    DebugLoc dl = getCurDebugLoc();
+    EVT DestVT = TLI.getValueType(I.getType());
+    uint64_t Idx = (cast<ConstantInt>(I.getArgOperand(1))->getZExtValue() & 1) *
+                   DestVT.getVectorNumElements();
+    Res = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, DestVT,
+                      getValue(I.getArgOperand(0)),
+                      DAG.getIntPtrConstant(Idx));
     setValue(&I, Res);
     return 0;
   }
