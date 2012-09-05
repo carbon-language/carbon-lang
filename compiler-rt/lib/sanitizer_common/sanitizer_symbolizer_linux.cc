@@ -125,8 +125,8 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
   module_name.data()[0] = '\0';
   if (data->current_n == 0) {
     // First module is the binary itself.
-    uptr module_name_len = readlink("/proc/self/exe",
-                                    module_name.data(), module_name.size());
+    uptr module_name_len = internal_readlink(
+        "/proc/self/exe", module_name.data(), module_name.size());
     CHECK_NE(module_name_len, (uptr)-1);
     CHECK_LT(module_name_len, module_name.size());
     module_name[module_name_len] = '\0';

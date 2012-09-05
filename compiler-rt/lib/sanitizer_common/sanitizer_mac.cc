@@ -71,6 +71,10 @@ int internal_dup2(int oldfd, int newfd) {
   return dup2(oldfd, newfd);
 }
 
+uptr internal_readlink(const char *path, char *buf, uptr bufsize) {
+  return readlink(path, buf, bufsize);
+}
+
 int internal_sched_yield() {
   return sched_yield();
 }

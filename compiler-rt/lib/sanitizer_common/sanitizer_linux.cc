@@ -80,6 +80,10 @@ int internal_dup2(int oldfd, int newfd) {
   return syscall(__NR_dup2, oldfd, newfd);
 }
 
+uptr internal_readlink(const char *path, char *buf, uptr bufsize) {
+  return (uptr)syscall(__NR_readlink, path, buf, bufsize);
+}
+
 int internal_sched_yield() {
   return syscall(__NR_sched_yield);
 }

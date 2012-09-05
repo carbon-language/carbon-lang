@@ -179,6 +179,11 @@ int internal_dup2(int oldfd, int newfd) {
   return 0;
 }
 
+uptr internal_readlink(const char *path, char *buf, uptr bufsize) {
+  UNIMPLEMENTED();
+  return 0;
+}
+
 int internal_sched_yield() {
   UNIMPLEMENTED();
   return 0;
