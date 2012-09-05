@@ -147,7 +147,6 @@ public:
   unsigned visualizeExplodedGraphWithGraphViz : 1;
   unsigned visualizeExplodedGraphWithUbiGraph : 1;
   unsigned UnoptimizedCFG : 1;
-  unsigned CFGAddImplicitDtors : 1;
   unsigned eagerlyTrimExplodedGraph : 1;
   unsigned PrintStats : 1;
   
@@ -172,8 +171,17 @@ public:
   /// Returns the option controlling which C++ member functions will be
   /// considered for inlining.
   ///
+  /// This is controlled by the 'c++-inlining' config option.
+  ///
   /// \sa CXXMemberInliningMode
   bool mayInlineCXXMemberFunction(CXXInlineableMemberKind K) const;
+
+  /// Returns whether or not the destructors for C++ temporary objects should
+  /// be included in the CFG.
+  ///
+  /// This is controlled by the 'cfg-temporary-dtors' config option. Any
+  /// non-empty value is considered to be 'true'.
+  bool includeTemporaryDtorsInCFG() const;
 
 public:
   AnalyzerOptions() : CXXMemberInliningMode() {
@@ -191,7 +199,6 @@ public:
     visualizeExplodedGraphWithGraphViz = 0;
     visualizeExplodedGraphWithUbiGraph = 0;
     UnoptimizedCFG = 0;
-    CFGAddImplicitDtors = 0;
     eagerlyTrimExplodedGraph = 0;
     PrintStats = 0;
     NoRetryExhausted = 0;

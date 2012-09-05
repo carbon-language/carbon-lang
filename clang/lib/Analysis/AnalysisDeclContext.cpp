@@ -62,11 +62,13 @@ AnalysisDeclContext::AnalysisDeclContext(AnalysisDeclContextManager *Mgr,
 }
 
 AnalysisDeclContextManager::AnalysisDeclContextManager(bool useUnoptimizedCFG,
-                                               bool addImplicitDtors,
-                                               bool addInitializers) {
+                                                       bool addImplicitDtors,
+                                                       bool addInitializers,
+                                                       bool addTemporaryDtors) {
   cfgBuildOptions.PruneTriviallyFalseEdges = !useUnoptimizedCFG;
   cfgBuildOptions.AddImplicitDtors = addImplicitDtors;
   cfgBuildOptions.AddInitializers = addInitializers;
+  cfgBuildOptions.AddTemporaryDtors = addTemporaryDtors;
 }
 
 void AnalysisDeclContextManager::clear() {

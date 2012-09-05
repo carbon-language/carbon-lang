@@ -568,6 +568,7 @@ public:
     bool AddEHEdges;
     bool AddInitializers;
     bool AddImplicitDtors;
+    bool AddTemporaryDtors;
 
     bool alwaysAdd(const Stmt *stmt) const {
       return alwaysAddMask[stmt->getStmtClass()];
@@ -587,7 +588,8 @@ public:
     : forcedBlkExprs(0), PruneTriviallyFalseEdges(true)
       ,AddEHEdges(false)
       ,AddInitializers(false)
-      ,AddImplicitDtors(false) {}
+      ,AddImplicitDtors(false)
+      ,AddTemporaryDtors(false) {}
   };
 
   /// \brief Provides a custom implementation of the iterator class to have the

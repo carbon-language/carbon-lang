@@ -382,8 +382,9 @@ class AnalysisDeclContextManager {
 
 public:
   AnalysisDeclContextManager(bool useUnoptimizedCFG = false,
-                         bool addImplicitDtors = false,
-                         bool addInitializers = false);
+                             bool addImplicitDtors = false,
+                             bool addInitializers = false,
+                             bool addTemporaryDtors = false);
 
   ~AnalysisDeclContextManager();
 

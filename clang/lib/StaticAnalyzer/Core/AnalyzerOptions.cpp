@@ -46,3 +46,7 @@ AnalyzerOptions::mayInlineCXXMemberFunction(CXXInlineableMemberKind K) const {
 
   return CXXMemberInliningMode >= K;
 }
+
+bool AnalyzerOptions::includeTemporaryDtorsInCFG() const {
+  return !Config.lookup("cfg-temporary-dtors").empty();
+}

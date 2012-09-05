@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=debug.DumpCFG -cfg-add-implicit-dtors %s 2>&1 | FileCheck %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=debug.DumpCFG %s 2>&1 | FileCheck %s
 // XPASS: *
 
 class A {
