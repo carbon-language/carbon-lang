@@ -77,10 +77,14 @@ PlatformMacOSX::CreateInstance (bool force, const ArchSpec *arch)
                 create = true;
                 break;
                 
+#if defined(__APPLE__)
+            // Only accept "unknown" for vendor if the host is Apple and
+            // it "unknown" wasn't specified (it was just returned becasue it
+            // was NOT specified)
             case llvm::Triple::UnknownArch:
                 create = !arch->TripleVendorWasSpecified();
                 break;
-                
+#endif
             default:
                 break;
         }
@@ -92,11 +96,14 @@ PlatformMacOSX::CreateInstance (bool force, const ArchSpec *arch)
                 case llvm::Triple::Darwin:  // Deprecated, but still support Darwin for historical reasons
                 case llvm::Triple::MacOSX:
                     break;
-                    
+#if defined(__APPLE__)
+                // Only accept "vendor" for vendor if the host is Apple and
+                // it "unknown" wasn't specified (it was just returned becasue it
+                // was NOT specified)
                 case llvm::Triple::UnknownOS:
                     create = !arch->TripleOSWasSpecified();
                     break;
-                    
+#endif
                 default:
                     create = false;
                     break;

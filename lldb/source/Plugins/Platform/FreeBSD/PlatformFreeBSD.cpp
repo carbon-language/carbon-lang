@@ -43,10 +43,14 @@ PlatformFreeBSD::CreateInstance (bool force, const lldb_private::ArchSpec *arch)
                 create = true;
                 break;
                 
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
+            // Only accept "unknown" for the vendor if the host is BSD and
+            // it "unknown" wasn't specified (it was just returned becasue it
+            // was NOT specified)
             case llvm::Triple::UnknownArch:
                 create = !arch->TripleVendorWasSpecified();
                 break;
-                
+#endif
             default:
                 break;
         }
@@ -59,10 +63,14 @@ PlatformFreeBSD::CreateInstance (bool force, const lldb_private::ArchSpec *arch)
                 case llvm::Triple::KFreeBSD:
                     break;
                     
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
+                // Only accept "unknown" for the OS if the host is BSD and
+                // it "unknown" wasn't specified (it was just returned becasue it
+                // was NOT specified)
                 case llvm::Triple::UnknownOS:
                     create = arch->TripleOSWasSpecified();
                     break;
-                    
+#endif
                 default:
                     create = false;
                     break;

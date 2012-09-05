@@ -102,6 +102,10 @@ PlatformRemoteiOS::CreateInstance (bool force, const ArchSpec *arch)
                         create = true;
                         break;
 
+#if defined(__APPLE__)
+                    // Only accept "unknown" for the vendor if the host is Apple and
+                    // it "unknown" wasn't specified (it was just returned becasue it
+                    // was NOT specified)
                     case llvm::Triple::UnknownArch:
                         create = !arch->TripleVendorWasSpecified();
                         break;
@@ -109,7 +113,7 @@ PlatformRemoteiOS::CreateInstance (bool force, const ArchSpec *arch)
                     default:
                         break;
                 }
-                
+#endif
                 if (create)
                 {
                     switch (triple.getOS())
@@ -118,10 +122,14 @@ PlatformRemoteiOS::CreateInstance (bool force, const ArchSpec *arch)
                         case llvm::Triple::IOS:     // This is the right triple value for iOS debugging
                             break;
 
+#if defined(__APPLE__)
+                        // Only accept "unknown" for the OS if the host is Apple and
+                        // it "unknown" wasn't specified (it was just returned becasue it
+                        // was NOT specified)
                         case llvm::Triple::UnknownOS:
                             create = !arch->TripleOSWasSpecified();
                             break;
-                            
+#endif
                         default:
                             create = false;
                             break;
