@@ -592,7 +592,7 @@ static int AnalyzeBitcode() {
       for (unsigned i = 0, e = FreqPairs.size(); i != e; ++i) {
         const PerRecordStats &RecStats = Stats.CodeFreq[FreqPairs[i].second];
 
-        outs() << format("\t\t%7d %9.2f",
+        outs() << format("\t\t%7d %9lu",
                          RecStats.NumInstances,
                          (unsigned long)RecStats.TotalBits);
 
