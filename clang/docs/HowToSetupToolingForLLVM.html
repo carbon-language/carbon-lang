@@ -77,12 +77,38 @@ $PATH. Try to run it on any .cpp file inside the LLVM source tree:</p>
 <p>If you're using vim, it's convenient to have clang-check integrated. Put this
 into your .vimrc:</p>
 <pre>
-  set makeprg=clang-check\ %
-  map &lt;F5&gt; :make&lt;CR&gt;&lt;CR&gt;
+function! ClangCheckImpl(cmd)
+  if &amp;autowrite | wall | endif
+  echo "Running " . a:cmd . " ..."
+  let l:output = system(a:cmd)
+  cexpr l:output
+  cwindow
+  let w:quickfix_title = a:cmd
+  if v:shell_error != 0
+    cc
+  endif
+  let g:clang_check_last_cmd = a:cmd
+endfunction
+
+function! ClangCheck()
+  let l:filename = expand('%')
+  if l:filename =~ '\.\(cpp\|cxx\|cc\|c\)$'
+    call ClangCheckImpl("clang-check " . l:filename)
+  elseif exists("g:clang_check_last_cmd")
+    call ClangCheckImpl(g:clang_check_last_cmd)
+  else
+    echo "Can't detect file's compilation arguments and no previous clang-check invocation!"
+  endif
+endfunction
+
+nmap &lt;silent&gt; &lt;F5&gt; :call ClangCheck()&lt;CR&gt;&lt;CR&gt;
 </pre>
 
-<p>When editing C++ code, hit F5 to reparse the current buffer. The output will
-go into the error window, which you can enable with <code>:cope</code>.</p>
+<p>When editing a .cpp/.cxx/.cc/.c file, hit F5 to reparse the file. In case
+the current file has a different extension (for example, .h), F5 will re-run
+the last clang-check invocation made from this vim instance (if any). The
+output will go into the error window, which is opened automatically when
+clang-check finds errors, and can be re-opened with <code>:cope</code>.</p>
 
 <p>Other <code>clang-check</code> options that can be useful when working with
 clang AST:</p>
