@@ -1211,8 +1211,6 @@ bool QualType::isCXX11PODType(ASTContext &Context) const {
       return false;
 
     case Qualifiers::OCL_None:
-      if (ty->isObjCLifetimeType())
-        return false;
       break;
     }        
   }
