@@ -732,14 +732,12 @@ SBValue::CreateValueFromExpression (const char *name, const char* expression)
             Target* target = exe_ctx.GetTargetPtr();
             if (target)
             {
+                Target::EvaluateExpressionOptions options;
+                options.SetKeepInMemory(true);
                 target->EvaluateExpression (expression,
                                             exe_ctx.GetFramePtr(),
-                                            eExecutionPolicyOnlyWhenNeeded,
-                                            false, // coerce to id
-                                            true, // unwind on error
-                                            true, // keep in memory
-                                            eNoDynamicValues,
-                                            new_value_sp);
+                                            new_value_sp,
+                                            options);
                 if (new_value_sp)
                 {
                     new_value_sp->SetName(ConstString(name));

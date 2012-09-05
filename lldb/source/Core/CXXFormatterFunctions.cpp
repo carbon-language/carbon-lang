@@ -42,14 +42,17 @@ lldb_private::formatters::CodeRunning_Fetcher (ValueObject &valobj,
     StackFrame* stack_frame = exe_ctx.GetFramePtr();
     if (!target || !stack_frame)
         return false;
+    
+    Target::EvaluateExpressionOptions options;
+    options.SetCoerceToId(false)
+    .SetUnwindOnError(true)
+    .SetKeepInMemory(true)
+    .SetUseDynamic(lldb::eDynamicCanRunTarget);
+    
     target->EvaluateExpression(expr.GetData(),
                                stack_frame,
-                               eExecutionPolicyOnlyWhenNeeded,
-                               false,
-                               true,
-                               true,
-                               lldb::eDynamicCanRunTarget,
-                               result_sp);
+                               result_sp,
+                               options);
     if (!result_sp)
         return false;
     value = result_sp->GetValueAsUnsigned(0);
@@ -364,14 +367,17 @@ lldb_private::formatters::NSNumber_SummaryProvider (ValueObject& valobj, Stream&
         StackFrame* stack_frame = exe_ctx.GetFramePtr();
         if (!target || !stack_frame)
             return false;
+        
+        Target::EvaluateExpressionOptions options;
+        options.SetCoerceToId(false)
+        .SetUnwindOnError(true)
+        .SetKeepInMemory(true)
+        .SetUseDynamic(lldb::eDynamicCanRunTarget);
+        
         target->EvaluateExpression(expr.GetData(),
                                    stack_frame,
-                                   eExecutionPolicyOnlyWhenNeeded,
-                                   false,
-                                   true,
-                                   true,
-                                   lldb::eDynamicCanRunTarget,
-                                   result_sp);
+                                   result_sp,
+                                   options);
         if (!result_sp)
             return false;
         stream.Printf("%s",result_sp->GetSummaryAsCString());

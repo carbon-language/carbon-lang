@@ -1606,18 +1606,11 @@ Target::EvaluateExpression
 (
     const char *expr_cstr,
     StackFrame *frame,
-    lldb_private::ExecutionPolicy execution_policy,
-    bool coerce_to_id,
-    bool unwind_on_error,
-    bool keep_in_memory,
-    lldb::DynamicValueType use_dynamic,
     lldb::ValueObjectSP &result_valobj_sp,
-    uint32_t single_thread_timeout_usec
+    const EvaluateExpressionOptions& options
 )
 {
     ExecutionResults execution_results = eExecutionSetupError;
-
-    result_valobj_sp.reset();
 
     if (expr_cstr == NULL || expr_cstr[0] == '\0')
         return execution_results;
@@ -1645,7 +1638,7 @@ Target::EvaluateExpression
         if (::strcspn (expr_cstr, "()+*&|!~<=/^%,?") == expr_cstr_len)
         {
             result_valobj_sp = frame->GetValueForVariableExpressionPath (expr_cstr, 
-                                                                         use_dynamic, 
+                                                                         options.GetUseDynamic(),
                                                                          expr_path_options, 
                                                                          var_sp, 
                                                                          error);
@@ -1679,9 +1672,9 @@ Target::EvaluateExpression
         }
         else
         {
-            if (use_dynamic != lldb::eNoDynamicValues)
+            if (options.GetUseDynamic() != lldb::eNoDynamicValues)
             {
-                ValueObjectSP dynamic_sp = result_valobj_sp->GetDynamicValue(use_dynamic);
+                ValueObjectSP dynamic_sp = result_valobj_sp->GetDynamicValue(options.GetUseDynamic());
                 if (dynamic_sp)
                     result_valobj_sp = dynamic_sp;
             }
@@ -1735,14 +1728,14 @@ Target::EvaluateExpression
             const char *prefix = GetExpressionPrefixContentsAsCString();
                     
             execution_results = ClangUserExpression::Evaluate (exe_ctx, 
-                                                               execution_policy,
+                                                               options.GetExecutionPolicy(),
                                                                lldb::eLanguageTypeUnknown,
-                                                               coerce_to_id ? ClangUserExpression::eResultTypeId : ClangUserExpression::eResultTypeAny,
-                                                               unwind_on_error,
+                                                               options.DoesCoerceToId() ? ClangUserExpression::eResultTypeId : ClangUserExpression::eResultTypeAny,
+                                                               options.DoesUnwindOnError(),
                                                                expr_cstr, 
                                                                prefix, 
                                                                result_valobj_sp,
-                                                               single_thread_timeout_usec);
+                                                               options.GetSingleThreadTimeoutUsec());
         }
     }
     

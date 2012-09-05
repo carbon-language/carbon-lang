@@ -760,6 +760,105 @@ public:
     ClangASTImporter *
     GetClangASTImporter();
     
+    class EvaluateExpressionOptions
+    {
+    public:
+        EvaluateExpressionOptions() :
+            m_execution_policy(eExecutionPolicyOnlyWhenNeeded),
+            m_coerce_to_id(false),
+            m_unwind_on_error(true),
+            m_keep_in_memory(false),
+            m_use_dynamic(lldb::eNoDynamicValues),
+            m_single_thread_timeout_usec(500000)
+        {}
+        
+        ExecutionPolicy
+        GetExecutionPolicy () const
+        {
+            return m_execution_policy;
+        }
+        
+        EvaluateExpressionOptions&
+        SetExecutionPolicy (ExecutionPolicy policy = eExecutionPolicyAlways)
+        {
+            m_execution_policy = policy;
+            return *this;
+        }
+        
+        bool
+        DoesCoerceToId () const
+        {
+            return m_coerce_to_id;
+        }
+        
+        EvaluateExpressionOptions&
+        SetCoerceToId (bool coerce = true)
+        {
+            m_coerce_to_id = coerce;
+            return *this;
+        }
+        
+        bool
+        DoesUnwindOnError () const
+        {
+            return m_unwind_on_error;
+        }
+        
+        EvaluateExpressionOptions&
+        SetUnwindOnError (bool unwind = false)
+        {
+            m_unwind_on_error = unwind;
+            return *this;
+        }
+        
+        bool
+        DoesKeepInMemory () const
+        {
+            return m_keep_in_memory;
+        }
+        
+        EvaluateExpressionOptions&
+        SetKeepInMemory (bool keep = true)
+        {
+            m_keep_in_memory = keep;
+            return *this;
+        }
+        
+        lldb::DynamicValueType
+        GetUseDynamic () const
+        {
+            return m_use_dynamic;
+        }
+        
+        EvaluateExpressionOptions&
+        SetUseDynamic (lldb::DynamicValueType dynamic = lldb::eDynamicCanRunTarget)
+        {
+            m_use_dynamic = dynamic;
+            return *this;
+        }
+        
+        uint32_t
+        GetSingleThreadTimeoutUsec () const
+        {
+            return m_single_thread_timeout_usec;
+        }
+        
+        EvaluateExpressionOptions&
+        SetSingleThreadTimeoutUsec (uint32_t timeout = 0)
+        {
+            m_single_thread_timeout_usec = timeout;
+            return *this;
+        }
+        
+    private:
+        ExecutionPolicy m_execution_policy;
+        bool m_coerce_to_id;
+        bool m_unwind_on_error;
+        bool m_keep_in_memory;
+        lldb::DynamicValueType m_use_dynamic;
+        uint32_t m_single_thread_timeout_usec;
+    };
+    
     // Since expressions results can persist beyond the lifetime of a process,
     // and the const expression results are available after a process is gone,
     // we provide a way for expressions to be evaluated from the Target itself.
@@ -768,13 +867,8 @@ public:
     ExecutionResults
     EvaluateExpression (const char *expression,
                         StackFrame *frame,
-                        lldb_private::ExecutionPolicy execution_policy,
-                        bool coerce_to_id,
-                        bool unwind_on_error,
-                        bool keep_in_memory,
-                        lldb::DynamicValueType use_dynamic,
                         lldb::ValueObjectSP &result_valobj_sp,
-                        uint32_t single_thread_timeout_usec = 500000);
+                        const EvaluateExpressionOptions& options = EvaluateExpressionOptions());
 
     ClangPersistentVariables &
     GetPersistentVariables()

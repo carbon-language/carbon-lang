@@ -1201,18 +1201,16 @@ protected:
         }
 
         // Use expression evaluation to arrive at the address to watch.
-        const bool coerce_to_id = true;
-        const bool unwind_on_error = true;
-        const bool keep_in_memory = false;
+        Target::EvaluateExpressionOptions options;
+        options.SetCoerceToId(false)
+        .SetUnwindOnError(true)
+        .SetKeepInMemory(false)
+        .SetSingleThreadTimeoutUsec(0);
+        
         ExecutionResults expr_result = target->EvaluateExpression (expr_str.c_str(), 
                                                                    frame, 
-                                                                   eExecutionPolicyOnlyWhenNeeded,
-                                                                   coerce_to_id,
-                                                                   unwind_on_error, 
-                                                                   keep_in_memory, 
-                                                                   eNoDynamicValues, 
                                                                    valobj_sp,
-                                                                   0 /* no timeout */);
+                                                                   options);
         if (expr_result != eExecutionCompleted) {
             result.GetErrorStream().Printf("error: expression evaluation of address to watch failed\n");
             result.GetErrorStream().Printf("expression evaluated: %s\n", expr_str.c_str());

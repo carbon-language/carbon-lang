@@ -1193,19 +1193,19 @@ CommandInterpreter::PreprocessCommand (std::string &command)
                     target = Host::GetDummyTarget(GetDebugger()).get();
                 if (target)
                 {
-                    const bool coerce_to_id = false;
-                    const bool unwind_on_error = true;
-                    const bool keep_in_memory = false;
                     ValueObjectSP expr_result_valobj_sp;
+                    
+                    Target::EvaluateExpressionOptions options;
+                    options.SetCoerceToId(false)
+                    .SetUnwindOnError(true)
+                    .SetKeepInMemory(false)
+                    .SetSingleThreadTimeoutUsec(0);
+                    
                     ExecutionResults expr_result = target->EvaluateExpression (expr_str.c_str(), 
-                                                                               exe_ctx.GetFramePtr(), 
-                                                                               eExecutionPolicyOnlyWhenNeeded,
-                                                                               coerce_to_id,
-                                                                               unwind_on_error, 
-                                                                               keep_in_memory, 
-                                                                               eNoDynamicValues, 
+                                                                               exe_ctx.GetFramePtr(),
                                                                                expr_result_valobj_sp,
-                                                                               0 /* no timeout */);
+                                                                               options);
+                    
                     if (expr_result == eExecutionCompleted)
                     {
                         Scalar scalar;

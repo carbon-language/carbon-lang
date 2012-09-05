@@ -1082,17 +1082,14 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
             Host::SetCrashDescriptionWithFormat ("SBFrame::EvaluateExpression (expr = \"%s\", fetch_dynamic_value = %u) %s",
                                                  expr, fetch_dynamic_value, frame_description.GetString().c_str());
 #endif
-            const bool coerce_to_id = false;
-            const bool keep_in_memory = false;
-
+            Target::EvaluateExpressionOptions options;
+            options.SetUnwindOnError(unwind_on_error)
+            .SetUseDynamic(fetch_dynamic_value);
+            
             exe_results = target->EvaluateExpression (expr, 
                                                       frame,
-                                                      eExecutionPolicyOnlyWhenNeeded,
-                                                      coerce_to_id,
-                                                      unwind_on_error, 
-                                                      keep_in_memory, 
-                                                      fetch_dynamic_value, 
-                                                      expr_value_sp);
+                                                      expr_value_sp,
+                                                      options);
             expr_result.SetSP(expr_value_sp);
 #ifdef LLDB_CONFIGURATION_DEBUG
             Host::SetCrashDescription (NULL);

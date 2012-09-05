@@ -298,15 +298,17 @@ CommandObjectExpression::EvaluateExpression
             break;
         }
         
+        Target::EvaluateExpressionOptions options;
+        options.SetCoerceToId(m_command_options.print_object)
+        .SetUnwindOnError(m_command_options.unwind_on_error)
+        .SetKeepInMemory(keep_in_memory)
+        .SetUseDynamic(use_dynamic)
+        .SetSingleThreadTimeoutUsec(0);
+        
         exe_results = target->EvaluateExpression (expr, 
                                                   m_interpreter.GetExecutionContext().GetFramePtr(),
-                                                  eExecutionPolicyOnlyWhenNeeded,
-                                                  m_command_options.print_object,
-                                                  m_command_options.unwind_on_error,
-                                                  keep_in_memory, 
-                                                  use_dynamic, 
                                                   result_valobj_sp,
-                                                  0 /* no timeout */);
+                                                  options);
         
         if (exe_results == eExecutionInterrupted && !m_command_options.unwind_on_error)
         {
