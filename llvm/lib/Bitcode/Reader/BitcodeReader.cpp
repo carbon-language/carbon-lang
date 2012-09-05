@@ -1245,7 +1245,8 @@ bool BitcodeReader::ParseConstants() {
         V = ConstantExpr::getICmp(Record[3], Op0, Op1);
       break;
     }
-    case bitc::CST_CODE_INLINEASM: {
+    // This maintains backward compatibility, pre-'nsdialect'.
+    case bitc::CST_CODE_INLINEASM_OLD: {
       if (Record.size() < 2) return Error("Invalid INLINEASM record");
       std::string AsmStr, ConstrStr;
       bool HasSideEffects = Record[0] & 1;
@@ -1264,6 +1265,30 @@ bool BitcodeReader::ParseConstants() {
       PointerType *PTy = cast<PointerType>(CurTy);
       V = InlineAsm::get(cast<FunctionType>(PTy->getElementType()),
                          AsmStr, ConstrStr, HasSideEffects, IsAlignStack);
+      break;
+    }
+    // This version adds support for the 'nsdialect' keyword.
+    case bitc::CST_CODE_INLINEASM: {
+      if (Record.size() < 2) return Error("Invalid INLINEASM record");
+      std::string AsmStr, ConstrStr;
+      bool HasSideEffects = Record[0] & 1;
+      bool IsAlignStack = (Record[0] >> 1) & 1;
+      unsigned AsmDialect = Record[0] >> 2;
+      unsigned AsmStrSize = Record[1];
+      if (2+AsmStrSize >= Record.size())
+        return Error("Invalid INLINEASM record");
+      unsigned ConstStrSize = Record[2+AsmStrSize];
+      if (3+AsmStrSize+ConstStrSize > Record.size())
+        return Error("Invalid INLINEASM record");
+
+      for (unsigned i = 0; i != AsmStrSize; ++i)
+        AsmStr += (char)Record[2+i];
+      for (unsigned i = 0; i != ConstStrSize; ++i)
+        ConstrStr += (char)Record[3+AsmStrSize+i];
+      PointerType *PTy = cast<PointerType>(CurTy);
+      V = InlineAsm::get(cast<FunctionType>(PTy->getElementType()),
+                         AsmStr, ConstrStr, HasSideEffects, IsAlignStack,
+                         AsmDialect);
       break;
     }
     case bitc::CST_CODE_BLOCKADDRESS:{
