@@ -510,7 +510,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(asm);
   KEYWORD(sideeffect);
   KEYWORD(alignstack);
-  KEYWORD(nsdialect);
+  KEYWORD(inteldialect);
   KEYWORD(gc);
 
   KEYWORD(ccc);

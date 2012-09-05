@@ -352,7 +352,7 @@ struct ExprMapKeyType {
 struct InlineAsmKeyType {
   InlineAsmKeyType(StringRef AsmString,
                    StringRef Constraints, bool hasSideEffects,
-                   bool isAlignStack, unsigned asmDialect)
+                   bool isAlignStack, InlineAsm::AsmDialect asmDialect)
     : asm_string(AsmString), constraints(Constraints),
       has_side_effects(hasSideEffects), is_align_stack(isAlignStack),
       asm_dialect(asmDialect) {}
@@ -360,7 +360,7 @@ struct InlineAsmKeyType {
   std::string constraints;
   bool has_side_effects;
   bool is_align_stack;
-  unsigned asm_dialect;
+  InlineAsm::AsmDialect asm_dialect;
   bool operator==(const InlineAsmKeyType& that) const {
     return this->asm_string == that.asm_string &&
            this->constraints == that.constraints &&

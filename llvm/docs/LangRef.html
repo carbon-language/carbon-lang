@@ -2894,19 +2894,18 @@ call void asm sideeffect "eieio", ""()
 call void asm alignstack "eieio", ""()
 </pre>
 
-<p>Inline asms also support using non-standard assembly dialects.  The standard
-   dialect is ATT, which is assumed when the '<tt>nsdialect</tt>' keyword is not
-   present.  When the '<tt>nsdialect</tt>' keyword is present, the dialect is
-   assumed to be Intel.  Currently, ATT and Intel are the only supported
-   dialects.  An example is:</p>
+<p>Inline asms also support using non-standard assembly dialects.  The assumed
+   dialect is ATT.  When the '<tt>inteldialect</tt>' keyword is present, the
+   inline asm is using the Intel dialect.  Currently, ATT and Intel are the
+   only supported dialects.  An example is:</p>
 
 <pre class="doc_code">
-call void asm nsdialect "eieio", ""()
+call void asm inteldialect "eieio", ""()
 </pre>
 
 <p>If multiple keywords appear the '<tt>sideeffect</tt>' keyword must come
    first, the '<tt>alignstack</tt>' keyword second and the
-   '<tt>nsdialect</tt>' keyword last.</p>
+   '<tt>inteldialect</tt>' keyword last.</p>
 
 <!--
 <p>TODO: The format of the asm and constraints string still need to be

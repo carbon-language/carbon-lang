@@ -1245,7 +1245,7 @@ bool BitcodeReader::ParseConstants() {
         V = ConstantExpr::getICmp(Record[3], Op0, Op1);
       break;
     }
-    // This maintains backward compatibility, pre-'nsdialect'.
+    // This maintains backward compatibility, pre-asm dialect keywords.
     // FIXME: Remove with the 4.0 release.
     case bitc::CST_CODE_INLINEASM_OLD: {
       if (Record.size() < 2) return Error("Invalid INLINEASM record");
@@ -1268,7 +1268,8 @@ bool BitcodeReader::ParseConstants() {
                          AsmStr, ConstrStr, HasSideEffects, IsAlignStack);
       break;
     }
-    // This version adds support for the 'nsdialect' keyword.
+    // This version adds support for the asm dialect keywords (e.g.,
+    // inteldialect).
     case bitc::CST_CODE_INLINEASM: {
       if (Record.size() < 2) return Error("Invalid INLINEASM record");
       std::string AsmStr, ConstrStr;
@@ -1289,7 +1290,7 @@ bool BitcodeReader::ParseConstants() {
       PointerType *PTy = cast<PointerType>(CurTy);
       V = InlineAsm::get(cast<FunctionType>(PTy->getElementType()),
                          AsmStr, ConstrStr, HasSideEffects, IsAlignStack,
-                         AsmDialect);
+                         InlineAsm::AsmDialect(AsmDialect));
       break;
     }
     case bitc::CST_CODE_BLOCKADDRESS:{

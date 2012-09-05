@@ -1056,7 +1056,7 @@ LLVMValueRef LLVMConstInlineAsm(LLVMTypeRef Ty, const char *AsmString,
                                 const char *Constraints,
                                 LLVMBool HasSideEffects,
                                 LLVMBool IsAlignStack,
-                                unsigned AsmDialect) {
+                                InlineAsm::AsmDialect AsmDialect) {
   return wrap(InlineAsm::get(dyn_cast<FunctionType>(unwrap(Ty)), AsmString,
                              Constraints, HasSideEffects, IsAlignStack,
                              AsmDialect));

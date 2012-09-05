@@ -27,7 +27,7 @@ InlineAsm::~InlineAsm() {
 
 InlineAsm *InlineAsm::get(FunctionType *Ty, StringRef AsmString,
                           StringRef Constraints, bool hasSideEffects,
-                          bool isAlignStack, unsigned asmDialect) {
+                          bool isAlignStack, AsmDialect asmDialect) {
   InlineAsmKeyType Key(AsmString, Constraints, hasSideEffects, isAlignStack,
                        asmDialect);
   LLVMContextImpl *pImpl = Ty->getContext().pImpl;
@@ -36,11 +36,11 @@ InlineAsm *InlineAsm::get(FunctionType *Ty, StringRef AsmString,
 
 InlineAsm::InlineAsm(PointerType *Ty, const std::string &asmString,
                      const std::string &constraints, bool hasSideEffects,
-                     bool isAlignStack, unsigned asmDialect)
+                     bool isAlignStack, AsmDialect asmDialect)
   : Value(Ty, Value::InlineAsmVal),
     AsmString(asmString), Constraints(constraints),
     HasSideEffects(hasSideEffects), IsAlignStack(isAlignStack),
-    AsmDialect(asmDialect) {
+    Dialect(asmDialect) {
 
   // Do various checks on the constraint string and type.
   assert(Verify(getFunctionType(), constraints) &&

@@ -33,6 +33,13 @@ template<class ConstantClass, class TypeClass, class ValType>
 struct ConstantCreator;
 
 class InlineAsm : public Value {
+public:
+  enum AsmDialect {
+    AD_ATT,
+    AD_Intel
+  };
+
+private:
   friend struct ConstantCreator<InlineAsm, PointerType, InlineAsmKeyType>;
   friend class ConstantUniqueMap<InlineAsmKeyType, const InlineAsmKeyType&,
                                  PointerType, InlineAsm, false>;
@@ -43,12 +50,11 @@ class InlineAsm : public Value {
   std::string AsmString, Constraints;
   bool HasSideEffects;
   bool IsAlignStack;
-  /// AsmDialect - 0 is AT&T (default) and 1 is the Intel dialect.
-  unsigned AsmDialect;
+  AsmDialect Dialect;
 
   InlineAsm(PointerType *Ty, const std::string &AsmString,
             const std::string &Constraints, bool hasSideEffects,
-            bool isAlignStack, unsigned asmDialect);
+            bool isAlignStack, AsmDialect asmDialect);
   virtual ~InlineAsm();
 
   /// When the ConstantUniqueMap merges two types and makes two InlineAsms
@@ -60,11 +66,12 @@ public:
   ///
   static InlineAsm *get(FunctionType *Ty, StringRef AsmString,
                         StringRef Constraints, bool hasSideEffects,
-                        bool isAlignStack = false, unsigned asmDialect = 0);
+                        bool isAlignStack = false,
+                        AsmDialect asmDialect = AD_ATT);
   
   bool hasSideEffects() const { return HasSideEffects; }
   bool isAlignStack() const { return IsAlignStack; }
-  unsigned getDialect() const { return AsmDialect; }
+  AsmDialect getDialect() const { return Dialect; }
 
   /// getType - InlineAsm's are always pointers.
   ///

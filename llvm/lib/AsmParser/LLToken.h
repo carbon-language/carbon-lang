@@ -72,7 +72,7 @@ namespace lltok {
     kw_asm,
     kw_sideeffect,
     kw_alignstack,
-    kw_nsdialect,
+    kw_inteldialect,
     kw_gc,
     kw_c,
 
