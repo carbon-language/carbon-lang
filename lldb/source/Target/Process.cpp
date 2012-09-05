@@ -3283,6 +3283,9 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
 
                 if (m_thread_list.ShouldStop (event_ptr) == false)
                 {
+                    // ShouldStop may have restarted the target already.  If so, don't
+                    // resume it twice.
+                    bool was_restarted = ProcessEventData::GetRestartedFromEvent (event_ptr);
                     switch (m_thread_list.ShouldReportStop (event_ptr))
                     {
                         case eVoteYes:
@@ -3296,7 +3299,8 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
 
                     if (log)
                         log->Printf ("Process::ShouldBroadcastEvent (%p) Restarting process from state: %s", event_ptr, StateAsCString(state));
-                    PrivateResume ();
+                    if (!was_restarted)
+                        PrivateResume ();
                 }
                 else
                 {
