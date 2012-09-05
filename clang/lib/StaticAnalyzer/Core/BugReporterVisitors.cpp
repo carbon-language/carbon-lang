@@ -54,7 +54,9 @@ const Stmt *bugreporter::GetDerefExpr(const ExplodedNode *N) {
         return U->getSubExpr()->IgnoreParenCasts();
     }
     else if (const MemberExpr *ME = dyn_cast<MemberExpr>(S)) {
-      return ME->getBase()->IgnoreParenCasts();
+      if (ME->isArrow()) {
+        return ME->getBase()->IgnoreParenCasts();
+      }
     }
     else if (const ArraySubscriptExpr *AE = dyn_cast<ArraySubscriptExpr>(S)) {
       return AE->getBase();
@@ -504,13 +506,15 @@ void bugreporter::trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S,
 
   // Is it a symbolic value?
   if (loc::MemRegionVal *L = dyn_cast<loc::MemRegionVal>(&V)) {
-    const MemRegion *Base = L->getRegion()->getBaseRegion();
-    report.addVisitor(new UndefOrNullArgVisitor(Base));
-    
-    if (isa<SymbolicRegion>(Base)) {
-      report.markInteresting(Base);
-      report.addVisitor(new TrackConstraintBRVisitor(loc::MemRegionVal(Base),
-                                                      false));
+    // At this point we are dealing with the region's LValue.
+    // However, if the rvalue is a symbolic region, we should track it as well.
+    SVal RVal = state->getSVal(L->getRegion());
+    const MemRegion *RegionRVal = RVal.getAsRegion();
+
+    if (RegionRVal && isa<SymbolicRegion>(RegionRVal)) {
+      report.markInteresting(RegionRVal);
+      report.addVisitor(new TrackConstraintBRVisitor(
+        loc::MemRegionVal(RegionRVal), false));
     }
   } else {
     // Otherwise, if the value came from an inlined function call,
