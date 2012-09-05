@@ -1813,7 +1813,12 @@ Decl *TemplateDeclInstantiator::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
                                  D->getIdentLocation(),
                                  D->getNominatedNamespace(),
                                  D->getCommonAncestor());
-  Owner->addDecl(Inst);
+
+  // Add the using directive to its declaration context
+  // only if this is not a function or method.
+  if (!Owner->isFunctionOrMethod())
+    Owner->addDecl(Inst);
+
   return Inst;
 }
 
