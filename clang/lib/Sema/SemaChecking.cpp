@@ -2596,81 +2596,84 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
   // format specifier.
   const analyze_printf::ArgType &AT = FS.getArgType(S.Context,
                                                     ObjCContext);
-  if (AT.isValid() && !AT.matchesType(S.Context, E->getType())) {
-    // Look through argument promotions for our error message's reported type.
-    // This includes the integral and floating promotions, but excludes array
-    // and function pointer decay; seeing that an argument intended to be a
-    // string has type 'char [6]' is probably more confusing than 'char *'.
-    if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
-      if (ICE->getCastKind() == CK_IntegralCast ||
-          ICE->getCastKind() == CK_FloatingCast) {
-        E = ICE->getSubExpr();
+  if (!AT.isValid())
+    return true;
+  if (AT.matchesType(S.Context, E->getType()))
+    return true;
 
-        // Check if we didn't match because of an implicit cast from a 'char'
-        // or 'short' to an 'int'.  This is done because printf is a varargs
-        // function.
-        if (ICE->getType() == S.Context.IntTy ||
-            ICE->getType() == S.Context.UnsignedIntTy) {
-          // All further checking is done on the subexpression.
-          if (AT.matchesType(S.Context, E->getType()))
-            return true;
-        }
+  // Look through argument promotions for our error message's reported type.
+  // This includes the integral and floating promotions, but excludes array
+  // and function pointer decay; seeing that an argument intended to be a
+  // string has type 'char [6]' is probably more confusing than 'char *'.
+  if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
+    if (ICE->getCastKind() == CK_IntegralCast ||
+        ICE->getCastKind() == CK_FloatingCast) {
+      E = ICE->getSubExpr();
+
+      // Check if we didn't match because of an implicit cast from a 'char'
+      // or 'short' to an 'int'.  This is done because printf is a varargs
+      // function.
+      if (ICE->getType() == S.Context.IntTy ||
+          ICE->getType() == S.Context.UnsignedIntTy) {
+        // All further checking is done on the subexpression.
+        if (AT.matchesType(S.Context, E->getType()))
+          return true;
       }
     }
+  }
 
-    // We may be able to offer a FixItHint if it is a supported type.
-    PrintfSpecifier fixedFS = FS;
-    bool success = fixedFS.fixType(E->getType(), S.getLangOpts(),
-                                   S.Context, ObjCContext);
+  // We may be able to offer a FixItHint if it is a supported type.
+  PrintfSpecifier fixedFS = FS;
+  bool success = fixedFS.fixType(E->getType(), S.getLangOpts(),
+                                 S.Context, ObjCContext);
 
-    if (success) {
-      // Get the fix string from the fixed format specifier
-      SmallString<16> buf;
-      llvm::raw_svector_ostream os(buf);
-      fixedFS.toString(os);
+  if (success) {
+    // Get the fix string from the fixed format specifier
+    SmallString<16> buf;
+    llvm::raw_svector_ostream os(buf);
+    fixedFS.toString(os);
 
+    EmitFormatDiagnostic(
+      S.PDiag(diag::warn_printf_conversion_argument_type_mismatch)
+        << AT.getRepresentativeTypeName(S.Context) << E->getType()
+        << E->getSourceRange(),
+      E->getLocStart(),
+      /*IsStringLocation*/false,
+      getSpecifierRange(StartSpecifier, SpecifierLen),
+      FixItHint::CreateReplacement(
+        getSpecifierRange(StartSpecifier, SpecifierLen),
+        os.str()));
+  } else {
+    const CharSourceRange &CSR = getSpecifierRange(StartSpecifier,
+                                                   SpecifierLen);
+    // Since the warning for passing non-POD types to variadic functions
+    // was deferred until now, we emit a warning for non-POD
+    // arguments here.
+    if (S.isValidVarArgType(E->getType()) == Sema::VAK_Invalid) {
+      unsigned DiagKind;
+      if (E->getType()->isObjCObjectType())
+        DiagKind = diag::err_cannot_pass_objc_interface_to_vararg_format;
+      else
+        DiagKind = diag::warn_non_pod_vararg_with_format_string;
+
+      EmitFormatDiagnostic(
+        S.PDiag(DiagKind)
+          << S.getLangOpts().CPlusPlus0x
+          << E->getType()
+          << CallType
+          << AT.getRepresentativeTypeName(S.Context)
+          << CSR
+          << E->getSourceRange(),
+        E->getLocStart(), /*IsStringLocation*/false, CSR);
+
+      checkForCStrMembers(AT, E, CSR);
+    } else
       EmitFormatDiagnostic(
         S.PDiag(diag::warn_printf_conversion_argument_type_mismatch)
           << AT.getRepresentativeTypeName(S.Context) << E->getType()
+          << CSR
           << E->getSourceRange(),
-        E->getLocStart(),
-        /*IsStringLocation*/false,
-        getSpecifierRange(StartSpecifier, SpecifierLen),
-        FixItHint::CreateReplacement(
-          getSpecifierRange(StartSpecifier, SpecifierLen),
-          os.str()));
-    } else {
-      const CharSourceRange &CSR = getSpecifierRange(StartSpecifier,
-                                                     SpecifierLen);
-      // Since the warning for passing non-POD types to variadic functions
-      // was deferred until now, we emit a warning for non-POD
-      // arguments here.
-      if (S.isValidVarArgType(E->getType()) == Sema::VAK_Invalid) {
-        unsigned DiagKind;
-        if (E->getType()->isObjCObjectType())
-          DiagKind = diag::err_cannot_pass_objc_interface_to_vararg_format;
-        else
-          DiagKind = diag::warn_non_pod_vararg_with_format_string;
-
-        EmitFormatDiagnostic(
-          S.PDiag(DiagKind)
-            << S.getLangOpts().CPlusPlus0x
-            << E->getType()
-            << CallType
-            << AT.getRepresentativeTypeName(S.Context)
-            << CSR
-            << E->getSourceRange(),
-          E->getLocStart(), /*IsStringLocation*/false, CSR);
-
-        checkForCStrMembers(AT, E, CSR);
-      } else
-        EmitFormatDiagnostic(
-          S.PDiag(diag::warn_printf_conversion_argument_type_mismatch)
-            << AT.getRepresentativeTypeName(S.Context) << E->getType()
-            << CSR
-            << E->getSourceRange(),
-          E->getLocStart(), /*IsStringLocation*/false, CSR);
-    }
+        E->getLocStart(), /*IsStringLocation*/false, CSR);
   }
 
   return true;
