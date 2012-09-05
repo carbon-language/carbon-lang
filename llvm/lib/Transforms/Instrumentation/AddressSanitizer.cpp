@@ -645,7 +645,7 @@ bool AddressSanitizer::insertGlobalRedzones(Module &M) {
     // Determine whether this global should be poisoned in initialization.
     bool GlobalHasDynamicInitializer = HasDynamicInitializer(G);
     // Don't check initialization order if this global is blacklisted.
-    GlobalHasDynamicInitializer &= ! BL->isInInit(*G);
+    GlobalHasDynamicInitializer &= !BL->isInInit(*G);
 
     StructType *NewTy = StructType::get(Ty, RightRedZoneTy, NULL);
     Constant *NewInitializer = ConstantStruct::get(
