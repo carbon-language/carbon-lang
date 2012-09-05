@@ -79,7 +79,7 @@ Archive::parseMemberHeader(const char*& At, const char* End, std::string* error)
   }
 
   // Cast archive member header
-  ArchiveMemberHeader* Hdr = (ArchiveMemberHeader*)At;
+  const ArchiveMemberHeader* Hdr = (const ArchiveMemberHeader*)At;
   At += sizeof(ArchiveMemberHeader);
 
   int flags = 0;
@@ -196,7 +196,7 @@ Archive::parseMemberHeader(const char*& At, const char* End, std::string* error)
       /* FALL THROUGH */
 
     default:
-      char* slash = (char*) memchr(Hdr->name, '/', 16);
+      const char* slash = (const char*) memchr(Hdr->name, '/', 16);
       if (slash == 0)
         slash = Hdr->name + 16;
       pathname.assign(Hdr->name, slash - Hdr->name);

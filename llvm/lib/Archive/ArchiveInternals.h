@@ -66,7 +66,7 @@ namespace llvm {
       fmag[1] = '\n';
     }
 
-    bool checkSignature() {
+    bool checkSignature() const {
       return 0 == memcmp(fmag, ARFILE_MEMBER_MAGIC,2);
     }
   };
