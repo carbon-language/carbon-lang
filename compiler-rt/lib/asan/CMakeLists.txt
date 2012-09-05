@@ -106,7 +106,7 @@ if(APPLE)
   set_target_compile_flags(clang_rt.asan_osx_dynamic ${ASAN_CFLAGS})
   filter_available_targets(ASAN_TARGETS x86_64 i386)
   set_target_properties(clang_rt.asan_osx_dynamic PROPERTIES
-    COMPILE_DEFINITIONS ${ASAN_DYLIB_DEFINITIONS}
+    COMPILE_DEFINITIONS "${ASAN_DYLIB_DEFINITIONS}"
     OSX_ARCHITECTURES "${ASAN_TARGETS}"
     LINK_FLAGS "-framework Foundation")
   list(APPEND ASAN_DYNAMIC_RUNTIME_LIBRARIES clang_rt.asan_osx_dynamic)

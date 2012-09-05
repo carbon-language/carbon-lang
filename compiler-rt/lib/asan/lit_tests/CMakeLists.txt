@@ -18,11 +18,15 @@ if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}")
     clang clang-headers FileCheck count not llvm-nm
     ${ASAN_RUNTIME_LIBRARIES}
     )
+  set(ASAN_TEST_PARAMS
+    asan_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
+    )
   if(LLVM_INCLUDE_TESTS)
     list(APPEND ASAN_TEST_DEPS AsanUnitTests)
   endif()
   add_lit_testsuite(check-asan "Running the AddressSanitizer tests"
     ${CMAKE_CURRENT_BINARY_DIR}
+    PARAMS ${ASAN_TEST_PARAMS}
     DEPENDS ${ASAN_TEST_DEPS}
     )
   set_target_properties(check-asan PROPERTIES FOLDER "ASan tests")
