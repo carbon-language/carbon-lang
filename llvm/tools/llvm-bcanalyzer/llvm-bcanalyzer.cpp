@@ -40,7 +40,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/system_error.h"
-#include <cstdio>
+
 #include <map>
 #include <algorithm>
 using namespace llvm;
@@ -463,11 +463,11 @@ static bool ParseBlock(BitstreamCursor &Stream, unsigned IndentLevel) {
 }
 
 static void PrintSize(double Bits) {
-  fprintf(stderr, "%.2f/%.2fB/%luW", Bits, Bits/8,(unsigned long)(Bits/32));
+  outs() << format("%.2f/%.2fB/%luW", Bits, Bits/8,(unsigned long)(Bits/32));
 }
 static void PrintSize(uint64_t Bits) {
-  fprintf(stderr, "%lub/%.2fB/%luW", (unsigned long)Bits,
-          (double)Bits/8, (unsigned long)(Bits/32));
+  outs() << format("%lub/%.2fB/%luW", (unsigned long)Bits,
+                   (double)Bits/8, (unsigned long)(Bits/32));
 }
 
 
@@ -556,7 +556,7 @@ static int AnalyzeBitcode() {
     PrintSize(Stats.NumBits);
     outs() << "\n";
     double pct = (Stats.NumBits * 100.0) / BufferSizeBits;
-    errs() << "    Percent of file: " << format("%2.4f%%", pct) << "\n";
+    outs() << "    Percent of file: " << format("%2.4f%%", pct) << "\n";
     if (Stats.NumInstances > 1) {
       outs() << "       Average Size: ";
       PrintSize(Stats.NumBits/(double)Stats.NumInstances);
@@ -588,24 +588,28 @@ static int AnalyzeBitcode() {
       std::reverse(FreqPairs.begin(), FreqPairs.end());
 
       outs() << "\tRecord Histogram:\n";
-      fprintf(stderr, "\t\t  Count    # Bits   %% Abv  Record Kind\n");
+      outs() << "\t\t  Count    # Bits   Bytes-Per  %% Abv  Record Kind\n";
       for (unsigned i = 0, e = FreqPairs.size(); i != e; ++i) {
         const PerRecordStats &RecStats = Stats.CodeFreq[FreqPairs[i].second];
 
-        fprintf(stderr, "\t\t%7d %9lu ", RecStats.NumInstances,
-                (unsigned long)RecStats.TotalBits);
+        outs() <<
+            format("\t\t%7d %9lu   %9.2f",
+                   RecStats.NumInstances,
+                   (unsigned long)RecStats.TotalBits,
+                   ((double)RecStats.TotalBits/RecStats.NumInstances)/8.0);
 
         if (RecStats.NumAbbrev)
-          fprintf(stderr, "%7.2f  ",
-                  (double)RecStats.NumAbbrev/RecStats.NumInstances*100);
+          outs() <<
+              format("%7.2f  ",
+                     (double)RecStats.NumAbbrev/RecStats.NumInstances*100);
         else
-          fprintf(stderr, "         ");
+          outs() << "         ";
 
         if (const char *CodeName =
               GetCodeName(FreqPairs[i].second, I->first, StreamFile))
-          fprintf(stderr, "%s\n", CodeName);
+          outs() << CodeName << "\n";
         else
-          fprintf(stderr, "UnknownCode%d\n", FreqPairs[i].second);
+          outs() << "UnknownCode" << FreqPairs[i].second << "\n";
       }
       outs() << "\n";
 
