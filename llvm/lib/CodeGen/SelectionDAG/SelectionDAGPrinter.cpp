@@ -49,7 +49,7 @@ namespace llvm {
 
     template<typename EdgeIter>
     static std::string getEdgeSourceLabel(const void *Node, EdgeIter I) {
-      return itostr(I - SDNodeIterator::begin((SDNode *) Node));
+      return itostr(I - SDNodeIterator::begin((const SDNode *) Node));
     }
 
     /// edgeTargetsEdgeSource - This method returns true if this outgoing edge
