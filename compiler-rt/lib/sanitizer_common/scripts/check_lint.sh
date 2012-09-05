@@ -54,8 +54,7 @@ ${CPPLINT} --filter=${ASAN_RTL_LINT_FILTER} ${ASAN_RTL}/*.{cc,h}
 ${CPPLINT} --filter=${ASAN_TEST_LINT_FILTER} ${ASAN_RTL}/tests/*.{cc,h} \
                                              ${ASAN_RTL}/output_tests/*.cc
 ${CPPLINT} --filter=${ASAN_TEST_LINT_FILTER} ${ASAN_RTL}/lit_tests/*.cc \
-                                             ${ASAN_RTL}/lit_tests/Linux/*.cc \
-                                             ${ASAN_RTL}/lit_tests/SharedLibs/*.cc
+                                             ${ASAN_RTL}/lit_tests/*/*.cc \
 
 # TSan
 TSAN_RTL=${COMPILER_RT}/lib/tsan
