@@ -9,6 +9,9 @@ RUN:              | FileCheck %s -check-prefix ELF-x86-64
 RUN: llvm-objdump -r %p/Inputs/trivial-object-test.elf-hexagon \
 RUN:              | FileCheck %s -check-prefix ELF-hexagon
 
+RUN: llvm-objdump -r %p/Inputs/relocations.elf-x86-64 \
+RUN:              | FileCheck %s -check-prefix ELF-complex-x86-64
+
 COFF-i386: .text
 COFF-i386: IMAGE_REL_I386_DIR32 L_.str
 COFF-i386: IMAGE_REL_I386_REL32 _puts
@@ -36,3 +39,13 @@ ELF-hexagon: R_HEX_HI16 puts
 ELF-hexagon: R_HEX_LO16 puts
 ELF-hexagon: R_HEX_B15_PCREL testf
 ELF-hexagon: R_HEX_B22_PCREL puts
+
+ELF-complex-x86-64: .text
+ELF-complex-x86-64-NEXT: R_X86_64_8 .data-4
+ELF-complex-x86-64-NEXT: R_X86_64_16 .data-4
+ELF-complex-x86-64-NEXT: R_X86_64_32 .data-4
+ELF-complex-x86-64-NEXT: R_X86_64_32S .data-4
+ELF-complex-x86-64-NEXT: R_X86_64_64 .data-4
+ELF-complex-x86-64-NEXT: R_X86_64_PC32 .data-4-P
+ELF-complex-x86-64-NEXT: R_X86_64_32 .data+0
+ELF-complex-x86-64-NEXT: R_X86_64_32 .data+4

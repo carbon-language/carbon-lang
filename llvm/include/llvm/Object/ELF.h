@@ -1711,15 +1711,15 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   int64_t addend = 0;
   uint16_t symbol_index = 0;
   switch (sec->sh_type) {
-    default :
+    default:
       return object_error::parse_failed;
-    case ELF::SHT_REL : {
+    case ELF::SHT_REL: {
       type = getRel(Rel)->getType();
       symbol_index = getRel(Rel)->getSymbol();
       // TODO: Read implicit addend from section data.
       break;
     }
-    case ELF::SHT_RELA : {
+    case ELF::SHT_RELA: {
       type = getRela(Rel)->getType();
       symbol_index = getRela(Rel)->getSymbol();
       addend = getRela(Rel)->r_addend;
@@ -1733,13 +1733,24 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   switch (Header->e_machine) {
   case ELF::EM_X86_64:
     switch (type) {
-    case ELF::R_X86_64_32S:
-      res = symname;
-      break;
+    case ELF::R_X86_64_PC8:
+    case ELF::R_X86_64_PC16:
     case ELF::R_X86_64_PC32: {
         std::string fmtbuf;
         raw_string_ostream fmt(fmtbuf);
         fmt << symname << (addend < 0 ? "" : "+") << addend << "-P";
+        fmt.flush();
+        Result.append(fmtbuf.begin(), fmtbuf.end());
+      }
+      break;
+    case ELF::R_X86_64_8:
+    case ELF::R_X86_64_16:
+    case ELF::R_X86_64_32:
+    case ELF::R_X86_64_32S:
+    case ELF::R_X86_64_64: {
+        std::string fmtbuf;
+        raw_string_ostream fmt(fmtbuf);
+        fmt << symname << (addend < 0 ? "" : "+") << addend;
         fmt.flush();
         Result.append(fmtbuf.begin(), fmtbuf.end());
       }
