@@ -89,6 +89,10 @@ bool BlackList::isIn(const Module &M) {
   return inSection("src", M.getModuleIdentifier());
 }
 
+bool BlackList::isInInit(const GlobalVariable &G) {
+  return isIn(*G.getParent()) || inSection("global-init", G.getName());
+}
+
 bool BlackList::inSection(const StringRef Section,
                                   const StringRef Query) {
   Regex *FunctionRegex = Entries[Section];

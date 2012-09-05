@@ -14,7 +14,8 @@
 // variables.  Each line contains a prefix, followed by a wild card expression.
 // ---
 // fun:*_ZN4base6subtle*
-// global:*global_with_initialization_problems*
+// global:*global_with_bad_access_or_initialization*
+// global-init:*global_with_initialization_issues*
 // src:file_with_tricky_code.cc
 // ---
 // Note that the wild card is in fact an llvm::Regex, but * is automatically
@@ -43,6 +44,8 @@ class BlackList {
   bool isIn(const GlobalVariable &G);
   // Returns whether this module is blacklisted by filename.
   bool isIn(const Module &M);
+  // Returns whether a global should be excluded from initialization checking.
+  bool isInInit(const GlobalVariable &G);
  private:
   StringMap<Regex*> Entries;
 

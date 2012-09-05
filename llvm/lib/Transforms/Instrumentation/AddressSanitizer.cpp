@@ -544,6 +544,7 @@ bool AddressSanitizer::ShouldInstrumentGlobal(GlobalVariable *G) {
   Type *Ty = cast<PointerType>(G->getType())->getElementType();
   DEBUG(dbgs() << "GLOBAL: " << *G);
 
+  if (BL->isIn(*G)) return false;
   if (!Ty->isSized()) return false;
   if (!G->hasInitializer()) return false;
   // Touch only those globals that will not be defined in other modules.
@@ -643,6 +644,8 @@ bool AddressSanitizer::insertGlobalRedzones(Module &M) {
     Type *RightRedZoneTy = ArrayType::get(IRB.getInt8Ty(), RightRedzoneSize);
     // Determine whether this global should be poisoned in initialization.
     bool GlobalHasDynamicInitializer = HasDynamicInitializer(G);
+    // Don't check initialization order if this global is blacklisted.
+    GlobalHasDynamicInitializer &= ! BL->isInInit(*G);
 
     StructType *NewTy = StructType::get(Ty, RightRedZoneTy, NULL);
     Constant *NewInitializer = ConstantStruct::get(
