@@ -109,6 +109,7 @@ bool HexagonPeephole::runOnMachineFunction(MachineFunction &MF) {
   MRI = &MF.getRegInfo();
 
   DenseMap<unsigned, unsigned> PeepholeMap;
+  DenseMap<unsigned, std::pair<unsigned, unsigned> > PeepholeDoubleRegsMap;
 
   if (DisableHexagonPeephole) return false;
 
@@ -117,6 +118,7 @@ bool HexagonPeephole::runOnMachineFunction(MachineFunction &MF) {
        MBBb != MBBe; ++MBBb) {
     MachineBasicBlock* MBB = MBBb;
     PeepholeMap.clear();
+    PeepholeDoubleRegsMap.clear();
 
     // Traverse the basic block.
     for (MachineBasicBlock::iterator MII = MBB->begin(); MII != MBB->end();
@@ -138,6 +140,24 @@ bool HexagonPeephole::runOnMachineFunction(MachineFunction &MF) {
           // PeepholeMap[170] = vreg166
           PeepholeMap[DstReg] = SrcReg;
         }
+      }
+
+      // Look for this sequence below
+      // %vregDoubleReg1 = LSRd_ri %vregDoubleReg0, 32
+      // %vregIntReg = COPY %vregDoubleReg1:subreg_loreg.
+      // and convert into
+      // %vregIntReg = COPY %vregDoubleReg0:subreg_hireg.
+      if (MI->getOpcode() == Hexagon::LSRd_ri) {
+        assert(MI->getNumOperands() == 3);
+        MachineOperand &Dst = MI->getOperand(0);
+        MachineOperand &Src1 = MI->getOperand(1);
+        MachineOperand &Src2 = MI->getOperand(2);
+        if (Src2.getImm() != 32)
+          continue;
+        unsigned DstReg = Dst.getReg();
+        unsigned SrcReg = Src1.getReg();
+        PeepholeDoubleRegsMap[DstReg] =
+          std::make_pair(*&SrcReg, 1/*Hexagon::subreg_hireg*/);
       }
 
       // Look for P=NOT(P).
@@ -178,6 +198,21 @@ bool HexagonPeephole::runOnMachineFunction(MachineFunction &MF) {
             // Change the 1st operand.
             MI->RemoveOperand(1);
             MI->addOperand(MachineOperand::CreateReg(PeepholeSrc, false));
+          } else  {
+            DenseMap<unsigned, std::pair<unsigned, unsigned> >::iterator DI =
+              PeepholeDoubleRegsMap.find(SrcReg);
+            if (DI != PeepholeDoubleRegsMap.end()) {
+              std::pair<unsigned,unsigned> PeepholeSrc = DI->second;
+              MI->RemoveOperand(1);
+              MI->addOperand(MachineOperand::CreateReg(PeepholeSrc.first,
+                                                       false /*isDef*/,
+                                                       false /*isImp*/,
+                                                       false /*isKill*/,
+                                                       false /*isDead*/,
+                                                       false /*isUndef*/,
+                                                       false /*isEarlyClobber*/,
+                                                       PeepholeSrc.second));
+            }
           }
         }
       }
