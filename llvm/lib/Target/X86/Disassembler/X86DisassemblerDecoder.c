@@ -719,7 +719,7 @@ static BOOL is16BitEquvalent(const char* orig, const char* equiv) {
  * @return      - 0 if the ModR/M could be read when needed or was not needed;
  *                nonzero otherwise.
  */
-static int getID(struct InternalInstruction* insn, void *miiArg) {
+static int getID(struct InternalInstruction* insn, const void *miiArg) {
   uint8_t attrMask;
   uint16_t instructionID;
   
@@ -1621,10 +1621,10 @@ static int readOperands(struct InternalInstruction* insn) {
  */
 int decodeInstruction(struct InternalInstruction* insn,
                       byteReader_t reader,
-                      void* readerArg,
+                      const void* readerArg,
                       dlog_t logger,
                       void* loggerArg,
-                      void* miiArg,
+                      const void* miiArg,
                       uint64_t startLoc,
                       DisassemblerMode mode) {
   memset(insn, 0, sizeof(struct InternalInstruction));

@@ -403,7 +403,7 @@ typedef uint8_t BOOL;
  *                  be read from.
  * @return        - -1 if the byte cannot be read for any reason; 0 otherwise.
  */
-typedef int (*byteReader_t)(void* arg, uint8_t* byte, uint64_t address);
+typedef int (*byteReader_t)(const void* arg, uint8_t* byte, uint64_t address);
 
 /*
  * dlog_t - Type for the logging function that the consumer can provide to
@@ -422,7 +422,7 @@ struct InternalInstruction {
   /* Reader interface (C) */
   byteReader_t reader;
   /* Opaque value passed to the reader */
-  void* readerArg;
+  const void* readerArg;
   /* The address of the next byte to read via the reader */
   uint64_t readerCursor;
 
@@ -561,10 +561,10 @@ struct InternalInstruction {
  */
 int decodeInstruction(struct InternalInstruction* insn,
                       byteReader_t reader,
-                      void* readerArg,
+                      const void* readerArg,
                       dlog_t logger,
                       void* loggerArg,
-                      void* miiArg,
+                      const void* miiArg,
                       uint64_t startLoc,
                       DisassemblerMode mode);
 
@@ -579,7 +579,7 @@ void x86DisassemblerDebug(const char *file,
                           unsigned line,
                           const char *s);
 
-const char *x86DisassemblerGetInstrName(unsigned Opcode, void *mii);
+const char *x86DisassemblerGetInstrName(unsigned Opcode, const void *mii);
 
 #ifdef __cplusplus
 }
