@@ -847,9 +847,12 @@ static bool getEdgeValueLocal(Value *Val, BasicBlock *BBFrom,
     for (SwitchInst::CaseIt i = SI->case_begin(), e = SI->case_end();
          i != e; ++i) {
       ConstantRange EdgeVal(i.getCaseValue()->getValue());
-      if (DefaultCase)
-        EdgesVals = EdgesVals.difference(EdgeVal);
-      else if (i.getCaseSuccessor() == BBTo)
+      if (DefaultCase) {
+        // It is possible that the default destination is the destination of
+        // some cases. There is no need to perform difference for those cases.
+        if (i.getCaseSuccessor() != BBTo)
+          EdgesVals = EdgesVals.difference(EdgeVal);
+      } else if (i.getCaseSuccessor() == BBTo)
         EdgesVals = EdgesVals.unionWith(EdgeVal);
     }
     Result = LVILatticeVal::getRange(EdgesVals);

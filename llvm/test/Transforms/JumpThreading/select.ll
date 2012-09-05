@@ -121,3 +121,39 @@ L4:
   call void @quux()
   br label %L0
 }
+
+; Make sure the edge value of %0 from entry to L2 includes 0 and L3 is
+; reachable.
+; CHECK: test_switch_default
+; CHECK: entry:
+; CHECK: load
+; CHECK: switch
+; CHECK: [[THREADED:[A-Za-z.0-9]+]]:
+; CHECK: store
+; CHECK: br
+; CHECK: L2:
+; CHECK: icmp
+define void @test_switch_default(i32* nocapture %status) nounwind {
+entry:
+  %0 = load i32* %status, align 4
+  switch i32 %0, label %L2 [
+    i32 5061, label %L1
+    i32 0, label %L2
+  ]
+
+L1:
+  store i32 10025, i32* %status, align 4
+  br label %L2
+
+L2:
+  %1 = load i32* %status, align 4
+  %cmp57.i = icmp eq i32 %1, 0
+  br i1 %cmp57.i, label %L3, label %L4
+
+L3:
+  store i32 10000, i32* %status, align 4
+  br label %L4
+
+L4:
+  ret void
+}
