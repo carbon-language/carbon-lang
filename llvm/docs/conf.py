@@ -98,7 +98,7 @@ html_theme = 'llvm-theme'
 #html_theme_options = {}
 
 # Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = ["."]
+html_theme_path = ["_themes"]
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -134,18 +134,7 @@ html_sidebars = {'index': 'indexsidebar.html'}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
-#
-# We load all the old-school HTML documentation pages into Sphinx here.
-basedir = os.path.dirname(__file__)
-html_additional_pages = {}
-for directory in ('', 'tutorial'):
-    for file in os.listdir(os.path.join(basedir, directory)):
-        if not file.endswith('.html'):
-            continue
-
-        subpath = os.path.join(directory, file)
-        name,_ = os.path.splitext(subpath)
-        html_additional_pages[name] = subpath
+#html_additional_pages = {}
 
 # If false, no module index is generated.
 #html_domain_indices = True
@@ -226,6 +215,7 @@ man_pages = []
 
 # Automatically derive the list of man pages from the contents of the command
 # guide subdirectory.
+basedir = os.path.dirname(__file__)
 man_page_authors = "Maintained by The LLVM Team (http://llvm.org/)."
 command_guide_subpath = 'CommandGuide'
 command_guide_path = os.path.join(basedir, command_guide_subpath)
