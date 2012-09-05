@@ -2088,7 +2088,8 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
                                                      Converted.data(),
                                                      Converted.size(), 0);
       ClassTemplate->AddSpecialization(Decl, InsertPos);
-      Decl->setLexicalDeclContext(CurContext);
+      if (ClassTemplate->isOutOfLine())
+        Decl->setLexicalDeclContext(ClassTemplate->getLexicalDeclContext());
     }
 
     CanonType = Context.getTypeDeclType(Decl);
