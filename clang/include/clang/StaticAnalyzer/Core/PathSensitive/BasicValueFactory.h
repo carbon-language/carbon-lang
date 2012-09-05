@@ -93,9 +93,6 @@ public:
   /// Returns the type of the APSInt used to store values of the given QualType.
   APSIntType getAPSIntType(QualType T) const {
     assert(T->isIntegerType() || Loc::isLocType(T));
-    // Make sure all locations have the same representation in the analyzer.
-    if (Loc::isLocType(T))
-      T = Ctx.VoidPtrTy;
     return APSIntType(Ctx.getTypeSize(T),
                       !T->isSignedIntegerOrEnumerationType());
   }

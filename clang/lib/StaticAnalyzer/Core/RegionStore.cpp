@@ -1744,26 +1744,6 @@ StoreRef RegionStoreManager::BindStruct(Store store, const TypedValueRegion* R,
   if (!RD->isCompleteDefinition())
     return StoreRef(store, *this);
 
-  // Handle Loc values by automatically dereferencing the location.
-  // This is necessary because we treat all struct values as regions even if
-  // they are rvalues; we may then be asked to bind one of these
-  // "rvalue regions" to an actual struct region.
-  // (This is necessary for many of the test cases in array-struct-region.cpp.)
-  //
-  // This also handles the case of a struct argument passed by value to an
-  // inlined function. In this case, the C++ standard says that the value
-  // is copy-constructed into the parameter variable. However, the copy-
-  // constructor is processed before we actually know if we're going to inline
-  // the function, and thus we don't actually have the parameter's region
-  // available. Instead, we use a temporary-object region, then copy the
-  // bindings over by value.
-  //
-  // FIXME: This will be a problem when we handle the destructors of
-  // temporaries; the inlined function will modify the parameter region,
-  // but the destructor will act on the temporary region.
-  if (const loc::MemRegionVal *MRV = dyn_cast<loc::MemRegionVal>(&V))
-    V = getBinding(store, *MRV);
-
   // Handle lazy compound values and symbolic values.
   if (isa<nonloc::LazyCompoundVal>(V) || isa<nonloc::SymbolVal>(V))
     return BindAggregate(store, R, V);
