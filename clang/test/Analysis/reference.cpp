@@ -116,8 +116,13 @@ void testReferenceAddress(int &x) {
 
   struct S { int &x; };
 
-  extern S *getS();
-  clang_analyzer_eval(&getS()->x != 0); // expected-warning{{TRUE}}
+  // FIXME: Should be TRUE. Fields of return-by-value structs are not yet
+  // symbolicated. Tracked by <rdar://problem/12137950>.
+  extern S getS();
+  clang_analyzer_eval(&getS().x != 0); // expected-warning{{UNKNOWN}}
+
+  extern S *getSP();
+  clang_analyzer_eval(&getSP()->x != 0); // expected-warning{{TRUE}}
 }
 
 
@@ -149,11 +154,4 @@ namespace rdar11212286 {
     B *x = 0;
     return *x; // should warn here!
   }
-}
-
-void testReferenceFieldAddress() {
-  struct S { int &x; };
-
-  extern S getS();
-  clang_analyzer_eval(&getS().x != 0); // expected-warning{{UNKNOWN}}
 }

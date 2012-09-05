@@ -384,6 +384,25 @@ void CXXInstanceCall::getExtraInvalidatedRegions(RegionList &Regions) const {
     Regions.push_back(R);
 }
 
+SVal CXXInstanceCall::getCXXThisVal() const {
+  const Expr *Base = getCXXThisExpr();
+  // FIXME: This doesn't handle an overloaded ->* operator.
+  if (!Base)
+    return UnknownVal();
+
+  SVal ThisVal = getSVal(Base);
+
+  // FIXME: This is only necessary because we can call member functions on
+  // struct rvalues, which do not have regions we can use for a 'this' pointer.
+  // Ideally this should eventually be changed to an assert, i.e. all
+  // non-Unknown, non-null 'this' values should be loc::MemRegionVals.
+  if (isa<DefinedSVal>(ThisVal))
+    if (!ThisVal.getAsRegion() && !ThisVal.isConstant())
+      return UnknownVal();
+
+  return ThisVal;
+}
+
 
 RuntimeDefinition CXXInstanceCall::getRuntimeDefinition() const {
   // Do we have a decl at all?

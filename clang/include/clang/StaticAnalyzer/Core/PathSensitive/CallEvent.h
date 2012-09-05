@@ -504,13 +504,7 @@ public:
   virtual const Expr *getCXXThisExpr() const { return 0; }
 
   /// \brief Returns the value of the implicit 'this' object.
-  virtual SVal getCXXThisVal() const {
-    const Expr *Base = getCXXThisExpr();
-    // FIXME: This doesn't handle an overloaded ->* operator.
-    if (!Base)
-      return UnknownVal();
-    return getSVal(Base);
-  }
+  virtual SVal getCXXThisVal() const;
 
   virtual const FunctionDecl *getDecl() const;
 
