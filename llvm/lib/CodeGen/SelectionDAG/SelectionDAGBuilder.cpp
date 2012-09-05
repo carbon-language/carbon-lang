@@ -6084,10 +6084,8 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
     ExtraInfo |= InlineAsm::Extra_HasSideEffects;
   if (IA->isAlignStack())
     ExtraInfo |= InlineAsm::Extra_IsAlignStack;
-  if (IA->getDialect() == InlineAsm::Extra_ATTDialect)
-    ExtraInfo |= InlineAsm::Extra_ATTDialect;
-  if (IA->getDialect() == InlineAsm::Extra_IntelDialect)
-    ExtraInfo |= InlineAsm::Extra_IntelDialect;
+  // Set the asm dialect.
+  ExtraInfo |= IA->getDialect() << 2;
   AsmNodeOperands.push_back(DAG.getTargetConstant(ExtraInfo,
                                                   TLI.getPointerTy()));
 

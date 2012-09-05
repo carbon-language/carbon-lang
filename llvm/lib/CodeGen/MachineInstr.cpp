@@ -970,11 +970,7 @@ bool MachineInstr::isStackAligningInlineAsm() const {
 InlineAsm::AsmDialect MachineInstr::getInlineAsmDialect() const {
   assert(isInlineAsm() && "getInlineAsmDialect() only works for inline asms!");
   unsigned ExtraInfo = getOperand(InlineAsm::MIOp_ExtraInfo).getImm();
-  if (ExtraInfo & InlineAsm::Extra_IntelDialect)
-    return InlineAsm::AD_Intel;
-
-  assert((ExtraInfo & InlineAsm::Extra_ATTDialect) && "Expected AT&T dialect!");
-  return InlineAsm::AD_ATT; // The default.
+  return InlineAsm::AsmDialect((ExtraInfo >> 2) & 1);
 }
 
 int MachineInstr::findInlineAsmFlagIdx(unsigned OpIdx,
@@ -1579,9 +1575,9 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
       OS << " [sideeffect]";
     if (ExtraInfo & InlineAsm::Extra_IsAlignStack)
       OS << " [alignstack]";
-    if (ExtraInfo & InlineAsm::Extra_ATTDialect)
+    if (getInlineAsmDialect() == InlineAsm::AD_ATT)
       OS << " [attdialect]";
-    if (ExtraInfo & InlineAsm::Extra_IntelDialect)
+    if (getInlineAsmDialect() == InlineAsm::AD_Intel)
       OS << " [inteldialect]";
 
     StartOp = AsmDescOp = InlineAsm::MIOp_FirstOperand;

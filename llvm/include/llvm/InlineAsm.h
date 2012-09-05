@@ -214,8 +214,7 @@ public:
     // Interpretation of the MIOp_ExtraInfo bit field.
     Extra_HasSideEffects = 1,
     Extra_IsAlignStack = 2,
-    Extra_ATTDialect = 3,   // AT&T AsmDialect.
-    Extra_IntelDialect = 4, // Intel AsmDialect.
+    Extra_AsmDialect = 3,
 
     // Inline asm operands map to multiple SDNode / MachineInstr operands.
     // The first operand is an immediate describing the asm operand, the low
