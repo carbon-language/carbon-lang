@@ -420,11 +420,13 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     // Both __PRETTY_FUNCTION__ and __FUNCTION__ are GCC extensions, however
     // VC++ appears to only like __FUNCTION__.
     Builder.defineMacro("__PRETTY_FUNCTION__", "__FUNCTION__");
-    // Work around some issues with Visual C++ headerws.
-    if (LangOpts.CPlusPlus) {
-      // Since we define wchar_t in C++ mode.
+    // Work around some issues with Visual C++ headers.
+    if (LangOpts.WChar) {
+      // wchar_t supported as a keyword.
       Builder.defineMacro("_WCHAR_T_DEFINED");
       Builder.defineMacro("_NATIVE_WCHAR_T_DEFINED");
+    }
+    if (LangOpts.CPlusPlus) {
       // FIXME: Support Microsoft's __identifier extension in the lexer.
       Builder.append("#define __identifier(x) x");
       Builder.append("class type_info;");

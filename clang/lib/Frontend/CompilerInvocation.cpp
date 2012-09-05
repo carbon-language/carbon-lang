@@ -797,6 +797,8 @@ static void LangOptsToArgs(const LangOptions &Opts, ToArgsList &Res) {
     Res.push_back("-fno-access-control");
   if (!Opts.CharIsSigned)
     Res.push_back("-fno-signed-char");
+  if (Opts.CPlusPlus && !Opts.WChar)
+    Res.push_back("-fno-wchar");
   if (Opts.ShortWChar)
     Res.push_back("-fshort-wchar");
   if (!Opts.ElideConstructors)
@@ -1871,6 +1873,9 @@ void CompilerInvocation::setLangDefaults(LangOptions &Opts, InputKind IK,
   // OpenCL and C++ both have bool, true, false keywords.
   Opts.Bool = Opts.OpenCL || Opts.CPlusPlus;
 
+  // C++ has wchar_t keyword.
+  Opts.WChar = Opts.CPlusPlus;
+
   Opts.GNUKeywords = Opts.GNUMode;
   Opts.CXXOperatorNames = Opts.CPlusPlus;
 
@@ -2078,6 +2083,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.BlocksRuntimeOptional = Args.hasArg(OPT_fblocks_runtime_optional);
   Opts.Modules = Args.hasArg(OPT_fmodules);
   Opts.CharIsSigned = !Args.hasArg(OPT_fno_signed_char);
+  Opts.WChar = Opts.CPlusPlus && !Args.hasArg(OPT_fno_wchar);
   Opts.ShortWChar = Args.hasArg(OPT_fshort_wchar);
   Opts.ShortEnums = Args.hasArg(OPT_fshort_enums);
   Opts.Freestanding = Args.hasArg(OPT_ffreestanding);
