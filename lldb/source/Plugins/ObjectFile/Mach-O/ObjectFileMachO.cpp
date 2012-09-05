@@ -12,9 +12,11 @@
 
 #include "ObjectFileMachO.h"
 
+#include "lldb/lldb-private-log.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/FileSpecList.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/RangeMap.h"
@@ -3139,7 +3141,6 @@ struct lldb_copy_dyld_cache_local_symbols_entry
                                     stub_symbol = symtab->FindSymbolByID (stub_sym_id);
                                 }
 
-                                assert (stub_symbol);
                                 if (stub_symbol)
                                 {
                                     Address so_addr(symbol_stub_addr, section_list);
@@ -3172,6 +3173,11 @@ struct lldb_copy_dyld_cache_local_symbols_entry
                                         sym[sym_idx].SetByteSize (symbol_stub_byte_size);
                                         ++sym_idx;
                                     }
+                                }
+                                else
+                                {
+                                    if (log)
+                                        log->Warning ("symbol stub referencing symbol table symbol %u that isn't in our minimal symbol table, fix this!!!", stub_sym_id);
                                 }
                             }
                         }
