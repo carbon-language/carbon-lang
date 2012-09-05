@@ -80,7 +80,7 @@ define double @f7(double %a, double %b) {
 ; CHECK-NEON:      adr     [[R2:r[0-9]+]], LCPI7_0
 ; CHECK-NEON-NEXT: cmp     r0, [[R3]]
 ; CHECK-NEON-NEXT: it      eq
-; CHECK-NEON-NEXT: addeq.w {{r.*}}, [[R2]]
+; CHECK-NEON-NEXT: addeq{{.*}} [[R2]], #4
 ; CHECK-NEON-NEXT: ldr
 ; CHECK-NEON:      bx
 

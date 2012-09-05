@@ -1580,15 +1580,19 @@ ARMBaseInstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
 }
 
 /// Identify instructions that can be folded into a MOVCC instruction, and
-/// return the corresponding opcode for the predicated pseudo-instruction.
-static unsigned canFoldIntoMOVCC(unsigned Reg, MachineInstr *&MI,
-                                 const MachineRegisterInfo &MRI) {
+/// return the defining instruction.
+static MachineInstr *canFoldIntoMOVCC(unsigned Reg,
+                                      const MachineRegisterInfo &MRI,
+                                      const TargetInstrInfo *TII) {
   if (!TargetRegisterInfo::isVirtualRegister(Reg))
     return 0;
   if (!MRI.hasOneNonDBGUse(Reg))
     return 0;
-  MI = MRI.getVRegDef(Reg);
+  MachineInstr *MI = MRI.getVRegDef(Reg);
   if (!MI)
+    return 0;
+  // MI is folded into the MOVCC by predicating it.
+  if (!MI->isPredicable())
     return 0;
   // Check if MI has any non-dead defs or physreg uses. This also detects
   // predicated instructions which will be reading CPSR.
@@ -1599,55 +1603,18 @@ static unsigned canFoldIntoMOVCC(unsigned Reg, MachineInstr *&MI,
       return 0;
     if (!MO.isReg())
       continue;
+    // MI can't have any tied operands, that would conflict with predication.
+    if (MO.isTied())
+      return 0;
     if (TargetRegisterInfo::isPhysicalRegister(MO.getReg()))
       return 0;
     if (MO.isDef() && !MO.isDead())
       return 0;
   }
-  switch (MI->getOpcode()) {
-  default: return 0;
-  case ARM::ANDri:   return ARM::ANDCCri;
-  case ARM::ANDrr:   return ARM::ANDCCrr;
-  case ARM::ANDrsi:  return ARM::ANDCCrsi;
-  case ARM::ANDrsr:  return ARM::ANDCCrsr;
-  case ARM::t2ANDri: return ARM::t2ANDCCri;
-  case ARM::t2ANDrr: return ARM::t2ANDCCrr;
-  case ARM::t2ANDrs: return ARM::t2ANDCCrs;
-  case ARM::EORri:   return ARM::EORCCri;
-  case ARM::EORrr:   return ARM::EORCCrr;
-  case ARM::EORrsi:  return ARM::EORCCrsi;
-  case ARM::EORrsr:  return ARM::EORCCrsr;
-  case ARM::t2EORri: return ARM::t2EORCCri;
-  case ARM::t2EORrr: return ARM::t2EORCCrr;
-  case ARM::t2EORrs: return ARM::t2EORCCrs;
-  case ARM::ORRri:   return ARM::ORRCCri;
-  case ARM::ORRrr:   return ARM::ORRCCrr;
-  case ARM::ORRrsi:  return ARM::ORRCCrsi;
-  case ARM::ORRrsr:  return ARM::ORRCCrsr;
-  case ARM::t2ORRri: return ARM::t2ORRCCri;
-  case ARM::t2ORRrr: return ARM::t2ORRCCrr;
-  case ARM::t2ORRrs: return ARM::t2ORRCCrs;
-
-  // ARM ADD/SUB
-  case ARM::ADDri:   return ARM::ADDCCri;
-  case ARM::ADDrr:   return ARM::ADDCCrr;
-  case ARM::ADDrsi:  return ARM::ADDCCrsi;
-  case ARM::ADDrsr:  return ARM::ADDCCrsr;
-  case ARM::SUBri:   return ARM::SUBCCri;
-  case ARM::SUBrr:   return ARM::SUBCCrr;
-  case ARM::SUBrsi:  return ARM::SUBCCrsi;
-  case ARM::SUBrsr:  return ARM::SUBCCrsr;
-
-  // Thumb2 ADD/SUB
-  case ARM::t2ADDri:   return ARM::t2ADDCCri;
-  case ARM::t2ADDri12: return ARM::t2ADDCCri12;
-  case ARM::t2ADDrr:   return ARM::t2ADDCCrr;
-  case ARM::t2ADDrs:   return ARM::t2ADDCCrs;
-  case ARM::t2SUBri:   return ARM::t2SUBCCri;
-  case ARM::t2SUBri12: return ARM::t2SUBCCri12;
-  case ARM::t2SUBrr:   return ARM::t2SUBCCrr;
-  case ARM::t2SUBrs:   return ARM::t2SUBCCrs;
-  }
+  bool DontMoveAcrossStores = true;
+  if (!MI->isSafeToMove(TII, /* AliasAnalysis = */ 0, DontMoveAcrossStores))
+    return 0;
+  return MI;
 }
 
 bool ARMBaseInstrInfo::analyzeSelect(const MachineInstr *MI,
@@ -1676,19 +1643,18 @@ MachineInstr *ARMBaseInstrInfo::optimizeSelect(MachineInstr *MI,
   assert((MI->getOpcode() == ARM::MOVCCr || MI->getOpcode() == ARM::t2MOVCCr) &&
          "Unknown select instruction");
   const MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
-  MachineInstr *DefMI = 0;
-  unsigned Opc = canFoldIntoMOVCC(MI->getOperand(2).getReg(), DefMI, MRI);
-  bool Invert = !Opc;
-  if (!Opc)
-    Opc = canFoldIntoMOVCC(MI->getOperand(1).getReg(), DefMI, MRI);
-  if (!Opc)
+  MachineInstr *DefMI = canFoldIntoMOVCC(MI->getOperand(2).getReg(), MRI, this);
+  bool Invert = !DefMI;
+  if (!DefMI)
+    DefMI = canFoldIntoMOVCC(MI->getOperand(1).getReg(), MRI, this);
+  if (!DefMI)
     return 0;
 
   // Create a new predicated version of DefMI.
   // Rfalse is the first use.
   MachineInstrBuilder NewMI = BuildMI(*MI->getParent(), MI, MI->getDebugLoc(),
-                                      get(Opc), MI->getOperand(0).getReg())
-    .addOperand(MI->getOperand(Invert ? 2 : 1));
+                                      DefMI->getDesc(),
+                                      MI->getOperand(0).getReg());
 
   // Copy all the DefMI operands, excluding its (null) predicate.
   const MCInstrDesc &DefDesc = DefMI->getDesc();
@@ -1706,6 +1672,15 @@ MachineInstr *ARMBaseInstrInfo::optimizeSelect(MachineInstr *MI,
   // DefMI is not the -S version that sets CPSR, so add an optional %noreg.
   if (NewMI->hasOptionalDef())
     AddDefaultCC(NewMI);
+
+  // The output register value when the predicate is false is an implicit
+  // register operand tied to the first def.
+  // The tie makes the register allocator ensure the FalseReg is allocated the
+  // same register as operand 0.
+  MachineOperand FalseReg = MI->getOperand(Invert ? 2 : 1);
+  FalseReg.setImplicit();
+  NewMI->addOperand(FalseReg);
+  NewMI->tieOperands(0, NewMI->getNumOperands() - 1);
 
   // The caller will erase MI, but not DefMI.
   DefMI->eraseFromParent();

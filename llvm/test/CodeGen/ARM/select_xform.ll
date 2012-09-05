@@ -9,7 +9,7 @@ define i32 @t1(i32 %a, i32 %b, i32 %c) nounwind {
 
 ; T2: t1:
 ; T2: mvn r0, #-2147483648
-; T2: addle.w r1, r1
+; T2: addle r1, r0
 ; T2: mov r0, r1
   %tmp1 = icmp sgt i32 %c, 10
   %tmp2 = select i1 %tmp1, i32 0, i32 2147483647
@@ -23,7 +23,7 @@ define i32 @t2(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
 ; ARM: mov r0, r1
 
 ; T2: t2:
-; T2: suble.w r1, r1, #10
+; T2: suble r1, #10
 ; T2: mov r0, r1
   %tmp1 = icmp sgt i32 %c, 10
   %tmp2 = select i1 %tmp1, i32 0, i32 10
@@ -37,7 +37,7 @@ define i32 @t3(i32 %a, i32 %b, i32 %x, i32 %y) nounwind {
 ; ARM: mov r0, r3
 
 ; T2: t3:
-; T2: andge.w r3, r3, r2
+; T2: andge r3, r2
 ; T2: mov r0, r3
   %cond = icmp slt i32 %a, %b
   %z = select i1 %cond, i32 -1, i32 %x
@@ -51,7 +51,7 @@ define i32 @t4(i32 %a, i32 %b, i32 %x, i32 %y) nounwind {
 ; ARM: mov r0, r3
 
 ; T2: t4:
-; T2: orrge.w r3, r3, r2
+; T2: orrge r3, r2
 ; T2: mov r0, r3
   %cond = icmp slt i32 %a, %b
   %z = select i1 %cond, i32 0, i32 %x
@@ -81,7 +81,7 @@ define i32 @t6(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
 
 ; T2: t6:
 ; T2-NOT: movge
-; T2: eorlt.w r3, r3, r2
+; T2: eorlt r3, r2
   %cond = icmp slt i32 %a, %b
   %tmp1 = select i1 %cond, i32 %c, i32 0
   %tmp2 = xor i32 %tmp1, %d
@@ -200,7 +200,7 @@ entry:
 
 ; T2: t13
 ; T2: cmp r1, #10
-; T2: addgt.w r0, r0, #1
+; T2: addgt r0, #1
   %cmp = icmp sgt i32 %a, 10
   %conv = zext i1 %cmp to i32
   %add = add i32 %conv, %c
@@ -216,7 +216,7 @@ entry:
 
 ; T2: t14
 ; T2: cmp r1, #10
-; T2: subgt.w r0, r0, #1
+; T2: subgt r0, #1
   %cmp = icmp sgt i32 %a, 10
   %conv = sext i1 %cmp to i32
   %add = add i32 %conv, %c
