@@ -29,6 +29,7 @@
 #include <climits>
 
 namespace llvm {
+  class CoalescerPair;
   class LiveIntervals;
   class MachineInstr;
   class MachineRegisterInfo;
@@ -365,6 +366,14 @@ namespace llvm {
         return false;
       return overlapsFrom(other, other.begin());
     }
+
+    /// overlaps - Return true if the two intervals have overlapping segments
+    /// that are not coalescable according to CP.
+    ///
+    /// Overlapping segments where one interval is defined by a coalescable
+    /// copy are allowed.
+    bool overlaps(const LiveInterval &Other, const CoalescerPair &CP,
+                  const SlotIndexes&) const;
 
     /// overlaps - Return true if the live interval overlaps a range specified
     /// by [Start, End).

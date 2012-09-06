@@ -76,12 +76,12 @@ entry:
 
 ; X32:    f5:
 ; X32:      leal {{[jk]}}@TLSLDM(%ebx)
-; X32-NEXT: calll ___tls_get_addr@PLT
-; X32-NEXT: movl {{[jk]}}@DTPOFF(%eax)
-; X32-NEXT: addl {{[jk]}}@DTPOFF(%eax)
+; X32: calll ___tls_get_addr@PLT
+; X32: movl {{[jk]}}@DTPOFF(%e
+; X32: addl {{[jk]}}@DTPOFF(%e
 
 ; X64:    f5:
 ; X64:      leaq {{[jk]}}@TLSLD(%rip), %rdi
-; X64-NEXT: callq	__tls_get_addr@PLT
-; X64-NEXT: movl {{[jk]}}@DTPOFF(%rax)
-; X64-NEXT: addl {{[jk]}}@DTPOFF(%rax)
+; X64: callq	__tls_get_addr@PLT
+; X64: movl {{[jk]}}@DTPOFF(%r
+; X64: addl {{[jk]}}@DTPOFF(%r

@@ -9,9 +9,8 @@ target triple = "powerpc-apple-darwin11.0"
 
 define void @foo() nounwind ssp {
 entry:
-; Better: mtctr r12
-; CHECK: mr r12, [[REG:r[0-9]+]]
-; CHECK: mtctr [[REG]]
+; CHECK: mtctr r12
+; CHECK: bctrl
   %0 = load void (...)** @p, align 4              ; <void (...)*> [#uses=1]
   call void (...)* %0() nounwind
   br label %return
