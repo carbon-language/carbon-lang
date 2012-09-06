@@ -163,13 +163,16 @@ bool LTOCodeGenerator::compile_to_file(const char** name, std::string& errMsg) {
   // generate object file
   bool genResult = false;
   tool_output_file objFile(uniqueObjPath.c_str(), errMsg);
-  if (!errMsg.empty())
+  if (!errMsg.empty()) {
+    uniqueObjPath.eraseFromDisk();
     return true;
+  }
 
   genResult = this->generateObjectFile(objFile.os(), errMsg);
   objFile.os().close();
   if (objFile.os().has_error()) {
     objFile.os().clear_error();
+    uniqueObjPath.eraseFromDisk();
     return true;
   }
 
@@ -196,6 +199,7 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg) {
   OwningPtr<MemoryBuffer> BuffPtr;
   if (error_code ec = MemoryBuffer::getFile(name, BuffPtr, -1, false)) {
     errMsg = ec.message();
+    sys::Path(_nativeObjectPath).eraseFromDisk();
     return NULL;
   }
   _nativeObjectFile = BuffPtr.take();
