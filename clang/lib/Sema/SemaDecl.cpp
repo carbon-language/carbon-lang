@@ -518,9 +518,9 @@ static bool isTagTypeWithMissingTag(Sema &SemaRef, LookupResult &Result,
                                     Scope *S, CXXScopeSpec &SS,
                                     IdentifierInfo *&Name,
                                     SourceLocation NameLoc) {
-  Result.clear(Sema::LookupTagName);
-  SemaRef.LookupParsedName(Result, S, &SS);
-  if (TagDecl *Tag = Result.getAsSingle<TagDecl>()) {
+  LookupResult R(SemaRef, Name, NameLoc, Sema::LookupTagName);
+  SemaRef.LookupParsedName(R, S, &SS);
+  if (TagDecl *Tag = R.getAsSingle<TagDecl>()) {
     const char *TagName = 0;
     const char *FixItTagName = 0;
     switch (Tag->getTagKind()) {
@@ -554,17 +554,17 @@ static bool isTagTypeWithMissingTag(Sema &SemaRef, LookupResult &Result,
       << Name << TagName << SemaRef.getLangOpts().CPlusPlus
       << FixItHint::CreateInsertion(NameLoc, FixItTagName);
 
-    LookupResult R(SemaRef, Name, NameLoc, Sema::LookupOrdinaryName);
-    if (SemaRef.LookupParsedName(R, S, &SS)) {
-      for (LookupResult::iterator I = R.begin(), IEnd = R.end();
-           I != IEnd; ++I)
-        SemaRef.Diag((*I)->getLocation(), diag::note_decl_hiding_tag_type)
-          << Name << TagName;
-    }
+    for (LookupResult::iterator I = Result.begin(), IEnd = Result.end();
+         I != IEnd; ++I)
+      SemaRef.Diag((*I)->getLocation(), diag::note_decl_hiding_tag_type)
+        << Name << TagName;
+
+    // Replace lookup results with just the tag decl.
+    Result.clear(Sema::LookupTagName);
+    SemaRef.LookupParsedName(Result, S, &SS);
     return true;
   }
 
-  Result.clear(Sema::LookupOrdinaryName);
   return false;
 }
 
@@ -862,14 +862,12 @@ Corrected:
     if ((NextToken.is(tok::identifier) ||
          (NextIsOp && FirstDecl->isFunctionOrFunctionTemplate())) &&
         isTagTypeWithMissingTag(*this, Result, S, SS, Name, NameLoc)) {
-      FirstDecl = (*Result.begin())->getUnderlyingDecl();
-      if (TypeDecl *Type = dyn_cast<TypeDecl>(FirstDecl)) {
-        DiagnoseUseOfDecl(Type, NameLoc);
-        QualType T = Context.getTypeDeclType(Type);
-        if (SS.isNotEmpty())
-          return buildNestedType(*this, SS, T, NameLoc);
-        return ParsedType::make(T);
-      }
+      TypeDecl *Type = Result.getAsSingle<TypeDecl>();
+      DiagnoseUseOfDecl(Type, NameLoc);
+      QualType T = Context.getTypeDeclType(Type);
+      if (SS.isNotEmpty())
+        return buildNestedType(*this, SS, T, NameLoc);
+      return ParsedType::make(T);
     }
   }
   
