@@ -1060,12 +1060,42 @@ BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
   // on corresponding edges.
   if (const PHINode *PN2 = dyn_cast<PHINode>(V2))
     if (PN2->getParent() == PN->getParent()) {
+      LocPair Locs(Location(PN, PNSize, PNTBAAInfo),
+                   Location(V2, V2Size, V2TBAAInfo));
+      if (PN > V2)
+        std::swap(Locs.first, Locs.second);
+
       AliasResult Alias =
         aliasCheck(PN->getIncomingValue(0), PNSize, PNTBAAInfo,
                    PN2->getIncomingValueForBlock(PN->getIncomingBlock(0)),
                    V2Size, V2TBAAInfo);
       if (Alias == MayAlias)
         return MayAlias;
+
+      // If the first source of the PHI nodes NoAlias and the other inputs are
+      // the PHI node itself through some amount of recursion this does not add
+      // any new information so just return NoAlias.
+      // bb:
+      //    ptr = ptr2 + 1
+      // loop:
+      //    ptr_phi = phi [bb, ptr], [loop, ptr_plus_one]
+      //    ptr2_phi = phi [bb, ptr2], [loop, ptr2_plus_one]
+      //    ...
+      //    ptr_plus_one = gep ptr_phi, 1
+      //    ptr2_plus_one = gep ptr2_phi, 1
+      // We assume for the recursion that the the phis (ptr_phi, ptr2_phi) do
+      // not alias each other.
+      bool ArePhisAssumedNoAlias = false;
+      AliasResult OrigAliasResult;
+      if (Alias == NoAlias) {
+        // Pretend the phis do not alias.
+        assert(AliasCache.count(Locs) &&
+               "There must exist an entry for the phi node");
+        OrigAliasResult = AliasCache[Locs];
+        AliasCache[Locs] = NoAlias;
+        ArePhisAssumedNoAlias = true;
+      }
+
       for (unsigned i = 1, e = PN->getNumIncomingValues(); i != e; ++i) {
         AliasResult ThisAlias =
           aliasCheck(PN->getIncomingValue(i), PNSize, PNTBAAInfo,
@@ -1075,6 +1105,11 @@ BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
         if (Alias == MayAlias)
           break;
       }
+
+      // Reset if speculation failed.
+      if (ArePhisAssumedNoAlias && Alias != NoAlias)
+        AliasCache[Locs] = OrigAliasResult;
+
       return Alias;
     }
 
