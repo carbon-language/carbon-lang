@@ -389,6 +389,90 @@ ABIArgInfo DefaultABIInfo::classifyReturnType(QualType RetTy) const {
           ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
 }
 
+//===----------------------------------------------------------------------===//
+// le32/PNaCl bitcode ABI Implementation
+//===----------------------------------------------------------------------===//
+
+class PNaClABIInfo : public ABIInfo {
+ public:
+  PNaClABIInfo(CodeGen::CodeGenTypes &CGT) : ABIInfo(CGT) {}
+
+  ABIArgInfo classifyReturnType(QualType RetTy) const;
+  ABIArgInfo classifyArgumentType(QualType RetTy, unsigned &FreeRegs) const;
+
+  virtual void computeInfo(CGFunctionInfo &FI) const;
+  virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                 CodeGenFunction &CGF) const;
+};
+
+class PNaClTargetCodeGenInfo : public TargetCodeGenInfo {
+ public:
+  PNaClTargetCodeGenInfo(CodeGen::CodeGenTypes &CGT)
+    : TargetCodeGenInfo(new PNaClABIInfo(CGT)) {}
+};
+
+void PNaClABIInfo::computeInfo(CGFunctionInfo &FI) const {
+    FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
+
+    unsigned FreeRegs = FI.getHasRegParm() ? FI.getRegParm() : 0;
+
+    for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
+         it != ie; ++it)
+      it->info = classifyArgumentType(it->type, FreeRegs);
+  }
+
+llvm::Value *PNaClABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                       CodeGenFunction &CGF) const {
+  return 0;
+}
+
+ABIArgInfo PNaClABIInfo::classifyArgumentType(QualType Ty,
+                                              unsigned &FreeRegs) const {
+  if (isAggregateTypeForABI(Ty)) {
+    // Records with non trivial destructors/constructors should not be passed
+    // by value.
+    FreeRegs = 0;
+    if (isRecordWithNonTrivialDestructorOrCopyConstructor(Ty))
+      return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
+
+    return ABIArgInfo::getIndirect(0);
+  }
+
+  // Treat an enum type as its underlying type.
+  if (const EnumType *EnumTy = Ty->getAs<EnumType>())
+    Ty = EnumTy->getDecl()->getIntegerType();
+
+  ABIArgInfo BaseInfo = (Ty->isPromotableIntegerType() ?
+          ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
+
+  // Regparm regs hold 32 bits.
+  unsigned SizeInRegs = (getContext().getTypeSize(Ty) + 31) / 32;
+  if (SizeInRegs == 0) return BaseInfo;
+  if (SizeInRegs > FreeRegs) {
+    FreeRegs = 0;
+    return BaseInfo;
+  }
+  FreeRegs -= SizeInRegs;
+  return BaseInfo.isDirect() ?
+      ABIArgInfo::getDirectInReg(BaseInfo.getCoerceToType()) :
+      ABIArgInfo::getExtendInReg(BaseInfo.getCoerceToType());
+}
+
+ABIArgInfo PNaClABIInfo::classifyReturnType(QualType RetTy) const {
+  if (RetTy->isVoidType())
+    return ABIArgInfo::getIgnore();
+
+  if (isAggregateTypeForABI(RetTy))
+    return ABIArgInfo::getIndirect(0);
+
+  // Treat an enum type as its underlying type.
+  if (const EnumType *EnumTy = RetTy->getAs<EnumType>())
+    RetTy = EnumTy->getDecl()->getIntegerType();
+
+  return (RetTy->isPromotableIntegerType() ?
+          ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
+}
+
 /// UseX86_MMXType - Return true if this is an MMX type that should use the
 /// special x86_mmx type.
 bool UseX86_MMXType(llvm::Type *IRType) {
@@ -3768,6 +3852,8 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
   default:
     return *(TheTargetCodeGenInfo = new DefaultTargetCodeGenInfo(Types));
 
+  case llvm::Triple::le32:
+    return *(TheTargetCodeGenInfo = new PNaClTargetCodeGenInfo(Types));
   case llvm::Triple::mips:
   case llvm::Triple::mipsel:
     return *(TheTargetCodeGenInfo = new MIPSTargetCodeGenInfo(Types, true));
