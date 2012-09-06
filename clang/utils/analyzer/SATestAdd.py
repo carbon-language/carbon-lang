@@ -33,7 +33,7 @@ def isExistingProject(PMapFile, projectID) :
 # Params:
 #   Dir is the directory where the sources are.
 #   ID is a short string used to identify a project.
-def addNewProject(ID, IsScanBuild) :
+def addNewProject(ID, BuildMode) :
     CurDir = os.path.abspath(os.curdir)
     Dir = SATestBuild.getProjectDir(ID)
     if not os.path.exists(Dir):
@@ -41,7 +41,7 @@ def addNewProject(ID, IsScanBuild) :
         sys.exit(-1)
         
     # Build the project.
-    SATestBuild.testProject(ID, IsScanBuild, IsReferenceBuild=True, Dir=Dir)
+    SATestBuild.testProject(ID, BuildMode, IsReferenceBuild=True, Dir=Dir)
 
     # Add the project ID to the project map.
     ProjectMapPath = os.path.join(CurDir, SATestBuild.ProjectMapFile)
@@ -57,7 +57,7 @@ def addNewProject(ID, IsScanBuild) :
             print >> sys.stdout, "Reference output has been regenerated."
         else:                     
             PMapWriter = csv.writer(PMapFile)
-            PMapWriter.writerow( (ID, int(IsScanBuild)) );
+            PMapWriter.writerow( (ID, int(BuildMode)) );
             print "The project map is updated: ", ProjectMapPath
     finally:
         PMapFile.close()
@@ -69,12 +69,14 @@ if __name__ == '__main__':
     if len(sys.argv) < 2:
         print >> sys.stderr, 'Usage: ', sys.argv[0],\
                              'project_ID <mode>' \
-                             'mode - 0 for single file project; 1 for scan_build'
+                             'mode - 0 for single file project; ' \
+                             '1 for scan_build; ' \
+                             '2 for single file c++11 project'
         sys.exit(-1)
     
-    IsScanBuild = 1    
+    BuildMode = 1    
     if (len(sys.argv) >= 3):
-        IsScanBuild = int(sys.argv[2])  
-    assert((IsScanBuild == 0) | (IsScanBuild == 1))
+        BuildMode = int(sys.argv[2])  
+    assert((BuildMode == 0) | (BuildMode == 1) | (BuildMode == 2))
         
-    addNewProject(sys.argv[1], IsScanBuild)
+    addNewProject(sys.argv[1], BuildMode)

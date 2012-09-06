@@ -241,7 +241,7 @@ def isValidSingleInputFile(FileName):
     return False
    
 # Run analysis on a set of preprocessed files.
-def runAnalyzePreprocessed(Dir, SBOutputDir):
+def runAnalyzePreprocessed(Dir, SBOutputDir, Mode):
     if os.path.exists(os.path.join(Dir, BuildScript)):
         print "Error: The preprocessed files project should not contain %s" % \
                BuildScript
@@ -249,6 +249,9 @@ def runAnalyzePreprocessed(Dir, SBOutputDir):
 
     CmdPrefix = Clang + " -cc1 -analyze -analyzer-output=plist -w "
     CmdPrefix += "-analyzer-checker=" + Checkers +" -fcxx-exceptions -fblocks "   
+    
+    if (Mode == 2) :
+        CmdPrefix += "-std=c++11 " 
     
     PlistPath = os.path.join(Dir, SBOutputDir, "date")
     FailPath = os.path.join(PlistPath, "failures");
@@ -287,7 +290,7 @@ def runAnalyzePreprocessed(Dir, SBOutputDir):
         if Failed == False:
             os.remove(LogFile.name);
 
-def buildProject(Dir, SBOutputDir, IsScanBuild, IsReferenceBuild):
+def buildProject(Dir, SBOutputDir, ProjectBuildMode, IsReferenceBuild):
     TBegin = time.time() 
 
     BuildLogPath = os.path.join(SBOutputDir, LogFolderName, BuildLogName)
@@ -317,10 +320,10 @@ def buildProject(Dir, SBOutputDir, IsScanBuild, IsReferenceBuild):
     try:
         runCleanupScript(Dir, PBuildLogFile)
         
-        if IsScanBuild:
+        if (ProjectBuildMode == 1):
             runScanBuild(Dir, SBOutputDir, PBuildLogFile)
         else:
-            runAnalyzePreprocessed(Dir, SBOutputDir)
+            runAnalyzePreprocessed(Dir, SBOutputDir, ProjectBuildMode)
         
         if IsReferenceBuild :
             runCleanupScript(Dir, PBuildLogFile)
@@ -474,7 +477,7 @@ def updateSVN(Mode, ProjectsMap):
         print "Error: SVN update failed."
         sys.exit(-1)
         
-def testProject(ID, IsScanBuild, IsReferenceBuild=False, Dir=None):
+def testProject(ID, ProjectBuildMode, IsReferenceBuild=False, Dir=None):
     print " \n\n--- Building project %s" % (ID,)
 
     TBegin = time.time() 
@@ -488,7 +491,7 @@ def testProject(ID, IsScanBuild, IsReferenceBuild=False, Dir=None):
     RelOutputDir = getSBOutputDirName(IsReferenceBuild)
     SBOutputDir = os.path.join(Dir, RelOutputDir)
                 
-    buildProject(Dir, SBOutputDir, IsScanBuild, IsReferenceBuild)
+    buildProject(Dir, SBOutputDir, ProjectBuildMode, IsReferenceBuild)
 
     checkBuild(SBOutputDir)
     
@@ -506,8 +509,9 @@ def testAll(IsReferenceBuild = False, UpdateSVN = False):
             if (len(I) != 2) :
                 print "Error: Rows in the ProjectMapFile should have 3 entries."
                 raise Exception()
-            if (not ((I[1] == "1") | (I[1] == "0"))):
-                print "Error: Second entry in the ProjectMapFile should be 0 or 1."
+            if (not ((I[1] == "0") | (I[1] == "1") | (I[1] == "2"))):
+                print "Error: Second entry in the ProjectMapFile should be 0" \
+                      " (single file), 1 (project), or 2(single file c++11)."
                 raise Exception()              
 
         # When we are regenerating the reference results, we might need to 
