@@ -1044,35 +1044,28 @@ Init *TGParser::ParseOperation(Record *CurRec) {
     switch (LexCode) {
     default: llvm_unreachable("Unhandled code!");
     case tgtok::XIf: {
-      // FIXME: The `!if' operator doesn't handle non-TypedInit well at
-      // all. This can be made much more robust.
-      TypedInit *MHSt = dynamic_cast<TypedInit*>(MHS);
-      TypedInit *RHSt = dynamic_cast<TypedInit*>(RHS);
-
       RecTy *MHSTy = 0;
       RecTy *RHSTy = 0;
 
-      if (MHSt == 0 && RHSt == 0) {
-        BitsInit *MHSbits = dynamic_cast<BitsInit*>(MHS);
-        BitsInit *RHSbits = dynamic_cast<BitsInit*>(RHS);
-
-        if (MHSbits && RHSbits &&
-            MHSbits->getNumBits() == RHSbits->getNumBits()) {
-          Type = BitRecTy::get();
-          break;
-        } else {
-          BitInit *MHSbit = dynamic_cast<BitInit*>(MHS);
-          BitInit *RHSbit = dynamic_cast<BitInit*>(RHS);
-
-          if (MHSbit && RHSbit) {
-            Type = BitRecTy::get();
-            break;
-          }
-        }
-      } else if (MHSt != 0 && RHSt != 0) {
+      if (TypedInit *MHSt = dynamic_cast<TypedInit*>(MHS))
         MHSTy = MHSt->getType();
+      if (BitsInit *MHSbits = dynamic_cast<BitsInit*>(MHS))
+        MHSTy = BitsRecTy::get(MHSbits->getNumBits());
+      if (dynamic_cast<BitInit*>(MHS))
+        MHSTy = BitRecTy::get();
+
+      if (TypedInit *RHSt = dynamic_cast<TypedInit*>(RHS))
         RHSTy = RHSt->getType();
-      }
+      if (BitsInit *RHSbits = dynamic_cast<BitsInit*>(RHS))
+        RHSTy = BitsRecTy::get(RHSbits->getNumBits());
+      if (dynamic_cast<BitInit*>(RHS))
+        RHSTy = BitRecTy::get();
+
+      // For UnsetInit, it's typed from the other hand.
+      if (dynamic_cast<UnsetInit*>(MHS))
+        MHSTy = RHSTy;
+      if (dynamic_cast<UnsetInit*>(RHS))
+        RHSTy = MHSTy;
 
       if (!MHSTy || !RHSTy) {
         TokError("could not get type for !if");

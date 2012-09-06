@@ -92,7 +92,7 @@ void CodeEmitterGen::reverseBits(std::vector<Record*> &Insts) {
 int CodeEmitterGen::getVariableBit(const std::string &VarName,
                                    BitsInit *BI, int bit) {
   if (VarBitInit *VBI = dynamic_cast<VarBitInit*>(BI->getBit(bit))) {
-    if (VarInit *VI = dynamic_cast<VarInit*>(VBI->getVariable()))
+    if (VarInit *VI = dynamic_cast<VarInit*>(VBI->getBitVar()))
       if (VI->getName() == VarName)
         return VBI->getBitNum();
   } else if (VarInit *VI = dynamic_cast<VarInit*>(BI->getBit(bit))) {

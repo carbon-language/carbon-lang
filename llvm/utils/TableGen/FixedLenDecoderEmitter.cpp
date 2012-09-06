@@ -1783,7 +1783,7 @@ static bool populateInstruction(const CodeGenInstruction &CGI, unsigned Opc,
       VarInit *Var = 0;
       VarBitInit *BI = dynamic_cast<VarBitInit*>(Bits.getBit(bi));
       if (BI)
-        Var = dynamic_cast<VarInit*>(BI->getVariable());
+        Var = dynamic_cast<VarInit*>(BI->getBitVar());
       else
         Var = dynamic_cast<VarInit*>(Bits.getBit(bi));
 

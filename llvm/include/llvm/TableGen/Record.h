@@ -509,6 +509,18 @@ public:
   virtual Init *resolveReferences(Record &R, const RecordVal *RV) const {
     return const_cast<Init *>(this);
   }
+
+  /// getBit - This method is used to return the initializer for the specified
+  /// bit.
+  virtual Init *getBit(unsigned Bit) const = 0;
+
+  /// getBitVar - This method is used to retrieve the initializer for bit
+  /// reference. For non-VarBitInit, it simply returns itself.
+  virtual Init *getBitVar() const { return const_cast<Init*>(this); }
+
+  /// getBitNum - This method is used to retrieve the bit number of a bit
+  /// reference. For non-VarBitInit, it simply returns 0.
+  virtual unsigned getBitNum() const { return 0; }
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS, const Init &I) {
@@ -541,13 +553,6 @@ public:
   ///
   virtual RecTy *getFieldType(const std::string &FieldName) const;
 
-  /// resolveBitReference - This method is used to implement
-  /// VarBitInit::resolveReferences.  If the bit is able to be resolved, we
-  /// simply return the resolved value, otherwise we return null.
-  ///
-  virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
-                                    unsigned Bit) const = 0;
-
   /// resolveListElementReference - This method is used to implement
   /// VarListElementInit::resolveReferences.  If the list element is resolvable
   /// now, we return the resolved value, otherwise we return null.
@@ -569,6 +574,10 @@ public:
 
   virtual Init *convertInitializerTo(RecTy *Ty) const {
     return Ty->convertValue(const_cast<UnsetInit *>(this));
+  }
+
+  virtual Init *getBit(unsigned Bit) const {
+    return const_cast<UnsetInit*>(this);
   }
 
   virtual bool isComplete() const { return false; }
@@ -595,6 +604,11 @@ public:
     return Ty->convertValue(const_cast<BitInit *>(this));
   }
 
+  virtual Init *getBit(unsigned Bit) const {
+    assert(Bit < 1 && "Bit index out of range!");
+    return const_cast<BitInit*>(this);
+  }
+
   virtual std::string getAsString() const { return Value ? "1" : "0"; }
 };
 
@@ -616,11 +630,6 @@ public:
 
   unsigned getNumBits() const { return Bits.size(); }
 
-  Init *getBit(unsigned Bit) const {
-    assert(Bit < Bits.size() && "Bit index out of range!");
-    return Bits[Bit];
-  }
-
   virtual Init *convertInitializerTo(RecTy *Ty) const {
     return Ty->convertValue(const_cast<BitsInit *>(this));
   }
@@ -640,6 +649,11 @@ public:
   virtual std::string getAsString() const;
 
   virtual Init *resolveReferences(Record &R, const RecordVal *RV) const;
+
+  virtual Init *getBit(unsigned Bit) const {
+    assert(Bit < Bits.size() && "Bit index out of range!");
+    return Bits[Bit];
+  }
 };
 
 
@@ -666,21 +680,16 @@ public:
 
   virtual std::string getAsString() const;
 
-  /// resolveBitReference - This method is used to implement
-  /// VarBitInit::resolveReferences.  If the bit is able to be resolved, we
-  /// simply return the resolved value, otherwise we return null.
-  ///
-  virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
-                                    unsigned Bit) const {
-    llvm_unreachable("Illegal bit reference off int");
-  }
-
   /// resolveListElementReference - This method is used to implement
   /// VarListElementInit::resolveReferences.  If the list element is resolvable
   /// now, we return the resolved value, otherwise we return null.
   virtual Init *resolveListElementReference(Record &R, const RecordVal *RV,
                                             unsigned Elt) const {
     llvm_unreachable("Illegal element reference off int");
+  }
+
+  virtual Init *getBit(unsigned Bit) const {
+    return BitInit::get((Value & (1 << Bit)) != 0);
   }
 };
 
@@ -709,21 +718,16 @@ public:
   virtual std::string getAsString() const { return "\"" + Value + "\""; }
   virtual std::string getAsUnquotedString() const { return Value; }
 
-  /// resolveBitReference - This method is used to implement
-  /// VarBitInit::resolveReferences.  If the bit is able to be resolved, we
-  /// simply return the resolved value, otherwise we return null.
-  ///
-  virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
-                                    unsigned Bit) const {
-    llvm_unreachable("Illegal bit reference off string");
-  }
-
   /// resolveListElementReference - This method is used to implement
   /// VarListElementInit::resolveReferences.  If the list element is resolvable
   /// now, we return the resolved value, otherwise we return null.
   virtual Init *resolveListElementReference(Record &R, const RecordVal *RV,
                                             unsigned Elt) const {
     llvm_unreachable("Illegal element reference off string");
+  }
+
+  virtual Init *getBit(unsigned Bit) const {
+    llvm_unreachable("Illegal bit reference off string");
   }
 };
 
@@ -777,20 +781,15 @@ public:
   inline size_t         size () const { return Values.size();  }
   inline bool           empty() const { return Values.empty(); }
 
-  /// resolveBitReference - This method is used to implement
-  /// VarBitInit::resolveReferences.  If the bit is able to be resolved, we
-  /// simply return the resolved value, otherwise we return null.
-  ///
-  virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
-                                    unsigned Bit) const {
-    llvm_unreachable("Illegal bit reference off list");
-  }
-
   /// resolveListElementReference - This method is used to implement
   /// VarListElementInit::resolveReferences.  If the list element is resolvable
   /// now, we return the resolved value, otherwise we return null.
   virtual Init *resolveListElementReference(Record &R, const RecordVal *RV,
                                             unsigned Elt) const;
+
+  virtual Init *getBit(unsigned Bit) const {
+    llvm_unreachable("Illegal bit reference off list");
+  }
 };
 
 
@@ -818,10 +817,10 @@ public:
     return Ty->convertValue(const_cast<OpInit *>(this));
   }
 
-  virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
-                                    unsigned Bit) const;
   virtual Init *resolveListElementReference(Record &R, const RecordVal *RV,
                                             unsigned Elt) const;
+
+  virtual Init *getBit(unsigned Bit) const;
 };
 
 
@@ -1003,8 +1002,6 @@ public:
     return getNameInit()->getAsUnquotedString();
   }
 
-  virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
-                                    unsigned Bit) const;
   virtual Init *resolveListElementReference(Record &R, const RecordVal *RV,
                                             unsigned Elt) const;
 
@@ -1019,6 +1016,8 @@ public:
   ///
   virtual Init *resolveReferences(Record &R, const RecordVal *RV) const;
 
+  virtual Init *getBit(unsigned Bit) const;
+
   virtual std::string getAsString() const { return getName(); }
 };
 
@@ -1030,8 +1029,10 @@ class VarBitInit : public Init {
   unsigned Bit;
 
   VarBitInit(TypedInit *T, unsigned B) : TI(T), Bit(B) {
-    assert(T->getType() && dynamic_cast<BitsRecTy*>(T->getType()) &&
-           ((BitsRecTy*)T->getType())->getNumBits() > B &&
+    assert(T->getType() &&
+           (dynamic_cast<IntRecTy*>(T->getType()) ||
+            (dynamic_cast<BitsRecTy*>(T->getType()) &&
+             dynamic_cast<BitsRecTy*>(T->getType())->getNumBits() > B)) &&
            "Illegal VarBitInit expression!");
   }
 
@@ -1045,11 +1046,16 @@ public:
     return Ty->convertValue(const_cast<VarBitInit *>(this));
   }
 
-  TypedInit *getVariable() const { return TI; }
-  unsigned getBitNum() const { return Bit; }
+  virtual Init *getBitVar() const { return TI; }
+  virtual unsigned getBitNum() const { return Bit; }
 
   virtual std::string getAsString() const;
   virtual Init *resolveReferences(Record &R, const RecordVal *RV) const;
+
+  virtual Init *getBit(unsigned B) const {
+    assert(B < 1 && "Bit index out of range!");
+    return const_cast<VarBitInit*>(this);
+  }
 };
 
 /// VarListElementInit - List[4] - Represent access to one element of a var or
@@ -1080,9 +1086,6 @@ public:
   TypedInit *getVariable() const { return TI; }
   unsigned getElementNum() const { return Element; }
 
-  virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
-                                    unsigned Bit) const;
-
   /// resolveListElementReference - This method is used to implement
   /// VarListElementInit::resolveReferences.  If the list element is resolvable
   /// now, we return the resolved value, otherwise we return null.
@@ -1092,6 +1095,8 @@ public:
 
   virtual std::string getAsString() const;
   virtual Init *resolveReferences(Record &R, const RecordVal *RV) const;
+
+  virtual Init *getBit(unsigned Bit) const;
 };
 
 /// DefInit - AL - Represent a reference to a 'def' in the description
@@ -1122,12 +1127,7 @@ public:
 
   virtual std::string getAsString() const;
 
-  /// resolveBitReference - This method is used to implement
-  /// VarBitInit::resolveReferences.  If the bit is able to be resolved, we
-  /// simply return the resolved value, otherwise we return null.
-  ///
-  virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
-                                    unsigned Bit) const {
+  virtual Init *getBit(unsigned Bit) const {
     llvm_unreachable("Illegal bit reference off def");
   }
 
@@ -1163,8 +1163,8 @@ public:
     return Ty->convertValue(const_cast<FieldInit *>(this));
   }
 
-  virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
-                                    unsigned Bit) const;
+  virtual Init *getBit(unsigned Bit) const;
+
   virtual Init *resolveListElementReference(Record &R,
                                             const RecordVal *RV,
                                             unsigned Elt) const;
@@ -1243,8 +1243,7 @@ public:
   inline size_t              name_size () const { return ArgNames.size();  }
   inline bool                name_empty() const { return ArgNames.empty(); }
 
-  virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
-                                    unsigned Bit) const {
+  virtual Init *getBit(unsigned Bit) const {
     llvm_unreachable("Illegal bit reference off dag");
   }
 
