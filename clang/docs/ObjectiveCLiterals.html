@@ -178,7 +178,7 @@ A C string literal prefixed by the <code>'@'</code> token denotes an <code>NSStr
 <pre>
 // Partition command line arguments into positional and option arguments.
 NSMutableArray *args = [NSMutableArray new];
-NSMutableDictionary *options = [NSMutableArray new];
+NSMutableDictionary *options = [NSMutableDictionary new];
 while (--argc) {
     const char *arg = *++argv;
     if (strncmp(arg, "--", 2) == 0) {
