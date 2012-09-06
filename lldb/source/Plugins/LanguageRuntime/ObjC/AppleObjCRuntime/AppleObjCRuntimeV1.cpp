@@ -280,10 +280,10 @@ AppleObjCRuntime::ClassDescriptorSP
 AppleObjCRuntimeV1::ClassDescriptorV1::GetSuperclass ()
 {
     if (!m_valid)
-        return NULL;
+        return AppleObjCRuntime::ClassDescriptorSP();
     ProcessSP process_sp = m_process_wp.lock();
     if (!process_sp)
-        return NULL;
+        return AppleObjCRuntime::ClassDescriptorSP();
     return ObjCLanguageRuntime::ClassDescriptorSP(new AppleObjCRuntimeV1::ClassDescriptorV1(m_parent_isa,process_sp));
 }
 

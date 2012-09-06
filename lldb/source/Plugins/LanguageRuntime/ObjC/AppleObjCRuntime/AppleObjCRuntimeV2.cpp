@@ -605,7 +605,7 @@ AppleObjCRuntimeV2::GetClassDescriptor (ValueObject& in_value)
 {
     uint64_t ptr_value = in_value.GetValueAsUnsigned(0);
     if (ptr_value == 0)
-        return NULL;
+        return ObjCLanguageRuntime::ClassDescriptorSP();
     
     ObjCISA isa = GetISA(in_value);
     
@@ -848,10 +848,10 @@ AppleObjCRuntime::ClassDescriptorSP
 AppleObjCRuntimeV2::ClassDescriptorV2::GetSuperclass ()
 {
     if (!m_valid)
-        return NULL;
+        return ObjCLanguageRuntime::ClassDescriptorSP();
     ProcessSP process_sp = m_process_wp.lock();
     if (!process_sp)
-        return NULL;
+        return ObjCLanguageRuntime::ClassDescriptorSP();
     return AppleObjCRuntime::ClassDescriptorSP(new AppleObjCRuntimeV2::ClassDescriptorV2(m_parent_isa,process_sp));
 }
 

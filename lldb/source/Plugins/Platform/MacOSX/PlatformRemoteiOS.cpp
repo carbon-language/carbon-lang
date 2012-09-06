@@ -110,10 +110,10 @@ PlatformRemoteiOS::CreateInstance (bool force, const ArchSpec *arch)
                         create = !arch->TripleVendorWasSpecified();
                         break;
 
+#endif
                     default:
                         break;
                 }
-#endif
                 if (create)
                 {
                     switch (triple.getOS())

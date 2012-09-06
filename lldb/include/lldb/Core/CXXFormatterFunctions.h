@@ -10,6 +10,7 @@
 #ifndef liblldb_CXXFormatterFunctions_h_
 #define liblldb_CXXFormatterFunctions_h_
 
+#include <stdint.h>
 #include "lldb/lldb-forward.h"
 
 namespace lldb_private {
