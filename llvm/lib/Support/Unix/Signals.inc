@@ -305,10 +305,10 @@ void llvm::sys::PrintStackTraceOnErrorSignal() {
 
     exception_mask_t mask = EXC_MASK_CRASH;
 
-    kern_return_t ret = task_set_exception_ports(self, 
+    kern_return_t ret = task_set_exception_ports(self,
                              mask,
                              MACH_PORT_NULL,
-                             EXCEPTION_STATE_IDENTITY | MACH_EXCEPTION_CODES, 
+                             EXCEPTION_STATE_IDENTITY | MACH_EXCEPTION_CODES,
                              THREAD_STATE_NONE);
     (void)ret;
   }
