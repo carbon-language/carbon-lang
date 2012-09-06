@@ -2642,7 +2642,7 @@ bool ARMFastISel::SelectShift(const Instruction *I,
   unsigned Reg1 = getRegForValue(Src1Value);
   if (Reg1 == 0) return false;
 
-  unsigned Reg2;
+  unsigned Reg2 = 0;
   if (Opc == ARM::MOVsr) {
     Reg2 = getRegForValue(Src2Value);
     if (Reg2 == 0) return false;

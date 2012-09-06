@@ -2440,7 +2440,7 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
   if (N0 == N1) {
     // The sext(setcc()) => setcc() optimization relies on the appropriate
     // constant being emitted.
-    uint64_t EqVal;
+    uint64_t EqVal = 0;
     switch (getBooleanContents(N0.getValueType().isVector())) {
     case UndefinedBooleanContent:
     case ZeroOrOneBooleanContent:
