@@ -162,7 +162,7 @@ TEST(AddressSanitizer, VariousMallocsTest) {
   *c = 0;
   delete c;
 
-#if !defined(__APPLE__) && !defined(ANDROID)
+#if !defined(__APPLE__) && !defined(ANDROID) && !defined(__ANDROID__)
   // fprintf(stderr, "posix_memalign\n");
   int *pm;
   int pm_res = posix_memalign((void**)&pm, kPageSize, kPageSize);
