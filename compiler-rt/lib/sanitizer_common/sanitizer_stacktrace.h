@@ -17,7 +17,7 @@
 
 namespace __sanitizer {
 
-static const uptr kStackTraceMax = 64;
+static const uptr kStackTraceMax = 256;
 
 struct StackTrace {
   typedef bool (*SymbolizeCallback)(const void *pc, char *out_buffer,

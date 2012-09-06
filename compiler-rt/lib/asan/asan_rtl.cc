@@ -62,7 +62,7 @@ void CheckFailed(const char *file, int line, const char *cond, u64 v1, u64 v2) {
 namespace __asan {
 
 // -------------------------- Flags ------------------------- {{{1
-static const int kMallocContextSize = 64;
+static const int kDeafultMallocContextSize = 30;
 
 static Flags asan_flags;
 
@@ -82,7 +82,7 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->report_globals, "report_globals");
   ParseFlag(str, &f->check_initialization_order, "initialization_order");
   ParseFlag(str, &f->malloc_context_size, "malloc_context_size");
-  CHECK(f->malloc_context_size <= kMallocContextSize);
+  CHECK(f->malloc_context_size <= kStackTraceMax);
 
   ParseFlag(str, &f->replace_str, "replace_str");
   ParseFlag(str, &f->replace_intrin, "replace_intrin");
@@ -121,7 +121,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->debug = false;
   f->report_globals = 1;
   f->check_initialization_order = true;
-  f->malloc_context_size = kMallocContextSize;
+  f->malloc_context_size = kDeafultMallocContextSize;
   f->replace_str = true;
   f->replace_intrin = true;
   f->replace_cfallocator = true;
