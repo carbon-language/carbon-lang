@@ -794,7 +794,7 @@ SBDebugger::SetSelectedTarget (SBTarget &sb_target)
 }
 
 void
-SBDebugger::DispatchInput (const void* baton, const void *data, size_t data_len)
+SBDebugger::DispatchInput (void* baton, const void *data, size_t data_len)
 {
     DispatchInput (data,data_len);
 }
