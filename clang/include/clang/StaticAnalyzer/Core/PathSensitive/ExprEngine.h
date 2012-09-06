@@ -385,8 +385,8 @@ public:
   void VisitCXXConstructExpr(const CXXConstructExpr *E, ExplodedNode *Pred,
                              ExplodedNodeSet &Dst);
 
-  void VisitCXXDestructor(QualType ObjectType,
-                          const MemRegion *Dest, const Stmt *S,
+  void VisitCXXDestructor(QualType ObjectType, const MemRegion *Dest,
+                          const Stmt *S, bool IsBaseDtor,
                           ExplodedNode *Pred, ExplodedNodeSet &Dst);
 
   void VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,

@@ -83,14 +83,14 @@ void DynamicTypePropagation::checkPreCall(const CallEvent &Call,
 
   if (const CXXDestructorCall *Dtor = dyn_cast<CXXDestructorCall>(&Call)) {
     // C++11 [class.cdtor]p4 (see above)
+    if (!Dtor->isBaseDestructor())
+      return;
 
     const MemRegion *Target = Dtor->getCXXThisVal().getAsRegion();
     if (!Target)
       return;
 
-    // FIXME: getRuntimeDefinition() can be expensive. It would be better to do
-    // this when we are entering the stack frame for the destructor.
-    const Decl *D = Dtor->getRuntimeDefinition().getDecl();
+    const Decl *D = Dtor->getDecl();
     if (!D)
       return;
 

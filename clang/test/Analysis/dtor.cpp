@@ -251,3 +251,33 @@ namespace DestructorsShouldNotAffectReturnValues {
     free(p); // no-warning
   }
 }
+
+namespace MultipleInheritanceVirtualDtors {
+  class VirtualDtor {
+  protected:
+    virtual ~VirtualDtor() {
+      clang_analyzer_checkInlined(true); // expected-warning{{TRUE}}
+    }
+  };
+
+  class NonVirtualDtor {
+  protected:
+    ~NonVirtualDtor() {
+      clang_analyzer_checkInlined(true); // expected-warning{{TRUE}}
+    }
+  };
+
+  class SubclassA : public VirtualDtor, public NonVirtualDtor {
+  public:
+    virtual ~SubclassA() {}
+  };
+  class SubclassB : public NonVirtualDtor, public VirtualDtor {
+  public:
+    virtual ~SubclassB() {}
+  };
+
+  void test() {
+    SubclassA a;
+    SubclassB b;
+  }
+}

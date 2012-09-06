@@ -163,6 +163,7 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
 void ExprEngine::VisitCXXDestructor(QualType ObjectType,
                                     const MemRegion *Dest,
                                     const Stmt *S,
+                                    bool IsBaseDtor,
                                     ExplodedNode *Pred, 
                                     ExplodedNodeSet &Dst) {
   const LocationContext *LCtx = Pred->getLocationContext();
@@ -183,7 +184,7 @@ void ExprEngine::VisitCXXDestructor(QualType ObjectType,
 
   CallEventManager &CEMgr = getStateManager().getCallEventManager();
   CallEventRef<CXXDestructorCall> Call =
-    CEMgr.getCXXDestructorCall(DtorDecl, S, Dest, State, LCtx);
+    CEMgr.getCXXDestructorCall(DtorDecl, S, Dest, IsBaseDtor, State, LCtx);
 
   PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
                                 Call->getSourceRange().getBegin(),

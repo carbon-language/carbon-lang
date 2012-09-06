@@ -559,8 +559,17 @@ void CXXConstructorCall::getInitialStackFrameContents(
 
 SVal CXXDestructorCall::getCXXThisVal() const {
   if (Data)
-    return loc::MemRegionVal(static_cast<const MemRegion *>(Data));
+    return loc::MemRegionVal(DtorDataTy::getFromOpaqueValue(Data).getPointer());
   return UnknownVal();
+}
+
+RuntimeDefinition CXXDestructorCall::getRuntimeDefinition() const {
+  // Base destructors are always called non-virtually.
+  // Skip CXXInstanceCall's devirtualization logic in this case.
+  if (isBaseDestructor())
+    return AnyFunctionCall::getRuntimeDefinition();
+
+  return CXXInstanceCall::getRuntimeDefinition();
 }
 
 
@@ -892,5 +901,5 @@ CallEventManager::getCaller(const StackFrameContext *CalleeCtx,
     Trigger = Dtor->getBody();
 
   return getCXXDestructorCall(Dtor, Trigger, ThisVal.getAsRegion(),
-                              State, CallerCtx);
+                              isa<CFGBaseDtor>(E), State, CallerCtx);
 }

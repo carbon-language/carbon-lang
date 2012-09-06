@@ -446,7 +446,7 @@ void ExprEngine::ProcessAutomaticObjDtor(const CFGAutomaticObjDtor Dtor,
   Loc dest = state->getLValue(varDecl, Pred->getLocationContext());
 
   VisitCXXDestructor(varType, cast<loc::MemRegionVal>(dest).getRegion(),
-                     Dtor.getTriggerStmt(), Pred, Dst);
+                     Dtor.getTriggerStmt(), /*IsBase=*/false, Pred, Dst);
 }
 
 void ExprEngine::ProcessBaseDtor(const CFGBaseDtor D,
@@ -464,7 +464,7 @@ void ExprEngine::ProcessBaseDtor(const CFGBaseDtor D,
   SVal BaseVal = getStoreManager().evalDerivedToBase(ThisVal, BaseTy);
 
   VisitCXXDestructor(BaseTy, cast<loc::MemRegionVal>(BaseVal).getRegion(),
-                     CurDtor->getBody(), Pred, Dst);
+                     CurDtor->getBody(), /*IsBase=*/true, Pred, Dst);
 }
 
 void ExprEngine::ProcessMemberDtor(const CFGMemberDtor D,
@@ -480,7 +480,7 @@ void ExprEngine::ProcessMemberDtor(const CFGMemberDtor D,
 
   VisitCXXDestructor(Member->getType(),
                      cast<loc::MemRegionVal>(FieldVal).getRegion(),
-                     CurDtor->getBody(), Pred, Dst);
+                     CurDtor->getBody(), /*IsBase=*/false, Pred, Dst);
 }
 
 void ExprEngine::ProcessTemporaryDtor(const CFGTemporaryDtor D,
