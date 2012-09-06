@@ -128,6 +128,15 @@ namespace {
     const Value *V;
     ExtensionKind Extension;
     int64_t Scale;
+
+    bool operator==(const VariableGEPIndex &Other) const {
+      return V == Other.V && Extension == Other.Extension &&
+        Scale == Other.Scale;
+    }
+
+    bool operator!=(const VariableGEPIndex &Other) const {
+      return !operator==(Other);
+    }
   };
 }
 
@@ -490,6 +499,7 @@ namespace {
     // aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP
     // instruction against another.
     AliasResult aliasGEP(const GEPOperator *V1, uint64_t V1Size,
+                         const MDNode *V1TBAAInfo,
                          const Value *V2, uint64_t V2Size,
                          const MDNode *V2TBAAInfo,
                          const Value *UnderlyingV1, const Value *UnderlyingV2);
@@ -807,6 +817,21 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
   return ModRefResult(AliasAnalysis::getModRefInfo(CS, Loc) & Min);
 }
 
+static bool areVarIndicesEqual(SmallVector<VariableGEPIndex, 4> &Indices1,
+                               SmallVector<VariableGEPIndex, 4> &Indices2) {
+  unsigned Size1 = Indices1.size();
+  unsigned Size2 = Indices2.size();
+
+  if (Size1 != Size2)
+    return false;
+
+  for (unsigned I = 0; I != Size1; ++I)
+    if (Indices1[I] != Indices2[I])
+      return false;
+
+  return true;
+}
+
 /// aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP instruction
 /// against another pointer.  We know that V1 is a GEP, but we don't know
 /// anything about V2.  UnderlyingV1 is GetUnderlyingObject(GEP1, TD),
@@ -814,6 +839,7 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
 ///
 AliasAnalysis::AliasResult
 BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
+                             const MDNode *V1TBAAInfo,
                              const Value *V2, uint64_t V2Size,
                              const MDNode *V2TBAAInfo,
                              const Value *UnderlyingV1,
@@ -821,9 +847,41 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
   int64_t GEP1BaseOffset;
   SmallVector<VariableGEPIndex, 4> GEP1VariableIndices;
 
-  // If we have two gep instructions with must-alias'ing base pointers, figure
-  // out if the indexes to the GEP tell us anything about the derived pointer.
+  // If we have two gep instructions with must-alias or not-alias'ing base
+  // pointers, figure out if the indexes to the GEP tell us anything about the
+  // derived pointer.
   if (const GEPOperator *GEP2 = dyn_cast<GEPOperator>(V2)) {
+    // Check for geps of non-aliasing underlying pointers where the offsets are
+    // identical.
+    if (V1Size == V2Size) {
+      // Do the base pointers alias assuming type and size.
+      AliasResult PreciseBaseAlias = aliasCheck(UnderlyingV1, V1Size,
+                                                V1TBAAInfo, UnderlyingV2,
+                                                V2Size, V2TBAAInfo);
+      if (PreciseBaseAlias == NoAlias) {
+        // See if the computed offset from the common pointer tells us about the
+        // relation of the resulting pointer.
+        int64_t GEP2BaseOffset;
+        SmallVector<VariableGEPIndex, 4> GEP2VariableIndices;
+        const Value *GEP2BasePtr =
+          DecomposeGEPExpression(GEP2, GEP2BaseOffset, GEP2VariableIndices, TD);
+        const Value *GEP1BasePtr =
+          DecomposeGEPExpression(GEP1, GEP1BaseOffset, GEP1VariableIndices, TD);
+        // DecomposeGEPExpression and GetUnderlyingObject should return the
+        // same result except when DecomposeGEPExpression has no TargetData.
+        if (GEP1BasePtr != UnderlyingV1 || GEP2BasePtr != UnderlyingV2) {
+          assert(TD == 0 &&
+             "DecomposeGEPExpression and GetUnderlyingObject disagree!");
+          return MayAlias;
+        }
+        // Same offsets.
+        if (GEP1BaseOffset == GEP2BaseOffset &&
+            areVarIndicesEqual(GEP1VariableIndices, GEP2VariableIndices))
+          return NoAlias;
+        GEP1VariableIndices.clear();
+      }
+    }
+
     // Do the base pointers alias?
     AliasResult BaseAlias = aliasCheck(UnderlyingV1, UnknownSize, 0,
                                        UnderlyingV2, UnknownSize, 0);
@@ -843,9 +901,8 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
     const Value *GEP2BasePtr =
       DecomposeGEPExpression(GEP2, GEP2BaseOffset, GEP2VariableIndices, TD);
     
-    // If DecomposeGEPExpression isn't able to look all the way through the
-    // addressing operation, we must not have TD and this is too complex for us
-    // to handle without it.
+    // DecomposeGEPExpression and GetUnderlyingObject should return the
+    // same result except when DecomposeGEPExpression has no TargetData.
     if (GEP1BasePtr != UnderlyingV1 || GEP2BasePtr != UnderlyingV2) {
       assert(TD == 0 &&
              "DecomposeGEPExpression and GetUnderlyingObject disagree!");
@@ -879,9 +936,8 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
     const Value *GEP1BasePtr =
       DecomposeGEPExpression(GEP1, GEP1BaseOffset, GEP1VariableIndices, TD);
     
-    // If DecomposeGEPExpression isn't able to look all the way through the
-    // addressing operation, we must not have TD and this is too complex for us
-    // to handle without it.
+    // DecomposeGEPExpression and GetUnderlyingObject should return the
+    // same result except when DecomposeGEPExpression has no TargetData.
     if (GEP1BasePtr != UnderlyingV1) {
       assert(TD == 0 &&
              "DecomposeGEPExpression and GetUnderlyingObject disagree!");
@@ -1156,7 +1212,7 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
     std::swap(O1, O2);
   }
   if (const GEPOperator *GV1 = dyn_cast<GEPOperator>(V1)) {
-    AliasResult Result = aliasGEP(GV1, V1Size, V2, V2Size, V2TBAAInfo, O1, O2);
+    AliasResult Result = aliasGEP(GV1, V1Size, V1TBAAInfo, V2, V2Size, V2TBAAInfo, O1, O2);
     if (Result != MayAlias) return AliasCache[Locs] = Result;
   }
 
