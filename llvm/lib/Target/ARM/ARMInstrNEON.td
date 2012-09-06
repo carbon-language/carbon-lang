@@ -1980,7 +1980,7 @@ def VST1LNd8  : VST1LN<0b0000, {?,?,?,0}, "8", v8i8, truncstorei8,
 def VST1LNd16 : VST1LN<0b0100, {?,?,0,?}, "16", v4i16, truncstorei16,
                        NEONvgetlaneu, addrmode6> {
   let Inst{7-6} = lane{1-0};
-  let Inst{4}   = Rn{5};
+  let Inst{4}   = Rn{4};
 }
 
 def VST1LNd32 : VST1LN<0b1000, {?,0,?,?}, "32", v2i32, store, extractelt,
@@ -2023,7 +2023,7 @@ def VST1LNd8_UPD  : VST1LNWB<0b0000, {?,?,?,0}, "8", v8i8, post_truncsti8,
 def VST1LNd16_UPD : VST1LNWB<0b0100, {?,?,0,?}, "16", v4i16, post_truncsti16,
                              NEONvgetlaneu, addrmode6> {
   let Inst{7-6} = lane{1-0};
-  let Inst{4}   = Rn{5};
+  let Inst{4}   = Rn{4};
 }
 def VST1LNd32_UPD : VST1LNWB<0b1000, {?,0,?,?}, "32", v2i32, post_store,
                              extractelt, addrmode6oneL32> {
