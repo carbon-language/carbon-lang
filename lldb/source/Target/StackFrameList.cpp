@@ -189,8 +189,10 @@ StackFrameList::DecrementCurrentInlinedDepth ()
         if (current_inlined_depth != UINT32_MAX)
         {
             if (current_inlined_depth > 0)
+            {
                 m_current_inlined_depth--;
-            return true;
+                return true;
+            }
         }
     }
     return false;
@@ -318,6 +320,9 @@ StackFrameList::GetFramesUpTo(uint32_t end_idx)
         {
             StackFrameList *prev_frames = m_prev_frames_sp.get();
             StackFrameList *curr_frames = this;
+            
+            curr_frames->m_current_inlined_depth = prev_frames->m_current_inlined_depth;
+            curr_frames->m_current_inlined_pc = prev_frames->m_current_inlined_pc;
 
 #if defined (DEBUG_STACK_FRAMES)
             s.PutCString("\nprev_frames:\n");
