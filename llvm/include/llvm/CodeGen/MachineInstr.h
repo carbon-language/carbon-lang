@@ -968,8 +968,8 @@ private:
   void untieRegOperand(unsigned OpIdx) {
     MachineOperand &MO = getOperand(OpIdx);
     if (MO.isReg() && MO.isTied()) {
-      getOperand(findTiedOperandIdx(OpIdx)).TiedTo = false;
-      MO.TiedTo = false;
+      getOperand(findTiedOperandIdx(OpIdx)).TiedTo = 0;
+      MO.TiedTo = 0;
     }
   }
 
