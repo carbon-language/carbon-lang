@@ -133,7 +133,9 @@ void DominanceFrontierBase::print(raw_ostream &OS, const Module* ) const {
   }
 }
 
+#ifndef NDEBUG
 void DominanceFrontierBase::dump() const {
   print(dbgs());
 }
+#endif
 

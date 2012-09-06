@@ -974,6 +974,7 @@ bool CallAnalyzer::analyzeCall(CallSite CS) {
   return AlwaysInline || Cost < Threshold;
 }
 
+#ifndef NDEBUG
 /// \brief Dump stats about this call's analysis.
 void CallAnalyzer::dump() {
 #define DEBUG_PRINT_STAT(x) llvm::dbgs() << "      " #x ": " << x << "\n"
@@ -987,6 +988,7 @@ void CallAnalyzer::dump() {
   DEBUG_PRINT_STAT(SROACostSavingsLost);
 #undef DEBUG_PRINT_STAT
 }
+#endif
 
 InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS, int Threshold) {
   return getInlineCost(CS, CS.getCalledFunction(), Threshold);

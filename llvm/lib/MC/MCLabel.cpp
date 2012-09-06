@@ -16,6 +16,8 @@ void MCLabel::print(raw_ostream &OS) const {
   OS << '"' << getInstance() << '"';
 }
 
+#ifndef NDEBUG
 void MCLabel::dump() const {
   print(dbgs());
 }
+#endif

@@ -273,9 +273,11 @@ void IVUsers::print(raw_ostream &OS, const Module *M) const {
   }
 }
 
+#ifndef NDEBUG
 void IVUsers::dump() const {
   print(dbgs());
 }
+#endif
 
 void IVUsers::releaseMemory() {
   Processed.clear();

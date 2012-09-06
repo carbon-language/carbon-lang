@@ -306,9 +306,11 @@ BasicBlock *Loop::getUniqueExitBlock() const {
   return 0;
 }
 
+#ifndef NDEBUG
 void Loop::dump() const {
   print(dbgs());
 }
+#endif
 
 //===----------------------------------------------------------------------===//
 // UnloopUpdater implementation

@@ -425,9 +425,11 @@ void MCDwarfFile::print(raw_ostream &OS) const {
   OS << '"' << getName() << '"';
 }
 
+#ifndef NDEBUG
 void MCDwarfFile::dump() const {
   print(dbgs());
 }
+#endif
 
 // Utility function to write a tuple for .debug_abbrev.
 static void EmitAbbrev(MCStreamer *MCOS, uint64_t Name, uint64_t Form) {

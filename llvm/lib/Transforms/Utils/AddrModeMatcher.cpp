@@ -55,10 +55,12 @@ void ExtAddrMode::print(raw_ostream &OS) const {
   OS << ']';
 }
 
+#ifndef NDEBUG
 void ExtAddrMode::dump() const {
   print(dbgs());
   dbgs() << '\n';
 }
+#endif
 
 
 /// MatchScaledValue - Try adding ScaleReg*Scale to the current addressing mode.

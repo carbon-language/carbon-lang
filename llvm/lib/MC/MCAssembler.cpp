@@ -830,6 +830,7 @@ raw_ostream &operator<<(raw_ostream &OS, const MCFixup &AF) {
 
 }
 
+#ifndef NDEBUG
 void MCFragment::dump() {
   raw_ostream &OS = llvm::errs();
 
@@ -970,6 +971,7 @@ void MCAssembler::dump() {
   }
   OS << "]>\n";
 }
+#endif
 
 // anchors for MC*Fragment vtables
 void MCDataFragment::anchor() { }

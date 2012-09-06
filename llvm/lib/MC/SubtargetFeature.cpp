@@ -368,11 +368,13 @@ void SubtargetFeatures::print(raw_ostream &OS) const {
   OS << "\n";
 }
 
+#ifndef NDEBUG
 /// dump - Dump feature info.
 ///
 void SubtargetFeatures::dump() const {
   print(dbgs());
 }
+#endif
 
 /// getDefaultSubtargetFeatures - Return a string listing the features
 /// associated with the target triple.

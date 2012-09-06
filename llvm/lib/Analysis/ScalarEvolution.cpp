@@ -122,10 +122,12 @@ char ScalarEvolution::ID = 0;
 // Implementation of the SCEV class.
 //
 
+#ifndef NDEBUG
 void SCEV::dump() const {
   print(dbgs());
   dbgs() << '\n';
 }
+#endif
 
 void SCEV::print(raw_ostream &OS) const {
   switch (getSCEVType()) {

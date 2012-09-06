@@ -121,9 +121,11 @@ void RegSortData::print(raw_ostream &OS) const {
   OS << "[NumUses=" << UsedByIndices.count() << ']';
 }
 
+#ifndef NDEBUG
 void RegSortData::dump() const {
   print(errs()); errs() << '\n';
 }
+#endif
 
 namespace {
 
@@ -414,9 +416,11 @@ void Formula::print(raw_ostream &OS) const {
   }
 }
 
+#ifndef NDEBUG
 void Formula::dump() const {
   print(errs()); errs() << '\n';
 }
+#endif
 
 /// isAddRecSExtable - Return true if the given addrec can be sign-extended
 /// without changing its value.
@@ -974,9 +978,11 @@ void Cost::print(raw_ostream &OS) const {
     OS << ", plus " << SetupCost << " setup cost";
 }
 
+#ifndef NDEBUG
 void Cost::dump() const {
   print(errs()); errs() << '\n';
 }
+#endif
 
 namespace {
 
@@ -1060,9 +1066,11 @@ void LSRFixup::print(raw_ostream &OS) const {
     OS << ", Offset=" << Offset;
 }
 
+#ifndef NDEBUG
 void LSRFixup::dump() const {
   print(errs()); errs() << '\n';
 }
+#endif
 
 namespace {
 
@@ -1252,9 +1260,11 @@ void LSRUse::print(raw_ostream &OS) const {
     OS << ", widest fixup type: " << *WidestFixupType;
 }
 
+#ifndef NDEBUG
 void LSRUse::dump() const {
   print(errs()); errs() << '\n';
 }
+#endif
 
 /// isLegalUse - Test whether the use described by AM is "legal", meaning it can
 /// be completely folded into the user instruction at isel time. This includes
@@ -3436,9 +3446,11 @@ void WorkItem::print(raw_ostream &OS) const {
      << " , add offset " << Imm;
 }
 
+#ifndef NDEBUG
 void WorkItem::dump() const {
   print(errs()); errs() << '\n';
 }
+#endif
 
 /// GenerateCrossUseConstantOffsets - Look for registers which are a constant
 /// distance apart and try to form reuse opportunities between them.
@@ -4731,9 +4743,11 @@ void LSRInstance::print(raw_ostream &OS) const {
   print_uses(OS);
 }
 
+#ifndef NDEBUG
 void LSRInstance::dump() const {
   print(errs()); errs() << '\n';
 }
+#endif
 
 namespace {
 

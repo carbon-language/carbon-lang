@@ -76,6 +76,8 @@ void MCSymbol::print(raw_ostream &OS) const {
   OS << '"' << getName() << '"';
 }
 
+#ifndef NDEBUG
 void MCSymbol::dump() const {
   print(dbgs());
 }
+#endif

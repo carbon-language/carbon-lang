@@ -198,9 +198,11 @@ void CallGraph::print(raw_ostream &OS, Module*) const {
   for (CallGraph::const_iterator I = begin(), E = end(); I != E; ++I)
     I->second->print(OS);
 }
+#ifndef NDEBUG
 void CallGraph::dump() const {
   print(dbgs(), 0);
 }
+#endif
 
 //===----------------------------------------------------------------------===//
 // Implementations of public modification methods
@@ -267,7 +269,9 @@ void CallGraphNode::print(raw_ostream &OS) const {
   OS << '\n';
 }
 
+#ifndef NDEBUG
 void CallGraphNode::dump() const { print(dbgs()); }
+#endif
 
 /// removeCallEdgeFor - This method removes the edge in the node for the
 /// specified call site.  Note that this method takes linear time, so it

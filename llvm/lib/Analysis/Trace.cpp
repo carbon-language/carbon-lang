@@ -43,9 +43,11 @@ void Trace::print(raw_ostream &O) const {
   O << "; Trace parent function: \n" << *F;
 }
 
+#ifndef NDEBUG
 /// dump - Debugger convenience method; writes trace to standard error
 /// output stream.
 ///
 void Trace::dump() const {
   print(dbgs());
 }
+#endif
