@@ -60,6 +60,9 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool tryParseRegisterOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                                StringRef Mnemonic);
 
+  bool parseMemOffset(const MCExpr *&Res);
+  bool parseRelocOperand(const MCExpr *&Res);
+  MCSymbolRefExpr::VariantKind getVariantKind(StringRef Symbol);
   bool isMips64() const {
     return (STI.getFeatureBits() & Mips::FeatureMips64) != 0;
   }
@@ -114,6 +117,11 @@ class MipsOperand : public MCParsedAsmOperand {
     struct {
       const MCExpr *Val;
     } Imm;
+
+    struct {
+      unsigned Base;
+      const MCExpr *Off;
+    } Mem;
   };
 
   SMLoc StartLoc, EndLoc;
@@ -141,7 +149,12 @@ public:
   }
 
   void addMemOperands(MCInst &Inst, unsigned N) const {
-    llvm_unreachable("unimplemented!");
+    assert(N == 2 && "Invalid number of operands!");
+
+    Inst.addOperand(MCOperand::CreateReg(getMemBase()));
+
+    const MCExpr *Expr = getMemOff();
+    addExpr(Inst,Expr);
   }
 
   bool isReg() const { return Kind == k_Register; }
@@ -164,6 +177,16 @@ public:
     return Imm.Val;
   }
 
+  unsigned getMemBase() const {
+    assert((Kind == k_Memory) && "Invalid access!");
+    return Mem.Base;
+  }
+
+  const MCExpr *getMemOff() const {
+    assert((Kind == k_Memory) && "Invalid access!");
+    return Mem.Off;
+  }
+
   static MipsOperand *CreateToken(StringRef Str, SMLoc S) {
     MipsOperand *Op = new MipsOperand(k_Token);
     Op->Tok.Data = Str.data();
@@ -184,6 +207,16 @@ public:
   static MipsOperand *CreateImm(const MCExpr *Val, SMLoc S, SMLoc E) {
     MipsOperand *Op = new MipsOperand(k_Immediate);
     Op->Imm.Val = Val;
+    Op->StartLoc = S;
+    Op->EndLoc = E;
+    return Op;
+  }
+
+  static MipsOperand *CreateMem(unsigned Base, const MCExpr *Off,
+                                 SMLoc S, SMLoc E) {
+    MipsOperand *Op = new MipsOperand(k_Memory);
+    Op->Mem.Base = Base;
+    Op->Mem.Off = Off;
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
@@ -324,8 +357,8 @@ int MipsAsmParser::tryParseRegister(StringRef Mnemonic) {
     std::string lowerCase = Tok.getString().lower();
     RegNum = matchRegisterName(lowerCase);
   } else if (Tok.is(AsmToken::Integer))
-      RegNum = matchRegisterByNumber(static_cast<unsigned> (Tok.getIntVal()),
-                                     Mnemonic.lower());
+    RegNum = matchRegisterByNumber(static_cast<unsigned> (Tok.getIntVal()),
+                                   Mnemonic.lower());
   return RegNum;
 }
 
@@ -393,14 +426,13 @@ bool MipsAsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand*>&Operands,
     if (Parser.ParseIdentifier(Identifier))
       return true;
 
-    SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer()-1);
+    SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
 
     StringRef Id = StringRef("$" + Identifier.str());
     MCSymbol *Sym = getContext().GetOrCreateSymbol(Id);
 
     // Otherwise create a symbol ref.
-    const MCExpr *Res = MCSymbolRefExpr::Create(Sym,
-                                                MCSymbolRefExpr::VK_None,
+    const MCExpr *Res = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_None,
                                                 getContext());
 
     Operands.push_back(MipsOperand::CreateImm(Res, S, E));
@@ -417,11 +449,86 @@ bool MipsAsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand*>&Operands,
     SMLoc S = Parser.getTok().getLoc();
     if (getParser().ParseExpression(IdVal))
       return true;
-    SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer()-1);
+    SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
     Operands.push_back(MipsOperand::CreateImm(IdVal, S, E));
     return false;
   }
+  case AsmToken::Percent: {
+    //it is a symbol reference or constant expression
+    const MCExpr *IdVal;
+    SMLoc S = Parser.getTok().getLoc(); //start location of the operand
+    if (parseRelocOperand(IdVal))
+      return true;
+
+    SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
+
+    Operands.push_back(MipsOperand::CreateImm(IdVal, S, E));
+    return false;
+  }//case AsmToken::Percent
   }//switch(getLexer().getKind())
+  return true;
+}
+
+bool MipsAsmParser::parseRelocOperand(const MCExpr *&Res) {
+
+  Parser.Lex(); //eat % token
+  const AsmToken &Tok = Parser.getTok(); //get next token, operation
+  if (Tok.isNot(AsmToken::Identifier))
+    return true;
+
+  StringRef Str = Tok.getIdentifier();
+
+  Parser.Lex(); //eat identifier
+  //now make expression from the rest of the operand
+  const MCExpr *IdVal;
+  SMLoc EndLoc;
+
+  if (getLexer().getKind() == AsmToken::LParen) {
+    while (1) {
+      Parser.Lex(); //eat '(' token
+      if (getLexer().getKind() == AsmToken::Percent) {
+        Parser.Lex(); //eat % token
+        const AsmToken &nextTok = Parser.getTok();
+        if (nextTok.isNot(AsmToken::Identifier))
+          return true;
+        Str = StringRef(Str.str() + "(%" + nextTok.getIdentifier().str());
+        Parser.Lex(); //eat identifier
+        if (getLexer().getKind() != AsmToken::LParen)
+          return true;
+      } else
+        break;
+    }
+    if (getParser().ParseParenExpression(IdVal,EndLoc))
+      return true;
+
+    while (getLexer().getKind() == AsmToken::RParen)
+      Parser.Lex(); //eat ')' token
+
+  } else
+    return true; //parenthesis must follow reloc operand
+
+  SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
+
+  //Check the type of the expression
+  if (MCConstantExpr::classof(IdVal)) {
+    //it's a constant, evaluate lo or hi value
+    int Val = ((const MCConstantExpr*)IdVal)->getValue();
+    if (Str == "lo") {
+      Val = Val & 0xffff;
+    } else if (Str == "hi") {
+      Val = (Val & 0xffff0000) >> 16;
+    }
+    Res = MCConstantExpr::Create(Val, getContext());
+    return false;
+  }
+
+  if (MCSymbolRefExpr::classof(IdVal)) {
+    //it's a symbol, create symbolic expression from symbol
+    StringRef Symbol = ((const MCSymbolRefExpr*)IdVal)->getSymbol().getName();
+    MCSymbolRefExpr::VariantKind VK = getVariantKind(Str);
+    Res = MCSymbolRefExpr::Create(Symbol,VK,getContext());
+    return false;
+  }
   return true;
 }
 
@@ -434,9 +541,106 @@ bool MipsAsmParser::ParseRegister(unsigned &RegNo, SMLoc &StartLoc,
   return (RegNo == (unsigned)-1);
 }
 
+bool MipsAsmParser::parseMemOffset(const MCExpr *&Res) {
+
+  SMLoc S;
+
+  switch(getLexer().getKind()) {
+  default:
+    return true;
+  case AsmToken::Integer:
+  case AsmToken::Minus:
+  case AsmToken::Plus:
+    return (getParser().ParseExpression(Res));
+  case AsmToken::Percent: {
+    return parseRelocOperand(Res);
+  }
+  case AsmToken::LParen:
+    return false;  //it's probably assuming 0
+  }
+  return true;
+}
+
 MipsAsmParser::OperandMatchResultTy MipsAsmParser::parseMemOperand(
                SmallVectorImpl<MCParsedAsmOperand*>&Operands) {
+
+  const MCExpr *IdVal = 0;
+  SMLoc S;
+  //first operand is the offset
+  S = Parser.getTok().getLoc();
+
+  if (parseMemOffset(IdVal))
+    return MatchOperand_ParseFail;
+
+  const AsmToken &Tok = Parser.getTok(); //get next token
+  if (Tok.isNot(AsmToken::LParen)) {
+    Error(Parser.getTok().getLoc(), "'(' expected");
+    return MatchOperand_ParseFail;
+  }
+
+  Parser.Lex(); // Eat '(' token.
+
+  const AsmToken &Tok1 = Parser.getTok(); //get next token
+  if (Tok1.is(AsmToken::Dollar)) {
+    Parser.Lex(); // Eat '$' token.
+    if (tryParseRegisterOperand(Operands,"")) {
+      Error(Parser.getTok().getLoc(), "unexpected token in operand");
+      return MatchOperand_ParseFail;
+    }
+
+  } else {
+    Error(Parser.getTok().getLoc(),"unexpected token in operand");
+    return MatchOperand_ParseFail;
+  }
+
+  const AsmToken &Tok2 = Parser.getTok(); //get next token
+  if (Tok2.isNot(AsmToken::RParen)) {
+    Error(Parser.getTok().getLoc(), "')' expected");
+    return MatchOperand_ParseFail;
+  }
+
+  SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
+
+  Parser.Lex(); // Eat ')' token.
+
+  if (IdVal == 0)
+    IdVal = MCConstantExpr::Create(0, getContext());
+
+  //now replace register operand with the mem operand
+  MipsOperand* op = static_cast<MipsOperand*>(Operands.back());
+  int RegNo = op->getReg();
+  //remove register from operands
+  Operands.pop_back();
+  //and add memory operand
+  Operands.push_back(MipsOperand::CreateMem(RegNo, IdVal, S, E));
+  delete op;
   return MatchOperand_Success;
+}
+
+MCSymbolRefExpr::VariantKind MipsAsmParser::getVariantKind(StringRef Symbol) {
+
+  MCSymbolRefExpr::VariantKind VK
+                   = StringSwitch<MCSymbolRefExpr::VariantKind>(Symbol)
+    .Case("hi",          MCSymbolRefExpr::VK_Mips_ABS_HI)
+    .Case("lo",          MCSymbolRefExpr::VK_Mips_ABS_LO)
+    .Case("gp_rel",      MCSymbolRefExpr::VK_Mips_GPREL)
+    .Case("call16",      MCSymbolRefExpr::VK_Mips_GOT_CALL)
+    .Case("got",         MCSymbolRefExpr::VK_Mips_GOT)
+    .Case("tlsgd",       MCSymbolRefExpr::VK_Mips_TLSGD)
+    .Case("tlsldm",      MCSymbolRefExpr::VK_Mips_TLSLDM)
+    .Case("dtprel_hi",   MCSymbolRefExpr::VK_Mips_DTPREL_HI)
+    .Case("dtprel_lo",   MCSymbolRefExpr::VK_Mips_DTPREL_LO)
+    .Case("gottprel",    MCSymbolRefExpr::VK_Mips_GOTTPREL)
+    .Case("tprel_hi",    MCSymbolRefExpr::VK_Mips_TPREL_HI)
+    .Case("tprel_lo",    MCSymbolRefExpr::VK_Mips_TPREL_LO)
+    .Case("got_disp",    MCSymbolRefExpr::VK_Mips_GOT_DISP)
+    .Case("got_page",    MCSymbolRefExpr::VK_Mips_GOT_PAGE)
+    .Case("got_ofst",    MCSymbolRefExpr::VK_Mips_GOT_OFST)
+    .Case("hi(%neg(%gp_rel",    MCSymbolRefExpr::VK_Mips_GPOFF_HI)
+    .Case("lo(%neg(%gp_rel",    MCSymbolRefExpr::VK_Mips_GPOFF_LO)
+    .Default(MCSymbolRefExpr::VK_None);
+
+  return VK;
 }
 
 bool MipsAsmParser::
