@@ -2942,7 +2942,7 @@ Process::ConnectRemote (const char *remote_url)
 Error
 Process::PrivateResume ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS|LIBLLDB_LOG_STEP));
     if (log)
         log->Printf("Process::Resume() m_stop_id = %u, public state: %s private state: %s", 
                     m_mod_id.GetStopID(),
