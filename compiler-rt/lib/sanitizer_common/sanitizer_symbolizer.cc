@@ -27,12 +27,6 @@ void AddressInfo::Clear() {
 
 LoadedModule::LoadedModule(const char *module_name, uptr base_address) {
   full_name_ = internal_strdup(module_name);
-  short_name_ = internal_strrchr(module_name, '/');
-  if (short_name_ == 0) {
-    short_name_ = full_name_;
-  } else {
-    short_name_++;
-  }
   base_address_ = base_address;
   n_ranges_ = 0;
 }

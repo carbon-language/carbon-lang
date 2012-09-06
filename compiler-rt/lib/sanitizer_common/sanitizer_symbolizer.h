@@ -78,7 +78,6 @@ class LoadedModule {
     uptr end;
   };
   char *full_name_;
-  char *short_name_;
   uptr base_address_;
   static const uptr kMaxNumberOfAddressRanges = 8;
   AddressRange ranges_[kMaxNumberOfAddressRanges];
