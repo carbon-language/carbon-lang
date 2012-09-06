@@ -200,7 +200,7 @@ define <8 x i16> @vsetQ_lane16(<8 x i16>* %A, i16 %B) nounwind {
 
 define <4 x i32> @vsetQ_lane32(<4 x i32>* %A, i32 %B) nounwind {
 ;CHECK: vsetQ_lane32:
-;CHECK: vmov.32
+;CHECK: vmov s
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = insertelement <4 x i32> %tmp1, i32 %B, i32 1
 	ret <4 x i32> %tmp2
