@@ -1074,6 +1074,8 @@ RetainSummaryManager::getFunctionSummary(const FunctionDecl *FD) {
       // The headers on OS X 10.8 use cf_consumed/ns_returns_retained,
       // but we can fully model NSMakeCollectable ourselves.
       AllowAnnotations = false;
+    } else if (FName == "CFPlugInInstanceCreate") {
+      S = getPersistentSummary(RetEffect::MakeNoRet());
     } else if (FName == "IOBSDNameMatching" ||
                FName == "IOServiceMatching" ||
                FName == "IOServiceNameMatching" ||
