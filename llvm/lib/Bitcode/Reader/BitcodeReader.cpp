@@ -2864,7 +2864,7 @@ bool BitcodeReader::InitStream() {
 }
 
 bool BitcodeReader::InitStreamFromBuffer() {
-  const unsigned char *BufPtr = (unsigned char *)Buffer->getBufferStart();
+  const unsigned char *BufPtr = (const unsigned char*)Buffer->getBufferStart();
   const unsigned char *BufEnd = BufPtr+Buffer->getBufferSize();
 
   if (Buffer->getBufferSize() & 3) {

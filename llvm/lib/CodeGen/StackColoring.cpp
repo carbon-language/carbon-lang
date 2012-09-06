@@ -522,7 +522,7 @@ void StackColoring::expungeSlotMap(DenseMap<int, int> &SlotRemap,
 bool StackColoring::runOnMachineFunction(MachineFunction &Func) {
   DEBUG(dbgs() << "********** Stack Coloring **********\n"
                << "********** Function: "
-               << ((Value*)Func.getFunction())->getName() << '\n');
+               << ((const Value*)Func.getFunction())->getName() << '\n');
   MF = &Func;
   MFI = MF->getFrameInfo();
   Indexes = &getAnalysis<SlotIndexes>();

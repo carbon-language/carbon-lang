@@ -659,7 +659,8 @@ static Constant *SymbolicallyEvaluateGEP(ArrayRef<Constant *> Ops,
   unsigned BitWidth = TD->getTypeSizeInBits(IntPtrTy);
   APInt Offset =
     APInt(BitWidth, TD->getIndexedOffset(Ptr->getType(),
-                                         makeArrayRef((Value **)Ops.data() + 1,
+                                         makeArrayRef((Value *const*)
+                                                        Ops.data() + 1,
                                                       Ops.size() - 1)));
   Ptr = StripPtrCastKeepAS(Ptr);
 
