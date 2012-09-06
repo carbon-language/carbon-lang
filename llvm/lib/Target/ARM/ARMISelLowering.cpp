@@ -4175,7 +4175,7 @@ SDValue ARMTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
 
   // Map of the number of times a particular SDValue appears in the
   // element list.
-  DenseMap<SDValue, int> ValueCounts;
+  DenseMap<SDValue, unsigned> ValueCounts;
   SDValue Value;
   for (unsigned i = 0; i < NumElts; ++i) {
     SDValue V = Op.getOperand(i);
@@ -4187,7 +4187,7 @@ SDValue ARMTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
       isConstant = false;
 
     ValueCounts.insert(std::make_pair(V, 0));
-    int &Count = ValueCounts[V];
+    unsigned &Count = ValueCounts[V];
     
     // Is this value dominant? (takes up more than half of the lanes)
     if (++Count > (NumElts / 2)) {
