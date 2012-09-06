@@ -15,6 +15,7 @@
 #define DEBUG_TYPE "mips-asm-printer"
 #include "Mips.h"
 #include "MipsAsmPrinter.h"
+#include "MipsDirectObjLower.h"
 #include "MipsInstrInfo.h"
 #include "MipsMCInstLower.h"
 #include "InstPrinter/MipsInstPrinter.h"
@@ -63,42 +64,25 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
   do {
     MCInst TmpInst0;
+    MCInstLowering.Lower(I++, TmpInst0);
 
     // Direct object specific instruction lowering
-    if (!OutStreamer.hasRawTextSupport())
-      switch (I->getOpcode()) {
+    if (!OutStreamer.hasRawTextSupport()){
+      switch (TmpInst0.getOpcode()) {
       // If shift amount is >= 32 it the inst needs to be lowered further
       case Mips::DSLL:
       case Mips::DSRL:
       case Mips::DSRA:
-      {
-        assert(I->getNumOperands() == 3 &&
-            "Invalid no. of machine operands for shift!");
-        assert(I->getOperand(2).isImm());
-        int64_t Shift = I->getOperand(2).getImm();
-        if (Shift > 31) {
-          MCInst TmpInst0;
-          MCInstLowering.LowerLargeShift(I, TmpInst0, Shift - 32);
-          OutStreamer.EmitInstruction(TmpInst0);
-          return;
-        }
-      }
-      break;
-      // Double extract instruction is chosen by pos and size operands
+        Mips::LowerLargeShift(TmpInst0);
+        break;
+        // Double extract instruction is chosen by pos and size operands
       case Mips::DEXT:
       case Mips::DINS:
-        assert(Subtarget->hasMips64() && "DEXT/DINS are MIPS64 instructions");
-        {
-          MCInst TmpInst0;
-          MCInstLowering.LowerDextDins(I, TmpInst0);
-          OutStreamer.EmitInstruction(TmpInst0);
-          return;
-        }
+        Mips::LowerDextDins(TmpInst0);
       }
+    }
 
-    MCInstLowering.Lower(I++, TmpInst0);
     OutStreamer.EmitInstruction(TmpInst0);
-
   } while ((I != E) && I->isInsideBundle()); // Delay slot check
 }
 
