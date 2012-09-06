@@ -66,6 +66,18 @@ bool Sema::CanUseDecl(NamedDecl *D) {
   return true;
 }
 
+static void DiagnoseUnusedOfDecl(Sema &S, NamedDecl *D, SourceLocation Loc) {
+  // Warn if this is used but marked unused.
+  if (D->hasAttr<UnusedAttr>()) {
+    const Decl *DC = cast<Decl>(S.getCurLexicalContext());
+    // A category implicitly has the availability of the interface.
+    if (const ObjCCategoryDecl *CatD = dyn_cast<ObjCCategoryDecl>(DC))
+      DC = CatD->getClassInterface();
+    if (!DC->hasAttr<UnusedAttr>())
+      S.Diag(Loc, diag::warn_used_but_marked_unused) << D->getDeclName();
+  }
+}
+
 static AvailabilityResult DiagnoseAvailabilityOfDecl(Sema &S,
                               NamedDecl *D, SourceLocation Loc,
                               const ObjCInterfaceDecl *UnknownObjCClass) {
@@ -250,9 +262,7 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
   }
   DiagnoseAvailabilityOfDecl(*this, D, Loc, UnknownObjCClass);
 
-  // Warn if this is used but marked unused.
-  if (D->hasAttr<UnusedAttr>())
-    Diag(Loc, diag::warn_used_but_marked_unused) << D->getDeclName();
+  DiagnoseUnusedOfDecl(*this, D, Loc);
 
   diagnoseUseOfInternalDeclInInlineFunction(*this, D, Loc);
 

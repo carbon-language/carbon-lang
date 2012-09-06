@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -Wunused-function -Wunneeded-internal-declaration -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wused-but-marked-unused -Wunused-function -Wunneeded-internal-declaration -verify %s
 // RUN: %clang_cc1 -fsyntax-only -verify -Wunused %s
 // RUN: %clang_cc1 -fsyntax-only -verify -Wall %s
 
@@ -53,4 +53,16 @@ static void cleanupMalloc(char * const * const allocation) { }
 void f13(void) {
   char * const __attribute__((cleanup(cleanupMalloc))) a;
   (void)a;
+}
+
+// rdar://12233989
+extern void a(void) __attribute__((unused));
+extern void b(void) __attribute__((unused));
+
+void b(void)
+{
+}
+void a(void)
+{
+  b();
 }
