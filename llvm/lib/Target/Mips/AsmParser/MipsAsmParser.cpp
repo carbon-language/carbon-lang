@@ -507,8 +507,6 @@ bool MipsAsmParser::parseRelocOperand(const MCExpr *&Res) {
   } else
     return true; //parenthesis must follow reloc operand
 
-  SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
-
   //Check the type of the expression
   if (MCConstantExpr::classof(IdVal)) {
     //it's a constant, evaluate lo or hi value
