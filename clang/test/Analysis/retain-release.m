@@ -1341,6 +1341,15 @@ void testattr4() {
   consume_cf(y);
 }
 
+@interface TestOwnershipAttr2 : NSObject
+- (NSString*) newString NS_RETURNS_NOT_RETAINED; // no-warning
+@end
+
+@implementation TestOwnershipAttr2
+- (NSString*) newString {
+  return [NSString alloc]; // expected-warning {{Potential leak of an object}}
+}
+@end
 
 @interface MyClassTestCFAttr : NSObject {}
 - (NSDate*) returnsCFRetained CF_RETURNS_RETAINED;
