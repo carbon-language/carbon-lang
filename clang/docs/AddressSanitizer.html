@@ -46,8 +46,6 @@ Typical slowdown introduced by AddressSanitizer is <b>2x</b>.
 
 <h2 id="howtobuild">How to build</h2>
 Follow the <a href="../get_started.html">clang build instructions</a>. <BR>
-Note: CMake build does not work yet.
-See <a href="http://llvm.org/bugs/show_bug.cgi?id=12272">bug 12272</a>.
 
 <h2 id="usage">Usage</h2>
 Simply compile and link your program with <tt>-faddress-sanitizer</tt> flag. <BR>
@@ -119,7 +117,7 @@ Note: currently, this attribute will be lost if the function is inlined.
 <h2 id="platforms">Supported Platforms</h2>
 AddressSanitizer is supported on
 <ul><li>Linux x86_64 (tested on Ubuntu 10.04).
-<li>MacOS 10.6 and 10.7 (i386/x86_64).
+<li>MacOS 10.6, 10.7 and 10.8 (i386/x86_64).
 </ul>
 Support for Linux i386/ARM is in progress
 (it may work, but is not guaranteed too).
@@ -140,8 +138,8 @@ This means that tools like <tt>ulimit</tt> may not work as usually expected.
 
 <h2 id="status">Current Status</h2>
 AddressSanitizer is fully functional on supported platforms starting from LLVM 3.1.
-However, the test suite is not fully integrated yet and we lack the testing
-process (buildbots).
+The test suite is integrated into CMake build (can be run with "make
+check-asan" command).
 
 <h2 id="moreinfo">More Information</h2>
 <a href="http://code.google.com/p/address-sanitizer/">http://code.google.com/p/address-sanitizer</a>.
