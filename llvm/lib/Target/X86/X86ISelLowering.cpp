@@ -14180,22 +14180,6 @@ static SDValue checkFlaggedOrCombine(SDValue Or, X86::CondCode &CC,
   return DAG.getNode(X86ISD::PTEST, DL, MVT::i32, VecIn, VecIn);
 }
 
-static bool isValidFCMOVCondition(X86::CondCode CC) {
-  switch (CC) {
-  default:
-    return false;
-  case X86::COND_B:
-  case X86::COND_BE:
-  case X86::COND_E:
-  case X86::COND_P:
-  case X86::COND_AE:
-  case X86::COND_A:
-  case X86::COND_NE:
-  case X86::COND_NP:
-    return true;
-  }
-}
-
 /// Optimize X86ISD::CMOV [LHS, RHS, CONDCODE (e.g. X86::COND_NE), CONDVAL]
 static SDValue PerformCMOVCombine(SDNode *N, SelectionDAG &DAG,
                                   TargetLowering::DAGCombinerInfo &DCI,
@@ -14227,7 +14211,7 @@ static SDValue PerformCMOVCombine(SDNode *N, SelectionDAG &DAG,
   Flags = checkBoolTestSetCCCombine(Cond, CC);
   if (Flags.getNode() &&
       // Extra check as FCMOV only supports a subset of X86 cond.
-      (FalseOp.getValueType() != MVT::f80 || isValidFCMOVCondition(CC))) {
+      (FalseOp.getValueType() != MVT::f80 || hasFPCMov(CC))) {
     SDValue Ops[] = { FalseOp, TrueOp,
                       DAG.getConstant(CC, MVT::i8), Flags };
     return DAG.getNode(X86ISD::CMOV, DL, N->getVTList(),
