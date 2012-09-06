@@ -100,6 +100,7 @@ namespace {
       Base_Reg = Reg;
     }
 
+#ifndef NDEBUG
     void dump() {
       dbgs() << "X86ISelAddressMode " << this << '\n';
       dbgs() << "Base_Reg ";
@@ -133,6 +134,7 @@ namespace {
         dbgs() << "nul";
       dbgs() << " JT" << JT << " Align" << Align << '\n';
     }
+#endif
   };
 }
 

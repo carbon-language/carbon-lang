@@ -1012,7 +1012,9 @@ void ScheduleDAGInstrs::computeLatency(SUnit *SU) {
 }
 
 void ScheduleDAGInstrs::dumpNode(const SUnit *SU) const {
+#ifndef NDEBUG
   SU->getInstr()->dump();
+#endif
 }
 
 std::string ScheduleDAGInstrs::getGraphNodeLabel(const SUnit *SU) const {

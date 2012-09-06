@@ -156,9 +156,11 @@ void LiveIntervals::printInstrs(raw_ostream &OS) const {
   MF->print(OS, Indexes);
 }
 
+#ifndef NDEBUG
 void LiveIntervals::dumpInstrs() const {
   printInstrs(dbgs());
 }
+#endif
 
 static
 bool MultipleDefsBySameMI(const MachineInstr &MI, unsigned MOIdx) {

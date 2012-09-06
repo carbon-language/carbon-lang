@@ -126,9 +126,11 @@ void VirtRegMap::print(raw_ostream &OS, const Module*) const {
   OS << '\n';
 }
 
+#ifndef NDEBUG
 void VirtRegMap::dump() const {
   print(dbgs());
 }
+#endif
 
 //===----------------------------------------------------------------------===//
 //                              VirtRegRewriter

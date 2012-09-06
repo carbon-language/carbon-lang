@@ -63,6 +63,7 @@ void RegisterPressure::decrease(const TargetRegisterClass *RC,
   decreaseSetPressure(MaxSetPressure, RC, TRI);
 }
 
+#ifndef NDEBUG
 void RegisterPressure::dump(const TargetRegisterInfo *TRI) {
   dbgs() << "Live In: ";
   for (unsigned i = 0, e = LiveInRegs.size(); i < e; ++i)
@@ -78,6 +79,7 @@ void RegisterPressure::dump(const TargetRegisterInfo *TRI) {
              << '\n';
   }
 }
+#endif
 
 /// Increase the current pressure as impacted by these physical registers and
 /// bump the high water mark if needed.

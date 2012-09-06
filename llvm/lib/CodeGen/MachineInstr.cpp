@@ -1496,7 +1496,9 @@ void MachineInstr::copyImplicitOps(const MachineInstr *MI) {
 }
 
 void MachineInstr::dump() const {
+#ifndef NDEBUG
   dbgs() << "  " << *this;
+#endif
 }
 
 static void printDebugLoc(DebugLoc DL, const MachineFunction *MF,

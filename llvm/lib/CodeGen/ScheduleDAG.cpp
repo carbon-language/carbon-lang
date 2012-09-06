@@ -279,6 +279,7 @@ void SUnit::ComputeHeight() {
   } while (!WorkList.empty());
 }
 
+#ifndef NDEBUG
 /// SUnit - Scheduling unit. It's an wrapper around either a single SDNode or
 /// a group of nodes flagged together.
 void SUnit::dump(const ScheduleDAG *G) const {
@@ -336,6 +337,7 @@ void SUnit::dumpAll(const ScheduleDAG *G) const {
   }
   dbgs() << "\n";
 }
+#endif
 
 #ifndef NDEBUG
 /// VerifyScheduledDAG - Verify that all SUnits were scheduled and that

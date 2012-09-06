@@ -143,6 +143,7 @@ void SlotIndexes::renumberIndexes(IndexList::iterator curItr) {
 }
 
 
+#ifndef NDEBUG
 void SlotIndexes::dump() const {
   for (IndexList::const_iterator itr = indexList.begin();
        itr != indexList.end(); ++itr) {
@@ -159,6 +160,7 @@ void SlotIndexes::dump() const {
     dbgs() << "BB#" << i << "\t[" << MBBRanges[i].first << ';'
            << MBBRanges[i].second << ")\n";
 }
+#endif
 
 // Print a SlotIndex to a raw_ostream.
 void SlotIndex::print(raw_ostream &os) const {
@@ -168,9 +170,11 @@ void SlotIndex::print(raw_ostream &os) const {
     os << "invalid";
 }
 
+#ifndef NDEBUG
 // Dump a SlotIndex to stderr.
 void SlotIndex::dump() const {
   print(dbgs());
   dbgs() << "\n";
 }
+#endif
 

@@ -65,6 +65,7 @@ LiveVariables::VarInfo::findKill(const MachineBasicBlock *MBB) const {
 }
 
 void LiveVariables::VarInfo::dump() const {
+#ifndef NDEBUG
   dbgs() << "  Alive in blocks: ";
   for (SparseBitVector<>::iterator I = AliveBlocks.begin(),
            E = AliveBlocks.end(); I != E; ++I)
@@ -77,6 +78,7 @@ void LiveVariables::VarInfo::dump() const {
       dbgs() << "\n    #" << i << ": " << *Kills[i];
     dbgs() << "\n";
   }
+#endif
 }
 
 /// getVarInfo - Get (possibly creating) a VarInfo object for the given vreg.

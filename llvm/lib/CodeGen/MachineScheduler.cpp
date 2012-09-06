@@ -764,12 +764,14 @@ public:
     Queue.pop_back();
   }
 
+#ifndef NDEBUG
   void dump() {
     dbgs() << Name << ": ";
     for (unsigned i = 0, e = Queue.size(); i < e; ++i)
       dbgs() << Queue[i]->NodeNum << " ";
     dbgs() << "\n";
   }
+#endif
 };
 
 /// ConvergingScheduler shrinks the unscheduled zone using heuristics to balance

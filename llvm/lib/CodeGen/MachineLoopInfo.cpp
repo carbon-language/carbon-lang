@@ -74,6 +74,8 @@ MachineBasicBlock *MachineLoop::getBottomBlock() {
   return BotMBB;
 }
 
+#ifndef NDEBUG
 void MachineLoop::dump() const {
   print(dbgs());
 }
+#endif

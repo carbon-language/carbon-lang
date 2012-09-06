@@ -643,6 +643,7 @@ void ScheduleDAGSDNodes::computeOperandLatency(SDNode *Def, SDNode *Use,
 }
 
 void ScheduleDAGSDNodes::dumpNode(const SUnit *SU) const {
+#ifndef NDEBUG
   if (!SU->getNode()) {
     dbgs() << "PHYS REG COPY\n";
     return;
@@ -659,8 +660,10 @@ void ScheduleDAGSDNodes::dumpNode(const SUnit *SU) const {
     dbgs() << "\n";
     GluedNodes.pop_back();
   }
+#endif
 }
 
+#ifndef NDEBUG
 void ScheduleDAGSDNodes::dumpSchedule() const {
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
     if (SUnit *SU = Sequence[i])
@@ -669,6 +672,7 @@ void ScheduleDAGSDNodes::dumpSchedule() const {
       dbgs() << "**** NOOP ****\n";
   }
 }
+#endif
 
 #ifndef NDEBUG
 /// VerifyScheduledSequence - Verify that all SUnits were scheduled and that

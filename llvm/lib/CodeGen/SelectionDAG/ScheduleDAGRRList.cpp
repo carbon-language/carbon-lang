@@ -1758,6 +1758,7 @@ public:
     return V;
   }
 
+#ifndef NDEBUG
   void dump(ScheduleDAG *DAG) const {
     // Emulate pop() without clobbering NodeQueueIds.
     std::vector<SUnit*> DumpQueue = Queue;
@@ -1768,6 +1769,7 @@ public:
       SU->dump(DAG);
     }
   }
+#endif
 };
 
 typedef RegReductionPriorityQueue<bu_ls_rr_sort>
@@ -1895,6 +1897,7 @@ unsigned RegReductionPQBase::getNodePriority(const SUnit *SU) const {
 //===----------------------------------------------------------------------===//
 
 void RegReductionPQBase::dumpRegPressure() const {
+#ifndef NDEBUG
   for (TargetRegisterInfo::regclass_iterator I = TRI->regclass_begin(),
          E = TRI->regclass_end(); I != E; ++I) {
     const TargetRegisterClass *RC = *I;
@@ -1904,6 +1907,7 @@ void RegReductionPQBase::dumpRegPressure() const {
     DEBUG(dbgs() << RC->getName() << ": " << RP << " / " << RegLimit[Id]
           << '\n');
   }
+#endif
 }
 
 bool RegReductionPQBase::HighRegPressure(const SUnit *SU) const {

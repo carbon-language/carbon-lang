@@ -171,6 +171,7 @@ namespace {
     // Shuffle live registers to match the expectations of successor blocks.
     void finishBlockStack();
 
+#ifndef NDEBUG
     void dumpStack() const {
       dbgs() << "Stack contents:";
       for (unsigned i = 0; i != StackTop; ++i) {
@@ -181,6 +182,7 @@ namespace {
         dbgs() << ", ST" << i << " in FP" << unsigned(PendingST[i]);
       dbgs() << "\n";
     }
+#endif
 
     /// getSlot - Return the stack slot number a particular register number is
     /// in.

@@ -228,9 +228,11 @@ const MachineBasicBlock *MachineBasicBlock::getLandingPadSuccessor() const {
   return 0;
 }
 
+#ifndef NDEBUG
 void MachineBasicBlock::dump() const {
   print(dbgs());
 }
+#endif
 
 StringRef MachineBasicBlock::getName() const {
   if (const BasicBlock *LBB = getBasicBlock())
