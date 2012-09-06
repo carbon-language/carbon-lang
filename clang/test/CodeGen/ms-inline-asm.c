@@ -96,6 +96,9 @@ unsigned t10(void) {
 void t11(void) {
   __asm EVEN
   __asm ALIGN
+// CHECK: t11
+// CHECK: call void asm sideeffect inteldialect "", "~{dirflag},~{fpsr},~{flags}"() nounwind
+// CHECK: call void asm sideeffect inteldialect "", "~{dirflag},~{fpsr},~{flags}"() nounwind
 }
 
 void t12(void) {
@@ -104,6 +107,8 @@ void t12(void) {
     _emit 0x43
     _emit 0x4B
   }
+// CHECK: t12
+// CHECK: call void asm sideeffect inteldialect "", "~{dirflag},~{fpsr},~{flags}"() nounwind
 }
 
 void t13(void) {
@@ -111,4 +116,8 @@ void t13(void) {
   __asm LENGTH arr ; sizeof(arr)/sizeof(arr[0])
   __asm SIZE arr   ; sizeof(arr)
   __asm TYPE arr   ; sizeof(arr[0])
+// CHECK: t13
+// CHECK: call void asm sideeffect inteldialect "", "~{dirflag},~{fpsr},~{flags}"() nounwind
+// CHECK: call void asm sideeffect inteldialect "", "~{dirflag},~{fpsr},~{flags}"() nounwind
+// CHECK: call void asm sideeffect inteldialect "", "~{dirflag},~{fpsr},~{flags}"() nounwind
 }

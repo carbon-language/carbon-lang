@@ -454,11 +454,11 @@ static std::string buildMSAsmString(Sema &SemaRef, ArrayRef<Token> AsmToks,
   return Res.str();
 }
 
-#define DEF_SIMPLE_MSASM                                                     \
+#define DEF_SIMPLE_MSASM(STR)                                                \
   MSAsmStmt *NS =                                                            \
     new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc, /*IsSimple*/ true,   \
                             /*IsVolatile*/ true, AsmToks, Inputs, Outputs,   \
-                            InputExprs, OutputExprs, AsmString, Constraints, \
+                            InputExprs, OutputExprs, STR, Constraints,       \
                             Clobbers, EndLoc);
 
 StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
@@ -478,11 +478,8 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   SmallVector<std::string, 4> OutputExprNames;
 
   // Empty asm statements don't need to instantiate the AsmParser, etc.
-  if (AsmToks.empty()) {
-    StringRef AsmString;
-    DEF_SIMPLE_MSASM;
-    return Owned(NS);
-  }
+  StringRef EmptyAsmStr;
+  if (AsmToks.empty()) { DEF_SIMPLE_MSASM(EmptyAsmStr); return Owned(NS); }
 
   std::vector<std::string> AsmStrings;
   std::vector<std::pair<unsigned,unsigned> > AsmTokRanges;
@@ -495,7 +492,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   bool IsSimple = isSimpleMSAsm(Pieces, Context.getTargetInfo());
 
   // AsmParser doesn't fully support these asm statements.
-  if (bailOnMSAsm(Pieces)) { DEF_SIMPLE_MSASM; return Owned(NS); }
+  if (bailOnMSAsm(Pieces)) { DEF_SIMPLE_MSASM(EmptyAsmStr); return Owned(NS); }
 
   // Initialize targets and assembly printers/parsers.
   llvm::InitializeAllTargetInfos();
@@ -549,7 +546,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
     bool HadError = TargetParser->ParseInstruction(OpcodeStr.str(), IDLoc,
                                                    Operands);
     // If we had an error parsing the operands, fail gracefully.
-    if (HadError) { DEF_SIMPLE_MSASM; return Owned(NS); }
+    if (HadError) { DEF_SIMPLE_MSASM(EmptyAsmStr); return Owned(NS); }
 
     // Match the MCInstr.
     unsigned Kind;
@@ -559,7 +556,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
                                               ErrorInfo,
                                               /*matchingInlineAsm*/ true);
     // If we had an error parsing the operands, fail gracefully.
-    if (HadError) { DEF_SIMPLE_MSASM; return Owned(NS); }
+    if (HadError) { DEF_SIMPLE_MSASM(EmptyAsmStr); return Owned(NS); }
 
     // Get the instruction descriptor.
     llvm::MCInst Inst = Instrs[0];
