@@ -193,6 +193,12 @@ public:
     void
     SetLoggingCallback (lldb::LogOutputCallback log_callback, void *baton);
     
+    // DEPRECATED
+    void
+    DispatchInput (void* baton,
+                   const void* data,
+                   size_t data_len);
+    
     void
     DispatchInput (const void *data, size_t data_len);
 
