@@ -287,9 +287,9 @@ RegisterValue::SetType (const RegisterInfo *reg_info)
         case eEncodingIEEE754:
             if (byte_size == sizeof(float))
                 m_type = eTypeFloat;
-            if (byte_size == sizeof(double))
+            else if (byte_size == sizeof(double))
                 m_type = eTypeDouble;
-            if (byte_size == sizeof(long double))
+            else if (byte_size == sizeof(long double))
                 m_type = eTypeLongDouble;
             break;
 
