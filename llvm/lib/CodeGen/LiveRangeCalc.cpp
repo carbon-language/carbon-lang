@@ -65,7 +65,11 @@ void LiveRangeCalc::extendToUses(LiveInterval *LI, unsigned Reg) {
   // Visit all operands that read Reg. This may include partial defs.
   for (MachineRegisterInfo::reg_nodbg_iterator I = MRI->reg_nodbg_begin(Reg),
        E = MRI->reg_nodbg_end(); I != E; ++I) {
-    const MachineOperand &MO = I.getOperand();
+    MachineOperand &MO = I.getOperand();
+    // Clear all kill flags. They will be reinserted after register allocation
+    // by LiveIntervalAnalysis::addKillFlags().
+    if (MO.isUse())
+      MO.setIsKill(false);
     if (!MO.readsReg())
       continue;
     // MI is reading Reg. We may have visited MI before if it happens to be
