@@ -2701,6 +2701,8 @@ static DecodeStatus DecodeVLD1DupInstruction(MCInst &Inst, unsigned Insn,
   unsigned align = fieldFromInstruction(Insn, 4, 1);
   unsigned size = fieldFromInstruction(Insn, 6, 2);
 
+  if (size == 0 && align == 1)
+    return MCDisassembler::Fail;
   align *= (1 << size);
 
   switch (Inst.getOpcode()) {
@@ -2831,6 +2833,8 @@ static DecodeStatus DecodeVLD4DupInstruction(MCInst &Inst, unsigned Insn,
   unsigned align = fieldFromInstruction(Insn, 4, 1);
 
   if (size == 0x3) {
+    if (align == 0)
+      return MCDisassembler::Fail;
     size = 4;
     align = 16;
   } else {
