@@ -96,7 +96,7 @@ void MaybeReexec() {
   // the library is preloaded so that the wrappers work. If it is not, set
   // DYLD_INSERT_LIBRARIES and re-exec ourselves.
   Dl_info info;
-  int result = dladdr((void*)__asan_init, &info);
+  CHECK(dladdr((void*)__asan_init, &info));
   const char *dyld_insert_libraries = GetEnv(kDyldInsertLibraries);
   if (!dyld_insert_libraries ||
       !REAL(strstr)(dyld_insert_libraries, info.dli_fname)) {
