@@ -4161,10 +4161,21 @@ SDValue ARMTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
   }
 
   // Scan through the operands to see if only one value is used.
+  //
+  // As an optimisation, even if more than one value is used it may be more
+  // profitable to splat with one value then change some lanes.
+  //
+  // Heuristically we decide to do this if the vector has a "dominant" value,
+  // defined as splatted to more than half of the lanes.
   unsigned NumElts = VT.getVectorNumElements();
   bool isOnlyLowElement = true;
   bool usesOnlyOneValue = true;
+  bool hasDominantValue = false;
   bool isConstant = true;
+
+  // Map of the number of times a particular SDValue appears in the
+  // element list.
+  DenseMap<SDValue, int> ValueCounts;
   SDValue Value;
   for (unsigned i = 0; i < NumElts; ++i) {
     SDValue V = Op.getOperand(i);
@@ -4175,13 +4186,21 @@ SDValue ARMTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
     if (!isa<ConstantFPSDNode>(V) && !isa<ConstantSDNode>(V))
       isConstant = false;
 
-    if (!Value.getNode())
+    ValueCounts.insert(std::make_pair(V, 0));
+    int &Count = ValueCounts[V];
+    
+    // Is this value dominant? (takes up more than half of the lanes)
+    if (++Count > (NumElts / 2)) {
+      hasDominantValue = true;
       Value = V;
-    else if (V != Value)
-      usesOnlyOneValue = false;
+    }
   }
+  if (ValueCounts.size() != 1)
+    usesOnlyOneValue = false;
+  if (!Value.getNode() && ValueCounts.size() > 0)
+    Value = ValueCounts.begin()->first;
 
-  if (!Value.getNode())
+  if (ValueCounts.size() == 0)
     return DAG.getUNDEF(VT);
 
   if (isOnlyLowElement)
@@ -4191,9 +4210,34 @@ SDValue ARMTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
 
   // Use VDUP for non-constant splats.  For f32 constant splats, reduce to
   // i32 and try again.
-  if (usesOnlyOneValue && EltSize <= 32) {
-    if (!isConstant)
-      return DAG.getNode(ARMISD::VDUP, dl, VT, Value);
+  if (hasDominantValue && EltSize <= 32) {
+    if (!isConstant) {
+      SDValue N;
+
+      // If we are VDUPing a value that comes directly from a vector, that will
+      // cause an unnecessary move to and from a GPR, where instead we could
+      // just use VDUPLANE.
+      if (Value->getOpcode() == ISD::EXTRACT_VECTOR_ELT)
+        N = DAG.getNode(ARMISD::VDUPLANE, dl, VT,
+                        Value->getOperand(0), Value->getOperand(1));
+      else
+        N = DAG.getNode(ARMISD::VDUP, dl, VT, Value);
+
+      if (!usesOnlyOneValue) {
+        // The dominant value was splatted as 'N', but we now have to insert
+        // all differing elements.
+        for (unsigned I = 0; I < NumElts; ++I) {
+          if (Op.getOperand(I) == Value)
+            continue;
+          SmallVector<SDValue, 3> Ops;
+          Ops.push_back(N);
+          Ops.push_back(Op.getOperand(I));
+          Ops.push_back(DAG.getConstant(I, MVT::i32));
+          N = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, VT, &Ops[0], 3);
+        }
+      }
+      return N;
+    }
     if (VT.getVectorElementType().isFloatingPoint()) {
       SmallVector<SDValue, 8> Ops;
       for (unsigned i = 0; i < NumElts; ++i)
@@ -4205,9 +4249,11 @@ SDValue ARMTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
       if (Val.getNode())
         return DAG.getNode(ISD::BITCAST, dl, VT, Val);
     }
-    SDValue Val = IsSingleInstrConstant(Value, DAG, ST, dl);
-    if (Val.getNode())
-      return DAG.getNode(ARMISD::VDUP, dl, VT, Val);
+    if (usesOnlyOneValue) {
+      SDValue Val = IsSingleInstrConstant(Value, DAG, ST, dl);
+      if (isConstant && Val.getNode())
+        return DAG.getNode(ARMISD::VDUP, dl, VT, Val); 
+    }
   }
 
   // If all elements are constants and the case above didn't get hit, fall back
