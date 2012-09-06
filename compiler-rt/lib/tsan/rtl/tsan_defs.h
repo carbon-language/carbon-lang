@@ -29,7 +29,8 @@ const unsigned kMaxTid = 1 << kTidBits;
 const unsigned kMaxTidInClock = kMaxTid * 2;  // This includes msb 'freed' bit.
 const int kClkBits = 43;
 #ifndef TSAN_GO
-const int kShadowStackSize = 1024;
+const int kShadowStackSize = 4*1024;
+const int kTraceStackSize = 256;
 #endif
 
 #ifdef TSAN_SHADOW_COUNT

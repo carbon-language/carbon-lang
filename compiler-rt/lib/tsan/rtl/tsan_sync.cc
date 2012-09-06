@@ -236,15 +236,19 @@ void StackTrace::ObtainCurrent(ThreadState *thr, uptr toppc) {
   n_ = thr->shadow_stack_pos - thr->shadow_stack;
   if (n_ + !!toppc == 0)
     return;
+  uptr start = 0;
   if (c_) {
     CHECK_NE(s_, 0);
-    CHECK_LE(n_ + !!toppc, c_);
+    if (n_ + !!toppc > c_) {
+      start = n_ - c_ + !!toppc;
+      n_ = c_ - !!toppc;
+    }
   } else {
     s_ = (uptr*)internal_alloc(MBlockStackTrace,
                                (n_ + !!toppc) * sizeof(s_[0]));
   }
   for (uptr i = 0; i < n_; i++)
-    s_[i] = thr->shadow_stack[i];
+    s_[i] = thr->shadow_stack[start + i];
   if (toppc) {
     s_[n_] = toppc;
     n_++;

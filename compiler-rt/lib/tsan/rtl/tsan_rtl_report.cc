@@ -85,9 +85,9 @@ static void StackStripMain(ReportStack *stack) {
   } else if (last || last2) {
     // Ensure that we recovered stack completely. Trimmed stack
     // can actually happen if we do not instrument some code,
-    // so it's only a DCHECK. However we must try hard to not miss it
+    // so it's only a debug print. However we must try hard to not miss it
     // due to our fault.
-    TsanPrintf("Bottom stack frame of stack %zx is missed\n", stack->pc);
+    DPrintf("Bottom stack frame of stack %zx is missed\n", stack->pc);
   }
 #else
   if (last && 0 == internal_strcmp(last, "schedunlock"))
@@ -163,6 +163,7 @@ void ScopedReport::AddThread(const ThreadContext *tctx) {
   rt->stack = SymbolizeStack(tctx->creation_stack);
 }
 
+#ifndef TSAN_GO
 static ThreadContext *FindThread(int unique_id) {
   CTX()->thread_mtx.CheckLocked();
   for (unsigned i = 0; i < kMaxTid; i++) {
@@ -173,6 +174,7 @@ static ThreadContext *FindThread(int unique_id) {
   }
   return 0;
 }
+#endif
 
 void ScopedReport::AddMutex(const SyncVar *s) {
   void *mem = internal_alloc(MBlockReportMutex, sizeof(ReportMutex));
@@ -230,6 +232,7 @@ void ScopedReport::AddLocation(uptr addr, uptr size) {
   }
 }
 
+#ifndef TSAN_GO
 void ScopedReport::AddSleep(u32 stack_id) {
   uptr ssz = 0;
   const uptr *stack = StackDepotGet(stack_id, &ssz);
@@ -239,6 +242,7 @@ void ScopedReport::AddSleep(u32 stack_id) {
     rep_->sleep = SymbolizeStack(trace);
   }
 }
+#endif
 
 const ReportDesc *ScopedReport::GetReport() const {
   return rep_;
@@ -285,8 +289,6 @@ void RestoreStack(int tid, const u64 epoch, StackTrace *stk) {
     } else if (typ == EventTypeFuncEnter) {
       stack[pos++] = pc;
     } else if (typ == EventTypeFuncExit) {
-      // Since we have full stacks, this should never happen.
-      DCHECK_GT(pos, 0);
       if (pos > 0)
         pos--;
     }

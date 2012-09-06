@@ -47,12 +47,12 @@ struct TraceHeader {
   StackTrace stack0;  // Start stack for the trace.
   u64        epoch0;  // Start epoch for the trace.
 #ifndef TSAN_GO
-  uptr       stack0buf[kShadowStackSize];
+  uptr       stack0buf[kTraceStackSize];
 #endif
 
   TraceHeader()
 #ifndef TSAN_GO
-      : stack0(stack0buf, kShadowStackSize)
+      : stack0(stack0buf, kTraceStackSize)
 #else
       : stack0()
 #endif

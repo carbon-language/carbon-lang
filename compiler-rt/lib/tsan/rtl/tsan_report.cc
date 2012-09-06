@@ -146,7 +146,7 @@ void PrintReport(const ReportDesc *rep) {
 
 #else
 
-static void PrintStack(const ReportStack *ent) {
+void PrintStack(const ReportStack *ent) {
   for (int i = 0; ent; ent = ent->next, i++) {
     TsanPrintf("  %s()\n      %s:%d +0x%zx\n",
         ent->func, ent->file, ent->line, (void*)ent->offset);
