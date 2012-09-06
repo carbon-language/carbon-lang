@@ -17,6 +17,7 @@
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_stackdepot.h"
 #include "sanitizer_common/sanitizer_placement_new.h"
+#include "sanitizer_common/sanitizer_symbolizer.h"
 #include "tsan_defs.h"
 #include "tsan_platform.h"
 #include "tsan_rtl.h"
@@ -181,6 +182,11 @@ void Initialize(ThreadState *thr) {
   InitializeSuppressions();
   InitializeMemoryProfile();
   InitializeMemoryFlush();
+
+  const char *external_symbolizer = flags()->external_symbolizer_path;
+  if (external_symbolizer != 0 && external_symbolizer[0] != '\0') {
+    InitializeExternalSymbolizer(external_symbolizer);
+  }
 
   if (ctx->flags.verbosity)
     TsanPrintf("***** Running under ThreadSanitizer v2 (pid %d) *****\n",

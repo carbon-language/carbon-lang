@@ -31,8 +31,15 @@ ReportStack *NewReportStackEntry(uptr addr) {
 
 static ReportStack *NewReportStackEntry(const AddressInfo &info) {
   ReportStack *ent = NewReportStackEntry(info.address);
-  if (info.module)
-    ent->module = internal_strdup(info.module);
+  if (info.module) {
+    // Strip module path to make output shorter.
+    const char *short_module_name = internal_strrchr(info.module, '/');
+    if (short_module_name)
+      short_module_name += 1;
+    else
+      short_module_name = info.module;
+    ent->module = internal_strdup(short_module_name);
+  }
   ent->offset = info.module_offset;
   if (info.function) {
     ent->func = internal_strdup(info.function);
@@ -45,7 +52,7 @@ static ReportStack *NewReportStackEntry(const AddressInfo &info) {
 }
 
 ReportStack *SymbolizeCode(uptr addr) {
-  if (flags()->use_internal_symbolizer) {
+  if (0 != internal_strcmp(flags()->external_symbolizer_path, "")) {
     static const uptr kMaxAddrFrames = 16;
     InternalScopedBuffer<AddressInfo> addr_frames(kMaxAddrFrames);
     for (uptr i = 0; i < kMaxAddrFrames; i++)

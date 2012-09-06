@@ -62,8 +62,8 @@ struct Flags {
   bool stop_on_start;
   // Controls whether RunningOnValgrind() returns true or false.
   bool running_on_valgrind;
-  // If set, uses in-process symbolizer from common sanitizer runtime.
-  bool use_internal_symbolizer;
+  // Path to external symbolizer.
+  const char *external_symbolizer_path;
 };
 
 Flags *flags();

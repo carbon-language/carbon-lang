@@ -53,7 +53,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->flush_memory_ms = 0;
   f->stop_on_start = false;
   f->running_on_valgrind = false;
-  f->use_internal_symbolizer = false;
+  f->external_symbolizer_path = "";
 
   // Let a frontend override.
   OverrideFlags(f);
@@ -75,7 +75,7 @@ void InitializeFlags(Flags *f, const char *env) {
   ParseFlag(env, &f->profile_memory, "profile_memory");
   ParseFlag(env, &f->flush_memory_ms, "flush_memory_ms");
   ParseFlag(env, &f->stop_on_start, "stop_on_start");
-  ParseFlag(env, &f->use_internal_symbolizer, "use_internal_symbolizer");
+  ParseFlag(env, &f->external_symbolizer_path, "external_symbolizer_path");
 }
 
 }  // namespace __tsan
