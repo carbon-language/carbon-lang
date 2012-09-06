@@ -147,7 +147,6 @@ ConversionResult ConvertUTF32toUTF8 (
   const UTF32** sourceStart, const UTF32* sourceEnd,
   UTF8** targetStart, UTF8* targetEnd, ConversionFlags flags);
 
-#ifdef CLANG_NEEDS_THESE_ONE_DAY
 ConversionResult ConvertUTF16toUTF32 (
   const UTF16** sourceStart, const UTF16* sourceEnd,
   UTF32** targetStart, UTF32* targetEnd, ConversionFlags flags);
@@ -194,7 +193,6 @@ bool ConvertUTF8toWide(unsigned WideCharWidth, llvm::StringRef Source,
 bool ConvertCodePointToUTF8(unsigned Source, char *&ResultPtr);
 
 }
-#endif
 
 #endif
 

@@ -111,7 +111,6 @@ static const UTF8 firstByteMark[7] = { 0x00, 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC 
  * into an inline function.
  */
 
-#ifdef CLANG_NEEDS_THESE_ONE_DAY
 
 /* --------------------------------------------------------------------- */
 
@@ -285,7 +284,6 @@ ConversionResult ConvertUTF16toUTF8 (
     *targetStart = target;
     return result;
 }
-#endif
 
 /* --------------------------------------------------------------------- */
 
