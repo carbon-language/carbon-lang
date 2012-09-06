@@ -1358,9 +1358,9 @@ void test59(void) {
   // CHECK:    define void @test59()
   // CHECK:      [[T0:%.*]] = call i8* @test59_getlock()
   // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T0]])
-  // CHECK-NEXT: call void @objc_sync_enter(i8* [[T1]])
+  // CHECK-NEXT: call i32 @objc_sync_enter(i8* [[T1]])
   // CHECK-NEXT: call void @test59_body()
-  // CHECK-NEXT: call void @objc_sync_exit(i8* [[T1]])
+  // CHECK-NEXT: call i32 @objc_sync_exit(i8* [[T1]])
   // CHECK-NEXT: call void @objc_release(i8* [[T1]])
   // CHECK-NEXT: ret void
 }
