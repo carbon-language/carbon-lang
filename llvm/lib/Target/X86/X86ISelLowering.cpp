@@ -6011,6 +6011,40 @@ SDValue LowerVECTOR_SHUFFLEv16i8(ShuffleVectorSDNode *SVOp,
   return DAG.getNode(ISD::BITCAST, dl, MVT::v16i8, NewV);
 }
 
+// v32i8 shuffles - Translate to VPSHUFB if possible.
+static
+SDValue LowerVECTOR_SHUFFLEv32i8(ShuffleVectorSDNode *SVOp,
+                                 SelectionDAG &DAG,
+                                 const X86TargetLowering &TLI) {
+  EVT VT = SVOp->getValueType(0);
+  SDValue V1 = SVOp->getOperand(0);
+  SDValue V2 = SVOp->getOperand(1);
+  DebugLoc dl = SVOp->getDebugLoc();
+  ArrayRef<int> MaskVals = SVOp->getMask();
+
+  bool V2IsUndef = V2.getOpcode() == ISD::UNDEF;
+
+  if (VT != MVT::v32i8 || !TLI.getSubtarget()->hasAVX2() || !V2IsUndef)
+    return SDValue();
+
+  SmallVector<SDValue,32> pshufbMask;
+  for (unsigned i = 0; i != 32; i++) {
+    int EltIdx = MaskVals[i];
+    if (EltIdx < 0 || EltIdx >= 32)
+      EltIdx = 0x80;
+    else {
+      if ((EltIdx >= 16 && i < 16) || (EltIdx < 16 && i >= 16))
+        // Cross lane is not allowed.
+        return SDValue();
+      EltIdx &= 0xf;
+    }
+    pshufbMask.push_back(DAG.getConstant(EltIdx, MVT::i8));
+  }
+  return DAG.getNode(X86ISD::PSHUFB, dl, MVT::v32i8, V1,
+                      DAG.getNode(ISD::BUILD_VECTOR, dl,
+                                  MVT::v32i8, &pshufbMask[0], 32));
+}
+
 /// RewriteAsNarrowerShuffle - Try rewriting v8i16 and v16i8 shuffles as 4 wide
 /// ones, or rewriting v4i32 / v4f32 as 2 wide ones if possible. This can be
 /// done when every pair / quad of shuffle mask elements point to elements in
@@ -6833,6 +6867,12 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
 
   if (VT == MVT::v16i8) {
     SDValue NewOp = LowerVECTOR_SHUFFLEv16i8(SVOp, DAG, *this);
+    if (NewOp.getNode())
+      return NewOp;
+  }
+
+  if (VT == MVT::v32i8) {
+    SDValue NewOp = LowerVECTOR_SHUFFLEv32i8(SVOp, DAG, *this);
     if (NewOp.getNode())
       return NewOp;
   }
