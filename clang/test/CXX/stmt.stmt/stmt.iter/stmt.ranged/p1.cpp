@@ -129,14 +129,15 @@ void g() {
   };
   for (auto u : NoBegin()) { // expected-error {{range type 'NoBegin' has 'end' member but no 'begin' member}}
   }
-  for (auto u : NoEnd()) { // expected-error {{range type 'NoEnd' has 'begin' member but no 'end' member}}
+  for (auto u : NoEnd()) { // expected-error {{range type 'NoEnd' has 'begin' member but no 'end' member}} 
   }
 
   struct NoIncr {
     void *begin(); // expected-note {{selected 'begin' function with iterator type 'void *'}}
     void *end();
   };
-  for (auto u : NoIncr()) { // expected-error {{arithmetic on a pointer to void}}
+  for (auto u : NoIncr()) { // expected-error {{arithmetic on a pointer to void}}\
+    expected-note {{in implicit call to 'operator++' for iterator of type 'NoIncr'}}
   }
 
   struct NoNotEq {
@@ -144,7 +145,19 @@ void g() {
     NoNotEq end();
     void operator++();
   };
-  for (auto u : NoNotEq()) { // expected-error {{invalid operands to binary expression}}
+  for (auto u : NoNotEq()) { // expected-error {{invalid operands to binary expression}}\
+    expected-note {{in implicit call to 'operator!=' for iterator of type 'NoNotEq'}}
+  }
+
+  struct NoDeref {
+    NoDeref begin(); // expected-note {{selected 'begin' function}}
+    NoDeref end();
+    void operator++();
+    bool operator!=(NoDeref &);
+  };
+
+  for (auto u : NoDeref()) { // expected-error {{indirection requires pointer operand}} \
+    expected-note {{in implicit call to 'operator*' for iterator of type 'NoDeref'}}
   }
 
   struct NoCopy {
