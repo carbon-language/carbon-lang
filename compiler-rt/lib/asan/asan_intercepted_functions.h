@@ -195,7 +195,7 @@ DECLARE_FUNCTION_AND_WRAPPER(void, dispatch_group_async_f,
                              dispatch_group_t group, dispatch_queue_t dq,
                              void *ctxt, dispatch_function_t func);
 
-DECLARE_FUNCTION_AND_WRAPPER(void, __CFInitialize);
+DECLARE_FUNCTION_AND_WRAPPER(void, __CFInitialize, void);
 DECLARE_FUNCTION_AND_WRAPPER(CFStringRef, CFStringCreateCopy,
                              CFAllocatorRef alloc, CFStringRef str);
 DECLARE_FUNCTION_AND_WRAPPER(void, free, void* ptr);
