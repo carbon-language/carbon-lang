@@ -22,13 +22,47 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ParentMap.h"
+#include "clang/AST/RecursiveASTVisitor.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Support/SaveAndRestore.h"
 
 using namespace clang;
 using namespace ento;
 
-namespace {
+namespace {  
+  
+/// A simple visitor to record what VarDecls occur in EH-handling code.
+class EHCodeVisitor : public RecursiveASTVisitor<EHCodeVisitor> {
+public:
+  bool inEH;
+  llvm::DenseSet<const VarDecl *> &S;
+  
+  bool TraverseObjCAtFinallyStmt(ObjCAtFinallyStmt *S) {
+    SaveAndRestore<bool> inFinally(inEH, true);
+    return ::RecursiveASTVisitor<EHCodeVisitor>::TraverseObjCAtFinallyStmt(S);
+  }
+  
+  bool TraverseObjCAtCatchStmt(ObjCAtCatchStmt *S) {
+    SaveAndRestore<bool> inCatch(inEH, true);
+    return ::RecursiveASTVisitor<EHCodeVisitor>::TraverseObjCAtCatchStmt(S);
+  }
+  
+  bool TraverseCXXCatchStmt(CXXCatchStmt *S) {
+    SaveAndRestore<bool> inCatch(inEH, true);
+    return TraverseStmt(S->getHandlerBlock());
+  }
+  
+  bool VisitDeclRefExpr(DeclRefExpr *DR) {
+    if (inEH)
+      if (const VarDecl *D = dyn_cast<VarDecl>(DR->getDecl()))
+        S.insert(D);
+    return true;
+  }
+  
+  EHCodeVisitor(llvm::DenseSet<const VarDecl *> &S) :
+  inEH(false), S(S) {}
+};
 
 // FIXME: Eventually migrate into its own file, and have it managed by
 // AnalysisManager.
@@ -93,6 +127,7 @@ class DeadStoreObs : public LiveVariables::Observer {
   llvm::SmallPtrSet<const VarDecl*, 20> Escaped;
   OwningPtr<ReachableCode> reachableCode;
   const CFGBlock *currentBlock;
+  llvm::OwningPtr<llvm::DenseSet<const VarDecl *> > InEH;
 
   enum DeadStoreKind { Standard, Enclosing, DeadIncrement, DeadInit };
 
@@ -105,6 +140,23 @@ public:
 
   virtual ~DeadStoreObs() {}
 
+  bool isLive(const LiveVariables::LivenessValues &Live, const VarDecl *D) {
+    if (Live.isLive(D))
+      return true;
+    // Lazily construct the set that records which VarDecls are in
+    // EH code.
+    if (!InEH.get()) {
+      InEH.reset(new llvm::DenseSet<const VarDecl *>());
+      EHCodeVisitor V(*InEH.get());
+      V.TraverseStmt(AC->getBody());
+    }
+    // Treat all VarDecls that occur in EH code as being "always live"
+    // when considering to suppress dead stores.  Frequently stores
+    // are followed by reads in EH code, but we don't have the ability
+    // to analyze that yet.
+    return InEH->count(D);
+  }
+  
   void Report(const VarDecl *V, DeadStoreKind dsk,
               PathDiagnosticLocation L, SourceRange R) {
     if (Escaped.count(V))
@@ -159,7 +211,7 @@ public:
     if (VD->getType()->getAs<ReferenceType>())
       return;
 
-    if (!Live.isLive(VD) && 
+    if (!isLive(Live, VD) &&
         !(VD->getAttr<UnusedAttr>() || VD->getAttr<BlocksAttr>())) {
 
       PathDiagnosticLocation ExLoc =
@@ -285,7 +337,7 @@ public:
             // A dead initialization is a variable that is dead after it
             // is initialized.  We don't flag warnings for those variables
             // marked 'unused'.
-            if (!Live.isLive(V) && V->getAttr<UnusedAttr>() == 0) {
+            if (!isLive(Live, V) && V->getAttr<UnusedAttr>() == 0) {
               // Special case: check for initializations with constants.
               //
               //  e.g. : int x = 0;
