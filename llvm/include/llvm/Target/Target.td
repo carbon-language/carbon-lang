@@ -602,23 +602,31 @@ def f64imm : Operand<f64>;
 ///
 def zero_reg;
 
+/// OperandWithDefaultOps - This Operand class can be used as the parent class
+/// for an Operand that needs to be initialized with a default value if
+/// no value is supplied in a pattern.  This class can be used to simplify the
+/// pattern definitions for instructions that have target specific flags
+/// encoded as immediate operands.
+class OperandWithDefaultOps<ValueType ty, dag defaultops>
+  : Operand<ty> {
+  dag DefaultOps = defaultops;
+}
+
 /// PredicateOperand - This can be used to define a predicate operand for an
 /// instruction.  OpTypes specifies the MIOperandInfo for the operand, and
 /// AlwaysVal specifies the value of this predicate when set to "always
 /// execute".
 class PredicateOperand<ValueType ty, dag OpTypes, dag AlwaysVal>
-  : Operand<ty> {
+  : OperandWithDefaultOps<ty, AlwaysVal> {
   let MIOperandInfo = OpTypes;
-  dag DefaultOps = AlwaysVal;
 }
 
 /// OptionalDefOperand - This is used to define a optional definition operand
 /// for an instruction. DefaultOps is the register the operand represents if
 /// none is supplied, e.g. zero_reg.
 class OptionalDefOperand<ValueType ty, dag OpTypes, dag defaultops>
-  : Operand<ty> {
+  : OperandWithDefaultOps<ty, defaultops> {
   let MIOperandInfo = OpTypes;
-  dag DefaultOps = defaultops;
 }
 
 

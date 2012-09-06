@@ -156,7 +156,7 @@ void PseudoLoweringEmitter::evaluateExpansion(Record *Rec) {
 
   // If there are more operands that weren't in the DAG, they have to
   // be operands that have default values, or we have an error. Currently,
-  // PredicateOperand and OptionalDefOperand both have default values.
+  // Operands that are a sublass of OperandWithDefaultOp have default values.
 
 
   // Validate that each result pattern argument has a matching (by name)

@@ -727,8 +727,7 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
 
     // Determine what to emit for this operand.
     Record *OperandNode = II.Operands[InstOpNo].Rec;
-    if ((OperandNode->isSubClassOf("PredicateOperand") ||
-         OperandNode->isSubClassOf("OptionalDefOperand")) &&
+    if (OperandNode->isSubClassOf("OperandWithDefaultOps") &&
         !CGP.getDefaultOperand(OperandNode).DefaultOps.empty()) {
       // This is a predicate or optional def operand; emit the
       // 'default ops' operands.

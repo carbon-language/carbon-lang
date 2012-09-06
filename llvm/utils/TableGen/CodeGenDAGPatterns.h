@@ -582,8 +582,8 @@ private:
   void ComputeNamedNodes(TreePatternNode *N);
 };
 
-/// DAGDefaultOperand - One of these is created for each PredicateOperand
-/// or OptionalDefOperand that has a set ExecuteAlways / DefaultOps field.
+/// DAGDefaultOperand - One of these is created for each OperandWithDefaultOps
+/// that has a set ExecuteAlways / DefaultOps field.
 struct DAGDefaultOperand {
   std::vector<TreePatternNode*> DefaultOps;
 };

@@ -1575,8 +1575,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       // If the instruction expects a predicate or optional def operand, we
       // codegen this by setting the operand to it's default value if it has a
       // non-empty DefaultOps field.
-      if ((OperandNode->isSubClassOf("PredicateOperand") ||
-           OperandNode->isSubClassOf("OptionalDefOperand")) &&
+      if (OperandNode->isSubClassOf("OperandWithDefaultOps") &&
           !CDP.getDefaultOperand(OperandNode).DefaultOps.empty())
         continue;
 
@@ -2173,53 +2172,46 @@ void CodeGenDAGPatterns::ParsePatternFragments() {
 }
 
 void CodeGenDAGPatterns::ParseDefaultOperands() {
-  std::vector<Record*> DefaultOps[2];
-  DefaultOps[0] = Records.getAllDerivedDefinitions("PredicateOperand");
-  DefaultOps[1] = Records.getAllDerivedDefinitions("OptionalDefOperand");
+  std::vector<Record*> DefaultOps;
+  DefaultOps = Records.getAllDerivedDefinitions("OperandWithDefaultOps");
 
   // Find some SDNode.
   assert(!SDNodes.empty() && "No SDNodes parsed?");
   Init *SomeSDNode = DefInit::get(SDNodes.begin()->first);
 
-  for (unsigned iter = 0; iter != 2; ++iter) {
-    for (unsigned i = 0, e = DefaultOps[iter].size(); i != e; ++i) {
-      DagInit *DefaultInfo = DefaultOps[iter][i]->getValueAsDag("DefaultOps");
+  for (unsigned i = 0, e = DefaultOps.size(); i != e; ++i) {
+    DagInit *DefaultInfo = DefaultOps[i]->getValueAsDag("DefaultOps");
 
-      // Clone the DefaultInfo dag node, changing the operator from 'ops' to
-      // SomeSDnode so that we can parse this.
-      std::vector<std::pair<Init*, std::string> > Ops;
-      for (unsigned op = 0, e = DefaultInfo->getNumArgs(); op != e; ++op)
-        Ops.push_back(std::make_pair(DefaultInfo->getArg(op),
-                                     DefaultInfo->getArgName(op)));
-      DagInit *DI = DagInit::get(SomeSDNode, "", Ops);
+    // Clone the DefaultInfo dag node, changing the operator from 'ops' to
+    // SomeSDnode so that we can parse this.
+    std::vector<std::pair<Init*, std::string> > Ops;
+    for (unsigned op = 0, e = DefaultInfo->getNumArgs(); op != e; ++op)
+      Ops.push_back(std::make_pair(DefaultInfo->getArg(op),
+                                   DefaultInfo->getArgName(op)));
+    DagInit *DI = DagInit::get(SomeSDNode, "", Ops);
 
-      // Create a TreePattern to parse this.
-      TreePattern P(DefaultOps[iter][i], DI, false, *this);
-      assert(P.getNumTrees() == 1 && "This ctor can only produce one tree!");
+    // Create a TreePattern to parse this.
+    TreePattern P(DefaultOps[i], DI, false, *this);
+    assert(P.getNumTrees() == 1 && "This ctor can only produce one tree!");
 
-      // Copy the operands over into a DAGDefaultOperand.
-      DAGDefaultOperand DefaultOpInfo;
+    // Copy the operands over into a DAGDefaultOperand.
+    DAGDefaultOperand DefaultOpInfo;
 
-      TreePatternNode *T = P.getTree(0);
-      for (unsigned op = 0, e = T->getNumChildren(); op != e; ++op) {
-        TreePatternNode *TPN = T->getChild(op);
-        while (TPN->ApplyTypeConstraints(P, false))
-          /* Resolve all types */;
+    TreePatternNode *T = P.getTree(0);
+    for (unsigned op = 0, e = T->getNumChildren(); op != e; ++op) {
+      TreePatternNode *TPN = T->getChild(op);
+      while (TPN->ApplyTypeConstraints(P, false))
+        /* Resolve all types */;
 
-        if (TPN->ContainsUnresolvedType()) {
-          if (iter == 0)
-            throw "Value #" + utostr(i) + " of PredicateOperand '" +
-              DefaultOps[iter][i]->getName() +"' doesn't have a concrete type!";
-          else
-            throw "Value #" + utostr(i) + " of OptionalDefOperand '" +
-              DefaultOps[iter][i]->getName() +"' doesn't have a concrete type!";
-        }
-        DefaultOpInfo.DefaultOps.push_back(TPN);
+      if (TPN->ContainsUnresolvedType()) {
+        throw "Value #" + utostr(i) + " of OperandWithDefaultOps '" +
+          DefaultOps[i]->getName() +"' doesn't have a concrete type!";
       }
-
-      // Insert it into the DefaultOperands map so we can find it later.
-      DefaultOperands[DefaultOps[iter][i]] = DefaultOpInfo;
+      DefaultOpInfo.DefaultOps.push_back(TPN);
     }
+
+    // Insert it into the DefaultOperands map so we can find it later.
+    DefaultOperands[DefaultOps[i]] = DefaultOpInfo;
   }
 }
 
@@ -2687,11 +2679,9 @@ void CodeGenDAGPatterns::ParseInstructions() {
         I->error("Operand #" + utostr(i) + " in operands list has no name!");
 
       if (!InstInputsCheck.count(OpName)) {
-        // If this is an predicate operand or optional def operand with an
-        // DefaultOps set filled in, we can ignore this.  When we codegen it,
-        // we will do so as always executed.
-        if (Op.Rec->isSubClassOf("PredicateOperand") ||
-            Op.Rec->isSubClassOf("OptionalDefOperand")) {
+        // If this is an operand with a DefaultOps set filled in, we can ignore
+        // this.  When we codegen it, we will do so as always executed.
+        if (Op.Rec->isSubClassOf("OperandWithDefaultOps")) {
           // Does it have a non-empty DefaultOps field?  If so, ignore this
           // operand.
           if (!getDefaultOperand(Op.Rec).DefaultOps.empty())
