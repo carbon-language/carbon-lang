@@ -213,7 +213,9 @@ class StmtPoint : public ProgramPoint {
 public:
   StmtPoint(const Stmt *S, const void *p2, Kind k, const LocationContext *L,
             const ProgramPointTag *tag)
-    : ProgramPoint(S, p2, k, L, tag) {}
+    : ProgramPoint(S, p2, k, L, tag) {
+    assert(S);
+  }
 
   const Stmt *getStmt() const { return (const Stmt*) getData1(); }
 
