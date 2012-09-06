@@ -3190,13 +3190,14 @@ static bool SwitchToLookupTable(SwitchInst *SI,
   SmallDenseMap<PHINode*, Constant*> SingleResults;
 
   Module &Mod = *CommonDest->getParent()->getParent();
-  for (SmallDenseMap<PHINode*, ResultListTy>::iterator I = ResultLists.begin(),
-       E = ResultLists.end(); I != E; ++I) {
-    PHINode *PHI = I->first;
+  for (SmallVector<PHINode*, 4>::iterator I = PHIs.begin(), E = PHIs.end();
+       I != E; ++I) {
+    PHINode *PHI = *I;
 
     Constant *SingleResult = NULL;
-    LookupTables[PHI] = BuildLookupTable(Mod, TableSize, MinCaseVal, I->second,
-                                         DefaultResults[PHI], &SingleResult);
+    LookupTables[PHI] = BuildLookupTable(Mod, TableSize, MinCaseVal,
+                                         ResultLists[PHI], DefaultResults[PHI],
+                                         &SingleResult);
     SingleResults[PHI] = SingleResult;
   }
 

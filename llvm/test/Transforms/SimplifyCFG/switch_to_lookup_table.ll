@@ -6,11 +6,11 @@ target triple = "x86_64-unknown-linux-gnu"
 ; The table for @f
 ; CHECK: @switch.table = private unnamed_addr constant [7 x i32] [i32 55, i32 123, i32 0, i32 -1, i32 27, i32 62, i32 1]
 
-; The float table for @h
-; CHECK: @switch.table1 = private unnamed_addr constant [4 x float] [float 0x40091EB860000000, float 0x3FF3BE76C0000000, float 0x4012449BA0000000, float 0x4001AE1480000000]
-
 ; The int table for @h
-; CHECK: @switch.table2 = private unnamed_addr constant [4 x i8] c"*\09X\05"
+; CHECK: @switch.table1 = private unnamed_addr constant [4 x i8] c"*\09X\05"
+
+; The float table for @h
+; CHECK: @switch.table2 = private unnamed_addr constant [4 x float] [float 0x40091EB860000000, float 0x3FF3BE76C0000000, float 0x4012449BA0000000, float 0x4001AE1480000000]
 
 ; The table for @foostring
 ; CHECK: @switch.table3 = private unnamed_addr constant [4 x i8*] [i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i8* getelementptr inbounds ([4 x i8]* @.str1, i64 0, i64 0), i8* getelementptr inbounds ([4 x i8]* @.str2, i64 0, i64 0), i8* getelementptr inbounds ([4 x i8]* @.str3, i64 0, i64 0)]
@@ -85,9 +85,9 @@ sw.epilog:
 ; CHECK-NEXT: %0 = icmp ult i32 %switch.tableidx, 4
 ; CHECK-NEXT: br i1 %0, label %switch.lookup, label %sw.epilog
 ; CHECK: switch.lookup:
-; CHECK-NEXT: %switch.gep = getelementptr inbounds [4 x i8]* @switch.table2, i32 0, i32 %switch.tableidx
+; CHECK-NEXT: %switch.gep = getelementptr inbounds [4 x i8]* @switch.table1, i32 0, i32 %switch.tableidx
 ; CHECK-NEXT: %switch.load = load i8* %switch.gep
-; CHECK-NEXT: %switch.gep1 = getelementptr inbounds [4 x float]* @switch.table1, i32 0, i32 %switch.tableidx
+; CHECK-NEXT: %switch.gep1 = getelementptr inbounds [4 x float]* @switch.table2, i32 0, i32 %switch.tableidx
 ; CHECK-NEXT: %switch.load2 = load float* %switch.gep1
 ; CHECK-NEXT: br label %sw.epilog
 ; CHECK: sw.epilog:
