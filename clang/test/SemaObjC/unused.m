@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -Wunused -Wunused-parameter -fsyntax-only -Wno-objc-root-class %s
+// RUN: %clang_cc1 -verify -Wused-but-marked-unused -Wno-objc-protocol-method-implementation -Wunused -Wunused-parameter -fsyntax-only -Wno-objc-root-class %s
 
 int printf(const char *, ...);
 
@@ -53,3 +53,17 @@ void test2() {
 
 // rdar://10777111
 static NSString *x = @"hi"; // expected-warning {{unused variable 'x'}}
+
+// rdar://12233989
+@interface TestTransitiveUnused
+- (void) a __attribute__((unused));
+- (void) b __attribute__((unused));
+@end
+
+@interface TestTransitiveUnused(CAT)
+@end
+
+@implementation TestTransitiveUnused(CAT)
+- (void) b {}
+- (void) a { [self b]; }
+@end

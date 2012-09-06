@@ -11101,10 +11101,6 @@ Decl *Sema::getObjCDeclContext() const {
 }
 
 AvailabilityResult Sema::getCurContextAvailability() const {
-  const Decl *D = cast<Decl>(getCurLexicalContext());
-  // A category implicitly has the availability of the interface.
-  if (const ObjCCategoryDecl *CatD = dyn_cast<ObjCCategoryDecl>(D))
-    D = CatD->getClassInterface();
-  
+  const Decl *D = cast<Decl>(getCurObjCLexicalContext());
   return D->getAvailability();
 }
