@@ -636,7 +636,7 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
     // "<proto1,proto2>" is an objc qualified ID with a missing id.
     if (DeclSpec::ProtocolQualifierListTy PQ = DS.getProtocolQualifiers()) {
       Result = Context.getObjCObjectType(Context.ObjCBuiltinIdTy,
-                                         (ObjCProtocolDecl**)PQ,
+                                         (ObjCProtocolDecl*const*)PQ,
                                          DS.getNumProtocolQualifiers());
       Result = Context.getObjCObjectPointerType(Result);
       break;
@@ -795,18 +795,18 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
 
         if (DS.getNumProtocolQualifiers())
           Result = Context.getObjCObjectType(Result,
-                                             (ObjCProtocolDecl**) PQ,
+                                             (ObjCProtocolDecl*const*) PQ,
                                              DS.getNumProtocolQualifiers());
       } else if (Result->isObjCIdType()) {
         // id<protocol-list>
         Result = Context.getObjCObjectType(Context.ObjCBuiltinIdTy,
-                                           (ObjCProtocolDecl**) PQ,
+                                           (ObjCProtocolDecl*const*) PQ,
                                            DS.getNumProtocolQualifiers());
         Result = Context.getObjCObjectPointerType(Result);
       } else if (Result->isObjCClassType()) {
         // Class<protocol-list>
         Result = Context.getObjCObjectType(Context.ObjCBuiltinClassTy,
-                                           (ObjCProtocolDecl**) PQ,
+                                           (ObjCProtocolDecl*const*) PQ,
                                            DS.getNumProtocolQualifiers());
         Result = Context.getObjCObjectPointerType(Result);
       } else {

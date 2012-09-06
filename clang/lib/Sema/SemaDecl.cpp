@@ -10182,7 +10182,7 @@ void Sema::ActOnFields(Scope* S,
                 //   class subobject has more than one final overrider the
                 //   program is ill-formed.
                 Diag(Record->getLocation(), diag::err_multiple_final_overriders)
-                  << (NamedDecl *)M->first << Record;
+                  << (const NamedDecl *)M->first << Record;
                 Diag(M->first->getLocation(), 
                      diag::note_overridden_virtual_function);
                 for (OverridingMethods::overriding_iterator 
@@ -10190,7 +10190,7 @@ void Sema::ActOnFields(Scope* S,
                        OMEnd = SO->second.end();
                      OM != OMEnd; ++OM)
                   Diag(OM->Method->getLocation(), diag::note_final_overrider)
-                    << (NamedDecl *)M->first << OM->Method->getParent();
+                    << (const NamedDecl *)M->first << OM->Method->getParent();
                 
                 Record->setInvalidDecl();
               }

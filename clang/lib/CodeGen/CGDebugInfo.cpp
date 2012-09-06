@@ -157,7 +157,7 @@ StringRef CGDebugInfo::getObjCMethodName(const ObjCMethodDecl *OMD) {
       OS << OID->getName();
   } else if (const ObjCCategoryImplDecl *OCD = 
              dyn_cast<const ObjCCategoryImplDecl>(DC)){
-      OS << ((NamedDecl *)OCD)->getIdentifier()->getNameStart() << '(' <<
+      OS << ((const NamedDecl *)OCD)->getIdentifier()->getNameStart() << '(' <<
           OCD->getIdentifier()->getNameStart() << ')';
   }
   OS << ' ' << OMD->getSelector().getAsString() << ']';

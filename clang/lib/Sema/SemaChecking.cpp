@@ -1268,7 +1268,7 @@ bool Sema::CheckObjCString(Expr *Arg) {
     StringRef String = Literal->getString();
     unsigned NumBytes = String.size();
     SmallVector<UTF16, 128> ToBuf(NumBytes);
-    const UTF8 *FromPtr = (UTF8 *)String.data();
+    const UTF8 *FromPtr = (const UTF8 *)String.data();
     UTF16 *ToPtr = &ToBuf[0];
     
     ConversionResult Result = ConvertUTF8toUTF16(&FromPtr, FromPtr + NumBytes,

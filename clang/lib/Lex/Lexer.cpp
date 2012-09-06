@@ -2179,7 +2179,8 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
 #ifdef __SSE2__
       __m128i Slashes = _mm_set1_epi8('/');
       while (CurPtr+16 <= BufferEnd) {
-        int cmp = _mm_movemask_epi8(_mm_cmpeq_epi8(*(__m128i*)CurPtr, Slashes));
+        int cmp = _mm_movemask_epi8(_mm_cmpeq_epi8(*(const __m128i*)CurPtr,
+                                    Slashes));
         if (cmp != 0) {
           // Adjust the pointer to point directly after the first slash. It's
           // not necessary to set C here, it will be overwritten at the end of

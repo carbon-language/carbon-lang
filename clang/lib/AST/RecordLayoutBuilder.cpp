@@ -2522,8 +2522,8 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
   assert(D && D->isThisDeclarationADefinition() && "Invalid interface decl!");
 
   // Look up this layout, if already laid out, return what we have.
-  ObjCContainerDecl *Key =
-    Impl ? (ObjCContainerDecl*) Impl : (ObjCContainerDecl*) D;
+  const ObjCContainerDecl *Key =
+    Impl ? (const ObjCContainerDecl*) Impl : (const ObjCContainerDecl*) D;
   if (const ASTRecordLayout *Entry = ObjCLayouts[Key])
     return *Entry;
 

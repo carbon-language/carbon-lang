@@ -953,7 +953,7 @@ public:
       return;
     }
     Dec->printName(llvm::errs());
-    llvm::errs() << "." << i << " " << ((void*) Dec);
+    llvm::errs() << "." << i << " " << ((const void*) Dec);
   }
 
   /// Dumps an ASCII representation of the variable map to llvm::errs()

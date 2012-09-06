@@ -1860,7 +1860,7 @@ llvm::Constant *CGObjCCommonMac::BuildGCBlockLayout(CodeGenModule &CGM,
   llvm::Constant *C = BuildIvarLayoutBitmap(BitMap);
   if (CGM.getLangOpts().ObjCGCBitmapPrint) {
     printf("\n block variable layout for block: ");
-    const unsigned char *s = (unsigned char*)BitMap.c_str();
+    const unsigned char *s = (const unsigned char*)BitMap.c_str();
     for (unsigned i = 0, e = BitMap.size(); i < e; i++)
       if (!(s[i] & 0xf0))
         printf("0x0%x%s", s[i], s[i] != 0 ? ", " : "");
@@ -4187,7 +4187,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
     printf("\n%s ivar layout for class '%s': ",
            ForStrongLayout ? "strong" : "weak",
            OMD->getClassInterface()->getName().data());
-    const unsigned char *s = (unsigned char*)BitMap.c_str();
+    const unsigned char *s = (const unsigned char*)BitMap.c_str();
     for (unsigned i = 0, e = BitMap.size(); i < e; i++)
       if (!(s[i] & 0xf0))
         printf("0x0%x%s", s[i], s[i] != 0 ? ", " : "");

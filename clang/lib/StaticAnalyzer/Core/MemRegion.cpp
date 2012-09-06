@@ -444,7 +444,7 @@ void MemRegion::dumpToStream(raw_ostream &os) const {
 }
 
 void AllocaRegion::dumpToStream(raw_ostream &os) const {
-  os << "alloca{" << (void*) Ex << ',' << Cnt << '}';
+  os << "alloca{" << (const void*) Ex << ',' << Cnt << '}';
 }
 
 void FunctionTextRegion::dumpToStream(raw_ostream &os) const {
@@ -452,7 +452,7 @@ void FunctionTextRegion::dumpToStream(raw_ostream &os) const {
 }
 
 void BlockTextRegion::dumpToStream(raw_ostream &os) const {
-  os << "block_code{" << (void*) this << '}';
+  os << "block_code{" << (const void*) this << '}';
 }
 
 void BlockDataRegion::dumpToStream(raw_ostream &os) const {
@@ -461,12 +461,12 @@ void BlockDataRegion::dumpToStream(raw_ostream &os) const {
 
 void CompoundLiteralRegion::dumpToStream(raw_ostream &os) const {
   // FIXME: More elaborate pretty-printing.
-  os << "{ " << (void*) CL <<  " }";
+  os << "{ " << (const void*) CL <<  " }";
 }
 
 void CXXTempObjectRegion::dumpToStream(raw_ostream &os) const {
   os << "temp_object{" << getValueType().getAsString() << ','
-     << (void*) Ex << '}';
+     << (const void*) Ex << '}';
 }
 
 void CXXBaseObjectRegion::dumpToStream(raw_ostream &os) const {

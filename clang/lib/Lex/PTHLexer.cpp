@@ -448,8 +448,8 @@ PTHManager *PTHManager::Create(const std::string &file,
 
   // Get the buffer ranges and check if there are at least three 32-bit
   // words at the end of the file.
-  const unsigned char *BufBeg = (unsigned char*)File->getBufferStart();
-  const unsigned char *BufEnd = (unsigned char*)File->getBufferEnd();
+  const unsigned char *BufBeg = (const unsigned char*)File->getBufferStart();
+  const unsigned char *BufEnd = (const unsigned char*)File->getBufferEnd();
 
   // Check the prologue of the file.
   if ((BufEnd - BufBeg) < (signed)(sizeof("cfe-pth") + 4 + 4) ||

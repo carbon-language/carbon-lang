@@ -32,8 +32,8 @@ static int StrCmpOptionName(const char *A, const char *B) {
 }
 
 static int CompareOptionRecords(const void *Av, const void *Bv) {
-  const Record *A = *(Record**) Av;
-  const Record *B = *(Record**) Bv;
+  const Record *A = *(const Record*const*) Av;
+  const Record *B = *(const Record*const*) Bv;
 
   // Sentinel options precede all others and are only ordered by precedence.
   bool ASent = A->getValueAsDef("Kind")->getValueAsBit("Sentinel");

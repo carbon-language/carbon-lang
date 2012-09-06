@@ -98,7 +98,7 @@ namespace  {
     void DumpStmt(const Stmt *Node) {
       Indent();
       OS << "(" << Node->getStmtClassName()
-         << " " << (void*)Node;
+         << " " << (const void*)Node;
       DumpSourceRange(Node);
     }
     void DumpValueKind(ExprValueKind K) {

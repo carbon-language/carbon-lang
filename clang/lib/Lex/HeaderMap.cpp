@@ -144,7 +144,7 @@ HMapBucket HeaderMap::getBucket(unsigned BucketNo) const {
                                         sizeof(HMapHeader));
 
   const HMapBucket *BucketPtr = BucketArray+BucketNo;
-  if ((char*)(BucketPtr+1) > FileBuffer->getBufferEnd()) {
+  if ((const char*)(BucketPtr+1) > FileBuffer->getBufferEnd()) {
     Result.Prefix = 0;
     Result.Suffix = 0;
     return Result;  // Invalid buffer, corrupt hmap.

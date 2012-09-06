@@ -1112,7 +1112,7 @@ static void ComputeLineNumbers(DiagnosticsEngine &Diag, ContentCache *FI,
 
     // Scan 16 byte chunks for '\r' and '\n'. Ignore '\0'.
     while (NextBuf+16 <= End) {
-      __m128i Chunk = *(__m128i*)NextBuf;
+      const __m128i Chunk = *(const __m128i*)NextBuf;
       __m128i Cmp = _mm_or_si128(_mm_cmpeq_epi8(Chunk, CRs),
                                  _mm_cmpeq_epi8(Chunk, LFs));
       unsigned Mask = _mm_movemask_epi8(Cmp);
