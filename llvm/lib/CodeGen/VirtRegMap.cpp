@@ -200,7 +200,7 @@ bool VirtRegRewriter::runOnMachineFunction(MachineFunction &fn) {
   DEBUG(VRM->dump());
 
   // Add kill flags while we still have virtual registers.
-  LIS->addKillFlags();
+  LIS->addKillFlags(VRM);
 
   // Live-in lists on basic blocks are required for physregs.
   addMBBLiveIns();

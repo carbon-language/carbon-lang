@@ -252,7 +252,7 @@ namespace llvm {
 
     /// addKillFlags - Add kill flags to any instruction that kills a virtual
     /// register.
-    void addKillFlags();
+    void addKillFlags(const VirtRegMap*);
 
     /// handleMove - call this method to notify LiveIntervals that
     /// instruction 'mi' has been moved within a basic block. This will update
