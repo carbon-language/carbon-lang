@@ -458,7 +458,9 @@ int MachineFrameInfo::CreateFixedObject(uint64_t Size, int64_t SPOffset,
   unsigned StackAlign = TFI.getStackAlignment();
   unsigned Align = MinAlign(SPOffset, StackAlign);
   Objects.insert(Objects.begin(), StackObject(Size, Align, SPOffset, Immutable,
-                                              /*isSS*/false, false));
+                                              /*isSS*/   false,
+                                              /*NeedSP*/ false,
+                                              /*Alloca*/ 0));
   return -++NumFixedObjects;
 }
 

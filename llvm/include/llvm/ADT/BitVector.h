@@ -311,7 +311,7 @@ public:
     return !(*this == RHS);
   }
 
-  // Intersection, union, disjoint union.
+  /// Intersection, union, disjoint union.
   BitVector &operator&=(const BitVector &RHS) {
     unsigned ThisWords = NumBitWords(size());
     unsigned RHSWords  = NumBitWords(RHS.size());
@@ -328,7 +328,7 @@ public:
     return *this;
   }
 
-  // reset - Reset bits that are set in RHS. Same as *this &= ~RHS.
+  /// reset - Reset bits that are set in RHS. Same as *this &= ~RHS.
   BitVector &reset(const BitVector &RHS) {
     unsigned ThisWords = NumBitWords(size());
     unsigned RHSWords  = NumBitWords(RHS.size());
@@ -336,6 +336,23 @@ public:
     for (i = 0; i != std::min(ThisWords, RHSWords); ++i)
       Bits[i] &= ~RHS.Bits[i];
     return *this;
+  }
+
+  /// test - Check if (This - RHS) is zero.
+  /// This is the same as reset(RHS) and any().
+  bool test(const BitVector &RHS) const {
+    unsigned ThisWords = NumBitWords(size());
+    unsigned RHSWords  = NumBitWords(RHS.size());
+    unsigned i;
+    for (i = 0; i != std::min(ThisWords, RHSWords); ++i)
+      if ((Bits[i] & ~RHS.Bits[i]) != 0)
+        return true;
+
+    for (; i != ThisWords ; ++i)
+      if (Bits[i] != 0)
+        return true;
+
+    return false;
   }
 
   BitVector &operator|=(const BitVector &RHS) {

@@ -656,6 +656,8 @@ void ScheduleDAGRRList::EmitNode(SUnit *SU) {
     break;
   case ISD::MERGE_VALUES:
   case ISD::TokenFactor:
+  case ISD::LIFETIME_START:
+  case ISD::LIFETIME_END:
   case ISD::CopyToReg:
   case ISD::CopyFromReg:
   case ISD::EH_LABEL:

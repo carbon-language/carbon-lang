@@ -232,6 +232,7 @@ void initializeSinkingPass(PassRegistry&);
 void initializeSlotIndexesPass(PassRegistry&);
 void initializeSpillPlacementPass(PassRegistry&);
 void initializeStackProtectorPass(PassRegistry&);
+void initializeStackColoringPass(PassRegistry&);
 void initializeStackSlotColoringPass(PassRegistry&);
 void initializeStripDeadDebugInfoPass(PassRegistry&);
 void initializeStripDeadPrototypesPassPass(PassRegistry&);

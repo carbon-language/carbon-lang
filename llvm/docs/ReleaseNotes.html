@@ -499,6 +499,13 @@ Release Notes</a>.</h1>
 
 <div>
 
+<p>Stack Coloring - We have implemented a new optimization pass
+  to merge stack objects which are used in disjoin areas of the code.
+  This optimization reduces the required stack space significantly, in cases
+  where it is clear to the optimizer that the stack slot is not shared.
+  We use the lifetime markers to tell the codegen that a certain alloca
+  is used within a region.</p>
+
 <p>We have put a significant amount of work into the code generator
    infrastructure, which allows us to implement more aggressive algorithms and
    make it run faster:</p>

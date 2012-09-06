@@ -4161,6 +4161,8 @@ SelectionDAG::getMemIntrinsicNode(unsigned Opcode, DebugLoc dl, SDVTList VTList,
   assert((Opcode == ISD::INTRINSIC_VOID ||
           Opcode == ISD::INTRINSIC_W_CHAIN ||
           Opcode == ISD::PREFETCH ||
+          Opcode == ISD::LIFETIME_START ||
+          Opcode == ISD::LIFETIME_END ||
           (Opcode <= INT_MAX &&
            (int)Opcode >= ISD::FIRST_TARGET_MEMORY_OPCODE)) &&
          "Opcode is not a memory-accessing opcode!");

@@ -87,7 +87,11 @@ namespace TargetOpcode {
     /// BUNDLE - This instruction represents an instruction bundle. Instructions
     /// which immediately follow a BUNDLE instruction which are marked with
     /// 'InsideBundle' flag are inside the bundle.
-    BUNDLE
+    BUNDLE = 14,
+
+    /// Lifetime markers.
+    LIFETIME_START = 15,
+    LIFETIME_END = 16
   };
 } // end namespace TargetOpcode
 } // end namespace llvm

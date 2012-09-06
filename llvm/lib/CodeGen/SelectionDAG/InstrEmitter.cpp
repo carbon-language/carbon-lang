@@ -873,6 +873,17 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
     break;
   }
 
+  case ISD::LIFETIME_START:
+  case ISD::LIFETIME_END: {
+    unsigned TarOp = (Node->getOpcode() == ISD::LIFETIME_START) ?
+    TargetOpcode::LIFETIME_START : TargetOpcode::LIFETIME_END;
+
+    FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Node->getOperand(1));
+    BuildMI(*MBB, InsertPos, Node->getDebugLoc(), TII->get(TarOp))
+    .addFrameIndex(FI->getIndex());
+    break;
+  }
+
   case ISD::INLINEASM: {
     unsigned NumOps = Node->getNumOperands();
     if (Node->getOperand(NumOps-1).getValueType() == MVT::Glue)

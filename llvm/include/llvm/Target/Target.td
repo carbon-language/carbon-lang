@@ -745,6 +745,18 @@ def BUNDLE : Instruction {
   let InOperandList = (ins variable_ops);
   let AsmString = "BUNDLE";
 }
+def LIFETIME_START : Instruction {
+  let OutOperandList = (outs);
+  let InOperandList = (ins i32imm:$id);
+  let AsmString = "LIFETIME_START";
+  let neverHasSideEffects = 1;
+}
+def LIFETIME_END : Instruction {
+  let OutOperandList = (outs);
+  let InOperandList = (ins i32imm:$id);
+  let AsmString = "LIFETIME_END";
+  let neverHasSideEffects = 1;
+}
 }
 
 //===----------------------------------------------------------------------===//

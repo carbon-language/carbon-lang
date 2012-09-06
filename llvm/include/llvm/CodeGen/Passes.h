@@ -404,6 +404,10 @@ namespace llvm {
   /// inserting cmov instructions.
   extern char &EarlyIfConverterID;
 
+  /// StackSlotColoring - This pass performs stack coloring and merging.
+  /// It merges disjoint allocas to reduce the stack size.
+  extern char &StackColoringID;
+
   /// IfConverter - This pass performs machine code if conversion.
   extern char &IfConverterID;
 

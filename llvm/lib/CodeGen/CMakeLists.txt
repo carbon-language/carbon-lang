@@ -95,6 +95,7 @@ add_llvm_library(LLVMCodeGen
   SplitKit.cpp
   StackProtector.cpp
   StackSlotColoring.cpp
+  StackColoring.cpp
   StrongPHIElimination.cpp
   TailDuplication.cpp
   TargetFrameLoweringImpl.cpp
