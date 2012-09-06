@@ -59,7 +59,7 @@ using namespace llvm;
 
 static cl::opt<bool>
 DisableColoring("no-stack-coloring",
-               cl::init(false), cl::Hidden,
+               cl::init(true), cl::Hidden,
                cl::desc("Suppress stack coloring"));
 
 STATISTIC(NumMarkerSeen,  "Number of life markers found.");
