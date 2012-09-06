@@ -1019,6 +1019,46 @@ let Predicates = [HasAVX] in {
             (VMOVUPSYmr addr:$dst, VR256:$src)>;
   def : Pat<(store (v32i8 VR256:$src), addr:$dst),
             (VMOVUPSYmr addr:$dst, VR256:$src)>;
+
+  // Special patterns for storing subvector extracts of lower 128-bits
+  // Its cheaper to just use VMOVAPS/VMOVUPS instead of VEXTRACTF128mr
+  def : Pat<(alignedstore (v2f64 (extract_subvector
+                                  (v4f64 VR256:$src), (i32 0))), addr:$dst),
+            (VMOVAPDmr addr:$dst, (v2f64 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
+  def : Pat<(alignedstore (v4f32 (extract_subvector
+                                  (v8f32 VR256:$src), (i32 0))), addr:$dst),
+            (VMOVAPSmr addr:$dst, (v4f32 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
+  def : Pat<(alignedstore (v2i64 (extract_subvector
+                                  (v4i64 VR256:$src), (i32 0))), addr:$dst),
+            (VMOVAPDmr addr:$dst, (v2i64 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
+  def : Pat<(alignedstore (v4i32 (extract_subvector
+                                  (v8i32 VR256:$src), (i32 0))), addr:$dst),
+            (VMOVAPSmr addr:$dst, (v4i32 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
+  def : Pat<(alignedstore (v8i16 (extract_subvector
+                                  (v16i16 VR256:$src), (i32 0))), addr:$dst),
+            (VMOVAPSmr addr:$dst, (v8i16 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
+  def : Pat<(alignedstore (v16i8 (extract_subvector
+                                  (v32i8 VR256:$src), (i32 0))), addr:$dst),
+            (VMOVAPSmr addr:$dst, (v16i8 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
+
+  def : Pat<(store (v2f64 (extract_subvector
+                           (v4f64 VR256:$src), (i32 0))), addr:$dst),
+            (VMOVUPDmr addr:$dst, (v2f64 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
+  def : Pat<(store (v4f32 (extract_subvector
+                           (v8f32 VR256:$src), (i32 0))), addr:$dst),
+            (VMOVUPSmr addr:$dst, (v4f32 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
+  def : Pat<(store (v2i64 (extract_subvector
+                           (v4i64 VR256:$src), (i32 0))), addr:$dst),
+            (VMOVUPDmr addr:$dst, (v2i64 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
+  def : Pat<(store (v4i32 (extract_subvector
+                           (v8i32 VR256:$src), (i32 0))), addr:$dst),
+            (VMOVUPSmr addr:$dst, (v4i32 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
+  def : Pat<(store (v8i16 (extract_subvector
+                           (v16i16 VR256:$src), (i32 0))), addr:$dst),
+            (VMOVAPSmr addr:$dst, (v8i16 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
+  def : Pat<(store (v16i8 (extract_subvector
+                           (v32i8 VR256:$src), (i32 0))), addr:$dst),
+            (VMOVUPSmr addr:$dst, (v16i8 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
 }
 
 // Use movaps / movups for SSE integer load / store (one byte shorter).
