@@ -4,22 +4,26 @@ This directory contains sources of the AddressSanitizer (asan) run-time library.
 We are in the process of integrating AddressSanitizer with LLVM, stay tuned.
 
 Directory structre:
-
 README.txt       : This file.
-Makefile.mk      : Currently a stub for a proper makefile. not usable.
-Makefile.old     : Old out-of-tree makefile, the only usable one so far.
+Makefile.mk      : File for make-based build.
+CMakeLists.txt   : File for cmake-based build.
 asan_*.{cc,h}    : Sources of the asan run-time lirbary.
-mach_override/*  : Utility to override functions on Darwin (MIT License).
 scripts/*        : Helper scripts.
+tests/*          : ASan unit tests.
+lit_tests/*      : ASan output tests.
 
-Temporary build instructions (verified on linux):
+Also ASan runtime needs the following libraries:
+lib/interception/      : Machinery used to intercept function calls.
+lib/sanitizer_common/  : Code shared between ASan and TSan.
 
-cd lib/asan
-make -f Makefile.old get_third_party  # gets googletest
-make -f Makefile.old test -j 8 CLANG_BUILD=/path/to/Release+Asserts
-# Optional:
-# make -f Makefile.old install # installs clang and rt to lib/asan_clang_linux
+Currently ASan runtime can be built by both make and cmake build systems.
+(see compiler-rt/make and files Makefile.mk for make-based build and
+files CMakeLists.txt for cmake-based build).
 
-For more info see http://code.google.com/p/address-sanitizer/
+ASan unit and output tests work only with cmake. You may run this
+command from the root of your cmake build tree:
 
+make check-asan
 
+For more instructions see:
+http://code.google.com/p/address-sanitizer/wiki/HowToBuild
