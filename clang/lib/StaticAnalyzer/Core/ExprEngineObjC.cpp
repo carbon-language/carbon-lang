@@ -245,8 +245,9 @@ void ExprEngine::VisitObjCMessage(const ObjCMessageExpr *ME,
       }
     }
 
-    // Evaluate the call.
-    defaultEvalCall(Bldr, Pred, *UpdatedMsg);
+    // Evaluate the call if we haven't cached out.
+    if (Pred)
+      defaultEvalCall(Bldr, Pred, *UpdatedMsg);
   }
   
   ExplodedNodeSet dstPostvisit;
