@@ -88,7 +88,7 @@ unsigned t10(void) {
 // CHECK: [[I:%[a-zA-Z0-9]+]] = alloca i32, align 4
 // CHECK: [[J:%[a-zA-Z0-9]+]] = alloca i32, align 4
 // CHECK: store i32 1, i32* [[I]], align 4
-// CHECK: call i32 asm sideeffect inteldialect "mov eax, i\0Amov j, eax", "=r,r,~{eax},~{dirflag},~{fpsr},~{flags}"(i32 %{{.*}}) nounwind
+// CHECK: call i32 asm sideeffect inteldialect "mov eax, $1\0Amov $0, eax", "=r,r,~{eax},~{dirflag},~{fpsr},~{flags}"(i32 %{{.*}}) nounwind
 // CHECK: [[RET:%[a-zA-Z0-9]+]] = load i32* [[J]], align 4
 // CHECK: ret i32 [[RET]]
 }

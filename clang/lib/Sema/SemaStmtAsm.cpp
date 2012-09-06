@@ -474,6 +474,8 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   SmallVector<IdentifierInfo*, 4> Outputs;
   SmallVector<Expr*, 4> InputExprs;
   SmallVector<Expr*, 4> OutputExprs;
+  SmallVector<std::string, 4> InputExprNames;
+  SmallVector<std::string, 4> OutputExprNames;
 
   // Empty asm statements don't need to instantiate the AsmParser, etc.
   if (AsmToks.empty()) {
@@ -628,10 +630,12 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
               if (isDef || isMemDef) {
                 Outputs.push_back(II);
                 OutputExprs.push_back(Result.take());
+                OutputExprNames.push_back(Name.str());
                 OutputConstraints.push_back("=r");
               } else {
                 Inputs.push_back(II);
                 InputExprs.push_back(Result.take());
+                InputExprNames.push_back(Name.str());
                 InputConstraints.push_back("r");
               }
             }
@@ -653,6 +657,27 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
   for (std::vector<std::string>::iterator I = InputConstraints.begin(),
          E = InputConstraints.end(); I != E; ++I)
     Constraints.push_back(*I);
+
+  // Enumerate the AsmString expressions.
+  // FIXME: This isn't going to work if:
+  //  1. The symbol name and an opcode/reg share the same, or are a substring of
+  //     the, name.
+  //  2. The symbol name appears more then once in the asm string.
+  unsigned OpNum = 0;
+  for (unsigned i = 0, e = OutputExprNames.size(); i != e; ++i, ++OpNum) {
+    size_t found = AsmString.find(OutputExprNames[i]);
+    SmallString<32> Res;
+    llvm::raw_svector_ostream OS(Res);
+    OS << '$' << OpNum;
+    AsmString.replace(found, OutputExprNames[i].size(), OS.str());
+  }
+  for (unsigned i = 0, e = InputExprNames.size(); i != e; ++i, ++OpNum) {
+    size_t found = AsmString.find(InputExprNames[i]);
+    SmallString<32> Res;
+    llvm::raw_svector_ostream OS(Res);
+    OS << '$' << OpNum;
+    AsmString.replace(found, InputExprNames[i].size(), OS.str());
+  }
 
   MSAsmStmt *NS =
     new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc, IsSimple,
