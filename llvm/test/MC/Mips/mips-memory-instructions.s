@@ -10,11 +10,15 @@
 # CHECK:  sh      $4, 16($5)      # encoding: [0x10,0x00,0xa4,0xa4]
 # CHECK:  sw      $4, 16($5)      # encoding: [0x10,0x00,0xa4,0xac]
 # CHECK:  sw      $7,  0($5)      # encoding: [0x00,0x00,0xa7,0xac]
+# CHECK:  swc1    $f2, 16($5)     # encoding: [0x10,0x00,0xa2,0xe4]
+# CHECK:  swl     $4, 16($5)      # encoding: [0x10,0x00,0xa4,0xa8]
      sb   $4, 16($5)
      sc   $4, 16($5)
      sh   $4, 16($5)
      sw   $4, 16($5)
      sw   $7,   ($5)
+     swc1 $f2, 16($5)
+     swl  $4, 16($5)
 
 #------------------------------------------------------------------------------
 # Memory load instructions
