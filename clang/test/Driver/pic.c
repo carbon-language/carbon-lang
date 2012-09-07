@@ -23,6 +23,11 @@
 // CHECK-PIE2-NOT: "-mrelocation-model"
 // CHECK-PIE2: "-pie-level" "2"
 //
+// CHECK-PIE3: "{{.*}}ld"
+// CHECK-PIE3: "-pie"
+// CHECK-PIE3: "Scrt1.o" "crti.o" "crtbeginS.o"
+// CHECK-PIE3: "crtendS.o" "crtn.o"
+//
 // RUN: %clang -c %s -target i386-unknown-unknown -### 2>&1 \
 // RUN:   | FileCheck %s --check-prefix=CHECK-NO-PIC
 // RUN: %clang -c %s -target i386-unknown-unknown -fpic -### 2>&1 \
@@ -69,6 +74,15 @@
 // RUN:   | FileCheck %s --check-prefix=CHECK-NO-PIC
 // RUN: %clang -c %s -target i386-apple-darwin -fno-PIC -### 2>&1 \
 // RUN:   | FileCheck %s --check-prefix=CHECK-NO-PIC
+//
+// Make sure -pie is passed to along to ld and that the right *crt* files
+// are linked in.
+// RUN: %clang %s -target i386-unknown-freebsd -fPIE -pie -### \
+// RUN: --sysroot=%S/Inputs/basic_freebsd_tree 2>&1 \
+// RUN:   | FileCheck %s --check-prefix=CHECK-PIE3
+// RUN: %clang %s -target i386-linux-gnu -fPIE -pie -### \
+// RUN: --sysroot=%S/Inputs/basic_linux_tree 2>&1 \
+// RUN:   | FileCheck %s --check-prefix=CHECK-PIE3
 //
 // Disregard any of the PIC-specific flags if we have a trump-card flag.
 // RUN: %clang -c %s -target i386-unknown-unknown -mkernel -fPIC -### 2>&1 \
