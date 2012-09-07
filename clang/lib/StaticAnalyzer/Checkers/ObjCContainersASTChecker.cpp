@@ -135,7 +135,9 @@ void WalkAST::VisitCallExpr(CallExpr *CE) {
 
     SmallString<256> Buf;
     llvm::raw_svector_ostream Os(Buf);
-    Os << " The "<< ((ArgNum == 1) ? "first" : "second") << " argument to '"
+    // Use "second" and "third" since users will expect 1-based indexing
+    // for parameter names when mentioned in prose.
+    Os << " The "<< ((ArgNum == 1) ? "second" : "third") << " argument to '"
         << Name << "' must be a C array of pointer-sized values, not '"
         << Arg->getType().getAsString() << "'";
 

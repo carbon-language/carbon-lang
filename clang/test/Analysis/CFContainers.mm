@@ -97,13 +97,13 @@ CFSetRef CFSetCreate(CFAllocatorRef allocator, const void **values, CFIndex numV
 // Test alpha.osx.cocoa.ContainerAPI checker.
 void testContainers(int **xNoWarn, CFIndex count) {
   int x[] = { 1, 2, 3 };
-  CFArrayRef foo = CFArrayCreate(kCFAllocatorDefault, (const void **) x, sizeof(x) / sizeof(x[0]), 0);// expected-warning {{The first argument to 'CFArrayCreate' must be a C array of pointer-sized}}
+  CFArrayRef foo = CFArrayCreate(kCFAllocatorDefault, (const void **) x, sizeof(x) / sizeof(x[0]), 0);// expected-warning {{The second argument to 'CFArrayCreate' must be a C array of pointer-sized}}
 
   CFArrayRef fooNoWarn = CFArrayCreate(kCFAllocatorDefault, (const void **) xNoWarn, sizeof(xNoWarn) / sizeof(xNoWarn[0]), 0); // no warning
   CFArrayRef fooNoWarn2 = CFArrayCreate(kCFAllocatorDefault, 0, sizeof(xNoWarn) / sizeof(xNoWarn[0]), 0);// no warning, passing in 0
   CFArrayRef fooNoWarn3 = CFArrayCreate(kCFAllocatorDefault, NULL, sizeof(xNoWarn) / sizeof(xNoWarn[0]), 0);// no warning, passing in NULL
 
-  CFSetRef set = CFSetCreate(NULL, (const void **)x, 3, &kCFTypeSetCallBacks); // expected-warning {{The first argument to 'CFSetCreate' must be a C array of pointer-sized values}}
+  CFSetRef set = CFSetCreate(NULL, (const void **)x, 3, &kCFTypeSetCallBacks); // expected-warning {{The second argument to 'CFSetCreate' must be a C array of pointer-sized values}}
   CFArrayRef* pairs = new CFArrayRef[count];
   CFSetRef fSet = CFSetCreate(kCFAllocatorDefault, (const void**) pairs, count - 1, &kCFTypeSetCallBacks);// no warning
 }
@@ -125,8 +125,8 @@ void CreateDict(int *elems) {
   const CFDictionaryKeyCallBacks keyCB = kCFCopyStringDictionaryKeyCallBacks;
   const CFDictionaryValueCallBacks valCB = kCFTypeDictionaryValueCallBacks;
   CFDictionaryRef dict1 = CFDictionaryCreate(kCFAllocatorDefault, (const void**)keys, (const void**)values, numValues, &keyCB, &valCB); // no warning
-  CFDictionaryRef dict2 = CFDictionaryCreate(kCFAllocatorDefault, (const void**)elems[0], (const void**)values, numValues, &keyCB, &valCB); //expected-warning {{The first argument to 'CFDictionaryCreate' must be a C array of}}
-  CFDictionaryRef dict3 = CFDictionaryCreate(kCFAllocatorDefault, (const void**)keys, (const void**)elems, numValues, &keyCB, &valCB); // expected-warning {{The second argument to 'CFDictionaryCreate' must be a C array of pointer-sized values}}
+  CFDictionaryRef dict2 = CFDictionaryCreate(kCFAllocatorDefault, (const void**)elems[0], (const void**)values, numValues, &keyCB, &valCB); //expected-warning {{The second argument to 'CFDictionaryCreate' must be a C array of}}
+  CFDictionaryRef dict3 = CFDictionaryCreate(kCFAllocatorDefault, (const void**)keys, (const void**)elems, numValues, &keyCB, &valCB); // expected-warning {{The third argument to 'CFDictionaryCreate' must be a C array of pointer-sized values}}
 }
 
 void OutOfBoundsSymbolicOffByOne(const void ** input, CFIndex S) {
@@ -177,11 +177,11 @@ void TestPointerToArray(int *elems, void *p1, void *p2, void *p3, unsigned count
 
   CFArrayCreate(0, (const void **) &fn, count, 0); // false negative
   CFArrayCreate(0, (const void **) fn, count, 0); // no warning
-  CFArrayCreate(0, (const void **) cp, count, 0); // expected-warning {{The first argument to 'CFArrayCreate' must be a C array of pointer-sized}}
+  CFArrayCreate(0, (const void **) cp, count, 0); // expected-warning {{The second argument to 'CFArrayCreate' must be a C array of pointer-sized}}
 
   char cc[] = { 0, 2, 3 };
-  CFArrayCreate(0, (const void **) &cc, count, 0); // expected-warning {{The first argument to 'CFArrayCreate' must be a C array of pointer-sized}}
-  CFArrayCreate(0, (const void **) cc, count, 0); // expected-warning {{The first argument to 'CFArrayCreate' must be a C array of pointer-sized}}
+  CFArrayCreate(0, (const void **) &cc, count, 0); // expected-warning {{The second argument to 'CFArrayCreate' must be a C array of pointer-sized}}
+  CFArrayCreate(0, (const void **) cc, count, 0); // expected-warning {{The second argument to 'CFArrayCreate' must be a C array of pointer-sized}}
 }
 
 void TestUndef(CFArrayRef A, CFIndex sIndex, void* x[]) {
