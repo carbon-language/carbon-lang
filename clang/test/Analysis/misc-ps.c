@@ -133,3 +133,21 @@ int isctype(char c, unsigned long f)
   return (c < 1 || c > 10) ? 0 : !!(c & f);
 }
 
+// Test that symbolic array offsets are modeled conservatively.
+// This was triggering a false "use of uninitialized value" warning.
+void rdar_12075238__aux(unsigned long y);
+int rdar_12075238_(unsigned long count) {
+  if ((count < 3) || (count > 6))
+    return 0;
+	
+  unsigned long array[6];
+  unsigned long i = 0;
+  for (; i <= count - 2; i++)
+  {
+	  array[i] = i;
+  }
+  array[count - 1] = i;
+  rdar_12075238__aux(array[2]); // no-warning
+  return 0;
+}
+
