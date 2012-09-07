@@ -894,6 +894,49 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
 
 bool MipsAsmParser::
 ParseDirective(AsmToken DirectiveID) {
+
+  if (DirectiveID.getString() == ".ent") {
+    //ignore this directive for now
+    Parser.Lex();
+    return false;
+  }
+
+  if (DirectiveID.getString() == ".end") {
+    //ignore this directive for now
+    Parser.Lex();
+    return false;
+  }
+
+  if (DirectiveID.getString() == ".frame") {
+    //ignore this directive for now
+    Parser.EatToEndOfStatement();
+    return false;
+  }
+
+  if (DirectiveID.getString() == ".set") {
+    //ignore this directive for now
+    Parser.EatToEndOfStatement();
+    return false;
+  }
+
+  if (DirectiveID.getString() == ".fmask") {
+    //ignore this directive for now
+    Parser.EatToEndOfStatement();
+    return false;
+  }
+
+  if (DirectiveID.getString() == ".mask") {
+    //ignore this directive for now
+    Parser.EatToEndOfStatement();
+    return false;
+  }
+
+  if (DirectiveID.getString() == ".gpword") {
+    //ignore this directive for now
+    Parser.EatToEndOfStatement();
+    return false;
+  }
+
   return true;
 }
 
