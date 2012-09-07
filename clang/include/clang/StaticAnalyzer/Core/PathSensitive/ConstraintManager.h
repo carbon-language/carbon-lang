@@ -43,8 +43,15 @@ public:
     return res;
   }
 
+  /// \brief If a symbol is perfectly constrained to a constant, attempt
+  /// to return the concrete value.
+  ///
+  /// Note that a ConstraintManager is not obligated to return a concretized
+  /// value for a symbol, even if it is perfectly constrained.
   virtual const llvm::APSInt* getSymVal(ProgramStateRef state,
-                                        SymbolRef sym) const = 0;
+                                        SymbolRef sym) const {
+    return 0;
+  }
 
   virtual ProgramStateRef removeDeadBindings(ProgramStateRef state,
                                                  SymbolReaper& SymReaper) = 0;
