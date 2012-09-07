@@ -117,7 +117,7 @@ $(call Set,Tmp.Configs,$($(Tmp.Key).Configs))
 $(call Set,Tmp.ObjPath,$(ProjObjRoot)/$(Tmp.Name))
 
 # Top-Level Platform Target
-$(Tmp.Name):: $(Tmp.Configs:%=$(Tmp.ObjPath)/%/libcompiler_rt.a)
+$(Tmp.Name):: $(Tmp.Configs:%=$(Tmp.Name)-%)
 .PHONY: $(Tmp.Name)
 
 clean::
@@ -131,6 +131,13 @@ endef
 define PerPlatformConfig_template
 $(call Set,Tmp.Config,$(1))
 $(call Set,Tmp.ObjPath,$(ProjObjRoot)/$(Tmp.Name)/$(Tmp.Config))
+$(call Set,Tmp.SHARED_LIBRARY,$(strip \
+  $(call GetCNAVar,SHARED_LIBRARY,$(Tmp.Key),$(Tmp.Config),$(Tmp.Arch))))
+
+# Compute the library suffix.
+$(if $(call streq,1,$(Tmp.SHARED_LIBRARY)),
+  $(call Set,Tmp.LibrarySuffix,dylib),
+  $(call Set,Tmp.LibrarySuffix,a))
 
 # Compute the archs to build, depending on whether this is a universal build or
 # not.
@@ -142,8 +149,8 @@ $(call Set,Tmp.ArchsToBuild,\
        $(call VarOrDefault,$(Tmp.Key).Arch.$(Tmp.Config),$($(Tmp.Key).Arch))))
 
 # Copy or lipo to create the per-config library.
-$(call Set,Tmp.Inputs,$(Tmp.ArchsToBuild:%=$(Tmp.ObjPath)/%/libcompiler_rt.a))
-$(Tmp.ObjPath)/libcompiler_rt.a: $(Tmp.Inputs) $(Tmp.ObjPath)/.dir
+$(call Set,Tmp.Inputs,$(Tmp.ArchsToBuild:%=$(Tmp.ObjPath)/%/libcompiler_rt.$(Tmp.LibrarySuffix)))
+$(Tmp.ObjPath)/libcompiler_rt.$(Tmp.LibrarySuffix): $(Tmp.Inputs) $(Tmp.ObjPath)/.dir
 	$(Summary) "  FINAL-ARCHIVE: $(Tmp.Name)/$(Tmp.Config): $$@"
 	-$(Verb) $(RM) $$@
 	$(if $(call streq,1,$(words $(Tmp.ArchsToBuild))), \
@@ -152,7 +159,7 @@ $(Tmp.ObjPath)/libcompiler_rt.a: $(Tmp.Inputs) $(Tmp.ObjPath)/.dir
 .PRECIOUS: $(Tmp.ObjPath)/.dir
 
 # Per-Config Targets
-$(Tmp.Name)-$(Tmp.Config):: $(Tmp.ObjPath)/libcompiler_rt.a
+$(Tmp.Name)-$(Tmp.Config):: $(Tmp.ObjPath)/libcompiler_rt.$(Tmp.LibrarySuffix)
 .PHONY: $(Tmp.Name)-$(Tmp.Config)
 
 # Per-Config-Arch Libraries
@@ -172,10 +179,21 @@ $(call Set,Tmp.AR,$(strip \
   $(call GetCNAVar,AR,$(Tmp.Key),$(Tmp.Config),$(Tmp.Arch))))
 $(call Set,Tmp.ARFLAGS,$(strip \
   $(call GetCNAVar,ARFLAGS,$(Tmp.Key),$(Tmp.Config),$(Tmp.Arch))))
+$(call Set,Tmp.CC,$(strip \
+  $(call GetCNAVar,CC,$(Tmp.Key),$(Tmp.Config),$(Tmp.Arch))))
+$(call Set,Tmp.LDFLAGS,$(strip \
+  $(call GetCNAVar,LDFLAGS,$(Tmp.Key),$(Tmp.Config),$(Tmp.Arch))))
 $(call Set,Tmp.RANLIB,$(strip \
   $(call GetCNAVar,RANLIB,$(Tmp.Key),$(Tmp.Config),$(Tmp.Arch))))
 $(call Set,Tmp.RANLIBFLAGS,$(strip \
   $(call GetCNAVar,RANLIBFLAGS,$(Tmp.Key),$(Tmp.Config),$(Tmp.Arch))))
+$(call Set,Tmp.SHARED_LIBRARY,$(strip \
+  $(call GetCNAVar,SHARED_LIBRARY,$(Tmp.Key),$(Tmp.Config),$(Tmp.Arch))))
+
+# Compute the library suffix.
+$(if $(call streq,1,$(Tmp.SHARED_LIBRARY)),
+  $(call Set,Tmp.LibrarySuffix,dylib),
+  $(call Set,Tmp.LibrarySuffix,a))
 
 # Compute the object inputs for this library.
 $(call Set,Tmp.Inputs,\
@@ -188,10 +206,14 @@ $(Tmp.ObjPath)/libcompiler_rt.a: $(Tmp.Inputs) $(Tmp.ObjPath)/.dir
 	-$(Verb) $(RM) $$@
 	$(Verb) $(Tmp.AR) $(Tmp.ARFLAGS) $$@ $(Tmp.Inputs)
 	$(Verb) $(Tmp.RANLIB) $(Tmp.RANLIBFLAGS) $$@
+$(Tmp.ObjPath)/libcompiler_rt.dylib: $(Tmp.Inputs) $(Tmp.ObjPath)/.dir
+	$(Summary) "  DYLIB:   $(Tmp.Name)/$(Tmp.Config)/$(Tmp.Arch): $$@"
+	$(Verb) $(Tmp.CC) -arch $(Tmp.Arch) -dynamiclib -o $$@ \
+	  $(Tmp.Inputs) $(Tmp.LDFLAGS)
 .PRECIOUS: $(Tmp.ObjPath)/.dir
 
 # Per-Config-Arch Targets
-$(Tmp.Name)-$(Tmp.Config)-$(Tmp.Arch):: $(Tmp.ObjPath)/libcompiler_rt.a
+$(Tmp.Name)-$(Tmp.Config)-$(Tmp.Arch):: $(Tmp.ObjPath)/libcompiler_rt.$(Tmp.LibrarySuffix)
 .PHONY: $(Tmp.Name)-$(Tmp.Config)-$(Tmp.Arch)
 
 # Per-Config-Arch-SubDir Objects

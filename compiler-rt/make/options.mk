@@ -23,11 +23,20 @@ OPTIMIZED := 1
 # default.
 VISIBILITY_HIDDEN := 0
 
+# Whether the library is being built for kernel use.
+KERNEL_USE := 0
+
+# Whether the library should be built as a shared object.
+SHARED_LIBRARY := 0
+
 # Miscellaneous tools.
 
 AR := ar
 # FIXME: Remove these pipes once ranlib errors are fixed.
 ARFLAGS := cru 2> /dev/null
+
+LDFLAGS :=
+
 RANLIB := ranlib
 # FIXME: Remove these pipes once ranlib errors are fixed.
 RANLIBFLAGS := 2> /dev/null

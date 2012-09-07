@@ -53,8 +53,7 @@ $(foreach key,$(SubDirKeys),\
 
 # The names of all the available options.
 AvailableOptions := AR ARFLAGS \
-                    CC CFLAGS FUNCTIONS OPTIMIZED \
+                    CC CFLAGS LDFLAGS FUNCTIONS OPTIMIZED \
                     RANLIB RANLIBFLAGS \
-                    VISIBILITY_HIDDEN \
-                    KERNEL_USE \
-                    STRIP LIPO
+                    VISIBILITY_HIDDEN KERNEL_USE \
+		    SHARED_LIBRARY STRIP LIPO
