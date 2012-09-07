@@ -411,8 +411,8 @@ void AsmPrinter::PrintSpecial(const MachineInstr *MI, raw_ostream &OS,
 /// instruction, using the specified assembler variant.  Targets should
 /// override this to format as appropriate.
 bool AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-    unsigned AsmVariant, const char *ExtraCode,
-    raw_ostream &O) {
+                                 unsigned AsmVariant, const char *ExtraCode,
+                                 raw_ostream &O) {
   // Does this asm operand have a single letter operand modifier?
   if (ExtraCode && ExtraCode[0]) {
     if (ExtraCode[1] != 0) return true; // Unknown modifier.
