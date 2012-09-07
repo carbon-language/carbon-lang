@@ -388,13 +388,21 @@ const bool IsBaseType<T>::value;
 /// \brief Interface that allows matchers to traverse the AST.
 /// FIXME: Find a better name.
 ///
-/// This provides two entry methods for each base node type in the AST:
-/// - matchesChildOf:
+/// This provides three entry methods for each base node type in the AST:
+/// - \c matchesChildOf:
 ///   Matches a matcher on every child node of the given node. Returns true
 ///   if at least one child node could be matched.
-/// - matchesDescendantOf:
+/// - \c matchesDescendantOf:
 ///   Matches a matcher on all descendant nodes of the given node. Returns true
 ///   if at least one descendant matched.
+/// - \c matchesAncestorOf:
+///   Matches a matcher on all ancestors of the given node. Returns true if
+///   at least one ancestor matched.
+///
+/// FIXME: Currently we only allow Stmt and Decl nodes to start a traversal.
+/// In the future, we wan to implement this for all nodes for which it makes
+/// sense. In the case of matchesAncestorOf, we'll want to implement it for
+/// all nodes, as all nodes have ancestors.
 class ASTMatchFinder {
 public:
   /// \brief Defines how we descend a level in the AST when we pass
@@ -449,8 +457,19 @@ public:
                                Matcher, Builder, Bind);
   }
 
+  // FIXME: Implement support for BindKind.
+  template <typename T>
+  bool matchesAncestorOf(const T &Node,
+                         const DynTypedMatcher &Matcher,
+                         BoundNodesTreeBuilder *Builder) {
+    TOOLING_COMPILE_ASSERT((llvm::is_base_of<Decl, T>::value ||
+                            llvm::is_base_of<Stmt, T>::value),
+                           only_Decl_or_Stmt_allowed_for_recursive_matching);
+    return matchesAncestorOf(ast_type_traits::DynTypedNode::create(Node),
+                             Matcher, Builder);
+  }
+
 protected:
-  // FIXME: Implement for other base nodes.
   virtual bool matchesChildOf(const ast_type_traits::DynTypedNode &Node,
                               const DynTypedMatcher &Matcher,
                               BoundNodesTreeBuilder *Builder,
@@ -461,6 +480,10 @@ protected:
                                    const DynTypedMatcher &Matcher,
                                    BoundNodesTreeBuilder *Builder,
                                    BindKind Bind) = 0;
+
+  virtual bool matchesAncestorOf(const ast_type_traits::DynTypedNode &Node,
+                                 const DynTypedMatcher &Matcher,
+                                 BoundNodesTreeBuilder *Builder) = 0;
 };
 
 /// \brief Converts a \c Matcher<T> to a matcher of desired type \c To by
@@ -799,6 +822,29 @@ public:
 
  private:
   const Matcher<DescendantT> DescendantMatcher;
+};
+
+/// \brief Matches nodes of type \c T that have at least one ancestor node of
+/// type \c AncestorT for which the given inner matcher matches.
+///
+/// \c AncestorT must be an AST base type.
+template <typename T, typename AncestorT>
+class HasAncestorMatcher : public MatcherInterface<T> {
+  TOOLING_COMPILE_ASSERT(IsBaseType<AncestorT>::value,
+                         has_ancestor_only_accepts_base_type_matcher);
+public:
+  explicit HasAncestorMatcher(const Matcher<AncestorT> &AncestorMatcher)
+      : AncestorMatcher(AncestorMatcher) {}
+
+  virtual bool matches(const T &Node,
+                       ASTMatchFinder *Finder,
+                       BoundNodesTreeBuilder *Builder) const {
+    return Finder->matchesAncestorOf(
+        Node, AncestorMatcher, Builder);
+  }
+
+ private:
+  const Matcher<AncestorT> AncestorMatcher;
 };
 
 /// \brief Matches nodes of type T that have at least one descendant node of

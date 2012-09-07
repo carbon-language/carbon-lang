@@ -29,6 +29,62 @@ namespace {
 
 typedef MatchFinder::MatchCallback MatchCallback;
 
+/// \brief A \c RecursiveASTVisitor that builds a map from nodes to their
+/// parents as defined by the \c RecursiveASTVisitor.
+///
+/// Note that the relationship described here is purely in terms of AST
+/// traversal - there are other relationships (for example declaration context)
+/// in the AST that are better modeled by special matchers.
+///
+/// FIXME: Currently only builds up the map using \c Stmt and \c Decl nodes.
+class ParentMapASTVisitor : public RecursiveASTVisitor<ParentMapASTVisitor> {
+public:
+  /// \brief Maps from a node to its parent.
+  typedef llvm::DenseMap<const void*, ast_type_traits::DynTypedNode> ParentMap;
+
+  /// \brief Builds and returns the translation unit's parent map.
+  ///
+  ///  The caller takes ownership of the returned \c ParentMap.
+  static ParentMap *buildMap(TranslationUnitDecl &TU) {
+    ParentMapASTVisitor Visitor(new ParentMap);
+    Visitor.TraverseDecl(&TU);
+    return Visitor.Parents;
+  }
+
+private:
+  typedef RecursiveASTVisitor<ParentMapASTVisitor> VisitorBase;
+
+  ParentMapASTVisitor(ParentMap *Parents) : Parents(Parents) {}
+
+  bool shouldVisitTemplateInstantiations() const { return true; }
+  bool shouldVisitImplicitCode() const { return true; }
+
+  template <typename T>
+  bool TraverseNode(T *Node, bool (VisitorBase::*traverse)(T*)) {
+    if (Node == NULL)
+      return true;
+    if (ParentStack.size() > 0)
+      (*Parents)[Node] = ParentStack.back();
+    ParentStack.push_back(ast_type_traits::DynTypedNode::create(*Node));
+    bool Result = (this->*traverse)(Node);
+    ParentStack.pop_back();
+    return Result;
+  }
+
+  bool TraverseDecl(Decl *DeclNode) {
+    return TraverseNode(DeclNode, &VisitorBase::TraverseDecl);
+  }
+
+  bool TraverseStmt(Stmt *StmtNode) {
+    return TraverseNode(StmtNode, &VisitorBase::TraverseStmt);
+  }
+
+  ParentMap *Parents;
+  llvm::SmallVector<ast_type_traits::DynTypedNode, 16> ParentStack;
+
+  friend class RecursiveASTVisitor<ParentMapASTVisitor>;
+};
+
 // We use memoization to avoid running the same matcher on the same
 // AST node twice.  This pair is the key for looking up match
 // result.  It consists of an ID of the MatcherInterface (for
@@ -311,6 +367,35 @@ public:
     return memoizedMatchesRecursively(Node, Matcher, Builder, INT_MAX,
                                       TK_AsIs, Bind);
   }
+  // Implements ASTMatchFinder::matchesAncestorOf.
+  virtual bool matchesAncestorOf(const ast_type_traits::DynTypedNode &Node,
+                                 const DynTypedMatcher &Matcher,
+                                 BoundNodesTreeBuilder *Builder) {
+    if (!Parents) {
+      // We always need to run over the whole translation unit, as
+      // \c hasAncestor can escape any subtree.
+      Parents.reset(ParentMapASTVisitor::buildMap(
+        *ActiveASTContext->getTranslationUnitDecl()));
+    }
+    ast_type_traits::DynTypedNode Ancestor = Node;
+    while (Ancestor.get<TranslationUnitDecl>() !=
+           ActiveASTContext->getTranslationUnitDecl()) {
+      assert(Ancestor.getMemoizationData() &&
+             "Invariant broken: only nodes that support memoization may be "
+             "used in the parent map.");
+      ParentMapASTVisitor::ParentMap::const_iterator I =
+        Parents->find(Ancestor.getMemoizationData());
+      if (I == Parents->end()) {
+        assert(false &&
+               "Found node that is not in the parent map.");
+        return false;
+      }
+      Ancestor = I->second;
+      if (Matcher.matches(Ancestor, this, Builder))
+        return true;
+    }
+    return false;
+  }
 
   bool shouldVisitTemplateInstantiations() const { return true; }
   bool shouldVisitImplicitCode() const { return true; }
@@ -378,6 +463,8 @@ private:
   // Maps (matcher, node) -> the match result for memoization.
   typedef llvm::DenseMap<UntypedMatchInput, MemoizedMatchResult> MemoizationMap;
   MemoizationMap ResultCache;
+
+  llvm::OwningPtr<ParentMapASTVisitor::ParentMap> Parents;
 };
 
 // Returns true if the given class is directly or indirectly derived

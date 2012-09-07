@@ -1179,7 +1179,6 @@ hasDescendant(const internal::Matcher<DescendantT> &DescendantMatcher) {
     DescendantT>(DescendantMatcher);
 }
 
-
 /// \brief Matches AST nodes that have child AST nodes that match the
 /// provided matcher.
 ///
@@ -1235,6 +1234,25 @@ forEachDescendant(
   return internal::ArgumentAdaptingMatcher<
     internal::ForEachDescendantMatcher,
     DescendantT>(DescendantMatcher);
+}
+
+/// \brief Matches AST nodes that have an ancestor that matches the provided
+/// matcher.
+///
+/// Given
+/// \code
+/// void f() { if (true) { int x = 42; } }
+/// void g() { for (;;) { int x = 43; } }
+/// \endcode
+/// \c expr(integerLiteral(hasAncsestor(ifStmt()))) matches \c 42, but not 43.
+///
+/// Usable as: Any Matcher
+template <typename AncestorT>
+internal::ArgumentAdaptingMatcher<internal::HasAncestorMatcher, AncestorT>
+hasAncestor(const internal::Matcher<AncestorT> &AncestorMatcher) {
+  return internal::ArgumentAdaptingMatcher<
+    internal::HasAncestorMatcher,
+    AncestorT>(AncestorMatcher);
 }
 
 /// \brief Matches if the provided matcher does not match.

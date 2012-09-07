@@ -597,31 +597,41 @@ TEST(TypeMatcher, MatchesClassType) {
       matches("class A { public: A *a; class B {}; };", TypeAHasClassB));
 }
 
-// Returns from Run whether 'bound_nodes' contain a Decl bound to 'Id', which
-// can be dynamically casted to T.
+// Implements a run method that returns whether BoundNodes contains a
+// Decl bound to Id that can be dynamically cast to T.
 // Optionally checks that the check succeeded a specific number of times.
 template <typename T>
 class VerifyIdIsBoundToDecl : public BoundNodesCallback {
 public:
-  // Create an object that checks that a node of type 'T' was bound to 'Id'.
+  // Create an object that checks that a node of type \c T was bound to \c Id.
   // Does not check for a certain number of matches.
-  explicit VerifyIdIsBoundToDecl(const std::string& Id)
+  explicit VerifyIdIsBoundToDecl(llvm::StringRef Id)
     : Id(Id), ExpectedCount(-1), Count(0) {}
 
-  // Create an object that checks that a node of type 'T' was bound to 'Id'.
-  // Checks that there were exactly 'ExpectedCount' matches.
-  explicit VerifyIdIsBoundToDecl(const std::string& Id, int ExpectedCount)
+  // Create an object that checks that a node of type \c T was bound to \c Id.
+  // Checks that there were exactly \c ExpectedCount matches.
+  VerifyIdIsBoundToDecl(llvm::StringRef Id, int ExpectedCount)
     : Id(Id), ExpectedCount(ExpectedCount), Count(0) {}
 
+  // Create an object that checks that a node of type \c T was bound to \c Id.
+  // Checks that there was exactly one match with the name \c ExpectedDeclName.
+  // Note that \c T must be a NamedDecl for this to work.
+  VerifyIdIsBoundToDecl(llvm::StringRef Id, llvm::StringRef ExpectedDeclName)
+    : Id(Id), ExpectedCount(1), Count(0), ExpectedDeclName(ExpectedDeclName) {}
+
   ~VerifyIdIsBoundToDecl() {
-    if (ExpectedCount != -1) {
+    if (ExpectedCount != -1)
       EXPECT_EQ(ExpectedCount, Count);
-    }
+    if (!ExpectedDeclName.empty())
+      EXPECT_EQ(ExpectedDeclName, DeclName);
   }
 
   virtual bool run(const BoundNodes *Nodes) {
-    if (Nodes->getDeclAs<T>(Id) != NULL) {
+    if (const Decl *Node = Nodes->getDeclAs<T>(Id)) {
       ++Count;
+      if (const NamedDecl *Named = llvm::dyn_cast<NamedDecl>(Node)) {
+        DeclName = Named->getNameAsString();
+      }
       return true;
     }
     return false;
@@ -631,6 +641,8 @@ private:
   const std::string Id;
   const int ExpectedCount;
   int Count;
+  const std::string ExpectedDeclName;
+  std::string DeclName;
 };
 template <typename T>
 class VerifyIdIsBoundToStmt : public BoundNodesCallback {
@@ -2719,6 +2731,73 @@ TEST(IsExplicitTemplateSpecialization,
       "template <typename T> void f(T t) {}"
       "template<> void f(int t) {}",
       functionDecl(isExplicitTemplateSpecialization())));
+}
+
+TEST(HasAncenstor, MatchesDeclarationAncestors) {
+  EXPECT_TRUE(matches(
+      "class A { class B { class C {}; }; };",
+      recordDecl(hasName("C"), hasAncestor(recordDecl(hasName("A"))))));
+}
+
+TEST(HasAncenstor, FailsIfNoAncestorMatches) {
+  EXPECT_TRUE(notMatches(
+      "class A { class B { class C {}; }; };",
+      recordDecl(hasName("C"), hasAncestor(recordDecl(hasName("X"))))));
+}
+
+TEST(HasAncestor, MatchesDeclarationsThatGetVisitedLater) {
+  EXPECT_TRUE(matches(
+      "class A { class B { void f() { C c; } class C {}; }; };",
+      varDecl(hasName("c"), hasType(recordDecl(hasName("C"), 
+          hasAncestor(recordDecl(hasName("A"))))))));
+}
+
+TEST(HasAncenstor, MatchesStatementAncestors) {
+  EXPECT_TRUE(matches(
+      "void f() { if (true) { while (false) { 42; } } }",
+      expr(integerLiteral(equals(42), hasAncestor(ifStmt())))));
+}
+
+TEST(HasAncestor, DrillsThroughDifferentHierarchies) {
+  EXPECT_TRUE(matches(
+      "void f() { if (true) { int x = 42; } }",
+      expr(integerLiteral(
+          equals(42), hasAncestor(functionDecl(hasName("f")))))));
+}
+
+TEST(HasAncestor, BindsRecursiveCombinations) {
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "class C { class D { class E { class F { int y; }; }; }; };",
+      fieldDecl(hasAncestor(recordDecl(hasAncestor(recordDecl().bind("r"))))),
+      new VerifyIdIsBoundToDecl<CXXRecordDecl>("r", 1)));
+}
+
+TEST(HasAncestor, BindsCombinationsWithHasDescendant) {
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "class C { class D { class E { class F { int y; }; }; }; };",
+      fieldDecl(hasAncestor(
+          decl(
+            hasDescendant(recordDecl(isDefinition(),
+                                     hasAncestor(recordDecl())))
+          ).bind("d")
+      )),
+      new VerifyIdIsBoundToDecl<CXXRecordDecl>("d", "E")));
+}
+
+TEST(HasAncestor, MatchesInTemplateInstantiations) {
+  EXPECT_TRUE(matches(
+      "template <typename T> struct A { struct B { struct C { T t; }; }; }; "
+      "A<int>::B::C a;",
+      fieldDecl(hasType(asString("int")),
+                hasAncestor(recordDecl(hasName("A"))))));
+}
+
+TEST(HasAncestor, MatchesInImplicitCode) {
+  EXPECT_TRUE(matches(
+      "struct X {}; struct A { A() {} X x; };",
+      constructorDecl(
+          hasAnyConstructorInitializer(withInitializer(expr(
+              hasAncestor(recordDecl(hasName("A")))))))));
 }
 
 } // end namespace ast_matchers
