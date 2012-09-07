@@ -14,8 +14,8 @@
 
 #if defined(__APPLE__)
 
-#include "asan_interceptors.h"
-#include "asan_intercepted_functions.h"
+#include "../asan_interceptors.h"
+#include "../asan_intercepted_functions.h"
 
 namespace __asan {
 
