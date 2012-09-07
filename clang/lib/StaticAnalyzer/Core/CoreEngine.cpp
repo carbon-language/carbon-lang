@@ -514,10 +514,9 @@ void CoreEngine::enqueueStmtNode(ExplodedNode *N,
     return;
   }
 
-  CFGElement Elem = (*Block)[Idx];
-  const CFGStmt *CS = Elem.getAs<CFGStmt>();
-  const Stmt *St = CS ? CS->getStmt() : 0;
-  PostStmt Loc(St, N->getLocationContext());
+  // At this point, we know we're processing a normal statement.
+  CFGStmt CS = cast<CFGStmt>((*Block)[Idx]);
+  PostStmt Loc(CS.getStmt(), N->getLocationContext());
 
   if (Loc == N->getLocation()) {
     // Note: 'N' should be a fresh node because otherwise it shouldn't be
