@@ -26,19 +26,52 @@ namespace ento {
 
 class SubEngine;
 
+class ConditionTruthVal {
+  llvm::Optional<bool> Val;
+public:
+  /// Construct a ConditionTruthVal indicating the constraint is constrained
+  /// to either true or false, depending on the boolean value provided.
+  ConditionTruthVal(bool constraint) : Val(constraint) {}
+
+  /// Construct a ConstraintVal indicating the constraint is underconstrained.
+  ConditionTruthVal() {}
+  
+  /// Return true if the constraint is perfectly constrained to 'true'.
+  bool isTrue() const {
+    return Val.hasValue() && Val.getValue();
+  }
+
+  /// Return true if the constraint is perfectly constrained to 'false'.
+  bool isFalse() const {
+    return Val.hasValue() && !Val.getValue();
+  }
+
+  /// Return true if the constrained is perfectly constrained.
+  bool isConstrained() const {
+    return Val.hasValue();
+  }
+
+  /// Return true if the constrained is underconstrained and we do not know
+  /// if the constraint is true of value.
+  bool isUnderconstrained() const {
+    return !Val.hasValue();
+  }
+};
+  
 class ConstraintManager {
 public:
+  ConstraintManager() : NotifyAssumeClients(true) {}
+  
   virtual ~ConstraintManager();
   virtual ProgramStateRef assume(ProgramStateRef state,
-                                     DefinedSVal Cond,
-                                     bool Assumption) = 0;
+                                 DefinedSVal Cond,
+                                 bool Assumption) = 0;
 
-  std::pair<ProgramStateRef, ProgramStateRef >
-    assumeDual(ProgramStateRef state, DefinedSVal Cond)
-  {
-    std::pair<ProgramStateRef, ProgramStateRef > res =
-      std::make_pair(assume(state, Cond, true), assume(state, Cond, false));
-
+  typedef std::pair<ProgramStateRef, ProgramStateRef> ProgramStatePair;
+  
+  ProgramStatePair assumeDual(ProgramStateRef state, DefinedSVal Cond) {
+    ProgramStatePair res(assume(state, Cond, true),
+                         assume(state, Cond, false));
     assert(!(!res.first && !res.second) && "System is over constrained.");
     return res;
   }
@@ -62,8 +95,20 @@ public:
                      const char *sep) = 0;
 
   virtual void EndPath(ProgramStateRef state) {}
+  
+  /// Convenience method to query the state to see if a symbol is null or
+  /// not null, or neither assumption can be made.
+  ConditionTruthVal isNull(ProgramStateRef State, SymbolRef Sym);
 
 protected:
+  /// A flag to indicate that clients should be notified of assumptions.
+  /// By default this is the case, but sometimes this needs to be restricted
+  /// to avoid infinite recursions within the ConstraintManager.
+  ///
+  /// Note that this flag allows the ConstraintManager to be re-entrant,
+  /// but not thread-safe.
+  bool NotifyAssumeClients;
+
   /// canReasonAbout - Not all ConstraintManagers can accurately reason about
   ///  all SVal values.  This method returns true if the ConstraintManager can
   ///  reasonably handle a given SVal value.  This is typically queried by

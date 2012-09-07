@@ -105,7 +105,12 @@ public:
   ~ProgramState();
 
   /// Return the ProgramStateManager associated with this state.
-  ProgramStateManager &getStateManager() const { return *stateMgr; }
+  ProgramStateManager &getStateManager() const {
+    return *stateMgr;
+  }
+  
+  /// Return the ConstraintManager.
+  ConstraintManager &getConstraintManager() const;
 
   /// getEnvironment - Return the environment associated with this state.
   ///  The environment is the mapping from expressions to values.
@@ -245,8 +250,6 @@ public:
 
   /// Get the lvalue for an array index.
   SVal getLValue(QualType ElementType, SVal Idx, SVal Base) const;
-
-  const llvm::APSInt *getSymVal(SymbolRef sym) const;
 
   /// Returns the SVal bound to the statement 'S' in the state's environment.
   SVal getSVal(const Stmt *S, const LocationContext *LCtx,
@@ -592,10 +595,6 @@ public:
     return ProgramStateTrait<T>::MakeContext(p);
   }
 
-  const llvm::APSInt* getSymVal(ProgramStateRef St, SymbolRef sym) {
-    return ConstraintMgr->getSymVal(St, sym);
-  }
-
   void EndPath(ProgramStateRef St) {
     ConstraintMgr->EndPath(St);
   }
@@ -606,6 +605,10 @@ public:
 // Out-of-line method definitions for ProgramState.
 //===----------------------------------------------------------------------===//
 
+inline ConstraintManager &ProgramState::getConstraintManager() const {
+  return stateMgr->getConstraintManager();
+}
+  
 inline const VarRegion* ProgramState::getRegion(const VarDecl *D,
                                                 const LocationContext *LC) const 
 {
@@ -668,10 +671,6 @@ inline SVal ProgramState::getLValue(QualType ElementType, SVal Idx, SVal Base) c
   if (NonLoc *N = dyn_cast<NonLoc>(&Idx))
     return getStateManager().StoreMgr->getLValueElement(ElementType, *N, Base);
   return UnknownVal();
-}
-
-inline const llvm::APSInt *ProgramState::getSymVal(SymbolRef sym) const {
-  return getStateManager().getSymVal(this, sym);
 }
 
 inline SVal ProgramState::getSVal(const Stmt *Ex, const LocationContext *LCtx,

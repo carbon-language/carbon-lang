@@ -585,7 +585,7 @@ void MacOSKeychainAPIChecker::checkDeadSymbols(SymbolReaper &SR,
     State = State->remove<AllocatedData>(I->first);
     // If the allocated symbol is null or if the allocation call might have
     // returned an error, do not report.
-    if (State->getSymVal(I->first) ||
+    if (State->getConstraintManager().isNull(State, I->first).isTrue() ||
         definitelyReturnedError(I->second.Region, State, C.getSValBuilder()))
       continue;
     Errors.push_back(std::make_pair(I->first, &I->second));
@@ -630,7 +630,7 @@ void MacOSKeychainAPIChecker::checkEndPath(CheckerContext &C) const {
     state = state->remove<AllocatedData>(I->first);
     // If the allocated symbol is null or if error code was returned at
     // allocation, do not report.
-    if (state->getSymVal(I.getKey()) ||
+    if (state->getConstraintManager().isNull(state, I.getKey()).isTrue() ||
         definitelyReturnedError(I->second.Region, state,
                                 C.getSValBuilder())) {
       continue;

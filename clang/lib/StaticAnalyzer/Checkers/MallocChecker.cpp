@@ -1275,9 +1275,8 @@ ProgramStateRef MallocChecker::evalAssume(ProgramStateRef state,
                                               bool Assumption) const {
   RegionStateTy RS = state->get<RegionState>();
   for (RegionStateTy::iterator I = RS.begin(), E = RS.end(); I != E; ++I) {
-    // If the symbol is assumed to NULL or another constant, this will
-    // return an APSInt*.
-    if (state->getSymVal(I.getKey()))
+    // If the symbol is assumed to be NULL, remove it from consideration.
+    if (state->getConstraintManager().isNull(state, I.getKey()).isTrue())
       state = state->remove<RegionState>(I.getKey());
   }
 
@@ -1285,12 +1284,10 @@ ProgramStateRef MallocChecker::evalAssume(ProgramStateRef state,
   // restore the state of the pointer being reallocated.
   ReallocMap RP = state->get<ReallocPairs>();
   for (ReallocMap::iterator I = RP.begin(), E = RP.end(); I != E; ++I) {
-    // If the symbol is assumed to NULL or another constant, this will
-    // return an APSInt*.
-    if (state->getSymVal(I.getKey())) {
+    // If the symbol is assumed to be NULL, remove it from consideration.
+    if (state->getConstraintManager().isNull(state, I.getKey()).isTrue()) {
       SymbolRef ReallocSym = I.getData().ReallocatedSym;
-      const RefState *RS = state->get<RegionState>(ReallocSym);
-      if (RS) {
+      if (const RefState *RS = state->get<RegionState>(ReallocSym)) {
         if (RS->isReleased() && ! I.getData().IsFreeOnFailure)
           state = state->set<RegionState>(ReallocSym,
                              RefState::getAllocated(RS->getStmt()));

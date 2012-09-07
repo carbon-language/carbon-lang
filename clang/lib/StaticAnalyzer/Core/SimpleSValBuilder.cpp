@@ -507,7 +507,8 @@ SVal SimpleSValBuilder::evalBinOpNN(ProgramStateRef state,
       } else if (isa<SymbolData>(Sym)) {
         // Does the symbol simplify to a constant?  If so, "fold" the constant
         // by setting 'lhs' to a ConcreteInt and try again.
-        if (const llvm::APSInt *Constant = state->getSymVal(Sym)) {
+        if (const llvm::APSInt *Constant = state->getConstraintManager()
+                                                  .getSymVal(state, Sym)) {
           lhs = nonloc::ConcreteInt(*Constant);
           continue;
         }
@@ -942,7 +943,7 @@ const llvm::APSInt *SimpleSValBuilder::getKnownValue(ProgramStateRef state,
     return &X->getValue();
 
   if (SymbolRef Sym = V.getAsSymbol())
-    return state->getSymVal(Sym);
+    return state->getConstraintManager().getSymVal(state, Sym);
 
   // FIXME: Add support for SymExprs.
   return NULL;

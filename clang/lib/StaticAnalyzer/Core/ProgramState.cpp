@@ -22,10 +22,6 @@
 using namespace clang;
 using namespace ento;
 
-// Give the vtable for ConstraintManager somewhere to live.
-// FIXME: Move this elsewhere.
-ConstraintManager::~ConstraintManager() {}
-
 namespace clang { namespace  ento {
 /// Increments the number of times this state is referenced.
 
@@ -238,7 +234,9 @@ SVal ProgramState::getSVal(Loc location, QualType T) const {
   // about).
   if (!T.isNull()) {
     if (SymbolRef sym = V.getAsSymbol()) {
-      if (const llvm::APSInt *Int = getSymVal(sym)) {
+      if (const llvm::APSInt *Int = getStateManager()
+                                    .getConstraintManager()
+                                    .getSymVal(this, sym)) {
         // FIXME: Because we don't correctly model (yet) sign-extension
         // and truncation of symbolic values, we need to convert
         // the integer value to the correct signedness and bitwidth.
