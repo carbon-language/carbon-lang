@@ -5218,6 +5218,12 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   }
   case Intrinsic::lifetime_start:
   case Intrinsic::lifetime_end: {
+    // Stack coloring is not enabled in O0, discard region information.
+    if (TM.getOptLevel() == CodeGenOpt::None) {
+      if (Intrinsic == Intrinsic::lifetime_start)
+        setValue(&I, DAG.getUNDEF(TLI.getPointerTy()));
+      return 0;
+    }
     SDValue Ops[2];
     AllocaInst *LifetimeObject =dyn_cast_or_null<AllocaInst>(
                                    GetUnderlyingObject(I.getArgOperand(1), TD));
