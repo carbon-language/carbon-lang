@@ -270,6 +270,9 @@ class ScopedInErrorReport {
   }
 };
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winvalid-noreturn"
+
 void ReportSIGSEGV(uptr pc, uptr sp, uptr bp, uptr addr) {
   ScopedInErrorReport in_report;
   Report("ERROR: AddressSanitizer crashed on unknown address %p"
@@ -326,6 +329,8 @@ void ReportStringFunctionMemoryRangesOverlap(
   DescribeAddress((uptr)offset2, length2);
 }
 
+#pragma clang diagnostic pop
+
 // ----------------------- Mac-specific reports ----------------- {{{1
 
 void WarnMacFreeUnallocated(
@@ -338,6 +343,9 @@ void WarnMacFreeUnallocated(
   PrintStack(stack);
   DescribeHeapAddress(addr, 1);
 }
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winvalid-noreturn"
 
 void ReportMacMzReallocUnknown(
     uptr addr, uptr zone_ptr, const char *zone_name, StackTrace *stack) {
@@ -360,6 +368,8 @@ void ReportMacCfReallocUnknown(
   PrintStack(stack);
   DescribeHeapAddress(addr, 1);
 }
+
+#pragma clang diagnostic pop
 
 }  // namespace __asan
 
