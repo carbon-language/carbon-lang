@@ -409,6 +409,21 @@ public:
   /// \brief Returns true if the given character could appear in an identifier.
   static bool isIdentifierBodyChar(char c, const LangOptions &LangOpts);
 
+  /// getCharAndSizeNoWarn - Like the getCharAndSize method, but does not ever
+  /// emit a warning.
+  static inline char getCharAndSizeNoWarn(const char *Ptr, unsigned &Size,
+                                          const LangOptions &LangOpts) {
+    // If this is not a trigraph and not a UCN or escaped newline, return
+    // quickly.
+    if (isObviouslySimpleCharacter(Ptr[0])) {
+      Size = 1;
+      return *Ptr;
+    }
+
+    Size = 0;
+    return getCharAndSizeSlowNoWarn(Ptr, Size, LangOpts);
+  }
+
   //===--------------------------------------------------------------------===//
   // Internal implementation interfaces.
 private:
@@ -513,21 +528,6 @@ private:
   /// getCharAndSizeSlow - Handle the slow/uncommon case of the getCharAndSize
   /// method.
   char getCharAndSizeSlow(const char *Ptr, unsigned &Size, Token *Tok = 0);
-
-  /// getCharAndSizeNoWarn - Like the getCharAndSize method, but does not ever
-  /// emit a warning.
-  static inline char getCharAndSizeNoWarn(const char *Ptr, unsigned &Size,
-                                          const LangOptions &LangOpts) {
-    // If this is not a trigraph and not a UCN or escaped newline, return
-    // quickly.
-    if (isObviouslySimpleCharacter(Ptr[0])) {
-      Size = 1;
-      return *Ptr;
-    }
-
-    Size = 0;
-    return getCharAndSizeSlowNoWarn(Ptr, Size, LangOpts);
-  }
 
   /// getEscapedNewLineSize - Return the size of the specified escaped newline,
   /// or 0 if it is not an escaped newline. P[-1] is known to be a "\" on entry
