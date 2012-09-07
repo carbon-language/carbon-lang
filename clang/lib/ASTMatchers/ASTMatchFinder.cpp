@@ -277,7 +277,7 @@ public:
   bool VisitTypedefDecl(TypedefDecl *DeclNode) {
     // When we see 'typedef A B', we add name 'B' to the set of names
     // A's canonical type maps to.  This is necessary for implementing
-    // IsDerivedFrom(x) properly, where x can be the name of the base
+    // isDerivedFrom(x) properly, where x can be the name of the base
     // class or any of its aliases.
     //
     // In general, the is-alias-of (as defined by typedefs) relation
@@ -298,7 +298,7 @@ public:
     //      `- E
     //
     // It is wrong to assume that the relation is a chain.  A correct
-    // implementation of IsDerivedFrom() needs to recognize that B and
+    // implementation of isDerivedFrom() needs to recognize that B and
     // E are aliases, even though neither is a typedef of the other.
     // Therefore, we cannot simply walk through one typedef chain to
     // find out whether the type name matches.
@@ -468,13 +468,11 @@ private:
 };
 
 // Returns true if the given class is directly or indirectly derived
-// from a base type with the given name.  A class is considered to be
-// also derived from itself.
+// from a base type with the given name.  A class is not considered to be
+// derived from itself.
 bool MatchASTVisitor::classIsDerivedFrom(const CXXRecordDecl *Declaration,
                                          const Matcher<NamedDecl> &Base,
                                          BoundNodesTreeBuilder *Builder) {
-  if (Base.matches(*Declaration, this, Builder))
-    return true;
   if (!Declaration->hasDefinition())
     return false;
   typedef CXXRecordDecl::base_class_const_iterator BaseIterator;
@@ -523,6 +521,8 @@ bool MatchASTVisitor::classIsDerivedFrom(const CXXRecordDecl *Declaration,
     }
     assert(ClassDecl != NULL);
     assert(ClassDecl != Declaration);
+    if (Base.matches(*ClassDecl, this, Builder))
+      return true;
     if (classIsDerivedFrom(ClassDecl, Base, Builder))
       return true;
   }

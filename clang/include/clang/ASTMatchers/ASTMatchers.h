@@ -1108,11 +1108,11 @@ AST_MATCHER_P(CXXOperatorCallExpr,
 /// \brief Matches C++ classes that are directly or indirectly derived from
 /// a class matching \c Base.
 ///
-/// Note that a class is considered to be also derived from itself.
+/// Note that a class is not considered to be derived from itself.
 ///
-/// Example matches X, Y, Z, C (Base == hasName("X"))
+/// Example matches Y, Z, C (Base == hasName("X"))
 /// \code
-///   class X;                // A class is considered to be derived from itself
+///   class X;
 ///   class Y : public X {};  // directly derived
 ///   class Z : public Y {};  // indirectly derived
 ///   typedef X A;
@@ -1135,6 +1135,18 @@ AST_MATCHER_P(CXXRecordDecl, isDerivedFrom,
 inline internal::Matcher<CXXRecordDecl> isDerivedFrom(StringRef BaseName) {
   assert(!BaseName.empty());
   return isDerivedFrom(hasName(BaseName));
+}
+
+/// \brief Similar to \c isDerivedFrom(), but also matches classes that directly
+/// match \c Base.
+inline internal::Matcher<CXXRecordDecl> isA(internal::Matcher<NamedDecl> Base) {
+  return anyOf(Base, isDerivedFrom(Base));
+}
+
+/// \brief Overloaded method as shortcut for \c isA(hasName(...)).
+inline internal::Matcher<CXXRecordDecl> isA(StringRef BaseName) {
+  assert(!BaseName.empty());
+  return isA(hasName(BaseName));
 }
 
 /// \brief Matches AST nodes that have child AST nodes that match the

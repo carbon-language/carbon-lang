@@ -101,11 +101,18 @@ TEST(DeclarationMatcher, ClassIsDerived) {
   DeclarationMatcher IsDerivedFromX = recordDecl(isDerivedFrom("X"));
 
   EXPECT_TRUE(matches("class X {}; class Y : public X {};", IsDerivedFromX));
-  EXPECT_TRUE(matches("class X {}; class Y : public X {};", IsDerivedFromX));
-  EXPECT_TRUE(matches("class X {};", IsDerivedFromX));
-  EXPECT_TRUE(matches("class X;", IsDerivedFromX));
+  EXPECT_TRUE(notMatches("class X {};", IsDerivedFromX));
+  EXPECT_TRUE(notMatches("class X;", IsDerivedFromX));
   EXPECT_TRUE(notMatches("class Y;", IsDerivedFromX));
   EXPECT_TRUE(notMatches("", IsDerivedFromX));
+
+  DeclarationMatcher IsAX = recordDecl(isA("X"));
+
+  EXPECT_TRUE(matches("class X {}; class Y : public X {};", IsAX));
+  EXPECT_TRUE(matches("class X {};", IsAX));
+  EXPECT_TRUE(matches("class X;", IsAX));
+  EXPECT_TRUE(notMatches("class Y;", IsAX));
+  EXPECT_TRUE(notMatches("", IsAX));
 
   DeclarationMatcher ZIsDerivedFromX =
       recordDecl(hasName("Z"), isDerivedFrom("X"));
@@ -458,7 +465,6 @@ TEST(DeclarationMatcher, MatchNot) {
   DeclarationMatcher NotClassX =
       recordDecl(
           isDerivedFrom("Y"),
-          unless(hasName("Y")),
           unless(hasName("X")));
   EXPECT_TRUE(notMatches("", NotClassX));
   EXPECT_TRUE(notMatches("class Y {};", NotClassX));
