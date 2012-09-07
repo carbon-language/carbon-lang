@@ -24,7 +24,7 @@ HexagonMCAsmInfo::HexagonMCAsmInfo(const Target &T, StringRef TT) {
   HasLEB128 = true;
 
   PrivateGlobalPrefix = ".L";
-  LCOMMDirectiveType = LCOMM::ByteAlignment;
+  LCOMMDirectiveSupportsAlignment = true;
   InlineAsmStart = "# InlineAsm Start";
   InlineAsmEnd = "# InlineAsm End";
   ZeroDirective = "\t.space\t";

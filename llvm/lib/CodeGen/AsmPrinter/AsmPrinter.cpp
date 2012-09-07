@@ -312,8 +312,7 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
       return;
     }
 
-    if (MAI->getLCOMMDirectiveType() != LCOMM::None &&
-        (MAI->getLCOMMDirectiveType() != LCOMM::NoAlignment || Align == 1)) {
+    if (Align == 1 || MAI->getLCOMMDirectiveSupportsAlignment()) {
       // .lcomm _foo, 42
       OutStreamer.EmitLocalCommonSymbol(GVSym, Size, Align);
       return;

@@ -2280,8 +2280,11 @@ bool AsmParser::ParseDirectiveComm(bool IsLocal) {
     if (ParseAbsoluteExpression(Pow2Alignment))
       return true;
 
+    if (IsLocal && !Lexer.getMAI().getLCOMMDirectiveSupportsAlignment())
+      return Error(Pow2AlignmentLoc, "alignment not supported on this target");
+
     // If this target takes alignments in bytes (not log) validate and convert.
-    if (Lexer.getMAI().getAlignmentIsInBytes()) {
+    if (Lexer.getMAI().getCOMMDirectiveAlignmentIsInBytes()) {
       if (!isPowerOf2_64(Pow2Alignment))
         return Error(Pow2AlignmentLoc, "alignment must be a power of 2");
       Pow2Alignment = Log2_64(Pow2Alignment);
@@ -2309,13 +2312,9 @@ bool AsmParser::ParseDirectiveComm(bool IsLocal) {
   if (!Sym->isUndefined())
     return Error(IDLoc, "invalid symbol redefinition");
 
-  // '.lcomm' is equivalent to '.zerofill'.
   // Create the Symbol as a common or local common with Size and Pow2Alignment
   if (IsLocal) {
-    getStreamer().EmitZerofill(Ctx.getMachOSection(
-                                 "__DATA", "__bss", MCSectionMachO::S_ZEROFILL,
-                                 0, SectionKind::getBSS()),
-                               Sym, Size, 1 << Pow2Alignment);
+    getStreamer().EmitLocalCommonSymbol(Sym, Size, 1 << Pow2Alignment);
     return false;
   }
 
