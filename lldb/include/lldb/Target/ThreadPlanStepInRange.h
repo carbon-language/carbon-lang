@@ -80,6 +80,7 @@ private:
     std::auto_ptr<RegularExpression> m_avoid_regexp_ap;
     bool m_step_past_prologue;  // FIXME: For now hard-coded to true, we could put a switch in for this if there's
                                 // demand for that.
+    bool m_virtual_step;        // true if we've just done a "virtual step", i.e. just moved the inline stack depth.
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanStepInRange);
 
