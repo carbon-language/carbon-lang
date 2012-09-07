@@ -128,6 +128,8 @@ public:
         uint32_t           orig_stop_id;  // Dunno if I need this yet but it is an interesting bit of data.
         lldb::StopInfoSP   stop_info_sp;  // You have to restore the stop info or you might continue with the wrong signals.
         RegisterCheckpoint register_backup;  // You need to restore the registers, of course...
+        uint32_t           current_inlined_depth;
+        lldb::addr_t       current_inlined_pc;
     };
 
     static void
@@ -280,7 +282,7 @@ public:
     uint32_t
     GetCurrentInlinedDepth()
     {
-        return GetStackFrameList()->DecrementCurrentInlinedDepth();
+        return GetStackFrameList()->GetCurrentInlinedDepth();
     }
     
     virtual lldb::StackFrameSP

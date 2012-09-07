@@ -241,6 +241,8 @@ Thread::CheckpointThreadState (ThreadStateCheckpoint &saved_state)
     ProcessSP process_sp (GetProcess());
     if (process_sp)
         saved_state.orig_stop_id = process_sp->GetStopID();
+    saved_state.current_inlined_depth = GetCurrentInlinedDepth();
+    
     return true;
 }
 
@@ -251,6 +253,7 @@ Thread::RestoreThreadStateFromCheckpoint (ThreadStateCheckpoint &saved_state)
     if (saved_state.stop_info_sp)
         saved_state.stop_info_sp->MakeStopInfoValid();
     SetStopInfo(saved_state.stop_info_sp);
+    GetStackFrameList()->SetCurrentInlinedDepth (saved_state.current_inlined_depth);
     return true;
 }
 
