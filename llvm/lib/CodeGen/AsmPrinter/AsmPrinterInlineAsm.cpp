@@ -43,10 +43,10 @@ namespace {
   };
 }
 
-/// SrcMgrDiagHandler - This callback is invoked when the SourceMgr for an
+/// srcMgrDiagHandler - This callback is invoked when the SourceMgr for an
 /// inline asm has an error in it.  diagInfo is a pointer to the SrcMgrDiagInfo
 /// struct above.
-static void SrcMgrDiagHandler(const SMDiagnostic &Diag, void *diagInfo) {
+static void srcMgrDiagHandler(const SMDiagnostic &Diag, void *diagInfo) {
   SrcMgrDiagInfo *DiagInfo = static_cast<SrcMgrDiagInfo *>(diagInfo);
   assert(DiagInfo && "Diagnostic context not passed down?");
 
@@ -92,12 +92,12 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode,
   LLVMContext &LLVMCtx = MMI->getModule()->getContext();
   bool HasDiagHandler = false;
   if (LLVMCtx.getInlineAsmDiagnosticHandler() != 0) {
-    // If the source manager has an issue, we arrange for SrcMgrDiagHandler
+    // If the source manager has an issue, we arrange for srcMgrDiagHandler
     // to be invoked, getting DiagInfo passed into it.
     DiagInfo.LocInfo = LocMDNode;
     DiagInfo.DiagHandler = LLVMCtx.getInlineAsmDiagnosticHandler();
     DiagInfo.DiagContext = LLVMCtx.getInlineAsmDiagnosticContext();
-    SrcMgr.setDiagHandler(SrcMgrDiagHandler, &DiagInfo);
+    SrcMgr.setDiagHandler(srcMgrDiagHandler, &DiagInfo);
     HasDiagHandler = true;
   }
 
