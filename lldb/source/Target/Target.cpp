@@ -247,8 +247,6 @@ Target::CreateBreakpoint (const FileSpecList *containingModules,
                           LazyBool skip_prologue,
                           bool internal)
 {
-    SearchFilterSP filter_sp(GetSearchFilterForModuleList (containingModules));
-    
     if (check_inlines == eLazyBoolCalculate)
     {
         const InlineStrategy inline_strategy = GetInlineStrategy();
@@ -269,6 +267,18 @@ Target::CreateBreakpoint (const FileSpecList *containingModules,
                 check_inlines = eLazyBoolYes;
                 break;
         }
+    }
+    SearchFilterSP filter_sp;
+    if (check_inlines == eLazyBoolNo)
+    {
+        // Not checking for inlines, we are looking only for matching compile units
+        FileSpecList compile_unit_list;
+        compile_unit_list.Append (file);
+        filter_sp = GetSearchFilterForModuleAndCUList (containingModules, &compile_unit_list);
+    }
+    else
+    {
+        filter_sp = GetSearchFilterForModuleList (containingModules);
     }
     BreakpointResolverSP resolver_sp(new BreakpointResolverFileLine (NULL,
                                                                      file,
