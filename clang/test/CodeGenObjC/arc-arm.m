@@ -18,3 +18,20 @@ void test1(void) {
   // CHECK-NEXT: ret void
   id x = test1_helper();
 }
+
+// rdar://problem/12133032
+@class A;
+A *test2(void) {
+  extern A *test2_helper(void);
+  // CHECK:      [[T0:%.*]] = call arm_aapcscc [[A:%.*]]* @test2_helper()
+  // CHECK-NEXT: ret [[A]]* [[T0]]
+  return test2_helper();
+}
+
+id test3(void) {
+  extern A *test3_helper(void);
+  // CHECK:      [[T0:%.*]] = call arm_aapcscc [[A:%.*]]* @test3_helper()
+  // CHECK-NEXT: [[T1:%.*]] = bitcast [[A]]* [[T0]] to i8*
+  // CHECK-NEXT: ret i8* [[T1]]
+  return test3_helper();
+}
