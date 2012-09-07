@@ -821,17 +821,19 @@ public:
   }
 
   LockData* findLock(FactManager& FM, const SExpr& M) const {
-    for (const_iterator I=begin(), E=end(); I != E; ++I) {
-      const SExpr& E = FM[*I].MutID;
-      if (E.matches(M)) return &FM[*I].LDat;
+    for (const_iterator I = begin(), E = end(); I != E; ++I) {
+      const SExpr& Exp = FM[*I].MutID;
+      if (Exp.matches(M))
+        return &FM[*I].LDat;
     }
     return 0;
   }
 
   LockData* findLockUniv(FactManager& FM, const SExpr& M) const {
-    for (const_iterator I=begin(), E=end(); I != E; ++I) {
-      const SExpr& E = FM[*I].MutID;
-      if (E.matches(M) || E.isUniversal()) return &FM[*I].LDat;
+    for (const_iterator I = begin(), E = end(); I != E; ++I) {
+      const SExpr& Exp = FM[*I].MutID;
+      if (Exp.matches(M) || Exp.isUniversal())
+        return &FM[*I].LDat;
     }
     return 0;
   }
