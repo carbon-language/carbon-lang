@@ -40,6 +40,12 @@ void MutexDestroy(ThreadState *thr, uptr pc, uptr addr) {
   CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: MutexDestroy %zx\n", thr->tid, addr);
   StatInc(thr, StatMutexDestroy);
+#ifndef TSAN_GO
+  // Global mutexes not marked as LINKER_INITIALIZED
+  // cause tons of not interesting reports, so just ignore it.
+  if (IsGlobalVar(addr))
+    return;
+#endif
   SyncVar *s = ctx->synctab.GetAndRemove(thr, pc, addr);
   if (s == 0)
     return;

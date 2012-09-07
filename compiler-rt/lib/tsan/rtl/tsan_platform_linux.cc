@@ -132,6 +132,10 @@ void InitializeShadowMemory() {
   DPrintf("stack        %zx\n", (uptr)&shadow);
 }
 
+static uptr g_tls_size;
+static uptr g_data_start;
+static uptr g_data_end;
+
 #ifndef TSAN_GO
 static void CheckPIE() {
   // Ensure that the binary is indeed compiled with -pie.
@@ -150,7 +154,26 @@ static void CheckPIE() {
   }
 }
 
-static uptr g_tls_size;
+static void InitDataSeg() {
+  MemoryMappingLayout proc_maps;
+  uptr start, end, offset;
+  char name[128];
+  bool prev_is_data = false;
+  while (proc_maps.Next(&start, &end, &offset, name, ARRAY_SIZE(name))) {
+    DPrintf("%p-%p %p %s\n", start, end, offset, name);
+    bool is_data = offset != 0 && name[0] != 0;
+    bool is_bss = offset == 0 && name[0] == 0 && prev_is_data;
+    if (g_data_start == 0 && is_data)
+      g_data_start = start;
+    if (is_bss)
+      g_data_end = end;
+    prev_is_data = is_data;
+  }
+  DPrintf("guessed data_start=%p data_end=%p\n",  g_data_start, g_data_end);
+  CHECK_LT(g_data_start, g_data_end);
+  CHECK_GE((uptr)&g_data_start, g_data_start);
+  CHECK_LT((uptr)&g_data_start, g_data_end);
+}
 
 #ifdef __i386__
 # define INTERNAL_FUNCTION __attribute__((regparm(3), stdcall))
@@ -187,6 +210,7 @@ const char *InitializePlatform() {
 #ifndef TSAN_GO
   CheckPIE();
   g_tls_size = (uptr)InitTlsSize();
+  InitDataSeg();
 #endif
   return getenv("TSAN_OPTIONS");
 }
@@ -232,6 +256,9 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
 #endif
 }
 
+bool IsGlobalVar(uptr addr) {
+  return g_data_start && addr >= g_data_start && addr < g_data_end;
+}
 
 }  // namespace __tsan
 
