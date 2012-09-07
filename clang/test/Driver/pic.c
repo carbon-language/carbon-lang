@@ -23,7 +23,7 @@
 // CHECK-PIE2-NOT: "-mrelocation-model"
 // CHECK-PIE2: "-pie-level" "2"
 //
-// CHECK-PIE3: "{{.*}}ld"
+// CHECK-PIE3: "{{.*}}ld{{(.exe)?}}"
 // CHECK-PIE3: "-pie"
 // CHECK-PIE3: "Scrt1.o" "crti.o" "crtbeginS.o"
 // CHECK-PIE3: "crtendS.o" "crtn.o"
