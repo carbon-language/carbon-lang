@@ -208,6 +208,41 @@ void PathDiagnosticConsumer::HandlePathDiagnostic(PathDiagnostic *D) {
 
 
 namespace {
+  
+static llvm::Optional<bool> comparePiece(PathDiagnosticPiece &X,
+                                         PathDiagnosticPiece &Y) {
+  PathDiagnosticPiece::Kind XK = X.getKind(), YK = Y.getKind();
+  if (XK != YK) {
+    return XK < YK;
+  }
+  FullSourceLoc XL = X.getLocation().asLocation();
+  FullSourceLoc YL = Y.getLocation().asLocation();
+  if (XL < YL)
+    return true;
+  if (YL < XL)
+    return false;
+  const std::string &XS = X.getString();
+  const std::string &YS = Y.getString();
+  if (XS != YS)
+    return XS < YS;
+  return llvm::Optional<bool>();
+}
+  
+static bool comparePathPieces(const PathPieces &X, const PathPieces &Y) {
+  if (X.size() < Y.size())
+    return true;
+  if (X.size() > Y.size())
+    return false;
+  // Compare individual parts of the path.
+  assert(X.size() == Y.size());
+  for (unsigned i = 0, n = X.size(); i < n; ++i) {
+    llvm::Optional<bool> B = comparePiece(*X[i], *Y[i]);
+    if (B.hasValue())
+      return B.getValue();
+  }
+  return false;
+}
+  
 struct CompareDiagnostics {
   // Compare if 'X' is "<" than 'Y'.
   bool operator()(const PathDiagnostic *X, const PathDiagnostic *Y) const {
@@ -216,7 +251,7 @@ struct CompareDiagnostics {
     const FullSourceLoc &YLoc = Y->getLocation().asLocation();
     if (XLoc < YLoc)
       return true;
-    if (XLoc != YLoc)
+    if (YLoc < XLoc)
       return false;
     
     // Next, compare by bug type.
@@ -235,8 +270,8 @@ struct CompareDiagnostics {
     if (XDesc != YDesc)
       return false;
     
-    // FIXME: Further refine by comparing PathDiagnosticPieces?
-    return false;    
+    // Fall back to comparing path pieces.
+    return comparePathPieces(X->path, Y->path);
   }  
 };  
 }
