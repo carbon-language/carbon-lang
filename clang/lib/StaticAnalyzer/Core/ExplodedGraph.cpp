@@ -68,7 +68,7 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
   // (5) The 'store' is the same as the predecessor.
   // (6) The 'GDM' is the same as the predecessor.
   // (7) The LocationContext is the same as the predecessor.
-  // (8) The PostStmt is for a non-consumed Stmt or Expr.
+  // (8) The PostStmt isn't for a non-consumed Stmt or Expr.
   // (9) The successor is not a CallExpr StmtPoint (so that we would be able to
   //     find it when retrying a call with no inlining).
   // FIXME: It may be safe to reclaim PreCall and PostCall nodes as well.
@@ -103,6 +103,9 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
     return false;
   
   // Condition 8.
+  // Do not collect nodes for non-consumed Stmt or Expr to ensure precise
+  // diagnostic generation; specifically, so that we could anchor arrows
+  // pointing to the beginning of statements (as written in code).
   if (!isa<Expr>(ps.getStmt()))
     return false;
   
