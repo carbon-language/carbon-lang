@@ -19,8 +19,10 @@ void MCAsmInfoCOFF::anchor() { }
 
 MCAsmInfoCOFF::MCAsmInfoCOFF() {
   GlobalPrefix = "_";
-  COMMDirectiveAlignmentIsInBytes = true;
-  LCOMMDirectiveSupportsAlignment = true;
+  // MingW 4.5 and later support .comm with log2 alignment, but .lcomm uses byte
+  // alignment.
+  COMMDirectiveAlignmentIsInBytes = false;
+  LCOMMDirectiveAlignmentType = LCOMM::ByteAlignment;
   HasDotTypeDotSizeDirective = false;
   HasSingleParameterDotFile = false;
   PrivateGlobalPrefix = "L";  // Prefix for private global symbols

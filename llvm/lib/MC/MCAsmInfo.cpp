@@ -69,7 +69,7 @@ MCAsmInfo::MCAsmInfo() {
   HasSetDirective = true;
   HasAggressiveSymbolFolding = true;
   COMMDirectiveAlignmentIsInBytes = true;
-  LCOMMDirectiveSupportsAlignment = false;
+  LCOMMDirectiveAlignmentType = LCOMM::NoAlignment;
   HasDotTypeDotSizeDirective = true;
   HasSingleParameterDotFile = true;
   HasNoDeadStrip = false;

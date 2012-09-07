@@ -32,6 +32,10 @@ namespace llvm {
     enum ExceptionsType { None, DwarfCFI, SjLj, ARM, Win64 };
   }
 
+  namespace LCOMM {
+    enum LCOMMType { NoAlignment, ByteAlignment, Log2Alignment };
+  }
+
   /// MCAsmInfo - This class is intended to be used as a base class for asm
   /// properties and features specific to the target.
   class MCAsmInfo {
@@ -247,9 +251,9 @@ namespace llvm {
     /// alignment is to be specified in bytes instead of log2(n).
     bool COMMDirectiveAlignmentIsInBytes;    // Defaults to true;
 
-    /// LCOMMDirectiveSupportsAlignment - True if .lcomm supports an optional
-    /// alignment argument on this target.
-    bool LCOMMDirectiveSupportsAlignment;    // Defaults to false.
+    /// LCOMMDirectiveAlignment - Describes if the .lcomm directive for the
+    /// target supports an alignment argument and how it is interpreted.
+    LCOMM::LCOMMType LCOMMDirectiveAlignmentType; // Defaults to NoAlignment.
 
     /// HasDotTypeDotSizeDirective - True if the target has .type and .size
     /// directives, this is true for most ELF targets.
@@ -495,8 +499,8 @@ namespace llvm {
     bool getCOMMDirectiveAlignmentIsInBytes() const {
       return COMMDirectiveAlignmentIsInBytes;
     }
-    bool getLCOMMDirectiveSupportsAlignment() const {
-      return LCOMMDirectiveSupportsAlignment;
+    LCOMM::LCOMMType getLCOMMDirectiveAlignmentType() const {
+      return LCOMMDirectiveAlignmentType;
     }
     bool hasDotTypeDotSizeDirective() const {return HasDotTypeDotSizeDirective;}
     bool hasSingleParameterDotFile() const { return HasSingleParameterDotFile; }

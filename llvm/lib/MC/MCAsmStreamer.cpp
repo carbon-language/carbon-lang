@@ -519,13 +519,16 @@ void MCAsmStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                           unsigned ByteAlign) {
   OS << "\t.lcomm\t" << *Symbol << ',' << Size;
   if (ByteAlign > 1) {
-    assert(MAI.getLCOMMDirectiveSupportsAlignment() &&
-           "alignment not supported on .lcomm!");
-    if (MAI.getCOMMDirectiveAlignmentIsInBytes()) {
+    switch (MAI.getLCOMMDirectiveAlignmentType()) {
+    case LCOMM::NoAlignment:
+      llvm_unreachable("alignment not supported on .lcomm!");
+    case LCOMM::ByteAlignment:
       OS << ',' << ByteAlign;
-    } else {
+      break;
+    case LCOMM::Log2Alignment:
       assert(isPowerOf2_32(ByteAlign) && "alignment must be a power of 2");
       OS << ',' << Log2_32(ByteAlign);
+      break;
     }
   }
   EmitEOL();

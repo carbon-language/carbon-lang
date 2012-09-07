@@ -32,7 +32,7 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
 
   AlignmentIsInBytes = false;
   COMMDirectiveAlignmentIsInBytes = false;
-  LCOMMDirectiveSupportsAlignment = true;
+  LCOMMDirectiveAlignmentType = LCOMM::Log2Alignment;
   InlineAsmStart = " InlineAsm Start";
   InlineAsmEnd = " InlineAsm End";
 

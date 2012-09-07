@@ -2280,11 +2280,13 @@ bool AsmParser::ParseDirectiveComm(bool IsLocal) {
     if (ParseAbsoluteExpression(Pow2Alignment))
       return true;
 
-    if (IsLocal && !Lexer.getMAI().getLCOMMDirectiveSupportsAlignment())
+    LCOMM::LCOMMType LCOMM = Lexer.getMAI().getLCOMMDirectiveAlignmentType();
+    if (IsLocal && LCOMM == LCOMM::NoAlignment)
       return Error(Pow2AlignmentLoc, "alignment not supported on this target");
 
     // If this target takes alignments in bytes (not log) validate and convert.
-    if (Lexer.getMAI().getCOMMDirectiveAlignmentIsInBytes()) {
+    if ((!IsLocal && Lexer.getMAI().getCOMMDirectiveAlignmentIsInBytes()) ||
+        (IsLocal && LCOMM == LCOMM::ByteAlignment)) {
       if (!isPowerOf2_64(Pow2Alignment))
         return Error(Pow2AlignmentLoc, "alignment must be a power of 2");
       Pow2Alignment = Log2_64(Pow2Alignment);
