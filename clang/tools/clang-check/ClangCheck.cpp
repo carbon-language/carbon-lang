@@ -58,7 +58,9 @@ static cl::opt<std::string> ASTDumpFilter(
     "ast-dump-filter",
     cl::desc(Options->getOptionHelpText(options::OPT_ast_dump_filter)));
 
-namespace {
+// Anonymous namespace here causes problems with gcc <= 4.4 on MacOS:
+// http://llvm.org/bugs/show_bug.cgi?id=13777
+// namespace {
 class ActionFactory {
 public:
   clang::ASTConsumer *newASTConsumer() {
@@ -71,7 +73,7 @@ public:
     return new clang::ASTConsumer();
   }
 };
-}
+// }
 
 int main(int argc, const char **argv) {
   ActionFactory Factory;
