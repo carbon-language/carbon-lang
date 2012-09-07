@@ -523,8 +523,7 @@ bool MipsAsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand*>&Operands,
 
     SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
 
-    StringRef Id = StringRef("$" + Identifier.str());
-    MCSymbol *Sym = getContext().GetOrCreateSymbol(Id);
+    MCSymbol *Sym = getContext().GetOrCreateSymbol("$" + Identifier);
 
     // Otherwise create a symbol ref.
     const MCExpr *Res = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_None,
@@ -571,7 +570,7 @@ bool MipsAsmParser::parseRelocOperand(const MCExpr *&Res) {
   if (Tok.isNot(AsmToken::Identifier))
     return true;
 
-  StringRef Str = Tok.getIdentifier();
+  std::string Str = Tok.getIdentifier().str();
 
   Parser.Lex(); //eat identifier
   //now make expression from the rest of the operand
@@ -586,7 +585,8 @@ bool MipsAsmParser::parseRelocOperand(const MCExpr *&Res) {
         const AsmToken &nextTok = Parser.getTok();
         if (nextTok.isNot(AsmToken::Identifier))
           return true;
-        Str = StringRef(Str.str() + "(%" + nextTok.getIdentifier().str());
+        Str += "(%";
+        Str += nextTok.getIdentifier();
         Parser.Lex(); //eat identifier
         if (getLexer().getKind() != AsmToken::LParen)
           return true;
@@ -603,9 +603,9 @@ bool MipsAsmParser::parseRelocOperand(const MCExpr *&Res) {
     return true; //parenthesis must follow reloc operand
 
   //Check the type of the expression
-  if (MCConstantExpr::classof(IdVal)) {
+  if (const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(IdVal)) {
     //it's a constant, evaluate lo or hi value
-    int Val = ((const MCConstantExpr*)IdVal)->getValue();
+    int Val = MCE->getValue();
     if (Str == "lo") {
       Val = Val & 0xffff;
     } else if (Str == "hi") {
@@ -615,9 +615,9 @@ bool MipsAsmParser::parseRelocOperand(const MCExpr *&Res) {
     return false;
   }
 
-  if (MCSymbolRefExpr::classof(IdVal)) {
+  if (const MCSymbolRefExpr *MSRE = dyn_cast<MCSymbolRefExpr>(IdVal)) {
     //it's a symbol, create symbolic expression from symbol
-    StringRef Symbol = ((const MCSymbolRefExpr*)IdVal)->getSymbol().getName();
+    StringRef Symbol = MSRE->getSymbol().getName();
     MCSymbolRefExpr::VariantKind VK = getVariantKind(Str);
     Res = MCSymbolRefExpr::Create(Symbol,VK,getContext());
     return false;
