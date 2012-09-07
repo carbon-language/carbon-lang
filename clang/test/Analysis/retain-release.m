@@ -1,5 +1,7 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core,osx.coreFoundation.CFRetainRelease,osx.cocoa.ClassRelease,osx.cocoa.RetainCount -analyzer-store=region -fblocks -verify -Wno-objc-root-class %s
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core,osx.coreFoundation.CFRetainRelease,osx.cocoa.ClassRelease,osx.cocoa.RetainCount -analyzer-store=region -fblocks -verify -x objective-c++ -Wno-objc-root-class %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core,osx.coreFoundation.CFRetainRelease,osx.cocoa.ClassRelease,osx.cocoa.RetainCount -analyzer-store=region -analyzer-output=text -fblocks -Wno-objc-root-class %s > %t.objc 2>&1
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core,osx.coreFoundation.CFRetainRelease,osx.cocoa.ClassRelease,osx.cocoa.RetainCount -analyzer-store=region -analyzer-output=text -fblocks -Wno-objc-root-class -x objective-c++ %s > %t.objcpp 2>&1
+// RUN: FileCheck -exact-match -input-file=%t.objc %s
+// RUN: FileCheck -exact-match -input-file=%t.objcpp %s
 
 #if __has_feature(attribute_ns_returns_retained)
 #define NS_RETURNS_RETAINED __attribute__((ns_returns_retained))
@@ -317,9 +319,9 @@ CFAbsoluteTime f1() {
   CFDateRef date = CFDateCreate(0, t);
   CFRetain(date);
   CFRelease(date);
-  CFDateGetAbsoluteTime(date); // no-warning
+  CFDateGetAbsoluteTime(date);
   CFRelease(date);
-  t = CFDateGetAbsoluteTime(date);   // expected-warning{{Reference-counted object is used after it is released}}
+  t = CFDateGetAbsoluteTime(date);
   return t;
 }
 
@@ -328,9 +330,9 @@ CFAbsoluteTime f2() {
   CFDateRef date = CFDateCreate(0, t);  
   [((NSDate*) date) retain];
   CFRelease(date);
-  CFDateGetAbsoluteTime(date); // no-warning
+  CFDateGetAbsoluteTime(date);
   [((NSDate*) date) release];
-  t = CFDateGetAbsoluteTime(date);   // expected-warning{{Reference-counted object is used after it is released}}
+  t = CFDateGetAbsoluteTime(date);
   return t;
 }
 
@@ -345,10 +347,10 @@ CFAbsoluteTime f3() {
   CFDateRef date = CFDateCreate(0, t);  
   [((NSDate*) date) retain];
   CFRelease(date);
-  CFDateGetAbsoluteTime(date); // no-warning
+  CFDateGetAbsoluteTime(date);
   global_x = (NSDate*) date;  
   [((NSDate*) date) release];
-  t = CFDateGetAbsoluteTime(date);   // no-warning
+  t = CFDateGetAbsoluteTime(date);
   return t;
 }
 
@@ -361,7 +363,7 @@ CFAbsoluteTime f3() {
 
 CFAbsoluteTime f5(int x) {  
   CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
-  CFDateRef date = CFDateCreate(0, t); // expected-warning{{leak}}
+  CFDateRef date = CFDateCreate(0, t);
   
   if (x)
     CFRelease(date);
@@ -372,7 +374,7 @@ CFAbsoluteTime f5(int x) {
 // Test a leak involving the return.
 
 CFDateRef f6(int x) {  
-  CFDateRef date = CFDateCreate(0, CFAbsoluteTimeGetCurrent());  // expected-warning{{leak}}
+  CFDateRef date = CFDateCreate(0, CFAbsoluteTimeGetCurrent());
   CFRetain(date);
   return date;
 }
@@ -382,7 +384,7 @@ CFDateRef f6(int x) {
 CFDateRef f7() {
   CFDateRef date = CFDateCreate(0, CFAbsoluteTimeGetCurrent());  //expected-warning{{leak}}
   CFRetain(date);
-  date = CFDateCreate(0, CFAbsoluteTimeGetCurrent()); // expected-warning {{leak}}
+  date = CFDateCreate(0, CFAbsoluteTimeGetCurrent());
   return date;
 }
 
@@ -391,16 +393,16 @@ CFDateRef f7() {
 CFDateRef MyDateCreate();
 
 CFDateRef f8() {
-  CFDateRef date = MyDateCreate(); // expected-warning{{leak}}
+  CFDateRef date = MyDateCreate();
   CFRetain(date);  
   return date;
 }
 
 __attribute__((cf_returns_retained)) CFDateRef f9() {
-  CFDateRef date = CFDateCreate(0, CFAbsoluteTimeGetCurrent()); // no-warning
+  CFDateRef date = CFDateCreate(0, CFAbsoluteTimeGetCurrent());
   int *p = 0;
   // When allocations fail, CFDateCreate can return null.
-  if (!date) *p = 1; // expected-warning{{null}}
+  if (!date) *p = 1;
   return date;
 }
 
@@ -409,23 +411,23 @@ __attribute__((cf_returns_retained)) CFDateRef f9() {
 // http://developer.apple.com/DOCUMENTATION/DARWIN/Reference/DiscArbitrationFramework/
 //
 void f10(io_service_t media, DADiskRef d, CFStringRef s) {
-  DADiskRef disk = DADiskCreateFromBSDName(kCFAllocatorDefault, 0, "hello"); // expected-warning{{leak}}
+  DADiskRef disk = DADiskCreateFromBSDName(kCFAllocatorDefault, 0, "hello");
   if (disk) NSLog(@"ok");
   
-  disk = DADiskCreateFromIOMedia(kCFAllocatorDefault, 0, media); // expected-warning{{leak}}
+  disk = DADiskCreateFromIOMedia(kCFAllocatorDefault, 0, media);
   if (disk) NSLog(@"ok");
 
-  CFDictionaryRef dict = DADiskCopyDescription(d);  // expected-warning{{leak}}
+  CFDictionaryRef dict = DADiskCopyDescription(d);
   if (dict) NSLog(@"ok"); 
   
-  disk = DADiskCopyWholeDisk(d); // expected-warning{{leak}}
+  disk = DADiskCopyWholeDisk(d);
   if (disk) NSLog(@"ok");
     
-  DADissenterRef dissenter = DADissenterCreate(kCFAllocatorDefault,   // expected-warning{{leak}}
+  DADissenterRef dissenter = DADissenterCreate(kCFAllocatorDefault,
                                                 kDAReturnSuccess, s);
   if (dissenter) NSLog(@"ok");
   
-  DASessionRef session = DASessionCreate(kCFAllocatorDefault);  // expected-warning{{leak}}
+  DASessionRef session = DASessionCreate(kCFAllocatorDefault);
   if (session) NSLog(@"ok");
 }
 
@@ -442,16 +444,16 @@ void f11() {
   CFArrayAppendValue(A, s1);
   
   // Decrement the reference count.
-  CFRelease(s1); // no-warning
+  CFRelease(s1);
   
   // Get the string.  We don't own it.
   s1 = (CFStringRef) CFArrayGetValueAtIndex(A, 0);
   
   // Release the array.
-  CFRelease(A); // no-warning
+  CFRelease(A);
   
   // Release the string.  This is a bug.
-  CFRelease(s1); // expected-warning{{Incorrect decrement of the reference count}}
+  CFRelease(s1);
 }
 
 // PR 3337: Handle functions declared using typedefs.
@@ -459,40 +461,40 @@ typedef CFTypeRef CREATEFUN();
 CREATEFUN MyCreateFun;
 
 void f12() {
-  CFTypeRef o = MyCreateFun(); // expected-warning {{leak}}
+  CFTypeRef o = MyCreateFun();
 }
 
 void f13_autorelease() {
-  CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
-  [(id) A autorelease]; // no-warning
+  CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+  [(id) A autorelease];
 }
 
 void f13_autorelease_b() {
   CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
   [(id) A autorelease];
-  [(id) A autorelease]; // expected-warning{{Object sent -autorelease too many times}}
+  [(id) A autorelease];
 }
 
 CFMutableArrayRef f13_autorelease_c() {
   CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
   [(id) A autorelease];
   [(id) A autorelease]; 
-  return A; // expected-warning{{Object sent -autorelease too many times}}
+  return A;
 }
 
 CFMutableArrayRef f13_autorelease_d() {
   CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
   [(id) A autorelease];
   [(id) A autorelease]; 
-  CFMutableArrayRef B = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // expected-warning{{Object sent -autorelease too many times}}
-  CFRelease(B); // no-warning
+  CFMutableArrayRef B = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+  CFRelease(B);
   while (1) {}
 }
 
 
 // This case exercises the logic where the leak site is the same as the allocation site.
 void f14_leakimmediately() {
-  CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // expected-warning{{leak}}
+  CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
 }
 
 // Test that we track an allocated object beyond the point where the *name*
@@ -502,7 +504,7 @@ void f15() {
   CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
   CFMutableArrayRef *B = &A;
   // At this point, the name 'A' is no longer live.
-  CFRelease(*B);  // no-warning
+  CFRelease(*B);
 }
 
 // Test when we pass NULL to CFRetain/CFRelease.
@@ -511,10 +513,10 @@ void f16(int x, CFTypeRef p) {
     return;
 
   if (x) {
-    CFRelease(p); // expected-warning{{Null pointer argument in call to CFRelease}}
+    CFRelease(p);
   }
   else {
-    CFRetain(p); // expected-warning{{Null pointer argument in call to CFRetain}}
+    CFRetain(p);
   }
 }
 
@@ -523,12 +525,12 @@ void f17(int x, CFTypeRef p) {
   if (x) {
     CFRelease(p);
     if (!p)
-      CFRelease(0); // no-warning
+      CFRelease(0);
   }
   else {
     CFRetain(p);
     if (!p)
-      CFRetain(0); // no-warning
+      CFRetain(0);
   }
 }
 
@@ -543,7 +545,7 @@ void f17(int x, CFTypeRef p) {
 
 @implementation SelfIvarTest
 - (void)test_self_tracking {
-  myObj = (id) CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
+  myObj = (id) CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
 }
 @end
 
@@ -556,7 +558,7 @@ void f17(int x, CFTypeRef p) {
 @implementation TestReturnNotOwnedWhenExpectedOwned
 - (NSString*)newString {
   NSString *s = [NSString stringWithUTF8String:"hello"];
-  return s; // expected-warning{{Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected}}
+  return s;
 }
 @end
 
@@ -569,7 +571,7 @@ static void rdar_6659160(char *inkind, char *inname)
   // will be a toggled flag in the future.  It can indeed return null, but
   // Cocoa programmers generally aren't expected to reason about out-of-memory
   // conditions.
-  NSString *kind = [[NSString alloc] initWithUTF8String:inkind];  // expected-warning{{leak}}
+  NSString *kind = [[NSString alloc] initWithUTF8String:inkind];
   
   // We do allow stringWithUTF8String to fail.  This isn't really correct, as
   // far as returning 0.  In most error conditions it will throw an exception.
@@ -591,13 +593,13 @@ static void rdar_6659160(char *inkind, char *inname)
     kindC = [kind UTF8String];
   if(name)
     nameC = [name UTF8String];
-  if(!isFoo(kindC[0])) // expected-warning{{null}}
+  if(!isFoo(kindC[0]))
     return;
-  if(!isFoo(nameC[0])) // no-warning
+  if(!isFoo(nameC[0]))
     return;
 
   [kind release];
-  [name release]; // expected-warning{{Incorrect decrement of the reference count}}
+  [name release];
 }
 
 // PR 3677 - 'allocWithZone' should be treated as following the Cocoa naming
@@ -605,14 +607,14 @@ static void rdar_6659160(char *inkind, char *inname)
 @interface PR3677: NSObject @end
 @implementation PR3677
 + (id)allocWithZone:(NSZone *)inZone {
-  return [super allocWithZone:inZone];  // no-warning
+  return [super allocWithZone:inZone];
 }
 @end
 
 // PR 3820 - Reason about calls to -dealloc
 void pr3820_DeallocInsteadOfRelease(void)
 {
-  id foo = [[NSString alloc] init]; // no-warning
+  id foo = [[NSString alloc] init];
   [foo dealloc];
   // foo is not leaked, since it has been deallocated.
 }
@@ -621,7 +623,7 @@ void pr3820_ReleaseAfterDealloc(void)
 {
   id foo = [[NSString alloc] init];
   [foo dealloc];
-  [foo release];  // expected-warning{{used after it is release}}
+  [foo release];
   // NSInternalInconsistencyException: message sent to deallocated object
 }
 
@@ -630,7 +632,7 @@ void pr3820_DeallocAfterRelease(void)
   NSLog(@"\n\n[%s]", __FUNCTION__);
   id foo = [[NSString alloc] init];
   [foo release];
-  [foo dealloc]; // expected-warning{{used after it is released}}
+  [foo dealloc];
   // message sent to released object
 }
 
@@ -646,7 +648,7 @@ void rdar6704930(unsigned char *s, unsigned int length) {
         if (*s == ':') {
           ++s;
           --length;
-          name = [[NSString alloc] init]; // no-warning
+          name = [[NSString alloc] init];
           break;
         }
         ++s;
@@ -657,7 +659,7 @@ void rdar6704930(unsigned char *s, unsigned int length) {
         name = 0;
       }
       if (length == 0) { // no ':' found -> use it all as name
-        name = [[NSString alloc] init]; // no-warning
+        name = [[NSString alloc] init];
       }
     }
   }
@@ -682,7 +684,7 @@ void rdar6704930(unsigned char *s, unsigned int length) {
 @implementation rdar_6833332
 @synthesize window;
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
- NSMutableDictionary *dict = [[NSMutableDictionary dictionaryWithCapacity:4] retain]; // expected-warning{{leak}}
+ NSMutableDictionary *dict = [[NSMutableDictionary dictionaryWithCapacity:4] retain];
 
  [dict setObject:@"foo" forKey:@"bar"];
 
@@ -694,7 +696,7 @@ void rdar6704930(unsigned char *s, unsigned int length) {
 }
 
 - (void)radar10102244 {
- NSMutableDictionary *dict = [[NSMutableDictionary dictionaryWithCapacity:4] retain]; // expected-warning{{leak}} 
+ NSMutableDictionary *dict = [[NSMutableDictionary dictionaryWithCapacity:4] retain];
  if (window) 
    NSLog(@"%@", window);    
 }
@@ -707,7 +709,7 @@ void rdar6704930(unsigned char *s, unsigned int length) {
 int rdar_6257780_Case1() {
   NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
   NSArray *array = [NSArray array];
-  [array release]; // expected-warning{{Incorrect decrement of the reference count of an object that is not owned at this point by the caller}}
+  [array release];
   [pool drain];
   return 0;
 }
@@ -732,7 +734,7 @@ void rdar_6866843() {
  [dictionary setObject:array forKey:@"key"];
  [array release];
  // Using 'array' here should be fine
- NSLog(@"array = %@\n", array); // no-warning
+ NSLog(@"array = %@\n", array);
  // Now the array is released
  [dictionary release];
  [pool drain];
@@ -752,10 +754,10 @@ typedef CFTypeRef OtherRef;
 
 @implementation RDar6877235
 - (CFTypeRef)_copyCFTypeRef {
-  return [[NSString alloc] init]; // no-warning
+  return [[NSString alloc] init];
 }
 - (OtherRef)_copyOtherRef {
-  return [[NSString alloc] init]; // no-warning
+  return [[NSString alloc] init];
 }
 @end
 
@@ -778,18 +780,18 @@ typedef CFTypeRef OtherRef;
 @implementation RDar6320065
 - (id)initReturningNewClass {
   [self release];
-  self = [[RDar6320065Subclass alloc] init]; // no-warning
+  self = [[RDar6320065Subclass alloc] init];
   return self;
 }
 - (id)_initReturningNewClassBad {
   [self release];
-  [[RDar6320065Subclass alloc] init]; // expected-warning {{leak}}
+  [[RDar6320065Subclass alloc] init];
   return self;
 }
 - (id)initReturningNewClassBad2 {
   [self release];
   self = [[RDar6320065Subclass alloc] init];
-  return [self autorelease]; // expected-warning{{Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected}}
+  return [self autorelease];
 }
 
 @end
@@ -798,7 +800,7 @@ typedef CFTypeRef OtherRef;
 @end
 
 int RDar6320065_test() {
-  RDar6320065 *test = [[RDar6320065 alloc] init]; // no-warning
+  RDar6320065 *test = [[RDar6320065 alloc] init];
   [test release];
   return 0;
 }
@@ -811,8 +813,8 @@ int RDar6320065_test() {
 @interface RDar7129086 : NSObject {} @end
 @implementation RDar7129086
 - (id)awakeAfterUsingCoder:(NSCoder *)aDecoder {
-  [self release]; // no-warning
-  return [NSString alloc];  // no-warning
+  [self release];
+  return [NSString alloc];
 }
 @end
 
@@ -827,15 +829,15 @@ int RDar6320065_test() {
 @end
 
 @implementation RDar6859457 
-- (NSString*) NoCopyString { return [[NSString alloc] init]; } // expected-warning{{leak}}
-- (NSString*) noCopyString { return [[NSString alloc] init]; } // expected-warning{{leak}}
+- (NSString*) NoCopyString { return [[NSString alloc] init]; }
+- (NSString*) noCopyString { return [[NSString alloc] init]; }
 @end
 
 void test_RDar6859457(RDar6859457 *x, void *bytes, NSUInteger dataLength) {
-  [x NoCopyString]; // expected-warning{{leak}}
-  [x noCopyString]; // expected-warning{{leak}}
-  [NSData dataWithBytesNoCopy:bytes length:dataLength];  // no-warning
-  [NSData dataWithBytesNoCopy:bytes length:dataLength freeWhenDone:1]; // no-warning
+  [x NoCopyString];
+  [x noCopyString];
+  [NSData dataWithBytesNoCopy:bytes length:dataLength];
+  [NSData dataWithBytesNoCopy:bytes length:dataLength freeWhenDone:1];
 }
 
 //===----------------------------------------------------------------------===//
@@ -845,8 +847,8 @@ void test_RDar6859457(RDar6859457 *x, void *bytes, NSUInteger dataLength) {
 
 static void PR4230(void)
 {
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init]; // no-warning
-  NSString *object = [[[NSString alloc] init] autorelease]; // no-warning
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  NSString *object = [[[NSString alloc] init] autorelease];
   return;
 }
 
@@ -860,7 +862,7 @@ static void PR4230(void)
 
 @implementation TestNullIdentifier
 + (id):(int)x, ... {
-  return [[NSString alloc] init]; // expected-warning{{leak}}
+  return [[NSString alloc] init];
 }
 @end
 
@@ -879,7 +881,7 @@ typedef struct s6893565* TD6893565;
 
 @implementation RDar6893565
 -(TD6893565)newThing {  
-  return (TD6893565) [[NSString alloc] init]; // no-warning
+  return (TD6893565) [[NSString alloc] init];
 }
 @end
 
@@ -890,10 +892,10 @@ typedef struct s6893565* TD6893565;
 void rdar6902710(QCView *view, QCRenderer *renderer, CIContext *context,
                  NSString *str, CIImage *img, CGRect rect,
                  CIFormat form, CGColorSpaceRef cs) {
-  [view createSnapshotImageOfType:str]; // expected-warning{{leak}}
-  [renderer createSnapshotImageOfType:str]; // expected-warning{{leak}}
-  [context createCGImage:img fromRect:rect]; // expected-warning{{leak}}
-  [context createCGImage:img fromRect:rect format:form colorSpace:cs]; // expected-warning{{leak}}
+  [view createSnapshotImageOfType:str];
+  [renderer createSnapshotImageOfType:str];
+  [context createCGImage:img fromRect:rect];
+  [context createCGImage:img fromRect:rect format:form colorSpace:cs];
 }
 
 //===----------------------------------------------------------------------===//
@@ -902,7 +904,7 @@ void rdar6902710(QCView *view, QCRenderer *renderer, CIContext *context,
 //===----------------------------------------------------------------------===//
 
 void rdar6945561(CIContext *context, CGSize size, CFDictionaryRef d) {
-  [context createCGLayerWithSize:size info:d]; // expected-warning{{leak}}
+  [context createCGLayerWithSize:size info:d];
 }
 
 //===----------------------------------------------------------------------===//
@@ -911,15 +913,15 @@ void rdar6945561(CIContext *context, CGSize size, CFDictionaryRef d) {
 //===----------------------------------------------------------------------===//
 
 void IOBSDNameMatching_wrapper(mach_port_t masterPort, uint32_t options,  const char * bsdName) {  
-  IOBSDNameMatching(masterPort, options, bsdName); // expected-warning{{leak}}
+  IOBSDNameMatching(masterPort, options, bsdName);
 }
 
 void IOServiceMatching_wrapper(const char * name) {
-  IOServiceMatching(name); // expected-warning{{leak}}
+  IOServiceMatching(name);
 }
 
 void IOServiceNameMatching_wrapper(const char * name) {
-  IOServiceNameMatching(name); // expected-warning{{leak}}
+  IOServiceNameMatching(name);
 }
 
 CF_RETURNS_RETAINED CFDictionaryRef CreateDict();
@@ -929,29 +931,29 @@ void IOServiceAddNotification_wrapper(mach_port_t masterPort, const io_name_t no
 
   CFDictionaryRef matching = CreateDict();
   CFRelease(matching);
-  IOServiceAddNotification(masterPort, notificationType, matching, // expected-warning{{used after it is released}} expected-warning{{deprecated}}
+  IOServiceAddNotification(masterPort, notificationType, matching,
                            wakePort, reference, notification);
 }
 
 void IORegistryEntryIDMatching_wrapper(uint64_t entryID ) {
-  IORegistryEntryIDMatching(entryID); // expected-warning{{leak}}
+  IORegistryEntryIDMatching(entryID);
 }
 
 void IOOpenFirmwarePathMatching_wrapper(mach_port_t masterPort, uint32_t options,
                                         const char * path) {
-  IOOpenFirmwarePathMatching(masterPort, options, path); // expected-warning{{leak}}
+  IOOpenFirmwarePathMatching(masterPort, options, path);
 }
 
 void IOServiceGetMatchingService_wrapper(mach_port_t masterPort) {
   CFDictionaryRef matching = CreateDict();
   IOServiceGetMatchingService(masterPort, matching);
-  CFRelease(matching); // expected-warning{{used after it is released}}
+  CFRelease(matching);
 }
 
 void IOServiceGetMatchingServices_wrapper(mach_port_t masterPort, io_iterator_t *existing) {
   CFDictionaryRef matching = CreateDict();
   IOServiceGetMatchingServices(masterPort, matching, existing);
-  CFRelease(matching); // expected-warning{{used after it is released}}
+  CFRelease(matching);
 }
 
 void IOServiceAddMatchingNotification_wrapper(IONotificationPortRef notifyPort, const io_name_t notificationType, 
@@ -959,7 +961,7 @@ void IOServiceAddMatchingNotification_wrapper(IONotificationPortRef notifyPort, 
     
   CFDictionaryRef matching = CreateDict();
   IOServiceAddMatchingNotification(notifyPort, notificationType, matching, callback, refCon, notification);
-  CFRelease(matching); // expected-warning{{used after it is released}}
+  CFRelease(matching);
 }
 
 //===----------------------------------------------------------------------===//
@@ -976,9 +978,9 @@ void rdar_6539791(CFMutableDictionaryRef y, void* key, void* val_key) {
   signed z = 1;
   CFNumberRef value = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &z);
   if (value) {
-    CFDictionaryAddValue(x, val_key, (void*)value); // no-warning
+    CFDictionaryAddValue(x, val_key, (void*)value);
     CFRelease(value);
-    CFDictionaryAddValue(y, val_key, (void*)value); // no-warning
+    CFDictionaryAddValue(y, val_key, (void*)value);
   }
 }
 
@@ -991,7 +993,7 @@ void rdar_6560661(CFMutableArrayRef x) {
   CFArrayAppendValue(x, value);
   CFRelease(value);
   CFRetain(value);
-  CFRelease(value); // no-warning
+  CFRelease(value);
 }
 
 // <rdar://problem/7152619>
@@ -1000,7 +1002,7 @@ void rdar_7152619(CFStringRef str) {
   CFAttributedStringRef string = CFAttributedStringCreate(kCFAllocatorDefault, str, 0);
   CFMutableAttributedStringRef attrString = CFAttributedStringCreateMutableCopy(kCFAllocatorDefault, 100, string);
   CFRelease(string);
-  NSNumber *number = [[NSNumber alloc] initWithInt:5]; // expected-warning{{leak}}
+  NSNumber *number = [[NSNumber alloc] initWithInt:5];
   CFAttributedStringSetAttribute(attrString, CFRangeMake(0, 1), str, number);
   [number release];
   [number retain];
@@ -1025,7 +1027,7 @@ void rdar_7184450(CGContextRef myContext, CGFloat x, CGPoint myStartPoint,
   }; // End color
   
   CGGradientRef myGradient =
-    CGGradientCreateWithColorComponents(CGColorSpaceCreateDeviceRGB(), // expected-warning{{leak}}
+    CGGradientCreateWithColorComponents(CGColorSpaceCreateDeviceRGB(),
       components, locations, num_locations);
 
   CGContextDrawLinearGradient(myContext, myGradient, myStartPoint, myEndPoint,
@@ -1047,7 +1049,7 @@ void rdar_7184450_pos(CGContextRef myContext, CGFloat x, CGPoint myStartPoint,
   }; // End color
   
   CGGradientRef myGradient =
-   CGGradientCreateWithColorComponents(CGColorSpaceCreateDeviceRGB(), components, locations, num_locations); // expected-warning 2 {{leak}}
+   CGGradientCreateWithColorComponents(CGColorSpaceCreateDeviceRGB(), components, locations, num_locations);
 
   CGContextDrawLinearGradient(myContext, myGradient, myStartPoint, myEndPoint,
                               0);
@@ -1081,11 +1083,11 @@ void *rdar_7299394_start_routine(void *p) {
   return 0;
 }
 void rdar_7299394(pthread_attr_t *attr, pthread_t *thread, void *args) {
-  NSNumber *number = [[NSNumber alloc] initWithInt:5]; // no-warning
+  NSNumber *number = [[NSNumber alloc] initWithInt:5];
   pthread_create(thread, attr, rdar_7299394_start_routine, number);
 }
 void rdar_7299394_positive(pthread_attr_t *attr, pthread_t *thread) {
-  NSNumber *number = [[NSNumber alloc] initWithInt:5]; // expected-warning{{leak}}
+  NSNumber *number = [[NSNumber alloc] initWithInt:5];
 }
 
 //===----------------------------------------------------------------------===//
@@ -1094,7 +1096,7 @@ void rdar_7299394_positive(pthread_attr_t *attr, pthread_t *thread) {
 //===----------------------------------------------------------------------===//
 
 void rdar11282706(pthread_key_t key) {
-  NSNumber *number = [[NSNumber alloc] initWithInt:5]; // no-warning
+  NSNumber *number = [[NSNumber alloc] initWithInt:5];
   pthread_setspecific(key, (void*) number);
 }
 
@@ -1169,7 +1171,7 @@ CVReturn rdar_7283567(CFAllocatorRef allocator, size_t width, size_t height,
   // For the allocated object, it doesn't really matter what type it is
   // for the purpose of this test.  All we want to show is that
   // this is freed later by the callback.
-  NSNumber *number = [[NSNumber alloc] initWithInt:5]; // no-warning
+  NSNumber *number = [[NSNumber alloc] initWithInt:5];
   
   return CVPixelBufferCreateWithBytes(allocator, width, height, pixelFormatType,
                                 baseAddress, bytesPerRow, releaseCallback,
@@ -1188,7 +1190,7 @@ CVReturn rdar_7283567_2(CFAllocatorRef allocator, size_t width, size_t height,
     // For the allocated object, it doesn't really matter what type it is
     // for the purpose of this test.  All we want to show is that
     // this is freed later by the callback.
-    NSNumber *number = [[NSNumber alloc] initWithInt:5]; // no-warning
+    NSNumber *number = [[NSNumber alloc] initWithInt:5];
 
     return CVPixelBufferCreateWithPlanarBytes(allocator,
               width, height, pixelFormatType, dataPtr, dataSize,
@@ -1218,9 +1220,9 @@ void rdar_7358899(void *data,
     // For the allocated object, it doesn't really matter what type it is
     // for the purpose of this test.  All we want to show is that
     // this is freed later by the callback.
-    NSNumber *number = [[NSNumber alloc] initWithInt:5]; // no-warning
+    NSNumber *number = [[NSNumber alloc] initWithInt:5];
 
-  CGBitmapContextCreateWithData(data, width, height, bitsPerComponent, // expected-warning{{leak}}
+  CGBitmapContextCreateWithData(data, width, height, bitsPerComponent,
     bytesPerRow, space, bitmapInfo, releaseCallback, number);
 }
 
@@ -1238,11 +1240,11 @@ void rdar_7358899(void *data,
 @end
 
 void rdar7265711_a(RDar7265711 *x) {
-  id y = [x new_stuff]; // expected-warning{{leak}}
+  id y = [x new_stuff];
 }
 
 void rdar7265711_b(RDar7265711 *x) {
-  id y = [x new_stuff]; // no-warning
+  id y = [x new_stuff];
   [y release];
 }
 
@@ -1258,8 +1260,8 @@ void rdar7265711_b(RDar7265711 *x) {
 void rdar7306898(void) {
   // 'dragCopyCursor' does not follow Cocoa's fundamental rule.  It is a noun, not an sentence
   // implying a 'copy' of something.
-  NSCursor *c =  [NSCursor dragCopyCursor]; // no-warning
-  NSNumber *number = [[NSNumber alloc] initWithInt:5]; // expected-warning{{leak}}
+  NSCursor *c =  [NSCursor dragCopyCursor];
+  NSNumber *number = [[NSNumber alloc] initWithInt:5];
 }
 
 //===----------------------------------------------------------------------===//
@@ -1269,10 +1271,10 @@ void rdar7306898(void) {
 
 @interface RDar7252064 : NSObject @end
 void rdar7252064(void) {
-  [RDar7252064 release]; // expected-warning{{The 'release' message should be sent to instances of class 'RDar7252064' and not the class directly}}
-  [RDar7252064 retain]; // expected-warning{{The 'retain' message should be sent to instances of class 'RDar7252064' and not the class directly}}
-  [RDar7252064 autorelease]; // expected-warning{{The 'autorelease' message should be sent to instances of class 'RDar7252064' and not the class directly}}
-  [NSAutoreleasePool drain]; // expected-warning{{method '+drain' not found}} expected-warning{{The 'drain' message should be sent to instances of class 'NSAutoreleasePool' and not the class directly}}
+  [RDar7252064 release];
+  [RDar7252064 retain];
+  [RDar7252064 autorelease];
+  [NSAutoreleasePool drain];
 }
 
 //===----------------------------------------------------------------------===//
@@ -1284,38 +1286,38 @@ typedef NSString* MyStringTy;
 @protocol FooP;
 
 @interface TestOwnershipAttr : NSObject
-- (NSString*) returnsAnOwnedString  NS_RETURNS_RETAINED; // no-warning
-- (NSString*) returnsAnOwnedCFString  CF_RETURNS_RETAINED; // no-warning
-- (MyStringTy) returnsAnOwnedTypedString NS_RETURNS_RETAINED; // no-warning
-- (NSString*) newString NS_RETURNS_NOT_RETAINED; // no-warning
+- (NSString*) returnsAnOwnedString  NS_RETURNS_RETAINED;
+- (NSString*) returnsAnOwnedCFString  CF_RETURNS_RETAINED;
+- (MyStringTy) returnsAnOwnedTypedString NS_RETURNS_RETAINED;
+- (NSString*) newString NS_RETURNS_NOT_RETAINED;
 - (NSString*) newStringNoAttr;
-- (int) returnsAnOwnedInt NS_RETURNS_RETAINED; // expected-warning{{'ns_returns_retained' attribute only applies to methods that return an Objective-C object}}
+- (int) returnsAnOwnedInt NS_RETURNS_RETAINED;
 - (id) pseudoInit NS_CONSUMES_SELF NS_RETURNS_RETAINED;
 + (void) consume:(id) NS_CONSUMED x;
 + (void) consume2:(id) CF_CONSUMED x;
 @end
 
-static int ownership_attribute_doesnt_go_here NS_RETURNS_RETAINED; // expected-warning{{'ns_returns_retained' attribute only applies to functions and methods}}
+static int ownership_attribute_doesnt_go_here NS_RETURNS_RETAINED;
 
 void test_attr_1(TestOwnershipAttr *X) {
-  NSString *str = [X returnsAnOwnedString]; // expected-warning{{leak}}
+  NSString *str = [X returnsAnOwnedString];
 }
 
 void test_attr_1b(TestOwnershipAttr *X) {
-  NSString *str = [X returnsAnOwnedCFString]; // expected-warning{{leak}}
+  NSString *str = [X returnsAnOwnedCFString];
 }
 
 void test_attr1c(TestOwnershipAttr *X) {
-  NSString *str = [X newString]; // no-warning
-  NSString *str2 = [X newStringNoAttr]; // expected-warning{{leak}}
+  NSString *str = [X newString];
+  NSString *str2 = [X newStringNoAttr];
 }
 
 void testattr2_a() {
-  TestOwnershipAttr *x = [TestOwnershipAttr alloc]; // expected-warning{{leak}}
+  TestOwnershipAttr *x = [TestOwnershipAttr alloc];
 }
 
 void testattr2_b() {
-  TestOwnershipAttr *x = [[TestOwnershipAttr alloc] pseudoInit];  // expected-warning{{leak}}
+  TestOwnershipAttr *x = [[TestOwnershipAttr alloc] pseudoInit];
 }
 
 void testattr2_b_11358224_self_assign_looses_the_leak() {
@@ -1324,14 +1326,14 @@ void testattr2_b_11358224_self_assign_looses_the_leak() {
 }
 
 void testattr2_c() {
-  TestOwnershipAttr *x = [[TestOwnershipAttr alloc] pseudoInit]; // no-warning
+  TestOwnershipAttr *x = [[TestOwnershipAttr alloc] pseudoInit];
   [x release];
 }
 
 void testattr3() {
-  TestOwnershipAttr *x = [TestOwnershipAttr alloc]; // no-warning
+  TestOwnershipAttr *x = [TestOwnershipAttr alloc];
   [TestOwnershipAttr consume:x];
-  TestOwnershipAttr *y = [TestOwnershipAttr alloc]; // no-warning
+  TestOwnershipAttr *y = [TestOwnershipAttr alloc];
   [TestOwnershipAttr consume2:y];
 }
 
@@ -1339,19 +1341,19 @@ void consume_ns(id NS_CONSUMED x);
 void consume_cf(id CF_CONSUMED x);
 
 void testattr4() {
-  TestOwnershipAttr *x = [TestOwnershipAttr alloc]; // no-warning
+  TestOwnershipAttr *x = [TestOwnershipAttr alloc];
   consume_ns(x);
-  TestOwnershipAttr *y = [TestOwnershipAttr alloc]; // no-warning
+  TestOwnershipAttr *y = [TestOwnershipAttr alloc];
   consume_cf(y);
 }
 
 @interface TestOwnershipAttr2 : NSObject
-- (NSString*) newString NS_RETURNS_NOT_RETAINED; // no-warning
+- (NSString*) newString NS_RETURNS_NOT_RETAINED;
 @end
 
 @implementation TestOwnershipAttr2
 - (NSString*) newString {
-  return [NSString alloc]; // expected-warning {{Potential leak of an object}}
+  return [NSString alloc];
 }
 @end
 
@@ -1384,20 +1386,20 @@ CFDateRef returnsRetainedCFDate()  {
 }
 
 - (CFDateRef) newCFRetainedAsCFNoAttr {
-  return (CFDateRef)[(id)[self returnsCFRetainedAsCF] autorelease]; // expected-warning{{Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected}}
+  return (CFDateRef)[(id)[self returnsCFRetainedAsCF] autorelease];
 }
 
 - (NSDate*) alsoReturnsRetained {
-  return (NSDate*) returnsRetainedCFDate(); // expected-warning{{leak}}
+  return (NSDate*) returnsRetainedCFDate();
 }
 
 - (CFDateRef) alsoReturnsRetainedAsCF {
-  return returnsRetainedCFDate(); // expected-warning{{leak}}
+  return returnsRetainedCFDate();
 }
 
 
 - (NSDate*) returnsNSRetained {
-  return (NSDate*) returnsRetainedCFDate(); // no-warning
+  return (NSDate*) returnsRetainedCFDate();
 }
 @end
 
@@ -1413,25 +1415,25 @@ void panic_not_in_hardcoded_list() __attribute__((noreturn));
 
 void test_panic_negative() {
   signed z = 1;
-  CFNumberRef value = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &z);  // expected-warning{{leak}}
+  CFNumberRef value = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &z);
 }
 
 void test_panic_positive() {
   signed z = 1;
-  CFNumberRef value = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &z); // no-warning
+  CFNumberRef value = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &z);
   panic();
 }
 
 void test_panic_neg_2(int x) {
   signed z = 1;
-  CFNumberRef value = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &z); // expected-warning{{leak}}
+  CFNumberRef value = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &z);
   if (x)
     panic();
 }
 
 void test_panic_pos_2(int x) {
   signed z = 1;
-  CFNumberRef value = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &z); // no-warning
+  CFNumberRef value = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &z);
   if (x)
     panic();
   if (!x) {
@@ -1447,28 +1449,28 @@ void test_panic_pos_2(int x) {
 //===----------------------------------------------------------------------===//
 
 void test_blocks_1_pos(void) {
-  NSNumber *number = [[NSNumber alloc] initWithInt:5]; // expected-warning{{leak}}
+  NSNumber *number = [[NSNumber alloc] initWithInt:5];
   ^{}();
 }
 
 void test_blocks_1_indirect_release(void) {
-  NSNumber *number = [[NSNumber alloc] initWithInt:5]; // no-warning
+  NSNumber *number = [[NSNumber alloc] initWithInt:5];
   ^{ [number release]; }();
 }
 
 void test_blocks_1_indirect_retain(void) {
   // Eventually this should be reported as a leak.
-  NSNumber *number = [[NSNumber alloc] initWithInt:5]; // no-warning
+  NSNumber *number = [[NSNumber alloc] initWithInt:5];
   ^{ [number retain]; }();
 }
 
 void test_blocks_1_indirect_release_via_call(void) {
-  NSNumber *number = [[NSNumber alloc] initWithInt:5]; // no-warning
+  NSNumber *number = [[NSNumber alloc] initWithInt:5];
   ^(NSObject *o){ [o release]; }(number);
 }
 
 void test_blocks_1_indirect_retain_via_call(void) {
-  NSNumber *number = [[NSNumber alloc] initWithInt:5]; // expected-warning {{leak}}
+  NSNumber *number = [[NSNumber alloc] initWithInt:5];
   ^(NSObject *o){ [o retain]; }(number);
 }
 
@@ -1503,7 +1505,7 @@ void r8272168() {
 - (NSDate*) rdar8356342:(NSDate*)inValue {
   NSDate *outValue = inValue;
   if (outValue == 0)
-    outValue = [[NSDate alloc] init]; // no-warning
+    outValue = [[NSDate alloc] init];
 
   if (outValue != inValue)
     [outValue autorelease];
@@ -1526,7 +1528,7 @@ static void rdar_8724287(CFErrorRef error)
     while (error_to_dump != ((void*)0)) {
         CFDictionaryRef info;
 
-        info = CFErrorCopyUserInfo(error_to_dump); // expected-warning{{Potential leak of an object}}
+        info = CFErrorCopyUserInfo(error_to_dump);
 
         if (info != ((void*)0)) {
         }
@@ -1572,52 +1574,52 @@ void rdar9726279() {
 // Test camelcase support for CF conventions.  While Core Foundation APIs
 // don't use camel casing, other code is allowed to use it.
 CFArrayRef camelcase_create_1() {
-  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
+  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
 }
 
 CFArrayRef camelcase_createno() {
-  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // expected-warning {{leak}}
+  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
 }
 
 CFArrayRef camelcase_copy() {
-  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
+  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
 }
 
 CFArrayRef camelcase_copying() {
-  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // expected-warning {{leak}}
+  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
 }
 
 CFArrayRef copyCamelCase() {
-  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
+  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
 }
 
 CFArrayRef __copyCamelCase() {
-  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
+  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
 }
 
 CFArrayRef __createCamelCase() {
-  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
+  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
 }
 
 CFArrayRef camel_create() {
-  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
+  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
 }
 
 
 CFArrayRef camel_creat() {
-  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // expected-warning {{leak}}
+  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
 }
 
 CFArrayRef camel_copy() {
-  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
+  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
 }
 
 CFArrayRef camel_copyMachine() {
-  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
+  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
 }
 
 CFArrayRef camel_copymachine() {
-  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // expected-warning {{leak}}
+  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
 }
 
 // rdar://problem/8024350
@@ -1638,14 +1640,14 @@ CFArrayRef camel_copymachine() {
 // Radar 6582778.
 void rdar6582778(void) {
   CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
-  CFTypeRef vals[] = { CFDateCreate(0, t) }; // expected-warning {{leak}}
+  CFTypeRef vals[] = { CFDateCreate(0, t) };
 }
 
 CFTypeRef global;
 
 void rdar6582778_2(void) {
   CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
-  global = CFDateCreate(0, t); // no-warning
+  global = CFDateCreate(0, t);
 }
 
 // <rdar://problem/10232019> - Test that objects passed to containers
@@ -1658,7 +1660,7 @@ void rdar10232019() {
   [array addObject:string];
   [string release];
 
-  NSString *otherString = [string stringByAppendingString:@"bar"]; // no-warning
+  NSString *otherString = [string stringByAppendingString:@"bar"];
   NSLog(@"%@", otherString);
 }
 
@@ -1668,7 +1670,7 @@ void rdar10232019_positive() {
   NSString *string = [[NSString alloc] initWithUTF8String:"foo"];
   [string release];
 
-  NSString *otherString = [string stringByAppendingString:@"bar"]; // expected-warning {{Reference-counted object is used after it is release}}
+  NSString *otherString = [string stringByAppendingString:@"bar"];
   NSLog(@"%@", otherString);
 }
 
@@ -1681,7 +1683,7 @@ void xpc_release(xpc_object_t object);
 void rdar9658496() {
   CFStringRef cf;
   xpc_object_t xpc;
-  cf = CFStringCreateWithCString( ((CFAllocatorRef)0), "test", kCFStringEncodingUTF8 ); // no-warning
+  cf = CFStringCreateWithCString( ((CFAllocatorRef)0), "test", kCFStringEncodingUTF8 );
   xpc = _CFXPCCreateXPCObjectFromCFObject( cf );
   CFRelease(cf);
   xpc_release(xpc);
@@ -1702,7 +1704,7 @@ void rdar9658496() {
 void rdar_10824732() {
   @autoreleasepool {
     NSString *obj = @"test";
-    RDar10824732 *foo = [[RDar10824732 alloc] initWithObj:obj]; // no-warning
+    RDar10824732 *foo = [[RDar10824732 alloc] initWithObj:obj];
     [foo release];
   }
 }
@@ -1769,17 +1771,17 @@ extern id NSApp;
 void *malloc(size_t);
 struct rdar11104566 { CFStringRef myStr; };
 struct rdar11104566 test_rdar11104566() {
-  CFStringRef cf = CFStringCreateWithCString( ((CFAllocatorRef)0), "test", kCFStringEncodingUTF8 ); // no-warning
+  CFStringRef cf = CFStringCreateWithCString( ((CFAllocatorRef)0), "test", kCFStringEncodingUTF8 );
   struct rdar11104566 V;
   V.myStr = cf;
-  return V; // no-warning
+  return V;
 }
 
 struct rdar11104566 *test_2_rdar11104566() {
-  CFStringRef cf = CFStringCreateWithCString( ((CFAllocatorRef)0), "test", kCFStringEncodingUTF8 ); // no-warning
+  CFStringRef cf = CFStringCreateWithCString( ((CFAllocatorRef)0), "test", kCFStringEncodingUTF8 );
   struct rdar11104566 *V = (struct rdar11104566 *) malloc(sizeof(*V));
   V->myStr = cf;
-  return V; // no-warning
+  return V;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1789,7 +1791,7 @@ struct rdar11104566 *test_2_rdar11104566() {
 void test_objc_arrays() {
     { // CASE ONE -- OBJECT IN ARRAY CREATED DIRECTLY
         NSObject *o = [[NSObject alloc] init];
-        NSArray *a = [[NSArray alloc] initWithObjects:o, (void*)0]; // expected-warning {{leak}}
+        NSArray *a = [[NSArray alloc] initWithObjects:o, (void*)0];
         [o release];
         [a description];
         [o description];
@@ -1798,7 +1800,7 @@ void test_objc_arrays() {
     { // CASE TWO -- OBJECT IN ARRAY CREATED BY DUPING AUTORELEASED ARRAY
         NSObject *o = [[NSObject alloc] init];
         NSArray *a1 = [NSArray arrayWithObjects:o, (void*)0];
-        NSArray *a2 = [[NSArray alloc] initWithArray:a1]; // expected-warning {{leak}}
+        NSArray *a2 = [[NSArray alloc] initWithArray:a1];
         [o release];        
         [a2 description];
         [o description];
@@ -1806,7 +1808,7 @@ void test_objc_arrays() {
 
     { // CASE THREE -- OBJECT IN RETAINED @[]
         NSObject *o = [[NSObject alloc] init];
-        NSArray *a3 = [@[o] retain]; // expected-warning {{leak}}
+        NSArray *a3 = [@[o] retain];
         [o release];        
         [a3 description];
         [o description];
@@ -1814,7 +1816,7 @@ void test_objc_arrays() {
     
     { // CASE FOUR -- OBJECT IN ARRAY CREATED BY DUPING @[]
         NSObject *o = [[NSObject alloc] init];
-        NSArray *a = [[NSArray alloc] initWithArray:@[o]]; // expected-warning {{leak}}
+        NSArray *a = [[NSArray alloc] initWithArray:@[o]];
         [o release];
         
         [a description];
@@ -1823,7 +1825,7 @@ void test_objc_arrays() {
     
     { // CASE FIVE -- OBJECT IN RETAINED @{}
         NSValue *o = [[NSValue alloc] init];
-        NSDictionary *a = [@{o : o} retain]; // expected-warning {{leak}}
+        NSDictionary *a = [@{o : o} retain];
         [o release];
         
         [a description];
@@ -1832,15 +1834,15 @@ void test_objc_arrays() {
 }
 
 void test_objc_integer_literals() {
-  id value = [@1 retain]; // expected-warning {{leak}}
+  id value = [@1 retain];
   [value description];
 }
 
 void test_objc_boxed_expressions(int x, const char *y) {
-  id value = [@(x) retain]; // expected-warning {{leak}}
+  id value = [@(x) retain];
   [value description];
 
-  value = [@(y) retain]; // expected-warning {{leak}}
+  value = [@(y) retain];
   [value description];
 }
 
@@ -1855,7 +1857,7 @@ void rdar11400885(int y)
       printString = [[NSString alloc] init];
     NSLog(@"Once %@", printString);
     [printString release];
-    NSLog(@"Again: %@", printString); // expected-warning {{Reference-counted object is used after it is released}}
+    NSLog(@"Again: %@", printString);
   }
 }
 
@@ -1875,28 +1877,28 @@ void CFConsumeAndStopTracking(CFTypeRef CF_CONSUMED obj, void (^callback)(void))
 
 void testConsumeAndStopTracking() {
   id retained = [@[] retain]; // +1
-  consumeAndStopTracking(retained, ^{}); // no-warning
+  consumeAndStopTracking(retained, ^{});
 
   id doubleRetained = [[@[] retain] retain]; // +2
   consumeAndStopTracking(doubleRetained, ^{
     [doubleRetained release];
-  }); // no-warning
+  });
 
   id unretained = @[]; // +0
-  consumeAndStopTracking(unretained, ^{}); // expected-warning {{Incorrect decrement of the reference count of an object that is not owned at this point by the caller}}
+  consumeAndStopTracking(unretained, ^{});
 }
 
 void testCFConsumeAndStopTracking() {
   id retained = [@[] retain]; // +1
-  CFConsumeAndStopTracking((CFTypeRef)retained, ^{}); // no-warning
+  CFConsumeAndStopTracking((CFTypeRef)retained, ^{});
 
-  id doubleRetained = [[@[] retain] retain]; // +2
+  id doubleRetained = [[@[] retain] retain];
   CFConsumeAndStopTracking((CFTypeRef)doubleRetained, ^{
     [doubleRetained release];
-  }); // no-warning
+  });
 
   id unretained = @[]; // +0
-  CFConsumeAndStopTracking((CFTypeRef)unretained, ^{}); // expected-warning {{Incorrect decrement of the reference count of an object that is not owned at this point by the caller}}
+  CFConsumeAndStopTracking((CFTypeRef)unretained, ^{});
 }
 //===----------------------------------------------------------------------===//
 // Test 'pragma clang arc_cf_code_audited' support.
@@ -1908,7 +1910,7 @@ MyCFType CreateMyCFType();
 #pragma clang arc_cf_code_audited end 
     
 void test_custom_cf() {
-  MyCFType x = CreateMyCFType(); // expected-warning {{leak of an object stored into 'x'}}
+  MyCFType x = CreateMyCFType();
 }
 
 //===----------------------------------------------------------------------===//
@@ -1917,5 +1919,1171 @@ void test_custom_cf() {
 //===----------------------------------------------------------------------===//
 
 void test_CFPlugInInstanceCreate(CFUUIDRef factoryUUID, CFUUIDRef typeUUID) {
-  CFPlugInInstanceCreate(kCFAllocatorDefault, factoryUUID, typeUUID); // no-warning
+  CFPlugInInstanceCreate(kCFAllocatorDefault, factoryUUID, typeUUID);
 }
+
+// CHECK: 934:3: warning: 'IOServiceAddNotification' is deprecated
+// CHECK:   IOServiceAddNotification(masterPort, notificationType, matching,
+// CHECK:   ^
+// CHECK: 204:15: note: 'IOServiceAddNotification' declared here
+// CHECK: kern_return_t IOServiceAddNotification(  mach_port_t masterPort,  const io_name_t notificationType,  CFDictionaryRef matching,  mach_port_t wakePort,  uintptr_t reference,  io_iterator_t * notification ) __attribute__((deprecated)); // expected-note {{'IOServiceAddNotification' declared here}}
+// CHECK:               ^
+// CHECK: 1277:3: warning: class method '+drain' not found (return type defaults to 'id')
+// CHECK:   [NSAutoreleasePool drain];
+// CHECK:   ^                  ~~~~~
+// CHECK: 1294:1: warning: 'ns_returns_retained' attribute only applies to methods that return an Objective-C object
+// CHECK: - (int) returnsAnOwnedInt NS_RETURNS_RETAINED;
+// CHECK: ^                         ~~~~~~~~~~~~~~~~~~~
+// CHECK: 1300:1: warning: 'ns_returns_retained' attribute only applies to functions and methods
+// CHECK: static int ownership_attribute_doesnt_go_here NS_RETURNS_RETAINED;
+// CHECK: ^                                             ~~~~~~~~~~~~~~~~~~~
+// CHECK: 324:7: warning: Reference-counted object is used after it is released
+// CHECK:   t = CFDateGetAbsoluteTime(date);
+// CHECK:       ^                     ~~~~
+// CHECK: 335:7: warning: Reference-counted object is used after it is released
+// CHECK:   t = CFDateGetAbsoluteTime(date);
+// CHECK:       ^                     ~~~~
+// CHECK: 366:20: warning: Potential leak of an object stored into 'date'
+// CHECK:   CFDateRef date = CFDateCreate(0, t);
+// CHECK:                    ^
+// CHECK: 377:20: warning: Potential leak of an object stored into 'date'
+// CHECK:   CFDateRef date = CFDateCreate(0, CFAbsoluteTimeGetCurrent());
+// CHECK:                    ^
+// CHECK: 385:20: warning: Potential leak of an object stored into 'date'
+// CHECK:   CFDateRef date = CFDateCreate(0, CFAbsoluteTimeGetCurrent());  //expected-warning{{leak}}
+// CHECK:                    ^
+// CHECK: 387:10: warning: Potential leak of an object stored into 'date'
+// CHECK:   date = CFDateCreate(0, CFAbsoluteTimeGetCurrent());
+// CHECK:          ^
+// CHECK: 396:20: warning: Potential leak of an object stored into 'date'
+// CHECK:   CFDateRef date = MyDateCreate();
+// CHECK:                    ^
+// CHECK: 405:17: warning: Dereference of null pointer (loaded from variable 'p')
+// CHECK:   if (!date) *p = 1;
+// CHECK:               ~ ^
+// CHECK: 414:20: warning: Potential leak of an object stored into 'disk'
+// CHECK:   DADiskRef disk = DADiskCreateFromBSDName(kCFAllocatorDefault, 0, "hello");
+// CHECK:                    ^
+// CHECK: 417:10: warning: Potential leak of an object stored into 'disk'
+// CHECK:   disk = DADiskCreateFromIOMedia(kCFAllocatorDefault, 0, media);
+// CHECK:          ^
+// CHECK: 420:26: warning: Potential leak of an object stored into 'dict'
+// CHECK:   CFDictionaryRef dict = DADiskCopyDescription(d);
+// CHECK:                          ^
+// CHECK: 423:10: warning: Potential leak of an object stored into 'disk'
+// CHECK:   disk = DADiskCopyWholeDisk(d);
+// CHECK:          ^
+// CHECK: 426:30: warning: Potential leak of an object stored into 'dissenter'
+// CHECK:   DADissenterRef dissenter = DADissenterCreate(kCFAllocatorDefault,
+// CHECK:                              ^
+// CHECK: 430:26: warning: Potential leak of an object stored into 'session'
+// CHECK:   DASessionRef session = DASessionCreate(kCFAllocatorDefault);
+// CHECK:                          ^
+// CHECK: 456:3: warning: Incorrect decrement of the reference count of an object that is not owned at this point by the caller
+// CHECK:   CFRelease(s1);
+// CHECK:   ^         ~~
+// CHECK: 464:17: warning: Potential leak of an object stored into 'o'
+// CHECK:   CFTypeRef o = MyCreateFun();
+// CHECK:                 ^
+// CHECK: 475:3: warning: Object sent -autorelease too many times
+// CHECK:   [(id) A autorelease];
+// CHECK:   ^~~~~~~~~~~~~~~~~~~~
+// CHECK: 482:3: warning: Object sent -autorelease too many times
+// CHECK:   return A;
+// CHECK:   ^
+// CHECK: 489:25: warning: Object sent -autorelease too many times
+// CHECK:   CFMutableArrayRef B = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+// CHECK:                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK: 497:3: warning: Potential leak of an object
+// CHECK:   CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+// CHECK:   ^
+// CHECK: 516:5: warning: Null pointer argument in call to CFRelease
+// CHECK:     CFRelease(p);
+// CHECK:     ^         ~
+// CHECK: 519:5: warning: Null pointer argument in call to CFRetain
+// CHECK:     CFRetain(p);
+// CHECK:     ^        ~
+// CHECK: 561:3: warning: Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected
+// CHECK:   return s;
+// CHECK:   ^
+// CHECK: 574:20: warning: Potential leak of an object stored into 'kind'
+// CHECK:   NSString *kind = [[NSString alloc] initWithUTF8String:inkind];
+// CHECK:                    ^
+// CHECK: 596:13: warning: Array access (from variable 'kindC') results in a null pointer dereference
+// CHECK:   if(!isFoo(kindC[0]))
+// CHECK:             ^~~~~
+// CHECK: 602:3: warning: Incorrect decrement of the reference count of an object that is not owned at this point by the caller
+// CHECK:   [name release];
+// CHECK:   ^~~~~
+// CHECK: 626:3: warning: Reference-counted object is used after it is released
+// CHECK:   [foo release];
+// CHECK:   ^~~~
+// CHECK: 635:3: warning: Reference-counted object is used after it is released
+// CHECK:   [foo dealloc];
+// CHECK:   ^~~~
+// CHECK: 687:31: warning: Potential leak of an object stored into 'dict'
+// CHECK:  NSMutableDictionary *dict = [[NSMutableDictionary dictionaryWithCapacity:4] retain];
+// CHECK:                               ^
+// CHECK: 699:31: warning: Potential leak of an object stored into 'dict'
+// CHECK:  NSMutableDictionary *dict = [[NSMutableDictionary dictionaryWithCapacity:4] retain];
+// CHECK:                               ^
+// CHECK: 712:3: warning: Incorrect decrement of the reference count of an object that is not owned at this point by the caller
+// CHECK:   [array release];
+// CHECK:   ^~~~~~
+// CHECK: 788:3: warning: Potential leak of an object
+// CHECK:   [[RDar6320065Subclass alloc] init];
+// CHECK:   ^
+// CHECK: 794:3: warning: Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected
+// CHECK:   return [self autorelease];
+// CHECK:   ^
+// CHECK: 832:37: warning: Potential leak of an object
+// CHECK: - (NSString*) NoCopyString { return [[NSString alloc] init]; }
+// CHECK:                                     ^
+// CHECK: 833:37: warning: Potential leak of an object
+// CHECK: - (NSString*) noCopyString { return [[NSString alloc] init]; }
+// CHECK:                                     ^
+// CHECK: 837:3: warning: Potential leak of an object
+// CHECK:   [x NoCopyString];
+// CHECK:   ^
+// CHECK: 838:3: warning: Potential leak of an object
+// CHECK:   [x noCopyString];
+// CHECK:   ^
+// CHECK: 865:10: warning: Potential leak of an object
+// CHECK:   return [[NSString alloc] init];
+// CHECK:          ^
+// CHECK: 895:3: warning: Potential leak of an object
+// CHECK:   [view createSnapshotImageOfType:str];
+// CHECK:   ^
+// CHECK: 896:3: warning: Potential leak of an object
+// CHECK:   [renderer createSnapshotImageOfType:str];
+// CHECK:   ^
+// CHECK: 897:3: warning: Potential leak of an object
+// CHECK:   [context createCGImage:img fromRect:rect];
+// CHECK:   ^
+// CHECK: 898:3: warning: Potential leak of an object
+// CHECK:   [context createCGImage:img fromRect:rect format:form colorSpace:cs];
+// CHECK:   ^
+// CHECK: 907:3: warning: Potential leak of an object
+// CHECK:   [context createCGLayerWithSize:size info:d];
+// CHECK:   ^
+// CHECK: 916:3: warning: Potential leak of an object
+// CHECK:   IOBSDNameMatching(masterPort, options, bsdName);
+// CHECK:   ^
+// CHECK: 920:3: warning: Potential leak of an object
+// CHECK:   IOServiceMatching(name);
+// CHECK:   ^
+// CHECK: 924:3: warning: Potential leak of an object
+// CHECK:   IOServiceNameMatching(name);
+// CHECK:   ^
+// CHECK: 934:3: warning: Reference-counted object is used after it is released
+// CHECK:   IOServiceAddNotification(masterPort, notificationType, matching,
+// CHECK:   ^                                                      ~~~~~~~~
+// CHECK: 939:3: warning: Potential leak of an object
+// CHECK:   IORegistryEntryIDMatching(entryID);
+// CHECK:   ^
+// CHECK: 944:3: warning: Potential leak of an object
+// CHECK:   IOOpenFirmwarePathMatching(masterPort, options, path);
+// CHECK:   ^
+// CHECK: 950:3: warning: Reference-counted object is used after it is released
+// CHECK:   CFRelease(matching);
+// CHECK:   ^         ~~~~~~~~
+// CHECK: 956:3: warning: Reference-counted object is used after it is released
+// CHECK:   CFRelease(matching);
+// CHECK:   ^         ~~~~~~~~
+// CHECK: 964:3: warning: Reference-counted object is used after it is released
+// CHECK:   CFRelease(matching);
+// CHECK:   ^         ~~~~~~~~
+// CHECK: 1005:22: warning: Potential leak of an object stored into 'number'
+// CHECK:   NSNumber *number = [[NSNumber alloc] initWithInt:5];
+// CHECK:                      ^
+// CHECK: 1030:41: warning: Potential leak of an object
+// CHECK:     CGGradientCreateWithColorComponents(CGColorSpaceCreateDeviceRGB(),
+// CHECK:                                         ^
+// CHECK: 1052:4: warning: Potential leak of an object stored into 'myGradient'
+// CHECK:    CGGradientCreateWithColorComponents(CGColorSpaceCreateDeviceRGB(), components, locations, num_locations);
+// CHECK:    ^
+// CHECK: 1052:40: warning: Potential leak of an object
+// CHECK:    CGGradientCreateWithColorComponents(CGColorSpaceCreateDeviceRGB(), components, locations, num_locations);
+// CHECK:                                        ^
+// CHECK: 1090:22: warning: Potential leak of an object stored into 'number'
+// CHECK:   NSNumber *number = [[NSNumber alloc] initWithInt:5];
+// CHECK:                      ^
+// CHECK: 1225:3: warning: Potential leak of an object
+// CHECK:   CGBitmapContextCreateWithData(data, width, height, bitsPerComponent,
+// CHECK:   ^
+// CHECK: 1243:10: warning: Potential leak of an object stored into 'y'
+// CHECK:   id y = [x new_stuff];
+// CHECK:          ^
+// CHECK: 1264:22: warning: Potential leak of an object stored into 'number'
+// CHECK:   NSNumber *number = [[NSNumber alloc] initWithInt:5];
+// CHECK:                      ^
+// CHECK: 1274:3: warning: The 'release' message should be sent to instances of class 'RDar7252064' and not the class directly
+// CHECK:   [RDar7252064 release];
+// CHECK:   ^~~~~~~~~~~~~~~~~~~~~
+// CHECK: 1275:3: warning: The 'retain' message should be sent to instances of class 'RDar7252064' and not the class directly
+// CHECK:   [RDar7252064 retain];
+// CHECK:   ^~~~~~~~~~~~~~~~~~~~
+// CHECK: 1276:3: warning: The 'autorelease' message should be sent to instances of class 'RDar7252064' and not the class directly
+// CHECK:   [RDar7252064 autorelease];
+// CHECK:   ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK: 1277:3: warning: The 'drain' message should be sent to instances of class 'NSAutoreleasePool' and not the class directly
+// CHECK:   [NSAutoreleasePool drain];
+// CHECK:   ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK: 1303:19: warning: Potential leak of an object stored into 'str'
+// CHECK:   NSString *str = [X returnsAnOwnedString];
+// CHECK:                   ^
+// CHECK: 1307:19: warning: Potential leak of an object stored into 'str'
+// CHECK:   NSString *str = [X returnsAnOwnedCFString];
+// CHECK:                   ^
+// CHECK: 1312:20: warning: Potential leak of an object stored into 'str2'
+// CHECK:   NSString *str2 = [X newStringNoAttr];
+// CHECK:                    ^
+// CHECK: 1316:26: warning: Potential leak of an object stored into 'x'
+// CHECK:   TestOwnershipAttr *x = [TestOwnershipAttr alloc];
+// CHECK:                          ^
+// CHECK: 1320:26: warning: Potential leak of an object stored into 'x'
+// CHECK:   TestOwnershipAttr *x = [[TestOwnershipAttr alloc] pseudoInit];
+// CHECK:                          ^
+// CHECK: 1324:26: warning: Potential leak of an object stored into 'x'
+// CHECK:   TestOwnershipAttr *x = [[TestOwnershipAttr alloc] pseudoInit];// expected-warning{{leak}}
+// CHECK:                          ^
+// CHECK: 1356:10: warning: Potential leak of an object
+// CHECK:   return [NSString alloc];
+// CHECK:          ^
+// CHECK: 1389:3: warning: Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected
+// CHECK:   return (CFDateRef)[(id)[self returnsCFRetainedAsCF] autorelease];
+// CHECK:   ^
+// CHECK: 1393:20: warning: Potential leak of an object
+// CHECK:   return (NSDate*) returnsRetainedCFDate();
+// CHECK:                    ^
+// CHECK: 1397:10: warning: Potential leak of an object
+// CHECK:   return returnsRetainedCFDate();
+// CHECK:          ^
+// CHECK: 1418:23: warning: Potential leak of an object stored into 'value'
+// CHECK:   CFNumberRef value = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &z);
+// CHECK:                       ^
+// CHECK: 1429:23: warning: Potential leak of an object stored into 'value'
+// CHECK:   CFNumberRef value = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &z);
+// CHECK:                       ^
+// CHECK: 1452:22: warning: Potential leak of an object stored into 'number'
+// CHECK:   NSNumber *number = [[NSNumber alloc] initWithInt:5];
+// CHECK:                      ^
+// CHECK: 1473:22: warning: Potential leak of an object stored into 'number'
+// CHECK:   NSNumber *number = [[NSNumber alloc] initWithInt:5];
+// CHECK:                      ^
+// CHECK: 1531:16: warning: Potential leak of an object stored into 'info'
+// CHECK:         info = CFErrorCopyUserInfo(error_to_dump);
+// CHECK:                ^
+// CHECK: 1581:10: warning: Potential leak of an object
+// CHECK:   return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+// CHECK:          ^
+// CHECK: 1589:10: warning: Potential leak of an object
+// CHECK:   return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+// CHECK:          ^
+// CHECK: 1610:10: warning: Potential leak of an object
+// CHECK:   return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+// CHECK:          ^
+// CHECK: 1622:10: warning: Potential leak of an object
+// CHECK:   return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+// CHECK:          ^
+// CHECK: 1643:24: warning: Potential leak of an object stored into 'vals'
+// CHECK:   CFTypeRef vals[] = { CFDateCreate(0, t) };
+// CHECK:                        ^
+// CHECK: 1673:27: warning: Reference-counted object is used after it is released
+// CHECK:   NSString *otherString = [string stringByAppendingString:@"bar"];
+// CHECK:                           ^~~~~~~
+// CHECK: 1794:22: warning: Potential leak of an object stored into 'a'
+// CHECK:         NSArray *a = [[NSArray alloc] initWithObjects:o, (void*)0];
+// CHECK:                      ^
+// CHECK: 1803:23: warning: Potential leak of an object stored into 'a2'
+// CHECK:         NSArray *a2 = [[NSArray alloc] initWithArray:a1];
+// CHECK:                       ^
+// CHECK: 1811:24: warning: Potential leak of an object stored into 'a3'
+// CHECK:         NSArray *a3 = [@[o] retain];
+// CHECK:                        ^
+// CHECK: 1819:22: warning: Potential leak of an object stored into 'a'
+// CHECK:         NSArray *a = [[NSArray alloc] initWithArray:@[o]];
+// CHECK:                      ^
+// CHECK: 1828:28: warning: Potential leak of an object stored into 'a'
+// CHECK:         NSDictionary *a = [@{o : o} retain];
+// CHECK:                            ^
+// CHECK: 1837:15: warning: Potential leak of an object stored into 'value'
+// CHECK:   id value = [@1 retain];
+// CHECK:               ^
+// CHECK: 1842:15: warning: Potential leak of an object stored into 'value'
+// CHECK:   id value = [@(x) retain];
+// CHECK:               ^
+// CHECK: 1845:12: warning: Potential leak of an object stored into 'value'
+// CHECK:   value = [@(y) retain];
+// CHECK:            ^
+// CHECK: 1860:5: warning: Reference-counted object is used after it is released
+// CHECK:     NSLog(@"Again: %@", printString);
+// CHECK:     ^                   ~~~~~~~~~~~
+// CHECK: 1888:3: warning: Incorrect decrement of the reference count of an object that is not owned at this point by the caller
+// CHECK:   consumeAndStopTracking(unretained, ^{});
+// CHECK:   ^                      ~~~~~~~~~~
+// CHECK: 1901:3: warning: Incorrect decrement of the reference count of an object that is not owned at this point by the caller
+// CHECK:   CFConsumeAndStopTracking((CFTypeRef)unretained, ^{});
+// CHECK:   ^                        ~~~~~~~~~~~~~~~~~~~~~
+// CHECK: 1913:16: warning: Potential leak of an object stored into 'x'
+// CHECK:   MyCFType x = CreateMyCFType();
+// CHECK:                ^
+// CHECK: 319:20: note: Call to function 'CFDateCreate' returns a Core Foundation object with a +1 retain count
+// CHECK:   CFDateRef date = CFDateCreate(0, t);
+// CHECK:                    ^
+// CHECK: 320:3: note: Reference count incremented. The object now has a +2 retain count
+// CHECK:   CFRetain(date);
+// CHECK:   ^
+// CHECK: 321:3: note: Reference count decremented. The object now has a +1 retain count
+// CHECK:   CFRelease(date);
+// CHECK:   ^
+// CHECK: 323:3: note: Object released
+// CHECK:   CFRelease(date);
+// CHECK:   ^
+// CHECK: 324:7: note: Reference-counted object is used after it is released
+// CHECK:   t = CFDateGetAbsoluteTime(date);
+// CHECK:       ^
+// CHECK: 330:20: note: Call to function 'CFDateCreate' returns a Core Foundation object with a +1 retain count
+// CHECK:   CFDateRef date = CFDateCreate(0, t);  
+// CHECK:                    ^
+// CHECK: 331:3: note: Reference count incremented. The object now has a +2 retain count
+// CHECK:   [((NSDate*) date) retain];
+// CHECK:   ^
+// CHECK: 332:3: note: Reference count decremented. The object now has a +1 retain count
+// CHECK:   CFRelease(date);
+// CHECK:   ^
+// CHECK: 334:3: note: Object released
+// CHECK:   [((NSDate*) date) release];
+// CHECK:   ^
+// CHECK: 335:7: note: Reference-counted object is used after it is released
+// CHECK:   t = CFDateGetAbsoluteTime(date);
+// CHECK:       ^
+// CHECK: 366:20: note: Call to function 'CFDateCreate' returns a Core Foundation object with a +1 retain count
+// CHECK:   CFDateRef date = CFDateCreate(0, t);
+// CHECK:                    ^
+// CHECK: 368:3: note: Taking false branch
+// CHECK:   if (x)
+// CHECK:   ^
+// CHECK: 371:10: note: Object leaked: object allocated and stored into 'date' is not referenced later in this execution path and has a retain count of +1
+// CHECK:   return t;
+// CHECK:          ^
+// CHECK: 377:20: note: Call to function 'CFDateCreate' returns a Core Foundation object with a +1 retain count
+// CHECK:   CFDateRef date = CFDateCreate(0, CFAbsoluteTimeGetCurrent());
+// CHECK:                    ^
+// CHECK: 378:3: note: Reference count incremented. The object now has a +2 retain count
+// CHECK:   CFRetain(date);
+// CHECK:   ^
+// CHECK: 379:3: note: Object returned to caller as an owning reference (single retain count transferred to caller)
+// CHECK:   return date;
+// CHECK:   ^
+// CHECK: 380:1: note: Object leaked: object allocated and stored into 'date' is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 385:20: note: Call to function 'CFDateCreate' returns a Core Foundation object with a +1 retain count
+// CHECK:   CFDateRef date = CFDateCreate(0, CFAbsoluteTimeGetCurrent());  //expected-warning{{leak}}
+// CHECK:                    ^
+// CHECK: 386:3: note: Reference count incremented. The object now has a +2 retain count
+// CHECK:   CFRetain(date);
+// CHECK:   ^
+// CHECK: 388:3: note: Object leaked: object allocated and stored into 'date' is not referenced later in this execution path and has a retain count of +2
+// CHECK:   return date;
+// CHECK:   ^
+// CHECK: 387:10: note: Call to function 'CFDateCreate' returns a Core Foundation object with a +1 retain count
+// CHECK:   date = CFDateCreate(0, CFAbsoluteTimeGetCurrent());
+// CHECK:          ^
+// CHECK: 388:3: note: Object returned to caller as an owning reference (single retain count transferred to caller)
+// CHECK:   return date;
+// CHECK:   ^
+// CHECK: 388:3: note: Object leaked: object allocated and stored into 'date' is returned from a function whose name ('f7') does not contain 'Copy' or 'Create'.  This violates the naming convention rules given in the Memory Management Guide for Core Foundation
+// CHECK: 396:20: note: Call to function 'MyDateCreate' returns a Core Foundation object with a +1 retain count
+// CHECK:   CFDateRef date = MyDateCreate();
+// CHECK:                    ^
+// CHECK: 397:3: note: Reference count incremented. The object now has a +2 retain count
+// CHECK:   CFRetain(date);  
+// CHECK:   ^
+// CHECK: 398:3: note: Object returned to caller as an owning reference (single retain count transferred to caller)
+// CHECK:   return date;
+// CHECK:   ^
+// CHECK: 399:1: note: Object leaked: object allocated and stored into 'date' is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 403:3: note: Variable 'p' initialized to a null pointer value
+// CHECK:   int *p = 0;
+// CHECK:   ^
+// CHECK: 405:3: note: Taking true branch
+// CHECK:   if (!date) *p = 1;
+// CHECK:   ^
+// CHECK: 405:14: note: Dereference of null pointer (loaded from variable 'p')
+// CHECK:   if (!date) *p = 1;
+// CHECK:              ^
+// CHECK: 415:3: note: Taking false branch
+// CHECK:   if (disk) NSLog(@"ok");
+// CHECK:   ^
+// CHECK: 418:3: note: Taking false branch
+// CHECK:   if (disk) NSLog(@"ok");
+// CHECK:   ^
+// CHECK: 420:26: note: Call to function 'DADiskCopyDescription' returns a Core Foundation object with a +1 retain count
+// CHECK:   CFDictionaryRef dict = DADiskCopyDescription(d);
+// CHECK:                          ^
+// CHECK: 421:7: note: Assuming 'dict' is non-null
+// CHECK:   if (dict) NSLog(@"ok"); 
+// CHECK:       ^
+// CHECK: 421:3: note: Taking true branch
+// CHECK:   if (dict) NSLog(@"ok"); 
+// CHECK:   ^
+// CHECK: 421:20: note: Object leaked: object allocated and stored into 'dict' is not referenced later in this execution path and has a retain count of +1
+// CHECK:   if (dict) NSLog(@"ok"); 
+// CHECK:                    ^
+// CHECK: 415:3: note: Taking false branch
+// CHECK:   if (disk) NSLog(@"ok");
+// CHECK:   ^
+// CHECK: 418:3: note: Taking false branch
+// CHECK:   if (disk) NSLog(@"ok");
+// CHECK:   ^
+// CHECK: 421:3: note: Taking false branch
+// CHECK:   if (dict) NSLog(@"ok"); 
+// CHECK:   ^
+// CHECK: 423:10: note: Call to function 'DADiskCopyWholeDisk' returns a Core Foundation object with a +1 retain count
+// CHECK:   disk = DADiskCopyWholeDisk(d);
+// CHECK:          ^
+// CHECK: 424:7: note: Assuming 'disk' is non-null
+// CHECK:   if (disk) NSLog(@"ok");
+// CHECK:       ^
+// CHECK: 424:3: note: Taking true branch
+// CHECK:   if (disk) NSLog(@"ok");
+// CHECK:   ^
+// CHECK: 424:20: note: Object leaked: object allocated and stored into 'disk' is not referenced later in this execution path and has a retain count of +1
+// CHECK:   if (disk) NSLog(@"ok");
+// CHECK:                    ^
+// CHECK: 415:3: note: Taking false branch
+// CHECK:   if (disk) NSLog(@"ok");
+// CHECK:   ^
+// CHECK: 418:3: note: Taking false branch
+// CHECK:   if (disk) NSLog(@"ok");
+// CHECK:   ^
+// CHECK: 421:3: note: Taking false branch
+// CHECK:   if (dict) NSLog(@"ok"); 
+// CHECK:   ^
+// CHECK: 424:3: note: Taking false branch
+// CHECK:   if (disk) NSLog(@"ok");
+// CHECK:   ^
+// CHECK: 426:30: note: Call to function 'DADissenterCreate' returns a Core Foundation object with a +1 retain count
+// CHECK:   DADissenterRef dissenter = DADissenterCreate(kCFAllocatorDefault,
+// CHECK:                              ^
+// CHECK: 428:7: note: Assuming 'dissenter' is non-null
+// CHECK:   if (dissenter) NSLog(@"ok");
+// CHECK:       ^
+// CHECK: 428:3: note: Taking true branch
+// CHECK:   if (dissenter) NSLog(@"ok");
+// CHECK:   ^
+// CHECK: 428:25: note: Object leaked: object allocated and stored into 'dissenter' is not referenced later in this execution path and has a retain count of +1
+// CHECK:   if (dissenter) NSLog(@"ok");
+// CHECK:                         ^
+// CHECK: 415:3: note: Taking false branch
+// CHECK:   if (disk) NSLog(@"ok");
+// CHECK:   ^
+// CHECK: 418:3: note: Taking false branch
+// CHECK:   if (disk) NSLog(@"ok");
+// CHECK:   ^
+// CHECK: 421:3: note: Taking false branch
+// CHECK:   if (dict) NSLog(@"ok"); 
+// CHECK:   ^
+// CHECK: 424:3: note: Taking false branch
+// CHECK:   if (disk) NSLog(@"ok");
+// CHECK:   ^
+// CHECK: 428:3: note: Taking false branch
+// CHECK:   if (dissenter) NSLog(@"ok");
+// CHECK:   ^
+// CHECK: 430:26: note: Call to function 'DASessionCreate' returns a Core Foundation object with a +1 retain count
+// CHECK:   DASessionRef session = DASessionCreate(kCFAllocatorDefault);
+// CHECK:                          ^
+// CHECK: 431:7: note: Assuming 'session' is non-null
+// CHECK:   if (session) NSLog(@"ok");
+// CHECK:       ^
+// CHECK: 431:3: note: Taking true branch
+// CHECK:   if (session) NSLog(@"ok");
+// CHECK:   ^
+// CHECK: 431:23: note: Object leaked: object allocated and stored into 'session' is not referenced later in this execution path and has a retain count of +1
+// CHECK:   if (session) NSLog(@"ok");
+// CHECK:                       ^
+// CHECK: 415:3: note: Taking false branch
+// CHECK:   if (disk) NSLog(@"ok");
+// CHECK:   ^
+// CHECK: 417:10: note: Call to function 'DADiskCreateFromIOMedia' returns a Core Foundation object with a +1 retain count
+// CHECK:   disk = DADiskCreateFromIOMedia(kCFAllocatorDefault, 0, media);
+// CHECK:          ^
+// CHECK: 418:7: note: Assuming 'disk' is non-null
+// CHECK:   if (disk) NSLog(@"ok");
+// CHECK:       ^
+// CHECK: 418:3: note: Taking true branch
+// CHECK:   if (disk) NSLog(@"ok");
+// CHECK:   ^
+// CHECK: 421:3: note: Taking false branch
+// CHECK:   if (dict) NSLog(@"ok"); 
+// CHECK:   ^
+// CHECK: 424:3: note: Taking false branch
+// CHECK:   if (disk) NSLog(@"ok");
+// CHECK:   ^
+// CHECK: 428:3: note: Taking false branch
+// CHECK:   if (dissenter) NSLog(@"ok");
+// CHECK:   ^
+// CHECK: 431:3: note: Taking false branch
+// CHECK:   if (session) NSLog(@"ok");
+// CHECK:   ^
+// CHECK: 432:1: note: Object leaked: object allocated and stored into 'disk' is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 450:22: note: Call to function 'CFArrayGetValueAtIndex' returns a Core Foundation object with a +0 retain count
+// CHECK:   s1 = (CFStringRef) CFArrayGetValueAtIndex(A, 0);
+// CHECK:                      ^
+// CHECK: 456:3: note: Incorrect decrement of the reference count of an object that is not owned at this point by the caller
+// CHECK:   CFRelease(s1);
+// CHECK:   ^
+// CHECK: 464:17: note: Call to function 'MyCreateFun' returns a Core Foundation object with a +1 retain count
+// CHECK:   CFTypeRef o = MyCreateFun();
+// CHECK:                 ^
+// CHECK: 465:1: note: Object leaked: object allocated and stored into 'o' is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 473:25: note: Call to function 'CFArrayCreateMutable' returns a Core Foundation object with a +1 retain count
+// CHECK:   CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+// CHECK:                         ^
+// CHECK: 474:3: note: Object sent -autorelease message
+// CHECK:   [(id) A autorelease];
+// CHECK:   ^
+// CHECK: 475:3: note: Object sent -autorelease message
+// CHECK:   [(id) A autorelease];
+// CHECK:   ^
+// CHECK: 476:1: note: Object over-autoreleased: object was sent -autorelease 2 times but the object has a +1 retain count
+// CHECK: }
+// CHECK: ^
+// CHECK: 479:25: note: Call to function 'CFArrayCreateMutable' returns a Core Foundation object with a +1 retain count
+// CHECK:   CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+// CHECK:                         ^
+// CHECK: 480:3: note: Object sent -autorelease message
+// CHECK:   [(id) A autorelease];
+// CHECK:   ^
+// CHECK: 481:3: note: Object sent -autorelease message
+// CHECK:   [(id) A autorelease]; 
+// CHECK:   ^
+// CHECK: 482:3: note: Object over-autoreleased: object was sent -autorelease 2 times but the object has a +0 retain count
+// CHECK:   return A;
+// CHECK:   ^
+// CHECK: 486:25: note: Call to function 'CFArrayCreateMutable' returns a Core Foundation object with a +1 retain count
+// CHECK:   CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+// CHECK:                         ^
+// CHECK: 487:3: note: Object sent -autorelease message
+// CHECK:   [(id) A autorelease];
+// CHECK:   ^
+// CHECK: 488:3: note: Object sent -autorelease message
+// CHECK:   [(id) A autorelease]; 
+// CHECK:   ^
+// CHECK: 489:25: note: Object over-autoreleased: object was sent -autorelease 2 times but the object has a +1 retain count
+// CHECK:   CFMutableArrayRef B = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+// CHECK:                         ^
+// CHECK: 497:3: note: Call to function 'CFArrayCreateMutable' returns a Core Foundation object with a +1 retain count
+// CHECK:   CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+// CHECK:   ^
+// CHECK: 498:1: note: Object leaked: allocated object is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 512:7: note: Assuming 'p' is null
+// CHECK:   if (p)
+// CHECK:       ^
+// CHECK: 512:7: note: Assuming pointer value is null
+// CHECK: 512:3: note: Taking false branch
+// CHECK:   if (p)
+// CHECK:   ^
+// CHECK: 515:3: note: Taking true branch
+// CHECK:   if (x) {
+// CHECK:   ^
+// CHECK: 516:5: note: Null pointer argument in call to CFRelease
+// CHECK:     CFRelease(p);
+// CHECK:     ^
+// CHECK: 512:7: note: Assuming 'p' is null
+// CHECK:   if (p)
+// CHECK:       ^
+// CHECK: 512:7: note: Assuming pointer value is null
+// CHECK: 512:3: note: Taking false branch
+// CHECK:   if (p)
+// CHECK:   ^
+// CHECK: 515:3: note: Taking false branch
+// CHECK:   if (x) {
+// CHECK:   ^
+// CHECK: 519:5: note: Null pointer argument in call to CFRetain
+// CHECK:     CFRetain(p);
+// CHECK:     ^
+// CHECK: 560:17: note: Method returns an Objective-C object with a +0 retain count
+// CHECK:   NSString *s = [NSString stringWithUTF8String:"hello"];
+// CHECK:                 ^
+// CHECK: 561:3: note: Object returned to caller with a +0 retain count
+// CHECK:   return s;
+// CHECK:   ^
+// CHECK: 561:3: note: Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected
+// CHECK: 574:20: note: Method returns an Objective-C object with a +1 retain count
+// CHECK:   NSString *kind = [[NSString alloc] initWithUTF8String:inkind];
+// CHECK:                    ^
+// CHECK: 581:3: note: Taking true branch
+// CHECK:   if(!name)
+// CHECK:   ^
+// CHECK: 582:5: note: Object leaked: object allocated and stored into 'kind' is not referenced later in this execution path and has a retain count of +1
+// CHECK:     return;
+// CHECK:     ^
+// CHECK: 581:3: note: Taking false branch
+// CHECK:   if(!name)
+// CHECK:   ^
+// CHECK: 584:3: note: Variable 'kindC' initialized to a null pointer value
+// CHECK:   const char *kindC = 0;
+// CHECK:   ^
+// CHECK: 592:3: note: Taking false branch
+// CHECK:   if(kind)
+// CHECK:   ^
+// CHECK: 594:3: note: Taking true branch
+// CHECK:   if(name)
+// CHECK:   ^
+// CHECK: 596:13: note: Array access (from variable 'kindC') results in a null pointer dereference
+// CHECK:   if(!isFoo(kindC[0]))
+// CHECK:             ^
+// CHECK: 580:20: note: Method returns an Objective-C object with a +0 retain count
+// CHECK:   NSString *name = [NSString stringWithUTF8String:inname];
+// CHECK:                    ^
+// CHECK: 581:6: note: Assuming 'name' is non-nil
+// CHECK:   if(!name)
+// CHECK:      ^
+// CHECK: 581:3: note: Taking false branch
+// CHECK:   if(!name)
+// CHECK:   ^
+// CHECK: 592:3: note: Taking true branch
+// CHECK:   if(kind)
+// CHECK:   ^
+// CHECK: 594:3: note: Taking true branch
+// CHECK:   if(name)
+// CHECK:   ^
+// CHECK: 596:3: note: Taking false branch
+// CHECK:   if(!isFoo(kindC[0]))
+// CHECK:   ^
+// CHECK: 598:3: note: Taking false branch
+// CHECK:   if(!isFoo(nameC[0]))
+// CHECK:   ^
+// CHECK: 602:3: note: Incorrect decrement of the reference count of an object that is not owned at this point by the caller
+// CHECK:   [name release];
+// CHECK:   ^
+// CHECK: 624:12: note: Method returns an Objective-C object with a +1 retain count
+// CHECK:   id foo = [[NSString alloc] init];
+// CHECK:            ^
+// CHECK: 625:3: note: Object released by directly sending the '-dealloc' message
+// CHECK:   [foo dealloc];
+// CHECK:   ^
+// CHECK: 626:3: note: Reference-counted object is used after it is released
+// CHECK:   [foo release];
+// CHECK:   ^
+// CHECK: 633:12: note: Method returns an Objective-C object with a +1 retain count
+// CHECK:   id foo = [[NSString alloc] init];
+// CHECK:            ^
+// CHECK: 634:3: note: Object released
+// CHECK:   [foo release];
+// CHECK:   ^
+// CHECK: 635:3: note: Reference-counted object is used after it is released
+// CHECK:   [foo dealloc];
+// CHECK:   ^
+// CHECK: 687:31: note: Method returns an Objective-C object with a +0 retain count
+// CHECK:  NSMutableDictionary *dict = [[NSMutableDictionary dictionaryWithCapacity:4] retain];
+// CHECK:                               ^
+// CHECK: 687:30: note: Reference count incremented. The object now has a +1 retain count
+// CHECK:  NSMutableDictionary *dict = [[NSMutableDictionary dictionaryWithCapacity:4] retain];
+// CHECK:                              ^
+// CHECK: 692:1: note: Object leaked: object allocated and stored into 'dict' is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 699:31: note: Method returns an Objective-C object with a +0 retain count
+// CHECK:  NSMutableDictionary *dict = [[NSMutableDictionary dictionaryWithCapacity:4] retain];
+// CHECK:                               ^
+// CHECK: 699:30: note: Reference count incremented. The object now has a +1 retain count
+// CHECK:  NSMutableDictionary *dict = [[NSMutableDictionary dictionaryWithCapacity:4] retain];
+// CHECK:                              ^
+// CHECK: 700:2: note: Taking false branch
+// CHECK:  if (window) 
+// CHECK:  ^
+// CHECK: 702:1: note: Object leaked: object allocated and stored into 'dict' is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 711:20: note: Method returns an Objective-C object with a +0 retain count
+// CHECK:   NSArray *array = [NSArray array];
+// CHECK:                    ^
+// CHECK: 712:3: note: Incorrect decrement of the reference count of an object that is not owned at this point by the caller
+// CHECK:   [array release];
+// CHECK:   ^
+// CHECK: 788:3: note: Method returns an Objective-C object with a +1 retain count
+// CHECK:   [[RDar6320065Subclass alloc] init];
+// CHECK:   ^
+// CHECK: 790:1: note: Object leaked: allocated object is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 793:10: note: Method returns an Objective-C object with a +1 retain count
+// CHECK:   self = [[RDar6320065Subclass alloc] init];
+// CHECK:          ^
+// CHECK: 794:10: note: Object sent -autorelease message
+// CHECK:   return [self autorelease];
+// CHECK:          ^
+// CHECK: 794:3: note: Object returned to caller with a +0 retain count
+// CHECK:   return [self autorelease];
+// CHECK:   ^
+// CHECK: 794:3: note: Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected
+// CHECK: 832:37: note: Method returns an Objective-C object with a +1 retain count
+// CHECK: - (NSString*) NoCopyString { return [[NSString alloc] init]; }
+// CHECK:                                     ^
+// CHECK: 832:30: note: Object returned to caller as an owning reference (single retain count transferred to caller)
+// CHECK: - (NSString*) NoCopyString { return [[NSString alloc] init]; }
+// CHECK:                              ^
+// CHECK: 832:30: note: Object leaked: allocated object is returned from a method whose name ('NoCopyString') does not start with 'copy', 'mutableCopy', 'alloc' or 'new'.  This violates the naming convention rules given in the Memory Management Guide for Cocoa
+// CHECK: 833:37: note: Method returns an Objective-C object with a +1 retain count
+// CHECK: - (NSString*) noCopyString { return [[NSString alloc] init]; }
+// CHECK:                                     ^
+// CHECK: 833:30: note: Object returned to caller as an owning reference (single retain count transferred to caller)
+// CHECK: - (NSString*) noCopyString { return [[NSString alloc] init]; }
+// CHECK:                              ^
+// CHECK: 833:30: note: Object leaked: allocated object is returned from a method whose name ('noCopyString') does not start with 'copy', 'mutableCopy', 'alloc' or 'new'.  This violates the naming convention rules given in the Memory Management Guide for Cocoa
+// CHECK: 837:3: note: Calling 'NoCopyString'
+// CHECK:   [x NoCopyString];
+// CHECK:   ^
+// CHECK: 832:37: note: Method returns an Objective-C object with a +1 retain count
+// CHECK: - (NSString*) NoCopyString { return [[NSString alloc] init]; }
+// CHECK:                                     ^
+// CHECK: 837:3: note: Returning from 'NoCopyString'
+// CHECK:   [x NoCopyString];
+// CHECK:   ^
+// CHECK: 841:1: note: Object leaked: allocated object is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 865:10: note: Method returns an Objective-C object with a +1 retain count
+// CHECK:   return [[NSString alloc] init];
+// CHECK:          ^
+// CHECK: 865:3: note: Object returned to caller as an owning reference (single retain count transferred to caller)
+// CHECK:   return [[NSString alloc] init];
+// CHECK:   ^
+// CHECK: 865:3: note: Object leaked: allocated object is returned from a method whose name (':') does not start with 'copy', 'mutableCopy', 'alloc' or 'new'.  This violates the naming convention rules given in the Memory Management Guide for Cocoa
+// CHECK: 895:3: note: Method returns an Objective-C object with a +1 retain count
+// CHECK:   [view createSnapshotImageOfType:str];
+// CHECK:   ^
+// CHECK: 899:1: note: Object leaked: allocated object is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 907:3: note: Method returns a Core Foundation object with a +1 retain count
+// CHECK:   [context createCGLayerWithSize:size info:d];
+// CHECK:   ^
+// CHECK: 908:1: note: Object leaked: allocated object is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 916:3: note: Call to function 'IOBSDNameMatching' returns a Core Foundation object with a +1 retain count
+// CHECK:   IOBSDNameMatching(masterPort, options, bsdName);
+// CHECK:   ^
+// CHECK: 917:1: note: Object leaked: allocated object is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 920:3: note: Call to function 'IOServiceMatching' returns a Core Foundation object with a +1 retain count
+// CHECK:   IOServiceMatching(name);
+// CHECK:   ^
+// CHECK: 921:1: note: Object leaked: allocated object is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 924:3: note: Call to function 'IOServiceNameMatching' returns a Core Foundation object with a +1 retain count
+// CHECK:   IOServiceNameMatching(name);
+// CHECK:   ^
+// CHECK: 925:1: note: Object leaked: allocated object is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 932:30: note: Call to function 'CreateDict' returns a Core Foundation object with a +1 retain count
+// CHECK:   CFDictionaryRef matching = CreateDict();
+// CHECK:                              ^
+// CHECK: 933:3: note: Object released
+// CHECK:   CFRelease(matching);
+// CHECK:   ^
+// CHECK: 934:3: note: Reference-counted object is used after it is released
+// CHECK:   IOServiceAddNotification(masterPort, notificationType, matching,
+// CHECK:   ^
+// CHECK: 939:3: note: Call to function 'IORegistryEntryIDMatching' returns a Core Foundation object with a +1 retain count
+// CHECK:   IORegistryEntryIDMatching(entryID);
+// CHECK:   ^
+// CHECK: 940:1: note: Object leaked: allocated object is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 944:3: note: Call to function 'IOOpenFirmwarePathMatching' returns a Core Foundation object with a +1 retain count
+// CHECK:   IOOpenFirmwarePathMatching(masterPort, options, path);
+// CHECK:   ^
+// CHECK: 945:1: note: Object leaked: allocated object is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 948:30: note: Call to function 'CreateDict' returns a Core Foundation object with a +1 retain count
+// CHECK:   CFDictionaryRef matching = CreateDict();
+// CHECK:                              ^
+// CHECK: 949:3: note: Object released
+// CHECK:   IOServiceGetMatchingService(masterPort, matching);
+// CHECK:   ^
+// CHECK: 950:3: note: Reference-counted object is used after it is released
+// CHECK:   CFRelease(matching);
+// CHECK:   ^
+// CHECK: 954:30: note: Call to function 'CreateDict' returns a Core Foundation object with a +1 retain count
+// CHECK:   CFDictionaryRef matching = CreateDict();
+// CHECK:                              ^
+// CHECK: 955:3: note: Object released
+// CHECK:   IOServiceGetMatchingServices(masterPort, matching, existing);
+// CHECK:   ^
+// CHECK: 956:3: note: Reference-counted object is used after it is released
+// CHECK:   CFRelease(matching);
+// CHECK:   ^
+// CHECK: 962:30: note: Call to function 'CreateDict' returns a Core Foundation object with a +1 retain count
+// CHECK:   CFDictionaryRef matching = CreateDict();
+// CHECK:                              ^
+// CHECK: 963:3: note: Object released
+// CHECK:   IOServiceAddMatchingNotification(notifyPort, notificationType, matching, callback, refCon, notification);
+// CHECK:   ^
+// CHECK: 964:3: note: Reference-counted object is used after it is released
+// CHECK:   CFRelease(matching);
+// CHECK:   ^
+// CHECK: 1005:22: note: Method returns an Objective-C object with a +1 retain count
+// CHECK:   NSNumber *number = [[NSNumber alloc] initWithInt:5];
+// CHECK:                      ^
+// CHECK: 1007:3: note: Reference count decremented
+// CHECK:   [number release];
+// CHECK:   ^
+// CHECK: 1008:3: note: Reference count incremented. The object now has a +1 retain count
+// CHECK:   [number retain];
+// CHECK:   ^
+// CHECK: 1009:3: note: Object leaked: object allocated and stored into 'number' is not referenced later in this execution path and has a retain count of +1
+// CHECK:   CFRelease(attrString);  
+// CHECK:   ^
+// CHECK: 1030:41: note: Call to function 'CGColorSpaceCreateDeviceRGB' returns a Core Foundation object with a +1 retain count
+// CHECK:     CGGradientCreateWithColorComponents(CGColorSpaceCreateDeviceRGB(),
+// CHECK:                                         ^
+// CHECK: 1029:3: note: Object leaked: allocated object is not referenced later in this execution path and has a retain count of +1
+// CHECK:   CGGradientRef myGradient =
+// CHECK:   ^
+// CHECK: 1052:40: note: Call to function 'CGColorSpaceCreateDeviceRGB' returns a Core Foundation object with a +1 retain count
+// CHECK:    CGGradientCreateWithColorComponents(CGColorSpaceCreateDeviceRGB(), components, locations, num_locations);
+// CHECK:                                        ^
+// CHECK: 1051:3: note: Object leaked: allocated object is not referenced later in this execution path and has a retain count of +1
+// CHECK:   CGGradientRef myGradient =
+// CHECK:   ^
+// CHECK: 1052:4: note: Call to function 'CGGradientCreateWithColorComponents' returns a Core Foundation object with a +1 retain count
+// CHECK:    CGGradientCreateWithColorComponents(CGColorSpaceCreateDeviceRGB(), components, locations, num_locations);
+// CHECK:    ^
+// CHECK: 1056:1: note: Object leaked: object allocated and stored into 'myGradient' is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 1090:22: note: Method returns an Objective-C object with a +1 retain count
+// CHECK:   NSNumber *number = [[NSNumber alloc] initWithInt:5];
+// CHECK:                      ^
+// CHECK: 1091:1: note: Object leaked: object allocated and stored into 'number' is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 1225:3: note: Call to function 'CGBitmapContextCreateWithData' returns a Core Foundation object with a +1 retain count
+// CHECK:   CGBitmapContextCreateWithData(data, width, height, bitsPerComponent,
+// CHECK:   ^
+// CHECK: 1227:1: note: Object leaked: allocated object is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 1243:10: note: Method returns an Objective-C object with a +1 retain count
+// CHECK:   id y = [x new_stuff];
+// CHECK:          ^
+// CHECK: 1244:1: note: Object leaked: object allocated and stored into 'y' is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 1264:22: note: Method returns an Objective-C object with a +1 retain count
+// CHECK:   NSNumber *number = [[NSNumber alloc] initWithInt:5];
+// CHECK:                      ^
+// CHECK: 1265:1: note: Object leaked: object allocated and stored into 'number' is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 1274:3: note: The 'release' message should be sent to instances of class 'RDar7252064' and not the class directly
+// CHECK:   [RDar7252064 release];
+// CHECK:   ^
+// CHECK: 1275:3: note: The 'retain' message should be sent to instances of class 'RDar7252064' and not the class directly
+// CHECK:   [RDar7252064 retain];
+// CHECK:   ^
+// CHECK: 1276:3: note: The 'autorelease' message should be sent to instances of class 'RDar7252064' and not the class directly
+// CHECK:   [RDar7252064 autorelease];
+// CHECK:   ^
+// CHECK: 1277:3: note: The 'drain' message should be sent to instances of class 'NSAutoreleasePool' and not the class directly
+// CHECK:   [NSAutoreleasePool drain];
+// CHECK:   ^
+// CHECK: 1303:19: note: Method returns an Objective-C object with a +1 retain count
+// CHECK:   NSString *str = [X returnsAnOwnedString];
+// CHECK:                   ^
+// CHECK: 1304:1: note: Object leaked: object allocated and stored into 'str' is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 1307:19: note: Method returns a Core Foundation object with a +1 retain count
+// CHECK:   NSString *str = [X returnsAnOwnedCFString];
+// CHECK:                   ^
+// CHECK: 1308:1: note: Object leaked: object allocated and stored into 'str' is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 1312:20: note: Method returns an Objective-C object with a +1 retain count
+// CHECK:   NSString *str2 = [X newStringNoAttr];
+// CHECK:                    ^
+// CHECK: 1313:1: note: Object leaked: object allocated and stored into 'str2' is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 1316:26: note: Method returns an Objective-C object with a +1 retain count
+// CHECK:   TestOwnershipAttr *x = [TestOwnershipAttr alloc];
+// CHECK:                          ^
+// CHECK: 1317:1: note: Object leaked: object allocated and stored into 'x' is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 1320:26: note: Method returns an Objective-C object with a +1 retain count
+// CHECK:   TestOwnershipAttr *x = [[TestOwnershipAttr alloc] pseudoInit];
+// CHECK:                          ^
+// CHECK: 1321:1: note: Object leaked: object allocated and stored into 'x' is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 1324:26: note: Method returns an Objective-C object with a +1 retain count
+// CHECK:   TestOwnershipAttr *x = [[TestOwnershipAttr alloc] pseudoInit];// expected-warning{{leak}}
+// CHECK:                          ^
+// CHECK: 1326:1: note: Object leaked: object allocated and stored into 'x' is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 1356:10: note: Method returns an Objective-C object with a +1 retain count
+// CHECK:   return [NSString alloc];
+// CHECK:          ^
+// CHECK: 1356:3: note: Object returned to caller as an owning reference (single retain count transferred to caller)
+// CHECK:   return [NSString alloc];
+// CHECK:   ^
+// CHECK: 1356:3: note: Object leaked: allocated object is returned from a method that is annotated as NS_RETURNS_NOT_RETAINED
+// CHECK: 1389:26: note: Calling 'returnsCFRetainedAsCF'
+// CHECK:   return (CFDateRef)[(id)[self returnsCFRetainedAsCF] autorelease];
+// CHECK:                          ^
+// CHECK: 1381:10: note: Calling 'returnsRetainedCFDate'
+// CHECK:   return returnsRetainedCFDate(); // No leak.
+// CHECK:          ^
+// CHECK: 1372:10: note: Call to function 'CFDateCreate' returns a Core Foundation object with a +1 retain count
+// CHECK:   return CFDateCreate(0, CFAbsoluteTimeGetCurrent());
+// CHECK:          ^
+// CHECK: 1381:10: note: Returning from 'returnsRetainedCFDate'
+// CHECK:   return returnsRetainedCFDate(); // No leak.
+// CHECK:          ^
+// CHECK: 1389:26: note: Returning from 'returnsCFRetainedAsCF'
+// CHECK:   return (CFDateRef)[(id)[self returnsCFRetainedAsCF] autorelease];
+// CHECK:                          ^
+// CHECK: 1389:21: note: Object sent -autorelease message
+// CHECK:   return (CFDateRef)[(id)[self returnsCFRetainedAsCF] autorelease];
+// CHECK:                     ^
+// CHECK: 1389:3: note: Object returned to caller with a +0 retain count
+// CHECK:   return (CFDateRef)[(id)[self returnsCFRetainedAsCF] autorelease];
+// CHECK:   ^
+// CHECK: 1389:3: note: Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected
+// CHECK: 1393:20: note: Calling 'returnsRetainedCFDate'
+// CHECK:   return (NSDate*) returnsRetainedCFDate();
+// CHECK:                    ^
+// CHECK: 1372:10: note: Call to function 'CFDateCreate' returns a Core Foundation object with a +1 retain count
+// CHECK:   return CFDateCreate(0, CFAbsoluteTimeGetCurrent());
+// CHECK:          ^
+// CHECK: 1393:20: note: Returning from 'returnsRetainedCFDate'
+// CHECK:   return (NSDate*) returnsRetainedCFDate();
+// CHECK:                    ^
+// CHECK: 1393:3: note: Object returned to caller as an owning reference (single retain count transferred to caller)
+// CHECK:   return (NSDate*) returnsRetainedCFDate();
+// CHECK:   ^
+// CHECK: 1393:3: note: Object leaked: allocated object is returned from a method whose name ('alsoReturnsRetained') does not start with 'copy', 'mutableCopy', 'alloc' or 'new'.  This violates the naming convention rules given in the Memory Management Guide for Cocoa
+// CHECK: 1397:10: note: Calling 'returnsRetainedCFDate'
+// CHECK:   return returnsRetainedCFDate();
+// CHECK:          ^
+// CHECK: 1372:10: note: Call to function 'CFDateCreate' returns a Core Foundation object with a +1 retain count
+// CHECK:   return CFDateCreate(0, CFAbsoluteTimeGetCurrent());
+// CHECK:          ^
+// CHECK: 1397:10: note: Returning from 'returnsRetainedCFDate'
+// CHECK:   return returnsRetainedCFDate();
+// CHECK:          ^
+// CHECK: 1397:3: note: Object returned to caller as an owning reference (single retain count transferred to caller)
+// CHECK:   return returnsRetainedCFDate();
+// CHECK:   ^
+// CHECK: 1397:3: note: Object leaked: allocated object is returned from a method whose name ('alsoReturnsRetainedAsCF') does not start with 'copy', 'mutableCopy', 'alloc' or 'new'.  This violates the naming convention rules given in the Memory Management Guide for Cocoa
+// CHECK: 1418:23: note: Call to function 'CFNumberCreate' returns a Core Foundation object with a +1 retain count
+// CHECK:   CFNumberRef value = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &z);
+// CHECK:                       ^
+// CHECK: 1419:1: note: Object leaked: object allocated and stored into 'value' is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 1429:23: note: Call to function 'CFNumberCreate' returns a Core Foundation object with a +1 retain count
+// CHECK:   CFNumberRef value = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &z);
+// CHECK:                       ^
+// CHECK: 1430:3: note: Taking false branch
+// CHECK:   if (x)
+// CHECK:   ^
+// CHECK: 1432:1: note: Object leaked: object allocated and stored into 'value' is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 1452:22: note: Method returns an Objective-C object with a +1 retain count
+// CHECK:   NSNumber *number = [[NSNumber alloc] initWithInt:5];
+// CHECK:                      ^
+// CHECK: 1453:3: note: Object leaked: object allocated and stored into 'number' is not referenced later in this execution path and has a retain count of +1
+// CHECK:   ^{}();
+// CHECK:   ^
+// CHECK: 1473:22: note: Method returns an Objective-C object with a +1 retain count
+// CHECK:   NSNumber *number = [[NSNumber alloc] initWithInt:5];
+// CHECK:                      ^
+// CHECK: 1474:3: note: Calling anonymous block
+// CHECK:   ^(NSObject *o){ [o retain]; }(number);
+// CHECK:   ^
+// CHECK: 1474:19: note: Reference count incremented. The object now has a +2 retain count
+// CHECK:   ^(NSObject *o){ [o retain]; }(number);
+// CHECK:                   ^
+// CHECK: 1474:3: note: Returning to caller
+// CHECK:   ^(NSObject *o){ [o retain]; }(number);
+// CHECK:   ^
+// CHECK: 1475:1: note: Object leaked: object allocated and stored into 'number' is not referenced later in this execution path and has a retain count of +2
+// CHECK: }
+// CHECK: ^
+// CHECK: 1528:5: note: Loop condition is true.  Entering loop body
+// CHECK:     while (error_to_dump != ((void*)0)) {
+// CHECK:     ^
+// CHECK: 1531:16: note: Call to function 'CFErrorCopyUserInfo' returns a Core Foundation object with a +1 retain count
+// CHECK:         info = CFErrorCopyUserInfo(error_to_dump);
+// CHECK:                ^
+// CHECK: 1533:13: note: Assuming 'info' is not equal to null
+// CHECK:         if (info != ((void*)0)) {
+// CHECK:             ^
+// CHECK: 1533:9: note: Taking true branch
+// CHECK:         if (info != ((void*)0)) {
+// CHECK:         ^
+// CHECK: 1528:5: note: Loop condition is false. Execution jumps to the end of the function
+// CHECK:     while (error_to_dump != ((void*)0)) {
+// CHECK:     ^
+// CHECK: 1538:1: note: Object leaked: object allocated and stored into 'info' is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 1581:10: note: Call to function 'CFArrayCreateMutable' returns a Core Foundation object with a +1 retain count
+// CHECK:   return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+// CHECK:          ^
+// CHECK: 1581:3: note: Object returned to caller as an owning reference (single retain count transferred to caller)
+// CHECK:   return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+// CHECK:   ^
+// CHECK: 1581:3: note: Object leaked: allocated object is returned from a function whose name ('camelcase_createno') does not contain 'Copy' or 'Create'.  This violates the naming convention rules given in the Memory Management Guide for Core Foundation
+// CHECK: 1589:10: note: Call to function 'CFArrayCreateMutable' returns a Core Foundation object with a +1 retain count
+// CHECK:   return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+// CHECK:          ^
+// CHECK: 1589:3: note: Object returned to caller as an owning reference (single retain count transferred to caller)
+// CHECK:   return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+// CHECK:   ^
+// CHECK: 1589:3: note: Object leaked: allocated object is returned from a function whose name ('camelcase_copying') does not contain 'Copy' or 'Create'.  This violates the naming convention rules given in the Memory Management Guide for Core Foundation
+// CHECK: 1610:10: note: Call to function 'CFArrayCreateMutable' returns a Core Foundation object with a +1 retain count
+// CHECK:   return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+// CHECK:          ^
+// CHECK: 1610:3: note: Object returned to caller as an owning reference (single retain count transferred to caller)
+// CHECK:   return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+// CHECK:   ^
+// CHECK: 1610:3: note: Object leaked: allocated object is returned from a function whose name ('camel_creat') does not contain 'Copy' or 'Create'.  This violates the naming convention rules given in the Memory Management Guide for Core Foundation
+// CHECK: 1622:10: note: Call to function 'CFArrayCreateMutable' returns a Core Foundation object with a +1 retain count
+// CHECK:   return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+// CHECK:          ^
+// CHECK: 1622:3: note: Object returned to caller as an owning reference (single retain count transferred to caller)
+// CHECK:   return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+// CHECK:   ^
+// CHECK: 1622:3: note: Object leaked: allocated object is returned from a function whose name ('camel_copymachine') does not contain 'Copy' or 'Create'.  This violates the naming convention rules given in the Memory Management Guide for Core Foundation
+// CHECK: 1643:24: note: Call to function 'CFDateCreate' returns a Core Foundation object with a +1 retain count
+// CHECK:   CFTypeRef vals[] = { CFDateCreate(0, t) };
+// CHECK:                        ^
+// CHECK: 1644:1: note: Object leaked: object allocated and stored into 'vals' is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 1670:22: note: Method returns an Objective-C object with a +1 retain count
+// CHECK:   NSString *string = [[NSString alloc] initWithUTF8String:"foo"];
+// CHECK:                      ^
+// CHECK: 1671:3: note: Object released
+// CHECK:   [string release];
+// CHECK:   ^
+// CHECK: 1673:27: note: Reference-counted object is used after it is released
+// CHECK:   NSString *otherString = [string stringByAppendingString:@"bar"];
+// CHECK:                           ^
+// CHECK: 1794:22: note: Method returns an Objective-C object with a +1 retain count
+// CHECK:         NSArray *a = [[NSArray alloc] initWithObjects:o, (void*)0];
+// CHECK:                      ^
+// CHECK: 1797:9: note: Object leaked: object allocated and stored into 'a' is not referenced later in this execution path and has a retain count of +1
+// CHECK:         [o description];
+// CHECK:         ^
+// CHECK: 1803:23: note: Method returns an Objective-C object with a +1 retain count
+// CHECK:         NSArray *a2 = [[NSArray alloc] initWithArray:a1];
+// CHECK:                       ^
+// CHECK: 1806:9: note: Object leaked: object allocated and stored into 'a2' is not referenced later in this execution path and has a retain count of +1
+// CHECK:         [o description];
+// CHECK:         ^
+// CHECK: 1811:24: note: NSArray literal is an object with a +0 retain count
+// CHECK:         NSArray *a3 = [@[o] retain];
+// CHECK:                        ^
+// CHECK: 1811:23: note: Reference count incremented. The object now has a +1 retain count
+// CHECK:         NSArray *a3 = [@[o] retain];
+// CHECK:                       ^
+// CHECK: 1814:9: note: Object leaked: object allocated and stored into 'a3' is not referenced later in this execution path and has a retain count of +1
+// CHECK:         [o description];
+// CHECK:         ^
+// CHECK: 1819:22: note: Method returns an Objective-C object with a +1 retain count
+// CHECK:         NSArray *a = [[NSArray alloc] initWithArray:@[o]];
+// CHECK:                      ^
+// CHECK: 1823:9: note: Object leaked: object allocated and stored into 'a' is not referenced later in this execution path and has a retain count of +1
+// CHECK:         [o description];
+// CHECK:         ^
+// CHECK: 1828:28: note: NSDictionary literal is an object with a +0 retain count
+// CHECK:         NSDictionary *a = [@{o : o} retain];
+// CHECK:                            ^
+// CHECK: 1828:27: note: Reference count incremented. The object now has a +1 retain count
+// CHECK:         NSDictionary *a = [@{o : o} retain];
+// CHECK:                           ^
+// CHECK: 1832:9: note: Object leaked: object allocated and stored into 'a' is not referenced later in this execution path and has a retain count of +1
+// CHECK:         [o description];
+// CHECK:         ^
+// CHECK: 1837:15: note: NSNumber literal is an object with a +0 retain count
+// CHECK:   id value = [@1 retain];
+// CHECK:               ^
+// CHECK: 1837:14: note: Reference count incremented. The object now has a +1 retain count
+// CHECK:   id value = [@1 retain];
+// CHECK:              ^
+// CHECK: 1839:1: note: Object leaked: object allocated and stored into 'value' is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 1842:15: note: NSNumber boxed expression produces an object with a +0 retain count
+// CHECK:   id value = [@(x) retain];
+// CHECK:               ^
+// CHECK: 1842:14: note: Reference count incremented. The object now has a +1 retain count
+// CHECK:   id value = [@(x) retain];
+// CHECK:              ^
+// CHECK: 1846:3: note: Object leaked: object allocated and stored into 'value' is not referenced later in this execution path and has a retain count of +1
+// CHECK:   [value description];
+// CHECK:   ^
+// CHECK: 1845:12: note: NSString boxed expression produces an object with a +0 retain count
+// CHECK:   value = [@(y) retain];
+// CHECK:            ^
+// CHECK: 1845:11: note: Reference count incremented. The object now has a +1 retain count
+// CHECK:   value = [@(y) retain];
+// CHECK:           ^
+// CHECK: 1847:1: note: Object leaked: object allocated and stored into 'value' is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
+// CHECK: 1854:5: note: Taking false branch
+// CHECK:     if(y > 2)
+// CHECK:     ^
+// CHECK: 1857:21: note: Method returns an Objective-C object with a +1 retain count
+// CHECK:       printString = [[NSString alloc] init];
+// CHECK:                     ^
+// CHECK: 1859:5: note: Object released
+// CHECK:     [printString release];
+// CHECK:     ^
+// CHECK: 1860:5: note: Reference-counted object is used after it is released
+// CHECK:     NSLog(@"Again: %@", printString);
+// CHECK:     ^
+// CHECK: 1887:19: note: NSArray literal is an object with a +0 retain count
+// CHECK:   id unretained = @[]; // +0
+// CHECK:                   ^
+// CHECK: 1888:3: note: Incorrect decrement of the reference count of an object that is not owned at this point by the caller
+// CHECK:   consumeAndStopTracking(unretained, ^{});
+// CHECK:   ^
+// CHECK: 1900:19: note: NSArray literal is an object with a +0 retain count
+// CHECK:   id unretained = @[]; // +0
+// CHECK:                   ^
+// CHECK: 1901:3: note: Incorrect decrement of the reference count of an object that is not owned at this point by the caller
+// CHECK:   CFConsumeAndStopTracking((CFTypeRef)unretained, ^{});
+// CHECK:   ^
+// CHECK: 1913:16: note: Call to function 'CreateMyCFType' returns a Core Foundation object with a +1 retain count
+// CHECK:   MyCFType x = CreateMyCFType();
+// CHECK:                ^
+// CHECK: 1914:1: note: Object leaked: object allocated and stored into 'x' is not referenced later in this execution path and has a retain count of +1
+// CHECK: }
+// CHECK: ^
