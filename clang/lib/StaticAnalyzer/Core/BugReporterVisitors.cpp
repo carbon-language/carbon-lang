@@ -696,8 +696,7 @@ ConditionBRVisitor::VisitTerminator(const Stmt *Term,
   assert(Cond);
   assert(srcBlk->succ_size() == 2);
   const bool tookTrue = *(srcBlk->succ_begin()) == dstBlk;
-  return VisitTrueTest(Cond->IgnoreParenNoopCasts(BRC.getASTContext()),
-                       tookTrue, BRC, R, N);
+  return VisitTrueTest(Cond, tookTrue, BRC, R, N);
 }
 
 PathDiagnosticPiece *
@@ -710,7 +709,7 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
   const Expr *Ex = Cond;
   
   while (true) {
-    Ex = Ex->IgnoreParens();
+    Ex = Ex->IgnoreParenCasts();
     switch (Ex->getStmtClass()) {
       default:
         return 0;
@@ -724,7 +723,7 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
         const UnaryOperator *UO = cast<UnaryOperator>(Ex);
         if (UO->getOpcode() == UO_LNot) {
           tookTrue = !tookTrue;
-          Ex = UO->getSubExpr()->IgnoreParenNoopCasts(BRC.getASTContext());
+          Ex = UO->getSubExpr();
           continue;
         }
         return 0;

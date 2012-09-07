@@ -25,7 +25,7 @@ void test_ic_set_to_null() {
 }
 
 void test_ic_null(TestInstanceCall *p) {
-  if (!p) // expected-note {{Assuming pointer value is null}} expected-note {{Taking true branch}}
+  if (!p) // expected-note {{Assuming pointer value is null}} expected-note {{Assuming 'p' is null}} expected-note {{Taking true branch}}
     p->foo(); // expected-warning {{Called C++ object pointer is null}} expected-note{{Called C++ object pointer is null}}
 }
 
@@ -37,7 +37,7 @@ void test_ic_member_ptr() {
 }
 
 void test_cast(const TestInstanceCall *p) {
-  if (!p) // expected-note {{Assuming pointer value is null}} expected-note {{Taking true branch}}
+  if (!p) // expected-note {{Assuming pointer value is null}} expected-note {{Assuming 'p' is null}} expected-note {{Taking true branch}}
     const_cast<TestInstanceCall *>(p)->foo(); // expected-warning {{Called C++ object pointer is null}} expected-note {{Called C++ object pointer is null}}
 }
 
