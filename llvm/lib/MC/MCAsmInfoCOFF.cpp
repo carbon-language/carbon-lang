@@ -19,7 +19,7 @@ void MCAsmInfoCOFF::anchor() { }
 
 MCAsmInfoCOFF::MCAsmInfoCOFF() {
   GlobalPrefix = "_";
-  COMMDirectiveAlignmentIsInBytes = false;
+  COMMDirectiveAlignmentIsInBytes = true;
   LCOMMDirectiveSupportsAlignment = true;
   HasDotTypeDotSizeDirective = false;
   HasSingleParameterDotFile = false;
