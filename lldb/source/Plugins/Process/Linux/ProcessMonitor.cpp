@@ -77,19 +77,19 @@ static void PtraceDisplayBytes(__ptrace_request &req, void *data)
                 verbose_log->Printf("PTRACE_POKETEXT %s", buf.GetData());
                 break;
             }
-        case PTRACE_POKEDATA: 
+        case PTRACE_POKEDATA:
             {
                 DisplayBytes(buf, &data, 8);
                 verbose_log->Printf("PTRACE_POKEDATA %s", buf.GetData());
                 break;
             }
-        case PTRACE_POKEUSER: 
+        case PTRACE_POKEUSER:
             {
                 DisplayBytes(buf, &data, 8);
                 verbose_log->Printf("PTRACE_POKEUSER %s", buf.GetData());
                 break;
             }
-        case PTRACE_SETREGS: 
+        case PTRACE_SETREGS:
             {
                 DisplayBytes(buf, data, sizeof(user_regs_struct));
                 verbose_log->Printf("PTRACE_SETREGS %s", buf.GetData());
@@ -101,7 +101,7 @@ static void PtraceDisplayBytes(__ptrace_request &req, void *data)
                 verbose_log->Printf("PTRACE_SETFPREGS %s", buf.GetData());
                 break;
             }
-        case PTRACE_SETSIGINFO: 
+        case PTRACE_SETSIGINFO:
             {
                 DisplayBytes(buf, data, sizeof(siginfo_t));
                 verbose_log->Printf("PTRACE_SETSIGINFO %s", buf.GetData());
@@ -126,7 +126,7 @@ PtraceWrapper(__ptrace_request req, pid_t pid, void *addr, void *data,
     if (log)
         log->Printf("ptrace(%s, %u, %p, %p) called from file %s line %d",
                     reqName, pid, addr, data, file, line);
-    
+
     PtraceDisplayBytes(req, data);
 
     errno = 0;
@@ -163,9 +163,11 @@ PtraceWrapper(__ptrace_request req, pid_t pid, void *addr, void *data,
 // functions without needed to go thru the thread funnel.
 
 static size_t
-DoReadMemory(lldb::pid_t pid, unsigned word_size,
+DoReadMemory(lldb::pid_t pid,
              lldb::addr_t vm_addr, void *buf, size_t size, Error &error)
 {
+    // ptrace word size is determined by the host, not the child
+    static const unsigned word_size = sizeof(void*);
     unsigned char *dst = static_cast<unsigned char*>(buf);
     size_t bytes_read;
     size_t remainder;
@@ -179,7 +181,6 @@ DoReadMemory(lldb::pid_t pid, unsigned word_size,
                      pid, word_size, (void*)vm_addr, buf, size);
 
     assert(sizeof(data) >= word_size);
-    assert(sizeof(void*) == word_size);
     for (bytes_read = 0; bytes_read < size; bytes_read += remainder)
     {
         errno = 0;
@@ -218,9 +219,11 @@ DoReadMemory(lldb::pid_t pid, unsigned word_size,
 }
 
 static size_t
-DoWriteMemory(lldb::pid_t pid, unsigned word_size,
+DoWriteMemory(lldb::pid_t pid,
               lldb::addr_t vm_addr, const void *buf, size_t size, Error &error)
 {
+    // ptrace word size is determined by the host, not the child
+    static const unsigned word_size = sizeof(void*);
     const unsigned char *src = static_cast<const unsigned char*>(buf);
     size_t bytes_written = 0;
     size_t remainder;
@@ -232,7 +235,6 @@ DoWriteMemory(lldb::pid_t pid, unsigned word_size,
         log->Printf ("ProcessMonitor::%s(%d, %d, %p, %p, %d, _)", __FUNCTION__,
                      pid, word_size, (void*)vm_addr, buf, size);
 
-    assert(sizeof(void*) == word_size);
     for (bytes_written = 0; bytes_written < size; bytes_written += remainder)
     {
         remainder = size - bytes_written;
@@ -263,7 +265,7 @@ DoWriteMemory(lldb::pid_t pid, unsigned word_size,
         else
         {
             unsigned char buff[8];
-            if (DoReadMemory(pid, word_size, vm_addr,
+            if (DoReadMemory(pid, vm_addr,
                              buff, word_size, error) != word_size)
             {
                 if (log)
@@ -273,7 +275,7 @@ DoWriteMemory(lldb::pid_t pid, unsigned word_size,
 
             memcpy(buff, src, remainder);
 
-            if (DoWriteMemory(pid, word_size, vm_addr,
+            if (DoWriteMemory(pid, vm_addr,
                               buff, word_size, error) != word_size)
             {
                 if (log)
@@ -361,10 +363,9 @@ private:
 void
 ReadOperation::Execute(ProcessMonitor *monitor)
 {
-    const unsigned word_size = monitor->GetProcess().GetAddressByteSize();
     lldb::pid_t pid = monitor->GetPID();
 
-    m_result = DoReadMemory(pid, word_size, m_addr, m_buff, m_size, m_error);
+    m_result = DoReadMemory(pid, m_addr, m_buff, m_size, m_error);
 }
 
 //------------------------------------------------------------------------------
@@ -392,10 +393,9 @@ private:
 void
 WriteOperation::Execute(ProcessMonitor *monitor)
 {
-    const unsigned word_size = monitor->GetProcess().GetAddressByteSize();
     lldb::pid_t pid = monitor->GetPID();
 
-    m_result = DoWriteMemory(pid, word_size, m_addr, m_buff, m_size, m_error);
+    m_result = DoWriteMemory(pid, m_addr, m_buff, m_size, m_error);
 }
 
 
@@ -744,7 +744,7 @@ DetachOperation::Execute(ProcessMonitor *monitor)
 
     if (ptrace(PT_DETACH, pid, NULL, 0) < 0)
         m_error.SetErrorToErrno();
-  
+
 }
 
 ProcessMonitor::OperationArgs::OperationArgs(ProcessMonitor *monitor)
@@ -1060,22 +1060,22 @@ ProcessMonitor::Launch(LaunchArgs *args)
         args->m_error.SetErrorToGenericError();
         switch (WEXITSTATUS(status))
         {
-            case ePtraceFailed: 
+            case ePtraceFailed:
                 args->m_error.SetErrorString("Child ptrace failed.");
                 break;
-            case eDupStdinFailed: 
+            case eDupStdinFailed:
                 args->m_error.SetErrorString("Child open stdin failed.");
                 break;
-            case eDupStdoutFailed: 
+            case eDupStdoutFailed:
                 args->m_error.SetErrorString("Child open stdout failed.");
                 break;
-            case eDupStderrFailed: 
+            case eDupStderrFailed:
                 args->m_error.SetErrorString("Child open stderr failed.");
                 break;
-            case eExecFailed: 
+            case eExecFailed:
                 args->m_error.SetErrorString("Child exec failed.");
                 break;
-            default: 
+            default:
                 args->m_error.SetErrorString("Child returned unknown exit status.");
                 break;
         }
@@ -1228,7 +1228,7 @@ ProcessMonitor::MonitorCallback(void *callback_baton,
         case SIGTRAP:
             message = MonitorSIGTRAP(monitor, &info, pid);
             break;
-            
+
         default:
             message = MonitorSignal(monitor, &info, pid);
             break;
@@ -1342,7 +1342,7 @@ ProcessMonitor::GetCrashReasonForSIGSEGV(const siginfo_t *info)
 
     reason = ProcessMessage::eInvalidCrashReason;
 
-    switch (info->si_code) 
+    switch (info->si_code)
     {
     default:
         assert(false && "unexpected si_code for SIGSEGV");
@@ -1354,7 +1354,7 @@ ProcessMonitor::GetCrashReasonForSIGSEGV(const siginfo_t *info)
         reason = ProcessMessage::ePrivilegedAddress;
         break;
     }
-        
+
     return reason;
 }
 
@@ -1675,7 +1675,7 @@ ProcessMonitor::Detach()
     DoOperation(&op);
     StopMonitor();
     return result;
-}    
+}
 
 bool
 ProcessMonitor::DupDescriptor(const char *path, int fd, int flags)

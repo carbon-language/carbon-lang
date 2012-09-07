@@ -339,6 +339,12 @@ Host::GetArchitecture (SystemDefaultArchitecture arch_kind)
             break;
 
         case llvm::Triple::x86_64:
+            g_host_arch_64.SetTriple(triple);
+            g_supports_64 = true;
+            g_host_arch_32.SetTriple(triple.get32BitArchVariant());
+            g_supports_32 = true;
+            break;
+
         case llvm::Triple::sparcv9:
         case llvm::Triple::ppc64:
         case llvm::Triple::cellspu:

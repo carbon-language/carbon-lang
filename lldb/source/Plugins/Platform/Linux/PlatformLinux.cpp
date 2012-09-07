@@ -312,6 +312,17 @@ PlatformLinux::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
         arch = Host::GetArchitecture (Host::eSystemDefaultArchitecture);
         return arch.IsValid();
     }
+    else if (idx == 1)
+    {
+        // If the default host architecture is 64-bit, look for a 32-bit variant
+        ArchSpec hostArch
+                      = Host::GetArchitecture(Host::eSystemDefaultArchitecture);
+        if (hostArch.IsValid() && hostArch.GetTriple().isArch64Bit())
+        {
+            arch = Host::GetArchitecture (Host::eSystemDefaultArchitecture32);
+            return arch.IsValid();
+        }
+    }
     return false;
 }
 
