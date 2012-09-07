@@ -2981,7 +2981,7 @@ static bool ForwardSwitchConditionToPHI(SwitchInst *SI) {
 
 /// ValidLookupTableConstant - Return true if the backend will be able to handle
 /// initializing an array of constants like C.
-bool ValidLookupTableConstant(Constant *C) {
+static bool ValidLookupTableConstant(Constant *C) {
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
     return CE->isGEPWithNoNotionalOverIndexing();
 
