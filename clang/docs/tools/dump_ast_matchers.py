@@ -14,7 +14,7 @@ MATCHERS_FILE = '../../include/clang/ASTMatchers/ASTMatchers.h'
 # The subsequent row contains the documentation and is hidden by default,
 # becoming visible via javascript when the user clicks the matcher name.
 TD_TEMPLATE="""
-<tr><td>%(result)s</td><td class="name" onclick="toggle('%(id)s')">%(name)s</td><td>%(args)s</td></tr>
+<tr><td>%(result)s</td><td class="name" onclick="toggle('%(id)s')"><a name="%(id)sAnchor">%(name)s</a></td><td>%(args)s</td></tr>
 <tr><td colspan="4" class="doc" id="%(id)s"><pre>%(comment)s</pre></td></tr>
 """
 
