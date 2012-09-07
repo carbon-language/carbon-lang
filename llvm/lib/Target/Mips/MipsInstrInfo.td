@@ -1080,6 +1080,26 @@ def EXT : ExtBase<0, "ext", CPURegs>;
 def INS : InsBase<4, "ins", CPURegs>;
 
 //===----------------------------------------------------------------------===//
+// Instruction aliases
+//===----------------------------------------------------------------------===//
+def : InstAlias<"move $dst,$src", (ADD CPURegs:$dst,CPURegs:$src,ZERO)>;
+def : InstAlias<"bal $offset", (BGEZAL RA,brtarget:$offset)>;
+def : InstAlias<"addu $rs,$rt,$imm",
+                (ADDiu CPURegs:$rs,CPURegs:$rt,simm16:$imm)>;
+def : InstAlias<"add $rs,$rt,$imm",
+                (ADDi CPURegs:$rs,CPURegs:$rt,simm16:$imm)>;
+def : InstAlias<"and $rs,$rt,$imm",
+                (ANDi CPURegs:$rs,CPURegs:$rt,simm16:$imm)>;
+def : InstAlias<"j $rs", (JR CPURegs:$rs)>;
+def : InstAlias<"not $rt,$rs", (NOR CPURegs:$rt,CPURegs:$rs,ZERO)>;
+def : InstAlias<"neg $rt,$rs", (SUB CPURegs:$rt,ZERO,CPURegs:$rs)>;
+def : InstAlias<"negu $rt,$rs", (SUBu CPURegs:$rt,ZERO,CPURegs:$rs)>;
+def : InstAlias<"slt $rs,$rt,$imm",
+                (SLTi CPURegs:$rs,CPURegs:$rt,simm16:$imm)>;
+def : InstAlias<"xor $rs,$rt,$imm",
+                (XORi CPURegs:$rs,CPURegs:$rt,simm16:$imm)>;
+
+//===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions
 //===----------------------------------------------------------------------===//
 

@@ -23,6 +23,8 @@
 # CHECK:   nop                    # encoding: [0x00,0x00,0x00,0x00]
 # CHECK:   bne $9, $6, 1332       # encoding: [0x34,0x05,0x26,0x15]
 # CHECK:   nop                    # encoding: [0x00,0x00,0x00,0x00]
+# CHECK:   bal     1332           # encoding: [0x34,0x05,0x00,0x04]
+# CHECK:   nop                    # encoding: [0x00,0x00,0x00,0x00]
          b 1332
          nop
          bc1f 1332
@@ -41,6 +43,8 @@
          nop
          bne $9,$6,1332
          nop
+         bal 1332
+         nop
 
 end_of_code:
 #------------------------------------------------------------------------------
@@ -53,6 +57,8 @@ end_of_code:
 # CHECK:   jalr $6              # encoding: [0x09,0xf8,0xc0,0x00]
 # CHECK:   nop                  # encoding: [0x00,0x00,0x00,0x00]
 # CHECK:   jr $7                # encoding: [0x08,0x00,0xe0,0x00]
+# CHECK:   nop                  # encoding: [0x00,0x00,0x00,0x00]
+# CHECK:   jr $7                # encoding: [0x08,0x00,0xe0,0x00]
 
 
    j 1328
@@ -62,3 +68,5 @@ end_of_code:
    jalr $6
    nop
    jr $7
+   nop
+   j $7
