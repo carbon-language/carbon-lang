@@ -217,10 +217,8 @@ static llvm::Optional<bool> comparePiece(PathDiagnosticPiece &X,
   }
   FullSourceLoc XL = X.getLocation().asLocation();
   FullSourceLoc YL = Y.getLocation().asLocation();
-  if (XL < YL)
-    return true;
-  if (YL < XL)
-    return false;
+  if (XL != YL)
+    return XL < YL;
   const std::string &XS = X.getString();
   const std::string &YS = Y.getString();
   if (XS != YS)
@@ -229,10 +227,8 @@ static llvm::Optional<bool> comparePiece(PathDiagnosticPiece &X,
 }
   
 static bool comparePathPieces(const PathPieces &X, const PathPieces &Y) {
-  if (X.size() < Y.size())
-    return true;
-  if (X.size() > Y.size())
-    return false;
+  if (X.size() != Y.size())
+    return X.size() < Y.size();
   // Compare individual parts of the path.
   assert(X.size() == Y.size());
   for (unsigned i = 0, n = X.size(); i < n; ++i) {
@@ -249,26 +245,20 @@ struct CompareDiagnostics {
     // First compare by location
     const FullSourceLoc &XLoc = X->getLocation().asLocation();
     const FullSourceLoc &YLoc = Y->getLocation().asLocation();
-    if (XLoc < YLoc)
-      return true;
-    if (YLoc < XLoc)
-      return false;
+    if (XLoc != YLoc)
+      return XLoc < YLoc;
     
     // Next, compare by bug type.
     StringRef XBugType = X->getBugType();
     StringRef YBugType = Y->getBugType();
-    if (XBugType < YBugType)
-      return true;
     if (XBugType != YBugType)
-      return false;
+      return XBugType < YBugType;
     
     // Next, compare by bug description.
     StringRef XDesc = X->getVerboseDescription();
     StringRef YDesc = Y->getVerboseDescription();
-    if (XDesc < YDesc)
-      return true;
     if (XDesc != YDesc)
-      return false;
+      return XDesc < YDesc;
     
     // Fall back to comparing path pieces.
     return comparePathPieces(X->path, Y->path);
