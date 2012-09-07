@@ -45,6 +45,10 @@ static cl::opt<bool>
 NoCanonicalizeWhiteSpace("strict-whitespace",
               cl::desc("Do not treat all horizontal whitespace as equivalent"));
 
+static cl::opt<bool>
+NoRegex("exact-match",
+        cl::desc("Look for exact matches without using regular expressions"));
+
 //===----------------------------------------------------------------------===//
 // Pattern Handling Code.
 //===----------------------------------------------------------------------===//
@@ -124,7 +128,7 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
   }
 
   // Check to see if this is a fixed string, or if it has regex pieces.
-  if (PatternStr.size() < 2 ||
+  if (PatternStr.size() < 2 || NoRegex ||
       (PatternStr.find("{{") == StringRef::npos &&
        PatternStr.find("[[") == StringRef::npos)) {
     FixedStr = PatternStr;
