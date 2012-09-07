@@ -528,6 +528,11 @@ def ObjCReturnsInnerPointer : Attr {
   let Subjects = [ObjCMethod];
 }
 
+def ObjCRequiresSuper : InheritableAttr {
+  let Spellings = [GNU<"objc_requires_super">];
+  let Subjects = [ObjCMethod];
+}
+
 def ObjCRootClass : Attr {
   let Spellings = [GNU<"objc_root_class">];
   let Subjects = [ObjCInterface];

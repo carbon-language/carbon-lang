@@ -371,8 +371,10 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
   // Warn on deprecated methods under -Wdeprecated-implementations,
   // and prepare for warning on missing super calls.
   if (ObjCInterfaceDecl *IC = MDecl->getClassInterface()) {
-    if (ObjCMethodDecl *IMD = 
-          IC->lookupMethod(MDecl->getSelector(), MDecl->isInstanceMethod()))
+    ObjCMethodDecl *IMD = 
+      IC->lookupMethod(MDecl->getSelector(), MDecl->isInstanceMethod());
+    
+    if (IMD)
       DiagnoseObjCImplementedDeprecations(*this, 
                                           dyn_cast<NamedDecl>(IMD), 
                                           MDecl->getLocation(), 0);
@@ -385,7 +387,10 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
       getCurFunction()->ObjCShouldCallSuperDealloc = 
         !(Context.getLangOpts().ObjCAutoRefCount ||
           Context.getLangOpts().getGC() == LangOptions::GCOnly) &&
-        MDecl->getMethodFamily() == OMF_dealloc;
+          MDecl->getMethodFamily() == OMF_dealloc;
+      if (!getCurFunction()->ObjCShouldCallSuperDealloc)
+        getCurFunction()->ObjCShouldCallSuperDealloc = 
+          (IMD && IMD->hasAttr<ObjCRequiresSuperAttr>());
       getCurFunction()->ObjCShouldCallSuperFinalize =
         Context.getLangOpts().getGC() != LangOptions::NonGC &&
         MDecl->getMethodFamily() == OMF_finalize;

@@ -740,7 +740,7 @@ def warn_objc_property_attr_mutually_exclusive : Warning<
   "property attributes '%0' and '%1' are mutually exclusive">,
   InGroup<ReadOnlySetterAttrs>, DefaultIgnore;
 def warn_objc_missing_super_dealloc : Warning<
-  "method possibly missing a [super dealloc] call">,
+  "method possibly missing a [super %0] call">,
   InGroup<ObjCMissingSuperCalls>;
 def error_dealloc_bad_result_type : Error<
   "dealloc return type must be correctly specified as 'void' under ARC, "
@@ -2057,6 +2057,12 @@ def warn_ns_attribute_wrong_parameter_type : Warning<
   "%0 attribute only applies to %select{Objective-C object|pointer}1 "
   "parameters">,
   InGroup<IgnoredAttributes>;
+def warn_objc_requires_super_protocol : Warning<
+  "%0 attribute cannot be applied to %select{methods in protocols|dealloc}1">,
+  InGroup<DiagGroup<"requires-super-attribute">>;
+def note_protocol_decl : Note<
+  "protocol is declared here">;
+
 def err_ns_bridged_not_interface : Error<
   "parameter of 'ns_bridged' attribute does not name an Objective-C class">;
 

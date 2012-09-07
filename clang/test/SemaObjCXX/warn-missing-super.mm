@@ -15,5 +15,5 @@ template<typename T> struct shared_ptr {
 - (void)dealloc
 {
 	constexpr shared_ptr<int> dummy;
-} // expected-warning {{method possibly missing a [super dealloc] call}}
+} // expected-warning {{method possibly missing a [super 'dealloc'] call}}
 @end

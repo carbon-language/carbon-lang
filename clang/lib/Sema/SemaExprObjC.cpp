@@ -1780,6 +1780,14 @@ ExprResult Sema::ActOnSuperMessage(Scope *S,
   if (Method->isInstanceMethod()) {
     if (Sel.getMethodFamily() == OMF_dealloc)
       getCurFunction()->ObjCShouldCallSuperDealloc = false;
+    else if (const ObjCMethodDecl *IMD =
+               Class->lookupMethod(Method->getSelector(), 
+                                   Method->isInstanceMethod()))
+          // Must check for name of message since the method could
+          // be another method with objc_requires_super attribute set.
+          if (IMD->hasAttr<ObjCRequiresSuperAttr>() && 
+              Sel == IMD->getSelector())
+            getCurFunction()->ObjCShouldCallSuperDealloc = false;
     if (Sel.getMethodFamily() == OMF_finalize)
       getCurFunction()->ObjCShouldCallSuperFinalize = false;
 
