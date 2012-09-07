@@ -435,7 +435,15 @@ RuntimeDefinition CXXInstanceCall::getRuntimeDefinition() const {
 
   // Find the decl for this method in that class.
   const CXXMethodDecl *Result = MD->getCorrespondingMethodInClass(RD, true);
-  assert(Result && "At the very least the static decl should show up.");
+  if (!Result) {
+    // We might not even get the original statically-resolved method due to
+    // some particularly nasty casting (e.g. casts to sister classes).
+    // However, we should at least be able to search up and down our own class
+    // hierarchy, and some real bugs have been caught by checking this.
+    assert(!MD->getParent()->isDerivedFrom(RD) && "Bad DynamicTypeInfo");
+    assert(!RD->isDerivedFrom(MD->getParent()) && "Couldn't find known method");
+    return RuntimeDefinition();
+  }
 
   // Does the decl that we found have an implementation?
   const FunctionDecl *Definition;

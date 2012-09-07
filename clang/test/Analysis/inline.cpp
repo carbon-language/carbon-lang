@@ -267,3 +267,35 @@ namespace OperatorNew {
     clang_analyzer_eval(obj->value == 42); // expected-warning{{UNKNOWN}}
   }
 }
+
+
+namespace VirtualWithSisterCasts {
+  struct Parent {
+    virtual int foo();
+  };
+
+  struct A : Parent {
+    virtual int foo() { return 42; }
+  };
+
+  struct B : Parent {
+    virtual int foo();
+  };
+
+  struct Unrelated {};
+
+  void testDowncast(Parent *b) {
+    A *a = (A *)(void *)b;
+    clang_analyzer_eval(a->foo() == 42); // expected-warning{{UNKNOWN}}
+  }
+
+  void testRelated(B *b) {
+    A *a = (A *)(void *)b;
+    clang_analyzer_eval(a->foo() == 42); // expected-warning{{UNKNOWN}}
+  }
+
+  void testUnrelated(Unrelated *b) {
+    A *a = (A *)(void *)b;
+    clang_analyzer_eval(a->foo() == 42); // expected-warning{{UNKNOWN}}
+  }
+}
