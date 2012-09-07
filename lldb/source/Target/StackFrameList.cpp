@@ -136,11 +136,6 @@ StackFrameList::ResetCurrentInlinedDepth ()
                         {
                             switch (stop_info_sp->GetStopReason())
                             {
-                            case eStopReasonBreakpoint:
-                                {
-                            
-                                }
-                                break;
                             case eStopReasonWatchpoint:
                             case eStopReasonException:
                             case eStopReasonSignal:
@@ -148,6 +143,12 @@ StackFrameList::ResetCurrentInlinedDepth ()
                                 m_current_inlined_pc = curr_pc;
                                 m_current_inlined_depth = 0;
                                 break;
+                            case eStopReasonBreakpoint:
+                                {
+                                    // FIXME: Figure out what this break point is doing, and set the inline depth
+                                    // appropriately.  Be careful to take into account breakpoints that implement
+                                    // step over prologue, since that should do the default calculation.
+                                }
                             default:
                                 {
                                     // Otherwise, we should set ourselves at the container of the inlining, so that the
