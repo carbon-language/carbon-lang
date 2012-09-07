@@ -125,6 +125,9 @@ protected:
     uint32_t
     GetCurrentInlinedDepth ();
     
+    void
+    SetCurrentInlinedDepth (uint32_t new_depth);
+    
     //------------------------------------------------------------------
     // Classes that inherit from StackFrameList can see and modify these
     //------------------------------------------------------------------
