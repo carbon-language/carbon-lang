@@ -50,6 +50,10 @@ static cl::opt<bool>
 PrintInlining("inlining", cl::init(true),
               cl::desc("Print all inlined frames for a given address"));
 
+static cl::opt<bool>
+Demangle("demangle", cl::init(true),
+         cl::desc("Demangle function names"));
+
 static StringRef ToolInvocationPath;
 
 static bool error(error_code ec) {
@@ -237,6 +241,10 @@ static ModuleInfo *getOrCreateModuleInfo(const string &ModuleName) {
   return Info;
 }
 
+// Assume that __cxa_demangle is provided by libcxxabi.
+extern "C" char *__cxa_demangle(const char *mangled_name, char *output_buffer,
+                                size_t *length, int *status);
+
 static void printDILineInfo(DILineInfo LineInfo) {
   // By default, DILineInfo contains "<invalid>" for function/filename it
   // cannot fetch. We replace it to "??" to make our output closer to addr2line.
@@ -246,6 +254,15 @@ static void printDILineInfo(DILineInfo LineInfo) {
     string FunctionName = LineInfo.getFunctionName();
     if (FunctionName == kDILineInfoBadString)
       FunctionName = kSymbolizerBadString;
+    if (Demangle) {
+      int status = 0;
+      char *DemangledName = __cxa_demangle(
+          FunctionName.c_str(), 0, 0, &status);
+      if (status == 0) {
+        FunctionName = DemangledName;
+        free(DemangledName);
+      }
+    }
     outs() << FunctionName << "\n";
   }
   string Filename = LineInfo.getFileName();
