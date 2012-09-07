@@ -415,8 +415,10 @@ static void checkAttrArgsAreLockableObjs(Sema &S, Decl *D,
     }
 
     if (StringLiteral *StrLit = dyn_cast<StringLiteral>(ArgExp)) {
-      if (StrLit->getLength() == 0) {
+      if (StrLit->getLength() == 0 ||
+          StrLit->getString() == StringRef("*")) {
         // Pass empty strings to the analyzer without warnings.
+        // Treat "*" as the universal lock.
         Args.push_back(ArgExp);
         continue;
       }
