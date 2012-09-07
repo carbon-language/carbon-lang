@@ -325,12 +325,6 @@ public:
 
   const llvm::APSInt* getSymVal(ProgramStateRef St, SymbolRef sym) const;
 
-  // FIXME: Refactor into SimpleConstraintManager?
-  bool isEqual(ProgramStateRef St, SymbolRef sym, const llvm::APSInt& V) const {
-    const llvm::APSInt *i = getSymVal(St, sym);
-    return i ? *i == V : false;
-  }
-
   ProgramStateRef removeDeadBindings(ProgramStateRef St, SymbolReaper& SymReaper);
 
   void print(ProgramStateRef St, raw_ostream &Out,

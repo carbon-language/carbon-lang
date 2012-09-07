@@ -46,10 +46,6 @@ public:
   virtual const llvm::APSInt* getSymVal(ProgramStateRef state,
                                         SymbolRef sym) const = 0;
 
-  virtual bool isEqual(ProgramStateRef state,
-                       SymbolRef sym,
-                       const llvm::APSInt& V) const = 0;
-
   virtual ProgramStateRef removeDeadBindings(ProgramStateRef state,
                                                  SymbolReaper& SymReaper) = 0;
 
