@@ -1822,6 +1822,24 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                                                 if (so_path && so_path[0])
                                                                 {
                                                                     std::string full_so_path (so_path);
+                                                                    const size_t double_slash_pos = full_so_path.find("//");
+                                                                    if (double_slash_pos != std::string::npos)
+                                                                    {
+                                                                        // The linker has been generating bad N_SO entries with doubled up paths
+                                                                        // in the format "%s%s" where the first stirng in the DW_AT_comp_dir,
+                                                                        // and the second is the directory for the source file so you end up with
+                                                                        // a path that looks like "/tmp/src//tmp/src/"
+                                                                        FileSpec so_dir(so_path, false);
+                                                                        if (!so_dir.Exists())
+                                                                        {
+                                                                            so_dir.SetFile(&full_so_path[double_slash_pos + 1], false);
+                                                                            if (so_dir.Exists())
+                                                                            {
+                                                                                // Trim off the incorrect path
+                                                                                full_so_path.erase(0, double_slash_pos + 1);
+                                                                            }
+                                                                        }
+                                                                    }
                                                                     if (*full_so_path.rbegin() != '/')
                                                                         full_so_path += '/';
                                                                     full_so_path += symbol_name;
@@ -2545,6 +2563,24 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                             if (so_path && so_path[0])
                             {
                                 std::string full_so_path (so_path);
+                                const size_t double_slash_pos = full_so_path.find("//");
+                                if (double_slash_pos != std::string::npos)
+                                {
+                                    // The linker has been generating bad N_SO entries with doubled up paths
+                                    // in the format "%s%s" where the first stirng in the DW_AT_comp_dir,
+                                    // and the second is the directory for the source file so you end up with
+                                    // a path that looks like "/tmp/src//tmp/src/"
+                                    FileSpec so_dir(so_path, false);
+                                    if (!so_dir.Exists())
+                                    {
+                                        so_dir.SetFile(&full_so_path[double_slash_pos + 1], false);
+                                        if (so_dir.Exists())
+                                        {
+                                            // Trim off the incorrect path
+                                            full_so_path.erase(0, double_slash_pos + 1);
+                                        }
+                                    }
+                                }
                                 if (*full_so_path.rbegin() != '/')
                                     full_so_path += '/';
                                 full_so_path += symbol_name;
