@@ -5,8 +5,8 @@ done!
 
 The list is sorted by surname and formatted to allow easy grepping and
 beautification by scripts.  The fields are: name (N), email (E), web-address
-(W), PGP key ID and fingerprint (P), description (D), and snail-mail address
-(S).
+(W), PGP key ID and fingerprint (P), description (D), snail-mail address
+(S), and (I) IRC handle.
 
 
 N: Vikram Adve
@@ -352,6 +352,7 @@ D: Cmake dependency chain and various bug fixes
 
 N: Alex Rosenberg
 E: alexr@leftfield.org
+I: arosenberg
 D: ARM calling conventions rewrite, hard float support
 
 N: Chad Rosier
