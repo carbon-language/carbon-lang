@@ -521,12 +521,13 @@ bool X86AsmParser::isDstOp(X86Operand &Op) {
 bool X86AsmParser::ParseRegister(unsigned &RegNo,
                                  SMLoc &StartLoc, SMLoc &EndLoc) {
   RegNo = 0;
-  if (!isParsingIntelSyntax()) {
-    const AsmToken &TokPercent = Parser.getTok();
-    assert(TokPercent.is(AsmToken::Percent) && "Invalid token kind!");
-    StartLoc = TokPercent.getLoc();
+  const AsmToken &PercentTok = Parser.getTok();
+  StartLoc = PercentTok.getLoc();
+
+  // If we encounter a %, ignore it. This code handles registers with and
+  // without the prefix, unprefixed registers can occur in cfi directives.
+  if (!isParsingIntelSyntax() && PercentTok.is(AsmToken::Percent))
     Parser.Lex(); // Eat percent token.
-  }
 
   const AsmToken &Tok = Parser.getTok();
   if (Tok.isNot(AsmToken::Identifier)) {
