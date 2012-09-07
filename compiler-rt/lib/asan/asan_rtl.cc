@@ -53,9 +53,7 @@ SANITIZER_INTERFACE_ATTRIBUTE
 void CheckFailed(const char *file, int line, const char *cond, u64 v1, u64 v2) {
   Report("AddressSanitizer CHECK failed: %s:%d \"%s\" (0x%zx, 0x%zx)\n",
              file, line, cond, (uptr)v1, (uptr)v2);
-  static __thread int recursion_count = 0;
-  RAW_CHECK_MSG(recursion_count == 0, "Infinite recursion detected in CHECK\n");
-  recursion_count++;
+  // FIXME: check for infinite recursion without a thread-local counter here.
   PRINT_CURRENT_STACK();
   ShowStatsAndAbort();
 }
