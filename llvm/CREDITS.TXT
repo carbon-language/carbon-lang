@@ -328,10 +328,6 @@ D: LTO tool, PassManager rewrite, Loop Pass Manager, Loop Rotate
 D: GCC PCH Integration (llvm-gcc), llvm-gcc improvements
 D: Optimizer improvements, Loop Index Split
 
-N: Sandeep Patel
-E: deeppatel1987@gmail.com
-D: ARM calling conventions rewrite, hard float support
-
 N: Wesley Peck
 E: peckw@wesleypeck.com
 W: http://wesleypeck.com/
@@ -353,6 +349,10 @@ D: Some bugfixes to CellSPU
 N: Xerxes Ranby
 E: xerxes@zafena.se
 D: Cmake dependency chain and various bug fixes
+
+N: Alex Rosenberg
+E: alexr@leftfield.org
+D: ARM calling conventions rewrite, hard float support
 
 N: Chad Rosier
 E: mcrosier@apple.com
