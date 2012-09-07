@@ -94,9 +94,6 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
   PostStmt ps = cast<PostStmt>(progPoint);
   if (ps.getTag())
     return false;
-  
-  if (isa<BinaryOperator>(ps.getStmt()))
-    return false;
 
   // Conditions 5, 6, and 7.
   ProgramStateRef state = node->getState();
@@ -106,6 +103,9 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
     return false;
   
   // Condition 8.
+  if (!isa<Expr>(ps.getStmt()))
+    return false;
+  
   if (const Expr *Ex = dyn_cast<Expr>(ps.getStmt())) {
     ParentMap &PM = progPoint.getLocationContext()->getParentMap();
     if (!PM.isConsumedExpr(Ex))
