@@ -957,10 +957,13 @@ SBTarget::AttachToProcessWithID
                 attach_info.SetUserID(instance_info.GetEffectiveUserID());
             }
             error.SetError (process_sp->Attach (attach_info));            
-            // If we are doing synchronous mode, then wait for the
-            // process to stop!
-            if (target_sp->GetDebugger().GetAsyncExecution () == false)
+            if (error.Success())
+            {
+                // If we are doing synchronous mode, then wait for the
+                // process to stop!
+                if (target_sp->GetDebugger().GetAsyncExecution () == false)
                 process_sp->WaitForProcessToStop (NULL);
+            }
         }
         else
         {

@@ -49,6 +49,9 @@ public:
     DoAttachToProcessWithID(lldb::pid_t pid);
 
     virtual lldb_private::Error
+    DoAttachToProcessWithID (lldb::pid_t pid, const lldb_private::ProcessAttachInfo &attach_info);
+
+    virtual lldb_private::Error
     DoLaunch (lldb_private::Module *exe_module, 
               const lldb_private::ProcessLaunchInfo &launch_info);
 

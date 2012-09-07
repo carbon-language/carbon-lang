@@ -118,6 +118,12 @@ ProcessPOSIX::DoAttachToProcessWithID(lldb::pid_t pid)
 }
 
 Error
+ProcessPOSIX::DoAttachToProcessWithID (lldb::pid_t pid,  const ProcessAttachInfo &attach_info)
+{
+    return DoAttachToProcessWithID(pid);
+}
+
+Error
 ProcessPOSIX::WillLaunch(Module* module)
 {
     Error error;
