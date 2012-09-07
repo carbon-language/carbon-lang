@@ -514,7 +514,8 @@ void CoreEngine::enqueueStmtNode(ExplodedNode *N,
     return;
   }
 
-  const CFGStmt *CS = (*Block)[Idx].getAs<CFGStmt>();
+  CFGElement Elem = (*Block)[Idx];
+  const CFGStmt *CS = Elem.getAs<CFGStmt>();
   const Stmt *St = CS ? CS->getStmt() : 0;
   PostStmt Loc(St, N->getLocationContext());
 
