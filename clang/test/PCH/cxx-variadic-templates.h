@@ -16,3 +16,10 @@ shared_ptr<_Tp>::allocate_shared(const _Alloc& __a, _Args&& ...__args)
   shared_ptr<_Tp> __r;
   return __r;
 }
+
+template<typename...Ts> struct outer {
+  template<Ts...Vs, template<Ts> class ...Cs> struct inner {
+    inner(Cs<Vs>...);
+  };
+};
+template struct outer<int, int>;

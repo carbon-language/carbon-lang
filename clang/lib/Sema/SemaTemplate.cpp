@@ -1205,11 +1205,17 @@ static bool DiagnoseDefaultTemplateArgument(Sema &S,
 /// of a template template parameter, recursively.
 static bool DiagnoseUnexpandedParameterPacks(Sema &S,
                                              TemplateTemplateParmDecl *TTP) {
+  // A template template parameter which is a parameter pack is also a pack
+  // expansion.
+  if (TTP->isParameterPack())
+    return false;
+
   TemplateParameterList *Params = TTP->getTemplateParameters();
   for (unsigned I = 0, N = Params->size(); I != N; ++I) {
     NamedDecl *P = Params->getParam(I);
     if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(P)) {
-      if (S.DiagnoseUnexpandedParameterPack(NTTP->getLocation(),
+      if (!NTTP->isParameterPack() &&
+          S.DiagnoseUnexpandedParameterPack(NTTP->getLocation(),
                                             NTTP->getTypeSourceInfo(),
                                       Sema::UPPC_NonTypeTemplateParameterType))
         return true;
@@ -1322,7 +1328,8 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
     } else if (NonTypeTemplateParmDecl *NewNonTypeParm
                = dyn_cast<NonTypeTemplateParmDecl>(*NewParam)) {
       // Check for unexpanded parameter packs.
-      if (DiagnoseUnexpandedParameterPack(NewNonTypeParm->getLocation(),
+      if (!NewNonTypeParm->isParameterPack() &&
+          DiagnoseUnexpandedParameterPack(NewNonTypeParm->getLocation(),
                                           NewNonTypeParm->getTypeSourceInfo(),
                                           UPPC_NonTypeTemplateParameterType)) {
         Invalid = true;
@@ -1343,7 +1350,8 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
       if (NewNonTypeParm->isParameterPack()) {
         assert(!NewNonTypeParm->hasDefaultArgument() &&
                "Parameter packs can't have a default argument!");
-        SawParameterPack = true;
+        if (!NewNonTypeParm->isPackExpansion())
+          SawParameterPack = true;
       } else if (OldNonTypeParm && OldNonTypeParm->hasDefaultArgument() &&
           NewNonTypeParm->hasDefaultArgument()) {
         OldDefaultLoc = OldNonTypeParm->getDefaultArgumentLoc();
@@ -1390,7 +1398,8 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
       if (NewTemplateParm->isParameterPack()) {
         assert(!NewTemplateParm->hasDefaultArgument() &&
                "Parameter packs can't have a default argument!");
-        SawParameterPack = true;
+        if (!NewTemplateParm->isPackExpansion())
+          SawParameterPack = true;
       } else if (OldTemplateParm && OldTemplateParm->hasDefaultArgument() &&
           NewTemplateParm->hasDefaultArgument()) {
         OldDefaultLoc = OldTemplateParm->getDefaultArgument().getLocation();
@@ -1417,10 +1426,10 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
         MissingDefaultArg = true;
     }
 
-    // C++0x [temp.param]p11:
+    // C++11 [temp.param]p11:
     //   If a template parameter of a primary class template or alias template
     //   is a template parameter pack, it shall be the last template parameter.
-    if (SawParameterPack && (NewParam + 1) != NewParamEnd && 
+    if (SawParameterPack && (NewParam + 1) != NewParamEnd &&
         (TPC == TPC_ClassTemplate || TPC == TPC_TypeAliasTemplate)) {
       Diag((*NewParam)->getLocation(),
            diag::err_template_param_pack_must_be_last_template_parameter);
@@ -2950,7 +2959,7 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
 
   case TemplateArgument::Template:
   case TemplateArgument::TemplateExpansion:
-    if (CheckTemplateArgument(TempParm, Arg))
+    if (CheckTemplateArgument(TempParm, Arg, ArgumentPackIndex))
       return true;
 
     Converted.push_back(Arg.getArgument());
@@ -2999,6 +3008,33 @@ static bool diagnoseArityMismatch(Sema &S, TemplateDecl *Template,
   return true;
 }
 
+/// \brief Check whether the template parameter is a pack expansion, and if so,
+/// determine the number of parameters produced by that expansion. For instance:
+///
+/// \code
+/// template<typename ...Ts> struct A {
+///   template<Ts ...NTs, template<Ts> class ...TTs, typename ...Us> struct B;
+/// };
+/// \endcode
+///
+/// In \c A<int,int>::B, \c NTs and \c TTs have expanded pack size 2, and \c Us
+/// is not a pack expansion, so returns an empty Optional.
+static llvm::Optional<unsigned> getExpandedPackSize(NamedDecl *Param) {
+  if (NonTypeTemplateParmDecl *NTTP
+        = dyn_cast<NonTypeTemplateParmDecl>(Param)) {
+    if (NTTP->isExpandedParameterPack())
+      return NTTP->getNumExpansionTypes();
+  }
+
+  if (TemplateTemplateParmDecl *TTP
+        = dyn_cast<TemplateTemplateParmDecl>(Param)) {
+    if (TTP->isExpandedParameterPack())
+      return TTP->getNumExpansionTemplateParameters();
+  }
+
+  return llvm::Optional<unsigned>();
+}
+
 /// \brief Check that the given template argument list is well-formed
 /// for specializing the given template.
 bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
@@ -3011,15 +3047,9 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
     *ExpansionIntoFixedList = false;
 
   TemplateParameterList *Params = Template->getTemplateParameters();
-  unsigned NumParams = Params->size();
-  unsigned NumArgs = TemplateArgs.size();
-  bool Invalid = false;
 
   SourceLocation RAngleLoc = TemplateArgs.getRAngleLoc();
 
-  bool HasParameterPack =
-    NumParams > 0 && Params->getParam(NumParams - 1)->isTemplateParameterPack();
-  
   // C++ [temp.arg]p1:
   //   [...] The type and form of each template-argument specified in
   //   a template-id shall match the type and form specified for the
@@ -3027,37 +3057,52 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
   //   template-parameter-list.
   bool isTemplateTemplateParameter = isa<TemplateTemplateParmDecl>(Template);
   SmallVector<TemplateArgument, 2> ArgumentPack;
-  TemplateParameterList::iterator Param = Params->begin(),
-                               ParamEnd = Params->end();
-  unsigned ArgIdx = 0;
+  unsigned ArgIdx = 0, NumArgs = TemplateArgs.size();
   LocalInstantiationScope InstScope(*this, true);
-  bool SawPackExpansion = false;
-  while (Param != ParamEnd) {
-    if (ArgIdx < NumArgs) {
-      // If we have an expanded parameter pack, make sure we don't have too
-      // many arguments.
-      // FIXME: This really should fall out from the normal arity checking.
-      if (NonTypeTemplateParmDecl *NTTP
-                                = dyn_cast<NonTypeTemplateParmDecl>(*Param)) {
-        if (NTTP->isExpandedParameterPack() &&
-            ArgumentPack.size() >= NTTP->getNumExpansionTypes()) {
-          Diag(TemplateLoc, diag::err_template_arg_list_different_arity)
-            << true
-            << (isa<ClassTemplateDecl>(Template)? 0 :
-                isa<FunctionTemplateDecl>(Template)? 1 :
-                isa<TemplateTemplateParmDecl>(Template)? 2 : 3)
-            << Template;
-          Diag(Template->getLocation(), diag::note_template_decl_here)
-            << Params->getSourceRange();
-          return true;
+  for (TemplateParameterList::iterator Param = Params->begin(),
+                                       ParamEnd = Params->end();
+       Param != ParamEnd; /* increment in loop */) {
+    // If we have an expanded parameter pack, make sure we don't have too
+    // many arguments.
+    if (llvm::Optional<unsigned> Expansions = getExpandedPackSize(*Param)) {
+      if (*Expansions == ArgumentPack.size()) {
+        // We're done with this parameter pack. Pack up its arguments and add
+        // them to the list.
+        if (ArgumentPack.empty())
+          Converted.push_back(TemplateArgument(0, 0));
+        else {
+          Converted.push_back(
+            TemplateArgument::CreatePackCopy(Context,
+                                             ArgumentPack.data(),
+                                             ArgumentPack.size()));
+          ArgumentPack.clear();
         }
+        // This argument is assigned to the next parameter.
+        ++Param;
+        continue;
+      } else if (ArgIdx == NumArgs && !PartialTemplateArgs) {
+        // Not enough arguments for this parameter pack.
+        Diag(TemplateLoc, diag::err_template_arg_list_different_arity)
+          << false
+          << (isa<ClassTemplateDecl>(Template)? 0 :
+              isa<FunctionTemplateDecl>(Template)? 1 :
+              isa<TemplateTemplateParmDecl>(Template)? 2 : 3)
+          << Template;
+        Diag(Template->getLocation(), diag::note_template_decl_here)
+          << Params->getSourceRange();
+        return true;
       }
+    }
 
+    if (ArgIdx < NumArgs) {
       // Check the template argument we were given.
       if (CheckTemplateArgument(*Param, TemplateArgs[ArgIdx], Template,
                                 TemplateLoc, RAngleLoc,
                                 ArgumentPack.size(), Converted))
         return true;
+
+      // We're now done with this argument.
+      ++ArgIdx;
 
       if ((*Param)->isTemplateParameterPack()) {
         // The template parameter was a template parameter pack, so take the
@@ -3070,16 +3115,51 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
         // Move to the next template parameter.
         ++Param;
       }
-      
-      // If this template argument is a pack expansion, record that fact
-      // and break out; we can't actually check any more.
-      if (TemplateArgs[ArgIdx].getArgument().isPackExpansion()) {
-        SawPackExpansion = true;
-        ++ArgIdx;
-        break;
+
+      // If we just saw a pack expansion, then directly convert the remaining
+      // arguments, because we don't know what parameters they'll match up
+      // with.
+      if (TemplateArgs[ArgIdx-1].getArgument().isPackExpansion()) {
+        bool InFinalParameterPack = Param != ParamEnd &&
+                                    Param + 1 == ParamEnd &&
+                                    (*Param)->isTemplateParameterPack() &&
+                                    !getExpandedPackSize(*Param);
+
+        if (!InFinalParameterPack && !ArgumentPack.empty()) {
+          // If we were part way through filling in an expanded parameter pack,
+          // fall back to just producing individual arguments.
+          Converted.insert(Converted.end(),
+                           ArgumentPack.begin(), ArgumentPack.end());
+          ArgumentPack.clear();
+        }
+
+        while (ArgIdx < NumArgs) {
+          if (InFinalParameterPack)
+            ArgumentPack.push_back(TemplateArgs[ArgIdx].getArgument());
+          else
+            Converted.push_back(TemplateArgs[ArgIdx].getArgument());
+          ++ArgIdx;
+        }
+
+        // Push the argument pack onto the list of converted arguments.
+        if (InFinalParameterPack) {
+          if (ArgumentPack.empty())
+            Converted.push_back(TemplateArgument(0, 0));
+          else {
+            Converted.push_back(
+              TemplateArgument::CreatePackCopy(Context,
+                                               ArgumentPack.data(),
+                                               ArgumentPack.size()));
+            ArgumentPack.clear();
+          }
+        } else if (ExpansionIntoFixedList) {
+          // We have expanded a pack into a fixed list.
+          *ExpansionIntoFixedList = true;
+        }
+
+        return false;
       }
-      
-      ++ArgIdx;
+
       continue;
     }
 
@@ -3090,14 +3170,34 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
                                                          ArgumentPack.data(),
                                                          ArgumentPack.size()));
         
-      return Invalid;
+      return false;
     }
 
     // If we have a template parameter pack with no more corresponding
     // arguments, just break out now and we'll fill in the argument pack below.
-    if ((*Param)->isTemplateParameterPack())
-      break;
-    
+    if ((*Param)->isTemplateParameterPack()) {
+      assert(!getExpandedPackSize(*Param) &&
+             "Should have dealt with this already");
+
+      // A non-expanded parameter pack before the end of the parameter list
+      // only occurs for an ill-formed template parameter list, unless we've
+      // got a partial argument list for a function template, so just bail out.
+      if (Param + 1 != ParamEnd)
+        return true;
+
+      if (ArgumentPack.empty())
+        Converted.push_back(TemplateArgument(0, 0));
+      else {
+        Converted.push_back(TemplateArgument::CreatePackCopy(Context,
+                                                         ArgumentPack.data(),
+                                                         ArgumentPack.size()));
+        ArgumentPack.clear();
+      }
+
+      ++Param;
+      continue;
+    }
+
     // Check whether we have a default argument.
     TemplateArgumentLoc Arg;
 
@@ -3184,86 +3284,12 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
     ++ArgIdx;
   }
 
-  // If we saw a pack expansion, then directly convert the remaining arguments,
-  // because we don't know what parameters they'll match up with.
-  if (SawPackExpansion) {
-    bool AddToArgumentPack
-      = Param != ParamEnd && (*Param)->isTemplateParameterPack();
-    while (ArgIdx < NumArgs) {
-      if (AddToArgumentPack)
-        ArgumentPack.push_back(TemplateArgs[ArgIdx].getArgument());
-      else
-        Converted.push_back(TemplateArgs[ArgIdx].getArgument());
-      ++ArgIdx;
-    }
-
-    // Push the argument pack onto the list of converted arguments.
-    if (AddToArgumentPack) {
-      if (ArgumentPack.empty())
-        Converted.push_back(TemplateArgument(0, 0));
-      else {
-        Converted.push_back(
-          TemplateArgument::CreatePackCopy(Context,
-                                           ArgumentPack.data(),
-                                           ArgumentPack.size()));
-        ArgumentPack.clear();
-      }      
-    } else if (ExpansionIntoFixedList) {
-      // We have expanded a pack into a fixed list.
-      *ExpansionIntoFixedList = true;
-    }
-
-    return Invalid;
-  }
-
   // If we have any leftover arguments, then there were too many arguments.
   // Complain and fail.
   if (ArgIdx < NumArgs)
     return diagnoseArityMismatch(*this, Template, TemplateLoc, TemplateArgs);
-  
-  // If we have an expanded parameter pack, make sure we don't have too
-  // many arguments.
-  // FIXME: This really should fall out from the normal arity checking.
-  if (Param != ParamEnd) {
-    if (NonTypeTemplateParmDecl *NTTP
-          = dyn_cast<NonTypeTemplateParmDecl>(*Param)) {
-      if (NTTP->isExpandedParameterPack() &&
-          ArgumentPack.size() < NTTP->getNumExpansionTypes()) {
-        Diag(TemplateLoc, diag::err_template_arg_list_different_arity)
-          << false
-          << (isa<ClassTemplateDecl>(Template)? 0 :
-              isa<FunctionTemplateDecl>(Template)? 1 :
-              isa<TemplateTemplateParmDecl>(Template)? 2 : 3)
-          << Template;
-        Diag(Template->getLocation(), diag::note_template_decl_here)
-          << Params->getSourceRange();
-        return true;
-      }
-    }
-  }
-  
-  // Form argument packs for each of the parameter packs remaining.
-  while (Param != ParamEnd) {
-    // If we're checking a partial list of template arguments, don't fill
-    // in arguments for non-template parameter packs.
-    if ((*Param)->isTemplateParameterPack()) {
-      if (!HasParameterPack)
-        return true;
-      if (ArgumentPack.empty())
-        Converted.push_back(TemplateArgument(0, 0));
-      else {
-        Converted.push_back(TemplateArgument::CreatePackCopy(Context,
-                                                          ArgumentPack.data(),
-                                                         ArgumentPack.size()));
-        ArgumentPack.clear();
-      }
-    } else if (!PartialTemplateArgs)
-      return diagnoseArityMismatch(*this, Template, TemplateLoc, TemplateArgs);
 
-    ++Param;
-  }
-
-  return Invalid;
+  return false;
 }
 
 namespace {
@@ -4420,7 +4446,8 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
 /// This routine implements the semantics of C++ [temp.arg.template].
 /// It returns true if an error occurred, and false otherwise.
 bool Sema::CheckTemplateArgument(TemplateTemplateParmDecl *Param,
-                                 const TemplateArgumentLoc &Arg) {
+                                 const TemplateArgumentLoc &Arg,
+                                 unsigned ArgumentPackIndex) {
   TemplateName Name = Arg.getArgument().getAsTemplate();
   TemplateDecl *Template = Name.getAsTemplateDecl();
   if (!Template) {
@@ -4451,8 +4478,12 @@ bool Sema::CheckTemplateArgument(TemplateTemplateParmDecl *Param,
       << Template;
   }
 
+  TemplateParameterList *Params = Param->getTemplateParameters();
+  if (Param->isExpandedParameterPack())
+    Params = Param->getExpansionTemplateParameters(ArgumentPackIndex);
+
   return !TemplateParameterListsAreEqual(Template->getTemplateParameters(),
-                                         Param->getTemplateParameters(),
+                                         Params,
                                          true,
                                          TPL_TemplateTemplateArgumentMatch,
                                          Arg.getLocation());

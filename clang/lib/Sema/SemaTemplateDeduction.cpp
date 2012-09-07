@@ -573,7 +573,7 @@ static void PrepareArgumentPackDeduction(Sema &S,
     if (!S.CurrentInstantiationScope)
       continue;
 
-    // If the template arugment pack was explicitly specified, add that to
+    // If the template argument pack was explicitly specified, add that to
     // the set of deduced arguments.
     const TemplateArgument *ExplicitArgs;
     unsigned NumExplicitArgs;

@@ -945,6 +945,9 @@ namespace clang {
       /// \brief A NonTypeTemplateParmDecl record that stores an expanded
       /// non-type template parameter pack.
       DECL_EXPANDED_NON_TYPE_TEMPLATE_PARM_PACK,
+      /// \brief A TemplateTemplateParmDecl record that stores an expanded
+      /// template template parameter pack.
+      DECL_EXPANDED_TEMPLATE_TEMPLATE_PARM_PACK,
       /// \brief A ClassScopeFunctionSpecializationDecl record a class scope
       /// function specialization. (Microsoft extension).
       DECL_CLASS_SCOPE_FUNCTION_SPECIALIZATION,

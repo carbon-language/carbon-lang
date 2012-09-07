@@ -50,7 +50,11 @@ class TemplateParameterList {
 
   /// The number of template parameters in this template
   /// parameter list.
-  unsigned NumParams;
+  unsigned NumParams : 31;
+
+  /// Whether this template parameter list contains an unexpanded parameter
+  /// pack.
+  unsigned ContainsUnexpandedParameterPack : 1;
 
 protected:
   TemplateParameterList(SourceLocation TemplateLoc, SourceLocation LAngleLoc,
@@ -103,6 +107,12 @@ public:
   /// The first template parameter list in a declaration will have depth 0,
   /// the second template parameter list will have depth 1, etc.
   unsigned getDepth() const;
+
+  /// \brief Determine whether this template parameter list contains an
+  /// unexpanded parameter pack.
+  bool containsUnexpandedParameterPack() const {
+    return ContainsUnexpandedParameterPack;
+  }
 
   SourceLocation getTemplateLoc() const { return TemplateLoc; }
   SourceLocation getLAngleLoc() const { return LAngleLoc; }
@@ -1090,8 +1100,17 @@ public:
   /// \endcode
   bool isParameterPack() const { return ParameterPack; }
 
+  /// \brief Whether this parameter pack is a pack expansion.
+  ///
+  /// A non-type template parameter pack is a pack expansion if its type
+  /// contains an unexpanded parameter pack. In this case, we will have
+  /// built a PackExpansionType wrapping the type.
+  bool isPackExpansion() const {
+    return ParameterPack && getType()->getAs<PackExpansionType>();
+  }
+
   /// \brief Whether this parameter is a non-type template parameter pack
-  /// that has different types at different positions.
+  /// that has a known list of different types at different positions.
   ///
   /// A parameter pack is an expanded parameter pack when the original
   /// parameter pack's type was itself a pack expansion, and that expansion
@@ -1165,13 +1184,28 @@ class TemplateTemplateParmDecl : public TemplateDecl,
   /// \brief Whether this parameter is a parameter pack.
   bool ParameterPack;
 
+  /// \brief Whether this template template parameter is an "expanded"
+  /// parameter pack, meaning that it is a pack expansion and we
+  /// already know the set of template parameters that expansion expands to.
+  bool ExpandedParameterPack;
+
+  /// \brief The number of parameters in an expanded parameter pack.
+  unsigned NumExpandedParams;
+
   TemplateTemplateParmDecl(DeclContext *DC, SourceLocation L,
                            unsigned D, unsigned P, bool ParameterPack,
                            IdentifierInfo *Id, TemplateParameterList *Params)
     : TemplateDecl(TemplateTemplateParm, DC, L, Id, Params),
       TemplateParmPosition(D, P), DefaultArgument(),
-      DefaultArgumentWasInherited(false), ParameterPack(ParameterPack)
+      DefaultArgumentWasInherited(false), ParameterPack(ParameterPack),
+      ExpandedParameterPack(false), NumExpandedParams(0)
     { }
+
+  TemplateTemplateParmDecl(DeclContext *DC, SourceLocation L,
+                           unsigned D, unsigned P,
+                           IdentifierInfo *Id, TemplateParameterList *Params,
+                           unsigned NumExpansions,
+                           TemplateParameterList * const *Expansions);
 
 public:
   static TemplateTemplateParmDecl *Create(const ASTContext &C, DeclContext *DC,
@@ -1179,9 +1213,18 @@ public:
                                           unsigned P, bool ParameterPack,
                                           IdentifierInfo *Id,
                                           TemplateParameterList *Params);
+  static TemplateTemplateParmDecl *Create(const ASTContext &C, DeclContext *DC,
+                                          SourceLocation L, unsigned D,
+                                          unsigned P,
+                                          IdentifierInfo *Id,
+                                          TemplateParameterList *Params,
+                             llvm::ArrayRef<TemplateParameterList*> Expansions);
 
-  static TemplateTemplateParmDecl *CreateDeserialized(ASTContext &C, 
+  static TemplateTemplateParmDecl *CreateDeserialized(ASTContext &C,
                                                       unsigned ID);
+  static TemplateTemplateParmDecl *CreateDeserialized(ASTContext &C,
+                                                      unsigned ID,
+                                                      unsigned NumExpansions);
   
   using TemplateParmPosition::getDepth;
   using TemplateParmPosition::getPosition;
@@ -1194,6 +1237,49 @@ public:
   /// template<template <class T> ...MetaFunctions> struct Apply;
   /// \endcode
   bool isParameterPack() const { return ParameterPack; }
+
+  /// \brief Whether this parameter pack is a pack expansion.
+  ///
+  /// A template template parameter pack is a pack expansion if its template
+  /// parameter list contains an unexpanded parameter pack.
+  bool isPackExpansion() const {
+    return ParameterPack &&
+           getTemplateParameters()->containsUnexpandedParameterPack();
+  }
+
+  /// \brief Whether this parameter is a template template parameter pack that
+  /// has a known list of different template parameter lists at different
+  /// positions.
+  ///
+  /// A parameter pack is an expanded parameter pack when the original parameter
+  /// pack's template parameter list was itself a pack expansion, and that
+  /// expansion has already been expanded. For exampe, given:
+  ///
+  /// \code
+  /// template<typename...Types> struct Outer {
+  ///   template<template<Types> class...Templates> struct Inner;
+  /// };
+  /// \endcode
+  ///
+  /// The parameter pack \c Templates is a pack expansion, which expands the
+  /// pack \c Types. When \c Types is supplied with template arguments by
+  /// instantiating \c Outer, the instantiation of \c Templates is an expanded
+  /// parameter pack.
+  bool isExpandedParameterPack() const { return ExpandedParameterPack; }
+
+  /// \brief Retrieves the number of expansion template parameters in
+  /// an expanded parameter pack.
+  unsigned getNumExpansionTemplateParameters() const {
+    assert(ExpandedParameterPack && "Not an expansion parameter pack");
+    return NumExpandedParams;
+  }
+
+  /// \brief Retrieve a particular expansion type within an expanded parameter
+  /// pack.
+  TemplateParameterList *getExpansionTemplateParameters(unsigned I) const {
+    assert(I < NumExpandedParams && "Out-of-range expansion type index");
+    return reinterpret_cast<TemplateParameterList *const *>(this + 1)[I];
+  }
 
   /// \brief Determine whether this template parameter has a default
   /// argument.
