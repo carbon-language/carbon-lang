@@ -80,8 +80,8 @@ public:
 
   llvm::Type *ConvertType(QualType T) { return CGF.ConvertType(T); }
   LValue EmitLValue(const Expr *E) { return CGF.EmitLValue(E); }
-  LValue EmitCheckedLValue(const Expr *E, CodeGenFunction::CheckType CT) {
-    return CGF.EmitCheckedLValue(E, CT);
+  LValue EmitCheckedLValue(const Expr *E, CodeGenFunction::TypeCheckKind TCK) {
+    return CGF.EmitCheckedLValue(E, TCK);
   }
 
   Value *EmitLoadOfLValue(LValue LV) {
@@ -92,7 +92,7 @@ public:
   /// value l-value, this method emits the address of the l-value, then loads
   /// and returns the result.
   Value *EmitLoadOfLValue(const Expr *E) {
-    return EmitLoadOfLValue(EmitCheckedLValue(E, CodeGenFunction::CT_Load));
+    return EmitLoadOfLValue(EmitCheckedLValue(E, CodeGenFunction::TCK_Load));
   }
 
   /// EmitConversionToBool - Convert the specified expression value to a
@@ -416,13 +416,7 @@ public:
   /// Create a binary op that checks for overflow.
   /// Currently only supports +, - and *.
   Value *EmitOverflowCheckedBinOp(const BinOpInfo &Ops);
-  // Emit the overflow BB when -ftrapv option is activated. 
-  void EmitOverflowBB(llvm::BasicBlock *overflowBB) {
-    Builder.SetInsertPoint(overflowBB);
-    llvm::Function *Trap = CGF.CGM.getIntrinsic(llvm::Intrinsic::trap);
-    Builder.CreateCall(Trap);
-    Builder.CreateUnreachable();
-  }
+
   // Check for undefined division and modulus behaviors.
   void EmitUndefinedBehaviorIntegerDivAndRemCheck(const BinOpInfo &Ops, 
                                                   llvm::Value *Zero,bool isDiv);
@@ -1688,7 +1682,7 @@ LValue ScalarExprEmitter::EmitCompoundAssignLValue(
   OpInfo.Opcode = E->getOpcode();
   OpInfo.E = E;
   // Load/convert the LHS.
-  LValue LHSLV = EmitCheckedLValue(E->getLHS(), CodeGenFunction::CT_Store);
+  LValue LHSLV = EmitCheckedLValue(E->getLHS(), CodeGenFunction::TCK_Store);
   OpInfo.LHS = EmitLoadOfLValue(LHSLV);
 
   llvm::PHINode *atomicPHI = 0;
@@ -1760,14 +1754,7 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
 }
 
 void ScalarExprEmitter::EmitUndefinedBehaviorIntegerDivAndRemCheck(
-     					    const BinOpInfo &Ops, 
-				     	    llvm::Value *Zero, bool isDiv) {
-  llvm::Function::iterator insertPt = Builder.GetInsertBlock();
-  llvm::BasicBlock *contBB =
-    CGF.createBasicBlock(isDiv ? "div.cont" : "rem.cont", CGF.CurFn,
-                         llvm::next(insertPt));
-  llvm::BasicBlock *overflowBB = CGF.createBasicBlock("overflow", CGF.CurFn);
-
+    const BinOpInfo &Ops, llvm::Value *Zero, bool isDiv) {
   llvm::IntegerType *Ty = cast<llvm::IntegerType>(Zero->getType());
 
   if (Ops.Ty->hasSignedIntegerRepresentation()) {
@@ -1775,37 +1762,24 @@ void ScalarExprEmitter::EmitUndefinedBehaviorIntegerDivAndRemCheck(
       Builder.getInt(llvm::APInt::getSignedMinValue(Ty->getBitWidth()));
     llvm::Value *NegOne = llvm::ConstantInt::get(Ty, -1ULL);
 
-    llvm::Value *Cond1 = Builder.CreateICmpEQ(Ops.RHS, Zero);
-    llvm::Value *LHSCmp = Builder.CreateICmpEQ(Ops.LHS, IntMin);
-    llvm::Value *RHSCmp = Builder.CreateICmpEQ(Ops.RHS, NegOne);
-    llvm::Value *Cond2 = Builder.CreateAnd(LHSCmp, RHSCmp, "and");
-    Builder.CreateCondBr(Builder.CreateOr(Cond1, Cond2, "or"), 
-                         overflowBB, contBB);
+    llvm::Value *Cond1 = Builder.CreateICmpNE(Ops.RHS, Zero);
+    llvm::Value *LHSCmp = Builder.CreateICmpNE(Ops.LHS, IntMin);
+    llvm::Value *RHSCmp = Builder.CreateICmpNE(Ops.RHS, NegOne);
+    llvm::Value *Cond2 = Builder.CreateOr(LHSCmp, RHSCmp, "or");
+    CGF.EmitCheck(Builder.CreateAnd(Cond1, Cond2, "and"));
   } else {
-    CGF.Builder.CreateCondBr(Builder.CreateICmpEQ(Ops.RHS, Zero), 
-                             overflowBB, contBB);
+    CGF.EmitCheck(Builder.CreateICmpNE(Ops.RHS, Zero));
   }
-  EmitOverflowBB(overflowBB);
-  Builder.SetInsertPoint(contBB);
 }
 
 Value *ScalarExprEmitter::EmitDiv(const BinOpInfo &Ops) {
-  if (isTrapvOverflowBehavior()) { 
+  if (isTrapvOverflowBehavior()) {
     llvm::Value *Zero = llvm::Constant::getNullValue(ConvertType(Ops.Ty));
 
     if (Ops.Ty->isIntegerType())
       EmitUndefinedBehaviorIntegerDivAndRemCheck(Ops, Zero, true);
-    else if (Ops.Ty->isRealFloatingType()) {
-      llvm::Function::iterator insertPt = Builder.GetInsertBlock();
-      llvm::BasicBlock *DivCont = CGF.createBasicBlock("div.cont", CGF.CurFn,
-                                                       llvm::next(insertPt));
-      llvm::BasicBlock *overflowBB = CGF.createBasicBlock("overflow",
-                                                          CGF.CurFn);
-      CGF.Builder.CreateCondBr(Builder.CreateFCmpOEQ(Ops.RHS, Zero), 
-                               overflowBB, DivCont);
-      EmitOverflowBB(overflowBB);
-      Builder.SetInsertPoint(DivCont);
-    }
+    else if (Ops.Ty->isRealFloatingType())
+      CGF.EmitCheck(Builder.CreateFCmpUNE(Ops.RHS, Zero));
   }
   if (Ops.LHS->getType()->isFPOrFPVectorTy()) {
     llvm::Value *Val = Builder.CreateFDiv(Ops.LHS, Ops.RHS, "div");
@@ -1874,6 +1848,14 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
   Value *result = Builder.CreateExtractValue(resultAndOverflow, 0);
   Value *overflow = Builder.CreateExtractValue(resultAndOverflow, 1);
 
+  // Handle overflow with llvm.trap if no custom handler has been specified.
+  const std::string *handlerName =
+    &CGF.getContext().getLangOpts().OverflowHandler;
+  if (handlerName->empty()) {
+    CGF.EmitCheck(Builder.CreateNot(overflow));
+    return result;
+  }
+
   // Branch in case of overflow.
   llvm::BasicBlock *initialBB = Builder.GetInsertBlock();
   llvm::Function::iterator insertPt = initialBB;
@@ -1882,15 +1864,6 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
   llvm::BasicBlock *overflowBB = CGF.createBasicBlock("overflow", CGF.CurFn);
 
   Builder.CreateCondBr(overflow, overflowBB, continueBB);
-
-  // Handle overflow with llvm.trap.
-  const std::string *handlerName = 
-    &CGF.getContext().getLangOpts().OverflowHandler;
-  if (handlerName->empty()) {
-    EmitOverflowBB(overflowBB);
-    Builder.SetInsertPoint(continueBB);
-    return result;
-  }
 
   // If an overflow handler is set, then we want to call it and then use its
   // result, if it returns.
@@ -2122,18 +2095,13 @@ Value *ScalarExprEmitter::EmitShl(const BinOpInfo &Ops) {
 
   if (CGF.CatchUndefined && isa<llvm::IntegerType>(Ops.LHS->getType())) {
     unsigned Width = cast<llvm::IntegerType>(Ops.LHS->getType())->getBitWidth();
-    llvm::BasicBlock *Cont = CGF.createBasicBlock("shl.cont");
-    llvm::BasicBlock *Trap = CGF.getTrapBB();
     llvm::Value *WidthMinusOne =
       llvm::ConstantInt::get(RHS->getType(), Width - 1);
-    CGF.Builder.CreateCondBr(Builder.CreateICmpULE(RHS, WidthMinusOne),
-                             Cont, Trap);
-    CGF.EmitBlock(Cont);
+    CGF.EmitCheck(Builder.CreateICmpULE(RHS, WidthMinusOne));
 
     if (Ops.Ty->hasSignedIntegerRepresentation()) {
       // Check whether we are shifting any non-zero bits off the top of the
       // integer.
-      Cont = CGF.createBasicBlock("shl.ok");
       llvm::Value *BitsShiftedOff =
         Builder.CreateLShr(Ops.LHS,
                            Builder.CreateSub(WidthMinusOne, RHS, "shl.zeros",
@@ -2148,9 +2116,7 @@ Value *ScalarExprEmitter::EmitShl(const BinOpInfo &Ops) {
         BitsShiftedOff = Builder.CreateLShr(BitsShiftedOff, One);
       }
       llvm::Value *Zero = llvm::ConstantInt::get(BitsShiftedOff->getType(), 0);
-      Builder.CreateCondBr(Builder.CreateICmpEQ(BitsShiftedOff, Zero),
-                           Cont, Trap);
-      CGF.EmitBlock(Cont);
+      CGF.EmitCheck(Builder.CreateICmpEQ(BitsShiftedOff, Zero));
     }
   }
 
@@ -2166,11 +2132,8 @@ Value *ScalarExprEmitter::EmitShr(const BinOpInfo &Ops) {
 
   if (CGF.CatchUndefined && isa<llvm::IntegerType>(Ops.LHS->getType())) {
     unsigned Width = cast<llvm::IntegerType>(Ops.LHS->getType())->getBitWidth();
-    llvm::BasicBlock *Cont = CGF.createBasicBlock("cont");
-    CGF.Builder.CreateCondBr(Builder.CreateICmpULT(RHS,
-                                 llvm::ConstantInt::get(RHS->getType(), Width)),
-                             Cont, CGF.getTrapBB());
-    CGF.EmitBlock(Cont);
+    llvm::Value *WidthVal = llvm::ConstantInt::get(RHS->getType(), Width);
+    CGF.EmitCheck(Builder.CreateICmpULT(RHS, WidthVal));
   }
 
   if (Ops.Ty->hasUnsignedIntegerRepresentation())
@@ -2361,7 +2324,7 @@ Value *ScalarExprEmitter::VisitBinAssign(const BinaryOperator *E) {
 
   case Qualifiers::OCL_Weak:
     RHS = Visit(E->getRHS());
-    LHS = EmitCheckedLValue(E->getLHS(), CodeGenFunction::CT_Store);
+    LHS = EmitCheckedLValue(E->getLHS(), CodeGenFunction::TCK_Store);
     RHS = CGF.EmitARCStoreWeak(LHS.getAddress(), RHS, Ignore);
     break;
 
@@ -2371,7 +2334,7 @@ Value *ScalarExprEmitter::VisitBinAssign(const BinaryOperator *E) {
     // __block variables need to have the rhs evaluated first, plus
     // this should improve codegen just a little.
     RHS = Visit(E->getRHS());
-    LHS = EmitCheckedLValue(E->getLHS(), CodeGenFunction::CT_Store);
+    LHS = EmitCheckedLValue(E->getLHS(), CodeGenFunction::TCK_Store);
 
     // Store the value into the LHS.  Bit-fields are handled specially
     // because the result is altered by the store, i.e., [C99 6.5.16p1]

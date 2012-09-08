@@ -404,7 +404,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   }
   case Builtin::BI__builtin_unreachable: {
     if (CatchUndefined)
-      EmitBranch(getTrapBB());
+      EmitCheck(Builder.getFalse());
     else
       Builder.CreateUnreachable();
 

@@ -1835,27 +1835,27 @@ public:
 
   /// \brief Situations in which we might emit a check for the suitability of a
   ///        pointer or glvalue.
-  enum CheckType {
+  enum TypeCheckKind {
     /// Checking the operand of a load. Must be suitably sized and aligned.
-    CT_Load,
+    TCK_Load,
     /// Checking the destination of a store. Must be suitably sized and aligned.
-    CT_Store,
+    TCK_Store,
     /// Checking the bound value in a reference binding. Must be suitably sized
     /// and aligned, but is not required to refer to an object (until the
     /// reference is used), per core issue 453.
-    CT_ReferenceBinding,
+    TCK_ReferenceBinding,
     /// Checking the object expression in a non-static data member access. Must
     /// be an object within its lifetime.
-    CT_MemberAccess,
+    TCK_MemberAccess,
     /// Checking the 'this' pointer for a call to a non-static member function.
     /// Must be an object within its lifetime.
-    CT_MemberCall
+    TCK_MemberCall
   };
 
-  /// EmitCheck - Emit a check that \p V is the address of storage of the
+  /// \brief Emit a check that \p V is the address of storage of the
   /// appropriate size and alignment for an object of type \p Type.
-  void EmitCheck(CheckType CT, llvm::Value *V,
-                 QualType Type, CharUnits Alignment = CharUnits::Zero());
+  void EmitTypeCheck(TypeCheckKind TCK, llvm::Value *V,
+                     QualType Type, CharUnits Alignment = CharUnits::Zero());
 
   llvm::Value *EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
                                        bool isInc, bool isPre);
@@ -2053,11 +2053,10 @@ public:
   ///
   LValue EmitLValue(const Expr *E);
 
-  /// EmitCheckedLValue - Same as EmitLValue but additionally we generate
-  /// checking code to guard against undefined behavior.  This is only
-  /// suitable when we know that the address will be used to access the
-  /// object.
-  LValue EmitCheckedLValue(const Expr *E, CheckType CT);
+  /// \brief Same as EmitLValue but additionally we generate checking code to
+  /// guard against undefined behavior.  This is only suitable when we know
+  /// that the address will be used to access the object.
+  LValue EmitCheckedLValue(const Expr *E, TypeCheckKind TCK);
 
   /// EmitToMemory - Change a scalar value from its value
   /// representation to its in-memory representation.
@@ -2536,9 +2535,9 @@ public:
   void EmitBranchOnBoolExpr(const Expr *Cond, llvm::BasicBlock *TrueBlock,
                             llvm::BasicBlock *FalseBlock);
 
-  /// getTrapBB - Create a basic block that will call the trap intrinsic.  We'll
-  /// generate a branch around the created basic block as necessary.
-  llvm::BasicBlock *getTrapBB();
+  /// \brief Create a basic block that will call the trap intrinsic, and emit a
+  /// conditional branch to it.
+  void EmitCheck(llvm::Value *Checked);
 
   /// EmitCallArg - Emit a single call argument.
   void EmitCallArg(CallArgList &args, const Expr *E, QualType ArgType);

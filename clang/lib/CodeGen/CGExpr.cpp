@@ -493,7 +493,7 @@ CodeGenFunction::EmitReferenceBindingToExpr(const Expr *E,
     //   storage of suitable size and alignment to contain an object of the
     //   reference's type, the behavior is undefined.
     QualType Ty = E->getType();
-    EmitCheck(CT_ReferenceBinding, Value, Ty);
+    EmitTypeCheck(TCK_ReferenceBinding, Value, Ty);
   }
   if (!ReferenceTemporaryDtor && ObjCARCReferenceLifetimeType.isNull())
     return RValue::get(Value);
@@ -558,14 +558,14 @@ unsigned CodeGenFunction::getAccessedFieldNo(unsigned Idx,
       ->getZExtValue();
 }
 
-void CodeGenFunction::EmitCheck(CheckType CT, llvm::Value *Address, QualType Ty,
-                                CharUnits Alignment) {
+void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, llvm::Value *Address,
+                                    QualType Ty, CharUnits Alignment) {
   if (!CatchUndefined)
     return;
 
   llvm::Value *Cond = 0;
 
-  if (CT != CT_Load && CT != CT_Store) {
+  if (TCK != TCK_Load && TCK != TCK_Store) {
     // The glvalue must not be an empty glvalue. Don't bother checking this for
     // loads and stores, because we will get a segfault anyway (if the operation
     // isn't optimized out).
@@ -600,11 +600,8 @@ void CodeGenFunction::EmitCheck(CheckType CT, llvm::Value *Address, QualType Ty,
         Builder.CreateICmpEQ(Align, llvm::ConstantInt::get(IntPtrTy, 0)));
   }
 
-  if (Cond) {
-    llvm::BasicBlock *Cont = createBasicBlock();
-    Builder.CreateCondBr(Cond, Cont, getTrapBB());
-    EmitBlock(Cont);
-  }
+  if (Cond)
+    EmitCheck(Cond);
 }
 
 
@@ -681,10 +678,10 @@ LValue CodeGenFunction::EmitUnsupportedLValue(const Expr *E,
   return MakeAddrLValue(llvm::UndefValue::get(Ty), E->getType());
 }
 
-LValue CodeGenFunction::EmitCheckedLValue(const Expr *E, CheckType CT) {
+LValue CodeGenFunction::EmitCheckedLValue(const Expr *E, TypeCheckKind TCK) {
   LValue LV = EmitLValue(E);
   if (!isa<DeclRefExpr>(E) && !LV.isBitField() && LV.isSimple())
-    EmitCheck(CT, LV.getAddress(), E->getType(), LV.getAlignment());
+    EmitTypeCheck(TCK, LV.getAddress(), E->getType(), LV.getAlignment());
   return LV;
 }
 
@@ -1927,33 +1924,33 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
   }
 }
 
-llvm::BasicBlock *CodeGenFunction::getTrapBB() {
+void CodeGenFunction::EmitCheck(llvm::Value *Checked) {
   const CodeGenOptions &GCO = CGM.getCodeGenOpts();
+
+  llvm::BasicBlock *Cont = createBasicBlock("cont");
 
   // If we are not optimzing, don't collapse all calls to trap in the function
   // to the same call, that way, in the debugger they can see which operation
   // did in fact fail.  If we are optimizing, we collapse all calls to trap down
   // to just one per function to save on codesize.
-  if (GCO.OptimizationLevel && TrapBB)
-    return TrapBB;
+  bool NeedNewTrapBB = !GCO.OptimizationLevel || !TrapBB;
 
-  llvm::BasicBlock *Cont = 0;
-  if (HaveInsertPoint()) {
-    Cont = createBasicBlock("cont");
-    EmitBranch(Cont);
+  if (NeedNewTrapBB)
+    TrapBB = createBasicBlock("trap");
+
+  Builder.CreateCondBr(Checked, Cont, TrapBB);
+
+  if (NeedNewTrapBB) {
+    EmitBlock(TrapBB);
+
+    llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::trap);
+    llvm::CallInst *TrapCall = Builder.CreateCall(F);
+    TrapCall->setDoesNotReturn();
+    TrapCall->setDoesNotThrow();
+    Builder.CreateUnreachable();
   }
-  TrapBB = createBasicBlock("trap");
-  EmitBlock(TrapBB);
 
-  llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::trap);
-  llvm::CallInst *TrapCall = Builder.CreateCall(F);
-  TrapCall->setDoesNotReturn();
-  TrapCall->setDoesNotThrow();
-  Builder.CreateUnreachable();
-
-  if (Cont)
-    EmitBlock(Cont);
-  return TrapBB;
+  EmitBlock(Cont);
 }
 
 /// isSimpleArrayDecayOperand - If the specified expr is a simple decay from an
@@ -2156,10 +2153,10 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   if (E->isArrow()) {
     llvm::Value *Ptr = EmitScalarExpr(BaseExpr);
     QualType PtrTy = BaseExpr->getType()->getPointeeType();
-    EmitCheck(CT_MemberAccess, Ptr, PtrTy);
+    EmitTypeCheck(TCK_MemberAccess, Ptr, PtrTy);
     BaseLV = MakeNaturalAlignAddrLValue(Ptr, PtrTy);
   } else
-    BaseLV = EmitCheckedLValue(BaseExpr, CT_MemberAccess);
+    BaseLV = EmitCheckedLValue(BaseExpr, TCK_MemberAccess);
 
   NamedDecl *ND = E->getMemberDecl();
   if (FieldDecl *Field = dyn_cast<FieldDecl>(ND)) {
