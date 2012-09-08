@@ -72,6 +72,8 @@ public:
   void checkPreCall(const CallEvent &CE, CheckerContext &C) const;
   void checkPostCall(const CallEvent &CE, CheckerContext &C) const;
 
+  void printState(raw_ostream &Out, ProgramStateRef State,
+                  const char *NL, const char *Sep) const;
 };
 } // end anonymous namespace
 
@@ -345,6 +347,52 @@ void ObjCSelfInitChecker::checkBind(SVal loc, SVal val, const Stmt *S,
     C.addTransition(State);
   }
 }
+
+void ObjCSelfInitChecker::printState(raw_ostream &Out, ProgramStateRef State,
+                                     const char *NL, const char *Sep) const {
+  SelfFlag FlagMap = State->get<SelfFlag>();
+  bool DidCallInit = State->get<CalledInit>();
+  SelfFlagEnum PreCallFlags = (SelfFlagEnum)State->get<PreCallSelfFlags>();
+
+  if (FlagMap.isEmpty() && !DidCallInit && !PreCallFlags)
+    return;
+
+  Out << Sep << NL << "ObjCSelfInitChecker:" << NL;
+
+  if (DidCallInit)
+    Out << "  An init method has been called." << NL;
+
+  if (PreCallFlags != SelfFlag_None) {
+    if (PreCallFlags & SelfFlag_Self) {
+      Out << "  An argument of the current call came from the 'self' variable."
+          << NL;
+    }
+    if (PreCallFlags & SelfFlag_InitRes) {
+      Out << "  An argument of the current call came from an init method."
+          << NL;
+    }
+  }
+
+  Out << NL;
+  for (SelfFlag::iterator I = FlagMap.begin(), E = FlagMap.end(); I != E; ++I) {
+    Out << I->first << " : ";
+
+    if (I->second == SelfFlag_None)
+      Out << "none";
+
+    if (I->second & SelfFlag_Self)
+      Out << "self variable";
+
+    if (I->second & SelfFlag_InitRes) {
+      if (I->second != SelfFlag_InitRes)
+        Out << " | ";
+      Out << "result of init method";
+    }
+
+    Out << NL;
+  }
+}
+
 
 // FIXME: A callback should disable checkers at the start of functions.
 static bool shouldRunOnFunctionOrMethod(const NamedDecl *ND) {
