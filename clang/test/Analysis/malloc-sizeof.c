@@ -37,9 +37,11 @@ void ignore_const() {
 
 int *mallocArraySize() {
   static const int sTable[10];
-  static const int nestedTable[10][10];
+  static const int nestedTable[10][2];
   int *table = malloc(sizeof sTable);
   int *table1 = malloc(sizeof nestedTable);
+  int (*table2)[2] = malloc(sizeof nestedTable);
+  int (*table3)[10][2] = malloc(sizeof nestedTable);
   return table;
 }
 

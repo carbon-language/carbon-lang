@@ -157,6 +157,18 @@ static bool typesCompatible(ASTContext &C, QualType A, QualType B) {
   return false;
 }
 
+static bool compatibleWithArrayType(ASTContext &C, QualType PT, QualType T) {
+  // Ex: 'int a[10][2]' is compatible with 'int', 'int[2]', 'int[10][2]'.
+  while (const ArrayType *AT = T->getAsArrayTypeUnsafe()) {
+    QualType ElemType = AT->getElementType();
+    if (typesCompatible(C, PT, AT->getElementType()))
+      return true;
+    T = ElemType;
+  }
+
+  return false;
+}
+
 class MallocSizeofChecker : public Checker<check::ASTCodeBody> {
 public:
   void checkASTCodeBody(const Decl *D, AnalysisManager& mgr,
@@ -189,18 +201,9 @@ public:
           continue;
 
         // If the argument to sizeof is an array, the result could be a
-        // pointer to the array element.
-        if (const ArrayType *AT = dyn_cast<ArrayType>(SizeofType)) {
-          QualType ElemType = AT->getElementType();
-          if (typesCompatible(BR.getContext(), PointeeType,
-                                               AT->getElementType()))
-            continue;
-            
-          // For now, let's only reason about arrays of built in types.
-          if (!ElemType->isBuiltinType())
-            continue;
-        }
-
+        // pointer to any array element.
+        if (compatibleWithArrayType(BR.getContext(), PointeeType, SizeofType))
+          continue;
 
         const TypeSourceInfo *TSI = 0;
         if (i->CastedExprParent.is<const VarDecl *>()) {
