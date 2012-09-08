@@ -598,7 +598,7 @@ public:
                 const bool discard_on_error = true;
                 Error error;
                 result_code = ClangUserExpression::EvaluateWithError (exe_ctx,
-                                                                      eExecutionPolicyAlways,
+                                                                      eExecutionPolicyOnlyWhenNeeded,
                                                                       lldb::eLanguageTypeUnknown,
                                                                       ClangUserExpression::eResultTypeAny,
                                                                       discard_on_error,
