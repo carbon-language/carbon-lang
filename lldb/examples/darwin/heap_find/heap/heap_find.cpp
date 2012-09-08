@@ -201,16 +201,120 @@ struct malloc_stack_entry
     const void *address;
     uint64_t argument;
     uint32_t type_flags;
-    std::vector<uintptr_t> frames;
+    uint32_t num_frames;
+    mach_vm_address_t frames[MAX_FRAMES];
+};
+
+class MatchResults
+{
+    enum { 
+        k_max_entries = 8 * 1024
+    };
+public:
+    MatchResults () :
+        m_size(0)
+    {
+    }
+    
+    void
+    clear()
+    {
+        m_size = 0;
+    }
+    
+    bool
+    empty() const
+    {
+        return m_size == 0;
+    }
+
+    void
+    push_back (const malloc_match& m)
+    {
+        if (m_size < k_max_entries - 1)
+        {
+            m_entries[m_size] = m;
+            m_size++;
+        }
+    }
+
+    malloc_match *
+    data ()
+    {
+        // If empty, return NULL
+        if (empty())
+            return NULL;
+        // In not empty, terminate and return the result
+        malloc_match terminator_entry = { NULL, 0, 0 };
+        // We always leave room for an empty entry at the end
+        m_entries[m_size + 1] = terminator_entry;
+        return m_entries;
+    }
+
+protected:
+    malloc_match m_entries[k_max_entries];
+    uint32_t m_size;
+};
+
+class MallocStackLoggingEntries
+{
+    enum {  k_max_entries = 128 };
+public:
+    MallocStackLoggingEntries () :
+        m_size(0)
+    {
+    }
+
+    void
+    clear()
+    {
+        m_size = 0;
+    }
+
+    bool
+    empty() const
+    {
+        return m_size == 0;
+    }
+
+
+    malloc_stack_entry *
+    next ()
+    {
+        if (m_size < k_max_entries - 1)
+        {
+            malloc_stack_entry * result = m_entries + m_size;
+            ++m_size;
+            return result;
+        }
+        return NULL; // Out of entries...
+    }
+
+    malloc_stack_entry *
+    data ()
+    {
+        // If empty, return NULL
+        if (empty())
+            return NULL;
+        // In not empty, terminate and return the result
+        m_entries[m_size + 1].address = NULL;
+        m_entries[m_size + 1].argument = 0;
+        m_entries[m_size + 1].type_flags = 0;
+        m_entries[m_size + 1].num_frames = 0;
+        return m_entries;
+    }
+
+protected:  
+    malloc_stack_entry m_entries[k_max_entries];
+    uint32_t m_size;
 };
 
 //----------------------------------------------------------------------
 // Local global variables
 //----------------------------------------------------------------------
-std::vector<malloc_match> g_matches;
-std::vector<malloc_stack_entry> g_malloc_stack_history;
-mach_vm_address_t g_stack_frames[MAX_FRAMES];
-char g_error_string[PATH_MAX];
+//std::vector<malloc_match> g_matches;
+MatchResults g_matches;
+MallocStackLoggingEntries g_malloc_stack_history;
 
 //----------------------------------------------------------------------
 // task_peek
@@ -296,7 +400,7 @@ range_info_callback (task_t task, void *baton, unsigned type, uint64_t ptr_addr,
         {
             ++info->match_count;
             malloc_match match = { (void *)ptr_addr, ptr_size, info->addr - ptr_addr };
-            g_matches.push_back(match);            
+            g_matches.push_back(match);
         }
         break;
     
@@ -413,31 +517,31 @@ range_info_callback (task_t task, void *baton, unsigned type, uint64_t ptr_addr,
 static void 
 get_stack_for_address_enumerator(mach_stack_logging_record_t stack_record, void *task_ptr)
 {
-    uint32_t num_frames = 0;
-    kern_return_t err = __mach_stack_logging_frames_for_uniqued_stack (*(task_t *)task_ptr, 
-                                                                       stack_record.stack_identifier,
-                                                                       g_stack_frames,
-                                                                       MAX_FRAMES,
-                                                                       &num_frames);    
-    g_malloc_stack_history.resize(g_malloc_stack_history.size() + 1);
-    g_malloc_stack_history.back().address = (void *)stack_record.address;
-    g_malloc_stack_history.back().type_flags = stack_record.type_flags;
-    g_malloc_stack_history.back().argument = stack_record.argument;
-    if (num_frames > 0)
-        g_malloc_stack_history.back().frames.assign(g_stack_frames, g_stack_frames + num_frames);
-    g_malloc_stack_history.back().frames.push_back(0); // Terminate the frames with zero
+    malloc_stack_entry *stack_entry = g_malloc_stack_history.next();
+    if (stack_entry)
+    {
+        stack_entry->address = (void *)stack_record.address;
+        stack_entry->type_flags = stack_record.type_flags;
+        stack_entry->argument = stack_record.argument;
+        stack_entry->num_frames = 0;
+        stack_entry->frames[0] = 0;
+        kern_return_t err = __mach_stack_logging_frames_for_uniqued_stack (*(task_t *)task_ptr, 
+                                                                           stack_record.stack_identifier,
+                                                                           stack_entry->frames,
+                                                                           MAX_FRAMES,
+                                                                           &stack_entry->num_frames);    
+        // Terminate the frames with zero if there is room
+        if (stack_entry->num_frames < MAX_FRAMES)
+            stack_entry->frames[stack_entry->num_frames] = 0; 
+    }
 }
 
 malloc_stack_entry *
 get_stack_history_for_address (const void * addr, int history)
 {
-    std::vector<malloc_stack_entry> empty;
-    g_malloc_stack_history.swap(empty);
     if (!stack_logging_enable_logging)
-    {
-        strncpy(g_error_string, "error: stack logging is not enabled, set MallocStackLogging=1 in the environment when launching to enable stack logging.", sizeof(g_error_string));
         return NULL;
-    }
+    g_malloc_stack_history.clear();
     kern_return_t err;
     task_t task = mach_task_self();
     if (history)
@@ -449,26 +553,28 @@ get_stack_history_for_address (const void * addr, int history)
     }
     else
     {
-        uint32_t num_frames = 0;
-        err = __mach_stack_logging_get_frames(task, (mach_vm_address_t)addr, g_stack_frames, MAX_FRAMES, &num_frames);
-        if (err == 0 && num_frames > 0)
+        malloc_stack_entry *stack_entry = g_malloc_stack_history.next();
+        if (stack_entry)
         {
-            g_malloc_stack_history.resize(1);
-            g_malloc_stack_history.back().address = addr;
-            g_malloc_stack_history.back().type_flags = stack_logging_type_alloc;
-            g_malloc_stack_history.back().argument = 0;
-            if (num_frames > 0)
-                g_malloc_stack_history.back().frames.assign(g_stack_frames, g_stack_frames + num_frames);
-            g_malloc_stack_history.back().frames.push_back(0); // Terminate the frames with zero
+            stack_entry->address = addr;
+            stack_entry->type_flags = stack_logging_type_alloc;
+            stack_entry->argument = 0;
+            stack_entry->num_frames = 0;
+            stack_entry->frames[0] = 0;
+            err = __mach_stack_logging_get_frames(task, (mach_vm_address_t)addr, stack_entry->frames, MAX_FRAMES, &stack_entry->num_frames);
+            if (err == 0 && stack_entry->num_frames > 0)
+            {
+                // Terminate the frames with zero if there is room
+                if (stack_entry->num_frames < MAX_FRAMES)
+                    stack_entry->frames[stack_entry->num_frames] = 0;
+            }
+            else
+            {
+                g_malloc_stack_history.clear();                
+            }
         }
     }
-    // Append an empty entry
-    if (g_malloc_stack_history.empty())
-        return NULL;
-    g_malloc_stack_history.resize(g_malloc_stack_history.size() + 1);
-    g_malloc_stack_history.back().address = 0;
-    g_malloc_stack_history.back().type_flags = 0;
-    g_malloc_stack_history.back().argument = 0;
+    // Return data if there is any
     return g_malloc_stack_history.data();
 }
 
@@ -496,10 +602,6 @@ find_pointer_in_heap (const void * addr)
         range_callback_info_t info = { enumerate_range_in_zone, range_info_callback, &data_info };
         foreach_zone_in_this_process (&info);
     }
-    if (g_matches.empty())
-        return NULL;
-    malloc_match match = { NULL, 0, 0 };
-    g_matches.push_back(match);
     return g_matches.data();
 }
 
@@ -523,10 +625,6 @@ find_pointer_in_memory (uint64_t memory_addr, uint64_t memory_size, const void *
     data_info.match_count = 0;                   // Initialize the match count to zero
     data_info.done = false;                      // Set done to false so searching doesn't stop
     range_info_callback (mach_task_self(), &data_info, stack_logging_type_generic, memory_addr, memory_size);
-    if (g_matches.empty())
-        return NULL;
-    malloc_match match = { NULL, 0, 0 };
-    g_matches.push_back(match);
     return g_matches.data();
 }
 
@@ -551,10 +649,6 @@ find_objc_objects_in_memory (void *isa)
     data_info.done = false;                      // Set done to false so searching doesn't stop
     range_callback_info_t info = { enumerate_range_in_zone, range_info_callback, &data_info };
     foreach_zone_in_this_process (&info);
-    if (g_matches.empty())
-        return NULL;
-    malloc_match match = { NULL, 0, 0 };
-    g_matches.push_back(match);
     return g_matches.data();
 }
 
@@ -583,10 +677,6 @@ find_cstring_in_heap (const char *s)
     data_info.done = false;                  // Set done to false so searching doesn't stop
     range_callback_info_t info = { enumerate_range_in_zone, range_info_callback, &data_info };
     foreach_zone_in_this_process (&info);
-    if (g_matches.empty())
-        return NULL;
-    malloc_match match = { NULL, 0, 0 };
-    g_matches.push_back(match);
     return g_matches.data();
 }
 
@@ -608,9 +698,5 @@ find_block_for_address (const void *addr)
     data_info.done = false;             // Set done to false so searching doesn't stop
     range_callback_info_t info = { enumerate_range_in_zone, range_info_callback, &data_info };
     foreach_zone_in_this_process (&info);
-    if (g_matches.empty())
-        return NULL;
-    malloc_match match = { NULL, 0, 0 };
-    g_matches.push_back(match);
     return g_matches.data();
 }
