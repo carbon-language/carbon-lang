@@ -13,6 +13,8 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Breakpoint/BreakpointLocation.h"
+#include "lldb/Breakpoint/Breakpoint.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/SourceManager.h"
@@ -155,6 +157,31 @@ StackFrameList::ResetCurrentInlinedDepth ()
                                     // FIXME: Figure out what this break point is doing, and set the inline depth
                                     // appropriately.  Be careful to take into account breakpoints that implement
                                     // step over prologue, since that should do the default calculation.
+                                    // For now, if the breakpoints corresponding to this hit are all internal,
+                                    // I set the stop location to the top of the inlined stack, since that will make
+                                    // things like stepping over prologues work right.  But if there are any non-internal
+                                    // breakpoints I do to the bottom of the stack, since that was the old behavior.
+                                    uint32_t bp_site_id = stop_info_sp->GetValue();
+                                    BreakpointSiteSP bp_site_sp(m_thread.GetProcess()->GetBreakpointSiteList().FindByID(bp_site_id));
+                                    bool all_internal = true;
+                                    if (bp_site_sp)
+                                    {
+                                        uint32_t num_owners = bp_site_sp->GetNumberOfOwners();
+                                        for (uint32_t i = 0; i < num_owners; i++)
+                                        {
+                                            Breakpoint &bp_ref = bp_site_sp->GetOwnerAtIndex(i)->GetBreakpoint();
+                                            if (!bp_ref.IsInternal())
+                                            {
+                                                all_internal = false;
+                                            }
+                                        }
+                                    }
+                                    if (!all_internal)
+                                    {
+                                        m_current_inlined_pc = curr_pc;
+                                        m_current_inlined_depth = 0;
+                                        break;
+                                    }
                                 }
                             default:
                                 {
