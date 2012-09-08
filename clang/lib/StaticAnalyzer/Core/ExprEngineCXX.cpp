@@ -250,7 +250,9 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
   if (FD && FD->isReservedGlobalPlacementOperator()) {
     // Non-array placement new should always return the placement location.
     SVal PlacementLoc = State->getSVal(CNE->getPlacementArg(0), LCtx);
-    State = State->BindExpr(CNE, LCtx, PlacementLoc);
+    SVal Result = svalBuilder.evalCast(PlacementLoc, CNE->getType(),
+                                       CNE->getPlacementArg(0)->getType());
+    State = State->BindExpr(CNE, LCtx, Result);
   } else {
     State = State->BindExpr(CNE, LCtx, symVal);
   }
