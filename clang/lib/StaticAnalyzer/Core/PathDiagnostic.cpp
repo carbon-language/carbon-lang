@@ -211,34 +211,19 @@ namespace {
 struct CompareDiagnostics {
   // Compare if 'X' is "<" than 'Y'.
   bool operator()(const PathDiagnostic *X, const PathDiagnostic *Y) const {
-    // First compare by location
-    const FullSourceLoc &XLoc = X->getLocation().asLocation();
-    const FullSourceLoc &YLoc = Y->getLocation().asLocation();
-    if (XLoc < YLoc)
-      return true;
-    if (XLoc != YLoc)
-      return false;
+    // First sort by location, and if that doesn't work, do a full profile.
+    FullSourceLoc XL = X->getLocation().asLocation();
+    FullSourceLoc YL = Y->getLocation().asLocation();
+    if (XL != YL)
+      return XL < YL;
     
-    // Next, compare by bug type.
-    StringRef XBugType = X->getBugType();
-    StringRef YBugType = Y->getBugType();
-    if (XBugType < YBugType)
-      return true;
-    if (XBugType != YBugType)
-      return false;
-    
-    // Next, compare by bug description.
-    StringRef XDesc = X->getVerboseDescription();
-    StringRef YDesc = Y->getVerboseDescription();
-    if (XDesc < YDesc)
-      return true;
-    if (XDesc != YDesc)
-      return false;
-    
-    // FIXME: Further refine by comparing PathDiagnosticPieces?
-    return false;    
-  }  
-};  
+    // Do a full profile.
+    llvm::FoldingSetNodeID XProfile, YProfile;
+    X->FullProfile(XProfile);
+    Y->FullProfile(YProfile);
+    return XProfile < YProfile;
+  }
+};
 }
 
 void PathDiagnosticConsumer::FlushDiagnostics(
@@ -251,11 +236,9 @@ void PathDiagnosticConsumer::FlushDiagnostics(
   std::vector<const PathDiagnostic *> BatchDiags;
   for (llvm::FoldingSet<PathDiagnostic>::iterator it = Diags.begin(),
        et = Diags.end(); it != et; ++it) {
-    BatchDiags.push_back(&*it);
+    const PathDiagnostic *D = &*it;
+    BatchDiags.push_back(D);
   }
-  
-  // Clear out the FoldingSet.
-  Diags.clear();
 
   // Sort the diagnostics so that they are always emitted in a deterministic
   // order.
@@ -270,6 +253,9 @@ void PathDiagnosticConsumer::FlushDiagnostics(
     const PathDiagnostic *D = *it;
     delete D;
   }
+  
+  // Clear out the FoldingSet.
+  Diags.clear();
 }
 
 void PathDiagnosticConsumer::FilesMade::addDiagnostic(const PathDiagnostic &PD,
