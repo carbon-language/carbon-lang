@@ -140,7 +140,8 @@ static void addSelfFlag(ProgramStateRef state, SVal val,
                         SelfFlagEnum flag, CheckerContext &C) {
   // We tag the symbol that the SVal wraps.
   if (SymbolRef sym = val.getAsSymbol())
-    C.addTransition(state->set<SelfFlag>(sym, getSelfFlags(val, C) | flag));
+    state = state->set<SelfFlag>(sym, getSelfFlags(val, state) | flag);
+  C.addTransition(state);
 }
 
 static bool hasSelfFlag(SVal val, SelfFlagEnum flag, CheckerContext &C) {
@@ -310,7 +311,7 @@ void ObjCSelfInitChecker::checkPostCall(const CallEvent &CE,
       const Expr *CallExpr = CE.getOriginExpr();
       if (CallExpr)
         addSelfFlag(state, state->getSVal(CallExpr, C.getLocationContext()),
-                                          prevFlags, C);
+                    prevFlags, C);
       return;
     }
   }
