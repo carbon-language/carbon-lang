@@ -1,6 +1,6 @@
 // RUN: rm -f %t
 // RUN: %clang_cc1 -analyze -analyzer-checker=unix.Malloc -analyzer-output=plist -o %t %s
-// RUN: FileCheck --exact-match --input-file %t %s
+// RUN: FileCheck -input-file %t %s
 
 typedef __typeof(sizeof(int)) size_t;
 void *malloc(size_t);
