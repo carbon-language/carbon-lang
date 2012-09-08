@@ -101,6 +101,21 @@ struct DOTGraphTraits<ScopDetection*> : public DOTGraphTraits<RegionNode*> {
     return DOTGraphTraits<RegionNode*>
       ::getNodeLabel(Node, SD->getRI()->getTopLevelRegion());
   }
+
+  static std::string escapeString(std::string String) {
+    std::string Escaped;
+
+    for (std::string::iterator SI = String.begin(), SE = String.end();
+         SI != SE; ++SI) {
+
+      if (*SI == '"')
+        Escaped += '\\';
+
+      Escaped += *SI;
+    }
+    return Escaped;
+  }
+
   // Print the cluster of the subregions. This groups the single basic blocks
   // and adds a different background color for each group.
   static void printRegionCluster(const ScopDetection *SD, const Region *R,
@@ -108,6 +123,7 @@ struct DOTGraphTraits<ScopDetection*> : public DOTGraphTraits<RegionNode*> {
     O.indent(2 * depth) << "subgraph cluster_" << static_cast<const void*>(R)
       << " {\n";
     std::string ErrorMessage = SD->regionIsInvalidBecause(R);
+    ErrorMessage = escapeString(ErrorMessage);
     O.indent(2 * (depth + 1)) << "label = \"" << ErrorMessage << "\";\n";
 
     if (SD->isMaxRegionInScop(*R)) {
