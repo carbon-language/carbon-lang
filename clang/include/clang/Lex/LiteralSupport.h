@@ -230,8 +230,8 @@ public:
 
 private:
   void init(const Token *StringToks, unsigned NumStringToks);
-  bool CopyStringFragment(StringRef Fragment);
-  bool DiagnoseBadString(const Token& Tok);
+  bool CopyStringFragment(const Token &Tok, const char *TokBegin,
+                          StringRef Fragment);
   void DiagnoseLexingError(SourceLocation Loc);
 };
 

@@ -13,16 +13,19 @@
 namespace clang {
 
 bool ConvertUTF8toWide(unsigned WideCharWidth, llvm::StringRef Source,
-                       char *&ResultPtr) {
+                       char *&ResultPtr, const UTF8 *&ErrorPtr) {
   assert(WideCharWidth == 1 || WideCharWidth == 2 || WideCharWidth == 4);
   ConversionResult result = conversionOK;
   // Copy the character span over.
   if (WideCharWidth == 1) {
-    if (!isLegalUTF8String(reinterpret_cast<const UTF8*>(Source.begin()),
-                           reinterpret_cast<const UTF8*>(Source.end())))
+    const UTF8 *Pos = reinterpret_cast<const UTF8*>(Source.begin());
+    if (!isLegalUTF8String(&Pos, reinterpret_cast<const UTF8*>(Source.end()))) {
       result = sourceIllegal;
-    memcpy(ResultPtr, Source.data(), Source.size());
-    ResultPtr += Source.size();
+      ErrorPtr = Pos;
+    } else {
+      memcpy(ResultPtr, Source.data(), Source.size());
+      ResultPtr += Source.size();
+    }
   } else if (WideCharWidth == 2) {
     const UTF8 *sourceStart = (const UTF8*)Source.data();
     // FIXME: Make the type of the result buffer correct instead of
@@ -34,6 +37,8 @@ bool ConvertUTF8toWide(unsigned WideCharWidth, llvm::StringRef Source,
         &targetStart, targetStart + 2*Source.size(), flags);
     if (result == conversionOK)
       ResultPtr = reinterpret_cast<char*>(targetStart);
+    else
+      ErrorPtr = sourceStart;
   } else if (WideCharWidth == 4) {
     const UTF8 *sourceStart = (const UTF8*)Source.data();
     // FIXME: Make the type of the result buffer correct instead of
@@ -45,6 +50,8 @@ bool ConvertUTF8toWide(unsigned WideCharWidth, llvm::StringRef Source,
         &targetStart, targetStart + 4*Source.size(), flags);
     if (result == conversionOK)
       ResultPtr = reinterpret_cast<char*>(targetStart);
+    else
+      ErrorPtr = sourceStart;
   }
   assert((result != targetExhausted)
          && "ConvertUTF8toUTFXX exhausted target buffer");
@@ -67,4 +74,3 @@ bool ConvertCodePointToUTF8(unsigned Source, char *&ResultPtr) {
 }
 
 } // end namespace clang
-

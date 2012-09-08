@@ -4,12 +4,12 @@ void foo() {
 
   "§Ã"; // ø
 // CHECK: {{^  "<A7><C3>"; // <F8>}}
-// CHECK: {{^  \^}}
+// CHECK: {{^   \^~~~}}
 
   /* þ« */ const char *d = "¥";
 
 // CHECK: {{^  /\* <FE><AB> \*/ const char \*d = "<A5>";}}
-// CHECK: {{^                                 \^}}
+// CHECK: {{^                                  \^~~~}}
 
 // CHECK: {{^  "<A7><C3>"; // <F8>}}
 // CHECK: {{^  \^~~~~~~~~~}}
