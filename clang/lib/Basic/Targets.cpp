@@ -3014,7 +3014,7 @@ public:
     return llvm::StringSwitch<const char*>(Name)
       .Cases("cortex-a8", "cortex-a9", "A")
       .Cases("cortex-m3", "cortex-m4", "cortex-m0", "M")
-      .Default(0);
+      .Default("");
   }
   virtual bool setCPU(const std::string &Name) {
     if (!getCPUDefineSuffix(Name))
