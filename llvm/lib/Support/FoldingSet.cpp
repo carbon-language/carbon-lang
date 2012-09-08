@@ -38,6 +38,14 @@ bool FoldingSetNodeIDRef::operator==(FoldingSetNodeIDRef RHS) const {
   return memcmp(Data, RHS.Data, Size*sizeof(*Data)) == 0;
 }
 
+/// Used to compare the "ordering" of two nodes as defined by the
+/// profiled bits and their ordering defined by memcmp().
+bool FoldingSetNodeIDRef::operator<(FoldingSetNodeIDRef RHS) const {
+  if (Size != RHS.Size)
+    return Size < RHS.Size;
+  return memcmp(Data, RHS.Data, Size*sizeof(*Data)) < 0;
+}
+
 //===----------------------------------------------------------------------===//
 // FoldingSetNodeID Implementation
 
@@ -150,6 +158,16 @@ bool FoldingSetNodeID::operator==(const FoldingSetNodeID &RHS)const{
 ///
 bool FoldingSetNodeID::operator==(FoldingSetNodeIDRef RHS) const {
   return FoldingSetNodeIDRef(Bits.data(), Bits.size()) == RHS;
+}
+
+/// Used to compare the "ordering" of two nodes as defined by the
+/// profiled bits and their ordering defined by memcmp().
+bool FoldingSetNodeID::operator<(const FoldingSetNodeID &RHS)const{
+  return *this < FoldingSetNodeIDRef(RHS.Bits.data(), RHS.Bits.size());
+}
+
+bool FoldingSetNodeID::operator<(FoldingSetNodeIDRef RHS) const {
+  return FoldingSetNodeIDRef(Bits.data(), Bits.size()) < RHS;
 }
 
 /// Intern - Copy this node's data to a memory region allocated from the

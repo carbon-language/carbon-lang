@@ -278,6 +278,10 @@ public:
 
   bool operator==(FoldingSetNodeIDRef) const;
 
+  /// Used to compare the "ordering" of two nodes as defined by the
+  /// profiled bits and their ordering defined by memcmp().
+  bool operator<(FoldingSetNodeIDRef) const;
+
   const unsigned *getData() const { return Data; }
   size_t getSize() const { return Size; }
 };
@@ -326,6 +330,11 @@ public:
   ///
   bool operator==(const FoldingSetNodeID &RHS) const;
   bool operator==(const FoldingSetNodeIDRef RHS) const;
+
+  /// Used to compare the "ordering" of two nodes as defined by the
+  /// profiled bits and their ordering defined by memcmp().
+  bool operator<(const FoldingSetNodeID &RHS) const;
+  bool operator<(const FoldingSetNodeIDRef RHS) const;
 
   /// Intern - Copy this node's data to a memory region allocated from the
   /// given allocator and return a FoldingSetNodeIDRef describing the
