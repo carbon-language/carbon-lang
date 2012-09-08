@@ -929,7 +929,6 @@ bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
                                 GetWeight(TI, i)->getValue().getZExtValue());
             } else if (PredHasWeights) {
               // Split the old default's weight amongst the children
-              assert(PredDefaultWeight != 0);
               Weights.push_back(PredDefaultWeight / (1 + BBCases.size()));
             }
           }
