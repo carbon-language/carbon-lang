@@ -631,8 +631,7 @@ PathDiagnosticPiece *ConditionBRVisitor::VisitNodeImpl(const ExplodedNode *N,
                                                        BugReporterContext &BRC,
                                                        BugReport &BR) {
   
-  const ProgramPoint &progPoint = N->getLocation();
-
+  ProgramPoint progPoint = N->getLocation();
   ProgramStateRef CurrentState = N->getState();
   ProgramStateRef PrevState = Prev->getState();
   

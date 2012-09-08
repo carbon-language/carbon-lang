@@ -158,9 +158,7 @@ bool BugReporter::RemoveUneededCalls(PathPieces &pieces, BugReport *R) {
         PathDiagnosticEventPiece *event = cast<PathDiagnosticEventPiece>(piece);
         // We never throw away an event, but we do throw it away wholesale
         // as part of a path if we throw the entire path away.
-        if (event->isPrunable())
-          continue;
-        containsSomethingInteresting = true;
+        containsSomethingInteresting |= !event->isPrunable();
         break;
       }
       case PathDiagnosticPiece::ControlFlow:
