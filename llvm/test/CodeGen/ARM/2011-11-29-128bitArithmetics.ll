@@ -300,3 +300,34 @@ L.entry:
 
 declare <4 x float> @llvm.sin.v4f32(<4 x float>) nounwind readonly
 
+define void @test_floor(<4 x float>* %X) nounwind {
+
+; CHECK: test_floor:
+
+; CHECK:      movw  [[reg0:r[0-9]+]], :lower16:{{.*}}
+; CHECK:      movt  [[reg0]], :upper16:{{.*}}
+; CHECK:      vldmia r{{[0-9][0-9]?}}, {{.*}}
+
+; CHECK:      {{v?mov(.32)?}}  r0,
+; CHECK:      bl  {{.*}}floorf
+
+; CHECK:      {{v?mov(.32)?}}  r0,
+; CHECK:      bl  {{.*}}floorf
+
+; CHECK:      {{v?mov(.32)?}}  r0,
+; CHECK:      bl  {{.*}}floorf
+
+; CHECK:      {{v?mov(.32)?}}  r0,
+; CHECK:      bl  {{.*}}floorf
+
+; CHECK:      vstmia  {{.*}}
+
+L.entry:
+  %0 = load <4 x float>* @A, align 16
+  %1 = call <4 x float> @llvm.floor.v4f32(<4 x float> %0)
+  store <4 x float> %1, <4 x float>* %X, align 16
+  ret void
+}
+
+declare <4 x float> @llvm.floor.v4f32(<4 x float>) nounwind readonly
+

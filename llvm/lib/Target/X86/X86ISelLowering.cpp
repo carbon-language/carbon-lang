@@ -739,6 +739,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FPOWI, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FSQRT, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FCOPYSIGN, (MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::FFLOOR, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::SMUL_LOHI, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::UMUL_LOHI, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::SDIVREM, (MVT::SimpleValueType)VT, Expand);
