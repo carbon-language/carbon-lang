@@ -1,7 +1,9 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core,osx.coreFoundation.CFRetainRelease,osx.cocoa.ClassRelease,osx.cocoa.RetainCount -analyzer-store=region -fblocks -verify -Wno-objc-root-class %s -analyzer-output=plist -o %t.objc.plist
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core,osx.coreFoundation.CFRetainRelease,osx.cocoa.ClassRelease,osx.cocoa.RetainCount -analyzer-store=region -fblocks -verify -x objective-c++ -Wno-objc-root-class %s -analyzer-output=plist -o %t.objcpp.plist
-// RUN: FileCheck --input-file=%t.objc.plist %s
-// RUN: FileCheck --input-file=%t.objcpp.plist %s
+
+// FIXME: The plist output is not being deterministically generated on all hosts for both ObjC and ObjC++.
+// FIXLATER: FileCheck --input-file=%t.objc.plist %s
+// FIXLATER: FileCheck --input-file=%t.objcpp.plist %s
 
 #if __has_feature(attribute_ns_returns_retained)
 #define NS_RETURNS_RETAINED __attribute__((ns_returns_retained))
