@@ -723,20 +723,12 @@ bool FormatSpecifier::hasStandardLengthConversionCombination() const {
 
 llvm::Optional<LengthModifier>
 FormatSpecifier::getCorrectedLengthModifier() const {
-  if (LM.getKind() == LengthModifier::AsLongDouble) {
-    switch (CS.getKind()) {
-    case ConversionSpecifier::dArg:
-    case ConversionSpecifier::iArg:
-    case ConversionSpecifier::oArg:
-    case ConversionSpecifier::uArg:
-    case ConversionSpecifier::xArg:
-    case ConversionSpecifier::XArg: {
+  if (CS.isAnyIntArg() || CS.getKind() == ConversionSpecifier::nArg) {
+    if (LM.getKind() == LengthModifier::AsLongDouble ||
+        LM.getKind() == LengthModifier::AsQuad) {
       LengthModifier FixedLM(LM);
       FixedLM.setKind(LengthModifier::AsLongLong);
       return FixedLM;
-    }
-    default:
-      break;
     }
   }
 

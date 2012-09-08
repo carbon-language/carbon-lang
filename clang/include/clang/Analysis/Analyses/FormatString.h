@@ -118,7 +118,7 @@ public:
     cArg,
     dArg,
     iArg,
-    IntArgBeg = cArg, IntArgEnd = iArg,
+    IntArgBeg = dArg, IntArgEnd = iArg,
 
     oArg,
     uArg,
@@ -191,7 +191,9 @@ public:
     return EndScanList ? EndScanList - Position : 1;
   }
 
+  bool isIntArg() const { return kind >= IntArgBeg && kind <= IntArgEnd; }
   bool isUIntArg() const { return kind >= UIntArgBeg && kind <= UIntArgEnd; }
+  bool isAnyIntArg() const { return kind >= IntArgBeg && kind <= UIntArgEnd; }
   const char *toString() const;
 
   bool isPrintfKind() const { return IsPrintf; }
@@ -382,7 +384,6 @@ public:
     : ConversionSpecifier(true, pos, k) {}
 
   bool isObjCArg() const { return kind >= ObjCBeg && kind <= ObjCEnd; }
-  bool isIntArg() const { return kind >= IntArgBeg && kind <= IntArgEnd; }
   bool isDoubleArg() const { return kind >= DoubleArgBeg &&
                                     kind <= DoubleArgEnd; }
   unsigned getLength() const {

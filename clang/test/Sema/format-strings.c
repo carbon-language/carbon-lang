@@ -117,6 +117,7 @@ void check_writeback_specifier()
   printf("%qn", (int*)0); // expected-warning{{format specifies type 'long long *' but the argument has type 'int *'}}
 
   printf("%Ln", 0); // expected-warning{{length modifier 'L' results in undefined behavior or no effect with 'n' conversion specifier}}
+  // expected-note@-1{{did you mean to use 'll'?}}
 }
 
 void check_invalid_specifier(FILE* fp, char *buf)
