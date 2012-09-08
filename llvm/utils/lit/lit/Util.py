@@ -56,7 +56,7 @@ def which(command, paths = None):
         paths = os.environ.get('PATH','')
 
     # Check for absolute match first.
-    if os.path.exists(command):
+    if os.path.isfile(command):
         return command
 
     # Would be nice if Python had a lib function for this.
