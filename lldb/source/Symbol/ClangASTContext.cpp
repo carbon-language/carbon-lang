@@ -5600,7 +5600,7 @@ ClangASTContext::IsPossibleDynamicType (clang::ASTContext *ast,
                         {
                             bool is_complete = cxx_record_decl->isCompleteDefinition();
                             if (!is_complete)
-                                is_complete = ClangASTContext::GetCompleteType (ast, clang_type);
+                                is_complete = ClangASTContext::GetCompleteType (ast, pointee_qual_type.getAsOpaquePtr());
 
                             if (is_complete)
                             {
