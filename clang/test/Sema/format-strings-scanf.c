@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -triple i386-apple-darwin9 -Wformat-nonliteral %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wformat-nonliteral %s
 
 // Test that -Wformat=0 works:
 // RUN: %clang_cc1 -fsyntax-only -Werror -Wformat=0 %s
@@ -111,16 +111,6 @@ void test_alloc_extension(char **sp, wchar_t **lsp, float *fp) {
   scanf("%mc", fp); // expected-warning{{format specifies type 'char **' but the argument has type 'float *'}}
   scanf("%mC", fp); // expected-warning{{format specifies type 'wchar_t **' (aka 'int **') but the argument has type 'float *'}}
   scanf("%m[abc]", fp); // expected-warning{{format specifies type 'char **' but the argument has type 'float *'}}
-}
-
-void test_longlong(long long *x, unsigned long long *y) {
-  scanf("%Ld", y); // no-warning
-  scanf("%Lu", y); // no-warning
-  scanf("%Lx", y); // no-warning
-  scanf("%Ld", x); // no-warning
-  scanf("%Lu", x); // no-warning
-  scanf("%Lx", x); // no-warning
-  scanf("%Ls", "hello"); // expected-warning {{length modifier 'L' results in undefined behavior or no effect with 's' conversion specifier}}
 }
 
 void test_quad(int *x, long long *llx) {

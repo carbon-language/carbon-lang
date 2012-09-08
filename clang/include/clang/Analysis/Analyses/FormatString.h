@@ -23,6 +23,8 @@
 
 namespace clang {
 
+class TargetInfo;
+
 //===----------------------------------------------------------------------===//
 /// Common components of both fprintf and fscanf format strings.
 namespace analyze_format_string {
@@ -348,9 +350,11 @@ public:
 
   bool usesPositionalArg() const { return UsesPositionalArg; }
 
-  bool hasValidLengthModifier() const;
+  bool hasValidLengthModifier(const TargetInfo &Target) const;
 
   bool hasStandardLengthModifier() const;
+
+  llvm::Optional<LengthModifier> getCorrectedLengthModifier() const;
 
   bool hasStandardConversionSpecifier(const LangOptions &LangOpt) const;
 

@@ -1938,6 +1938,11 @@ public:
   void HandleIncompleteSpecifier(const char *startSpecifier,
                                  unsigned specifierLen);
 
+  void HandleInvalidLengthModifier(
+      const analyze_format_string::FormatSpecifier &FS,
+      const analyze_format_string::ConversionSpecifier &CS,
+      const char *startSpecifier, unsigned specifierLen);
+
   void HandleNonStandardLengthModifier(
       const analyze_format_string::LengthModifier &LM,
       const char *startSpecifier, unsigned specifierLen);
@@ -2026,6 +2031,38 @@ void CheckFormatHandler::HandleIncompleteSpecifier(const char *startSpecifier,
                        getLocationOfByte(startSpecifier),
                        /*IsStringLocation*/true,
                        getSpecifierRange(startSpecifier, specifierLen));
+}
+
+void CheckFormatHandler::HandleInvalidLengthModifier(
+    const analyze_format_string::FormatSpecifier &FS,
+    const analyze_format_string::ConversionSpecifier &CS,
+    const char *startSpecifier, unsigned specifierLen) {
+  using namespace analyze_format_string;
+
+  const LengthModifier &LM = FS.getLengthModifier();
+  CharSourceRange LMRange = getSpecifierRange(LM.getStart(), LM.getLength());
+
+  // See if we know how to fix this length modifier.
+  llvm::Optional<LengthModifier> FixedLM = FS.getCorrectedLengthModifier();
+  if (FixedLM) {
+    EmitFormatDiagnostic(S.PDiag(diag::warn_format_nonsensical_length)
+                           << LM.toString() << CS.toString(),
+                         getLocationOfByte(LM.getStart()),
+                         /*IsStringLocation*/true,
+                         getSpecifierRange(startSpecifier, specifierLen));
+
+    S.Diag(getLocationOfByte(LM.getStart()), diag::note_format_fix_specifier)
+      << FixedLM->toString()
+      << FixItHint::CreateReplacement(LMRange, FixedLM->toString());
+
+  } else {
+    EmitFormatDiagnostic(S.PDiag(diag::warn_format_nonsensical_length)
+                           << LM.toString() << CS.toString(),
+                         getLocationOfByte(LM.getStart()),
+                         /*IsStringLocation*/true,
+                         getSpecifierRange(startSpecifier, specifierLen),
+                         FixItHint::CreateRemoval(LMRange));
+  }
 }
 
 void CheckFormatHandler::HandleNonStandardLengthModifier(
@@ -2566,22 +2603,16 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
 
   // Check the length modifier is valid with the given conversion specifier.
   const LengthModifier &LM = FS.getLengthModifier();
-  if (!FS.hasValidLengthModifier())
-    EmitFormatDiagnostic(S.PDiag(diag::warn_format_nonsensical_length)
-                           << LM.toString() << CS.toString(),
-                         getLocationOfByte(LM.getStart()),
-                         /*IsStringLocation*/true,
-                         getSpecifierRange(startSpecifier, specifierLen),
-                         FixItHint::CreateRemoval(
-                           getSpecifierRange(LM.getStart(),
-                                             LM.getLength())));
-  if (!FS.hasStandardLengthModifier())
+  if (!FS.hasValidLengthModifier(S.getASTContext().getTargetInfo()))
+    HandleInvalidLengthModifier(FS, CS, startSpecifier, specifierLen);
+  else if (!FS.hasStandardLengthModifier())
     HandleNonStandardLengthModifier(LM, startSpecifier, specifierLen);
-  if (!FS.hasStandardConversionSpecifier(S.getLangOpts()))
-    HandleNonStandardConversionSpecifier(CS, startSpecifier, specifierLen);
-  if (!FS.hasStandardLengthConversionCombination())
+  else if (!FS.hasStandardLengthConversionCombination())
     HandleNonStandardConversionSpecification(LM, CS, startSpecifier,
                                              specifierLen);
+
+  if (!FS.hasStandardConversionSpecifier(S.getLangOpts()))
+    HandleNonStandardConversionSpecifier(CS, startSpecifier, specifierLen);
 
   // The remaining checks depend on the data arguments.
   if (HasVAListArg)
@@ -2886,23 +2917,16 @@ bool CheckScanfHandler::HandleScanfSpecifier(
   
   // Check the length modifier is valid with the given conversion specifier.
   const LengthModifier &LM = FS.getLengthModifier();
-  if (!FS.hasValidLengthModifier()) {
-    const CharSourceRange &R = getSpecifierRange(LM.getStart(), LM.getLength());
-    EmitFormatDiagnostic(S.PDiag(diag::warn_format_nonsensical_length)
-                         << LM.toString() << CS.toString()
-                         << getSpecifierRange(startSpecifier, specifierLen),
-                         getLocationOfByte(LM.getStart()),
-                         /*IsStringLocation*/true, R,
-                         FixItHint::CreateRemoval(R));
-  }
-
-  if (!FS.hasStandardLengthModifier())
+  if (!FS.hasValidLengthModifier(S.getASTContext().getTargetInfo()))
+    HandleInvalidLengthModifier(FS, CS, startSpecifier, specifierLen);
+  else if (!FS.hasStandardLengthModifier())
     HandleNonStandardLengthModifier(LM, startSpecifier, specifierLen);
-  if (!FS.hasStandardConversionSpecifier(S.getLangOpts()))
-    HandleNonStandardConversionSpecifier(CS, startSpecifier, specifierLen);
-  if (!FS.hasStandardLengthConversionCombination())
+  else if (!FS.hasStandardLengthConversionCombination())
     HandleNonStandardConversionSpecification(LM, CS, startSpecifier,
                                              specifierLen);
+
+  if (!FS.hasStandardConversionSpecifier(S.getLangOpts()))
+    HandleNonStandardConversionSpecifier(CS, startSpecifier, specifierLen);
 
   // The remaining checks depend on the data arguments.
   if (HasVAListArg)

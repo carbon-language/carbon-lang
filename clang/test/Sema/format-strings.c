@@ -531,17 +531,6 @@ void pr9751() {
          0.0); // expected-warning{{format specifies}}
 }
 
-// PR 9466: clang: doesn't know about %Lu, %Ld, and %Lx 
-void printf_longlong(long long x, unsigned long long y) {
-  printf("%Ld", y); // no-warning
-  printf("%Lu", y); // no-warning
-  printf("%Lx", y); // no-warning
-  printf("%Ld", x); // no-warning
-  printf("%Lu", x); // no-warning
-  printf("%Lx", x); // no-warning
-  printf("%Ls", "hello"); // expected-warning {{length modifier 'L' results in undefined behavior or no effect with 's' conversion specifier}}
-}
-
 void __attribute__((format(strfmon,1,2))) monformat(const char *fmt, ...);
 void __attribute__((format(strftime,1,0))) dateformat(const char *fmt);
 

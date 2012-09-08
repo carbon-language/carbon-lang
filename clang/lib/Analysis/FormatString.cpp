@@ -14,6 +14,7 @@
 
 #include "FormatStringParsing.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/Basic/TargetInfo.h"
 
 using clang::analyze_format_string::ArgType;
 using clang::analyze_format_string::FormatStringHandler;
@@ -548,7 +549,7 @@ void OptionalAmount::toString(raw_ostream &os) const {
   }
 }
 
-bool FormatSpecifier::hasValidLengthModifier() const {
+bool FormatSpecifier::hasValidLengthModifier(const TargetInfo &Target) const {
   switch (LM.getKind()) {
     case LengthModifier::None:
       return true;
@@ -611,14 +612,15 @@ bool FormatSpecifier::hasValidLengthModifier() const {
         case ConversionSpecifier::gArg:
         case ConversionSpecifier::GArg:
           return true;
-        // GNU extension.
+        // GNU libc extension.
         case ConversionSpecifier::dArg:
         case ConversionSpecifier::iArg:
         case ConversionSpecifier::oArg:
         case ConversionSpecifier::uArg:
         case ConversionSpecifier::xArg:
         case ConversionSpecifier::XArg:
-          return true;
+          return !Target.getTriple().isOSDarwin() &&
+                 !Target.getTriple().isOSWindows();
         default:
           return false;
       }
@@ -717,6 +719,28 @@ bool FormatSpecifier::hasStandardLengthConversionCombination() const {
     }
   }
   return true;
+}
+
+llvm::Optional<LengthModifier>
+FormatSpecifier::getCorrectedLengthModifier() const {
+  if (LM.getKind() == LengthModifier::AsLongDouble) {
+    switch (CS.getKind()) {
+    case ConversionSpecifier::dArg:
+    case ConversionSpecifier::iArg:
+    case ConversionSpecifier::oArg:
+    case ConversionSpecifier::uArg:
+    case ConversionSpecifier::xArg:
+    case ConversionSpecifier::XArg: {
+      LengthModifier FixedLM(LM);
+      FixedLM.setKind(LengthModifier::AsLongLong);
+      return FixedLM;
+    }
+    default:
+      break;
+    }
+  }
+
+  return llvm::Optional<LengthModifier>();
 }
 
 bool FormatSpecifier::namedTypeToLengthModifier(QualType QT,

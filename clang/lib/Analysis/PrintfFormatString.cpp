@@ -482,9 +482,11 @@ bool PrintfSpecifier::fixType(QualType QT, const LangOptions &LangOpt,
     namedTypeToLengthModifier(QT, LM);
 
   // If fixing the length modifier was enough, we are done.
-  const analyze_printf::ArgType &ATR = getArgType(Ctx, IsObjCLiteral);
-  if (hasValidLengthModifier() && ATR.isValid() && ATR.matchesType(Ctx, QT))
-    return true;
+  if (hasValidLengthModifier(Ctx.getTargetInfo())) {
+    const analyze_printf::ArgType &ATR = getArgType(Ctx, IsObjCLiteral);
+    if (ATR.isValid() && ATR.matchesType(Ctx, QT))
+      return true;
+  }
 
   // Set conversion specifier and disable any flags which do not apply to it.
   // Let typedefs to char fall through to int, as %c is silly for uint8_t.
