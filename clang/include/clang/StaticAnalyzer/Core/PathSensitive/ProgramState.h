@@ -493,10 +493,6 @@ public:
                                     const StackFrameContext *LCtx,
                                     SymbolReaper& SymReaper);
 
-  /// Marshal a new state for the callee in another translation unit.
-  /// 'state' is owned by the caller's engine.
-  ProgramStateRef MarshalState(ProgramStateRef state, const StackFrameContext *L);
-
 public:
 
   SVal ArrayToPointer(Loc Array) {

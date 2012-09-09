@@ -111,17 +111,6 @@ ProgramStateManager::removeDeadBindings(ProgramStateRef state,
   return ConstraintMgr->removeDeadBindings(Result, SymReaper);
 }
 
-ProgramStateRef ProgramStateManager::MarshalState(ProgramStateRef state,
-                                            const StackFrameContext *InitLoc) {
-  // make up an empty state for now.
-  ProgramState State(this,
-                EnvMgr.getInitialEnvironment(),
-                StoreMgr->getInitialStore(InitLoc),
-                GDMFactory.getEmptyMap());
-
-  return getPersistentState(State);
-}
-
 ProgramStateRef ProgramState::bindCompoundLiteral(const CompoundLiteralExpr *CL,
                                             const LocationContext *LC,
                                             SVal V) const {
