@@ -808,18 +808,44 @@ void LiveVariables::addNewBlock(MachineBasicBlock *BB,
                                 MachineBasicBlock *SuccBB) {
   const unsigned NumNew = BB->getNumber();
 
-  // All registers used by PHI nodes in SuccBB must be live through BB.
-  for (MachineBasicBlock::iterator BBI = SuccBB->begin(),
-         BBE = SuccBB->end(); BBI != BBE && BBI->isPHI(); ++BBI)
+  SmallSet<unsigned, 16> Defs, Kills;
+
+  MachineBasicBlock::iterator BBI = SuccBB->begin(), BBE = SuccBB->end();
+  for (; BBI != BBE && BBI->isPHI(); ++BBI) {
+    // Record the def of the PHI node.
+    Defs.insert(BBI->getOperand(0).getReg());
+
+    // All registers used by PHI nodes in SuccBB must be live through BB.
     for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2)
       if (BBI->getOperand(i+1).getMBB() == BB)
         getVarInfo(BBI->getOperand(i).getReg()).AliveBlocks.set(NumNew);
+  }
+
+  // Record all vreg defs and kills of all instructions in SuccBB.
+  for (; BBI != BBE; ++BBI) {
+    for (MachineInstr::mop_iterator I = BBI->operands_begin(),
+         E = BBI->operands_end(); I != E; ++I) {
+      if (I->isReg() && TargetRegisterInfo::isVirtualRegister(I->getReg())) {
+        if (I->isDef())
+          Defs.insert(I->getReg());
+        else if (I->isKill())
+          Kills.insert(I->getReg());
+      }
+    }
+  }
 
   // Update info for all live variables
   for (unsigned i = 0, e = MRI->getNumVirtRegs(); i != e; ++i) {
     unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
+
+    // If the Defs is defined in the successor it can't be live in BB.
+    if (Defs.count(Reg))
+      continue;
+
+    // If the register is either killed in or live through SuccBB it's also live
+    // through BB.
     VarInfo &VI = getVarInfo(Reg);
-    if (!VI.AliveBlocks.test(NumNew) && VI.isLiveIn(*SuccBB, Reg, *MRI))
+    if (Kills.count(Reg) || VI.AliveBlocks.test(SuccBB->getNumber()))
       VI.AliveBlocks.set(NumNew);
   }
 }
