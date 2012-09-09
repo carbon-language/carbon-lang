@@ -1844,7 +1844,7 @@ public:
   // Per C99 6.2.5p6, for every signed integer type, there is a corresponding
   // unsigned integer type.  This method takes a signed type, and returns the
   // corresponding unsigned integer type.
-  QualType getCorrespondingUnsignedType(QualType T);
+  QualType getCorrespondingUnsignedType(QualType T) const;
 
   //===--------------------------------------------------------------------===//
   //                    Type Iterators.

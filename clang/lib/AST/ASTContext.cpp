@@ -6830,7 +6830,7 @@ unsigned ASTContext::getIntWidth(QualType T) const {
   return (unsigned)getTypeSize(T);
 }
 
-QualType ASTContext::getCorrespondingUnsignedType(QualType T) {
+QualType ASTContext::getCorrespondingUnsignedType(QualType T) const {
   assert(T->hasSignedIntegerRepresentation() && "Unexpected type");
   
   // Turn <4 x signed int> -> <4 x unsigned int>
