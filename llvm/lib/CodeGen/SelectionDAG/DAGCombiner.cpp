@@ -413,7 +413,7 @@ static char isNegatibleForFree(SDValue Op, bool LegalOperations,
         !TLI.isOperationLegalOrCustom(ISD::FSUB,  Op.getValueType()))
       return 0;
 
-    // fold (fsub (fadd A, B)) -> (fsub (fneg A), B)
+    // fold (fneg (fadd A, B)) -> (fsub (fneg A), B)
     if (char V = isNegatibleForFree(Op.getOperand(0), LegalOperations, TLI,
                                     Options, Depth + 1))
       return V;
@@ -6408,6 +6408,30 @@ SDValue DAGCombiner::visitFP_EXTEND(SDNode *N) {
 SDValue DAGCombiner::visitFNEG(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   EVT VT = N->getValueType(0);
+
+  if (VT.isVector() && !LegalOperations) {
+    // If operand is a BUILD_VECTOR node, see if we can constant fold it.
+    if (N0.getOpcode() == ISD::BUILD_VECTOR) {
+      SmallVector<SDValue, 8> Ops;
+      for (unsigned i = 0, e = N0.getNumOperands(); i != e; ++i) {
+        SDValue Op = N0.getOperand(i);
+        if (Op.getOpcode() != ISD::UNDEF &&
+            Op.getOpcode() != ISD::ConstantFP)
+          break;
+        EVT EltVT = Op.getValueType();
+        SDValue FoldOp = DAG.getNode(ISD::FNEG, N0.getDebugLoc(), EltVT, Op);
+        if (FoldOp.getOpcode() != ISD::UNDEF &&
+            FoldOp.getOpcode() != ISD::ConstantFP)
+          break;
+        Ops.push_back(FoldOp);
+        AddToWorkList(FoldOp.getNode());
+      }
+
+      if (Ops.size() == N0.getNumOperands())
+        return DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(),
+                           VT, &Ops[0], Ops.size());
+    }
+  }
 
   if (isNegatibleForFree(N0, LegalOperations, DAG.getTargetLoweringInfo(),
                          &DAG.getTarget().Options))
