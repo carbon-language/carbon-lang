@@ -188,7 +188,7 @@ public:
 private:
   SourceManager &SourceMgr;
   std::vector<RawComment *> Comments;
-  RawComment LastComment;
+  SourceLocation PrevCommentEndLoc;
   bool OnlyWhitespaceSeen;
 
   void addCommentsToFront(const std::vector<RawComment *> &C) {

@@ -181,26 +181,22 @@ bool containsOnlyWhitespace(StringRef Str) {
   return Str.find_first_not_of(" \t\f\v\r\n") == StringRef::npos;
 }
 
-bool onlyWhitespaceBetweenComments(SourceManager &SM,
-                                   const RawComment &C1, const RawComment &C2) {
-  std::pair<FileID, unsigned> C1EndLocInfo = SM.getDecomposedLoc(
-                                                C1.getSourceRange().getEnd());
-  std::pair<FileID, unsigned> C2BeginLocInfo = SM.getDecomposedLoc(
-                                              C2.getSourceRange().getBegin());
+bool onlyWhitespaceBetween(SourceManager &SM,
+                           SourceLocation Loc1, SourceLocation Loc2) {
+  std::pair<FileID, unsigned> Loc1Info = SM.getDecomposedLoc(Loc1);
+  std::pair<FileID, unsigned> Loc2Info = SM.getDecomposedLoc(Loc2);
 
-  // Question does not make sense if comments are located in different files.
-  if (C1EndLocInfo.first != C2BeginLocInfo.first)
+  // Question does not make sense if locations are in different files.
+  if (Loc1Info.first != Loc2Info.first)
     return false;
 
   bool Invalid = false;
-  const char *Buffer = SM.getBufferData(C1EndLocInfo.first, &Invalid).data();
+  const char *Buffer = SM.getBufferData(Loc1Info.first, &Invalid).data();
   if (Invalid)
     return false;
 
-  StringRef TextBetweenComments(Buffer + C1EndLocInfo.second,
-                                C2BeginLocInfo.second - C1EndLocInfo.second);
-
-  return containsOnlyWhitespace(TextBetweenComments);
+  StringRef Text(Buffer + Loc1Info.second, Loc2Info.second - Loc1Info.second);
+  return containsOnlyWhitespace(Text);
 }
 } // unnamed namespace
 
@@ -220,11 +216,13 @@ void RawCommentList::addComment(const RawComment &RC,
   }
 
   if (OnlyWhitespaceSeen) {
-    if (!onlyWhitespaceBetweenComments(SourceMgr, LastComment, RC))
+    if (!onlyWhitespaceBetween(SourceMgr,
+                               PrevCommentEndLoc,
+                               RC.getSourceRange().getBegin()))
       OnlyWhitespaceSeen = false;
   }
 
-  LastComment = RC;
+  PrevCommentEndLoc = RC.getSourceRange().getEnd();
 
   // Ordinary comments are not interesting for us.
   if (RC.isOrdinary())
