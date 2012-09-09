@@ -775,14 +775,14 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
           LiveAllocas.push_back(*I);
       }
 
+      // If all of the allocas were clobbered by the call then we're not going
+      // to find anything else to process.
+      if (DeadStackObjects.size() == LiveAllocas.size())
+        break;
+
       for (SmallVector<Value*, 8>::iterator I = LiveAllocas.begin(),
            E = LiveAllocas.end(); I != E; ++I)
         DeadStackObjects.remove(*I);
-
-      // If all of the allocas were clobbered by the call then we're not going
-      // to find anything else to process.
-      if (DeadStackObjects.empty())
-        break;
 
       continue;
     }
