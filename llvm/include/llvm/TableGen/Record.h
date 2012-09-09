@@ -689,7 +689,7 @@ public:
   }
 
   virtual Init *getBit(unsigned Bit) const {
-    return BitInit::get((Value & (1 << Bit)) != 0);
+    return BitInit::get((Value & (1ULL << Bit)) != 0);
   }
 };
 
