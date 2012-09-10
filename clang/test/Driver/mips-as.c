@@ -38,3 +38,8 @@
 // RUN:   -no-integrated-as -c %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=MIPS-N32 %s
 // MIPS-N32: as{{(.exe)?}}" "-march" "mips64" "-mabi" "n32" "-EB"
+//
+// RUN: %clang -target mips-linux-gnu -march=mips32r2 -### \
+// RUN:   -no-integrated-as -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS-32R2 %s
+// MIPS-32R2: as{{(.exe)?}}" "-march" "mips32r2" "-mabi" "32" "-EB"
