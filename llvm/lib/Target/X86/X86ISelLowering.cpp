@@ -14158,19 +14158,49 @@ static SDValue checkBoolTestSetCCCombine(SDValue Cmp, X86::CondCode &CC) {
   if (SetCC.getOpcode() == ISD::ZERO_EXTEND)
     SetCC = SetCC.getOperand(0);
 
-  // Quit if not SETCC.
-  // FIXME: So far we only handle the boolean value generated from SETCC. If
-  // there is other ways to generate boolean values, we need handle them here
-  // as well.
-  if (SetCC.getOpcode() != X86ISD::SETCC)
-    return SDValue();
+  switch (SetCC.getOpcode()) {
+  case X86ISD::SETCC:
+    // Set the condition code or opposite one if necessary.
+    CC = X86::CondCode(SetCC.getConstantOperandVal(0));
+    if (needOppositeCond)
+      CC = X86::GetOppositeBranchCondition(CC);
+    return SetCC.getOperand(1);
+  case X86ISD::CMOV: {
+    // Check whether false/true value has canonical one, i.e. 0 or 1.
+    ConstantSDNode *FVal = dyn_cast<ConstantSDNode>(SetCC.getOperand(0));
+    ConstantSDNode *TVal = dyn_cast<ConstantSDNode>(SetCC.getOperand(1));
+    // Quit if true value is not a constant.
+    if (!TVal)
+      return SDValue();
+    // Quit if false value is not a constant.
+    if (!FVal) {
+      // A special case for rdrand, where 0 is set if false cond is found.
+      SDValue Op = SetCC.getOperand(0);
+      if (Op.getOpcode() != X86ISD::RDRAND)
+        return SDValue();
+    }
+    // Quit if false value is not the constant 0 or 1.
+    bool FValIsFalse = true;
+    if (FVal && FVal->getZExtValue() != 0) {
+      if (FVal->getZExtValue() != 1)
+        return SDValue();
+      // If FVal is 1, opposite cond is needed.
+      needOppositeCond = !needOppositeCond;
+      FValIsFalse = false;
+    }
+    // Quit if TVal is not the constant opposite of FVal.
+    if (FValIsFalse && TVal->getZExtValue() != 1)
+      return SDValue();
+    if (!FValIsFalse && TVal->getZExtValue() != 0)
+      return SDValue();
+    CC = X86::CondCode(SetCC.getConstantOperandVal(2));
+    if (needOppositeCond)
+      CC = X86::GetOppositeBranchCondition(CC);
+    return SetCC.getOperand(3);
+  }
+  }
 
-  // Set the condition code or opposite one if necessary.
-  CC = X86::CondCode(SetCC.getConstantOperandVal(0));
-  if (needOppositeCond)
-    CC = X86::GetOppositeBranchCondition(CC);
-
-  return SetCC.getOperand(1);
+  return SDValue();
 }
 
 /// checkFlaggedOrCombine - DAG combination on X86ISD::OR, i.e. with EFLAGS
