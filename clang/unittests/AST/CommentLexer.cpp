@@ -30,7 +30,8 @@ protected:
     : FileMgr(FileMgrOpts),
       DiagID(new DiagnosticIDs()),
       Diags(DiagID, new IgnoringDiagConsumer()),
-      SourceMgr(Diags, FileMgr) {
+      SourceMgr(Diags, FileMgr),
+      Traits(Allocator) {
   }
 
   FileSystemOptions FileMgrOpts;
@@ -39,8 +40,21 @@ protected:
   DiagnosticsEngine Diags;
   SourceManager SourceMgr;
   llvm::BumpPtrAllocator Allocator;
+  CommandTraits Traits;
 
   void lexString(const char *Source, std::vector<Token> &Toks);
+
+  StringRef getCommandName(const Token &Tok) {
+    return Traits.getCommandInfo(Tok.getCommandID())->Name;
+  }
+
+  StringRef getVerbatimBlockName(const Token &Tok) {
+    return Traits.getCommandInfo(Tok.getVerbatimBlockID())->Name;
+  }
+
+  StringRef getVerbatimLineName(const Token &Tok) {
+    return Traits.getCommandInfo(Tok.getVerbatimLineID())->Name;
+  }
 };
 
 void CommentLexerTest::lexString(const char *Source,
@@ -49,9 +63,7 @@ void CommentLexerTest::lexString(const char *Source,
   FileID File = SourceMgr.createFileIDForMemBuffer(Buf);
   SourceLocation Begin = SourceMgr.getLocForStartOfFile(File);
 
-  comments::CommandTraits Traits;
-  comments::Lexer L(Allocator, Traits, Begin,
-                    Source, Source + strlen(Source));
+  Lexer L(Allocator, Traits, Begin, Source, Source + strlen(Source));
 
   while (1) {
     Token Tok;
@@ -322,7 +334,7 @@ TEST_F(CommentLexerTest, DoxygenCommand5) {
   ASSERT_EQ(StringRef(" "),     Toks[0].getText());
 
   ASSERT_EQ(tok::command,       Toks[1].getKind());
-  ASSERT_EQ(StringRef("brief"), Toks[1].getCommandName());
+  ASSERT_EQ(StringRef("brief"), getCommandName(Toks[1]));
 
   ASSERT_EQ(tok::text,          Toks[2].getKind());
   ASSERT_EQ(StringRef(" Aaa."), Toks[2].getText());
@@ -331,6 +343,38 @@ TEST_F(CommentLexerTest, DoxygenCommand5) {
 }
 
 TEST_F(CommentLexerTest, DoxygenCommand6) {
+  const char *Source = "/// \\em\\em \\em\t\\em\n";
+  std::vector<Token> Toks;
+
+  lexString(Source, Toks);
+
+  ASSERT_EQ(8U, Toks.size());
+
+  ASSERT_EQ(tok::text,       Toks[0].getKind());
+  ASSERT_EQ(StringRef(" "),  Toks[0].getText());
+
+  ASSERT_EQ(tok::command,    Toks[1].getKind());
+  ASSERT_EQ(StringRef("em"), getCommandName(Toks[1]));
+
+  ASSERT_EQ(tok::command,    Toks[2].getKind());
+  ASSERT_EQ(StringRef("em"), getCommandName(Toks[2]));
+
+  ASSERT_EQ(tok::text,       Toks[3].getKind());
+  ASSERT_EQ(StringRef(" "),  Toks[3].getText());
+
+  ASSERT_EQ(tok::command,    Toks[4].getKind());
+  ASSERT_EQ(StringRef("em"), getCommandName(Toks[4]));
+
+  ASSERT_EQ(tok::text,       Toks[5].getKind());
+  ASSERT_EQ(StringRef("\t"), Toks[5].getText());
+
+  ASSERT_EQ(tok::command,    Toks[6].getKind());
+  ASSERT_EQ(StringRef("em"), getCommandName(Toks[6]));
+
+  ASSERT_EQ(tok::newline,    Toks[7].getKind());
+}
+
+TEST_F(CommentLexerTest, DoxygenCommand7) {
   const char *Source = "/// \\aaa\\bbb \\ccc\t\\ddd\n";
   std::vector<Token> Toks;
 
@@ -341,28 +385,28 @@ TEST_F(CommentLexerTest, DoxygenCommand6) {
   ASSERT_EQ(tok::text,        Toks[0].getKind());
   ASSERT_EQ(StringRef(" "),   Toks[0].getText());
 
-  ASSERT_EQ(tok::command,     Toks[1].getKind());
-  ASSERT_EQ(StringRef("aaa"), Toks[1].getCommandName());
+  ASSERT_EQ(tok::unknown_command, Toks[1].getKind());
+  ASSERT_EQ(StringRef("aaa"), Toks[1].getUnknownCommandName());
 
-  ASSERT_EQ(tok::command,     Toks[2].getKind());
-  ASSERT_EQ(StringRef("bbb"), Toks[2].getCommandName());
+  ASSERT_EQ(tok::unknown_command, Toks[2].getKind());
+  ASSERT_EQ(StringRef("bbb"), Toks[2].getUnknownCommandName());
 
   ASSERT_EQ(tok::text,        Toks[3].getKind());
   ASSERT_EQ(StringRef(" "),   Toks[3].getText());
 
-  ASSERT_EQ(tok::command,     Toks[4].getKind());
-  ASSERT_EQ(StringRef("ccc"), Toks[4].getCommandName());
+  ASSERT_EQ(tok::unknown_command, Toks[4].getKind());
+  ASSERT_EQ(StringRef("ccc"), Toks[4].getUnknownCommandName());
 
   ASSERT_EQ(tok::text,        Toks[5].getKind());
   ASSERT_EQ(StringRef("\t"),  Toks[5].getText());
 
-  ASSERT_EQ(tok::command,     Toks[6].getKind());
-  ASSERT_EQ(StringRef("ddd"), Toks[6].getCommandName());
+  ASSERT_EQ(tok::unknown_command, Toks[6].getKind());
+  ASSERT_EQ(StringRef("ddd"), Toks[6].getUnknownCommandName());
 
   ASSERT_EQ(tok::newline,     Toks[7].getKind());
 }
 
-TEST_F(CommentLexerTest, DoxygenCommand7) {
+TEST_F(CommentLexerTest, DoxygenCommand8) {
   const char *Source = "// \\c\n";
   std::vector<Token> Toks;
 
@@ -374,7 +418,7 @@ TEST_F(CommentLexerTest, DoxygenCommand7) {
   ASSERT_EQ(StringRef(" "), Toks[0].getText());
 
   ASSERT_EQ(tok::command,   Toks[1].getKind());
-  ASSERT_EQ(StringRef("c"), Toks[1].getCommandName());
+  ASSERT_EQ(StringRef("c"), getCommandName(Toks[1]));
 
   ASSERT_EQ(tok::newline,   Toks[2].getKind());
 }
@@ -397,10 +441,10 @@ TEST_F(CommentLexerTest, VerbatimBlock1) {
     ASSERT_EQ(StringRef(" "),            Toks[0].getText());
 
     ASSERT_EQ(tok::verbatim_block_begin, Toks[1].getKind());
-    ASSERT_EQ(StringRef("verbatim"),     Toks[1].getVerbatimBlockName());
+    ASSERT_EQ(StringRef("verbatim"),     getVerbatimBlockName(Toks[1]));
 
     ASSERT_EQ(tok::verbatim_block_end,   Toks[2].getKind());
-    ASSERT_EQ(StringRef("endverbatim"),  Toks[2].getVerbatimBlockName());
+    ASSERT_EQ(StringRef("endverbatim"),  getVerbatimBlockName(Toks[2]));
 
     ASSERT_EQ(tok::newline,              Toks[3].getKind());
     ASSERT_EQ(tok::newline,              Toks[4].getKind());
@@ -421,7 +465,7 @@ TEST_F(CommentLexerTest, VerbatimBlock2) {
   ASSERT_EQ(StringRef(" "),            Toks[0].getText());
 
   ASSERT_EQ(tok::verbatim_block_begin, Toks[1].getKind());
-  ASSERT_EQ(StringRef("verbatim"),     Toks[1].getVerbatimBlockName());
+  ASSERT_EQ(StringRef("verbatim"),     getVerbatimBlockName(Toks[1]));
 
   ASSERT_EQ(tok::newline,              Toks[2].getKind());
 }
@@ -440,7 +484,7 @@ TEST_F(CommentLexerTest, VerbatimBlock3) {
   ASSERT_EQ(StringRef(" "),            Toks[0].getText());
 
   ASSERT_EQ(tok::verbatim_block_begin, Toks[1].getKind());
-  ASSERT_EQ(StringRef("verbatim"),     Toks[1].getVerbatimBlockName());
+  ASSERT_EQ(StringRef("verbatim"),     getVerbatimBlockName(Toks[1]));
 
   ASSERT_EQ(tok::newline,              Toks[2].getKind());
   ASSERT_EQ(tok::newline,              Toks[3].getKind());
@@ -464,13 +508,13 @@ TEST_F(CommentLexerTest, VerbatimBlock4) {
     ASSERT_EQ(StringRef(" Meow "),       Toks[0].getText());
 
     ASSERT_EQ(tok::verbatim_block_begin, Toks[1].getKind());
-    ASSERT_EQ(StringRef("verbatim"),     Toks[1].getVerbatimBlockName());
+    ASSERT_EQ(StringRef("verbatim"),     getVerbatimBlockName(Toks[1]));
 
     ASSERT_EQ(tok::verbatim_block_line,  Toks[2].getKind());
     ASSERT_EQ(StringRef(" aaa "),        Toks[2].getVerbatimBlockText());
 
     ASSERT_EQ(tok::verbatim_block_end,   Toks[3].getKind());
-    ASSERT_EQ(StringRef("endverbatim"),  Toks[3].getVerbatimBlockName());
+    ASSERT_EQ(StringRef("endverbatim"),  getVerbatimBlockName(Toks[3]));
 
     ASSERT_EQ(tok::newline,              Toks[4].getKind());
     ASSERT_EQ(tok::newline,              Toks[5].getKind());
@@ -495,7 +539,7 @@ TEST_F(CommentLexerTest, VerbatimBlock5) {
     ASSERT_EQ(StringRef(" Meow "),       Toks[0].getText());
 
     ASSERT_EQ(tok::verbatim_block_begin, Toks[1].getKind());
-    ASSERT_EQ(StringRef("verbatim"),     Toks[1].getVerbatimBlockName());
+    ASSERT_EQ(StringRef("verbatim"),     getVerbatimBlockName(Toks[1]));
 
     ASSERT_EQ(tok::verbatim_block_line,  Toks[2].getKind());
     ASSERT_EQ(StringRef(" aaa "),        Toks[2].getVerbatimBlockText());
@@ -523,7 +567,7 @@ TEST_F(CommentLexerTest, VerbatimBlock6) {
   ASSERT_EQ(StringRef(" "),            Toks[0].getText());
 
   ASSERT_EQ(tok::verbatim_block_begin, Toks[1].getKind());
-  ASSERT_EQ(StringRef("verbatim"),     Toks[1].getVerbatimBlockName());
+  ASSERT_EQ(StringRef("verbatim"),     getVerbatimBlockName(Toks[1]));
 
   ASSERT_EQ(tok::newline,              Toks[2].getKind());
 
@@ -540,7 +584,7 @@ TEST_F(CommentLexerTest, VerbatimBlock6) {
   ASSERT_EQ(tok::newline,              Toks[7].getKind());
 
   ASSERT_EQ(tok::verbatim_block_end,   Toks[8].getKind());
-  ASSERT_EQ(StringRef("endverbatim"),  Toks[8].getVerbatimBlockName());
+  ASSERT_EQ(StringRef("endverbatim"),  getVerbatimBlockName(Toks[8]));
 
   ASSERT_EQ(tok::newline,              Toks[9].getKind());
 }
@@ -564,7 +608,7 @@ TEST_F(CommentLexerTest, VerbatimBlock7) {
   ASSERT_EQ(StringRef(" "),            Toks[0].getText());
 
   ASSERT_EQ(tok::verbatim_block_begin, Toks[1].getKind());
-  ASSERT_EQ(StringRef("verbatim"),     Toks[1].getVerbatimBlockName());
+  ASSERT_EQ(StringRef("verbatim"),     getVerbatimBlockName(Toks[1]));
 
   ASSERT_EQ(tok::verbatim_block_line,  Toks[2].getKind());
   ASSERT_EQ(StringRef(" Aaa"),         Toks[2].getVerbatimBlockText());
@@ -576,7 +620,7 @@ TEST_F(CommentLexerTest, VerbatimBlock7) {
   ASSERT_EQ(StringRef(" Bbb"),         Toks[4].getVerbatimBlockText());
 
   ASSERT_EQ(tok::verbatim_block_end,   Toks[5].getKind());
-  ASSERT_EQ(StringRef("endverbatim"),  Toks[5].getVerbatimBlockName());
+  ASSERT_EQ(StringRef("endverbatim"),  getVerbatimBlockName(Toks[5]));
 
   ASSERT_EQ(tok::newline,              Toks[6].getKind());
 
@@ -605,7 +649,7 @@ TEST_F(CommentLexerTest, VerbatimBlock8) {
   ASSERT_EQ(StringRef(" Meow "),       Toks[0].getText());
 
   ASSERT_EQ(tok::verbatim_block_begin, Toks[1].getKind());
-  ASSERT_EQ(StringRef("verbatim"),     Toks[1].getVerbatimBlockName());
+  ASSERT_EQ(StringRef("verbatim"),     getVerbatimBlockName(Toks[1]));
 
   ASSERT_EQ(tok::verbatim_block_line,  Toks[2].getKind());
   ASSERT_EQ(StringRef(" aaa\\$\\@"),   Toks[2].getVerbatimBlockText());
@@ -620,19 +664,19 @@ TEST_F(CommentLexerTest, VerbatimBlock8) {
   ASSERT_EQ(StringRef("ddd "),         Toks[5].getVerbatimBlockText());
 
   ASSERT_EQ(tok::verbatim_block_end,   Toks[6].getKind());
-  ASSERT_EQ(StringRef("endverbatim"),  Toks[6].getVerbatimBlockName());
+  ASSERT_EQ(StringRef("endverbatim"),  getVerbatimBlockName(Toks[6]));
 
   ASSERT_EQ(tok::text,                 Toks[7].getKind());
   ASSERT_EQ(StringRef(" Blah "),       Toks[7].getText());
 
   ASSERT_EQ(tok::verbatim_block_begin, Toks[8].getKind());
-  ASSERT_EQ(StringRef("verbatim"),     Toks[8].getVerbatimBlockName());
+  ASSERT_EQ(StringRef("verbatim"),     getVerbatimBlockName(Toks[8]));
 
   ASSERT_EQ(tok::verbatim_block_line,  Toks[9].getKind());
   ASSERT_EQ(StringRef(" eee"),         Toks[9].getVerbatimBlockText());
 
   ASSERT_EQ(tok::verbatim_block_end,   Toks[10].getKind());
-  ASSERT_EQ(StringRef("endverbatim"),  Toks[10].getVerbatimBlockName());
+  ASSERT_EQ(StringRef("endverbatim"),  getVerbatimBlockName(Toks[10]));
 
   ASSERT_EQ(tok::text,                 Toks[11].getKind());
   ASSERT_EQ(StringRef(" BlahBlah"),    Toks[11].getText());
@@ -655,37 +699,37 @@ TEST_F(CommentLexerTest, VerbatimBlock9) {
   ASSERT_EQ(StringRef(" "),            Toks[0].getText());
 
   ASSERT_EQ(tok::verbatim_block_begin, Toks[1].getKind());
-  ASSERT_EQ(StringRef("f$"),           Toks[1].getVerbatimBlockName());
+  ASSERT_EQ(StringRef("f$"),           getVerbatimBlockName(Toks[1]));
 
   ASSERT_EQ(tok::verbatim_block_line,  Toks[2].getKind());
   ASSERT_EQ(StringRef(" Aaa "),        Toks[2].getVerbatimBlockText());
 
   ASSERT_EQ(tok::verbatim_block_end,   Toks[3].getKind());
-  ASSERT_EQ(StringRef("f$"),           Toks[3].getVerbatimBlockName());
+  ASSERT_EQ(StringRef("f$"),           getVerbatimBlockName(Toks[3]));
 
   ASSERT_EQ(tok::text,                 Toks[4].getKind());
   ASSERT_EQ(StringRef(" "),            Toks[4].getText());
 
   ASSERT_EQ(tok::verbatim_block_begin, Toks[5].getKind());
-  ASSERT_EQ(StringRef("f["),           Toks[5].getVerbatimBlockName());
+  ASSERT_EQ(StringRef("f["),           getVerbatimBlockName(Toks[5]));
 
   ASSERT_EQ(tok::verbatim_block_line,  Toks[6].getKind());
   ASSERT_EQ(StringRef(" Bbb "),        Toks[6].getVerbatimBlockText());
 
   ASSERT_EQ(tok::verbatim_block_end,   Toks[7].getKind());
-  ASSERT_EQ(StringRef("f]"),           Toks[7].getVerbatimBlockName());
+  ASSERT_EQ(StringRef("f]"),           getVerbatimBlockName(Toks[7]));
 
   ASSERT_EQ(tok::text,                 Toks[8].getKind());
   ASSERT_EQ(StringRef(" "),            Toks[8].getText());
 
   ASSERT_EQ(tok::verbatim_block_begin, Toks[9].getKind());
-  ASSERT_EQ(StringRef("f{"),           Toks[9].getVerbatimBlockName());
+  ASSERT_EQ(StringRef("f{"),           getVerbatimBlockName(Toks[9]));
 
   ASSERT_EQ(tok::verbatim_block_line,  Toks[10].getKind());
   ASSERT_EQ(StringRef(" Ccc "),        Toks[10].getVerbatimBlockText());
 
   ASSERT_EQ(tok::verbatim_block_end,   Toks[11].getKind());
-  ASSERT_EQ(StringRef("f}"),           Toks[11].getVerbatimBlockName());
+  ASSERT_EQ(StringRef("f}"),           getVerbatimBlockName(Toks[11]));
 
   ASSERT_EQ(tok::newline,              Toks[12].getKind());
 }
@@ -708,7 +752,7 @@ TEST_F(CommentLexerTest, VerbatimLine1) {
     ASSERT_EQ(StringRef(" "),          Toks[0].getText());
 
     ASSERT_EQ(tok::verbatim_line_name, Toks[1].getKind());
-    ASSERT_EQ(StringRef("fn"),         Toks[1].getVerbatimLineName());
+    ASSERT_EQ(StringRef("fn"),         getVerbatimLineName(Toks[1]));
 
     ASSERT_EQ(tok::newline,            Toks[2].getKind());
     ASSERT_EQ(tok::newline,            Toks[3].getKind());
@@ -733,7 +777,7 @@ TEST_F(CommentLexerTest, VerbatimLine2) {
     ASSERT_EQ(StringRef(" "),          Toks[0].getText());
 
     ASSERT_EQ(tok::verbatim_line_name, Toks[1].getKind());
-    ASSERT_EQ(StringRef("fn"),         Toks[1].getVerbatimLineName());
+    ASSERT_EQ(StringRef("fn"),         getVerbatimLineName(Toks[1]));
 
     ASSERT_EQ(tok::verbatim_line_text, Toks[2].getKind());
     ASSERT_EQ(StringRef(" void *foo(const char *zzz = \"\\$\");"),
@@ -761,7 +805,7 @@ TEST_F(CommentLexerTest, VerbatimLine3) {
   ASSERT_EQ(StringRef(" "),          Toks[0].getText());
 
   ASSERT_EQ(tok::verbatim_line_name, Toks[1].getKind());
-  ASSERT_EQ(StringRef("fn"),         Toks[1].getVerbatimLineName());
+  ASSERT_EQ(StringRef("fn"),         getVerbatimLineName(Toks[1]));
 
   ASSERT_EQ(tok::verbatim_line_text, Toks[2].getKind());
   ASSERT_EQ(StringRef(" void *foo(const char *zzz = \"\\$\");"),

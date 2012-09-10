@@ -79,14 +79,14 @@ std::string BriefParser::Parse() {
     }
 
     if (Tok.is(tok::command)) {
-      StringRef Name = Tok.getCommandName();
-      if (Traits.isBriefCommand(Name)) {
+      const CommandInfo *Info = Traits.getCommandInfo(Tok.getCommandID());
+      if (Info->IsBriefCommand) {
         FirstParagraphOrBrief.clear();
         InBrief = true;
         ConsumeToken();
         continue;
       }
-      if (Traits.isReturnsCommand(Name)) {
+      if (Info->IsReturnsCommand) {
         InReturns = true;
         InBrief = false;
         InFirstParagraph = false;
@@ -95,7 +95,7 @@ std::string BriefParser::Parse() {
         continue;
       }
       // Block commands implicitly start a new paragraph.
-      if (Traits.isBlockCommand(Name)) {
+      if (Info->IsBlockCommand) {
         // We found an implicit paragraph end.
         InFirstParagraph = false;
         if (InBrief)

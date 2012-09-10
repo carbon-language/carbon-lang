@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/Comment.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
@@ -37,11 +38,12 @@ void Comment::dump() const {
   // in CommentDumper.cpp, that object file would be removed by linker because
   // none of its functions are referenced by other object files, despite the
   // LLVM_ATTRIBUTE_USED.
-  dump(llvm::errs(), NULL);
+  dump(llvm::errs(), NULL, NULL);
 }
 
-void Comment::dump(SourceManager &SM) const {
-  dump(llvm::errs(), &SM);
+void Comment::dump(const ASTContext &Context) const {
+  dump(llvm::errs(), &Context.getCommentCommandTraits(),
+       &Context.getSourceManager());
 }
 
 namespace {

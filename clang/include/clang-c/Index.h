@@ -2040,7 +2040,8 @@ typedef struct {
  * \brief A comment AST node.
  */
 typedef struct {
-  const void *Data;
+  const void *ASTNode;
+  CXTranslationUnit TranslationUnit;
 } CXComment;
 
 /**
@@ -3692,14 +3693,11 @@ CINDEX_LINKAGE CXString clang_FullComment_getAsHTML(CXComment Comment);
  * A Relax NG schema for the XML can be found in comment-xml-schema.rng file
  * inside clang source tree.
  *
- * \param TU the translation unit \c Comment belongs to.
- *
  * \param Comment a \c CXComment_FullComment AST node.
  *
  * \returns string containing an XML document.
  */
-CINDEX_LINKAGE CXString clang_FullComment_getAsXML(CXTranslationUnit TU,
-                                                   CXComment Comment);
+CINDEX_LINKAGE CXString clang_FullComment_getAsXML(CXComment Comment);
 
 /**
  * @}

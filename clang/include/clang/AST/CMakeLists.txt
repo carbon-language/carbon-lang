@@ -28,3 +28,7 @@ clang_tablegen(CommentHTMLTagsProperties.inc -gen-clang-comment-html-tags-proper
   SOURCE CommentHTMLTags.td
   TARGET ClangCommentHTMLTagsProperties)
 
+clang_tablegen(CommentCommandInfo.inc -gen-clang-comment-command-info
+  SOURCE CommentCommands.td
+  TARGET ClangCommentCommandInfo)
+

@@ -512,8 +512,7 @@ static void ValidateCommentXML(const char *Str,
 #endif
 }
 
-static void PrintCursorComments(CXTranslationUnit TU,
-                                CXCursor Cursor,
+static void PrintCursorComments(CXCursor Cursor,
                                 CommentXMLValidationData *ValidationData) {
   {
     CXString RawComment;
@@ -543,7 +542,7 @@ static void PrintCursorComments(CXTranslationUnit TU,
                                         clang_FullComment_getAsHTML(Comment));
       {
         CXString XML;
-        XML = clang_FullComment_getAsXML(TU, Comment);
+        XML = clang_FullComment_getAsXML(Comment);
         PrintCXStringWithPrefix("FullCommentAsXML", XML);
         ValidateCommentXML(clang_getCString(XML), ValidationData);
         clang_disposeString(XML);
@@ -781,7 +780,7 @@ static void PrintCursor(CXCursor Cursor,
         PrintRange(RefNameRange, "RefName");
     }
 
-    PrintCursorComments(TU, Cursor, ValidationData);
+    PrintCursorComments(Cursor, ValidationData);
   }
 }
 

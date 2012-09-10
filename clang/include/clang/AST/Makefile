@@ -2,7 +2,7 @@ CLANG_LEVEL := ../../..
 TD_SRC_DIR = $(PROJ_SRC_DIR)/../Basic
 BUILT_SOURCES = Attrs.inc AttrImpl.inc StmtNodes.inc DeclNodes.inc \
                 CommentNodes.inc CommentHTMLTags.inc \
-                CommentHTMLTagsProperties.inc
+                CommentHTMLTagsProperties.inc CommentCommandInfo.inc
 
 TABLEGEN_INC_FILES_COMMON = 1
 
@@ -44,4 +44,9 @@ $(ObjDir)/CommentHTMLTagsProperties.inc.tmp : $(PROJ_SRC_DIR)/CommentHTMLTags.td
                                               $(CLANG_TBLGEN) $(ObjDir)/.dir
 	$(Echo) "Building Clang comment HTML tag properties with tblgen"
 	$(Verb) $(ClangTableGen) -gen-clang-comment-html-tags-properties -o $(call SYSPATH, $@) $<
+
+$(ObjDir)/CommentCommandInfo.inc.tmp : $(PROJ_SRC_DIR)/CommentCommands.td \
+                                              $(CLANG_TBLGEN) $(ObjDir)/.dir
+	$(Echo) "Building Clang comment command info with tblgen"
+	$(Verb) $(ClangTableGen) -gen-clang-comment-command-info -o $(call SYSPATH, $@) $<
 

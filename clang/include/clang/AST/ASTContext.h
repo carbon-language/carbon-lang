@@ -29,6 +29,7 @@
 #include "clang/AST/Type.h"
 #include "clang/AST/CanonicalType.h"
 #include "clang/AST/RawCommentList.h"
+#include "clang/AST/CommentCommandTraits.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
@@ -528,6 +529,14 @@ public:
   /// Return parsed documentation comment attached to a given declaration.
   /// Returns NULL if no comment is attached.
   comments::FullComment *getCommentForDecl(const Decl *D) const;
+
+private:
+  mutable comments::CommandTraits CommentCommandTraits;
+
+public:
+  comments::CommandTraits &getCommentCommandTraits() const {
+    return CommentCommandTraits;
+  }
 
   /// \brief Retrieve the attributes for the given declaration.
   AttrVec& getDeclAttrs(const Decl *D);

@@ -5800,13 +5800,13 @@ CXString clang_Cursor_getBriefCommentText(CXCursor C) {
 
 CXComment clang_Cursor_getParsedComment(CXCursor C) {
   if (!clang_isDeclaration(C.kind))
-    return cxcomment::createCXComment(NULL);
+    return cxcomment::createCXComment(NULL, NULL);
 
   const Decl *D = getCursorDecl(C);
   const ASTContext &Context = getCursorContext(C);
   const comments::FullComment *FC = Context.getCommentForDecl(D);
 
-  return cxcomment::createCXComment(FC);
+  return cxcomment::createCXComment(FC, getCursorTU(C));
 }
 
 } // end: extern "C"

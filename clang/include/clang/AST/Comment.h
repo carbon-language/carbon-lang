@@ -16,6 +16,7 @@
 
 #include "clang/Basic/SourceLocation.h"
 #include "clang/AST/Type.h"
+#include "clang/AST/CommentCommandTraits.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 
@@ -74,8 +75,9 @@ protected:
     unsigned : NumInlineContentCommentBits;
 
     unsigned RenderKind : 2;
+    unsigned CommandID : 8;
   };
-  enum { NumInlineCommandCommentBits = NumInlineContentCommentBits + 1 };
+  enum { NumInlineCommandCommentBits = NumInlineContentCommentBits + 10 };
 
   class HTMLStartTagCommentBitfields {
     friend class HTMLStartTagComment;
@@ -101,10 +103,19 @@ protected:
   };
   enum { NumParagraphCommentBits = NumCommentBits + 2 };
 
+  class BlockCommandCommentBitfields {
+    friend class BlockCommandComment;
+
+    unsigned : NumCommentBits;
+
+    unsigned CommandID : 8;
+  };
+  enum { NumBlockCommandCommentBits = NumCommentBits + 8 };
+
   class ParamCommandCommentBitfields {
     friend class ParamCommandComment;
 
-    unsigned : NumCommentBits;
+    unsigned : NumBlockCommandCommentBits;
 
     /// Parameter passing direction, see ParamCommandComment::PassDirection.
     unsigned Direction : 2;
@@ -112,7 +123,7 @@ protected:
     /// True if direction was specified explicitly in the comment.
     unsigned IsDirectionExplicit : 1;
   };
-  enum { NumParamCommandCommentBits = 11 };
+  enum { NumParamCommandCommentBits = NumBlockCommandCommentBits + 3 };
 
   union {
     CommentBitfields CommentBits;
@@ -121,6 +132,7 @@ protected:
     InlineCommandCommentBitfields InlineCommandCommentBits;
     HTMLStartTagCommentBitfields HTMLStartTagCommentBits;
     ParagraphCommentBitfields ParagraphCommentBits;
+    BlockCommandCommentBitfields BlockCommandCommentBits;
     ParamCommandCommentBitfields ParamCommandCommentBits;
   };
 
@@ -158,8 +170,9 @@ public:
   const char *getCommentKindName() const;
 
   LLVM_ATTRIBUTE_USED void dump() const;
-  LLVM_ATTRIBUTE_USED void dump(SourceManager &SM) const;
-  void dump(llvm::raw_ostream &OS, SourceManager *SM) const;
+  LLVM_ATTRIBUTE_USED void dump(const ASTContext &Context) const;
+  void dump(llvm::raw_ostream &OS, const CommandTraits *Traits,
+            const SourceManager *SM) const;
 
   static bool classof(const Comment *) { return true; }
 
@@ -273,21 +286,19 @@ public:
   };
 
 protected:
-  /// Command name.
-  StringRef Name;
-
   /// Command arguments.
   llvm::ArrayRef<Argument> Args;
 
 public:
   InlineCommandComment(SourceLocation LocBegin,
                        SourceLocation LocEnd,
-                       StringRef Name,
+                       unsigned CommandID,
                        RenderKind RK,
                        llvm::ArrayRef<Argument> Args) :
       InlineContentComment(InlineCommandCommentKind, LocBegin, LocEnd),
-      Name(Name), Args(Args) {
+      Args(Args) {
     InlineCommandCommentBits.RenderKind = RK;
+    InlineCommandCommentBits.CommandID = CommandID;
   }
 
   static bool classof(const Comment *C) {
@@ -300,8 +311,12 @@ public:
 
   child_iterator child_end() const { return NULL; }
 
-  StringRef getCommandName() const {
-    return Name;
+  unsigned getCommandID() const {
+    return InlineCommandCommentBits.CommandID;
+  }
+
+  StringRef getCommandName(const CommandTraits &Traits) const {
+    return Traits.getCommandInfo(getCommandID())->Name;
   }
 
   SourceRange getCommandNameRange() const {
@@ -566,9 +581,6 @@ public:
   };
 
 protected:
-  /// Command name.
-  StringRef Name;
-
   /// Word-like arguments.
   llvm::ArrayRef<Argument> Args;
 
@@ -578,21 +590,21 @@ protected:
   BlockCommandComment(CommentKind K,
                       SourceLocation LocBegin,
                       SourceLocation LocEnd,
-                      StringRef Name) :
+                      unsigned CommandID) :
       BlockContentComment(K, LocBegin, LocEnd),
-      Name(Name),
       Paragraph(NULL) {
-    setLocation(getCommandNameRange().getBegin());
+    setLocation(getCommandNameBeginLoc());
+    BlockCommandCommentBits.CommandID = CommandID;
   }
 
 public:
   BlockCommandComment(SourceLocation LocBegin,
                       SourceLocation LocEnd,
-                      StringRef Name) :
+                      unsigned CommandID) :
       BlockContentComment(BlockCommandCommentKind, LocBegin, LocEnd),
-      Name(Name),
       Paragraph(NULL) {
-    setLocation(getCommandNameRange().getBegin());
+    setLocation(getCommandNameBeginLoc());
+    BlockCommandCommentBits.CommandID = CommandID;
   }
 
   static bool classof(const Comment *C) {
@@ -610,12 +622,21 @@ public:
     return reinterpret_cast<child_iterator>(&Paragraph + 1);
   }
 
-  StringRef getCommandName() const {
-    return Name;
+  unsigned getCommandID() const {
+    return BlockCommandCommentBits.CommandID;
   }
 
-  SourceRange getCommandNameRange() const {
-    return SourceRange(getLocStart().getLocWithOffset(1),
+  StringRef getCommandName(const CommandTraits &Traits) const {
+    return Traits.getCommandInfo(getCommandID())->Name;
+  }
+
+  SourceLocation getCommandNameBeginLoc() const {
+    return getLocStart().getLocWithOffset(1);
+  }
+
+  SourceRange getCommandNameRange(const CommandTraits &Traits) const {
+    StringRef Name = getCommandName(Traits);
+    return SourceRange(getCommandNameBeginLoc(),
                        getLocStart().getLocWithOffset(1 + Name.size()));
   }
 
@@ -667,8 +688,9 @@ public:
 
   ParamCommandComment(SourceLocation LocBegin,
                       SourceLocation LocEnd,
-                      StringRef Name) :
-      BlockCommandComment(ParamCommandCommentKind, LocBegin, LocEnd, Name),
+                      unsigned CommandID) :
+      BlockCommandComment(ParamCommandCommentKind, LocBegin, LocEnd,
+                          CommandID),
       ParamIndex(InvalidParamIndex) {
     ParamCommandCommentBits.Direction = In;
     ParamCommandCommentBits.IsDirectionExplicit = false;
@@ -748,8 +770,8 @@ private:
 public:
   TParamCommandComment(SourceLocation LocBegin,
                        SourceLocation LocEnd,
-                       StringRef Name) :
-      BlockCommandComment(TParamCommandCommentKind, LocBegin, LocEnd, Name)
+                       unsigned CommandID) :
+      BlockCommandComment(TParamCommandCommentKind, LocBegin, LocEnd, CommandID)
   { }
 
   static bool classof(const Comment *C) {
@@ -830,9 +852,9 @@ protected:
 public:
   VerbatimBlockComment(SourceLocation LocBegin,
                        SourceLocation LocEnd,
-                       StringRef Name) :
+                       unsigned CommandID) :
       BlockCommandComment(VerbatimBlockCommentKind,
-                          LocBegin, LocEnd, Name)
+                          LocBegin, LocEnd, CommandID)
   { }
 
   static bool classof(const Comment *C) {
@@ -882,12 +904,12 @@ protected:
 public:
   VerbatimLineComment(SourceLocation LocBegin,
                       SourceLocation LocEnd,
-                      StringRef Name,
+                      unsigned CommandID,
                       SourceLocation TextBegin,
                       StringRef Text) :
       BlockCommandComment(VerbatimLineCommentKind,
                           LocBegin, LocEnd,
-                          Name),
+                          CommandID),
       Text(Text),
       TextBegin(TextBegin)
   { }

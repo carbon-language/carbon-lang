@@ -26,6 +26,7 @@ namespace comments {
 
 class Lexer;
 class TextTokenRetokenizer;
+struct CommandInfo;
 class CommandTraits;
 
 namespace tok {
@@ -33,6 +34,7 @@ enum TokenKind {
   eof,
   newline,
   text,
+  unknown_command,
   command,
   verbatim_block_begin,
   verbatim_block_line,
@@ -65,8 +67,14 @@ class Token {
   unsigned Length;
 
   /// Contains text value associated with a token.
-  const char *TextPtr1;
-  unsigned TextLen1;
+  const char *TextPtr;
+
+  /// Integer value associated with a token.
+  ///
+  /// If the token is a konwn command, contains command ID and TextPtr is
+  /// unused (command spelling can be found with CommandTraits).  Otherwise,
+  /// contains the length of the string that starts at TextPtr.
+  unsigned IntVal;
 
 public:
   SourceLocation getLocation() const LLVM_READONLY { return Loc; }
@@ -89,113 +97,120 @@ public:
 
   StringRef getText() const LLVM_READONLY {
     assert(is(tok::text));
-    return StringRef(TextPtr1, TextLen1);
+    return StringRef(TextPtr, IntVal);
   }
 
   void setText(StringRef Text) {
     assert(is(tok::text));
-    TextPtr1 = Text.data();
-    TextLen1 = Text.size();
+    TextPtr = Text.data();
+    IntVal = Text.size();
   }
 
-  StringRef getCommandName() const LLVM_READONLY {
+  StringRef getUnknownCommandName() const LLVM_READONLY {
+    assert(is(tok::unknown_command));
+    return StringRef(TextPtr, IntVal);
+  }
+
+  void setUnknownCommandName(StringRef Name) {
+    assert(is(tok::unknown_command));
+    TextPtr = Name.data();
+    IntVal = Name.size();
+  }
+
+  unsigned getCommandID() const LLVM_READONLY {
     assert(is(tok::command));
-    return StringRef(TextPtr1, TextLen1);
+    return IntVal;
   }
 
-  void setCommandName(StringRef Name) {
+  void setCommandID(unsigned ID) {
     assert(is(tok::command));
-    TextPtr1 = Name.data();
-    TextLen1 = Name.size();
+    IntVal = ID;
   }
 
-  StringRef getVerbatimBlockName() const LLVM_READONLY {
+  unsigned getVerbatimBlockID() const LLVM_READONLY {
     assert(is(tok::verbatim_block_begin) || is(tok::verbatim_block_end));
-    return StringRef(TextPtr1, TextLen1);
+    return IntVal;
   }
 
-  void setVerbatimBlockName(StringRef Name) {
+  void setVerbatimBlockID(unsigned ID) {
     assert(is(tok::verbatim_block_begin) || is(tok::verbatim_block_end));
-    TextPtr1 = Name.data();
-    TextLen1 = Name.size();
+    IntVal = ID;
   }
 
   StringRef getVerbatimBlockText() const LLVM_READONLY {
     assert(is(tok::verbatim_block_line));
-    return StringRef(TextPtr1, TextLen1);
+    return StringRef(TextPtr, IntVal);
   }
 
   void setVerbatimBlockText(StringRef Text) {
     assert(is(tok::verbatim_block_line));
-    TextPtr1 = Text.data();
-    TextLen1 = Text.size();
+    TextPtr = Text.data();
+    IntVal = Text.size();
   }
 
-  /// Returns the name of verbatim line command.
-  StringRef getVerbatimLineName() const LLVM_READONLY {
+  unsigned getVerbatimLineID() const LLVM_READONLY {
     assert(is(tok::verbatim_line_name));
-    return StringRef(TextPtr1, TextLen1);
+    return IntVal;
   }
 
-  void setVerbatimLineName(StringRef Name) {
+  void setVerbatimLineID(unsigned ID) {
     assert(is(tok::verbatim_line_name));
-    TextPtr1 = Name.data();
-    TextLen1 = Name.size();
+    IntVal = ID;
   }
 
   StringRef getVerbatimLineText() const LLVM_READONLY {
     assert(is(tok::verbatim_line_text));
-    return StringRef(TextPtr1, TextLen1);
+    return StringRef(TextPtr, IntVal);
   }
 
   void setVerbatimLineText(StringRef Text) {
     assert(is(tok::verbatim_line_text));
-    TextPtr1 = Text.data();
-    TextLen1 = Text.size();
+    TextPtr = Text.data();
+    IntVal = Text.size();
   }
 
   StringRef getHTMLTagStartName() const LLVM_READONLY {
     assert(is(tok::html_start_tag));
-    return StringRef(TextPtr1, TextLen1);
+    return StringRef(TextPtr, IntVal);
   }
 
   void setHTMLTagStartName(StringRef Name) {
     assert(is(tok::html_start_tag));
-    TextPtr1 = Name.data();
-    TextLen1 = Name.size();
+    TextPtr = Name.data();
+    IntVal = Name.size();
   }
 
   StringRef getHTMLIdent() const LLVM_READONLY {
     assert(is(tok::html_ident));
-    return StringRef(TextPtr1, TextLen1);
+    return StringRef(TextPtr, IntVal);
   }
 
   void setHTMLIdent(StringRef Name) {
     assert(is(tok::html_ident));
-    TextPtr1 = Name.data();
-    TextLen1 = Name.size();
+    TextPtr = Name.data();
+    IntVal = Name.size();
   }
 
   StringRef getHTMLQuotedString() const LLVM_READONLY {
     assert(is(tok::html_quoted_string));
-    return StringRef(TextPtr1, TextLen1);
+    return StringRef(TextPtr, IntVal);
   }
 
   void setHTMLQuotedString(StringRef Str) {
     assert(is(tok::html_quoted_string));
-    TextPtr1 = Str.data();
-    TextLen1 = Str.size();
+    TextPtr = Str.data();
+    IntVal = Str.size();
   }
 
   StringRef getHTMLTagEndName() const LLVM_READONLY {
     assert(is(tok::html_end_tag));
-    return StringRef(TextPtr1, TextLen1);
+    return StringRef(TextPtr, IntVal);
   }
 
   void setHTMLTagEndName(StringRef Name) {
     assert(is(tok::html_end_tag));
-    TextPtr1 = Name.data();
-    TextLen1 = Name.size();
+    TextPtr = Name.data();
+    IntVal = Name.size();
   }
 
   void dump(const Lexer &L, const SourceManager &SM) const;
@@ -280,8 +295,8 @@ private:
     Result.setKind(Kind);
     Result.setLength(TokLen);
 #ifndef NDEBUG
-    Result.TextPtr1 = "<UNSET>";
-    Result.TextLen1 = 7;
+    Result.TextPtr = "<UNSET>";
+    Result.IntVal = 7;
 #endif
     BufferPtr = TokEnd;
   }
@@ -308,13 +323,14 @@ private:
 
   void setupAndLexVerbatimBlock(Token &T,
                                 const char *TextBegin,
-                                char Marker, StringRef EndName);
+                                char Marker, const CommandInfo *Info);
 
   void lexVerbatimBlockFirstLine(Token &T);
 
   void lexVerbatimBlockBody(Token &T);
 
-  void setupAndLexVerbatimLine(Token &T, const char *TextBegin);
+  void setupAndLexVerbatimLine(Token &T, const char *TextBegin,
+                               const CommandInfo *Info);
 
   void lexVerbatimLineText(Token &T);
 

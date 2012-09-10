@@ -143,10 +143,10 @@ const char *RawComment::extractBriefText(const ASTContext &Context) const {
   // a separate allocator for all temporary stuff.
   llvm::BumpPtrAllocator Allocator;
 
-  comments::CommandTraits Traits;
-  comments::Lexer L(Allocator, Traits, Range.getBegin(),
+  comments::Lexer L(Allocator, Context.getCommentCommandTraits(),
+                    Range.getBegin(),
                     RawText.begin(), RawText.end());
-  comments::BriefParser P(L, Traits);
+  comments::BriefParser P(L, Context.getCommentCommandTraits());
 
   const std::string Result = P.Parse();
   const unsigned BriefTextLength = Result.size();
@@ -163,15 +163,16 @@ comments::FullComment *RawComment::parse(const ASTContext &Context,
   // Make sure that RawText is valid.
   getRawText(Context.getSourceManager());
 
-  comments::CommandTraits Traits;
-  comments::Lexer L(Context.getAllocator(), Traits,
+  comments::Lexer L(Context.getAllocator(), Context.getCommentCommandTraits(),
                     getSourceRange().getBegin(),
                     RawText.begin(), RawText.end());
   comments::Sema S(Context.getAllocator(), Context.getSourceManager(),
-                   Context.getDiagnostics(), Traits);
+                   Context.getDiagnostics(),
+                   Context.getCommentCommandTraits());
   S.setDecl(D);
   comments::Parser P(L, S, Context.getAllocator(), Context.getSourceManager(),
-                     Context.getDiagnostics(), Traits);
+                     Context.getDiagnostics(),
+                     Context.getCommentCommandTraits());
 
   return P.parseFullComment();
 }

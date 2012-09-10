@@ -50,6 +50,8 @@ void EmitClangSACheckers(RecordKeeper &Records, raw_ostream &OS);
 void EmitClangCommentHTMLTags(RecordKeeper &Records, raw_ostream &OS);
 void EmitClangCommentHTMLTagsProperties(RecordKeeper &Records, raw_ostream &OS);
 
+void EmitClangCommentCommandInfo(RecordKeeper &Records, raw_ostream &OS);
+
 void EmitNeon(RecordKeeper &Records, raw_ostream &OS);
 void EmitNeonSema(RecordKeeper &Records, raw_ostream &OS);
 void EmitNeonTest(RecordKeeper &Records, raw_ostream &OS);
