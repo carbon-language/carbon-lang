@@ -630,7 +630,7 @@ bool StackColoring::runOnMachineFunction(MachineFunction &Func) {
       if (SortedSlots[I] == -1)
         continue;
 
-      for (unsigned J=0; J < NumSlots; ++J) {
+      for (unsigned J=I+1; J < NumSlots; ++J) {
         if (SortedSlots[J] == -1)
           continue;
 
