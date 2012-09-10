@@ -283,8 +283,8 @@ public:
   /// for the given DITemplateTypeParameter.
   DIE *getOrCreateTemplateTypeParameterDIE(DITemplateTypeParameter TP);
 
-  /// getOrCreateTemplateValueParameterDIE - Find existing DIE or create new DIE 
-  /// for the given DITemplateValueParameter.
+  /// getOrCreateTemplateValueParameterDIE - Find existing DIE or create
+  /// new DIE for the given DITemplateValueParameter.
   DIE *getOrCreateTemplateValueParameterDIE(DITemplateValueParameter TVP);
 
   /// createDIEEntry - Creates a new DIEEntry to be a proxy for a debug

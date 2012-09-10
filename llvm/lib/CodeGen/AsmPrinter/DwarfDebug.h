@@ -96,7 +96,8 @@ typedef struct DotDebugLocEntry {
   DotDebugLocEntry(const MCSymbol *B, const MCSymbol *E, const ConstantFP *FPtr)
     : Begin(B), End(E), Variable(0), Merged(false), 
       Constant(true) { Constants.CFP = FPtr; EntryKind = E_ConstantFP; }
-  DotDebugLocEntry(const MCSymbol *B, const MCSymbol *E, const ConstantInt *IPtr)
+  DotDebugLocEntry(const MCSymbol *B, const MCSymbol *E,
+                   const ConstantInt *IPtr)
     : Begin(B), End(E), Variable(0), Merged(false), 
       Constant(true) { Constants.CIP = IPtr; EntryKind = E_ConstantInt; }
 
