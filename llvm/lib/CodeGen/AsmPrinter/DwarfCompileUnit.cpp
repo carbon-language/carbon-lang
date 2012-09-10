@@ -1105,7 +1105,7 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
     if (SPTag == dwarf::DW_TAG_subroutine_type)
       for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
         DIE *Arg = new DIE(dwarf::DW_TAG_formal_parameter);
-        DIType ATy = DIType(DIType(Args.getElement(i)));
+        DIType ATy = DIType(Args.getElement(i));
         addType(Arg, ATy);
         if (ATy.isArtificial())
           addFlag(Arg, dwarf::DW_AT_artificial);
