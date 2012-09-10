@@ -58,10 +58,10 @@ static cl::opt<std::string> ASTDumpFilter(
     "ast-dump-filter",
     cl::desc(Options->getOptionHelpText(options::OPT_ast_dump_filter)));
 
-// Anonymous namespace here causes problems with gcc <= 4.4 on MacOS:
-// http://llvm.org/bugs/show_bug.cgi?id=13777
-// namespace {
-class ActionFactory {
+// Anonymous namespace here causes problems with gcc <= 4.4 on MacOS 10.6.
+// "Non-global symbol: ... can't be a weak_definition"
+namespace clang_check {
+class ClangCheckActionFactory {
 public:
   clang::ASTConsumer *newASTConsumer() {
     if (ASTList)
@@ -73,10 +73,10 @@ public:
     return new clang::ASTConsumer();
   }
 };
-// }
+}
 
 int main(int argc, const char **argv) {
-  ActionFactory Factory;
+  clang_check::ClangCheckActionFactory Factory;
   CommonOptionsParser OptionsParser(argc, argv);
   ClangTool Tool(OptionsParser.GetCompilations(),
                  OptionsParser.GetSourcePathList());
