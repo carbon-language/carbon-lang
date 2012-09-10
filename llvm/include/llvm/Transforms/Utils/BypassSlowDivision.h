@@ -20,10 +20,14 @@
 
 #include "llvm/Function.h"
 
+namespace llvm {
+
 /// This optimization identifies DIV instructions that can be
 /// profitably bypassed and carried out with a shorter, faster divide.
-bool bypassSlowDivision(llvm::Function &F,
-                        llvm::Function::iterator &I,
-                        const llvm::DenseMap<llvm::Type *, llvm::Type *> &BypassTypeMap);
+bool bypassSlowDivision(Function &F,
+                        Function::iterator &I,
+                        const DenseMap<Type *, Type *> &BypassTypeMap);
+
+} // End llvm namespace
 
 #endif

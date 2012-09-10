@@ -24,7 +24,7 @@
 
 using namespace llvm;
 
-namespace llvm {
+namespace {
   struct DivOpInfo {
     bool SignedOp;
     Value *Dividend;
@@ -41,7 +41,9 @@ namespace llvm {
     DivPhiNodes(PHINode *InQuotient, PHINode *InRemainder)
       : Quotient(InQuotient), Remainder(InRemainder) {}
   };
+}
 
+namespace llvm {
   template<>
   struct DenseMapInfo<DivOpInfo> {
     static bool isEqual(const DivOpInfo &Val1, const DivOpInfo &Val2) {
@@ -217,9 +219,9 @@ static bool reuseOrInsertFastDiv(Function &F,
 
 // bypassSlowDivision - This optimization identifies DIV instructions that can
 // be profitably bypassed and carried out with a shorter, faster divide.
-bool bypassSlowDivision(Function &F,
-                        Function::iterator &I,
-                        const llvm::DenseMap<Type *, Type *> &BypassTypeMap) {
+bool llvm::bypassSlowDivision(Function &F,
+                              Function::iterator &I,
+                              const DenseMap<Type *, Type *> &BypassTypeMap) {
   DivCacheTy DivCache;
 
   bool MadeChange = false;
