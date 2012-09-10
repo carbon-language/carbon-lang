@@ -246,6 +246,7 @@ static void ReportEvent(raw_ostream &o, const PathDiagnosticPiece& P,
   // Output the short text.
   // FIXME: Really use a short string.
   Indent(o, indent) << "<key>message</key>\n";
+  Indent(o, indent);
   EmitString(o, P.getString()) << '\n';
   
   // Finish up.
