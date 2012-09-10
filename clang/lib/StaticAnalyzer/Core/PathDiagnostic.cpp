@@ -199,7 +199,6 @@ void PathDiagnosticConsumer::HandlePathDiagnostic(PathDiagnostic *D) {
     if (orig_size <= new_size)
       return;
 
-    assert(orig != D);
     Diags.RemoveNode(orig);
     delete orig;
   }
@@ -207,145 +206,22 @@ void PathDiagnosticConsumer::HandlePathDiagnostic(PathDiagnostic *D) {
   Diags.InsertNode(OwningD.take());
 }
 
-static llvm::Optional<bool> comparePath(const PathPieces &X,
-                                        const PathPieces &Y);
-static llvm::Optional<bool>
-compareControlFlow(const PathDiagnosticControlFlowPiece &X,
-                   const PathDiagnosticControlFlowPiece &Y) {
-  FullSourceLoc XSL = X.getStartLocation().asLocation();
-  FullSourceLoc YSL = Y.getStartLocation().asLocation();
-  if (XSL != YSL)
-    return XSL.isBeforeInTranslationUnitThan(YSL);
-  FullSourceLoc XEL = X.getStartLocation().asLocation();
-  FullSourceLoc YEL = Y.getStartLocation().asLocation();
-  if (XEL != YEL)
-    return XEL.isBeforeInTranslationUnitThan(YEL);
-  return llvm::Optional<bool>();
-}
-
-static llvm::Optional<bool>
-compareMacro(const PathDiagnosticMacroPiece &X,
-             const PathDiagnosticMacroPiece &Y) {
-  return comparePath(X.subPieces, Y.subPieces);
-}
-
-static llvm::Optional<bool>
-compareCall(const PathDiagnosticCallPiece &X,
-            const PathDiagnosticCallPiece &Y) {
-  FullSourceLoc X_CEL = X.callEnter.asLocation();
-  FullSourceLoc Y_CEL = Y.callEnter.asLocation();
-  if (X_CEL != Y_CEL)
-    return X_CEL.isBeforeInTranslationUnitThan(Y_CEL);
-  FullSourceLoc X_CEWL = X.callEnterWithin.asLocation();
-  FullSourceLoc Y_CEWL = Y.callEnterWithin.asLocation();
-  if (X_CEWL != Y_CEWL)
-    return X_CEWL.isBeforeInTranslationUnitThan(Y_CEWL);
-  FullSourceLoc X_CRL = X.callReturn.asLocation();
-  FullSourceLoc Y_CRL = Y.callReturn.asLocation();
-  if (X_CRL != Y_CRL)
-    return X_CRL.isBeforeInTranslationUnitThan(Y_CRL);
-  return comparePath(X.path, Y.path);
-}
-
-static llvm::Optional<bool> comparePiece(const PathDiagnosticPiece &X,
-                                         const PathDiagnosticPiece &Y) {
-  if (X.getKind() != Y.getKind())
-    return X.getKind() < Y.getKind();
-  
-  FullSourceLoc XL = X.getLocation().asLocation();
-  FullSourceLoc YL = Y.getLocation().asLocation();
-  if (XL != YL)
-    return XL.isBeforeInTranslationUnitThan(YL);
-
-  if (X.getString() != Y.getString())
-    return X.getString() < Y.getString();
-
-  if (X.getRanges().size() != Y.getRanges().size())
-    return X.getRanges().size() < Y.getRanges().size();
-
-  for (unsigned i = 0, n = X.getRanges().size(); i < n; ++i) {
-    SourceRange XR = X.getRanges()[i];
-    SourceRange YR = Y.getRanges()[i];
-    if (XR != YR) {
-      if (XR.getBegin() != YR.getBegin())
-        return XR.getBegin() < YR.getBegin();
-      return XR.getEnd() < YR.getEnd();
-    }
-  }
-  
-  switch (X.getKind()) {
-    case clang::ento::PathDiagnosticPiece::ControlFlow:
-      return compareControlFlow(cast<PathDiagnosticControlFlowPiece>(X),
-                                cast<PathDiagnosticControlFlowPiece>(Y));
-    case clang::ento::PathDiagnosticPiece::Event:
-      return llvm::Optional<bool>();
-    case clang::ento::PathDiagnosticPiece::Macro:
-      return compareMacro(cast<PathDiagnosticMacroPiece>(X),
-                          cast<PathDiagnosticMacroPiece>(Y));
-    case clang::ento::PathDiagnosticPiece::Call:
-      return compareCall(cast<PathDiagnosticCallPiece>(X),
-                         cast<PathDiagnosticCallPiece>(Y));
-  }
-  llvm_unreachable("all cases handled");
-}
-
-static llvm::Optional<bool> comparePath(const PathPieces &X,
-                                        const PathPieces &Y) {
-  if (X.size() != Y.size())
-    return X.size() < Y.size();
-  for (unsigned i = 0, n = X.size(); i != n; ++i) {
-    llvm::Optional<bool> b = comparePiece(*X[i], *Y[i]);
-    if (b.hasValue())
-      return b.getValue();
-  }
-  return llvm::Optional<bool>();
-}
-
-static bool compare(const PathDiagnostic &X, const PathDiagnostic &Y) {
-  FullSourceLoc XL = X.getLocation().asLocation();
-  FullSourceLoc YL = Y.getLocation().asLocation();
-  if (XL != YL)
-    return XL.isBeforeInTranslationUnitThan(YL);
-  if (X.getBugType() != Y.getBugType())
-    return X.getBugType() < Y.getBugType();
-  if (X.getCategory() != Y.getCategory())
-    return X.getCategory() < Y.getCategory();
-  if (X.getVerboseDescription() != Y.getVerboseDescription())
-    return X.getVerboseDescription() < Y.getVerboseDescription();
-  if (X.getShortDescription() != Y.getShortDescription())
-    return X.getShortDescription() < Y.getShortDescription();
-  if (X.getDeclWithIssue() != Y.getDeclWithIssue()) {
-    const Decl *XD = X.getDeclWithIssue();
-    if (!XD)
-      return true;
-    const Decl *YD = Y.getDeclWithIssue();
-    if (!YD)
-      return false;
-    SourceLocation XDL = XD->getLocation();
-    SourceLocation YDL = YD->getLocation();
-    if (XDL != YDL)
-      return XDL < YDL;
-  }
-  PathDiagnostic::meta_iterator XI = X.meta_begin(), XE = X.meta_end();
-  PathDiagnostic::meta_iterator YI = Y.meta_begin(), YE = Y.meta_end();
-  if (XE - XI != YE - YI)
-    return (XE - XI) < (YE - YI);
-  for ( ; XI != XE ; ++XI, ++YI) {
-    if (*XI != *YI)
-      return (*XI) < (*YI);
-  }
-  llvm::Optional<bool> b = comparePath(X.path, Y.path);
-  assert(b.hasValue());
-  return b.getValue();
-}
 
 namespace {
 struct CompareDiagnostics {
   // Compare if 'X' is "<" than 'Y'.
   bool operator()(const PathDiagnostic *X, const PathDiagnostic *Y) const {
-    if (X == Y)
-      return false;
-    return compare(*X, *Y);
+    // First sort by location, and if that doesn't work, do a full profile.
+    FullSourceLoc XL = X->getLocation().asLocation();
+    FullSourceLoc YL = Y->getLocation().asLocation();
+    if (XL != YL)
+      return XL < YL;
+    
+    // Do a full profile.
+    llvm::FoldingSetNodeID XProfile, YProfile;
+    X->FullProfile(XProfile);
+    Y->FullProfile(YProfile);
+    return XProfile < YProfile;
   }
 };
 }
