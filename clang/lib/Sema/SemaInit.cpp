@@ -1503,11 +1503,14 @@ static void ExpandAnonymousFieldDesignator(Sema &SemaRef,
 ///  corresponds to FieldName.
 static IndirectFieldDecl *FindIndirectFieldDesignator(FieldDecl *AnonField,
                                                  IdentifierInfo *FieldName) {
+  if (!FieldName)
+    return 0;
+
   assert(AnonField->isAnonymousStructOrUnion());
   Decl *NextDecl = AnonField->getNextDeclInContext();
   while (IndirectFieldDecl *IF = 
           dyn_cast_or_null<IndirectFieldDecl>(NextDecl)) {
-    if (FieldName && FieldName == IF->getAnonField()->getIdentifier())
+    if (FieldName == IF->getAnonField()->getIdentifier())
       return IF;
     NextDecl = NextDecl->getNextDeclInContext();
   }
