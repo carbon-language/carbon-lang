@@ -4322,7 +4322,7 @@ bool SpecialMemberDeletionInfo::isAccessible(Subobject Subobj,
   /// If we're operating on a base class, the object type is the
   /// type of this special member.
   QualType objectTy;
-  AccessSpecifier access = target->getAccess();;
+  AccessSpecifier access = target->getAccess();
   if (CXXBaseSpecifier *base = Subobj.dyn_cast<CXXBaseSpecifier*>()) {
     objectTy = S.Context.getTypeDeclType(MD->getParent());
     access = CXXRecordDecl::MergeAccess(base->getAccessSpecifier(), access);

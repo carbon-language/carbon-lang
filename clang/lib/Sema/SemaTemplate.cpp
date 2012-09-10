@@ -4426,7 +4426,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     case NPV_NullPointer:
       Diag(Arg->getExprLoc(), diag::warn_cxx98_compat_template_arg_null);
       Converted = TemplateArgument((Decl *)0);
-      return Owned(Arg);;
+      return Owned(Arg);
     }
   }
 

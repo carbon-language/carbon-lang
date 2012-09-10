@@ -4866,7 +4866,7 @@ void RewriteModernObjC::RewriteBlockPointerDecl(NamedDecl *ND) {
       else if (*argListBegin ==  '<') {
         buf += "/*"; 
         buf += *argListBegin++;
-        OrigLength++;;
+        OrigLength++;
         while (*argListBegin != '>') {
           buf += *argListBegin++;
           OrigLength++;

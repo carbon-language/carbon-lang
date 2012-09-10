@@ -886,7 +886,7 @@ CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E,
     if (constNum->getZExtValue() <= initializerElements) {
       // If there was a cleanup, deactivate it.
       if (cleanupDominator)
-        DeactivateCleanupBlock(cleanup, cleanupDominator);;
+        DeactivateCleanupBlock(cleanup, cleanupDominator);
       return;
     }
   } else {

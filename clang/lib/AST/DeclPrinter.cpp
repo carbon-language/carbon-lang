@@ -462,7 +462,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
           if (I)
             Proto += ", ";
 
-          Proto += FT->getExceptionType(I).getAsString(SubPolicy);;
+          Proto += FT->getExceptionType(I).getAsString(SubPolicy);
         }
       Proto += ")";
     } else if (FT && isNoexceptExceptionSpec(FT->getExceptionSpecType())) {

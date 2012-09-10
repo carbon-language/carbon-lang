@@ -85,7 +85,7 @@ static bool scan_ivar_release(Stmt *S, ObjCIvarDecl *ID,
                                             Expr::NPC_ValueDependentIsNull)) {
               // This is only a 'release' if the property kind is not
               // 'assign'.
-              return PD->getSetterKind() != ObjCPropertyDecl::Assign;;
+              return PD->getSetterKind() != ObjCPropertyDecl::Assign;
             }
 
   // Recurse to children.

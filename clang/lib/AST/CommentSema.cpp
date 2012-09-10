@@ -675,7 +675,7 @@ unsigned Sema::correctTypoInParmVarReference(
   if (Corrector.getBestDecl())
     return Corrector.getBestDeclIndex();
   else
-    return ParamCommandComment::InvalidParamIndex;;
+    return ParamCommandComment::InvalidParamIndex;
 }
 
 namespace {

@@ -223,7 +223,7 @@ bool clang::analyze_format_string::ParsePrintfString(FormatStringHandler &H,
     // Did a fail-stop error of any kind occur when parsing the specifier?
     // If so, don't do any more processing.
     if (FSR.shouldStop())
-      return true;;
+      return true;
     // Did we exhaust the string or encounter an error that
     // we can recover from?
     if (!FSR.hasValue())

@@ -961,7 +961,7 @@ DeclContext::lookup_result
 ExternalASTSource::SetExternalVisibleDeclsForName(const DeclContext *DC,
                                                   DeclarationName Name,
                                                   ArrayRef<NamedDecl*> Decls) {
-  ASTContext &Context = DC->getParentASTContext();;
+  ASTContext &Context = DC->getParentASTContext();
 
   StoredDeclsMap *Map;
   if (!(Map = DC->LookupPtr.getPointer()))

@@ -6368,7 +6368,7 @@ TreeTransform<Derived>::TransformCallExpr(CallExpr *E) {
   if (!getDerived().AlwaysRebuild() &&
       Callee.get() == E->getCallee() &&
       !ArgChanged)
-    return SemaRef.MaybeBindToTemporary(E);;
+    return SemaRef.MaybeBindToTemporary(E);
 
   // FIXME: Wrong source location information for the '('.
   SourceLocation FakeLParenLoc
