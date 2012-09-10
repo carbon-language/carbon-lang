@@ -448,6 +448,8 @@ bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
     break;
   }
   case CE_ObjCMessage:
+    if (!Opts.mayInlineObjCMethod())
+      return false;
     if (!(getAnalysisManager().options.IPAMode == DynamicDispatch ||
           getAnalysisManager().options.IPAMode == DynamicDispatchBifurcate))
       return false;

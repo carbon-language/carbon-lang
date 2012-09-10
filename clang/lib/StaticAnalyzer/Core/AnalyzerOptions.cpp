@@ -82,6 +82,14 @@ bool AnalyzerOptions::mayInlineTemplateFunctions() const {
   return *InlineTemplateFunctions;
 }
 
+bool AnalyzerOptions::mayInlineObjCMethod() const {
+  if (!ObjCInliningMode.hasValue())
+    const_cast<llvm::Optional<bool> &>(ObjCInliningMode) =
+      getBooleanOption("objc-inlining", /*Default=*/true);
+
+  return *ObjCInliningMode;
+}
+
 int AnalyzerOptions::getOptionAsInteger(StringRef Name, int DefaultVal) const {
   std::string OptStr = Config.lookup(Name);
   if (OptStr.empty())
@@ -97,9 +105,8 @@ int AnalyzerOptions::getOptionAsInteger(StringRef Name, int DefaultVal) const {
 unsigned AnalyzerOptions::getAlwaysInlineSize() const {
   if (!AlwaysInlineSize.hasValue()) {
     unsigned DefaultSize = 3;
-    Optional<unsigned> &MutableOption =
-      const_cast<Optional<unsigned> &>(AlwaysInlineSize);
-    MutableOption = getOptionAsInteger("ipa-always-inline-size", DefaultSize);
+    const_cast<Optional<unsigned> &>(AlwaysInlineSize) =
+      getOptionAsInteger("ipa-always-inline-size", DefaultSize);
   }
 
   return AlwaysInlineSize.getValue();

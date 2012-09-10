@@ -178,6 +178,9 @@ private:
   /// \sa mayInlineTemplateFunctions
   llvm::Optional<bool> InlineTemplateFunctions;
 
+  /// \sa mayInlineObjCMethod
+  llvm::Optional<bool> ObjCInliningMode;
+
   // Cache of the "ipa-always-inline-size" setting.
   // \sa getAlwaysInlineSize
   llvm::Optional<unsigned> AlwaysInlineSize;
@@ -199,6 +202,9 @@ public:
   ///
   /// \sa CXXMemberInliningMode
   bool mayInlineCXXMemberFunction(CXXInlineableMemberKind K) const;
+
+  /// Returns true if ObjectiveC inlining is enabled, false otherwise.
+  bool mayInlineObjCMethod() const;
 
   /// Returns whether or not the destructors for C++ temporary objects should
   /// be included in the CFG.
