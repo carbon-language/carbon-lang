@@ -351,40 +351,50 @@ void StackColoring::calculateLiveIntervals(unsigned NumSlots) {
     Finishes.clear();
     Finishes.resize(NumSlots);
 
+    // Create the interval for the basic blocks with lifetime markers in them.
+    for (SmallVector<MachineInstr*, 8>::iterator it = Markers.begin(),
+         e = Markers.end(); it != e; ++it) {
+      MachineInstr *MI = *it;
+      if (MI->getParent() != MBB)
+        continue;
+
+      assert((MI->getOpcode() == TargetOpcode::LIFETIME_START ||
+              MI->getOpcode() == TargetOpcode::LIFETIME_END) &&
+             "Invalid Lifetime marker");
+
+      bool IsStart = MI->getOpcode() == TargetOpcode::LIFETIME_START;
+      MachineOperand &Mo = MI->getOperand(0);
+      int Slot = Mo.getIndex();
+      assert(Slot >= 0 && "Invalid slot");
+
+      SlotIndex ThisIndex = Indexes->getInstructionIndex(MI);
+
+      if (IsStart) {
+        if (!Starts[Slot].isValid() || Starts[Slot] > ThisIndex)
+          Starts[Slot] = ThisIndex;
+      } else {
+        if (!Finishes[Slot].isValid() || Finishes[Slot] < ThisIndex)
+          Finishes[Slot] = ThisIndex;
+      }
+    }
+
+    // Create the interval of the blocks that we previously found to be 'alive'.
     BitVector Alive = BlockLiveness[MBB].LiveIn;
     Alive |= BlockLiveness[MBB].LiveOut;
 
     if (Alive.any()) {
       for (int pos = Alive.find_first(); pos != -1;
            pos = Alive.find_next(pos)) {
-        Starts[pos] = Indexes->getMBBStartIdx(MBB);
-        Finishes[pos] = Indexes->getMBBEndIdx(MBB);
-      }
-    }
-
-    for (SmallVector<MachineInstr*, 8>::iterator it = Markers.begin(),
-         e = Markers.end(); it != e; ++it) {
-      MachineInstr *MI = *it;
-      assert((MI->getOpcode() == TargetOpcode::LIFETIME_START ||
-              MI->getOpcode() == TargetOpcode::LIFETIME_END) &&
-             "Invalid Lifetime marker");
-
-      if (MI->getParent() == MBB) {
-        bool IsStart = MI->getOpcode() == TargetOpcode::LIFETIME_START;
-        MachineOperand &Mo = MI->getOperand(0);
-        int Slot = Mo.getIndex();
-        assert(Slot >= 0 && "Invalid slot");
-        if (IsStart) {
-          Starts[Slot] = Indexes->getInstructionIndex(MI);
-        } else {
-          Finishes[Slot] = Indexes->getInstructionIndex(MI);
-        }
+        if (!Starts[pos].isValid())
+          Starts[pos] = Indexes->getMBBStartIdx(MBB);
+        if (!Finishes[pos].isValid())
+          Finishes[pos] = Indexes->getMBBEndIdx(MBB);
       }
     }
 
     for (unsigned i = 0; i < NumSlots; ++i) {
-      assert(!!Starts[i] == !!Finishes[i] && "Unmatched range");
-      if (Starts[i] == Finishes[i])
+      assert(Starts[i].isValid() == Finishes[i].isValid() && "Unmatched range");
+      if (!Starts[i].isValid())
         continue;
 
       assert(Starts[i] && Finishes[i] && "Invalid interval");

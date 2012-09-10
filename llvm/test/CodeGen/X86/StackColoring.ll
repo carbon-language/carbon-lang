@@ -297,6 +297,34 @@ bb3:
   ret i32 0
 }
 
+
+;YESCOLOR: multi_region_bb
+;NOCOLOR: multi_region_bb
+define void @multi_region_bb() nounwind ssp {
+entry:
+  %A.i1 = alloca [100 x i32], align 4
+  %B.i2 = alloca [100 x i32], align 4
+  %A.i = alloca [100 x i32], align 4
+  %B.i = alloca [100 x i32], align 4
+  %0 = bitcast [100 x i32]* %A.i to i8*
+  call void @llvm.lifetime.start(i64 -1, i8* %0) nounwind ; <---- start #1
+  %1 = bitcast [100 x i32]* %B.i to i8*
+  call void @llvm.lifetime.start(i64 -1, i8* %1) nounwind
+  call void @bar([100 x i32]* %A.i, [100 x i32]* %B.i) nounwind
+  call void @llvm.lifetime.end(i64 -1, i8* %0) nounwind
+  call void @llvm.lifetime.end(i64 -1, i8* %1) nounwind
+  %2 = bitcast [100 x i32]* %A.i1 to i8*
+  call void @llvm.lifetime.start(i64 -1, i8* %2) nounwind
+  %3 = bitcast [100 x i32]* %B.i2 to i8*
+  call void @llvm.lifetime.start(i64 -1, i8* %3) nounwind
+  call void @llvm.lifetime.start(i64 -1, i8* %0) nounwind  ; <---- start #2
+  call void @bar([100 x i32]* %A.i1, [100 x i32]* %B.i2) nounwind
+  call void @llvm.lifetime.end(i64 -1, i8* %2) nounwind
+  call void @llvm.lifetime.end(i64 -1, i8* %0) nounwind
+  call void @llvm.lifetime.end(i64 -1, i8* %3) nounwind
+  ret void
+}
+
 declare void @bar([100 x i32]* , [100 x i32]*) nounwind
 
 declare void @llvm.lifetime.start(i64, i8* nocapture) nounwind
