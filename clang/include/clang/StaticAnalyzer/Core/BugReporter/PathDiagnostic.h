@@ -335,7 +335,7 @@ protected:
 public:
   virtual ~PathDiagnosticPiece();
 
-  const std::string& getString() const { return str; }
+  llvm::StringRef getString() const { return str; }
 
   /// getDisplayHint - Return a hint indicating where the diagnostic should
   ///  be displayed by the PathDiagnosticConsumer.
