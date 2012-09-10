@@ -590,8 +590,10 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
                                                   TemplArgs.size(), C);
       void *InsertPos = 0;
       CanonTemplate->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
-      assert(InsertPos && "Another specialization already inserted!");
-      CanonTemplate->getSpecializations().InsertNode(FTInfo, InsertPos);
+      if (InsertPos)
+        CanonTemplate->getSpecializations().InsertNode(FTInfo, InsertPos);
+      else
+        assert(0 && "Another specialization already inserted!");
     }
     break;
   }
