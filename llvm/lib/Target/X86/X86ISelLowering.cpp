@@ -6030,14 +6030,25 @@ SDValue LowerVECTOR_SHUFFLEv32i8(ShuffleVectorSDNode *SVOp,
   SDValue V1 = SVOp->getOperand(0);
   SDValue V2 = SVOp->getOperand(1);
   DebugLoc dl = SVOp->getDebugLoc();
-  ArrayRef<int> MaskVals = SVOp->getMask();
+  SmallVector<int, 32> MaskVals(SVOp->getMask().begin(), SVOp->getMask().end());
 
   bool V2IsUndef = V2.getOpcode() == ISD::UNDEF;
+  bool V1IsAllZero = ISD::isBuildVectorAllZeros(V1.getNode());
+  bool V2IsAllZero = ISD::isBuildVectorAllZeros(V2.getNode());
 
-  if (VT != MVT::v32i8 || !TLI.getSubtarget()->hasAVX2() || !V2IsUndef)
+  // VPSHUFB may be generated if 
+  // (1) one of input vector is undefined or zeroinitializer.
+  // The mask value 0x80 puts 0 in the corresponding slot of the vector.
+  // And (2) the mask indexes don't cross the 128-bit lane.
+  if (VT != MVT::v32i8 || !TLI.getSubtarget()->hasAVX2() ||
+      (!V2IsUndef && !V2IsAllZero && !V1IsAllZero))
     return SDValue();
 
-  SmallVector<SDValue,32> pshufbMask;
+  if (V1IsAllZero && !V2IsAllZero) {
+    CommuteVectorShuffleMask(MaskVals, 32);
+    V1 = V2;
+  }
+  SmallVector<SDValue, 32> pshufbMask;
   for (unsigned i = 0; i != 32; i++) {
     int EltIdx = MaskVals[i];
     if (EltIdx < 0 || EltIdx >= 32)

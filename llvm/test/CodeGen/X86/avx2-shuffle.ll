@@ -37,3 +37,26 @@ define <32 x i8> @vpshufb_test(<32 x i8> %a) nounwind {
                                                                 i32 20, i32 19, i32 31, i32 17, i32 23, i32 undef, i32 29, i32 18>
   ret <32 x i8>%S
 }
+
+; CHECK: vpshufb1_test
+; CHECK; vpshufb {{.*\(%r.*}}, %ymm
+; CHECK: ret
+define <32 x i8> @vpshufb1_test(<32 x i8> %a) nounwind {
+  %S = shufflevector <32 x i8> %a, <32 x i8> zeroinitializer, <32 x i32> <i32 1, i32 9, i32 3, i32 11, i32 5, i32 13, i32 7, i32 15, 
+                                                                i32 1, i32 9, i32 36, i32 11, i32 5, i32 13, i32 7, i32 15,  
+                                                                i32 18, i32 49, i32 30, i32 16, i32 25, i32 23, i32 17, i32 25, 
+                                                                i32 20, i32 19, i32 31, i32 17, i32 23, i32 undef, i32 29, i32 18>
+  ret <32 x i8>%S
+}
+
+
+; CHECK: vpshufb2_test
+; CHECK; vpshufb {{.*\(%r.*}}, %ymm
+; CHECK: ret
+define <32 x i8> @vpshufb2_test(<32 x i8> %a) nounwind {
+  %S = shufflevector <32 x i8> zeroinitializer, <32 x i8> %a, <32 x i32> <i32 1, i32 9, i32 3, i32 11, i32 5, i32 13, i32 7, i32 15, 
+                                                                i32 1, i32 9, i32 36, i32 11, i32 5, i32 13, i32 7, i32 15,  
+                                                                i32 18, i32 49, i32 30, i32 16, i32 25, i32 23, i32 17, i32 25, 
+                                                                i32 20, i32 19, i32 31, i32 17, i32 23, i32 undef, i32 29, i32 18>
+  ret <32 x i8>%S
+}
