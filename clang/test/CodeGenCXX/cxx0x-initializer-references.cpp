@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++11 -S -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -S -triple armv7-none-eabi -emit-llvm -o - %s | FileCheck %s
 
 namespace reference {
   struct A {
@@ -64,10 +64,10 @@ namespace reference {
   {
     // Ensure lifetime extension.
 
-    // CHECK: call void @_ZN9reference1BC1Ev
+    // CHECK: call %"struct.reference::B"* @_ZN9reference1BC1Ev
     // CHECK-NEXT: store %{{.*}}* %{{.*}}, %{{.*}}** %
     const B &rb{ B() };
-    // CHECK: call void @_ZN9reference1BD1Ev
+    // CHECK: call %"struct.reference::B"* @_ZN9reference1BD1Ev
   }
 
 }

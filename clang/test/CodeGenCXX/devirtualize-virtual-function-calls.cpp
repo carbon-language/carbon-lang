@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -triple armv7-none-eabi -emit-llvm -o - | FileCheck %s
 
 struct A {
   virtual void f();
@@ -66,7 +66,7 @@ namespace test2 {
 
   void f(bar *b) {
     // CHECK: call void @_ZN5test23foo1fEv
-    // CHECK: call void @_ZN5test23fooD1Ev
+    // CHECK: call %"struct.test2::foo"* @_ZN5test23fooD1Ev
     b->foo::f();
     b->foo::~foo();
   }
