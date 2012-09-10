@@ -1055,11 +1055,9 @@ LLVMValueRef LLVMConstInsertValue(LLVMValueRef AggConstant,
 LLVMValueRef LLVMConstInlineAsm(LLVMTypeRef Ty, const char *AsmString,
                                 const char *Constraints,
                                 LLVMBool HasSideEffects,
-                                LLVMBool IsAlignStack,
-                                InlineAsm::AsmDialect AsmDialect) {
+                                LLVMBool IsAlignStack) {
   return wrap(InlineAsm::get(dyn_cast<FunctionType>(unwrap(Ty)), AsmString,
-                             Constraints, HasSideEffects, IsAlignStack,
-                             AsmDialect));
+                             Constraints, HasSideEffects, IsAlignStack));
 }
 
 LLVMValueRef LLVMBlockAddress(LLVMValueRef F, LLVMBasicBlockRef BB) {
