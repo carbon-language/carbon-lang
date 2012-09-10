@@ -2934,17 +2934,13 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
     // expanding large vector constants.
     if (N2C && N1.getOpcode() == ISD::BUILD_VECTOR) {
       SDValue Elt = N1.getOperand(N2C->getZExtValue());
-      EVT VEltTy = N1.getValueType().getVectorElementType();
-      if (Elt.getValueType() != VEltTy) {
+
+      if (VT != Elt.getValueType())
         // If the vector element type is not legal, the BUILD_VECTOR operands
-        // are promoted and implicitly truncated.  Make that explicit here.
-        Elt = getNode(ISD::TRUNCATE, DL, VEltTy, Elt);
-      }
-      if (VT != VEltTy) {
-        // If the vector element type is not legal, the EXTRACT_VECTOR_ELT
-        // result is implicitly extended.
-        Elt = getNode(ISD::ANY_EXTEND, DL, VT, Elt);
-      }
+        // are promoted and implicitly truncated, and the result implicitly
+        // extended. Make that explicit here.
+        Elt = getAnyExtOrTrunc(Elt, DL, VT);
+      
       return Elt;
     }
 

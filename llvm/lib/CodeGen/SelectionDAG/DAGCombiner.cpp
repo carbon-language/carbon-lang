@@ -8095,6 +8095,12 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
       if (VecIn1.getValueType().getSizeInBits()*2 != VT.getSizeInBits())
         return SDValue();
 
+      // If the input vector type has a different base type to the output
+      // vector type, bail out.
+      if (VecIn1.getValueType().getVectorElementType() !=
+          VT.getVectorElementType())
+        return SDValue();
+
       // Widen the input vector by adding undef values.
       VecIn1 = DAG.getNode(ISD::CONCAT_VECTORS, N->getDebugLoc(), VT,
                            VecIn1, DAG.getUNDEF(VecIn1.getValueType()));
