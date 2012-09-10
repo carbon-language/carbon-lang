@@ -496,8 +496,8 @@ void StackColoring::remapInstructions(DenseMap<int, int> &SlotRemap) {
         if (!SlotRemap.count(FromSlot))
           continue;
 
-        // In a debug build, check that the instruction that we are check is
-        // inside its expected live range. If the instruction is not inside
+        // In a debug build, check that the instruction that we are modifying is
+        // inside the expected live range. If the instruction is not inside
         // the calculated range then it means that the alloca usage moved
         // outside of the lifetime markers.
 #ifndef NDEBUG
