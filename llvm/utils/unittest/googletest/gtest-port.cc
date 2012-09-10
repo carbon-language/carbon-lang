@@ -505,6 +505,10 @@ class CapturedStream {
     GTEST_CHECK_(captured_fd != -1) << "Unable to open temporary file "
                                     << temp_file_path;
     filename_ = temp_file_path;
+#elif GTEST_OS_LINUX_ANDROID
+    char name_template[] = "/sdcard/captured_stderr.XXXXXX";
+    const int captured_fd = mkstemp(name_template);
+    filename_ = name_template;
 # else
     // There's no guarantee that a test has write access to the
     // current directory, so we create the temporary file in the /tmp
