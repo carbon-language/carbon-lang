@@ -206,10 +206,10 @@ void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO,
   }
 }
 
-/// print_pcrel_imm - This is used to print an immediate value that ends up
+/// printPCRelImm - This is used to print an immediate value that ends up
 /// being encoded as a pc-relative value.  These print slightly differently, for
 /// example, a $ is not emitted.
-void X86AsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo,
+void X86AsmPrinter::printPCRelImm(const MachineInstr *MI, unsigned OpNo,
                                     raw_ostream &O) {
   const MachineOperand &MO = MI->getOperand(OpNo);
   switch (MO.getType()) {
@@ -459,7 +459,7 @@ bool X86AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
       return false;
 
     case 'P': // This is the operand of a call, treat specially.
-      print_pcrel_imm(MI, OpNo, O);
+      printPCRelImm(MI, OpNo, O);
       return false;
 
     case 'n':  // Negate the immediate or print a '-' before the operand.

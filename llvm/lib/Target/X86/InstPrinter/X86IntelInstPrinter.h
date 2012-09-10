@@ -37,7 +37,7 @@ public:
   void printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printMemReference(const MCInst *MI, unsigned Op, raw_ostream &O);
   void printSSECC(const MCInst *MI, unsigned Op, raw_ostream &O);
-  void print_pcrel_imm(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printPCRelImm(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   
   void printopaquemem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     O << "OPAQUE PTR ";

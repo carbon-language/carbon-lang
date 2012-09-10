@@ -82,10 +82,10 @@ void X86IntelInstPrinter::printSSECC(const MCInst *MI, unsigned Op,
   }
 }
 
-/// print_pcrel_imm - This is used to print an immediate value that ends up
+/// printPCRelImm - This is used to print an immediate value that ends up
 /// being encoded as a pc-relative value.
-void X86IntelInstPrinter::print_pcrel_imm(const MCInst *MI, unsigned OpNo,
-                                          raw_ostream &O) {
+void X86IntelInstPrinter::printPCRelImm(const MCInst *MI, unsigned OpNo,
+                                        raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNo);
   if (Op.isImm())
     O << Op.getImm();
