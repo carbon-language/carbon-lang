@@ -247,18 +247,33 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
   }
 }
 
-static void examineStackFrames(const Decl *D, const LocationContext *LCtx,
+void ExprEngine::examineStackFrames(const Decl *D, const LocationContext *LCtx,
                                bool &IsRecursive, unsigned &StackDepth) {
   IsRecursive = false;
   StackDepth = 0;
+
   while (LCtx) {
     if (const StackFrameContext *SFC = dyn_cast<StackFrameContext>(LCtx)) {
-      ++StackDepth;
-      if (SFC->getDecl() == D)
+      const Decl *DI = SFC->getDecl();
+
+      // Mark recursive (and mutually recursive) functions and always count
+      // them when measuring the stack depth.
+      if (DI == D) {
         IsRecursive = true;
+        ++StackDepth;
+        LCtx = LCtx->getParent();
+        continue;
+      }
+
+      // Do not count the small functions when determining the stack depth.
+      AnalysisDeclContext *CalleeADC = AMgr.getAnalysisDeclContext(DI);
+      const CFG *CalleeCFG = CalleeADC->getCFG();
+      if (CalleeCFG->getNumBlockIDs() > AMgr.options.getAlwaysInlineSize())
+        ++StackDepth;
     }
     LCtx = LCtx->getParent();
   }
+
 }
 
 static bool IsInStdNamespace(const FunctionDecl *FD) {

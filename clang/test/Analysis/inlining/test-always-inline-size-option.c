@@ -2,6 +2,11 @@
 
 void clang_analyzer_eval(int);
 int nested5() {
+  if (5 < 3)
+    return 0;
+  else
+    if (3 == 3)
+      return 0;
   return 0;
 }
 int nested4() {
@@ -27,4 +32,17 @@ int recursive() {
 }
 int callRecursive() {
   return recursive();
+}
+
+int mutuallyRecursive1();
+
+int mutuallyRecursive2() {
+  return mutuallyRecursive1();
+}
+
+int mutuallyRecursive1() {
+  return mutuallyRecursive2();
+}
+int callMutuallyRecursive() {
+  return mutuallyRecursive1();
 }
