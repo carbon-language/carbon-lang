@@ -3045,13 +3045,12 @@ static bool GetCaseResults(SwitchInst *SI,
 /// DefaultResult to fill the holes in the table. If the table ends up
 /// containing the same result in each element, set *SingleResult to that value
 /// and return NULL.
-static GlobalVariable *BuildLookupTable(
-    Module &M,
-    uint64_t TableSize,
-    ConstantInt *Offset,
-    const std::vector<std::pair<ConstantInt*,Constant*> >& Results,
-    Constant *DefaultResult,
-    Constant **SingleResult) {
+static GlobalVariable *BuildLookupTable(Module &M,
+                                        uint64_t TableSize,
+                                        ConstantInt *Offset,
+              const SmallVector<std::pair<ConstantInt*, Constant*>, 4>& Results,
+                                        Constant *DefaultResult,
+                                        Constant **SingleResult) {
   assert(Results.size() && "Need values to build lookup table");
   assert(TableSize >= Results.size() && "Table needs to hold all values");
 
@@ -3133,7 +3132,7 @@ static bool SwitchToLookupTable(SwitchInst *SI,
   ConstantInt *MaxCaseVal = CI.getCaseValue();
 
   BasicBlock *CommonDest = NULL;
-  typedef std::vector<std::pair<ConstantInt*, Constant*> > ResultListTy;
+  typedef SmallVector<std::pair<ConstantInt*, Constant*>, 4> ResultListTy;
   SmallDenseMap<PHINode*, ResultListTy> ResultLists;
   SmallDenseMap<PHINode*, Constant*> DefaultResults;
   SmallDenseMap<PHINode*, Type*> ResultTypes;
@@ -3161,16 +3160,14 @@ static bool SwitchToLookupTable(SwitchInst *SI,
   }
 
   // Get the resulting values for the default case.
-  {
-    SmallVector<std::pair<PHINode*, Constant*>, 4> DefaultResultsList;
-    if (!GetCaseResults(SI, SI->getDefaultDest(), &CommonDest, DefaultResultsList))
-      return false;
-    for (size_t I = 0, E = DefaultResultsList.size(); I != E; ++I) {
-      PHINode *PHI = DefaultResultsList[I].first;
-      Constant *Result = DefaultResultsList[I].second;
-      DefaultResults[PHI] = Result;
-      ResultTypes[PHI] = Result->getType();
-    }
+  SmallVector<std::pair<PHINode*, Constant*>, 4> DefaultResultsList;
+  if (!GetCaseResults(SI, SI->getDefaultDest(), &CommonDest, DefaultResultsList))
+    return false;
+  for (size_t I = 0, E = DefaultResultsList.size(); I != E; ++I) {
+    PHINode *PHI = DefaultResultsList[I].first;
+    Constant *Result = DefaultResultsList[I].second;
+    DefaultResults[PHI] = Result;
+    ResultTypes[PHI] = Result->getType();
   }
 
   APInt RangeSpread = MaxCaseVal->getValue() - MinCaseVal->getValue();
