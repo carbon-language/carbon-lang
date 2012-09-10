@@ -4860,6 +4860,7 @@ Process::GetThreadStatus (Stream &strm,
 {
     size_t num_thread_infos_dumped = 0;
     
+    Mutex::Locker locker (GetThreadList().GetMutex());
     const size_t num_threads = GetThreadList().GetSize();
     for (uint32_t i = 0; i < num_threads; i++)
     {

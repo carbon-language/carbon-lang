@@ -185,6 +185,7 @@ protected:
         else if (command.GetArgumentCount() == 1 && ::strcmp (command.GetArgumentAtIndex(0), "all") == 0)
         {
             Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
+            Mutex::Locker locker (process->GetThreadList().GetMutex());
             uint32_t num_threads = process->GetThreadList().GetSize();
             for (uint32_t i = 0; i < num_threads; i++)
             {
@@ -208,6 +209,7 @@ protected:
         {
             uint32_t num_args = command.GetArgumentCount();
             Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
+            Mutex::Locker locker (process->GetThreadList().GetMutex());
             std::vector<ThreadSP> thread_sps;
 
             for (uint32_t i = 0; i < num_args; i++)
