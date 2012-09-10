@@ -646,7 +646,8 @@ bool StackColoring::runOnMachineFunction(MachineFunction &Func) {
           First->MergeRangesInAsValue(*Second, First->getValNumInfo(0));
           SlotRemap[SecondSlot] = FirstSlot;
           SortedSlots[J] = -1;
-          DEBUG(dbgs()<<"Merging #"<<I<<" and slots #"<<J<<" together.\n");
+          DEBUG(dbgs()<<"Merging #"<<FirstSlot<<" and slots #"<<
+                SecondSlot<<" together.\n");
           unsigned MaxAlignment = std::max(MFI->getObjectAlignment(FirstSlot),
                                            MFI->getObjectAlignment(SecondSlot));
 
