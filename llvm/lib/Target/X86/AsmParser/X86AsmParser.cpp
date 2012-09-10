@@ -1745,7 +1745,10 @@ bool X86AsmParser::ParseDirective(AsmToken DirectiveID) {
     return ParseDirectiveWord(2, DirectiveID.getLoc());
   else if (IDVal.startswith(".code"))
     return ParseDirectiveCode(IDVal, DirectiveID.getLoc());
-  else if (IDVal.startswith(".intel_syntax")) {
+  else if (IDVal.startswith(".att_syntax")) {
+    getParser().setAssemblerDialect(0);
+    return false;
+  } else if (IDVal.startswith(".intel_syntax")) {
     getParser().setAssemblerDialect(1);
     if (getLexer().isNot(AsmToken::EndOfStatement)) {
       if(Parser.getTok().getString() == "noprefix") {
