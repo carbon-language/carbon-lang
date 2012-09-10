@@ -40,11 +40,10 @@ using namespace llvm;
 namespace llvm {
 class VLIWMachineScheduler;
 
-/// MachineSchedStrategy - Interface used by VLIWMachineScheduler to drive the selected
-/// scheduling algorithm.
+/// MachineSchedStrategy - Interface used by VLIWMachineScheduler to drive
+/// the selected scheduling algorithm.
 ///
-/// If this works well and targets wish to reuse VLIWMachineScheduler, we may expose it
-/// in ScheduleDAGInstrs.h
+/// TODO: Move this to ScheduleDAGInstrs.h
 class MachineSchedStrategy {
 public:
   virtual ~MachineSchedStrategy() {}
@@ -57,7 +56,8 @@ public:
   /// be scheduled at the bottom.
   virtual SUnit *pickNode(bool &IsTopNode) = 0;
 
-  /// Notify MachineSchedStrategy that VLIWMachineScheduler has scheduled a node.
+  /// Notify MachineSchedStrategy that VLIWMachineScheduler has
+  /// scheduled a node.
   virtual void schedNode(SUnit *SU, bool IsTopNode) = 0;
 
   /// When all predecessor dependencies have been resolved, free this node for
@@ -69,7 +69,8 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-// ConvergingVLIWScheduler - Implementation of the standard MachineSchedStrategy.
+// ConvergingVLIWScheduler - Implementation of the standard
+// MachineSchedStrategy.
 //===----------------------------------------------------------------------===//
 
 /// ReadyQueue encapsulates vector of "ready" SUnits with basic convenience
@@ -123,12 +124,197 @@ public:
   }
 };
 
-/// ConvergingVLIWScheduler shrinks the unscheduled zone using heuristics to balance
-/// the schedule.
+class VLIWResourceModel {
+  /// ResourcesModel - Represents VLIW state.
+  /// Not limited to VLIW targets per say, but assumes
+  /// definition of DFA by a target.
+  DFAPacketizer *ResourcesModel;
+
+  const InstrItineraryData *InstrItins;
+
+  /// Local packet/bundle model. Purely
+  /// internal to the MI schedulre at the time.
+  std::vector<SUnit*> Packet;
+
+  /// Total packets created.
+  unsigned TotalPackets;
+
+public:
+  VLIWResourceModel(MachineSchedContext *C, const InstrItineraryData *IID) :
+    InstrItins(IID), TotalPackets(0) {
+    const TargetMachine &TM = C->MF->getTarget();
+    ResourcesModel = TM.getInstrInfo()->CreateTargetScheduleState(&TM,NULL);
+
+    // This hard requirement could be relaxed,
+    // but for now do not let it proceed.
+    assert(ResourcesModel && "Unimplemented CreateTargetScheduleState.");
+
+    Packet.resize(InstrItins->SchedModel->IssueWidth);
+    Packet.clear();
+    ResourcesModel->clearResources();
+  }
+
+  VLIWResourceModel(const TargetMachine &TM) :
+    InstrItins(TM.getInstrItineraryData()), TotalPackets(0) {
+    ResourcesModel = TM.getInstrInfo()->CreateTargetScheduleState(&TM,NULL);
+
+    // This hard requirement could be relaxed,
+    // but for now do not let it proceed.
+    assert(ResourcesModel && "Unimplemented CreateTargetScheduleState.");
+
+    Packet.resize(InstrItins->SchedModel->IssueWidth);
+    Packet.clear();
+    ResourcesModel->clearResources();
+  }
+
+  ~VLIWResourceModel() {
+    delete ResourcesModel;
+  }
+
+  void resetPacketState() {
+    Packet.clear();
+  }
+
+  void resetDFA() {
+    ResourcesModel->clearResources();
+  }
+
+  void reset() {
+    Packet.clear();
+    ResourcesModel->clearResources();
+  }
+
+  bool isResourceAvailable(SUnit *SU);
+  bool reserveResources(SUnit *SU);
+  unsigned getTotalPackets() const { return TotalPackets; }
+};
+
+class VLIWMachineScheduler : public ScheduleDAGInstrs {
+  /// AA - AliasAnalysis for making memory reference queries.
+  AliasAnalysis *AA;
+
+  RegisterClassInfo *RegClassInfo;
+  MachineSchedStrategy *SchedImpl;
+
+  MachineBasicBlock::iterator LiveRegionEnd;
+
+  /// Register pressure in this region computed by buildSchedGraph.
+  IntervalPressure RegPressure;
+  RegPressureTracker RPTracker;
+
+  /// List of pressure sets that exceed the target's pressure limit before
+  /// scheduling, listed in increasing set ID order. Each pressure set is paired
+  /// with its max pressure in the currently scheduled regions.
+  std::vector<PressureElement> RegionCriticalPSets;
+
+  /// The top of the unscheduled zone.
+  MachineBasicBlock::iterator CurrentTop;
+  IntervalPressure TopPressure;
+  RegPressureTracker TopRPTracker;
+
+  /// The bottom of the unscheduled zone.
+  MachineBasicBlock::iterator CurrentBottom;
+  IntervalPressure BotPressure;
+  RegPressureTracker BotRPTracker;
+
+#ifndef NDEBUG
+  /// The number of instructions scheduled so far. Used to cut off the
+  /// scheduler at the point determined by misched-cutoff.
+  unsigned NumInstrsScheduled;
+#endif
+
+  /// Total packets in the region.
+  unsigned TotalPackets;
+
+  const MachineLoopInfo *MLI;
+public:
+  VLIWMachineScheduler(MachineSchedContext *C, MachineSchedStrategy *S):
+    ScheduleDAGInstrs(*C->MF, *C->MLI, *C->MDT, /*IsPostRA=*/false, C->LIS),
+    AA(C->AA), RegClassInfo(C->RegClassInfo), SchedImpl(S),
+    RPTracker(RegPressure), CurrentTop(), TopRPTracker(TopPressure),
+    CurrentBottom(), BotRPTracker(BotPressure), MLI(C->MLI) {
+#ifndef NDEBUG
+    NumInstrsScheduled = 0;
+#endif
+    TotalPackets = 0;
+  }
+
+  virtual ~VLIWMachineScheduler() {
+    delete SchedImpl;
+  }
+
+  MachineBasicBlock::iterator top() const { return CurrentTop; }
+  MachineBasicBlock::iterator bottom() const { return CurrentBottom; }
+
+  /// Implement the ScheduleDAGInstrs interface for handling the next scheduling
+  /// region. This covers all instructions in a block, while schedule() may only
+  /// cover a subset.
+  void enterRegion(MachineBasicBlock *bb,
+                   MachineBasicBlock::iterator begin,
+                   MachineBasicBlock::iterator end,
+                   unsigned endcount);
+
+  /// Schedule - This is called back from ScheduleDAGInstrs::Run() when it's
+  /// time to do some work.
+  void schedule();
+
+  unsigned CurCycle;
+
+  /// Get current register pressure for the top scheduled instructions.
+  const IntervalPressure &getTopPressure() const { return TopPressure; }
+  const RegPressureTracker &getTopRPTracker() const { return TopRPTracker; }
+
+  /// Get current register pressure for the bottom scheduled instructions.
+  const IntervalPressure &getBotPressure() const { return BotPressure; }
+  const RegPressureTracker &getBotRPTracker() const { return BotRPTracker; }
+
+  /// Get register pressure for the entire scheduling region before scheduling.
+  const IntervalPressure &getRegPressure() const { return RegPressure; }
+
+  const std::vector<PressureElement> &getRegionCriticalPSets() const {
+    return RegionCriticalPSets;
+  }
+
+  /// getIssueWidth - Return the max instructions per scheduling group.
+  unsigned getIssueWidth() const {
+    return (InstrItins && InstrItins->SchedModel)
+      ? InstrItins->SchedModel->IssueWidth : 1;
+  }
+
+  /// getNumMicroOps - Return the number of issue slots required for this MI.
+  unsigned getNumMicroOps(MachineInstr *MI) const {
+    return 1;
+    //if (!InstrItins) return 1;
+    //int UOps = InstrItins->getNumMicroOps(MI->getDesc().getSchedClass());
+    //return (UOps >= 0) ? UOps : TII->getNumMicroOps(InstrItins, MI);
+  }
+
+private:
+  void scheduleNodeTopDown(SUnit *SU);
+  void listScheduleTopDown();
+
+  void initRegPressure();
+  void updateScheduledPressure(std::vector<unsigned> NewMaxPressure);
+
+  void moveInstruction(MachineInstr *MI, MachineBasicBlock::iterator InsertPos);
+  bool checkSchedLimit();
+
+  void releaseRoots();
+
+  void releaseSucc(SUnit *SU, SDep *SuccEdge);
+  void releaseSuccessors(SUnit *SU);
+  void releasePred(SUnit *SU, SDep *PredEdge);
+  void releasePredecessors(SUnit *SU);
+
+  void placeDebugValues();
+};
+
+/// ConvergingVLIWScheduler shrinks the unscheduled zone using heuristics
+/// to balance the schedule.
 class ConvergingVLIWScheduler : public MachineSchedStrategy {
 
-  /// Store the state used by ConvergingVLIWScheduler heuristics, required for the
-  /// lifetime of one invocation of pickNode().
+  /// Store the state used by ConvergingVLIWScheduler heuristics, required
+  ///  for the lifetime of one invocation of pickNode().
   struct SchedCandidate {
     // The best SUnit candidate.
     SUnit *SU;
@@ -157,6 +343,7 @@ class ConvergingVLIWScheduler : public MachineSchedStrategy {
     bool CheckPending;
 
     ScheduleHazardRecognizer *HazardRec;
+    VLIWResourceModel *ResourceModel;
 
     unsigned CurrCycle;
     unsigned IssueCount;
@@ -172,10 +359,14 @@ class ConvergingVLIWScheduler : public MachineSchedStrategy {
     SchedBoundary(unsigned ID, const Twine &Name):
       DAG(0), Available(ID, Name+".A"),
       Pending(ID << ConvergingVLIWScheduler::LogMaxQID, Name+".P"),
-      CheckPending(false), HazardRec(0), CurrCycle(0), IssueCount(0),
+      CheckPending(false), HazardRec(0), ResourceModel(0),
+      CurrCycle(0), IssueCount(0),
       MinReadyCycle(UINT_MAX), MaxMinLatency(0) {}
 
-    ~SchedBoundary() { delete HazardRec; }
+    ~SchedBoundary() {
+      delete ResourceModel;
+      delete HazardRec;
+    }
 
     bool isTop() const {
       return Available.getID() == ConvergingVLIWScheduler::TopQID;
@@ -240,183 +431,6 @@ protected:
 #endif
 };
 
-class VLIWResourceModel {
-  /// ResourcesModel - Represents VLIW state.
-  /// Not limited to VLIW targets per say, but assumes
-  /// definition of DFA by a target.
-  DFAPacketizer *ResourcesModel;
-
-  const InstrItineraryData *InstrItins;
-
-  /// Local packet/bundle model. Purely
-  /// internal to the MI schedulre at the time.
-  std::vector<SUnit*> Packet;
-
-  /// Total packets created.
-  unsigned TotalPackets;
-
-public:
-  VLIWResourceModel(MachineSchedContext *C, const InstrItineraryData *IID) :
-    InstrItins(IID), TotalPackets(0) {
-    const TargetMachine &TM = C->MF->getTarget();
-    ResourcesModel = TM.getInstrInfo()->CreateTargetScheduleState(&TM,NULL);
-
-    // This hard requirement could be relaxed, but for now do not let it proceed.
-    assert(ResourcesModel && "Unimplemented CreateTargetScheduleState.");
-
-    Packet.resize(InstrItins->SchedModel->IssueWidth);
-    Packet.clear();
-    ResourcesModel->clearResources();
-  }
-
-  ~VLIWResourceModel() {
-    delete ResourcesModel;
-  }
-
-  void resetPacketState() {
-    Packet.clear();
-  }
-
-  void resetDFA() {
-    ResourcesModel->clearResources();
-  }
-
-  bool isResourceAvailable(SUnit *SU);
-  void reserveResources(SUnit *SU);
-  unsigned getTotalPackets() const { return TotalPackets; }
-};
-
-class VLIWMachineScheduler : public ScheduleDAGInstrs {
-  /// AA - AliasAnalysis for making memory reference queries.
-  AliasAnalysis *AA;
-
-  RegisterClassInfo *RegClassInfo;
-  MachineSchedStrategy *SchedImpl;
-
-  /// state separatly for top/bottom sectioins.
-  VLIWResourceModel *TopResourceModel;
-  VLIWResourceModel *BotResourceModel;
-
-  MachineBasicBlock::iterator LiveRegionEnd;
-
-  /// Register pressure in this region computed by buildSchedGraph.
-  IntervalPressure RegPressure;
-  RegPressureTracker RPTracker;
-
-  /// List of pressure sets that exceed the target's pressure limit before
-  /// scheduling, listed in increasing set ID order. Each pressure set is paired
-  /// with its max pressure in the currently scheduled regions.
-  std::vector<PressureElement> RegionCriticalPSets;
-
-  /// The top of the unscheduled zone.
-  MachineBasicBlock::iterator CurrentTop;
-  IntervalPressure TopPressure;
-  RegPressureTracker TopRPTracker;
-
-  /// The bottom of the unscheduled zone.
-  MachineBasicBlock::iterator CurrentBottom;
-  IntervalPressure BotPressure;
-  RegPressureTracker BotRPTracker;
-
-#ifndef NDEBUG
-  /// The number of instructions scheduled so far. Used to cut off the
-  /// scheduler at the point determined by misched-cutoff.
-  unsigned NumInstrsScheduled;
-#endif
-
-  /// Total packets in the region.
-  unsigned TotalPackets;
-
-  const MachineLoopInfo *MLI;
-public:
-  VLIWMachineScheduler(MachineSchedContext *C, MachineSchedStrategy *S):
-    ScheduleDAGInstrs(*C->MF, *C->MLI, *C->MDT, /*IsPostRA=*/false, C->LIS),
-    AA(C->AA), RegClassInfo(C->RegClassInfo), SchedImpl(S),
-    RPTracker(RegPressure), CurrentTop(), TopRPTracker(TopPressure),
-    CurrentBottom(), BotRPTracker(BotPressure), MLI(C->MLI) {
-
-    TopResourceModel = new VLIWResourceModel(C, InstrItins);
-    BotResourceModel = new VLIWResourceModel(C, InstrItins);
-
-#ifndef NDEBUG
-    NumInstrsScheduled = 0;
-#endif
-    TotalPackets = 0;
-  }
-
-  virtual ~VLIWMachineScheduler() {
-    delete SchedImpl;
-    delete TopResourceModel;
-    delete BotResourceModel;
-  }
-
-  MachineBasicBlock::iterator top() const { return CurrentTop; }
-  MachineBasicBlock::iterator bottom() const { return CurrentBottom; }
-
-  /// Implement the ScheduleDAGInstrs interface for handling the next scheduling
-  /// region. This covers all instructions in a block, while schedule() may only
-  /// cover a subset.
-  void enterRegion(MachineBasicBlock *bb,
-                   MachineBasicBlock::iterator begin,
-                   MachineBasicBlock::iterator end,
-                   unsigned endcount);
-
-  /// Schedule - This is called back from ScheduleDAGInstrs::Run() when it's
-  /// time to do some work.
-  void schedule();
-
-  unsigned CurCycle;
-
-  /// Get current register pressure for the top scheduled instructions.
-  const IntervalPressure &getTopPressure() const { return TopPressure; }
-  const RegPressureTracker &getTopRPTracker() const { return TopRPTracker; }
-
-  /// Get current register pressure for the bottom scheduled instructions.
-  const IntervalPressure &getBotPressure() const { return BotPressure; }
-  const RegPressureTracker &getBotRPTracker() const { return BotRPTracker; }
-
-  /// Get register pressure for the entire scheduling region before scheduling.
-  const IntervalPressure &getRegPressure() const { return RegPressure; }
-
-  const std::vector<PressureElement> &getRegionCriticalPSets() const {
-    return RegionCriticalPSets;
-  }
-
-  VLIWResourceModel *getTopResourceModel() { return TopResourceModel; }
-  VLIWResourceModel *getBotResourceModel() { return BotResourceModel; }
-
-  /// getIssueWidth - Return the max instructions per scheduling group.
-  unsigned getIssueWidth() const {
-    return (InstrItins && InstrItins->SchedModel)
-      ? InstrItins->SchedModel->IssueWidth : 1;
-  }
-
-  /// getNumMicroOps - Return the number of issue slots required for this MI.
-  unsigned getNumMicroOps(MachineInstr *MI) const {
-    if (!InstrItins) return 1;
-    int UOps = InstrItins->getNumMicroOps(MI->getDesc().getSchedClass());
-    return (UOps >= 0) ? UOps : TII->getNumMicroOps(InstrItins, MI);
-  }
-
-private:
-  void scheduleNodeTopDown(SUnit *SU);
-  void listScheduleTopDown();
-
-  void initRegPressure();
-  void updateScheduledPressure(std::vector<unsigned> NewMaxPressure);
-
-  void moveInstruction(MachineInstr *MI, MachineBasicBlock::iterator InsertPos);
-  bool checkSchedLimit();
-
-  void releaseRoots();
-
-  void releaseSucc(SUnit *SU, SDep *SuccEdge);
-  void releaseSuccessors(SUnit *SU);
-  void releasePred(SUnit *SU, SDep *PredEdge);
-  void releasePredecessors(SUnit *SU);
-
-  void placeDebugValues();
-};
 } // namespace
 
 
