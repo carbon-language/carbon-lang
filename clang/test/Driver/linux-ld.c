@@ -412,3 +412,20 @@
 // CHECK-ANDROID-STATIC: "-lgcc"
 // CHECK-ANDROID-STATIC-NOT: "gcc_s"
 // CHECK-ANDROID-STATIC: "{{.*}}/crtend_android.o"
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -target arm-linux-androideabi \
+// RUN:     --sysroot=%S/Inputs/basic_android_tree/sysroot  \
+// RUN:     -pie \
+// RUN:   | FileCheck --check-prefix=CHECK-ANDROID-PIE %s
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -target arm-linux-android \
+// RUN:     --sysroot=%S/Inputs/basic_android_tree/sysroot \
+// RUN:     -pie \
+// RUN:   | FileCheck --check-prefix=CHECK-ANDROID-PIE %s
+// CHECK-ANDROID-PIE: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-ANDROID-PIE: "{{.*}}/crtbegin_dynamic.o"
+// CHECK-ANDROID-PIE: "-L[[SYSROOT]]/usr/lib"
+// CHECK-ANDROID-PIE-NOT: "gcc_s"
+// CHECK-ANDROID-PIE: "-lgcc"
+// CHECK-ANDROID-PIE-NOT: "gcc_s"
+// CHECK-ANDROID-PIE: "{{.*}}/crtend_android.o"
