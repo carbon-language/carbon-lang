@@ -325,6 +325,33 @@ entry:
   ret void
 }
 
+
+;YESCOLOR: subq  $272, %rsp
+;NOCOLOR: subq  $272, %rsp
+
+define i32 @myCall_end_before_begin(i32 %in, i1 %d) {
+entry:
+  %a = alloca [17 x i8*], align 8
+  %a2 = alloca [16 x i8*], align 8
+  %b = bitcast [17 x i8*]* %a to i8*
+  %b2 = bitcast [16 x i8*]* %a2 to i8*
+  %t1 = call i32 @foo(i32 %in, i8* %b)
+  %t2 = call i32 @foo(i32 %in, i8* %b)
+  call void @llvm.lifetime.end(i64 -1, i8* %b)
+  call void @llvm.lifetime.start(i64 -1, i8* %b)
+  br i1 %d, label %bb2, label %bb3
+bb2:
+  call void @llvm.lifetime.start(i64 -1, i8* %b2)
+  %t3 = call i32 @foo(i32 %in, i8* %b2)
+  %t4 = call i32 @foo(i32 %in, i8* %b2)
+  %t5 = add i32 %t1, %t2
+  %t6 = add i32 %t3, %t4
+  %t7 = add i32 %t5, %t6
+  ret i32 %t7
+bb3:
+  ret i32 0
+}
+
 declare void @bar([100 x i32]* , [100 x i32]*) nounwind
 
 declare void @llvm.lifetime.start(i64, i8* nocapture) nounwind

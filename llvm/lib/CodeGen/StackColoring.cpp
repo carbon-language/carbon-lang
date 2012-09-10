@@ -315,6 +315,18 @@ void StackColoring::calculateLocalLiveness() {
       LocalLiveOut.reset(BlockLiveness[BB].End);
       LocalLiveIn.reset(BlockLiveness[BB].Begin);
 
+      // If we have both BEGIN and END markers in the same basic block then
+      // we know that the BEGIN marker comes after the END, because we already
+      // handle the case where the BEGIN comes before the END when collecting
+      // the markers (and building the BEGIN/END vectore).
+      // Want to enable the LIVE_IN and LIVE_OUT of slots that have both
+      // BEGIN and END because it means that the value lives before and after
+      // this basic block.
+      BitVector LocalEndBegin = BlockLiveness[BB].End;
+      LocalEndBegin &= BlockLiveness[BB].Begin;
+      LocalLiveIn |= LocalEndBegin;
+      LocalLiveOut |= LocalEndBegin;
+
       if (LocalLiveIn.test(BlockLiveness[BB].LiveIn)) {
         changed = true;
         BlockLiveness[BB].LiveIn |= LocalLiveIn;
