@@ -267,3 +267,14 @@ void test_mixed_vector_types(fltx4 f, intx4 n, flte4 g, flte4 m) {
   (void)(n *= m);
   (void)(n /= m);
 }
+
+template<typename T> void test_pseudo_dtor_tmpl(T *ptr) {
+  ptr->~T();
+  (*ptr).~T();
+}
+
+void test_pseudo_dtor(fltx4 *f) {
+  f->~fltx4();
+  (*f).~fltx4();
+  test_pseudo_dtor_tmpl(f);
+}
