@@ -345,12 +345,11 @@ private:
 class YAMLUndefinedAtom : public UndefinedAtom {
 public:
   YAMLUndefinedAtom( YAMLFile &f
-                   , int32_t ord
+                   , int32_t
                    , StringRef name
                    , UndefinedAtom::CanBeNull cbn)
     : _file(f)
     , _name(name)
-    , _ordinal(ord)
     , _canBeNull(cbn) {
   }
 
@@ -369,7 +368,6 @@ public:
 private:
   YAMLFile                &_file;
   StringRef                _name;
-  uint32_t                 _ordinal;
   UndefinedAtom::CanBeNull _canBeNull;
 };
 
@@ -381,13 +379,12 @@ private:
 class YAMLSharedLibraryAtom : public SharedLibraryAtom {
 public:
   YAMLSharedLibraryAtom( YAMLFile &f
-                       , int32_t ord
+                       , int32_t
                        , StringRef name
                        , StringRef loadName
                        , bool cbn)
     : _file(f)
     , _name(name)
-    , _ordinal(ord)
     , _loadName(loadName)
     , _canBeNull(cbn) {
   }
@@ -411,7 +408,6 @@ public:
 private:
   YAMLFile &_file;
   StringRef _name;
-  uint32_t  _ordinal;
   StringRef _loadName;
   bool      _canBeNull;
 };
@@ -423,10 +419,9 @@ private:
 ///
 class YAMLAbsoluteAtom : public AbsoluteAtom {
 public:
-  YAMLAbsoluteAtom(YAMLFile &f, int32_t ord, StringRef name, uint64_t v)
+  YAMLAbsoluteAtom(YAMLFile &f, int32_t, StringRef name, uint64_t v)
     : _file(f)
     , _name(name)
-    , _ordinal(ord)
     , _value(v) {
   }
 
@@ -445,7 +440,6 @@ public:
 private:
   YAMLFile &_file;
   StringRef _name;
-  uint32_t  _ordinal;
   uint64_t  _value;
 };
 

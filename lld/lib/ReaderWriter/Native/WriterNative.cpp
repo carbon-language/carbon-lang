@@ -28,8 +28,7 @@ namespace native {
 ///
 class Writer : public lld::Writer {
 public:
-  Writer(const WriterOptionsNative &options) : _options(options) {
-  }
+  Writer(const WriterOptionsNative &options) {}
   
   virtual error_code writeFile(const lld::File &file, StringRef outPath) {
     // reserve first byte for unnamed atoms
@@ -523,7 +522,6 @@ private:
   typedef llvm::DenseMap<const Atom*, uint32_t> TargetToIndex;
   typedef llvm::DenseMap<Reference::Addend, uint32_t> AddendToIndex;
 
-  const WriterOptionsNative              &_options;
   NativeFileHeader*                       _headerBuffer;
   size_t                                  _headerBufferSize;
   std::vector<char>                       _stringPool;

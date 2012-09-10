@@ -359,8 +359,7 @@ private:
 
 class ReaderCOFF : public Reader {
 public:
-  ReaderCOFF(const ReaderOptionsPECOFF &options) : _options(options) {
-  }
+  ReaderCOFF(const ReaderOptionsPECOFF &options) {}
 
   error_code parseFile(std::unique_ptr<MemoryBuffer> mb,
                        std::vector<std::unique_ptr<File>> &result) {
@@ -373,8 +372,6 @@ public:
     result.push_back(std::move(f));
     return error_code::success();
   }
-private:
-  const ReaderOptionsPECOFF &_options;
 };
 
 } // namespace anonymous

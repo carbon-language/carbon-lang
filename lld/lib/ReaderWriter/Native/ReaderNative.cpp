@@ -896,16 +896,12 @@ inline void NativeReferenceV1::setAddend(Addend a) {
 
 class Reader : public lld::Reader {
 public:
-  Reader(const ReaderOptionsNative &options) : _options(options) {
-  }
+  Reader(const ReaderOptionsNative &options) {}
   
   virtual error_code parseFile(std::unique_ptr<MemoryBuffer> mb, 
                                std::vector<std::unique_ptr<lld::File>> &result) {
     return File::make(mb, mb->getBufferIdentifier(), result);
   }
-
-private:
-  const ReaderOptionsNative &_options;
 };
 
 

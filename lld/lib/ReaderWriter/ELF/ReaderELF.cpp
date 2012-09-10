@@ -492,9 +492,7 @@ private:
 
 class ReaderELF: public Reader {
 public:
-  ReaderELF(const ReaderOptionsELF &options) :
-    _options(options) {
-  }
+  ReaderELF(const ReaderOptionsELF &) {}
   error_code parseFile(std::unique_ptr<MemoryBuffer> mb, std::vector<
       std::unique_ptr<File> > &result) {
 
@@ -531,8 +529,6 @@ public:
     result.push_back(std::move(f));
     return error_code::success();
   }
-private:
-  const ReaderOptionsELF &_options;
 };
 
 } // namespace anonymous

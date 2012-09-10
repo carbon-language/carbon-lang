@@ -35,11 +35,10 @@ using namespace lld;
 //
 class TestingStubAtom : public DefinedAtom {
 public:
-        TestingStubAtom(const File& f, const Atom& shlib) :
-                        _file(f), _shlib(shlib) {
-          static uint32_t lastOrdinal = 0;
-          _ordinal = lastOrdinal++; 
-        }
+  TestingStubAtom(const File &F, const Atom&) : _file(F) {
+    static uint32_t lastOrdinal = 0;
+    _ordinal = lastOrdinal++; 
+  }
 
   virtual const File& file() const {
     return _file;
@@ -122,7 +121,6 @@ public:
   
 private:
   const File&               _file;
-  const Atom&               _shlib;
   uint32_t                  _ordinal;
 };
 
@@ -134,11 +132,10 @@ private:
 //
 class TestingGOTAtom : public DefinedAtom {
 public:
-        TestingGOTAtom(const File& f, const Atom& shlib) :
-                        _file(f), _shlib(shlib) {
-          static uint32_t lastOrdinal = 0;
-          _ordinal = lastOrdinal++; 
-        }
+  TestingGOTAtom(const File &F, const Atom&) : _file(F) {
+    static uint32_t lastOrdinal = 0;
+    _ordinal = lastOrdinal++; 
+  }
 
   virtual const File& file() const {
     return _file;
@@ -221,7 +218,6 @@ public:
   
 private:
   const File&               _file;
-  const Atom&               _shlib;
   uint32_t                  _ordinal;
 };
 
