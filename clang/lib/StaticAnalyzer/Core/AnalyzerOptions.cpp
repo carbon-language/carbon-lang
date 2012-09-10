@@ -47,6 +47,36 @@ AnalyzerOptions::mayInlineCXXMemberFunction(CXXInlineableMemberKind K) const {
   return CXXMemberInliningMode >= K;
 }
 
+bool AnalyzerOptions::getBooleanOption(StringRef Name, bool DefaultVal) const {
+  // FIXME: We should emit a warning here if the value is something other than
+  // "true", "false", or the empty string (meaning the default value),
+  // but the AnalyzerOptions doesn't have access to a diagnostic engine.
+  return llvm::StringSwitch<bool>(Config.lookup(Name))
+    .Case("true", true)
+    .Case("false", false)
+    .Default(DefaultVal);
+}
+
 bool AnalyzerOptions::includeTemporaryDtorsInCFG() const {
-  return !Config.lookup("cfg-temporary-dtors").empty();
+  if (!IncludeTemporaryDtorsInCFG.hasValue())
+    const_cast<llvm::Optional<bool> &>(IncludeTemporaryDtorsInCFG) =
+      getBooleanOption("cfg-temporary-dtors");
+  
+  return *IncludeTemporaryDtorsInCFG;
+}
+
+bool AnalyzerOptions::mayInlineCXXStandardLibrary() const {
+  if (!InlineCXXStandardLibrary.hasValue())
+    const_cast<llvm::Optional<bool> &>(InlineCXXStandardLibrary) =
+      getBooleanOption("c++-stdlib-inlining");
+  
+  return *InlineCXXStandardLibrary;
+}
+
+bool AnalyzerOptions::mayInlineTemplateFunctions() const {
+  if (!InlineTemplateFunctions.hasValue())
+    const_cast<llvm::Optional<bool> &>(InlineTemplateFunctions) =
+      getBooleanOption("c++-template-inlining", /*Default=*/true);
+  
+  return *InlineTemplateFunctions;
 }

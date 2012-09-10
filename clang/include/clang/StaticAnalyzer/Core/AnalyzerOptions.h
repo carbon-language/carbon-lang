@@ -17,7 +17,9 @@
 
 #include <string>
 #include <vector>
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 
 namespace clang {
@@ -166,6 +168,12 @@ public:
 private:
   /// Controls which C++ member functions will be considered for inlining.
   CXXInlineableMemberKind CXXMemberInliningMode;
+  
+  llvm::Optional<bool> IncludeTemporaryDtorsInCFG;
+  llvm::Optional<bool> InlineCXXStandardLibrary;
+  llvm::Optional<bool> InlineTemplateFunctions;
+  
+  bool getBooleanOption(StringRef Name, bool DefaultVal = false) const;
 
 public:
   /// Returns the option controlling which C++ member functions will be
@@ -182,6 +190,19 @@ public:
   /// This is controlled by the 'cfg-temporary-dtors' config option. Any
   /// non-empty value is considered to be 'true'.
   bool includeTemporaryDtorsInCFG() const;
+
+  /// Returns whether or not C++ standard library functions may be considered
+  /// for inlining.
+  ///
+  /// This is controlled by the 'c++-stdlib-inlining' config option, which
+  /// accepts the values "true" and "false".
+  bool mayInlineCXXStandardLibrary() const;
+
+  /// Returns whether or not templated functions may be considered for inlining.
+  ///
+  /// This is controlled by the 'c++-template-inlining' config option, which
+  /// accepts the values "true" and "false".
+  bool mayInlineTemplateFunctions() const;
 
 public:
   AnalyzerOptions() : CXXMemberInliningMode() {

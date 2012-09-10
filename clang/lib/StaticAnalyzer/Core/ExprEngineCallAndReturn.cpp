@@ -257,6 +257,21 @@ static unsigned getNumberStackFrames(const LocationContext *LCtx) {
   return count;  
 }
 
+static bool IsInStdNamespace(const FunctionDecl *FD) {
+  const DeclContext *DC = FD->getEnclosingNamespaceContext();
+  const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(DC);
+  if (!ND)
+    return false;
+  
+  while (const DeclContext *Parent = ND->getParent()) {
+    if (!isa<NamespaceDecl>(Parent))
+      break;
+    ND = cast<NamespaceDecl>(Parent);
+  }
+
+  return ND->getName() == "std";
+}
+
 // Determine if we should inline the call.
 bool ExprEngine::shouldInlineDecl(const Decl *D, ExplodedNode *Pred) {
   AnalysisDeclContext *CalleeADC = AMgr.getAnalysisDeclContext(D);
@@ -285,6 +300,21 @@ bool ExprEngine::shouldInlineDecl(const Decl *D, ExplodedNode *Pred) {
   else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     if (FD->isVariadic())
       return false;
+  }
+
+  if (getContext().getLangOpts().CPlusPlus) {
+    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+      // Conditionally allow the inlining of template functions.
+      if (!getAnalysisManager().options.mayInlineTemplateFunctions())
+        if (FD->getTemplatedKind() != FunctionDecl::TK_NonTemplate)
+          return false;
+
+      // Conditionally allow the inlining of C++ standard library functions.
+      if (!getAnalysisManager().options.mayInlineCXXStandardLibrary())
+        if (getContext().getSourceManager().isInSystemHeader(FD->getLocation()))
+          if (IsInStdNamespace(FD))
+            return false;
+    }
   }
 
   // It is possible that the live variables analysis cannot be
