@@ -735,8 +735,7 @@ MCSymbolRefExpr::VariantKind MipsAsmParser::getVariantKind(StringRef Symbol) {
   return VK;
 }
 
-int ConvertCcString(StringRef CondString){
-
+static int ConvertCcString(StringRef CondString) {
   int CC = StringSwitch<unsigned>(CondString)
       .Case(".f",    0)
       .Case(".un",   1)
