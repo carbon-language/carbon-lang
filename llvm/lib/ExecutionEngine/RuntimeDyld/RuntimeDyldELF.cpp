@@ -36,8 +36,7 @@ class DyldELFObject : public ELFObjectFile<target_endianness, is64Bits> {
   typedef Elf_Rel_Impl<target_endianness, is64Bits, false> Elf_Rel;
   typedef Elf_Rel_Impl<target_endianness, is64Bits, true> Elf_Rela;
 
-  typedef typename ELFObjectFile<target_endianness, is64Bits>::
-    Elf_Ehdr Elf_Ehdr;
+  typedef Elf_Ehdr_Impl<target_endianness, is64Bits> Elf_Ehdr;
 
   typedef typename ELFDataTypeTypedefHelper<
           target_endianness, is64Bits>::value_type addr_type;

@@ -387,11 +387,36 @@ struct Elf_Rel_Impl<target_endianness, false, isRela>
   }
 };
 
+template<support::endianness target_endianness, bool is64Bits>
+struct Elf_Ehdr_Impl {
+  LLVM_ELF_IMPORT_TYPES(target_endianness, is64Bits)
+  unsigned char e_ident[ELF::EI_NIDENT]; // ELF Identification bytes
+  Elf_Half e_type;     // Type of file (see ET_*)
+  Elf_Half e_machine;  // Required architecture for this file (see EM_*)
+  Elf_Word e_version;  // Must be equal to 1
+  Elf_Addr e_entry;    // Address to jump to in order to start program
+  Elf_Off  e_phoff;    // Program header table's file offset, in bytes
+  Elf_Off  e_shoff;    // Section header table's file offset, in bytes
+  Elf_Word e_flags;    // Processor-specific flags
+  Elf_Half e_ehsize;   // Size of ELF header, in bytes
+  Elf_Half e_phentsize;// Size of an entry in the program header table
+  Elf_Half e_phnum;    // Number of entries in the program header table
+  Elf_Half e_shentsize;// Size of an entry in the section header table
+  Elf_Half e_shnum;    // Number of entries in the section header table
+  Elf_Half e_shstrndx; // Section header table index of section name
+                                 // string table
+  bool checkMagic() const {
+    return (memcmp(e_ident, ELF::ElfMagic, strlen(ELF::ElfMagic))) == 0;
+  }
+   unsigned char getFileClass() const { return e_ident[ELF::EI_CLASS]; }
+   unsigned char getDataEncoding() const { return e_ident[ELF::EI_DATA]; }
+};
 
 template<support::endianness target_endianness, bool is64Bits>
 class ELFObjectFile : public ObjectFile {
   LLVM_ELF_IMPORT_TYPES(target_endianness, is64Bits)
 
+  typedef Elf_Ehdr_Impl<target_endianness, is64Bits> Elf_Ehdr;
   typedef Elf_Shdr_Impl<target_endianness, is64Bits> Elf_Shdr;
   typedef Elf_Sym_Impl<target_endianness, is64Bits> Elf_Sym;
   typedef Elf_Dyn_Impl<target_endianness, is64Bits> Elf_Dyn;
@@ -406,28 +431,6 @@ class ELFObjectFile : public ObjectFile {
   typedef content_iterator<DynRef> dyn_iterator;
 
 protected:
-  struct Elf_Ehdr {
-    unsigned char e_ident[ELF::EI_NIDENT]; // ELF Identification bytes
-    Elf_Half e_type;     // Type of file (see ET_*)
-    Elf_Half e_machine;  // Required architecture for this file (see EM_*)
-    Elf_Word e_version;  // Must be equal to 1
-    Elf_Addr e_entry;    // Address to jump to in order to start program
-    Elf_Off  e_phoff;    // Program header table's file offset, in bytes
-    Elf_Off  e_shoff;    // Section header table's file offset, in bytes
-    Elf_Word e_flags;    // Processor-specific flags
-    Elf_Half e_ehsize;   // Size of ELF header, in bytes
-    Elf_Half e_phentsize;// Size of an entry in the program header table
-    Elf_Half e_phnum;    // Number of entries in the program header table
-    Elf_Half e_shentsize;// Size of an entry in the section header table
-    Elf_Half e_shnum;    // Number of entries in the section header table
-    Elf_Half e_shstrndx; // Section header table index of section name
-                                  // string table
-    bool checkMagic() const {
-      return (memcmp(e_ident, ELF::ElfMagic, strlen(ELF::ElfMagic))) == 0;
-    }
-    unsigned char getFileClass() const { return e_ident[ELF::EI_CLASS]; }
-    unsigned char getDataEncoding() const { return e_ident[ELF::EI_DATA]; }
-  };
   // This flag is used for classof, to distinguish ELFObjectFile from
   // its subclass. If more subclasses will be created, this flag will
   // have to become an enum.
