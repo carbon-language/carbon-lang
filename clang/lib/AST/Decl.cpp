@@ -2762,6 +2762,10 @@ void RecordDecl::completeDefinition() {
   TagDecl::completeDefinition();
 }
 
+static bool isFieldOrIndirectField(Decl::Kind K) {
+  return FieldDecl::classofKind(K) || IndirectFieldDecl::classofKind(K);
+}
+
 void RecordDecl::LoadFieldsFromExternalStorage() const {
   ExternalASTSource *Source = getASTContext().getExternalSource();
   assert(hasExternalLexicalStorage() && Source && "No external storage?");
@@ -2771,7 +2775,8 @@ void RecordDecl::LoadFieldsFromExternalStorage() const {
 
   SmallVector<Decl*, 64> Decls;
   LoadedFieldsFromExternalStorage = true;  
-  switch (Source->FindExternalLexicalDeclsBy<FieldDecl>(this, Decls)) {
+  switch (Source->FindExternalLexicalDecls(this, isFieldOrIndirectField,
+                                           Decls)) {
   case ELR_Success:
     break;
     
@@ -2783,7 +2788,7 @@ void RecordDecl::LoadFieldsFromExternalStorage() const {
 #ifndef NDEBUG
   // Check that all decls we got were FieldDecls.
   for (unsigned i=0, e=Decls.size(); i != e; ++i)
-    assert(isa<FieldDecl>(Decls[i]));
+    assert(isa<FieldDecl>(Decls[i]) || isa<IndirectFieldDecl>(Decls[i]));
 #endif
 
   if (Decls.empty())
