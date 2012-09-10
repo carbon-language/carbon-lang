@@ -57,6 +57,16 @@ struct Ambig {
   operator signed char(); // expected-note 2 {{candidate function}}
 };
 
+struct Abstract {
+  virtual ~Abstract() = 0; // expected-note {{unimplemented pure virtual method '~Abstract' in 'Abstract'}}
+};
+
+struct Derived1: Abstract {
+};
+
+struct Derived2: Abstract {
+};
+
 void test()
 {
   // This function tests C++0x 5.16
@@ -206,6 +216,9 @@ void test()
   // Note the thing that this does not test: since DR446, various situations
   // *must* create a separate temporary copy of class objects. This can only
   // be properly tested at runtime, though.
+
+  const Abstract &a = true ? static_cast<const Abstract&>(Derived1()) : Derived2(); // expected-error {{allocating an object of abstract class type 'const Abstract'}}
+  true ? static_cast<const Abstract&>(Derived1()) : throw 3; // expected-error {{allocating an object of abstract class type 'const Abstract'}}
 }
 
 namespace PR6595 {

@@ -4149,6 +4149,9 @@ QualType Sema::CXXCheckConditionalOperands(ExprResult &Cond, ExprResult &LHS,
     ExprResult &NonVoid = LVoid ? RHS : LHS;
     if (NonVoid.get()->getType()->isRecordType() &&
         NonVoid.get()->isGLValue()) {
+      if (RequireNonAbstractType(QuestionLoc, NonVoid.get()->getType(),
+                             diag::err_allocation_of_abstract_type))
+        return QualType();
       InitializedEntity Entity =
           InitializedEntity::InitializeTemporary(NonVoid.get()->getType());
       NonVoid = PerformCopyInitialization(Entity, SourceLocation(), NonVoid);
@@ -4291,7 +4294,11 @@ QualType Sema::CXXCheckConditionalOperands(ExprResult &Cond, ExprResult &LHS,
   if (Context.getCanonicalType(LTy) == Context.getCanonicalType(RTy)) {
     if (LTy->isRecordType()) {
       // The operands have class type. Make a temporary copy.
+      if (RequireNonAbstractType(QuestionLoc, LTy,
+                                 diag::err_allocation_of_abstract_type))
+        return QualType();
       InitializedEntity Entity = InitializedEntity::InitializeTemporary(LTy);
+
       ExprResult LHSCopy = PerformCopyInitialization(Entity,
                                                      SourceLocation(),
                                                      LHS);
