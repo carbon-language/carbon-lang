@@ -471,6 +471,7 @@ def objc_refs(debugger, command, result, dict):
                     isa = expr_sbvalue.unsigned
                     if isa:
                         options.type = 'isa'
+                        result.AppendMessage('Searching for all instances of %s (isa=0x%x)' % (class_name, isa))
                         heap_search (result, options, '0x%x' % isa)
                     else:
                         result.AppendMessage('error: Can\'t find isa for an ObjC class named "%s"' % (class_name))

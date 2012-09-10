@@ -147,7 +147,7 @@ extern "C" int stack_logging_enable_logging;
 //----------------------------------------------------------------------
 typedef void range_callback_t (task_t task, void *baton, unsigned type, uint64_t ptr_addr, uint64_t ptr_size);
 typedef void zone_callback_t (void *info, const malloc_zone_t *zone);
-
+typedef int (*comare_function_t)(const void *, const void *);
 struct range_callback_info_t
 {
     zone_callback_t *zone_callback;
@@ -171,7 +171,7 @@ struct aligned_data_t
 
 struct objc_data_t
 {
-    Class match_isa; // Set to NULL for all objective C objects
+    void *match_isa; // Set to NULL for all objective C objects
     bool match_superclasses;
 };
 
@@ -204,6 +204,16 @@ struct malloc_stack_entry
     uint32_t num_frames;
     mach_vm_address_t frames[MAX_FRAMES];
 };
+
+static int 
+compare_void_ptr (const void *a, const void *b)
+{
+    Class a_ptr = *(Class *)a;
+    Class b_ptr = *(Class *)b;
+    if (a_ptr < b_ptr) return -1;
+    if (a_ptr > b_ptr) return +1;
+    return 0;
+}
 
 class MatchResults
 {
@@ -310,11 +320,227 @@ protected:
 };
 
 //----------------------------------------------------------------------
+// A safe way to allocate memory and keep it from interfering with the
+// malloc enumerators.
+//----------------------------------------------------------------------
+void *
+safe_malloc(size_t n_bytes)
+{
+    if (n_bytes > 0)
+    {
+        const int k_page_size = getpagesize();
+        const mach_vm_size_t vm_size = ((n_bytes + k_page_size - 1)/k_page_size) * k_page_size;
+        vm_address_t address = NULL;
+        kern_return_t kerr = vm_allocate (mach_task_self(), &address, vm_size, true);
+        if (kerr == KERN_SUCCESS)
+            return (void *)address;
+    }
+    return NULL;
+}
+
+
+//----------------------------------------------------------------------
+// ObjCClasses
+//----------------------------------------------------------------------
+class ObjCClasses
+{
+public:
+    ObjCClasses() :
+        m_objc_class_ptrs (NULL),
+        m_size (0)
+    {
+    }
+
+    bool
+    Update()
+    {
+        // TODO: find out if class list has changed and update if needed
+        if (m_objc_class_ptrs == NULL)
+        {
+            m_size = objc_getClassList(NULL, 0);
+            if (m_size > 0)
+            {
+                // Allocate the class pointers
+                m_objc_class_ptrs = (Class *)safe_malloc (m_size * sizeof(Class));
+                m_size = objc_getClassList(m_objc_class_ptrs, m_size);
+                // Sort Class pointers for quick lookup
+                ::qsort (m_objc_class_ptrs, m_size, sizeof(Class), compare_void_ptr);
+            }
+            else
+                return false;
+        }
+        return true;
+    }
+    
+    uint32_t
+    FindClassIndex (Class isa)
+    {
+        Class *matching_class = (Class *)bsearch (&isa, 
+                                                  m_objc_class_ptrs, 
+                                                  m_size, 
+                                                  sizeof(Class), 
+                                                  compare_void_ptr);
+        if (matching_class)
+        {
+            uint32_t idx = matching_class - m_objc_class_ptrs;
+            return idx;
+        }        
+        return UINT32_MAX;
+    }
+    
+    Class
+    GetClassAtIndex (uint32_t idx) const
+    {
+        if (idx < m_size)
+            return m_objc_class_ptrs[idx];
+        return NULL;
+    }
+    uint32_t
+    GetSize() const
+    {
+        return m_size;
+    }
+private:
+    Class *m_objc_class_ptrs;
+    uint32_t m_size;    
+};
+
+
+
+//----------------------------------------------------------------------
 // Local global variables
 //----------------------------------------------------------------------
 //std::vector<malloc_match> g_matches;
 MatchResults g_matches;
 MallocStackLoggingEntries g_malloc_stack_history;
+ObjCClasses g_objc_classes;
+
+//----------------------------------------------------------------------
+// ObjCClassInfo
+//----------------------------------------------------------------------
+class ObjCClassInfo
+{
+public:
+    ObjCClassInfo() :
+        m_entries (NULL),
+        m_size (0),
+        m_sort_type (eSortTypeNone)
+    {
+    }
+    
+    void
+    Update (const ObjCClasses &objc_classes)
+    {
+        m_size = objc_classes.GetSize();
+        m_entries = (Entry *)safe_malloc (m_size * sizeof(Entry));
+        m_sort_type = eSortTypeNone;
+        Reset ();
+    }
+    
+    bool
+    AddInstance (uint32_t idx, uint64_t ptr_size)
+    {
+        if (m_size == 0)
+            Update (g_objc_classes);
+        // Update the totals for the classes
+        if (idx < m_size)
+        {
+            m_entries[idx].bytes += ptr_size;
+            ++m_entries[idx].count;
+            return true;
+        }
+        return false;
+    }
+    
+    void
+    Reset ()
+    {
+        m_sort_type = eSortTypeNone;
+        for (uint32_t i=0; i<m_size; ++i)
+        {
+             // In case we sort the entries after gathering the data, we will
+             // want to know the index into the m_objc_class_ptrs[] array.
+            m_entries[i].idx = i;
+            m_entries[i].bytes = 0;
+            m_entries[i].count = 0;
+        }
+    }
+    void
+    SortByTotalBytes (const ObjCClasses &objc_classes, bool print)
+    {
+        if (m_sort_type != eSortTypeBytes && m_size > 0)
+        {
+            ::qsort (m_entries, m_size, sizeof(Entry), (comare_function_t)compare_bytes);            
+            m_sort_type = eSortTypeBytes;
+        }
+        if (print && m_size > 0)
+        {
+            puts("Objective C objects by total bytes:");
+            puts("Total Bytes Class Name");
+            puts("----------- -----------------------------------------------------------------");
+            for (uint32_t i=0; i<m_size && m_entries[i].bytes > 0; ++i)
+            {
+                printf ("%11llu %s\n", m_entries[i].bytes, class_getName (objc_classes.GetClassAtIndex(m_entries[i].idx)));
+            }            
+        }
+    }
+    void
+    SortByTotalCount (const ObjCClasses &objc_classes, bool print)
+    {
+        if (m_sort_type != eSortTypeCount && m_size > 0)
+        {
+            ::qsort (m_entries, m_size, sizeof(Entry), (comare_function_t)compare_count);            
+            m_sort_type = eSortTypeCount;
+        }
+        if (print && m_size > 0)
+        {
+            puts("Objective C objects by total count:");
+            puts("Count    Class Name");
+            puts("-------- -----------------------------------------------------------------");
+            for (uint32_t i=0; i<m_size && m_entries[i].count > 0; ++i)
+            {
+                printf ("%8u %s\n", m_entries[i].count, class_getName (objc_classes.GetClassAtIndex(m_entries[i].idx)));
+            }            
+        }
+    }
+private:
+    struct Entry
+    {
+        uint32_t idx;   // Index into the m_objc_class_ptrs[] array
+        uint32_t count; // Number of object instances that were found
+        uint64_t bytes; // Total number of bytes for each objc class
+    };
+    
+    static int
+    compare_bytes (const Entry *a, const Entry *b)
+    {
+        // Reverse the comparisong to most bytes entries end up at top of list
+        if (a->bytes > b->bytes) return -1;
+        if (a->bytes < b->bytes) return +1;
+        return 0;
+    }
+
+    static int
+    compare_count (const Entry *a, const Entry *b)
+    {
+        // Reverse the comparisong to most count entries end up at top of list
+        if (a->count > b->count) return -1;
+        if (a->count < b->count) return +1;
+        return 0;
+    }
+
+    enum SortType
+    {
+        eSortTypeNone,
+        eSortTypeBytes,
+        eSortTypeCount
+    };
+    Entry *m_entries;
+    uint32_t m_size;    
+    SortType m_sort_type;
+};
+
+ObjCClassInfo g_objc_class_snapshot;
 
 //----------------------------------------------------------------------
 // task_peek
@@ -444,29 +670,13 @@ range_info_callback (task_t task, void *baton, unsigned type, uint64_t ptr_addr,
             struct objc_class *objc_object_ptr = NULL;
             if (task_peek (task, ptr_addr, sizeof(void *), (void **)&objc_object_ptr) == KERN_SUCCESS)
             {
-                const uint64_t isa_bits = (uintptr_t)objc_object_ptr->isa;
-                //printf ("objc: addr = 0x%16.16llx, size = %6llu, isa = 0x%16.16llx", ptr_addr, ptr_size, isa_bits);
-                Dl_info dl_info;
-                
-                if (isa_bits == 0 || isa_bits % sizeof(void*))
+                // We assume that g_objc_classes is up to date
+                // that the class list was verified to have some classes in it
+                // before calling this function
+                const uint32_t objc_class_idx = g_objc_classes.FindClassIndex (objc_object_ptr->isa);
+                if (objc_class_idx != UINT32_MAX)
                 {
-                    //printf (" error: invalid pointer\n");
-                    return;                    
-                }
-                if (dladdr(objc_object_ptr->isa, &dl_info) == 0)
-                {
-                    //printf (" error: symbol lookup failed\n");
-                    return;                    
-                }
-                if (dl_info.dli_sname == NULL)
-                {
-                    //printf (" error: no symbol name\n");
-                    return;
-                }
-
-                if ((dl_info.dli_sname[0] == 'O' && strncmp("OBJC_CLASS_$_"    , dl_info.dli_sname, 13) == 0) ||
-                    (dl_info.dli_sname[0] == '.' && strncmp(".objc_class_name_", dl_info.dli_sname, 17) == 0))
-                {
+                    g_objc_class_snapshot.AddInstance (objc_class_idx, ptr_size);
                     bool match = false;
                     if (info->objc.match_isa == 0)
                     {
@@ -639,16 +849,24 @@ malloc_match *
 find_objc_objects_in_memory (void *isa)
 {
     g_matches.clear();
-    // Setup "info" to look for a malloc block that contains data
-    // that is the a pointer 
-    range_contains_data_callback_info_t data_info;
-    data_info.type = eDataTypeObjC;      // Check each block for data
-    data_info.objc.match_isa = (Class)isa;
-    data_info.objc.match_superclasses = true;
-    data_info.match_count = 0;                   // Initialize the match count to zero
-    data_info.done = false;                      // Set done to false so searching doesn't stop
-    range_callback_info_t info = { enumerate_range_in_zone, range_info_callback, &data_info };
-    foreach_zone_in_this_process (&info);
+    if (g_objc_classes.Update())
+    {
+        // Reset all stats
+        g_objc_class_snapshot.Reset ();
+        // Setup "info" to look for a malloc block that contains data
+        // that is the a pointer 
+        range_contains_data_callback_info_t data_info;
+        data_info.type = eDataTypeObjC;      // Check each block for data
+        data_info.objc.match_isa = isa;
+        data_info.objc.match_superclasses = true;
+        data_info.match_count = 0;                   // Initialize the match count to zero
+        data_info.done = false;                      // Set done to false so searching doesn't stop
+        range_callback_info_t info = { enumerate_range_in_zone, range_info_callback, &data_info };
+        foreach_zone_in_this_process (&info);
+        
+        // Sort and print byte total bytes
+        g_objc_class_snapshot.SortByTotalBytes(g_objc_classes, true);
+    }
     return g_matches.data();
 }
 
