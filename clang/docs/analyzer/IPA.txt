@@ -28,12 +28,18 @@ inlining. The major one is -analyzer-ipa:
 
 Currently, -analyzer-ipa=dynamic-bifurcate is the default mode.
 
+While -analyzer-ipa determines in general how aggressively the analyzer will try to
+inline functions, several additional options control which types of functions can
+inlined, in an all-or-nothing way. These options use the analyzer's configuration
+table, so they are all specified as follows:
 
-A second setting, c++-inlining, controls which C++ member functions may be
-inlined. This option uses the analyzer's configuration table, so it is specified
-as shown here:
+    -analyzer-config OPTION=VALUE
 
-  -analyzer-config c++-inlining=[none | methods | constructors | destructors]
+### c++-inlining ###
+
+This option controls which C++ member functions may be inlined.
+
+    -analyzer-config c++-inlining=[none | methods | constructors | destructors]
 
 Each of these modes implies that all the previous member function kinds will be
 inlined as well; it doesn't make sense to inline destructors without inlining
@@ -43,6 +49,35 @@ The default c++-inlining mode is 'methods', meaning only regular member
 functions and overloaded operators will be inlined. Note that no C++ member
 functions will be inlined under -analyzer-ipa=none or
 -analyzer-ipa=basic-inlining.
+
+### c++-template-inlining ###
+
+This option controls whether C++ templated functions may be inlined.
+
+    -analyzer-config c++-template-inlining=[true | false]
+
+Currently, template functions are considered for inlining by default.
+
+The motivation behind this option is that very generic code can be a source
+of false positives, either by considering paths that the caller considers
+impossible (by some unstated precondition), or by inlining some but not all
+of a deep implementation of a function.
+
+### c++-stdlib-inlining ###
+
+This option controls whether functions from the C++ standard library, including
+methods of the container classes in the Standard Template Library, should be
+considered for inlining.
+
+    -analyzer-config c++-template-inlining=[true | false]
+
+Currently, C++ standard library functions are NOT considered for inlining by default.
+
+The standard library functions and the STL in particular are used ubiquitously
+enough that our tolerance for false positives is even lower here. A false
+positive due to poor modeling of the STL leads to a poor user experience, since
+most users would not be comfortable adding assertions to system headers in order
+to silence analyzer warnings.
 
 
 Basics of Implementation

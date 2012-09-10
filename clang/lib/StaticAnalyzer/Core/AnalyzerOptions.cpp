@@ -60,7 +60,7 @@ bool AnalyzerOptions::getBooleanOption(StringRef Name, bool DefaultVal) const {
 bool AnalyzerOptions::includeTemporaryDtorsInCFG() const {
   if (!IncludeTemporaryDtorsInCFG.hasValue())
     const_cast<llvm::Optional<bool> &>(IncludeTemporaryDtorsInCFG) =
-      getBooleanOption("cfg-temporary-dtors");
+      getBooleanOption("cfg-temporary-dtors", /*Default=*/false);
   
   return *IncludeTemporaryDtorsInCFG;
 }
@@ -68,7 +68,7 @@ bool AnalyzerOptions::includeTemporaryDtorsInCFG() const {
 bool AnalyzerOptions::mayInlineCXXStandardLibrary() const {
   if (!InlineCXXStandardLibrary.hasValue())
     const_cast<llvm::Optional<bool> &>(InlineCXXStandardLibrary) =
-      getBooleanOption("c++-stdlib-inlining");
+      getBooleanOption("c++-stdlib-inlining", /*Default=*/false);
   
   return *InlineCXXStandardLibrary;
 }

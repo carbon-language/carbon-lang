@@ -169,11 +169,20 @@ private:
   /// Controls which C++ member functions will be considered for inlining.
   CXXInlineableMemberKind CXXMemberInliningMode;
   
+  /// \sa includeTemporaryDtorsInCFG
   llvm::Optional<bool> IncludeTemporaryDtorsInCFG;
+  
+  /// \sa mayInlineCXXStandardLibrary
   llvm::Optional<bool> InlineCXXStandardLibrary;
+  
+  /// \sa mayInlineTemplateFunctions
   llvm::Optional<bool> InlineTemplateFunctions;
   
-  bool getBooleanOption(StringRef Name, bool DefaultVal = false) const;
+  /// Interprets an option's string value as a boolean.
+  ///
+  /// Accepts the strings "true" and "false".
+  /// If an option value is not provided, returns the given \p DefaultVal.
+  bool getBooleanOption(StringRef Name, bool DefaultVal) const;
 
 public:
   /// Returns the option controlling which C++ member functions will be
@@ -187,8 +196,8 @@ public:
   /// Returns whether or not the destructors for C++ temporary objects should
   /// be included in the CFG.
   ///
-  /// This is controlled by the 'cfg-temporary-dtors' config option. Any
-  /// non-empty value is considered to be 'true'.
+  /// This is controlled by the 'cfg-temporary-dtors' config option, which
+  /// accepts the values "true" and "false".
   bool includeTemporaryDtorsInCFG() const;
 
   /// Returns whether or not C++ standard library functions may be considered
