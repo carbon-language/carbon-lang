@@ -2816,6 +2816,24 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
         if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(N2))
           if (CFP->getValueAPF().isZero())
             return N1;
+      } else if (Opcode == ISD::FMUL) {
+        ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(N1);
+        SDValue V = N2;
+
+        // If the first operand isn't the constant, try the second
+        if (!CFP) {
+          CFP = dyn_cast<ConstantFPSDNode>(N2);
+          V = N1;
+        }
+
+        if (CFP) {
+          // 0*x --> 0
+          if (CFP->isZero())
+            return SDValue(CFP,0);
+          // 1*x --> x
+          if (CFP->isExactlyValue(1.0))
+            return V;
+        }
       }
     }
     assert(VT.isFloatingPoint() && "This operator only applies to FP types!");
