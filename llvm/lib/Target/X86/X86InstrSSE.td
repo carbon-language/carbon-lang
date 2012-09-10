@@ -2007,10 +2007,10 @@ def VCVTPS2PDrr : I<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                      "vcvtps2pd\t{$src, $dst|$dst, $src}",
                      [(set VR128:$dst, (int_x86_sse2_cvtps2pd VR128:$src))],
                      IIC_SSE_CVT_PD_RR>, TB, VEX;
-let neverHasSideEffects = 1, mayLoad = 1 in
 def VCVTPS2PDrm : I<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
-                     "vcvtps2pd\t{$src, $dst|$dst, $src}", [],
-                     IIC_SSE_CVT_PD_RM>, TB, VEX;
+                    "vcvtps2pd\t{$src, $dst|$dst, $src}",
+                    [(set VR128:$dst, (v2f64 (extloadv2f32 addr:$src)))],
+                    IIC_SSE_CVT_PD_RM>, TB, VEX;
 def VCVTPS2PDYrr : I<0x5A, MRMSrcReg, (outs VR256:$dst), (ins VR128:$src),
                      "vcvtps2pd\t{$src, $dst|$dst, $src}",
                      [(set VR256:$dst,
@@ -2028,10 +2028,10 @@ def CVTPS2PDrr : I<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                        "cvtps2pd\t{$src, $dst|$dst, $src}",
                        [(set VR128:$dst, (int_x86_sse2_cvtps2pd VR128:$src))],
                        IIC_SSE_CVT_PD_RR>, TB;
-let neverHasSideEffects = 1, mayLoad = 1 in
 def CVTPS2PDrm : I<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
-                       "cvtps2pd\t{$src, $dst|$dst, $src}", [],
-                       IIC_SSE_CVT_PD_RM>, TB;
+                   "cvtps2pd\t{$src, $dst|$dst, $src}",
+                   [(set VR128:$dst, (v2f64 (extloadv2f32 addr:$src)))],
+                   IIC_SSE_CVT_PD_RM>, TB;
 }
 
 // Convert Packed DW Integers to Packed Double FP
@@ -2134,7 +2134,7 @@ let Predicates = [HasAVX] in {
             (VCVTPS2PDrr VR128:$src)>;
   def : Pat<(v4f64 (fextend (v4f32 VR128:$src))),
             (VCVTPS2PDYrr VR128:$src)>;
-  def : Pat<(v4f64 (fextend (loadv4f32 addr:$src))),
+  def : Pat<(v4f64 (extloadv4f32 addr:$src)),
             (VCVTPS2PDYrm addr:$src)>;
 }
 
