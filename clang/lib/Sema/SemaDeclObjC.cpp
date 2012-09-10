@@ -388,9 +388,12 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
         !(Context.getLangOpts().ObjCAutoRefCount ||
           Context.getLangOpts().getGC() == LangOptions::GCOnly) &&
           MDecl->getMethodFamily() == OMF_dealloc;
-      if (!getCurFunction()->ObjCShouldCallSuperDealloc)
+      if (!getCurFunction()->ObjCShouldCallSuperDealloc) {
+        IMD = IC->getSuperClass()->lookupMethod(MDecl->getSelector(), 
+                                                MDecl->isInstanceMethod());
         getCurFunction()->ObjCShouldCallSuperDealloc = 
           (IMD && IMD->hasAttr<ObjCRequiresSuperAttr>());
+      }
       getCurFunction()->ObjCShouldCallSuperFinalize =
         Context.getLangOpts().getGC() != LangOptions::NonGC &&
         MDecl->getMethodFamily() == OMF_finalize;
