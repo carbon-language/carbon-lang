@@ -199,7 +199,8 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
 
   // The variant of the current asmprinter.
   int AsmPrinterVariant = MAI->getAssemblerDialect();
-
+  int InlineAsmVariant = MI->getInlineAsmDialect();
+  
   int CurVariant = -1;            // The number of the {.|.|.} region we are in.
   const char *LastEmitted = AsmStr; // One past the last character emitted.
 
@@ -344,11 +345,11 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
           else {
             AsmPrinter *AP = const_cast<AsmPrinter*>(this);
             if (InlineAsm::isMemKind(OpFlags)) {
-              Error = AP->PrintAsmMemoryOperand(MI, OpNo, AsmPrinterVariant,
+              Error = AP->PrintAsmMemoryOperand(MI, OpNo, InlineAsmVariant,
                                                 Modifier[0] ? Modifier : 0,
                                                 OS);
             } else {
-              Error = AP->PrintAsmOperand(MI, OpNo, AsmPrinterVariant,
+              Error = AP->PrintAsmOperand(MI, OpNo, InlineAsmVariant,
                                           Modifier[0] ? Modifier : 0, OS);
             }
           }

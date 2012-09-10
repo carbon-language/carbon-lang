@@ -233,12 +233,14 @@ void X86AsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo,
 
 
 void X86AsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
-                                 raw_ostream &O, const char *Modifier) {
+                                 raw_ostream &O, const char *Modifier,
+                                 unsigned AsmVariant) {
   const MachineOperand &MO = MI->getOperand(OpNo);
   switch (MO.getType()) {
   default: llvm_unreachable("unknown operand type!");
   case MachineOperand::MO_Register: {
-    O << '%';
+    // FIXME: Enumerating AsmVariant, so we can remove magic number.
+    if (AsmVariant == 0) O << '%';
     unsigned Reg = MO.getReg();
     if (Modifier && strncmp(Modifier, "subreg", strlen("subreg")) == 0) {
       EVT VT = (strcmp(Modifier+6,"64") == 0) ?
@@ -471,7 +473,7 @@ bool X86AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     }
   }
 
-  printOperand(MI, OpNo, O);
+  printOperand(MI, OpNo, O, /*Modifier*/ 0, AsmVariant);
   return false;
 }
 

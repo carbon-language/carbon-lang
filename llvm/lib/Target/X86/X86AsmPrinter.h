@@ -50,7 +50,7 @@ class LLVM_LIBRARY_VISIBILITY X86AsmPrinter : public AsmPrinter {
 
   // These methods are used by the tablegen'erated instruction printer.
   void printOperand(const MachineInstr *MI, unsigned OpNo, raw_ostream &O,
-                    const char *Modifier = 0);
+                    const char *Modifier = 0, unsigned AsmVariant = 0);
   void print_pcrel_imm(const MachineInstr *MI, unsigned OpNo, raw_ostream &O);
 
   bool printAsmMRegister(const MachineOperand &MO, char Mode, raw_ostream &O);
