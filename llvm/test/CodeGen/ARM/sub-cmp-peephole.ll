@@ -63,3 +63,24 @@ if.then:
 if.else:
   ret i32 %sub
 }
+
+; If the sub/rsb instruction is predicated, we can't use the flags.
+; <rdar://problem/12263428>
+; Test case from MultiSource/Benchmarks/Ptrdist/bc/number.s
+; CHECK: bc_raise
+; CHECK: rsbeq
+; CHECK: cmp
+define i32 @bc_raise() nounwind ssp {
+entry:
+  %val.2.i = select i1 undef, i32 0, i32 undef
+  %sub.i = sub nsw i32 0, %val.2.i
+  %retval.0.i = select i1 undef, i32 %val.2.i, i32 %sub.i
+  %cmp1 = icmp eq i32 %retval.0.i, 0
+  br i1 %cmp1, label %land.lhs.true, label %if.end11
+
+land.lhs.true:                                    ; preds = %num2long.exit
+  ret i32 17
+
+if.end11:                                         ; preds = %num2long.exit
+  ret i32 23
+}
