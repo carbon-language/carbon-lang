@@ -739,7 +739,7 @@ def error_property_implemented : Error<"property %0 is already implemented">;
 def warn_objc_property_attr_mutually_exclusive : Warning<
   "property attributes '%0' and '%1' are mutually exclusive">,
   InGroup<ReadOnlySetterAttrs>, DefaultIgnore;
-def warn_objc_missing_super_dealloc : Warning<
+def warn_objc_missing_super_call : Warning<
   "method possibly missing a [super %0] call">,
   InGroup<ObjCMissingSuperCalls>;
 def error_dealloc_bad_result_type : Error<

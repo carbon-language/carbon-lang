@@ -41,11 +41,11 @@ __attribute__((objc_root_class))
 @end
 
 // RUN: %clang_cc1 -fsyntax-only %s 2>&1 | FileCheck %s
-// CHECK: warn-missing-super.m:24:1: warning: method possibly missing a [super 'dealloc'] call
+// CHECK: warn-missing-super.m:24:1: warning: method possibly missing a [super dealloc] call
 // CHECK: 1 warning generated.
 
 // RUN: %clang_cc1 -fsyntax-only -fobjc-gc %s 2>&1 | FileCheck --check-prefix=CHECK-GC %s
-// CHECK-GC: warn-missing-super.m:24:1: warning: method possibly missing a [super 'dealloc'] call
+// CHECK-GC: warn-missing-super.m:24:1: warning: method possibly missing a [super dealloc] call
 // CHECK-GC: warn-missing-super.m:26:1: warning: method possibly missing a [super finalize] call
 // CHECK-GC: 2 warnings generated.
 

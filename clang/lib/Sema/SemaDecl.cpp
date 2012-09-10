@@ -7832,8 +7832,8 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
         computeNRVO(Body, getCurFunction());
     }
     if (getCurFunction()->ObjCShouldCallSuperDealloc) {
-      Diag(MD->getLocEnd(), diag::warn_objc_missing_super_dealloc)
-        << MD->getDeclName();
+      Diag(MD->getLocEnd(), diag::warn_objc_missing_super_call)
+        << MD->getSelector().getAsString();
       getCurFunction()->ObjCShouldCallSuperDealloc = false;
     }
     if (getCurFunction()->ObjCShouldCallSuperFinalize) {

@@ -26,6 +26,6 @@
 
 - (void)XXX {
   [super MyDealloc];
-} // expected-warning {{method possibly missing a [super 'XXX'] call}}
+} // expected-warning {{method possibly missing a [super XXX] call}}
 @end
 
