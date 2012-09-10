@@ -16,6 +16,7 @@
 #include "llvm/ADT/StringSwitch.h"
 
 using namespace clang;
+using namespace llvm;
 
 bool
 AnalyzerOptions::mayInlineCXXMemberFunction(CXXInlineableMemberKind K) const {
@@ -79,4 +80,27 @@ bool AnalyzerOptions::mayInlineTemplateFunctions() const {
       getBooleanOption("c++-template-inlining", /*Default=*/true);
   
   return *InlineTemplateFunctions;
+}
+
+int AnalyzerOptions::getOptionAsInteger(StringRef Name, int DefaultVal) const {
+  std::string OptStr = Config.lookup(Name);
+  if (OptStr.empty())
+    return DefaultVal;
+
+  int Res = DefaultVal;
+  assert(StringRef(OptStr).getAsInteger(10, Res) == false &&
+         "analyzer-config option should be numeric.");
+
+  return Res;
+}
+
+unsigned AnalyzerOptions::getAlwaysInlineSize() const {
+  if (!AlwaysInlineSize.hasValue()) {
+    unsigned DefaultSize = 3;
+    Optional<unsigned> &MutableOption =
+      const_cast<Optional<unsigned> &>(AlwaysInlineSize);
+    MutableOption = getOptionAsInteger("ipa-always-inline-size", DefaultSize);
+  }
+
+  return AlwaysInlineSize.getValue();
 }

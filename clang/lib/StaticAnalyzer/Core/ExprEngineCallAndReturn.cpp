@@ -247,14 +247,18 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
   }
 }
 
-static unsigned getNumberStackFrames(const LocationContext *LCtx) {
-  unsigned count = 0;
+static void examineStackFrames(const Decl *D, const LocationContext *LCtx,
+                               bool &IsRecursive, unsigned &StackDepth) {
+  IsRecursive = false;
+  StackDepth = 0;
   while (LCtx) {
-    if (isa<StackFrameContext>(LCtx))
-      ++count;
+    if (const StackFrameContext *SFC = dyn_cast<StackFrameContext>(LCtx)) {
+      ++StackDepth;
+      if (SFC->getDecl() == D)
+        IsRecursive = true;
+    }
     LCtx = LCtx->getParent();
   }
-  return count;  
 }
 
 static bool IsInStdNamespace(const FunctionDecl *FD) {
@@ -282,8 +286,12 @@ bool ExprEngine::shouldInlineDecl(const Decl *D, ExplodedNode *Pred) {
   if (!CalleeCFG)
     return false;
 
-  if (getNumberStackFrames(Pred->getLocationContext())
-        == AMgr.options.InlineMaxStackDepth)
+  bool IsRecursive = false;
+  unsigned StackDepth = 0;
+  examineStackFrames(D, Pred->getLocationContext(), IsRecursive, StackDepth);
+  if ((StackDepth >= AMgr.options.InlineMaxStackDepth) &&
+       ((CalleeCFG->getNumBlockIDs() > AMgr.options.getAlwaysInlineSize())
+         || IsRecursive))
     return false;
 
   if (Engine.FunctionSummaries->hasReachedMaxBlockCount(D))

@@ -18,9 +18,9 @@
 #include <string>
 #include <vector>
 #include "clang/Basic/LLVM.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/StringMap.h"
 
 namespace clang {
 class ASTConsumer;
@@ -177,12 +177,19 @@ private:
   
   /// \sa mayInlineTemplateFunctions
   llvm::Optional<bool> InlineTemplateFunctions;
+
+  // Cache of the "ipa-always-inline-size" setting.
+  // \sa getAlwaysInlineSize
+  llvm::Optional<unsigned> AlwaysInlineSize;
   
   /// Interprets an option's string value as a boolean.
   ///
   /// Accepts the strings "true" and "false".
   /// If an option value is not provided, returns the given \p DefaultVal.
   bool getBooleanOption(StringRef Name, bool DefaultVal) const;
+
+  /// Interprets an option's string value as an integer value.
+  int getOptionAsInteger(llvm::StringRef Name, int DefaultVal) const;
 
 public:
   /// Returns the option controlling which C++ member functions will be
@@ -212,6 +219,12 @@ public:
   /// This is controlled by the 'c++-template-inlining' config option, which
   /// accepts the values "true" and "false".
   bool mayInlineTemplateFunctions() const;
+
+  // Returns the size of the functions (in basic blocks), which should be
+  // considered to be small enough to always inline.
+  //
+  // This is controlled by "ipa-always-inline-size" analyzer-config option.
+  unsigned getAlwaysInlineSize() const;
 
 public:
   AnalyzerOptions() : CXXMemberInliningMode() {
