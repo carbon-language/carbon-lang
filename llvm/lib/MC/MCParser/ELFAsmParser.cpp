@@ -203,7 +203,7 @@ bool ELFAsmParser::ParseDirectiveSize(StringRef, SMLoc) {
   StringRef Name;
   if (getParser().ParseIdentifier(Name))
     return TokError("expected identifier in directive");
-  MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);;
+  MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
 
   if (getLexer().isNot(AsmToken::Comma))
     return TokError("unexpected token in directive");

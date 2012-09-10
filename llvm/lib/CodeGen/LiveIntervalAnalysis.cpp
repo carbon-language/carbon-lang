@@ -442,7 +442,7 @@ void LiveIntervals::computeIntervals() {
 
     // Compute the number of register mask instructions in this block.
     std::pair<unsigned, unsigned> &RMB = RegMaskBlocks[MBB->getNumber()];
-    RMB.second = RegMaskSlots.size() - RMB.first;;
+    RMB.second = RegMaskSlots.size() - RMB.first;
   }
 
   // Create empty intervals for registers defined by implicit_def's (except
@@ -499,7 +499,7 @@ void LiveIntervals::computeRegMasks() {
           RegMaskBits.push_back(MO->getRegMask());
       }
     // Compute the number of register mask instructions in this block.
-    RMB.second = RegMaskSlots.size() - RMB.first;;
+    RMB.second = RegMaskSlots.size() - RMB.first;
   }
 }
 

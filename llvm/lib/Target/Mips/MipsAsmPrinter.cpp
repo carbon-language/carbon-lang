@@ -213,7 +213,7 @@ const char *MipsAsmPrinter::getCurrentABIString() const {
   case MipsSubtarget::N32:  return "abiN32";
   case MipsSubtarget::N64:  return "abi64";
   case MipsSubtarget::EABI: return "eabi32"; // TODO: handle eabi64
-  default: llvm_unreachable("Unknown Mips ABI");;
+  default: llvm_unreachable("Unknown Mips ABI");
   }
 }
 

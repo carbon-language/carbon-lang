@@ -410,7 +410,7 @@ void ARMMachObjectWriter::RecordRelocation(MachObjectWriter *Writer,
   if (Type == macho::RIT_ARM_Half) {
     // The other-half value only gets populated for the movt and movw
     // relocation entries.
-    uint32_t Value = 0;;
+    uint32_t Value = 0;
     switch ((unsigned)Fixup.getKind()) {
     default: break;
     case ARM::fixup_arm_movw_lo16:

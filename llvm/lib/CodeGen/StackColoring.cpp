@@ -220,7 +220,7 @@ unsigned StackColoring::collectMarkers(unsigned NumSlot) {
        FI != FE; ++FI) {
 
     // Assign a serial number to this basic block.
-    BasicBlocks[*FI] = BasicBlockNumbering.size();;
+    BasicBlocks[*FI] = BasicBlockNumbering.size();
     BasicBlockNumbering.push_back(*FI);
 
     BlockLiveness[*FI].Begin.resize(NumSlot);
