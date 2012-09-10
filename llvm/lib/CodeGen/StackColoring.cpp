@@ -454,6 +454,11 @@ void StackColoring::remapInstructions(DenseMap<int, int> &SlotRemap) {
   for (BB = MF->begin(), BBE = MF->end(); BB != BBE; ++BB)
     for (I = BB->begin(), IE = BB->end(); I != IE; ++I) {
 
+      // Skip lifetime markers. We'll remove them soon.
+      if (I->getOpcode() == TargetOpcode::LIFETIME_START ||
+          I->getOpcode() == TargetOpcode::LIFETIME_END)
+        continue;
+
       // Update the MachineMemOperand to use the new alloca.
       for (MachineInstr::mmo_iterator MM = I->memoperands_begin(),
            E = I->memoperands_end(); MM != E; ++MM) {
@@ -490,6 +495,17 @@ void StackColoring::remapInstructions(DenseMap<int, int> &SlotRemap) {
         // Only look at mapped slots.
         if (!SlotRemap.count(FromSlot))
           continue;
+
+        // In a debug build, check that the instruction that we are check is
+        // inside its expected live range. If the instruction is not inside
+        // the calculated range then it means that the alloca usage moved
+        // outside of the lifetime markers.
+#ifndef NDEBUG
+        SlotIndex Index = Indexes->getInstructionIndex(I);
+        LiveInterval* Interval = Intervals[FromSlot];
+        assert(Interval->find(Index) != Interval->end() &&
+               "Found instruction usage outside of live range.");
+#endif
 
         // Fix the machine instructions.
         int ToSlot = SlotRemap[FromSlot];
