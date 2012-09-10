@@ -1866,14 +1866,6 @@ def warn_lock_exclusive_and_shared : Warning<
   InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
 def note_lock_exclusive_and_shared : Note<
   "the other lock of mutex '%0' is here">;
-def warn_variable_requires_lock : Warning<
-  "%select{reading|writing}2 variable '%0' requires locking "
-  "%select{'%1'|'%1' exclusively}2">,
-  InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
-def warn_var_deref_requires_lock : Warning<
-  "%select{reading|writing}2 the value pointed to by '%0' requires locking "
-  "%select{'%1'|'%1' exclusively}2">,
-  InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
 def warn_variable_requires_any_lock : Warning<
   "%select{reading|writing}1 variable '%0' requires locking "
   "%select{any mutex|any mutex exclusively}1">,
@@ -1882,9 +1874,6 @@ def warn_var_deref_requires_any_lock : Warning<
   "%select{reading|writing}1 the value pointed to by '%0' requires locking "
   "%select{any mutex|any mutex exclusively}1">,
   InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
-def warn_fun_requires_lock : Warning<
-  "calling function '%0' requires %select{shared|exclusive}2 lock on '%1'">,
-  InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
 def warn_fun_excludes_mutex : Warning<
   "cannot call function '%0' while mutex '%1' is locked">,
   InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
@@ -1892,6 +1881,32 @@ def warn_cannot_resolve_lock : Warning<
   "cannot resolve lock expression">,
   InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
 
+// Imprecise thread safety warnings
+def warn_variable_requires_lock : Warning<
+  "%select{reading|writing}2 variable '%0' requires locking "
+  "%select{'%1'|'%1' exclusively}2">,
+  InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
+def warn_var_deref_requires_lock : Warning<
+  "%select{reading|writing}2 the value pointed to by '%0' requires locking "
+  "%select{'%1'|'%1' exclusively}2">,
+  InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
+def warn_fun_requires_lock : Warning<
+  "calling function '%0' requires %select{shared|exclusive}2 lock on '%1'">,
+  InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
+
+// Precise thread safety warnings
+def warn_variable_requires_lock_precise : Warning<
+  "%select{reading|writing}2 variable '%0' requires locking "
+  "%select{'%1'|'%1' exclusively}2">,
+  InGroup<ThreadSafetyPrecise>, DefaultIgnore;
+def warn_var_deref_requires_lock_precise : Warning<
+  "%select{reading|writing}2 the value pointed to by '%0' requires locking "
+  "%select{'%1'|'%1' exclusively}2">,
+  InGroup<ThreadSafetyPrecise>, DefaultIgnore;
+def warn_fun_requires_lock_precise : Warning<
+  "calling function '%0' requires %select{shared|exclusive}2 lock on '%1'">,
+  InGroup<ThreadSafetyPrecise>, DefaultIgnore;
+def note_found_mutex_near_match : Note<"found near match '%0'">;
 
 def warn_impcast_vector_scalar : Warning<
   "implicit conversion turns vector to scalar: %0 to %1">,

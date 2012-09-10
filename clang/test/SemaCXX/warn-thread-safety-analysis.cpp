@@ -533,7 +533,8 @@ void late_bad_0() {
   LateFoo fooB;
   fooA.mu.Lock();
   fooB.a = 5; // \
-    // expected-warning{{writing variable 'a' requires locking 'fooB.mu' exclusively}}
+    // expected-warning{{writing variable 'a' requires locking 'fooB.mu' exclusively}} \
+    // expected-note{{found near match 'fooA.mu'}}
   fooA.mu.Unlock();
 }
 
@@ -553,7 +554,8 @@ void late_bad_2() {
   LateBar BarA;
   BarA.FooPointer->mu.Lock();
   BarA.Foo.a = 2; // \
-    // expected-warning{{writing variable 'a' requires locking 'BarA.Foo.mu' exclusively}}
+    // expected-warning{{writing variable 'a' requires locking 'BarA.Foo.mu' exclusively}} \
+    // expected-note{{found near match 'BarA.FooPointer->mu'}}
   BarA.FooPointer->mu.Unlock();
 }
 
@@ -561,7 +563,8 @@ void late_bad_3() {
   LateBar BarA;
   BarA.Foo.mu.Lock();
   BarA.FooPointer->a = 2; // \
-    // expected-warning{{writing variable 'a' requires locking 'BarA.FooPointer->mu' exclusively}}
+    // expected-warning{{writing variable 'a' requires locking 'BarA.FooPointer->mu' exclusively}} \
+    // expected-note{{found near match 'BarA.Foo.mu'}}
   BarA.Foo.mu.Unlock();
 }
 
@@ -569,7 +572,8 @@ void late_bad_4() {
   LateBar BarA;
   BarA.Foo.mu.Lock();
   BarA.Foo2.a = 2; // \
-    // expected-warning{{writing variable 'a' requires locking 'BarA.Foo2.mu' exclusively}}
+    // expected-warning{{writing variable 'a' requires locking 'BarA.Foo2.mu' exclusively}} \
+    // expected-note{{found near match 'BarA.Foo.mu'}}
   BarA.Foo.mu.Unlock();
 }
 
@@ -1237,7 +1241,9 @@ void func()
 {
   b1->MyLock();
   b1->a_ = 5;
-  b2->a_ = 3; // expected-warning {{writing variable 'a_' requires locking 'b2->mu1_' exclusively}}
+  b2->a_ = 3; // \
+    // expected-warning {{writing variable 'a_' requires locking 'b2->mu1_' exclusively}} \
+    // expected-note {{found near match 'b1->mu1_'}}
   b2->MyLock();
   b2->MyUnlock();
   b1->MyUnlock();
@@ -1267,11 +1273,13 @@ int func(int i)
   int x;
   b3->mu1_.Lock();
   res = b1.a_ + b3->b_; // expected-warning {{reading variable 'a_' requires locking 'b1.mu1_'}} \
-    // expected-warning {{writing variable 'res' requires locking 'mu' exclusively}}
+    // expected-warning {{writing variable 'res' requires locking 'mu' exclusively}} \
+    // expected-note {{found near match 'b3->mu1_'}}
   *p = i; // expected-warning {{reading variable 'p' requires locking 'mu'}} \
     // expected-warning {{writing the value pointed to by 'p' requires locking 'mu' exclusively}}
   b1.a_ = res + b3->b_; // expected-warning {{reading variable 'res' requires locking 'mu'}} \
-    // expected-warning {{writing variable 'a_' requires locking 'b1.mu1_' exclusively}}
+    // expected-warning {{writing variable 'a_' requires locking 'b1.mu1_' exclusively}} \
+    // expected-note {{found near match 'b3->mu1_'}}
   b3->b_ = *b1.q; // expected-warning {{reading the value pointed to by 'q' requires locking 'mu'}}
   b3->mu1_.Unlock();
   b1.b_ = res; // expected-warning {{reading variable 'res' requires locking 'mu'}}
@@ -1296,8 +1304,12 @@ class Foo {
 
      child->Func(new_foo); // There shouldn't be any warning here as the
                            // acquired lock is not in child.
-     child->bar(7); // expected-warning {{calling function 'bar' requires exclusive lock on 'child->lock_'}}
-     child->a_ = 5; // expected-warning {{writing variable 'a_' requires locking 'child->lock_' exclusively}}
+     child->bar(7); // \
+       // expected-warning {{calling function 'bar' requires exclusive lock on 'child->lock_'}} \
+       // expected-note {{found near match 'lock_'}}
+     child->a_ = 5; // \
+       // expected-warning {{writing variable 'a_' requires locking 'child->lock_' exclusively}} \
+       // expected-note {{found near match 'lock_'}}
      lock_.Unlock();
   }
 
@@ -1495,7 +1507,8 @@ namespace substitution_test {
       DataLocker dlr;
       dlr.lockData(d1);
       foo(d2); // \
-        // expected-warning {{calling function 'foo' requires exclusive lock on 'd2->mu'}}
+        // expected-warning {{calling function 'foo' requires exclusive lock on 'd2->mu'}} \
+        // expected-note {{found near match 'd1->mu'}}
       dlr.unlockData(d1);
     }
   };
@@ -1833,7 +1846,8 @@ void test() {
 
   f1.mu_.Unlock();
   bt.barTD(&f1);  // \
-    // expected-warning {{calling function 'barTD' requires exclusive lock on 'f1.mu_'}}
+    // expected-warning {{calling function 'barTD' requires exclusive lock on 'f1.mu_'}} \
+    // expected-note {{found near match 'bt.fooBase.mu_'}}
 
   bt.fooBase.mu_.Unlock();
   bt.fooBaseT.mu_.Unlock();
@@ -2239,27 +2253,32 @@ void test() {
 
   bar.getFoo().mu_.Lock();
   bar.getFooey().a = 0; // \
-    // expected-warning {{writing variable 'a' requires locking 'bar.getFooey().mu_' exclusively}}
+    // expected-warning {{writing variable 'a' requires locking 'bar.getFooey().mu_' exclusively}} \
+    // expected-note {{found near match 'bar.getFoo().mu_'}}
   bar.getFoo().mu_.Unlock();
 
   bar.getFoo2(a).mu_.Lock();
   bar.getFoo2(b).a = 0; // \
-    // expected-warning {{writing variable 'a' requires locking 'bar.getFoo2(b).mu_' exclusively}}
+    // expected-warning {{writing variable 'a' requires locking 'bar.getFoo2(b).mu_' exclusively}} \
+    // expected-note {{found near match 'bar.getFoo2(a).mu_'}}
   bar.getFoo2(a).mu_.Unlock();
 
   bar.getFoo3(a, b).mu_.Lock();
   bar.getFoo3(a, c).a = 0;  // \
-    // expected-warning {{writing variable 'a' requires locking 'bar.getFoo3(a,c).mu_' exclusively}}
+    // expected-warning {{writing variable 'a' requires locking 'bar.getFoo3(a,c).mu_' exclusively}} \
+    // expected-note {{'bar.getFoo3(a,b).mu_'}}
   bar.getFoo3(a, b).mu_.Unlock();
 
   getBarFoo(bar, a).mu_.Lock();
   getBarFoo(bar, b).a = 0;  // \
-    // expected-warning {{writing variable 'a' requires locking 'getBarFoo(bar,b).mu_' exclusively}}
+    // expected-warning {{writing variable 'a' requires locking 'getBarFoo(bar,b).mu_' exclusively}} \
+    // expected-note {{'getBarFoo(bar,a).mu_'}}
   getBarFoo(bar, a).mu_.Unlock();
 
   (a > 0 ? fooArray[1] : fooArray[b]).mu_.Lock();
   (a > 0 ? fooArray[b] : fooArray[c]).a = 0; // \
-    // expected-warning {{writing variable 'a' requires locking '((a#_)#_#fooArray[b]).mu_' exclusively}}
+    // expected-warning {{writing variable 'a' requires locking '((a#_)#_#fooArray[b]).mu_' exclusively}} \
+    // expected-note {{'((a#_)#_#fooArray[_]).mu_'}}
   (a > 0 ? fooArray[1] : fooArray[b]).mu_.Unlock();
 }
 
@@ -2318,7 +2337,9 @@ void test1(Foo* f1, Foo* f2) {
 
   f1->a = 0;
   f1->foo();
-  f1->foo2(f2);    // expected-warning {{calling function 'foo2' requires exclusive lock on 'f2->mu_'}}
+  f1->foo2(f2); // \
+    // expected-warning {{calling function 'foo2' requires exclusive lock on 'f2->mu_'}} \
+    // expected-note {{found near match 'f1->mu_'}}
 
   Foo::getMu(f2)->Lock();
   f1->foo2(f2);
@@ -2358,7 +2379,9 @@ void test2(Bar* b1, Bar* b2) {
 
   b1->b = 0;
   b1->bar();
-  b1->bar2(b2);    // expected-warning {{calling function 'bar2' requires exclusive lock on 'b2->mu_'}}
+  b1->bar2(b2);  // \
+    // expected-warning {{calling function 'bar2' requires exclusive lock on 'b2->mu_'}} \
+    // // expected-note {{found near match 'b1->mu_'}}
 
   b2->getMu()->Lock();
   b1->bar2(b2);

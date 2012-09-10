@@ -575,6 +575,15 @@ public:
     return false;
   }
 
+  // A partial match between a.mu and b.mu returns true a and b have the same
+  // type (and thus mu refers to the same mutex declaration), regardless of
+  // whether a and b are different objects or not.
+  bool partiallyMatches(const SExpr &Other) const {
+    if (NodeVec[0].kind() == EOP_Dot)
+      return NodeVec[0].matches(Other.NodeVec[0]);
+    return false;
+  }
+
   /// \brief Pretty print a lock expression for use in error messages.
   std::string toString(unsigned i = 0) const {
     assert(isValid());
@@ -820,7 +829,7 @@ public:
     return false;
   }
 
-  LockData* findLock(FactManager& FM, const SExpr& M) const {
+  LockData* findLock(FactManager &FM, const SExpr &M) const {
     for (const_iterator I = begin(), E = end(); I != E; ++I) {
       const SExpr &Exp = FM[*I].MutID;
       if (Exp.matches(M))
@@ -829,11 +838,19 @@ public:
     return 0;
   }
 
-  LockData* findLockUniv(FactManager& FM, const SExpr& M) const {
+  LockData* findLockUniv(FactManager &FM, const SExpr &M) const {
     for (const_iterator I = begin(), E = end(); I != E; ++I) {
       const SExpr &Exp = FM[*I].MutID;
       if (Exp.matches(M) || Exp.isUniversal())
         return &FM[*I].LDat;
+    }
+    return 0;
+  }
+
+  FactEntry* findPartialMatch(FactManager &FM, const SExpr &M) const {
+    for (const_iterator I=begin(), E=end(); I != E; ++I) {
+      const SExpr& Exp = FM[*I].MutID;
+      if (Exp.partiallyMatches(M)) return &FM[*I];
     }
     return 0;
   }
@@ -1742,7 +1759,26 @@ void BuildLockset::warnIfMutexNotHeld(const NamedDecl *D, Expr *Exp,
   }
 
   LockData* LDat = FSet.findLockUniv(Analyzer->FactMan, Mutex);
-  if (!LDat || !LDat->isAtLeast(LK))
+  bool NoError = true;
+  if (!LDat) {
+    // No exact match found.  Look for a partial match.
+    FactEntry* FEntry = FSet.findPartialMatch(Analyzer->FactMan, Mutex);
+    if (FEntry) {
+      // Warn that there's no precise match.
+      LDat = &FEntry->LDat;
+      std::string PartMatchStr = FEntry->MutID.toString();
+      StringRef   PartMatchName(PartMatchStr);
+      Analyzer->Handler.handleMutexNotHeld(D, POK, Mutex.toString(), LK,
+                                           Exp->getExprLoc(), &PartMatchName);
+    } else {
+      // Warn that there's no match at all.
+      Analyzer->Handler.handleMutexNotHeld(D, POK, Mutex.toString(), LK,
+                                           Exp->getExprLoc());
+    }
+    NoError = false;
+  }
+  // Make sure the mutex we found is the right kind.
+  if (NoError && LDat && !LDat->isAtLeast(LK))
     Analyzer->Handler.handleMutexNotHeld(D, POK, Mutex.toString(), LK,
                                          Exp->getExprLoc());
 }

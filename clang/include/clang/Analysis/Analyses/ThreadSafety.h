@@ -132,7 +132,8 @@ public:
   /// \param Loc -- The location of the protected operation.
   virtual void handleMutexNotHeld(const NamedDecl *D,
                                   ProtectedOperationKind POK, Name LockName,
-                                  LockKind LK, SourceLocation Loc) {}
+                                  LockKind LK, SourceLocation Loc,
+                                  Name *PossibleMatch=0) {}
 
   /// Warn when a function is called while an excluded mutex is locked. For
   /// example, the mutex may be locked inside the function.

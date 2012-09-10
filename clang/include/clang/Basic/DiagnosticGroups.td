@@ -386,9 +386,12 @@ def Most : DiagGroup<"most", [
 
 // Thread Safety warnings 
 def ThreadSafetyAttributes : DiagGroup<"thread-safety-attributes">;
-def ThreadSafetyAnalysis : DiagGroup<"thread-safety-analysis">;
-def ThreadSafety : DiagGroup<"thread-safety", 
-                             [ThreadSafetyAttributes, ThreadSafetyAnalysis]>;
+def ThreadSafetyAnalysis   : DiagGroup<"thread-safety-analysis">;
+def ThreadSafetyPrecise    : DiagGroup<"thread-safety-precise">;
+def ThreadSafety : DiagGroup<"thread-safety",
+                             [ThreadSafetyAttributes, 
+                              ThreadSafetyAnalysis,
+                              ThreadSafetyPrecise]>;
 
 // Note that putting warnings in -Wall will not disable them by default. If a
 // warning should be active _only_ when -Wall is passed in, mark it as
