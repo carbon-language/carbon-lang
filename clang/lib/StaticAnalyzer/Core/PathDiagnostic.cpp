@@ -325,8 +325,10 @@ static bool compare(const PathDiagnostic &X, const PathDiagnostic &Y) {
       return false;
     SourceLocation XDL = XD->getLocation();
     SourceLocation YDL = YD->getLocation();
-    if (XDL != YDL)
-      return XDL < YDL;
+    if (XDL != YDL) {
+      const SourceManager &SM = XL.getManager();
+      return SM.isBeforeInTranslationUnit(XDL, YDL);
+    }
   }
   PathDiagnostic::meta_iterator XI = X.meta_begin(), XE = X.meta_end();
   PathDiagnostic::meta_iterator YI = Y.meta_begin(), YE = Y.meta_end();
