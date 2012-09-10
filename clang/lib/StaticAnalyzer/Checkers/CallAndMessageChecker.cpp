@@ -80,8 +80,8 @@ void CallAndMessageChecker::emitBadCall(BugType *BT, CheckerContext &C,
   C.EmitReport(R);
 }
 
-StringRef describeUninitializedArgumentInCall(const CallEvent &Call,
-                                              bool IsFirstArgument) {
+static StringRef describeUninitializedArgumentInCall(const CallEvent &Call,
+                                                     bool IsFirstArgument) {
   switch (Call.getKind()) {
   case CE_ObjCMessage: {
     const ObjCMethodCall &Msg = cast<ObjCMethodCall>(Call);

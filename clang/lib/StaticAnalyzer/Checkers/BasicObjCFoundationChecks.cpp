@@ -732,9 +732,9 @@ public:
 };
 }
 
-ProgramStateRef assumeExprIsNonNull(const Expr *NonNullExpr,
-                                    ProgramStateRef State,
-                                    CheckerContext &C) {
+static ProgramStateRef assumeExprIsNonNull(const Expr *NonNullExpr,
+                                           ProgramStateRef State,
+                                           CheckerContext &C) {
   SVal Val = State->getSVal(NonNullExpr, C.getLocationContext());
   if (DefinedOrUnknownSVal *DV = dyn_cast<DefinedOrUnknownSVal>(&Val))
     return State->assume(*DV, true);
