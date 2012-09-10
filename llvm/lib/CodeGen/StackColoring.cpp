@@ -241,7 +241,7 @@ unsigned StackColoring::collectMarkers(unsigned NumSlot) {
 
       MarkersFound++;
 
-      const Value* Allocation = MFI->getObjectAllocation(Slot);
+      const Value *Allocation = MFI->getObjectAllocation(Slot);
       if (Allocation) {
         DEBUG(dbgs()<<"Found lifetime marker for allocation: "<<
               Allocation->getName()<<"\n");
@@ -452,8 +452,8 @@ void StackColoring::remapInstructions(DenseMap<int, int> &SlotRemap) {
   DenseMap<const Value*, const Value*> Allocas;
   for (DenseMap<int, int>::iterator it = SlotRemap.begin(),
        e = SlotRemap.end(); it != e; ++it) {
-    const Value* From = MFI->getObjectAllocation(it->first);
-    const Value* To = MFI->getObjectAllocation(it->second);
+    const Value *From = MFI->getObjectAllocation(it->first);
+    const Value *To = MFI->getObjectAllocation(it->second);
     assert(To && From && "Invalid allocation object");
     Allocas[From] = To;
   }
