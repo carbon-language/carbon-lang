@@ -25,8 +25,6 @@ class TestInlineStepping(TestBase):
         self.buildDwarf()
         self.inline_stepping()
 
-    # <rdar://problem/12259124>
-    @unittest2.expectedFailure 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
     @dsym_test
@@ -35,8 +33,6 @@ class TestInlineStepping(TestBase):
         self.buildDsym()
         self.inline_stepping_step_over()
 
-    # <rdar://problem/12259124>
-    @unittest2.expectedFailure 
     @python_api_test
     @dwarf_test
     def test_step_over_with_dwarf_and_python_api(self):

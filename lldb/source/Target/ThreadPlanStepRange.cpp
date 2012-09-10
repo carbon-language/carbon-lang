@@ -146,9 +146,12 @@ ThreadPlanStepRange::InRange ()
                     if (log)
                     {
                         StreamString s;
-                        m_addr_context.line_entry.range.Dump (&s, 
-                                                              m_thread.CalculateTarget().get(), 
-                                                              Address::DumpStyleLoadAddress);
+                        m_addr_context.line_entry.Dump (&s,
+                                                        m_thread.CalculateTarget().get(),
+                                                        true,
+                                                        Address::DumpStyleLoadAddress,
+                                                        Address::DumpStyleLoadAddress,
+                                                        true);
 
                         log->Printf ("Step range plan stepped to another range of same line: %s", s.GetData());
                     }
@@ -167,9 +170,12 @@ ThreadPlanStepRange::InRange ()
                     if (log)
                     {
                         StreamString s;
-                        m_addr_context.line_entry.range.Dump (&s, 
-                                                              m_thread.CalculateTarget().get(), 
-                                                              Address::DumpStyleLoadAddress);
+                        m_addr_context.line_entry.Dump (&s, 
+                                                        m_thread.CalculateTarget().get(),
+                                                        true,
+                                                        Address::DumpStyleLoadAddress,
+                                                        Address::DumpStyleLoadAddress,
+                                                        true);
 
                         log->Printf ("Step range plan stepped to the middle of new line(%d): %s, continuing to clear this line.", 
                                      new_context.line_entry.line, 
@@ -367,6 +373,14 @@ ThreadPlanStepRange::GetPlanRunState ()
 bool
 ThreadPlanStepRange::MischiefManaged ()
 {
+    // If we have pushed some plans between ShouldStop & MischiefManaged, then we're not done...
+    // I do this check first because we might have stepped somewhere that will fool InRange into
+    // thinking it needs to step past the end of that line.  This happens, for instance, when stepping
+    // over inlined code that is in the middle of the current line.
+    
+    if (!m_no_more_plans)
+        return false;
+    
     bool done = true;
     if (!IsPlanComplete())
     {
