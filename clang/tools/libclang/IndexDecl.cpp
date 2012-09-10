@@ -325,7 +325,7 @@ void IndexingContext::indexDeclContext(const DeclContext *DC) {
   }
 }
 
-void IndexingContext::indexTopLevelDecl(Decl *D) {
+void IndexingContext::indexTopLevelDecl(const Decl *D) {
   if (isNotFromSourceFile(D->getLocation()))
     return;
 

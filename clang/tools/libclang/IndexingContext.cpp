@@ -204,6 +204,26 @@ void IndexingContext::setPreprocessor(Preprocessor &PP) {
   static_cast<ASTUnit*>(CXTU->TUData)->setPreprocessor(&PP);
 }
 
+bool IndexingContext::isFunctionLocalDecl(const Decl *D) {
+  assert(D);
+
+  if (!D->getParentFunctionOrMethod())
+    return false;
+
+  if (const NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
+    switch (ND->getLinkage()) {
+    case NoLinkage:
+    case InternalLinkage:
+      return true;
+    case UniqueExternalLinkage:
+    case ExternalLinkage:
+      return false;
+    }
+  }
+
+  return true;
+}
+
 bool IndexingContext::shouldAbort() {
   if (!CB.abortQuery)
     return false;
@@ -590,7 +610,7 @@ bool IndexingContext::handleReference(const NamedDecl *D, SourceLocation Loc,
     return false;
   if (Loc.isInvalid())
     return false;
-  if (!shouldIndexFunctionLocalSymbols() && D->getParentFunctionOrMethod())
+  if (!shouldIndexFunctionLocalSymbols() && isFunctionLocalDecl(D))
     return false;
   if (isNotFromSourceFile(D->getLocation()))
     return false;
