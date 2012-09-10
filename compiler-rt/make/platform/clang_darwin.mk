@@ -61,6 +61,9 @@ UniversalArchs.profile_osx := $(call CheckArches,i386 x86_64,profile_osx)
 Configs += asan_osx
 UniversalArchs.asan_osx := $(call CheckArches,i386 x86_64,asan_osx)
 
+Configs += asan_osx_dynamic
+UniversalArchs.asan_osx_dynamic := $(call CheckArches,i386 x86_64,asan_osx_dynamic)
+
 # If RC_SUPPORTED_ARCHS is defined, treat it as a list of the architectures we
 # are intended to support and limit what we try to build to that.
 #
@@ -95,6 +98,9 @@ CFLAGS.eprintf		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.10.4		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 # FIXME: We can't build ASAN with our stub SDK yet.
 CFLAGS.asan_osx         := $(CFLAGS) -mmacosx-version-min=10.5 -fno-builtin
+CFLAGS.asan_osx_dynamic := \
+	$(CFLAGS) -mmacosx-version-min=10.5 -fno-builtin \
+	-DMAC_INTERPOSE_FUNCTIONS=1
 
 CFLAGS.osx.i386		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.osx.x86_64	:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
@@ -102,6 +108,10 @@ CFLAGS.cc_kext.i386	:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext.x86_64	:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.profile_osx.i386   := $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.profile_osx.x86_64 := $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
+
+# Configure the asan_osx_dynamic library to be built shared.
+SHARED_LIBRARY.asan_osx_dynamic := 1
+LDFLAGS.asan_osx_dynamic := -framework Foundation -lstdc++
 
 FUNCTIONS.eprintf := eprintf
 FUNCTIONS.10.4 := eprintf floatundidf floatundisf floatundixf
@@ -112,6 +122,9 @@ FUNCTIONS.profile_osx := GCDAProfiling
 
 FUNCTIONS.asan_osx := $(AsanFunctions) $(InterceptionFunctions) \
                                        $(SanitizerCommonFunctions)
+FUNCTIONS.asan_osx_dynamic := $(AsanFunctions) $(InterceptionFunctions) \
+                              $(SanitizerCommonFunctions) \
+	                      $(AsanDynamicFunctions)
 
 CCKEXT_COMMON_FUNCTIONS := \
 	absvdi2 \
