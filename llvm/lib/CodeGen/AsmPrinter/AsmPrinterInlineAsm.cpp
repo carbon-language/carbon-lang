@@ -200,7 +200,15 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
   // The variant of the current asmprinter.
   int AsmPrinterVariant = MAI->getAssemblerDialect();
   int InlineAsmVariant = MI->getInlineAsmDialect();
-  
+
+  // Switch to the inline assembly variant.
+  if (AsmPrinterVariant != InlineAsmVariant) {
+    if (InlineAsmVariant == 0)
+      OS << ".att_syntax\n\t";
+    else
+      OS << ".intel_syntax\n\t";
+  }
+
   int CurVariant = -1;            // The number of the {.|.|.} region we are in.
   const char *LastEmitted = AsmStr; // One past the last character emitted.
 
@@ -365,6 +373,14 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
     }
     }
   }
+  // Switch to the AsmPrinter variant.
+  if (AsmPrinterVariant != InlineAsmVariant) {
+    if (AsmPrinterVariant == 0)
+      OS << "\n\t.att_syntax";
+    else
+      OS << "\n\t.intel_syntax";
+  }
+
   OS << '\n' << (char)0;  // null terminate string.
   EmitInlineAsm(OS.str(), LocMD, MI->getInlineAsmDialect());
 

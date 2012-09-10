@@ -6,9 +6,9 @@ entry:
   ret i32 %0
 ; CHECK: t1
 ; CHECK: ## InlineAsm Start
-; FIXME: .intel_syntax
+; CHECK: .intel_syntax
 ; CHECK: mov eax, ecx
 ; CHECK: mov ecx, eax
-; FIXME: .att_syntax
+; CHECK: .att_syntax
 ; CHECK: ## InlineAsm End
 }
