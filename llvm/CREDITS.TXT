@@ -370,6 +370,7 @@ D: MSIL backend
 
 N: Duncan Sands
 E: baldrick@free.fr
+I: baldrick
 D: Ada support in llvm-gcc
 D: Dragonegg plugin
 D: Exception handling improvements
