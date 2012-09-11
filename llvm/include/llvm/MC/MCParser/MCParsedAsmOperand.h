@@ -23,6 +23,11 @@ public:
   MCParsedAsmOperand() {}
   virtual ~MCParsedAsmOperand() {}
 
+  virtual bool isToken() const = 0;
+  virtual bool isImm() const = 0;
+  virtual bool isReg() const = 0;
+  virtual bool isMem() const = 0;
+
   /// getStartLoc - Get the location of the first token of this operand.
   virtual SMLoc getStartLoc() const = 0;
   /// getEndLoc - Get the location of the last token of this operand.
