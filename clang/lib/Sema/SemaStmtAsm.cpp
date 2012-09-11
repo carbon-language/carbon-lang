@@ -595,10 +595,9 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
       }
 
       const llvm::MCOperand &Op = Inst.getOperand(MCIdx);
-      bool isDef = NumDefs && (MCIdx < NumDefs);
 
       // Register/Clobber.
-      if (Op.isReg() && isDef) {
+      if (Op.isReg() && NumDefs && (MCIdx < NumDefs)) {
         std::string Reg;
         llvm::raw_string_ostream OS(Reg);
         IP->printRegName(OS, Op.getReg());
@@ -628,7 +627,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
                                                   false, false);
             if (!Result.isInvalid()) {
               bool isMemDef = (i == 1) && Desc.mayStore();
-              if (isDef || isMemDef) {
+              if (isMemDef) {
                 Outputs.push_back(II);
                 OutputExprs.push_back(Result.take());
                 OutputExprNames.push_back(Name.str());
