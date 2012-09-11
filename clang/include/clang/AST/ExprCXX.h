@@ -3561,7 +3561,7 @@ public:
 ///
 /// When a pack expansion in the source code contains multiple parameter packs
 /// and those parameter packs correspond to different levels of template
-/// parameter lists, this node node is used to represent a non-type template
+/// parameter lists, this node is used to represent a non-type template
 /// parameter pack from an outer level, which has already had its argument pack
 /// substituted but that still lives within a pack expansion that itself
 /// could not be instantiated. When actually performing a substitution into
