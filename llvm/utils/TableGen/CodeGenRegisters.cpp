@@ -75,16 +75,6 @@ void CodeGenSubRegIndex::updateComponents(CodeGenRegBank &RegBank) {
   }
 }
 
-void CodeGenSubRegIndex::cleanComposites() {
-  // Clean out redundant mappings of the form this+X -> X.
-  for (CompMap::iterator i = Composed.begin(), e = Composed.end(); i != e;) {
-    CompMap::iterator j = i;
-    ++i;
-    if (j->first == j->second)
-      Composed.erase(j);
-  }
-}
-
 //===----------------------------------------------------------------------===//
 //                              CodeGenRegister
 //===----------------------------------------------------------------------===//
@@ -1164,11 +1154,6 @@ void CodeGenRegBank::computeComposites() {
       }
     }
   }
-
-  // We don't care about the difference between (Idx1, Idx2) -> Idx2 and invalid
-  // compositions, so remove any mappings of that form.
-  for (unsigned i = 0, e = SubRegIndices.size(); i != e; ++i)
-    SubRegIndices[i]->cleanComposites();
 }
 
 namespace {

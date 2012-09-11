@@ -1055,8 +1055,8 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
     for (unsigned i = 0, e = SubRegIndices.size(); i != e; ++i) {
       bool Open = false;
       for (unsigned j = 0; j != e; ++j) {
-        if (CodeGenSubRegIndex *Comp =
-            SubRegIndices[i]->compose(SubRegIndices[j])) {
+        CodeGenSubRegIndex *Comp = SubRegIndices[i]->compose(SubRegIndices[j]);
+        if (Comp && Comp != SubRegIndices[j]) {
           if (!Open) {
             OS << "  case " << SubRegIndices[i]->getQualifiedName()
               << ": switch(IdxB) {\n    default: return IdxB;\n";
