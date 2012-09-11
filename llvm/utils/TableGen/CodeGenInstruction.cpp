@@ -101,7 +101,7 @@ CGIOperandList::CGIOperandList(Record *R) : TheDef(R) {
     } else if (Rec->isSubClassOf("RegisterClass")) {
       OperandType = "OPERAND_REGISTER";
     } else if (!Rec->isSubClassOf("PointerLikeRegClass") &&
-               Rec->getName() != "unknown")
+               !Rec->isSubClassOf("unknown_class"))
       throw "Unknown operand class '" + Rec->getName() +
       "' in '" + R->getName() + "' instruction!";
 

@@ -1535,7 +1535,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
         const CodeGenRegisterClass &RC =
           CDP.getTargetInfo().getRegisterClass(RegClass);
         MadeChange |= UpdateNodeType(ResNo, RC.getValueTypes(), TP);
-      } else if (ResultNode->getName() == "unknown") {
+      } else if (ResultNode->isSubClassOf("unknown_class")) {
         // Nothing to do.
       } else {
         assert(ResultNode->isSubClassOf("RegisterClass") &&
@@ -1602,7 +1602,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
         MadeChange |= Child->UpdateNodeType(ChildResNo, VT, TP);
       } else if (OperandNode->isSubClassOf("PointerLikeRegClass")) {
         MadeChange |= Child->UpdateNodeType(ChildResNo, MVT::iPTR, TP);
-      } else if (OperandNode->getName() == "unknown") {
+      } else if (OperandNode->isSubClassOf("unknown_class")) {
         // Nothing to do.
       } else
         llvm_unreachable("Unknown operand type!");
