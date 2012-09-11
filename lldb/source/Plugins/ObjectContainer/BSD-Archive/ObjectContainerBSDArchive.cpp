@@ -273,10 +273,10 @@ ObjectContainerBSDArchive::CreateInstance
     if (file && data_sp && ObjectContainerBSDArchive::MagicBytesMatch(data))
     {
         Timer scoped_timer (__PRETTY_FUNCTION__,
-                            "ObjectContainerBSDArchive::CreateInstance (module = %s/%s, file = %p, file_offset = 0x%z8.8x, file_size = 0x%z8.8x)",
+                            "ObjectContainerBSDArchive::CreateInstance (module = %s/%s, file = %p, file_offset = 0x%8.8llx, file_size = 0x%8.8llx)",
                             module_sp->GetFileSpec().GetDirectory().AsCString(),
                             module_sp->GetFileSpec().GetFilename().AsCString(),
-                            file, offset, length);
+                            file, (uint64_t) offset, (uint64_t) length);
 
         Archive::shared_ptr archive_sp (Archive::FindCachedArchive (*file, module_sp->GetArchitecture(), module_sp->GetModificationTime()));
 
