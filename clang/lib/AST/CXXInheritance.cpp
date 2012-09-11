@@ -14,6 +14,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/DeclCXX.h"
+#include "llvm/ADT/SetVector.h"
 #include <algorithm>
 #include <set>
 
@@ -25,11 +26,9 @@ void CXXBasePaths::ComputeDeclsFound() {
   assert(NumDeclsFound == 0 && !DeclsFound &&
          "Already computed the set of declarations");
 
-  llvm::SmallPtrSet<NamedDecl *, 8> KnownDecls;
-  SmallVector<NamedDecl *, 8> Decls;
+  llvm::SetVector<NamedDecl *, SmallVector<NamedDecl *, 8> > Decls;
   for (paths_iterator Path = begin(), PathEnd = end(); Path != PathEnd; ++Path)
-    if (KnownDecls.insert(*Path->Decls.first))
-      Decls.push_back(*Path->Decls.first);
+    Decls.insert(*Path->Decls.first);
 
   NumDeclsFound = Decls.size();
   DeclsFound = new NamedDecl * [NumDeclsFound];
