@@ -454,7 +454,6 @@ private:
   void buildSExprFromExpr(Expr *MutexExp, Expr *DeclExp, const NamedDecl *D) {
     CallingContext CallCtx(D);
 
-
     if (MutexExp) {
       if (StringLiteral* SLit = dyn_cast<StringLiteral>(MutexExp)) {
         if (SLit->getString() == StringRef("*"))
@@ -562,7 +561,9 @@ public:
 
   bool matches(const SExpr &Other, unsigned i = 0, unsigned j = 0) const {
     if (NodeVec[i].matches(Other.NodeVec[j])) {
-      unsigned n = NodeVec[i].arity();
+      unsigned ni = NodeVec[i].arity();
+      unsigned nj = Other.NodeVec[j].arity();
+      unsigned n = (ni < nj) ? ni : nj;
       bool Result = true;
       unsigned ci = i+1;  // first child of i
       unsigned cj = j+1;  // first child of j

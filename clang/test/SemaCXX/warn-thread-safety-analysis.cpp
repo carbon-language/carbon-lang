@@ -3341,3 +3341,43 @@ public:
 }  // end namespace TemplateLockReturned
 
 
+namespace ExprMatchingBugFix {
+
+class Foo {
+public:
+  Mutex mu_;
+};
+
+
+class Bar {
+public:
+  bool c;
+  Foo* foo;
+  Bar(Foo* f) : foo(f) { }
+
+  struct Nested {
+    Foo* foo;
+    Nested(Foo* f) : foo(f) { }
+
+    void unlockFoo() UNLOCK_FUNCTION(&Foo::mu_);
+  };
+
+  void test();
+};
+
+
+void Bar::test() {
+  foo->mu_.Lock();
+  if (c) {
+    Nested *n = new Nested(foo);
+    n->unlockFoo();
+  }
+  else {
+    foo->mu_.Unlock();
+  }
+}
+
+}; // end namespace ExprMatchingBugfix
+
+
+
