@@ -1739,7 +1739,7 @@ ProcessGDBRemote::DoDestroy ()
                 ThreadList &threads = GetThreadList();
                 
                 {
-                    Mutex::Locker(threads.GetMutex());
+                    Mutex::Locker locker(threads.GetMutex());
                     
                     size_t num_threads = threads.GetSize();
                     for (size_t i = 0; i < num_threads; i++)
@@ -1774,7 +1774,7 @@ ProcessGDBRemote::DoDestroy ()
                     // have to run the risk of letting those threads proceed a bit.
     
                     {
-                        Mutex::Locker(threads.GetMutex());
+                        Mutex::Locker locker(threads.GetMutex());
                         
                         size_t num_threads = threads.GetSize();
                         for (size_t i = 0; i < num_threads; i++)
