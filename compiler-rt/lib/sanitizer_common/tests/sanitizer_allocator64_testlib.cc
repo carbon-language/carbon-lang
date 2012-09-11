@@ -42,18 +42,6 @@ void Init() {
 
 }  // namespace
 
-namespace __sanitizer {
-void NORETURN Die() {
-  _exit(77);
-}
-void NORETURN CheckFailed(const char *file, int line, const char *cond,
-                          u64 v1, u64 v2) {
-  fprintf(stderr, "CheckFailed: %s:%d %s (%lld %lld)\n",
-          file, line, cond, v1, v2);
-  Die();
-}
-}
-
 #if 1
 extern "C" {
 void *malloc(size_t size) {
