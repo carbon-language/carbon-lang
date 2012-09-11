@@ -15,6 +15,8 @@ B(int x);
 
 const char *fname = __FILE__;
 
+#include <a.h>
+
 // RUN: c-index-test -cursor-at=%s:1:11 -I%S/Inputs %s | FileCheck -check-prefix=CHECK-1 %s
 // CHECK-1: macro definition=OBSCURE
 // RUN: c-index-test -cursor-at=%s:2:14 -I%S/Inputs %s | FileCheck -check-prefix=CHECK-2 %s
@@ -31,6 +33,8 @@ const char *fname = __FILE__;
 // CHECK-7: macro expansion=B:12:9
 // RUN: c-index-test -cursor-at=%s:16:25 -I%S/Inputs %s | FileCheck -check-prefix=CHECK-8 %s
 // CHECK-8: macro expansion=__FILE__
+// RUN: c-index-test -cursor-at=%s:18:12 -I%S/Inputs %s | FileCheck -check-prefix=CHECK-9 %s
+// CHECK-9: inclusion directive=a.h
 
 // Same tests, but with "editing" optimizations
 // RUN: env CINDEXTEST_EDITING=1 c-index-test -cursor-at=%s:1:11 -I%S/Inputs %s | FileCheck -check-prefix=CHECK-1 %s

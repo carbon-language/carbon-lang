@@ -1296,6 +1296,9 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   case tok::string_literal:
     Filename = getSpelling(FilenameTok, FilenameBuffer);
     End = FilenameTok.getLocation();
+    // For an angled include, point the end location at the closing '>'.
+    if (FilenameTok.is(tok::angle_string_literal))
+      End = End.getLocWithOffset(Filename.size()-1);
     CharEnd = End.getLocWithOffset(Filename.size());
     break;
 
