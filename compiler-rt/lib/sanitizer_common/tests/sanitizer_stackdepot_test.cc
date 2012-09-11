@@ -24,7 +24,7 @@ TEST(SanitizerCommon, StackDepotBasic) {
   const uptr *sp1 = StackDepotGet(i1, &sz1);
   EXPECT_NE(sp1, (uptr*)0);
   EXPECT_EQ(sz1, ARRAY_SIZE(s1));
-  EXPECT_EQ(internal_memcmp(sp1?:s1, s1, sizeof(s1)), 0);
+  EXPECT_EQ(internal_memcmp(sp1, s1, sizeof(s1)), 0);
 }
 
 TEST(SanitizerCommon, StackDepotAbsent) {
@@ -55,7 +55,7 @@ TEST(SanitizerCommon, StackDepotSame) {
   const uptr *sp1 = StackDepotGet(i1, &sz1);
   EXPECT_NE(sp1, (uptr*)0);
   EXPECT_EQ(sz1, ARRAY_SIZE(s1));
-  EXPECT_EQ(internal_memcmp(sp1?:s1, s1, sizeof(s1)), 0);
+  EXPECT_EQ(internal_memcmp(sp1, s1, sizeof(s1)), 0);
 }
 
 TEST(SanitizerCommon, StackDepotSeveral) {
