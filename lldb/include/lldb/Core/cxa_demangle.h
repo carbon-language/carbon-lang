@@ -10,6 +10,8 @@
 #ifndef _CXA_DEMANGLE_H
 #define _CXA_DEMANGLE_H
 
+// FreeBSD9-STABLE fix (define size_t before including cxxabi.h)
+#include <cstdlib>
 #include <cxxabi.h>
 
 #pragma GCC visibility push(hidden)
