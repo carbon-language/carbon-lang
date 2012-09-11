@@ -1455,7 +1455,7 @@ ClangExpressionDeclMap::DoMaterialize
         if (log)
             log->PutCString("Not bothering to allocate a struct because no arguments are needed");
         
-        m_material_vars->m_allocated_area = NULL;
+        m_material_vars->m_allocated_area = 0UL;
         
         return true;
     }

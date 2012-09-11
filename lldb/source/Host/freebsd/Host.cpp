@@ -178,7 +178,7 @@ GetFreeBSDProcessArgs (const ProcessInstanceInfoMatch *match_info_ptr,
                       ProcessInstanceInfo &process_info)
 {
     if (process_info.ProcessIDIsValid()) {
-        int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_ARGS, process_info.GetProcessID() };
+        int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_ARGS, (int)process_info.GetProcessID() };
 
         char arg_data[8192];
         size_t arg_data_size = sizeof(arg_data);
@@ -243,7 +243,7 @@ GetFreeBSDProcessUserAndGroup(ProcessInstanceInfo &process_info)
     if (process_info.ProcessIDIsValid()) 
     {
         int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID,
-            process_info.GetProcessID() };
+            (int)process_info.GetProcessID() };
         proc_kinfo_size = sizeof(struct kinfo_proc);
 
         if (::sysctl (mib, 4, &proc_kinfo, &proc_kinfo_size, NULL, 0) == 0)
@@ -301,7 +301,7 @@ Host::GetAuxvData(lldb_private::Process *process)
            pid.piod_addr = &ps_strings;
            pid.piod_offs = ps_strings_addr;
            pid.piod_len = sizeof(ps_strings);
-           if (::ptrace(PT_IO, process->GetID(), (caddr_t)&pid, NULL)) {
+           if (::ptrace(PT_IO, process->GetID(), (caddr_t)&pid, 0)) {
                    perror("failed to fetch ps_strings");
                    buf_ap.release();
                    goto done;
@@ -312,7 +312,7 @@ Host::GetAuxvData(lldb_private::Process *process)
            pid.piod_addr = aux_info;
            pid.piod_offs = auxv_addr;
            pid.piod_len = sizeof(aux_info);
-           if (::ptrace(PT_IO, process->GetID(), (caddr_t)&pid, NULL)) {
+           if (::ptrace(PT_IO, process->GetID(), (caddr_t)&pid, 0)) {
                    perror("failed to fetch aux_info");
                    buf_ap.release();
                    goto done;

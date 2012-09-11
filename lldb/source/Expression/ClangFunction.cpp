@@ -462,7 +462,7 @@ ClangFunction::ExecuteFunction(ExecutionContext &exe_ctx, Stream &errors, bool s
 {
     const bool try_all_threads = false;
     const bool discard_on_error = true;
-    return ExecuteFunction (exe_ctx, NULL, errors, stop_others, NULL, try_all_threads, discard_on_error, results);
+    return ExecuteFunction (exe_ctx, NULL, errors, stop_others, 0UL, try_all_threads, discard_on_error, results);
 }
 
 ExecutionResults
