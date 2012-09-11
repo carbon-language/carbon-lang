@@ -752,38 +752,27 @@ static inline bool HasBranchWeights(const Instruction* I) {
   return false;
 }
 
-/// Tries to get a branch weight for the given instruction, returns NULL if it
-/// can't. Pos starts at 0.
-static ConstantInt* GetWeight(Instruction* I, int Pos) {
-  MDNode* ProfMD = I->getMetadata(LLVMContext::MD_prof);
-  if (ProfMD && ProfMD->getOperand(0)) {
-    if (MDString* MDS = dyn_cast<MDString>(ProfMD->getOperand(0))) {
-      if (MDS->getString().equals("branch_weights")) {
-        assert(ProfMD->getNumOperands() >= 3);
-        return dyn_cast<ConstantInt>(ProfMD->getOperand(1 + Pos));
-      }
-    }
-  }
-
-  return 0;
-}
-
-/// Scale the given weights based on the successor TI's metadata. Scaling is
-/// done by multiplying every weight by the sum of the successor's weights.
-static void ScaleWeights(Instruction* STI, MutableArrayRef<uint64_t> Weights) {
-  // Sum the successor's weights
-  assert(HasBranchWeights(STI));
-  unsigned Scale = 0;
-  MDNode* ProfMD = STI->getMetadata(LLVMContext::MD_prof);
-  for (unsigned i = 1; i < ProfMD->getNumOperands(); ++i) {
-    ConstantInt* CI = dyn_cast<ConstantInt>(ProfMD->getOperand(i));
+/// Get Weights of a given TerminatorInst, the default weight is at the front
+/// of the vector. If TI is a conditional eq, we need to swap the branch-weight
+/// metadata.
+static void GetBranchWeights(TerminatorInst *TI,
+                             SmallVectorImpl<uint64_t> &Weights) {
+  MDNode* MD = TI->getMetadata(LLVMContext::MD_prof);
+  assert(MD);
+  for (unsigned i = 1, e = MD->getNumOperands(); i < e; ++i) {
+    ConstantInt* CI = dyn_cast<ConstantInt>(MD->getOperand(i));
     assert(CI);
-    Scale += CI->getValue().getZExtValue();
+    Weights.push_back(CI->getValue().getZExtValue());
   }
 
-  // Skip default, as it's replaced during the folding
-  for (unsigned i = 1; i < Weights.size(); ++i) {
-    Weights[i] *= Scale;
+  // If TI is a conditional eq, the default case is the false case,
+  // and the corresponding branch-weight data is at index 2. We swap the
+  // default weight to be the first entry.
+  if (BranchInst* BI = dyn_cast<BranchInst>(TI)) {
+    assert(Weights.size() == 2);
+    ICmpInst *ICI = cast<ICmpInst>(BI->getCondition());
+    if (ICI->getPredicate() == ICmpInst::ICMP_EQ)
+      std::swap(Weights.front(), Weights.back());
   }
 }
 
@@ -838,52 +827,22 @@ bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
 
       // Update the branch weight metadata along the way
       SmallVector<uint64_t, 8> Weights;
-      uint64_t PredDefaultWeight = 0;
       bool PredHasWeights = HasBranchWeights(PTI);
       bool SuccHasWeights = HasBranchWeights(TI);
 
-      if (PredHasWeights) {
-        MDNode* MD = PTI->getMetadata(LLVMContext::MD_prof);
-        assert(MD);
-        for (unsigned i = 1, e = MD->getNumOperands(); i < e; ++i) {
-          ConstantInt* CI = dyn_cast<ConstantInt>(MD->getOperand(i));
-          assert(CI);
-          Weights.push_back(CI->getValue().getZExtValue());
-        }
-
-        // If the predecessor is a conditional eq, then swap the default weight
-        // to be the first entry.
-        if (BranchInst* BI = dyn_cast<BranchInst>(PTI)) {
-          assert(Weights.size() == 2);
-          ICmpInst *ICI = cast<ICmpInst>(BI->getCondition());
-
-          if (ICI->getPredicate() == ICmpInst::ICMP_EQ) {
-            std::swap(Weights.front(), Weights.back());
-          }
-        }
-
-        PredDefaultWeight = Weights.front();
-      } else if (SuccHasWeights) {
+      if (PredHasWeights)
+        GetBranchWeights(PTI, Weights);
+      else if (SuccHasWeights)
         // If there are no predecessor weights but there are successor weights,
         // populate Weights with 1, which will later be scaled to the sum of
         // successor's weights
         Weights.assign(1 + PredCases.size(), 1);
-        PredDefaultWeight = 1;
-      }
 
-      uint64_t SuccDefaultWeight = 0;
-      if (SuccHasWeights) {
-        int Index = 0;
-        if (BranchInst* BI = dyn_cast<BranchInst>(TI)) {
-          ICmpInst* ICI = dyn_cast<ICmpInst>(BI->getCondition());
-          assert(ICI);
-
-          if (ICI->getPredicate() == ICmpInst::ICMP_EQ)
-            Index = 1;
-        }
-
-        SuccDefaultWeight = GetWeight(TI, Index)->getValue().getZExtValue();
-      }
+      SmallVector<uint64_t, 8> SuccWeights;
+      if (SuccHasWeights)
+        GetBranchWeights(TI, SuccWeights);
+      else if (PredHasWeights)
+        SuccWeights.assign(1 + BBCases.size(), 1);
 
       if (PredDefault == BB) {
         // If this is the default destination from PTI, only the edges in TI
@@ -896,7 +855,9 @@ bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
             // The default destination is BB, we don't need explicit targets.
             std::swap(PredCases[i], PredCases.back());
 
-            if (PredHasWeights) {
+            if (PredHasWeights || SuccHasWeights) {
+              // Increase weight for the default case.
+              Weights[0] += Weights[i+1];
               std::swap(Weights[i+1], Weights.back());
               Weights.pop_back();
             }
@@ -912,27 +873,30 @@ bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
           NewSuccessors.push_back(BBDefault);
         }
 
-        if (SuccHasWeights) {
-          ScaleWeights(TI, Weights);
-          Weights.front() *= SuccDefaultWeight;
-        } else if (PredHasWeights) {
-          Weights.front() /= (1 + BBCases.size());
-        }
-
+        unsigned CasesFromPred = Weights.size();
+        uint64_t ValidTotalSuccWeight = 0;
         for (unsigned i = 0, e = BBCases.size(); i != e; ++i)
           if (!PTIHandled.count(BBCases[i].Value) &&
               BBCases[i].Dest != BBDefault) {
             PredCases.push_back(BBCases[i]);
             NewSuccessors.push_back(BBCases[i].Dest);
-            if (SuccHasWeights) {
-              Weights.push_back(PredDefaultWeight *
-                                GetWeight(TI, i)->getValue().getZExtValue());
-            } else if (PredHasWeights) {
-              // Split the old default's weight amongst the children
-              Weights.push_back(PredDefaultWeight / (1 + BBCases.size()));
+            if (SuccHasWeights || PredHasWeights) {
+              // The default weight is at index 0, so weight for the ith case
+              // should be at index i+1. Scale the cases from successor by
+              // PredDefaultWeight (Weights[0]).
+              Weights.push_back(Weights[0] * SuccWeights[i+1]);
+              ValidTotalSuccWeight += SuccWeights[i+1];
             }
           }
 
+        if (SuccHasWeights || PredHasWeights) {
+          ValidTotalSuccWeight += SuccWeights[0];
+          // Scale the cases from predecessor by ValidTotalSuccWeight.
+          for (unsigned i = 1; i < CasesFromPred; ++i)
+            Weights[i] *= ValidTotalSuccWeight;
+          // Scale the default weight by SuccDefaultWeight (SuccWeights[0]).
+          Weights[0] *= SuccWeights[0];
+        }
       } else {
         // FIXME: preserve branch weight metadata, similarly to the 'then'
         // above. For now, drop it.
