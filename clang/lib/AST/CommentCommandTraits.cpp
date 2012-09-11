@@ -32,9 +32,9 @@ const CommandInfo *CommandTraits::getCommandInfo(unsigned CommandID) const {
 }
 
 const CommandInfo *CommandTraits::registerUnknownCommand(StringRef CommandName) {
-  char *Name = Allocator.Allocate<char>(CommandName.size());
+  char *Name = Allocator.Allocate<char>(CommandName.size() + 1);
   memcpy(Name, CommandName.data(), CommandName.size());
-  Name[CommandName.size() + 1] = '\0';
+  Name[CommandName.size()] = '\0';
 
   // Value-initialize (=zero-initialize in this case) a new CommandInfo.
   CommandInfo *Info = new (Allocator) CommandInfo();
