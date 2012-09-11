@@ -42,7 +42,7 @@ g_option_table[] =
     { LLDB_OPT_SET_1, false, "no-summary-depth", 'Y', optional_argument, NULL, 0, eArgTypeCount,     "Set the depth at which omitting summary information stops (default is 1)."},
     { LLDB_OPT_SET_1, false, "raw-output",       'R', no_argument,       NULL, 0, eArgTypeNone,      "Don't use formatting options."},
     { LLDB_OPT_SET_1, false, "show-all-children",'A', no_argument,       NULL, 0, eArgTypeNone,      "Ignore the upper bound on the number of children to show."},
-    { 0, false, NULL, 0, 0, NULL, NULL, eArgTypeNone, NULL }
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 uint32_t
