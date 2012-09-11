@@ -1,29 +1,3 @@
-# Compute the Clang version from the LLVM version.
-# FIXME: We should be able to reuse CLANG_VERSION variable calculated
-#        in Clang cmake files, instead of copying the rules here.
-string(REGEX MATCH "[0-9]+\\.[0-9]+(\\.[0-9]+)?" CLANG_VERSION
-       ${PACKAGE_VERSION})
-
-# Call add_clang_runtime_static_library(<target_library>) to make
-# sure that static <target_library> is built in the directory
-# where Clang driver expects to find it.
-if (APPLE)
-  set(CLANG_RUNTIME_LIB_DIR
-      ${LLVM_BINARY_DIR}/lib/clang/${CLANG_VERSION}/lib/darwin)
-elseif (UNIX)
-  # Assume Linux.
-  set(CLANG_RUNTIME_LIB_DIR
-      ${LLVM_BINARY_DIR}/lib/clang/${CLANG_VERSION}/lib/linux)
-endif()
-function(add_clang_runtime_static_library)
-  set_target_properties(${ARGN} PROPERTIES
-                        ARCHIVE_OUTPUT_DIRECTORY ${CLANG_RUNTIME_LIB_DIR})
-endfunction()
-function(add_clang_runtime_shared_library)
-  set_target_properties(${ARGN} PROPERTIES
-                        LIBRARY_OUTPUT_DIRECTORY ${CLANG_RUNTIME_LIB_DIR})
-endfunction()
-
 # First, add the subdirectories which contain feature-based runtime libraries
 # and several convenience helper libraries.
 add_subdirectory(asan)
@@ -178,6 +152,7 @@ if(CAN_TARGET_X86_64)
     ${GENERIC_SOURCES}
     )
   set_target_properties(clang_rt.x86_64 PROPERTIES COMPILE_FLAGS "-std=c99 ${TARGET_X86_64_CFLAGS}")
+  add_clang_compiler_rt_libraries(clang_rt.x86_64)
 endif()
 if(CAN_TARGET_I386)
   add_library(clang_rt.i386 STATIC
@@ -198,4 +173,5 @@ if(CAN_TARGET_I386)
     ${GENERIC_SOURCES}
     )
   set_target_properties(clang_rt.i386 PROPERTIES COMPILE_FLAGS "-std=c99 ${TARGET_I386_CFLAGS}")
+  add_clang_compiler_rt_libraries(clang_rt.i386)
 endif()

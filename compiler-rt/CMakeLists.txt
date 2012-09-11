@@ -106,6 +106,40 @@ function(set_target_compile_flags target)
   set_property(TARGET ${target} PROPERTY COMPILE_FLAGS "${argstring}")
 endfunction()
 
+# Compute the Clang version from the LLVM version.
+# FIXME: We should be able to reuse CLANG_VERSION variable calculated
+#        in Clang cmake files, instead of copying the rules here.
+string(REGEX MATCH "[0-9]+\\.[0-9]+(\\.[0-9]+)?" CLANG_VERSION
+       ${PACKAGE_VERSION})
+# Setup the paths where compiler-rt runtimes and headers should be stored.
+set(LIBCLANG_INSTALL_PATH lib${LLVM_LIBIR_SUFFIX}/clang/${CLANG_VERSION})
+string(TOLOWER ${CMAKE_SYSTEM_NAME} LIBCLANG_OS_DIR)
+
+# Install compiler-rt headers.
+install(DIRECTORY include/
+  DESTINATION ${LIBCLANG_INSTALL_PATH}/include
+  FILES_MATCHING
+  PATTERN "*.h"
+  PATTERN ".svn" EXCLUDE
+  )
+
+# Call add_clang_compiler_rt_libraries to make sure that targets are built
+# and installed in the directories where Clang driver expects to find them.
+macro(add_clang_compiler_rt_libraries)
+  # Setup output directories so that clang in build tree works.
+  set_target_properties(${ARGN} PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY
+      ${LLVM_BINARY_DIR}/lib/clang/${CLANG_VERSION}/lib/${LIBCLANG_OS_DIR}
+    LIBRARY_OUTPUT_DIRECTORY
+      ${LLVM_BINARY_DIR}/lib/clang/${CLANG_VERSION}/lib/${LIBCLANG_OS_DIR}
+    )
+  # Add installation command.
+  install(TARGETS ${ARGN}
+    ARCHIVE DESTINATION ${LIBCLANG_INSTALL_PATH}/lib/${LIBCLANG_OS_DIR}
+    LIBRARY DESTINATION ${LIBCLANG_INSTALL_PATH}/lib/${LIBCLANG_OS_DIR}
+    )
+endmacro(add_clang_compiler_rt_libraries)
+
 # Add the public header's directory to the includes for all of compiler-rt.
 include_directories(include)
 
