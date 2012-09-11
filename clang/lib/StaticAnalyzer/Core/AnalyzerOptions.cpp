@@ -69,7 +69,7 @@ bool AnalyzerOptions::includeTemporaryDtorsInCFG() const {
 bool AnalyzerOptions::mayInlineCXXStandardLibrary() const {
   if (!InlineCXXStandardLibrary.hasValue())
     const_cast<llvm::Optional<bool> &>(InlineCXXStandardLibrary) =
-      getBooleanOption("c++-stdlib-inlining", /*Default=*/true);
+      getBooleanOption("c++-stdlib-inlining", /*Default=*/false);
   
   return *InlineCXXStandardLibrary;
 }
