@@ -137,80 +137,113 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode,
     report_fatal_error("Error parsing inline asm\n");
 }
 
+static void EmitMSInlineAsmStr(const char *AsmStr, const MachineInstr *MI,
+                               MachineModuleInfo *MMI, int InlineAsmVariant,
+                               AsmPrinter *AP, unsigned LocCookie,
+                               raw_ostream &OS) {
+  // Switch to the inline assembly variant.
+  OS << "\t.intel_syntax\n\t";
 
-/// EmitInlineAsm - This method formats and emits the specified machine
-/// instruction that is an inline asm.
-void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
-  assert(MI->isInlineAsm() && "printInlineAsm only works on inline asms");
-
+  const char *LastEmitted = AsmStr; // One past the last character emitted.
   unsigned NumOperands = MI->getNumOperands();
 
-  // Count the number of register definitions to find the asm string.
-  unsigned NumDefs = 0;
-  for (; MI->getOperand(NumDefs).isReg() && MI->getOperand(NumDefs).isDef();
-       ++NumDefs)
-    assert(NumDefs != NumOperands-2 && "No asm string?");
+  while (*LastEmitted) {
+    switch (*LastEmitted) {
+    default: {
+      // Not a special case, emit the string section literally.
+      const char *LiteralEnd = LastEmitted+1;
+      while (*LiteralEnd && *LiteralEnd != '{' && *LiteralEnd != '|' &&
+             *LiteralEnd != '}' && *LiteralEnd != '$' && *LiteralEnd != '\n')
+        ++LiteralEnd;
 
-  assert(MI->getOperand(NumDefs).isSymbol() && "No asm string?");
+      OS.write(LastEmitted, LiteralEnd-LastEmitted);
+      LastEmitted = LiteralEnd;
+      break;
+    }
+    case '\n':
+      ++LastEmitted;   // Consume newline character.
+      OS << '\n';      // Indent code with newline.
+      break;
+    case '$': {
+      ++LastEmitted;   // Consume '$' character.
+      bool Done = true;
 
-  // Disassemble the AsmStr, printing out the literal pieces, the operands, etc.
-  const char *AsmStr = MI->getOperand(NumDefs).getSymbolName();
-
-  // If this asmstr is empty, just print the #APP/#NOAPP markers.
-  // These are useful to see where empty asm's wound up.
-  if (AsmStr[0] == 0) {
-    // Don't emit the comments if writing to a .o file.
-    if (!OutStreamer.hasRawTextSupport()) return;
-
-    OutStreamer.EmitRawText(Twine("\t")+MAI->getCommentString()+
-                            MAI->getInlineAsmStart());
-    OutStreamer.EmitRawText(Twine("\t")+MAI->getCommentString()+
-                            MAI->getInlineAsmEnd());
-    return;
-  }
-
-  // Emit the #APP start marker.  This has to happen even if verbose-asm isn't
-  // enabled, so we use EmitRawText.
-  if (OutStreamer.hasRawTextSupport())
-    OutStreamer.EmitRawText(Twine("\t")+MAI->getCommentString()+
-                            MAI->getInlineAsmStart());
-
-  // Get the !srcloc metadata node if we have it, and decode the loc cookie from
-  // it.
-  unsigned LocCookie = 0;
-  const MDNode *LocMD = 0;
-  for (unsigned i = MI->getNumOperands(); i != 0; --i) {
-    if (MI->getOperand(i-1).isMetadata() &&
-        (LocMD = MI->getOperand(i-1).getMetadata()) &&
-        LocMD->getNumOperands() != 0) {
-      if (const ConstantInt *CI = dyn_cast<ConstantInt>(LocMD->getOperand(0))) {
-        LocCookie = CI->getZExtValue();
+      // Handle escapes.
+      switch (*LastEmitted) {
+      default: Done = false; break;
+      case '$':
+        ++LastEmitted;  // Consume second '$' character.
         break;
       }
+      if (Done) break;
+
+      const char *IDStart = LastEmitted;
+      const char *IDEnd = IDStart;
+      while (*IDEnd >= '0' && *IDEnd <= '9') ++IDEnd;
+
+      unsigned Val;
+      if (StringRef(IDStart, IDEnd-IDStart).getAsInteger(10, Val))
+        report_fatal_error("Bad $ operand number in inline asm string: '" +
+                           Twine(AsmStr) + "'");
+      LastEmitted = IDEnd;
+
+      if (Val >= NumOperands-1)
+        report_fatal_error("Invalid $ operand number in inline asm string: '" +
+                           Twine(AsmStr) + "'");
+
+      // Okay, we finally have a value number.  Ask the target to print this
+      // operand!
+      unsigned OpNo = InlineAsm::MIOp_FirstOperand;
+
+      bool Error = false;
+
+      // Scan to find the machine operand number for the operand.
+      for (; Val; --Val) {
+        if (OpNo >= MI->getNumOperands()) break;
+        unsigned OpFlags = MI->getOperand(OpNo).getImm();
+        OpNo += InlineAsm::getNumOperandRegisters(OpFlags) + 1;
+      }
+
+      // We may have a location metadata attached to the end of the
+      // instruction, and at no point should see metadata at any
+      // other point while processing. It's an error if so.
+      if (OpNo >= MI->getNumOperands() ||
+          MI->getOperand(OpNo).isMetadata()) {
+        Error = true;
+      } else {
+        unsigned OpFlags = MI->getOperand(OpNo).getImm();
+        ++OpNo;  // Skip over the ID number.
+        
+        if (InlineAsm::isMemKind(OpFlags)) {
+          Error = AP->PrintAsmMemoryOperand(MI, OpNo, InlineAsmVariant,
+                                            /*Modifier*/ 0, OS);
+        } else {
+          Error = AP->PrintAsmOperand(MI, OpNo, InlineAsmVariant,
+                                      /*Modifier*/ 0, OS);
+        }
+      }
+      if (Error) {
+        std::string msg;
+        raw_string_ostream Msg(msg);
+        Msg << "invalid operand in inline asm: '" << AsmStr << "'";
+        MMI->getModule()->getContext().emitError(LocCookie, Msg.str());
+      }
+      break;
+    }
     }
   }
+  OS << "\n\t.att_syntax\n" << (char)0;  // null terminate string.
+}
 
-  // Emit the inline asm to a temporary string so we can emit it through
-  // EmitInlineAsm.
-  SmallString<256> StringData;
-  raw_svector_ostream OS(StringData);
-
-  OS << '\t';
-
-  // The variant of the current asmprinter.
-  int AsmPrinterVariant = MAI->getAssemblerDialect();
-  int InlineAsmVariant = MI->getInlineAsmDialect();
-
-  // Switch to the inline assembly variant.
-  if (AsmPrinterVariant != InlineAsmVariant) {
-    if (InlineAsmVariant == 0)
-      OS << ".att_syntax\n\t";
-    else
-      OS << ".intel_syntax\n\t";
-  }
-
+static void EmitGCCInlineAsmStr(const char *AsmStr, const MachineInstr *MI,
+                                MachineModuleInfo *MMI, int InlineAsmVariant,
+                                int AsmPrinterVariant, AsmPrinter *AP,
+                                unsigned LocCookie, raw_ostream &OS) {
   int CurVariant = -1;            // The number of the {.|.|.} region we are in.
   const char *LastEmitted = AsmStr; // One past the last character emitted.
+  unsigned NumOperands = MI->getNumOperands();
+
+  OS << '\t';
 
   while (*LastEmitted) {
     switch (*LastEmitted) {
@@ -283,7 +316,7 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
                              " string: '" + Twine(AsmStr) + "'");
 
         std::string Val(StrStart, StrEnd);
-        PrintSpecial(MI, OS, Val.c_str());
+        AP->PrintSpecial(MI, OS, Val.c_str());
         LastEmitted = StrEnd+1;
         break;
       }
@@ -351,7 +384,6 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
             // FIXME: What if the operand isn't an MBB, report error?
             OS << *MI->getOperand(OpNo).getMBB()->getSymbol();
           else {
-            AsmPrinter *AP = const_cast<AsmPrinter*>(this);
             if (InlineAsm::isMemKind(OpFlags)) {
               Error = AP->PrintAsmMemoryOperand(MI, OpNo, InlineAsmVariant,
                                                 Modifier[0] ? Modifier : 0,
@@ -373,15 +405,74 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
     }
     }
   }
-  // Switch to the AsmPrinter variant.
-  if (AsmPrinterVariant != InlineAsmVariant) {
-    if (AsmPrinterVariant == 0)
-      OS << "\n\t.att_syntax";
-    else
-      OS << "\n\t.intel_syntax";
+  OS << '\n' << (char)0;  // null terminate string.
+}
+
+/// EmitInlineAsm - This method formats and emits the specified machine
+/// instruction that is an inline asm.
+void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
+  assert(MI->isInlineAsm() && "printInlineAsm only works on inline asms");
+
+  // Count the number of register definitions to find the asm string.
+  unsigned NumDefs = 0;
+  for (; MI->getOperand(NumDefs).isReg() && MI->getOperand(NumDefs).isDef();
+       ++NumDefs)
+    assert(NumDefs != MI->getNumOperands()-2 && "No asm string?");
+
+  assert(MI->getOperand(NumDefs).isSymbol() && "No asm string?");
+
+  // Disassemble the AsmStr, printing out the literal pieces, the operands, etc.
+  const char *AsmStr = MI->getOperand(NumDefs).getSymbolName();
+
+  // If this asmstr is empty, just print the #APP/#NOAPP markers.
+  // These are useful to see where empty asm's wound up.
+  if (AsmStr[0] == 0) {
+    // Don't emit the comments if writing to a .o file.
+    if (!OutStreamer.hasRawTextSupport()) return;
+
+    OutStreamer.EmitRawText(Twine("\t")+MAI->getCommentString()+
+                            MAI->getInlineAsmStart());
+    OutStreamer.EmitRawText(Twine("\t")+MAI->getCommentString()+
+                            MAI->getInlineAsmEnd());
+    return;
   }
 
-  OS << '\n' << (char)0;  // null terminate string.
+  // Emit the #APP start marker.  This has to happen even if verbose-asm isn't
+  // enabled, so we use EmitRawText.
+  if (OutStreamer.hasRawTextSupport())
+    OutStreamer.EmitRawText(Twine("\t")+MAI->getCommentString()+
+                            MAI->getInlineAsmStart());
+
+  // Get the !srcloc metadata node if we have it, and decode the loc cookie from
+  // it.
+  unsigned LocCookie = 0;
+  const MDNode *LocMD = 0;
+  for (unsigned i = MI->getNumOperands(); i != 0; --i) {
+    if (MI->getOperand(i-1).isMetadata() &&
+        (LocMD = MI->getOperand(i-1).getMetadata()) &&
+        LocMD->getNumOperands() != 0) {
+      if (const ConstantInt *CI = dyn_cast<ConstantInt>(LocMD->getOperand(0))) {
+        LocCookie = CI->getZExtValue();
+        break;
+      }
+    }
+  }
+
+  // Emit the inline asm to a temporary string so we can emit it through
+  // EmitInlineAsm.
+  SmallString<256> StringData;
+  raw_svector_ostream OS(StringData);
+
+  // The variant of the current asmprinter.
+  int AsmPrinterVariant = MAI->getAssemblerDialect();
+  InlineAsm::AsmDialect InlineAsmVariant = MI->getInlineAsmDialect();
+  AsmPrinter *AP = const_cast<AsmPrinter*>(this);
+  if (InlineAsmVariant == InlineAsm::AD_ATT)
+    EmitGCCInlineAsmStr(AsmStr, MI, MMI, InlineAsmVariant, AsmPrinterVariant,
+                        AP, LocCookie, OS);
+  else
+    EmitMSInlineAsmStr(AsmStr, MI, MMI, InlineAsmVariant, AP, LocCookie, OS);
+
   EmitInlineAsm(OS.str(), LocMD, MI->getInlineAsmDialect());
 
   // Emit the #NOAPP end marker.  This has to happen even if verbose-asm isn't

@@ -12,3 +12,15 @@ entry:
 ; CHECK: .att_syntax
 ; CHECK: {{## InlineAsm End|#NO_APP}}
 }
+
+define void @t2() nounwind {
+entry:
+  call void asm sideeffect inteldialect "mov eax, $$1", "~{eax},~{dirflag},~{fpsr},~{flags}"() nounwind
+  ret void
+; CHECK: t2
+; CHECK: {{## InlineAsm Start|#APP}}
+; CHECK: .intel_syntax
+; CHECK: mov eax, 1
+; CHECK: .att_syntax
+; CHECK: {{## InlineAsm End|#NO_APP}}
+}
