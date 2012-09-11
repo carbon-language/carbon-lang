@@ -57,6 +57,10 @@ endif
 # We can revisit this when LLVM/Clang support it.
 CXX.Flags += -fno-strict-aliasing
 
+# Use c++11 and libc++ and it's headers, instead of gnu's libstdcpp
+CXX.Flags += -std=c++11
+CXX.Flags += -stdlib=libc++
+
 # Do not warn about pragmas.  In particular, we are looking to ignore the
 # "#pragma mark" construct which GCC warns about on platforms other than Darwin.
 EXTRA_OPTIONS += -Wno-unknown-pragmas
