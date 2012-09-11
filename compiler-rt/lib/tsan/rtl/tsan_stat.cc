@@ -183,6 +183,8 @@ void StatOutput(u64 *stat) {
   name[StatInt_pwrite64]                 = "  pwrite64                        ";
   name[StatInt_writev]                   = "  writev                          ";
   name[StatInt_pwritev64]                = "  pwritev64                       ";
+  name[StatInt_lockf]                    = "  lockf                           ";
+  name[StatInt_lockf64]                  = "  lockf64                         ";
   name[StatInt_send]                     = "  send                            ";
   name[StatInt_sendmsg]                  = "  sendmsg                         ";
   name[StatInt_recv]                     = "  recv                            ";

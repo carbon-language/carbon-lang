@@ -181,6 +181,8 @@ enum StatType {
   StatInt_pwrite64,
   StatInt_writev,
   StatInt_pwritev64,
+  StatInt_lockf,
+  StatInt_lockf64,
   StatInt_send,
   StatInt_sendmsg,
   StatInt_recv,
