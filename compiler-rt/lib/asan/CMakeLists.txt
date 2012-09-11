@@ -30,11 +30,20 @@ include_directories(..)
 
 set(ASAN_CFLAGS ${SANITIZER_COMMON_CFLAGS})
 
-set(ASAN_COMMON_DEFINITIONS
-  ASAN_HAS_EXCEPTIONS=1
-  ASAN_FLEXIBLE_MAPPING_AND_OFFSET=0
-  ASAN_NEEDS_SEGV=1
-  )
+if(ANDROID)
+  set(ASAN_COMMON_DEFINITIONS
+    ASAN_HAS_EXCEPTIONS=1
+    ASAN_FLEXIBLE_MAPPING_AND_OFFSET=0
+    ASAN_NEEDS_SEGV=0
+    ASAN_LOW_MEMORY=1
+    )
+else()
+  set(ASAN_COMMON_DEFINITIONS
+    ASAN_HAS_EXCEPTIONS=1
+    ASAN_FLEXIBLE_MAPPING_AND_OFFSET=0
+    ASAN_NEEDS_SEGV=1
+    )
+endif()
 
 set(ASAN_DYLIB_DEFINITIONS
   ${ASAN_COMMON_DEFINITIONS}
@@ -54,6 +63,17 @@ if(APPLE)
   set_target_properties(clang_rt.asan_osx PROPERTIES
     OSX_ARCHITECTURES "${ASAN_TARGETS}")
   list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan_osx)
+elseif(ANDROID)
+  add_library(clang_rt.asan-arm-android SHARED
+    ${ASAN_SOURCES}
+    $<TARGET_OBJECTS:RTInterception.arm.android>
+    $<TARGET_OBJECTS:RTSanitizerCommon.arm.android>
+    )
+  set_target_compile_flags(clang_rt.asan-arm-android
+    ${ASAN_CFLAGS}
+    )
+  target_link_libraries(clang_rt.asan-arm-android dl)
+  list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-arm-android)
 else()
   # Otherwise, build separate libraries for each target.
   if(CAN_TARGET_X86_64)
@@ -77,17 +97,6 @@ else()
       ${ASAN_CFLAGS} ${TARGET_I386_CFLAGS}
       )
     list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-i386)
-  endif()
-  if(CAN_TARGET_ARM_ANDROID)
-    add_library(clang_rt.asan-arm-android STATIC
-      ${ASAN_SOURCES}
-      $<TARGET_OBJECTS:RTInterception.arm.android>
-      $<TARGET_OBJECTS:RTSanitizerCommon.arm.android>
-      )
-    set_target_compile_flags(clang_rt.asan-arm-android
-      ${ASAN_CFLAGS} ${TARGET_ARM_ANDROID_CFLAGS}
-      )
-    list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-arm-android)
   endif()
 endif()
 

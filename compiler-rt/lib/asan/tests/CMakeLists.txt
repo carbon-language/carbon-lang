@@ -15,17 +15,32 @@ include_directories(..)
 include_directories(../..)
 
 set(ASAN_UNITTEST_COMMON_CFLAGS
-  # Use -D instead of definitions to please custom compile command.
-  -DASAN_HAS_BLACKLIST=1
-  -DASAN_HAS_EXCEPTIONS=1
-  -DASAN_NEEDS_SEGV=1
-  -DASAN_UAR=0
   -Wall
   -Wno-format
   -fvisibility=hidden
   -g
   -O2
 )
+
+# Use -D instead of definitions to please custom compile command.
+if(ANDROID)
+  list(APPEND ASAN_UNITTEST_COMMON_CFLAGS
+    -DASAN_LOW_MEMORY=1
+    -DASAN_HAS_BLACKLIST=1
+    -DASAN_HAS_EXCEPTIONS=1
+    -DASAN_NEEDS_SEGV=0
+    -DASAN_UAR=0
+    -fPIE
+  )
+else()
+  list(APPEND ASAN_UNITTEST_COMMON_CFLAGS
+    -DASAN_HAS_BLACKLIST=1
+    -DASAN_HAS_EXCEPTIONS=1
+    -DASAN_NEEDS_SEGV=1
+    -DASAN_UAR=0
+  )
+endif()
+
 # Support 64-bit and 32-bit builds.
 if(LLVM_BUILD_32_BITS)
   list(APPEND ASAN_UNITTEST_COMMON_CFLAGS -m32)
@@ -60,6 +75,8 @@ function(add_asan_test testsuite testname)
     set_property(TARGET ${testname} APPEND PROPERTY
                  LINK_FLAGS "-framework Foundation")
     target_link_libraries(${testname} clang_rt.asan_osx)
+  elseif (ANDROID)
+    target_link_libraries(${testname} clang_rt.asan-arm-android)
   elseif (UNIX)
     # Linux-specific linker flags.
     set_property(TARGET ${testname} APPEND PROPERTY
@@ -89,7 +106,8 @@ set(ASAN_INST_TEST_OBJECTS)
 # We only support building instrumented tests when we're not cross compiling
 # and targeting a unix-like system where we can predict viable compilation and
 # linking strategies.
-if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}" AND UNIX)
+# We use a different approach to build these tests for Android. See below.
+if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}" AND UNIX AND NOT ANDROID)
 
   # This function is a custom routine to manage manually compiling source files
   # for unit tests with the just-built Clang binary, using the ASan
@@ -128,5 +146,26 @@ endif()
 # Main AddressSanitizer unit tests.
 add_custom_target(AsanUnitTests)
 set_target_properties(AsanUnitTests PROPERTIES FOLDER "ASan unit tests")
-add_asan_test(AsanUnitTests AsanTest ${ASAN_NOINST_TEST_SOURCES}
-                                     ${ASAN_INST_TEST_OBJECTS})
+
+if(ANDROID)
+  set(ASAN_INST_TEST_SOURCES asan_globals_test.cc asan_test.cc)
+  add_library(asan_noinst_test OBJECT
+    ${ASAN_NOINST_TEST_SOURCES}
+    )
+  set_target_compile_flags(asan_noinst_test
+    ${ASAN_UNITTEST_COMMON_CFLAGS} ${ASAN_GTEST_INCLUDE_CFLAGS}
+    )
+  add_asan_test(AsanUnitTests AsanTest
+    ${ASAN_INST_TEST_SOURCES}
+    $<TARGET_OBJECTS:asan_noinst_test>
+    )
+  set_target_compile_flags(AsanTest
+    ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS} ${ASAN_GTEST_INCLUDE_CFLAGS}
+    )
+  set_target_link_flags(AsanTest
+    -pie
+    )
+else()
+  add_asan_test(AsanUnitTests AsanTest ${ASAN_NOINST_TEST_SOURCES}
+    ${ASAN_INST_TEST_OBJECTS})
+endif()
