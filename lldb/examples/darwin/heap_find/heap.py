@@ -282,6 +282,7 @@ def heap_search(result, options, arg_str):
         result.AppendMessage(dylid_load_err)
         return
     expr = None
+    print_no_matches = True
     arg_str_description = arg_str
     if options.type == 'pointer':
         expr = 'find_pointer_in_heap((void *)%s)' % (arg_str)
@@ -301,6 +302,10 @@ def heap_search(result, options, arg_str):
     elif options.type == 'addr':
         expr = 'find_block_for_address((void *)%s)' % arg_str
         arg_str_description = 'malloc block for %s' % arg_str
+    elif options.type == 'all':
+        expr = 'get_heap_info(1)'
+        arg_str_description = None
+        print_no_matches = False
     else:
         result.AppendMessage('error: invalid type "%s"\nvalid values are "pointer", "cstr"' % options.type)
         return
@@ -378,29 +383,24 @@ def malloc_info(debugger, command, result, dict):
     else:
         result.AppendMessage('error: no c string arguments were given to search for')
 
-def malloc_history(debugger, command, result, dict):
+def heap(debugger, command, result, dict):
     command_args = shlex.split(command)
     usage = "usage: %prog [options] <EXPR> [EXPR ...]"
-    description='''Gets the allocation history for an expression whose result is an address.
+    description='''Traverse all allocations on the heap and report statistics.
 
-    Programs should set the MallocStackLogging=1 in the environment to enable stack history. This can be done
-    with "process launch -v MallocStackLogging=1 -- [arg1 ...]"'''
-
-    dylid_load_err = load_dylib()
-    if dylid_load_err:
-        result.AppendMessage(dylid_load_err)
+    If programs set the MallocStackLogging=1 in the environment, then stack
+    history is available for any allocations. '''
+    parser = optparse.OptionParser(description=description, prog='cstr_refs',usage=usage)
+    add_common_options(parser)
+    try:
+        (options, args) = parser.parse_args(command_args)
+    except:
+        return
+    options.type = 'all'
+    if args:
+        result.AppendMessage('error: heap command takes no arguments, only options')
     else:
-        if command_args:
-            for addr_expr_str in command_args:
-                expr_sbvalue = lldb.frame.EvaluateExpression (addr_expr_str)
-                if expr_sbvalue.error.Success():
-                    addr = expr_sbvalue.unsigned
-                    if addr != 0:
-                        dump_stack_history_entries (addr, 1)
-                else:
-                    result.AppendMessage('error: expression error for "%s": %s' % (addr_expr_str, expr_sbvalue.error))
-        else:
-            result.AppendMessage('error: no address expressions were specified')
+        heap_search (result, options, None)
 
 def section_ptr_refs(debugger, command, result, dict):
     command_args = shlex.split(command)
@@ -490,10 +490,10 @@ if __name__ == '__main__':
 lldb.debugger.HandleCommand('command script add -f lldb.macosx.heap.ptr_refs ptr_refs')
 lldb.debugger.HandleCommand('command script add -f lldb.macosx.heap.cstr_refs cstr_refs')
 lldb.debugger.HandleCommand('command script add -f lldb.macosx.heap.malloc_info malloc_info')
-lldb.debugger.HandleCommand('command script add -f lldb.macosx.heap.malloc_history malloc_history')
+lldb.debugger.HandleCommand('command script add -f lldb.macosx.heap.heap heap')
 lldb.debugger.HandleCommand('command script add -f lldb.macosx.heap.section_ptr_refs section_ptr_refs')
 lldb.debugger.HandleCommand('command script add -f lldb.macosx.heap.objc_refs objc_refs')
-print '"ptr_refs", "cstr_refs", "malloc_info", "malloc_history" and "section_ptr_refs" commands have been installed, use the "--help" options on these commands for detailed help.'
+print '"ptr_refs", "cstr_refs", "malloc_info", "heap" and "section_ptr_refs" commands have been installed, use the "--help" options on these commands for detailed help.'
 
 
 

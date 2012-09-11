@@ -159,7 +159,8 @@ enum data_type_t
 {
     eDataTypeAddress,
     eDataTypeContainsData,
-    eDataTypeObjC
+    eDataTypeObjC,
+    eDataTypeHeapInfo
 };
 
 struct aligned_data_t
@@ -203,6 +204,14 @@ struct malloc_stack_entry
     uint32_t type_flags;
     uint32_t num_frames;
     mach_vm_address_t frames[MAX_FRAMES];
+};
+
+struct malloc_block_contents
+{
+    union {
+        Class isa;
+        void *pointers[2];
+    };
 };
 
 static int 
@@ -418,6 +427,14 @@ ObjCClasses g_objc_classes;
 //----------------------------------------------------------------------
 // ObjCClassInfo
 //----------------------------------------------------------------------
+
+enum HeapInfoSortType
+{
+    eSortTypeNone,
+    eSortTypeBytes,
+    eSortTypeCount
+};
+
 class ObjCClassInfo
 {
 public:
@@ -529,15 +546,9 @@ private:
         return 0;
     }
 
-    enum SortType
-    {
-        eSortTypeNone,
-        eSortTypeBytes,
-        eSortTypeCount
-    };
     Entry *m_entries;
     uint32_t m_size;    
-    SortType m_sort_type;
+    HeapInfoSortType m_sort_type;
 };
 
 ObjCClassInfo g_objc_class_snapshot;
@@ -667,16 +678,15 @@ range_info_callback (task_t task, void *baton, unsigned type, uint64_t ptr_addr,
         // of any sort where the first pointer in the object is an OBJC class
         // pointer (an isa)
         {
-            struct objc_class *objc_object_ptr = NULL;
-            if (task_peek (task, ptr_addr, sizeof(void *), (void **)&objc_object_ptr) == KERN_SUCCESS)
+            malloc_block_contents *block_contents = NULL;
+            if (task_peek (task, ptr_addr, sizeof(void *), (void **)&block_contents) == KERN_SUCCESS)
             {
                 // We assume that g_objc_classes is up to date
                 // that the class list was verified to have some classes in it
                 // before calling this function
-                const uint32_t objc_class_idx = g_objc_classes.FindClassIndex (objc_object_ptr->isa);
+                const uint32_t objc_class_idx = g_objc_classes.FindClassIndex (block_contents->isa);
                 if (objc_class_idx != UINT32_MAX)
                 {
-                    g_objc_class_snapshot.AddInstance (objc_class_idx, ptr_size);
                     bool match = false;
                     if (info->objc.match_isa == 0)
                     {
@@ -687,11 +697,11 @@ range_info_callback (task_t task, void *baton, unsigned type, uint64_t ptr_addr,
                     {
                         // Only match exact isa values in the current class or
                         // optionally in the super classes
-                        if (info->objc.match_isa == objc_object_ptr->isa)
+                        if (info->objc.match_isa == block_contents->isa)
                             match = true;
                         else if (info->objc.match_superclasses)
                         {
-                            Class super = class_getSuperclass(objc_object_ptr->isa);
+                            Class super = class_getSuperclass(block_contents->isa);
                             while (super)
                             {
                                 match = super == info->objc.match_isa;
@@ -721,6 +731,32 @@ range_info_callback (task_t task, void *baton, unsigned type, uint64_t ptr_addr,
             }
         }
         break;
+
+    case eDataTypeHeapInfo:
+        // Check if the current malloc block contains an objective C object
+        // of any sort where the first pointer in the object is an OBJC class
+        // pointer (an isa)
+        {
+            malloc_block_contents *block_contents = NULL;
+            if (task_peek (task, ptr_addr, sizeof(void *), (void **)&block_contents) == KERN_SUCCESS)
+            {
+                // We assume that g_objc_classes is up to date
+                // that the class list was verified to have some classes in it
+                // before calling this function
+                const uint32_t objc_class_idx = g_objc_classes.FindClassIndex (block_contents->isa);
+                if (objc_class_idx != UINT32_MAX)
+                {
+                    // This is an objective C object
+                    g_objc_class_snapshot.AddInstance (objc_class_idx, ptr_size);
+                }
+                else
+                {
+                    // Classify other heap info
+                }
+            }
+        }
+        break;
+
     }
 }
 
@@ -851,8 +887,6 @@ find_objc_objects_in_memory (void *isa)
     g_matches.clear();
     if (g_objc_classes.Update())
     {
-        // Reset all stats
-        g_objc_class_snapshot.Reset ();
         // Setup "info" to look for a malloc block that contains data
         // that is the a pointer 
         range_contains_data_callback_info_t data_info;
@@ -863,11 +897,51 @@ find_objc_objects_in_memory (void *isa)
         data_info.done = false;                      // Set done to false so searching doesn't stop
         range_callback_info_t info = { enumerate_range_in_zone, range_info_callback, &data_info };
         foreach_zone_in_this_process (&info);
-        
-        // Sort and print byte total bytes
-        g_objc_class_snapshot.SortByTotalBytes(g_objc_classes, true);
     }
     return g_matches.data();
+}
+
+//----------------------------------------------------------------------
+// get_heap_info
+//
+// Gather information for all allocations on the heap and report 
+// statistics.
+//----------------------------------------------------------------------
+
+void
+get_heap_info (int sort_type)
+{
+    if (g_objc_classes.Update())
+    {
+        // Reset all stats
+        g_objc_class_snapshot.Reset ();
+        // Setup "info" to look for a malloc block that contains data
+        // that is the a pointer 
+        range_contains_data_callback_info_t data_info;
+        data_info.type = eDataTypeHeapInfo; // Check each block for data
+        data_info.match_count = 0;          // Initialize the match count to zero
+        data_info.done = false;             // Set done to false so searching doesn't stop
+        range_callback_info_t info = { enumerate_range_in_zone, range_info_callback, &data_info };
+        foreach_zone_in_this_process (&info);
+        
+        // Sort and print byte total bytes
+        switch (sort_type)
+        {
+        case eSortTypeNone:
+        default:
+        case eSortTypeBytes:
+            g_objc_class_snapshot.SortByTotalBytes(g_objc_classes, true);
+            break;
+            
+        case eSortTypeCount:
+            g_objc_class_snapshot.SortByTotalCount(g_objc_classes, true);
+            break;
+        }
+    }
+    else
+    {
+        printf ("error: no objective C classes\n");
+    }
 }
 
 //----------------------------------------------------------------------
