@@ -413,9 +413,9 @@ static void buildMSAsmPieces(std::vector<std::string> &AsmStrings,
     buildMSAsmPieces(AsmStrings[i], Pieces[i]);
 }
 
-// Build the unmodified AsmString used by the IR.  Also build the individual
-// asm instruction(s) and place them in the AsmStrings vector; these are fed
-// to the AsmParser.
+// Build the AsmString used by the IR.  Also build the individual asm
+// instruction(s) and place them in the AsmStrings vector; these are fed to the
+// AsmParser.
 static std::string buildMSAsmString(Sema &SemaRef, ArrayRef<Token> AsmToks,
                                     std::vector<std::string> &AsmStrings,
                      std::vector<std::pair<unsigned,unsigned> > &AsmTokRanges) {
@@ -433,9 +433,8 @@ static std::string buildMSAsmString(Sema &SemaRef, ArrayRef<Token> AsmToks,
         AsmStrings.push_back(Asm.str());
         AsmTokRanges.push_back(std::make_pair(startTok, i-1));
         startTok = i;
-        Res += Asm;
         Asm.clear();
-        Res += '\n';
+        Res += "\n\t";
       }
       if (AsmToks[i].is(tok::kw_asm)) {
         i++; // Skip __asm
@@ -443,14 +442,20 @@ static std::string buildMSAsmString(Sema &SemaRef, ArrayRef<Token> AsmToks,
       }
     }
 
-    if (i && AsmToks[i].hasLeadingSpace() && !isNewAsm)
+    if (i && AsmToks[i].hasLeadingSpace() && !isNewAsm) {
       Asm += ' ';
+      Res += ' ';
+    }
 
-    Asm += getSpelling(SemaRef, AsmToks[i]);
+    if (AsmToks[i].is(tok::numeric_constant))
+      Res += "$$";
+
+    StringRef Spelling = getSpelling(SemaRef, AsmToks[i]);
+    Asm += Spelling;
+    Res += Spelling;
   }
   AsmStrings.push_back(Asm.str());
   AsmTokRanges.push_back(std::make_pair(startTok, AsmToks.size()-1));
-  Res += Asm;
   return Res.str();
 }
 
