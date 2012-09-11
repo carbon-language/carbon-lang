@@ -554,6 +554,13 @@ BlockContentComment *Parser::parseParagraphOrBlockCommand() {
           return parseBlockCommand();
         break; // Block command ahead, finish this parapgaph.
       }
+      if (Info->IsUnknownCommand) {
+        Content.push_back(S.actOnUnknownCommand(Tok.getLocation(),
+                                                Tok.getEndLocation(),
+                                                Info->getID()));
+        consumeToken();
+        continue;
+      }
       assert(Info->IsInlineCommand);
       Content.push_back(parseInlineCommand());
       continue;

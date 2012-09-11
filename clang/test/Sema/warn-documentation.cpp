@@ -761,3 +761,8 @@ inline void test_nocrash6()
 */
 typedef const struct test_nocrash7 * test_nocrash8;
 
+// We used to crash on this.
+
+/// aaa \unknown aaa \unknown aaa
+int test_nocrash9;
+

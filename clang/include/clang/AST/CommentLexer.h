@@ -34,8 +34,8 @@ enum TokenKind {
   eof,
   newline,
   text,
-  unknown_command,
-  command,
+  unknown_command, // Command that does not have an ID.
+  command,         // Command with an ID.
   verbatim_block_begin,
   verbatim_block_line,
   verbatim_block_end,

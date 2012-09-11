@@ -40,6 +40,7 @@ const CommandInfo *CommandTraits::registerUnknownCommand(StringRef CommandName) 
   CommandInfo *Info = new (Allocator) CommandInfo();
   Info->Name = Name;
   Info->ID = NextID++;
+  Info->IsUnknownCommand = true;
 
   RegisteredCommands.push_back(Info);
 

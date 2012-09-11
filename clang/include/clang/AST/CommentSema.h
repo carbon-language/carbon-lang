@@ -139,7 +139,11 @@ public:
 
   InlineContentComment *actOnUnknownCommand(SourceLocation LocBegin,
                                             SourceLocation LocEnd,
-                                            StringRef Name);
+                                            StringRef CommandName);
+
+  InlineContentComment *actOnUnknownCommand(SourceLocation LocBegin,
+                                            SourceLocation LocEnd,
+                                            unsigned CommandID);
 
   TextComment *actOnText(SourceLocation LocBegin,
                          SourceLocation LocEnd,
