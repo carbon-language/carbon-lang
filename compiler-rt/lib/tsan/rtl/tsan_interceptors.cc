@@ -1204,38 +1204,6 @@ TSAN_INTERCEPTOR(long_t, pwritev64, int fd, void *vec, int cnt, u64 off) {
   return res;
 }
 
-// |func| is either lockf or lockf64.
-#define LOCKF_BODY(func) \
-  SCOPED_TSAN_INTERCEPTOR(func, fd, cmd, len); \
-  int res = -1; \
-  switch (cmd) { \
-    case F_ULOCK: { \
-      Release(thr, pc, fd2addr(fd)); \
-      res = REAL(func)(fd, cmd, len); \
-      break; \
-    } \
-    case F_LOCK: \
-    case F_TLOCK: { \
-      res = REAL(func)(fd, cmd, len); \
-      if (res != -1) Acquire(thr, pc, fd2addr(fd)); \
-      break; \
-    } \
-    default: { \
-      res = REAL(func)(fd, cmd, len); \
-      break; \
-    } \
-  } \
-  return res; \
-/**/
-
-TSAN_INTERCEPTOR(int, lockf, int fd, int cmd, unsigned len) {
-  LOCKF_BODY(lockf);
-}
-
-TSAN_INTERCEPTOR(int, lockf64, int fd, int cmd, u64 len) {
-  LOCKF_BODY(lockf64);
-}
-
 TSAN_INTERCEPTOR(long_t, send, int fd, void *buf, long_t len, int flags) {
   SCOPED_TSAN_INTERCEPTOR(send, fd, buf, len, flags);
   Release(thr, pc, fd2addr(fd));
@@ -1609,8 +1577,6 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(pwrite64);
   TSAN_INTERCEPT(writev);
   TSAN_INTERCEPT(pwritev64);
-  TSAN_INTERCEPT(lockf);
-  TSAN_INTERCEPT(lockf64);
   TSAN_INTERCEPT(send);
   TSAN_INTERCEPT(sendmsg);
   TSAN_INTERCEPT(recv);
