@@ -21,8 +21,6 @@
 
 namespace llvm {
 
-extern cl::opt<bool> DisableIVRewrite;
-
 class CastInst;
 class IVUsers;
 class Loop;
