@@ -17,8 +17,12 @@
 #ifndef SANITIZER_ALLOCATOR_H
 #define SANITIZER_ALLOCATOR_H
 
-#include "sanitizer_common.h"
 #include "sanitizer_internal_defs.h"
+#if __WORDSIZE != 64
+# error "sanitizer_allocator64.h can only be used on 64-bit platforms"
+#endif
+
+#include "sanitizer_common.h"
 #include "sanitizer_libc.h"
 #include "sanitizer_list.h"
 #include "sanitizer_mutex.h"
