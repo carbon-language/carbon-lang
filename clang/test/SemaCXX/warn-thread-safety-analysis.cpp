@@ -3241,7 +3241,7 @@ static void test() {
   lt->mu_.Unlock();
 }
 
-}
+}  // end namespace TrylockWithCleanups
 
 
 namespace UniversalLock {
@@ -3315,4 +3315,29 @@ class Foo {
   }
 };
 
-}
+}  // end namespace UniversalLock
+
+
+namespace TemplateLockReturned {
+
+template<class T>
+class BaseT {
+public:
+  virtual void baseMethod() = 0;
+  Mutex* get_mutex() LOCK_RETURNED(mutex_) { return &mutex_; }
+
+  Mutex mutex_;
+  int a GUARDED_BY(mutex_);
+};
+
+
+class Derived : public BaseT<int> {
+public:
+  void baseMethod() EXCLUSIVE_LOCKS_REQUIRED(get_mutex()) {
+    a = 0;
+  }
+};
+
+}  // end namespace TemplateLockReturned
+
+

@@ -872,9 +872,6 @@ static void handleLockReturnedAttr(Sema &S, Decl *D,
     return;
   }
 
-  if (Arg->isTypeDependent())
-    return;
-
   // check that the argument is lockable object
   SmallVector<Expr*, 1> Args;
   checkAttrArgsAreLockableObjs(S, D, Attr, Args);
