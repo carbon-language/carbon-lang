@@ -199,12 +199,11 @@ void CodeGenTarget::ReadRegAltNameIndices() const {
 /// getRegisterByName - If there is a register with the specific AsmName,
 /// return it.
 const CodeGenRegister *CodeGenTarget::getRegisterByName(StringRef Name) const {
-  const std::vector<CodeGenRegister*> &Regs = getRegBank().getRegisters();
-  for (unsigned i = 0, e = Regs.size(); i != e; ++i)
-    if (Regs[i]->TheDef->getValueAsString("AsmName") == Name)
-      return Regs[i];
-
-  return 0;
+  const StringMap<CodeGenRegister*> &Regs = getRegBank().getRegistersByName();
+  StringMap<CodeGenRegister*>::const_iterator I = Regs.find(Name);
+  if (I == Regs.end())
+    return 0;
+  return I->second;
 }
 
 std::vector<MVT::SimpleValueType> CodeGenTarget::

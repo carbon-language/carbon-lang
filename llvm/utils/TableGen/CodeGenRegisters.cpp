@@ -993,6 +993,12 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) {
   for (unsigned i = 0, e = Registers.size(); i != e; ++i)
     Registers[i]->buildObjectGraph(*this);
 
+  // Compute register name map.
+  for (unsigned i = 0, e = Registers.size(); i != e; ++i)
+    RegistersByName.GetOrCreateValue(
+                       Registers[i]->TheDef->getValueAsString("AsmName"),
+                       Registers[i]);
+
   // Precompute all sub-register maps.
   // This will create Composite entries for all inferred sub-register indices.
   for (unsigned i = 0, e = Registers.size(); i != e; ++i)

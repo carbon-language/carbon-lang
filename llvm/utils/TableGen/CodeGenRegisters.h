@@ -440,6 +440,7 @@ namespace llvm {
 
     // Registers.
     std::vector<CodeGenRegister*> Registers;
+    StringMap<CodeGenRegister*> RegistersByName;
     DenseMap<Record*, CodeGenRegister*> Def2Reg;
     unsigned NumNativeRegUnits;
 
@@ -522,6 +523,9 @@ namespace llvm {
     }
 
     const std::vector<CodeGenRegister*> &getRegisters() { return Registers; }
+    const StringMap<CodeGenRegister*> &getRegistersByName() {
+      return RegistersByName;
+    }
 
     // Find a register from its Record def.
     CodeGenRegister *getReg(Record*);
