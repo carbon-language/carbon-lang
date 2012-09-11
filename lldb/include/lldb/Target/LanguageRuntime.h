@@ -83,6 +83,12 @@ public:
     
     static const char *
     GetNameForLanguageType (lldb::LanguageType language);
+    
+    Process *
+    GetProcess()
+    {
+        return m_process;
+    }
         
 protected:
     //------------------------------------------------------------------

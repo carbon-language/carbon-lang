@@ -16,30 +16,32 @@
 #include <map>
 
 // Other libraries and framework includes
+
 // Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Symbol/ClangASTContext.h"
-#include "lldb/Symbol/SymbolVendor.h"
-#include "lldb/Symbol/SymbolFile.h"
+#include "lldb/Symbol/TypeVendor.h"
 
 namespace lldb_private {
+
+class AppleObjCExternalASTSource;
     
-class AppleObjCSymbolVendor : public SymbolVendor
+class AppleObjCTypeVendor : public TypeVendor
 {
 public:
-    AppleObjCSymbolVendor(Process* process);
+    AppleObjCTypeVendor(ObjCLanguageRuntime &runtime);
     
     virtual uint32_t
-    FindTypes (const SymbolContext& sc, 
-               const ConstString &name,
-               const ClangNamespaceDecl *namespace_decl, 
-               bool append, 
-               uint32_t max_matches, 
-               TypeList& types);
+    FindTypes (const ConstString &name,
+               bool append,
+               uint32_t max_matches,
+               std::vector <ClangASTType> &types);
     
+    friend class AppleObjCExternalASTSource;
 private:
-    lldb::ProcessSP                     m_process;
-    ClangASTContext                     m_ast_ctx;
+    ObjCLanguageRuntime            &m_runtime;
+    ClangASTContext                 m_ast_ctx;
+    AppleObjCExternalASTSource   *m_external_source;
 };
 
 } // namespace lldb_private

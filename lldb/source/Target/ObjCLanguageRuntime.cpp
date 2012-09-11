@@ -281,6 +281,16 @@ ObjCLanguageRuntime::ClassDescriptor::IsPointerValid (lldb::addr_t value,
 }
 
 ObjCLanguageRuntime::ObjCISA
+ObjCLanguageRuntime::GetISA(const ConstString &name)
+{
+    for (const ISAToDescriptorMap::value_type &val : m_isa_to_descriptor_cache)
+        if (val.second && val.second->GetClassName() == name)
+            return val.first;
+    
+    return 0;
+}
+
+ObjCLanguageRuntime::ObjCISA
 ObjCLanguageRuntime::GetParentClass(ObjCLanguageRuntime::ObjCISA isa)
 {
     if (!IsValidISA(isa))

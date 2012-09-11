@@ -244,7 +244,7 @@ public:
     static const ObjCLanguageRuntime::ObjCISA g_objc_Tagged_ISA = 1;
     
     virtual ObjCLanguageRuntime::ObjCISA
-    GetISA(ValueObject& valobj);   
+    GetISA(ValueObject& valobj);
     
     virtual ConstString
     GetActualTypeName(ObjCLanguageRuntime::ObjCISA isa);
@@ -255,8 +255,8 @@ public:
     virtual ClassDescriptorSP
     GetClassDescriptor (ObjCISA isa);
     
-    virtual SymbolVendor *
-    GetSymbolVendor();
+    virtual TypeVendor *
+    GetTypeVendor();
     
 protected:
     virtual lldb::BreakpointResolverSP
@@ -278,7 +278,7 @@ private:
     lldb::addr_t                        m_get_class_name_args;
     Mutex                               m_get_class_name_args_mutex;
     
-    std::auto_ptr<SymbolVendor>         m_symbol_vendor_ap;
+    std::auto_ptr<TypeVendor>           m_type_vendor_ap;
     
     static const char *g_find_class_name_function_name;
     static const char *g_find_class_name_function_body;

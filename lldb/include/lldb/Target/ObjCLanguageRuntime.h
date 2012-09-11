@@ -19,6 +19,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Symbol/Type.h"
+#include "lldb/Symbol/TypeVendor.h"
 #include "lldb/Target/LanguageRuntime.h"
 
 namespace lldb_private {
@@ -222,14 +223,17 @@ public:
     virtual ObjCISA
     GetISA(ValueObject& valobj) = 0;
     
+    virtual ObjCISA
+    GetISA(const ConstString &name);
+    
     virtual ConstString
     GetActualTypeName(ObjCISA isa);
     
     virtual ObjCISA
     GetParentClass(ObjCISA isa);
     
-    virtual SymbolVendor *
-    GetSymbolVendor()
+    virtual TypeVendor *
+    GetTypeVendor()
     {
         return NULL;
     }

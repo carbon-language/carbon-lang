@@ -32,6 +32,7 @@
 #include "lldb/Expression/ClangUtilityFunction.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/Symbol.h"
+#include "lldb/Symbol/TypeList.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
@@ -39,7 +40,7 @@
 #include "lldb/Target/Thread.h"
 
 #include "AppleObjCRuntimeV2.h"
-#include "AppleObjCSymbolVendor.h"
+#include "AppleObjCTypeVendor.h"
 #include "AppleObjCTrampolineHandler.h"
 
 #include <vector>
@@ -700,13 +701,13 @@ AppleObjCRuntimeV2::GetActualTypeName(ObjCLanguageRuntime::ObjCISA isa)
     return descriptor->GetClassName();
 }
 
-SymbolVendor *
-AppleObjCRuntimeV2::GetSymbolVendor()
+TypeVendor *
+AppleObjCRuntimeV2::GetTypeVendor()
 {
-    if (!m_symbol_vendor_ap.get())
-        m_symbol_vendor_ap.reset(new AppleObjCSymbolVendor(m_process));
+    if (!m_type_vendor_ap.get())
+        m_type_vendor_ap.reset(new AppleObjCTypeVendor(*this));
     
-    return m_symbol_vendor_ap.get();
+    return m_type_vendor_ap.get();
 }
 
 AppleObjCRuntimeV2::ClassDescriptorV2::ClassDescriptorV2 (ValueObject &isa_pointer)
