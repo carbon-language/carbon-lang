@@ -23,9 +23,13 @@ public:
   MCParsedAsmOperand() {}
   virtual ~MCParsedAsmOperand() {}
 
+  /// isToken - Is this a token operand?
   virtual bool isToken() const = 0;
+  /// isImm - Is this an immediate operand?
   virtual bool isImm() const = 0;
+  /// isReg - Is this a register operand?
   virtual bool isReg() const = 0;
+  /// isMem - Is this a memory operand?
   virtual bool isMem() const = 0;
 
   /// getStartLoc - Get the location of the first token of this operand.
