@@ -16,6 +16,33 @@
 
 namespace __sanitizer {
 
+static void (*DieCallback)(void);
+void SetDieCallback(void (*callback)(void)) {
+  DieCallback = callback;
+}
+
+void NORETURN Die() {
+  if (DieCallback) {
+    DieCallback();
+  }
+  Exit(1);
+}
+
+static CheckFailedCallbackType CheckFailedCallback;
+void SetCheckFailedCallback(CheckFailedCallbackType callback) {
+  CheckFailedCallback = callback;
+}
+
+void NORETURN CheckFailed(const char *file, int line, const char *cond,
+                          u64 v1, u64 v2) {
+  if (CheckFailedCallback) {
+    CheckFailedCallback(file, line, cond, v1, v2);
+  }
+  Report("Sanitizer CHECK failed: %s:%d %s (%zd, %zd)\n", file, line, cond,
+                                                          v1, v2);
+  Die();
+}
+
 void RawWrite(const char *buffer) {
   static const char *kRawWriteError = "RawWrite can't output requested buffer!";
   uptr length = (uptr)internal_strlen(buffer);

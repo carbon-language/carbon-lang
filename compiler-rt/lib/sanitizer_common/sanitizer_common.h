@@ -120,10 +120,22 @@ void DisableCoreDumper();
 void DumpProcessMap();
 void SleepForSeconds(int seconds);
 void SleepForMillis(int millis);
-void NORETURN Exit(int exitcode);
-void NORETURN Abort();
 int Atexit(void (*function)(void));
 void SortArray(uptr *array, uptr size);
+
+// Exit
+void NORETURN Abort();
+void NORETURN Exit(int exitcode);
+void NORETURN Die();
+void NORETURN SANITIZER_INTERFACE_ATTRIBUTE
+CheckFailed(const char *file, int line, const char *cond, u64 v1, u64 v2);
+
+// Specific tools may override behavior of "Die" and "CheckFailed" functions
+// to do tool-specific job.
+void SetDieCallback(void (*callback)(void));
+typedef void (*CheckFailedCallbackType)(const char *, int, const char *,
+                                       u64, u64);
+void SetCheckFailedCallback(CheckFailedCallbackType callback);
 
 // Math
 INLINE bool IsPowerOfTwo(uptr x) {

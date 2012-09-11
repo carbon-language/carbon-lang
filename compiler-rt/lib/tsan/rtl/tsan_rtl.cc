@@ -165,6 +165,9 @@ void Initialize(ThreadState *thr) {
   if (is_initialized)
     return;
   is_initialized = true;
+  // Install tool-specific callbacks in sanitizer_common.
+  SetCheckFailedCallback(TsanCheckFailed);
+
   ScopedInRtl in_rtl;
 #ifndef TSAN_GO
   InitializeAllocator();

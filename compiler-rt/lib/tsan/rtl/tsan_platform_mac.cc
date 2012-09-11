@@ -37,14 +37,6 @@
 #include <errno.h>
 #include <sched.h>
 
-namespace __sanitizer {
-
-void Die() {
-  _exit(1);
-}
-
-}  // namespace __sanitizer
-
 namespace __tsan {
 
 ScopedInRtl::ScopedInRtl() {

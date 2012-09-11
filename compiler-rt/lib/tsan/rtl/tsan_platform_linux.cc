@@ -43,14 +43,6 @@
 
 extern "C" int arch_prctl(int code, __sanitizer::uptr *addr);
 
-namespace __sanitizer {
-
-void Die() {
-  _exit(1);
-}
-
-}  // namespace __sanitizer
-
 namespace __tsan {
 
 #ifndef TSAN_GO

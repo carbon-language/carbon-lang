@@ -23,20 +23,16 @@
 #include "tsan_mman.h"
 #include "tsan_flags.h"
 
-namespace __sanitizer {
-using namespace __tsan;
+namespace __tsan {
 
-void CheckFailed(const char *file, int line, const char *cond, u64 v1, u64 v2) {
+void TsanCheckFailed(const char *file, int line, const char *cond,
+                     u64 v1, u64 v2) {
   ScopedInRtl in_rtl;
   TsanPrintf("FATAL: ThreadSanitizer CHECK failed: "
              "%s:%d \"%s\" (0x%zx, 0x%zx)\n",
              file, line, cond, (uptr)v1, (uptr)v2);
   Die();
 }
-
-}  // namespace __sanitizer
-
-namespace __tsan {
 
 // Can be overriden by an application/test to intercept reports.
 #ifdef TSAN_EXTERNAL_HOOKS

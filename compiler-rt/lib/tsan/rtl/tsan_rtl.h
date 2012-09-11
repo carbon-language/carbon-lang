@@ -65,6 +65,8 @@ typedef CombinedAllocator<PrimaryAllocator, AllocatorCache,
 Allocator *allocator();
 #endif
 
+void TsanCheckFailed(const char *file, int line, const char *cond,
+                     u64 v1, u64 v2);
 void TsanPrintf(const char *format, ...);
 
 // FastState (from most significant bit):
