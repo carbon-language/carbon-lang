@@ -633,14 +633,16 @@ X86Operand *X86AsmParser::ParseOperand() {
 
 /// getIntelMemOperandSize - Return intel memory operand size.
 static unsigned getIntelMemOperandSize(StringRef OpStr) {
-  if (OpStr == "BYTE") return 8;
-  if (OpStr == "WORD") return 16;
-  if (OpStr == "DWORD") return 32;
-  if (OpStr == "QWORD") return 64;
-  if (OpStr == "XWORD") return 80;
-  if (OpStr == "XMMWORD") return 128;
-  if (OpStr == "YMMWORD") return 256;
-  return 0;
+  unsigned Size = StringSwitch<unsigned>(OpStr)
+    .Case("BYTE", 8)
+    .Case("WORD", 16)
+    .Case("DWORD", 32)
+    .Case("QWORD", 64)
+    .Case("XWORD", 80)
+    .Case("XMMWORD", 128)
+    .Case("YMMWORD", 256)
+    .Default(0);
+  return Size;
 }
 
 X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
