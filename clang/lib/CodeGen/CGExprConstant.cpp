@@ -814,11 +814,7 @@ public:
     return llvm::ConstantArray::get(AType, Elts);
   }
 
-  llvm::Constant *EmitStructInitialization(InitListExpr *ILE) {
-    return ConstStructBuilder::BuildStruct(CGM, CGF, ILE);
-  }
-
-  llvm::Constant *EmitUnionInitialization(InitListExpr *ILE) {
+  llvm::Constant *EmitRecordInitialization(InitListExpr *ILE) {
     return ConstStructBuilder::BuildStruct(CGM, CGF, ILE);
   }
 
@@ -830,11 +826,8 @@ public:
     if (ILE->getType()->isArrayType())
       return EmitArrayInitialization(ILE);
 
-    if (ILE->getType()->isUnionType())
-      return EmitUnionInitialization(ILE);
-
     if (ILE->getType()->isRecordType())
-      return EmitStructInitialization(ILE);
+      return EmitRecordInitialization(ILE);
 
     return 0;
   }
