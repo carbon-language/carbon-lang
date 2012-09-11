@@ -277,21 +277,32 @@ static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
   // "x86_64-linux-clang" as interpreted as suffix "clang" with
   // target prefix "x86_64-linux". If such a target prefix is found,
   // is gets added via -target as implicit first argument.
+  //
+  // The default language dialect depends on the name by which clang was
+  // invoked.  These names first follow the standard and then the GCC
+  // implementation.  When invoked as c89 or c99, clang should be a c89 or c99
+  // compiler, respectively, per POSIX.  The compiler called cc was deprecated
+  // by POSIX in 1997 and the language dialect is implementation defined.
+  // Unfortunately, a lot of existing code depends on it being a C89 compiler.
   static const struct {
     const char *Suffix;
     bool IsCXX;
     bool IsCPP;
+    const char *DefaultDialect;
   } suffixes [] = {
-    { "clang", false, false },
-    { "clang++", true, false },
-    { "clang-c++", true, false },
-    { "clang-cc", false, false },
-    { "clang-cpp", false, true },
-    { "clang-g++", true, false },
-    { "clang-gcc", false, false },
-    { "cc", false, false },
-    { "cpp", false, true },
-    { "++", true, false },
+    { "clang", false, false, 0 },
+    { "clang++", true, false, 0 },
+    { "clang-c++", true, false, 0 },
+    { "clang-cc", false, false, "-std=c89" },
+    { "clang-cpp", false, true, 0 },
+    { "clang-g++", true, false, "-std=gnu++89" },
+    { "clang-gcc", false, false, "-std=gnu89" },
+    { "cc", false, false, "-std=c89" },
+    { "c89", false, false, "-std=c89" },
+    { "c99", false, false, "-std=c99" },
+    { "c11", false, false, "-std=c11" },
+    { "cpp", false, true, 0 },
+    { "++", true, false, 0 },
   };
   std::string ProgName(llvm::sys::path::stem(ArgVector[0]));
   StringRef ProgNameRef(ProgName);
@@ -304,10 +315,14 @@ static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
     for (i = 0; i < sizeof(suffixes) / sizeof(suffixes[0]); ++i) {
       if (ProgNameRef.endswith(suffixes[i].Suffix)) {
         FoundMatch = true;
-        if (suffixes[i].IsCXX)
+        if (suffixes[i].IsCXX) {
           TheDriver.CCCIsCXX = true;
+          fprintf(stderr, "ccc is c++\n");
+        }
         if (suffixes[i].IsCPP)
           TheDriver.CCCIsCPP = true;
+        if (suffixes[i].DefaultDialect)
+          ArgVector.insert(ArgVector.begin()+1, suffixes[i].DefaultDialect);
         break;
       }
     }
