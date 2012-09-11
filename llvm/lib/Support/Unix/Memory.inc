@@ -23,6 +23,14 @@
 #include <mach/mach.h>
 #endif
 
+#if defined(__mips__)
+#  if defined(__OpenBSD__)
+#    include <mips64/sysarch.h>
+#  else
+#    include <sys/cachectl.h>
+#  endif
+#endif
+
 /// AllocateRWX - Allocate a slab of memory with read/write/execute
 /// permissions.  This is typically used for JIT applications where we want
 /// to emit code to the memory then jump to it.  Getting this type of memory

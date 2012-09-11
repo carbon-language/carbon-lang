@@ -16,10 +16,6 @@
 #include "llvm/Support/Valgrind.h"
 #include "llvm/Config/config.h"
 
-#if defined(__mips__)
-#include <sys/cachectl.h>
-#endif
-
 namespace llvm {
 using namespace sys;
 }
