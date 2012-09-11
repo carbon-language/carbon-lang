@@ -595,11 +595,6 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
       }
 
       const llvm::MCOperand &Op = Inst.getOperand(MCIdx);
-
-      // Immediate.
-      if (Op.isImm() || Op.isFPImm())
-        continue;
-
       bool isDef = NumDefs && (MCIdx < NumDefs);
 
       // Register/Clobber.
