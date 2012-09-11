@@ -40,6 +40,7 @@ namespace llvm {
 
   public:
     const unsigned EnumValue;
+    unsigned LaneMask;
 
     CodeGenSubRegIndex(Record *R, unsigned Enum);
     CodeGenSubRegIndex(StringRef N, StringRef Nspace, unsigned Enum);
@@ -82,6 +83,9 @@ namespace llvm {
 
     // Return the map of composites.
     const CompMap &getComposites() const { return Composed; }
+
+    // Compute LaneMask from Composed. Return LaneMask.
+    unsigned computeLaneMask();
 
   private:
     CompMap Composed;
@@ -485,6 +489,9 @@ namespace llvm {
 
     // Populate the Composite map from sub-register relationships.
     void computeComposites();
+
+    // Compute a lane mask for each sub-register index.
+    void computeSubRegIndexLaneMasks();
 
   public:
     CodeGenRegBank(RecordKeeper&);

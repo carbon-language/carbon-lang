@@ -28,7 +28,7 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 
 CodeGenSubRegIndex::CodeGenSubRegIndex(Record *R, unsigned Enum)
-  : TheDef(R), EnumValue(Enum) {
+  : TheDef(R), EnumValue(Enum), LaneMask(0) {
   Name = R->getName();
   if (R->getValue("Namespace"))
     Namespace = R->getValueAsString("Namespace");
@@ -36,7 +36,7 @@ CodeGenSubRegIndex::CodeGenSubRegIndex(Record *R, unsigned Enum)
 
 CodeGenSubRegIndex::CodeGenSubRegIndex(StringRef N, StringRef Nspace,
                                        unsigned Enum)
-  : TheDef(0), Name(N), Namespace(Nspace), EnumValue(Enum) {
+  : TheDef(0), Name(N), Namespace(Nspace), EnumValue(Enum), LaneMask(0) {
 }
 
 std::string CodeGenSubRegIndex::getQualifiedName() const {
@@ -73,6 +73,23 @@ void CodeGenSubRegIndex::updateComponents(CodeGenRegBank &RegBank) {
       IdxParts.push_back(RegBank.getSubRegIdx(Parts[i]));
     RegBank.addConcatSubRegIndex(IdxParts, this);
   }
+}
+
+unsigned CodeGenSubRegIndex::computeLaneMask() {
+  // Already computed?
+  if (LaneMask)
+    return LaneMask;
+
+  // Recursion guard, shouldn't be required.
+  LaneMask = ~0u;
+
+  // The lane mask is simply the union of all sub-indices.
+  unsigned M = 0;
+  for (CompMap::iterator I = Composed.begin(), E = Composed.end(); I != E; ++I)
+    M |= I->second->computeLaneMask();
+  assert(M && "Missing lane mask, sub-register cycle?");
+  LaneMask = M;
+  return LaneMask;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1156,6 +1173,35 @@ void CodeGenRegBank::computeComposites() {
   }
 }
 
+// Compute lane masks. This is similar to register units, but at the
+// sub-register index level. Each bit in the lane mask is like a register unit
+// class, and two lane masks will have a bit in common if two sub-register
+// indices overlap in some register.
+//
+// Conservatively share a lane mask bit if two sub-register indices overlap in
+// some registers, but not in others. That shouldn't happen a lot.
+void CodeGenRegBank::computeSubRegIndexLaneMasks() {
+  // First assign individual bits to all the leaf indices.
+  unsigned Bit = 0;
+  for (unsigned i = 0, e = SubRegIndices.size(); i != e; ++i) {
+    CodeGenSubRegIndex *Idx = SubRegIndices[i];
+    if (Idx->getComposites().empty()) {
+      Idx->LaneMask = 1u << Bit;
+      // Share bit 31 in the unlikely case there are more than 32 leafs.
+      if (Bit < 31) ++Bit;
+    } else {
+      Idx->LaneMask = 0;
+    }
+  }
+
+  // FIXME: What if ad-hoc aliasing introduces overlaps that aren't represented
+  // by the sub-register graph? This doesn't occur in any known targets.
+
+  // Inherit lanes from composites.
+  for (unsigned i = 0, e = SubRegIndices.size(); i != e; ++i)
+    SubRegIndices[i]->computeLaneMask();
+}
+
 namespace {
 // UberRegSet is a helper class for computeRegUnitWeights. Each UberRegSet is
 // the transitive closure of the union of overlapping register
@@ -1539,6 +1585,7 @@ void CodeGenRegBank::computeRegUnitSets() {
 
 void CodeGenRegBank::computeDerivedInfo() {
   computeComposites();
+  computeSubRegIndexLaneMasks();
 
   // Compute a weight for each register unit created during getSubRegs.
   // This may create adopted register units (with unit # >= NumNativeRegUnits).
