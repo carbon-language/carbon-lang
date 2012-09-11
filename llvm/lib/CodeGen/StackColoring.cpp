@@ -523,10 +523,12 @@ void StackColoring::remapInstructions(DenseMap<int, int> &SlotRemap) {
         // the calculated range then it means that the alloca usage moved
         // outside of the lifetime markers.
 #ifndef NDEBUG
-        SlotIndex Index = Indexes->getInstructionIndex(I);
-        LiveInterval* Interval = Intervals[FromSlot];
-        assert(Interval->find(Index) != Interval->end() &&
+        if (!I->isDebugValue()) {
+          SlotIndex Index = Indexes->getInstructionIndex(I);
+          LiveInterval* Interval = Intervals[FromSlot];
+          assert(Interval->find(Index) != Interval->end() &&
                "Found instruction usage outside of live range.");
+        }
 #endif
 
         // Fix the machine instructions.
