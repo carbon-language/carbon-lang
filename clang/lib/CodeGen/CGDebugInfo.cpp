@@ -1998,9 +1998,11 @@ llvm::DIType CGDebugInfo::getOrCreateFunctionType(const Decl * D,
     // First element is always return type. For 'void' functions it is NULL.
     Elts.push_back(getOrCreateType(OMethod->getResultType(), F));
     // "self" pointer is always first argument.
-    Elts.push_back(getOrCreateType(OMethod->getSelfDecl()->getType(), F));
+    llvm::DIType SelfTy = getOrCreateType(OMethod->getSelfDecl()->getType(), F);
+    Elts.push_back(DBuilder.createArtificialType(SelfTy));
     // "cmd" pointer is always second argument.
-    Elts.push_back(getOrCreateType(OMethod->getCmdDecl()->getType(), F));
+    llvm::DIType CmdTy = getOrCreateType(OMethod->getCmdDecl()->getType(), F);
+    Elts.push_back(DBuilder.createArtificialType(CmdTy));
     // Get rest of the arguments.
     for (ObjCMethodDecl::param_const_iterator PI = OMethod->param_begin(), 
            PE = OMethod->param_end(); PI != PE; ++PI)
