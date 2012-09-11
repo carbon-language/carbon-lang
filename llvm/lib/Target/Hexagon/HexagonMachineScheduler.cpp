@@ -20,203 +20,6 @@
 
 using namespace llvm;
 
-static cl::opt<bool> ForceTopDown("vliw-misched-topdown", cl::Hidden,
-                                  cl::desc("Force top-down list scheduling"));
-static cl::opt<bool> ForceBottomUp("vliw-misched-bottomup", cl::Hidden,
-                                   cl::desc("Force bottom-up list scheduling"));
-
-#ifndef NDEBUG
-static cl::opt<bool> ViewMISchedDAGs("vliw-view-misched-dags", cl::Hidden,
-  cl::desc("Pop up a window to show MISched dags after they are processed"));
-
-static cl::opt<unsigned> MISchedCutoff("vliw-misched-cutoff", cl::Hidden,
-  cl::desc("Stop scheduling after N instructions"), cl::init(~0U));
-#else
-static bool ViewMISchedDAGs = false;
-#endif // NDEBUG
-
-/// Decrement this iterator until reaching the top or a non-debug instr.
-static MachineBasicBlock::iterator
-priorNonDebug(MachineBasicBlock::iterator I, MachineBasicBlock::iterator Beg) {
-  assert(I != Beg && "reached the top of the region, cannot decrement");
-  while (--I != Beg) {
-    if (!I->isDebugValue())
-      break;
-  }
-  return I;
-}
-
-/// If this iterator is a debug value, increment until reaching the End or a
-/// non-debug instruction.
-static MachineBasicBlock::iterator
-nextIfDebug(MachineBasicBlock::iterator I, MachineBasicBlock::iterator End) {
-  for(; I != End; ++I) {
-    if (!I->isDebugValue())
-      break;
-  }
-  return I;
-}
-
-/// ReleaseSucc - Decrement the NumPredsLeft count of a successor. When
-/// NumPredsLeft reaches zero, release the successor node.
-///
-/// FIXME: Adjust SuccSU height based on MinLatency.
-void VLIWMachineScheduler::releaseSucc(SUnit *SU, SDep *SuccEdge) {
-  SUnit *SuccSU = SuccEdge->getSUnit();
-
-#ifndef NDEBUG
-  if (SuccSU->NumPredsLeft == 0) {
-    dbgs() << "*** Scheduling failed! ***\n";
-    SuccSU->dump(this);
-    dbgs() << " has been released too many times!\n";
-    llvm_unreachable(0);
-  }
-#endif
-  --SuccSU->NumPredsLeft;
-  if (SuccSU->NumPredsLeft == 0 && SuccSU != &ExitSU)
-    SchedImpl->releaseTopNode(SuccSU);
-}
-
-/// releaseSuccessors - Call releaseSucc on each of SU's successors.
-void VLIWMachineScheduler::releaseSuccessors(SUnit *SU) {
-  for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
-       I != E; ++I) {
-    releaseSucc(SU, &*I);
-  }
-}
-
-/// ReleasePred - Decrement the NumSuccsLeft count of a predecessor. When
-/// NumSuccsLeft reaches zero, release the predecessor node.
-///
-/// FIXME: Adjust PredSU height based on MinLatency.
-void VLIWMachineScheduler::releasePred(SUnit *SU, SDep *PredEdge) {
-  SUnit *PredSU = PredEdge->getSUnit();
-
-#ifndef NDEBUG
-  if (PredSU->NumSuccsLeft == 0) {
-    dbgs() << "*** Scheduling failed! ***\n";
-    PredSU->dump(this);
-    dbgs() << " has been released too many times!\n";
-    llvm_unreachable(0);
-  }
-#endif
-  --PredSU->NumSuccsLeft;
-  if (PredSU->NumSuccsLeft == 0 && PredSU != &EntrySU)
-    SchedImpl->releaseBottomNode(PredSU);
-}
-
-/// releasePredecessors - Call releasePred on each of SU's predecessors.
-void VLIWMachineScheduler::releasePredecessors(SUnit *SU) {
-  for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
-       I != E; ++I) {
-    releasePred(SU, &*I);
-  }
-}
-
-void VLIWMachineScheduler::moveInstruction(MachineInstr *MI,
-                                    MachineBasicBlock::iterator InsertPos) {
-  // Advance RegionBegin if the first instruction moves down.
-  if (&*RegionBegin == MI)
-    ++RegionBegin;
-
-  // Update the instruction stream.
-  BB->splice(InsertPos, BB, MI);
-
-  // Update LiveIntervals
-  LIS->handleMove(MI);
-
-  // Recede RegionBegin if an instruction moves above the first.
-  if (RegionBegin == InsertPos)
-    RegionBegin = MI;
-}
-
-bool VLIWMachineScheduler::checkSchedLimit() {
-#ifndef NDEBUG
-  if (NumInstrsScheduled == MISchedCutoff && MISchedCutoff != ~0U) {
-    CurrentTop = CurrentBottom;
-    return false;
-  }
-  ++NumInstrsScheduled;
-#endif
-  return true;
-}
-
-/// enterRegion - Called back from MachineScheduler::runOnMachineFunction after
-/// crossing a scheduling boundary. [begin, end) includes all instructions in
-/// the region, including the boundary itself and single-instruction regions
-/// that don't get scheduled.
-void VLIWMachineScheduler::enterRegion(MachineBasicBlock *bb,
-                                MachineBasicBlock::iterator begin,
-                                MachineBasicBlock::iterator end,
-                                unsigned endcount)
-{
-  ScheduleDAGInstrs::enterRegion(bb, begin, end, endcount);
-
-  // For convenience remember the end of the liveness region.
-  LiveRegionEnd =
-    (RegionEnd == bb->end()) ? RegionEnd : llvm::next(RegionEnd);
-}
-
-// Setup the register pressure trackers for the top scheduled top and bottom
-// scheduled regions.
-void VLIWMachineScheduler::initRegPressure() {
-  TopRPTracker.init(&MF, RegClassInfo, LIS, BB, RegionBegin);
-  BotRPTracker.init(&MF, RegClassInfo, LIS, BB, LiveRegionEnd);
-
-  // Close the RPTracker to finalize live ins.
-  RPTracker.closeRegion();
-
-  DEBUG(RPTracker.getPressure().dump(TRI));
-
-  // Initialize the live ins and live outs.
-  TopRPTracker.addLiveRegs(RPTracker.getPressure().LiveInRegs);
-  BotRPTracker.addLiveRegs(RPTracker.getPressure().LiveOutRegs);
-
-  // Close one end of the tracker so we can call
-  // getMaxUpward/DownwardPressureDelta before advancing across any
-  // instructions. This converts currently live regs into live ins/outs.
-  TopRPTracker.closeTop();
-  BotRPTracker.closeBottom();
-
-  // Account for liveness generated by the region boundary.
-  if (LiveRegionEnd != RegionEnd)
-    BotRPTracker.recede();
-
-  assert(BotRPTracker.getPos() == RegionEnd && "Can't find the region bottom");
-
-  // Cache the list of excess pressure sets in this region. This will also track
-  // the max pressure in the scheduled code for these sets.
-  RegionCriticalPSets.clear();
-  std::vector<unsigned> RegionPressure = RPTracker.getPressure().MaxSetPressure;
-  for (unsigned i = 0, e = RegionPressure.size(); i < e; ++i) {
-    unsigned Limit = TRI->getRegPressureSetLimit(i);
-    DEBUG(dbgs() << TRI->getRegPressureSetName(i)
-          << "Limit " << Limit
-          << " Actual " << RegionPressure[i] << "\n");
-    if (RegionPressure[i] > Limit)
-      RegionCriticalPSets.push_back(PressureElement(i, 0));
-  }
-  DEBUG(dbgs() << "Excess PSets: ";
-        for (unsigned i = 0, e = RegionCriticalPSets.size(); i != e; ++i)
-          dbgs() << TRI->getRegPressureSetName(
-            RegionCriticalPSets[i].PSetID) << " ";
-        dbgs() << "\n");
-
-  TotalPackets = 0;
-}
-
-// FIXME: When the pressure tracker deals in pressure differences then we won't
-// iterate over all RegionCriticalPSets[i].
-void VLIWMachineScheduler::
-updateScheduledPressure(std::vector<unsigned> NewMaxPressure) {
-  for (unsigned i = 0, e = RegionCriticalPSets.size(); i < e; ++i) {
-    unsigned ID = RegionCriticalPSets[i].PSetID;
-    int &MaxUnits = RegionCriticalPSets[i].UnitIncrease;
-    if ((int)NewMaxPressure[ID] > MaxUnits)
-      MaxUnits = NewMaxPressure[ID];
-  }
-}
-
 /// Check if scheduling of this SU is possible
 /// in the current packet.
 /// It is _not_ precise (statefull), it is more like
@@ -312,26 +115,6 @@ bool VLIWResourceModel::reserveResources(SUnit *SU) {
   return startNewCycle;
 }
 
-// Release all DAG roots for scheduling.
-void VLIWMachineScheduler::releaseRoots() {
-  SmallVector<SUnit*, 16> BotRoots;
-
-  for (std::vector<SUnit>::iterator
-         I = SUnits.begin(), E = SUnits.end(); I != E; ++I) {
-    // A SUnit is ready to top schedule if it has no predecessors.
-    if (I->Preds.empty())
-      SchedImpl->releaseTopNode(&(*I));
-    // A SUnit is ready to bottom schedule if it has no successors.
-    if (I->Succs.empty())
-      BotRoots.push_back(&(*I));
-  }
-  // Release bottom roots in reverse order so the higher priority nodes appear
-  // first. This is more natural and slightly more efficient.
-  for (SmallVectorImpl<SUnit*>::const_reverse_iterator
-         I = BotRoots.rbegin(), E = BotRoots.rend(); I != E; ++I)
-    SchedImpl->releaseBottomNode(*I);
-}
-
 /// schedule - Called back from MachineScheduler::runOnMachineFunction
 /// after setting up the current scheduling region. [RegionBegin, RegionEnd)
 /// only includes instructions that have DAG nodes, not scheduling boundaries.
@@ -343,18 +126,7 @@ void VLIWMachineScheduler::schedule() {
         << " at loop depth "  << MLI->getLoopDepth(BB)
         << " \n");
 
-  // Initialize the register pressure tracker used by buildSchedGraph.
-  RPTracker.init(&MF, RegClassInfo, LIS, BB, LiveRegionEnd);
-
-  // Account for liveness generate by the region boundary.
-  if (LiveRegionEnd != RegionEnd)
-    RPTracker.recede();
-
-  // Build the DAG, and compute current register pressure.
-  buildSchedGraph(AA, &RPTracker);
-
-  // Initialize top/bottom trackers after computing region pressure.
-  initRegPressure();
+  buildDAGWithRegPressure();
 
   // To view Height/Depth correctly, they should be accessed at least once.
   DEBUG(unsigned maxH = 0;
@@ -370,99 +142,27 @@ void VLIWMachineScheduler::schedule() {
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
           SUnits[su].dumpAll(this));
 
-  if (ViewMISchedDAGs) viewGraph();
+  initQueues();
 
-  SchedImpl->initialize(this);
-
-  // Release edges from the special Entry node or to the special Exit node.
-  releaseSuccessors(&EntrySU);
-  releasePredecessors(&ExitSU);
-
-  // Release all DAG roots for scheduling.
-  releaseRoots();
-
-  CurrentTop = nextIfDebug(RegionBegin, RegionEnd);
-  CurrentBottom = RegionEnd;
   bool IsTopNode = false;
   while (SUnit *SU = SchedImpl->pickNode(IsTopNode)) {
     if (!checkSchedLimit())
       break;
 
-    // Move the instruction to its new location in the instruction stream.
-    MachineInstr *MI = SU->getInstr();
+    scheduleMI(SU, IsTopNode);
 
-    if (IsTopNode) {
-      assert(SU->isTopReady() && "node still has unscheduled dependencies");
-      if (&*CurrentTop == MI)
-        CurrentTop = nextIfDebug(++CurrentTop, CurrentBottom);
-      else {
-        moveInstruction(MI, CurrentTop);
-        TopRPTracker.setPos(MI);
-      }
-
-      // Update top scheduled pressure.
-      TopRPTracker.advance();
-      assert(TopRPTracker.getPos() == CurrentTop && "out of sync");
-      updateScheduledPressure(TopRPTracker.getPressure().MaxSetPressure);
-
-      // Release dependent instructions for scheduling.
-      releaseSuccessors(SU);
-    } else {
-      assert(SU->isBottomReady() && "node still has unscheduled dependencies");
-      MachineBasicBlock::iterator priorII =
-        priorNonDebug(CurrentBottom, CurrentTop);
-      if (&*priorII == MI)
-        CurrentBottom = priorII;
-      else {
-        if (&*CurrentTop == MI) {
-          CurrentTop = nextIfDebug(++CurrentTop, priorII);
-          TopRPTracker.setPos(CurrentTop);
-        }
-        moveInstruction(MI, CurrentBottom);
-        CurrentBottom = MI;
-      }
-      // Update bottom scheduled pressure.
-      BotRPTracker.recede();
-      assert(BotRPTracker.getPos() == CurrentBottom && "out of sync");
-      updateScheduledPressure(BotRPTracker.getPressure().MaxSetPressure);
-
-      // Release dependent instructions for scheduling.
-      releasePredecessors(SU);
-    }
-    SU->isScheduled = true;
-    SchedImpl->schedNode(SU, IsTopNode);
+    updateQueues(SU, IsTopNode);
   }
   assert(CurrentTop == CurrentBottom && "Nonempty unscheduled zone.");
 
   placeDebugValues();
 }
 
-/// Reinsert any remaining debug_values, just like the PostRA scheduler.
-void VLIWMachineScheduler::placeDebugValues() {
-  // If first instruction was a DBG_VALUE then put it back.
-  if (FirstDbgValue) {
-    BB->splice(RegionBegin, BB, FirstDbgValue);
-    RegionBegin = FirstDbgValue;
-  }
-
-  for (std::vector<std::pair<MachineInstr *, MachineInstr *> >::iterator
-         DI = DbgValues.end(), DE = DbgValues.begin(); DI != DE; --DI) {
-    std::pair<MachineInstr *, MachineInstr *> P = *prior(DI);
-    MachineInstr *DbgValue = P.first;
-    MachineBasicBlock::iterator OrigPrevMI = P.second;
-    BB->splice(++OrigPrevMI, BB, DbgValue);
-    if (OrigPrevMI == llvm::prior(RegionEnd))
-      RegionEnd = DbgValue;
-  }
-  DbgValues.clear();
-  FirstDbgValue = NULL;
-}
-
-void ConvergingVLIWScheduler::initialize(VLIWMachineScheduler *dag) {
-  DAG = dag;
+void ConvergingVLIWScheduler::initialize(ScheduleDAGMI *dag) {
+  DAG = static_cast<VLIWMachineScheduler*>(dag);
   TRI = DAG->TRI;
-  Top.DAG = dag;
-  Bot.DAG = dag;
+  Top.DAG = DAG;
+  Bot.DAG = DAG;
 
   // Initialize the HazardRecognizers.
   const TargetMachine &TM = DAG->MF.getTarget();
@@ -473,7 +173,7 @@ void ConvergingVLIWScheduler::initialize(VLIWMachineScheduler *dag) {
   Top.ResourceModel = new VLIWResourceModel(TM);
   Bot.ResourceModel = new VLIWResourceModel(TM);
 
-  assert((!ForceTopDown || !ForceBottomUp) &&
+  assert((!llvm::ForceTopDown || !llvm::ForceBottomUp) &&
          "-misched-topdown incompatible with -misched-bottomup");
 }
 
@@ -899,7 +599,7 @@ SUnit *ConvergingVLIWScheduler::pickNode(bool &IsTopNode) {
     return NULL;
   }
   SUnit *SU;
-  if (ForceTopDown) {
+  if (llvm::ForceTopDown) {
     SU = Top.pickOnlyChoice();
     if (!SU) {
       SchedCandidate TopCand;
@@ -910,7 +610,7 @@ SUnit *ConvergingVLIWScheduler::pickNode(bool &IsTopNode) {
       SU = TopCand.SU;
     }
     IsTopNode = true;
-  } else if (ForceBottomUp) {
+  } else if (llvm::ForceBottomUp) {
     SU = Bot.pickOnlyChoice();
     if (!SU) {
       SchedCandidate BotCand;

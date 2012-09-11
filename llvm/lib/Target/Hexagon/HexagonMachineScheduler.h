@@ -33,96 +33,11 @@
 
 using namespace llvm;
 
-//===----------------------------------------------------------------------===//
-// MachineSchedStrategy - Interface to a machine scheduling algorithm.
-//===----------------------------------------------------------------------===//
-
 namespace llvm {
-class VLIWMachineScheduler;
-
-/// MachineSchedStrategy - Interface used by VLIWMachineScheduler to drive
-/// the selected scheduling algorithm.
-///
-/// TODO: Move this to ScheduleDAGInstrs.h
-class MachineSchedStrategy {
-public:
-  virtual ~MachineSchedStrategy() {}
-
-  /// Initialize the strategy after building the DAG for a new region.
-  virtual void initialize(VLIWMachineScheduler *DAG) = 0;
-
-  /// Pick the next node to schedule, or return NULL. Set IsTopNode to true to
-  /// schedule the node at the top of the unscheduled region. Otherwise it will
-  /// be scheduled at the bottom.
-  virtual SUnit *pickNode(bool &IsTopNode) = 0;
-
-  /// Notify MachineSchedStrategy that VLIWMachineScheduler has
-  /// scheduled a node.
-  virtual void schedNode(SUnit *SU, bool IsTopNode) = 0;
-
-  /// When all predecessor dependencies have been resolved, free this node for
-  /// top-down scheduling.
-  virtual void releaseTopNode(SUnit *SU) = 0;
-  /// When all successor dependencies have been resolved, free this node for
-  /// bottom-up scheduling.
-  virtual void releaseBottomNode(SUnit *SU) = 0;
-};
-
 //===----------------------------------------------------------------------===//
 // ConvergingVLIWScheduler - Implementation of the standard
 // MachineSchedStrategy.
 //===----------------------------------------------------------------------===//
-
-/// ReadyQueue encapsulates vector of "ready" SUnits with basic convenience
-/// methods for pushing and removing nodes. ReadyQueue's are uniquely identified
-/// by an ID. SUnit::NodeQueueId is a mask of the ReadyQueues the SUnit is in.
-class ReadyQueue {
-  unsigned ID;
-  std::string Name;
-  std::vector<SUnit*> Queue;
-
-public:
-  ReadyQueue(unsigned id, const Twine &name): ID(id), Name(name.str()) {}
-
-  unsigned getID() const { return ID; }
-
-  StringRef getName() const { return Name; }
-
-  // SU is in this queue if it's NodeQueueID is a superset of this ID.
-  bool isInQueue(SUnit *SU) const { return (SU->NodeQueueId & ID); }
-
-  bool empty() const { return Queue.empty(); }
-
-  unsigned size() const { return Queue.size(); }
-
-  typedef std::vector<SUnit*>::iterator iterator;
-
-  iterator begin() { return Queue.begin(); }
-
-  iterator end() { return Queue.end(); }
-
-  iterator find(SUnit *SU) {
-    return std::find(Queue.begin(), Queue.end(), SU);
-  }
-
-  void push(SUnit *SU) {
-    Queue.push_back(SU);
-    SU->NodeQueueId |= ID;
-  }
-
-  void remove(iterator I) {
-    (*I)->NodeQueueId &= ~ID;
-    *I = Queue.back();
-    Queue.pop_back();
-  }
-
-  void dump() {
-    dbgs() << Name << ": ";
-    for (unsigned i = 0, e = Queue.size(); i < e; ++i)
-      dbgs() << Queue[i]->NodeNum << " ";
-    dbgs() << "\n";
-  }
-};
 
 class VLIWResourceModel {
   /// ResourcesModel - Represents VLIW state.
@@ -189,124 +104,17 @@ public:
   unsigned getTotalPackets() const { return TotalPackets; }
 };
 
-class VLIWMachineScheduler : public ScheduleDAGInstrs {
-  /// AA - AliasAnalysis for making memory reference queries.
-  AliasAnalysis *AA;
-
-  RegisterClassInfo *RegClassInfo;
-  MachineSchedStrategy *SchedImpl;
-
-  MachineBasicBlock::iterator LiveRegionEnd;
-
-  /// Register pressure in this region computed by buildSchedGraph.
-  IntervalPressure RegPressure;
-  RegPressureTracker RPTracker;
-
-  /// List of pressure sets that exceed the target's pressure limit before
-  /// scheduling, listed in increasing set ID order. Each pressure set is paired
-  /// with its max pressure in the currently scheduled regions.
-  std::vector<PressureElement> RegionCriticalPSets;
-
-  /// The top of the unscheduled zone.
-  MachineBasicBlock::iterator CurrentTop;
-  IntervalPressure TopPressure;
-  RegPressureTracker TopRPTracker;
-
-  /// The bottom of the unscheduled zone.
-  MachineBasicBlock::iterator CurrentBottom;
-  IntervalPressure BotPressure;
-  RegPressureTracker BotRPTracker;
-
-#ifndef NDEBUG
-  /// The number of instructions scheduled so far. Used to cut off the
-  /// scheduler at the point determined by misched-cutoff.
-  unsigned NumInstrsScheduled;
-#endif
-
-  /// Total packets in the region.
-  unsigned TotalPackets;
-
+/// Extend the standard ScheduleDAGMI to provide more context and override the
+/// top-level schedule() driver.
+class VLIWMachineScheduler : public ScheduleDAGMI {
   const MachineLoopInfo *MLI;
 public:
   VLIWMachineScheduler(MachineSchedContext *C, MachineSchedStrategy *S):
-    ScheduleDAGInstrs(*C->MF, *C->MLI, *C->MDT, /*IsPostRA=*/false, C->LIS),
-    AA(C->AA), RegClassInfo(C->RegClassInfo), SchedImpl(S),
-    RPTracker(RegPressure), CurrentTop(), TopRPTracker(TopPressure),
-    CurrentBottom(), BotRPTracker(BotPressure), MLI(C->MLI) {
-#ifndef NDEBUG
-    NumInstrsScheduled = 0;
-#endif
-    TotalPackets = 0;
-  }
-
-  virtual ~VLIWMachineScheduler() {
-    delete SchedImpl;
-  }
-
-  MachineBasicBlock::iterator top() const { return CurrentTop; }
-  MachineBasicBlock::iterator bottom() const { return CurrentBottom; }
-
-  /// Implement the ScheduleDAGInstrs interface for handling the next scheduling
-  /// region. This covers all instructions in a block, while schedule() may only
-  /// cover a subset.
-  void enterRegion(MachineBasicBlock *bb,
-                   MachineBasicBlock::iterator begin,
-                   MachineBasicBlock::iterator end,
-                   unsigned endcount);
+    ScheduleDAGMI(C, S), MLI(C->MLI) {}
 
   /// Schedule - This is called back from ScheduleDAGInstrs::Run() when it's
   /// time to do some work.
-  void schedule();
-
-  unsigned CurCycle;
-
-  /// Get current register pressure for the top scheduled instructions.
-  const IntervalPressure &getTopPressure() const { return TopPressure; }
-  const RegPressureTracker &getTopRPTracker() const { return TopRPTracker; }
-
-  /// Get current register pressure for the bottom scheduled instructions.
-  const IntervalPressure &getBotPressure() const { return BotPressure; }
-  const RegPressureTracker &getBotRPTracker() const { return BotRPTracker; }
-
-  /// Get register pressure for the entire scheduling region before scheduling.
-  const IntervalPressure &getRegPressure() const { return RegPressure; }
-
-  const std::vector<PressureElement> &getRegionCriticalPSets() const {
-    return RegionCriticalPSets;
-  }
-
-  /// getIssueWidth - Return the max instructions per scheduling group.
-  unsigned getIssueWidth() const {
-    return (InstrItins && InstrItins->SchedModel)
-      ? InstrItins->SchedModel->IssueWidth : 1;
-  }
-
-  /// getNumMicroOps - Return the number of issue slots required for this MI.
-  unsigned getNumMicroOps(MachineInstr *MI) const {
-    return 1;
-    //if (!InstrItins) return 1;
-    //int UOps = InstrItins->getNumMicroOps(MI->getDesc().getSchedClass());
-    //return (UOps >= 0) ? UOps : TII->getNumMicroOps(InstrItins, MI);
-  }
-
-private:
-  void scheduleNodeTopDown(SUnit *SU);
-  void listScheduleTopDown();
-
-  void initRegPressure();
-  void updateScheduledPressure(std::vector<unsigned> NewMaxPressure);
-
-  void moveInstruction(MachineInstr *MI, MachineBasicBlock::iterator InsertPos);
-  bool checkSchedLimit();
-
-  void releaseRoots();
-
-  void releaseSucc(SUnit *SU, SDep *SuccEdge);
-  void releaseSuccessors(SUnit *SU);
-  void releasePred(SUnit *SU, SDep *PredEdge);
-  void releasePredecessors(SUnit *SU);
-
-  void placeDebugValues();
+  virtual void schedule();
 };
 
 /// ConvergingVLIWScheduler shrinks the unscheduled zone using heuristics
@@ -405,7 +213,7 @@ public:
   ConvergingVLIWScheduler():
     DAG(0), TRI(0), Top(TopQID, "TopQ"), Bot(BotQID, "BotQ") {}
 
-  virtual void initialize(VLIWMachineScheduler *dag);
+  virtual void initialize(ScheduleDAGMI *dag);
 
   virtual SUnit *pickNode(bool &IsTopNode);
 
