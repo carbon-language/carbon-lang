@@ -864,7 +864,6 @@ static void handleLockReturnedAttr(Sema &S, Decl *D,
 
   if (!checkAttributeNumArgs(S, Attr, 1))
     return;
-  Expr *Arg = Attr.getArg(0);
 
   if (!isa<FunctionDecl>(D) && !isa<FunctionTemplateDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_thread_attribute_wrong_decl_type)
