@@ -743,7 +743,7 @@ private:
 OptionDefinition
 CommandObjectWatchpointIgnore::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_ALL, true, "ignore-count", 'i', required_argument, NULL, NULL, eArgTypeCount, "Set the number of times this watchpoint is skipped before stopping." },
+    { LLDB_OPT_SET_ALL, true, "ignore-count", 'i', required_argument, NULL, 0, eArgTypeCount, "Set the number of times this watchpoint is skipped before stopping." },
     { 0,                false, NULL,            0 , 0,                 NULL, 0,    eArgTypeNone, NULL }
 };
 
@@ -906,7 +906,7 @@ private:
 OptionDefinition
 CommandObjectWatchpointModify::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_ALL, false, "condition",    'c', required_argument, NULL, NULL, eArgTypeExpression, "The watchpoint stops only if this condition expression evaluates to true."},
+{ LLDB_OPT_SET_ALL, false, "condition",    'c', required_argument, NULL, 0, eArgTypeExpression, "The watchpoint stops only if this condition expression evaluates to true."},
 { 0,                false, NULL,            0 , 0,                 NULL, 0,    eArgTypeNone, NULL }
 };
 
