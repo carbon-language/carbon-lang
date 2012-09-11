@@ -333,6 +333,13 @@ public:
     return NumRegs;
   }
 
+  /// getNumSubRegIndices - Return the number of sub-register indices
+  /// understood by the target. Index 0 is reserved for the no-op sub-register,
+  /// while 1 to getNumSubRegIndices() - 1 represent real sub-registers.
+  unsigned getNumSubRegIndices() const {
+    return NumSubRegIndices;
+  }
+
   /// getNumRegUnits - Return the number of (native) register units in the
   /// target. Register units are numbered from 0 to getNumRegUnits() - 1. They
   /// can be accessed through MCRegUnitIterator defined below.

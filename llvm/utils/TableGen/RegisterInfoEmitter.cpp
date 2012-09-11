@@ -770,7 +770,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
      << TargetName << "RegDiffLists, "
      << TargetName << "RegStrings, "
      << TargetName << "SubRegIdxLists, "
-     << SubRegIndices.size() << ",\n"
+     << (SubRegIndices.size() + 1) << ",\n"
      << "  " << TargetName << "RegEncodingTable);\n\n";
 
   EmitRegMapping(OS, Regs, false);
@@ -1131,7 +1131,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
      << "                     " << TargetName << "RegDiffLists,\n"
      << "                     " << TargetName << "RegStrings,\n"
      << "                     " << TargetName << "SubRegIdxLists,\n"
-     << "                     " << SubRegIndices.size() << ",\n"
+     << "                     " << SubRegIndices.size() + 1 << ",\n"
      << "                     " << TargetName << "RegEncodingTable);\n\n";
 
   EmitRegMapping(OS, Regs, true);

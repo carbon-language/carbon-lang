@@ -327,7 +327,8 @@ public:
   /// getSubRegIndexName - Return the human-readable symbolic target-specific
   /// name for the specified SubRegIndex.
   const char *getSubRegIndexName(unsigned SubIdx) const {
-    assert(SubIdx && "This is not a subregister index");
+    assert(SubIdx && SubIdx < getNumSubRegIndices() &&
+           "This is not a subregister index");
     return SubRegIndexNames[SubIdx-1];
   }
 

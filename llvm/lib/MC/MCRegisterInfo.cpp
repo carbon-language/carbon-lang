@@ -24,6 +24,8 @@ unsigned MCRegisterInfo::getMatchingSuperReg(unsigned Reg, unsigned SubIdx,
 }
 
 unsigned MCRegisterInfo::getSubReg(unsigned Reg, unsigned Idx) const {
+  assert(Idx && Idx < getNumSubRegIndices() &&
+         "This is not a subregister index");
   // Get a pointer to the corresponding SubRegIndices list. This list has the
   // name of each sub-register in the same order as MCSubRegIterator.
   const uint16_t *SRI = SubRegIndices + get(Reg).SubRegIndices;
@@ -34,6 +36,7 @@ unsigned MCRegisterInfo::getSubReg(unsigned Reg, unsigned Idx) const {
 }
 
 unsigned MCRegisterInfo::getSubRegIndex(unsigned Reg, unsigned SubReg) const {
+  assert(SubReg && SubReg < getNumRegs() && "This is not a register");
   // Get a pointer to the corresponding SubRegIndices list. This list has the
   // name of each sub-register in the same order as MCSubRegIterator.
   const uint16_t *SRI = SubRegIndices + get(Reg).SubRegIndices;
