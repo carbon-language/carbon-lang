@@ -270,7 +270,7 @@ Listener::FindNextEventInternal
     EventSP &event_sp,
     bool remove)
 {
-    //LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EVENTS));
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EVENTS));
 
     Mutex::Locker lock(m_events_mutex);
 
@@ -292,6 +292,18 @@ Listener::FindNextEventInternal
     if (pos != m_events.end())
     {
         event_sp = *pos;
+        
+        if (log)
+            log->Printf ("%p '%s' Listener::FindNextEventInternal(broadcaster=%p, broadcaster_names=%p[%u], event_type_mask=0x%8.8x, remove=%i) event %p",
+                         this,
+                         GetName(),
+                         broadcaster,
+                         broadcaster_names,
+                         num_broadcaster_names,
+                         event_type_mask,
+                         remove,
+                         event_sp.get());
+
         if (remove)
         {
             m_events.erase(pos);
@@ -413,14 +425,14 @@ Listener::WaitForEventsInternal
         {
             log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EVENTS);
             if (log)
-                log->Printf ("%p Listener::WaitForEvents() timed out for %s", this, m_name.c_str());
+                log->Printf ("%p Listener::WaitForEventsInternal() timed out for %s", this, m_name.c_str());
             break;
         }
         else
         {
             log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EVENTS);
             if (log)
-                log->Printf ("%p Listener::WaitForEvents() unknown error for %s", this, m_name.c_str());
+                log->Printf ("%p Listener::WaitForEventsInternal() unknown error for %s", this, m_name.c_str());
             break;
         }
     }
