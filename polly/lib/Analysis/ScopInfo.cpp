@@ -270,6 +270,7 @@ isl_map *MemoryAccess::getNewAccessRelation() const {
 isl_basic_map *MemoryAccess::createBasicAccessMap(ScopStmt *Statement) {
   isl_space *Space = isl_space_set_alloc(Statement->getIslCtx(), 0, 1);
   Space = isl_space_set_tuple_name(Space, isl_dim_set, getBaseName().c_str());
+  Space = isl_space_align_params(Space, Statement->getDomainSpace());
 
   return isl_basic_map_from_domain_and_range(
     isl_basic_set_universe(Statement->getDomainSpace()),
