@@ -141,6 +141,7 @@ namespace {
       (void) llvm::createLoopDeletionPass();
       (void) llvm::createPostDomTree();
       (void) llvm::createInstructionNamerPass();
+      (void) llvm::createMetaRenamerPass();
       (void) llvm::createFunctionAttrsPass();
       (void) llvm::createMergeFunctionsPass();
       (void) llvm::createPrintModulePass(0);

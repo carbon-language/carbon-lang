@@ -178,6 +178,7 @@ void initializeMachineVerifierPassPass(PassRegistry&);
 void initializeMemCpyOptPass(PassRegistry&);
 void initializeMemDepPrinterPass(PassRegistry&);
 void initializeMemoryDependenceAnalysisPass(PassRegistry&);
+void initializeMetaRenamerPass(PassRegistry&);
 void initializeMergeFunctionsPass(PassRegistry&);
 void initializeModuleDebugInfoPrinterPass(PassRegistry&);
 void initializeNoAAPass(PassRegistry&);
