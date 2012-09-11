@@ -491,7 +491,7 @@
 		49A71FE8141FFACF00D59478 /* DataEncoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268ED0A4140FF54200DE830F /* DataEncoder.cpp */; };
 		49C8507C1384A786007DB519 /* ProcessDataAllocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49C850781384A0CA007DB519 /* ProcessDataAllocator.cpp */; };
 		49D8FB3913B5598F00411094 /* ClangASTImporter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49D8FB3513B558DE00411094 /* ClangASTImporter.cpp */; };
-		49DA65031485C92A005FF180 /* AppleObjCSymbolVendor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49DA65021485C92A005FF180 /* AppleObjCSymbolVendor.cpp */; };
+		49DA65031485C92A005FF180 /* AppleObjCTypeVendor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49DA65021485C92A005FF180 /* AppleObjCTypeVendor.cpp */; };
 		4C6649A014EEE7F100B0316F /* StreamCallback.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C66499F14EEE7F100B0316F /* StreamCallback.h */; };
 		4C6649A314EEE81000B0316F /* StreamCallback.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C6649A214EEE81000B0316F /* StreamCallback.cpp */; };
 		4C701C1E15ABB70C00B50001 /* libxml2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26D55234159A7DB100708D8D /* libxml2.dylib */; };
@@ -1412,6 +1412,7 @@
 		49A1CAC31430E8BD00306AC9 /* ExpressionSourceCode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ExpressionSourceCode.cpp; path = source/Expression/ExpressionSourceCode.cpp; sourceTree = "<group>"; };
 		49A8A39F11D568A300AD3B68 /* ASTResultSynthesizer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTResultSynthesizer.cpp; path = source/Expression/ASTResultSynthesizer.cpp; sourceTree = "<group>"; };
 		49A8A3A311D568BF00AD3B68 /* ASTResultSynthesizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTResultSynthesizer.h; path = include/lldb/Expression/ASTResultSynthesizer.h; sourceTree = "<group>"; };
+		49B01A2D15F67B1700666829 /* TypeVendor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TypeVendor.h; path = include/lldb/Symbol/TypeVendor.h; sourceTree = "<group>"; };
 		49BB309511F79450001A4197 /* TaggedASTType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TaggedASTType.h; path = include/lldb/Symbol/TaggedASTType.h; sourceTree = "<group>"; };
 		49C850761384A02F007DB519 /* ProcessDataAllocator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ProcessDataAllocator.h; path = include/lldb/Expression/ProcessDataAllocator.h; sourceTree = "<group>"; };
 		49C850781384A0CA007DB519 /* ProcessDataAllocator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ProcessDataAllocator.cpp; path = source/Expression/ProcessDataAllocator.cpp; sourceTree = "<group>"; };
@@ -1423,8 +1424,8 @@
 		49D7072811B5AD11001AD875 /* ClangASTSource.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangASTSource.cpp; path = source/Expression/ClangASTSource.cpp; sourceTree = "<group>"; };
 		49D8FB3513B558DE00411094 /* ClangASTImporter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangASTImporter.cpp; path = source/Symbol/ClangASTImporter.cpp; sourceTree = "<group>"; };
 		49D8FB3713B5594900411094 /* ClangASTImporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangASTImporter.h; path = include/lldb/Symbol/ClangASTImporter.h; sourceTree = "<group>"; };
-		49DA65021485C92A005FF180 /* AppleObjCSymbolVendor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AppleObjCSymbolVendor.cpp; sourceTree = "<group>"; };
-		49DA65041485C942005FF180 /* AppleObjCSymbolVendor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppleObjCSymbolVendor.h; sourceTree = "<group>"; };
+		49DA65021485C92A005FF180 /* AppleObjCTypeVendor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AppleObjCTypeVendor.cpp; sourceTree = "<group>"; };
+		49DA65041485C942005FF180 /* AppleObjCTypeVendor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppleObjCTypeVendor.h; sourceTree = "<group>"; };
 		49E45FA911F660DC008F7B28 /* ClangASTType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangASTType.h; path = include/lldb/Symbol/ClangASTType.h; sourceTree = "<group>"; };
 		49E45FAD11F660FE008F7B28 /* ClangASTType.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangASTType.cpp; path = source/Symbol/ClangASTType.cpp; sourceTree = "<group>"; };
 		49EC3E98118F90AC00B1265E /* ThreadPlanCallFunction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadPlanCallFunction.cpp; path = source/Target/ThreadPlanCallFunction.cpp; sourceTree = "<group>"; };
@@ -2649,6 +2650,7 @@
 				9467E65113C3D97600B3B6F3 /* TypeHierarchyNavigator.cpp */,
 				26BC7C6610F1B6E900F91463 /* TypeList.h */,
 				26BC7F2110F1B8EC00F91463 /* TypeList.cpp */,
+				49B01A2D15F67B1700666829 /* TypeVendor.h */,
 				269FF07F12494F8E00225026 /* UnwindPlan.h */,
 				961FABB91235DE1600F93A47 /* UnwindPlan.cpp */,
 				269FF08112494FC200225026 /* UnwindTable.h */,
@@ -3237,10 +3239,10 @@
 				4CCA644513B40B82003BDF98 /* AppleObjCRuntimeV1.h */,
 				4CCA644613B40B82003BDF98 /* AppleObjCRuntimeV2.cpp */,
 				4CCA644713B40B82003BDF98 /* AppleObjCRuntimeV2.h */,
-				49DA65041485C942005FF180 /* AppleObjCSymbolVendor.h */,
-				49DA65021485C92A005FF180 /* AppleObjCSymbolVendor.cpp */,
 				4CCA644813B40B82003BDF98 /* AppleObjCTrampolineHandler.cpp */,
 				4CCA644913B40B82003BDF98 /* AppleObjCTrampolineHandler.h */,
+				49DA65041485C942005FF180 /* AppleObjCTypeVendor.h */,
+				49DA65021485C92A005FF180 /* AppleObjCTypeVendor.cpp */,
 				4CCA644A13B40B82003BDF98 /* AppleThreadPlanStepThroughObjCTrampoline.cpp */,
 				4CCA644B13B40B82003BDF98 /* AppleThreadPlanStepThroughObjCTrampoline.h */,
 			);
@@ -4081,7 +4083,7 @@
 				B207C4931429607D00F36E4E /* CommandObjectWatchpoint.cpp in Sources */,
 				49A1CAC51430E8DE00306AC9 /* ExpressionSourceCode.cpp in Sources */,
 				494260DA14579144003C1C78 /* VerifyDecl.cpp in Sources */,
-				49DA65031485C92A005FF180 /* AppleObjCSymbolVendor.cpp in Sources */,
+				49DA65031485C92A005FF180 /* AppleObjCTypeVendor.cpp in Sources */,
 				4966DCC4148978A10028481B /* ClangExternalASTSourceCommon.cpp in Sources */,
 				26A527C114E24F5F00F3A14A /* ProcessMachCore.cpp in Sources */,
 				26A527C314E24F5F00F3A14A /* ThreadMachCore.cpp in Sources */,
