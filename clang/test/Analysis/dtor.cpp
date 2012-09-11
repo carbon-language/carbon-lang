@@ -281,3 +281,23 @@ namespace MultipleInheritanceVirtualDtors {
     SubclassB b;
   }
 }
+
+namespace ExplicitDestructorCall {
+  class VirtualDtor {
+  public:
+    virtual ~VirtualDtor() {
+      clang_analyzer_checkInlined(true); // expected-warning{{TRUE}}
+    }
+  };
+  
+  class Subclass : public VirtualDtor {
+  public:
+    virtual ~Subclass() {
+      clang_analyzer_checkInlined(false); // no-warning
+    }
+  };
+  
+  void destroy(Subclass *obj) {
+    obj->VirtualDtor::~VirtualDtor();
+  }
+}

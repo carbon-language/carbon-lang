@@ -325,3 +325,18 @@ namespace VirtualWithSisterCasts {
     clang_analyzer_eval(g->x == 42); // expected-warning{{TRUE}}
   }
 }
+
+
+namespace QualifiedCalls {
+  void test(One *object) {
+    // This uses the One class from the top of the file.
+    clang_analyzer_eval(object->getNum() == 1); // expected-warning{{UNKNOWN}}
+    clang_analyzer_eval(object->One::getNum() == 1); // expected-warning{{TRUE}}
+    clang_analyzer_eval(object->A::getNum() == 0); // expected-warning{{TRUE}}
+
+    // getZero is non-virtual.
+    clang_analyzer_eval(object->getZero() == 0); // expected-warning{{TRUE}}
+    clang_analyzer_eval(object->One::getZero() == 0); // expected-warning{{TRUE}}
+    clang_analyzer_eval(object->A::getZero() == 0); // expected-warning{{TRUE}}
+}
+}

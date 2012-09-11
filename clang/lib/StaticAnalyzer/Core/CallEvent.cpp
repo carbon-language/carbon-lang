@@ -496,6 +496,18 @@ const Expr *CXXMemberCall::getCXXThisExpr() const {
   return getOriginExpr()->getImplicitObjectArgument();
 }
 
+RuntimeDefinition CXXMemberCall::getRuntimeDefinition() const {
+  // C++11 [expr.call]p1: ...If the selected function is non-virtual, or if the
+  // id-expression in the class member access expression is a qualified-id,
+  // that function is called. Otherwise, its final overrider in the dynamic type
+  // of the object expression is called.
+  if (const MemberExpr *ME = dyn_cast<MemberExpr>(getOriginExpr()->getCallee()))
+    if (ME->hasQualifier())
+      return AnyFunctionCall::getRuntimeDefinition();
+  
+  return CXXInstanceCall::getRuntimeDefinition();
+}
+
 
 const Expr *CXXMemberOperatorCall::getCXXThisExpr() const {
   return getOriginExpr()->getArg(0);

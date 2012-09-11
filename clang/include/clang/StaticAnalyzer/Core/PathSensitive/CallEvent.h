@@ -549,6 +549,8 @@ public:
   }
 
   virtual const Expr *getCXXThisExpr() const;
+  
+  virtual RuntimeDefinition getRuntimeDefinition() const;
 
   virtual Kind getKind() const { return CE_CXXMember; }
 
