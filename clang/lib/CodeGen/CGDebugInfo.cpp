@@ -1985,7 +1985,7 @@ llvm::DISubprogram CGDebugInfo::getFunctionDeclaration(const Decl *D) {
 
 // getOrCreateFunctionType - Construct DIType. If it is a c++ method, include
 // implicit parameter "this".
-llvm::DIType CGDebugInfo::getOrCreateFunctionType(const Decl * D,
+llvm::DIType CGDebugInfo::getOrCreateFunctionType(const Decl *D,
                                                   QualType FnType,
                                                   llvm::DIFile F) {
 
@@ -2000,7 +2000,7 @@ llvm::DIType CGDebugInfo::getOrCreateFunctionType(const Decl * D,
     // "self" pointer is always first argument.
     llvm::DIType SelfTy = getOrCreateType(OMethod->getSelfDecl()->getType(), F);
     Elts.push_back(DBuilder.createArtificialType(SelfTy));
-    // "cmd" pointer is always second argument.
+    // "_cmd" pointer is always second argument.
     llvm::DIType CmdTy = getOrCreateType(OMethod->getCmdDecl()->getType(), F);
     Elts.push_back(DBuilder.createArtificialType(CmdTy));
     // Get rest of the arguments.
