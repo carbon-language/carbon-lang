@@ -1012,7 +1012,7 @@ void ScheduleDAGInstrs::computeLatency(SUnit *SU) {
 }
 
 void ScheduleDAGInstrs::dumpNode(const SUnit *SU) const {
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
   SU->getInstr()->dump();
 #endif
 }

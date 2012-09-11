@@ -63,7 +63,7 @@ void RegisterPressure::decrease(const TargetRegisterClass *RC,
   decreaseSetPressure(MaxSetPressure, RC, TRI);
 }
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void RegisterPressure::dump(const TargetRegisterInfo *TRI) {
   dbgs() << "Live In: ";
   for (unsigned i = 0, e = LiveInRegs.size(); i < e; ++i)

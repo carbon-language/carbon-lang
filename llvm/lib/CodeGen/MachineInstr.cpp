@@ -1496,7 +1496,7 @@ void MachineInstr::copyImplicitOps(const MachineInstr *MI) {
 }
 
 void MachineInstr::dump() const {
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
   dbgs() << "  " << *this;
 #endif
 }

@@ -143,7 +143,7 @@ void SlotIndexes::renumberIndexes(IndexList::iterator curItr) {
 }
 
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void SlotIndexes::dump() const {
   for (IndexList::const_iterator itr = indexList.begin();
        itr != indexList.end(); ++itr) {
@@ -170,7 +170,7 @@ void SlotIndex::print(raw_ostream &os) const {
     os << "invalid";
 }
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 // Dump a SlotIndex to stderr.
 void SlotIndex::dump() const {
   print(dbgs());

@@ -228,7 +228,7 @@ const MachineBasicBlock *MachineBasicBlock::getLandingPadSuccessor() const {
   return 0;
 }
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void MachineBasicBlock::dump() const {
   print(dbgs());
 }

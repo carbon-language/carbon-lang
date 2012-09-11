@@ -279,7 +279,7 @@ void MachineScheduler::print(raw_ostream &O, const Module* m) const {
   // unimplemented
 }
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void ReadyQueue::dump() {
   dbgs() << Name << ": ";
   for (unsigned i = 0, e = Queue.size(); i < e; ++i)

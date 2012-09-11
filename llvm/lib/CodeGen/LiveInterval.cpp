@@ -748,7 +748,7 @@ raw_ostream& llvm::operator<<(raw_ostream& os, const LiveRange &LR) {
   return os << '[' << LR.start << ',' << LR.end << ':' << LR.valno->id << ")";
 }
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void LiveRange::dump() const {
   dbgs() << *this << "\n";
 }
@@ -785,7 +785,7 @@ void LiveInterval::print(raw_ostream &OS) const {
   }
 }
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void LiveInterval::dump() const {
   dbgs() << *this << "\n";
 }
