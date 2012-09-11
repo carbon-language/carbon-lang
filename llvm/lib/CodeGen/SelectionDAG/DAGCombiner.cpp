@@ -194,6 +194,7 @@ namespace {
     SDValue visitOR(SDNode *N);
     SDValue visitXOR(SDNode *N);
     SDValue SimplifyVBinOp(SDNode *N);
+    SDValue SimplifyVUnaryOp(SDNode *N);
     SDValue visitSHL(SDNode *N);
     SDValue visitSRA(SDNode *N);
     SDValue visitSRL(SDNode *N);
@@ -6409,28 +6410,9 @@ SDValue DAGCombiner::visitFNEG(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   EVT VT = N->getValueType(0);
 
-  if (VT.isVector() && !LegalOperations) {
-    // If operand is a BUILD_VECTOR node, see if we can constant fold it.
-    if (N0.getOpcode() == ISD::BUILD_VECTOR) {
-      SmallVector<SDValue, 8> Ops;
-      for (unsigned i = 0, e = N0.getNumOperands(); i != e; ++i) {
-        SDValue Op = N0.getOperand(i);
-        if (Op.getOpcode() != ISD::UNDEF &&
-            Op.getOpcode() != ISD::ConstantFP)
-          break;
-        EVT EltVT = Op.getValueType();
-        SDValue FoldOp = DAG.getNode(ISD::FNEG, N0.getDebugLoc(), EltVT, Op);
-        if (FoldOp.getOpcode() != ISD::UNDEF &&
-            FoldOp.getOpcode() != ISD::ConstantFP)
-          break;
-        Ops.push_back(FoldOp);
-        AddToWorkList(FoldOp.getNode());
-      }
-
-      if (Ops.size() == N0.getNumOperands())
-        return DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(),
-                           VT, &Ops[0], Ops.size());
-    }
+  if (VT.isVector()) {
+    SDValue FoldedVOp = SimplifyVUnaryOp(N);
+    if (FoldedVOp.getNode()) return FoldedVOp;
   }
 
   if (isNegatibleForFree(N0, LegalOperations, DAG.getTargetLoweringInfo(),
@@ -6508,6 +6490,11 @@ SDValue DAGCombiner::visitFABS(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
   EVT VT = N->getValueType(0);
+
+  if (VT.isVector()) {
+    SDValue FoldedVOp = SimplifyVUnaryOp(N);
+    if (FoldedVOp.getNode()) return FoldedVOp;
+  }
 
   // fold (fabs c1) -> fabs(c1)
   if (N0CFP && VT != MVT::ppcf128)
@@ -8489,6 +8476,44 @@ SDValue DAGCombiner::SimplifyVBinOp(SDNode *N) {
   }
 
   return SDValue();
+}
+
+/// SimplifyVUnaryOp - Visit a binary vector operation, like FABS/FNEG.
+SDValue DAGCombiner::SimplifyVUnaryOp(SDNode *N) {
+  // After legalize, the target may be depending on adds and other
+  // binary ops to provide legal ways to construct constants or other
+  // things. Simplifying them may result in a loss of legality.
+  if (LegalOperations) return SDValue();
+
+  assert(N->getValueType(0).isVector() &&
+         "SimplifyVUnaryOp only works on vectors!");
+
+  SDValue N0 = N->getOperand(0);
+
+  if (N0.getOpcode() != ISD::BUILD_VECTOR)
+    return SDValue();
+
+  // Operand is a BUILD_VECTOR node, see if we can constant fold it.
+  SmallVector<SDValue, 8> Ops;
+  for (unsigned i = 0, e = N0.getNumOperands(); i != e; ++i) {
+    SDValue Op = N0.getOperand(i);
+    if (Op.getOpcode() != ISD::UNDEF &&
+        Op.getOpcode() != ISD::ConstantFP)
+      break;
+    EVT EltVT = Op.getValueType();
+    SDValue FoldOp = DAG.getNode(N->getOpcode(), N0.getDebugLoc(), EltVT, Op);
+    if (FoldOp.getOpcode() != ISD::UNDEF &&
+        FoldOp.getOpcode() != ISD::ConstantFP)
+      break;
+    Ops.push_back(FoldOp);
+    AddToWorkList(FoldOp.getNode());
+  }
+
+  if (Ops.size() != N0.getNumOperands())
+    return SDValue();
+
+  return DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(),
+                     N0.getValueType(), &Ops[0], Ops.size());
 }
 
 SDValue DAGCombiner::SimplifySelect(DebugLoc DL, SDValue N0,
