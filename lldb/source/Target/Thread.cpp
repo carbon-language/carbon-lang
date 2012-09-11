@@ -955,7 +955,7 @@ Thread::DiscardThreadPlans(bool force)
     {
 
         int master_plan_idx;
-        bool discard;
+        bool discard = true;
 
         // Find the first master plan, see if it wants discarding, and if yes discard up to it.
         for (master_plan_idx = m_plan_stack.size() - 1; master_plan_idx >= 0; master_plan_idx--)
