@@ -112,7 +112,7 @@ endfunction()
 string(REGEX MATCH "[0-9]+\\.[0-9]+(\\.[0-9]+)?" CLANG_VERSION
        ${PACKAGE_VERSION})
 # Setup the paths where compiler-rt runtimes and headers should be stored.
-set(LIBCLANG_INSTALL_PATH lib${LLVM_LIBIR_SUFFIX}/clang/${CLANG_VERSION})
+set(LIBCLANG_INSTALL_PATH lib${LLVM_LIBDIR_SUFFIX}/clang/${CLANG_VERSION})
 string(TOLOWER ${CMAKE_SYSTEM_NAME} LIBCLANG_OS_DIR)
 
 # Install compiler-rt headers.
