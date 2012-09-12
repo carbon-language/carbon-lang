@@ -634,13 +634,13 @@ X86Operand *X86AsmParser::ParseOperand() {
 /// getIntelMemOperandSize - Return intel memory operand size.
 static unsigned getIntelMemOperandSize(StringRef OpStr) {
   unsigned Size = StringSwitch<unsigned>(OpStr)
-    .Case("BYTE", 8)
-    .Case("WORD", 16)
-    .Case("DWORD", 32)
-    .Case("QWORD", 64)
-    .Case("XWORD", 80)
-    .Case("XMMWORD", 128)
-    .Case("YMMWORD", 256)
+    .Cases("BYTE", "byte", 8)
+    .Cases("WORD", "word", 16)
+    .Cases("DWORD", "dword", 32)
+    .Cases("QWORD", "qword", 64)
+    .Cases("XWORD", "xword", 80)
+    .Cases("XMMWORD", "xmmword", 128)
+    .Cases("YMMWORD", "ymmword", 256)
     .Default(0);
   return Size;
 }
@@ -744,7 +744,8 @@ X86Operand *X86AsmParser::ParseIntelMemOperand() {
   unsigned Size = getIntelMemOperandSize(Tok.getString());
   if (Size) {
     Parser.Lex();
-    assert (Tok.getString() == "PTR" && "Unexpected token!");
+    assert ((Tok.getString() == "PTR" || Tok.getString() == "ptr") &&
+            "Unexpected token!");
     Parser.Lex();
   }
 
