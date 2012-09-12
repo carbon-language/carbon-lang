@@ -218,6 +218,9 @@ public:
   virtual raw_ostream &changeColor(enum Colors Color,
                                    bool Bold = false,
                                    bool BG = false) {
+    (void)Color;
+    (void)Bold;
+    (void)BG;
     return *this;
   }
 
