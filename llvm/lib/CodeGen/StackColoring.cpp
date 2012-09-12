@@ -59,12 +59,20 @@ using namespace llvm;
 
 static cl::opt<bool>
 DisableColoring("no-stack-coloring",
-               cl::init(false), cl::Hidden,
-               cl::desc("Suppress stack coloring"));
+        cl::init(false), cl::Hidden,
+        cl::desc("Disable stack coloring"));
 
-STATISTIC(NumMarkerSeen,  "Number of life markers found.");
+static cl::opt<bool>
+CheckEscapedAllocas("stack-coloring-check-escaped",
+        cl::init(true), cl::Hidden,
+        cl::desc("Look for allocas which escaped the lifetime region"));
+
+STATISTIC(NumMarkerSeen,  "Number of lifetime markers found.");
 STATISTIC(StackSpaceSaved, "Number of bytes saved due to merging slots.");
 STATISTIC(StackSlotMerged, "Number of stack slot merged.");
+STATISTIC(EscapedAllocas,
+          "Number of allocas that escaped the lifetime region");
+
 
 //===----------------------------------------------------------------------===//
 //                           StackColoring Pass
@@ -104,7 +112,7 @@ class StackColoring : public MachineFunctionPass {
   /// VNInfo is used for the construction of LiveIntervals.
   VNInfo::Allocator VNInfoAllocator;
   /// SlotIndex analysis object.
-  SlotIndexes* Indexes;
+  SlotIndexes *Indexes;
 
   /// The list of lifetime markers found. These markers are to be removed
   /// once the coloring is done.
@@ -533,7 +541,7 @@ void StackColoring::remapInstructions(DenseMap<int, int> &SlotRemap) {
 #ifndef NDEBUG
         if (!I->isDebugValue()) {
           SlotIndex Index = Indexes->getInstructionIndex(I);
-          LiveInterval* Interval = Intervals[FromSlot];
+          LiveInterval *Interval = Intervals[FromSlot];
           assert(Interval->find(Index) != Interval->end() &&
                "Found instruction usage outside of live range.");
         }
@@ -583,6 +591,7 @@ void StackColoring::removeInvalidSlotRanges() {
         if (Interval->find(Index) == Interval->end()) {
           Intervals[Slot]->clear();
           DEBUG(dbgs()<<"Invalidating range #"<<Slot<<"\n");
+          EscapedAllocas++;
         }
       }
     }
@@ -662,7 +671,10 @@ bool StackColoring::runOnMachineFunction(MachineFunction &Func) {
   // Propagate the liveness information.
   calculateLiveIntervals(NumSlots);
 
-  removeInvalidSlotRanges();
+  // Search for allocas which are used outside of the declared lifetime
+  // markers.
+  if (CheckEscapedAllocas)
+    removeInvalidSlotRanges();
 
   // Maps old slots to new slots.
   DenseMap<int, int> SlotRemap;
