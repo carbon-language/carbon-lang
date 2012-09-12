@@ -54,6 +54,14 @@ struct AsanStats {
   void Print();
 };
 
+// A cross-platform equivalent of malloc_statistics_t on Mac OS.
+struct AsanMallocStats {
+  uptr blocks_in_use;
+  uptr size_in_use;
+  uptr max_size_in_use;
+  uptr size_allocated;
+};
+
 }  // namespace __asan
 
 #endif  // ASAN_STATS_H

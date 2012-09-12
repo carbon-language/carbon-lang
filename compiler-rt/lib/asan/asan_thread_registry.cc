@@ -30,6 +30,7 @@ AsanThreadRegistry::AsanThreadRegistry(LinkerInitialized x)
     : main_thread_(x),
       main_thread_summary_(x),
       accumulated_stats_(x),
+      max_malloced_memory_(x),
       mu_(x) { }
 
 void AsanThreadRegistry::Init() {
@@ -131,6 +132,17 @@ uptr AsanThreadRegistry::GetFreeBytes() {
          + accumulated_stats_.really_freed_redzones;
 }
 
+// Return several stats counters with a single call to
+// UpdateAccumulatedStatsUnlocked().
+void AsanThreadRegistry::FillMallocStatistics(AsanMallocStats *malloc_stats) {
+  ScopedLock lock(&mu_);
+  UpdateAccumulatedStatsUnlocked();
+  malloc_stats->blocks_in_use = accumulated_stats_.mallocs;
+  malloc_stats->size_in_use = accumulated_stats_.malloced;
+  malloc_stats->max_size_in_use = max_malloced_memory_;
+  malloc_stats->size_allocated = accumulated_stats_.mmaped;
+}
+
 AsanThreadSummary *AsanThreadRegistry::FindByTid(u32 tid) {
   CHECK(tid < n_threads_);
   CHECK(thread_summaries_[tid]);
@@ -155,6 +167,12 @@ void AsanThreadRegistry::UpdateAccumulatedStatsUnlocked() {
     if (t != 0) {
       FlushToAccumulatedStatsUnlocked(&t->stats());
     }
+  }
+  // This is not very accurate: we may miss allocation peaks that happen
+  // between two updates of accumulated_stats_. For more accurate bookkeeping
+  // the maximum should be updated on every malloc(), which is unacceptable.
+  if (max_malloced_memory_ < accumulated_stats_.malloced) {
+    max_malloced_memory_ = accumulated_stats_.malloced;
   }
 }
 

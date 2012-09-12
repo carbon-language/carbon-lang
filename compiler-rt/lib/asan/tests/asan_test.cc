@@ -30,6 +30,7 @@
 #ifndef __APPLE__
 #include <malloc.h>
 #else
+#include <malloc/malloc.h>
 #include <AvailabilityMacros.h>  // For MAC_OS_X_VERSION_*
 #include <CoreFoundation/CFString.h>
 #endif  // __APPLE__
@@ -2092,6 +2093,19 @@ TEST(AddressSanitizerMac, NSObjectOOB) {
 // See http://code.google.com/p/address-sanitizer/issues/detail?id=70.
 TEST(AddressSanitizerMac, NSURLDeallocation) {
   TestNSURLDeallocation();
+}
+
+// See http://code.google.com/p/address-sanitizer/issues/detail?id=109.
+TEST(AddressSanitizerMac, Mstats) {
+  malloc_statistics_t stats1, stats2;
+  malloc_zone_statistics(/*all zones*/NULL, &stats1);
+  const int kMallocSize = 100000;
+  void *alloc = Ident(malloc(kMallocSize));
+  malloc_zone_statistics(/*all zones*/NULL, &stats2);
+  EXPECT_GT(stats2.blocks_in_use, stats1.blocks_in_use);
+  EXPECT_GE(stats2.size_in_use - stats1.size_in_use, kMallocSize);
+  free(alloc);
+  // Even the default OSX allocator may not change the stats after free().
 }
 #endif  // __APPLE__
 
