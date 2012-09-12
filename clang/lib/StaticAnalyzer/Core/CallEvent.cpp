@@ -440,8 +440,15 @@ RuntimeDefinition CXXInstanceCall::getRuntimeDefinition() const {
     // some particularly nasty casting (e.g. casts to sister classes).
     // However, we should at least be able to search up and down our own class
     // hierarchy, and some real bugs have been caught by checking this.
-    assert(!MD->getParent()->isDerivedFrom(RD) && "Bad DynamicTypeInfo");
     assert(!RD->isDerivedFrom(MD->getParent()) && "Couldn't find known method");
+    
+    // FIXME: This is checking that our DynamicTypeInfo is at least as good as
+    // the static type. However, because we currently don't update
+    // DynamicTypeInfo when an object is cast, we can't actually be sure the
+    // DynamicTypeInfo is up to date. This assert should be re-enabled once
+    // this is fixed. <rdar://problem/12287087>
+    //assert(!MD->getParent()->isDerivedFrom(RD) && "Bad DynamicTypeInfo");
+
     return RuntimeDefinition();
   }
 
