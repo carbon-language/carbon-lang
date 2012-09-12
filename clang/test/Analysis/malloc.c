@@ -1020,6 +1020,16 @@ int reallocButNoMallocPR13674(struct HasPtr *a, int c, int size) {
   return 0;
 }
 
+// Test realloc with no visible malloc.
+void *test(void *ptr) {
+  void *newPtr = realloc(ptr, 4);
+  if (newPtr == 0) {
+    if (ptr)
+      free(ptr); // no-warning
+  }
+  return newPtr;
+}
+
 // ----------------------------------------------------------------------------
 // False negatives.
 
