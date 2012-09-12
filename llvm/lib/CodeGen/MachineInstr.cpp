@@ -198,7 +198,8 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
     return !strcmp(getSymbolName(), Other.getSymbolName()) &&
            getOffset() == Other.getOffset();
   case MachineOperand::MO_BlockAddress:
-    return getBlockAddress() == Other.getBlockAddress();
+    return getBlockAddress() == Other.getBlockAddress() &&
+           getOffset() == Other.getOffset();
   case MO_RegisterMask:
     return getRegMask() == Other.getRegMask();
   case MachineOperand::MO_MCSymbol:
@@ -239,7 +240,7 @@ hash_code llvm::hash_value(const MachineOperand &MO) {
                         MO.getOffset());
   case MachineOperand::MO_BlockAddress:
     return hash_combine(MO.getType(), MO.getTargetFlags(),
-                        MO.getBlockAddress());
+                        MO.getBlockAddress(), MO.getOffset());
   case MachineOperand::MO_RegisterMask:
     return hash_combine(MO.getType(), MO.getTargetFlags(), MO.getRegMask());
   case MachineOperand::MO_Metadata:
@@ -362,6 +363,7 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
   case MachineOperand::MO_BlockAddress:
     OS << '<';
     WriteAsOperand(OS, getBlockAddress(), /*PrintType=*/false);
+    if (getOffset()) OS << "+" << getOffset();
     OS << '>';
     break;
   case MachineOperand::MO_RegisterMask:

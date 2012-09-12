@@ -274,8 +274,8 @@ bool MSP430DAGToDAGISel::SelectAddr(SDValue N,
   else if (AM.JT != -1)
     Disp = CurDAG->getTargetJumpTable(AM.JT, MVT::i16, 0/*AM.SymbolFlags*/);
   else if (AM.BlockAddr)
-    Disp = CurDAG->getBlockAddress(AM.BlockAddr, MVT::i32,
-                                   true, 0/*AM.SymbolFlags*/);
+    Disp = CurDAG->getTargetBlockAddress(AM.BlockAddr, MVT::i32, 0,
+                                         0/*AM.SymbolFlags*/);
   else
     Disp = CurDAG->getTargetConstant(AM.Disp, MVT::i16);
 

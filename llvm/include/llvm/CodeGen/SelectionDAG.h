@@ -437,7 +437,13 @@ public:
   SDValue getRegisterMask(const uint32_t *RegMask);
   SDValue getEHLabel(DebugLoc dl, SDValue Root, MCSymbol *Label);
   SDValue getBlockAddress(const BlockAddress *BA, EVT VT,
-                          bool isTarget = false, unsigned char TargetFlags = 0);
+                          int64_t Offset = 0, bool isTarget = false,
+                          unsigned char TargetFlags = 0);
+  SDValue getTargetBlockAddress(const BlockAddress *BA, EVT VT,
+                                int64_t Offset = 0,
+                                unsigned char TargetFlags = 0) {
+    return getBlockAddress(BA, VT, Offset, true, TargetFlags);
+  }
 
   SDValue getCopyToReg(SDValue Chain, DebugLoc dl, unsigned Reg, SDValue N) {
     return getNode(ISD::CopyToReg, dl, MVT::Other, Chain,

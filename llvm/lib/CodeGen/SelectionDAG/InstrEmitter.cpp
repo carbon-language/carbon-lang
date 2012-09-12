@@ -410,6 +410,7 @@ void InstrEmitter::AddOperand(MachineInstr *MI, SDValue Op,
                                             ES->getTargetFlags()));
   } else if (BlockAddressSDNode *BA = dyn_cast<BlockAddressSDNode>(Op)) {
     MI->addOperand(MachineOperand::CreateBA(BA->getBlockAddress(),
+                                            BA->getOffset(),
                                             BA->getTargetFlags()));
   } else if (TargetIndexSDNode *TI = dyn_cast<TargetIndexSDNode>(Op)) {
     MI->addOperand(MachineOperand::CreateTargetIndex(TI->getIndex(),

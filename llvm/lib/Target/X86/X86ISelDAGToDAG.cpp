@@ -246,13 +246,15 @@ namespace {
       else if (AM.CP)
         Disp = CurDAG->getTargetConstantPool(AM.CP, MVT::i32,
                                              AM.Align, AM.Disp, AM.SymbolFlags);
-      else if (AM.ES)
+      else if (AM.ES) {
+        assert(!AM.Disp && "Non-zero displacement is ignored with ES.");
         Disp = CurDAG->getTargetExternalSymbol(AM.ES, MVT::i32, AM.SymbolFlags);
-      else if (AM.JT != -1)
+      } else if (AM.JT != -1) {
+        assert(!AM.Disp && "Non-zero displacement is ignored with JT.");
         Disp = CurDAG->getTargetJumpTable(AM.JT, MVT::i32, AM.SymbolFlags);
-      else if (AM.BlockAddr)
-        Disp = CurDAG->getBlockAddress(AM.BlockAddr, MVT::i32,
-                                       true, AM.SymbolFlags);
+      } else if (AM.BlockAddr)
+        Disp = CurDAG->getTargetBlockAddress(AM.BlockAddr, MVT::i32, AM.Disp,
+                                             AM.SymbolFlags);
       else
         Disp = CurDAG->getTargetConstant(AM.Disp, MVT::i32);
 
@@ -654,10 +656,16 @@ bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
     } else if (JumpTableSDNode *J = dyn_cast<JumpTableSDNode>(N0)) {
       AM.JT = J->getIndex();
       AM.SymbolFlags = J->getTargetFlags();
-    } else {
-      AM.BlockAddr = cast<BlockAddressSDNode>(N0)->getBlockAddress();
-      AM.SymbolFlags = cast<BlockAddressSDNode>(N0)->getTargetFlags();
-    }
+    } else if (BlockAddressSDNode *BA = dyn_cast<BlockAddressSDNode>(N0)) {
+      X86ISelAddressMode Backup = AM;
+      AM.BlockAddr = BA->getBlockAddress();
+      AM.SymbolFlags = BA->getTargetFlags();
+      if (FoldOffsetIntoAddress(BA->getOffset(), AM)) {
+        AM = Backup;
+        return true;
+      }
+    } else
+      llvm_unreachable("Unhandled symbol reference node.");
 
     if (N.getOpcode() == X86ISD::WrapperRIP)
       AM.setBaseReg(CurDAG->getRegister(X86::RIP, MVT::i64));
@@ -686,10 +694,12 @@ bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
     } else if (JumpTableSDNode *J = dyn_cast<JumpTableSDNode>(N0)) {
       AM.JT = J->getIndex();
       AM.SymbolFlags = J->getTargetFlags();
-    } else {
-      AM.BlockAddr = cast<BlockAddressSDNode>(N0)->getBlockAddress();
-      AM.SymbolFlags = cast<BlockAddressSDNode>(N0)->getTargetFlags();
-    }
+    } else if (BlockAddressSDNode *BA = dyn_cast<BlockAddressSDNode>(N0)) {
+      AM.BlockAddr = BA->getBlockAddress();
+      AM.Disp += BA->getOffset();
+      AM.SymbolFlags = BA->getTargetFlags();
+    } else
+      llvm_unreachable("Unhandled symbol reference node.");
     return false;
   }
 

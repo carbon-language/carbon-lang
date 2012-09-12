@@ -475,11 +475,16 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
     OS << "<" << *M->getMemOperand() << ">";
   } else if (const BlockAddressSDNode *BA =
                dyn_cast<BlockAddressSDNode>(this)) {
+    int64_t offset = BA->getOffset();
     OS << "<";
     WriteAsOperand(OS, BA->getBlockAddress()->getFunction(), false);
     OS << ", ";
     WriteAsOperand(OS, BA->getBlockAddress()->getBasicBlock(), false);
     OS << ">";
+    if (offset > 0)
+      OS << " + " << offset;
+    else
+      OS << " " << offset;
     if (unsigned int TF = BA->getTargetFlags())
       OS << " [TF=" << TF << ']';
   }

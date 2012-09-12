@@ -628,11 +628,11 @@ public:
     Op.setTargetFlags(TargetFlags);
     return Op;
   }
-  static MachineOperand CreateBA(const BlockAddress *BA,
+  static MachineOperand CreateBA(const BlockAddress *BA, int64_t Offset,
                                  unsigned char TargetFlags = 0) {
     MachineOperand Op(MachineOperand::MO_BlockAddress);
     Op.Contents.OffsetedInfo.Val.BA = BA;
-    Op.setOffset(0); // Offset is always 0.
+    Op.setOffset(Offset);
     Op.setTargetFlags(TargetFlags);
     return Op;
   }
