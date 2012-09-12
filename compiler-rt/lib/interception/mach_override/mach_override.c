@@ -50,7 +50,7 @@ long kIslandTemplate[] = {
 #define kOriginalInstructionsSize 16
 
 static
-char kIslandTemplate[] = {
+unsigned char kIslandTemplate[] = {
 	// kOriginalInstructionsSize nop instructions so that we 
 	// should have enough space to host original instructions 
 	0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 
@@ -68,7 +68,7 @@ char kIslandTemplate[] = {
 #define kJumpAddress    kOriginalInstructionsSize + 6
 
 static
-char kIslandTemplate[] = {
+unsigned char kIslandTemplate[] = {
 	// kOriginalInstructionsSize nop instructions so that we 
 	// should have enough space to host original instructions 
 	0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 
@@ -112,26 +112,26 @@ typedef	struct	{
 allocateBranchIsland(
 		BranchIsland	**island,
 		int				allocateHigh,
-		void *originalFunctionAddress) __attribute__((visibility("hidden")));
+		void *originalFunctionAddress);
 
 	static mach_error_t
 freeBranchIsland(
-		BranchIsland	*island ) __attribute__((visibility("hidden")));
+		BranchIsland	*island );
 
 	static mach_error_t
 defaultIslandMalloc(
-	  void **ptr, size_t unused_size, void *hint) __attribute__((visibility("hidden")));
+	  void **ptr, size_t unused_size, void *hint);
 
 	static mach_error_t
 defaultIslandFree(
-   	void *ptr) __attribute__((visibility("hidden")));
+   	void *ptr);
 
 #if defined(__ppc__) || defined(__POWERPC__)
 	static mach_error_t
 setBranchIslandTarget(
 		BranchIsland	*island,
 		const void		*branchTo,
-		long			instruction ) __attribute__((visibility("hidden")));
+		long			instruction );
 #endif 
 
 #if defined(__i386__) || defined(__x86_64__)
@@ -139,7 +139,7 @@ static mach_error_t
 setBranchIslandTarget_i386(
 						   BranchIsland	*island,
 						   const void		*branchTo,
-						   char*			instructions ) __attribute__((visibility("hidden")));
+						   char*			instructions );
 // Can't be made static because there's no C implementation for atomic_mov64
 // on i386.
 void 
@@ -154,7 +154,7 @@ eatKnownInstructions(
 	int				*howManyEaten, 
 	char			*originalInstructions,
 	int				*originalInstructionCount, 
-	uint8_t			*originalInstructionSizes ) __attribute__((visibility("hidden")));
+	uint8_t			*originalInstructionSizes );
 
 	static void
 fixupInstructions(
@@ -162,7 +162,7 @@ fixupInstructions(
     void		*escapeIsland,
     void		*instructionsToFix,
 	int			instructionCount,
-	uint8_t		*instructionSizes ) __attribute__((visibility("hidden")));
+	uint8_t		*instructionSizes );
 
 #ifdef DEBUG_DISASM
 	static void
