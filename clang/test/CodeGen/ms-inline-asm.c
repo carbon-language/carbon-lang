@@ -139,3 +139,9 @@ void t16(unsigned long long V) {
 // CHECK: t16
 // CHECK:   call void asm sideeffect inteldialect "mov eax, DWORD PTR [$0]", "r,~{eax},~{dirflag},~{fpsr},~{flags}"(i64 %0) nounwind
 }
+
+void t17(void) {
+  __asm mov eax, dword ptr [eax]
+// CHECK: t17
+// CHECK: call void asm sideeffect inteldialect "mov eax, dword ptr [eax]", "~{eax},~{dirflag},~{fpsr},~{flags}"() nounwind
+}
