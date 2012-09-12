@@ -71,11 +71,11 @@ set(SANITIZER_COMMON_CFLAGS
   -fvisibility=hidden
   -O3
   )
+check_cxx_compiler_flag(-Wno-variadic-macros SUPPORTS_NO_VARIADIC_MACROS_FLAG)
 if(SUPPORTS_NO_VARIADIC_MACROS_FLAG)
   list(APPEND SANITIZER_COMMON_CFLAGS -Wno-variadic-macros)
 endif()
-check_cxx_compiler_flag(-Wno-c99-extensions
-  SUPPORTS_NO_C99_EXTENSIONS_FLAG)
+check_cxx_compiler_flag(-Wno-c99-extensions SUPPORTS_NO_C99_EXTENSIONS_FLAG)
 if(SUPPORTS_NO_C99_EXTENSIONS_FLAG)
   list(APPEND SANITIZER_COMMON_CFLAGS -Wno-c99-extensions)
 endif()
