@@ -1032,7 +1032,6 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
 
   AttributePool allParamAttrs(AttrFactory);
   bool warnSelectorName = false;
-  bool warnHasNoName = true;
   while (1) {
     ParsedAttributes paramAttrs(AttrFactory);
     Sema::ObjCArgInfo ArgInfo;
@@ -1110,8 +1109,7 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
       Diag(Tok, diag::warn_missing_argument_name); // missing argument name.
       warnSelectorName = true;
     }
-    else
-      warnHasNoName = false;
+    
     // We have a selector or a colon, continue parsing.
   }
 
@@ -1152,11 +1150,8 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   
   Selector Sel = PP.getSelectorTable().getSelector(KeyIdents.size(),
                                                    &KeyIdents[0]);
-  if (warnSelectorName) {
-    if (warnHasNoName)
-      Diag(mLoc, diag::warn_selector_with_bare_colon);
+  if (warnSelectorName)
     Diag(mLoc, diag::note_missing_argument_name) << Sel.getAsString();
-  }
   
   Decl *Result
        = Actions.ActOnMethodDeclaration(getCurScope(), mLoc, Tok.getLocation(),
