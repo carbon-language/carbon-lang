@@ -312,17 +312,13 @@ void mi_force_unlock(malloc_zone_t *zone) {
   asan_mz_force_unlock();
 }
 
-// This function is currently unused, and we build with -Werror.
-#if 0
 void mi_statistics(malloc_zone_t *zone, malloc_statistics_t *stats) {
-  // TODO(csilvers): figure out how to fill these out
-  // TODO(glider): port this from tcmalloc when ready.
+  // TODO(glider): fill these correctly.
   stats->blocks_in_use = 0;
   stats->size_in_use = 0;
   stats->max_size_in_use = 0;
   stats->size_allocated = 0;
 }
-#endif
 
 #if defined(MAC_OS_X_VERSION_10_6) && \
     MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
@@ -364,6 +360,7 @@ void ReplaceSystemMalloc() {
   asan_introspection.log = &mi_log;
   asan_introspection.force_lock = &mi_force_lock;
   asan_introspection.force_unlock = &mi_force_unlock;
+  asan_introspection.statistics = &mi_statistics;
 
   internal_memset(&asan_zone, 0, sizeof(malloc_zone_t));
 
