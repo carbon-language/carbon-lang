@@ -128,7 +128,7 @@
 #endif  // MAC_INTERPOSE_FUNCTIONS
 
 #define DECLARE_REAL_AND_INTERCEPTOR(ret_type, func, ...) \
-  DECLARE_REAL(ret_type, func, ##__VA_ARGS__) \
+  DECLARE_REAL(ret_type, func, __VA_ARGS__) \
   extern "C" ret_type WRAP(func)(__VA_ARGS__);
 
 // Generally, you don't need to use DEFINE_REAL by itself, as INTERCEPTOR
