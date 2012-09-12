@@ -29,6 +29,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "objc-arc"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/DenseMap.h"
 using namespace llvm;
@@ -1597,6 +1598,12 @@ void BBState::MergePred(const BBState &Other) {
   // loop backedge. Loop backedges are special.
   TopDownPathCount += Other.TopDownPathCount;
 
+  // Check for overflow. If we have overflow, fall back to conservative behavior.
+  if (TopDownPathCount < Other.TopDownPathCount) {
+    clearTopDownPointers();
+    return;
+  }
+
   // For each entry in the other set, if our set has an entry with the same key,
   // merge the entries. Otherwise, copy the entry and merge it with an empty
   // entry.
@@ -1621,6 +1628,12 @@ void BBState::MergeSucc(const BBState &Other) {
   // Other.BottomUpPathCount can be 0, in which case it is either dead or a
   // loop backedge. Loop backedges are special.
   BottomUpPathCount += Other.BottomUpPathCount;
+
+  // Check for overflow. If we have overflow, fall back to conservative behavior.
+  if (BottomUpPathCount < Other.BottomUpPathCount) {
+    clearBottomUpPointers();
+    return;
+  }
 
   // For each entry in the other set, if our set has an entry with the
   // same key, merge the entries. Otherwise, copy the entry and merge
