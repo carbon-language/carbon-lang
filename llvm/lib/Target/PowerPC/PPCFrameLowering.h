@@ -45,6 +45,16 @@ public:
                                             RegScavenger *RS = NULL) const;
   void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
 
+  bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                 MachineBasicBlock::iterator MI,
+                                 const std::vector<CalleeSavedInfo> &CSI,
+                                 const TargetRegisterInfo *TRI) const;
+
+  bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator MI,
+                                   const std::vector<CalleeSavedInfo> &CSI,
+                                   const TargetRegisterInfo *TRI) const;
+
   /// targetHandlesStackFrameRounding - Returns true if the target is
   /// responsible for rounding up the stack frame (probably at emitPrologue
   /// time).
@@ -170,23 +180,11 @@ public:
       {PPC::R15, -68},
       {PPC::R14, -72},
 
-      // CR save area offset.
-      // FIXME SVR4: Disable CR save area for now.
-//      {PPC::CR2, -4},
-//      {PPC::CR3, -4},
-//      {PPC::CR4, -4},
-//      {PPC::CR2LT, -4},
-//      {PPC::CR2GT, -4},
-//      {PPC::CR2EQ, -4},
-//      {PPC::CR2UN, -4},
-//      {PPC::CR3LT, -4},
-//      {PPC::CR3GT, -4},
-//      {PPC::CR3EQ, -4},
-//      {PPC::CR3UN, -4},
-//      {PPC::CR4LT, -4},
-//      {PPC::CR4GT, -4},
-//      {PPC::CR4EQ, -4},
-//      {PPC::CR4UN, -4},
+      // CR save area offset.  We map each of the nonvolatile CR fields
+      // to the slot for CR2, which is the first of the nonvolatile CR
+      // fields to be assigned, so that we only allocate one save slot.
+      // See PPCRegisterInfo::hasReservedSpillSlot() for more information.
+      {PPC::CR2, -4},
 
       // VRSAVE save area offset.
       {PPC::VRSAVE, -4},
@@ -228,27 +226,6 @@ public:
       {PPC::F14, -144},
 
       // General register save area offsets.
-      // FIXME 64-bit SVR4: Are 32-bit registers actually allocated in 64-bit
-      //                    mode?
-      {PPC::R31, -4},
-      {PPC::R30, -12},
-      {PPC::R29, -20},
-      {PPC::R28, -28},
-      {PPC::R27, -36},
-      {PPC::R26, -44},
-      {PPC::R25, -52},
-      {PPC::R24, -60},
-      {PPC::R23, -68},
-      {PPC::R22, -76},
-      {PPC::R21, -84},
-      {PPC::R20, -92},
-      {PPC::R19, -100},
-      {PPC::R18, -108},
-      {PPC::R17, -116},
-      {PPC::R16, -124},
-      {PPC::R15, -132},
-      {PPC::R14, -140},
-
       {PPC::X31, -8},
       {PPC::X30, -16},
       {PPC::X29, -24},
@@ -267,24 +244,6 @@ public:
       {PPC::X16, -128},
       {PPC::X15, -136},
       {PPC::X14, -144},
-
-      // CR save area offset.
-      // FIXME SVR4: Disable CR save area for now.
-//      {PPC::CR2, -4},
-//      {PPC::CR3, -4},
-//      {PPC::CR4, -4},
-//      {PPC::CR2LT, -4},
-//      {PPC::CR2GT, -4},
-//      {PPC::CR2EQ, -4},
-//      {PPC::CR2UN, -4},
-//      {PPC::CR3LT, -4},
-//      {PPC::CR3GT, -4},
-//      {PPC::CR3EQ, -4},
-//      {PPC::CR3UN, -4},
-//      {PPC::CR4LT, -4},
-//      {PPC::CR4GT, -4},
-//      {PPC::CR4EQ, -4},
-//      {PPC::CR4UN, -4},
 
       // VRSAVE save area offset.
       {PPC::VRSAVE, -4},
