@@ -466,6 +466,22 @@ Platform::ResolveExecutable (const FileSpec &exe_file,
     return error;
 }
 
+Error
+Platform::ResolveSymbolFile (Target &target,
+                             const ModuleSpec &sym_spec,
+                             FileSpec &sym_file)
+{
+    Error error;
+    if (sym_spec.GetSymbolFileSpec().Exists())
+        sym_file = sym_spec.GetSymbolFileSpec();
+    else
+        error.SetErrorString("unable to resolve symbol file");
+    return error;
+    
+}
+
+
+
 bool
 Platform::ResolveRemotePath (const FileSpec &platform_path,
                              FileSpec &resolved_platform_path)

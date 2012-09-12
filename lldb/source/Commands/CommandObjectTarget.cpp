@@ -4040,12 +4040,21 @@ protected:
             }
             else
             {
+                PlatformSP platform_sp (target->GetPlatform());
+
                 for (size_t i=0; i<argc; ++i)
                 {
                     const char *symfile_path = args.GetArgumentAtIndex(i);
                     if (symfile_path)
                     {
-                        FileSpec symfile_spec(symfile_path, true);
+                        ModuleSpec sym_spec;
+                        FileSpec symfile_spec;
+                        sym_spec.GetSymbolFileSpec().SetFile(symfile_path, true);
+                        if (platform_sp)
+                            platform_sp->ResolveSymbolFile(*target, sym_spec, symfile_spec);
+                        else
+                            symfile_spec.SetFile(symfile_path, true);
+                        
                         ArchSpec arch;
                         if (symfile_spec.Exists())
                         {

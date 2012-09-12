@@ -244,12 +244,10 @@ FileAtPathContainsArchAndUUID
     return false;
 }
 
-static FileSpec
-LocateDSYMMachFileInDSYMBundle
-(
-    const FileSpec& dsym_bundle_fspec,
-    const lldb_private::UUID *uuid,
-    const ArchSpec *arch)
+FileSpec
+Symbols::FindSymbolFileInBundle (const FileSpec& dsym_bundle_fspec,
+                                 const lldb_private::UUID *uuid,
+                                 const ArchSpec *arch)
 {
     char path[PATH_MAX];
 
@@ -361,7 +359,7 @@ LocateMacOSXFilesUsingDebugSymbols
 
                             if (out_dsym_fspec->GetFileType () == FileSpec::eFileTypeDirectory)
                             {
-                                *out_dsym_fspec = LocateDSYMMachFileInDSYMBundle (*out_dsym_fspec, uuid, arch);
+                                *out_dsym_fspec = Symbols::FindSymbolFileInBundle (*out_dsym_fspec, uuid, arch);
                                 if (*out_dsym_fspec)
                                     ++items_found;
                             }

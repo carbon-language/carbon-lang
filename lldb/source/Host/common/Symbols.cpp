@@ -28,4 +28,13 @@ Symbols::LocateExecutableSymbolFile (const ModuleSpec &module_spec)
     return FileSpec();
 }
 
+FileSpec
+Symbols::FindSymbolFileInBundle (const FileSpec& symfile_bundle,
+                                 const lldb_private::UUID *uuid,
+                                 const ArchSpec *arch)
+{
+    return FileSpec();
+}
+
+
 #endif
