@@ -158,6 +158,14 @@ private:
   /// slots to use the joint slots.
   void remapInstructions(DenseMap<int, int> &SlotRemap);
 
+  /// The input program may contain intructions which are not inside lifetime
+  /// markers. This can happen due to a bug in the compiler or due to a bug in
+  /// user code (for example, returning a reference to a local variable).
+  /// This procedure checks all of the instructions in the function and
+  /// invalidates lifetime ranges which do not contain all of the instructions
+  /// which access that frame slot.
+  void removeInvalidSlotRanges();
+
   /// Map entries which point to other entries to their destination.
   ///   A->B->C becomes A->C.
    void expungeSlotMap(DenseMap<int, int> &SlotRemap, unsigned NumSlots);
@@ -543,6 +551,43 @@ void StackColoring::remapInstructions(DenseMap<int, int> &SlotRemap) {
   DEBUG(dbgs()<<"Fixed "<<FixedInstr<<" machine instructions.\n");
 }
 
+void StackColoring::removeInvalidSlotRanges() {
+  MachineFunction::iterator BB, BBE;
+  MachineBasicBlock::iterator I, IE;
+  for (BB = MF->begin(), BBE = MF->end(); BB != BBE; ++BB)
+    for (I = BB->begin(), IE = BB->end(); I != IE; ++I) {
+
+      if (I->getOpcode() == TargetOpcode::LIFETIME_START ||
+          I->getOpcode() == TargetOpcode::LIFETIME_END || I->isDebugValue())
+        continue;
+
+      // Check all of the machine operands.
+      for (unsigned i = 0 ; i <  I->getNumOperands(); ++i) {
+        MachineOperand &MO = I->getOperand(i);
+
+        if (!MO.isFI())
+          continue;
+
+        int Slot = MO.getIndex();
+
+        if (Slot<0)
+          continue;
+
+        if (Intervals[Slot]->empty())
+          continue;
+
+        // Check that the used slot is inside the calculated lifetime range.
+        // If it is not, warn about it and invalidate the range.
+        LiveInterval *Interval = Intervals[Slot];
+        SlotIndex Index = Indexes->getInstructionIndex(I);
+        if (Interval->find(Index) == Interval->end()) {
+          Intervals[Slot]->clear();
+          DEBUG(dbgs()<<"Invalidating range #"<<Slot<<"\n");
+        }
+      }
+    }
+}
+
 void StackColoring::expungeSlotMap(DenseMap<int, int> &SlotRemap,
                                    unsigned NumSlots) {
   // Expunge slot remap map.
@@ -616,6 +661,8 @@ bool StackColoring::runOnMachineFunction(MachineFunction &Func) {
 
   // Propagate the liveness information.
   calculateLiveIntervals(NumSlots);
+
+  removeInvalidSlotRanges();
 
   // Maps old slots to new slots.
   DenseMap<int, int> SlotRemap;

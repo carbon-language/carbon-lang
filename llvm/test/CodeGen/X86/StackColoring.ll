@@ -7,7 +7,6 @@ target triple = "x86_64-apple-macosx10.8.0"
 ;YESCOLOR: subq  $136, %rsp
 ;NOCOLOR: subq  $264, %rsp
 
-
 define i32 @myCall_w2(i32 %in) {
 entry:
   %a = alloca [17 x i8*], align 8
@@ -328,7 +327,6 @@ entry:
 
 ;YESCOLOR: subq  $272, %rsp
 ;NOCOLOR: subq  $272, %rsp
-
 define i32 @myCall_end_before_begin(i32 %in, i1 %d) {
 entry:
   %a = alloca [17 x i8*], align 8
@@ -352,11 +350,37 @@ bb3:
   ret i32 0
 }
 
+; Check that we don't assert and crash even when there are allocas
+; outside the declared lifetime regions.
+;YESCOLOR: bad_range
+;NOCOLOR:  bad_range
+define void @bad_range() nounwind ssp {
+entry:
+  %A.i1 = alloca [100 x i32], align 4
+  %B.i2 = alloca [100 x i32], align 4
+  %A.i = alloca [100 x i32], align 4
+  %B.i = alloca [100 x i32], align 4
+  %0 = bitcast [100 x i32]* %A.i to i8*
+  call void @llvm.lifetime.start(i64 -1, i8* %0) nounwind
+  %1 = bitcast [100 x i32]* %B.i to i8*
+  call void @llvm.lifetime.start(i64 -1, i8* %1) nounwind
+  call void @bar([100 x i32]* %A.i, [100 x i32]* %B.i) nounwind
+  call void @llvm.lifetime.end(i64 -1, i8* %0) nounwind
+  call void @llvm.lifetime.end(i64 -1, i8* %1) nounwind
+  br label %block2
+
+block2:
+  ; I am used outside the marked lifetime.
+  call void @bar([100 x i32]* %A.i, [100 x i32]* %B.i) nounwind
+  ret void
+}
+
+
 declare void @bar([100 x i32]* , [100 x i32]*) nounwind
 
 declare void @llvm.lifetime.start(i64, i8* nocapture) nounwind
 
 declare void @llvm.lifetime.end(i64, i8* nocapture) nounwind
 
- declare i32 @foo(i32, i8*)
+declare i32 @foo(i32, i8*)
 
