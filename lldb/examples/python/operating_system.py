@@ -7,7 +7,10 @@ class PlugIn(object):
     """Class that provides data for an instance of a LLDB 'OperatingSystemPython' plug-in class"""
     
     def __init__(self, process):
-        '''Initialization needs a valid.SBProcess object'''
+        '''Initialization needs a valid.SBProcess object.
+        
+        This plug-in will get created after a live process is valid and has stopped for the
+        first time.'''
         self.process = None
         self.registers = None
         self.threads = None
@@ -15,8 +18,25 @@ class PlugIn(object):
             self.process = process
             self.threads = None # Will be an dictionary containing info for each thread
     
+    def get_target(self):
+        # NOTE: Don't use "lldb.target" when trying to get your target as the "lldb.target"
+        # tracks the current target in the LLDB command interpreter which isn't the
+        # correct thing to use for this plug-in.
+        return self.process.target
+        
     def get_thread_info(self):
         if not self.threads:
+            # The sample dictionary below shows the values that can be returned for a thread
+            # tid => thread ID (mandatory)
+            # name => thread name (optional key/value pair)
+            # queue => thread dispatch queue name (optional key/value pair)
+            # state => thred state (mandatory, set to 'stopped' for now)
+            # stop_reason => thread stop reason. (mandatory, usually set to 'none')
+            #  Possible values include:
+            #   'breakpoint' if the thread is stopped at a breakpoint
+            #   'none' thread is just stopped because the process is stopped
+            #   'trace' the thread just single stepped
+            #   The usual value for this while threads are in memory is 'none'
             self.threads = [
                     { 'tid' : 0x111111111, 'name' : 'one'  , 'queue' : 'queue1', 'state' : 'stopped', 'stop_reason' : 'breakpoint'},
                     { 'tid' : 0x222222222, 'name' : 'two'  , 'queue' : 'queue2', 'state' : 'stopped', 'stop_reason' : 'none'      },
