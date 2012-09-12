@@ -198,7 +198,7 @@ void CallGraph::print(raw_ostream &OS, Module*) const {
   for (CallGraph::const_iterator I = begin(), E = end(); I != E; ++I)
     I->second->print(OS);
 }
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void CallGraph::dump() const {
   print(dbgs(), 0);
 }
@@ -269,7 +269,7 @@ void CallGraphNode::print(raw_ostream &OS) const {
   OS << '\n';
 }
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void CallGraphNode::dump() const { print(dbgs()); }
 #endif
 

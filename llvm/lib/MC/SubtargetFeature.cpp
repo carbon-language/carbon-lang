@@ -368,7 +368,7 @@ void SubtargetFeatures::print(raw_ostream &OS) const {
   OS << "\n";
 }
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 /// dump - Dump feature info.
 ///
 void SubtargetFeatures::dump() const {

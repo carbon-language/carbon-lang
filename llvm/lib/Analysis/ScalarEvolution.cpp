@@ -122,7 +122,7 @@ char ScalarEvolution::ID = 0;
 // Implementation of the SCEV class.
 //
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void SCEV::dump() const {
   print(dbgs());
   dbgs() << '\n';

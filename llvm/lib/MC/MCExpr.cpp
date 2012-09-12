@@ -136,7 +136,7 @@ void MCExpr::print(raw_ostream &OS) const {
   llvm_unreachable("Invalid expression kind!");
 }
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void MCExpr::dump() const {
   print(dbgs());
   dbgs() << '\n';

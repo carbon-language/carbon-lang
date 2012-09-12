@@ -425,7 +425,7 @@ void MCDwarfFile::print(raw_ostream &OS) const {
   OS << '"' << getName() << '"';
 }
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void MCDwarfFile::dump() const {
   print(dbgs());
 }

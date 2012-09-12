@@ -830,7 +830,7 @@ raw_ostream &operator<<(raw_ostream &OS, const MCFixup &AF) {
 
 }
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void MCFragment::dump() {
   raw_ostream &OS = llvm::errs();
 

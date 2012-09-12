@@ -55,7 +55,7 @@ void ExtAddrMode::print(raw_ostream &OS) const {
   OS << ']';
 }
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void ExtAddrMode::dump() const {
   print(dbgs());
   dbgs() << '\n';

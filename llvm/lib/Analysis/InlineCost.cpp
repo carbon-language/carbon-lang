@@ -974,7 +974,7 @@ bool CallAnalyzer::analyzeCall(CallSite CS) {
   return AlwaysInline || Cost < Threshold;
 }
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 /// \brief Dump stats about this call's analysis.
 void CallAnalyzer::dump() {
 #define DEBUG_PRINT_STAT(x) llvm::dbgs() << "      " #x ": " << x << "\n"

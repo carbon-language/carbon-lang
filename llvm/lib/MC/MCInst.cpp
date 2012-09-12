@@ -32,7 +32,7 @@ void MCOperand::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
   OS << ">";
 }
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void MCOperand::dump() const {
   print(dbgs(), 0);
   dbgs() << "\n";
@@ -64,7 +64,7 @@ void MCInst::dump_pretty(raw_ostream &OS, const MCAsmInfo *MAI,
   OS << ">";
 }
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void MCInst::dump() const {
   print(dbgs(), 0);
   dbgs() << "\n";
