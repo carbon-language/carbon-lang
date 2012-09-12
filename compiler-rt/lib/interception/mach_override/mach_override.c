@@ -682,7 +682,7 @@ static AsmInstructionMatch possibleInstructions[] = {
 	{ 0x2, {0xFF, 0xFF}, {0xDB, 0xE3} }, 						// fninit
 	{ 0x5, {0xFF, 0x00, 0x00, 0x00, 0x00}, {0xE8, 0x00, 0x00, 0x00, 0x00} },	// call $imm
 	{ 0x4, {0xFF, 0xFF, 0xFF, 0x00}, {0x0F, 0xBE, 0x55, 0x00} },                    // movsbl $imm(%ebp), %edx
-	{ 0x0 }
+	{ 0x0, {0x00}, {0x00} }
 };
 #elif defined(__x86_64__)
 // TODO(glider): disassembling the "0x48, 0x89" sequences is trickier than it's done below.
@@ -729,7 +729,7 @@ static AsmInstructionMatch possibleInstructions[] = {
         { 0x3, {0xFF, 0xFF, 0x00}, {0xFF, 0x77, 0x00} },  // pushq $imm(%rdi)
         { 0x2, {0xFF, 0xFF}, {0xDB, 0xE3} }, // fninit
         { 0x3, {0xFF, 0xFF, 0xFF}, {0x48, 0x85, 0xD2} },  // test %rdx,%rdx
-	{ 0x0 }
+	{ 0x0, {0x00}, {0x00} }
 };
 #endif
 
@@ -876,7 +876,7 @@ fixupInstructions(
 			// This is critical, otherwise a near jump will likely fall outside the original function.
 			uint32_t offset = (uintptr_t)initialOriginalFunction - (uintptr_t)escapeIsland;
 			uint32_t jumpOffset = *(uint8_t*)((uintptr_t)instructionsToFix + 1);
-			*(uint8_t*)(instructionsToFix + 1) = *(uint8_t*)instructionsToFix + 0x10;
+			*((uint8_t*)instructionsToFix + 1) = *(uint8_t*)instructionsToFix + 0x10;
 			*(uint8_t*)instructionsToFix = 0x0F;
 			uint32_t *jumpOffsetPtr = (uint32_t*)((uintptr_t)instructionsToFix + 2 );
 			*jumpOffsetPtr = offset + jumpOffset;
