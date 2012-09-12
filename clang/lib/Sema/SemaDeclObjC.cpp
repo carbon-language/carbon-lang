@@ -282,11 +282,10 @@ void Sema::AddAnyMethodToGlobalPool(Decl *D) {
     AddFactoryMethodToGlobalPool(MDecl, true);
 }
 
-/// StrongPointerToObjCPointer - returns true when pointer to ObjC pointer
-/// is __strong, or when it is any other type. It returns false when
-/// pointer to ObjC pointer is not __strong.
+/// HasExplicitOwnershipAttr - returns true when pointer to ObjC pointer
+/// has explicit ownership attribute; false otherwise.
 static bool
-StrongPointerToObjCPointer(Sema &S, ParmVarDecl *Param) {
+HasExplicitOwnershipAttr(Sema &S, ParmVarDecl *Param) {
   QualType T = Param->getType();
   if (!T->isObjCIndirectLifetimeType())
     return true;
@@ -296,8 +295,11 @@ StrongPointerToObjCPointer(Sema &S, ParmVarDecl *Param) {
         ? T->getAs<PointerType>()->getPointeeType() 
         : T->getAs<ReferenceType>()->getPointeeType();
   if (T->isObjCLifetimeType()) {
-    Qualifiers::ObjCLifetime lifetime = T.getObjCLifetime();
-    return lifetime == Qualifiers::OCL_Strong;
+    // when lifetime is Qualifiers::OCL_None it means that it has
+    // no implicit ownership qualifier (which means it is explicit).
+    Qualifiers::ObjCLifetime lifetime = 
+      T.getLocalQualifiers().getObjCLifetime();
+    return lifetime == Qualifiers::OCL_None;
   }
   return true;
 }
@@ -335,7 +337,7 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
           Param->setInvalidDecl();
     if (!Param->isInvalidDecl() &&
         getLangOpts().ObjCAutoRefCount &&
-        !StrongPointerToObjCPointer(*this, Param))
+        !HasExplicitOwnershipAttr(*this, Param))
       Diag(Param->getLocation(), diag::warn_arc_strong_pointer_objc_pointer) <<
             Param->getType();
     
