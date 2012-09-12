@@ -231,6 +231,7 @@ def : Proc<"bdver2",          [FeatureXOP, FeatureFMA4, FeatureCMPXCHG16B,
                                FeatureAES, FeaturePCLMUL,
                                FeatureF16C, FeatureLZCNT,
                                FeaturePOPCNT, FeatureBMI, FeatureFMA]>;
+def : Proc<"geode",           [Feature3DNowA]>;
 
 def : Proc<"winchip-c6",      [FeatureMMX]>;
 def : Proc<"winchip2",        [Feature3DNow]>;

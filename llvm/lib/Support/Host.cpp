@@ -303,6 +303,7 @@ std::string sys::getHostCPUName() {
         case 8:  return "k6-2";
         case 9:
         case 13: return "k6-3";
+        case 10: return "geode";
         default: return "pentium";
         }
       case 6:
