@@ -106,7 +106,7 @@ TEST(DeclarationMatcher, ClassIsDerived) {
   EXPECT_TRUE(notMatches("class Y;", IsDerivedFromX));
   EXPECT_TRUE(notMatches("", IsDerivedFromX));
 
-  DeclarationMatcher IsAX = recordDecl(isA("X"));
+  DeclarationMatcher IsAX = recordDecl(isSameOrDerivedFrom("X"));
 
   EXPECT_TRUE(matches("class X {}; class Y : public X {};", IsAX));
   EXPECT_TRUE(matches("class X {};", IsAX));

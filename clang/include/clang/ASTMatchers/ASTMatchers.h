@@ -1139,14 +1139,17 @@ inline internal::Matcher<CXXRecordDecl> isDerivedFrom(StringRef BaseName) {
 
 /// \brief Similar to \c isDerivedFrom(), but also matches classes that directly
 /// match \c Base.
-inline internal::Matcher<CXXRecordDecl> isA(internal::Matcher<NamedDecl> Base) {
+inline internal::Matcher<CXXRecordDecl> isSameOrDerivedFrom(
+    internal::Matcher<NamedDecl> Base) {
   return anyOf(Base, isDerivedFrom(Base));
 }
 
-/// \brief Overloaded method as shortcut for \c isA(hasName(...)).
-inline internal::Matcher<CXXRecordDecl> isA(StringRef BaseName) {
+/// \brief Overloaded method as shortcut for
+/// \c isSameOrDerivedFrom(hasName(...)).
+inline internal::Matcher<CXXRecordDecl> isSameOrDerivedFrom(
+    StringRef BaseName) {
   assert(!BaseName.empty());
-  return isA(hasName(BaseName));
+  return isSameOrDerivedFrom(hasName(BaseName));
 }
 
 /// \brief Matches AST nodes that have child AST nodes that match the
