@@ -124,6 +124,8 @@ def add_common_options(parser):
     parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help='display verbose debug info', default=False)
     parser.add_option('-t', '--type', action='store_true', dest='print_type', help='print the full value of the type for each matching malloc block', default=False)
     parser.add_option('-o', '--po', action='store_true', dest='print_object_description', help='print the object descriptions for any matches', default=False)
+    parser.add_option('-z', '--size', action='store_true', dest='show_size', help='print the allocation size in bytes', default=False)
+    parser.add_option('-r', '--range', action='store_true', dest='show_range', help='print the allocation address range instead of just the allocation base address', default=False)
     parser.add_option('-m', '--memory', action='store_true', dest='memory', help='dump the memory for each matching block', default=False)
     parser.add_option('-f', '--format', type='string', dest='format', help='the format to use when dumping memory if --memory is specified', default=None)
     parser.add_option('-I', '--omit-ivar-regex', type='string', action='callback', callback=append_regex_callback, dest='ivar_regex_blacklist', default=[], help='specify one or more regular expressions used to backlist any matches that are in ivars')
@@ -212,24 +214,45 @@ def display_match_results (result, options, arg_str_description, expr_sbvalue, p
                 else:                    
                     match_addr = malloc_addr + offset
                     dynamic_value = match_entry.addr.sbvalue.GetDynamicValue(lldb.eDynamicCanRunTarget)
-                    description = '[%u] %s: addr = 0x%x' % (match_idx, arg_str_description, malloc_addr)
-                    if offset != 0:
-                        description += ' + %u' % (offset)
-                    description += ', size = %u' % (malloc_size)
+                    description = '%#x: ' % (match_addr)
+                    if options.show_size:
+                        description += '<%5u> ' % (malloc_size)
+                    if options.show_range:
+                        if offset > 0:
+                            description += '[%#x - %#x) + %-6u ' % (malloc_addr, malloc_addr + malloc_size, offset)
+                        else:
+                            description += '[%#x - %#x)' % (malloc_addr, malloc_addr + malloc_size)
+                    else:
+                        if options.type != 'isa':
+                            description += '%#x + %-6u ' % (malloc_addr, offset)
                     derefed_dynamic_value = None
                     if dynamic_value.type.name == 'void *':
                         if options.type == 'pointer' and malloc_size == 4096:
                             error = lldb.SBError()
                             data = bytearray(lldb.process.ReadMemory(malloc_addr, 16, error))
                             if data == '\xa1\xa1\xa1\xa1AUTORELEASE!':
-                                description += ', type = (AUTORELEASE!)'
+                                ptr_size = lldb.target.addr_size
+                                thread = lldb.process.ReadUnsignedFromMemory (malloc_addr + 16 + ptr_size, ptr_size, error)
+                                #   4 bytes  0xa1a1a1a1
+                                #  12 bytes  'AUTORELEASE!'
+                                # ptr bytes  autorelease insertion point
+                                # ptr bytes  pthread_t
+                                # ptr bytes  next colder page
+                                # ptr bytes  next hotter page
+                                #   4 bytes  this page's depth in the list
+                                #   4 bytes  high-water mark
+                                description += 'AUTORELEASE! for pthread_t %#x' % (thread)
+                            else:
+                                description += 'malloc(%u)' % (malloc_size)
+                        else:
+                            description += 'malloc(%u)' % (malloc_size)
                     else:
                         derefed_dynamic_value = dynamic_value.deref
                         if derefed_dynamic_value:                        
                             derefed_dynamic_type = derefed_dynamic_value.type
                             derefed_dynamic_type_size = derefed_dynamic_type.size
                             derefed_dynamic_type_name = derefed_dynamic_type.name
-                            description += ', type = %s <%u>' % (derefed_dynamic_type_name, derefed_dynamic_type_size)
+                            description += derefed_dynamic_type_name
                             if offset < derefed_dynamic_type_size:
                                 member_list = list();
                                 get_member_types_for_offset (derefed_dynamic_type, offset, member_list)
@@ -246,7 +269,12 @@ def display_match_results (result, options, arg_str_description, expr_sbvalue, p
                                             for ivar_regex in options.ivar_regex_blacklist:
                                                 if ivar_regex.match(member_path):
                                                     print_entry = False
-                                        description += ', ivar = %s' % (member_path)
+                                        description += '.%s' % (member_path)
+                            else:
+                                description += '%u bytes after %s' % (offset - derefed_dynamic_type_size, derefed_dynamic_type_name)
+                        else:
+                            # strip the "*" from the end of the name since we were unable to dereference this
+                            description += dynamic_value.type.name[0:-1]
                 if print_entry:
                     match_idx += 1
                     result_output = ''
@@ -257,7 +285,7 @@ def display_match_results (result, options, arg_str_description, expr_sbvalue, p
                         if options.print_object_description and dynamic_value:
                             desc = dynamic_value.GetObjectDescription()
                             if desc:
-                                result_output += ', po=%s' % (desc)
+                                result_output += '\n%s' % (desc)
                     if result_output:
                         result.AppendMessage(result_output)
                     if options.memory:
@@ -471,7 +499,7 @@ def objc_refs(debugger, command, result, dict):
                     isa = expr_sbvalue.unsigned
                     if isa:
                         options.type = 'isa'
-                        result.AppendMessage('Searching for all instances of %s (isa=0x%x)' % (class_name, isa))
+                        result.AppendMessage('Searching for all instances of classes or subclasses of %s (isa=0x%x)' % (class_name, isa))
                         heap_search (result, options, '0x%x' % isa)
                     else:
                         result.AppendMessage('error: Can\'t find isa for an ObjC class named "%s"' % (class_name))

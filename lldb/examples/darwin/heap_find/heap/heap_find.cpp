@@ -266,7 +266,7 @@ public:
         // In not empty, terminate and return the result
         malloc_match terminator_entry = { NULL, 0, 0 };
         // We always leave room for an empty entry at the end
-        m_entries[m_size + 1] = terminator_entry;
+        m_entries[m_size] = terminator_entry;
         return m_entries;
     }
 
@@ -316,10 +316,10 @@ public:
         if (empty())
             return NULL;
         // In not empty, terminate and return the result
-        m_entries[m_size + 1].address = NULL;
-        m_entries[m_size + 1].argument = 0;
-        m_entries[m_size + 1].type_flags = 0;
-        m_entries[m_size + 1].num_frames = 0;
+        m_entries[m_size].address = NULL;
+        m_entries[m_size].argument = 0;
+        m_entries[m_size].type_flags = 0;
+        m_entries[m_size].num_frames = 0;
         return m_entries;
     }
 
@@ -419,7 +419,6 @@ private:
 //----------------------------------------------------------------------
 // Local global variables
 //----------------------------------------------------------------------
-//std::vector<malloc_match> g_matches;
 MatchResults g_matches;
 MallocStackLoggingEntries g_malloc_stack_history;
 ObjCClasses g_objc_classes;
