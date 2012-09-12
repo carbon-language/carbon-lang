@@ -215,3 +215,8 @@ class Foo : protected T
  public:
   Foo& operator=( const Foo& other );
 };
+
+template<typename...A> struct NestedExpansion {
+  template<typename...B> auto f(A...a, B...b) -> decltype(g(a + b...));
+};
+template struct NestedExpansion<char, char, char>;

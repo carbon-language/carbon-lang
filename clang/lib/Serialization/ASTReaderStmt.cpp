@@ -1468,6 +1468,16 @@ void ASTStmtReader::VisitSubstNonTypeTemplateParmPackExpr(
   E->NameLoc = ReadSourceLocation(Record, Idx);
 }
 
+void ASTStmtReader::VisitFunctionParmPackExpr(FunctionParmPackExpr *E) {
+  VisitExpr(E);
+  E->NumParameters = Record[Idx++];
+  E->ParamPack = ReadDeclAs<ParmVarDecl>(Record, Idx);
+  E->NameLoc = ReadSourceLocation(Record, Idx);
+  ParmVarDecl **Parms = reinterpret_cast<ParmVarDecl**>(E+1);
+  for (unsigned i = 0, n = E->NumParameters; i != n; ++i)
+    Parms[i] = ReadDeclAs<ParmVarDecl>(Record, Idx);
+}
+
 void ASTStmtReader::VisitMaterializeTemporaryExpr(MaterializeTemporaryExpr *E) {
   VisitExpr(E);
   E->Temporary = Reader.ReadSubExpr();
@@ -2182,6 +2192,11 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
         
     case EXPR_SUBST_NON_TYPE_TEMPLATE_PARM_PACK:
       S = new (Context) SubstNonTypeTemplateParmPackExpr(Empty);
+      break;
+
+    case EXPR_FUNCTION_PARM_PACK:
+      S = FunctionParmPackExpr::CreateEmpty(Context,
+                                          Record[ASTStmtReader::NumExprFields]);
       break;
         
     case EXPR_MATERIALIZE_TEMPORARY:

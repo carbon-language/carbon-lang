@@ -802,11 +802,24 @@ namespace {
     ExprResult TransformPredefinedExpr(PredefinedExpr *E);
     ExprResult TransformDeclRefExpr(DeclRefExpr *E);
     ExprResult TransformCXXDefaultArgExpr(CXXDefaultArgExpr *E);
+
     ExprResult TransformTemplateParmRefExpr(DeclRefExpr *E,
                                             NonTypeTemplateParmDecl *D);
     ExprResult TransformSubstNonTypeTemplateParmPackExpr(
                                            SubstNonTypeTemplateParmPackExpr *E);
-    
+
+    /// \brief Rebuild a DeclRefExpr for a ParmVarDecl reference.
+    ExprResult RebuildParmVarDeclRefExpr(ParmVarDecl *PD, SourceLocation Loc);
+
+    /// \brief Transform a reference to a function parameter pack.
+    ExprResult TransformFunctionParmPackRefExpr(DeclRefExpr *E,
+                                                ParmVarDecl *PD);
+
+    /// \brief Transform a FunctionParmPackExpr which was built when we couldn't
+    /// expand a function parameter pack reference which refers to an expanded
+    /// pack.
+    ExprResult TransformFunctionParmPackExpr(FunctionParmPackExpr *E);
+
     QualType TransformFunctionProtoType(TypeLocBuilder &TLB,
                                         FunctionProtoTypeLoc TL);
     QualType TransformFunctionProtoType(TypeLocBuilder &TLB,
@@ -1230,8 +1243,81 @@ TemplateInstantiator::TransformSubstNonTypeTemplateParmPackExpr(
 }
 
 ExprResult
+TemplateInstantiator::RebuildParmVarDeclRefExpr(ParmVarDecl *PD,
+                                                SourceLocation Loc) {
+  DeclarationNameInfo NameInfo(PD->getDeclName(), Loc);
+  return getSema().BuildDeclarationNameExpr(CXXScopeSpec(), NameInfo, PD);
+}
+
+ExprResult
+TemplateInstantiator::TransformFunctionParmPackExpr(FunctionParmPackExpr *E) {
+  if (getSema().ArgumentPackSubstitutionIndex != -1) {
+    // We can expand this parameter pack now.
+    ParmVarDecl *D = E->getExpansion(getSema().ArgumentPackSubstitutionIndex);
+    ValueDecl *VD = cast_or_null<ValueDecl>(TransformDecl(E->getExprLoc(), D));
+    if (!VD)
+      return ExprError();
+    return RebuildParmVarDeclRefExpr(cast<ParmVarDecl>(VD), E->getExprLoc());
+  }
+
+  QualType T = TransformType(E->getType());
+  if (T.isNull())
+    return ExprError();
+
+  // Transform each of the parameter expansions into the corresponding
+  // parameters in the instantiation of the function decl.
+  llvm::SmallVector<Decl*, 8> Parms;
+  Parms.reserve(E->getNumExpansions());
+  for (FunctionParmPackExpr::iterator I = E->begin(), End = E->end();
+       I != End; ++I) {
+    ParmVarDecl *D =
+        cast_or_null<ParmVarDecl>(TransformDecl(E->getExprLoc(), *I));
+    if (!D)
+      return ExprError();
+    Parms.push_back(D);
+  }
+
+  return FunctionParmPackExpr::Create(getSema().Context, T,
+                                      E->getParameterPack(),
+                                      E->getParameterPackLocation(), Parms);
+}
+
+ExprResult
+TemplateInstantiator::TransformFunctionParmPackRefExpr(DeclRefExpr *E,
+                                                       ParmVarDecl *PD) {
+  typedef LocalInstantiationScope::DeclArgumentPack DeclArgumentPack;
+  llvm::PointerUnion<Decl *, DeclArgumentPack *> *Found
+    = getSema().CurrentInstantiationScope->findInstantiationOf(PD);
+  assert(Found && "no instantiation for parameter pack");
+
+  Decl *TransformedDecl;
+  if (DeclArgumentPack *Pack = Found->dyn_cast<DeclArgumentPack *>()) {
+    // If this is a reference to a function parameter pack which we can substitute
+    // but can't yet expand, build a FunctionParmPackExpr for it.
+    if (getSema().ArgumentPackSubstitutionIndex == -1) {
+      QualType T = TransformType(E->getType());
+      if (T.isNull())
+        return ExprError();
+      return FunctionParmPackExpr::Create(getSema().Context, T, PD,
+                                          E->getExprLoc(), *Pack);
+    }
+
+    TransformedDecl = (*Pack)[getSema().ArgumentPackSubstitutionIndex];
+  } else {
+    TransformedDecl = Found->get<Decl*>();
+  }
+
+  // We have either an unexpanded pack or a specific expansion.
+  return RebuildParmVarDeclRefExpr(cast<ParmVarDecl>(TransformedDecl),
+                                   E->getExprLoc());
+}
+
+ExprResult
 TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E) {
   NamedDecl *D = E->getDecl();
+
+  // Handle references to non-type template parameters and non-type template
+  // parameter packs.
   if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
     if (NTTP->getDepth() < TemplateArgs.getNumLevels())
       return TransformTemplateParmRefExpr(E, NTTP);
@@ -1239,6 +1325,11 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E) {
     // We have a non-type template parameter that isn't fully substituted;
     // FindInstantiatedDecl will find it in the local instantiation scope.
   }
+
+  // Handle references to function parameter packs.
+  if (ParmVarDecl *PD = dyn_cast<ParmVarDecl>(D))
+    if (PD->isParameterPack())
+      return TransformFunctionParmPackRefExpr(E, PD);
 
   return TreeTransform<TemplateInstantiator>::TransformDeclRefExpr(E);
 }

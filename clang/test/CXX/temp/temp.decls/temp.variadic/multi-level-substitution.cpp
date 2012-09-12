@@ -187,6 +187,30 @@ namespace PacksAtDifferentLevels {
                               add_pointer<float>,
                               add_const<double>>>::value == 0? 1 : -1];
 
+  namespace PR13811 {
+    constexpr int g(int n, int m) { return n * 10 + m; }
+
+    template<typename...A>
+    struct X6 {
+      template<typename...B>
+      constexpr auto f1(A ...a) -> decltype(g(A(a + B())...)) { return g(A(a + B())...); }
+
+      template<typename...B>
+      constexpr auto f2(A ...a, B ...b) -> decltype(g((&a)[b] ...)) { return g((&a)[b] ...); } // expected-note {{past-the-end}}
+
+      template<typename...B> struct Inner {
+        template<typename...C>
+        constexpr auto f(A ...a, B ...b, C ...c) -> decltype(g(a+b+c...)) { return g(a+b+c...); }
+      };
+    };
+    struct A { constexpr operator int() { return 2; } };
+    struct B { constexpr operator int() { return 1; } };
+
+    static_assert(X6<unsigned char, int>().f1<A, B>(255, 1) == 12, "");
+    static_assert(X6<int, int>().f2(3, 4, 0, 0) == 34, "");
+    static_assert(X6<int, int>().f2(3, 4, 0, 1) == 34, ""); // expected-error {{constant expression}} expected-note {{in call}}
+    static_assert(X6<int, int>::Inner<int, int>().f(1, 2, 3, 4, 5, 6) == 102, "");
+  }
 }
 
 namespace ExpandingNonTypeTemplateParameters {

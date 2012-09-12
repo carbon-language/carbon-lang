@@ -1,11 +1,11 @@
 // Test this without pch.
-// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -include %S/cxx-templates.h -verify %s -ast-dump -o -
-// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -include %S/cxx-templates.h %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -fcxx-exceptions -fexceptions -include %S/cxx-templates.h -verify %s -ast-dump -o -
+// RUN: %clang_cc1 -std=c++11 -fcxx-exceptions -fexceptions -include %S/cxx-templates.h %s -emit-llvm -o - | FileCheck %s
 
 // Test with pch.
-// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -x c++-header -emit-pch -o %t %S/cxx-templates.h
-// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -include-pch %t -verify %s -ast-dump  -o -
-// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -include-pch %t %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -fcxx-exceptions -fexceptions -x c++-header -emit-pch -o %t %S/cxx-templates.h
+// RUN: %clang_cc1 -std=c++11 -fcxx-exceptions -fexceptions -include-pch %t -verify %s -ast-dump  -o -
+// RUN: %clang_cc1 -std=c++11 -fcxx-exceptions -fexceptions -include-pch %t %s -emit-llvm -o - | FileCheck %s
 
 // CHECK: define weak_odr void @_ZN2S4IiE1mEv
 // CHECK: define linkonce_odr void @_ZN2S3IiE1mEv
@@ -67,4 +67,13 @@ template< typename D >
 Foo< D >& Foo< D >::operator=( const Foo& other )
 {
    return *this;
+}
+
+namespace TestNestedExpansion {
+  struct Int {
+    Int(int);
+    friend Int operator+(Int, Int);
+  };
+  Int &g(Int, int, double);
+  Int &test = NestedExpansion<char, char, char>().f(0, 1, 2, Int(3), 4, 5.0);
 }

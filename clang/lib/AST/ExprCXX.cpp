@@ -1299,6 +1299,34 @@ TemplateArgument SubstNonTypeTemplateParmPackExpr::getArgumentPack() const {
   return TemplateArgument(Arguments, NumArguments);
 }
 
+FunctionParmPackExpr::FunctionParmPackExpr(QualType T, ParmVarDecl *ParamPack,
+                                           SourceLocation NameLoc,
+                                           unsigned NumParams,
+                                           Decl * const *Params)
+  : Expr(FunctionParmPackExprClass, T, VK_LValue, OK_Ordinary,
+         true, true, true, true),
+    ParamPack(ParamPack), NameLoc(NameLoc), NumParameters(NumParams) {
+  if (Params)
+    std::uninitialized_copy(Params, Params + NumParams,
+                            reinterpret_cast<Decl**>(this+1));
+}
+
+FunctionParmPackExpr *
+FunctionParmPackExpr::Create(ASTContext &Context, QualType T,
+                             ParmVarDecl *ParamPack, SourceLocation NameLoc,
+                             llvm::ArrayRef<Decl*> Params) {
+  return new (Context.Allocate(sizeof(FunctionParmPackExpr) +
+                               sizeof(ParmVarDecl*) * Params.size()))
+    FunctionParmPackExpr(T, ParamPack, NameLoc, Params.size(), Params.data());
+}
+
+FunctionParmPackExpr *
+FunctionParmPackExpr::CreateEmpty(ASTContext &Context, unsigned NumParams) {
+  return new (Context.Allocate(sizeof(FunctionParmPackExpr) +
+                               sizeof(ParmVarDecl*) * NumParams))
+    FunctionParmPackExpr(QualType(), 0, SourceLocation(), 0, 0);
+}
+
 TypeTraitExpr::TypeTraitExpr(QualType T, SourceLocation Loc, TypeTrait Kind,
                              ArrayRef<TypeSourceInfo *> Args,
                              SourceLocation RParenLoc,

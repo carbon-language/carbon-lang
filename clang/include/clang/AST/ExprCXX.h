@@ -3616,6 +3616,73 @@ public:
   child_range children() { return child_range(); }
 };
 
+/// \brief Represents a reference to a function parameter pack that has been
+/// substituted but not yet expanded.
+///
+/// When a pack expansion contains multiple parameter packs at different levels,
+/// this node is used to represent a function parameter pack at an outer level
+/// which we have already substituted to refer to expanded parameters, but where
+/// the containing pack expansion cannot yet be expanded.
+///
+/// \code
+/// template<typename...Ts> struct S {
+///   template<typename...Us> auto f(Ts ...ts) -> decltype(g(Us(ts)...));
+/// };
+/// template struct S<int, int>;
+/// \endcode
+class FunctionParmPackExpr : public Expr {
+  /// \brief The function parameter pack which was referenced.
+  ParmVarDecl *ParamPack;
+
+  /// \brief The location of the function parameter pack reference.
+  SourceLocation NameLoc;
+
+  /// \brief The number of expansions of this pack.
+  unsigned NumParameters;
+
+  FunctionParmPackExpr(QualType T, ParmVarDecl *ParamPack,
+                       SourceLocation NameLoc, unsigned NumParams,
+                       Decl * const *Params);
+
+  friend class ASTReader;
+  friend class ASTStmtReader;
+
+public:
+  static FunctionParmPackExpr *Create(ASTContext &Context, QualType T,
+                                      ParmVarDecl *ParamPack,
+                                      SourceLocation NameLoc,
+                                      llvm::ArrayRef<Decl*> Params);
+  static FunctionParmPackExpr *CreateEmpty(ASTContext &Context,
+                                           unsigned NumParams);
+
+  /// \brief Get the parameter pack which this expression refers to.
+  ParmVarDecl *getParameterPack() const { return ParamPack; }
+
+  /// \brief Get the location of the parameter pack.
+  SourceLocation getParameterPackLocation() const { return NameLoc; }
+
+  /// \brief Iterators over the parameters which the parameter pack expanded
+  /// into.
+  typedef ParmVarDecl * const *iterator;
+  iterator begin() const { return reinterpret_cast<iterator>(this+1); }
+  iterator end() const { return begin() + NumParameters; }
+
+  /// \brief Get the number of parameters in this parameter pack.
+  unsigned getNumExpansions() const { return NumParameters; }
+
+  /// \brief Get an expansion of the parameter pack by index.
+  ParmVarDecl *getExpansion(unsigned I) const { return begin()[I]; }
+
+  SourceRange getSourceRange() const LLVM_READONLY { return NameLoc; }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == FunctionParmPackExprClass;
+  }
+  static bool classof(const FunctionParmPackExpr *) { return true; }
+
+  child_range children() { return child_range(); }
+};
+
 /// \brief Represents a prvalue temporary that written into memory so that
 /// a reference can bind to it.
 ///
