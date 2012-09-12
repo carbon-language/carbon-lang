@@ -357,12 +357,6 @@ def err_nsnumber_nonliteral_unary : Error<
 def warn_cstyle_param : Warning<
   "use of C-style parameters in Objective-C method declarations"
   " is deprecated">, InGroup<DeprecatedDeclarations>;
-def warn_missing_argument_name : Warning<
-  "no parameter name in the middle of a selector"
-  " may result in incomplete selector name">,
-  InGroup<DiagGroup<"missing-argument-name-in-selector">>, DefaultIgnore;
-def note_missing_argument_name : Note<
-  "did you mean %0 as the selector name">;
 
 let CategoryName = "ARC Parse Issue" in {
 def err_arc_bridge_retain : Error<

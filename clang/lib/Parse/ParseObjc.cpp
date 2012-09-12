@@ -1031,7 +1031,7 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
                             Scope::FunctionPrototypeScope|Scope::DeclScope);
 
   AttributePool allParamAttrs(AttrFactory);
-  bool warnSelectorName = false;
+  
   while (1) {
     ParsedAttributes paramAttrs(AttrFactory);
     Sema::ObjCArgInfo ArgInfo;
@@ -1100,16 +1100,8 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     
     // Check for another keyword selector.
     SelIdent = ParseObjCSelectorPiece(selLoc);
-    if (!SelIdent) {
-      if (Tok.isNot(tok::colon))
-        break;
-      // parameter name was not followed with selector name; as in:
-      // - (void) Meth: (id) Name:(id)Arg2; Issue a warning as user
-      // might have meant: - (void) Meth: (id)Arg1 Name:(id)Arg2;
-      Diag(Tok, diag::warn_missing_argument_name); // missing argument name.
-      warnSelectorName = true;
-    }
-    
+    if (!SelIdent && Tok.isNot(tok::colon))
+      break;
     // We have a selector or a colon, continue parsing.
   }
 
@@ -1150,9 +1142,6 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   
   Selector Sel = PP.getSelectorTable().getSelector(KeyIdents.size(),
                                                    &KeyIdents[0]);
-  if (warnSelectorName)
-    Diag(mLoc, diag::note_missing_argument_name) << Sel.getAsString();
-  
   Decl *Result
        = Actions.ActOnMethodDeclaration(getCurScope(), mLoc, Tok.getLocation(),
                                         mType, DSRet, ReturnType, 
