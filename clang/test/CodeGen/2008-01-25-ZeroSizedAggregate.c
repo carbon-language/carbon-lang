@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 %s -emit-llvm -o -
+// REQUIRES: LP64
 
 // Aggregates of size zero should be dropped from argument list.
 typedef long int Tlong;
