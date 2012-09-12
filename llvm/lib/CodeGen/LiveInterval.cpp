@@ -69,21 +69,6 @@ VNInfo *LiveInterval::createDeadDef(SlotIndex Def,
   return VNI;
 }
 
-/// killedInRange - Return true if the interval has kills in [Start,End).
-bool LiveInterval::killedInRange(SlotIndex Start, SlotIndex End) const {
-  Ranges::const_iterator r =
-    std::lower_bound(ranges.begin(), ranges.end(), End);
-
-  // Now r points to the first interval with start >= End, or ranges.end().
-  if (r == ranges.begin())
-    return false;
-
-  --r;
-  // Now r points to the last interval with end <= End.
-  // r->end is the kill point.
-  return r->end >= Start && r->end < End;
-}
-
 // overlaps - Return true if the intersection of the two live intervals is
 // not empty.
 //
@@ -714,27 +699,6 @@ VNInfo* LiveInterval::MergeValueNumberInto(VNInfo *V1, VNInfo *V2) {
   markValNoForDeletion(V1);
 
   return V2;
-}
-
-void LiveInterval::Copy(const LiveInterval &RHS,
-                        MachineRegisterInfo *MRI,
-                        VNInfo::Allocator &VNInfoAllocator) {
-  ranges.clear();
-  valnos.clear();
-  std::pair<unsigned, unsigned> Hint = MRI->getRegAllocationHint(RHS.reg);
-  MRI->setRegAllocationHint(reg, Hint.first, Hint.second);
-
-  weight = RHS.weight;
-  for (unsigned i = 0, e = RHS.getNumValNums(); i != e; ++i) {
-    const VNInfo *VNI = RHS.getValNumInfo(i);
-    createValueCopy(VNI, VNInfoAllocator);
-  }
-  for (unsigned i = 0, e = RHS.ranges.size(); i != e; ++i) {
-    const LiveRange &LR = RHS.ranges[i];
-    addRange(LiveRange(LR.start, LR.end, getValNumInfo(LR.valno->id)));
-  }
-
-  verify();
 }
 
 unsigned LiveInterval::getSize() const {
