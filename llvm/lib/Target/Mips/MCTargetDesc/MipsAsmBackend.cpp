@@ -217,7 +217,7 @@ public:
   ///
   /// \param Inst - The instruction to relax, which may be the same
   /// as the output.
-  /// \parm Res [output] - On return, the relaxed instruction.
+  /// \param [out] Res On return, the relaxed instruction.
   void relaxInstruction(const MCInst &Inst, MCInst &Res) const {
   }
 

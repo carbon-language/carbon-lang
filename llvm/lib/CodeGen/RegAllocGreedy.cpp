@@ -508,7 +508,7 @@ bool RAGreedy::shouldEvict(LiveInterval &A, bool IsHint,
 ///
 /// @param VirtReg Live range that is about to be assigned.
 /// @param PhysReg Desired register for assignment.
-/// @prarm IsHint  True when PhysReg is VirtReg's preferred register.
+/// @param IsHint  True when PhysReg is VirtReg's preferred register.
 /// @param MaxCost Only look for cheaper candidates and update with new cost
 ///                when returning true.
 /// @returns True when interference can be evicted cheaper than MaxCost.

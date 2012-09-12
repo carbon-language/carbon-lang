@@ -126,9 +126,9 @@ public:
   /// RelaxInstruction - Relax the instruction in the given fragment to the next
   /// wider instruction.
   ///
-  /// \param Inst - The instruction to relax, which may be the same as the
+  /// \param Inst The instruction to relax, which may be the same as the
   /// output.
-  /// \parm Res [output] - On return, the relaxed instruction.
+  /// \param [out] Res On return, the relaxed instruction.
   virtual void relaxInstruction(const MCInst &Inst, MCInst &Res) const = 0;
 
   /// @}

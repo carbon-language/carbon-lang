@@ -358,8 +358,8 @@ static int X86TypeFromOpName(LiteralConstantEmitter *type,
 /// X86PopulateOperands - Handles all the operands in an X86 instruction, adding
 ///   the appropriate flags to their descriptors
 ///
-/// @operandFlags - A reference the array of operand flag objects
-/// @inst         - The instruction to use as a source of information
+/// \param operandTypes A reference the array of operand type objects
+/// \param inst         The instruction to use as a source of information
 static void X86PopulateOperands(
   LiteralConstantEmitter *(&operandTypes)[EDIS_MAX_OPERANDS],
   const CodeGenInstruction &inst) {
@@ -385,11 +385,12 @@ static void X86PopulateOperands(
 
 /// decorate1 - Decorates a named operand with a new flag
 ///
-/// @operandFlags - The array of operand flag objects, which don't have names
-/// @inst         - The CodeGenInstruction, which provides a way to translate
-///                 between names and operand indices
-/// @opName       - The name of the operand
-/// @flag         - The name of the flag to add
+/// \param operandFlags The array of operand flag objects, which don't have
+///                     names
+/// \param inst         The CodeGenInstruction, which provides a way to
+//                      translate between names and operand indices
+/// \param opName       The name of the operand
+/// \param opFlag       The name of the flag to add
 static inline void decorate1(
   FlagsConstantEmitter *(&operandFlags)[EDIS_MAX_OPERANDS],
   const CodeGenInstruction &inst,
@@ -438,9 +439,9 @@ static inline void decorate1(
 ///   instruction to determine what sort of an instruction it is and then adds
 ///   the appropriate flags to the instruction and its operands
 ///
-/// @arg instType     - A reference to the type for the instruction as a whole
-/// @arg operandFlags - A reference to the array of operand flag object pointers
-/// @arg inst         - A reference to the original instruction
+/// \param instType     A reference to the type for the instruction as a whole
+/// \param operandFlags A reference to the array of operand flag object pointers
+/// \param inst         A reference to the original instruction
 static void X86ExtractSemantics(
   LiteralConstantEmitter &instType,
   FlagsConstantEmitter *(&operandFlags)[EDIS_MAX_OPERANDS],
@@ -567,8 +568,8 @@ static void X86ExtractSemantics(
 /// ARMFlagFromOpName - Processes the name of a single ARM operand (which is
 ///   actually its type) and translates it into an operand type
 ///
-/// @arg type     - The type object to set
-/// @arg name     - The name of the operand
+/// \param type The type object to set
+/// \param name The name of the operand
 static int ARMFlagFromOpName(LiteralConstantEmitter *type,
                              const std::string &name) {
   REG("GPR");
@@ -750,8 +751,8 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
 /// ARMPopulateOperands - Handles all the operands in an ARM instruction, adding
 ///   the appropriate flags to their descriptors
 ///
-/// @operandFlags - A reference the array of operand flag objects
-/// @inst         - The instruction to use as a source of information
+/// \param operandTypes A reference the array of operand type objects
+/// \param inst         The instruction to use as a source of information
 static void ARMPopulateOperands(
   LiteralConstantEmitter *(&operandTypes)[EDIS_MAX_OPERANDS],
   const CodeGenInstruction &inst) {
@@ -790,10 +791,10 @@ static void ARMPopulateOperands(
 ///   instruction to determine what sort of an instruction it is and then adds
 ///   the appropriate flags to the instruction and its operands
 ///
-/// @arg instType     - A reference to the type for the instruction as a whole
-/// @arg operandTypes - A reference to the array of operand type object pointers
-/// @arg operandFlags - A reference to the array of operand flag object pointers
-/// @arg inst         - A reference to the original instruction
+/// \param instType     A reference to the type for the instruction as a whole
+/// \param operandTypes A reference to the array of operand type object pointers
+/// \param operandFlags A reference to the array of operand flag object pointers
+/// \param inst         A reference to the original instruction
 static void ARMExtractSemantics(
   LiteralConstantEmitter &instType,
   LiteralConstantEmitter *(&operandTypes)[EDIS_MAX_OPERANDS],
@@ -831,8 +832,8 @@ static void ARMExtractSemantics(
 /// populateInstInfo - Fills an array of InstInfos with information about each
 ///   instruction in a target
 ///
-/// @arg infoArray  - The array of InstInfo objects to populate
-/// @arg target     - The CodeGenTarget to use as a source of instructions
+/// \param infoArray The array of InstInfo objects to populate
+/// \param target    The CodeGenTarget to use as a source of instructions
 static void populateInstInfo(CompoundConstantEmitter &infoArray,
                              CodeGenTarget &target) {
   const std::vector<const CodeGenInstruction*> &numberedInstructions =
