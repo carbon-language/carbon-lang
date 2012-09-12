@@ -1280,7 +1280,8 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
       }
 
       if (const BlockEntrance *BE = dyn_cast<BlockEntrance>(&P)) {
-        if (const CFGStmt *S = BE->getFirstElement().getAs<CFGStmt>()) {
+        CFGElement First = BE->getFirstElement();
+        if (const CFGStmt *S = First.getAs<CFGStmt>()) {
           const Stmt *stmt = S->getStmt();
           if (IsControlFlowExpr(stmt)) {
             // Add the proper context for '&&', '||', and '?'.
