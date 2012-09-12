@@ -625,7 +625,7 @@ void InitializeAsanInterceptors() {
 #if !MAC_INTERPOSE_FUNCTIONS
     // If we're using dynamic interceptors on Mac, these two are just plain
     // functions.
-    *(uptr*)&REAL(memcpy) = (uptr)REAL(memmove);
+    internal_memcpy(&REAL(memcpy), &REAL(memmove), sizeof(REAL(memmove)));
 #endif
   }
 

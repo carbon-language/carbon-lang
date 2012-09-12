@@ -58,7 +58,7 @@ if(LLVM_INCLUDE_TESTS)
   add_library(RTSanitizerCommon.test STATIC ${SANITIZER_SOURCES})
   # Build test library with debug info.
   set_target_compile_flags(RTSanitizerCommon.test
-    ${SANITIZER_CFLAGS} -g -Werror)
+    ${SANITIZER_CFLAGS} -g)
   set_target_properties(RTSanitizerCommon.test PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 

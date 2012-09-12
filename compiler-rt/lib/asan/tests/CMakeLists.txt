@@ -17,6 +17,7 @@ include_directories(../..)
 set(ASAN_UNITTEST_COMMON_CFLAGS
   -Wall
   -Wno-format
+  -Werror
   -fvisibility=hidden
   -g
   -O2

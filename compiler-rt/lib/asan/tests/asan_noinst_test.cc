@@ -678,9 +678,10 @@ TEST(AddressSanitizerInterface, DISABLED_InvalidPoisonAndUnpoisonCallsTest) {
 }
 
 static void ErrorReportCallbackOneToZ(const char *report) {
-  write(2, "ABCDEF", 6);
-  write(2, report, strlen(report));
-  write(2, "ABCDEF", 6);
+  int report_len = strlen(report);
+  ASSERT_EQ(6, write(2, "ABCDEF", 6));
+  ASSERT_EQ(report_len, write(2, report, report_len));
+  ASSERT_EQ(6, write(2, "ABCDEF", 6));
   _exit(1);
 }
 
