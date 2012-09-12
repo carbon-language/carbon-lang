@@ -59,8 +59,7 @@ PPCLinuxMCAsmInfo::PPCLinuxMCAsmInfo(bool is64Bit) {
   HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
 
   // Exceptions handling
-  if (!is64Bit)
-    ExceptionsType = ExceptionHandling::DwarfCFI;
+  ExceptionsType = ExceptionHandling::DwarfCFI;
     
   ZeroDirective = "\t.space\t";
   Data64bitsDirective = is64Bit ? "\t.quad\t" : 0;
