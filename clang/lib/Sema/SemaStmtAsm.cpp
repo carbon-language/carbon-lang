@@ -581,62 +581,60 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
       unsigned MCIdx = TargetParser->getMCInstOperandNum(Kind, Inst, Operands,
                                                          i, NumMCOperands);
       assert (NumMCOperands && "Expected at least 1 MCOperand!");
-      // If we have a one-to-many mapping, then search for the MCExpr.
-      if (NumMCOperands > 1) {
-        bool foundExpr = false;
-        for (unsigned j = MCIdx, e = MCIdx + NumMCOperands; j != e; ++j) {
-          if (Inst.getOperand(j).isExpr()) {
-            foundExpr = true;
-            MCIdx = j;
-            break;
-          }
+
+      for (unsigned j = MCIdx, e = MCIdx + NumMCOperands; j != e; ++j) {
+        const llvm::MCOperand &Op = Inst.getOperand(j);
+
+        // Skip immediates.
+        if (Op.isImm() || Op.isFPImm())
+          continue;
+
+        // Skip invalid register operands.
+        if (Op.isReg() && Op.getReg() == 0)
+          continue;
+
+        // Register/Clobber.
+        if (Op.isReg() && NumDefs && (j < NumDefs)) {
+          std::string Reg;
+          llvm::raw_string_ostream OS(Reg);
+          IP->printRegName(OS, Op.getReg());
+
+          StringRef Clobber(OS.str());
+          if (!Context.getTargetInfo().isValidClobber(Clobber))
+            return StmtError(
+              Diag(AsmLoc, diag::err_asm_unknown_register_name) << Clobber);
+          ClobberRegs.insert(Reg);
+          continue;
         }
-        assert (foundExpr && "Expected for find an expression!");
-      }
-
-      const llvm::MCOperand &Op = Inst.getOperand(MCIdx);
-
-      // Register/Clobber.
-      if (Op.isReg() && NumDefs && (MCIdx < NumDefs)) {
-        std::string Reg;
-        llvm::raw_string_ostream OS(Reg);
-        IP->printRegName(OS, Op.getReg());
-
-        StringRef Clobber(OS.str());
-        if (!Context.getTargetInfo().isValidClobber(Clobber))
-          return StmtError(Diag(AsmLoc, diag::err_asm_unknown_register_name) <<
-                           Clobber);
-        ClobberRegs.insert(Reg);
-        continue;
-      }
-      // Expr/Input or Output.
-      if (Op.isExpr()) {
-        const llvm::MCExpr *Expr = Op.getExpr();
-        const llvm::MCSymbolRefExpr *SymRef;
-        if ((SymRef = dyn_cast<llvm::MCSymbolRefExpr>(Expr))) {
-          StringRef Name = SymRef->getSymbol().getName();
-          IdentifierInfo *II = getIdentifierInfo(Name, AsmToks,
-                                                 AsmTokRanges[StrIdx].first,
-                                                 AsmTokRanges[StrIdx].second);
-          if (II) {
-            CXXScopeSpec SS;
-            UnqualifiedId Id;
-            SourceLocation Loc;
-            Id.setIdentifier(II, AsmLoc);
-            ExprResult Result = ActOnIdExpression(getCurScope(), SS, Loc, Id,
-                                                  false, false);
-            if (!Result.isInvalid()) {
-              bool isMemDef = (i == 1) && Desc.mayStore();
-              if (isMemDef) {
-                Outputs.push_back(II);
-                OutputExprs.push_back(Result.take());
-                OutputExprNames.push_back(Name.str());
-                OutputConstraints.push_back("=r");
-              } else {
-                Inputs.push_back(II);
-                InputExprs.push_back(Result.take());
-                InputExprNames.push_back(Name.str());
-                InputConstraints.push_back("r");
+        // Expr/Input or Output.
+        if (Op.isExpr()) {
+          const llvm::MCExpr *Expr = Op.getExpr();
+          const llvm::MCSymbolRefExpr *SymRef;
+          if ((SymRef = dyn_cast<llvm::MCSymbolRefExpr>(Expr))) {
+            StringRef Name = SymRef->getSymbol().getName();
+            IdentifierInfo *II = getIdentifierInfo(Name, AsmToks,
+                                                   AsmTokRanges[StrIdx].first,
+                                                   AsmTokRanges[StrIdx].second);
+            if (II) {
+              CXXScopeSpec SS;
+              UnqualifiedId Id;
+              SourceLocation Loc;
+              Id.setIdentifier(II, AsmLoc);
+              ExprResult Result = ActOnIdExpression(getCurScope(), SS, Loc, Id,
+                                                    false, false);
+              if (!Result.isInvalid()) {
+                bool isMemDef = (i == 1) && Desc.mayStore();
+                if (isMemDef) {
+                  Outputs.push_back(II);
+                  OutputExprs.push_back(Result.take());
+                  OutputExprNames.push_back(Name.str());
+                  OutputConstraints.push_back("=r");
+                } else {
+                  Inputs.push_back(II);
+                  InputExprs.push_back(Result.take());
+                  InputExprNames.push_back(Name.str());
+                  InputConstraints.push_back("r");
+                }
               }
             }
           }
