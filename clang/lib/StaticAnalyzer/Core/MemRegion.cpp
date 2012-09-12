@@ -990,6 +990,26 @@ const MemRegion *MemRegion::getBaseRegion() const {
   return R;
 }
 
+bool MemRegion::isSubRegionOf(const MemRegion *PR) const {
+  const MemRegion *R = this;
+  while (true) {
+    switch (R->getKind()) {
+      case MemRegion::ElementRegionKind:
+      case MemRegion::FieldRegionKind:
+      case MemRegion::ObjCIvarRegionKind:
+      case MemRegion::CXXBaseObjectRegionKind:
+        R = cast<SubRegion>(R)->getSuperRegion();
+        if (R == PR)
+          return true;
+        continue;
+      default:
+        break;
+    }
+    break;
+  }
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 // View handling.
 //===----------------------------------------------------------------------===//

@@ -140,6 +140,9 @@ public:
 
   const MemRegion *getBaseRegion() const;
 
+  /// Check if the region is a subregion of the given region.
+  bool isSubRegionOf(const MemRegion *PR) const;
+
   const MemRegion *StripCasts(bool StripBaseCasts = true) const;
 
   bool hasGlobalsOrParametersStorage() const;

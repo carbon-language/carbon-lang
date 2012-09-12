@@ -26,426 +26,1158 @@ int use(int c) {
                  //expected-note@-1{{The left operand of '+' is a garbage value}}
 }
 
-//CHECK:  <dict>
-//CHECK:   <key>files</key>
-//CHECK:   <array>
-//CHECK:   </array>
-//CHECK:   <key>diagnostics</key>
-//CHECK:   <array>
-//CHECK:    <dict>
-//CHECK:     <key>path</key>
-//CHECK:     <array>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>19</integer>
-//CHECK:        <key>col</key><integer>5</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>19</integer>
-//CHECK:           <key>col</key><integer>5</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>19</integer>
-//CHECK:           <key>col</key><integer>10</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Variable &apos;xx&apos; declared without an initial value</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Variable &apos;xx&apos; declared without an initial value</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>19</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>19</integer>
-//CHECK:             <key>col</key><integer>7</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>21</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>21</integer>
-//CHECK:             <key>col</key><integer>7</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>21</integer>
-//CHECK:        <key>col</key><integer>5</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>21</integer>
-//CHECK:           <key>col</key><integer>5</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>21</integer>
-//CHECK:           <key>col</key><integer>14</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Calling &apos;foo&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Calling &apos;foo&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>10</integer>
-//CHECK:        <key>col</key><integer>1</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Entered call from &apos;use&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Entered call from &apos;use&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>10</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>10</integer>
-//CHECK:             <key>col</key><integer>4</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>11</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>11</integer>
-//CHECK:             <key>col</key><integer>6</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>11</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>11</integer>
-//CHECK:             <key>col</key><integer>6</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>11</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>11</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>11</integer>
-//CHECK:        <key>col</key><integer>9</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>11</integer>
-//CHECK:           <key>col</key><integer>9</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>11</integer>
-//CHECK:           <key>col</key><integer>9</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Assuming &apos;c&apos; is not equal to 0</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Assuming &apos;c&apos; is not equal to 0</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>11</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>11</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>14</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>14</integer>
-//CHECK:             <key>col</key><integer>14</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>21</integer>
-//CHECK:        <key>col</key><integer>5</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>21</integer>
-//CHECK:           <key>col</key><integer>5</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>21</integer>
-//CHECK:           <key>col</key><integer>14</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Returning from &apos;foo&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Returning from &apos;foo&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>21</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>21</integer>
-//CHECK:             <key>col</key><integer>7</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>24</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>24</integer>
-//CHECK:             <key>col</key><integer>18</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>24</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>24</integer>
-//CHECK:             <key>col</key><integer>18</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>25</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>25</integer>
-//CHECK:             <key>col</key><integer>10</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>25</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>25</integer>
-//CHECK:             <key>col</key><integer>10</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>25</integer>
-//CHECK:             <key>col</key><integer>12</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>25</integer>
-//CHECK:             <key>col</key><integer>13</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>25</integer>
-//CHECK:        <key>col</key><integer>12</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>25</integer>
-//CHECK:           <key>col</key><integer>12</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>25</integer>
-//CHECK:           <key>col</key><integer>13</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>The left operand of &apos;+&apos; is a garbage value</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>The left operand of &apos;+&apos; is a garbage value</string>
-//CHECK:      </dict>
-//CHECK:     </array>
-//CHECK:     <key>description</key><string>The left operand of &apos;+&apos; is a garbage value</string>
-//CHECK:     <key>category</key><string>Logic error</string>
-//CHECK:     <key>type</key><string>Result of operation is garbage or undefined</string>
-//CHECK:    <key>issue_context_kind</key><string>function</string>
-//CHECK:    <key>issue_context</key><string>use</string>
-//CHECK:    <key>issue_hash</key><integer>7</integer>
-//CHECK:    <key>location</key>
-//CHECK:    <dict>
-//CHECK:     <key>line</key><integer>25</integer>
-//CHECK:     <key>col</key><integer>12</integer>
-//CHECK:     <key>file</key><integer>0</integer>
-//CHECK:    </dict>
-//CHECK:    </dict>
-//CHECK:   </array>
-//CHECK:  </dict>
-//CHECK:  </plist>
+void initArray(int x, double XYZ[3]) {
+    if (x <= 0) //expected-note {{Taking true branch}}
+                //expected-note@-1 {{Assuming 'x' is <= 0}}
+        return;
+    XYZ[0] = 1;
+    XYZ[1] = 1;
+    XYZ[2] = 1;
+}
+int testPassingParentRegionArray(int x) {
+    double XYZ[3];
+    initArray(x, XYZ); //expected-note {{Calling 'initArray'}}
+                       //expected-note@-1 {{Returning from 'initArray'}}
+    return 1 * XYZ[1]; //expected-warning {{The right operand of '*' is a garbage value}}
+                       //expected-note@-1 {{The right operand of '*' is a garbage value}}
+}
+
+double *getValidPtr();
+struct WithFields {
+  double *f1;
+};
+void initStruct(int x, struct WithFields *X) {
+  if (x <= 0) //expected-note {{Taking true branch}}
+              //expected-note@-1 {{Assuming 'x' is <= 0}}
+
+    return;
+  X->f1 = getValidPtr();
+}
+double testPassingParentRegionStruct(int x) {
+  struct WithFields st;
+  st.f1 = 0;
+  initStruct(x, &st); //expected-note {{Calling 'initStruct'}}
+                      //expected-note@-1 {{Returning from 'initStruct'}}
+  return (*st.f1); //expected-warning {{Dereference of null pointer}}
+                   //expected-note@-1{{Dereference of null pointer (loaded from field 'f1')}}
+}
+
+// CHECK:  <key>diagnostics</key>
+// CHECK-NEXT:  <array>
+// CHECK-NEXT:   <dict>
+// CHECK-NEXT:    <key>path</key>
+// CHECK-NEXT:    <array>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>19</integer>
+// CHECK-NEXT:       <key>col</key><integer>5</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>19</integer>
+// CHECK-NEXT:          <key>col</key><integer>5</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>19</integer>
+// CHECK-NEXT:          <key>col</key><integer>10</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Variable &apos;xx&apos; declared without an initial value</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Variable &apos;xx&apos; declared without an initial value</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>19</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>19</integer>
+// CHECK-NEXT:            <key>col</key><integer>7</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>21</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>21</integer>
+// CHECK-NEXT:            <key>col</key><integer>7</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>21</integer>
+// CHECK-NEXT:       <key>col</key><integer>5</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>21</integer>
+// CHECK-NEXT:          <key>col</key><integer>5</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>21</integer>
+// CHECK-NEXT:          <key>col</key><integer>14</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Calling &apos;foo&apos;</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Calling &apos;foo&apos;</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>10</integer>
+// CHECK-NEXT:       <key>col</key><integer>1</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>depth</key><integer>1</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Entered call from &apos;use&apos;</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Entered call from &apos;use&apos;</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>10</integer>
+// CHECK-NEXT:            <key>col</key><integer>1</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>10</integer>
+// CHECK-NEXT:            <key>col</key><integer>4</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>11</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>11</integer>
+// CHECK-NEXT:            <key>col</key><integer>6</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>11</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>11</integer>
+// CHECK-NEXT:            <key>col</key><integer>6</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>11</integer>
+// CHECK-NEXT:            <key>col</key><integer>9</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>11</integer>
+// CHECK-NEXT:            <key>col</key><integer>9</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>11</integer>
+// CHECK-NEXT:       <key>col</key><integer>9</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>11</integer>
+// CHECK-NEXT:          <key>col</key><integer>9</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>11</integer>
+// CHECK-NEXT:          <key>col</key><integer>9</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>1</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Assuming &apos;c&apos; is not equal to 0</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Assuming &apos;c&apos; is not equal to 0</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>11</integer>
+// CHECK-NEXT:            <key>col</key><integer>9</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>11</integer>
+// CHECK-NEXT:            <key>col</key><integer>9</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>14</integer>
+// CHECK-NEXT:            <key>col</key><integer>9</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>14</integer>
+// CHECK-NEXT:            <key>col</key><integer>14</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>21</integer>
+// CHECK-NEXT:       <key>col</key><integer>5</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>21</integer>
+// CHECK-NEXT:          <key>col</key><integer>5</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>21</integer>
+// CHECK-NEXT:          <key>col</key><integer>14</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>1</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Returning from &apos;foo&apos;</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Returning from &apos;foo&apos;</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>21</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>21</integer>
+// CHECK-NEXT:            <key>col</key><integer>7</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>24</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>24</integer>
+// CHECK-NEXT:            <key>col</key><integer>18</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>24</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>24</integer>
+// CHECK-NEXT:            <key>col</key><integer>18</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>25</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>25</integer>
+// CHECK-NEXT:            <key>col</key><integer>10</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>25</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>25</integer>
+// CHECK-NEXT:            <key>col</key><integer>10</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>25</integer>
+// CHECK-NEXT:            <key>col</key><integer>12</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>25</integer>
+// CHECK-NEXT:            <key>col</key><integer>13</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>25</integer>
+// CHECK-NEXT:       <key>col</key><integer>12</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>25</integer>
+// CHECK-NEXT:          <key>col</key><integer>12</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>25</integer>
+// CHECK-NEXT:          <key>col</key><integer>13</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>The left operand of &apos;+&apos; is a garbage value</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>The left operand of &apos;+&apos; is a garbage value</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:    </array>
+// CHECK-NEXT:    <key>description</key><string>The left operand of &apos;+&apos; is a garbage value</string>
+// CHECK-NEXT:    <key>category</key><string>Logic error</string>
+// CHECK-NEXT:    <key>type</key><string>Result of operation is garbage or undefined</string>
+// CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
+// CHECK-NEXT:   <key>issue_context</key><string>use</string>
+// CHECK-NEXT:   <key>issue_hash</key><integer>7</integer>
+// CHECK-NEXT:   <key>location</key>
+// CHECK-NEXT:   <dict>
+// CHECK-NEXT:    <key>line</key><integer>25</integer>
+// CHECK-NEXT:    <key>col</key><integer>12</integer>
+// CHECK-NEXT:    <key>file</key><integer>0</integer>
+// CHECK-NEXT:   </dict>
+// CHECK-NEXT:   </dict>
+// CHECK-NEXT:   <dict>
+// CHECK-NEXT:    <key>path</key>
+// CHECK-NEXT:    <array>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>38</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>38</integer>
+// CHECK-NEXT:            <key>col</key><integer>10</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>39</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>39</integer>
+// CHECK-NEXT:            <key>col</key><integer>13</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>39</integer>
+// CHECK-NEXT:       <key>col</key><integer>5</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>39</integer>
+// CHECK-NEXT:          <key>col</key><integer>5</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>39</integer>
+// CHECK-NEXT:          <key>col</key><integer>21</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Calling &apos;initArray&apos;</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Calling &apos;initArray&apos;</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>29</integer>
+// CHECK-NEXT:       <key>col</key><integer>1</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>depth</key><integer>1</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Entered call from &apos;testPassingParentRegionArray&apos;</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Entered call from &apos;testPassingParentRegionArray&apos;</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>29</integer>
+// CHECK-NEXT:            <key>col</key><integer>1</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>29</integer>
+// CHECK-NEXT:            <key>col</key><integer>4</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>30</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>30</integer>
+// CHECK-NEXT:            <key>col</key><integer>6</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>30</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>30</integer>
+// CHECK-NEXT:            <key>col</key><integer>6</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>30</integer>
+// CHECK-NEXT:            <key>col</key><integer>9</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>30</integer>
+// CHECK-NEXT:            <key>col</key><integer>9</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>30</integer>
+// CHECK-NEXT:       <key>col</key><integer>9</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>30</integer>
+// CHECK-NEXT:          <key>col</key><integer>9</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>30</integer>
+// CHECK-NEXT:          <key>col</key><integer>14</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>1</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Assuming &apos;x&apos; is &lt;= 0</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Assuming &apos;x&apos; is &lt;= 0</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>30</integer>
+// CHECK-NEXT:            <key>col</key><integer>9</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>30</integer>
+// CHECK-NEXT:            <key>col</key><integer>9</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>32</integer>
+// CHECK-NEXT:            <key>col</key><integer>9</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>32</integer>
+// CHECK-NEXT:            <key>col</key><integer>14</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>39</integer>
+// CHECK-NEXT:       <key>col</key><integer>5</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>39</integer>
+// CHECK-NEXT:          <key>col</key><integer>5</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>39</integer>
+// CHECK-NEXT:          <key>col</key><integer>21</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>1</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Returning from &apos;initArray&apos;</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Returning from &apos;initArray&apos;</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>39</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>39</integer>
+// CHECK-NEXT:            <key>col</key><integer>13</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>41</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>41</integer>
+// CHECK-NEXT:            <key>col</key><integer>10</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>41</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>41</integer>
+// CHECK-NEXT:            <key>col</key><integer>10</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>41</integer>
+// CHECK-NEXT:            <key>col</key><integer>12</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>41</integer>
+// CHECK-NEXT:            <key>col</key><integer>12</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>41</integer>
+// CHECK-NEXT:       <key>col</key><integer>12</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>41</integer>
+// CHECK-NEXT:          <key>col</key><integer>16</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>41</integer>
+// CHECK-NEXT:          <key>col</key><integer>21</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>The right operand of &apos;*&apos; is a garbage value</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>The right operand of &apos;*&apos; is a garbage value</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:    </array>
+// CHECK-NEXT:    <key>description</key><string>The right operand of &apos;*&apos; is a garbage value</string>
+// CHECK-NEXT:    <key>category</key><string>Logic error</string>
+// CHECK-NEXT:    <key>type</key><string>Result of operation is garbage or undefined</string>
+// CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
+// CHECK-NEXT:   <key>issue_context</key><string>testPassingParentRegionArray</string>
+// CHECK-NEXT:   <key>issue_hash</key><integer>4</integer>
+// CHECK-NEXT:   <key>location</key>
+// CHECK-NEXT:   <dict>
+// CHECK-NEXT:    <key>line</key><integer>41</integer>
+// CHECK-NEXT:    <key>col</key><integer>12</integer>
+// CHECK-NEXT:    <key>file</key><integer>0</integer>
+// CHECK-NEXT:   </dict>
+// CHECK-NEXT:   </dict>
+// CHECK-NEXT:   <dict>
+// CHECK-NEXT:    <key>path</key>
+// CHECK-NEXT:    <array>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>57</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>57</integer>
+// CHECK-NEXT:            <key>col</key><integer>8</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>59</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>59</integer>
+// CHECK-NEXT:            <key>col</key><integer>12</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>59</integer>
+// CHECK-NEXT:       <key>col</key><integer>3</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>59</integer>
+// CHECK-NEXT:          <key>col</key><integer>3</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>59</integer>
+// CHECK-NEXT:          <key>col</key><integer>20</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Calling &apos;initStruct&apos;</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Calling &apos;initStruct&apos;</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>49</integer>
+// CHECK-NEXT:       <key>col</key><integer>1</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>depth</key><integer>1</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Entered call from &apos;testPassingParentRegionStruct&apos;</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Entered call from &apos;testPassingParentRegionStruct&apos;</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>49</integer>
+// CHECK-NEXT:            <key>col</key><integer>1</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>49</integer>
+// CHECK-NEXT:            <key>col</key><integer>4</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>50</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>50</integer>
+// CHECK-NEXT:            <key>col</key><integer>4</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>50</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>50</integer>
+// CHECK-NEXT:            <key>col</key><integer>4</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>50</integer>
+// CHECK-NEXT:            <key>col</key><integer>7</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>50</integer>
+// CHECK-NEXT:            <key>col</key><integer>7</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>50</integer>
+// CHECK-NEXT:       <key>col</key><integer>7</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>50</integer>
+// CHECK-NEXT:          <key>col</key><integer>7</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>50</integer>
+// CHECK-NEXT:          <key>col</key><integer>12</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>1</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Assuming &apos;x&apos; is &lt;= 0</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Assuming &apos;x&apos; is &lt;= 0</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>50</integer>
+// CHECK-NEXT:            <key>col</key><integer>7</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>50</integer>
+// CHECK-NEXT:            <key>col</key><integer>7</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>53</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>53</integer>
+// CHECK-NEXT:            <key>col</key><integer>10</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>59</integer>
+// CHECK-NEXT:       <key>col</key><integer>3</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>59</integer>
+// CHECK-NEXT:          <key>col</key><integer>3</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>59</integer>
+// CHECK-NEXT:          <key>col</key><integer>20</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>1</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Returning from &apos;initStruct&apos;</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Returning from &apos;initStruct&apos;</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>59</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>59</integer>
+// CHECK-NEXT:            <key>col</key><integer>12</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>61</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>61</integer>
+// CHECK-NEXT:            <key>col</key><integer>8</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>61</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>61</integer>
+// CHECK-NEXT:            <key>col</key><integer>8</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>61</integer>
+// CHECK-NEXT:            <key>col</key><integer>10</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>61</integer>
+// CHECK-NEXT:            <key>col</key><integer>10</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>61</integer>
+// CHECK-NEXT:       <key>col</key><integer>10</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>61</integer>
+// CHECK-NEXT:          <key>col</key><integer>15</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>61</integer>
+// CHECK-NEXT:          <key>col</key><integer>16</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Dereference of null pointer (loaded from field &apos;f1&apos;)</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Dereference of null pointer (loaded from field &apos;f1&apos;)</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:    </array>
+// CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from field &apos;f1&apos;)</string>
+// CHECK-NEXT:    <key>category</key><string>Logic error</string>
+// CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
+// CHECK-NEXT:   <key>issue_context</key><string>testPassingParentRegionStruct</string>
+// CHECK-NEXT:   <key>issue_hash</key><integer>5</integer>
+// CHECK-NEXT:   <key>location</key>
+// CHECK-NEXT:   <dict>
+// CHECK-NEXT:    <key>line</key><integer>61</integer>
+// CHECK-NEXT:    <key>col</key><integer>10</integer>
+// CHECK-NEXT:    <key>file</key><integer>0</integer>
+// CHECK-NEXT:   </dict>
+// CHECK-NEXT:   </dict>
+// CHECK-NEXT:  </array>

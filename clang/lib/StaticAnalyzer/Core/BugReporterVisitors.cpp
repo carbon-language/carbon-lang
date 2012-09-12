@@ -517,6 +517,8 @@ void bugreporter::trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S,
     // However, if the rvalue is a symbolic region, we should track it as well.
     SVal RVal = state->getSVal(L->getRegion());
     const MemRegion *RegionRVal = RVal.getAsRegion();
+    report.addVisitor(new UndefOrNullArgVisitor(L->getRegion()));
+
 
     if (RegionRVal && isa<SymbolicRegion>(RegionRVal)) {
       report.markInteresting(RegionRVal);
@@ -985,8 +987,8 @@ UndefOrNullArgVisitor::VisitNode(const ExplodedNode *N,
                                  E = Call->param_end(); I != E; ++I, ++Idx) {
     const MemRegion *ArgReg = Call->getArgSVal(Idx).getAsRegion();
 
-    // Are we tracking the argument?
-    if ( !ArgReg || ArgReg != R)
+    // Are we tracking the argument or its subregion?
+    if ( !ArgReg || (ArgReg != R && !R->isSubRegionOf(ArgReg->StripCasts())))
       continue;
 
     // Check the function parameter type.
@@ -1006,7 +1008,7 @@ UndefOrNullArgVisitor::VisitNode(const ExplodedNode *N,
 
     // Mark the call site (LocationContext) as interesting if the value of the 
     // argument is undefined or '0'/'NULL'.
-    SVal BoundVal = State->getSVal(ArgReg);
+    SVal BoundVal = State->getSVal(R);
     if (BoundVal.isUndef() || BoundVal.isZeroConstant()) {
       BR.markInteresting(CEnter->getCalleeContext());
       return 0;
