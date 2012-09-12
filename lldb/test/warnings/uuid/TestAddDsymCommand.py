@@ -43,6 +43,17 @@ class AddDsymCommandCase(TestBase):
         self.exe_name = 'a.out'
         self.do_add_dsym_with_success(self.exe_name)
 
+    def test_add_dsym_with_dSYM_bundle(self):
+        """Test that the 'add-dsym' command informs the user about success."""
+
+        # Call the program generator to produce main.cpp, version 1.
+        self.generate_main_cpp(version=1)
+        self.buildDsym(clean=True)
+
+        self.exe_name = 'a.out'
+        self.do_add_dsym_with_dSYM_bundle(self.exe_name)
+
+
     def generate_main_cpp(self, version=0):
         """Generate main.cpp from main.cpp.template."""
         temp = os.path.join(os.getcwd(), self.template)
@@ -64,12 +75,11 @@ class AddDsymCommandCase(TestBase):
         """Test that the 'add-dsym' command informs the user about failures."""
         self.runCmd("file " + exe_name, CURRENT_EXECUTABLE_SET)
 
-        wrong_path = "%s.dSYM" % exe_name
+        wrong_path = os.path.join("%s.dSYM" % exe_name, "Contents")
         self.expect("add-dsym " + wrong_path, error=True,
-            substrs = ['symbol file', 'with UUID', 'does not match',
-                       'please specify the full path to the symbol file'])
+            substrs = ['invalid module path'])
 
-        right_path = os.path.join(wrong_path, "Contents", "Resources", "DWARF", exe_name)
+        right_path = os.path.join("%s.dSYM" % exe_name, "Contents", "Resources", "DWARF", exe_name)
         self.expect("add-dsym " + right_path, error=True,
             substrs = ['symbol file', 'with UUID', 'does not match'])
 
@@ -79,6 +89,16 @@ class AddDsymCommandCase(TestBase):
 
         # This time, the UUID should match and we expect some feedback from lldb.
         right_path = os.path.join("%s.dSYM" % exe_name, "Contents", "Resources", "DWARF", exe_name)
+        self.expect("add-dsym " + right_path,
+            substrs = ['symbol file', 'with UUID', 'has been successfully added to the',
+                       'module'])
+
+    def do_add_dsym_with_dSYM_bundle(self, exe_name):
+        """Test that the 'add-dsym' command informs the user about success when loading files in bundles."""
+        self.runCmd("file " + exe_name, CURRENT_EXECUTABLE_SET)
+
+        # This time, the UUID should be found inside the bundle
+        right_path = "%s.dSYM" % exe_name
         self.expect("add-dsym " + right_path,
             substrs = ['symbol file', 'with UUID', 'has been successfully added to the',
                        'module'])
