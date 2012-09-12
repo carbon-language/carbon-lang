@@ -113,7 +113,6 @@ MipsTargetLowering(MipsTargetMachine &TM)
 
   if (Subtarget->inMips16Mode()) {
     addRegisterClass(MVT::i32, &Mips::CPU16RegsRegClass);
-    addRegisterClass(MVT::i32, &Mips::CPURARegRegClass);
   }
 
   if (!TM.Options.UseSoftFloat) {
@@ -1571,7 +1570,8 @@ SDValue MipsTargetLowering::LowerGlobalAddress(SDValue Op,
   if (getTargetMachine().getRelocationModel() != Reloc::PIC_ && !IsN64) {
     SDVTList VTs = DAG.getVTList(MVT::i32);
 
-    const MipsTargetObjectFile &TLOF = (const MipsTargetObjectFile&)getObjFileLowering();
+    const MipsTargetObjectFile &TLOF =
+      (const MipsTargetObjectFile&)getObjFileLowering();
 
     // %gp_rel relocation
     if (TLOF.IsGlobalInSmallSection(GV, getTargetMachine())) {
@@ -3325,8 +3325,11 @@ getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const
     case 'd': // Address register. Same as 'r' unless generating MIPS16 code.
     case 'y': // Same as 'r'. Exists for compatibility.
     case 'r':
-      if (VT == MVT::i32 || VT == MVT::i16 || VT == MVT::i8)
+      if (VT == MVT::i32 || VT == MVT::i16 || VT == MVT::i8) {
+        if (Subtarget->inMips16Mode())
+          return std::make_pair(0U, &Mips::CPU16RegsRegClass);
         return std::make_pair(0U, &Mips::CPURegsRegClass);
+      }
       if (VT == MVT::i64 && !HasMips64)
         return std::make_pair(0U, &Mips::CPURegsRegClass);
       if (VT == MVT::i64 && HasMips64)
