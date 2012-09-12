@@ -769,7 +769,7 @@ namespace {
     /// instantiating it.
     Decl *TransformDefinition(SourceLocation Loc, Decl *D);
 
-    /// \bried Transform the first qualifier within a scope by instantiating the
+    /// \brief Transform the first qualifier within a scope by instantiating the
     /// declaration.
     NamedDecl *TransformFirstQualifierInScope(NamedDecl *D, SourceLocation Loc);
       

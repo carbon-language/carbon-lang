@@ -557,13 +557,13 @@ public:
   SourceLocation getStartOfMainFileID();
   SourceLocation getEndOfPreambleFileID();
 
-  /// \brief \see mapLocationFromPreamble.
+  /// \see mapLocationFromPreamble.
   SourceRange mapRangeFromPreamble(SourceRange R) {
     return SourceRange(mapLocationFromPreamble(R.getBegin()),
                        mapLocationFromPreamble(R.getEnd()));
   }
 
-  /// \brief \see mapLocationToPreamble.
+  /// \see mapLocationToPreamble.
   SourceRange mapRangeToPreamble(SourceRange R) {
     return SourceRange(mapLocationToPreamble(R.getBegin()),
                        mapLocationToPreamble(R.getEnd()));

@@ -205,7 +205,7 @@ namespace {
                                 bool captureSetValueAsResult) = 0;
   };
 
-  /// A PseudoOpBuilder for Objective-C @properties.
+  /// A PseudoOpBuilder for Objective-C \@properties.
   class ObjCPropertyOpBuilder : public PseudoOpBuilder {
     ObjCPropertyRefExpr *RefExpr;
     ObjCPropertyRefExpr *SyntacticRefExpr;
