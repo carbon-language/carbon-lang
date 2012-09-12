@@ -971,6 +971,80 @@ getWeightIterator(MachineBasicBlock::const_succ_iterator I) const {
   return Weights.begin() + index;
 }
 
+/// Return whether (physical) register "Reg" has been <def>ined and not <kill>ed
+/// as of just before "MI".
+/// 
+/// Search is localised to a neighborhood of
+/// Neighborhood instructions before (searching for defs or kills) and N
+/// instructions after (searching just for defs) MI.
+MachineBasicBlock::LivenessQueryResult
+MachineBasicBlock::computeRegisterLiveness(const TargetRegisterInfo *TRI,
+                                           unsigned Reg, MachineInstr *MI,
+                                           unsigned Neighborhood) {
+  
+  unsigned N = Neighborhood;
+  MachineBasicBlock *MBB = MI->getParent();
+
+  // Start by searching backwards from MI, looking for kills, reads or defs.
+
+  MachineBasicBlock::iterator I(MI);
+  // If this is the first insn in the block, don't search backwards.
+  if (I != MBB->begin()) {
+    do {
+      --I;
+
+      MachineOperandIteratorBase::PhysRegInfo Analysis =
+        MIOperands(I).analyzePhysReg(Reg, TRI);
+
+      if (Analysis.Kills)
+        // Register killed, so isn't live.
+        return LQR_Dead;
+
+      else if (Analysis.DefinesOverlap || Analysis.ReadsOverlap)
+        // Defined or read without a previous kill - live.
+        return (Analysis.Defines || Analysis.Reads) ? 
+          LQR_Live : LQR_OverlappingLive;
+
+    } while (I != MBB->begin() && --N > 0);
+  }
+
+  // Did we get to the start of the block?
+  if (I == MBB->begin()) {
+    // If so, the register's state is definitely defined by the live-in state.
+    for (MCRegAliasIterator RAI(Reg, TRI, /*IncludeSelf=*/true);
+         RAI.isValid(); ++RAI) {
+      if (MBB->isLiveIn(*RAI))
+        return (*RAI == Reg) ? LQR_Live : LQR_OverlappingLive;
+    }
+
+    return LQR_Dead;
+  }
+
+  N = Neighborhood;
+
+  // Try searching forwards from MI, looking for reads or defs.
+  I = MachineBasicBlock::iterator(MI);
+  // If this is the last insn in the block, don't search forwards.
+  if (I != MBB->end()) {
+    for (++I; I != MBB->end() && N > 0; ++I, --N) {
+      MachineOperandIteratorBase::PhysRegInfo Analysis =
+        MIOperands(I).analyzePhysReg(Reg, TRI);
+
+      if (Analysis.ReadsOverlap)
+        // Used, therefore must have been live.
+        return (Analysis.Reads) ?
+          LQR_Live : LQR_OverlappingLive;
+
+      else if (Analysis.DefinesOverlap)
+        // Defined (but not read) therefore cannot have been live.
+        return LQR_Dead;
+    }
+  }
+
+  // At this point we have no idea of the liveness of the register.
+  return LQR_Unknown;
+}
+
 void llvm::WriteAsOperand(raw_ostream &OS, const MachineBasicBlock *MBB,
                           bool t) {
   OS << "BB#" << MBB->getNumber();
