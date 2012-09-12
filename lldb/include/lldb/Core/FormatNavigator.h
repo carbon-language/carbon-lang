@@ -425,13 +425,16 @@ protected:
     bool
     Get_Impl (ConstString key, MapValueType& value, lldb::RegularExpressionSP *dummy)
     {
+       const char* key_cstr = key.AsCString();
+       if (!key_cstr)
+           return false;
        Mutex& x_mutex = m_format_map.mutex();
        lldb_private::Mutex::Locker locker(x_mutex);
        MapIterator pos, end = m_format_map.map().end();
        for (pos = m_format_map.map().begin(); pos != end; pos++)
        {
            lldb::RegularExpressionSP regex = pos->first;
-           if (regex->Execute(key.AsCString()))
+           if (regex->Execute(key_cstr))
            {
                value = pos->second;
                return true;
