@@ -959,6 +959,13 @@ ABISysV_x86_64::GetReturnValueObjectImpl (Thread &thread, ClangASTType &ast_type
     return return_valobj_sp;
 }
 
+Error
+ABISysV_x86_64::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value)
+{
+    Error return_error("I can't do that yet Jim.");
+    return return_error;
+}
+
 bool
 ABISysV_x86_64::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
 {

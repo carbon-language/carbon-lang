@@ -101,6 +101,9 @@ public:
 
     void
     RunToAddress (lldb::addr_t addr);
+    
+    SBError
+    ReturnToFrame (SBFrame &frame, SBValue &return_value);
 
     //--------------------------------------------------------------------------
     /// LLDB currently supports process centric debugging which means when any

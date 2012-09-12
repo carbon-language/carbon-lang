@@ -383,6 +383,7 @@ public:
 protected:
     friend class SBValueList;
     friend class SBFrame;
+    friend class SBThread;
 
     lldb::ValueObjectSP
     GetSP () const;

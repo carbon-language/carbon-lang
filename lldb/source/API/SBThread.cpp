@@ -877,6 +877,29 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
     return sb_error;
 }
 
+SBError
+SBThread::ReturnToFrame (SBFrame &frame, SBValue &return_value)
+{
+    SBError sb_error;
+    
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
+
+    if (log)
+        log->Printf ("SBThread(%p)::ReturnToFrame (frame=%d)", exe_ctx.GetThreadPtr(), frame.GetFrameID());
+    
+    if (exe_ctx.HasThreadScope())
+    {
+        Thread *thread = exe_ctx.GetThreadPtr();
+        sb_error.SetError (thread->ReturnToFrame(frame.GetFrameSP(), return_value.GetSP()));
+    }
+    
+    return sb_error;
+}
+
 
 bool
 SBThread::Suspend()

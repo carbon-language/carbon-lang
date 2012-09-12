@@ -774,6 +774,13 @@ ABIMacOSX_i386::GetReturnValueObjectImpl (Thread &thread,
     return return_valobj_sp;
 }
 
+Error
+ABIMacOSX_i386::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value)
+{
+    Error return_error("I can't do that yet Jim.");
+    return return_error;
+}
+
 bool
 ABIMacOSX_i386::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
 {

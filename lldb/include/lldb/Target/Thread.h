@@ -285,6 +285,12 @@ public:
         return GetStackFrameList()->GetCurrentInlinedDepth();
     }
     
+    Error
+    ReturnToFrameWithIndex (uint32_t frame_idx, lldb::ValueObjectSP return_value_sp);
+    
+    Error
+    ReturnToFrame (lldb::StackFrameSP frame_sp, lldb::ValueObjectSP return_value_sp);
+    
     virtual lldb::StackFrameSP
     GetFrameWithStackID (const StackID &stack_id)
     {
@@ -747,6 +753,10 @@ protected:
 
     virtual bool
     RestoreSaveFrameZero (const RegisterCheckpoint &checkpoint);
+    
+    // register_data_sp must be a DataSP passed to ReadAllRegisterValues.
+    bool
+    ResetFrameZeroRegisters (lldb::DataBufferSP register_data_sp);
 
     virtual lldb_private::Unwind *
     GetUnwinder ();

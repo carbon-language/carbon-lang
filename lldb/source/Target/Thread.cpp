@@ -1271,6 +1271,62 @@ Thread::GetFrameWithConcreteFrameIndex (uint32_t unwind_idx)
     return GetStackFrameList()->GetFrameWithConcreteFrameIndex (unwind_idx);
 }
 
+
+Error
+Thread::ReturnToFrameWithIndex (uint32_t frame_idx, lldb::ValueObjectSP return_value_sp)
+{
+    StackFrameSP frame_sp = GetStackFrameAtIndex (frame_idx);
+    Error return_error;
+    
+    if (!frame_sp)
+    {
+        return_error.SetErrorStringWithFormat("Could not find frame with index %d in thread 0x%llx.", frame_idx, GetID());
+    }
+    
+    return ReturnToFrame(frame_sp, return_value_sp);
+}
+
+Error
+Thread::ReturnToFrame (lldb::StackFrameSP frame_sp, lldb::ValueObjectSP return_value_sp)
+{
+    Error return_error;
+    
+    if (!frame_sp)
+    {
+        return_error.SetErrorString("Can't return to a null frame.");
+        return return_error;
+    }
+    
+    Thread *thread = frame_sp->GetThread().get();
+    
+    if (return_value_sp)
+    {
+        lldb::ABISP abi = thread->GetProcess()->GetABI();
+        if (!abi)
+        {
+            return_error.SetErrorString("Could not find ABI to set return value.");
+        }
+        return_error = abi->SetReturnValueObject(frame_sp, return_value_sp);
+        if (!return_error.Success())
+            return return_error;
+    }
+    
+    // Now write the return registers for the chosen frame:
+    lldb::DataBufferSP register_values_sp;
+    frame_sp->GetRegisterContext()->ReadAllRegisterValues (register_values_sp);
+    if (thread->ResetFrameZeroRegisters(register_values_sp))
+    {
+        thread->DiscardThreadPlans(true);
+        return return_error;
+    }
+    else
+    {
+        return_error.SetErrorString("Could not reset register values.");
+        return return_error;
+    
+    }
+}
+
 void
 Thread::DumpUsingSettingsFormat (Stream &strm, uint32_t frame_idx)
 {
@@ -1430,10 +1486,16 @@ Thread::SaveFrameZeroState (RegisterCheckpoint &checkpoint)
 bool
 Thread::RestoreSaveFrameZero (const RegisterCheckpoint &checkpoint)
 {
+    return ResetFrameZeroRegisters (checkpoint.GetData());
+}
+
+bool
+Thread::ResetFrameZeroRegisters (lldb::DataBufferSP register_data_sp)
+{
     lldb::StackFrameSP frame_sp(GetStackFrameAtIndex (0));
     if (frame_sp)
     {
-        bool ret = frame_sp->GetRegisterContext()->WriteAllRegisterValues (checkpoint.GetData());
+        bool ret = frame_sp->GetRegisterContext()->WriteAllRegisterValues (register_data_sp);
 
         // Clear out all stack frames as our world just changed.
         ClearStackFrames();
