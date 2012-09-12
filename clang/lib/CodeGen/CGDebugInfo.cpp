@@ -891,12 +891,12 @@ CGDebugInfo::getOrCreateMethodType(const CXXMethodDecl *Method,
       // TODO: This and the artificial type below are misleading, the
       // types aren't artificial the argument is, but the current
       // metadata doesn't represent that.
-      ThisPtrType = DBuilder.createObjectPointerType(ThisPtrType);
+      ThisPtrType = DBuilder.createArtificialType(ThisPtrType);
       Elts.push_back(ThisPtrType);
     } else {
       llvm::DIType ThisPtrType = getOrCreateType(ThisPtr, Unit);
       TypeCache[ThisPtr.getAsOpaquePtr()] = ThisPtrType;
-      ThisPtrType = DBuilder.createObjectPointerType(ThisPtrType);
+      ThisPtrType = DBuilder.createArtificialType(ThisPtrType);
       Elts.push_back(ThisPtrType);
     }
   }
@@ -1999,7 +1999,7 @@ llvm::DIType CGDebugInfo::getOrCreateFunctionType(const Decl *D,
     Elts.push_back(getOrCreateType(OMethod->getResultType(), F));
     // "self" pointer is always first argument.
     llvm::DIType SelfTy = getOrCreateType(OMethod->getSelfDecl()->getType(), F);
-    Elts.push_back(DBuilder.createObjectPointerType(SelfTy));
+    Elts.push_back(DBuilder.createArtificialType(SelfTy));
     // "_cmd" pointer is always second argument.
     llvm::DIType CmdTy = getOrCreateType(OMethod->getCmdDecl()->getType(), F);
     Elts.push_back(DBuilder.createArtificialType(CmdTy));
@@ -2297,16 +2297,8 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
   unsigned Flags = 0;
   if (VD->isImplicit())
     Flags |= llvm::DIDescriptor::FlagArtificial;
-  // If this is the first argument and it is implicit then
-  // give it an object pointer flag.
-  // FIXME: There has to be a better way to do this, but for static
-  // functions there won't be an implicit param at arg1 and
-  // otherwise it is 'self' or 'this'.
-  if (isa<ImplicitParamDecl>(VD) && ArgNo == 1)
-    Flags |= llvm::DIDescriptor::FlagObjectPointer;
-
   llvm::MDNode *Scope = LexicalBlockStack.back();
-
+    
   StringRef Name = VD->getName();
   if (!Name.empty()) {
     if (VD->hasAttr<BlocksAttr>()) {
