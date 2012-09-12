@@ -45,6 +45,16 @@ r:
         ret void
 }
 
+define i32 @f8() nounwind {
+; Check that constant propagation through (i32)-1 => (float)Nan => (i32)-1
+; gives expected result
+; CHECK: f8
+; CHECK: mvn r0, #0
+        %tmp0 = bitcast i32 -1 to float
+        %tmp1 = bitcast float %tmp0 to i32
+        ret i32 %tmp1
+}
+
 %t1 = type { <3 x float>, <3 x float> }
 
 @const1 = global %t1 { <3 x float> zeroinitializer,

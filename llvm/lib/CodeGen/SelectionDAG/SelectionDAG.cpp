@@ -2454,9 +2454,9 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
     }
     case ISD::BITCAST:
       if (VT == MVT::f32 && C->getValueType(0) == MVT::i32)
-        return getConstantFP(Val.bitsToFloat(), VT);
+        return getConstantFP(APFloat(Val), VT);
       else if (VT == MVT::f64 && C->getValueType(0) == MVT::i64)
-        return getConstantFP(Val.bitsToDouble(), VT);
+        return getConstantFP(APFloat(Val), VT);
       break;
     case ISD::BSWAP:
       return getConstant(Val.byteSwap(), VT);
