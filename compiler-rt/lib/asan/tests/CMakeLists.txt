@@ -23,6 +23,10 @@ set(ASAN_UNITTEST_COMMON_CFLAGS
   -O2
 )
 
+if(SUPPORTS_NO_VARIADIC_MACROS_FLAG)
+  list(APPEND ASAN_UNITTEST_COMMON_CFLAGS -Wno-variadic-macros)
+endif()
+
 # Use -D instead of definitions to please custom compile command.
 if(ANDROID)
   list(APPEND ASAN_UNITTEST_COMMON_CFLAGS

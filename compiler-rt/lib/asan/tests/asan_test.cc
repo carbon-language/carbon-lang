@@ -66,7 +66,7 @@ NOINLINE void asan_write(T *a) {
 }
 
 NOINLINE void asan_write_sized_aligned(uint8_t *p, size_t size) {
-  EXPECT_EQ(0, ((uintptr_t)p % size));
+  EXPECT_EQ(0U, ((uintptr_t)p % size));
   if      (size == 1) asan_write((uint8_t*)p);
   else if (size == 2) asan_write((uint16_t*)p);
   else if (size == 4) asan_write((uint32_t*)p);
@@ -172,7 +172,7 @@ TEST(AddressSanitizer, VariousMallocsTest) {
 
 #if !defined(__APPLE__)
   int *ma = (int*)memalign(kPageSize, kPageSize);
-  EXPECT_EQ(0, (uintptr_t)ma % kPageSize);
+  EXPECT_EQ(0U, (uintptr_t)ma % kPageSize);
   ma[123] = 0;
   free(ma);
 #endif  // __APPLE__
@@ -186,19 +186,19 @@ TEST(AddressSanitizer, CallocTest) {
 
 TEST(AddressSanitizer, VallocTest) {
   void *a = valloc(100);
-  EXPECT_EQ(0, (uintptr_t)a % kPageSize);
+  EXPECT_EQ(0U, (uintptr_t)a % kPageSize);
   free(a);
 }
 
 #ifndef __APPLE__
 TEST(AddressSanitizer, PvallocTest) {
   char *a = (char*)pvalloc(kPageSize + 100);
-  EXPECT_EQ(0, (uintptr_t)a % kPageSize);
+  EXPECT_EQ(0U, (uintptr_t)a % kPageSize);
   a[kPageSize + 101] = 1;  // we should not report an error here.
   free(a);
 
   a = (char*)pvalloc(0);  // pvalloc(0) should allocate at least one page.
-  EXPECT_EQ(0, (uintptr_t)a % kPageSize);
+  EXPECT_EQ(0U, (uintptr_t)a % kPageSize);
   a[101] = 1;  // we should not report an error here.
   free(a);
 }
@@ -245,10 +245,10 @@ void OOBTest() {
       EXPECT_DEATH(oob_test<T>(size, i), expected_str);
     }
 
-    for (int i = 0; i < size - sizeof(T) + 1; i++)
+    for (int i = 0; i < (int)(size - sizeof(T) + 1); i++)
       oob_test<T>(size, i);
 
-    for (int i = size - sizeof(T) + 1; i <= size + 3 * sizeof(T); i++) {
+    for (int i = size - sizeof(T) + 1; i <= (int)(size + 3 * sizeof(T)); i++) {
       const char *str =
           "is located.*%d byte.*to the right";
       int off = i >= size ? (i - size) : 0;
@@ -335,7 +335,7 @@ TEST(AddressSanitizer, BitFieldPositiveTest) {
   EXPECT_DEATH(x->bf2 = 0, "use-after-free");
   EXPECT_DEATH(x->bf3 = 0, "use-after-free");
   EXPECT_DEATH(x->bf4 = 0, "use-after-free");
-};
+}
 
 struct StructWithBitFields_8_24 {
   int a:8;
@@ -481,7 +481,7 @@ TEST(AddressSanitizer, MallocUsableSizeTest) {
   const size_t kArraySize = 100;
   char *array = Ident((char*)malloc(kArraySize));
   int *int_ptr = Ident(new int);
-  EXPECT_EQ(0, malloc_usable_size(NULL));
+  EXPECT_EQ(0U, malloc_usable_size(NULL));
   EXPECT_EQ(kArraySize, malloc_usable_size(array));
   EXPECT_EQ(sizeof(int), malloc_usable_size(int_ptr));
   EXPECT_DEATH(malloc_usable_size((void*)0x123), kMallocUsableSizeErrorMsg);
@@ -902,8 +902,8 @@ void StrLenOOBTestTemplate(char *str, size_t length, bool is_global) {
   // Normal strlen calls
   EXPECT_EQ(strlen(str), length);
   if (length > 0) {
-    EXPECT_EQ(strlen(str + 1), length - 1);
-    EXPECT_EQ(strlen(str + length), 0);
+    EXPECT_EQ(length - 1, strlen(str + 1));
+    EXPECT_EQ(0U, strlen(str + length));
   }
   // Arg of strlen is not malloced, OOB access
   if (!is_global) {
@@ -925,7 +925,7 @@ TEST(AddressSanitizer, StrLenOOBTest) {
   size_t length = Ident(10);
   char *heap_string = Ident((char*)malloc(length + 1));
   char stack_string[10 + 1];
-  for (int i = 0; i < length; i++) {
+  for (size_t i = 0; i < length; i++) {
     heap_string[i] = 'a';
     stack_string[i] = 'b';
   }
@@ -2103,7 +2103,7 @@ TEST(AddressSanitizer, LongDoubleNegativeTest) {
   static long double c;
   memcpy(Ident(&a), Ident(&b), sizeof(long double));
   memcpy(Ident(&c), Ident(&b), sizeof(long double));
-};
+}
 
 int main(int argc, char **argv) {
   progname = argv[0];
