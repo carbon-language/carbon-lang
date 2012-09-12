@@ -164,6 +164,16 @@ public:
       return true;
     return false;
   }
+
+  bool isObjectPointer()             const {
+    if (Var.isObjectPointer())
+      return true;
+    if (Var.getTag() == dwarf::DW_TAG_arg_variable
+        && getType().isObjectPointer())
+      return true;
+    return false;
+  }
+  
   bool variableHasComplexAddress()   const {
     assert(Var.Verify() && "Invalid complex DbgVariable!");
     return Var.hasComplexAddress();

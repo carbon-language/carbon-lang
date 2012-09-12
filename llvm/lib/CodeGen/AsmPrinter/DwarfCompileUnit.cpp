@@ -1109,6 +1109,8 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
         addType(Arg, ATy);
         if (ATy.isArtificial())
           addFlag(Arg, dwarf::DW_AT_artificial);
+        if (ATy.isObjectPointer())
+          addFlag(Arg, dwarf::DW_AT_object_pointer);
         SPDie->addChild(Arg);
       }
   }
@@ -1348,6 +1350,8 @@ DIE *CompileUnit::constructVariableDIE(DbgVariable *DV, bool isScopeAbstract) {
 
   if (DV->isArtificial())
     addFlag(VariableDie, dwarf::DW_AT_artificial);
+  if (DV->isObjectPointer())
+    addFlag(VariableDie, dwarf::DW_AT_object_pointer);
 
   if (isScopeAbstract) {
     DV->setDIE(VariableDie);

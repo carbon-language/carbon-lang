@@ -330,6 +330,8 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU,
           SPCU->addType(Arg, ATy);
           if (ATy.isArtificial())
             SPCU->addFlag(Arg, dwarf::DW_AT_artificial);
+          if (ATy.isObjectPointer())
+            SPCU->addFlag(Arg, dwarf::DW_AT_object_pointer);
           SPDie->addChild(Arg);
         }
       DIE *SPDeclDie = SPDie;
