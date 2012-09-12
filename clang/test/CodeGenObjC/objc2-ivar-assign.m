@@ -1,6 +1,9 @@
 // RUN: %clang_cc1 -fobjc-gc -emit-llvm -o %t %s
 // RUN: grep objc_assign_ivar %t | count 6
 
+// PR13820
+// REQUIRES: LP64
+
 @interface I @end
 
 typedef I TI;

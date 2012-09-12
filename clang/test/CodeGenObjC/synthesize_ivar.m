@@ -1,5 +1,8 @@
 // RUN: %clang_cc1 -emit-llvm -o %t %s
 
+// PR13820
+// REQUIRES: LP64
+
 @interface I
 @property int IP;
 @end

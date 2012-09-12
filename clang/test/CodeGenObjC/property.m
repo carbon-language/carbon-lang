@@ -1,5 +1,8 @@
 // RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck %s
 
+// PR13820
+// REQUIRES: LP64
+
 // TODO: actually test most of this instead of just emitting it
 
 int printf(const char *, ...);
