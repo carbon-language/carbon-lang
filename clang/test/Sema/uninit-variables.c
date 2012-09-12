@@ -508,3 +508,26 @@ int self_init_in_cond(int *p) {
   int n = ((p && (0 || 1)) && (n = *p)) ? n : -1; // ok
   return n;
 }
+
+void test_analyzer_noreturn_aux() __attribute__((analyzer_noreturn));
+
+void test_analyzer_noreturn(int y) {
+  int x; // expected-note {{initialize the variable 'x' to silence this warning}}
+  if (y) {
+    test_analyzer_noreturn_aux();
+	++x; // no-warning
+  }
+  else {
+	++x; // expected-warning {{variable 'x' is uninitialized when used here}}
+  }
+}
+void test_analyzer_noreturn_2(int y) {
+  int x;
+  if (y) {
+    test_analyzer_noreturn_aux();
+  }
+  else {
+	x = 1;
+  }
+  ++x; // no-warning
+}

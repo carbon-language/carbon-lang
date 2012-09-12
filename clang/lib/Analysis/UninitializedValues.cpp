@@ -605,14 +605,26 @@ void TransferFunctions::VisitBlockExpr(BlockExpr *be) {
 }
 
 void TransferFunctions::VisitCallExpr(CallExpr *ce) {
-  // After a call to a function like setjmp or vfork, any variable which is
-  // initialized anywhere within this function may now be initialized. For now,
-  // just assume such a call initializes all variables.
-  // FIXME: Only mark variables as initialized if they have an initializer which
-  // is reachable from here.
-  Decl *Callee = ce->getCalleeDecl();
-  if (Callee && Callee->hasAttr<ReturnsTwiceAttr>())
-    vals.setAllScratchValues(Initialized);
+  if (Decl *Callee = ce->getCalleeDecl()) {
+    if (Callee->hasAttr<ReturnsTwiceAttr>()) {
+      // After a call to a function like setjmp or vfork, any variable which is
+      // initialized anywhere within this function may now be initialized. For
+      // now, just assume such a call initializes all variables.  FIXME: Only
+      // mark variables as initialized if they have an initializer which is
+      // reachable from here.
+      vals.setAllScratchValues(Initialized);
+    }
+    else if (Callee->hasAttr<AnalyzerNoReturnAttr>()) {
+      // Functions labeled like "analyzer_noreturn" are often used to denote
+      // "panic" functions that in special debug situations can still return,
+      // but for the most part should not be treated as returning.  This is a
+      // useful annotation borrowed from the static analyzer that is useful for
+      // suppressing branch-specific false positives when we call one of these
+      // functions but keep pretending the path continues (when in reality the
+      // user doesn't care).
+      vals.setAllScratchValues(Unknown);
+    }
+  }
 }
 
 void TransferFunctions::VisitDeclRefExpr(DeclRefExpr *dr) {
