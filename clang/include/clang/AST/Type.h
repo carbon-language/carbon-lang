@@ -160,6 +160,44 @@ public:
 
   Qualifiers() : Mask(0) {}
 
+  /// \brief Returns the common set of qualifiers while removing them from
+  /// the given sets.
+  static Qualifiers removeCommonQualifiers(Qualifiers &L, Qualifiers &R) {
+    // If both are only CVR-qualified, bit operations are sufficient.
+    if (!(L.Mask & ~CVRMask) && !(R.Mask & ~CVRMask)) {
+      Qualifiers Q;
+      Q.Mask = L.Mask & R.Mask;
+      L.Mask &= ~Q.Mask;
+      R.Mask &= ~Q.Mask;
+      return Q;
+    }
+
+    Qualifiers Q;
+    unsigned CommonCRV = L.getCVRQualifiers() & R.getCVRQualifiers();
+    Q.addCVRQualifiers(CommonCRV);
+    L.removeCVRQualifiers(CommonCRV);
+    R.removeCVRQualifiers(CommonCRV);
+
+    if (L.getObjCGCAttr() == R.getObjCGCAttr()) {
+      Q.setObjCGCAttr(L.getObjCGCAttr());
+      L.removeObjCGCAttr();
+      R.removeObjCGCAttr();
+    }
+
+    if (L.getObjCLifetime() == R.getObjCLifetime()) {
+      Q.setObjCLifetime(L.getObjCLifetime());
+      L.removeObjCLifetime();
+      R.removeObjCLifetime();
+    }
+
+    if (L.getAddressSpace() == R.getAddressSpace()) {
+      Q.setAddressSpace(L.getAddressSpace());
+      L.removeAddressSpace();
+      R.removeAddressSpace();
+    }
+    return Q;
+  }
+
   static Qualifiers fromFastMask(unsigned Mask) {
     Qualifiers Qs;
     Qs.addFastQualifiers(Mask);
@@ -333,6 +371,23 @@ public:
     }
   }
 
+  /// \brief Remove the qualifiers from the given set from this set.
+  void removeQualifiers(Qualifiers Q) {
+    // If the other set doesn't have any non-boolean qualifiers, just
+    // bit-and the inverse in.
+    if (!(Q.Mask & ~CVRMask))
+      Mask &= ~Q.Mask;
+    else {
+      Mask &= ~(Q.Mask & CVRMask);
+      if (getObjCGCAttr() == Q.getObjCGCAttr())
+        removeObjCGCAttr();
+      if (getObjCLifetime() == Q.getObjCLifetime())
+        removeObjCLifetime();
+      if (getAddressSpace() == Q.getAddressSpace())
+        removeAddressSpace();
+    }
+  }
+
   /// \brief Add the qualifiers from the given set to this set, given that
   /// they don't conflict.
   void addConsistentQualifiers(Qualifiers qs) {
@@ -400,7 +455,7 @@ public:
   }
 
   Qualifiers &operator-=(Qualifiers R) {
-    Mask = Mask & ~(R.Mask);
+    removeQualifiers(R);
     return *this;
   }
 
