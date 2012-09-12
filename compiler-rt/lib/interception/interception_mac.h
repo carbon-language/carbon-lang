@@ -42,7 +42,7 @@ bool OverrideFunction(uptr old_func, uptr new_func, uptr *orig_old_func);
     ::__interception::OverrideFunction( \
           (::__interception::uptr)old_func, \
           (::__interception::uptr)new_func, \
-          (::__interception::uptr*)&REAL(old_func))
+          (::__interception::uptr*)((::__interception::uptr)&REAL(old_func)))
 # define INTERCEPT_FUNCTION_MAC(func) OVERRIDE_FUNCTION_MAC(func, WRAP(func))
 
 #endif  // INTERCEPTION_MAC_H
