@@ -55,3 +55,14 @@ typedef void (^T) ();
 - (void) N : (__strong NSObject***) arg0 : (__strong NSObject<P>***)arg : (float**) arg1 : (double) arg2 {} 
 - (void) BLOCK : (T&) arg0 : (T)arg  : (__strong T*) arg1 {} // expected-warning {{method parameter of type '__autoreleasing T &' (aka 'void (^__autoreleasing &)()') with no explicit ownership}}
 @end
+
+// rdar://12280826
+@class NSMutableDictionary, NSError;
+@interface Radar12280826
+- (void)createInferiorTransportAndSetEnvironment:(NSMutableDictionary*)environment error:(__autoreleasing NSError*&)error;
+@end
+
+@implementation Radar12280826
+- (void)createInferiorTransportAndSetEnvironment:(NSMutableDictionary*)environment error:(__autoreleasing NSError*&)error {}
+@end
+
