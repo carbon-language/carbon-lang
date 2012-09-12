@@ -1,5 +1,8 @@
 // RUN: %clang_cc1 -fsyntax-only -pedantic -verify %s
 
+// PR13819
+// REQUIRES: LP64
+
 // [dcl.ambig.res]p1:
 struct S { 
   S(int); 
