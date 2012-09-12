@@ -1020,7 +1020,9 @@ AsmMatcherInfo::getOperandClass(Record *Rec, int SubOpIdx) {
     throw TGError(Rec->getLoc(), "register class has no class info!");
   }
 
-  assert(Rec->isSubClassOf("Operand") && "Unexpected operand!");
+  if (!Rec->isSubClassOf("Operand"))
+    throw TGError(Rec->getLoc(), "Operand `" + Rec->getName() +
+                  "' does not derive from class Operand!\n");
   Record *MatchClass = Rec->getValueAsDef("ParserMatchClass");
   if (ClassInfo *CI = AsmOperandClasses[MatchClass])
     return CI;
