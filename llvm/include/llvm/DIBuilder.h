@@ -347,6 +347,10 @@ namespace llvm {
     /// createArtificialType - Create a new DIType with "artificial" flag set.
     DIType createArtificialType(DIType Ty);
 
+    /// createObjectPointerType - Create a new DIType with the "object pointer"
+    /// flag set.
+    DIType createObjectPointerType(DIType Ty);
+
     /// createTemporaryType - Create a temporary forward-declared type.
     DIType createTemporaryType();
     DIType createTemporaryType(DIFile F);
