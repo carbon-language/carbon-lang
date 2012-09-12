@@ -255,7 +255,7 @@ bool CXXBasePaths::lookupInBases(ASTContext &Context,
       }
     } else if (VisitBase) {
       CXXRecordDecl *BaseRecord
-        = cast<CXXRecordDecl>(BaseSpec->getType()->getAs<RecordType>()
+        = cast<CXXRecordDecl>(BaseSpec->getType()->castAs<RecordType>()
                                 ->getDecl());
       if (lookupInBases(Context, BaseRecord, BaseMatches, UserData)) {
         // C++ [class.member.lookup]p2:
@@ -717,7 +717,7 @@ CXXRecordDecl::getIndirectPrimaryBases(CXXIndirectPrimaryBaseSet& Bases) const {
            "Cannot get indirect primary bases for class with dependent bases.");
 
     const CXXRecordDecl *BaseDecl =
-      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+      cast<CXXRecordDecl>(I->getType()->castAs<RecordType>()->getDecl());
 
     // Only bases with virtual bases participate in computing the
     // indirect primary virtual base classes.
