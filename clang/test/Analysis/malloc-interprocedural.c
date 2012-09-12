@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=unix.Malloc -analyzer-inline-max-stack-depth=5 -analyzer-inline-max-function-size=6 -verify %s
 
-#include "system-header-simulator.h"
+#include "Inputs/system-header-simulator.h"
 
 typedef __typeof(sizeof(int)) size_t;
 void *malloc(size_t);

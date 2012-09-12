@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc -analyzer-store=region -verify -Wno-objc-root-class -fblocks %s
-#include "system-header-simulator-objc.h"
+#include "Inputs/system-header-simulator-objc.h"
 
 @class NSString;
 typedef __typeof(sizeof(int)) size_t;

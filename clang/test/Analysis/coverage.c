@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc -analyzer-store=region -analyzer-max-loop 4 -verify %s
-#include "system-header-simulator.h"
+#include "Inputs/system-header-simulator.h"
 
 typedef __typeof(sizeof(int)) size_t;
 void *malloc(size_t);

@@ -3,7 +3,7 @@
 void clang_analyzer_eval(int);
 
 // Note, we do need to include headers here, since the analyzer checks if the function declaration is located in a system header.
-#include "system-header-simulator.h"
+#include "Inputs/system-header-simulator.h"
 
 // Test that system header does not invalidate the internal global.
 int size_rdar9373039 = 1;
