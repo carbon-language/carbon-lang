@@ -252,6 +252,16 @@ bool CallEvent::isCallStmt(const Stmt *S) {
                           || isa<CXXNewExpr>(S);
 }
 
+/// \brief Returns the result type, adjusted for references.
+QualType CallEvent::getDeclaredResultType(const Decl *D) {
+  assert(D);
+  if (const FunctionDecl* FD = dyn_cast<FunctionDecl>(D))
+    return FD->getResultType();
+  else if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(D))
+    return MD->getResultType();
+  return QualType();
+}
+
 static void addParameterValuesToBindings(const StackFrameContext *CalleeCtx,
                                          CallEvent::BindingsTy &Bindings,
                                          SValBuilder &SVB,

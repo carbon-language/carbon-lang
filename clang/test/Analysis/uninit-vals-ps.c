@@ -122,3 +122,15 @@ int pr4631_f1_b(void)
   return x;  // no-warning
 }
 
+void foo_radar12278788() { return; }
+void test_radar12278788() {
+  return foo_radar12278788(); // no-warning
+}
+
+void foo_radar12278788_fp() { return; }
+typedef int (*RetIntFuncType)();
+typedef void (*RetVoidFuncType)();
+int test_radar12278788_FP() {
+  RetVoidFuncType f = foo_radar12278788_fp;
+  return ((RetIntFuncType)f)(); //expected-warning {{Undefined or garbage value returned to caller}}
+}
