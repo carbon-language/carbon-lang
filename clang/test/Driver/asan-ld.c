@@ -17,8 +17,8 @@
 // RUN:   | FileCheck --check-prefix=CHECK-ANDROID %s
 // CHECK-ANDROID: "{{.*}}ld{{(.exe)?}}"
 // CHECK-ANDROID-NOT: "-lc"
-// CHECK-ANDROID: "-u" "__asan_preinit" "-lasan"
-// CHECK-ANDROID: "-lasan_preload" "-ldl"
+// CHECK-ANDROID: libclang_rt.asan-arm-android.so"
+// CHECK-ANDROID-NOT: "-lpthread"
 
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     -target arm-linux-androideabi -faddress-sanitizer \
@@ -27,5 +27,5 @@
 // RUN:   | FileCheck --check-prefix=CHECK-ANDROID-SHARED %s
 // CHECK-ANDROID-SHARED: "{{.*}}ld{{(.exe)?}}"
 // CHECK-ANDROID-SHARED-NOT: "-lc"
-// CHECK-ANDROID-SHARED-NOT: "-lasan"
-// CHECK-ANDROID-SHARED: "-lasan_preload" "-ldl"
+// CHECK-ANDROID-SHARED: libclang_rt.asan-arm-android.so"
+// CHECK-ANDROID-SHARED-NOT: "-lpthread"
