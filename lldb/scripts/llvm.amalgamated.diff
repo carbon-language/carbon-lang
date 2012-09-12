@@ -1424,3 +1424,120 @@ Index: lib/MC/MCDisassembler/Disassembler.h
      Ctx.reset(ctx);
      DisAsm.reset(disAsm);
      IP.reset(iP);
+Index: tools/llvm-nm/llvm-nm.cpp
+===================================================================
+--- tools/llvm-nm/llvm-nm.cpp	(revision 152265)
++++ tools/llvm-nm/llvm-nm.cpp	(working copy)
+@@ -204,9 +204,9 @@ static void SortAndPrintSymbolList() {
+       strcpy(SymbolSizeStr, "        ");
+ 
+     if (i->Address != object::UnknownAddressOrSize)
+-      format("%08"PRIx64, i->Address).print(SymbolAddrStr, sizeof(SymbolAddrStr));
++      format("%08" PRIx64, i->Address).print(SymbolAddrStr, sizeof(SymbolAddrStr));
+     if (i->Size != object::UnknownAddressOrSize)
+-      format("%08"PRIx64, i->Size).print(SymbolSizeStr, sizeof(SymbolSizeStr));
++      format("%08" PRIx64, i->Size).print(SymbolSizeStr, sizeof(SymbolSizeStr));
+ 
+     if (OutputFormat == posix) {
+       outs() << i->Name << " " << i->TypeChar << " "
+Index: lib/DebugInfo/DWARFFormValue.cpp
+===================================================================
+--- lib/DebugInfo/DWARFFormValue.cpp	(revision 152265)
++++ lib/DebugInfo/DWARFFormValue.cpp	(working copy)
+@@ -348,7 +348,7 @@ DWARFFormValue::dump(raw_ostream &OS, const DWARFC
+   }
+ 
+   if (cu_relative_offset)
+-    OS << format(" => {0x%8.8"PRIx64"}", (uvalue + (cu ? cu->getOffset() : 0)));
++    OS << format(" => {0x%8.8" PRIx64 "}", (uvalue + (cu ? cu->getOffset() : 0)));
+ }
+ 
+ const char*
+Index: tools/llvm-objdump/llvm-objdump.cpp
+===================================================================
+--- tools/llvm-objdump/llvm-objdump.cpp	(revision 152265)
++++ tools/llvm-objdump/llvm-objdump.cpp	(working copy)
+@@ -300,7 +300,7 @@ static void DisassembleObject(const ObjectFile *Ob
+ 
+         if (DisAsm->getInstruction(Inst, Size, memoryObject, Index,
+                                    DebugOut, nulls())) {
+-          outs() << format("%8"PRIx64":\t", SectionAddr + Index);
++          outs() << format("%8" PRIx64":\t", SectionAddr + Index);
+           DumpBytes(StringRef(Bytes.data() + Index, Size));
+           IP->printInst(&Inst, outs(), "");
+           outs() << "\n";
+@@ -327,7 +327,7 @@ static void DisassembleObject(const ObjectFile *Ob
+           if (error(rel_cur->getTypeName(name))) goto skip_print_rel;
+           if (error(rel_cur->getValueString(val))) goto skip_print_rel;
+ 
+-          outs() << format("\t\t\t%8"PRIx64": ", SectionAddr + addr) << name << "\t"
++          outs() << format("\t\t\t%8" PRIx64 ": ", SectionAddr + addr) << name << "\t"
+                  << val << "\n";
+ 
+         skip_print_rel:
+@@ -388,7 +388,7 @@ static void PrintSectionHeaders(const ObjectFile *
+     if (error(si->isBSS(BSS))) return;
+     std::string Type = (std::string(Text ? "TEXT " : "") +
+                         (Data ? "DATA " : "") + (BSS ? "BSS" : ""));
+-    outs() << format("%3d %-13s %09"PRIx64" %017"PRIx64" %s\n", i, Name.str().c_str(), Size,
++    outs() << format("%3d %-13s %09" PRIx64 " %017" PRIx64 " %s\n", i, Name.str().c_str(), Size,
+                      Address, Type.c_str());
+     ++i;
+   }
+@@ -411,7 +411,7 @@ static void PrintSectionContents(const ObjectFile
+ 
+     // Dump out the content as hex and printable ascii characters.
+     for (std::size_t addr = 0, end = Contents.size(); addr < end; addr += 16) {
+-      outs() << format(" %04"PRIx64" ", BaseAddr + addr);
++      outs() << format(" %04" PRIx64 " ", BaseAddr + addr);
+       // Dump line of hex.
+       for (std::size_t i = 0; i < 16; ++i) {
+         if (i != 0 && i % 4 == 0)
+@@ -519,7 +519,7 @@ static void PrintSymbolTable(const ObjectFile *o)
+       else if (Type == SymbolRef::ST_Function)
+         FileFunc = 'F';
+ 
+-      outs() << format("%08"PRIx64, Address) << " "
++      outs() << format("%08" PRIx64, Address) << " "
+              << GlobLoc // Local -> 'l', Global -> 'g', Neither -> ' '
+              << (Weak ? 'w' : ' ') // Weak?
+              << ' ' // Constructor. Not supported yet.
+@@ -539,7 +539,7 @@ static void PrintSymbolTable(const ObjectFile *o)
+         outs() << SectionName;
+       }
+       outs() << '\t'
+-             << format("%08"PRIx64" ", Size)
++             << format("%08" PRIx64 " ", Size)
+              << Name
+              << '\n';
+     }
+Index: tools/bugpoint/ToolRunner.cpp
+===================================================================
+--- tools/bugpoint/ToolRunner.cpp	(revision 152265)
++++ tools/bugpoint/ToolRunner.cpp	(working copy)
+@@ -128,7 +128,7 @@ static int RunProgramRemotelyWithTimeout(const sys
+       ErrorFile.close();
+     }
+ 
+-    errs() << OS;
++    errs() << OS.str();
+   }
+ 
+   return ReturnCode;
+Index: tools/llvm-readobj/llvm-readobj.cpp
+===================================================================
+--- tools/llvm-readobj/llvm-readobj.cpp	(revision 152265)
++++ tools/llvm-readobj/llvm-readobj.cpp	(working copy)
+@@ -95,9 +95,9 @@ void DumpSymbol(const SymbolRef &sym) {
+     // format() can't handle StringRefs
+     outs() << format("  %-32s", Name.str().c_str())
+            << format("  %-4s", GetTypeStr(Type))
+-           << format("  %16"PRIx64, Address)
+-           << format("  %16"PRIx64, Size)
+-           << format("  %16"PRIx64, FileOffset)
++           << format("  %16" PRIx64, Address)
++           << format("  %16" PRIx64, Size)
++           << format("  %16" PRIx64, FileOffset)
+            << "  " << GetFlagStr(Flags)
+            << "\n";
+ }
