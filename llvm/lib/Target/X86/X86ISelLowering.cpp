@@ -6924,9 +6924,9 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT_SSE4(SDValue Op,
 
   if (VT.getSizeInBits() == 8) {
     SDValue Extract = DAG.getNode(X86ISD::PEXTRB, dl, MVT::i32,
-                                    Op.getOperand(0), Op.getOperand(1));
+                                  Op.getOperand(0), Op.getOperand(1));
     SDValue Assert  = DAG.getNode(ISD::AssertZext, dl, MVT::i32, Extract,
-                                    DAG.getValueType(VT));
+                                  DAG.getValueType(VT));
     return DAG.getNode(ISD::TRUNCATE, dl, VT, Assert);
   }
 
@@ -6941,9 +6941,9 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT_SSE4(SDValue Op,
                                                  Op.getOperand(0)),
                                      Op.getOperand(1)));
     SDValue Extract = DAG.getNode(X86ISD::PEXTRW, dl, MVT::i32,
-                                    Op.getOperand(0), Op.getOperand(1));
+                                  Op.getOperand(0), Op.getOperand(1));
     SDValue Assert  = DAG.getNode(ISD::AssertZext, dl, MVT::i32, Extract,
-                                    DAG.getValueType(VT));
+                                  DAG.getValueType(VT));
     return DAG.getNode(ISD::TRUNCATE, dl, VT, Assert);
   }
 
@@ -7027,9 +7027,9 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op,
     // Transform it so it match pextrw which produces a 32-bit result.
     EVT EltVT = MVT::i32;
     SDValue Extract = DAG.getNode(X86ISD::PEXTRW, dl, EltVT,
-                                    Op.getOperand(0), Op.getOperand(1));
+                                  Op.getOperand(0), Op.getOperand(1));
     SDValue Assert  = DAG.getNode(ISD::AssertZext, dl, EltVT, Extract,
-                                    DAG.getValueType(VT));
+                                  DAG.getValueType(VT));
     return DAG.getNode(ISD::TRUNCATE, dl, VT, Assert);
   }
 
@@ -7479,8 +7479,8 @@ LowerToTLSGeneralDynamicModel32(GlobalAddressSDNode *GA, SelectionDAG &DAG,
   SDValue InFlag;
   DebugLoc dl = GA->getDebugLoc();  // ? function entry point might be better
   SDValue Chain = DAG.getCopyToReg(DAG.getEntryNode(), dl, X86::EBX,
-                                     DAG.getNode(X86ISD::GlobalBaseReg,
-                                                 DebugLoc(), PtrVT), InFlag);
+                                   DAG.getNode(X86ISD::GlobalBaseReg,
+                                               DebugLoc(), PtrVT), InFlag);
   InFlag = Chain.getValue(1);
 
   return GetTLSADDR(DAG, Chain, GA, &InFlag, PtrVT, X86::EAX, X86II::MO_TLSGD);
