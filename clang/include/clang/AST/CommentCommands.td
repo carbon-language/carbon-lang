@@ -73,10 +73,23 @@ def Tparam : BlockCommand<"tparam"> { let IsTParamCommand = 1; }
 // HeaderDoc
 def Templatefield : BlockCommand<"templatefield"> { let IsTParamCommand = 1; }
 
-def Author  : BlockCommand<"author">;
-def Authors : BlockCommand<"authors">;
-def Pre     : BlockCommand<"pre">;
-def Post    : BlockCommand<"post">;
+def Author     : BlockCommand<"author">;
+def Authors    : BlockCommand<"authors">;
+def Bug        : BlockCommand<"bug">;
+def Copyright  : BlockCommand<"copyright">;
+def Date       : BlockCommand<"date">;
+def Details    : BlockCommand<"details">;
+def Note       : BlockCommand<"note">;
+def Post       : BlockCommand<"post">;
+def Pre        : BlockCommand<"pre">;
+def Remark     : BlockCommand<"remark">;
+def Remarks    : BlockCommand<"remarks">;
+def Sa         : BlockCommand<"sa">;
+def See        : BlockCommand<"see">;
+def Since      : BlockCommand<"since">;
+def Todo       : BlockCommand<"todo">;
+def Version    : BlockCommand<"version">;
+def Warning    : BlockCommand<"warning">;
 
 defm Code      : VerbatimBlockCommand<"code", "endcode">;
 defm Verbatim  : VerbatimBlockCommand<"verbatim", "endverbatim">;
