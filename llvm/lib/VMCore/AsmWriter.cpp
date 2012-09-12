@@ -1288,8 +1288,9 @@ void AssemblyWriter::printModule(const Module *M) {
   // Output all globals.
   if (!M->global_empty()) Out << '\n';
   for (Module::const_global_iterator I = M->global_begin(), E = M->global_end();
-       I != E; ++I)
-    printGlobal(I);
+       I != E; ++I) {
+    printGlobal(I); Out << '\n';
+  }
 
   // Output all aliases.
   if (!M->alias_empty()) Out << "\n";
@@ -1439,7 +1440,6 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
     Out << ", align " << GV->getAlignment();
 
   printInfoComment(*GV);
-  Out << '\n';
 }
 
 void AssemblyWriter::printAlias(const GlobalAlias *GA) {
