@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 %s -emit-llvm -O1 -o -
+// REQUIRES: LP64
 
 typedef long intptr_t;
 int test(void *b) {

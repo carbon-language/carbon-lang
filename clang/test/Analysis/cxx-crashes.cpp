@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc,debug.ExprInspection -verify %s
+// REQUIRES: LP64
 
 void clang_analyzer_eval(bool);
 

@@ -1,6 +1,7 @@
 #include "nonnull.h"
 
 // RUN: %clang_cc1 -fblocks -fsyntax-only -verify -Wno-objc-root-class %s
+// REQUIRES: LP64
 
 @class NSObject;
 

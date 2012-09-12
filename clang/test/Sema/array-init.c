@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -pedantic -verify %s
+// REQUIRES: LP64
 
 extern int foof() = 1; // expected-error{{illegal initializer (only variables can be initialized)}}
 

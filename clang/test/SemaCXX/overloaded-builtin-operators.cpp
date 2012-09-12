@@ -1,4 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -fshow-overloads=best -verify %s 
+// REQUIRES: LP64
+
 struct yes;
 struct no;
 

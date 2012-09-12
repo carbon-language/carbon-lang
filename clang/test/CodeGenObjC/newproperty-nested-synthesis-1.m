@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -emit-llvm -o %t %s
+// REQUIRES: LP64
 
 @interface Object
 - (id) new;

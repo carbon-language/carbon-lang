@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// REQUIRES: LP64
 
 struct A {};
 
