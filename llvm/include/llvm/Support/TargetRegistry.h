@@ -352,7 +352,6 @@ namespace llvm {
     /// createMCAsmBackend - Create a target specific assembly parser.
     ///
     /// \param Triple The target triple string.
-    /// \param Backend The target independent assembler object.
     MCAsmBackend *createMCAsmBackend(StringRef Triple) const {
       if (!MCAsmBackendCtorFn)
         return 0;
