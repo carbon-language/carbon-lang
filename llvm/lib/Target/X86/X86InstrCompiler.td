@@ -1041,7 +1041,13 @@ def : Pat<(X86tcret ptr_rc_tailcall:$dst, imm:$off),
           (TCRETURNri64 ptr_rc_tailcall:$dst, imm:$off)>,
           Requires<[In64BitMode]>;
 
-def : Pat<(X86tcret (load addr:$dst), imm:$off),
+// When calling a variadic function with 6 arguments, 7 scratch registers are
+// needed since %al holds the number of vector registers used. That leaves %r11
+// as the only remaining GR64_TC register for the addressing mode.
+//
+// The single_reg_addr pattern rejects any addressing modes that would need
+// more than one register.
+def : Pat<(X86tcret (load single_reg_addr:$dst), imm:$off),
           (TCRETURNmi64 addr:$dst, imm:$off)>,
           Requires<[In64BitMode]>;
 

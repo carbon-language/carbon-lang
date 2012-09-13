@@ -204,6 +204,9 @@ namespace {
     bool SelectAddr(SDNode *Parent, SDValue N, SDValue &Base,
                     SDValue &Scale, SDValue &Index, SDValue &Disp,
                     SDValue &Segment);
+    bool SelectSingleRegAddr(SDNode *Parent, SDValue N, SDValue &Base,
+                             SDValue &Scale, SDValue &Index, SDValue &Disp,
+                             SDValue &Segment);
     bool SelectLEAAddr(SDValue N, SDValue &Base,
                        SDValue &Scale, SDValue &Index, SDValue &Disp,
                        SDValue &Segment);
@@ -1317,6 +1320,31 @@ bool X86DAGToDAGISel::SelectAddr(SDNode *Parent, SDValue N, SDValue &Base,
 
   getAddressOperands(AM, Base, Scale, Index, Disp, Segment);
   return true;
+}
+
+/// SelectSingleRegAddr - Like SelectAddr, but reject any address that would
+/// require more than one allocatable register.
+///
+/// This is used for a TCRETURNmi64 instruction when used to tail call a
+/// variadic function with 6 arguments: Only %r11 is available from GR64_TC.
+/// The other scratch register, %rax, is needed to pass in the number of vector
+/// registers used in the variadic arguments.
+///
+bool X86DAGToDAGISel::SelectSingleRegAddr(SDNode *Parent, SDValue N,
+                                          SDValue &Base,
+                                          SDValue &Scale, SDValue &Index,
+                                          SDValue &Disp, SDValue &Segment) {
+  if (!SelectAddr(Parent, N, Base, Scale, Index, Disp, Segment))
+    return false;
+  // Anything %RIP relative is fine.
+  if (RegisterSDNode *Reg = dyn_cast<RegisterSDNode>(Base))
+    if (Reg->getReg() == X86::RIP)
+      return true;
+  // Check that the index register is 0.
+  if (RegisterSDNode *Reg = dyn_cast<RegisterSDNode>(Index))
+    if (Reg->getReg() == 0)
+      return true;
+  return false;
 }
 
 /// SelectScalarSSELoad - Match a scalar SSE load.  In particular, we want to
