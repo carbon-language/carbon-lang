@@ -4943,14 +4943,21 @@ void openbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
     // the default system libraries. Just mimic this for now.
     CmdArgs.push_back("-lgcc");
 
-    if (Args.hasArg(options::OPT_pthread))
-      CmdArgs.push_back("-lpthread");
+    if (Args.hasArg(options::OPT_pthread)) {
+      if (!Args.hasArg(options::OPT_shared) &&
+          Args.hasArg(options::OPT_pg))
+         CmdArgs.push_back("-lpthread_p");
+      else
+         CmdArgs.push_back("-lpthread");
+    }
+
     if (!Args.hasArg(options::OPT_shared)) {
-      if (Args.hasArg(options::OPT_pg)) 
+      if (Args.hasArg(options::OPT_pg))
          CmdArgs.push_back("-lc_p");
       else
          CmdArgs.push_back("-lc");
     }
+
     CmdArgs.push_back("-lgcc");
   }
 
