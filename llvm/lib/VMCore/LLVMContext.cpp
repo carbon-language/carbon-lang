@@ -53,6 +53,11 @@ LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) {
   unsigned RangeID = getMDKindID("range");
   assert(RangeID == MD_range && "range kind id drifted");
   (void)RangeID;
+
+  // Create the 'tbaa.struct' metadata kind.
+  unsigned TBAAStructID = getMDKindID("tbaa.struct");
+  assert(TBAAStructID == MD_tbaa_struct && "tbaa.struct kind id drifted");
+  (void)TBAAStructID;
 }
 LLVMContext::~LLVMContext() { delete pImpl; }
 
