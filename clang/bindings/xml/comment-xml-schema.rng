@@ -294,9 +294,9 @@
 
   <define name="Discussion">
     <element name="Discussion">
-      <oneOrMore>
+      <zeroOrMore>
         <ref name="TextBlockContent" />
-      </oneOrMore>
+      </zeroOrMore>
     </element>
   </define>
 
