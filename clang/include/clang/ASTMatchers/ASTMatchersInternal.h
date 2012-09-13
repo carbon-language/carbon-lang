@@ -380,6 +380,8 @@ struct IsBaseType {
       (llvm::is_same<T, Decl>::value ||
        llvm::is_same<T, Stmt>::value ||
        llvm::is_same<T, QualType>::value ||
+       llvm::is_same<T, NestedNameSpecifier>::value ||
+       llvm::is_same<T, NestedNameSpecifierLoc>::value ||
        llvm::is_same<T, CXXCtorInitializer>::value);
 };
 template <typename T>
@@ -652,9 +654,6 @@ public:
   /// The returned matcher is equivalent to this matcher, but will
   /// bind the matched node on a match.
   Matcher<T> bind(StringRef ID) const {
-    TOOLING_COMPILE_ASSERT((llvm::is_base_of<Stmt, T>::value ||
-                            llvm::is_base_of<Decl, T>::value),
-      trying_to_bind_unsupported_node_type__only_decl_and_stmt_supported);
     return Matcher<T>(new IdMatcher<T>(ID, *this));
   }
 };
@@ -779,6 +778,20 @@ private:
   const Matcher<T> InnertMatcher2;
 };
 
+/// \brief Creates a Matcher<T> that matches if all inner matchers match.
+template<typename T>
+BindableMatcher<T> makeAllOfComposite(
+    ArrayRef<const Matcher<T> *> InnerMatchers) {
+  if (InnerMatchers.empty())
+    return BindableMatcher<T>(new TrueMatcher<T>);
+  MatcherInterface<T> *InnerMatcher = new TrueMatcher<T>;
+  for (int i = InnerMatchers.size() - 1; i >= 0; --i) {
+    InnerMatcher = new AllOfMatcher<T, Matcher<T>, Matcher<T> >(
+      *InnerMatchers[i], makeMatcher(InnerMatcher));
+  }
+  return BindableMatcher<T>(InnerMatcher);
+}
+
 /// \brief Creates a Matcher<T> that matches if
 /// T is dyn_cast'able into InnerT and all inner matchers match.
 ///
@@ -788,17 +801,8 @@ private:
 template<typename T, typename InnerT>
 BindableMatcher<T> makeDynCastAllOfComposite(
     ArrayRef<const Matcher<InnerT> *> InnerMatchers) {
-  if (InnerMatchers.empty()) {
-    Matcher<InnerT> InnerMatcher = makeMatcher(new TrueMatcher<InnerT>);
-    return BindableMatcher<T>(new DynCastMatcher<T, InnerT>(InnerMatcher));
-  }
-  Matcher<InnerT> InnerMatcher = *InnerMatchers.back();
-  for (int i = InnerMatchers.size() - 2; i >= 0; --i) {
-    InnerMatcher = makeMatcher(
-        new AllOfMatcher<InnerT, Matcher<InnerT>, Matcher<InnerT> >(
-            *InnerMatchers[i], InnerMatcher));
-  }
-  return BindableMatcher<T>(new DynCastMatcher<T, InnerT>(InnerMatcher));
+  return BindableMatcher<T>(new DynCastMatcher<T, InnerT>(
+    makeAllOfComposite(InnerMatchers)));
 }
 
 /// \brief Matches nodes of type T that have at least one descendant node of
@@ -978,6 +982,99 @@ class VariadicDynCastAllOfMatcher
         makeDynCastAllOfComposite<SourceT, TargetT> > {
 public:
   VariadicDynCastAllOfMatcher() {}
+};
+
+/// \brief A \c VariadicAllOfMatcher<T> object is a variadic functor that takes
+/// a number of \c Matcher<T> and returns a \c Matcher<T> that matches \c T
+/// nodes that are matched by all of the given matchers.
+///
+/// For example:
+///   const VariadicAllOfMatcher<NestedNameSpecifier> nestedNameSpecifier;
+/// Creates a functor nestedNameSpecifier(...) that creates a
+/// \c Matcher<NestedNameSpecifier> given a variable number of arguments of type
+/// \c Matcher<NestedNameSpecifier>.
+/// The returned matcher matches if all given matchers match.
+template <typename T>
+class VariadicAllOfMatcher : public llvm::VariadicFunction<
+                               BindableMatcher<T>, Matcher<T>,
+                               makeAllOfComposite<T> > {
+public:
+  VariadicAllOfMatcher() {}
+};
+
+/// \brief Matches nodes of type \c TLoc for which the inner
+/// \c Matcher<T> matches.
+template <typename TLoc, typename T>
+class LocMatcher : public MatcherInterface<TLoc> {
+public:
+  explicit LocMatcher(const Matcher<T> &InnerMatcher)
+      : InnerMatcher(InnerMatcher) {}
+
+  virtual bool matches(const TLoc &Node,
+                       ASTMatchFinder *Finder,
+                       BoundNodesTreeBuilder *Builder) const {
+    if (!Node)
+      return false;
+    return InnerMatcher.matches(*extract(Node), Finder, Builder);
+  }
+
+private:
+  const NestedNameSpecifier *extract(const NestedNameSpecifierLoc &Loc) const {
+    return Loc.getNestedNameSpecifier();
+  }
+  // FIXME: Add overload for TypeLoc when implementing TypeLoc-matchers.
+
+  const Matcher<T> InnerMatcher;
+};
+
+/// \brief Matches nodes of type \c T for which the inner matcher matches on a
+/// another node of type \c T that can be reached using a given traverse
+/// function.
+template <typename T>
+class TraverseMatcher : public MatcherInterface<T> {
+public:
+  explicit TraverseMatcher(const Matcher<T> &InnerMatcher,
+                           T *(T::*TraverseFunction)() const)
+      : InnerMatcher(InnerMatcher), TraverseFunction(TraverseFunction) {}
+
+  virtual bool matches(const T &Node,
+                       ASTMatchFinder *Finder,
+                       BoundNodesTreeBuilder *Builder) const {
+    T* NextNode = (Node.*TraverseFunction)();
+    if (NextNode == NULL)
+      return false;
+    return InnerMatcher.matches(*NextNode, Finder, Builder);
+  }
+
+private:
+  const Matcher<T> InnerMatcher;
+  T *(T::*TraverseFunction)() const;
+};
+
+/// \brief Matches nodes of type \c T in a ..Loc hierarchy, for which the inner
+/// matcher matches on a another node of type \c T that can be reached using a
+/// given traverse function.
+template <typename T>
+class LocTraverseMatcher : public MatcherInterface<T> {
+public:
+  explicit LocTraverseMatcher(const Matcher<T> &InnerMatcher,
+                              T (T::*TraverseFunction)() const)
+      : InnerMatcher(InnerMatcher), TraverseFunction(TraverseFunction) {}
+
+  virtual bool matches(const T &Node,
+                       ASTMatchFinder *Finder,
+                       BoundNodesTreeBuilder *Builder) const {
+    if (!Node)
+      return false;
+    T NextNode = (Node.*TraverseFunction)();
+    if (!NextNode)
+      return false;
+    return InnerMatcher.matches(NextNode, Finder, Builder);
+  }
+
+private:
+  const Matcher<T> InnerMatcher;
+  T (T::*TraverseFunction)() const;
 };
 
 } // end namespace internal

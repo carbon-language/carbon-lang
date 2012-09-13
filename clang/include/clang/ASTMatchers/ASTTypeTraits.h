@@ -74,6 +74,8 @@ private:
   enum NodeTypeTag {
     NT_Decl,
     NT_Stmt,
+    NT_NestedNameSpecifier,
+    NT_NestedNameSpecifierLoc,
     NT_QualType
   } Tag;
 
@@ -83,7 +85,7 @@ private:
   /// guaranteed to be unique pointers pointing to dedicated storage in the
   /// AST. \c QualTypes on the other hand do not have storage or unique
   /// pointers and thus need to be stored by value.
-  llvm::AlignedCharArrayUnion<Decl*, Stmt*, QualType> Storage;
+  llvm::AlignedCharArrayUnion<Decl*, Stmt*, NestedNameSpecifierLoc, QualType> Storage;
 };
 template<typename T> struct DynTypedNode::BaseConverter<T,
     typename llvm::enable_if<llvm::is_base_of<Decl, T> >::type> {
@@ -110,6 +112,33 @@ template<typename T> struct DynTypedNode::BaseConverter<T,
     DynTypedNode Result;
     Result.Tag = NT_Stmt;
     new (Result.Storage.buffer) const Stmt*(&Node);
+    return Result;
+  }
+};
+template<> struct DynTypedNode::BaseConverter<NestedNameSpecifier, void> {
+  static const NestedNameSpecifier *get(NodeTypeTag Tag, const char Storage[]) {
+    if (Tag == NT_NestedNameSpecifier)
+      return *reinterpret_cast<NestedNameSpecifier*const*>(Storage);
+    return NULL;
+  }
+  static DynTypedNode create(const NestedNameSpecifier &Node) {
+    DynTypedNode Result;
+    Result.Tag = NT_NestedNameSpecifier;
+    new (Result.Storage.buffer) const NestedNameSpecifier*(&Node);
+    return Result;
+  }
+};
+template<> struct DynTypedNode::BaseConverter<NestedNameSpecifierLoc, void> {
+  static const NestedNameSpecifierLoc *get(NodeTypeTag Tag,
+                                           const char Storage[]) {
+    if (Tag == NT_NestedNameSpecifierLoc)
+      return reinterpret_cast<const NestedNameSpecifierLoc*>(Storage);
+    return NULL;
+  }
+  static DynTypedNode create(const NestedNameSpecifierLoc &Node) {
+    DynTypedNode Result;
+    Result.Tag = NT_NestedNameSpecifierLoc;
+    new (Result.Storage.buffer) NestedNameSpecifierLoc(Node);
     return Result;
   }
 };
@@ -146,4 +175,3 @@ inline const void *DynTypedNode::getMemoizationData() const {
 } // end namespace clang
 
 #endif // LLVM_CLANG_AST_MATCHERS_AST_TYPE_TRAITS_H
-

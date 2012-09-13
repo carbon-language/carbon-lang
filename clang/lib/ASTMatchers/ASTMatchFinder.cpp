@@ -313,6 +313,8 @@ public:
   bool TraverseStmt(Stmt *StmtNode);
   bool TraverseType(QualType TypeNode);
   bool TraverseTypeLoc(TypeLoc TypeNode);
+  bool TraverseNestedNameSpecifier(NestedNameSpecifier *NNS);
+  bool TraverseNestedNameSpecifierLoc(NestedNameSpecifierLoc NNS);
 
   // Matches children or descendants of 'Node' with 'BaseMatcher'.
   bool memoizedMatchesRecursively(const ast_type_traits::DynTypedNode &Node,
@@ -556,6 +558,21 @@ bool MatchASTVisitor::TraverseTypeLoc(TypeLoc TypeLoc) {
       TraverseTypeLoc(TypeLoc);
 }
 
+bool MatchASTVisitor::TraverseNestedNameSpecifier(NestedNameSpecifier *NNS) {
+  match(*NNS);
+  return RecursiveASTVisitor<MatchASTVisitor>::TraverseNestedNameSpecifier(NNS);
+}
+
+bool MatchASTVisitor::TraverseNestedNameSpecifierLoc(
+    NestedNameSpecifierLoc NNS) {
+  match(NNS);
+  // We only match the nested name specifier here (as opposed to traversing it)
+  // because the traversal is already done in the parallel "Loc"-hierarchy.
+  match(*NNS.getNestedNameSpecifier());
+  return
+      RecursiveASTVisitor<MatchASTVisitor>::TraverseNestedNameSpecifierLoc(NNS);
+}
+
 class MatchASTConsumer : public ASTConsumer {
 public:
   MatchASTConsumer(
@@ -617,6 +634,18 @@ void MatchFinder::addMatcher(const StatementMatcher &NodeMatch,
                              MatchCallback *Action) {
   MatcherCallbackPairs.push_back(std::make_pair(
     new internal::Matcher<Stmt>(NodeMatch), Action));
+}
+
+void MatchFinder::addMatcher(const NestedNameSpecifierMatcher &NodeMatch,
+                             MatchCallback *Action) {
+  MatcherCallbackPairs.push_back(std::make_pair(
+    new NestedNameSpecifierMatcher(NodeMatch), Action));
+}
+
+void MatchFinder::addMatcher(const NestedNameSpecifierLocMatcher &NodeMatch,
+                             MatchCallback *Action) {
+  MatcherCallbackPairs.push_back(std::make_pair(
+    new NestedNameSpecifierLocMatcher(NodeMatch), Action));
 }
 
 ASTConsumer *MatchFinder::newASTConsumer() {

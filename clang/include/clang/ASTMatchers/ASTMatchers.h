@@ -110,6 +110,8 @@ internal::Matcher<T> id(const std::string &ID,
 typedef internal::Matcher<Decl> DeclarationMatcher;
 typedef internal::Matcher<QualType> TypeMatcher;
 typedef internal::Matcher<Stmt> StatementMatcher;
+typedef internal::Matcher<NestedNameSpecifier> NestedNameSpecifierMatcher;
+typedef internal::Matcher<NestedNameSpecifierLoc> NestedNameSpecifierLocMatcher;
 /// @}
 
 /// \brief Matches any node.
@@ -2286,6 +2288,83 @@ inline internal::PolymorphicMatcherWithParam0<
 isExplicitTemplateSpecialization() {
   return internal::PolymorphicMatcherWithParam0<
     internal::IsExplicitTemplateSpecializationMatcher>();
+}
+
+/// \brief Matches nested name specifiers.
+///
+/// Given
+/// \code
+///   namespace ns {
+///     struct A { static void f(); };
+///     void A::f() {}
+///     void g() { A::f(); }
+///   }
+///   ns::A a;
+/// \endcode
+/// nestedNameSpecifier()
+///   matches "ns::" and both "A::"
+const internal::VariadicAllOfMatcher<NestedNameSpecifier> nestedNameSpecifier;
+
+/// \brief Same as \c nestedNameSpecifier but matches \c NestedNameSpecifierLoc.
+const internal::VariadicAllOfMatcher<
+  NestedNameSpecifierLoc> nestedNameSpecifierLoc;
+
+/// \brief Matches \c NestedNameSpecifierLocs for which the given inner
+/// NestedNameSpecifier-matcher matches.
+inline internal::BindableMatcher<NestedNameSpecifierLoc> loc(
+    const internal::Matcher<NestedNameSpecifier> &InnerMatcher) {
+  return internal::BindableMatcher<NestedNameSpecifierLoc>(
+      new internal::LocMatcher<NestedNameSpecifierLoc, NestedNameSpecifier>(
+          InnerMatcher));
+}
+
+/// \brief Matches nested name specifiers that specify a type matching the
+/// given \c QualType matcher without qualifiers.
+/// FIXME: This is a temporary solution. Switch to using Type-matchers as soon
+/// as we have those.
+///
+/// Given
+/// \code
+///   struct A { struct B { struct C {}; }; };
+///   A::B::C c;
+/// \endcode
+/// nestedNameSpecifier(specifiesType(hasDeclaration(recordDecl(hasName("A")))))
+///   matches "A::"
+AST_MATCHER_P(NestedNameSpecifier, specifiesType,
+              internal::Matcher<QualType>, InnerMatcher) {
+  if (Node.getAsType() == NULL)
+    return false;
+  return InnerMatcher.matches(QualType(Node.getAsType(), 0), Finder, Builder);
+}
+
+/// \brief Matches on the prefix of a \c NestedNameSpecifier or
+/// \c NestedNameSpecifierLoc.
+///
+/// Given
+/// \code
+///   struct A { struct B { struct C {}; }; };
+///   A::B::C c;
+/// \endcode
+/// nestedNameSpecifier(hasPrefix(specifiesType(asString("struct A")))) and
+/// nestedNameSpecifierLoc(hasPrefix(loc(specifiesType(asString("struct A")))))
+///   both match "A::"
+LOC_TRAVERSE_MATCHER(hasPrefix, NestedNameSpecifier, getPrefix)
+
+/// \brief Matches nested name specifiers that specify a namespace matching the
+/// given namespace matcher.
+///
+/// Given
+/// \code
+///   namespace ns { struct A {}; }
+///   ns::A a;
+/// \endcode
+/// nestedNameSpecifier(specifiesNamespace(hasName("ns")))
+///   matches "ns::"
+AST_MATCHER_P(NestedNameSpecifier, specifiesNamespace,
+              internal::Matcher<NamespaceDecl>, InnerMatcher) {
+  if (Node.getAsNamespace() == NULL)
+    return false;
+  return InnerMatcher.matches(*Node.getAsNamespace(), Finder, Builder);
 }
 
 } // end namespace ast_matchers

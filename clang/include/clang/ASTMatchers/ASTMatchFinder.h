@@ -112,6 +112,10 @@ public:
                   MatchCallback *Action);
   void addMatcher(const StatementMatcher &NodeMatch,
                   MatchCallback *Action);
+  void addMatcher(const NestedNameSpecifierMatcher &NodeMatch,
+                  MatchCallback *Action);
+  void addMatcher(const NestedNameSpecifierLocMatcher &NodeMatch,
+                  MatchCallback *Action);
   /// @}
 
   /// \brief Creates a clang ASTConsumer that finds all matches.

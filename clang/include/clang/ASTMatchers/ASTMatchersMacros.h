@@ -221,4 +221,22 @@
       const NodeType &Node, ASTMatchFinder *Finder,                            \
       BoundNodesTreeBuilder *Builder) const
 
+/// \brief LOC_TRAVERSE_MATCHER(MatcherName, NodeType, FunctionName)
+/// defines the matcher \c MatcherName that can be used to traverse
+/// a Type or NestedNameSpecifier as well as the corresponding ..Loc.
+///
+/// The traversal is done using the given \c FunctionName.
+#define LOC_TRAVERSE_MATCHER(                                                  \
+      MatcherName, NodeType, FunctionName)                                     \
+  inline internal::Matcher<NodeType> hasPrefix(                                \
+      const internal::Matcher<NodeType> &InnerMatcher) {                       \
+    return makeMatcher(new internal::TraverseMatcher<NodeType>(                \
+      InnerMatcher, &NodeType::getPrefix));                                    \
+  }                                                                            \
+  inline internal::Matcher<NodeType##Loc> hasPrefix(                           \
+      const internal::Matcher<NodeType##Loc> &InnerMatcher) {                  \
+    return makeMatcher(new internal::LocTraverseMatcher<NodeType##Loc>(        \
+      InnerMatcher, &NodeType##Loc::getPrefix));                               \
+  }
+
 #endif // LLVM_CLANG_AST_MATCHERS_AST_MATCHERS_MACROS_H
