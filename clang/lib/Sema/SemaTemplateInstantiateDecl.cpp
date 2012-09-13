@@ -1008,6 +1008,21 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
   return Record;
 }
 
+/// \brief Adjust the given function type for an instantiation of the
+/// given declaration, to cope with modifications to the function's type that
+/// aren't reflected in the type-source information.
+///
+/// \param D The declaration we're instantiating.
+/// \param TInfo The already-instantiated type.
+static QualType adjustFunctionTypeForInstantiation(ASTContext &Context,
+                                                   FunctionDecl *D,
+                                                   TypeSourceInfo *TInfo) {
+  const FunctionType *OrigFunc = D->getType()->castAs<FunctionType>();
+  const FunctionType *NewFunc = TInfo->getType()->castAs<FunctionType>();
+  return QualType(Context.adjustFunctionType(NewFunc, OrigFunc->getExtInfo()),
+                  0);
+}
+
 /// Normal class members are of more specific types and therefore
 /// don't make it here.  This function serves two purposes:
 ///   1) instantiating function templates
@@ -1048,7 +1063,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
   TypeSourceInfo *TInfo = SubstFunctionType(D, Params);
   if (!TInfo)
     return 0;
-  QualType T = TInfo->getType();
+  QualType T = adjustFunctionTypeForInstantiation(SemaRef.Context, D, TInfo);
 
   NestedNameSpecifierLoc QualifierLoc = D->getQualifierLoc();
   if (QualifierLoc) {
@@ -1366,7 +1381,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
   TypeSourceInfo *TInfo = SubstFunctionType(D, Params);
   if (!TInfo)
     return 0;
-  QualType T = TInfo->getType();
+  QualType T = adjustFunctionTypeForInstantiation(SemaRef.Context, D, TInfo);
 
   // \brief If the type of this function, after ignoring parentheses,
   // is not *directly* a function type, then we're instantiating a function

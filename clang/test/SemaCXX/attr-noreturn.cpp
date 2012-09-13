@@ -54,3 +54,29 @@ class xpto {
 int xpto::blah() {
   return 3; // expected-warning {{function 'blah' declared 'noreturn' should not return}}
 }
+
+// PR12948
+
+namespace PR12948 {
+  template<int>
+  void foo() __attribute__((__noreturn__));
+
+  template<int>
+  void foo() {
+    while (1) continue;
+  }
+
+  void bar() __attribute__((__noreturn__));
+
+  void bar() {
+    foo<0>();
+  }
+
+
+  void baz() __attribute__((__noreturn__));
+  typedef void voidfn();
+  voidfn baz;
+
+  template<typename> void wibble()  __attribute__((__noreturn__));
+  template<typename> voidfn wibble;
+}
