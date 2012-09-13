@@ -2165,6 +2165,9 @@ Sema::TemplateDeductionResult
 Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
                               const TemplateArgumentList &TemplateArgs,
                               TemplateDeductionInfo &Info) {
+  if (Partial->isInvalidDecl())
+    return TDK_Invalid;
+
   // C++ [temp.class.spec.match]p2:
   //   A partial specialization matches a given actual template
   //   argument list if the template arguments of the partial
@@ -3015,6 +3018,9 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
                               llvm::ArrayRef<Expr *> Args,
                               FunctionDecl *&Specialization,
                               TemplateDeductionInfo &Info) {
+  if (FunctionTemplate->isInvalidDecl())
+    return TDK_Invalid;
+
   FunctionDecl *Function = FunctionTemplate->getTemplatedDecl();
 
   // C++ [temp.deduct.call]p1:
@@ -3271,6 +3277,9 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
                               QualType ArgFunctionType,
                               FunctionDecl *&Specialization,
                               TemplateDeductionInfo &Info) {
+  if (FunctionTemplate->isInvalidDecl())
+    return TDK_Invalid;
+
   FunctionDecl *Function = FunctionTemplate->getTemplatedDecl();
   TemplateParameterList *TemplateParams
     = FunctionTemplate->getTemplateParameters();
@@ -3330,6 +3339,9 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
                               QualType ToType,
                               CXXConversionDecl *&Specialization,
                               TemplateDeductionInfo &Info) {
+  if (FunctionTemplate->isInvalidDecl())
+    return TDK_Invalid;
+
   CXXConversionDecl *Conv
     = cast<CXXConversionDecl>(FunctionTemplate->getTemplatedDecl());
   QualType FromType = Conv->getConversionType();

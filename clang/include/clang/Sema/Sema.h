@@ -5280,6 +5280,8 @@ public:
   enum TemplateDeductionResult {
     /// \brief Template argument deduction was successful.
     TDK_Success = 0,
+    /// \brief The declaration was invalid; do nothing.
+    TDK_Invalid,
     /// \brief Template argument deduction exceeded the maximum template
     /// instantiation depth (which has already been diagnosed).
     TDK_InstantiationDepth,

@@ -2,7 +2,7 @@
 
 // Note that the error count below doesn't matter. We just want to
 // make sure that the parser doesn't crash.
-// CHECK: 13 errors
+// CHECK: 15 errors
 
 // PR7511
 template<a>
@@ -86,4 +86,16 @@ int operator<<( basic_ostream<char> , pair ) ;
 void register_object_imp ( )
 {
 cout << endl<1>;
+}
+
+// PR12933
+namespacae PR12933 {
+  template<typename S>
+    template<typename T>
+    void function(S a, T b) {}
+
+  int main() {
+    function(0, 1);
+    return 0;
+  }
 }

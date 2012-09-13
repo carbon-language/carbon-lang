@@ -555,6 +555,7 @@ static MakeDeductionFailureInfo(ASTContext &Context,
   Result.Data = 0;
   switch (TDK) {
   case Sema::TDK_Success:
+  case Sema::TDK_Invalid:
   case Sema::TDK_InstantiationDepth:
   case Sema::TDK_TooManyArguments:
   case Sema::TDK_TooFewArguments:
@@ -597,6 +598,7 @@ static MakeDeductionFailureInfo(ASTContext &Context,
 void OverloadCandidate::DeductionFailureInfo::Destroy() {
   switch (static_cast<Sema::TemplateDeductionResult>(Result)) {
   case Sema::TDK_Success:
+  case Sema::TDK_Invalid:
   case Sema::TDK_InstantiationDepth:
   case Sema::TDK_Incomplete:
   case Sema::TDK_TooManyArguments:
@@ -637,6 +639,7 @@ TemplateParameter
 OverloadCandidate::DeductionFailureInfo::getTemplateParameter() {
   switch (static_cast<Sema::TemplateDeductionResult>(Result)) {
   case Sema::TDK_Success:
+  case Sema::TDK_Invalid:
   case Sema::TDK_InstantiationDepth:
   case Sema::TDK_TooManyArguments:
   case Sema::TDK_TooFewArguments:
@@ -664,6 +667,7 @@ TemplateArgumentList *
 OverloadCandidate::DeductionFailureInfo::getTemplateArgumentList() {
   switch (static_cast<Sema::TemplateDeductionResult>(Result)) {
     case Sema::TDK_Success:
+    case Sema::TDK_Invalid:
     case Sema::TDK_InstantiationDepth:
     case Sema::TDK_TooManyArguments:
     case Sema::TDK_TooFewArguments:
@@ -688,6 +692,7 @@ OverloadCandidate::DeductionFailureInfo::getTemplateArgumentList() {
 const TemplateArgument *OverloadCandidate::DeductionFailureInfo::getFirstArg() {
   switch (static_cast<Sema::TemplateDeductionResult>(Result)) {
   case Sema::TDK_Success:
+  case Sema::TDK_Invalid:
   case Sema::TDK_InstantiationDepth:
   case Sema::TDK_Incomplete:
   case Sema::TDK_TooManyArguments:
@@ -713,6 +718,7 @@ const TemplateArgument *
 OverloadCandidate::DeductionFailureInfo::getSecondArg() {
   switch (static_cast<Sema::TemplateDeductionResult>(Result)) {
   case Sema::TDK_Success:
+  case Sema::TDK_Invalid:
   case Sema::TDK_InstantiationDepth:
   case Sema::TDK_Incomplete:
   case Sema::TDK_TooManyArguments:
@@ -8555,6 +8561,7 @@ RankDeductionFailure(const OverloadCandidate::DeductionFailureInfo &DFI) {
   case Sema::TDK_Success:
     llvm_unreachable("TDK_success while diagnosing bad deduction");
 
+  case Sema::TDK_Invalid:
   case Sema::TDK_Incomplete:
     return 1;
 
