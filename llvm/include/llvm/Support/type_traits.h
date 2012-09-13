@@ -54,8 +54,9 @@ struct is_class
   // is_class<> metafunction due to Paul Mensonides (leavings@attbi.com). For
   // more details:
   // http://groups.google.com/groups?hl=en&selm=000001c1cc83%24e154d5e0%247772e50c%40c161550a&rnum=1
- public:
-    enum { value = sizeof(char) == sizeof(dont_use::is_class_helper<T>(0)) };
+public:
+  static const bool value =
+      sizeof(char) == sizeof(dont_use::is_class_helper<T>(0));
 };
   
   
@@ -162,12 +163,11 @@ template <typename T> class is_integral_or_enum {
   static UnderlyingT &nonce_instance;
 
 public:
-  enum {
+  static const bool
     value = (!is_class<UnderlyingT>::value && !is_pointer<UnderlyingT>::value &&
              !is_same<UnderlyingT, float>::value &&
              !is_same<UnderlyingT, double>::value &&
-             sizeof(char) != sizeof(check_int_convertible(nonce_instance)))
-  };
+             sizeof(char) != sizeof(check_int_convertible(nonce_instance)));
 };
 
 // enable_if_c - Enable/disable a template based on a metafunction
