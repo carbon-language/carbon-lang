@@ -34,7 +34,6 @@
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/PathV2.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include <string>
 #include <utility>
@@ -102,7 +101,6 @@ namespace {
 
     Module *M;
     LLVMContext *Ctx;
-    const TargetData *TD;
   };
 }
 
@@ -354,7 +352,6 @@ std::string GCOVProfiler::mangleName(DICompileUnit CU, const char *NewStem) {
 
 bool GCOVProfiler::runOnModule(Module &M) {
   this->M = &M;
-  TD = getAnalysisIfAvailable<TargetData>();
   Ctx = &M.getContext();
 
   if (EmitNotes) emitGCNO();
@@ -653,8 +650,8 @@ void GCOVProfiler::insertCounterWriteout(
   NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu");
   if (CU_Nodes) {
     for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
-      DICompileUnit compile_unit(CU_Nodes->getOperand(i));
-      std::string FilenameGcda = mangleName(compile_unit, "gcda");
+      DICompileUnit CU(CU_Nodes->getOperand(i));
+      std::string FilenameGcda = mangleName(CU, "gcda");
       Builder.CreateCall(StartFile,
                          Builder.CreateGlobalStringPtr(FilenameGcda));
       for (ArrayRef<std::pair<GlobalVariable *, MDNode *> >::iterator
@@ -762,8 +759,6 @@ insertFlush(ArrayRef<std::pair<GlobalVariable*, MDNode*> > CountersBySP) {
     FlushF->setLinkage(GlobalValue::InternalLinkage);
   FlushF->setUnnamedAddr(true);
 
-  Type *Int8Ty = Type::getInt8Ty(*Ctx);
-  Type *Int64Ty = Type::getInt64Ty(*Ctx);
   BasicBlock *Entry = BasicBlock::Create(*Ctx, "entry", FlushF);
 
   // Write out the current counters.
@@ -773,17 +768,14 @@ insertFlush(ArrayRef<std::pair<GlobalVariable*, MDNode*> > CountersBySP) {
   IRBuilder<> Builder(Entry);
   Builder.CreateCall(WriteoutF);
 
-  if (TD)
-    // Zero out the counters.
-    for (ArrayRef<std::pair<GlobalVariable *, MDNode *> >::iterator
-           I = CountersBySP.begin(), E = CountersBySP.end();
-         I != E; ++I) {
-      GlobalVariable *GV = I->first;
-      uint64_t NumBytes = TD->getTypeAllocSize(GV->getType()->getElementType());
-      Builder.CreateMemSet(Builder.CreateConstGEP2_64(GV, 0, 0),
-                           ConstantInt::get(Int8Ty, 0),
-                           ConstantInt::get(Int64Ty, NumBytes), false);
-    }
+  // Zero out the counters.
+  for (ArrayRef<std::pair<GlobalVariable *, MDNode *> >::iterator
+         I = CountersBySP.begin(), E = CountersBySP.end();
+       I != E; ++I) {
+    GlobalVariable *GV = I->first;
+    Constant *Null = Constant::getNullValue(GV->getType()->getElementType());
+    Builder.CreateStore(Null, GV);//Builder.CreateConstGEP2_64(GV, 0, 0));
+  }
 
   Type *RetTy = FlushF->getReturnType();
   if (RetTy == Type::getVoidTy(*Ctx))
