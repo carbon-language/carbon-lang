@@ -436,7 +436,7 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
 
   if (BitsLeft < 16) {
     // Add a second OpInfo table only when it is necessary.
-    O<<"  static const short OpInfo2[] = {\n";
+    O<<"  static const uint16_t OpInfo2[] = {\n";
     for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
       O << "    " << OpcodeInfo[i].second << "U,\t// "
         << NumberedInstructions[i]->TheDef->getName() << "\n";
