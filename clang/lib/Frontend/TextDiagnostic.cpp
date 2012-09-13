@@ -274,14 +274,44 @@ struct SourceColumnMap {
   }
   int columns() const { return m_byteToColumn.back(); }
   int bytes() const { return m_columnToByte.back(); }
+
+  /// \brief Map a byte to the column which it is at the start of, or return -1
+  /// if it is not at the start of a column (for a UTF-8 trailing byte).
   int byteToColumn(int n) const {
     assert(0<=n && n<static_cast<int>(m_byteToColumn.size()));
     return m_byteToColumn[n];
   }
+
+  /// \brief Map a byte to the first column which contains it.
+  int byteToContainingColumn(int N) const {
+    assert(0 <= N && N < static_cast<int>(m_byteToColumn.size()));
+    while (m_byteToColumn[N] == -1)
+      --N;
+    return m_byteToColumn[N];
+  }
+
+  /// \brief Map a column to the byte which starts the column, or return -1 if
+  /// the column the second or subsequent column of an expanded tab or similar
+  /// multi-column entity.
   int columnToByte(int n) const {
     assert(0<=n && n<static_cast<int>(m_columnToByte.size()));
     return m_columnToByte[n];
   }
+
+  /// \brief Map from a byte index to the next byte which starts a column.
+  int startOfNextColumn(int N) const {
+    assert(0 <= N && N < static_cast<int>(m_columnToByte.size() - 1));
+    while (byteToColumn(++N) == -1) {}
+    return N;
+  }
+
+  /// \brief Map from a byte index to the previous byte which starts a column.
+  int startOfPreviousColumn(int N) const {
+    assert(0 < N && N < static_cast<int>(m_columnToByte.size()));
+    while (byteToColumn(N--) == -1) {}
+    return N;
+  }
+
   StringRef getSourceLine() const {
     return m_SourceLine;
   }
@@ -402,21 +432,20 @@ static void selectInterestingSourceRegion(std::string &SourceLine,
 
       // Skip over any whitespace we see here; we're looking for
       // another bit of interesting text.
+      // FIXME: Detect non-ASCII whitespace characters too.
       while (NewStart &&
-             (map.byteToColumn(NewStart)==-1 ||
-             isspace(static_cast<unsigned char>(SourceLine[NewStart]))))
-        --NewStart;
+             isspace(static_cast<unsigned char>(SourceLine[NewStart])))
+        NewStart = map.startOfPreviousColumn(NewStart);
 
       // Skip over this bit of "interesting" text.
-      while (NewStart &&
-             (map.byteToColumn(NewStart)!=-1 &&
-             !isspace(static_cast<unsigned char>(SourceLine[NewStart]))))
-        --NewStart;
+      while (NewStart) {
+        unsigned Prev = map.startOfPreviousColumn(NewStart);
+        if (isspace(static_cast<unsigned char>(SourceLine[Prev])))
+          break;
+        NewStart = Prev;
+      }
 
-      // Move up to the non-whitespace character we just saw.
-      if (NewStart)
-        ++NewStart;
-
+      assert(map.byteToColumn(NewStart) != -1);
       unsigned NewColumns = map.byteToColumn(SourceEnd) -
                               map.byteToColumn(NewStart);
       if (NewColumns <= TargetColumns) {
@@ -430,17 +459,17 @@ static void selectInterestingSourceRegion(std::string &SourceLine,
 
       // Skip over any whitespace we see here; we're looking for
       // another bit of interesting text.
-      while (NewEnd<SourceLine.size() &&
-             (map.byteToColumn(NewEnd)==-1 ||
-             isspace(static_cast<unsigned char>(SourceLine[NewEnd]))))
-        ++NewEnd;
+      // FIXME: Detect non-ASCII whitespace characters too.
+      while (NewEnd < SourceLine.size() &&
+             isspace(static_cast<unsigned char>(SourceLine[NewEnd])))
+        NewEnd = map.startOfNextColumn(NewEnd);
 
       // Skip over this bit of "interesting" text.
-      while (NewEnd<SourceLine.size() &&
-             (map.byteToColumn(NewEnd)!=-1 &&
-             !isspace(static_cast<unsigned char>(SourceLine[NewEnd]))))
-        ++NewEnd;
+      while (NewEnd < SourceLine.size() &&
+             !isspace(static_cast<unsigned char>(SourceLine[NewEnd])))
+        NewEnd = map.startOfNextColumn(NewEnd);
 
+      assert(map.byteToColumn(NewEnd) != -1);
       unsigned NewColumns = map.byteToColumn(NewEnd) -
                               map.byteToColumn(SourceStart);
       if (NewColumns <= TargetColumns) {
@@ -933,7 +962,7 @@ void TextDiagnostic::emitSnippetAndCaret(
     highlightRange(*I, LineNo, FID, sourceColMap, CaretLine, SM);
 
   // Next, insert the caret itself.
-  ColNo = sourceColMap.byteToColumn(ColNo-1);
+  ColNo = sourceColMap.byteToContainingColumn(ColNo-1);
   if (CaretLine.size()<ColNo+1)
     CaretLine.resize(ColNo+1, ' ');
   CaretLine[ColNo] = '^';
@@ -1080,7 +1109,7 @@ void TextDiagnostic::highlightRange(const CharSourceRange &R,
     while (StartColNo < map.getSourceLine().size() &&
            (map.getSourceLine()[StartColNo] == ' ' ||
             map.getSourceLine()[StartColNo] == '\t'))
-      ++StartColNo;
+      StartColNo = map.startOfNextColumn(StartColNo);
 
     // Pick the last non-whitespace column.
     if (EndColNo > map.getSourceLine().size())
@@ -1088,7 +1117,7 @@ void TextDiagnostic::highlightRange(const CharSourceRange &R,
     while (EndColNo-1 &&
            (map.getSourceLine()[EndColNo-1] == ' ' ||
             map.getSourceLine()[EndColNo-1] == '\t'))
-      --EndColNo;
+      EndColNo = map.startOfPreviousColumn(EndColNo);
 
     // If the start/end passed each other, then we are trying to highlight a
     // range that just exists in whitespace, which must be some sort of other
@@ -1100,8 +1129,8 @@ void TextDiagnostic::highlightRange(const CharSourceRange &R,
   assert(EndColNo <= map.getSourceLine().size() && "Invalid range!");
 
   // Fill the range with ~'s.
-  StartColNo = map.byteToColumn(StartColNo);
-  EndColNo = map.byteToColumn(EndColNo);
+  StartColNo = map.byteToContainingColumn(StartColNo);
+  EndColNo = map.byteToContainingColumn(EndColNo);
 
   assert(StartColNo <= EndColNo && "Invalid range!");
   if (CaretLine.size() < EndColNo)
@@ -1139,7 +1168,7 @@ std::string TextDiagnostic::buildFixItInsertionLine(
 
         // The hint must start inside the source or right at the end
         assert(HintByteOffset < static_cast<unsigned>(map.bytes())+1);
-        unsigned HintCol = map.byteToColumn(HintByteOffset);
+        unsigned HintCol = map.byteToContainingColumn(HintByteOffset);
 
         // If we inserted a long previous hint, push this one forwards, and add
         // an extra space to show that this is not part of the previous
