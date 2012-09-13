@@ -138,6 +138,10 @@ static InstrUID decode(OpcodeType type,
     if (modFromModRM(modRM) == 0x3)
       return modRMTable[dec->instructionIDs+((modRM & 0x38) >> 3)+8];
     return modRMTable[dec->instructionIDs+((modRM & 0x38) >> 3)];
+  case MODRM_SPLITMISC:
+    if (modFromModRM(modRM) == 0x3)
+      return modRMTable[dec->instructionIDs+(modRM & 0x3f)+8];
+    return modRMTable[dec->instructionIDs+((modRM & 0x38) >> 3)];
   case MODRM_FULL:
     return modRMTable[dec->instructionIDs+modRM];
   }
