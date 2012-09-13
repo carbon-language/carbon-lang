@@ -1017,10 +1017,19 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
 static QualType adjustFunctionTypeForInstantiation(ASTContext &Context,
                                                    FunctionDecl *D,
                                                    TypeSourceInfo *TInfo) {
-  const FunctionType *OrigFunc = D->getType()->castAs<FunctionType>();
-  const FunctionType *NewFunc = TInfo->getType()->castAs<FunctionType>();
-  return QualType(Context.adjustFunctionType(NewFunc, OrigFunc->getExtInfo()),
-                  0);
+  const FunctionProtoType *OrigFunc
+    = D->getType()->castAs<FunctionProtoType>();
+  const FunctionProtoType *NewFunc
+    = TInfo->getType()->castAs<FunctionProtoType>();
+  if (OrigFunc->getExtInfo() == NewFunc->getExtInfo())
+    return TInfo->getType();
+
+  FunctionProtoType::ExtProtoInfo NewEPI = NewFunc->getExtProtoInfo();
+  NewEPI.ExtInfo = OrigFunc->getExtInfo();
+  return Context.getFunctionType(NewFunc->getResultType(),
+                                 NewFunc->arg_type_begin(),
+                                 NewFunc->getNumArgs(),
+                                 NewEPI);
 }
 
 /// Normal class members are of more specific types and therefore
