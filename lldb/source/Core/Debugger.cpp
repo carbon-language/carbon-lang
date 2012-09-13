@@ -86,6 +86,7 @@ g_language_enumerators[] =
     { eScriptLanguageNone,      "none",     "Disable scripting languages."},
     { eScriptLanguagePython,    "python",   "Select python as the default scripting language."},
     { eScriptLanguageDefault,   "default",  "Select the lldb default as the default scripting language."},
+    { 0, NULL, NULL }
 };
 
 #define MODULE_WITH_FUNC "{ ${module.file.basename}{`${function.name-with-args}${function.pc-offset}}}"
