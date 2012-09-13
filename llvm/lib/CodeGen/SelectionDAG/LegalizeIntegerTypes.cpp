@@ -2253,17 +2253,13 @@ void DAGTypeLegalizer::ExpandIntRes_UADDSUBO(SDNode *N,
 void DAGTypeLegalizer::ExpandIntRes_XMULO(SDNode *N,
                                           SDValue &Lo, SDValue &Hi) {
   EVT VT = N->getValueType(0);
-  Type *RetTy = VT.getTypeForEVT(*DAG.getContext());
-  EVT PtrVT = TLI.getPointerTy();
-  Type *PtrTy = PtrVT.getTypeForEVT(*DAG.getContext());
   DebugLoc dl = N->getDebugLoc();
 
   // A divide for UMULO should be faster than a function call.
   if (N->getOpcode() == ISD::UMULO) {
     SDValue LHS = N->getOperand(0), RHS = N->getOperand(1);
-    DebugLoc DL = N->getDebugLoc();
 
-    SDValue MUL = DAG.getNode(ISD::MUL, DL, LHS.getValueType(), LHS, RHS);
+    SDValue MUL = DAG.getNode(ISD::MUL, dl, LHS.getValueType(), LHS, RHS);
     SplitInteger(MUL, Lo, Hi);
 
     // A divide for UMULO will be faster than a function call. Select to
@@ -2272,13 +2268,17 @@ void DAGTypeLegalizer::ExpandIntRes_XMULO(SDNode *N,
                                   RHS, DAG.getConstant(0, VT), ISD::SETNE);
     SDValue NotZero = DAG.getNode(ISD::SELECT, dl, VT, isZero,
                                   DAG.getConstant(1, VT), RHS);
-    SDValue DIV = DAG.getNode(ISD::UDIV, DL, LHS.getValueType(), MUL, NotZero);
-    SDValue Overflow;
-    Overflow = DAG.getSetCC(DL, N->getValueType(1), DIV, LHS, ISD::SETNE);
+    SDValue DIV = DAG.getNode(ISD::UDIV, dl, VT, MUL, NotZero);
+    SDValue Overflow = DAG.getSetCC(dl, N->getValueType(1), DIV, LHS,
+                                    ISD::SETNE);
     ReplaceValueWith(SDValue(N, 1), Overflow);
     return;
   }
 
+  Type *RetTy = VT.getTypeForEVT(*DAG.getContext());
+  EVT PtrVT = TLI.getPointerTy();
+  Type *PtrTy = PtrVT.getTypeForEVT(*DAG.getContext());
+  
   // Replace this with a libcall that will check overflow.
   RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
   if (VT == MVT::i32)
