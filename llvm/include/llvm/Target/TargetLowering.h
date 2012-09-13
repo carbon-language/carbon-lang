@@ -497,7 +497,8 @@ public:
            (unsigned)VT.getSimpleVT().SimpleTy < sizeof(CondCodeActions[0])*4 &&
            "Table isn't big enough!");
     LegalizeAction Action = (LegalizeAction)
-      ((CondCodeActions[CC] >> (2*VT.getSimpleVT().SimpleTy)) & 3);
+      ((CondCodeActions[CC][VT.getSimpleVT().SimpleTy >> 5]
+        >> (2*(VT.getSimpleVT().SimpleTy & 0x1F))) & 3);
     assert(Action != Promote && "Can't promote condition code!");
     return Action;
   }
@@ -554,6 +555,7 @@ public:
     }
     return EVT::getEVT(Ty, AllowUnknown);
   }
+  
 
   /// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
   /// function arguments in the caller parameter area.  This is the actual
@@ -1153,8 +1155,10 @@ protected:
     assert(VT < MVT::LAST_VALUETYPE &&
            (unsigned)CC < array_lengthof(CondCodeActions) &&
            "Table isn't big enough!");
-    CondCodeActions[(unsigned)CC] &= ~(uint64_t(3UL)  << VT.SimpleTy*2);
-    CondCodeActions[(unsigned)CC] |= (uint64_t)Action << VT.SimpleTy*2;
+    CondCodeActions[(unsigned)CC][VT.SimpleTy >> 5]
+      &= ~(uint64_t(3UL)  << (VT.SimpleTy & 0x1F)*2);
+    CondCodeActions[(unsigned)CC][VT.SimpleTy >> 5]
+      |= (uint64_t)Action << (VT.SimpleTy & 0x1F)*2;
   }
 
   /// AddPromotedToType - If Opc/OrigVT is specified as being promoted, the
@@ -1933,7 +1937,7 @@ private:
   /// CondCodeActions - For each condition code (ISD::CondCode) keep a
   /// LegalizeAction that indicates how instruction selection should
   /// deal with the condition code.
-  uint64_t CondCodeActions[ISD::SETCC_INVALID];
+  uint64_t CondCodeActions[ISD::SETCC_INVALID][2];
 
   ValueTypeActionImpl ValueTypeActions;
 
