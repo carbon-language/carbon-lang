@@ -39,13 +39,14 @@ namespace path {
 /// The backwards traversal order is the reverse of forward traversal.
 ///
 /// Iteration examples. Each component is separated by ',':
-/// /          => /
-/// /foo       => /,foo
-/// foo/       => foo,.
-/// /foo/bar   => /,foo,bar
-/// ../        => ..,.
-/// C:\foo\bar => C:,/,foo,bar
-///
+/// @code
+///   /          => /
+///   /foo       => /,foo
+///   foo/       => foo,.
+///   /foo/bar   => /,foo,bar
+///   ../        => ..,.
+///   C:\foo\bar => C:,/,foo,bar
+/// @endcode
 class const_iterator {
   StringRef Path;      ///< The entire path.
   StringRef Component; ///< The current component. Not necessarily in Path.
@@ -107,18 +108,22 @@ inline reverse_iterator rend(StringRef path) {
 
 /// @brief Remove the last component from \a path unless it is the root dir.
 ///
-/// directory/filename.cpp => directory/
-/// directory/             => directory
-/// /                      => /
+/// @code
+///   directory/filename.cpp => directory/
+///   directory/             => directory
+///   /                      => /
+/// @endcode
 ///
 /// @param path A path that is modified to not have a file component.
 void remove_filename(SmallVectorImpl<char> &path);
 
 /// @brief Replace the file extension of \a path with \a extension.
 ///
-/// ./filename.cpp => ./filename.extension
-/// ./filename     => ./filename.extension
-/// ./             => ./.extension
+/// @code
+///   ./filename.cpp => ./filename.extension
+///   ./filename     => ./filename.extension
+///   ./             => ./.extension
+/// @endcode
 ///
 /// @param path A path that has its extension replaced with \a extension.
 /// @param extension The extension to be added. It may be empty. It may also
@@ -128,9 +133,11 @@ void replace_extension(SmallVectorImpl<char> &path, const Twine &extension);
 
 /// @brief Append to path.
 ///
-/// /foo  + bar/f => /foo/bar/f
-/// /foo/ + bar/f => /foo/bar/f
-/// foo   + bar/f => foo/bar/f
+/// @code
+///   /foo  + bar/f => /foo/bar/f
+///   /foo/ + bar/f => /foo/bar/f
+///   foo   + bar/f => foo/bar/f
+/// @endcode
 ///
 /// @param path Set to \a path + \a component.
 /// @param a The component to be appended to \a path.
@@ -141,9 +148,11 @@ void append(SmallVectorImpl<char> &path, const Twine &a,
 
 /// @brief Append to path.
 ///
-/// /foo  + [bar,f] => /foo/bar/f
-/// /foo/ + [bar,f] => /foo/bar/f
-/// foo   + [bar,f] => foo/bar/f
+/// @code
+///   /foo  + [bar,f] => /foo/bar/f
+///   /foo/ + [bar,f] => /foo/bar/f
+///   foo   + [bar,f] => foo/bar/f
+/// @endcode
 ///
 /// @param path Set to \a path + [\a begin, \a end).
 /// @param begin Start of components to append.
@@ -169,9 +178,11 @@ void native(const Twine &path, SmallVectorImpl<char> &result);
 
 /// @brief Get root name.
 ///
-/// //net/hello => //net
-/// c:/hello    => c: (on Windows, on other platforms nothing)
-/// /hello      => <empty>
+/// @code
+///   //net/hello => //net
+///   c:/hello    => c: (on Windows, on other platforms nothing)
+///   /hello      => <empty>
+/// @endcode
 ///
 /// @param path Input path.
 /// @result The root name of \a path if it has one, otherwise "".
@@ -179,9 +190,11 @@ const StringRef root_name(StringRef path);
 
 /// @brief Get root directory.
 ///
-/// /goo/hello => /
-/// c:/hello   => /
-/// d/file.txt => <empty>
+/// @code
+///   /goo/hello => /
+///   c:/hello   => /
+///   d/file.txt => <empty>
+/// @endcode
 ///
 /// @param path Input path.
 /// @result The root directory of \a path if it has one, otherwise
@@ -198,9 +211,11 @@ const StringRef root_path(StringRef path);
 
 /// @brief Get relative path.
 ///
-/// C:\hello\world => hello\world
-/// foo/bar        => foo/bar
-/// /foo/bar       => foo/bar
+/// @code
+///   C:\hello\world => hello\world
+///   foo/bar        => foo/bar
+///   /foo/bar       => foo/bar
+/// @endcode
 ///
 /// @param path Input path.
 /// @result The path starting after root_path if one exists, otherwise "".
@@ -208,9 +223,11 @@ const StringRef relative_path(StringRef path);
 
 /// @brief Get parent path.
 ///
-/// /          => <empty>
-/// /foo       => /
-/// foo/../bar => foo/..
+/// @code
+///   /          => <empty>
+///   /foo       => /
+///   foo/../bar => foo/..
+/// @endcode
 ///
 /// @param path Input path.
 /// @result The parent path of \a path if one exists, otherwise "".
@@ -218,10 +235,12 @@ const StringRef parent_path(StringRef path);
 
 /// @brief Get filename.
 ///
-/// /foo.txt    => foo.txt
-/// .          => .
-/// ..         => ..
-/// /          => /
+/// @code
+///   /foo.txt    => foo.txt
+///   .          => .
+///   ..         => ..
+///   /          => /
+/// @endcode
 ///
 /// @param path Input path.
 /// @result The filename part of \a path. This is defined as the last component
@@ -234,11 +253,13 @@ const StringRef filename(StringRef path);
 /// substring of filename ending at (but not including) the last dot. Otherwise
 /// it is filename.
 ///
-/// /foo/bar.txt => bar
-/// /foo/bar     => bar
-/// /foo/.txt    => <empty>
-/// /foo/.       => .
-/// /foo/..      => ..
+/// @code
+///   /foo/bar.txt => bar
+///   /foo/bar     => bar
+///   /foo/.txt    => <empty>
+///   /foo/.       => .
+///   /foo/..      => ..
+/// @endcode
 ///
 /// @param path Input path.
 /// @result The stem of \a path.
@@ -250,9 +271,11 @@ const StringRef stem(StringRef path);
 /// substring of filename starting at (and including) the last dot, and ending
 /// at the end of \a path. Otherwise "".
 ///
-/// /foo/bar.txt => .txt
-/// /foo/bar     => <empty>
-/// /foo/.txt    => .txt
+/// @code
+///   /foo/bar.txt => .txt
+///   /foo/bar     => <empty>
+///   /foo/.txt    => .txt
+/// @endcode
 ///
 /// @param path Input path.
 /// @result The extension of \a path.
