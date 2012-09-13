@@ -4595,15 +4595,21 @@ static QualType getDecltypeForExpr(Sema &S, Expr *E) {
   //       member access (5.2.5), decltype(e) is the type of the entity named
   //       by e. If there is no such entity, or if e names a set of overloaded
   //       functions, the program is ill-formed;
+  //
+  // We apply the same rules for Objective-C ivar and property references.
   if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
     if (const ValueDecl *VD = dyn_cast<ValueDecl>(DRE->getDecl()))
       return VD->getType();
-  }
-  if (const MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
+  } else if (const MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
     if (const FieldDecl *FD = dyn_cast<FieldDecl>(ME->getMemberDecl()))
       return FD->getType();
+  } else if (const ObjCIvarRefExpr *IR = dyn_cast<ObjCIvarRefExpr>(E)) {
+    return IR->getDecl()->getType();
+  } else if (const ObjCPropertyRefExpr *PR = dyn_cast<ObjCPropertyRefExpr>(E)) {
+    if (PR->isExplicitProperty())
+      return PR->getExplicitProperty()->getType();
   }
-
+  
   // C++11 [expr.lambda.prim]p18:
   //   Every occurrence of decltype((x)) where x is a possibly
   //   parenthesized id-expression that names an entity of automatic
