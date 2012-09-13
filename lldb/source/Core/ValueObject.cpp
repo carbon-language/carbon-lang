@@ -3990,3 +3990,67 @@ ValueObject::GetSymbolContextScope()
     }
     return NULL;
 }
+
+lldb::ValueObjectSP
+ValueObject::CreateValueObjectFromExpression (const char* name,
+                                              const char* expression,
+                                              const ExecutionContext& exe_ctx)
+{
+    lldb::ValueObjectSP retval_sp;
+    lldb::TargetSP target_sp(exe_ctx.GetTargetSP());
+    if (!target_sp)
+        return retval_sp;
+    if (!expression || !*expression)
+        return retval_sp;
+    target_sp->EvaluateExpression (expression,
+                                   exe_ctx.GetFrameSP().get(),
+                                   retval_sp);
+    if (retval_sp && name && *name)
+        retval_sp->SetName(ConstString(name));
+    return retval_sp;
+}
+
+lldb::ValueObjectSP
+ValueObject::CreateValueObjectFromAddress (const char* name,
+                                           uint64_t address,
+                                           const ExecutionContext& exe_ctx,
+                                           ClangASTType type)
+{
+    ClangASTType pointer_type(type.GetASTContext(),type.GetPointerType());
+    lldb::DataBufferSP buffer(new lldb_private::DataBufferHeap(&address,sizeof(lldb::addr_t)));
+    lldb::ValueObjectSP ptr_result_valobj_sp(ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(),
+                                                                             pointer_type.GetASTContext(),
+                                                                             pointer_type.GetOpaqueQualType(),
+                                                                             ConstString(name),
+                                                                             buffer,
+                                                                             lldb::endian::InlHostByteOrder(),
+                                                                             exe_ctx.GetAddressByteSize()));
+    if (ptr_result_valobj_sp)
+    {
+        ptr_result_valobj_sp->GetValue().SetValueType(Value::eValueTypeLoadAddress);
+        Error err;
+        ptr_result_valobj_sp = ptr_result_valobj_sp->Dereference(err);
+        if (ptr_result_valobj_sp && name && *name)
+            ptr_result_valobj_sp->SetName(ConstString(name));
+    }
+    return ptr_result_valobj_sp;
+}
+
+lldb::ValueObjectSP
+ValueObject::CreateValueObjectFromData (const char* name,
+                                        DataExtractor& data,
+                                        const ExecutionContext& exe_ctx,
+                                        ClangASTType type)
+{
+    lldb::ValueObjectSP new_value_sp;
+    new_value_sp = ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(),
+                                                   type.GetASTContext() ,
+                                                   type.GetOpaqueQualType(),
+                                                   ConstString(name),
+                                                   data,
+                                                   LLDB_INVALID_ADDRESS);
+    new_value_sp->SetAddressTypeOfChildren(eAddressTypeLoad);
+    if (new_value_sp && name && *name)
+        new_value_sp->SetName(ConstString(name));
+    return new_value_sp;
+}

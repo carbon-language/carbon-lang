@@ -646,7 +646,33 @@ AppleObjCRuntimeV2::GetISA(ValueObject& valobj)
     
     // tagged pointer
     if (IsTaggedPointer(isa_pointer))
+    {
+        ClassDescriptorV2Tagged descriptor(valobj);
+        
+        // probably an invalid tagged pointer - say it's wrong
+        if (!descriptor.IsValid())
+            return 0;
+        
+        static const ConstString g_objc_tagged_isa_nsatom_name ("NSAtom");
+        static const ConstString g_objc_tagged_isa_nsnumber_name ("NSNumber");
+        static const ConstString g_objc_tagged_isa_nsdatets_name ("NSDateTS");
+        static const ConstString g_objc_tagged_isa_nsmanagedobject_name ("NSManagedObject");
+        static const ConstString g_objc_tagged_isa_nsdate_name ("NSDate");
+        
+        ConstString class_name_const_string = descriptor.GetClassName();
+
+        if (class_name_const_string == g_objc_tagged_isa_nsatom_name)
+            return g_objc_Tagged_ISA_NSAtom;
+        if (class_name_const_string == g_objc_tagged_isa_nsnumber_name)
+            return g_objc_Tagged_ISA_NSNumber;
+        if (class_name_const_string == g_objc_tagged_isa_nsdatets_name)
+            return g_objc_Tagged_ISA_NSDateTS;
+        if (class_name_const_string == g_objc_tagged_isa_nsmanagedobject_name)
+            return g_objc_Tagged_ISA_NSManagedObject;
+        if (class_name_const_string == g_objc_tagged_isa_nsdate_name)
+            return g_objc_Tagged_ISA_NSDate;
         return g_objc_Tagged_ISA;
+    }
 
     ExecutionContext exe_ctx (valobj.GetExecutionContextRef());
 
@@ -679,7 +705,32 @@ AppleObjCRuntimeV2::GetActualTypeName(ObjCLanguageRuntime::ObjCISA isa)
         static const ConstString g_objc_tagged_isa_name ("_lldb_Tagged_ObjC_ISA");
         return g_objc_tagged_isa_name;
     }
-    
+    if (isa == g_objc_Tagged_ISA_NSAtom)
+    {
+        static const ConstString g_objc_tagged_isa_nsatom_name ("NSAtom");
+        return g_objc_tagged_isa_nsatom_name;
+    }
+    if (isa == g_objc_Tagged_ISA_NSNumber)
+    {
+        static const ConstString g_objc_tagged_isa_nsnumber_name ("NSNumber");
+        return g_objc_tagged_isa_nsnumber_name;
+    }
+    if (isa == g_objc_Tagged_ISA_NSDateTS)
+    {
+        static const ConstString g_objc_tagged_isa_nsdatets_name ("NSDateTS");
+        return g_objc_tagged_isa_nsdatets_name;
+    }
+    if (isa == g_objc_Tagged_ISA_NSManagedObject)
+    {
+        static const ConstString g_objc_tagged_isa_nsmanagedobject_name ("NSManagedObject");
+        return g_objc_tagged_isa_nsmanagedobject_name;
+    }
+    if (isa == g_objc_Tagged_ISA_NSDate)
+    {
+        static const ConstString g_objc_tagged_isa_nsdate_name ("NSDate");
+        return g_objc_tagged_isa_nsdate_name;
+    }
+
     ISAToDescriptorIterator found = m_isa_to_descriptor_cache.find(isa);
     ISAToDescriptorIterator end = m_isa_to_descriptor_cache.end();
     

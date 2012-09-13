@@ -277,6 +277,20 @@ TypeFilterImpl::GetDescription()
 }
 
 std::string
+CXXSyntheticChildren::GetDescription()
+{
+    StreamString sstr;
+    sstr.Printf("%s%s%s Generator at %p - %s\n",
+                Cascades() ? "" : " (not cascading)",
+                SkipsPointers() ? " (skip pointers)" : "",
+                SkipsReferences() ? " (skip references)" : "",
+                m_create_callback,
+                m_description.c_str());
+    
+    return sstr.GetString();
+}
+
+std::string
 SyntheticArrayView::GetDescription()
 {
     StreamString sstr;
@@ -329,7 +343,7 @@ TypeSyntheticImpl::FrontEnd::~FrontEnd()
 }
 
 lldb::ValueObjectSP
-TypeSyntheticImpl::FrontEnd::GetChildAtIndex (uint32_t idx, bool can_create)
+TypeSyntheticImpl::FrontEnd::GetChildAtIndex (uint32_t idx)
 {
     if (!m_wrapper_sp || !m_interpreter)
         return lldb::ValueObjectSP();

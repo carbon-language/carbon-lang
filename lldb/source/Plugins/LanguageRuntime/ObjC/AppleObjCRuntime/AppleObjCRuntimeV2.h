@@ -238,10 +238,18 @@ public:
         return (isa != 0);
     }
     
-    // this is not a valid ISA in the sense that no valid
-    // class pointer can live at address 1. we use it to refer to
-    // tagged types, where the ISA must be dynamically determined
+    // none of these are valid ISAs - we use them to infer the type
+    // of tagged pointers - if we have something meaningful to say
+    // we report an actual type - otherwise, we just say tagged
+    // there is no connection between the values here and the tagged pointers map
     static const ObjCLanguageRuntime::ObjCISA g_objc_Tagged_ISA = 1;
+
+    static const ObjCLanguageRuntime::ObjCISA g_objc_Tagged_ISA_NSAtom = 2;
+    static const ObjCLanguageRuntime::ObjCISA g_objc_Tagged_ISA_NSNumber = 3;
+    static const ObjCLanguageRuntime::ObjCISA g_objc_Tagged_ISA_NSDateTS = 4;
+    static const ObjCLanguageRuntime::ObjCISA g_objc_Tagged_ISA_NSManagedObject = 5;
+    static const ObjCLanguageRuntime::ObjCISA g_objc_Tagged_ISA_NSDate = 6;
+
     
     virtual ObjCLanguageRuntime::ObjCISA
     GetISA(ValueObject& valobj);

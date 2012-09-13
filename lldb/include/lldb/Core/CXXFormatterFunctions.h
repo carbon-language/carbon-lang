@@ -13,44 +13,161 @@
 #include <stdint.h>
 #include "lldb/lldb-forward.h"
 
+#include "lldb/Core/ConstString.h"
+#include "lldb/Core/FormatClasses.h"
+
+#include "clang/AST/ASTContext.h"
+
 namespace lldb_private {
     namespace formatters
     {
         
         bool
-        CodeRunning_Fetcher (ValueObject &valobj,
-                             const char* target_type,
-                             const char* selector,
-                             uint64_t &value);
+        ExtractValueFromObjCExpression (ValueObject &valobj,
+                                        const char* target_type,
+                                        const char* selector,
+                                        uint64_t &value);
+        
+        lldb::ValueObjectSP
+        CallSelectorOnObject (ValueObject &valobj,
+                              const char* return_type,
+                              const char* selector,
+                              uint64_t index);
+        
+        lldb::ValueObjectSP
+        CallSelectorOnObject (ValueObject &valobj,
+                              const char* return_type,
+                              const char* selector,
+                              const char* key);
         
         template<bool name_entries>
         bool
-        NSDictionary_SummaryProvider (ValueObject& valobj, Stream& stream);
+        NSDictionarySummaryProvider (ValueObject& valobj, Stream& stream);
         
         bool
-        NSArray_SummaryProvider (ValueObject& valobj, Stream& stream);
+        NSArraySummaryProvider (ValueObject& valobj, Stream& stream);
         
         template<bool needs_at>
         bool
-        NSData_SummaryProvider (ValueObject& valobj, Stream& stream);
+        NSDataSummaryProvider (ValueObject& valobj, Stream& stream);
         
         bool
-        NSNumber_SummaryProvider (ValueObject& valobj, Stream& stream);
+        NSNumberSummaryProvider (ValueObject& valobj, Stream& stream);
 
         bool
-        NSString_SummaryProvider (ValueObject& valobj, Stream& stream);
+        NSStringSummaryProvider (ValueObject& valobj, Stream& stream);
         
         extern template bool
-        NSDictionary_SummaryProvider<true> (ValueObject&, Stream&) ;
+        NSDictionarySummaryProvider<true> (ValueObject&, Stream&) ;
         
         extern template bool
-        NSDictionary_SummaryProvider<false> (ValueObject&, Stream&) ;
+        NSDictionarySummaryProvider<false> (ValueObject&, Stream&) ;
         
         extern template bool
-        NSData_SummaryProvider<true> (ValueObject&, Stream&) ;
+        NSDataSummaryProvider<true> (ValueObject&, Stream&) ;
         
         extern template bool
-        NSData_SummaryProvider<false> (ValueObject&, Stream&) ;
+        NSDataSummaryProvider<false> (ValueObject&, Stream&) ;
+        
+        class NSArrayMSyntheticFrontEnd : public SyntheticChildrenFrontEnd
+        {
+        private:
+            struct DataDescriptor_32
+            {
+                uint32_t _used;
+                uint32_t _priv1 : 2 ;
+                uint32_t _size : 30;
+                uint32_t _priv2 : 2;
+                uint32_t offset : 30;
+                uint32_t _priv3;
+                uint32_t _data;
+            };
+            struct DataDescriptor_64
+            {
+                uint64_t _used;
+                uint64_t _priv1 : 2 ;
+                uint64_t _size : 62;
+                uint64_t _priv2 : 2;
+                uint64_t offset : 62;
+                uint32_t _priv3;
+                uint64_t _data;
+            };
+        public:
+            NSArrayMSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+            
+            virtual uint32_t
+            CalculateNumChildren ();
+            
+            virtual lldb::ValueObjectSP
+            GetChildAtIndex (uint32_t idx);
+            
+            virtual bool
+            Update();
+            
+            virtual uint32_t
+            GetIndexOfChildWithName (const ConstString &name);
+            
+            virtual
+            ~NSArrayMSyntheticFrontEnd ();
+        private:
+            ExecutionContextRef m_exe_ctx_ref;
+            uint8_t m_ptr_size;
+            DataDescriptor_32 *m_data_32;
+            DataDescriptor_64 *m_data_64;
+            ClangASTType m_id_type;
+            std::vector<lldb::ValueObjectSP> m_children;
+        };
+        
+        class NSArrayISyntheticFrontEnd : public SyntheticChildrenFrontEnd
+        {
+        public:
+            NSArrayISyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+            
+            virtual uint32_t
+            CalculateNumChildren ();
+            
+            virtual lldb::ValueObjectSP
+            GetChildAtIndex (uint32_t idx);
+            
+            virtual bool
+            Update();
+            
+            virtual uint32_t
+            GetIndexOfChildWithName (const ConstString &name);
+            
+            virtual
+            ~NSArrayISyntheticFrontEnd ();
+        private:
+            ExecutionContextRef m_exe_ctx_ref;
+            uint8_t m_ptr_size;
+            uint64_t m_items;
+            lldb::addr_t m_data_ptr;
+            ClangASTType m_id_type;
+            std::vector<lldb::ValueObjectSP> m_children;
+        };
+        
+        class NSArrayCodeRunningSyntheticFrontEnd : public SyntheticChildrenFrontEnd
+        {
+        public:
+            NSArrayCodeRunningSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+            
+            virtual uint32_t
+            CalculateNumChildren ();
+            
+            virtual lldb::ValueObjectSP
+            GetChildAtIndex (uint32_t idx);
+            
+            virtual bool
+            Update();
+            
+            virtual uint32_t
+            GetIndexOfChildWithName (const ConstString &name);
+            
+            virtual
+            ~NSArrayCodeRunningSyntheticFrontEnd ();
+        };
+        
+        SyntheticChildrenFrontEnd* NSArraySyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
         
     }
 }

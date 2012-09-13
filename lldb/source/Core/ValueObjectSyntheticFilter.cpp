@@ -121,7 +121,7 @@ ValueObjectSynthetic::GetChildAtIndex (uint32_t idx, bool can_create)
     {
         if (can_create && m_synth_filter_ap.get() != NULL)
         {
-            lldb::ValueObjectSP synth_guy = m_synth_filter_ap->GetChildAtIndex (idx, can_create);
+            lldb::ValueObjectSP synth_guy = m_synth_filter_ap->GetChildAtIndex (idx);
             if (!synth_guy)
                 return synth_guy;
             m_children_byindex[idx]= synth_guy.get();

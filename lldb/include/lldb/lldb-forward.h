@@ -85,6 +85,7 @@ class   Condition;
 class   Connection;
 class   ConnectionFileDescriptor;
 class   ConstString;
+class   CXXSyntheticChildren;
 class   DWARFCallFrameInfo;
 class   DWARFExpression;
 class   DataBuffer;

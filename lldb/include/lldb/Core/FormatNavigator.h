@@ -25,6 +25,9 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/ValueObject.h"
+
+#include "lldb/Symbol/ClangASTContext.h"
+
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/StackFrame.h"
@@ -578,8 +581,7 @@ protected:
                 return true;
             }
         }
-        
-        if (typePtr->isPointerType())
+        else if (typePtr->isPointerType())
         {
             if (log)
                 log->Printf("stripping pointer");
@@ -591,7 +593,13 @@ protected:
             }
         }
 
-        if (typePtr->isObjCObjectPointerType())
+        bool canBeObjCDynamic = ClangASTContext::IsPossibleDynamicType (valobj.GetClangAST(),
+                                                                        type.getAsOpaquePtr(),
+                                                                        NULL,
+                                                                        false, // no C++
+                                                                        true); // yes ObjC
+        
+        if (canBeObjCDynamic)
         {
             if (use_dynamic != lldb::eNoDynamicValues)
             {

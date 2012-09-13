@@ -910,6 +910,23 @@ public:
                      ValueObject *valobj,
                      const DumpValueObjectOptions& options);
 
+    static lldb::ValueObjectSP
+    CreateValueObjectFromExpression (const char* name,
+                                     const char* expression,
+                                     const ExecutionContext& exe_ctx);
+    
+    static lldb::ValueObjectSP
+    CreateValueObjectFromAddress (const char* name,
+                                  uint64_t address,
+                                  const ExecutionContext& exe_ctx,
+                                  ClangASTType type);
+    
+    static lldb::ValueObjectSP
+    CreateValueObjectFromData (const char* name,
+                               DataExtractor& data,
+                               const ExecutionContext& exe_ctx,
+                               ClangASTType type);
+    
     static void
     LogValueObject (Log *log,
                     ValueObject *valobj);

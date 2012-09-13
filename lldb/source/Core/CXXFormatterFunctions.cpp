@@ -13,8 +13,12 @@
 #define CLANG_NEEDS_THESE_ONE_DAY
 #include "clang/Basic/ConvertUTF.h"
 
+#include "lldb/Core/DataBufferHeap.h"
+#include "lldb/Core/Error.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/ValueObject.h"
+#include "lldb/Core/ValueObjectConstResult.h"
+#include "lldb/Host/Endian.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Target.h"
 
@@ -23,10 +27,10 @@ using namespace lldb_private;
 using namespace lldb_private::formatters;
 
 bool
-lldb_private::formatters::CodeRunning_Fetcher (ValueObject &valobj,
-                                               const char* target_type,
-                                               const char* selector,
-                                               uint64_t &value)
+lldb_private::formatters::ExtractValueFromObjCExpression (ValueObject &valobj,
+                                                          const char* target_type,
+                                                          const char* selector,
+                                                          uint64_t &value)
 {
     if (!target_type || !*target_type)
         return false;
@@ -59,9 +63,81 @@ lldb_private::formatters::CodeRunning_Fetcher (ValueObject &valobj,
     return true;
 }
 
+lldb::ValueObjectSP
+lldb_private::formatters::CallSelectorOnObject (ValueObject &valobj,
+                                                const char* return_type,
+                                                const char* selector,
+                                                uint64_t index)
+{
+    lldb::ValueObjectSP valobj_sp;
+    if (!return_type || !*return_type)
+        return valobj_sp;
+    if (!selector || !*selector)
+        return valobj_sp;
+    StreamString expr_path_stream;
+    valobj.GetExpressionPath(expr_path_stream, false);
+    StreamString expr;
+    expr.Printf("(%s)[%s %s:%lld]",return_type,expr_path_stream.GetData(),selector,index);
+    ExecutionContext exe_ctx (valobj.GetExecutionContextRef());
+    lldb::ValueObjectSP result_sp;
+    Target* target = exe_ctx.GetTargetPtr();
+    StackFrame* stack_frame = exe_ctx.GetFramePtr();
+    if (!target || !stack_frame)
+        return valobj_sp;
+    
+    Target::EvaluateExpressionOptions options;
+    options.SetCoerceToId(false)
+    .SetUnwindOnError(true)
+    .SetKeepInMemory(true)
+    .SetUseDynamic(lldb::eDynamicCanRunTarget);
+    
+    target->EvaluateExpression(expr.GetData(),
+                               stack_frame,
+                               valobj_sp,
+                               options);
+    return valobj_sp;
+}
+
+lldb::ValueObjectSP
+lldb_private::formatters::CallSelectorOnObject (ValueObject &valobj,
+                                                const char* return_type,
+                                                const char* selector,
+                                                const char* key)
+{
+    lldb::ValueObjectSP valobj_sp;
+    if (!return_type || !*return_type)
+        return valobj_sp;
+    if (!selector || !*selector)
+        return valobj_sp;
+    if (!key || !*key)
+        return valobj_sp;
+    StreamString expr_path_stream;
+    valobj.GetExpressionPath(expr_path_stream, false);
+    StreamString expr;
+    expr.Printf("(%s)[%s %s:%s]",return_type,expr_path_stream.GetData(),selector,key);
+    ExecutionContext exe_ctx (valobj.GetExecutionContextRef());
+    lldb::ValueObjectSP result_sp;
+    Target* target = exe_ctx.GetTargetPtr();
+    StackFrame* stack_frame = exe_ctx.GetFramePtr();
+    if (!target || !stack_frame)
+        return valobj_sp;
+    
+    Target::EvaluateExpressionOptions options;
+    options.SetCoerceToId(false)
+    .SetUnwindOnError(true)
+    .SetKeepInMemory(true)
+    .SetUseDynamic(lldb::eDynamicCanRunTarget);
+    
+    target->EvaluateExpression(expr.GetData(),
+                               stack_frame,
+                               valobj_sp,
+                               options);
+    return valobj_sp;
+}
+
 template<bool name_entries>
 bool
-lldb_private::formatters::NSDictionary_SummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::NSDictionarySummaryProvider (ValueObject& valobj, Stream& stream)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
@@ -115,7 +191,7 @@ lldb_private::formatters::NSDictionary_SummaryProvider (ValueObject& valobj, Str
             }
     else
     {
-        if (!CodeRunning_Fetcher(valobj, "int", "count", value))
+        if (!ExtractValueFromObjCExpression(valobj, "int", "count", value))
             return false;
     }
     
@@ -128,7 +204,7 @@ lldb_private::formatters::NSDictionary_SummaryProvider (ValueObject& valobj, Str
 }
 
 bool
-lldb_private::formatters::NSArray_SummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::NSArraySummaryProvider (ValueObject& valobj, Stream& stream)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
@@ -177,7 +253,7 @@ lldb_private::formatters::NSArray_SummaryProvider (ValueObject& valobj, Stream& 
     }
     else
     {
-        if (!CodeRunning_Fetcher(valobj, "int", "count", value))
+        if (!ExtractValueFromObjCExpression(valobj, "int", "count", value))
             return false;
     }
     
@@ -189,7 +265,7 @@ lldb_private::formatters::NSArray_SummaryProvider (ValueObject& valobj, Stream& 
 
 template<bool needs_at>
 bool
-lldb_private::formatters::NSData_SummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::NSDataSummaryProvider (ValueObject& valobj, Stream& stream)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
@@ -226,7 +302,7 @@ lldb_private::formatters::NSData_SummaryProvider (ValueObject& valobj, Stream& s
     }
     else
     {
-        if (!CodeRunning_Fetcher(valobj, "int", "length", value))
+        if (!ExtractValueFromObjCExpression(valobj, "int", "length", value))
             return false;
     }
     
@@ -240,7 +316,7 @@ lldb_private::formatters::NSData_SummaryProvider (ValueObject& valobj, Stream& s
 }
 
 bool
-lldb_private::formatters::NSNumber_SummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::NSNumberSummaryProvider (ValueObject& valobj, Stream& stream)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
@@ -356,7 +432,7 @@ lldb_private::formatters::NSNumber_SummaryProvider (ValueObject& valobj, Stream&
     }
     else
     {
-        // similar to CodeRunning_Fetcher but uses summary instead of value
+        // similar to ExtractValueFromObjCExpression but uses summary instead of value
         StreamString expr_path_stream;
         valobj.GetExpressionPath(expr_path_stream, false);
         StreamString expr;
@@ -386,7 +462,7 @@ lldb_private::formatters::NSNumber_SummaryProvider (ValueObject& valobj, Stream&
 }
 
 bool
-lldb_private::formatters::NSString_SummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& stream)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
@@ -673,14 +749,296 @@ lldb_private::formatters::NSString_SummaryProvider (ValueObject& valobj, Stream&
     
 }
 
-template bool
-lldb_private::formatters::NSDictionary_SummaryProvider<true> (ValueObject&, Stream&) ;
+lldb_private::formatters::NSArrayMSyntheticFrontEnd::NSArrayMSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
+SyntheticChildrenFrontEnd(*valobj_sp.get()),
+m_exe_ctx_ref(),
+m_ptr_size(8),
+m_data_32(NULL),
+m_data_64(NULL)
+{
+    if (!valobj_sp)
+        return;
+    if (valobj_sp->IsDynamic())
+        valobj_sp = valobj_sp->GetStaticValue();
+    if (!valobj_sp)
+        return;
+    m_exe_ctx_ref = valobj_sp->GetExecutionContextRef();
+    Error error;
+    if (valobj_sp->IsPointerType())
+    {
+        valobj_sp = valobj_sp->Dereference(error);
+        if (error.Fail() || !valobj_sp)
+            return;
+    }
+    error.Clear();
+    lldb::ProcessSP process_sp(valobj_sp->GetProcessSP());
+    if (!process_sp)
+        return;
+    m_ptr_size = process_sp->GetAddressByteSize();
+    uint64_t data_location = valobj_sp->GetAddressOf() + m_ptr_size;
+    if (m_ptr_size == 4)
+    {
+        m_data_32 = new DataDescriptor_32();
+        process_sp->ReadMemory (data_location, m_data_32, sizeof(DataDescriptor_32), error);
+    }
+    else
+    {
+        m_data_64 = new DataDescriptor_64();
+        process_sp->ReadMemory (data_location, m_data_64, sizeof(DataDescriptor_64), error);
+    }
+    if (error.Fail())
+        return;
+    m_id_type = ClangASTType(valobj_sp->GetClangAST(),valobj_sp->GetClangAST()->ObjCBuiltinIdTy.getAsOpaquePtr());
+}
+
+uint32_t
+lldb_private::formatters::NSArrayMSyntheticFrontEnd::CalculateNumChildren ()
+{
+    if (m_data_32)
+        return m_data_32->_used;
+    if (m_data_64)
+        return m_data_64->_used;
+    return 0;
+}
+
+lldb::ValueObjectSP
+lldb_private::formatters::NSArrayMSyntheticFrontEnd::GetChildAtIndex (uint32_t idx)
+{
+    if (!m_data_32 && !m_data_64)
+        return lldb::ValueObjectSP();
+    if (idx >= CalculateNumChildren())
+        return lldb::ValueObjectSP();
+    lldb::addr_t object_at_idx = (m_data_32 ? m_data_32->_data : m_data_64->_data);
+    object_at_idx += (idx * m_ptr_size);
+    StreamString idx_name;
+    idx_name.Printf("[%d]",idx);
+    lldb::ValueObjectSP retval_sp = ValueObject::CreateValueObjectFromAddress(idx_name.GetData(),
+                                                                              object_at_idx,
+                                                                              m_exe_ctx_ref,
+                                                                              m_id_type);
+    m_children.push_back(retval_sp);
+    return retval_sp;
+}
+
+bool
+lldb_private::formatters::NSArrayMSyntheticFrontEnd::Update()
+{
+    m_children.clear();
+    return false;
+}
+
+static uint32_t
+ExtractIndexFromString (const char* item_name)
+{
+    if (!item_name || !*item_name)
+        return UINT32_MAX;
+    if (*item_name != '[')
+        return UINT32_MAX;
+    item_name++;
+    uint32_t idx = 0;
+    while(*item_name)
+    {
+        char x = *item_name;
+        if (x == ']')
+            break;
+        if (x < '0' || x > '9')
+            return UINT32_MAX;
+        idx = 10*idx + (x-'0');
+        item_name++;
+    }
+    return idx;
+}
+
+uint32_t
+lldb_private::formatters::NSArrayMSyntheticFrontEnd::GetIndexOfChildWithName (const ConstString &name)
+{
+    if (!m_data_32 && !m_data_64)
+        return UINT32_MAX;
+    const char* item_name = name.GetCString();
+    uint32_t idx = ExtractIndexFromString(item_name);
+    if (idx < UINT32_MAX && idx >= CalculateNumChildren())
+        return UINT32_MAX;
+    return idx;
+}
+
+lldb_private::formatters::NSArrayMSyntheticFrontEnd::~NSArrayMSyntheticFrontEnd ()
+{
+    delete m_data_32;
+    m_data_32 = NULL;
+    delete m_data_64;
+    m_data_64 = NULL;
+}
+
+lldb_private::formatters::NSArrayISyntheticFrontEnd::NSArrayISyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
+SyntheticChildrenFrontEnd(*valobj_sp.get()),
+m_exe_ctx_ref(),
+m_ptr_size(8),
+m_items(0),
+m_data_ptr(0)
+{
+    if (!valobj_sp)
+        return;
+    if (valobj_sp->IsDynamic())
+        valobj_sp = valobj_sp->GetStaticValue();
+    if (!valobj_sp)
+        return;
+    m_exe_ctx_ref = valobj_sp->GetExecutionContextRef();
+    Error error;
+    if (valobj_sp->IsPointerType())
+    {
+        valobj_sp = valobj_sp->Dereference(error);
+        if (error.Fail() || !valobj_sp)
+            return;
+    }
+    error.Clear();
+    lldb::ProcessSP process_sp(valobj_sp->GetProcessSP());
+    if (!process_sp)
+        return;
+    m_ptr_size = process_sp->GetAddressByteSize();
+    uint64_t data_location = valobj_sp->GetAddressOf() + m_ptr_size;
+    m_items = process_sp->ReadPointerFromMemory(data_location, error);
+    if (error.Fail())
+        return;
+    m_data_ptr = data_location+m_ptr_size;
+    m_id_type = ClangASTType(valobj_sp->GetClangAST(),valobj_sp->GetClangAST()->ObjCBuiltinIdTy.getAsOpaquePtr());
+}
+
+lldb_private::formatters::NSArrayISyntheticFrontEnd::~NSArrayISyntheticFrontEnd ()
+{
+}
+
+uint32_t
+lldb_private::formatters::NSArrayISyntheticFrontEnd::GetIndexOfChildWithName (const ConstString &name)
+{
+    const char* item_name = name.GetCString();
+    uint32_t idx = ExtractIndexFromString(item_name);
+    if (idx < UINT32_MAX && idx >= CalculateNumChildren())
+        return UINT32_MAX;
+    return idx;
+}
+
+uint32_t
+lldb_private::formatters::NSArrayISyntheticFrontEnd::CalculateNumChildren ()
+{
+    return m_items;
+}
+
+bool
+lldb_private::formatters::NSArrayISyntheticFrontEnd::Update()
+{
+    m_children.clear();
+    return false;
+}
+
+lldb::ValueObjectSP
+lldb_private::formatters::NSArrayISyntheticFrontEnd::GetChildAtIndex (uint32_t idx)
+{
+    if (idx >= CalculateNumChildren())
+        return lldb::ValueObjectSP();
+    lldb::addr_t object_at_idx = m_data_ptr;
+    object_at_idx += (idx * m_ptr_size);
+    ProcessSP process_sp = m_exe_ctx_ref.GetProcessSP();
+    if (!process_sp)
+        return lldb::ValueObjectSP();
+    Error error;
+    object_at_idx = process_sp->ReadPointerFromMemory(object_at_idx, error);
+    if (error.Fail())
+        return lldb::ValueObjectSP();
+    StreamString expr;
+    expr.Printf("(id)%llu",object_at_idx);
+    StreamString idx_name;
+    idx_name.Printf("[%d]",idx);
+    lldb::ValueObjectSP retval_sp = ValueObject::CreateValueObjectFromExpression(idx_name.GetData(), expr.GetData(), m_exe_ctx_ref);
+    m_children.push_back(retval_sp);
+    return retval_sp;
+}
+
+SyntheticChildrenFrontEnd* lldb_private::formatters::NSArraySyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP valobj_sp)
+{
+    lldb::ProcessSP process_sp (valobj_sp->GetProcessSP());
+    if (!process_sp)
+        return NULL;
+    ObjCLanguageRuntime *runtime = (ObjCLanguageRuntime*)process_sp->GetLanguageRuntime(lldb::eLanguageTypeObjC);
+    if (!runtime)
+        return NULL;
+    
+    if (!valobj_sp->IsPointerType())
+    {
+        Error error;
+        valobj_sp = valobj_sp->AddressOf(error);
+        if (error.Fail() || !valobj_sp)
+            return NULL;
+    }
+    
+    ObjCLanguageRuntime::ClassDescriptorSP descriptor(runtime->GetClassDescriptor(*valobj_sp.get()));
+    
+    if (!descriptor.get() || !descriptor->IsValid())
+        return NULL;
+    
+    const char* class_name = descriptor->GetClassName().GetCString();
+    if (!strcmp(class_name,"__NSArrayI"))
+    {
+        return (new NSArrayISyntheticFrontEnd(valobj_sp));
+    }
+    else if (!strcmp(class_name,"__NSArrayM"))
+    {
+        return (new NSArrayMSyntheticFrontEnd(valobj_sp));
+    }
+    else
+    {
+        return (new NSArrayCodeRunningSyntheticFrontEnd(valobj_sp));
+    }
+}
+
+lldb_private::formatters::NSArrayCodeRunningSyntheticFrontEnd::NSArrayCodeRunningSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
+SyntheticChildrenFrontEnd(*valobj_sp.get())
+{}
+
+uint32_t
+lldb_private::formatters::NSArrayCodeRunningSyntheticFrontEnd::CalculateNumChildren ()
+{
+        return 0;
+    uint64_t count = 0;
+    if (ExtractValueFromObjCExpression(m_backend, "int", "count", count))
+        return count;
+    return 0;
+}
+
+lldb::ValueObjectSP
+lldb_private::formatters::NSArrayCodeRunningSyntheticFrontEnd::GetChildAtIndex (uint32_t idx)
+{
+    StreamString idx_name;
+    idx_name.Printf("[%d]",idx);
+    lldb::ValueObjectSP valobj_sp = CallSelectorOnObject(m_backend,"id","objectAtIndex:",idx);
+    if (valobj_sp)
+        valobj_sp->SetName(ConstString(idx_name.GetData()));
+    return valobj_sp;
+}
+
+bool
+lldb_private::formatters::NSArrayCodeRunningSyntheticFrontEnd::Update()
+{
+    return false;
+}
+
+uint32_t
+lldb_private::formatters::NSArrayCodeRunningSyntheticFrontEnd::GetIndexOfChildWithName (const ConstString &name)
+{
+    return 0;
+}
+
+lldb_private::formatters::NSArrayCodeRunningSyntheticFrontEnd::~NSArrayCodeRunningSyntheticFrontEnd ()
+{}
+
 
 template bool
-lldb_private::formatters::NSDictionary_SummaryProvider<false> (ValueObject&, Stream&) ;
+lldb_private::formatters::NSDictionarySummaryProvider<true> (ValueObject&, Stream&) ;
 
 template bool
-lldb_private::formatters::NSData_SummaryProvider<true> (ValueObject&, Stream&) ;
+lldb_private::formatters::NSDictionarySummaryProvider<false> (ValueObject&, Stream&) ;
 
 template bool
-lldb_private::formatters::NSData_SummaryProvider<false> (ValueObject&, Stream&) ;
+lldb_private::formatters::NSDataSummaryProvider<true> (ValueObject&, Stream&) ;
+
+template bool
+lldb_private::formatters::NSDataSummaryProvider<false> (ValueObject&, Stream&) ;
