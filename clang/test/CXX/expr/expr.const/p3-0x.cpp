@@ -73,13 +73,12 @@ using Int = A<1000>; // expected-error {{template argument evaluates to 1000, wh
 using Int = A<-3>; // expected-error {{template argument evaluates to -3, which cannot be narrowed to type 'unsigned char'}}
 
 // Note, conversions from integral or unscoped enumeration types to bool are
-// boolean conversions, not integral conversions, so are not permitted. See
-// core issue 1407.
+// integral conversions as well as boolean conversions.
 template<typename T, T v> struct Val { static constexpr T value = v; };
-static_assert(Val<bool, E1>::value == 1, ""); // expected-error {{conversion from 'E' to 'bool' is not allowed in a converted constant expression}}
-static_assert(Val<bool, '\0'>::value == 0, ""); // expected-error {{conversion from 'char' to 'bool' is not allowed in a converted constant expression}}
-static_assert(Val<bool, U'\1'>::value == 1, ""); // expected-error {{conversion from 'char32_t' to 'bool' is not allowed in a converted constant expression}}
-static_assert(Val<bool, E5>::value == 1, ""); // expected-error {{conversion from 'E' to 'bool' is not allowed in a converted constant expression}}
+static_assert(Val<bool, E1>::value == 1, ""); // ok
+static_assert(Val<bool, '\0'>::value == 0, ""); // ok
+static_assert(Val<bool, U'\1'>::value == 1, ""); // ok
+static_assert(Val<bool, E5>::value == 1, ""); // expected-error {{5, which cannot be narrowed to type 'bool'}}
 
 // (no other conversions are permitted)
 using Int = A<1.0>; // expected-error {{conversion from 'double' to 'unsigned char' is not allowed in a converted constant expression}}

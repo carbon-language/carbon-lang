@@ -181,7 +181,7 @@ template <typename T> typename T::U ft6(const T&) { return 0; }
 template int ft6<S>(const S&);
 
 template<typename> struct __is_scalar_type {
-  static const bool __value = true;
+  enum { __value = 1 };
 };
 
 template<bool, typename> struct __enable_if { };
@@ -231,7 +231,7 @@ template void ft8<void*>();
 // PR5796
 namespace PR5796 {
 template<typename> struct __is_scalar_type {
-  static const bool __value = false;
+  enum { __value = 0 };
 };
 
 template<bool, typename> struct __enable_if {};
