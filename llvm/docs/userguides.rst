@@ -13,6 +13,7 @@ User Guides
    FAQ
    Lexicon
    Packaging
+   HowToAddABuilder
 
 * `The LLVM Getting Started Guide <GettingStarted.html>`_
     
@@ -78,7 +79,7 @@ User Guides
 
    Definition of acronyms, terms and concepts used in LLVM.
 
-* `How To Add Your Build Configuration To LLVM Buildbot Infrastructure <HowToAddABuilder.html>`_
+* :ref:`how_to_add_a_builder`
 
    Instructions for adding new builder to LLVM buildbot master.
     
