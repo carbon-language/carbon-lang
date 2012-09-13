@@ -3335,36 +3335,6 @@ Sema::GetTypeSourceInfoForDeclarator(Declarator &D, QualType T,
   return TInfo;
 }
 
-
-/// checkImplicitObjCParamAttribute - diagnoses when pointer to ObjC pointer
-/// has implicit ownership attribute.
-static void
-checkImplicitObjCParamAttribute(Sema &S, Declarator &D, QualType T) {
-  if (!S.getLangOpts().ObjCAutoRefCount ||
-      !S.OriginalLexicalContext ||
-      (S.OriginalLexicalContext->getDeclKind() != Decl::ObjCImplementation &&
-       S.OriginalLexicalContext->getDeclKind() != Decl::ObjCCategoryImpl))
-    return;
-  
-  if (!T->isObjCIndirectLifetimeType())
-    return;
-  if (!T->isPointerType() && !T->isReferenceType())
-    return;
-  QualType OrigT = T;
-  T = T->isPointerType() 
-    ? T->getAs<PointerType>()->getPointeeType() 
-    : T->getAs<ReferenceType>()->getPointeeType();
-  if (T->isObjCLifetimeType()) {
-    // when lifetime is Qualifiers::OCL_None it means that it has
-    // no implicit ownership qualifier (which means it is explicit).
-    Qualifiers::ObjCLifetime lifetime = 
-    T.getLocalQualifiers().getObjCLifetime();
-    if (lifetime != Qualifiers::OCL_None)
-      S.Diag(D.getLocStart(), diag::warn_arc_strong_pointer_objc_pointer)
-      << OrigT;
-  }
-}
-
 /// \brief Create a LocInfoType to hold the given QualType and TypeSourceInfo.
 ParsedType Sema::CreateParsedType(QualType T, TypeSourceInfo *TInfo) {
   // FIXME: LocInfoTypes are "transient", only needed for passing to/from Parser
@@ -3400,8 +3370,6 @@ TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
   // to apply them to the actual parameter declaration.
   if (D.getContext() != Declarator::ObjCParameterContext)
     checkUnusedDeclAttributes(D);
-  else
-    checkImplicitObjCParamAttribute(*this, D, T);
 
   if (getLangOpts().CPlusPlus) {
     // Check that there are no default arguments (C++ only).
