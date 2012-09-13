@@ -132,14 +132,6 @@ void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S,
   getCheckerManager().runCheckersForPostStmt(Dst, Tmp, S, *this);
 }
 
-static bool isSubclass(const ObjCInterfaceDecl *Class, IdentifierInfo *II) {
-  if (!Class)
-    return false;
-  if (Class->getIdentifier() == II)
-    return true;
-  return isSubclass(Class->getSuperClass(), II);
-}
-
 void ExprEngine::VisitObjCMessage(const ObjCMessageExpr *ME,
                                   ExplodedNode *Pred,
                                   ExplodedNodeSet &Dst) {
@@ -184,7 +176,7 @@ void ExprEngine::VisitObjCMessage(const ObjCMessageExpr *ME,
         
         // Check if the "raise" message was sent.
         assert(notNilState);
-        if (Msg->getSelector() == RaiseSel) {
+        if (ObjCNoRet.isImplicitNoReturn(ME)) {
           // If we raise an exception, for now treat it as a sink.
           // Eventually we will want to handle exceptions properly.
           Bldr.generateSink(currStmt, Pred, State);
@@ -198,52 +190,13 @@ void ExprEngine::VisitObjCMessage(const ObjCMessageExpr *ME,
         }
       }
     } else {
-      // Check for special class methods.
-      if (const ObjCInterfaceDecl *Iface = Msg->getReceiverInterface()) {
-        if (!NSExceptionII) {
-          ASTContext &Ctx = getContext();
-          NSExceptionII = &Ctx.Idents.get("NSException");
-        }
-        
-        if (isSubclass(Iface, NSExceptionII)) {
-          enum { NUM_RAISE_SELECTORS = 2 };
-          
-          // Lazily create a cache of the selectors.
-          if (!NSExceptionInstanceRaiseSelectors) {
-            ASTContext &Ctx = getContext();
-            NSExceptionInstanceRaiseSelectors =
-              new Selector[NUM_RAISE_SELECTORS];
-            SmallVector<IdentifierInfo*, NUM_RAISE_SELECTORS> II;
-            unsigned idx = 0;
-            
-            // raise:format:
-            II.push_back(&Ctx.Idents.get("raise"));
-            II.push_back(&Ctx.Idents.get("format"));
-            NSExceptionInstanceRaiseSelectors[idx++] =
-              Ctx.Selectors.getSelector(II.size(), &II[0]);
-            
-            // raise:format:arguments:
-            II.push_back(&Ctx.Idents.get("arguments"));
-            NSExceptionInstanceRaiseSelectors[idx++] =
-              Ctx.Selectors.getSelector(II.size(), &II[0]);
-          }
-          
-          Selector S = Msg->getSelector();
-          bool RaisesException = false;
-          for (unsigned i = 0; i < NUM_RAISE_SELECTORS; ++i) {
-            if (S == NSExceptionInstanceRaiseSelectors[i]) {
-              RaisesException = true;
-              break;
-            }
-          }
-          if (RaisesException) {
-            // If we raise an exception, for now treat it as a sink.
-            // Eventually we will want to handle exceptions properly.
-            Bldr.generateSink(currStmt, Pred, Pred->getState());
-            continue;
-          }
-
-        }
+      // Check for special class methods that are known to not return
+      // and that we should treat as a sink.
+      if (ObjCNoRet.isImplicitNoReturn(ME)) {
+        // If we raise an exception, for now treat it as a sink.
+        // Eventually we will want to handle exceptions properly.
+        Bldr.generateSink(currStmt, Pred, Pred->getState());
+        continue;
       }
     }
 
