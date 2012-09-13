@@ -210,7 +210,8 @@ unsigned Inliner::getInlineThreshold(CallSite CS) const {
   Function *Caller = CS.getCaller();
   bool OptSize = Caller && !Caller->isDeclaration() &&
     Caller->hasFnAttr(Attribute::OptimizeForSize);
-  if (!(InlineLimit.getNumOccurrences() > 0) && OptSize && OptSizeThreshold < thres)
+  if (!(InlineLimit.getNumOccurrences() > 0) && OptSize &&
+      OptSizeThreshold < thres)
     thres = OptSizeThreshold;
 
   // Listen to the inlinehint attribute when it would increase the threshold.
