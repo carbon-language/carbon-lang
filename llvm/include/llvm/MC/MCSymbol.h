@@ -133,7 +133,7 @@ namespace llvm {
       return Value != 0;
     }
 
-    /// getValue() - Get the value for variable symbols.
+    /// getVariableValue() - Get the value for variable symbols.
     const MCExpr *getVariableValue() const {
       assert(isVariable() && "Invalid accessor!");
       IsUsed = true;
