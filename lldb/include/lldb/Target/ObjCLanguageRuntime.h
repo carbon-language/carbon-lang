@@ -223,6 +223,23 @@ public:
     virtual ObjCISA
     GetISA(ValueObject& valobj) = 0;
     
+    virtual void
+    UpdateISAToDescriptorMap_Impl()
+    {
+        // to be implemented by runtimes if they support doing this
+    }
+    
+    void
+    UpdateISAToDescriptorMap()
+    {
+        if (m_isa_to_descriptor_cache_is_up_to_date)
+            return;
+        
+        m_isa_to_descriptor_cache_is_up_to_date = true;
+
+        UpdateISAToDescriptorMap_Impl();
+    }
+    
     virtual ObjCISA
     GetISA(const ConstString &name);
     
@@ -408,10 +425,10 @@ private:
     
     LazyBool m_has_new_literals_and_indexing;
 protected:
-    
     typedef std::map<ObjCISA, ClassDescriptorSP> ISAToDescriptorMap;
     typedef ISAToDescriptorMap::iterator ISAToDescriptorIterator;
     ISAToDescriptorMap                  m_isa_to_descriptor_cache;
+    bool                                m_isa_to_descriptor_cache_is_up_to_date;
     
     typedef std::map<lldb::addr_t,TypeAndOrName> ClassNameMap;
     typedef ClassNameMap::iterator ClassNameIterator;

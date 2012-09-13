@@ -936,6 +936,7 @@ CommandObject::g_arguments_data[] =
     { eArgTypeFrameIndex, "frame-index", CommandCompletions::eNoCompletion, { NULL, false }, "Index into a thread's list of frames." },
     { eArgTypeFullName, "fullname", CommandCompletions::eNoCompletion, { NULL, false }, "Help text goes here." },
     { eArgTypeFunctionName, "function-name", CommandCompletions::eNoCompletion, { NULL, false }, "The name of a function." },
+    { eArgTypeFunctionOrSymbol, "function-or-symbol", CommandCompletions::eNoCompletion, { NULL, false }, "The name of a function or symbol." },
     { eArgTypeGDBFormat, "gdb-format", CommandCompletions::eNoCompletion, { GDBFormatHelpTextCallback, true }, NULL },
     { eArgTypeIndex, "index", CommandCompletions::eNoCompletion, { NULL, false }, "An index into a list." },
     { eArgTypeLanguage, "language", CommandCompletions::eNoCompletion, { NULL, false }, "A source language name." },

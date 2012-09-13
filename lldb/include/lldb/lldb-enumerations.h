@@ -370,6 +370,7 @@ namespace lldb {
         eArgTypeFrameIndex,
         eArgTypeFullName,
         eArgTypeFunctionName,
+        eArgTypeFunctionOrSymbol,
         eArgTypeGDBFormat,
         eArgTypeIndex,
         eArgTypeLanguage,
