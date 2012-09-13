@@ -62,10 +62,15 @@ DisableColoring("no-stack-coloring",
         cl::init(false), cl::Hidden,
         cl::desc("Disable stack coloring"));
 
+
+/// The user may write code that uses allocas outside of the declared lifetime
+/// zone. This can happen when the user returns a reference to a local
+/// data-structure. We can detect these cases and decide not to optimize the
+/// code. If this flag is enabled, we try to save the user.
 static cl::opt<bool>
-CheckEscapedAllocas("stack-coloring-check-escaped",
+ProtectFromEscapedAllocas("protect-from-escaped-allocas",
         cl::init(true), cl::Hidden,
-        cl::desc("Look for allocas which escaped the lifetime region"));
+        cl::desc("Do not optimize lifetime zones that are broken"));
 
 STATISTIC(NumMarkerSeen,  "Number of lifetime markers found.");
 STATISTIC(StackSpaceSaved, "Number of bytes saved due to merging slots.");
@@ -536,13 +541,15 @@ void StackColoring::remapInstructions(DenseMap<int, int> &SlotRemap) {
         // In a debug build, check that the instruction that we are modifying is
         // inside the expected live range. If the instruction is not inside
         // the calculated range then it means that the alloca usage moved
-        // outside of the lifetime markers.
+        // outside of the lifetime markers, or that the user has a bug.
         // NOTE: Alloca address calculations which happen outside the lifetime
         // zone are are okay, despite the fact that we don't have a good way
         // for validating all of the usages of the calculation.
 #ifndef NDEBUG
         bool TouchesMemory = I->mayLoad() || I->mayStore();
-        if (!I->isDebugValue() && TouchesMemory) {
+        // If we *don't* protect the user from escaped allocas, don't bother
+        // validating the instructions.
+        if (!I->isDebugValue() && TouchesMemory && ProtectFromEscapedAllocas) {
           SlotIndex Index = Indexes->getInstructionIndex(I);
           LiveInterval *Interval = Intervals[FromSlot];
           assert(Interval->find(Index) != Interval->end() &&
@@ -685,7 +692,7 @@ bool StackColoring::runOnMachineFunction(MachineFunction &Func) {
 
   // Search for allocas which are used outside of the declared lifetime
   // markers.
-  if (CheckEscapedAllocas)
+  if (ProtectFromEscapedAllocas)
     removeInvalidSlotRanges();
 
   // Maps old slots to new slots.
