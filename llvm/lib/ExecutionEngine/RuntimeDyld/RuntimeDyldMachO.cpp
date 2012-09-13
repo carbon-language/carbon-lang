@@ -246,7 +246,12 @@ void RuntimeDyldMachO::processRelocationRef(const ObjRelocationInfo &Rel,
     }
     assert(si != se && "No section containing relocation!");
     Value.SectionID = findOrEmitSection(Obj, *si, true, ObjSectionToID);
-    Value.Addend = *(const intptr_t *)Target;
+    Value.Addend = 0;
+    // FIXME: The size and type of the relocation determines if we can
+    // encode an Addend in the target location itself, and if so, how many
+    // bytes we should read in order to get it. We don't yet support doing
+    // that, and just assuming it's sizeof(intptr_t) is blatantly wrong.
+    //Value.Addend = *(const intptr_t *)Target;
     if (Value.Addend) {
       // The MachO addend is an offset from the current section.  We need it
       // to be an offset from the destination section
