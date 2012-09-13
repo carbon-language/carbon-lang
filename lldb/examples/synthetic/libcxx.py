@@ -203,6 +203,7 @@ class stdlist_SynthProvider:
 	def __init__(self, valobj, dict):
 		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj
+		self.count = None
 
 	def next_node(self,node):
 		logger = lldb.formatters.Logger.Logger()
@@ -441,6 +442,7 @@ class stdmap_SynthProvider:
 		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.pointer_size = self.valobj.GetProcess().GetAddressByteSize()
+		self.count = None
 
 	def update(self):
 		logger = lldb.formatters.Logger.Logger()
