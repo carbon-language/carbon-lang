@@ -6914,6 +6914,10 @@ __demangle_tree::__parse_expr_primary(const char* first, const char* last)
                     first = t+1;
             }
             break;
+        case 'T':
+            // Invalid mangled name per
+            //   http://sourcerytools.com/pipermail/cxx-abi-dev/2011-August/002422.html
+            break;
         default:
             {
                 // might be named type
