@@ -310,7 +310,7 @@ TypeSyntheticImpl::FrontEnd::FrontEnd(std::string pclass, ValueObject &backend) 
     m_wrapper_sp(),
     m_interpreter(NULL)
 {
-    if (backend == NULL)
+    if (backend == LLDB_INVALID_UID)
         return;
     
     TargetSP target_sp = backend.GetTargetSP();
