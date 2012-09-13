@@ -94,14 +94,43 @@ void DAGTypeLegalizer::ExpandRes_BITCAST(SDNode *N, SDValue &Lo, SDValue &Hi) {
   if (InVT.isVector() && OutVT.isInteger()) {
     // Handle cases like i64 = BITCAST v1i64 on x86, where the operand
     // is legal but the result is not.
-    EVT NVT = EVT::getVectorVT(*DAG.getContext(), NOutVT, 2);
+    unsigned NumElems = 2;
+    EVT NVT = EVT::getVectorVT(*DAG.getContext(), NOutVT, NumElems);
+
+    // If <NOutVT * N> is not a legal type, try <NOutVT/2 * (N*2)>.
+    while (!isTypeLegal(NVT)) {
+      unsigned NewSizeInBits = NOutVT.getSizeInBits() / 2;
+      // If the element size is smaller than byte, bail.
+      if (NewSizeInBits < 8)
+        break;
+      NumElems *= 2;
+      NOutVT = EVT::getIntegerVT(*DAG.getContext(), NewSizeInBits);
+      NVT = EVT::getVectorVT(*DAG.getContext(), NOutVT, NumElems);
+    }
 
     if (isTypeLegal(NVT)) {
       SDValue CastInOp = DAG.getNode(ISD::BITCAST, dl, NVT, InOp);
-      Lo = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, NOutVT, CastInOp,
-                       DAG.getIntPtrConstant(0));
-      Hi = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, NOutVT, CastInOp,
-                       DAG.getIntPtrConstant(1));
+
+      SmallVector<SDValue, 8> Vals;
+      for (unsigned i = 0; i < NumElems; ++i)
+        Vals.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, NOutVT,
+                                   CastInOp, DAG.getIntPtrConstant(i)));
+
+      // Build Lo, Hi pair by pairing extracted elements if needed.
+      unsigned Slot = 0;
+      for (unsigned e = Vals.size(); e - Slot > 2; Slot += 2, e += 1) {
+        // Each iteration will BUILD_PAIR two nodes and append the result until
+        // there are only two nodes left, i.e. Lo and Hi.
+        SDValue LHS = Vals[Slot];
+        SDValue RHS = Vals[Slot + 1];
+        Vals.push_back(DAG.getNode(ISD::BUILD_PAIR, dl,
+                                   EVT::getIntegerVT(
+                                     *DAG.getContext(),
+                                     LHS.getValueType().getSizeInBits() << 1),
+                                   LHS, RHS));
+      }
+      Lo = Vals[Slot++];
+      Hi = Vals[Slot++];
 
       if (TLI.isBigEndian())
         std::swap(Lo, Hi);
