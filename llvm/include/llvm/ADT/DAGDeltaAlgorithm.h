@@ -57,8 +57,9 @@ public:
   ///
   /// \param Dependencies The list of dependencies amongst changes. For each
   /// (x,y) in \arg Dependencies, both x and y must be in \arg Changes. The
-  /// minimization algorithm guarantees that for each tested changed set S, x
-  /// \in S implies y \in S. It is an error to have cyclic dependencies.
+  /// minimization algorithm guarantees that for each tested changed set S,
+  /// \f$ x \in S \f$ implies \f$ y \in S \f$. It is an error to have cyclic
+  /// dependencies.
   changeset_ty Run(const changeset_ty &Changes,
                    const std::vector<edge_ty> &Dependencies);
 

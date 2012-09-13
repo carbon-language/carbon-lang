@@ -21,7 +21,7 @@ namespace llvm {
 template<typename T> class SmallVectorImpl;
 
 /// hexdigit - Return the hexadecimal character for the
-/// given number \arg X (which should be less than 16).
+/// given number \p X (which should be less than 16).
 static inline char hexdigit(unsigned X, bool LowerCase = false) {
   const char HexChar = LowerCase ? 'a' : 'A';
   return X < 10 ? '0' + X : HexChar + X - 10;

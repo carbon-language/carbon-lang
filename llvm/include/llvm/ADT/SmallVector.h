@@ -684,8 +684,8 @@ public:
                                         RHS.begin(), RHS.end());
   }
 
-  /// set_size - Set the array size to \arg N, which the current array must have
-  /// enough capacity for.
+  /// Set the array size to \p N, which the current array must have enough
+  /// capacity for.
   ///
   /// This does not construct or destroy any elements in the vector.
   ///

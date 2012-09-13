@@ -251,7 +251,7 @@ public:
   /// constructor.
   APInt(unsigned numBits, unsigned numWords, const uint64_t bigVal[]);
 
-  /// This constructor interprets the string \arg str in the given radix. The
+  /// This constructor interprets the string \p str in the given radix. The
   /// interpretation stops when the first character that is not suitable for the
   /// radix is encountered, or the end of the string. Acceptable radix values
   /// are 2, 8, 10, 16, and 36. It is an error for the value implied by the 
@@ -1231,7 +1231,7 @@ public:
   }
 
   /// This method determines how many bits are required to hold the APInt
-  /// equivalent of the string given by \arg str.
+  /// equivalent of the string given by \p str.
   /// @brief Get bits required for string value.
   static unsigned getBitsNeeded(StringRef str, uint8_t radix);
 

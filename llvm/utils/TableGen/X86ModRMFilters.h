@@ -70,7 +70,7 @@ class ModFilter : public ModRMFilter {
 public:
   /// Constructor
   ///
-  /// @r            - True if the mod bits of the ModR/M byte must be 11; false
+  /// \param r        True if the mod bits of the ModR/M byte must be 11; false
   ///                 otherwise.  The name r derives from the fact that the mod
   ///                 bits indicate whether the R/M bits [bits 2-0] signify a
   ///                 register or a memory operand.
@@ -98,11 +98,12 @@ class EscapeFilter : public ModRMFilter {
 public:
   /// Constructor
   ///
-  /// @c0_ff        - True if the ModR/M byte must fall between 0xc0 and 0xff;
-  ///                 false otherwise.
-  /// @nnn_or_modRM - If c0_ff is true, the required value of the entire ModR/M
-  ///                 byte.  If c0_ff is false, the required value of the nnn
-  ///                 field.
+  /// \param c0_ff True if the ModR/M byte must fall between 0xc0 and 0xff;
+  ///              false otherwise.
+  ///
+  /// \param nnn_or_modRM If c0_ff is true, the required value of the entire
+  ///                     ModR/M byte.  If c0_ff is false, the required value
+  ///                     of the nnn field.
   EscapeFilter(bool c0_ff, uint8_t nnn_or_modRM) :
     ModRMFilter(),
     C0_FF(c0_ff),
@@ -128,8 +129,8 @@ class AddRegEscapeFilter : public ModRMFilter {
 public:
   /// Constructor
   ///
-  /// @modRM        - The value of the ModR/M byte when the register operand
-  ///                 refers to the first register in the register set.
+  /// \param modRM The value of the ModR/M byte when the register operand
+  ///              refers to the first register in the register set.
   AddRegEscapeFilter(uint8_t modRM) : ModRM(modRM) {
   }
   
@@ -150,9 +151,9 @@ class ExtendedFilter : public ModRMFilter {
 public:
   /// Constructor
   ///
-  /// @r            - True if the mod field must be set to 11; false otherwise.
-  ///                 The name is explained at ModFilter.
-  /// @nnn          - The required value of the nnn field.
+  /// \param r   True if the mod field must be set to 11; false otherwise.
+  ///            The name is explained at ModFilter.
+  /// \param nnn The required value of the nnn field.
   ExtendedFilter(bool r, uint8_t nnn) : 
     ModRMFilter(),
     R(r),
@@ -177,7 +178,7 @@ class ExactFilter : public ModRMFilter {
 public:
   /// Constructor
   ///
-  /// @modRM        - The required value of the full ModR/M byte.
+  /// \param modRM The required value of the full ModR/M byte.
   ExactFilter(uint8_t modRM) :
     ModRMFilter(),
     ModRM(modRM) {

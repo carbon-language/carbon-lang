@@ -44,7 +44,7 @@ namespace llvm {
   /// itself, and renders as an empty string. This can be returned from APIs to
   /// effectively nullify any concatenations performed on the result.
   ///
-  /// \b Implementation \n
+  /// \b Implementation
   ///
   /// Given the nature of a Twine, it is not possible for the Twine's
   /// concatenation method to construct interior nodes; the result must be
@@ -67,7 +67,7 @@ namespace llvm {
   ///
   /// These invariants are check by \see isValid().
   ///
-  /// \b Efficiency Considerations \n
+  /// \b Efficiency Considerations
   ///
   /// The Twine is designed to yield efficient and small code for common
   /// situations. For this reason, the concat() method is inlined so that
@@ -303,37 +303,37 @@ namespace llvm {
       LHS.character = static_cast<char>(Val);
     }
 
-    /// Construct a twine to print \arg Val as an unsigned decimal integer.
+    /// Construct a twine to print \p Val as an unsigned decimal integer.
     explicit Twine(unsigned Val)
       : LHSKind(DecUIKind), RHSKind(EmptyKind) {
       LHS.decUI = Val;
     }
 
-    /// Construct a twine to print \arg Val as a signed decimal integer.
+    /// Construct a twine to print \p Val as a signed decimal integer.
     explicit Twine(int Val)
       : LHSKind(DecIKind), RHSKind(EmptyKind) {
       LHS.decI = Val;
     }
 
-    /// Construct a twine to print \arg Val as an unsigned decimal integer.
+    /// Construct a twine to print \p Val as an unsigned decimal integer.
     explicit Twine(const unsigned long &Val)
       : LHSKind(DecULKind), RHSKind(EmptyKind) {
       LHS.decUL = &Val;
     }
 
-    /// Construct a twine to print \arg Val as a signed decimal integer.
+    /// Construct a twine to print \p Val as a signed decimal integer.
     explicit Twine(const long &Val)
       : LHSKind(DecLKind), RHSKind(EmptyKind) {
       LHS.decL = &Val;
     }
 
-    /// Construct a twine to print \arg Val as an unsigned decimal integer.
+    /// Construct a twine to print \p Val as an unsigned decimal integer.
     explicit Twine(const unsigned long long &Val)
       : LHSKind(DecULLKind), RHSKind(EmptyKind) {
       LHS.decULL = &Val;
     }
 
-    /// Construct a twine to print \arg Val as a signed decimal integer.
+    /// Construct a twine to print \p Val as a signed decimal integer.
     explicit Twine(const long long &Val)
       : LHSKind(DecLLKind), RHSKind(EmptyKind) {
       LHS.decLL = &Val;
@@ -370,7 +370,7 @@ namespace llvm {
     /// @name Numeric Conversions
     /// @{
 
-    // Construct a twine to print \arg Val as an unsigned hexadecimal integer.
+    // Construct a twine to print \p Val as an unsigned hexadecimal integer.
     static Twine utohexstr(const uint64_t &Val) {
       Child LHS, RHS;
       LHS.uHex = &Val;
@@ -447,17 +447,17 @@ namespace llvm {
     /// The returned StringRef's size does not include the null terminator.
     StringRef toNullTerminatedStringRef(SmallVectorImpl<char> &Out) const;
 
-    /// print - Write the concatenated string represented by this twine to the
-    /// stream \arg OS.
+    /// Write the concatenated string represented by this twine to the
+    /// stream \p OS.
     void print(raw_ostream &OS) const;
 
-    /// dump - Dump the concatenated string represented by this twine to stderr.
+    /// Dump the concatenated string represented by this twine to stderr.
     void dump() const;
 
-    /// print - Write the representation of this twine to the stream \arg OS.
+    /// Write the representation of this twine to the stream \p OS.
     void printRepr(raw_ostream &OS) const;
 
-    /// dumpRepr - Dump the representation of this twine to stderr.
+    /// Dump the representation of this twine to stderr.
     void dumpRepr() const;
 
     /// @}

@@ -271,7 +271,7 @@ namespace llvm {
     /// createMCAsmInfo - Create a MCAsmInfo implementation for the specified
     /// target triple.
     ///
-    /// \arg Triple - This argument is used to determine the target machine
+    /// \param Triple This argument is used to determine the target machine
     /// feature set; it should always be provided. Generally this should be
     /// either the target triple from the module, or the target triple of the
     /// host if that does not exist.
@@ -317,12 +317,12 @@ namespace llvm {
 
     /// createMCSubtargetInfo - Create a MCSubtargetInfo implementation.
     ///
-    /// \arg Triple - This argument is used to determine the target machine
+    /// \param Triple This argument is used to determine the target machine
     /// feature set; it should always be provided. Generally this should be
     /// either the target triple from the module, or the target triple of the
     /// host if that does not exist.
-    /// \arg CPU - This specifies the name of the target CPU.
-    /// \arg Features - This specifies the string representation of the
+    /// \param CPU This specifies the name of the target CPU.
+    /// \param Features This specifies the string representation of the
     /// additional target features.
     MCSubtargetInfo *createMCSubtargetInfo(StringRef Triple, StringRef CPU,
                                            StringRef Features) const {
@@ -332,9 +332,9 @@ namespace llvm {
     }
 
     /// createTargetMachine - Create a target specific machine implementation
-    /// for the specified \arg Triple.
+    /// for the specified \p Triple.
     ///
-    /// \arg Triple - This argument is used to determine the target machine
+    /// \param Triple This argument is used to determine the target machine
     /// feature set; it should always be provided. Generally this should be
     /// either the target triple from the module, or the target triple of the
     /// host if that does not exist.
@@ -351,8 +351,8 @@ namespace llvm {
 
     /// createMCAsmBackend - Create a target specific assembly parser.
     ///
-    /// \arg Triple - The target triple string.
-    /// \arg Backend - The target independent assembler object.
+    /// \param Triple The target triple string.
+    /// \param Backend The target independent assembler object.
     MCAsmBackend *createMCAsmBackend(StringRef Triple) const {
       if (!MCAsmBackendCtorFn)
         return 0;
@@ -370,7 +370,7 @@ namespace llvm {
 
     /// createMCAsmParser - Create a target specific assembly parser.
     ///
-    /// \arg Parser - The target independent parser implementation to use for
+    /// \param Parser The target independent parser implementation to use for
     /// parsing and lexing.
     MCTargetAsmParser *createMCAsmParser(MCSubtargetInfo &STI,
                                          MCAsmParser &Parser) const {
@@ -416,13 +416,13 @@ namespace llvm {
 
     /// createMCObjectStreamer - Create a target specific MCStreamer.
     ///
-    /// \arg TT - The target triple.
-    /// \arg Ctx - The target context.
-    /// \arg TAB - The target assembler backend object. Takes ownership.
-    /// \arg _OS - The stream object.
-    /// \arg _Emitter - The target independent assembler object.Takes ownership.
-    /// \arg RelaxAll - Relax all fixups?
-    /// \arg NoExecStack - Mark file as not needing a executable stack.
+    /// \param TT The target triple.
+    /// \param Ctx The target context.
+    /// \param TAB The target assembler backend object. Takes ownership.
+    /// \param _OS The stream object.
+    /// \param _Emitter The target independent assembler object.Takes ownership.
+    /// \param RelaxAll Relax all fixups?
+    /// \param NoExecStack Mark file as not needing a executable stack.
     MCStreamer *createMCObjectStreamer(StringRef TT, MCContext &Ctx,
                                        MCAsmBackend &TAB,
                                        raw_ostream &_OS,

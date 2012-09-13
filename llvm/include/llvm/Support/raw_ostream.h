@@ -191,10 +191,10 @@ public:
 
   raw_ostream &operator<<(double N);
 
-  /// write_hex - Output \arg N in hexadecimal, without any prefix or padding.
+  /// write_hex - Output \p N in hexadecimal, without any prefix or padding.
   raw_ostream &write_hex(unsigned long long N);
 
-  /// write_escaped - Output \arg Str, turning '\\', '\t', '\n', '"', and
+  /// write_escaped - Output \p Str, turning '\\', '\t', '\n', '"', and
   /// anything that doesn't satisfy std::isprint into an escape sequence.
   raw_ostream &write_escaped(StringRef Str, bool UseHexEscapes = false);
 
@@ -245,15 +245,16 @@ public:
 
 private:
   /// write_impl - The is the piece of the class that is implemented
-  /// by subclasses.  This writes the \args Size bytes starting at
-  /// \arg Ptr to the underlying stream.
+  /// by subclasses.  This writes the \p Size bytes starting at
+  /// \p Ptr to the underlying stream.
   ///
   /// This function is guaranteed to only be called at a point at which it is
   /// safe for the subclass to install a new buffer via SetBuffer.
   ///
-  /// \arg Ptr - The start of the data to be written. For buffered streams this
+  /// \param Ptr The start of the data to be written. For buffered streams this
   /// is guaranteed to be the start of the buffer.
-  /// \arg Size - The number of bytes to be written.
+  ///
+  /// \param Size The number of bytes to be written.
   ///
   /// \invariant { Size > 0 }
   virtual void write_impl(const char *Ptr, size_t Size) = 0;
@@ -473,7 +474,7 @@ class raw_svector_ostream : public raw_ostream {
 public:
   /// Construct a new raw_svector_ostream.
   ///
-  /// \arg O - The vector to write to; this should generally have at least 128
+  /// \param O The vector to write to; this should generally have at least 128
   /// bytes free to avoid any extraneous memory overhead.
   explicit raw_svector_ostream(SmallVectorImpl<char> &O);
   ~raw_svector_ostream();

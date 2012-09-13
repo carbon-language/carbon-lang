@@ -225,23 +225,23 @@ private:
   /// emitInstructionSpecifier - Loads the instruction specifier for the current
   ///   instruction into a DisassemblerTables.
   ///
-  /// @arg tables - The DisassemblerTables to populate with the specifier for
+  /// \param tables The DisassemblerTables to populate with the specifier for
   ///               the current instruction.
   void emitInstructionSpecifier(DisassemblerTables &tables);
   
   /// emitDecodePath - Populates the proper fields in the decode tables
   ///   corresponding to the decode paths for this instruction.
   ///
-  /// @arg tables - The DisassemblerTables to populate with the decode
+  /// \param tables The DisassemblerTables to populate with the decode
   ///               decode information for the current instruction.
   void emitDecodePath(DisassemblerTables &tables) const;
 
   /// Constructor - Initializes a RecognizableInstr with the appropriate fields
   ///   from a CodeGenInstruction.
   ///
-  /// @arg tables - The DisassemblerTables that the specifier will be added to.
-  /// @arg insn   - The CodeGenInstruction to extract information from.
-  /// @arg uid    - The unique ID of the current instruction.
+  /// \param tables The DisassemblerTables that the specifier will be added to.
+  /// \param insn   The CodeGenInstruction to extract information from.
+  /// \param uid    The unique ID of the current instruction.
   RecognizableInstr(DisassemblerTables &tables,
                     const CodeGenInstruction &insn,
                     InstrUID uid);
@@ -249,11 +249,11 @@ public:
   /// processInstr - Accepts a CodeGenInstruction and loads decode information
   ///   for it into a DisassemblerTables if appropriate.
   ///
-  /// @arg tables - The DiassemblerTables to be populated with decode
+  /// \param tables The DiassemblerTables to be populated with decode
   ///               information.
-  /// @arg insn   - The CodeGenInstruction to be used as a source for this
+  /// \param insn   The CodeGenInstruction to be used as a source for this
   ///               information.
-  /// @uid        - The unique ID of the instruction.
+  /// \param uid    The unique ID of the instruction.
   static void processInstr(DisassemblerTables &tables,
                            const CodeGenInstruction &insn,
                            InstrUID uid);

@@ -120,7 +120,7 @@ public:
   /// setName() - Change the name of the value, choosing a new unique name if
   /// the provided name is taken.
   ///
-  /// \arg Name - The new name; or "" if the value's name should be removed.
+  /// \param Name The new name; or "" if the value's name should be removed.
   void setName(const Twine &Name);
 
   

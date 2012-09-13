@@ -44,25 +44,25 @@ public:
   /// @name String Assignment
   /// @{
 
-  /// Assign from a repeated element
+  /// Assign from a repeated element.
   void assign(size_t NumElts, char Elt) {
     this->SmallVectorImpl<char>::assign(NumElts, Elt);
   }
 
-  /// Assign from an iterator pair
+  /// Assign from an iterator pair.
   template<typename in_iter>
   void assign(in_iter S, in_iter E) {
     this->clear();
     SmallVectorImpl<char>::append(S, E);
   }
 
-  /// Assign from a StringRef
+  /// Assign from a StringRef.
   void assign(StringRef RHS) {
     this->clear();
     SmallVectorImpl<char>::append(RHS.begin(), RHS.end());
   }
 
-  /// Assign from a SmallVector
+  /// Assign from a SmallVector.
   void assign(const SmallVectorImpl<char> &RHS) {
     this->clear();
     SmallVectorImpl<char>::append(RHS.begin(), RHS.end());
@@ -72,7 +72,7 @@ public:
   /// @name String Concatenation
   /// @{
 
-  /// Append from an iterator pair
+  /// Append from an iterator pair.
   template<typename in_iter>
   void append(in_iter S, in_iter E) {
     SmallVectorImpl<char>::append(S, E);
@@ -83,12 +83,12 @@ public:
   }
 
 
-  /// Append from a StringRef
+  /// Append from a StringRef.
   void append(StringRef RHS) {
     SmallVectorImpl<char>::append(RHS.begin(), RHS.end());
   }
 
-  /// Append from a SmallVector
+  /// Append from a SmallVector.
   void append(const SmallVectorImpl<char> &RHS) {
     SmallVectorImpl<char>::append(RHS.begin(), RHS.end());
   }
@@ -97,19 +97,19 @@ public:
   /// @name String Comparison
   /// @{
 
-  /// equals - Check for string equality, this is more efficient than
-  /// compare() when the relative ordering of inequal strings isn't needed.
+  /// Check for string equality.  This is more efficient than compare() when
+  /// the relative ordering of inequal strings isn't needed.
   bool equals(StringRef RHS) const {
     return str().equals(RHS);
   }
 
-  /// equals_lower - Check for string equality, ignoring case.
+  /// Check for string equality, ignoring case.
   bool equals_lower(StringRef RHS) const {
     return str().equals_lower(RHS);
   }
 
-  /// compare - Compare two strings; the result is -1, 0, or 1 if this string
-  /// is lexicographically less than, equal to, or greater than the \arg RHS.
+  /// Compare two strings; the result is -1, 0, or 1 if this string is
+  /// lexicographically less than, equal to, or greater than the \p RHS.
   int compare(StringRef RHS) const {
     return str().compare(RHS);
   }
@@ -129,12 +129,12 @@ public:
   /// @name String Predicates
   /// @{
 
-  /// startswith - Check if this string starts with the given \arg Prefix.
+  /// startswith - Check if this string starts with the given \p Prefix.
   bool startswith(StringRef Prefix) const {
     return str().startswith(Prefix);
   }
 
-  /// endswith - Check if this string ends with the given \arg Suffix.
+  /// endswith - Check if this string ends with the given \p Suffix.
   bool endswith(StringRef Suffix) const {
     return str().endswith(Suffix);
   }
@@ -143,76 +143,76 @@ public:
   /// @name String Searching
   /// @{
 
-  /// find - Search for the first character \arg C in the string.
+  /// find - Search for the first character \p C in the string.
   ///
-  /// \return - The index of the first occurrence of \arg C, or npos if not
+  /// \return - The index of the first occurrence of \p C, or npos if not
   /// found.
   size_t find(char C, size_t From = 0) const {
     return str().find(C, From);
   }
 
-  /// find - Search for the first string \arg Str in the string.
+  /// Search for the first string \p Str in the string.
   ///
-  /// \return - The index of the first occurrence of \arg Str, or npos if not
+  /// \returns The index of the first occurrence of \p Str, or npos if not
   /// found.
   size_t find(StringRef Str, size_t From = 0) const {
     return str().find(Str, From);
   }
 
-  /// rfind - Search for the last character \arg C in the string.
+  /// Search for the last character \p C in the string.
   ///
-  /// \return - The index of the last occurrence of \arg C, or npos if not
+  /// \returns The index of the last occurrence of \p C, or npos if not
   /// found.
   size_t rfind(char C, size_t From = StringRef::npos) const {
     return str().rfind(C, From);
   }
 
-  /// rfind - Search for the last string \arg Str in the string.
+  /// Search for the last string \p Str in the string.
   ///
-  /// \return - The index of the last occurrence of \arg Str, or npos if not
+  /// \returns The index of the last occurrence of \p Str, or npos if not
   /// found.
   size_t rfind(StringRef Str) const {
     return str().rfind(Str);
   }
 
-  /// find_first_of - Find the first character in the string that is \arg C,
-  /// or npos if not found. Same as find.
+  /// Find the first character in the string that is \p C, or npos if not
+  /// found. Same as find.
   size_t find_first_of(char C, size_t From = 0) const {
     return str().find_first_of(C, From);
   }
 
-  /// find_first_of - Find the first character in the string that is in \arg
-  /// Chars, or npos if not found.
+  /// Find the first character in the string that is in \p Chars, or npos if
+  /// not found.
   ///
-  /// Note: O(size() + Chars.size())
+  /// Complexity: O(size() + Chars.size())
   size_t find_first_of(StringRef Chars, size_t From = 0) const {
     return str().find_first_of(Chars, From);
   }
 
-  /// find_first_not_of - Find the first character in the string that is not
-  /// \arg C or npos if not found.
+  /// Find the first character in the string that is not \p C or npos if not
+  /// found.
   size_t find_first_not_of(char C, size_t From = 0) const {
     return str().find_first_not_of(C, From);
   }
 
-  /// find_first_not_of - Find the first character in the string that is not
-  /// in the string \arg Chars, or npos if not found.
+  /// Find the first character in the string that is not in the string
+  /// \p Chars, or npos if not found.
   ///
-  /// Note: O(size() + Chars.size())
+  /// Complexity: O(size() + Chars.size())
   size_t find_first_not_of(StringRef Chars, size_t From = 0) const {
     return str().find_first_not_of(Chars, From);
   }
 
-  /// find_last_of - Find the last character in the string that is \arg C, or
-  /// npos if not found.
+  /// Find the last character in the string that is \p C, or npos if not
+  /// found.
   size_t find_last_of(char C, size_t From = StringRef::npos) const {
     return str().find_last_of(C, From);
   }
 
-  /// find_last_of - Find the last character in the string that is in \arg C,
-  /// or npos if not found.
+  /// Find the last character in the string that is in \p C, or npos if not
+  /// found.
   ///
-  /// Note: O(size() + Chars.size())
+  /// Complexity: O(size() + Chars.size())
   size_t find_last_of(
       StringRef Chars, size_t From = StringRef::npos) const {
     return str().find_last_of(Chars, From);
@@ -222,13 +222,13 @@ public:
   /// @name Helpful Algorithms
   /// @{
 
-  /// count - Return the number of occurrences of \arg C in the string.
+  /// Return the number of occurrences of \p C in the string.
   size_t count(char C) const {
     return str().count(C);
   }
 
-  /// count - Return the number of non-overlapped occurrences of \arg Str in
-  /// the string.
+  /// Return the number of non-overlapped occurrences of \p Str in the
+  /// string.
   size_t count(StringRef Str) const {
     return str().count(Str);
   }
@@ -237,36 +237,36 @@ public:
   /// @name Substring Operations
   /// @{
 
-  /// substr - Return a reference to the substring from [Start, Start + N).
+  /// Return a reference to the substring from [Start, Start + N).
   ///
-  /// \param Start - The index of the starting character in the substring; if
+  /// \param Start The index of the starting character in the substring; if
   /// the index is npos or greater than the length of the string then the
   /// empty substring will be returned.
   ///
-  /// \param N - The number of characters to included in the substring. If N
+  /// \param N The number of characters to included in the substring. If \p N
   /// exceeds the number of characters remaining in the string, the string
-  /// suffix (starting with \arg Start) will be returned.
+  /// suffix (starting with \p Start) will be returned.
   StringRef substr(size_t Start, size_t N = StringRef::npos) const {
     return str().substr(Start, N);
   }
 
-  /// slice - Return a reference to the substring from [Start, End).
+  /// Return a reference to the substring from [Start, End).
   ///
-  /// \param Start - The index of the starting character in the substring; if
+  /// \param Start The index of the starting character in the substring; if
   /// the index is npos or greater than the length of the string then the
   /// empty substring will be returned.
   ///
-  /// \param End - The index following the last character to include in the
-  /// substring. If this is npos, or less than \arg Start, or exceeds the
+  /// \param End The index following the last character to include in the
+  /// substring. If this is npos, or less than \p Start, or exceeds the
   /// number of characters remaining in the string, the string suffix
-  /// (starting with \arg Start) will be returned.
+  /// (starting with \p Start) will be returned.
   StringRef slice(size_t Start, size_t End) const {
     return str().slice(Start, End);
   }
 
   // Extra methods.
 
-  /// Explicit conversion to StringRef
+  /// Explicit conversion to StringRef.
   StringRef str() const { return StringRef(this->begin(), this->size()); }
 
   // TODO: Make this const, if it's safe...

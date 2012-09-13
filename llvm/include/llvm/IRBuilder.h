@@ -1261,13 +1261,13 @@ public:
   // Utility creation methods
   //===--------------------------------------------------------------------===//
 
-  /// CreateIsNull - Return an i1 value testing if \arg Arg is null.
+  /// CreateIsNull - Return an i1 value testing if \p Arg is null.
   Value *CreateIsNull(Value *Arg, const Twine &Name = "") {
     return CreateICmpEQ(Arg, Constant::getNullValue(Arg->getType()),
                         Name);
   }
 
-  /// CreateIsNotNull - Return an i1 value testing if \arg Arg is not null.
+  /// CreateIsNotNull - Return an i1 value testing if \p Arg is not null.
   Value *CreateIsNotNull(Value *Arg, const Twine &Name = "") {
     return CreateICmpNE(Arg, Constant::getNullValue(Arg->getType()),
                         Name);

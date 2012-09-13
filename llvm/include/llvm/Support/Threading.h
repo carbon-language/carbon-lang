@@ -41,8 +41,8 @@ namespace llvm {
   /// before llvm_start_multithreaded().
   void llvm_release_global_lock();
 
-  /// llvm_execute_on_thread - Execute the given \arg UserFn on a separate
-  /// thread, passing it the provided \arg UserData.
+  /// llvm_execute_on_thread - Execute the given \p UserFn on a separate
+  /// thread, passing it the provided \p UserData.
   ///
   /// This function does not guarantee that the code will actually be executed
   /// on a separate thread or honoring the requested stack size, but tries to do
