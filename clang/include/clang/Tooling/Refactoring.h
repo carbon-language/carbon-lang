@@ -74,6 +74,7 @@ public:
   StringRef getFilePath() const { return FilePath; }
   unsigned getOffset() const { return Offset; }
   unsigned getLength() const { return Length; }
+  StringRef getReplacementText() const { return ReplacementText; }
   /// @}
 
   /// \brief Applies the replacement on the Rewriter.
