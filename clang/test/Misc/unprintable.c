@@ -9,14 +9,14 @@ int main() {
 // CHECK: {{^        ~\^~~~~~~~~~~~~~~~}}
 // CHECK: {{^       ~ \^               ~}}
 
-    (void)"ÊÑ¿ô";
+    (void)"ÊðŸ‘¿ô";
 
-// CHECK: {{^    \(void\)"<CA><U\+047F><F4>";}}
+// CHECK: {{^    \(void\)"<CA><U\+1F47F><F4>";}}
 // CHECK: {{^           \^~~~}}
 
 Â  int n = 0;
 
-// CHECK: {{^<U\+00A0> int n = 0;}}
+// CHECK: {{ int n = 0;}}
 // CHECK: {{^\^}}
 
    "ðŸ‘¿                                                              \z";
