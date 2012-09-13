@@ -162,7 +162,7 @@ public:
     ScanfConvBeg = ScanListArg, ScanfConvEnd = ScanListArg
   };
 
-  ConversionSpecifier(bool isPrintf)
+  ConversionSpecifier(bool isPrintf = true)
     : IsPrintf(isPrintf), Position(0), EndScanList(0), kind(InvalidSpecifier) {}
 
   ConversionSpecifier(bool isPrintf, const char *pos, Kind k)
@@ -200,6 +200,8 @@ public:
   const char *toString() const;
 
   bool isPrintfKind() const { return IsPrintf; }
+  
+  llvm::Optional<ConversionSpecifier> getStandardSpecifier() const;
 
 protected:
   bool IsPrintf;

@@ -527,6 +527,29 @@ const char *ConversionSpecifier::toString() const {
   return NULL;
 }
 
+llvm::Optional<ConversionSpecifier>
+ConversionSpecifier::getStandardSpecifier() const {
+  ConversionSpecifier::Kind NewKind;
+  
+  switch (getKind()) {
+  default:
+    return llvm::Optional<ConversionSpecifier>();
+  case DArg:
+    NewKind = dArg;
+    break;
+  case UArg:
+    NewKind = uArg;
+    break;
+  case OArg:
+    NewKind = oArg;
+    break;
+  }
+
+  ConversionSpecifier FixedCS(*this);
+  FixedCS.setKind(NewKind);
+  return FixedCS;
+}
+
 //===----------------------------------------------------------------------===//
 // Methods on OptionalAmount.
 //===----------------------------------------------------------------------===//
