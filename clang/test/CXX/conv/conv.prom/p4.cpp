@@ -14,13 +14,14 @@ enum B : bool { false_, true_ };
 template<bool> struct T {};
 T<false_> f;
 T<true_> t;
-T<+true_> t; // expected-error {{conversion from 'int' to 'bool'}}
+// FIXME: DR1407 will make this ill-formed for a different reason.
+T<+true_> q; // desired-error {{conversion from 'int' to 'bool'}}
 
 enum B2 : bool {
   a = false,
   b = true,
   c = false_,
   d = true_,
-  e = +false_ // expected-error {{conversion from 'int' to 'bool'}} \
-              // FIXME: expected-error {{enumerator value 2 is not representable}}
+  // FIXME: DR1407 will make this ill-formed
+  e = +false_ // desired-error {{conversion from 'int' to 'bool'}}
 };
