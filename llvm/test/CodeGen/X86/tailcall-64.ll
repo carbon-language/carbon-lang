@@ -93,4 +93,43 @@ define { i64, i64 } @crash(i8* %this) {
   ret { i64, i64 } %mrv7
 }
 
+; Check that we can fold an indexed load into a tail call instruction.
+; CHECK: fold_indexed_load
+; CHECK: leaq (%rsi,%rsi,4), %[[RAX:r..]]
+; CHECK: movq _func_table@GOTPCREL(%rip), %[[RCX:r..]]
+; CHECK: jmpq *16(%[[RCX]],%[[RAX]],8)  # TAILCALL
+%struct.funcs = type { i32 (i8*, i32*, i32)*, i32 (i8*)*, i32 (i8*)*, i32 (i8*, i32)*, i32 }
+@func_table = external global [0 x %struct.funcs]
+define void @fold_indexed_load(i8* %mbstr, i64 %idxprom) nounwind uwtable ssp {
+entry:
+  %dsplen = getelementptr inbounds [0 x %struct.funcs]* @func_table, i64 0, i64 %idxprom, i32 2
+  %x1 = load i32 (i8*)** %dsplen, align 8
+  %call = tail call i32 %x1(i8* %mbstr) nounwind
+  ret void
+}
 
+; <rdar://problem/12282281> Fold an indexed load into the tail call instruction.
+; Calling a varargs function with 6 arguments requires 7 registers (%al is the
+; vector count for varargs functions). This leaves %r11 as the only available
+; scratch register.
+;
+; It is not possible to fold an indexed load into TCRETURNmi64 in that case.
+;
+; typedef int (*funcptr)(void*, ...);
+; extern const funcptr funcs[];
+; int f(int n) {
+;   return funcs[n](0, 0, 0, 0, 0, 0);
+; }
+;
+; CHECK: rdar12282281
+; CHECK: jmpq *%r11 # TAILCALL
+@funcs = external constant [0 x i32 (i8*, ...)*]
+
+define i32 @rdar12282281(i32 %n) nounwind uwtable ssp {
+entry:
+  %idxprom = sext i32 %n to i64
+  %arrayidx = getelementptr inbounds [0 x i32 (i8*, ...)*]* @funcs, i64 0, i64 %idxprom
+  %0 = load i32 (i8*, ...)** %arrayidx, align 8
+  %call = tail call i32 (i8*, ...)* %0(i8* null, i32 0, i32 0, i32 0, i32 0, i32 0) nounwind
+  ret i32 %call
+}

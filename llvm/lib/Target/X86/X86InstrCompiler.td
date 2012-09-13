@@ -1017,7 +1017,24 @@ def : Pat<(X86call (i64 tglobaladdr:$dst)),
 def : Pat<(X86call (i64 texternalsym:$dst)),
           (CALL64pcrel32 texternalsym:$dst)>;
 
-// tailcall stuff
+// Tailcall stuff. The TCRETURN instructions execute after the epilog, so they
+// can never use callee-saved registers. That is the purpose of the GR64_TC
+// register classes.
+//
+// The only volatile register that is never used by the calling convention is
+// %r11. This happens when calling a vararg function with 6 arguments.
+//
+// Match an X86tcret that uses less than 7 volatile registers.
+def X86tcret_6regs : PatFrag<(ops node:$ptr, node:$off),
+                             (X86tcret node:$ptr, node:$off), [{
+  // X86tcret args: (*chain, ptr, imm, regs..., glue)
+  unsigned NumRegs = 0;
+  for (unsigned i = 3, e = N->getNumOperands(); i != e; ++i)
+    if (isa<RegisterSDNode>(N->getOperand(i)) && ++NumRegs > 6)
+      return false;
+  return true;
+}]>;
+
 def : Pat<(X86tcret ptr_rc_tailcall:$dst, imm:$off),
           (TCRETURNri ptr_rc_tailcall:$dst, imm:$off)>,
           Requires<[In32BitMode]>;
@@ -1041,7 +1058,9 @@ def : Pat<(X86tcret ptr_rc_tailcall:$dst, imm:$off),
           (TCRETURNri64 ptr_rc_tailcall:$dst, imm:$off)>,
           Requires<[In64BitMode]>;
 
-def : Pat<(X86tcret (load addr:$dst), imm:$off),
+// Don't fold loads into X86tcret requiring more than 6 regs.
+// There wouldn't be enough scratch registers for base+index.
+def : Pat<(X86tcret_6regs (load addr:$dst), imm:$off),
           (TCRETURNmi64 addr:$dst, imm:$off)>,
           Requires<[In64BitMode]>;
 
