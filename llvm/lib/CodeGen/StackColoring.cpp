@@ -73,7 +73,6 @@ STATISTIC(StackSlotMerged, "Number of stack slot merged.");
 STATISTIC(EscapedAllocas,
           "Number of allocas that escaped the lifetime region");
 
-
 //===----------------------------------------------------------------------===//
 //                           StackColoring Pass
 //===----------------------------------------------------------------------===//
@@ -259,8 +258,8 @@ unsigned StackColoring::collectMarkers(unsigned NumSlot) {
 
       const Value *Allocation = MFI->getObjectAllocation(Slot);
       if (Allocation) {
-        DEBUG(dbgs()<<"Found lifetime marker for allocation: "<<
-              Allocation->getName()<<"\n");
+        DEBUG(dbgs()<<"Found a lifetime marker for slot #"<<Slot<<
+              " with allocation: "<< Allocation->getName()<<"\n");
       }
 
       if (IsStart) {
@@ -538,8 +537,12 @@ void StackColoring::remapInstructions(DenseMap<int, int> &SlotRemap) {
         // inside the expected live range. If the instruction is not inside
         // the calculated range then it means that the alloca usage moved
         // outside of the lifetime markers.
+        // NOTE: Alloca address calculations which happen outside the lifetime
+        // zone are are okay, despite the fact that we don't have a good way
+        // for validating all of the usages of the calculation.
 #ifndef NDEBUG
-        if (!I->isDebugValue()) {
+        bool TouchesMemory = I->mayLoad() || I->mayStore();
+        if (!I->isDebugValue() && TouchesMemory) {
           SlotIndex Index = Indexes->getInstructionIndex(I);
           LiveInterval *Interval = Intervals[FromSlot];
           assert(Interval->find(Index) != Interval->end() &&
@@ -567,6 +570,15 @@ void StackColoring::removeInvalidSlotRanges() {
 
       if (I->getOpcode() == TargetOpcode::LIFETIME_START ||
           I->getOpcode() == TargetOpcode::LIFETIME_END || I->isDebugValue())
+        continue;
+
+      // Some intervals are suspicious! In some cases we find address
+      // calculations outside of the lifetime zone, but not actual memory
+      // read or write. Memory accesses outside of the lifetime zone are a clear
+      // violation, but address calculations are okay. This can happen when
+      // GEPs are hoisted outside of the lifetime zone.
+      // So, in here we only check instrucitons which can read or write memory.
+      if (!I->mayLoad() && !I->mayStore())
         continue;
 
       // Check all of the machine operands.
@@ -652,7 +664,7 @@ bool StackColoring::runOnMachineFunction(MachineFunction &Func) {
   DEBUG(dbgs()<<"Total Stack size: "<<TotalSize<<" bytes\n\n");
 
   // Don't continue because there are not enough lifetime markers, or the
-  // stack or too small, or we are told not to optimize the slots.
+  // stack is too small, or we are told not to optimize the slots.
   if (NumMarkers < 2 || TotalSize < 16 || DisableColoring) {
     DEBUG(dbgs()<<"Will not try to merge slots.\n");
     return removeAllMarkers();

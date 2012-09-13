@@ -376,6 +376,30 @@ block2:
 }
 
 
+; Check that we don't assert and crash even when there are usages
+; of allocas which do not read or write outside the declared lifetime regions.
+;YESCOLOR: shady_range
+;NOCOLOR:  shady_range
+
+%struct.Klass = type { i32, i32 }
+
+define i32 @shady_range(i32 %argc, i8** nocapture %argv) uwtable {
+  %a.i = alloca [4 x %struct.Klass], align 16
+  %b.i = alloca [4 x %struct.Klass], align 16
+  %a8 = bitcast [4 x %struct.Klass]* %a.i to i8*
+  %b8 = bitcast [4 x %struct.Klass]* %b.i to i8*
+  ; I am used outside the lifetime zone below:
+  %z2 = getelementptr inbounds [4 x %struct.Klass]* %a.i, i64 0, i64 0, i32 0
+  call void @llvm.lifetime.start(i64 -1, i8* %a8)
+  call void @llvm.lifetime.start(i64 -1, i8* %b8)
+  %z3 = load i32* %z2, align 16
+  %r = call i32 @foo(i32 %z3, i8* %a8)
+  %r2 = call i32 @foo(i32 %z3, i8* %b8)
+  call void @llvm.lifetime.end(i64 -1, i8* %a8)
+  call void @llvm.lifetime.end(i64 -1, i8* %b8)
+  ret i32 9
+}
+
 declare void @bar([100 x i32]* , [100 x i32]*) nounwind
 
 declare void @llvm.lifetime.start(i64, i8* nocapture) nounwind
