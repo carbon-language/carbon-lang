@@ -288,9 +288,6 @@ static bool
 HasExplicitOwnershipAttr(Sema &S, ParmVarDecl *Param) {
   QualType T = Param->getType();
   
-  if (!T->isPointerType() && !T->isReferenceType())
-    return true;
-  
   if (const PointerType *PT = T->getAs<PointerType>()) {
     T = PT->getPointeeType();
   } else if (const ReferenceType *RT = T->getAs<ReferenceType>()) {
