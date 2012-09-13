@@ -2151,6 +2151,9 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
 
   Opts.EmitMicrosoftInlineAsm = Args.hasArg(OPT_fenable_experimental_ms_inline_asm);
 
+  Opts.RetainCommentsFromSystemHeaders =
+      Args.hasArg(OPT_fretain_comments_from_system_headers);
+
   unsigned SSP = Args.getLastArgIntValue(OPT_stack_protector, 0, Diags);
   switch (SSP) {
   default:

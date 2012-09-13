@@ -514,6 +514,8 @@ public:
   }
 
   void addComment(const RawComment &RC) {
+    assert(LangOpts.RetainCommentsFromSystemHeaders ||
+           !SourceMgr.isInSystemHeader(RC.getSourceRange().getBegin()));
     Comments.addComment(RC, BumpAlloc);
   }
 

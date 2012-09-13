@@ -468,6 +468,7 @@ def fmodule_cache_path : Separate<"-fmodule-cache-path">, Group<i_Group>,
   HelpText<"Specify the module cache path">;
 def fmodules : Flag <"-fmodules">, Group<f_Group>, Flags<[NoForward,CC1Option]>,
   HelpText<"Enable the 'modules' language feature">;
+def fretain_comments_from_system_headers : Flag<"-fretain-comments-from-system-headers">, Group<f_Group>, Flags<[CC1Option]>;
   
 def fmudflapth : Flag<"-fmudflapth">, Group<f_Group>;
 def fmudflap : Flag<"-fmudflap">, Group<f_Group>;

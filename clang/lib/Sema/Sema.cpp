@@ -1026,6 +1026,9 @@ LambdaScopeInfo *Sema::getCurLambda() {
 }
 
 void Sema::ActOnComment(SourceRange Comment) {
+  if (!LangOpts.RetainCommentsFromSystemHeaders &&
+      SourceMgr.isInSystemHeader(Comment.getBegin()))
+    return;
   RawComment RC(SourceMgr, Comment);
   if (RC.isAlmostTrailingComment()) {
     SourceRange MagicMarkerRange(Comment.getBegin(),
