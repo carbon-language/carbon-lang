@@ -71,7 +71,8 @@ public:
   /// Map the address of a JIT section as returned from the memory manager
   /// to the address in the target process as the running code will see it.
   /// This is the address which will be used for relocation resolution.
-  virtual void mapSectionAddress(void *LocalAddress, uint64_t TargetAddress) {
+  virtual void mapSectionAddress(const void *LocalAddress,
+                                 uint64_t TargetAddress) {
     Dyld.mapSectionAddress(LocalAddress, TargetAddress);
   }
 
