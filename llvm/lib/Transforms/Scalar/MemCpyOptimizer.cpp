@@ -38,7 +38,7 @@ STATISTIC(NumMemSetInfer, "Number of memsets inferred");
 STATISTIC(NumMoveToCpy,   "Number of memmoves converted to memcpy");
 STATISTIC(NumCpyToSet,    "Number of memcpys converted to memset");
 
-static int64_t GetOffsetFromIndex(const GetElementPtrInst *GEP, unsigned Idx,
+static int64_t GetOffsetFromIndex(const GEPOperator *GEP, unsigned Idx,
                                   bool &VariableIdxFound, const TargetData &TD){
   // Skip over the first indices.
   gep_type_iterator GTI = gep_type_begin(GEP);
@@ -75,8 +75,8 @@ static bool IsPointerOffset(Value *Ptr1, Value *Ptr2, int64_t &Offset,
                             const TargetData &TD) {
   Ptr1 = Ptr1->stripPointerCasts();
   Ptr2 = Ptr2->stripPointerCasts();
-  GetElementPtrInst *GEP1 = dyn_cast<GetElementPtrInst>(Ptr1);
-  GetElementPtrInst *GEP2 = dyn_cast<GetElementPtrInst>(Ptr2);
+  GEPOperator *GEP1 = dyn_cast<GEPOperator>(Ptr1);
+  GEPOperator *GEP2 = dyn_cast<GEPOperator>(Ptr2);
 
   bool VariableIdxFound = false;
 

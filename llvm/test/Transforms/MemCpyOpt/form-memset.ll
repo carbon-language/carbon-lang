@@ -248,3 +248,27 @@ entry:
 ; CHECK: @test8
 ; CHECK: store <4 x i32> <i32 -1, i32 -1, i32 -1, i32 -1>, <4 x i32>* %0, align 16
 }
+
+@test9buf = internal unnamed_addr global [16 x i64] zeroinitializer, align 16
+
+define void @test9() nounwind {
+  store i8 -1, i8* bitcast ([16 x i64]* @test9buf to i8*), align 16
+  store i8 -1, i8* getelementptr (i8* bitcast ([16 x i64]* @test9buf to i8*), i64 1), align 1
+  store i8 -1, i8* getelementptr (i8* bitcast ([16 x i64]* @test9buf to i8*), i64 2), align 2
+  store i8 -1, i8* getelementptr (i8* bitcast ([16 x i64]* @test9buf to i8*), i64 3), align 1
+  store i8 -1, i8* getelementptr (i8* bitcast ([16 x i64]* @test9buf to i8*), i64 4), align 4
+  store i8 -1, i8* getelementptr (i8* bitcast ([16 x i64]* @test9buf to i8*), i64 5), align 1
+  store i8 -1, i8* getelementptr (i8* bitcast ([16 x i64]* @test9buf to i8*), i64 6), align 2
+  store i8 -1, i8* getelementptr (i8* bitcast ([16 x i64]* @test9buf to i8*), i64 7), align 1
+  store i8 -1, i8* bitcast (i64* getelementptr inbounds ([16 x i64]* @test9buf, i64 0, i64 1) to i8*), align 8
+  store i8 -1, i8* getelementptr (i8* bitcast ([16 x i64]* @test9buf to i8*), i64 9), align 1
+  store i8 -1, i8* getelementptr (i8* bitcast ([16 x i64]* @test9buf to i8*), i64 10), align 2
+  store i8 -1, i8* getelementptr (i8* bitcast ([16 x i64]* @test9buf to i8*), i64 11), align 1
+  store i8 -1, i8* getelementptr (i8* bitcast ([16 x i64]* @test9buf to i8*), i64 12), align 4
+  store i8 -1, i8* getelementptr (i8* bitcast ([16 x i64]* @test9buf to i8*), i64 13), align 1
+  store i8 -1, i8* getelementptr (i8* bitcast ([16 x i64]* @test9buf to i8*), i64 14), align 2
+  store i8 -1, i8* getelementptr (i8* bitcast ([16 x i64]* @test9buf to i8*), i64 15), align 1
+  ret void
+; CHECK: @test9(
+; CHECK: call void @llvm.memset.p0i8.i64(i8* bitcast ([16 x i64]* @test9buf to i8*), i8 -1, i64 16, i32 16, i1 false)
+}
