@@ -415,6 +415,9 @@ FullComment *Sema::actOnFullComment(
 }
 
 void Sema::checkBlockCommandEmptyParagraph(BlockCommandComment *Command) {
+  if (Traits.getCommandInfo(Command->getCommandID())->IsEmptyParagraphAllowed)
+    return;
+
   ParagraphComment *Paragraph = Command->getParagraph();
   if (Paragraph->isWhitespace()) {
     SourceLocation DiagLoc;

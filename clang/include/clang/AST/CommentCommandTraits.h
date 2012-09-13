@@ -66,6 +66,10 @@ struct CommandInfo {
   /// a template parameter (\\tparam or an alias).
   unsigned IsTParamCommand : 1;
 
+  /// True if we don't want to warn about this command being passed an empty
+  /// paragraph.  Meaningful only for block commands.
+  unsigned IsEmptyParagraphAllowed : 1;
+
   /// \brief True if this command is a verbatim-like block command.
   ///
   /// A verbatim-like block command eats every character (except line starting

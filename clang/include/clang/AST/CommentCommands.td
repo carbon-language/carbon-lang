@@ -12,6 +12,8 @@ class Command<string name> {
   bit IsParamCommand = 0;
   bit IsTParamCommand = 0;
 
+  bit IsEmptyParagraphAllowed = 0;
+
   bit IsVerbatimBlockCommand = 0;
   bit IsVerbatimBlockEndCommand = 0;
   bit IsVerbatimLineCommand = 0;
@@ -72,6 +74,8 @@ def Tparam : BlockCommand<"tparam"> { let IsTParamCommand = 1; }
 
 // HeaderDoc
 def Templatefield : BlockCommand<"templatefield"> { let IsTParamCommand = 1; }
+
+def Deprecated : BlockCommand<"deprecated"> { let IsEmptyParagraphAllowed = 1; }
 
 def Author     : BlockCommand<"author">;
 def Authors    : BlockCommand<"authors">;
