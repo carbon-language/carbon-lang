@@ -38,6 +38,7 @@ void TsanCheckFailed(const char *file, int line, const char *cond,
 #ifdef TSAN_EXTERNAL_HOOKS
 bool OnReport(const ReportDesc *rep, bool suppressed);
 #else
+SANITIZER_INTERFACE_ATTRIBUTE
 bool WEAK OnReport(const ReportDesc *rep, bool suppressed) {
   (void)rep;
   return suppressed;

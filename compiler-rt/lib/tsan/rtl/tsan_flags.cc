@@ -27,6 +27,7 @@ Flags *flags() {
 #ifdef TSAN_EXTERNAL_HOOKS
 void OverrideFlags(Flags *f);
 #else
+SANITIZER_INTERFACE_ATTRIBUTE
 void WEAK OverrideFlags(Flags *f) {
   (void)f;
 }
