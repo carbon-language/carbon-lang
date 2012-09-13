@@ -8407,7 +8407,7 @@ SDValue X86TargetLowering::LowerVectorAllZeroTest(SDValue Op, SelectionDAG &DAG)
   }
 
   assert((VT.is128BitVector() || VT.is256BitVector()) &&
-         "Not extracted from 128-bit vector.");
+         "Not extracted from 128-/256-bit vector.");
 
   unsigned FullMask = (1U << VT.getVectorNumElements()) - 1U;
   SmallVector<SDValue, 8> VecIns;
