@@ -247,7 +247,6 @@ void MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   switch (Attribute) {
   case MCSA_LazyReference:
   case MCSA_Reference:
-  case MCSA_NoDeadStrip:
   case MCSA_SymbolResolver:
   case MCSA_PrivateExtern:
   case MCSA_WeakDefinition:
@@ -256,6 +255,7 @@ void MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   case MCSA_IndirectSymbol:
     llvm_unreachable("Invalid symbol attribute for ELF!");
 
+  case MCSA_NoDeadStrip:
   case MCSA_ELF_TypeGnuUniqueObject:
     // Ignore for now.
     break;
