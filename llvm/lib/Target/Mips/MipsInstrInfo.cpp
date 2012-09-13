@@ -95,6 +95,7 @@ bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
                                   SmallVectorImpl<MachineOperand> &Cond,
                                   bool AllowModify) const
 {
+
   MachineBasicBlock::reverse_iterator I = MBB.rbegin(), REnd = MBB.rend();
 
   // Skip all the debug instructions.
@@ -177,9 +178,14 @@ void MipsInstrInfo::BuildCondBr(MachineBasicBlock &MBB,
   const MCInstrDesc &MCID = get(Opc);
   MachineInstrBuilder MIB = BuildMI(&MBB, DL, MCID);
 
-  for (unsigned i = 1; i < Cond.size(); ++i)
-    MIB.addReg(Cond[i].getReg());
-
+  for (unsigned i = 1; i < Cond.size(); ++i) {
+    if (Cond[i].isReg())
+      MIB.addReg(Cond[i].getReg());
+    else if (Cond[i].isImm())
+      MIB.addImm(Cond[i].getImm());
+    else
+       assert(true && "Cannot copy operand");
+  }
   MIB.addMBB(TBB);
 }
 
