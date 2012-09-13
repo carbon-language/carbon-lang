@@ -70,10 +70,10 @@ void MacOSXAPIChecker::CheckDispatchOnce(CheckerContext &C, const CallExpr *CE,
     BT_dispatchOnce.reset(new BugType("Improper use of 'dispatch_once'",
                                       "Mac OS X API"));
 
-  // Handle _dispatch_once, which in some versions of the OS X SDK that
-  // dispatch_once is a macro that wraps a call to _dispatch_once, which
-  // then calls the real dispatch_once.  Users do not care; they just
-  // want the warning at the top-level call.
+  // Handle _dispatch_once.  In some versions of the OS X SDK we have the case
+  // that dispatch_once is a macro that wraps a call to _dispatch_once.
+  // _dispatch_once is then a function which then calls the real dispatch_once.
+  // Users do not care; they just want the warning at the top-level call.
   if (CE->getLocStart().isMacroID()) {
     StringRef TrimmedFName = FName.ltrim("_");
     if (TrimmedFName != FName)
