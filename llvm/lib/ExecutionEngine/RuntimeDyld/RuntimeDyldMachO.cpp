@@ -57,7 +57,7 @@ void RuntimeDyldMachO::resolveRelocation(uint8_t *LocalAddress,
                           FinalAddress,
                           (uintptr_t)Value,
                           isPCRel,
-                          Type,
+                          MachoType,
                           Size,
                           Addend);
     break;
