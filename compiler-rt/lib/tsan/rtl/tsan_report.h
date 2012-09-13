@@ -24,7 +24,7 @@ enum ReportType {
   ReportTypeThreadLeak,
   ReportTypeMutexDestroyLocked,
   ReportTypeSignalUnsafe,
-  ReportTypeErrnoInSignal,
+  ReportTypeErrnoInSignal
 };
 
 struct ReportStack {
@@ -51,7 +51,7 @@ struct ReportMop {
 enum ReportLocationType {
   ReportLocationGlobal,
   ReportLocationHeap,
-  ReportLocationStack,
+  ReportLocationStack
 };
 
 struct ReportLocation {

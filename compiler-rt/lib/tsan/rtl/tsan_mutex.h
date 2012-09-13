@@ -31,7 +31,7 @@ enum MutexType {
   MutexTypeAtExit,
 
   // This must be the last.
-  MutexTypeCount,
+  MutexTypeCount
 };
 
 class Mutex {

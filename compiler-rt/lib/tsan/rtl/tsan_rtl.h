@@ -316,7 +316,7 @@ enum ThreadStatus {
   ThreadStatusCreated,   // Created but not yet running.
   ThreadStatusRunning,   // The thread is currently running.
   ThreadStatusFinished,  // Joinable thread is finished but not yet joined.
-  ThreadStatusDead,      // Joined, but some info (trace) is still alive.
+  ThreadStatusDead       // Joined, but some info (trace) is still alive.
 };
 
 // An info about a thread that is hold for some time after its termination.

@@ -178,8 +178,12 @@ extern "C" void _dl_get_tls_static_info(size_t*, size_t*)
 static int InitTlsSize() {
   typedef void (*get_tls_func)(size_t*, size_t*) INTERNAL_FUNCTION;
   get_tls_func get_tls = &_dl_get_tls_static_info;
-  if (get_tls == 0)
-    get_tls = (get_tls_func)dlsym(RTLD_NEXT, "_dl_get_tls_static_info");
+  if (get_tls == 0) {
+    void *get_tls_static_info_ptr = dlsym(RTLD_NEXT, "_dl_get_tls_static_info");
+    CHECK_EQ(sizeof(get_tls), sizeof(get_tls_static_info_ptr));
+    internal_memcpy(&get_tls, &get_tls_static_info_ptr,
+                    sizeof(get_tls_static_info_ptr));
+  }
   CHECK_NE(get_tls, 0);
   size_t tls_size = 0;
   size_t tls_align = 0;

@@ -250,7 +250,7 @@ enum StatType {
   StatMtxAtExit,
 
   // This must be the last.
-  StatCnt,
+  StatCnt
 };
 
 }  // namespace __tsan

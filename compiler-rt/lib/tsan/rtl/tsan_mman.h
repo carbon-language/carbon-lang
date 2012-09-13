@@ -57,7 +57,7 @@ enum MBlockType {
   MBlockSignal,
 
   // This must be the last.
-  MBlockTypeCount,
+  MBlockTypeCount
 };
 
 // For internal data structures.

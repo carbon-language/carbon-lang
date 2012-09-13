@@ -26,7 +26,7 @@ enum SuppressionType {
   SuppressionRace,
   SuppressionMutex,
   SuppressionThread,
-  SuppressionSignal,
+  SuppressionSignal
 };
 
 struct Suppression {

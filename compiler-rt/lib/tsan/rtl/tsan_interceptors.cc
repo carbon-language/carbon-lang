@@ -1366,11 +1366,11 @@ TSAN_INTERCEPTOR(int, sigaction, int sig, sigaction_t *act, sigaction_t *old) {
 }
 
 TSAN_INTERCEPTOR(sighandler_t, signal, int sig, sighandler_t h) {
-  sigaction_t act = {};
+  sigaction_t act;
   act.sa_handler = h;
   REAL(memset)(&act.sa_mask, -1, sizeof(act.sa_mask));
   act.sa_flags = 0;
-  sigaction_t old = {};
+  sigaction_t old;
   int res = sigaction(sig, &act, &old);
   if (res)
     return SIG_ERR;

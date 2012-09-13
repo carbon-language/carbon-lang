@@ -35,7 +35,7 @@ enum EventType {
   EventTypeLock,
   EventTypeUnlock,
   EventTypeRLock,
-  EventTypeRUnlock,
+  EventTypeRUnlock
 };
 
 // Represents a thread event (from most significant bit):

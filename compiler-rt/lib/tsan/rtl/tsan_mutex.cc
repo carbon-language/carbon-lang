@@ -48,7 +48,7 @@ void InitializeMutex() {
   bool leaf[N] = {};
   for (int i = 1; i < N; i++) {
     for (int j = 0; j < N; j++) {
-      int z = CanLockTab[i][j];
+      MutexType z = CanLockTab[i][j];
       if (z == MutexTypeInvalid)
         continue;
       if (z == MutexTypeLeaf) {
@@ -56,8 +56,8 @@ void InitializeMutex() {
         leaf[i] = true;
         continue;
       }
-      CHECK(!CanLockAdj[i][z]);
-      CanLockAdj[i][z] = true;
+      CHECK(!CanLockAdj[i][(int)z]);
+      CanLockAdj[i][(int)z] = true;
       cnt[i]++;
     }
   }
