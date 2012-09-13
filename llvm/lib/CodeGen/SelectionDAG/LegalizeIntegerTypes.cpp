@@ -2265,12 +2265,15 @@ void DAGTypeLegalizer::ExpandIntRes_XMULO(SDNode *N,
     // A divide for UMULO will be faster than a function call. Select to
     // make sure we aren't using 0.
     SDValue isZero = DAG.getSetCC(dl, TLI.getSetCCResultType(VT),
-                                  RHS, DAG.getConstant(0, VT), ISD::SETNE);
+                                  RHS, DAG.getConstant(0, VT), ISD::SETEQ);
     SDValue NotZero = DAG.getNode(ISD::SELECT, dl, VT, isZero,
                                   DAG.getConstant(1, VT), RHS);
     SDValue DIV = DAG.getNode(ISD::UDIV, dl, VT, MUL, NotZero);
     SDValue Overflow = DAG.getSetCC(dl, N->getValueType(1), DIV, LHS,
                                     ISD::SETNE);
+    Overflow = DAG.getNode(ISD::SELECT, dl, N->getValueType(1), isZero,
+                           DAG.getConstant(0, N->getValueType(1)),
+                           Overflow);
     ReplaceValueWith(SDValue(N, 1), Overflow);
     return;
   }
