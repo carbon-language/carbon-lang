@@ -254,7 +254,7 @@ void RuntimeDyldMachO::processRelocationRef(const ObjRelocationInfo &Rel,
     }
   }
 
-  if (Arch == Triple::arm && RelType == macho::RIT_ARM_Branch24Bit) {
+  if (Arch == Triple::arm && (RelType & 0xf) == macho::RIT_ARM_Branch24Bit) {
     // This is an ARM branch relocation, need to use a stub function.
 
     //  Look up for existing stub.
