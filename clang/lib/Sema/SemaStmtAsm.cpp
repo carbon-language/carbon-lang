@@ -414,15 +414,13 @@ static void buildMSAsmPieces(std::vector<std::string> &AsmStrings,
     buildMSAsmPieces(AsmStrings[i], Pieces[i]);
 }
 
-// Build the AsmString used by the IR.  Also build the individual asm
-// instruction(s) and place them in the AsmStrings vector; these are fed to the
-// AsmParser.
-static std::string buildMSAsmString(Sema &SemaRef, ArrayRef<Token> AsmToks,
-                                    std::vector<std::string> &AsmStrings,
+// Build the individual assembly instruction(s) and place them in the AsmStrings
+// vector.  These strings are fed to the AsmParser.
+static void buildMSAsmStrings(Sema &SemaRef, ArrayRef<Token> AsmToks,
+                              std::vector<std::string> &AsmStrings,
                      std::vector<std::pair<unsigned,unsigned> > &AsmTokRanges) {
   assert (!AsmToks.empty() && "Didn't expect an empty AsmToks!");
 
-  SmallString<512> Res;
   SmallString<512> Asm;
   unsigned startTok = 0;
   for (unsigned i = 0, e = AsmToks.size(); i < e; ++i) {
@@ -435,7 +433,6 @@ static std::string buildMSAsmString(Sema &SemaRef, ArrayRef<Token> AsmToks,
         AsmTokRanges.push_back(std::make_pair(startTok, i-1));
         startTok = i;
         Asm.clear();
-        Res += "\n\t";
       }
       if (AsmToks[i].is(tok::kw_asm)) {
         i++; // Skip __asm
@@ -443,21 +440,14 @@ static std::string buildMSAsmString(Sema &SemaRef, ArrayRef<Token> AsmToks,
       }
     }
 
-    if (i && AsmToks[i].hasLeadingSpace() && !isNewAsm) {
+    if (i && AsmToks[i].hasLeadingSpace() && !isNewAsm)
       Asm += ' ';
-      Res += ' ';
-    }
-
-    if (AsmToks[i].is(tok::numeric_constant))
-      Res += "$$";
 
     StringRef Spelling = getSpelling(SemaRef, AsmToks[i]);
     Asm += Spelling;
-    Res += Spelling;
   }
   AsmStrings.push_back(Asm.str());
   AsmTokRanges.push_back(std::make_pair(startTok, AsmToks.size()-1));
-  return Res.str();
 }
 
 #define DEF_SIMPLE_MSASM(STR)                                                \
@@ -467,21 +457,23 @@ static std::string buildMSAsmString(Sema &SemaRef, ArrayRef<Token> AsmToks,
                             InputExprs, OutputExprs, STR, Constraints,       \
                             Clobbers, EndLoc);
 
-StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
-                                SourceLocation LBraceLoc,
-                                ArrayRef<Token> AsmToks,
-                                SourceLocation EndLoc) {
+StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
+                                ArrayRef<Token> AsmToks,SourceLocation EndLoc) {
   SmallVector<StringRef, 4> Constraints;
   std::vector<std::string> InputConstraints;
   std::vector<std::string> OutputConstraints;
   SmallVector<StringRef, 4> Clobbers;
   std::set<std::string> ClobberRegs;
+
+  // FIXME: Use a struct to hold the various expression information.
   SmallVector<IdentifierInfo*, 4> Inputs;
   SmallVector<IdentifierInfo*, 4> Outputs;
   SmallVector<Expr*, 4> InputExprs;
   SmallVector<Expr*, 4> OutputExprs;
   SmallVector<std::string, 4> InputExprNames;
   SmallVector<std::string, 4> OutputExprNames;
+  SmallVector<unsigned, 4> InputExprStrIdx;
+  SmallVector<unsigned, 4> OutputExprStrIdx;
 
   // Empty asm statements don't need to instantiate the AsmParser, etc.
   StringRef EmptyAsmStr;
@@ -489,8 +481,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
 
   std::vector<std::string> AsmStrings;
   std::vector<std::pair<unsigned,unsigned> > AsmTokRanges;
-  std::string AsmString = buildMSAsmString(*this, AsmToks, AsmStrings,
-                                           AsmTokRanges);
+  buildMSAsmStrings(*this, AsmToks, AsmStrings, AsmTokRanges);
 
   std::vector<std::vector<StringRef> > Pieces(AsmStrings.size());
   buildMSAsmPieces(AsmStrings, Pieces);
@@ -628,11 +619,13 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
                   Outputs.push_back(II);
                   OutputExprs.push_back(Result.take());
                   OutputExprNames.push_back(Name.str());
+                  OutputExprStrIdx.push_back(StrIdx);
                   OutputConstraints.push_back("=r");
                 } else {
                   Inputs.push_back(II);
                   InputExprs.push_back(Result.take());
                   InputExprNames.push_back(Name.str());
+                  InputExprStrIdx.push_back(StrIdx);
                   InputConstraints.push_back("r");
                 }
               }
@@ -657,24 +650,101 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
     Constraints.push_back(*I);
 
   // Enumerate the AsmString expressions.
-  // FIXME: This isn't going to work if:
-  //  1. The symbol name and an opcode/reg share the same, or are a substring of
-  //     the, name.
-  //  2. The symbol name appears more then once in the asm string.
   unsigned OpNum = 0;
   for (unsigned i = 0, e = OutputExprNames.size(); i != e; ++i, ++OpNum) {
-    size_t found = AsmString.find(OutputExprNames[i]);
-    SmallString<32> Res;
-    llvm::raw_svector_ostream OS(Res);
-    OS << '$' << OpNum;
-    AsmString.replace(found, OutputExprNames[i].size(), OS.str());
+    unsigned StrIdx = OutputExprStrIdx[i];
+    // Iterate over the assembly instruction pieces, skipping the mnemonic.
+    for (unsigned j = 1, f = Pieces[StrIdx].size(); j != f; ++j) {
+      // If the operand and the expression name match, then rewrite the operand.
+      if (OutputExprNames[i] == Pieces[StrIdx][j]) {
+        SmallString<32> Res;
+        llvm::raw_svector_ostream OS(Res);
+        OS << '$' << OpNum;
+        OutputExprNames[i] = OS.str();
+        Pieces[StrIdx][j] = OutputExprNames[i];
+        break;
+      }
+      // Check to see if the expression is a substring of the asm piece.
+      std::pair< StringRef, StringRef > Split =	Pieces[StrIdx][j].split(' ');
+      bool isKeyword = llvm::StringSwitch<bool>(Split.first)
+        .Cases("BYTE", "byte", "WORD", "word", "DWORD", true)
+        .Cases("dword", "QWORD", "qword", "XWORD", "xword", true)
+        .Cases("XMMWORD", "xmmword", "YMMWORD", "ymmword", true)
+        .Default(false);
+      if (isKeyword &&
+          Split.second.find_first_of(OutputExprNames[i]) != StringRef::npos) {
+        // Is is a substring, do the replacement.
+        SmallString<32> Res;
+        llvm::raw_svector_ostream OS(Res);
+        OS << '$' << OpNum;
+        std::string piece = Pieces[StrIdx][j].str();
+        size_t found = piece.find(InputExprNames[i]);
+        piece.replace(found, InputExprNames[i].size(), OS.str());
+        OutputExprNames[i] = piece;
+        Pieces[StrIdx][j] = OutputExprNames[i];
+        break;
+      }
+    }
   }
   for (unsigned i = 0, e = InputExprNames.size(); i != e; ++i, ++OpNum) {
-    size_t found = AsmString.find(InputExprNames[i]);
-    SmallString<32> Res;
-    llvm::raw_svector_ostream OS(Res);
-    OS << '$' << OpNum;
-    AsmString.replace(found, InputExprNames[i].size(), OS.str());
+    unsigned StrIdx = InputExprStrIdx[i];
+    // Iterate over the assembly instruction pieces, skipping the mnemonic.
+    for (unsigned j = 1, f = Pieces[StrIdx].size(); j != f; ++j) {
+      // If the operand and the expression name match, then rewrite the operand.
+      if (InputExprNames[i] == Pieces[StrIdx][j]) {
+        SmallString<32> Res;
+        llvm::raw_svector_ostream OS(Res);
+        OS << '$' << OpNum;
+        InputExprNames[i] = OS.str();
+        Pieces[StrIdx][j] = InputExprNames[i];
+        break;
+      }
+      // Check to see if the expression is a substring of the asm piece.
+      std::pair< StringRef, StringRef > Split =	Pieces[StrIdx][j].split(' ');
+      bool isKeyword = llvm::StringSwitch<bool>(Split.first)
+        .Cases("BYTE", "byte", "WORD", "word", "DWORD", true)
+        .Cases("dword", "QWORD", "qword", "XWORD", "xword", true)
+        .Cases("XMMWORD", "xmmword", "YMMWORD", "ymmword", true)
+        .Default(false);
+      if (isKeyword &&
+          Split.second.find_first_of(InputExprNames[i]) != StringRef::npos) {
+        // It is a substring, do the replacement.
+        SmallString<32> Res;
+        llvm::raw_svector_ostream OS(Res);
+        OS << '$' << OpNum;
+        std::string piece = Pieces[StrIdx][j].str();
+        size_t found = piece.find(InputExprNames[i]);
+        piece.replace(found, InputExprNames[i].size(), OS.str());
+        InputExprNames[i] = piece;
+        Pieces[StrIdx][j] = InputExprNames[i];
+        break;
+      }
+    }
+  }
+
+  // Emit the IR assembly string.
+  std::string AsmString;
+  for (unsigned i = 0, e = Pieces.size(); i != e; ++i) {
+    // Skip empty asm stmts.
+    if (Pieces[i].empty()) continue;
+
+    if (i > 0)
+      AsmString += "\n\t";
+
+    // Emit the mnemonic.
+    AsmString += Pieces[i][0];
+    if (Pieces[i].size() > 1)
+      AsmString += ' ';
+
+    // Emit the operands adding $$ to constants.
+    for (unsigned j = 1, f = Pieces[i].size(); j != f; ++j) {
+      if (j > 1) AsmString += ", ";
+      unsigned Val;
+      if (!Pieces[i][j].getAsInteger(0, Val))
+        AsmString += "$$";
+
+      AsmString += Pieces[i][j];
+    }
   }
 
   MSAsmStmt *NS =

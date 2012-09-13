@@ -151,3 +151,16 @@ void t18(void) {
 // CHECK: t18
 // CHECK: call void asm sideeffect inteldialect "mov dword ptr [eax], eax", "~{dirflag},~{fpsr},~{flags}"() nounwind
 }
+
+unsigned t19(void) {
+  unsigned i = 1, j, l = 1, m;
+  __asm {
+    mov eax, i
+    mov j, eax
+    mov eax, l
+    mov m, eax
+  }
+  return j + m;
+// CHECK: t19
+// CHECK: call { i32, i32 } asm sideeffect inteldialect "mov eax, $2\0A\09mov $0, eax\0A\09mov eax, $3\0A\09mov $1, eax", "=r,=r,r,r,~{eax},~{dirflag},~{fpsr},~{flags}"(i32 %{{.*}}, i32 %{{.*}}) nounwind
+}
