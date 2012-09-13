@@ -710,7 +710,7 @@ hash_code hash_combine(const T1 &arg1) {
 #endif
 
 
-// Implementation details for implementatinos of hash_value overloads provided
+// Implementation details for implementations of hash_value overloads provided
 // here.
 namespace hashing {
 namespace detail {
