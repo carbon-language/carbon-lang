@@ -13,6 +13,20 @@
 
 using namespace lldb_private;
 
+static const char *global_defines = "#undef NULL                       \n"
+                                    "#undef Nil                        \n"
+                                    "#undef nil                        \n"
+                                    "#undef YES                        \n"
+                                    "#undef NO                         \n"
+                                    "#define NULL ((int)0)             \n"
+                                    "#define Nil ((Class)0)            \n"
+                                    "#define nil ((id)0)               \n"
+                                    "#define YES ((BOOL)1)             \n"
+                                    "#define NO ((BOOL)0)              \n"
+                                    "typedef int BOOL;                 \n"
+                                    "typedef unsigned short unichar;   \n";
+
+
 bool ExpressionSourceCode::GetText (std::string &text, lldb::LanguageType wrapping_language, bool const_object, bool static_method) const
 {
     if (m_wrap)
@@ -35,33 +49,27 @@ bool ExpressionSourceCode::GetText (std::string &text, lldb::LanguageType wrappi
             break;
         case lldb::eLanguageTypeC:
             wrap_stream.Printf("%s                             \n"
-                               "#undef NULL                    \n"
-                               "#define NULL 0                 \n"
-                               "#undef nil                     \n"
-                               "#define nil (id)0              \n"
-                               "typedef unsigned short unichar;\n"
+                               "%s                             \n"
                                "void                           \n"
                                "%s(void *$__lldb_arg)          \n"
                                "{                              \n"
                                "    %s;                        \n" 
                                "}                              \n",
                                m_prefix.c_str(),
+                               global_defines,
                                m_name.c_str(),
                                m_body.c_str());
             break;
         case lldb::eLanguageTypeC_plus_plus:
             wrap_stream.Printf("%s                                     \n"
-                               "#undef NULL                            \n"
-                               "#define NULL 0                         \n"
-                               "#undef nil                             \n"
-                               "#define nil (id)0                      \n"
-                               "typedef unsigned short unichar;        \n"
+                               "%s                                     \n"
                                "void                                   \n"
                                "$__lldb_class::%s(void *$__lldb_arg) %s\n"
                                "{                                      \n"
                                "    %s;                                \n" 
                                "}                                      \n",
                                m_prefix.c_str(),
+                               global_defines,
                                m_name.c_str(),
                                (const_object ? "const" : ""),
                                m_body.c_str());
@@ -70,33 +78,26 @@ bool ExpressionSourceCode::GetText (std::string &text, lldb::LanguageType wrappi
             if (static_method)
             {
                 wrap_stream.Printf("%s                                                      \n"
-                                    "#undef NULL                                            \n"
-                                    "#define NULL 0                                         \n"
-                                    "#undef nil                                             \n"
-                                    "#define nil (id)0                                      \n"
-                                    "typedef unsigned short unichar;                        \n"
-                                    "@interface $__lldb_objc_class ($__lldb_category)       \n"
-                                    "+(void)%s:(void *)$__lldb_arg;                         \n"
-                                    "@end                                                   \n"
-                                    "@implementation $__lldb_objc_class ($__lldb_category)  \n"
-                                    "+(void)%s:(void *)$__lldb_arg                          \n"
-                                    "{                                                      \n"
-                                    "    %s;                                                \n"
-                                    "}                                                      \n"
-                                    "@end                                                   \n",
-                                    m_prefix.c_str(),
-                                    m_name.c_str(),
-                                    m_name.c_str(),
-                                    m_body.c_str());
+                                   "%s                                                      \n"
+                                   "@interface $__lldb_objc_class ($__lldb_category)        \n"
+                                   "+(void)%s:(void *)$__lldb_arg;                          \n"
+                                   "@end                                                    \n"
+                                   "@implementation $__lldb_objc_class ($__lldb_category)   \n"
+                                   "+(void)%s:(void *)$__lldb_arg                           \n"
+                                   "{                                                       \n"
+                                   "    %s;                                                 \n"
+                                   "}                                                       \n"
+                                   "@end                                                    \n",
+                                   m_prefix.c_str(),
+                                   global_defines,
+                                   m_name.c_str(),
+                                   m_name.c_str(),
+                                   m_body.c_str());
             }
             else
             {
                 wrap_stream.Printf("%s                                                     \n"
-                                   "#undef NULL                                            \n"
-                                   "#define NULL 0                                         \n"
-                                   "#undef nil                                             \n"
-                                   "#define nil (id)0                                      \n"
-                                   "typedef unsigned short unichar;                        \n"
+                                   "%s                                                     \n"
                                    "@interface $__lldb_objc_class ($__lldb_category)       \n"
                                    "-(void)%s:(void *)$__lldb_arg;                         \n"
                                    "@end                                                   \n"
@@ -107,6 +108,7 @@ bool ExpressionSourceCode::GetText (std::string &text, lldb::LanguageType wrappi
                                    "}                                                      \n"
                                    "@end                                                   \n",
                                    m_prefix.c_str(),
+                                   global_defines,
                                    m_name.c_str(),
                                    m_name.c_str(),
                                    m_body.c_str());
