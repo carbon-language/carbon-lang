@@ -901,9 +901,9 @@ public:
 
   /// \brief Add a constructor-initialization step.
   ///
-  /// \arg FromInitList The constructor call is syntactically an initializer
+  /// \param FromInitList The constructor call is syntactically an initializer
   /// list.
-  /// \arg AsInitList The constructor is called as an init list constructor.
+  /// \param AsInitList The constructor is called as an init list constructor.
   void AddConstructorInitializationStep(CXXConstructorDecl *Constructor,
                                         AccessSpecifier Access,
                                         QualType T,

@@ -55,8 +55,8 @@ public:
   /// driver add an additional "command failed" diagnostic on failures.
   virtual bool hasGoodDiagnostics() const { return false; }
 
-  /// ConstructJob - Construct jobs to perform the action \arg JA,
-  /// writing to \arg Output and with \arg Inputs.
+  /// ConstructJob - Construct jobs to perform the action \p JA,
+  /// writing to \p Output and with \p Inputs.
   ///
   /// \param TCArgs - The argument list for this toolchain, with any
   /// tool chain specific translations applied.

@@ -515,7 +515,7 @@ public:
   void addFileLevelDecl(Decl *D);
 
   /// \brief Get the decls that are contained in a file in the Offset/Length
-  /// range. \arg Length can be 0 to indicate a point at \arg Offset instead of
+  /// range. \p Length can be 0 to indicate a point at \p Offset instead of
   /// a range. 
   void findFileRegionDecls(FileID File, unsigned Offset, unsigned Length,
                            SmallVectorImpl<Decl *> &Decls);
@@ -542,14 +542,14 @@ public:
   /// \brief Get the source location for the given file:offset pair.
   SourceLocation getLocation(const FileEntry *File, unsigned Offset) const;
 
-  /// \brief If \arg Loc is a loaded location from the preamble, returns
+  /// \brief If \p Loc is a loaded location from the preamble, returns
   /// the corresponding local location of the main file, otherwise it returns
-  /// \arg Loc.
+  /// \p Loc.
   SourceLocation mapLocationFromPreamble(SourceLocation Loc);
 
-  /// \brief If \arg Loc is a local location of the main file but inside the
+  /// \brief If \p Loc is a local location of the main file but inside the
   /// preamble chunk, returns the corresponding loaded location from the
-  /// preamble, otherwise it returns \arg Loc.
+  /// preamble, otherwise it returns \p Loc.
   SourceLocation mapLocationToPreamble(SourceLocation Loc);
 
   bool isInPreambleFileID(SourceLocation Loc);

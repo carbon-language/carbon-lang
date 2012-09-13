@@ -83,7 +83,7 @@ public:
   /// \brief The Objective-C NSArray selectors.
   Selector getNSArraySelector(NSArrayMethodKind MK) const;
 
-  /// \brief Return NSArrayMethodKind if \arg Sel is such a selector.
+  /// \brief Return NSArrayMethodKind if \p Sel is such a selector.
   llvm::Optional<NSArrayMethodKind> getNSArrayMethodKind(Selector Sel);
 
   /// \brief Enumerates the NSDictionary methods used to generate literals.
@@ -104,7 +104,7 @@ public:
   /// \brief The Objective-C NSDictionary selectors.
   Selector getNSDictionarySelector(NSDictionaryMethodKind MK) const;
 
-  /// \brief Return NSDictionaryMethodKind if \arg Sel is such a selector.
+  /// \brief Return NSDictionaryMethodKind if \p Sel is such a selector.
   llvm::Optional<NSDictionaryMethodKind>
       getNSDictionaryMethodKind(Selector Sel);
 
@@ -169,7 +169,7 @@ public:
            Sel == getNSNumberLiteralSelector(MK, true);
   }
 
-  /// \brief Return NSNumberLiteralMethodKind if \arg Sel is such a selector.
+  /// \brief Return NSNumberLiteralMethodKind if \p Sel is such a selector.
   llvm::Optional<NSNumberLiteralMethodKind>
       getNSNumberLiteralMethodKind(Selector Sel) const;
 

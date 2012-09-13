@@ -30,7 +30,7 @@ private:
   bool OwnsVMContext;
 
 protected:
-  /// Create a new code generation action.  If the optional \arg _VMContext
+  /// Create a new code generation action.  If the optional \p _VMContext
   /// parameter is supplied, the action uses it without taking ownership,
   /// otherwise it creates a fresh LLVM context and takes ownership.
   CodeGenAction(unsigned _Act, llvm::LLVMContext *_VMContext = 0);

@@ -98,8 +98,7 @@ public:
   StringRef getSysRoot() const;
 
   /// getArgsForToolChain - Return the derived argument list for the
-  /// tool chain \arg TC (or the default tool chain, if TC is not
-  /// specified).
+  /// tool chain \p TC (or the default tool chain, if TC is not specified).
   ///
   /// \param BoundArch - The bound architecture name, or 0.
   const DerivedArgList &getArgsForToolChain(const ToolChain *TC,

@@ -269,12 +269,12 @@ namespace clang {
     virtual PreprocessedEntity *ReadPreprocessedEntity(unsigned Index) = 0;
 
     /// \brief Returns a pair of [Begin, End) indices of preallocated
-    /// preprocessed entities that \arg Range encompasses.
+    /// preprocessed entities that \p Range encompasses.
     virtual std::pair<unsigned, unsigned>
         findPreprocessedEntitiesInRange(SourceRange Range) = 0;
 
     /// \brief Optionally returns true or false if the preallocated preprocessed
-    /// entity with index \arg Index came from file \arg FID.
+    /// entity with index \p Index came from file \p FID.
     virtual llvm::Optional<bool> isPreprocessedEntityInFileID(unsigned Index,
                                                               FileID FID) {
       return llvm::Optional<bool>();
@@ -372,7 +372,7 @@ namespace clang {
     }
 
     /// \brief Returns a pair of [Begin, End) indices of local preprocessed
-    /// entities that \arg Range encompasses.
+    /// entities that \p Range encompasses.
     std::pair<unsigned, unsigned>
       findLocalPreprocessedEntitiesInRange(SourceRange Range) const;
     unsigned findBeginLocalPreprocessedEntity(SourceLocation Loc) const;
@@ -540,14 +540,14 @@ namespace clang {
     }
 
     /// \brief Returns a pair of [Begin, End) iterators of preprocessed entities
-    /// that source range \arg R encompasses.
+    /// that source range \p R encompasses.
     ///
     /// \param R the range to look for preprocessed entities.
     ///
     std::pair<iterator, iterator> getPreprocessedEntitiesInRange(SourceRange R);
 
-    /// \brief Returns true if the preprocessed entity that \arg PPEI iterator
-    /// points to is coming from the file \arg FID.
+    /// \brief Returns true if the preprocessed entity that \p PPEI iterator
+    /// points to is coming from the file \p FID.
     ///
     /// Can be used to avoid implicit deserializations of preallocated
     /// preprocessed entities if we only care about entities of a specific file

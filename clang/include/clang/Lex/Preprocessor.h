@@ -506,8 +506,8 @@ public:
   }
 
   /// RemovePragmaHandler - Remove the specific pragma handler from
-  /// the preprocessor. If \arg Namespace is non-null, then it should
-  /// be the namespace that \arg Handler was added to. It is an error
+  /// the preprocessor. If \p Namespace is non-null, then it should
+  /// be the namespace that \p Handler was added to. It is an error
   /// to remove a handler that has not been registered.
   void RemovePragmaHandler(StringRef Namespace, PragmaHandler *Handler);
   void RemovePragmaHandler(PragmaHandler *Handler) {

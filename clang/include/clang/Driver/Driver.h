@@ -287,7 +287,7 @@ public:
   /// BuildJobs - Bind actions to concrete tools and translate
   /// arguments to form the list of jobs to run.
   ///
-  /// \arg C - The compilation that is being built.
+  /// \param C - The compilation that is being built.
   void BuildJobs(Compilation &C) const;
 
   /// ExecuteCompilation - Execute the compilation according to the command line
@@ -323,21 +323,20 @@ public:
   /// PrintVersion - Print the driver version.
   void PrintVersion(const Compilation &C, raw_ostream &OS) const;
 
-  /// GetFilePath - Lookup \arg Name in the list of file search paths.
+  /// GetFilePath - Lookup \p Name in the list of file search paths.
   ///
-  /// \arg TC - The tool chain for additional information on
+  /// \param TC - The tool chain for additional information on
   /// directories to search.
   //
   // FIXME: This should be in CompilationInfo.
   std::string GetFilePath(const char *Name, const ToolChain &TC) const;
 
-  /// GetProgramPath - Lookup \arg Name in the list of program search
-  /// paths.
+  /// GetProgramPath - Lookup \p Name in the list of program search paths.
   ///
-  /// \arg TC - The provided tool chain for additional information on
+  /// \param TC - The provided tool chain for additional information on
   /// directories to search.
   ///
-  /// \arg WantFile - False when searching for an executable file, otherwise
+  /// \param WantFile - False when searching for an executable file, otherwise
   /// true.  Defaults to false.
   //
   // FIXME: This should be in CompilationInfo.
@@ -352,14 +351,14 @@ public:
   bool HandleImmediateArgs(const Compilation &C);
 
   /// ConstructAction - Construct the appropriate action to do for
-  /// \arg Phase on the \arg Input, taking in to account arguments
+  /// \p Phase on the \p Input, taking in to account arguments
   /// like -fsyntax-only or --analyze.
   Action *ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
                                Action *Input) const;
 
 
   /// BuildJobsForAction - Construct the jobs to perform for the
-  /// action \arg A.
+  /// action \p A.
   void BuildJobsForAction(Compilation &C,
                           const Action *A,
                           const ToolChain *TC,
@@ -369,7 +368,7 @@ public:
                           InputInfo &Result) const;
 
   /// GetNamedOutputPath - Return the name to use for the output of
-  /// the action \arg JA. The result is appended to the compilation's
+  /// the action \p JA. The result is appended to the compilation's
   /// list of temporary or result files, as appropriate.
   ///
   /// \param C - The compilation.

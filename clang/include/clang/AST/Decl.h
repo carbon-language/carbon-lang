@@ -712,7 +712,7 @@ public:
   typedef clang::StorageClass StorageClass;
 
   /// getStorageClassSpecifierString - Return the string used to
-  /// specify the storage class \arg SC.
+  /// specify the storage class \p SC.
   ///
   /// It is illegal to call this function with SC == None.
   static const char *getStorageClassSpecifierString(StorageClass SC);

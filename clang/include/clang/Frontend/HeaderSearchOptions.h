@@ -125,7 +125,7 @@ public:
       UseStandardSystemIncludes(true), UseStandardCXXIncludes(true),
       UseLibcxx(false), Verbose(false) {}
 
-  /// AddPath - Add the \arg Path path to the specified \arg Group list.
+  /// AddPath - Add the \p Path path to the specified \p Group list.
   void AddPath(StringRef Path, frontend::IncludeDirGroup Group,
                bool IsUserSupplied, bool IsFramework, bool IgnoreSysRoot,
                bool IsInternal = false, bool ImplicitExternC = false) {
@@ -134,7 +134,7 @@ public:
   }
 
   /// AddSystemHeaderPrefix - Override whether \#include directives naming a
-  /// path starting with \arg Prefix should be considered as naming a system
+  /// path starting with \p Prefix should be considered as naming a system
   /// header.
   void AddSystemHeaderPrefix(StringRef Prefix, bool IsSystemHeader) {
     SystemHeaderPrefixes.push_back(SystemHeaderPrefix(Prefix, IsSystemHeader));

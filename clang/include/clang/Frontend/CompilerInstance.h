@@ -390,7 +390,7 @@ public:
   ASTConsumer *takeASTConsumer() { return Consumer.take(); }
 
   /// setASTConsumer - Replace the current AST consumer; the compiler instance
-  /// takes ownership of \arg Value.
+  /// takes ownership of \p Value.
   void setASTConsumer(ASTConsumer *Value);
 
   /// }
@@ -430,7 +430,7 @@ public:
   }
 
   /// setCodeCompletionConsumer - Replace the current code completion consumer;
-  /// the compiler instance takes ownership of \arg Value.
+  /// the compiler instance takes ownership of \p Value.
   void setCodeCompletionConsumer(CodeCompleteConsumer *Value);
 
   /// }
@@ -485,7 +485,7 @@ public:
 
   /// Create a DiagnosticsEngine object with a the TextDiagnosticPrinter.
   ///
-  /// The \arg Argc and \arg Argv arguments are used only for logging purposes,
+  /// The \p Argc and \p Argv arguments are used only for logging purposes,
   /// when the diagnostic options indicate that the compiler should output
   /// logging information.
   ///
@@ -552,8 +552,7 @@ public:
   void createCodeCompletionConsumer();
 
   /// Create a code completion consumer to print code completion results, at
-  /// \arg Filename, \arg Line, and \arg Column, to the given output stream \arg
-  /// OS.
+  /// \p Filename, \p Line, and \p Column, to the given output stream \p OS.
   static CodeCompleteConsumer *
   createCodeCompletionConsumer(Preprocessor &PP, const std::string &Filename,
                                unsigned Line, unsigned Column,
@@ -593,15 +592,15 @@ public:
 
   /// Create a new output file, optionally deriving the output path name.
   ///
-  /// If \arg OutputPath is empty, then createOutputFile will derive an output
-  /// path location as \arg BaseInput, with any suffix removed, and \arg
-  /// Extension appended. If OutputPath is not stdout and \arg UseTemporary
+  /// If \p OutputPath is empty, then createOutputFile will derive an output
+  /// path location as \p BaseInput, with any suffix removed, and \p Extension
+  /// appended. If \p OutputPath is not stdout and \p UseTemporary
   /// is true, createOutputFile will create a new temporary file that must be
-  /// renamed to OutputPath in the end.
+  /// renamed to \p OutputPath in the end.
   ///
   /// \param OutputPath - If given, the path to the output file.
   /// \param Error [out] - On failure, the error message.
-  /// \param BaseInput - If \arg OutputPath is empty, the input path name to use
+  /// \param BaseInput - If \p OutputPath is empty, the input path name to use
   /// for deriving the output path.
   /// \param Extension - The extension to use for derived output names.
   /// \param Binary - The mode to open the file in.
@@ -610,7 +609,7 @@ public:
   /// multithreaded use, as the underlying signal mechanism is not reentrant
   /// \param UseTemporary - Create a new temporary file that must be renamed to
   /// OutputPath in the end.
-  /// \param CreateMissingDirectories - When \arg UseTemporary is true, create
+  /// \param CreateMissingDirectories - When \p UseTemporary is true, create
   /// missing directories in the output path.
   /// \param ResultPathName [out] - If given, the result path name will be
   /// stored here on success.

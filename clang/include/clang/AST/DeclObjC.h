@@ -363,7 +363,7 @@ public:
   }
 
   /// \brief Sets the method's parameters and selector source locations.
-  /// If the method is implicit (not coming from source) \arg SelLocs is
+  /// If the method is implicit (not coming from source) \p SelLocs is
   /// ignored.
   void setMethodParams(ASTContext &C,
                        ArrayRef<ParmVarDecl*> Params,

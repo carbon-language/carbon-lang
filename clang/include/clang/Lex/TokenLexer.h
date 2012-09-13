@@ -169,7 +169,7 @@ private:
   /// first token on the next line.
   void HandleMicrosoftCommentPaste(Token &Tok);
 
-  /// \brief If \arg loc is a FileID and points inside the current macro
+  /// \brief If \p loc is a FileID and points inside the current macro
   /// definition, returns the appropriate source location pointing at the
   /// macro expansion source location entry.
   SourceLocation getExpansionLocForMacroDefLoc(SourceLocation loc) const;

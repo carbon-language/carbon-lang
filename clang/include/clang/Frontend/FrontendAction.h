@@ -167,8 +167,8 @@ public:
   /// @name Public Action Interface
   /// @{
 
-  /// BeginSourceFile - Prepare the action for processing the input file \arg
-  /// Filename; this is run after the options and frontend have been
+  /// BeginSourceFile - Prepare the action for processing the input file
+  /// \p Input; this is run after the options and frontend have been
   /// initialized, but prior to executing any per-file processing.
   ///
   /// \param CI - The compiler instance this action is being run from. The

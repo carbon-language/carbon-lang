@@ -183,7 +183,7 @@ public:
   /// location was not rewritable, false otherwise.
   ///
   /// \param indentNewLines if true new lines in the string are indented
-  /// using the indentation of the source line in position \arg Loc.
+  /// using the indentation of the source line in position \p Loc.
   bool InsertText(SourceLocation Loc, StringRef Str,
                   bool InsertAfter = true, bool indentNewLines = false);
 

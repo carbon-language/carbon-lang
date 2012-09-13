@@ -42,7 +42,7 @@ enum SelectorLocationsKind {
   SelLoc_StandardWithSpace = 2
 };
 
-/// \brief Returns true if all \arg SelLocs are in a "standard" location.
+/// \brief Returns true if all \p SelLocs are in a "standard" location.
 SelectorLocationsKind hasStandardSelectorLocs(Selector Sel,
                                               ArrayRef<SourceLocation> SelLocs,
                                               ArrayRef<Expr *> Args,
@@ -60,7 +60,7 @@ SourceLocation getStandardSelectorLoc(unsigned Index,
                                       ArrayRef<Expr *> Args,
                                       SourceLocation EndLoc);
 
-/// \brief Returns true if all \arg SelLocs are in a "standard" location.
+/// \brief Returns true if all \p SelLocs are in a "standard" location.
 SelectorLocationsKind hasStandardSelectorLocs(Selector Sel,
                                               ArrayRef<SourceLocation> SelLocs,
                                               ArrayRef<ParmVarDecl *> Args,
