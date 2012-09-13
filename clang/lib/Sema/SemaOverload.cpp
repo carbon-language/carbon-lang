@@ -1674,7 +1674,7 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType) {
     return To->getKind() == BuiltinType::UInt;
   }
 
-  // C++0x [conv.prom]p3:
+  // C++11 [conv.prom]p3:
   //   A prvalue of an unscoped enumeration type whose underlying type is not
   //   fixed (7.2) can be converted to an rvalue a prvalue of the first of the
   //   following types that can represent all the values of the enumeration
@@ -1686,11 +1686,25 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType) {
   //   with lowest integer conversion rank (4.13) greater than the rank of long
   //   long in which all the values of the enumeration can be represented. If
   //   there are two such extended types, the signed one is chosen.
+  // C++11 [conv.prom]p4:
+  //   A prvalue of an unscoped enumeration type whose underlying type is fixed
+  //   can be converted to a prvalue of its underlying type. Moreover, if
+  //   integral promotion can be applied to its underlying type, a prvalue of an
+  //   unscoped enumeration type whose underlying type is fixed can also be
+  //   converted to a prvalue of the promoted underlying type.
   if (const EnumType *FromEnumType = FromType->getAs<EnumType>()) {
     // C++0x 7.2p9: Note that this implicit enum to int conversion is not
     // provided for a scoped enumeration.
     if (FromEnumType->getDecl()->isScoped())
       return false;
+
+    // We can perform an integral promotion to the underlying type of the enum,
+    // even if that's not the promoted type.
+    if (FromEnumType->getDecl()->isFixed()) {
+      QualType Underlying = FromEnumType->getDecl()->getIntegerType();
+      return Context.hasSameUnqualifiedType(Underlying, ToType) ||
+             IsIntegralPromotion(From, Underlying, ToType);
+    }
 
     // We have already pre-calculated the promotion type, so this is trivial.
     if (ToType->isIntegerType() &&

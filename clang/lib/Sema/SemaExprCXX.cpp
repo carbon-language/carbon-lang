@@ -2593,8 +2593,16 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
 
   case ICK_Integral_Promotion:
   case ICK_Integral_Conversion:
-    From = ImpCastExprToType(From, ToType, CK_IntegralCast, 
-                             VK_RValue, /*BasePath=*/0, CCK).take();
+    if (ToType->isBooleanType()) {
+      assert(FromType->castAs<EnumType>()->getDecl()->isFixed() &&
+             SCS.Second == ICK_Integral_Promotion &&
+             "only enums with fixed underlying type can promote to bool");
+      From = ImpCastExprToType(From, ToType, CK_IntegralToBoolean,
+                               VK_RValue, /*BasePath=*/0, CCK).take();
+    } else {
+      From = ImpCastExprToType(From, ToType, CK_IntegralCast,
+                               VK_RValue, /*BasePath=*/0, CCK).take();
+    }
     break;
 
   case ICK_Floating_Promotion:
