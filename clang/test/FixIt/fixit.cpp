@@ -64,7 +64,7 @@ namespace rdar7796492 {
 
 // extra qualification on member
 class C {
-  int C::foo(); // expected-warning {{extra qualification}}
+  int C::foo(); // expected-error {{extra qualification}}
 };
 
 namespace rdar8488464 {

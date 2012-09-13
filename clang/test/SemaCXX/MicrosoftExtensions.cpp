@@ -203,3 +203,4 @@ struct PR11150 {
 
 void f() { int __except = 0; }
 
+void ::f(); // expected-warning{{extra qualification on member 'f'}}

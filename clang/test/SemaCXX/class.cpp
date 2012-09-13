@@ -120,7 +120,7 @@ struct C4 {
 struct S
 {
   void f(); // expected-note 1 {{previous declaration}}
-  void S::f() {} // expected-warning {{extra qualification on member}} expected-error {{class member cannot be redeclared}} expected-note {{previous declaration}} expected-note {{previous definition}}
+  void S::f() {} // expected-error {{extra qualification on member}} expected-error {{class member cannot be redeclared}} expected-note {{previous declaration}} expected-note {{previous definition}}
   void f() {} // expected-error {{class member cannot be redeclared}} expected-error {{redefinition}}
 };
 

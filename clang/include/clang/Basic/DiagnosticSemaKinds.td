@@ -3954,6 +3954,8 @@ def ext_out_of_line_declaration : ExtWarn<
   "out-of-line declaration of a member must be a definition">,
   InGroup<OutOfLineDeclaration>, DefaultError;
 def warn_member_extra_qualification : Warning<
+  "extra qualification on member %0">, InGroup<Microsoft>;
+def err_member_extra_qualification : Error<
   "extra qualification on member %0">;
 def err_member_qualification : Error<
   "non-friend class member %0 cannot have a qualified name">;  

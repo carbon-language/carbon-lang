@@ -8,7 +8,7 @@ template<typename T> int S<T>::a, S<T>::b; // expected-error {{can only declare 
 
 template<typename T> struct A { static A a; } A<T>::a; // expected-error {{expected ';' after struct}} \
                                                           expected-error {{use of undeclared identifier 'T'}} \
-                                                          expected-warning{{extra qualification}}
+                                                          expected-error{{extra qualification}}
 
 template<typename T> struct B { } f(); // expected-error {{expected ';' after struct}} \
                                           expected-error {{requires a type specifier}}
