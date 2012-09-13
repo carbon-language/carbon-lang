@@ -139,6 +139,12 @@ def ProcA9      : SubtargetFeature<"a9", "ARMProcFamily", "CortexA9",
                                    [FeatureVMLxForwarding,
                                     FeatureT2XtPk, FeatureFP16,
                                     FeatureAvoidPartialCPSR]>;
+// FIXME: It has not been determined if A15 has these features.
+def ProcA15      : SubtargetFeature<"a15", "ARMProcFamily", "CortexA15",
+                                   "Cortex-A15 ARM processors",
+                                   [FeatureVMLxForwarding,
+                                    FeatureT2XtPk, FeatureFP16,
+                                    FeatureAvoidPartialCPSR]>;
 
 class ProcNoItin<string Name, list<SubtargetFeature> Features>
  : Processor<Name, NoItineraries, Features>;
@@ -214,6 +220,10 @@ def : ProcessorModel<"cortex-a9-mp", CortexA9Model,
                                     [ProcA9, HasV7Ops, FeatureNEON, FeatureDB,
                                      FeatureDSPThumb2, FeatureMP,
                                      FeatureHasRAS]>;
+// FIXME: A15 has currently the same ProcessorModel as A9.
+def : ProcessorModel<"cortex-a15",   CortexA9Model,
+                                    [ProcA15, HasV7Ops, FeatureNEON, FeatureDB,
+                                     FeatureDSPThumb2, FeatureHasRAS]>;
 
 // V7M Processors.
 def : ProcNoItin<"cortex-m3",       [HasV7Ops,

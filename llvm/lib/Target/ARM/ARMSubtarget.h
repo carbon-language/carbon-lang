@@ -30,7 +30,7 @@ class StringRef;
 class ARMSubtarget : public ARMGenSubtargetInfo {
 protected:
   enum ARMProcFamilyEnum {
-    Others, CortexA8, CortexA9
+    Others, CortexA8, CortexA9, CortexA15
   };
 
   /// ARMProcFamily - ARM processor family: Cortex-A8, Cortex-A9, and others.
@@ -199,7 +199,9 @@ protected:
 
   bool isCortexA8() const { return ARMProcFamily == CortexA8; }
   bool isCortexA9() const { return ARMProcFamily == CortexA9; }
+  bool isCortexA15() const { return ARMProcFamily == CortexA15; }
   bool isCortexM3() const { return CPUString == "cortex-m3"; }
+  bool isLikeA9() const { return isCortexA9() || isCortexA15(); }
 
   bool hasARMOps() const { return !NoARM; }
 

@@ -2430,7 +2430,7 @@ ARMBaseInstrInfo::getNumMicroOps(const InstrItineraryData *ItinData,
       if (NumRegs % 2)
         ++A8UOps;
       return A8UOps;
-    } else if (Subtarget.isCortexA9()) {
+    } else if (Subtarget.isLikeA9()) {
       int A9UOps = (NumRegs / 2);
       // If there are odd number of registers or if it's not 64-bit aligned,
       // then it takes an extra AGU (Address Generation Unit) cycle.
@@ -2463,7 +2463,7 @@ ARMBaseInstrInfo::getVLDMDefCycle(const InstrItineraryData *ItinData,
     DefCycle = RegNo / 2 + 1;
     if (RegNo % 2)
       ++DefCycle;
-  } else if (Subtarget.isCortexA9()) {
+  } else if (Subtarget.isLikeA9()) {
     DefCycle = RegNo;
     bool isSLoad = false;
 
@@ -2507,7 +2507,7 @@ ARMBaseInstrInfo::getLDMDefCycle(const InstrItineraryData *ItinData,
       DefCycle = 1;
     // Result latency is issue cycle + 2: E2.
     DefCycle += 2;
-  } else if (Subtarget.isCortexA9()) {
+  } else if (Subtarget.isLikeA9()) {
     DefCycle = (RegNo / 2);
     // If there are odd number of registers or if it's not 64-bit aligned,
     // then it takes an extra AGU (Address Generation Unit) cycle.
@@ -2538,7 +2538,7 @@ ARMBaseInstrInfo::getVSTMUseCycle(const InstrItineraryData *ItinData,
     UseCycle = RegNo / 2 + 1;
     if (RegNo % 2)
       ++UseCycle;
-  } else if (Subtarget.isCortexA9()) {
+  } else if (Subtarget.isLikeA9()) {
     UseCycle = RegNo;
     bool isSStore = false;
 
@@ -2579,7 +2579,7 @@ ARMBaseInstrInfo::getSTMUseCycle(const InstrItineraryData *ItinData,
       UseCycle = 2;
     // Read in E3.
     UseCycle += 2;
-  } else if (Subtarget.isCortexA9()) {
+  } else if (Subtarget.isLikeA9()) {
     UseCycle = (RegNo / 2);
     // If there are odd number of registers or if it's not 64-bit aligned,
     // then it takes an extra AGU (Address Generation Unit) cycle.
@@ -2764,7 +2764,7 @@ static int adjustDefLatency(const ARMSubtarget &Subtarget,
                             const MachineInstr *DefMI,
                             const MCInstrDesc *DefMCID, unsigned DefAlign) {
   int Adjust = 0;
-  if (Subtarget.isCortexA8() || Subtarget.isCortexA9()) {
+  if (Subtarget.isCortexA8() || Subtarget.isLikeA9()) {
     // FIXME: Shifter op hack: no shift (i.e. [r +/- r]) or [r + r << 2]
     // variants are one cycle cheaper.
     switch (DefMCID->getOpcode()) {
@@ -2791,7 +2791,7 @@ static int adjustDefLatency(const ARMSubtarget &Subtarget,
     }
   }
 
-  if (DefAlign < 8 && Subtarget.isCortexA9()) {
+  if (DefAlign < 8 && Subtarget.isLikeA9()) {
     switch (DefMCID->getOpcode()) {
     default: break;
     case ARM::VLD1q8:
@@ -2949,7 +2949,7 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   if (Reg == ARM::CPSR) {
     if (DefMI->getOpcode() == ARM::FMSTAT) {
       // fpscr -> cpsr stalls over 20 cycles on A8 (and earlier?)
-      return Subtarget.isCortexA9() ? 1 : 20;
+      return Subtarget.isLikeA9() ? 1 : 20;
     }
 
     // CPSR set and branch can be paired in the same cycle.
@@ -3015,7 +3015,7 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
 
   if (!UseNode->isMachineOpcode()) {
     int Latency = ItinData->getOperandCycle(DefMCID.getSchedClass(), DefIdx);
-    if (Subtarget.isCortexA9())
+    if (Subtarget.isLikeA9())
       return Latency <= 2 ? 1 : Latency - 1;
     else
       return Latency <= 3 ? 1 : Latency - 2;
@@ -3032,7 +3032,7 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
                                   UseMCID, UseIdx, UseAlign);
 
   if (Latency > 1 &&
-      (Subtarget.isCortexA8() || Subtarget.isCortexA9())) {
+      (Subtarget.isCortexA8() || Subtarget.isLikeA9())) {
     // FIXME: Shifter op hack: no shift (i.e. [r +/- r]) or [r + r << 2]
     // variants are one cycle cheaper.
     switch (DefMCID.getOpcode()) {
@@ -3061,7 +3061,7 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
     }
   }
 
-  if (DefAlign < 8 && Subtarget.isCortexA9())
+  if (DefAlign < 8 && Subtarget.isLikeA9())
     switch (DefMCID.getOpcode()) {
     default: break;
     case ARM::VLD1q8:
@@ -3354,9 +3354,9 @@ ARMBaseInstrInfo::getExecutionDomain(const MachineInstr *MI) const {
   if (MI->getOpcode() == ARM::VMOVD && !isPredicated(MI))
     return std::make_pair(ExeVFP, (1<<ExeVFP) | (1<<ExeNEON));
 
-  // Cortex-A9 is particularly picky about mixing the two and wants these
+  // A9-like cores are particularly picky about mixing the two and want these
   // converted.
-  if (Subtarget.isCortexA9() && !isPredicated(MI) &&
+  if (Subtarget.isLikeA9() && !isPredicated(MI) &&
       (MI->getOpcode() == ARM::VMOVRS ||
        MI->getOpcode() == ARM::VMOVSR ||
        MI->getOpcode() == ARM::VMOVS))

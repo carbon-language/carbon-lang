@@ -47,7 +47,7 @@ ARMHazardRecognizer::getHazardType(SUnit *SU, int Stalls) {
       // Skip over one non-VFP / NEON instruction.
       if (!LastMI->isBarrier() &&
           // On A9, AGU and NEON/FPU are muxed.
-          !(STI.isCortexA9() && (LastMI->mayLoad() || LastMI->mayStore())) &&
+          !(STI.isLikeA9() && (LastMI->mayLoad() || LastMI->mayStore())) &&
           (LastMCID.TSFlags & ARMII::DomainMask) == ARMII::DomainGeneral) {
         MachineBasicBlock::iterator I = LastMI;
         if (I != LastMI->getParent()->begin()) {
