@@ -543,10 +543,6 @@ def tls64addr : ComplexPattern<i64, 5, "SelectTLSADDRAddr",
 def tls64baseaddr : ComplexPattern<i64, 5, "SelectTLSADDRAddr",
                                [tglobaltlsaddr], []>;
 
-// Same as addr, but reject addressing modes requiring more than one register.
-def single_reg_addr : ComplexPattern<iPTR, 5, "SelectSingleRegAddr", [],
-                                     [SDNPWantParent]>;
-
 //===----------------------------------------------------------------------===//
 // X86 Instruction Predicate Definitions.
 def HasCMov      : Predicate<"Subtarget->hasCMov()">;

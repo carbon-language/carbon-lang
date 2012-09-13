@@ -1,4 +1,4 @@
-; RUN: llc < %s -verify-machineinstrs | FileCheck %s
+; RUN: llc < %s | FileCheck %s
 target datalayout = "e-p:64:64:64-S128-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f16:16:16-f32:32:32-f64:64:64-f128:128:128-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 target triple = "x86_64-apple-darwin11.4.0"
 
@@ -93,38 +93,4 @@ define { i64, i64 } @crash(i8* %this) {
   ret { i64, i64 } %mrv7
 }
 
-; <rdar://problem/12282281> Fold an indexed load into the tail call instruction.
-; Calling a varargs function with 6 arguments requires 7 registers (%al is the
-; vector count for varargs functions). This leaves %r11 as the only available
-; scratch register.
-;
-; It is not possible to fold an indexed load into TCRETURNmi64 in that case.
-;
-; typedef int (*funcptr)(void*, ...);
-; extern const funcptr funcs[];
-; int f(int n) {
-;   return funcs[n](0, 0, 0, 0, 0, 0);
-; }
-;
-; CHECK: rdar12282281
-; CHECK: jmpq *%r11 # TAILCALL
-@funcs = external constant [0 x i32 (i8*, ...)*]
 
-define i32 @rdar12282281(i32 %n) nounwind uwtable ssp {
-entry:
-  %idxprom = sext i32 %n to i64
-  %arrayidx = getelementptr inbounds [0 x i32 (i8*, ...)*]* @funcs, i64 0, i64 %idxprom
-  %0 = load i32 (i8*, ...)** %arrayidx, align 8
-  %call = tail call i32 (i8*, ...)* %0(i8* null, i32 0, i32 0, i32 0, i32 0, i32 0) nounwind
-  ret i32 %call
-}
-
-; Same thing, using a fixed offset. The load should foid.
-; CHECK: rdar12282281fixed
-; CHECK: jmpq *8(%r11) # TAILCALL
-define i32 @rdar12282281fixed() nounwind uwtable ssp {
-entry:
-  %0 = load i32 (i8*, ...)** getelementptr inbounds ([0 x i32 (i8*, ...)*]* @funcs, i64 0, i64 1), align 8
-  %call.i = tail call i32 (i8*, ...)* %0(i8* null, i32 0, i32 0, i32 0, i32 0, i32 0) nounwind
-  ret i32 %call.i
-}
