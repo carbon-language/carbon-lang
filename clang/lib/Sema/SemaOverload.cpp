@@ -4798,12 +4798,6 @@ static bool CheckConvertedConstantConversions(Sema &S,
     return true;
 
   case ICK_Boolean_Conversion:
-    // Conversion from an integral or unscoped enumeration type to bool is
-    // classified as ICK_Boolean_Conversion, but it's also an integral
-    // conversion, so it's permitted in a converted constant expression.
-    return SCS.getFromType()->isIntegralOrUnscopedEnumerationType() &&
-           SCS.getToType(2)->isBooleanType();
-
   case ICK_Floating_Integral:
   case ICK_Complex_Real:
     return false;
