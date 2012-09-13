@@ -8347,6 +8347,98 @@ static SDValue LowerFGETSIGN(SDValue Op, SelectionDAG &DAG) {
   return DAG.getNode(ISD::AND, dl, VT, xFGETSIGN, DAG.getConstant(1, VT));
 }
 
+// LowerVectorAllZeroTest - Check whether an OR'd tree is PTEST-able.
+//
+SDValue X86TargetLowering::LowerVectorAllZeroTest(SDValue Op, SelectionDAG &DAG) const {
+  assert(Op.getOpcode() == ISD::OR && "Only check OR'd tree.");
+
+  if (!Subtarget->hasSSE41())
+    return SDValue();
+
+  if (!Op->hasOneUse())
+    return SDValue();
+
+  SDNode *N = Op.getNode();
+  DebugLoc DL = N->getDebugLoc();
+
+  SmallVector<SDValue, 8> Opnds;
+  DenseMap<SDValue, unsigned> VecInMap;
+  EVT VT = MVT::Other;
+
+  // Recognize a special case where a vector is casted into wide integer to
+  // test all 0s.
+  Opnds.push_back(N->getOperand(0));
+  Opnds.push_back(N->getOperand(1));
+
+  for (unsigned Slot = 0, e = Opnds.size(); Slot < e; ++Slot) {
+    SmallVector<SDValue, 8>::const_iterator I = Opnds.begin() + Slot;
+    // BFS traverse all OR'd operands.
+    if (I->getOpcode() == ISD::OR) {
+      Opnds.push_back(I->getOperand(0));
+      Opnds.push_back(I->getOperand(1));
+      // Re-evaluate the number of nodes to be traversed.
+      e += 2; // 2 more nodes (LHS and RHS) are pushed.
+      continue;
+    }
+
+    // Quit if a non-EXTRACT_VECTOR_ELT
+    if (I->getOpcode() != ISD::EXTRACT_VECTOR_ELT)
+      return SDValue();
+
+    // Quit if without a constant index.
+    SDValue Idx = I->getOperand(1);
+    if (!isa<ConstantSDNode>(Idx))
+      return SDValue();
+
+    SDValue ExtractedFromVec = I->getOperand(0);
+    DenseMap<SDValue, unsigned>::iterator M = VecInMap.find(ExtractedFromVec);
+    if (M == VecInMap.end()) {
+      VT = ExtractedFromVec.getValueType();
+      // Quit if not 128/256-bit vector.
+      if (!VT.is128BitVector() && !VT.is256BitVector())
+        return SDValue();
+      // Quit if not the same type.
+      if (VecInMap.begin() != VecInMap.end() &&
+          VT != VecInMap.begin()->first.getValueType())
+        return SDValue();
+      M = VecInMap.insert(std::make_pair(ExtractedFromVec, 0)).first;
+    }
+    M->second |= 1U << cast<ConstantSDNode>(Idx)->getZExtValue();
+  }
+
+  assert((VT.is128BitVector() || VT.is256BitVector()) &&
+         "Not extracted from 128-bit vector.");
+
+  unsigned FullMask = (1U << VT.getVectorNumElements()) - 1U;
+  SmallVector<SDValue, 8> VecIns;
+
+  for (DenseMap<SDValue, unsigned>::const_iterator
+        I = VecInMap.begin(), E = VecInMap.end(); I != E; ++I) {
+    // Quit if not all elements are used.
+    if (I->second != FullMask)
+      return SDValue();
+    VecIns.push_back(I->first);
+  }
+
+  EVT TestVT = VT.is128BitVector() ? MVT::v2i64 : MVT::v4i64;
+
+  // Cast all vectors into TestVT for PTEST.
+  for (unsigned i = 0, e = VecIns.size(); i < e; ++i)
+    VecIns[i] = DAG.getNode(ISD::BITCAST, DL, TestVT, VecIns[i]);
+
+  // If more than one full vectors are evaluated, OR them first before PTEST.
+  for (unsigned Slot = 0, e = VecIns.size(); e - Slot > 1; Slot += 2, e += 1) {
+    // Each iteration will OR 2 nodes and append the result until there is only
+    // 1 node left, i.e. the final OR'd value of all vectors.
+    SDValue LHS = VecIns[Slot];
+    SDValue RHS = VecIns[Slot + 1];
+    VecIns.push_back(DAG.getNode(ISD::OR, DL, TestVT, LHS, RHS));
+  }
+
+  return DAG.getNode(X86ISD::PTEST, DL, MVT::i32,
+                     VecIns.back(), VecIns.back());
+}
+
 /// Emit nodes that will be selected as "test Op0,Op0", or something
 /// equivalent.
 SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
@@ -8486,9 +8578,17 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
     switch (ArithOp.getOpcode()) {
     default: llvm_unreachable("unexpected operator!");
     case ISD::SUB: Opcode = X86ISD::SUB; break;
-    case ISD::OR:  Opcode = X86ISD::OR;  break;
     case ISD::XOR: Opcode = X86ISD::XOR; break;
     case ISD::AND: Opcode = X86ISD::AND; break;
+    case ISD::OR: {
+      if (!NeedTruncation && (X86CC == X86::COND_E || X86CC == X86::COND_NE)) {
+        SDValue EFLAGS = LowerVectorAllZeroTest(Op, DAG);
+        if (EFLAGS.getNode())
+          return EFLAGS;
+      }
+      Opcode = X86ISD::OR;
+      break;
+    }
     }
 
     NumOperands = 2;
@@ -14205,84 +14305,6 @@ static SDValue checkBoolTestSetCCCombine(SDValue Cmp, X86::CondCode &CC) {
   return SDValue();
 }
 
-/// checkFlaggedOrCombine - DAG combination on X86ISD::OR, i.e. with EFLAGS
-/// updated. If only flag result is used and the result is evaluated from a
-/// series of element extraction, try to combine it into a PTEST.
-static SDValue checkFlaggedOrCombine(SDValue Or, X86::CondCode &CC,
-                                     SelectionDAG &DAG,
-                                     const X86Subtarget *Subtarget) {
-  SDNode *N = Or.getNode();
-  DebugLoc DL = N->getDebugLoc();
-
-  // Only SSE4.1 and beyond supports PTEST or like.
-  if (!Subtarget->hasSSE41())
-    return SDValue();
-
-  if (N->getOpcode() != X86ISD::OR)
-    return SDValue();
-
-  // Quit if the value result of OR is used.
-  if (N->hasAnyUseOfValue(0))
-    return SDValue();
-
-  // Quit if not used as a boolean value.
-  if (CC != X86::COND_E && CC != X86::COND_NE)
-    return SDValue();
-
-  SmallVector<SDValue, 8> Opnds;
-  SDValue VecIn;
-  EVT VT = MVT::Other;
-  unsigned Mask = 0;
-
-  // Recognize a special case where a vector is casted into wide integer to
-  // test all 0s.
-  Opnds.push_back(N->getOperand(0));
-  Opnds.push_back(N->getOperand(1));
-
-  for (unsigned Slot = 0, e = Opnds.size(); Slot < e; ++Slot) {
-    SmallVector<SDValue, 8>::const_iterator I = Opnds.begin() + Slot;
-    // BFS traverse all OR'd operands.
-    if (I->getOpcode() == ISD::OR) {
-      Opnds.push_back(I->getOperand(0));
-      Opnds.push_back(I->getOperand(1));
-      // Re-evaluate the number of nodes to be traversed.
-      e += 2; // 2 more nodes (LHS and RHS) are pushed.
-      continue;
-    }
-
-    // Quit if a non-EXTRACT_VECTOR_ELT
-    if (I->getOpcode() != ISD::EXTRACT_VECTOR_ELT)
-      return SDValue();
-
-    // Quit if without a constant index.
-    SDValue Idx = I->getOperand(1);
-    if (!isa<ConstantSDNode>(Idx))
-      return SDValue();
-
-    // Check if all elements are extracted from the same vector.
-    SDValue ExtractedFromVec = I->getOperand(0);
-    if (VecIn.getNode() == 0) {
-      VT = ExtractedFromVec.getValueType();
-      // FIXME: only 128-bit vector is supported so far.
-      if (!VT.is128BitVector())
-        return SDValue();
-      VecIn = ExtractedFromVec;
-    } else if (VecIn != ExtractedFromVec)
-      return SDValue();
-
-    // Record the constant index.
-    Mask |= 1U << cast<ConstantSDNode>(Idx)->getZExtValue();
-  }
-
-  assert(VT.is128BitVector() && "Only 128-bit vector PTEST is supported so far.");
-
-  // Quit if not all elements are used.
-  if (Mask != (1U << VT.getVectorNumElements()) - 1U)
-    return SDValue();
-
-  return DAG.getNode(X86ISD::PTEST, DL, MVT::i32, VecIn, VecIn);
-}
-
 /// Optimize X86ISD::CMOV [LHS, RHS, CONDCODE (e.g. X86::COND_NE), CONDVAL]
 static SDValue PerformCMOVCombine(SDNode *N, SelectionDAG &DAG,
                                   TargetLowering::DAGCombinerInfo &DCI,
@@ -14315,14 +14337,6 @@ static SDValue PerformCMOVCombine(SDNode *N, SelectionDAG &DAG,
   if (Flags.getNode() &&
       // Extra check as FCMOV only supports a subset of X86 cond.
       (FalseOp.getValueType() != MVT::f80 || hasFPCMov(CC))) {
-    SDValue Ops[] = { FalseOp, TrueOp,
-                      DAG.getConstant(CC, MVT::i8), Flags };
-    return DAG.getNode(X86ISD::CMOV, DL, N->getVTList(),
-                       Ops, array_lengthof(Ops));
-  }
-
-  Flags = checkFlaggedOrCombine(Cond, CC, DAG, Subtarget);
-  if (Flags.getNode()) {
     SDValue Ops[] = { FalseOp, TrueOp,
                       DAG.getConstant(CC, MVT::i8), Flags };
     return DAG.getNode(X86ISD::CMOV, DL, N->getVTList(),
@@ -15860,12 +15874,6 @@ static SDValue PerformSETCCCombine(SDNode *N, SelectionDAG &DAG,
     return DAG.getNode(X86ISD::SETCC, DL, N->getVTList(), Cond, Flags);
   }
 
-  Flags = checkFlaggedOrCombine(EFLAGS, CC, DAG, Subtarget);
-  if (Flags.getNode()) {
-    SDValue Cond = DAG.getConstant(CC, MVT::i8);
-    return DAG.getNode(X86ISD::SETCC, DL, N->getVTList(), Cond, Flags);
-  }
-
   return SDValue();
 }
 
@@ -15883,13 +15891,6 @@ static SDValue PerformBrCondCombine(SDNode *N, SelectionDAG &DAG,
   SDValue Flags;
 
   Flags = checkBoolTestSetCCCombine(EFLAGS, CC);
-  if (Flags.getNode()) {
-    SDValue Cond = DAG.getConstant(CC, MVT::i8);
-    return DAG.getNode(X86ISD::BRCOND, DL, N->getVTList(), Chain, Dest, Cond,
-                       Flags);
-  }
-
-  Flags = checkFlaggedOrCombine(EFLAGS, CC, DAG, Subtarget);
   if (Flags.getNode()) {
     SDValue Cond = DAG.getConstant(CC, MVT::i8);
     return DAG.getNode(X86ISD::BRCOND, DL, N->getVTList(), Chain, Dest, Cond,

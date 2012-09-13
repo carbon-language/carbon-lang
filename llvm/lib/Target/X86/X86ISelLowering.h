@@ -811,6 +811,8 @@ namespace llvm {
     SDValue LowerVectorBroadcast(SDValue Op, SelectionDAG &DAG) const;
     SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG) const;
 
+    SDValue LowerVectorAllZeroTest(SDValue Op, SelectionDAG &DAG) const;
+
     SDValue LowerVectorFpExtend(SDValue &Op, SelectionDAG &DAG) const;
 
     virtual SDValue
