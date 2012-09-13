@@ -282,28 +282,6 @@ void Sema::AddAnyMethodToGlobalPool(Decl *D) {
     AddFactoryMethodToGlobalPool(MDecl, true);
 }
 
-/// HasExplicitOwnershipAttr - returns true when pointer to ObjC pointer
-/// has explicit ownership attribute; false otherwise.
-static bool
-HasExplicitOwnershipAttr(Sema &S, ParmVarDecl *Param) {
-  QualType T = Param->getType();
-  if (!T->isObjCIndirectLifetimeType())
-    return true;
-  if (!T->isPointerType() && !T->isReferenceType())
-    return true;
-  T = T->isPointerType() 
-        ? T->getAs<PointerType>()->getPointeeType() 
-        : T->getAs<ReferenceType>()->getPointeeType();
-  if (T->isObjCLifetimeType()) {
-    // when lifetime is Qualifiers::OCL_None it means that it has
-    // no implicit ownership qualifier (which means it is explicit).
-    Qualifiers::ObjCLifetime lifetime = 
-      T.getLocalQualifiers().getObjCLifetime();
-    return lifetime == Qualifiers::OCL_None;
-  }
-  return true;
-}
-
 /// ActOnStartOfObjCMethodDef - This routine sets up parameters; invisible
 /// and user declared, in the method definition's AST.
 void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
@@ -335,11 +313,6 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
         RequireCompleteType(Param->getLocation(), Param->getType(),
                             diag::err_typecheck_decl_incomplete_type))
           Param->setInvalidDecl();
-    if (!Param->isInvalidDecl() &&
-        getLangOpts().ObjCAutoRefCount &&
-        !HasExplicitOwnershipAttr(*this, Param))
-      Diag(Param->getLocation(), diag::warn_arc_strong_pointer_objc_pointer) <<
-            Param->getType();
     
     if ((*PI)->getIdentifier())
       PushOnScopeChains(*PI, FnBodyScope);
