@@ -616,12 +616,13 @@ Decl *Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
   BalancedDelimiterTracker T(*this, tok::l_paren);
   if (T.consumeOpen()) {
     Diag(Tok, diag::err_expected_lparen);
+    SkipMalformedDecl();
     return 0;
   }
 
   ExprResult AssertExpr(ParseConstantExpression());
   if (AssertExpr.isInvalid()) {
-    SkipUntil(tok::semi);
+    SkipMalformedDecl();
     return 0;
   }
 
@@ -630,13 +631,13 @@ Decl *Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
 
   if (!isTokenStringLiteral()) {
     Diag(Tok, diag::err_expected_string_literal);
-    SkipUntil(tok::semi);
+    SkipMalformedDecl();
     return 0;
   }
 
   ExprResult AssertMessage(ParseStringLiteralExpression());
   if (AssertMessage.isInvalid()) {
-    SkipUntil(tok::semi);
+    SkipMalformedDecl();
     return 0;
   }
 

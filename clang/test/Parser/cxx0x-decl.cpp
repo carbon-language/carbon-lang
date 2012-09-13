@@ -30,3 +30,5 @@ class ExtraSemiAfterMemFn {
 // pedantically warn on it
 int *const const p = 0; // expected-warning {{duplicate 'const' declaration specifier}}
 const const int *q = 0; // expected-warning {{duplicate 'const' declaration specifier}}
+
+static_assert(something, ""); // expected-error {{undeclared identifier}}
