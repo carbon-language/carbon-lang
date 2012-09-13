@@ -179,3 +179,13 @@ void testCasts() {
   // CHECK: fix-it:"{{.*}}":{168:11-168:13}:"%u"
   // CHECK: fix-it:"{{.*}}":{168:16-168:24}:"(unsigned int)"
 }
+
+void testCapitals() {
+  printf("%D", 1); // no-warning
+  printf("%U", 1); // no-warning
+  printf("%O", 1); // no-warning
+  
+  printf("%lD", 1); // expected-warning{{format specifies type 'long' but the argument has type 'int'}}
+
+  // CHECK: fix-it:"{{.*}}":{188:11-188:14}:"%D"
+}

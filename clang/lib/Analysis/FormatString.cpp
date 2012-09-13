@@ -490,9 +490,12 @@ analyze_format_string::LengthModifier::toString() const {
 const char *ConversionSpecifier::toString() const {
   switch (kind) {
   case dArg: return "d";
+  case DArg: return "D";
   case iArg: return "i";
   case oArg: return "o";
+  case OArg: return "O";
   case uArg: return "u";
+  case UArg: return "U";
   case xArg: return "x";
   case XArg: return "X";
   case fArg: return "f";
@@ -564,9 +567,12 @@ bool FormatSpecifier::hasValidLengthModifier(const TargetInfo &Target) const {
     case LengthModifier::AsPtrDiff:
       switch (CS.getKind()) {
         case ConversionSpecifier::dArg:
+        case ConversionSpecifier::DArg:
         case ConversionSpecifier::iArg:
         case ConversionSpecifier::oArg:
+        case ConversionSpecifier::OArg:
         case ConversionSpecifier::uArg:
+        case ConversionSpecifier::UArg:
         case ConversionSpecifier::xArg:
         case ConversionSpecifier::XArg:
         case ConversionSpecifier::nArg:
@@ -579,9 +585,12 @@ bool FormatSpecifier::hasValidLengthModifier(const TargetInfo &Target) const {
     case LengthModifier::AsLong:
       switch (CS.getKind()) {
         case ConversionSpecifier::dArg:
+        case ConversionSpecifier::DArg:
         case ConversionSpecifier::iArg:
         case ConversionSpecifier::oArg:
+        case ConversionSpecifier::OArg:
         case ConversionSpecifier::uArg:
+        case ConversionSpecifier::UArg:
         case ConversionSpecifier::xArg:
         case ConversionSpecifier::XArg:
         case ConversionSpecifier::aArg:
@@ -699,6 +708,9 @@ bool FormatSpecifier::hasStandardConversionSpecifier(const LangOptions &LangOpt)
       return LangOpt.ObjC1 || LangOpt.ObjC2;
     case ConversionSpecifier::InvalidSpecifier:
     case ConversionSpecifier::PrintErrno:
+    case ConversionSpecifier::DArg:
+    case ConversionSpecifier::OArg:
+    case ConversionSpecifier::UArg:
       return false;
   }
   llvm_unreachable("Invalid ConversionSpecifier Kind!");

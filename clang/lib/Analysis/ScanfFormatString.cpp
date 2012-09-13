@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/Analyses/FormatString.h"
+#include "clang/Basic/TargetInfo.h"
 #include "FormatStringParsing.h"
 
 using clang::analyze_format_string::ArgType;
@@ -67,7 +68,8 @@ static ScanfSpecifierResult ParseScanfSpecifier(FormatStringHandler &H,
                                                 const char *&Beg,
                                                 const char *E,
                                                 unsigned &argIndex,
-                                                const LangOptions &LO) {
+                                                const LangOptions &LO,
+                                                const TargetInfo &Target) {
   
   using namespace clang::analyze_scanf;
   const char *I = Beg;
@@ -172,6 +174,20 @@ static ScanfSpecifierResult ParseScanfSpecifier(FormatStringHandler &H,
     case 'o': k = ConversionSpecifier::oArg; break;
     case 's': k = ConversionSpecifier::sArg; break;
     case 'p': k = ConversionSpecifier::pArg; break;
+    // Apple extensions
+      // Apple-specific
+    case 'D':
+      if (Target.getTriple().isOSDarwin())
+        k = ConversionSpecifier::DArg;
+      break;
+    case 'O':
+      if (Target.getTriple().isOSDarwin())
+        k = ConversionSpecifier::OArg;
+      break;
+    case 'U':
+      if (Target.getTriple().isOSDarwin())
+        k = ConversionSpecifier::UArg;
+      break;
   }
   ScanfConversionSpecifier CS(conversionPosition, k);
   if (k == ScanfConversionSpecifier::ScanListArg) {
@@ -202,6 +218,7 @@ ArgType ScanfSpecifier::getArgType(ASTContext &Ctx) const {
   switch(CS.getKind()) {
     // Signed int.
     case ConversionSpecifier::dArg:
+    case ConversionSpecifier::DArg:
     case ConversionSpecifier::iArg:
       switch (LM.getKind()) {
         case LengthModifier::None:
@@ -233,7 +250,9 @@ ArgType ScanfSpecifier::getArgType(ASTContext &Ctx) const {
 
     // Unsigned int.
     case ConversionSpecifier::oArg:
+    case ConversionSpecifier::OArg:
     case ConversionSpecifier::uArg:
+    case ConversionSpecifier::UArg:
     case ConversionSpecifier::xArg:
     case ConversionSpecifier::XArg:
       switch (LM.getKind()) {
@@ -465,14 +484,15 @@ void ScanfSpecifier::toString(raw_ostream &os) const {
 bool clang::analyze_format_string::ParseScanfString(FormatStringHandler &H,
                                                     const char *I,
                                                     const char *E,
-                                                    const LangOptions &LO) {
+                                                    const LangOptions &LO,
+                                                    const TargetInfo &Target) {
   
   unsigned argIndex = 0;
   
   // Keep looking for a format specifier until we have exhausted the string.
   while (I != E) {
     const ScanfSpecifierResult &FSR = ParseScanfSpecifier(H, I, E, argIndex,
-                                                          LO);
+                                                          LO, Target);
     // Did a fail-stop error of any kind occur when parsing the specifier?
     // If so, don't do any more processing.
     if (FSR.shouldStop())

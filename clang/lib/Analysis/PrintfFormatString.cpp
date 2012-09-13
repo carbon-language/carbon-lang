@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/Analyses/FormatString.h"
+#include "clang/Basic/TargetInfo.h"
 #include "FormatStringParsing.h"
 
 using clang::analyze_format_string::ArgType;
@@ -52,7 +53,8 @@ static PrintfSpecifierResult ParsePrintfSpecifier(FormatStringHandler &H,
                                                   const char *&Beg,
                                                   const char *E,
                                                   unsigned &argIndex,
-                                                  const LangOptions &LO) {
+                                                  const LangOptions &LO,
+                                                  const TargetInfo &Target) {
 
   using namespace clang::analyze_format_string;
   using namespace clang::analyze_printf;
@@ -196,6 +198,19 @@ static PrintfSpecifierResult ParsePrintfSpecifier(FormatStringHandler &H,
     case '@': k = ConversionSpecifier::ObjCObjArg; break;
     // Glibc specific.
     case 'm': k = ConversionSpecifier::PrintErrno; break;
+    // Apple-specific
+    case 'D':
+      if (Target.getTriple().isOSDarwin())
+        k = ConversionSpecifier::DArg;
+      break;
+    case 'O':
+      if (Target.getTriple().isOSDarwin())
+        k = ConversionSpecifier::OArg;
+      break;
+    case 'U':
+      if (Target.getTriple().isOSDarwin())
+        k = ConversionSpecifier::UArg;
+      break;
   }
   PrintfConversionSpecifier CS(conversionPosition, k);
   FS.setConversionSpecifier(CS);
@@ -212,14 +227,15 @@ static PrintfSpecifierResult ParsePrintfSpecifier(FormatStringHandler &H,
 bool clang::analyze_format_string::ParsePrintfString(FormatStringHandler &H,
                                                      const char *I,
                                                      const char *E,
-                                                     const LangOptions &LO) {
+                                                     const LangOptions &LO,
+                                                     const TargetInfo &Target) {
 
   unsigned argIndex = 0;
 
   // Keep looking for a format specifier until we have exhausted the string.
   while (I != E) {
     const PrintfSpecifierResult &FSR = ParsePrintfSpecifier(H, I, E, argIndex,
-                                                            LO);
+                                                            LO, Target);
     // Did a fail-stop error of any kind occur when parsing the specifier?
     // If so, don't do any more processing.
     if (FSR.shouldStop())
@@ -551,6 +567,7 @@ bool PrintfSpecifier::hasValidPlusPrefix() const {
   // The plus prefix only makes sense for signed conversions
   switch (CS.getKind()) {
   case ConversionSpecifier::dArg:
+  case ConversionSpecifier::DArg:
   case ConversionSpecifier::iArg:
   case ConversionSpecifier::fArg:
   case ConversionSpecifier::FArg:
@@ -574,6 +591,7 @@ bool PrintfSpecifier::hasValidAlternativeForm() const {
   // Alternate form flag only valid with the oxXaAeEfFgG conversions
   switch (CS.getKind()) {
   case ConversionSpecifier::oArg:
+  case ConversionSpecifier::OArg:
   case ConversionSpecifier::xArg:
   case ConversionSpecifier::XArg:
   case ConversionSpecifier::aArg:
@@ -598,9 +616,12 @@ bool PrintfSpecifier::hasValidLeadingZeros() const {
   // Leading zeroes flag only valid with the diouxXaAeEfFgG conversions
   switch (CS.getKind()) {
   case ConversionSpecifier::dArg:
+  case ConversionSpecifier::DArg:
   case ConversionSpecifier::iArg:
   case ConversionSpecifier::oArg:
+  case ConversionSpecifier::OArg:
   case ConversionSpecifier::uArg:
+  case ConversionSpecifier::UArg:
   case ConversionSpecifier::xArg:
   case ConversionSpecifier::XArg:
   case ConversionSpecifier::aArg:
@@ -625,6 +646,7 @@ bool PrintfSpecifier::hasValidSpacePrefix() const {
   // The space prefix only makes sense for signed conversions
   switch (CS.getKind()) {
   case ConversionSpecifier::dArg:
+  case ConversionSpecifier::DArg:
   case ConversionSpecifier::iArg:
   case ConversionSpecifier::fArg:
   case ConversionSpecifier::FArg:
@@ -661,8 +683,10 @@ bool PrintfSpecifier::hasValidThousandsGroupingPrefix() const {
 
   switch (CS.getKind()) {
     case ConversionSpecifier::dArg:
+    case ConversionSpecifier::DArg:
     case ConversionSpecifier::iArg:
     case ConversionSpecifier::uArg:
+    case ConversionSpecifier::UArg:
     case ConversionSpecifier::fArg:
     case ConversionSpecifier::FArg:
     case ConversionSpecifier::gArg:
@@ -680,9 +704,12 @@ bool PrintfSpecifier::hasValidPrecision() const {
   // Precision is only valid with the diouxXaAeEfFgGs conversions
   switch (CS.getKind()) {
   case ConversionSpecifier::dArg:
+  case ConversionSpecifier::DArg:
   case ConversionSpecifier::iArg:
   case ConversionSpecifier::oArg:
+  case ConversionSpecifier::OArg:
   case ConversionSpecifier::uArg:
+  case ConversionSpecifier::UArg:
   case ConversionSpecifier::xArg:
   case ConversionSpecifier::XArg:
   case ConversionSpecifier::aArg:
