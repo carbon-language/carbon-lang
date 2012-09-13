@@ -136,3 +136,18 @@ void test_valloc_nowarn(size_t sz) {
     foo[i] = 0;
   }
 }
+
+// Test dispatch_once being a macro that wraps a call to _dispatch_once, which in turn
+// calls the real dispatch_once.
+
+static inline void _dispatch_once(dispatch_once_t *predicate, dispatch_block_t block)
+{
+  dispatch_once(predicate, block);
+}
+
+#define dispatch_once _dispatch_once
+
+void test_dispatch_once_in_macro() {
+  dispatch_once_t pred = 0;
+  dispatch_once(&pred, ^(){});  // expected-warning {{Call to 'dispatch_once' uses the local variable 'pred' for the predicate value}}
+}
