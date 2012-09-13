@@ -997,7 +997,6 @@ SyntheticChildrenFrontEnd(*valobj_sp.get())
 uint32_t
 lldb_private::formatters::NSArrayCodeRunningSyntheticFrontEnd::CalculateNumChildren ()
 {
-        return 0;
     uint64_t count = 0;
     if (ExtractValueFromObjCExpression(m_backend, "int", "count", count))
         return count;
