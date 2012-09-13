@@ -5441,7 +5441,8 @@ SDValue DAGCombiner::visitBITCAST(SDNode *N) {
   // This often reduces constant pool loads.
   if (((N0.getOpcode() == ISD::FNEG && !TLI.isFNegFree(VT)) ||
        (N0.getOpcode() == ISD::FABS && !TLI.isFAbsFree(VT))) &&
-      N0.getNode()->hasOneUse() && VT.isInteger() && !VT.isVector()) {
+      N0.getNode()->hasOneUse() && VT.isInteger() &&
+      !VT.isVector() && !N0.getValueType().isVector()) {
     SDValue NewConv = DAG.getNode(ISD::BITCAST, N0.getDebugLoc(), VT,
                                   N0.getOperand(0));
     AddToWorkList(NewConv.getNode());
