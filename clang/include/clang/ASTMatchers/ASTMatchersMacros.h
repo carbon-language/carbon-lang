@@ -230,13 +230,14 @@
       MatcherName, NodeType, FunctionName)                                     \
   inline internal::Matcher<NodeType> hasPrefix(                                \
       const internal::Matcher<NodeType> &InnerMatcher) {                       \
-    return makeMatcher(new internal::TraverseMatcher<NodeType>(                \
+    return internal::makeMatcher(new internal::TraverseMatcher<NodeType>(      \
       InnerMatcher, &NodeType::getPrefix));                                    \
   }                                                                            \
   inline internal::Matcher<NodeType##Loc> hasPrefix(                           \
       const internal::Matcher<NodeType##Loc> &InnerMatcher) {                  \
-    return makeMatcher(new internal::LocTraverseMatcher<NodeType##Loc>(        \
-      InnerMatcher, &NodeType##Loc::getPrefix));                               \
+    return internal::makeMatcher(                                              \
+      new internal::LocTraverseMatcher<NodeType##Loc>(                         \
+        InnerMatcher, &NodeType##Loc::getPrefix));                             \
   }
 
 #endif // LLVM_CLANG_AST_MATCHERS_AST_MATCHERS_MACROS_H
