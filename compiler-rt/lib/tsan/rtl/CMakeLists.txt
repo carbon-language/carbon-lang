@@ -44,7 +44,7 @@ if(CAN_TARGET_X86_64 AND UNIX AND NOT APPLE)
     $<TARGET_OBJECTS:RTSanitizerCommon.x86_64>
     )
   set_target_compile_flags(clang_rt.tsan-x86_64
-    ${TSAN_CFLAGS} ${TARGET_X864_64_CFLAGS}
+    ${TSAN_CFLAGS} ${TARGET_X86_64_CFLAGS}
     )
   list(APPEND TSAN_RUNTIME_LIBRARIES clang_rt.tsan-x86_64)
 endif()
