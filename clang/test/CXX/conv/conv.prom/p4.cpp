@@ -14,7 +14,7 @@ enum B : bool { false_, true_ };
 template<bool> struct T {};
 T<false_> f;
 T<true_> t;
-// FIXME: DR1407 will make this ill-formed for a different reason.
+// FIXME: DR1407 will make this ill-formed
 T<+true_> q; // desired-error {{conversion from 'int' to 'bool'}}
 
 enum B2 : bool {
