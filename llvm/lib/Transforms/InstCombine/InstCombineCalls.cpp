@@ -94,6 +94,7 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
   // dest address will be promotable.  See if we can find a better type than the
   // integer datatype.
   Value *StrippedDest = MI->getArgOperand(0)->stripPointerCasts();
+  MDNode *CopyMD = 0;
   if (StrippedDest != MI->getArgOperand(0)) {
     Type *SrcETy = cast<PointerType>(StrippedDest->getType())
                                     ->getElementType();
@@ -105,6 +106,18 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
       if (SrcETy->isSingleValueType()) {
         NewSrcPtrTy = PointerType::get(SrcETy, SrcAddrSp);
         NewDstPtrTy = PointerType::get(SrcETy, DstAddrSp);
+
+        // If the memcpy has metadata describing the members, see if we can
+        // get the TBAA tag describing our copy.
+        if (MDNode *M = MI->getMetadata(LLVMContext::MD_tbaa_struct)) {
+          if (M->getNumOperands() == 3 &&
+              isa<ConstantInt>(M->getOperand(0)) &&
+              cast<ConstantInt>(M->getOperand(0))->isNullValue() &&
+              isa<ConstantInt>(M->getOperand(1)) &&
+              cast<ConstantInt>(M->getOperand(1))->getValue() == Size &&
+              isa<MDNode>(M->getOperand(2)))
+            CopyMD = cast<MDNode>(M->getOperand(2));
+        }
       }
     }
   }
@@ -118,8 +131,12 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
   Value *Dest = Builder->CreateBitCast(MI->getArgOperand(0), NewDstPtrTy);
   LoadInst *L = Builder->CreateLoad(Src, MI->isVolatile());
   L->setAlignment(SrcAlign);
+  if (CopyMD)
+    L->setMetadata(LLVMContext::MD_tbaa, CopyMD);
   StoreInst *S = Builder->CreateStore(L, Dest, MI->isVolatile());
   S->setAlignment(DstAlign);
+  if (CopyMD)
+    S->setMetadata(LLVMContext::MD_tbaa, CopyMD);
 
   // Set the size of the copy to 0, it will be deleted on the next iteration.
   MI->setArgOperand(2, Constant::getNullValue(MemOpLength->getType()));
