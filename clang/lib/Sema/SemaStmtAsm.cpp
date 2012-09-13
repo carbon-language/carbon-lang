@@ -568,6 +568,8 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
       if (Operands[i]->isToken() || Operands[i]->isImm())
         continue;
 
+      // FIXME: The getMCInstOperandNum() function does not work with tied 
+      // operands or custom converters.
       unsigned NumMCOperands;
       unsigned MCIdx = TargetParser->getMCInstOperandNum(Kind, Inst, Operands,
                                                          i, NumMCOperands);
@@ -614,6 +616,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
               ExprResult Result = ActOnIdExpression(getCurScope(), SS, Loc, Id,
                                                     false, false);
               if (!Result.isInvalid()) {
+                // FIXME: Determine the proper constraints.
                 bool isMemDef = (i == 1) && Desc.mayStore();
                 if (isMemDef) {
                   Outputs.push_back(II);
