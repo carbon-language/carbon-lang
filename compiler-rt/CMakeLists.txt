@@ -62,7 +62,6 @@ endfunction()
 
 # Provide some common commmandline flags for Sanitizer runtimes.
 set(SANITIZER_COMMON_CFLAGS
-  -Werror
   -fPIC
   -fno-builtin
   -fno-exceptions
