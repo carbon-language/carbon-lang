@@ -577,7 +577,7 @@ void StackColoring::removeInvalidSlotRanges() {
       // read or write. Memory accesses outside of the lifetime zone are a clear
       // violation, but address calculations are okay. This can happen when
       // GEPs are hoisted outside of the lifetime zone.
-      // So, in here we only check instrucitons which can read or write memory.
+      // So, in here we only check instructions which can read or write memory.
       if (!I->mayLoad() && !I->mayStore())
         continue;
 
