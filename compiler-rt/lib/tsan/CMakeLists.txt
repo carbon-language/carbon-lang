@@ -1,8 +1,18 @@
-# Build for the AddressSanitizer runtime support library.
+# Build for the ThreadSanitizer runtime support library.
 
-file(GLOB TSAN_SOURCES "*.cc")
+include_directories(..)
 
-if(CAN_TARGET_X86_64)
-  add_library(clang_rt.tsan-x86_64 STATIC ${TSAN_SOURCES})
-  set_target_properties(clang_rt.tsan-x86_64 PROPERTIES COMPILE_FLAGS "${TARGET_X86_64_CFLAGS}")
+set(TSAN_CFLAGS ${SANITIZER_COMMON_CFLAGS})
+# FIXME: Add support for compile flags:
+#   -Wframe-larger-than=512,
+#   -Wglobal-constructors,
+#   --sysroot=.
+
+if("${CMAKE_BUILD_TYPE}" EQUAL "Release")
+  set(TSAN_COMMON_DEFINITIONS DEBUG=0)
+else()
+  set(TSAN_COMMON_DEFINITIONS DEBUG=1)
 endif()
+
+add_subdirectory(rtl)
+# FIXME: Support TSan runtime tests, unit tests and output tests.

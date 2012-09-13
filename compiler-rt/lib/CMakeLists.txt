@@ -3,8 +3,8 @@
 add_subdirectory(asan)
 add_subdirectory(interception)
 add_subdirectory(sanitizer_common)
+add_subdirectory(tsan)
 
-# FIXME: Add support for tsan library.
 # FIXME: Add support for the profile library.
 
 # The top-level lib directory contains a large amount of C code which provides
