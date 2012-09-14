@@ -13,6 +13,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/lldb-private.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/SourceManager.h"
 #include "lldb/Host/Host.h"
@@ -1244,6 +1245,107 @@ protected:
     }
 };
 
+class CommandObjectThreadReturn : public CommandObjectRaw
+{
+public:
+    CommandObjectThreadReturn (CommandInterpreter &interpreter) :
+        CommandObjectRaw (interpreter,
+                          "thread return",
+                          "Return from the currently selected frame, short-circuiting execution of the frames below it, with an optional return value.",
+                          "thread return",
+                          eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
+    {
+        CommandArgumentEntry arg;
+        CommandArgumentData expression_arg;
+
+        // Define the first (and only) variant of this arg.
+        expression_arg.arg_type = eArgTypeExpression;
+        expression_arg.arg_repetition = eArgRepeatPlain;
+
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (expression_arg);
+
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
+        
+        
+    }
+    
+    ~CommandObjectThreadReturn()
+    {
+    }
+    
+protected:
+
+    bool DoExecute
+    (
+        const char *command,
+        CommandReturnObject &result
+    )
+    {
+        // If there is a command string, pass it to the expression parser:
+        ExecutionContext exe_ctx = m_interpreter.GetExecutionContext();
+        if (!(exe_ctx.HasProcessScope() && exe_ctx.HasThreadScope() && exe_ctx.HasFrameScope()))
+        {
+            result.AppendError("Must have selected process, thread and frame for thread return.");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        
+        ValueObjectSP return_valobj_sp;
+        
+        StackFrameSP frame_sp = exe_ctx.GetFrameSP();
+        uint32_t frame_idx = frame_sp->GetFrameIndex();
+        
+        if (frame_sp->IsInlined())
+        {
+            result.AppendError("Don't know how to return from inlined frames.");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        
+        if (command && command[0] != '\0')
+        {
+            Target *target = exe_ctx.GetTargetPtr();
+            Target::EvaluateExpressionOptions options;
+
+            options.SetUnwindOnError(true);
+            options.SetUseDynamic(eNoDynamicValues);
+            
+            ExecutionResults exe_results = eExecutionSetupError;
+            exe_results = target->EvaluateExpression (command,
+                                                      frame_sp.get(),
+                                                      return_valobj_sp,
+                                                      options);
+            if (exe_results != eExecutionCompleted)
+            {
+                if (return_valobj_sp)
+                    result.AppendErrorWithFormat("Error evaluating result expression: %s", return_valobj_sp->GetError().AsCString());
+                else
+                    result.AppendErrorWithFormat("Unknown error evaluating result expression.");
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            
+            }
+        }
+                
+        Error error;
+        ThreadSP thread_sp = exe_ctx.GetThreadSP();
+        error = thread_sp->ReturnFromFrame (frame_sp, return_valobj_sp);
+        if (!error.Success())
+        {
+            result.AppendErrorWithFormat("Error returning from frame %d of thread %d: %s.", frame_idx, thread_sp->GetIndexID(), error.AsCString());
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        thread_sp->GetStatus(result.GetOutputStream(), 0, 1, 1);
+        result.SetStatus (eReturnStatusSuccessFinishResult);
+        return true;
+    }
+
+};
+
 //-------------------------------------------------------------------------
 // CommandObjectMultiwordThread
 //-------------------------------------------------------------------------
@@ -1257,6 +1359,7 @@ CommandObjectMultiwordThread::CommandObjectMultiwordThread (CommandInterpreter &
     LoadSubCommand ("backtrace",  CommandObjectSP (new CommandObjectThreadBacktrace (interpreter)));
     LoadSubCommand ("continue",   CommandObjectSP (new CommandObjectThreadContinue (interpreter)));
     LoadSubCommand ("list",       CommandObjectSP (new CommandObjectThreadList (interpreter)));
+    LoadSubCommand ("return",     CommandObjectSP (new CommandObjectThreadReturn (interpreter)));
     LoadSubCommand ("select",     CommandObjectSP (new CommandObjectThreadSelect (interpreter)));
     LoadSubCommand ("until",      CommandObjectSP (new CommandObjectThreadUntil (interpreter)));
     LoadSubCommand ("step-in",    CommandObjectSP (new CommandObjectThreadStepWithTypeAndScope (

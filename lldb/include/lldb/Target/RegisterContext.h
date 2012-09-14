@@ -72,6 +72,9 @@ public:
     virtual bool
     WriteAllRegisterValues (const lldb::DataBufferSP &data_sp) = 0;
     
+    bool
+    CopyFromRegisterContext (lldb::RegisterContextSP context);
+    
     virtual uint32_t
     ConvertRegisterKindToRegisterNumber (uint32_t kind, uint32_t num) = 0;
 

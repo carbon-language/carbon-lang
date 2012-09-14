@@ -1273,7 +1273,7 @@ Thread::GetFrameWithConcreteFrameIndex (uint32_t unwind_idx)
 
 
 Error
-Thread::ReturnToFrameWithIndex (uint32_t frame_idx, lldb::ValueObjectSP return_value_sp)
+Thread::ReturnFromFrameWithIndex (uint32_t frame_idx, lldb::ValueObjectSP return_value_sp)
 {
     StackFrameSP frame_sp = GetStackFrameAtIndex (frame_idx);
     Error return_error;
@@ -1283,11 +1283,11 @@ Thread::ReturnToFrameWithIndex (uint32_t frame_idx, lldb::ValueObjectSP return_v
         return_error.SetErrorStringWithFormat("Could not find frame with index %d in thread 0x%llx.", frame_idx, GetID());
     }
     
-    return ReturnToFrame(frame_sp, return_value_sp);
+    return ReturnFromFrame(frame_sp, return_value_sp);
 }
 
 Error
-Thread::ReturnToFrame (lldb::StackFrameSP frame_sp, lldb::ValueObjectSP return_value_sp)
+Thread::ReturnFromFrame (lldb::StackFrameSP frame_sp, lldb::ValueObjectSP return_value_sp)
 {
     Error return_error;
     
@@ -1298,32 +1298,37 @@ Thread::ReturnToFrame (lldb::StackFrameSP frame_sp, lldb::ValueObjectSP return_v
     }
     
     Thread *thread = frame_sp->GetThread().get();
+    uint32_t older_frame_idx = frame_sp->GetFrameIndex() + 1;
+    StackFrameSP older_frame_sp = thread->GetStackFrameAtIndex(older_frame_idx);
     
     if (return_value_sp)
     {
+        // TODO: coerce the return_value_sp to the type of the function in frame_sp.
+    
         lldb::ABISP abi = thread->GetProcess()->GetABI();
         if (!abi)
         {
             return_error.SetErrorString("Could not find ABI to set return value.");
         }
-        return_error = abi->SetReturnValueObject(frame_sp, return_value_sp);
+        return_error = abi->SetReturnValueObject(older_frame_sp, return_value_sp);
         if (!return_error.Success())
             return return_error;
     }
     
     // Now write the return registers for the chosen frame:
-    lldb::DataBufferSP register_values_sp;
-    frame_sp->GetRegisterContext()->ReadAllRegisterValues (register_values_sp);
-    if (thread->ResetFrameZeroRegisters(register_values_sp))
+    // Note, we can't use ReadAllRegisterValues->WriteAllRegisterValues, since the read & write
+    // cook their data 
+    bool copy_success = thread->GetStackFrameAtIndex(0)->GetRegisterContext()->CopyFromRegisterContext(older_frame_sp->GetRegisterContext());
+    if (copy_success)
     {
         thread->DiscardThreadPlans(true);
+        thread->ClearStackFrames();
         return return_error;
     }
     else
     {
         return_error.SetErrorString("Could not reset register values.");
         return return_error;
-    
     }
 }
 

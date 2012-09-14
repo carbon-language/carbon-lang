@@ -286,10 +286,10 @@ public:
     }
     
     Error
-    ReturnToFrameWithIndex (uint32_t frame_idx, lldb::ValueObjectSP return_value_sp);
+    ReturnFromFrameWithIndex (uint32_t frame_idx, lldb::ValueObjectSP return_value_sp);
     
     Error
-    ReturnToFrame (lldb::StackFrameSP frame_sp, lldb::ValueObjectSP return_value_sp);
+    ReturnFromFrame (lldb::StackFrameSP frame_sp, lldb::ValueObjectSP return_value_sp);
     
     virtual lldb::StackFrameSP
     GetFrameWithStackID (const StackID &stack_id)

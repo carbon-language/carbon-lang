@@ -131,7 +131,7 @@ public:
     RunToAddress (lldb::addr_t addr);
 
     SBError
-    ReturnToFrame (SBFrame &frame, SBValue &return_value);
+    ReturnFromFrame (SBFrame &frame, SBValue &return_value);
 
     %feature("docstring", "
     //--------------------------------------------------------------------------

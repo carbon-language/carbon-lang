@@ -196,6 +196,47 @@ RegisterContext::WriteRegisterFromUnsigned (const RegisterInfo *reg_info, uint64
     return false;
 }
 
+bool
+RegisterContext::CopyFromRegisterContext (lldb::RegisterContextSP context)
+{
+    uint32_t num_register_sets = context->GetRegisterSetCount();
+    // We don't know that two threads have the same register context, so require the threads to be the same.
+    if (context->GetThreadID() != GetThreadID())
+        return false;
+    
+    if (num_register_sets != GetRegisterSetCount())
+        return false;
+    
+    RegisterContextSP frame_zero_context = m_thread.GetRegisterContext();
+    
+    for (uint32_t set_idx = 0; set_idx < num_register_sets; ++set_idx)
+    {
+        const RegisterSet * const reg_set = GetRegisterSet(set_idx);
+        
+        const uint32_t num_registers = reg_set->num_registers;
+        for (uint32_t reg_idx = 0; reg_idx < num_registers; ++reg_idx)
+        {
+            const uint32_t reg = reg_set->registers[reg_idx];
+            const RegisterInfo *reg_info = GetRegisterInfoAtIndex(reg);
+            if (!reg_info || reg_info->value_regs)
+                continue;
+            RegisterValue reg_value;
+            
+            // If we can reconstruct the register from the frame we are copying from, then do so, otherwise
+            // use the value from frame 0.
+            if (context->ReadRegister(reg_info, reg_value))
+            {
+                WriteRegister(reg_info, reg_value);
+            }
+            else if (frame_zero_context->ReadRegister(reg_info, reg_value))
+            {
+                WriteRegister(reg_info, reg_value);
+            }
+        }
+    }
+    return true;
+}
+
 lldb::tid_t
 RegisterContext::GetThreadID() const
 {

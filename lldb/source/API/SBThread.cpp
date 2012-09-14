@@ -878,7 +878,7 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
 }
 
 SBError
-SBThread::ReturnToFrame (SBFrame &frame, SBValue &return_value)
+SBThread::ReturnFromFrame (SBFrame &frame, SBValue &return_value)
 {
     SBError sb_error;
     
@@ -889,12 +889,12 @@ SBThread::ReturnToFrame (SBFrame &frame, SBValue &return_value)
 
 
     if (log)
-        log->Printf ("SBThread(%p)::ReturnToFrame (frame=%d)", exe_ctx.GetThreadPtr(), frame.GetFrameID());
+        log->Printf ("SBThread(%p)::ReturnFromFrame (frame=%d)", exe_ctx.GetThreadPtr(), frame.GetFrameID());
     
     if (exe_ctx.HasThreadScope())
     {
         Thread *thread = exe_ctx.GetThreadPtr();
-        sb_error.SetError (thread->ReturnToFrame(frame.GetFrameSP(), return_value.GetSP()));
+        sb_error.SetError (thread->ReturnFromFrame(frame.GetFrameSP(), return_value.GetSP()));
     }
     
     return sb_error;
