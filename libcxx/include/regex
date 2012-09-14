@@ -1231,11 +1231,11 @@ regex_traits<_CharT>::__value(wchar_t __ch, int __radix) const
 
 template <class _CharT> class __node;
 
-template <class _BidirectionalIterator> class sub_match;
+template <class _BidirectionalIterator> class _LIBCPP_VISIBLE sub_match;
 
 template <class _BidirectionalIterator,
           class _Allocator = allocator<sub_match<_BidirectionalIterator> > >
-class match_results;
+class _LIBCPP_VISIBLE match_results;
 
 template <class _CharT>
 struct __state

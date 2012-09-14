@@ -425,17 +425,19 @@ lock(_L0& __l0, _L1& __l1, _L2& __l2, _L3& ...__l3)
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 
-struct once_flag;
+struct _LIBCPP_VISIBLE once_flag;
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
 template<class _Callable, class... _Args>
-  void call_once(once_flag&, _Callable&&, _Args&&...);
+_LIBCPP_INLINE_VISIBILITY
+void call_once(once_flag&, _Callable&&, _Args&&...);
 
 #else  // _LIBCPP_HAS_NO_VARIADICS
 
 template<class _Callable>
-  void call_once(once_flag&, _Callable);
+_LIBCPP_INLINE_VISIBILITY
+void call_once(once_flag&, _Callable);
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 

@@ -194,7 +194,7 @@ protected:
 public:
 
     // 27.7.1.1.3 Prefix/suffix:
-    class sentry;
+    class _LIBCPP_VISIBLE sentry;
 
     // 27.7.1.2 Formatted input:
     basic_istream& operator>>(basic_istream& (*__pf)(basic_istream&));

@@ -962,12 +962,12 @@ __async_assoc_state<void, _Fp>::__on_zero_shared() _NOEXCEPT
     base::__on_zero_shared();
 }
 
-template <class _Rp> class promise;
-template <class _Rp> class shared_future;
+template <class _Rp> class _LIBCPP_VISIBLE promise;
+template <class _Rp> class _LIBCPP_VISIBLE shared_future;
 
 // future
 
-template <class _Rp> class future;
+template <class _Rp> class _LIBCPP_VISIBLE future;
 
 template <class _Rp, class _Fp>
 future<_Rp>

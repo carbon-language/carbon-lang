@@ -1009,43 +1009,52 @@ make_move_iterator(const _Iter& __i)
 template <class _Iter> class __wrap_iter;
 
 template <class _Iter1, class _Iter2>
+_LIBCPP_INLINE_VISIBILITY
 bool
 operator==(const __wrap_iter<_Iter1>&, const __wrap_iter<_Iter2>&) _NOEXCEPT;
 
 template <class _Iter1, class _Iter2>
+_LIBCPP_INLINE_VISIBILITY
 bool
 operator<(const __wrap_iter<_Iter1>&, const __wrap_iter<_Iter2>&) _NOEXCEPT;
 
 template <class _Iter1, class _Iter2>
+_LIBCPP_INLINE_VISIBILITY
 bool
 operator!=(const __wrap_iter<_Iter1>&, const __wrap_iter<_Iter2>&) _NOEXCEPT;
 
 template <class _Iter1, class _Iter2>
+_LIBCPP_INLINE_VISIBILITY
 bool
 operator>(const __wrap_iter<_Iter1>&, const __wrap_iter<_Iter2>&) _NOEXCEPT;
 
 template <class _Iter1, class _Iter2>
+_LIBCPP_INLINE_VISIBILITY
 bool
 operator>=(const __wrap_iter<_Iter1>&, const __wrap_iter<_Iter2>&) _NOEXCEPT;
 
 template <class _Iter1, class _Iter2>
+_LIBCPP_INLINE_VISIBILITY
 bool
 operator<=(const __wrap_iter<_Iter1>&, const __wrap_iter<_Iter2>&) _NOEXCEPT;
 
 template <class _Iter1, class _Iter2>
+_LIBCPP_INLINE_VISIBILITY
 typename __wrap_iter<_Iter1>::difference_type
 operator-(const __wrap_iter<_Iter1>&, const __wrap_iter<_Iter2>&) _NOEXCEPT;
 
 template <class _Iter>
+_LIBCPP_INLINE_VISIBILITY
 __wrap_iter<_Iter>
 operator+(typename __wrap_iter<_Iter>::difference_type, __wrap_iter<_Iter>) _NOEXCEPT;
 
-template <class _Ip, class _Op> _Op copy(_Ip, _Ip, _Op);
-template <class _B1, class _B2> _B2 copy_backward(_B1, _B1, _B2);
-template <class _Ip, class _Op> _Op move(_Ip, _Ip, _Op);
-template <class _B1, class _B2> _B2 move_backward(_B1, _B1, _B2);
+template <class _Ip, class _Op> _Op _LIBCPP_INLINE_VISIBILITY copy(_Ip, _Ip, _Op);
+template <class _B1, class _B2> _B2 _LIBCPP_INLINE_VISIBILITY copy_backward(_B1, _B1, _B2);
+template <class _Ip, class _Op> _Op _LIBCPP_INLINE_VISIBILITY move(_Ip, _Ip, _Op);
+template <class _B1, class _B2> _B2 _LIBCPP_INLINE_VISIBILITY move_backward(_B1, _B1, _B2);
 
 template <class _Tp>
+_LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_trivially_copy_assignable<_Tp>::value,
@@ -1313,34 +1322,42 @@ operator+(typename __wrap_iter<_Iter>::difference_type __n,
 template <class _Container, class _Iter> class __debug_iter;
 
 template <class _Container, class _Iter1, class _Iter2>
+_LIBCPP_INLINE_VISIBILITY
 bool
 operator==(const __debug_iter<_Container, _Iter1>&, const __debug_iter<_Container, _Iter2>&);
 
 template <class _Container, class _Iter1, class _Iter2>
+_LIBCPP_INLINE_VISIBILITY
 bool
 operator<(const __debug_iter<_Container, _Iter1>&, const __debug_iter<_Container, _Iter2>&);
 
 template <class _Container, class _Iter1, class _Iter2>
+_LIBCPP_INLINE_VISIBILITY
 bool
 operator!=(const __debug_iter<_Container, _Iter1>&, const __debug_iter<_Container, _Iter2>&);
 
 template <class _Container, class _Iter1, class _Iter2>
+_LIBCPP_INLINE_VISIBILITY
 bool
 operator>(const __debug_iter<_Container, _Iter1>&, const __debug_iter<_Container, _Iter2>&);
 
 template <class _Container, class _Iter1, class _Iter2>
+_LIBCPP_INLINE_VISIBILITY
 bool
 operator>=(const __debug_iter<_Container, _Iter1>&, const __debug_iter<_Container, _Iter2>&);
 
 template <class _Container, class _Iter1, class _Iter2>
+_LIBCPP_INLINE_VISIBILITY
 bool
 operator<=(const __debug_iter<_Container, _Iter1>&, const __debug_iter<_Container, _Iter2>&);
 
 template <class _Container, class _Iter1, class _Iter2>
+_LIBCPP_INLINE_VISIBILITY
 typename __debug_iter<_Container, _Iter1>::difference_type
 operator-(const __debug_iter<_Container, _Iter1>&, const __debug_iter<_Container, _Iter2>&);
 
 template <class _Container, class _Iter>
+_LIBCPP_INLINE_VISIBILITY
 __debug_iter<_Container, _Iter>
 operator+(typename __debug_iter<_Container, _Iter>::difference_type, const __debug_iter<_Container, _Iter>&);
 

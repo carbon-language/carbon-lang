@@ -91,13 +91,15 @@ template <class T, class Container>
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-template <class _Tp, class _Container> class stack;
+template <class _Tp, class _Container> class _LIBCPP_VISIBLE stack;
 
 template <class _Tp, class _Container>
+_LIBCPP_INLINE_VISIBILITY
 bool
 operator==(const stack<_Tp, _Container>& __x, const stack<_Tp, _Container>& __y);
 
 template <class _Tp, class _Container>
+_LIBCPP_INLINE_VISIBILITY
 bool
 operator< (const stack<_Tp, _Container>& __x, const stack<_Tp, _Container>& __y);
 

@@ -354,12 +354,12 @@ struct _LIBCPP_VISIBLE is_error_condition_enum<errc::_>
     : true_type { };
 #endif
 
-class error_condition;
-class error_code;
+class _LIBCPP_VISIBLE error_condition;
+class _LIBCPP_VISIBLE error_code;
 
 // class error_category
 
-class __do_message;
+class _LIBCPP_HIDDEN __do_message;
 
 class _LIBCPP_VISIBLE error_category
 {
@@ -387,7 +387,7 @@ public:
     _LIBCPP_ALWAYS_INLINE
     bool operator< (const error_category& __rhs) const _NOEXCEPT {return this < &__rhs;}
 
-    friend class __do_message;
+    friend class _LIBCPP_HIDDEN __do_message;
 };
 
 class _LIBCPP_HIDDEN __do_message

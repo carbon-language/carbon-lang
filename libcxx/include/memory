@@ -3580,7 +3580,7 @@ public:
     virtual const char* what() const  _NOEXCEPT;
 };
 
-template<class _Tp> class weak_ptr;
+template<class _Tp> class _LIBCPP_VISIBLE weak_ptr;
 
 class __shared_count
 {
@@ -3746,7 +3746,7 @@ __shared_ptr_emplace<_Tp, _Alloc>::__on_zero_shared_weak() _NOEXCEPT
     __a.deallocate(this, 1);
 }
 
-template<class _Tp> class enable_shared_from_this;
+template<class _Tp> class _LIBCPP_VISIBLE enable_shared_from_this;
 
 template<class _Tp>
 class _LIBCPP_VISIBLE shared_ptr
@@ -5278,10 +5278,10 @@ private:
     __sp_mut(const __sp_mut&);
     __sp_mut& operator=(const __sp_mut&);
 
-    friend __sp_mut& __get_sp_mut(const void*);
+    friend _LIBCPP_VISIBLE __sp_mut& __get_sp_mut(const void*);
 };
 
-__sp_mut& __get_sp_mut(const void*);
+_LIBCPP_VISIBLE __sp_mut& __get_sp_mut(const void*);
 
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY

@@ -31,17 +31,24 @@
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-class locale;
+class _LIBCPP_VISIBLE locale;
 
-template <class _Facet> bool has_facet(const locale&) _NOEXCEPT;
-template <class _Facet> const _Facet& use_facet(const locale&);
+template <class _Facet>
+_LIBCPP_INLINE_VISIBILITY
+bool
+has_facet(const locale&) _NOEXCEPT;
+
+template <class _Facet>
+_LIBCPP_INLINE_VISIBILITY
+const _Facet&
+use_facet(const locale&);
 
 class _LIBCPP_VISIBLE locale
 {
 public:
     // types:
-    class facet;
-    class id;
+    class _LIBCPP_VISIBLE facet;
+    class _LIBCPP_VISIBLE id;
 
     typedef int category;
     static const category // values assigned here are for exposition only

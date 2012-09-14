@@ -354,7 +354,7 @@ template <class T> unspecified2 end(const valarray<T>& v);
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-template<class _Tp> class valarray;
+template<class _Tp> class _LIBCPP_VISIBLE valarray;
 
 class _LIBCPP_VISIBLE slice
 {
@@ -381,25 +381,29 @@ public:
     _LIBCPP_INLINE_VISIBILITY size_t stride() const {return __stride_;}
 };
 
-template <class _Tp> class slice_array;
-class gslice;
-template <class _Tp> class gslice_array;
-template <class _Tp> class mask_array;
-template <class _Tp> class indirect_array;
+template <class _Tp> class _LIBCPP_VISIBLE slice_array;
+class _LIBCPP_VISIBLE gslice;
+template <class _Tp> class _LIBCPP_VISIBLE gslice_array;
+template <class _Tp> class _LIBCPP_VISIBLE mask_array;
+template <class _Tp> class _LIBCPP_VISIBLE indirect_array;
 
 template <class _Tp>
+_LIBCPP_INLINE_VISIBILITY
 _Tp*
 begin(valarray<_Tp>& __v);
 
 template <class _Tp>
+_LIBCPP_INLINE_VISIBILITY
 const _Tp*
 begin(const valarray<_Tp>& __v);
 
 template <class _Tp>
+_LIBCPP_INLINE_VISIBILITY
 _Tp*
 end(valarray<_Tp>& __v);
 
 template <class _Tp>
+_LIBCPP_INLINE_VISIBILITY
 const _Tp*
 end(const valarray<_Tp>& __v);
 

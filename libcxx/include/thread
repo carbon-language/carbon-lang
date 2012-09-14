@@ -173,13 +173,13 @@ __thread_specific_ptr<_Tp>::reset(pointer __p)
     delete __p_old;
 }
 
-class thread;
-class __thread_id;
+class _LIBCPP_VISIBLE thread;
+class _LIBCPP_VISIBLE __thread_id;
 
 namespace this_thread
 {
 
-__thread_id get_id() _NOEXCEPT;
+_LIBCPP_INLINE_VISIBILITY __thread_id get_id() _NOEXCEPT;
 
 }  // this_thread
 

@@ -626,7 +626,7 @@ __bitset<0, 0>::__bitset(unsigned long long) _NOEXCEPT
 {
 }
 
-template <size_t _Size> class bitset;
+template <size_t _Size> class _LIBCPP_VISIBLE bitset;
 template <size_t _Size> struct hash<bitset<_Size> >;
 
 template <size_t _Size>

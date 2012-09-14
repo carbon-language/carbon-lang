@@ -803,7 +803,7 @@ struct __ignore_t
 
 namespace { const __ignore_t<unsigned char> ignore = __ignore_t<unsigned char>(); }
 
-template <class _Tp> class reference_wrapper;
+template <class _Tp> class _LIBCPP_VISIBLE reference_wrapper;
 
 template <class _Tp>
 struct ___make_tuple_return

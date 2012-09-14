@@ -614,8 +614,8 @@ public:
 #endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
 };
 
-template <class _TreeIterator> class __map_iterator;
-template <class _TreeIterator> class __map_const_iterator;
+template <class _TreeIterator> class _LIBCPP_VISIBLE __map_iterator;
+template <class _TreeIterator> class _LIBCPP_VISIBLE __map_const_iterator;
 
 template <class _Tp, class _NodePtr, class _DiffType>
 class _LIBCPP_VISIBLE __tree_iterator

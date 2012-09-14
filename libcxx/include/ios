@@ -227,7 +227,7 @@ typedef ptrdiff_t streamsize;
 class _LIBCPP_VISIBLE ios_base
 {
 public:
-    class failure;
+    class _LIBCPP_VISIBLE failure;
 
     typedef unsigned int fmtflags;
     static const fmtflags boolalpha   = 0x0001;
@@ -271,7 +271,7 @@ public:
     typedef _VSTD::streamoff streamoff;
     typedef _VSTD::streampos streampos;
 
-    class Init;
+    class _LIBCPP_VISIBLE Init;
 
     // 27.5.2.2 fmtflags state:
     _LIBCPP_INLINE_VISIBILITY fmtflags flags() const;

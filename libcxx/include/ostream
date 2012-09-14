@@ -169,7 +169,7 @@ protected:
 public:
 
     // 27.7.2.4 Prefix/suffix:
-    class sentry;
+    class _LIBCPP_VISIBLE sentry;
 
     // 27.7.2.6 Formatted output:
     basic_ostream& operator<<(basic_ostream& (*__pf)(basic_ostream&));
