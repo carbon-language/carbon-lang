@@ -115,12 +115,14 @@
                 <code>&gt; cd $llvm/..
                   <br>&gt; mkdir build
                   <br>&gt; cd build
-                  <br>&gt; $llvm/configure --enable-targets=x86 --enable-jit
-                  <br>&gt; make</code>
+                  <br>&gt; $llvm/configure --enable-targets=x86 --enable-jit --enable-libcpp
+                  <br>&gt; make CXXFLAGS+=c++11</code>
                 
                 <p>Note that once both LLVM and Clang have been configured and built it is not
                 necessary to perform a top-level <tt>make</tt> to rebuild changes made only to LLDB.
-                You can build from the <tt>build/tools/lldb</tt> subdirectory as well.</p>
+                You can build from the <tt>build/tools/lldb</tt> subdirectory as well. If your
+                compiler doesn't support c++11 or libc++, you may need to tweak or remove the last
+                parameter to the configure script and make command.</p>
                 
                 <h2>Additional Notes</h2>
                 <p>LLDB has a Python scripting capability and supplies it&#8217;s own Python module,
