@@ -615,6 +615,8 @@ private:
   }
 
   // Disable SRoA for any intrinsics except for lifetime invariants.
+  // FIXME: What about debug instrinsics? This matches old behavior, but
+  // doesn't make sense.
   bool visitIntrinsicInst(IntrinsicInst &II) {
     if (II.getIntrinsicID() == Intrinsic::lifetime_start ||
         II.getIntrinsicID() == Intrinsic::lifetime_end) {
