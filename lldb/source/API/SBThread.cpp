@@ -625,7 +625,7 @@ SBThread::StepOut ()
     if (exe_ctx.HasThreadScope())
     {
         bool abort_other_plans = false;
-        bool stop_other_threads = true;
+        bool stop_other_threads = false;
 
         Thread *thread = exe_ctx.GetThreadPtr();
 
@@ -661,7 +661,7 @@ SBThread::StepOutOfFrame (lldb::SBFrame &sb_frame)
     if (exe_ctx.HasThreadScope())
     {
         bool abort_other_plans = false;
-        bool stop_other_threads = true;
+        bool stop_other_threads = false;
         Thread *thread = exe_ctx.GetThreadPtr();
 
         ThreadPlan *new_plan = thread->QueueThreadPlanForStepOut (abort_other_plans,
