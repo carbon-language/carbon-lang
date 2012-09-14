@@ -630,12 +630,13 @@ protected:
             
             if (!old_arch_spec.IsValid())
             {
-                result.AppendMessageWithFormat ("Architecture set to: %s.\n", target->GetArchitecture().GetArchitectureName());
+                result.AppendMessageWithFormat ("Architecture set to: %s.\n", target->GetArchitecture().GetTriple().getTriple().c_str());
             }
             else if (old_arch_spec != target->GetArchitecture())
             {
                 result.AppendWarningWithFormat("Architecture changed from %s to %s.\n", 
-                                                old_arch_spec.GetArchitectureName(), target->GetArchitecture().GetArchitectureName());
+                                               old_arch_spec.GetTriple().getTriple().c_str(),
+                                               target->GetArchitecture().GetTriple().getTriple().c_str());
             }
 
             // This supports the use-case scenario of immediately continuing the process once attached.

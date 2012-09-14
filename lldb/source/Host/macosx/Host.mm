@@ -1039,14 +1039,24 @@ GetMacOSXProcessCPUType (ProcessInstanceInfo &process_info)
         mib_len++;
     
         cpu_type_t cpu, sub = 0;
-        size_t cpu_len = sizeof(cpu);
-        if (::sysctl (mib, mib_len, &cpu, &cpu_len, 0, 0) == 0)
+        size_t len = sizeof(cpu);
+        if (::sysctl (mib, mib_len, &cpu, &len, 0, 0) == 0)
         {
             switch (cpu)
             {
                 case llvm::MachO::CPUTypeI386:      sub = llvm::MachO::CPUSubType_I386_ALL;     break;
                 case llvm::MachO::CPUTypeX86_64:    sub = llvm::MachO::CPUSubType_X86_64_ALL;   break;
-                default: break;
+                case llvm::MachO::CPUTypeARM:
+                    {
+                        uint32_t cpusubtype = 0;
+                        len = sizeof(cpusubtype);
+                        if (::sysctlbyname("hw.cpusubtype", &cpusubtype, &len, NULL, 0) == 0)
+                            sub = cpusubtype;
+                    }
+                    break;
+
+                default:
+                    break;
             }
             process_info.GetArchitecture ().SetArchitecture (eArchTypeMachO, cpu, sub);
             return true;
