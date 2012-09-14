@@ -525,6 +525,8 @@ public:
     Context.InitBuiltinTypes(*Target);
     
     InitializedLanguage = true;
+
+    applyLangOptsToTarget();
     return false;
   }
 
@@ -541,6 +543,8 @@ public:
     TargetOpts.Features.clear();
     TargetOpts.Triple = Triple;
     Target = TargetInfo::CreateTargetInfo(PP.getDiagnostics(), TargetOpts);
+
+    applyLangOptsToTarget();
     return false;
   }
 
@@ -561,6 +565,17 @@ public:
 
   virtual void ReadCounter(unsigned Value) {
     Counter = Value;
+  }
+
+private:
+  void applyLangOptsToTarget() {
+    if (Target && InitializedLanguage) {
+      // Inform the target of the language options.
+      //
+      // FIXME: We shouldn't need to do this, the target should be immutable once
+      // created. This complexity should be lifted elsewhere.
+      Target->setForcedLangOptions(LangOpt);
+    }
   }
 };
 
