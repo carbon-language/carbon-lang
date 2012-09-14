@@ -1876,8 +1876,9 @@ def CortexA9Itineraries : ProcessorItineraries<
 ]>;
 
 // ===---------------------------------------------------------------------===//
-// This following definitions describe the simple machine model which
-// will replace itineraries.
+// The following definitions describe the simpler per-operand machine model.
+// This works with MachineScheduler and will eventually replace itineraries.
+
 
 // Cortex-A9 machine model for scheduling and other instruction cost heuristics.
 def CortexA9Model : SchedMachineModel {
@@ -1891,5 +1892,595 @@ def CortexA9Model : SchedMachineModel {
   let Itineraries = CortexA9Itineraries;
 }
 
-// TODO: Add Cortex-A9 processor and scheduler resources.
+//===----------------------------------------------------------------------===//
+// Define each kind of processor resource and number available.
 
+def A9UnitALU : ProcResource<2>;
+def A9UnitMul : ProcResource<1> { let Super = A9UnitALU; }
+def A9UnitAGU : ProcResource<1>;
+def A9UnitLS  : ProcResource<1>;
+def A9UnitFP  : ProcResource<1> { let Buffered = 0; }
+def A9UnitB   : ProcResource<1>;
+
+//===----------------------------------------------------------------------===//
+// Define scheduler read/write types with their resources and latency on A9.
+
+// Consume an issue slot, but no processor resources. This is useful when all
+// other writes associated with the operand have NumMicroOps = 0.
+def A9WriteIssue : SchedWriteRes<[]> { let Latency = 0; }
+
+// Write an integer register.
+def A9WriteI : SchedWriteRes<[A9UnitALU]>;
+// Write an integer shifted-by register
+def A9WriteIsr : SchedWriteRes<[A9UnitALU]> { let Latency = 2; }
+
+// Basic ALU.
+def A9WriteA : SchedWriteRes<[A9UnitALU]>;
+// ALU with operand shifted by immediate.
+def A9WriteAsi : SchedWriteRes<[A9UnitALU]> { let Latency = 2; }
+// ALU with operand shifted by register.
+def A9WriteAsr : SchedWriteRes<[A9UnitALU]> { let Latency = 3; }
+
+// Multiplication
+def A9WriteM   : SchedWriteRes<[A9UnitMul, A9UnitMul]> { let Latency = 4; }
+def A9WriteMHi : SchedWriteRes<[A9UnitMul]> { let Latency = 5;
+                                              let NumMicroOps = 0; }
+def A9WriteM16   : SchedWriteRes<[A9UnitMul]> { let Latency = 3; }
+def A9WriteM16Hi : SchedWriteRes<[A9UnitMul]> { let Latency = 4;
+                                                let NumMicroOps = 0; }
+
+// Floating-point
+// Only one FP or AGU instruction may issue per cycle. We model this
+// by having FP instructions consume the AGU resource.
+def A9WriteF      : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 4; }
+def A9WriteFMov   : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 1; }
+def A9WriteFMulS  : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 5; }
+def A9WriteFMulD  : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 6; }
+def A9WriteFMAS   : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 8; }
+def A9WriteFMAD   : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 9; }
+def A9WriteFDivS  : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 10; }
+def A9WriteFDivD  : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 20; }
+def A9WriteFSqrtS : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 13; }
+def A9WriteFSqrtD : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 28; }
+
+// NEON has an odd mix of latencies. Simply name the write types by latency.
+def A9WriteV1 : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 2; }
+def A9WriteV2 : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 2; }
+def A9WriteV3 : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 3; }
+def A9WriteV4 : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 4; }
+def A9WriteV5 : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 5; }
+def A9WriteV6 : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 6; }
+def A9WriteV7 : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 7; }
+def A9WriteV9 : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 9; }
+def A9WriteV10 : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 10; }
+
+// Reserve A9UnitFP for 2 consecutive cycles.
+def A9Write2V4 : SchedWriteRes<[A9UnitFP, A9UnitAGU]> {
+  let Latency = 4;
+  let ResourceCycles = [2];
+}
+def A9Write2V7 : SchedWriteRes<[A9UnitFP, A9UnitAGU]> {
+  let Latency = 7;
+  let ResourceCycles = [2];
+}
+def A9Write2V9 : SchedWriteRes<[A9UnitFP, A9UnitAGU]> {
+  let Latency = 9;
+  let ResourceCycles = [2];
+}
+
+// Branches don't have a def operand but still consume resources.
+def A9WriteB : SchedWriteRes<[A9UnitB]>;
+
+// Address generation.
+def A9WriteAdr : SchedWriteRes<[A9UnitAGU]> { let NumMicroOps = 0; }
+
+// Load Integer.
+def A9WriteL : SchedWriteRes<[A9UnitLS]> { let Latency = 3; }
+// Load the upper 32-bits using the same micro-op.
+def A9WriteLHi : SchedWriteRes<[]> { let Latency = 3;
+                                     let NumMicroOps = 0; }
+// Offset shifted by register.
+def A9WriteLsi : SchedWriteRes<[A9UnitLS]> { let Latency = 4; }
+// Load (and zero extend) a byte.
+def A9WriteLb : SchedWriteRes<[A9UnitLS]> { let Latency = 4; }
+def A9WriteLbsi : SchedWriteRes<[A9UnitLS]> { let Latency = 5; }
+
+// Load or Store Float, aligned.
+def A9WriteLSfp : SchedWriteRes<[A9UnitLS, A9UnitFP]> { let Latency = 1; }
+
+// Store Integer.
+def A9WriteS : SchedWriteRes<[A9UnitLS]>;
+
+//===----------------------------------------------------------------------===//
+// Define resources dynamically for load multiple variants.
+
+// Define helpers for extra latency without consuming resources.
+def A9WriteCycle1 : SchedWriteRes<[]> { let Latency = 1; let NumMicroOps = 0; }
+foreach NumCycles = 2-8 in {
+def A9WriteCycle#NumCycles : WriteSequence<[A9WriteCycle1], NumCycles>;
+} // foreach NumCycles
+
+// Define TII for use in SchedVariant Predicates.
+def : PredicateProlog<[{
+  const ARMBaseInstrInfo *TII =
+    static_cast<const ARMBaseInstrInfo*>(SchedModel->getInstrInfo());
+  (void)TII;
+}]>;
+
+// Define address generation sequences and predicates for 8 flavors of LDMs.
+foreach NumAddr = 1-8 in {
+
+// Define A9WriteAdr1-8 as a sequence of A9WriteAdr with additive
+// latency for instructions that generate multiple loads or stores.
+def A9WriteAdr#NumAddr : WriteSequence<[A9WriteAdr], NumAddr>;
+
+// Define a predicate to select the LDM based on number of memory addresses.
+def A9LMAdr#NumAddr#Pred :
+  SchedPredicate<"TII->getNumLDMAddresses(MI) == "#NumAddr>;
+
+} // foreach NumAddr
+
+// Fall-back for unknown LDMs.
+def A9LMUnknownPred : SchedPredicate<"TII->getNumLDMAddresses(MI) == 0">;
+
+// LDM/VLDM/VLDn address generation latency & resources.
+// Dynamically select the A9WriteAdrN sequence using a predicate.
+def A9WriteLMAdr : SchedWriteVariant<[
+  SchedVar<A9LMAdr1Pred, [A9WriteAdr1]>,
+  SchedVar<A9LMAdr2Pred, [A9WriteAdr2]>,
+  SchedVar<A9LMAdr3Pred, [A9WriteAdr3]>,
+  SchedVar<A9LMAdr4Pred, [A9WriteAdr4]>,
+  SchedVar<A9LMAdr5Pred, [A9WriteAdr5]>,
+  SchedVar<A9LMAdr6Pred, [A9WriteAdr6]>,
+  SchedVar<A9LMAdr7Pred, [A9WriteAdr7]>,
+  SchedVar<A9LMAdr8Pred, [A9WriteAdr8]>,
+  // For unknown LDM/VLDM/VSTM, assume 2 32-bit registers.
+  SchedVar<A9LMUnknownPred, [A9WriteAdr2]>]>;
+
+// Define LDM Resources.
+// These take no issue resource, so they can be combined with other
+// writes like WriteB.
+// A9WriteLMLo takes a single LS resource and 2 cycles.
+def A9WriteLMLo : SchedWriteRes<[A9UnitLS]> { let Latency = 2;
+                                              let NumMicroOps = 0; }
+// Assuming aligned access, the upper half of each pair is free with
+// the same latency.
+def A9WriteLMHi : SchedWriteRes<[]> { let Latency = 2;
+                                      let NumMicroOps = 0; }
+// Each A9WriteL#N variant adds N cycles of latency without consuming
+// additional resources.
+foreach NumAddr = 1-8 in {
+def A9WriteL#NumAddr : WriteSequence<
+  [A9WriteLMLo, !cast<SchedWrite>("A9WriteCycle"#NumAddr)]>;
+def A9WriteL#NumAddr#Hi : WriteSequence<
+  [A9WriteLMHi, !cast<SchedWrite>("A9WriteCycle"#NumAddr)]>;
+}
+
+//===----------------------------------------------------------------------===//
+// LDM: Load multiple into 32-bit integer registers.
+
+// A9WriteLM variants expand into a pair of writes for each 64-bit
+// value loaded. When the number of registers is odd, the last
+// A9WriteLnHi is naturally ignored because the instruction has no
+// following def operands.  These variants take no issue resource, so
+// they may need to be part of a WriteSequence that includes A9WriteIssue.
+def A9WriteLM : SchedWriteVariant<[
+  SchedVar<A9LMAdr1Pred, [A9WriteL1, A9WriteL1Hi]>,
+  SchedVar<A9LMAdr2Pred, [A9WriteL1, A9WriteL1Hi,
+                          A9WriteL2, A9WriteL2Hi]>,
+  SchedVar<A9LMAdr3Pred, [A9WriteL1, A9WriteL1Hi,
+                          A9WriteL2, A9WriteL2Hi,
+                          A9WriteL3, A9WriteL3Hi]>,
+  SchedVar<A9LMAdr4Pred, [A9WriteL1, A9WriteL1Hi,
+                          A9WriteL2, A9WriteL2Hi,
+                          A9WriteL3, A9WriteL3Hi,
+                          A9WriteL4, A9WriteL4Hi]>,
+  SchedVar<A9LMAdr5Pred, [A9WriteL1, A9WriteL1Hi,
+                          A9WriteL2, A9WriteL2Hi,
+                          A9WriteL3, A9WriteL3Hi,
+                          A9WriteL4, A9WriteL4Hi,
+                          A9WriteL5, A9WriteL5Hi]>,
+  SchedVar<A9LMAdr6Pred, [A9WriteL1, A9WriteL1Hi,
+                          A9WriteL2, A9WriteL2Hi,
+                          A9WriteL3, A9WriteL3Hi,
+                          A9WriteL4, A9WriteL4Hi,
+                          A9WriteL5, A9WriteL5Hi,
+                          A9WriteL6, A9WriteL6Hi]>,
+  SchedVar<A9LMAdr7Pred, [A9WriteL1, A9WriteL1Hi,
+                          A9WriteL2, A9WriteL2Hi,
+                          A9WriteL3, A9WriteL3Hi,
+                          A9WriteL4, A9WriteL4Hi,
+                          A9WriteL5, A9WriteL5Hi,
+                          A9WriteL6, A9WriteL6Hi,
+                          A9WriteL7, A9WriteL7Hi]>,
+  SchedVar<A9LMAdr8Pred, [A9WriteL1, A9WriteL1Hi,
+                          A9WriteL2, A9WriteL2Hi,
+                          A9WriteL3, A9WriteL3Hi,
+                          A9WriteL4, A9WriteL4Hi,
+                          A9WriteL5, A9WriteL5Hi,
+                          A9WriteL6, A9WriteL6Hi,
+                          A9WriteL7, A9WriteL7Hi,
+                          A9WriteL8, A9WriteL8Hi]>,
+  // For unknown LDMs, define the maximum number of writes, but only
+  // make the first two consume resources.
+  SchedVar<A9LMUnknownPred, [A9WriteL1, A9WriteL1Hi,
+                             A9WriteL2, A9WriteL2Hi,
+                             A9WriteL3Hi, A9WriteL3Hi,
+                             A9WriteL4Hi, A9WriteL4Hi,
+                             A9WriteL5Hi, A9WriteL5Hi,
+                             A9WriteL6Hi, A9WriteL6Hi,
+                             A9WriteL7Hi, A9WriteL7Hi,
+                             A9WriteL8Hi, A9WriteL8Hi]>]> {
+  let Variadic = 1;
+}
+
+//===----------------------------------------------------------------------===//
+// VFP Load/Store Multiple Variants, and NEON VLDn/VSTn support.
+
+// A9WriteLfpOp is the same as A9WriteLSfp but takes no issue resources
+// so can be used in WriteSequences for in single-issue instructions that
+// encapsulate multiple loads.
+def A9WriteLfpOp : SchedWriteRes<[A9UnitLS, A9UnitFP]> {
+  let Latency = 1;
+  let NumMicroOps = 0;
+}
+
+foreach NumAddr = 1-8 in {
+
+// Helper for A9WriteLfp1-8: A sequence of fp loads with no micro-ops.
+def A9WriteLfp#NumAddr#Seq : WriteSequence<[A9WriteLfpOp], NumAddr>;
+
+// A9WriteLfp1-8 definitions are statically expanded into a sequence of
+// A9WriteLfpOps with additive latency that takes a single issue slot.
+// Used directly to describe NEON VLDn.
+def A9WriteLfp#NumAddr : WriteSequence<
+  [A9WriteIssue, !cast<SchedWrite>("A9WriteLfp"#NumAddr#Seq)]>;
+
+// A9WriteLfp1-8Mov adds a cycle of latency and FP resource for
+// permuting loaded values.
+def A9WriteLfp#NumAddr#Mov : WriteSequence<
+  [A9WriteF, !cast<SchedWrite>("A9WriteLfp"#NumAddr#Seq)]>;
+
+} // foreach NumAddr
+
+// Define VLDM/VSTM PreRA resources.
+// A9WriteLMfpPreRA are dynamically expanded into the correct
+// A9WriteLfp1-8 sequence based on a predicate. This supports the
+// preRA VLDM variants in which all 64-bit loads are written to the
+// same tuple of either single or double precision registers.
+def A9WriteLMfpPreRA : SchedWriteVariant<[
+  SchedVar<A9LMAdr1Pred, [A9WriteLfp1]>,
+  SchedVar<A9LMAdr2Pred, [A9WriteLfp2]>,
+  SchedVar<A9LMAdr3Pred, [A9WriteLfp3]>,
+  SchedVar<A9LMAdr4Pred, [A9WriteLfp4]>,
+  SchedVar<A9LMAdr5Pred, [A9WriteLfp5]>,
+  SchedVar<A9LMAdr6Pred, [A9WriteLfp6]>,
+  SchedVar<A9LMAdr7Pred, [A9WriteLfp7]>,
+  SchedVar<A9LMAdr8Pred, [A9WriteLfp8]>,
+  // For unknown VLDM/VSTM PreRA, assume 2xS registers.
+  SchedVar<A9LMUnknownPred, [A9WriteLfp2]>]>;
+
+// Define VLDM/VSTM PostRA Resources.
+// A9WriteLMfpLo takes a LS and FP resource and one issue slot but no latency.
+def A9WriteLMfpLo : SchedWriteRes<[A9UnitLS, A9UnitFP]> { let Latency = 0; }
+
+foreach NumAddr = 1-8 in {
+
+// Each A9WriteL#N variant adds N cycles of latency without consuming
+// additional resources.
+def A9WriteLMfp#NumAddr : WriteSequence<
+  [A9WriteLMfpLo, !cast<SchedWrite>("A9WriteCycle"#NumAddr)]>;
+
+// Assuming aligned access, the upper half of each pair is free with
+// the same latency.
+def A9WriteLMfp#NumAddr#Hi : WriteSequence<
+  [A9WriteLMHi, !cast<SchedWrite>("A9WriteCycle"#NumAddr)]>;
+
+} // foreach NumAddr
+
+// VLDM PostRA Variants. These variants expand A9WriteLMfpPostRA into a
+// pair of writes for each 64-bit data loaded. When the number of
+// registers is odd, the last WriteLMfpnHi is naturally ignored because
+// the instruction has no following def operands.
+def A9WriteLMfpPostRA : SchedWriteVariant<[
+  SchedVar<A9LMAdr1Pred, [A9WriteLMfp1, A9WriteLMfp1Hi]>,
+  SchedVar<A9LMAdr2Pred, [A9WriteLMfp1, A9WriteLMfp1Hi,
+                          A9WriteLMfp2, A9WriteLMfp2Hi]>,
+  SchedVar<A9LMAdr3Pred, [A9WriteLMfp1, A9WriteLMfp1Hi,
+                          A9WriteLMfp2, A9WriteLMfp2Hi,
+                          A9WriteLMfp3, A9WriteLMfp3Hi]>,
+  SchedVar<A9LMAdr4Pred, [A9WriteLMfp1, A9WriteLMfp1Hi,
+                          A9WriteLMfp2, A9WriteLMfp2Hi,
+                          A9WriteLMfp3, A9WriteLMfp3Hi,
+                          A9WriteLMfp4, A9WriteLMfp4Hi]>,
+  SchedVar<A9LMAdr5Pred, [A9WriteLMfp1, A9WriteLMfp1Hi,
+                          A9WriteLMfp2, A9WriteLMfp2Hi,
+                          A9WriteLMfp3, A9WriteLMfp3Hi,
+                          A9WriteLMfp4, A9WriteLMfp4Hi,
+                          A9WriteLMfp5, A9WriteLMfp5Hi]>,
+  SchedVar<A9LMAdr6Pred, [A9WriteLMfp1, A9WriteLMfp1Hi,
+                          A9WriteLMfp2, A9WriteLMfp2Hi,
+                          A9WriteLMfp3, A9WriteLMfp3Hi,
+                          A9WriteLMfp4, A9WriteLMfp4Hi,
+                          A9WriteLMfp5, A9WriteLMfp5Hi,
+                          A9WriteLMfp6, A9WriteLMfp6Hi]>,
+  SchedVar<A9LMAdr7Pred, [A9WriteLMfp1, A9WriteLMfp1Hi,
+                          A9WriteLMfp2, A9WriteLMfp2Hi,
+                          A9WriteLMfp3, A9WriteLMfp3Hi,
+                          A9WriteLMfp4, A9WriteLMfp4Hi,
+                          A9WriteLMfp5, A9WriteLMfp5Hi,
+                          A9WriteLMfp6, A9WriteLMfp6Hi,
+                          A9WriteLMfp7, A9WriteLMfp7Hi]>,
+  SchedVar<A9LMAdr8Pred, [A9WriteLMfp1, A9WriteLMfp1Hi,
+                          A9WriteLMfp2, A9WriteLMfp2Hi,
+                          A9WriteLMfp3, A9WriteLMfp3Hi,
+                          A9WriteLMfp4, A9WriteLMfp4Hi,
+                          A9WriteLMfp5, A9WriteLMfp5Hi,
+                          A9WriteLMfp6, A9WriteLMfp6Hi,
+                          A9WriteLMfp7, A9WriteLMfp7Hi,
+                          A9WriteLMfp8, A9WriteLMfp8Hi]>,
+  // For unknown LDMs, define the maximum number of writes, but only
+  // make the first two consume resources.
+  SchedVar<A9LMUnknownPred, [A9WriteLMfp1, A9WriteLMfp1Hi,
+                             A9WriteLMfp2, A9WriteLMfp2Hi,
+                             A9WriteLMfp3Hi, A9WriteLMfp3Hi,
+                             A9WriteLMfp4Hi, A9WriteLMfp4Hi,
+                             A9WriteLMfp5Hi, A9WriteLMfp5Hi,
+                             A9WriteLMfp6Hi, A9WriteLMfp6Hi,
+                             A9WriteLMfp7Hi, A9WriteLMfp7Hi,
+                             A9WriteLMfp8Hi, A9WriteLMfp8Hi]>]> {
+  let Variadic = 1;
+}
+
+// Distinguish between our multiple MI-level forms of the same
+// VLDM/VSTM instructions.
+def A9PreRA : SchedPredicate<
+  "TargetRegisterInfo::isVirtualRegister(MI->getOperand(0).getReg())">;
+def A9PostRA : SchedPredicate<
+  "TargetRegisterInfo::isPhysicalRegister(MI->getOperand(0).getReg())">;
+
+// VLDM represents all destination registers as a single register
+// tuple, unlike LDM. So the number of write operands is not variadic.
+def A9WriteLMfp : SchedWriteVariant<[
+  SchedVar<A9PreRA, [A9WriteLMfpPreRA]>,
+  SchedVar<A9PostRA, [A9WriteLMfpPostRA]>]>;
+
+//===----------------------------------------------------------------------===//
+// Resources for other (non LDM/VLDM) Variants.
+
+// These mov immediate writers are unconditionally expanded with
+// additive latency.
+def A9WriteI2 : WriteSequence<[A9WriteI, A9WriteI]>;
+def A9WriteI2pc : WriteSequence<[A9WriteI, A9WriteI, A9WriteA]>;
+def A9WriteI2ld  : WriteSequence<[A9WriteI, A9WriteI, A9WriteL]>;
+
+// Some ALU operations can read loaded integer values one cycle early.
+def A9ReadA : SchedReadAdvance<1,
+  [A9WriteL, A9WriteLHi, A9WriteLsi, A9WriteLb, A9WriteLbsi,
+   A9WriteL1, A9WriteL2, A9WriteL3, A9WriteL4,
+   A9WriteL5, A9WriteL6, A9WriteL7, A9WriteL8,
+   A9WriteL1Hi, A9WriteL2Hi, A9WriteL3Hi, A9WriteL4Hi,
+   A9WriteL5Hi, A9WriteL6Hi, A9WriteL7Hi, A9WriteL8Hi]>;
+
+// Read types for operands that are unconditionally read in cycle N
+// after the instruction issues, decreases producer latency by N-1.
+def A9Read2 : SchedReadAdvance<1>;
+def A9Read3 : SchedReadAdvance<2>;
+def A9Read4 : SchedReadAdvance<3>;
+
+//===----------------------------------------------------------------------===//
+// Map itinerary classes to scheduler read/write resources per operand.
+//
+// For ARM, we piggyback scheduler resources on the Itinerary classes
+// to avoid perturbing the existing instruction definitions.
+
+// This table follows the ARM Cortex-A9 Technical Reference Manuals,
+// mostly in order.
+let SchedModel = CortexA9Model in {
+
+def :ItinRW<[A9WriteI], [IIC_iMOVi,IIC_iMOVr,IIC_iMOVsi,
+                         IIC_iMVNi,IIC_iMVNsi,
+                         IIC_iCMOVi,IIC_iCMOVr,IIC_iCMOVsi]>;
+def :ItinRW<[A9WriteI,A9ReadA],[IIC_iMVNr]>;
+def :ItinRW<[A9WriteIsr], [IIC_iMOVsr,IIC_iMVNsr,IIC_iCMOVsr]>;
+
+def :ItinRW<[A9WriteI2],   [IIC_iMOVix2,IIC_iCMOVix2]>;
+def :ItinRW<[A9WriteI2pc], [IIC_iMOVix2addpc]>;
+def :ItinRW<[A9WriteI2ld], [IIC_iMOVix2ld]>;
+
+def :ItinRW<[A9WriteA], [IIC_iBITi,IIC_iBITr,IIC_iUNAr,IIC_iTSTi,IIC_iTSTr]>;
+def :ItinRW<[A9WriteA, A9ReadA], [IIC_iALUi, IIC_iCMPi, IIC_iCMPsi]>;
+def :ItinRW<[A9WriteA, A9ReadA, A9ReadA],[IIC_iALUr,IIC_iCMPr]>;
+def :ItinRW<[A9WriteAsi], [IIC_iBITsi,IIC_iUNAsi,IIC_iEXTr,IIC_iTSTsi]>;
+def :ItinRW<[A9WriteAsi, A9ReadA], [IIC_iALUsi]>;
+def :ItinRW<[A9WriteAsi, ReadDefault, A9ReadA], [IIC_iALUsir]>; // RSB
+def :ItinRW<[A9WriteAsr], [IIC_iBITsr,IIC_iTSTsr,IIC_iEXTAr,IIC_iEXTAsr]>;
+def :ItinRW<[A9WriteAsr, A9ReadA], [IIC_iALUsr,IIC_iCMPsr]>;
+
+// A9WriteHi ignored for MUL32.
+def :ItinRW<[A9WriteM, A9WriteMHi], [IIC_iMUL32,IIC_iMAC32,
+                                     IIC_iMUL64,IIC_iMAC64]>;
+// FIXME: SMLALxx needs itin classes
+def :ItinRW<[A9WriteM16, A9WriteM16Hi], [IIC_iMUL16,IIC_iMAC16]>;
+
+// TODO: For floating-point ops, we model the pipeline forwarding
+// latencies here. WAW latencies are sometimes longer.
+
+def :ItinRW<[A9WriteFMov], [IIC_fpSTAT, IIC_fpMOVIS, IIC_fpMOVID, IIC_fpMOVSI,
+                            IIC_fpUNA32, IIC_fpUNA64,
+                            IIC_fpCMP32, IIC_fpCMP64]>;
+def :ItinRW<[A9WriteFMov, A9WriteFMov], [IIC_fpMOVDI]>;
+def :ItinRW<[A9WriteF], [IIC_fpCVTSD, IIC_fpCVTDS, IIC_fpCVTSH, IIC_fpCVTHS,
+                         IIC_fpCVTIS, IIC_fpCVTID, IIC_fpCVTSI, IIC_fpCVTDI,
+                         IIC_fpALU32, IIC_fpALU64]>;
+def :ItinRW<[A9WriteFMulS], [IIC_fpMUL32]>;
+def :ItinRW<[A9WriteFMulD], [IIC_fpMUL64]>;
+def :ItinRW<[A9WriteFMAS], [IIC_fpMAC32]>;
+def :ItinRW<[A9WriteFMAD], [IIC_fpMAC64]>;
+def :ItinRW<[A9WriteFDivS], [IIC_fpDIV32]>;
+def :ItinRW<[A9WriteFDivD], [IIC_fpDIV64]>;
+def :ItinRW<[A9WriteFSqrtS], [IIC_fpSQRT32]>;
+def :ItinRW<[A9WriteFSqrtD], [IIC_fpSQRT64]>;
+
+def :ItinRW<[A9WriteB], [IIC_Br]>;
+
+// A9 PLD is processed in a dedicated unit.
+def :ItinRW<[], [IIC_Preload]>;
+
+// Note: We must assume that loads are aligned, since the machine
+// model cannot know this statically and A9 ignores alignment hints.
+
+// A9WriteAdr consumes AGU regardless address writeback. But it's
+// latency is only relevant for users of an updated address.
+def :ItinRW<[A9WriteL, A9WriteAdr], [IIC_iLoad_i,IIC_iLoad_r,
+                                     IIC_iLoad_iu,IIC_iLoad_ru]>;
+def :ItinRW<[A9WriteLsi, A9WriteAdr], [IIC_iLoad_si,IIC_iLoad_siu]>;
+def :ItinRW<[A9WriteLb, A9WriteAdr2], [IIC_iLoad_bh_i,IIC_iLoad_bh_r,
+                                       IIC_iLoad_bh_iu,IIC_iLoad_bh_ru]>;
+def :ItinRW<[A9WriteLbsi, A9WriteAdr2], [IIC_iLoad_bh_si,IIC_iLoad_bh_siu]>;
+def :ItinRW<[A9WriteL, A9WriteLHi, A9WriteAdr], [IIC_iLoad_d_i,IIC_iLoad_d_r,
+                                            IIC_iLoad_d_ru]>;
+// Store either has no def operands, or the one def for address writeback.
+def :ItinRW<[A9WriteAdr, A9WriteS], [IIC_iStore_i, IIC_iStore_r,
+                                     IIC_iStore_iu, IIC_iStore_ru,
+                                     IIC_iStore_d_i, IIC_iStore_d_r,
+                                     IIC_iStore_d_ru]>;
+def :ItinRW<[A9WriteAdr2, A9WriteS], [IIC_iStore_si, IIC_iStore_siu,
+                                      IIC_iStore_bh_i, IIC_iStore_bh_r,
+                                      IIC_iStore_bh_iu, IIC_iStore_bh_ru]>;
+def :ItinRW<[A9WriteAdr3, A9WriteS], [IIC_iStore_bh_si, IIC_iStore_bh_siu]>;
+
+// A9WriteML will be expanded into a separate write for each def
+// operand. Address generation consumes resources, but A9WriteLMAdr
+// is listed after all def operands, so has no effective latency.
+//
+// Note: A9WriteLM expands into an even number of def operands. The
+// actual number of def operands may be less by one.
+def :ItinRW<[A9WriteLM, A9WriteLMAdr, A9WriteIssue], [IIC_iLoad_m, IIC_iPop]>;
+
+// Load multiple with address writeback has an extra def operand in
+// front of the loaded registers.
+//
+// Reuse the load-multiple variants for store-multiple because the
+// resources are identical, For stores only the address writeback
+// has a def operand so the WriteL latencies are unused.
+def :ItinRW<[A9WriteLMAdr, A9WriteLM, A9WriteIssue], [IIC_iLoad_mu,
+                                                      IIC_iStore_m,
+                                                      IIC_iStore_mu]>;
+def :ItinRW<[A9WriteLM, A9WriteLMAdr, A9WriteB], [IIC_iLoad_mBr, IIC_iPop_Br]>;
+def :ItinRW<[A9WriteL, A9WriteAdr, A9WriteA], [IIC_iLoadiALU]>;
+
+def :ItinRW<[A9WriteLSfp, A9WriteAdr], [IIC_fpLoad32, IIC_fpLoad64]>;
+
+def :ItinRW<[A9WriteLMfp, A9WriteLMAdr], [IIC_fpLoad_m]>;
+def :ItinRW<[A9WriteLMAdr, A9WriteLMfp], [IIC_fpLoad_mu]>;
+def :ItinRW<[A9WriteAdr, A9WriteLSfp], [IIC_fpStore32, IIC_fpStore64,
+                                        IIC_fpStore_m, IIC_fpStore_mu]>;
+
+// Note: Unlike VLDM, VLD1 expects the writeback operand after the
+// normal writes.
+def :ItinRW<[A9WriteLfp1, A9WriteAdr1], [IIC_VLD1, IIC_VLD1u,
+                                         IIC_VLD1x2, IIC_VLD1x2u]>;
+def :ItinRW<[A9WriteLfp2, A9WriteAdr2], [IIC_VLD1x3, IIC_VLD1x3u,
+                                         IIC_VLD1x4, IIC_VLD1x4u,
+                                         IIC_VLD4dup, IIC_VLD4dupu]>;
+def :ItinRW<[A9WriteLfp1Mov, A9WriteAdr1], [IIC_VLD1dup, IIC_VLD1dupu,
+                                            IIC_VLD2, IIC_VLD2u,
+                                            IIC_VLD2dup, IIC_VLD2dupu]>;
+def :ItinRW<[A9WriteLfp2Mov, A9WriteAdr1], [IIC_VLD1ln, IIC_VLD1lnu,
+                                            IIC_VLD2x2, IIC_VLD2x2u,
+                                            IIC_VLD2ln, IIC_VLD2lnu]>;
+def :ItinRW<[A9WriteLfp3Mov, A9WriteAdr3], [IIC_VLD3, IIC_VLD3u,
+                                            IIC_VLD3dup, IIC_VLD3dupu]>;
+def :ItinRW<[A9WriteLfp4Mov, A9WriteAdr4], [IIC_VLD4, IIC_VLD4u,
+                                            IIC_VLD4ln, IIC_VLD4lnu]>;
+def :ItinRW<[A9WriteLfp5Mov, A9WriteAdr5], [IIC_VLD3ln, IIC_VLD3lnu]>;
+
+// Vector stores use similar resources to vector loads, so use the
+// same write types. The address write must be first for stores with
+// address writeback.
+def :ItinRW<[A9WriteAdr1, A9WriteLfp1], [IIC_VST1, IIC_VST1u,
+                                         IIC_VST1x2, IIC_VST1x2u,
+                                         IIC_VST1ln, IIC_VST1lnu,
+                                         IIC_VST2, IIC_VST2u,
+                                         IIC_VST2x2, IIC_VST2x2u,
+                                         IIC_VST2ln, IIC_VST2lnu]>;
+def :ItinRW<[A9WriteAdr2, A9WriteLfp2], [IIC_VST1x3, IIC_VST1x3u,
+                                         IIC_VST1x4, IIC_VST1x4u,
+                                         IIC_VST3, IIC_VST3u,
+                                         IIC_VST3ln, IIC_VST3lnu,
+                                         IIC_VST4, IIC_VST4u,
+                                         IIC_VST4ln, IIC_VST4lnu]>;
+
+// NEON moves.
+def :ItinRW<[A9WriteV2], [IIC_VMOVSI, IIC_VMOVDI, IIC_VMOVD, IIC_VMOVQ]>;
+def :ItinRW<[A9WriteV1], [IIC_VMOV, IIC_VMOVIS, IIC_VMOVID]>;
+def :ItinRW<[A9WriteV3], [IIC_VMOVISL, IIC_VMOVN]>;
+
+// NEON integer arithmetic
+//
+// VADD/VAND/VORR/VEOR/VBIC/VORN/VBIT/VBIF/VBSL
+def :ItinRW<[A9WriteV3, A9Read2, A9Read2], [IIC_VBINiD, IIC_VBINiQ]>;
+// VSUB/VMVN/VCLSD/VCLZD/VCNTD
+def :ItinRW<[A9WriteV3, A9Read2], [IIC_VSUBiD, IIC_VSUBiQ, IIC_VCNTiD]>;
+// VADDL/VSUBL/VNEG are mapped later under IIC_SHLi.
+// ...
+// VHADD/VRHADD/VQADD/VTST/VADH/VRADH
+def :ItinRW<[A9WriteV4, A9Read2, A9Read2], [IIC_VBINi4D, IIC_VBINi4Q]>;
+// VSBH/VRSBH/VHSUB/VQSUB/VABD/VCEQ/VCGE/VCGT/VMAX/VMIN/VPMAX/VPMIN/VABDL
+def :ItinRW<[A9WriteV4, A9Read2], [IIC_VSUBi4D, IIC_VSUBi4Q]>;
+// VQNEG/VQABS
+def :ItinRW<[A9WriteV4], [IIC_VQUNAiD, IIC_VQUNAiQ]>;
+// VABS
+def :ItinRW<[A9WriteV4, A9Read2], [IIC_VUNAiD, IIC_VUNAiQ]>;
+// VPADD/VPADDL are mapped later under IIC_SHLi.
+// ...
+// VCLSQ/VCLZQ/VCNTQ, takes two cycles.
+def :ItinRW<[A9Write2V4, A9Read3], [IIC_VCNTiQ]>;
+// VMOVimm/VMVNimm/VORRimm/VBICimm
+def :ItinRW<[A9WriteV3], [IIC_VMOVImm]>;
+def :ItinRW<[A9WriteV6, A9Read3, A9Read2], [IIC_VABAD, IIC_VABAQ]>;
+def :ItinRW<[A9WriteV6, A9Read3], [IIC_VPALiD, IIC_VPALiQ]>;
+
+// NEON integer multiply
+//
+// Note: these don't quite match the timing docs, but they do match
+// the original A9 itinerary.
+def :ItinRW<[A9WriteV6, A9Read2, A9Read2], [IIC_VMULi16D]>;
+def :ItinRW<[A9WriteV7, A9Read2, A9Read2], [IIC_VMULi16Q]>;
+def :ItinRW<[A9Write2V7, A9Read2], [IIC_VMULi32D]>;
+def :ItinRW<[A9Write2V9, A9Read2], [IIC_VMULi32Q]>;
+def :ItinRW<[A9WriteV6, A9Read3, A9Read2, A9Read2], [IIC_VMACi16D]>;
+def :ItinRW<[A9WriteV7, A9Read3, A9Read2, A9Read2], [IIC_VMACi16Q]>;
+def :ItinRW<[A9Write2V7, A9Read3, A9Read2], [IIC_VMACi32D]>;
+def :ItinRW<[A9Write2V9, A9Read3, A9Read2], [IIC_VMACi32Q]>;
+
+// NEON integer shift
+// TODO: Q,Q,Q shifts should actually reserve FP for 2 cycles.
+def :ItinRW<[A9WriteV3], [IIC_VSHLiD, IIC_VSHLiQ]>;
+def :ItinRW<[A9WriteV4], [IIC_VSHLi4D, IIC_VSHLi4Q]>;
+
+// NEON permute
+def :ItinRW<[A9WriteV2], [IIC_VPERMD, IIC_VPERMQ, IIC_VEXTD]>;
+def :ItinRW<[A9WriteV3, A9WriteV4, ReadDefault, A9Read2],
+            [IIC_VPERMQ3, IIC_VEXTQ]>;
+def :ItinRW<[A9WriteV3, A9Read2], [IIC_VTB1]>;
+def :ItinRW<[A9WriteV3, A9Read2, A9Read2], [IIC_VTB2]>;
+def :ItinRW<[A9WriteV4, A9Read2, A9Read2, A9Read3], [IIC_VTB3]>;
+def :ItinRW<[A9WriteV4, A9Read2, A9Read2, A9Read3, A9Read3], [IIC_VTB4]>;
+def :ItinRW<[A9WriteV3, ReadDefault, A9Read2], [IIC_VTBX1]>;
+def :ItinRW<[A9WriteV3, ReadDefault, A9Read2, A9Read2], [IIC_VTBX2]>;
+def :ItinRW<[A9WriteV4, ReadDefault, A9Read2, A9Read2, A9Read3], [IIC_VTBX3]>;
+def :ItinRW<[A9WriteV4, ReadDefault, A9Read2, A9Read2, A9Read3, A9Read3],
+            [IIC_VTBX4]>;
+
+// NEON floating-point
+def :ItinRW<[A9WriteV5, A9Read2, A9Read2], [IIC_VBIND]>;
+def :ItinRW<[A9WriteV6, A9Read2, A9Read2], [IIC_VBINQ]>;
+def :ItinRW<[A9WriteV5, A9Read2], [IIC_VUNAD, IIC_VFMULD]>;
+def :ItinRW<[A9WriteV6, A9Read2], [IIC_VUNAQ, IIC_VFMULQ]>;
+def :ItinRW<[A9WriteV9, A9Read3, A9Read2], [IIC_VMACD, IIC_VFMACD]>;
+def :ItinRW<[A9WriteV10, A9Read3, A9Read2], [IIC_VMACQ, IIC_VFMACQ]>;
+def :ItinRW<[A9WriteV9, A9Read2, A9Read2], [IIC_VRECSD]>;
+def :ItinRW<[A9WriteV10, A9Read2, A9Read2], [IIC_VRECSQ]>;
+} // SchedModel = CortexA9Model
