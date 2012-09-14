@@ -496,6 +496,9 @@ public:
     assert((unsigned)CC < array_lengthof(CondCodeActions) &&
            (unsigned)VT.getSimpleVT().SimpleTy < sizeof(CondCodeActions[0])*4 &&
            "Table isn't big enough!");
+    /// The lower 5 bits of the SimpleTy index into Nth 2bit set from the 64bit
+    /// value and the upper 27 bits index into the second dimension of the
+    /// array to select what 64bit value to use.
     LegalizeAction Action = (LegalizeAction)
       ((CondCodeActions[CC][VT.getSimpleVT().SimpleTy >> 5]
         >> (2*(VT.getSimpleVT().SimpleTy & 0x1F))) & 3);
@@ -1155,6 +1158,9 @@ protected:
     assert(VT < MVT::LAST_VALUETYPE &&
            (unsigned)CC < array_lengthof(CondCodeActions) &&
            "Table isn't big enough!");
+    /// The lower 5 bits of the SimpleTy index into Nth 2bit set from the 64bit
+    /// value and the upper 27 bits index into the second dimension of the
+    /// array to select what 64bit value to use.
     CondCodeActions[(unsigned)CC][VT.SimpleTy >> 5]
       &= ~(uint64_t(3UL)  << (VT.SimpleTy & 0x1F)*2);
     CondCodeActions[(unsigned)CC][VT.SimpleTy >> 5]
@@ -1937,7 +1943,10 @@ private:
   /// CondCodeActions - For each condition code (ISD::CondCode) keep a
   /// LegalizeAction that indicates how instruction selection should
   /// deal with the condition code.
-  uint64_t CondCodeActions[ISD::SETCC_INVALID][2];
+  /// Because each CC action takes up 2 bits, we need to have the array size
+  /// be large enough to fit all of the value types. This can be done by
+  /// dividing the MVT::LAST_VALUETYPE by 32 and adding one.
+  uint64_t CondCodeActions[ISD::SETCC_INVALID][(MVT::LAST_VALUETYPE / 32) + 1];
 
   ValueTypeActionImpl ValueTypeActions;
 
