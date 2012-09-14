@@ -23,6 +23,6 @@ add_llvm_unittest(SupportTests
   TimeValue.cpp
   ValueHandleTest.cpp
   YAMLParserTest.cpp
-  formatted_raw_ostream.cpp
+  formatted_raw_ostream_test.cpp
   raw_ostream_test.cpp
   )
