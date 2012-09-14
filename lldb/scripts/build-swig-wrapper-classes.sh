@@ -119,7 +119,7 @@ do
                 echo "Executing $curlang build script..."
             fi
 
-            ./build-swig-${curlang}.sh  $SRC_ROOT $TARGET_DIR $CONFIG_BUILD_DIR "${PREFIX}" "${debug_flag}" "${SWIG}"
+            ./build-swig-${curlang}.sh  "$SRC_ROOT" "$TARGET_DIR" "$CONFIG_BUILD_DIR" "${PREFIX}" "${debug_flag}" "${SWIG}"
         fi
     fi
 done

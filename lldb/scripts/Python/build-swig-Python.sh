@@ -18,13 +18,19 @@ PYTHON_INSTALL_DIR=$4
 debug_flag=$5 
 SWIG=$6
 
-swig_output_file=${SRC_ROOT}/source/LLDBWrapPython.cpp
+os_name=`uname -s`
+if [ "$os_name" == "Darwin" ]
+then
+  swig_output_file=${SRC_ROOT}/source/LLDBWrapPython.cpp
+else
+  swig_output_file=${TARGET_DIR}/LLDBWrapPython.cpp
+fi
 swig_input_file=${SRC_ROOT}/scripts/lldb.swig
 swig_python_extensions=${SRC_ROOT}/scripts/Python/python-extensions.swig
 swig_python_wrapper=${SRC_ROOT}/scripts/Python/python-wrapper.swig
 swig_python_typemaps=${SRC_ROOT}/scripts/Python/python-typemaps.swig
 
-if [ $LLDB_DISABLE_PYTHON = "1" ] ; then
+if [ "$LLDB_DISABLE_PYTHON" = "1" ] ; then
     # We don't want Python for this build, but touch the output file so we don't have to
     # conditionalize the build on this as well.
     # Note, at present iOS doesn't have Python, so if you're building for iOS be sure to
@@ -252,8 +258,7 @@ then
     fi
 fi
 
-os_name=`uname -s`
-python_version=`/usr/bin/python --version 2>&1 | sed -e 's,Python ,,' -e 's,[.][0-9],,2' -e 's,[a-z][a-z][0-9],,'`
+python_version=`/usr/bin/env python --version 2>&1 | sed -e 's,Python ,,' -e 's,[.][0-9],,2' -e 's,[a-z][a-z][0-9],,'`
 
 if [ "$os_name" == "Darwin" ]
 then

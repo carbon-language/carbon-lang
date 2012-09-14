@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/sh
 
 # finish-swig-Python.sh
 #
@@ -37,7 +37,7 @@ debug_flag=$5
 # Note, at present iOS doesn't have Python, so if you're building for iOS be sure to
 # set LLDB_DISABLE_PYTHON to 1.
 
-if [ ! $LLDB_DISABLE_PYTHON = "1" ] ; then
+if [ ! "$LLDB_DISABLE_PYTHON" = "1" ] ; then
 
 if [ -n "$debug_flag" -a "$debug_flag" == "-debug" ]
 then
@@ -47,7 +47,7 @@ else
 fi
 
 OS_NAME=`uname -s`
-PYTHON_VERSION=`/usr/bin/python --version 2>&1 | sed -e 's,Python ,,' -e 's,[.][0-9],,2' -e 's,[a-z][a-z][0-9],,'`
+PYTHON_VERSION=`/usr/bin/env python --version 2>&1 | sed -e 's,Python ,,' -e 's,[.][0-9],,2' -e 's,[a-z][a-z][0-9],,'`
 
 
 if [ $Debug == 1 ]
@@ -134,9 +134,6 @@ then
     then
         cd "${framework_python_dir}"
         ln -s "../../../LLDB" _lldb.so
-    else
-        cd "${TARGET_DIR}"
-        ln -s "../LLDB" _lldb.so
     fi
 else
     if [ $Debug == 1 ]
@@ -146,7 +143,7 @@ else
 fi
 
 
-function create_python_package {
+create_python_package () {
     package_dir="${framework_python_dir}$1"
     package_files="$2"
     package_name=`echo $1 | tr '/' '.'`

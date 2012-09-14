@@ -16,6 +16,10 @@ BUILT_SOURCES := LLDBWrapPython.cpp
 include $(LLDB_LEVEL)/Makefile
 -include $(PROJ_OBJ_DIR)/LLDBWrapPython.cpp.d
 
+# edit-swig-python-wrapper-file.py needs $(SRCROOT)
+export SRCROOT := $(PROJ_SRC_DIR)/$(LLDB_LEVEL)
+TARGET_DIR := $(PROJ_OBJ_DIR)
+
 PYTHON_DIR := $(LibDir)/python/lldb
 ifeq ($(HOST_OS),Darwin)
 PYTHON_DEST_DIR := $(DESTDIR)/$(call realpath,/Library/Python/$(shell python -c 'import sys; print sys.version[:3]')/site-packages)/lldb
@@ -126,26 +130,29 @@ CPP_DEPEND_MOVEFILE = then $(MV) -f "$(PROJ_OBJ_DIR)/$*.cpp.d.tmp" "$(PROJ_OBJ_D
                       else $(RM) -f "$(PROJ_OBJ_DIR)/$*.cpp.d.tmp"; exit 1; fi
 
 LLDBWrapPython.cpp: $(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/Python/modify-python-lldb.py \
-                    $(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/Python/edit-swig-python-wrapper-file.py
+                    $(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/Python/edit-swig-python-wrapper-file.py \
+                    $(wildcard $(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/Python/interface/*.i)
 	$(Echo) Generating LLDBWrapPython.cpp
 	$(Verb) $(MKDIR) $(PYTHON_DIR)
-	$(Verb) if swig -c++ -shadow -python $(LLDB_SWIG_INCLUDE_DIRS) \
-          -D__STDC_LIMIT_MACROS -outdir "$(PYTHON_DIR)"   \
-          $(SWIG_DEPEND_OPTIONS) \
-          -o LLDBWrapPython.cpp "$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/lldb.swig" ; \
-          $(CPP_DEPEND_MOVEFILE)
-	$(Verb) python "$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/Python/modify-python-lldb.py" \
-		  "$(PYTHON_DIR)"
-	$(Verb) python "$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/Python/edit-swig-python-wrapper-file.py" \
-		  "$(PROJ_OBJ_DIR)"
-	$(Verb) if test -f "$(PROJ_OBJ_DIR)/LLDBWrapPython.cpp.edited"; then \
-		  $(MV) "$(PROJ_OBJ_DIR)/LLDBWrapPython.cpp.edited" \
-				"$(PROJ_OBJ_DIR)/LLDBWrapPython.cpp"; fi
-	$(Verb) $(MV) "$(PYTHON_DIR)/lldb.py" "$(PYTHON_DIR)/__init__.py"
-	$(Verb) $(CP) "$(PROJ_SRC_DIR)/embedded_interpreter.py" "$(PYTHON_DIR)"
-	$(Verb) $(RM) -f $(PYTHON_DIR)/_lldb.so
-	$(Verb) $(AliasTool) $(LIBLLDB) $(PYTHON_DIR)/_lldb.so
-	$(LLDB_COPY_PACKAGE)
+	$(Verb) "$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/build-swig-wrapper-classes.sh" "$(PROJ_SRC_DIR)/$(LLDB_LEVEL)" "$(TARGET_DIR)" "$(PYTHON_DIR)" "$(PYTHON_DIR)"
+	$(Verb) "$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/finish-swig-wrapper-classes.sh" "$(PROJ_SRC_DIR)/$(LLDB_LEVEL)" "$(TARGET_DIR)" "$(PYTHON_DIR)" "$(PYTHON_DIR)"
+#	$(Verb) if swig -c++ -shadow -python $(LLDB_SWIG_INCLUDE_DIRS) \
+#          -D__STDC_LIMIT_MACROS -outdir "$(PYTHON_DIR)"   \
+#          $(SWIG_DEPEND_OPTIONS) \
+#          -o LLDBWrapPython.cpp "$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/lldb.swig" ; \
+#          $(CPP_DEPEND_MOVEFILE)
+#	$(Verb) python "$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/Python/modify-python-lldb.py" \
+#		  "$(PYTHON_DIR)"
+#	$(Verb) python "$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/Python/edit-swig-python-wrapper-file.py" \
+#		  "$(PROJ_OBJ_DIR)"
+#	$(Verb) if test -f "$(PROJ_OBJ_DIR)/LLDBWrapPython.cpp.edited"; then \
+#		  $(MV) "$(PROJ_OBJ_DIR)/LLDBWrapPython.cpp.edited" \
+#				"$(PROJ_OBJ_DIR)/LLDBWrapPython.cpp"; fi
+#	$(Verb) $(MV) "$(PYTHON_DIR)/lldb.py" "$(PYTHON_DIR)/__init__.py"
+#	$(Verb) $(CP) "$(PROJ_SRC_DIR)/embedded_interpreter.py" "$(PYTHON_DIR)"
+#	$(Verb) $(RM) -f $(PYTHON_DIR)/_lldb.so
+#	$(Verb) $(AliasTool) $(LIBLLDB) $(PYTHON_DIR)/_lldb.so
+#	$(LLDB_COPY_PACKAGE)
 
 else
 
