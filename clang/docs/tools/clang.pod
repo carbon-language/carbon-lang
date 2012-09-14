@@ -132,7 +132,7 @@ Treat subsequent input files as having type I<language>.
 
 Specify the language standard to compile for.
 
-=item B<-stdlib>=I<language>
+=item B<-stdlib>=I<library>
 
 Specify the C++ standard library to use; supported options are libstdc++ and
 libc++.
