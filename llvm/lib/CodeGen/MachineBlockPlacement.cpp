@@ -500,11 +500,10 @@ void MachineBlockPlacement::buildChain(
     assert(BB);
     assert(BlockToChain[BB] == &Chain);
     assert(*llvm::prior(Chain.end()) == BB);
-    MachineBasicBlock *BestSucc = 0;
 
     // Look for the best viable successor if there is one to place immediately
     // after this block.
-    BestSucc = selectBestSuccessor(BB, Chain, BlockFilter);
+    MachineBasicBlock *BestSucc = selectBestSuccessor(BB, Chain, BlockFilter);
 
     // If an immediate successor isn't available, look for the best viable
     // block among those we've identified as not violating the loop's CFG at
