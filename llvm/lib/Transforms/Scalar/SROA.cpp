@@ -291,8 +291,8 @@ public:
   void printUsers(raw_ostream &OS, const_iterator I,
                   StringRef Indent = "  ") const;
   void print(raw_ostream &OS) const;
-  void dump(const_iterator I) const LLVM_ATTRIBUTE_NOINLINE LLVM_ATTRIBUTE_USED;
-  void dump() const LLVM_ATTRIBUTE_NOINLINE LLVM_ATTRIBUTE_USED;
+  void dump(const_iterator I) LLVM_ATTRIBUTE_NOINLINE LLVM_ATTRIBUTE_USED const;
+  void dump() LLVM_ATTRIBUTE_NOINLINE LLVM_ATTRIBUTE_USED const;
 
 private:
   template <typename DerivedT, typename RetT = void> class BuilderBase;
