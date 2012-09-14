@@ -9,7 +9,7 @@
 //
 // This file defines a wrapper around MCSchedModel that allows the interface to
 // benefit from information currently only available in TargetInstrInfo.
-// Ideally, the scheduling interface would be fully defined in the MC layter.
+// Ideally, the scheduling interface would be fully defined in the MC layer.
 //
 //===----------------------------------------------------------------------===//
 
