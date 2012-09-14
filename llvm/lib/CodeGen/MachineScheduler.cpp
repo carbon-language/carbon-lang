@@ -484,6 +484,8 @@ void ScheduleDAGMI::releaseRoots() {
 void ScheduleDAGMI::schedule() {
   buildDAGWithRegPressure();
 
+  postprocessDAG();
+
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
           SUnits[su].dumpAll(this));
 
@@ -520,6 +522,13 @@ void ScheduleDAGMI::buildDAGWithRegPressure() {
 
   // Initialize top/bottom trackers after computing region pressure.
   initRegPressure();
+}
+
+/// Apply each ScheduleDAGMutation step in order.
+void ScheduleDAGMI::postprocessDAG() {
+  for (unsigned i = 0, e = Mutations.size(); i < e; ++i) {
+    Mutations[i]->apply(this);
+  }
 }
 
 /// Identify DAG roots and setup scheduler queues.
