@@ -16,17 +16,102 @@
 #define LLVM_MC_MCSCHEDMODEL_H
 
 #include "llvm/Support/DataTypes.h"
+#include <cassert>
 
 namespace llvm {
 
 struct InstrItinerary;
 
+/// Define a kind of processor resource that will be modeled by the scheduler.
+struct MCProcResourceDesc {
+#ifndef NDEBUG
+  const char *Name;
+#endif
+  unsigned Count; // Number of resource of this kind
+  unsigned SuperIdx; // Index of the resources kind that contains this kind.
+
+  bool operator==(const MCProcResourceDesc &Other) const {
+    return Count == Other.Count && SuperIdx == Other.SuperIdx;
+  }
+};
+
+/// Identify one of the processor resource kinds consumed by a particular
+/// scheduling class for the specified number of cycles.
+struct MCWriteProcResEntry {
+  unsigned ProcResourceIdx;
+  unsigned Cycles;
+
+  bool operator==(const MCWriteProcResEntry &Other) const {
+    return ProcResourceIdx == Other.ProcResourceIdx && Cycles == Other.Cycles;
+  }
+};
+
+/// Specify the latency in cpu cycles for a particular scheduling class and def
+/// index. Also identify the WriteResources of this def. When the operand
+/// expands to a sequence of writes, this ID is the last write in the sequence.
+struct MCWriteLatencyEntry {
+  unsigned Cycles;
+  unsigned WriteResourceID;
+
+  bool operator==(const MCWriteLatencyEntry &Other) const {
+    return Cycles == Other.Cycles && WriteResourceID == Other.WriteResourceID;
+  }
+};
+
+/// Specify the number of cycles allowed after instruction issue before a
+/// particular use operand reads its registers. This effectively reduces the
+/// write's latency. Here we allow negative cycles for corner cases where
+/// latency increases. This rule only applies when the entry's WriteResource
+/// matches the write's WriteResource.
+///
+/// MCReadAdvanceEntries are sorted first by operand index (UseIdx), then by
+/// WriteResourceIdx.
+struct MCReadAdvanceEntry {
+  unsigned UseIdx;
+  unsigned WriteResourceID;
+  int Cycles;
+
+  bool operator==(const MCReadAdvanceEntry &Other) const {
+    return UseIdx == Other.UseIdx && WriteResourceID == Other.WriteResourceID
+      && Cycles == Other.Cycles;
+  }
+};
+
+/// Summarize the scheduling resources required for an instruction of a
+/// particular scheduling class.
+///
+/// Defined as an aggregate struct for creating tables with initializer lists.
+struct MCSchedClassDesc {
+  static const unsigned short InvalidNumMicroOps = UINT16_MAX;
+  static const unsigned short VariantNumMicroOps = UINT16_MAX - 1;
+
+#ifndef NDEBUG
+  const char* Name;
+#endif
+  unsigned short NumMicroOps;
+  bool     BeginGroup;
+  bool     EndGroup;
+  unsigned WriteProcResIdx; // First index into WriteProcResTable.
+  unsigned NumWriteProcResEntries;
+  unsigned WriteLatencyIdx; // First index into WriteLatencyTable.
+  unsigned NumWriteLatencyEntries;
+  unsigned ReadAdvanceIdx; // First index into ReadAdvanceTable.
+  unsigned NumReadAdvanceEntries;
+
+  bool isValid() const {
+    return NumMicroOps != InvalidNumMicroOps;
+  }
+  bool isVariant() const {
+    return NumMicroOps == VariantNumMicroOps;
+  }
+};
+
 /// Machine model for scheduling, bundling, and heuristics.
 ///
 /// The machine model directly provides basic information about the
 /// microarchitecture to the scheduler in the form of properties. It also
-/// optionally refers to scheduler resources tables and itinerary
-/// tables. Scheduler resources tables model the latency and cost for each
+/// optionally refers to scheduler resource tables and itinerary
+/// tables. Scheduler resource tables model the latency and cost for each
 /// instruction type. Itinerary tables are an independant mechanism that
 /// provides a detailed reservation table describing each cycle of instruction
 /// execution. Subtargets may define any or all of the above categories of data
@@ -84,7 +169,12 @@ public:
   static const unsigned DefaultMispredictPenalty = 10;
 
 private:
-  // TODO: Add a reference to proc resource types and sched resource tables.
+  unsigned ProcID;
+  const MCProcResourceDesc *ProcResourceTable;
+  const MCSchedClassDesc *SchedClassTable;
+
+  unsigned NumProcResourceKinds;
+  unsigned NumSchedClasses;
 
   // Instruction itinerary tables used by InstrItineraryData.
   friend class InstrItineraryData;
@@ -100,13 +190,38 @@ public:
                   LoadLatency(DefaultLoadLatency),
                   HighLatency(DefaultHighLatency),
                   MispredictPenalty(DefaultMispredictPenalty),
-                  InstrItineraries(0) {}
+                  ProcID(0), InstrItineraries(0) {}
 
   // Table-gen driven ctor.
   MCSchedModel(unsigned iw, int ml, unsigned ll, unsigned hl, unsigned mp,
                const InstrItinerary *ii):
     IssueWidth(iw), MinLatency(ml), LoadLatency(ll), HighLatency(hl),
-    MispredictPenalty(mp), InstrItineraries(ii){}
+    MispredictPenalty(mp), ProcID(0), ProcResourceTable(0),
+    SchedClassTable(0), InstrItineraries(ii) {}
+
+  /// Does this machine model include instruction-level scheduling.
+  bool hasInstrSchedModel() const {
+    return SchedClassTable;
+  }
+
+  /// Does this machine model include cycle-to-cycle itineraries.
+  bool hasInstrItineraries() const {
+    return InstrItineraries;
+  }
+
+  const MCProcResourceDesc *getProcResource(unsigned ProcResourceIdx) const {
+    assert(hasInstrSchedModel() && "No scheduling machine model");
+
+    assert(ProcResourceIdx < NumProcResourceKinds && "bad proc resource idx");
+    return &ProcResourceTable[ProcResourceIdx];
+  }
+
+  const MCSchedClassDesc *getSchedClassDesc(unsigned SchedClassIdx) const {
+    assert(hasInstrSchedModel() && "No scheduling machine model");
+
+    assert(SchedClassIdx < NumSchedClasses && "bad scheduling class idx");
+    return &SchedClassTable[SchedClassIdx];
+  }
 };
 
 } // End llvm namespace

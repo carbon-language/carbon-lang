@@ -30,7 +30,13 @@ class MCSubtargetInfo {
   std::string TargetTriple;            // Target triple
   const SubtargetFeatureKV *ProcFeatures;  // Processor feature list
   const SubtargetFeatureKV *ProcDesc;  // Processor descriptions
-  const SubtargetInfoKV *ProcSchedModel; // Scheduler machine model
+
+  // Scheduler machine model
+  const SubtargetInfoKV *ProcSchedModels;
+  const MCWriteProcResEntry *WriteProcResTable;
+  const MCWriteLatencyEntry *WriteLatencyTable;
+  const MCReadAdvanceEntry *ReadAdvanceTable;
+
   const InstrStage *Stages;            // Instruction itinerary stages
   const unsigned *OperandCycles;       // Itinerary operand cycles
   const unsigned *ForwardingPaths;     // Forwarding paths
@@ -73,6 +79,41 @@ public:
   /// getSchedModelForCPU - Get the machine model of a CPU.
   ///
   const MCSchedModel *getSchedModelForCPU(StringRef CPU) const;
+
+  /// Return an iterator at the first process resource consumed by the given
+  /// scheduling class.
+  const MCWriteProcResEntry *getWriteProcResBegin(
+    const MCSchedClassDesc *SC) const {
+    return &WriteProcResTable[SC->WriteProcResIdx];
+  }
+  const MCWriteProcResEntry *getWriteProcResEnd(
+    const MCSchedClassDesc *SC) const {
+    return getWriteProcResBegin(SC) + SC->NumWriteProcResEntries;
+  }
+
+  const MCWriteLatencyEntry *getWriteLatencyEntry(const MCSchedClassDesc *SC,
+                                                  unsigned DefIdx) const {
+    assert(DefIdx < SC->NumWriteLatencyEntries &&
+           "MachineModel does not specify a WriteResource for DefIdx");
+
+    return &WriteLatencyTable[SC->WriteLatencyIdx + DefIdx];
+  }
+
+  int getReadAdvanceCycles(const MCSchedClassDesc *SC, unsigned UseIdx,
+                           unsigned WriteResID) const {
+    for (const MCReadAdvanceEntry *I = &ReadAdvanceTable[SC->ReadAdvanceIdx],
+           *E = I + SC->NumReadAdvanceEntries; I != E; ++I) {
+      if (I->UseIdx < UseIdx)
+        continue;
+      if (I->UseIdx > UseIdx)
+        break;
+      // Find the first WriteResIdx match, which has the highest cycle count.
+      if (!I->WriteResourceID || I->WriteResourceID == WriteResID) {
+        return I->Cycles;
+      }
+    }
+    return 0;
+  }
 
   /// getInstrItineraryForCPU - Get scheduling itinerary of a CPU.
   ///

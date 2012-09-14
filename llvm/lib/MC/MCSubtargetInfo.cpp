@@ -31,7 +31,7 @@ MCSubtargetInfo::InitMCSubtargetInfo(StringRef TT, StringRef CPU, StringRef FS,
   TargetTriple = TT;
   ProcFeatures = PF;
   ProcDesc = PD;
-  ProcSchedModel = ProcSched;
+  ProcSchedModels = ProcSched;
   Stages = IS;
   OperandCycles = OC;
   ForwardingPaths = FP;
@@ -72,11 +72,11 @@ uint64_t MCSubtargetInfo::ToggleFeature(StringRef FS) {
 
 const MCSchedModel *
 MCSubtargetInfo::getSchedModelForCPU(StringRef CPU) const {
-  assert(ProcSchedModel && "Processor machine model not available!");
+  assert(ProcSchedModels && "Processor machine model not available!");
 
 #ifndef NDEBUG
   for (size_t i = 1; i < NumProcs; i++) {
-    assert(strcmp(ProcSchedModel[i - 1].Key, ProcSchedModel[i].Key) < 0 &&
+    assert(strcmp(ProcSchedModels[i - 1].Key, ProcSchedModels[i].Key) < 0 &&
            "Processor machine model table is not sorted");
   }
 #endif
@@ -85,8 +85,8 @@ MCSubtargetInfo::getSchedModelForCPU(StringRef CPU) const {
   SubtargetInfoKV KV;
   KV.Key = CPU.data();
   const SubtargetInfoKV *Found =
-    std::lower_bound(ProcSchedModel, ProcSchedModel+NumProcs, KV);
-  if (Found == ProcSchedModel+NumProcs || StringRef(Found->Key) != CPU) {
+    std::lower_bound(ProcSchedModels, ProcSchedModels+NumProcs, KV);
+  if (Found == ProcSchedModels+NumProcs || StringRef(Found->Key) != CPU) {
     errs() << "'" << CPU
            << "' is not a recognized processor for this target"
            << " (ignoring processor)\n";
