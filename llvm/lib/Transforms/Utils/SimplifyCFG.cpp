@@ -830,18 +830,24 @@ bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
       bool PredHasWeights = HasBranchWeights(PTI);
       bool SuccHasWeights = HasBranchWeights(TI);
 
-      if (PredHasWeights)
+      if (PredHasWeights) {
         GetBranchWeights(PTI, Weights);
-      else if (SuccHasWeights)
+        // branch-weight metadata is inconsistant here.
+        if (Weights.size() != 1 + PredCases.size())
+          PredHasWeights = SuccHasWeights = false;
+      } else if (SuccHasWeights)
         // If there are no predecessor weights but there are successor weights,
         // populate Weights with 1, which will later be scaled to the sum of
         // successor's weights
         Weights.assign(1 + PredCases.size(), 1);
 
       SmallVector<uint64_t, 8> SuccWeights;
-      if (SuccHasWeights)
+      if (SuccHasWeights) {
         GetBranchWeights(TI, SuccWeights);
-      else if (PredHasWeights)
+        // branch-weight metadata is inconsistant here.
+        if (SuccWeights.size() != 1 + BBCases.size())
+          PredHasWeights = SuccHasWeights = false;
+      } else if (PredHasWeights)
         SuccWeights.assign(1 + BBCases.size(), 1);
 
       if (PredDefault == BB) {
