@@ -765,7 +765,6 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
             return sb_error;
         }
         
-        StackFrameSP frame_sp;
         if (!frame_sp)
         {
             frame_sp = thread->GetSelectedFrame ();
