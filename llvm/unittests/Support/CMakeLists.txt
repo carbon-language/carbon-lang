@@ -18,10 +18,11 @@ add_llvm_unittest(SupportTests
   ManagedStatic.cpp
   MathExtrasTest.cpp
   Path.cpp
-  raw_ostream_test.cpp
   RegexTest.cpp
   SwapByteOrderTest.cpp
   TimeValue.cpp
   ValueHandleTest.cpp
   YAMLParserTest.cpp
+  formatted_raw_ostream.cpp
+  raw_ostream_test.cpp
   )
