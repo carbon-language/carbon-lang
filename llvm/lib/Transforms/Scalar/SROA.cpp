@@ -287,12 +287,14 @@ public:
   /// memcpy are ignored.
   Type *getCommonType(iterator I) const;
 
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
   void print(raw_ostream &OS, const_iterator I, StringRef Indent = "  ") const;
   void printUsers(raw_ostream &OS, const_iterator I,
                   StringRef Indent = "  ") const;
   void print(raw_ostream &OS) const;
   void LLVM_ATTRIBUTE_NOINLINE LLVM_ATTRIBUTE_USED dump(const_iterator I) const;
   void LLVM_ATTRIBUTE_NOINLINE LLVM_ATTRIBUTE_USED dump() const;
+#endif
 
 private:
   template <typename DerivedT, typename RetT = void> class BuilderBase;
@@ -1054,6 +1056,8 @@ Type *AllocaPartitioning::getCommonType(iterator I) const {
   return Ty;
 }
 
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
+
 void AllocaPartitioning::print(raw_ostream &OS, const_iterator I,
                                StringRef Indent) const {
   OS << Indent << "partition #" << (I - begin())
@@ -1101,6 +1105,8 @@ void AllocaPartitioning::print(raw_ostream &OS) const {
 
 void AllocaPartitioning::dump(const_iterator I) const { print(dbgs(), I); }
 void AllocaPartitioning::dump() const { print(dbgs()); }
+
+#endif // !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 
 
 namespace {
