@@ -68,10 +68,7 @@ inline unsigned alignOf() { return AlignOf<T>::Alignment; }
 /// integer literal can be used to specify an alignment constraint. Once built
 /// up here, we can then begin to indirect between these using normal C++
 /// template parameters.
-template <size_t Alignment> struct AlignedCharArrayImpl {};
-template <> struct AlignedCharArrayImpl<0> {
-  typedef char type;
-};
+template <size_t Alignment> struct AlignedCharArrayImpl;
 
 // MSVC requires special handling here.
 #ifndef _MSC_VER
@@ -79,12 +76,12 @@ template <> struct AlignedCharArrayImpl<0> {
 #if __has_feature(cxx_alignas)
 #define LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(x) \
   template <> struct AlignedCharArrayImpl<x> { \
-    typedef char alignas(x) type; \
+    char alignas(x) aligned; \
   }
-#elif defined(__clang__) || defined(__GNUC__)
+#elif defined(__GNUC__)
 #define LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(x) \
   template <> struct AlignedCharArrayImpl<x> { \
-    typedef char type __attribute__((aligned(x))); \
+    char aligned __attribute__((aligned(x))); \
   }
 #else
 # error No supported align as directive.
@@ -112,14 +109,14 @@ LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(8192);
 // alignments because __declspec(align(...)) doesn't actually work when it is
 // a member of a by-value function argument in MSVC, even if the alignment
 // request is something reasonably like 8-byte or 16-byte.
-template <> struct AlignedCharArrayImpl<1> { typedef char type; };
-template <> struct AlignedCharArrayImpl<2> { typedef short type; };
-template <> struct AlignedCharArrayImpl<4> { typedef int type; };
-template <> struct AlignedCharArrayImpl<8> { typedef double type; };
+template <> struct AlignedCharArrayImpl<1> { char aligned; };
+template <> struct AlignedCharArrayImpl<2> { short aligned; };
+template <> struct AlignedCharArrayImpl<4> { int aligned; };
+template <> struct AlignedCharArrayImpl<8> { double aligned; };
 
 #define LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(x) \
   template <> struct AlignedCharArrayImpl<x> { \
-    typedef __declspec(align(x)) char type; \
+    __declspec(align(x)) char aligned; \
   }
 LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(16);
 LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(32);
@@ -162,17 +159,11 @@ public:
   /// constrain the layout of this character array.
   char buffer[sizeof(SizerImpl)];
 
-  // Sadly, Clang and GCC both fail to align a character array properly even
-  // with an explicit alignment attribute. To work around this, we union
-  // the character array that will actually be used with a struct that contains
-  // a single aligned character member. Tests seem to indicate that both Clang
-  // and GCC will properly register the alignment of a struct containing an
-  // aligned member, and this alignment should carry over to the character
-  // array in the union.
-  struct {
-    typename llvm::AlignedCharArrayImpl<AlignOf<AlignerImpl>::Alignment>::type
-      nonce_inner_member;
-  } nonce_member;
+private:
+  // Tests seem to indicate that both Clang and GCC will properly register the
+  // alignment of a struct containing an aligned member, and this alignment
+  // should carry over to the character array in the union.
+  llvm::AlignedCharArrayImpl<AlignOf<AlignerImpl>::Alignment> nonce_member;
 };
 
 } // end namespace llvm

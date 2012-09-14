@@ -1,4 +1,4 @@
-//===- llvm/unittest/Support/AlignOfTest.cpp - Alignment utility tests ----===//
+//=== - llvm/unittest/Support/AlignOfTest.cpp - Alignment utility tests ----===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -23,30 +23,24 @@ namespace {
 #endif
 
 // Define some fixed alignment types to use in these tests.
-#if __cplusplus == 201103L || __has_feature(cxx_alignas)
-typedef char alignas(1) A1;
-typedef char alignas(2) A2;
-typedef char alignas(4) A4;
-typedef char alignas(8) A8;
-#elif defined(__clang__) || defined(__GNUC__)
-typedef char A1 __attribute__((aligned(1)));
-typedef char A2 __attribute__((aligned(2)));
-typedef char A4 __attribute__((aligned(4)));
-typedef char A8 __attribute__((aligned(8)));
+#if __has_feature(cxx_alignas)
+struct alignas(1) A1 { };
+struct alignas(2) A2 { };
+struct alignas(4) A4 { };
+struct alignas(8) A8 { };
+#elif defined(__GNUC__)
+struct A1 { } __attribute__((aligned(1)));
+struct A2 { } __attribute__((aligned(2)));
+struct A4 { } __attribute__((aligned(4)));
+struct A8 { } __attribute__((aligned(8)));
 #elif defined(_MSC_VER)
-typedef __declspec(align(1)) char A1;
-typedef __declspec(align(2)) char A2;
-typedef __declspec(align(4)) char A4;
-typedef __declspec(align(8)) char A8;
+__declspec(align(1)) struct A1 { };
+__declspec(align(2)) struct A2 { };
+__declspec(align(4)) struct A4 { };
+__declspec(align(8)) struct A8 { };
 #else
 # error No supported align as directive.
 #endif
-
-// Wrap the forced aligned types in structs to hack around compiler bugs.
-struct SA1 { A1 a; };
-struct SA2 { A2 a; };
-struct SA4 { A4 a; };
-struct SA8 { A8 a; };
 
 struct S1 {};
 struct S2 { char a; };
@@ -90,11 +84,7 @@ char LLVM_ATTRIBUTE_UNUSED test_arr2
   [AlignOf<A1>::Alignment > 0]
   [AlignOf<A2>::Alignment > 0]
   [AlignOf<A4>::Alignment > 0]
-  [AlignOf<A8>::Alignment > 0]
-  [AlignOf<SA1>::Alignment > 0]
-  [AlignOf<SA2>::Alignment > 0]
-  [AlignOf<SA4>::Alignment > 0]
-  [AlignOf<SA8>::Alignment > 0];
+  [AlignOf<A8>::Alignment > 0];
 char LLVM_ATTRIBUTE_UNUSED test_arr3
   [AlignOf<S1>::Alignment > 0]
   [AlignOf<S2>::Alignment > 0]
@@ -123,20 +113,10 @@ char LLVM_ATTRIBUTE_UNUSED test_arr5
   [AlignOf<V8>::Alignment > 0];
 
 TEST(AlignOfTest, BasicAlignmentInvariants) {
-  // For a very strange reason, many compilers do not support this. Both Clang
-  // and GCC fail to align these properly.
-  EXPECT_EQ(1u, alignOf<A1>());
-#if 0
-  EXPECT_EQ(2u, alignOf<A2>());
-  EXPECT_EQ(4u, alignOf<A4>());
-  EXPECT_EQ(8u, alignOf<A8>());
-#endif
-
-  // But once wrapped in structs, the alignment is correctly managed.
-  EXPECT_LE(1u, alignOf<SA1>());
-  EXPECT_LE(2u, alignOf<SA2>());
-  EXPECT_LE(4u, alignOf<SA4>());
-  EXPECT_LE(8u, alignOf<SA8>());
+  EXPECT_LE(1u, alignOf<A1>());
+  EXPECT_LE(2u, alignOf<A2>());
+  EXPECT_LE(4u, alignOf<A4>());
+  EXPECT_LE(8u, alignOf<A8>());
 
   EXPECT_EQ(1u, alignOf<char>());
   EXPECT_LE(alignOf<char>(),   alignOf<short>());
@@ -174,42 +154,38 @@ TEST(AlignOfTest, BasicAlignmentInvariants) {
 }
 
 TEST(AlignOfTest, BasicAlignedArray) {
-  // Note: this code exclusively uses the struct-wrapped arbitrarily aligned
-  // types because of the bugs mentioned above where GCC and Clang both
-  // disregard the arbitrary alignment specifier until the type is used to
-  // declare a member of a struct.
-  EXPECT_LE(1u, alignOf<AlignedCharArrayUnion<SA1> >());
-  EXPECT_LE(2u, alignOf<AlignedCharArrayUnion<SA2> >());
-  EXPECT_LE(4u, alignOf<AlignedCharArrayUnion<SA4> >());
-  EXPECT_LE(8u, alignOf<AlignedCharArrayUnion<SA8> >());
+  EXPECT_LE(1u, alignOf<AlignedCharArrayUnion<A1> >());
+  EXPECT_LE(2u, alignOf<AlignedCharArrayUnion<A2> >());
+  EXPECT_LE(4u, alignOf<AlignedCharArrayUnion<A4> >());
+  EXPECT_LE(8u, alignOf<AlignedCharArrayUnion<A8> >());
 
-  EXPECT_LE(1u, sizeof(AlignedCharArrayUnion<SA1>));
-  EXPECT_LE(2u, sizeof(AlignedCharArrayUnion<SA2>));
-  EXPECT_LE(4u, sizeof(AlignedCharArrayUnion<SA4>));
-  EXPECT_LE(8u, sizeof(AlignedCharArrayUnion<SA8>));
+  EXPECT_LE(1u, sizeof(AlignedCharArrayUnion<A1>));
+  EXPECT_LE(2u, sizeof(AlignedCharArrayUnion<A2>));
+  EXPECT_LE(4u, sizeof(AlignedCharArrayUnion<A4>));
+  EXPECT_LE(8u, sizeof(AlignedCharArrayUnion<A8>));
 
-  EXPECT_EQ(1u, (alignOf<AlignedCharArrayUnion<SA1> >()));
-  EXPECT_EQ(2u, (alignOf<AlignedCharArrayUnion<SA1, SA2> >()));
-  EXPECT_EQ(4u, (alignOf<AlignedCharArrayUnion<SA1, SA2, SA4> >()));
-  EXPECT_EQ(8u, (alignOf<AlignedCharArrayUnion<SA1, SA2, SA4, SA8> >()));
+  EXPECT_EQ(1u, (alignOf<AlignedCharArrayUnion<A1> >()));
+  EXPECT_EQ(2u, (alignOf<AlignedCharArrayUnion<A1, A2> >()));
+  EXPECT_EQ(4u, (alignOf<AlignedCharArrayUnion<A1, A2, A4> >()));
+  EXPECT_EQ(8u, (alignOf<AlignedCharArrayUnion<A1, A2, A4, A8> >()));
 
-  EXPECT_EQ(1u, sizeof(AlignedCharArrayUnion<SA1>));
-  EXPECT_EQ(2u, sizeof(AlignedCharArrayUnion<SA1, SA2>));
-  EXPECT_EQ(4u, sizeof(AlignedCharArrayUnion<SA1, SA2, SA4>));
-  EXPECT_EQ(8u, sizeof(AlignedCharArrayUnion<SA1, SA2, SA4, SA8>));
+  EXPECT_EQ(1u, sizeof(AlignedCharArrayUnion<A1>));
+  EXPECT_EQ(2u, sizeof(AlignedCharArrayUnion<A1, A2>));
+  EXPECT_EQ(4u, sizeof(AlignedCharArrayUnion<A1, A2, A4>));
+  EXPECT_EQ(8u, sizeof(AlignedCharArrayUnion<A1, A2, A4, A8>));
 
-  EXPECT_EQ(1u, (alignOf<AlignedCharArrayUnion<SA1[1]> >()));
-  EXPECT_EQ(2u, (alignOf<AlignedCharArrayUnion<SA1[2], SA2[1]> >()));
-  EXPECT_EQ(4u, (alignOf<AlignedCharArrayUnion<SA1[42], SA2[55],
-                                               SA4[13]> >()));
-  EXPECT_EQ(8u, (alignOf<AlignedCharArrayUnion<SA1[2], SA2[1],
-                                               SA4, SA8> >()));
+  EXPECT_EQ(1u, (alignOf<AlignedCharArrayUnion<A1[1]> >()));
+  EXPECT_EQ(2u, (alignOf<AlignedCharArrayUnion<A1[2], A2[1]> >()));
+  EXPECT_EQ(4u, (alignOf<AlignedCharArrayUnion<A1[42], A2[55],
+                                               A4[13]> >()));
+  EXPECT_EQ(8u, (alignOf<AlignedCharArrayUnion<A1[2], A2[1],
+                                               A4, A8> >()));
 
-  EXPECT_EQ(1u,  sizeof(AlignedCharArrayUnion<SA1[1]>));
-  EXPECT_EQ(2u,  sizeof(AlignedCharArrayUnion<SA1[2], SA2[1]>));
-  EXPECT_EQ(4u,  sizeof(AlignedCharArrayUnion<SA1[3], SA2[2], SA4>));
-  EXPECT_EQ(16u, sizeof(AlignedCharArrayUnion<SA1, SA2[3],
-                                              SA4[3], SA8>));
+  EXPECT_EQ(1u,  sizeof(AlignedCharArrayUnion<A1[1]>));
+  EXPECT_EQ(2u,  sizeof(AlignedCharArrayUnion<A1[2], A2[1]>));
+  EXPECT_EQ(4u,  sizeof(AlignedCharArrayUnion<A1[3], A2[2], A4>));
+  EXPECT_EQ(16u, sizeof(AlignedCharArrayUnion<A1, A2[3],
+                                              A4[3], A8>));
 
   // For other tests we simply assert that the alignment of the union mathes
   // that of the fundamental type and hope that we have any weird type
