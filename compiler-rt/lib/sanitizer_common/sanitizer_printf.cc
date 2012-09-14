@@ -129,7 +129,7 @@ int VSNPrintf(char *buff, int buff_length,
       }
       case 'c': {
         RAW_CHECK_MSG(!have_z, kPrintfFormatsHelp);
-        result += AppendChar(&buff, buff_end, va_arg(args, uptr));
+        result += AppendChar(&buff, buff_end, va_arg(args, int));
         break;
       }
       case '%' : {
