@@ -74,7 +74,7 @@ namespace {
 /// information about the nature of uses of each slice of the alloca. The goal
 /// is that this information is sufficient to decide if and how to split the
 /// alloca apart and replace slices with scalars. It is also intended that this
-/// structure can capture the relevant information needed both due decide about
+/// structure can capture the relevant information needed both to decide about
 /// and to enact these transformations.
 class AllocaPartitioning {
 public:
@@ -94,7 +94,7 @@ public:
     ///
     /// This provides an ordering over ranges such that start offsets are
     /// always increasing, and within equal start offsets, the end offsets are
-    /// decreasing. Thus the spanning range comes first in in cluster with the
+    /// decreasing. Thus the spanning range comes first in a cluster with the
     /// same start position.
     bool operator<(const ByteRange &RHS) const {
       if (BeginOffset < RHS.BeginOffset) return true;
@@ -124,7 +124,7 @@ public:
     /// \brief Whether this partition is splittable into smaller partitions.
     ///
     /// We flag partitions as splittable when they are formed entirely due to
-    /// accesses by trivially split operations such as memset and memcpy.
+    /// accesses by trivially splittable operations such as memset and memcpy.
     ///
     /// FIXME: At some point we should consider loads and stores of FCAs to be
     /// splittable and eagerly split them into scalar values.
@@ -142,7 +142,7 @@ public:
   /// and includes a handle to the user itself and the pointer value in use.
   /// The bounds of these uses are determined by intersecting the bounds of the
   /// memory use itself with a particular partition. As a consequence there is
-  /// intentionally overlap between various usues of the same partition.
+  /// intentionally overlap between various uses of the same partition.
   struct PartitionUse : public ByteRange {
     /// \brief The user of this range of the alloca.
     AssertingVH<Instruction> User;
@@ -224,7 +224,7 @@ public:
   dead_user_iterator dead_user_end() const { return DeadUsers.end(); }
   /// @}
 
-  /// \brief Allow iterating the dead operands referring to this alloca.
+  /// \brief Allow iterating the dead expressions referring to this alloca.
   ///
   /// These are operands which have cannot actually be used to refer to the
   /// alloca as they are outside its range and the user doesn't correct for
@@ -315,8 +315,10 @@ private:
   ///
   /// We store a vector of the partitions over the alloca here. This vector is
   /// sorted by increasing begin offset, and then by decreasing end offset. See
-  /// the Partition inner class for more details. Initially there are overlaps,
-  /// be during construction we form a disjoint sequence toward the end.
+  /// the Partition inner class for more details. Initially (during
+  /// construction) there are overlaps, but we form a disjoint sequence of
+  /// partitions while finishing construction and a fully constructed object is
+  /// expected to always have this as a disjoint space.
   SmallVector<Partition, 8> Partitions;
 
   /// \brief The uses of the partitions.
@@ -716,8 +718,8 @@ private:
 
 /// \brief Use adder for the alloca partitioning.
 ///
-/// This class adds the uses of an alloca to all of the partitions which it
-/// uses. For splittable partitions, this can end up doing essentially a linear
+/// This class adds the uses of an alloca to all of the partitions which they
+/// use. For splittable partitions, this can end up doing essentially a linear
 /// walk of the partitions, but the number of steps remains bounded by the
 /// total result instruction size:
 /// - The number of partitions is a result of the number unsplittable
@@ -1354,7 +1356,7 @@ static Value *getNaturalGEPRecursively(IRBuilder<> &IRB, const TargetData &TD,
 /// possible. We recurse by decreasing Offset, adding the appropriate index to
 /// Indices, and setting Ty to the result subtype.
 ///
-/// If no natural GEP can be constructed, this function returns a null Value*.
+/// If no natural GEP can be constructed, this function returns null.
 static Value *getNaturalGEPWithOffset(IRBuilder<> &IRB, const TargetData &TD,
                                       Value *Ptr, APInt Offset, Type *TargetTy,
                                       SmallVectorImpl<Value *> &Indices,
