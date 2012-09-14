@@ -107,10 +107,9 @@ public:
 /// Extend the standard ScheduleDAGMI to provide more context and override the
 /// top-level schedule() driver.
 class VLIWMachineScheduler : public ScheduleDAGMI {
-  const MachineLoopInfo *MLI;
 public:
   VLIWMachineScheduler(MachineSchedContext *C, MachineSchedStrategy *S):
-    ScheduleDAGMI(C, S), MLI(C->MLI) {}
+    ScheduleDAGMI(C, S) {}
 
   /// Schedule - This is called back from ScheduleDAGInstrs::Run() when it's
   /// time to do some work.
