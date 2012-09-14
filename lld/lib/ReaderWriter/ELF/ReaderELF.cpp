@@ -214,7 +214,7 @@ public:
       return (Alignment(Symbol->st_value));
     }
 
-    return Alignment(1);
+    return Alignment(llvm::Log2_64(Section->sh_addralign));
   }
 
   // Do we have a choice for ELF?  All symbols

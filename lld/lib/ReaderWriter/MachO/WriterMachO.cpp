@@ -11,7 +11,7 @@
 
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-//#include "llvm/Support/FileOutputBuffer.h"
+#include "llvm/Support/FileOutputBuffer.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
@@ -1501,7 +1501,6 @@ error_code MachOWriter::writeFile(const lld::File &file, StringRef path) {
   this->build(file);
 
 // FIXME: re-enable when FileOutputBuffer is in LLVMSupport.a 
-#if 0 
   uint64_t totalSize = _chunks.back()->fileOffset() + _chunks.back()->size();
 
   OwningPtr<llvm::FileOutputBuffer> buffer;
@@ -1523,9 +1522,7 @@ error_code MachOWriter::writeFile(const lld::File &file, StringRef path) {
   }
   
   return buffer->commit();
-#else
   return error_code::success();
-#endif
 }
 
 

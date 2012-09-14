@@ -179,7 +179,7 @@ int main(int argc, char *argv[]) {
     case readerYAML:
       reader = createReaderYAML(readerOptionsYAML);
       break;
-#if 0 
+#if 0
     case readerMachO:
       reader = createReaderMachO(lld::readerOptionsMachO);
       break;
