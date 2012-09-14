@@ -384,6 +384,14 @@ void test_deprecated_1(int a);
 void test_deprecated_2(int a);
 
 
+/// \invariant aaa
+void test_invariant_1(int a);
+
+// expected-warning@+1 {{empty paragraph passed to '\invariant' command}}
+/// \invariant
+void test_invariant_2(int a);
+
+
 // no-warning
 /// \returns Aaa
 int test_returns_right_decl_1(int);

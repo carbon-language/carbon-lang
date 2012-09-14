@@ -83,6 +83,7 @@ def Bug        : BlockCommand<"bug">;
 def Copyright  : BlockCommand<"copyright">;
 def Date       : BlockCommand<"date">;
 def Details    : BlockCommand<"details">;
+def Invariant  : BlockCommand<"invariant">;
 def Note       : BlockCommand<"note">;
 def Post       : BlockCommand<"post">;
 def Pre        : BlockCommand<"pre">;
