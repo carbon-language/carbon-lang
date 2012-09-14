@@ -200,8 +200,20 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB, bool DeleteDeadConditions,
             "cond");
 
         // Insert the new branch.
-        Builder.CreateCondBr(Cond, FirstCase.getCaseSuccessor(),
-                             SI->getDefaultDest());
+        BranchInst *NewBr = Builder.CreateCondBr(Cond,
+                                FirstCase.getCaseSuccessor(),
+                                SI->getDefaultDest());
+        MDNode* MD = SI->getMetadata(LLVMContext::MD_prof);
+        if (MD && MD->getNumOperands() == 3) {
+          ConstantInt *SICase = dyn_cast<ConstantInt>(MD->getOperand(2));
+          ConstantInt *SIDef = dyn_cast<ConstantInt>(MD->getOperand(1));
+          assert(SICase && SIDef);
+          // The TrueWeight should be the weight for the single case of SI.
+          NewBr->setMetadata(LLVMContext::MD_prof,
+                 MDBuilder(BB->getContext()).
+                 createBranchWeights(SICase->getValue().getZExtValue(),
+                                     SIDef->getValue().getZExtValue()));
+        }
 
         // Delete the old switch.
         SI->eraseFromParent();

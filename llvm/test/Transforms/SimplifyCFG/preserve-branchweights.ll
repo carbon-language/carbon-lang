@@ -109,12 +109,60 @@ sw.epilog:
   ret void
 }
 
+;; test6 - Some cases of the second switch are pruned during optimization.
+;; Then the second switch will be converted to a branch, finally, the first
+;; switch and the branch will be merged into a single switch.
+define void @test6(i32 %M, i32 %N) nounwind uwtable {
+entry:
+  switch i32 %N, label %sw2 [
+    i32 1, label %sw2
+    i32 2, label %sw.bb
+    i32 3, label %sw.bb1
+  ], !prof !4
+; CHECK: test6
+; CHECK: switch i32 %N, label %sw.epilog
+; CHECK: i32 3, label %sw.bb1
+; CHECK: i32 2, label %sw.bb
+; CHECK: i32 4, label %sw.bb5
+; CHECK: ], !prof !3
+
+sw.bb:
+  call void @helper(i32 0)
+  br label %sw.epilog
+
+sw.bb1:
+  call void @helper(i32 1)
+  br label %sw.epilog
+
+sw2:
+;; Here "case 2" is invalidated since the default case of the first switch
+;; does not include "case 2".
+  switch i32 %N, label %sw.epilog [
+    i32 2, label %sw.bb4
+    i32 4, label %sw.bb5
+  ], !prof !5
+
+sw.bb4:
+  call void @helper(i32 2)
+  br label %sw.epilog
+
+sw.bb5:
+  call void @helper(i32 3)
+  br label %sw.epilog
+
+sw.epilog:
+  ret void
+}
+
 !0 = metadata !{metadata !"branch_weights", i32 3, i32 5}
 !1 = metadata !{metadata !"branch_weights", i32 1, i32 1}
 !2 = metadata !{metadata !"branch_weights", i32 1, i32 2}
 !3 = metadata !{metadata !"branch_weights", i32 4, i32 3, i32 2, i32 1}
+!4 = metadata !{metadata !"branch_weights", i32 4, i32 3, i32 2, i32 1}
+!5 = metadata !{metadata !"branch_weights", i32 7, i32 6, i32 5}
 
 ; CHECK: !0 = metadata !{metadata !"branch_weights", i32 5, i32 11}
 ; CHECK: !1 = metadata !{metadata !"branch_weights", i32 1, i32 5}
 ; CHECK: !2 = metadata !{metadata !"branch_weights", i32 7, i32 1, i32 2}
-; CHECK-NOT: !3
+; CHECK: !3 = metadata !{metadata !"branch_weights", i32 49, i32 12, i32 24, i32 35}
+; CHECK-NOT: !4

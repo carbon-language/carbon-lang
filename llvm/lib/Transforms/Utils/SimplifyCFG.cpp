@@ -667,13 +667,32 @@ SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
     DEBUG(dbgs() << "Threading pred instr: " << *Pred->getTerminator()
                  << "Through successor TI: " << *TI);
 
+    // Collect branch weights into a vector.
+    SmallVector<uint32_t, 8> Weights;
+    MDNode* MD = SI->getMetadata(LLVMContext::MD_prof);
+    bool HasWeight = MD && (MD->getNumOperands() == 2 + SI->getNumCases());
+    if (HasWeight)
+      for (unsigned MD_i = 1, MD_e = MD->getNumOperands(); MD_i < MD_e;
+           ++MD_i) {
+        ConstantInt* CI = dyn_cast<ConstantInt>(MD->getOperand(MD_i));
+        assert(CI);
+        Weights.push_back(CI->getValue().getZExtValue());
+      }
     for (SwitchInst::CaseIt i = SI->case_end(), e = SI->case_begin(); i != e;) {
       --i;
       if (DeadCases.count(i.getCaseValue())) {
+        if (HasWeight) {
+          std::swap(Weights[i.getCaseIndex()+1], Weights.back());
+          Weights.pop_back();
+        }
         i.getCaseSuccessor()->removePredecessor(TI->getParent());
         SI->removeCase(i);
       }
     }
+    if (HasWeight)
+      SI->setMetadata(LLVMContext::MD_prof,
+                      MDBuilder(SI->getParent()->getContext()).
+                      createBranchWeights(Weights));
 
     DEBUG(dbgs() << "Leaving: " << *TI << "\n");
     return true;
