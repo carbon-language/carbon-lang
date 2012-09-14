@@ -449,6 +449,13 @@ protected:
             bool bool_stop_other_threads;
             if (m_options.m_run_mode == eAllThreads)
                 bool_stop_other_threads = false;
+            else if (m_options.m_run_mode == eOnlyDuringStepping)
+            {
+                if (m_step_type == eStepTypeOut)
+                    bool_stop_other_threads = false;
+                else
+                    bool_stop_other_threads = true;
+            }
             else
                 bool_stop_other_threads = true;
 
