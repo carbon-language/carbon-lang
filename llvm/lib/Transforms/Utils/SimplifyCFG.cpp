@@ -898,18 +898,21 @@ bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
           Weights[0] *= SuccWeights[0];
         }
       } else {
-        // FIXME: preserve branch weight metadata, similarly to the 'then'
-        // above. For now, drop it.
-        PredHasWeights = false;
-        SuccHasWeights = false;
-
         // If this is not the default destination from PSI, only the edges
         // in SI that occur in PSI with a destination of BB will be
         // activated.
         std::set<ConstantInt*, ConstantIntOrdering> PTIHandled;
+        std::map<ConstantInt*, uint64_t> WeightsForHandled;
         for (unsigned i = 0, e = PredCases.size(); i != e; ++i)
           if (PredCases[i].Dest == BB) {
             PTIHandled.insert(PredCases[i].Value);
+
+            if (PredHasWeights || SuccHasWeights) {
+              WeightsForHandled[PredCases[i].Value] = Weights[i+1];
+              std::swap(Weights[i+1], Weights.back());
+              Weights.pop_back();
+            }
+
             std::swap(PredCases[i], PredCases.back());
             PredCases.pop_back();
             --i; --e;
@@ -920,6 +923,8 @@ bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
         for (unsigned i = 0, e = BBCases.size(); i != e; ++i)
           if (PTIHandled.count(BBCases[i].Value)) {
             // If this is one we are capable of getting...
+            if (PredHasWeights || SuccHasWeights)
+              Weights.push_back(WeightsForHandled[BBCases[i].Value]);
             PredCases.push_back(BBCases[i]);
             NewSuccessors.push_back(BBCases[i].Dest);
             PTIHandled.erase(BBCases[i].Value);// This constant is taken care of
@@ -930,6 +935,8 @@ bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
         for (std::set<ConstantInt*, ConstantIntOrdering>::iterator I =
                                     PTIHandled.begin(),
                E = PTIHandled.end(); I != E; ++I) {
+          if (PredHasWeights || SuccHasWeights) 
+            Weights.push_back(WeightsForHandled[*I]); 
           PredCases.push_back(ValueEqualityComparisonCase(*I, BBDefault));
           NewSuccessors.push_back(BBDefault);
         }

@@ -84,9 +84,57 @@ sw.epilog:
   ret void
 }
 
+;; test3 - Merge two switches where PredDefault != BB.
+define void @test3(i32 %M, i32 %N) nounwind uwtable {
+entry:
+  %cmp = icmp sgt i32 %M, 2
+  br i1 %cmp, label %sw1, label %sw2
+
+sw1:
+  switch i32 %N, label %sw.bb [
+    i32 2, label %sw2
+    i32 3, label %sw2
+    i32 1, label %sw.bb1
+  ], !prof !4
+; CHECK: test3
+; CHECK: switch i32 %N, label %sw.bb
+; CHECK: i32 1, label %sw.bb1
+; CHECK: i32 3, label %sw.bb4
+; CHECK: i32 2, label %sw.epilog
+; CHECK: ], !prof !3
+
+sw.bb:
+  call void @func2(i32 %N) nounwind
+  br label %sw.epilog
+
+sw.bb1:
+  call void @func4(i32 %N) nounwind
+  br label %sw.epilog
+
+sw2:
+  switch i32 %N, label %sw.epilog [
+    i32 3, label %sw.bb4
+    i32 4, label %sw.bb5
+  ], !prof !5
+
+sw.bb4:
+  call void @func6(i32 %N) nounwind
+  br label %sw.epilog
+
+sw.bb5:
+  call void @func8(i32 %N) nounwind
+  br label %sw.epilog
+
+sw.epilog:
+  ret void
+}
+
 !0 = metadata !{metadata !"branch_weights", i32 64, i32 4}
 !1 = metadata !{metadata !"branch_weights", i32 4, i32 64}
 ; CHECK: !0 = metadata !{metadata !"branch_weights", i32 256, i32 4352, i32 16}
 !2 = metadata !{metadata !"branch_weights", i32 4, i32 4, i32 8}
 !3 = metadata !{metadata !"branch_weights", i32 8, i32 8, i32 4}
 ; CHECK: !1 = metadata !{metadata !"branch_weights", i32 32, i32 48, i32 96, i32 16}
+!4 = metadata !{metadata !"branch_weights", i32 7, i32 6, i32 4, i32 3}
+!5 = metadata !{metadata !"branch_weights", i32 17, i32 13, i32 9}
+; CHECK: !3 = metadata !{metadata !"branch_weights", i32 7, i32 3, i32 4, i32 6}
