@@ -1135,72 +1135,73 @@ foreach my $lang ("c", "objective-c", "objective-c++", "c++") {
 }
 
 # Query clang for complete list of checkers.
-pipe(FROM_CHILD, TO_PARENT);
-my $pid = fork();
-if ($pid == 0) {
-  close FROM_CHILD;
-  open(STDOUT,">&", \*TO_PARENT);
-  open(STDERR,">&", \*TO_PARENT);
-  exec $Clang, ('-cc1', @PluginsToLoad , '-analyzer-checker-help');
-}
-close(TO_PARENT);
-my $foundCheckers = 0;
-while(<FROM_CHILD>) {
-  if (/CHECKERS:/) {
-    $foundCheckers = 1;
-    last;
+if (defined $Clang && -x $Clang) {
+  pipe(FROM_CHILD, TO_PARENT);
+  my $pid = fork();
+  if ($pid == 0) {
+    close FROM_CHILD;
+    open(STDOUT,">&", \*TO_PARENT);
+    open(STDERR,">&", \*TO_PARENT);
+    exec $Clang, ('-cc1', @PluginsToLoad , '-analyzer-checker-help');
   }
-}
-if (!$foundCheckers) {
-  print "  *** Could not query Clang for the list of available checkers.";
-}
-else {
-  print("\nAVAILABLE CHECKERS:\n\n");
-  my $skip = 0;
+  close(TO_PARENT);
+  my $foundCheckers = 0;
   while(<FROM_CHILD>) {
-    if (/experimental/) {
-      $skip = 1;
-      next;
+    if (/CHECKERS:/) {
+      $foundCheckers = 1;
+      last;
     }
-    if ($skip) {
-      next if (!/^\s\s[^\s]/);
-      $skip = 0;
-    }
-    s/^\s\s//;
-    if (/^([^\s]+)/) {
-      # Is the checker enabled?
-      my $checker = $1;
-      my $enabled = 0;
-      my $aggregate = "";
-      foreach my $domain (split /\./, $checker) {
-        $aggregate .= $domain;
-        if ($EnabledCheckers{$aggregate}) {
-          $enabled =1;
-          last;
-        }
-        # append a dot, if an additional domain is added in the next iteration
-        $aggregate .= ".";
+  }
+  if (!$foundCheckers) {
+    print "  *** Could not query Clang for the list of available checkers.";
+  }
+  else {
+    print("\nAVAILABLE CHECKERS:\n\n");
+    my $skip = 0;
+    while(<FROM_CHILD>) {
+      if (/experimental/) {
+        $skip = 1;
+        next;
       }
+      if ($skip) {
+        next if (!/^\s\s[^\s]/);
+        $skip = 0;
+      }
+      s/^\s\s//;
+      if (/^([^\s]+)/) {
+        # Is the checker enabled?
+        my $checker = $1;
+        my $enabled = 0;
+        my $aggregate = "";
+        foreach my $domain (split /\./, $checker) {
+          $aggregate .= $domain;
+          if ($EnabledCheckers{$aggregate}) {
+            $enabled =1;
+            last;
+          }
+          # append a dot, if an additional domain is added in the next iteration
+          $aggregate .= ".";
+        }
       
-      if ($enabled) {
-        print " + ";
+        if ($enabled) {
+          print " + ";
+        }
+        else {
+          print "   ";
+        }
       }
       else {
         print "   ";
       }
+      print $_;
     }
-    else {
-      print "   ";
-    }
-    print $_;
-  } 
+    print "\nNOTE: \"+\" indicates that an analysis is enabled by default.\n"
+  }
+  waitpid($pid,0);
+  close(FROM_CHILD);
 }
-waitpid($pid,0);
-close(FROM_CHILD);
 
 print <<ENDTEXT
-
- NOTE: "+" indicates that an analysis is enabled by default.
 
 BUILD OPTIONS
 
@@ -1456,11 +1457,6 @@ if (!@ARGV and $displayHelp == 0) {
   $displayHelp = 1;
 }
 
-if ($displayHelp) {
-  DisplayHelp();
-  exit 1;
-}
-
 # Find 'clang'
 if (!defined $AnalyzerDiscoveryMethod) {
   $Clang = Cwd::realpath("$RealBin/bin/clang");
@@ -1468,8 +1464,10 @@ if (!defined $AnalyzerDiscoveryMethod) {
     $Clang = Cwd::realpath("$RealBin/clang");
   }
   if (!defined $Clang || ! -x $Clang) {
-    DieDiag("error: Cannot find an executable 'clang' relative to scan-build." .
-   	        "  Consider using --use-analyzer to pick a version of 'clang' to use for static analysis.\n");
+    if (!$displayHelp) {
+      DieDiag("error: Cannot find an executable 'clang' relative to scan-build." .
+   	          "  Consider using --use-analyzer to pick a version of 'clang' to use for static analysis.\n");
+    }
   }
 } 
 else {  
@@ -1491,6 +1489,11 @@ else {
    	  DieDiag("Cannot find an executable clang at '$Clang'\n");
 	}
   }
+}
+
+if ($displayHelp) {
+  DisplayHelp();
+  exit 1;
 }
 
 $ClangCXX = $Clang;
