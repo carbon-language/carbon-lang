@@ -989,6 +989,9 @@ class Processor<string n, ProcessorItineraries pi, list<SubtargetFeature> f> {
 // ProcessorModel allows subtargets to specify the more general
 // SchedMachineModel instead if a ProcessorItinerary. Subtargets will
 // gradually move to this newer form.
+//
+// Although this class always passes NoItineraries to the Processor
+// class, the SchedMachineModel may still define valid Itineraries.
 class ProcessorModel<string n, SchedMachineModel m, list<SubtargetFeature> f>
   : Processor<n, NoItineraries, f> {
   let SchedModel = m;
