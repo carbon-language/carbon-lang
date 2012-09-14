@@ -1300,10 +1300,13 @@ static Value *getNaturalGEPRecursively(IRBuilder<> &IRB, const TargetData &TD,
   if (Ty->isPointerTy())
     return 0;
 
+  // We try to analyze GEPs over vectors here, but note that these GEPs are
+  // extremely poorly defined currently. The long-term goal is to remove GEPing
+  // over a vector from the IR completely.
   if (VectorType *VecTy = dyn_cast<VectorType>(Ty)) {
     unsigned ElementSizeInBits = VecTy->getScalarSizeInBits();
     if (ElementSizeInBits % 8)
-      return 0; // GEPs over multiple of 8 size vector elements are invalid.
+      return 0; // GEPs over non-multiple of 8 size vector elements are invalid.
     APInt ElementSize(Offset.getBitWidth(), ElementSizeInBits / 8);
     APInt NumSkippedElements = Offset.udiv(ElementSize);
     if (NumSkippedElements.ugt(VecTy->getNumElements()))
