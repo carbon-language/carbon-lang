@@ -303,8 +303,10 @@ private:
   class UseBuilder;
   friend class AllocaPartitioning::UseBuilder;
 
+#ifndef NDEBUG
   /// \brief Handle to alloca instruction to simplify method interfaces.
   AllocaInst &AI;
+#endif
 
   /// \brief The instruction responsible for this alloca having no partitioning.
   ///
@@ -988,7 +990,11 @@ void AllocaPartitioning::splitAndMergePartitions() {
 }
 
 AllocaPartitioning::AllocaPartitioning(const TargetData &TD, AllocaInst &AI)
-    : AI(AI), PointerEscapingInstr(0) {
+    :
+#ifndef NDEBUG
+      AI(AI),
+#endif
+      PointerEscapingInstr(0) {
   PartitionBuilder PB(TD, AI, *this);
   if (!PB())
     return;
@@ -1906,6 +1912,7 @@ private:
       uint64_t OrigEnd = IsDest ? MTO.DestEnd : MTO.SourceEnd;
       // Ensure the start lines up.
       assert(BeginOffset == OrigBegin);
+      (void)OrigBegin;
 
       // Rewrite the size as needed.
       if (EndOffset != OrigEnd)
