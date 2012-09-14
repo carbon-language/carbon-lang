@@ -819,7 +819,7 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
         
         std::vector<addr_t> step_over_until_addrs;
         const bool abort_other_plans = false;
-        const bool stop_other_threads = true;
+        const bool stop_other_threads = false;
         const bool check_inlines = true;
         const bool exact = false;
 
