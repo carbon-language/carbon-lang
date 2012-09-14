@@ -1275,14 +1275,6 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
       }
     }
 
-    // ARC: warn about ABI issues.
-    if (getLangOpts().ObjCAutoRefCount) {
-      QualType BaseAllocType = Context.getBaseElementType(AllocType);
-      if (BaseAllocType.hasStrongOrWeakObjCLifetime())
-        Diag(StartLoc, diag::warn_err_new_delete_object_array)
-          << 0 << BaseAllocType;
-    }
-
     // Note that we do *not* convert the argument in any way.  It can
     // be signed, larger than size_t, whatever.
   }
@@ -2206,13 +2198,6 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
         }
       }
 
-    } else if (getLangOpts().ObjCAutoRefCount &&
-               PointeeElem->isObjCLifetimeType() &&
-               (PointeeElem.getObjCLifetime() == Qualifiers::OCL_Strong ||
-                PointeeElem.getObjCLifetime() == Qualifiers::OCL_Weak) &&
-               ArrayForm) {
-      Diag(StartLoc, diag::warn_err_new_delete_object_array)
-        << 1 << PointeeElem;
     }
 
     if (!OperatorDelete) {
