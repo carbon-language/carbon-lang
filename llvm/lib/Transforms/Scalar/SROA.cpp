@@ -546,8 +546,6 @@ private:
   }
 
   bool visitGetElementPtrInst(GetElementPtrInst &GEPI) {
-    //unsigned IntPtrWidth = TD->getPointerSizeInBits();
-    //assert(IntPtrWidth == Offset.getBitWidth());
     uint64_t GEPOffset;
     if (!computeConstantGEPOffset(GEPI, GEPOffset))
       return markAsEscaping(GEPI);
@@ -815,8 +813,6 @@ private:
     if (GEPI.use_empty())
       return markAsDead(GEPI);
 
-    //unsigned IntPtrWidth = TD->getPointerSizeInBits();
-    //assert(IntPtrWidth == Offset.getBitWidth());
     uint64_t GEPOffset;
     if (!computeConstantGEPOffset(GEPI, GEPOffset))
       llvm_unreachable("Unable to compute constant offset for use");
