@@ -3346,11 +3346,10 @@ void Sema::ActOnMemInitializers(Decl *ConstructorDecl,
     } else {
       assert(Init->isDelegatingInitializer());
       // This must be the only initializer
-      if (i != 0 || NumMemInits > 1) {
-        Diag(MemInits[0]->getSourceLocation(),
+      if (NumMemInits != 1) {
+        Diag(Init->getSourceLocation(),
              diag::err_delegating_initializer_alone)
-          << MemInits[0]->getSourceRange();
-        HadError = true;
+          << Init->getSourceRange() << MemInits[i ? 0 : 1]->getSourceRange();
         // We will treat this as being the only initializer.
       }
       SetDelegatingInitializer(Constructor, MemInits[i]);

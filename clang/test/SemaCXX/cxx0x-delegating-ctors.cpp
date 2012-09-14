@@ -33,7 +33,9 @@ foo::foo (const float &f) : foo(&f) { //expected-error{{creates a delegation cyc
                                       //expected-note{{which delegates to}}
 }
 
-foo::foo (char) : i(3), foo(3) { // expected-error{{must appear alone}}
+foo::foo (char) :
+  i(3),
+  foo(3) { // expected-error{{must appear alone}}
 }
 
 // This should not cause an infinite loop
