@@ -221,6 +221,7 @@ void initializeRegionOnlyViewerPass(PassRegistry&);
 void initializeRegionPrinterPass(PassRegistry&);
 void initializeRegionViewerPass(PassRegistry&);
 void initializeSCCPPass(PassRegistry&);
+void initializeSROAPass(PassRegistry&);
 void initializeSROA_DTPass(PassRegistry&);
 void initializeSROA_SSAUpPass(PassRegistry&);
 void initializeScalarEvolutionAliasAnalysisPass(PassRegistry&);

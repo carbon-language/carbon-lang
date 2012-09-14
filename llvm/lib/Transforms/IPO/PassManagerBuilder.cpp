@@ -40,6 +40,10 @@ UseGVNAfterVectorization("use-gvn-after-vectorization",
   cl::init(false), cl::Hidden,
   cl::desc("Run GVN instead of Early CSE after vectorization passes"));
 
+static cl::opt<bool> UseNewSROA("use-new-sroa",
+  cl::init(true), cl::Hidden,
+  cl::desc("Enable the new, experimental SROA pass"));
+
 PassManagerBuilder::PassManagerBuilder() {
     OptLevel = 2;
     SizeLevel = 0;
@@ -100,7 +104,10 @@ void PassManagerBuilder::populateFunctionPassManager(FunctionPassManager &FPM) {
   addInitialAliasAnalysisPasses(FPM);
 
   FPM.add(createCFGSimplificationPass());
-  FPM.add(createScalarReplAggregatesPass());
+  if (UseNewSROA)
+    FPM.add(createSROAPass());
+  else
+    FPM.add(createScalarReplAggregatesPass());
   FPM.add(createEarlyCSEPass());
   FPM.add(createLowerExpectIntrinsicPass());
 }
@@ -265,7 +272,10 @@ void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM,
   PM.add(createInstructionCombiningPass());
   PM.add(createJumpThreadingPass());
   // Break up allocas
-  PM.add(createScalarReplAggregatesPass());
+  if (UseNewSROA)
+    PM.add(createSROAPass());
+  else
+    PM.add(createScalarReplAggregatesPass());
 
   // Run a few AA driven optimizations here and now, to cleanup the code.
   PM.add(createFunctionAttrsPass()); // Add nocapture.

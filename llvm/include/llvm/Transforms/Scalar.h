@@ -70,6 +70,12 @@ FunctionPass *createAggressiveDCEPass();
 
 //===----------------------------------------------------------------------===//
 //
+// SROA - Replace aggregates or pieces of aggregates with scalar SSA values.
+//
+FunctionPass *createSROAPass();
+
+//===----------------------------------------------------------------------===//
+//
 // ScalarReplAggregates - Break up alloca's of aggregates into multiple allocas
 // if possible.
 //
