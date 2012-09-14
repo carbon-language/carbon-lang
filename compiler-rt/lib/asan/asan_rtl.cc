@@ -99,6 +99,7 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->strip_path_prefix, "strip_path_prefix");
   ParseFlag(str, &f->allow_reexec, "allow_reexec");
   ParseFlag(str, &f->print_full_thread_history, "print_full_thread_history");
+  ParseFlag(str, &f->log_path, "log_path");
 }
 
 extern "C" {
@@ -137,6 +138,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->strip_path_prefix = "";
   f->allow_reexec = true;
   f->print_full_thread_history = true;
+  f->log_path = 0;
 
   // Override from user-specified string.
   ParseFlagsFromString(f, __asan_default_options());
@@ -295,6 +297,7 @@ void __asan_init() {
   // initialization steps look at flags().
   const char *options = GetEnv("ASAN_OPTIONS");
   InitializeFlags(flags(), options);
+  __sanitizer_set_report_path(flags()->log_path);
 
   if (flags()->verbosity && options) {
     Report("Parsed ASAN_OPTIONS: %s\n", options);

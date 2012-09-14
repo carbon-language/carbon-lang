@@ -86,7 +86,7 @@ static int AppendPointer(char **buff, const char *buff_end, u64 ptr_value) {
 int VSNPrintf(char *buff, int buff_length,
               const char *format, va_list args) {
   static const char *kPrintfFormatsHelp = "Supported Printf formats: "
-                                          "%%[z]{d,u,x}; %%p; %%s\n";
+                                          "%%[z]{d,u,x}; %%p; %%s; %%c\n";
   RAW_CHECK(format);
   RAW_CHECK(buff_length > 0);
   const char *buff_end = &buff[buff_length - 1];
@@ -125,6 +125,11 @@ int VSNPrintf(char *buff, int buff_length,
       case 's': {
         RAW_CHECK_MSG(!have_z, kPrintfFormatsHelp);
         result += AppendString(&buff, buff_end, va_arg(args, char*));
+        break;
+      }
+      case 'c': {
+        RAW_CHECK_MSG(!have_z, kPrintfFormatsHelp);
+        result += AppendChar(&buff, buff_end, va_arg(args, uptr));
         break;
       }
       case '%' : {
