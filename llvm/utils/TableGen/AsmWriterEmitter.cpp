@@ -315,7 +315,7 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
   /// chunk of the output as well as indices used for operand printing.
   /// To reduce the number of unhandled cases, we expand the size from 32-bit
   /// to 32+16 = 48-bit.
-  std::vector<std::pair<unsigned, uint16_t> > OpcodeInfo;
+  std::vector<uint64_t> OpcodeInfo;
 
   // Add all strings to the string table upfront so it can generate an optimized
   // representation.
@@ -356,7 +356,7 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
     }
 
     // Bias offset by one since we want 0 as a sentinel.
-    OpcodeInfo.push_back(std::make_pair(Idx+1, 0));
+    OpcodeInfo.push_back(Idx+1);
   }
 
   // Figure out how many bits we used for the string index.
@@ -364,7 +364,7 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
 
   // To reduce code size, we compactify common instructions into a few bits
   // in the opcode-indexed table.
-  unsigned BitsLeft = 32+16-AsmStrBits;
+  unsigned BitsLeft = 64-AsmStrBits;
 
   std::vector<std::vector<std::string> > TableDrivenOperandPrinters;
 
@@ -382,13 +382,6 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
     // ceil(log2(numentries)).
     unsigned NumBits = Log2_32_Ceil(UniqueOperandCommands.size());
 
-    // Check whether these Bits will fit in the first 32 bits.
-    if (BitsLeft > 16 && NumBits > BitsLeft - 16)
-      // We don't have enough bits in the first 32 bits, and we skip the
-      // left-over bits.
-      BitsLeft = 16;
-    bool UseSecond = (BitsLeft <= 16);
-
     // If we don't have enough bits for this operand, don't include it.
     if (NumBits > BitsLeft) {
       DEBUG(errs() << "Not enough bits to densely encode " << NumBits
@@ -397,15 +390,11 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
     }
 
     // Otherwise, we can include this in the initial lookup table.  Add it in.
-    BitsLeft -= NumBits;
     for (unsigned i = 0, e = InstIdxs.size(); i != e; ++i)
-      // Update the first 32 bits or the second 16 bits.
       if (InstIdxs[i] != ~0U) {
-        if (UseSecond)
-          OpcodeInfo[i].second |= InstIdxs[i] << BitsLeft;
-        else
-          OpcodeInfo[i].first |= InstIdxs[i] << (BitsLeft-16+AsmStrBits);
+        OpcodeInfo[i] |= (uint64_t)InstIdxs[i] << (64-BitsLeft);
       }
+    BitsLeft -= NumBits;
 
     // Remove the info about this operand.
     for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
@@ -424,21 +413,25 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
   }
 
 
-
-  O<<"  static const unsigned OpInfo[] = {\n";
+  // We always emit at least one 32-bit table. A second table is emitted if
+  // more bits are needed.
+  O<<"  static const uint32_t OpInfo[] = {\n";
   for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
-    O << "    " << OpcodeInfo[i].first << "U,\t// "
+    O << "    " << (OpcodeInfo[i] & 0xffffffff) << "U,\t// "
       << NumberedInstructions[i]->TheDef->getName() << "\n";
   }
   // Add a dummy entry so the array init doesn't end with a comma.
   O << "    0U\n";
   O << "  };\n\n";
 
-  if (BitsLeft < 16) {
+  if (BitsLeft < 32) {
     // Add a second OpInfo table only when it is necessary.
-    O<<"  static const uint16_t OpInfo2[] = {\n";
+    // Adjust the type of the second table based on the number of bits needed.
+    O << "  static const uint"
+      << ((BitsLeft < 16) ? "32" : (BitsLeft < 24) ? "16" : "8")
+      << "_t OpInfo2[] = {\n";
     for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
-      O << "    " << OpcodeInfo[i].second << "U,\t// "
+      O << "    " << (OpcodeInfo[i] >> 32) << "U,\t// "
         << NumberedInstructions[i]->TheDef->getName() << "\n";
     }
     // Add a dummy entry so the array init doesn't end with a comma.
@@ -453,15 +446,22 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
 
   O << "  O << \"\\t\";\n\n";
 
-  O << "  // Emit the opcode for the instruction.\n"
-    << "  unsigned Bits = OpInfo[MI->getOpcode()];\n";
-  if (BitsLeft < 16)
-    O << "  unsigned short Bits2 = OpInfo2[MI->getOpcode()];\n";
+  O << "  // Emit the opcode for the instruction.\n";
+  if (BitsLeft < 32) {
+    // If we have two tables then we need to perform two lookups and combine
+    // the results into a single 64-bit value.
+    O << "  uint64_t Bits1 = OpInfo[MI->getOpcode()];\n"
+      << "  uint64_t Bits2 = OpInfo2[MI->getOpcode()];\n"
+      << "  uint64_t Bits = (Bits2 << 32) | Bits1;\n";
+  } else {
+    // If only one table is used we just need to perform a single lookup.
+    O << "  uint32_t Bits = OpInfo[MI->getOpcode()];\n";
+  }
   O << "  assert(Bits != 0 && \"Cannot print this instruction.\");\n"
     << "  O << AsmStrs+(Bits & " << (1 << AsmStrBits)-1 << ")-1;\n\n";
 
   // Output the table driven operand information.
-  BitsLeft = 32+16-AsmStrBits;
+  BitsLeft = 64-AsmStrBits;
   for (unsigned i = 0, e = TableDrivenOperandPrinters.size(); i != e; ++i) {
     std::vector<std::string> &Commands = TableDrivenOperandPrinters[i];
 
@@ -470,21 +470,14 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
     unsigned NumBits = Log2_32_Ceil(Commands.size());
     assert(NumBits <= BitsLeft && "consistency error");
 
-    // Check whether these Bits will fit in the first 32 bits.
-    if (BitsLeft > 16 && NumBits > BitsLeft - 16)
-      BitsLeft = 16;
-    bool UseSecond = (BitsLeft <= 16);
-
     // Emit code to extract this field from Bits.
-    BitsLeft -= NumBits;
-
     O << "\n  // Fragment " << i << " encoded into " << NumBits
       << " bits for " << Commands.size() << " unique commands.\n";
 
     if (Commands.size() == 2) {
       // Emit two possibilitys with if/else.
-      O << (UseSecond ? "  if ((Bits2 >> " : "  if ((Bits >> ")
-        << (UseSecond ? BitsLeft : (BitsLeft-16+AsmStrBits)) << ") & "
+      O << "  if ((Bits >> "
+        << (64-BitsLeft) << ") & "
         << ((1 << NumBits)-1) << ") {\n"
         << Commands[1]
         << "  } else {\n"
@@ -494,8 +487,8 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
       // Emit a single possibility.
       O << Commands[0] << "\n\n";
     } else {
-      O << (UseSecond ? "  switch ((Bits2 >> " : "  switch ((Bits >> ")
-        << (UseSecond ? BitsLeft : (BitsLeft-16+AsmStrBits)) << ") & "
+      O << "  switch ((Bits >> "
+        << (64-BitsLeft) << ") & "
         << ((1 << NumBits)-1) << ") {\n"
         << "  default:   // unreachable.\n";
 
@@ -507,6 +500,7 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
       }
       O << "  }\n\n";
     }
+    BitsLeft -= NumBits;
   }
 
   // Okay, delete instructions with no operand info left.
