@@ -26,7 +26,7 @@ namespace llvm {
 /// profitably bypassed and carried out with a shorter, faster divide.
 bool bypassSlowDivision(Function &F,
                         Function::iterator &I,
-                        const DenseMap<Type *, Type *> &BypassTypeMap);
+                        const DenseMap<Type*, Type*> &BypassTypeMap);
 
 } // End llvm namespace
 

@@ -221,7 +221,7 @@ static bool reuseOrInsertFastDiv(Function &F,
 // be profitably bypassed and carried out with a shorter, faster divide.
 bool llvm::bypassSlowDivision(Function &F,
                               Function::iterator &I,
-                              const DenseMap<Type *, Type *> &BypassTypeMap) {
+                              const DenseMap<Type*, Type*> &BypassTypeMap) {
   DivCacheTy DivCache;
 
   bool MadeChange = false;
