@@ -2037,6 +2037,28 @@ static void addPathIfExists(Twine Path, ToolChain::path_list &Paths) {
   if (llvm::sys::fs::exists(Path)) Paths.push_back(Path.str());
 }
 
+static bool isMipsArch(llvm::Triple::ArchType Arch) {
+  return Arch == llvm::Triple::mips ||
+         Arch == llvm::Triple::mipsel ||
+         Arch == llvm::Triple::mips64 ||
+         Arch == llvm::Triple::mips64el;
+}
+
+static StringRef getMultilibDir(const llvm::Triple &Triple,
+                                const ArgList &Args) {
+  if (!isMipsArch(Triple.getArch()))
+    return Triple.isArch32Bit() ? "lib32" : "lib64";
+
+  // lib32 directory has a special meaning on MIPS targets.
+  // It contains N32 ABI binaries. Use this folder if produce
+  // code for N32 ABI only.
+  Arg *A = Args.getLastArg(options::OPT_mabi_EQ);
+  if (A && (A->getValue(Args) == StringRef("n32")))
+    return "lib32";
+
+  return Triple.isArch32Bit() ? "lib" : "lib64";
+}
+
 Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   : Generic_ELF(D, Triple, Args) {
   llvm::Triple::ArchType Arch = Triple.getArch();
@@ -2060,11 +2082,6 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   if (Arch == llvm::Triple::arm || Arch == llvm::Triple::thumb)
     ExtraOpts.push_back("-X");
 
-  const bool IsMips = Arch == llvm::Triple::mips ||
-                      Arch == llvm::Triple::mipsel ||
-                      Arch == llvm::Triple::mips64 ||
-                      Arch == llvm::Triple::mips64el;
-
   const bool IsAndroid = Triple.getEnvironment() == llvm::Triple::Android;
 
   // Do not use 'gnu' hash style for Mips targets because .gnu.hash
@@ -2072,7 +2089,7 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   // .gnu.hash needs symbols to be grouped by hash code whereas the MIPS
   // ABI requires a mapping between the GOT and the symbol table.
   // Android loader does not support .gnu.hash.
-  if (!IsMips && !IsAndroid) {
+  if (!isMipsArch(Arch) && !IsAndroid) {
     if (IsRedhat(Distro) || IsOpenSuse(Distro) ||
         (IsUbuntu(Distro) && Distro >= UbuntuMaverick))
       ExtraOpts.push_back("--hash-style=gnu");
@@ -2101,7 +2118,7 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   // to the link paths.
   path_list &Paths = getFilePaths();
 
-  const std::string Multilib = Triple.isArch32Bit() ? "lib32" : "lib64";
+  const std::string Multilib = getMultilibDir(Triple, Args);
   const std::string MultiarchTriple = getMultiarchTriple(Triple, SysRoot);
 
   // Add the multilib suffixed paths where they are available.
