@@ -13,15 +13,15 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Transforms/IPO.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
 #include "llvm/TypeFinder.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/SmallString.h"
 
 using namespace llvm;
 
