@@ -22,7 +22,7 @@ include "llvm/Target/TargetItinerary.td"
 // Default values for basic properties are defined in MCSchedModel. "-1"
 // indicates that the property is not overriden by the target description.
 class SchedMachineModel {
-  int IssueWidth = -1; // Max instructions that may be scheduled per cycle.
+  int IssueWidth = -1; // Max micro-ops that may be scheduled per cycle.
   int MinLatency = -1; // Determines which instrucions are allowed in a group.
                        // (-1) inorder (0) ooo, (1): inorder +var latencies.
   int LoadLatency = -1; // Cycles for loads to access the cache.
