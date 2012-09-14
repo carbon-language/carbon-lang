@@ -304,3 +304,19 @@ namespace init_list_default {
   };
   B b {}; // calls default constructor
 }
+
+
+// <rdar://problem/11974632>
+namespace rdar11974632 {
+  struct X {
+    X(const X&) = delete;
+    X(int);
+  };
+
+  template<typename T>
+  struct Y { 
+    X x{1};
+  };
+
+  Y<int> yi;
+}
