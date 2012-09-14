@@ -1336,7 +1336,7 @@ static Value *getNaturalGEPRecursively(IRBuilder<> &IRB, const TargetData &TD,
 
   const StructLayout *SL = TD.getStructLayout(STy);
   uint64_t StructOffset = Offset.getZExtValue();
-  if (StructOffset > SL->getSizeInBytes())
+  if (StructOffset >= SL->getSizeInBytes())
     return 0;
   unsigned Index = SL->getElementContainingOffset(StructOffset);
   Offset -= APInt(Offset.getBitWidth(), SL->getElementOffset(Index));
