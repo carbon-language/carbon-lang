@@ -81,3 +81,8 @@ CtorStruct create_CtorStruct() {
   return CtorStruct(1, 3.14f); // CXXTemporaryObjectExpr
 };
 
+// CharacterLiteral variants
+const char char_value = 'a';
+const wchar_t wchar_t_value = L'ı';
+const char16_t char16_t_value = u'ç';
+const char32_t char32_t_value = U'∂';

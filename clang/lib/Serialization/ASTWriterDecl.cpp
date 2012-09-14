@@ -1619,7 +1619,7 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   //Character Literal
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // getValue
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Location
-  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); //IsWide
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 2)); // getKind
   CharacterLiteralAbbrev = Stream.EmitAbbrev(Abv);
 
   Abv = new BitCodeAbbrev();
