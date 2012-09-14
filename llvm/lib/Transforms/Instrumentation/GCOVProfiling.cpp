@@ -774,7 +774,7 @@ insertFlush(ArrayRef<std::pair<GlobalVariable*, MDNode*> > CountersBySP) {
        I != E; ++I) {
     GlobalVariable *GV = I->first;
     Constant *Null = Constant::getNullValue(GV->getType()->getElementType());
-    Builder.CreateStore(Null, GV);//Builder.CreateConstGEP2_64(GV, 0, 0));
+    Builder.CreateStore(Null, GV);
   }
 
   Type *RetTy = FlushF->getReturnType();
