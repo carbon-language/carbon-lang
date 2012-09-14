@@ -1054,7 +1054,7 @@ protected:
                                                                 &address_list.front(), 
                                                                 address_list.size(), 
                                                                 m_options.m_stop_others, 
-                                                                thread->GetSelectedFrameIndex ());
+                                                                m_options.m_frame_idx);
                 // User level plans should be master plans so they can be interrupted (e.g. by hitting a breakpoint)
                 // and other plans executed by the user (stepping around the breakpoint) and then a "continue"
                 // will resume the original plan.
