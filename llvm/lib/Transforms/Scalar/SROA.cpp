@@ -2302,7 +2302,14 @@ private:
 ///
 /// This recurses through the aggregate type and tries to compute a subtype
 /// based on the offset and size. When the offset and size span a sub-section
-/// of an array, it will even compute a new array type for that sub-section.
+/// of an array, it will even compute a new array type for that sub-section,
+/// and the same for structs.
+///
+/// Note that this routine is very strict and tries to find a partition of the
+/// type which produces the *exact* right offset and size. It is not forgiving
+/// when the size or offset cause either end of type-based partition to be off.
+/// Also, this is a best-effort routine. It is reasonable to give up and not
+/// return a type if necessary.
 static Type *getTypePartition(const TargetData &TD, Type *Ty,
                               uint64_t Offset, uint64_t Size) {
   if (Offset == 0 && TD.getTypeAllocSize(Ty) == Size)
@@ -2348,15 +2355,13 @@ static Type *getTypePartition(const TargetData &TD, Type *Ty,
     return 0;
 
   const StructLayout *SL = TD.getStructLayout(STy);
-  if (Offset > SL->getSizeInBytes())
+  if (Offset >= SL->getSizeInBytes())
     return 0;
   uint64_t EndOffset = Offset + Size;
   if (EndOffset > SL->getSizeInBytes())
     return 0;
 
   unsigned Index = SL->getElementContainingOffset(Offset);
-  if (SL->getElementOffset(Index) != Offset)
-    return 0; // Inside of padding.
   Offset -= SL->getElementOffset(Index);
 
   Type *ElementTy = STy->getElementType(Index);
@@ -2381,8 +2386,15 @@ static Type *getTypePartition(const TargetData &TD, Type *Ty,
     unsigned EndIndex = SL->getElementContainingOffset(EndOffset);
     if (Index == EndIndex)
       return 0; // Within a single element and its padding.
+
+    // Don't try to form "natural" types if the elements don't line up with the
+    // expected size.
+    // FIXME: We could potentially recurse down through the last element in the
+    // sub-struct to find a natural end point.
+    if (SL->getElementOffset(EndIndex) != EndOffset)
+      return 0;
+
     assert(Index < EndIndex);
-    assert(Index + EndIndex <= STy->getNumElements());
     EE = STy->element_begin() + EndIndex;
   }
 
@@ -2394,12 +2406,10 @@ static Type *getTypePartition(const TargetData &TD, Type *Ty,
   StructType *SubTy = StructType::get(STy->getContext(), ElementTys,
                                       STy->isPacked());
   const StructLayout *SubSL = TD.getStructLayout(SubTy);
-  if (Size == SubSL->getSizeInBytes())
-    return SubTy;
+  if (Size != SubSL->getSizeInBytes())
+    return 0; // The sub-struct doesn't have quite the size needed.
 
-  // FIXME: We could potentially recurse down through the last element in the
-  // sub-struct to find a natural end point.
-  return 0;
+  return SubTy;
 }
 
 /// \brief Rewrite an alloca partition's users.
