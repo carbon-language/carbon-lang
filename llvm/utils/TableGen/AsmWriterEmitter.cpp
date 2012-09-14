@@ -581,12 +581,13 @@ emitRegisterNameString(raw_ostream &O, StringRef AltName,
     StringTable.add(AsmName);
   }
 
-  StringTable.layout();
+  unsigned Entries = StringTable.layout();
   O << "  static const char AsmStrs" << AltName << "[] = {\n";
   StringTable.emit(O, printChar);
   O << "  };\n\n";
 
-  O << "  static const unsigned RegAsmOffset" << AltName << "[] = {";
+  O << "  static const uint" << ((Entries > 0xffff) ? "32" : "16")
+    << "_t RegAsmOffset" << AltName << "[] = {";
   for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
     if ((i % 14) == 0)
       O << "\n    ";

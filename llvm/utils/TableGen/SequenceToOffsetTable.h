@@ -82,9 +82,9 @@ public:
   }
 
   bool empty() const { return Seqs.empty(); }
-  
+
   /// layout - Computes the final table layout.
-  void layout() {
+  unsigned layout() {
     assert(Entries == 0 && "Can only call layout() once");
     // Lay out the table in Seqs iteration order.
     for (typename SeqMap::iterator I = Seqs.begin(), E = Seqs.end(); I != E;
@@ -93,6 +93,7 @@ public:
       // Include space for a terminator.
       Entries += I->first.size() + 1;
     }
+    return Entries;
   }
 
   /// get - Returns the offset of Seq in the final table.
