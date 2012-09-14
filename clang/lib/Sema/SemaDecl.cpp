@@ -1264,7 +1264,7 @@ static bool ShouldDiagnoseUnusedDecl(const NamedDecl *D) {
     QualType Ty = VD->getType();
 
     // Only look at the outermost level of typedef.
-    if (const TypedefType *TT = dyn_cast<TypedefType>(Ty)) {
+    if (const TypedefType *TT = Ty->getAs<TypedefType>()) {
       if (TT->getDecl()->hasAttr<UnusedAttr>())
         return false;
     }
