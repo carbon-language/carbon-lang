@@ -20,6 +20,22 @@
 
 using namespace llvm;
 
+/// Platform specific modifications to DAG.
+void VLIWMachineScheduler::postprocessDAG() {
+  SUnit* LastSequentialCall = NULL;
+  // Currently we only catch the situation when compare gets scheduled
+  // before preceding call.
+  for (unsigned su = 0, e = SUnits.size(); su != e; ++su) {
+    // Remember the call.
+    if (SUnits[su].getInstr()->isCall())
+      LastSequentialCall = &(SUnits[su]);
+    // Look for a compare that defines a predicate.
+    else if (SUnits[su].getInstr()->isCompare() && LastSequentialCall)
+      SUnits[su].addPred(SDep(LastSequentialCall, SDep::Order, 0, /*Reg=*/0,
+                              false));
+  }
+}
+
 /// Check if scheduling of this SU is possible
 /// in the current packet.
 /// It is _not_ precise (statefull), it is more like
@@ -67,6 +83,13 @@ bool VLIWResourceModel::isResourceAvailable(SUnit *SU) {
 /// Keep track of available resources.
 bool VLIWResourceModel::reserveResources(SUnit *SU) {
   bool startNewCycle = false;
+  // Artificially reset state.
+  if (!SU) {
+    ResourcesModel->clearResources();
+    Packet.clear();
+    TotalPackets++;
+    return false;
+  }
   // If this SU does not fit in the packet
   // start a new one.
   if (!isResourceAvailable(SU)) {
@@ -127,6 +150,9 @@ void VLIWMachineScheduler::schedule() {
         << " \n");
 
   buildDAGWithRegPressure();
+
+  // Postprocess the DAG to add platform specific artificial dependencies.
+  postprocessDAG();
 
   // To view Height/Depth correctly, they should be accessed at least once.
   DEBUG(unsigned maxH = 0;
@@ -354,6 +380,7 @@ SUnit *ConvergingVLIWScheduler::SchedBoundary::pickOnlyChoice() {
   for (unsigned i = 0; Available.empty(); ++i) {
     assert(i <= (HazardRec->getMaxLookAhead() + MaxMinLatency) &&
            "permanent hazard"); (void)i;
+    ResourceModel->reserveResources(0);
     bumpCycle();
     releasePending();
   }
