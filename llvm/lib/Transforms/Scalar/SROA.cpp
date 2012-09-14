@@ -567,6 +567,7 @@ private:
 
 
   bool visitMemSetInst(MemSetInst &II) {
+    assert(II.getRawDest() == *U && "Pointer use is not the destination?");
     ConstantInt *Length = dyn_cast<ConstantInt>(II.getLength());
     insertUse(II, Length ? Length->getZExtValue() : AllocSize - Offset, Length);
     return true;
@@ -2440,6 +2441,7 @@ bool SROA::rewriteAllocaPartition(AllocaInst &AI,
     AllocaTy = Type::getIntNTy(*C, AllocaSize * 8);
   if (!AllocaTy)
     AllocaTy = ArrayType::get(Type::getInt8Ty(*C), AllocaSize);
+  assert(TD->getTypeAllocSize(AllocaTy) >= AllocaSize);
 
   // Check for the case where we're going to rewrite to a new alloca of the
   // exact same type as the original, and with the same access offsets. In that
