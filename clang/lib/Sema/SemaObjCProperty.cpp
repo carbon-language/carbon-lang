@@ -948,10 +948,9 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
 
     // Check that type of property and its ivar are type compatible.
     if (!Context.hasSameType(PropertyIvarType, IvarType)) {
-      compat = false;
       if (isa<ObjCObjectPointerType>(PropertyIvarType) 
           && isa<ObjCObjectPointerType>(IvarType))
-        compat = 
+        compat =
           Context.canAssignObjCInterfaces(
                                   PropertyIvarType->getAs<ObjCObjectPointerType>(),
                                   IvarType->getAs<ObjCObjectPointerType>());
