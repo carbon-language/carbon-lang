@@ -2368,9 +2368,6 @@ static Type *getTypePartition(const TargetData &TD, Type *Ty,
   if (Offset > 0 || Size < ElementSize) {
     if ((Offset + Size) > ElementSize)
       return 0;
-    // Bail if this is a poniter element, we can't recurse through them.
-    if (ElementTy->isPointerTy())
-      return 0;
     return getTypePartition(TD, ElementTy, Offset, Size);
   }
   assert(Offset == 0);
