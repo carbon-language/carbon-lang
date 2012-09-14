@@ -26,7 +26,7 @@ static bool isAcceptableChar(char C) {
   return true;
 }
 
-/// NameNeedsQuoting - Return true if the identifier \arg Str needs quotes to be
+/// NameNeedsQuoting - Return true if the identifier \p Str needs quotes to be
 /// syntactically correct.
 static bool NameNeedsQuoting(StringRef Str) {
   assert(!Str.empty() && "Cannot create an empty MCSymbol");

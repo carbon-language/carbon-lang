@@ -202,7 +202,7 @@ private:
   /// This returns true on failure.
   bool ProcessIncbinFile(const std::string &Filename);
 
-  /// \brief Reset the current lexer position to that given by \arg Loc. The
+  /// \brief Reset the current lexer position to that given by \p Loc. The
   /// current token is not set; clients should ensure Lex() is called
   /// subsequently.
   void JumpToLoc(SMLoc Loc);
@@ -230,7 +230,7 @@ private:
   bool ParseBracketExpr(const MCExpr *&Res, SMLoc &EndLoc);
 
   /// ParseIdentifier - Parse an identifier or string (as a quoted identifier)
-  /// and set \arg Res to the identifier contents.
+  /// and set \p Res to the identifier contents.
   virtual bool ParseIdentifier(StringRef &Res);
 
   // Directive Parsing.

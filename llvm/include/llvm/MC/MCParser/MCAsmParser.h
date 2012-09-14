@@ -73,15 +73,13 @@ public:
   /// Run - Run the parser on the input source buffer.
   virtual bool Run(bool NoInitialTextSection, bool NoFinalize = false) = 0;
 
-  /// Warning - Emit a warning at the location \arg L, with the message \arg
-  /// Msg.
+  /// Warning - Emit a warning at the location \p L, with the message \p Msg.
   ///
   /// \return The return value is true, if warnings are fatal.
   virtual bool Warning(SMLoc L, const Twine &Msg,
                        ArrayRef<SMRange> Ranges = ArrayRef<SMRange>()) = 0;
 
-  /// Error - Emit an error at the location \arg L, with the message \arg
-  /// Msg.
+  /// Error - Emit an error at the location \p L, with the message \p Msg.
   ///
   /// \return The return value is always true, as an idiomatic convenience to
   /// clients.
@@ -100,7 +98,7 @@ public:
                 ArrayRef<SMRange> Ranges = ArrayRef<SMRange>());
 
   /// ParseIdentifier - Parse an identifier or string (as a quoted identifier)
-  /// and set \arg Res to the identifier contents.
+  /// and set \p Res to the identifier contents.
   virtual bool ParseIdentifier(StringRef &Res) = 0;
 
   /// \brief Parse up to the end of statement and return the contents from the

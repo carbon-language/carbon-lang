@@ -88,7 +88,7 @@ public:
 
   /// \brief Erase an entry from the mapping table.
   ///
-  /// \returns The address that \arg ToUnmap was happed to.
+  /// \returns The address that \p ToUnmap was happed to.
   void *RemoveMapping(const MutexGuard &, const GlobalValue *ToUnmap);
 };
 

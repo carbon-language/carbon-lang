@@ -182,7 +182,7 @@ public:
   void dump() const;
 
   /// \brief Dump the MCInst as prettily as possible using the additional MC
-  /// structures, if given. Operators are separated by the \arg Separator
+  /// structures, if given. Operators are separated by the \p Separator
   /// string.
   void dump_pretty(raw_ostream &OS, const MCAsmInfo *MAI = 0,
                    const MCInstPrinter *Printer = 0,

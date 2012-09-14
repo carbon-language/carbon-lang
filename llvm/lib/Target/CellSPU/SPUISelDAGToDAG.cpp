@@ -67,8 +67,8 @@ namespace {
 
   //! ConstantSDNode predicate for signed 16-bit values
   /*!
-    \arg CN The constant SelectionDAG node holding the value
-    \arg Imm The returned 16-bit value, if returning true
+    \param CN The constant SelectionDAG node holding the value
+    \param Imm The returned 16-bit value, if returning true
 
     This predicate tests the value in \a CN to see whether it can be
     represented as a 16-bit, sign-extended quantity. Returns true if
@@ -305,10 +305,10 @@ namespace {
 }
 
 /*!
- \arg Op The ISD instruction operand
- \arg N The address to be tested
- \arg Base The base address
- \arg Index The base address index
+ \param Op The ISD instruction operand
+ \param N The address to be tested
+ \param Base The base address
+ \param Index The base address index
  */
 bool
 SPUDAGToDAGISel::SelectAFormAddr(SDNode *Op, SDValue N, SDValue &Base,
@@ -375,10 +375,10 @@ SPUDAGToDAGISel::SelectDForm2Addr(SDNode *Op, SDValue N, SDValue &Disp,
 }
 
 /*!
-  \arg Op The ISD instruction (ignored)
-  \arg N The address to be tested
-  \arg Base Base address register/pointer
-  \arg Index Base address index
+  \param Op The ISD instruction (ignored)
+  \param N The address to be tested
+  \param Base Base address register/pointer
+  \param Index Base address index
 
   Examine the input address by a base register plus a signed 10-bit
   displacement, [r+I10] (D-form address).
@@ -541,10 +541,10 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDNode *Op, SDValue N, SDValue &Base,
 }
 
 /*!
-  \arg Op The ISD instruction operand
-  \arg N The address operand
-  \arg Base The base pointer operand
-  \arg Index The offset/index operand
+  \param Op The ISD instruction operand
+  \param N The address operand
+  \param Base The base pointer operand
+  \param Index The offset/index operand
 
   If the address \a N can be expressed as an A-form or D-form address, returns
   false.  Otherwise, creates two operands, Base and Index that will become the
@@ -569,7 +569,7 @@ SPUDAGToDAGISel::SelectXFormAddr(SDNode *Op, SDValue N, SDValue &Base,
  Utility function to use with COPY_TO_REGCLASS instructions. Returns a SDValue
  to be used as the last parameter of a
 CurDAG->getMachineNode(COPY_TO_REGCLASS,..., ) function call
- \arg VT the value type for which we want a register class
+ \param VT the value type for which we want a register class
 */
 SDValue SPUDAGToDAGISel::getRC( MVT VT ) {
   switch( VT.SimpleTy ) {

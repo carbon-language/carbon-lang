@@ -170,31 +170,47 @@ public:
   }
 };
 
-/// format - This is a helper function that is used to produce formatted output.
-/// This is typically used like:  OS << format("%0.4f", myfloat) << '\n';
+/// This is a helper function that is used to produce formatted output.
+///
+/// This is typically used like:
+/// \code
+///   OS << format("%0.4f", myfloat) << '\n';
+/// \endcode
 template <typename T>
 inline format_object1<T> format(const char *Fmt, const T &Val) {
   return format_object1<T>(Fmt, Val);
 }
 
-/// format - This is a helper function that is used to produce formatted output.
-/// This is typically used like:  OS << format("%0.4f", myfloat) << '\n';
+/// This is a helper function that is used to produce formatted output.
+///
+/// This is typically used like:
+/// \code
+///   OS << format("%0.4f", myfloat) << '\n';
+/// \endcode
 template <typename T1, typename T2>
 inline format_object2<T1, T2> format(const char *Fmt, const T1 &Val1,
                                      const T2 &Val2) {
   return format_object2<T1, T2>(Fmt, Val1, Val2);
 }
 
-/// format - This is a helper function that is used to produce formatted output.
-/// This is typically used like:  OS << format("%0.4f", myfloat) << '\n';
+/// This is a helper function that is used to produce formatted output.
+///
+/// This is typically used like:
+/// \code
+///   OS << format("%0.4f", myfloat) << '\n';
+/// \endcode
 template <typename T1, typename T2, typename T3>
   inline format_object3<T1, T2, T3> format(const char *Fmt, const T1 &Val1,
                                            const T2 &Val2, const T3 &Val3) {
   return format_object3<T1, T2, T3>(Fmt, Val1, Val2, Val3);
 }
 
-/// format - This is a helper function that is used to produce formatted output.
-/// This is typically used like:  OS << format("%0.4f", myfloat) << '\n';
+/// This is a helper function that is used to produce formatted output.
+///
+/// This is typically used like:
+/// \code
+///   OS << format("%0.4f", myfloat) << '\n';
+/// \endcode
 template <typename T1, typename T2, typename T3, typename T4>
 inline format_object4<T1, T2, T3, T4> format(const char *Fmt, const T1 &Val1,
                                              const T2 &Val2, const T3 &Val3,
@@ -202,8 +218,12 @@ inline format_object4<T1, T2, T3, T4> format(const char *Fmt, const T1 &Val1,
   return format_object4<T1, T2, T3, T4>(Fmt, Val1, Val2, Val3, Val4);
 }
 
-/// format - This is a helper function that is used to produce formatted output.
-/// This is typically used like:  OS << format("%0.4f", myfloat) << '\n';
+/// This is a helper function that is used to produce formatted output.
+///
+/// This is typically used like:
+/// \code
+///   OS << format("%0.4f", myfloat) << '\n';
+/// \endcode
 template <typename T1, typename T2, typename T3, typename T4, typename T5>
 inline format_object5<T1, T2, T3, T4, T5> format(const char *Fmt,const T1 &Val1,
                                              const T2 &Val2, const T3 &Val3,

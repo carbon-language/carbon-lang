@@ -92,7 +92,7 @@ public:
       MCELFObjectTargetWriter::getOSABI(OSType), IsLittle, Is64Bit);
   }
 
-  /// ApplyFixup - Apply the \arg Value for given \arg Fixup into the provided
+  /// ApplyFixup - Apply the \p Value for given \p Fixup into the provided
   /// data fragment, at the offset specified by the fixup and following the
   /// fixup kind as appropriate.
   void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,

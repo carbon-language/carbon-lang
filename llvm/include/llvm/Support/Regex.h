@@ -36,7 +36,7 @@ namespace llvm {
       Newline=2
     };
 
-    /// Compiles the given POSIX Extended Regular Expression \arg Regex.
+    /// Compiles the given POSIX Extended Regular Expression \p Regex.
     /// This implementation supports regexes and matching strings with embedded
     /// NUL characters.
     Regex(StringRef Regex, unsigned Flags = NoFlags);
@@ -51,17 +51,17 @@ namespace llvm {
     /// many entries plus one for the whole regex (as element 0).
     unsigned getNumMatches() const;
 
-    /// matches - Match the regex against a given \arg String.
+    /// matches - Match the regex against a given \p String.
     ///
     /// \param Matches - If given, on a successful match this will be filled in
-    /// with references to the matched group expressions (inside \arg String),
+    /// with references to the matched group expressions (inside \p String),
     /// the first group is always the entire pattern.
     ///
     /// This returns true on a successful match.
     bool match(StringRef String, SmallVectorImpl<StringRef> *Matches = 0);
 
     /// sub - Return the result of replacing the first match of the regex in
-    /// \arg String with the \arg Repl string. Backreferences like "\0" in the
+    /// \p String with the \p Repl string. Backreferences like "\0" in the
     /// replacement string are replaced with the appropriate match substring.
     ///
     /// Note that the replacement string has backslash escaping performed on

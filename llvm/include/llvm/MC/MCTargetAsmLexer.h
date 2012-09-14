@@ -45,7 +45,7 @@ public:
 
   const Target &getTarget() const { return TheTarget; }
 
-  /// InstallLexer - Set the lexer to get tokens from lower-level lexer \arg L.
+  /// InstallLexer - Set the lexer to get tokens from lower-level lexer \p L.
   void InstallLexer(MCAsmLexer &L) {
     Lexer = &L;
   }
@@ -77,10 +77,10 @@ public:
   /// getKind - Get the kind of current token.
   AsmToken::TokenKind getKind() const { return CurTok.getKind(); }
 
-  /// is - Check if the current token has kind \arg K.
+  /// is - Check if the current token has kind \p K.
   bool is(AsmToken::TokenKind K) const { return CurTok.is(K); }
 
-  /// isNot - Check if the current token has kind \arg K.
+  /// isNot - Check if the current token has kind \p K.
   bool isNot(AsmToken::TokenKind K) const { return CurTok.isNot(K); }
 };
 

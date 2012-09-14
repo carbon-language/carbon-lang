@@ -278,9 +278,9 @@ void X86AsmBackend::relaxInstruction(const MCInst &Inst, MCInst &Res) const {
   Res.setOpcode(RelaxedOp);
 }
 
-/// writeNopData - Write optimal nops to the output file for the \arg Count
+/// writeNopData - Write optimal nops to the output file for the \p Count
 /// bytes.  This returns the number of bytes written.  It may return 0 if
-/// the \arg Count is more than the maximum optimal nops.
+/// the \p Count is more than the maximum optimal nops.
 bool X86AsmBackend::writeNopData(uint64_t Count, MCObjectWriter *OW) const {
   static const uint8_t Nops[10][10] = {
     // nop

@@ -305,7 +305,7 @@ static bool isOpcWithIntImmediate(SDNode *N, unsigned Opc, unsigned& Imm) {
 }
 
 /// \brief Check whether a particular node is a constant value representable as
-/// (N * Scale) where (N in [\arg RangeMin, \arg RangeMax).
+/// (N * Scale) where (N in [\p RangeMin, \p RangeMax).
 ///
 /// \param ScaledConstant [out] - On success, the pre-scaled constant value.
 static bool isScaledConstantInRange(SDValue Node, int Scale,

@@ -381,7 +381,7 @@ void MCAsmLayout::LayoutFragment(MCFragment *F) {
   LastValidFragment[F->getParent()] = F;
 }
 
-/// WriteFragmentData - Write the \arg F data to the output file.
+/// WriteFragmentData - Write the \p F data to the output file.
 static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
                               const MCFragment &F) {
   MCObjectWriter *OW = &Asm.getWriter();

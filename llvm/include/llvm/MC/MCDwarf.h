@@ -59,7 +59,7 @@ namespace llvm {
     unsigned getDirIndex() const { return DirIndex; }
 
 
-    /// print - Print the value to the stream \arg OS.
+    /// print - Print the value to the stream \p OS.
     void print(raw_ostream &OS) const;
 
     /// dump - Print the value to stderr.

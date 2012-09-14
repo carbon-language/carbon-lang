@@ -48,15 +48,15 @@ public:
 public:
   virtual ~DAGDeltaAlgorithm() {}
 
-  /// Run - Minimize the DAG formed by the \arg Changes vertices and the \arg
-  /// Dependencies edges by executing \see ExecuteOneTest() on subsets of
+  /// Run - Minimize the DAG formed by the \p Changes vertices and the
+  /// \p Dependencies edges by executing \see ExecuteOneTest() on subsets of
   /// changes and returning the smallest set which still satisfies the test
-  /// predicate and the input \arg Dependencies.
+  /// predicate and the input \p Dependencies.
   ///
   /// \param Changes The list of changes.
   ///
   /// \param Dependencies The list of dependencies amongst changes. For each
-  /// (x,y) in \arg Dependencies, both x and y must be in \arg Changes. The
+  /// (x,y) in \p Dependencies, both x and y must be in \p Changes. The
   /// minimization algorithm guarantees that for each tested changed set S,
   /// \f$ x \in S \f$ implies \f$ y \in S \f$. It is an error to have cyclic
   /// dependencies.
@@ -68,7 +68,7 @@ public:
                                   const changesetlist_ty &Sets,
                                   const changeset_ty &Required) {}
 
-  /// ExecuteOneTest - Execute a single test predicate on the change set \arg S.
+  /// ExecuteOneTest - Execute a single test predicate on the change set \p S.
   virtual bool ExecuteOneTest(const changeset_ty &S) = 0;
 };
 

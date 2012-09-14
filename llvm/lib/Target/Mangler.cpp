@@ -44,7 +44,7 @@ static void MangleLetter(SmallVectorImpl<char> &OutName, unsigned char C) {
   OutName.push_back('_');
 }
 
-/// NameNeedsEscaping - Return true if the identifier \arg Str needs quotes
+/// NameNeedsEscaping - Return true if the identifier \p Str needs quotes
 /// for this assembler.
 static bool NameNeedsEscaping(StringRef Str, const MCAsmInfo &MAI) {
   assert(!Str.empty() && "Cannot create an empty MCSymbol");
