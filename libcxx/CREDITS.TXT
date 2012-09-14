@@ -62,3 +62,7 @@ D: Minor patches and bug fixes.
 N: Michel Morin
 E: mimomorin@gmail.com
 D: Minor patches to is_convertible.
+
+N: Dimitry Andric
+E: dimitry@andric.com
+D: Visibility fixes, minor FreeBSD portability patches.
