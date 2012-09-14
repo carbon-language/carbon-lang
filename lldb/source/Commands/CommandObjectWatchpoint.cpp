@@ -970,6 +970,21 @@ public:
     }
 
 protected:
+    static uint32_t GetVariableCallback (void *baton,
+                                         const char *name,
+                                         VariableList &variable_list)
+    {
+        Target *target = static_cast<Target *>(baton);
+        if (target)
+        {
+            return target->GetImages().FindGlobalVariables (ConstString(name),
+                                                            true,
+                                                            UINT32_MAX,
+                                                            variable_list);
+        }
+        return 0;
+    }
+    
     virtual bool
     DoExecute (Args& command,
              CommandReturnObject &result)
@@ -1023,6 +1038,24 @@ protected:
                                                               expr_path_options,
                                                               var_sp,
                                                               error);
+        
+        if (!valobj_sp) {
+            // Not in the frame; let's check the globals.
+            
+            VariableList variable_list;
+            ValueObjectList valobj_list;
+            
+            Error error (Variable::GetValuesForVariableExpressionPath (command.GetArgumentAtIndex(0),
+                                                                       exe_ctx.GetBestExecutionContextScope(),
+                                                                       GetVariableCallback,
+                                                                       target,
+                                                                       variable_list,
+                                                                       valobj_list));
+            
+            if (valobj_list.GetSize())
+                valobj_sp = valobj_list.GetValueObjectAtIndex(0);
+        }
+        
         if (valobj_sp) {
             AddressType addr_type;
             addr = valobj_sp->GetAddressOf(false, &addr_type);
