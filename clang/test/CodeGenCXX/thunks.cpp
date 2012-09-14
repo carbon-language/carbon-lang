@@ -301,6 +301,32 @@ namespace Test12 {
   // CHECK: getelementptr inbounds i8* {{.*}}, i64 8
 }
 
+// PR13832
+namespace Test13 {
+  struct B1 {
+    virtual B1 &foo1();
+  };
+  struct Pad1 {
+    virtual ~Pad1();
+  };
+  struct Proxy1 : Pad1, B1 {
+    virtual ~Proxy1();
+  };
+  struct D : virtual Proxy1 {
+    virtual ~D();
+    virtual D &foo1();
+  };
+  D& D::foo1() {
+    return *this;
+  }
+  // CHECK: define {{.*}} @_ZTcvn8_n32_v8_n24_N6Test131D4foo1Ev
+  // CHECK: getelementptr inbounds i8* {{.*}}, i64 -8
+  // CHECK: getelementptr inbounds i8* {{.*}}, i64 -32
+  // CHECK: getelementptr inbounds i8* {{.*}}, i64 -24
+  // CHECK: getelementptr inbounds i8* {{.*}}, i64 8
+  // CHECK: ret %"struct.Test13::D"*
+}
+
 /**** The following has to go at the end of the file ****/
 
 // This is from Test5:
