@@ -66,6 +66,24 @@ static void write_string(const char *s) {
   fwrite("\0\0\0\0", 4 - (strlen(s) % 4), 1, output_file);
 }
 
+static uint32_t read_int32() {
+  uint32_t tmp;
+
+  if (fread(&tmp, 1, 4, output_file) != 4)
+    return (uint32_t)-1;
+
+  return tmp;
+}
+
+static uint64_t read_int64() {
+  uint64_t tmp;
+
+  if (fread(&tmp, 1, 8, output_file) != 8)
+    return (uint64_t)-1;
+
+  return tmp;
+}
+
 static char *mangle_filename(const char *orig_filename) {
   char *filename = 0;
   int prefix_len = 0;
@@ -129,15 +147,24 @@ static void recursive_mkdir(char *filename) {
  */
 void llvm_gcda_start_file(const char *orig_filename) {
   char *filename = mangle_filename(orig_filename);
-  output_file = fopen(filename, "w+b");
+  char buffer[13];
+
+  /* Try just opening the file. */
+  output_file = fopen(filename, "r+b");
 
   if (!output_file) {
-    recursive_mkdir(filename);
+    /* Try opening the file, creating it if necessary. */
     output_file = fopen(filename, "w+b");
     if (!output_file) {
-      fprintf(stderr, "profiling:%s: cannot open\n", filename);
-      free(filename);
-      return;
+      /* Try creating the directories first then opening the file. */
+      recursive_mkdir(filename);
+      output_file = fopen(filename, "w+b");
+      if (!output_file) {
+        /* Bah! It's hopeless. */
+        fprintf(stderr, "profiling:%s: cannot open\n", filename);
+        free(filename);
+        return;
+      }
     }
   }
 
@@ -148,11 +175,11 @@ void llvm_gcda_start_file(const char *orig_filename) {
   fwrite("adcg*404MVLL", 12, 1, output_file);
 #endif
 
-#ifdef DEBUG_GCDAPROFILING
-  printf("llvmgcda: [%s]\n", orig_filename);
-#endif
-
   free(filename);
+
+#ifdef DEBUG_GCDAPROFILING
+  fprintf(stderr, "llvmgcda: [%s]\n", orig_filename);
+#endif
 }
 
 /* Given an array of pointers to counters (counters), increment the n-th one,
@@ -175,14 +202,14 @@ void llvm_gcda_increment_indirect_counter(uint32_t *predecessor,
 #ifdef DEBUG_GCDAPROFILING
   else
     fprintf(stderr,
-            "llvmgcda: increment_indirect_counter counters=%x, pred=%u\n",
-            state_table_row, *predecessor);
+            "llvmgcda: increment_indirect_counter counters=%08llx, pred=%u\n",
+            *counter, *predecessor);
 #endif
 }
 
 void llvm_gcda_emit_function(uint32_t ident, const char *function_name) {
 #ifdef DEBUG_GCDAPROFILING
-  printf("llvmgcda: function id=%x\n", ident);
+  fprintf(stderr, "llvmgcda: function id=0x%08x\n", ident);
 #endif
   if (!output_file) return;
 
@@ -197,18 +224,55 @@ void llvm_gcda_emit_function(uint32_t ident, const char *function_name) {
 
 void llvm_gcda_emit_arcs(uint32_t num_counters, uint64_t *counters) {
   uint32_t i;
+  uint64_t *old_ctrs = NULL;
+  uint32_t val = 0;
+  long pos = 0;
+
+  if (!output_file) return;
+
+  pos = ftell(output_file);
+  val = read_int32();
+
+  fprintf(stderr, "Read: 0x%08x\n", val);
+
+  if (val != (uint32_t)-1) {
+    /* There are counters present in the file. Merge them. */
+    uint32_t j;
+
+    if (val != 0x01a10000) {
+      fprintf(stderr, "profiling: invalid magic number (0x%08x)\n", val);
+      return;
+    }
+
+    val = read_int32();
+    if (val == (uint32_t)-1 || val / 2 != num_counters) {
+      fprintf(stderr, "profiling: invalid number of counters (%d)\n", val);
+      return;
+    }
+
+    old_ctrs = malloc(sizeof(uint64_t) * num_counters);
+
+    for (j = 0; j < num_counters; ++j) {
+      old_ctrs[j] = read_int64();
+      fprintf(stderr, "old counter[%d]: %lld\n", j, old_ctrs[j]);
+    }
+  }
+
+  /* Reset for writing. */
+  fseek(output_file, pos, SEEK_SET);
 
   /* Counter #1 (arcs) tag */
-  if (!output_file) return;
   fwrite("\0\0\xa1\1", 4, 1, output_file);
   write_int32(num_counters * 2);
   for (i = 0; i < num_counters; ++i)
-    write_int64(counters[i]);
+    write_int64(counters[i] + (old_ctrs ? old_ctrs[i] : 0));
+
+  free(old_ctrs);
 
 #ifdef DEBUG_GCDAPROFILING
-  printf("llvmgcda:   %u arcs\n", num_counters);
+  fprintf(stderr, "llvmgcda:   %u arcs\n", num_counters);
   for (i = 0; i < num_counters; ++i)
-    printf("llvmgcda:   %llu\n", (unsigned long long)counters[i]);
+    fprintf(stderr, "llvmgcda:   %llu\n", (unsigned long long)counters[i]);
 #endif
 }
 
@@ -220,6 +284,6 @@ void llvm_gcda_end_file() {
   output_file = NULL;
 
 #ifdef DEBUG_GCDAPROFILING
-  printf("llvmgcda: -----\n");
+  fprintf(stderr, "llvmgcda: -----\n");
 #endif
 }

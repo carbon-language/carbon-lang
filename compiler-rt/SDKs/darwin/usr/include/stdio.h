@@ -51,11 +51,24 @@ typedef __SIZE_TYPE__ size_t;
 #    define stderr __stderrp
 extern FILE *__stderrp;
 
+#ifndef SEEK_SET
+#define	SEEK_SET	0	/* set file offset to offset */
+#endif
+#ifndef SEEK_CUR
+#define	SEEK_CUR	1	/* set file offset to current plus offset */
+#endif
+#ifndef SEEK_END
+#define	SEEK_END	2	/* set file offset to EOF plus offset */
+#endif
+
 int fclose(FILE *);
 int fflush(FILE *);
 FILE *fopen(const char * restrict, const char * restrict) __asm(__FOPEN_NAME);
 int fprintf(FILE * restrict, const char * restrict, ...);
 size_t fwrite(const void * restrict, size_t, size_t, FILE * restrict)
   __asm(__FWRITE_NAME);
+size_t fread(void * __restrict, size_t, size_t, FILE * __restrict);
+long ftell(FILE *);
+int fseek(FILE *, long, int);
 
 #endif /* __STDIO_H__ */
