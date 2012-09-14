@@ -457,7 +457,7 @@ class AllocaPartitioning::PartitionBuilder
 
 public:
   PartitionBuilder(const TargetData &TD, AllocaInst &AI, AllocaPartitioning &P)
-      : BuilderBase(TD, AI, P) {}
+      : BuilderBase<PartitionBuilder, bool>(TD, AI, P) {}
 
   /// \brief Run the builder over the allocation.
   bool operator()() {
@@ -740,7 +740,7 @@ class AllocaPartitioning::UseBuilder : public BuilderBase<UseBuilder> {
 
 public:
   UseBuilder(const TargetData &TD, AllocaInst &AI, AllocaPartitioning &P)
-      : BuilderBase(TD, AI, P) {}
+      : BuilderBase<UseBuilder>(TD, AI, P) {}
 
   /// \brief Run the builder over the allocation.
   void operator()() {
