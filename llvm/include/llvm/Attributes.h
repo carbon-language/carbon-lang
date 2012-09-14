@@ -21,11 +21,13 @@
 #include <string>
 
 namespace llvm {
+
 class Type;
 
 namespace Attribute {
-/// We use this proxy POD type to allow constructing Attributes constants
-/// using initializer lists. Do not use this class directly.
+
+/// We use this proxy POD type to allow constructing Attributes constants using
+/// initializer lists. Do not use this class directly.
 struct AttrConst {
   uint64_t v;
   AttrConst operator | (const AttrConst Attrs) const {
@@ -37,49 +39,6 @@ struct AttrConst {
     return Res;
   }
 };
-}  // namespace Attribute
-
-
-/// Attributes - A bitset of attributes.
-class Attributes {
- public:
-  Attributes() : Bits(0) { }
-  explicit Attributes(uint64_t Val) : Bits(Val) { }
-  /*implicit*/ Attributes(Attribute::AttrConst Val) : Bits(Val.v) { }
-  // This is a "safe bool() operator".
-  operator const void *() const { return Bits ? this : 0; }
-  bool isEmptyOrSingleton() const { return (Bits & (Bits - 1)) == 0; }
-  bool operator == (const Attributes &Attrs) const {
-    return Bits == Attrs.Bits;
-  }
-  bool operator != (const Attributes &Attrs) const {
-    return Bits != Attrs.Bits;
-  }
-  Attributes operator | (const Attributes &Attrs) const {
-    return Attributes(Bits | Attrs.Bits);
-  }
-  Attributes operator & (const Attributes &Attrs) const {
-    return Attributes(Bits & Attrs.Bits);
-  }
-  Attributes operator ^ (const Attributes &Attrs) const {
-    return Attributes(Bits ^ Attrs.Bits);
-  }
-  Attributes &operator |= (const Attributes &Attrs) {
-    Bits |= Attrs.Bits;
-    return *this;
-  }
-  Attributes &operator &= (const Attributes &Attrs) {
-    Bits &= Attrs.Bits;
-    return *this;
-  }
-  Attributes operator ~ () const { return Attributes(~Bits); }
-  uint64_t Raw() const { return Bits; }
- private:
-  // Currently, we need less than 64 bits.
-  uint64_t Bits;
-};
-
-namespace Attribute {
 
 /// Function parameters and results can have attributes to indicate how they
 /// should be treated by optimizations and code generation. This enumeration
@@ -87,10 +46,10 @@ namespace Attribute {
 /// results or the function itself.
 /// @brief Function attributes.
 
-// We declare AttrConst objects that will be used throughout the code
-// and also raw uint64_t objects with _i suffix to be used below for other
-// constant declarations. This is done to avoid static CTORs and at the same
-// time to keep type-safety of Attributes.
+/// We declare AttrConst objects that will be used throughout the code and also
+/// raw uint64_t objects with _i suffix to be used below for other constant
+/// declarations. This is done to avoid static CTORs and at the same time to
+/// keep type-safety of Attributes.
 #define DECLARE_LLVM_ATTRIBUTE(name, value) \
   const uint64_t name##_i = value; \
   const AttrConst name = {value};
@@ -136,6 +95,48 @@ DECLARE_LLVM_ATTRIBUTE(NonLazyBind,1U<<31) ///< Function is called early and/or
 DECLARE_LLVM_ATTRIBUTE(AddressSafety,1ULL<<32) ///< Address safety checking is on.
 
 #undef DECLARE_LLVM_ATTRIBUTE
+
+}  // namespace Attribute
+
+/// Attributes - A bitset of attributes.
+class Attributes {
+  // Currently, we need less than 64 bits.
+  uint64_t Bits;
+public:
+  Attributes() : Bits(0) { }
+  explicit Attributes(uint64_t Val) : Bits(Val) { }
+  /*implicit*/ Attributes(Attribute::AttrConst Val) : Bits(Val.v) { }
+  // This is a "safe bool() operator".
+  operator const void *() const { return Bits ? this : 0; }
+  bool isEmptyOrSingleton() const { return (Bits & (Bits - 1)) == 0; }
+  bool operator == (const Attributes &Attrs) const {
+    return Bits == Attrs.Bits;
+  }
+  bool operator != (const Attributes &Attrs) const {
+    return Bits != Attrs.Bits;
+  }
+  Attributes operator | (const Attributes &Attrs) const {
+    return Attributes(Bits | Attrs.Bits);
+  }
+  Attributes operator & (const Attributes &Attrs) const {
+    return Attributes(Bits & Attrs.Bits);
+  }
+  Attributes operator ^ (const Attributes &Attrs) const {
+    return Attributes(Bits ^ Attrs.Bits);
+  }
+  Attributes &operator |= (const Attributes &Attrs) {
+    Bits |= Attrs.Bits;
+    return *this;
+  }
+  Attributes &operator &= (const Attributes &Attrs) {
+    Bits &= Attrs.Bits;
+    return *this;
+  }
+  Attributes operator ~ () const { return Attributes(~Bits); }
+  uint64_t Raw() const { return Bits; }
+};
+
+namespace Attribute {
 
 /// Note that uwtable is about the ABI or the user mandating an entry in the
 /// unwind table. The nounwind attribute is about an exception passing by the
