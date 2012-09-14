@@ -53,13 +53,13 @@ public:
   // scheduling and the specified optimization level meets the requirement
   // return true to enable post-register-allocation scheduling. In
   // CriticalPathRCs return any register classes that should only be broken
-  // if on the critical path. 
+  // if on the critical path.
   virtual bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
                                      AntiDepBreakMode& Mode,
                                      RegClassVector& CriticalPathRCs) const;
   // adjustSchedDependency - Perform target specific adjustments to
   // the latency of a schedule dependency.
-  virtual void adjustSchedDependency(SUnit *def, SUnit *use, 
+  virtual void adjustSchedDependency(SUnit *def, SUnit *use,
                                      SDep& dep) const { }
 };
 
