@@ -1150,12 +1150,6 @@ class SROA : public FunctionPass {
   /// uses as dead. Only used to guard insertion into DeadInsts.
   SmallPtrSet<Instruction *, 4> DeadSplitInsts;
 
-  /// \brief A set of deleted alloca instructions.
-  ///
-  /// These pointers are *no longer valid* as they have been deleted. They are
-  /// used to remove deleted allocas from the list of promotable allocas.
-  SmallPtrSet<AllocaInst *, 4> DeletedAllocas;
-
   /// \brief A collection of alloca instructions we can directly promote.
   std::vector<AllocaInst *> PromotableAllocas;
 
@@ -1178,7 +1172,7 @@ private:
                               AllocaPartitioning::iterator PI);
   bool splitAlloca(AllocaInst &AI, AllocaPartitioning &P);
   bool runOnAlloca(AllocaInst &AI);
-  void deleteDeadInstructions();
+  void deleteDeadInstructions(SmallPtrSet<AllocaInst *, 4> &DeletedAllocas);
 };
 }
 
@@ -2556,7 +2550,16 @@ bool SROA::runOnAlloca(AllocaInst &AI) {
   return splitAlloca(AI, P) || Changed;
 }
 
-void SROA::deleteDeadInstructions() {
+/// \brief Delete the dead instructions accumulated in this run.
+///
+/// Recursively deletes the dead instructions we've accumulated. This is done
+/// at the very end to maximize locality of the recursive delete and to
+/// minimize the problems of invalidated instruction pointers as such pointers
+/// are used heavily in the intermediate stages of the algorithm.
+///
+/// We also record the alloca instructions deleted here so that they aren't
+/// subsequently handed to mem2reg to promote.
+void SROA::deleteDeadInstructions(SmallPtrSet<AllocaInst*, 4> &DeletedAllocas) {
   DeadSplitInsts.clear();
   while (!DeadInsts.empty()) {
     Instruction *I = DeadInsts.pop_back_val();
@@ -2607,9 +2610,13 @@ bool SROA::runOnFunction(Function &F) {
       Worklist.insert(AI);
 
   bool Changed = false;
+  // A set of deleted alloca instruction pointers which should be removed from
+  // the list of promotable allocas.
+  SmallPtrSet<AllocaInst *, 4> DeletedAllocas;
+
   while (!Worklist.empty()) {
     Changed |= runOnAlloca(*Worklist.pop_back_val());
-    deleteDeadInstructions();
+    deleteDeadInstructions(DeletedAllocas);
     if (!DeletedAllocas.empty()) {
       PromotableAllocas.erase(std::remove_if(PromotableAllocas.begin(),
                                              PromotableAllocas.end(),
