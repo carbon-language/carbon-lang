@@ -147,7 +147,6 @@ static void recursive_mkdir(char *filename) {
  */
 void llvm_gcda_start_file(const char *orig_filename) {
   char *filename = mangle_filename(orig_filename);
-  char buffer[13];
 
   /* Try just opening the file. */
   output_file = fopen(filename, "r+b");
