@@ -142,29 +142,24 @@ TEST(AddressSanitizer, SimpleDeathTest) {
 }
 
 TEST(AddressSanitizer, VariousMallocsTest) {
-  // fprintf(stderr, "malloc:\n");
   int *a = (int*)malloc(100 * sizeof(int));
   a[50] = 0;
   free(a);
 
-  // fprintf(stderr, "realloc:\n");
   int *r = (int*)malloc(10);
   r = (int*)realloc(r, 2000 * sizeof(int));
   r[1000] = 0;
   free(r);
 
-  // fprintf(stderr, "operator new []\n");
   int *b = new int[100];
   b[50] = 0;
   delete [] b;
 
-  // fprintf(stderr, "operator new\n");
   int *c = new int;
   *c = 0;
   delete c;
 
 #if !defined(__APPLE__) && !defined(ANDROID) && !defined(__ANDROID__)
-  // fprintf(stderr, "posix_memalign\n");
   int *pm;
   int pm_res = posix_memalign((void**)&pm, kPageSize, kPageSize);
   EXPECT_EQ(0, pm_res);
