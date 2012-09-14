@@ -62,7 +62,7 @@ void Mips16InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 
   if (Mips::CPURegsRegClass.contains(DestReg)) { // Copy to CPU Reg.
     if (Mips::CPURegsRegClass.contains(SrcReg))
-      Opc = Mips::Mov32R16;
+      Opc = Mips::Move32R16;
   }
 
   assert(Opc && "Cannot copy registers");
