@@ -235,6 +235,9 @@ public:
   getExecutionDomain(const MachineInstr *MI) const;
   void setExecutionDomain(MachineInstr *MI, unsigned Domain) const;
 
+  /// Get the number of addresses by LDM or VLDM or zero for unknown.
+  unsigned getNumLDMAddresses(const MachineInstr *MI) const;
+
 private:
   unsigned getInstBundleLength(const MachineInstr *MI) const;
 

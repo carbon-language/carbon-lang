@@ -2342,6 +2342,37 @@ bool ARMBaseInstrInfo::FoldImmediate(MachineInstr *UseMI,
   return true;
 }
 
+// Return the number of 32-bit words loaded by LDM or stored by STM. If this
+// can't be easily determined return 0 (missing MachineMemOperand).
+//
+// FIXME: The current MachineInstr design does not support relying on machine
+// mem operands to determine the width of a memory access. Instead, we expect
+// the target to provide this information based on the instruction opcode and
+// operands. However, using MachineMemOperand is a the best solution now for
+// two reasons:
+//
+// 1) getNumMicroOps tries to infer LDM memory width from the total number of MI
+// operands. This is much more dangerous than using the MachineMemOperand
+// sizes because CodeGen passes can insert/remove optional machine operands. In
+// fact, it's totally incorrect for preRA passes and appears to be wrong for
+// postRA passes as well.
+//
+// 2) getNumLDMAddresses is only used by the scheduling machine model and any
+// machine model that calls this should handle the unknown (zero size) case.
+//
+// Long term, we should require a target hook that verifies MachineMemOperand
+// sizes during MC lowering. That target hook should be local to MC lowering
+// because we can't ensure that it is aware of other MI forms. Doing this will
+// ensure that MachineMemOperands are correctly propagated through all passes.
+unsigned ARMBaseInstrInfo::getNumLDMAddresses(const MachineInstr *MI) const {
+  unsigned Size = 0;
+  for (MachineInstr::mmo_iterator I = MI->memoperands_begin(),
+         E = MI->memoperands_end(); I != E; ++I) {
+    Size += (*I)->getSize();
+  }
+  return Size / 4;
+}
+
 unsigned
 ARMBaseInstrInfo::getNumMicroOps(const InstrItineraryData *ItinData,
                                  const MachineInstr *MI) const {
