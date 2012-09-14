@@ -118,6 +118,9 @@ public:
   /// getInstrItineraryForCPU - Get scheduling itinerary of a CPU.
   ///
   InstrItineraryData getInstrItineraryForCPU(StringRef CPU) const;
+
+  /// Initialize an InstrItineraryData instance.
+  void initInstrItins(InstrItineraryData &InstrItins) const;
 };
 
 } // End llvm namespace

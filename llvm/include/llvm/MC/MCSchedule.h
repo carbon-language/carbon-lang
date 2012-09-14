@@ -199,6 +199,8 @@ public:
     MispredictPenalty(mp), ProcID(0), ProcResourceTable(0),
     SchedClassTable(0), InstrItineraries(ii) {}
 
+  unsigned getProcessorID() const { return ProcID; }
+
   /// Does this machine model include instruction-level scheduling.
   bool hasInstrSchedModel() const {
     return SchedClassTable;

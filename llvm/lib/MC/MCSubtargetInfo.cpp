@@ -101,3 +101,9 @@ MCSubtargetInfo::getInstrItineraryForCPU(StringRef CPU) const {
   const MCSchedModel *SchedModel = getSchedModelForCPU(CPU);
   return InstrItineraryData(SchedModel, Stages, OperandCycles, ForwardingPaths);
 }
+
+/// Initialize an InstrItineraryData instance.
+void MCSubtargetInfo::initInstrItins(InstrItineraryData &InstrItins) const {
+  InstrItins =
+    InstrItineraryData(0, Stages, OperandCycles, ForwardingPaths);
+}
