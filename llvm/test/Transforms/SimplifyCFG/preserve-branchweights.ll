@@ -154,6 +154,26 @@ sw.epilog:
   ret void
 }
 
+;; This test is based on test1 but swapped the targets of the second branch.
+define void @test1_swap(i1 %a, i1 %b) {
+; CHECK: @test1_swap
+entry:
+  br i1 %a, label %Y, label %X, !prof !0
+; CHECK: br i1 %or.cond, label %Y, label %Z, !prof !4
+
+X:
+  %c = or i1 %b, false
+  br i1 %c, label %Y, label %Z, !prof !1
+
+Y:
+  call void @helper(i32 0)
+  ret void
+
+Z:
+  call void @helper(i32 1)
+  ret void
+}
+
 !0 = metadata !{metadata !"branch_weights", i32 3, i32 5}
 !1 = metadata !{metadata !"branch_weights", i32 1, i32 1}
 !2 = metadata !{metadata !"branch_weights", i32 1, i32 2}
@@ -165,4 +185,5 @@ sw.epilog:
 ; CHECK: !1 = metadata !{metadata !"branch_weights", i32 1, i32 5}
 ; CHECK: !2 = metadata !{metadata !"branch_weights", i32 7, i32 1, i32 2}
 ; CHECK: !3 = metadata !{metadata !"branch_weights", i32 49, i32 12, i32 24, i32 35}
-; CHECK-NOT: !4
+; CHECK: !4 = metadata !{metadata !"branch_weights", i32 11, i32 5}
+; CHECK-NOT: !5
