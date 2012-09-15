@@ -127,24 +127,15 @@ let DecoderNamespace = "Mips64" in {
 ///  aligned
 defm LB64    : LoadM64<0x20, "lb",  sextloadi8>;
 defm LBu64   : LoadM64<0x24, "lbu", zextloadi8>;
-defm LH64    : LoadM64<0x21, "lh",  sextloadi16_a>;
-defm LHu64   : LoadM64<0x25, "lhu", zextloadi16_a>;
-defm LW64    : LoadM64<0x23, "lw",  sextloadi32_a>;
-defm LWu64   : LoadM64<0x27, "lwu", zextloadi32_a>;
+defm LH64    : LoadM64<0x21, "lh",  sextloadi16>;
+defm LHu64   : LoadM64<0x25, "lhu", zextloadi16>;
+defm LW64    : LoadM64<0x23, "lw",  sextloadi32>;
+defm LWu64   : LoadM64<0x27, "lwu", zextloadi32>;
 defm SB64    : StoreM64<0x28, "sb", truncstorei8>;
-defm SH64    : StoreM64<0x29, "sh", truncstorei16_a>;
-defm SW64    : StoreM64<0x2b, "sw", truncstorei32_a>;
-defm LD      : LoadM64<0x37, "ld",  load_a>;
-defm SD      : StoreM64<0x3f, "sd", store_a>;
-
-///  unaligned
-defm ULH64     : LoadM64<0x21, "ulh",  sextloadi16_u, 1>;
-defm ULHu64    : LoadM64<0x25, "ulhu", zextloadi16_u, 1>;
-defm ULW64     : LoadM64<0x23, "ulw",  sextloadi32_u, 1>;
-defm USH64     : StoreM64<0x29, "ush", truncstorei16_u, 1>;
-defm USW64     : StoreM64<0x2b, "usw", truncstorei32_u, 1>;
-defm ULD       : LoadM64<0x37, "uld",  load_u, 1>;
-defm USD       : StoreM64<0x3f, "usd", store_u, 1>;
+defm SH64    : StoreM64<0x29, "sh", truncstorei16>;
+defm SW64    : StoreM64<0x2b, "sw", truncstorei32>;
+defm LD      : LoadM64<0x37, "ld",  load>;
+defm SD      : StoreM64<0x3f, "sd", store>;
 
 /// load/store left/right
 let isCodeGenOnly = 1 in {
@@ -244,21 +235,14 @@ let isCodeGenOnly = 1, rs = 0, shamt = 0 in {
 let Predicates = [NotN64, HasStandardEncoding] in {
   def : MipsPat<(i64 (extloadi1  addr:$src)), (LB64 addr:$src)>;
   def : MipsPat<(i64 (extloadi8  addr:$src)), (LB64 addr:$src)>;
-  def : MipsPat<(i64 (extloadi16_a addr:$src)), (LH64 addr:$src)>;
-  def : MipsPat<(i64 (extloadi16_u addr:$src)), (ULH64 addr:$src)>;
-  def : MipsPat<(i64 (extloadi32_a addr:$src)), (LW64 addr:$src)>;
-  def : MipsPat<(i64 (extloadi32_u addr:$src)), (ULW64 addr:$src)>;
-  def : MipsPat<(zextloadi32_u addr:$a), (DSRL (DSLL (ULW64 addr:$a), 32), 32)>;
+  def : MipsPat<(i64 (extloadi16 addr:$src)), (LH64 addr:$src)>;
+  def : MipsPat<(i64 (extloadi32 addr:$src)), (LW64 addr:$src)>;
 }
 let Predicates = [IsN64, HasStandardEncoding] in {
   def : MipsPat<(i64 (extloadi1  addr:$src)), (LB64_P8 addr:$src)>;
   def : MipsPat<(i64 (extloadi8  addr:$src)), (LB64_P8 addr:$src)>;
-  def : MipsPat<(i64 (extloadi16_a addr:$src)), (LH64_P8 addr:$src)>;
-  def : MipsPat<(i64 (extloadi16_u addr:$src)), (ULH64_P8 addr:$src)>;
-  def : MipsPat<(i64 (extloadi32_a addr:$src)), (LW64_P8 addr:$src)>;
-  def : MipsPat<(i64 (extloadi32_u addr:$src)), (ULW64_P8 addr:$src)>;
-  def : MipsPat<(zextloadi32_u addr:$a),
-                (DSRL (DSLL (ULW64_P8 addr:$a), 32), 32)>;
+  def : MipsPat<(i64 (extloadi16 addr:$src)), (LH64_P8 addr:$src)>;
+  def : MipsPat<(i64 (extloadi32 addr:$src)), (LW64_P8 addr:$src)>;
 }
 
 // hi/lo relocs

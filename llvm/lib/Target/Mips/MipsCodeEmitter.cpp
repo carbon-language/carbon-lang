@@ -218,15 +218,9 @@ unsigned MipsCodeEmitter::getMachineOpValue(const MachineInstr &MI,
     return getMipsRegisterNumbering(MO.getReg());
   else if (MO.isImm())
     return static_cast<unsigned>(MO.getImm());
-  else if (MO.isGlobal()) {
-    if (MI.getOpcode() == Mips::ULW || MI.getOpcode() == Mips::USW ||
-          MI.getOpcode() == Mips::ULH || MI.getOpcode() == Mips::ULHu)
-      emitGlobalAddressUnaligned(MO.getGlobal(), getRelocation(MI, MO), 4);
-    else if (MI.getOpcode() == Mips::USH)
-      emitGlobalAddressUnaligned(MO.getGlobal(), getRelocation(MI, MO), 8);
-    else
-      emitGlobalAddress(MO.getGlobal(), getRelocation(MI, MO), true);
-  } else if (MO.isSymbol())
+  else if (MO.isGlobal())
+    emitGlobalAddress(MO.getGlobal(), getRelocation(MI, MO), true);
+  else if (MO.isSymbol())
     emitExternalSymbolAddress(MO.getSymbolName(), getRelocation(MI, MO));
   else if (MO.isCPI())
     emitConstPoolAddress(MO.getIndex(), getRelocation(MI, MO));
@@ -383,29 +377,8 @@ void MipsCodeEmitter::emitInstruction(const MachineInstr &MI) {
   if ((MI.getDesc().TSFlags & MipsII::FormMask) == MipsII::Pseudo)
     return;
 
-
-  switch (MI.getOpcode()) {
-  case Mips::USW:
-    NumEmitted += emitUSW(MI);
-    break;
-  case Mips::ULW:
-    NumEmitted += emitULW(MI);
-    break;
-  case Mips::ULH:
-    NumEmitted += emitULH(MI);
-    break;
-  case Mips::ULHu:
-    NumEmitted += emitULHu(MI);
-    break;
-  case Mips::USH:
-    NumEmitted += emitUSH(MI);
-    break;
-
-  default:
-    emitWordLE(getBinaryCodeForInstr(MI));
-    ++NumEmitted;  // Keep track of the # of mi's emitted
-    break;
-  }
+  emitWordLE(getBinaryCodeForInstr(MI));
+  ++NumEmitted;  // Keep track of the # of mi's emitted
 
   MCE.processDebugLoc(MI.getDebugLoc(), false);
 }

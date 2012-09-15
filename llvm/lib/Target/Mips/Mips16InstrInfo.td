@@ -403,16 +403,16 @@ class LoadM16_pat<PatFrag OpNode, Instruction I> :
 
 def: LoadM16_pat<sextloadi8, LbRxRyOffMemX16>;
 def: LoadM16_pat<zextloadi8, LbuRxRyOffMemX16>;
-def: LoadM16_pat<sextloadi16_a, LhRxRyOffMemX16>;
-def: LoadM16_pat<zextloadi16_a, LhuRxRyOffMemX16>;
-def: LoadM16_pat<load_a, LwRxRyOffMemX16>;
+def: LoadM16_pat<sextloadi16, LhRxRyOffMemX16>;
+def: LoadM16_pat<zextloadi16, LhuRxRyOffMemX16>;
+def: LoadM16_pat<load, LwRxRyOffMemX16>;
 
 class StoreM16_pat<PatFrag OpNode, Instruction I> :
   Mips16Pat<(OpNode CPU16Regs:$r, addr:$addr), (I CPU16Regs:$r, addr:$addr)>;
 
 def: StoreM16_pat<truncstorei8, SbRxRyOffMemX16>;
-def: StoreM16_pat<truncstorei16_a, ShRxRyOffMemX16>;
-def: StoreM16_pat<store_a, SwRxRyOffMemX16>;
+def: StoreM16_pat<truncstorei16, ShRxRyOffMemX16>;
+def: StoreM16_pat<store, SwRxRyOffMemX16>;
 
 
 // Jump and Link (Call)

@@ -293,55 +293,6 @@ def addr :
   ComplexPattern<iPTR, 2, "SelectAddr", [frameindex], [SDNPWantParent]>;
 
 //===----------------------------------------------------------------------===//
-// Pattern fragment for load/store
-//===----------------------------------------------------------------------===//
-class UnalignedLoad<PatFrag Node> :
-  PatFrag<(ops node:$ptr), (Node node:$ptr), [{
-  LoadSDNode *LD = cast<LoadSDNode>(N);
-  return LD->getMemoryVT().getSizeInBits()/8 > LD->getAlignment();
-}]>;
-
-class AlignedLoad<PatFrag Node> :
-  PatFrag<(ops node:$ptr), (Node node:$ptr), [{
-  LoadSDNode *LD = cast<LoadSDNode>(N);
-  return LD->getMemoryVT().getSizeInBits()/8 <= LD->getAlignment();
-}]>;
-
-class UnalignedStore<PatFrag Node> :
-  PatFrag<(ops node:$val, node:$ptr), (Node node:$val, node:$ptr), [{
-  StoreSDNode *SD = cast<StoreSDNode>(N);
-  return SD->getMemoryVT().getSizeInBits()/8 > SD->getAlignment();
-}]>;
-
-class AlignedStore<PatFrag Node> :
-  PatFrag<(ops node:$val, node:$ptr), (Node node:$val, node:$ptr), [{
-  StoreSDNode *SD = cast<StoreSDNode>(N);
-  return SD->getMemoryVT().getSizeInBits()/8 <= SD->getAlignment();
-}]>;
-
-// Load/Store PatFrags.
-def sextloadi16_a   : AlignedLoad<sextloadi16>;
-def zextloadi16_a   : AlignedLoad<zextloadi16>;
-def extloadi16_a    : AlignedLoad<extloadi16>;
-def load_a          : AlignedLoad<load>;
-def sextloadi32_a   : AlignedLoad<sextloadi32>;
-def zextloadi32_a   : AlignedLoad<zextloadi32>;
-def extloadi32_a    : AlignedLoad<extloadi32>;
-def truncstorei16_a : AlignedStore<truncstorei16>;
-def store_a         : AlignedStore<store>;
-def truncstorei32_a : AlignedStore<truncstorei32>;
-def sextloadi16_u   : UnalignedLoad<sextloadi16>;
-def zextloadi16_u   : UnalignedLoad<zextloadi16>;
-def extloadi16_u    : UnalignedLoad<extloadi16>;
-def load_u          : UnalignedLoad<load>;
-def sextloadi32_u   : UnalignedLoad<sextloadi32>;
-def zextloadi32_u   : UnalignedLoad<zextloadi32>;
-def extloadi32_u    : UnalignedLoad<extloadi32>;
-def truncstorei16_u : UnalignedStore<truncstorei16>;
-def store_u         : UnalignedStore<store>;
-def truncstorei32_u : UnalignedStore<truncstorei32>;
-
-//===----------------------------------------------------------------------===//
 // Instructions specific format
 //===----------------------------------------------------------------------===//
 
@@ -957,19 +908,12 @@ let Predicates = [HasMips32r2, HasStandardEncoding] in {
 ///  aligned
 defm LB      : LoadM32<0x20, "lb",  sextloadi8>;
 defm LBu     : LoadM32<0x24, "lbu", zextloadi8>;
-defm LH      : LoadM32<0x21, "lh",  sextloadi16_a>;
-defm LHu     : LoadM32<0x25, "lhu", zextloadi16_a>;
-defm LW      : LoadM32<0x23, "lw",  load_a>;
+defm LH      : LoadM32<0x21, "lh",  sextloadi16>;
+defm LHu     : LoadM32<0x25, "lhu", zextloadi16>;
+defm LW      : LoadM32<0x23, "lw",  load>;
 defm SB      : StoreM32<0x28, "sb", truncstorei8>;
-defm SH      : StoreM32<0x29, "sh", truncstorei16_a>;
-defm SW      : StoreM32<0x2b, "sw", store_a>;
-
-///  unaligned
-defm ULH     : LoadM32<0x21, "ulh",  sextloadi16_u, 1>;
-defm ULHu    : LoadM32<0x25, "ulhu", zextloadi16_u, 1>;
-defm ULW     : LoadM32<0x23, "ulw",  load_u, 1>;
-defm USH     : StoreM32<0x29, "ush", truncstorei16_u, 1>;
-defm USW     : StoreM32<0x2b, "usw", store_u, 1>;
+defm SH      : StoreM32<0x29, "sh", truncstorei16>;
+defm SW      : StoreM32<0x2b, "sw", store>;
 
 /// load/store left/right
 defm LWL : LoadLeftRightM32<0x22, "lwl", MipsLWL>;
@@ -1181,24 +1125,20 @@ def : MipsPat<(not CPURegs:$in),
 let Predicates = [NotN64, HasStandardEncoding] in {
   def : MipsPat<(i32 (extloadi1  addr:$src)), (LBu addr:$src)>;
   def : MipsPat<(i32 (extloadi8  addr:$src)), (LBu addr:$src)>;
-  def : MipsPat<(i32 (extloadi16_a addr:$src)), (LHu addr:$src)>;
-  def : MipsPat<(i32 (extloadi16_u addr:$src)), (ULHu addr:$src)>;
+  def : MipsPat<(i32 (extloadi16 addr:$src)), (LHu addr:$src)>;
 }
 let Predicates = [IsN64, HasStandardEncoding] in {
   def : MipsPat<(i32 (extloadi1  addr:$src)), (LBu_P8 addr:$src)>;
   def : MipsPat<(i32 (extloadi8  addr:$src)), (LBu_P8 addr:$src)>;
-  def : MipsPat<(i32 (extloadi16_a addr:$src)), (LHu_P8 addr:$src)>;
-  def : MipsPat<(i32 (extloadi16_u addr:$src)), (ULHu_P8 addr:$src)>;
+  def : MipsPat<(i32 (extloadi16 addr:$src)), (LHu_P8 addr:$src)>;
 }
 
 // peepholes
 let Predicates = [NotN64, HasStandardEncoding] in {
-  def : MipsPat<(store_a (i32 0), addr:$dst), (SW ZERO, addr:$dst)>;
-  def : MipsPat<(store_u (i32 0), addr:$dst), (USW ZERO, addr:$dst)>;
+  def : MipsPat<(store (i32 0), addr:$dst), (SW ZERO, addr:$dst)>;
 }
 let Predicates = [IsN64, HasStandardEncoding] in {
-  def : MipsPat<(store_a (i32 0), addr:$dst), (SW_P8 ZERO, addr:$dst)>;
-  def : MipsPat<(store_u (i32 0), addr:$dst), (USW_P8 ZERO, addr:$dst)>;
+  def : MipsPat<(store (i32 0), addr:$dst), (SW_P8 ZERO, addr:$dst)>;
 }
 
 // brcond patterns
