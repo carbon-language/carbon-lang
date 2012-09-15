@@ -583,7 +583,7 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
 
   MachineOperand &NewDstMO = DefMI->getOperand(NewDstIdx);
   unsigned NewReg = NewDstMO.getReg();
-  if (NewReg != IntB.reg || !NewDstMO.isKill())
+  if (NewReg != IntB.reg || !LiveRangeQuery(IntB, AValNo->def).isKill())
     return false;
 
   // Make sure there are no other definitions of IntB that would reach the
