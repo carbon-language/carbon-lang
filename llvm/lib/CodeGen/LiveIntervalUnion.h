@@ -178,8 +178,8 @@ public:
     bool checkLoopInterference(MachineLoopRange*);
 
   private:
-    Query(const Query&);          // DO NOT IMPLEMENT
-    void operator=(const Query&); // DO NOT IMPLEMENT
+    Query(const Query&) LLVM_DELETED_FUNCTION;
+    void operator=(const Query&) LLVM_DELETED_FUNCTION;
   };
 
   // Array of LiveIntervalUnions.

@@ -35,8 +35,8 @@ STATISTIC(MCNumCPRelocations, "Number of constant pool relocations created.");
 
 namespace {
 class ARMMCCodeEmitter : public MCCodeEmitter {
-  ARMMCCodeEmitter(const ARMMCCodeEmitter &); // DO NOT IMPLEMENT
-  void operator=(const ARMMCCodeEmitter &); // DO NOT IMPLEMENT
+  ARMMCCodeEmitter(const ARMMCCodeEmitter &) LLVM_DELETED_FUNCTION;
+  void operator=(const ARMMCCodeEmitter &) LLVM_DELETED_FUNCTION;
   const MCInstrInfo &MCII;
   const MCSubtargetInfo &STI;
   const MCContext &CTX;

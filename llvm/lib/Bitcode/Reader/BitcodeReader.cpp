@@ -197,7 +197,7 @@ namespace {
   /// @brief A class for maintaining the slot number definition
   /// as a placeholder for the actual definition for forward constants defs.
   class ConstantPlaceHolder : public ConstantExpr {
-    void operator=(const ConstantPlaceHolder &); // DO NOT IMPLEMENT
+    void operator=(const ConstantPlaceHolder &) LLVM_DELETED_FUNCTION;
   public:
     // allocate space for exactly one operand
     void *operator new(size_t s) {

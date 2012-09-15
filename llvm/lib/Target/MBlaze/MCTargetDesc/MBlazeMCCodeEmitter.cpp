@@ -29,8 +29,8 @@ STATISTIC(MCNumEmitted, "Number of MC instructions emitted");
 
 namespace {
 class MBlazeMCCodeEmitter : public MCCodeEmitter {
-  MBlazeMCCodeEmitter(const MBlazeMCCodeEmitter &); // DO NOT IMPLEMENT
-  void operator=(const MBlazeMCCodeEmitter &); // DO NOT IMPLEMENT
+  MBlazeMCCodeEmitter(const MBlazeMCCodeEmitter &) LLVM_DELETED_FUNCTION;
+  void operator=(const MBlazeMCCodeEmitter &) LLVM_DELETED_FUNCTION;
   const MCInstrInfo &MCII;
 
 public:

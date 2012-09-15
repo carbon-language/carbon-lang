@@ -78,9 +78,9 @@ private:
 
   unsigned FirstFuncConstantID;
   unsigned FirstInstID;
-  
-  ValueEnumerator(const ValueEnumerator &);  // DO NOT IMPLEMENT
-  void operator=(const ValueEnumerator &);   // DO NOT IMPLEMENT
+
+  ValueEnumerator(const ValueEnumerator &) LLVM_DELETED_FUNCTION;
+  void operator=(const ValueEnumerator &) LLVM_DELETED_FUNCTION;
 public:
   ValueEnumerator(const Module *M);
 

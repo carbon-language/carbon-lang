@@ -159,8 +159,8 @@ static void PrintLLVMName(raw_ostream &OS, const Value *V) {
 /// TypePrinting - Type printing machinery.
 namespace {
 class TypePrinting {
-  TypePrinting(const TypePrinting &);   // DO NOT IMPLEMENT
-  void operator=(const TypePrinting&);  // DO NOT IMPLEMENT
+  TypePrinting(const TypePrinting &) LLVM_DELETED_FUNCTION;
+  void operator=(const TypePrinting&) LLVM_DELETED_FUNCTION;
 public:
 
   /// NamedTypes - The named types that are used by the current module.
@@ -398,8 +398,8 @@ private:
   /// Add all of the functions arguments, basic blocks, and instructions.
   void processFunction();
 
-  SlotTracker(const SlotTracker &);  // DO NOT IMPLEMENT
-  void operator=(const SlotTracker &);  // DO NOT IMPLEMENT
+  SlotTracker(const SlotTracker &) LLVM_DELETED_FUNCTION;
+  void operator=(const SlotTracker &) LLVM_DELETED_FUNCTION;
 };
 
 }  // end anonymous namespace

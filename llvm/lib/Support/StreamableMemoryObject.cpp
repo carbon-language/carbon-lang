@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/StreamableMemoryObject.h"
+#include "llvm/Support/Compiler.h"
 #include <cassert>
 #include <cstring>
 
@@ -49,8 +50,8 @@ private:
     return static_cast<ptrdiff_t>(address) == LastChar - FirstChar;
   }
 
-  RawMemoryObject(const RawMemoryObject&);  // DO NOT IMPLEMENT
-  void operator=(const RawMemoryObject&);  // DO NOT IMPLEMENT
+  RawMemoryObject(const RawMemoryObject&) LLVM_DELETED_FUNCTION;
+  void operator=(const RawMemoryObject&) LLVM_DELETED_FUNCTION;
 };
 
 int RawMemoryObject::readByte(uint64_t address, uint8_t* ptr) const {
