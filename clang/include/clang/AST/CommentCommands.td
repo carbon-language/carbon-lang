@@ -128,11 +128,12 @@ def Subpage  : VerbatimLineCommand<"subpage">;
 def Ref      : VerbatimLineCommand<"ref">;
 
 // Doxygen commands.
-def Fn       : DeclarationVerbatimLineCommand<"fn">;
-def Var      : DeclarationVerbatimLineCommand<"var">;
-def Property : DeclarationVerbatimLineCommand<"property">;
-def Typedef  : DeclarationVerbatimLineCommand<"typedef">;
-def Overload : DeclarationVerbatimLineCommand<"overload">;
+def Fn        : DeclarationVerbatimLineCommand<"fn">;
+def Namespace : DeclarationVerbatimLineCommand<"namespace">;
+def Overload  : DeclarationVerbatimLineCommand<"overload">;
+def Property  : DeclarationVerbatimLineCommand<"property">;
+def Typedef   : DeclarationVerbatimLineCommand<"typedef">;
+def Var       : DeclarationVerbatimLineCommand<"var">;
 
 // HeaderDoc commands.
 def Class     : DeclarationVerbatimLineCommand<"class">;
