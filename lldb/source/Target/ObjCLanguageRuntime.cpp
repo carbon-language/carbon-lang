@@ -30,7 +30,8 @@ ObjCLanguageRuntime::~ObjCLanguageRuntime()
 
 ObjCLanguageRuntime::ObjCLanguageRuntime (Process *process) :
     LanguageRuntime (process),
-    m_has_new_literals_and_indexing (eLazyBoolCalculate)
+    m_has_new_literals_and_indexing (eLazyBoolCalculate),
+    m_isa_to_descriptor_cache_is_up_to_date (false)
 {
 
 }
@@ -283,10 +284,24 @@ ObjCLanguageRuntime::ClassDescriptor::IsPointerValid (lldb::addr_t value,
 ObjCLanguageRuntime::ObjCISA
 ObjCLanguageRuntime::GetISA(const ConstString &name)
 {
+    // Try once regardless of whether the map has been brought up to date.  We
+    // might have encountered the relevant isa directly.
+    for (const ISAToDescriptorMap::value_type &val : m_isa_to_descriptor_cache)
+        if (val.second && val.second->GetClassName() == name)
+            return val.first;
+ 
+    // If the map is up to date and we didn't find the isa, give up.
+    if (m_isa_to_descriptor_cache_is_up_to_date)
+        return 0;
+    
+    // Try again after bringing the map up to date.
+    UpdateISAToDescriptorMap();
+
     for (const ISAToDescriptorMap::value_type &val : m_isa_to_descriptor_cache)
         if (val.second && val.second->GetClassName() == name)
             return val.first;
     
+    // Now we know for sure that the class isn't there.  Give up.
     return 0;
 }
 

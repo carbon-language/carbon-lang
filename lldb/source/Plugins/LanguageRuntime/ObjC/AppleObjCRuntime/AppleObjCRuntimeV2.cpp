@@ -20,6 +20,7 @@
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/ConstString.h"
+#include "lldb/Core/DataBufferMemoryMap.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
@@ -31,6 +32,7 @@
 #include "lldb/Expression/ClangFunction.h"
 #include "lldb/Expression/ClangUtilityFunction.h"
 #include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Symbol/TypeList.h"
 #include "lldb/Target/ExecutionContext.h"
@@ -625,6 +627,531 @@ AppleObjCRuntimeV2::GetClassDescriptor (ValueObject& in_value)
     if (descriptor && descriptor->IsValid())
         m_isa_to_descriptor_cache[descriptor->GetISA()] = descriptor;
     return descriptor;
+}
+
+class RemoteNXMapTable
+{
+public:
+    RemoteNXMapTable (lldb::ProcessSP process_sp,
+                      lldb::addr_t load_addr) :
+        m_process_sp(process_sp),
+        m_end_iterator(*this, -1),
+        m_load_addr(load_addr),
+        m_map_pair_size(m_process_sp->GetAddressByteSize() * 2),
+        m_NXMAPNOTAKEY(m_process_sp->GetAddressByteSize() == 8 ? 0xffffffffffffffffull : 0xffffffffull)
+    {
+        lldb::addr_t cursor = load_addr;
+     
+        Error err;
+        
+        // const struct +NXMapTablePrototype *prototype;
+        m_prototype_la = m_process_sp->ReadPointerFromMemory(cursor, err);
+        cursor += m_process_sp->GetAddressByteSize();
+                
+        // unsigned count;
+        m_count = m_process_sp->ReadUnsignedIntegerFromMemory(cursor, sizeof(unsigned), 0, err);
+        cursor += sizeof(unsigned);
+        
+        // unsigned nbBucketsMinusOne;
+        m_nbBucketsMinusOne = m_process_sp->ReadUnsignedIntegerFromMemory(cursor, sizeof(unsigned), 0, err);
+        cursor += sizeof(unsigned);
+        
+        // void *buckets;
+        m_buckets_la = m_process_sp->ReadPointerFromMemory(cursor, err);
+    }
+    
+    // const_iterator mimics NXMapState and its code comes from NXInitMapState and NXNextMapState.
+    typedef std::pair<ConstString, ObjCLanguageRuntime::ObjCISA> element;
+
+    friend class const_iterator;
+    class const_iterator
+    {
+    public:
+        const_iterator (RemoteNXMapTable &parent, int index) : m_parent(parent), m_index(index)
+        {
+            AdvanceToValidIndex();
+        }
+        
+        const_iterator (const const_iterator &rhs) : m_parent(rhs.m_parent), m_index(rhs.m_index)
+        {
+            // AdvanceToValidIndex() has been called by rhs already.
+        }
+        
+        const_iterator &operator=(const const_iterator &rhs)
+        {
+            // AdvanceToValidIndex() has been called by rhs already.
+            assert (&m_parent == &rhs.m_parent);
+            m_index = rhs.m_index;
+            return *this;
+        }
+        
+        bool operator==(const const_iterator &rhs) const
+        {
+            if (&m_parent != &rhs.m_parent)
+                return false;
+            if (m_index != rhs.m_index)
+                return false;
+            
+            return true;
+        }
+        
+        bool operator!=(const const_iterator &rhs) const
+        {
+            return !(operator==(rhs));
+        }
+        
+        const_iterator &operator++()
+        {
+            AdvanceToValidIndex();
+            return *this;
+        }
+        
+        const element operator*() const
+        {
+            if (m_index == -1)
+            {
+                // TODO find a way to make this an error, but not an assert
+                return element();
+            }
+         
+            lldb::addr_t    pairs_la        = m_parent.m_buckets_la;
+            size_t          map_pair_size   = m_parent.m_map_pair_size;
+            lldb::addr_t    pair_la         = pairs_la + (m_index * map_pair_size);
+            
+            Error           err;
+            
+            lldb::addr_t    key     = m_parent.m_process_sp->ReadPointerFromMemory(pair_la, err);
+            if (!err.Success())
+                return element();
+            lldb::addr_t    value   = m_parent.m_process_sp->ReadPointerFromMemory(pair_la + m_parent.m_process_sp->GetAddressByteSize(), err);
+            if (!err.Success())
+                return element();
+            
+            std::string key_string;
+            
+            m_parent.m_process_sp->ReadCStringFromMemory(key, key_string, err);
+            if (!err.Success())
+                return element();
+            
+            return element(ConstString(key_string.c_str()), (ObjCLanguageRuntime::ObjCISA)value);
+        }
+    private:
+        void AdvanceToValidIndex ()
+        {
+            if (m_index == -1)
+                return;
+            
+            lldb::addr_t    pairs_la        = m_parent.m_buckets_la;
+            size_t          map_pair_size   = m_parent.m_map_pair_size;
+            lldb::addr_t    NXMAPNOTAKEY    = m_parent.m_NXMAPNOTAKEY;
+            Error           err;
+
+            while (m_index--)
+            {
+                lldb::addr_t pair_la = pairs_la + (m_index * map_pair_size);
+                lldb::addr_t key = m_parent.m_process_sp->ReadPointerFromMemory(pair_la, err);
+                
+                if (!err.Success())
+                {
+                    m_index = -1;
+                    return;
+                }
+                
+                if (key != NXMAPNOTAKEY)
+                    return;
+            }
+        }
+        RemoteNXMapTable   &m_parent;
+        int                 m_index;
+    };
+    
+    const_iterator begin ()
+    {
+        return const_iterator(*this, m_nbBucketsMinusOne + 1);
+    }
+    
+    const_iterator end ()
+    {
+        return m_end_iterator;
+    }
+    
+private:
+    // contents of _NXMapTable struct
+    lldb::addr_t                        m_prototype_la;
+    uint32_t                            m_count;
+    uint32_t                            m_nbBucketsMinusOne;
+    lldb::addr_t                        m_buckets_la;
+    
+    lldb::ProcessSP                     m_process_sp;
+    const_iterator                      m_end_iterator;
+    lldb::addr_t                        m_load_addr;
+    size_t                              m_map_pair_size;
+    lldb::addr_t                        m_NXMAPNOTAKEY;
+};
+
+class RemoteObjCOpt
+{
+public:
+    RemoteObjCOpt (lldb::ProcessSP process_sp,
+                   lldb::addr_t load_addr) :
+        m_process_sp(process_sp),
+        m_end_iterator(*this, -1ll),
+        m_load_addr(load_addr)
+    {
+        lldb::addr_t cursor = load_addr;
+        
+        Error err;
+        
+        // uint32_t version;
+        m_version = m_process_sp->ReadUnsignedIntegerFromMemory(cursor, sizeof(uint32_t), 0, err);
+        cursor += sizeof(uint32_t);
+        
+        // int32_t selopt_offset;
+        cursor += sizeof(int32_t);
+        
+        // int32_t headeropt_offset;
+        cursor += sizeof(int32_t);
+        
+        // int32_t clsopt_offset;
+        {
+            Scalar clsopt_offset;
+            m_process_sp->ReadScalarIntegerFromMemory(cursor, sizeof(int32_t), /*is_signed*/ true, clsopt_offset, err);
+            m_clsopt_offset = clsopt_offset.SInt();
+            cursor += sizeof(int32_t);
+        }
+        
+        if (m_version != 12)
+            return;
+        
+        m_clsopt_la = load_addr + m_clsopt_offset;
+        
+        cursor = m_clsopt_la;
+        
+        // uint32_t capacity;
+        m_capacity = m_process_sp->ReadUnsignedIntegerFromMemory(cursor, sizeof(uint32_t), 0, err);
+        cursor += sizeof(uint32_t);
+        
+        // uint32_t occupied;
+        cursor += sizeof(uint32_t);
+        
+        // uint32_t shift;
+        cursor += sizeof(uint32_t);
+        
+        // uint32_t mask;
+        m_mask = m_process_sp->ReadUnsignedIntegerFromMemory(cursor, sizeof(uint32_t), 0, err);
+        cursor += sizeof(uint32_t);
+
+        // uint32_t zero;
+        m_zero_offset = cursor - m_clsopt_la;
+        cursor += sizeof(uint32_t);
+        
+        // uint32_t unused;
+        cursor += sizeof(uint32_t);
+        
+        // uint64_t salt;
+        cursor += sizeof(uint64_t);
+        
+        // uint32_t scramble[256];
+        cursor += sizeof(uint32_t) * 256;
+        
+        // uint8_t tab[mask+1];
+        cursor += sizeof(uint8_t) * (m_mask + 1);
+        
+        // uint8_t checkbytes[capacity];
+        cursor += sizeof(uint8_t) * m_capacity;
+        
+        // int32_t offset[capacity];
+        cursor += sizeof(int32_t) * m_capacity;
+        
+        // objc_classheader_t clsOffsets[capacity];
+        m_clsOffsets_la = cursor;
+        cursor += (m_classheader_size * m_capacity);
+        
+        // uint32_t duplicateCount;
+        m_duplicateCount = m_process_sp->ReadUnsignedIntegerFromMemory(cursor, sizeof(uint32_t), 0, err);
+        cursor += sizeof(uint32_t);
+        
+        // objc_classheader_t duplicateOffsets[duplicateCount];
+        m_duplicateOffsets_la = cursor;
+    }
+    
+    friend class const_iterator;
+    class const_iterator
+    {
+    public:
+        const_iterator (RemoteObjCOpt &parent, int64_t index) : m_parent(parent), m_index(index)
+        {
+            AdvanceToValidIndex();
+        }
+        
+        const_iterator (const const_iterator &rhs) : m_parent(rhs.m_parent), m_index(rhs.m_index)
+        {
+            // AdvanceToValidIndex() has been called by rhs already
+        }
+        
+        const_iterator &operator=(const const_iterator &rhs)
+        {
+            assert (&m_parent == &rhs.m_parent);
+            m_index = rhs.m_index;
+            return *this;
+        }
+        
+        bool operator==(const const_iterator &rhs) const
+        {
+            if (&m_parent != &rhs.m_parent)
+                return false;
+            if (m_index != rhs.m_index)
+                return false;
+            return true;
+        }
+        
+        bool operator!=(const const_iterator &rhs) const
+        {
+            return !(operator==(rhs));
+        }
+        
+        const_iterator &operator++()
+        {
+            AdvanceToValidIndex();
+            return *this;
+        }
+        
+        const ObjCLanguageRuntime::ObjCISA operator*() const
+        {
+            if (m_index == -1)
+                return 0;
+            
+            Error err;
+            return isaForIndex(err);
+        }
+    private:
+        ObjCLanguageRuntime::ObjCISA isaForIndex(Error &err) const
+        {
+            if (m_index >= m_parent.m_capacity + m_parent.m_duplicateCount)
+                return 0; // index out of range
+            
+            lldb::addr_t classheader_la;
+            
+            if (m_index >= m_parent.m_capacity)
+            {
+                // index in the duplicate offsets
+                uint32_t index = (uint32_t)((uint64_t)m_index - (uint64_t)m_parent.m_capacity);
+                classheader_la = m_parent.m_duplicateOffsets_la + (index * m_parent.m_classheader_size);
+            }
+            else
+            {
+                // index in the offsets
+                uint32_t index = (uint32_t)m_index;
+                classheader_la = m_parent.m_clsOffsets_la + (index * m_parent.m_classheader_size);
+            }
+            
+            Scalar clsOffset;
+            m_parent.m_process_sp->ReadScalarIntegerFromMemory(classheader_la, sizeof(int32_t), /*is_signed*/ true, clsOffset, err);
+            if (!err.Success())
+                return 0;
+            
+            int32_t clsOffset_int = clsOffset.SInt();
+            if (clsOffset_int & 0x1)
+                return 0; // not even
+
+            if (clsOffset_int == m_parent.m_zero_offset)
+                return 0; // == offsetof(objc_clsopt_t, zero)
+            
+            return m_parent.m_clsopt_la + (int64_t)clsOffset_int;
+        }
+        
+        void AdvanceToValidIndex ()
+        {
+            if (m_index == -1)
+                return;
+            
+            Error err;
+            
+            m_index--;
+            
+            while (m_index >= 0)
+            {
+                ObjCLanguageRuntime::ObjCISA objc_isa = isaForIndex(err);
+                if (objc_isa)
+                    return;
+                m_index--;
+            }
+        }
+        RemoteObjCOpt  &m_parent;
+        int64_t         m_index;
+    };
+    
+    const_iterator begin ()
+    {
+        return const_iterator(*this, (int64_t)m_capacity + (int64_t)m_duplicateCount);
+    }
+    
+    const_iterator end ()
+    {
+        return m_end_iterator;
+    }
+    
+private:
+    // contents of objc_opt struct
+    uint32_t                            m_version;
+    int32_t                             m_clsopt_offset;
+    
+    lldb::addr_t                        m_clsopt_la;
+    
+    // contents of objc_clsopt struct
+    uint32_t                            m_capacity;
+    uint32_t                            m_mask;
+    uint32_t                            m_duplicateCount;
+    lldb::addr_t                        m_clsOffsets_la;
+    lldb::addr_t                        m_duplicateOffsets_la;
+    int32_t                             m_zero_offset;
+    
+    lldb::ProcessSP                     m_process_sp;
+    const_iterator                      m_end_iterator;
+    lldb::addr_t                        m_load_addr;
+    const size_t                        m_classheader_size = (sizeof(int32_t) * 2);
+};
+
+ModuleSP FindLibobjc (Target &target)
+{
+    ModuleList& modules = target.GetImages();
+    for (uint32_t idx = 0; idx < modules.GetSize(); idx++)
+    {
+        lldb::ModuleSP module_sp = modules.GetModuleAtIndex(idx);
+        if (!module_sp)
+            continue;
+        if (strncmp(module_sp->GetFileSpec().GetFilename().AsCString(""), "libobjc.", sizeof("libobjc.") - 1) == 0)
+            return module_sp;
+    }
+    
+    return ModuleSP();
+}
+
+void
+AppleObjCRuntimeV2::UpdateISAToDescriptorMap_Impl()
+{
+    lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
+
+    Process *process_ptr = GetProcess();
+    
+    if (!process_ptr)
+        return;
+    
+    ProcessSP process_sp = process_ptr->shared_from_this();
+    
+    Target &target(process_sp->GetTarget());
+    
+    ModuleSP objc_module_sp(FindLibobjc(target));
+    
+    if (!objc_module_sp)
+        return;
+    
+    do
+    {
+        SymbolContextList sc_list;
+    
+        size_t num_symbols = objc_module_sp->FindSymbolsWithNameAndType(ConstString("gdb_objc_realized_classes"),
+                                                                        lldb::eSymbolTypeData,
+                                                                        sc_list);
+    
+        if (!num_symbols)
+            break;
+        
+        SymbolContext gdb_objc_realized_classes_sc;
+        
+        if (!sc_list.GetContextAtIndex(0, gdb_objc_realized_classes_sc))
+             break;
+        
+        AddressRange gdb_objc_realized_classes_addr_range;
+        
+        const uint32_t scope = eSymbolContextSymbol;
+        const uint32_t range_idx = 0;
+        bool use_inline_block_range = false;
+
+        if (!gdb_objc_realized_classes_sc.GetAddressRange(scope,
+                                                          range_idx,
+                                                          use_inline_block_range,
+                                                          gdb_objc_realized_classes_addr_range))
+            break;
+        
+        lldb::addr_t gdb_objc_realized_classes_la = gdb_objc_realized_classes_addr_range.GetBaseAddress().GetLoadAddress(&target);
+        
+        if (gdb_objc_realized_classes_la == LLDB_INVALID_ADDRESS)
+            break;
+    
+        // <rdar://problem/10763513>
+        
+        lldb::addr_t gdb_objc_realized_classes_nxmaptable_la;
+        
+        {
+            Error err;
+            gdb_objc_realized_classes_nxmaptable_la = process_sp->ReadPointerFromMemory(gdb_objc_realized_classes_la, err);
+            if (!err.Success())
+                break;
+        }
+        
+        RemoteNXMapTable gdb_objc_realized_classes(process_sp, gdb_objc_realized_classes_nxmaptable_la);
+    
+        for (RemoteNXMapTable::element elt : gdb_objc_realized_classes)
+        {
+            if (m_isa_to_descriptor_cache.count(elt.second))
+                continue;
+            
+            ClassDescriptorSP descriptor_sp = ClassDescriptorSP(new ClassDescriptorV2(elt.second, process_sp));
+            
+            if (log)
+                log->Printf("AppleObjCRuntimeV2 added (ObjCISA)0x%llx (%s) from dynamic table to isa->descriptor cache", elt.second, elt.first.AsCString());
+            
+            m_isa_to_descriptor_cache[elt.second] = descriptor_sp;
+        }
+    }
+    while(0);
+    
+    do
+    {
+        ObjectFile *objc_object = objc_module_sp->GetObjectFile();
+        
+        if (!objc_object)
+            break;
+        
+        SectionList *section_list = objc_object->GetSectionList();
+        
+        if (!section_list)
+            break;
+        
+        SectionSP TEXT_section_sp = section_list->FindSectionByName(ConstString("__TEXT"));
+        
+        if (!TEXT_section_sp)
+            break;
+        
+        SectionList &TEXT_children = TEXT_section_sp->GetChildren();
+        
+        SectionSP objc_opt_section_sp = TEXT_children.FindSectionByName(ConstString("__objc_opt_ro"));
+        
+        if (!objc_opt_section_sp)
+            break;
+        
+        lldb::addr_t objc_opt_la = objc_opt_section_sp->GetLoadBaseAddress(&target);
+        
+        if (objc_opt_la == LLDB_INVALID_ADDRESS)
+            break;
+        
+        RemoteObjCOpt objc_opt(process_sp, objc_opt_la);
+        
+        for (ObjCLanguageRuntime::ObjCISA objc_isa : objc_opt)
+        {
+            if (m_isa_to_descriptor_cache.count(objc_isa))
+                continue;
+            
+            ClassDescriptorSP descriptor_sp = ClassDescriptorSP(new ClassDescriptorV2(objc_isa, process_sp));
+            
+            if (log)
+                log->Printf("AppleObjCRuntimeV2 added (ObjCISA)0x%llx (%s) from static table to isa->descriptor cache", objc_isa, descriptor_sp->GetClassName().AsCString());
+            
+            m_isa_to_descriptor_cache[objc_isa] = descriptor_sp;
+        }
+    }
+    while (0);
 }
 
 // this code relies on the assumption that an Objective-C object always starts

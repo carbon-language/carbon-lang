@@ -232,6 +232,9 @@ public:
     virtual size_t
     GetByteOffsetForIvar (ClangASTType &parent_qual_type, const char *ivar_name);
     
+    virtual void
+    UpdateISAToDescriptorMap_Impl();
+    
     virtual bool
     IsValidISA (ObjCLanguageRuntime::ObjCISA isa)
     {
