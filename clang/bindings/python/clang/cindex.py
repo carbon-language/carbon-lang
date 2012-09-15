@@ -1735,10 +1735,15 @@ class CompletionString(ClangObject):
         res = conf.lib.clang_getCompletionAvailability(self.obj)
         return availabilityKinds[res]
 
+    @property
+    def briefComment(self):
+        return conf.lib.clang_getCompletionBriefComment(self.obj)
+
     def __repr__(self):
         return " | ".join([str(a) for a in self]) \
                + " || Priority: " + str(self.priority) \
-               + " || Availability: " + str(self.availability)
+               + " || Availability: " + str(self.availability) \
+               + " || Brief comment: " + str(self.briefComment.spelling)
 
 availabilityKinds = {
             0: CompletionChunk.Kind("Available"),
@@ -1876,6 +1881,10 @@ class TranslationUnit(ClangObject):
     # Do not parse function bodies. This is useful if you only care about
     # searching for declarations/definitions.
     PARSE_SKIP_FUNCTION_BODIES = 64
+
+    # Used to indicate that brief documentation comments should be included
+    # into the set of code completions returned from this translation unit.
+    PARSE_INCLUDE_BRIEF_COMMENTS_IN_CODE_COMPLETION = 128
 
     @classmethod
     def from_source(cls, filename, args=None, unsaved_files=None, options=0,
@@ -2149,7 +2158,9 @@ class TranslationUnit(ClangObject):
             raise TranslationUnitSaveError(result,
                 'Error saving TranslationUnit.')
 
-    def codeComplete(self, path, line, column, unsaved_files=None, options=0):
+    def codeComplete(self, path, line, column, unsaved_files=None,
+                     include_macros=False, include_code_patterns=False,
+                     include_brief_comments=False):
         """
         Code complete in this translation unit.
 
@@ -2158,6 +2169,17 @@ class TranslationUnit(ClangObject):
         and the second should be the contents to be substituted for the
         file. The contents may be passed as strings or file objects.
         """
+        options = 0
+
+        if include_macros:
+            options += 1
+
+        if include_code_patterns:
+            options += 2
+
+        if include_brief_comments:
+            options += 4
+
         if unsaved_files is None:
             unsaved_files = []
 
@@ -2555,6 +2577,10 @@ functionList = [
   ("clang_getCompletionAvailability",
    [c_void_p],
    c_int),
+
+  ("clang_getCompletionBriefComment",
+   [c_void_p],
+   _CXString),
 
   ("clang_getCompletionChunkCompletionString",
    [c_void_p, c_int],
