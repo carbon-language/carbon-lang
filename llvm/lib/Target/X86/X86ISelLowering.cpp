@@ -647,7 +647,9 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FCOPYSIGN, MVT::f32, Expand);
 
     if (!TM.Options.UnsafeFPMath) {
+      setOperationAction(ISD::FSIN           , MVT::f32  , Expand);
       setOperationAction(ISD::FSIN           , MVT::f64  , Expand);
+      setOperationAction(ISD::FCOS           , MVT::f32  , Expand);
       setOperationAction(ISD::FCOS           , MVT::f64  , Expand);
     }
     addLegalFPImmediate(APFloat(+0.0)); // FLD0
