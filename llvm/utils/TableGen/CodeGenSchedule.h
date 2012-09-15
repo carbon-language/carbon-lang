@@ -83,6 +83,13 @@ struct CodeGenSchedRW {
 #endif
 };
 
+/// Represent a transition between SchedClasses induced by SchedWriteVariant.
+struct CodeGenSchedTransition {
+  unsigned ToClassIdx;
+  IdxVec ProcIndices;
+  RecVec PredTerm;
+};
+
 /// Scheduling class.
 ///
 /// Each instruction description will be mapped to a scheduling class. There are
@@ -115,6 +122,8 @@ struct CodeGenSchedClass {
   IdxVec Reads;
   // Sorted list of ProcIdx, where ProcIdx==0 implies any processor.
   IdxVec ProcIndices;
+
+  std::vector<CodeGenSchedTransition> Transitions;
 
   // InstReadWrite records associated with this class. Any Instrs that the
   // definitions refer to that are not mapped to this class should be ignored.
@@ -308,6 +317,7 @@ public:
 
   void findRWs(const RecVec &RWDefs, IdxVec &Writes, IdxVec &Reads) const;
   void findRWs(const RecVec &RWDefs, IdxVec &RWs, bool IsRead) const;
+  void expandRWSequence(unsigned RWIdx, IdxVec &RWSeq, bool IsRead) const;
 
   unsigned addSchedClass(const IdxVec &OperWrites, const IdxVec &OperReads,
                          const IdxVec &ProcIndices);
@@ -337,6 +347,13 @@ private:
   void collectProcItins();
 
   void collectProcItinRW();
+
+  void inferSchedClasses();
+
+  void inferFromRW(const IdxVec &OperWrites, const IdxVec &OperReads,
+                   unsigned FromClassIdx, const IdxVec &ProcIndices);
+  void inferFromItinClass(Record *ItinClassDef, unsigned FromClassIdx);
+  void inferFromInstRWs(unsigned SCIdx);
 };
 
 } // namespace llvm
