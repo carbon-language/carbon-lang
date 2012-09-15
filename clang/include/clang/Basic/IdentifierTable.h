@@ -346,8 +346,8 @@ public:
 /// actual functionality.
 class IdentifierIterator {
 private:
-  IdentifierIterator(const IdentifierIterator&); // Do not implement
-  IdentifierIterator &operator=(const IdentifierIterator&); // Do not implement
+  IdentifierIterator(const IdentifierIterator &) LLVM_DELETED_FUNCTION;
+  void operator=(const IdentifierIterator &) LLVM_DELETED_FUNCTION;
 
 protected:
   IdentifierIterator() { }
@@ -695,8 +695,8 @@ public:
 /// multi-keyword caching.
 class SelectorTable {
   void *Impl;  // Actually a SelectorTableImpl
-  SelectorTable(const SelectorTable&); // DISABLED: DO NOT IMPLEMENT
-  void operator=(const SelectorTable&); // DISABLED: DO NOT IMPLEMENT
+  SelectorTable(const SelectorTable &) LLVM_DELETED_FUNCTION;
+  void operator=(const SelectorTable &) LLVM_DELETED_FUNCTION;
 public:
   SelectorTable();
   ~SelectorTable();

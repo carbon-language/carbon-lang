@@ -33,8 +33,8 @@ namespace driver {
   /// ArgList to provide efficient iteration over all instances of a
   /// particular option.
   class Arg {
-    Arg(const Arg &); // DO NOT IMPLEMENT
-    void operator=(const Arg &); // DO NOT IMPLEMENT
+    Arg(const Arg &) LLVM_DELETED_FUNCTION;
+    void operator=(const Arg &) LLVM_DELETED_FUNCTION;
 
   private:
     /// \brief The option this argument is an instance of.

@@ -46,9 +46,8 @@ class TemplateDeductionInfo {
   /// SFINAE while performing template argument deduction.
   SmallVector<PartialDiagnosticAt, 4> SuppressedDiagnostics;
 
-  // do not implement these
-  TemplateDeductionInfo(const TemplateDeductionInfo&);
-  TemplateDeductionInfo &operator=(const TemplateDeductionInfo&);
+  TemplateDeductionInfo(const TemplateDeductionInfo &) LLVM_DELETED_FUNCTION;
+  void operator=(const TemplateDeductionInfo &) LLVM_DELETED_FUNCTION;
 
 public:
   TemplateDeductionInfo(ASTContext &Context, SourceLocation Loc)

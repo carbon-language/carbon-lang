@@ -1181,8 +1181,8 @@ public:
   };
 
 private:
-  Type(const Type&);           // DO NOT IMPLEMENT.
-  void operator=(const Type&); // DO NOT IMPLEMENT.
+  Type(const Type &) LLVM_DELETED_FUNCTION;
+  void operator=(const Type &) LLVM_DELETED_FUNCTION;
 
   /// Bitfields required by the Type class.
   class TypeBitfields {

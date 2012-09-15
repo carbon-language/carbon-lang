@@ -69,8 +69,8 @@ protected:
   /// we are currently in.
   SmallVector<PPConditionalInfo, 4> ConditionalStack;
 
-  PreprocessorLexer(const PreprocessorLexer&);          // DO NOT IMPLEMENT
-  void operator=(const PreprocessorLexer&); // DO NOT IMPLEMENT
+  PreprocessorLexer(const PreprocessorLexer &) LLVM_DELETED_FUNCTION;
+  void operator=(const PreprocessorLexer &) LLVM_DELETED_FUNCTION;
   friend class Preprocessor;
 
   PreprocessorLexer(Preprocessor *pp, FileID fid);

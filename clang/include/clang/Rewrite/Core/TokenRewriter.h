@@ -43,8 +43,8 @@ namespace clang {
     ///
     OwningPtr<ScratchBuffer> ScratchBuf;
 
-    TokenRewriter(const TokenRewriter&);  // DO NOT IMPLEMENT
-    void operator=(const TokenRewriter&); // DO NOT IMPLEMENT.
+    TokenRewriter(const TokenRewriter &) LLVM_DELETED_FUNCTION;
+    void operator=(const TokenRewriter &) LLVM_DELETED_FUNCTION;
   public:
     /// TokenRewriter - This creates a TokenRewriter for the file with the
     /// specified FileID.

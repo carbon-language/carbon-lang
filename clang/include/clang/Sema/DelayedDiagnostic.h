@@ -220,9 +220,8 @@ class DelayedDiagnosticPool {
   const DelayedDiagnosticPool *Parent;
   llvm::SmallVector<DelayedDiagnostic, 4> Diagnostics;
 
-  // Do not implement.
-  DelayedDiagnosticPool(const DelayedDiagnosticPool &other);
-  DelayedDiagnosticPool &operator=(const DelayedDiagnosticPool &other);
+  DelayedDiagnosticPool(const DelayedDiagnosticPool &) LLVM_DELETED_FUNCTION;
+  void operator=(const DelayedDiagnosticPool &) LLVM_DELETED_FUNCTION;
 public:
   DelayedDiagnosticPool(const DelayedDiagnosticPool *parent) : Parent(parent) {}
   ~DelayedDiagnosticPool() {

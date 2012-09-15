@@ -532,8 +532,8 @@ public:
 /// CodeGenFunction - This class organizes the per-function state that is used
 /// while generating LLVM code.
 class CodeGenFunction : public CodeGenTypeCache {
-  CodeGenFunction(const CodeGenFunction&); // DO NOT IMPLEMENT
-  void operator=(const CodeGenFunction&);  // DO NOT IMPLEMENT
+  CodeGenFunction(const CodeGenFunction &) LLVM_DELETED_FUNCTION;
+  void operator=(const CodeGenFunction &) LLVM_DELETED_FUNCTION;
 
   friend class CGCXXABI;
 public:
@@ -794,8 +794,8 @@ public:
     bool OldDidCallStackSave;
     bool PerformCleanup;
 
-    RunCleanupsScope(const RunCleanupsScope &); // DO NOT IMPLEMENT
-    RunCleanupsScope &operator=(const RunCleanupsScope &); // DO NOT IMPLEMENT
+    RunCleanupsScope(const RunCleanupsScope &) LLVM_DELETED_FUNCTION;
+    void operator=(const RunCleanupsScope &) LLVM_DELETED_FUNCTION;
 
   protected:
     CodeGenFunction& CGF;
@@ -838,8 +838,8 @@ public:
     SourceRange Range;
     bool PopDebugStack;
 
-    LexicalScope(const LexicalScope &); // DO NOT IMPLEMENT THESE
-    LexicalScope &operator=(const LexicalScope &);
+    LexicalScope(const LexicalScope &) LLVM_DELETED_FUNCTION;
+    void operator=(const LexicalScope &) LLVM_DELETED_FUNCTION;
 
   public:
     /// \brief Enter a new cleanup scope.

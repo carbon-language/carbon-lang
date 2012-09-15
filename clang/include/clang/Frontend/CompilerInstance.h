@@ -130,8 +130,8 @@ class CompilerInstance : public ModuleLoader {
   /// The list of active output files.
   std::list<OutputFile> OutputFiles;
 
-  void operator=(const CompilerInstance &);  // DO NOT IMPLEMENT
-  CompilerInstance(const CompilerInstance&); // DO NOT IMPLEMENT
+  CompilerInstance(const CompilerInstance &) LLVM_DELETED_FUNCTION;
+  void operator=(const CompilerInstance &) LLVM_DELETED_FUNCTION;
 public:
   CompilerInstance();
   ~CompilerInstance();

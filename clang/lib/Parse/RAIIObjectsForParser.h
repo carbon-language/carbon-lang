@@ -87,9 +87,8 @@ namespace clang {
     Sema::ParsingDeclState State;
     bool Popped;
 
-    // Do not implement.
-    ParsingDeclRAIIObject(const ParsingDeclRAIIObject &other);
-    ParsingDeclRAIIObject &operator=(const ParsingDeclRAIIObject &other);
+    ParsingDeclRAIIObject(const ParsingDeclRAIIObject &) LLVM_DELETED_FUNCTION;
+    void operator=(const ParsingDeclRAIIObject &) LLVM_DELETED_FUNCTION;
 
   public:
     enum NoParent_t { NoParent };
@@ -245,8 +244,9 @@ namespace clang {
   /// the way they used to be.  This is used to handle __extension__ in the
   /// parser.
   class ExtensionRAIIObject {
-    void operator=(const ExtensionRAIIObject &);     // DO NOT IMPLEMENT
-    ExtensionRAIIObject(const ExtensionRAIIObject&); // DO NOT IMPLEMENT
+    ExtensionRAIIObject(const ExtensionRAIIObject &) LLVM_DELETED_FUNCTION;
+    void operator=(const ExtensionRAIIObject &) LLVM_DELETED_FUNCTION;
+
     DiagnosticsEngine &Diags;
   public:
     ExtensionRAIIObject(DiagnosticsEngine &diags) : Diags(diags) {

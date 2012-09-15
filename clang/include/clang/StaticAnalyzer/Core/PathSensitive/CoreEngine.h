@@ -97,8 +97,8 @@ private:
                     ExplodedNode *Pred);
 
 private:
-  CoreEngine(const CoreEngine&); // Do not implement.
-  CoreEngine& operator=(const CoreEngine&);
+  CoreEngine(const CoreEngine &) LLVM_DELETED_FUNCTION;
+  void operator=(const CoreEngine &) LLVM_DELETED_FUNCTION;
 
   ExplodedNode *generateCallExitBeginNode(ExplodedNode *N);
 

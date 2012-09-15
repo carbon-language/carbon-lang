@@ -146,8 +146,8 @@ public:
     }
 
   private:
-    Directive(const Directive&); // DO NOT IMPLEMENT
-    void operator=(const Directive&); // DO NOT IMPLEMENT
+    Directive(const Directive &) LLVM_DELETED_FUNCTION;
+    void operator=(const Directive &) LLVM_DELETED_FUNCTION;
   };
 
   typedef std::vector<Directive*> DirectiveList;

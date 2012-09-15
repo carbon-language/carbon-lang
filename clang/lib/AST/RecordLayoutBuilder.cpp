@@ -789,8 +789,8 @@ protected:
   void setDataSize(CharUnits NewSize) { DataSize = Context.toBits(NewSize); }
   void setDataSize(uint64_t NewSize) { DataSize = NewSize; }
 
-  RecordLayoutBuilder(const RecordLayoutBuilder&);   // DO NOT IMPLEMENT
-  void operator=(const RecordLayoutBuilder&); // DO NOT IMPLEMENT
+  RecordLayoutBuilder(const RecordLayoutBuilder &) LLVM_DELETED_FUNCTION;
+  void operator=(const RecordLayoutBuilder &) LLVM_DELETED_FUNCTION;
 public:
   static const CXXMethodDecl *ComputeKeyFunction(const CXXRecordDecl *RD);
 };

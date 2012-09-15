@@ -166,8 +166,8 @@ public:
 class CGRecordLayout {
   friend class CodeGenTypes;
 
-  CGRecordLayout(const CGRecordLayout&); // DO NOT IMPLEMENT
-  void operator=(const CGRecordLayout&); // DO NOT IMPLEMENT
+  CGRecordLayout(const CGRecordLayout &) LLVM_DELETED_FUNCTION;
+  void operator=(const CGRecordLayout &) LLVM_DELETED_FUNCTION;
 
 private:
   /// The LLVM type corresponding to this record layout; used when

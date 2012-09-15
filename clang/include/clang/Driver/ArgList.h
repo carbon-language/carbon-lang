@@ -94,8 +94,8 @@ namespace driver {
   /// and to iterate over groups of arguments.
   class ArgList {
   private:
-    ArgList(const ArgList &); // DO NOT IMPLEMENT
-    void operator=(const ArgList &); // DO NOT IMPLEMENT
+    ArgList(const ArgList &) LLVM_DELETED_FUNCTION;
+    void operator=(const ArgList &) LLVM_DELETED_FUNCTION;
 
   public:
     typedef SmallVector<Arg*, 16> arglist_type;

@@ -83,8 +83,8 @@ class Lexer : public PreprocessorLexer {
   // CurrentConflictMarkerState - The kind of conflict marker we are handling.
   ConflictMarkerKind CurrentConflictMarkerState;
 
-  Lexer(const Lexer&);          // DO NOT IMPLEMENT
-  void operator=(const Lexer&); // DO NOT IMPLEMENT
+  Lexer(const Lexer &) LLVM_DELETED_FUNCTION;
+  void operator=(const Lexer &) LLVM_DELETED_FUNCTION;
   friend class Preprocessor;
 
   void InitLexer(const char *BufStart, const char *BufPtr, const char *BufEnd);

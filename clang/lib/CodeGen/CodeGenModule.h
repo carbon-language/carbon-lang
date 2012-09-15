@@ -210,8 +210,8 @@ struct ARCEntrypoints {
 /// CodeGenModule - This class organizes the cross-function state that is used
 /// while generating LLVM code.
 class CodeGenModule : public CodeGenTypeCache {
-  CodeGenModule(const CodeGenModule&);  // DO NOT IMPLEMENT
-  void operator=(const CodeGenModule&); // DO NOT IMPLEMENT
+  CodeGenModule(const CodeGenModule &) LLVM_DELETED_FUNCTION;
+  void operator=(const CodeGenModule &) LLVM_DELETED_FUNCTION;
 
   typedef std::vector<std::pair<llvm::Constant*, int> > CtorList;
 

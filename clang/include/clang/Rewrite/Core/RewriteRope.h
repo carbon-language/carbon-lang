@@ -14,6 +14,8 @@
 #ifndef LLVM_CLANG_REWRITEROPE_H
 #define LLVM_CLANG_REWRITEROPE_H
 
+#include "llvm/Support/Compiler.h"
+
 #include <cstring>
 #include <cassert>
 #include <cstddef>
@@ -153,7 +155,7 @@ namespace clang {
 
   class RopePieceBTree {
     void /*RopePieceBTreeNode*/ *Root;
-    void operator=(const RopePieceBTree &); // DO NOT IMPLEMENT
+    void operator=(const RopePieceBTree &) LLVM_DELETED_FUNCTION;
   public:
     RopePieceBTree();
     RopePieceBTree(const RopePieceBTree &RHS);

@@ -120,8 +120,7 @@ private:
   const LocationContext *LCtx;
   llvm::PointerUnion<const Expr *, const Decl *> Origin;
 
-  // DO NOT IMPLEMENT
-  CallEvent &operator=(const CallEvent &);
+  void operator=(const CallEvent &) LLVM_DELETED_FUNCTION;
 
 protected:
   // This is user data for subclasses.

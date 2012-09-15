@@ -450,8 +450,8 @@ private:
   /// entity being completed by this result.
   const char *BriefComment;
   
-  CodeCompletionString(const CodeCompletionString &); // DO NOT IMPLEMENT
-  CodeCompletionString &operator=(const CodeCompletionString &); // DITTO
+  CodeCompletionString(const CodeCompletionString &) LLVM_DELETED_FUNCTION;
+  void operator=(const CodeCompletionString &) LLVM_DELETED_FUNCTION;
 
   CodeCompletionString(const Chunk *Chunks, unsigned NumChunks,
                        unsigned Priority, CXAvailabilityKind Availability,

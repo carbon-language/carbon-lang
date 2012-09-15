@@ -758,8 +758,8 @@ private:
     ASTReader &Reader;
     enum ReadingKind PrevKind;
 
-    ReadingKindTracker(const ReadingKindTracker&); // do not implement
-    ReadingKindTracker &operator=(const ReadingKindTracker&);// do not implement
+    ReadingKindTracker(const ReadingKindTracker &) LLVM_DELETED_FUNCTION;
+    void operator=(const ReadingKindTracker &) LLVM_DELETED_FUNCTION;
 
   public:
     ReadingKindTracker(enum ReadingKind newKind, ASTReader &reader)
@@ -862,8 +862,8 @@ private:
   void Error(unsigned DiagID, StringRef Arg1 = StringRef(),
              StringRef Arg2 = StringRef());
 
-  ASTReader(const ASTReader&); // do not implement
-  ASTReader &operator=(const ASTReader &); // do not implement
+  ASTReader(const ASTReader &) LLVM_DELETED_FUNCTION;
+  void operator=(const ASTReader &) LLVM_DELETED_FUNCTION;
 public:
   /// \brief Load the AST file and validate its contents against the given
   /// Preprocessor.

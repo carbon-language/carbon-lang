@@ -2027,8 +2027,8 @@ public:
   static unsigned NumImplicitDestructorsDeclared;
   
 private:
-  ASTContext(const ASTContext&); // DO NOT IMPLEMENT
-  void operator=(const ASTContext&); // DO NOT IMPLEMENT
+  ASTContext(const ASTContext &) LLVM_DELETED_FUNCTION;
+  void operator=(const ASTContext &) LLVM_DELETED_FUNCTION;
 
 public:
   /// \brief Initialize built-in types.

@@ -174,8 +174,8 @@ public:
   BoundNodesTree build() const;
 
 private:
-  BoundNodesTreeBuilder(const BoundNodesTreeBuilder&);  // DO NOT IMPLEMENT
-  void operator=(const BoundNodesTreeBuilder&);  // DO NOT IMPLEMENT
+  BoundNodesTreeBuilder(const BoundNodesTreeBuilder &) LLVM_DELETED_FUNCTION;
+  void operator=(const BoundNodesTreeBuilder &) LLVM_DELETED_FUNCTION;
 
   BoundNodesMap Bindings;
 

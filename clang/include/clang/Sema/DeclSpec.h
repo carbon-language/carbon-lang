@@ -383,8 +383,8 @@ private:
             T == TST_class);
   }
 
-  DeclSpec(const DeclSpec&);       // DO NOT IMPLEMENT
-  void operator=(const DeclSpec&); // DO NOT IMPLEMENT
+  DeclSpec(const DeclSpec &) LLVM_DELETED_FUNCTION;
+  void operator=(const DeclSpec &) LLVM_DELETED_FUNCTION;
 public:
 
   DeclSpec(AttributeFactory &attrFactory)

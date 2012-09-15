@@ -33,8 +33,8 @@ class ObjCPropertyImplDecl;
 class CXXCtorInitializer;
 
 class ObjCListBase {
-  void operator=(const ObjCListBase &);     // DO NOT IMPLEMENT
-  ObjCListBase(const ObjCListBase&);        // DO NOT IMPLEMENT
+  ObjCListBase(const ObjCListBase &) LLVM_DELETED_FUNCTION;
+  void operator=(const ObjCListBase &) LLVM_DELETED_FUNCTION;
 protected:
   /// List is an array of pointers to objects that are not owned by this object.
   void **List;

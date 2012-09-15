@@ -108,8 +108,8 @@ public:
   class Builder {
     ContinuousRangeMap &Self;
     
-    Builder(const Builder&); // DO NOT IMPLEMENT
-    Builder &operator=(const Builder&); // DO NOT IMPLEMENT
+    Builder(const Builder&) LLVM_DELETED_FUNCTION;
+    Builder &operator=(const Builder&) LLVM_DELETED_FUNCTION;
     
   public:
     explicit Builder(ContinuousRangeMap &Self) : Self(Self) { }

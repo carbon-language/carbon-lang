@@ -91,8 +91,8 @@ class TokenLexer {
   /// should not be subject to further macro expansion.
   bool DisableMacroExpansion : 1;
 
-  TokenLexer(const TokenLexer&);  // DO NOT IMPLEMENT
-  void operator=(const TokenLexer&); // DO NOT IMPLEMENT
+  TokenLexer(const TokenLexer &) LLVM_DELETED_FUNCTION;
+  void operator=(const TokenLexer &) LLVM_DELETED_FUNCTION;
 public:
   /// Create a TokenLexer for the specified macro with the specified actual
   /// arguments.  Note that this ctor takes ownership of the ActualArgs pointer.

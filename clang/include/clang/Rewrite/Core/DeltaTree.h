@@ -14,6 +14,8 @@
 #ifndef CLANG_REWRITE_DELTATREE_H
 #define CLANG_REWRITE_DELTATREE_H
 
+#include "llvm/Support/Compiler.h"
+
 namespace clang {
 
   /// DeltaTree - a multiway search tree (BTree) structure with some fancy
@@ -25,7 +27,7 @@ namespace clang {
   /// as well, without traversing the whole tree.
   class DeltaTree {
     void *Root;    // "DeltaTreeNode *"
-    void operator=(const DeltaTree&); // DO NOT IMPLEMENT
+    void operator=(const DeltaTree &) LLVM_DELETED_FUNCTION;
   public:
     DeltaTree();
 
