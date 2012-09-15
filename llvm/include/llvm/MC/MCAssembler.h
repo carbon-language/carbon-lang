@@ -440,8 +440,8 @@ public:
 class MCSectionData : public ilist_node<MCSectionData> {
   friend class MCAsmLayout;
 
-  MCSectionData(const MCSectionData&);  // DO NOT IMPLEMENT
-  void operator=(const MCSectionData&); // DO NOT IMPLEMENT
+  MCSectionData(const MCSectionData&) LLVM_DELETED_FUNCTION;
+  void operator=(const MCSectionData&) LLVM_DELETED_FUNCTION;
 
 public:
   typedef iplist<MCFragment> FragmentListType;
@@ -683,8 +683,8 @@ public:
   typedef std::vector<DataRegionData>::iterator data_region_iterator;
 
 private:
-  MCAssembler(const MCAssembler&);    // DO NOT IMPLEMENT
-  void operator=(const MCAssembler&); // DO NOT IMPLEMENT
+  MCAssembler(const MCAssembler&) LLVM_DELETED_FUNCTION;
+  void operator=(const MCAssembler&) LLVM_DELETED_FUNCTION;
 
   MCContext &Context;
 
