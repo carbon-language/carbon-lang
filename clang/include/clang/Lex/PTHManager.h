@@ -81,9 +81,8 @@ class PTHManager : public IdentifierInfoLookup {
              void* stringIdLookup, unsigned numIds,
              const unsigned char* spellingBase, const char *originalSourceFile);
 
-  // Do not implement.
-  PTHManager();
-  void operator=(const PTHManager&);
+  PTHManager(const PTHManager &) LLVM_DELETED_FUNCTION;
+  void operator=(const PTHManager &) LLVM_DELETED_FUNCTION;
 
   /// getSpellingAtPTHOffset - Used by PTHLexer classes to get the cached
   ///  spelling for a token.
