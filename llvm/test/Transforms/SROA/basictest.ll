@@ -1,5 +1,9 @@
 ; RUN: opt < %s -sroa -S | FileCheck %s
+; RUN: opt < %s -sroa -force-ssa-updater -S | FileCheck %s
 target datalayout = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-n8:16:32:64"
+
+declare void @llvm.lifetime.start(i64, i8* nocapture)
+declare void @llvm.lifetime.end(i64, i8* nocapture)
 
 define i32 @test0() {
 ; CHECK: @test0
@@ -10,13 +14,23 @@ entry:
   %a1 = alloca i32
   %a2 = alloca float
 
+  %a1.i8 = bitcast i32* %a1 to i8*
+  call void @llvm.lifetime.start(i64 4, i8* %a1.i8)
+
   store i32 0, i32* %a1
   %v1 = load i32* %a1
+
+  call void @llvm.lifetime.end(i64 4, i8* %a1.i8)
+
+  %a2.i8 = bitcast float* %a2 to i8*
+  call void @llvm.lifetime.start(i64 4, i8* %a2.i8)
 
   store float 0.0, float* %a2
   %v2 = load float * %a2
   %v2.int = bitcast float %v2 to i32
   %sum1 = add i32 %v1, %v2.int
+
+  call void @llvm.lifetime.end(i64 4, i8* %a2.i8)
 
   ret i32 %sum1
 }

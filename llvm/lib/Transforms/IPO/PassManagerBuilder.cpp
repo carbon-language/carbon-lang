@@ -41,7 +41,7 @@ UseGVNAfterVectorization("use-gvn-after-vectorization",
   cl::desc("Run GVN instead of Early CSE after vectorization passes"));
 
 static cl::opt<bool> UseNewSROA("use-new-sroa",
-  cl::init(false), cl::Hidden,
+  cl::init(true), cl::Hidden,
   cl::desc("Enable the new, experimental SROA pass"));
 
 PassManagerBuilder::PassManagerBuilder() {
@@ -154,7 +154,10 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
 
   // Start of function pass.
   // Break up aggregate allocas, using SSAUpdater.
-  MPM.add(createScalarReplAggregatesPass(-1, false));
+  if (UseNewSROA)
+    MPM.add(createSROAPass(/*RequiresDomTree*/ false));
+  else
+    MPM.add(createScalarReplAggregatesPass(-1, false));
   MPM.add(createEarlyCSEPass());              // Catch trivial redundancies
   if (!DisableSimplifyLibCalls)
     MPM.add(createSimplifyLibCallsPass());    // Library Call Optimizations

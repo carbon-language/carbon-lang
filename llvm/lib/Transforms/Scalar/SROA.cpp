@@ -47,6 +47,7 @@
 #include "llvm/Analysis/Loads.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
@@ -66,6 +67,11 @@ STATISTIC(NumPromoted,        "Number of allocas promoted to SSA values");
 STATISTIC(NumLoadsSpeculated, "Number of loads speculated to allow promotion");
 STATISTIC(NumDeleted,         "Number of instructions deleted");
 STATISTIC(NumVectorized,      "Number of vectorized aggregates");
+
+/// Hidden option to force the pass to not use DomTree and mem2reg, instead
+/// forming SSA values through the SSAUpdater infrastructure.
+static cl::opt<bool>
+ForceSSAUpdater("force-ssa-updater", cl::init(false), cl::Hidden);
 
 namespace {
 /// \brief Alloca partitioning representation.
@@ -1115,6 +1121,90 @@ void AllocaPartitioning::dump() const { print(dbgs()); }
 
 
 namespace {
+/// \brief Implementation of LoadAndStorePromoter for promoting allocas.
+///
+/// This subclass of LoadAndStorePromoter adds overrides to handle promoting
+/// the loads and stores of an alloca instruction, as well as updating its
+/// debug information. This is used when a domtree is unavailable and thus
+/// mem2reg in its full form can't be used to handle promotion of allocas to
+/// scalar values.
+class AllocaPromoter : public LoadAndStorePromoter {
+  AllocaInst &AI;
+  DIBuilder &DIB;
+
+  SmallVector<DbgDeclareInst *, 4> DDIs;
+  SmallVector<DbgValueInst *, 4> DVIs;
+
+public:
+  AllocaPromoter(const SmallVectorImpl<Instruction*> &Insts, SSAUpdater &S,
+                 AllocaInst &AI, DIBuilder &DIB)
+    : LoadAndStorePromoter(Insts, S), AI(AI), DIB(DIB) {}
+
+  void run(const SmallVectorImpl<Instruction*> &Insts) {
+    // Remember which alloca we're promoting (for isInstInList).
+    if (MDNode *DebugNode = MDNode::getIfExists(AI.getContext(), &AI)) {
+      for (Value::use_iterator UI = DebugNode->use_begin(),
+                               UE = DebugNode->use_end();
+           UI != UE; ++UI)
+        if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(*UI))
+          DDIs.push_back(DDI);
+        else if (DbgValueInst *DVI = dyn_cast<DbgValueInst>(*UI))
+          DVIs.push_back(DVI);
+    }
+
+    LoadAndStorePromoter::run(Insts);
+    AI.eraseFromParent();
+    while (!DDIs.empty())
+      DDIs.pop_back_val()->eraseFromParent();
+    while (!DVIs.empty())
+      DVIs.pop_back_val()->eraseFromParent();
+  }
+
+  virtual bool isInstInList(Instruction *I,
+                            const SmallVectorImpl<Instruction*> &Insts) const {
+    if (LoadInst *LI = dyn_cast<LoadInst>(I))
+      return LI->getOperand(0) == &AI;
+    return cast<StoreInst>(I)->getPointerOperand() == &AI;
+  }
+
+  virtual void updateDebugInfo(Instruction *Inst) const {
+    for (SmallVector<DbgDeclareInst *, 4>::const_iterator I = DDIs.begin(),
+           E = DDIs.end(); I != E; ++I) {
+      DbgDeclareInst *DDI = *I;
+      if (StoreInst *SI = dyn_cast<StoreInst>(Inst))
+        ConvertDebugDeclareToDebugValue(DDI, SI, DIB);
+      else if (LoadInst *LI = dyn_cast<LoadInst>(Inst))
+        ConvertDebugDeclareToDebugValue(DDI, LI, DIB);
+    }
+    for (SmallVector<DbgValueInst *, 4>::const_iterator I = DVIs.begin(),
+           E = DVIs.end(); I != E; ++I) {
+      DbgValueInst *DVI = *I;
+      Value *Arg = NULL;
+      if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
+        // If an argument is zero extended then use argument directly. The ZExt
+        // may be zapped by an optimization pass in future.
+        if (ZExtInst *ZExt = dyn_cast<ZExtInst>(SI->getOperand(0)))
+          Arg = dyn_cast<Argument>(ZExt->getOperand(0));
+        if (SExtInst *SExt = dyn_cast<SExtInst>(SI->getOperand(0)))
+          Arg = dyn_cast<Argument>(SExt->getOperand(0));
+        if (!Arg)
+          Arg = SI->getOperand(0);
+      } else if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
+        Arg = LI->getOperand(0);
+      } else {
+        continue;
+      }
+      Instruction *DbgVal =
+        DIB.insertDbgValueIntrinsic(Arg, 0, DIVariable(DVI->getVariable()),
+                                     Inst);
+      DbgVal->setDebugLoc(DVI->getDebugLoc());
+    }
+  }
+};
+} // end anon namespace
+
+
+namespace {
 /// \brief An optimization pass providing Scalar Replacement of Aggregates.
 ///
 /// This pass takes allocations which can be completely analyzed (that is, they
@@ -1134,6 +1224,8 @@ namespace {
 ///    this form. By doing so, it will enable promotion of vector aggregates to
 ///    SSA vector values.
 class SROA : public FunctionPass {
+  const bool RequiresDomTree;
+
   LLVMContext *C;
   const TargetData *TD;
   DominatorTree *DT;
@@ -1160,7 +1252,9 @@ class SROA : public FunctionPass {
   std::vector<AllocaInst *> PromotableAllocas;
 
 public:
-  SROA() : FunctionPass(ID), C(0), TD(0), DT(0) {
+  SROA(bool RequiresDomTree = true)
+      : FunctionPass(ID), RequiresDomTree(RequiresDomTree),
+        C(0), TD(0), DT(0) {
     initializeSROAPass(*PassRegistry::getPassRegistry());
   }
   bool runOnFunction(Function &F);
@@ -1179,13 +1273,14 @@ private:
   bool splitAlloca(AllocaInst &AI, AllocaPartitioning &P);
   bool runOnAlloca(AllocaInst &AI);
   void deleteDeadInstructions(SmallPtrSet<AllocaInst *, 4> &DeletedAllocas);
+  bool promoteAllocas(Function &F);
 };
 }
 
 char SROA::ID = 0;
 
-FunctionPass *llvm::createSROAPass() {
-  return new SROA();
+FunctionPass *llvm::createSROAPass(bool RequiresDomTree) {
+  return new SROA(RequiresDomTree);
 }
 
 INITIALIZE_PASS_BEGIN(SROA, "sroa", "Scalar Replacement Of Aggregates",
@@ -2598,6 +2693,66 @@ void SROA::deleteDeadInstructions(SmallPtrSet<AllocaInst*, 4> &DeletedAllocas) {
   }
 }
 
+/// \brief Promote the allocas, using the best available technique.
+///
+/// This attempts to promote whatever allocas have been identified as viable in
+/// the PromotableAllocas list. If that list is empty, there is nothing to do.
+/// If there is a domtree available, we attempt to promote using the full power
+/// of mem2reg. Otherwise, we build and use the AllocaPromoter above which is
+/// based on the SSAUpdater utilities. This function returns whether any
+/// promotion occured.
+bool SROA::promoteAllocas(Function &F) {
+  if (PromotableAllocas.empty())
+    return false;
+
+  NumPromoted += PromotableAllocas.size();
+
+  if (DT && !ForceSSAUpdater) {
+    DEBUG(dbgs() << "Promoting allocas with mem2reg...\n");
+    PromoteMemToReg(PromotableAllocas, *DT);
+    PromotableAllocas.clear();
+    return true;
+  }
+
+  DEBUG(dbgs() << "Promoting allocas with SSAUpdater...\n");
+  SSAUpdater SSA;
+  DIBuilder DIB(*F.getParent());
+  SmallVector<Instruction*, 64> Insts;
+
+  for (unsigned Idx = 0, Size = PromotableAllocas.size(); Idx != Size; ++Idx) {
+    AllocaInst *AI = PromotableAllocas[Idx];
+    for (Value::use_iterator UI = AI->use_begin(), UE = AI->use_end();
+         UI != UE;) {
+      Instruction *I = cast<Instruction>(*UI++);
+      // FIXME: Currently the SSAUpdater infrastructure doesn't reason about
+      // lifetime intrinsics and so we strip them (and the bitcasts+GEPs
+      // leading to them) here. Eventually it should use them to optimize the
+      // scalar values produced.
+      if (isa<BitCastInst>(I) || isa<GetElementPtrInst>(I)) {
+        assert(onlyUsedByLifetimeMarkers(I) &&
+               "Found a bitcast used outside of a lifetime marker.");
+        while (!I->use_empty())
+          cast<Instruction>(*I->use_begin())->eraseFromParent();
+        I->eraseFromParent();
+        continue;
+      }
+      if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
+        assert(II->getIntrinsicID() == Intrinsic::lifetime_start ||
+               II->getIntrinsicID() == Intrinsic::lifetime_end);
+        II->eraseFromParent();
+        continue;
+      }
+
+      Insts.push_back(I);
+    }
+    AllocaPromoter(Insts, SSA, *AI, DIB).run(Insts);
+    Insts.clear();
+  }
+
+  PromotableAllocas.clear();
+  return true;
+}
+
 namespace {
   /// \brief A predicate to test whether an alloca belongs to a set.
   class IsAllocaInSet {
@@ -2618,7 +2773,7 @@ bool SROA::runOnFunction(Function &F) {
     DEBUG(dbgs() << "  Skipping SROA -- no target data!\n");
     return false;
   }
-  DT = &getAnalysis<DominatorTree>();
+  DT = getAnalysisIfAvailable<DominatorTree>();
 
   BasicBlock &EntryBB = F.getEntryBlock();
   for (BasicBlock::iterator I = EntryBB.begin(), E = llvm::prior(EntryBB.end());
@@ -2643,18 +2798,13 @@ bool SROA::runOnFunction(Function &F) {
     }
   }
 
-  if (!PromotableAllocas.empty()) {
-    DEBUG(dbgs() << "Promoting allocas with mem2reg...\n");
-    PromoteMemToReg(PromotableAllocas, *DT);
-    Changed = true;
-    NumPromoted += PromotableAllocas.size();
-    PromotableAllocas.clear();
-  }
+  Changed |= promoteAllocas(F);
 
   return Changed;
 }
 
 void SROA::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<DominatorTree>();
+  if (RequiresDomTree)
+    AU.addRequired<DominatorTree>();
   AU.setPreservesCFG();
 }
