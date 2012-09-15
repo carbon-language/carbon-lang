@@ -84,8 +84,8 @@ public:
 class AsmParser : public MCAsmParser {
   friend class GenericAsmParser;
 
-  AsmParser(const AsmParser &);   // DO NOT IMPLEMENT
-  void operator=(const AsmParser &);  // DO NOT IMPLEMENT
+  AsmParser(const AsmParser &) LLVM_DELETED_FUNCTION;
+  void operator=(const AsmParser &) LLVM_DELETED_FUNCTION;
 private:
   AsmLexer Lexer;
   MCContext &Ctx;
