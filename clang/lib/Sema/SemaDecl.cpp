@@ -6582,8 +6582,12 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
   // Check any implicit conversions within the expression.
   CheckImplicitConversions(Init, VDecl->getLocation());
 
-  if (!VDecl->isInvalidDecl())
+  if (!VDecl->isInvalidDecl()) {
     checkUnsafeAssigns(VDecl->getLocation(), VDecl->getType(), Init);
+
+    if (VDecl->hasAttr<BlocksAttr>())
+      checkRetainCycles(VDecl, Init);
+  }
 
   Init = MaybeCreateExprWithCleanups(Init);
   // Attach the initializer to the decl.

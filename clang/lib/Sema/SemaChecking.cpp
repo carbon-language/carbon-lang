@@ -5299,7 +5299,8 @@ static bool considerVariable(VarDecl *var, Expr *ref, RetainCycleOwner &owner) {
     return false;
 
   owner.Variable = var;
-  owner.setLocsFrom(ref);
+  if (ref)
+    owner.setLocsFrom(ref);
   return true;
 }
 
@@ -5497,6 +5498,20 @@ void Sema::checkRetainCycles(Expr *receiver, Expr *argument) {
 
   if (Expr *capturer = findCapturingExpr(*this, argument, owner))
     diagnoseRetainCycle(*this, capturer, owner);
+}
+
+void Sema::checkRetainCycles(VarDecl *Var, Expr *Init) {
+  RetainCycleOwner Owner;
+  if (!considerVariable(Var, /*DeclRefExpr=*/0, Owner))
+    return;
+  
+  // Because we don't have an expression for the variable, we have to set the
+  // location explicitly here.
+  Owner.Loc = Var->getLocation();
+  Owner.Range = Var->getSourceRange();
+  
+  if (Expr *Capturer = findCapturingExpr(*this, Init, Owner))
+    diagnoseRetainCycle(*this, Capturer, Owner);
 }
 
 bool Sema::checkUnsafeAssigns(SourceLocation Loc,

@@ -6784,6 +6784,7 @@ public:
   /// might create an obvious retain cycle.
   void checkRetainCycles(ObjCMessageExpr *msg);
   void checkRetainCycles(Expr *receiver, Expr *argument);
+  void checkRetainCycles(VarDecl *Var, Expr *Init);
 
   /// checkUnsafeAssigns - Check whether +1 expr is being assigned
   /// to weak/__unsafe_unretained type.

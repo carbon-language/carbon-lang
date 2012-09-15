@@ -127,3 +127,29 @@ void doSomething(unsigned v);
 }
 @end
 
+
+void testBlockVariable() {
+  typedef void (^block_t)(void);
+  
+  // This case will be caught by -Wuninitialized, and does not create a
+  // retain cycle.
+  block_t a1 = ^{
+    a1(); // no-warning
+  };
+
+  // This case will also be caught by -Wuninitialized.
+  block_t a2;
+  a2 = ^{
+    a2(); // no-warning
+  };
+  
+  __block block_t b1 = ^{ // expected-note{{block will be retained by the captured object}}
+    b1(); // expected-warning{{capturing 'b1' strongly in this block is likely to lead to a retain cycle}}
+  };
+
+  __block block_t b2;
+  b2 = ^{ // expected-note{{block will be retained by the captured object}}
+    b2(); // expected-warning{{capturing 'b2' strongly in this block is likely to lead to a retain cycle}}
+  };
+}
+
