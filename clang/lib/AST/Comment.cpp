@@ -253,14 +253,6 @@ void DeclInfo::fill() {
     TypeLoc TL = TSI->getTypeLoc().getUnqualifiedLoc();
     while (true) {
       TL = TL.IgnoreParens();
-      // Look through typedefs.
-      if (TypedefTypeLoc *TypedefTL = dyn_cast<TypedefTypeLoc>(&TL)) {
-        TSI = TypedefTL->getTypedefNameDecl()->getTypeSourceInfo();
-        if (TSI)
-          break;
-        TL = TSI->getTypeLoc().getUnqualifiedLoc();
-        continue;
-      }
       // Look through qualified types.
       if (QualifiedTypeLoc *QualifiedTL = dyn_cast<QualifiedTypeLoc>(&TL)) {
         TL = QualifiedTL->getUnqualifiedLoc();

@@ -297,6 +297,12 @@ typedef int (* const test_param25)(int aaa, int ccc);
 /// \returns aaa.
 typedef int (C::*test_param26)(int aaa, int ccc);
 
+typedef int (*test_param27)(int aaa);
+
+// expected-warning@+1 {{'\param' command used in a comment that is not attached to a function declaration}}
+/// \param aaa Meow.
+typedef test_param27 test_param28;
+
 
 // expected-warning@+1 {{'\tparam' command used in a comment that is not attached to a template declaration}}
 /// \tparam T Aaa
