@@ -23,11 +23,11 @@
 #include "CGVTables.h"
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
-#include <clang/AST/Mangle.h>
-#include <clang/AST/Type.h>
-#include <llvm/Intrinsics.h>
-#include <llvm/Target/TargetData.h>
-#include <llvm/Value.h>
+#include "clang/AST/Mangle.h"
+#include "clang/AST/Type.h"
+#include "llvm/Intrinsics.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Value.h"
 
 using namespace clang;
 using namespace CodeGen;
