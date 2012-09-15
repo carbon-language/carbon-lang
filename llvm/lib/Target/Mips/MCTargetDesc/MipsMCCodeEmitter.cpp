@@ -29,17 +29,14 @@ using namespace llvm;
 
 namespace {
 class MipsMCCodeEmitter : public MCCodeEmitter {
-  MipsMCCodeEmitter(const MipsMCCodeEmitter &); // DO NOT IMPLEMENT
-  void operator=(const MipsMCCodeEmitter &); // DO NOT IMPLEMENT
+  MipsMCCodeEmitter(const MipsMCCodeEmitter &) LLVM_DELETED_FUNCTION;
+  void operator=(const MipsMCCodeEmitter &) LLVM_DELETED_FUNCTION;
   const MCInstrInfo &MCII;
-  const MCSubtargetInfo &STI;
-  MCContext &Ctx;
   bool IsLittleEndian;
 
 public:
-  MipsMCCodeEmitter(const MCInstrInfo &mcii, const MCSubtargetInfo &sti,
-                    MCContext &ctx, bool IsLittle) :
-            MCII(mcii), STI(sti) , Ctx(ctx), IsLittleEndian(IsLittle) {}
+  MipsMCCodeEmitter(const MCInstrInfo &mcii, bool IsLittle) :
+            MCII(mcii), IsLittleEndian(IsLittle) {}
 
   ~MipsMCCodeEmitter() {}
 
@@ -95,7 +92,7 @@ MCCodeEmitter *llvm::createMipsMCCodeEmitterEB(const MCInstrInfo &MCII,
                                                const MCSubtargetInfo &STI,
                                                MCContext &Ctx)
 {
-  return new MipsMCCodeEmitter(MCII, STI, Ctx, false);
+  return new MipsMCCodeEmitter(MCII, false);
 }
 
 MCCodeEmitter *llvm::createMipsMCCodeEmitterEL(const MCInstrInfo &MCII,
@@ -103,7 +100,7 @@ MCCodeEmitter *llvm::createMipsMCCodeEmitterEL(const MCInstrInfo &MCII,
                                                const MCSubtargetInfo &STI,
                                                MCContext &Ctx)
 {
-  return new MipsMCCodeEmitter(MCII, STI, Ctx, true);
+  return new MipsMCCodeEmitter(MCII, true);
 }
 
 /// EncodeInstruction - Emit the instruction.
