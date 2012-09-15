@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "gtest/gtest.h"
-#include <llvm/ADT/DenseSet.h>
+#include "llvm/ADT/DenseSet.h"
 
 using namespace llvm;
 

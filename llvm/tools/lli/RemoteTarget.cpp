@@ -13,9 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "RemoteTarget.h"
-#include <llvm/ADT/StringRef.h>
-#include <llvm/Support/DataTypes.h>
-#include <llvm/Support/Memory.h>
+#include "llvm/ADT/StringRef.h"
+#include "llvm/Support/DataTypes.h"
+#include "llvm/Support/Memory.h"
 #include <stdlib.h>
 #include <string>
 using namespace llvm;
