@@ -783,8 +783,9 @@ private:
 /// \brief Represents a C++ unqualified-id that has been parsed. 
 class UnqualifiedId {
 private:
-  const UnqualifiedId &operator=(const UnqualifiedId &); // DO NOT IMPLEMENT
-  
+  UnqualifiedId(const UnqualifiedId &Other) LLVM_DELETED_FUNCTION;
+  const UnqualifiedId &operator=(const UnqualifiedId &) LLVM_DELETED_FUNCTION;
+
 public:
   /// \brief Describes the kind of unqualified-id parsed.
   enum IdKind {
@@ -858,17 +859,6 @@ public:
   SourceLocation EndLocation;
   
   UnqualifiedId() : Kind(IK_Identifier), Identifier(0) { }
-
-  /// \brief Do not use this copy constructor. It is temporary, and only
-  /// exists because we are holding FieldDeclarators in a SmallVector when we
-  /// don't actually need them.
-  ///
-  /// FIXME: Kill this copy constructor.
-  UnqualifiedId(const UnqualifiedId &Other) 
-    : Kind(IK_Identifier), Identifier(Other.Identifier), 
-      StartLocation(Other.StartLocation), EndLocation(Other.EndLocation) {
-    assert(Other.Kind == IK_Identifier && "Cannot copy non-identifiers");
-  }
 
   /// \brief Clear out this unqualified-id, setting it to default (invalid) 
   /// state.
