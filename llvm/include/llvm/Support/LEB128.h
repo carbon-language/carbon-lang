@@ -15,7 +15,7 @@
 #ifndef LLVM_SYSTEM_LEB128_H
 #define LLVM_SYSTEM_LEB128_H
 
-#include <llvm/Support/raw_ostream.h>
+#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 

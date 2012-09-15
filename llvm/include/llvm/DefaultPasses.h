@@ -14,7 +14,7 @@
 #ifndef LLVM_DEFAULT_PASS_SUPPORT_H
 #define LLVM_DEFAULT_PASS_SUPPORT_H
 
-#include <llvm/PassSupport.h>
+#include "llvm/PassSupport.h"
 
 namespace llvm {
 
