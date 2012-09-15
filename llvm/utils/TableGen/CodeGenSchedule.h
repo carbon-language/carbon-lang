@@ -171,9 +171,22 @@ struct CodeGenProcModel {
   // This list is empty if no ItinRW refers to this Processor.
   RecVec ItinRWDefs;
 
+  // All read/write resources associated with this processor.
+  RecVec WriteResDefs;
+  RecVec ReadAdvanceDefs;
+
+  // Per-operand machine model resources associated with this processor.
+  RecVec ProcResourceDefs;
+
   CodeGenProcModel(unsigned Idx, const std::string &Name, Record *MDef,
                    Record *IDef) :
     Index(Idx), ModelName(Name), ModelDef(MDef), ItinsDef(IDef) {}
+
+  bool hasInstrSchedModel() const {
+    return !WriteResDefs.empty() || !ItinRWDefs.empty();
+  }
+
+  unsigned getProcResourceIdx(Record *PRDef) const;
 
 #ifndef NDEBUG
   void dump() const;
@@ -326,6 +339,9 @@ public:
 
   unsigned findSchedClassIdx(const IdxVec &Writes, const IdxVec &Reads) const;
 
+  Record *findProcResUnits(Record *ProcResKind,
+                           const CodeGenProcModel &PM) const;
+
 private:
   void collectProcModels();
 
@@ -354,6 +370,19 @@ private:
                    unsigned FromClassIdx, const IdxVec &ProcIndices);
   void inferFromItinClass(Record *ItinClassDef, unsigned FromClassIdx);
   void inferFromInstRWs(unsigned SCIdx);
+
+  void collectProcResources();
+
+  void collectItinProcResources(Record *ItinClassDef);
+
+  void collectRWResources(const IdxVec &Writes, const IdxVec &Reads,
+                          const IdxVec &ProcIndices);
+
+  void addProcResource(Record *ProcResourceKind, CodeGenProcModel &PM);
+
+  void addWriteRes(Record *ProcWriteResDef, unsigned PIdx);
+
+  void addReadAdvance(Record *ProcReadAdvanceDef, unsigned PIdx);
 };
 
 } // namespace llvm

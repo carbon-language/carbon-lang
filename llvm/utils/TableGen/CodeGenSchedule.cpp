@@ -74,6 +74,10 @@ CodeGenSchedModels::CodeGenSchedModels(RecordKeeper &RK,
 
   DEBUG(for (unsigned i = 0; i < SchedClasses.size(); ++i)
           SchedClasses[i].dump(this));
+
+  // Populate each CodeGenProcModel's WriteResDefs, ReadAdvanceDefs, and
+  // ProcResourceDefs.
+  collectProcResources();
 }
 
 /// Gather all processor models.
@@ -1082,6 +1086,192 @@ void CodeGenSchedModels::inferFromRW(const IdxVec &OperWrites,
   // WARNING: We are about to mutate the SchedClasses vector. Do not refer to
   // OperWrites, OperReads, or ProcIndices after calling inferFromTransitions.
   inferFromTransitions(LastTransitions, FromClassIdx, ProcIndices, *this);
+}
+
+// Collect and sort WriteRes, ReadAdvance, and ProcResources.
+void CodeGenSchedModels::collectProcResources() {
+  // Add any subtarget-specific SchedReadWrites that are directly associated
+  // with processor resources. Refer to the parent SchedClass's ProcIndices to
+  // determine which processors they apply to.
+  for (SchedClassIter SCI = schedClassBegin(), SCE = schedClassEnd();
+       SCI != SCE; ++SCI) {
+    if (SCI->ItinClassDef)
+      collectItinProcResources(SCI->ItinClassDef);
+    else
+      collectRWResources(SCI->Writes, SCI->Reads, SCI->ProcIndices);
+  }
+  // Add resources separately defined by each subtarget.
+  RecVec WRDefs = Records.getAllDerivedDefinitions("WriteRes");
+  for (RecIter WRI = WRDefs.begin(), WRE = WRDefs.end(); WRI != WRE; ++WRI) {
+    Record *ModelDef = (*WRI)->getValueAsDef("SchedModel");
+    addWriteRes(*WRI, getProcModel(ModelDef).Index);
+  }
+  RecVec RADefs = Records.getAllDerivedDefinitions("ReadAdvance");
+  for (RecIter RAI = RADefs.begin(), RAE = RADefs.end(); RAI != RAE; ++RAI) {
+    Record *ModelDef = (*RAI)->getValueAsDef("SchedModel");
+    addReadAdvance(*RAI, getProcModel(ModelDef).Index);
+  }
+  // Finalize each ProcModel by sorting the record arrays.
+  for (unsigned PIdx = 0, PEnd = ProcModels.size(); PIdx != PEnd; ++PIdx) {
+    CodeGenProcModel &PM = ProcModels[PIdx];
+    std::sort(PM.WriteResDefs.begin(), PM.WriteResDefs.end(),
+              LessRecord());
+    std::sort(PM.ReadAdvanceDefs.begin(), PM.ReadAdvanceDefs.end(),
+              LessRecord());
+    std::sort(PM.ProcResourceDefs.begin(), PM.ProcResourceDefs.end(),
+              LessRecord());
+    DEBUG(
+      PM.dump();
+      dbgs() << "WriteResDefs: ";
+      for (RecIter RI = PM.WriteResDefs.begin(),
+             RE = PM.WriteResDefs.end(); RI != RE; ++RI) {
+        if ((*RI)->isSubClassOf("WriteRes"))
+          dbgs() << (*RI)->getValueAsDef("WriteType")->getName() << " ";
+        else
+          dbgs() << (*RI)->getName() << " ";
+      }
+      dbgs() << "\nReadAdvanceDefs: ";
+      for (RecIter RI = PM.ReadAdvanceDefs.begin(),
+             RE = PM.ReadAdvanceDefs.end(); RI != RE; ++RI) {
+        if ((*RI)->isSubClassOf("ReadAdvance"))
+          dbgs() << (*RI)->getValueAsDef("ReadType")->getName() << " ";
+        else
+          dbgs() << (*RI)->getName() << " ";
+      }
+      dbgs() << "\nProcResourceDefs: ";
+      for (RecIter RI = PM.ProcResourceDefs.begin(),
+             RE = PM.ProcResourceDefs.end(); RI != RE; ++RI) {
+        dbgs() << (*RI)->getName() << " ";
+      }
+      dbgs() << '\n');
+  }
+}
+
+// Collect itinerary class resources for each processor.
+void CodeGenSchedModels::collectItinProcResources(Record *ItinClassDef) {
+  for (unsigned PIdx = 0, PEnd = ProcModels.size(); PIdx != PEnd; ++PIdx) {
+    const CodeGenProcModel &PM = ProcModels[PIdx];
+    // For all ItinRW entries.
+    bool HasMatch = false;
+    for (RecIter II = PM.ItinRWDefs.begin(), IE = PM.ItinRWDefs.end();
+         II != IE; ++II) {
+      RecVec Matched = (*II)->getValueAsListOfDefs("MatchedItinClasses");
+      if (!std::count(Matched.begin(), Matched.end(), ItinClassDef))
+        continue;
+      if (HasMatch)
+        throw TGError((*II)->getLoc(), "Duplicate itinerary class "
+                      + ItinClassDef->getName()
+                      + " in ItinResources for " + PM.ModelName);
+      HasMatch = true;
+      IdxVec Writes, Reads;
+      findRWs((*II)->getValueAsListOfDefs("OperandReadWrites"), Writes, Reads);
+      IdxVec ProcIndices(1, PIdx);
+      collectRWResources(Writes, Reads, ProcIndices);
+    }
+  }
+}
+
+
+// Collect resources for a set of read/write types and processor indices.
+void CodeGenSchedModels::collectRWResources(const IdxVec &Writes,
+                                            const IdxVec &Reads,
+                                            const IdxVec &ProcIndices) {
+
+  for (IdxIter WI = Writes.begin(), WE = Writes.end(); WI != WE; ++WI) {
+    const CodeGenSchedRW &SchedRW = getSchedRW(*WI, /*IsRead=*/false);
+    if (SchedRW.TheDef && SchedRW.TheDef->isSubClassOf("SchedWriteRes")) {
+      for (IdxIter PI = ProcIndices.begin(), PE = ProcIndices.end();
+           PI != PE; ++PI) {
+        addWriteRes(SchedRW.TheDef, *PI);
+      }
+    }
+  }
+  for (IdxIter RI = Reads.begin(), RE = Reads.end(); RI != RE; ++RI) {
+    const CodeGenSchedRW &SchedRW = getSchedRW(*RI, /*IsRead=*/true);
+    if (SchedRW.TheDef && SchedRW.TheDef->isSubClassOf("SchedReadAdvance")) {
+      for (IdxIter PI = ProcIndices.begin(), PE = ProcIndices.end();
+           PI != PE; ++PI) {
+        addReadAdvance(SchedRW.TheDef, *PI);
+      }
+    }
+  }
+}
+
+// Find the processor's resource units for this kind of resource.
+Record *CodeGenSchedModels::findProcResUnits(Record *ProcResKind,
+                                             const CodeGenProcModel &PM) const {
+  if (ProcResKind->isSubClassOf("ProcResourceUnits"))
+    return ProcResKind;
+
+  Record *ProcUnitDef = 0;
+  RecVec ProcResourceDefs =
+    Records.getAllDerivedDefinitions("ProcResourceUnits");
+
+  for (RecIter RI = ProcResourceDefs.begin(), RE = ProcResourceDefs.end();
+       RI != RE; ++RI) {
+
+    if ((*RI)->getValueAsDef("Kind") == ProcResKind
+        && (*RI)->getValueAsDef("SchedModel") == PM.ModelDef) {
+      if (ProcUnitDef) {
+        throw TGError((*RI)->getLoc(),
+                      "Multiple ProcessorResourceUnits associated with "
+                      + ProcResKind->getName());
+      }
+      ProcUnitDef = *RI;
+    }
+  }
+  if (!ProcUnitDef) {
+    throw TGError(ProcResKind->getLoc(),
+                  "No ProcessorResources associated with "
+                  + ProcResKind->getName());
+  }
+  return ProcUnitDef;
+}
+
+// Iteratively add a resource and its super resources.
+void CodeGenSchedModels::addProcResource(Record *ProcResKind,
+                                         CodeGenProcModel &PM) {
+  for (;;) {
+    Record *ProcResUnits = findProcResUnits(ProcResKind, PM);
+
+    // See if this ProcResource is already associated with this processor.
+    RecIter I = std::find(PM.ProcResourceDefs.begin(),
+                          PM.ProcResourceDefs.end(), ProcResUnits);
+    if (I != PM.ProcResourceDefs.end())
+      return;
+
+    PM.ProcResourceDefs.push_back(ProcResUnits);
+    if (!ProcResUnits->getValueInit("Super")->isComplete())
+      return;
+
+    ProcResKind = ProcResUnits->getValueAsDef("Super");
+  }
+}
+
+// Add resources for a SchedWrite to this processor if they don't exist.
+void CodeGenSchedModels::addWriteRes(Record *ProcWriteResDef, unsigned PIdx) {
+  RecVec &WRDefs = ProcModels[PIdx].WriteResDefs;
+  RecIter WRI = std::find(WRDefs.begin(), WRDefs.end(), ProcWriteResDef);
+  if (WRI != WRDefs.end())
+    return;
+  WRDefs.push_back(ProcWriteResDef);
+
+  // Visit ProcResourceKinds referenced by the newly discovered WriteRes.
+  RecVec ProcResDefs = ProcWriteResDef->getValueAsListOfDefs("ProcResources");
+  for (RecIter WritePRI = ProcResDefs.begin(), WritePRE = ProcResDefs.end();
+       WritePRI != WritePRE; ++WritePRI) {
+    addProcResource(*WritePRI, ProcModels[PIdx]);
+  }
+}
+
+// Add resources for a ReadAdvance to this processor if they don't exist.
+void CodeGenSchedModels::addReadAdvance(Record *ProcReadAdvanceDef,
+                                        unsigned PIdx) {
+  RecVec &RADefs = ProcModels[PIdx].ReadAdvanceDefs;
+  RecIter I = std::find(RADefs.begin(), RADefs.end(), ProcReadAdvanceDef);
+  if (I != RADefs.end())
+    return;
+  RADefs.push_back(ProcReadAdvanceDef);
 }
 
 #ifndef NDEBUG
