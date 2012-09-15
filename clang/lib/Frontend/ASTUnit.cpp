@@ -772,9 +772,12 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
                             /*DelayInitialization=*/true);
   ASTContext &Context = *AST->Ctx;
 
+  bool disableValid = false;
+  if (::getenv("LIBCLANG_DISABLE_PCH_VALIDATION"))
+    disableValid = true;
   Reader.reset(new ASTReader(PP, Context,
                              /*isysroot=*/"",
-                             /*DisableValidation=*/false,
+                             /*DisableValidation=*/disableValid,
                              /*DisableStatCache=*/false,
                              AllowPCHWithCompilerErrors));
   
