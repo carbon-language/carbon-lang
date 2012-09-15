@@ -33,6 +33,7 @@ namespace llvm {
 ///
 /// Here is a simple example using integers:
 ///
+/// \code
 ///  EquivalenceClasses<int> EC;
 ///  EC.unionSets(1, 2);                // insert 1, 2 into the same set
 ///  EC.insert(4); EC.insert(5);        // insert 4, 5 into own sets
@@ -46,6 +47,7 @@ namespace llvm {
 ///      cerr << *MI << " ";  // Print member.
 ///    cerr << "\n";   // Finish set.
 ///  }
+/// \endcode
 ///
 /// This example prints:
 ///   4

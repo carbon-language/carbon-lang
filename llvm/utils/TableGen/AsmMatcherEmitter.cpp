@@ -199,7 +199,7 @@ public:
     return Kind >= UserClass0;
   }
 
-  /// isRelatedTo - Check whether this class is "related" to \arg RHS. Classes
+  /// isRelatedTo - Check whether this class is "related" to \p RHS. Classes
   /// are related if they are in the same class hierarchy.
   bool isRelatedTo(const ClassInfo &RHS) const {
     // Tokens are only related to tokens.
@@ -238,7 +238,7 @@ public:
     return Root == RHSRoot;
   }
 
-  /// isSubsetOf - Test whether this class is a subset of \arg RHS;
+  /// isSubsetOf - Test whether this class is a subset of \p RHS.
   bool isSubsetOf(const ClassInfo &RHS) const {
     // This is a subset of RHS if it is the same class...
     if (this == &RHS)
@@ -501,7 +501,7 @@ struct MatchableInfo {
   }
 
   /// couldMatchAmbiguouslyWith - Check whether this matchable could
-  /// ambiguously match the same set of operands as \arg RHS (without being a
+  /// ambiguously match the same set of operands as \p RHS (without being a
   /// strictly superior match).
   bool couldMatchAmbiguouslyWith(const MatchableInfo &RHS) {
     // The primary comparator is the instruction mnemonic.
@@ -2064,7 +2064,7 @@ static void emitValidateOperandClass(AsmMatcherInfo &Info,
 static void emitIsSubclass(CodeGenTarget &Target,
                            std::vector<ClassInfo*> &Infos,
                            raw_ostream &OS) {
-  OS << "/// isSubclass - Compute whether \\arg A is a subclass of \\arg B.\n";
+  OS << "/// isSubclass - Compute whether \\p A is a subclass of \\p B.\n";
   OS << "static bool isSubclass(MatchClassKind A, MatchClassKind B) {\n";
   OS << "  if (A == B)\n";
   OS << "    return true;\n\n";
