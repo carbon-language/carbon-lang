@@ -575,13 +575,12 @@ emitRegisterNameString(raw_ostream &O, StringRef AltName,
     StringTable.add(AsmName);
   }
 
-  unsigned Entries = StringTable.layout();
+  StringTable.layout();
   O << "  static const char AsmStrs" << AltName << "[] = {\n";
   StringTable.emit(O, printChar);
   O << "  };\n\n";
 
-  O << "  static const uint" << ((Entries > 0xffff) ? "32" : "16")
-    << "_t RegAsmOffset" << AltName << "[] = {";
+  O << "  static const uint32_t RegAsmOffset" << AltName << "[] = {";
   for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
     if ((i % 14) == 0)
       O << "\n    ";
@@ -620,7 +619,7 @@ void AsmWriterEmitter::EmitGetRegisterName(raw_ostream &O) {
     emitRegisterNameString(O, "", Registers);
 
   if (hasAltNames) {
-    O << "  const unsigned *RegAsmOffset;\n"
+    O << "  const uint32_t *RegAsmOffset;\n"
       << "  const char *AsmStrs;\n"
       << "  switch(AltIdx) {\n"
       << "  default: llvm_unreachable(\"Invalid register alt name index!\");\n";
