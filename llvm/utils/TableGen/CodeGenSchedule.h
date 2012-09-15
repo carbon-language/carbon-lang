@@ -23,21 +23,112 @@
 namespace llvm {
 
 class CodeGenTarget;
+class CodeGenSchedModels;
+class CodeGenInstruction;
 
-// Scheduling class.
-//
-// Each instruction description will be mapped to a scheduling class. It may be
-// an explicitly defined itinerary class, or an inferred class in which case
-// ItinClassDef == NULL.
+typedef std::vector<Record*> RecVec;
+typedef std::vector<Record*>::const_iterator RecIter;
+
+typedef std::vector<unsigned> IdxVec;
+typedef std::vector<unsigned>::const_iterator IdxIter;
+
+void splitSchedReadWrites(const RecVec &RWDefs,
+                          RecVec &WriteDefs, RecVec &ReadDefs);
+
+/// We have two kinds of SchedReadWrites. Explicitly defined and inferred
+/// sequences.  TheDef is nonnull for explicit SchedWrites, but Sequence may or
+/// may not be empty. TheDef is null for inferred sequences, and Sequence must
+/// be nonempty.
+///
+/// IsVariadic controls whether the variants are expanded into multiple operands
+/// or a sequence of writes on one operand.
+struct CodeGenSchedRW {
+  std::string Name;
+  Record *TheDef;
+  bool HasVariants;
+  bool IsVariadic;
+  bool IsSequence;
+  IdxVec Sequence;
+
+  CodeGenSchedRW(): TheDef(0), HasVariants(false), IsVariadic(false),
+                    IsSequence(false) {}
+  CodeGenSchedRW(Record *Def): TheDef(Def), IsVariadic(false) {
+    Name = Def->getName();
+    HasVariants = Def->isSubClassOf("SchedVariant");
+    if (HasVariants)
+      IsVariadic = Def->getValueAsBit("Variadic");
+
+    // Read records don't currently have sequences, but it can be easily
+    // added. Note that implicit Reads (from ReadVariant) may have a Sequence
+    // (but no record).
+    IsSequence = Def->isSubClassOf("WriteSequence");
+  }
+
+  CodeGenSchedRW(const IdxVec &Seq, const std::string &Name):
+    Name(Name), TheDef(0), HasVariants(false), IsVariadic(false),
+    IsSequence(true), Sequence(Seq) {
+    assert(Sequence.size() > 1 && "implied sequence needs >1 RWs");
+  }
+
+  bool isValid() const {
+    assert((!HasVariants || TheDef) && "Variant write needs record def");
+    assert((!IsVariadic || HasVariants) && "Variadic write needs variants");
+    assert((!IsSequence || !HasVariants) && "Sequence can't have variant");
+    assert((!IsSequence || !Sequence.empty()) && "Sequence should be nonempty");
+    return TheDef || !Sequence.empty();
+  }
+
+#ifndef NDEBUG
+  void dump() const;
+#endif
+};
+
+/// Scheduling class.
+///
+/// Each instruction description will be mapped to a scheduling class. There are
+/// four types of classes:
+///
+/// 1) An explicitly defined itinerary class with ItinClassDef set.
+/// Writes and ReadDefs are empty. ProcIndices contains 0 for any processor.
+///
+/// 2) An implied class with a list of SchedWrites and SchedReads that are
+/// defined in an instruction definition and which are common across all
+/// subtargets. ProcIndices contains 0 for any processor.
+///
+/// 3) An implied class with a list of InstRW records that map instructions to
+/// SchedWrites and SchedReads per-processor. InstrClassMap should map the same
+/// instructions to this class. ProcIndices contains all the processors that
+/// provided InstrRW records for this class. ItinClassDef or Writes/Reads may
+/// still be defined for processors with no InstRW entry.
+///
+/// 4) An inferred class represents a variant of another class that may be
+/// resolved at runtime. ProcIndices contains the set of processors that may
+/// require the class. ProcIndices are propagated through SchedClasses as
+/// variants are expanded. Multiple SchedClasses may be inferred from an
+/// itinerary class. Each inherits the processor index from the ItinRW record
+/// that mapped the itinerary class to the variant Writes or Reads.
 struct CodeGenSchedClass {
   std::string Name;
-  unsigned Index;
   Record *ItinClassDef;
 
-  CodeGenSchedClass(): Index(0), ItinClassDef(0) {}
-  CodeGenSchedClass(Record *rec): Index(0), ItinClassDef(rec) {
+  IdxVec Writes;
+  IdxVec Reads;
+  // Sorted list of ProcIdx, where ProcIdx==0 implies any processor.
+  IdxVec ProcIndices;
+
+  // InstReadWrite records associated with this class. Any Instrs that the
+  // definitions refer to that are not mapped to this class should be ignored.
+  RecVec InstRWs;
+
+  CodeGenSchedClass(): ItinClassDef(0) {}
+  CodeGenSchedClass(Record *rec): ItinClassDef(rec) {
     Name = rec->getName();
+    ProcIndices.push_back(0);
   }
+
+#ifndef NDEBUG
+  void dump(const CodeGenSchedModels *SchedModels) const;
+#endif
 };
 
 // Processor model.
@@ -55,28 +146,53 @@ struct CodeGenSchedClass {
 //
 // ItinDefList orders this processor's InstrItinData records by SchedClass idx.
 struct CodeGenProcModel {
+  unsigned Index;
   std::string ModelName;
   Record *ModelDef;
   Record *ItinsDef;
 
-  // Array of InstrItinData records indexed by CodeGenSchedClass::Index.
-  // The list is empty if the subtarget has no itineraries.
-  std::vector<Record *> ItinDefList;
+  // Derived members...
 
-  CodeGenProcModel(const std::string &Name, Record *MDef, Record *IDef):
-    ModelName(Name), ModelDef(MDef), ItinsDef(IDef) {}
+  // Array of InstrItinData records indexed by a CodeGenSchedClass index.
+  // This list is empty if the Processor has no value for Itineraries.
+  // Initialized by collectProcItins().
+  RecVec ItinDefList;
+
+  // Map itinerary classes to per-operand resources.
+  // This list is empty if no ItinRW refers to this Processor.
+  RecVec ItinRWDefs;
+
+  CodeGenProcModel(unsigned Idx, const std::string &Name, Record *MDef,
+                   Record *IDef) :
+    Index(Idx), ModelName(Name), ModelDef(MDef), ItinsDef(IDef) {}
+
+#ifndef NDEBUG
+  void dump() const;
+#endif
 };
 
-// Top level container for machine model data.
+/// Top level container for machine model data.
 class CodeGenSchedModels {
   RecordKeeper &Records;
   const CodeGenTarget &Target;
+
+  // List of unique processor models.
+  std::vector<CodeGenProcModel> ProcModels;
+
+  // Map Processor's MachineModel or ProcItin to a CodeGenProcModel index.
+  typedef DenseMap<Record*, unsigned> ProcModelMapTy;
+  ProcModelMapTy ProcModelMap;
+
+  // Per-operand SchedReadWrite types.
+  std::vector<CodeGenSchedRW> SchedWrites;
+  std::vector<CodeGenSchedRW> SchedReads;
 
   // List of unique SchedClasses.
   std::vector<CodeGenSchedClass> SchedClasses;
 
   // Map SchedClass name to itinerary index.
-  // These are either explicit itinerary classes or inferred classes.
+  // These are either explicit itinerary classes or classes implied by
+  // instruction definitions with SchedReadWrite lists.
   StringMap<unsigned> SchedClassIdxMap;
 
   // SchedClass indices 1 up to and including NumItineraryClasses identify
@@ -84,21 +200,67 @@ class CodeGenSchedModels {
   // definitions. NoItinerary always has index 0 regardless of whether it is
   // explicitly referenced.
   //
-  // Any inferred SchedClass have a index greater than NumItineraryClasses.
+  // Any implied SchedClass has an index greater than NumItineraryClasses.
   unsigned NumItineraryClasses;
 
-  // List of unique processor models.
-  std::vector<CodeGenProcModel> ProcModels;
+  // Any inferred SchedClass has an index greater than NumInstrSchedClassses.
+  unsigned NumInstrSchedClasses;
 
-  // Map Processor's MachineModel + ProcItin fields to a CodeGenProcModel index.
-  typedef DenseMap<std::pair<Record*, Record*>, unsigned> ProcModelMapTy;
-  ProcModelMapTy ProcModelMap;
-
-  // True if any processors have nonempty itineraries.
-  bool HasProcItineraries;
+  // Map Instruction to SchedClass index. Only for Instructions mentioned in
+  // OpReadWrites.
+  typedef DenseMap<Record*, unsigned> InstClassMapTy;
+  InstClassMapTy InstrClassMap;
 
 public:
   CodeGenSchedModels(RecordKeeper& RK, const CodeGenTarget &TGT);
+
+  Record *getModelOrItinDef(Record *ProcDef) const {
+    Record *ModelDef = ProcDef->getValueAsDef("SchedModel");
+    Record *ItinsDef = ProcDef->getValueAsDef("ProcItin");
+    if (!ItinsDef->getValueAsListOfDefs("IID").empty()) {
+      assert(ModelDef->getValueAsBit("NoModel")
+             && "Itineraries must be defined within SchedMachineModel");
+      return ItinsDef;
+    }
+    return ModelDef;
+  }
+
+  const CodeGenProcModel &getModelForProc(Record *ProcDef) const {
+    Record *ModelDef = getModelOrItinDef(ProcDef);
+    ProcModelMapTy::const_iterator I = ProcModelMap.find(ModelDef);
+    assert(I != ProcModelMap.end() && "missing machine model");
+    return ProcModels[I->second];
+  }
+
+  const CodeGenProcModel &getProcModel(Record *ModelDef) const {
+    ProcModelMapTy::const_iterator I = ProcModelMap.find(ModelDef);
+    assert(I != ProcModelMap.end() && "missing machine model");
+    return ProcModels[I->second];
+  }
+
+  // Iterate over the unique processor models.
+  typedef std::vector<CodeGenProcModel>::const_iterator ProcIter;
+  ProcIter procModelBegin() const { return ProcModels.begin(); }
+  ProcIter procModelEnd() const { return ProcModels.end(); }
+
+  // Get a SchedWrite from its index.
+  const CodeGenSchedRW &getSchedWrite(unsigned Idx) const {
+    assert(Idx < SchedWrites.size() && "bad SchedWrite index");
+    assert(SchedWrites[Idx].isValid() && "invalid SchedWrite");
+    return SchedWrites[Idx];
+  }
+  // Get a SchedWrite from its index.
+  const CodeGenSchedRW &getSchedRead(unsigned Idx) const {
+    assert(Idx < SchedReads.size() && "bad SchedRead index");
+    assert(SchedReads[Idx].isValid() && "invalid SchedRead");
+    return SchedReads[Idx];
+  }
+
+  const CodeGenSchedRW &getSchedRW(unsigned Idx, bool IsRead) const {
+    return IsRead ? getSchedRead(Idx) : getSchedWrite(Idx);
+  }
+
+  unsigned getSchedRWIdx(Record *Def, bool IsRead, unsigned After = 0) const;
 
   // Check if any instructions are assigned to an explicit itinerary class other
   // than NoItinerary.
@@ -111,7 +273,11 @@ public:
   }
 
   // Get a SchedClass from its index.
-  const CodeGenSchedClass &getSchedClass(unsigned Idx) {
+  CodeGenSchedClass &getSchedClass(unsigned Idx) {
+    assert(Idx < SchedClasses.size() && "bad SchedClass index");
+    return SchedClasses[Idx];
+  }
+  const CodeGenSchedClass &getSchedClass(unsigned Idx) const {
     assert(Idx < SchedClasses.size() && "bad SchedClass index");
     return SchedClasses[Idx];
   }
@@ -125,46 +291,52 @@ public:
     return Idx;
   }
 
-  bool hasProcessorItineraries() const {
-    return HasProcItineraries;
+  // Get the SchedClass index for an instruction. Instructions with no
+  // itinerary, no SchedReadWrites, and no InstrReadWrites references return 0
+  // for NoItinerary.
+  unsigned getSchedClassIdx(const CodeGenInstruction &Inst) const;
+
+  unsigned getSchedClassIdx(const RecVec &RWDefs) const;
+
+  unsigned getSchedClassIdxForItin(const Record *ItinDef) {
+    return SchedClassIdxMap[ItinDef->getName()];
   }
 
-  // Get an existing machine model for a processor definition.
-  const CodeGenProcModel &getProcModel(Record *ProcDef) const {
-    unsigned idx = getProcModelIdx(ProcDef);
-    assert(idx < ProcModels.size() && "missing machine model");
-    return ProcModels[idx];
-  }
+  typedef std::vector<CodeGenSchedClass>::const_iterator SchedClassIter;
+  SchedClassIter schedClassBegin() const { return SchedClasses.begin(); }
+  SchedClassIter schedClassEnd() const { return SchedClasses.end(); }
 
-  // Iterate over the unique processor models.
-  typedef std::vector<CodeGenProcModel>::const_iterator ProcIter;
-  ProcIter procModelBegin() const { return ProcModels.begin(); }
-  ProcIter procModelEnd() const { return ProcModels.end(); }
+  void findRWs(const RecVec &RWDefs, IdxVec &Writes, IdxVec &Reads) const;
+  void findRWs(const RecVec &RWDefs, IdxVec &RWs, bool IsRead) const;
+
+  unsigned addSchedClass(const IdxVec &OperWrites, const IdxVec &OperReads,
+                         const IdxVec &ProcIndices);
+
+  unsigned findOrInsertRW(ArrayRef<unsigned> Seq, bool IsRead);
+
+  unsigned findSchedClassIdx(const IdxVec &Writes, const IdxVec &Reads) const;
 
 private:
-  // Get a key that can uniquely identify a machine model.
-  ProcModelMapTy::key_type getProcModelKey(Record *ProcDef) const {
-    Record *ModelDef = ProcDef->getValueAsDef("SchedModel");
-    Record *ItinsDef = ProcDef->getValueAsDef("ProcItin");
-    return std::make_pair(ModelDef, ItinsDef);
-  }
-
-  // Get the unique index of a machine model.
-  unsigned getProcModelIdx(Record *ProcDef) const {
-    ProcModelMapTy::const_iterator I =
-      ProcModelMap.find(getProcModelKey(ProcDef));
-    if (I == ProcModelMap.end())
-      return ProcModels.size();
-    return I->second;
-  }
+  void collectProcModels();
 
   // Initialize a new processor model if it is unique.
   void addProcModel(Record *ProcDef);
 
-  void CollectSchedClasses();
-  void CollectProcModels();
-  void CollectProcItin(CodeGenProcModel &ProcModel,
-                       std::vector<Record*> ItinRecords);
+  void collectSchedRW();
+
+  std::string genRWName(const IdxVec& Seq, bool IsRead);
+  unsigned findRWForSequence(const IdxVec &Seq, bool IsRead);
+
+  void collectSchedClasses();
+
+  std::string createSchedClassName(const IdxVec &OperWrites,
+                                   const IdxVec &OperReads);
+  std::string createSchedClassName(const RecVec &InstDefs);
+  void createInstRWClass(Record *InstRWDef);
+
+  void collectProcItins();
+
+  void collectProcItinRW();
 };
 
 } // namespace llvm

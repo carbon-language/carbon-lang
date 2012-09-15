@@ -521,7 +521,7 @@ EmitItineraries(raw_ostream &OS,
   std::vector<std::vector<InstrItinerary> >::iterator
       ProcItinListsIter = ProcItinLists.begin();
   for (CodeGenSchedModels::ProcIter PI = SchedModels.procModelBegin(),
-         PE = SchedModels.procModelEnd(); PI != PE; ++PI) {
+         PE = SchedModels.procModelEnd(); PI != PE; ++PI, ++ProcItinListsIter) {
 
     Record *ItinsDef = PI->ItinsDef;
     if (!ItinsDefSet.insert(ItinsDef))
@@ -532,7 +532,7 @@ EmitItineraries(raw_ostream &OS,
 
     // Get the itinerary list for the processor.
     assert(ProcItinListsIter != ProcItinLists.end() && "bad iterator");
-    std::vector<InstrItinerary> &ItinList = *ProcItinListsIter++;
+    std::vector<InstrItinerary> &ItinList = *ProcItinListsIter;
 
     OS << "\n";
     OS << "static const llvm::InstrItinerary ";
@@ -621,7 +621,7 @@ void SubtargetEmitter::EmitProcessorLookup(raw_ostream &OS) {
 
     const std::string &Name = Processor->getValueAsString("Name");
     const std::string &ProcModelName =
-      SchedModels.getProcModel(Processor).ModelName;
+      SchedModels.getModelForProc(Processor).ModelName;
 
     // Emit as { "cpu", procinit },
     OS << "  { "
