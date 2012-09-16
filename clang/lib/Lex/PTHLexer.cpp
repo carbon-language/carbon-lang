@@ -198,12 +198,11 @@ bool PTHLexer::SkipBlock() {
   assert(LastHashTokPtr && "No known '#' token.");
 
   const unsigned char* HashEntryI = 0;
-  uint32_t Offset;
   uint32_t TableIdx;
 
   do {
     // Read the token offset from the side-table.
-    Offset = ReadLE32(CurPPCondPtr);
+    uint32_t Offset = ReadLE32(CurPPCondPtr);
 
     // Read the target table index from the side-table.
     TableIdx = ReadLE32(CurPPCondPtr);
@@ -223,13 +222,11 @@ bool PTHLexer::SkipBlock() {
         PPCond + TableIdx*(sizeof(uint32_t)*2);
       assert(NextPPCondPtr >= CurPPCondPtr);
       // Read where we should jump to.
-      uint32_t TmpOffset = ReadLE32(NextPPCondPtr);
-      const unsigned char* HashEntryJ = TokBuf + TmpOffset;
+      const unsigned char* HashEntryJ = TokBuf + ReadLE32(NextPPCondPtr);
 
       if (HashEntryJ <= LastHashTokPtr) {
         // Jump directly to the next entry in the side table.
         HashEntryI = HashEntryJ;
-        Offset = TmpOffset;
         TableIdx = ReadLE32(NextPPCondPtr);
         CurPPCondPtr = NextPPCondPtr;
       }
