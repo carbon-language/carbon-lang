@@ -499,7 +499,9 @@ namespace llvm {
       if (I == E)
         return;
       // Is this an instruction live-in segment?
-      if (SlotIndex::isEarlierInstr(I->start, Idx)) {
+      // If Idx is the start index of a basic block, include live-in segments
+      // that start at Idx.getBaseIndex().
+      if (I->start <= Idx.getBaseIndex()) {
         EarlyVal = I->valno;
         EndPoint = I->end;
         // Move to the potentially live-out segment.
