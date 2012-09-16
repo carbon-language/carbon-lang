@@ -15,12 +15,13 @@
 #ifndef LLVM_ADT_SMALLPTRSET_H
 #define LLVM_ADT_SMALLPTRSET_H
 
+#include "llvm/Support/Compiler.h"
+#include "llvm/Support/DataTypes.h"
+#include "llvm/Support/PointerLikeTypeTraits.h"
 #include <cassert>
 #include <cstddef>
 #include <cstring>
 #include <iterator>
-#include "llvm/Support/DataTypes.h"
-#include "llvm/Support/PointerLikeTypeTraits.h"
 
 namespace llvm {
 
@@ -132,7 +133,7 @@ private:
   /// Grow - Allocate a larger backing store for the buckets and move it over.
   void Grow(unsigned NewSize);
 
-  void operator=(const SmallPtrSetImpl &RHS);  // DO NOT IMPLEMENT.
+  void operator=(const SmallPtrSetImpl &RHS) LLVM_DELETED_FUNCTION;
 protected:
   /// swap - Swaps the elements of two sets.
   /// Note: This method assumes that both sets have the same small size.

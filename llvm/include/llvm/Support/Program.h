@@ -34,8 +34,8 @@ namespace sys {
     void *Data_;
 
     // Noncopyable.
-    Program(const Program& other);
-    Program& operator=(const Program& other);
+    Program(const Program& other) LLVM_DELETED_FUNCTION;
+    Program& operator=(const Program& other) LLVM_DELETED_FUNCTION;
 
     /// @name Methods
     /// @{

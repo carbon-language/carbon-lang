@@ -14,6 +14,7 @@
 #ifndef LLVM_SYSTEM_MUTEX_H
 #define LLVM_SYSTEM_MUTEX_H
 
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Threading.h"
 #include <cassert>
 
@@ -75,8 +76,8 @@ namespace llvm
     /// @name Do Not Implement
     /// @{
     private:
-      MutexImpl(const MutexImpl & original);
-      void operator=(const MutexImpl &);
+      MutexImpl(const MutexImpl &) LLVM_DELETED_FUNCTION;
+      void operator=(const MutexImpl &) LLVM_DELETED_FUNCTION;
     /// @}
     };
 

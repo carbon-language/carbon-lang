@@ -12,6 +12,7 @@
 #define STREAMABLEMEMORYOBJECT_H_
 
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/DataStream.h"
 #include <vector>
@@ -170,8 +171,8 @@ private:
     return true;
   }
 
-  StreamingMemoryObject(const StreamingMemoryObject&);  // DO NOT IMPLEMENT
-  void operator=(const StreamingMemoryObject&);  // DO NOT IMPLEMENT
+  StreamingMemoryObject(const StreamingMemoryObject&) LLVM_DELETED_FUNCTION;
+  void operator=(const StreamingMemoryObject&) LLVM_DELETED_FUNCTION;
 };
 
 StreamableMemoryObject *getNonStreamedMemoryObject(

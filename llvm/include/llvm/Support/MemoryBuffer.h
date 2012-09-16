@@ -15,6 +15,7 @@
 #define LLVM_SUPPORT_MEMORYBUFFER_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
@@ -36,8 +37,8 @@ class MemoryBuffer {
   const char *BufferStart; // Start of the buffer.
   const char *BufferEnd;   // End of the buffer.
 
-  MemoryBuffer(const MemoryBuffer &); // DO NOT IMPLEMENT
-  MemoryBuffer &operator=(const MemoryBuffer &); // DO NOT IMPLEMENT
+  MemoryBuffer(const MemoryBuffer &) LLVM_DELETED_FUNCTION;
+  MemoryBuffer &operator=(const MemoryBuffer &) LLVM_DELETED_FUNCTION;
 protected:
   MemoryBuffer() {}
   void init(const char *BufStart, const char *BufEnd,

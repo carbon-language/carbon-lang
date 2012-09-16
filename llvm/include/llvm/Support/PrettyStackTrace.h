@@ -16,6 +16,8 @@
 #ifndef LLVM_SUPPORT_PRETTYSTACKTRACE_H
 #define LLVM_SUPPORT_PRETTYSTACKTRACE_H
 
+#include "llvm/Support/Compiler.h"
+
 namespace llvm {
   class raw_ostream;
 
@@ -32,8 +34,8 @@ namespace llvm {
   /// virtual stack trace.  This gets dumped out if the program crashes.
   class PrettyStackTraceEntry {
     const PrettyStackTraceEntry *NextEntry;
-    PrettyStackTraceEntry(const PrettyStackTraceEntry &); // DO NOT IMPLEMENT
-    void operator=(const PrettyStackTraceEntry&);         // DO NOT IMPLEMENT
+    PrettyStackTraceEntry(const PrettyStackTraceEntry &) LLVM_DELETED_FUNCTION;
+    void operator=(const PrettyStackTraceEntry&) LLVM_DELETED_FUNCTION;
   public:
     PrettyStackTraceEntry();
     virtual ~PrettyStackTraceEntry();

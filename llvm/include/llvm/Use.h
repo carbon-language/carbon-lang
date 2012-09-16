@@ -66,7 +66,7 @@ public:
 
 private:
   /// Copy ctor - do not implement
-  Use(const Use &U);
+  Use(const Use &U) LLVM_DELETED_FUNCTION;
 
   /// Destructor - Only for zap()
   ~Use() {

@@ -31,8 +31,8 @@ template <class>
 struct OperandTraits;
 
 class User : public Value {
-  User(const User &);             // Do not implement
-  void *operator new(size_t);     // Do not implement
+  User(const User &) LLVM_DELETED_FUNCTION;
+  void *operator new(size_t) LLVM_DELETED_FUNCTION;
   template <unsigned>
   friend struct HungoffOperandTraits;
   virtual void anchor();

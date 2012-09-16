@@ -64,9 +64,9 @@ private:
 
   DiagHandlerTy DiagHandler;
   void *DiagContext;
-  
-  SourceMgr(const SourceMgr&);    // DO NOT IMPLEMENT
-  void operator=(const SourceMgr&); // DO NOT IMPLEMENT
+
+  SourceMgr(const SourceMgr&) LLVM_DELETED_FUNCTION;
+  void operator=(const SourceMgr&) LLVM_DELETED_FUNCTION;
 public:
   SourceMgr() : LineNoCache(0), DiagHandler(0), DiagContext(0) {}
   ~SourceMgr();

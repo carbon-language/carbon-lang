@@ -47,8 +47,8 @@ private:
   Optional<std::pair<std::string, int> > Owner;
   Optional<error_code> Error;
 
-  LockFileManager(const LockFileManager &);
-  LockFileManager &operator=(const LockFileManager &);
+  LockFileManager(const LockFileManager &) LLVM_DELETED_FUNCTION;
+  LockFileManager &operator=(const LockFileManager &) LLVM_DELETED_FUNCTION;
 
   static Optional<std::pair<std::string, int> >
   readLockFile(StringRef LockFileName);

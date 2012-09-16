@@ -80,8 +80,8 @@ private:
   friend class ValueHandleBase;
   ValueName *Name;
 
-  void operator=(const Value &);     // Do not implement
-  Value(const Value &);              // Do not implement
+  void operator=(const Value &) LLVM_DELETED_FUNCTION;
+  Value(const Value &) LLVM_DELETED_FUNCTION;
 
 protected:
   /// printCustom - Value subclasses can override this to implement custom

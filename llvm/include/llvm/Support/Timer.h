@@ -15,6 +15,7 @@
 #ifndef LLVM_SUPPORT_TIMER_H
 #define LLVM_SUPPORT_TIMER_H
 
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/StringRef.h"
 #include <cassert>
@@ -130,7 +131,7 @@ private:
 ///
 class TimeRegion {
   Timer *T;
-  TimeRegion(const TimeRegion &); // DO NOT IMPLEMENT
+  TimeRegion(const TimeRegion &) LLVM_DELETED_FUNCTION;
 public:
   explicit TimeRegion(Timer &t) : T(&t) {
     T->startTimer();
@@ -168,8 +169,8 @@ class TimerGroup {
   std::vector<std::pair<TimeRecord, std::string> > TimersToPrint;
   
   TimerGroup **Prev, *Next; // Doubly linked list of TimerGroup's.
-  TimerGroup(const TimerGroup &TG);      // DO NOT IMPLEMENT
-  void operator=(const TimerGroup &TG);  // DO NOT IMPLEMENT
+  TimerGroup(const TimerGroup &TG) LLVM_DELETED_FUNCTION;
+  void operator=(const TimerGroup &TG) LLVM_DELETED_FUNCTION;
 public:
   explicit TimerGroup(StringRef name);
   ~TimerGroup();

@@ -17,6 +17,8 @@
 #ifndef LLVM_SYSTEM_SYSTEM_ERROR_H
 #define LLVM_SYSTEM_SYSTEM_ERROR_H
 
+#include "llvm/Support/Compiler.h"
+
 /*
     system_error synopsis
 
@@ -629,8 +631,8 @@ public:
 
 private:
   error_category();
-  error_category(const error_category&);// = delete;
-  error_category& operator=(const error_category&);// = delete;
+  error_category(const error_category&) LLVM_DELETED_FUNCTION;
+  error_category& operator=(const error_category&) LLVM_DELETED_FUNCTION;
 
 public:
   virtual const char* name() const = 0;

@@ -14,6 +14,7 @@
 #ifndef LLVM_SYSTEM_RWMUTEX_H
 #define LLVM_SYSTEM_RWMUTEX_H
 
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Threading.h"
 #include <cassert>
 
@@ -75,8 +76,8 @@ namespace llvm
     /// @name Do Not Implement
     /// @{
     private:
-      RWMutexImpl(const RWMutexImpl & original);
-      void operator=(const RWMutexImpl &);
+      RWMutexImpl(const RWMutexImpl & original) LLVM_DELETED_FUNCTION;
+      void operator=(const RWMutexImpl &) LLVM_DELETED_FUNCTION;
     /// @}
     };
 

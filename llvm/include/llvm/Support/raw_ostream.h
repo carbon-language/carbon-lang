@@ -15,6 +15,7 @@
 #define LLVM_SUPPORT_RAW_OSTREAM_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
@@ -29,8 +30,8 @@ namespace llvm {
 class raw_ostream {
 private:
   // Do not implement. raw_ostream is noncopyable.
-  void operator=(const raw_ostream &);
-  raw_ostream(const raw_ostream &);
+  void operator=(const raw_ostream &) LLVM_DELETED_FUNCTION;
+  raw_ostream(const raw_ostream &) LLVM_DELETED_FUNCTION;
 
   /// The buffer is handled in such a way that the buffer is
   /// uninitialized, unbuffered, or out of space when OutBufCur >=

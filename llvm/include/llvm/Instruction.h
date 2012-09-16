@@ -28,8 +28,8 @@ template<typename ValueSubClass, typename ItemParentClass>
   class SymbolTableListTraits;
 
 class Instruction : public User, public ilist_node<Instruction> {
-  void operator=(const Instruction &);     // Do not implement
-  Instruction(const Instruction &);        // Do not implement
+  void operator=(const Instruction &) LLVM_DELETED_FUNCTION;
+  Instruction(const Instruction &) LLVM_DELETED_FUNCTION;
 
   BasicBlock *Parent;
   DebugLoc DbgLoc;                         // 'dbg' Metadata cache.
