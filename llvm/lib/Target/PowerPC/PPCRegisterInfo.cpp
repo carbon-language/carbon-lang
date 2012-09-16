@@ -119,7 +119,7 @@ PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   return Subtarget.isPPC64() ? CSR_SVR464_SaveList : CSR_SVR432_SaveList;
 }
 
-const unsigned*
+const uint32_t*
 PPCRegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
   if (Subtarget.isDarwinABI())
     return Subtarget.isPPC64() ? CSR_Darwin64_RegMask :
