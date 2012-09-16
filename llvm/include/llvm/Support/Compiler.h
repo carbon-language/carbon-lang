@@ -57,6 +57,22 @@
 #define LLVM_DELETED_FUNCTION
 #endif
 
+/// LLVM_FINAL - Expands to 'final' if the compiler supports it.
+/// Use to mark classes or virtual methods as final.
+#if (__has_feature(cxx_override_control))
+#define LLVM_FINAL final
+#else
+#define LLVM_FINAL
+#endif
+
+/// LLVM_OVERRIDE - Expands to 'override' if the compiler supports it.
+/// Use to mark virtual methods as overriding a base class method.
+#if (__has_feature(cxx_override_control))
+#define LLVM_OVERRIDE override
+#else
+#define LLVM_OVERRIDE
+#endif
+
 /// LLVM_LIBRARY_VISIBILITY - If a class marked with this attribute is linked
 /// into a shared library, then the class should be private to the library and
 /// not accessible from outside it.  Can also be used to mark variables and
