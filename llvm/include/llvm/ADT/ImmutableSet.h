@@ -468,8 +468,7 @@ protected:
       freeNodes.pop_back();
       assert(T != L);
       assert(T != R);
-    }
-    else {
+    } else {
       T = (TreeTy*) A.Allocate<TreeTy>();
     }
     new (T) TreeTy(this, L, R, V, incrementHeight(L,R));
@@ -512,7 +511,8 @@ protected:
 
       return createNode(createNode(LL,L,LRL), LR, createNode(LRR,V,R));
     }
-    else if (hr > hl + 2) {
+
+    if (hr > hl + 2) {
       assert(!isEmpty(R) && "Right tree cannot be empty to have a height >= 2");
 
       TreeTy *RL = getLeft(R);
@@ -528,8 +528,8 @@ protected:
 
       return createNode(createNode(L,V,RLL), RL, createNode(RLR,R,RR));
     }
-    else
-      return createNode(L,V,R);
+
+    return createNode(L,V,R);
   }
 
   /// add_internal - Creates a new tree that includes the specified
