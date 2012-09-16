@@ -152,9 +152,9 @@ public:
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
-  std::string getAsString() const { return "bit"; }
+  virtual std::string getAsString() const { return "bit"; }
 
-  bool typeIsConvertibleTo(const RecTy *RHS) const {
+  virtual bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);
   }
   virtual bool baseClassOf(const BitRecTy    *RHS) const { return true; }
@@ -195,9 +195,9 @@ public:
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
-  std::string getAsString() const;
+  virtual std::string getAsString() const;
 
-  bool typeIsConvertibleTo(const RecTy *RHS) const {
+  virtual bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);
   }
   virtual bool baseClassOf(const BitRecTy    *RHS) const { return Size == 1; }
@@ -237,9 +237,9 @@ public:
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
-  std::string getAsString() const { return "int"; }
+  virtual std::string getAsString() const { return "int"; }
 
-  bool typeIsConvertibleTo(const RecTy *RHS) const {
+  virtual bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);
   }
 
@@ -278,9 +278,9 @@ public:
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
-  std::string getAsString() const { return "string"; }
+  virtual std::string getAsString() const { return "string"; }
 
-  bool typeIsConvertibleTo(const RecTy *RHS) const {
+  virtual bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);
   }
 
@@ -322,9 +322,9 @@ public:
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
-  std::string getAsString() const;
+  virtual std::string getAsString() const;
 
-  bool typeIsConvertibleTo(const RecTy *RHS) const {
+  virtual bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);
   }
 
@@ -363,9 +363,9 @@ public:
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
-  std::string getAsString() const { return "dag"; }
+  virtual std::string getAsString() const { return "dag"; }
 
-  bool typeIsConvertibleTo(const RecTy *RHS) const {
+  virtual bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);
   }
 
@@ -407,9 +407,9 @@ public:
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
-  std::string getAsString() const;
+  virtual std::string getAsString() const;
 
-  bool typeIsConvertibleTo(const RecTy *RHS) const {
+  virtual bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);
   }
   virtual bool baseClassOf(const BitRecTy    *RHS) const { return false; }
@@ -758,7 +758,8 @@ public:
 
   Record *getElementAsRecord(unsigned i) const;
 
-  Init *convertInitListSlice(const std::vector<unsigned> &Elements) const;
+  virtual Init *
+    convertInitListSlice(const std::vector<unsigned> &Elements) const;
 
   virtual Init *convertInitializerTo(RecTy *Ty) const {
     return Ty->convertValue(const_cast<ListInit *>(this));
@@ -849,8 +850,8 @@ public:
     return UnOpInit::get(getOpcode(), *Operands.begin(), getType());
   }
 
-  int getNumOperands() const { return 1; }
-  Init *getOperand(int i) const {
+  virtual int getNumOperands() const { return 1; }
+  virtual Init *getOperand(int i) const {
     assert(i == 0 && "Invalid operand id for unary operator");
     return getOperand();
   }
@@ -860,7 +861,7 @@ public:
 
   // Fold - If possible, fold this to a simpler init.  Return this if not
   // possible to fold.
-  Init *Fold(Record *CurRec, MultiClass *CurMultiClass) const;
+  virtual Init *Fold(Record *CurRec, MultiClass *CurMultiClass) const;
 
   virtual Init *resolveReferences(Record &R, const RecordVal *RV) const;
 
@@ -893,8 +894,8 @@ public:
     return BinOpInit::get(getOpcode(), Operands[0], Operands[1], getType());
   }
 
-  int getNumOperands() const { return 2; }
-  Init *getOperand(int i) const {
+  virtual int getNumOperands() const { return 2; }
+  virtual Init *getOperand(int i) const {
     assert((i == 0 || i == 1) && "Invalid operand id for binary operator");
     if (i == 0) {
       return getLHS();
@@ -909,7 +910,7 @@ public:
 
   // Fold - If possible, fold this to a simpler init.  Return this if not
   // possible to fold.
-  Init *Fold(Record *CurRec, MultiClass *CurMultiClass) const;
+  virtual Init *Fold(Record *CurRec, MultiClass *CurMultiClass) const;
 
   virtual Init *resolveReferences(Record &R, const RecordVal *RV) const;
 
@@ -945,8 +946,8 @@ public:
                            getType());
   }
 
-  int getNumOperands() const { return 3; }
-  Init *getOperand(int i) const {
+  virtual int getNumOperands() const { return 3; }
+  virtual Init *getOperand(int i) const {
     assert((i == 0 || i == 1 || i == 2) &&
            "Invalid operand id for ternary operator");
     if (i == 0) {
@@ -965,7 +966,7 @@ public:
 
   // Fold - If possible, fold this to a simpler init.  Return this if not
   // possible to fold.
-  Init *Fold(Record *CurRec, MultiClass *CurMultiClass) const;
+  virtual Init *Fold(Record *CurRec, MultiClass *CurMultiClass) const;
 
   virtual bool isComplete() const { return false; }
 
