@@ -555,7 +555,7 @@ kill_dependency(_Tp __y) _NOEXCEPT
 template <class _Tp, bool = is_integral<_Tp>::value && !is_same<_Tp, bool>::value>
 struct __atomic_base  // false
 {
-    _Atomic(_Tp) __a_;
+    mutable _Atomic(_Tp) __a_;
 
     _LIBCPP_INLINE_VISIBILITY
     bool is_lock_free() const volatile _NOEXCEPT
