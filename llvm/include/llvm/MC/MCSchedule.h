@@ -172,10 +172,10 @@ private:
   unsigned ProcID;
   const MCProcResourceDesc *ProcResourceTable;
   const MCSchedClassDesc *SchedClassTable;
-
+#ifndef NDEBUG
   unsigned NumProcResourceKinds;
   unsigned NumSchedClasses;
-
+#endif
   // Instruction itinerary tables used by InstrItineraryData.
   friend class InstrItineraryData;
   const InstrItinerary *InstrItineraries;
