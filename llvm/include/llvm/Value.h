@@ -16,6 +16,7 @@
 
 #include "llvm/Use.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
