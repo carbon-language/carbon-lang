@@ -5576,30 +5576,42 @@ let Predicates = [HasAVX] in {
             (VPMOVSXBWrm addr:$src)>;
   def : Pat<(int_x86_sse41_pmovsxbw (vzload_v2i64 addr:$src)),
             (VPMOVSXBWrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovsxbw (bc_v16i8 (loadv2i64 addr:$src))),
+            (VPMOVSXBWrm addr:$src)>;
 
   def : Pat<(int_x86_sse41_pmovsxwd (vzmovl_v2i64 addr:$src)),
             (VPMOVSXWDrm addr:$src)>;
   def : Pat<(int_x86_sse41_pmovsxwd (vzload_v2i64 addr:$src)),
+            (VPMOVSXWDrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovsxwd (bc_v8i16 (loadv2i64 addr:$src))),
             (VPMOVSXWDrm addr:$src)>;
 
   def : Pat<(int_x86_sse41_pmovsxdq (vzmovl_v2i64 addr:$src)),
             (VPMOVSXDQrm addr:$src)>;
   def : Pat<(int_x86_sse41_pmovsxdq (vzload_v2i64 addr:$src)),
             (VPMOVSXDQrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovsxdq (bc_v4i32 (loadv2i64 addr:$src))),
+            (VPMOVSXDQrm addr:$src)>;
 
   def : Pat<(int_x86_sse41_pmovzxbw (vzmovl_v2i64 addr:$src)),
             (VPMOVZXBWrm addr:$src)>;
   def : Pat<(int_x86_sse41_pmovzxbw (vzload_v2i64 addr:$src)),
+            (VPMOVZXBWrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovzxbw (bc_v16i8 (loadv2i64 addr:$src))),
             (VPMOVZXBWrm addr:$src)>;
 
   def : Pat<(int_x86_sse41_pmovzxwd (vzmovl_v2i64 addr:$src)),
             (VPMOVZXWDrm addr:$src)>;
   def : Pat<(int_x86_sse41_pmovzxwd (vzload_v2i64 addr:$src)),
             (VPMOVZXWDrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovzxwd (bc_v8i16 (loadv2i64 addr:$src))),
+            (VPMOVZXWDrm addr:$src)>;
 
   def : Pat<(int_x86_sse41_pmovzxdq (vzmovl_v2i64 addr:$src)),
             (VPMOVZXDQrm addr:$src)>;
   def : Pat<(int_x86_sse41_pmovzxdq (vzload_v2i64 addr:$src)),
+            (VPMOVZXDQrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovzxdq (bc_v4i32 (loadv2i64 addr:$src))),
             (VPMOVZXDQrm addr:$src)>;
 }
 
@@ -5609,30 +5621,42 @@ let Predicates = [UseSSE41] in {
             (PMOVSXBWrm addr:$src)>;
   def : Pat<(int_x86_sse41_pmovsxbw (vzload_v2i64 addr:$src)),
             (PMOVSXBWrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovsxbw (bc_v16i8 (loadv2i64 addr:$src))),
+            (PMOVSXBWrm addr:$src)>;
 
   def : Pat<(int_x86_sse41_pmovsxwd (vzmovl_v2i64 addr:$src)),
             (PMOVSXWDrm addr:$src)>;
   def : Pat<(int_x86_sse41_pmovsxwd (vzload_v2i64 addr:$src)),
+            (PMOVSXWDrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovsxwd (bc_v8i16 (loadv2i64 addr:$src))),
             (PMOVSXWDrm addr:$src)>;
 
   def : Pat<(int_x86_sse41_pmovsxdq (vzmovl_v2i64 addr:$src)),
             (PMOVSXDQrm addr:$src)>;
   def : Pat<(int_x86_sse41_pmovsxdq (vzload_v2i64 addr:$src)),
             (PMOVSXDQrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovsxdq (bc_v4i32 (loadv2i64 addr:$src))),
+            (PMOVSXDQrm addr:$src)>;
 
   def : Pat<(int_x86_sse41_pmovzxbw (vzmovl_v2i64 addr:$src)),
             (PMOVZXBWrm addr:$src)>;
   def : Pat<(int_x86_sse41_pmovzxbw (vzload_v2i64 addr:$src)),
+            (PMOVZXBWrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovzxbw (bc_v16i8 (loadv2i64 addr:$src))),
             (PMOVZXBWrm addr:$src)>;
 
   def : Pat<(int_x86_sse41_pmovzxwd (vzmovl_v2i64 addr:$src)),
             (PMOVZXWDrm addr:$src)>;
   def : Pat<(int_x86_sse41_pmovzxwd (vzload_v2i64 addr:$src)),
             (PMOVZXWDrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovzxwd (bc_v8i16 (loadv2i64 addr:$src))),
+            (PMOVZXWDrm addr:$src)>;
 
   def : Pat<(int_x86_sse41_pmovzxdq (vzmovl_v2i64 addr:$src)),
             (PMOVZXDQrm addr:$src)>;
   def : Pat<(int_x86_sse41_pmovzxdq (vzload_v2i64 addr:$src)),
+            (PMOVZXDQrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovzxdq (bc_v4i32 (loadv2i64 addr:$src))),
             (PMOVZXDQrm addr:$src)>;
 }
 
