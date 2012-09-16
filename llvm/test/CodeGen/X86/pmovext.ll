@@ -3,7 +3,7 @@
 ; rdar://11897677
 
 ;CHECK: intrin_pmov
-;CHECK: pmovzxbw  (%rsi), %xmm0
+;CHECK: pmovzxbw  (%{{.*}}), %xmm0
 ;CHECK-NEXT: movdqu
 ;CHECK-NEXT: ret
 define void @intrin_pmov(i16* noalias %dest, i8* noalias %src) nounwind uwtable ssp {
