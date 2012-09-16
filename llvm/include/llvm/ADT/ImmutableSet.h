@@ -22,7 +22,6 @@
 #include <cassert>
 #include <functional>
 #include <vector>
-#include <stdio.h>
 
 namespace llvm {
 
