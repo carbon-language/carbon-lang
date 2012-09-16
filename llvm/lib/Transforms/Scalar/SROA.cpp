@@ -490,7 +490,8 @@ private:
     return false;
   }
 
-  void insertUse(Instruction &I, uint64_t Size, bool IsSplittable = false) {
+  void insertUse(Instruction &I, uint64_t Offset, uint64_t Size,
+                 bool IsSplittable = false) {
     uint64_t BeginOffset = Offset, EndOffset = Offset + Size;
 
     // Completely skip uses which start outside of the allocation.
@@ -524,7 +525,7 @@ private:
     P.Partitions.push_back(New);
   }
 
-  bool handleLoadOrStore(Type *Ty, Instruction &I) {
+  bool handleLoadOrStore(Type *Ty, Instruction &I, uint64_t Offset) {
     uint64_t Size = TD.getTypeStoreSize(Ty);
 
     // If this memory access can be shown to *statically* extend outside the
@@ -544,7 +545,7 @@ private:
       return true;
     }
 
-    insertUse(I, Size);
+    insertUse(I, Offset, Size);
     return true;
   }
 
@@ -563,21 +564,22 @@ private:
   }
 
   bool visitLoadInst(LoadInst &LI) {
-    return handleLoadOrStore(LI.getType(), LI);
+    return handleLoadOrStore(LI.getType(), LI, Offset);
   }
 
   bool visitStoreInst(StoreInst &SI) {
     if (SI.getOperand(0) == *U)
       return markAsEscaping(SI);
 
-    return handleLoadOrStore(SI.getOperand(0)->getType(), SI);
+    return handleLoadOrStore(SI.getOperand(0)->getType(), SI, Offset);
   }
 
 
   bool visitMemSetInst(MemSetInst &II) {
     assert(II.getRawDest() == *U && "Pointer use is not the destination?");
     ConstantInt *Length = dyn_cast<ConstantInt>(II.getLength());
-    insertUse(II, Length ? Length->getZExtValue() : AllocSize - Offset, Length);
+    uint64_t Size = Length ? Length->getZExtValue() : AllocSize - Offset;
+    insertUse(II, Offset, Size, Length);
     return true;
   }
 
@@ -602,7 +604,7 @@ private:
       Offsets.DestEnd = Offset + Size;
     }
 
-    insertUse(II, Size, Offsets.IsSplittable);
+    insertUse(II, Offset, Size, Offsets.IsSplittable);
     unsigned NewIdx = P.Partitions.size() - 1;
 
     SmallDenseMap<Instruction *, unsigned>::const_iterator PMI;
@@ -630,7 +632,7 @@ private:
         II.getIntrinsicID() == Intrinsic::lifetime_end) {
       ConstantInt *Length = cast<ConstantInt>(II.getArgOperand(0));
       uint64_t Size = std::min(AllocSize - Offset, Length->getLimitedValue());
-      insertUse(II, Size, true);
+      insertUse(II, Offset, Size, true);
       return true;
     }
 
@@ -684,7 +686,7 @@ private:
     std::pair<uint64_t, bool> &PHIInfo = P.PHIOrSelectSizes[&PN];
     if (PHIInfo.first) {
       PHIInfo.second = true;
-      insertUse(PN, PHIInfo.first);
+      insertUse(PN, Offset, PHIInfo.first);
       return true;
     }
 
@@ -692,7 +694,7 @@ private:
     if (Instruction *EscapingI = hasUnsafePHIOrSelectUse(&PN, PHIInfo.first))
       return markAsEscaping(*EscapingI);
 
-    insertUse(PN, PHIInfo.first);
+    insertUse(PN, Offset, PHIInfo.first);
     return true;
   }
 
@@ -710,7 +712,7 @@ private:
     std::pair<uint64_t, bool> &SelectInfo = P.PHIOrSelectSizes[&SI];
     if (SelectInfo.first) {
       SelectInfo.second = true;
-      insertUse(SI, SelectInfo.first);
+      insertUse(SI, Offset, SelectInfo.first);
       return true;
     }
 
@@ -718,7 +720,7 @@ private:
     if (Instruction *EscapingI = hasUnsafePHIOrSelectUse(&SI, SelectInfo.first))
       return markAsEscaping(*EscapingI);
 
-    insertUse(SI, SelectInfo.first);
+    insertUse(SI, Offset, SelectInfo.first);
     return true;
   }
 
@@ -772,7 +774,7 @@ private:
       P.DeadUsers.push_back(&I);
   }
 
-  void insertUse(uint64_t Size, Instruction &User) {
+  void insertUse(Instruction &User, uint64_t Offset, uint64_t Size) {
     uint64_t BeginOffset = Offset, EndOffset = Offset + Size;
 
     // If the use extends outside of the allocation, record it as a dead use
@@ -800,7 +802,7 @@ private:
     }
   }
 
-  void handleLoadOrStore(Type *Ty, Instruction &I) {
+  void handleLoadOrStore(Type *Ty, Instruction &I, uint64_t Offset) {
     uint64_t Size = TD.getTypeStoreSize(Ty);
 
     // If this memory access can be shown to *statically* extend outside the
@@ -810,7 +812,7 @@ private:
     if (Offset >= AllocSize || Size > AllocSize || Offset + Size > AllocSize)
       return markAsDead(I);
 
-    insertUse(Size, I);
+    insertUse(I, Offset, Size);
   }
 
   void visitBitCastInst(BitCastInst &BC) {
@@ -832,21 +834,23 @@ private:
   }
 
   void visitLoadInst(LoadInst &LI) {
-    handleLoadOrStore(LI.getType(), LI);
+    handleLoadOrStore(LI.getType(), LI, Offset);
   }
 
   void visitStoreInst(StoreInst &SI) {
-    handleLoadOrStore(SI.getOperand(0)->getType(), SI);
+    handleLoadOrStore(SI.getOperand(0)->getType(), SI, Offset);
   }
 
   void visitMemSetInst(MemSetInst &II) {
     ConstantInt *Length = dyn_cast<ConstantInt>(II.getLength());
-    insertUse(Length ? Length->getZExtValue() : AllocSize - Offset, II);
+    uint64_t Size = Length ? Length->getZExtValue() : AllocSize - Offset;
+    insertUse(II, Offset, Size);
   }
 
   void visitMemTransferInst(MemTransferInst &II) {
     ConstantInt *Length = dyn_cast<ConstantInt>(II.getLength());
-    insertUse(Length ? Length->getZExtValue() : AllocSize - Offset, II);
+    uint64_t Size = Length ? Length->getZExtValue() : AllocSize - Offset;
+    insertUse(II, Offset, Size);
   }
 
   void visitIntrinsicInst(IntrinsicInst &II) {
@@ -854,10 +858,11 @@ private:
            II.getIntrinsicID() == Intrinsic::lifetime_end);
 
     ConstantInt *Length = cast<ConstantInt>(II.getArgOperand(0));
-    insertUse(std::min(AllocSize - Offset, Length->getLimitedValue()), II);
+    insertUse(II, Offset,
+              std::min(AllocSize - Offset, Length->getLimitedValue()));
   }
 
-  void insertPHIOrSelect(Instruction &User) {
+  void insertPHIOrSelect(Instruction &User, uint64_t Offset) {
     uint64_t Size = P.PHIOrSelectSizes.lookup(&User).first;
 
     // For PHI and select operands outside the alloca, we can't nuke the entire
@@ -869,13 +874,13 @@ private:
       return;
     }
 
-    insertUse(Size, User);
+    insertUse(User, Offset, Size);
   }
   void visitPHINode(PHINode &PN) {
     if (PN.use_empty())
       return markAsDead(PN);
 
-    insertPHIOrSelect(PN);
+    insertPHIOrSelect(PN, Offset);
   }
   void visitSelectInst(SelectInst &SI) {
     if (SI.use_empty())
@@ -890,7 +895,7 @@ private:
       return;
     }
 
-    insertPHIOrSelect(SI);
+    insertPHIOrSelect(SI, Offset);
   }
 
   /// \brief Unreachable, we've already visited the alloca once.
