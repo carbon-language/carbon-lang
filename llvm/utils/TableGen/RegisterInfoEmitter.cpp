@@ -802,16 +802,16 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
      << "  virtual bool needsStackRealignment(const MachineFunction &) const\n"
      << "     { return false; }\n";
   if (!RegBank.getSubRegIndices().empty()) {
-    OS << "  unsigned composeSubRegIndices(unsigned, unsigned) const;\n"
-      << "  const TargetRegisterClass *"
+    OS << "  virtual unsigned composeSubRegIndices(unsigned, unsigned) const;\n"
+      << "  virtual const TargetRegisterClass *"
       "getSubClassWithSubReg(const TargetRegisterClass*, unsigned) const;\n";
   }
-  OS << "  const RegClassWeight &getRegClassWeight("
+  OS << "  virtual const RegClassWeight &getRegClassWeight("
      << "const TargetRegisterClass *RC) const;\n"
-     << "  unsigned getNumRegPressureSets() const;\n"
-     << "  const char *getRegPressureSetName(unsigned Idx) const;\n"
-     << "  unsigned getRegPressureSetLimit(unsigned Idx) const;\n"
-     << "  const int *getRegClassPressureSets("
+     << "  virtual unsigned getNumRegPressureSets() const;\n"
+     << "  virtual const char *getRegPressureSetName(unsigned Idx) const;\n"
+     << "  virtual unsigned getRegPressureSetLimit(unsigned Idx) const;\n"
+     << "  virtual const int *getRegClassPressureSets("
      << "const TargetRegisterClass *RC) const;\n"
      << "};\n\n";
 
