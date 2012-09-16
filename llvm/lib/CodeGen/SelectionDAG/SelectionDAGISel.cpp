@@ -2004,7 +2004,7 @@ MorphNode(SDNode *Node, unsigned TargetOpc, SDVTList VTList,
   return Res;
 }
 
-/// CheckPatternPredicate - Implements OP_CheckPatternPredicate.
+/// CheckSame - Implements OP_CheckSame.
 LLVM_ATTRIBUTE_ALWAYS_INLINE static bool
 CheckSame(const unsigned char *MatcherTable, unsigned &MatcherIndex,
           SDValue N,
