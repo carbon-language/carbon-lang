@@ -66,6 +66,11 @@ VerifyCoalescing("verify-coalescing",
          cl::desc("Verify machine instrs before and after register coalescing"),
          cl::Hidden);
 
+// Temporary option for testing new coalescer algo.
+static cl::opt<bool>
+NewCoalescer("new-coalescer", cl::Hidden,
+             cl::desc("Use new coalescer algorithm"));
+
 namespace {
   class RegisterCoalescer : public MachineFunctionPass,
                             private LiveRangeEdit::Delegate {
@@ -122,6 +127,9 @@ namespace {
     /// returns false.  The output "SrcInt" will not have been modified, so we
     /// can use this information below to update aliases.
     bool joinIntervals(CoalescerPair &CP);
+
+    /// Attempt joining two virtual registers. Return true on success.
+    bool joinVirtRegs(CoalescerPair &CP);
 
     /// Attempt joining with a reserved physreg.
     bool joinReservedPhysReg(CoalescerPair &CP);
@@ -1102,6 +1110,473 @@ bool RegisterCoalescer::joinReservedPhysReg(CoalescerPair &CP) {
   return true;
 }
 
+//===----------------------------------------------------------------------===//
+//                 Interference checking and interval joining
+//===----------------------------------------------------------------------===//
+//
+// In the easiest case, the two live ranges being joined are disjoint, and
+// there is no interference to consider. It is quite common, though, to have
+// overlapping live ranges, and we need to check if the interference can be
+// resolved.
+//
+// The live range of a single SSA value forms a sub-tree of the dominator tree.
+// This means that two SSA values overlap if and only if the def of one value
+// is contained in the live range of the other value. As a special case, the
+// overlapping values can be defined at the same index.
+//
+// The interference from an overlapping def can be resolved in these cases:
+//
+// 1. Coalescable copies. The value is defined by a copy that would become an
+//    identity copy after joining SrcReg and DstReg. The copy instruction will
+//    be removed, and the value will be merged with the source value.
+//
+//    There can be several copies back and forth, causing many values to be
+//    merged into one. We compute a list of ultimate values in the joined live
+//    range as well as a mappings from the old value numbers.
+//
+// 2. IMPLICIT_DEF. This instruction is only inserted to ensure all PHI
+//    predecessors have a live out value. It doesn't cause real interference,
+//    and can be merged into the value it overlaps. Like a coalescable copy, it
+//    can be erased after joining.
+//
+// 3. Copy of external value. The overlapping def may be a copy of a value that
+//    is already in the other register. This is like a coalescable copy, but
+//    the live range of the source register must be trimmed after erasing the
+//    copy instruction:
+//
+//      %src = COPY %ext
+//      %dst = COPY %ext  <-- Remove this COPY, trim the live range of %ext.
+//
+// 4. Clobbering undefined lanes. Vector registers are sometimes built by
+//    defining one lane at a time:
+//
+//      %dst:ssub0<def,read-undef> = FOO
+//      %src = BAR
+//      %dst:ssub1<def> = COPY %src
+//
+//    The live range of %src overlaps the %dst value defined by FOO, but
+//    merging %src into %dst:ssub1 is only going to clobber the ssub1 lane
+//    which was undef anyway.
+//
+//    The value mapping is more complicated in this case. The final live range
+//    will have different value numbers for both FOO and BAR, but there is no
+//    simple mapping from old to new values. It may even be necessary to add
+//    new PHI values.
+//
+// 5. Clobbering dead lanes. A def may clobber a lane of a vector register that
+//    is live, but never read. This can happen because we don't compute
+//    individual live ranges per lane.
+//
+//      %dst<def> = FOO
+//      %src = BAR
+//      %dst:ssub1<def> = COPY %src
+//
+//    This kind of interference is only resolved locally. If the clobbered
+//    lane value escapes the block, the join is aborted.
+
+namespace {
+/// Track information about values in a single virtual register about to be
+/// joined. Objects of this class are always created in pairs - one for each
+/// side of the CoalescerPair.
+class JoinVals {
+  LiveInterval &LI;
+
+  // Location of this register in the final joined register.
+  // Either CP.DstIdx or CP.SrcIdx.
+  unsigned SubIdx;
+
+  // Values that will be present in the final live range.
+  SmallVectorImpl<VNInfo*> &NewVNInfo;
+
+  const CoalescerPair &CP;
+  LiveIntervals *LIS;
+  SlotIndexes *Indexes;
+  const TargetRegisterInfo *TRI;
+
+  // Value number assignments. Maps value numbers in LI to entries in NewVNInfo.
+  // This is suitable for passing to LiveInterval::join().
+  SmallVector<int, 8> Assignments;
+
+  // Conflict resolution for overlapping values.
+  enum ConflictResolution {
+    // No overlap, simply keep this value.
+    CR_Keep,
+
+    // Merge this value into OtherVNI and erase the defining instruction.
+    // Used for IMPLICIT_DEF, coalescable copies, and copies from external
+    // values.
+    CR_Erase,
+
+    // Merge this value into OtherVNI but keep the defining instruction.
+    // This is for the special case where OtherVNI is defined by the same
+    // instruction.
+    CR_Merge,
+
+    // Keep this value, and have it replace OtherVNI where possible. This
+    // complicates value mapping since OtherVNI maps to two different values
+    // before and after this def.
+    // Used when clobbering undefined or dead lanes.
+    CR_Replace,
+
+    // Unresolved conflict. Visit later when all values have been mapped.
+    CR_Unresolved,
+
+    // Unresolvable conflict. Abort the join.
+    CR_Impossible
+  };
+
+  // Per-value info for LI. The lane bit masks are all relative to the final
+  // joined register, so they can be compared directly between SrcReg and
+  // DstReg.
+  struct Val {
+    ConflictResolution Resolution;
+
+    // Lanes written by this def, 0 for unanalyzed values.
+    unsigned WriteLanes;
+
+    // Lanes with defined values in this register. Other lanes are undef and
+    // safe to clobber.
+    unsigned ValidLanes;
+
+    // Value in LI being redefined by this def.
+    VNInfo *RedefVNI;
+
+    // Value in the other live range that overlaps this def, if any.
+    VNInfo *OtherVNI;
+
+    Val() : Resolution(CR_Keep), WriteLanes(0), ValidLanes(0),
+            RedefVNI(0), OtherVNI(0) {}
+
+    bool isAnalyzed() const { return WriteLanes != 0; }
+  };
+
+  // One entry per value number in LI.
+  SmallVector<Val, 8> Vals;
+
+  unsigned computeWriteLanes(const MachineInstr *DefMI, bool &Redef);
+  VNInfo *stripCopies(VNInfo *VNI);
+  ConflictResolution analyzeValue(unsigned ValNo, JoinVals &Other);
+  void computeAssignment(unsigned ValNo, JoinVals &Other);
+
+public:
+  JoinVals(LiveInterval &li, unsigned subIdx,
+           SmallVectorImpl<VNInfo*> &newVNInfo,
+           const CoalescerPair &cp,
+           LiveIntervals *lis,
+           const TargetRegisterInfo *tri)
+    : LI(li), SubIdx(subIdx), NewVNInfo(newVNInfo), CP(cp), LIS(lis),
+      Indexes(LIS->getSlotIndexes()), TRI(tri),
+      Assignments(LI.getNumValNums(), -1), Vals(LI.getNumValNums())
+  {}
+
+  /// Analyze defs in LI and compute a value mapping in NewVNInfo.
+  /// Returns false if any conflicts were impossible to resolve.
+  bool mapValues(JoinVals &Other);
+
+  /// Try to resolve conflicts that require all values to be mapped.
+  /// Returns false if any conflicts were impossible to resolve.
+  bool resolveConflicts(JoinVals &Other);
+
+  /// Erase any machine instructions that have been coalesced away.
+  /// Add erased instructions to ErasedInstrs.
+  /// Add foreign virtual registers to ShrinkRegs if their live range ended at
+  /// the erased instrs.
+  void eraseInstrs(SmallPtrSet<MachineInstr*, 8> &ErasedInstrs,
+                   SmallVectorImpl<unsigned> &ShrinkRegs);
+
+  /// Get the value assignments suitable for passing to LiveInterval::join.
+  const int *getAssignments() const { return &Assignments[0]; }
+};
+} // end anonymous namespace
+
+/// Compute the bitmask of lanes actually written by DefMI.
+/// Set Redef if there are any partial register definitions that depend on the
+/// previous value of the register.
+unsigned JoinVals::computeWriteLanes(const MachineInstr *DefMI, bool &Redef) {
+  unsigned L = 0;
+  for (ConstMIOperands MO(DefMI); MO.isValid(); ++MO) {
+    if (!MO->isReg() || MO->getReg() != LI.reg || !MO->isDef())
+      continue;
+    L |= TRI->getSubRegIndexLaneMask(compose(*TRI, SubIdx, MO->getSubReg()));
+    if (MO->readsReg())
+      Redef = true;
+  }
+  return L;
+}
+
+/// Find the ultimate value that VNI was copied from.
+VNInfo *JoinVals::stripCopies(VNInfo *VNI) {
+  while (!VNI->isPHIDef()) {
+    MachineInstr *MI = Indexes->getInstructionFromIndex(VNI->def);
+    assert(MI && "No defining instruction");
+    if (!MI->isFullCopy())
+      break;
+    unsigned Reg = MI->getOperand(1).getReg();
+    if (!TargetRegisterInfo::isVirtualRegister(Reg))
+      break;
+    LiveRangeQuery LRQ(LIS->getInterval(Reg), VNI->def);
+    if (!LRQ.valueIn())
+      break;
+    VNI = LRQ.valueIn();
+  }
+  return VNI;
+}
+
+/// Analyze ValNo in this live range, and set all fields of Vals[ValNo].
+/// Return a conflict resolution when possible, but leave the hard cases as
+/// CR_Unresolved.
+/// Recursively calls computeAssignment() on this and Other, guaranteeing that
+/// both OtherVNI and RedefVNI have been analyzed and mapped before returning.
+/// The recursion always goes upwards in the dominator tree, making loops
+/// impossible.
+JoinVals::ConflictResolution
+JoinVals::analyzeValue(unsigned ValNo, JoinVals &Other) {
+  Val &V = Vals[ValNo];
+  assert(!V.isAnalyzed() && "Value has already been analyzed!");
+  VNInfo *VNI = LI.getValNumInfo(ValNo);
+  if (VNI->isUnused()) {
+    V.WriteLanes = ~0u;
+    return CR_Keep;
+  }
+
+  // Get the instruction defining this value, compute the lanes written.
+  const MachineInstr *DefMI = 0;
+  if (VNI->isPHIDef()) {
+    // Conservatively assume that all lanes in a PHI are valid.
+    V.ValidLanes = V.WriteLanes = TRI->getSubRegIndexLaneMask(SubIdx);
+  } else {
+    DefMI = Indexes->getInstructionFromIndex(VNI->def);
+    bool Redef = false;
+    V.ValidLanes = V.WriteLanes = computeWriteLanes(DefMI, Redef);
+
+    // If this is a read-modify-write instruction, there may be more valid
+    // lanes than the ones written by this instruction.
+    // This only covers partial redef operands. DefMI may have normal use
+    // operands reading the register. They don't contribute valid lanes.
+    //
+    // This adds ssub1 to the set of valid lanes in %src:
+    //
+    //   %src:ssub1<def> = FOO
+    //
+    // This leaves only ssub1 valid, making any other lanes undef:
+    //
+    //   %src:ssub1<def,read-undef> = FOO %src:ssub2
+    //
+    // The <read-undef> flag on the def operand means that old lane values are
+    // not important.
+    if (Redef) {
+      V.RedefVNI = LiveRangeQuery(LI, VNI->def).valueIn();
+      assert(V.RedefVNI && "Instruction is reading nonexistent value");
+      computeAssignment(V.RedefVNI->id, Other);
+      V.ValidLanes |= Vals[V.RedefVNI->id].ValidLanes;
+    }
+
+    // An IMPLICIT_DEF writes undef values.
+    if (DefMI->isImplicitDef())
+      V.ValidLanes &= ~V.WriteLanes;
+  }
+
+  // Find the value in Other that overlaps VNI->def, if any.
+  LiveRangeQuery OtherLRQ(Other.LI, VNI->def);
+
+  // It is possible that both values are defined by the same instruction, or
+  // the values are PHIs defined in the same block. When that happens, the two
+  // values should be merged into one, but not into any preceding value.
+  // The first value defined or visited gets CR_Keep, the other gets CR_Merge.
+  if (VNInfo *OtherVNI = OtherLRQ.valueDefined()) {
+    DEBUG(dbgs() << "\t\tDouble def: " << VNI->def << '\n');
+    assert(SlotIndex::isSameInstr(VNI->def, OtherVNI->def) && "Broken LRQ");
+
+    // One value stays, the other is merged. Keep the earlier one, or the first
+    // one we see.
+    if (OtherVNI->def < VNI->def)
+      Other.computeAssignment(OtherVNI->id, *this);
+    else if (VNI->def < OtherVNI->def && OtherLRQ.valueIn()) {
+      // This is an early-clobber def overlapping a live-in value in the other
+      // register. Not mergeable.
+      V.OtherVNI = OtherLRQ.valueIn();
+      return CR_Impossible;
+    }
+    V.OtherVNI = OtherVNI;
+    Val &OtherV = Other.Vals[OtherVNI->id];
+    // Keep this value, check for conflicts when analyzing OtherVNI.
+    if (!OtherV.isAnalyzed())
+      return CR_Keep;
+    // Both sides have been analyzed now. Do they conflict?
+    if (V.ValidLanes & OtherV.ValidLanes)
+      // Overlapping lanes can't be resolved now, maybe later.
+      return CR_Unresolved;
+    else
+      return CR_Merge;
+  }
+
+  // No simultaneous def. Is Other live at the def?
+  V.OtherVNI = OtherLRQ.valueIn();
+  if (!V.OtherVNI)
+    // No overlap, no conflict.
+    return CR_Keep;
+
+  assert(!SlotIndex::isSameInstr(VNI->def, V.OtherVNI->def) && "Broken LRQ");
+
+  // We have overlapping values, or possibly a kill of Other.
+  // Recursively compute assignments up the dominator tree.
+  Other.computeAssignment(V.OtherVNI->id, *this);
+
+  // Don't attempt resolving PHI values for now.
+  if (VNI->isPHIDef())
+    return CR_Impossible;
+
+  // Check for simple erasable conflicts.
+  if (DefMI->isImplicitDef())
+    return CR_Erase;
+
+  // Include the non-conflict where DefMI is a coalescable copy that kills
+  // OtherVNI. We still want the copy erased and value numbers merged.
+  if (CP.isCoalescable(DefMI)) {
+    // Some of the lanes copied from OtherVNI may be undef, making them undef
+    // here too.
+    V.ValidLanes &= ~V.WriteLanes | Other.Vals[V.OtherVNI->id].ValidLanes;
+    return CR_Erase;
+  }
+
+  // This may not be a real conflict if DefMI simply kills Other and defines
+  // VNI.
+  if (OtherLRQ.isKill() && OtherLRQ.endPoint() <= VNI->def)
+    return CR_Keep;
+
+  // Handle the case where VNI and OtherVNI can be proven to be identical:
+  //
+  //   %other = COPY %ext
+  //   %this  = COPY %ext <-- Erase this copy
+  //
+  if (DefMI->isFullCopy() && !CP.isPartial() &&
+      stripCopies(VNI) == stripCopies(V.OtherVNI))
+    return CR_Erase;
+
+  // FIXME: Identify CR_Replace opportunities.
+  return CR_Impossible;
+}
+
+/// Compute the value assignment for ValNo in LI.
+/// This may be called recursively by analyzeValue(), but never for a ValNo on
+/// the stack.
+void JoinVals::computeAssignment(unsigned ValNo, JoinVals &Other) {
+  Val &V = Vals[ValNo];
+  if (V.isAnalyzed()) {
+    // Recursion should always move up the dominator tree, so ValNo is not
+    // supposed to reappear before it has been assigned.
+    assert(Assignments[ValNo] != -1 && "Bad recursion?");
+    return;
+  }
+  switch ((V.Resolution = analyzeValue(ValNo, Other))) {
+  case CR_Erase:
+  case CR_Merge:
+    // Merge this ValNo into OtherVNI.
+    assert(V.OtherVNI && "OtherVNI not assigned, can't merge.");
+    assert(Other.Vals[V.OtherVNI->id].isAnalyzed() && "Missing recursion");
+    Assignments[ValNo] = Other.Assignments[V.OtherVNI->id];
+    DEBUG(dbgs() << "\t\tmerge " << PrintReg(LI.reg) << ':' << ValNo << '@'
+                 << LI.getValNumInfo(ValNo)->def << " into "
+                 << PrintReg(Other.LI.reg) << ':' << V.OtherVNI->id << '@'
+                 << V.OtherVNI->def << " --> @"
+                 << NewVNInfo[Assignments[ValNo]]->def << '\n');
+    break;
+  default:
+    // This value number needs to go in the final joined live range.
+    Assignments[ValNo] = NewVNInfo.size();
+    NewVNInfo.push_back(LI.getValNumInfo(ValNo));
+    break;
+  }
+}
+
+bool JoinVals::mapValues(JoinVals &Other) {
+  for (unsigned i = 0, e = LI.getNumValNums(); i != e; ++i) {
+    computeAssignment(i, Other);
+    if (Vals[i].Resolution == CR_Impossible) {
+      DEBUG(dbgs() << "\t\tinterference at " << PrintReg(LI.reg) << ':' << i
+                   << '@' << LI.getValNumInfo(i)->def << '\n');
+      return false;
+    }
+  }
+  return true;
+}
+
+bool JoinVals::resolveConflicts(JoinVals &Other) {
+  for (unsigned i = 0, e = LI.getNumValNums(); i != e; ++i) {
+    assert (Vals[i].Resolution != CR_Impossible && "Unresolvable conflict");
+    if (Vals[i].Resolution != CR_Unresolved)
+      continue;
+    // FIXME: Actually resolve dead lane conflicts.
+    DEBUG(dbgs() << "\t\tconflict at " << PrintReg(LI.reg) << ':' << i
+                 << '@' << LI.getValNumInfo(i)->def << '\n');
+    return false;
+  }
+  return true;
+}
+
+void JoinVals::eraseInstrs(SmallPtrSet<MachineInstr*, 8> &ErasedInstrs,
+                           SmallVectorImpl<unsigned> &ShrinkRegs) {
+  for (unsigned i = 0, e = LI.getNumValNums(); i != e; ++i) {
+    if (Vals[i].Resolution != CR_Erase)
+      continue;
+    SlotIndex Def = LI.getValNumInfo(i)->def;
+    MachineInstr *MI = Indexes->getInstructionFromIndex(Def);
+    assert(MI && "No instruction to erase");
+    if (MI->isCopy()) {
+      unsigned Reg = MI->getOperand(1).getReg();
+      if (TargetRegisterInfo::isVirtualRegister(Reg) &&
+          Reg != CP.getSrcReg() && Reg != CP.getDstReg())
+        ShrinkRegs.push_back(Reg);
+    }
+    ErasedInstrs.insert(MI);
+    DEBUG(dbgs() << "\t\terased:\t" << Def << '\t' << *MI);
+    LIS->RemoveMachineInstrFromMaps(MI);
+    MI->eraseFromParent();
+  }
+}
+
+bool RegisterCoalescer::joinVirtRegs(CoalescerPair &CP) {
+  SmallVector<VNInfo*, 16> NewVNInfo;
+  LiveInterval &RHS = LIS->getInterval(CP.getSrcReg());
+  LiveInterval &LHS = LIS->getInterval(CP.getDstReg());
+  JoinVals RHSVals(RHS, CP.getSrcIdx(), NewVNInfo, CP, LIS, TRI);
+  JoinVals LHSVals(LHS, CP.getDstIdx(), NewVNInfo, CP, LIS, TRI);
+
+  DEBUG(dbgs() << "\t\tRHS = " << PrintReg(CP.getSrcReg()) << ' ' << RHS
+               << "\n\t\tLHS = " << PrintReg(CP.getDstReg()) << ' ' << LHS
+               << '\n');
+
+  // First compute NewVNInfo and the simple value mappings.
+  // Detect impossible conflicts early.
+  if (!LHSVals.mapValues(RHSVals) || !RHSVals.mapValues(LHSVals))
+    return false;
+
+  // Some conflicts can only be resolved after all values have been mapped.
+  if (!LHSVals.resolveConflicts(RHSVals) || !RHSVals.resolveConflicts(LHSVals))
+    return false;
+
+  // All clear, the live ranges can be merged.
+
+  // Erase COPY and IMPLICIT_DEF instructions. This may cause some external
+  // registers to require trimming.
+  SmallVector<unsigned, 8> ShrinkRegs;
+  LHSVals.eraseInstrs(ErasedInstrs, ShrinkRegs);
+  RHSVals.eraseInstrs(ErasedInstrs, ShrinkRegs);
+  while (!ShrinkRegs.empty())
+    LIS->shrinkToUses(&LIS->getInterval(ShrinkRegs.pop_back_val()));
+
+  // Join RHS into LHS.
+  LHS.join(RHS, LHSVals.getAssignments(), RHSVals.getAssignments(), NewVNInfo,
+           MRI);
+
+  // Kill flags are going to be wrong if the live ranges were overlapping.
+  // Eventually, we should simply clear all kill flags when computing live
+  // ranges. They are reinserted after register allocation.
+  MRI->clearKillFlags(LHS.reg);
+  MRI->clearKillFlags(RHS.reg);
+  return true;
+}
+
 /// ComputeUltimateVN - Assuming we are going to join two live intervals,
 /// compute what the resultant value numbers for each value in the input two
 /// ranges will be.  This is complicated by copies between the two which can
@@ -1228,6 +1703,9 @@ bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
   // Handle physreg joins separately.
   if (CP.isPhys())
     return joinReservedPhysReg(CP);
+
+  if (NewCoalescer)
+    return joinVirtRegs(CP);
 
   LiveInterval &RHS = LIS->getInterval(CP.getSrcReg());
   DEBUG(dbgs() << "\t\tRHS = " << PrintReg(CP.getSrcReg()) << ' ' << RHS
