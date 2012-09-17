@@ -24,6 +24,9 @@ MCSubtargetInfo::InitMCSubtargetInfo(StringRef TT, StringRef CPU, StringRef FS,
                                      const SubtargetFeatureKV *PF,
                                      const SubtargetFeatureKV *PD,
                                      const SubtargetInfoKV *ProcSched,
+                                     const MCWriteProcResEntry *WPR,
+                                     const MCWriteLatencyEntry *WL,
+                                     const MCReadAdvanceEntry *RA,
                                      const InstrStage *IS,
                                      const unsigned *OC,
                                      const unsigned *FP,
@@ -32,6 +35,10 @@ MCSubtargetInfo::InitMCSubtargetInfo(StringRef TT, StringRef CPU, StringRef FS,
   ProcFeatures = PF;
   ProcDesc = PD;
   ProcSchedModels = ProcSched;
+  WriteProcResTable = WPR;
+  WriteLatencyTable = WL;
+  ReadAdvanceTable = RA;
+
   Stages = IS;
   OperandCycles = OC;
   ForwardingPaths = FP;
@@ -41,8 +48,9 @@ MCSubtargetInfo::InitMCSubtargetInfo(StringRef TT, StringRef CPU, StringRef FS,
   SubtargetFeatures Features(FS);
   FeatureBits = Features.getFeatureBits(CPU, ProcDesc, NumProcs,
                                         ProcFeatures, NumFeatures);
-}
 
+  CPUSchedModel = getSchedModelForCPU(CPU);
+}
 
 /// ReInitMCSubtargetInfo - Change CPU (and optionally supplemented with
 /// feature string) and recompute feature bits.

@@ -708,7 +708,7 @@ void SubtargetEmitter::GenSchedClassTables(const CodeGenProcModel &ProcModel,
          SCE = SchedModels.schedClassEnd(); SCI != SCE; ++SCI) {
     SCTab.resize(SCTab.size() + 1);
     MCSchedClassDesc &SCDesc = SCTab.back();
-    SCDesc.Name = SCI->Name.c_str();
+    // SCDesc.Name is guarded by NDEBUG
     SCDesc.NumMicroOps = 0;
     SCDesc.BeginGroup = false;
     SCDesc.EndGroup = false;
@@ -1019,6 +1019,15 @@ void SubtargetEmitter::EmitProcessorModels(raw_ostream &OS) {
     EmitProcessorProp(OS, PI->ModelDef, "LoadLatency", ',');
     EmitProcessorProp(OS, PI->ModelDef, "HighLatency", ',');
     EmitProcessorProp(OS, PI->ModelDef, "MispredictPenalty", ',');
+    OS << "  " << PI->Index << ", // Processor ID\n";
+    if (PI->hasInstrSchedModel())
+      OS << "  " << PI->ModelName << "ProcResources" << ",\n"
+         << "  " << PI->ModelName << "SchedClasses" << ",\n"
+         << "  " << PI->ProcResourceDefs.size()+1 << ",\n"
+         << "  " << (SchedModels.schedClassEnd()
+                     - SchedModels.schedClassBegin()) << ",\n";
+    else
+      OS << "  0, 0, 0, 0, // No instruction-level machine model.\n";
     if (SchedModels.hasItineraryClasses())
       OS << "  " << PI->ItinsDef->getName() << ");\n";
     else
@@ -1192,13 +1201,17 @@ void SubtargetEmitter::run(raw_ostream &OS) {
   else
     OS << "0, ";
   OS << '\n'; OS.indent(22);
+  OS << Target << "ProcSchedKV, "
+     << Target << "WriteProcResTable, "
+     << Target << "WriteLatencyTable, "
+     << Target << "ReadAdvanceTable, ";
   if (SchedModels.hasItineraryClasses()) {
-    OS << Target << "ProcSchedKV, "
-       << Target << "Stages, "
+    OS << '\n'; OS.indent(22);
+    OS << Target << "Stages, "
        << Target << "OperandCycles, "
        << Target << "ForwardingPaths, ";
   } else
-    OS << "0, 0, 0, 0, ";
+    OS << "0, 0, 0, ";
   OS << NumFeatures << ", " << NumProcs << ");\n}\n\n";
 
   OS << "} // End llvm namespace \n";
@@ -1264,13 +1277,18 @@ void SubtargetEmitter::run(raw_ostream &OS) {
     OS << Target << "SubTypeKV, ";
   else
     OS << "0, ";
+  OS << '\n'; OS.indent(22);
+  OS << Target << "ProcSchedKV, "
+     << Target << "WriteProcResTable, "
+     << Target << "WriteLatencyTable, "
+     << Target << "ReadAdvanceTable, ";
+  OS << '\n'; OS.indent(22);
   if (SchedModels.hasItineraryClasses()) {
-    OS << Target << "ProcSchedKV, "
-       << Target << "Stages, "
+    OS << Target << "Stages, "
        << Target << "OperandCycles, "
        << Target << "ForwardingPaths, ";
   } else
-    OS << "0, 0, 0, 0, ";
+    OS << "0, 0, 0, ";
   OS << NumFeatures << ", " << NumProcs << ");\n}\n\n";
 
   OS << "} // End llvm namespace \n";
