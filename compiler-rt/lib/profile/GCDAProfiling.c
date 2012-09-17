@@ -232,8 +232,6 @@ void llvm_gcda_emit_arcs(uint32_t num_counters, uint64_t *counters) {
   pos = ftell(output_file);
   val = read_int32();
 
-  fprintf(stderr, "Read: 0x%08x\n", val);
-
   if (val != (uint32_t)-1) {
     /* There are counters present in the file. Merge them. */
     uint32_t j;
@@ -251,10 +249,8 @@ void llvm_gcda_emit_arcs(uint32_t num_counters, uint64_t *counters) {
 
     old_ctrs = malloc(sizeof(uint64_t) * num_counters);
 
-    for (j = 0; j < num_counters; ++j) {
+    for (j = 0; j < num_counters; ++j)
       old_ctrs[j] = read_int64();
-      fprintf(stderr, "old counter[%d]: %lld\n", j, old_ctrs[j]);
-    }
   }
 
   /* Reset for writing. */
