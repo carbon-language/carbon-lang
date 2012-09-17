@@ -28,8 +28,8 @@ template<typename ValueSubClass, typename ItemParentClass>
 
 class GlobalAlias : public GlobalValue, public ilist_node<GlobalAlias> {
   friend class SymbolTableListTraits<GlobalAlias, Module>;
-  void operator=(const GlobalAlias &);     // Do not implement
-  GlobalAlias(const GlobalAlias &);     // Do not implement
+  void operator=(const GlobalAlias &) LLVM_DELETED_FUNCTION;
+  GlobalAlias(const GlobalAlias &) LLVM_DELETED_FUNCTION;
 
   void setParent(Module *parent);
 

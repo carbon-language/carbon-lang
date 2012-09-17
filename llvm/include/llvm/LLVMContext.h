@@ -15,6 +15,8 @@
 #ifndef LLVM_LLVMCONTEXT_H
 #define LLVM_LLVMCONTEXT_H
 
+#include "llvm/Support/Compiler.h"
+
 namespace llvm {
 
 class LLVMContextImpl;
@@ -88,9 +90,8 @@ public:
   void emitError(const Twine &ErrorStr);
 
 private:
-  // DO NOT IMPLEMENT
-  LLVMContext(LLVMContext&);
-  void operator=(LLVMContext&);
+  LLVMContext(LLVMContext&) LLVM_DELETED_FUNCTION;
+  void operator=(LLVMContext&) LLVM_DELETED_FUNCTION;
 
   /// addModule - Register a module as being instantiated in this context.  If
   /// the context is deleted, the module will be deleted as well.

@@ -26,7 +26,7 @@ class PointerType;
 class Module;
 
 class GlobalValue : public Constant {
-  GlobalValue(const GlobalValue &);             // do not implement
+  GlobalValue(const GlobalValue &) LLVM_DELETED_FUNCTION;
 public:
   /// @brief An enumeration for the kinds of linkage for global values.
   enum LinkageTypes {

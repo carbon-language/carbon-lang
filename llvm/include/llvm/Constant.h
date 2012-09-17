@@ -39,8 +39,8 @@ namespace llvm {
 /// don't have to worry about the lifetime of the objects.
 /// @brief LLVM Constant Representation
 class Constant : public User {
-  void operator=(const Constant &);     // Do not implement
-  Constant(const Constant &);           // Do not implement
+  void operator=(const Constant &) LLVM_DELETED_FUNCTION;
+  Constant(const Constant &) LLVM_DELETED_FUNCTION;
   virtual void anchor();
   
 protected:

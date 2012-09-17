@@ -109,8 +109,8 @@ public:
 private:
   Value *GetValueAtEndOfBlockInternal(BasicBlock *BB);
 
-  void operator=(const SSAUpdater&); // DO NOT IMPLEMENT
-  SSAUpdater(const SSAUpdater&);     // DO NOT IMPLEMENT
+  void operator=(const SSAUpdater&) LLVM_DELETED_FUNCTION;
+  SSAUpdater(const SSAUpdater&) LLVM_DELETED_FUNCTION;
 };
   
 /// LoadAndStorePromoter - This little helper class provides a convenient way to

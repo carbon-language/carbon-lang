@@ -79,8 +79,8 @@ private:
   void setParent(Function *parent);
   friend class SymbolTableListTraits<BasicBlock, Function>;
 
-  BasicBlock(const BasicBlock &);     // Do not implement
-  void operator=(const BasicBlock &); // Do not implement
+  BasicBlock(const BasicBlock &) LLVM_DELETED_FUNCTION;
+  void operator=(const BasicBlock &) LLVM_DELETED_FUNCTION;
 
   /// BasicBlock ctor - If the function parameter is specified, the basic block
   /// is automatically inserted at either the end of the function (if

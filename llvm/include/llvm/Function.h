@@ -109,9 +109,9 @@ private:
       BuildLazyArguments();
   }
   void BuildLazyArguments() const;
-  
-  Function(const Function&); // DO NOT IMPLEMENT
-  void operator=(const Function&); // DO NOT IMPLEMENT
+
+  Function(const Function&) LLVM_DELETED_FUNCTION;
+  void operator=(const Function&) LLVM_DELETED_FUNCTION;
 
   /// Function ctor - If the (optional) Module argument is specified, the
   /// function is automatically inserted into the end of the function list for

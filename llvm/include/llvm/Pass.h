@@ -29,6 +29,7 @@
 #ifndef LLVM_PASS_H
 #define LLVM_PASS_H
 
+#include "llvm/Support/Compiler.h"
 #include <string>
 
 namespace llvm {
@@ -82,8 +83,8 @@ class Pass {
   AnalysisResolver *Resolver;  // Used to resolve analysis
   const void *PassID;
   PassKind Kind;
-  void operator=(const Pass&);  // DO NOT IMPLEMENT
-  Pass(const Pass &);           // DO NOT IMPLEMENT
+  void operator=(const Pass&) LLVM_DELETED_FUNCTION;
+  Pass(const Pass &) LLVM_DELETED_FUNCTION;
 
 public:
   explicit Pass(PassKind K, char &pid) : Resolver(0), PassID(&pid), Kind(K) { }

@@ -126,8 +126,8 @@ public:
   }
 
 private:
-  void operator=(const PassInfo &); // do not implement
-  PassInfo(const PassInfo &);       // do not implement
+  void operator=(const PassInfo &) LLVM_DELETED_FUNCTION;
+  PassInfo(const PassInfo &) LLVM_DELETED_FUNCTION;
 };
 
 #define CALL_ONCE_INITIALIZATION(function) \
