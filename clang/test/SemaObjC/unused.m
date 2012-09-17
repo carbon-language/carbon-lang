@@ -29,8 +29,9 @@ void test2() {
 @end
 
 @implementation foo
-- (int) meth: (int)x: 
-(int)y: // expected-warning{{unused}} 
+- (int) meth: (int)x:  // expected-warning {{parameter name used as selector may result in incomplete method selector name}} \
+                       // expected-note {{did you mean to use meth:Name2:Name3: as the selector name instead of meth:::}}
+(int)y: // expected-warning{{unused}}  expected-warning {{parameter name used as selector may result in incomplete method selector name}}
 (int) __attribute__((unused))z { return x; }
 @end
 
