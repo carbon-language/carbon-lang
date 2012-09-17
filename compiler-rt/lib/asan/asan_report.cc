@@ -229,27 +229,33 @@ class ScopedInErrorReport {
  public:
   ScopedInErrorReport() {
     static atomic_uint32_t num_calls;
+    static u32 reporting_thread_tid;
     if (atomic_fetch_add(&num_calls, 1, memory_order_relaxed) != 0) {
       // Do not print more than one report, otherwise they will mix up.
       // Error reporting functions shouldn't return at this situation, as
       // they are defined as no-return.
       Report("AddressSanitizer: while reporting a bug found another one."
                  "Ignoring.\n");
-      // We can't use infinite busy loop here, as ASan may try to report an
-      // error while another error report is being printed (e.g. if the code
-      // that prints error report for buffer overflow results in SEGV).
-      SleepForSeconds(Max(5, flags()->sleep_before_dying + 1));
+      u32 current_tid = asanThreadRegistry().GetCurrentTidOrInvalid();
+      if (current_tid != reporting_thread_tid) {
+        // ASan found two bugs in different threads simultaneously. Sleep
+        // long enough to make sure that the thread which started to print
+        // an error report will finish doing it.
+        SleepForSeconds(Max(100, flags()->sleep_before_dying + 1));
+      }
       Die();
     }
     if (on_error_callback) {
       on_error_callback();
     }
+    reporting_thread_tid = asanThreadRegistry().GetCurrentTidOrInvalid();
     Printf("===================================================="
-               "=============\n");
-    AsanThread *curr_thread = asanThreadRegistry().GetCurrent();
-    if (curr_thread) {
+           "=============\n");
+    if (reporting_thread_tid != kInvalidTid) {
       // We started reporting an error message. Stop using the fake stack
       // in case we call an instrumented function from a symbolizer.
+      AsanThread *curr_thread = asanThreadRegistry().GetCurrent();
+      CHECK(curr_thread);
       curr_thread->fake_stack().StopUsingFakeStack();
     }
   }
