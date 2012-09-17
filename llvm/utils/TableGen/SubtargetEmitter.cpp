@@ -28,6 +28,30 @@ using namespace llvm;
 
 namespace {
 class SubtargetEmitter {
+  // Each processor has a SchedClassDesc table with an entry for each SchedClass.
+  // The SchedClassDesc table indexes into a global write resource table, write
+  // latency table, and read advance table.
+  struct SchedClassTables {
+    std::vector<std::vector<MCSchedClassDesc> > ProcSchedClasses;
+    std::vector<MCWriteProcResEntry> WriteProcResources;
+    std::vector<MCWriteLatencyEntry> WriteLatencies;
+    std::vector<MCReadAdvanceEntry> ReadAdvanceEntries;
+
+    // Reserve an invalid entry at index 0
+    SchedClassTables() {
+      ProcSchedClasses.resize(1);
+      WriteProcResources.resize(1);
+      WriteLatencies.resize(1);
+      ReadAdvanceEntries.resize(1);
+    }
+  };
+
+  struct LessWriteProcResources {
+    bool operator()(const MCWriteProcResEntry &LHS,
+                    const MCWriteProcResEntry &RHS) {
+      return LHS.ProcResourceIdx < RHS.ProcResourceIdx;
+    }
+  };
 
   RecordKeeper &Records;
   CodeGenSchedModels &SchedModels;
@@ -54,6 +78,11 @@ class SubtargetEmitter {
                          char Separator);
   void EmitProcessorResources(const CodeGenProcModel &ProcModel,
                               raw_ostream &OS);
+  Record *FindWriteResources(Record *WriteDef,
+                             const CodeGenProcModel &ProcModel);
+  Record *FindReadAdvance(Record *ReadDef, const CodeGenProcModel &ProcModel);
+  void GenSchedClassTables(const CodeGenProcModel &ProcModel,
+                           SchedClassTables &SchedTables);
   void EmitProcessorModels(raw_ostream &OS);
   void EmitProcessorLookup(raw_ostream &OS);
   void EmitSchedModel(raw_ostream &OS);
@@ -617,6 +646,261 @@ void SubtargetEmitter::EmitProcessorResources(const CodeGenProcModel &ProcModel,
   OS << "};\n";
 }
 
+// Find the WriteRes Record that defines processor resources for this
+// SchedWrite.
+Record *SubtargetEmitter::FindWriteResources(
+  Record *WriteDef, const CodeGenProcModel &ProcModel) {
+
+  // Check if the SchedWrite is already subtarget-specific and directly
+  // specifies a set of processor resources.
+  if (WriteDef->isSubClassOf("SchedWriteRes"))
+    return WriteDef;
+
+  // Check this processor's list of write resources.
+  for (RecIter WRI = ProcModel.WriteResDefs.begin(),
+         WRE = ProcModel.WriteResDefs.end(); WRI != WRE; ++WRI) {
+    if (!(*WRI)->isSubClassOf("WriteRes"))
+      continue;
+    if (WriteDef == (*WRI)->getValueAsDef("WriteType"))
+      return *WRI;
+  }
+  throw TGError(ProcModel.ModelDef->getLoc(),
+                std::string("Processor does not define resources for ")
+                + WriteDef->getName());
+}
+
+/// Find the ReadAdvance record for the given SchedRead on this processor or
+/// return NULL.
+Record *SubtargetEmitter::FindReadAdvance(Record *ReadDef,
+                                          const CodeGenProcModel &ProcModel) {
+  // Check for SchedReads that directly specify a ReadAdvance.
+  if (ReadDef->isSubClassOf("SchedReadAdvance"))
+    return ReadDef;
+
+  // Check this processor's ReadAdvanceList.
+  for (RecIter RAI = ProcModel.ReadAdvanceDefs.begin(),
+         RAE = ProcModel.ReadAdvanceDefs.end(); RAI != RAE; ++RAI) {
+    if (!(*RAI)->isSubClassOf("ReadAdvance"))
+      continue;
+    if (ReadDef == (*RAI)->getValueAsDef("ReadType"))
+      return *RAI;
+  }
+  if (ReadDef->getName() != "ReadDefault") {
+    throw TGError(ProcModel.ModelDef->getLoc(),
+                  std::string("Processor does not define resources for ")
+                  + ReadDef->getName());
+  }
+  return NULL;
+}
+
+// Generate the SchedClass table for this processor and update global
+// tables. Must be called for each processor in order.
+void SubtargetEmitter::GenSchedClassTables(const CodeGenProcModel &ProcModel,
+                                           SchedClassTables &SchedTables) {
+  SchedTables.ProcSchedClasses.resize(SchedTables.ProcSchedClasses.size() + 1);
+  if (!ProcModel.hasInstrSchedModel())
+    return;
+
+  std::vector<MCSchedClassDesc> &SCTab = SchedTables.ProcSchedClasses.back();
+  for (CodeGenSchedModels::SchedClassIter SCI = SchedModels.schedClassBegin(),
+         SCE = SchedModels.schedClassEnd(); SCI != SCE; ++SCI) {
+    SCTab.resize(SCTab.size() + 1);
+    MCSchedClassDesc &SCDesc = SCTab.back();
+    SCDesc.Name = SCI->Name.c_str();
+    SCDesc.NumMicroOps = 0;
+    SCDesc.BeginGroup = false;
+    SCDesc.EndGroup = false;
+    SCDesc.WriteProcResIdx = 0;
+    SCDesc.WriteLatencyIdx = 0;
+    SCDesc.ReadAdvanceIdx = 0;
+
+    // A Variant SchedClass has no resources of its own.
+    if (!SCI->Transitions.empty()) {
+      SCDesc.NumMicroOps = MCSchedClassDesc::VariantNumMicroOps;
+      continue;
+    }
+
+    // Determine if the SchedClass is actually reachable on this processor. If
+    // not don't try to locate the processor resources, it will fail.
+    // If ProcIndices contains 0, this class applies to all processors.
+    assert(!SCI->ProcIndices.empty() && "expect at least one procidx");
+    if (SCI->ProcIndices[0] != 0) {
+      IdxIter PIPos = std::find(SCI->ProcIndices.begin(),
+                                SCI->ProcIndices.end(), ProcModel.Index);
+      if (PIPos == SCI->ProcIndices.end())
+        continue;
+    }
+    IdxVec Writes = SCI->Writes;
+    IdxVec Reads = SCI->Reads;
+    if (SCI->ItinClassDef) {
+      assert(SCI->InstRWs.empty() && "ItinClass should not have InstRWs");
+      // Check this processor's itinerary class resources.
+      for (RecIter II = ProcModel.ItinRWDefs.begin(),
+             IE = ProcModel.ItinRWDefs.end(); II != IE; ++II) {
+        RecVec Matched = (*II)->getValueAsListOfDefs("MatchedItinClasses");
+        if (std::find(Matched.begin(), Matched.end(), SCI->ItinClassDef)
+            != Matched.end()) {
+          SchedModels.findRWs((*II)->getValueAsListOfDefs("OperandReadWrites"),
+                              Writes, Reads);
+          break;
+        }
+      }
+      if (Writes.empty()) {
+        DEBUG(dbgs() << ProcModel.ItinsDef->getName()
+              << " does not have resources for itinerary class "
+              << SCI->ItinClassDef->getName() << '\n');
+      }
+    }
+    else if (!SCI->InstRWs.empty()) {
+      assert(SCI->Writes.empty() && SCI->Reads.empty() &&
+             "InstRW class should not have its own ReadWrites");
+      Record *RWDef = 0;
+      for (RecIter RWI = SCI->InstRWs.begin(), RWE = SCI->InstRWs.end();
+           RWI != RWE; ++RWI) {
+        Record *RWModelDef = (*RWI)->getValueAsDef("SchedModel");
+        if (&ProcModel == &SchedModels.getProcModel(RWModelDef)) {
+          RWDef = *RWI;
+          break;
+        }
+      }
+      if (RWDef) {
+        SchedModels.findRWs(RWDef->getValueAsListOfDefs("OperandReadWrites"),
+                            Writes, Reads);
+      }
+    }
+    // Sum resources across all operand writes.
+    std::vector<MCWriteProcResEntry> WriteProcResources;
+    std::vector<MCWriteLatencyEntry> WriteLatencies;
+    std::vector<MCReadAdvanceEntry> ReadAdvanceEntries;
+    for (IdxIter WI = Writes.begin(), WE = Writes.end(); WI != WE; ++WI) {
+      IdxVec WriteSeq;
+      SchedModels.expandRWSequence(*WI, WriteSeq, /*IsRead=*/false);
+
+      // For each operand, create a latency entry.
+      MCWriteLatencyEntry WLEntry;
+      WLEntry.Cycles = 0;
+      WLEntry.WriteResourceID = WriteSeq.back();
+
+      for (IdxIter WSI = WriteSeq.begin(), WSE = WriteSeq.end();
+           WSI != WSE; ++WSI) {
+
+        Record *WriteDef = SchedModels.getSchedWrite(*WSI).TheDef;
+        Record *WriteRes = FindWriteResources(WriteDef, ProcModel);
+
+        // Mark the parent class as invalid for unsupported write types.
+        if (WriteRes->getValueAsBit("Unsupported")) {
+          SCDesc.NumMicroOps = MCSchedClassDesc::InvalidNumMicroOps;
+          break;
+        }
+        WLEntry.Cycles += WriteRes->getValueAsInt("Latency");
+        SCDesc.NumMicroOps += WriteRes->getValueAsInt("NumMicroOps");
+        SCDesc.BeginGroup |= WriteRes->getValueAsBit("BeginGroup");
+        SCDesc.EndGroup |= WriteRes->getValueAsBit("EndGroup");
+
+        // Create an entry for each ProcResource listed in WriteRes.
+        RecVec PRVec = WriteRes->getValueAsListOfDefs("ProcResources");
+        std::vector<int64_t> Cycles =
+          WriteRes->getValueAsListOfInts("ResourceCycles");
+        for (unsigned PRIdx = 0, PREnd = PRVec.size();
+             PRIdx != PREnd; ++PRIdx) {
+          MCWriteProcResEntry WPREntry;
+          WPREntry.ProcResourceIdx = ProcModel.getProcResourceIdx(PRVec[PRIdx]);
+          assert(WPREntry.ProcResourceIdx && "Bad ProcResourceIdx");
+          if (Cycles.size() > PRIdx)
+            WPREntry.Cycles = Cycles[PRIdx];
+          else
+            WPREntry.Cycles = 1;
+          WriteProcResources.push_back(WPREntry);
+        }
+      }
+      WriteLatencies.push_back(WLEntry);
+    }
+    // Create an entry for each operand Read in this SchedClass.
+    // Entries must be sorted first by UseIdx then by WriteResourceID.
+    for (unsigned UseIdx = 0, EndIdx = Reads.size();
+         UseIdx != EndIdx; ++UseIdx) {
+      Record *ReadDef = SchedModels.getSchedRead(Reads[UseIdx]).TheDef;
+      Record *ReadAdvance = FindReadAdvance(ReadDef, ProcModel);
+      if (!ReadAdvance)
+        continue;
+
+      // Mark the parent class as invalid for unsupported write types.
+      if (ReadAdvance->getValueAsBit("Unsupported")) {
+        SCDesc.NumMicroOps = MCSchedClassDesc::InvalidNumMicroOps;
+        break;
+      }
+      RecVec ValidWrites = ReadAdvance->getValueAsListOfDefs("ValidWrites");
+      IdxVec WriteIDs;
+      if (ValidWrites.empty())
+        WriteIDs.push_back(0);
+      else {
+        for (RecIter VWI = ValidWrites.begin(), VWE = ValidWrites.end();
+             VWI != VWE; ++VWI) {
+          WriteIDs.push_back(SchedModels.getSchedRWIdx(*VWI, /*IsRead=*/false));
+        }
+      }
+      std::sort(WriteIDs.begin(), WriteIDs.end());
+      for(IdxIter WI = WriteIDs.begin(), WE = WriteIDs.end(); WI != WE; ++WI) {
+        MCReadAdvanceEntry RAEntry;
+        RAEntry.UseIdx = UseIdx;
+        RAEntry.WriteResourceID = *WI;
+        RAEntry.Cycles = ReadAdvance->getValueAsInt("Cycles");
+        ReadAdvanceEntries.push_back(RAEntry);
+      }
+    }
+    if (SCDesc.NumMicroOps == MCSchedClassDesc::InvalidNumMicroOps) {
+      WriteProcResources.clear();
+      WriteLatencies.clear();
+      ReadAdvanceEntries.clear();
+    }
+    // Add the information for this SchedClass to the global tables using basic
+    // compression.
+    //
+    // WritePrecRes entries are sorted by ProcResIdx.
+    std::sort(WriteProcResources.begin(), WriteProcResources.end(),
+              LessWriteProcResources());
+
+    SCDesc.NumWriteProcResEntries = WriteProcResources.size();
+    std::vector<MCWriteProcResEntry>::iterator WPRPos =
+      std::search(SchedTables.WriteProcResources.begin(),
+                  SchedTables.WriteProcResources.end(),
+                  WriteProcResources.begin(), WriteProcResources.end());
+    if (WPRPos != SchedTables.WriteProcResources.end())
+      SCDesc.WriteProcResIdx = WPRPos - SchedTables.WriteProcResources.begin();
+    else {
+      SCDesc.WriteProcResIdx = SchedTables.WriteProcResources.size();
+      SchedTables.WriteProcResources.insert(WPRPos, WriteProcResources.begin(),
+                                            WriteProcResources.end());
+    }
+    // Latency entries must remain in operand order.
+    SCDesc.NumWriteLatencyEntries = WriteLatencies.size();
+    std::vector<MCWriteLatencyEntry>::iterator WLPos =
+      std::search(SchedTables.WriteLatencies.begin(),
+                  SchedTables.WriteLatencies.end(),
+                  WriteLatencies.begin(), WriteLatencies.end());
+    if (WLPos != SchedTables.WriteLatencies.end())
+      SCDesc.WriteLatencyIdx = WLPos - SchedTables.WriteLatencies.begin();
+    else {
+      SCDesc.WriteLatencyIdx = SchedTables.WriteLatencies.size();
+      SchedTables.WriteLatencies.insert(WLPos, WriteLatencies.begin(),
+                                     WriteLatencies.end());
+    }
+    // ReadAdvanceEntries must remain in operand order.
+    SCDesc.NumReadAdvanceEntries = ReadAdvanceEntries.size();
+    std::vector<MCReadAdvanceEntry>::iterator RAPos =
+      std::search(SchedTables.ReadAdvanceEntries.begin(),
+                  SchedTables.ReadAdvanceEntries.end(),
+                  ReadAdvanceEntries.begin(), ReadAdvanceEntries.end());
+    if (RAPos != SchedTables.ReadAdvanceEntries.end())
+      SCDesc.ReadAdvanceIdx = RAPos - SchedTables.ReadAdvanceEntries.begin();
+    else {
+      SCDesc.ReadAdvanceIdx = SchedTables.ReadAdvanceEntries.size();
+      SchedTables.ReadAdvanceEntries.insert(RAPos, ReadAdvanceEntries.begin(),
+                                            ReadAdvanceEntries.end());
+    }
+  }
+}
+
 void SubtargetEmitter::EmitProcessorModels(raw_ostream &OS) {
   // For each processor model.
   for (CodeGenSchedModels::ProcIter PI = SchedModels.procModelBegin(),
@@ -626,8 +910,7 @@ void SubtargetEmitter::EmitProcessorModels(raw_ostream &OS) {
       EmitProcessorResources(*PI, OS);
     else if(!PI->ProcResourceDefs.empty())
       throw TGError(PI->ModelDef->getLoc(), "SchedMachineModel defines "
-                    "ProcResources without defining either WriteResourcesList "
-                    "or ItinResources");
+                    "ProcResources without defining WriteRes SchedWriteRes");
 
     // Begin processor itinerary properties
     OS << "\n";
@@ -705,6 +988,12 @@ void SubtargetEmitter::EmitSchedModel(raw_ostream &OS) {
   EmitProcessorModels(OS);
   // Emit the processor lookup data
   EmitProcessorLookup(OS);
+
+  SchedClassTables SchedTables;
+  for (CodeGenSchedModels::ProcIter PI = SchedModels.procModelBegin(),
+         PE = SchedModels.procModelEnd(); PI != PE; ++PI) {
+    GenSchedClassTables(*PI, SchedTables);
+  }
 
   OS << "#undef DBGFIELD";
 }
