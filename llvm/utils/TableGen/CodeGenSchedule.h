@@ -304,15 +304,6 @@ public:
     return SchedClasses[Idx];
   }
 
-  // Get an itinerary class's index. Value indices are '0' for NoItinerary up to
-  // and including numItineraryClasses().
-  unsigned getItinClassIdx(Record *ItinDef) const {
-    assert(SchedClassIdxMap.count(ItinDef->getName()) && "missing ItinClass");
-    unsigned Idx = SchedClassIdxMap.lookup(ItinDef->getName());
-    assert(Idx <= NumItineraryClasses && "bad ItinClass index");
-    return Idx;
-  }
-
   // Get the SchedClass index for an instruction. Instructions with no
   // itinerary, no SchedReadWrites, and no InstrReadWrites references return 0
   // for NoItinerary.
