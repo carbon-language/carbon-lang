@@ -110,8 +110,13 @@ public:
     }
 
     /// \brief Support comparison with a single offset to allow binary searches.
-    bool operator<(uint64_t RHSOffset) const {
-      return BeginOffset < RHSOffset;
+    friend bool operator<(const ByteRange &LHS, uint64_t RHSOffset) {
+      return LHS.BeginOffset < RHSOffset;
+    }
+
+    friend LLVM_ATTRIBUTE_UNUSED bool operator<(uint64_t LHSOffset,
+                                                const ByteRange &RHS) {
+      return LHSOffset < RHS.BeginOffset;
     }
 
     bool operator==(const ByteRange &RHS) const {
