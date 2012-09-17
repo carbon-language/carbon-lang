@@ -148,7 +148,7 @@ struct COFFParser {
           return false;
         }
         if (KeyValue == "Machine") {
-          uint16_t Machine;
+          uint16_t Machine = COFF::MT_Invalid;
           if (!getAs(Value, Machine)) {
             // It's not a raw number, try matching the string.
             StringRef ValueValue = Value->getValue(Storage);

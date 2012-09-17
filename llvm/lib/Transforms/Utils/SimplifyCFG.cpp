@@ -1796,7 +1796,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
       continue;
 
     // Determine if the two branches share a common destination.
-    Instruction::BinaryOps Opc;
+    Instruction::BinaryOps Opc = Instruction::BinaryOpsEnd;
     bool InvertPredCond = false;
 
     if (BI->isConditional()) {

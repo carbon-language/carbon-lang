@@ -392,7 +392,7 @@ bool AddressSanitizer::HasDynamicInitializer(GlobalVariable *G) {
 }
 
 void AddressSanitizer::instrumentMop(AsanFunctionContext &AFC, Instruction *I) {
-  bool IsWrite;
+  bool IsWrite = false;
   Value *Addr = isInterestingMemoryAccess(I, &IsWrite);
   assert(Addr);
   if (ClOpt && ClOptGlobals) {
