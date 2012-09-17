@@ -14,10 +14,12 @@
 #include "CodeGenTarget.h"
 #include "CodeGenSchedule.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/MC/MCInstrItineraries.h"
-#include "llvm/Support/Debug.h"
+#include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/TableGenBackend.h"
+#include "llvm/Support/Debug.h"
 #include <algorithm>
 #include <map>
 #include <string>
@@ -50,6 +52,8 @@ class SubtargetEmitter {
                          &ProcItinLists);
   void EmitProcessorProp(raw_ostream &OS, const Record *R, const char *Name,
                          char Separator);
+  void EmitProcessorResources(const CodeGenProcModel &ProcModel,
+                              raw_ostream &OS);
   void EmitProcessorModels(raw_ostream &OS);
   void EmitProcessorLookup(raw_ostream &OS);
   void EmitSchedModel(raw_ostream &OS);
@@ -578,11 +582,53 @@ void SubtargetEmitter::EmitProcessorProp(raw_ostream &OS, const Record *R,
   OS << '\n';
 }
 
+void SubtargetEmitter::EmitProcessorResources(const CodeGenProcModel &ProcModel,
+                                              raw_ostream &OS) {
+  char Sep = ProcModel.ProcResourceDefs.empty() ? ' ' : ',';
+
+  OS << "\n// {Name, NumUnits, SuperIdx}\n";
+  OS << "static const llvm::MCProcResourceDesc "
+     << ProcModel.ModelName << "ProcResources" << "[] = {\n"
+     << "  {DBGFIELD(\"InvalidUnit\")     0, 0}" << Sep << "\n";
+
+  for (unsigned i = 0, e = ProcModel.ProcResourceDefs.size(); i < e; ++i) {
+    Record *PRDef = ProcModel.ProcResourceDefs[i];
+
+    // Find the SuperIdx
+    unsigned SuperIdx = 0;
+    Record *SuperDef = 0;
+    if (PRDef->getValueInit("Super")->isComplete()) {
+      SuperDef =
+        SchedModels.findProcResUnits(PRDef->getValueAsDef("Super"), ProcModel);
+      SuperIdx = ProcModel.getProcResourceIdx(SuperDef);
+    }
+    // Emit the ProcResourceDesc
+    if (i+1 == e)
+      Sep = ' ';
+    OS << "  {DBGFIELD(\"" << PRDef->getName() << "\") ";
+    if (PRDef->getName().size() < 15)
+      OS.indent(15 - PRDef->getName().size());
+    OS << PRDef->getValueAsInt("NumUnits") << ", " << SuperIdx
+       << "}" << Sep << " // #" << i+1;
+    if (SuperDef)
+      OS << ", Super=" << SuperDef->getName();
+    OS << "\n";
+  }
+  OS << "};\n";
+}
+
 void SubtargetEmitter::EmitProcessorModels(raw_ostream &OS) {
   // For each processor model.
   for (CodeGenSchedModels::ProcIter PI = SchedModels.procModelBegin(),
          PE = SchedModels.procModelEnd(); PI != PE; ++PI) {
-    // Skip default
+    // Emit processor resource table.
+    if (PI->hasInstrSchedModel())
+      EmitProcessorResources(*PI, OS);
+    else if(!PI->ProcResourceDefs.empty())
+      throw TGError(PI->ModelDef->getLoc(), "SchedMachineModel defines "
+                    "ProcResources without defining either WriteResourcesList "
+                    "or ItinResources");
+
     // Begin processor itinerary properties
     OS << "\n";
     OS << "static const llvm::MCSchedModel " << PI->ModelName << "(\n";
@@ -592,10 +638,9 @@ void SubtargetEmitter::EmitProcessorModels(raw_ostream &OS) {
     EmitProcessorProp(OS, PI->ModelDef, "HighLatency", ',');
     EmitProcessorProp(OS, PI->ModelDef, "MispredictPenalty", ',');
     if (SchedModels.hasItineraryClasses())
-      OS << "  " << PI->ItinsDef->getName();
+      OS << "  " << PI->ItinsDef->getName() << ");\n";
     else
-      OS << "  0";
-    OS << ");\n";
+      OS << "  0); // No Itinerary\n";
   }
 }
 
@@ -624,11 +669,7 @@ void SubtargetEmitter::EmitProcessorLookup(raw_ostream &OS) {
       SchedModels.getModelForProc(Processor).ModelName;
 
     // Emit as { "cpu", procinit },
-    OS << "  { "
-       << "\"" << Name << "\", "
-       << "(const void *)&" << ProcModelName;
-
-    OS << " }";
+    OS << "  { \"" << Name << "\", (const void *)&" << ProcModelName << " }";
 
     // Depending on ''if more in the list'' emit comma
     if (++i < N) OS << ",";
@@ -644,16 +685,28 @@ void SubtargetEmitter::EmitProcessorLookup(raw_ostream &OS) {
 // EmitSchedModel - Emits all scheduling model tables, folding common patterns.
 //
 void SubtargetEmitter::EmitSchedModel(raw_ostream &OS) {
+  OS << "#ifdef DBGFIELD\n"
+     << "#error \"<target>GenSubtargetInfo.inc requires a DBGFIELD macro\"\n"
+     << "#endif\n"
+     << "#ifndef NDEBUG\n"
+     << "#define DBGFIELD(x) x,\n"
+     << "#else\n"
+     << "#define DBGFIELD(x)\n"
+     << "#endif\n";
+
   if (SchedModels.hasItineraryClasses()) {
     std::vector<std::vector<InstrItinerary> > ProcItinLists;
     // Emit the stage data
     EmitStageAndOperandCycleData(OS, ProcItinLists);
     EmitItineraries(OS, ProcItinLists);
   }
+
   // Emit the processor machine model
   EmitProcessorModels(OS);
   // Emit the processor lookup data
   EmitProcessorLookup(OS);
+
+  OS << "#undef DBGFIELD";
 }
 
 //
