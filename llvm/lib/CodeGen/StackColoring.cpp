@@ -62,14 +62,13 @@ DisableColoring("no-stack-coloring",
         cl::init(false), cl::Hidden,
         cl::desc("Disable stack coloring"));
 
-
 /// The user may write code that uses allocas outside of the declared lifetime
 /// zone. This can happen when the user returns a reference to a local
 /// data-structure. We can detect these cases and decide not to optimize the
 /// code. If this flag is enabled, we try to save the user.
 static cl::opt<bool>
 ProtectFromEscapedAllocas("protect-from-escaped-allocas",
-        cl::init(true), cl::Hidden,
+        cl::init(false), cl::Hidden,
         cl::desc("Do not optimize lifetime zones that are broken"));
 
 STATISTIC(NumMarkerSeen,  "Number of lifetime markers found.");
