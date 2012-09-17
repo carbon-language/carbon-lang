@@ -109,7 +109,6 @@ class AliasSet : public ilist_node<AliasSet> {
 
   PointerRec *PtrList, **PtrListEnd;  // Doubly linked list of nodes.
   AliasSet *Forward;             // Forwarding pointer.
-  AliasSet *Next, *Prev;         // Doubly linked list of AliasSets.
 
   // All instructions without a specific address in this alias set.
   std::vector<AssertingVH<Instruction> > UnknownInsts;
