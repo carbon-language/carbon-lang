@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
+#include "llvm/CodeGen/TargetSchedule.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/SmallSet.h"
@@ -180,6 +181,9 @@ namespace llvm {
 
     /// Live Intervals provides reaching defs in preRA scheduling.
     LiveIntervals *LIS;
+
+    /// TargetSchedModel provides an interface to the machine model.
+    TargetSchedModel SchedModel;
 
     /// isPostRA flag indicates vregs cannot be present.
     bool IsPostRA;
