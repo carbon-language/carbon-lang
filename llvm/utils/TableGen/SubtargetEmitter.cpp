@@ -708,7 +708,6 @@ void SubtargetEmitter::GenSchedClassTables(const CodeGenProcModel &ProcModel,
          SCE = SchedModels.schedClassEnd(); SCI != SCE; ++SCI) {
     SCTab.resize(SCTab.size() + 1);
     MCSchedClassDesc &SCDesc = SCTab.back();
-    SCDesc.Name = SCI->Name.c_str();
     SCDesc.NumMicroOps = 0;
     SCDesc.BeginGroup = false;
     SCDesc.EndGroup = false;
@@ -972,7 +971,7 @@ void SubtargetEmitter::EmitSchedClassTables(SchedClassTables &SchedTables,
 
     // The first class is always invalid. We no way to distinguish it except by
     // name and position.
-    assert(SchedModels.getSchedClass(0).Name == "NoItinerary"
+    assert(SchedClass.Name == "NoItinerary"
            && "invalid class not first");
     OS << "  {DBGFIELD(\"InvalidSchedClass\")  "
        << MCSchedClassDesc::InvalidNumMicroOps
