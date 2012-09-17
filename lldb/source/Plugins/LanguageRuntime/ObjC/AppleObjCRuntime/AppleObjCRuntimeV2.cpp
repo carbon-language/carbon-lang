@@ -1365,17 +1365,6 @@ AppleObjCRuntimeV2::ClassDescriptorV2::Initialize (ObjCISA isa, lldb::ProcessSP 
         m_valid = false;
         return;
     }
-    lldb::addr_t vtable_ptr = process_sp->ReadPointerFromMemory(m_isa + 3*ptr_size, error);
-    if (error.Fail())
-    {
-        m_valid = false;
-        return;
-    }
-    if (!IsPointerValid(vtable_ptr,ptr_size,true,false,true))
-    {
-        m_valid = false;
-        return;
-    }
 
     // now construct the data object
     
