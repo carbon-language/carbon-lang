@@ -14,7 +14,7 @@
 #ifndef LLVM_TARGET_TARGETSUBTARGETINFO_H
 #define LLVM_TARGET_TARGETSUBTARGETINFO_H
 
-#include "llvm/Codegen/TargetSchedule.h"
+#include "llvm/CodeGen/TargetSchedule.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/CodeGen.h"
 
