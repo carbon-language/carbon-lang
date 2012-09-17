@@ -14,8 +14,10 @@
 
 #include "lld/ReaderWriter/ReaderELF.h"
 #include "lld/Core/File.h"
+#include "lld/Core/Reference.h"
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Object/ELF.h"
 #include "llvm/Object/ObjectFile.h"
@@ -39,58 +41,133 @@ using namespace lld;
 
 namespace { // anonymous
 
-// This atom class corresponds to absolute symbol
-class ELFAbsoluteAtom: public AbsoluteAtom {
 
+/// \brief Relocation References: Defined Atoms may contain 
+/// references that will need to be patched before
+/// the executable is written.
+template <llvm::support::endianness target_endianness, bool is64Bits>
+class ELFReference final : public Reference {
+
+  typedef llvm::object::Elf_Rel_Impl
+                        <target_endianness, is64Bits, false> Elf_Rel;
+  typedef llvm::object::Elf_Rel_Impl
+                        <target_endianness, is64Bits, true> Elf_Rela;
 public:
-  ELFAbsoluteAtom(const File &F,
-                  llvm::StringRef N,
-                  uint64_t V)
-    : OwningFile(F)
-    , Name(N)
-    , Value(V)
-  {}
 
-  virtual const class File &file() const {
-    return OwningFile;
+  ELFReference(const Elf_Rela *rela, uint64_t offset, const Atom *target)
+    : _target(target)
+    , _targetSymbolIndex(rela->getSymbol())
+    , _offsetInAtom(offset)
+    , _addend(rela->r_addend)
+    , _kind(rela->getType()) {}
+
+  ELFReference(const Elf_Rel *rel, uint64_t offset, const Atom *target)
+    : _target(target)
+    , _targetSymbolIndex(rel->getSymbol())
+    , _offsetInAtom(offset)
+    , _addend(0)
+    , _kind(rel->getType()) {}
+
+
+  virtual uint64_t offsetInAtom() const {
+    return _offsetInAtom;
   }
 
-  virtual llvm::StringRef name() const {
-    return Name;
+  virtual Kind kind() const {
+    return _kind;
   }
 
-  virtual uint64_t value() const {
-    return Value;
+  virtual void setKind(Kind kind) {
+    _kind = kind;
   }
 
+  virtual const Atom *target() const {
+    return _target;
+  }
+
+/// \brief targetSymbolIndex: This is the symbol table index that contains
+/// the target reference.
+  uint64_t targetSymbolIndex() const {
+    return _targetSymbolIndex;
+  }
+
+  virtual Addend addend() const {
+    return _addend;
+  }
+
+  virtual void setAddend(Addend A) {
+    _addend = A;
+  }
+
+  virtual void setTarget(const Atom *newAtom) {
+    _target = newAtom;
+  }
 private:
-  const File &OwningFile;
-  llvm::StringRef Name;
-  uint64_t Value;
+  const Atom  *_target;
+  uint64_t     _targetSymbolIndex;
+  uint64_t     _offsetInAtom;
+  Addend       _addend;
+  Kind         _kind;
 };
 
 
-//  This atom corresponds to undefined symbols.
+/// \brief ELFAbsoluteAtom: These atoms store symbols that are fixed to a
+/// particular address.  This atom has no content its address will be used by
+/// the writer to fixup references that point to it.
 template<llvm::support::endianness target_endianness, bool is64Bits>
-class ELFUndefinedAtom: public UndefinedAtom {
+class ELFAbsoluteAtom final: public AbsoluteAtom {
+
+public:
+  ELFAbsoluteAtom(const File &file,
+                  llvm::StringRef name,
+                  uint64_t value)
+    : _owningFile(file)
+    , _name(name)
+    , _value(value)
+  {}
+
+  virtual const class File &file() const {
+    return _owningFile;
+  }
+
+  virtual llvm::StringRef name() const {
+    return _name;
+  }
+
+  virtual uint64_t value() const {
+    return _value;
+  }
+
+private:
+  const File &_owningFile;
+  llvm::StringRef _name;
+  uint64_t _value;
+};
+
+
+/// \brief ELFUndefinedAtom: These atoms store undefined symbols and are
+/// place holders that will be replaced by defined atoms later in the
+/// linking process.
+template<llvm::support::endianness target_endianness, bool is64Bits>
+class ELFUndefinedAtom final: public UndefinedAtom {
 
   typedef llvm::object::Elf_Sym_Impl<target_endianness, is64Bits> Elf_Sym;
 
 public:
-  ELFUndefinedAtom(const File &F,
-                   llvm::StringRef N,
-                   const Elf_Sym *E)
-    : OwningFile(F)
-    , Name(N)
-    , Symbol(E)
+  ELFUndefinedAtom(const File &file,
+                   llvm::StringRef name,
+                   const Elf_Sym *symbol)
+    : _owningFile(file)
+    , _name(name)
+    , _symbol(symbol)
   {}
 
   virtual const class File &file() const {
-    return OwningFile;
+    return _owningFile;
   }
 
   virtual llvm::StringRef name() const {
-    return Name;
+    return _name;
   }
 
   //   FIXME What distinguishes a symbol in ELF that can help
@@ -100,49 +177,58 @@ public:
   //
   virtual CanBeNull canBeNull() const {
 
-    if (Symbol->getBinding() == llvm::ELF::STB_WEAK)
+    if (_symbol->getBinding() == llvm::ELF::STB_WEAK)
       return CanBeNull::canBeNullAtBuildtime;
     else
       return CanBeNull::canBeNullNever;
   }
 
 private:
-  const File &OwningFile;
-  llvm::StringRef Name;
-  const Elf_Sym *Symbol;
+  const File &_owningFile;
+  llvm::StringRef _name;
+  const Elf_Sym *_symbol;
 };
 
 
-//  This atom corresponds to defined symbols.
+/// \brief ELFDefinedAtom: This atom stores defined symbols and will contain
+/// either data or code.
 template<llvm::support::endianness target_endianness, bool is64Bits>
-class ELFDefinedAtom: public DefinedAtom {
+class ELFDefinedAtom final: public DefinedAtom {
 
   typedef llvm::object::Elf_Sym_Impl<target_endianness, is64Bits> Elf_Sym;
   typedef llvm::object::Elf_Shdr_Impl<target_endianness, is64Bits> Elf_Shdr;
 
 public:
-  ELFDefinedAtom(const File &F,
-                 llvm::StringRef N,
-                 llvm::StringRef SN,
-                 const Elf_Sym *E,
-                 const Elf_Shdr *S,
-                 llvm::ArrayRef<uint8_t> D)
-    : OwningFile(F)
-    , SymbolName(N)
-    , SectionName(SN)
-    , Symbol(E)
-    , Section(S)
-    , ContentData(D) {
-    static uint64_t ordernumber = 0;
-    _ordinal = ++ordernumber;
+  ELFDefinedAtom(const File &file,
+                 llvm::StringRef symbolName,
+                 llvm::StringRef sectionName,
+                 const Elf_Sym *symbol,
+                 const Elf_Shdr *section,
+                 llvm::ArrayRef<uint8_t> contentData,
+                 unsigned int referenceStart,
+                 unsigned int referenceEnd,
+                 std::vector<ELFReference
+                             <target_endianness, is64Bits> *> &referenceList)
+
+    : _owningFile(file)
+    , _symbolName(symbolName)
+    , _sectionName(sectionName)
+    , _symbol(symbol)
+    , _section(section)
+    , _contentData(contentData) 
+    , _referenceStartIndex(referenceStart)
+    , _referenceEndIndex(referenceEnd)
+    , _referenceList(referenceList) {
+    static uint64_t orderNumber = 0;
+    _ordinal = ++orderNumber;
   }
 
   virtual const class File &file() const {
-    return OwningFile;
+    return _owningFile;
   }
 
   virtual llvm::StringRef name() const {
-    return SymbolName;
+    return _symbolName;
   }
 
   virtual uint64_t ordinal() const {
@@ -153,18 +239,18 @@ public:
 
     // Common symbols are not allocated in object files so
     // their size is zero.
-    if ((Symbol->getType() == llvm::ELF::STT_COMMON)
-        || Symbol->st_shndx == llvm::ELF::SHN_COMMON)
+    if ((_symbol->getType() == llvm::ELF::STT_COMMON)
+        || _symbol->st_shndx == llvm::ELF::SHN_COMMON)
       return (uint64_t)0;
 
-    return ContentData.size();
+    return _contentData.size();
 
   }
 
   virtual Scope scope() const {
-    if (Symbol->st_other == llvm::ELF::STV_HIDDEN)
+    if (_symbol->st_other == llvm::ELF::STV_HIDDEN)
       return scopeLinkageUnit;
-    else if (Symbol->getBinding() != llvm::ELF::STB_LOCAL)
+    else if (_symbol->getBinding() != llvm::ELF::STB_LOCAL)
       return scopeGlobal;
     else
       return scopeTranslationUnit;
@@ -180,11 +266,11 @@ public:
 
   virtual Merge merge() const {
 
-    if (Symbol->getBinding() == llvm::ELF::STB_WEAK)
+    if (_symbol->getBinding() == llvm::ELF::STB_WEAK)
       return mergeAsWeak;
 
-    if ((Symbol->getType() == llvm::ELF::STT_COMMON)
-        || Symbol->st_shndx == llvm::ELF::SHN_COMMON)
+    if ((_symbol->getType() == llvm::ELF::STT_COMMON)
+        || _symbol->st_shndx == llvm::ELF::SHN_COMMON)
       return mergeAsTentative;
 
     return mergeNo;
@@ -192,14 +278,14 @@ public:
 
   virtual ContentType contentType() const {
 
-    if (Symbol->getType() == llvm::ELF::STT_FUNC)
+    if (_symbol->getType() == llvm::ELF::STT_FUNC)
       return typeCode;
 
-    if ((Symbol->getType() == llvm::ELF::STT_COMMON)
-        || Symbol->st_shndx == llvm::ELF::SHN_COMMON)
+    if ((_symbol->getType() == llvm::ELF::STT_COMMON)
+        || _symbol->st_shndx == llvm::ELF::SHN_COMMON)
       return typeZeroFill;
 
-    if (Symbol->getType() == llvm::ELF::STT_OBJECT)
+    if (_symbol->getType() == llvm::ELF::STT_OBJECT)
       return typeData;
 
     return typeUnknown;
@@ -209,25 +295,25 @@ public:
 
     // Unallocated common symbols specify their alignment
     // constraints in st_value.
-    if ((Symbol->getType() == llvm::ELF::STT_COMMON)
-        || Symbol->st_shndx == llvm::ELF::SHN_COMMON) {
-      return (Alignment(Symbol->st_value));
+    if ((_symbol->getType() == llvm::ELF::STT_COMMON)
+        || _symbol->st_shndx == llvm::ELF::SHN_COMMON) {
+      return (Alignment(_symbol->st_value));
     }
 
-    return Alignment(llvm::Log2_64(Section->sh_addralign));
+    return Alignment(llvm::Log2_64(_section->sh_addralign));
   }
 
   // Do we have a choice for ELF?  All symbols
   // live in explicit sections.
   virtual SectionChoice sectionChoice() const {
-    if (Symbol->st_shndx > llvm::ELF::SHN_LORESERVE)
+    if (_symbol->st_shndx > llvm::ELF::SHN_LORESERVE)
       return sectionBasedOnContent;
 
     return sectionCustomRequired;
   }
 
   virtual llvm::StringRef customSectionName() const {
-    return SectionName;
+    return _sectionName;
   }
 
   // It isn't clear that __attribute__((used)) is transmitted to
@@ -238,7 +324,7 @@ public:
 
   virtual ContentPermissions permissions() const {
 
-    switch (Section->sh_type) {
+    switch (_section->sh_type) {
     // permRW_L is for sections modified by the runtime
     // loader.
     case llvm::ELF::SHT_REL:
@@ -247,7 +333,7 @@ public:
 
     case llvm::ELF::SHT_DYNAMIC:
     case llvm::ELF::SHT_PROGBITS:
-      switch (Section->sh_flags) {
+      switch (_section->sh_flags) {
 
       case (llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_EXECINSTR):
         return permR_X;
@@ -281,34 +367,49 @@ public:
   }
 
   virtual llvm::ArrayRef<uint8_t> rawContent() const {
-    return ContentData;
+    return _contentData;
   }
 
-  virtual reference_iterator begin() const {
-    return reference_iterator(*this, nullptr);
+  DefinedAtom::reference_iterator begin() const {
+    uintptr_t index = _referenceStartIndex;
+    const void *it = reinterpret_cast<const void*>(index);
+    return reference_iterator(*this, it);
   }
 
-  virtual reference_iterator end() const {
-    return reference_iterator(*this, nullptr);
+  DefinedAtom::reference_iterator end() const {
+    uintptr_t index = _referenceEndIndex;
+    const void *it = reinterpret_cast<const void*>(index);
+    return reference_iterator(*this, it);
+  }
+
+  const Reference *derefIterator(const void *It) const {
+    uintptr_t index = reinterpret_cast<uintptr_t>(It);
+    assert(index >= _referenceStartIndex);
+    assert(index < _referenceEndIndex);
+    return ((_referenceList)[index]);
+  }
+
+  void incrementIterator(const void*& It) const {
+    uintptr_t index = reinterpret_cast<uintptr_t>(It);
+    ++index;
+    It = reinterpret_cast<const void*>(index);
   }
 
 private:
-  virtual const Reference *derefIterator(const void *iter) const {
-    return nullptr;
-  }
-  virtual void incrementIterator(const void *&iter) const {
-  }
 
-  const File &OwningFile;
-  llvm::StringRef SymbolName;
-  llvm::StringRef SectionName;
-  const Elf_Sym *Symbol;
-  const Elf_Shdr *Section;
+  const File &_owningFile;
+  llvm::StringRef _symbolName;
+  llvm::StringRef _sectionName;
+  const Elf_Sym *_symbol;
+  const Elf_Shdr *_section;
 
-  // ContentData will hold the bits that make up the atom.
-  llvm::ArrayRef<uint8_t> ContentData;
+  // _contentData will hold the bits that make up the atom.
+  llvm::ArrayRef<uint8_t> _contentData;
 
   uint64_t _ordinal;
+  unsigned int _referenceStartIndex;
+  unsigned int _referenceEndIndex;
+  std::vector<ELFReference<target_endianness, is64Bits> *> &_referenceList;
 };
 
 
@@ -318,91 +419,152 @@ private:
 template<llvm::support::endianness target_endianness, bool is64Bits>
 class FileELF: public File {
 
-  typedef llvm::object::Elf_Sym_Impl<target_endianness, is64Bits> Elf_Sym;
-  typedef llvm::object::Elf_Shdr_Impl<target_endianness, is64Bits> Elf_Shdr;
+  typedef llvm::object::Elf_Sym_Impl
+                        <target_endianness, is64Bits> Elf_Sym;
+  typedef llvm::object::Elf_Shdr_Impl
+                        <target_endianness, is64Bits> Elf_Shdr;
+  typedef llvm::object::Elf_Rel_Impl
+                        <target_endianness, is64Bits, false> Elf_Rel;
+  typedef llvm::object::Elf_Rel_Impl
+                        <target_endianness, is64Bits, true> Elf_Rela;
 
 public:
   FileELF(std::unique_ptr<llvm::MemoryBuffer> MB, llvm::error_code &EC) :
           File(MB->getBufferIdentifier()) {
 
-    llvm::OwningPtr<llvm::object::Binary> Bin;
-    EC = llvm::object::createBinary(MB.release(), Bin);
+    llvm::OwningPtr<llvm::object::Binary> binaryFile;
+    EC = llvm::object::createBinary(MB.release(), binaryFile);
     if (EC)
       return;
 
     // Point Obj to correct class and bitwidth ELF object
-    Obj.reset(llvm::dyn_cast<llvm::object::ELFObjectFile<target_endianness,
-        is64Bits> >(Bin.get()));
+    _objFile.reset(llvm::dyn_cast<llvm::object::ELFObjectFile<target_endianness,
+        is64Bits> >(binaryFile.get()));
 
-    if (!Obj) {
+    if (!_objFile) {
       EC = make_error_code(llvm::object::object_error::invalid_file_type);
       return;
     }
 
-    Bin.take();
+    binaryFile.take();
 
-    std::map< const Elf_Shdr *, std::vector<const Elf_Sym *>> SectionSymbols;
+    std::map< const Elf_Shdr *, std::vector<const Elf_Sym *>> sectionSymbols;
 
-    llvm::object::symbol_iterator it(Obj->begin_symbols());
-    llvm::object::symbol_iterator ie(Obj->end_symbols());
+//  Handle: SHT_REL and SHT_RELA sections:
+//  Increment over the sections, when REL/RELA section types are
+//  found add the contents to the RelocationReferences map.
+
+    llvm::object::section_iterator sit(_objFile->begin_sections());
+    llvm::object::section_iterator sie(_objFile->end_sections());
+    for (; sit != sie; sit.increment(EC)) {
+      if (EC)
+        return;
+
+      const Elf_Shdr *section = _objFile->getElfSection(sit);
+
+      if (section->sh_type == llvm::ELF::SHT_RELA) {
+        llvm::StringRef sectionName;
+        if ((EC = _objFile->getSectionName(section, sectionName)))
+          return;
+        // Get rid of the leading .rela so Atoms can use their own section
+        // name to find the relocs.
+        sectionName = sectionName.drop_front(5);
+
+        auto rai(_objFile->beginELFRela(section));
+        auto rae(_objFile->endELFRela(section));
+
+        auto &Ref = _relocationAddendRefences[sectionName];
+        for (; rai != rae; rai++) {
+          Ref.push_back(&*rai);
+        }
+      }
+
+      if (section->sh_type == llvm::ELF::SHT_REL) {
+        llvm::StringRef sectionName;
+        if ((EC = _objFile->getSectionName(section, sectionName)))
+          return;
+        // Get rid of the leading .rel so Atoms can use their own section
+        // name to find the relocs.
+        sectionName = sectionName.drop_front(4);
+
+        auto ri(_objFile->beginELFRel(section));
+        auto re(_objFile->endELFRel(section));
+
+        auto &Ref = _relocationReferences[sectionName];
+        for (; ri != re; ri++) {
+          Ref.push_back(&*ri);
+        }
+      }
+    }
+
+
+//  Increment over all the symbols collecting atoms and symbol
+//  names for later use.
+
+    llvm::object::symbol_iterator it(_objFile->begin_symbols());
+    llvm::object::symbol_iterator ie(_objFile->end_symbols());
 
     for (; it != ie; it.increment(EC)) {
       if (EC)
         return;
-      llvm::object::SectionRef SR;
-      llvm::object::section_iterator section(SR);
 
-      if ((EC = it->getSection(section)))
+      if ((EC = it->getSection(sit)))
         return;
 
-      const Elf_Shdr *Section = Obj->getElfSection(section);
-      const Elf_Sym  *Symbol  = Obj->getElfSymbol(it);
+      const Elf_Shdr *section = _objFile->getElfSection(sit);
+      const Elf_Sym  *symbol  = _objFile->getElfSymbol(it);
 
-      llvm::StringRef SymbolName;
-      if ((EC = Obj->getSymbolName(Section, Symbol, SymbolName)))
+      llvm::StringRef symbolName;
+      if ((EC = _objFile->getSymbolName(section, symbol, symbolName)))
         return;
 
-      if (Symbol->st_shndx == llvm::ELF::SHN_ABS) {
+      if (symbol->st_shndx == llvm::ELF::SHN_ABS) {
         // Create an absolute atom.
-        AbsoluteAtoms._atoms.push_back(
-                             new (AtomStorage.Allocate<ELFAbsoluteAtom> ())
-                             ELFAbsoluteAtom(*this, SymbolName,
-                                             Symbol->st_value));
+        auto *newAtom = new (_readerStorage.Allocate
+                       <ELFAbsoluteAtom<target_endianness, is64Bits> > ()) 
+                        ELFAbsoluteAtom<target_endianness, is64Bits>
+                          (*this, symbolName, symbol->st_value);
 
-      } else if (Symbol->st_shndx == llvm::ELF::SHN_UNDEF) {
+        _absoluteAtoms._atoms.push_back(newAtom);
+        _symbolToAtomMapping.insert(std::make_pair(symbol, newAtom));
+
+      } else if (symbol->st_shndx == llvm::ELF::SHN_UNDEF) {
         // Create an undefined atom.
-        UndefinedAtoms._atoms.push_back(
-            new (AtomStorage.Allocate<ELFUndefinedAtom<
-                 target_endianness, is64Bits>>())
-                 ELFUndefinedAtom<target_endianness, is64Bits> (
-                                 *this, SymbolName, Symbol));
+        auto *newAtom = new (_readerStorage.Allocate
+                       <ELFUndefinedAtom<target_endianness, is64Bits> > ()) 
+                        ELFUndefinedAtom<target_endianness, is64Bits>
+                          (*this, symbolName, symbol);
+
+        _undefinedAtoms._atoms.push_back(newAtom);
+        _symbolToAtomMapping.insert(std::make_pair(symbol, newAtom));
+
       } else {
         // This is actually a defined symbol. Add it to its section's list of
         // symbols.
-        if (Symbol->getType() == llvm::ELF::STT_NOTYPE
-            || Symbol->getType() == llvm::ELF::STT_OBJECT
-            || Symbol->getType() == llvm::ELF::STT_FUNC
-            || Symbol->getType() == llvm::ELF::STT_SECTION
-            || Symbol->getType() == llvm::ELF::STT_FILE
-            || Symbol->getType() == llvm::ELF::STT_TLS
-            || Symbol->getType() == llvm::ELF::STT_COMMON
-            || Symbol->st_shndx == llvm::ELF::SHN_COMMON) {
-          SectionSymbols[Section].push_back(Symbol);
+        if (symbol->getType() == llvm::ELF::STT_NOTYPE
+            || symbol->getType() == llvm::ELF::STT_OBJECT
+            || symbol->getType() == llvm::ELF::STT_FUNC
+            || symbol->getType() == llvm::ELF::STT_SECTION
+            || symbol->getType() == llvm::ELF::STT_FILE
+            || symbol->getType() == llvm::ELF::STT_TLS
+            || symbol->getType() == llvm::ELF::STT_COMMON
+            || symbol->st_shndx == llvm::ELF::SHN_COMMON) {
+          sectionSymbols[section].push_back(symbol);
         }
         else {
-          llvm::errs() << "Unable to create atom for: " << SymbolName << "\n";
+          llvm::errs() << "Unable to create atom for: " << symbolName << "\n";
           EC = llvm::object::object_error::parse_failed;
           return;
         }
       }
     }
 
-    for (auto &i : SectionSymbols) {
-      auto &Symbs = i.second;
-      llvm::StringRef SymbolName;
-      llvm::StringRef SectionName;
+    for (auto &i : sectionSymbols) {
+      auto &symbols = i.second;
+      llvm::StringRef symbolName;
+      llvm::StringRef sectionName;
       // Sort symbols by position.
-      std::stable_sort(Symbs.begin(), Symbs.end(),
+      std::stable_sort(symbols.begin(), symbols.end(),
         // From ReaderCOFF.cpp:
         // For some reason MSVC fails to allow the lambda in this context with
         // a "illegal use of local type in type instantiation". MSVC is clearly
@@ -413,46 +575,92 @@ public:
       }));
 
       // i.first is the section the symbol lives in
-      for (auto si = Symbs.begin(), se = Symbs.end(); si != se; ++si) {
+      for (auto si = symbols.begin(), se = symbols.end(); si != se; ++si) {
 
         StringRef symbolContents;
-        if ((EC = Obj->getSectionContents(i.first, symbolContents)))
+        if ((EC = _objFile->getSectionContents(i.first, symbolContents)))
           return;
 
-        if ((EC = Obj->getSymbolName(i.first, *si, SymbolName)))
+        if ((EC = _objFile->getSymbolName(i.first, *si, symbolName)))
           return;
 
-        if ((EC = Obj->getSectionName(i.first, SectionName)))
+        if ((EC = _objFile->getSectionName(i.first, sectionName)))
           return;
 
-        bool IsCommon = false;
+        bool isCommon = false;
         if (((*si)->getType() == llvm::ELF::STT_COMMON)
-             || (*si)->st_shndx == llvm::ELF::SHN_COMMON)
-          IsCommon = true;
+          || (*si)->st_shndx == llvm::ELF::SHN_COMMON)
+          isCommon = true;
 
         // Get the symbol's content:
-        llvm::ArrayRef<uint8_t> SymbolData;
+        llvm::ArrayRef<uint8_t> symbolData;
+        uint64_t contentSize;
         if (si + 1 == se) {
           // if this is the last symbol, take up the remaining data.
-          SymbolData = llvm::ArrayRef<uint8_t>((uint8_t *)symbolContents.data()
-                                    + (*si)->st_value,
-                                    (IsCommon) ? 0 :
-                                    ((i.first)->sh_size - (*si)->st_value));
+          contentSize = (isCommon) ? 0 
+                                   : ((i.first)->sh_size - (*si)->st_value);
         }
         else {
-          SymbolData = llvm::ArrayRef<uint8_t>((uint8_t *)symbolContents.data()
-                                    + (*si)->st_value,
-                                    (IsCommon) ? 0 :
-                                    (*(si + 1))->st_value - (*si)->st_value);
+          contentSize = (isCommon) ? 0 
+                                   : (*(si + 1))->st_value - (*si)->st_value;
         }
 
-        DefinedAtoms._atoms.push_back(
-          new (AtomStorage.Allocate<ELFDefinedAtom<
-               target_endianness, is64Bits> > ())
-               ELFDefinedAtom<target_endianness, is64Bits> (*this,
-                             SymbolName, SectionName,
-                             *si, i.first, SymbolData));
+        symbolData = llvm::ArrayRef<uint8_t>((uint8_t *)symbolContents.data()
+                                    + (*si)->st_value, contentSize);
+
+
+        unsigned int referenceStart = _references.size();
+
+        // Only relocations that are inside the domain of the atom are 
+        // added.
+
+        // Add Rela (those with r_addend) references:
+        for (auto &rai : _relocationAddendRefences[sectionName]) {
+          if ((rai->r_offset >= (*si)->st_value) &&
+              (rai->r_offset < (*si)->st_value+contentSize)) {
+
+            auto *ERef = new (_readerStorage.Allocate
+                         <ELFReference<target_endianness, is64Bits> > ())
+                          ELFReference<target_endianness, is64Bits> (
+                          rai, rai->r_offset-(*si)->st_value, nullptr);
+
+            _references.push_back(ERef);
+          }
+        }
+
+        // Add Rel references:
+        for (auto &ri : _relocationReferences[sectionName]) {
+          if (((ri)->r_offset >= (*si)->st_value) &&
+              ((ri)->r_offset < (*si)->st_value+contentSize)) {
+
+            auto *ERef = new (_readerStorage.Allocate
+                         <ELFReference<target_endianness, is64Bits> > ())
+                          ELFReference<target_endianness, is64Bits> (
+                         (ri), (ri)->r_offset-(*si)->st_value, nullptr);
+
+            _references.push_back(ERef);
+          }
+        }
+
+        // Create the DefinedAtom and add it to the list of DefinedAtoms.
+        auto *newAtom = new (_readerStorage.Allocate
+                       <ELFDefinedAtom<target_endianness, is64Bits> > ()) 
+                        ELFDefinedAtom<target_endianness, is64Bits>
+                           (*this, symbolName, sectionName,
+                             *si, i.first, symbolData,
+                             referenceStart, _references.size(), _references);
+
+        _definedAtoms._atoms.push_back(newAtom);
+        _symbolToAtomMapping.insert(std::make_pair((*si), newAtom));
+
       }
+    }
+
+// All the Atoms and References are created.  Now update each Reference's
+// target with the Atom pointer it refers to.
+    for (auto &ri : _references) {
+      const Elf_Sym  *Symbol  = _objFile->getElfSymbol(ri->targetSymbolIndex());
+      ri->setTarget(findAtom (Symbol));
     }
   }
 
@@ -461,30 +669,49 @@ public:
   }
 
   virtual const atom_collection<DefinedAtom> &defined() const {
-    return DefinedAtoms;
+    return _definedAtoms;
   }
 
   virtual const atom_collection<UndefinedAtom> &undefined() const {
-    return UndefinedAtoms;
+    return _undefinedAtoms;
   }
 
   virtual const atom_collection<SharedLibraryAtom> &sharedLibrary() const {
-    return SharedLibraryAtoms;
+    return _sharedLibraryAtoms;
   }
 
   virtual const atom_collection<AbsoluteAtom> &absolute() const {
-    return AbsoluteAtoms;
+    return _absoluteAtoms;
   }
+
+  Atom *findAtom(const Elf_Sym  *symbol) {
+    return (_symbolToAtomMapping.lookup(symbol));
+  }
+
 
 private:
   std::unique_ptr<llvm::object::ELFObjectFile<target_endianness, is64Bits> >
-      Obj;
-  atom_collection_vector<DefinedAtom>       DefinedAtoms;
-  atom_collection_vector<UndefinedAtom>     UndefinedAtoms;
-  atom_collection_vector<SharedLibraryAtom> SharedLibraryAtoms;
-  atom_collection_vector<AbsoluteAtom>      AbsoluteAtoms;
-  llvm::BumpPtrAllocator AtomStorage;
+      _objFile;
+  atom_collection_vector<DefinedAtom>       _definedAtoms;
+  atom_collection_vector<UndefinedAtom>     _undefinedAtoms;
+  atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
+  atom_collection_vector<AbsoluteAtom>      _absoluteAtoms;
 
+/// \brief _relocationAddendRefences and _relocationReferences contain the list
+/// of relocations references.  In ELF, if a section named, ".text" has
+/// relocations will also have a section named ".rel.text" or ".rela.text"
+/// which will hold the entries. -- .rel or .rela is prepended to create
+/// the SHT_REL(A) section name.
+///
+  std::map<llvm::StringRef, std::vector<const Elf_Rela *> >
+           _relocationAddendRefences;
+  std::map<llvm::StringRef, std::vector<const Elf_Rel *> >
+           _relocationReferences;
+
+  std::vector<ELFReference<target_endianness, is64Bits> *> _references;
+  llvm::DenseMap<const Elf_Sym *, Atom *> _symbolToAtomMapping;
+
+  llvm::BumpPtrAllocator _readerStorage;
 };
 
 //  ReaderELF is reader object that will instantiate correct FileELF
@@ -540,7 +767,6 @@ ReaderOptionsELF::ReaderOptionsELF() {
 
 ReaderOptionsELF::~ReaderOptionsELF() {
 }
-
 
 Reader *createReaderELF(const ReaderOptionsELF &options) {
   return new ReaderELF(options);
