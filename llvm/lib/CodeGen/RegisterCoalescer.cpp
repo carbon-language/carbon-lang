@@ -1277,6 +1277,11 @@ public:
   /// Returns false if any conflicts were impossible to resolve.
   bool resolveConflicts(JoinVals &Other);
 
+  /// Prune the live range of values in Other.LI where they would conflict with
+  /// CR_Replace values in LI. Collect end points for restoring the live range
+  /// after joining.
+  void pruneValues(JoinVals &Other, SmallVectorImpl<SlotIndex> &EndPoints);
+
   /// Erase any machine instructions that have been coalesced away.
   /// Add erased instructions to ErasedInstrs.
   /// Add foreign virtual registers to ShrinkRegs if their live range ended at
@@ -1421,6 +1426,7 @@ JoinVals::analyzeValue(unsigned ValNo, JoinVals &Other) {
   // We have overlapping values, or possibly a kill of Other.
   // Recursively compute assignments up the dominator tree.
   Other.computeAssignment(V.OtherVNI->id, *this);
+  const Val &OtherV = Other.Vals[V.OtherVNI->id];
 
   // Don't attempt resolving PHI values for now.
   if (VNI->isPHIDef())
@@ -1435,7 +1441,7 @@ JoinVals::analyzeValue(unsigned ValNo, JoinVals &Other) {
   if (CP.isCoalescable(DefMI)) {
     // Some of the lanes copied from OtherVNI may be undef, making them undef
     // here too.
-    V.ValidLanes &= ~V.WriteLanes | Other.Vals[V.OtherVNI->id].ValidLanes;
+    V.ValidLanes &= ~V.WriteLanes | OtherV.ValidLanes;
     return CR_Erase;
   }
 
@@ -1453,7 +1459,23 @@ JoinVals::analyzeValue(unsigned ValNo, JoinVals &Other) {
       stripCopies(VNI) == stripCopies(V.OtherVNI))
     return CR_Erase;
 
-  // FIXME: Identify CR_Replace opportunities.
+  // If the lanes written by this instruction were all undef in OtherVNI, it is
+  // still safe to join the live ranges. This can't be done with a simple value
+  // mapping, though - OtherVNI will map to multiple values:
+  //
+  //   1 %dst:ssub0 = FOO                <-- OtherVNI
+  //   2 %src = BAR                      <-- VNI
+  //   3 %dst:ssub1 = COPY %src<kill>    <-- Eliminate this copy.
+  //   4 BAZ %dst<kill>
+  //   5 QUUX %src<kill>
+  //
+  // Here OtherVNI will map to itself in [1;2), but to VNI in [2;5). CR_Replace
+  // handles this complex value mapping.
+  if ((V.WriteLanes & OtherV.ValidLanes) == 0)
+    return CR_Replace;
+
+  // FIXME: Identify CR_Replace opportunities where the clobbered lanes are
+  // dead.
   return CR_Impossible;
 }
 
@@ -1514,6 +1536,18 @@ bool JoinVals::resolveConflicts(JoinVals &Other) {
   return true;
 }
 
+void JoinVals::pruneValues(JoinVals &Other,
+                           SmallVectorImpl<SlotIndex> &EndPoints) {
+  for (unsigned i = 0, e = LI.getNumValNums(); i != e; ++i) {
+    if (Vals[i].Resolution != CR_Replace)
+      continue;
+    SlotIndex Def = LI.getValNumInfo(i)->def;
+    LIS->pruneValue(&Other.LI, Def, &EndPoints);
+    DEBUG(dbgs() << "\t\tpruned " << PrintReg(Other.LI.reg) << " at " << Def
+                 << ": " << Other.LI << '\n');
+  }
+}
+
 void JoinVals::eraseInstrs(SmallPtrSet<MachineInstr*, 8> &ErasedInstrs,
                            SmallVectorImpl<unsigned> &ShrinkRegs) {
   for (unsigned i = 0, e = LI.getNumValNums(); i != e; ++i) {
@@ -1557,6 +1591,14 @@ bool RegisterCoalescer::joinVirtRegs(CoalescerPair &CP) {
 
   // All clear, the live ranges can be merged.
 
+  // The merging algorithm in LiveInterval::join() can't handle conflicting
+  // value mappings, so we need to remove any live ranges that overlap a
+  // CR_Replace resolution. Collect a set of end points that can be used to
+  // restore the live range after joining.
+  SmallVector<SlotIndex, 8> EndPoints;
+  LHSVals.pruneValues(RHSVals, EndPoints);
+  RHSVals.pruneValues(LHSVals, EndPoints);
+
   // Erase COPY and IMPLICIT_DEF instructions. This may cause some external
   // registers to require trimming.
   SmallVector<unsigned, 8> ShrinkRegs;
@@ -1574,6 +1616,15 @@ bool RegisterCoalescer::joinVirtRegs(CoalescerPair &CP) {
   // ranges. They are reinserted after register allocation.
   MRI->clearKillFlags(LHS.reg);
   MRI->clearKillFlags(RHS.reg);
+
+  if (EndPoints.empty())
+    return true;
+
+  // Recompute the parts of the live range we had to remove because of
+  // CR_Replace conflicts.
+  DEBUG(dbgs() << "\t\trestoring liveness to " << EndPoints.size()
+               << " points: " << LHS << '\n');
+  LIS->extendToIndices(&LHS, EndPoints);
   return true;
 }
 

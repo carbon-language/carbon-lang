@@ -165,6 +165,26 @@ namespace llvm {
     bool shrinkToUses(LiveInterval *li,
                       SmallVectorImpl<MachineInstr*> *dead = 0);
 
+    /// extendToIndices - Extend the live range of LI to reach all points in
+    /// Indices. The points in the Indices array must be jointly dominated by
+    /// existing defs in LI. PHI-defs are added as needed to maintain SSA form.
+    ///
+    /// If a SlotIndex in Indices is the end index of a basic block, LI will be
+    /// extended to be live out of the basic block.
+    ///
+    /// See also LiveRangeCalc::extend().
+    void extendToIndices(LiveInterval *LI, ArrayRef<SlotIndex> Indices);
+
+    /// pruneValue - If an LI value is live at Kill, prune its live range by
+    /// removing any liveness reachable from Kill. Add live range end points to
+    /// EndPoints such that extendToIndices(LI, EndPoints) will reconstruct the
+    /// value's live range.
+    ///
+    /// Calling pruneValue() and extendToIndices() can be used to reconstruct
+    /// SSA form after adding defs to a virtual register.
+    void pruneValue(LiveInterval *LI, SlotIndex Kill,
+                    SmallVectorImpl<SlotIndex> *EndPoints);
+
     SlotIndexes *getSlotIndexes() const {
       return Indexes;
     }

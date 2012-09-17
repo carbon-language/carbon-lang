@@ -731,6 +731,73 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
   return CanSeparate;
 }
 
+void LiveIntervals::extendToIndices(LiveInterval *LI,
+                                    ArrayRef<SlotIndex> Indices) {
+  assert(LRCalc && "LRCalc not initialized.");
+  LRCalc->reset(MF, getSlotIndexes(), DomTree, &getVNInfoAllocator());
+  for (unsigned i = 0, e = Indices.size(); i != e; ++i)
+    LRCalc->extend(LI, Indices[i]);
+}
+
+void LiveIntervals::pruneValue(LiveInterval *LI, SlotIndex Kill,
+                               SmallVectorImpl<SlotIndex> *EndPoints) {
+  LiveRangeQuery LRQ(*LI, Kill);
+  assert (!LRQ.valueDefined() && "Can't prune value at the defining instr");
+
+  // Also can't prune a value that isn't there.
+  VNInfo *VNI = LRQ.valueOut();
+  if (!VNI)
+    return;
+
+  MachineBasicBlock *KillMBB = Indexes->getMBBFromIndex(Kill);
+  SlotIndex MBBStart, MBBEnd;
+  tie(MBBStart, MBBEnd) = Indexes->getMBBRange(KillMBB);
+
+  // If VNI isn't live out from KillMBB, the value is trivially pruned.
+  if (LRQ.endPoint() < MBBEnd) {
+    LI->removeRange(Kill, LRQ.endPoint());
+    if (EndPoints) EndPoints->push_back(LRQ.endPoint());
+    return;
+  }
+
+  // VNI is live out of KillMBB.
+  LI->removeRange(Kill, MBBEnd);
+  if (EndPoints) EndPoints->push_back(MBBEnd);
+
+  // Find all blocks that are reachable from MBB without leaving VNI's live
+  // range.
+  for (df_iterator<MachineBasicBlock*>
+       I = df_begin(KillMBB), E = df_end(KillMBB); I != E;) {
+    MachineBasicBlock *MBB = *I;
+    // KillMBB itself was already handled.
+    if (MBB == KillMBB) {
+      ++I;
+      continue;
+    }
+
+    // Check if VNI is live in to MBB.
+    tie(MBBStart, MBBEnd) = Indexes->getMBBRange(MBB);
+    LiveRangeQuery LRQ(*LI, MBBStart);
+    if (LRQ.valueIn() != VNI) {
+      // This block isn't part of the VNI live range. Prune the search.
+      I.skipChildren();
+      continue;
+    }
+
+    // Prune the search if VNI is killed in MBB.
+    if (LRQ.endPoint() < MBBEnd) {
+      LI->removeRange(MBBStart, LRQ.endPoint());
+      if (EndPoints) EndPoints->push_back(LRQ.endPoint());
+      I.skipChildren();
+      continue;
+    }
+
+    // VNI is live through MBB.
+    LI->removeRange(MBBStart, MBBEnd);
+    if (EndPoints) EndPoints->push_back(MBBEnd);
+    ++I;
+  }
+}
 
 //===----------------------------------------------------------------------===//
 // Register allocator hooks.

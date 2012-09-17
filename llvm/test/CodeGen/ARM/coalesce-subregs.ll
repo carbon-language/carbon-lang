@@ -1,4 +1,4 @@
-; RUN: llc < %s -mcpu=cortex-a9 | FileCheck %s
+; RUN: llc < %s -mcpu=cortex-a9 -new-coalescer | FileCheck %s
 target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:32:64-v128:32:128-a0:0:32-n32-S32"
 target triple = "thumbv7-apple-ios0.0.0"
 
@@ -66,3 +66,51 @@ do.end:                                           ; preds = %do.body
 
 declare { <4 x float>, <4 x float> } @llvm.arm.neon.vld2.v4f32(i8*, i32) nounwind readonly
 declare void @llvm.arm.neon.vst2.v4f32(i8*, <4 x float>, <4 x float>, i32) nounwind
+
+; CHECK: f3
+; This function has lane insertions that span basic blocks.
+; The trivial REG_SEQUENCE lowering can't handle that, but the coalescer can.
+;
+; void f3(float *p, float *q) {
+;   float32x2_t x;
+;   x[1] = p[3];
+;   if (q)
+;     x[0] = q[0] + q[1];
+;   else
+;     x[0] = p[2];
+;   vst1_f32(p+4, x);
+; }
+;
+; CHECK-NOT: vmov
+; CHECK-NOT: vorr
+define void @f3(float* %p, float* %q) nounwind ssp {
+entry:
+  %arrayidx = getelementptr inbounds float* %p, i32 3
+  %0 = load float* %arrayidx, align 4
+  %vecins = insertelement <2 x float> undef, float %0, i32 1
+  %tobool = icmp eq float* %q, null
+  br i1 %tobool, label %if.else, label %if.then
+
+if.then:                                          ; preds = %entry
+  %1 = load float* %q, align 4
+  %arrayidx2 = getelementptr inbounds float* %q, i32 1
+  %2 = load float* %arrayidx2, align 4
+  %add = fadd float %1, %2
+  %vecins3 = insertelement <2 x float> %vecins, float %add, i32 0
+  br label %if.end
+
+if.else:                                          ; preds = %entry
+  %arrayidx4 = getelementptr inbounds float* %p, i32 2
+  %3 = load float* %arrayidx4, align 4
+  %vecins5 = insertelement <2 x float> %vecins, float %3, i32 0
+  br label %if.end
+
+if.end:                                           ; preds = %if.else, %if.then
+  %x.0 = phi <2 x float> [ %vecins3, %if.then ], [ %vecins5, %if.else ]
+  %add.ptr = getelementptr inbounds float* %p, i32 4
+  %4 = bitcast float* %add.ptr to i8*
+  tail call void @llvm.arm.neon.vst1.v2f32(i8* %4, <2 x float> %x.0, i32 4)
+  ret void
+}
+
+declare void @llvm.arm.neon.vst1.v2f32(i8*, <2 x float>, i32) nounwind
