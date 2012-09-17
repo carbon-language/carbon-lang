@@ -77,8 +77,8 @@ namespace llvm {
 /// target-specific constructs to SelectionDAG operators.
 ///
 class TargetLowering {
-  TargetLowering(const TargetLowering&);  // DO NOT IMPLEMENT
-  void operator=(const TargetLowering&);  // DO NOT IMPLEMENT
+  TargetLowering(const TargetLowering&) LLVM_DELETED_FUNCTION;
+  void operator=(const TargetLowering&) LLVM_DELETED_FUNCTION;
 public:
   /// LegalizeAction - This enum indicates whether operations are valid for a
   /// target, and if not, what action should be used to make them valid.

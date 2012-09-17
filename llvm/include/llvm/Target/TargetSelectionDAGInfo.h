@@ -28,8 +28,8 @@ class TargetMachine;
 /// SelectionDAG lowering and instruction selection process.
 ///
 class TargetSelectionDAGInfo {
-  TargetSelectionDAGInfo(const TargetSelectionDAGInfo &); // DO NOT IMPLEMENT
-  void operator=(const TargetSelectionDAGInfo &);         // DO NOT IMPLEMENT
+  TargetSelectionDAGInfo(const TargetSelectionDAGInfo &) LLVM_DELETED_FUNCTION;
+  void operator=(const TargetSelectionDAGInfo &) LLVM_DELETED_FUNCTION;
 
   const TargetData *TD;
 

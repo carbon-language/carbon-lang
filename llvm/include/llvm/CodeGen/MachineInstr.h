@@ -82,8 +82,8 @@ private:
   MachineBasicBlock *Parent;            // Pointer to the owning basic block.
   DebugLoc debugLoc;                    // Source line information.
 
-  MachineInstr(const MachineInstr&);   // DO NOT IMPLEMENT
-  void operator=(const MachineInstr&); // DO NOT IMPLEMENT
+  MachineInstr(const MachineInstr&) LLVM_DELETED_FUNCTION;
+  void operator=(const MachineInstr&) LLVM_DELETED_FUNCTION;
 
   // Intrusive list support
   friend struct ilist_traits<MachineInstr>;

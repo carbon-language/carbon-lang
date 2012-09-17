@@ -106,8 +106,8 @@ class MachineRegisterInfo {
   std::vector<std::pair<unsigned, unsigned> > LiveIns;
   std::vector<unsigned> LiveOuts;
 
-  MachineRegisterInfo(const MachineRegisterInfo&); // DO NOT IMPLEMENT
-  void operator=(const MachineRegisterInfo&);      // DO NOT IMPLEMENT
+  MachineRegisterInfo(const MachineRegisterInfo&) LLVM_DELETED_FUNCTION;
+  void operator=(const MachineRegisterInfo&) LLVM_DELETED_FUNCTION;
 public:
   explicit MachineRegisterInfo(const TargetRegisterInfo &TRI);
   ~MachineRegisterInfo();

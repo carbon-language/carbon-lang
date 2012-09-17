@@ -109,8 +109,8 @@ namespace llvm {
   /// class to support additional constraints for your architecture.
   class PBQPBuilder {
   private:
-    PBQPBuilder(const PBQPBuilder&) {}
-    void operator=(const PBQPBuilder&) {}
+    PBQPBuilder(const PBQPBuilder&) LLVM_DELETED_FUNCTION;
+    void operator=(const PBQPBuilder&) LLVM_DELETED_FUNCTION;
   public:
 
     typedef std::set<unsigned> RegSet;

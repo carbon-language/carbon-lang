@@ -52,8 +52,8 @@ class raw_ostream;
 /// through this interface.
 ///
 class TargetMachine {
-  TargetMachine(const TargetMachine &);   // DO NOT IMPLEMENT
-  void operator=(const TargetMachine &);  // DO NOT IMPLEMENT
+  TargetMachine(const TargetMachine &) LLVM_DELETED_FUNCTION;
+  void operator=(const TargetMachine &) LLVM_DELETED_FUNCTION;
 protected: // Can only create subclasses.
   TargetMachine(const Target &T, StringRef TargetTriple,
                 StringRef CPU, StringRef FS, const TargetOptions &Options);

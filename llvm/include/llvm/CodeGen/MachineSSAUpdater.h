@@ -14,6 +14,8 @@
 #ifndef LLVM_CODEGEN_MACHINESSAUPDATER_H
 #define LLVM_CODEGEN_MACHINESSAUPDATER_H
 
+#include "llvm/Support/Compiler.h"
+
 namespace llvm {
   class MachineBasicBlock;
   class MachineFunction;
@@ -106,8 +108,8 @@ private:
   void ReplaceRegWith(unsigned OldReg, unsigned NewReg);
   unsigned GetValueAtEndOfBlockInternal(MachineBasicBlock *BB);
 
-  void operator=(const MachineSSAUpdater&); // DO NOT IMPLEMENT
-  MachineSSAUpdater(const MachineSSAUpdater&);     // DO NOT IMPLEMENT
+  void operator=(const MachineSSAUpdater&) LLVM_DELETED_FUNCTION;
+  MachineSSAUpdater(const MachineSSAUpdater&) LLVM_DELETED_FUNCTION;
 };
 
 } // End llvm namespace

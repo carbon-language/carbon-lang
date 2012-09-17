@@ -48,9 +48,10 @@ namespace llvm {
     // May only be subclassed.
     GCMetadataPrinter();
 
-    // Do not implement.
-    GCMetadataPrinter(const GCMetadataPrinter &);
-    GCMetadataPrinter &operator=(const GCMetadataPrinter &);
+  private:
+    GCMetadataPrinter(const GCMetadataPrinter &) LLVM_DELETED_FUNCTION;
+    GCMetadataPrinter &
+      operator=(const GCMetadataPrinter &) LLVM_DELETED_FUNCTION;
 
   public:
     GCStrategy &getStrategy() { return *S; }

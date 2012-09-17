@@ -114,9 +114,6 @@ namespace llvm {
 
     void dump() const;
     void print(raw_ostream &os) const;
-
-  private:
-    LiveRange(); // DO NOT IMPLEMENT
   };
 
   template <> struct isPodLike<LiveRange> { static const bool value = true; };
@@ -467,7 +464,7 @@ namespace llvm {
                              VNInfo *LHSValNo = 0,
                              const VNInfo *RHSValNo = 0);
 
-    LiveInterval& operator=(const LiveInterval& rhs); // DO NOT IMPLEMENT
+    LiveInterval& operator=(const LiveInterval& rhs) LLVM_DELETED_FUNCTION;
 
   };
 

@@ -127,8 +127,8 @@ class MachineFunction {
   /// about the control flow of such functions.
   bool ExposesReturnsTwice;
 
-  MachineFunction(const MachineFunction &); // DO NOT IMPLEMENT
-  void operator=(const MachineFunction&);   // DO NOT IMPLEMENT
+  MachineFunction(const MachineFunction &) LLVM_DELETED_FUNCTION;
+  void operator=(const MachineFunction&) LLVM_DELETED_FUNCTION;
 public:
   MachineFunction(const Function *Fn, const TargetMachine &TM,
                   unsigned FunctionNum, MachineModuleInfo &MMI,

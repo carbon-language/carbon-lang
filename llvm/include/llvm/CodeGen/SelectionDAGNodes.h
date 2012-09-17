@@ -216,8 +216,8 @@ class SDUse {
   /// this operand.
   SDUse **Prev, *Next;
 
-  SDUse(const SDUse &U);          // Do not implement
-  void operator=(const SDUse &U); // Do not implement
+  SDUse(const SDUse &U) LLVM_DELETED_FUNCTION;
+  void operator=(const SDUse &U) LLVM_DELETED_FUNCTION;
 
 public:
   SDUse() : Val(), User(NULL), Prev(NULL), Next(NULL) {}
@@ -1390,7 +1390,7 @@ public:
 /// BUILD_VECTORs.
 class BuildVectorSDNode : public SDNode {
   // These are constructed as SDNodes and then cast to BuildVectorSDNodes.
-  explicit BuildVectorSDNode();        // Do not implement
+  explicit BuildVectorSDNode() LLVM_DELETED_FUNCTION;
 public:
   /// isConstantSplat - Check if this is a constant splat, and if so, find the
   /// smallest element size that splats the vector.  If MinSplatBits is

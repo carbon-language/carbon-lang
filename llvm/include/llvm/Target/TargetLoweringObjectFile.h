@@ -33,10 +33,11 @@ namespace llvm {
   
 class TargetLoweringObjectFile : public MCObjectFileInfo {
   MCContext *Ctx;
-  
-  TargetLoweringObjectFile(const TargetLoweringObjectFile&); // DO NOT IMPLEMENT
-  void operator=(const TargetLoweringObjectFile&);           // DO NOT IMPLEMENT
-  
+
+  TargetLoweringObjectFile(
+    const TargetLoweringObjectFile&) LLVM_DELETED_FUNCTION;
+  void operator=(const TargetLoweringObjectFile&) LLVM_DELETED_FUNCTION;
+
 public:
   MCContext &getContext() const { return *Ctx; }
 

@@ -14,6 +14,7 @@
 #ifndef LLVM_TARGET_TARGETINTRINSICINFO_H
 #define LLVM_TARGET_TARGETINTRINSICINFO_H
 
+#include "llvm/Support/Compiler.h"
 #include <string>
 
 namespace llvm {
@@ -27,8 +28,8 @@ class Type;
 /// TargetIntrinsicInfo - Interface to description of machine instruction set
 ///
 class TargetIntrinsicInfo {
-  TargetIntrinsicInfo(const TargetIntrinsicInfo &); // DO NOT IMPLEMENT
-  void operator=(const TargetIntrinsicInfo &);      // DO NOT IMPLEMENT
+  TargetIntrinsicInfo(const TargetIntrinsicInfo &) LLVM_DELETED_FUNCTION;
+  void operator=(const TargetIntrinsicInfo &) LLVM_DELETED_FUNCTION;
 public:
   TargetIntrinsicInfo();
   virtual ~TargetIntrinsicInfo();
