@@ -655,21 +655,21 @@ public:
 
   virtual Elf_Rela_Iter beginELFRela(const Elf_Shdr *sec) const {
     return Elf_Rela_Iter(sec, (const char *)(base() + sec->sh_offset));
-  };
+  }
 
   virtual Elf_Rela_Iter endELFRela(const Elf_Shdr *sec) const {
     return Elf_Rela_Iter(sec, (const char *)
                          (base() + sec->sh_offset + sec->sh_size));
-  };
+  }
 
   virtual Elf_Rel_Iter beginELFRel(const Elf_Shdr *sec) const {
     return Elf_Rel_Iter(sec, (const char *)(base() + sec->sh_offset));
-  };
+  }
 
   virtual Elf_Rel_Iter endELFRel(const Elf_Shdr *sec) const {
     return Elf_Rel_Iter(sec, (const char *)
                         (base() + sec->sh_offset + sec->sh_size));
-  };
+  }
 
   virtual uint8_t getBytesInAddress() const;
   virtual StringRef getFileFormatName() const;
