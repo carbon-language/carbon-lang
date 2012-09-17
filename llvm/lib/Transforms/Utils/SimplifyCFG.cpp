@@ -2425,6 +2425,21 @@ static bool TryToSimplifyUncondBranchWithICmpInIt(ICmpInst *ICI,
   // the switch to the merge point on the compared value.
   BasicBlock *NewBB = BasicBlock::Create(BB->getContext(), "switch.edge",
                                          BB->getParent(), BB);
+  SmallVector<uint64_t, 8> Weights;
+  bool HasWeights = HasBranchWeights(SI);
+  if (HasWeights) {
+    GetBranchWeights(SI, Weights);
+    if (Weights.size() == 1 + SI->getNumCases()) {
+      // Split weight for default case to case for "Cst".
+      Weights[0] = (Weights[0]+1) >> 1;
+      Weights.push_back(Weights[0]);
+
+      SmallVector<uint32_t, 8> MDWeights(Weights.begin(), Weights.end());
+      SI->setMetadata(LLVMContext::MD_prof,
+                      MDBuilder(SI->getContext()).
+                      createBranchWeights(MDWeights));
+    }
+  }
   SI->addCase(Cst, NewBB);
 
   // NewBB branches to the phi block, add the uncond branch and the phi entry.

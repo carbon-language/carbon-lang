@@ -216,6 +216,40 @@ bees:
     ret void
 }
 
+; Test edge splitting when the default target has icmp and unconditinal
+; branch
+define i1 @test9(i32 %x, i32 %y) nounwind {
+; CHECK: @test9
+entry:
+    switch i32 %x, label %bees [
+        i32 0, label %a
+        i32 1, label %end
+        i32 2, label %end
+    ], !prof !7
+; CHECK: switch i32 %x, label %bees [
+; CHECK: i32 0, label %a
+; CHECK: i32 1, label %end
+; CHECK: i32 2, label %end
+; CHECK: i32 92, label %end
+; CHECK: ], !prof !7
+
+a:
+    call void @helper(i32 0) nounwind
+    %reta = icmp slt i32 %x, %y
+    ret i1 %reta
+
+bees:
+    %tmp = icmp eq i32 %x, 92
+    br label %end
+
+end:
+; CHECK: end:
+; CHECK: %ret = phi i1 [ true, %entry ], [ false, %bees ], [ true, %entry ], [ true, %entry ]
+    %ret = phi i1 [ true, %entry ], [%tmp, %bees], [true, %entry]
+    call void @helper(i32 2) nounwind
+    ret i1 %ret
+}
+
 !0 = metadata !{metadata !"branch_weights", i32 3, i32 5}
 !1 = metadata !{metadata !"branch_weights", i32 1, i32 1}
 !2 = metadata !{metadata !"branch_weights", i32 1, i32 2}
@@ -232,4 +266,5 @@ bees:
 ; CHECK: !4 = metadata !{metadata !"branch_weights", i32 11, i32 5}
 ; CHECK: !5 = metadata !{metadata !"branch_weights", i32 17, i32 15} 
 ; CHECK: !6 = metadata !{metadata !"branch_weights", i32 9, i32 7}
-; CHECK-NOT: !7
+; CHECK: !7 = metadata !{metadata !"branch_weights", i32 17, i32 9, i32 8, i32 7, i32 17}
+; CHECK-NOT: !8
