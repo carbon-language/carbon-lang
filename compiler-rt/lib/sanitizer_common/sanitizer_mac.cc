@@ -110,6 +110,10 @@ const char *GetEnv(const char *name) {
   return 0;
 }
 
+void ReExec() {
+  UNIMPLEMENTED();
+}
+
 // ----------------- sanitizer_procmaps.h
 
 MemoryMappingLayout::MemoryMappingLayout() {

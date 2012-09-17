@@ -138,6 +138,20 @@ void DisableCoreDumper() {
   setrlimit(RLIMIT_CORE, &nocore);
 }
 
+bool StackSizeIsUnlimited() {
+  struct rlimit rlim;
+  CHECK_EQ(0, getrlimit(RLIMIT_STACK, &rlim));
+  return (rlim.rlim_cur == (uptr)-1);
+}
+
+void SetStackSizeLimitInBytes(uptr limit) {
+  struct rlimit rlim;
+  rlim.rlim_cur = limit;
+  rlim.rlim_max = limit;
+  CHECK_EQ(0, setrlimit(RLIMIT_STACK, &rlim));
+  CHECK(!StackSizeIsUnlimited());
+}
+
 void SleepForSeconds(int seconds) {
   sleep(seconds);
 }

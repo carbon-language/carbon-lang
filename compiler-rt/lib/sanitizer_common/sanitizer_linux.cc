@@ -164,6 +164,26 @@ const char *GetEnv(const char *name) {
   return 0;  // Not found.
 }
 
+void ReExec() {
+  static const int kMaxArgv = 100;
+  InternalScopedBuffer<char*> argv(kMaxArgv + 1);
+  static char *buff;
+  uptr buff_size = 0;
+  ReadFileToBuffer("/proc/self/cmdline", &buff, &buff_size, 1024 * 1024);
+  argv[0] = buff;
+  int argc, i;
+  for (argc = 1, i = 1; ; i++) {
+    if (buff[i] == 0) {
+      if (buff[i+1] == 0) break;
+      argv[argc] = &buff[i+1];
+      CHECK_LE(argc, kMaxArgv);  // FIXME: make this more flexible.
+      argc++;
+    }
+  }
+  argv[argc] = 0;
+  execv(argv[0], argv.data());
+}
+
 // ----------------- sanitizer_procmaps.h
 MemoryMappingLayout::MemoryMappingLayout() {
   proc_self_maps_buff_len_ =

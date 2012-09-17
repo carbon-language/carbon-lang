@@ -109,6 +109,19 @@ void DisableCoreDumper() {
   UNIMPLEMENTED();
 }
 
+void ReExec() {
+  UNIMPLEMENTED();
+}
+
+bool StackSizeIsUnlimited() {
+  UNIMPLEMENTED();
+  return false;
+}
+
+void SetStackSizeLimitInBytes(uptr limit) {
+  UNIMPLEMENTED();
+}
+
 void SleepForSeconds(int seconds) {
   Sleep(seconds * 1000);
 }
