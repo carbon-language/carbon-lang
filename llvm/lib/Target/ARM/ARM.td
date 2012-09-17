@@ -142,8 +142,7 @@ def ProcA9      : SubtargetFeature<"a9", "ARMProcFamily", "CortexA9",
 // FIXME: It has not been determined if A15 has these features.
 def ProcA15      : SubtargetFeature<"a15", "ARMProcFamily", "CortexA15",
                                    "Cortex-A15 ARM processors",
-                                   [FeatureVMLxForwarding,
-                                    FeatureT2XtPk, FeatureFP16,
+                                   [FeatureT2XtPk, FeatureFP16,
                                     FeatureAvoidPartialCPSR]>;
 
 class ProcNoItin<string Name, list<SubtargetFeature> Features>
