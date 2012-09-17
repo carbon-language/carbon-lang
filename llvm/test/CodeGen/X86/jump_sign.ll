@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mcpu=pentiumpro | FileCheck %s
+; RUN: llc < %s -march=x86 -mcpu=pentiumpro -verify-machineinstrs | FileCheck %s
 
 define i32 @f(i32 %X) {
 entry:
@@ -252,4 +252,29 @@ if.end:
 return:
   %retval.0 = phi i8* [ %add.ptr, %if.end ], [ null, %entry ]
   ret i8* %retval.0
+}
+
+; Test optimizations of dec/inc.
+define i32 @dec(i32 %a) nounwind {
+entry:
+; CHECK: dec:
+; CHECK: decl
+; CHECK-NOT: test
+; CHECK: cmovsl
+  %sub = sub nsw i32 %a, 1
+  %cmp = icmp sgt i32 %sub, 0
+  %cond = select i1 %cmp, i32 %sub, i32 0
+  ret i32 %cond
+}
+
+define i32 @inc(i32 %a) nounwind {
+entry:
+; CHECK: inc:
+; CHECK: incl
+; CHECK-NOT: test
+; CHECK: cmovsl
+  %add = add nsw i32 %a, 1
+  %cmp = icmp sgt i32 %add, 0
+  %cond = select i1 %cmp, i32 %add, i32 0
+  ret i32 %cond
 }

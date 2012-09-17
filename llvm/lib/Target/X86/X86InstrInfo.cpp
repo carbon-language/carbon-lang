@@ -3127,11 +3127,19 @@ inline static bool isDefConvertible(MachineInstr *MI) {
   case X86::SUB8ri:    case X86::SUB64rr:  case X86::SUB32rr:
   case X86::SUB16rr:   case X86::SUB8rr:   case X86::SUB64rm:
   case X86::SUB32rm:   case X86::SUB16rm:  case X86::SUB8rm:
+  case X86::DEC64r:  case X86::DEC32r:  case X86::DEC16r: case X86::DEC8r:
+  case X86::DEC64m:  case X86::DEC32m:  case X86::DEC16m: case X86::DEC8m:
+  case X86::DEC64_32r: case X86::DEC64_16r:
+  case X86::DEC64_32m: case X86::DEC64_16m:
   case X86::ADD64ri32: case X86::ADD64ri8: case X86::ADD32ri:
   case X86::ADD32ri8:  case X86::ADD16ri:  case X86::ADD16ri8:
   case X86::ADD8ri:    case X86::ADD64rr:  case X86::ADD32rr:
   case X86::ADD16rr:   case X86::ADD8rr:   case X86::ADD64rm:
   case X86::ADD32rm:   case X86::ADD16rm:  case X86::ADD8rm:
+  case X86::INC64r:  case X86::INC32r:  case X86::INC16r: case X86::INC8r:
+  case X86::INC64m:  case X86::INC32m:  case X86::INC16m: case X86::INC8m:
+  case X86::INC64_32r: case X86::INC64_16r:
+  case X86::INC64_32m: case X86::INC64_16m:
   case X86::AND64ri32: case X86::AND64ri8: case X86::AND32ri:
   case X86::AND32ri8:  case X86::AND16ri:  case X86::AND16ri8:
   case X86::AND8ri:    case X86::AND64rr:  case X86::AND32rr:
@@ -3371,12 +3379,14 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
     Sub->getParent()->insert(MachineBasicBlock::iterator(Sub), Movr0Inst);
   }
 
-  // Make sure Sub instruction defines EFLAGS.
+  // Make sure Sub instruction defines EFLAGS and mark the def live.
+  unsigned LastOperand = Sub->getNumOperands() - 1;
   assert(Sub->getNumOperands() >= 2 &&
-         Sub->getOperand(Sub->getNumOperands()-1).isReg() &&
-         Sub->getOperand(Sub->getNumOperands()-1).getReg() == X86::EFLAGS &&
+         Sub->getOperand(LastOperand).isReg() &&
+         Sub->getOperand(LastOperand).getReg() == X86::EFLAGS &&
          "EFLAGS should be the last operand of SUB, ADD, OR, XOR, AND");
-  Sub->getOperand(Sub->getNumOperands()-1).setIsDef(true);
+  Sub->getOperand(LastOperand).setIsDef(true);
+  Sub->getOperand(LastOperand).setIsDead(false);
   CmpInstr->eraseFromParent();
 
   // Modify the condition code of instructions in OpsToUpdate.
