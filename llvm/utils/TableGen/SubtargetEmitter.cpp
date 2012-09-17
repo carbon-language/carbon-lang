@@ -1213,7 +1213,8 @@ void SubtargetEmitter::ParseFeaturesFunction(raw_ostream &OS,
     return;
   }
 
-  OS << "  uint64_t Bits = ReInitMCSubtargetInfo(CPU, FS);\n";
+  OS << "  InitMCProcessorInfo(CPU, FS);\n"
+     << "  uint64_t Bits = getFeatureBits();\n";
 
   for (unsigned i = 0; i < Features.size(); i++) {
     // Next record
