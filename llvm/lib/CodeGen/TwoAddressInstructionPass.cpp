@@ -1758,10 +1758,6 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
         if (MO.isReg() && MO.isDef() && MO.getReg() == DstReg)
           MO.setIsUndef();
       }
-      // Make sure there is a full non-subreg imp-def operand on the
-      // instruction.  This shouldn't be necessary, but it seems that at least
-      // RAFast requires it.
-      Def->addRegisterDefined(DstReg, TRI);
       DEBUG(dbgs() << "First def: " << *Def);
     }
 
