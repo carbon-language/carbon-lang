@@ -1032,7 +1032,6 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
                             Scope::FunctionPrototypeScope|Scope::DeclScope);
 
   AttributePool allParamAttrs(AttrFactory);
-  bool warnSelectorName = false;
   while (1) {
     ParsedAttributes paramAttrs(AttrFactory);
     Sema::ObjCArgInfo ArgInfo;
@@ -1103,11 +1102,12 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     SelIdent = ParseObjCSelectorPiece(selLoc);
     if (!SelIdent && Tok.isNot(tok::colon))
       break;
-    if (MethodDefinition && !SelIdent) {
+    if (!SelIdent) {
       SourceLocation ColonLoc = Tok.getLocation();
       if (PP.getLocForEndOfToken(ArgInfo.NameLoc) == ColonLoc) {
-        warnSelectorName = true;
-        Diag(ArgInfo.NameLoc, diag::missing_selector_name);
+        Diag(ArgInfo.NameLoc, diag::warn_missing_selector_name) << ArgInfo.Name;
+        Diag(ArgInfo.NameLoc, diag::note_missing_selector_name) << ArgInfo.Name;
+        Diag(ColonLoc, diag::note_force_empty_selector_name) << ArgInfo.Name;
       }
     }
     // We have a selector or a colon, continue parsing.
@@ -1150,22 +1150,6 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   
   Selector Sel = PP.getSelectorTable().getSelector(KeyIdents.size(),
                                                    &KeyIdents[0]);
-  if (warnSelectorName) {
-    SmallVector<IdentifierInfo *, 12> DiagKeyIdents;
-    for (unsigned i = 0, size = KeyIdents.size(); i < size; i++)
-      if (KeyIdents[i])
-        DiagKeyIdents.push_back(KeyIdents[i]);
-      else {
-        std::string name = "Name";
-        name += llvm::utostr(i+1);
-        IdentifierInfo *NamedMissingId = &PP.getIdentifierTable().get(name);
-        DiagKeyIdents.push_back(NamedMissingId);
-      }
-      Selector NewSel = 
-        PP.getSelectorTable().getSelector(DiagKeyIdents.size(), &DiagKeyIdents[0]);
-      Diag(mLoc, diag::note_missing_argument_name)
-        << NewSel.getAsString() << Sel.getAsString();
-  }
   Decl *Result
        = Actions.ActOnMethodDeclaration(getCurScope(), mLoc, Tok.getLocation(),
                                         mType, DSRet, ReturnType, 
