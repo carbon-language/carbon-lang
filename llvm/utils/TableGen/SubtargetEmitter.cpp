@@ -971,7 +971,7 @@ void SubtargetEmitter::EmitSchedClassTables(SchedClassTables &SchedTables,
 
     // The first class is always invalid. We no way to distinguish it except by
     // name and position.
-    assert(SchedClass.Name == "NoItinerary"
+    assert(SchedModels.getSchedClass(0).Name == "NoItinerary"
            && "invalid class not first");
     OS << "  {DBGFIELD(\"InvalidSchedClass\")  "
        << MCSchedClassDesc::InvalidNumMicroOps
