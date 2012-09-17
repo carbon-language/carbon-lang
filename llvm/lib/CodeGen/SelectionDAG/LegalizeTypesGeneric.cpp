@@ -95,17 +95,18 @@ void DAGTypeLegalizer::ExpandRes_BITCAST(SDNode *N, SDValue &Lo, SDValue &Hi) {
     // Handle cases like i64 = BITCAST v1i64 on x86, where the operand
     // is legal but the result is not.
     unsigned NumElems = 2;
-    EVT NVT = EVT::getVectorVT(*DAG.getContext(), NOutVT, NumElems);
+    EVT ElemVT = NOutVT;
+    EVT NVT = EVT::getVectorVT(*DAG.getContext(), ElemVT, NumElems);
 
-    // If <NOutVT * N> is not a legal type, try <NOutVT/2 * (N*2)>.
+    // If <ElemVT * N> is not a legal type, try <ElemVT/2 * (N*2)>.
     while (!isTypeLegal(NVT)) {
-      unsigned NewSizeInBits = NOutVT.getSizeInBits() / 2;
+      unsigned NewSizeInBits = ElemVT.getSizeInBits() / 2;
       // If the element size is smaller than byte, bail.
       if (NewSizeInBits < 8)
         break;
       NumElems *= 2;
-      NOutVT = EVT::getIntegerVT(*DAG.getContext(), NewSizeInBits);
-      NVT = EVT::getVectorVT(*DAG.getContext(), NOutVT, NumElems);
+      ElemVT = EVT::getIntegerVT(*DAG.getContext(), NewSizeInBits);
+      NVT = EVT::getVectorVT(*DAG.getContext(), ElemVT, NumElems);
     }
 
     if (isTypeLegal(NVT)) {
@@ -113,7 +114,7 @@ void DAGTypeLegalizer::ExpandRes_BITCAST(SDNode *N, SDValue &Lo, SDValue &Hi) {
 
       SmallVector<SDValue, 8> Vals;
       for (unsigned i = 0; i < NumElems; ++i)
-        Vals.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, NOutVT,
+        Vals.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, ElemVT,
                                    CastInOp, DAG.getIntPtrConstant(i)));
 
       // Build Lo, Hi pair by pairing extracted elements if needed.
