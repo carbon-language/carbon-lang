@@ -225,8 +225,8 @@ private:
                AccessTy(NoModRef), AliasTy(MustAlias), Volatile(false) {
   }
 
-  AliasSet(const AliasSet &AS);        // do not implement
-  void operator=(const AliasSet &AS);  // do not implement
+  AliasSet(const AliasSet &AS) LLVM_DELETED_FUNCTION;
+  void operator=(const AliasSet &AS) LLVM_DELETED_FUNCTION;
 
   PointerRec *getSomePointer() const {
     return PtrList;

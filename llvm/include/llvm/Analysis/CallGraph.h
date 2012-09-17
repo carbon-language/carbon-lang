@@ -185,9 +185,9 @@ private:
   /// in the CalledFunctions array of this or other CallGraphNodes.
   unsigned NumReferences;
 
-  CallGraphNode(const CallGraphNode &);            // DO NOT IMPLEMENT
-  void operator=(const CallGraphNode &);           // DO NOT IMPLEMENT
-  
+  CallGraphNode(const CallGraphNode &) LLVM_DELETED_FUNCTION;
+  void operator=(const CallGraphNode &) LLVM_DELETED_FUNCTION;
+ 
   void DropRef() { --NumReferences; }
   void AddRef() { ++NumReferences; }
 public:

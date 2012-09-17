@@ -54,10 +54,8 @@ class FlatIt {};
 /// @brief A RegionNode represents a subregion or a BasicBlock that is part of a
 /// Region.
 class RegionNode {
-  // DO NOT IMPLEMENT
-  RegionNode(const RegionNode &);
-  // DO NOT IMPLEMENT
-  const RegionNode &operator=(const RegionNode &);
+  RegionNode(const RegionNode &) LLVM_DELETED_FUNCTION;
+  const RegionNode &operator=(const RegionNode &) LLVM_DELETED_FUNCTION;
 
 protected:
   /// This is the entry basic block that starts this region node.  If this is a
@@ -203,10 +201,8 @@ inline Region* RegionNode::getNodeAs<Region>() const {
 /// tree, the second one creates a graphical representation using graphviz.
 class Region : public RegionNode {
   friend class RegionInfo;
-  // DO NOT IMPLEMENT
-  Region(const Region &);
-  // DO NOT IMPLEMENT
-  const Region &operator=(const Region &);
+  Region(const Region &) LLVM_DELETED_FUNCTION;
+  const Region &operator=(const Region &) LLVM_DELETED_FUNCTION;
 
   // Information necessary to manage this Region.
   RegionInfo* RI;
@@ -565,10 +561,8 @@ class RegionInfo : public FunctionPass {
   typedef DenseMap<BasicBlock*, Region*> BBtoRegionMap;
   typedef SmallPtrSet<Region*, 4> RegionSet;
 
-  // DO NOT IMPLEMENT
-  RegionInfo(const RegionInfo &);
-  // DO NOT IMPLEMENT
-  const RegionInfo &operator=(const RegionInfo &);
+  RegionInfo(const RegionInfo &) LLVM_DELETED_FUNCTION;
+  const RegionInfo &operator=(const RegionInfo &) LLVM_DELETED_FUNCTION;
 
   DominatorTree *DT;
   PostDominatorTree *PDT;

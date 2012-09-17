@@ -29,8 +29,8 @@ class LazyValueInfo : public FunctionPass {
   class TargetData *TD;
   class TargetLibraryInfo *TLI;
   void *PImpl;
-  LazyValueInfo(const LazyValueInfo&); // DO NOT IMPLEMENT.
-  void operator=(const LazyValueInfo&); // DO NOT IMPLEMENT.
+  LazyValueInfo(const LazyValueInfo&) LLVM_DELETED_FUNCTION;
+  void operator=(const LazyValueInfo&) LLVM_DELETED_FUNCTION;
 public:
   static char ID;
   LazyValueInfo() : FunctionPass(ID), PImpl(0) {
