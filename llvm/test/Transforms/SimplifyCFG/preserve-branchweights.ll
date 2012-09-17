@@ -174,16 +174,37 @@ Z:
   ret void
 }
 
+define void @test7(i1 %a, i1 %b) {
+; CHECK: @test7
+entry:
+  %c = or i1 %b, false
+  br i1 %a, label %Y, label %X, !prof !0
+; CHECK: br i1 %brmerge, label %Y, label %Z, !prof !5
+
+X:
+  br i1 %c, label %Y, label %Z, !prof !6
+
+Y:
+  call void @helper(i32 0)
+  ret void
+
+Z:
+  call void @helper(i32 1)
+  ret void
+}
+
 !0 = metadata !{metadata !"branch_weights", i32 3, i32 5}
 !1 = metadata !{metadata !"branch_weights", i32 1, i32 1}
 !2 = metadata !{metadata !"branch_weights", i32 1, i32 2}
 !3 = metadata !{metadata !"branch_weights", i32 4, i32 3, i32 2, i32 1}
 !4 = metadata !{metadata !"branch_weights", i32 4, i32 3, i32 2, i32 1}
 !5 = metadata !{metadata !"branch_weights", i32 7, i32 6, i32 5}
+!6 = metadata !{metadata !"branch_weights", i32 1, i32 3}
 
 ; CHECK: !0 = metadata !{metadata !"branch_weights", i32 5, i32 11}
 ; CHECK: !1 = metadata !{metadata !"branch_weights", i32 1, i32 5}
 ; CHECK: !2 = metadata !{metadata !"branch_weights", i32 7, i32 1, i32 2}
 ; CHECK: !3 = metadata !{metadata !"branch_weights", i32 49, i32 12, i32 24, i32 35}
 ; CHECK: !4 = metadata !{metadata !"branch_weights", i32 11, i32 5}
-; CHECK-NOT: !5
+; CHECK: !5 = metadata !{metadata !"branch_weights", i32 17, i32 15} 
+; CHECK-NOT: !6
