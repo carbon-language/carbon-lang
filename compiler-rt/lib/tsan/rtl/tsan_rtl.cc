@@ -454,7 +454,7 @@ static void MemoryRangeSet(ThreadState *thr, uptr pc, uptr addr, uptr size,
   // Some programs mmap like hundreds of GBs but actually used a small part.
   // So, it's better to report a false positive on the memory
   // then to hang here senselessly.
-  const uptr kMaxResetSize = 1024*1024*1024;
+  const uptr kMaxResetSize = 4ull*1024*1024*1024;
   if (size > kMaxResetSize)
     size = kMaxResetSize;
   size = (size + (kShadowCell - 1)) & ~(kShadowCell - 1);
