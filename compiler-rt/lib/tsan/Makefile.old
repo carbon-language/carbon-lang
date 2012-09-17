@@ -19,9 +19,9 @@ GTEST_LIB=$(GTEST_BUILD_DIR)/gtest-all.o
 
 SANITIZER_COMMON_TESTS_SRC=$(wildcard ../sanitizer_common/tests/*_test.cc)
 SANITIZER_COMMON_TESTS_OBJ=$(patsubst %.cc,%.o,$(SANITIZER_COMMON_TESTS_SRC))
-RTL_TEST_SRC=$(wildcard rtl_tests/*.cc)
+RTL_TEST_SRC=$(wildcard tests/rtl/*.cc)
 RTL_TEST_OBJ=$(patsubst %.cc,%.o,$(RTL_TEST_SRC))
-UNIT_TEST_SRC=$(wildcard unit_tests/*_test.cc)
+UNIT_TEST_SRC=$(wildcard tests/unit/*_test.cc)
 UNIT_TEST_OBJ=$(patsubst %.cc,%.o,$(UNIT_TEST_SRC))
 UNIT_TEST_HDR=$(wildcard rtl/*.h) $(wildcard ../sanitizer_common/*.h)
 
