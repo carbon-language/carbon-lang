@@ -267,7 +267,7 @@ void PseudoLoweringEmitter::emitLoweringEmitter(raw_ostream &o) {
 
 void PseudoLoweringEmitter::run(raw_ostream &o) {
   Record *ExpansionClass = Records.getClass("PseudoInstExpansion");
-  Record *InstructionClass = Records.getClass("PseudoInstExpansion");
+  Record *InstructionClass = Records.getClass("Instruction");
   assert(ExpansionClass && "PseudoInstExpansion class definition missing!");
   assert(InstructionClass && "Instruction class definition missing!");
 
