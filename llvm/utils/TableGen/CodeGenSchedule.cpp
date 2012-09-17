@@ -1274,6 +1274,16 @@ void CodeGenSchedModels::addReadAdvance(Record *ProcReadAdvanceDef,
   RADefs.push_back(ProcReadAdvanceDef);
 }
 
+unsigned CodeGenProcModel::getProcResourceIdx(Record *PRDef) const {
+  RecIter PRPos = std::find(ProcResourceDefs.begin(), ProcResourceDefs.end(),
+                            PRDef);
+  if (PRPos == ProcResourceDefs.end())
+    throw TGError(PRDef->getLoc(), "ProcResource def is not included in "
+                  "the ProcResources list for " + ModelName);
+  // Idx=0 is reserved for invalid.
+  return 1 + PRPos - ProcResourceDefs.begin();
+}
+
 #ifndef NDEBUG
 void CodeGenProcModel::dump() const {
   dbgs() << Index << ": " << ModelName << " "
