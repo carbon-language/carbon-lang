@@ -533,16 +533,28 @@ public:
 
 /// FunctionTextRegion - A region that represents code texts of function.
 class FunctionTextRegion : public CodeTextRegion {
-  const FunctionDecl *FD;
+  const NamedDecl *FD;
 public:
-  FunctionTextRegion(const FunctionDecl *fd, const MemRegion* sreg)
-    : CodeTextRegion(sreg, FunctionTextRegionKind), FD(fd) {}
-  
-  QualType getLocationType() const {
-    return getContext().getPointerType(FD->getType());
+  FunctionTextRegion(const NamedDecl *fd, const MemRegion* sreg)
+    : CodeTextRegion(sreg, FunctionTextRegionKind), FD(fd) {
+    assert(isa<ObjCMethodDecl>(fd) || isa<FunctionDecl>(fd));
   }
   
-  const FunctionDecl *getDecl() const {
+  QualType getLocationType() const {
+    const ASTContext &Ctx = getContext();
+    if (const FunctionDecl *D = dyn_cast<FunctionDecl>(FD)) {
+      return Ctx.getPointerType(D->getType());
+    }
+
+    assert(isa<ObjCMethodDecl>(FD));
+    assert(false && "Getting the type of ObjCMethod is not supported yet");
+
+    // TODO: We might want to return a different type here (ex: id (*ty)(...))
+    //       depending on how it is used.
+    return QualType();
+  }
+
+  const NamedDecl *getDecl() const {
     return FD;
   }
     
@@ -550,7 +562,7 @@ public:
   
   void Profile(llvm::FoldingSetNodeID& ID) const;
   
-  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const FunctionDecl *FD,
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const NamedDecl *FD,
                             const MemRegion*);
   
   static bool classof(const MemRegion* R) {
@@ -1217,7 +1229,7 @@ public:
     return getCXXBaseObjectRegion(baseReg->getDecl(), superRegion);
   }
 
-  const FunctionTextRegion *getFunctionTextRegion(const FunctionDecl *FD);
+  const FunctionTextRegion *getFunctionTextRegion(const NamedDecl *FD);
   const BlockTextRegion *getBlockTextRegion(const BlockDecl *BD,
                                             CanQualType locTy,
                                             AnalysisDeclContext *AC);

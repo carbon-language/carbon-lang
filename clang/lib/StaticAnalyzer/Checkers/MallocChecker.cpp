@@ -739,7 +739,7 @@ bool MallocChecker::SummarizeRegion(raw_ostream &os,
                                     const MemRegion *MR) {
   switch (MR->getKind()) {
   case MemRegion::FunctionTextRegionKind: {
-    const FunctionDecl *FD = cast<FunctionTextRegion>(MR)->getDecl();
+    const NamedDecl *FD = cast<FunctionTextRegion>(MR)->getDecl();
     if (FD)
       os << "the address of the function '" << *FD << '\'';
     else

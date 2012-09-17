@@ -51,7 +51,8 @@ const FunctionDecl *SVal::getAsFunctionDecl() const {
   if (const loc::MemRegionVal* X = dyn_cast<loc::MemRegionVal>(this)) {
     const MemRegion* R = X->getRegion();
     if (const FunctionTextRegion *CTR = R->getAs<FunctionTextRegion>())
-      return CTR->getDecl();
+      if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CTR->getDecl()))
+        return FD;
   }
 
   return 0;

@@ -352,7 +352,7 @@ void ElementRegion::Profile(llvm::FoldingSetNodeID& ID) const {
 }
 
 void FunctionTextRegion::ProfileRegion(llvm::FoldingSetNodeID& ID,
-                                       const FunctionDecl *FD,
+                                       const NamedDecl *FD,
                                        const MemRegion*) {
   ID.AddInteger(MemRegion::FunctionTextRegionKind);
   ID.AddPointer(FD);
@@ -748,11 +748,11 @@ const VarRegion* MemRegionManager::getVarRegion(const VarDecl *D,
       }
       else {
         assert(D->isStaticLocal());
-        const Decl *D = STC->getDecl();
-        if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+        const Decl *STCD = STC->getDecl();
+        if (isa<FunctionDecl>(STCD) || isa<ObjCMethodDecl>(STCD))
           sReg = getGlobalsRegion(MemRegion::StaticGlobalSpaceRegionKind,
-                                  getFunctionTextRegion(FD));
-        else if (const BlockDecl *BD = dyn_cast<BlockDecl>(D)) {
+                                  getFunctionTextRegion(cast<NamedDecl>(STCD)));
+        else if (const BlockDecl *BD = dyn_cast<BlockDecl>(STCD)) {
           const BlockTextRegion *BTR =
             getBlockTextRegion(BD,
                      C.getCanonicalType(BD->getSignatureAsWritten()->getType()),
@@ -761,8 +761,6 @@ const VarRegion* MemRegionManager::getVarRegion(const VarDecl *D,
                                   BTR);
         }
         else {
-          // FIXME: For ObjC-methods, we need a new CodeTextRegion.  For now
-          // just use the main global memspace.
           sReg = getGlobalsRegion();
         }
       }
@@ -845,7 +843,7 @@ MemRegionManager::getElementRegion(QualType elementType, NonLoc Idx,
 }
 
 const FunctionTextRegion *
-MemRegionManager::getFunctionTextRegion(const FunctionDecl *FD) {
+MemRegionManager::getFunctionTextRegion(const NamedDecl *FD) {
   return getSubRegion<FunctionTextRegion>(FD, getCodeRegion());
 }
 
