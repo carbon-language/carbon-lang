@@ -1582,7 +1582,8 @@ path between it and the next switch label.</p>
 <pre>
 // compile with -Wimplicit-fallthrough
 switch (n) {
-case 33:
+case 22:
+case 33:  // no warning: no statements between case labels
   f();
 case 44:  // warning: unannotated fall-through
   g();
