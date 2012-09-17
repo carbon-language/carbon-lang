@@ -462,6 +462,59 @@ private:
   // This is set the first time getLoadName is called.
   mutable const char *dt_soname;
 
+public:
+  /// \brief Iterate over relocations in a .rel or .rela section.
+  template<class RelocT>
+  class ELFRelocationIterator {
+  public:
+    typedef void difference_type;
+    typedef const RelocT value_type;
+    typedef std::forward_iterator_tag iterator_category;
+    typedef value_type &reference;
+    typedef value_type *pointer;
+
+    /// \brief Default construct iterator.
+    ELFRelocationIterator() : Section(0), Current(0) {}
+    ELFRelocationIterator(const Elf_Shdr *Sec, const char *Start)
+      : Section(Sec)
+      , Current(Start) {}
+
+    reference operator *() {
+      assert(Current && "Attempted to dereference an invalid iterator!");
+      return *reinterpret_cast<const RelocT*>(Current);
+    }
+
+    pointer operator ->() {
+      assert(Current && "Attempted to dereference an invalid iterator!");
+      return reinterpret_cast<const RelocT*>(Current);
+    }
+
+    bool operator ==(const ELFRelocationIterator &Other) {
+      return Section == Other.Section && Current == Other.Current;
+    }
+
+    bool operator !=(const ELFRelocationIterator &Other) {
+      return !(*this == Other);
+    }
+
+    ELFRelocationIterator &operator ++(int) {
+      assert(Current && "Attempted to increment an invalid iterator!");
+      Current += Section->sh_entsize;
+      return *this;
+    }
+
+    ELFRelocationIterator operator ++() {
+      ELFRelocationIterator Tmp = *this;
+      ++*this;
+      return Tmp;
+    }
+
+  private:
+    const Elf_Shdr *Section;
+    const char *Current;
+  };
+
+private:
   // Records for each version index the corresponding Verdef or Vernaux entry.
   // This is filled the first time LoadVersionMap() is called.
   class VersionMapEntry : public PointerIntPair<const void*, 1> {
@@ -597,6 +650,27 @@ public:
   virtual dyn_iterator begin_dynamic_table() const;
   virtual dyn_iterator end_dynamic_table() const;
 
+  typedef ELFRelocationIterator<Elf_Rela> Elf_Rela_Iter;
+  typedef ELFRelocationIterator<Elf_Rel> Elf_Rel_Iter;
+
+  virtual Elf_Rela_Iter beginELFRela(const Elf_Shdr *sec) const {
+    return Elf_Rela_Iter(sec, (const char *)(base() + sec->sh_offset));
+  };
+
+  virtual Elf_Rela_Iter endELFRela(const Elf_Shdr *sec) const {
+    return Elf_Rela_Iter(sec, (const char *)
+                         (base() + sec->sh_offset + sec->sh_size));
+  };
+
+  virtual Elf_Rel_Iter beginELFRel(const Elf_Shdr *sec) const {
+    return Elf_Rel_Iter(sec, (const char *)(base() + sec->sh_offset));
+  };
+
+  virtual Elf_Rel_Iter endELFRel(const Elf_Shdr *sec) const {
+    return Elf_Rel_Iter(sec, (const char *)
+                        (base() + sec->sh_offset + sec->sh_size));
+  };
+
   virtual uint8_t getBytesInAddress() const;
   virtual StringRef getFileFormatName() const;
   virtual StringRef getObjectType() const { return "ELF"; }
@@ -611,6 +685,7 @@ public:
   const Elf_Shdr *getSection(const Elf_Sym *symb) const;
   const Elf_Shdr *getElfSection(section_iterator &It) const;
   const Elf_Sym *getElfSymbol(symbol_iterator &It) const;
+  const Elf_Sym *getElfSymbol(uint32_t index) const;
 
   // Methods for type inquiry through isa, cast, and dyn_cast
   bool isDyldType() const { return isDyldELFObject; }
@@ -804,6 +879,16 @@ const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Sym *
 ELFObjectFile<target_endianness, is64Bits>
                              ::getElfSymbol(symbol_iterator &It) const {
   return getSymbol(It->getRawDataRefImpl());
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Sym *
+ELFObjectFile<target_endianness, is64Bits>
+                             ::getElfSymbol(uint32_t index) const {
+  DataRefImpl SymbolData;
+  SymbolData.d.a = index;
+  SymbolData.d.b = 1;
+  return getSymbol(SymbolData);
 }
 
 template<support::endianness target_endianness, bool is64Bits>
