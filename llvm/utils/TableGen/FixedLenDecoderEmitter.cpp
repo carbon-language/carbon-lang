@@ -1882,7 +1882,7 @@ static void emitDecodeInstruction(formatted_raw_ostream &OS) {
      << "  uint64_t Bits = STI.getFeatureBits();\n"
      << "\n"
      << "  const uint8_t *Ptr = DecodeTable;\n"
-     << "  uint32_t CurFieldValue;\n"
+     << "  uint32_t CurFieldValue = 0;\n"
      << "  DecodeStatus S = MCDisassembler::Success;\n"
      << "  for (;;) {\n"
      << "    ptrdiff_t Loc = Ptr - DecodeTable;\n"
