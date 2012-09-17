@@ -83,7 +83,7 @@ struct CodeGenSchedRW {
 #endif
 };
 
-/// Represent a transition between SchedClasses induced by SchedWriteVariant.
+/// Represent a transition between SchedClasses induced by SchedVariant.
 struct CodeGenSchedTransition {
   unsigned ToClassIdx;
   IdxVec ProcIndices;
