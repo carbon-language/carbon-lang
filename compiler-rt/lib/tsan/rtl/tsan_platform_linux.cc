@@ -202,6 +202,17 @@ const char *InitializePlatform() {
     lim.rlim_max = 0;
     setrlimit(RLIMIT_CORE, (rlimit*)&lim);
   }
+  // TSan doesn't play well with unlimited stack size (as stack
+  // overlaps with shadow memory). If we detect unlimited stack size,
+  // we re-exec the program with limited stack size as a best effort.
+  if (StackSizeIsUnlimited()) {
+    const uptr kMaxStackSize = 32 * 1024 * 1024;  // 32 Mb
+    Report("WARNING: Program is run with unlimited stack size, which "
+           "wouldn't work with ThreadSanitizer.\n");
+    Report("Re-execing with stack size limited to %zd bytes.\n", kMaxStackSize);
+    SetStackSizeLimitInBytes(kMaxStackSize);
+    ReExec();
+  }
 
 #ifndef TSAN_GO
   CheckPIE();
