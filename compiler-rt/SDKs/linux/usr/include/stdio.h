@@ -26,10 +26,17 @@ extern struct _IO_FILE *stdin;
 extern struct _IO_FILE *stdout;
 extern struct _IO_FILE *stderr;
 
+#define	SEEK_SET	0	/* set file offset to offset */
+#define	SEEK_CUR	1	/* set file offset to current plus offset */
+#define	SEEK_END	2	/* set file offset to EOF plus offset */
+
 extern int fclose(FILE *);
 extern int fflush(FILE *);
 extern FILE *fopen(const char * restrict, const char * restrict);
 extern int fprintf(FILE * restrict, const char * restrict, ...);
 extern size_t fwrite(const void * restrict, size_t, size_t, FILE * restrict);
+extern size_t fread(void * restrict, size_t, size_t, FILE * restrict);
+extern long ftell(FILE *);
+extern int fseek(FILE *, long, int);
 
 #endif /* __STDIO_H__ */
