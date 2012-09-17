@@ -80,8 +80,8 @@ class ValueMap {
   typedef typename Config::ExtraData ExtraData;
   MapT Map;
   ExtraData Data;
-  ValueMap(const ValueMap&); // DO NOT IMPLEMENT
-  ValueMap& operator=(const ValueMap&); // DO NOT IMPLEMENT
+  ValueMap(const ValueMap&) LLVM_DELETED_FUNCTION;
+  ValueMap& operator=(const ValueMap&) LLVM_DELETED_FUNCTION;
 public:
   typedef KeyT key_type;
   typedef ValueT mapped_type;

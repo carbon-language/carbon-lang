@@ -128,8 +128,8 @@ class SparseSet {
 
   // Disable copy construction and assignment.
   // This data structure is not meant to be used that way.
-  SparseSet(const SparseSet&); // DO NOT IMPLEMENT.
-  SparseSet &operator=(const SparseSet&); // DO NOT IMPLEMENT.
+  SparseSet(const SparseSet&) LLVM_DELETED_FUNCTION;
+  SparseSet &operator=(const SparseSet&) LLVM_DELETED_FUNCTION;
 
 public:
   typedef ValueT value_type;

@@ -38,6 +38,7 @@
 #ifndef LLVM_ADT_ILIST_H
 #define LLVM_ADT_ILIST_H
 
+#include "llvm/Support/Compiler.h"
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
@@ -331,8 +332,8 @@ class iplist : public Traits {
 
   // No fundamental reason why iplist can't be copyable, but the default
   // copy/copy-assign won't do.
-  iplist(const iplist &);         // do not implement
-  void operator=(const iplist &); // do not implement
+  iplist(const iplist &) LLVM_DELETED_FUNCTION;
+  void operator=(const iplist &) LLVM_DELETED_FUNCTION;
 
 public:
   typedef NodeTy *pointer;

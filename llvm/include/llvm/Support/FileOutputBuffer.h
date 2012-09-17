@@ -78,10 +78,11 @@ public:
   ~FileOutputBuffer();
 
   
+private:
+  FileOutputBuffer(const FileOutputBuffer &) LLVM_DELETED_FUNCTION;
+  FileOutputBuffer &operator=(const FileOutputBuffer &) LLVM_DELETED_FUNCTION;
 protected:
-  FileOutputBuffer(const FileOutputBuffer &); // DO NOT IMPLEMENT
-  FileOutputBuffer &operator=(const FileOutputBuffer &); // DO NOT IMPLEMENT
-  FileOutputBuffer(uint8_t *Start, uint8_t *End, 
+  FileOutputBuffer(uint8_t *Start, uint8_t *End,
                     StringRef Path, StringRef TempPath);
     
   uint8_t            *BufferStart;

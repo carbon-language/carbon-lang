@@ -122,8 +122,8 @@ public:
     }
 
   private:
-    Factory(const Factory& RHS); // DO NOT IMPLEMENT
-    void operator=(const Factory& RHS); // DO NOT IMPLEMENT
+    Factory(const Factory& RHS) LLVM_DELETED_FUNCTION;
+    void operator=(const Factory& RHS) LLVM_DELETED_FUNCTION;
   };
 
   bool contains(key_type_ref K) const {

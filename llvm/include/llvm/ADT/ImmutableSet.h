@@ -1007,8 +1007,8 @@ public:
     }
 
   private:
-    Factory(const Factory& RHS); // DO NOT IMPLEMENT
-    void operator=(const Factory& RHS); // DO NOT IMPLEMENT
+    Factory(const Factory& RHS) LLVM_DELETED_FUNCTION;
+    void operator=(const Factory& RHS) LLVM_DELETED_FUNCTION;
   };
 
   friend class Factory;
