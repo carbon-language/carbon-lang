@@ -13,14 +13,15 @@
 
 #include "sanitizer_stackdepot.h"
 #include "sanitizer_common.h"
+#include "sanitizer_internal_defs.h"
 #include "sanitizer_mutex.h"
 #include "sanitizer_atomic.h"
 
 namespace __sanitizer {
 
 const int kTabSize = 1024 * 1024;  // Hash table size.
-const int kPartBits = 10;
-const int kPartShift = sizeof(u32) * 8 - kPartBits;
+const int kPartBits = 8;
+const int kPartShift = sizeof(u32) * 8 - kPartBits - 1;
 const int kPartCount = 1 << kPartBits;  // Number of subparts in the table.
 const int kPartSize = kTabSize / kPartCount;
 const int kMaxId = 1 << kPartShift;
@@ -157,6 +158,8 @@ u32 StackDepotPut(const uptr *stack, uptr size) {
   id = atomic_fetch_add(&depot.seq[part], 1, memory_order_relaxed) + 1;
   CHECK_LT(id, kMaxId);
   id |= part << kPartShift;
+  CHECK_NE(id, 0);
+  CHECK_EQ(id & (1u << 31), 0);
   s = allocDesc(size);
   s->id = id;
   s->hash = h;
@@ -170,6 +173,7 @@ u32 StackDepotPut(const uptr *stack, uptr size) {
 const uptr *StackDepotGet(u32 id, uptr *size) {
   if (id == 0)
     return 0;
+  CHECK_EQ(id & (1u << 31), 0);
   // High kPartBits contain part id, so we need to scan at most kPartSize lists.
   uptr part = id >> kPartShift;
   for (int i = 0; i != kPartSize; i++) {

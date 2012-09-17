@@ -29,7 +29,7 @@ TEST(SanitizerCommon, StackDepotBasic) {
 
 TEST(SanitizerCommon, StackDepotAbsent) {
   uptr sz1 = 0;
-  const uptr *sp1 = StackDepotGet(-10, &sz1);
+  const uptr *sp1 = StackDepotGet((1 << 30) - 1, &sz1);
   EXPECT_EQ(sp1, (uptr*)0);
 }
 
