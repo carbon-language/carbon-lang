@@ -4086,7 +4086,7 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
 
   // Compute argument constness, constexpr, and triviality.
   bool CanHaveConstParam = false;
-  bool Trivial;
+  bool Trivial = false;
   switch (CSM) {
   case CXXDefaultConstructor:
     Trivial = RD->hasTrivialDefaultConstructor();
