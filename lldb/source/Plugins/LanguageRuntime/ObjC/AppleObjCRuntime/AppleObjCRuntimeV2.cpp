@@ -1029,6 +1029,12 @@ public:
         return m_isa;
     }
     
+    virtual bool
+    IsRealized ()
+    {
+        return m_realized;
+    }
+    
     virtual
     ~ClassDescriptorV2 ()
     {}
@@ -1107,9 +1113,28 @@ protected:
             return;
         }
         
+        lldb::addr_t rot_pointer;
+        
         // now construct the data object
         
-        lldb::addr_t rot_pointer = process_sp->ReadPointerFromMemory(data_ptr + 8, error);
+        uint32_t flags;
+        process_sp->ReadMemory(data_ptr, &flags, 4, error);
+        if (error.Fail())
+        {
+            m_valid = false;
+            return;
+        }
+
+        if (flags & RW_REALIZED)
+        {
+            m_realized = true;
+            rot_pointer = process_sp->ReadPointerFromMemory(data_ptr + 8, error);
+        }
+        else
+        {
+            m_realized = false;
+            rot_pointer = data_ptr;
+        }
         
         if (error.Fail())
         {
@@ -1154,12 +1179,14 @@ protected:
     }
     
 private:
+    static const uint32_t RW_REALIZED = (1 << 31);
     ConstString m_name;
     ObjCLanguageRuntime::ObjCISA m_isa;
     ObjCLanguageRuntime::ObjCISA m_parent_isa;
     bool m_valid;
     lldb::ProcessWP m_process_wp;
     uint64_t m_instance_size;
+    bool m_realized;
 };
 
 class ClassDescriptorV2Tagged : public ObjCLanguageRuntime::ClassDescriptor
