@@ -751,10 +751,10 @@ void GCOVProfiler::insertIndirectCounterIncrement() {
 void GCOVProfiler::
 insertFlush(ArrayRef<std::pair<GlobalVariable*, MDNode*> > CountersBySP) {
   FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx), false);
-  Function *FlushF = M->getFunction("__llvm_gcov_flush");
+  Function *FlushF = M->getFunction("__gcov_flush");
   if (!FlushF)
     FlushF = Function::Create(FTy, GlobalValue::InternalLinkage,
-                              "__llvm_gcov_flush", M);
+                              "__gcov_flush", M);
   else
     FlushF->setLinkage(GlobalValue::InternalLinkage);
   FlushF->setUnnamedAddr(true);
@@ -781,8 +781,8 @@ insertFlush(ArrayRef<std::pair<GlobalVariable*, MDNode*> > CountersBySP) {
   if (RetTy == Type::getVoidTy(*Ctx))
     Builder.CreateRetVoid();
   else if (RetTy->isIntegerTy())
-    // Used if __llvm_gcov_flush was implicitly declared.
+    // Used if __gcov_flush was implicitly declared.
     Builder.CreateRet(ConstantInt::get(RetTy, 0));
   else
-    report_fatal_error("invalid return type for __llvm_gcov_flush");
+    report_fatal_error("invalid return type for __gcov_flush");
 }
