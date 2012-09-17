@@ -286,6 +286,23 @@ public:
   /// the EOF was encountered.
   bool ParseTopLevelDecl(DeclGroupPtrTy &Result);
 
+  /// ConsumeToken - Consume the current 'peek token' and lex the next one.
+  /// This does not work with all kinds of tokens: strings and specific other
+  /// tokens must be consumed with custom methods below.  This returns the
+  /// location of the consumed token.
+  SourceLocation ConsumeToken() {
+    assert(!isTokenStringLiteral() && !isTokenParen() && !isTokenBracket() &&
+           !isTokenBrace() &&
+           "Should consume special tokens with Consume*Token");
+
+    if (Tok.is(tok::code_completion))
+      return handleUnexpectedCodeCompletionToken();
+
+    PrevTokLocation = Tok.getLocation();
+    PP.Lex(Tok);
+    return PrevTokLocation;
+  }
+
 private:
   //===--------------------------------------------------------------------===//
   // Low-Level token peeking and consumption methods.
@@ -317,23 +334,6 @@ private:
   /// \brief Returns true if the current token is '=' or is a type of '='.
   /// For typos, give a fixit to '='
   bool isTokenEqualOrEqualTypo();
-
-  /// ConsumeToken - Consume the current 'peek token' and lex the next one.
-  /// This does not work with all kinds of tokens: strings and specific other
-  /// tokens must be consumed with custom methods below.  This returns the
-  /// location of the consumed token.
-  SourceLocation ConsumeToken() {
-    assert(!isTokenStringLiteral() && !isTokenParen() && !isTokenBracket() &&
-           !isTokenBrace() &&
-           "Should consume special tokens with Consume*Token");
-
-    if (Tok.is(tok::code_completion))
-      return handleUnexpectedCodeCompletionToken();
-
-    PrevTokLocation = Tok.getLocation();
-    PP.Lex(Tok);
-    return PrevTokLocation;
-  }
 
   /// ConsumeAnyToken - Dispatch to the right Consume* method based on the
   /// current token type.  This should only be used in cases where the type of
@@ -453,6 +453,7 @@ private:
     return PP.LookAhead(N-1);
   }
 
+public:
   /// NextToken - This peeks ahead one token and returns it without
   /// consuming it.
   const Token &NextToken() {
@@ -464,6 +465,7 @@ private:
     return ParsedType::getFromOpaquePtr(Tok.getAnnotationValue());
   }
 
+private:
   static void setTypeAnnotation(Token &Tok, ParsedType T) {
     Tok.setAnnotationValue(T.getAsOpaquePtr());
   }
@@ -486,6 +488,7 @@ private:
       Tok.setAnnotationValue(ER.get());
   }
 
+public:
   // If NeedType is true, then TryAnnotateTypeOrScopeToken will try harder to
   // find a type name by attempting typo correction.
   bool TryAnnotateTypeOrScopeToken(bool EnteringContext = false,
@@ -495,6 +498,8 @@ private:
                                                  CXXScopeSpec &SS,
                                                  bool IsNewScope);
   bool TryAnnotateCXXScopeToken(bool EnteringContext = false);
+
+private:
   enum AnnotatedNameKind {
     /// Annotation has failed and emitted an error.
     ANK_Error,
@@ -644,6 +649,7 @@ private:
   /// \brief Consume any extra semi-colons until the end of the line.
   void ConsumeExtraSemi(ExtraSemiKind Kind, unsigned TST = TST_unspecified);
 
+public:
   //===--------------------------------------------------------------------===//
   // Scope manipulation
 
@@ -691,6 +697,7 @@ private:
   /// ExitScope - Pop a scope off the scope stack.
   void ExitScope();
 
+private:
   /// \brief RAII object used to modify the scope flags for the current scope.
   class ParseScopeFlags {
     Scope *CurScope;
@@ -718,6 +725,7 @@ private:
                           SourceRange ParenRange);
   void CheckNestedObjCContexts(SourceLocation AtLoc);
 
+public:
   /// SkipUntil - Read tokens until we get to the specified token, then consume
   /// it (unless DontConsume is true).  Because we cannot guarantee that the
   /// token will ever occur, this skips to the next token, or to some likely
@@ -749,6 +757,7 @@ private:
   /// point for skipping past a simple-declaration.
   void SkipMalformedDecl();
 
+private:
   //===--------------------------------------------------------------------===//
   // Lexing and parsing of C++ inline methods.
 
@@ -1181,6 +1190,7 @@ private:
 
   Decl *ParseObjCMethodDefinition();
 
+public:
   //===--------------------------------------------------------------------===//
   // C99 6.5: Expressions.
 
@@ -1196,6 +1206,7 @@ private:
   // Expr that doesn't include commas.
   ExprResult ParseAssignmentExpression(TypeCastState isTypeCast = NotTypeCast);
 
+private:
   ExprResult ParseExpressionWithLeadingAt(SourceLocation AtLoc);
 
   ExprResult ParseExpressionWithLeadingExtension(SourceLocation ExtLoc);
@@ -1773,11 +1784,14 @@ private:
   TPResult TryParseFunctionDeclarator();
   TPResult TryParseBracketDeclarator();
 
+public:
   TypeResult ParseTypeName(SourceRange *Range = 0,
                            Declarator::TheContext Context
                              = Declarator::TypeNameContext,
                            AccessSpecifier AS = AS_none,
                            Decl **OwnedType = 0);
+
+private:
   void ParseBlockId(SourceLocation CaretLoc);
 
   // Check for the start of a C++11 attribute-specifier-seq in a context where
@@ -2053,6 +2067,8 @@ private:
   bool ParseUnqualifiedIdOperator(CXXScopeSpec &SS, bool EnteringContext,
                                   ParsedType ObjectType,
                                   UnqualifiedId &Result);
+
+public:
   bool ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
                           bool AllowDestructorName,
                           bool AllowConstructorName,
@@ -2060,6 +2076,7 @@ private:
                           SourceLocation& TemplateKWLoc,
                           UnqualifiedId &Result);
 
+private:
   //===--------------------------------------------------------------------===//
   // C++ 14: Templates [temp]
 
