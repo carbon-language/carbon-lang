@@ -87,7 +87,6 @@ class SubtargetEmitter {
   void EmitSchedClassTables(SchedClassTables &SchedTables, raw_ostream &OS);
   void EmitProcessorModels(raw_ostream &OS);
   void EmitProcessorLookup(raw_ostream &OS);
-  void EmitSchedModelHelpers(std::string ClassName, raw_ostream &OS);
   void EmitSchedModel(raw_ostream &OS);
   void ParseFeaturesFunction(raw_ostream &OS, unsigned NumFeatures,
                              unsigned NumProcs);
@@ -709,7 +708,7 @@ void SubtargetEmitter::GenSchedClassTables(const CodeGenProcModel &ProcModel,
          SCE = SchedModels.schedClassEnd(); SCI != SCE; ++SCI) {
     SCTab.resize(SCTab.size() + 1);
     MCSchedClassDesc &SCDesc = SCTab.back();
-    // SCDesc.Name is guarded by NDEBUG
+    SCDesc.Name = SCI->Name.c_str();
     SCDesc.NumMicroOps = 0;
     SCDesc.BeginGroup = false;
     SCDesc.EndGroup = false;
@@ -1020,15 +1019,6 @@ void SubtargetEmitter::EmitProcessorModels(raw_ostream &OS) {
     EmitProcessorProp(OS, PI->ModelDef, "LoadLatency", ',');
     EmitProcessorProp(OS, PI->ModelDef, "HighLatency", ',');
     EmitProcessorProp(OS, PI->ModelDef, "MispredictPenalty", ',');
-    OS << "  " << PI->Index << ", // Processor ID\n";
-    if (PI->hasInstrSchedModel())
-      OS << "  " << PI->ModelName << "ProcResources" << ",\n"
-         << "  " << PI->ModelName << "SchedClasses" << ",\n"
-         << "  " << PI->ProcResourceDefs.size()+1 << ",\n"
-         << "  " << (SchedModels.schedClassEnd()
-                     - SchedModels.schedClassBegin()) << ",\n";
-    else
-      OS << "  0, 0, 0, 0, // No instruction-level machine model.\n";
     if (SchedModels.hasItineraryClasses())
       OS << "  " << PI->ItinsDef->getName() << ");\n";
     else
@@ -1110,85 +1100,6 @@ void SubtargetEmitter::EmitSchedModel(raw_ostream &OS) {
   OS << "#undef DBGFIELD";
 }
 
-void SubtargetEmitter::EmitSchedModelHelpers(std::string ClassName,
-                                             raw_ostream &OS) {
-  OS << "unsigned " << ClassName
-     << "\n::resolveSchedClass(unsigned SchedClass, const MachineInstr *MI,"
-     << " const TargetSchedModel *SchedModel) const {\n";
-
-  std::vector<Record*> Prologs = Records.getAllDerivedDefinitions("PredicateProlog");
-  std::sort(Prologs.begin(), Prologs.end(), LessRecord());
-  for (std::vector<Record*>::const_iterator
-         PI = Prologs.begin(), PE = Prologs.end(); PI != PE; ++PI) {
-    OS << (*PI)->getValueAsString("Code") << '\n';
-  }
-  IdxVec VariantClasses;
-  for (CodeGenSchedModels::SchedClassIter SCI = SchedModels.schedClassBegin(),
-         SCE = SchedModels.schedClassEnd(); SCI != SCE; ++SCI) {
-    if (SCI->Transitions.empty())
-      continue;
-    VariantClasses.push_back(SCI - SchedModels.schedClassBegin());
-  }
-  if (!VariantClasses.empty()) {
-    OS << "  switch (SchedClass) {\n";
-    for (IdxIter VCI = VariantClasses.begin(), VCE = VariantClasses.end();
-         VCI != VCE; ++VCI) {
-      const CodeGenSchedClass &SC = SchedModels.getSchedClass(*VCI);
-      OS << "  case " << *VCI << ": // " << SC.Name << '\n';
-      IdxVec ProcIndices;
-      for (std::vector<CodeGenSchedTransition>::const_iterator
-             TI = SC.Transitions.begin(), TE = SC.Transitions.end();
-           TI != TE; ++TI) {
-        IdxVec PI;
-        std::set_union(TI->ProcIndices.begin(), TI->ProcIndices.end(),
-                       ProcIndices.begin(), ProcIndices.end(),
-                       std::back_inserter(PI));
-        ProcIndices.swap(PI);
-      }
-      for (IdxIter PI = ProcIndices.begin(), PE = ProcIndices.end();
-           PI != PE; ++PI) {
-        OS << "    ";
-        if (*PI != 0)
-          OS << "if (SchedModel->getProcessorID() == " << *PI << ") ";
-        OS << "{ // " << (SchedModels.procModelBegin() + *PI)->ModelName
-           << '\n';
-        for (std::vector<CodeGenSchedTransition>::const_iterator
-               TI = SC.Transitions.begin(), TE = SC.Transitions.end();
-             TI != TE; ++TI) {
-          OS << "      if (";
-          if (*PI != 0 && !std::count(TI->ProcIndices.begin(),
-                                      TI->ProcIndices.end(), *PI)) {
-              continue;
-          }
-          for (RecIter RI = TI->PredTerm.begin(), RE = TI->PredTerm.end();
-               RI != RE; ++RI) {
-            if (RI != TI->PredTerm.begin())
-              OS << "\n          && ";
-            OS << "(" << (*RI)->getValueAsString("Predicate") << ")";
-          }
-          OS << ")\n"
-             << "        return " << TI->ToClassIdx << "; // "
-             << SchedModels.getSchedClass(TI->ToClassIdx).Name << '\n';
-        }
-        OS << "    }\n";
-        if (*PI == 0)
-          break;
-      }
-      unsigned SCIdx = 0;
-      if (SC.ItinClassDef)
-        SCIdx = SchedModels.getSchedClassIdxForItin(SC.ItinClassDef);
-      else
-        SCIdx = SchedModels.findSchedClassIdx(SC.Writes, SC.Reads);
-      if (SCIdx != *VCI)
-        OS << "    return " << SCIdx << ";\n";
-      OS << "    break;\n";
-    }
-    OS << "  };\n";
-  }
-  OS << "  report_fatal_error(\"Expected a variant SchedClass\");\n"
-     << "} // " << ClassName << "::resolveSchedClass\n";
-}
-
 //
 // ParseFeaturesFunction - Produces a subtarget specific function for parsing
 // the subtarget features string.
@@ -1213,8 +1124,7 @@ void SubtargetEmitter::ParseFeaturesFunction(raw_ostream &OS,
     return;
   }
 
-  OS << "  InitMCProcessorInfo(CPU, FS);\n"
-     << "  uint64_t Bits = getFeatureBits();\n";
+  OS << "  uint64_t Bits = ReInitMCSubtargetInfo(CPU, FS);\n";
 
   for (unsigned i = 0; i < Features.size(); i++) {
     // Next record
@@ -1282,17 +1192,13 @@ void SubtargetEmitter::run(raw_ostream &OS) {
   else
     OS << "0, ";
   OS << '\n'; OS.indent(22);
-  OS << Target << "ProcSchedKV, "
-     << Target << "WriteProcResTable, "
-     << Target << "WriteLatencyTable, "
-     << Target << "ReadAdvanceTable, ";
   if (SchedModels.hasItineraryClasses()) {
-    OS << '\n'; OS.indent(22);
-    OS << Target << "Stages, "
+    OS << Target << "ProcSchedKV, "
+       << Target << "Stages, "
        << Target << "OperandCycles, "
        << Target << "ForwardingPaths, ";
   } else
-    OS << "0, 0, 0, ";
+    OS << "0, 0, 0, 0, ";
   OS << NumFeatures << ", " << NumProcs << ");\n}\n\n";
 
   OS << "} // End llvm namespace \n";
@@ -1319,8 +1225,6 @@ void SubtargetEmitter::run(raw_ostream &OS) {
      << "  explicit " << ClassName << "(StringRef TT, StringRef CPU, "
      << "StringRef FS);\n"
      << "public:\n"
-     << "  unsigned resolveSchedClass(unsigned SchedClass, const MachineInstr *DefMI,"
-     << " const TargetSchedModel *SchedModel) const;\n"
      << "  DFAPacketizer *createDFAPacketizer(const InstrItineraryData *IID)"
      << " const;\n"
      << "};\n";
@@ -1360,21 +1264,14 @@ void SubtargetEmitter::run(raw_ostream &OS) {
     OS << Target << "SubTypeKV, ";
   else
     OS << "0, ";
-  OS << '\n'; OS.indent(22);
-  OS << Target << "ProcSchedKV, "
-     << Target << "WriteProcResTable, "
-     << Target << "WriteLatencyTable, "
-     << Target << "ReadAdvanceTable, ";
-  OS << '\n'; OS.indent(22);
   if (SchedModels.hasItineraryClasses()) {
-    OS << Target << "Stages, "
+    OS << Target << "ProcSchedKV, "
+       << Target << "Stages, "
        << Target << "OperandCycles, "
        << Target << "ForwardingPaths, ";
   } else
-    OS << "0, 0, 0, ";
+    OS << "0, 0, 0, 0, ";
   OS << NumFeatures << ", " << NumProcs << ");\n}\n\n";
-
-  EmitSchedModelHelpers(ClassName, OS);
 
   OS << "} // End llvm namespace \n";
 

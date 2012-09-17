@@ -606,13 +606,13 @@ getOperandLatency(const InstrItineraryData *ItinData,
 
 /// If we can determine the operand latency from the def only, without itinerary
 /// lookup, do so. Otherwise return -1.
-int TargetInstrInfo::computeDefOperandLatency(
-  const InstrItineraryData *ItinData,
-  const MachineInstr *DefMI, bool FindMin) const {
+static int computeDefOperandLatency(
+  const TargetInstrInfo *TII, const InstrItineraryData *ItinData,
+  const MachineInstr *DefMI, bool FindMin) {
 
   // Let the target hook getInstrLatency handle missing itineraries.
   if (!ItinData)
-    return getInstrLatency(ItinData, DefMI);
+    return TII->getInstrLatency(ItinData, DefMI);
 
   // Return a latency based on the itinerary properties and defining instruction
   // if possible. Some common subtargets don't require per-operand latency,
@@ -621,7 +621,7 @@ int TargetInstrInfo::computeDefOperandLatency(
     // If MinLatency is valid, call getInstrLatency. This uses Stage latency if
     // it exists before defaulting to MinLatency.
     if (ItinData->SchedModel->MinLatency >= 0)
-      return getInstrLatency(ItinData, DefMI);
+      return TII->getInstrLatency(ItinData, DefMI);
 
     // If MinLatency is invalid, OperandLatency is interpreted as MinLatency.
     // For empty itineraries, short-cirtuit the check and default to one cycle.
@@ -629,7 +629,7 @@ int TargetInstrInfo::computeDefOperandLatency(
       return 1;
   }
   else if(ItinData->isEmpty())
-    return defaultDefLatency(ItinData->SchedModel, DefMI);
+    return TII->defaultDefLatency(ItinData->SchedModel, DefMI);
 
   // ...operand lookup required
   return -1;
@@ -652,7 +652,7 @@ computeOperandLatency(const InstrItineraryData *ItinData,
                       const MachineInstr *UseMI, unsigned UseIdx,
                       bool FindMin) const {
 
-  int DefLatency = computeDefOperandLatency(ItinData, DefMI, FindMin);
+  int DefLatency = computeDefOperandLatency(this, ItinData, DefMI, FindMin);
   if (DefLatency >= 0)
     return DefLatency;
 

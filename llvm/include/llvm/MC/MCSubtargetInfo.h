@@ -36,7 +36,6 @@ class MCSubtargetInfo {
   const MCWriteProcResEntry *WriteProcResTable;
   const MCWriteLatencyEntry *WriteLatencyTable;
   const MCReadAdvanceEntry *ReadAdvanceTable;
-  const MCSchedModel *CPUSchedModel;
 
   const InstrStage *Stages;            // Instruction itinerary stages
   const unsigned *OperandCycles;       // Itinerary operand cycles
@@ -50,9 +49,6 @@ public:
                            const SubtargetFeatureKV *PF,
                            const SubtargetFeatureKV *PD,
                            const SubtargetInfoKV *ProcSched,
-                           const MCWriteProcResEntry *WPR,
-                           const MCWriteLatencyEntry *WL,
-                           const MCReadAdvanceEntry *RA,
                            const InstrStage *IS,
                            const unsigned *OC, const unsigned *FP,
                            unsigned NF, unsigned NP);
@@ -68,9 +64,9 @@ public:
     return FeatureBits;
   }
 
-  /// InitMCProcessorInfo - Set or change the CPU (optionally supplemented with
-  /// feature string). Recompute feature bits and scheduling model.
-  void InitMCProcessorInfo(StringRef CPU, StringRef FS);
+  /// ReInitMCSubtargetInfo - Change CPU (and optionally supplemented with
+  /// feature string), recompute and return feature bits.
+  uint64_t ReInitMCSubtargetInfo(StringRef CPU, StringRef FS);
 
   /// ToggleFeature - Toggle a feature and returns the re-computed feature
   /// bits. This version does not change the implied bits.
@@ -83,10 +79,6 @@ public:
   /// getSchedModelForCPU - Get the machine model of a CPU.
   ///
   const MCSchedModel *getSchedModelForCPU(StringRef CPU) const;
-
-  /// getSchedModel - Get the machine model for this subtarget's CPU.
-  ///
-  const MCSchedModel *getSchedModel() const { return CPUSchedModel; }
 
   /// Return an iterator at the first process resource consumed by the given
   /// scheduling class.

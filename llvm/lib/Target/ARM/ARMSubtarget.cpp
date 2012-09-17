@@ -13,9 +13,8 @@
 
 #include "ARMSubtarget.h"
 #include "ARMBaseRegisterInfo.h"
-#include "ARMBaseInstrInfo.h"
 #include "llvm/GlobalValue.h"
-#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Support/CommandLine.h"
 
 #define GET_SUBTARGETINFO_TARGET_DESC
