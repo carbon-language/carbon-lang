@@ -16,7 +16,7 @@
 
 @interface MyClass ()
 
-@property (readwrite) NSMutableArray * array;
+@property (readwrite, retain) NSMutableArray * array;
 
 @end
 

@@ -35,15 +35,29 @@
 
 @property (nonatomic, copy) NSString* addingMemoryModel;
 @property (nonatomic, copy) NSString* matchingMemoryModel;
-@property () NSString* addingNoNewMemoryModel;
-@property () NSString* none;
-@property (readwrite) NSString* none1;
+@property () NSString* addingNoNewMemoryModel; // expected-warning {{no 'assign', 'retain', or 'copy' attribute is specified - 'assign' is assumed}} \
+                                               // expected-warning {{default property attribute 'assign' not appropriate for non-GC object}}
+@property () NSString* none; // expected-warning {{no 'assign', 'retain', or 'copy' attribute is specified - 'assign' is assumed}} \
+                                               // expected-warning {{default property attribute 'assign' not appropriate for non-GC object}}
+@property (readwrite, retain) NSString* none1;
 
 @property (retain) NSString* changeMemoryModel; // expected-warning {{property attribute in class extension does not match the primary class}}
-@property () __weak id weak_prop;
-@property (readwrite) __weak id weak_prop1;
+@property () __weak id weak_prop; // expected-warning {{no 'assign', 'retain', or 'copy' attribute is specified - 'assign' is assumed}} \
+                                  // expected-warning {{default property attribute 'assign' not appropriate for non-GC object}}
+@property (readwrite) __weak id weak_prop1; // expected-warning {{no 'assign', 'retain', or 'copy' attribute is specified - 'assign' is assumed}}\
+					    // expected-warning {{default property attribute 'assign' not appropriate for non-GC object}}
 
-@property () NSString* assignProperty;
+@property (assign, readwrite) NSString* assignProperty;
 @property (assign) NSString* readonlyProp;
+@end
+
+// rdar://12214070
+@interface radar12214070
+@property (nonatomic, atomic, readonly) float propertyName; // expected-error {{property attributes 'atomic' and 'nonatomic' are mutually exclusive}}
+@end
+
+@interface radar12214070 ()
+@property (atomic, nonatomic, readonly, readwrite) float propertyName; // expected-error {{property attributes 'readonly' and 'readwrite' are mutually exclusive}} \
+		// expected-error {{property attributes 'atomic' and 'nonatomic' are mutually exclusive}}
 @end
 
