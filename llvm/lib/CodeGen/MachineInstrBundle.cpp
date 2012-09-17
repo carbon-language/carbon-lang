@@ -109,10 +109,10 @@ void llvm::finalizeBundle(MachineBasicBlock &MBB,
   MachineInstrBuilder MIB = BuildMI(MBB, FirstMI, FirstMI->getDebugLoc(),
                                     TII->get(TargetOpcode::BUNDLE));
 
-  SmallVector<unsigned, 8> LocalDefs;
-  SmallSet<unsigned, 8> LocalDefSet;
+  SmallVector<unsigned, 32> LocalDefs;
+  SmallSet<unsigned, 32> LocalDefSet;
   SmallSet<unsigned, 8> DeadDefSet;
-  SmallSet<unsigned, 8> KilledDefSet;
+  SmallSet<unsigned, 16> KilledDefSet;
   SmallVector<unsigned, 8> ExternUses;
   SmallSet<unsigned, 8> ExternUseSet;
   SmallSet<unsigned, 8> KilledUseSet;
@@ -181,7 +181,7 @@ void llvm::finalizeBundle(MachineBasicBlock &MBB,
     Defs.clear();
   }
 
-  SmallSet<unsigned, 8> Added;
+  SmallSet<unsigned, 32> Added;
   for (unsigned i = 0, e = LocalDefs.size(); i != e; ++i) {
     unsigned Reg = LocalDefs[i];
     if (Added.insert(Reg)) {
