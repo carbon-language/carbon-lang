@@ -193,6 +193,29 @@ Z:
   ret void
 }
 
+; Test basic folding to a conditional branch.
+define void @test8(i64 %x, i64 %y) nounwind {
+; CHECK: @test8
+entry:
+    %lt = icmp slt i64 %x, %y
+; CHECK: br i1 %lt, label %a, label %b, !prof !6
+    %qux = select i1 %lt, i32 0, i32 2
+    switch i32 %qux, label %bees [
+        i32 0, label %a
+        i32 1, label %b
+        i32 2, label %b
+    ], !prof !7
+a:
+    call void @helper(i32 0) nounwind
+    ret void
+b:
+    call void @helper(i32 1) nounwind
+    ret void
+bees:
+    call void @helper(i32 2) nounwind
+    ret void
+}
+
 !0 = metadata !{metadata !"branch_weights", i32 3, i32 5}
 !1 = metadata !{metadata !"branch_weights", i32 1, i32 1}
 !2 = metadata !{metadata !"branch_weights", i32 1, i32 2}
@@ -200,6 +223,7 @@ Z:
 !4 = metadata !{metadata !"branch_weights", i32 4, i32 3, i32 2, i32 1}
 !5 = metadata !{metadata !"branch_weights", i32 7, i32 6, i32 5}
 !6 = metadata !{metadata !"branch_weights", i32 1, i32 3}
+!7 = metadata !{metadata !"branch_weights", i32 33, i32 9, i32 8, i32 7}
 
 ; CHECK: !0 = metadata !{metadata !"branch_weights", i32 5, i32 11}
 ; CHECK: !1 = metadata !{metadata !"branch_weights", i32 1, i32 5}
@@ -207,4 +231,5 @@ Z:
 ; CHECK: !3 = metadata !{metadata !"branch_weights", i32 49, i32 12, i32 24, i32 35}
 ; CHECK: !4 = metadata !{metadata !"branch_weights", i32 11, i32 5}
 ; CHECK: !5 = metadata !{metadata !"branch_weights", i32 17, i32 15} 
-; CHECK-NOT: !6
+; CHECK: !6 = metadata !{metadata !"branch_weights", i32 9, i32 7}
+; CHECK-NOT: !7
