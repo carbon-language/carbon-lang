@@ -308,7 +308,7 @@ MachineOperandIteratorBase::analyzePhysReg(unsigned Reg,
     } if (IsRegOrOverlapping && MO.readsReg()) {
       PRI.ReadsOverlap = true;// Reg or an overlapping register is read.
     }
-    
+
     if (!MO.isDef())
       continue;
 
