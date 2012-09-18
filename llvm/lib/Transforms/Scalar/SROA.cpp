@@ -1059,7 +1059,7 @@ Type *AllocaPartitioning::getCommonType(iterator I) const {
     if (isa<IntrinsicInst>(*UI->User))
       continue;
     if (UI->BeginOffset != I->BeginOffset || UI->EndOffset != I->EndOffset)
-      return 0;
+      continue;
 
     Type *UserTy = 0;
     if (LoadInst *LI = dyn_cast<LoadInst>(&*UI->User)) {
