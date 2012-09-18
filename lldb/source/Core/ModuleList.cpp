@@ -643,8 +643,14 @@ ModuleList::GetIndexForModule (const Module *module) const
 static ModuleList &
 GetSharedModuleList ()
 {
-    static ModuleList g_shared_module_list;
-    return g_shared_module_list;
+    // NOTE: Intentionally leak the module list so a program doesn't have to
+    // cleanup all modules and object files as it exits. This just wastes time
+    // doing a bunch of cleanup that isn't required.
+    static ModuleList *g_shared_module_list = NULL;
+    if (g_shared_module_list == NULL)
+        g_shared_module_list = new ModuleList(); // <--- Intentional leak!!!
+    
+    return *g_shared_module_list;
 }
 
 bool
