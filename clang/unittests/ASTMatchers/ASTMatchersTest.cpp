@@ -294,6 +294,16 @@ TEST(DeclarationMatcher, ClassIsDerived) {
       recordDecl(isDerivedFrom(recordDecl(hasName("X")).bind("test")))));
 }
 
+TEST(DeclarationMatcher, ClassDerivedFromDependentTemplateSpecialization) {
+  EXPECT_TRUE(matches(
+     "template <typename T> struct A {"
+     "  template <typename T2> struct F {};"
+     "};"
+     "template <typename T> struct B : A<T>::template F<T> {};"
+     "B<int> b;",
+     recordDecl(hasName("B"), isDerivedFrom(recordDecl()))));
+}
+
 TEST(ClassTemplate, DoesNotMatchClass) {
   DeclarationMatcher ClassX = classTemplateDecl(hasName("X"));
   EXPECT_TRUE(notMatches("class X;", ClassX));

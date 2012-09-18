@@ -487,6 +487,7 @@ bool MatchASTVisitor::classIsDerivedFrom(const CXXRecordDecl *Declaration,
 
     // Type::getAs<...>() drills through typedefs.
     if (TypeNode->getAs<DependentNameType>() != NULL ||
+        TypeNode->getAs<DependentTemplateSpecializationType>() != NULL ||
         TypeNode->getAs<TemplateTypeParmType>() != NULL)
       // Dependent names and template TypeNode parameters will be matched when
       // the template is instantiated.
