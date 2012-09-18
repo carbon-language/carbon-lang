@@ -14,6 +14,7 @@
 #ifndef LLVM_TARGET_TARGETSUBTARGETINFO_H
 #define LLVM_TARGET_TARGETSUBTARGETINFO_H
 
+#include "llvm/CodeGen/TargetSchedule.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/CodeGen.h"
 
@@ -42,6 +43,15 @@ public:
   typedef SmallVectorImpl<const TargetRegisterClass*> RegClassVector;
 
   virtual ~TargetSubtargetInfo();
+
+  /// Initialize a copy of the scheduling model for this subtarget.
+  /// TargetSchedModel provides the interface for the subtarget's
+  /// instruction scheduling information.
+  void initSchedModel(TargetSchedModel &SchedModel,
+                      const TargetInstrInfo *TII) const {
+    // getSchedModel returns the static MCSchedModel initialized by InitMCSubtargetInfo.
+    SchedModel.init(*getSchedModel(), this, TII);
+  }
 
   /// getSpecialAddressLatency - For targets where it is beneficial to
   /// backschedule instructions that compute addresses, return a value
