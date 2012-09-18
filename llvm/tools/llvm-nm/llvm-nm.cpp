@@ -110,6 +110,9 @@ namespace {
 
   cl::opt<bool> SizeSort("size-sort", cl::desc("Sort symbols by size"));
 
+  cl::opt<bool> WithoutAliases("without-aliases", cl::Hidden,
+                               cl::desc("Exclude aliases from output"));
+
   bool PrintAddress = true;
 
   bool MultipleFiles = false;
@@ -275,8 +278,9 @@ static void DumpSymbolNamesFromModule(Module *M) {
   std::for_each (M->begin(), M->end(), DumpSymbolNameForGlobalValue);
   std::for_each (M->global_begin(), M->global_end(),
                  DumpSymbolNameForGlobalValue);
-  std::for_each (M->alias_begin(), M->alias_end(),
-                 DumpSymbolNameForGlobalValue);
+  if (!WithoutAliases)
+    std::for_each (M->alias_begin(), M->alias_end(),
+		   DumpSymbolNameForGlobalValue);
 
   SortAndPrintSymbolList();
 }
