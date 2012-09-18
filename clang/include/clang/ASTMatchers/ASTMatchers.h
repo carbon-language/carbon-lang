@@ -741,7 +741,7 @@ const internal::VariadicDynCastAllOfMatcher<Stmt, CompoundStmt> compoundStmt;
 ///   true
 /// \endcode
 const internal::VariadicDynCastAllOfMatcher<
-  Expr,
+  Stmt,
   CXXBoolLiteralExpr> boolLiteral;
 
 /// \brief Matches string literals (also matches wide string literals).
@@ -751,7 +751,7 @@ const internal::VariadicDynCastAllOfMatcher<
 ///   char *s = "abcd"; wchar_t *ws = L"abcd"
 /// \endcode
 const internal::VariadicDynCastAllOfMatcher<
-  Expr,
+  Stmt,
   StringLiteral> stringLiteral;
 
 /// \brief Matches character literals (also matches wchar_t).
@@ -764,7 +764,7 @@ const internal::VariadicDynCastAllOfMatcher<
 ///   char ch = 'a'; wchar_t chw = L'a';
 /// \endcode
 const internal::VariadicDynCastAllOfMatcher<
-  Expr,
+  Stmt,
   CharacterLiteral> characterLiteral;
 
 /// \brief Matches integer literals of all sizes / encodings.
@@ -773,7 +773,7 @@ const internal::VariadicDynCastAllOfMatcher<
 ///
 /// Example matches 1, 1L, 0x1, 1U
 const internal::VariadicDynCastAllOfMatcher<
-  Expr,
+  Stmt,
   IntegerLiteral> integerLiteral;
 
 /// \brief Matches binary operator expressions.
@@ -817,7 +817,7 @@ const internal::VariadicDynCastAllOfMatcher<
 ///   void* p = reinterpret_cast<char*>(&p);
 /// \endcode
 const internal::VariadicDynCastAllOfMatcher<
-  Expr,
+  Stmt,
   CXXReinterpretCastExpr> reinterpretCastExpr;
 
 /// \brief Matches a C++ static_cast expression.
@@ -834,7 +834,7 @@ const internal::VariadicDynCastAllOfMatcher<
 ///   long eight(static_cast<long>(8));
 /// \endcode
 const internal::VariadicDynCastAllOfMatcher<
-  Expr,
+  Stmt,
   CXXStaticCastExpr> staticCastExpr;
 
 /// \brief Matches a dynamic_cast expression.
@@ -850,7 +850,7 @@ const internal::VariadicDynCastAllOfMatcher<
 ///   D* p = dynamic_cast<D*>(&b);
 /// \endcode
 const internal::VariadicDynCastAllOfMatcher<
-  Expr,
+  Stmt,
   CXXDynamicCastExpr> dynamicCastExpr;
 
 /// \brief Matches a const_cast expression.
@@ -862,7 +862,7 @@ const internal::VariadicDynCastAllOfMatcher<
 ///   int* p = const_cast<int*>(&r);
 /// \endcode
 const internal::VariadicDynCastAllOfMatcher<
-  Expr,
+  Stmt,
   CXXConstCastExpr> constCastExpr;
 
 /// \brief Matches explicit cast expressions.
@@ -887,7 +887,7 @@ const internal::VariadicDynCastAllOfMatcher<
 ///   long ell = 42;
 /// \endcode
 const internal::VariadicDynCastAllOfMatcher<
-  Expr,
+  Stmt,
   ExplicitCastExpr> explicitCastExpr;
 
 /// \brief Matches the implicit cast nodes of Clang's AST.
@@ -895,7 +895,7 @@ const internal::VariadicDynCastAllOfMatcher<
 /// This matches many different places, including function call return value
 /// eliding, as well as any type conversions.
 const internal::VariadicDynCastAllOfMatcher<
-  Expr,
+  Stmt,
   ImplicitCastExpr> implicitCastExpr;
 
 /// \brief Matches any cast nodes of Clang's AST.
@@ -911,7 +911,7 @@ const internal::VariadicDynCastAllOfMatcher<
 ///   int i = (0);
 ///   int k = 0;
 /// \endcode
-const internal::VariadicDynCastAllOfMatcher<Expr, CastExpr> castExpr;
+const internal::VariadicDynCastAllOfMatcher<Stmt, CastExpr> castExpr;
 
 /// \brief Matches functional cast expressions
 ///
@@ -922,7 +922,7 @@ const internal::VariadicDynCastAllOfMatcher<Expr, CastExpr> castExpr;
 ///   Foo h = Foo(bar);
 /// \endcode
 const internal::VariadicDynCastAllOfMatcher<
-  Expr,
+  Stmt,
   CXXFunctionalCastExpr> functionalCastExpr;
 
 /// \brief Various overloads for the anyOf matcher.
