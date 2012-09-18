@@ -754,3 +754,23 @@ entry:
   ret void
 }
 
+%opaque = type opaque
+
+define i32 @test19(%opaque* %x) {
+; This input will cause us to try to compute a natural GEP when rewriting
+; pointers in such a way that we try to GEP through the opaque type. Previously,
+; a check for an unsized type was missing and this crashed. Ensure it behaves
+; reasonably now.
+; CHECK: @test19
+; CHECK-NOT: alloca
+; CHECK: ret i32 undef
+
+entry:
+  %a = alloca { i64, i8* }
+  %cast1 = bitcast %opaque* %x to i8*
+  %cast2 = bitcast { i64, i8* }* %a to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %cast2, i8* %cast1, i32 16, i32 1, i1 false)
+  %gep = getelementptr inbounds { i64, i8* }* %a, i32 0, i32 0
+  %val = load i64* %gep
+  ret i32 undef
+}

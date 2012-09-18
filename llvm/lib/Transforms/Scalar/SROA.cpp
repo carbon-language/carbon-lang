@@ -1487,6 +1487,8 @@ static Value *getNaturalGEPWithOffset(IRBuilder<> &IRB, const TargetData &TD,
     return 0;
 
   Type *ElementTy = Ty->getElementType();
+  if (!ElementTy->isSized())
+    return 0; // We can't GEP through an unsized element.
   APInt ElementSize(Offset.getBitWidth(), TD.getTypeAllocSize(ElementTy));
   if (ElementSize == 0)
     return 0; // Zero-length arrays can't help us build a natural GEP.
