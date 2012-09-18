@@ -379,6 +379,25 @@ namespace statics {
   }
 }
 
+namespace in_class_initializers {
+  struct S {
+    S() : a(a + 1) {} // expected-warning{{field is uninitialized when used here}}
+    int a = 42; // Note: because a is in a member initializer list, this initialization is ignored.
+  };
+
+  struct T {
+    T() : b(a + 1) {} // No-warning.
+    int a = 42;
+    int b;
+  };
+
+  struct U {
+    U() : a(b + 1), b(a + 1) {} // FIXME: Warn here.
+    int a = 42; // Note: because a and b are in the member initializer list, these initializers are ignored.
+    int b = 1;
+  };
+}
+
 namespace references {
   int &a = a; // expected-warning{{reference 'a' is not yet bound to a value when used within its own initialization}}
 
@@ -394,6 +413,13 @@ namespace references {
   struct T {
     T() : a(b), b(a) {} // FIXME: Warn here.
     int &a, &b;
-    int &c = c; // FIXME: Warn here.
+    int &c = c; // expected-warning{{reference is not yet bound to a value when used here}}
+  };
+
+  int x;
+  struct U {
+    U() : b(a) {} // No-warning.
+    int &a = x;
+    int &b;
   };
 }

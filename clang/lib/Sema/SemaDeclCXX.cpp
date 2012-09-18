@@ -1678,6 +1678,99 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   return Member;
 }
 
+namespace {
+  class UninitializedFieldVisitor
+      : public EvaluatedExprVisitor<UninitializedFieldVisitor> {
+    Sema &S;
+    ValueDecl *VD;
+  public:
+    typedef EvaluatedExprVisitor<UninitializedFieldVisitor> Inherited;
+    UninitializedFieldVisitor(Sema &S, ValueDecl *VD) : Inherited(S.Context),
+                                                        S(S), VD(VD) {
+    }
+
+    void HandleExpr(Expr *E) {
+      if (!E) return;
+
+      // Expressions like x(x) sometimes lack the surrounding expressions
+      // but need to be checked anyways.
+      HandleValue(E);
+      Visit(E);
+    }
+
+    void HandleValue(Expr *E) {
+      E = E->IgnoreParens();
+
+      if (MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
+        if (isa<EnumConstantDecl>(ME->getMemberDecl()))
+            return;
+        Expr *Base = E;
+        while (isa<MemberExpr>(Base)) {
+          ME = dyn_cast<MemberExpr>(Base);
+          if (VarDecl *VarD = dyn_cast<VarDecl>(ME->getMemberDecl()))
+            if (VarD->hasGlobalStorage())
+              return;
+          Base = ME->getBase();
+        }
+
+        if (VD == ME->getMemberDecl() && isa<CXXThisExpr>(Base)) {
+          unsigned diag = VD->getType()->isReferenceType()
+              ? diag::warn_reference_field_is_uninit
+              : diag::warn_field_is_uninit;
+          S.Diag(ME->getExprLoc(), diag);
+          return;
+        }
+      }
+
+      if (ConditionalOperator *CO = dyn_cast<ConditionalOperator>(E)) {
+        HandleValue(CO->getTrueExpr());
+        HandleValue(CO->getFalseExpr());
+        return;
+      }
+
+      if (BinaryConditionalOperator *BCO =
+              dyn_cast<BinaryConditionalOperator>(E)) {
+        HandleValue(BCO->getCommon());
+        HandleValue(BCO->getFalseExpr());
+        return;
+      }
+
+      if (BinaryOperator *BO = dyn_cast<BinaryOperator>(E)) {
+        switch (BO->getOpcode()) {
+        default:
+          return;
+        case(BO_PtrMemD):
+        case(BO_PtrMemI):
+          HandleValue(BO->getLHS());
+          return;
+        case(BO_Comma):
+          HandleValue(BO->getRHS());
+          return;
+        }
+      }
+    }
+
+    void VisitImplicitCastExpr(ImplicitCastExpr *E) {
+      if (E->getCastKind() == CK_LValueToRValue)
+        HandleValue(E->getSubExpr());
+
+      Inherited::VisitImplicitCastExpr(E);
+    }
+
+    void VisitCXXMemberCallExpr(CXXMemberCallExpr *E) {
+      Expr *Callee = E->getCallee();
+      if (isa<MemberExpr>(Callee))
+        HandleValue(Callee);
+
+      Inherited::VisitCXXMemberCallExpr(E);
+    }
+  };
+  static void CheckInitExprContainsUninitializedFields(Sema &S, Expr *E,
+                                                       ValueDecl *VD) {
+    UninitializedFieldVisitor(S, VD).HandleExpr(E);
+  }
+} // namespace
+
 /// ActOnCXXInClassMemberInitializer - This is invoked after parsing an
 /// in-class initializer for a non-static C++ class member, and after
 /// instantiating an in-class initializer in a class template. Such actions
@@ -1699,6 +1792,11 @@ Sema::ActOnCXXInClassMemberInitializer(Decl *D, SourceLocation InitLoc,
     FD->setInvalidDecl();
     FD->removeInClassInitializer();
     return;
+  }
+
+  if (getDiagnostics().getDiagnosticLevel(diag::warn_field_is_uninit, InitLoc)
+      != DiagnosticsEngine::Ignored) {
+    CheckInitExprContainsUninitializedFields(*this, InitExpr, FD);
   }
 
   ExprResult Init = InitExpr;
@@ -2065,99 +2163,6 @@ static void CheckForDanglingReferenceOrPointer(Sema &S, ValueDecl *Member,
     << (unsigned)IsPointer;
 }
 
-namespace {
-  class UninitializedFieldVisitor
-      : public EvaluatedExprVisitor<UninitializedFieldVisitor> {
-    Sema &S;
-    ValueDecl *VD;
-  public:
-    typedef EvaluatedExprVisitor<UninitializedFieldVisitor> Inherited;
-    UninitializedFieldVisitor(Sema &S, ValueDecl *VD) : Inherited(S.Context),
-                                                        S(S), VD(VD) {
-    }
-
-    void HandleExpr(Expr *E) {
-      if (!E) return;
-
-      // Expressions like x(x) sometimes lack the surrounding expressions
-      // but need to be checked anyways.
-      HandleValue(E);
-      Visit(E);
-    }
-
-    void HandleValue(Expr *E) {
-      E = E->IgnoreParens();
-
-      if (MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
-        if (isa<EnumConstantDecl>(ME->getMemberDecl()))
-            return;
-        Expr *Base = E;
-        while (isa<MemberExpr>(Base)) {
-          ME = dyn_cast<MemberExpr>(Base);
-          if (VarDecl *VarD = dyn_cast<VarDecl>(ME->getMemberDecl()))
-            if (VarD->hasGlobalStorage())
-              return;
-          Base = ME->getBase();
-        }
-
-        if (VD == ME->getMemberDecl() && isa<CXXThisExpr>(Base)) {
-          unsigned diag = VD->getType()->isReferenceType()
-              ? diag::warn_reference_field_is_uninit
-              : diag::warn_field_is_uninit;
-          S.Diag(ME->getExprLoc(), diag);
-          return;
-        }
-      }
-
-      if (ConditionalOperator *CO = dyn_cast<ConditionalOperator>(E)) {
-        HandleValue(CO->getTrueExpr());
-        HandleValue(CO->getFalseExpr());
-        return;
-      }
-
-      if (BinaryConditionalOperator *BCO =
-              dyn_cast<BinaryConditionalOperator>(E)) {
-        HandleValue(BCO->getCommon());
-        HandleValue(BCO->getFalseExpr());
-        return;
-      }
-
-      if (BinaryOperator *BO = dyn_cast<BinaryOperator>(E)) {
-        switch (BO->getOpcode()) {
-        default:
-          return;
-        case(BO_PtrMemD):
-        case(BO_PtrMemI):
-          HandleValue(BO->getLHS());
-          return;
-        case(BO_Comma):
-          HandleValue(BO->getRHS());
-          return;
-        }
-      }
-    }
-
-    void VisitImplicitCastExpr(ImplicitCastExpr *E) {
-      if (E->getCastKind() == CK_LValueToRValue)
-        HandleValue(E->getSubExpr());
-
-      Inherited::VisitImplicitCastExpr(E);
-    }
-
-    void VisitCXXMemberCallExpr(CXXMemberCallExpr *E) {
-      Expr *Callee = E->getCallee();
-      if (isa<MemberExpr>(Callee))
-        HandleValue(Callee);
-
-      Inherited::VisitCXXMemberCallExpr(E);
-    }
-  };
-  static void CheckInitExprContainsUninitializedFields(Sema &S, Expr *E,
-                                                       ValueDecl *VD) {
-    UninitializedFieldVisitor(S, VD).HandleExpr(E);
-  }
-} // namespace
-
 MemInitResult
 Sema::BuildMemberInitializer(ValueDecl *Member, Expr *Init,
                              SourceLocation IdLoc) {
@@ -2191,11 +2196,13 @@ Sema::BuildMemberInitializer(ValueDecl *Member, Expr *Init,
         != DiagnosticsEngine::Ignored)
     for (unsigned i = 0; i < NumArgs; ++i)
       // FIXME: Warn about the case when other fields are used before being
-      // uninitialized. For example, let this field be the i'th field. When
+      // initialized. For example, let this field be the i'th field. When
       // initializing the i'th field, throw a warning if any of the >= i'th
       // fields are used, as they are not yet initialized.
       // Right now we are only handling the case where the i'th field uses
       // itself in its initializer.
+      // Also need to take into account that some fields may be initialized by
+      // in-class initializers, see C++11 [class.base.init]p9.
       CheckInitExprContainsUninitializedFields(*this, Args[i], Member);
 
   SourceRange InitRange = Init->getSourceRange();
