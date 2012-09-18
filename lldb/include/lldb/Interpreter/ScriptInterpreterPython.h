@@ -149,8 +149,8 @@ public:
                         lldb::ScriptInterpreterObjectSP& callee_wrapper_sp,
                         std::string& retval);
     
-    virtual std::string
-    GetDocumentationForItem (const char* item);
+    virtual bool
+    GetDocumentationForItem (const char* item, std::string& dest);
     
     virtual bool
     LoadScriptingModule (const char* filename,

@@ -1162,6 +1162,7 @@ class CommandObjectPythonFunction : public CommandObjectRaw
 private:
     std::string m_function_name;
     ScriptedCommandSynchronicity m_synchro;
+    bool m_fetched_help_long;
     
 public:
     
@@ -1174,15 +1175,9 @@ public:
                           (std::string("Run Python function ") + funct).c_str(),
                           NULL),
         m_function_name(funct),
-        m_synchro(synch)
+        m_synchro(synch),
+        m_fetched_help_long(false)
     {
-        ScriptInterpreter* scripter = m_interpreter.GetScriptInterpreter();
-        if (scripter)
-        {
-            std::string docstring = scripter->GetDocumentationForItem(funct.c_str());
-            if (!docstring.empty())
-                SetHelpLong(docstring);
-        }
     }
     
     virtual
@@ -1206,6 +1201,23 @@ public:
     GetSynchronicity ()
     {
         return m_synchro;
+    }
+    
+    virtual const char *
+    GetHelpLong ()
+    {
+        if (!m_fetched_help_long)
+        {
+            ScriptInterpreter* scripter = m_interpreter.GetScriptInterpreter();
+            if (scripter)
+            {
+                std::string docstring;
+                m_fetched_help_long = scripter->GetDocumentationForItem(m_function_name.c_str(),docstring);
+                if (!docstring.empty())
+                    SetHelpLong(docstring);
+            }
+        }
+        return CommandObjectRaw::GetHelpLong();
     }
     
 protected:

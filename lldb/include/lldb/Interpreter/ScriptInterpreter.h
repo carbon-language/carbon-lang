@@ -298,10 +298,11 @@ public:
         return false;
     }
     
-    virtual std::string
-    GetDocumentationForItem (const char* item)
+    virtual bool
+    GetDocumentationForItem (const char* item, std::string& dest)
     {
-        return std::string("");
+		dest.clear();
+        return false;
     }
 
     virtual bool

@@ -99,7 +99,7 @@ public:
     const char *
     GetHelp ();
 
-    const char *
+    virtual const char *
     GetHelpLong ();
 
     const char *
