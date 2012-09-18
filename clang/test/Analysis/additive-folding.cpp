@@ -128,10 +128,10 @@ void tautologies(unsigned a) {
 
 // Tautologies from outside the range of the symbol
 void tautologiesOutside(unsigned char a) {
-  clang_analyzer_eval(a <= 0x100); // expected-warning{{TRUE}}
-  clang_analyzer_eval(a < 0x100); // expected-warning{{TRUE}}
+  clang_analyzer_eval(a <= 0x100); // expected-warning{{comparison of literal 256 with expression of type 'unsigned char' is always true}} expected-warning{{TRUE}}
+  clang_analyzer_eval(a < 0x100); // expected-warning{{comparison of literal 256 with expression of type 'unsigned char' is always true}} expected-warning{{TRUE}}
 
-  clang_analyzer_eval(a != 0x100); // expected-warning{{TRUE}}
+  clang_analyzer_eval(a != 0x100); // expected-warning{{comparison of literal 256 with expression of type 'unsigned char' is always true}} expected-warning{{TRUE}}
   clang_analyzer_eval(a != -1); // expected-warning{{TRUE}}
 
   clang_analyzer_eval(a > -1); // expected-warning{{TRUE}}

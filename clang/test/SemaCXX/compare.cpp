@@ -89,8 +89,8 @@ int test0(long a, unsigned long b) {
          // (C,b)
          (C == (unsigned long) b) +
          (C == (unsigned int) b) +
-         (C == (unsigned short) b) +
-         (C == (unsigned char) b) +
+         (C == (unsigned short) b) + // expected-warning {{comparison of literal 65536 with expression of type 'unsigned short' is always false}}
+         (C == (unsigned char) b) +  // expected-warning {{comparison of literal 65536 with expression of type 'unsigned char' is always false}}
          ((long) C == b) +
          ((int) C == b) +
          ((short) C == b) +
@@ -101,8 +101,8 @@ int test0(long a, unsigned long b) {
          ((signed char) C == (unsigned char) b) +
          (C < (unsigned long) b) +
          (C < (unsigned int) b) +
-         (C < (unsigned short) b) +
-         (C < (unsigned char) b) +
+         (C < (unsigned short) b) + // expected-warning {{comparison of literal 65536 with expression of type 'unsigned short' is always false}}
+         (C < (unsigned char) b) + // expected-warning {{comparison of literal 65536 with expression of type 'unsigned char' is always false}}
          ((long) C < b) +
          ((int) C < b) +
          ((short) C < b) +
@@ -119,8 +119,8 @@ int test0(long a, unsigned long b) {
          (a == (unsigned char) C) +
          ((long) a == C) +
          ((int) a == C) +
-         ((short) a == C) +
-         ((signed char) a == C) +
+         ((short) a == C) + // expected-warning {{comparison of literal 65536 with expression of type 'short' is always false}}
+         ((signed char) a == C) + // expected-warning {{comparison of literal 65536 with expression of type 'signed char' is always false}}
          ((long) a == (unsigned long) C) +
          ((int) a == (unsigned int) C) +
          ((short) a == (unsigned short) C) +
@@ -131,8 +131,8 @@ int test0(long a, unsigned long b) {
          (a < (unsigned char) C) +
          ((long) a < C) +
          ((int) a < C) +
-         ((short) a < C) +
-         ((signed char) a < C) +
+         ((short) a < C) + // expected-warning {{comparison of literal 65536 with expression of type 'short' is always true}}
+         ((signed char) a < C) + // expected-warning {{comparison of literal 65536 with expression of type 'signed char' is always true}}
          ((long) a < (unsigned long) C) +  // expected-warning {{comparison of integers of different signs}}
          ((int) a < (unsigned int) C) +  // expected-warning {{comparison of integers of different signs}}
          ((short) a < (unsigned short) C) +
@@ -141,8 +141,8 @@ int test0(long a, unsigned long b) {
          // (0x80000,b)
          (0x80000 == (unsigned long) b) +
          (0x80000 == (unsigned int) b) +
-         (0x80000 == (unsigned short) b) +
-         (0x80000 == (unsigned char) b) +
+         (0x80000 == (unsigned short) b) + // expected-warning {{comparison of literal 524288 with expression of type 'unsigned short' is always false}}
+         (0x80000 == (unsigned char) b) + // expected-warning {{comparison of literal 524288 with expression of type 'unsigned char' is always false}}
          ((long) 0x80000 == b) +
          ((int) 0x80000 == b) +
          ((short) 0x80000 == b) +
@@ -153,8 +153,8 @@ int test0(long a, unsigned long b) {
          ((signed char) 0x80000 == (unsigned char) b) +
          (0x80000 < (unsigned long) b) +
          (0x80000 < (unsigned int) b) +
-         (0x80000 < (unsigned short) b) +
-         (0x80000 < (unsigned char) b) +
+         (0x80000 < (unsigned short) b) + // expected-warning {{comparison of literal 524288 with expression of type 'unsigned short' is always false}}
+         (0x80000 < (unsigned char) b) + // expected-warning {{comparison of literal 524288 with expression of type 'unsigned char' is always false}}
          ((long) 0x80000 < b) +
          ((int) 0x80000 < b) +
          ((short) 0x80000 < b) +
@@ -171,8 +171,8 @@ int test0(long a, unsigned long b) {
          (a == (unsigned char) 0x80000) +
          ((long) a == 0x80000) +
          ((int) a == 0x80000) +
-         ((short) a == 0x80000) +
-         ((signed char) a == 0x80000) +
+         ((short) a == 0x80000) + // expected-warning {{comparison of literal 524288 with expression of type 'short' is always false}}
+         ((signed char) a == 0x80000) + // expected-warning {{comparison of literal 524288 with expression of type 'signed char' is always false}}
          ((long) a == (unsigned long) 0x80000) +
          ((int) a == (unsigned int) 0x80000) +
          ((short) a == (unsigned short) 0x80000) +
@@ -183,8 +183,8 @@ int test0(long a, unsigned long b) {
          (a < (unsigned char) 0x80000) +
          ((long) a < 0x80000) +
          ((int) a < 0x80000) +
-         ((short) a < 0x80000) +
-         ((signed char) a < 0x80000) +
+         ((short) a < 0x80000) + // expected-warning {{comparison of literal 524288 with expression of type 'short' is always true}}
+         ((signed char) a < 0x80000) + // expected-warning {{comparison of literal 524288 with expression of type 'signed char' is always true}}
          ((long) a < (unsigned long) 0x80000) +  // expected-warning {{comparison of integers of different signs}}
          ((int) a < (unsigned int) 0x80000) +  // expected-warning {{comparison of integers of different signs}}
          ((short) a < (unsigned short) 0x80000) +

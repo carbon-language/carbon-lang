@@ -196,6 +196,7 @@ def SizeofArrayArgument : DiagGroup<"sizeof-array-argument">;
 def StringPlusInt : DiagGroup<"string-plus-int">;
 def StrncatSize : DiagGroup<"strncat-size">;
 def TautologicalCompare : DiagGroup<"tautological-compare">;
+def TautologicalOutofRangeCompare : DiagGroup<"tautological-constant-out-of-range-compare">;
 def HeaderHygiene : DiagGroup<"header-hygiene">;
 def DuplicateDeclSpecifier : DiagGroup<"duplicate-decl-specifier">;
 

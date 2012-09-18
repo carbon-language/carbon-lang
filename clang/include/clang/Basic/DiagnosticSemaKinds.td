@@ -4068,6 +4068,9 @@ def warn_mixed_sign_comparison : Warning<
 def warn_lunsigned_always_true_comparison : Warning<
   "comparison of unsigned%select{| enum}2 expression %0 is always %1">,
   InGroup<TautologicalCompare>;
+def warn_outof_range_compare : Warning<
+  "comparison of literal %0 with expression of type %1 is always "
+  "%select{false|true}2">, InGroup<TautologicalOutofRangeCompare>;
 def warn_runsigned_always_true_comparison : Warning<
   "comparison of %0 unsigned%select{| enum}2 expression is always %1">,
   InGroup<TautologicalCompare>;
