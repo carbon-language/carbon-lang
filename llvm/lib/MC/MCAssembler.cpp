@@ -199,8 +199,7 @@ MCAssembler::MCAssembler(MCContext &Context_, MCAsmBackend &Backend_,
                          MCCodeEmitter &Emitter_, MCObjectWriter &Writer_,
                          raw_ostream &OS_)
   : Context(Context_), Backend(Backend_), Emitter(Emitter_), Writer(Writer_),
-    OS(OS_), RelaxAll(false), NoExecStack(false), SubsectionsViaSymbols(false)
-{
+    OS(OS_), RelaxAll(false), NoExecStack(false), SubsectionsViaSymbols(false) {
 }
 
 MCAssembler::~MCAssembler() {
@@ -533,7 +532,7 @@ void MCAssembler::writeSectionData(const MCSectionData *SD,
   }
 
   uint64_t Start = getWriter().getStream().tell();
-  (void) Start;
+  (void)Start;
 
   for (MCSectionData::const_iterator it = SD->begin(),
          ie = SD->end(); it != ie; ++it)
