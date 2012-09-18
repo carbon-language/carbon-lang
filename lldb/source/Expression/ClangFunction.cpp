@@ -66,9 +66,9 @@ ClangFunction::ClangFunction
     m_compiled (false),
     m_JITted (false)
 {
-    m_jit_process_sp = exe_scope.CalculateProcess();
+    m_jit_process_wp = lldb::ProcessWP(exe_scope.CalculateProcess());
     // Can't make a ClangFunction without a process.
-    assert (m_jit_process_sp);
+    assert (m_jit_process_wp.lock());
 }
 
 ClangFunction::ClangFunction
@@ -89,9 +89,9 @@ ClangFunction::ClangFunction
     m_compiled (false),
     m_JITted (false)
 {
-    m_jit_process_sp = exe_scope.CalculateProcess();
+    m_jit_process_wp = lldb::ProcessWP(exe_scope.CalculateProcess());
     // Can't make a ClangFunction without a process.
-    assert (m_jit_process_sp);
+    assert (m_jit_process_wp.lock());
 
     m_function_addr = m_function_ptr->GetAddressRange().GetBaseAddress();
     m_function_return_qual_type = m_function_ptr->GetReturnClangType();
@@ -219,10 +219,19 @@ ClangFunction::CompileFunction (Stream &errors)
         log->Printf ("Expression: \n\n%s\n\n", m_wrapper_function_text.c_str());
         
     // Okay, now compile this expression
-        
-    m_parser.reset(new ClangExpressionParser(m_jit_process_sp.get(), *this));
     
-    num_errors = m_parser->Parse (errors);
+    lldb::ProcessSP jit_process_sp(m_jit_process_wp.lock());
+    if (jit_process_sp)
+    {
+        m_parser.reset(new ClangExpressionParser(jit_process_sp.get(), *this));
+        
+        num_errors = m_parser->Parse (errors);
+    }
+    else
+    {
+        errors.Printf("no process - unable to inject function");
+        num_errors = 1;
+    }
     
     m_compiled = (num_errors == 0);
     
@@ -239,8 +248,10 @@ ClangFunction::WriteFunctionWrapper (ExecutionContext &exe_ctx, Stream &errors)
 
     if (!process)
         return false;
-        
-    if (process != m_jit_process_sp.get())
+    
+    lldb::ProcessSP jit_process_sp(m_jit_process_wp.lock());
+    
+    if (process != jit_process_sp.get())
         return false;
     
     if (!m_compiled)
@@ -265,7 +276,7 @@ ClangFunction::WriteFunctionWrapper (ExecutionContext &exe_ctx, Stream &errors)
     if (!jit_error.Success())
         return false;
     if (process && m_jit_alloc != LLDB_INVALID_ADDRESS)
-        m_jit_process_sp = process->shared_from_this();
+        m_jit_process_wp = lldb::ProcessWP(process->shared_from_this());
 
     return true;
 }
@@ -302,7 +313,9 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx,
     if (process == NULL)
         return return_value;
 
-    if (process != m_jit_process_sp.get())
+    lldb::ProcessSP jit_process_sp(m_jit_process_wp.lock());
+    
+    if (process != jit_process_sp.get())
         return false;
                 
     if (args_addr_ref == LLDB_INVALID_ADDRESS)
@@ -426,7 +439,10 @@ ClangFunction::FetchFunctionResults (ExecutionContext &exe_ctx, lldb::addr_t arg
     
     if (process == NULL)
         return false;
-    if (process != m_jit_process_sp.get())
+
+    lldb::ProcessSP jit_process_sp(m_jit_process_wp.lock());
+    
+    if (process != jit_process_sp.get())
         return false;
                 
     Error error;

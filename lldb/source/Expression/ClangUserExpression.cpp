@@ -351,7 +351,7 @@ ClangUserExpression::Parse (Stream &error_stream,
     if (jit_error.Success())
     {
         if (process && m_jit_alloc != LLDB_INVALID_ADDRESS)
-            m_jit_process_sp = process->shared_from_this();        
+            m_jit_process_wp = lldb::ProcessWP(process->shared_from_this());
         return true;
     }
     else

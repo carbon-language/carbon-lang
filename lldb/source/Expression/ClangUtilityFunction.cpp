@@ -148,7 +148,7 @@ ClangUtilityFunction::Install (Stream &error_stream,
     }
     
     if (m_jit_start_addr != LLDB_INVALID_ADDRESS)
-        m_jit_process_sp = process->shared_from_this();
+        m_jit_process_wp = lldb::ProcessWP(process->shared_from_this());
     
 #if 0
 	// jingham: look here
