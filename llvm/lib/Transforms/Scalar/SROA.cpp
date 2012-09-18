@@ -2466,6 +2466,7 @@ private:
   bool visitInstruction(Instruction &I) { return false; }
 
   /// \brief Generic recursive split emission class.
+  template <typename Derived>
   class OpSplitter {
   protected:
     /// The builder used to form new instructions.
@@ -2483,11 +2484,9 @@ private:
     /// Initialize the splitter with an insertion point, Ptr and start with a
     /// single zero GEP index.
     OpSplitter(Instruction *InsertionPoint, Value *Ptr)
-      : IRB(InsertionPoint), Ptr(Ptr), GEPIndices(1, IRB.getInt32(0)) {}
+      : IRB(InsertionPoint), GEPIndices(1, IRB.getInt32(0)), Ptr(Ptr) {}
 
   public:
-    virtual void emitFunc(Type *Ty, Value *&Agg, const Twine &Name) = 0;
-
     /// \brief Generic recursive split emission routine.
     ///
     /// This method recursively splits an aggregate op (load or store) into
@@ -2503,7 +2502,7 @@ private:
     /// whether this is splitting a load or a store respectively.
     void emitSplitOps(Type *Ty, Value *&Agg, const Twine &Name) {
       if (Ty->isSingleValueType())
-        return emitFunc(Ty, Agg, Name);
+        return static_cast<Derived *>(this)->emitFunc(Ty, Agg, Name);
 
       if (ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
         unsigned OldSize = Indices.size();
@@ -2539,13 +2538,13 @@ private:
     }
   };
 
-  struct LoadOpSplitter : public OpSplitter {
+  struct LoadOpSplitter : public OpSplitter<LoadOpSplitter> {
     LoadOpSplitter(Instruction *InsertionPoint, Value *Ptr)
       : OpSplitter(InsertionPoint, Ptr) {}
 
     /// Emit a leaf load of a single value. This is called at the leaves of the
     /// recursive emission to actually load values.
-    virtual void emitFunc(Type *Ty, Value *&Agg, const Twine &Name) {
+    void emitFunc(Type *Ty, Value *&Agg, const Twine &Name) {
       assert(Ty->isSingleValueType());
       // Load the single value and insert it using the indices.
       Value *Load = IRB.CreateLoad(IRB.CreateInBoundsGEP(Ptr, GEPIndices,
@@ -2571,13 +2570,13 @@ private:
     return true;
   }
 
-  struct StoreOpSplitter : public OpSplitter {
+  struct StoreOpSplitter : public OpSplitter<StoreOpSplitter> {
     StoreOpSplitter(Instruction *InsertionPoint, Value *Ptr)
       : OpSplitter(InsertionPoint, Ptr) {}
 
     /// Emit a leaf store of a single value. This is called at the leaves of the
     /// recursive emission to actually produce stores.
-    virtual void emitFunc(Type *Ty, Value *&Agg, const Twine &Name) {
+    void emitFunc(Type *Ty, Value *&Agg, const Twine &Name) {
       assert(Ty->isSingleValueType());
       // Extract the single value and store it using the indices.
       Value *Store = IRB.CreateStore(
