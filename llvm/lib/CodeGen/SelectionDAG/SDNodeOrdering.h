@@ -28,8 +28,8 @@ class SDNode;
 class SDNodeOrdering {
   DenseMap<const SDNode*, unsigned> OrderMap;
 
-  void operator=(const SDNodeOrdering&);   // Do not implement.
-  SDNodeOrdering(const SDNodeOrdering&);   // Do not implement.
+  void operator=(const SDNodeOrdering&) LLVM_DELETED_FUNCTION;
+  SDNodeOrdering(const SDNodeOrdering&) LLVM_DELETED_FUNCTION;
 public:
   SDNodeOrdering() {}
 

@@ -1121,9 +1121,8 @@ namespace {
     bool relatedSelect(const SelectInst *A, const Value *B);
     bool relatedPHI(const PHINode *A, const Value *B);
 
-    // Do not implement.
-    void operator=(const ProvenanceAnalysis &);
-    ProvenanceAnalysis(const ProvenanceAnalysis &);
+    void operator=(const ProvenanceAnalysis &) LLVM_DELETED_FUNCTION;
+    ProvenanceAnalysis(const ProvenanceAnalysis &) LLVM_DELETED_FUNCTION;
 
   public:
     ProvenanceAnalysis() {}

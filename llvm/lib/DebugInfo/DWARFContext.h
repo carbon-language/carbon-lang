@@ -32,8 +32,8 @@ class DWARFContext : public DIContext {
   OwningPtr<DWARFDebugAranges> Aranges;
   OwningPtr<DWARFDebugLine> Line;
 
-  DWARFContext(DWARFContext &); // = delete
-  DWARFContext &operator=(DWARFContext &); // = delete
+  DWARFContext(DWARFContext &) LLVM_DELETED_FUNCTION;
+  DWARFContext &operator=(DWARFContext &) LLVM_DELETED_FUNCTION;
 
   /// Read compile units from the debug_info section and store them in CUs.
   void parseCompileUnits();

@@ -19,8 +19,8 @@
 namespace llvm {
 
 class ObjectImage {
-  ObjectImage(); // = delete
-  ObjectImage(const ObjectImage &other); // = delete
+  ObjectImage() LLVM_DELETED_FUNCTION;
+  ObjectImage(const ObjectImage &other) LLVM_DELETED_FUNCTION;
 protected:
   object::ObjectFile *ObjFile;
 

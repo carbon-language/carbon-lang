@@ -125,8 +125,8 @@ class AttributeListImpl : public FoldingSetNode {
   sys::cas_flag RefCount;
   
   // AttributesList is uniqued, these should not be publicly available.
-  void operator=(const AttributeListImpl &); // Do not implement
-  AttributeListImpl(const AttributeListImpl &); // Do not implement
+  void operator=(const AttributeListImpl &) LLVM_DELETED_FUNCTION;
+  AttributeListImpl(const AttributeListImpl &) LLVM_DELETED_FUNCTION;
   ~AttributeListImpl();                        // Private implementation
 public:
   SmallVector<AttributeWithIndex, 4> Attrs;

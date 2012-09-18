@@ -29,8 +29,8 @@ class MemoryBuffer;
 // FIXME: As the RuntimeDyld fills out, additional routines will be needed
 //        for the varying types of objects to be allocated.
 class RTDyldMemoryManager {
-  RTDyldMemoryManager(const RTDyldMemoryManager&);  // DO NOT IMPLEMENT
-  void operator=(const RTDyldMemoryManager&);       // DO NOT IMPLEMENT
+  RTDyldMemoryManager(const RTDyldMemoryManager&) LLVM_DELETED_FUNCTION;
+  void operator=(const RTDyldMemoryManager&) LLVM_DELETED_FUNCTION;
 public:
   RTDyldMemoryManager() {}
   virtual ~RTDyldMemoryManager();
@@ -50,8 +50,8 @@ public:
 };
 
 class RuntimeDyld {
-  RuntimeDyld(const RuntimeDyld &);     // DO NOT IMPLEMENT
-  void operator=(const RuntimeDyld &);  // DO NOT IMPLEMENT
+  RuntimeDyld(const RuntimeDyld &) LLVM_DELETED_FUNCTION;
+  void operator=(const RuntimeDyld &) LLVM_DELETED_FUNCTION;
 
   // RuntimeDyldImpl is the actual class. RuntimeDyld is just the public
   // interface.

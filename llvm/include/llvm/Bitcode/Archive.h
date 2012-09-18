@@ -527,9 +527,9 @@ class Archive {
   /// @name Hidden
   /// @{
   private:
-    Archive();                          ///< Do not implement
-    Archive(const Archive&);            ///< Do not implement
-    Archive& operator=(const Archive&); ///< Do not implement
+    Archive() LLVM_DELETED_FUNCTION;
+    Archive(const Archive&) LLVM_DELETED_FUNCTION;
+    Archive& operator=(const Archive&) LLVM_DELETED_FUNCTION;
   /// @}
 };
 
