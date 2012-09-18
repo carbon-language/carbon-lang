@@ -569,14 +569,19 @@ private:
   }
 
   bool visitLoadInst(LoadInst &LI) {
+    assert((!LI.isSimple() || LI.getType()->isSingleValueType()) &&
+           "All simple FCA loads should have been pre-split");
     return handleLoadOrStore(LI.getType(), LI, Offset);
   }
 
   bool visitStoreInst(StoreInst &SI) {
-    if (SI.getOperand(0) == *U)
+    Value *ValOp = SI.getValueOperand();
+    if (ValOp == *U)
       return markAsEscaping(SI);
 
-    return handleLoadOrStore(SI.getOperand(0)->getType(), SI, Offset);
+    assert((!SI.isSimple() || ValOp->getType()->isSingleValueType()) &&
+           "All simple FCA stores should have been pre-split");
+    return handleLoadOrStore(ValOp->getType(), SI, Offset);
   }
 
 
@@ -1051,10 +1056,10 @@ AllocaPartitioning::AllocaPartitioning(const TargetData &TD, AllocaInst &AI)
 Type *AllocaPartitioning::getCommonType(iterator I) const {
   Type *Ty = 0;
   for (const_use_iterator UI = use_begin(I), UE = use_end(I); UI != UE; ++UI) {
-    if (isa<MemIntrinsic>(*UI->User))
+    if (isa<IntrinsicInst>(*UI->User))
       continue;
     if (UI->BeginOffset != I->BeginOffset || UI->EndOffset != I->EndOffset)
-      break;
+      return 0;
 
     Type *UserTy = 0;
     if (LoadInst *LI = dyn_cast<LoadInst>(&*UI->User)) {
@@ -2409,6 +2414,208 @@ private:
 };
 }
 
+namespace {
+/// \brief Visitor to rewrite aggregate loads and stores as scalar.
+///
+/// This pass aggressively rewrites all aggregate loads and stores on
+/// a particular pointer (or any pointer derived from it which we can identify)
+/// with scalar loads and stores.
+class AggLoadStoreRewriter : public InstVisitor<AggLoadStoreRewriter, bool> {
+  // Befriend the base class so it can delegate to private visit methods.
+  friend class llvm::InstVisitor<AggLoadStoreRewriter, bool>;
+
+  const TargetData &TD;
+
+  /// Queue of pointer uses to analyze and potentially rewrite.
+  SmallVector<Use *, 8> Queue;
+
+  /// Set to prevent us from cycling with phi nodes and loops.
+  SmallPtrSet<User *, 8> Visited;
+
+  /// The current pointer use being rewritten. This is used to dig up the used
+  /// value (as opposed to the user).
+  Use *U;
+
+public:
+  AggLoadStoreRewriter(const TargetData &TD) : TD(TD) {}
+
+  /// Rewrite loads and stores through a pointer and all pointers derived from
+  /// it.
+  bool rewrite(Instruction &I) {
+    DEBUG(dbgs() << "  Rewriting FCA loads and stores...\n");
+    enqueueUsers(I);
+    bool Changed = false;
+    while (!Queue.empty()) {
+      U = Queue.pop_back_val();
+      Changed |= visit(cast<Instruction>(U->getUser()));
+    }
+    return Changed;
+  }
+
+private:
+  /// Enqueue all the users of the given instruction for further processing.
+  /// This uses a set to de-duplicate users.
+  void enqueueUsers(Instruction &I) {
+    for (Value::use_iterator UI = I.use_begin(), UE = I.use_end(); UI != UE;
+         ++UI)
+      if (Visited.insert(*UI))
+        Queue.push_back(&UI.getUse());
+  }
+
+  // Conservative default is to not rewrite anything.
+  bool visitInstruction(Instruction &I) { return false; }
+
+  /// \brief Generic recursive split emission routine.
+  ///
+  /// This method recursively splits an aggregate op (load or store) into
+  /// scalar or vector ops. It splits recursively until it hits a single value
+  /// and emits that single value operation via the template argument.
+  ///
+  /// The logic of this routine relies on GEPs and insertvalue and extractvalue
+  /// all operating with the same fundamental index list, merely formatted
+  /// differently (GEPs need actual values).
+  ///
+  /// \param IRB The builder used to form new instructions.
+  /// \param Ty  The type being split recursively into smaller ops.
+  /// \param Agg The aggregate value being built up or stored, depending on
+  /// whether this is splitting a load or a store respectively.
+  /// \param Ptr The base pointer of the original op, used as a base for GEPing
+  /// the split operations.
+  /// \param Indices The indices which to be used with insert- or extractvalue
+  /// to select the appropriate value within the aggregate for \p Ty.
+  /// \param GEPIndices The indices to a GEP instruction which will move \p Ptr
+  /// to the correct slot within the aggregate for \p Ty.
+  template <void (AggLoadStoreRewriter::*emitFunc)(
+                IRBuilder<> &IRB, Type *Ty, Value *&Agg, Value *Ptr,
+                ArrayRef<unsigned> Indices, ArrayRef<Value *> GEPIndices,
+                const Twine &Name)>
+  void emitSplitOps(IRBuilder<> &IRB, Type *Ty, Value *&Agg, Value *Ptr,
+                    SmallVectorImpl<unsigned> &Indices,
+                    SmallVectorImpl<Value *> &GEPIndices,
+                    const Twine &Name) {
+    if (Ty->isSingleValueType())
+      return (this->*emitFunc)(IRB, Ty, Agg, Ptr, Indices, GEPIndices, Name);
+
+    if (ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+      unsigned OldSize = Indices.size();
+      (void)OldSize;
+      for (unsigned Idx = 0, Size = ATy->getNumElements(); Idx != Size; ++Idx) {
+        assert(Indices.size() == OldSize && "Did not return to the old size");
+        Indices.push_back(Idx);
+        GEPIndices.push_back(IRB.getInt32(Idx));
+        emitSplitOps<emitFunc>(IRB, ATy->getElementType(), Agg, Ptr,
+                               Indices, GEPIndices, Name + "." + Twine(Idx));
+        GEPIndices.pop_back();
+        Indices.pop_back();
+      }
+      return;
+    }
+
+    if (StructType *STy = dyn_cast<StructType>(Ty)) {
+      unsigned OldSize = Indices.size();
+      (void)OldSize;
+      for (unsigned Idx = 0, Size = STy->getNumElements(); Idx != Size; ++Idx) {
+        assert(Indices.size() == OldSize && "Did not return to the old size");
+        Indices.push_back(Idx);
+        GEPIndices.push_back(IRB.getInt32(Idx));
+        emitSplitOps<emitFunc>(IRB, STy->getElementType(Idx), Agg, Ptr,
+                               Indices, GEPIndices, Name + "." + Twine(Idx));
+        GEPIndices.pop_back();
+        Indices.pop_back();
+      }
+      return;
+    }
+
+    llvm_unreachable("Only arrays and structs are aggregate loadable types");
+  }
+
+  /// Emit a leaf load of a single value. This is called at the leaves of the
+  /// recursive emission to actually load values.
+  void emitLoad(IRBuilder<> &IRB, Type *Ty, Value *&Agg, Value *Ptr,
+                ArrayRef<unsigned> Indices, ArrayRef<Value *> GEPIndices,
+                const Twine &Name) {
+    assert(Ty->isSingleValueType());
+    // Load the single value and insert it using the indices.
+    Value *Load = IRB.CreateLoad(IRB.CreateInBoundsGEP(Ptr, GEPIndices,
+                                                       Name + ".gep"),
+                                 Name + ".load");
+    Agg = IRB.CreateInsertValue(Agg, Load, Indices, Name + ".insert");
+    DEBUG(dbgs() << "          to: " << *Load << "\n");
+  }
+
+  bool visitLoadInst(LoadInst &LI) {
+    assert(LI.getPointerOperand() == *U);
+    if (!LI.isSimple() || LI.getType()->isSingleValueType())
+      return false;
+
+    // We have an aggregate being loaded, split it apart.
+    DEBUG(dbgs() << "    original: " << LI << "\n");
+    IRBuilder<> IRB(&LI);
+    Value *V = UndefValue::get(LI.getType());
+    SmallVector<unsigned, 4> Indices;
+    SmallVector<Value *, 4> GEPIndices;
+    GEPIndices.push_back(IRB.getInt32(0));
+    emitSplitOps<&AggLoadStoreRewriter::emitLoad>(
+      IRB, LI.getType(), V, *U, Indices, GEPIndices, LI.getName() + ".fca");
+    LI.replaceAllUsesWith(V);
+    LI.eraseFromParent();
+    return true;
+  }
+
+  /// Emit a leaf store of a single value. This is called at the leaves of the
+  /// recursive emission to actually produce stores.
+  void emitStore(IRBuilder<> &IRB, Type *Ty, Value *&Agg, Value *Ptr,
+                 ArrayRef<unsigned> Indices, ArrayRef<Value *> GEPIndices,
+                 const Twine &Name) {
+    assert(Ty->isSingleValueType());
+    // Extract the single value and store it using the indices.
+    Value *Store = IRB.CreateStore(
+      IRB.CreateExtractValue(Agg, Indices, Name + ".extract"),
+      IRB.CreateInBoundsGEP(Ptr, GEPIndices, Name + ".gep"));
+    DEBUG(dbgs() << "          to: " << *Store << "\n");
+  }
+
+  bool visitStoreInst(StoreInst &SI) {
+    if (!SI.isSimple() || SI.getPointerOperand() != *U)
+      return false;
+    Value *V = SI.getValueOperand();
+    if (V->getType()->isSingleValueType())
+      return false;
+
+    // We have an aggregate being stored, split it apart.
+    DEBUG(dbgs() << "    original: " << SI << "\n");
+    IRBuilder<> IRB(&SI);
+    SmallVector<unsigned, 4> Indices;
+    SmallVector<Value *, 4> GEPIndices;
+    GEPIndices.push_back(IRB.getInt32(0));
+    emitSplitOps<&AggLoadStoreRewriter::emitStore>(
+      IRB, V->getType(), V, *U, Indices, GEPIndices, V->getName() + ".fca");
+    SI.eraseFromParent();
+    return true;
+  }
+
+  bool visitBitCastInst(BitCastInst &BC) {
+    enqueueUsers(BC);
+    return false;
+  }
+
+  bool visitGetElementPtrInst(GetElementPtrInst &GEPI) {
+    enqueueUsers(GEPI);
+    return false;
+  }
+
+  bool visitPHINode(PHINode &PN) {
+    enqueueUsers(PN);
+    return false;
+  }
+
+  bool visitSelectInst(SelectInst &SI) {
+    enqueueUsers(SI);
+    return false;
+  }
+};
+}
+
 /// \brief Try to find a partition of the aggregate type passed in for a given
 /// offset and size.
 ///
@@ -2637,18 +2844,24 @@ bool SROA::runOnAlloca(AllocaInst &AI) {
     return false;
   }
 
+  bool Changed = false;
+
+  // First, split any FCA loads and stores touching this alloca to promote
+  // better splitting and promotion opportunities.
+  AggLoadStoreRewriter AggRewriter(*TD);
+  Changed |= AggRewriter.rewrite(AI);
+
   // Build the partition set using a recursive instruction-visiting builder.
   AllocaPartitioning P(*TD, AI);
   DEBUG(P.print(dbgs()));
   if (P.isEscaped())
-    return false;
+    return Changed;
 
   // No partitions to split. Leave the dead alloca for a later pass to clean up.
   if (P.begin() == P.end())
-    return false;
+    return Changed;
 
   // Delete all the dead users of this alloca before splitting and rewriting it.
-  bool Changed = false;
   for (AllocaPartitioning::dead_user_iterator DI = P.dead_user_begin(),
                                               DE = P.dead_user_end();
        DI != DE; ++DI) {
