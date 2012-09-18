@@ -154,7 +154,8 @@ void Parser::SuggestParentheses(SourceLocation Loc, unsigned DK,
 
 static bool IsCommonTypo(tok::TokenKind ExpectedTok, const Token &Tok) {
   switch (ExpectedTok) {
-  case tok::semi: return Tok.is(tok::colon); // : for ;
+  case tok::semi:
+    return Tok.is(tok::colon) || Tok.is(tok::comma); // : or , for ;
   default: return false;
   }
 }

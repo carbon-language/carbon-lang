@@ -81,6 +81,13 @@ void oopsMoreCommas() {
   &a == &b ? oopsMoreCommas() : removeUnusedLabels(a[0]);
 }
 
+int commaAtEndOfStatement() {
+  int a = 1;
+  a = 5, // expected-error {{';'}}
+  int m = 5, // expected-error {{';'}}
+  return 0, // expected-error {{';'}}
+}
+
 int noSemiAfterLabel(int n) {
   switch (n) {
     default:

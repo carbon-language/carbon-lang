@@ -58,3 +58,11 @@ void f5() {
   asm volatile ("":: :"memory");
   asm volatile ("": ::"memory");
 }
+
+int f6() {
+  int k, // expected-note {{change this ',' to a ';' to call 'f6'}}
+  f6(), // expected-error {{expected ';'}} expected-warning {{interpreted as a function declaration}} expected-note {{replace paren}}
+  int n = 0, // expected-error {{expected ';'}}
+  return f5(), // ok
+  int(n);
+}

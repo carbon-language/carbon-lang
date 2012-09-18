@@ -1221,6 +1221,9 @@ private:
                                  bool isAddressOfOperand = false,
                                  TypeCastState isTypeCast = NotTypeCast);
 
+  /// Returns true if the next token cannot start an expression.
+  bool isNotExpressionStart();
+
   /// Returns true if the next token would start a postfix-expression
   /// suffix.
   bool isPostfixExpressionSuffixStart() {
@@ -1632,6 +1635,15 @@ private:
   /// is definitely a type-specifier.  Return false if it isn't part of a type
   /// specifier or if we're not sure.
   bool isKnownToBeTypeSpecifier(const Token &Tok) const;
+
+  /// \brief Return true if we know that we are definitely looking at a
+  /// decl-specifier, and isn't part of an expression such as a function-style
+  /// cast. Return false if it's no a decl-specifier, or we're not sure.
+  bool isKnownToBeDeclarationSpecifier() {
+    if (getLangOpts().CPlusPlus)
+      return isCXXDeclarationSpecifier() == TPResult::True();
+    return isDeclarationSpecifier(true);
+  }
 
   /// isDeclarationStatement - Disambiguates between a declaration or an
   /// expression statement, when parsing function bodies.

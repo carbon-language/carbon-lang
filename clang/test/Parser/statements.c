@@ -62,3 +62,18 @@ void test8() {
   // Should not skip '}' and produce a "expected '}'" error.
   undecl // expected-error {{use of undeclared identifier 'undecl'}}
 }
+
+int test9() {
+  int T[] = {1, 2, };
+
+  int X;
+  X = 0, // expected-error {{expected ';' after expression}}
+    {
+    }
+
+  X = 0, // expected-error {{expected ';' after expression}}
+  if (0)
+    ;
+
+  return 4, // expected-error {{expected ';' after return statement}}
+}
