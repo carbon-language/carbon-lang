@@ -37,7 +37,6 @@ namespace clang {
   class ASTDeclReader : public DeclVisitor<ASTDeclReader, void> {
     ASTReader &Reader;
     ModuleFile &F;
-    llvm::BitstreamCursor &Cursor;
     const DeclID ThisDeclID;
     const unsigned RawLocation;
     typedef ASTReader::RecordData RecordData;
@@ -194,10 +193,10 @@ namespace clang {
     
   public:
     ASTDeclReader(ASTReader &Reader, ModuleFile &F,
-                  llvm::BitstreamCursor &Cursor, DeclID thisDeclID,
+                  DeclID thisDeclID,
                   unsigned RawLocation,
                   const RecordData &Record, unsigned &Idx)
-      : Reader(Reader), F(F), Cursor(Cursor), ThisDeclID(thisDeclID),
+      : Reader(Reader), F(F), ThisDeclID(thisDeclID),
         RawLocation(RawLocation), Record(Record), Idx(Idx),
         TypeIDForTypeDecl(0) { }
 
@@ -1910,7 +1909,7 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
   RecordData Record;
   unsigned Code = DeclsCursor.ReadCode();
   unsigned Idx = 0;
-  ASTDeclReader Reader(*this, *Loc.F, DeclsCursor, ID, RawLocation, Record,Idx);
+  ASTDeclReader Reader(*this, *Loc.F, ID, RawLocation, Record,Idx);
 
   Decl *D = 0;
   switch ((DeclCode)DeclsCursor.ReadRecord(Code, Record)) {
@@ -2167,7 +2166,7 @@ void ASTReader::loadDeclUpdateRecords(serialization::DeclID ID, Decl *D) {
       assert(RecCode == DECL_UPDATES && "Expected DECL_UPDATES record!");
       
       unsigned Idx = 0;
-      ASTDeclReader Reader(*this, *F, Cursor, ID, 0, Record, Idx);
+      ASTDeclReader Reader(*this, *F, ID, 0, Record, Idx);
       Reader.UpdateDecl(D, *F, Record);
     }
   }
