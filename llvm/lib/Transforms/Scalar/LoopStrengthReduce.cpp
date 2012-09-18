@@ -4464,17 +4464,21 @@ void LSRInstance::RewriteForPHI(PHINode *PN,
             SplitLandingPadPredecessors(Parent, BB, "", "", P, NewBBs);
             NewBB = NewBBs[0];
           }
+          // If NewBB==NULL, then SplitCriticalEdge refused to split because all
+          // phi predecessors are identical. The simple thing to do is skip
+          // splitting in this case rather than complicate the API.
+          if (NewBB) {
+            // If PN is outside of the loop and BB is in the loop, we want to
+            // move the block to be immediately before the PHI block, not
+            // immediately after BB.
+            if (L->contains(BB) && !L->contains(PN))
+              NewBB->moveBefore(PN->getParent());
 
-          // If PN is outside of the loop and BB is in the loop, we want to
-          // move the block to be immediately before the PHI block, not
-          // immediately after BB.
-          if (L->contains(BB) && !L->contains(PN))
-            NewBB->moveBefore(PN->getParent());
-
-          // Splitting the edge can reduce the number of PHI entries we have.
-          e = PN->getNumIncomingValues();
-          BB = NewBB;
-          i = PN->getBasicBlockIndex(BB);
+            // Splitting the edge can reduce the number of PHI entries we have.
+            e = PN->getNumIncomingValues();
+            BB = NewBB;
+            i = PN->getBasicBlockIndex(BB);
+          }
         }
       }
 
