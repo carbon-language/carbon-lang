@@ -1686,9 +1686,9 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
         << "                const SmallVectorImpl<MCParsedAsmOperand*"
         << "> &Operands) {\n"
         << "  assert(Kind < CVT_NUM_SIGNATURES && \"Invalid signature!\");\n"
-        << "  uint8_t *Converter = ConversionTable[Kind];\n"
+        << "  const uint8_t *Converter = ConversionTable[Kind];\n"
         << "  Inst.setOpcode(Opcode);\n"
-        << "  for (uint8_t *p = Converter; *p; p+= 2) {\n"
+        << "  for (const uint8_t *p = Converter; *p; p+= 2) {\n"
         << "    switch (*p) {\n"
         << "    default: llvm_unreachable(\"invalid conversion entry!\");\n"
         << "    case CVT_Reg:\n"
@@ -1710,8 +1710,8 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
        << "  assert(Kind < CVT_NUM_SIGNATURES && \"Invalid signature!\");\n"
        << "  NumMCOperands = 0;\n"
        << "  unsigned MCOperandNum = 0;\n"
-       << "  uint8_t *Converter = ConversionTable[Kind];\n"
-       << "  for (uint8_t *p = Converter; *p; p+= 2) {\n"
+       << "  const uint8_t *Converter = ConversionTable[Kind];\n"
+       << "  for (const uint8_t *p = Converter; *p; p+= 2) {\n"
        << "    if (*(p + 1) > OperandNum) continue;\n"
        << "    switch (*p) {\n"
        << "    default: llvm_unreachable(\"invalid conversion entry!\");\n"
@@ -1947,7 +1947,7 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
   OS << "} // end anonymous namespace\n\n";
 
   // Output the conversion table.
-  OS << "static uint8_t ConversionTable[CVT_NUM_SIGNATURES]["
+  OS << "static const uint8_t ConversionTable[CVT_NUM_SIGNATURES]["
      << MaxRowLength << "] = {\n";
 
   for (unsigned Row = 0, ERow = ConversionTable.size(); Row != ERow; ++Row) {
