@@ -169,6 +169,129 @@ namespace lldb_private {
         
         SyntheticChildrenFrontEnd* NSArraySyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
         
+        class NSDictionaryISyntheticFrontEnd : public SyntheticChildrenFrontEnd
+        {
+        private:
+            struct DataDescriptor_32
+            {
+                uint32_t _used : 26;
+                uint32_t _szidx : 6;
+            };
+            struct DataDescriptor_64
+            {
+                uint64_t _used : 58;
+                uint32_t _szidx : 6;
+            };
+            
+            struct DictionaryItemDescriptor
+            {
+                lldb::addr_t key_ptr;
+                lldb::addr_t val_ptr;
+                lldb::ValueObjectSP valobj_sp;
+            };
+            
+        public:
+            NSDictionaryISyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+            
+            virtual uint32_t
+            CalculateNumChildren ();
+            
+            virtual lldb::ValueObjectSP
+            GetChildAtIndex (uint32_t idx);
+            
+            virtual bool
+            Update();
+            
+            virtual uint32_t
+            GetIndexOfChildWithName (const ConstString &name);
+            
+            virtual
+            ~NSDictionaryISyntheticFrontEnd ();
+        private:
+            ExecutionContextRef m_exe_ctx_ref;
+            uint8_t m_ptr_size;
+            DataDescriptor_32 *m_data_32;
+            DataDescriptor_64 *m_data_64;
+            lldb::addr_t m_data_ptr;
+            std::vector<DictionaryItemDescriptor> m_children;
+        };
+        
+        class NSDictionaryMSyntheticFrontEnd : public SyntheticChildrenFrontEnd
+        {
+        private:
+            struct DataDescriptor_32
+            {
+                uint32_t _used : 26;
+                uint32_t _kvo : 1;
+                uint32_t _size;
+                uint32_t _mutations;
+                uint32_t _objs_addr;
+                uint32_t _keys_addr;
+            };
+            struct DataDescriptor_64
+            {
+                uint64_t _used : 58;
+                uint32_t _kvo : 1;
+                uint64_t _size;
+                uint64_t _mutations;
+                uint64_t _objs_addr;
+                uint64_t _keys_addr;
+            };
+            struct DictionaryItemDescriptor
+            {
+                lldb::addr_t key_ptr;
+                lldb::addr_t val_ptr;
+                lldb::ValueObjectSP valobj_sp;
+            };
+        public:
+            NSDictionaryMSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+            
+            virtual uint32_t
+            CalculateNumChildren ();
+            
+            virtual lldb::ValueObjectSP
+            GetChildAtIndex (uint32_t idx);
+            
+            virtual bool
+            Update();
+            
+            virtual uint32_t
+            GetIndexOfChildWithName (const ConstString &name);
+            
+            virtual
+            ~NSDictionaryMSyntheticFrontEnd ();
+        private:
+            ExecutionContextRef m_exe_ctx_ref;
+            uint8_t m_ptr_size;
+            uint64_t m_items;
+            DataDescriptor_32 *m_data_32;
+            DataDescriptor_64 *m_data_64;
+            std::vector<DictionaryItemDescriptor> m_children;
+        };
+        
+        class NSDictionaryCodeRunningSyntheticFrontEnd : public SyntheticChildrenFrontEnd
+        {
+        public:
+            NSDictionaryCodeRunningSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+            
+            virtual uint32_t
+            CalculateNumChildren ();
+            
+            virtual lldb::ValueObjectSP
+            GetChildAtIndex (uint32_t idx);
+            
+            virtual bool
+            Update();
+            
+            virtual uint32_t
+            GetIndexOfChildWithName (const ConstString &name);
+            
+            virtual
+            ~NSDictionaryCodeRunningSyntheticFrontEnd ();
+        };
+        
+        SyntheticChildrenFrontEnd* NSDictionarySyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
+        
     }
 }
 

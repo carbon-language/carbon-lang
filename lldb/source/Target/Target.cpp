@@ -1620,6 +1620,8 @@ Target::EvaluateExpression
     const EvaluateExpressionOptions& options
 )
 {
+    result_valobj_sp.reset();
+    
     ExecutionResults execution_results = eExecutionSetupError;
 
     if (expr_cstr == NULL || expr_cstr[0] == '\0')
