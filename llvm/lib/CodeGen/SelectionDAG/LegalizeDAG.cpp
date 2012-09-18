@@ -869,25 +869,24 @@ void SelectionDAGLegalize::LegalizeLoadOps(SDNode *Node) {
     switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
     default: llvm_unreachable("This action is not supported yet!");
     case TargetLowering::Legal:
-             // If this is an unaligned load and the target doesn't support it,
-             // expand it.
-             if (!TLI.allowsUnalignedMemoryAccesses(LD->getMemoryVT())) {
-               Type *Ty = LD->getMemoryVT().getTypeForEVT(*DAG.getContext());
-               unsigned ABIAlignment =
-                 TLI.getTargetData()->getABITypeAlignment(Ty);
-               if (LD->getAlignment() < ABIAlignment){
-                 ExpandUnalignedLoad(cast<LoadSDNode>(Node),
-                                     DAG, TLI, RVal, RChain);
-               }
-             }
-             break;
+      // If this is an unaligned load and the target doesn't support it,
+      // expand it.
+      if (!TLI.allowsUnalignedMemoryAccesses(LD->getMemoryVT())) {
+        Type *Ty = LD->getMemoryVT().getTypeForEVT(*DAG.getContext());
+        unsigned ABIAlignment =
+          TLI.getTargetData()->getABITypeAlignment(Ty);
+        if (LD->getAlignment() < ABIAlignment){
+          ExpandUnalignedLoad(cast<LoadSDNode>(Node), DAG, TLI, RVal, RChain);
+        }
+      }
+      break;
     case TargetLowering::Custom: {
-             SDValue Res = TLI.LowerOperation(RVal, DAG);
-             if (Res.getNode()) {
-               RVal = Res;
-               RChain = Res.getValue(1);
-             }
-             break;
+      SDValue Res = TLI.LowerOperation(RVal, DAG);
+      if (Res.getNode()) {
+        RVal = Res;
+        RChain = Res.getValue(1);
+      }
+      break;
     }
     case TargetLowering::Promote: {
       // Only promote a load of vector type to another.
