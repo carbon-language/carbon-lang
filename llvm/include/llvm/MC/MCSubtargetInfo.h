@@ -68,9 +68,9 @@ public:
     return FeatureBits;
   }
 
-  /// ReInitMCSubtargetInfo - Change CPU (and optionally supplemented with
-  /// feature string), recompute and return feature bits.
-  uint64_t ReInitMCSubtargetInfo(StringRef CPU, StringRef FS);
+  /// InitMCProcessorInfo - Set or change the CPU (optionally supplemented with
+  /// feature string). Recompute feature bits and scheduling model.
+  void InitMCProcessorInfo(StringRef CPU, StringRef FS);
 
   /// ToggleFeature - Toggle a feature and returns the re-computed feature
   /// bits. This version does not change the implied bits.

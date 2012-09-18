@@ -19,6 +19,20 @@ using namespace llvm;
 
 MCSchedModel MCSchedModel::DefaultSchedModel; // For unknown processors.
 
+/// ReInitMCSubtargetInfo - Set or change the CPU (optionally supplemented
+/// with feature string). Recompute feature bits and scheduling model.
+void
+MCSubtargetInfo::InitMCProcessorInfo(StringRef CPU, StringRef FS) {
+  SubtargetFeatures Features(FS);
+  FeatureBits = Features.getFeatureBits(CPU, ProcDesc, NumProcs,
+                                        ProcFeatures, NumFeatures);
+
+  if (!CPU.empty())
+    CPUSchedModel = getSchedModelForCPU(CPU);
+  else
+    CPUSchedModel = &MCSchedModel::DefaultSchedModel;
+}
+
 void
 MCSubtargetInfo::InitMCSubtargetInfo(StringRef TT, StringRef CPU, StringRef FS,
                                      const SubtargetFeatureKV *PF,
@@ -45,20 +59,7 @@ MCSubtargetInfo::InitMCSubtargetInfo(StringRef TT, StringRef CPU, StringRef FS,
   NumFeatures = NF;
   NumProcs = NP;
 
-  SubtargetFeatures Features(FS);
-  FeatureBits = Features.getFeatureBits(CPU, ProcDesc, NumProcs,
-                                        ProcFeatures, NumFeatures);
-
-  CPUSchedModel = getSchedModelForCPU(CPU);
-}
-
-/// ReInitMCSubtargetInfo - Change CPU (and optionally supplemented with
-/// feature string) and recompute feature bits.
-uint64_t MCSubtargetInfo::ReInitMCSubtargetInfo(StringRef CPU, StringRef FS) {
-  SubtargetFeatures Features(FS);
-  FeatureBits = Features.getFeatureBits(CPU, ProcDesc, NumProcs,
-                                        ProcFeatures, NumFeatures);
-  return FeatureBits;
+  InitMCProcessorInfo(CPU, FS);
 }
 
 /// ToggleFeature - Toggle a feature and returns the re-computed feature
