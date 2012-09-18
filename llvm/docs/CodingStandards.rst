@@ -826,14 +826,14 @@ unimplemented copy constructor and copy assignment operator and make them
 private. This would give a compiler error for accessing a private method or a
 linker error because it wasn't implemented.
 
-With C++11, we can mark methods that won't be implemented with ``= deleted``.
+With C++11, we can mark methods that won't be implemented with ``= delete``.
 This will trigger a much better error message and tell the compiler that the
 method will never be implemented. This enables other checks like
 ``-Wunused-private-field`` to run correctly on classes that contain these
 methods.
 
 To maintain compatibility with C++03, ``LLVM_DELETED_FUNCTION`` should be used
-which will expand to ``= deleted`` if the compiler supports it. These methods
+which will expand to ``= delete`` if the compiler supports it. These methods
 should still be declared private. Example of the uncopyable pattern:
 
 .. code-block:: c++
