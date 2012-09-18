@@ -279,7 +279,7 @@ If you have recently been granted commit access, these policies apply:
 #. You are granted *commit-after-approval* to all parts of LLVM.  To get
    approval, submit a `patch`_ to `llvm-commits
    <http://lists.cs.uiuc.edu/mailman/listinfo/llvm-commits>`_. When approved
-   you may commit it yourself.</li>
+   you may commit it yourself.
 
 #. You are allowed to commit patches without approval which you think are
    obvious. This is clearly a subjective decision --- we simply expect you to
