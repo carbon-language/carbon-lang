@@ -79,6 +79,22 @@ define float @test_ineligible(float, float %in) {
   ; internal fault).
   call void @bar()
 ; CHECL: bl bar
-; CHECK: vmov.f32 {{s[0-9]+}}, {{s[0-9]+}}
+; CHECK: vext.32 
+; CHECK: vext.32 
   ret float %val
+}
+
+define i32 @test_vmovs_no_sreg(i32 %in) {
+; CHECK: test_vmovs_no_sreg:
+
+  ; Check that the movement to and from GPRs takes place in the NEON domain.
+; CHECK: vmov.32 d
+  %x = bitcast i32 %in to float
+
+  %res = fadd float %x, %x
+
+; CHECK: vmov.32 r{{[0-9]+}}, d
+  %resi = bitcast float %res to i32
+
+  ret i32 %resi
 }

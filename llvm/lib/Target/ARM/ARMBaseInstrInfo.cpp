@@ -3425,6 +3425,48 @@ static unsigned getCorrespondingDRegAndLane(const TargetRegisterInfo *TRI,
   return DReg;
 }
 
+/// getImplicitSPRUseForDPRUse - Given a use of a DPR register and lane, 
+/// set ImplicitSReg to a register number that must be marked as implicit-use or
+/// zero if no register needs to be defined as implicit-use.
+///
+/// If the function cannot determine if an SPR should be marked implicit use or
+/// not, it returns false.
+///
+/// This function handles cases where an instruction is being modified from taking
+/// an SPR to a DPR[Lane]. A use of the DPR is being added, which may conflict 
+/// with an earlier def of an SPR corresponding to DPR[Lane^1] (i.e. the other
+/// lane of the DPR).
+///
+/// If the other SPR is defined, an implicit-use of it should be added. Else,
+/// (including the case where the DPR itself is defined), it should not.
+/// 
+static bool getImplicitSPRUseForDPRUse(const TargetRegisterInfo *TRI,
+                                       MachineInstr *MI,
+                                       unsigned DReg, unsigned Lane,
+                                       unsigned &ImplicitSReg) {
+  // If the DPR is defined or used already, the other SPR lane will be chained
+  // correctly, so there is nothing to be done.
+  if (MI->definesRegister(DReg, TRI) || MI->readsRegister(DReg, TRI)) {
+    ImplicitSReg = 0;
+    return true;
+  }
+
+  // Otherwise we need to go searching to see if the SPR is set explicitly.
+  ImplicitSReg = TRI->getSubReg(DReg,
+                                (Lane & 1) ? ARM::ssub_0 : ARM::ssub_1);
+  MachineBasicBlock::LivenessQueryResult LQR =
+    MI->getParent()->computeRegisterLiveness(TRI, ImplicitSReg, MI);
+
+  if (LQR == MachineBasicBlock::LQR_Live)
+    return true;
+  else if (LQR == MachineBasicBlock::LQR_Unknown)
+    return false;
+
+  // If the register is known not to be live, there is no need to add an
+  // implicit-use.
+  ImplicitSReg = 0;
+  return true;
+}
 
 void
 ARMBaseInstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
@@ -3482,7 +3524,7 @@ ARMBaseInstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
       // was dead before here.
       MIB.addReg(SrcReg, RegState::Implicit);
       break;
-    case ARM::VMOVSR:
+    case ARM::VMOVSR: {
       if (Domain != ExeNEON)
         break;
       assert(!isPredicated(MI) && "Cannot predicate a VSETLN");
@@ -3493,12 +3535,9 @@ ARMBaseInstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
 
       DReg = getCorrespondingDRegAndLane(TRI, DstReg, Lane);
 
-      // If we insert both a novel <def> and an <undef> on the DReg, we break
-      // any existing dependency chain on the unused lane. Either already being
-      // present means this instruction is in that chain anyway so we can make
-      // the transformation.
-      if (!MI->definesRegister(DReg, TRI) && !MI->readsRegister(DReg, TRI))
-          break;
+      unsigned ImplicitSReg;
+      if (!getImplicitSPRUseForDPRUse(TRI, MI, DReg, Lane, ImplicitSReg))
+        break;
 
       for (unsigned i = MI->getDesc().getNumOperands(); i; --i)
         MI->RemoveOperand(i-1);
@@ -3515,7 +3554,10 @@ ARMBaseInstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
       // The narrower destination must be marked as set to keep previous chains
       // in place.
       MIB.addReg(DstReg, RegState::Define | RegState::Implicit);
+      if (ImplicitSReg != 0)
+        MIB.addReg(ImplicitSReg, RegState::Implicit);
       break;
+    }
     case ARM::VMOVS: {
       if (Domain != ExeNEON)
         break;
@@ -3528,12 +3570,9 @@ ARMBaseInstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
       DDst = getCorrespondingDRegAndLane(TRI, DstReg, DstLane);
       DSrc = getCorrespondingDRegAndLane(TRI, SrcReg, SrcLane);
 
-      // If we insert both a novel <def> and an <undef> on the DReg, we break
-      // any existing dependency chain on the unused lane. Either already being
-      // present means this instruction is in that chain anyway so we can make
-      // the transformation.
-      if (!MI->definesRegister(DDst, TRI) && !MI->readsRegister(DDst, TRI))
-          break;
+      unsigned ImplicitSReg;
+      if (!getImplicitSPRUseForDPRUse(TRI, MI, DSrc, SrcLane, ImplicitSReg))
+        break;
 
       for (unsigned i = MI->getDesc().getNumOperands(); i; --i)
         MI->RemoveOperand(i-1);
@@ -3551,6 +3590,8 @@ ARMBaseInstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
         // more, so add them in manually.
         MIB.addReg(DstReg, RegState::Implicit | RegState::Define);
         MIB.addReg(SrcReg, RegState::Implicit);
+        if (ImplicitSReg != 0)
+          MIB.addReg(ImplicitSReg, RegState::Implicit);
         break;
       }
 
@@ -3609,6 +3650,8 @@ ARMBaseInstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
       // As before, the original destination is no longer represented, add it
       // implicitly.
       MIB.addReg(DstReg, RegState::Define | RegState::Implicit);
+      if (ImplicitSReg != 0)
+        MIB.addReg(ImplicitSReg, RegState::Implicit);
       break;
     }
   }
