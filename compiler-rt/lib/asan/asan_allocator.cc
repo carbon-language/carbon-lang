@@ -199,50 +199,50 @@ struct AsanChunk: public ChunkBase {
     if (REDZONE < sizeof(ChunkBase)) return 0;
     return (REDZONE) / sizeof(u32);
   }
-
-  bool AddrIsInside(uptr addr, uptr access_size, uptr *offset) {
-    if (addr >= Beg() && (addr + access_size) <= (Beg() + used_size)) {
-      *offset = addr - Beg();
-      return true;
-    }
-    return false;
-  }
-
-  bool AddrIsAtLeft(uptr addr, uptr access_size, uptr *offset) {
-    if (addr < Beg()) {
-      *offset = Beg() - addr;
-      return true;
-    }
-    return false;
-  }
-
-  bool AddrIsAtRight(uptr addr, uptr access_size, uptr *offset) {
-    if (addr + access_size >= Beg() + used_size) {
-      if (addr <= Beg() + used_size)
-        *offset = 0;
-      else
-        *offset = addr - (Beg() + used_size);
-      return true;
-    }
-    return false;
-  }
-
-  void DescribeAddress(uptr addr, uptr access_size) {
-    uptr offset;
-    Printf("%p is located ", (void*)addr);
-    if (AddrIsInside(addr, access_size, &offset)) {
-      Printf("%zu bytes inside of", offset);
-    } else if (AddrIsAtLeft(addr, access_size, &offset)) {
-      Printf("%zu bytes to the left of", offset);
-    } else if (AddrIsAtRight(addr, access_size, &offset)) {
-      Printf("%zu bytes to the right of", offset);
-    } else {
-      Printf(" somewhere around (this is AddressSanitizer bug!)");
-    }
-    Printf(" %zu-byte region [%p,%p)\n",
-               used_size, (void*)Beg(), (void*)(Beg() + used_size));
-  }
 };
+
+uptr AsanChunkView::Beg() { return chunk_->Beg(); }
+uptr AsanChunkView::End() { return Beg() + UsedSize(); }
+uptr AsanChunkView::UsedSize() { return chunk_->used_size; }
+uptr AsanChunkView::AllocTid() { return chunk_->alloc_tid; }
+uptr AsanChunkView::FreeTid() { return chunk_->free_tid; }
+
+void AsanChunkView::GetAllocStack(StackTrace *stack) {
+  StackTrace::UncompressStack(stack, chunk_->compressed_alloc_stack(),
+                              chunk_->compressed_alloc_stack_size());
+}
+
+void AsanChunkView::GetFreeStack(StackTrace *stack) {
+  StackTrace::UncompressStack(stack, chunk_->compressed_free_stack(),
+                              chunk_->compressed_free_stack_size());
+}
+
+bool AsanChunkView::AddrIsInside(uptr addr, uptr access_size, uptr *offset) {
+  if (addr >= Beg() && (addr + access_size) <= End()) {
+    *offset = addr - Beg();
+    return true;
+  }
+  return false;
+}
+
+bool AsanChunkView::AddrIsAtLeft(uptr addr, uptr access_size, uptr *offset) {
+  if (addr < Beg()) {
+    *offset = Beg() - addr;
+    return true;
+  }
+  return false;
+}
+
+bool AsanChunkView::AddrIsAtRight(uptr addr, uptr access_size, uptr *offset) {
+  if (addr + access_size >= End()) {
+    if (addr <= End())
+      *offset = 0;
+    else
+      *offset = addr - End();
+    return true;
+  }
+  return false;
+}
 
 static AsanChunk *PtrToChunk(uptr ptr) {
   AsanChunk *m = (AsanChunk*)(ptr - REDZONE);
@@ -251,7 +251,6 @@ static AsanChunk *PtrToChunk(uptr ptr) {
   }
   return m;
 }
-
 
 void AsanChunkFifoList::PushList(AsanChunkFifoList *q) {
   CHECK(q->size() > 0);
@@ -368,9 +367,9 @@ class MallocInfo {
     quarantine_.Push(chunk);
   }
 
-  AsanChunk *FindMallocedOrFreed(uptr addr, uptr access_size) {
+  AsanChunk *FindChunkByAddr(uptr addr) {
     ScopedLock lock(&mu_);
-    return FindChunkByAddr(addr);
+    return FindChunkByAddrUnlocked(addr);
   }
 
   uptr AllocationSize(uptr ptr) {
@@ -379,7 +378,7 @@ class MallocInfo {
 
     // Make sure this is our chunk and |ptr| actually points to the beginning
     // of the allocated memory.
-    AsanChunk *m = FindChunkByAddr(ptr);
+    AsanChunk *m = FindChunkByAddrUnlocked(ptr);
     if (!m || m->Beg() != ptr) return 0;
 
     if (m->chunk_state == CHUNK_ALLOCATED) {
@@ -463,14 +462,14 @@ class MallocInfo {
       return left_chunk;
     // Choose based on offset.
     uptr l_offset = 0, r_offset = 0;
-    CHECK(left_chunk->AddrIsAtRight(addr, 1, &l_offset));
-    CHECK(right_chunk->AddrIsAtLeft(addr, 1, &r_offset));
+    CHECK(AsanChunkView(left_chunk).AddrIsAtRight(addr, 1, &l_offset));
+    CHECK(AsanChunkView(right_chunk).AddrIsAtLeft(addr, 1, &r_offset));
     if (l_offset < r_offset)
       return left_chunk;
     return right_chunk;
   }
 
-  AsanChunk *FindChunkByAddr(uptr addr) {
+  AsanChunk *FindChunkByAddrUnlocked(uptr addr) {
     PageGroup *g = FindPageGroupUnlocked(addr);
     if (!g) return 0;
     CHECK(g->size_of_chunk);
@@ -483,17 +482,18 @@ class MallocInfo {
           m->chunk_state == CHUNK_AVAILABLE ||
           m->chunk_state == CHUNK_QUARANTINE);
     uptr offset = 0;
-    if (m->AddrIsInside(addr, 1, &offset))
+    AsanChunkView m_view(m);
+    if (m_view.AddrIsInside(addr, 1, &offset))
       return m;
 
-    if (m->AddrIsAtRight(addr, 1, &offset)) {
+    if (m_view.AddrIsAtRight(addr, 1, &offset)) {
       if (this_chunk_addr == g->last_chunk)  // rightmost chunk
         return m;
       uptr right_chunk_addr = this_chunk_addr + g->size_of_chunk;
       CHECK(g->InRange(right_chunk_addr));
       return ChooseChunk(addr, m, (AsanChunk*)right_chunk_addr);
     } else {
-      CHECK(m->AddrIsAtLeft(addr, 1, &offset));
+      CHECK(m_view.AddrIsAtLeft(addr, 1, &offset));
       if (this_chunk_addr == g->beg)  // leftmost chunk
         return m;
       uptr left_chunk_addr = this_chunk_addr - g->size_of_chunk;
@@ -585,39 +585,8 @@ void AsanThreadLocalMallocStorage::CommitBack() {
   malloc_info.SwallowThreadLocalMallocStorage(this, true);
 }
 
-void DescribeHeapAddress(uptr addr, uptr access_size) {
-  AsanChunk *m = malloc_info.FindMallocedOrFreed(addr, access_size);
-  if (!m) return;
-  m->DescribeAddress(addr, access_size);
-  CHECK(m->alloc_tid >= 0);
-  AsanThreadSummary *alloc_thread =
-      asanThreadRegistry().FindByTid(m->alloc_tid);
-  StackTrace alloc_stack;
-  StackTrace::UncompressStack(&alloc_stack, m->compressed_alloc_stack(),
-                                  m->compressed_alloc_stack_size());
-  AsanThread *t = asanThreadRegistry().GetCurrent();
-  CHECK(t);
-  if (m->free_tid != kInvalidTid) {
-    AsanThreadSummary *free_thread =
-        asanThreadRegistry().FindByTid(m->free_tid);
-    Printf("freed by thread T%d here:\n", free_thread->tid());
-    StackTrace free_stack;
-    StackTrace::UncompressStack(&free_stack, m->compressed_free_stack(),
-                                    m->compressed_free_stack_size());
-    PrintStack(&free_stack);
-    Printf("previously allocated by thread T%d here:\n",
-               alloc_thread->tid());
-
-    PrintStack(&alloc_stack);
-    DescribeThread(t->summary());
-    DescribeThread(free_thread);
-    DescribeThread(alloc_thread);
-  } else {
-    Printf("allocated by thread T%d here:\n", alloc_thread->tid());
-    PrintStack(&alloc_stack);
-    DescribeThread(t->summary());
-    DescribeThread(alloc_thread);
-  }
+AsanChunkView FindHeapChunkByAddress(uptr address) {
+  return AsanChunkView(malloc_info.FindChunkByAddr(address));
 }
 
 static u8 *Allocate(uptr alignment, uptr size, StackTrace *stack) {

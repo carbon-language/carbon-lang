@@ -23,6 +23,26 @@ namespace __asan {
 static const uptr kNumberOfSizeClasses = 255;
 struct AsanChunk;
 
+class AsanChunkView {
+ public:
+  explicit AsanChunkView(AsanChunk *chunk) : chunk_(chunk) {}
+  bool IsValid() { return chunk_ != 0; }
+  uptr Beg();       // first byte of user memory.
+  uptr End();       // last byte of user memory.
+  uptr UsedSize();  // size requested by the user.
+  uptr AllocTid();
+  uptr FreeTid();
+  void GetAllocStack(StackTrace *stack);
+  void GetFreeStack(StackTrace *stack);
+  bool AddrIsInside(uptr addr, uptr access_size, uptr *offset);
+  bool AddrIsAtLeft(uptr addr, uptr access_size, uptr *offset);
+  bool AddrIsAtRight(uptr addr, uptr access_size, uptr *offset);
+ private:
+  AsanChunk *const chunk_;
+};
+
+AsanChunkView FindHeapChunkByAddress(uptr address);
+
 class AsanChunkFifoList {
  public:
   explicit AsanChunkFifoList(LinkerInitialized) { }
