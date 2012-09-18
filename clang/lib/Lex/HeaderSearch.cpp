@@ -41,7 +41,7 @@ ExternalHeaderFileInfoSource::~ExternalHeaderFileInfoSource() {}
 HeaderSearch::HeaderSearch(FileManager &FM, DiagnosticsEngine &Diags,
                            const LangOptions &LangOpts, 
                            const TargetInfo *Target)
-  : FileMgr(FM), Diags(Diags), FrameworkMap(64), 
+  : FileMgr(FM), FrameworkMap(64),
     ModMap(FileMgr, *Diags.getClient(), LangOpts, Target)
 {
   AngledDirIdx = 0;

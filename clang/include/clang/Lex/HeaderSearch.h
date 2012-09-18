@@ -132,7 +132,6 @@ class HeaderSearch {
   };
 
   FileManager &FileMgr;
-  DiagnosticsEngine &Diags;
   /// \#include search path information.  Requests for \#include "x" search the
   /// directory of the \#including file first, then each directory in SearchDirs
   /// consecutively. Requests for <x> search the current dir first, then each
