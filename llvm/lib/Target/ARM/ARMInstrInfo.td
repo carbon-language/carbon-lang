@@ -3092,9 +3092,11 @@ def : ARMPat<(ARMaddc GPR:$src, so_imm_neg:$imm),
              (SUBSri  GPR:$src, so_imm_neg:$imm)>;
 
 def : ARMPat<(add     GPR:$src, imm0_65535_neg:$imm),
-             (SUBrr   GPR:$src, (MOVi16 (imm_neg_XFORM imm:$imm)))>;
+             (SUBrr   GPR:$src, (MOVi16 (imm_neg_XFORM imm:$imm)))>,
+             Requires<[IsARM, HasV6T2]>;
 def : ARMPat<(ARMaddc GPR:$src, imm0_65535_neg:$imm),
-             (SUBSrr  GPR:$src, (MOVi16 (imm_neg_XFORM imm:$imm)))>;
+             (SUBSrr  GPR:$src, (MOVi16 (imm_neg_XFORM imm:$imm)))>,
+             Requires<[IsARM, HasV6T2]>;
 
 // The with-carry-in form matches bitwise not instead of the negation.
 // Effectively, the inverse interpretation of the carry flag already accounts

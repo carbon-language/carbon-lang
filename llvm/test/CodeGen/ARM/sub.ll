@@ -1,4 +1,4 @@
-; RUN: llc -march=arm < %s | FileCheck %s
+; RUN: llc -march=arm -mcpu=cortex-a8 < %s | FileCheck %s
 
 ; 171 = 0x000000ab
 define i64 @f1(i64 %a) {
