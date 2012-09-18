@@ -172,7 +172,7 @@ MachTask::ReadMemory (nub_addr_t addr, nub_size_t size, void *buf)
     {
         n = m_vm_memory.Read(task, addr, buf, size);
 
-        DNBLogThreadedIf(LOG_MEMORY, "MachTask::ReadMemory ( addr = 0x%8.8llx, size = %zu, buf = %p) => %zu bytes read", (uint64_t)addr, size, buf, n);
+        DNBLogThreadedIf(LOG_MEMORY, "MachTask::ReadMemory ( addr = 0x%8.8llx, size = %llu, buf = %p) => %llu bytes read", (uint64_t)addr, (uint64_t)size, buf, (uint64_t)n);
         if (DNBLogCheckLogBit(LOG_MEMORY_DATA_LONG) || (DNBLogCheckLogBit(LOG_MEMORY_DATA_SHORT) && size <= 8))
         {
             DNBDataRef data((uint8_t*)buf, n, false);
@@ -194,7 +194,7 @@ MachTask::WriteMemory (nub_addr_t addr, nub_size_t size, const void *buf)
     if (task != TASK_NULL)
     {
         n = m_vm_memory.Write(task, addr, buf, size);
-        DNBLogThreadedIf(LOG_MEMORY, "MachTask::WriteMemory ( addr = 0x%8.8llx, size = %zu, buf = %p) => %zu bytes written", (uint64_t)addr, size, buf, n);
+        DNBLogThreadedIf(LOG_MEMORY, "MachTask::WriteMemory ( addr = 0x%8.8llx, size = %llu, buf = %p) => %llu bytes written", (uint64_t)addr, (uint64_t)size, buf, (uint64_t)n);
         if (DNBLogCheckLogBit(LOG_MEMORY_DATA_LONG) || (DNBLogCheckLogBit(LOG_MEMORY_DATA_SHORT) && size <= 8))
         {
             DNBDataRef data((uint8_t*)buf, n, false);

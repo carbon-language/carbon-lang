@@ -344,10 +344,10 @@ UnwindAssemblyInstEmulation::ReadMemory (EmulateInstruction *instruction,
     if (log && log->GetVerbose ())
     {
         StreamString strm;
-        strm.Printf ("UnwindAssemblyInstEmulation::ReadMemory    (addr = 0x%16.16llx, dst = %p, dst_len = %zu, context = ", 
+        strm.Printf ("UnwindAssemblyInstEmulation::ReadMemory    (addr = 0x%16.16llx, dst = %p, dst_len = %llu, context = ", 
                      addr,
                      dst,
-                     dst_len);
+                     (uint64_t)dst_len);
         context.Dump(strm, instruction);
         log->PutCString (strm.GetData ());
     }

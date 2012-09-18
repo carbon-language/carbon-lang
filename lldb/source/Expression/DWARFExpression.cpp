@@ -1345,7 +1345,7 @@ DWARFExpression::Evaluate
             for (size_t i=0; i<count; ++i)
             {
                 StreamString new_value;
-                new_value.Printf("[%zu]", i);
+                new_value.Printf("[%llu]", (uint64_t)i);
                 stack[i].Dump(&new_value);
                 log->Printf("  %s", new_value.GetData());
             }
@@ -3186,7 +3186,7 @@ DWARFExpression::Evaluate
         for (size_t i=0; i<count; ++i)
         {
             StreamString new_value;
-            new_value.Printf("[%zu]", i);
+            new_value.Printf("[%llu]", (uint64_t)i);
             stack[i].Dump(&new_value);
             log->Printf("  %s", new_value.GetData());
         }

@@ -298,12 +298,12 @@ GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtrac
         size_t bytes_read = Read (buffer, sizeof(buffer), timeout_usec, status, &error);
         
         if (log)
-            log->Printf ("%s: Read (buffer, (sizeof(buffer), timeout_usec = 0x%x, status = %s, error = %s) => bytes_read = %zu",
+            log->Printf ("%s: Read (buffer, (sizeof(buffer), timeout_usec = 0x%x, status = %s, error = %s) => bytes_read = %llu",
                          __PRETTY_FUNCTION__,
                          timeout_usec, 
                          Communication::ConnectionStatusAsCString (status),
                          error.AsCString(), 
-                         bytes_read);
+                         (uint64_t)bytes_read);
 
         if (bytes_read > 0)
         {

@@ -186,7 +186,7 @@ ClangFunction::CompileFunction (Stream &errors)
         char arg_buf[32];
         args_buffer.append ("    ");
         args_buffer.append (type_name);
-        snprintf(arg_buf, 31, "arg_%zd", i);
+        snprintf(arg_buf, 31, "arg_%llu", (uint64_t)i);
         args_buffer.push_back (' ');
         args_buffer.append (arg_buf);
         args_buffer.append (";\n");

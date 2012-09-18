@@ -2599,7 +2599,7 @@ RNBRemote::HandlePacket_G (const char *p)
             }
             else
             {
-                DNBLogError("RNBRemote::HandlePacket_G(%s): extracted %zu of %zu bytes, size mismatch\n", p, bytes_extracted, reg_ctx_size);
+                DNBLogError("RNBRemote::HandlePacket_G(%s): extracted %llu of %llu bytes, size mismatch\n", p, (uint64_t)bytes_extracted, (uint64_t)reg_ctx_size);
                 return SendPacket ("E64");
             }
         }

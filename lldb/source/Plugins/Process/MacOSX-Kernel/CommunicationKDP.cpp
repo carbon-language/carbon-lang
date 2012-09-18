@@ -145,7 +145,7 @@ CommunicationKDP::SendRequestPacketNoLock (const PacketStreamType &request_packe
             return true;
         
         if (log)
-            log->Printf ("error: failed to send packet entire packet %zu of %zu bytes sent", bytes_written, packet_size);
+            log->Printf ("error: failed to send packet entire packet %llu of %llu bytes sent", (uint64_t)bytes_written, (uint64_t)packet_size);
     }
     return false;
 }
@@ -189,12 +189,12 @@ CommunicationKDP::WaitForPacketWithTimeoutMicroSecondsNoLock (DataExtractor &pac
         size_t bytes_read = Read (buffer, sizeof(buffer), timeout_usec, status, &error);
         
         if (log)
-            log->Printf ("%s: Read (buffer, (sizeof(buffer), timeout_usec = 0x%x, status = %s, error = %s) => bytes_read = %zu",
+            log->Printf ("%s: Read (buffer, (sizeof(buffer), timeout_usec = 0x%x, status = %s, error = %s) => bytes_read = %llu",
                          __PRETTY_FUNCTION__,
                          timeout_usec, 
                          Communication::ConnectionStatusAsCString (status),
                          error.AsCString(), 
-                         bytes_read);
+                         (uint64_t)bytes_read);
 
         if (bytes_read > 0)
         {

@@ -362,8 +362,8 @@ ConnectionFileDescriptor::Read (void *dst,
 {
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
-        log->Printf ("%p ConnectionFileDescriptor::Read () ::read (fd = %i, dst = %p, dst_len = %zu)...",
-                     this, m_fd_recv, dst, dst_len);
+        log->Printf ("%p ConnectionFileDescriptor::Read () ::read (fd = %i, dst = %p, dst_len = %llu)...",
+                     this, m_fd_recv, dst, (uint64_t)dst_len);
 
     Mutex::Locker locker;
     bool got_lock = locker.TryLock (m_mutex);
@@ -411,12 +411,12 @@ ConnectionFileDescriptor::Read (void *dst,
     }
 
     if (log)
-        log->Printf ("%p ConnectionFileDescriptor::Read () ::read (fd = %i, dst = %p, dst_len = %zu) => %zi, error = %s",
+        log->Printf ("%p ConnectionFileDescriptor::Read () ::read (fd = %i, dst = %p, dst_len = %llu) => %lli, error = %s",
                      this, 
                      m_fd_recv, 
                      dst, 
-                     dst_len, 
-                     bytes_read, 
+                     (uint64_t)dst_len,
+                     (int64_t)bytes_read,
                      error.AsCString());
 
     if (error_ptr)
@@ -475,7 +475,7 @@ ConnectionFileDescriptor::Write (const void *src, size_t src_len, ConnectionStat
 {
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
-        log->Printf ("%p ConnectionFileDescriptor::Write (src = %p, src_len = %zu)", this, src, src_len);
+        log->Printf ("%p ConnectionFileDescriptor::Write (src = %p, src_len = %llu)", this, src, (uint64_t)src_len);
 
     if (!IsConnected ())
     {
@@ -530,32 +530,32 @@ ConnectionFileDescriptor::Write (const void *src, size_t src_len, ConnectionStat
         switch (m_fd_send_type)
         {
             case eFDTypeFile:       // Other FD requireing read/write
-                log->Printf ("%p ConnectionFileDescriptor::Write()  ::write (fd = %i, src = %p, src_len = %zu) => %zi (error = %s)",
+                log->Printf ("%p ConnectionFileDescriptor::Write()  ::write (fd = %i, src = %p, src_len = %llu) => %lli (error = %s)",
                              this, 
                              m_fd_send, 
                              src, 
-                             src_len, 
-                             bytes_sent, 
+                             (uint64_t)src_len,
+                             (int64_t)bytes_sent,
                              error.AsCString());
                 break;
                 
             case eFDTypeSocket:     // Socket requiring send/recv
-                log->Printf ("%p ConnectionFileDescriptor::Write()  ::send (socket = %i, src = %p, src_len = %zu, flags = 0) => %zi (error = %s)",
+                log->Printf ("%p ConnectionFileDescriptor::Write()  ::send (socket = %i, src = %p, src_len = %llu, flags = 0) => %lli (error = %s)",
                              this, 
                              m_fd_send, 
                              src, 
-                             src_len, 
-                             bytes_sent, 
+                             (uint64_t)src_len,
+                             (int64_t)bytes_sent,
                              error.AsCString());
                 break;
                 
             case eFDTypeSocketUDP:  // Unconnected UDP socket requiring sendto/recvfrom
-                log->Printf ("%p ConnectionFileDescriptor::Write()  ::sendto (socket = %i, src = %p, src_len = %zu, flags = 0) => %zi (error = %s)",
+                log->Printf ("%p ConnectionFileDescriptor::Write()  ::sendto (socket = %i, src = %p, src_len = %llu, flags = 0) => %lli (error = %s)",
                              this, 
                              m_fd_send, 
                              src, 
-                             src_len, 
-                             bytes_sent, 
+                             (uint64_t)src_len,
+                             (int64_t)bytes_sent, 
                              error.AsCString());
                 break;
         }

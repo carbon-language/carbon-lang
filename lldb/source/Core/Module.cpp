@@ -99,7 +99,7 @@ namespace lldb {
         Mutex::Locker locker (Module::GetAllocationModuleCollectionMutex());
         ModuleCollection &modules = GetModuleCollection();
         const size_t count = modules.size();
-        printf ("%s: %zu modules:\n", __PRETTY_FUNCTION__, count);
+        printf ("%s: %llu modules:\n", __PRETTY_FUNCTION__, (uint64_t)count);
         for (size_t i=0; i<count; ++i)
         {
             

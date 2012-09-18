@@ -206,7 +206,7 @@ SBValue::GetByteSize ()
     }
 
     if (log)
-        log->Printf ("SBValue(%p)::GetByteSize () => %zu", value_sp.get(), result);
+        log->Printf ("SBValue(%p)::GetByteSize () => %llu", value_sp.get(), (uint64_t)result);
 
     return result;
 }

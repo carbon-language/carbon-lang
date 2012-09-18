@@ -263,7 +263,7 @@ RNBSocket::Read (std::string &p)
         p.append(buf, bytesread);
 
     if (err.Fail() || DNBLogCheckLogBit(LOG_RNB_COMM))
-        err.LogThreaded("::read ( %i, %p, %zu ) => %i", m_fd, buf, sizeof (buf), bytesread);
+        err.LogThreaded("::read ( %i, %p, %llu ) => %i", m_fd, buf, sizeof (buf), (uint64_t)bytesread);
 
     // Our port went away - we have to mark this so IsConnected will return the truth.
     if (bytesread == 0)
@@ -297,7 +297,7 @@ RNBSocket::Write (const void *buffer, size_t length)
         err.SetError(errno, DNBError::POSIX);
 
     if (err.Fail() || DNBLogCheckLogBit(LOG_RNB_COMM))
-        err.LogThreaded("::write ( socket = %i, buffer = %p, length = %zu) => %i", m_fd, buffer, length, bytessent);
+        err.LogThreaded("::write ( socket = %i, buffer = %p, length = %llu) => %i", m_fd, buffer, length, (uint64_t)bytessent);
 
     if (bytessent < 0)
         return rnb_err;

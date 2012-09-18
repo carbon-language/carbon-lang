@@ -361,7 +361,7 @@ EmulateInstruction::ReadMemoryDefault (EmulateInstruction *instruction,
                                        size_t length)
 {
     StreamFile strm (stdout, false);
-    strm.Printf ("    Read from Memory (address = 0x%llx, length = %zu, context = ", addr, length);
+    strm.Printf ("    Read from Memory (address = 0x%llx, length = %llu, context = ", addr, (uint64_t)length);
     context.Dump (strm, instruction);    
     strm.EOL();
     *((uint64_t *) dst) = 0xdeadbeef;
@@ -377,7 +377,7 @@ EmulateInstruction::WriteMemoryDefault (EmulateInstruction *instruction,
                                         size_t length)
 {
     StreamFile strm (stdout, false);
-    strm.Printf ("    Write to Memory (address = 0x%llx, length = %zu, context = ", addr, length);
+    strm.Printf ("    Write to Memory (address = 0x%llx, length = %llu, context = ", addr, (uint64_t)length);
     context.Dump (strm, instruction);    
     strm.EOL();
     return length;

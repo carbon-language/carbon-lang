@@ -91,11 +91,11 @@ DNBBreakpoint::Dump() const
     }
     else
     {
-        DNBLog ("DNBBreakpoint %u: tid = %4.4x  addr = 0x%llx  size = %zu  state = %s  type = %s watchpoint (%s%s)  hw_index = %i  hit_count = %-4u  ignore_count = %-4u  callback = %p baton = %p",
+        DNBLog ("DNBBreakpoint %u: tid = %4.4x  addr = 0x%llx  size = %llu  state = %s  type = %s watchpoint (%s%s)  hw_index = %i  hit_count = %-4u  ignore_count = %-4u  callback = %p baton = %p",
                 m_breakID,
                 m_tid,
                 (uint64_t)m_addr,
-                m_byte_size,
+                (uint64_t)m_byte_size,
                 m_enabled ? "enabled " : "disabled",
                 IsHardware() ? "hardware" : "software",
                 m_watch_read ? "r" : "",

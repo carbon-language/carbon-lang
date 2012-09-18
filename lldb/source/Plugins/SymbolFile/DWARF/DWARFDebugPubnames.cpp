@@ -32,11 +32,11 @@ bool
 DWARFDebugPubnames::Extract(const DataExtractor& data)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__,
-                        "DWARFDebugPubnames::Extract (byte_size = %zu)",
-                        data.GetByteSize());
+                        "DWARFDebugPubnames::Extract (byte_size = %llu)",
+                        (uint64_t)data.GetByteSize());
     LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_PUBNAMES));
     if (log)
-        log->Printf("DWARFDebugPubnames::Extract (byte_size = %zu)", data.GetByteSize());
+        log->Printf("DWARFDebugPubnames::Extract (byte_size = %llu)", (uint64_t)data.GetByteSize());
 
     if (data.ValidOffset(0))
     {

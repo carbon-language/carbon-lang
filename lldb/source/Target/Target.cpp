@@ -527,8 +527,8 @@ Target::CreateWatchpoint(lldb::addr_t addr, size_t size, uint32_t type, Error &e
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
-        log->Printf("Target::%s (addr = 0x%8.8llx size = %zu type = %u)\n",
-                    __FUNCTION__, addr, size, type);
+        log->Printf("Target::%s (addr = 0x%8.8llx size = %llu type = %u)\n",
+                    __FUNCTION__, addr, (uint64_t)size, type);
 
     WatchpointSP wp_sp;
     if (!ProcessIsValid())
@@ -1235,7 +1235,7 @@ Target::ReadMemory (const Address& addr,
                     if (bytes_read == 0)
                         error.SetErrorStringWithFormat("read memory from 0x%llx failed", load_addr);
                     else
-                        error.SetErrorStringWithFormat("only %zu of %zu bytes were read from memory at 0x%llx", bytes_read, dst_len, load_addr);
+                        error.SetErrorStringWithFormat("only %llu of %llu bytes were read from memory at 0x%llx", (uint64_t)bytes_read, (uint64_t)dst_len, load_addr);
                 }
             }
             if (bytes_read)

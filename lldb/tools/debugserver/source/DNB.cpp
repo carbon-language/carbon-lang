@@ -185,7 +185,7 @@ DNBProcessLaunch (const char *path,
                   char *err_str,
                   size_t err_len)
 {
-    DNBLogThreadedIf(LOG_PROCESS, "%s ( path='%s', argv = %p, envp = %p, working_dir=%s, stdin=%s, stdout=%s, stderr=%s, no-stdio=%i, launch_flavor = %u, disable_aslr = %d, err = %p, err_len = %zu) called...", 
+    DNBLogThreadedIf(LOG_PROCESS, "%s ( path='%s', argv = %p, envp = %p, working_dir=%s, stdin=%s, stdout=%s, stderr=%s, no-stdio=%i, launch_flavor = %u, disable_aslr = %d, err = %p, err_len = %llu) called...",
                      __FUNCTION__, 
                      path, 
                      argv, 
@@ -198,7 +198,7 @@ DNBProcessLaunch (const char *path,
                      launch_flavor, 
                      disable_aslr, 
                      err_str, 
-                     err_len);
+                     (uint64_t)err_len);
     
     if (err_str && err_len > 0)
         err_str[0] = '\0';
@@ -291,7 +291,7 @@ DNBProcessAttachByName (const char *name, struct timespec *timeout, char *err_st
     }
     else if (num_matching_proc_infos > 1)
     {
-        DNBLogError ("error: %zu processes match '%s':\n", num_matching_proc_infos, name);
+        DNBLogError ("error: %llu processes match '%s':\n", (uint64_t)num_matching_proc_infos, name);
         size_t i;
         for (i=0; i<num_matching_proc_infos; ++i)
             DNBLogError ("%6u - %s\n", matching_proc_infos[i].kp_proc.p_pid, matching_proc_infos[i].kp_proc.p_comm);

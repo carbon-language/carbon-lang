@@ -91,15 +91,6 @@ Args::~Args ()
 void
 Args::Dump (Stream *s)
 {
-//    int argc = GetArgumentCount();
-//
-//    arg_sstr_collection::const_iterator pos, begin = m_args.begin(), end = m_args.end();
-//    for (pos = m_args.begin(); pos != end; ++pos)
-//    {
-//        s->Indent();
-//        s->Printf("args[%zu]=%s\n", std::distance(begin, pos), pos->c_str());
-//    }
-//    s->EOL();
     const int argc = m_argv.size();
     for (int i=0; i<argc; ++i)
     {

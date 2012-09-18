@@ -1531,7 +1531,7 @@ LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_info, :
         size_t ocount = 0;
         error.SetError( ::posix_spawnattr_setbinpref_np (&attr, 1, &cpu, &ocount), eErrorTypePOSIX);
         if (error.Fail() || log)
-            error.PutToLog(log.get(), "::posix_spawnattr_setbinpref_np ( &attr, 1, cpu_type = 0x%8.8x, count => %zu )", cpu, ocount);
+            error.PutToLog(log.get(), "::posix_spawnattr_setbinpref_np ( &attr, 1, cpu_type = 0x%8.8x, count => %llu )", cpu, (uint64_t)ocount);
         
         if (error.Fail() || ocount != 1)
             return error;

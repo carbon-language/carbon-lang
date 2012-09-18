@@ -1215,7 +1215,8 @@ GDBRemoteCommunicationClient::AllocateMemory (size_t size, uint32_t permissions)
     {
         m_supports_alloc_dealloc_memory = eLazyBoolYes;
         char packet[64];
-        const int packet_len = ::snprintf (packet, sizeof(packet), "_M%zx,%s%s%s", size,
+        const int packet_len = ::snprintf (packet, sizeof(packet), "_M%llx,%s%s%s",
+                                           (uint64_t)size,
                                            permissions & lldb::ePermissionsReadable ? "r" : "",
                                            permissions & lldb::ePermissionsWritable ? "w" : "",
                                            permissions & lldb::ePermissionsExecutable ? "x" : "");

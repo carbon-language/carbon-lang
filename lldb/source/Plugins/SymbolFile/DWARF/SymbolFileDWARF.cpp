@@ -126,15 +126,15 @@ public:
     {
         StreamString log_strm;
         const size_t n = m_dies.size();
-        log_strm.Printf("DIEStack[%zu]:\n", n);
+        log_strm.Printf("DIEStack[%llu]:\n", (uint64_t)n);
         for (size_t i=0; i<n; i++)
         {
             DWARFCompileUnit *cu = m_dies[i].cu;
             const DWARFDebugInfoEntry *die = m_dies[i].die;
             std::string qualified_name;
             die->GetQualifiedName(dwarf, cu, qualified_name);
-            log_strm.Printf ("[%zu] 0x%8.8x: %s name='%s'\n", 
-                             i,
+            log_strm.Printf ("[%llu] 0x%8.8x: %s name='%s'\n", 
+                             (uint64_t)i,
                              die->GetOffset(), 
                              DW_TAG_value_to_name(die->Tag()), 
                              qualified_name.c_str());

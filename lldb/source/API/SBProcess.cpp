@@ -310,8 +310,12 @@ SBProcess::GetSTDOUT (char *dst, size_t dst_len) const
     
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBProcess(%p)::GetSTDOUT (dst=\"%.*s\", dst_len=%zu) => %zu", 
-                     process_sp.get(), (int) bytes_read, dst, dst_len, bytes_read);
+        log->Printf ("SBProcess(%p)::GetSTDOUT (dst=\"%.*s\", dst_len=%llu) => %llu", 
+                     process_sp.get(),
+                     (int) bytes_read,
+                     dst,
+                     (uint64_t)dst_len,
+                     (uint64_t)bytes_read);
 
     return bytes_read;
 }
@@ -329,8 +333,12 @@ SBProcess::GetSTDERR (char *dst, size_t dst_len) const
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBProcess(%p)::GetSTDERR (dst=\"%.*s\", dst_len=%zu) => %zu",
-                     process_sp.get(), (int) bytes_read, dst, dst_len, bytes_read);
+        log->Printf ("SBProcess(%p)::GetSTDERR (dst=\"%.*s\", dst_len=%llu) => %llu",
+                     process_sp.get(),
+                     (int) bytes_read,
+                     dst,
+                     (uint64_t)dst_len,
+                     (uint64_t)bytes_read);
 
     return bytes_read;
 }
@@ -850,11 +858,11 @@ SBProcess::ReadMemory (addr_t addr, void *dst, size_t dst_len, SBError &sb_error
 
     if (log)
     {
-        log->Printf ("SBProcess(%p)::ReadMemory (addr=0x%llx, dst=%p, dst_len=%zu, SBError (%p))...",
+        log->Printf ("SBProcess(%p)::ReadMemory (addr=0x%llx, dst=%p, dst_len=%llu, SBError (%p))...",
                      process_sp.get(), 
                      addr, 
                      dst, 
-                     dst_len, 
+                     (uint64_t)dst_len,
                      sb_error.get());
     }
     
@@ -882,14 +890,14 @@ SBProcess::ReadMemory (addr_t addr, void *dst, size_t dst_len, SBError &sb_error
     {
         SBStream sstr;
         sb_error.GetDescription (sstr);
-        log->Printf ("SBProcess(%p)::ReadMemory (addr=0x%llx, dst=%p, dst_len=%zu, SBError (%p): %s) => %zu", 
+        log->Printf ("SBProcess(%p)::ReadMemory (addr=0x%llx, dst=%p, dst_len=%llu, SBError (%p): %s) => %llu", 
                      process_sp.get(), 
                      addr, 
                      dst, 
-                     dst_len, 
+                     (uint64_t)dst_len,
                      sb_error.get(), 
                      sstr.GetData(),
-                     bytes_read);
+                     (uint64_t)bytes_read);
     }
 
     return bytes_read;
@@ -990,11 +998,11 @@ SBProcess::WriteMemory (addr_t addr, const void *src, size_t src_len, SBError &s
 
     if (log)
     {
-        log->Printf ("SBProcess(%p)::WriteMemory (addr=0x%llx, src=%p, dst_len=%zu, SBError (%p))...",
+        log->Printf ("SBProcess(%p)::WriteMemory (addr=0x%llx, src=%p, src_len=%llu, SBError (%p))...",
                      process_sp.get(), 
                      addr, 
                      src, 
-                     src_len, 
+                     (uint64_t)src_len,
                      sb_error.get());
     }
 
@@ -1018,14 +1026,14 @@ SBProcess::WriteMemory (addr_t addr, const void *src, size_t src_len, SBError &s
     {
         SBStream sstr;
         sb_error.GetDescription (sstr);
-        log->Printf ("SBProcess(%p)::WriteMemory (addr=0x%llx, src=%p, dst_len=%zu, SBError (%p): %s) => %zu", 
+        log->Printf ("SBProcess(%p)::WriteMemory (addr=0x%llx, src=%p, src_len=%llu, SBError (%p): %s) => %llu",
                      process_sp.get(), 
                      addr, 
                      src, 
-                     src_len, 
+                     (uint64_t)src_len, 
                      sb_error.get(), 
                      sstr.GetData(),
-                     bytes_written);
+                     (uint64_t)bytes_written);
     }
 
     return bytes_written;

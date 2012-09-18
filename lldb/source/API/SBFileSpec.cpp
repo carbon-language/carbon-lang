@@ -154,8 +154,8 @@ SBFileSpec::GetPath (char *dst_path, size_t dst_len) const
         result = m_opaque_ap->GetPath (dst_path, dst_len);
 
     if (log)
-        log->Printf ("SBFileSpec(%p)::GetPath (dst_path=\"%.*s\", dst_len=%zu) => %u", 
-                     m_opaque_ap.get(), result, dst_path, dst_len, result);
+        log->Printf ("SBFileSpec(%p)::GetPath (dst_path=\"%.*s\", dst_len=%llu) => %u", 
+                     m_opaque_ap.get(), result, dst_path, (uint64_t)dst_len, result);
 
     if (result == 0 && dst_path && dst_len > 0)
         *dst_path = '\0';

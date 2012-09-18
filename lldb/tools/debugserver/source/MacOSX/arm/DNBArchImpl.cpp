@@ -2288,9 +2288,9 @@ DNBArchMachARM::EnableHardwareBreakpoint (nub_addr_t addr, nub_size_t size)
                                         byte_addr_select |  // Set the correct byte address select so we only trigger on the correct opcode
                                         S_USER |            // Which modes should this breakpoint stop in?
                                         BCR_ENABLE;         // Enable this hardware breakpoint
-                DNBLogThreadedIf (LOG_BREAKPOINTS, "DNBArchMachARM::EnableHardwareBreakpoint( addr = 0x%8.8llx, size = %zu ) - BVR%u/BCR%u = 0x%8.8x / 0x%8.8x (Thumb)",
+                DNBLogThreadedIf (LOG_BREAKPOINTS, "DNBArchMachARM::EnableHardwareBreakpoint( addr = 0x%8.8llx, size = %llu ) - BVR%u/BCR%u = 0x%8.8x / 0x%8.8x (Thumb)",
                                   (uint64_t)addr,
-                                  size,
+                                  (uint64_t)size,
                                   i,
                                   i,
                                   m_state.dbg.__bvr[i],
@@ -2303,9 +2303,9 @@ DNBArchMachARM::EnableHardwareBreakpoint (nub_addr_t addr, nub_size_t size)
                                         BAS_IMVA_ALL |      // Stop on any of the four bytes following the IMVA
                                         S_USER |            // Which modes should this breakpoint stop in?
                                         BCR_ENABLE;         // Enable this hardware breakpoint
-                DNBLogThreadedIf (LOG_BREAKPOINTS, "DNBArchMachARM::EnableHardwareBreakpoint( addr = 0x%8.8llx, size = %zu ) - BVR%u/BCR%u = 0x%8.8x / 0x%8.8x (ARM)",
+                DNBLogThreadedIf (LOG_BREAKPOINTS, "DNBArchMachARM::EnableHardwareBreakpoint( addr = 0x%8.8llx, size = %llu ) - BVR%u/BCR%u = 0x%8.8x / 0x%8.8x (ARM)",
                                   (uint64_t)addr,
-                                  size,
+                                  (uint64_t)size,
                                   i,
                                   i,
                                   m_state.dbg.__bvr[i],
@@ -2320,7 +2320,7 @@ DNBArchMachARM::EnableHardwareBreakpoint (nub_addr_t addr, nub_size_t size)
         }
         else
         {
-            DNBLogThreadedIf (LOG_BREAKPOINTS, "DNBArchMachARM::EnableHardwareBreakpoint(addr = 0x%8.8llx, size = %zu) => all hardware breakpoint resources are being used.", (uint64_t)addr, size);
+            DNBLogThreadedIf (LOG_BREAKPOINTS, "DNBArchMachARM::EnableHardwareBreakpoint(addr = 0x%8.8llx, size = %llu) => all hardware breakpoint resources are being used.", (uint64_t)addr, (uint64_t)size);
         }
     }
 
@@ -2361,7 +2361,7 @@ static uint32_t LoHi[16] = { 0 };
 uint32_t
 DNBArchMachARM::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write)
 {
-    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::EnableHardwareWatchpoint(addr = 0x%8.8llx, size = %zu, read = %u, write = %u)", (uint64_t)addr, size, read, write);
+    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::EnableHardwareWatchpoint(addr = 0x%8.8llx, size = %llu, read = %u, write = %u)", (uint64_t)addr, (uint64_t)size, read, write);
 
     const uint32_t num_hw_watchpoints = NumSupportedHardwareWatchpoints();
 
@@ -3223,7 +3223,7 @@ DNBArchMachARM::GetRegisterContext (void *buf, nub_size_t buf_len)
             return 0;
         ::memcpy (buf, &m_state.context, size);
     }
-    DNBLogThreadedIf (LOG_THREAD, "DNBArchMachARM::GetRegisterContext (buf = %p, len = %zu) => %zu", buf, buf_len, size);
+    DNBLogThreadedIf (LOG_THREAD, "DNBArchMachARM::GetRegisterContext (buf = %p, len = %llu) => %llu", buf, buf_len, (uint64_t)size);
     // Return the size of the register context even if NULL was passed in
     return size;
 }
@@ -3245,7 +3245,7 @@ DNBArchMachARM::SetRegisterContext (const void *buf, nub_size_t buf_len)
         SetVFPState();
         SetEXCState();
     }
-    DNBLogThreadedIf (LOG_THREAD, "DNBArchMachARM::SetRegisterContext (buf = %p, len = %zu) => %zu", buf, buf_len, size);
+    DNBLogThreadedIf (LOG_THREAD, "DNBArchMachARM::SetRegisterContext (buf = %p, len = %llu) => %llu", buf, buf_len, (uint64_t)size);
     return size;
 }
 

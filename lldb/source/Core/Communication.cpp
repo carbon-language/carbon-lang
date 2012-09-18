@@ -136,10 +136,10 @@ size_t
 Communication::Read (void *dst, size_t dst_len, uint32_t timeout_usec, ConnectionStatus &status, Error *error_ptr)
 {
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_COMMUNICATION,
-                                         "%p Communication::Read (dst = %p, dst_len = %zu, timeout = %u usec) connection = %p",
+                                         "%p Communication::Read (dst = %p, dst_len = %llu, timeout = %u usec) connection = %p",
                                          this, 
                                          dst, 
-                                         dst_len, 
+                                         (uint64_t)dst_len,
                                          timeout_usec, 
                                          m_connection_sp.get());
 
@@ -210,10 +210,10 @@ Communication::Write (const void *src, size_t src_len, ConnectionStatus &status,
 
     Mutex::Locker (m_write_mutex);
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_COMMUNICATION,
-                                         "%p Communication::Write (src = %p, src_len = %zu) connection = %p",
+                                         "%p Communication::Write (src = %p, src_len = %llu) connection = %p",
                                          this, 
                                          src, 
-                                         src_len, 
+                                         (uint64_t)src_len,
                                          connection_sp.get());
 
     if (connection_sp.get())
@@ -295,8 +295,8 @@ void
 Communication::AppendBytesToCache (const uint8_t * bytes, size_t len, bool broadcast, ConnectionStatus status)
 {
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_COMMUNICATION,
-                                 "%p Communication::AppendBytesToCache (src = %p, src_len = %zu, broadcast = %i)",
-                                 this, bytes, len, broadcast);
+                                 "%p Communication::AppendBytesToCache (src = %p, src_len = %llu, broadcast = %i)",
+                                 this, bytes, (uint64_t)len, broadcast);
     if ((bytes == NULL || len == 0)
         && (status != lldb::eConnectionStatusEndOfFile))
         return;

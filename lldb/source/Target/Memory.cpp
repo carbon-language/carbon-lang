@@ -68,14 +68,11 @@ MemoryCache::Flush (addr_t addr, size_t size)
     else
         num_cache_lines = (UINT64_MAX - first_cache_line_addr + 1)/cache_line_byte_size;
 
-    //printf ("MemoryCache::Flush (0x%16.16llx, %zu (0x%zx))\n", addr, size, size);
-
     uint32_t cache_idx = 0;
     for (addr_t curr_addr = first_cache_line_addr;
          cache_idx < num_cache_lines;
          curr_addr += cache_line_byte_size, ++cache_idx)
     {
-        //printf ("flushing: 0x%16.16llx\n", curr_addr); /// REMOVE THIS PRIOR TO CHECKIN!!!!
         BlockMap::iterator pos = m_cache.find (curr_addr);
         if (pos != m_cache.end())
             m_cache.erase(pos);

@@ -126,9 +126,9 @@ OptionValueArray::GetSubValue (const ExecutionContext *exe_ctx,
                     if (array_count == 0)
                         error.SetErrorStringWithFormat("index %i is not valid for an empty array", idx);
                     else if (idx > 0)
-                        error.SetErrorStringWithFormat("index %i out of range, valid values are 0 through %zu", idx, array_count - 1);
+                        error.SetErrorStringWithFormat("index %i out of range, valid values are 0 through %llu", idx, (uint64_t)(array_count - 1));
                     else
-                        error.SetErrorStringWithFormat("negative index %i out of range, valid values are -1 through -%zu", idx, array_count);
+                        error.SetErrorStringWithFormat("negative index %i out of range, valid values are -1 through -%llu", idx, (uint64_t)array_count);
                 }
             }
         }

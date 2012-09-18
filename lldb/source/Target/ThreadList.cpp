@@ -189,7 +189,7 @@ ThreadList::ShouldStop (Event *event_ptr)
     if (log)
     {
         log->PutCString("");
-        log->Printf ("ThreadList::%s: %zu threads", __FUNCTION__, m_threads.size());
+        log->Printf ("ThreadList::%s: %llu threads", __FUNCTION__, (uint64_t)m_threads.size());
     }
 
     for (pos = m_threads.begin(); pos != end; ++pos)
@@ -228,7 +228,7 @@ ThreadList::ShouldReportStop (Event *event_ptr)
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     if (log)
-        log->Printf ("ThreadList::%s %zu threads", __FUNCTION__, m_threads.size());
+        log->Printf ("ThreadList::%s %llu threads", __FUNCTION__, (uint64_t)m_threads.size());
 
     // Run through the threads and ask whether we should report this event.
     // For stopping, a YES vote wins over everything.  A NO vote wins over NO opinion.

@@ -51,8 +51,8 @@ WatchpointList::DumpWithLevel (Stream *s, lldb::DescriptionLevel description_lev
     Mutex::Locker locker (m_mutex);
     s->Printf("%p: ", this);
     //s->Indent();
-    s->Printf("WatchpointList with %zu Watchpoints:\n",
-              m_watchpoints.size());
+    s->Printf("WatchpointList with %llu Watchpoints:\n",
+              (uint64_t)m_watchpoints.size());
     s->IndentMore();
     wp_collection::const_iterator pos, end = m_watchpoints.end();
     for (pos = m_watchpoints.begin(); pos != end; ++pos)

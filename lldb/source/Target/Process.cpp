@@ -3920,7 +3920,7 @@ Process::GetSTDOUT (char *buf, size_t buf_size, Error &error)
     {
         LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
         if (log)
-            log->Printf ("Process::GetSTDOUT (buf = %p, size = %zu)", buf, buf_size);
+            log->Printf ("Process::GetSTDOUT (buf = %p, size = %llu)", buf, (uint64_t)buf_size);
         if (bytes_available > buf_size)
         {
             memcpy(buf, m_stdout_data.c_str(), buf_size);
@@ -3946,7 +3946,7 @@ Process::GetSTDERR (char *buf, size_t buf_size, Error &error)
     {
         LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
         if (log)
-            log->Printf ("Process::GetSTDERR (buf = %p, size = %zu)", buf, buf_size);
+            log->Printf ("Process::GetSTDERR (buf = %p, size = %llu)", buf, (uint64_t)buf_size);
         if (bytes_available > buf_size)
         {
             memcpy(buf, m_stderr_data.c_str(), buf_size);

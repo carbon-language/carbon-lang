@@ -703,7 +703,7 @@ protected:
                     }
                     else 
                     {
-                        result.AppendErrorWithFormat("Failed to write %zu bytes to '%s'.\n", bytes_read, path);
+                        result.AppendErrorWithFormat("Failed to write %llu bytes to '%s'.\n", (uint64_t)bytes_read, path);
                         result.SetStatus(eReturnStatusFailed);
                         return false;
                     }
@@ -1042,13 +1042,13 @@ protected:
                     if (bytes_written == length)
                     {
                         // All bytes written
-                        result.GetOutputStream().Printf("%zu bytes were written to 0x%llx\n", bytes_written, addr);
+                        result.GetOutputStream().Printf("%llu bytes were written to 0x%llx\n", (uint64_t)bytes_written, addr);
                         result.SetStatus(eReturnStatusSuccessFinishResult);
                     }
                     else if (bytes_written > 0)
                     {
                         // Some byte written
-                        result.GetOutputStream().Printf("%zu bytes of %zu requested were written to 0x%llx\n", bytes_written, length, addr);
+                        result.GetOutputStream().Printf("%llu bytes of %llu requested were written to 0x%llx\n", (uint64_t)bytes_written, (uint64_t)length, addr);
                         result.SetStatus(eReturnStatusSuccessFinishResult);
                     }
                     else 

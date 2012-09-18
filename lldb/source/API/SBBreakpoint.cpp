@@ -440,7 +440,7 @@ SBBreakpoint::GetNumResolvedLocations() const
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBBreakpoint(%p)::GetNumResolvedLocations () => %zu", m_opaque_sp.get(), num_resolved);
+        log->Printf ("SBBreakpoint(%p)::GetNumResolvedLocations () => %llu", m_opaque_sp.get(), (uint64_t)num_resolved);
     return num_resolved;
 }
 
@@ -455,7 +455,7 @@ SBBreakpoint::GetNumLocations() const
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBBreakpoint(%p)::GetNumLocations () => %zu", m_opaque_sp.get(), num_locs);
+        log->Printf ("SBBreakpoint(%p)::GetNumLocations () => %llu", m_opaque_sp.get(), (uint64_t)num_locs);
     return num_locs;
 }
 
@@ -469,7 +469,7 @@ SBBreakpoint::GetDescription (SBStream &s)
         m_opaque_sp->GetResolverDescription (s.get());
         m_opaque_sp->GetFilterDescription (s.get());
         const size_t num_locations = m_opaque_sp->GetNumLocations ();
-        s.Printf(", locations = %zu", num_locations);
+        s.Printf(", locations = %llu", (uint64_t)num_locations);
         return true;
     }
     s.Printf ("No value");

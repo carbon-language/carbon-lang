@@ -525,9 +525,9 @@ Breakpoint::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_l
     case lldb::eDescriptionLevelFull:
         if (num_locations > 0)
         {
-            s->Printf(", locations = %zu", num_locations);
+            s->Printf(", locations = %llu", (uint64_t)num_locations);
             if (num_resolved_locations > 0)
-                s->Printf(", resolved = %zu", num_resolved_locations);
+                s->Printf(", resolved = %llu", (uint64_t)num_resolved_locations);
         }
         else
         {
