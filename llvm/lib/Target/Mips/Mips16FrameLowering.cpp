@@ -35,8 +35,6 @@ void Mips16FrameLowering::emitPrologue(MachineFunction &MF) const {
   DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
   uint64_t StackSize = MFI->getStackSize();
 
-  StackSize += 16; // need to allocate space for RA. Clean this up later
-                   // when we fix the save/restore instruction. TBD..
   // No need to allocate space on the stack.
   if (StackSize == 0 && !MFI->adjustsStack()) return;
 
@@ -54,8 +52,6 @@ void Mips16FrameLowering::emitEpilogue(MachineFunction &MF,
   DebugLoc dl = MBBI->getDebugLoc();
   uint64_t StackSize = MFI->getStackSize();
 
-  StackSize += 16; // need to allocate space for RA. Clean this up later
-                   // when we fix the save/restore instruction. TBD..
   if (!StackSize)
     return;
 
