@@ -527,6 +527,10 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
       continue;
     }
 
+    // Ignore invalid decls; they'll just confuse the code later.
+    if (Var->isInvalidDecl())
+      continue;
+
     if (!Var->hasLocalStorage()) {
       Diag(C->Loc, diag::err_capture_non_automatic_variable) << C->Id;
       Diag(Var->getLocation(), diag::note_previous_decl) << C->Id;

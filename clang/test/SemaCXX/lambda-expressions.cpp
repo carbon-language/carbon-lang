@@ -221,3 +221,11 @@ namespace VariadicPackExpansion {
   template void nested2(int); // ok
   template void nested2(int, int); // expected-note {{in instantiation of}}
 }
+
+namespace PR13860 {
+  void foo() {
+    auto x = PR13860UndeclaredIdentifier(); // expected-error {{use of undeclared identifier 'PR13860UndeclaredIdentifier'}}
+    auto y = [x]() { };
+    static_assert(sizeof(y), "");
+  }
+}
