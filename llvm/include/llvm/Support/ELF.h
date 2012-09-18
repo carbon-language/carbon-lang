@@ -441,6 +441,7 @@ enum {
   R_MICROBLAZE_COPY           = 21
 };
 
+// ELF Relocation types for PPC32
 enum {
   R_PPC_NONE                  = 0,      /* No relocation. */
   R_PPC_ADDR32                = 1,
@@ -457,6 +458,20 @@ enum {
   R_PPC_REL14_BRTAKEN         = 12,
   R_PPC_REL14_BRNTAKEN        = 13,
   R_PPC_REL32                 = 26
+};
+
+// ELF Relocation types for PPC64
+enum {
+  R_PPC64_ADDR16_LO           = 4,
+  R_PPC64_ADDR16_HI           = 5,
+  R_PPC64_ADDR14              = 7,
+  R_PPC64_REL24               = 10,
+  R_PPC64_ADDR64              = 38,
+  R_PPC64_ADDR16_HIGHER       = 39,
+  R_PPC64_ADDR16_HIGHEST      = 41,
+  R_PPC64_TOC16               = 47,
+  R_PPC64_TOC                 = 51,
+  R_PPC64_TOC16_DS            = 63
 };
 
 // ARM Specific e_flags
