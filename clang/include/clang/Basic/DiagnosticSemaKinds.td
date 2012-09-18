@@ -20,17 +20,6 @@ def warn_variables_not_in_loop_body : Warning<
   "used in loop condition not modified in loop body">,
   InGroup<DiagGroup<"loop-analysis">>, DefaultIgnore;
 
-def warn_identical_enum_values : Warning<
-  "all elements of %0 are initialized with literals to value %1">,
-  InGroup<DiagGroup<"unique-enum">>;
-def note_identical_enum_values : Note<
-  "initialize the last element with the previous element to silence "
-  "this warning">;
-def warn_duplicate_enum_values : Warning<
-  "element %0 has been implicitly assigned %1 which another element has "
-  "been assigned">, InGroup<DiagGroup<"duplicate-enum">>, DefaultIgnore;
-def note_duplicate_element : Note<"element %0 also has value %1">;
-
 // Constant expressions
 def err_expr_not_ice : Error<
   "expression is not an %select{integer|integral}0 constant expression">;
