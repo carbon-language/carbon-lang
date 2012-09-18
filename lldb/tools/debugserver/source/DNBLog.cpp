@@ -185,13 +185,21 @@ _DNBLogThreaded (const char *format, ...)
                 timersub (&tv, &g_timeval, &delta);
             }
             g_timeval = tv;
+            
+            // Calling "mach_port_deallocate()" bumps the reference count on the thread
+            // port, so we need to deallocate it. mach_task_self() doesn't bump the ref
+            // count.
+            thread_port_t thread_self = mach_thread_self();
+
             _DNBLog (DNBLOG_FLAG_THREADED, "%u +%lu.%06u sec [%4.4x/%4.4x]: %s", 
                      ++g_message_id, 
                      delta.tv_sec, 
                      delta.tv_usec,             
                      getpid(), 
-                     mach_thread_self(), 
+                     thread_self, 
                      arg_msg);
+
+            mach_port_deallocate(mach_task_self(), thread_self);
             free (arg_msg);
         }
     }
@@ -230,13 +238,22 @@ _DNBLogThreadedIf (uint32_t log_bit, const char *format, ...)
                 timersub (&tv, &g_timeval, &delta);
             }
             g_timeval = tv;
-            _DNBLog (DNBLOG_FLAG_THREADED, "%u +%lu.%06u sec [%4.4x/%4.4x]: %s", 
+
+            // Calling "mach_port_deallocate()" bumps the reference count on the thread
+            // port, so we need to deallocate it. mach_task_self() doesn't bump the ref
+            // count.
+            thread_port_t thread_self = mach_thread_self();
+
+            _DNBLog (DNBLOG_FLAG_THREADED, "%u +%lu.%06u sec [%4.4x/%4.4x]: %s",
                      ++g_message_id, 
                      delta.tv_sec, 
                      delta.tv_usec, 
                      getpid(), 
-                     mach_thread_self(), 
+                     thread_self, 
                      arg_msg);
+
+            mach_port_deallocate(mach_task_self(), thread_self);
+
             free (arg_msg);
         }
     }

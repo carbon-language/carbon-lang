@@ -39,6 +39,7 @@
 #include <dispatch/dispatch.h>
 #include <libproc.h>
 #include <mach-o/dyld.h>
+#include <mach/mach_port.h>
 #include <sys/sysctl.h>
 
 
@@ -430,7 +431,12 @@ lldb::tid_t
 Host::GetCurrentThreadID()
 {
 #if defined (__APPLE__)
-    return ::mach_thread_self();
+    // Calling "mach_port_deallocate()" bumps the reference count on the thread
+    // port, so we need to deallocate it. mach_task_self() doesn't bump the ref
+    // count.
+    thread_port_t thread_self = mach_thread_self();
+    mach_port_deallocate(mach_task_self(), thread_self);
+    return thread_self;
 #elif defined(__FreeBSD__)
     return lldb::tid_t(pthread_getthreadid_np());
 #else
