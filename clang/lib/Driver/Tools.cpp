@@ -968,6 +968,8 @@ static std::string getPPCTargetCPU(const ArgList &Args) {
       .Case("970", "970")
       .Case("G5", "g5")
       .Case("a2", "a2")
+      .Case("e500mc", "e500mc")
+      .Case("e5500", "e5500")
       .Case("power6", "pwr6")
       .Case("power7", "pwr7")
       .Case("powerpc", "ppc")

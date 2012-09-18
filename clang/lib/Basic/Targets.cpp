@@ -641,6 +641,8 @@ public:
       .Case("970", true)
       .Case("g5", true)
       .Case("a2", true)
+      .Case("e500mc", true)
+      .Case("e5500", true)
       .Case("pwr6", true)
       .Case("pwr7", true)
       .Case("ppc", true)

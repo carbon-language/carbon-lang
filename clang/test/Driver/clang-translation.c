@@ -74,3 +74,20 @@
 // PPC64NS: clang
 // PPC64NS: "-cc1"
 // PPC64NS: "-target-cpu" "ppc64"
+
+// RUN: %clang -ccc-clang-archs powerpc \
+// RUN:   -target powerpc-fsl-linux -### -S %s 2> %t.log \
+// RUN:   -mcpu=e500mc
+// RUN: FileCheck -check-prefix=PPCE500MC %s < %t.log
+// PPCE500MC: clang
+// PPCE500MC: "-cc1"
+// PPCE500MC: "-target-cpu" "e500mc"
+
+// RUN: %clang -ccc-clang-archs powerpc64 \
+// RUN:   -target powerpc64-fsl-linux -### -S %s 2> %t.log \
+// RUN:   -mcpu=e5500
+// RUN: FileCheck -check-prefix=PPCE5500 %s < %t.log
+// PPCE5500: clang
+// PPCE5500: "-cc1"
+// PPCE5500: "-target-cpu" "e5500"
+
