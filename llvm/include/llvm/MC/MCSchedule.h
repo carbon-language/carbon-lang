@@ -208,7 +208,7 @@ public:
   unsigned getProcessorID() const { return ProcID; }
 
   /// Does this machine model include instruction-level scheduling.
-  bool hasInstrSchedModel() const { return SchedClassTable != NULL; }
+  bool hasInstrSchedModel() const { return SchedClassTable; }
 
   const MCProcResourceDesc *getProcResource(unsigned ProcResourceIdx) const {
     assert(hasInstrSchedModel() && "No scheduling machine model");
