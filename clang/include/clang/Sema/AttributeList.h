@@ -140,10 +140,10 @@ private:
     return *reinterpret_cast<const TypeTagForDatatypeData *>(this + 1);
   }
 
-  AttributeList(const AttributeList &); // DO NOT IMPLEMENT
-  void operator=(const AttributeList &); // DO NOT IMPLEMENT
-  void operator delete(void *); // DO NOT IMPLEMENT
-  ~AttributeList(); // DO NOT IMPLEMENT
+  AttributeList(const AttributeList &) LLVM_DELETED_FUNCTION;
+  void operator=(const AttributeList &) LLVM_DELETED_FUNCTION;
+  void operator delete(void *) LLVM_DELETED_FUNCTION;
+  ~AttributeList() LLVM_DELETED_FUNCTION;
 
   size_t allocated_size() const;
 

@@ -75,7 +75,7 @@ public:
   typedef llvm::ImmutableMap<void*, void*>                 GenericDataMap;
 
 private:
-  void operator=(const ProgramState& R) const; // Do not implement.
+  void operator=(const ProgramState& R) LLVM_DELETED_FUNCTION;
 
   friend class ProgramStateManager;
   friend class ExplodedGraph;

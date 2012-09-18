@@ -97,8 +97,7 @@ private:
       Specifier(Other.Specifier) {
   }
 
-  NestedNameSpecifier &operator=(const NestedNameSpecifier &); // do not
-                                                               // implement
+  void operator=(const NestedNameSpecifier &) LLVM_DELETED_FUNCTION;
 
   /// \brief Either find or insert the given nested name specifier
   /// mockup in the given context.

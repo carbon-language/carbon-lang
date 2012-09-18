@@ -75,8 +75,8 @@ class IdentifierInfo {
   void *FETokenInfo;               // Managed by the language front-end.
   llvm::StringMapEntry<IdentifierInfo*> *Entry;
 
-  IdentifierInfo(const IdentifierInfo&);  // NONCOPYABLE.
-  void operator=(const IdentifierInfo&);  // NONASSIGNABLE.
+  IdentifierInfo(const IdentifierInfo&) LLVM_DELETED_FUNCTION;
+  void operator=(const IdentifierInfo&) LLVM_DELETED_FUNCTION;
 
   friend class IdentifierTable;
   

@@ -149,8 +149,8 @@ class TemplateArgumentList {
   /// argument list.
   unsigned NumArguments;
 
-  TemplateArgumentList(const TemplateArgumentList &Other); // DO NOT IMPL
-  void operator=(const TemplateArgumentList &Other); // DO NOT IMPL
+  TemplateArgumentList(const TemplateArgumentList &Other) LLVM_DELETED_FUNCTION;
+  void operator=(const TemplateArgumentList &Other) LLVM_DELETED_FUNCTION;
 
   TemplateArgumentList(const TemplateArgument *Args, unsigned NumArgs,
                        bool Owned)

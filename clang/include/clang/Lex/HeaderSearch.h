@@ -207,10 +207,9 @@ class HeaderSearch {
   unsigned NumFrameworkLookups, NumSubFrameworkLookups;
 
   // HeaderSearch doesn't support default or copy construction.
-  explicit HeaderSearch();
-  explicit HeaderSearch(const HeaderSearch&);
-  void operator=(const HeaderSearch&);
-  
+  HeaderSearch(const HeaderSearch&) LLVM_DELETED_FUNCTION;
+  void operator=(const HeaderSearch&) LLVM_DELETED_FUNCTION;
+
   friend class DirectoryLookup;
   
 public:

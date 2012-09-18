@@ -334,8 +334,8 @@ class DeclarationNameTable {
   CXXOperatorIdName *CXXOperatorNames; // Operator names
   void *CXXLiteralOperatorNames; // Actually a CXXOperatorIdName*
 
-  DeclarationNameTable(const DeclarationNameTable&);            // NONCOPYABLE
-  DeclarationNameTable& operator=(const DeclarationNameTable&); // NONCOPYABLE
+  DeclarationNameTable(const DeclarationNameTable&) LLVM_DELETED_FUNCTION;
+  void operator=(const DeclarationNameTable&) LLVM_DELETED_FUNCTION;
 
 public:
   DeclarationNameTable(const ASTContext &C);

@@ -322,10 +322,9 @@ private:
   const DisplayHint Hint;
   std::vector<SourceRange> ranges;
 
-  // Do not implement:
-  PathDiagnosticPiece();
-  PathDiagnosticPiece(const PathDiagnosticPiece &P);
-  PathDiagnosticPiece& operator=(const PathDiagnosticPiece &P);
+  PathDiagnosticPiece() LLVM_DELETED_FUNCTION;
+  PathDiagnosticPiece(const PathDiagnosticPiece &P) LLVM_DELETED_FUNCTION;
+  void operator=(const PathDiagnosticPiece &P) LLVM_DELETED_FUNCTION;
 
 protected:
   PathDiagnosticPiece(StringRef s, Kind k, DisplayHint hint = Below);

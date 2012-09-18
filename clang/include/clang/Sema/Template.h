@@ -239,8 +239,9 @@ namespace clang {
     unsigned NumArgsInPartiallySubstitutedPack;
 
     // This class is non-copyable
-    LocalInstantiationScope(const LocalInstantiationScope &);
-    LocalInstantiationScope &operator=(const LocalInstantiationScope &);
+    LocalInstantiationScope(
+      const LocalInstantiationScope &) LLVM_DELETED_FUNCTION;
+    void operator=(const LocalInstantiationScope &) LLVM_DELETED_FUNCTION;
 
   public:
     LocalInstantiationScope(Sema &SemaRef, bool CombineWithOuterScope = false)
