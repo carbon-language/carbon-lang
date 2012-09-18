@@ -28,9 +28,6 @@ namespace sema {
 /// deduction, whose success or failure was described by a
 /// TemplateDeductionResult value.
 class TemplateDeductionInfo {
-  /// \brief The context in which the template arguments are stored.
-  ASTContext &Context;
-
   /// \brief The deduced template argument list.
   ///
   TemplateArgumentList *Deduced;
@@ -51,7 +48,7 @@ class TemplateDeductionInfo {
 
 public:
   TemplateDeductionInfo(ASTContext &Context, SourceLocation Loc)
-    : Context(Context), Deduced(0), Loc(Loc), HasSFINAEDiagnostic(false) { }
+    : Deduced(0), Loc(Loc), HasSFINAEDiagnostic(false) { }
 
   ~TemplateDeductionInfo() {
     // FIXME: if (Deduced) Deduced->Destroy(Context);
