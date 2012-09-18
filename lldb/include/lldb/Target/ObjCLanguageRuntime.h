@@ -113,6 +113,13 @@ public:
         virtual ObjCISA
         GetISA () = 0;
         
+        // This should return true iff the interface could be completed
+        virtual bool
+        CompleteInterface (clang::ObjCInterfaceDecl *interface_decl)
+        {
+            return false;
+        }
+        
         virtual
         ~ClassDescriptor ()
         {}

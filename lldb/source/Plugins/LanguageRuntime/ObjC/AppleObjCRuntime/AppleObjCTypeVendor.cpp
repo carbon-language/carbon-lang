@@ -31,9 +31,56 @@ public:
     }
     
     clang::DeclContextLookupResult
-    FindExternalVisibleDeclsByName (const clang::DeclContext *DC,
-                                    clang::DeclarationName Name)
+    FindExternalVisibleDeclsByName (const clang::DeclContext *decl_ctx,
+                                    clang::DeclarationName name)
     {
+        static unsigned int invocation_id = 0;
+        unsigned int current_id = invocation_id++;
+
+        lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_EXPRESSIONS));  // FIXME - a more appropriate log channel?
+
+        if (log)
+        {
+            log->Printf("AppleObjCExternalASTSource::FindExternalVisibleDeclsByName[%u] on (ASTContext*)%p Looking for %s in (%sDecl*)%p",
+                        current_id,
+                        &decl_ctx->getParentASTContext(),
+                        name.getAsString().c_str(),
+                        decl_ctx->getDeclKindName(),
+                        decl_ctx);
+        }
+        
+        do
+        {
+            const clang::ObjCInterfaceDecl *interface_decl = llvm::dyn_cast<clang::ObjCInterfaceDecl>(decl_ctx);
+        
+            if (!interface_decl)
+                break;
+                        
+            ObjCLanguageRuntime::ObjCISA objc_isa = (ObjCLanguageRuntime::ObjCISA)GetMetadata((uintptr_t)interface_decl);
+            
+            if (!objc_isa)
+                break;
+            
+            clang::ObjCInterfaceDecl *non_const_interface_decl = const_cast<clang::ObjCInterfaceDecl*>(interface_decl);
+            
+            if (non_const_interface_decl->hasExternalVisibleStorage())
+            {
+                ObjCLanguageRuntime::ClassDescriptorSP descriptor = m_type_vendor.m_runtime.GetClassDescriptor(objc_isa);
+                
+                if (!descriptor)
+                    break;
+                
+                if (descriptor->CompleteInterface(non_const_interface_decl))
+                    non_const_interface_decl->setHasExternalLexicalStorage(false);
+            }
+
+            if (non_const_interface_decl->hasExternalLexicalStorage()) // hasExternalLexicalStorage() is cleared during completion
+                break;
+            
+            return non_const_interface_decl->lookup(name);
+        }
+        while(0);
+        
         return clang::DeclContextLookupResult();
     }
     
@@ -46,14 +93,62 @@ public:
     }
     
     void
-    CompleteType (clang::TagDecl *Tag)
+    CompleteType (clang::TagDecl *tag_decl)
     {
+        static unsigned int invocation_id = 0;
+        unsigned int current_id = invocation_id++;
+
+        lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_EXPRESSIONS));  // FIXME - a more appropriate log channel?
+        
+        if (log)
+        {
+            log->Printf("AppleObjCExternalASTSource::CompleteType[%u] on (ASTContext*)%p Completing (TagDecl*)%p named %s",
+                        current_id,
+                        &tag_decl->getASTContext(),
+                        tag_decl,
+                        tag_decl->getName().str().c_str());
+            
+            log->Printf("  AOEAS::CT[%u] Before:", current_id);
+            ASTDumper dumper((clang::Decl*)tag_decl);
+            dumper.ToLog(log, "    [CT] ");
+        }
+        
+        if (log)
+        {
+            log->Printf("  AOEAS::CT[%u] After:", current_id);
+            ASTDumper dumper((clang::Decl*)tag_decl);
+            dumper.ToLog(log, "    [CT] ");
+        }
         return;
     }
     
     void
-    CompleteType (clang::ObjCInterfaceDecl *Class)
+    CompleteType (clang::ObjCInterfaceDecl *interface_decl)
     {
+        static unsigned int invocation_id = 0;
+        unsigned int current_id = invocation_id++;
+        
+        lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_EXPRESSIONS));  // FIXME - a more appropriate log channel?
+        
+        if (log)
+        {
+            log->Printf("AppleObjCExternalASTSource::CompleteType[%u] on (ASTContext*)%p Completing (ObjCInterfaceDecl*)%p named %s",
+                        current_id,
+                        &interface_decl->getASTContext(),
+                        interface_decl,
+                        interface_decl->getName().str().c_str());
+            
+            log->Printf("  AOEAS::CT[%u] Before:", current_id);
+            ASTDumper dumper((clang::Decl*)interface_decl);
+            dumper.ToLog(log, "    [CT] ");
+        }
+                
+        if (log)
+        {
+            log->Printf("  [CT] After:");
+            ASTDumper dumper((clang::Decl*)interface_decl);
+            dumper.ToLog(log, "    [CT] ");
+        }
         return;
     }
     
@@ -75,7 +170,7 @@ public:
         translation_unit_decl->setHasExternalLexicalStorage();
     }
 private:
-    AppleObjCTypeVendor &m_type_vendor;
+    AppleObjCTypeVendor                                    &m_type_vendor;
 };
 
 AppleObjCTypeVendor::AppleObjCTypeVendor(ObjCLanguageRuntime &runtime) :
@@ -179,8 +274,8 @@ AppleObjCTypeVendor::FindTypes (const ConstString &name,
                                                                                     NULL);
         
         m_external_source->SetMetadata((uintptr_t)new_iface_decl, (uint64_t)isa);
-        
         new_iface_decl->setHasExternalVisibleStorage();
+        ast_ctx->getTranslationUnitDecl()->addDecl(new_iface_decl);
         
         clang::QualType new_iface_type = ast_ctx->getObjCInterfaceType(new_iface_decl);
         
@@ -192,6 +287,10 @@ AppleObjCTypeVendor::FindTypes (const ConstString &name,
                         dumper.GetCString(),
                         (uint64_t)isa);
         }
+        
+        types.push_back(ClangASTType(ast_ctx, new_iface_type.getAsOpaquePtr()));
+        ret++;
+        break;
     } while (0);
     
     return ret;

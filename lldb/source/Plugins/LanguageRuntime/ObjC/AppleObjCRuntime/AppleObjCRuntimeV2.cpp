@@ -1030,6 +1030,12 @@ public:
     }
     
     virtual bool
+    CompleteInterface (clang::ObjCInterfaceDecl *interface_decl)
+    {
+        return false;
+    }
+    
+    virtual bool
     IsRealized ()
     {
         return m_realized;
@@ -1510,7 +1516,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMap_Impl()
             
             ClassDescriptorSP descriptor_sp = ClassDescriptorSP(new ClassDescriptorV2(elt.second, process_sp));
             
-            if (log)
+            if (log && log->GetVerbose())
                 log->Printf("AppleObjCRuntimeV2 added (ObjCISA)0x%llx (%s) from dynamic table to isa->descriptor cache", elt.second, elt.first.AsCString());
             
             m_isa_to_descriptor_cache[elt.second] = descriptor_sp;
@@ -1556,7 +1562,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMap_Impl()
             
             ClassDescriptorSP descriptor_sp = ClassDescriptorSP(new ClassDescriptorV2(objc_isa, process_sp));
             
-            if (log)
+            if (log && log->GetVerbose())
                 log->Printf("AppleObjCRuntimeV2 added (ObjCISA)0x%llx (%s) from static table to isa->descriptor cache", objc_isa, descriptor_sp->GetClassName().AsCString());
             
             m_isa_to_descriptor_cache[objc_isa] = descriptor_sp;
