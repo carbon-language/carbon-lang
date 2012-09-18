@@ -183,6 +183,7 @@ namespace llvm {
 
     /// LookupSymbol - Get the symbol for \p Name, or null.
     MCSymbol *LookupSymbol(StringRef Name) const;
+    MCSymbol *LookupSymbol(const Twine &Name) const;
 
     /// getSymbols - Get a reference for the symbol table for clients that
     /// want to, for example, iterate over all symbols. 'const' because we

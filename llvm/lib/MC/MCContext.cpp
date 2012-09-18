@@ -153,6 +153,12 @@ MCSymbol *MCContext::LookupSymbol(StringRef Name) const {
   return Symbols.lookup(Name);
 }
 
+MCSymbol *MCContext::LookupSymbol(const Twine &Name) const {
+  SmallString<128> NameSV;
+  Name.toVector(NameSV);
+  return LookupSymbol(NameSV.str());
+}
+
 //===----------------------------------------------------------------------===//
 // Section Management
 //===----------------------------------------------------------------------===//
