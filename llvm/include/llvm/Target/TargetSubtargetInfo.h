@@ -14,15 +14,16 @@
 #ifndef LLVM_TARGET_TARGETSUBTARGETINFO_H
 #define LLVM_TARGET_TARGETSUBTARGETINFO_H
 
-#include "llvm/CodeGen/TargetSchedule.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/CodeGen.h"
 
 namespace llvm {
 
+class MachineInstr;
 class SDep;
 class SUnit;
 class TargetRegisterClass;
+class TargetSchedModel;
 template <typename T> class SmallVectorImpl;
 
 //===----------------------------------------------------------------------===//
@@ -44,13 +45,13 @@ public:
 
   virtual ~TargetSubtargetInfo();
 
-  /// Initialize a copy of the scheduling model for this subtarget.
-  /// TargetSchedModel provides the interface for the subtarget's
-  /// instruction scheduling information.
-  void initSchedModel(TargetSchedModel &SchedModel,
-                      const TargetInstrInfo *TII) const {
-    // getSchedModel returns the static MCSchedModel initialized by InitMCSubtargetInfo.
-    SchedModel.init(*getSchedModel(), this, TII);
+  /// Resolve a SchedClass at runtime, where SchedClass identifies an
+  /// MCSchedClassDesc with the isVariant property. This may return the ID of
+  /// another variant SchedClass, but repeated invocation must quickly terminate
+  /// in a nonvariant SchedClass.
+  virtual unsigned resolveSchedClass(unsigned SchedClass, const MachineInstr *MI,
+                                     const TargetSchedModel* SchedModel) const {
+    return 0;
   }
 
   /// getSpecialAddressLatency - For targets where it is beneficial to

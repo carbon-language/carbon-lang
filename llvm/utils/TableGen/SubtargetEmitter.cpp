@@ -1248,6 +1248,7 @@ void SubtargetEmitter::run(raw_ostream &OS) {
   OS << "\n#ifdef GET_SUBTARGETINFO_CTOR\n";
   OS << "#undef GET_SUBTARGETINFO_CTOR\n";
 
+  OS << "#include \"llvm/CodeGen/TargetSchedule.h\"\n";
   OS << "namespace llvm {\n";
   OS << "extern const llvm::SubtargetFeatureKV " << Target << "FeatureKV[];\n";
   OS << "extern const llvm::SubtargetFeatureKV " << Target << "SubTypeKV[];\n";
