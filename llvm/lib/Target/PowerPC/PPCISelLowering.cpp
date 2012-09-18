@@ -2808,6 +2808,14 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
   return CallOpc;
 }
 
+static
+bool isLocalCall(const SDValue &Callee)
+{
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
+    return !G->getGlobal()->isDeclaration();
+  return false;
+}
+
 SDValue
 PPCTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
                                    CallingConv::ID CallConv, bool isVarArg,
@@ -2916,8 +2924,8 @@ PPCTargetLowering::FinishCall(CallingConv::ID CallConv, DebugLoc dl,
       // from allocating it), resulting in an additional register being
       // allocated and an unnecessary move instruction being generated.
       needsTOCRestore = true;
-    } else if (CallOpc == PPCISD::CALL_SVR4) {
-      // Otherwise insert NOP.
+    } else if ((CallOpc == PPCISD::CALL_SVR4) && !isLocalCall(Callee)) {
+      // Otherwise insert NOP for non-local calls.
       CallOpc = PPCISD::CALL_NOP_SVR4;
     }
   }
