@@ -537,11 +537,11 @@ static bool ReadCheckFile(SourceMgr &SM,
       Buffer = Buffer.substr(CheckPrefix.size()+1);
     } else if (Buffer.size() > CheckPrefix.size()+6 &&
                memcmp(Buffer.data()+CheckPrefix.size(), "-NEXT:", 6) == 0) {
-      Buffer = Buffer.substr(CheckPrefix.size()+7);
+      Buffer = Buffer.substr(CheckPrefix.size()+6);
       IsCheckNext = true;
     } else if (Buffer.size() > CheckPrefix.size()+5 &&
                memcmp(Buffer.data()+CheckPrefix.size(), "-NOT:", 5) == 0) {
-      Buffer = Buffer.substr(CheckPrefix.size()+6);
+      Buffer = Buffer.substr(CheckPrefix.size()+5);
       IsCheckNot = true;
     } else {
       Buffer = Buffer.substr(1);
