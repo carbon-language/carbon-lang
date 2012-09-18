@@ -6790,17 +6790,16 @@ public:
   //        bool       operator==(T, T);
   //        bool       operator!=(T, T);
   void addRelationalPointerOrEnumeralOverloads() {
-    // C++ [over.built]p1:
-    //   If there is a user-written candidate with the same name and parameter
-    //   types as a built-in candidate operator function, the built-in operator
-    //   function is hidden and is not included in the set of candidate
-    //   functions.
+    // C++ [over.match.oper]p3:
+    //   [...]the built-in candidates include all of the candidate operator
+    //   functions defined in 13.6 that, compared to the given operator, [...]
+    //   do not have the same parameter-type-list as any non-template non-member
+    //   candidate.
     //
-    // The text is actually in a note, but if we don't implement it then we end
-    // up with ambiguities when the user provides an overloaded operator for
-    // an enumeration type. Note that only enumeration types have this problem,
-    // so we track which enumeration types we've seen operators for. Also, the
-    // only other overloaded operator with enumeration argumenst, operator=,
+    // Note that in practice, this only affects enumeration types because there
+    // aren't any built-in candidates of record type, and a user-defined operator
+    // must have an operand of record or enumeration type. Also, the only other
+    // overloaded operator with enumeration arguments, operator=,
     // cannot be overloaded for enumeration types, so this is the only place
     // where we must suppress candidates like this.
     llvm::DenseSet<std::pair<CanQualType, CanQualType> >
@@ -6813,6 +6812,9 @@ public:
                                          CEnd = CandidateSet.end();
              C != CEnd; ++C) {
           if (!C->Viable || !C->Function || C->Function->getNumParams() != 2)
+            continue;
+
+          if (C->Function->isFunctionTemplateSpecialization())
             continue;
 
           QualType FirstParamType =
