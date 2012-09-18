@@ -10,7 +10,7 @@ void callee();
 // CHECK: define void @_Z5test0v()
 void test0() {
   // CHECK: call i8* @_Z9getObjectv
-  // CHECK-NEXT:: call i8* @objc_retainAutoreleasedReturnValue
+  // CHECK-NEXT: call i8* @objc_retainAutoreleasedReturnValue
   const __strong id &ref1 = getObject();
   // CHECK: call void @_Z6calleev
   callee();
