@@ -52,6 +52,9 @@ ScheduleDAGInstrs::ScheduleDAGInstrs(MachineFunction &mf,
   DbgValues.clear();
   assert(!(IsPostRA && MRI.getNumVirtRegs()) &&
          "Virtual registers must be removed prior to PostRA scheduling");
+
+  const TargetSubtargetInfo &ST = TM.getSubtarget<TargetSubtargetInfo>();
+  SchedModel.init(*ST.getSchedModel(), &ST, TII);
 }
 
 /// getUnderlyingObjectFromInt - This is the function that does the work of
@@ -274,15 +277,13 @@ void ScheduleDAGInstrs::addPhysRegDataDeps(SUnit *SU, unsigned OperIdx) {
       // perform its own adjustments.
       SDep dep(SU, SDep::Data, LDataLatency, *Alias);
       if (!UnitLatencies) {
-        unsigned Latency =
-          TII->computeOperandLatency(InstrItins, SU->getInstr(), OperIdx,
-                                     (UseOp < 0 ? 0 : UseMI), UseOp);
-        dep.setLatency(Latency);
-        unsigned MinLatency =
-          TII->computeOperandLatency(InstrItins, SU->getInstr(), OperIdx,
-                                     (UseOp < 0 ? 0 : UseMI), UseOp,
-                                     /*FindMin=*/true);
-        dep.setMinLatency(MinLatency);
+        MachineInstr *RegUse = UseOp < 0 ? 0 : UseMI;
+        dep.setLatency(
+          SchedModel.computeOperandLatency(SU->getInstr(), OperIdx,
+                                           RegUse, UseOp, /*FindMin=*/false));
+        dep.setMinLatency(
+          SchedModel.computeOperandLatency(SU->getInstr(), OperIdx,
+                                           RegUse, UseOp, /*FindMin=*/true));
 
         ST.adjustSchedDependency(SU, UseSU, dep);
       }
@@ -477,13 +478,10 @@ void ScheduleDAGInstrs::addVRegUseDeps(SUnit *SU, unsigned OperIdx) {
         // Adjust the dependence latency using operand def/use information, then
         // allow the target to perform its own adjustments.
         int DefOp = Def->findRegisterDefOperandIdx(Reg);
-        unsigned Latency =
-          TII->computeOperandLatency(InstrItins, Def, DefOp, MI, OperIdx);
-        dep.setLatency(Latency);
-        unsigned MinLatency =
-          TII->computeOperandLatency(InstrItins, Def, DefOp, MI, OperIdx,
-                                     /*FindMin=*/true);
-        dep.setMinLatency(MinLatency);
+        dep.setLatency(
+          SchedModel.computeOperandLatency(Def, DefOp, MI, OperIdx, false));
+        dep.setMinLatency(
+          SchedModel.computeOperandLatency(Def, DefOp, MI, OperIdx, true));
 
         const TargetSubtargetInfo &ST = TM.getSubtarget<TargetSubtargetInfo>();
         ST.adjustSchedDependency(DefSU, SU, const_cast<SDep &>(dep));
