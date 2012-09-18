@@ -113,5 +113,5 @@ MCSubtargetInfo::getInstrItineraryForCPU(StringRef CPU) const {
 /// Initialize an InstrItineraryData instance.
 void MCSubtargetInfo::initInstrItins(InstrItineraryData &InstrItins) const {
   InstrItins =
-    InstrItineraryData(0, Stages, OperandCycles, ForwardingPaths);
+    InstrItineraryData(CPUSchedModel, Stages, OperandCycles, ForwardingPaths);
 }

@@ -45,17 +45,33 @@ public:
   /// Return true if this machine model includes an instruction-level scheduling
   /// model. This is more detailed than the course grain IssueWidth and default
   /// latency properties, but separate from the per-cycle itinerary data.
-  bool hasInstrSchedModel() const {
-    return SchedModel.hasInstrSchedModel();
-  }
+  bool hasInstrSchedModel() const { return SchedModel.hasInstrSchedModel(); }
 
   /// Return true if this machine model includes cycle-to-cycle itinerary
   /// data. This models scheduling at each stage in the processor pipeline.
-  bool hasInstrItineraries() const {
-    return SchedModel.hasInstrItineraries();
-  }
+  bool hasInstrItineraries() const { return !InstrItins.isEmpty(); }
+
+  /// computeOperandLatency - Compute and return the latency of the given data
+  /// dependent def and use when the operand indices are already known. UseMI
+  /// may be NULL for an unknown user.
+  ///
+  /// FindMin may be set to get the minimum vs. expected latency. Minimum
+  /// latency is used for scheduling groups, while expected latency is for
+  /// instruction cost and critical path.
+  unsigned computeOperandLatency(const MachineInstr *DefMI, unsigned DefOperIdx,
+                                 const MachineInstr *UseMI, unsigned UseOperIdx,
+                                 bool FindMin) const;
 
   unsigned getProcessorID() const { return SchedModel.getProcessorID(); }
+
+private:
+  /// getDefLatency is a helper for computeOperandLatency. Return the
+  /// instruction's latency if operand lookup is not required.
+  /// Otherwise return -1.
+  int getDefLatency(const MachineInstr *DefMI, bool FindMin) const;
+
+  /// Return the MCSchedClassDesc for this instruction.
+  const MCSchedClassDesc *resolveSchedClass(const MachineInstr *MI) const;
 };
 
 } // namespace llvm

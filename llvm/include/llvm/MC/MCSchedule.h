@@ -208,14 +208,7 @@ public:
   unsigned getProcessorID() const { return ProcID; }
 
   /// Does this machine model include instruction-level scheduling.
-  bool hasInstrSchedModel() const {
-    return SchedClassTable;
-  }
-
-  /// Does this machine model include cycle-to-cycle itineraries.
-  bool hasInstrItineraries() const {
-    return InstrItineraries;
-  }
+  bool hasInstrSchedModel() const { return SchedClassTable != NULL; }
 
   const MCProcResourceDesc *getProcResource(unsigned ProcResourceIdx) const {
     assert(hasInstrSchedModel() && "No scheduling machine model");
