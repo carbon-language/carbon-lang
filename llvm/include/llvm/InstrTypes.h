@@ -88,7 +88,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 class UnaryInstruction : public Instruction {
-  void *operator new(size_t, unsigned);      // Do not implement
+  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
 
 protected:
   UnaryInstruction(Type *Ty, unsigned iType, Value *V,
@@ -138,7 +138,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(UnaryInstruction, Value)
 //===----------------------------------------------------------------------===//
 
 class BinaryOperator : public Instruction {
-  void *operator new(size_t, unsigned); // Do not implement
+  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
 protected:
   void init(BinaryOps iType);
   BinaryOperator(BinaryOps iType, Value *S1, Value *S2, Type *Ty,
@@ -627,8 +627,8 @@ public:
 /// This class is the base class for the comparison instructions.
 /// @brief Abstract base class of comparison instructions.
 class CmpInst : public Instruction {
-  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
-  CmpInst(); // do not implement
+  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
+  CmpInst() LLVM_DELETED_FUNCTION;
 protected:
   CmpInst(Type *ty, Instruction::OtherOps op, unsigned short pred,
           Value *LHS, Value *RHS, const Twine &Name = "",

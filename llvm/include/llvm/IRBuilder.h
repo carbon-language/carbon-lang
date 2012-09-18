@@ -1052,7 +1052,7 @@ public:
 private:
   // Provided to resolve 'CreateIntCast(Ptr, Ptr, "...")', giving a compile time
   // error, instead of converting the string to bool for the isSigned parameter.
-  Value *CreateIntCast(Value *, Type *, const char *); // DO NOT IMPLEMENT
+  Value *CreateIntCast(Value *, Type *, const char *) LLVM_DELETED_FUNCTION;
 public:
   Value *CreateFPCast(Value *V, Type *DestTy, const Twine &Name = "") {
     if (V->getType() == DestTy)
