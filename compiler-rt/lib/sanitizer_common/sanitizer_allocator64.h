@@ -357,22 +357,29 @@ struct SizeClassAllocatorLocalCache {
 // This class can (de)allocate only large chunks of memory using mmap/unmap.
 // The main purpose of this allocator is to cover large and rare allocation
 // sizes not covered by more efficient allocators (e.g. SizeClassAllocator64).
-// The result is always page-aligned.
 class LargeMmapAllocator {
  public:
   void Init() {
     internal_memset(this, 0, sizeof(*this));
   }
   void *Allocate(uptr size, uptr alignment) {
-    CHECK_LE(alignment, kPageSize);  // Not implemented. Do we need it?
-    if (size + alignment + 2 * kPageSize < size)
-      return 0;
+    CHECK(IsPowerOfTwo(alignment));
     uptr map_size = RoundUpMapSize(size);
-    void *map = MmapOrDie(map_size, "LargeMmapAllocator");
-    void *res = reinterpret_cast<void*>(reinterpret_cast<uptr>(map)
-                                        + kPageSize);
+    if (alignment > kPageSize)
+      map_size += alignment;
+    if (map_size < size) return 0;  // Overflow.
+    uptr map_beg = reinterpret_cast<uptr>(
+        MmapOrDie(map_size, "LargeMmapAllocator"));
+    uptr map_end = map_beg + map_size;
+    uptr res = map_beg + kPageSize;
+    if (res & (alignment - 1))  // Align.
+      res += alignment - (res & (alignment - 1));
+    CHECK_EQ(0, res & (alignment - 1));
+    CHECK_LE(res + size, map_end);
     Header *h = GetHeader(res);
     h->size = size;
+    h->map_beg = map_beg;
+    h->map_size = map_size;
     {
       SpinMutexLock l(&mutex_);
       h->next = list_;
@@ -381,12 +388,11 @@ class LargeMmapAllocator {
         list_->prev = h;
       list_ = h;
     }
-    return res;
+    return reinterpret_cast<void*>(res);
   }
 
   void Deallocate(void *p) {
     Header *h = GetHeader(p);
-    uptr map_size = RoundUpMapSize(h->size);
     {
       SpinMutexLock l(&mutex_);
       Header *prev = h->prev;
@@ -398,7 +404,7 @@ class LargeMmapAllocator {
       if (h == list_)
         list_ = next;
     }
-    UnmapOrDie(h, map_size);
+    UnmapOrDie(reinterpret_cast<void*>(h->map_beg), h->map_size);
   }
 
   uptr TotalMemoryUsed() {
@@ -441,14 +447,15 @@ class LargeMmapAllocator {
 
  private:
   struct Header {
+    uptr map_beg;
+    uptr map_size;
     uptr size;
     Header *next;
     Header *prev;
   };
 
-  Header *GetHeader(void *p) {
-    return reinterpret_cast<Header*>(reinterpret_cast<uptr>(p) - kPageSize);
-  }
+  Header *GetHeader(uptr p) { return reinterpret_cast<Header*>(p - kPageSize); }
+  Header *GetHeader(void *p) { return GetHeader(reinterpret_cast<uptr>(p)); }
 
   void *GetUser(Header *h) {
     return reinterpret_cast<void*>(reinterpret_cast<uptr>(h) + kPageSize);

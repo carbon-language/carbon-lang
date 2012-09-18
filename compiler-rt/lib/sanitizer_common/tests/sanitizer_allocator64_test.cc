@@ -179,6 +179,19 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
     a.Deallocate(p);
   }
   CHECK_EQ(a.TotalMemoryUsed(), 0);
+
+  for (uptr alignment = 8; alignment <= (1<<28); alignment *= 2) {
+    for (int i = 0; i < kNumAllocs; i++) {
+      uptr size = ((i % 10) + 1) * kPageSize;
+      allocated[i] = a.Allocate(size, alignment);
+      CHECK_EQ(0, (uptr)allocated[i] % alignment);
+      char *p = (char*)allocated[i];
+      p[0] = p[size - 1] = 0;
+    }
+    for (int i = 0; i < kNumAllocs; i++) {
+      a.Deallocate(allocated[i]);
+    }
+  }
 }
 
 TEST(SanitizerCommon, CombinedAllocator) {
