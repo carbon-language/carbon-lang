@@ -820,8 +820,12 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
          it = Asm.data_region_begin(), ie = Asm.data_region_end();
          it != ie; ++it) {
     const DataRegionData *Data = &(*it);
-    uint64_t Start = getSymbolAddress(&Layout.getAssembler().getSymbolData(*Data->Start), Layout);
-    uint64_t End = getSymbolAddress(&Layout.getAssembler().getSymbolData(*Data->End), Layout);
+    uint64_t Start =
+      getSymbolAddress(&Layout.getAssembler().getSymbolData(*Data->Start),
+                       Layout);
+    uint64_t End =
+      getSymbolAddress(&Layout.getAssembler().getSymbolData(*Data->End),
+                       Layout);
     DEBUG(dbgs() << "data in code region-- kind: " << Data->Kind
                  << "  start: " << Start << "(" << Data->Start->getName() << ")"
                  << "  end: " << End << "(" << Data->End->getName() << ")"
