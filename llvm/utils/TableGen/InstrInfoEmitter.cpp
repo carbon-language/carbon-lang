@@ -304,11 +304,10 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
     MinOperands = Inst.Operands.back().MIOperandNo +
                   Inst.Operands.back().MINumOperands;
 
-  Record *ItinDef = Inst.TheDef->getValueAsDef("Itinerary");
   OS << "  { ";
   OS << Num << ",\t" << MinOperands << ",\t"
      << Inst.Operands.NumDefs << ",\t"
-     << SchedModels.getItinClassIdx(ItinDef) << ",\t"
+     << SchedModels.getSchedClassIdx(Inst) << ",\t"
      << Inst.TheDef->getValueAsInt("Size") << ",\t0";
 
   // Emit all of the target indepedent flags...
