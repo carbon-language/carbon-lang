@@ -46,7 +46,7 @@ MCCodeEmitter *createARMMCCodeEmitter(const MCInstrInfo &MCII,
                                       const MCSubtargetInfo &STI,
                                       MCContext &Ctx);
 
-MCAsmBackend *createARMAsmBackend(const Target &T, StringRef TT);
+MCAsmBackend *createARMAsmBackend(const Target &T, StringRef TT, StringRef CPU);
 
 /// createARMELFObjectWriter - Construct an ELF Mach-O object writer.
 MCObjectWriter *createARMELFObjectWriter(raw_ostream &OS,

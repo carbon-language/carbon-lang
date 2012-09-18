@@ -66,9 +66,10 @@ public:
 };
 
 class X86AsmBackend : public MCAsmBackend {
+  StringRef CPU;
 public:
-  X86AsmBackend(const Target &T)
-    : MCAsmBackend() {}
+  X86AsmBackend(const Target &T, StringRef _CPU)
+    : MCAsmBackend(), CPU(_CPU) {}
 
   unsigned getNumFixupKinds() const {
     return X86::NumTargetFixupKinds;
@@ -305,6 +306,13 @@ bool X86AsmBackend::writeNopData(uint64_t Count, MCObjectWriter *OW) const {
     {0x66, 0x2e, 0x0f, 0x1f, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00},
   };
 
+  // This CPU doesnt support long nops. If needed add more.
+  if (CPU == "geode") {
+    for (uint64_t i = 0; i < Count; ++i)
+      OW->Write8(0x90);
+    return true;
+  }
+
   // Write an optimal sequence for the first 15 bytes.
   const uint64_t OptimalCount = (Count < 16) ? Count : 15;
   const uint64_t Prefixes = OptimalCount <= 10 ? 0 : OptimalCount - 10;
@@ -327,8 +335,8 @@ namespace {
 class ELFX86AsmBackend : public X86AsmBackend {
 public:
   uint8_t OSABI;
-  ELFX86AsmBackend(const Target &T, uint8_t _OSABI)
-    : X86AsmBackend(T), OSABI(_OSABI) {
+  ELFX86AsmBackend(const Target &T, uint8_t _OSABI, StringRef CPU)
+    : X86AsmBackend(T, CPU), OSABI(_OSABI) {
     HasReliableSymbolDifference = true;
   }
 
@@ -340,8 +348,8 @@ public:
 
 class ELFX86_32AsmBackend : public ELFX86AsmBackend {
 public:
-  ELFX86_32AsmBackend(const Target &T, uint8_t OSABI)
-    : ELFX86AsmBackend(T, OSABI) {}
+  ELFX86_32AsmBackend(const Target &T, uint8_t OSABI, StringRef CPU)
+    : ELFX86AsmBackend(T, OSABI, CPU) {}
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
     return createX86ELFObjectWriter(OS, /*Is64Bit*/ false, OSABI);
@@ -350,8 +358,8 @@ public:
 
 class ELFX86_64AsmBackend : public ELFX86AsmBackend {
 public:
-  ELFX86_64AsmBackend(const Target &T, uint8_t OSABI)
-    : ELFX86AsmBackend(T, OSABI) {}
+  ELFX86_64AsmBackend(const Target &T, uint8_t OSABI, StringRef CPU)
+    : ELFX86AsmBackend(T, OSABI, CPU) {}
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
     return createX86ELFObjectWriter(OS, /*Is64Bit*/ true, OSABI);
@@ -362,8 +370,8 @@ class WindowsX86AsmBackend : public X86AsmBackend {
   bool Is64Bit;
 
 public:
-  WindowsX86AsmBackend(const Target &T, bool is64Bit)
-    : X86AsmBackend(T)
+  WindowsX86AsmBackend(const Target &T, bool is64Bit, StringRef CPU)
+    : X86AsmBackend(T, CPU)
     , Is64Bit(is64Bit) {
   }
 
@@ -374,14 +382,14 @@ public:
 
 class DarwinX86AsmBackend : public X86AsmBackend {
 public:
-  DarwinX86AsmBackend(const Target &T)
-    : X86AsmBackend(T) { }
+  DarwinX86AsmBackend(const Target &T, StringRef CPU)
+    : X86AsmBackend(T, CPU) { }
 };
 
 class DarwinX86_32AsmBackend : public DarwinX86AsmBackend {
 public:
-  DarwinX86_32AsmBackend(const Target &T)
-    : DarwinX86AsmBackend(T) {}
+  DarwinX86_32AsmBackend(const Target &T, StringRef CPU)
+    : DarwinX86AsmBackend(T, CPU) {}
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
     return createX86MachObjectWriter(OS, /*Is64Bit=*/false,
@@ -392,8 +400,8 @@ public:
 
 class DarwinX86_64AsmBackend : public DarwinX86AsmBackend {
 public:
-  DarwinX86_64AsmBackend(const Target &T)
-    : DarwinX86AsmBackend(T) {
+  DarwinX86_64AsmBackend(const Target &T, StringRef CPU)
+    : DarwinX86AsmBackend(T, CPU) {
     HasReliableSymbolDifference = true;
   }
 
@@ -439,28 +447,28 @@ public:
 
 } // end anonymous namespace
 
-MCAsmBackend *llvm::createX86_32AsmBackend(const Target &T, StringRef TT) {
+MCAsmBackend *llvm::createX86_32AsmBackend(const Target &T, StringRef TT, StringRef CPU) {
   Triple TheTriple(TT);
 
   if (TheTriple.isOSDarwin() || TheTriple.getEnvironment() == Triple::MachO)
-    return new DarwinX86_32AsmBackend(T);
+    return new DarwinX86_32AsmBackend(T, CPU);
 
   if (TheTriple.isOSWindows())
-    return new WindowsX86AsmBackend(T, false);
+    return new WindowsX86AsmBackend(T, false, CPU);
 
   uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(TheTriple.getOS());
-  return new ELFX86_32AsmBackend(T, OSABI);
+  return new ELFX86_32AsmBackend(T, OSABI, CPU);
 }
 
-MCAsmBackend *llvm::createX86_64AsmBackend(const Target &T, StringRef TT) {
+MCAsmBackend *llvm::createX86_64AsmBackend(const Target &T, StringRef TT, StringRef CPU) {
   Triple TheTriple(TT);
 
   if (TheTriple.isOSDarwin() || TheTriple.getEnvironment() == Triple::MachO)
-    return new DarwinX86_64AsmBackend(T);
+    return new DarwinX86_64AsmBackend(T, CPU);
 
   if (TheTriple.isOSWindows())
-    return new WindowsX86AsmBackend(T, true);
+    return new WindowsX86AsmBackend(T, true, CPU);
 
   uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(TheTriple.getOS());
-  return new ELFX86_64AsmBackend(T, OSABI);
+  return new ELFX86_64AsmBackend(T, OSABI, CPU);
 }

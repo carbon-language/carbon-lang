@@ -674,7 +674,7 @@ void DarwinARMAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
 
 } // end anonymous namespace
 
-MCAsmBackend *llvm::createARMAsmBackend(const Target &T, StringRef TT) {
+MCAsmBackend *llvm::createARMAsmBackend(const Target &T, StringRef TT, StringRef CPU) {
   Triple TheTriple(TT);
 
   if (TheTriple.isOSDarwin()) {

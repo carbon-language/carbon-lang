@@ -156,7 +156,8 @@ void ELFMBlazeAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
 }
 } // end anonymous namespace
 
-MCAsmBackend *llvm::createMBlazeAsmBackend(const Target &T, StringRef TT) {
+MCAsmBackend *llvm::createMBlazeAsmBackend(const Target &T, StringRef TT,
+                                           StringRef CPU) {
   Triple TheTriple(TT);
 
   if (TheTriple.isOSDarwin())
