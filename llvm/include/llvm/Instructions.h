@@ -255,7 +255,7 @@ private:
 /// StoreInst - an instruction for storing to memory
 ///
 class StoreInst : public Instruction {
-  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
+  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
   void AssertOK();
 protected:
   virtual StoreInst *clone_impl() const;
@@ -382,7 +382,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(StoreInst, Value)
 /// FenceInst - an instruction for ordering other memory operations
 ///
 class FenceInst : public Instruction {
-  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
+  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
   void Init(AtomicOrdering Ordering, SynchronizationScope SynchScope);
 protected:
   virtual FenceInst *clone_impl() const;
@@ -450,7 +450,7 @@ private:
 /// there.  Returns the value that was loaded.
 ///
 class AtomicCmpXchgInst : public Instruction {
-  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
+  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
   void Init(Value *Ptr, Value *Cmp, Value *NewVal,
             AtomicOrdering Ordering, SynchronizationScope SynchScope);
 protected:
@@ -557,7 +557,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(AtomicCmpXchgInst, Value)
 /// the old value.
 ///
 class AtomicRMWInst : public Instruction {
-  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
+  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
 protected:
   virtual AtomicRMWInst *clone_impl() const;
 public:
@@ -1839,7 +1839,7 @@ ExtractValueInst::ExtractValueInst(Value *Agg,
 class InsertValueInst : public Instruction {
   SmallVector<unsigned, 4> Indices;
 
-  void *operator new(size_t, unsigned); // Do not implement
+  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
   InsertValueInst(const InsertValueInst &IVI);
   void init(Value *Agg, Value *Val, ArrayRef<unsigned> Idxs,
             const Twine &NameStr);
@@ -1970,7 +1970,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(InsertValueInst, Value)
 // scientist's overactive imagination.
 //
 class PHINode : public Instruction {
-  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
+  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
   /// ReservedSpace - The number of operands actually allocated.  NumOperands is
   /// the number actually in use.
   unsigned ReservedSpace;
@@ -2178,7 +2178,7 @@ class LandingPadInst : public Instruction {
 public:
   enum ClauseType { Catch, Filter };
 private:
-  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
+  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
   // Allocate space for exactly zero operands.
   void *operator new(size_t s) {
     return User::operator new(s, 0);
@@ -2445,7 +2445,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(BranchInst, Value)
 /// SwitchInst - Multiway switch
 ///
 class SwitchInst : public TerminatorInst {
-  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
+  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
   unsigned ReservedSpace;
   // Operands format:
   // Operand[0]    = Value to switch on
@@ -2857,7 +2857,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(SwitchInst, Value)
 /// IndirectBrInst - Indirect Branch Instruction.
 ///
 class IndirectBrInst : public TerminatorInst {
-  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
+  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
   unsigned ReservedSpace;
   // Operand[0]    = Value to switch on
   // Operand[1]    = Default basic block destination
@@ -3251,7 +3251,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ResumeInst, Value)
 /// end of the block cannot be reached.
 ///
 class UnreachableInst : public TerminatorInst {
-  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
+  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
 protected:
   virtual UnreachableInst *clone_impl() const;
 
