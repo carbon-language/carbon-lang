@@ -408,7 +408,7 @@ declare void @llvm.memset.p0i8.i32(i8* nocapture, i8, i32, i32, i1) nounwind
 
 define i16 @test5() {
 ; CHECK: @test5
-; CHECK: alloca float
+; CHECK: alloca i32
 ; CHECK: ret i16 %
 
 entry:

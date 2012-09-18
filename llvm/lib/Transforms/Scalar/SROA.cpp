@@ -2572,6 +2572,7 @@ private:
     Value *Store = IRB.CreateStore(
       IRB.CreateExtractValue(Agg, Indices, Name + ".extract"),
       IRB.CreateInBoundsGEP(Ptr, GEPIndices, Name + ".gep"));
+    (void)Store;
     DEBUG(dbgs() << "          to: " << *Store << "\n");
   }
 
