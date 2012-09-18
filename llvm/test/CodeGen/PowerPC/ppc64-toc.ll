@@ -12,6 +12,7 @@ entry:
 ; CHECK-NEXT: .align  3
 ; CHECK-NEXT: .quad   .L.access_int64
 ; CHECK-NEXT: .quad   .TOC.@tocbase
+; CHECK-NEXT: .quad   0
 ; CHECK-NEXT: .text
   %0 = load i64* @number64, align 8
 ; CHECK: ld {{[0-9]+}}, .LC{{[0-9]+}}@toc(2)

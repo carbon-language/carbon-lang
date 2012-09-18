@@ -5,6 +5,7 @@
 ; CHECK-NEXT:	.align 3
 ; CHECK-NEXT:	.quad .L.test1
 ; CHECK-NEXT:	.quad .TOC.@tocbase
+; CHECK-NEXT:   .quad 0
 ; CHECK-NEXT:	.text
 ; CHECK-NEXT: .L.test1:
 
