@@ -2540,7 +2540,7 @@ private:
 
   struct LoadOpSplitter : public OpSplitter<LoadOpSplitter> {
     LoadOpSplitter(Instruction *InsertionPoint, Value *Ptr)
-      : OpSplitter(InsertionPoint, Ptr) {}
+      : OpSplitter<LoadOpSplitter>(InsertionPoint, Ptr) {}
 
     /// Emit a leaf load of a single value. This is called at the leaves of the
     /// recursive emission to actually load values.
@@ -2572,7 +2572,7 @@ private:
 
   struct StoreOpSplitter : public OpSplitter<StoreOpSplitter> {
     StoreOpSplitter(Instruction *InsertionPoint, Value *Ptr)
-      : OpSplitter(InsertionPoint, Ptr) {}
+      : OpSplitter<StoreOpSplitter>(InsertionPoint, Ptr) {}
 
     /// Emit a leaf store of a single value. This is called at the leaves of the
     /// recursive emission to actually produce stores.
