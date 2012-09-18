@@ -11,6 +11,7 @@ add_llvm_library(LLVMTransformUtils
   DemoteRegToStack.cpp
   InlineFunction.cpp
   InstructionNamer.cpp
+  IntegerDivision.cpp
   LCSSA.cpp
   Local.cpp
   LoopSimplify.cpp
