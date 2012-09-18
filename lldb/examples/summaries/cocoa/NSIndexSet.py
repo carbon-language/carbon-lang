@@ -133,7 +133,7 @@ def NSIndexSet_SummaryProvider (valobj,dict):
 		if isinstance(summary, basestring):
 			return summary
 		else:
-			summary = str(summary) + (' objects' if summary != 1 else ' object')
+			summary = str(summary) + (' indexes' if summary != 1 else ' index')
 		return summary
 	return 'Summary Unavailable'
 

@@ -80,9 +80,9 @@ class DataFormatterOneIsSingularTestCase(TestBase):
         self.expect('frame variable nscounted_set', matching=False,
                     substrs = ['1 objects'])
         self.expect('frame variable imset',
-                    substrs = ['1 object'])
+                    substrs = ['1 index'])
         self.expect('frame variable imset', matching=False,
-                    substrs = ['1 objects'])
+                    substrs = ['1 indexes'])
         self.expect('frame variable binheap_ref',
                     substrs = ['@"1 item"'])
         self.expect('frame variable binheap_ref', matching=False,

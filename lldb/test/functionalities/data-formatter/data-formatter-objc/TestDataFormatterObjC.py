@@ -338,7 +338,7 @@ class ObjCDataFormatterTestCase(TestBase):
         #self.runCmd("p (int)[imset count]")
 
         self.expect('frame variable iset1 iset2 imset',
-                    substrs = ['4 objects','512 objects','10 objects'])
+                    substrs = ['4 indexes','512 indexes','10 indexes'])
 
         self.expect('frame variable cupertino home europe',
                     substrs = ['@"America/Los_Angeles"',
