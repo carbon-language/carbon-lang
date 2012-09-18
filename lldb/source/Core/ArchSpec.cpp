@@ -10,6 +10,7 @@
 #include "lldb/Core/ArchSpec.h"
 
 #include <stdio.h>
+#include <errno.h>
 
 #include <string>
 
@@ -492,11 +493,13 @@ ArchSpec::SetTriple (const char *triple_cstr)
         {
             // Accept "12-10" or "12.10" as cpu type/subtype
             char *end = NULL;
+            errno = 0;
             uint32_t cpu = ::strtoul (triple_cstr, &end, 0);
-            if (cpu != 0 && end && ((*end == '-') || (*end == '.')))
+            if (errno == 0 && cpu != 0 && end && ((*end == '-') || (*end == '.')))
             {
+                errno = 0;
                 uint32_t sub = ::strtoul (end + 1, &end, 0);
-                if (sub != 0 && end && ((*end == '-') || (*end == '.') || (*end == '\0')))
+                if (errno == 0 && end && ((*end == '-') || (*end == '.') || (*end == '\0')))
                 {
                     if (SetArchitecture (eArchTypeMachO, cpu, sub))
                     {
