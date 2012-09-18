@@ -53,7 +53,7 @@ test: libtsan tsan_test
 
 run: all
 	(ulimit -s 8192; ./tsan_test)
-	./output_tests/test_output.sh
+	./lit_tests/test_output.sh
 
 presubmit:
 	# Debug build with clang.
