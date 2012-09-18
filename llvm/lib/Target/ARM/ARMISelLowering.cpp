@@ -9025,8 +9025,8 @@ bool ARMTargetLowering::isDesirableToTransformToIntegerOp(unsigned Opc,
 }
 
 bool ARMTargetLowering::allowsUnalignedMemoryAccesses(EVT VT) const {
-  if (!Subtarget->allowsUnalignedMem())
-    return false;
+  // The AllowsUnaliged flag models the SCTLR.A setting in ARM cpus
+  bool AllowsUnaligned = Subtarget->allowsUnalignedMem();
 
   switch (VT.getSimpleVT().SimpleTy) {
   default:
@@ -9034,10 +9034,14 @@ bool ARMTargetLowering::allowsUnalignedMemoryAccesses(EVT VT) const {
   case MVT::i8:
   case MVT::i16:
   case MVT::i32:
-    return true;
+    // Unaligned access can use (for example) LRDB, LRDH, LDR
+    return AllowsUnaligned;
   case MVT::f64:
-    return Subtarget->hasNEON();
-  // FIXME: VLD1 etc with standard alignment is legal.
+  case MVT::v2f64:
+    // For any little-endian targets with neon, we can support unaligned ld/st
+    // of D and Q (e.g. {D0,D1}) registers by using vld1.i8/vst1.i8.
+    // A big-endian target may also explictly support unaligned accesses
+    return Subtarget->hasNEON() && (AllowsUnaligned || isLittleEndian());
   }
 }
 

@@ -4,12 +4,12 @@
 define void @PR13378() nounwind {
 ; This was orriginally a crasher trying to schedule the instructions.
 ; CHECK:      PR13378:
-; CHECK:        vldmia
+; CHECK:        vld1.32
+; CHECK-NEXT:   vst1.32
+; CHECK-NEXT:   vst1.32
 ; CHECK-NEXT:   vmov.f32
-; CHECK-NEXT:   vstmia
-; CHECK-NEXT:   vstmia
 ; CHECK-NEXT:   vmov.f32
-; CHECK-NEXT:   vstmia
+; CHECK-NEXT:   vst1.32
 
 entry:
   %0 = load <4 x float>* undef

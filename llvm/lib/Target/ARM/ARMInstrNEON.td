@@ -398,6 +398,20 @@ def VecListFourQWordIndexed : Operand<i32> {
   let MIOperandInfo = (ops DPR:$Vd, i32imm:$idx);
 }
 
+def dword_alignedload : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+  return cast<LoadSDNode>(N)->getAlignment() >= 8;
+}]>;
+def dword_alignedstore : PatFrag<(ops node:$val, node:$ptr),
+                                 (store node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->getAlignment() >= 8;
+}]>;
+def word_alignedload : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+  return cast<LoadSDNode>(N)->getAlignment() == 4;
+}]>;
+def word_alignedstore : PatFrag<(ops node:$val, node:$ptr),
+                                 (store node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->getAlignment() == 4;
+}]>;
 def hword_alignedload : PatFrag<(ops node:$ptr), (load node:$ptr), [{
   return cast<LoadSDNode>(N)->getAlignment() == 2;
 }]>;
@@ -2272,6 +2286,25 @@ def : Pat<(f64 (non_word_alignedload addrmode6:$addr)),
           (VLD1d64 addrmode6:$addr)>, Requires<[IsBE]>;
 def : Pat<(non_word_alignedstore (f64 DPR:$value), addrmode6:$addr),
           (VST1d64 addrmode6:$addr, DPR:$value)>, Requires<[IsBE]>;
+
+// Use vld1/vst1 for Q and QQ. Also use them for unaligned v2f64
+// load / store if it's legal.
+def : Pat<(v2f64 (dword_alignedload addrmode6:$addr)),
+          (VLD1q64 addrmode6:$addr)>;
+def : Pat<(dword_alignedstore (v2f64 QPR:$value), addrmode6:$addr),
+          (VST1q64 addrmode6:$addr, QPR:$value)>;
+def : Pat<(v2f64 (word_alignedload addrmode6:$addr)),
+          (VLD1q32 addrmode6:$addr)>;
+def : Pat<(word_alignedstore (v2f64 QPR:$value), addrmode6:$addr),
+          (VST1q32 addrmode6:$addr, QPR:$value)>;
+def : Pat<(v2f64 (hword_alignedload addrmode6:$addr)),
+          (VLD1q16 addrmode6:$addr)>, Requires<[IsLE]>;
+def : Pat<(hword_alignedstore (v2f64 QPR:$value), addrmode6:$addr),
+          (VST1q16 addrmode6:$addr, QPR:$value)>, Requires<[IsLE]>;
+def : Pat<(v2f64 (byte_alignedload addrmode6:$addr)),
+          (VLD1q8 addrmode6:$addr)>, Requires<[IsLE]>;
+def : Pat<(byte_alignedstore (v2f64 QPR:$value), addrmode6:$addr),
+          (VST1q8 addrmode6:$addr, QPR:$value)>, Requires<[IsLE]>;
 
 //===----------------------------------------------------------------------===//
 // NEON pattern fragments

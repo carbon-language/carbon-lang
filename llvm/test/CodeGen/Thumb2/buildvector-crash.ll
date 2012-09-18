@@ -1,4 +1,4 @@
-; RUN: llc < %s -O3 -mtriple=thumbv7-apple-darwin10 -mcpu=cortex-a8 | FileCheck %s
+; RUN: llc < %s -O3 -mtriple=thumbv7-apple-ios -mcpu=cortex-a8 | FileCheck %s
 ; Formerly crashed, 3573915.
 
 define void @RotateStarsFP_Vec() nounwind {
@@ -13,5 +13,5 @@ bb8:                                              ; preds = %bb8, %bb.nph372
   store <4 x float> %3, <4 x float>* undef, align 4
   br label %bb8
 ; CHECK: RotateStarsFP_Vec:
-; CHECK: vldmia
+; CHECK: vld1.64
 }

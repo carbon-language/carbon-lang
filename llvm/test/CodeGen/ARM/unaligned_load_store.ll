@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=arm -pre-RA-sched=source | FileCheck %s -check-prefix=EXPANDED
-; RUN: llc < %s -mtriple=armv6-apple-darwin -mcpu=cortex-a8 -arm-strict-align -pre-RA-sched=source | FileCheck %s -check-prefix=EXPANDED
+; RUN: llc < %s -mtriple=armv6-apple-darwin -mcpu=cortex-a8 -mattr=-neon -arm-strict-align -pre-RA-sched=source | FileCheck %s -check-prefix=EXPANDED
 ; RUN: llc < %s -mtriple=armv6-apple-darwin -mcpu=cortex-a8 | FileCheck %s -check-prefix=UNALIGNED
 
 ; rdar://7113725
@@ -57,5 +57,21 @@ entry:
 ; UNALIGNED: vst1.8
   %tmp = load double* %a, align 1
   store double %tmp, double* %b, align 1
+  ret void
+}
+
+define void @byte_word_ops(i32* %a, i32* %b) nounwind {
+entry:
+; EXPANDED: byte_word_ops:
+; EXPANDED: ldrb
+; EXPANDED: strb
+
+; UNALIGNED: byte_word_ops:
+; UNALIGNED-NOT: ldrb
+; UNALIGNED: ldr
+; UNALIGNED-NOT: strb
+; UNALIGNED: str
+  %tmp = load i32* %a, align 1
+  store i32 %tmp, i32* %b, align 1
   ret void
 }

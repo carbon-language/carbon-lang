@@ -59,8 +59,8 @@ define <1 x i64> @v_bsli64(<1 x i64>* %A, <1 x i64>* %B, <1 x i64>* %C) nounwind
 
 define <16 x i8> @v_bslQi8(<16 x i8>* %A, <16 x i8>* %B, <16 x i8>* %C) nounwind {
 ;CHECK: v_bslQi8:
-;CHECK: vldmia
-;CHECK: vldmia
+;CHECK: vld1.32
+;CHECK: vld1.32
 ;CHECK: vbsl
 	%tmp1 = load <16 x i8>* %A
 	%tmp2 = load <16 x i8>* %B
@@ -73,8 +73,8 @@ define <16 x i8> @v_bslQi8(<16 x i8>* %A, <16 x i8>* %B, <16 x i8>* %C) nounwind
 
 define <8 x i16> @v_bslQi16(<8 x i16>* %A, <8 x i16>* %B, <8 x i16>* %C) nounwind {
 ;CHECK: v_bslQi16:
-;CHECK: vldmia
-;CHECK: vldmia
+;CHECK: vld1.32
+;CHECK: vld1.32
 ;CHECK: vbsl
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i16>* %B
@@ -87,8 +87,8 @@ define <8 x i16> @v_bslQi16(<8 x i16>* %A, <8 x i16>* %B, <8 x i16>* %C) nounwin
 
 define <4 x i32> @v_bslQi32(<4 x i32>* %A, <4 x i32>* %B, <4 x i32>* %C) nounwind {
 ;CHECK: v_bslQi32:
-;CHECK: vldmia
-;CHECK: vldmia
+;CHECK: vld1.32
+;CHECK: vld1.32
 ;CHECK: vbsl
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B
@@ -101,9 +101,9 @@ define <4 x i32> @v_bslQi32(<4 x i32>* %A, <4 x i32>* %B, <4 x i32>* %C) nounwin
 
 define <2 x i64> @v_bslQi64(<2 x i64>* %A, <2 x i64>* %B, <2 x i64>* %C) nounwind {
 ;CHECK: v_bslQi64:
-;CHECK: vldmia
-;CHECK: vldmia
-;CHECK: vldmia
+;CHECK: vld1.32
+;CHECK: vld1.32
+;CHECK: vld1.64
 ;CHECK: vbsl
 	%tmp1 = load <2 x i64>* %A
 	%tmp2 = load <2 x i64>* %B

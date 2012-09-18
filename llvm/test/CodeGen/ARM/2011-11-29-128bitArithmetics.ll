@@ -8,12 +8,12 @@ define void @test_sqrt(<4 x float>* %X) nounwind {
 
 ; CHECK:      movw    r1, :lower16:{{.*}}
 ; CHECK:      movt    r1, :upper16:{{.*}}
-; CHECK:      vldmia  r1
+; CHECK:      vld1.64 {{.*}}, [r1, :128]
 ; CHECK:      vsqrt.f32       {{s[0-9]+}}, {{s[0-9]+}}
 ; CHECK:      vsqrt.f32       {{s[0-9]+}}, {{s[0-9]+}}
 ; CHECK:      vsqrt.f32       {{s[0-9]+}}, {{s[0-9]+}}
 ; CHECK:      vsqrt.f32       {{s[0-9]+}}, {{s[0-9]+}}
-; CHECK:      vstmia  {{.*}}
+; CHECK:      vst1.64  {{.*}}
 
 L.entry:
   %0 = load <4 x float>* @A, align 16
@@ -31,7 +31,7 @@ define void @test_cos(<4 x float>* %X) nounwind {
 
 ; CHECK:      movw  [[reg0:r[0-9]+]], :lower16:{{.*}}
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}
-; CHECK:      vldmia r{{[0-9][0-9]?}}, {{.*}}
+; CHECK:      vld1.64
 
 ; CHECK:      {{v?mov(.32)?}}  r0,
 ; CHECK:      bl  {{.*}}cosf
@@ -45,7 +45,7 @@ define void @test_cos(<4 x float>* %X) nounwind {
 ; CHECK:      {{v?mov(.32)?}}  r0,
 ; CHECK:      bl  {{.*}}cosf
 
-; CHECK:      vstmia  {{.*}}
+; CHECK:      vst1.64
 
 L.entry:
   %0 = load <4 x float>* @A, align 16
@@ -62,7 +62,7 @@ define void @test_exp(<4 x float>* %X) nounwind {
 
 ; CHECK:      movw  [[reg0:r[0-9]+]], :lower16:{{.*}}
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}
-; CHECK:      vldmia r{{[0-9][0-9]?}}, {{.*}}
+; CHECK:      vld1.64
 
 ; CHECK:      {{v?mov(.32)?}}  r0,
 ; CHECK:      bl  {{.*}}expf
@@ -76,7 +76,7 @@ define void @test_exp(<4 x float>* %X) nounwind {
 ; CHECK:      {{v?mov(.32)?}}  r0,
 ; CHECK:      bl  {{.*}}expf
 
-; CHECK:      vstmia  {{.*}}
+; CHECK:      vst1.64
 
 L.entry:
   %0 = load <4 x float>* @A, align 16
@@ -93,7 +93,7 @@ define void @test_exp2(<4 x float>* %X) nounwind {
 
 ; CHECK:      movw  [[reg0:r[0-9]+]], :lower16:{{.*}}
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}
-; CHECK:      vldmia r{{[0-9][0-9]?}}, {{.*}}
+; CHECK:      vld1.64
 
 ; CHECK:      {{v?mov(.32)?}}  r0,
 ; CHECK:      bl  {{.*}}exp2f
@@ -107,7 +107,7 @@ define void @test_exp2(<4 x float>* %X) nounwind {
 ; CHECK:      {{v?mov(.32)?}}  r0,
 ; CHECK:      bl  {{.*}}exp2f
 
-; CHECK:      vstmia  {{.*}}
+; CHECK:      vst1.64
 
 L.entry:
   %0 = load <4 x float>* @A, align 16
@@ -124,7 +124,7 @@ define void @test_log10(<4 x float>* %X) nounwind {
 
 ; CHECK:      movw  [[reg0:r[0-9]+]], :lower16:{{.*}}
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}
-; CHECK:      vldmia r{{[0-9][0-9]?}}, {{.*}}
+; CHECK:      vld1.64
 
 ; CHECK:      {{v?mov(.32)?}}  r0,
 ; CHECK:      bl  {{.*}}log10f
@@ -138,7 +138,7 @@ define void @test_log10(<4 x float>* %X) nounwind {
 ; CHECK:      {{v?mov(.32)?}}  r0,
 ; CHECK:      bl  {{.*}}log10f
 
-; CHECK:      vstmia  {{.*}}
+; CHECK:      vst1.64
 
 L.entry:
   %0 = load <4 x float>* @A, align 16
@@ -155,7 +155,7 @@ define void @test_log(<4 x float>* %X) nounwind {
 
 ; CHECK:      movw  [[reg0:r[0-9]+]], :lower16:{{.*}}
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}
-; CHECK:      vldmia r{{[0-9][0-9]?}}, {{.*}}
+; CHECK:      vld1.64
 
 ; CHECK:      {{v?mov(.32)?}}  r0,
 ; CHECK:      bl  {{.*}}logf
@@ -169,7 +169,7 @@ define void @test_log(<4 x float>* %X) nounwind {
 ; CHECK:      {{v?mov(.32)?}}  r0,
 ; CHECK:      bl  {{.*}}logf
 
-; CHECK:      vstmia  {{.*}}
+; CHECK:      vst1.64
 
 L.entry:
   %0 = load <4 x float>* @A, align 16
@@ -186,7 +186,7 @@ define void @test_log2(<4 x float>* %X) nounwind {
 
 ; CHECK:      movw  [[reg0:r[0-9]+]], :lower16:{{.*}}
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}
-; CHECK:      vldmia r{{[0-9][0-9]?}}, {{.*}}
+; CHECK:      vld1.64
 
 ; CHECK:      {{v?mov(.32)?}}  r0,
 ; CHECK:      bl  {{.*}}log2f
@@ -200,7 +200,7 @@ define void @test_log2(<4 x float>* %X) nounwind {
 ; CHECK:      {{v?mov(.32)?}}  r0,
 ; CHECK:      bl  {{.*}}log2f
 
-; CHECK:      vstmia  {{.*}}
+; CHECK:      vst1.64
 
 L.entry:
   %0 = load <4 x float>* @A, align 16
@@ -218,7 +218,7 @@ define void @test_pow(<4 x float>* %X) nounwind {
 
 ; CHECK:      movw  [[reg0:r[0-9]+]], :lower16:{{.*}}
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}
-; CHECK:      vldmia r{{[0-9][0-9]?}}, {{.*}}
+; CHECK:      vld1.64
 
 ; CHECK:      {{v?mov(.32)?}}  r0,
 ; CHECK:      bl  {{.*}}powf
@@ -232,7 +232,7 @@ define void @test_pow(<4 x float>* %X) nounwind {
 ; CHECK:      {{v?mov(.32)?}}  r0,
 ; CHECK:      bl  {{.*}}powf
 
-; CHECK:      vstmia  {{.*}}
+; CHECK:      vst1.64
 
 L.entry:
 
@@ -252,10 +252,10 @@ define void @test_powi(<4 x float>* %X) nounwind {
 
 ; CHECK:       movw  [[reg0:r[0-9]+]], :lower16:{{.*}}
 ; CHECK:       movt  [[reg0]], :upper16:{{.*}}
-; CHECK:       vldmia  [[reg0]], {{.*}}
+; CHECK:       vld1.64 {{.*}}, :128
 ; CHECK:       vmul.f32 {{.*}}
 
-; CHECK:      vstmia  {{.*}}
+; CHECK:      vst1.64
 
 L.entry:
 
@@ -275,7 +275,7 @@ define void @test_sin(<4 x float>* %X) nounwind {
 
 ; CHECK:      movw  [[reg0:r[0-9]+]], :lower16:{{.*}}
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}
-; CHECK:      vldmia r{{[0-9][0-9]?}}, {{.*}}
+; CHECK:      vld1.64
 
 ; CHECK:      {{v?mov(.32)?}}  r0,
 ; CHECK:      bl  {{.*}}sinf
@@ -289,7 +289,7 @@ define void @test_sin(<4 x float>* %X) nounwind {
 ; CHECK:      {{v?mov(.32)?}}  r0,
 ; CHECK:      bl  {{.*}}sinf
 
-; CHECK:      vstmia  {{.*}}
+; CHECK:      vst1.64
 
 L.entry:
   %0 = load <4 x float>* @A, align 16
@@ -306,7 +306,7 @@ define void @test_floor(<4 x float>* %X) nounwind {
 
 ; CHECK:      movw  [[reg0:r[0-9]+]], :lower16:{{.*}}
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}
-; CHECK:      vldmia r{{[0-9][0-9]?}}, {{.*}}
+; CHECK:      vld1.64
 
 ; CHECK:      {{v?mov(.32)?}}  r0,
 ; CHECK:      bl  {{.*}}floorf
@@ -320,7 +320,7 @@ define void @test_floor(<4 x float>* %X) nounwind {
 ; CHECK:      {{v?mov(.32)?}}  r0,
 ; CHECK:      bl  {{.*}}floorf
 
-; CHECK:      vstmia  {{.*}}
+; CHECK:      vst1.64
 
 L.entry:
   %0 = load <4 x float>* @A, align 16
