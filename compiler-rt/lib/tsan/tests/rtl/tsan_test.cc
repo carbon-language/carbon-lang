@@ -34,7 +34,7 @@ int run_tests(int argc, char **argv) {
   TestMutexBeforeInit();  // Mutexes must be usable before __tsan_init();
   __tsan_init();
   __tsan_func_entry(__builtin_return_address(0));
-  __tsan_func_entry((void*)((uintptr_t)&run_tests + 1));
+  __tsan_func_entry((void*)((intptr_t)&run_tests + 1));
 
   testing::GTEST_FLAG(death_test_style) = "threadsafe";
   testing::InitGoogleTest(&argc, argv);
