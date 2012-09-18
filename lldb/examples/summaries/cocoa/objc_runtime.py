@@ -75,7 +75,10 @@ class Utilities:
 		logger = lldb.formatters.Logger.Logger()
 		# assume the only thing that has a Foundation.framework is a Mac
 		# assume anything < Lion does not even exist
-		mod = target.module['Foundation']
+		try:
+			mod = target.module['Foundation']
+		except:
+			mod = None
 		if mod is None or mod.IsValid() == 0:
 			return None
 		ver = mod.GetVersion()
