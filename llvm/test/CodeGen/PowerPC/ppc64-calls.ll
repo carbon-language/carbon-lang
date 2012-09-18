@@ -6,12 +6,26 @@ define void @foo() nounwind readnone noinline {
   ret void
 }
 
+define weak void @foo_weak() nounwind {
+  ret void
+}
+
 ; Calls to local function does not require the TOC restore 'nop'
 define void @test_direct() nounwind readnone {
 ; CHECK: test_direct:
   tail call void @foo() nounwind
 ; CHECK: bl foo
 ; CHECK-NOT: nop
+  ret void
+}
+
+; Calls to weak function requires a TOC restore 'nop' because they
+; may be overridden in a different module.
+define void @test_weak() nounwind readnone {
+; CHECK: test_weak:
+  tail call void @foo_weak() nounwind
+; CHECK: bl foo
+; CHECK-NEXT: nop
   ret void
 }
 
