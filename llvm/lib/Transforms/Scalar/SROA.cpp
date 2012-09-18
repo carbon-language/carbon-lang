@@ -2465,83 +2465,96 @@ private:
   // Conservative default is to not rewrite anything.
   bool visitInstruction(Instruction &I) { return false; }
 
-  /// \brief Generic recursive split emission routine.
-  ///
-  /// This method recursively splits an aggregate op (load or store) into
-  /// scalar or vector ops. It splits recursively until it hits a single value
-  /// and emits that single value operation via the template argument.
-  ///
-  /// The logic of this routine relies on GEPs and insertvalue and extractvalue
-  /// all operating with the same fundamental index list, merely formatted
-  /// differently (GEPs need actual values).
-  ///
-  /// \param IRB The builder used to form new instructions.
-  /// \param Ty  The type being split recursively into smaller ops.
-  /// \param Agg The aggregate value being built up or stored, depending on
-  /// whether this is splitting a load or a store respectively.
-  /// \param Ptr The base pointer of the original op, used as a base for GEPing
-  /// the split operations.
-  /// \param Indices The indices which to be used with insert- or extractvalue
-  /// to select the appropriate value within the aggregate for \p Ty.
-  /// \param GEPIndices The indices to a GEP instruction which will move \p Ptr
-  /// to the correct slot within the aggregate for \p Ty.
-  template <void (AggLoadStoreRewriter::*emitFunc)(
-                IRBuilder<> &IRB, Type *Ty, Value *&Agg, Value *Ptr,
-                ArrayRef<unsigned>, ArrayRef<Value *>,
-                const Twine &Name)>
-  void emitSplitOps(IRBuilder<> &IRB, Type *Ty, Value *&Agg, Value *Ptr,
-                    SmallVectorImpl<unsigned> &Indices,
-                    SmallVectorImpl<Value *> &GEPIndices,
-                    const Twine &Name) {
-    if (Ty->isSingleValueType())
-      return (this->*emitFunc)(IRB, Ty, Agg, Ptr, Indices, GEPIndices, Name);
+  /// \brief Generic recursive split emission class.
+  class OpSplitter {
+  protected:
+    /// The builder used to form new instructions.
+    IRBuilder<> IRB;
+    /// The indices which to be used with insert- or extractvalue to select the
+    /// appropriate value within the aggregate.
+    SmallVector<unsigned, 4> Indices;
+    /// The indices to a GEP instruction which will move Ptr to the correct slot
+    /// within the aggregate.
+    SmallVector<Value *, 4> GEPIndices;
+    /// The base pointer of the original op, used as a base for GEPing the
+    /// split operations.
+    Value *Ptr;
 
-    if (ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
-      unsigned OldSize = Indices.size();
-      (void)OldSize;
-      for (unsigned Idx = 0, Size = ATy->getNumElements(); Idx != Size; ++Idx) {
-        assert(Indices.size() == OldSize && "Did not return to the old size");
-        Indices.push_back(Idx);
-        GEPIndices.push_back(IRB.getInt32(Idx));
-        emitSplitOps<emitFunc>(IRB, ATy->getElementType(), Agg, Ptr,
-                               Indices, GEPIndices, Name + "." + Twine(Idx));
-        GEPIndices.pop_back();
-        Indices.pop_back();
+    /// Initialize the splitter with an insertion point, Ptr and start with a
+    /// single zero GEP index.
+    OpSplitter(Instruction *InsertionPoint, Value *Ptr)
+      : IRB(InsertionPoint), Ptr(Ptr), GEPIndices(1, IRB.getInt32(0)) {}
+
+  public:
+    virtual void emitFunc(Type *Ty, Value *&Agg, const Twine &Name) = 0;
+
+    /// \brief Generic recursive split emission routine.
+    ///
+    /// This method recursively splits an aggregate op (load or store) into
+    /// scalar or vector ops. It splits recursively until it hits a single value
+    /// and emits that single value operation via the template argument.
+    ///
+    /// The logic of this routine relies on GEPs and insertvalue and
+    /// extractvalue all operating with the same fundamental index list, merely
+    /// formatted differently (GEPs need actual values).
+    ///
+    /// \param Ty  The type being split recursively into smaller ops.
+    /// \param Agg The aggregate value being built up or stored, depending on
+    /// whether this is splitting a load or a store respectively.
+    void emitSplitOps(Type *Ty, Value *&Agg, const Twine &Name) {
+      if (Ty->isSingleValueType())
+        return emitFunc(Ty, Agg, Name);
+
+      if (ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+        unsigned OldSize = Indices.size();
+        (void)OldSize;
+        for (unsigned Idx = 0, Size = ATy->getNumElements(); Idx != Size;
+             ++Idx) {
+          assert(Indices.size() == OldSize && "Did not return to the old size");
+          Indices.push_back(Idx);
+          GEPIndices.push_back(IRB.getInt32(Idx));
+          emitSplitOps(ATy->getElementType(), Agg, Name + "." + Twine(Idx));
+          GEPIndices.pop_back();
+          Indices.pop_back();
+        }
+        return;
       }
-      return;
-    }
 
-    if (StructType *STy = dyn_cast<StructType>(Ty)) {
-      unsigned OldSize = Indices.size();
-      (void)OldSize;
-      for (unsigned Idx = 0, Size = STy->getNumElements(); Idx != Size; ++Idx) {
-        assert(Indices.size() == OldSize && "Did not return to the old size");
-        Indices.push_back(Idx);
-        GEPIndices.push_back(IRB.getInt32(Idx));
-        emitSplitOps<emitFunc>(IRB, STy->getElementType(Idx), Agg, Ptr,
-                               Indices, GEPIndices, Name + "." + Twine(Idx));
-        GEPIndices.pop_back();
-        Indices.pop_back();
+      if (StructType *STy = dyn_cast<StructType>(Ty)) {
+        unsigned OldSize = Indices.size();
+        (void)OldSize;
+        for (unsigned Idx = 0, Size = STy->getNumElements(); Idx != Size;
+             ++Idx) {
+          assert(Indices.size() == OldSize && "Did not return to the old size");
+          Indices.push_back(Idx);
+          GEPIndices.push_back(IRB.getInt32(Idx));
+          emitSplitOps(STy->getElementType(Idx), Agg, Name + "." + Twine(Idx));
+          GEPIndices.pop_back();
+          Indices.pop_back();
+        }
+        return;
       }
-      return;
+
+      llvm_unreachable("Only arrays and structs are aggregate loadable types");
     }
+  };
 
-    llvm_unreachable("Only arrays and structs are aggregate loadable types");
-  }
+  struct LoadOpSplitter : public OpSplitter {
+    LoadOpSplitter(Instruction *InsertionPoint, Value *Ptr)
+      : OpSplitter(InsertionPoint, Ptr) {}
 
-  /// Emit a leaf load of a single value. This is called at the leaves of the
-  /// recursive emission to actually load values.
-  void emitLoad(IRBuilder<> &IRB, Type *Ty, Value *&Agg, Value *Ptr,
-                ArrayRef<unsigned> Indices, ArrayRef<Value *> GEPIndices,
-                const Twine &Name) {
-    assert(Ty->isSingleValueType());
-    // Load the single value and insert it using the indices.
-    Value *Load = IRB.CreateLoad(IRB.CreateInBoundsGEP(Ptr, GEPIndices,
-                                                       Name + ".gep"),
-                                 Name + ".load");
-    Agg = IRB.CreateInsertValue(Agg, Load, Indices, Name + ".insert");
-    DEBUG(dbgs() << "          to: " << *Load << "\n");
-  }
+    /// Emit a leaf load of a single value. This is called at the leaves of the
+    /// recursive emission to actually load values.
+    virtual void emitFunc(Type *Ty, Value *&Agg, const Twine &Name) {
+      assert(Ty->isSingleValueType());
+      // Load the single value and insert it using the indices.
+      Value *Load = IRB.CreateLoad(IRB.CreateInBoundsGEP(Ptr, GEPIndices,
+                                                         Name + ".gep"),
+                                   Name + ".load");
+      Agg = IRB.CreateInsertValue(Agg, Load, Indices, Name + ".insert");
+      DEBUG(dbgs() << "          to: " << *Load << "\n");
+    }
+  };
 
   bool visitLoadInst(LoadInst &LI) {
     assert(LI.getPointerOperand() == *U);
@@ -2550,31 +2563,30 @@ private:
 
     // We have an aggregate being loaded, split it apart.
     DEBUG(dbgs() << "    original: " << LI << "\n");
-    IRBuilder<> IRB(&LI);
+    LoadOpSplitter Splitter(&LI, *U);
     Value *V = UndefValue::get(LI.getType());
-    SmallVector<unsigned, 4> Indices;
-    SmallVector<Value *, 4> GEPIndices;
-    GEPIndices.push_back(IRB.getInt32(0));
-    emitSplitOps<&AggLoadStoreRewriter::emitLoad>(
-      IRB, LI.getType(), V, *U, Indices, GEPIndices, LI.getName() + ".fca");
+    Splitter.emitSplitOps(LI.getType(), V, LI.getName() + ".fca");
     LI.replaceAllUsesWith(V);
     LI.eraseFromParent();
     return true;
   }
 
-  /// Emit a leaf store of a single value. This is called at the leaves of the
-  /// recursive emission to actually produce stores.
-  void emitStore(IRBuilder<> &IRB, Type *Ty, Value *&Agg, Value *Ptr,
-                 ArrayRef<unsigned> Indices, ArrayRef<Value *> GEPIndices,
-                 const Twine &Name) {
-    assert(Ty->isSingleValueType());
-    // Extract the single value and store it using the indices.
-    Value *Store = IRB.CreateStore(
-      IRB.CreateExtractValue(Agg, Indices, Name + ".extract"),
-      IRB.CreateInBoundsGEP(Ptr, GEPIndices, Name + ".gep"));
-    (void)Store;
-    DEBUG(dbgs() << "          to: " << *Store << "\n");
-  }
+  struct StoreOpSplitter : public OpSplitter {
+    StoreOpSplitter(Instruction *InsertionPoint, Value *Ptr)
+      : OpSplitter(InsertionPoint, Ptr) {}
+
+    /// Emit a leaf store of a single value. This is called at the leaves of the
+    /// recursive emission to actually produce stores.
+    virtual void emitFunc(Type *Ty, Value *&Agg, const Twine &Name) {
+      assert(Ty->isSingleValueType());
+      // Extract the single value and store it using the indices.
+      Value *Store = IRB.CreateStore(
+        IRB.CreateExtractValue(Agg, Indices, Name + ".extract"),
+        IRB.CreateInBoundsGEP(Ptr, GEPIndices, Name + ".gep"));
+      (void)Store;
+      DEBUG(dbgs() << "          to: " << *Store << "\n");
+    }
+  };
 
   bool visitStoreInst(StoreInst &SI) {
     if (!SI.isSimple() || SI.getPointerOperand() != *U)
@@ -2585,12 +2597,8 @@ private:
 
     // We have an aggregate being stored, split it apart.
     DEBUG(dbgs() << "    original: " << SI << "\n");
-    IRBuilder<> IRB(&SI);
-    SmallVector<unsigned, 4> Indices;
-    SmallVector<Value *, 4> GEPIndices;
-    GEPIndices.push_back(IRB.getInt32(0));
-    emitSplitOps<&AggLoadStoreRewriter::emitStore>(
-      IRB, V->getType(), V, *U, Indices, GEPIndices, V->getName() + ".fca");
+    StoreOpSplitter Splitter(&SI, *U);
+    Splitter.emitSplitOps(V->getType(), V, V->getName() + ".fca");
     SI.eraseFromParent();
     return true;
   }
