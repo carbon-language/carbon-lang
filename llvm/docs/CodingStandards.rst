@@ -818,6 +818,34 @@ least one out-of-line virtual method in the class.  Without this, the compiler
 will copy the vtable and RTTI into every ``.o`` file that ``#include``\s the
 header, bloating ``.o`` file sizes and increasing link times.
 
+Use ``LLVM_DELETED_FUNCTION`` to mark uncallable methods
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Prior to C++11, a common pattern to make a class uncopyable was to declare an
+unimplemented copy constructor and copy assignment operator and make them
+private. This would give a compiler error for accessing a private method or a
+linker error because it wasn't implemented.
+
+With C++11, we can mark methods that won't be implemented with ``= deleted``.
+This will trigger a much better error message and tell the compiler that the
+method will never be implemented. This enables other checks like
+``-Wunused-private-field`` to run correctly on classes that contain these
+methods.
+
+To maintain compatibility with C++03, ``LLVM_DELETED_FUNCTION`` should be used
+which will expand to ``= deleted`` if the compiler supports it. These methods
+should still be declared private. Example of the uncopyable pattern:
+
+.. code-block:: c++
+
+  class DontCopy {
+  private:
+    DontCopy(const DontCopy&) LLVM_DELETED_FUNCTION;
+    DontCopy &operator =(const DontCopy&) LLVM_DELETED_FUNCTION;
+  public:
+    ...
+  };
+
 Don't evaluate ``end()`` every time through a loop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
