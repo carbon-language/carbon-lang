@@ -4355,11 +4355,11 @@ static void AnalyzeComparison(Sema &S, BinaryOperator *E) {
   QualType T = E->getLHS()->getType();
   assert(S.Context.hasSameUnqualifiedType(T, E->getRHS()->getType())
          && "comparison with mismatched types");
+  if (E->isValueDependent())
+    return AnalyzeImpConvsInComparison(S, E);
 
   Expr *LHS = E->getLHS()->IgnoreParenImpCasts();
   Expr *RHS = E->getRHS()->IgnoreParenImpCasts();
-  if (E->isValueDependent())
-    return AnalyzeImpConvsInComparison(S, E);
   
   bool IsComparisonConstant = false;
   
