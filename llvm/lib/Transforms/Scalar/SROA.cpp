@@ -2487,7 +2487,7 @@ private:
   /// to the correct slot within the aggregate for \p Ty.
   template <void (AggLoadStoreRewriter::*emitFunc)(
                 IRBuilder<> &IRB, Type *Ty, Value *&Agg, Value *Ptr,
-                ArrayRef<unsigned> Indices, ArrayRef<Value *> GEPIndices,
+                ArrayRef<unsigned>, ArrayRef<Value *>,
                 const Twine &Name)>
   void emitSplitOps(IRBuilder<> &IRB, Type *Ty, Value *&Agg, Value *Ptr,
                     SmallVectorImpl<unsigned> &Indices,
