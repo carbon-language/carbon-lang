@@ -2812,7 +2812,8 @@ static
 bool isLocalCall(const SDValue &Callee)
 {
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
-    return !G->getGlobal()->isDeclaration();
+    return !G->getGlobal()->isDeclaration() &&
+           !G->getGlobal()->isWeakForLinker();
   return false;
 }
 
