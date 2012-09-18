@@ -28,11 +28,13 @@ TEST(ThreadSanitizer, FuncCall) {
   t2.Return();
 }
 
-int main(int argc, char **argv) {
+// We use this function instead of main, as ISO C++ forbids taking the address
+// of main, which we need to pass inside __tsan_func_entry.
+int run_tests(int argc, char **argv) {
   TestMutexBeforeInit();  // Mutexes must be usable before __tsan_init();
   __tsan_init();
   __tsan_func_entry(__builtin_return_address(0));
-  __tsan_func_entry((char*)&main + 1);
+  __tsan_func_entry((void*)((uintptr_t)&run_tests + 1));
 
   testing::GTEST_FLAG(death_test_style) = "threadsafe";
   testing::InitGoogleTest(&argc, argv);
@@ -41,4 +43,8 @@ int main(int argc, char **argv) {
   __tsan_func_exit();
   __tsan_func_exit();
   return res;
+}
+
+int main(int argc, char **argv) {
+  return run_tests(argc, argv);
 }

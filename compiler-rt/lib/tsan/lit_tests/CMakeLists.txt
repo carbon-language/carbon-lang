@@ -19,7 +19,7 @@ if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}")
     tsan_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
     )
   if(LLVM_INCLUDE_TESTS)
-    list(APPEND ASAN_TEST_DEPS TsanUnitTests)
+    list(APPEND TSAN_TEST_DEPS TsanUnitTests)
   endif()
   add_lit_testsuite(check-tsan "Running ThreadSanitizer tests"
     ${CMAKE_CURRENT_BINARY_DIR}

@@ -19,14 +19,14 @@ namespace __tsan {
 TEST(Flags, Basic) {
   ScopedInRtl in_rtl;
   // At least should not crash.
-  Flags f = {};
+  Flags f;
   InitializeFlags(&f, 0);
   InitializeFlags(&f, "");
 }
 
 TEST(Flags, DefaultValues) {
   ScopedInRtl in_rtl;
-  Flags f = {};
+  Flags f;
 
   f.enable_annotations = false;
   f.exitcode = -11;

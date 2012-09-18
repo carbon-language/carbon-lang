@@ -397,7 +397,7 @@ void ScopedThread::VptrUpdate(const MemLoc &vptr,
 }
 
 void ScopedThread::Call(void(*pc)()) {
-  Event event(Event::CALL, (void*)pc);
+  Event event(Event::CALL, (void*)((uintptr_t)pc));
   impl_->send(&event);
 }
 
