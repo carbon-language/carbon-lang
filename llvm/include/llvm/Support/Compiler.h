@@ -40,7 +40,7 @@
 
 /// LLVM_DELETED_FUNCTION - Expands to = delete if the compiler supports it.
 /// Use to mark functions as uncallable. Member functions with this should
-/// be declared private so that some behaivor is kept in C++03 mode.
+/// be declared private so that some behavior is kept in C++03 mode.
 ///
 /// class DontCopy {
 /// private:
