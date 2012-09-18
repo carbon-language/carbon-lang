@@ -17,6 +17,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
@@ -98,11 +99,15 @@ static unsigned findDefIdx(const MachineInstr *MI, unsigned DefOperIdx) {
 
 /// Find the use index of this operand. This is independent of the instruction's
 /// def operands.
+///
+/// Note that uses are not determined by the operand's isUse property, which
+/// is simply the inverse of isDef. Here we consider any readsReg operand to be
+/// a "use". The machine model allows an operand to be both a Def and Use.
 static unsigned findUseIdx(const MachineInstr *MI, unsigned UseOperIdx) {
   unsigned UseIdx = 0;
   for (unsigned i = 0; i != UseOperIdx; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (MO.isReg() && MO.isUse())
+    if (MO.isReg() && MO.readsReg())
       ++UseIdx;
   }
   return UseIdx;
@@ -122,7 +127,6 @@ unsigned TargetSchedModel::computeOperandLatency(
     const MCSchedClassDesc *SCDesc = resolveSchedClass(DefMI);
     unsigned DefIdx = findDefIdx(DefMI, DefOperIdx);
     if (DefIdx < SCDesc->NumWriteLatencyEntries) {
-
       // Lookup the definition's write latency in SubtargetInfo.
       const MCWriteLatencyEntry *WLEntry =
         STI->getWriteLatencyEntry(SCDesc, DefIdx);
@@ -140,10 +144,16 @@ unsigned TargetSchedModel::computeOperandLatency(
     }
     // If DefIdx does not exist in the model (e.g. implicit defs), then return
     // unit latency (defaultDefLatency may be too conservative).
-    // TODO: For unknown defs, we may want to use the subtarget's model
-    // for WAW latency here instead of 1 cycle.
-    assert((!SCDesc->isValid() || DefMI->getOperand(DefOperIdx).isImplicit()) &&
-           "DefIdx exceeds machine model def operand list");
+#ifndef NDEBUG
+    if (SCDesc->isValid() && !DefMI->getOperand(DefOperIdx).isImplicit()
+        && !DefMI->getDesc().OpInfo[DefOperIdx].isOptionalDef()) {
+      std::string Err;
+      raw_string_ostream ss(Err);
+      ss << "DefIdx " << DefIdx << " exceeds machine model writes for "
+         << *DefMI;
+      report_fatal_error(ss.str());
+    }
+#endif
     return 1;
   }
   assert(EnableSchedItins && hasInstrItineraries() &&
