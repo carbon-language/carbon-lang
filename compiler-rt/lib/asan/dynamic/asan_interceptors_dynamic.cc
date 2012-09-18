@@ -98,6 +98,9 @@ const interpose_substitution substitutions[]
   INTERPOSE_FUNCTION(dispatch_source_set_event_handler),
   INTERPOSE_FUNCTION(dispatch_source_set_cancel_handler),
 
+  INTERPOSE_FUNCTION(signal),
+  INTERPOSE_FUNCTION(sigaction),
+
   INTERPOSE_FUNCTION(__CFInitialize),
   INTERPOSE_FUNCTION(CFStringCreateCopy),
   INTERPOSE_FUNCTION(free),
