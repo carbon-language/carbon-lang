@@ -2229,6 +2229,20 @@ TEST(StaticCast, DoesNotMatchOtherCasts) {
                          staticCastExpr()));
 }
 
+TEST(CStyleCast, MatchesSimpleCase) {
+  EXPECT_TRUE(matches("int i = (int) 2.2f;", cStyleCastExpr()));
+}
+
+TEST(CStyleCast, DoesNotMatchOtherCasts) {
+  EXPECT_TRUE(notMatches("char* p = static_cast<char*>(0);"
+                         "char q, *r = const_cast<char*>(&q);"
+                         "void* s = reinterpret_cast<char*>(&s);"
+                         "struct B { virtual ~B() {} }; struct D : B {};"
+                         "B b;"
+                         "D* t = dynamic_cast<D*>(&b);",
+                         cStyleCastExpr()));
+}
+
 TEST(HasDestinationType, MatchesSimpleCase) {
   EXPECT_TRUE(matches("char* p = static_cast<char*>(0);",
                       staticCastExpr(hasDestinationType(

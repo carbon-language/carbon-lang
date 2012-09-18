@@ -865,6 +865,16 @@ const internal::VariadicDynCastAllOfMatcher<
   Stmt,
   CXXConstCastExpr> constCastExpr;
 
+/// \brief Matches a C-style cast expression.
+///
+/// Example: Matches (int*) 2.2f in
+/// \code
+///   int i = (int) 2.2f;
+/// \endcode
+const internal::VariadicDynCastAllOfMatcher<
+  Stmt,
+  CStyleCastExpr> cStyleCastExpr;
+
 /// \brief Matches explicit cast expressions.
 ///
 /// Matches any cast expression written in user code, whether it be a
