@@ -36,8 +36,10 @@ using namespace llvm;
 using namespace object;
 using std::string;
 
+// FIXME: Enable --use-symbol-table by default when the bug in libObject's
+// Symbol::getAddress is fixed.
 static cl::opt<bool>
-UseSymbolTable("use-symbol-table", cl::init(true),
+UseSymbolTable("use-symbol-table", cl::init(false),
                cl::desc("Prefer names in symbol table to names "
                         "in debug info"));
 
