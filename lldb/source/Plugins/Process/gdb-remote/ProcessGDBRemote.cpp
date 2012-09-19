@@ -1904,11 +1904,11 @@ ProcessGDBRemote::DoReadMemory (addr_t addr, void *buf, size_t size, Error &erro
             return response.GetHexBytes(buf, size, '\xdd');
         }
         else if (response.IsErrorResponse())
-            error.SetErrorStringWithFormat("gdb remote returned an error: %s", response.GetStringRef().c_str());
+            error.SetErrorString("memory read failed");
         else if (response.IsUnsupportedResponse())
-            error.SetErrorStringWithFormat("'%s' packet unsupported", packet);
+            error.SetErrorStringWithFormat("GDB server does not support reading memory");
         else
-            error.SetErrorStringWithFormat("unexpected response to '%s': '%s'", packet, response.GetStringRef().c_str());
+            error.SetErrorStringWithFormat("unexpected response to GDB server memory read packet '%s': '%s'", packet, response.GetStringRef().c_str());
     }
     else
     {
@@ -1940,11 +1940,11 @@ ProcessGDBRemote::DoWriteMemory (addr_t addr, const void *buf, size_t size, Erro
             return size;
         }
         else if (response.IsErrorResponse())
-            error.SetErrorStringWithFormat("gdb remote returned an error: %s", response.GetStringRef().c_str());
+            error.SetErrorString("memory write failed");
         else if (response.IsUnsupportedResponse())
-            error.SetErrorStringWithFormat("'%s' packet unsupported", packet.GetString().c_str());
+            error.SetErrorStringWithFormat("GDB server does not support writing memory");
         else
-            error.SetErrorStringWithFormat("unexpected response to '%s': '%s'", packet.GetString().c_str(), response.GetStringRef().c_str());
+            error.SetErrorStringWithFormat("unexpected response to GDB server memory write packet '%s': '%s'", packet.GetString().c_str(), response.GetStringRef().c_str());
     }
     else
     {
