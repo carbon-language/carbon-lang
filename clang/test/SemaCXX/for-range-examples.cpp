@@ -115,19 +115,19 @@ namespace map_range {
   }
 }
 
-#define assert(b) if (!b) { return 1; }
+#define assert(b) if (!(b)) { return 1; }
 int main() {
   int total = 0;
 
   for (auto n : range(1, 5)) {
     total += n;
   }
-  assert((total == 10));
+  assert(total == 10);
 
   for (auto n : range(10, 100, 10)) {
     total += n;
   }
-  assert((total == 460));
+  assert(total == 460);
 
   map_range::vector<char> chars;
   chars.push_back('a');
@@ -136,7 +136,7 @@ int main() {
   for (char c : chars) {
     ++total;
   }
-  assert((total == 463));
+  assert(total == 463);
 
   typedef map_range::tuple<int, double> T;
   map_range::vector<T> pairs;
@@ -146,7 +146,7 @@ int main() {
   for (auto a : map(map_range::mem_fun(&T::get<int>), pairs)) {
     total += a;
   }
-  assert((total == 500));
+  assert(total == 500);
 }
 
 // PR11793
