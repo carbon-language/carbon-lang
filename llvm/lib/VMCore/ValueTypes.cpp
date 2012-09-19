@@ -55,6 +55,14 @@ bool EVT::isExtendedVector() const {
   return LLVMTy->isVectorTy();
 }
 
+bool EVT::isExtended16BitVector() const {
+  return isExtendedVector() && getSizeInBits() == 16;
+}
+
+bool EVT::isExtended32BitVector() const {
+  return isExtendedVector() && getSizeInBits() == 32;
+}
+
 bool EVT::isExtended64BitVector() const {
   return isExtendedVector() && getSizeInBits() == 64;
 }
@@ -120,15 +128,21 @@ std::string EVT::getEVTString() const {
   case MVT::Other:   return "ch";
   case MVT::Glue:    return "glue";
   case MVT::x86mmx:  return "x86mmx";
+  case MVT::v2i1:    return "v2i1";
+  case MVT::v4i1:    return "v4i1";
+  case MVT::v8i1:    return "v8i1";
+  case MVT::v16i1:   return "v16i1";
   case MVT::v2i8:    return "v2i8";
   case MVT::v4i8:    return "v4i8";
   case MVT::v8i8:    return "v8i8";
   case MVT::v16i8:   return "v16i8";
   case MVT::v32i8:   return "v32i8";
+  case MVT::v1i16:   return "v1i16";
   case MVT::v2i16:   return "v2i16";
   case MVT::v4i16:   return "v4i16";
   case MVT::v8i16:   return "v8i16";
   case MVT::v16i16:  return "v16i16";
+  case MVT::v1i32:   return "v1i32";
   case MVT::v2i32:   return "v2i32";
   case MVT::v4i32:   return "v4i32";
   case MVT::v8i32:   return "v8i32";
@@ -171,15 +185,21 @@ Type *EVT::getTypeForEVT(LLVMContext &Context) const {
   case MVT::f128:    return Type::getFP128Ty(Context);
   case MVT::ppcf128: return Type::getPPC_FP128Ty(Context);
   case MVT::x86mmx:  return Type::getX86_MMXTy(Context);
+  case MVT::v2i1:    return VectorType::get(Type::getInt1Ty(Context), 2);
+  case MVT::v4i1:    return VectorType::get(Type::getInt1Ty(Context), 4);
+  case MVT::v8i1:    return VectorType::get(Type::getInt1Ty(Context), 8);
+  case MVT::v16i1:   return VectorType::get(Type::getInt1Ty(Context), 16);
   case MVT::v2i8:    return VectorType::get(Type::getInt8Ty(Context), 2);
   case MVT::v4i8:    return VectorType::get(Type::getInt8Ty(Context), 4);
   case MVT::v8i8:    return VectorType::get(Type::getInt8Ty(Context), 8);
   case MVT::v16i8:   return VectorType::get(Type::getInt8Ty(Context), 16);
   case MVT::v32i8:   return VectorType::get(Type::getInt8Ty(Context), 32);
+  case MVT::v1i16:   return VectorType::get(Type::getInt16Ty(Context), 1);
   case MVT::v2i16:   return VectorType::get(Type::getInt16Ty(Context), 2);
   case MVT::v4i16:   return VectorType::get(Type::getInt16Ty(Context), 4);
   case MVT::v8i16:   return VectorType::get(Type::getInt16Ty(Context), 8);
   case MVT::v16i16:  return VectorType::get(Type::getInt16Ty(Context), 16);
+  case MVT::v1i32:   return VectorType::get(Type::getInt32Ty(Context), 1);
   case MVT::v2i32:   return VectorType::get(Type::getInt32Ty(Context), 2);
   case MVT::v4i32:   return VectorType::get(Type::getInt32Ty(Context), 4);
   case MVT::v8i32:   return VectorType::get(Type::getInt32Ty(Context), 8);

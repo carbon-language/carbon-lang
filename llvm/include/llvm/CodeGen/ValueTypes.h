@@ -56,50 +56,56 @@ namespace llvm {
       FIRST_FP_VALUETYPE = f16,
       LAST_FP_VALUETYPE  = ppcf128,
 
-      v2i8           =  13,   //  2 x i8
-      v4i8           =  14,   //  4 x i8
-      v8i8           =  15,   //  8 x i8
-      v16i8          =  16,   // 16 x i8
-      v32i8          =  17,   // 32 x i8
-      v2i16          =  18,   //  2 x i16
-      v4i16          =  19,   //  4 x i16
-      v8i16          =  20,   //  8 x i16
-      v16i16         =  21,   // 16 x i16
-      v2i32          =  22,   //  2 x i32
-      v4i32          =  23,   //  4 x i32
-      v8i32          =  24,   //  8 x i32
-      v16i32         =  25,   // 16 x i32
-      v1i64          =  26,   //  1 x i64
-      v2i64          =  27,   //  2 x i64
-      v4i64          =  28,   //  4 x i64
-      v8i64          =  29,   //  8 x i64
-      v16i64         =  30,   // 16 x i64
+      v2i1           =  13,   //  2 x i1
+      v4i1           =  14,   //  4 x i1
+      v8i1           =  15,   //  8 x i1
+      v16i1          =  16,   // 16 x i1
+      v2i8           =  17,   //  2 x i8
+      v4i8           =  18,   //  4 x i8
+      v8i8           =  19,   //  8 x i8
+      v16i8          =  20,   // 16 x i8
+      v32i8          =  21,   // 32 x i8
+      v1i16          =  22,   //  1 x i16
+      v2i16          =  23,   //  2 x i16
+      v4i16          =  24,   //  4 x i16
+      v8i16          =  25,   //  8 x i16
+      v16i16         =  26,   // 16 x i16
+      v1i32          =  27,   //  1 x i32
+      v2i32          =  28,   //  2 x i32
+      v4i32          =  29,   //  4 x i32
+      v8i32          =  30,   //  8 x i32
+      v16i32         =  31,   // 16 x i32
+      v1i64          =  32,   //  1 x i64
+      v2i64          =  33,   //  2 x i64
+      v4i64          =  34,   //  4 x i64
+      v8i64          =  35,   //  8 x i64
+      v16i64         =  36,   // 16 x i64
 
-      v2f16          =  31,   //  2 x f16
-      v2f32          =  32,   //  2 x f32
-      v4f32          =  33,   //  4 x f32
-      v8f32          =  34,   //  8 x f32
-      v2f64          =  35,   //  2 x f64
-      v4f64          =  36,   //  4 x f64
+      v2f16          =  37,   //  2 x f16
+      v2f32          =  38,   //  2 x f32
+      v4f32          =  39,   //  4 x f32
+      v8f32          =  40,   //  8 x f32
+      v2f64          =  41,   //  2 x f64
+      v4f64          =  42,   //  4 x f64
 
-      FIRST_VECTOR_VALUETYPE = v2i8,
+      FIRST_VECTOR_VALUETYPE = v2i1,
       LAST_VECTOR_VALUETYPE  = v4f64,
-      FIRST_INTEGER_VECTOR_VALUETYPE = v2i8,
+      FIRST_INTEGER_VECTOR_VALUETYPE = v2i1,
       LAST_INTEGER_VECTOR_VALUETYPE = v16i64,
       FIRST_FP_VECTOR_VALUETYPE = v2f16,
       LAST_FP_VECTOR_VALUETYPE = v4f64,
 
-      x86mmx         =  37,   // This is an X86 MMX value
+      x86mmx         =  43,   // This is an X86 MMX value
 
-      Glue           =  38,   // This glues nodes together during pre-RA sched
+      Glue           =  44,   // This glues nodes together during pre-RA sched
 
-      isVoid         =  39,   // This has no value
+      isVoid         =  45,   // This has no value
 
-      Untyped        =  40,   // This value takes a register, but has
+      Untyped        =  46,   // This value takes a register, but has
                               // unspecified type.  The register class
                               // will be determined by the opcode.
 
-      LAST_VALUETYPE =  41,   // This always remains at the end of the list.
+      LAST_VALUETYPE =  47,   // This always remains at the end of the list.
 
       // This is the current maximum for LAST_VALUETYPE.
       // MVT::MAX_ALLOWED_VALUETYPE is used for asserts and to size bit vectors
@@ -233,15 +239,21 @@ namespace llvm {
       switch (SimpleTy) {
       default:
         llvm_unreachable("Not a vector MVT!");
+      case v2i1 :
+      case v4i1 :
+      case v8i1 :
+      case v16i1: return i1;
       case v2i8 :
       case v4i8 :
       case v8i8 :
       case v16i8:
       case v32i8: return i8;
+      case v1i16:
       case v2i16:
       case v4i16:
       case v8i16:
       case v16i16: return i16;
+      case v1i32:
       case v2i32:
       case v4i32:
       case v8i32:
@@ -265,21 +277,25 @@ namespace llvm {
       default:
         llvm_unreachable("Not a vector MVT!");
       case v32i8: return 32;
+      case v16i1:
       case v16i8:
       case v16i16:
       case v16i32:
       case v16i64:return 16;
+      case v8i1:
       case v8i8 :
       case v8i16:
       case v8i32:
       case v8i64:
       case v8f32: return 8;
+      case v4i1:
       case v4i8:
       case v4i16:
       case v4i32:
       case v4i64:
       case v4f32:
       case v4f64: return 4;
+      case v2i1:
       case v2i8:
       case v2i16:
       case v2i32:
@@ -287,6 +303,8 @@ namespace llvm {
       case v2f16:
       case v2f32:
       case v2f64: return 2;
+      case v1i16:
+      case v1i32:
       case v1i64: return 1;
       }
     }
@@ -302,15 +320,21 @@ namespace llvm {
       default:
         llvm_unreachable("getSizeInBits called on extended MVT.");
       case i1  :  return 1;
-      case i8  :  return 8;
+      case v2i1:  return 2;
+      case v4i1:  return 4;
+      case i8  :
+      case v8i1: return 8;
       case i16 :
       case f16:
-      case v2i8:  return 16;
+      case v16i1:
+      case v2i8:
+      case v1i16: return 16;
       case f32 :
       case i32 :
       case v4i8:
       case v2i16:
-      case v2f16: return 32;
+      case v2f16: 
+      case v1i32: return 32;
       case x86mmx:
       case f64 :
       case i64 :
@@ -393,6 +417,12 @@ namespace llvm {
       switch (VT.SimpleTy) {
       default:
         break;
+      case MVT::i1:
+        if (NumElements == 2)  return MVT::v2i1;
+        if (NumElements == 4)  return MVT::v4i1;
+        if (NumElements == 8)  return MVT::v8i1;
+        if (NumElements == 16) return MVT::v16i1;
+        break;
       case MVT::i8:
         if (NumElements == 2)  return MVT::v2i8;
         if (NumElements == 4)  return MVT::v4i8;
@@ -401,12 +431,14 @@ namespace llvm {
         if (NumElements == 32) return MVT::v32i8;
         break;
       case MVT::i16:
+        if (NumElements == 1)  return MVT::v1i16;
         if (NumElements == 2)  return MVT::v2i16;
         if (NumElements == 4)  return MVT::v4i16;
         if (NumElements == 8)  return MVT::v8i16;
         if (NumElements == 16) return MVT::v16i16;
         break;
       case MVT::i32:
+        if (NumElements == 1)  return MVT::v1i32;
         if (NumElements == 2)  return MVT::v2i32;
         if (NumElements == 4)  return MVT::v4i32;
         if (NumElements == 8)  return MVT::v8i32;
@@ -527,6 +559,23 @@ namespace llvm {
     /// isVector - Return true if this is a vector value type.
     bool isVector() const {
       return isSimple() ? V.isVector() : isExtendedVector();
+    }
+
+    /// is16BitVector - Return true if this is a 16-bit vector type.
+    bool is16BitVector() const {
+      if (!isSimple())
+        return isExtended16BitVector();
+
+      return (V == MVT::v2i8  || V==MVT::v1i16 || V == MVT::v16i1);
+    }
+
+    /// is32BitVector - Return true if this is a 32-bit vector type.
+    bool is32BitVector() const {
+      if (!isSimple())
+        return isExtended32BitVector();
+
+      return (V == MVT::v4i8  || V==MVT::v2i16
+          || V==MVT::v1i32);
     }
 
     /// is64BitVector - Return true if this is a 64-bit vector type.
@@ -740,6 +789,8 @@ namespace llvm {
     bool isExtendedFloatingPoint() const;
     bool isExtendedInteger() const;
     bool isExtendedVector() const;
+    bool isExtended16BitVector() const;
+    bool isExtended32BitVector() const;
     bool isExtended64BitVector() const;
     bool isExtended128BitVector() const;
     bool isExtended256BitVector() const;

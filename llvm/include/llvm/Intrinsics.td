@@ -121,15 +121,21 @@ def llvm_metadata_ty   : LLVMType<MetadataVT>;                    // !{...}
 def llvm_x86mmx_ty     : LLVMType<x86mmx>;
 def llvm_ptrx86mmx_ty  : LLVMPointerType<llvm_x86mmx_ty>;         // <1 x i64>*
 
+def llvm_v2i1_ty       : LLVMType<v2i1>;     //  2 x i1
+def llvm_v4i1_ty       : LLVMType<v4i1>;     //  4 x i1
+def llvm_v8i1_ty       : LLVMType<v8i1>;     //  8 x i1
+def llvm_v16i1_ty      : LLVMType<v16i1>;    // 16 x i1
 def llvm_v2i8_ty       : LLVMType<v2i8>;     //  2 x i8
 def llvm_v4i8_ty       : LLVMType<v4i8>;     //  4 x i8
 def llvm_v8i8_ty       : LLVMType<v8i8>;     //  8 x i8
 def llvm_v16i8_ty      : LLVMType<v16i8>;    // 16 x i8
 def llvm_v32i8_ty      : LLVMType<v32i8>;    // 32 x i8
+def llvm_v1i16_ty      : LLVMType<v1i16>;    //  1 x i16
 def llvm_v2i16_ty      : LLVMType<v2i16>;    //  2 x i16
 def llvm_v4i16_ty      : LLVMType<v4i16>;    //  4 x i16
 def llvm_v8i16_ty      : LLVMType<v8i16>;    //  8 x i16
 def llvm_v16i16_ty     : LLVMType<v16i16>;   // 16 x i16
+def llvm_v1i32_ty      : LLVMType<v1i32>;    //  1 x i32
 def llvm_v2i32_ty      : LLVMType<v2i32>;    //  2 x i32
 def llvm_v4i32_ty      : LLVMType<v4i32>;    //  4 x i32
 def llvm_v8i32_ty      : LLVMType<v8i32>;    //  8 x i32
