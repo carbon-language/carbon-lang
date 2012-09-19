@@ -28,7 +28,7 @@ using namespace llvm;
 /// instruction. This will generate a udiv in the process, and Builder's insert
 /// point will be pointing at the udiv (if present, i.e. not folded), ready to
 /// be expanded if the user wishes.
-static Value *GenerateSignedDivisionCode(Value *Dividend, Value *Divisor,
+static Value *generateSignedDivisionCode(Value *Dividend, Value *Divisor,
                                          IRBuilder<> &Builder) {
   // Implementation taken from compiler-rt's __divsi3
 
@@ -64,7 +64,7 @@ static Value *GenerateSignedDivisionCode(Value *Dividend, Value *Divisor,
 /// Generates code to divide two unsigned scalar 32-bit integers. Returns the
 /// quotient, rounded towards 0. Builder's insert point should be pointing at
 /// the udiv instruction.
-static Value *GenerateUnsignedDivisionCode(Value *Dividend, Value *Divisor,
+static Value *generateUnsignedDivisionCode(Value *Dividend, Value *Divisor,
                                            IRBuilder<> &Builder) {
   // The basic algorithm can be found in the compiler-rt project's
   // implementation of __udivsi3.c. Here, we do a lower-level IR based approach
@@ -286,7 +286,7 @@ bool llvm::expandDivision(BinaryOperator *Div) {
   // First prepare the sign if it's a signed division
   if (Div->getOpcode() == Instruction::SDiv) {
     // Lower the code to unsigned division, and reset Div to point to the udiv.
-    Value *Quotient = GenerateSignedDivisionCode(Div->getOperand(0),
+    Value *Quotient = generateSignedDivisionCode(Div->getOperand(0),
                                                 Div->getOperand(1), Builder);
     Div->replaceAllUsesWith(Quotient);
     Div->dropAllReferences();
@@ -301,7 +301,7 @@ bool llvm::expandDivision(BinaryOperator *Div) {
   }
 
   // Insert the unsigned division code
-  Value *Quotient = GenerateUnsignedDivisionCode(Div->getOperand(0),
+  Value *Quotient = generateUnsignedDivisionCode(Div->getOperand(0),
                                                  Div->getOperand(1),
                                                  Builder);
   Div->replaceAllUsesWith(Quotient);
