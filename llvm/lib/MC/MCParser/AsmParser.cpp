@@ -47,7 +47,7 @@ namespace {
 /// \brief Helper class for tracking macro definitions.
 typedef std::vector<AsmToken> MacroArgument;
 typedef std::vector<MacroArgument> MacroArguments;
-typedef StringRef MacroParameter;
+typedef std::pair<StringRef, MacroArgument> MacroParameter;
 typedef std::vector<MacroParameter> MacroParameters;
 
 struct Macro {
@@ -1534,7 +1534,7 @@ bool AsmParser::expandMacro(raw_svector_ostream &OS, StringRef Body,
       StringRef Argument(Begin, I - (Pos +1));
       unsigned Index = 0;
       for (; Index < NParameters; ++Index)
-        if (Parameters[Index] == Argument)
+        if (Parameters[Index].first == Argument)
           break;
 
       // FIXME: We should error at the macro definition.
@@ -1606,10 +1606,27 @@ bool AsmParser::ParseMacroArguments(const Macro *M, MacroArguments &A) {
     if (ParseMacroArgument(MA))
       return true;
 
-    A.push_back(MA);
+    if (!MA.empty() || !NParameters)
+      A.push_back(MA);
+    else if (NParameters) {
+      if (!M->Parameters[Parameter].second.empty())
+        A.push_back(M->Parameters[Parameter].second);
+    }
 
-    if (Lexer.is(AsmToken::EndOfStatement))
+    // At the end of the statement, fill in remaining arguments that have
+    // default values. If there aren't any, then the next argument is
+    // required but missing
+    if (Lexer.is(AsmToken::EndOfStatement)) {
+      if (NParameters && Parameter < NParameters - 1) {
+        if (M->Parameters[Parameter + 1].second.empty())
+          return TokError("macro argument '" +
+                          Twine(M->Parameters[Parameter + 1].first) +
+                          "' is missing");
+        else
+          continue;
+      }
       return false;
+    }
 
     if (Lexer.is(AsmToken::Comma))
       Lex();
@@ -3091,8 +3108,15 @@ bool GenericAsmParser::ParseDirectiveMacro(StringRef Directive,
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     for (;;) {
       MacroParameter Parameter;
-      if (getParser().ParseIdentifier(Parameter))
+      if (getParser().ParseIdentifier(Parameter.first))
         return TokError("expected identifier in '.macro' directive");
+
+      if (getLexer().is(AsmToken::Equal)) {
+        Lex();
+        if (getParser().ParseMacroArgument(Parameter.second))
+          return true;
+      }
+
       Parameters.push_back(Parameter);
 
       if (getLexer().isNot(AsmToken::Comma))
@@ -3308,7 +3332,7 @@ bool AsmParser::ParseDirectiveIrp(SMLoc DirectiveLoc) {
   MacroParameters Parameters;
   MacroParameter Parameter;
 
-  if (ParseIdentifier(Parameter))
+  if (ParseIdentifier(Parameter.first))
     return TokError("expected identifier in '.irp' directive");
 
   Parameters.push_back(Parameter);
@@ -3354,7 +3378,7 @@ bool AsmParser::ParseDirectiveIrpc(SMLoc DirectiveLoc) {
   MacroParameters Parameters;
   MacroParameter Parameter;
 
-  if (ParseIdentifier(Parameter))
+  if (ParseIdentifier(Parameter.first))
     return TokError("expected identifier in '.irpc' directive");
 
   Parameters.push_back(Parameter);
