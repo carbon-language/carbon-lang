@@ -15,6 +15,7 @@
 #define LLVM_SYSTEM_MEMORY_H
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/system_error.h"
 #include <string>
 
 namespace llvm {
@@ -43,6 +44,70 @@ namespace sys {
   /// @brief An abstraction for memory operations.
   class Memory {
   public:
+    enum ProtectionFlags {
+      MF_READ  = 0x1000000,
+      MF_WRITE = 0x2000000,
+      MF_EXEC  = 0x4000000
+    };
+
+    /// This method allocates a block of memory that is suitable for loading
+    /// dynamically generated code (e.g. JIT). An attempt to allocate
+    /// \p NumBytes bytes of virtual memory is made.
+    /// \p NearBlock may point to an existing allocation in which case
+    /// an attempt is made to allocate more memory near the existing block.
+    /// The actual allocated address is not guaranteed to be near the requested
+    /// address.
+    /// \p Flags is used to set the initial protection flags for the block
+    /// of the memory.
+    /// \p EC [out] returns an object describing any error that occurs.
+    ///
+    /// This method may allocate more than the number of bytes requested.  The
+    /// actual number of bytes allocated is indicated in the returned
+    /// MemoryBlock.
+    ///
+    /// The start of the allocated block must be aligned with the
+    /// system allocation granularity (64K on Windows, page size on Linux).
+    /// If the address following \p NearBlock is not so aligned, it will be
+    /// rounded up to the next allocation granularity boundary.
+    ///
+    /// \r a non-null MemoryBlock if the function was successful, 
+    /// otherwise a null MemoryBlock is with \p EC describing the error.
+    ///
+    /// @brief Allocate mapped memory.
+    static MemoryBlock allocateMappedMemory(size_t NumBytes,
+                                            const MemoryBlock *const NearBlock,
+                                            unsigned Flags,
+                                            error_code &EC);
+
+    /// This method releases a block of memory that was allocated with the
+    /// allocateMappedMemory method. It should not be used to release any
+    /// memory block allocated any other way.
+    /// \p Block describes the memory to be released.
+    ///
+    /// \r error_success if the function was successful, or an error_code
+    /// describing the failure if an error occurred.
+    /// 
+    /// @brief Release mapped memory.
+    static error_code releaseMappedMemory(MemoryBlock &Block);
+
+    /// This method sets the protection flags for a block of memory to the
+    /// state specified by /p Flags.  The behavior is not specified if the
+    /// memory was not allocated using the allocateMappedMemory method.
+    /// \p Block describes the memory block to be protected.
+    /// \p Flags specifies the new protection state to be assigned to the block.
+    /// \p ErrMsg [out] returns a string describing any error that occured.
+    ///
+    /// If \p Flags is MF_WRITE, the actual behavior varies
+    /// with the operating system (i.e. MF_READWRITE on Windows) and the
+    /// target architecture (i.e. MF_WRITE -> MF_READWRITE on i386).
+    ///
+    /// \r error_success if the function was successful, or an error_code
+    /// describing the failure if an error occurred.
+    ///
+    /// @brief Set memory protection state.
+    static error_code protectMappedMemory(const MemoryBlock &Block,
+                                          unsigned Flags);
+
     /// This method allocates a block of Read/Write/Execute memory that is
     /// suitable for executing dynamically generated code (e.g. JIT). An
     /// attempt to allocate \p NumBytes bytes of virtual memory is made.
