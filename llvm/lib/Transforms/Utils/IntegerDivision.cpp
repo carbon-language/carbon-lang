@@ -23,11 +23,11 @@
 
 using namespace llvm;
 
-// Generate code to divide two signed integers. Returns the quotient, rounded
-// towards 0. Builder's insert point should be pointing at the sdiv
-// instruction. This will generate a udiv in the process, and Builder's insert
-// point will be pointing at the udiv (if present, i.e. not folded), ready to be
-// expanded if the user wishes.
+/// Generate code to divide two signed integers. Returns the quotient, rounded
+/// towards 0. Builder's insert point should be pointing at the sdiv
+/// instruction. This will generate a udiv in the process, and Builder's insert
+/// point will be pointing at the udiv (if present, i.e. not folded), ready to
+/// be expanded if the user wishes.
 static Value *GenerateSignedDivisionCode(Value *Dividend, Value *Divisor,
                                          IRBuilder<> &Builder) {
   // Implementation taken from compiler-rt's __divsi3
@@ -61,9 +61,9 @@ static Value *GenerateSignedDivisionCode(Value *Dividend, Value *Divisor,
   return Q;
 }
 
-// Generates code to divide two unsigned scalar 32-bit integers. Returns the
-// quotient, rounded towards 0. Builder's insert point should be pointing at the
-// udiv instruction.
+/// Generates code to divide two unsigned scalar 32-bit integers. Returns the
+/// quotient, rounded towards 0. Builder's insert point should be pointing at
+/// the udiv instruction.
 static Value *GenerateUnsignedDivisionCode(Value *Dividend, Value *Divisor,
                                            IRBuilder<> &Builder) {
   // The basic algorithm can be found in the compiler-rt project's
@@ -265,6 +265,14 @@ static Value *GenerateUnsignedDivisionCode(Value *Dividend, Value *Divisor,
   return Q_5;
 }
 
+/// Generate code to divide two integers, replacing Div with the generated
+/// code. This currently generates code similarly to compiler-rt's
+/// implementations, but future work includes generating more specialized code
+/// when more information about the operands are known. Currently only
+/// implements 32bit scalar division, but future work is removing this
+/// limitation.
+///
+/// @brief Replace Div with generated code.
 bool llvm::expandDivision(BinaryOperator *Div) {
   assert((Div->getOpcode() == Instruction::SDiv ||
           Div->getOpcode() == Instruction::UDiv) &&
