@@ -599,7 +599,8 @@ public:
   std::vector<OperandMatchEntry> OperandMatchInfo;
 
   /// Map of Register records to their class information.
-  std::map<Record*, ClassInfo*> RegisterClasses;
+  typedef std::map<Record*, ClassInfo*, LessRecordByID> RegisterClassesTy;
+  RegisterClassesTy RegisterClasses;
 
   /// Map of Predicate records to their subtarget information.
   std::map<Record*, SubtargetFeatureInfo*> SubtargetFeatures;
@@ -2043,7 +2044,7 @@ static void emitValidateOperandClass(AsmMatcherInfo &Info,
   OS << "    MatchClassKind OpKind;\n";
   OS << "    switch (Operand.getReg()) {\n";
   OS << "    default: OpKind = InvalidMatchClass; break;\n";
-  for (std::map<Record*, ClassInfo*>::iterator
+  for (AsmMatcherInfo::RegisterClassesTy::iterator
          it = Info.RegisterClasses.begin(), ie = Info.RegisterClasses.end();
        it != ie; ++it)
     OS << "    case " << Info.Target.getName() << "::"
