@@ -7856,18 +7856,19 @@ TreeTransform<Derived>::TransformCXXTemporaryObjectExpr(
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
-  // Create the local class that will describe the lambda.
-  CXXRecordDecl *Class
-    = getSema().createLambdaClosureType(E->getIntroducerRange(),
-                                        /*KnownDependent=*/false);
-  getDerived().transformedLocalDecl(E->getLambdaClass(), Class);
-
   // Transform the type of the lambda parameters and start the definition of
   // the lambda itself.
   TypeSourceInfo *MethodTy
     = TransformType(E->getCallOperator()->getTypeSourceInfo());
   if (!MethodTy)
     return ExprError();
+
+  // Create the local class that will describe the lambda.
+  CXXRecordDecl *Class
+    = getSema().createLambdaClosureType(E->getIntroducerRange(),
+                                        MethodTy,
+                                        /*KnownDependent=*/false);
+  getDerived().transformedLocalDecl(E->getLambdaClass(), Class);
 
   // Transform lambda parameters.
   llvm::SmallVector<QualType, 4> ParamTypes;

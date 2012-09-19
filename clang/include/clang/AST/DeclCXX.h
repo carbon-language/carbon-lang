@@ -563,9 +563,10 @@ class CXXRecordDecl : public RecordDecl {
   struct LambdaDefinitionData : public DefinitionData {
     typedef LambdaExpr::Capture Capture;
     
-    LambdaDefinitionData(CXXRecordDecl *D, bool Dependent) 
+    LambdaDefinitionData(CXXRecordDecl *D, TypeSourceInfo *Info, bool Dependent) 
       : DefinitionData(D), Dependent(Dependent), NumCaptures(0), 
-        NumExplicitCaptures(0), ManglingNumber(0), ContextDecl(0), Captures(0) 
+        NumExplicitCaptures(0), ManglingNumber(0), ContextDecl(0), Captures(0),
+        MethodTyInfo(Info) 
     {
       IsLambda = true;
     }
@@ -598,7 +599,10 @@ class CXXRecordDecl : public RecordDecl {
     
     /// \brief The list of captures, both explicit and implicit, for this 
     /// lambda.
-    Capture *Captures;    
+    Capture *Captures;
+
+    /// \brief The type of the call method.
+    TypeSourceInfo *MethodTyInfo;
   };
 
   struct DefinitionData &data() {
@@ -705,7 +709,8 @@ public:
                                IdentifierInfo *Id, CXXRecordDecl* PrevDecl=0,
                                bool DelayTypeCreation = false);
   static CXXRecordDecl *CreateLambda(const ASTContext &C, DeclContext *DC,
-                                     SourceLocation Loc, bool DependentLambda);
+                                     TypeSourceInfo *Info, SourceLocation Loc,
+                                     bool DependentLambda);
   static CXXRecordDecl *CreateDeserialized(const ASTContext &C, unsigned ID);
 
   bool isDynamicClass() const {
@@ -1500,7 +1505,11 @@ public:
   bool isDependentLambda() const {
     return isLambda() && getLambdaData().Dependent;
   }
-  
+
+  TypeSourceInfo *getLambdaTypeInfo() const {
+    return getLambdaData().MethodTyInfo;
+  }
+
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) {
     return K >= firstCXXRecord && K <= lastCXXRecord;

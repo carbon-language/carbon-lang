@@ -90,11 +90,12 @@ CXXRecordDecl *CXXRecordDecl::Create(const ASTContext &C, TagKind TK,
 }
 
 CXXRecordDecl *CXXRecordDecl::CreateLambda(const ASTContext &C, DeclContext *DC,
-                                           SourceLocation Loc, bool Dependent) {
+                                           TypeSourceInfo *Info, SourceLocation Loc,
+                                           bool Dependent) {
   CXXRecordDecl* R = new (C) CXXRecordDecl(CXXRecord, TTK_Class, DC, Loc, Loc,
                                            0, 0);
   R->IsBeingDefined = true;
-  R->DefinitionData = new (C) struct LambdaDefinitionData(R, Dependent);
+  R->DefinitionData = new (C) struct LambdaDefinitionData(R, Info, Dependent);
   C.getTypeDeclType(R, /*PrevDecl=*/0);
   return R;
 }

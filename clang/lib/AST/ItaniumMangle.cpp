@@ -1342,11 +1342,8 @@ void CXXNameMangler::mangleLambda(const CXXRecordDecl *Lambda) {
   }
 
   Out << "Ul";
-  DeclarationName Name
-    = getASTContext().DeclarationNames.getCXXOperatorName(OO_Call);
-  const FunctionProtoType *Proto
-    = cast<CXXMethodDecl>(*Lambda->lookup(Name).first)->getType()->
-        getAs<FunctionProtoType>();
+  const FunctionProtoType *Proto = Lambda->getLambdaTypeInfo()->getType()->
+                                   getAs<FunctionProtoType>();
   mangleBareFunctionType(Proto, /*MangleReturnType=*/false);        
   Out << "E";
   
