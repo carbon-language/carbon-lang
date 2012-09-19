@@ -1328,6 +1328,14 @@ public:
     TrackedRecords(records), TheInit(0) {
     init();
   }
+
+  // When copy-constructing a Record, we must still guarantee a globally unique
+  // ID number.  All other fields can be copied normally.
+  Record(const Record &O) :
+    ID(LastID++), Name(O.Name), Locs(O.Locs), TemplateArgs(O.TemplateArgs),
+    Values(O.Values), SuperClasses(O.SuperClasses),
+    TrackedRecords(O.TrackedRecords), TheInit(O.TheInit) { }
+
   ~Record() {}
 
 
