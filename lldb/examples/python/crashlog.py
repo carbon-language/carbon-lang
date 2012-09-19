@@ -26,7 +26,6 @@
 #   PYTHONPATH=/path/to/LLDB.framework/Resources/Python ./crashlog.py ~/Library/Logs/DiagnosticReports/a.crash
 #----------------------------------------------------------------------
 
-import lldb
 import commands
 import cmd
 import datetime
@@ -42,6 +41,38 @@ import string
 import sys
 import time
 import uuid
+
+try: 
+    # Just try for LLDB in case PYTHONPATH is already correctly setup
+    import lldb
+except ImportError:
+    lldb_python_dirs = list()
+    # lldb is not in the PYTHONPATH, try some defaults for the current platform
+    platform_system = platform.system()
+    if platform_system == 'Darwin':
+        # On Darwin, try the currently selected Xcode directory
+        xcode_dir = commands.getoutput("xcode-select --print-path")
+        if xcode_dir:
+            lldb_python_dirs.append(os.path.realpath(xcode_dir + '/../SharedFrameworks/LLDB.framework/Resources/Python'))
+            lldb_python_dirs.append(xcode_dir + '/Library/PrivateFrameworks/LLDB.framework/Resources/Python')
+        lldb_python_dirs.append('/System/Library/PrivateFrameworks/LLDB.framework/Resources/Python')
+    success = False
+    for lldb_python_dir in lldb_python_dirs:
+        if os.path.exists(lldb_python_dir):
+            if not (sys.path.__contains__(lldb_python_dir)):
+                sys.path.append(lldb_python_dir)
+                try: 
+                    import lldb
+                except ImportError:
+                    pass
+                else:
+                    print 'imported lldb from: "%s"' % (lldb_python_dir)
+                    success = True
+                    break
+    if not success:
+        print "error: couldn't locate the 'lldb' module, please set PYTHONPATH correctly"
+        sys.exit(1)
+
 from lldb.utils import symbolication
 
 PARSE_MODE_NORMAL = 0
@@ -740,7 +771,6 @@ be disassembled and lookups can be performed using the addresses found in the cr
                 SymbolicateCrashLog (crash_log, options)
 if __name__ == '__main__':
     # Create a new debugger instance
-    print 'main'
     lldb.debugger = lldb.SBDebugger.Create()
     SymbolicateCrashLogs (sys.argv[1:])
 elif getattr(lldb, 'debugger', None):
