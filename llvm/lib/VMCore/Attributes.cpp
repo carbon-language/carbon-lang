@@ -28,55 +28,55 @@ using namespace llvm;
 
 std::string Attribute::getAsString(Attributes Attrs) {
   std::string Result;
-  if (Attrs & Attribute::ZExt)
+  if (Attrs.hasZExtAttr())
     Result += "zeroext ";
-  if (Attrs & Attribute::SExt)
+  if (Attrs.hasSExtAttr())
     Result += "signext ";
-  if (Attrs & Attribute::NoReturn)
+  if (Attrs.hasNoReturnAttr())
     Result += "noreturn ";
-  if (Attrs & Attribute::NoUnwind)
+  if (Attrs.hasNoUnwindAttr())
     Result += "nounwind ";
-  if (Attrs & Attribute::UWTable)
+  if (Attrs.hasUWTableAttr())
     Result += "uwtable ";
-  if (Attrs & Attribute::ReturnsTwice)
+  if (Attrs.hasReturnsTwiceAttr())
     Result += "returns_twice ";
-  if (Attrs & Attribute::InReg)
+  if (Attrs.hasInRegAttr())
     Result += "inreg ";
-  if (Attrs & Attribute::NoAlias)
+  if (Attrs.hasNoAliasAttr())
     Result += "noalias ";
-  if (Attrs & Attribute::NoCapture)
+  if (Attrs.hasNoCaptureAttr())
     Result += "nocapture ";
-  if (Attrs & Attribute::StructRet)
+  if (Attrs.hasStructRetAttr())
     Result += "sret ";
-  if (Attrs & Attribute::ByVal)
+  if (Attrs.hasByValAttr())
     Result += "byval ";
-  if (Attrs & Attribute::Nest)
+  if (Attrs.hasNestAttr())
     Result += "nest ";
-  if (Attrs & Attribute::ReadNone)
+  if (Attrs.hasReadNoneAttr())
     Result += "readnone ";
-  if (Attrs & Attribute::ReadOnly)
+  if (Attrs.hasReadOnlyAttr())
     Result += "readonly ";
-  if (Attrs & Attribute::OptimizeForSize)
+  if (Attrs.hasOptimizeForSizeAttr())
     Result += "optsize ";
-  if (Attrs & Attribute::NoInline)
+  if (Attrs.hasNoInlineAttr())
     Result += "noinline ";
-  if (Attrs & Attribute::InlineHint)
+  if (Attrs.hasInlineHintAttr())
     Result += "inlinehint ";
-  if (Attrs & Attribute::AlwaysInline)
+  if (Attrs.hasAlwaysInlineAttr())
     Result += "alwaysinline ";
-  if (Attrs & Attribute::StackProtect)
+  if (Attrs.hasStackProtectAttr())
     Result += "ssp ";
-  if (Attrs & Attribute::StackProtectReq)
+  if (Attrs.hasStackProtectReqAttr())
     Result += "sspreq ";
-  if (Attrs & Attribute::NoRedZone)
+  if (Attrs.hasNoRedZoneAttr())
     Result += "noredzone ";
-  if (Attrs & Attribute::NoImplicitFloat)
+  if (Attrs.hasNoImplicitFloatAttr())
     Result += "noimplicitfloat ";
-  if (Attrs & Attribute::Naked)
+  if (Attrs.hasNakedAttr())
     Result += "naked ";
-  if (Attrs & Attribute::NonLazyBind)
+  if (Attrs.hasNonLazyBindAttr())
     Result += "nonlazybind ";
-  if (Attrs & Attribute::AddressSafety)
+  if (Attrs.hasAddressSafetyAttr())
     Result += "address_safety ";
   if (Attrs & Attribute::StackAlignment) {
     Result += "alignstack(";
