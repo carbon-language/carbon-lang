@@ -172,6 +172,20 @@ template<typename...T> int PR12917<T...>::n[3] = {
 PR12917<int, char, double> pr12917;
 int *pr12917_p = PR12917<int, int>::n;
 
+namespace PR12808 {
+  template <typename> struct B {
+    int a;
+    template <typename L> constexpr B(L&& x) : a(x()) { }
+  };
+  template <typename> void b(int) {
+    [&]{ (void)B<int>([&]{ return 1; }); }();
+  }
+  void f() {
+    b<int>(1);
+  }
+  // CHECK: define linkonce_odr void @_ZZN7PR128081bIiEEviENKS0_IiEUlvE_clEv
+  // CHECK: define linkonce_odr i32 @_ZZZN7PR128081bIiEEviENKS0_IiEUlvE_clEvENKUlvE_clEv
+}
 
 // CHECK: define linkonce_odr void @_Z1fIZZNK23TestNestedInstantiationclEvENKUlvE_clEvEUlvE_EvT_
 
