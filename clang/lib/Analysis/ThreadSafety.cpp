@@ -2374,6 +2374,20 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
     }
   }
 
+
+  // Check to make sure that the exit block is reachable
+  bool ExitUnreachable = true;
+  for (CFGBlock::const_pred_iterator PI = CFGraph->getExit().pred_begin(),
+       PE  = CFGraph->getExit().pred_end(); PI != PE; ++PI) {
+    if (!(*PI)->hasNoReturnElement()) {
+      ExitUnreachable = false;
+      break;
+    }
+  }
+  // Skip the final check if the exit block is unreachable.
+  if (ExitUnreachable)
+    return;
+
   CFGBlockInfo *Initial = &BlockInfo[CFGraph->getEntry().getBlockID()];
   CFGBlockInfo *Final   = &BlockInfo[CFGraph->getExit().getBlockID()];
 

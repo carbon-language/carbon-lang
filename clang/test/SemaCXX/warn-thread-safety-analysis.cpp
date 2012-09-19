@@ -3419,3 +3419,37 @@ void test2() {
 }
 
 };  // end namespace ComplexNameTest
+
+
+namespace UnreachableExitTest {
+
+class FemmeFatale {
+public:
+  FemmeFatale();
+  ~FemmeFatale() __attribute__((noreturn));
+};
+
+void exitNow() __attribute__((noreturn));
+
+Mutex fatalmu_;
+
+void test1() EXCLUSIVE_LOCKS_REQUIRED(fatalmu_) {
+  exitNow();
+}
+
+void test2() EXCLUSIVE_LOCKS_REQUIRED(fatalmu_) {
+  FemmeFatale femme;
+}
+
+bool c;
+
+void test3() EXCLUSIVE_LOCKS_REQUIRED(fatalmu_) {
+  if (c) {
+    exitNow();
+  }
+  else {
+    FemmeFatale femme;
+  }
+}
+
+}   // end namespace UnreachableExitTest
