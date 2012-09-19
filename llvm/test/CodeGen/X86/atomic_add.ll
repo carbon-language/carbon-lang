@@ -178,7 +178,8 @@ entry:
 define void @sub2(i16* nocapture %p, i32 %v) nounwind ssp {
 entry:
 ; CHECK: sub2:
-; CHECK: negl
+; CHECK-NOT: negl
+; CHECK: subw
 	%0 = trunc i32 %v to i16		; <i16> [#uses=1]
   %1 = atomicrmw sub i16* %p, i16 %0 monotonic
   ret void
