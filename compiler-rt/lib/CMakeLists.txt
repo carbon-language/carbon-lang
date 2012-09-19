@@ -3,7 +3,10 @@
 add_subdirectory(asan)
 add_subdirectory(interception)
 add_subdirectory(sanitizer_common)
-add_subdirectory(tsan)
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+  # ThreadSanitizer is supported on Linux only.
+  add_subdirectory(tsan)
+endif()
 
 # FIXME: Add support for the profile library.
 
