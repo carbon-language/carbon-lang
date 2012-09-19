@@ -270,6 +270,21 @@ unsigned CodeGenSchedModels::getSchedRWIdx(Record *Def, bool IsRead,
   return 0;
 }
 
+bool CodeGenSchedModels::hasReadOfWrite(Record *WriteDef) const {
+  for (unsigned i = 0, e = SchedReads.size(); i < e; ++i) {
+    Record *ReadDef = SchedReads[i].TheDef;
+    if (!ReadDef || !ReadDef->isSubClassOf("ProcReadAdvance"))
+      continue;
+
+    RecVec ValidWrites = ReadDef->getValueAsListOfDefs("ValidWrites");
+    if (std::find(ValidWrites.begin(), ValidWrites.end(), WriteDef)
+        != ValidWrites.end()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 namespace llvm {
 void splitSchedReadWrites(const RecVec &RWDefs,
                           RecVec &WriteDefs, RecVec &ReadDefs) {

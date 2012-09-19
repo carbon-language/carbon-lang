@@ -284,6 +284,9 @@ public:
 
   unsigned getSchedRWIdx(Record *Def, bool IsRead, unsigned After = 0) const;
 
+  // Return true if the given write record is referenced by a ReadAdvance.
+  bool hasReadOfWrite(Record *WriteDef) const;
+
   // Check if any instructions are assigned to an explicit itinerary class other
   // than NoItinerary.
   bool hasItineraryClasses() const { return NumItineraryClasses > 0; }

@@ -36,6 +36,7 @@ class SubtargetEmitter {
     std::vector<std::vector<MCSchedClassDesc> > ProcSchedClasses;
     std::vector<MCWriteProcResEntry> WriteProcResources;
     std::vector<MCWriteLatencyEntry> WriteLatencies;
+    std::vector<std::string> WriterNames;
     std::vector<MCReadAdvanceEntry> ReadAdvanceEntries;
 
     // Reserve an invalid entry at index 0
@@ -43,6 +44,7 @@ class SubtargetEmitter {
       ProcSchedClasses.resize(1);
       WriteProcResources.resize(1);
       WriteLatencies.resize(1);
+      WriterNames.push_back("InvalidWrite");
       ReadAdvanceEntries.resize(1);
     }
   };
@@ -774,6 +776,7 @@ void SubtargetEmitter::GenSchedClassTables(const CodeGenProcModel &ProcModel,
     // Sum resources across all operand writes.
     std::vector<MCWriteProcResEntry> WriteProcResources;
     std::vector<MCWriteLatencyEntry> WriteLatencies;
+    std::vector<std::string> WriterNames;
     std::vector<MCReadAdvanceEntry> ReadAdvanceEntries;
     for (IdxIter WI = Writes.begin(), WE = Writes.end(); WI != WE; ++WI) {
       IdxVec WriteSeq;
@@ -782,7 +785,14 @@ void SubtargetEmitter::GenSchedClassTables(const CodeGenProcModel &ProcModel,
       // For each operand, create a latency entry.
       MCWriteLatencyEntry WLEntry;
       WLEntry.Cycles = 0;
-      WLEntry.WriteResourceID = WriteSeq.back();
+      unsigned WriteID = WriteSeq.back();
+      WriterNames.push_back(SchedModels.getSchedWrite(WriteID).Name);
+      // If this Write is not referenced by a ReadAdvance, don't distinguish it
+      // from other WriteLatency entries.
+      if (!SchedModels.hasReadOfWrite(SchedModels.getSchedWrite(WriteID).TheDef)) {
+        WriteID = 0;
+      }
+      WLEntry.WriteResourceID = WriteID;
 
       for (IdxIter WSI = WriteSeq.begin(), WSE = WriteSeq.end();
            WSI != WSE; ++WSI) {
@@ -881,12 +891,22 @@ void SubtargetEmitter::GenSchedClassTables(const CodeGenProcModel &ProcModel,
       std::search(SchedTables.WriteLatencies.begin(),
                   SchedTables.WriteLatencies.end(),
                   WriteLatencies.begin(), WriteLatencies.end());
-    if (WLPos != SchedTables.WriteLatencies.end())
-      SCDesc.WriteLatencyIdx = WLPos - SchedTables.WriteLatencies.begin();
+    if (WLPos != SchedTables.WriteLatencies.end()) {
+      unsigned idx = WLPos - SchedTables.WriteLatencies.begin();
+      SCDesc.WriteLatencyIdx = idx;
+      for (unsigned i = 0, e = WriteLatencies.size(); i < e; ++i)
+        if (SchedTables.WriterNames[idx + i].find(WriterNames[i]) ==
+            std::string::npos) {
+          SchedTables.WriterNames[idx + i] += std::string("_") + WriterNames[i];
+        }
+    }
     else {
       SCDesc.WriteLatencyIdx = SchedTables.WriteLatencies.size();
-      SchedTables.WriteLatencies.insert(WLPos, WriteLatencies.begin(),
-                                     WriteLatencies.end());
+      SchedTables.WriteLatencies.insert(SchedTables.WriteLatencies.end(),
+                                        WriteLatencies.begin(),
+                                        WriteLatencies.end());
+      SchedTables.WriterNames.insert(SchedTables.WriterNames.end(),
+                                     WriterNames.begin(), WriterNames.end());
     }
     // ReadAdvanceEntries must remain in operand order.
     SCDesc.NumReadAdvanceEntries = ReadAdvanceEntries.size();
@@ -935,8 +955,7 @@ void SubtargetEmitter::EmitSchedClassTables(SchedClassTables &SchedTables,
        << format("%2d", WLEntry.WriteResourceID) << "}";
     if (WLIdx + 1 < WLEnd)
       OS << ',';
-    OS << " // #" << WLIdx << " "
-       << SchedModels.getSchedWrite(WLEntry.WriteResourceID).Name << '\n';
+    OS << " // #" << WLIdx << " " << SchedTables.WriterNames[WLIdx] << '\n';
   }
   OS << "}; // " << Target << "WriteLatencyTable\n";
 
