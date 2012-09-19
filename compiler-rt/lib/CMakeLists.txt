@@ -1,8 +1,12 @@
 # First, add the subdirectories which contain feature-based runtime libraries
 # and several convenience helper libraries.
-add_subdirectory(asan)
-add_subdirectory(interception)
-add_subdirectory(sanitizer_common)
+if(CMAKE_SYSTEM_NAME MATCHES "Darwin|Linux|Windows")
+  # AddressSanitizer is supported on Linux and Mac OS X.
+  # Windows support is work in progress.
+  add_subdirectory(asan)
+  add_subdirectory(interception)
+  add_subdirectory(sanitizer_common)
+endif()
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
   # ThreadSanitizer is supported on Linux only.
   add_subdirectory(tsan)
