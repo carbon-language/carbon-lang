@@ -574,10 +574,6 @@ bool EEVT::TypeSet::EnforceVectorSubVectorTypeIs(EEVT::TypeSet &VTOperand,
 //===----------------------------------------------------------------------===//
 // Helpers for working with extended types.
 
-bool RecordPtrCmp::operator()(const Record *LHS, const Record *RHS) const {
-  return LHS->getID() < RHS->getID();
-}
-
 /// Dependent variable map for CodeGenDAGPattern variant generation
 typedef std::map<std::string, int> DepVarMap;
 
@@ -2748,7 +2744,7 @@ void CodeGenDAGPatterns::ParseInstructions() {
   }
 
   // If we can, convert the instructions to be patterns that are matched!
-  for (std::map<Record*, DAGInstruction, RecordPtrCmp>::iterator II =
+  for (std::map<Record*, DAGInstruction, LessRecordByID>::iterator II =
         Instructions.begin(),
        E = Instructions.end(); II != E; ++II) {
     DAGInstruction &TheInst = II->second;

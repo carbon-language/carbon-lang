@@ -1609,6 +1609,16 @@ struct LessRecord {
   }
 };
 
+/// LessRecordByID - Sorting predicate to sort record pointers by their
+/// unique ID. If you just need a deterministic order, use this, since it
+/// just compares two `unsigned`; the other sorting predicates require
+/// string manipulation.
+struct LessRecordByID {
+  bool operator()(const Record *LHS, const Record *RHS) const {
+    return LHS->getID() < RHS->getID();
+  }
+};
+
 /// LessRecordFieldName - Sorting predicate to sort record pointers by their
 /// name field.
 ///

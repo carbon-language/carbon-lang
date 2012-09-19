@@ -661,23 +661,18 @@ public:
   unsigned getPatternComplexity(const CodeGenDAGPatterns &CGP) const;
 };
 
-// Deterministic comparison of Record*.
-struct RecordPtrCmp {
-  bool operator()(const Record *LHS, const Record *RHS) const;
-};
-
 class CodeGenDAGPatterns {
   RecordKeeper &Records;
   CodeGenTarget Target;
   std::vector<CodeGenIntrinsic> Intrinsics;
   std::vector<CodeGenIntrinsic> TgtIntrinsics;
 
-  std::map<Record*, SDNodeInfo, RecordPtrCmp> SDNodes;
-  std::map<Record*, std::pair<Record*, std::string>, RecordPtrCmp> SDNodeXForms;
-  std::map<Record*, ComplexPattern, RecordPtrCmp> ComplexPatterns;
-  std::map<Record*, TreePattern*, RecordPtrCmp> PatternFragments;
-  std::map<Record*, DAGDefaultOperand, RecordPtrCmp> DefaultOperands;
-  std::map<Record*, DAGInstruction, RecordPtrCmp> Instructions;
+  std::map<Record*, SDNodeInfo, LessRecordByID> SDNodes;
+  std::map<Record*, std::pair<Record*, std::string>, LessRecordByID> SDNodeXForms;
+  std::map<Record*, ComplexPattern, LessRecordByID> ComplexPatterns;
+  std::map<Record*, TreePattern*, LessRecordByID> PatternFragments;
+  std::map<Record*, DAGDefaultOperand, LessRecordByID> DefaultOperands;
+  std::map<Record*, DAGInstruction, LessRecordByID> Instructions;
 
   // Specific SDNode definitions:
   Record *intrinsic_void_sdnode;
@@ -708,7 +703,7 @@ public:
     return SDNodeXForms.find(R)->second;
   }
 
-  typedef std::map<Record*, NodeXForm, RecordPtrCmp>::const_iterator
+  typedef std::map<Record*, NodeXForm, LessRecordByID>::const_iterator
           nx_iterator;
   nx_iterator nx_begin() const { return SDNodeXForms.begin(); }
   nx_iterator nx_end() const { return SDNodeXForms.end(); }
@@ -758,7 +753,7 @@ public:
     return PatternFragments.find(R)->second;
   }
 
-  typedef std::map<Record*, TreePattern*, RecordPtrCmp>::const_iterator
+  typedef std::map<Record*, TreePattern*, LessRecordByID>::const_iterator
           pf_iterator;
   pf_iterator pf_begin() const { return PatternFragments.begin(); }
   pf_iterator pf_end() const { return PatternFragments.end(); }
