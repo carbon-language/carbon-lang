@@ -116,13 +116,6 @@ Function *CloneFunction(const Function *F,
                         bool ModuleLevelChanges,
                         ClonedCodeInfo *CodeInfo = 0);
 
-/// CloneFunction - Version of the function that doesn't need the VMap.
-///
-inline Function *CloneFunction(const Function *F, ClonedCodeInfo *CodeInfo = 0){
-  ValueToValueMapTy VMap;
-  return CloneFunction(F, VMap, CodeInfo);
-}
-
 /// Clone OldFunc into NewFunc, transforming the old arguments into references
 /// to VMap values.  Note that if NewFunc already has basic blocks, the ones
 /// cloned into it will be added to the end of the function.  This function
