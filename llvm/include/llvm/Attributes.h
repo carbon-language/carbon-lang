@@ -106,6 +106,87 @@ public:
   Attributes() : Bits(0) { }
   explicit Attributes(uint64_t Val) : Bits(Val) { }
   /*implicit*/ Attributes(Attribute::AttrConst Val) : Bits(Val.v) { }
+
+  // Attribute query methods.
+  // FIXME: StackAlignment & Alignment attributes have no predicate methods.
+  bool hasAttributes() const { return Bits != 0; }
+
+  bool hasZExtAttr() const {
+    return Bits & Attribute::ZExt_i;
+  }
+  bool hasSExtAttr() const {
+    return Bits & Attribute::SExt_i;
+  }
+  bool hasNoReturnAttr() const {
+    return Bits & Attribute::NoReturn_i;
+  }
+  bool hasInRegAttr() const {
+    return Bits & Attribute::InReg_i;
+  }
+  bool hasStructRetAttr() const {
+    return Bits & Attribute::StructRet_i;
+  }
+  bool hasNoUnwindAttr() const {
+    return Bits & Attribute::NoUnwind_i;
+  }
+  bool hasNoAliasAttr() const {
+    return Bits & Attribute::NoAlias_i;
+  }
+  bool hasByValAttr() const {
+    return Bits & Attribute::ByVal_i;
+  }
+  bool hasNestAttr() const {
+    return Bits & Attribute::Nest_i;
+  }
+  bool hasReadNoneAttr() const {
+    return Bits & Attribute::ReadNone_i;
+  }
+  bool hasReadOnlyAttr() const {
+    return Bits & Attribute::ReadOnly_i;
+  }
+  bool hasNoInlineAttr() const {
+    return Bits & Attribute::NoInline_i;
+  }
+  bool hasAlwaysInlineAttr() const {
+    return Bits & Attribute::AlwaysInline_i;
+  }
+  bool hasOptimizeForSizeAttr() const {
+    return Bits & Attribute::OptimizeForSize_i;
+  }
+  bool hasStackProtectAttr() const {
+    return Bits & Attribute::StackProtect_i;
+  }
+  bool hasStackProtectReqAttr() const {
+    return Bits & Attribute::StackProtectReq_i;
+  }
+  bool hasNoCaptureAttr() const {
+    return Bits & Attribute::NoCapture_i;
+  }
+  bool hasNoRedZoneAttr() const {
+    return Bits & Attribute::NoRedZone_i;
+  }
+  bool hasNoImplicitFloatAttr() const {
+    return Bits & Attribute::NoImplicitFloat_i;
+  }
+  bool hasNakedAttr() const {
+    return Bits & Attribute::Naked_i;
+  }
+  bool hasInlineHintAttr() const {
+    return Bits & Attribute::InlineHint_i;
+  }
+  bool hasReturnsTwiceAttr() const {
+    return Bits & Attribute::ReturnsTwice_i;
+  }
+  bool hasUWTableAttr() const {
+    return Bits & Attribute::UWTable_i;
+  }
+  bool hasNonLazyBindAttr() const {
+    return Bits & Attribute::NonLazyBind_i;
+  }
+  bool hasAddressSafetyAttr() const {
+    return Bits & Attribute::AddressSafety_i;
+  }
+
   // This is a "safe bool() operator".
   operator const void *() const { return Bits ? this : 0; }
   bool isEmptyOrSingleton() const { return (Bits & (Bits - 1)) == 0; }

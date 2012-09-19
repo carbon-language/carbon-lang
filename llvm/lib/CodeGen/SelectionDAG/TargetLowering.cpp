@@ -996,9 +996,9 @@ void llvm::GetReturnInfo(Type* ReturnType, Attributes attr,
     EVT VT = ValueVTs[j];
     ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
 
-    if (attr & Attribute::SExt)
+    if (attr.hasSExtAttr())
       ExtendKind = ISD::SIGN_EXTEND;
-    else if (attr & Attribute::ZExt)
+    else if (attr.hasZExtAttr())
       ExtendKind = ISD::ZERO_EXTEND;
 
     // FIXME: C calling convention requires the return type to be promoted to
@@ -1016,18 +1016,17 @@ void llvm::GetReturnInfo(Type* ReturnType, Attributes attr,
 
     // 'inreg' on function refers to return value
     ISD::ArgFlagsTy Flags = ISD::ArgFlagsTy();
-    if (attr & Attribute::InReg)
+    if (attr.hasInRegAttr())
       Flags.setInReg();
 
     // Propagate extension type if any
-    if (attr & Attribute::SExt)
+    if (attr.hasSExtAttr())
       Flags.setSExt();
-    else if (attr & Attribute::ZExt)
+    else if (attr.hasZExtAttr())
       Flags.setZExt();
 
-    for (unsigned i = 0; i < NumParts; ++i) {
+    for (unsigned i = 0; i < NumParts; ++i)
       Outs.push_back(ISD::OutputArg(Flags, PartVT, /*isFixed=*/true));
-    }
   }
 }
 
