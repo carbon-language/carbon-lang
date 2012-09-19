@@ -2757,30 +2757,32 @@ public:
   void EmitKey(raw_ostream& Out, DeclarationName Name, unsigned) {
     using namespace clang::io;
 
-    assert(Name.getNameKind() < 0x100 && "Invalid name kind ?");
     Emit8(Out, Name.getNameKind());
     switch (Name.getNameKind()) {
     case DeclarationName::Identifier:
       Emit32(Out, Writer.getIdentifierRef(Name.getAsIdentifierInfo()));
-      break;
+      return;
     case DeclarationName::ObjCZeroArgSelector:
     case DeclarationName::ObjCOneArgSelector:
     case DeclarationName::ObjCMultiArgSelector:
       Emit32(Out, Writer.getSelectorRef(Name.getObjCSelector()));
-      break;
+      return;
     case DeclarationName::CXXOperatorName:
-      assert(Name.getCXXOverloadedOperator() < 0x100 && "Invalid operator ?");
+      assert(Name.getCXXOverloadedOperator() < NUM_OVERLOADED_OPERATORS &&
+             "Invalid operator?");
       Emit8(Out, Name.getCXXOverloadedOperator());
-      break;
+      return;
     case DeclarationName::CXXLiteralOperatorName:
       Emit32(Out, Writer.getIdentifierRef(Name.getCXXLiteralIdentifier()));
-      break;
+      return;
     case DeclarationName::CXXConstructorName:
     case DeclarationName::CXXDestructorName:
     case DeclarationName::CXXConversionFunctionName:
     case DeclarationName::CXXUsingDirective:
-      break;
+      return;
     }
+
+    llvm_unreachable("Invalid name kind?");
   }
 
   void EmitData(raw_ostream& Out, key_type_ref,
