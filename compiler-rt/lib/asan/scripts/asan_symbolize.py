@@ -52,6 +52,8 @@ class LLVMSymbolizer(Symbolizer):
     self.symbolizer_path = symbolizer_path
     self.pipe = self.open_llvm_symbolizer()
   def open_llvm_symbolizer(self):
+    if not os.path.exists(self.symbolizer_path):
+      return None
     cmd = [self.symbolizer_path,
            "--use-symbol-table=false",  # FIXME: Remove this when libObject is
                                         # fixed.
@@ -65,6 +67,8 @@ class LLVMSymbolizer(Symbolizer):
 
   def symbolize(self, addr, binary, offset):
     """Overrides Symbolizer.symbolize"""
+    if not self.pipe:
+      return None
     result = []
     try:
       symbolizer_input = "%s %s" % (binary, offset)
