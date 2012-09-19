@@ -354,6 +354,7 @@ my %CompilerLinkerOptionMap = (
   '-arch' => 1,
   '-m32' => 0,
   '-m64' => 0,
+  '-stdlib' => 0, # This is really a 1 argument, but always has '='
   '-v' => 0,
   '-fpascal-strings' => 0,
   '-mmacosx-version-min' => 0, # This is really a 1 argument, but always has '='
