@@ -1,4 +1,4 @@
-; RUN: llc -march=sparc  < %s | FileCheck %s
+; RUN: llc -march=sparc < %s | FileCheck %s
 
 ; Check that all the switches turned into lookup tables by SimplifyCFG are
 ; turned back into switches for targets that don't like lookup tables.
