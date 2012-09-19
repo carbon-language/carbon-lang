@@ -51,9 +51,12 @@ class CallAnalyzer : public InstVisitor<CallAnalyzer, bool> {
   int Cost;
   const bool AlwaysInline;
 
-  bool IsRecursive;
+  bool IsCallerRecursive;
+  bool IsRecursiveCall;
   bool ExposesReturnsTwice;
   bool HasDynamicAlloca;
+  /// Number of bytes allocated statically by the callee.
+  uint64_t AllocatedSize;
   unsigned NumInstructions, NumVectorInstructions;
   int FiftyPercentVectorBonus, TenPercentVectorBonus;
   int VectorBonus;
@@ -126,7 +129,8 @@ public:
   CallAnalyzer(const TargetData *TD, Function &Callee, int Threshold)
     : TD(TD), F(Callee), Threshold(Threshold), Cost(0),
       AlwaysInline(F.hasFnAttr(Attribute::AlwaysInline)),
-      IsRecursive(false), ExposesReturnsTwice(false), HasDynamicAlloca(false),
+      IsCallerRecursive(false), IsRecursiveCall(false),
+      ExposesReturnsTwice(false), HasDynamicAlloca(false), AllocatedSize(0),
       NumInstructions(0), NumVectorInstructions(0),
       FiftyPercentVectorBonus(0), TenPercentVectorBonus(0), VectorBonus(0),
       NumConstantArgs(0), NumConstantOffsetPtrArgs(0), NumAllocaArgs(0),
@@ -268,6 +272,13 @@ bool CallAnalyzer::accumulateGEPOffset(GEPOperator &GEP, APInt &Offset) {
 bool CallAnalyzer::visitAlloca(AllocaInst &I) {
   // FIXME: Check whether inlining will turn a dynamic alloca into a static
   // alloca, and handle that case.
+
+  // Accumulate the allocated size.
+  if (I.isStaticAlloca()) {
+    Type *Ty = I.getAllocatedType();
+    AllocatedSize += (TD ? TD->getTypeAllocSize(Ty) :
+                      Ty->getPrimitiveSizeInBits());
+  }
 
   // We will happily inline static alloca instructions or dynamic alloca
   // instructions in always-inline situations.
@@ -625,7 +636,7 @@ bool CallAnalyzer::visitCallSite(CallSite CS) {
     if (F == CS.getInstruction()->getParent()->getParent()) {
       // This flag will fully abort the analysis, so don't bother with anything
       // else.
-      IsRecursive = true;
+      IsRecursiveCall = true;
       return false;
     }
 
@@ -712,7 +723,14 @@ bool CallAnalyzer::analyzeBlock(BasicBlock *BB) {
       Cost += InlineConstants::InstrCost;
 
     // If the visit this instruction detected an uninlinable pattern, abort.
-    if (IsRecursive || ExposesReturnsTwice || HasDynamicAlloca)
+    if (IsRecursiveCall || ExposesReturnsTwice || HasDynamicAlloca)
+      return false;
+
+    // If the caller is a recursive function then we don't want to inline
+    // functions which allocate a lot of stack space because it would increase
+    // the caller stack usage dramatically.
+    if (IsCallerRecursive &&
+        AllocatedSize > InlineConstants::TotalAllocaSizeRecursiveCaller)
       return false;
 
     if (NumVectorInstructions > NumInstructions/2)
@@ -831,12 +849,14 @@ bool CallAnalyzer::analyzeCall(CallSite CS) {
       Cost += InlineConstants::LastCallToStaticBonus;
 
     // If the instruction after the call, or if the normal destination of the
-    // invoke is an unreachable instruction, the function is noreturn.  As such,
-    // there is little point in inlining this unless there is literally zero cost.
-    if (InvokeInst *II = dyn_cast<InvokeInst>(CS.getInstruction())) {
+    // invoke is an unreachable instruction, the function is noreturn. As such,
+    // there is little point in inlining this unless there is literally zero
+    // cost.
+    Instruction *Instr = CS.getInstruction();
+    if (InvokeInst *II = dyn_cast<InvokeInst>(Instr)) {
       if (isa<UnreachableInst>(II->getNormalDest()->begin()))
         Threshold = 1;
-    } else if (isa<UnreachableInst>(++BasicBlock::iterator(CS.getInstruction())))
+    } else if (isa<UnreachableInst>(++BasicBlock::iterator(Instr)))
       Threshold = 1;
 
     // If this function uses the coldcc calling convention, prefer not to inline
@@ -851,6 +871,20 @@ bool CallAnalyzer::analyzeCall(CallSite CS) {
 
   if (F.empty())
     return true;
+
+  Function *Caller = CS.getInstruction()->getParent()->getParent();
+  // Check if the caller function is recursive itself.
+  for (Value::use_iterator U = Caller->use_begin(), E = Caller->use_end();
+       U != E; ++U) {
+    CallSite Site(cast<Value>(*U));
+    if (!Site)
+      continue;
+    Instruction *I = Site.getInstruction();
+    if (I->getParent()->getParent() == Caller) {
+      IsCallerRecursive = true;
+      break;
+    }
+  }
 
   // Track whether we've seen a return instruction. The first return
   // instruction is free, as at least one will usually disappear in inlining.
@@ -908,9 +942,9 @@ bool CallAnalyzer::analyzeCall(CallSite CS) {
 
     // We never want to inline functions that contain an indirectbr.  This is
     // incorrect because all the blockaddress's (in static global initializers
-    // for example) would be referring to the original function, and this indirect
-    // jump would jump from the inlined copy of the function into the original
-    // function which is extremely undefined behavior.
+    // for example) would be referring to the original function, and this
+    // indirect jump would jump from the inlined copy of the function into the 
+    // original function which is extremely undefined behavior.
     // FIXME: This logic isn't really right; we can safely inline functions
     // with indirectbr's as long as no other function or global references the
     // blockaddress of a block within the current function.  And as a QOI issue,
@@ -928,8 +962,16 @@ bool CallAnalyzer::analyzeCall(CallSite CS) {
     // Analyze the cost of this block. If we blow through the threshold, this
     // returns false, and we can bail on out.
     if (!analyzeBlock(BB)) {
-      if (IsRecursive || ExposesReturnsTwice || HasDynamicAlloca)
+      if (IsRecursiveCall || ExposesReturnsTwice || HasDynamicAlloca)
         return false;
+
+      // If the caller is a recursive function then we don't want to inline
+      // functions which allocate a lot of stack space because it would increase
+      // the caller stack usage dramatically.
+      if (IsCallerRecursive &&
+          AllocatedSize > InlineConstants::TotalAllocaSizeRecursiveCaller)
+        return false;
+
       break;
     }
 
@@ -955,7 +997,8 @@ bool CallAnalyzer::analyzeCall(CallSite CS) {
 
     // If we're unable to select a particular successor, just count all of
     // them.
-    for (unsigned TIdx = 0, TSize = TI->getNumSuccessors(); TIdx != TSize; ++TIdx)
+    for (unsigned TIdx = 0, TSize = TI->getNumSuccessors(); TIdx != TSize;
+         ++TIdx)
       BBWorklist.insert(TI->getSuccessor(TIdx));
 
     // If we had any successors at this point, than post-inlining is likely to
@@ -1003,7 +1046,8 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS, Function *Callee,
       Callee->hasFnAttr(Attribute::NoInline) || CS.isNoInline())
     return llvm::InlineCost::getNever();
 
-  DEBUG(llvm::dbgs() << "      Analyzing call of " << Callee->getName() << "...\n");
+  DEBUG(llvm::dbgs() << "      Analyzing call of " << Callee->getName()
+        << "...\n");
 
   CallAnalyzer CA(TD, *Callee, Threshold);
   bool ShouldInline = CA.analyzeCall(CS);
