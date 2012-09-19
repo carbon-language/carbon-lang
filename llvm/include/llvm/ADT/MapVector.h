@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements a map that also provides access to all stored values
-// in a deterministic order via the getValues method. Note that the iteration
-// order itself is just the DenseMap order and not deterministic. The interface
-// is purposefully minimal.
+// This file implements a map that provides insertion order iteration. The
+// interface is purposefully minimal. The key is assumed to be cheap to copy
+// and 2 copies are kept, one for indexing in a DenseMap, one for iteration in
+// a std::vector.
 //
 //===----------------------------------------------------------------------===//
 
@@ -29,111 +29,38 @@ namespace llvm {
 template<typename KeyT, typename ValueT>
 class MapVector {
   typedef llvm::DenseMap<KeyT, unsigned> MapType;
-  typedef std::vector<ValueT> VectorType;
+  typedef std::vector<std::pair<KeyT, ValueT> > VectorType;
   typedef typename VectorType::size_type SizeType;
 
   MapType Map;
   VectorType Vector;
 
 public:
-  // The keys and values are not stored close to each other, so the iterator
-  // operator->() cannot return a pointer to a std::pair like a DenseMap does.
-  // Instead it returns a FakePair that contains references to Key and Value.
-  // This lets code using this to look the same as if using a regular DenseMap.
-  template<bool IsConst>
-  struct FakePair {
-    typedef typename conditional<IsConst, const ValueT, ValueT>::type VT;
-    const KeyT &first;
-    VT &second;
-    FakePair(const KeyT &K, VT &V) : first(K), second(V) {
-    }
-    FakePair *operator->() {
-      return this;
-    }
-  };
-
-  template<bool IsConst>
-  class IteratorTemplate {
-    typedef typename MapType::const_iterator WrappedIteratorType;
-    WrappedIteratorType WrappedI;
-    typedef
-      typename conditional<IsConst, const VectorType, VectorType>::type VT;
-    VT &VecRef;
-    typedef FakePair<IsConst> PairType;
-    friend class IteratorTemplate<true>;
-
-  public:
-    IteratorTemplate(WrappedIteratorType I, VT &V) :
-      WrappedI(I), VecRef(V) {
-    }
-
-    // If IsConst is true this is a converting constructor from iterator to
-    // const_iterator and the default copy constructor is used.
-    // Otherwise this is a copy constructor for iterator.
-    IteratorTemplate(const IteratorTemplate<false>& I) :
-      WrappedI(I.WrappedI), VecRef(I.VecRef) {
-    }
-
-    bool operator!=(const IteratorTemplate &RHS) const {
-      return WrappedI != RHS.WrappedI;
-    }
-
-    IteratorTemplate &operator++() {  // Preincrement
-      ++WrappedI;
-      return *this;
-    }
-
-    PairType operator->() {
-      unsigned Pos = WrappedI->second;
-      PairType Ret(WrappedI->first, VecRef[Pos]);
-      return Ret;
-    }
-  };
-
-  typedef IteratorTemplate<false> iterator;
-  typedef IteratorTemplate<true> const_iterator;
+  typedef typename VectorType::iterator iterator;
+  typedef typename VectorType::const_iterator const_iterator;
 
   SizeType size() const {
     return Vector.size();
   }
 
   iterator begin() {
-    return iterator(Map.begin(), this->Vector);
+    return Vector.begin();
   }
 
   const_iterator begin() const {
-    return const_iterator(Map.begin(), this->Vector);
+    return Vector.begin();
   }
 
   iterator end() {
-    return iterator(Map.end(), this->Vector);
+    return Vector.end();
   }
 
   const_iterator end() const {
-    return const_iterator(Map.end(), this->Vector);
+    return Vector.end();
   }
 
   bool empty() const {
-    return Map.empty();
-  }
-
-  typedef typename VectorType::iterator value_iterator;
-  typedef typename VectorType::const_iterator const_value_iterator;
-
-  value_iterator value_begin() {
-    return Vector.begin();
-  }
-
-  const_value_iterator value_begin() const {
-    return Vector.begin();
-  }
-
-  value_iterator value_end() {
-    return Vector.end();
-  }
-
-  const_value_iterator value_end() const {
-    return Vector.end();
+    return Vector.empty();
   }
 
   ValueT &operator[](const KeyT &Key) {
@@ -141,10 +68,10 @@ public:
     std::pair<typename MapType::iterator, bool> Result = Map.insert(Pair);
     unsigned &I = Result.first->second;
     if (Result.second) {
-      Vector.push_back(ValueT());
+      Vector.push_back(std::make_pair(Key, ValueT()));
       I = Vector.size() - 1;
     }
-    return Vector[I];
+    return Vector[I].second;
   }
 };
 
