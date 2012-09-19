@@ -881,6 +881,14 @@ public:
     _LIBCPP_INLINE_VISIBILITY ostreambuf_iterator& operator++()    {return *this;}
     _LIBCPP_INLINE_VISIBILITY ostreambuf_iterator& operator++(int) {return *this;}
     _LIBCPP_INLINE_VISIBILITY bool failed() const _NOEXCEPT {return __sbuf_ == 0;}
+
+    template <class _Ch, class _Tr>
+    friend
+    _LIBCPP_HIDDEN
+    ostreambuf_iterator<_Ch, _Tr>
+    __pad_and_output(ostreambuf_iterator<_Ch, _Tr> __s,
+                     const _Ch* __ob, const _Ch* __op, const _Ch* __oe,
+                     ios_base& __iob, _Ch __fl);
 };
 
 template <class _Iter>
