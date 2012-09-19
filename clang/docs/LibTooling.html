@@ -16,6 +16,8 @@
 <p>LibTooling is a library to support writing standalone tools based on
 Clang. This document will provide a basic walkthrough of how to write
 a tool using LibTooling.</p>
+<p>For the information on how to setup Clang Tooling for LLVM see
+<a href="HowToSetupToolingForLLVM.html">HowToSetupToolingForLLVM.html</a></p>
 
 <!-- ======================================================================= -->
 <h2 id="intro">Introduction</h2>
@@ -112,6 +114,7 @@ tool is also checked into the clang tree at tools/clang-check/ClangCheck.cpp.
 // Declares clang::SyntaxOnlyAction.
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CommonOptionsParser.h"
+#include "clang/Tooling/Tooling.h"
 // Declares llvm::cl::extrahelp.
 #include "llvm/Support/CommandLine.h"
 
