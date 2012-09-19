@@ -1086,7 +1086,7 @@ BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
       // We assume for the recursion that the the phis (ptr_phi, ptr2_phi) do
       // not alias each other.
       bool ArePhisAssumedNoAlias = false;
-      AliasResult OrigAliasResult;
+      AliasResult OrigAliasResult = NoAlias;
       if (Alias == NoAlias) {
         // Pretend the phis do not alias.
         assert(AliasCache.count(Locs) &&
