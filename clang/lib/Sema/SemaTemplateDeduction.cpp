@@ -3711,7 +3711,7 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
     IsNonStatic1 = Method1 && !Method1->isStatic();
     IsNonStatic2 = Method2 && !Method2->isStatic();
 
-    // C++0x [temp.func.order]p3:
+    // C++11 [temp.func.order]p3:
     //   [...] If only one of the function templates is a non-static
     //   member, that function template is considered to have a new
     //   first parameter inserted in its function parameter list. The
@@ -3719,21 +3719,24 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
     //   the cv-qualifiers of the function template (if any) and A is
     //   the class of which the function template is a member.
     //
+    // Note that we interpret this to mean "if one of the function
+    // templates is a non-static member and the other is a non-member";
+    // otherwise, the ordering rules for static functions against non-static
+    // functions don't make any sense.
+    //
     // C++98/03 doesn't have this provision, so instead we drop the
-    // first argument of the free function or static member, which
-    // seems to match existing practice.
+    // first argument of the free function, which seems to match
+    // existing practice.
     SmallVector<QualType, 4> Args1;
-    unsigned Skip1 = !S.getLangOpts().CPlusPlus0x &&
-      IsNonStatic2 && !IsNonStatic1;
-    if (S.getLangOpts().CPlusPlus0x && IsNonStatic1 && !IsNonStatic2)
+    unsigned Skip1 = !S.getLangOpts().CPlusPlus0x && IsNonStatic2 && !Method1;
+    if (S.getLangOpts().CPlusPlus0x && IsNonStatic1 && !Method2)
       MaybeAddImplicitObjectParameterType(S.Context, Method1, Args1);
     Args1.insert(Args1.end(),
                  Proto1->arg_type_begin() + Skip1, Proto1->arg_type_end());
 
     SmallVector<QualType, 4> Args2;
-    Skip2 = !S.getLangOpts().CPlusPlus0x &&
-      IsNonStatic1 && !IsNonStatic2;
-    if (S.getLangOpts().CPlusPlus0x && IsNonStatic2 && !IsNonStatic1)
+    Skip2 = !S.getLangOpts().CPlusPlus0x && IsNonStatic1 && !Method2;
+    if (S.getLangOpts().CPlusPlus0x && IsNonStatic2 && !Method1)
       MaybeAddImplicitObjectParameterType(S.Context, Method2, Args2);
     Args2.insert(Args2.end(),
                  Proto2->arg_type_begin() + Skip2, Proto2->arg_type_end());

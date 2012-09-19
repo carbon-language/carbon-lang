@@ -14,3 +14,15 @@ namespace DeduceVsMember {
     float& ir = (xi == xf);
   }
 }
+
+namespace OrderWithStaticMember {
+  struct A {
+    template<class T> int g(T**, int=0) { return 0; }
+    template<class T> static int g(T*) { return 1; }
+  };
+  void f() {
+    A a;
+    int **p;
+    a.g(p);
+  }
+}
