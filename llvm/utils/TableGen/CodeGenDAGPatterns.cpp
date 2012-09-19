@@ -2800,8 +2800,11 @@ void CodeGenDAGPatterns::AddPatternToMatch(const TreePattern *Pattern,
                                            const PatternToMatch &PTM) {
   // Do some sanity checking on the pattern we're about to match.
   std::string Reason;
-  if (!PTM.getSrcPattern()->canPatternMatch(Reason, *this))
-    Pattern->error("Pattern can never match: " + Reason);
+  if (!PTM.getSrcPattern()->canPatternMatch(Reason, *this)) {
+    PrintWarning(Pattern->getRecord()->getLoc(),
+      Twine("Pattern can never match: ") + Reason);
+    return;
+  }
 
   // If the source pattern's root is a complex pattern, that complex pattern
   // must specify the nodes it can potentially match.
