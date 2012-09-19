@@ -809,6 +809,16 @@ CollectRecordFields(const RecordDecl *record, llvm::DIFile tunit,
                             Field->getAccess(), layout.getFieldOffset(fieldno),
                             VUnit, RecordTy);
         elements.push_back(fieldType);
+      } else {
+        assert(C.capturesThis() && "Field that isn't captured and isn't this?");
+        FieldDecl *f = *Field;
+        llvm::DIFile VUnit = getOrCreateFile(f->getLocation());
+        QualType type = f->getType();
+        llvm::DIType fieldType
+          = createFieldType("this", type, 0, f->getLocation(), f->getAccess(),
+                            layout.getFieldOffset(fieldNo), VUnit, RecordTy);
+
+        elements.push_back(fieldType);
       }
     }
   } else {
