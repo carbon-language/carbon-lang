@@ -1084,7 +1084,7 @@ class ThreadSafetyReporter : public clang::thread_safety::ThreadSafetyHandler {
                         diag::warn_variable_requires_any_lock:
                         diag::warn_var_deref_requires_any_lock;
     PartialDiagnosticAt Warning(Loc, S.PDiag(DiagID)
-      << D->getName() << getLockKindFromAccessKind(AK));
+      << D->getNameAsString() << getLockKindFromAccessKind(AK));
     Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
   }
 
@@ -1105,7 +1105,7 @@ class ThreadSafetyReporter : public clang::thread_safety::ThreadSafetyHandler {
           break;
       }
       PartialDiagnosticAt Warning(Loc, S.PDiag(DiagID)
-        << D->getName() << LockName << LK);
+        << D->getNameAsString() << LockName << LK);
       PartialDiagnosticAt Note(Loc, S.PDiag(diag::note_found_mutex_near_match)
                                << *PossibleMatch);
       Warnings.push_back(DelayedDiag(Warning, OptionalNotes(1, Note)));
@@ -1122,7 +1122,7 @@ class ThreadSafetyReporter : public clang::thread_safety::ThreadSafetyHandler {
           break;
       }
       PartialDiagnosticAt Warning(Loc, S.PDiag(DiagID)
-        << D->getName() << LockName << LK);
+        << D->getNameAsString() << LockName << LK);
       Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
     }
   }

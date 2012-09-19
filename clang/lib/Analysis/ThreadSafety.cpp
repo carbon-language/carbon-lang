@@ -1794,9 +1794,12 @@ void BuildLockset::warnIfMutexHeld(const NamedDecl *D, Expr* Exp,
   }
 
   LockData* LDat = FSet.findLock(Analyzer->FactMan, Mutex);
-  if (LDat)
-    Analyzer->Handler.handleFunExcludesLock(D->getName(), Mutex.toString(),
+  if (LDat) {
+    std::string DeclName = D->getNameAsString();
+    StringRef   DeclNameSR (DeclName);
+    Analyzer->Handler.handleFunExcludesLock(DeclNameSR, Mutex.toString(),
                                             Exp->getExprLoc());
+  }
 }
 
 

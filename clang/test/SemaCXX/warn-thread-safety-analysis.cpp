@@ -3380,4 +3380,42 @@ void Bar::test() {
 }; // end namespace ExprMatchingBugfix
 
 
+namespace ComplexNameTest {
 
+class Foo {
+public:
+  static Mutex mu_;
+
+  Foo() EXCLUSIVE_LOCKS_REQUIRED(mu_)  { }
+  ~Foo() EXCLUSIVE_LOCKS_REQUIRED(mu_) { }
+
+  int operator[](int i) EXCLUSIVE_LOCKS_REQUIRED(mu_) { return 0; }
+};
+
+class Bar {
+public:
+  static Mutex mu_;
+
+  Bar()  LOCKS_EXCLUDED(mu_) { }
+  ~Bar() LOCKS_EXCLUDED(mu_) { }
+
+  int operator[](int i) LOCKS_EXCLUDED(mu_) { return 0; }
+};
+
+
+void test1() {
+  Foo f;           // expected-warning {{calling function 'Foo' requires exclusive lock on 'mu_'}}
+  int a = f[0];    // expected-warning {{calling function 'operator[]' requires exclusive lock on 'mu_'}}
+}                  // expected-warning {{calling function '~Foo' requires exclusive lock on 'mu_'}}
+
+
+void test2() {
+  Bar::mu_.Lock();
+  {
+    Bar b;         // expected-warning {{cannot call function 'Bar' while mutex 'mu_' is locked}}
+    int a = b[0];  // expected-warning {{cannot call function 'operator[]' while mutex 'mu_' is locked}}
+  }                // expected-warning {{cannot call function '~Bar' while mutex 'mu_' is locked}}
+  Bar::mu_.Unlock();
+}
+
+};  // end namespace ComplexNameTest
