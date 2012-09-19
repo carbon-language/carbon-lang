@@ -810,7 +810,7 @@ CollectRecordFields(const RecordDecl *record, llvm::DIFile tunit,
       } else {
         // TODO: Need to handle 'this' in some way by probably renaming the
         // this of the lambda class and having a field member of 'this' or
-        // by use AT_object_pointer for the function and having that be
+        // by using AT_object_pointer for the function and having that be
         // used as 'this' for semantic references.
         assert(C.capturesThis() && "Field that isn't captured and isn't this?");
         FieldDecl *f = *Field;
