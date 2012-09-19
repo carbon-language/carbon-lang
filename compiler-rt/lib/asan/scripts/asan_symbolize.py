@@ -13,6 +13,7 @@ import re
 import sys
 import subprocess
 
+llvm_symbolizer = None
 symbolizers = {}
 filetypes = {}
 vmaddrs = {}
@@ -30,11 +31,75 @@ def fix_filename(file_name):
 class Symbolizer(object):
   def __init__(self):
     pass
+  def symbolize(self, addr, binary, offset):
+    """
+      Overrided in subclasses.
+      Args:
+        addr: virtual address of an instruction.
+        binary: path to executable/shared object containing this instruction.
+        offset: instruction offset in the @binary.
+      Returns:
+        list of strings (one string for each inlined frame) describing
+        the code locations for this instruction (that is, function name, file
+        name, line and column numbers).
+    """
+    return None
 
 
-class LinuxSymbolizer(Symbolizer):
+class LLVMSymbolizer(Symbolizer):
+  def __init__(self, symbolizer_path):
+    super(LLVMSymbolizer, self).__init__()
+    self.symbolizer_path = symbolizer_path
+    self.pipe = self.open_llvm_symbolizer()
+  def open_llvm_symbolizer(self):
+    cmd = [self.symbolizer_path,
+           "--use-symbol-table=false",  # FIXME: Remove this when libObject is
+                                        # fixed.
+           "--demangle=false",
+           "--functions=true",
+           "--inlining=true"]
+    if DEBUG:
+      print ' '.join(cmd)
+    return subprocess.Popen(cmd, stdin=subprocess.PIPE,
+                            stdout=subprocess.PIPE)
+
+  def symbolize(self, addr, binary, offset):
+    """Overrides Symbolizer.symbolize"""
+    result = []
+    try:
+      symbolizer_input = "%s %s" % (binary, offset)
+      print >> self.pipe.stdin, symbolizer_input
+      while True:
+        function_name = self.pipe.stdout.readline().rstrip()
+        if (function_name == ""):
+          break
+        file_name = self.pipe.stdout.readline().rstrip()
+        file_name = fix_filename(file_name)
+        if (not function_name.startswith("??") and
+            not file_name.startswith("??")):
+          # Append only valid frames.
+          result.append("%s in %s %s" % (addr, function_name,
+                                         file_name))
+    except Exception:
+      result = []
+    if len(result) == 0:
+      result = None
+    return result
+
+
+def LLVMSymbolizerFactory(system):
+  if system == "Linux":
+    symbolizer_path = os.getenv("LLVM_SYMBOLIZER_PATH")
+    if not symbolizer_path:
+      # Assume llvm-symbolizer is in PATH.
+      symbolizer_path = "llvm-symbolizer"
+    return LLVMSymbolizer(symbolizer_path)
+  return None
+
+
+class Addr2LineSymbolizer(Symbolizer):
   def __init__(self, binary):
-    super(LinuxSymbolizer, self).__init__()
+    super(Addr2LineSymbolizer, self).__init__()
     self.binary = binary
     self.pipe = self.open_addr2line()
   def open_addr2line(self):
@@ -43,7 +108,10 @@ class LinuxSymbolizer(Symbolizer):
       print ' '.join(cmd)
     return subprocess.Popen(cmd,
                             stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-  def symbolize(self, prefix, addr, offset):
+  def symbolize(self, addr, binary, offset):
+    """Overrides Symbolizer.symbolize"""
+    if self.binary != binary:
+      return None
     try:
       print >> self.pipe.stdin, offset
       function_name = self.pipe.stdout.readline().rstrip()
@@ -52,7 +120,7 @@ class LinuxSymbolizer(Symbolizer):
       function_name = ""
       file_name = ""
     file_name = fix_filename(file_name)
-    return "%s%s in %s %s" % (prefix, addr, function_name, file_name)
+    return ["%s in %s %s" % (addr, function_name, file_name)]
 
 
 class DarwinSymbolizer(Symbolizer):
@@ -106,7 +174,10 @@ class DarwinSymbolizer(Symbolizer):
                                  stdin=subprocess.PIPE,
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE)
-  def symbolize(self, prefix, addr, offset):
+  def symbolize(self, addr, binary, offset):
+    """Overrides Symbolizer.symbolize"""
+    if self.binary != binary:
+      return None
     self.open_atos()
     self.write_addr_to_pipe(offset)
     self.pipe.stdin.close()
@@ -120,22 +191,27 @@ class DarwinSymbolizer(Symbolizer):
       function_name = match.group(1)
       function_name = re.sub("\(.*?\)", "", function_name)
       file_name = fix_filename(match.group(3))
-      return "%s%s in %s %s" % (prefix, addr, function_name, file_name)
+      return ["%s in %s %s" % (addr, function_name, file_name)]
     else:
-      return "%s%s in %s" % (prefix, addr, atos_line)
+      return ["%s in %s" % (addr, atos_line)]
 
 
-# Chain two symbolizers so that the second one is called if the first fails.
+# Chain several symbolizers so that if one symbolizer fails, we fall back
+# to the next symbolizer in chain.
 class ChainSymbolizer(Symbolizer):
-  def __init__(self, symbolizer1, symbolizer2):
+  def __init__(self, symbolizer_list):
     super(ChainSymbolizer, self).__init__()
-    self.symbolizer1 = symbolizer1
-    self.symbolizer2 = symbolizer2
-  def symbolize(self, prefix, addr, offset):
-    result = self.symbolizer1.symbolize(prefix, addr, offset)
-    if result is None:
-      result = self.symbolizer2.symbolize(prefix, addr, offset)
-    return result
+    self.symbolizer_list = symbolizer_list
+  def symbolize(self, addr, binary, offset):
+    """Overrides Symbolizer.symbolize"""
+    for symbolizer in self.symbolizer_list:
+      if symbolizer:
+        result = symbolizer.symbolize(addr, binary, offset)
+        if result:
+          return result
+    return None
+  def append_symbolizer(self, symbolizer):
+    self.symbolizer_list.append(symbolizer)
 
 
 def BreakpadSymbolizerFactory(addr, binary):
@@ -151,7 +227,7 @@ def SystemSymbolizerFactory(system, addr, binary):
   if system == 'Darwin':
     return DarwinSymbolizer(addr, binary)
   elif system == 'Linux':
-    return LinuxSymbolizer(binary)
+    return Addr2LineSymbolizer(binary)
 
 
 class BreakpadSymbolizer(Symbolizer):
@@ -211,51 +287,64 @@ class BreakpadSymbolizer(Symbolizer):
       return symbol, filename, line_no
     else:
       return None
-  def symbolize(self, prefix, addr, offset):
+  def symbolize(self, addr, binary, offset):
+    if self.binary != binary:
+      return None
     res = self.get_sym_file_line(int(offset, 16))
     if res:
       function_name, file_name, line_no = res
-      result = "%s%s in %s %s:%d" % (
-          prefix, addr, function_name, file_name, line_no)
+      result = ["%s in %s %s:%d" % (
+          addr, function_name, file_name, line_no)]
       print result
       return result
     else:
       return None
 
 
-def symbolize_line(system, line):
-  #0 0x7f6e35cf2e45  (/blah/foo.so+0x11fe45)
-  match = re.match('^( *#([0-9]+) *)(0x[0-9a-f]+) *\((.*)\+(0x[0-9a-f]+)\)',
-                   line)
-  if match:
-    if DEBUG:
-      print line
-    prefix = match.group(1)
-    # frameno = match.group(2)
-    addr = match.group(3)
-    binary = match.group(4)
-    offset = match.group(5)
-    if not symbolizers.has_key(binary):
-      p = BreakpadSymbolizerFactory(addr, binary)
-      if p:
-        symbolizers[binary] = p
-      else:
-        symbolizers[binary] = SystemSymbolizerFactory(system, addr, binary)
-    result = symbolizers[binary].symbolize(prefix, addr, offset)
-    if result is None:
-      symbolizers[binary] = ChainSymbolizer(symbolizers[binary],
-          SystemSymbolizerFactory(system, addr, binary))
-    return symbolizers[binary].symbolize(prefix, addr, offset)
-  else:
-    return line
-
+def symbolize_address(system, addr, binary, offset):
+  # Use the chain of symbolizers:
+  # Breakpad symbolizer -> LLVM symbolizer -> addr2line/atos
+  # (fall back to next symbolizer if the previous one fails).
+  if not symbolizers.has_key(binary):
+    symbolizers[binary] = ChainSymbolizer(
+        [BreakpadSymbolizerFactory(addr, binary), llvm_symbolizer])
+  result = symbolizers[binary].symbolize(addr, binary, offset)
+  if result is None:
+    # Initialize system symbolizer only if other symbolizers failed.
+    symbolizers[binary].append_symbolizer(
+        SystemSymbolizerFactory(system, addr, binary))
+    result = symbolizers[binary].symbolize(addr, binary, offset)
+  # The system symbolizer must produce some result.
+  assert(result)
+  return result
 
 def main():
   system = os.uname()[0]
+  global llvm_symbolizer
+  llvm_symbolizer = LLVMSymbolizerFactory(system)
+  frame_no = 0
   if system in ['Linux', 'Darwin']:
     for line in sys.stdin:
-      line = symbolize_line(system, line)
-      print line.rstrip()
+      #0 0x7f6e35cf2e45  (/blah/foo.so+0x11fe45)
+      stack_trace_line_format = (
+          "^( *#([0-9]+) *)(0x[0-9a-f]+) *\((.*)\+(0x[0-9a-f]+)\)")
+      match = re.match(stack_trace_line_format, line)
+      if not match:
+        print line.rstrip()
+        continue
+      if DEBUG:
+        print line
+      prefix, frameno_str, addr, binary, offset = match.groups()
+      if (frameno_str == "0"):
+        # Assume that frame #0 is the first frame of new stack trace.
+        frame_no = 0
+      symbolized_line = symbolize_address(system, addr, binary, offset)
+      if not symbolized_line:
+        print line.rstrip()
+      else:
+        for symbolized_frame in symbolized_line:
+          print "    #" + str(frame_no) + " " + symbolized_frame.rstrip()
+          frame_no += 1
   else:
     print 'Unknown system: ', system
 
