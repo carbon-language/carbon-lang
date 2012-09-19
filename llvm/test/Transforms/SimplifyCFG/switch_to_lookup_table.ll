@@ -15,6 +15,9 @@ target triple = "x86_64-unknown-linux-gnu"
 ; The table for @foostring
 ; CHECK: @switch.table3 = private unnamed_addr constant [4 x i8*] [i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i8* getelementptr inbounds ([4 x i8]* @.str1, i64 0, i64 0), i8* getelementptr inbounds ([4 x i8]* @.str2, i64 0, i64 0), i8* getelementptr inbounds ([4 x i8]* @.str3, i64 0, i64 0)]
 
+; The table for @earlyreturncrash
+; CHECK: @switch.table4 = private unnamed_addr constant [4 x i32] [i32 42, i32 9, i32 88, i32 5]
+
 ; A simple int-to-int selection switch.
 ; It is dense enough to be replaced by table lookup.
 ; The result is directly by a ret from an otherwise empty bb,
@@ -137,4 +140,35 @@ return:
 ; CHECK-NEXT: %switch.gep = getelementptr inbounds [4 x i8*]* @switch.table3, i32 0, i32 %switch.tableidx
 ; CHECK-NEXT: %switch.load = load i8** %switch.gep
 ; CHECK-NEXT: ret i8* %switch.load
+}
+
+; Switch used to initialize two values. The first value is returned, the second
+; value is not used. This used to make the transformation generate illegal code.
+
+define i32 @earlyreturncrash(i32 %x)  {
+entry:
+  switch i32 %x, label %sw.default [
+    i32 0, label %sw.epilog
+    i32 1, label %sw.bb1
+    i32 2, label %sw.bb2
+    i32 3, label %sw.bb3
+  ]
+
+sw.bb1: br label %sw.epilog
+sw.bb2: br label %sw.epilog
+sw.bb3: br label %sw.epilog
+sw.default: br label %sw.epilog
+
+sw.epilog:
+  %a.0 = phi i32 [ 7, %sw.default ], [ 5, %sw.bb3 ], [ 88, %sw.bb2 ], [ 9, %sw.bb1 ], [ 42, %entry ]
+  %b.0 = phi i32 [ 10, %sw.default ], [ 5, %sw.bb3 ], [ 1, %sw.bb2 ], [ 4, %sw.bb1 ], [ 3, %entry ]
+  ret i32 %a.0
+
+; CHECK: @earlyreturncrash
+; CHECK: switch.lookup:
+; CHECK-NEXT: %switch.gep = getelementptr inbounds [4 x i32]* @switch.table4, i32 0, i32 %switch.tableidx
+; CHECK-NEXT: %switch.load = load i32* %switch.gep
+; CHECK-NEXT: ret i32 %switch.load
+; CHECK: sw.epilog:
+; CHECK-NEXT: ret i32 7
 }

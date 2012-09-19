@@ -3258,17 +3258,16 @@ static bool SwitchToLookupTable(SwitchInst *SI,
                                            "switch.gep");
     Value *Result = Builder.CreateLoad(GEP, "switch.load");
 
-    // If the result is only going to be used to return from the function,
-    // we want to do that right here.
-    if (PHI->hasOneUse() && isa<ReturnInst>(*PHI->use_begin())) {
-      if (CommonDest->getFirstNonPHIOrDbg() == CommonDest->getTerminator()) {
-        Builder.CreateRet(Result);
-        ReturnedEarly = true;
-      }
+    // If the result is used to return immediately from the function, we want to
+    // do that right here.
+    if (PHI->hasOneUse() && isa<ReturnInst>(*PHI->use_begin()) &&
+        *PHI->use_begin() == CommonDest->getFirstNonPHIOrDbg()) {
+      Builder.CreateRet(Result);
+      ReturnedEarly = true;
+      break;
     }
 
-    if (!ReturnedEarly)
-      PHI->addIncoming(Result, LookupBB);
+    PHI->addIncoming(Result, LookupBB);
   }
 
   if (!ReturnedEarly)
