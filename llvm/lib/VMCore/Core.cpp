@@ -568,6 +568,19 @@ const char *LLVMGetMDString(LLVMValueRef V, unsigned* Len) {
   return 0;
 }
 
+unsigned LLVMGetMDNodeNumOperands(LLVMValueRef V)
+{
+  return cast<MDNode>(unwrap(V))->getNumOperands();
+}
+
+void LLVMGetMDNodeOperands(LLVMValueRef V, LLVMValueRef *Dest)
+{
+  const MDNode *N = cast<MDNode>(unwrap(V));
+  const unsigned numOperands = N->getNumOperands();
+  for (unsigned i = 0; i < numOperands; i++)
+    Dest[i] = wrap(N->getOperand(i));
+}
+
 unsigned LLVMGetNamedMetadataNumOperands(LLVMModuleRef M, const char* name)
 {
   if (NamedMDNode *N = unwrap(M)->getNamedMetadata(name)) {

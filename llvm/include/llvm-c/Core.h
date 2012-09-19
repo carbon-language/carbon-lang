@@ -1869,6 +1869,27 @@ LLVMValueRef LLVMMDNode(LLVMValueRef *Vals, unsigned Count);
 const char  *LLVMGetMDString(LLVMValueRef V, unsigned* Len);
 
 /**
+ * Obtain the number of operands from an MDNode value.
+ *
+ * @param V MDNode to get number of operands from.
+ * @return Number of operands of the MDNode.
+ */
+unsigned LLVMGetMDNodeNumOperands(LLVMValueRef V);
+
+/**
+ * Obtain the given MDNode's operands.
+ *
+ * The passed LLVMValueRef pointer should point to enough memory to hold all of
+ * the operands of the given MDNode (see LLVMGetMDNodeNumOperands) as
+ * LLVMValueRefs. This memory will be populated with the LLVMValueRefs of the
+ * MDNode's operands.
+ *
+ * @param V MDNode to get the operands from.
+ * @param Dest Destination array for operands.
+ */
+void LLVMGetMDNodeOperands(LLVMValueRef V, LLVMValueRef *Dest);
+
+/**
  * @}
  */
 
