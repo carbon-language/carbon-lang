@@ -307,7 +307,7 @@ AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value,
                 static ConstString g_objc_class_section_name ("__objc_data");
                 if (section_name == g_objc_class_section_name)
                 {
-                    isa_address.CalculateSymbolContext(&sc);
+                    isa_address.CalculateSymbolContext(&sc, eSymbolContextModule | eSymbolContextSymbol);
                     if (sc.symbol)
                     {
                         if (sc.symbol->GetType() == eSymbolTypeObjCClass)
@@ -351,7 +351,6 @@ AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value,
             class_type_or_name.SetName (class_name);
             
             TypeList class_types;
-            SymbolContext sc;
             const bool exact_match = true;
             uint32_t num_matches = target.GetImages().FindTypes (sc,
                                                                  class_type_or_name.GetName(),
