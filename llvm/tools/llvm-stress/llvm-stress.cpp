@@ -126,6 +126,10 @@ public:
   /// C'tor
   Modifier(BasicBlock *Block, PieceTable *PT, Random *R):
     BB(Block),PT(PT),Ran(R),Context(BB->getContext()) {}
+
+  /// virtual D'tor to silence warnings.
+  virtual ~Modifier() {}
+
   /// Add a new instruction.
   virtual void Act() = 0;
   /// Add N new instructions,
