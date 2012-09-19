@@ -1351,7 +1351,11 @@ tanh(const complex<_Tp>& __x)
     _Tp __2r(_Tp(2) * __x.real());
     _Tp __2i(_Tp(2) * __x.imag());
     _Tp __d(cosh(__2r) + cos(__2i));
-    return  complex<_Tp>(sinh(__2r)/__d, sin(__2i)/__d);
+    _Tp __2rsh(sinh(__2r));
+    if (isinf(__2rsh) && isinf(__d))
+        return complex<_Tp>(__2rsh > _Tp(0) ? _Tp(1) : _Tp(-1),
+                            __2i > _Tp(0) ? _Tp(0) : _Tp(-0.));
+    return  complex<_Tp>(__2rsh/__d, sin(__2i)/__d);
 }
 
 // asin

@@ -30,6 +30,7 @@ void
 test()
 {
     test(std::complex<T>(0, 0), std::complex<T>(0, 0));
+    test(std::complex<T>(10000, -10000), std::complex<T>(0, -1));
 }
 
 void test_edges()
