@@ -344,57 +344,53 @@ bool RecordRecTy::baseClassOf(const RecordRecTy *RHS) const {
   return false;
 }
 
-
 /// resolveTypes - Find a common type that T1 and T2 convert to.
 /// Return 0 if no such type exists.
 ///
 RecTy *llvm::resolveTypes(RecTy *T1, RecTy *T2) {
-  if (!T1->typeIsConvertibleTo(T2)) {
-    if (!T2->typeIsConvertibleTo(T1)) {
-      // If one is a Record type, check superclasses
-      RecordRecTy *RecTy1 = dynamic_cast<RecordRecTy*>(T1);
-      if (RecTy1) {
-        // See if T2 inherits from a type T1 also inherits from
-        const std::vector<Record *> &T1SuperClasses =
-          RecTy1->getRecord()->getSuperClasses();
-        for(std::vector<Record *>::const_iterator i = T1SuperClasses.begin(),
-              iend = T1SuperClasses.end();
-            i != iend;
-            ++i) {
-          RecordRecTy *SuperRecTy1 = RecordRecTy::get(*i);
-          RecTy *NewType1 = resolveTypes(SuperRecTy1, T2);
-          if (NewType1 != 0) {
-            if (NewType1 != SuperRecTy1) {
-              delete SuperRecTy1;
-            }
-            return NewType1;
-          }
-        }
-      }
-      RecordRecTy *RecTy2 = dynamic_cast<RecordRecTy*>(T2);
-      if (RecTy2) {
-        // See if T1 inherits from a type T2 also inherits from
-        const std::vector<Record *> &T2SuperClasses =
-          RecTy2->getRecord()->getSuperClasses();
-        for (std::vector<Record *>::const_iterator i = T2SuperClasses.begin(),
-              iend = T2SuperClasses.end();
-            i != iend;
-            ++i) {
-          RecordRecTy *SuperRecTy2 = RecordRecTy::get(*i);
-          RecTy *NewType2 = resolveTypes(T1, SuperRecTy2);
-          if (NewType2 != 0) {
-            if (NewType2 != SuperRecTy2) {
-              delete SuperRecTy2;
-            }
-            return NewType2;
-          }
-        }
-      }
-      return 0;
-    }
+  if (T1->typeIsConvertibleTo(T2))
     return T2;
+  if (T2->typeIsConvertibleTo(T1))
+    return T1;
+
+  // If one is a Record type, check superclasses
+  if (RecordRecTy *RecTy1 = dynamic_cast<RecordRecTy*>(T1)) {
+    // See if T2 inherits from a type T1 also inherits from
+    const std::vector<Record *> &T1SuperClasses =
+      RecTy1->getRecord()->getSuperClasses();
+    for(std::vector<Record *>::const_iterator i = T1SuperClasses.begin(),
+          iend = T1SuperClasses.end();
+        i != iend;
+        ++i) {
+      RecordRecTy *SuperRecTy1 = RecordRecTy::get(*i);
+      RecTy *NewType1 = resolveTypes(SuperRecTy1, T2);
+      if (NewType1 != 0) {
+        if (NewType1 != SuperRecTy1) {
+          delete SuperRecTy1;
+        }
+        return NewType1;
+      }
+    }
   }
-  return T1;
+  if (RecordRecTy *RecTy2 = dynamic_cast<RecordRecTy*>(T2)) {
+    // See if T1 inherits from a type T2 also inherits from
+    const std::vector<Record *> &T2SuperClasses =
+      RecTy2->getRecord()->getSuperClasses();
+    for (std::vector<Record *>::const_iterator i = T2SuperClasses.begin(),
+          iend = T2SuperClasses.end();
+        i != iend;
+        ++i) {
+      RecordRecTy *SuperRecTy2 = RecordRecTy::get(*i);
+      RecTy *NewType2 = resolveTypes(T1, SuperRecTy2);
+      if (NewType2 != 0) {
+        if (NewType2 != SuperRecTy2) {
+          delete SuperRecTy2;
+        }
+        return NewType2;
+      }
+    }
+  }
+  return 0;
 }
 
 
