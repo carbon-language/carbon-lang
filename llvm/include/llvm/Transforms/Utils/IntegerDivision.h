@@ -18,6 +18,10 @@
 #define TRANSFORMS_UTILS_INTEGERDIVISION_H
 
 namespace llvm {
+  class BinaryOperator;
+}
+
+namespace llvm {
 
   bool expandDivision(BinaryOperator* Div);
 
