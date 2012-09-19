@@ -38,7 +38,7 @@ namespace llvm {
     const int NoreturnPenalty = 10000;
     /// Do not inline functions which allocate this many bytes on the stack
     /// when the caller is recursive.
-    const int TotalAllocaSizeRecursiveCaller = 1024;
+    const unsigned TotalAllocaSizeRecursiveCaller = 1024;
   }
 
   /// \brief Represents the cost of inlining a function.
