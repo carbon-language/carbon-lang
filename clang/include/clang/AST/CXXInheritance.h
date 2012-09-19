@@ -271,15 +271,14 @@ struct UniqueVirtualMethod {
 /// pair is the virtual method that overrides it (including the
 /// subobject in which that virtual function occurs).
 class OverridingMethods {
-  llvm::DenseMap<unsigned, SmallVector<UniqueVirtualMethod, 4> > 
-    Overrides;
+  typedef SmallVector<UniqueVirtualMethod, 4> ValuesT;
+  typedef llvm::DenseMap<unsigned, ValuesT> MapType;
+  MapType Overrides;
 
 public:
   // Iterate over the set of subobjects that have overriding methods.
-  typedef llvm::DenseMap<unsigned, SmallVector<UniqueVirtualMethod, 4> >
-            ::iterator iterator;
-  typedef llvm::DenseMap<unsigned, SmallVector<UniqueVirtualMethod, 4> >
-            ::const_iterator const_iterator;
+  typedef MapType::iterator iterator;
+  typedef MapType::const_iterator const_iterator;
   iterator begin() { return Overrides.begin(); }
   const_iterator begin() const { return Overrides.begin(); }
   iterator end() { return Overrides.end(); }
