@@ -55,6 +55,8 @@ STATISTIC(numCommutes , "Number of instruction commuting performed");
 STATISTIC(numExtends  , "Number of copies extended");
 STATISTIC(NumReMats   , "Number of instructions re-materialized");
 STATISTIC(NumInflated , "Number of register classes inflated");
+STATISTIC(NumLaneConflicts, "Number of dead lane conflicts tested");
+STATISTIC(NumLaneResolves,  "Number of dead lane conflicts resolved");
 
 static cl::opt<bool>
 EnableJoining("join-liveintervals",
@@ -1257,6 +1259,9 @@ class JoinVals {
   VNInfo *stripCopies(VNInfo *VNI);
   ConflictResolution analyzeValue(unsigned ValNo, JoinVals &Other);
   void computeAssignment(unsigned ValNo, JoinVals &Other);
+  bool taintExtent(unsigned, unsigned, JoinVals&,
+                   SmallVectorImpl<std::pair<SlotIndex, unsigned> >&);
+  bool usesLanes(MachineInstr *MI, unsigned, unsigned, unsigned);
 
 public:
   JoinVals(LiveInterval &li, unsigned subIdx,
@@ -1409,8 +1414,8 @@ JoinVals::analyzeValue(unsigned ValNo, JoinVals &Other) {
       return CR_Keep;
     // Both sides have been analyzed now. Do they conflict?
     if (V.ValidLanes & OtherV.ValidLanes)
-      // Overlapping lanes can't be resolved now, maybe later.
-      return CR_Unresolved;
+      // Overlapping lanes can't be resolved.
+      return CR_Impossible;
     else
       return CR_Merge;
   }
@@ -1474,9 +1479,28 @@ JoinVals::analyzeValue(unsigned ValNo, JoinVals &Other) {
   if ((V.WriteLanes & OtherV.ValidLanes) == 0)
     return CR_Replace;
 
-  // FIXME: Identify CR_Replace opportunities where the clobbered lanes are
-  // dead.
-  return CR_Impossible;
+  // VNI is clobbering live lanes in OtherVNI, but there is still the
+  // possibility that no instructions actually read the clobbered lanes.
+  // If we're clobbering all the lanes in OtherVNI, at least one must be read.
+  // Otherwise Other.LI wouldn't be live here.
+  if ((TRI->getSubRegIndexLaneMask(Other.SubIdx) & ~V.WriteLanes) == 0)
+    return CR_Impossible;
+
+  // We need to verify that no instructions are reading the clobbered lanes. To
+  // save compile time, we'll only check that locally. Don't allow the tainted
+  // value to escape the basic block.
+  MachineBasicBlock *MBB = Indexes->getMBBFromIndex(VNI->def);
+  if (OtherLRQ.endPoint() >= Indexes->getMBBEndIdx(MBB))
+    return CR_Impossible;
+
+  // There are still some things that could go wrong besides clobbered lanes
+  // being read, for example OtherVNI may be only partially redefined in MBB,
+  // and some clobbered lanes could escape the block. Save this analysis for
+  // resolveConflicts() when all values have been mapped. We need to know
+  // RedefVNI and WriteLanes for any later defs in MBB, and we can't compute
+  // that now - the recursive analyzeValue() calls must go upwards in the
+  // dominator tree.
+  return CR_Unresolved;
 }
 
 /// Compute the value assignment for ValNo in LI.
@@ -1523,15 +1547,137 @@ bool JoinVals::mapValues(JoinVals &Other) {
   return true;
 }
 
+/// Assuming ValNo is going to clobber some valid lanes in Other.LI, compute
+/// the extent of the tainted lanes in the block.
+///
+/// Multiple values in Other.LI can be affected since partial redefinitions can
+/// preserve previously tainted lanes.
+///
+///   1 %dst = VLOAD           <-- Define all lanes in %dst
+///   2 %src = FOO             <-- ValNo to be joined with %dst:ssub0
+///   3 %dst:ssub1 = BAR       <-- Partial redef doesn't clear taint in ssub0
+///   4 %dst:ssub0 = COPY %src <-- Conflict resolved, ssub0 wasn't read
+///
+/// For each ValNo in Other that is affected, add an (EndIndex, TaintedLanes)
+/// entry to TaintedVals.
+///
+/// Returns false if the tainted lanes extend beyond the basic block.
+bool JoinVals::
+taintExtent(unsigned ValNo, unsigned TaintedLanes, JoinVals &Other,
+            SmallVectorImpl<std::pair<SlotIndex, unsigned> > &TaintExtent) {
+  VNInfo *VNI = LI.getValNumInfo(ValNo);
+  MachineBasicBlock *MBB = Indexes->getMBBFromIndex(VNI->def);
+  SlotIndex MBBEnd = Indexes->getMBBEndIdx(MBB);
+
+  // Scan Other.LI from VNI.def to MBBEnd.
+  LiveInterval::iterator OtherI = Other.LI.find(VNI->def);
+  assert(OtherI != Other.LI.end() && "No conflict?");
+  do {
+    // OtherI is pointing to a tainted value. Abort the join if the tainted
+    // lanes escape the block.
+    SlotIndex End = OtherI->end;
+    if (End >= MBBEnd) {
+      DEBUG(dbgs() << "\t\ttaints global " << PrintReg(Other.LI.reg) << ':'
+                   << OtherI->valno->id << '@' << OtherI->start << '\n');
+      return false;
+    }
+    DEBUG(dbgs() << "\t\ttaints local " << PrintReg(Other.LI.reg) << ':'
+                 << OtherI->valno->id << '@' << OtherI->start
+                 << " to " << End << '\n');
+    // A dead def is not a problem.
+    if (End.isDead())
+      break;
+    TaintExtent.push_back(std::make_pair(End, TaintedLanes));
+
+    // Check for another def in the MBB.
+    if (++OtherI == Other.LI.end() || OtherI->start >= MBBEnd)
+      break;
+
+    // Lanes written by the new def are no longer tainted.
+    const Val &OV = Other.Vals[OtherI->valno->id];
+    TaintedLanes &= ~OV.WriteLanes;
+    if (!OV.RedefVNI)
+      break;
+  } while (TaintedLanes);
+  return true;
+}
+
+/// Return true if MI uses any of the given Lanes from Reg.
+/// This does not include partial redefinitions of Reg.
+bool JoinVals::usesLanes(MachineInstr *MI, unsigned Reg, unsigned SubIdx,
+                         unsigned Lanes) {
+  if (MI->isDebugValue())
+    return false;
+  for (ConstMIOperands MO(MI); MO.isValid(); ++MO) {
+    if (!MO->isReg() || MO->isDef() || MO->getReg() != Reg)
+      continue;
+    if (!MO->readsReg())
+      continue;
+    if (Lanes &
+        TRI->getSubRegIndexLaneMask(compose(*TRI, SubIdx, MO->getSubReg())))
+      return true;
+  }
+  return false;
+}
+
 bool JoinVals::resolveConflicts(JoinVals &Other) {
   for (unsigned i = 0, e = LI.getNumValNums(); i != e; ++i) {
-    assert (Vals[i].Resolution != CR_Impossible && "Unresolvable conflict");
-    if (Vals[i].Resolution != CR_Unresolved)
+    Val &V = Vals[i];
+    assert (V.Resolution != CR_Impossible && "Unresolvable conflict");
+    if (V.Resolution != CR_Unresolved)
       continue;
-    // FIXME: Actually resolve dead lane conflicts.
     DEBUG(dbgs() << "\t\tconflict at " << PrintReg(LI.reg) << ':' << i
                  << '@' << LI.getValNumInfo(i)->def << '\n');
-    return false;
+    ++NumLaneConflicts;
+    assert(V.OtherVNI && "Inconsistent conflict resolution.");
+    VNInfo *VNI = LI.getValNumInfo(i);
+    const Val &OtherV = Other.Vals[V.OtherVNI->id];
+
+    // VNI is known to clobber some lanes in OtherVNI. If we go ahead with the
+    // join, those lanes will be tainted with a wrong value. Get the extent of
+    // the tainted lanes.
+    unsigned TaintedLanes = V.WriteLanes & OtherV.ValidLanes;
+    SmallVector<std::pair<SlotIndex, unsigned>, 8> TaintExtent;
+    if (!taintExtent(i, TaintedLanes, Other, TaintExtent))
+      // Tainted lanes would extend beyond the basic block.
+      return false;
+
+    assert(!TaintExtent.empty() && "There should be at least one conflict.");
+
+    // Now look at the instructions from VNI->def to TaintExtent (inclusive).
+    MachineBasicBlock *MBB = Indexes->getMBBFromIndex(VNI->def);
+    MachineBasicBlock::iterator MI = MBB->begin();
+    if (!VNI->isPHIDef()) {
+      MI = Indexes->getInstructionFromIndex(VNI->def);
+      // No need to check the instruction defining VNI for reads.
+      ++MI;
+    }
+    assert(!SlotIndex::isSameInstr(VNI->def, TaintExtent.front().first) &&
+           "Interference ends on VNI->def. Should have been handled earlier");
+    MachineInstr *LastMI =
+      Indexes->getInstructionFromIndex(TaintExtent.front().first);
+    assert(LastMI && "Range must end at a proper instruction");
+    unsigned TaintNum = 0;
+    for(;;) {
+      assert(MI != MBB->end() && "Bad LastMI");
+      if (usesLanes(MI, Other.LI.reg, Other.SubIdx, TaintedLanes)) {
+        DEBUG(dbgs() << "\t\ttainted lanes used by: " << *MI);
+        return false;
+      }
+      // LastMI is the last instruction to use the current value.
+      if (&*MI == LastMI) {
+        if (++TaintNum == TaintExtent.size())
+          break;
+        LastMI = Indexes->getInstructionFromIndex(TaintExtent[TaintNum].first);
+        assert(LastMI && "Range must end at a proper instruction");
+        TaintedLanes = TaintExtent[TaintNum].second;
+      }
+      ++MI;
+    }
+
+    // The tainted lanes are unused.
+    V.Resolution = CR_Replace;
+    ++NumLaneResolves;
   }
   return true;
 }

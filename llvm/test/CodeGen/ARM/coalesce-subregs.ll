@@ -114,3 +114,30 @@ if.end:                                           ; preds = %if.else, %if.then
 }
 
 declare void @llvm.arm.neon.vst1.v2f32(i8*, <2 x float>, i32) nounwind
+declare <2 x float> @llvm.arm.neon.vld1.v2f32(i8*, i32) nounwind readonly
+
+; CHECK: f4
+; This function inserts a lane into a fully defined vector.
+; The destination lane isn't read, so the subregs can coalesce.
+; CHECK-NOT: vmov
+; CHECK-NOT: vorr
+define void @f4(float* %p, float* %q) nounwind ssp {
+entry:
+  %0 = bitcast float* %p to i8*
+  %vld1 = tail call <2 x float> @llvm.arm.neon.vld1.v2f32(i8* %0, i32 4)
+  %tobool = icmp eq float* %q, null
+  br i1 %tobool, label %if.end, label %if.then
+
+if.then:                                          ; preds = %entry
+  %1 = load float* %q, align 4
+  %arrayidx1 = getelementptr inbounds float* %q, i32 1
+  %2 = load float* %arrayidx1, align 4
+  %add = fadd float %1, %2
+  %vecins = insertelement <2 x float> %vld1, float %add, i32 1
+  br label %if.end
+
+if.end:                                           ; preds = %entry, %if.then
+  %x.0 = phi <2 x float> [ %vecins, %if.then ], [ %vld1, %entry ]
+  tail call void @llvm.arm.neon.vst1.v2f32(i8* %0, <2 x float> %x.0, i32 4)
+  ret void
+}
