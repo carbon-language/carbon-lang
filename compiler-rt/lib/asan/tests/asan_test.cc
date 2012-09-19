@@ -1,4 +1,4 @@
-//===-- asan_test.cc ----------------------===//
+//===-- asan_test.cc ------------------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -371,7 +371,7 @@ void my_sigaction_sighandler(int, siginfo_t*, void*) {
   exit(1);
 }
 
-void my_signal_sighandler(int) {
+void my_signal_sighandler(int signum) {
   fprintf(stderr, kOverriddenHandler);
   exit(1);
 }
@@ -392,8 +392,7 @@ TEST(AddressSanitizer, SignalTest) {
   EXPECT_EQ(0, signal(SIGSEGV, my_signal_sighandler));
   EXPECT_DEATH(*c = 0, kUnknownCrash);
 }
-
-}
+}  // namespace
 #endif
 
 static void MallocStress(size_t n) {

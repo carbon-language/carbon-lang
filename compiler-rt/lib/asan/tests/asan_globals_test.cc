@@ -1,4 +1,4 @@
-//===-- asan_globals_test.cc ----------------------===//
+//===-- asan_globals_test.cc ----------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
