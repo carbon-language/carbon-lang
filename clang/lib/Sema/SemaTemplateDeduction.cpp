@@ -3651,26 +3651,23 @@ MarkUsedTemplateParameters(ASTContext &Ctx, QualType T,
                            llvm::SmallBitVector &Deduced);
 
 /// \brief If this is a non-static member function,
-static void MaybeAddImplicitObjectParameterType(ASTContext &Context,
+static void AddImplicitObjectParameterType(ASTContext &Context,
                                                 CXXMethodDecl *Method,
                                  SmallVectorImpl<QualType> &ArgTypes) {
-  if (Method->isStatic())
-    return;
-
-  // C++ [over.match.funcs]p4:
+  // C++11 [temp.func.order]p3:
+  //   [...] The new parameter is of type "reference to cv A," where cv are
+  //   the cv-qualifiers of the function template (if any) and A is
+  //   the class of which the function template is a member.
   //
-  //   For non-static member functions, the type of the implicit
-  //   object parameter is
-  //     - "lvalue reference to cv X" for functions declared without a
-  //       ref-qualifier or with the & ref-qualifier
-  //     - "rvalue reference to cv X" for functions declared with the
-  //       && ref-qualifier
-  //
-  // FIXME: We don't have ref-qualifiers yet, so we don't do that part.
+  // The standard doesn't say explicitly, but we pick the appropriate kind of
+  // reference type based on [over.match.funcs]p4.
   QualType ArgTy = Context.getTypeDeclType(Method->getParent());
   ArgTy = Context.getQualifiedType(ArgTy,
                         Qualifiers::fromCVRMask(Method->getTypeQualifiers()));
-  ArgTy = Context.getLValueReferenceType(ArgTy);
+  if (Method->getRefQualifier() == RQ_RValue)
+    ArgTy = Context.getRValueReferenceType(ArgTy);
+  else
+    ArgTy = Context.getLValueReferenceType(ArgTy);
   ArgTypes.push_back(ArgTy);
 }
 
@@ -3730,14 +3727,14 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
     SmallVector<QualType, 4> Args1;
     unsigned Skip1 = !S.getLangOpts().CPlusPlus0x && IsNonStatic2 && !Method1;
     if (S.getLangOpts().CPlusPlus0x && IsNonStatic1 && !Method2)
-      MaybeAddImplicitObjectParameterType(S.Context, Method1, Args1);
+      AddImplicitObjectParameterType(S.Context, Method1, Args1);
     Args1.insert(Args1.end(),
                  Proto1->arg_type_begin() + Skip1, Proto1->arg_type_end());
 
     SmallVector<QualType, 4> Args2;
     Skip2 = !S.getLangOpts().CPlusPlus0x && IsNonStatic1 && !Method2;
     if (S.getLangOpts().CPlusPlus0x && IsNonStatic2 && !Method1)
-      MaybeAddImplicitObjectParameterType(S.Context, Method2, Args2);
+      AddImplicitObjectParameterType(S.Context, Method2, Args2);
     Args2.insert(Args2.end(),
                  Proto2->arg_type_begin() + Skip2, Proto2->arg_type_end());
 
