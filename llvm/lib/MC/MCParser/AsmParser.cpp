@@ -130,6 +130,9 @@ private:
   /// AssemblerDialect. ~OU means unset value and use value provided by MAI.
   unsigned AssemblerDialect;
 
+  /// IsDarwin - is Darwin compatibility enabled?
+  bool IsDarwin;
+
 public:
   AsmParser(SourceMgr &SM, MCContext &Ctx, MCStreamer &Out,
             const MCAsmInfo &MAI);
@@ -209,7 +212,8 @@ private:
 
   virtual void EatToEndOfStatement();
 
-  bool ParseMacroArgument(MacroArgument &MA);
+  bool ParseMacroArgument(MacroArgument &MA,
+                          AsmToken::TokenKind &ArgumentDelimiter);
   bool ParseMacroArguments(const Macro *M, MacroArguments &A);
 
   /// \brief Parse up to the end of statement and a return the contents from the
@@ -407,8 +411,8 @@ AsmParser::AsmParser(SourceMgr &_SM, MCContext &_Ctx,
                      MCStreamer &_Out, const MCAsmInfo &_MAI)
   : Lexer(_MAI), Ctx(_Ctx), Out(_Out), MAI(_MAI), SrcMgr(_SM),
     GenericParser(new GenericAsmParser), PlatformParser(0),
-    CurBuffer(0), MacrosEnabled(true), CppHashLineNumber(0), 
-    AssemblerDialect(~0U) {
+    CurBuffer(0), MacrosEnabled(true), CppHashLineNumber(0),
+    AssemblerDialect(~0U), IsDarwin(false) {
   // Save the old handler.
   SavedDiagHandler = SrcMgr.getDiagHandler();
   SavedDiagContext = SrcMgr.getDiagContext();
@@ -429,6 +433,7 @@ AsmParser::AsmParser(SourceMgr &_SM, MCContext &_Ctx,
   } else if (_MAI.hasSubsectionsViaSymbols()) {
     PlatformParser = createDarwinAsmParser();
     PlatformParser->Initialize(*this);
+    IsDarwin = true;
   } else {
     PlatformParser = createELFAsmParser();
     PlatformParser->Initialize(*this);
@@ -1471,6 +1476,8 @@ bool AsmParser::expandMacro(raw_svector_ostream &OS, StringRef Body,
   if (NParameters != 0 && NParameters != A.size())
     return Error(L, "Wrong number of arguments");
 
+  // A macro without parameters is handled differently on Darwin:
+  // gas accepts no arguments and does no substitutions
   while (!Body.empty()) {
     // Scan for the next substitution.
     std::size_t End = Body.size(), Pos = 0;
@@ -1537,15 +1544,23 @@ bool AsmParser::expandMacro(raw_svector_ostream &OS, StringRef Body,
         if (Parameters[Index].first == Argument)
           break;
 
-      // FIXME: We should error at the macro definition.
-      if (Index == NParameters)
-        return Error(L, "Parameter not found");
+      if (Index == NParameters) {
+          if (Body[Pos+1] == '(' && Body[Pos+2] == ')')
+            Pos += 3;
+          else {
+            OS << '\\' << Argument;
+            Pos = I;
+          }
+      } else {
+        for (MacroArgument::const_iterator it = A[Index].begin(),
+               ie = A[Index].end(); it != ie; ++it)
+          if (it->getKind() == AsmToken::String)
+            OS << it->getStringContents();
+          else
+            OS << it->getString();
 
-      for (MacroArgument::const_iterator it = A[Index].begin(),
-             ie = A[Index].end(); it != ie; ++it)
-        OS << it->getString();
-
-      Pos += 1 + Argument.size();
+        Pos += 1 + Argument.size();
+      }
     }
     // Update the scan point.
     Body = Body.substr(Pos);
@@ -1560,21 +1575,96 @@ MacroInstantiation::MacroInstantiation(const Macro *M, SMLoc IL, SMLoc EL,
 {
 }
 
+static bool IsOperator(AsmToken::TokenKind kind)
+{
+  switch (kind)
+  {
+    default:
+      return false;
+    case AsmToken::Plus:
+    case AsmToken::Minus:
+    case AsmToken::Tilde:
+    case AsmToken::Slash:
+    case AsmToken::Star:
+    case AsmToken::Dot:
+    case AsmToken::Equal:
+    case AsmToken::EqualEqual:
+    case AsmToken::Pipe:
+    case AsmToken::PipePipe:
+    case AsmToken::Caret:
+    case AsmToken::Amp:
+    case AsmToken::AmpAmp:
+    case AsmToken::Exclaim:
+    case AsmToken::ExclaimEqual:
+    case AsmToken::Percent:
+    case AsmToken::Less:
+    case AsmToken::LessEqual:
+    case AsmToken::LessLess:
+    case AsmToken::LessGreater:
+    case AsmToken::Greater:
+    case AsmToken::GreaterEqual:
+    case AsmToken::GreaterGreater:
+      return true;
+  }
+}
+
 /// ParseMacroArgument - Extract AsmTokens for a macro argument.
 /// This is used for both default macro parameter values and the
 /// arguments in macro invocations
-bool AsmParser::ParseMacroArgument(MacroArgument &MA) {
+bool AsmParser::ParseMacroArgument(MacroArgument &MA,
+                                   AsmToken::TokenKind &ArgumentDelimiter) {
   unsigned ParenLevel = 0;
+  unsigned AddTokens = 0;
+
+  // gas accepts arguments separated by whitespace, except on Darwin
+  if (!IsDarwin)
+    Lexer.setSkipSpace(false);
 
   for (;;) {
-    if (Lexer.is(AsmToken::Eof) || Lexer.is(AsmToken::Equal))
+    if (Lexer.is(AsmToken::Eof) || Lexer.is(AsmToken::Equal)) {
+      Lexer.setSkipSpace(true);
       return TokError("unexpected token in macro instantiation");
+    }
+
+    if (ParenLevel == 0 && Lexer.is(AsmToken::Comma)) {
+      // Spaces and commas cannot be mixed to delimit parameters
+      if (ArgumentDelimiter == AsmToken::Eof)
+        ArgumentDelimiter = AsmToken::Comma;
+      else if (ArgumentDelimiter != AsmToken::Comma) {
+        Lexer.setSkipSpace(true);
+        return TokError("expected ' ' for macro argument separator");
+      }
+      break;
+    }
+
+    if (Lexer.is(AsmToken::Space)) {
+      Lex(); // Eat spaces
+
+      // Spaces can delimit parameters, but could also be part an expression.
+      // If the token after a space is an operator, add the token and the next
+      // one into this argument
+      if (ArgumentDelimiter == AsmToken::Space ||
+          ArgumentDelimiter == AsmToken::Eof) {
+        if (IsOperator(Lexer.getKind())) {
+          // Check to see whether the token is used as an operator,
+          // or part of an identifier
+          const char *NextChar = getTok().getEndLoc().getPointer() + 1;
+          if (*NextChar == ' ')
+            AddTokens = 2;
+        }
+
+        if (!AddTokens && ParenLevel == 0) {
+          if (ArgumentDelimiter == AsmToken::Eof &&
+              !IsOperator(Lexer.getKind()))
+            ArgumentDelimiter = AsmToken::Space;
+          break;
+        }
+      }
+    }
 
     // HandleMacroEntry relies on not advancing the lexer here
     // to be able to fill in the remaining default parameter values
     if (Lexer.is(AsmToken::EndOfStatement))
-      break;
-    if (ParenLevel == 0 && Lexer.is(AsmToken::Comma))
       break;
 
     // Adjust the current parentheses level.
@@ -1585,8 +1675,12 @@ bool AsmParser::ParseMacroArgument(MacroArgument &MA) {
 
     // Append the token to the current argument list.
     MA.push_back(getTok());
+    if (AddTokens)
+      AddTokens--;
     Lex();
   }
+
+  Lexer.setSkipSpace(true);
   if (ParenLevel != 0)
     return TokError("unbalanced parentheses in macro argument");
   return false;
@@ -1595,6 +1689,9 @@ bool AsmParser::ParseMacroArgument(MacroArgument &MA) {
 // Parse the macro instantiation arguments.
 bool AsmParser::ParseMacroArguments(const Macro *M, MacroArguments &A) {
   const unsigned NParameters = M ? M->Parameters.size() : 0;
+  // Argument delimiter is initially unknown. It will be set by
+  // ParseMacroArgument()
+  AsmToken::TokenKind ArgumentDelimiter = AsmToken::Eof;
 
   // Parse two kinds of macro invocations:
   // - macros defined without any parameters accept an arbitrary number of them
@@ -1603,7 +1700,7 @@ bool AsmParser::ParseMacroArguments(const Macro *M, MacroArguments &A) {
        ++Parameter) {
     MacroArgument MA;
 
-    if (ParseMacroArgument(MA))
+    if (ParseMacroArgument(MA, ArgumentDelimiter))
       return true;
 
     if (!MA.empty() || !NParameters)
@@ -3105,6 +3202,9 @@ bool GenericAsmParser::ParseDirectiveMacro(StringRef Directive,
     return TokError("expected identifier in '.macro' directive");
 
   MacroParameters Parameters;
+  // Argument delimiter is initially unknown. It will be set by
+  // ParseMacroArgument()
+  AsmToken::TokenKind ArgumentDelimiter = AsmToken::Eof;
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     for (;;) {
       MacroParameter Parameter;
@@ -3113,20 +3213,18 @@ bool GenericAsmParser::ParseDirectiveMacro(StringRef Directive,
 
       if (getLexer().is(AsmToken::Equal)) {
         Lex();
-        if (getParser().ParseMacroArgument(Parameter.second))
+        if (getParser().ParseMacroArgument(Parameter.second, ArgumentDelimiter))
           return true;
       }
 
       Parameters.push_back(Parameter);
 
-      if (getLexer().isNot(AsmToken::Comma))
+      if (getLexer().is(AsmToken::Comma))
+        Lex();
+      else if (getLexer().is(AsmToken::EndOfStatement))
         break;
-      Lex();
     }
   }
-
-  if (getLexer().isNot(AsmToken::EndOfStatement))
-    return TokError("unexpected token in '.macro' directive");
 
   // Eat the end of statement.
   Lex();

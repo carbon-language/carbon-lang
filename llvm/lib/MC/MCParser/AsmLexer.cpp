@@ -396,8 +396,17 @@ AsmToken AsmLexer::LexToken() {
   case 0:
   case ' ':
   case '\t':
-    // Ignore whitespace.
-    return LexToken();
+    if (SkipSpace) {
+      // Ignore whitespace.
+      return LexToken();
+    } else {
+      int len = 1;
+      while (*CurPtr==' ' || *CurPtr=='\t') {
+        CurPtr++;
+        len++;
+      }
+      return AsmToken(AsmToken::Space, StringRef(TokStart, len));
+    }
   case '\n': // FALL THROUGH.
   case '\r':
     isAtStartOfLine = true;
