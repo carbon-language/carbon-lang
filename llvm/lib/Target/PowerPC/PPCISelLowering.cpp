@@ -1717,16 +1717,16 @@ PPCTargetLowering::LowerFormalArguments(SDValue Chain,
                                         SmallVectorImpl<SDValue> &InVals)
                                           const {
   if (PPCSubTarget.isSVR4ABI() && !PPCSubTarget.isPPC64()) {
-    return LowerFormalArguments_SVR4(Chain, CallConv, isVarArg, Ins,
-                                     dl, DAG, InVals);
-  } else {
-    return LowerFormalArguments_Darwin(Chain, CallConv, isVarArg, Ins,
+    return LowerFormalArguments_32SVR4(Chain, CallConv, isVarArg, Ins,
                                        dl, DAG, InVals);
+  } else {
+    return LowerFormalArguments_Darwin_Or_64SVR4(Chain, CallConv, isVarArg, Ins,
+                                                 dl, DAG, InVals);
   }
 }
 
 SDValue
-PPCTargetLowering::LowerFormalArguments_SVR4(
+PPCTargetLowering::LowerFormalArguments_32SVR4(
                                       SDValue Chain,
                                       CallingConv::ID CallConv, bool isVarArg,
                                       const SmallVectorImpl<ISD::InputArg>
@@ -1944,7 +1944,7 @@ PPCTargetLowering::LowerFormalArguments_SVR4(
 }
 
 SDValue
-PPCTargetLowering::LowerFormalArguments_Darwin(
+PPCTargetLowering::LowerFormalArguments_Darwin_Or_64SVR4(
                                       SDValue Chain,
                                       CallingConv::ID CallConv, bool isVarArg,
                                       const SmallVectorImpl<ISD::InputArg>
@@ -1959,6 +1959,7 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
 
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   bool isPPC64 = PtrVT == MVT::i64;
+  bool isSVR4ABI = PPCSubTarget.isSVR4ABI();
   // Potential tail calls could cause overwriting of argument stack slots.
   bool isImmutable = !(getTargetMachine().Options.GuaranteedTailCallOpt &&
                        (CallConv == CallingConv::Fast));
@@ -2019,10 +2020,12 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
       default: llvm_unreachable("Unhandled argument type!");
       case MVT::i32:
       case MVT::f32:
-        VecArgOffset += isPPC64 ? 8 : 4;
+        VecArgOffset += 4;
         break;
       case MVT::i64:  // PPC64
       case MVT::f64:
+        // FIXME: We are guaranteed to be !isPPC64 at this point.
+        // Does MVT::i64 apply?
         VecArgOffset += 8;
         break;
       case MVT::v4f32:
@@ -2076,8 +2079,11 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
       // ObjSize is the true size, ArgSize rounded up to multiple of registers.
       ObjSize = Flags.getByValSize();
       ArgSize = ((ObjSize + PtrByteSize - 1)/PtrByteSize) * PtrByteSize;
-      // Objects of size 1 and 2 are right justified, everything else is
-      // left justified.  This means the memory address is adjusted forwards.
+      // FOR DARWIN: Objects of size 1 and 2 are right justified, everything
+      // else is left justified.  This means the memory address is adjusted
+      // forwards.
+      // FOR 64-BIT SVR4: All aggregates smaller than 8 bytes must be passed
+      // right-justified.
       if (ObjSize==1 || ObjSize==2) {
         CurArgOffset = CurArgOffset + (4 - ObjSize);
       }
@@ -2085,7 +2091,8 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
       int FI = MFI->CreateFixedObject(ObjSize, CurArgOffset, true);
       SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
       InVals.push_back(FIN);
-      if (ObjSize==1 || ObjSize==2) {
+      if (ObjSize==1 || ObjSize==2 ||
+          (ObjSize==4 && isSVR4ABI)) {
         if (GPR_idx != Num_GPR_Regs) {
           unsigned VReg;
           if (isPPC64)
@@ -2093,10 +2100,11 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
           else
             VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::GPRCRegClass);
           SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, PtrVT);
+          EVT ObjType = (ObjSize == 1 ? MVT::i8 :
+                         (ObjSize == 2 ? MVT::i16 : MVT::i32));
           SDValue Store = DAG.getTruncStore(Val.getValue(1), dl, Val, FIN,
                                             MachinePointerInfo(),
-                                            ObjSize==1 ? MVT::i8 : MVT::i16,
-                                            false, false, 0);
+                                            ObjType, false, false, 0);
           MemOps.push_back(Store);
           ++GPR_idx;
         }
@@ -2107,8 +2115,8 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
       }
       for (unsigned j = 0; j < ArgSize; j += PtrByteSize) {
         // Store whatever pieces of the object are in registers
-        // to memory.  ArgVal will be address of the beginning of
-        // the object.
+        // to memory.  ArgOffset will be the address of the beginning
+        // of the object.
         if (GPR_idx != Num_GPR_Regs) {
           unsigned VReg;
           if (isPPC64)
@@ -2118,7 +2126,16 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
           int FI = MFI->CreateFixedObject(PtrByteSize, ArgOffset, true);
           SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
           SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, PtrVT);
-          SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, FIN,
+          SDValue Shifted = Val;
+
+          // For 64-bit SVR4, small structs come in right-adjusted.
+          // Shift them left so the following logic works as expected.
+          if (ObjSize < 8 && isSVR4ABI) {
+            SDValue ShiftAmt = DAG.getConstant(64 - 8 * ObjSize, PtrVT);
+            Shifted = DAG.getNode(ISD::SHL, dl, PtrVT, Val, ShiftAmt);
+          }
+
+          SDValue Store = DAG.getStore(Val.getValue(1), dl, Shifted, FIN,
                                        MachinePointerInfo(),
                                        false, false, 0);
           MemOps.push_back(Store);
@@ -2308,8 +2325,8 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
   return Chain;
 }
 
-/// CalculateParameterAndLinkageAreaSize - Get the size of the paramter plus
-/// linkage area for the Darwin ABI.
+/// CalculateParameterAndLinkageAreaSize - Get the size of the parameter plus
+/// linkage area for the Darwin ABI, or the 64-bit SVR4 ABI.
 static unsigned
 CalculateParameterAndLinkageAreaSize(SelectionDAG &DAG,
                                      bool isPPC64,
@@ -2718,7 +2735,7 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
       // Thus for a call through a function pointer, the following actions need
       // to be performed:
       //   1. Save the TOC of the caller in the TOC save area of its stack
-      //      frame (this is done in LowerCall_Darwin()).
+      //      frame (this is done in LowerCall_Darwin_Or_64SVR4()).
       //   2. Load the address of the function entry point from the function
       //      descriptor.
       //   3. Load the TOC of the callee from the function descriptor into r2.
@@ -2969,25 +2986,25 @@ PPCTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                                    Ins, DAG);
 
   if (PPCSubTarget.isSVR4ABI() && !PPCSubTarget.isPPC64())
-    return LowerCall_SVR4(Chain, Callee, CallConv, isVarArg,
-                          isTailCall, Outs, OutVals, Ins,
-                          dl, DAG, InVals);
+    return LowerCall_32SVR4(Chain, Callee, CallConv, isVarArg,
+                            isTailCall, Outs, OutVals, Ins,
+                            dl, DAG, InVals);
 
-  return LowerCall_Darwin(Chain, Callee, CallConv, isVarArg,
-                          isTailCall, Outs, OutVals, Ins,
-                          dl, DAG, InVals);
+  return LowerCall_Darwin_Or_64SVR4(Chain, Callee, CallConv, isVarArg,
+                                    isTailCall, Outs, OutVals, Ins,
+                                    dl, DAG, InVals);
 }
 
 SDValue
-PPCTargetLowering::LowerCall_SVR4(SDValue Chain, SDValue Callee,
-                                  CallingConv::ID CallConv, bool isVarArg,
-                                  bool isTailCall,
-                                  const SmallVectorImpl<ISD::OutputArg> &Outs,
-                                  const SmallVectorImpl<SDValue> &OutVals,
-                                  const SmallVectorImpl<ISD::InputArg> &Ins,
-                                  DebugLoc dl, SelectionDAG &DAG,
-                                  SmallVectorImpl<SDValue> &InVals) const {
-  // See PPCTargetLowering::LowerFormalArguments_SVR4() for a description
+PPCTargetLowering::LowerCall_32SVR4(SDValue Chain, SDValue Callee,
+                                    CallingConv::ID CallConv, bool isVarArg,
+                                    bool isTailCall,
+                                    const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                    const SmallVectorImpl<SDValue> &OutVals,
+                                    const SmallVectorImpl<ISD::InputArg> &Ins,
+                                    DebugLoc dl, SelectionDAG &DAG,
+                                    SmallVectorImpl<SDValue> &InVals) const {
+  // See PPCTargetLowering::LowerFormalArguments_32SVR4() for a description
   // of the 32-bit SVR4 ABI stack frame layout.
 
   assert((CallConv == CallingConv::C ||
@@ -3192,7 +3209,7 @@ PPCTargetLowering::LowerCall_SVR4(SDValue Chain, SDValue Callee,
 }
 
 SDValue
-PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
+PPCTargetLowering::LowerCall_Darwin_Or_64SVR4(SDValue Chain, SDValue Callee,
                                     CallingConv::ID CallConv, bool isVarArg,
                                     bool isTailCall,
                                     const SmallVectorImpl<ISD::OutputArg> &Outs,
@@ -3200,6 +3217,8 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
                                     const SmallVectorImpl<ISD::InputArg> &Ins,
                                     DebugLoc dl, SelectionDAG &DAG,
                                     SmallVectorImpl<SDValue> &InVals) const {
+
+  bool isSVR4ABI = PPCSubTarget.isSVR4ABI();
 
   unsigned NumOps  = Outs.size();
 
@@ -3308,12 +3327,22 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
     }
 
     // FIXME memcpy is used way more than necessary.  Correctness first.
+    // Note: "by value" is code for passing a structure by value, not
+    // basic types.
     if (Flags.isByVal()) {
+      // Note: Size includes alignment padding, so
+      //   struct x { short a; char b; }
+      // will have Size = 4.  With #pragma pack(1), it will have Size = 3.
+      // These are the proper values we need for right-justifying the
+      // aggregate in a parameter register for 64-bit SVR4.
       unsigned Size = Flags.getByValSize();
-      if (Size==1 || Size==2) {
-        // Very small objects are passed right-justified.
-        // Everything else is passed left-justified.
-        EVT VT = (Size==1) ? MVT::i8 : MVT::i16;
+      // FOR DARWIN ONLY:  Very small objects are passed right-justified.
+      // Everything else is passed left-justified.
+      // FOR 64-BIT SVR4:  All aggregates smaller than 8 bytes must
+      // be passed right-justified.
+      if (Size==1 || Size==2 ||
+          (Size==4 && isSVR4ABI)) {
+        EVT VT = (Size==1) ? MVT::i8 : ((Size==2) ? MVT::i16 : MVT::i32);
         if (GPR_idx != NumGPRs) {
           SDValue Load = DAG.getExtLoad(ISD::EXTLOAD, dl, PtrVT, Chain, Arg,
                                         MachinePointerInfo(), VT,
@@ -3341,15 +3370,67 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
       // Copy entire object into memory.  There are cases where gcc-generated
       // code assumes it is there, even if it could be put entirely into
       // registers.  (This is not what the doc says.)
-      SDValue MemcpyCall = CreateCopyOfByValArgument(Arg, PtrOff,
-                            CallSeqStart.getNode()->getOperand(0),
-                            Flags, DAG, dl);
-      // This must go outside the CALLSEQ_START..END.
-      SDValue NewCallSeqStart = DAG.getCALLSEQ_START(MemcpyCall,
-                           CallSeqStart.getNode()->getOperand(1));
-      DAG.ReplaceAllUsesWith(CallSeqStart.getNode(), NewCallSeqStart.getNode());
-      Chain = CallSeqStart = NewCallSeqStart;
-      // And copy the pieces of it that fit into registers.
+
+      // FIXME: The above statement is likely due to a misunderstanding of the
+      // documents.  At least for 64-bit SVR4, all arguments must be copied
+      // into the parameter area BY THE CALLEE in the event that the callee
+      // takes the address of any formal argument.  That has not yet been
+      // implemented.  However, it is reasonable to use the stack area as a
+      // staging area for the register load.
+
+      // Skip this for small aggregates under 64-bit SVR4, as we will use
+      // the same slot for a right-justified copy, below.
+      if (Size >= 8 || !isSVR4ABI) {
+        SDValue MemcpyCall = CreateCopyOfByValArgument(Arg, PtrOff,
+                              CallSeqStart.getNode()->getOperand(0),
+                              Flags, DAG, dl);
+        // This must go outside the CALLSEQ_START..END.
+        SDValue NewCallSeqStart = DAG.getCALLSEQ_START(MemcpyCall,
+                                   CallSeqStart.getNode()->getOperand(1));
+        DAG.ReplaceAllUsesWith(CallSeqStart.getNode(),
+                               NewCallSeqStart.getNode());
+        Chain = CallSeqStart = NewCallSeqStart;
+      }
+
+      // FOR 64-BIT SVR4:  When a register is available, pass the
+      // aggregate right-justified.
+      if (isSVR4ABI && Size < 8 && GPR_idx != NumGPRs) {
+        // The easiest way to get this right-justified in a register
+        // is to copy the structure into the rightmost portion of a
+        // local variable slot, then load the whole slot into the
+        // register.
+        // FIXME: The memcpy seems to produce pretty awful code for
+        // small aggregates, particularly for packed ones.
+        // FIXME: It would be preferable to use the slot in the 
+        // parameter save area instead of a new local variable.
+        SDValue Const = DAG.getConstant(8 - Size, PtrOff.getValueType());
+        SDValue AddPtr = DAG.getNode(ISD::ADD, dl, PtrVT, PtrOff, Const);
+        SDValue MemcpyCall = CreateCopyOfByValArgument(Arg, AddPtr,
+                              CallSeqStart.getNode()->getOperand(0),
+                              Flags, DAG, dl);
+
+        // Place the memcpy outside the CALLSEQ_START..END.
+        SDValue NewCallSeqStart = DAG.getCALLSEQ_START(MemcpyCall,
+                                   CallSeqStart.getNode()->getOperand(1));
+        DAG.ReplaceAllUsesWith(CallSeqStart.getNode(), 
+                               NewCallSeqStart.getNode());
+        Chain = CallSeqStart = NewCallSeqStart;
+
+        // Load the slot into the register.
+        SDValue Load = DAG.getLoad(PtrVT, dl, Chain, PtrOff,
+                                   MachinePointerInfo(),
+                                   false, false, false, 0);
+        MemOpChains.push_back(Load.getValue(1));
+        RegsToPass.push_back(std::make_pair(GPR[GPR_idx++], Load));
+
+        // Done with this argument.
+        ArgOffset += PtrByteSize;
+        continue;
+      }
+
+      // For small aggregates (Darwin only) and aggregates >= PtrByteSize,
+      // copy the pieces of the object that fit into registers from the
+      // parameter save area.
       for (unsigned j=0; j<Size; j+=PtrByteSize) {
         SDValue Const = DAG.getConstant(j, PtrOff.getValueType());
         SDValue AddArg = DAG.getNode(ISD::ADD, dl, PtrVT, Arg, Const);
