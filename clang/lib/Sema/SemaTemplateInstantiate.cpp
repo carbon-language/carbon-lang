@@ -2250,7 +2250,7 @@ Sema::InstantiateClassTemplateSpecialization(
   Template->getPartialSpecializations(PartialSpecs);
   for (unsigned I = 0, N = PartialSpecs.size(); I != N; ++I) {
     ClassTemplatePartialSpecializationDecl *Partial = PartialSpecs[I];
-    TemplateDeductionInfo Info(Context, PointOfInstantiation);
+    TemplateDeductionInfo Info(PointOfInstantiation);
     if (TemplateDeductionResult Result
           = DeduceTemplateArguments(Partial,
                                     ClassTemplateSpec->getTemplateArgs(),

@@ -19,7 +19,6 @@
 
 namespace clang {
 
-class ASTContext;
 class TemplateArgumentList;
 
 namespace sema {
@@ -47,12 +46,8 @@ class TemplateDeductionInfo {
   void operator=(const TemplateDeductionInfo &) LLVM_DELETED_FUNCTION;
 
 public:
-  TemplateDeductionInfo(ASTContext &Context, SourceLocation Loc)
+  TemplateDeductionInfo(SourceLocation Loc)
     : Deduced(0), Loc(Loc), HasSFINAEDiagnostic(false) { }
-
-  ~TemplateDeductionInfo() {
-    // FIXME: if (Deduced) Deduced->Destroy(Context);
-  }
 
   /// \brief Returns the location at which template argument is
   /// occurring.
@@ -79,7 +74,6 @@ public:
   /// \brief Provide a new template argument list that contains the
   /// results of template argument deduction.
   void reset(TemplateArgumentList *NewDeduced) {
-    // FIXME: if (Deduced) Deduced->Destroy(Context);
     Deduced = NewDeduced;
   }
 

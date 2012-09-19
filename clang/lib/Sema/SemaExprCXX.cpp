@@ -1625,7 +1625,7 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
             = dyn_cast<FunctionTemplateDecl>((*D)->getUnderlyingDecl())) {
         // Perform template argument deduction to try to match the
         // expected function type.
-        TemplateDeductionInfo Info(Context, StartLoc);
+        TemplateDeductionInfo Info(StartLoc);
         if (DeduceTemplateArguments(FnTmpl, 0, ExpectedFunctionType, Fn, Info))
           continue;
       } else
