@@ -3404,7 +3404,7 @@ bool AsmParser::ParseDirectiveIrpc(SMLoc DirectiveLoc) {
 
 bool AsmParser::ParseDirectiveEndr(SMLoc DirectiveLoc) {
   if (ActiveMacros.empty())
-    return TokError("unexpected '.endr' directive, no current .rept");
+    return TokError("unmatched '.endr' directive");
 
   // The only .repl that should get here are the ones created by
   // InstantiateMacroLikeBody.

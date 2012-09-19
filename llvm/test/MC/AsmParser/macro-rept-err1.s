@@ -3,4 +3,4 @@
 
 .endr
 
-// CHECK: unexpected '.endr' directive, no current .rept
+// CHECK: unmatched '.endr' directive
