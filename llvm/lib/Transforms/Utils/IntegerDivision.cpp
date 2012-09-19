@@ -266,16 +266,14 @@ static Value* GenerateUnsignedDivisionCode(Value* Dividend, Value* Divisor,
 }
 
 bool llvm::expandDivision(BinaryOperator* Div) {
-  assert(Div->getOpcode() == Instruction::SDiv ||
-         Div->getOpcode() == Instruction::UDiv
-         && "Trying to expand division from a non-division function");
+  assert((Div->getOpcode() == Instruction::SDiv ||
+          Div->getOpcode() == Instruction::UDiv) &&
+         "Trying to expand division from a non-division function");
 
   IRBuilder<> Builder(Div);
 
-  if (Div->getType()->isVectorTy()) {
-    assert(0 && "Div over vectors not supported");
-    return false;
-  }
+  if (Div->getType()->isVectorTy())
+    llvm_unreachable("Div over vectors not supported");
 
   // First prepare the sign if it's a signed division
   if (Div->getOpcode() == Instruction::SDiv) {
