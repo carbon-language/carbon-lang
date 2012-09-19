@@ -432,11 +432,13 @@ bool InstructionLLVMC::s_regex_compiled = false;
 Disassembler *
 DisassemblerLLVMC::CreateInstance (const ArchSpec &arch)
 {
-    std::auto_ptr<DisassemblerLLVMC> disasm_ap (new DisassemblerLLVMC(arch));
+    if (arch.GetTriple().getArch() != llvm::Triple::UnknownArch)
+    {
+        std::auto_ptr<DisassemblerLLVMC> disasm_ap (new DisassemblerLLVMC(arch));
     
-    if (disasm_ap.get() && disasm_ap->IsValid())
-        return disasm_ap.release();
-    
+        if (disasm_ap.get() && disasm_ap->IsValid())
+            return disasm_ap.release();
+    }
     return NULL;
 }
 
