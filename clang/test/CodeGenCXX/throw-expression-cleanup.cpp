@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm -fcxx-exceptions -fexceptions -std=c++11 -o - | FileCheck %s
+// RUN: %clang_cc1 %s -triple x86_64-none-linux-gnu -emit-llvm -fcxx-exceptions -fexceptions -std=c++11 -o - | FileCheck %s
 // PR13359
 
 struct X {
