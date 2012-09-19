@@ -244,7 +244,7 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   IsSSE            = (HasOpSizePrefix && (Name.find("16") == Name.npos)) ||
                      (Name.find("CRC32") != Name.npos);
   HasFROperands    = hasFROperands();
-  HasVEX_LPrefix   = has256BitOperands() || Rec->getValueAsBit("hasVEX_L");
+  HasVEX_LPrefix   = Rec->getValueAsBit("hasVEX_L");
 
   // Check for 64-bit inst which does not require REX
   Is32Bit = false;
@@ -475,20 +475,6 @@ bool RecognizableInstr::hasFROperands() const {
 
     if (recName.find("FR") != recName.npos)
       return true;
-  }
-  return false;
-}
-
-bool RecognizableInstr::has256BitOperands() const {
-  const std::vector<CGIOperandList::OperandInfo> &OperandList = *Operands;
-  unsigned numOperands = OperandList.size();
-
-  for (unsigned operandIndex = 0; operandIndex < numOperands; ++operandIndex) {
-    const std::string &recName = OperandList[operandIndex].Rec->getName();
-
-    if (!recName.compare("VR256")) {
-      return true;
-    }
   }
   return false;
 }

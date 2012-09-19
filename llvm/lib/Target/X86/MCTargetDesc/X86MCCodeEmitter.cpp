@@ -560,15 +560,6 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   }
 
 
-  // Set the vector length to 256-bit if YMM0-YMM15 is used
-  for (unsigned i = 0; i != MI.getNumOperands(); ++i) {
-    if (!MI.getOperand(i).isReg())
-      continue;
-    unsigned SrcReg = MI.getOperand(i).getReg();
-    if (SrcReg >= X86::YMM0 && SrcReg <= X86::YMM15)
-      VEX_L = 1;
-  }
-
   // Classify VEX_B, VEX_4V, VEX_R, VEX_X
   unsigned NumOps = Desc.getNumOperands();
   unsigned CurOp = 0;

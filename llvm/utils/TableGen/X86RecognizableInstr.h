@@ -127,10 +127,7 @@ private:
 
   /// hasFROperands - Returns true if any operand is a FR operand.
   bool hasFROperands() const;
-  
-  /// has256BitOperands - Returns true if any operand is a 256-bit SSE operand.
-  bool has256BitOperands() const;
-  
+
   /// typeFromString - Translates an operand type from the string provided in
   ///   the LLVM tables to an OperandType for use in the operand specifier.
   ///
