@@ -75,10 +75,10 @@ multiclass xop2op256<bits<8> opc, string OpcodeStr, Intrinsic Int,
                      PatFrag memop> {
   def rrY : IXOP<opc, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
            !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-           [(set VR256:$dst, (Int VR256:$src))]>, VEX;
+           [(set VR256:$dst, (Int VR256:$src))]>, VEX, VEX_L;
   def rmY : IXOP<opc, MRMSrcMem, (outs VR256:$dst), (ins f256mem:$src),
            !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-           [(set VR256:$dst, (Int (bitconvert (memop addr:$src))))]>, VEX;
+           [(set VR256:$dst, (Int (bitconvert (memop addr:$src))))]>, VEX, VEX_L;
 }
 
 let isAsmParserOnly = 1 in {
@@ -238,7 +238,7 @@ multiclass xop4op256<bits<8> opc, string OpcodeStr, Intrinsic Int> {
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            [(set VR256:$dst, (Int VR256:$src1, VR256:$src2, VR256:$src3))]>,
-           VEX_4V, VEX_I8IMM;
+           VEX_4V, VEX_I8IMM, VEX_L;
   def rmY : IXOPi8<opc, MRMSrcMem, (outs VR256:$dst),
            (ins VR256:$src1, VR256:$src2, i256mem:$src3),
            !strconcat(OpcodeStr,
@@ -246,7 +246,7 @@ multiclass xop4op256<bits<8> opc, string OpcodeStr, Intrinsic Int> {
            [(set VR256:$dst,
              (Int VR256:$src1, VR256:$src2,
               (bitconvert (memopv4i64 addr:$src3))))]>,
-           VEX_4V, VEX_I8IMM, VEX_W, MemOp4;
+           VEX_4V, VEX_I8IMM, VEX_W, MemOp4, VEX_L;
   def mrY : IXOPi8<opc, MRMSrcMem, (outs VR256:$dst),
            (ins VR256:$src1, f256mem:$src2, VR256:$src3),
            !strconcat(OpcodeStr,
@@ -254,7 +254,7 @@ multiclass xop4op256<bits<8> opc, string OpcodeStr, Intrinsic Int> {
            [(set VR256:$dst,
              (Int VR256:$src1, (bitconvert (memopv4i64 addr:$src2)),
               VR256:$src3))]>,
-           VEX_4V, VEX_I8IMM;
+           VEX_4V, VEX_I8IMM, VEX_L;
 }
 
 let isAsmParserOnly = 1 in {
@@ -287,20 +287,21 @@ multiclass xop5op<bits<8> opc, string OpcodeStr, Intrinsic Int128,
         !strconcat(OpcodeStr,
         "\t{$src4, $src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3, $src4}"),
         [(set VR256:$dst,
-          (Int256 VR256:$src1, VR256:$src2, VR256:$src3, imm:$src4))]>;
+          (Int256 VR256:$src1, VR256:$src2, VR256:$src3, imm:$src4))]>, VEX_L;
   def rmY : IXOP5<opc, MRMSrcMem, (outs VR256:$dst),
         (ins VR256:$src1, VR256:$src2, f256mem:$src3, i8imm:$src4),
         !strconcat(OpcodeStr,
         "\t{$src4, $src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3, $src4}"),
         [(set VR256:$dst,
           (Int256 VR256:$src1, VR256:$src2, (ld_256 addr:$src3), imm:$src4))]>,
-        VEX_W, MemOp4;
+        VEX_W, MemOp4, VEX_L;
   def mrY : IXOP5<opc, MRMSrcMem, (outs VR256:$dst),
         (ins VR256:$src1, f256mem:$src2, VR256:$src3, i8imm:$src4),
         !strconcat(OpcodeStr,
         "\t{$src4, $src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3, $src4}"),
         [(set VR256:$dst,
-           (Int256 VR256:$src1, (ld_256 addr:$src2), VR256:$src3, imm:$src4))]>;
+           (Int256 VR256:$src1, (ld_256 addr:$src2), VR256:$src3, imm:$src4))]>,
+        VEX_L;
 }
 
 defm VPERMIL2PD : xop5op<0x49, "vpermil2pd", int_x86_xop_vpermil2pd,

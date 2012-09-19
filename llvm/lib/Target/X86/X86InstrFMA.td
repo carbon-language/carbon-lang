@@ -42,7 +42,7 @@ multiclass fma3p_rm<bits<8> opc, string OpcodeStr,
                    !strconcat(OpcodeStr,
                               "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
                    [(set VR256:$dst, (OpVT256 (Op VR256:$src2, VR256:$src1,
-                                               VR256:$src3)))]>;
+                                               VR256:$src3)))]>, VEX_L;
 
   let mayLoad = 1 in
   def mY    : FMA3<opc, MRMSrcMem, (outs VR256:$dst),
@@ -51,7 +51,7 @@ multiclass fma3p_rm<bits<8> opc, string OpcodeStr,
                               "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
                    [(set VR256:$dst,
                      (OpVT256 (Op VR256:$src2, VR256:$src1,
-                               (MemFrag256 addr:$src3))))]>;
+                               (MemFrag256 addr:$src3))))]>, VEX_L;
 }
 } // Constraints = "$src1 = $dst"
 
@@ -280,19 +280,19 @@ multiclass fma4p<bits<8> opc, string OpcodeStr, SDNode OpNode,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            [(set VR256:$dst,
              (OpVT256 (OpNode VR256:$src1, VR256:$src2, VR256:$src3)))]>,
-           VEX_W, MemOp4;
+           VEX_W, MemOp4, VEX_L;
   def rmY : FMA4<opc, MRMSrcMem, (outs VR256:$dst),
            (ins VR256:$src1, VR256:$src2, f256mem:$src3),
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            [(set VR256:$dst, (OpNode VR256:$src1, VR256:$src2,
-                              (ld_frag256 addr:$src3)))]>, VEX_W, MemOp4;
+                              (ld_frag256 addr:$src3)))]>, VEX_W, MemOp4, VEX_L;
   def mrY : FMA4<opc, MRMSrcMem, (outs VR256:$dst),
            (ins VR256:$src1, f256mem:$src2, VR256:$src3),
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
-           [(set VR256:$dst,
-             (OpNode VR256:$src1, (ld_frag256 addr:$src2), VR256:$src3))]>;
+           [(set VR256:$dst, (OpNode VR256:$src1,
+                              (ld_frag256 addr:$src2), VR256:$src3))]>, VEX_L;
 // For disassembler
 let isCodeGenOnly = 1 in {
   def rr_REV : FMA4<opc, MRMSrcReg, (outs VR128:$dst),
@@ -302,7 +302,8 @@ let isCodeGenOnly = 1 in {
   def rrY_REV : FMA4<opc, MRMSrcReg, (outs VR256:$dst),
                 (ins VR256:$src1, VR256:$src2, VR256:$src3),
                 !strconcat(OpcodeStr,
-                "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"), []>;
+                "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"), []>,
+                VEX_L;
 } // isCodeGenOnly = 1
 }
 
