@@ -28,11 +28,11 @@ using namespace llvm;
 // instruction. This will generate a udiv in the process, and Builder's insert
 // point will be pointing at the udiv (if present, i.e. not folded), ready to be
 // expanded if the user wishes.
-static Value* GenerateSignedDivisionCode(Value* Dividend, Value* Divisor,
-                                         IRBuilder<>& Builder) {
+static Value *GenerateSignedDivisionCode(Value *Dividend, Value *Divisor,
+                                         IRBuilder<> &Builder) {
   // Implementation taken from compiler-rt's __divsi3
 
-  ConstantInt* ThirtyOne = Builder.getInt32(31);
+  ConstantInt *ThirtyOne = Builder.getInt32(31);
 
   // ;   %tmp    = ashr i32 %dividend, 31
   // ;   %tmp1   = ashr i32 %divisor, 31
@@ -44,18 +44,18 @@ static Value* GenerateSignedDivisionCode(Value* Dividend, Value* Divisor,
   // ;   %q_mag  = udiv i32 %u_dvnd, %u_dvsr
   // ;   %tmp4   = xor i32 %q_mag, %q_sgn
   // ;   %q      = sub i32 %tmp4, %q_sgn
-  Value* Tmp    = Builder.CreateAShr(Dividend, ThirtyOne);
-  Value* Tmp1   = Builder.CreateAShr(Divisor, ThirtyOne);
-  Value* Tmp2   = Builder.CreateXor(Tmp, Dividend);
-  Value* U_Dvnd = Builder.CreateSub(Tmp2, Tmp);
-  Value* Tmp3   = Builder.CreateXor(Tmp1, Divisor);
-  Value* U_Dvsr = Builder.CreateSub(Tmp3, Tmp1);
-  Value* Q_Sgn  = Builder.CreateXor(Tmp1, Tmp);
-  Value* Q_Mag  = Builder.CreateUDiv(U_Dvnd, U_Dvsr);
-  Value* Tmp4   = Builder.CreateXor(Q_Mag, Q_Sgn);
-  Value* Q      = Builder.CreateSub(Tmp4, Q_Sgn);
+  Value *Tmp    = Builder.CreateAShr(Dividend, ThirtyOne);
+  Value *Tmp1   = Builder.CreateAShr(Divisor, ThirtyOne);
+  Value *Tmp2   = Builder.CreateXor(Tmp, Dividend);
+  Value *U_Dvnd = Builder.CreateSub(Tmp2, Tmp);
+  Value *Tmp3   = Builder.CreateXor(Tmp1, Divisor);
+  Value *U_Dvsr = Builder.CreateSub(Tmp3, Tmp1);
+  Value *Q_Sgn  = Builder.CreateXor(Tmp1, Tmp);
+  Value *Q_Mag  = Builder.CreateUDiv(U_Dvnd, U_Dvsr);
+  Value *Tmp4   = Builder.CreateXor(Q_Mag, Q_Sgn);
+  Value *Q      = Builder.CreateSub(Tmp4, Q_Sgn);
 
-  if (Instruction* UDiv = dyn_cast<Instruction>(Q_Mag))
+  if (Instruction *UDiv = dyn_cast<Instruction>(Q_Mag))
     Builder.SetInsertPoint(UDiv);
 
   return Q;
@@ -64,24 +64,24 @@ static Value* GenerateSignedDivisionCode(Value* Dividend, Value* Divisor,
 // Generates code to divide two unsigned scalar 32-bit integers. Returns the
 // quotient, rounded towards 0. Builder's insert point should be pointing at the
 // udiv instruction.
-static Value* GenerateUnsignedDivisionCode(Value* Dividend, Value* Divisor,
-                                           IRBuilder<>& Builder) {
+static Value *GenerateUnsignedDivisionCode(Value *Dividend, Value *Divisor,
+                                           IRBuilder<> &Builder) {
   // The basic algorithm can be found in the compiler-rt project's
   // implementation of __udivsi3.c. Here, we do a lower-level IR based approach
   // that's been hand-tuned to lessen the amount of control flow involved.
 
   // Some helper values
-  IntegerType* I32Ty = Builder.getInt32Ty();
+  IntegerType *I32Ty = Builder.getInt32Ty();
 
-  ConstantInt* Zero      = Builder.getInt32(0);
-  ConstantInt* One       = Builder.getInt32(1);
-  ConstantInt* ThirtyOne = Builder.getInt32(31);
-  ConstantInt* NegOne    = ConstantInt::getSigned(I32Ty, -1);
-  ConstantInt* True      = Builder.getTrue();
+  ConstantInt *Zero      = Builder.getInt32(0);
+  ConstantInt *One       = Builder.getInt32(1);
+  ConstantInt *ThirtyOne = Builder.getInt32(31);
+  ConstantInt *NegOne    = ConstantInt::getSigned(I32Ty, -1);
+  ConstantInt *True      = Builder.getTrue();
 
-  BasicBlock* IBB = Builder.GetInsertBlock();
-  Function* F = IBB->getParent();
-  Function* CTLZi32 = Intrinsic::getDeclaration(F->getParent(), Intrinsic::ctlz,
+  BasicBlock *IBB = Builder.GetInsertBlock();
+  Function *F = IBB->getParent();
+  Function *CTLZi32 = Intrinsic::getDeclaration(F->getParent(), Intrinsic::ctlz,
                                                 I32Ty);
 
   // Our CFG is going to look like:
@@ -116,17 +116,17 @@ static Value* GenerateUnsignedDivisionCode(Value* Dividend, Value* Divisor,
   // | ...   |
   // | end   |
   // +-------+
-  BasicBlock* SpecialCases = Builder.GetInsertBlock();
+  BasicBlock *SpecialCases = Builder.GetInsertBlock();
   SpecialCases->setName(Twine(SpecialCases->getName(), "_udiv-special-cases"));
-  BasicBlock* End = SpecialCases->splitBasicBlock(Builder.GetInsertPoint(),
+  BasicBlock *End = SpecialCases->splitBasicBlock(Builder.GetInsertPoint(),
                                                   "udiv-end");
-  BasicBlock* LoopExit  = BasicBlock::Create(Builder.getContext(),
+  BasicBlock *LoopExit  = BasicBlock::Create(Builder.getContext(),
                                              "udiv-loop-exit", F, End);
-  BasicBlock* DoWhile   = BasicBlock::Create(Builder.getContext(),
+  BasicBlock *DoWhile   = BasicBlock::Create(Builder.getContext(),
                                              "udiv-do-while", F, End);
-  BasicBlock* Preheader = BasicBlock::Create(Builder.getContext(),
+  BasicBlock *Preheader = BasicBlock::Create(Builder.getContext(),
                                              "udiv-preheader", F, End);
-  BasicBlock* BB1       = BasicBlock::Create(Builder.getContext(),
+  BasicBlock *BB1       = BasicBlock::Create(Builder.getContext(),
                                              "udiv-bb1", F, End);
 
   // We'll be overwriting the terminator to insert our extra blocks
@@ -148,17 +148,17 @@ static Value* GenerateUnsignedDivisionCode(Value* Dividend, Value* Divisor,
   // ;   %earlyRet    = or i1 %ret0, %retDividend
   // ;   br i1 %earlyRet, label %end, label %bb1
   Builder.SetInsertPoint(SpecialCases);
-  Value* Ret0_1      = Builder.CreateICmpEQ(Divisor, Zero);
-  Value* Ret0_2      = Builder.CreateICmpEQ(Dividend, Zero);
-  Value* Ret0_3      = Builder.CreateOr(Ret0_1, Ret0_2);
-  Value* Tmp0        = Builder.CreateCall2(CTLZi32, Divisor, True);
-  Value* Tmp1        = Builder.CreateCall2(CTLZi32, Dividend, True);
-  Value* SR          = Builder.CreateSub(Tmp0, Tmp1);
-  Value* Ret0_4      = Builder.CreateICmpUGT(SR, ThirtyOne);
-  Value* Ret0        = Builder.CreateOr(Ret0_3, Ret0_4);
-  Value* RetDividend = Builder.CreateICmpEQ(SR, ThirtyOne);
-  Value* RetVal      = Builder.CreateSelect(Ret0, Zero, Dividend);
-  Value* EarlyRet    = Builder.CreateOr(Ret0, RetDividend);
+  Value *Ret0_1      = Builder.CreateICmpEQ(Divisor, Zero);
+  Value *Ret0_2      = Builder.CreateICmpEQ(Dividend, Zero);
+  Value *Ret0_3      = Builder.CreateOr(Ret0_1, Ret0_2);
+  Value *Tmp0        = Builder.CreateCall2(CTLZi32, Divisor, True);
+  Value *Tmp1        = Builder.CreateCall2(CTLZi32, Dividend, True);
+  Value *SR          = Builder.CreateSub(Tmp0, Tmp1);
+  Value *Ret0_4      = Builder.CreateICmpUGT(SR, ThirtyOne);
+  Value *Ret0        = Builder.CreateOr(Ret0_3, Ret0_4);
+  Value *RetDividend = Builder.CreateICmpEQ(SR, ThirtyOne);
+  Value *RetVal      = Builder.CreateSelect(Ret0, Zero, Dividend);
+  Value *EarlyRet    = Builder.CreateOr(Ret0, RetDividend);
   Builder.CreateCondBr(EarlyRet, End, BB1);
 
   // ; bb1:                                             ; preds = %special-cases
@@ -168,10 +168,10 @@ static Value* GenerateUnsignedDivisionCode(Value* Dividend, Value* Divisor,
   // ;   %skipLoop = icmp eq i32 %sr_1, 0
   // ;   br i1 %skipLoop, label %loop-exit, label %preheader
   Builder.SetInsertPoint(BB1);
-  Value* SR_1     = Builder.CreateAdd(SR, One);
-  Value* Tmp2     = Builder.CreateSub(ThirtyOne, SR);
-  Value* Q        = Builder.CreateShl(Dividend, Tmp2);
-  Value* SkipLoop = Builder.CreateICmpEQ(SR_1, Zero);
+  Value *SR_1     = Builder.CreateAdd(SR, One);
+  Value *Tmp2     = Builder.CreateSub(ThirtyOne, SR);
+  Value *Q        = Builder.CreateShl(Dividend, Tmp2);
+  Value *SkipLoop = Builder.CreateICmpEQ(SR_1, Zero);
   Builder.CreateCondBr(SkipLoop, LoopExit, Preheader);
 
   // ; preheader:                                           ; preds = %bb1
@@ -179,8 +179,8 @@ static Value* GenerateUnsignedDivisionCode(Value* Dividend, Value* Divisor,
   // ;   %tmp4 = add i32 %divisor, -1
   // ;   br label %do-while
   Builder.SetInsertPoint(Preheader);
-  Value* Tmp3 = Builder.CreateLShr(Dividend, SR_1);
-  Value* Tmp4 = Builder.CreateAdd(Divisor, NegOne);
+  Value *Tmp3 = Builder.CreateLShr(Dividend, SR_1);
+  Value *Tmp4 = Builder.CreateAdd(Divisor, NegOne);
   Builder.CreateBr(DoWhile);
 
   // ; do-while:                                 ; preds = %do-while, %preheader
@@ -202,22 +202,22 @@ static Value* GenerateUnsignedDivisionCode(Value* Dividend, Value* Divisor,
   // ;   %tmp12 = icmp eq i32 %sr_2, 0
   // ;   br i1 %tmp12, label %loop-exit, label %do-while
   Builder.SetInsertPoint(DoWhile);
-  PHINode* Carry_1 = Builder.CreatePHI(I32Ty, 2);
-  PHINode* SR_3    = Builder.CreatePHI(I32Ty, 2);
-  PHINode* R_1     = Builder.CreatePHI(I32Ty, 2);
-  PHINode* Q_2     = Builder.CreatePHI(I32Ty, 2);
-  Value* Tmp5  = Builder.CreateShl(R_1, One);
-  Value* Tmp6  = Builder.CreateLShr(Q_2, ThirtyOne);
-  Value* Tmp7  = Builder.CreateOr(Tmp5, Tmp6);
-  Value* Tmp8  = Builder.CreateShl(Q_2, One);
-  Value* Q_1   = Builder.CreateOr(Carry_1, Tmp8);
-  Value* Tmp9  = Builder.CreateSub(Tmp4, Tmp7);
-  Value* Tmp10 = Builder.CreateAShr(Tmp9, 31);
-  Value* Carry = Builder.CreateAnd(Tmp10, One);
-  Value* Tmp11 = Builder.CreateAnd(Tmp10, Divisor);
-  Value* R     = Builder.CreateSub(Tmp7, Tmp11);
-  Value* SR_2  = Builder.CreateAdd(SR_3, NegOne);
-  Value* Tmp12 = Builder.CreateICmpEQ(SR_2, Zero);
+  PHINode *Carry_1 = Builder.CreatePHI(I32Ty, 2);
+  PHINode *SR_3    = Builder.CreatePHI(I32Ty, 2);
+  PHINode *R_1     = Builder.CreatePHI(I32Ty, 2);
+  PHINode *Q_2     = Builder.CreatePHI(I32Ty, 2);
+  Value *Tmp5  = Builder.CreateShl(R_1, One);
+  Value *Tmp6  = Builder.CreateLShr(Q_2, ThirtyOne);
+  Value *Tmp7  = Builder.CreateOr(Tmp5, Tmp6);
+  Value *Tmp8  = Builder.CreateShl(Q_2, One);
+  Value *Q_1   = Builder.CreateOr(Carry_1, Tmp8);
+  Value *Tmp9  = Builder.CreateSub(Tmp4, Tmp7);
+  Value *Tmp10 = Builder.CreateAShr(Tmp9, 31);
+  Value *Carry = Builder.CreateAnd(Tmp10, One);
+  Value *Tmp11 = Builder.CreateAnd(Tmp10, Divisor);
+  Value *R     = Builder.CreateSub(Tmp7, Tmp11);
+  Value *SR_2  = Builder.CreateAdd(SR_3, NegOne);
+  Value *Tmp12 = Builder.CreateICmpEQ(SR_2, Zero);
   Builder.CreateCondBr(Tmp12, LoopExit, DoWhile);
 
   // ; loop-exit:                                      ; preds = %do-while, %bb1
@@ -227,17 +227,17 @@ static Value* GenerateUnsignedDivisionCode(Value* Dividend, Value* Divisor,
   // ;   %q_4   = or i32 %carry_2, %tmp13
   // ;   br label %end
   Builder.SetInsertPoint(LoopExit);
-  PHINode* Carry_2 = Builder.CreatePHI(I32Ty, 2);
-  PHINode* Q_3     = Builder.CreatePHI(I32Ty, 2);
-  Value* Tmp13 = Builder.CreateShl(Q_3, One);
-  Value* Q_4   = Builder.CreateOr(Carry_2, Tmp13);
+  PHINode *Carry_2 = Builder.CreatePHI(I32Ty, 2);
+  PHINode *Q_3     = Builder.CreatePHI(I32Ty, 2);
+  Value *Tmp13 = Builder.CreateShl(Q_3, One);
+  Value *Q_4   = Builder.CreateOr(Carry_2, Tmp13);
   Builder.CreateBr(End);
 
   // ; end:                                 ; preds = %loop-exit, %special-cases
   // ;   %q_5 = phi i32 [ %q_4, %loop-exit ], [ %retVal, %special-cases ]
   // ;   ret i32 %q_5
   Builder.SetInsertPoint(End, End->begin());
-  PHINode* Q_5 = Builder.CreatePHI(I32Ty, 2);
+  PHINode *Q_5 = Builder.CreatePHI(I32Ty, 2);
 
   // Populate the Phis, since all values have now been created. Our Phis were:
   // ;   %carry_1 = phi i32 [ 0, %preheader ], [ %carry, %do-while ]
@@ -265,7 +265,7 @@ static Value* GenerateUnsignedDivisionCode(Value* Dividend, Value* Divisor,
   return Q_5;
 }
 
-bool llvm::expandDivision(BinaryOperator* Div) {
+bool llvm::expandDivision(BinaryOperator *Div) {
   assert((Div->getOpcode() == Instruction::SDiv ||
           Div->getOpcode() == Instruction::UDiv) &&
          "Trying to expand division from a non-division function");
@@ -278,14 +278,14 @@ bool llvm::expandDivision(BinaryOperator* Div) {
   // First prepare the sign if it's a signed division
   if (Div->getOpcode() == Instruction::SDiv) {
     // Lower the code to unsigned division, and reset Div to point to the udiv.
-    Value* Quotient = GenerateSignedDivisionCode(Div->getOperand(0),
+    Value *Quotient = GenerateSignedDivisionCode(Div->getOperand(0),
                                                 Div->getOperand(1), Builder);
     Div->replaceAllUsesWith(Quotient);
     Div->dropAllReferences();
     Div->eraseFromParent();
 
     // If we didn't actually generate a udiv instruction, we're done
-    BinaryOperator* BO = dyn_cast<BinaryOperator>(Builder.GetInsertPoint());
+    BinaryOperator *BO = dyn_cast<BinaryOperator>(Builder.GetInsertPoint());
     if (!BO || BO->getOpcode() != Instruction::UDiv)
       return true;
 
@@ -293,7 +293,7 @@ bool llvm::expandDivision(BinaryOperator* Div) {
   }
 
   // Insert the unsigned division code
-  Value* Quotient = GenerateUnsignedDivisionCode(Div->getOperand(0),
+  Value *Quotient = GenerateUnsignedDivisionCode(Div->getOperand(0),
                                                  Div->getOperand(1),
                                                  Builder);
   Div->replaceAllUsesWith(Quotient);
