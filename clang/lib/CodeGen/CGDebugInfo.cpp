@@ -793,8 +793,6 @@ CollectRecordFields(const RecordDecl *record, llvm::DIFile tunit,
     for (CXXRecordDecl::capture_const_iterator I = CXXDecl->captures_begin(),
            E = CXXDecl->captures_end(); I != E; ++I, ++Field, ++fieldno) {
       const LambdaExpr::Capture C = *I;
-      // TODO: Need to handle 'this' in some way by probably renaming the
-      // this of the lambda class and having a field member of 'this'.
       if (C.capturesVariable()) {
         VarDecl *V = C.getCapturedVar();
         llvm::DIFile VUnit = getOrCreateFile(C.getLocation());
@@ -810,6 +808,10 @@ CollectRecordFields(const RecordDecl *record, llvm::DIFile tunit,
                             VUnit, RecordTy);
         elements.push_back(fieldType);
       } else {
+        // TODO: Need to handle 'this' in some way by probably renaming the
+        // this of the lambda class and having a field member of 'this' or
+        // by use AT_object_pointer for the function and having that be
+        // used as 'this' for semantic references.
         assert(C.capturesThis() && "Field that isn't captured and isn't this?");
         FieldDecl *f = *Field;
         llvm::DIFile VUnit = getOrCreateFile(f->getLocation());
