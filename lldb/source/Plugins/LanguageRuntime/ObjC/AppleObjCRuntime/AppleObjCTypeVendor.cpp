@@ -71,10 +71,10 @@ public:
                     break;
                 
                 if (descriptor->CompleteInterface(non_const_interface_decl))
-                    non_const_interface_decl->setHasExternalLexicalStorage(false);
+                    non_const_interface_decl->setHasExternalVisibleStorage(false);
             }
 
-            if (non_const_interface_decl->hasExternalLexicalStorage()) // hasExternalLexicalStorage() is cleared during completion
+            if (non_const_interface_decl->hasExternalVisibleStorage())
                 break;
             
             return non_const_interface_decl->lookup(name);
@@ -253,7 +253,7 @@ AppleObjCTypeVendor::FindTypes (const ConstString &name,
         
         // It's not.  If it exists, we have to put it into our ASTContext.
         
-        // TODO Actually do this.  But we have to search the class list first.  Until then we'll just give up.
+        // TODO Remove this break once testing is complete.
         break;
         
         ObjCLanguageRuntime::ObjCISA isa = m_runtime.GetISA(name);
