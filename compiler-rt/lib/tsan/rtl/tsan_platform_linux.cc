@@ -124,7 +124,6 @@ void InitializeShadowMemory() {
   DPrintf("stack        %zx\n", (uptr)&shadow);
 }
 
-static uptr g_tls_size;
 static uptr g_data_start;
 static uptr g_data_end;
 
@@ -166,6 +165,8 @@ static void InitDataSeg() {
   CHECK_GE((uptr)&g_data_start, g_data_start);
   CHECK_LT((uptr)&g_data_start, g_data_end);
 }
+
+static uptr g_tls_size;
 
 #ifdef __i386__
 # define INTERNAL_FUNCTION __attribute__((regparm(3), stdcall))
