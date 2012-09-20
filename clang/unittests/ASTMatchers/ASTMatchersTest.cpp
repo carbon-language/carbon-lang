@@ -805,6 +805,15 @@ TEST(Matcher, Call) {
                  MethodOnYPointer));
 }
 
+TEST(Matcher, FlowControl) {
+  EXPECT_TRUE(matches("void f() { while(true) { break; } }", breakStmt()));
+  EXPECT_TRUE(matches("void f() { while(true) { continue; } }",
+                      continueStmt()));
+  EXPECT_TRUE(matches("void f() { goto FOO; FOO: ;}", gotoStmt()));
+  EXPECT_TRUE(matches("void f() { goto FOO; FOO: ;}", labelStmt()));
+  EXPECT_TRUE(matches("void f() { return; }", returnStmt()));
+}
+
 TEST(HasType, MatchesAsString) {
   EXPECT_TRUE(
       matches("class Y { public: void x(); }; void z() {Y* y; y->x(); }",
@@ -1539,6 +1548,10 @@ TEST(Matcher, IntegerLiterals) {
   EXPECT_TRUE(notMatches("int i = 'a';", HasIntLiteral));
   EXPECT_TRUE(notMatches("int i = 1e10;", HasIntLiteral));
   EXPECT_TRUE(notMatches("int i = 10.0;", HasIntLiteral));
+}
+
+TEST(Matcher, AsmStatement) {
+  EXPECT_TRUE(matches("void foo() { __asm(\"mov al, 2\"); }", asmStmt()));
 }
 
 TEST(Matcher, Conditions) {
@@ -2573,6 +2586,23 @@ TEST(SwitchCase, MatchesCase) {
   EXPECT_TRUE(notMatches("void x() { switch(42) {} }", switchCase()));
 }
 
+TEST(SwitchCase, MatchesSwitch) {
+  EXPECT_TRUE(matches("void x() { switch(42) { case 42:; } }", switchStmt()));
+  EXPECT_TRUE(matches("void x() { switch(42) { default:; } }", switchStmt()));
+  EXPECT_TRUE(matches("void x() { switch(42) default:; }", switchStmt()));
+  EXPECT_TRUE(notMatches("void x() {}", switchStmt()));
+}
+
+TEST(ExceptionHandling, SimpleCases) {
+  EXPECT_TRUE(matches("void foo() try { } catch(int X) { }", catchStmt()));
+  EXPECT_TRUE(matches("void foo() try { } catch(int X) { }", tryStmt()));
+  EXPECT_TRUE(notMatches("void foo() try { } catch(int X) { }", throwExpr()));
+  EXPECT_TRUE(matches("void foo() try { throw; } catch(int X) { }",
+                      throwExpr()));
+  EXPECT_TRUE(matches("void foo() try { throw 5;} catch(int X) { }",
+                      throwExpr()));
+}
+
 TEST(HasConditionVariableStatement, DoesNotMatchCondition) {
   EXPECT_TRUE(notMatches(
       "void x() { if(true) {} }",
@@ -2831,6 +2861,11 @@ TEST(NNS, MatchesNestedNameSpecifiers) {
   EXPECT_TRUE(notMatches(
     "struct A { static void f() {} }; void g(A* a) { a->f(); }",
     nestedNameSpecifier()));
+}
+
+TEST(NullStatement, SimpleCases) {
+  EXPECT_TRUE(matches("void f() {int i;;}", nullStmt()));
+  EXPECT_TRUE(notMatches("void f() {int i;}", nullStmt()));
 }
 
 TEST(NNS, MatchesTypes) {

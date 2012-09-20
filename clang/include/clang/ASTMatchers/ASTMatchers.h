@@ -716,6 +716,68 @@ const internal::VariadicDynCastAllOfMatcher<Stmt, WhileStmt> whileStmt;
 ///   matches 'do {} while(true)'
 const internal::VariadicDynCastAllOfMatcher<Stmt, DoStmt> doStmt;
 
+/// \brief Matches break statements.
+///
+/// Given
+/// \code
+///   while (true) { break; }
+/// \endcode
+/// breakStmt()
+///   matches 'break'
+const internal::VariadicDynCastAllOfMatcher<Stmt, BreakStmt> breakStmt;
+
+/// \brief Matches continue statements.
+///
+/// Given
+/// \code
+///   while (true) { continue; }
+/// \endcode
+/// continueStmt()
+///   matches 'continue'
+const internal::VariadicDynCastAllOfMatcher<Stmt, ContinueStmt> continueStmt;
+
+/// \brief Matches return statements.
+///
+/// Given
+/// \code
+///   return 1;
+/// \endcode
+/// returnStmt()
+///   matches 'return 1'
+const internal::VariadicDynCastAllOfMatcher<Stmt, ReturnStmt> returnStmt;
+
+/// \brief Matches goto statements.
+///
+/// Given
+/// \code
+///   goto FOO;
+///   FOO: bar();
+/// \endcode
+/// gotoStmt()
+///   matches 'goto FOO'
+const internal::VariadicDynCastAllOfMatcher<Stmt, GotoStmt> gotoStmt;
+
+/// \brief Matches label statements.
+///
+/// Given
+/// \code
+///   goto FOO;
+///   FOO: bar();
+/// \endcode
+/// labelStmt()
+///   matches 'FOO:'
+const internal::VariadicDynCastAllOfMatcher<Stmt, LabelStmt> labelStmt;
+
+/// \brief Matches switch statements.
+///
+/// Given
+/// \code
+///   switch(a) { case 42: break; default: break; }
+/// \endcode
+/// switchStmt()
+///   matches 'switch(a)'.
+const internal::VariadicDynCastAllOfMatcher<Stmt, SwitchStmt> switchStmt;
+
 /// \brief Matches case and default statements inside switch statements.
 ///
 /// Given
@@ -733,6 +795,52 @@ const internal::VariadicDynCastAllOfMatcher<Stmt, SwitchCase> switchCase;
 ///   for (;;) {{}}
 /// \endcode
 const internal::VariadicDynCastAllOfMatcher<Stmt, CompoundStmt> compoundStmt;
+
+/// \brief Matches catch statements.
+///
+/// \code
+///   try {} catch(int i) {}
+/// \endcode
+/// catchStmt()
+///   matches 'catch(int i)'
+const internal::VariadicDynCastAllOfMatcher<Stmt, CXXCatchStmt> catchStmt;
+
+/// \brief Matches try statements.
+///
+/// \code
+///   try {} catch(int i) {}
+/// \endcode
+/// tryStmt()
+///   matches 'try {}'
+const internal::VariadicDynCastAllOfMatcher<Stmt, CXXTryStmt> tryStmt;
+
+/// \brief Matches throw expressions.
+///
+/// \code
+///   try { throw 5; } catch(int i) {}
+/// \endcode
+/// throwExpr()
+///   matches 'throw 5'
+const internal::VariadicDynCastAllOfMatcher<Stmt, CXXThrowExpr> throwExpr;
+
+/// \brief Matches null statements.
+///
+/// \code
+///   foo();;
+/// \endcode
+/// nullStmt()
+///   matches the second ';'
+const internal::VariadicDynCastAllOfMatcher<Stmt, NullStmt> nullStmt;
+
+/// \brief Matches asm statements.
+///
+/// \code
+///  int i = 100;
+///   __asm("mov al, 2");
+/// \endcode
+/// asmStmt()
+///   matches '__asm("mov al, 2")'
+const internal::VariadicDynCastAllOfMatcher<Stmt, AsmStmt> asmStmt;
 
 /// \brief Matches bool literals.
 ///
