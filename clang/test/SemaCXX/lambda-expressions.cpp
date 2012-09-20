@@ -229,3 +229,7 @@ namespace PR13860 {
     static_assert(sizeof(y), "");
   }
 }
+
+namespace PR13854 {
+  auto l = [](void){};
+}

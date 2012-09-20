@@ -410,9 +410,15 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
       = MethodTyInfo->getType()->getAs<FunctionType>()->getResultType() 
                                                         != Context.DependentTy;
 
-    Params.reserve(FTI.NumArgs);
-    for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
-      Params.push_back(cast<ParmVarDecl>(FTI.ArgInfo[i].Param));
+    if (FTI.NumArgs == 1 && !FTI.isVariadic && FTI.ArgInfo[0].Ident == 0 &&
+        cast<ParmVarDecl>(FTI.ArgInfo[0].Param)->getType()->isVoidType()) {
+      // Empty arg list, don't push any params.
+      checkVoidParamDecl(cast<ParmVarDecl>(FTI.ArgInfo[0].Param));
+    } else {
+      Params.reserve(FTI.NumArgs);
+      for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
+        Params.push_back(cast<ParmVarDecl>(FTI.ArgInfo[i].Param));
+    }
 
     // Check for unexpanded parameter packs in the method type.
     if (MethodTyInfo->getType()->containsUnexpandedParameterPack())
