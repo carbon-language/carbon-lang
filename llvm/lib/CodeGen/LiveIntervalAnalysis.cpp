@@ -742,9 +742,6 @@ void LiveIntervals::extendToIndices(LiveInterval *LI,
 void LiveIntervals::pruneValue(LiveInterval *LI, SlotIndex Kill,
                                SmallVectorImpl<SlotIndex> *EndPoints) {
   LiveRangeQuery LRQ(*LI, Kill);
-  assert (!LRQ.valueDefined() && "Can't prune value at the defining instr");
-
-  // Also can't prune a value that isn't there.
   VNInfo *VNI = LRQ.valueOut();
   if (!VNI)
     return;

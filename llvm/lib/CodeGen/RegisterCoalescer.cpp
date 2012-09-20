@@ -1246,8 +1246,15 @@ class JoinVals {
     // Value in the other live range that overlaps this def, if any.
     VNInfo *OtherVNI;
 
+    // True when the live range of this value will be pruned because of an
+    // overlapping CR_Replace value in the other live range.
+    bool Pruned;
+
+    // True once Pruned above has been computed.
+    bool PrunedComputed;
+
     Val() : Resolution(CR_Keep), WriteLanes(0), ValidLanes(0),
-            RedefVNI(0), OtherVNI(0) {}
+            RedefVNI(0), OtherVNI(0), Pruned(false), PrunedComputed(false) {}
 
     bool isAnalyzed() const { return WriteLanes != 0; }
   };
@@ -1262,6 +1269,7 @@ class JoinVals {
   bool taintExtent(unsigned, unsigned, JoinVals&,
                    SmallVectorImpl<std::pair<SlotIndex, unsigned> >&);
   bool usesLanes(MachineInstr *MI, unsigned, unsigned, unsigned);
+  bool isPrunedValue(unsigned ValNo, JoinVals &Other);
 
 public:
   JoinVals(LiveInterval &li, unsigned subIdx,
@@ -1527,6 +1535,12 @@ void JoinVals::computeAssignment(unsigned ValNo, JoinVals &Other) {
                  << V.OtherVNI->def << " --> @"
                  << NewVNInfo[Assignments[ValNo]]->def << '\n');
     break;
+  case CR_Replace:
+  case CR_Unresolved:
+    // The other value is going to be pruned if this join is successful.
+    assert(V.OtherVNI && "OtherVNI not assigned, can't prune");
+    Other.Vals[V.OtherVNI->id].Pruned = true;
+    // Fall through.
   default:
     // This value number needs to go in the final joined live range.
     Assignments[ValNo] = NewVNInfo.size();
@@ -1682,15 +1696,57 @@ bool JoinVals::resolveConflicts(JoinVals &Other) {
   return true;
 }
 
+// Determine if ValNo is a copy of a value number in LI or Other.LI that will
+// be pruned:
+//
+//   %dst = COPY %src
+//   %src = COPY %dst  <-- This value to be pruned.
+//   %dst = COPY %src  <-- This value is a copy of a pruned value.
+//
+bool JoinVals::isPrunedValue(unsigned ValNo, JoinVals &Other) {
+  Val &V = Vals[ValNo];
+  if (V.Pruned || V.PrunedComputed)
+    return V.Pruned;
+
+  if (V.Resolution != CR_Erase && V.Resolution != CR_Merge)
+    return V.Pruned;
+
+  // Follow copies up the dominator tree and check if any intermediate value
+  // has been pruned.
+  V.PrunedComputed = true;
+  V.Pruned = Other.isPrunedValue(V.OtherVNI->id, *this);
+  return V.Pruned;
+}
+
 void JoinVals::pruneValues(JoinVals &Other,
                            SmallVectorImpl<SlotIndex> &EndPoints) {
   for (unsigned i = 0, e = LI.getNumValNums(); i != e; ++i) {
-    if (Vals[i].Resolution != CR_Replace)
-      continue;
     SlotIndex Def = LI.getValNumInfo(i)->def;
-    LIS->pruneValue(&Other.LI, Def, &EndPoints);
-    DEBUG(dbgs() << "\t\tpruned " << PrintReg(Other.LI.reg) << " at " << Def
-                 << ": " << Other.LI << '\n');
+    switch (Vals[i].Resolution) {
+    case CR_Keep:
+      break;
+    case CR_Replace:
+      // This value takes precedence over the value in Other.LI.
+      LIS->pruneValue(&Other.LI, Def, &EndPoints);
+      DEBUG(dbgs() << "\t\tpruned " << PrintReg(Other.LI.reg) << " at " << Def
+                   << ": " << Other.LI << '\n');
+      break;
+    case CR_Erase:
+    case CR_Merge:
+      if (isPrunedValue(i, Other)) {
+        // This value is ultimately a copy of a pruned value in LI or Other.LI.
+        // We can no longer trust the value mapping computed by
+        // computeAssignment(), the value that was originally copied could have
+        // been replaced.
+        LIS->pruneValue(&LI, Def, &EndPoints);
+        DEBUG(dbgs() << "\t\tpruned all of " << PrintReg(LI.reg) << " at "
+                     << Def << ": " << LI << '\n');
+      }
+      break;
+    case CR_Unresolved:
+    case CR_Impossible:
+      llvm_unreachable("Unresolved conflicts");
+    }
   }
 }
 
