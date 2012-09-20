@@ -180,4 +180,4 @@ CHECK-NEXT:   warn_weak_import
 
 The list of warnings in -Wpedantic should NEVER grow.
 
-CHECK: Number in -Wpedantic (not covered by other -W flags): 38
+CHECK: Number in -Wpedantic (not covered by other -W flags): 37

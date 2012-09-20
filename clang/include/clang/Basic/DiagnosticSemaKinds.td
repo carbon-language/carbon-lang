@@ -3286,7 +3286,7 @@ def err_typecheck_invalid_restrict_not_pointer_noarg : Error<
 def err_typecheck_invalid_restrict_invalid_pointee : Error<
   "pointer to function type %0 may not be 'restrict' qualified">;
 def ext_typecheck_zero_array_size : Extension<
-  "zero size arrays are an extension">;
+  "zero size arrays are an extension">, InGroup<ZeroLengthArray>;
 def err_typecheck_zero_array_size : Error<
   "zero-length arrays are not permitted in C++">;
 def warn_typecheck_zero_static_array_size : Warning<
