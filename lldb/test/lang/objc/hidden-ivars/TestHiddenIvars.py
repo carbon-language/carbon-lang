@@ -70,21 +70,45 @@ class HiddenIvarsTestCase(TestBase):
         self.common_setup()
 
         # This should display correctly.
+        self.expect("expression (j->_definer->foo)", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["= 4"])
+
         self.expect("expression (j->_definer->bar)", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["= 5"])
             
         self.expect("expression *(j->_definer)", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["foo = 0", "bar = 5"])
+            substrs = ["foo = 4", "bar = 5"])
+
+        self.expect("expression (k->foo)", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["= 2"])
+
+        self.expect("expression (k->bar)", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["= 3"])
+
+        self.expect("expression *(k)", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["foo = 2", "bar = 3"])
 
     def frame_var(self):
         self.common_setup()
 
         # This should display correctly.
+        self.expect("frame variable j->_definer->foo", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["= 4"])
+
         self.expect("frame variable j->_definer->bar", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["= 5"])
             
         self.expect("frame variable *j->_definer", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["foo = 0", "bar = 5"])
+            substrs = ["foo = 4", "bar = 5"])
+
+        self.expect("frame variable k->foo", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["= 2"])
+
+        self.expect("frame variable k->bar", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["= 3"])
+
+        self.expect("frame variable *k", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["foo = 2", "bar = 3"])
                        
 if __name__ == '__main__':
     import atexit

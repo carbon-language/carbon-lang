@@ -1,10 +1,11 @@
 #import <Foundation/Foundation.h>
+#import <stdint.h>
 
 @interface InternalDefiner : NSObject {
 @public
-    int foo;
+    uintptr_t foo;
 }
 
--(int)setBarTo:(int)newBar;
+-(id)initWithFoo:(uintptr_t)f andBar:(uintptr_t)b;
 
 @end
