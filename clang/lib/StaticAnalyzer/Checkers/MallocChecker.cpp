@@ -442,6 +442,9 @@ bool MallocChecker::isFreeFunction(const FunctionDecl *FD, ASTContext &C) const 
 }
 
 void MallocChecker::checkPostStmt(const CallExpr *CE, CheckerContext &C) const {
+  if (C.wasInlined)
+    return;
+  
   const FunctionDecl *FD = C.getCalleeDecl(CE);
   if (!FD)
     return;
