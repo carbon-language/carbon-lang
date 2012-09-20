@@ -109,7 +109,12 @@ public:
 
   // Attribute query methods.
   // FIXME: StackAlignment & Alignment attributes have no predicate methods.
-  bool hasAttributes() const { return Bits != 0; }
+  bool hasAttributes() const {
+    return Bits != 0;
+  }
+  bool hasAttributes(const Attributes &A) const {
+    return Bits & A.Bits;
+  }
 
   bool hasZExtAttr() const {
     return Bits & Attribute::ZExt_i;
@@ -159,6 +164,9 @@ public:
   bool hasStackProtectReqAttr() const {
     return Bits & Attribute::StackProtectReq_i;
   }
+  bool hasAlignmentAttr() const {
+    return Bits & Attribute::Alignment_i;
+  }
   bool hasNoCaptureAttr() const {
     return Bits & Attribute::NoCapture_i;
   }
@@ -177,6 +185,9 @@ public:
   bool hasReturnsTwiceAttr() const {
     return Bits & Attribute::ReturnsTwice_i;
   }
+  bool hasStackAlignmentAttr() const {
+    return Bits & Attribute::StackAlignment_i;
+  }
   bool hasUWTableAttr() const {
     return Bits & Attribute::UWTable_i;
   }
@@ -185,6 +196,13 @@ public:
   }
   bool hasAddressSafetyAttr() const {
     return Bits & Attribute::AddressSafety_i;
+  }
+
+  uint64_t getRawAlignment() const {
+    return Bits & Attribute::Alignment_i;
+  }
+  uint64_t getRawStackAlignment() const {
+    return Bits & Attribute::StackAlignment_i;
   }
 
   // This is a "safe bool() operator".
@@ -278,11 +296,10 @@ inline Attributes constructAlignmentFromInt(unsigned i) {
 
 /// This returns the alignment field of an attribute as a byte alignment value.
 inline unsigned getAlignmentFromAttrs(Attributes A) {
-  Attributes Align = A & Attribute::Alignment;
-  if (!Align)
+  if (!A.hasAlignmentAttr())
     return 0;
 
-  return 1U << ((Align.Raw() >> 16) - 1);
+  return 1U << ((A.getRawAlignment() >> 16) - 1);
 }
 
 /// This turns an int stack alignment (which must be a power of 2) into
@@ -300,11 +317,10 @@ inline Attributes constructStackAlignmentFromInt(unsigned i) {
 /// This returns the stack alignment field of an attribute as a byte alignment
 /// value.
 inline unsigned getStackAlignmentFromAttrs(Attributes A) {
-  Attributes StackAlign = A & Attribute::StackAlignment;
-  if (!StackAlign)
+  if (!A.hasStackAlignmentAttr())
     return 0;
 
-  return 1U << ((StackAlign.Raw() >> 26) - 1);
+  return 1U << ((A.getRawStackAlignment() >> 26) - 1);
 }
 
 /// This returns an integer containing an encoding of all the
@@ -324,9 +340,9 @@ inline uint64_t encodeLLVMAttributesForBitcode(Attributes Attrs) {
   // 11 bits.
 
   uint64_t EncodedAttrs = Attrs.Raw() & 0xffff;
-  if (Attrs & Attribute::Alignment)
+  if (Attrs.hasAlignmentAttr())
     EncodedAttrs |= (1ull << 16) <<
-      (((Attrs & Attribute::Alignment).Raw()-1) >> 16);
+      ((Attrs.getRawAlignment() - 1) >> 16);
   EncodedAttrs |= (Attrs.Raw() & (0xfffull << 21)) << 11;
 
   return EncodedAttrs;
@@ -428,7 +444,7 @@ public:
   /// paramHasAttr - Return true if the specified parameter index has the
   /// specified attribute set.
   bool paramHasAttr(unsigned Idx, Attributes Attr) const {
-    return getAttributes(Idx) & Attr;
+    return getAttributes(Idx).hasAttributes(Attr);
   }
 
   /// getParamAlignment - Return the alignment for the specified function

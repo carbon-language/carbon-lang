@@ -78,12 +78,12 @@ std::string Attributes::getAsString() const {
     Result += "nonlazybind ";
   if (hasAddressSafetyAttr())
     Result += "address_safety ";
-  if (*this & Attribute::StackAlignment) { // FIXME
+  if (hasStackAlignmentAttr()) {
     Result += "alignstack(";
     Result += utostr(Attribute::getStackAlignmentFromAttrs(*this));
     Result += ") ";
   }
-  if (*this & Attribute::Alignment) { // FIXME
+  if (hasAlignmentAttr()) {
     Result += "align ";
     Result += utostr(Attribute::getAlignmentFromAttrs(*this));
     Result += " ";
@@ -263,7 +263,7 @@ bool AttrListPtr::hasAttrSomewhere(Attributes Attr) const {
   
   const SmallVector<AttributeWithIndex, 4> &Attrs = AttrList->Attrs;
   for (unsigned i = 0, e = Attrs.size(); i != e; ++i)
-    if (Attrs[i].Attrs & Attr)
+    if (Attrs[i].Attrs.hasAttributes(Attr))
       return true;
   return false;
 }
@@ -274,8 +274,8 @@ AttrListPtr AttrListPtr::addAttr(unsigned Idx, Attributes Attrs) const {
 #ifndef NDEBUG
   // FIXME it is not obvious how this should work for alignment.
   // For now, say we can't change a known alignment.
-  Attributes OldAlign = OldAttrs & Attribute::Alignment;
-  Attributes NewAlign = Attrs & Attribute::Alignment;
+  unsigned OldAlign = Attribute::getAlignmentFromAttrs(OldAttrs);
+  unsigned NewAlign = Attribute::getAlignmentFromAttrs(Attrs);
   assert((!OldAlign || !NewAlign || OldAlign == NewAlign) &&
          "Attempt to change alignment!");
 #endif
@@ -314,7 +314,7 @@ AttrListPtr AttrListPtr::removeAttr(unsigned Idx, Attributes Attrs) const {
 #ifndef NDEBUG
   // FIXME it is not obvious how this should work for alignment.
   // For now, say we can't pass in alignment, which no current use does.
-  assert(!(Attrs & Attribute::Alignment) && "Attempt to exclude alignment!");
+  assert(!Attrs.hasAlignmentAttr() && "Attempt to exclude alignment!");
 #endif
   if (AttrList == 0) return AttrListPtr();
   
