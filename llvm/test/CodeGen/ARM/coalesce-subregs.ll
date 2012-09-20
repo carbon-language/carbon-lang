@@ -141,3 +141,51 @@ if.end:                                           ; preds = %entry, %if.then
   tail call void @llvm.arm.neon.vst1.v2f32(i8* %0, <2 x float> %x.0, i32 4)
   ret void
 }
+
+; CHECK: f5
+; Coalesce vector lanes through phis.
+; CHECK: vmov.f32 {{.*}}, #1.0
+; CHECK-NOT: vmov
+; CHECK-NOT: vorr
+; CHECK: %if.end
+; We may leave the last insertelement in the if.end block.
+; It is inserting the %add value into a dead lane, but %add causes interference
+; in the entry block, and we don't do dead lane checks across basic blocks.
+define void @f5(float* %p, float* %q) nounwind ssp {
+entry:
+  %0 = bitcast float* %p to i8*
+  %vld1 = tail call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* %0, i32 4)
+  %vecext = extractelement <4 x float> %vld1, i32 0
+  %vecext1 = extractelement <4 x float> %vld1, i32 1
+  %vecext2 = extractelement <4 x float> %vld1, i32 2
+  %vecext3 = extractelement <4 x float> %vld1, i32 3
+  %add = fadd float %vecext3, 1.000000e+00
+  %tobool = icmp eq float* %q, null
+  br i1 %tobool, label %if.end, label %if.then
+
+if.then:                                          ; preds = %entry
+  %arrayidx = getelementptr inbounds float* %q, i32 1
+  %1 = load float* %arrayidx, align 4
+  %add4 = fadd float %vecext, %1
+  %2 = load float* %q, align 4
+  %add6 = fadd float %vecext1, %2
+  %arrayidx7 = getelementptr inbounds float* %q, i32 2
+  %3 = load float* %arrayidx7, align 4
+  %add8 = fadd float %vecext2, %3
+  br label %if.end
+
+if.end:                                           ; preds = %entry, %if.then
+  %a.0 = phi float [ %add4, %if.then ], [ %vecext, %entry ]
+  %b.0 = phi float [ %add6, %if.then ], [ %vecext1, %entry ]
+  %c.0 = phi float [ %add8, %if.then ], [ %vecext2, %entry ]
+  %vecinit = insertelement <4 x float> undef, float %a.0, i32 0
+  %vecinit9 = insertelement <4 x float> %vecinit, float %b.0, i32 1
+  %vecinit10 = insertelement <4 x float> %vecinit9, float %c.0, i32 2
+  %vecinit11 = insertelement <4 x float> %vecinit10, float %add, i32 3
+  tail call void @llvm.arm.neon.vst1.v4f32(i8* %0, <4 x float> %vecinit11, i32 4)
+  ret void
+}
+
+declare <4 x float> @llvm.arm.neon.vld1.v4f32(i8*, i32) nounwind readonly
+
+declare void @llvm.arm.neon.vst1.v4f32(i8*, <4 x float>, i32) nounwind

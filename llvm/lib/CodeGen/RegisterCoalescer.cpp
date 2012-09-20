@@ -1402,7 +1402,6 @@ JoinVals::analyzeValue(unsigned ValNo, JoinVals &Other) {
   // values should be merged into one, but not into any preceding value.
   // The first value defined or visited gets CR_Keep, the other gets CR_Merge.
   if (VNInfo *OtherVNI = OtherLRQ.valueDefined()) {
-    DEBUG(dbgs() << "\t\tDouble def: " << VNI->def << '\n');
     assert(SlotIndex::isSameInstr(VNI->def, OtherVNI->def) && "Broken LRQ");
 
     // One value stays, the other is merged. Keep the earlier one, or the first
@@ -1420,7 +1419,11 @@ JoinVals::analyzeValue(unsigned ValNo, JoinVals &Other) {
     // Keep this value, check for conflicts when analyzing OtherVNI.
     if (!OtherV.isAnalyzed())
       return CR_Keep;
-    // Both sides have been analyzed now. Do they conflict?
+    // Both sides have been analyzed now.
+    // Allow overlapping PHI values. Any real interference would show up in a
+    // predecessor, the PHI itself can't introduce any conflicts.
+    if (VNI->isPHIDef())
+      return CR_Merge;
     if (V.ValidLanes & OtherV.ValidLanes)
       // Overlapping lanes can't be resolved.
       return CR_Impossible;
@@ -1441,9 +1444,10 @@ JoinVals::analyzeValue(unsigned ValNo, JoinVals &Other) {
   Other.computeAssignment(V.OtherVNI->id, *this);
   const Val &OtherV = Other.Vals[V.OtherVNI->id];
 
-  // Don't attempt resolving PHI values for now.
+  // Allow overlapping PHI values. Any real interference would show up in a
+  // predecessor, the PHI itself can't introduce any conflicts.
   if (VNI->isPHIDef())
-    return CR_Impossible;
+    return CR_Replace;
 
   // Check for simple erasable conflicts.
   if (DefMI->isImplicitDef())
