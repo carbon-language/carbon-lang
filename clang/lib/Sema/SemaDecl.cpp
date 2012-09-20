@@ -2442,7 +2442,7 @@ void Sema::MergeVarDeclTypes(VarDecl *New, VarDecl *Old) {
   }
   if (MergedT.isNull()) {
     Diag(New->getLocation(), diag::err_redefinition_different_type)
-      << New->getDeclName();
+      << New->getDeclName() << New->getType() << Old->getType();
     Diag(Old->getLocation(), diag::note_previous_definition);
     return New->setInvalidDecl();
   }

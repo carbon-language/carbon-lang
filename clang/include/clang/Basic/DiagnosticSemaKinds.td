@@ -3185,7 +3185,7 @@ def err_non_thread_thread : Error<
 def err_thread_non_thread : Error<
   "thread-local declaration of %0 follows non-thread-local declaration">;
 def err_redefinition_different_type : Error<
-  "redefinition of %0 with a different type">;
+  "redefinition of %0 with a different type%diff{: $ vs $|}1,2">;
 def err_redefinition_different_kind : Error<
   "redefinition of %0 as different kind of symbol">;
 def warn_forward_class_redefinition : Warning<
