@@ -2542,17 +2542,28 @@ public:
                                         SourceLocation RParenLoc);
   StmtResult FinishObjCForCollectionStmt(Stmt *ForCollection, Stmt *Body);
 
+  enum BuildForRangeKind {
+    /// Initial building of a for-range statement.
+    BFRK_Build,
+    /// Instantiation or recovery rebuild of a for-range statement. Don't
+    /// attempt any typo-correction.
+    BFRK_Rebuild,
+    /// Determining whether a for-range statement could be built. Avoid any
+    /// unnecessary or irreversible actions.
+    BFRK_Check
+  };
+
   StmtResult ActOnCXXForRangeStmt(SourceLocation ForLoc, Stmt *LoopVar,
                                   SourceLocation ColonLoc, Expr *Collection,
                                   SourceLocation RParenLoc,
-                                  bool ShouldTryDeref);
+                                  BuildForRangeKind Kind);
   StmtResult BuildCXXForRangeStmt(SourceLocation ForLoc,
                                   SourceLocation ColonLoc,
                                   Stmt *RangeDecl, Stmt *BeginEndDecl,
                                   Expr *Cond, Expr *Inc,
                                   Stmt *LoopVarDecl,
                                   SourceLocation RParenLoc,
-                                  bool ShouldTryDeref);
+                                  BuildForRangeKind Kind);
   StmtResult FinishCXXForRangeStmt(Stmt *ForRange, Stmt *Body);
 
   StmtResult ActOnGotoStmt(SourceLocation GotoLoc,

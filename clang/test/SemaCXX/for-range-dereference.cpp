@@ -17,17 +17,17 @@ struct DeletedEnd : public T {
 struct DeletedADLBegin { };
 
 int* begin(DeletedADLBegin) = delete; //expected-note {{candidate function has been explicitly deleted}} \
- expected-note 6 {{candidate function not viable: no known conversion}}
+ expected-note 5 {{candidate function not viable: no known conversion}}
 
 struct PrivateEnd {
   Data *begin();
 
  private:
-  Data *end(); // expected-note 1 {{declared private here}}
+  Data *end(); // expected-note 2 {{declared private here}}
 };
 
 struct ADLNoEnd { };
-Data * begin(ADLNoEnd); // expected-note 7 {{candidate function not viable: no known conversion}}
+Data * begin(ADLNoEnd); // expected-note 6 {{candidate function not viable: no known conversion}}
 
 struct OverloadedStar {
   T operator*();
@@ -70,10 +70,9 @@ expected-note {{when looking up 'end' function for range expression of type 'Del
   // the range is invalid.
   for (auto i : PE) { } // expected-error{{'end' is a private member of 'PrivateEnd'}}
 
-  // FIXME: This diagnostic should be improved as well. It should not mention a
-  // deleted function, and we should not issue a FixIt suggesting a dereference.
   PrivateEnd *pPE;
   for (auto i : pPE) { }// expected-error {{invalid range expression of type 'PrivateEnd *'}}
+  // expected-error@-1 {{'end' is a private member of 'PrivateEnd'}}
 
   DeletedADLBegin DAB;
   for (auto i : DAB) { } // expected-error {{call to deleted function 'begin'}}\
@@ -83,4 +82,8 @@ expected-note {{when looking up 'end' function for range expression of type 'Del
   for (auto i : *OS) { }
 
   for (auto i : OS) { } // expected-error {{invalid range expression of type 'OverloadedStar'; did you mean to dereference it with '*'?}}
+
+  for (Data *p : pt) { } // expected-error {{invalid range expression of type 'T *'; did you mean to dereference it with '*'?}}
+  // expected-error@-1 {{no viable conversion from 'Data' to 'Data *'}}
+  // expected-note@4 {{selected 'begin' function with iterator type 'Data *'}}
 }

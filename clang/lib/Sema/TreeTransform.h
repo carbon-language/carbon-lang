@@ -1330,7 +1330,8 @@ public:
                                     Stmt *LoopVar,
                                     SourceLocation RParenLoc) {
     return getSema().BuildCXXForRangeStmt(ForLoc, ColonLoc, Range, BeginEnd,
-                                          Cond, Inc, LoopVar, RParenLoc, false);
+                                          Cond, Inc, LoopVar, RParenLoc,
+                                          Sema::BFRK_Rebuild);
   }
 
   /// \brief Build a new C++0x range-based for statement.

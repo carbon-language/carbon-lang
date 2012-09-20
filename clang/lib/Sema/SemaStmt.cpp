@@ -1656,7 +1656,7 @@ static bool ObjCEnumerationCollection(Expr *Collection) {
 StmtResult
 Sema::ActOnCXXForRangeStmt(SourceLocation ForLoc,
                            Stmt *First, SourceLocation ColonLoc, Expr *Range,
-                           SourceLocation RParenLoc, bool ShouldTryDeref) {
+                           SourceLocation RParenLoc, BuildForRangeKind Kind) {
   if (!First || !Range)
     return StmtError();
 
@@ -1694,7 +1694,7 @@ Sema::ActOnCXXForRangeStmt(SourceLocation ForLoc,
 
   return BuildCXXForRangeStmt(ForLoc, ColonLoc, RangeDecl.get(),
                               /*BeginEndDecl=*/0, /*Cond=*/0, /*Inc=*/0, DS,
-                              RParenLoc, ShouldTryDeref);
+                              RParenLoc, Kind);
 }
 
 /// \brief Create the initialization, compare, and increment steps for
@@ -1782,8 +1782,8 @@ static Sema::ForRangeStatus BuildNonArrayForRange(Sema &SemaRef, Scope *S,
 }
 
 /// Speculatively attempt to dereference an invalid range expression.
-/// This function will not emit diagnostics, but returns StmtError if
-/// an error occurs.
+/// If the attempt fails, this function will return a valid, null StmtResult
+/// and emit no diagnostics.
 static StmtResult RebuildForRangeWithDereference(Sema &SemaRef, Scope *S,
                                                  SourceLocation ForLoc,
                                                  Stmt *LoopVarDecl,
@@ -1791,22 +1791,40 @@ static StmtResult RebuildForRangeWithDereference(Sema &SemaRef, Scope *S,
                                                  Expr *Range,
                                                  SourceLocation RangeLoc,
                                                  SourceLocation RParenLoc) {
-  Sema::SFINAETrap Trap(SemaRef);
-  ExprResult AdjustedRange = SemaRef.BuildUnaryOp(S, RangeLoc, UO_Deref, Range);
-  StmtResult SR =
-    SemaRef.ActOnCXXForRangeStmt(ForLoc, LoopVarDecl, ColonLoc,
-                                 AdjustedRange.get(), RParenLoc, false);
-  if (Trap.hasErrorOccurred())
-    return StmtError();
-  return SR;
+  // Determine whether we can rebuild the for-range statement with a
+  // dereferenced range expression.
+  ExprResult AdjustedRange;
+  {
+    Sema::SFINAETrap Trap(SemaRef);
+
+    AdjustedRange = SemaRef.BuildUnaryOp(S, RangeLoc, UO_Deref, Range);
+    if (AdjustedRange.isInvalid())
+      return StmtResult();
+
+    StmtResult SR =
+      SemaRef.ActOnCXXForRangeStmt(ForLoc, LoopVarDecl, ColonLoc,
+                                   AdjustedRange.get(), RParenLoc,
+                                   Sema::BFRK_Check);
+    if (SR.isInvalid())
+      return StmtResult();
+  }
+
+  // The attempt to dereference worked well enough that it could produce a valid
+  // loop. Produce a fixit, and rebuild the loop with diagnostics enabled, in
+  // case there are any other (non-fatal) problems with it.
+  SemaRef.Diag(RangeLoc, diag::err_for_range_dereference)
+    << Range->getType() << FixItHint::CreateInsertion(RangeLoc, "*");
+  return SemaRef.ActOnCXXForRangeStmt(ForLoc, LoopVarDecl, ColonLoc,
+                                      AdjustedRange.get(), RParenLoc,
+                                      Sema::BFRK_Rebuild);
 }
 
-/// BuildCXXForRangeStmt - Build or instantiate a C++0x for-range statement.
+/// BuildCXXForRangeStmt - Build or instantiate a C++11 for-range statement.
 StmtResult
 Sema::BuildCXXForRangeStmt(SourceLocation ForLoc, SourceLocation ColonLoc,
                            Stmt *RangeDecl, Stmt *BeginEnd, Expr *Cond,
                            Expr *Inc, Stmt *LoopVarDecl,
-                           SourceLocation RParenLoc, bool ShouldTryDeref) {
+                           SourceLocation RParenLoc, BuildForRangeKind Kind) {
   Scope *S = getCurScope();
 
   DeclStmt *RangeDS = cast<DeclStmt>(RangeDecl);
@@ -1902,25 +1920,19 @@ Sema::BuildCXXForRangeStmt(SourceLocation ForLoc, SourceLocation ColonLoc,
 
       // If building the range failed, try dereferencing the range expression
       // unless a diagnostic was issued or the end function is problematic.
-      if (ShouldTryDeref && RangeStatus == FRS_NoViableFunction &&
+      if (Kind == BFRK_Build && RangeStatus == FRS_NoViableFunction &&
           BEFFailure == BEF_begin) {
         StmtResult SR = RebuildForRangeWithDereference(*this, S, ForLoc,
                                                        LoopVarDecl, ColonLoc,
                                                        Range, RangeLoc,
                                                        RParenLoc);
-        if (!SR.isInvalid()) {
-          // The attempt to dereference would succeed; return the result of
-          // recovery.
-          Diag(RangeLoc, diag::err_for_range_dereference)
-              << RangeLoc << RangeType
-              << FixItHint::CreateInsertion(RangeLoc, "*");
+        if (SR.isInvalid() || SR.isUsable())
           return SR;
-        }
       }
 
       // Otherwise, emit diagnostics if we haven't already.
       if (RangeStatus == FRS_NoViableFunction) {
-        Expr *Range = BEFFailure ?  EndRangeRef.get() : BeginRangeRef.get();
+        Expr *Range = BEFFailure ? EndRangeRef.get() : BeginRangeRef.get();
         Diag(Range->getLocStart(), diag::err_for_range_invalid)
             << RangeLoc << Range->getType() << BEFFailure;
         CandidateSet.NoteCandidates(*this, OCD_AllCandidates,
@@ -2003,8 +2015,9 @@ Sema::BuildCXXForRangeStmt(SourceLocation ForLoc, SourceLocation ColonLoc,
       return StmtError();
     }
 
-    // Attach  *__begin  as initializer for VD.
-    if (!LoopVar->isInvalidDecl()) {
+    // Attach  *__begin  as initializer for VD. Don't touch it if we're just
+    // trying to determine whether this would be a valid range.
+    if (!LoopVar->isInvalidDecl() && Kind != BFRK_Check) {
       AddInitializerToDecl(LoopVar, DerefExpr.get(), /*DirectInit=*/false,
                            /*TypeMayContainAuto=*/true);
       if (LoopVar->isInvalidDecl())
@@ -2014,6 +2027,11 @@ Sema::BuildCXXForRangeStmt(SourceLocation ForLoc, SourceLocation ColonLoc,
     // The range is implicitly used as a placeholder when it is dependent.
     RangeVar->setUsed();
   }
+
+  // Don't bother to actually allocate the result if we're just trying to
+  // determine whether it would be valid.
+  if (Kind == BFRK_Check)
+    return StmtResult();
 
   return Owned(new (Context) CXXForRangeStmt(RangeDS,
                                      cast_or_null<DeclStmt>(BeginEndDecl.get()),
