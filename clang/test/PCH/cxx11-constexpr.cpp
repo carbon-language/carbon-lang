@@ -20,6 +20,13 @@ struct D : B {
   int k;
 };
 
+constexpr int value = 7;
+
+template<typename T>
+constexpr T plus_seven(T other) {
+  return value + other;
+}
+
 #else
 
 static_assert(D(4).k == 9, "");
@@ -27,5 +34,7 @@ constexpr int f(C c) { return 0; } // expected-error {{not a literal type}}
 // expected-note@13 {{not an aggregate and has no constexpr constructors}}
 constexpr B b; // expected-error {{constant expression}} expected-note {{non-constexpr}}
                // expected-note@9 {{here}}
+
+static_assert(plus_seven(3) == 10, "");
 
 #endif

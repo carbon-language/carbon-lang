@@ -675,6 +675,8 @@ void ASTDeclWriter::VisitVarDecl(VarDecl *D) {
   Record.push_back(D->isNRVOVariable());
   Record.push_back(D->isCXXForRangeDecl());
   Record.push_back(D->isARCPseudoStrong());
+  Record.push_back(D->isConstexpr());
+
   if (D->getInit()) {
     Record.push_back(!D->isInitKnownICE() ? 1 : (D->isInitICE() ? 3 : 2));
     Writer.AddStmt(D->getInit());
@@ -705,6 +707,7 @@ void ASTDeclWriter::VisitVarDecl(VarDecl *D) {
       D->getInitStyle() == VarDecl::CInit &&
       D->getInit() == 0 &&
       !isa<ParmVarDecl>(D) &&
+      !D->isConstexpr() &&
       !SpecInfo)
     AbbrevToUse = Writer.getDeclVarAbbrev();
 
@@ -1478,6 +1481,7 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(0));                       // isNRVOVariable
   Abv->Add(BitCodeAbbrevOp(0));                       // isCXXForRangeDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // isARCPseudoStrong
+  Abv->Add(BitCodeAbbrevOp(0));                       // isConstexpr
   Abv->Add(BitCodeAbbrevOp(0));                       // HasInit
   Abv->Add(BitCodeAbbrevOp(0));                   // HasMemberSpecializationInfo
   // ParmVarDecl
@@ -1556,6 +1560,7 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // isNRVOVariable
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // isCXXForRangeDecl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // isARCPseudoStrong
+  Abv->Add(BitCodeAbbrevOp(0));                         // isConstexpr
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // HasInit
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // HasMemberSpecInfo
   // Type Source Info
