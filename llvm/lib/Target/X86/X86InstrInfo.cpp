@@ -2266,7 +2266,7 @@ static X86::CondCode getCondFromSETOpc(unsigned Opc) {
 }
 
 /// getCondFromCmovOpc - return condition code of a CMov opcode.
-static X86::CondCode getCondFromCMovOpc(unsigned Opc) {
+X86::CondCode X86::getCondFromCMovOpc(unsigned Opc) {
   switch (Opc) {
   default: return X86::COND_INVALID;
   case X86::CMOVA16rm:  case X86::CMOVA16rr:  case X86::CMOVA32rm:
@@ -3314,7 +3314,7 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
         if (OldCC != X86::COND_INVALID)
           OpcIsSET = true;
         else
-          OldCC = getCondFromCMovOpc(Instr.getOpcode());
+          OldCC = X86::getCondFromCMovOpc(Instr.getOpcode());
       }
       if (OldCC == X86::COND_INVALID) return false;
     }

@@ -61,6 +61,9 @@ namespace X86 {
   // Turn condition code into conditional branch opcode.
   unsigned GetCondBranchFromCond(CondCode CC);
 
+  // Turn CMov opcode into condition code.
+  CondCode getCondFromCMovOpc(unsigned Opc);
+
   /// GetOppositeBranchCondition - Return the inverse of the specified cond,
   /// e.g. turning COND_E to COND_NE.
   CondCode GetOppositeBranchCondition(X86::CondCode CC);

@@ -483,8 +483,7 @@ def CMOV_RFP80 : I<0, Pseudo,
 //===----------------------------------------------------------------------===//
 
 // Atomic exchange, and, or, xor
-let Constraints = "$val = $dst", Defs = [EFLAGS],
-                  usesCustomInserter = 1 in {
+let usesCustomInserter = 1 in {
 
 def ATOMAND8 : I<0, Pseudo, (outs GR8:$dst),(ins i8mem:$ptr, GR8:$val),
                "#ATOMAND8 PSEUDO!",
@@ -578,11 +577,7 @@ def ATOMUMAX64: I<0, Pseudo, (outs GR64:$dst),(ins i64mem:$ptr, GR64:$val),
                [(set GR64:$dst, (atomic_load_umax_64 addr:$ptr, GR64:$val))]>;
 }
 
-let Constraints = "$val1 = $dst1, $val2 = $dst2",
-                  Defs = [EFLAGS, EAX, EBX, ECX, EDX],
-                  Uses = [EAX, EBX, ECX, EDX],
-                  mayLoad = 1, mayStore = 1,
-                  usesCustomInserter = 1 in {
+let mayLoad = 1, mayStore = 1, usesCustomInserter = 1 in {
 def ATOMAND6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
                                (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
                "#ATOMAND6432 PSEUDO!", []>;

@@ -1,4 +1,4 @@
-; RUN: llc < %s -mcpu=generic -march=x86 | FileCheck %s
+; RUN: llc < %s -mcpu=generic -march=x86 -mattr=+cmov | FileCheck %s
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
 
@@ -107,13 +107,12 @@ entry:
         ; CHECK: cmpxchgl
   %17 = cmpxchg i32* %val2, i32 1976, i32 1 monotonic
 	store i32 %17, i32* %old
+        ; CHECK: movl  [[R17atomic:.*]], %eax
         ; CHECK: movl	$1401, %[[R17mask:[a-z]*]]
-        ; CHECK: movl	[[R17atomic:.*]], %eax
-        ; CHECK: movl	%eax, %[[R17newval:[a-z]*]]
-        ; CHECK: andl	%[[R17mask]], %[[R17newval]]
-        ; CHECK: notl	%[[R17newval]]
+        ; CHECK: andl	%eax, %[[R17mask]]
+        ; CHECK: notl	%[[R17mask]]
         ; CHECK: lock
-        ; CHECK: cmpxchgl	%[[R17newval]], [[R17atomic]]
+        ; CHECK: cmpxchgl	%[[R17mask]], [[R17atomic]]
         ; CHECK: jne
         ; CHECK: movl	%eax,
   %18 = atomicrmw nand i32* %val2, i32 1401 monotonic
