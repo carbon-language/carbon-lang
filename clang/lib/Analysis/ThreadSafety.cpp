@@ -1681,7 +1681,7 @@ void ThreadSafetyAnalyzer::getEdgeLockset(FactSet& Result,
       case attr::SharedTrylockFunction: {
         SharedTrylockFunctionAttr *A =
           cast<SharedTrylockFunctionAttr>(Attr);
-        getMutexIDs(ExclusiveLocksToAdd, A, Exp, FunDecl,
+        getMutexIDs(SharedLocksToAdd, A, Exp, FunDecl,
                     PredBlock, CurrBlock, A->getSuccessValue(), Negate);
         break;
       }
