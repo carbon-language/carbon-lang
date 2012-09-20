@@ -27,3 +27,29 @@ struct Y3 {
 X1<Y2> x1a;
 X1<Y3> x1b;
 X1<Y1> x1c; // expected-note{{in instantiation of template class 'X1<Y1>' requested here}}
+
+template<typename T>
+class A {
+  T x;
+public:
+  class foo {};
+  static int y;
+};
+
+struct {
+  // Ill-formed
+  int friend; // expected-error {{'friend' must appear first in a non-function declaration}}
+  unsigned friend int; // expected-error {{'friend' must appear first in a non-function declaration}}
+  const volatile friend int; // expected-error {{'friend' must appear first in a non-function declaration}}
+  int
+          friend; // expected-error {{'friend' must appear first in a non-function declaration}}
+
+  // OK
+  int friend foo(void);
+  friend int;
+  friend const volatile int;
+      friend
+
+  float;
+  template<typename T> friend class A<T>::foo;
+} a;

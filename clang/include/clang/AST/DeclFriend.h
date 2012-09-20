@@ -104,7 +104,8 @@ public:
 
   /// Retrieves the source range for the friend declaration.
   SourceRange getSourceRange() const LLVM_READONLY {
-    /* FIXME: consider the case of templates wrt start of range. */
+    // FIXME: If this is a friend function declaration, the 'friend' keyword
+    // might not be the first token of the declaration.
     if (NamedDecl *ND = getFriendDecl())
       return SourceRange(getFriendLoc(), ND->getLocEnd());
     else if (TypeSourceInfo *TInfo = getFriendType())

@@ -807,6 +807,8 @@ def err_qualified_friend_def : Error<
   "friend function definition cannot be qualified with '%0'">;
 def err_friend_def_in_local_class : Error<
   "friend function cannot be defined in a local class">;
+def err_friend_not_first_in_declaration : Error<
+  "'friend' must appear first in a non-function declaration">;
   
 def err_abstract_type_in_decl : Error<
   "%select{return|parameter|variable|field|ivar}0 type %1 is an abstract class">;

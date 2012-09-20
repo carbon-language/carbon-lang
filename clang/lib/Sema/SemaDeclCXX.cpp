@@ -9850,7 +9850,7 @@ Decl *Sema::BuildStaticAssertDeclaration(SourceLocation StaticAssertLoc,
 /// \brief Perform semantic analysis of the given friend type declaration.
 ///
 /// \returns A friend declaration that.
-FriendDecl *Sema::CheckFriendTypeDecl(SourceLocation Loc,
+FriendDecl *Sema::CheckFriendTypeDecl(SourceLocation LocStart,
                                       SourceLocation FriendLoc,
                                       TypeSourceInfo *TSInfo) {
   assert(TSInfo && "NULL TypeSourceInfo for friend type declaration");
@@ -9889,7 +9889,7 @@ FriendDecl *Sema::CheckFriendTypeDecl(SourceLocation Loc,
              diag::warn_cxx98_compat_nonclass_type_friend :
              diag::ext_nonclass_type_friend)
         << T
-        << SourceRange(FriendLoc, TypeRange.getEnd());
+        << TypeRange;
     }
   } else if (T->getAs<EnumType>()) {
     Diag(FriendLoc,
@@ -9897,18 +9897,22 @@ FriendDecl *Sema::CheckFriendTypeDecl(SourceLocation Loc,
            diag::warn_cxx98_compat_enum_friend :
            diag::ext_enum_friend)
       << T
-      << SourceRange(FriendLoc, TypeRange.getEnd());
+      << TypeRange;
   }
   
-  // C++0x [class.friend]p3:
+  // C++11 [class.friend]p3:
+  //   A friend declaration that does not declare a function shall have one
+  //   of the following forms:
+  //     friend elaborated-type-specifier ;
+  //     friend simple-type-specifier ;
+  //     friend typename-specifier ;
+  if (getLangOpts().CPlusPlus0x && LocStart != FriendLoc)
+    Diag(FriendLoc, diag::err_friend_not_first_in_declaration) << T;
+
   //   If the type specifier in a friend declaration designates a (possibly
-  //   cv-qualified) class type, that class is declared as a friend; otherwise, 
+  //   cv-qualified) class type, that class is declared as a friend; otherwise,
   //   the friend declaration is ignored.
-  
-  // FIXME: C++0x has some syntactic restrictions on friend type declarations
-  // in [class.friend]p3 that we do not implement.
-  
-  return FriendDecl::Create(Context, CurContext, Loc, TSInfo, FriendLoc);
+  return FriendDecl::Create(Context, CurContext, LocStart, TSInfo, FriendLoc);
 }
 
 /// Handle a friend tag declaration where the scope specifier was

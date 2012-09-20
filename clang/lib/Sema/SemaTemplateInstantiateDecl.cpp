@@ -510,7 +510,7 @@ Decl *TemplateDeclInstantiator::VisitFriendDecl(FriendDecl *D) {
     if (!InstTy)
       return 0;
 
-    FriendDecl *FD = SemaRef.CheckFriendTypeDecl(D->getLocation(),
+    FriendDecl *FD = SemaRef.CheckFriendTypeDecl(D->getLocStart(),
                                                  D->getFriendLoc(), InstTy);
     if (!FD)
       return 0;

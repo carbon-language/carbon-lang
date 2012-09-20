@@ -4336,7 +4336,7 @@ public:
                                      SourceLocation RParenLoc,
                                      bool Failed);
 
-  FriendDecl *CheckFriendTypeDecl(SourceLocation Loc,
+  FriendDecl *CheckFriendTypeDecl(SourceLocation LocStart,
                                   SourceLocation FriendLoc,
                                   TypeSourceInfo *TSInfo);
   Decl *ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
