@@ -6,42 +6,42 @@ int value(void);
 int main()
 {
     int a = value();
-    if (a == 0x1234567812345678L) // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'int' is always false}}
+    if (a == 0x1234567812345678L) // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'int' is always false}}
         return 0;
-    if (a != 0x1234567812345678L) // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'int' is always true}}
+    if (a != 0x1234567812345678L) // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'int' is always true}}
         return 0;
-    if (a < 0x1234567812345678L)  // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'int' is always true}}
+    if (a < 0x1234567812345678L)  // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'int' is always true}}
         return 0;
-    if (a <= 0x1234567812345678L)  // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'int' is always true}}
+    if (a <= 0x1234567812345678L)  // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'int' is always true}}
         return 0;
-    if (a > 0x1234567812345678L)  // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'int' is always false}}
+    if (a > 0x1234567812345678L)  // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'int' is always false}}
         return 0;
-    if (a >= 0x1234567812345678L)  // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'int' is always false}}
+    if (a >= 0x1234567812345678L)  // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'int' is always false}}
         return 0;
 
-    if (0x1234567812345678L == a) // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'int' is always false}}
+    if (0x1234567812345678L == a) // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'int' is always false}}
         return 0;
-    if (0x1234567812345678L != a) // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'int' is always true}}
+    if (0x1234567812345678L != a) // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'int' is always true}}
         return 0;
-    if (0x1234567812345678L < a)  // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'int' is always false}}
+    if (0x1234567812345678L < a)  // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'int' is always false}}
         return 0;
-    if (0x1234567812345678L <= a)  // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'int' is always false}}
+    if (0x1234567812345678L <= a)  // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'int' is always false}}
         return 0;
-    if (0x1234567812345678L > a) // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'int' is always true}}
+    if (0x1234567812345678L > a) // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'int' is always true}}
         return 0;
-    if (0x1234567812345678L >= a) // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'int' is always true}}
+    if (0x1234567812345678L >= a) // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'int' is always true}}
         return 0;
-    if (a == 0x1234567812345678LL) // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'int' is always false}}
+    if (a == 0x1234567812345678LL) // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'int' is always false}}
       return 0;
-    if (a == -0x1234567812345678L) // expected-warning {{comparison of literal -1311768465173141112 with expression of type 'int' is always false}}
+    if (a == -0x1234567812345678L) // expected-warning {{comparison of constant -1311768465173141112 with expression of type 'int' is always false}}
       return 0;
-    if (a < -0x1234567812345678L) // expected-warning {{comparison of literal -1311768465173141112 with expression of type 'int' is always false}}
+    if (a < -0x1234567812345678L) // expected-warning {{comparison of constant -1311768465173141112 with expression of type 'int' is always false}}
       return 0;
-    if (a > -0x1234567812345678L) // expected-warning {{comparison of literal -1311768465173141112 with expression of type 'int' is always true}}
+    if (a > -0x1234567812345678L) // expected-warning {{comparison of constant -1311768465173141112 with expression of type 'int' is always true}}
       return 0;
-    if (a <= -0x1234567812345678L) // expected-warning {{comparison of literal -1311768465173141112 with expression of type 'int' is always false}}
+    if (a <= -0x1234567812345678L) // expected-warning {{comparison of constant -1311768465173141112 with expression of type 'int' is always false}}
       return 0;
-    if (a >= -0x1234567812345678L) // expected-warning {{comparison of literal -1311768465173141112 with expression of type 'int' is always true}}
+    if (a >= -0x1234567812345678L) // expected-warning {{comparison of constant -1311768465173141112 with expression of type 'int' is always true}}
       return 0;
 
 
@@ -49,30 +49,30 @@ int main()
       return 1;
 
     short s = value();
-    if (s == 0x1234567812345678L) // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'short' is always false}}
+    if (s == 0x1234567812345678L) // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'short' is always false}}
         return 0;
-    if (s != 0x1234567812345678L) // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'short' is always true}}
+    if (s != 0x1234567812345678L) // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'short' is always true}}
         return 0;
-    if (s < 0x1234567812345678L) // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'short' is always true}}
+    if (s < 0x1234567812345678L) // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'short' is always true}}
         return 0;
-    if (s <= 0x1234567812345678L) // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'short' is always true}}
+    if (s <= 0x1234567812345678L) // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'short' is always true}}
         return 0;
-    if (s > 0x1234567812345678L) // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'short' is always false}}
+    if (s > 0x1234567812345678L) // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'short' is always false}}
         return 0;
-    if (s >= 0x1234567812345678L) // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'short' is always false}}
+    if (s >= 0x1234567812345678L) // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'short' is always false}}
         return 0;
 
-    if (0x1234567812345678L == s) // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'short' is always false}}
+    if (0x1234567812345678L == s) // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'short' is always false}}
         return 0;
-    if (0x1234567812345678L != s) // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'short' is always true}}
+    if (0x1234567812345678L != s) // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'short' is always true}}
         return 0;
-    if (0x1234567812345678L < s) // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'short' is always false}}
+    if (0x1234567812345678L < s) // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'short' is always false}}
         return 0;
-    if (0x1234567812345678L <= s) // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'short' is always false}}
+    if (0x1234567812345678L <= s) // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'short' is always false}}
         return 0;
-    if (0x1234567812345678L > s) // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'short' is always true}}
+    if (0x1234567812345678L > s) // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'short' is always true}}
         return 0;
-    if (0x1234567812345678L >= s) // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'short' is always true}}
+    if (0x1234567812345678L >= s) // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'short' is always true}}
         return 0;
     long l = value();
     if (l == 0x1234567812345678L)
@@ -142,7 +142,7 @@ int main()
     };
     enum E e;
 
-    if (e == 0x1234567812345678L) // expected-warning {{comparison of literal 1311768465173141112 with expression of type 'enum E' is always false}}
+    if (e == 0x1234567812345678L) // expected-warning {{comparison of constant 1311768465173141112 with expression of type 'enum E' is always false}}
       return 0;
 
     return 1;
