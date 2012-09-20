@@ -2717,7 +2717,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
 
   // If the alignment was parsed as an attribute, move to the alignment field.
   if (FuncAttrs & Attribute::Alignment) {
-    Alignment = FuncAttrs.getAlignment();
+    Alignment = Attribute::getAlignmentFromAttrs(FuncAttrs);
     FuncAttrs &= ~Attribute::Alignment;
   }
 

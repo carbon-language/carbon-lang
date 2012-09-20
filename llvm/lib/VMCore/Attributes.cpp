@@ -80,12 +80,12 @@ std::string Attributes::getAsString() const {
     Result += "address_safety ";
   if (hasStackAlignmentAttr()) {
     Result += "alignstack(";
-    Result += utostr(getStackAlignment());
+    Result += utostr(Attribute::getStackAlignmentFromAttrs(*this));
     Result += ") ";
   }
   if (hasAlignmentAttr()) {
     Result += "align ";
-    Result += utostr(getAlignment());
+    Result += utostr(Attribute::getAlignmentFromAttrs(*this));
     Result += " ";
   }
   // Trim the trailing space.
@@ -174,7 +174,7 @@ AttrListPtr AttrListPtr::get(ArrayRef<AttributeWithIndex> Attrs) {
   
 #ifndef NDEBUG
   for (unsigned i = 0, e = Attrs.size(); i != e; ++i) {
-    assert(Attrs[i].Attrs.hasAttributes() && 
+    assert(Attrs[i].Attrs != Attribute::None && 
            "Pointless attribute!");
     assert((!i || Attrs[i-1].Index < Attrs[i].Index) &&
            "Misordered AttributesList!");
@@ -247,14 +247,13 @@ const AttributeWithIndex &AttrListPtr::getSlot(unsigned Slot) const {
 /// returned.  Attributes for the result are denoted with Idx = 0.
 /// Function notes are denoted with idx = ~0.
 Attributes AttrListPtr::getAttributes(unsigned Idx) const {
-  if (AttrList == 0) return Attributes();
+  if (AttrList == 0) return Attribute::None;
   
   const SmallVector<AttributeWithIndex, 4> &Attrs = AttrList->Attrs;
   for (unsigned i = 0, e = Attrs.size(); i != e && Attrs[i].Index <= Idx; ++i)
     if (Attrs[i].Index == Idx)
       return Attrs[i].Attrs;
-
-  return Attributes();
+  return Attribute::None;
 }
 
 /// hasAttrSomewhere - Return true if the specified attribute is set for at
@@ -275,8 +274,8 @@ AttrListPtr AttrListPtr::addAttr(unsigned Idx, Attributes Attrs) const {
 #ifndef NDEBUG
   // FIXME it is not obvious how this should work for alignment.
   // For now, say we can't change a known alignment.
-  unsigned OldAlign = OldAttrs.getAlignment();
-  unsigned NewAlign = Attrs.getAlignment();
+  unsigned OldAlign = Attribute::getAlignmentFromAttrs(OldAttrs);
+  unsigned NewAlign = Attribute::getAlignmentFromAttrs(Attrs);
   assert((!OldAlign || !NewAlign || OldAlign == NewAlign) &&
          "Attempt to change alignment!");
 #endif

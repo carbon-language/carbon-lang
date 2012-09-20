@@ -60,8 +60,8 @@ MachineFunction::MachineFunction(const Function *F, const TargetMachine &TM,
   MFInfo = 0;
   FrameInfo = new (Allocator) MachineFrameInfo(*TM.getFrameLowering());
   if (Fn->hasFnAttr(Attribute::StackAlignment))
-    FrameInfo->ensureMaxAlignment(Fn->getAttributes().
-                                  getFnAttributes().getStackAlignment());
+    FrameInfo->ensureMaxAlignment(Attribute::getStackAlignmentFromAttrs(
+        Fn->getAttributes().getFnAttributes()));
   ConstantPool = new (Allocator) MachineConstantPool(TM.getTargetData());
   Alignment = TM.getTargetLowering()->getMinFunctionAlignment();
   // FIXME: Shouldn't use pref alignment if explicit alignment is set on Fn.
