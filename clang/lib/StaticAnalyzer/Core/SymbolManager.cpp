@@ -117,17 +117,21 @@ bool SymExpr::symbol_iterator::operator!=(const symbol_iterator &X) const {
 
 SymExpr::symbol_iterator::symbol_iterator(const SymExpr *SE) {
   itr.push_back(SE);
+  while (!isa<SymbolData>(itr.back())) expand();
 }
 
 SymExpr::symbol_iterator &SymExpr::symbol_iterator::operator++() {
   assert(!itr.empty() && "attempting to iterate on an 'end' iterator");
-  expand();
+  assert(isa<SymbolData>(itr.back()));
+  itr.pop_back();
+  if (!itr.empty())
+    while (!isa<SymbolData>(itr.back())) expand();
   return *this;
 }
 
 SymbolRef SymExpr::symbol_iterator::operator*() {
   assert(!itr.empty() && "attempting to dereference an 'end' iterator");
-  return itr.back();
+  return cast<SymbolData>(itr.back());
 }
 
 void SymExpr::symbol_iterator::expand() {
