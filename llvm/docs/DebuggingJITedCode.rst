@@ -1,10 +1,10 @@
 .. _debugging-jited-code:
 
-.. sectionauthor:: Reid Kleckner and Eli Bendersky
-
 ==============================
 Debugging JIT-ed Code With GDB
 ==============================
+
+.. sectionauthor:: Reid Kleckner and Eli Bendersky
 
 Background
 ==========

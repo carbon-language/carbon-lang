@@ -15,6 +15,7 @@ Subsystem Documentation
    LinkTimeOptimization
    SegmentedStacks
    TableGenFundamentals
+   DebuggingJITedCode
 
 * `Writing an LLVM Pass <WritingAnLLVMPass.html>`_
     
@@ -78,7 +79,7 @@ Subsystem Documentation
     
    How to build your programs with link-time optimization on Linux.
     
-* `The GDB JIT interface <DebuggingJITedCode.html>`_
+* :ref:`debugging-jited-code`
     
    How to debug JITed code with GDB.
     
