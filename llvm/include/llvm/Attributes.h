@@ -205,6 +205,24 @@ public:
     return Bits & Attribute::StackAlignment_i;
   }
 
+  /// This returns the alignment field of an attribute as a byte alignment
+  /// value.
+  unsigned getAlignment() const {
+    if (!hasAlignmentAttr())
+      return 0;
+
+    return 1U << ((getRawAlignment() >> 16) - 1);
+  }
+
+  /// This returns the stack alignment field of an attribute as a byte alignment
+  /// value.
+  unsigned getStackAlignment() const {
+    if (!hasStackAlignmentAttr())
+      return 0;
+
+    return 1U << ((getRawStackAlignment() >> 26) - 1);
+  }
+
   // This is a "safe bool() operator".
   operator const void *() const { return Bits ? this : 0; }
   bool isEmptyOrSingleton() const { return (Bits & (Bits - 1)) == 0; }
@@ -212,8 +230,9 @@ public:
     return Bits == Attrs.Bits;
   }
   bool operator != (const Attributes &Attrs) const {
-    return Bits != Attrs.Bits;
+    return !(this == Attrs);
   }
+
   Attributes operator | (const Attributes &Attrs) const {
     return Attributes(Bits | Attrs.Bits);
   }
@@ -294,14 +313,6 @@ inline Attributes constructAlignmentFromInt(unsigned i) {
   return Attributes((Log2_32(i)+1) << 16);
 }
 
-/// This returns the alignment field of an attribute as a byte alignment value.
-inline unsigned getAlignmentFromAttrs(Attributes A) {
-  if (!A.hasAlignmentAttr())
-    return 0;
-
-  return 1U << ((A.getRawAlignment() >> 16) - 1);
-}
-
 /// This turns an int stack alignment (which must be a power of 2) into
 /// the form used internally in Attributes.
 inline Attributes constructStackAlignmentFromInt(unsigned i) {
@@ -312,15 +323,6 @@ inline Attributes constructStackAlignmentFromInt(unsigned i) {
   assert(isPowerOf2_32(i) && "Alignment must be a power of two.");
   assert(i <= 0x100 && "Alignment too large.");
   return Attributes((Log2_32(i)+1) << 26);
-}
-
-/// This returns the stack alignment field of an attribute as a byte alignment
-/// value.
-inline unsigned getStackAlignmentFromAttrs(Attributes A) {
-  if (!A.hasStackAlignmentAttr())
-    return 0;
-
-  return 1U << ((A.getRawStackAlignment() >> 26) - 1);
 }
 
 /// This returns an integer containing an encoding of all the
@@ -450,7 +452,7 @@ public:
   /// getParamAlignment - Return the alignment for the specified function
   /// parameter.
   unsigned getParamAlignment(unsigned Idx) const {
-    return Attribute::getAlignmentFromAttrs(getAttributes(Idx));
+    return getAttributes(Idx).getAlignment();
   }
 
   /// hasAttrSomewhere - Return true if the specified attribute is set for at
