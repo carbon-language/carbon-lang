@@ -656,6 +656,9 @@ int main(int argc, char **argv, char * const *envp) {
 
     Target.stop();
   } else {
+    // Trigger compilation separately so code regions that need to be 
+    // invalidated will be known.
+    (void)EE->getPointerToFunction(EntryFn);
     // Clear instruction cache before code will be executed.
     if (JMM)
       static_cast<LLIMCJITMemoryManager*>(JMM)->invalidateInstructionCache();
