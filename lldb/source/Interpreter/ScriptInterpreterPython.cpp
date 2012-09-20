@@ -2555,9 +2555,10 @@ ScriptInterpreterPython::GetDocumentationForItem(const char* item, std::string& 
     
     if (ExecuteOneLineWithReturn (command.c_str(),
                                  ScriptInterpreter::eScriptReturnTypeCharStrOrNone,
-                                 &result_ptr, false) && result_ptr)
+                                 &result_ptr, false))
     {
-        dest.assign(result_ptr);
+        if (result_ptr)
+            dest.assign(result_ptr);
         return true;
     }
     else
