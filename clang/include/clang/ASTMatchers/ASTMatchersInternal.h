@@ -257,19 +257,21 @@ public:
   explicit Matcher(MatcherInterface<T> *Implementation)
       : Implementation(Implementation) {}
 
+  /// \brief Implicitly converts \c Other to a Matcher<T>.
+  ///
+  /// Requires \c T to be derived from \c From.
+  template <typename From>
+  Matcher(const Matcher<From> &Other,
+          typename llvm::enable_if_c<
+            llvm::is_base_of<From, T>::value &&
+            !llvm::is_same<From, T>::value >::type* = 0)
+      : Implementation(new ImplicitCastMatcher<From>(Other)) {}
+
   /// \brief Forwards the call to the underlying MatcherInterface<T> pointer.
   bool matches(const T &Node,
                ASTMatchFinder *Finder,
                BoundNodesTreeBuilder *Builder) const {
     return Implementation->matches(Node, Finder, Builder);
-  }
-
-  /// \brief Implicitly converts this object to a Matcher<Derived>.
-  ///
-  /// Requires Derived to be derived from T.
-  template <typename Derived>
-  operator Matcher<Derived>() const {
-    return Matcher<Derived>(new ImplicitCastMatcher<Derived>(*this));
   }
 
   /// \brief Returns an ID that uniquely identifies the matcher.
@@ -289,22 +291,22 @@ public:
   }
 
 private:
-  /// \brief Allows conversion from Matcher<T> to Matcher<Derived> if Derived
-  /// is derived from T.
-  template <typename Derived>
-  class ImplicitCastMatcher : public MatcherInterface<Derived> {
+  /// \brief Allows conversion from Matcher<Base> to Matcher<T> if T
+  /// is derived from Base.
+  template <typename Base>
+  class ImplicitCastMatcher : public MatcherInterface<T> {
   public:
-    explicit ImplicitCastMatcher(const Matcher<T> &From)
+    explicit ImplicitCastMatcher(const Matcher<Base> &From)
         : From(From) {}
 
-    virtual bool matches(const Derived &Node,
+    virtual bool matches(const T &Node,
                          ASTMatchFinder *Finder,
                          BoundNodesTreeBuilder *Builder) const {
       return From.matches(Node, Finder, Builder);
     }
 
   private:
-    const Matcher<T> From;
+    const Matcher<Base> From;
   };
 
   llvm::IntrusiveRefCntPtr< MatcherInterface<T> > Implementation;
