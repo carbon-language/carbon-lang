@@ -1,5 +1,7 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=unix.Malloc -analyzer-inline-max-stack-depth=5 -verify %s
 
+// XFAIL: cygwin,mingw32,win32
+
 #include "Inputs/system-header-simulator.h"
 
 typedef __typeof(sizeof(int)) size_t;
