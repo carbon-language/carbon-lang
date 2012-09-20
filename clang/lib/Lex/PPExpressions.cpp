@@ -178,7 +178,9 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
     // preprocessor keywords and it wasn't macro expanded, it turns
     // into a simple 0, unless it is the C++ keyword "true", in which case it
     // turns into "1".
-    if (ValueLive)
+    if (ValueLive &&
+        II->getTokenID() != tok::kw_true &&
+        II->getTokenID() != tok::kw_false)
       PP.Diag(PeekTok, diag::warn_pp_undef_identifier) << II;
     Result.Val = II->getTokenID() == tok::kw_true;
     Result.Val.setIsUnsigned(false);  // "0" is signed intmax_t 0.
