@@ -1065,6 +1065,12 @@ public:
         return m_address_type_of_ptr_or_ref_children;
     }
     
+    void
+    SetHasCompleteType()
+    {
+        m_did_calculate_complete_objc_class_type = true;
+    }
+    
 protected:
     typedef ClusterManager<ValueObject> ValueObjectManager;
     

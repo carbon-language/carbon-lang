@@ -1629,7 +1629,13 @@ ClangASTType::GetTypeByteSize(
     if (ClangASTContext::GetCompleteType (ast_context, opaque_clang_qual_type))
     {
         clang::QualType qual_type(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
-        return (ast_context->getTypeSize (qual_type) + 7) / 8;
+        
+        uint32_t byte_size = (ast_context->getTypeSize (qual_type) + 7) / 8;
+        
+        if (ClangASTContext::IsObjCClassType(opaque_clang_qual_type))
+            byte_size += ast_context->getTypeSize(ast_context->ObjCBuiltinClassTy) / 8; // isa
+        
+        return byte_size;
     }
     return 0;
 }

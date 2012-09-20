@@ -80,6 +80,9 @@ public:
         return origin.Valid();
     }
     
+    void
+    SetDeclOrigin (const clang::Decl *decl, clang::Decl *original_decl);
+    
     uint64_t
     GetDeclMetadata (const clang::Decl *decl);
     

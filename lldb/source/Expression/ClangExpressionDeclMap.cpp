@@ -480,6 +480,8 @@ ClangExpressionDeclMap::AddPersistentVariable
     if (!var_sp)
         return false;
     
+    var_sp->m_frozen_sp->SetHasCompleteType();
+    
     if (is_result)
         var_sp->m_flags |= ClangExpressionVariable::EVNeedsFreezeDry;
     else
