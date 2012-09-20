@@ -403,7 +403,7 @@ def err_statically_allocated_object : Error<
   "interface type cannot be statically allocated">;
 def err_object_cannot_be_passed_returned_by_value : Error<
   "interface type %1 cannot be %select{returned|passed}0 by value"
-  "; did you forget * in %1">;
+  "; did you forget * in %1?">;
 def err_parameters_retval_cannot_have_fp16_type : Error<
   "%select{parameters|function return value}0 cannot have __fp16 type; did you forget * ?">;
 def warn_enum_value_overflow : Warning<"overflow in enumeration value">;
@@ -800,7 +800,7 @@ def err_tagless_friend_type_template : Error<
 def err_no_matching_local_friend : Error<
   "no matching function found in local scope">;
 def err_no_matching_local_friend_suggest : Error<
-  "no matching function %0 found in local scope; did you mean %2">;
+  "no matching function %0 found in local scope; did you mean %2?">;
 def err_partial_specialization_friend : Error<
   "partial specialization cannot be declared as a friend">;
 def err_qualified_friend_def : Error<
