@@ -530,12 +530,12 @@ void Verifier::VerifyParameterAttrs(Attributes Attrs, Type *Ty,
     return;
 
   Attributes FnCheckAttr = Attrs & Attribute::FunctionOnly;
-  Assert1(!FnCheckAttr, "Attribute " + Attribute::getAsString(FnCheckAttr) +
+  Assert1(!FnCheckAttr, "Attribute " + FnCheckAttr.getAsString() +
           " only applies to the function!", V);
 
   if (isReturnValue) {
     Attributes RetI = Attrs & Attribute::ParameterOnly;
-    Assert1(!RetI, "Attribute " + Attribute::getAsString(RetI) +
+    Assert1(!RetI, "Attribute " + RetI.getAsString() +
             " does not apply to return values!", V);
   }
 
@@ -543,21 +543,21 @@ void Verifier::VerifyParameterAttrs(Attributes Attrs, Type *Ty,
        i < array_lengthof(Attribute::MutuallyIncompatible); ++i) {
     Attributes MutI = Attrs & Attribute::MutuallyIncompatible[i];
     Assert1(MutI.isEmptyOrSingleton(), "Attributes " +
-            Attribute::getAsString(MutI) + " are incompatible!", V);
+            MutI.getAsString() + " are incompatible!", V);
   }
 
   Attributes TypeI = Attrs & Attribute::typeIncompatible(Ty);
   Assert1(!TypeI, "Wrong type for attribute " +
-          Attribute::getAsString(TypeI), V);
+          TypeI.getAsString(), V);
 
   Attributes ByValI = Attrs & Attribute::ByVal;
   if (PointerType *PTy = dyn_cast<PointerType>(Ty)) {
     Assert1(!ByValI || PTy->getElementType()->isSized(),
-            "Attribute " + Attribute::getAsString(ByValI) +
+            "Attribute " + ByValI.getAsString() +
             " does not support unsized types!", V);
   } else {
     Assert1(!ByValI,
-            "Attribute " + Attribute::getAsString(ByValI) +
+            "Attribute " + ByValI.getAsString() +
             " only applies to parameters with pointer type!", V);
   }
 }
@@ -596,14 +596,14 @@ void Verifier::VerifyFunctionAttrs(FunctionType *FT,
 
   Attributes FAttrs = Attrs.getFnAttributes();
   Attributes NotFn = FAttrs & (~Attribute::FunctionOnly);
-  Assert1(!NotFn, "Attribute " + Attribute::getAsString(NotFn) +
+  Assert1(!NotFn, "Attribute " + NotFn.getAsString() +
           " does not apply to the function!", V);
 
   for (unsigned i = 0;
        i < array_lengthof(Attribute::MutuallyIncompatible); ++i) {
     Attributes MutI = FAttrs & Attribute::MutuallyIncompatible[i];
     Assert1(MutI.isEmptyOrSingleton(), "Attributes " +
-            Attribute::getAsString(MutI) + " are incompatible!", V);
+            MutI.getAsString() + " are incompatible!", V);
   }
 }
 
@@ -1171,7 +1171,7 @@ void Verifier::VerifyCallSite(CallSite CS) {
       VerifyParameterAttrs(Attr, CS.getArgument(Idx-1)->getType(), false, I);
 
       Attributes VArgI = Attr & Attribute::VarArgsIncompatible;
-      Assert1(!VArgI, "Attribute " + Attribute::getAsString(VArgI) +
+      Assert1(!VArgI, "Attribute " + VArgI.getAsString() +
               " cannot be used for vararg call arguments!", I);
     }
 

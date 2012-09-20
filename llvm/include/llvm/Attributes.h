@@ -215,6 +215,12 @@ public:
   }
   Attributes operator ~ () const { return Attributes(~Bits); }
   uint64_t Raw() const { return Bits; }
+
+  /// The set of Attributes set in Attributes is converted to a string of
+  /// equivalent mnemonics. This is, presumably, for writing out the mnemonics
+  /// for the assembly writer.
+  /// @brief Convert attribute bits to text
+  std::string getAsString() const;
 };
 
 namespace Attribute {
@@ -345,12 +351,6 @@ inline Attributes decodeLLVMAttributesForBitcode(uint64_t EncodedAttrs) {
   return Attrs;
 }
 
-
-/// The set of Attributes set in Attributes is converted to a
-/// string of equivalent mnemonics. This is, presumably, for writing out
-/// the mnemonics for the assembly writer.
-/// @brief Convert attribute bits to text
-std::string getAsString(Attributes Attrs);
 } // end namespace Attribute
 
 /// This is just a pair of values to associate a set of attributes

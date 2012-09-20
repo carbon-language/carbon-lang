@@ -26,66 +26,66 @@ using namespace llvm;
 // Attribute Function Definitions
 //===----------------------------------------------------------------------===//
 
-std::string Attribute::getAsString(Attributes Attrs) {
+std::string Attributes::getAsString() const {
   std::string Result;
-  if (Attrs.hasZExtAttr())
+  if (hasZExtAttr())
     Result += "zeroext ";
-  if (Attrs.hasSExtAttr())
+  if (hasSExtAttr())
     Result += "signext ";
-  if (Attrs.hasNoReturnAttr())
+  if (hasNoReturnAttr())
     Result += "noreturn ";
-  if (Attrs.hasNoUnwindAttr())
+  if (hasNoUnwindAttr())
     Result += "nounwind ";
-  if (Attrs.hasUWTableAttr())
+  if (hasUWTableAttr())
     Result += "uwtable ";
-  if (Attrs.hasReturnsTwiceAttr())
+  if (hasReturnsTwiceAttr())
     Result += "returns_twice ";
-  if (Attrs.hasInRegAttr())
+  if (hasInRegAttr())
     Result += "inreg ";
-  if (Attrs.hasNoAliasAttr())
+  if (hasNoAliasAttr())
     Result += "noalias ";
-  if (Attrs.hasNoCaptureAttr())
+  if (hasNoCaptureAttr())
     Result += "nocapture ";
-  if (Attrs.hasStructRetAttr())
+  if (hasStructRetAttr())
     Result += "sret ";
-  if (Attrs.hasByValAttr())
+  if (hasByValAttr())
     Result += "byval ";
-  if (Attrs.hasNestAttr())
+  if (hasNestAttr())
     Result += "nest ";
-  if (Attrs.hasReadNoneAttr())
+  if (hasReadNoneAttr())
     Result += "readnone ";
-  if (Attrs.hasReadOnlyAttr())
+  if (hasReadOnlyAttr())
     Result += "readonly ";
-  if (Attrs.hasOptimizeForSizeAttr())
+  if (hasOptimizeForSizeAttr())
     Result += "optsize ";
-  if (Attrs.hasNoInlineAttr())
+  if (hasNoInlineAttr())
     Result += "noinline ";
-  if (Attrs.hasInlineHintAttr())
+  if (hasInlineHintAttr())
     Result += "inlinehint ";
-  if (Attrs.hasAlwaysInlineAttr())
+  if (hasAlwaysInlineAttr())
     Result += "alwaysinline ";
-  if (Attrs.hasStackProtectAttr())
+  if (hasStackProtectAttr())
     Result += "ssp ";
-  if (Attrs.hasStackProtectReqAttr())
+  if (hasStackProtectReqAttr())
     Result += "sspreq ";
-  if (Attrs.hasNoRedZoneAttr())
+  if (hasNoRedZoneAttr())
     Result += "noredzone ";
-  if (Attrs.hasNoImplicitFloatAttr())
+  if (hasNoImplicitFloatAttr())
     Result += "noimplicitfloat ";
-  if (Attrs.hasNakedAttr())
+  if (hasNakedAttr())
     Result += "naked ";
-  if (Attrs.hasNonLazyBindAttr())
+  if (hasNonLazyBindAttr())
     Result += "nonlazybind ";
-  if (Attrs.hasAddressSafetyAttr())
+  if (hasAddressSafetyAttr())
     Result += "address_safety ";
-  if (Attrs & Attribute::StackAlignment) {
+  if (*this & Attribute::StackAlignment) { // FIXME
     Result += "alignstack(";
-    Result += utostr(Attribute::getStackAlignmentFromAttrs(Attrs));
+    Result += utostr(Attribute::getStackAlignmentFromAttrs(*this));
     Result += ") ";
   }
-  if (Attrs & Attribute::Alignment) {
+  if (*this & Attribute::Alignment) { // FIXME
     Result += "align ";
-    Result += utostr(Attribute::getAlignmentFromAttrs(Attrs));
+    Result += utostr(Attribute::getAlignmentFromAttrs(*this));
     Result += " ";
   }
   // Trim the trailing space.
