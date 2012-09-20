@@ -1664,7 +1664,7 @@ ClangExpressionDeclMap::DoMaterializeOnePersistentVariable
                 mem = var_sp->m_live_sp->GetValue().GetScalar().ULongLong();
                 
                 if (log)
-                    log->Printf("Dematerializing %s from 0x%llx", var_sp->GetName().GetCString(), (uint64_t)mem);
+                    log->Printf("Dematerializing %s from 0x%llx (size = %u)", var_sp->GetName().GetCString(), (uint64_t)mem, (unsigned)pvar_byte_size);
                 
                 // Read the contents of the spare memory area
                                 
