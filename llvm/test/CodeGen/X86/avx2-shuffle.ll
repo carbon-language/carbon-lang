@@ -28,7 +28,7 @@ entry:
 }
 
 ; CHECK: vpshufb_test
-; CHECK; vpshufb {{.*\(%r.*}}, %ymm
+; CHECK: vpshufb {{.*\(%r.*}}, %ymm
 ; CHECK: ret
 define <32 x i8> @vpshufb_test(<32 x i8> %a) nounwind {
   %S = shufflevector <32 x i8> %a, <32 x i8> undef, <32 x i32> <i32 1, i32 9, i32 3, i32 11, i32 5, i32 13, i32 7, i32 15, 
@@ -39,7 +39,7 @@ define <32 x i8> @vpshufb_test(<32 x i8> %a) nounwind {
 }
 
 ; CHECK: vpshufb1_test
-; CHECK; vpshufb {{.*\(%r.*}}, %ymm
+; CHECK: vpshufb {{.*\(%r.*}}, %ymm
 ; CHECK: ret
 define <32 x i8> @vpshufb1_test(<32 x i8> %a) nounwind {
   %S = shufflevector <32 x i8> %a, <32 x i8> zeroinitializer, <32 x i32> <i32 1, i32 9, i32 3, i32 11, i32 5, i32 13, i32 7, i32 15, 
@@ -51,7 +51,7 @@ define <32 x i8> @vpshufb1_test(<32 x i8> %a) nounwind {
 
 
 ; CHECK: vpshufb2_test
-; CHECK; vpshufb {{.*\(%r.*}}, %ymm
+; CHECK: vpshufb {{.*\(%r.*}}, %ymm
 ; CHECK: ret
 define <32 x i8> @vpshufb2_test(<32 x i8> %a) nounwind {
   %S = shufflevector <32 x i8> zeroinitializer, <32 x i8> %a, <32 x i32> <i32 1, i32 9, i32 3, i32 11, i32 5, i32 13, i32 7, i32 15, 
