@@ -3453,3 +3453,35 @@ void test3() EXCLUSIVE_LOCKS_REQUIRED(fatalmu_) {
 }
 
 }   // end namespace UnreachableExitTest
+
+
+namespace VirtualMethodCanonicalizationTest {
+
+class Base {
+public:
+  virtual Mutex* getMutex() = 0;
+};
+
+class Base2 : public Base {
+public:
+  Mutex* getMutex();
+};
+
+class Base3 : public Base2 {
+public:
+  Mutex* getMutex();
+};
+
+class Derived : public Base3 {
+public:
+  Mutex* getMutex();  // overrides Base::getMutex()
+};
+
+void baseFun(Base *b) EXCLUSIVE_LOCKS_REQUIRED(b->getMutex()) { }
+
+void derivedFun(Derived *d) EXCLUSIVE_LOCKS_REQUIRED(d->getMutex()) {
+  baseFun(d);
+}
+
+}  // end namespace VirtualMethodCanonicalizationTest
+

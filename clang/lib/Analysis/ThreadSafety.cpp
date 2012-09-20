@@ -226,8 +226,21 @@ private:
     return NodeVec.size()-1;
   }
 
-  unsigned makeMCall(unsigned NumArgs, const NamedDecl *D) {
-    NodeVec.push_back(SExprNode(EOP_MCall, NumArgs, D));
+  // Grab the very first declaration of virtual method D
+  const CXXMethodDecl* getFirstVirtualDecl(const CXXMethodDecl *D) {
+    while (true) {
+      D = D->getCanonicalDecl();
+      CXXMethodDecl::method_iterator I = D->begin_overridden_methods(),
+                                     E = D->end_overridden_methods();
+      if (I == E)
+        return D;  // Method does not override anything
+      D = *I;      // FIXME: this does not work with multiple inheritance.
+    }
+    return 0;
+  }
+
+  unsigned makeMCall(unsigned NumArgs, const CXXMethodDecl *D) {
+    NodeVec.push_back(SExprNode(EOP_MCall, NumArgs, getFirstVirtualDecl(D)));
     return NodeVec.size()-1;
   }
 
@@ -328,8 +341,7 @@ private:
         return buildSExpr(CMCE->getImplicitObjectArgument(), CallCtx, NDeref);
       }
       unsigned NumCallArgs = CMCE->getNumArgs();
-      unsigned Root =
-        makeMCall(NumCallArgs, CMCE->getMethodDecl()->getCanonicalDecl());
+      unsigned Root = makeMCall(NumCallArgs, CMCE->getMethodDecl());
       unsigned Sz = buildSExpr(CMCE->getImplicitObjectArgument(), CallCtx);
       Expr** CallArgs = CMCE->getArgs();
       for (unsigned i = 0; i < NumCallArgs; ++i) {
