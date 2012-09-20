@@ -601,9 +601,9 @@ code to be structured like this:
 
 .. code-block:: c++
 
-  /// ListContainsFoo - Return true if the specified list has an element that is
+  /// containsFoo - Return true if the specified list has an element that is
   /// a foo.
-  static bool ListContainsFoo(const std::vector<Bar*> &List) {
+  static bool containsFoo(const std::vector<Bar*> &List) {
     for (unsigned i = 0, e = List.size(); i != e; ++i)
       if (List[i]->isFoo())
         return true;
@@ -611,7 +611,7 @@ code to be structured like this:
   }
   ...
 
-  if (ListContainsFoo(BarList)) {
+  if (containsFoo(BarList)) {
     ...
   }
 
@@ -1120,7 +1120,7 @@ good:
     };
   } // end anonymous namespace
 
-  static void Helper() { 
+  static void runHelper() { 
     ... 
   }
 
@@ -1140,7 +1140,7 @@ This is bad:
     bool operator<(const char *RHS) const;
   };
 
-  void Helper() { 
+  void runHelper() { 
     ... 
   }
 
@@ -1150,7 +1150,7 @@ This is bad:
 
   } // end anonymous namespace
 
-This is bad specifically because if you're looking at "``Helper``" in the middle
+This is bad specifically because if you're looking at "``runHelper``" in the middle
 of a large C++ file, that you have no immediate way to tell if it is local to
 the file.  When it is marked static explicitly, this is immediately obvious.
 Also, there is no reason to enclose the definition of "``operator<``" in the
