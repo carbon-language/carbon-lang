@@ -1644,7 +1644,8 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
     return N0.getOperand(0);
   // fold C2-(A+C1) -> (C2-C1)-A
   if (N1.getOpcode() == ISD::ADD && N0C && N1C1) {
-    SDValue NewC = DAG.getConstant((N0C->getAPIntValue() - N1C1->getAPIntValue()), VT);
+    SDValue NewC = DAG.getConstant(N0C->getAPIntValue() - N1C1->getAPIntValue(),
+                                   VT);
     return DAG.getNode(ISD::SUB, N->getDebugLoc(), VT, NewC,
                        N1.getOperand(0));
   }
@@ -2346,16 +2347,19 @@ SDValue DAGCombiner::SimplifyBinOpWithSameOpcodeHands(SDNode *N) {
   // we don't want to undo this promotion.
   // We also handle SCALAR_TO_VECTOR because xor/or/and operations are cheaper
   // on scalars.
-  if ((N0.getOpcode() == ISD::BITCAST || N0.getOpcode() == ISD::SCALAR_TO_VECTOR)
-      && Level == AfterLegalizeTypes) {
+  if ((N0.getOpcode() == ISD::BITCAST ||
+       N0.getOpcode() == ISD::SCALAR_TO_VECTOR) &&
+      Level == AfterLegalizeTypes) {
     SDValue In0 = N0.getOperand(0);
     SDValue In1 = N1.getOperand(0);
     EVT In0Ty = In0.getValueType();
     EVT In1Ty = In1.getValueType();
-    // If both incoming values are integers, and the original types are the same.
+    DebugLoc DL = N->getDebugLoc();
+    // If both incoming values are integers, and the original types are the
+    // same.
     if (In0Ty.isInteger() && In1Ty.isInteger() && In0Ty == In1Ty) {
-      SDValue Op = DAG.getNode(N->getOpcode(), N->getDebugLoc(), In0Ty, In0, In1);
-      SDValue BC = DAG.getNode(N0.getOpcode(), N->getDebugLoc(), VT, Op);
+      SDValue Op = DAG.getNode(N->getOpcode(), DL, In0Ty, In0, In1);
+      SDValue BC = DAG.getNode(N0.getOpcode(), DL, VT, Op);
       AddToWorkList(Op.getNode());
       return BC;
     }
@@ -4057,7 +4061,8 @@ SDValue DAGCombiner::visitSELECT(SDNode *N) {
   if (VT.isInteger() &&
       (VT0 == MVT::i1 ||
        (VT0.isInteger() &&
-        TLI.getBooleanContents(false) == TargetLowering::ZeroOrOneBooleanContent)) &&
+        TLI.getBooleanContents(false) ==
+        TargetLowering::ZeroOrOneBooleanContent)) &&
       N1C && N2C && N1C->isNullValue() && N2C->getAPIntValue() == 1) {
     SDValue XORNode;
     if (VT == VT0)
@@ -5676,12 +5681,12 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
     return N0;
   // fold (fadd A, (fneg B)) -> (fsub A, B)
   if ((!LegalOperations || TLI.isOperationLegalOrCustom(ISD::FSUB, VT)) &&
-      isNegatibleForFree(N1, LegalOperations, TLI, &DAG.getTarget().Options) == 2)
+    isNegatibleForFree(N1, LegalOperations, TLI, &DAG.getTarget().Options) == 2)
     return DAG.getNode(ISD::FSUB, N->getDebugLoc(), VT, N0,
                        GetNegatedExpression(N1, DAG, LegalOperations));
   // fold (fadd (fneg A), B) -> (fsub B, A)
   if ((!LegalOperations || TLI.isOperationLegalOrCustom(ISD::FSUB, VT)) &&
-      isNegatibleForFree(N0, LegalOperations, TLI, &DAG.getTarget().Options) == 2)
+    isNegatibleForFree(N0, LegalOperations, TLI, &DAG.getTarget().Options) == 2)
     return DAG.getNode(ISD::FSUB, N->getDebugLoc(), VT, N1,
                        GetNegatedExpression(N0, DAG, LegalOperations));
 
@@ -7711,9 +7716,9 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
 
   // Transform: (EXTRACT_VECTOR_ELT( VECTOR_SHUFFLE )) -> EXTRACT_VECTOR_ELT.
   // We only perform this optimization before the op legalization phase because
-  // we may introduce new vector instructions which are not backed by TD patterns.
-  // For example on AVX, extracting elements from a wide vector without using
-  // extract_subvector.
+  // we may introduce new vector instructions which are not backed by TD
+  // patterns. For example on AVX, extracting elements from a wide vector
+  // without using extract_subvector.
   if (InVec.getOpcode() == ISD::VECTOR_SHUFFLE
       && ConstEltNo && !LegalOperations) {
     int Elt = cast<ConstantSDNode>(EltNo)->getZExtValue();
@@ -8097,7 +8102,8 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
     // If VecIn2 is unused then change it to undef.
     VecIn2 = VecIn2.getNode() ? VecIn2 : DAG.getUNDEF(VT);
 
-    // Check that we were able to transform all incoming values to the same type.
+    // Check that we were able to transform all incoming values to the same
+    // type.
     if (VecIn2.getValueType() != VecIn1.getValueType() ||
         VecIn1.getValueType() != VT)
           return SDValue();
