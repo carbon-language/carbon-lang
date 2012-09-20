@@ -54,8 +54,13 @@ static cl::opt<bool>
 DupRet("simplifycfg-dup-ret", cl::Hidden, cl::init(false),
        cl::desc("Duplicate return instructions into unconditional branches"));
 
+static cl::opt<bool>
+SinkCommon("simplifycfg-sink-common", cl::Hidden, cl::init(true),
+       cl::desc("Sink common instructions down to the end block"));
+
 STATISTIC(NumSpeculations, "Number of speculative executed instructions");
 STATISTIC(NumLookupTables, "Number of switch instructions turned into lookup tables");
+STATISTIC(NumSinkCommons, "Number of common instructions sunk down to the end block");
 
 namespace {
   /// ValueEqualityComparisonCase - Represents a case of a switch.
@@ -1154,6 +1159,171 @@ HoistTerminator:
 
   EraseTerminatorInstAndDCECond(BI);
   return true;
+}
+
+/// SinkThenElseCodeToEnd - Given an unconditional branch that goes to BBEnd,
+/// check whether BBEnd has only two predecessors and the other predecessor
+/// ends with an unconditional branch. If it is true, sink any common code
+/// in the two predecessors to BBEnd.
+static bool SinkThenElseCodeToEnd(BranchInst *BI1) {
+  assert(BI1->isUnconditional());
+  BasicBlock *BB1 = BI1->getParent();
+  BasicBlock *BBEnd = BI1->getSuccessor(0);
+
+  // Check that BBEnd has two predecessors and the other predecessor ends with
+  // an unconditional branch.
+  SmallVector<BasicBlock*, 16> Preds(pred_begin(BBEnd), pred_end(BBEnd));
+  if (Preds.size() != 2)
+    return false;
+  BasicBlock *BB2 = (Preds[0] == BB1) ? Preds[1] : Preds[0];
+  BranchInst *BI2 = dyn_cast<BranchInst>(BB2->getTerminator());
+  if (!BI2 || !BI2->isUnconditional())
+    return false;
+
+  // Gather the PHI nodes in BBEnd.
+  std::map<Value*, std::pair<Value*, PHINode*> > MapValueFromBB1ToBB2;
+  Instruction *FirstNonPhiInBBEnd = 0;
+  for (BasicBlock::iterator I = BBEnd->begin(), E = BBEnd->end();
+       I != E; ++I) {
+    if (PHINode *PN = dyn_cast<PHINode>(I)) {
+      Value *BB1V = PN->getIncomingValueForBlock(BB1);
+      Value *BB2V = PN->getIncomingValueForBlock(BB2); 
+      MapValueFromBB1ToBB2[BB1V] = std::make_pair(BB2V, PN);
+    } else {
+      FirstNonPhiInBBEnd = &*I;
+      break;
+    }
+  }
+  if (!FirstNonPhiInBBEnd)
+    return false;
+  
+
+  // This does very trivial matching, with limited scanning, to find identical
+  // instructions in the two blocks.  We scan backward for obviously identical
+  // instructions in an identical order.
+  BasicBlock::InstListType::reverse_iterator RI1 = BB1->getInstList().rbegin(),
+      RE1 = BB1->getInstList().rend(), RI2 = BB2->getInstList().rbegin(),
+      RE2 = BB2->getInstList().rend();
+  // Skip debug info.
+  while (RI1 != RE1 && isa<DbgInfoIntrinsic>(&*RI1)) ++RI1;
+  if (RI1 == RE1)
+    return false;
+  while (RI2 != RE2 && isa<DbgInfoIntrinsic>(&*RI2)) ++RI2;
+  if (RI2 == RE2)
+    return false;
+  // Skip the unconditional branches.
+  ++RI1;
+  ++RI2;
+
+  bool Changed = false;
+  while (RI1 != RE1 && RI2 != RE2) {
+    // Skip debug info.
+    while (RI1 != RE1 && isa<DbgInfoIntrinsic>(&*RI1)) ++RI1;
+    if (RI1 == RE1)
+      return Changed;
+    while (RI2 != RE2 && isa<DbgInfoIntrinsic>(&*RI2)) ++RI2;
+    if (RI2 == RE2)
+      return Changed;
+
+    Instruction *I1 = &*RI1, *I2 = &*RI2;
+    // I1 and I2 should have a single use in the same PHI node, and they
+    // perform the same operation.
+    // Cannot move control-flow-involving, volatile loads, vaarg, etc.
+    if (isa<PHINode>(I1) || isa<PHINode>(I2) ||
+        isa<TerminatorInst>(I1) || isa<TerminatorInst>(I2) ||
+        isa<LandingPadInst>(I1) || isa<LandingPadInst>(I2) ||
+        isa<AllocaInst>(I1) || isa<AllocaInst>(I2) ||
+        I1->mayHaveSideEffects() || I2->mayHaveSideEffects() ||
+        I1->mayReadOrWriteMemory() || I2->mayReadOrWriteMemory() ||
+        !I1->hasOneUse() || !I2->hasOneUse() ||
+        MapValueFromBB1ToBB2.find(I1) == MapValueFromBB1ToBB2.end() ||
+        MapValueFromBB1ToBB2[I1].first != I2)
+      return Changed;
+
+    // Check whether we should swap the operands of ICmpInst.
+    ICmpInst *ICmp1 = dyn_cast<ICmpInst>(I1), *ICmp2 = dyn_cast<ICmpInst>(I2);
+    bool SwapOpnds = false;
+    if (ICmp1 && ICmp2 &&
+        ICmp1->getOperand(0) != ICmp2->getOperand(0) &&
+        ICmp1->getOperand(1) != ICmp2->getOperand(1) &&
+        (ICmp1->getOperand(0) == ICmp2->getOperand(1) ||
+         ICmp1->getOperand(1) == ICmp2->getOperand(0))) {
+      ICmp2->swapOperands();
+      SwapOpnds = true;
+    }
+    if (!I1->isSameOperationAs(I2)) {
+      if (SwapOpnds)
+        ICmp2->swapOperands();
+      return Changed;
+    }
+
+    // The operands should be either the same or they need to be generated
+    // with a PHI node after sinking. We only handle the case where there is
+    // a single pair of different operands.
+    Value *DifferentOp1 = 0, *DifferentOp2 = 0;
+    unsigned Op1Idx = 0;
+    for (unsigned I = 0, E = I1->getNumOperands(); I != E; ++I) {
+      if (I1->getOperand(I) == I2->getOperand(I))
+        continue;
+      // Early exit if we have more-than one pair of different operands or
+      // the different operand is already in MapValueFromBB1ToBB2.
+      // Early exit if we need a PHI node to replace a constant.
+      if (DifferentOp1 ||
+          MapValueFromBB1ToBB2.find(I1->getOperand(I)) !=
+          MapValueFromBB1ToBB2.end() ||
+          isa<Constant>(I1->getOperand(I)) ||
+          isa<Constant>(I2->getOperand(I))) {
+        // If we can't sink the instructions, undo the swapping.
+        if (SwapOpnds)
+          ICmp2->swapOperands();
+        return Changed;
+      }
+      DifferentOp1 = I1->getOperand(I);
+      Op1Idx = I;
+      DifferentOp2 = I2->getOperand(I);
+    }
+
+    // We insert the pair of different operands to MapValueFromBB1ToBB2 and
+    // remove (I1, I2) from MapValueFromBB1ToBB2.
+    if (DifferentOp1) {
+      PHINode *NewPN = PHINode::Create(DifferentOp1->getType(), 2,
+                                       DifferentOp1->getName() + ".sink",
+                                       BBEnd->begin());
+      MapValueFromBB1ToBB2[DifferentOp1] = std::make_pair(DifferentOp2, NewPN);
+      // I1 should use NewPN instead of DifferentOp1.
+      I1->setOperand(Op1Idx, NewPN);
+      NewPN->addIncoming(DifferentOp1, BB1);
+      NewPN->addIncoming(DifferentOp2, BB2);
+      DEBUG(dbgs() << "Create PHI node " << *NewPN << "\n";);
+    }
+    PHINode *OldPN = MapValueFromBB1ToBB2[I1].second;
+    MapValueFromBB1ToBB2.erase(I1);
+
+    DEBUG(dbgs() << "SINK common instructions " << *I1 << "\n";);
+    DEBUG(dbgs() << "                         " << *I2 << "\n";);
+    // We need to update RE1 and RE2 if we are going to sink the first
+    // instruction in the basic block down.
+    bool UpdateRE1 = (I1 == BB1->begin()), UpdateRE2 = (I2 == BB2->begin());
+    // Sink the instruction.
+    BBEnd->getInstList().splice(FirstNonPhiInBBEnd, BB1->getInstList(), I1);
+    if (!OldPN->use_empty())
+      OldPN->replaceAllUsesWith(I1);
+    OldPN->eraseFromParent();
+
+    if (!I2->use_empty())
+      I2->replaceAllUsesWith(I1);
+    I1->intersectOptionalDataWith(I2);
+    I2->eraseFromParent();
+
+    if (UpdateRE1)
+      RE1 = BB1->getInstList().rend();
+    if (UpdateRE2)
+      RE2 = BB2->getInstList().rend();
+    FirstNonPhiInBBEnd = I1;
+    NumSinkCommons++;
+    Changed = true;
+  }
+  return Changed;
 }
 
 /// SpeculativelyExecuteBB - Given a conditional branch that goes to BB1
@@ -3369,6 +3539,9 @@ bool SimplifyCFGOpt::SimplifyIndirectBr(IndirectBrInst *IBI) {
 
 bool SimplifyCFGOpt::SimplifyUncondBranch(BranchInst *BI, IRBuilder<> &Builder){
   BasicBlock *BB = BI->getParent();
+
+  if (SinkCommon && SinkThenElseCodeToEnd(BI))
+    return true;
 
   // If the Terminator is the only non-phi instruction, simplify the block.
   BasicBlock::iterator I = BB->getFirstNonPHIOrDbgOrLifetime();
