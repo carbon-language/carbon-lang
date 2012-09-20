@@ -51,6 +51,21 @@
 
 /* .. */
 
+#if defined(__OpenBSD__) || defined(__Bitrig__)
+#include <machine/endian.h>
+
+#if _BYTE_ORDER == _BIG_ENDIAN
+#define _YUGA_LITTLE_ENDIAN 0
+#define _YUGA_BIG_ENDIAN    1
+#elif _BYTE_ORDER == _LITTLE_ENDIAN
+#define _YUGA_LITTLE_ENDIAN 1
+#define _YUGA_BIG_ENDIAN    0
+#endif /* _BYTE_ORDER */
+
+#endif /* OpenBSD and Bitrig. */
+
+/* .. */
+
 /* Mac OSX has __BIG_ENDIAN__ or __LITTLE_ENDIAN__ automatically set by the compiler (at least with GCC) */
 #if defined(__APPLE__) && defined(__MACH__) || defined(__ellcc__ )
 
