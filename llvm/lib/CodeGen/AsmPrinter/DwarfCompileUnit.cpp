@@ -1109,9 +1109,6 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
         addType(Arg, ATy);
         if (ATy.isArtificial())
           addFlag(Arg, dwarf::DW_AT_artificial);
-        if (ATy.isObjectPointer())
-          addDIEEntry(SPDie, dwarf::DW_AT_object_pointer, dwarf::DW_FORM_ref4,
-                      Arg);
         SPDie->addChild(Arg);
       }
   }
