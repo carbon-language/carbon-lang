@@ -421,9 +421,9 @@ exit from a function, consider this "bad" code:
 
 .. code-block:: c++
 
-  Value *DoSomething(Instruction *I) {
+  Value *doSomething(Instruction *I) {
     if (!isa<TerminatorInst>(I) &&
-        I->hasOneUse() && SomeOtherThing(I)) {
+        I->hasOneUse() && doOtherThing(I)) {
       ... some long code ....
     }
 
@@ -445,7 +445,7 @@ It is much preferred to format the code like this:
 
 .. code-block:: c++
 
-  Value *DoSomething(Instruction *I) {
+  Value *doSomething(Instruction *I) {
     // Terminators never need 'something' done to them because ... 
     if (isa<TerminatorInst>(I))
       return 0;
@@ -456,7 +456,7 @@ It is much preferred to format the code like this:
       return 0;
 
     // This is really just here for example.
-    if (!SomeOtherThing(I))
+    if (!doOtherThing(I))
       return 0;
     
     ... some long code ....
