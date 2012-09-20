@@ -15,7 +15,9 @@ int fscanf(FILE *restrict, const char *restrict, ...);
 // Note, on some platforms errno macro gets replaced with a function call.
 extern int errno;
 
-unsigned long strlen(const char *);
+typedef __typeof(sizeof(int)) size_t;
+
+size_t strlen(const char *);
 
 char *strcpy(char *restrict, const char *restrict);
 
