@@ -1039,12 +1039,56 @@ public:
     }
     
     virtual bool
-    CompleteInterface (clang::ObjCInterfaceDecl *interface_decl)
+    Describe (std::function <void (ObjCLanguageRuntime::ObjCISA)> const &superclass_func,
+              std::function <void (const char *, const char *)> const &method_func)
     {
         if (!m_valid)
             return false;
         
-        return false;
+        std::auto_ptr <class_ro_t> ro;
+        std::auto_ptr <class_rw_t> rw;
+        
+        ProcessSP process_sp = m_process_wp.lock();
+        
+        if (!process_sp)
+            return false;
+        
+        if (IsRealized())
+        {
+            rw.reset(new class_rw_t);
+            if (!rw->Read(process_sp, m_objc_class.m_data_la))
+                return false;
+            
+            ro.reset(new class_ro_t);
+            if (!ro->Read(process_sp, rw->m_ro_la))
+                return false;
+        }
+        else
+        {
+            ro.reset(new class_ro_t);
+            if (!ro->Read(process_sp, m_objc_class.m_data_la))
+                return false;
+        }
+        
+        superclass_func(m_objc_class.m_superclass);
+        
+        std::auto_ptr <method_list_t> base_method_list;
+        
+        base_method_list.reset(new method_list_t);
+        if (!base_method_list->Read(process_sp, ro->m_baseMethods_la))
+            return false;
+        
+        std::auto_ptr <method_t> method;
+        method.reset(new method_t);
+        
+        for (uint32_t i = 0, e = base_method_list->m_count; i < e; ++i)
+        {
+            method->Read(process_sp, base_method_list->m_first_la + (i * base_method_list->m_entsize));
+            
+            method_func(method->m_name.c_str(), method->m_types.c_str());
+        }
+        
+        return true;
     }
     
     virtual bool
@@ -1102,35 +1146,11 @@ protected:
             m_valid = false;
             return;
         }
-                
-        size_t objc_class_size = ptr_size   // uintptr_t isa;
-                               + ptr_size   // Class superclass;
-                               + ptr_size   // void *cache;
-                               + ptr_size   // IMP *vtable;
-                               + ptr_size;  // uintptr_t data_NEVER_USE;
         
+        if (!m_objc_class.Read(process_sp, m_objc_class_la))
         {
-            DataBufferHeap objc_class_buf (objc_class_size, '\0');
-            
-            process_sp->ReadMemory(m_objc_class_la, objc_class_buf.GetBytes(), objc_class_size, error);
-            if (error.Fail())
-            {
-                m_valid = false;
-                return;
-            }
-            
-            DataExtractor objc_class_extractor(objc_class_buf.GetBytes(), objc_class_size, process_sp->GetByteOrder(), process_sp->GetAddressByteSize());
-            
-            uint32_t cursor = 0;
-            
-            m_objc_class.m_isa          = objc_class_extractor.GetAddress_unchecked(&cursor);   // uintptr_t isa;
-            m_objc_class.m_superclass   = objc_class_extractor.GetAddress_unchecked(&cursor);   // Class superclass;
-            m_objc_class.m_cache_la     = objc_class_extractor.GetAddress_unchecked(&cursor);   // void *cache;
-            m_objc_class.m_vtable_la    = objc_class_extractor.GetAddress_unchecked(&cursor);   // IMP *vtable;
-            lldb::addr_t data_NEVER_USE = objc_class_extractor.GetAddress_unchecked(&cursor);   // uintptr_t data_NEVER_USE;
-            
-            m_objc_class.m_flags = (uint8_t)(data_NEVER_USE & (lldb::addr_t)3);
-            m_objc_class.m_data_la = data_NEVER_USE & ~(lldb::addr_t)3;
+            m_valid = false;
+            return;
         }
                     
         // Now we just want to grab the instance size and the name.
@@ -1227,7 +1247,7 @@ protected:
                 
         m_process_wp = lldb::ProcessWP(process_sp);
     }
-    
+        
 private:
     static const uint32_t RW_REALIZED = (1 << 31);
     
@@ -1241,6 +1261,41 @@ private:
         lldb::addr_t                    m_vtable_la;
         lldb::addr_t                    m_data_la;
         uint8_t                         m_flags;
+        
+        bool Read(ProcessSP &process_sp, lldb::addr_t addr)
+        {
+            size_t ptr_size = process_sp->GetAddressByteSize();
+            
+            size_t objc_class_size = ptr_size   // uintptr_t isa;
+                                   + ptr_size   // Class superclass;
+                                   + ptr_size   // void *cache;
+                                   + ptr_size   // IMP *vtable;
+                                   + ptr_size;  // uintptr_t data_NEVER_USE;
+            
+            DataBufferHeap objc_class_buf (objc_class_size, '\0');
+            Error error;
+            
+            process_sp->ReadMemory(addr, objc_class_buf.GetBytes(), objc_class_size, error);
+            if (error.Fail())
+            {
+                return false;
+            }
+            
+            DataExtractor extractor(objc_class_buf.GetBytes(), objc_class_size, process_sp->GetByteOrder(), process_sp->GetAddressByteSize());
+            
+            uint32_t cursor = 0;
+            
+            m_isa                       = extractor.GetAddress_unchecked(&cursor);   // uintptr_t isa;
+            m_superclass                = extractor.GetAddress_unchecked(&cursor);   // Class superclass;
+            m_cache_la                  = extractor.GetAddress_unchecked(&cursor);   // void *cache;
+            m_vtable_la                 = extractor.GetAddress_unchecked(&cursor);   // IMP *vtable;
+            lldb::addr_t data_NEVER_USE = extractor.GetAddress_unchecked(&cursor);   // uintptr_t data_NEVER_USE;
+            
+            m_flags     = (uint8_t)(data_NEVER_USE & (lldb::addr_t)3);
+            m_data_la   = data_NEVER_USE & ~(lldb::addr_t)3;
+            
+            return true;
+        }
     };
     
     objc_class_t                        m_objc_class;
@@ -1264,9 +1319,54 @@ private:
         
         lldb::addr_t                    m_weakIvarLayout_la;
         lldb::addr_t                    m_baseProperties_la;
+        
+        bool Read(ProcessSP &process_sp, lldb::addr_t addr)
+        {
+            size_t ptr_size = process_sp->GetAddressByteSize();
+            
+            size_t size = sizeof(uint32_t)                         // uint32_t flags;
+                        + sizeof(uint32_t)                         // uint32_t instanceStart;
+                        + sizeof(uint32_t)                         // uint32_t instanceSize;
+                        + (ptr_size == 8 ? sizeof(uint32_t) : 0)   // uint32_t reserved; // __LP64__ only
+                        + ptr_size                                 // const uint8_t *ivarLayout;
+                        + ptr_size                                 // const char *name;
+                        + ptr_size                                 // const method_list_t *baseMethods;
+                        + ptr_size                                 // const protocol_list_t *baseProtocols;
+                        + ptr_size                                 // const ivar_list_t *ivars;
+                        + ptr_size                                 // const uint8_t *weakIvarLayout;
+                        + ptr_size;                                // const property_list_t *baseProperties;
+            
+            DataBufferHeap buffer (size, '\0');
+            Error error;
+            
+            process_sp->ReadMemory(addr, buffer.GetBytes(), size, error);
+            if (error.Fail())
+            {
+                return false;
+            }
+            
+            DataExtractor extractor(buffer.GetBytes(), size, process_sp->GetByteOrder(), process_sp->GetAddressByteSize());
+            
+            uint32_t cursor = 0;
+            
+            m_flags             = extractor.GetU32_unchecked(&cursor);
+            m_instanceStart     = extractor.GetU32_unchecked(&cursor);
+            m_instanceSize      = extractor.GetU32_unchecked(&cursor);
+            if (ptr_size == 8)
+                m_reserved      = extractor.GetU32_unchecked(&cursor);
+            else
+                m_reserved      = 0;
+            m_ivarLayout_la     = extractor.GetAddress_unchecked(&cursor);
+            m_name_la           = extractor.GetAddress_unchecked(&cursor);
+            m_baseMethods_la    = extractor.GetAddress_unchecked(&cursor);
+            m_baseProtocols_la  = extractor.GetAddress_unchecked(&cursor);
+            m_ivars_la          = extractor.GetAddress_unchecked(&cursor);
+            m_weakIvarLayout_la = extractor.GetAddress_unchecked(&cursor);
+            m_baseProperties_la = extractor.GetAddress_unchecked(&cursor);
+            
+            return true;
+        }
     };
-    
-    std::auto_ptr<class_ro_t>           m_class_ro;
     
     struct class_rw_t {
         uint32_t                        m_flags;
@@ -1282,9 +1382,122 @@ private:
         
         ObjCLanguageRuntime::ObjCISA    m_firstSubclass;
         ObjCLanguageRuntime::ObjCISA    m_nextSiblingClass;
+        
+        bool Read(ProcessSP &process_sp, lldb::addr_t addr)
+        {
+            size_t ptr_size = process_sp->GetAddressByteSize();
+            
+            size_t size = sizeof(uint32_t)  // uint32_t flags;
+                        + sizeof(uint32_t)  // uint32_t version;
+                        + ptr_size          // const class_ro_t *ro;
+                        + ptr_size          // union { method_list_t **method_lists; method_list_t *method_list; };
+                        + ptr_size          // struct chained_property_list *properties;
+                        + ptr_size          // const protocol_list_t **protocols;
+                        + ptr_size          // Class firstSubclass;
+                        + ptr_size;         // Class nextSiblingClass;
+            
+            DataBufferHeap buffer (size, '\0');
+            Error error;
+            
+            process_sp->ReadMemory(addr, buffer.GetBytes(), size, error);
+            if (error.Fail())
+            {
+                return false;
+            }
+            
+            DataExtractor extractor(buffer.GetBytes(), size, process_sp->GetByteOrder(), process_sp->GetAddressByteSize());
+            
+            uint32_t cursor = 0;
+            
+            m_flags             = extractor.GetU32_unchecked(&cursor);
+            m_version           = extractor.GetU32_unchecked(&cursor);
+            m_ro_la             = extractor.GetAddress_unchecked(&cursor);
+            m_method_list_la    = extractor.GetAddress_unchecked(&cursor);
+            m_properties_la     = extractor.GetAddress_unchecked(&cursor);
+            m_firstSubclass     = extractor.GetAddress_unchecked(&cursor);
+            m_nextSiblingClass  = extractor.GetAddress_unchecked(&cursor);
+            
+            return true;
+        }
     };
     
-    std::auto_ptr<class_rw_t>           m_class_rw;
+    struct method_list_t
+    {
+        uint32_t        m_entsize;
+        uint32_t        m_count;
+        lldb::addr_t    m_first_la;
+        
+        bool Read(ProcessSP &process_sp, lldb::addr_t addr)
+        {            
+            size_t size = sizeof(uint32_t)  // uint32_t entsize_NEVER_USE;
+                        + sizeof(uint32_t); // uint32_t count;
+            
+            DataBufferHeap buffer (size, '\0');
+            Error error;
+            
+            process_sp->ReadMemory(addr, buffer.GetBytes(), size, error);
+            if (error.Fail())
+            {
+                return false;
+            }
+            
+            DataExtractor extractor(buffer.GetBytes(), size, process_sp->GetByteOrder(), process_sp->GetAddressByteSize());
+            
+            uint32_t cursor = 0;
+            
+            m_entsize   = extractor.GetU32_unchecked(&cursor) & ~(uint32_t)3;
+            m_count     = extractor.GetU32_unchecked(&cursor);
+            m_first_la  = addr + cursor;
+            
+            return true;
+        }
+    };
+    
+    struct method_t
+    {
+        lldb::addr_t    m_name_la;
+        lldb::addr_t    m_types_la;
+        lldb::addr_t    m_imp_la;
+        
+        std::string     m_name;
+        std::string     m_types;
+        
+        bool Read(ProcessSP &process_sp, lldb::addr_t addr)
+        {
+            size_t size = sizeof(uint32_t)  // uint32_t entsize_NEVER_USE;
+                        + sizeof(uint32_t); // uint32_t count;
+            
+            DataBufferHeap buffer (size, '\0');
+            Error error;
+            
+            process_sp->ReadMemory(addr, buffer.GetBytes(), size, error);
+            if (error.Fail())
+            {
+                return false;
+            }
+            
+            DataExtractor extractor(buffer.GetBytes(), size, process_sp->GetByteOrder(), process_sp->GetAddressByteSize());
+            
+            uint32_t cursor = 0;
+            
+            m_name_la   = extractor.GetAddress_unchecked(&cursor);
+            m_types_la  = extractor.GetAddress_unchecked(&cursor);
+            m_imp_la    = extractor.GetAddress_unchecked(&cursor);
+            
+            const size_t buffer_size = 1024;
+            size_t count;
+            
+            DataBufferHeap string_buf(buffer_size, 0);
+            
+            count = process_sp->ReadCStringFromMemory(m_name_la, (char*)string_buf.GetBytes(), buffer_size, error);
+            m_name.assign((char*)string_buf.GetBytes(), count);
+            
+            count = process_sp->ReadCStringFromMemory(m_types_la, (char*)string_buf.GetBytes(), buffer_size, error);
+            m_types.assign((char*)string_buf.GetBytes(), count);
+            
+            return true;
+        }
+    };
     
     lldb::ProcessWP m_process_wp;
 };

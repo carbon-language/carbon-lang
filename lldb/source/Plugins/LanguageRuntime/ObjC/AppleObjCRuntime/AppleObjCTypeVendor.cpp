@@ -55,28 +55,12 @@ public:
         
             if (!interface_decl)
                 break;
-                        
-            ObjCLanguageRuntime::ObjCISA objc_isa = (ObjCLanguageRuntime::ObjCISA)GetMetadata((uintptr_t)interface_decl);
-            
-            if (!objc_isa)
-                break;
             
             clang::ObjCInterfaceDecl *non_const_interface_decl = const_cast<clang::ObjCInterfaceDecl*>(interface_decl);
-            
-            if (non_const_interface_decl->hasExternalVisibleStorage())
-            {
-                ObjCLanguageRuntime::ClassDescriptorSP descriptor = m_type_vendor.m_runtime.GetClassDescriptor(objc_isa);
-                
-                if (!descriptor)
-                    break;
-                
-                if (descriptor->CompleteInterface(non_const_interface_decl))
-                    non_const_interface_decl->setHasExternalVisibleStorage(false);
-            }
 
-            if (non_const_interface_decl->hasExternalVisibleStorage())
+            if (!m_type_vendor.FinishDecl(non_const_interface_decl))
                 break;
-            
+                        
             return non_const_interface_decl->lookup(name);
         }
         while(0);
@@ -183,6 +167,78 @@ AppleObjCTypeVendor::AppleObjCTypeVendor(ObjCLanguageRuntime &runtime) :
     m_ast_ctx.getASTContext()->setExternalSource(external_source_owning_ptr);
 }
 
+clang::ObjCInterfaceDecl*
+AppleObjCTypeVendor::GetDeclForISA(ObjCLanguageRuntime::ObjCISA isa)
+{
+    ISAToInterfaceMap::const_iterator iter = m_isa_to_interface.find(isa);
+    
+    if (iter != m_isa_to_interface.end())
+        return iter->second;
+    
+    clang::ASTContext *ast_ctx = m_ast_ctx.getASTContext();
+    
+    ObjCLanguageRuntime::ClassDescriptorSP descriptor = m_runtime.GetClassDescriptor(isa);
+    
+    if (!descriptor)
+        return NULL;
+    
+    const ConstString &name(descriptor->GetClassName());
+    
+    clang::IdentifierInfo &identifier_info = ast_ctx->Idents.get(name.GetStringRef());
+
+    clang::ObjCInterfaceDecl *new_iface_decl = clang::ObjCInterfaceDecl::Create(*ast_ctx,
+                                                                                ast_ctx->getTranslationUnitDecl(),
+                                                                                clang::SourceLocation(),
+                                                                                &identifier_info,
+                                                                                NULL);
+    
+    m_external_source->SetMetadata((uintptr_t)new_iface_decl, (uint64_t)isa);
+    new_iface_decl->setHasExternalVisibleStorage();
+    ast_ctx->getTranslationUnitDecl()->addDecl(new_iface_decl);
+    
+    m_isa_to_interface[isa] = new_iface_decl;
+    
+    return new_iface_decl;
+}
+
+bool
+AppleObjCTypeVendor::FinishDecl(clang::ObjCInterfaceDecl *interface_decl)
+{
+    ObjCLanguageRuntime::ObjCISA objc_isa = (ObjCLanguageRuntime::ObjCISA)m_external_source->GetMetadata((uintptr_t)interface_decl);
+    
+    if (!objc_isa)
+        return false;
+    
+    if (!interface_decl->hasExternalVisibleStorage())
+        return true;
+    
+    interface_decl->startDefinition();
+    
+    ObjCLanguageRuntime::ClassDescriptorSP descriptor = m_runtime.GetClassDescriptor(objc_isa);
+    
+    if (!descriptor)
+        return false;
+    
+    auto superclass_func = [interface_decl, this](ObjCLanguageRuntime::ObjCISA isa)
+    {
+        clang::ObjCInterfaceDecl *superclass_decl = GetDeclForISA(isa);
+        if (!superclass_decl)
+            return;
+        interface_decl->setSuperClass(superclass_decl);
+    };
+    
+    auto method_func = [interface_decl, this](const char *name, const char *types)
+    {
+        
+    };
+    
+    if (!descriptor->Describe(superclass_func, method_func))
+        return false;
+            
+    interface_decl->setHasExternalVisibleStorage(false);
+    return true;
+}
+
 uint32_t
 AppleObjCTypeVendor::FindTypes (const ConstString &name,
                                 bool append,
@@ -205,6 +261,9 @@ AppleObjCTypeVendor::FindTypes (const ConstString &name,
         types.clear();
     
     uint32_t ret = 0;
+    
+    // TODO Remove this return once testing is complete.
+    return ret;
     
     do
     {
@@ -252,10 +311,7 @@ AppleObjCTypeVendor::FindTypes (const ConstString &name,
         }
         
         // It's not.  If it exists, we have to put it into our ASTContext.
-        
-        // TODO Remove this break once testing is complete.
-        break;
-        
+                
         ObjCLanguageRuntime::ObjCISA isa = m_runtime.GetISA(name);
     
         if (!isa)
@@ -267,17 +323,17 @@ AppleObjCTypeVendor::FindTypes (const ConstString &name,
             break;
         }
         
-        clang::ObjCInterfaceDecl *new_iface_decl = clang::ObjCInterfaceDecl::Create(*ast_ctx,
-                                                                                    ast_ctx->getTranslationUnitDecl(),
-                                                                                    clang::SourceLocation(),
-                                                                                    &identifier_info,
-                                                                                    NULL);
+        clang::ObjCInterfaceDecl *iface_decl = GetDeclForISA(isa);
         
-        m_external_source->SetMetadata((uintptr_t)new_iface_decl, (uint64_t)isa);
-        new_iface_decl->setHasExternalVisibleStorage();
-        ast_ctx->getTranslationUnitDecl()->addDecl(new_iface_decl);
+        if (!iface_decl)
+        {
+            if (log)
+                log->Printf("AOCTV::FT [%u] Couldn't get the Objective-C interface for isa 0x%llx",
+                            current_id,
+                            (uint64_t)isa);
+        }
         
-        clang::QualType new_iface_type = ast_ctx->getObjCInterfaceType(new_iface_decl);
+        clang::QualType new_iface_type = ast_ctx->getObjCInterfaceType(iface_decl);
         
         if (log)
         {

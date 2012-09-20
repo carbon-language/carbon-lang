@@ -12,6 +12,7 @@
 
 // C Includes
 // C++ Includes
+#include <functional>
 #include <map>
 
 // Other libraries and framework includes
@@ -115,7 +116,8 @@ public:
         
         // This should return true iff the interface could be completed
         virtual bool
-        CompleteInterface (clang::ObjCInterfaceDecl *interface_decl)
+        Describe (std::function <void (ObjCISA)> const &superclass_func,
+                  std::function <void (const char*, const char*)> const &method_func)
         {
             return false;
         }

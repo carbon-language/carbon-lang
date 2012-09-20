@@ -21,6 +21,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/TypeVendor.h"
+#include "lldb/Target/ObjCLanguageRuntime.h"
 
 namespace lldb_private {
 
@@ -39,9 +40,16 @@ public:
     
     friend class AppleObjCExternalASTSource;
 private:
-    ObjCLanguageRuntime            &m_runtime;
-    ClangASTContext                 m_ast_ctx;
-    AppleObjCExternalASTSource   *m_external_source;
+    clang::ObjCInterfaceDecl   *GetDeclForISA(ObjCLanguageRuntime::ObjCISA isa);
+    bool                        FinishDecl(clang::ObjCInterfaceDecl *decl);
+    
+    ObjCLanguageRuntime        &m_runtime;
+    ClangASTContext             m_ast_ctx;
+    AppleObjCExternalASTSource *m_external_source;
+    
+    typedef llvm::DenseMap<ObjCLanguageRuntime::ObjCISA, clang::ObjCInterfaceDecl *> ISAToInterfaceMap;
+
+    ISAToInterfaceMap           m_isa_to_interface;
 };
 
 } // namespace lldb_private
