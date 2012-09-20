@@ -734,10 +734,30 @@ void StmtPrinter::VisitIntegerLiteral(IntegerLiteral *Node) {
   case BuiltinType::UInt128:   OS << "Ui128"; break;
   }
 }
-void StmtPrinter::VisitFloatingLiteral(FloatingLiteral *Node) {
+
+static void PrintFloatingLiteral(raw_ostream &OS, FloatingLiteral *Node,
+                                 bool PrintSuffix) {
   SmallString<16> Str;
   Node->getValue().toString(Str);
   OS << Str;
+  if (Str.find_first_not_of("-0123456789") == StringRef::npos)
+    OS << '.'; // Trailing dot in order to separate from ints.
+
+  if (!PrintSuffix)
+    return;
+
+  // Emit suffixes.  Float literals are always a builtin float type.
+  switch (Node->getType()->getAs<BuiltinType>()->getKind()) {
+  default: llvm_unreachable("Unexpected type for float literal!");
+  case BuiltinType::Half:       break; // FIXME: suffix?
+  case BuiltinType::Double:     break; // no suffix.
+  case BuiltinType::Float:      OS << 'F'; break;
+  case BuiltinType::LongDouble: OS << 'L'; break;
+  }
+}
+
+void StmtPrinter::VisitFloatingLiteral(FloatingLiteral *Node) {
+  PrintFloatingLiteral(OS, Node, /*PrintSuffix=*/true);
 }
 
 void StmtPrinter::VisitImaginaryLiteral(ImaginaryLiteral *Node) {
@@ -1217,7 +1237,12 @@ void StmtPrinter::VisitUserDefinedLiteral(UserDefinedLiteral *Node) {
     OS << Int->getValue().toString(10, /*isSigned*/false);
     break;
   }
-  case UserDefinedLiteral::LOK_Floating:
+  case UserDefinedLiteral::LOK_Floating: {
+    // Print floating literal without suffix.
+    FloatingLiteral *Float = cast<FloatingLiteral>(Node->getCookedLiteral());
+    PrintFloatingLiteral(OS, Float, /*PrintSuffix=*/false);
+    break;
+  }
   case UserDefinedLiteral::LOK_String:
   case UserDefinedLiteral::LOK_Character:
     PrintExpr(Node->getCookedLiteral());
