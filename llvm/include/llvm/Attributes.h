@@ -223,6 +223,30 @@ public:
     return 1U << ((getRawStackAlignment() >> 26) - 1);
   }
 
+  /// This turns an int alignment (a power of 2, normally) into the form used
+  /// internally in Attributes.
+  static Attributes constructAlignmentFromInt(unsigned i) {
+    // Default alignment, allow the target to define how to align it.
+    if (i == 0)
+      return Attribute::None;
+
+    assert(isPowerOf2_32(i) && "Alignment must be a power of two.");
+    assert(i <= 0x40000000 && "Alignment too large.");
+    return Attributes((Log2_32(i)+1) << 16);
+  }
+
+  /// This turns an int stack alignment (which must be a power of 2) into the
+  /// form used internally in Attributes.
+  static Attributes constructStackAlignmentFromInt(unsigned i) {
+    // Default alignment, allow the target to define how to align it.
+    if (i == 0)
+      return Attribute::None;
+
+    assert(isPowerOf2_32(i) && "Alignment must be a power of two.");
+    assert(i <= 0x100 && "Alignment too large.");
+    return Attributes((Log2_32(i)+1) << 26);
+  }
+
   // This is a "safe bool() operator".
   operator const void *() const { return Bits ? this : 0; }
   bool isEmptyOrSingleton() const { return (Bits & (Bits - 1)) == 0; }
@@ -300,30 +324,6 @@ const AttrConst MutuallyIncompatible[5] = {
 /// @brief Which attributes cannot be applied to a type.
 Attributes typeIncompatible(Type *Ty);
 
-/// This turns an int alignment (a power of 2, normally) into the
-/// form used internally in Attributes.
-inline Attributes constructAlignmentFromInt(unsigned i) {
-  // Default alignment, allow the target to define how to align it.
-  if (i == 0)
-    return None;
-
-  assert(isPowerOf2_32(i) && "Alignment must be a power of two.");
-  assert(i <= 0x40000000 && "Alignment too large.");
-  return Attributes((Log2_32(i)+1) << 16);
-}
-
-/// This turns an int stack alignment (which must be a power of 2) into
-/// the form used internally in Attributes.
-inline Attributes constructStackAlignmentFromInt(unsigned i) {
-  // Default alignment, allow the target to define how to align it.
-  if (i == 0)
-    return None;
-
-  assert(isPowerOf2_32(i) && "Alignment must be a power of two.");
-  assert(i <= 0x100 && "Alignment too large.");
-  return Attributes((Log2_32(i)+1) << 26);
-}
-
 /// This returns an integer containing an encoding of all the
 /// LLVM attributes found in the given attribute bitset.  Any
 /// change to this encoding is a breaking change to bitcode
@@ -362,7 +362,7 @@ inline Attributes decodeLLVMAttributesForBitcode(uint64_t EncodedAttrs) {
 
   Attributes Attrs(EncodedAttrs & 0xffff);
   if (Alignment)
-    Attrs |= Attribute::constructAlignmentFromInt(Alignment);
+    Attrs |= Attributes::constructAlignmentFromInt(Alignment);
   Attrs |= Attributes((EncodedAttrs & (0xfffull << 32)) >> 11);
 
   return Attrs;

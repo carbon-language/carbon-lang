@@ -1475,7 +1475,7 @@ LLVMAttribute LLVMGetAttribute(LLVMValueRef Arg) {
 
 void LLVMSetParamAlignment(LLVMValueRef Arg, unsigned align) {
   unwrap<Argument>(Arg)->addAttr(
-          Attribute::constructAlignmentFromInt(align));
+          Attributes::constructAlignmentFromInt(align));
 }
 
 /*--.. Operations on basic blocks ..........................................--*/
@@ -1680,7 +1680,7 @@ void LLVMSetInstrParamAlignment(LLVMValueRef Instr, unsigned index,
   CallSite Call = CallSite(unwrap<Instruction>(Instr));
   Call.setAttributes(
     Call.getAttributes().addAttr(index, 
-        Attribute::constructAlignmentFromInt(align)));
+        Attributes::constructAlignmentFromInt(align)));
 }
 
 /*--.. Operations on call instructions (only) ..............................--*/

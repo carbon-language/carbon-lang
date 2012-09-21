@@ -967,7 +967,7 @@ bool LLParser::ParseOptionalAttrs(Attributes &Attrs, unsigned AttrKind) {
       unsigned Alignment;
       if (ParseOptionalStackAlignment(Alignment))
         return true;
-      Attrs |= Attribute::constructStackAlignmentFromInt(Alignment);
+      Attrs |= Attributes::constructStackAlignmentFromInt(Alignment);
       continue;
     }
 
@@ -975,7 +975,7 @@ bool LLParser::ParseOptionalAttrs(Attributes &Attrs, unsigned AttrKind) {
       unsigned Alignment;
       if (ParseOptionalAlignment(Alignment))
         return true;
-      Attrs |= Attribute::constructAlignmentFromInt(Alignment);
+      Attrs |= Attributes::constructAlignmentFromInt(Alignment);
       continue;
     }
 
