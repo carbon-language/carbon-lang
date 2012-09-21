@@ -1,4 +1,4 @@
-//===--- DriverOptions.td - Options for clang -----------------------------===//
+//===--- Options.td - Options for clang -----------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
