@@ -81,9 +81,6 @@ class AnalysisDeclContext {
   CFG::BuildOptions::ForcedBlkExprs *forcedBlkExprs;
 
   bool builtCFG, builtCompleteCFG;
-
-  OwningPtr<LiveVariables> liveness;
-  OwningPtr<LiveVariables> relaxedLiveness;
   OwningPtr<ParentMap> PM;
   OwningPtr<PseudoConstantAnalysis> PCA;
   OwningPtr<CFGReverseBlockReachabilityAnalysis> CFA;
