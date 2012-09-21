@@ -15,8 +15,11 @@ class CommandLineCompletionTestCase(TestBase):
     @classmethod
     def classCleanup(cls):
         """Cleanup the test byproducts."""
-        os.remove("child_send.txt")
-        os.remove("child_read.txt")
+        try:
+            os.remove("child_send.txt")
+            os.remove("child_read.txt")
+        except:
+            pass
 
     def test_at(self):
         """Test that 'at' completes to 'attach '."""

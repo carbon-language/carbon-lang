@@ -66,6 +66,17 @@ class _WritelnDecorator(object):
 # Global variables:
 #
 
+# Dictionary of categories
+# When you define a new category for your testcases, be sure to add it here, or the test suite
+# will gladly complain as soon as you try to use it. This allows us to centralize which categories
+# exist, and to provide a description for each one
+validCategories = {
+'dataformatters':'Tests related to the type command and the data formatters subsystem',
+'expression':'Tests related to the expression parser',
+'objc':'Tests related to the Objective-C programming language support',
+'pyapi':'Tests related to the Python API'
+}
+
 # The test suite.
 suite = unittest2.TestSuite()
 
@@ -93,6 +104,13 @@ blacklist = None
 
 # The dictionary as a result of sourcing blacklistFile.
 blacklistConfig = {}
+
+# The list of categories we said we care about
+categoriesList = None
+# set to true if we are going to use categories for cherry-picking test cases
+useCategories = False
+# use this to track per-category failures
+failuresPerCategory = {}
 
 # The config file is optional.
 configFile = None
@@ -296,6 +314,9 @@ def parseOptionsAndInitTestdirs():
     global dont_do_dwarf_test
     global blacklist
     global blacklistConfig
+    global categoriesList
+    global validCategories
+    global useCategories
     global configFile
     global archs
     global compilers
@@ -353,6 +374,7 @@ def parseOptionsAndInitTestdirs():
     X('-l', "Don't skip long running tests")
     group.add_argument('-p', metavar='pattern', help='Specify a regexp filename pattern for inclusion in the test suite')
     group.add_argument('-X', metavar='directory', help="Exclude a directory from consideration for test discovery. -X types => if 'types' appear in the pathname components of a potential testfile, it will be ignored")
+    group.add_argument('-G', '--category', metavar='category', action='append', dest='categoriesList', help=textwrap.dedent('''Specify categories of test cases of interest. Can be specified more than once.'''))
 
     # Configuration options
     group = parser.add_argument_group('Configuration options')
@@ -399,6 +421,16 @@ def parseOptionsAndInitTestdirs():
             archs = ['x86_64', 'i386']
         else:
             archs = [platform_machine]
+
+    if args.categoriesList:
+        for category in args.categoriesList:
+            if not(category in validCategories):
+                print "fatal error: category '" + category + "' is not a valid category - edit dotest.py or correct your invocation"
+                sys.exit(1)
+        categoriesList = set(args.categoriesList)
+        useCategories = True
+    else:
+        categoriesList = []
 
     if args.compilers:
         compilers = args.compilers
@@ -1228,7 +1260,34 @@ for ia in range(len(archs) if iterArchs else 1):
                 else:
                     return str(test)
 
+            def getCategoriesForTest(self,test):
+                if hasattr(test,"getCategories"):
+                    test_categories = test.getCategories()
+                elif inspect.ismethod(test) and test.__self__ != None and hasattr(test.__self__,"getCategories"):
+                    test_categories = test.__self__.getCategories()
+                else:
+                    test_categories = []
+                if test_categories == None:
+                    test_categories = []
+                return test_categories
+
+            def shouldSkipBecauseOfCategories(self,test):
+                global useCategories
+                import inspect
+                if useCategories:
+                    global categoriesList
+                    test_categories = self.getCategoriesForTest(test)
+                    if len(test_categories) == 0 or len(categoriesList & set(test_categories)) == 0:
+                        return True
+                return False
+
+            def hardMarkAsSkipped(self,test):
+                getattr(test, test._testMethodName).__func__.__unittest_skip__ = True
+                getattr(test, test._testMethodName).__func__.__unittest_skip_why__ = "test case does not fall in any category of interest for this run"
+
             def startTest(self, test):
+                if self.shouldSkipBecauseOfCategories(test):
+                    self.hardMarkAsSkipped(test)
                 self.counter += 1
                 if self.showAll:
                     self.stream.write(self.fmt % self.counter)
@@ -1244,11 +1303,19 @@ for ia in range(len(archs) if iterArchs else 1):
 
             def addFailure(self, test, err):
                 global sdir_has_content
+                global failuresPerCategory
                 sdir_has_content = True
                 super(LLDBTestResult, self).addFailure(test, err)
                 method = getattr(test, "markFailure", None)
                 if method:
                     method()
+                if useCategories:
+                    test_categories = self.getCategoriesForTest(test)
+                    for category in test_categories:
+                        if category in failuresPerCategory:
+                            failuresPerCategory[category] = failuresPerCategory[category] + 1
+                        else:
+                            failuresPerCategory[category] = 1
 
             def addExpectedFailure(self, test, err):
                 global sdir_has_content
@@ -1295,6 +1362,11 @@ for ia in range(len(archs) if iterArchs else 1):
 if sdir_has_content:
     sys.stderr.write("Session logs for test failures/errors/unexpected successes"
                      " can be found in directory '%s'\n" % sdir_name)
+
+if useCategories and len(failuresPerCategory) > 0:
+    sys.stderr.write("Failures per category:\n")
+    for category in failuresPerCategory:
+        sys.stderr.write("%s - %d\n" % (category,failuresPerCategory[category]))
 
 fname = os.path.join(sdir_name, "TestFinished")
 with open(fname, "w") as f:

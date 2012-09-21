@@ -98,11 +98,15 @@ class LLDBTestCase(unittest.TestCase):
     else:
       self.fail("Command " + command + " returned an error")
       return None
+  def getCategories(self):
+    return []
 
 class SanityCheckTestCase(LLDBTestCase):
   def runTest(self):
     ret = self.runCommand("show arch", "show-arch")
     #print ret
+  def getCategories(self):
+    return []
 
 suite = unittest.TestLoader().loadTestsFromTestCase(SanityCheckTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)

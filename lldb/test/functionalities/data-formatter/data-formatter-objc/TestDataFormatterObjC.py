@@ -89,6 +89,8 @@ class ObjCDataFormatterTestCase(TestBase):
         """Test common cases of expression parser <--> formatters interaction."""
         self.buildDsym()
         self.expr_objc_data_formatter_commands()
+        def getCategories(self):
+            return ['dataformatters','expression','objc']
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dwarf_test
@@ -96,6 +98,8 @@ class ObjCDataFormatterTestCase(TestBase):
         """Test common cases of expression parser <--> formatters interaction."""
         self.buildDwarf()
         self.expr_objc_data_formatter_commands()
+        def getCategories(self):
+            return ['dataformatters','expression','objc']
 
     def setUp(self):
         # Call super's setUp().

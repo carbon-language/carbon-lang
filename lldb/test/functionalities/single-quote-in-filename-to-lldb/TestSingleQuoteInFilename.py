@@ -16,9 +16,12 @@ class SingleQuoteInCommandLineTestCase(TestBase):
     @classmethod
     def classCleanup(cls):
         """Cleanup the test byproducts."""
-        os.remove("child_send.txt")
-        os.remove("child_read.txt")
-        os.remove(cls.myexe)
+        try:
+            os.remove("child_send.txt")
+            os.remove("child_read.txt")
+            os.remove(cls.myexe)
+        except:
+            pass
 
     def test_lldb_invocation_with_single_quote_in_filename(self):
         """Test that 'lldb my_file_name' works where my_file_name is a string with a single quote char in it."""
