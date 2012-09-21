@@ -46,7 +46,11 @@ class ASTMaker {
 public:
   ASTMaker(ASTContext &C) : C(C) {}
   
+  /// Create a new DeclRefExpr for the referenced variable.
   DeclRefExpr *makeDeclRefExpr(const VarDecl *D);
+  
+  /// Create an implicit cast for an integer conversion.
+  ImplicitCastExpr *makeIntegralCast(const Expr *Arg, QualType Ty);
   
 private:
   ASTContext &C;
@@ -64,6 +68,11 @@ DeclRefExpr *ASTMaker::makeDeclRefExpr(const VarDecl *D) {
                         /* T = */ D->getType(),
                         /* VK = */ VK_LValue);
   return DR;
+}
+
+ImplicitCastExpr *ASTMaker::makeIntegralCast(const Expr *Arg, QualType Ty) {
+  return ImplicitCastExpr::Create(C, Ty, CK_IntegralCast,
+                                  const_cast<Expr*>(Arg), 0, VK_RValue);
 }
 
 //===----------------------------------------------------------------------===//
@@ -117,8 +126,7 @@ static Stmt *create_dispatch_once(ASTContext &C, const FunctionDecl *D) {
   IntegerLiteral *IL =
     IntegerLiteral::Create(C, llvm::APInt(C.getTypeSize(C.IntTy), (uint64_t) 1),
                            C.IntTy, SourceLocation());
-  ICE = ImplicitCastExpr::Create(C, PredicateTy, CK_IntegralCast, IL, 0,
-                                 VK_RValue);
+  ICE = M.makeIntegralCast(IL, PredicateTy);
   DR = M.makeDeclRefExpr(Predicate);
   ImplicitCastExpr *LValToRval =
     ImplicitCastExpr::Create(C, PredicateQPtrTy, CK_LValueToRValue, DR,
