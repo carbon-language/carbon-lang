@@ -137,8 +137,6 @@ private:
                          Kind kind)
     : K(kind), S(0), D(0), SM(&sm),
       Loc(genLocation(L)), Range(genRange()) {
-    assert(Loc.isValid());
-    assert(Range.isValid());
   }
 
   FullSourceLoc
@@ -157,12 +155,14 @@ public:
   PathDiagnosticLocation(const Stmt *s,
                          const SourceManager &sm,
                          LocationOrAnalysisDeclContext lac)
-    : K(StmtK), S(s), D(0), SM(&sm),
+    : K(s->getLocStart().isValid() ? StmtK : SingleLocK),
+      S(K == StmtK ? s : 0),
+      D(0), SM(&sm),
       Loc(genLocation(SourceLocation(), lac)),
       Range(genRange(lac)) {
-    assert(S);
-    assert(Loc.isValid());
-    assert(Range.isValid());
+    assert(K == SingleLocK || S);
+    assert(K == SingleLocK || Loc.isValid());
+    assert(K == SingleLocK || Range.isValid());
   }
 
   /// Create a location corresponding to the given declaration.

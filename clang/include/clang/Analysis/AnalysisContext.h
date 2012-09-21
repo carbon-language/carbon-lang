@@ -376,12 +376,17 @@ class AnalysisDeclContextManager {
   ContextMap Contexts;
   LocationContextManager LocContexts;
   CFG::BuildOptions cfgBuildOptions;
+  
+  /// Flag to indicate whether or not bodies should be synthesized
+  /// for well-known functions.
+  bool SynthesizeBodies;
 
 public:
   AnalysisDeclContextManager(bool useUnoptimizedCFG = false,
                              bool addImplicitDtors = false,
                              bool addInitializers = false,
-                             bool addTemporaryDtors = false);
+                             bool addTemporaryDtors = false,
+                             bool synthesizeBodies = false);
 
   ~AnalysisDeclContextManager();
 
@@ -394,6 +399,10 @@ public:
   CFG::BuildOptions &getCFGBuildOptions() {
     return cfgBuildOptions;
   }
+  
+  /// Return true if faux bodies should be synthesized for well-known
+  /// functions.
+  bool synthesizeBodies() const { return SynthesizeBodies; }
 
   const StackFrameContext *getStackFrame(AnalysisDeclContext *Ctx,
                                          LocationContext const *Parent,

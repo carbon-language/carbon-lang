@@ -121,7 +121,8 @@ GetCurrentOrNextStmt(const ExplodedNode *N) {
 /// Recursively scan through a path and prune out calls and macros pieces
 /// that aren't needed.  Return true if afterwards the path contains
 /// "interesting stuff" which means it should be pruned from the parent path.
-bool BugReporter::RemoveUneededCalls(PathPieces &pieces, BugReport *R) {
+bool BugReporter::RemoveUneededCalls(PathPieces &pieces, BugReport *R,
+                                     PathDiagnosticCallPiece *CallWithLoc) {
   bool containsSomethingInteresting = false;
   const unsigned N = pieces.size();
   
@@ -131,6 +132,11 @@ bool BugReporter::RemoveUneededCalls(PathPieces &pieces, BugReport *R) {
     IntrusiveRefCntPtr<PathDiagnosticPiece> piece(pieces.front());
     pieces.pop_front();
     
+    // Throw away pieces with invalid locations.
+    if (piece->getKind() != PathDiagnosticPiece::Call &&
+        piece->getLocation().asLocation().isInvalid())
+      continue;
+
     switch (piece->getKind()) {
       case PathDiagnosticPiece::Call: {
         PathDiagnosticCallPiece *call = cast<PathDiagnosticCallPiece>(piece);
@@ -142,8 +148,17 @@ bool BugReporter::RemoveUneededCalls(PathPieces &pieces, BugReport *R) {
         }
         // Recursively clean out the subclass.  Keep this call around if
         // it contains any informative diagnostics.
-        if (!RemoveUneededCalls(call->path, R))
+        PathDiagnosticCallPiece *NewCallWithLoc =
+          call->getLocation().asLocation().isValid()
+            ? call : CallWithLoc;
+        
+        if (!RemoveUneededCalls(call->path, R, NewCallWithLoc))
           continue;
+
+        if (NewCallWithLoc == CallWithLoc && CallWithLoc) {
+          call->callEnter = CallWithLoc->callEnter;
+        }
+        
         containsSomethingInteresting = true;
         break;
       }
@@ -156,6 +171,7 @@ bool BugReporter::RemoveUneededCalls(PathPieces &pieces, BugReport *R) {
       }
       case PathDiagnosticPiece::Event: {
         PathDiagnosticEventPiece *event = cast<PathDiagnosticEventPiece>(piece);
+        
         // We never throw away an event, but we do throw it away wholesale
         // as part of a path if we throw the entire path away.
         containsSomethingInteresting |= !event->isPrunable();
@@ -954,6 +970,11 @@ void EdgeBuilder::rawAddEdge(PathDiagnosticLocation NewLoc) {
   const PathDiagnosticLocation &NewLocClean = cleanUpLocation(NewLoc);
   const PathDiagnosticLocation &PrevLocClean = cleanUpLocation(PrevLoc);
 
+  if (PrevLocClean.asLocation().isInvalid()) {
+    PrevLoc = NewLoc;
+    return;
+  }
+  
   if (NewLocClean.asLocation() == PrevLocClean.asLocation())
     return;
 

@@ -1,5 +1,6 @@
 add_clang_library(clangAnalysis
   AnalysisDeclContext.cpp
+  BodyFarm.cpp
   CFG.cpp
   CFGReachabilityAnalysis.cpp
   CFGStmtMap.cpp

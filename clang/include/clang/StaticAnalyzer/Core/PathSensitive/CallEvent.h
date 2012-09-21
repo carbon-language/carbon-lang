@@ -20,6 +20,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/Analysis/AnalysisContext.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
 #include "llvm/ADT/PointerIntPair.h"
@@ -191,7 +192,8 @@ public:
 
   /// \brief Returns the definition of the function or method that will be
   /// called.
-  virtual RuntimeDefinition getRuntimeDefinition() const = 0;
+  virtual RuntimeDefinition
+          getRuntimeDefinition(AnalysisDeclContextManager &M) const = 0;
 
   /// \brief Returns the expression whose value will be the result of this call.
   /// May be null.
@@ -364,11 +366,17 @@ public:
     return cast<FunctionDecl>(CallEvent::getDecl());
   }
 
-  virtual RuntimeDefinition getRuntimeDefinition() const {
+  virtual RuntimeDefinition
+          getRuntimeDefinition(AnalysisDeclContextManager &M) const {
     const FunctionDecl *FD = getDecl();
-    // Note that hasBody() will fill FD with the definition FunctionDecl.
-    if (FD && FD->hasBody(FD))
-      return RuntimeDefinition(FD);
+    // Note that the AnalysisDeclContext will have the FunctionDecl with
+    // the definition (if one exists).
+    if (FD) {
+      AnalysisDeclContext *AD = M.getContext(FD);
+      if (AD->getBody())
+        return RuntimeDefinition(AD->getDecl());
+    }
+
     return RuntimeDefinition();
   }
 
@@ -468,7 +476,8 @@ public:
     return BR->getDecl();
   }
 
-  virtual RuntimeDefinition getRuntimeDefinition() const {
+  virtual RuntimeDefinition
+          getRuntimeDefinition(AnalysisDeclContextManager &M) const {
     return RuntimeDefinition(getBlockDecl());
   }
 
@@ -510,7 +519,8 @@ public:
 
   virtual const FunctionDecl *getDecl() const;
 
-  virtual RuntimeDefinition getRuntimeDefinition() const;
+  virtual RuntimeDefinition
+          getRuntimeDefinition(AnalysisDeclContextManager &M) const;
 
   virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
                                             BindingsTy &Bindings) const;
@@ -552,7 +562,8 @@ public:
 
   virtual const Expr *getCXXThisExpr() const;
   
-  virtual RuntimeDefinition getRuntimeDefinition() const;
+  virtual RuntimeDefinition
+          getRuntimeDefinition(AnalysisDeclContextManager &M) const;
 
   virtual Kind getKind() const { return CE_CXXMember; }
 
@@ -632,7 +643,8 @@ public:
   virtual SourceRange getSourceRange() const { return Location; }
   virtual unsigned getNumArgs() const { return 0; }
 
-  virtual RuntimeDefinition getRuntimeDefinition() const;
+  virtual RuntimeDefinition
+          getRuntimeDefinition(AnalysisDeclContextManager &M) const;
 
   /// \brief Returns the value of the implicit 'this' object.
   virtual SVal getCXXThisVal() const;
@@ -838,7 +850,8 @@ public:
     llvm_unreachable("Unknown message kind");
   }
 
-  virtual RuntimeDefinition getRuntimeDefinition() const;
+  virtual RuntimeDefinition
+          getRuntimeDefinition(AnalysisDeclContextManager &M) const;
 
   virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
                                             BindingsTy &Bindings) const;

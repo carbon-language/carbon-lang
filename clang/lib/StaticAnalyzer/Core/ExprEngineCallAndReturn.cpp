@@ -640,7 +640,7 @@ void ExprEngine::defaultEvalCall(NodeBuilder &Bldr, ExplodedNode *Pred,
     // If we already tried once and failed, make sure we don't retry later.
     State = InlinedFailedState;
   } else {
-    RuntimeDefinition RD = Call->getRuntimeDefinition();
+    RuntimeDefinition RD = Call->getRuntimeDefinition(AnalysisDeclContexts);
     const Decl *D = RD.getDecl();
     if (D) {
       if (RD.mayHaveOtherDefinitions()) {

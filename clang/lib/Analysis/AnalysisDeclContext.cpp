@@ -29,13 +29,15 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/ErrorHandling.h"
 
+#include "BodyFarm.h"
+
 using namespace clang;
 
 typedef llvm::DenseMap<const void *, ManagedAnalysis *> ManagedAnalysisMap;
 
 AnalysisDeclContext::AnalysisDeclContext(AnalysisDeclContextManager *Mgr,
-                                 const Decl *d,
-                                 const CFG::BuildOptions &buildOptions)
+                                         const Decl *d,
+                                         const CFG::BuildOptions &buildOptions)
   : Manager(Mgr),
     D(d),
     cfgBuildOptions(buildOptions),
@@ -49,7 +51,7 @@ AnalysisDeclContext::AnalysisDeclContext(AnalysisDeclContextManager *Mgr,
 }
 
 AnalysisDeclContext::AnalysisDeclContext(AnalysisDeclContextManager *Mgr,
-                                 const Decl *d)
+                                         const Decl *d)
 : Manager(Mgr),
   D(d),
   forcedBlkExprs(0),
@@ -64,7 +66,10 @@ AnalysisDeclContext::AnalysisDeclContext(AnalysisDeclContextManager *Mgr,
 AnalysisDeclContextManager::AnalysisDeclContextManager(bool useUnoptimizedCFG,
                                                        bool addImplicitDtors,
                                                        bool addInitializers,
-                                                       bool addTemporaryDtors) {
+                                                       bool addTemporaryDtors,
+                                                       bool synthesizeBodies)
+  : SynthesizeBodies(synthesizeBodies)
+{
   cfgBuildOptions.PruneTriviallyFalseEdges = !useUnoptimizedCFG;
   cfgBuildOptions.AddImplicitDtors = addImplicitDtors;
   cfgBuildOptions.AddInitializers = addInitializers;
@@ -77,9 +82,18 @@ void AnalysisDeclContextManager::clear() {
   Contexts.clear();
 }
 
+static BodyFarm &getBodyFarm(ASTContext &C) {
+  static BodyFarm *BF = new BodyFarm(C);
+  return *BF;
+}
+
 Stmt *AnalysisDeclContext::getBody() const {
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
-    return FD->getBody();
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    Stmt *Body = FD->getBody();
+    if (!Body && Manager && Manager->synthesizeBodies())
+      return getBodyFarm(getASTContext()).getBody(FD);
+    return Body;
+  }
   else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
     return MD->getBody();
   else if (const BlockDecl *BD = dyn_cast<BlockDecl>(D))
@@ -203,6 +217,11 @@ PseudoConstantAnalysis *AnalysisDeclContext::getPseudoConstantAnalysis() {
 }
 
 AnalysisDeclContext *AnalysisDeclContextManager::getContext(const Decl *D) {
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    FD->hasBody(FD);
+    D = FD;
+  }
+
   AnalysisDeclContext *&AC = Contexts[D];
   if (!AC)
     AC = new AnalysisDeclContext(this, D, cfgBuildOptions);

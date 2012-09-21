@@ -396,7 +396,8 @@ public:
                                       PathDiagnosticConsumer &PC,
                                       ArrayRef<BugReport *> &bugReports) {}
 
-  bool RemoveUneededCalls(PathPieces &pieces, BugReport *R);
+  bool RemoveUneededCalls(PathPieces &pieces, BugReport *R,
+                          PathDiagnosticCallPiece *CallWithLoc = 0);
 
   void Register(BugType *BT);
 

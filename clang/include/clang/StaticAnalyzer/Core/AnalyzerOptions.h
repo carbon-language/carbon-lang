@@ -231,6 +231,10 @@ public:
   //
   // This is controlled by "ipa-always-inline-size" analyzer-config option.
   unsigned getAlwaysInlineSize() const;
+  
+  /// Returns true if the analyzer engine should synthesize fake bodies
+  /// for well-known functions.
+  bool shouldSynthesizeBodies() const;
 
 public:
   AnalyzerOptions() : CXXMemberInliningMode() {

@@ -111,3 +111,7 @@ unsigned AnalyzerOptions::getAlwaysInlineSize() const {
 
   return AlwaysInlineSize.getValue();
 }
+
+bool AnalyzerOptions::shouldSynthesizeBodies() const {
+  return getBooleanOption("faux-bodies", false);
+}
