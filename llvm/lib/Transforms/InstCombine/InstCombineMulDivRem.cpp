@@ -477,7 +477,8 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
     if (match(Op1, m_Shl(m_Power2(CI), m_Value(N))) ||
         match(Op1, m_ZExt(m_Shl(m_Power2(CI), m_Value(N))))) {
       if (*CI != 1)
-        N = Builder->CreateAdd(N, ConstantInt::get(I.getType(),CI->logBase2()));
+        N = Builder->CreateAdd(N,
+                               ConstantInt::get(N->getType(), CI->logBase2()));
       if (ZExtInst *Z = dyn_cast<ZExtInst>(Op1))
         N = Builder->CreateZExt(N, Z->getDestTy());
       if (I.isExact())
