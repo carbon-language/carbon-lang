@@ -113,5 +113,5 @@ unsigned AnalyzerOptions::getAlwaysInlineSize() const {
 }
 
 bool AnalyzerOptions::shouldSynthesizeBodies() const {
-  return getBooleanOption("faux-bodies", true);
+  return getBooleanOption("faux-bodies", false);
 }
