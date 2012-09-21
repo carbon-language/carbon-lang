@@ -1512,8 +1512,10 @@ QualType ASTNodeImporter::VisitFunctionProtoType(const FunctionProtoType *T) {
   FunctionProtoType::ExtProtoInfo EPI = T->getExtProtoInfo();
   EPI.Exceptions = ExceptionTypes.data();
   EPI.NoexceptExpr = Importer.Import(EPI.NoexceptExpr);
-  EPI.ExceptionSpecDecl = Importer.Import(EPI.ExceptionSpecDecl);
-  EPI.ExceptionSpecTemplate = Importer.Import(EPI.ExceptionSpecTemplate);
+  EPI.ExceptionSpecDecl
+    = cast_or_null<FunctionDecl>(Importer.Import(EPI.ExceptionSpecDecl));
+  EPI.ExceptionSpecTemplate
+    = cast_or_null<FunctionDecl>(Importer.Import(EPI.ExceptionSpecTemplate));
        
   return Importer.getToContext().getFunctionType(ToResultType, ArgTypes.data(),
                                                  ArgTypes.size(), EPI);
