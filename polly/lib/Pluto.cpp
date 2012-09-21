@@ -143,6 +143,9 @@ bool PlutoOptimizer::runOnScop(Scop &S) {
   isl_union_set_free(Domain);
   isl_union_map_free(Deps);
 
+  if (!Schedule)
+    return false;
+
   Schedule = isl_union_map_apply_domain(Schedule,
                                         isl_union_map_reverse(ToPlutoNames));
 
