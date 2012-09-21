@@ -973,13 +973,19 @@ private:
 class ClassDescriptorV2 : public ObjCLanguageRuntime::ClassDescriptor
 {
 public:
-    ClassDescriptorV2 (ValueObject &isa_pointer)
+    ClassDescriptorV2 (ValueObject &ptr_to_object)
     {
-        ObjCLanguageRuntime::ObjCISA ptr_value = isa_pointer.GetValueAsUnsigned(0);
+        lldb::addr_t object_la = ptr_to_object.GetValueAsUnsigned(0);
+        lldb::ProcessSP process_sp = ptr_to_object.GetProcessSP();
         
-        lldb::ProcessSP process_sp = isa_pointer.GetProcessSP();
+        Error error;
+        ObjCLanguageRuntime::ObjCISA isa = process_sp->ReadPointerFromMemory(object_la,
+                                                                             error);
         
-        Initialize (ptr_value,process_sp);
+        if (isa == LLDB_INVALID_ADDRESS)
+            m_valid = false;
+        else
+            Initialize (isa, process_sp);
     }
     
     ClassDescriptorV2 (ObjCLanguageRuntime::ObjCISA isa, lldb::ProcessSP process_sp)
@@ -1116,27 +1122,21 @@ protected:
     }
     
     void
-    Initialize (ObjCLanguageRuntime::ObjCISA pointer_to_isa, lldb::ProcessSP process_sp)
+    Initialize (ObjCLanguageRuntime::ObjCISA objc_class_la, lldb::ProcessSP process_sp)
     {
         m_valid = true;
 
-        if (!pointer_to_isa || !process_sp)
+        if (!objc_class_la || !process_sp)
         {
             m_valid = false;
             return;
         }
         
+        m_objc_class_la = objc_class_la;
+
         size_t ptr_size = process_sp->GetAddressByteSize();
         Error error;
-        
-        m_objc_class_la = process_sp->ReadPointerFromMemory(pointer_to_isa, error);
-
-        if (error.Fail())
-        {
-            m_valid = false;
-            return;
-        }
-        
+                
         const bool allow_NULLs = false;
         const bool allow_tagged = false;
         const bool check_version_specific = true;
