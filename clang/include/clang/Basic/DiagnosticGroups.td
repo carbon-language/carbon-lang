@@ -49,6 +49,7 @@ def DefaultArgSpecialMember : DiagGroup<"default-arg-special-member">;
 def GNUDesignator : DiagGroup<"gnu-designator">;
 
 def DeleteNonVirtualDtor : DiagGroup<"delete-non-virtual-dtor">;
+def AbstractFinalClass : DiagGroup<"abstract-final-class">;
 
 def DeprecatedDeclarations : DiagGroup<"deprecated-declarations">;
 def DeprecatedWritableStr : DiagGroup<"deprecated-writable-strings">;

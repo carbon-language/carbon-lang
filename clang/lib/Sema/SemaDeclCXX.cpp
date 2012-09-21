@@ -3840,6 +3840,11 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
            diag::warn_non_virtual_dtor) << Context.getRecordType(Record);
   }
 
+  if (Record->isAbstract() && Record->hasAttr<FinalAttr>()) {
+    Diag(Record->getLocation(), diag::warn_abstract_final_class);
+    DiagnoseAbstractType(Record);
+  }
+
   // See if a method overloads virtual methods in a base
   /// class without overriding any.
   if (!Record->isDependentType()) {

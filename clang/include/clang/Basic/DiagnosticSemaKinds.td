@@ -1350,6 +1350,8 @@ def err_function_marked_override_not_overriding : Error<
   "%0 marked 'override' but does not override any member functions">;
 def err_class_marked_final_used_as_base : Error<
   "base %0 is marked 'final'">;
+def warn_abstract_final_class : Warning<
+  "abstract class is marked 'final'">, InGroup<AbstractFinalClass>;
 
 // C++11 attributes
 def err_repeat_attribute : Error<"'%0' attribute cannot be repeated">;
