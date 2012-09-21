@@ -8,11 +8,16 @@ Programming Documentation
 
    CodingStandards
    CommandLine
+   Atomics
 
 * `LLVM Language Reference Manual <LangRef.html>`_
 
   Defines the LLVM intermediate representation and the assembly form of the
   different nodes.
+
+* :ref:`atomics`
+
+  Information about LLVM's concurrency model.
 
 * `The LLVM Programmers Manual <ProgrammersManual.html>`_
 
