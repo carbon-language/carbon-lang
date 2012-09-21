@@ -25,7 +25,10 @@
 using namespace llvm;
 
 char LiveStacks::ID = 0;
-INITIALIZE_PASS(LiveStacks, "livestacks",
+INITIALIZE_PASS_BEGIN(LiveStacks, "livestacks",
+                "Live Stack Slot Analysis", false, false)
+INITIALIZE_PASS_DEPENDENCY(SlotIndexes)
+INITIALIZE_PASS_END(LiveStacks, "livestacks",
                 "Live Stack Slot Analysis", false, false)
 
 char &llvm::LiveStacksID = LiveStacks::ID;
