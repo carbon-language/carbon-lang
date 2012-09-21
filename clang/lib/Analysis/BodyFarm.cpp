@@ -41,6 +41,31 @@ static bool isDispatchBlock(QualType Ty) {
   return true;
 }
 
+namespace {
+class ASTMaker {
+public:
+  ASTMaker(ASTContext &C) : C(C) {}
+  
+  DeclRefExpr *makeDeclRefExpr(const VarDecl *D);
+  
+private:
+  ASTContext &C;
+};
+}
+
+DeclRefExpr *ASTMaker::makeDeclRefExpr(const VarDecl *D) {
+  DeclRefExpr *DR =
+    DeclRefExpr::Create(/* Ctx = */ C,
+                        /* QualifierLoc = */ NestedNameSpecifierLoc(),
+                        /* TemplateKWLoc = */ SourceLocation(),
+                        /* D = */ const_cast<VarDecl*>(D),
+                        /* isEnclosingLocal = */ false,
+                        /* NameLoc = */ SourceLocation(),
+                        /* T = */ D->getType(),
+                        /* VK = */ VK_LValue);
+  return DR;
+}
+
 //===----------------------------------------------------------------------===//
 // Creation functions for faux ASTs.
 //===----------------------------------------------------------------------===//
@@ -79,11 +104,10 @@ static Stmt *create_dispatch_once(ASTContext &C, const FunctionDecl *D) {
   //  }
   // }
   
+  ASTMaker M(C);
+  
   // (1) Create the call.
-  DeclRefExpr *DR = DeclRefExpr::CreateEmpty(C, false, false, false, false);
-  DR->setDecl(const_cast<ParmVarDecl*>(Block));
-  DR->setType(Ty);
-  DR->setValueKind(VK_LValue);
+  DeclRefExpr *DR = M.makeDeclRefExpr(Block);
   ImplicitCastExpr *ICE = ImplicitCastExpr::Create(C, Ty, CK_LValueToRValue,
                                                    DR, 0, VK_RValue);
   CallExpr *CE = new (C) CallExpr(C, ICE, ArrayRef<Expr*>(), C.VoidTy,
@@ -95,10 +119,7 @@ static Stmt *create_dispatch_once(ASTContext &C, const FunctionDecl *D) {
                            C.IntTy, SourceLocation());
   ICE = ImplicitCastExpr::Create(C, PredicateTy, CK_IntegralCast, IL, 0,
                                  VK_RValue);
-  DR = DeclRefExpr::CreateEmpty(C, false, false, false, false);
-  DR->setDecl(const_cast<ParmVarDecl*>(Predicate));
-  DR->setType(PredicateQPtrTy);
-  DR->setValueKind(VK_LValue);
+  DR = M.makeDeclRefExpr(Predicate);
   ImplicitCastExpr *LValToRval =
     ImplicitCastExpr::Create(C, PredicateQPtrTy, CK_LValueToRValue, DR,
                              0, VK_RValue);
@@ -117,10 +138,7 @@ static Stmt *create_dispatch_once(ASTContext &C, const FunctionDecl *D) {
                                           SourceLocation());
   
   // (4) Create the 'if' condition.
-  DR = DeclRefExpr::CreateEmpty(C, false, false, false, false);
-  DR->setDecl(const_cast<ParmVarDecl*>(Predicate));
-  DR->setType(PredicateQPtrTy);
-  DR->setValueKind(VK_LValue);
+  DR = M.makeDeclRefExpr(Predicate);
   LValToRval = ImplicitCastExpr::Create(C, PredicateQPtrTy, CK_LValueToRValue,
                                         DR, 0, VK_RValue);
   UO = new (C) UnaryOperator(LValToRval, UO_Deref, PredicateTy,
@@ -136,8 +154,6 @@ static Stmt *create_dispatch_once(ASTContext &C, const FunctionDecl *D) {
   return If;
 }
 
-  
-
 /// Create a fake body for dispatch_sync.
 static Stmt *create_dispatch_sync(ASTContext &C, const FunctionDecl *D) {
   // Check if we have at least two parameters.
@@ -149,18 +165,16 @@ static Stmt *create_dispatch_sync(ASTContext &C, const FunctionDecl *D) {
   QualType Ty = PV->getType();
   if (!isDispatchBlock(Ty))
     return 0;
-
+  
   // Everything checks out.  Create a fake body that just calls the block.
   // This is basically just an AST dump of:
   //
   // void dispatch_sync(dispatch_queue_t queue, void (^block)(void)) {
   //   block();
   // }
-  //
-  DeclRefExpr *DR = DeclRefExpr::CreateEmpty(C, false, false, false, false);
-  DR->setDecl(const_cast<ParmVarDecl*>(PV));
-  DR->setType(Ty);
-  DR->setValueKind(VK_LValue);
+  //  
+  ASTMaker M(C);
+  DeclRefExpr *DR = M.makeDeclRefExpr(PV);
   ImplicitCastExpr *ICE = ImplicitCastExpr::Create(C, Ty, CK_LValueToRValue,
                                                    DR, 0, VK_RValue);
   CallExpr *CE = new (C) CallExpr(C, ICE, ArrayRef<Expr*>(), C.VoidTy,
