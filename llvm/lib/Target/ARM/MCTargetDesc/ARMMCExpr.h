@@ -28,7 +28,7 @@ private:
 
   explicit ARMMCExpr(VariantKind _Kind, const MCExpr *_Expr)
     : Kind(_Kind), Expr(_Expr) {}
-  
+
 public:
   /// @name Construction
   /// @{
@@ -67,7 +67,7 @@ public:
   static bool classof(const MCExpr *E) {
     return E->getKind() == MCExpr::Target;
   }
-  
+
   static bool classof(const ARMMCExpr *) { return true; }
 
 };
