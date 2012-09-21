@@ -830,11 +830,11 @@ off by default but turned on when building LLVM with a version of Clang that
 supports the warning.
 
 A knock-on effect of this stylistic requirement is that when building LLVM with
-GCC you may get warnings related "control may reach end of non-void function"
+GCC you may get warnings related to "control may reach end of non-void function"
 if you return from each case of a covered switch-over-enum because GCC assumes
-that the enum expression may take any representable value, not just those in
-the enumeration. To suppress this warning, use ``llvm_unreachable`` after the
-switch.
+that the enum expression may take any representable value, not just those of
+individual enumerators. To suppress this warning, use ``llvm_unreachable`` after
+the switch.
 
 Use ``LLVM_DELETED_FUNCTION`` to mark uncallable methods
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
