@@ -257,11 +257,11 @@ entry:
 
 define i16 @unaligned_i16_load(i16* %x) nounwind {
 entry:
-; ARM-STRICT-ALIGN: @unaligned_i16_store
+; ARM-STRICT-ALIGN: @unaligned_i16_load
 ; ARM-STRICT-ALIGN: ldrb
 ; ARM-STRICT-ALIGN: ldrb
 
-; THUMB-STRICT-ALIGN: @unaligned_i16_store
+; THUMB-STRICT-ALIGN: @unaligned_i16_load
 ; THUMB-STRICT-ALIGN: ldrb
 ; THUMB-STRICT-ALIGN: ldrb
 
