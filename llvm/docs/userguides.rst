@@ -14,6 +14,7 @@ User Guides
    Lexicon
    Packaging
    HowToAddABuilder
+   yaml2obj
 
 * `The LLVM Getting Started Guide <GettingStarted.html>`_
     
