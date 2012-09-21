@@ -4616,7 +4616,7 @@ bool ARMAsmParser::parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
       return true;
 
     const MCExpr *ExprVal = ARMMCExpr::Create(RefKind, SubExprVal,
-                                                   getContext());
+                                              getContext());
     E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
     Operands.push_back(ARMOperand::CreateImm(ExprVal, S, E));
     return false;
