@@ -256,6 +256,20 @@ CommunicationKDP::CheckForPacket (const uint8_t *src, size_t src_len, DataExtrac
         uint8_t reply_command = packet.GetU8(&offset);
         switch (reply_command)
         {
+        case ePacketTypeRequest | KDP_EXCEPTION:
+        case ePacketTypeRequest | KDP_TERMINATION:
+            // We got an exception request, so be sure to send an ACK
+            {
+                PacketStreamType request_ack_packet (Stream::eBinary, m_addr_byte_size, m_byte_order);
+                // Set the reply but and make the ACK packet
+                request_ack_packet.PutHex8 (reply_command | ePacketTypeReply);
+                request_ack_packet.PutHex8 (packet.GetU8(&offset));
+                request_ack_packet.PutHex16 (packet.GetU16(&offset));
+                request_ack_packet.PutHex32 (packet.GetU32(&offset));
+                // Ack to the exception or termination
+                SendRequestPacketNoLock (request_ack_packet);
+            }
+            // Fall through to case below to get packet contents
         case ePacketTypeReply | KDP_CONNECT:
         case ePacketTypeReply | KDP_DISCONNECT:
         case ePacketTypeReply | KDP_HOSTINFO:
@@ -269,8 +283,6 @@ CommunicationKDP::CheckForPacket (const uint8_t *src, size_t src_len, DataExtrac
         case ePacketTypeReply | KDP_IMAGEPATH:
         case ePacketTypeReply | KDP_SUSPEND:
         case ePacketTypeReply | KDP_RESUMECPUS:
-        case ePacketTypeReply | KDP_EXCEPTION:
-        case ePacketTypeReply | KDP_TERMINATION:
         case ePacketTypeReply | KDP_BREAKPOINT_SET:
         case ePacketTypeReply | KDP_BREAKPOINT_REMOVE:
         case ePacketTypeReply | KDP_REGIONS:
@@ -1003,7 +1015,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
 uint32_t
 CommunicationKDP::SendRequestReadRegisters (uint32_t cpu,
                                             uint32_t flavor,
-                                            void *dst, 
+                                            void *dst,
                                             uint32_t dst_len,
                                             Error &error)
 {
@@ -1032,13 +1044,41 @@ CommunicationKDP::SendRequestReadRegisters (uint32_t cpu,
                 error.Clear();
                 // Return the number of bytes we could have returned regardless if
                 // we copied them or not, just so we know when things don't match up
-                return src_len; 
+                return src_len;
             }
         }
         if (kdp_error)
             error.SetErrorStringWithFormat("failed to read kdp registers for cpu %u flavor %u (error %u)", cpu, flavor, kdp_error);
         else
             error.SetErrorStringWithFormat("failed to read kdp registers for cpu %u flavor %u", cpu, flavor);
+    }
+    return 0;
+}
+
+uint32_t
+CommunicationKDP::SendRequestWriteRegisters (uint32_t cpu,
+                                             uint32_t flavor,
+                                             const void *src,
+                                             uint32_t src_len,
+                                             Error &error)
+{
+    PacketStreamType request_packet (Stream::eBinary, m_addr_byte_size, m_byte_order);
+    const CommandType command = KDP_WRITEREGS;
+    // Size is header + 4 byte cpu and 4 byte flavor
+    const uint32_t command_length = 8 + 4 + 4;
+    const uint32_t request_sequence_id = m_request_sequence_id;
+    MakeRequestPacketHeader (command, request_packet, command_length);
+    request_packet.PutHex32 (cpu);
+    request_packet.PutHex32 (flavor);
+    request_packet.Write(src, src_len);
+    DataExtractor reply_packet;
+    if (SendRequestAndGetReply (command, request_sequence_id, request_packet, reply_packet))
+    {
+        uint32_t offset = 8;
+        uint32_t kdp_error = reply_packet.GetU32 (&offset);
+        if (kdp_error == 0)
+            return src_len;
+        error.SetErrorStringWithFormat("failed to read kdp registers for cpu %u flavor %u (error %u)", cpu, flavor, kdp_error);
     }
     return 0;
 }

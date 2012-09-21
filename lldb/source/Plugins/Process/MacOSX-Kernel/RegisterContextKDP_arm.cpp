@@ -97,24 +97,64 @@ RegisterContextKDP_arm::DoReadDBG (lldb::tid_t tid, int flavor, DBG &dbg)
 int
 RegisterContextKDP_arm::DoWriteGPR (lldb::tid_t tid, int flavor, const GPR &gpr)
 {
+    ProcessSP process_sp (CalculateProcess());
+    if (process_sp)
+    {
+        Error error;
+        if (static_cast<ProcessKDP *>(process_sp.get())->GetCommunication().SendRequestWriteRegisters (tid, GPRRegSet, &gpr, sizeof(gpr), error))
+        {
+            if (error.Success())
+                return 0;
+        }
+    }
     return -1;
 }
 
 int
 RegisterContextKDP_arm::DoWriteFPU (lldb::tid_t tid, int flavor, const FPU &fpu)
 {
+    ProcessSP process_sp (CalculateProcess());
+    if (process_sp)
+    {
+        Error error;
+        if (static_cast<ProcessKDP *>(process_sp.get())->GetCommunication().SendRequestWriteRegisters (tid, FPURegSet, &fpu, sizeof(fpu), error))
+        {
+            if (error.Success())
+                return 0;
+        }
+    }
     return -1;
 }
 
 int
 RegisterContextKDP_arm::DoWriteEXC (lldb::tid_t tid, int flavor, const EXC &exc)
 {
+    ProcessSP process_sp (CalculateProcess());
+    if (process_sp)
+    {
+        Error error;
+        if (static_cast<ProcessKDP *>(process_sp.get())->GetCommunication().SendRequestWriteRegisters (tid, EXCRegSet, &exc, sizeof(exc), error))
+        {
+            if (error.Success())
+                return 0;
+        }
+    }
     return -1;
 }
 
 int
 RegisterContextKDP_arm::DoWriteDBG (lldb::tid_t tid, int flavor, const DBG &dbg)
 {
+    ProcessSP process_sp (CalculateProcess());
+    if (process_sp)
+    {
+        Error error;
+        if (static_cast<ProcessKDP *>(process_sp.get())->GetCommunication().SendRequestWriteRegisters (tid, DBGRegSet, &dbg, sizeof(dbg), error))
+        {
+            if (error.Success())
+                return 0;
+        }
+    }
     return -1;
 }
 

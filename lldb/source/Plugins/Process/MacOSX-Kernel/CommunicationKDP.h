@@ -177,7 +177,14 @@ public:
                               void *dst, 
                               uint32_t dst_size,
                               lldb_private::Error &error);
-    
+
+    uint32_t
+    SendRequestWriteRegisters (uint32_t cpu,
+                               uint32_t flavor,
+                               const void *src,
+                               uint32_t src_size,
+                               lldb_private::Error &error);
+
     const char *
     GetKernelVersion ();
     

@@ -307,7 +307,16 @@ Error
 ProcessKDP::DoResume ()
 {
     Error error;
-    if (!m_comm.SendRequestResume ())
+    if (m_comm.SendRequestResume ())
+    {
+        SetPrivateState(eStateRunning);
+        DataExtractor exc_reply_packet;
+        if (m_comm.WaitForPacketWithTimeoutMicroSeconds (exc_reply_packet, 60 * USEC_PER_SEC))
+        {
+            SetPrivateState(eStateStopped);
+        }
+    }
+    else
         error.SetErrorString ("KDP resume failed");
     return error;
 }
