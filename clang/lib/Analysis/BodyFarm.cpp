@@ -20,7 +20,9 @@
 
 using namespace clang;
 
-typedef Stmt *(*FunctionFarmer)(ASTContext &C, const FunctionDecl *D);
+//===----------------------------------------------------------------------===//
+// Helper creation functions for constructing faux ASTs.
+//===----------------------------------------------------------------------===//
 
 static bool isDispatchBlock(QualType Ty) {
   // Is it a block pointer?
@@ -38,6 +40,12 @@ static bool isDispatchBlock(QualType Ty) {
 
   return true;
 }
+
+//===----------------------------------------------------------------------===//
+// Creation functions for faux ASTs.
+//===----------------------------------------------------------------------===//
+
+typedef Stmt *(*FunctionFarmer)(ASTContext &C, const FunctionDecl *D);
 
 /// Create a fake body for dispatch_once.
 static Stmt *create_dispatch_once(ASTContext &C, const FunctionDecl *D) {
