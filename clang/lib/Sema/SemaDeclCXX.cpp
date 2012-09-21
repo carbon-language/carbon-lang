@@ -1717,7 +1717,7 @@ namespace {
           unsigned diag = VD->getType()->isReferenceType()
               ? diag::warn_reference_field_is_uninit
               : diag::warn_field_is_uninit;
-          S.Diag(ME->getExprLoc(), diag);
+          S.Diag(ME->getExprLoc(), diag) << ME->getMemberNameInfo().getName();
           return;
         }
       }

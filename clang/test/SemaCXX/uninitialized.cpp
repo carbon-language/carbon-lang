@@ -173,11 +173,11 @@ struct S {
   int x;
   void *ptr;
 
-  S(bool (*)[1]) : x(x) {} // expected-warning {{field is uninitialized when used here}}
-  S(bool (*)[2]) : x(x + 1) {} // expected-warning {{field is uninitialized when used here}}
-  S(bool (*)[3]) : x(x + x) {} // expected-warning 2{{field is uninitialized when used here}}
-  S(bool (*)[4]) : x(static_cast<long>(x) + 1) {} // expected-warning {{field is uninitialized when used here}}
-  S(bool (*)[5]) : x(foo(x)) {} // expected-warning {{field is uninitialized when used here}}
+  S(bool (*)[1]) : x(x) {} // expected-warning {{field 'x' is uninitialized when used here}}
+  S(bool (*)[2]) : x(x + 1) {} // expected-warning {{field 'x' is uninitialized when used here}}
+  S(bool (*)[3]) : x(x + x) {} // expected-warning 2{{field 'x' is uninitialized when used here}}
+  S(bool (*)[4]) : x(static_cast<long>(x) + 1) {} // expected-warning {{field 'x' is uninitialized when used here}}
+  S(bool (*)[5]) : x(foo(x)) {} // expected-warning {{field 'x' is uninitialized when used here}}
 
   // These don't actually require the value of x and so shouldn't warn.
   S(char (*)[1]) : x(sizeof(x)) {} // rdar://8610363
@@ -262,8 +262,8 @@ namespace {
     C c;
     D(char (*)[1]) : c(c.b.a.A1) {}
     D(char (*)[2]) : c(c.b.a.A2()) {}
-    D(char (*)[3]) : c(c.b.a.A3) {}    // expected-warning {{field is uninitialized when used here}}
-    D(char (*)[4]) : c(c.b.a.A4()) {}  // expected-warning {{field is uninitialized when used here}}
+    D(char (*)[3]) : c(c.b.a.A3) {}    // expected-warning {{field 'c' is uninitialized when used here}}
+    D(char (*)[4]) : c(c.b.a.A4()) {}  // expected-warning {{field 'c' is uninitialized when used here}}
 
     // c::a is static, so it is already initialized
     D(char (*)[5]) : c(c.a.A1) {}
@@ -274,21 +274,21 @@ namespace {
 
   struct E {
     int a, b, c;
-    E(char (*)[1]) : a(a ? b : c) {}  // expected-warning {{field is uninitialized when used here}}
-    E(char (*)[2]) : a(b ? a : a) {} // expected-warning 2{{field is uninitialized when used here}}
-    E(char (*)[3]) : a(b ? (a) : c) {} // expected-warning {{field is uninitialized when used here}}
-    E(char (*)[4]) : a(b ? c : (a+c)) {} // expected-warning {{field is uninitialized when used here}}
+    E(char (*)[1]) : a(a ? b : c) {}  // expected-warning {{field 'a' is uninitialized when used here}}
+    E(char (*)[2]) : a(b ? a : a) {} // expected-warning 2{{field 'a' is uninitialized when used here}}
+    E(char (*)[3]) : a(b ? (a) : c) {} // expected-warning {{field 'a' is uninitialized when used here}}
+    E(char (*)[4]) : a(b ? c : (a+c)) {} // expected-warning {{field 'a' is uninitialized when used here}}
     E(char (*)[5]) : a(b ? c : b) {}
 
-    E(char (*)[6]) : a(a ?: a) {} // expected-warning 2{{field is uninitialized when used here}}
-    E(char (*)[7]) : a(b ?: a) {} // expected-warning {{field is uninitialized when used here}}
-    E(char (*)[8]) : a(a ?: c) {} // expected-warning {{field is uninitialized when used here}}
+    E(char (*)[6]) : a(a ?: a) {} // expected-warning 2{{field 'a' is uninitialized when used here}}
+    E(char (*)[7]) : a(b ?: a) {} // expected-warning {{field 'a' is uninitialized when used here}}
+    E(char (*)[8]) : a(a ?: c) {} // expected-warning {{field 'a' is uninitialized when used here}}
     E(char (*)[9]) : a(b ?: c) {}
 
     E(char (*)[10]) : a((a, a, b)) {}
-    E(char (*)[11]) : a((c + a, a + 1, b)) {} // expected-warning 2{{field is uninitialized when used here}}
-    E(char (*)[12]) : a((b + c, c, a)) {} // expected-warning {{field is uninitialized when used here}}
-    E(char (*)[13]) : a((a, a, a, a)) {} // expected-warning {{field is uninitialized when used here}}
+    E(char (*)[11]) : a((c + a, a + 1, b)) {} // expected-warning 2{{field 'a' is uninitialized when used here}}
+    E(char (*)[12]) : a((b + c, c, a)) {} // expected-warning {{field 'a' is uninitialized when used here}}
+    E(char (*)[13]) : a((a, a, a, a)) {} // expected-warning {{field 'a' is uninitialized when used here}}
     E(char (*)[14]) : a((b, c, c)) {}
   };
 
@@ -304,16 +304,16 @@ namespace {
   struct G {
     F f1, f2;
     F *f3, *f4;
-    G(char (*)[1]) : f1(f1) {} // expected-warning {{field is uninitialized when used here}}
+    G(char (*)[1]) : f1(f1) {} // expected-warning {{field 'f1' is uninitialized when used here}}
     G(char (*)[2]) : f2(f1) {}
     G(char (*)[3]) : f2(F()) {}
 
-    G(char (*)[4]) : f1(f1.*ptr) {} // expected-warning {{field is uninitialized when used here}}
+    G(char (*)[4]) : f1(f1.*ptr) {} // expected-warning {{field 'f1' is uninitialized when used here}}
     G(char (*)[5]) : f2(f1.*ptr) {}
 
-    G(char (*)[6]) : f3(f3) {}  // expected-warning {{field is uninitialized when used here}}
-    G(char (*)[7]) : f3(f3->*f_ptr) {} // expected-warning {{field is uninitialized when used here}}
-    G(char (*)[8]) : f3(new F(f3->*ptr)) {} // expected-warning {{field is uninitialized when used here}}
+    G(char (*)[6]) : f3(f3) {}  // expected-warning {{field 'f3' is uninitialized when used here}}
+    G(char (*)[7]) : f3(f3->*f_ptr) {} // expected-warning {{field 'f3' is uninitialized when used here}}
+    G(char (*)[8]) : f3(new F(f3->*ptr)) {} // expected-warning {{field 'f3' is uninitialized when used here}}
   };
 }
 
@@ -381,7 +381,7 @@ namespace statics {
 
 namespace in_class_initializers {
   struct S {
-    S() : a(a + 1) {} // expected-warning{{field is uninitialized when used here}}
+    S() : a(a + 1) {} // expected-warning{{field 'a' is uninitialized when used here}}
     int a = 42; // Note: because a is in a member initializer list, this initialization is ignored.
   };
 
@@ -402,7 +402,7 @@ namespace references {
   int &a = a; // expected-warning{{reference 'a' is not yet bound to a value when used within its own initialization}}
 
   struct S {
-    S() : a(a) {} // expected-warning{{reference is not yet bound to a value when used here}}
+    S() : a(a) {} // expected-warning{{reference 'a' is not yet bound to a value when used here}}
     int &a;
   };
 
@@ -413,7 +413,7 @@ namespace references {
   struct T {
     T() : a(b), b(a) {} // FIXME: Warn here.
     int &a, &b;
-    int &c = c; // expected-warning{{reference is not yet bound to a value when used here}}
+    int &c = c; // expected-warning{{reference 'c' is not yet bound to a value when used here}}
   };
 
   int x;

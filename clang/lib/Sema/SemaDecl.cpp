@@ -6328,14 +6328,12 @@ namespace {
     void HandleDeclRefExpr(DeclRefExpr *DRE) {
       Decl* ReferenceDecl = DRE->getDecl(); 
       if (OrigDecl != ReferenceDecl) return;
-      LookupResult Result(S, DRE->getNameInfo(), Sema::LookupOrdinaryName,
-                          Sema::NotForRedeclaration);
       unsigned diag = isReferenceType
           ? diag::warn_uninit_self_reference_in_reference_init
           : diag::warn_uninit_self_reference_in_init;
       S.DiagRuntimeBehavior(DRE->getLocStart(), DRE,
                             S.PDiag(diag)
-                              << Result.getLookupName()
+                              << DRE->getNameInfo().getName()
                               << OrigDecl->getLocation()
                               << DRE->getSourceRange());
     }

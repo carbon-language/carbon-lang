@@ -9,6 +9,6 @@ struct bar {
 struct foo {
   bar b;
   foo()
-    : b(b) // expected-warning{{field is uninitialized}}
+    : b(b) // expected-warning{{field 'b' is uninitialized}}
   {}
 };
