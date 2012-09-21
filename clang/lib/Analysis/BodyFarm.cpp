@@ -151,12 +151,15 @@ static Stmt *create_dispatch_once(ASTContext &C, const FunctionDecl *D) {
   IntegerLiteral *IL =
     IntegerLiteral::Create(C, llvm::APInt(C.getTypeSize(C.IntTy), (uint64_t) 1),
                            C.IntTy, SourceLocation());
-  ICE = M.makeIntegralCast(IL, PredicateTy);
-  DR = M.makeDeclRefExpr(Predicate);
-  ImplicitCastExpr *LValToRval = M.makeLvalueToRvalue(DR, PredicateQPtrTy);
-  UnaryOperator *UO = M.makeDereference(LValToRval, PredicateTy);
-  BinaryOperator * B = M.makeAssignment(UO, ICE, PredicateTy);
-
+  BinaryOperator *B =
+    M.makeAssignment(
+       M.makeDereference(
+          M.makeLvalueToRvalue(
+            M.makeDeclRefExpr(Predicate), PredicateQPtrTy),
+            PredicateTy),
+       M.makeIntegralCast(IL, PredicateTy),
+       PredicateTy);
+  
   // (3) Create the compound statement.
   Stmt *Stmts[2];
   Stmts[0] = B;
@@ -165,12 +168,18 @@ static Stmt *create_dispatch_once(ASTContext &C, const FunctionDecl *D) {
                                           SourceLocation());
   
   // (4) Create the 'if' condition.
-  DR = M.makeDeclRefExpr(Predicate);
-  LValToRval = M.makeLvalueToRvalue(DR, PredicateQPtrTy);
-  UO = M.makeDereference(LValToRval, PredicateTy);
-  LValToRval = M.makeLvalueToRvalue(UO, PredicateTy);
-  UO = new (C) UnaryOperator(LValToRval, UO_LNot, C.IntTy,
-                             VK_RValue, OK_Ordinary, SourceLocation());
+  ImplicitCastExpr *LValToRval =
+    M.makeLvalueToRvalue(
+      M.makeDereference(
+        M.makeLvalueToRvalue(
+          M.makeDeclRefExpr(Predicate),
+          PredicateQPtrTy),
+        PredicateTy),
+    PredicateTy);
+  
+  UnaryOperator *UO = new (C) UnaryOperator(LValToRval, UO_LNot, C.IntTy,
+                                           VK_RValue, OK_Ordinary,
+                                           SourceLocation());
   
   // (5) Create the 'if' statement.
   IfStmt *If = new (C) IfStmt(C, SourceLocation(), 0, UO, CS);
