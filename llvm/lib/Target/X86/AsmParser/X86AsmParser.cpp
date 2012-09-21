@@ -202,7 +202,8 @@ struct X86Operand : public MCParsedAsmOperand {
   SMLoc getStartLoc() const { return StartLoc; }
   /// getEndLoc - Get the location of the last token of this operand.
   SMLoc getEndLoc() const { return EndLoc; }
-
+  /// getLocRange - Get the range between the first and last token of this
+  /// operand.
   SMRange getLocRange() const { return SMRange(StartLoc, EndLoc); }
 
   virtual void print(raw_ostream &OS) const {}
