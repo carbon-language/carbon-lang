@@ -245,7 +245,7 @@ define void @unaligned_i16_store(i16 %x, i16* %y) nounwind {
 entry:
 ; ARM-STRICT-ALIGN: @unaligned_i16_store
 ; ARM-STRICT-ALIGN: strb
-; ARM-STRICT-ALIGN-NEXT: strb
+; ARM-STRICT-ALIGN: strb
 
 ; THUMB-STRICT-ALIGN: @unaligned_i16_store
 ; THUMB-STRICT-ALIGN: strb
