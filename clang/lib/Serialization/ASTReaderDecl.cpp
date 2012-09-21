@@ -2127,6 +2127,9 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
       }
       PendingVisibleUpdates.erase(I);
     }
+
+    if (!DC->hasExternalVisibleStorage() && DC->hasExternalLexicalStorage())
+      DC->setMustBuildLookupTable();
   }
   assert(Idx == Record.size());
 

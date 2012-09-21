@@ -1661,6 +1661,10 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
         return Failure;
       }
 
+      DeclContext *DC = Context.getTranslationUnitDecl();
+      if (!DC->hasExternalVisibleStorage() && DC->hasExternalLexicalStorage())
+        DC->setMustBuildLookupTable();
+
       return Success;
     }
 
