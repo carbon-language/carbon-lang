@@ -951,7 +951,18 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   case ELF::STT_FUNC:
   case ELF::STT_OBJECT:
   case ELF::STT_NOTYPE:
-    Result = symb->st_value + (Section ? Section->sh_addr : 0);
+    bool IsRelocatable;
+    switch(Header->e_type) {
+    case ELF::ET_EXEC:
+    case ELF::ET_DYN:
+      IsRelocatable = false;
+      break;
+    default:
+      IsRelocatable = true;
+    }
+    Result = symb->st_value;
+    if (IsRelocatable && Section != 0)
+      Result += Section->sh_addr;
     return object_error::success;
   default:
     Result = UnknownAddressOrSize;

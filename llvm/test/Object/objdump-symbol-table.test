@@ -4,6 +4,8 @@ RUN: llvm-objdump -t %p/Inputs/trivial-object-test.elf-i386 \
 RUN:              | FileCheck %s -check-prefix ELF-i386
 RUN: llvm-objdump -t %p/Inputs/trivial-object-test.macho-i386 \
 RUN:              | FileCheck %s -check-prefix macho-i386
+RUN: llvm-objdump -t %p/Inputs/shared-object-test.elf-i386 \
+RUN:              | FileCheck %s -check-prefix ELF-shared
 
 COFF-i386: file format
 COFF-i386: SYMBOL TABLE:
@@ -31,3 +33,9 @@ macho-i386: SYMBOL TABLE:
 macho-i386: 00000000 g     F __TEXT,__text  00000024 _main
 macho-i386: 00000000         *UND*  00000000 _SomeOtherFunction
 macho-i386: 00000000         *UND*  00000000 _puts
+
+ELF-shared: shared-object-test.elf-i386:     file format
+ELF-shared: SYMBOL TABLE:
+ELF-shared: 00000200 l     F .text 00000003 local_func
+ELF-shared: 000012c4 g       .data 00000004 defined_sym
+ELF-shared: 000001f0 g     F .text 00000003 global_func

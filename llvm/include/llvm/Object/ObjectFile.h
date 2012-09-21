@@ -212,6 +212,8 @@ public:
   error_code getNext(SymbolRef &Result) const;
 
   error_code getName(StringRef &Result) const;
+  /// Returns the symbol virtual address (i.e. address at which it will be
+  /// mapped).
   error_code getAddress(uint64_t &Result) const;
   error_code getFileOffset(uint64_t &Result) const;
   error_code getSize(uint64_t &Result) const;
