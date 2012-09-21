@@ -44,7 +44,7 @@ private:
     const void*
     compute_gcc_empty_string_storage() _LIBCPP_CANTTHROW
     {
-        void* handle = dlopen("libstdc++.dylib", RTLD_LAZY);
+        void* handle = dlopen("/usr/lib/libstdc++.6.dylib", RTLD_NOLOAD);
         if (handle == 0)
             return 0;
         return (const char*)dlsym(handle, "_ZNSs4_Rep20_S_empty_rep_storageE") + offset;
