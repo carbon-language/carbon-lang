@@ -19,7 +19,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/TypeOrdering.h"
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include <list>
@@ -272,7 +272,7 @@ struct UniqueVirtualMethod {
 /// subobject in which that virtual function occurs).
 class OverridingMethods {
   typedef SmallVector<UniqueVirtualMethod, 4> ValuesT;
-  typedef llvm::DenseMap<unsigned, ValuesT> MapType;
+  typedef llvm::MapVector<unsigned, ValuesT> MapType;
   MapType Overrides;
 
 public:
@@ -356,8 +356,8 @@ public:
 /// 0 represents the virtua base class subobject of that type, while
 /// subobject numbers greater than 0 refer to non-virtual base class
 /// subobjects of that type.
-class CXXFinalOverriderMap 
-  : public llvm::DenseMap<const CXXMethodDecl *, OverridingMethods> { };
+class CXXFinalOverriderMap
+  : public llvm::MapVector<const CXXMethodDecl *, OverridingMethods> { };
 
 /// \brief A set of all the primary bases for a class.
 class CXXIndirectPrimaryBaseSet
