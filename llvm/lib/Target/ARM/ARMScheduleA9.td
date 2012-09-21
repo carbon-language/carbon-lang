@@ -1938,13 +1938,13 @@ def A9WriteFMulS  : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 5; }
 def A9WriteFMulD  : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 6; }
 def A9WriteFMAS   : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 8; }
 def A9WriteFMAD   : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 9; }
-def A9WriteFDivS  : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 10; }
-def A9WriteFDivD  : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 20; }
-def A9WriteFSqrtS : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 13; }
-def A9WriteFSqrtD : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 28; }
+def A9WriteFDivS  : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 15; }
+def A9WriteFDivD  : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 25; }
+def A9WriteFSqrtS : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 17; }
+def A9WriteFSqrtD : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 32; }
 
 // NEON has an odd mix of latencies. Simply name the write types by latency.
-def A9WriteV1 : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 2; }
+def A9WriteV1 : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 1; }
 def A9WriteV2 : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 2; }
 def A9WriteV3 : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 3; }
 def A9WriteV4 : SchedWriteRes<[A9UnitFP, A9UnitAGU]> { let Latency = 4; }
