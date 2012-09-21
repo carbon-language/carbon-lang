@@ -421,4 +421,9 @@ def int_arm_neon_vst4lane : Intrinsic<[],
                                        LLVMMatchType<0>, llvm_i32_ty,
                                        llvm_i32_ty], [IntrReadWriteArgMem]>;
 
+// Vector bitwise select.
+def int_arm_neon_vbsl : Intrinsic<[llvm_anyvector_ty],
+                        [LLVMMatchType<0>, LLVMMatchType<0>, LLVMMatchType<0>],
+                        [IntrNoMem]>;
+
 } // end TargetPrefix
