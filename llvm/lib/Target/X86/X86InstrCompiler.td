@@ -765,14 +765,14 @@ multiclass ATOMIC_LOAD_BINOP<bits<8> opc8, bits<8> opc, string mnemonic,
                         GR32:$dst,
                         (!cast<PatFrag>(frag # "_32") addr:$ptr, GR32:$val))],
                      itin>;
-    def #NAME#64 : I<opc, MRMSrcMem, (outs GR64:$dst),
-                     (ins GR64:$val, i64mem:$ptr),
-                     !strconcat("lock\n\t", mnemonic,
-                                "{q}\t{$val, $ptr|$ptr, $val}"),
-                     [(set
-                        GR64:$dst,
-                        (!cast<PatFrag>(frag # "_64") addr:$ptr, GR64:$val))],
-                     itin>;
+    def #NAME#64 : RI<opc, MRMSrcMem, (outs GR64:$dst),
+                      (ins GR64:$val, i64mem:$ptr),
+                      !strconcat("lock\n\t", mnemonic,
+                                 "{q}\t{$val, $ptr|$ptr, $val}"),
+                      [(set
+                         GR64:$dst,
+                         (!cast<PatFrag>(frag # "_64") addr:$ptr, GR64:$val))],
+                      itin>;
   }
 }
 
