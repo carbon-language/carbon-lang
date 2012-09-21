@@ -2621,7 +2621,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
      << "                           const "
      << "SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n                     "
      << "          unsigned OperandNum, unsigned &NumMCOperands);\n";
-  OS << "  bool MnemonicIsValid(StringRef Mnemonic);\n";
+  OS << "  bool mnemonicIsValidImpl(StringRef Mnemonic);\n";
   OS << "  unsigned MatchInstructionImpl(\n"
      << "    const SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n"
      << "    unsigned &Kind, MCInst &Inst, "
@@ -2800,7 +2800,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   // A method to determine if a mnemonic is in the list.
   OS << "bool " << Target.getName() << ClassName << "::\n"
-     << "MnemonicIsValid(StringRef Mnemonic) {\n";
+     << "mnemonicIsValidImpl(StringRef Mnemonic) {\n";
   OS << "  // Search the table.\n";
   OS << "  std::pair<const MatchEntry*, const MatchEntry*> MnemonicRange =\n";
   OS << "    std::equal_range(MatchTable, MatchTable+"

@@ -60,6 +60,10 @@ private:
   bool ParseDirectiveWord(unsigned Size, SMLoc L);
   bool ParseDirectiveCode(StringRef IDVal, SMLoc L);
 
+  bool mnemonicIsValid(StringRef Mnemonic) {
+    return mnemonicIsValidImpl(Mnemonic);
+  }
+
   bool processInstruction(MCInst &Inst,
                           const SmallVectorImpl<MCParsedAsmOperand*> &Ops);
 

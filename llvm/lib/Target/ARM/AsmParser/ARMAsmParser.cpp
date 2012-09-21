@@ -257,6 +257,10 @@ public:
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands);
   bool ParseDirective(AsmToken DirectiveID);
 
+  bool mnemonicIsValid(StringRef Mnemonic) {
+    return mnemonicIsValidImpl(Mnemonic);
+  }
+
   unsigned checkTargetMatchPredicate(MCInst &Inst);
 
   bool MatchAndEmitInstruction(SMLoc IDLoc,

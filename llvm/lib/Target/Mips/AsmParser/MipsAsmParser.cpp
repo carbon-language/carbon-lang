@@ -41,6 +41,10 @@ class MipsAsmParser : public MCTargetAsmParser {
 #define GET_ASSEMBLER_HEADER
 #include "MipsGenAsmMatcher.inc"
 
+  bool mnemonicIsValid(StringRef Mnemonic) {
+    return mnemonicIsValidImpl(Mnemonic);
+  }
+
   bool MatchAndEmitInstruction(SMLoc IDLoc,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                                MCStreamer &Out);
