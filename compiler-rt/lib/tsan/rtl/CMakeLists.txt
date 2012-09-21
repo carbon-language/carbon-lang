@@ -35,7 +35,7 @@ if(CAN_TARGET_X86_64 AND UNIX AND NOT APPLE)
   set(TSAN_ASM_SOURCES tsan_rtl_amd64.S)
   # Pass ASM file directly to the C++ compiler.
   set_source_files_properties(${TSAN_ASM_SOURCES} PROPERTIES
-    LANGUAGE CXX
+    LANGUAGE C
     )
   add_library(clang_rt.tsan-x86_64 STATIC
     ${TSAN_SOURCES}
