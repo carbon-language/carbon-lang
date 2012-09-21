@@ -159,8 +159,7 @@ public:
   bool isArtificial()                const {
     if (Var.isArtificial())
       return true;
-    if (Var.getTag() == dwarf::DW_TAG_arg_variable
-        && getType().isArtificial())
+    if (getType().isArtificial())
       return true;
     return false;
   }
@@ -168,8 +167,7 @@ public:
   bool isObjectPointer()             const {
     if (Var.isObjectPointer())
       return true;
-    if (Var.getTag() == dwarf::DW_TAG_arg_variable
-        && getType().isObjectPointer())
+    if (getType().isObjectPointer())
       return true;
     return false;
   }
