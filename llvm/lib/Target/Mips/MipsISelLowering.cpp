@@ -129,6 +129,22 @@ MipsTargetLowering(MipsTargetMachine &TM)
     addRegisterClass(MVT::i32, &Mips::CPU16RegsRegClass);
   }
 
+  if (Subtarget->hasDSP()) {
+    MVT::SimpleValueType VecTys[2] = {MVT::v2i16, MVT::v4i8};
+
+    for (unsigned i = 0; i < array_lengthof(VecTys); ++i) {
+      addRegisterClass(VecTys[i], &Mips::DSPRegsRegClass);
+
+      // Expand all builtin opcodes.
+      for (unsigned Opc = 0; Opc < ISD::BUILTIN_OP_END; ++Opc)
+        setOperationAction(Opc, VecTys[i], Expand);
+
+      setOperationAction(ISD::LOAD, VecTys[i], Legal);
+      setOperationAction(ISD::STORE, VecTys[i], Legal);
+      setOperationAction(ISD::BITCAST, VecTys[i], Legal);
+    }
+  }
+
   if (!TM.Options.UseSoftFloat) {
     addRegisterClass(MVT::f32, &Mips::FGR32RegClass);
 
@@ -268,6 +284,9 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::VAARG,             MVT::Other, Expand);
   setOperationAction(ISD::VACOPY,            MVT::Other, Expand);
   setOperationAction(ISD::VAEND,             MVT::Other, Expand);
+
+  setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::i64, Custom);
+  setOperationAction(ISD::INTRINSIC_W_CHAIN, MVT::i64, Custom);
 
   // Use the default for now
   setOperationAction(ISD::STACKSAVE,         MVT::Other, Expand);
@@ -801,6 +820,26 @@ SDValue  MipsTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI)
   }
 
   return SDValue();
+}
+
+void
+MipsTargetLowering::LowerOperationWrapper(SDNode *N,
+                                          SmallVectorImpl<SDValue> &Results,
+                                          SelectionDAG &DAG) const {
+  SDValue Res = LowerOperation(SDValue(N, 0), DAG);
+
+  for (unsigned I = 0, E = Res->getNumValues(); I != E; ++I)
+    Results.push_back(Res.getValue(I));
+}
+
+void
+MipsTargetLowering::ReplaceNodeResults(SDNode *N,
+                                       SmallVectorImpl<SDValue> &Results,
+                                       SelectionDAG &DAG) const {
+  SDValue Res = LowerOperation(SDValue(N, 0), DAG);
+
+  for (unsigned I = 0, E = Res->getNumValues(); I != E; ++I)
+    Results.push_back(Res.getValue(I));
 }
 
 SDValue MipsTargetLowering::

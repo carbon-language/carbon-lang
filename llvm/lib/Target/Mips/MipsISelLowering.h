@@ -146,8 +146,18 @@ namespace llvm {
 
     virtual bool allowsUnalignedMemoryAccesses (EVT VT) const;
 
+    virtual void LowerOperationWrapper(SDNode *N,
+                                       SmallVectorImpl<SDValue> &Results,
+                                       SelectionDAG &DAG) const;
+
     /// LowerOperation - Provide custom lowering hooks for some operations.
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
+
+    /// ReplaceNodeResults - Replace the results of node with an illegal result
+    /// type with new values built out of custom code.
+    ///
+    virtual void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue>&Results,
+                                    SelectionDAG &DAG) const;
 
     /// getTargetNodeName - This method returns the name of a target specific
     //  DAG node.
