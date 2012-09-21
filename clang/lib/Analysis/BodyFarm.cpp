@@ -46,6 +46,9 @@ class ASTMaker {
 public:
   ASTMaker(ASTContext &C) : C(C) {}
   
+  /// Create a new BinaryOperator representing a simple assignment.
+  BinaryOperator *makeAssignment(const Expr *LHS, const Expr *RHS, QualType Ty);
+  
   /// Create a new DeclRefExpr for the referenced variable.
   DeclRefExpr *makeDeclRefExpr(const VarDecl *D);
   
@@ -61,6 +64,13 @@ public:
 private:
   ASTContext &C;
 };
+}
+
+BinaryOperator *ASTMaker::makeAssignment(const Expr *LHS, const Expr *RHS,
+                                         QualType Ty) {
+ return new (C) BinaryOperator(const_cast<Expr*>(LHS), const_cast<Expr*>(RHS),
+                               BO_Assign, Ty, VK_RValue,
+                               OK_Ordinary, SourceLocation());
 }
 
 DeclRefExpr *ASTMaker::makeDeclRefExpr(const VarDecl *D) {
@@ -145,10 +155,8 @@ static Stmt *create_dispatch_once(ASTContext &C, const FunctionDecl *D) {
   DR = M.makeDeclRefExpr(Predicate);
   ImplicitCastExpr *LValToRval = M.makeLvalueToRvalue(DR, PredicateQPtrTy);
   UnaryOperator *UO = M.makeDereference(LValToRval, PredicateTy);
-  BinaryOperator *B = new (C) BinaryOperator(UO, ICE, BO_Assign,
-                                             PredicateTy, VK_RValue,
-                                             OK_Ordinary,
-                                             SourceLocation());
+  BinaryOperator * B = M.makeAssignment(UO, ICE, PredicateTy);
+
   // (3) Create the compound statement.
   Stmt *Stmts[2];
   Stmts[0] = B;
