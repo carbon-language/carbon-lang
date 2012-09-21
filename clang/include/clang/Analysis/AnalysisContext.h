@@ -101,7 +101,7 @@ public:
 
   ~AnalysisDeclContext();
 
-  ASTContext &getASTContext() { return D->getASTContext(); }
+  ASTContext &getASTContext() const { return D->getASTContext(); }
   const Decl *getDecl() const { return D; }
 
   /// Return the build options used to construct the CFG.
