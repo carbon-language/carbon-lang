@@ -6,9 +6,9 @@ yaml2obj
 yaml2obj takes a YAML description of an object file and converts it to a binary
 file.
 
-    $ yaml2py input-file
+    $ yaml2obj input-file
 
-.. program:: yaml2py
+.. program:: yaml2obj
 
 Outputs the binary to stdout.
 
