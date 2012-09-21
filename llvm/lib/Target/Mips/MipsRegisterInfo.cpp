@@ -123,6 +123,9 @@ getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(Mips::HWR29);
   Reserved.set(Mips::HWR29_64);
 
+  // Reserve DSP control register.
+  Reserved.set(Mips::DSPCtrl);
+
   // Reserve RA if in mips16 mode.
   if (Subtarget.inMips16Mode()) {
     Reserved.set(Mips::RA);
