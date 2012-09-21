@@ -18,6 +18,9 @@
 /* Default <path> to all compiler invocations for --sysroot=<path>. */
 #undef DEFAULT_SYSROOT
 
+/* Define if you want backtraces on crash */
+#undef ENABLE_BACKTRACES
+
 /* Define if position independent code is enabled */
 #undef ENABLE_PIC
 

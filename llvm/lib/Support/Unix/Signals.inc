@@ -243,7 +243,7 @@ void llvm::sys::AddSignalHandler(void (*FnPtr)(void *), void *Cookie) {
 // On glibc systems we have the 'backtrace' function, which works nicely, but
 // doesn't demangle symbols.
 static void PrintStackTrace(void *) {
-#ifdef HAVE_BACKTRACE
+#if defined(HAVE_BACKTRACE) && defined(ENABLE_BACKTRACE)
   static void* StackTrace[256];
   // Use backtrace() to output a backtrace on Linux systems with glibc.
   int depth = backtrace(StackTrace,

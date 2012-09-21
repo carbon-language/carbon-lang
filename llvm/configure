@@ -1423,6 +1423,8 @@ Optional Features:
                           Win32 DLL (default is NO)
   --enable-timestamps     Enable embedding timestamp information in build
                           (default is YES)
+  --enable-backtraces     Enable embedding backtraces on crash (default is
+                          YES)
   --enable-targets        Build specific host targets: all or
                           target1,target2,... Valid targets are: host, x86,
                           x86_64, sparc, powerpc, arm, mips, spu, hexagon,
@@ -5379,6 +5381,31 @@ esac
 
 cat >>confdefs.h <<_ACEOF
 #define ENABLE_TIMESTAMPS $ENABLE_TIMESTAMPS
+_ACEOF
+
+
+
+# Check whether --enable-backtraces was given.
+if test "${enable_backtraces+set}" = set; then
+  enableval=$enable_backtraces;
+else
+  enableval=default
+fi
+
+case "$enableval" in
+  yes) ENABLE_TIMESTAMPS=1
+ ;;
+  no)  ENABLE_TIMESTAMPS=0
+ ;;
+  default) ENABLE_TIMESTAMPS=1
+ ;;
+  *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-backtraces. Use \"yes\" or \"no\"" >&5
+echo "$as_me: error: Invalid setting for --enable-backtraces. Use \"yes\" or \"no\"" >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
+
+cat >>confdefs.h <<_ACEOF
+#define ENABLE_BACKTRACES $ENABLE_BACKTRACES
 _ACEOF
 
 
@@ -10289,7 +10316,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10292 "configure"
+#line 10319 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H

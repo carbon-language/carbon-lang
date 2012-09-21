@@ -678,6 +678,21 @@ esac
 AC_DEFINE_UNQUOTED([ENABLE_TIMESTAMPS],$ENABLE_TIMESTAMPS,
                    [Define if timestamp information (e.g., __DATE__) is allowed])
 
+dnl Enable embedding timestamp information into build.
+
+AC_ARG_ENABLE(backtraces,
+  AS_HELP_STRING([--enable-backtraces],
+                 [Enable embedding backtraces on crash (default is YES)]),,
+                 enableval=default)
+case "$enableval" in
+  yes) AC_SUBST(ENABLE_TIMESTAMPS,[1]) ;;
+  no)  AC_SUBST(ENABLE_TIMESTAMPS,[0]) ;;
+  default) AC_SUBST(ENABLE_TIMESTAMPS,[1]) ;;
+  *) AC_MSG_ERROR([Invalid setting for --enable-backtraces. Use "yes" or "no"]) ;;
+esac
+AC_DEFINE_UNQUOTED([ENABLE_BACKTRACES],$ENABLE_BACKTRACES,
+                   [Define if you want backtraces on crash])
+
 dnl Allow specific targets to be specified for building (or not)
 TARGETS_TO_BUILD=""
 AC_ARG_ENABLE([targets],AS_HELP_STRING([--enable-targets],
