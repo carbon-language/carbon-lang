@@ -64,6 +64,7 @@ void beginNoWarnOnWrites() EXCLUSIVE_LOCK_FUNCTION("*");
 void endNoWarnOnWrites()   UNLOCK_FUNCTION("*");
 
 
+// For testing handling of smart pointers.
 template<class T>
 class SmartPtr {
 public:
@@ -78,6 +79,15 @@ public:
 private:
   T* ptr_;
 };
+
+
+// For testing destructor calls and cleanup.
+class MyString {
+public:
+  MyString(const char* s);
+  ~MyString();
+};
+
 
 
 Mutex sls_mu;
@@ -3250,12 +3260,6 @@ void Base::bar(Inner* i) {
 
 namespace TrylockWithCleanups {
 
-class MyString {
-public:
-  MyString(const char* s);
-  ~MyString();
-};
-
 struct Foo {
   Mutex mu_;
   int a GUARDED_BY(mu_);
@@ -3460,6 +3464,7 @@ public:
 };
 
 void exitNow() __attribute__((noreturn));
+void exitDestruct(const MyString& ms) __attribute__((noreturn));
 
 Mutex fatalmu_;
 
@@ -3480,6 +3485,10 @@ void test3() EXCLUSIVE_LOCKS_REQUIRED(fatalmu_) {
   else {
     FemmeFatale femme;
   }
+}
+
+void test4() EXCLUSIVE_LOCKS_REQUIRED(fatalmu_) {
+  exitDestruct("foo");
 }
 
 }   // end namespace UnreachableExitTest
