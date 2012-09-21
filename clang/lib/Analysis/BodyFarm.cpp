@@ -49,6 +49,9 @@ public:
   /// Create a new DeclRefExpr for the referenced variable.
   DeclRefExpr *makeDeclRefExpr(const VarDecl *D);
   
+  /// Create a new UnaryOperator representing a dereference.
+  UnaryOperator *makeDereference(const Expr *Arg, QualType Ty);
+  
   /// Create an implicit cast for an integer conversion.
   ImplicitCastExpr *makeIntegralCast(const Expr *Arg, QualType Ty);
   
@@ -71,6 +74,11 @@ DeclRefExpr *ASTMaker::makeDeclRefExpr(const VarDecl *D) {
                         /* T = */ D->getType(),
                         /* VK = */ VK_LValue);
   return DR;
+}
+
+UnaryOperator *ASTMaker::makeDereference(const Expr *Arg, QualType Ty) {
+  return new (C) UnaryOperator(const_cast<Expr*>(Arg), UO_Deref, Ty,
+                               VK_LValue, OK_Ordinary, SourceLocation());
 }
 
 ImplicitCastExpr *ASTMaker::makeLvalueToRvalue(const Expr *Arg, QualType Ty) {
@@ -136,9 +144,7 @@ static Stmt *create_dispatch_once(ASTContext &C, const FunctionDecl *D) {
   ICE = M.makeIntegralCast(IL, PredicateTy);
   DR = M.makeDeclRefExpr(Predicate);
   ImplicitCastExpr *LValToRval = M.makeLvalueToRvalue(DR, PredicateQPtrTy);
-  UnaryOperator *UO = new (C) UnaryOperator(LValToRval, UO_Deref, PredicateTy,
-                                            VK_LValue, OK_Ordinary,
-                                            SourceLocation());
+  UnaryOperator *UO = M.makeDereference(LValToRval, PredicateTy);
   BinaryOperator *B = new (C) BinaryOperator(UO, ICE, BO_Assign,
                                              PredicateTy, VK_RValue,
                                              OK_Ordinary,
@@ -153,9 +159,7 @@ static Stmt *create_dispatch_once(ASTContext &C, const FunctionDecl *D) {
   // (4) Create the 'if' condition.
   DR = M.makeDeclRefExpr(Predicate);
   LValToRval = M.makeLvalueToRvalue(DR, PredicateQPtrTy);
-  UO = new (C) UnaryOperator(LValToRval, UO_Deref, PredicateTy,
-                             VK_LValue, OK_Ordinary,
-                             SourceLocation());
+  UO = M.makeDereference(LValToRval, PredicateTy);
   LValToRval = M.makeLvalueToRvalue(UO, PredicateTy);
   UO = new (C) UnaryOperator(LValToRval, UO_LNot, C.IntTy,
                              VK_RValue, OK_Ordinary, SourceLocation());
@@ -186,8 +190,7 @@ static Stmt *create_dispatch_sync(ASTContext &C, const FunctionDecl *D) {
   //  
   ASTMaker M(C);
   DeclRefExpr *DR = M.makeDeclRefExpr(PV);
-  ImplicitCastExpr *ICE = ImplicitCastExpr::Create(C, Ty, CK_LValueToRValue,
-                                                   DR, 0, VK_RValue);
+  ImplicitCastExpr *ICE = M.makeLvalueToRvalue(DR, Ty);
   CallExpr *CE = new (C) CallExpr(C, ICE, ArrayRef<Expr*>(), C.VoidTy,
                                   VK_RValue, SourceLocation());
   return CE;
