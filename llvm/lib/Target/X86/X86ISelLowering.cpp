@@ -12153,6 +12153,11 @@ X86TargetLowering::EmitAtomicLoadArith(MachineInstr *MI,
     BuildMI(mainMBB, DL, TII->get(NOTOpc), t1).addReg(t2);
     break;
   }
+  case X86::ATOMMAX8:
+  case X86::ATOMMIN8:
+  case X86::ATOMUMAX8:
+  case X86::ATOMUMIN8:
+    llvm_unreachable("Not supported yet!");
   case X86::ATOMMAX16:
   case X86::ATOMMAX32:
   case X86::ATOMMAX64:
