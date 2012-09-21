@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 %s -triple=x86_64-pc-linux-gnu -emit-llvm -o - | FileCheck %s
-// RUN: %clang_cc1 %s -triple=x86_64-pc-linux-gnu -fhidden-weak-vtables -emit-llvm -o - | FileCheck -check-prefix=HIDDEN %s
+// RUN: %clang_cc1 %s -triple=x86_64-pc-linux-gnu -munwind-tables -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -triple=x86_64-pc-linux-gnu -munwind-tables -fhidden-weak-vtables -emit-llvm -o - | FileCheck -check-prefix=HIDDEN %s
 
 namespace Test1 {
 
@@ -325,6 +325,21 @@ namespace Test13 {
   // CHECK: getelementptr inbounds i8* {{.*}}, i64 -24
   // CHECK: getelementptr inbounds i8* {{.*}}, i64 8
   // CHECK: ret %"struct.Test13::D"*
+}
+
+namespace Test14 {
+  class A {
+    virtual void f();
+  };
+  class B {
+    virtual void f();
+  };
+  class C : public A, public B  {
+    virtual void f();
+  };
+  void C::f() {
+  }
+  // CHECK: define void @_ZThn8_N6Test141C1fEv({{.*}}) {{.*}} uwtable
 }
 
 /**** The following has to go at the end of the file ****/

@@ -466,6 +466,8 @@ void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk,
     return;
   }
 
+  CGM.SetLLVMFunctionAttributesForDefinition(GD.getDecl(), ThunkFn);
+
   if (ThunkFn->isVarArg()) {
     // Varargs thunks are special; we can't just generate a call because
     // we can't copy the varargs.  Our implementation is rather
