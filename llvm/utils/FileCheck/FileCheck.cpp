@@ -470,7 +470,7 @@ static MemoryBuffer *CanonicalizeInputFile(MemoryBuffer *MB) {
       continue;
     }
 
-    // If C is not a horizontal whitespace, skip it.
+    // If current char is not a horizontal whitespace, dump it to output as is.
     if (*Ptr != ' ' && *Ptr != '\t') {
       NewFile.push_back(*Ptr);
       continue;
