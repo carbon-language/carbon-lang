@@ -2418,9 +2418,10 @@ void CGDebugInfo::EmitDeclareOfAutoVariable(const VarDecl *VD,
   EmitDeclare(VD, llvm::dwarf::DW_TAG_auto_variable, Storage, 0, Builder);
 }
 
-void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(
-  const VarDecl *VD, llvm::Value *Storage, CGBuilderTy &Builder,
-  const CGBlockInfo &blockInfo) {
+void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(const VarDecl *VD,
+                                                    llvm::Value *Storage,
+                                                    CGBuilderTy &Builder,
+                                                 const CGBlockInfo &blockInfo) {
   assert(CGM.getCodeGenOpts().DebugInfo >= CodeGenOptions::LimitedDebugInfo);
   assert(!LexicalBlockStack.empty() && "Region stack mismatch, stack empty!");
   
@@ -2436,6 +2437,11 @@ void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(
     Ty = EmitTypeForVarWithBlocksAttr(VD, &XOffset);
   else 
     Ty = getOrCreateType(VD->getType(), Unit);
+
+  // Self is passed along as an implicit non-arg variable in a
+  // block. Mark it as the object pointer.
+  if (isa<ImplicitParamDecl>(VD) && VD->getName() == "self")
+    Ty = DBuilder.createObjectPointerType(Ty);
 
   // Get location information.
   unsigned Line = getLineNumber(VD->getLocation());
