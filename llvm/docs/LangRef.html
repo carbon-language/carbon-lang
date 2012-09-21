@@ -103,6 +103,7 @@
       <li><a href="#metadata">Metadata Nodes and Metadata Strings</a>
         <ol>
           <li><a href="#tbaa">'<tt>tbaa</tt>' Metadata</a></li>
+          <li><a href="#tbaa.struct">'<tt>tbaa.struct</tt>' Metadata</a></li>
           <li><a href="#fpmath">'<tt>fpmath</tt>' Metadata</a></li>
           <li><a href="#range">'<tt>range</tt>' Metadata</a></li>
         </ol>
@@ -3047,6 +3048,44 @@ call void @llvm.dbg.value(metadata !24, i64 0, metadata !25)
    <tt>pointsToConstantMemory</tt> should return true; see
    <a href="AliasAnalysis.html#OtherItfs">other useful
    <tt>AliasAnalysis</tt> methods</a>).</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="tbaa.struct">'<tt>tbaa.struct</tt>' Metadata</a>
+</h4>
+
+<div>
+
+<p>The <a href="#int_memcpy"><tt>llvm.memcpy</tt></a> is often used to implement
+aggregate assignment operations in C and similar languages, however it is
+defined to copy a contiguous region of memory, which is more than strictly
+necessary for aggregate types which contain holes due to padding. Also, it
+doesn't contain any TBAA information about the fields of the aggregate.</p>
+
+<p><tt>!tbaa.struct</tt> metadata can describe which memory subregions in a memcpy
+are padding and what the TBAA tags of the struct are.</p>
+
+<p>The current metadata format is very simple. <tt>!tbaa.struct</tt> metadata nodes
+   are a list of operands which are in conceptual groups of three. For each
+   group of three, the first operand gives the byte offset of a field in address
+   units, the second gives its size in address units, and the third gives its
+   tbaa tag. e.g.:</p>
+
+<div class="doc_code">
+<pre>
+!4 = metadata !{ i64 0, i64 4, metadata !1, i64 8, i64 4, metadata !2 }
+</pre>
+</div>
+
+<p>This describes a struct with two fields. The first is at offset 0 address units
+   with size 4 address units, and has tbaa tag !1. The second is at offset 8 address
+   units and has size 4 address units and has tbaa tag !2.</p>
+
+<p>Note that the fields need not be contiguous. In this example, there is a
+   4 byte gap between the two fields. This gap represents padding which
+   does not carry useful data and need not be preserved.</p>
 
 </div>
 
