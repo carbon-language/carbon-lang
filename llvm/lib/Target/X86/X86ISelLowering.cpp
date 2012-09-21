@@ -11966,15 +11966,19 @@ static unsigned getNonAtomicOpcodeWithExtraOpc(unsigned Opc,
   case X86::ATOMNAND16: ExtraOpc = X86::NOT16r;  return X86::AND16rr;
   case X86::ATOMNAND32: ExtraOpc = X86::NOT32r;  return X86::AND32rr;
   case X86::ATOMNAND64: ExtraOpc = X86::NOT64r;  return X86::AND64rr;
+  case X86::ATOMMAX8:   ExtraOpc = X86::CMP8rr;  return X86::CMOVL32rr;
   case X86::ATOMMAX16:  ExtraOpc = X86::CMP16rr; return X86::CMOVL16rr;
   case X86::ATOMMAX32:  ExtraOpc = X86::CMP32rr; return X86::CMOVL32rr;
   case X86::ATOMMAX64:  ExtraOpc = X86::CMP64rr; return X86::CMOVL64rr;
+  case X86::ATOMMIN8:   ExtraOpc = X86::CMP8rr;  return X86::CMOVG32rr;
   case X86::ATOMMIN16:  ExtraOpc = X86::CMP16rr; return X86::CMOVG16rr;
   case X86::ATOMMIN32:  ExtraOpc = X86::CMP32rr; return X86::CMOVG32rr;
   case X86::ATOMMIN64:  ExtraOpc = X86::CMP64rr; return X86::CMOVG64rr;
+  case X86::ATOMUMAX8:  ExtraOpc = X86::CMP8rr;  return X86::CMOVB32rr;
   case X86::ATOMUMAX16: ExtraOpc = X86::CMP16rr; return X86::CMOVB16rr;
   case X86::ATOMUMAX32: ExtraOpc = X86::CMP32rr; return X86::CMOVB32rr;
   case X86::ATOMUMAX64: ExtraOpc = X86::CMP64rr; return X86::CMOVB64rr;
+  case X86::ATOMUMIN8:  ExtraOpc = X86::CMP8rr;  return X86::CMOVA32rr;
   case X86::ATOMUMIN16: ExtraOpc = X86::CMP16rr; return X86::CMOVA16rr;
   case X86::ATOMUMIN32: ExtraOpc = X86::CMP32rr; return X86::CMOVA32rr;
   case X86::ATOMUMIN64: ExtraOpc = X86::CMP64rr; return X86::CMOVA64rr;
@@ -12013,6 +12017,7 @@ static unsigned getNonAtomic6432OpcodeWithExtraOpc(unsigned Opc,
 // Get pseudo CMOV opcode from the specified data type.
 static unsigned getPseudoCMOVOpc(EVT VT) {
   switch (VT.getSimpleVT().SimpleTy) {
+  case MVT::i8:  return X86::CMOV_GR8;
   case MVT::i16: return X86::CMOV_GR16;
   case MVT::i32: return X86::CMOV_GR32;
   default:
@@ -12154,19 +12159,18 @@ X86TargetLowering::EmitAtomicLoadArith(MachineInstr *MI,
     break;
   }
   case X86::ATOMMAX8:
-  case X86::ATOMMIN8:
-  case X86::ATOMUMAX8:
-  case X86::ATOMUMIN8:
-    llvm_unreachable("Not supported yet!");
   case X86::ATOMMAX16:
   case X86::ATOMMAX32:
   case X86::ATOMMAX64:
+  case X86::ATOMMIN8:
   case X86::ATOMMIN16:
   case X86::ATOMMIN32:
   case X86::ATOMMIN64:
+  case X86::ATOMUMAX8:
   case X86::ATOMUMAX16:
   case X86::ATOMUMAX32:
   case X86::ATOMUMAX64:
+  case X86::ATOMUMIN8:
   case X86::ATOMUMIN16:
   case X86::ATOMUMIN32:
   case X86::ATOMUMIN64: {
@@ -12178,13 +12182,40 @@ X86TargetLowering::EmitAtomicLoadArith(MachineInstr *MI,
       .addReg(AccReg);
 
     if (Subtarget->hasCMov()) {
-      // Native support
-      BuildMI(mainMBB, DL, TII->get(CMOVOpc), t1)
-        .addReg(SrcReg)
-        .addReg(AccReg);
+      if (VT != MVT::i8) {
+        // Native support
+        BuildMI(mainMBB, DL, TII->get(CMOVOpc), t1)
+          .addReg(SrcReg)
+          .addReg(AccReg);
+      } else {
+        // Promote i8 to i32 to use CMOV32
+        const TargetRegisterClass *RC32 = getRegClassFor(MVT::i32);
+        unsigned SrcReg32 = MRI.createVirtualRegister(RC32);
+        unsigned AccReg32 = MRI.createVirtualRegister(RC32);
+        unsigned t2 = MRI.createVirtualRegister(RC32);
+
+        unsigned Undef = MRI.createVirtualRegister(RC32);
+        BuildMI(mainMBB, DL, TII->get(TargetOpcode::IMPLICIT_DEF), Undef);
+
+        BuildMI(mainMBB, DL, TII->get(TargetOpcode::INSERT_SUBREG), SrcReg32)
+          .addReg(Undef)
+          .addReg(SrcReg)
+          .addImm(X86::sub_8bit);
+        BuildMI(mainMBB, DL, TII->get(TargetOpcode::INSERT_SUBREG), AccReg32)
+          .addReg(Undef)
+          .addReg(AccReg)
+          .addImm(X86::sub_8bit);
+
+        BuildMI(mainMBB, DL, TII->get(CMOVOpc), t2)
+          .addReg(SrcReg32)
+          .addReg(AccReg32);
+
+        BuildMI(mainMBB, DL, TII->get(TargetOpcode::COPY), t1)
+          .addReg(t2, 0, X86::sub_8bit);
+      }
     } else {
       // Use pseudo select and lower them.
-      assert((VT == MVT::i16 || VT == MVT::i32) &&
+      assert((VT == MVT::i8 || VT == MVT::i16 || VT == MVT::i32) &&
              "Invalid atomic-load-op transformation!");
       unsigned SelOpc = getPseudoCMOVOpc(VT);
       X86::CondCode CC = X86::getCondFromCMovOpc(CMOVOpc);
@@ -13314,18 +13345,22 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case X86::ATOMNAND32:
   case X86::ATOMNAND64:
     // Fall through
+  case X86::ATOMMAX8:
   case X86::ATOMMAX16:
   case X86::ATOMMAX32:
   case X86::ATOMMAX64:
     // Fall through
+  case X86::ATOMMIN8:
   case X86::ATOMMIN16:
   case X86::ATOMMIN32:
   case X86::ATOMMIN64:
     // Fall through
+  case X86::ATOMUMAX8:
   case X86::ATOMUMAX16:
   case X86::ATOMUMAX32:
   case X86::ATOMUMAX64:
     // Fall through
+  case X86::ATOMUMIN8:
   case X86::ATOMUMIN16:
   case X86::ATOMUMIN32:
   case X86::ATOMUMIN64:
