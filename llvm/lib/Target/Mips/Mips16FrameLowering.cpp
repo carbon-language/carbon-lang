@@ -68,7 +68,6 @@ spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                           const TargetRegisterInfo *TRI) const {
   MachineFunction *MF = MBB.getParent();
   MachineBasicBlock *EntryBlock = MF->begin();
-  const TargetInstrInfo &TII = *MF->getTarget().getInstrInfo();
 
   //
   // Registers RA, S0,S1 are the callee saved registers and they
