@@ -130,30 +130,34 @@ entry:
 ; CHECK: ret i32 1
 }
 
-declare void @f(i32*)
+declare void @f(i32*, i32*)
 
 define i32 @test6(i32* %b) {
 ; CHECK: @test6
 entry:
 	%a = alloca [2 x i32]
-; The alloca remains because it is used in a dead select.
-; CHECK: alloca
+  %c = alloca i32
+; CHECK-NOT: alloca
 
   %a1 = getelementptr [2 x i32]* %a, i64 0, i32 1
 	store i32 1, i32* %a1
 
 	%select = select i1 true, i32* %a1, i32* %b
 	%select2 = select i1 false, i32* %a1, i32* %b
-; CHECK-NOT: select i1 true
-; We don't aggressively DCE this select.
-; CHECK: select i1 false
+  %select3 = select i1 false, i32* %c, i32* %b
+; CHECK: %[[select2:.*]] = select i1 false, i32* undef, i32* %b
+; CHECK: %[[select3:.*]] = select i1 false, i32* undef, i32* %b
 
   ; Note, this would potentially escape the alloca pointer except for the
   ; constant folding of the select.
-  call void @f(i32* %select2)
+  call void @f(i32* %select2, i32* %select3)
+; CHECK: call void @f(i32* %[[select2]], i32* %[[select3]])
+
 
 	%result = load i32* %select
 ; CHECK-NOT: load
+
+  %dead = load i32* %c
 
 	ret i32 %result
 ; CHECK: ret i32 1

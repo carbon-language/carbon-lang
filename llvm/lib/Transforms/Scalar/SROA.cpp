@@ -901,6 +901,10 @@ private:
         // If the result of the constant fold will be the pointer, recurse
         // through the select as if we had RAUW'ed it.
         enqueueUsers(SI, Offset);
+      else
+        // Otherwise the operand to the select is dead, and we can replace it
+        // with undef.
+        P.DeadOperands.push_back(U);
 
       return;
     }
