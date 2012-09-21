@@ -3069,8 +3069,8 @@ are padding and what the TBAA tags of the struct are.</p>
 
 <p>The current metadata format is very simple. <tt>!tbaa.struct</tt> metadata nodes
    are a list of operands which are in conceptual groups of three. For each
-   group of three, the first operand gives the byte offset of a field in address
-   units, the second gives its size in address units, and the third gives its
+   group of three, the first operand gives the byte offset of a field in bytes,
+   the second gives its size in bytes, and the third gives its
    tbaa tag. e.g.:</p>
 
 <div class="doc_code">
@@ -3079,9 +3079,9 @@ are padding and what the TBAA tags of the struct are.</p>
 </pre>
 </div>
 
-<p>This describes a struct with two fields. The first is at offset 0 address units
-   with size 4 address units, and has tbaa tag !1. The second is at offset 8 address
-   units and has size 4 address units and has tbaa tag !2.</p>
+<p>This describes a struct with two fields. The first is at offset 0 bytes
+   with size 4 bytes, and has tbaa tag !1. The second is at offset 8 bytes
+   and has size 4 bytes and has tbaa tag !2.</p>
 
 <p>Note that the fields need not be contiguous. In this example, there is a
    4 byte gap between the two fields. This gap represents padding which
