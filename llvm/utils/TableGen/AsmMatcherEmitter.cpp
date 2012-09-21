@@ -2617,8 +2617,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
      << "unsigned Opcode,\n"
      << "                          const SmallVectorImpl<MCParsedAsmOperand*> "
      << "&Operands);\n";
-  OS << "  unsigned getMCInstOperandNumImpl(unsigned Kind, MCInst &Inst,\n     "
-     << "                              const "
+  OS << "  unsigned getMCInstOperandNumImpl(unsigned Kind, MCInst &Inst,\n"
+     << "                           const "
      << "SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n                     "
      << "          unsigned OperandNum, unsigned &NumMCOperands);\n";
   OS << "  bool MnemonicIsValid(StringRef Mnemonic);\n";
