@@ -134,6 +134,27 @@ namespace llvm {
       }
     }
 
+    struct TBAAStructField {
+      uint64_t Offset;
+      uint64_t Size;
+      MDNode *TBAA;
+      TBAAStructField(uint64_t Offset, uint64_t Size, MDNode *TBAA) :
+        Offset(Offset), Size(Size), TBAA(TBAA) {}
+    };
+
+    /// \brief Return metadata for a tbaa.struct node with the given
+    /// struct field descriptions.
+    MDNode *createTBAAStructNode(ArrayRef<TBAAStructField> Fields) {
+      SmallVector<Value *, 4> Vals(Fields.size() * 3);
+      Type *Int64 = IntegerType::get(Context, 64);
+      for (unsigned i = 0, e = Fields.size(); i != e; ++i) {
+        Vals[i * 3 + 0] = ConstantInt::get(Int64, Fields[i].Offset);
+        Vals[i * 3 + 1] = ConstantInt::get(Int64, Fields[i].Size);
+        Vals[i * 3 + 2] = Fields[i].TBAA;
+      }
+      return MDNode::get(Context, Vals);
+    }
+
   };
 
 } // end namespace llvm
