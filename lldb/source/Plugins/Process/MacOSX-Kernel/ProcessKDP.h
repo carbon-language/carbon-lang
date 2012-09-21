@@ -240,6 +240,7 @@ protected:
         eBroadcastBitAsyncContinue                  = (1 << 0),
         eBroadcastBitAsyncThreadShouldExit          = (1 << 1)
     };
+    
 
     lldb_private::Error
     InterruptIfRunning (bool discard_thread_plans,
@@ -261,9 +262,6 @@ protected:
     
     static void *
     AsyncThread (void *arg);
-    
-    lldb::StateType
-    SetThreadStopInfo (StringExtractor& stop_packet);
     
 private:
     //------------------------------------------------------------------

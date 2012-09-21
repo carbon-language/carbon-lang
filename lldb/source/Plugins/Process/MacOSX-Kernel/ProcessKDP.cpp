@@ -20,6 +20,7 @@
 #include "lldb/Core/State.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Symbol/ObjectFile.h"
+#include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
@@ -103,8 +104,8 @@ ProcessKDP::ProcessKDP(Target& target, Listener &listener) :
     m_async_broadcaster (NULL, "lldb.process.kdp-remote.async-broadcaster"),
     m_async_thread (LLDB_INVALID_HOST_THREAD)
 {
-//    m_async_broadcaster.SetEventName (eBroadcastBitAsyncThreadShouldExit,   "async thread should exit");
-//    m_async_broadcaster.SetEventName (eBroadcastBitAsyncContinue,           "async thread continue");
+    m_async_broadcaster.SetEventName (eBroadcastBitAsyncThreadShouldExit,   "async thread should exit");
+    m_async_broadcaster.SetEventName (eBroadcastBitAsyncContinue,           "async thread continue");
 }
 
 //----------------------------------------------------------------------
@@ -168,11 +169,18 @@ ProcessKDP::WillAttachToProcessWithName (const char *process_name, bool wait_for
 Error
 ProcessKDP::DoConnectRemote (const char *remote_url)
 {
-    // TODO: fill in the remote connection to the remote KDP here!
     Error error;
-    
+
+    // Don't let any JIT happen when doing KDP as we can't allocate
+    // memory and we don't want to be mucking with threads that might
+    // already be handling exceptions
+    SetCanJIT(false);
+
     if (remote_url == NULL || remote_url[0] == '\0')
-        remote_url = "udp://localhost:41139";
+    {
+        error.SetErrorStringWithFormat ("invalid connection URL '%s'", remote_url);
+        return error;
+    }
 
     std::auto_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());
     if (conn_ap.get())
@@ -307,17 +315,59 @@ Error
 ProcessKDP::DoResume ()
 {
     Error error;
-    if (m_comm.SendRequestResume ())
+    LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_PROCESS));
+    // Only start the async thread if we try to do any process control
+    if (!IS_VALID_LLDB_HOST_THREAD(m_async_thread))
+        StartAsyncThread ();
+
+    const uint32_t num_threads = m_thread_list.GetSize();
+    uint32_t resume_cpu_mask = 0;
+    
+    for (uint32_t idx = 0; idx < num_threads; ++idx)
     {
-        SetPrivateState(eStateRunning);
-        DataExtractor exc_reply_packet;
-        if (m_comm.WaitForPacketWithTimeoutMicroSeconds (exc_reply_packet, 60 * USEC_PER_SEC))
+        ThreadSP thread_sp (m_thread_list.GetThreadAtIndex(idx));
+        const StateType thread_resume_state = thread_sp->GetState();
+        switch (thread_resume_state)
         {
-            SetPrivateState(eStateStopped);
+            case eStateStopped:
+            case eStateSuspended:
+                // Nothing to do here when a thread will stay suspended
+                // we just leave the CPU mask bit set to zero for the thread
+                break;
+                
+            case eStateStepping:
+            case eStateRunning:
+                thread_sp->GetRegisterContext()->HardwareSingleStep (thread_resume_state == eStateStepping);
+                // Thread ID is the bit we need for the CPU mask
+                resume_cpu_mask |= thread_sp->GetID();
+                break;
+                
+                break;
+                
+            default:
+                assert (!"invalid thread resume state");
+                break;
         }
     }
+    if (log)
+        log->Printf ("ProcessKDP::DoResume () sending resume with cpu_mask = 0x%8.8x",
+                     resume_cpu_mask);
+    if (resume_cpu_mask)
+    {
+        
+        if (m_comm.SendRequestResume (resume_cpu_mask))
+        {
+            m_async_broadcaster.BroadcastEvent (eBroadcastBitAsyncContinue);
+            SetPrivateState(eStateRunning);
+        }
+        else
+            error.SetErrorString ("KDP resume failed");
+    }
     else
-        error.SetErrorString ("KDP resume failed");
+    {
+        error.SetErrorString ("all threads suspended");        
+    }
+    
     return error;
 }
 
@@ -346,21 +396,12 @@ ProcessKDP::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_threa
     return new_thread_list.GetSize(false) > 0;
 }
 
-
-StateType
-ProcessKDP::SetThreadStopInfo (StringExtractor& stop_packet)
-{
-    // TODO: figure out why we stopped given the packet that tells us we stopped...
-    return eStateStopped;
-}
-
 void
 ProcessKDP::RefreshStateAfterStop ()
 {
     // Let all threads recover from stopping and do any clean up based
     // on the previous thread state (if any).
     m_thread_list.RefreshStateAfterStop();
-    //SetThreadStopInfo (m_last_stop_packet);
 }
 
 Error
@@ -514,34 +555,8 @@ ProcessKDP::DoDetach()
 Error
 ProcessKDP::DoDestroy ()
 {
-    Error error;
-    LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet(KDP_LOG_PROCESS));
-    if (log)
-        log->Printf ("ProcessKDP::DoDestroy()");
-    
-    // Interrupt if our inferior is running...
-    if (m_comm.IsConnected())
-    {
-        if (m_public_state.GetValue() == eStateAttaching)
-        {
-            // We are being asked to halt during an attach. We need to just close
-            // our file handle and debugserver will go away, and we can be done...
-            m_comm.Disconnect();
-        }
-        else
-        {
-            DisableAllBreakpointSites ();
-            
-            m_comm.SendRequestDisconnect();
-            
-            StringExtractor response;
-            // TODO: Send kill packet?
-            SetExitStatus(SIGABRT, NULL);
-        }
-    }
-    StopAsyncThread ();
-    m_comm.Clear();
-    return error;
+    // For KDP there really is no difference between destroy and detach
+    return DoDetach();
 }
 
 //------------------------------------------------------------------
@@ -569,7 +584,9 @@ ProcessKDP::DoReadMemory (addr_t addr, void *buf, size_t size, Error &error)
 size_t
 ProcessKDP::DoWriteMemory (addr_t addr, const void *buf, size_t size, Error &error)
 {
-    error.SetErrorString ("ProcessKDP::DoReadMemory not implemented");
+    if (m_comm.IsConnected())
+        return m_comm.SendRequestWriteMemory (addr, buf, size, error);
+    error.SetErrorString ("not connected");
     return 0;
 }
 
@@ -695,10 +712,11 @@ ProcessKDP::StartAsyncThread ()
     LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet(KDP_LOG_PROCESS));
     
     if (log)
-        log->Printf ("ProcessKDP::%s ()", __FUNCTION__);
+        log->Printf ("ProcessKDP::StartAsyncThread ()");
     
-    // Create a thread that watches our internal state and controls which
-    // events make it to clients (into the DCProcess event queue).
+    if (IS_VALID_LLDB_HOST_THREAD(m_async_thread))
+        return true;
+
     m_async_thread = Host::ThreadCreate ("<lldb.process.kdp-remote.async>", ProcessKDP::AsyncThread, this, NULL);
     return IS_VALID_LLDB_HOST_THREAD(m_async_thread);
 }
@@ -709,7 +727,7 @@ ProcessKDP::StopAsyncThread ()
     LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet(KDP_LOG_PROCESS));
     
     if (log)
-        log->Printf ("ProcessKDP::%s ()", __FUNCTION__);
+        log->Printf ("ProcessKDP::StopAsyncThread ()");
     
     m_async_broadcaster.BroadcastEvent (eBroadcastBitAsyncThreadShouldExit);
     
@@ -717,6 +735,7 @@ ProcessKDP::StopAsyncThread ()
     if (IS_VALID_LLDB_HOST_THREAD(m_async_thread))
     {
         Host::ThreadJoin (m_async_thread, NULL, NULL);
+        m_async_thread = LLDB_INVALID_HOST_THREAD;
     }
 }
 
@@ -726,113 +745,99 @@ ProcessKDP::AsyncThread (void *arg)
 {
     ProcessKDP *process = (ProcessKDP*) arg;
     
+    const lldb::pid_t pid = process->GetID();
+
     LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_PROCESS));
     if (log)
-        log->Printf ("ProcessKDP::%s (arg = %p, pid = %llu) thread starting...", __FUNCTION__, arg, process->GetID());
+        log->Printf ("ProcessKDP::AsyncThread (arg = %p, pid = %llu) thread starting...", arg, pid);
     
     Listener listener ("ProcessKDP::AsyncThread");
     EventSP event_sp;
     const uint32_t desired_event_mask = eBroadcastBitAsyncContinue |
                                         eBroadcastBitAsyncThreadShouldExit;
     
+    
     if (listener.StartListeningForEvents (&process->m_async_broadcaster, desired_event_mask) == desired_event_mask)
     {
-        listener.StartListeningForEvents (&process->m_comm, Communication::eBroadcastBitReadThreadDidExit);
-        
         bool done = false;
         while (!done)
         {
             if (log)
-                log->Printf ("ProcessKDP::%s (arg = %p, pid = %llu) listener.WaitForEvent (NULL, event_sp)...", __FUNCTION__, arg, process->GetID());
+                log->Printf ("ProcessKDP::AsyncThread (pid = %llu) listener.WaitForEvent (NULL, event_sp)...",
+                             pid);
             if (listener.WaitForEvent (NULL, event_sp))
             {
-                const uint32_t event_type = event_sp->GetType();
-                if (event_sp->BroadcasterIs (&process->m_async_broadcaster))
+                uint32_t event_type = event_sp->GetType();
+                if (log)
+                    log->Printf ("ProcessKDP::AsyncThread (pid = %llu) Got an event of type: %d...",
+                                 pid,
+                                 event_type);
+                
+                // When we are running, poll for 1 second to try and get an exception
+                // to indicate the process has stopped. If we don't get one, check to
+                // make sure no one asked us to exit
+                bool is_running = false;
+                DataExtractor exc_reply_packet;
+                do
                 {
-                    if (log)
-                        log->Printf ("ProcessKDP::%s (arg = %p, pid = %llu) Got an event of type: %d...", __FUNCTION__, arg, process->GetID(), event_type);
-                    
                     switch (event_type)
                     {
-                        case eBroadcastBitAsyncContinue:
+                    case eBroadcastBitAsyncContinue:
                         {
-                            const EventDataBytes *continue_packet = EventDataBytes::GetEventDataFromEvent(event_sp.get());
-                            
-                            if (continue_packet)
+                            is_running = true;
+                            if (process->m_comm.WaitForPacketWithTimeoutMicroSeconds (exc_reply_packet, 1 * USEC_PER_SEC))
                             {
-                                // TODO: do continue support here
-                                
-//                                const char *continue_cstr = (const char *)continue_packet->GetBytes ();
-//                                const size_t continue_cstr_len = continue_packet->GetByteSize ();
-//                                if (log)
-//                                    log->Printf ("ProcessKDP::%s (arg = %p, pid = %i) got eBroadcastBitAsyncContinue: %s", __FUNCTION__, arg, process->GetID(), continue_cstr);
-//                                
-//                                if (::strstr (continue_cstr, "vAttach") == NULL)
-//                                    process->SetPrivateState(eStateRunning);
-//                                StringExtractor response;
-//                                StateType stop_state = process->GetCommunication().SendContinuePacketAndWaitForResponse (process, continue_cstr, continue_cstr_len, response);
-//                                
-//                                switch (stop_state)
-//                                {
-//                                    case eStateStopped:
-//                                    case eStateCrashed:
-//                                    case eStateSuspended:
-//                                        process->m_last_stop_packet = response;
-//                                        process->SetPrivateState (stop_state);
-//                                        break;
-//                                        
-//                                    case eStateExited:
-//                                        process->m_last_stop_packet = response;
-//                                        response.SetFilePos(1);
-//                                        process->SetExitStatus(response.GetHexU8(), NULL);
-//                                        done = true;
-//                                        break;
-//                                        
-//                                    case eStateInvalid:
-//                                        process->SetExitStatus(-1, "lost connection");
-//                                        break;
-//                                        
-//                                    default:
-//                                        process->SetPrivateState (stop_state);
-//                                        break;
-//                                }
+                                // TODO: parse the stop reply packet
+                                is_running = false;
+                                process->SetPrivateState(eStateStopped);
+                            }
+                            else
+                            {
+                                // Check to see if we are supposed to exit. There is no way to
+                                // interrupt a running kernel, so all we can do is wait for an
+                                // exception or detach...
+                                if (listener.GetNextEvent(event_sp))
+                                {
+                                    // We got an event, go through the loop again
+                                    event_type = event_sp->GetType();
+                                }
                             }
                         }
-                            break;
+                        break;
                             
-                        case eBroadcastBitAsyncThreadShouldExit:
-                            if (log)
-                                log->Printf ("ProcessKDP::%s (arg = %p, pid = %llu) got eBroadcastBitAsyncThreadShouldExit...", __FUNCTION__, arg, process->GetID());
-                            done = true;
-                            break;
-                            
-                        default:
-                            if (log)
-                                log->Printf ("ProcessKDP::%s (arg = %p, pid = %llu) got unknown event 0x%8.8x", __FUNCTION__, arg, process->GetID(), event_type);
-                            done = true;
-                            break;
-                    }
-                }
-                else if (event_sp->BroadcasterIs (&process->m_comm))
-                {
-                    if (event_type & Communication::eBroadcastBitReadThreadDidExit)
-                    {
-                        process->SetExitStatus (-1, "lost connection");
+                    case eBroadcastBitAsyncThreadShouldExit:
+                        if (log)
+                            log->Printf ("ProcessKDP::AsyncThread (pid = %llu) got eBroadcastBitAsyncThreadShouldExit...",
+                                         pid);
                         done = true;
+                        is_running = false;
+                        break;
+                            
+                    default:
+                        if (log)
+                            log->Printf ("ProcessKDP::AsyncThread (pid = %llu) got unknown event 0x%8.8x",
+                                         pid,
+                                         event_type);
+                        done = true;
+                        is_running = false;
+                        break;
                     }
-                }
+                } while (is_running);
             }
             else
             {
                 if (log)
-                    log->Printf ("ProcessKDP::%s (arg = %p, pid = %llu) listener.WaitForEvent (NULL, event_sp) => false", __FUNCTION__, arg, process->GetID());
+                    log->Printf ("ProcessKDP::AsyncThread (pid = %llu) listener.WaitForEvent (NULL, event_sp) => false",
+                                 pid);
                 done = true;
             }
         }
     }
     
     if (log)
-        log->Printf ("ProcessKDP::%s (arg = %p, pid = %llu) thread exiting...", __FUNCTION__, arg, process->GetID());
+        log->Printf ("ProcessKDP::AsyncThread (arg = %p, pid = %llu) thread exiting...",
+                     arg,
+                     pid);
     
     process->m_async_thread = LLDB_INVALID_HOST_THREAD;
     return NULL;
