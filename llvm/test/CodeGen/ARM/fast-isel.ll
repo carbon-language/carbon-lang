@@ -268,3 +268,39 @@ entry:
   %0 = load i16* %x, align 1
   ret i16 %0
 }
+
+define void @unaligned_i32_store(i32 %x, i32* %y) nounwind {
+entry:
+; ARM-STRICT-ALIGN: @unaligned_i32_store
+; ARM-STRICT-ALIGN: strb
+; ARM-STRICT-ALIGN: strb
+; ARM-STRICT-ALIGN: strb
+; ARM-STRICT-ALIGN: strb
+
+; THUMB-STRICT-ALIGN: @unaligned_i32_store
+; THUMB-STRICT-ALIGN: strb
+; THUMB-STRICT-ALIGN: strb
+; THUMB-STRICT-ALIGN: strb
+; THUMB-STRICT-ALIGN: strb
+
+  store i32 %x, i32* %y, align 1
+  ret void
+}
+
+define i32 @unaligned_i32_load(i32* %x) nounwind {
+entry:
+; ARM-STRICT-ALIGN: @unaligned_i32_load
+; ARM-STRICT-ALIGN: ldrb
+; ARM-STRICT-ALIGN: ldrb
+; ARM-STRICT-ALIGN: ldrb
+; ARM-STRICT-ALIGN: ldrb
+
+; THUMB-STRICT-ALIGN: @unaligned_i32_load
+; THUMB-STRICT-ALIGN: ldrb
+; THUMB-STRICT-ALIGN: ldrb
+; THUMB-STRICT-ALIGN: ldrb
+; THUMB-STRICT-ALIGN: ldrb
+
+  %0 = load i32* %x, align 1
+  ret i32 %0
+}
