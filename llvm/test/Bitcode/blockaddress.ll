@@ -28,3 +28,18 @@ here:
 end:
   ret void
 }
+
+; PR13895
+define void @doitagain(i8** nocapture %pptr) {
+; CHECK: define void @doitagain
+entry:
+  br label %here
+
+here:
+  store i8* blockaddress(@doit, %here), i8** %pptr, align 8
+; CHECK: blockaddress(@doit, %here)
+  br label %end
+
+end:
+  ret void
+}

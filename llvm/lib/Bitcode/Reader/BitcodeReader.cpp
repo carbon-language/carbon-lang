@@ -52,6 +52,8 @@ void BitcodeReader::FreeState() {
   std::vector<Function*>().swap(FunctionsWithBodies);
   DeferredFunctionInfo.clear();
   MDKindMap.clear();
+
+  assert(BlockAddrFwdRefs.empty() && "Unresolved blockaddress fwd references");
 }
 
 //===----------------------------------------------------------------------===//
@@ -1300,13 +1302,27 @@ bool BitcodeReader::ParseConstants() {
       Function *Fn =
         dyn_cast_or_null<Function>(ValueList.getConstantFwdRef(Record[1],FnTy));
       if (Fn == 0) return Error("Invalid CE_BLOCKADDRESS record");
-      
-      GlobalVariable *FwdRef = new GlobalVariable(*Fn->getParent(),
-                                                  Type::getInt8Ty(Context),
+
+      // If the function is already parsed we can insert the block address right
+      // away.
+      if (!Fn->empty()) {
+        Function::iterator BBI = Fn->begin(), BBE = Fn->end();
+        for (size_t I = 0, E = Record[2]; I != E; ++I) {
+          if (BBI == BBE)
+            return Error("Invalid blockaddress block #");
+          ++BBI;
+        }
+        V = BlockAddress::get(Fn, BBI);
+      } else {
+        // Otherwise insert a placeholder and remember it so it can be inserted
+        // when the function is parsed.
+        GlobalVariable *FwdRef = new GlobalVariable(*Fn->getParent(),
+                                                    Type::getInt8Ty(Context),
                                             false, GlobalValue::InternalLinkage,
-                                                  0, "");
-      BlockAddrFwdRefs[Fn].push_back(std::make_pair(Record[2], FwdRef));
-      V = FwdRef;
+                                                    0, "");
+        BlockAddrFwdRefs[Fn].push_back(std::make_pair(Record[2], FwdRef));
+        V = FwdRef;
+      }
       break;
     }  
     }
