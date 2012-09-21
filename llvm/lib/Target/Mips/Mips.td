@@ -77,6 +77,10 @@ def FeatureMips64r2    : SubtargetFeature<"mips64r2", "MipsArchVersion",
 def FeatureMips16  : SubtargetFeature<"mips16", "InMips16Mode", "true",
                                       "Mips16 mode">;
 
+def FeatureDSP : SubtargetFeature<"dsp", "HasDSP", "true", "Mips DSP ASE">;
+def FeatureDSPR2 : SubtargetFeature<"dspr2", "HasDSPR2", "true",
+                                    "Mips DSP-R2 ASE", [FeatureDSP]>;
+
 //===----------------------------------------------------------------------===//
 // Mips processors supported.
 //===----------------------------------------------------------------------===//
