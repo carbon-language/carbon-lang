@@ -536,6 +536,8 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
     SmallString<128> OpcodeStr;
     for (unsigned i = 0, e = IDVal.size(); i != e; ++i)
       OpcodeStr.push_back(tolower(IDVal[i]));
+    // FIXME: Convert to a StmtError.
+    assert(TargetParser->mnemonicIsValid(OpcodeStr) && "Invalid mnemonic!");
 
     // Parse the operands.
     llvm::SMLoc IDLoc;
