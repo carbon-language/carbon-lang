@@ -52,6 +52,9 @@ public:
   /// Create an implicit cast for an integer conversion.
   ImplicitCastExpr *makeIntegralCast(const Expr *Arg, QualType Ty);
   
+  // Create an implicit cast for lvalue-to-rvaluate conversions.
+  ImplicitCastExpr *makeLvalueToRvalue(const Expr *Arg, QualType Ty);
+  
 private:
   ASTContext &C;
 };
@@ -68,6 +71,11 @@ DeclRefExpr *ASTMaker::makeDeclRefExpr(const VarDecl *D) {
                         /* T = */ D->getType(),
                         /* VK = */ VK_LValue);
   return DR;
+}
+
+ImplicitCastExpr *ASTMaker::makeLvalueToRvalue(const Expr *Arg, QualType Ty) {
+  return ImplicitCastExpr::Create(C, Ty, CK_LValueToRValue,
+                                  const_cast<Expr*>(Arg), 0, VK_RValue);
 }
 
 ImplicitCastExpr *ASTMaker::makeIntegralCast(const Expr *Arg, QualType Ty) {
@@ -117,8 +125,7 @@ static Stmt *create_dispatch_once(ASTContext &C, const FunctionDecl *D) {
   
   // (1) Create the call.
   DeclRefExpr *DR = M.makeDeclRefExpr(Block);
-  ImplicitCastExpr *ICE = ImplicitCastExpr::Create(C, Ty, CK_LValueToRValue,
-                                                   DR, 0, VK_RValue);
+  ImplicitCastExpr *ICE = M.makeLvalueToRvalue(DR, Ty);
   CallExpr *CE = new (C) CallExpr(C, ICE, ArrayRef<Expr*>(), C.VoidTy,
                                   VK_RValue, SourceLocation());
 
@@ -128,9 +135,7 @@ static Stmt *create_dispatch_once(ASTContext &C, const FunctionDecl *D) {
                            C.IntTy, SourceLocation());
   ICE = M.makeIntegralCast(IL, PredicateTy);
   DR = M.makeDeclRefExpr(Predicate);
-  ImplicitCastExpr *LValToRval =
-    ImplicitCastExpr::Create(C, PredicateQPtrTy, CK_LValueToRValue, DR,
-                             0, VK_RValue);
+  ImplicitCastExpr *LValToRval = M.makeLvalueToRvalue(DR, PredicateQPtrTy);
   UnaryOperator *UO = new (C) UnaryOperator(LValToRval, UO_Deref, PredicateTy,
                                             VK_LValue, OK_Ordinary,
                                             SourceLocation());
@@ -147,13 +152,11 @@ static Stmt *create_dispatch_once(ASTContext &C, const FunctionDecl *D) {
   
   // (4) Create the 'if' condition.
   DR = M.makeDeclRefExpr(Predicate);
-  LValToRval = ImplicitCastExpr::Create(C, PredicateQPtrTy, CK_LValueToRValue,
-                                        DR, 0, VK_RValue);
+  LValToRval = M.makeLvalueToRvalue(DR, PredicateQPtrTy);
   UO = new (C) UnaryOperator(LValToRval, UO_Deref, PredicateTy,
                              VK_LValue, OK_Ordinary,
                              SourceLocation());
-  LValToRval = ImplicitCastExpr::Create(C, PredicateTy, CK_LValueToRValue,
-                                        UO, 0, VK_RValue);
+  LValToRval = M.makeLvalueToRvalue(UO, PredicateTy);
   UO = new (C) UnaryOperator(LValToRval, UO_LNot, C.IntTy,
                              VK_RValue, OK_Ordinary, SourceLocation());
   
