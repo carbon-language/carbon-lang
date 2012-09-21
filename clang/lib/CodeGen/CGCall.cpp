@@ -1043,7 +1043,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
         Attrs |= llvm::Attribute::ByVal;
 
       Attrs |=
-        llvm::Attribute::constructAlignmentFromInt(AI.getIndirectAlign());
+        llvm::Attributes::constructAlignmentFromInt(AI.getIndirectAlign());
       // byval disables readnone and readonly.
       FuncAttrs &= ~(llvm::Attribute::ReadOnly |
                      llvm::Attribute::ReadNone);
