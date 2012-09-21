@@ -72,7 +72,7 @@ class AnalysisDeclContext {
   /// AnalysisDeclContext. This may be null.
   AnalysisDeclContextManager *Manager;
 
-  const Decl *D;
+  const Decl * const D;
 
   OwningPtr<CFG> cfg, completeCFG;
   OwningPtr<CFGStmtMap> cfgStmtMap;
