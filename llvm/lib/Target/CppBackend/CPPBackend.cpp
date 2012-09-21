@@ -508,7 +508,7 @@ void CppWriter::printAttributes(const AttrListPtr &PAL,
 #undef HANDLE_ATTR
       if (attrs & Attribute::StackAlignment)
         Out << " | Attribute::constructStackAlignmentFromInt("
-            << Attribute::getStackAlignmentFromAttrs(attrs)
+            << attrs.getStackAlignment()
             << ")"; 
       attrs &= ~Attribute::StackAlignment;
       assert(attrs == 0 && "Unhandled attribute!");
