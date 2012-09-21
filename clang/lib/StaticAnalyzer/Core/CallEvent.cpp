@@ -414,7 +414,7 @@ SVal CXXInstanceCall::getCXXThisVal() const {
 }
 
 
-RuntimeDefinition CXXInstanceCall::getRuntimeDefinition(AnalysisDeclContextManager &M) const {
+RuntimeDefinition CXXInstanceCall::getRuntimeDefinition() const {
   // Do we have a decl at all?
   const Decl *D = getDecl();
   if (!D)
@@ -423,7 +423,7 @@ RuntimeDefinition CXXInstanceCall::getRuntimeDefinition(AnalysisDeclContextManag
   // If the method is non-virtual, we know we can inline it.
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(D);
   if (!MD->isVirtual())
-    return AnyFunctionCall::getRuntimeDefinition(M);
+    return AnyFunctionCall::getRuntimeDefinition();
 
   // Do we know the implicit 'this' object being called?
   const MemRegion *R = getCXXThisVal().getAsRegion();
@@ -513,16 +513,16 @@ const Expr *CXXMemberCall::getCXXThisExpr() const {
   return getOriginExpr()->getImplicitObjectArgument();
 }
 
-RuntimeDefinition CXXMemberCall::getRuntimeDefinition(AnalysisDeclContextManager &M) const {
+RuntimeDefinition CXXMemberCall::getRuntimeDefinition() const {
   // C++11 [expr.call]p1: ...If the selected function is non-virtual, or if the
   // id-expression in the class member access expression is a qualified-id,
   // that function is called. Otherwise, its final overrider in the dynamic type
   // of the object expression is called.
   if (const MemberExpr *ME = dyn_cast<MemberExpr>(getOriginExpr()->getCallee()))
     if (ME->hasQualifier())
-      return AnyFunctionCall::getRuntimeDefinition(M);
+      return AnyFunctionCall::getRuntimeDefinition();
   
-  return CXXInstanceCall::getRuntimeDefinition(M);
+  return CXXInstanceCall::getRuntimeDefinition();
 }
 
 
@@ -600,13 +600,13 @@ SVal CXXDestructorCall::getCXXThisVal() const {
   return UnknownVal();
 }
 
-RuntimeDefinition CXXDestructorCall::getRuntimeDefinition(AnalysisDeclContextManager &M) const {
+RuntimeDefinition CXXDestructorCall::getRuntimeDefinition() const {
   // Base destructors are always called non-virtually.
   // Skip CXXInstanceCall's devirtualization logic in this case.
   if (isBaseDestructor())
-    return AnyFunctionCall::getRuntimeDefinition(M);
+    return AnyFunctionCall::getRuntimeDefinition();
 
-  return CXXInstanceCall::getRuntimeDefinition(M);
+  return CXXInstanceCall::getRuntimeDefinition();
 }
 
 
@@ -790,7 +790,7 @@ bool ObjCMethodCall::canBeOverridenInSubclass(ObjCInterfaceDecl *IDecl,
   llvm_unreachable("The while loop should always terminate.");
 }
 
-RuntimeDefinition ObjCMethodCall::getRuntimeDefinition(AnalysisDeclContextManager &M) const {
+RuntimeDefinition ObjCMethodCall::getRuntimeDefinition() const {
   const ObjCMessageExpr *E = getOriginExpr();
   assert(E);
   Selector Sel = E->getSelector();

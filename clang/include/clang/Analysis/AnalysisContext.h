@@ -104,6 +104,12 @@ public:
   ASTContext &getASTContext() const { return D->getASTContext(); }
   const Decl *getDecl() const { return D; }
 
+  /// Return the AnalysisDeclContextManager (if any) that created
+  /// this AnalysisDeclContext.
+  AnalysisDeclContextManager *getManager() const {
+    return Manager;
+  }
+  
   /// Return the build options used to construct the CFG.
   CFG::BuildOptions &getCFGBuildOptions() {
     return cfgBuildOptions;
