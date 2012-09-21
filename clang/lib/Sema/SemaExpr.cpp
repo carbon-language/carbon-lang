@@ -87,6 +87,13 @@ static AvailabilityResult DiagnoseAvailabilityOfDecl(Sema &S,
       if (const EnumDecl *TheEnumDecl = dyn_cast<EnumDecl>(DC))
         Result = TheEnumDecl->getAvailability(&Message);
     }
+  const ObjCPropertyDecl *ObjCPDecl = 0;
+  if (Result == AR_Deprecated || Result == AR_Unavailable)
+    if (ObjCPropertyDecl *ND = S.PropertyIfSetterOrGetter(D)) {
+      AvailabilityResult PDeclResult = ND->getAvailability(0);
+      if (PDeclResult == Result)
+        ObjCPDecl = ND;
+    }
   
   switch (Result) {
     case AR_Available:
@@ -94,23 +101,30 @@ static AvailabilityResult DiagnoseAvailabilityOfDecl(Sema &S,
       break;
             
     case AR_Deprecated:
-      S.EmitDeprecationWarning(D, Message, Loc, UnknownObjCClass);
+      S.EmitDeprecationWarning(D, Message, Loc, UnknownObjCClass, ObjCPDecl);
       break;
             
     case AR_Unavailable:
       if (S.getCurContextAvailability() != AR_Unavailable) {
         if (Message.empty()) {
-          if (!UnknownObjCClass)
+          if (!UnknownObjCClass) {
             S.Diag(Loc, diag::err_unavailable) << D->getDeclName();
+            if (ObjCPDecl)
+              S.Diag(ObjCPDecl->getLocation(), diag::note_property_attribute)
+                << ObjCPDecl->getDeclName() << 1;
+          }
           else
             S.Diag(Loc, diag::warn_unavailable_fwdclass_message) 
               << D->getDeclName();
         }
-        else 
+        else
           S.Diag(Loc, diag::err_unavailable_message) 
             << D->getDeclName() << Message;
-          S.Diag(D->getLocation(), diag::note_unavailable_here) 
-          << isa<FunctionDecl>(D) << false;
+        S.Diag(D->getLocation(), diag::note_unavailable_here)
+                  << isa<FunctionDecl>(D) << false;
+        if (ObjCPDecl)
+          S.Diag(ObjCPDecl->getLocation(), diag::note_property_attribute)
+          << ObjCPDecl->getDeclName() << 1;
       }
       break;
     }

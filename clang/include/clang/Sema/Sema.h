@@ -2295,6 +2295,10 @@ public:
   /// its protocols.
   ObjCPropertyDecl *LookupPropertyDecl(const ObjCContainerDecl *CDecl,
                                        IdentifierInfo *II);
+  
+  /// PropertyIfSetterOrGetter - Looks up the property if named declaration
+  /// is a setter or getter method backing a property.
+  ObjCPropertyDecl *PropertyIfSetterOrGetter(NamedDecl *D);
 
   /// Called by ActOnProperty to handle \@property declarations in
   /// class extensions.
@@ -2686,7 +2690,8 @@ public:
 
   void EmitDeprecationWarning(NamedDecl *D, StringRef Message,
                               SourceLocation Loc,
-                              const ObjCInterfaceDecl *UnknownObjCClass=0);
+                              const ObjCInterfaceDecl *UnknownObjCClass,
+                              const ObjCPropertyDecl  *ObjCProperty);
 
   void HandleDelayedDeprecationCheck(sema::DelayedDiagnostic &DD, Decl *Ctx);
 

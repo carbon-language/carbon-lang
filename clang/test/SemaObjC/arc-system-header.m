@@ -38,7 +38,7 @@ id test6() {
   x = (id) (test6_helper(), kMagicConstant);
 }
 
-// workaround expected-note 4 {{marked unavailable here}}
+// workaround expected-note 4 {{marked unavailable here}} expected-note 2 {{property 'prop' is declared unavailable here}}
 void test7(Test7 *p) {
   *p.prop = 0; // expected-error {{'prop' is unavailable: this system declaration uses an unsupported type}}
   p.prop = 0; // expected-error {{'prop' is unavailable: this system declaration uses an unsupported type}}

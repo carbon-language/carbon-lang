@@ -107,7 +107,8 @@ __attribute ((deprecated))
 
 
 @interface Test2
-@property int test2 __attribute__((deprecated)); // expected-note 4 {{declared here}}
+@property int test2 __attribute__((deprecated)); // expected-note 4 {{declared here}} \
+						 // expected-note 2 {{property 'test2' is declared deprecated here}}
 @end
 
 void test(Test2 *foo) {

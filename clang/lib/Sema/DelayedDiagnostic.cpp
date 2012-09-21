@@ -22,6 +22,7 @@ using namespace sema;
 DelayedDiagnostic DelayedDiagnostic::makeDeprecation(SourceLocation Loc,
                                     const NamedDecl *D,
                                     const ObjCInterfaceDecl *UnknownObjCClass,
+                                    const ObjCPropertyDecl  *ObjCProperty,
                                     StringRef Msg) {
   DelayedDiagnostic DD;
   DD.Kind = Deprecation;
@@ -29,6 +30,7 @@ DelayedDiagnostic DelayedDiagnostic::makeDeprecation(SourceLocation Loc,
   DD.Loc = Loc;
   DD.DeprecationData.Decl = D;
   DD.DeprecationData.UnknownObjCClass = UnknownObjCClass;
+  DD.DeprecationData.ObjCProperty = ObjCProperty;
   char *MessageData = 0;
   if (Msg.size()) {
     MessageData = new char [Msg.size()];

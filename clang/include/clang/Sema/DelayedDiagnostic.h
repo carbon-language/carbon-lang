@@ -124,6 +124,7 @@ public:
   static DelayedDiagnostic makeDeprecation(SourceLocation Loc,
            const NamedDecl *D,
            const ObjCInterfaceDecl *UnknownObjCClass,
+           const ObjCPropertyDecl  *ObjCProperty,
            StringRef Msg);
 
   static DelayedDiagnostic makeAccess(SourceLocation Loc,
@@ -193,12 +194,17 @@ public:
     return DeprecationData.UnknownObjCClass;
   }
 
+  const ObjCPropertyDecl *getObjCProperty() const {
+    return DeprecationData.ObjCProperty;
+  }
+  
 private:
   union {
     /// Deprecation.
     struct {
       const NamedDecl *Decl;
       const ObjCInterfaceDecl *UnknownObjCClass;
+      const ObjCPropertyDecl  *ObjCProperty;
       const char *Message;
       size_t MessageLen;
     } DeprecationData;

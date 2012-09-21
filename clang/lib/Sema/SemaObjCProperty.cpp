@@ -22,6 +22,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallString.h"
+#include "clang/Lex/Preprocessor.h"
 
 using namespace clang;
 
@@ -1558,6 +1559,58 @@ ObjCPropertyDecl *Sema::LookupPropertyDecl(const ObjCContainerDecl *CDecl,
       ObjCPropertyDecl *Prop = LookupPropertyDecl((*PI), II);
       if (Prop)
         return Prop;
+    }
+  }
+  else if (const ObjCCategoryDecl *CatDecl =
+            dyn_cast<ObjCCategoryDecl>(CDecl)) {
+    for (ObjCContainerDecl::prop_iterator P = CatDecl->prop_begin(),
+         E = CatDecl->prop_end(); P != E; ++P) {
+      ObjCPropertyDecl *Prop = *P;
+      if (Prop->getIdentifier() == II)
+        return Prop;
+    }
+  }
+  return 0;
+}
+
+/// PropertyIfSetterOrGetter - Looks up the property if named declaration
+/// is a setter or getter method backing a property.
+ObjCPropertyDecl *Sema::PropertyIfSetterOrGetter(NamedDecl *D) {
+  if (const ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(D)) {
+    Selector Sel = Method->getSelector();
+    IdentifierInfo *Id = 0;
+    if (Sel.getNumArgs() == 0)
+      Id = Sel.getIdentifierInfoForSlot(0);
+    else if (Sel.getNumArgs() == 1) {
+      StringRef str = Sel.getNameForSlot(0);
+      if (str.startswith("set")) {
+        str = str.substr(3);
+        char front = str.front();
+        front = islower(front) ? toupper(front) : tolower(front);
+        SmallString<100> PropertyName = str;
+        PropertyName[0] = front;
+        Id = &PP.getIdentifierTable().get(PropertyName);
+      }
+    }
+    if (Id) {
+      if (isa<ObjCInterfaceDecl>(Method->getDeclContext())) {
+        const ObjCInterfaceDecl *IDecl = Method->getClassInterface();
+        while (IDecl) {
+          ObjCPropertyDecl  *PDecl =
+            LookupPropertyDecl(cast<ObjCContainerDecl>(IDecl), Id);
+          if (PDecl)
+            return PDecl;
+          for (ObjCCategoryDecl *Category = IDecl->getCategoryList();
+             Category; Category = Category->getNextClassCategory())
+            if ((PDecl =
+                 LookupPropertyDecl(cast<ObjCContainerDecl>(Category), Id)))
+              return PDecl;
+          IDecl = IDecl->getSuperClass();
+        }
+      } else if (ObjCPropertyDecl  *PDecl =
+                  LookupPropertyDecl(
+                    cast<ObjCContainerDecl>(Method->getDeclContext()), Id))
+               return PDecl;
     }
   }
   return 0;
