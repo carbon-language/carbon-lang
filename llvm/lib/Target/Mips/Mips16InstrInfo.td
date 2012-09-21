@@ -254,10 +254,12 @@ def OrRxRxRy16: FRxRxRy16_ins<0b01101, "or", IIAlu>, ArithLogic16Defs<1>;
 // for direct object emitter, encoding needs to be adjusted for the
 // frame size
 //
-let ra=1, s=0,s0=0,s1=0 in
+let ra=1, s=0,s0=1,s1=1 in
 def RestoreRaF16:
   FI8_SVRS16<0b1, (outs), (ins uimm16:$frame_size),
-             "restore \t$$ra, $frame_size", [], IILoad >;
+             "restore \t$$ra,  $$s0, $$s1, $frame_size", [], IILoad > {
+  let isCodeGenOnly = 1;
+}
 
 //
 // Format: SAVE {ra,}{s0/s1/s0-1,}{framesize} (All arguments are optional)
@@ -266,11 +268,12 @@ def RestoreRaF16:
 // To set up a stack frame on entry to a subroutine,
 // saving return address and static registers, and adjusting stack
 //
-let ra=1, s=1,s0=0,s1=0 in
+let ra=1, s=1,s0=1,s1=1 in
 def SaveRaF16:
   FI8_SVRS16<0b1, (outs), (ins uimm16:$frame_size),
-             "save \t$$ra, $frame_size", [], IILoad >;
-
+             "save \t$$ra, $$s0, $$s1, $frame_size", [], IILoad > {
+  let isCodeGenOnly = 1;
+}
 //
 // Format: SB ry, offset(rx) MIPS16e
 // Purpose: Store Byte (Extended)
