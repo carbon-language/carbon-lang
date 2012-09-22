@@ -6,6 +6,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class CategoriesDataFormatterTestCase(TestBase):
 
@@ -34,10 +35,11 @@ class CategoriesDataFormatterTestCase(TestBase):
         """Test that that file and class static variables display correctly."""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
-        self.expect("breakpoint set -f main.cpp -l %d" % self.line,
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.cpp', line = %d, locations = 1" %
-                        self.line)
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=True)
+#        self.expect("breakpoint set -f main.cpp -l %d" % self.line,
+#                    BREAKPOINT_CREATED,
+#            startstr = "Breakpoint created: 1: file ='main.cpp', line = %d, locations = 1" %
+#                        self.line)
 
         self.runCmd("run", RUN_SUCCEEDED)
 

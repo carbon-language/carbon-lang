@@ -4,6 +4,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class SetValuesTestCase(TestBase):
 
@@ -38,30 +39,15 @@ class SetValuesTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Set breakpoints on several places to set program variables.
-        self.expect("breakpoint set -f main.c -l %d" % self.line1,
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.c', line = %d, locations = 1" %
-                        self.line1)
+        lldbutil.run_break_set_by_file_and_line (self, "main.c", self.line1, num_expected_locations=1, loc_exact=True)
 
-        self.expect("breakpoint set -f main.c -l %d" % self.line2,
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 2: file ='main.c', line = %d, locations = 1" %
-                        self.line2)
+        lldbutil.run_break_set_by_file_and_line (self, "main.c", self.line2, num_expected_locations=1, loc_exact=True)
 
-        self.expect("breakpoint set -f main.c -l %d" % self.line3,
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 3: file ='main.c', line = %d, locations = 1" %
-                        self.line3)
+        lldbutil.run_break_set_by_file_and_line (self, "main.c", self.line3, num_expected_locations=1, loc_exact=True)
 
-        self.expect("breakpoint set -f main.c -l %d" % self.line4,
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 4: file ='main.c', line = %d, locations = 1" %
-                        self.line4)
+        lldbutil.run_break_set_by_file_and_line (self, "main.c", self.line4, num_expected_locations=1, loc_exact=True)
 
-        self.expect("breakpoint set -f main.c -l %d" % self.line5,
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 5: file ='main.c', line = %d, locations = 1" %
-                        self.line5)
+        lldbutil.run_break_set_by_file_and_line (self, "main.c", self.line5, num_expected_locations=1, loc_exact=True)
 
         self.runCmd("run", RUN_SUCCEEDED)
 

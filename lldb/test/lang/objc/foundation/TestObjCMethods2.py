@@ -6,6 +6,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
 class FoundationTestCase2(TestBase):
@@ -91,10 +92,10 @@ class FoundationTestCase2(TestBase):
         TestBase.setUp(self)
         # Find the line numbers to break at.
         self.lines = []
-        self.lines.append(line_number('main.m', '// Expressions to test here for selector:'))
-        self.lines.append(line_number('main.m', '// Expressions to test here for NSArray:'))
-        self.lines.append(line_number('main.m', '// Expressions to test here for NSString:'))
-        self.lines.append(line_number('main.m', "// Set a breakpoint on '-[MyString description]' and test expressions:"))
+        self.lines.append(line_number('main.m', '// Break here for selector: tests'))
+        self.lines.append(line_number('main.m', '// Break here for NSArray tests'))
+        self.lines.append(line_number('main.m', '// Break here for NSString tests'))
+        self.lines.append(line_number('main.m', '// Break here for description test'))
         self.lines.append(line_number('main.m', '// Set break point at this line'))
     
     def more_expr_objc(self):
@@ -104,9 +105,10 @@ class FoundationTestCase2(TestBase):
 
         # Create a bunch of breakpoints.
         for line in self.lines:
-            self.expect("breakpoint set -f main.m -l %d" % line, BREAKPOINT_CREATED,
-                substrs = ["Breakpoint created:",
-                           "file ='main.m', line = %d, locations = 1" % line])
+            lldbutil.run_break_set_by_file_and_line (self, "main.m", line, num_expected_locations=1, loc_exact=True)
+#            self.expect("breakpoint set -f main.m -l %d" % line, BREAKPOINT_CREATED,
+#                substrs = ["Breakpoint created:",
+#                           "file ='main.m', line = %d, locations = 1" % line])
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -143,9 +145,10 @@ class FoundationTestCase2(TestBase):
 
         # Break inside Test_NSArray:
         line = self.lines[1]
-        self.expect("breakpoint set -f main.m -l %d" % line, BREAKPOINT_CREATED,
-            substrs = ["Breakpoint created:",
-                       "file ='main.m', line = %d, locations = 1" % line])
+        lldbutil.run_break_set_by_file_and_line (self, "main.m", line, num_expected_locations=1, loc_exact=True)
+#        self.expect("breakpoint set -f main.m -l %d" % line, BREAKPOINT_CREATED,
+#            substrs = ["Breakpoint created:",
+#                       "file ='main.m', line = %d, locations = 1" % line])#
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -172,9 +175,10 @@ class FoundationTestCase2(TestBase):
 
         # Break inside Test_NSString:
         line = self.lines[2]
-        self.expect("breakpoint set -f main.m -l %d" % line, BREAKPOINT_CREATED,
-            substrs = ["Breakpoint created:",
-                       "file ='main.m', line = %d, locations = 1" % line])
+        lldbutil.run_break_set_by_file_and_line (self, "main.m", line, num_expected_locations=1, loc_exact=True)
+#        self.expect("breakpoint set -f main.m -l %d" % line, BREAKPOINT_CREATED,
+#            substrs = ["Breakpoint created:",
+#                       "file ='main.m', line = %d, locations = 1" % line])#
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -201,10 +205,11 @@ class FoundationTestCase2(TestBase):
         
         line = self.lines[4]
 
-        self.expect("breakpoint set -f main.m -l %d" % line, BREAKPOINT_CREATED,
-                    substrs = ["Breakpoint created:",
-                               "file ='main.m', line = %d, locations = 1" % line])
-        
+        lldbutil.run_break_set_by_file_and_line (self, "main.m", line, num_expected_locations=1, loc_exact=True)
+#        self.expect("breakpoint set -f main.m -l %d" % line, BREAKPOINT_CREATED,
+#                    substrs = ["Breakpoint created:",
+#                               "file ='main.m', line = %d, locations = 1" % line])
+#        
         self.runCmd("run", RUN_SUCCEEDED)
         
         self.expect("expression *my",
@@ -218,9 +223,10 @@ class FoundationTestCase2(TestBase):
         
         line = self.lines[4]
 
-        self.expect("breakpoint set -f main.m -l %d" % line, BREAKPOINT_CREATED,
-                    substrs = ["Breakpoint created:",
-                               "file ='main.m', line = %d, locations = 1" % line])
+        lldbutil.run_break_set_by_file_and_line (self, "main.m", line, num_expected_locations=1, loc_exact=True)
+#        self.expect("breakpoint set -f main.m -l %d" % line, BREAKPOINT_CREATED,
+#                    substrs = ["Breakpoint created:",
+#                               "file ='main.m', line = %d, locations = 1" % line])#
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -235,9 +241,10 @@ class FoundationTestCase2(TestBase):
         
         line = self.lines[4]
 
-        self.expect("breakpoint set -f main.m -l %d" % line, BREAKPOINT_CREATED,
-                    substrs = ["Breakpoint created:",
-                               "file ='main.m', line = %d, locations = 1" % line])
+        lldbutil.run_break_set_by_file_and_line (self, "main.m", line, num_expected_locations=1, loc_exact=True)
+#        self.expect("breakpoint set -f main.m -l %d" % line, BREAKPOINT_CREATED,
+#                    substrs = ["Breakpoint created:",
+#                               "file ='main.m', line = %d, locations = 1" % line])#
 
         self.runCmd("run", RUN_SUCCEEDED)
 

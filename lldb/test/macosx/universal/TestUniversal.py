@@ -4,6 +4,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class UniversalTestCase(TestBase):
 
@@ -53,10 +54,7 @@ class UniversalTestCase(TestBase):
             substrs = ["testit' (x86_64)."])
 
         # Break inside the main.
-        self.expect("breakpoint set -f main.c -l %d" % self.line,
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.c', line = %d, locations = 1" %
-                        self.line)
+        lldbutil.run_break_set_by_file_and_line (self, "main.c", self.line, num_expected_locations=1, loc_exact=True)
 
         # We should be able to launch the x86_64 executable.
         self.runCmd("run", RUN_SUCCEEDED)
@@ -81,10 +79,7 @@ class UniversalTestCase(TestBase):
             substrs = ["testit' (i386)."])
 
         # Break inside the main.
-        self.expect("breakpoint set -f main.c -l %d" % self.line,
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.c', line = %d, locations = 1" %
-                        self.line)
+        lldbutil.run_break_set_by_file_and_line (self, "main.c", self.line, num_expected_locations=1, loc_exact=True)
 
         # We should be able to launch the i386 executable as well.
         self.runCmd("run", RUN_SUCCEEDED)

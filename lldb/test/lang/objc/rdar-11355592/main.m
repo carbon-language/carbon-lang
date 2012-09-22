@@ -29,8 +29,8 @@ int main (int argc, char const *argv[])
 
     FoolMeOnce *my_foolie = [[FoolMeOnce alloc] initWithFirst: 20 andSecond: 55];
     const char *my_string = (char *) my_foolie;
-// Set breakpoint here.
-    my_string = "Now this is a REAL string...";
+
+    my_string = "Now this is a REAL string..."; // Set breakpoint here.
 
     [pool release];
     return 0;

@@ -4,6 +4,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class AnonymousTestCase(TestBase):
 
@@ -37,8 +38,7 @@ class AnonymousTestCase(TestBase):
 
         # Break inside the foo function which takes a bar_ptr argument.
 	for line in self.lines:
-            self.expect("breakpoint set -f main.c -l %d" % line, BREAKPOINT_CREATED,
-                startstr = "Breakpoint created")
+            lldbutil.run_break_set_by_file_and_line (self, "main.c", line, num_expected_locations=1, loc_exact=True)
 
     def wait_for_breakpoint(self):
         if self.is_started == False:

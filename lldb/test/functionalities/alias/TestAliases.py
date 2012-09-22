@@ -6,6 +6,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class AliasTestCase(TestBase):
 
@@ -80,15 +81,16 @@ class AliasTestCase(TestBase):
         self.runCmd ("alias bpa bp command add")
         self.runCmd ("alias bpi bp list")
 
-        self.expect ("bp set -n foo",
-                     startstr = "Breakpoint created: 1: name = 'foo', locations = 1")
+        break_results = lldbutil.run_break_set_command (self, "bp set -n foo")
+        lldbutil.check_breakpoint_result (self, break_results, num_locations=1, symbol_name='foo', symbol_match_exact=False)
 
-        self.expect ("bp set -n sum",
-                     startstr = "Breakpoint created: 2: name = 'sum', locations = 1")
+        break_results = lldbutil.run_break_set_command (self, "bp set -n sum")
+        lldbutil.check_breakpoint_result (self, break_results, num_locations=1, symbol_name='sum', symbol_match_exact=False)
 
         self.runCmd ("alias bfl bp set -f %1 -l %2")
-        self.expect ("bfl main.cpp 32",
-                     startstr = "Breakpoint created: 3: file ='main.cpp', line = 32, locations = 1")
+
+        break_results = lldbutil.run_break_set_command (self, "bfl main.cpp 32")
+        lldbutil.check_breakpoint_result (self, break_results, num_locations=1, file_name='main.cpp', line_number=32)
 
         self.expect ("bpi",
                      startstr = "Current breakpoints:",

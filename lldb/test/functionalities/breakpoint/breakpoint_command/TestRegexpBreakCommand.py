@@ -6,6 +6,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class RegexpBreakCommandTestCase(TestBase):
 
@@ -36,12 +37,11 @@ class RegexpBreakCommandTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
-        self.expect("b %d" % self.line,
-                    BREAKPOINT_CREATED,
-            substrs = ["Breakpoint created: 1: file ='main.c', line = %d, locations = 1" % self.line])
-        self.expect("b %s:%d" % (self.source, self.line),
-                    BREAKPOINT_CREATED,
-            substrs = ["Breakpoint created: 2: file ='main.c', line = %d, locations = 1" % self.line])
+        break_results = lldbutil.run_break_set_command (self, "b %d" % self.line)
+        lldbutil.check_breakpoint_result (self, break_results, file_name='main.c', line_number=self.line, num_locations=1)
+
+        break_results = lldbutil.run_break_set_command (self, "b %s:%d" % (self.source, self.line))
+        lldbutil.check_breakpoint_result (self, break_results, file_name='main.c', line_number=self.line, num_locations=1)
 
         self.runCmd("run", RUN_SUCCEEDED)
 

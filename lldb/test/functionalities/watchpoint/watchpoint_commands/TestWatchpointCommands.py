@@ -6,6 +6,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class WatchpointCommandsTestCase(TestBase):
 
@@ -106,9 +107,7 @@ class WatchpointCommandsTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Add a breakpoint to set a watchpoint when stopped on the breakpoint.
-        self.expect("breakpoint set -l %d" % self.line, BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='%s', line = %d, locations = 1" %
-                       (self.source, self.line))
+        lldbutil.run_break_set_by_file_and_line (self, None, self.line, num_expected_locations=1)
 
         # Run the program.
         self.runCmd("run", RUN_SUCCEEDED)
@@ -163,9 +162,7 @@ class WatchpointCommandsTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Add a breakpoint to set a watchpoint when stopped on the breakpoint.
-        self.expect("breakpoint set -l %d" % self.line, BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='%s', line = %d, locations = 1" %
-                       (self.source, self.line))
+        lldbutil.run_break_set_by_file_and_line (self, None, self.line, num_expected_locations=1)
 
         # Run the program.
         self.runCmd("run", RUN_SUCCEEDED)
@@ -205,9 +202,7 @@ class WatchpointCommandsTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Add a breakpoint to set a watchpoint when stopped on the breakpoint.
-        self.expect("breakpoint set -l %d" % self.line, BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='%s', line = %d, locations = 1" %
-                       (self.source, self.line))
+        lldbutil.run_break_set_by_file_and_line (self, None, self.line, num_expected_locations=1)
 
         # Run the program.
         self.runCmd("run", RUN_SUCCEEDED)
@@ -251,9 +246,158 @@ class WatchpointCommandsTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Add a breakpoint to set a watchpoint when stopped on the breakpoint.
-        self.expect("breakpoint set -l %d" % self.line, BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='%s', line = %d, locations = 1" %
-                       (self.source, self.line))
+        lldbutil.run_break_set_by_file_and_line (self, "main.m")
+#        self.expect("breakpoint set -l %d" % self.line, BREAKPOINT_CREATED,
+#            startstr = "Breakpoint created: 1: file ='%s', line = %d, locations = 1" %
+#                       (self.source, self.line))#
+
+        # Run the program.
+        self.runCmd("run", RUN_SUCCEEDED)
+
+        # We should be stopped again due to the breakpoint.
+        # The stop reason of the thread should be breakpoint.
+        self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
+            substrs = ['stopped',
+                       'stop reason = breakpoint'])
+
+        # Now let's set a read_write-type watchpoint for 'global'.
+        # There should be two watchpoint hits (see main.c).
+        self.expect("watchpoint set variable -w read_write global", WATCHPOINT_CREATED,
+            substrs = ['Watchpoint created', 'size = 4', 'type = rw',
+                       '%s:%d' % (self.source, self.decl)])
+
+        # Use the '-v' option to do verbose listing of the watchpoint.
+        # The hit count should be 0 initially.
+        self.expect("watchpoint list -v",
+            substrs = ['Number of supported hardware watchpoints:',
+                       'hit_count = 0'])
+
+        self.runCmd("process continue")
+
+        # We should be stopped again due to the watchpoint (read_write type).
+        # The stop reason of the thread should be watchpoint.
+        self.expect("thread backtrace", STOPPED_DUE_TO_WATCHPOINT,
+            substrs = ['stop reason = watchpoint'])
+
+        self.runCmd("process continue")
+
+        # We should be stopped again due to the watchpoint (read_write type).
+        # The stop reason of the thread should be watchpoint.
+        self.expect("thread backtrace", STOPPED_DUE_TO_WATCHPOINT,
+            substrs = ['stop reason = watchpoint'])
+
+        self.runCmd("process continue")
+
+        # There should be no more watchpoint hit and the process status should
+        # be 'exited'.
+        self.expect("process status",
+            substrs = ['exited'])
+
+        # Use the '-v' option to do verbose listing of the watchpoint.
+        # The hit count should now be 2.
+        self.expect("watchpoint list -v",
+            substrs = ['hit_count = 2'])
+
+    def delete_read_write_watchpoint(self):
+        """Do delete watchpoint immediately and expect not to stop for watchpoint."""
+        exe = os.path.join(os.getcwd(), self.exe_name)
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+
+        # Add a breakpoint to set a watchpoint when stopped on the breakpoint.
+        lldbutil.run_break_set_by_file_and_line (self, None, self.line, num_expected_locations=1)
+#        self.expect("breakpoint set -l %d" % self.line, BREAKPOINT_CREATED,
+#            startstr = "Breakpoint created: 1: file ='%s', line = %d, locations = 1" %
+#                       (self.source, self.line))
+
+        # Run the program.
+        self.runCmd("run", RUN_SUCCEEDED)
+
+        # We should be stopped again due to the breakpoint.
+        # The stop reason of the thread should be breakpoint.
+        self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
+            substrs = ['stopped',
+                       'stop reason = breakpoint'])
+
+        # Now let's set a read_write-type watchpoint for 'global'.
+        # There should be two watchpoint hits (see main.c).
+        self.expect("watchpoint set variable -w read_write global", WATCHPOINT_CREATED,
+            substrs = ['Watchpoint created', 'size = 4', 'type = rw',
+                       '%s:%d' % (self.source, self.decl)])
+
+        # Delete the watchpoint immediately, but set auto-confirm to true first.
+        self.runCmd("settings set auto-confirm true")
+        self.expect("watchpoint delete",
+            substrs = ['All watchpoints removed.'])
+        # Restore the original setting of auto-confirm.
+        self.runCmd("settings clear auto-confirm")
+
+        # Use the '-v' option to do verbose listing of the watchpoint.
+        self.runCmd("watchpoint list -v")
+
+        self.runCmd("process continue")
+
+        # There should be no more watchpoint hit and the process status should
+        # be 'exited'.
+        self.expect("process status",
+            substrs = ['exited'])
+
+    def ignore_read_write_watchpoint(self):
+        """Test watchpoint ignore count and expect to not to stop at all."""
+        exe = os.path.join(os.getcwd(), self.exe_name)
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+
+        # Add a breakpoint to set a watchpoint when stopped on the breakpoint.
+        lldbutil.run_break_set_by_file_and_line (self, None, self.line, num_expected_locations=1)
+#        self.expect("breakpoint set -l %d" % self.line, BREAKPOINT_CREATED,
+#            startstr = "Breakpoint created: 1: file ='%s', line = %d, locations = 1" %
+#                       (self.source, self.line))
+
+        # Run the program.
+        self.runCmd("run", RUN_SUCCEEDED)
+
+        # We should be stopped again due to the breakpoint.
+        # The stop reason of the thread should be breakpoint.
+        self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
+            substrs = ['stopped',
+                       'stop reason = breakpoint'])
+
+        # Now let's set a read_write-type watchpoint for 'global'.
+        # There should be two watchpoint hits (see main.c).
+        self.expect("watchpoint set variable -w read_write global", WATCHPOINT_CREATED,
+            substrs = ['Watchpoint created', 'size = 4', 'type = rw',
+                       '%s:%d' % (self.source, self.decl)])
+
+        # Set the ignore count of the watchpoint immediately.
+        self.expect("watchpoint ignore -i 2",
+            substrs = ['All watchpoints ignored.'])
+
+        # Use the '-v' option to do verbose listing of the watchpoint.
+        # Expect to find an ignore_count of 2.
+        self.expect("watchpoint list -v",
+            substrs = ['hit_count = 0', 'ignore_count = 2'])
+
+        self.runCmd("process continue")
+
+        # There should be no more watchpoint hit and the process status should
+        # be 'exited'.
+        self.expect("process status",
+            substrs = ['exited'])
+
+        # Use the '-v' option to do verbose listing of the watchpoint.
+        # Expect to find a hit_count of 2 as well.
+        self.expect("watchpoint list -v",
+            substrs = ['hit_count = 2', 'ignore_count = 2'])
+
+    def read_write_watchpoint_disable_after_first_stop(self):
+        """Do read_write watchpoint but disable it after the first stop."""
+        exe = os.path.join(os.getcwd(), self.exe_name)
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+
+        # Add a breakpoint to set a watchpoint when stopped on the breakpoint.
+        lldbutil.run_break_set_by_file_and_line (self, None, self.line, num_expected_locations=1)
+#        self.expect("breakpoint set -l %d" % self.line, BREAKPOINT_CREATED,
+#            startstr = "Breakpoint created: 1: file ='%s', line = %d, locations = 1" %
+#                       (self.source, self.line))#
 
         # Run the program.
         self.runCmd("run", RUN_SUCCEEDED)
@@ -307,12 +451,14 @@ class WatchpointCommandsTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Add a breakpoint to set a watchpoint when stopped on the breakpoint.
-        self.expect("breakpoint set -l %d" % self.line, BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='%s', line = %d, locations = 1" %
-                       (self.source, self.line))
-        self.expect("breakpoint set -l %d" % self.line2, BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 2: file ='%s', line = %d, locations = 1" %
-                       (self.source, self.line2))
+        lldbutil.run_break_set_by_file_and_line (self, None, self.line, num_expected_locations=1)
+#        self.expect("breakpoint set -l %d" % self.line, BREAKPOINT_CREATED,
+#            startstr = "Breakpoint created: 1: file ='%s', line = %d, locations = 1" %
+#                       (self.source, self.line))
+        lldbutil.run_break_set_by_file_and_line (self, None, self.line2, num_expected_locations=1)
+#        self.expect("breakpoint set -l %d" % self.line2, BREAKPOINT_CREATED,
+#            startstr = "Breakpoint created: 2: file ='%s', line = %d, locations = 1" %
+#                       (self.source, self.line2))
 
         # Run the program.
         self.runCmd("run", RUN_SUCCEEDED)

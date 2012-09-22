@@ -11,6 +11,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 # rdar://problem/9087739
 # test failure: objc_optimized does not work for "-C clang -A i386"
@@ -39,9 +40,7 @@ class ObjcOptimizedTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
-        self.expect("breakpoint set -n '%s'" % self.method_spec,
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: name = '%s', locations = 1" % self.method_spec)
+        lldbutil.run_break_set_by_symbol (self, self.method_spec, num_expected_locations=1, sym_exact=True)
 
         self.runCmd("run", RUN_SUCCEEDED)
         self.expect("thread backtrace", STOPPED_DUE_TO_BREAKPOINT,

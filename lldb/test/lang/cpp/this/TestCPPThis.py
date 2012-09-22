@@ -1,8 +1,9 @@
 """
 Tests that C++ member and static variables are available where they should be.
 """
-
+import lldb
 from lldbtest import *
+import lldbutil
 
 class CPPThisTestCase(TestBase):
     
@@ -29,10 +30,8 @@ class CPPThisTestCase(TestBase):
         TestBase.setUp(self)
     
     def set_breakpoint(self, line):
-        self.expect("breakpoint set -f main.cpp -l %d" % line,
-                    BREAKPOINT_CREATED,
-                    startstr = "Breakpoint created")
-    
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", line, num_expected_locations=1, loc_exact=False)
+
     def static_method_commands(self):
         """Test that the appropriate member variables are available when stopped in C++ static, inline, and const methods"""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)

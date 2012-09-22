@@ -7,6 +7,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class CommonShortSpellingsTestCase(TestBase):
     
@@ -29,8 +30,9 @@ class CommonShortSpellingsTestCase(TestBase):
                     patterns = [ "Current executable set to .*a.out.*" ])
 
         # br s -> breakpoint set
-        self.expect("br s -n sum",
-            startstr = "Breakpoint created: 1: name = 'sum', locations = 1")
+        
+        match_object = lldbutil.run_break_set_command (self, "br s -n sum")
+        lldbutil.check_breakpoint_result (self, match_object, symbol_name='sum', symbol_match_exact=False, num_locations=1)
 
         self.runCmd("settings set interpreter.expand-regex-aliases true")
         self.addTearDownHook(

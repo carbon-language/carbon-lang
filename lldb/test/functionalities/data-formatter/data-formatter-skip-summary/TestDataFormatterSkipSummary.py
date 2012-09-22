@@ -6,6 +6,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class SkipSummaryDataFormatterTestCase(TestBase):
 
@@ -34,10 +35,9 @@ class SkipSummaryDataFormatterTestCase(TestBase):
         """Test that that file and class static variables display correctly."""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
-        self.expect("breakpoint set -f main.cpp -l %d" % self.line,
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.cpp', line = %d, locations = 1" %
-                        self.line)
+        #import lldbutil
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=True)
+
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -134,7 +134,7 @@ class SkipSummaryDataFormatterTestCase(TestBase):
         # Bad debugging info on SnowLeopard gcc (Apple Inc. build 5666).
         # Skip the following tests if the condition is met.
         if self.getCompiler().endswith('gcc') and not self.getCompiler().endswith('llvm-gcc'):
-           import re, lldbutil
+           import re
            gcc_version_output = system([lldbutil.which(self.getCompiler()), "-v"])[1]
            #print "my output:", gcc_version_output
            for line in gcc_version_output.split(os.linesep):

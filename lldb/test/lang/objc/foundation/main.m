@@ -40,7 +40,7 @@
 {
     // Set a breakpoint on '-[MyString description]' and test expressions:
     // expression (char *)sel_getName(_cmd)
-    if (self.descriptionPauses)
+  if (self.descriptionPauses)  // Break here for description test
     {
         printf ("\nAbout to sleep.\n");
         usleep(100000);
@@ -60,7 +60,7 @@ Test_Selector ()
     //      The expression above should return "sel" as it should be just
     //      a uniqued C string pointer. We were seeing the result pointer being
     //      truncated with recent LLDBs.
-    return 0;
+    return 0; // Break here for selector: tests
 }
 
 int
@@ -82,7 +82,7 @@ Test_NSString (const char *program)
     // expression str.description
     // expression str = @"new"
     // expression str = [NSString stringWithFormat: @"%cew", 'N']
-    return 0;
+    return 0; // Break here for NSString tests
 }
 
 NSString *my_global_str = NULL;
@@ -112,7 +112,7 @@ Test_NSArray ()
     // expression array2.count
     id obj;
     // After each object at index call, use expression and validate object
-    obj = [array1 objectAtIndex: 0];
+    obj = [array1 objectAtIndex: 0]; // Break here for NSArray tests
     obj = [array1 objectAtIndex: 1];
     obj = [array1 objectAtIndex: 2];
 

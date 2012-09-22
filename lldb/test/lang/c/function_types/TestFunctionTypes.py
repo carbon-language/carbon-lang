@@ -4,6 +4,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class FunctionTypesTestCase(TestBase):
 
@@ -46,10 +47,7 @@ class FunctionTypesTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
         
         # Break inside the main.
-        self.expect("breakpoint set -f main.c -l %d" % self.line,
-                    BREAKPOINT_CREATED,
-                    startstr = "Breakpoint created: 1: file ='main.c', line = %d, locations = 1" %
-                    self.line)
+        lldbutil.run_break_set_by_file_and_line (self, "main.c", self.line, num_expected_locations=1, loc_exact=True)
         
         self.runCmd("run", RUN_SUCCEEDED)
         
@@ -72,7 +70,7 @@ class FunctionTypesTestCase(TestBase):
             startstr = '(int (*)(const char *)) callback =')
 
         # And that we can break on the callback function.
-        self.runCmd("breakpoint set -n string_not_empty", BREAKPOINT_CREATED)
+        lldbutil.run_break_set_by_symbol (self, "string_not_empty", num_expected_locations=1, sym_exact=True)
         self.runCmd("continue")
 
         # Check that we do indeed stop on the string_not_empty function.

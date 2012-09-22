@@ -6,6 +6,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class BreakpointIDTestCase(TestBase):
 
@@ -27,15 +28,15 @@ class BreakpointIDTestCase(TestBase):
         self.expect("file " + exe,
                     patterns = [ "Current executable set to .*a.out" ])
 
-        self.expect ("breakpoint set -n product",
-                     startstr = "Breakpoint created: 1: name = 'product', locations =")
+        
+        bpno = lldbutil.run_break_set_by_symbol (self, 'product', num_expected_locations=-1, sym_exact=False)
+        self.assertTrue (bpno == 1, "First breakpoint number is 1.")
 
-        self.expect ("breakpoint set -n sum",
-                     startstr = "Breakpoint created: 2: name = 'sum', locations =")
+        bpno = lldbutil.run_break_set_by_symbol (self, 'sum', num_expected_locations=-1, sym_exact=False)
+        self.assertTrue (bpno == 2, "Second breakpoint number is 2.")
 
-        self.expect ("breakpoint set -n junk",
-                     startstr = "Breakpoint created: 3: name = 'junk', locations = 0 (pending)",
-                     substrs = [ "WARNING:  Unable to resolve breakpoint to any actual locations." ] )
+        bpno = lldbutil.run_break_set_by_symbol (self, 'junk', num_expected_locations=0, sym_exact=False)
+        self.assertTrue (bpno == 3, "Third breakpoint number is 3.")
 
         self.expect ("breakpoint disable 1.1 - 2.2 ",
                      COMMAND_FAILED_AS_EXPECTED, error = True,

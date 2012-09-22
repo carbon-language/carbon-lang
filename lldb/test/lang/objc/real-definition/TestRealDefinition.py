@@ -4,6 +4,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class TestRealDefinition(TestBase):
 
@@ -54,13 +55,15 @@ class TestRealDefinition(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Break inside the foo function which takes a bar_ptr argument.
-        self.expect("breakpoint set -f main.m -l %d" % line_number('main.m', '// Set breakpoint in main'), BREAKPOINT_CREATED, startstr = "Breakpoint created")
+        line = line_number('main.m', '// Set breakpoint in main')
+        lldbutil.run_break_set_by_file_and_line (self, "main.m", line, num_expected_locations=1, loc_exact=True)
 
     def stop_at_interface(self):
         """Test that we can find the implementation for an objective C type when we stop in the interface"""
         self.common_setup()
 
-        self.expect("breakpoint set -f Foo.m -l %d" % line_number('Foo.m', '// Set breakpoint where Bar is an interface'), BREAKPOINT_CREATED, startstr = "Breakpoint created")
+        line = line_number('Foo.m', '// Set breakpoint where Bar is an interface')
+        lldbutil.run_break_set_by_file_and_line (self, 'Foo.m', line, num_expected_locations=1, loc_exact=True);
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -87,7 +90,8 @@ class TestRealDefinition(TestBase):
         """Test that we can find the implementation for an objective C type when we stop in the implementation"""
         self.common_setup()
 
-        self.expect("breakpoint set -f Bar.m -l %d" % line_number('Bar.m', '// Set breakpoint where Bar is an implementation'), BREAKPOINT_CREATED, startstr = "Breakpoint created")
+        line = line_number('Bar.m', '// Set breakpoint where Bar is an implementation')
+        lldbutil.run_break_set_by_file_and_line (self, 'Bar.m', line, num_expected_locations=1, loc_exact=True)
 
         self.runCmd("run", RUN_SUCCEEDED)
 

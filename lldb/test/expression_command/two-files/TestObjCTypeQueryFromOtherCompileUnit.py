@@ -7,6 +7,7 @@ The expression parser's type search only looks in the current compilation unit f
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class ObjCTypeQueryTestCase(TestBase):
 
@@ -36,10 +37,7 @@ class ObjCTypeQueryTestCase(TestBase):
         """The expression parser's type search should be wider than the current compilation unit."""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
-        self.expect("breakpoint set -f main.m -l %d" % self.line,
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.m', line = %d" %
-                        self.line)
+        lldbutil.run_break_set_by_file_and_line (self, "main.m", self.line, num_expected_locations=1, loc_exact=True)
 
         self.runCmd("run", RUN_SUCCEEDED)
 

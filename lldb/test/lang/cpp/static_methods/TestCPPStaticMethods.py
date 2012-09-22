@@ -2,7 +2,9 @@
 Tests expressions that distinguish between static and non-static methods.
 """
 
+import lldb
 from lldbtest import *
+import lldbutil
 
 class CPPStaticMethodsTestCase(TestBase):
     
@@ -29,9 +31,7 @@ class CPPStaticMethodsTestCase(TestBase):
         """Test that static methods are properly distinguished from regular methods"""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
-        self.expect("breakpoint set -f main.cpp -l %d" % self.line,
-                    BREAKPOINT_CREATED,
-                    startstr = "Breakpoint created: 1: file ='main.cpp', line = %d, locations = 1" % self.line)
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=True)
 
         self.runCmd("process launch", RUN_SUCCEEDED)
 

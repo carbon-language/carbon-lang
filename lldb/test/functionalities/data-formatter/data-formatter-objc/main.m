@@ -653,9 +653,7 @@ int main (int argc, const char * argv[])
 	NSArray *components = @[@"usr", @"blah", @"stuff"];
 	NSString *path = [NSString pathWithComponents: components];
 
-    // Set break point at this line.
-
-    [molecule addObserver:[My_KVO_Observer new] forKeyPath:@"atoms" options:0 context:NULL];
+    [molecule addObserver:[My_KVO_Observer new] forKeyPath:@"atoms" options:0 context:NULL];     // Set break point at this line.
     [newMutableDictionary addObserver:[My_KVO_Observer new] forKeyPath:@"weirdKeyToKVO" options:NSKeyValueObservingOptionNew context:NULL];
 
     [molecule setAtoms:nil];

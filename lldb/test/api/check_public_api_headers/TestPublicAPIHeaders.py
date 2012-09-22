@@ -6,6 +6,7 @@ should compile and link with the LLDB framework."""
 import os, re, StringIO
 import unittest2
 from lldbtest import *
+import lldbutil
 
 class SBDirCheckerCase(TestBase):
 
@@ -81,10 +82,7 @@ class SBDirCheckerCase(TestBase):
         self.runCmd(env_cmd)
         self.addTearDownHook(lambda: self.runCmd("settings remove target.env-vars %s" % env_var))
 
-        self.expect('breakpoint set -f %s -l %d' % (self.source, self.line_to_break),
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='%s', line = %d" %
-                        (self.source, self.line_to_break))
+        lldbutil.run_break_set_by_file_and_line (self, self.source, self.line_to_break, num_expected_locations = -1)
 
         self.runCmd("run", RUN_SUCCEEDED)
 

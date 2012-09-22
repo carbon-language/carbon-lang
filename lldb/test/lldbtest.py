@@ -1101,6 +1101,49 @@ class TestBase(Base):
             self.assertTrue(self.res.Succeeded(),
                             msg if msg else CMD_MSG(cmd))
 
+    def match (self, str, patterns, msg=None, trace=False, error=False, matching=True, exe=True):
+        """run command in str, and match the result against regexp in patterns returning the match object for the first matching pattern
+
+        Otherwise, all the arguments have the same meanings as for the expect function"""
+
+        trace = (True if traceAlways else trace)
+
+        if exe:
+            # First run the command.  If we are expecting error, set check=False.
+            # Pass the assert message along since it provides more semantic info.
+            self.runCmd(str, msg=msg, trace = (True if trace else False), check = not error)
+
+            # Then compare the output against expected strings.
+            output = self.res.GetError() if error else self.res.GetOutput()
+
+            # If error is True, the API client expects the command to fail!
+            if error:
+                self.assertFalse(self.res.Succeeded(),
+                                 "Command '" + str + "' is expected to fail!")
+        else:
+            # No execution required, just compare str against the golden input.
+            output = str
+            with recording(self, trace) as sbuf:
+                print >> sbuf, "looking at:", output
+
+        # The heading says either "Expecting" or "Not expecting".
+        heading = "Expecting" if matching else "Not expecting"
+
+        for pattern in patterns:
+            # Match Objects always have a boolean value of True.
+            match_object = re.search(pattern, output)
+            matched = bool(match_object)
+            with recording(self, trace) as sbuf:
+                print >> sbuf, "%s pattern: %s" % (heading, pattern)
+                print >> sbuf, "Matched" if matched else "Not matched"
+            if matched:
+                break
+
+        self.assertTrue(matched if matching else not matched,
+                        msg if msg else EXP_MSG(str, exe))
+
+        return match_object        
+
     def expect(self, str, msg=None, patterns=None, startstr=None, endstr=None, substrs=None, trace=False, error=False, matching=True, exe=True):
         """
         Similar to runCmd; with additional expect style output matching ability.

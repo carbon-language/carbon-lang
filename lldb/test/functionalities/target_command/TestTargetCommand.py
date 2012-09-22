@@ -6,6 +6,7 @@ import unittest2
 import lldb
 import sys
 from lldbtest import *
+import lldbutil
 
 class targetCommandTestCase(TestBase):
 
@@ -84,13 +85,11 @@ class targetCommandTestCase(TestBase):
         self.runCmd("run", RUN_SUCCEEDED)
 
         self.runCmd("target create " + exe_b, CURRENT_EXECUTABLE_SET)
-        self.runCmd("breakpoint set -f %s -l %d" % ('b.c', self.line_b),
-                    BREAKPOINT_CREATED)
+        lldbutil.run_break_set_by_file_and_line (self, 'b.c', self.line_b, num_expected_locations=1, loc_exact=True)
         self.runCmd("run", RUN_SUCCEEDED)
 
         self.runCmd("target create " + exe_c, CURRENT_EXECUTABLE_SET)
-        self.runCmd("breakpoint set -f %s -l %d" % ('c.c', self.line_c),
-                    BREAKPOINT_CREATED)
+        lldbutil.run_break_set_by_file_and_line (self, 'c.c', self.line_c, num_expected_locations=1, loc_exact=True)
         self.runCmd("run", RUN_SUCCEEDED)
 
         self.runCmd("target list")

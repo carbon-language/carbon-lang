@@ -4,6 +4,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class HiddenIvarsTestCase(TestBase):
 
@@ -52,8 +53,7 @@ class HiddenIvarsTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Break inside the foo function which takes a bar_ptr argument.
-        self.expect("breakpoint set -f main.m -l %d" % self.line, BREAKPOINT_CREATED,
-            startstr = "Breakpoint created")
+        lldbutil.run_break_set_by_file_and_line (self, "main.m", self.line, num_expected_locations=1, loc_exact=True)
 
         self.runCmd("run", RUN_SUCCEEDED)
 

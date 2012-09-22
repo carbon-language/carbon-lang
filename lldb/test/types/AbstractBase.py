@@ -6,6 +6,7 @@ import os, time
 import re
 import lldb
 from lldbtest import *
+import lldbutil
 
 def Msg(var, val, using_frame_variable):
     return "'%s %s' matches the output (from compiled code): %s" % (
@@ -120,10 +121,7 @@ class GenericTester(TestBase):
             break_line = line_number ("basic_type.cpp", "// Break here to test block captured variables.")
         else:
             break_line = line_number ("basic_type.cpp", "// Here is the line we will break on to check variables.")
-        self.expect("breakpoint set -f basic_type.cpp -l %d" % break_line,
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='basic_type.cpp', line = %d, locations = 1" %
-                        break_line)
+        lldbutil.run_break_set_by_file_and_line (self, "basic_type.cpp", break_line, num_expected_locations=1, loc_exact=True)
 
         self.runCmd("run", RUN_SUCCEEDED)
         self.expect("process status", STOPPED_DUE_TO_BREAKPOINT,
@@ -204,10 +202,8 @@ class GenericTester(TestBase):
             break_line = line_number ("basic_type.cpp", "// Break here to test block captured variables.")
         else:
             break_line = line_number ("basic_type.cpp", "// Here is the line we will break on to check variables.")
-        self.expect("breakpoint set -f basic_type.cpp -l %d" % break_line,
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='basic_type.cpp', line = %d, locations = 1" %
-                        break_line)
+        lldbutil.run_break_set_by_file_and_line (self, "basic_type.cpp", break_line, num_expected_locations=1, loc_exact=True)
+
         self.runCmd("run", RUN_SUCCEEDED)
         self.expect("process status", STOPPED_DUE_TO_BREAKPOINT,
             substrs = [" at basic_type.cpp:%d" % break_line,

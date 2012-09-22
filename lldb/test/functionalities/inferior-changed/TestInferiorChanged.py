@@ -4,6 +4,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class ChangedInferiorTestCase(TestBase):
 
@@ -64,10 +65,7 @@ class ChangedInferiorTestCase(TestBase):
             self.fail("Inferior changed, but lldb did not perform a reload")
 
         # Break inside the main.
-        self.expect("breakpoint set -f main2.c -l %d" % self.line2,
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main2.c', line = %d, locations = 1" %
-                        self.line2)
+        lldbutil.run_break_set_by_file_and_line (self, "main2.c", self.line2, num_expected_locations=1, loc_exact=True)
 
         self.runCmd("run", RUN_SUCCEEDED)
 

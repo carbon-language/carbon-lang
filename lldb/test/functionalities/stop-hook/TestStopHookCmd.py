@@ -7,6 +7,7 @@ import unittest2
 import StringIO
 import lldb
 from lldbtest import *
+import lldbutil
 
 class StopHookCmdTestCase(TestBase):
 
@@ -43,14 +44,9 @@ class StopHookCmdTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
-        self.expect('breakpoint set -f main.cpp -l %d' % self.begl,
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.cpp', line = %d" %
-                        self.begl)
-        self.expect('breakpoint set -f main.cpp -l %d' % self.line,
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 2: file ='main.cpp', line = %d" %
-                        self.line)
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.begl, num_expected_locations=1, loc_exact=True)
+
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=True)
 
         self.runCmd("target stop-hook add -f main.cpp -l %d -e %d -o 'expr ptr'" % (self.begl, self.endl))
 

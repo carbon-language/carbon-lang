@@ -6,6 +6,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class AbbreviationsTestCase(TestBase):
     
@@ -90,11 +91,11 @@ class AbbreviationsTestCase(TestBase):
         self.expect("_regexp-b product", matching=False,
                     substrs = [ "breakpoint set --name" ])
 
-        self.expect("br s -n sum",
-                    startstr = "Breakpoint created: 2: name = 'sum', locations = 1")
+        match_object = lldbutil.run_break_set_command (self, "br s -n sum")
+        lldbutil.check_breakpoint_result (self, match_object, symbol_name='sum', symbol_match_exact=False, num_locations=1)
 
-        self.expect("br s -f main.cpp -l 32",
-                    startstr = "Breakpoint created: 3: file ='main.cpp', line = 32, locations = 1")
+        match_object = lldbutil.run_break_set_command (self, "br s -f main.cpp -l 32")
+        lldbutil.check_breakpoint_result (self, match_object, file_name='main.cpp', line_number=32, num_locations=1)
 
         self.runCmd("br co a -s python 1 -o 'print frame'")
         self.expect("br co l 1",

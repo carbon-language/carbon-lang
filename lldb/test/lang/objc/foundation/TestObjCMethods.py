@@ -7,6 +7,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
 class FoundationTestCase(TestBase):
@@ -61,20 +62,26 @@ class FoundationTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Stop at +[NSString stringWithFormat:].
-        self.expect("_regexp-break +[NSString stringWithFormat:]", BREAKPOINT_CREATED,
-            substrs = ["Breakpoint created: 1: name = '+[NSString stringWithFormat:]', locations = 1"])
+        break_results = lldbutil.run_break_set_command(self, "_regexp-break +[NSString stringWithFormat:]")
+        lldbutil.check_breakpoint_result (self, break_results, symbol_name='+[NSString stringWithFormat:]', num_locations=1)
+#        self.expect("_regexp-break +[NSString stringWithFormat:]", BREAKPOINT_CREATED,
+#            substrs = ["Breakpoint created: 1: name = '+[NSString stringWithFormat:]', locations = 1"])
 
         # Stop at -[MyString initWithNSString:].
-        self.expect("breakpoint set -n '-[MyString initWithNSString:]'", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 2: name = '-[MyString initWithNSString:]', locations = 1")
+        lldbutil.run_break_set_by_symbol (self, '-[MyString initWithNSString:]', num_expected_locations=1, sym_exact=True)
+#        self.expect("breakpoint set -n '-[MyString initWithNSString:]'", BREAKPOINT_CREATED,
+#            startstr = "Breakpoint created: 2: name = '-[MyString initWithNSString:]', locations = 1")
 
         # Stop at the "description" selector.
-        self.expect("breakpoint set -S description", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 3: name = 'description', locations = 1")
+        lldbutil.run_break_set_by_selector (self, 'description', num_expected_locations=1)
+#        self.expect("breakpoint set -S description", BREAKPOINT_CREATED,
+#            startstr = "Breakpoint created: 3: name = 'description', locations = 1")
 
         # Stop at -[NSAutoreleasePool release].
-        self.expect("_regexp-break -[NSAutoreleasePool release]", BREAKPOINT_CREATED,
-            substrs = ["Breakpoint created: 4: name = '-[NSAutoreleasePool release]', locations = 1"])
+        break_results = lldbutil.run_break_set_command(self, "_regexp-break -[NSAutoreleasePool release]")
+        lldbutil.check_breakpoint_result (self, break_results, symbol_name='-[NSAutoreleasePool release]', num_locations=1)
+#        self.expect("_regexp-break -[NSAutoreleasePool release]", BREAKPOINT_CREATED,
+#            substrs = ["Breakpoint created: 4: name = '-[NSAutoreleasePool release]', locations = 1"])
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -125,8 +132,9 @@ class FoundationTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Stop at -[MyString description].
-        self.expect("breakpoint set -n '-[MyString description]", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: name = '-[MyString description]', locations = 1")
+        lldbutil.run_break_set_by_symbol (self, '-[MyString description]', num_expected_locations=1, sym_exact=True)
+#        self.expect("breakpoint set -n '-[MyString description]", BREAKPOINT_CREATED,
+#            startstr = "Breakpoint created: 1: name = '-[MyString description]', locations = 1")
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -195,10 +203,11 @@ class FoundationTestCase(TestBase):
         #
 
         self.runCmd("breakpoint delete 1")
-        self.expect("breakpoint set -f main.m -l %d" % self.line,
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 2: file ='main.m', line = %d, locations = 1" %
-                        self.line)
+        lldbutil.run_break_set_by_file_and_line (self, "main.m", self.line, num_expected_locations=1, loc_exact=True)
+#        self.expect("breakpoint set -f main.m -l %d" % self.line,
+#                    BREAKPOINT_CREATED,
+#            startstr = "Breakpoint created: 2: file ='main.m', line = %d, locations = 1" %
+#                        self.line)
         self.runCmd("process continue")
 
         # rdar://problem/8542091

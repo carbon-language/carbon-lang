@@ -55,10 +55,8 @@ class BreakpointIgnoreCountTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
-        # Create a breakpoint by function name 'c'.
-        self.expect("breakpoint set -i 1 -f main.c -l %d" % self.line1, BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.c', line = %d, locations = 1" %
-                        self.line1)
+        # Create a breakpoint in main.c at line1.
+        lldbutil.run_break_set_by_file_and_line (self, 'main.c', self.line1, extra_options='-i 1', num_expected_locations=1, loc_exact=True)
 
         # Now run the program.
         self.runCmd("run", RUN_SUCCEEDED)

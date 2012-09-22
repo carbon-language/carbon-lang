@@ -7,6 +7,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class InlinedBreakpointsTestCase(TestBase):
     """Bug fixed: rdar://problem/8464339"""
@@ -38,9 +39,7 @@ class InlinedBreakpointsTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Set a breakpoint and fail because it is in an inlined source implemenation file
-        self.expect("breakpoint set -f basic_type.cpp -l %d" % self.line,
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='basic_type.cpp', line = %d, locations = 0 (pending)" % self.line)
+        lldbutil.run_break_set_by_file_and_line (self, "basic_type.cpp", self.line, num_expected_locations=0)
 
         # Now enable breakpoints in implementation files and see the breakpoint set succeed
         self.runCmd('settings set target.inline-breakpoint-strategy always')
@@ -48,10 +47,7 @@ class InlinedBreakpointsTestCase(TestBase):
         self.addTearDownHook(
             lambda: self.runCmd("settings set target.inline-breakpoint-strategy headers"))
 
-        self.expect("breakpoint set -f basic_type.cpp -l %d" % self.line,
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 2: file ='basic_type.cpp', line = %d, locations = 1" %
-                        self.line)
+        lldbutil.run_break_set_by_file_and_line (self, "basic_type.cpp", self.line, num_expected_locations=1, loc_exact=True)
 
         self.runCmd("run", RUN_SUCCEEDED)
 

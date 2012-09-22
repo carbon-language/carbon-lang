@@ -6,6 +6,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class WatchedVariableHitWhenInScopeTestCase(TestBase):
 
@@ -39,8 +40,7 @@ class WatchedVariableHitWhenInScopeTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Add a breakpoint to set a watchpoint when stopped in main.
-        self.expect("breakpoint set -n main", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: name = 'main'")
+        lldbutil.run_break_set_by_symbol (self, "main", num_expected_locations=-1)
 
         # Run the program.
         self.runCmd("run", RUN_SUCCEEDED)

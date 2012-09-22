@@ -62,6 +62,5 @@ int main()
 	               256*'X' +
 	               256*256*'T'+
 	               256*256*256*'F';
-    // Set second cast break point at this line.
-    return 0;
+    return 0;     // Set second cast break point at this line.
 }

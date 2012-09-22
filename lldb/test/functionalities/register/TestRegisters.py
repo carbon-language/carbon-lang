@@ -7,6 +7,7 @@ import re
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class RegisterCommandsTestCase(TestBase):
 
@@ -39,9 +40,7 @@ class RegisterCommandsTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Break in main().
-        self.expect("breakpoint set -n main",
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: name = 'main'")
+        lldbutil.run_break_set_by_symbol (self, "main", num_expected_locations=-1)
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -68,9 +67,7 @@ class RegisterCommandsTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Break in main().
-        self.expect("breakpoint set -n main",
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: name = 'main'")
+        lldbutil.run_break_set_by_symbol (self, "main", num_expected_locations=-1)
 
         self.runCmd("run", RUN_SUCCEEDED)
 

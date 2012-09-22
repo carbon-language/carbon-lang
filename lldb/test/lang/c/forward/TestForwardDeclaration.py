@@ -4,6 +4,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class ForwardDeclarationTestCase(TestBase):
 
@@ -32,8 +33,7 @@ class ForwardDeclarationTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Break inside the foo function which takes a bar_ptr argument.
-        self.expect("breakpoint set -n foo", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: name = 'foo', locations = 1")
+        lldbutil.run_break_set_by_symbol (self, "foo", num_expected_locations=1, sym_exact=True)
 
         self.runCmd("run", RUN_SUCCEEDED)
 

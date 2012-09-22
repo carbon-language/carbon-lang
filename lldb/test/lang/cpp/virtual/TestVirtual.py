@@ -6,6 +6,7 @@ import os, time
 import re
 import lldb
 from lldbtest import *
+import lldbutil
 
 def Msg(expr, val):
     return "'expression %s' matches the output (from compiled code): %s" % (expr, val)
@@ -62,7 +63,7 @@ class CppVirtualMadness(TestBase):
         # Bring the program to the point where we can issue a series of
         # 'expression' command to compare against the golden output.
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
-        self.runCmd("breakpoint set -f main.cpp -l %d" % self.line)
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=False)
         self.runCmd("run", RUN_SUCCEEDED)
 
         # Now iterate through the golden list, comparing against the output from

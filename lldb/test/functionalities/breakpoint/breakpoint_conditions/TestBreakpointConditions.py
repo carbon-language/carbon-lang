@@ -67,12 +67,10 @@ class BreakpointConditionsTestCase(TestBase):
 
         if inline:
             # Create a breakpoint by function name 'c' and set the condition.
-            self.expect("breakpoint set -n c -c 'val == 3'", BREAKPOINT_CREATED,
-                startstr = "Breakpoint created: 1: name = 'c', locations = 1")
+            lldbutil.run_break_set_by_symbol (self, "c", extra_options="-c 'val == 3'", num_expected_locations=1, sym_exact=True)
         else:
             # Create a breakpoint by function name 'c'.
-            self.expect("breakpoint set -n c", BREAKPOINT_CREATED,
-                startstr = "Breakpoint created: 1: name = 'c', locations = 1")
+            lldbutil.run_break_set_by_symbol (self, "c", num_expected_locations=1, sym_exact=True)
 
             # And set a condition on the breakpoint to stop on when 'val == 3'.
             self.runCmd("breakpoint modify -c 'val == 3' 1")

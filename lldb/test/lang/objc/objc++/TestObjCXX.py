@@ -6,6 +6,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class ObjCXXTestCase(TestBase):
 
@@ -32,8 +33,7 @@ class ObjCXXTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
-        self.expect("breakpoint set -p 'breakpoint 1'", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created")
+        lldbutil.run_break_set_by_source_regexp (self, 'breakpoint 1', num_expected_locations=1) 
 
         self.runCmd("run", RUN_SUCCEEDED)
 

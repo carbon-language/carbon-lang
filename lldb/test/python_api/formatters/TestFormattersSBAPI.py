@@ -4,6 +4,7 @@ import os, sys, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class SBFormattersAPITestCase(TestBase):
 
@@ -42,10 +43,7 @@ class SBFormattersAPITestCase(TestBase):
         """Test Python APIs for working with formatters"""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
-        self.expect("breakpoint set -f main.cpp -l %d" % self.line,
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.cpp', line = %d, locations = 1" %
-                        self.line)
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=True)
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -304,10 +302,7 @@ class SBFormattersAPITestCase(TestBase):
         """Test that one can have the public API return non-synthetic SBValues if desired"""
         self.runCmd("file no_synth", CURRENT_EXECUTABLE_SET)
 
-        self.expect("breakpoint set -f main.cpp -l %d" % self.line,
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.cpp', line = %d, locations = 1" %
-                        self.line)
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=True)
 
         self.runCmd("run", RUN_SUCCEEDED)
 

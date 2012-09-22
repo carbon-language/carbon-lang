@@ -258,6 +258,193 @@ def value_type_to_str(enum):
 
 
 # ==================================================
+# Utility functions for setting breakpoints
+# ==================================================
+
+def run_break_set_by_file_and_line (test, file_name, line_number, extra_options = None, num_expected_locations = 1, loc_exact=False, module_name=None):
+    """Set a breakpoint by file and line, returning the breakpoint number. 
+
+    If extra_options is not None, then we append it to the breakpoint set command.
+
+    If num_expected_locations is -1 we check that we got AT LEAST one location, otherwise we check that num_expected_locations equals the number of locations.
+
+    If loc_exact is true, we check that there is one location, and that location must be at the input file and line number."""
+
+    if file_name == None:
+        command = 'breakpoint set -l %d'%(line_number)
+    else:
+        command = 'breakpoint set -f "%s" -l %d'%(file_name, line_number)
+
+    if extra_options:
+        command += " " + extra_options
+
+    break_results = run_break_set_command (test, command)
+
+    if num_expected_locations == 1 and loc_exact:
+        check_breakpoint_result (test, break_results, num_locations=num_expected_locations, file_name = file_name, line_number = line_number, module_name=module_name)
+    else:
+        check_breakpoint_result (test, break_results, num_locations = num_expected_locations)
+
+    return get_bpno_from_match (break_results)
+
+def run_break_set_by_symbol (test, symbol, extra_options = None, num_expected_locations = -1, sym_exact = False, module_name=None):
+    """Set a breakpoint by symbol name.  Common options are the same as run_break_set_by_file_and_line.
+
+    If sym_exact is true, then the output symbol must match the input exactly, otherwise we do a substring match."""
+    command = 'breakpoint set -n "%s"'%(symbol)
+    if extra_options:
+        command += " " + extra_options
+
+    break_results = run_break_set_command (test, command)
+
+    if num_expected_locations == 1 and sym_exact:
+        check_breakpoint_result (test, break_results, num_locations = num_expected_locations, symbol_name = symbol, module_name=module_name)
+    else:
+        check_breakpoint_result (test, break_results, num_locations = num_expected_locations)
+
+    return get_bpno_from_match (break_results)
+
+def run_break_set_by_selector (test, selector, extra_options = None, num_expected_locations = -1, module_name=None):
+    """Set a breakpoint by selector.  Common options are the same as run_break_set_by_file_and_line."""
+
+    command = 'breakpoint set -S "%s"'%(selector)
+    if extra_options:
+        command += " " + extra_options
+
+    break_results = run_break_set_command (test, command)
+
+    if num_expected_locations == 1:
+        check_breakpoint_result (test, break_results, num_locations = num_expected_locations, symbol_name = selector, symbol_match_exact=False, module_name=module_name)
+    else:
+        check_breakpoint_result (test, break_results, num_locations = num_expected_locations)
+
+    return get_bpno_from_match (break_results)
+
+def run_break_set_by_regexp (test, regexp, extra_options=None, num_expected_locations=-1):
+    """Set a breakpoint by regular expression match on symbol name.  Common options are the same as run_break_set_by_file_and_line."""
+
+    command = 'breakpoint set -r "%s"'%(regexp)
+    if extra_options:
+        command += " " + extra_options
+    
+    break_results = run_break_set_command (test, command)
+    
+    check_breakpoint_result (test, break_results, num_locations=num_expected_locations)
+
+    return get_bpno_from_match (break_results)
+
+def run_break_set_by_source_regexp (test, regexp, extra_options=None, num_expected_locations=-1):
+    """Set a breakpoint by source regular expression.  Common options are the same as run_break_set_by_file_and_line."""
+    command = 'breakpoint set -p "%s"'%(regexp)
+    if extra_options:
+        command += " " + extra_options
+    
+    break_results = run_break_set_command (test, command)
+    
+    check_breakpoint_result (test, break_results, num_locations=num_expected_locations)
+
+    return get_bpno_from_match (break_results)
+
+def run_break_set_command (test, command):
+    """Run the command passed in - it must be some break set variant - and analyze the result.  
+    Returns a dictionary of information gleaned from the command-line results.
+    Will assert if the breakpoint setting fails altogether.
+
+    Dictionary will contain:
+        bpno          - breakpoint of the newly created breakpoint, -1 on error.
+        num_locations - number of locations set for the breakpoint.
+
+    If there is only one location, the dictionary MAY contain:
+        file          - source file name
+        line_no       - source line number
+        symbol        - symbol name
+        inline_symbol - inlined symbol name
+        offset        - offset from the original symbol
+        module        - module
+        address       - address at which the breakpoint was set."""
+
+    patterns = [r"^Breakpoint (?P<bpno>[0-9]+): (?P<num_locations>[0-9]+) locations\.$",
+                r"^Breakpoint (?P<bpno>[0-9]+): (?P<num_locations>no) locations \(pending\)\.",
+                r"^Breakpoint (?P<bpno>[0-9]+): where = (?P<module>.*)`(?P<symbol>[+\-]{0,1}[^+]+)( \+ (?P<offset>[0-9]+)){0,1}( \[inlined\] (?P<inline_symbol>.*)){0,1} at (?P<file>[^:]+):(?P<line_no>[0-9]+), address = (?P<address>0x[0-9a-fA-F]+)$",
+                r"^Breakpoint (?P<bpno>[0-9]+): where = (?P<module>.*)`(?P<symbol>.*)( \+ (?P<offset>[0-9]+)){0,1}, address = (?P<address>0x[0-9a-fA-F]+)$"]
+    match_object = test.match (command, patterns)
+    break_results = match_object.groupdict()
+    print "Break results: ", break_results
+
+    # We always insert the breakpoint number, setting it to -1 if we couldn't find it
+    # Also, make sure it gets stored as an integer.
+    if not 'bpno' in break_results:
+        break_results['bpno'] = -1
+    else:
+        break_results['bpno'] = int(break_results['bpno'])
+        
+    # We always insert the number of locations
+    # If ONE location is set for the breakpoint, then the output doesn't mention locations, but it has to be 1...
+    # We also make sure it is an integer.
+
+    if not 'num_locations' in break_results:
+        num_locations = 1
+    else:
+        num_locations = break_results['num_locations']
+        if num_locations == 'no':
+            num_locations = 0
+        else:
+            num_locations = int(break_results['num_locations'])
+
+    break_results['num_locations'] = num_locations
+    
+    if 'line_no' in break_results:
+        break_results['line_no'] = int(break_results['line_no'])
+
+    return break_results
+
+def get_bpno_from_match (break_results):
+    return int (break_results['bpno'])
+
+def check_breakpoint_result (test, break_results, file_name=None, line_number=-1, symbol_name=None, symbol_match_exact=True, module_name=None, offset=-1, num_locations=-1):
+
+    out_num_locations = break_results['num_locations']
+
+    print "Num locations: ", num_locations, " and out num locations: ", out_num_locations
+    if num_locations == -1:
+        test.assertTrue (out_num_locations > 0, "Expecting one or more locations, got none.")
+    else:
+        test.assertTrue (num_locations == out_num_locations, "Expecting %d locations, got %d."%(num_locations, out_num_locations))
+
+    if file_name:
+        out_file_name = ""
+        if 'file' in break_results:
+            out_file_name = break_results['file']
+        test.assertTrue (file_name == out_file_name, "Breakpoint file name '%s' doesn't match resultant name '%s'."%(file_name, out_file_name))
+
+    if line_number != -1:
+        out_file_line = -1
+        if 'line_no' in break_results:
+            out_line_number = break_results['line_no']
+
+        test.assertTrue (line_number == out_line_number, "Breakpoint line number %s doesn't match resultant line %s."%(line_number, out_line_number))
+
+    if symbol_name:
+        out_symbol_name = ""
+        # Look first for the inlined symbol name, otherwise use the symbol name:
+        if 'inline_symbol' in break_results and break_results['inline_symbol']:
+            out_symbol_name = break_results['inline_symbol']
+        elif 'symbol' in break_results:
+            out_symbol_name = break_results['symbol']
+
+        if symbol_match_exact:
+            test.assertTrue(symbol_name == out_symbol_name, "Symbol name '%s' doesn't match resultant symbol '%s'."%(symbol_name, out_symbol_name))
+        else:
+            test.assertTrue(out_symbol_name.find(symbol_name) != -1, "Symbol name '%s' isn't in resultant symbol '%s'."%(symbol_name, out_symbol_name))
+
+    if module_name:
+        out_nodule_name = None
+        if 'module' in break_results:
+            out_module_name = break_results['module']
+        
+        test.assertTrue (module_name.find(out_module_name) != -1, "Symbol module name '%s' isn't in expected module name '%s'."%(out_module_name, module_name))
+
+# ==================================================
 # Utility functions related to Threads and Processes
 # ==================================================
 

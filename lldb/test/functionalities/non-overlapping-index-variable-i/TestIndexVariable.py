@@ -4,6 +4,7 @@ from out of scope to in scope when stopped at the breakpoint."""
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class NonOverlappingIndexVariableCase(TestBase):
 
@@ -26,10 +27,7 @@ class NonOverlappingIndexVariableCase(TestBase):
         exe = os.path.join(os.getcwd(), exe_name)
         self.runCmd("file %s" % exe, CURRENT_EXECUTABLE_SET)
 
-        self.expect('breakpoint set -f %s -l %d' % (self.source, self.line_to_break),
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='%s', line = %d, locations = 1" %
-                        (self.source, self.line_to_break))
+        lldbutil.run_break_set_by_file_and_line (self, self.source, self.line_to_break, num_expected_locations=1, loc_exact=True)
 
         self.runCmd("run", RUN_SUCCEEDED)
 

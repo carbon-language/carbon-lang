@@ -4,6 +4,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class BSDArchivesTestCase(TestBase):
 
@@ -26,9 +27,8 @@ class BSDArchivesTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Break inside a() by file and line first.
-        self.expect("breakpoint set -f a.c -l %d" % self.line, BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='a.c', line = %d" %
-                        self.line)
+        lldbutil.run_break_set_by_file_and_line (self, "a.c", self.line, num_expected_locations=1, loc_exact=True)
+
         self.runCmd("run", RUN_SUCCEEDED)
 
         # The stop reason of the thread should be breakpoint.
@@ -43,9 +43,7 @@ class BSDArchivesTestCase(TestBase):
             substrs = ['(int) __a_global = 1'])
 
         # Set breakpoint for b() next.
-        self.expect("breakpoint set -n b", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 2: name = 'b'",
-            substrs = ['resolved = 1'])
+        lldbutil.run_break_set_by_symbol (self, "b", num_expected_locations=1, sym_exact=True)
 
         # Continue the program, we should break at b(int) next.
         self.runCmd("continue")

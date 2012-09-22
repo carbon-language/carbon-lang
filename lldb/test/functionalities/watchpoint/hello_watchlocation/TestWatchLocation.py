@@ -7,6 +7,7 @@ import re
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class HelloWatchLocationTestCase(TestBase):
 
@@ -46,9 +47,7 @@ class HelloWatchLocationTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Add a breakpoint to set a watchpoint when stopped on the breakpoint.
-        self.expect("breakpoint set -l %d" % self.line, BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='%s', line = %d, locations = 1" %
-                       (self.source, self.line))
+        lldbutil.run_break_set_by_file_and_line (self, None, self.line, num_expected_locations=1, loc_exact=False)
 
         # Run the program.
         self.runCmd("run", RUN_SUCCEEDED)

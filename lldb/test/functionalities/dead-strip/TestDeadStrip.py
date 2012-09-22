@@ -6,6 +6,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class DeadStripTestCase(TestBase):
 
@@ -30,16 +31,13 @@ class DeadStripTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Break by function name f1 (live code).
-        self.expect("breakpoint set -s a.out -n f1", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: name = 'f1', module = a.out, locations = 1")
+        lldbutil.run_break_set_by_symbol (self, "f1", extra_options="-s a.out", num_expected_locations=1, module_name="a.out")
 
         # Break by function name f2 (dead code).
-        self.expect("breakpoint set -s a.out -n f2", BREAKPOINT_PENDING_CREATED,
-            startstr = "Breakpoint created: 2: name = 'f2', module = a.out, locations = 0 (pending)")
+        lldbutil.run_break_set_by_symbol (self, "f2", extra_options="-s a.out", num_expected_locations=0)
 
         # Break by function name f3 (live code).
-        self.expect("breakpoint set -s a.out -n f3", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 3: name = 'f3', module = a.out, locations = 1")
+        lldbutil.run_break_set_by_symbol (self, "f3", extra_options="-s a.out", num_expected_locations=1, module_name="a.out")
 
         self.runCmd("run", RUN_SUCCEEDED)
 

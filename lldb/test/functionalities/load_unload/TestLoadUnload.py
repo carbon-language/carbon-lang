@@ -7,6 +7,7 @@ import re
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class LoadUnloadTestCase(TestBase):
 
@@ -112,10 +113,8 @@ class LoadUnloadTestCase(TestBase):
         remove_dyld_path_cmd = "settings remove target.env-vars " + dylibPath
         self.addTearDownHook(lambda: self.runCmd(remove_dyld_path_cmd))
 
-        self.expect("breakpoint set -f d.c -l %d" % self.line_d_function,
-                    BREAKPOINT_CREATED,
-                    startstr = "Breakpoint created: 1: file ='d.c', line = %d" %
-                        self.line_d_function)
+        lldbutil.run_break_set_by_file_and_line (self, "d.c", self.line_d_function, num_expected_locations=1, loc_exact=True)
+
         # For now we don't track DYLD_LIBRARY_PATH, so the old library will be in
         # the modules list.
         self.expect("target modules list",
@@ -143,10 +142,7 @@ class LoadUnloadTestCase(TestBase):
         # Break at main.c before the call to dlopen().
         # Use lldb's process load command to load the dylib, instead.
 
-        self.expect("breakpoint set -f main.c -l %d" % self.line,
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.c', line = %d" %
-                        self.line)
+        lldbutil.run_break_set_by_file_and_line (self, "main.c", self.line, num_expected_locations=1, loc_exact=True)
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -190,8 +186,7 @@ class LoadUnloadTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Break by function name a_function (not yet loaded).
-        self.expect("breakpoint set -n a_function", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: name = 'a_function', locations = 0 (pending)")
+        lldbutil.run_break_set_by_symbol (self, "a_function", num_expected_locations=0)
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -230,9 +225,7 @@ class LoadUnloadTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Break by function name a_function (not yet loaded).
-        self.expect("breakpoint set -f main.c -l %d"%(self.line), BREAKPOINT_CREATED,
-            substrs = ['Breakpoint created:',
-                      "file ='main.c', line = %d, locations = 1"%(self.line)])
+        lldbutil.run_break_set_by_file_and_line (self, "main.c", self.line, num_expected_locations=1, loc_exact=True)
 
         self.runCmd("run", RUN_SUCCEEDED)
 

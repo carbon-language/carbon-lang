@@ -6,6 +6,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 class Radar9531204TestCase(TestBase):
 
@@ -18,9 +19,7 @@ class Radar9531204TestCase(TestBase):
 
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
-        self.expect("breakpoint set -n foo",
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: name = 'foo', locations = 1")
+        lldbutil.run_break_set_by_symbol (self, 'foo', sym_exact=True, num_expected_locations=1)
 
         self.runCmd("run", RUN_SUCCEEDED)
 

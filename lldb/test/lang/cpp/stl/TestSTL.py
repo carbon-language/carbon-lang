@@ -63,10 +63,7 @@ class STLTestCase(TestBase):
         # rdar://problem/8543077
         # test/stl: clang built binaries results in the breakpoint locations = 3,
         # is this a problem with clang generated debug info?
-        self.expect("breakpoint set -f %s -l %d" % (self.source, self.line),
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.cpp', line = %d" %
-                        self.line)
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=True)
 
         self.runCmd("run", RUN_SUCCEEDED)
 

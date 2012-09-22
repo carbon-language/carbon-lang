@@ -6,6 +6,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import lldbutil
 
 @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
 class MethodReturningBOOLTestCase(TestBase):
@@ -42,10 +43,7 @@ class MethodReturningBOOLTestCase(TestBase):
         exe = os.path.join(os.getcwd(), exe_name)
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
-        self.expect("breakpoint set -f %s -l %d" % (self.main_source, self.line),
-                    BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='%s', line = %d, locations = 1" %
-                        (self.main_source, self.line))
+        lldbutil.run_break_set_by_file_and_line (self, "main.m", self.line, num_expected_locations=1, loc_exact=True)
 
         self.runCmd("run", RUN_SUCCEEDED)
         self.expect("process status", STOPPED_DUE_TO_BREAKPOINT,
