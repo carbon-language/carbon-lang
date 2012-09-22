@@ -1,5 +1,11 @@
 ; RUN: llc < %s -O0 -march=x86-64 -mcpu=corei7 | FileCheck %s --check-prefix X64
 ; RUN: llc < %s -O0 -march=x86 -mcpu=corei7 | FileCheck %s --check-prefix X32
+; RUN: llc < %s -O0 -mtriple=x86_64-linux-unknonw-unknown -mcpu=corei7 -show-mc-encoding | grep xaddw | grep 0x66
+; RUN: llc < %s -O0 -mtriple=x86_64-linux-unknonw-unknown -mcpu=corei7 -show-mc-encoding | grep addw | grep 0x66
+; RUN: llc < %s -O0 -mtriple=x86_64-linux-unknonw-unknown -mcpu=corei7 -show-mc-encoding | grep subw | grep 0x66
+; RUN: llc < %s -O0 -mtriple=x86_64-linux-unknonw-unknown -mcpu=corei7 -show-mc-encoding | grep xorw | grep 0x66
+; RUN: llc < %s -O0 -mtriple=x86_64-linux-unknonw-unknown -mcpu=corei7 -show-mc-encoding | grep orw | grep 0x66
+; RUN: llc < %s -O0 -mtriple=x86_64-linux-unknonw-unknown -mcpu=corei7 -show-mc-encoding | grep andw | grep 0x66
 
 @sc16 = external global i16
 
