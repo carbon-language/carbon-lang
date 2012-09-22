@@ -1482,7 +1482,9 @@ ASTNodeImporter::VisitFunctionNoProtoType(const FunctionNoProtoType *T) {
                                                         T->getExtInfo());
 }
 
-QualType ASTNodeImporter::VisitFunctionProtoType(const FunctionProtoType *T) {
+static QualType importFunctionProtoType(ASTImporter &Importer,
+                                        const FunctionProtoType *T,
+                                        bool importExceptionSpecDecls) {
   QualType ToResultType = Importer.Import(T->getResultType());
   if (ToResultType.isNull())
     return QualType();
@@ -1509,16 +1511,38 @@ QualType ASTNodeImporter::VisitFunctionProtoType(const FunctionProtoType *T) {
     ExceptionTypes.push_back(ExceptionType);
   }
 
-  FunctionProtoType::ExtProtoInfo EPI = T->getExtProtoInfo();
-  EPI.Exceptions = ExceptionTypes.data();
-  EPI.NoexceptExpr = Importer.Import(EPI.NoexceptExpr);
-  EPI.ExceptionSpecDecl
-    = cast_or_null<FunctionDecl>(Importer.Import(EPI.ExceptionSpecDecl));
-  EPI.ExceptionSpecTemplate
-    = cast_or_null<FunctionDecl>(Importer.Import(EPI.ExceptionSpecTemplate));
-       
+  FunctionProtoType::ExtProtoInfo FromEPI = T->getExtProtoInfo();
+  FunctionProtoType::ExtProtoInfo ToEPI;
+
+  ToEPI.ExtInfo = FromEPI.ExtInfo;
+  ToEPI.Variadic = FromEPI.Variadic;
+  ToEPI.HasTrailingReturn = FromEPI.HasTrailingReturn;
+  ToEPI.TypeQuals = FromEPI.TypeQuals;
+  ToEPI.RefQualifier = FromEPI.RefQualifier;
+  ToEPI.NumExceptions = ExceptionTypes.size();
+  ToEPI.Exceptions = ExceptionTypes.data();
+  ToEPI.ConsumedArguments = FromEPI.ConsumedArguments;
+
+  if (importExceptionSpecDecls) {
+    ToEPI.ExceptionSpecType = FromEPI.ExceptionSpecType;
+    ToEPI.NoexceptExpr = Importer.Import(FromEPI.NoexceptExpr);
+    ToEPI.ExceptionSpecDecl = cast_or_null<FunctionDecl>(
+                                Importer.Import(FromEPI.ExceptionSpecDecl));
+    ToEPI.ExceptionSpecTemplate = cast_or_null<FunctionDecl>(
+                                Importer.Import(FromEPI.ExceptionSpecTemplate));
+  }
+
   return Importer.getToContext().getFunctionType(ToResultType, ArgTypes.data(),
-                                                 ArgTypes.size(), EPI);
+                                                 ArgTypes.size(), ToEPI);
+}
+
+QualType ASTNodeImporter::VisitFunctionProtoType(const FunctionProtoType *T) {
+  // FunctionProtoType::ExtProtoInfo's ExceptionSpecDecl can point to the
+  // FunctionDecl that we are importing this FunctionProtoType for.
+  // Update it in ASTNodeImporter::VisitFunctionDecl after the FunctionDecl has
+  // been created.
+  return importFunctionProtoType(Importer, T,
+                                 /*importExceptionSpecDecls=*/false);
 }
 
 QualType ASTNodeImporter::VisitParenType(const ParenType *T) {
@@ -2576,6 +2600,16 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
     ToFunction->addDeclInternal(Parameters[I]);
   }
   ToFunction->setParams(Parameters);
+
+  // Update FunctionProtoType::ExtProtoInfo.
+  if (const FunctionProtoType *
+        FromFPT = D->getType()->getAs<FunctionProtoType>()) {
+    FunctionProtoType::ExtProtoInfo FromEPI = FromFPT->getExtProtoInfo();
+    if (FromEPI.ExceptionSpecDecl || FromEPI.ExceptionSpecTemplate) {
+      ToFunction->setType(importFunctionProtoType(Importer, FromFPT,
+                                            /*importExceptionSpecDecls=*/true));
+    }
+  }
 
   // FIXME: Other bits to merge?
 
