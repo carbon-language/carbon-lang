@@ -140,9 +140,13 @@ public:
   ReturnVisitor(const StackFrameContext *Frame)
     : StackFrame(Frame), Satisfied(false) {}
 
-  virtual void Profile(llvm::FoldingSetNodeID &ID) const {
+  static void *getTag() {
     static int Tag = 0;
-    ID.AddPointer(&Tag);
+    return static_cast<void *>(&Tag);
+  }
+
+  virtual void Profile(llvm::FoldingSetNodeID &ID) const {
+    ID.AddPointer(ReturnVisitor::getTag());
     ID.AddPointer(StackFrame);
   }
 
@@ -215,10 +219,6 @@ public:
     // Don't print any more notes after this one.
     Satisfied = true;
 
-    // Build an appropriate message based on the return value.
-    SmallString<64> Msg;
-    llvm::raw_svector_ostream Out(Msg);
-
     const Expr *RetE = Ret->getRetValue();
     assert(RetE && "Tracking a return value for a void function");
     RetE = RetE->IgnoreParenCasts();
@@ -234,7 +234,18 @@ public:
     // If we're returning 0, we should track where that 0 came from.
     bugreporter::trackNullOrUndefValue(N, RetE, BR);
 
+    // Build an appropriate message based on the return value.
+    SmallString<64> Msg;
+    llvm::raw_svector_ostream Out(Msg);
+
     if (isa<Loc>(V)) {
+      // If we are pruning null-return paths as unlikely error paths, mark the
+      // report invalid. We still want to emit a path note, however, in case
+      // the report is resurrected as valid later on.
+      ExprEngine &Eng = BRC.getBugReporter().getEngine();
+      if (Eng.getAnalysisManager().options.shouldPruneNullReturnPaths())
+        BR.markInvalid(ReturnVisitor::getTag(), StackFrame);
+
       if (RetE->getType()->isObjCObjectPointerType())
         Out << "Returning nil";
       else

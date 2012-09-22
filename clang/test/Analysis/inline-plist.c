@@ -1,5 +1,5 @@
-// RUN: %clang --analyze %s -fblocks -Xanalyzer -analyzer-output=text -Xclang -verify %s
-// RUN: %clang --analyze %s -fblocks -o %t
+// RUN: %clang --analyze %s -fblocks -Xanalyzer -analyzer-output=text -Xanalyzer -analyzer-config -Xanalyzer suppress-null-return-paths=false -Xclang -verify %s
+// RUN: %clang --analyze %s -fblocks -Xanalyzer -analyzer-config -Xanalyzer suppress-null-return-paths=false -o %t
 // RUN: FileCheck -input-file %t %s
 
 // <rdar://problem/10967815>
