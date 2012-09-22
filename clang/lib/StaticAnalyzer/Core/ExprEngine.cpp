@@ -1515,22 +1515,30 @@ void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
     return;
   }
 
-  // FIXME: Should we insert some assumption logic in here to determine
-  // if "Base" is a valid piece of memory?  Before we put this assumption
-  // later when using FieldOffset lvals (which we no longer have).
-
   // For all other cases, compute an lvalue.    
   SVal L = state->getLValue(field, baseExprVal);
   if (M->isGLValue()) {
+    ExplodedNodeSet Tmp;
+    Bldr.takeNodes(Pred);
+    evalLocation(Tmp, M, M, Pred, state, baseExprVal,
+                 /*Tag=*/0, /*isLoad=*/true);
+    Bldr.addNodes(Tmp);
+
+    const MemRegion *ReferenceRegion = 0;
     if (field->getType()->isReferenceType()) {
-      if (const MemRegion *R = L.getAsRegion())
-        L = state->getSVal(R);
-      else
+      ReferenceRegion = L.getAsRegion();
+      if (!ReferenceRegion)
         L = UnknownVal();
     }
 
-    Bldr.generateNode(M, Pred, state->BindExpr(M, LCtx, L), 0,
-                      ProgramPoint::PostLValueKind);
+    for (ExplodedNodeSet::iterator I = Tmp.begin(), E = Tmp.end(); I != E; ++I){
+      state = (*I)->getState();
+      if (ReferenceRegion)
+        L = state->getSVal(ReferenceRegion);
+
+      Bldr.generateNode(M, (*I), state->BindExpr(M, LCtx, L), 0,
+                        ProgramPoint::PostLValueKind);
+    }
   } else {
     Bldr.takeNodes(Pred);
     evalLoad(Dst, M, M, Pred, state, L);
