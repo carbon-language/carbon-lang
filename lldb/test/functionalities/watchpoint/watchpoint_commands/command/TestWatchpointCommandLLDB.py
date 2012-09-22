@@ -62,9 +62,6 @@ class WatchpointLLDBCommandTestCase(TestBase):
 
         # Add a breakpoint to set a watchpoint when stopped on the breakpoint.
         lldbutil.run_break_set_by_file_and_line (self, None, self.line, num_expected_locations=1)
-#        self.expect("breakpoint set -l %d" % self.line, BREAKPOINT_CREATED,
-#            startstr = "Breakpoint created: 1: file ='%s', line = %d, locations = 1" %
-#                       (self.source, self.line))
 
         # Run the program.
         self.runCmd("run", RUN_SUCCEEDED)
@@ -114,9 +111,6 @@ class WatchpointLLDBCommandTestCase(TestBase):
 
         # Add a breakpoint to set a watchpoint when stopped on the breakpoint.
         lldbutil.run_break_set_by_file_and_line (self, None, self.line, num_expected_locations=1)
-#        self.expect("breakpoint set -l %d" % self.line, BREAKPOINT_CREATED,
-#            startstr = "Breakpoint created: 1: file ='%s', line = %d, locations = 1" %
-#                       (self.source, self.line))#
 
         # Run the program.
         self.runCmd("run", RUN_SUCCEEDED)

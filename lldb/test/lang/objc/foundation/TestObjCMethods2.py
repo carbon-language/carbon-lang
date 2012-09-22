@@ -106,9 +106,6 @@ class FoundationTestCase2(TestBase):
         # Create a bunch of breakpoints.
         for line in self.lines:
             lldbutil.run_break_set_by_file_and_line (self, "main.m", line, num_expected_locations=1, loc_exact=True)
-#            self.expect("breakpoint set -f main.m -l %d" % line, BREAKPOINT_CREATED,
-#                substrs = ["Breakpoint created:",
-#                           "file ='main.m', line = %d, locations = 1" % line])
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -146,9 +143,6 @@ class FoundationTestCase2(TestBase):
         # Break inside Test_NSArray:
         line = self.lines[1]
         lldbutil.run_break_set_by_file_and_line (self, "main.m", line, num_expected_locations=1, loc_exact=True)
-#        self.expect("breakpoint set -f main.m -l %d" % line, BREAKPOINT_CREATED,
-#            substrs = ["Breakpoint created:",
-#                       "file ='main.m', line = %d, locations = 1" % line])#
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -176,9 +170,6 @@ class FoundationTestCase2(TestBase):
         # Break inside Test_NSString:
         line = self.lines[2]
         lldbutil.run_break_set_by_file_and_line (self, "main.m", line, num_expected_locations=1, loc_exact=True)
-#        self.expect("breakpoint set -f main.m -l %d" % line, BREAKPOINT_CREATED,
-#            substrs = ["Breakpoint created:",
-#                       "file ='main.m', line = %d, locations = 1" % line])#
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -206,10 +197,7 @@ class FoundationTestCase2(TestBase):
         line = self.lines[4]
 
         lldbutil.run_break_set_by_file_and_line (self, "main.m", line, num_expected_locations=1, loc_exact=True)
-#        self.expect("breakpoint set -f main.m -l %d" % line, BREAKPOINT_CREATED,
-#                    substrs = ["Breakpoint created:",
-#                               "file ='main.m', line = %d, locations = 1" % line])
-#        
+
         self.runCmd("run", RUN_SUCCEEDED)
         
         self.expect("expression *my",
@@ -224,9 +212,6 @@ class FoundationTestCase2(TestBase):
         line = self.lines[4]
 
         lldbutil.run_break_set_by_file_and_line (self, "main.m", line, num_expected_locations=1, loc_exact=True)
-#        self.expect("breakpoint set -f main.m -l %d" % line, BREAKPOINT_CREATED,
-#                    substrs = ["Breakpoint created:",
-#                               "file ='main.m', line = %d, locations = 1" % line])#
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -242,9 +227,6 @@ class FoundationTestCase2(TestBase):
         line = self.lines[4]
 
         lldbutil.run_break_set_by_file_and_line (self, "main.m", line, num_expected_locations=1, loc_exact=True)
-#        self.expect("breakpoint set -f main.m -l %d" % line, BREAKPOINT_CREATED,
-#                    substrs = ["Breakpoint created:",
-#                               "file ='main.m', line = %d, locations = 1" % line])#
 
         self.runCmd("run", RUN_SUCCEEDED)
 

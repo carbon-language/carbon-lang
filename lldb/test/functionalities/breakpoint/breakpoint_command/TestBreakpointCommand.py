@@ -47,20 +47,8 @@ class BreakpointCommandTestCase(TestBase):
         # Add three breakpoints on the same line.  The first time we don't specify the file,
         # since the default file is the one containing main:
         lldbutil.run_break_set_by_file_and_line (self, None, self.line, num_expected_locations=1, loc_exact=True)
-#        self.expect("breakpoint set -l %d" % self.line,
-#                    BREAKPOINT_CREATED,
-#            startstr = "Breakpoint created: 1: file ='main.c', line = %d, locations = 1" %
-#                        self.line)
         lldbutil.run_break_set_by_file_and_line (self, "main.c", self.line, num_expected_locations=1, loc_exact=True)
-#        self.expect("breakpoint set -f main.c -l %d" % self.line,
-#                    BREAKPOINT_CREATED,
-#            startstr = "Breakpoint created: 2: file ='main.c', line = %d, locations = 1" %
-#                        self.line)
         lldbutil.run_break_set_by_file_and_line (self, "main.c", self.line, num_expected_locations=1, loc_exact=True)
-#        self.expect("breakpoint set -f main.c -l %d" % self.line,
-#                    BREAKPOINT_CREATED,
-#            startstr = "Breakpoint created: 3: file ='main.c', line = %d, locations = 1" %
-#                        self.line)
 
         # Now add callbacks for the breakpoints just created.
         self.runCmd("breakpoint command add -s command -o 'frame variable -T -s' 1")

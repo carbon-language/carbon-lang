@@ -76,24 +76,16 @@ class FoundationDisassembleTestCase(TestBase):
         symbol_name = "+[NSString stringWithFormat:]"
         break_results = lldbutil.run_break_set_command (self, "_regexp-break %s"%(symbol_name))
         lldbutil.check_breakpoint_result (self, break_results, symbol_name=symbol_name, num_locations=1)
-#        self.expect("_regexp-break +[NSString stringWithFormat:]", BREAKPOINT_CREATED,
-#            substrs = ["Breakpoint created: 1: name = '+[NSString stringWithFormat:]', locations = 1"])
 
         # Stop at -[MyString initWithNSString:].
         lldbutil.run_break_set_by_symbol (self, '-[MyString initWithNSString:]', num_expected_locations=1, sym_exact=True)
-#        self.expect("breakpoint set -n '-[MyString initWithNSString:]'", BREAKPOINT_CREATED,
-#            startstr = "Breakpoint created: 2: name = '-[MyString initWithNSString:]', locations = 1")
 
         # Stop at the "description" selector.
         lldbutil.run_break_set_by_selector (self, 'description', num_expected_locations=1)
-#        self.expect("breakpoint set -S description", BREAKPOINT_CREATED,
-#            startstr = "Breakpoint created: 3: name = 'description', locations = 1")
 
         # Stop at -[NSAutoreleasePool release].
         break_results = lldbutil.run_break_set_command (self, "_regexp-break -[NSAutoreleasePool release]")
         lldbutil.check_breakpoint_result (self, break_results, symbol_name='-[NSAutoreleasePool release]', num_locations=1)
-#        self.expect("_regexp-break -[NSAutoreleasePool release]", BREAKPOINT_CREATED,
-#            substrs = ["Breakpoint created: 4: name = '-[NSAutoreleasePool release]', locations = 1"])
 
         self.runCmd("run", RUN_SUCCEEDED)
 
