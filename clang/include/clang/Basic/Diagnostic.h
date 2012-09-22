@@ -478,10 +478,13 @@ public:
   }
   OverloadsShown getShowOverloads() const { return ShowOverloads; }
   
-  /// \brief Pretend that the last diagnostic issued was ignored.
+  /// \brief Pretend that the last diagnostic issued was ignored, so any
+  /// subsequent notes will be suppressed.
   ///
   /// This can be used by clients who suppress diagnostics themselves.
   void setLastDiagnosticIgnored() {
+    if (LastDiagLevel == DiagnosticIDs::Fatal)
+      FatalErrorOccurred = true;
     LastDiagLevel = DiagnosticIDs::Ignored;
   }
   
