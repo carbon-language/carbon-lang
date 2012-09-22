@@ -11,10 +11,14 @@
 // I386: "hidden"
 // I386: "-o"
 // I386: clang-translation
-// RUN: %clang -target i386-apple-darwin9 -### -S %s -o %t.s 2> %t.log
-// RUN: grep '"-target-cpu" "yonah"' %t.log
-// RUN: %clang -target x86_64-apple-darwin9 -### -S %s -o %t.s 2> %t.log
-// RUN: grep '"-target-cpu" "core2"' %t.log
+// RUN: %clang -target i386-apple-darwin9 -### -S %s -o %t.s 2>&1 | \
+// RUN: FileCheck -check-prefix=YONAH %s
+// YONAH: "-target-cpu"
+// YONAH: "yonah"
+// RUN: %clang -target x86_64-apple-darwin9 -### -S %s -o %t.s 2>&1 | \
+// RUN: FileCheck -check-prefix=CORE2 %s
+// CORE2: "-target-cpu"
+// CORE2: "core2"
 
 // RUN: %clang -target x86_64-apple-darwin10 -### -S %s 2> %t.log \
 // RUN:   -arch armv7
