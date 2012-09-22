@@ -91,3 +91,10 @@
 // PPCE5500: "-cc1"
 // PPCE5500: "-target-cpu" "e5500"
 
+// RUN: %clang -target amd64-unknown-openbsd5.2 -### -S %s 2>&1 | \
+// RUN: FileCheck -check-prefix=AMD64 %s
+// AMD64: clang
+// AMD64: "-cc1"
+// AMD64: "-triple"
+// AMD64: "amd64-unknown-openbsd5.2"
+// AMD64: "-munwind-tables"

@@ -1416,7 +1416,7 @@ Tool &Generic_GCC::SelectTool(const Compilation &C,
 bool Generic_GCC::IsUnwindTablesDefault() const {
   // FIXME: Gross; we should probably have some separate target
   // definition, possibly even reusing the one in clang.
-  return getArchName() == "x86_64";
+  return getArch() == llvm::Triple::x86_64;
 }
 
 const char *Generic_GCC::GetDefaultRelocationModel() const {
