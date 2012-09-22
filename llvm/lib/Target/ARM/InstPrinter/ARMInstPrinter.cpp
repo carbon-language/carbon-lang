@@ -362,10 +362,12 @@ void ARMInstPrinter::printAddrMode2Operand(const MCInst *MI, unsigned Op,
     return;
   }
 
+#ifndef NDEBUG
   const MCOperand &MO3 = MI->getOperand(Op+2);
   unsigned IdxMode = ARM_AM::getAM2IdxMode(MO3.getImm());
   assert(IdxMode != ARMII::IndexModePost &&
          "Should be pre or offset index op");
+#endif
 
   printAM2PreOrOffsetIndexOp(MI, Op, O);
 }
