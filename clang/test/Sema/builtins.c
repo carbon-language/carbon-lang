@@ -51,6 +51,20 @@ void test9(short v) {
   }
 }
 
+// overloaded atomics should be declared only once.
+void test9_1(volatile int* ptr, int val) {
+  __sync_fetch_and_add_4(ptr, val);
+}
+void test9_2(volatile int* ptr, int val) {
+  __sync_fetch_and_add(ptr, val);
+}
+void test9_3(volatile int* ptr, int val) {
+  __sync_fetch_and_add_4(ptr, val);
+  __sync_fetch_and_add(ptr, val);
+  __sync_fetch_and_add(ptr, val);
+  __sync_fetch_and_add_4(ptr, val);
+  __sync_fetch_and_add_4(ptr, val);
+}
 
 // rdar://7236819
 void test10(void) __attribute__((noreturn));
