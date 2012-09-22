@@ -129,6 +129,25 @@ static inline unsigned HashString(StringRef Str, unsigned Result = 0) {
   return Result;
 }
 
+/// Returns the English suffix for an ordinal integer (-st, -nd, -rd, -th).
+static inline StringRef getOrdinalSuffix(unsigned Val) {
+  // It is critically important that we do this perfectly for
+  // user-written sequences with over 100 elements.
+  switch (Val % 100) {
+  case 11:
+  case 12:
+  case 13:
+    return "th";
+  default:
+    switch (Val % 10) {
+      case 1: return "st";
+      case 2: return "nd";
+      case 3: return "rd";
+      default: return "th";
+    }
+  }
+}
+
 } // End llvm namespace
 
 #endif
