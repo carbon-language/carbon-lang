@@ -62,7 +62,6 @@ class LangOptions;
 class ASTWriter;
 class ASTReader;
 
-/// \namespace
 /// \brief Public enums and private classes that are part of the
 /// SourceManager implementation.
 ///
