@@ -332,8 +332,8 @@ ExplodedGraph::TrimInternal(const ExplodedNode* const* BeginSources,
 
   // ===- Pass 1 (reverse DFS) -===
   for (const ExplodedNode* const* I = BeginSources; I != EndSources; ++I) {
-    assert(*I);
-    WL1.push_back(*I);
+    if (*I)
+      WL1.push_back(*I);
   }
 
   // Process the first worklist until it is empty.  Because it is a std::list

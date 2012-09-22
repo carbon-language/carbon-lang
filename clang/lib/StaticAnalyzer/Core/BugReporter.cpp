@@ -432,7 +432,7 @@ static void updateStackPiecesWithMessage(PathDiagnosticPiece *P,
 
 static void CompactPathDiagnostic(PathPieces &path, const SourceManager& SM);
 
-static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
+static bool GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
                                           PathDiagnosticBuilder &PDB,
                                           const ExplodedNode *N,
                                       ArrayRef<BugReporterVisitor *> visitors) {
@@ -756,9 +756,13 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
     }
   }
 
+  if (!PDB.getBugReport()->isValid())
+    return false;
+
   // After constructing the full PathDiagnostic, do a pass over it to compact
   // PathDiagnosticPieces that occur within a macro.
   CompactPathDiagnostic(PD.getMutablePieces(), PDB.getSourceManager());
+  return true;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1164,7 +1168,7 @@ static void reversePropagateInterestingSymbols(BugReport &R,
   }
 }
                                                
-static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
+static bool GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
                                             PathDiagnosticBuilder &PDB,
                                             const ExplodedNode *N,
                                       ArrayRef<BugReporterVisitor *> visitors) {
@@ -1337,6 +1341,8 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
       }
     }
   }
+
+  return PDB.getBugReport()->isValid();
 }
 
 //===----------------------------------------------------------------------===//
@@ -1866,16 +1872,26 @@ static void CompactPathDiagnostic(PathPieces &path, const SourceManager& SM) {
     path.push_back(*I);
 }
 
-void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
+bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
                                            PathDiagnosticConsumer &PC,
                                            ArrayRef<BugReport *> &bugReports) {
-
   assert(!bugReports.empty());
+
+  bool HasValid = false;
   SmallVector<const ExplodedNode *, 10> errorNodes;
   for (ArrayRef<BugReport*>::iterator I = bugReports.begin(),
                                       E = bugReports.end(); I != E; ++I) {
+    if ((*I)->isValid()) {
+      HasValid = true;
       errorNodes.push_back((*I)->getErrorNode());
+    } else {
+      errorNodes.push_back(0);
+    }
   }
+
+  // If all the reports have been marked invalid, we're done.
+  if (!HasValid)
+    return false;
 
   // Construct a new graph that contains only a single path from the error
   // node to a root.
@@ -1887,6 +1903,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   assert(GPair.second.second < bugReports.size());
   BugReport *R = bugReports[GPair.second.second];
   assert(R && "No original report found for sliced graph.");
+  assert(R->isValid() && "Report selected from trimmed graph marked invalid.");
 
   OwningPtr<ExplodedGraph> ReportGraph(GPair.first.first);
   OwningPtr<NodeBackMap> BackMap(GPair.first.second);
@@ -1932,14 +1949,24 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
     if (LastPiece)
       PD.setEndOfPath(LastPiece);
     else
-      return;
+      return false;
 
     switch (PDB.getGenerationScheme()) {
     case PathDiagnosticConsumer::Extensive:
-      GenerateExtensivePathDiagnostic(PD, PDB, N, visitors);
+      if (!GenerateExtensivePathDiagnostic(PD, PDB, N, visitors)) {
+        assert(!R->isValid() && "Failed on valid report");
+        // Try again. We'll filter out the bad report when we trim the graph.
+        // FIXME: It would be more efficient to use the same intermediate
+        // trimmed graph, and just repeat the shortest-path search.
+        return generatePathDiagnostic(PD, PC, bugReports);
+      }
       break;
     case PathDiagnosticConsumer::Minimal:
-      GenerateMinimalPathDiagnostic(PD, PDB, N, visitors);
+      if (!GenerateMinimalPathDiagnostic(PD, PDB, N, visitors)) {
+        assert(!R->isValid() && "Failed on valid report");
+        // Try again. We'll filter out the bad report when we trim the graph.
+        return generatePathDiagnostic(PD, PC, bugReports);
+      }
       break;
     case PathDiagnosticConsumer::None:
       llvm_unreachable("PathDiagnosticConsumer::None should never appear here");
@@ -1958,6 +1985,8 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
     assert(hasSomethingInteresting);
     (void) hasSomethingInteresting;
   }
+
+  return true;
 }
 
 void BugReporter::Register(BugType *BT) {
@@ -2129,7 +2158,8 @@ void BugReporter::FlushReport(BugReport *exampleReport,
   // specified by the PathDiagnosticConsumer.
   if (PD.getGenerationScheme() != PathDiagnosticConsumer::None) {
     if (!bugReports.empty())
-      GeneratePathDiagnostic(*D.get(), PD, bugReports);
+      if (!generatePathDiagnostic(*D.get(), PD, bugReports))
+        return;
   }
 
   // If the path is empty, generate a single step path with the location

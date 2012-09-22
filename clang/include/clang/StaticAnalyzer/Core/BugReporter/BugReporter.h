@@ -116,6 +116,19 @@ protected:
   /// when reporting an issue.
   bool DoNotPrunePath;
 
+  /// Used to track unique reasons why a bug report might be invalid.
+  ///
+  /// \sa markInvalid
+  /// \sa removeInvalidation
+  typedef std::pair<const void *, const void *> InvalidationRecord;
+
+  /// If non-empty, this bug report is likely a false positive and should not be
+  /// shown to the user.
+  ///
+  /// \sa markInvalid
+  /// \sa removeInvalidation
+  llvm::SmallSet<InvalidationRecord, 4> Invalidations;
+
 private:
   // Used internally by BugReporter.
   Symbols &getInterestingSymbols();
@@ -152,7 +165,8 @@ public:
             PathDiagnosticLocation LocationToUnique)
     : BT(bt), DeclWithIssue(0), Description(desc),
       UniqueingLocation(LocationToUnique),
-      ErrorNode(errornode), ConfigurationChangeToken(0) {}
+      ErrorNode(errornode), ConfigurationChangeToken(0),
+      DoNotPrunePath(false) {}
 
   virtual ~BugReport();
 
@@ -188,6 +202,34 @@ public:
 
   unsigned getConfigurationChangeToken() const {
     return ConfigurationChangeToken;
+  }
+
+  /// Returns whether or not this report should be considered valid.
+  ///
+  /// Invalid reports are those that have been classified as likely false
+  /// positives after the fact.
+  bool isValid() const {
+    return Invalidations.empty();
+  }
+
+  /// Marks the current report as invalid, meaning that it is probably a false
+  /// positive and should not be reported to the user.
+  ///
+  /// The \p Tag and \p Data arguments are intended to be opaque identifiers for
+  /// this particular invalidation, where \p Tag represents the visitor
+  /// responsible for invalidation, and \p Data represents the reason this
+  /// visitor decided to invalidate the bug report.
+  ///
+  /// \sa removeInvalidation
+  void markInvalid(const void *Tag, const void *Data) {
+    Invalidations.insert(std::make_pair(Tag, Data));
+  }
+
+  /// Reverses the effects of a previous invalidation.
+  ///
+  /// \sa markInvalid
+  void removeInvalidation(const void *Tag, const void *Data) {
+    Invalidations.erase(std::make_pair(Tag, Data));
   }
   
   /// Return the canonical declaration, be it a method or class, where
@@ -392,9 +434,11 @@ public:
 
   SourceManager& getSourceManager() { return D.getSourceManager(); }
 
-  virtual void GeneratePathDiagnostic(PathDiagnostic& pathDiagnostic,
+  virtual bool generatePathDiagnostic(PathDiagnostic& pathDiagnostic,
                                       PathDiagnosticConsumer &PC,
-                                      ArrayRef<BugReport *> &bugReports) {}
+                                      ArrayRef<BugReport *> &bugReports) {
+    return true;
+  }
 
   bool RemoveUneededCalls(PathPieces &pieces, BugReport *R,
                           PathDiagnosticCallPiece *CallWithLoc = 0);
@@ -461,7 +505,15 @@ public:
   ///  engine.
   ProgramStateManager &getStateManager();
 
-  virtual void GeneratePathDiagnostic(PathDiagnostic &pathDiagnostic,
+  /// Generates a path corresponding to one of the given bug reports.
+  ///
+  /// Which report is used for path generation is not specified. The
+  /// bug reporter will try to pick the shortest path, but this is not
+  /// guaranteed.
+  ///
+  /// \return True if the report was valid and a path was generated,
+  ///         false if the reports should be considered invalid.
+  virtual bool generatePathDiagnostic(PathDiagnostic &PD,
                                       PathDiagnosticConsumer &PC,
                                       ArrayRef<BugReport*> &bugReports);
 
