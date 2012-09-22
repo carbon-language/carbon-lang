@@ -699,7 +699,7 @@ multiclass LCMPXCHG_BinOp<bits<8> Opc8, bits<8> Opc, Format Form,
                           InstrItinClass itin8, InstrItinClass itin> {
 let isCodeGenOnly = 1 in {
   let Defs = [AL, EFLAGS], Uses = [AL] in
-  def #NAME#8  : I<Opc, Form, (outs), (ins i8mem:$ptr, GR8:$swap),
+  def #NAME#8  : I<Opc8, Form, (outs), (ins i8mem:$ptr, GR8:$swap),
                    !strconcat("lock\n\t", mnemonic,
                               "{b}\t{$swap, $ptr|$ptr, $swap}"),
                    [(frag addr:$ptr, GR8:$swap, 1)], itin8>, TB, LOCK;
