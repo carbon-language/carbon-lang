@@ -1737,7 +1737,9 @@ class CompletionString(ClangObject):
 
     @property
     def briefComment(self):
-        return conf.lib.clang_getCompletionBriefComment(self.obj)
+        if conf.function_exists("clang_getCompletionBriefComment"):
+            return conf.lib.clang_getCompletionBriefComment(self.obj)
+        return _CXString()
 
     def __repr__(self):
         return " | ".join([str(a) for a in self]) \
@@ -3097,6 +3099,13 @@ class Config:
 
         return library
 
+    def function_exists(self, name):
+        try:
+            getattr(self.lib, name)
+        except AttributeError:
+            return False
+
+        return True
 
 def register_enumerations():
     for name, value in clang.enumerations.TokenKinds:
