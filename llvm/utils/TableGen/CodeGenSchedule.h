@@ -45,14 +45,16 @@ void splitSchedReadWrites(const RecVec &RWDefs,
 struct CodeGenSchedRW {
   std::string Name;
   Record *TheDef;
+  bool IsAlias;
   bool HasVariants;
   bool IsVariadic;
   bool IsSequence;
   IdxVec Sequence;
+  RecVec Aliases;
 
-  CodeGenSchedRW(): TheDef(0), HasVariants(false), IsVariadic(false),
-                    IsSequence(false) {}
-  CodeGenSchedRW(Record *Def): TheDef(Def), IsVariadic(false) {
+  CodeGenSchedRW(): TheDef(0), IsAlias(false), HasVariants(false),
+                    IsVariadic(false), IsSequence(false) {}
+  CodeGenSchedRW(Record *Def): TheDef(Def), IsAlias(false), IsVariadic(false) {
     Name = Def->getName();
     HasVariants = Def->isSubClassOf("SchedVariant");
     if (HasVariants)
@@ -65,8 +67,8 @@ struct CodeGenSchedRW {
   }
 
   CodeGenSchedRW(const IdxVec &Seq, const std::string &Name):
-    Name(Name), TheDef(0), HasVariants(false), IsVariadic(false),
-    IsSequence(true), Sequence(Seq) {
+    Name(Name), TheDef(0), IsAlias(false), HasVariants(false),
+    IsVariadic(false), IsSequence(true), Sequence(Seq) {
     assert(Sequence.size() > 1 && "implied sequence needs >1 RWs");
   }
 
@@ -75,6 +77,7 @@ struct CodeGenSchedRW {
     assert((!IsVariadic || HasVariants) && "Variadic write needs variants");
     assert((!IsSequence || !HasVariants) && "Sequence can't have variant");
     assert((!IsSequence || !Sequence.empty()) && "Sequence should be nonempty");
+    assert((!IsAlias || Aliases.empty()) && "Alias cannot have aliases");
     return TheDef || !Sequence.empty();
   }
 
@@ -125,8 +128,10 @@ struct CodeGenSchedClass {
 
   std::vector<CodeGenSchedTransition> Transitions;
 
-  // InstReadWrite records associated with this class. Any Instrs that the
-  // definitions refer to that are not mapped to this class should be ignored.
+  // InstRW records associated with this class. These records may refer to an
+  // Instruction no longer mapped to this class by InstrClassMap. These
+  // Instructions should be ignored by this class because they have been split
+  // off to join another inferred class.
   RecVec InstRWs;
 
   CodeGenSchedClass(): ItinClassDef(0) {}
@@ -229,7 +234,7 @@ class CodeGenSchedModels {
   unsigned NumInstrSchedClasses;
 
   // Map Instruction to SchedClass index. Only for Instructions mentioned in
-  // OpReadWrites.
+  // InstRW records.
   typedef DenseMap<Record*, unsigned> InstClassMapTy;
   InstClassMapTy InstrClassMap;
 
@@ -280,6 +285,16 @@ public:
 
   const CodeGenSchedRW &getSchedRW(unsigned Idx, bool IsRead) const {
     return IsRead ? getSchedRead(Idx) : getSchedWrite(Idx);
+  }
+  CodeGenSchedRW &getSchedRW(Record *Def, unsigned &Idx) {
+    bool IsRead = Def->isSubClassOf("SchedRead");
+    Idx = getSchedRWIdx(Def, IsRead);
+    return const_cast<CodeGenSchedRW&>(
+      IsRead ? getSchedRead(Idx) : getSchedWrite(Idx));
+  }
+  CodeGenSchedRW &getSchedRW(Record *Def) {
+    unsigned Idx;
+    return getSchedRW(Def, Idx);
   }
 
   unsigned getSchedRWIdx(Record *Def, bool IsRead, unsigned After = 0) const;

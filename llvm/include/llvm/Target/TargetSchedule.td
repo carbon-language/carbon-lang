@@ -101,6 +101,10 @@ class ProcResourceKind;
 // cycle that the instruction issues in-order, forcing an interlock
 // with subsequent instructions that require the same resource until
 // the number of ResourceCyles specified in WriteRes expire.
+//
+// SchedModel ties these units to a processor for any stand-alone defs
+// of this class. Instances of subclass ProcResource will be automatically
+// attached to a processor, so SchedModel is not needed.
 class ProcResourceUnits<ProcResourceKind kind, int num> {
   ProcResourceKind Kind = kind;
   int NumUnits = num;
@@ -152,12 +156,17 @@ class SchedRead  : SchedReadWrite;
 // If the final write in this sequence is a SchedWriteVariant marked
 // Variadic, then the list of prior writes are distributed across all
 // operands after resolving the predicate for the final write.
+//
+// SchedModel silences warnings but is ignored.
 class WriteSequence<list<SchedWrite> writes, int rep = 1> : SchedWrite {
   list<SchedWrite> Writes = writes;
   int Repeat = rep;
+  SchedMachineModel SchedModel = ?;
 }
 
 // Define values common to WriteRes and SchedWriteRes.
+//
+// SchedModel ties these resources to a processor.
 class ProcWriteResources<list<ProcResourceKind> resources> {
   list<ProcResourceKind> ProcResources = resources;
   list<int> ResourceCycles = [];
@@ -217,12 +226,15 @@ class SchedWriteRes<list<ProcResourceKind> resources> : SchedWrite,
   ProcWriteResources<resources>;
 
 // Define values common to ReadAdvance and SchedReadAdvance.
+//
+// SchedModel ties these resources to a processor.
 class ProcReadAdvance<int cycles, list<SchedWrite> writes = []> {
   int Cycles = cycles;
   list<SchedWrite> ValidWrites = writes;
   // Allow a processor to mark some scheduling classes as unsupported
   // for stronger verification.
   bit Unsupported = 0;
+  SchedMachineModel SchedModel = ?;
 }
 
 // A processor may define a ReadAdvance associated with a SchedRead
@@ -237,7 +249,6 @@ class ProcReadAdvance<int cycles, list<SchedWrite> writes = []> {
 // to issue earlier relative to the writer.
 class ReadAdvance<SchedRead read, int cycles, list<SchedWrite> writes = []>
   : ProcReadAdvance<cycles, writes> {
-  SchedMachineModel SchedModel = ?;
   SchedRead ReadType = read;
 }
 
@@ -261,6 +272,8 @@ class PredicateProlog<code c> {
 // particular MachineInstr. The code snippet is used as an
 // if-statement's expression. Available variables are MI, SchedModel,
 // and anything defined in a PredicateProlog.
+//
+// SchedModel silences warnings but is ignored.
 class SchedPredicate<code pred> {
   SchedMachineModel SchedModel = ?;
   code Predicate = pred;
@@ -281,6 +294,7 @@ class SchedVar<SchedPredicate pred, list<SchedReadWrite> selected> {
   list<SchedReadWrite> Selected = selected;
 }
 
+// SchedModel silences warnings but is ignored.
 class SchedVariant<list<SchedVar> variants> {
   list<SchedVar> Variants = variants;
   bit Variadic = 0;
@@ -309,6 +323,8 @@ class SchedReadVariant<list<SchedVar> variants> : SchedRead,
 
 // Map a set of opcodes to a list of SchedReadWrite types. This allows
 // the subtarget to easily override specific operations.
+//
+// SchedModel ties this opcode mapping to a processor.
 class InstRW<list<SchedReadWrite> rw, list<Instruction> instrs> {
   list<SchedReadWrite> OperandReadWrites = rw;
   list<Instruction> Instrs = instrs;
@@ -318,8 +334,23 @@ class InstRW<list<SchedReadWrite> rw, list<Instruction> instrs> {
 // Map a set of itinerary classes to SchedReadWrite resources. This is
 // used to bootstrap a target (e.g. ARM) when itineraries already
 // exist and changing InstrInfo is undesirable.
+//
+// SchedModel ties this ItineraryClass mapping to a processor.
 class ItinRW<list<SchedReadWrite> rw, list<InstrItinClass> iic> {
   list<InstrItinClass> MatchedItinClasses = iic;
   list<SchedReadWrite> OperandReadWrites = rw;
+  SchedMachineModel SchedModel = ?;
+}
+
+// Alias a target-defined SchedReadWrite to a processor specific
+// SchedReadWrite. This allows a subtarget to easily map a
+// SchedReadWrite type onto a WriteSequence, SchedWriteVariant, or
+// SchedReadVariant.
+//
+// SchedModel will usually be provided by surrounding let statement
+// and ties this SchedAlias mapping to a processor.
+class SchedAlias<SchedReadWrite match, SchedReadWrite alias> {
+  SchedReadWrite MatchRW = match;
+  SchedReadWrite AliasRW = alias;
   SchedMachineModel SchedModel = ?;
 }
