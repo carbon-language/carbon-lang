@@ -402,6 +402,35 @@ PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
 }
 
 //===----------------------------------------------------------------------===//
+// "Visitors only" path diagnostic generation algorithm.
+//===----------------------------------------------------------------------===//
+static bool GenerateVisitorsOnlyPathDiagnostic(PathDiagnostic &PD,
+                                               PathDiagnosticBuilder &PDB,
+                                               const ExplodedNode *N,
+                                      ArrayRef<BugReporterVisitor *> visitors) {
+  // All path generation skips the very first node (the error node).
+  // This is because there is special handling for the end-of-path note.
+  N = N->getFirstPred();
+  if (!N)
+    return true;
+
+  BugReport *R = PDB.getBugReport();
+  while (const ExplodedNode *Pred = N->getFirstPred()) {
+    for (ArrayRef<BugReporterVisitor *>::iterator I = visitors.begin(),
+                                                  E = visitors.end();
+         I != E; ++I) {
+      // Visit all the node pairs, but throw the path pieces away.
+      PathDiagnosticPiece *Piece = (*I)->VisitNode(N, Pred, PDB, *R);
+      delete Piece;
+    }
+
+    N = Pred;
+  }
+
+  return R->isValid();
+}
+
+//===----------------------------------------------------------------------===//
 // "Minimal" path diagnostic generation algorithm.
 //===----------------------------------------------------------------------===//
 typedef std::pair<PathDiagnosticCallPiece*, const ExplodedNode*> StackDiagPair;
@@ -1935,21 +1964,23 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
 
     // Generate the very last diagnostic piece - the piece is visible before 
     // the trace is expanded.
-    PathDiagnosticPiece *LastPiece = 0;
-    for (BugReport::visitor_iterator I = visitors.begin(), E = visitors.end();
-         I != E; ++I) {
-      if (PathDiagnosticPiece *Piece = (*I)->getEndPath(PDB, N, *R)) {
-        assert (!LastPiece &&
-                "There can only be one final piece in a diagnostic.");
-        LastPiece = Piece;
+    if (PDB.getGenerationScheme() != PathDiagnosticConsumer::None) {
+      PathDiagnosticPiece *LastPiece = 0;
+      for (BugReport::visitor_iterator I = visitors.begin(), E = visitors.end();
+           I != E; ++I) {
+        if (PathDiagnosticPiece *Piece = (*I)->getEndPath(PDB, N, *R)) {
+          assert (!LastPiece &&
+                  "There can only be one final piece in a diagnostic.");
+          LastPiece = Piece;
+        }
       }
+      if (!LastPiece)
+        LastPiece = BugReporterVisitor::getDefaultEndPath(PDB, N, *R);
+      if (LastPiece)
+        PD.setEndOfPath(LastPiece);
+      else
+        return false;
     }
-    if (!LastPiece)
-      LastPiece = BugReporterVisitor::getDefaultEndPath(PDB, N, *R);
-    if (LastPiece)
-      PD.setEndOfPath(LastPiece);
-    else
-      return false;
 
     switch (PDB.getGenerationScheme()) {
     case PathDiagnosticConsumer::Extensive:
@@ -1969,7 +2000,12 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
       }
       break;
     case PathDiagnosticConsumer::None:
-      llvm_unreachable("PathDiagnosticConsumer::None should never appear here");
+      if (!GenerateVisitorsOnlyPathDiagnostic(PD, PDB, N, visitors)) {
+        assert(!R->isValid() && "Failed on valid report");
+        // Try again. We'll filter out the bad report when we trim the graph.
+        return generatePathDiagnostic(PD, PC, bugReports);
+      }
+      break;
     }
 
     // Clean up the visitors we used.
@@ -1980,7 +2016,7 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
   } while(finalReportConfigToken != originalReportConfigToken);
 
   // Finally, prune the diagnostic path of uninteresting stuff.
-  if (R->shouldPrunePath()) {
+  if (!PD.path.empty() && R->shouldPrunePath()) {
     bool hasSomethingInteresting = RemoveUneededCalls(PD.getMutablePieces(), R);
     assert(hasSomethingInteresting);
     (void) hasSomethingInteresting;
@@ -2155,12 +2191,12 @@ void BugReporter::FlushReport(BugReport *exampleReport,
                          BT.getCategory()));
 
   // Generate the full path diagnostic, using the generation scheme
-  // specified by the PathDiagnosticConsumer.
-  if (PD.getGenerationScheme() != PathDiagnosticConsumer::None) {
-    if (!bugReports.empty())
-      if (!generatePathDiagnostic(*D.get(), PD, bugReports))
-        return;
-  }
+  // specified by the PathDiagnosticConsumer. Note that we have to generate
+  // path diagnostics even for consumers which do not support paths, because
+  // the BugReporterVisitors may mark this bug as a false positive.
+  if (!bugReports.empty())
+    if (!generatePathDiagnostic(*D.get(), PD, bugReports))
+      return;
 
   // If the path is empty, generate a single step path with the location
   // of the issue.
