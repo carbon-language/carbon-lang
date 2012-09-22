@@ -65,18 +65,21 @@ template <typename To, typename From> struct isa_impl_cl<To, const From> {
 
 template <typename To, typename From> struct isa_impl_cl<To, From*> {
   static inline bool doit(const From *Val) {
+    assert(Val && "isa<> used on a null pointer");
     return isa_impl<To, From>::doit(*Val);
   }
 };
 
 template <typename To, typename From> struct isa_impl_cl<To, const From*> {
   static inline bool doit(const From *Val) {
+    assert(Val && "isa<> used on a null pointer");
     return isa_impl<To, From>::doit(*Val);
   }
 };
 
 template <typename To, typename From> struct isa_impl_cl<To, const From*const> {
   static inline bool doit(const From *Val) {
+    assert(Val && "isa<> used on a null pointer");
     return isa_impl<To, From>::doit(*Val);
   }
 };
