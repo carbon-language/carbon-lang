@@ -4444,6 +4444,12 @@ bool ARMAsmParser::parseMemRegOffsetShift(ARM_AM::ShiftOpc &St,
         ((St == ARM_AM::lsl || St == ARM_AM::ror) && Imm > 31) ||
         ((St == ARM_AM::lsr || St == ARM_AM::asr) && Imm > 32))
       return Error(Loc, "immediate shift value out of range");
+    // If <ShiftTy> #0, turn it into a no_shift.
+    if (Imm == 0)
+      St = ARM_AM::lsl;
+    // For consistency, treat lsr #32 and asr #32 as having immediate value 0.
+    if (Imm == 32)
+      Imm = 0;
     Amount = Imm;
   }
 

@@ -1523,6 +1523,8 @@ DecodeAddrMode2IdxInstruction(MCInst &Inst, unsigned Insn,
         return MCDisassembler::Fail;
     }
     unsigned amt = fieldFromInstruction(Insn, 7, 5);
+    if (Opc == ARM_AM::ror && amt == 0)
+      Opc = ARM_AM::rrx;
     unsigned imm = ARM_AM::getAM2Opc(Op, amt, Opc, idx_mode);
 
     Inst.addOperand(MCOperand::CreateImm(imm));
@@ -1563,6 +1565,9 @@ static DecodeStatus DecodeSORegMemOperand(MCInst &Inst, unsigned Val,
       ShOp = ARM_AM::ror;
       break;
   }
+
+  if (ShOp == ARM_AM::ror && imm == 0)
+    ShOp = ARM_AM::rrx;
 
   if (!Check(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)))
     return MCDisassembler::Fail;

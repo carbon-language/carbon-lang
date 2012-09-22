@@ -934,6 +934,10 @@ getLdStSORegOpValue(const MCInst &MI, unsigned OpIdx,
   ARM_AM::ShiftOpc ShOp = ARM_AM::getAM2ShiftOpc(MO2.getImm());
   unsigned SBits = getShiftOp(ShOp);
 
+  // While "lsr #32" and "asr #32" exist, they are encoded with a 0 in the shift
+  // amount. However, it would be an easy mistake to make so check here.
+  assert((ShImm & ~0x1f) == 0 && "Out of range shift amount");
+
   // {16-13} = Rn
   // {12}    = isAdd
   // {11-0}  = shifter

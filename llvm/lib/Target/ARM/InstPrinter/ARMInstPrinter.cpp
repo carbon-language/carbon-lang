@@ -29,11 +29,27 @@ using namespace llvm;
 ///
 /// getSORegOffset returns an integer from 0-31, representing '32' as 0.
 static unsigned translateShiftImm(unsigned imm) {
+  // lsr #32 and asr #32 exist, but should be encoded as a 0.
+  assert((imm & ~0x1f) == 0 && "Invalid shift encoding");
+
   if (imm == 0)
     return 32;
   return imm;
 }
 
+/// Prints the shift value with an immediate value.
+static void printRegImmShift(raw_ostream &O, ARM_AM::ShiftOpc ShOpc,
+                          unsigned ShImm) {
+  if (ShOpc == ARM_AM::no_shift || (ShOpc == ARM_AM::lsl && !ShImm))
+    return;
+  O << ", ";
+
+  assert (!(ShOpc == ARM_AM::ror && !ShImm) && "Cannot have ror #0");
+  O << getShiftOpcStr(ShOpc);
+
+  if (ShOpc != ARM_AM::rrx)
+    O << " #" << translateShiftImm(ShImm);
+}
 
 ARMInstPrinter::ARMInstPrinter(const MCAsmInfo &MAI,
                                const MCInstrInfo &MII,
@@ -319,10 +335,8 @@ void ARMInstPrinter::printAM2PreOrOffsetIndexOp(const MCInst *MI, unsigned Op,
     << ARM_AM::getAddrOpcStr(ARM_AM::getAM2Op(MO3.getImm()))
     << getRegisterName(MO2.getReg());
 
-  if (unsigned ShImm = ARM_AM::getAM2Offset(MO3.getImm()))
-    O << ", "
-    << ARM_AM::getShiftOpcStr(ARM_AM::getAM2ShiftOpc(MO3.getImm()))
-    << " #" << ShImm;
+  printRegImmShift(O, ARM_AM::getAM2ShiftOpc(MO3.getImm()),
+                   ARM_AM::getAM2Offset(MO3.getImm()));
   O << "]";
 }
 
@@ -403,10 +417,8 @@ void ARMInstPrinter::printAddrMode2OffsetOperand(const MCInst *MI,
   O << ARM_AM::getAddrOpcStr(ARM_AM::getAM2Op(MO2.getImm()))
     << getRegisterName(MO1.getReg());
 
-  if (unsigned ShImm = ARM_AM::getAM2Offset(MO2.getImm()))
-    O << ", "
-    << ARM_AM::getShiftOpcStr(ARM_AM::getAM2ShiftOpc(MO2.getImm()))
-    << " #" << ShImm;
+  printRegImmShift(O, ARM_AM::getAM2ShiftOpc(MO2.getImm()),
+                   ARM_AM::getAM2Offset(MO2.getImm()));
 }
 
 //===--------------------------------------------------------------------===//
