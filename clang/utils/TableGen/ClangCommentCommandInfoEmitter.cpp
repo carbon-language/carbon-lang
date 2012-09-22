@@ -38,6 +38,7 @@ void EmitClangCommentCommandInfo(RecordKeeper &Records, raw_ostream &OS) {
        << Tag.getValueAsBit("IsReturnsCommand") << ", "
        << Tag.getValueAsBit("IsParamCommand") << ", "
        << Tag.getValueAsBit("IsTParamCommand") << ", "
+       << Tag.getValueAsBit("IsDeprecatedCommand") << ", "
        << Tag.getValueAsBit("IsEmptyParagraphAllowed") << ", "
        << Tag.getValueAsBit("IsVerbatimBlockCommand") << ", "
        << Tag.getValueAsBit("IsVerbatimBlockEndCommand") << ", "

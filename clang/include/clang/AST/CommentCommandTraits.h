@@ -66,6 +66,9 @@ struct CommandInfo {
   /// a template parameter (\\tparam or an alias).
   unsigned IsTParamCommand : 1;
 
+  /// True if this command is \\deprecated or an alias.
+  unsigned IsDeprecatedCommand : 1;
+
   /// True if we don't want to warn about this command being passed an empty
   /// paragraph.  Meaningful only for block commands.
   unsigned IsEmptyParagraphAllowed : 1;

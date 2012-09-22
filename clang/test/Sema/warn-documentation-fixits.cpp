@@ -20,8 +20,45 @@ void test3(T aaa);
 template<typename SomeTy, typename OtherTy>
 void test4(SomeTy aaa, OtherTy bbb);
 
+// expected-warning@+1 {{declaration is marked with '\deprecated' command but does not have a deprecation attribute}} expected-note@+2 {{add a deprecation attribute to the declaration to silence this warning}}
+/// \deprecated
+void test_deprecated_1();
+
+// expected-warning@+1 {{declaration is marked with '\deprecated' command but does not have a deprecation attribute}} expected-note@+2 {{add a deprecation attribute to the declaration to silence this warning}}
+/// \deprecated
+void test_deprecated_2(int a);
+
+struct test_deprecated_3 {
+  // expected-warning@+1 {{declaration is marked with '\deprecated' command but does not have a deprecation attribute}} expected-note@+2 {{add a deprecation attribute to the declaration to silence this warning}}
+  /// \deprecated
+  void test_deprecated_4();
+
+  // expected-warning@+1 {{declaration is marked with '\deprecated' command but does not have a deprecation attribute}} expected-note@+2 {{add a deprecation attribute to the declaration to silence this warning}}
+  /// \deprecated
+  void test_deprecated_5() {
+  }
+};
+
+template<typename T>
+struct test_deprecated_6 {
+  // expected-warning@+1 {{declaration is marked with '\deprecated' command but does not have a deprecation attribute}} expected-note@+2 {{add a deprecation attribute to the declaration to silence this warning}}
+  /// \deprecated
+  void test_deprecated_7();
+
+  // expected-warning@+1 {{declaration is marked with '\deprecated' command but does not have a deprecation attribute}} expected-note@+2 {{add a deprecation attribute to the declaration to silence this warning}}
+  /// \deprecated
+  void test_deprecated_8() {
+  }
+};
+
 // CHECK: fix-it:"{{.*}}":{5:12-5:22}:"a"
 // CHECK: fix-it:"{{.*}}":{9:12-9:15}:"aaa"
 // CHECK: fix-it:"{{.*}}":{13:13-13:23}:"T"
 // CHECK: fix-it:"{{.*}}":{18:13-18:18}:"SomeTy"
+// CHECK: fix-it:"{{.*}}":{25:25-25:25}:" __attribute__((deprecated))"
+// CHECK: fix-it:"{{.*}}":{29:30-29:30}:" __attribute__((deprecated))"
+// CHECK: fix-it:"{{.*}}":{34:27-34:27}:" __attribute__((deprecated))"
+// CHECK: fix-it:"{{.*}}":{38:27-38:27}:" __attribute__((deprecated))"
+// CHECK: fix-it:"{{.*}}":{46:27-46:27}:" __attribute__((deprecated))"
+// CHECK: fix-it:"{{.*}}":{50:27-50:27}:" __attribute__((deprecated))"
 

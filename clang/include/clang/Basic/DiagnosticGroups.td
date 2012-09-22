@@ -61,9 +61,14 @@ def DeprecatedImplementations :DiagGroup<"deprecated-implementations">;
 def : DiagGroup<"disabled-optimization">;
 def : DiagGroup<"discard-qual">;
 def : DiagGroup<"div-by-zero">;
+
 def DocumentationHTML : DiagGroup<"documentation-html">;
 def DocumentationPedantic : DiagGroup<"documentation-pedantic">;
-def Documentation : DiagGroup<"documentation", [DocumentationHTML]>;
+def DocumentationDeprecatedSync : DiagGroup<"documentation-deprecated-sync">;
+def Documentation : DiagGroup<"documentation",
+                              [DocumentationHTML,
+                               DocumentationDeprecatedSync]>;
+
 def EmptyBody : DiagGroup<"empty-body">;
 def ExtraTokens : DiagGroup<"extra-tokens">;
 def CXX11ExtraSemi : DiagGroup<"c++11-extra-semi">;

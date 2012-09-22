@@ -121,5 +121,15 @@ def warn_doc_returns_attached_to_a_void_function : Warning<
   "method returning void}1">,
   InGroup<Documentation>, DefaultIgnore;
 
+// \deprecated command
+
+def warn_doc_deprecated_not_sync : Warning<
+  "declaration is marked with '\\deprecated' command but does not have "
+  "a deprecation attribute">,
+  InGroup<DocumentationDeprecatedSync>, DefaultIgnore;
+
+def note_add_deprecation_attr : Note<
+  "add a deprecation attribute to the declaration to silence this warning">;
+
 } // end of documentation issue category
 } // end of AST component

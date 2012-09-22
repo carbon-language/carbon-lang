@@ -59,6 +59,7 @@ void Sema::actOnBlockCommandFinish(BlockCommandComment *Command,
   checkBlockCommandEmptyParagraph(Command);
   checkBlockCommandDuplicate(Command);
   checkReturnsCommand(Command);
+  checkDeprecatedCommand(Command);
 }
 
 ParamCommandComment *Sema::actOnParamCommandStart(SourceLocation LocBegin,
@@ -498,6 +499,39 @@ void Sema::checkBlockCommandDuplicate(const BlockCommandComment *Command) {
          diag::note_doc_block_command_previous_alias)
         << PrevCommandName
         << CommandName;
+}
+
+void Sema::checkDeprecatedCommand(const BlockCommandComment *Command) {
+  if (!Traits.getCommandInfo(Command->getCommandID())->IsDeprecatedCommand)
+    return;
+
+  const Decl *D = ThisDeclInfo->ThisDecl;
+  if (!D)
+    return;
+
+  if (D->hasAttr<DeprecatedAttr>() ||
+      D->hasAttr<AvailabilityAttr>() ||
+      D->hasAttr<UnavailableAttr>())
+    return;
+
+  Diag(Command->getLocation(),
+       diag::warn_doc_deprecated_not_sync)
+    << Command->getSourceRange();
+
+  // Try to emit a fixit with a deprecation attribute.
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    // Don't emit a Fix-It for non-member function definitions.  GCC does not
+    // accept attributes on them.
+    const DeclContext *Ctx = FD->getDeclContext();
+    if ((!Ctx || !Ctx->isRecord()) &&
+        FD->doesThisDeclarationHaveABody())
+      return;
+
+    Diag(FD->getLocEnd(),
+         diag::note_add_deprecation_attr)
+      << FixItHint::CreateInsertion(FD->getLocEnd().getLocWithOffset(1),
+                                    " __attribute__((deprecated))");
+  }
 }
 
 void Sema::resolveParamCommandIndexes(const FullComment *FC) {

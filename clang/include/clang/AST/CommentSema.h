@@ -187,6 +187,8 @@ public:
   /// used only once per comment, e.g., \\brief and \\returns.
   void checkBlockCommandDuplicate(const BlockCommandComment *Command);
 
+  void checkDeprecatedCommand(const BlockCommandComment *Comment);
+
   /// Resolve parameter names to parameter indexes in function declaration.
   /// Emit diagnostics about unknown parametrs.
   void resolveParamCommandIndexes(const FullComment *FC);
