@@ -499,6 +499,9 @@ void bugreporter::trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S,
   if (!S || !N)
     return;
 
+  if (const OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(S))
+    S = OVE->getSourceExpr();
+
   ProgramStateManager &StateMgr = N->getState()->getStateManager();
 
   // Walk through nodes until we get one that matches the statement exactly.
