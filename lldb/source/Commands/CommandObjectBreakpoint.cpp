@@ -516,9 +516,8 @@ protected:
         if (bp)
         {
             Stream &output_stream = result.GetOutputStream();
-            output_stream.Printf ("Breakpoint created: ");
-            bp->GetDescription(&output_stream, lldb::eDescriptionLevelBrief);
-            output_stream.EOL();
+            const bool show_locations = false;
+            bp->GetDescription(&output_stream, lldb::eDescriptionLevelInitial, show_locations);
             // Don't print out this warning for exception breakpoints.  They can get set before the target
             // is set, but we won't know how to actually set the breakpoint till we run.
             if (bp->GetNumLocations() == 0 && break_type != eSetTypeException)

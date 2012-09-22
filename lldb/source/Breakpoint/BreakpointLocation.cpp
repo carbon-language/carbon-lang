@@ -410,13 +410,20 @@ void
 BreakpointLocation::GetDescription (Stream *s, lldb::DescriptionLevel level)
 {
     SymbolContext sc;
-    s->Indent();
-    BreakpointID::GetCanonicalReference(s, m_owner.GetID(), GetID());
-
+    
+    // If the description level is "initial" then the breakpoint is printing out our initial state,
+    // and we should let it decide how it wants to print our label.
+    if (level != eDescriptionLevelInitial)
+    {
+        s->Indent();
+        BreakpointID::GetCanonicalReference(s, m_owner.GetID(), GetID());
+    }
+    
     if (level == lldb::eDescriptionLevelBrief)
         return;
 
-    s->PutCString(": ");
+    if (level != eDescriptionLevelInitial)
+        s->PutCString(": ");
 
     if (level == lldb::eDescriptionLevelVerbose)
         s->IndentMore();
@@ -425,7 +432,7 @@ BreakpointLocation::GetDescription (Stream *s, lldb::DescriptionLevel level)
     {
         m_address.CalculateSymbolContext(&sc);
 
-        if (level == lldb::eDescriptionLevelFull)
+        if (level == lldb::eDescriptionLevelFull || level == eDescriptionLevelInitial)
         {
             s->PutCString("where = ");
             sc.DumpStopContext (s, m_owner.GetTarget().GetProcessSP().get(), m_address, false, true, false);
@@ -478,7 +485,11 @@ BreakpointLocation::GetDescription (Stream *s, lldb::DescriptionLevel level)
         s->EOL();
         s->Indent();
     }
-    s->Printf ("%saddress = ", (level == lldb::eDescriptionLevelFull && m_address.IsSectionOffset()) ? ", " : "");
+    
+    if (m_address.IsSectionOffset() && (level == eDescriptionLevelFull || level == eDescriptionLevelInitial))
+        s->Printf (", ");
+    s->Printf ("address = ");
+    
     ExecutionContextScope *exe_scope = NULL;
     Target *target = &m_owner.GetTarget();
     if (target)
@@ -486,7 +497,10 @@ BreakpointLocation::GetDescription (Stream *s, lldb::DescriptionLevel level)
     if (exe_scope == NULL)
         exe_scope = target;
 
-    m_address.Dump(s, exe_scope, Address::DumpStyleLoadAddress, Address::DumpStyleModuleWithFileAddress);
+    if (eDescriptionLevelInitial)
+        m_address.Dump(s, exe_scope, Address::DumpStyleLoadAddress, Address::DumpStyleFileAddress);
+    else
+        m_address.Dump(s, exe_scope, Address::DumpStyleLoadAddress, Address::DumpStyleModuleWithFileAddress);
 
     if (level == lldb::eDescriptionLevelVerbose)
     {
@@ -505,7 +519,7 @@ BreakpointLocation::GetDescription (Stream *s, lldb::DescriptionLevel level)
         }
         s->IndentLess();
     }
-    else
+    else if (level != eDescriptionLevelInitial)
     {
         s->Printf(", %sresolved, hit count = %u ",
                   (IsResolved() ? "" : "un"),

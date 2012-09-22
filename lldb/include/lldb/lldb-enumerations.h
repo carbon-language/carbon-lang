@@ -137,6 +137,7 @@ namespace lldb {
         eDescriptionLevelBrief = 0,
         eDescriptionLevelFull,
         eDescriptionLevelVerbose,
+        eDescriptionLevelInitial,
         kNumDescriptionLevels
     } DescriptionLevel;
 
