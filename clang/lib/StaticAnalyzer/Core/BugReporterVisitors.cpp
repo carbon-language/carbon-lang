@@ -23,6 +23,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CallEvent.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringExtras.h"
 
 using namespace clang;
 using namespace ento;
@@ -297,6 +298,22 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
       if (const BinaryOperator *BO = P->getStmtAs<BinaryOperator>())
         if (BO->isAssignmentOp())
           InitE = BO->getRHS();
+
+    // If this is a call entry, the variable should be a parameter.
+    // FIXME: Handle CXXThisRegion as well. (This is not a priority because
+    // 'this' should never be NULL, but this visitor isn't just for NULL and
+    // UndefinedVal.)
+    if (const CallEnter *CE = Succ->getLocationAs<CallEnter>()) {
+      const VarRegion *VR = cast<VarRegion>(R);
+      const ParmVarDecl *Param = cast<ParmVarDecl>(VR->getDecl());
+      
+      ProgramStateManager &StateMgr = BRC.getStateManager();
+      CallEventManager &CallMgr = StateMgr.getCallEventManager();
+
+      CallEventRef<> Call = CallMgr.getCaller(CE->getCalleeContext(),
+                                              Succ->getState());
+      InitE = Call->getArgExpr(Param->getFunctionScopeIndex());
+    }
   }
 
   if (!StoreSite)
@@ -309,6 +326,9 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
     InitE = InitE->IgnoreParenCasts();
     ReturnVisitor::addVisitorIfNecessary(StoreSite, InitE, BR);
   }
+
+  if (!R->canPrintPretty())
+    return 0;
 
   // Okay, we've found the binding. Emit an appropriate message.
   SmallString<256> sbuf;
@@ -353,6 +373,30 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
         os << "initialized here";
       }
     }
+  } else if (isa<CallEnter>(StoreSite->getLocation())) {
+    const ParmVarDecl *Param = cast<ParmVarDecl>(cast<VarRegion>(R)->getDecl());
+
+    os << "Passing ";
+
+    if (isa<loc::ConcreteInt>(V)) {
+      if (Param->getType()->isObjCObjectPointerType())
+        os << "nil object reference";
+      else
+        os << "null pointer value";
+    } else if (V.isUndef()) {
+      os << "uninitialized value";
+    } else if (isa<nonloc::ConcreteInt>(V)) {
+      os << "the value " << cast<nonloc::ConcreteInt>(V).getValue();
+    } else {
+      os << "value";
+    }
+
+    // Printed parameter indexes are 1-based, not 0-based.
+    unsigned Idx = Param->getFunctionScopeIndex() + 1;
+    os << " via " << Idx << llvm::getOrdinalSuffix(Idx) << " parameter '";
+
+    R->printPretty(os);
+    os << '\'';
   }
 
   if (os.str().empty()) {
@@ -380,17 +424,19 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
     else
       os << "Value assigned to ";
 
-    if (const VarRegion *VR = dyn_cast<VarRegion>(R)) {
-      os << '\'' << *VR->getDecl() << '\'';
-    }
-    else
-      return NULL;
+    os << '\'';
+    R->printPretty(os);
+    os << '\'';
   }
 
   // Construct a new PathDiagnosticPiece.
   ProgramPoint P = StoreSite->getLocation();
-  PathDiagnosticLocation L =
-    PathDiagnosticLocation::create(P, BRC.getSourceManager());
+  PathDiagnosticLocation L;
+  if (isa<CallEnter>(P))
+    L = PathDiagnosticLocation(InitE, BRC.getSourceManager(),
+                               P.getLocationContext());
+  else
+    L = PathDiagnosticLocation::create(P, BRC.getSourceManager());
   if (!L.isValid())
     return NULL;
   return new PathDiagnosticEventPiece(L, os.str());

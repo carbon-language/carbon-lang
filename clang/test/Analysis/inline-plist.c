@@ -1,40 +1,53 @@
+// RUN: %clang --analyze %s -fblocks -Xanalyzer -analyzer-output=text -Xclang -verify %s
 // RUN: %clang --analyze %s -fblocks -o %t
 // RUN: FileCheck -input-file %t %s
 
 // <rdar://problem/10967815>
 void mmm(int y) {
   if (y != 0)
-      y++;
+    y++;
 }
 
 int foo(int x, int y) {
-    mmm(y);
-    if (x != 0)
-      x++;
-    return 5/x;
+  mmm(y);
+  if (x != 0) {
+    // expected-note@-1 {{Assuming 'x' is equal to 0}}
+    // expected-note@-2 {{Taking false branch}}
+    x++;
+  }
+  return 5/x; // expected-warning{{Division by zero}} expected-note{{Division by zero}}
 }
 
 // Test a bug triggering only when inlined.
 void has_bug(int *p) {
-  *p = 0xDEADBEEF;
+  *p = 0xDEADBEEF; // expected-warning{{Dereference of null pointer (loaded from variable 'p')}} expected-note{{Dereference of null pointer (loaded from variable 'p')}}
 }
 
 void test_has_bug() {
   has_bug(0);
+  // expected-note@-1 {{Passing null pointer value via 1st parameter 'p'}}
+  // expected-note@-2 {{Calling 'has_bug'}}
 }
 
 void triggers_bug(int *p) {
-  *p = 0xDEADBEEF;
+  *p = 0xDEADBEEF; // expected-warning{{Dereference of null pointer (loaded from variable 'p')}} expected-note{{Dereference of null pointer (loaded from variable 'p')}}
 }
 
 // This function triggers a bug by calling triggers_bug().  The diagnostics
 // should show when p is assumed to be null.
 void bar(int *p) {
-  if (!!p)
+  if (!!p) {
+    // expected-note@-1 {{Assuming 'p' is null}}
+    // expected-note@-2 {{Taking false branch}}
     return;
+  }
   
-  if (p == 0)
+  if (p == 0) {
+    // expected-note@-1 {{Taking true branch}}
     triggers_bug(p);
+    // expected-note@-1 {{Passing null pointer value via 1st parameter 'p'}}
+    // expected-note@-2 {{Calling 'triggers_bug'}}
+  }
 }
 
 // ========================================================================== //
@@ -42,25 +55,35 @@ void bar(int *p) {
 // ========================================================================== //
 
 void test_block__capture_null() {
-  int *p = 0;
-  ^(){ *p = 1; }();
+  int *p = 0; // expected-note{{Variable 'p' initialized to a null pointer value}}
+  ^(){ // expected-note {{Calling anonymous block}}
+    *p = 1; // expected-warning{{Dereference of null pointer (loaded from variable 'p')}} expected-note{{Dereference of null pointer (loaded from variable 'p')}}
+  }();
+  
 }
 
 void test_block_ret() {
-  int *p = ^(){ int *q = 0; return q; }();
-  *p = 1;
+  int *p = ^(){ // expected-note {{Calling anonymous block}} expected-note{{Returning to caller}} expected-note {{Variable 'p' initialized to a null pointer value}}
+    int *q = 0; // expected-note {{Variable 'q' initialized to a null pointer value}}
+    return q; // expected-note {{Returning null pointer (loaded from 'q')}}
+  }();
+  *p = 1; // expected-warning{{Dereference of null pointer (loaded from variable 'p')}} expected-note{{Dereference of null pointer (loaded from variable 'p')}}
 }
 
 void test_block_blockvar() {
   __block int *p;
-  ^(){ p = 0; }();
-  *p = 1;
+  ^(){ // expected-note{{Calling anonymous block}} expected-note{{Returning to caller}}
+    p = 0; // expected-note{{Null pointer value stored to 'p'}}
+  }();
+  *p = 1; // expected-warning{{Dereference of null pointer (loaded from variable 'p')}} expected-note{{Dereference of null pointer (loaded from variable 'p')}}
 }
 
 void test_block_arg() {
   int *p;
-  ^(int **q){ *q = 0; }(&p);
-  *p = 1;
+  ^(int **q){ // expected-note{{Calling anonymous block}} expected-note{{Returning to caller}}
+    *q = 0; // expected-note{{Null pointer value stored to 'p'}}
+  }(&p);
+  *p = 1; // expected-warning{{Dereference of null pointer (loaded from variable 'p')}} expected-note{{Dereference of null pointer (loaded from variable 'p')}}
 }
 
 // CHECK:  <key>diagnostics</key>
@@ -76,26 +99,26 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>11</integer>
-// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>line</key><integer>12</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>11</integer>
-// CHECK-NEXT:            <key>col</key><integer>7</integer>
+// CHECK-NEXT:            <key>line</key><integer>12</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:          </array>
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>12</integer>
-// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>line</key><integer>13</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>12</integer>
-// CHECK-NEXT:            <key>col</key><integer>6</integer>
+// CHECK-NEXT:            <key>line</key><integer>13</integer>
+// CHECK-NEXT:            <key>col</key><integer>4</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:          </array>
@@ -110,26 +133,26 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>12</integer>
-// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>line</key><integer>13</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>12</integer>
-// CHECK-NEXT:            <key>col</key><integer>6</integer>
+// CHECK-NEXT:            <key>line</key><integer>13</integer>
+// CHECK-NEXT:            <key>col</key><integer>4</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:          </array>
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>12</integer>
-// CHECK-NEXT:            <key>col</key><integer>9</integer>
+// CHECK-NEXT:            <key>line</key><integer>13</integer>
+// CHECK-NEXT:            <key>col</key><integer>7</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>12</integer>
-// CHECK-NEXT:            <key>col</key><integer>9</integer>
+// CHECK-NEXT:            <key>line</key><integer>13</integer>
+// CHECK-NEXT:            <key>col</key><integer>7</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:          </array>
@@ -140,21 +163,21 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>12</integer>
-// CHECK-NEXT:       <key>col</key><integer>9</integer>
+// CHECK-NEXT:       <key>line</key><integer>13</integer>
+// CHECK-NEXT:       <key>col</key><integer>7</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
 // CHECK-NEXT:      <key>ranges</key>
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>12</integer>
-// CHECK-NEXT:          <key>col</key><integer>9</integer>
+// CHECK-NEXT:          <key>line</key><integer>13</integer>
+// CHECK-NEXT:          <key>col</key><integer>7</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>12</integer>
-// CHECK-NEXT:          <key>col</key><integer>14</integer>
+// CHECK-NEXT:          <key>line</key><integer>13</integer>
+// CHECK-NEXT:          <key>col</key><integer>12</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
@@ -163,7 +186,7 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Assuming &apos;x&apos; is equal to 0</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Assuming &apos;x&apos; is equal to 0</string>
+// CHECK-NEXT:      <string>Assuming &apos;x&apos; is equal to 0</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -173,26 +196,26 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>12</integer>
-// CHECK-NEXT:            <key>col</key><integer>9</integer>
+// CHECK-NEXT:            <key>line</key><integer>13</integer>
+// CHECK-NEXT:            <key>col</key><integer>7</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>12</integer>
-// CHECK-NEXT:            <key>col</key><integer>9</integer>
+// CHECK-NEXT:            <key>line</key><integer>13</integer>
+// CHECK-NEXT:            <key>col</key><integer>7</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:          </array>
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>14</integer>
-// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>line</key><integer>18</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>14</integer>
-// CHECK-NEXT:            <key>col</key><integer>10</integer>
+// CHECK-NEXT:            <key>line</key><integer>18</integer>
+// CHECK-NEXT:            <key>col</key><integer>8</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:          </array>
@@ -207,26 +230,26 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>14</integer>
-// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>line</key><integer>18</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>14</integer>
-// CHECK-NEXT:            <key>col</key><integer>10</integer>
+// CHECK-NEXT:            <key>line</key><integer>18</integer>
+// CHECK-NEXT:            <key>col</key><integer>8</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:          </array>
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>14</integer>
-// CHECK-NEXT:            <key>col</key><integer>12</integer>
+// CHECK-NEXT:            <key>line</key><integer>18</integer>
+// CHECK-NEXT:            <key>col</key><integer>10</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>14</integer>
-// CHECK-NEXT:            <key>col</key><integer>12</integer>
+// CHECK-NEXT:            <key>line</key><integer>18</integer>
+// CHECK-NEXT:            <key>col</key><integer>10</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:          </array>
@@ -237,21 +260,21 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>14</integer>
-// CHECK-NEXT:       <key>col</key><integer>12</integer>
+// CHECK-NEXT:       <key>line</key><integer>18</integer>
+// CHECK-NEXT:       <key>col</key><integer>10</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
 // CHECK-NEXT:      <key>ranges</key>
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>14</integer>
-// CHECK-NEXT:          <key>col</key><integer>12</integer>
+// CHECK-NEXT:          <key>line</key><integer>18</integer>
+// CHECK-NEXT:          <key>col</key><integer>10</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>14</integer>
-// CHECK-NEXT:          <key>col</key><integer>14</integer>
+// CHECK-NEXT:          <key>line</key><integer>18</integer>
+// CHECK-NEXT:          <key>col</key><integer>12</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
@@ -260,7 +283,7 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Division by zero</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Division by zero</string>
+// CHECK-NEXT:      <string>Division by zero</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Division by zero</string>
@@ -268,163 +291,11 @@ void test_block_arg() {
 // CHECK-NEXT:    <key>type</key><string>Division by zero</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>foo</string>
-// CHECK-NEXT:   <key>issue_hash</key><integer>4</integer>
+// CHECK-NEXT:   <key>issue_hash</key><integer>7</integer>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
-// CHECK-NEXT:    <key>line</key><integer>14</integer>
-// CHECK-NEXT:    <key>col</key><integer>12</integer>
-// CHECK-NEXT:    <key>file</key><integer>0</integer>
-// CHECK-NEXT:   </dict>
-// CHECK-NEXT:   </dict>
-// CHECK-NEXT:   <dict>
-// CHECK-NEXT:    <key>path</key>
-// CHECK-NEXT:    <array>
-// CHECK-NEXT:     <dict>
-// CHECK-NEXT:      <key>kind</key><string>event</string>
-// CHECK-NEXT:      <key>location</key>
-// CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>23</integer>
-// CHECK-NEXT:       <key>col</key><integer>3</integer>
-// CHECK-NEXT:       <key>file</key><integer>0</integer>
-// CHECK-NEXT:      </dict>
-// CHECK-NEXT:      <key>ranges</key>
-// CHECK-NEXT:      <array>
-// CHECK-NEXT:        <array>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>23</integer>
-// CHECK-NEXT:          <key>col</key><integer>3</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>23</integer>
-// CHECK-NEXT:          <key>col</key><integer>12</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:        </array>
-// CHECK-NEXT:      </array>
-// CHECK-NEXT:      <key>depth</key><integer>0</integer>
-// CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Null pointer value stored to &apos;p&apos;</string>
-// CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Null pointer value stored to &apos;p&apos;</string>
-// CHECK-NEXT:     </dict>
-// CHECK-NEXT:     <dict>
-// CHECK-NEXT:      <key>kind</key><string>event</string>
-// CHECK-NEXT:      <key>location</key>
-// CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>23</integer>
-// CHECK-NEXT:       <key>col</key><integer>3</integer>
-// CHECK-NEXT:       <key>file</key><integer>0</integer>
-// CHECK-NEXT:      </dict>
-// CHECK-NEXT:      <key>ranges</key>
-// CHECK-NEXT:      <array>
-// CHECK-NEXT:        <array>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>23</integer>
-// CHECK-NEXT:          <key>col</key><integer>3</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>23</integer>
-// CHECK-NEXT:          <key>col</key><integer>12</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:        </array>
-// CHECK-NEXT:      </array>
-// CHECK-NEXT:      <key>depth</key><integer>0</integer>
-// CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Calling &apos;has_bug&apos;</string>
-// CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Calling &apos;has_bug&apos;</string>
-// CHECK-NEXT:     </dict>
-// CHECK-NEXT:     <dict>
-// CHECK-NEXT:      <key>kind</key><string>event</string>
-// CHECK-NEXT:      <key>location</key>
-// CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>18</integer>
-// CHECK-NEXT:       <key>col</key><integer>1</integer>
-// CHECK-NEXT:       <key>file</key><integer>0</integer>
-// CHECK-NEXT:      </dict>
-// CHECK-NEXT:      <key>depth</key><integer>1</integer>
-// CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Entered call from &apos;test_has_bug&apos;</string>
-// CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Entered call from &apos;test_has_bug&apos;</string>
-// CHECK-NEXT:     </dict>
-// CHECK-NEXT:     <dict>
-// CHECK-NEXT:      <key>kind</key><string>control</string>
-// CHECK-NEXT:      <key>edges</key>
-// CHECK-NEXT:       <array>
-// CHECK-NEXT:        <dict>
-// CHECK-NEXT:         <key>start</key>
-// CHECK-NEXT:          <array>
-// CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>18</integer>
-// CHECK-NEXT:            <key>col</key><integer>1</integer>
-// CHECK-NEXT:            <key>file</key><integer>0</integer>
-// CHECK-NEXT:           </dict>
-// CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>18</integer>
-// CHECK-NEXT:            <key>col</key><integer>4</integer>
-// CHECK-NEXT:            <key>file</key><integer>0</integer>
-// CHECK-NEXT:           </dict>
-// CHECK-NEXT:          </array>
-// CHECK-NEXT:         <key>end</key>
-// CHECK-NEXT:          <array>
-// CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>19</integer>
-// CHECK-NEXT:            <key>col</key><integer>3</integer>
-// CHECK-NEXT:            <key>file</key><integer>0</integer>
-// CHECK-NEXT:           </dict>
-// CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>19</integer>
-// CHECK-NEXT:            <key>col</key><integer>3</integer>
-// CHECK-NEXT:            <key>file</key><integer>0</integer>
-// CHECK-NEXT:           </dict>
-// CHECK-NEXT:          </array>
-// CHECK-NEXT:        </dict>
-// CHECK-NEXT:       </array>
-// CHECK-NEXT:     </dict>
-// CHECK-NEXT:     <dict>
-// CHECK-NEXT:      <key>kind</key><string>event</string>
-// CHECK-NEXT:      <key>location</key>
-// CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>19</integer>
-// CHECK-NEXT:       <key>col</key><integer>3</integer>
-// CHECK-NEXT:       <key>file</key><integer>0</integer>
-// CHECK-NEXT:      </dict>
-// CHECK-NEXT:      <key>ranges</key>
-// CHECK-NEXT:      <array>
-// CHECK-NEXT:        <array>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>19</integer>
-// CHECK-NEXT:          <key>col</key><integer>4</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>19</integer>
-// CHECK-NEXT:          <key>col</key><integer>4</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:        </array>
-// CHECK-NEXT:      </array>
-// CHECK-NEXT:      <key>depth</key><integer>1</integer>
-// CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
-// CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
-// CHECK-NEXT:     </dict>
-// CHECK-NEXT:    </array>
-// CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
-// CHECK-NEXT:    <key>category</key><string>Logic error</string>
-// CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
-// CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
-// CHECK-NEXT:   <key>issue_context</key><string>has_bug</string>
-// CHECK-NEXT:   <key>issue_hash</key><integer>1</integer>
-// CHECK-NEXT:   <key>location</key>
-// CHECK-NEXT:   <dict>
-// CHECK-NEXT:    <key>line</key><integer>19</integer>
-// CHECK-NEXT:    <key>col</key><integer>3</integer>
+// CHECK-NEXT:    <key>line</key><integer>18</integer>
+// CHECK-NEXT:    <key>col</key><integer>10</integer>
 // CHECK-NEXT:    <key>file</key><integer>0</integer>
 // CHECK-NEXT:   </dict>
 // CHECK-NEXT:   </dict>
@@ -439,216 +310,13 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>33</integer>
+// CHECK-NEXT:            <key>line</key><integer>27</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>33</integer>
-// CHECK-NEXT:            <key>col</key><integer>4</integer>
-// CHECK-NEXT:            <key>file</key><integer>0</integer>
-// CHECK-NEXT:           </dict>
-// CHECK-NEXT:          </array>
-// CHECK-NEXT:         <key>end</key>
-// CHECK-NEXT:          <array>
-// CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>33</integer>
-// CHECK-NEXT:            <key>col</key><integer>8</integer>
-// CHECK-NEXT:            <key>file</key><integer>0</integer>
-// CHECK-NEXT:           </dict>
-// CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>33</integer>
-// CHECK-NEXT:            <key>col</key><integer>8</integer>
-// CHECK-NEXT:            <key>file</key><integer>0</integer>
-// CHECK-NEXT:           </dict>
-// CHECK-NEXT:          </array>
-// CHECK-NEXT:        </dict>
-// CHECK-NEXT:       </array>
-// CHECK-NEXT:     </dict>
-// CHECK-NEXT:     <dict>
-// CHECK-NEXT:      <key>kind</key><string>event</string>
-// CHECK-NEXT:      <key>location</key>
-// CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>33</integer>
-// CHECK-NEXT:       <key>col</key><integer>8</integer>
-// CHECK-NEXT:       <key>file</key><integer>0</integer>
-// CHECK-NEXT:      </dict>
-// CHECK-NEXT:      <key>ranges</key>
-// CHECK-NEXT:      <array>
-// CHECK-NEXT:        <array>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>33</integer>
-// CHECK-NEXT:          <key>col</key><integer>8</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>33</integer>
-// CHECK-NEXT:          <key>col</key><integer>9</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:        </array>
-// CHECK-NEXT:      </array>
-// CHECK-NEXT:      <key>depth</key><integer>0</integer>
-// CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Assuming &apos;p&apos; is null</string>
-// CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Assuming &apos;p&apos; is null</string>
-// CHECK-NEXT:     </dict>
-// CHECK-NEXT:     <dict>
-// CHECK-NEXT:      <key>kind</key><string>control</string>
-// CHECK-NEXT:      <key>edges</key>
-// CHECK-NEXT:       <array>
-// CHECK-NEXT:        <dict>
-// CHECK-NEXT:         <key>start</key>
-// CHECK-NEXT:          <array>
-// CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>33</integer>
-// CHECK-NEXT:            <key>col</key><integer>8</integer>
-// CHECK-NEXT:            <key>file</key><integer>0</integer>
-// CHECK-NEXT:           </dict>
-// CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>33</integer>
-// CHECK-NEXT:            <key>col</key><integer>8</integer>
-// CHECK-NEXT:            <key>file</key><integer>0</integer>
-// CHECK-NEXT:           </dict>
-// CHECK-NEXT:          </array>
-// CHECK-NEXT:         <key>end</key>
-// CHECK-NEXT:          <array>
-// CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>36</integer>
-// CHECK-NEXT:            <key>col</key><integer>3</integer>
-// CHECK-NEXT:            <key>file</key><integer>0</integer>
-// CHECK-NEXT:           </dict>
-// CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>36</integer>
-// CHECK-NEXT:            <key>col</key><integer>4</integer>
-// CHECK-NEXT:            <key>file</key><integer>0</integer>
-// CHECK-NEXT:           </dict>
-// CHECK-NEXT:          </array>
-// CHECK-NEXT:        </dict>
-// CHECK-NEXT:       </array>
-// CHECK-NEXT:     </dict>
-// CHECK-NEXT:     <dict>
-// CHECK-NEXT:      <key>kind</key><string>control</string>
-// CHECK-NEXT:      <key>edges</key>
-// CHECK-NEXT:       <array>
-// CHECK-NEXT:        <dict>
-// CHECK-NEXT:         <key>start</key>
-// CHECK-NEXT:          <array>
-// CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>36</integer>
-// CHECK-NEXT:            <key>col</key><integer>3</integer>
-// CHECK-NEXT:            <key>file</key><integer>0</integer>
-// CHECK-NEXT:           </dict>
-// CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>36</integer>
-// CHECK-NEXT:            <key>col</key><integer>4</integer>
-// CHECK-NEXT:            <key>file</key><integer>0</integer>
-// CHECK-NEXT:           </dict>
-// CHECK-NEXT:          </array>
-// CHECK-NEXT:         <key>end</key>
-// CHECK-NEXT:          <array>
-// CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>37</integer>
-// CHECK-NEXT:            <key>col</key><integer>5</integer>
-// CHECK-NEXT:            <key>file</key><integer>0</integer>
-// CHECK-NEXT:           </dict>
-// CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>37</integer>
-// CHECK-NEXT:            <key>col</key><integer>16</integer>
-// CHECK-NEXT:            <key>file</key><integer>0</integer>
-// CHECK-NEXT:           </dict>
-// CHECK-NEXT:          </array>
-// CHECK-NEXT:        </dict>
-// CHECK-NEXT:       </array>
-// CHECK-NEXT:     </dict>
-// CHECK-NEXT:     <dict>
-// CHECK-NEXT:      <key>kind</key><string>event</string>
-// CHECK-NEXT:      <key>location</key>
-// CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>37</integer>
-// CHECK-NEXT:       <key>col</key><integer>5</integer>
-// CHECK-NEXT:       <key>file</key><integer>0</integer>
-// CHECK-NEXT:      </dict>
-// CHECK-NEXT:      <key>ranges</key>
-// CHECK-NEXT:      <array>
-// CHECK-NEXT:        <array>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>37</integer>
-// CHECK-NEXT:          <key>col</key><integer>5</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>37</integer>
-// CHECK-NEXT:          <key>col</key><integer>19</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:        </array>
-// CHECK-NEXT:      </array>
-// CHECK-NEXT:      <key>depth</key><integer>0</integer>
-// CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Null pointer value stored to &apos;p&apos;</string>
-// CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Null pointer value stored to &apos;p&apos;</string>
-// CHECK-NEXT:     </dict>
-// CHECK-NEXT:     <dict>
-// CHECK-NEXT:      <key>kind</key><string>event</string>
-// CHECK-NEXT:      <key>location</key>
-// CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>37</integer>
-// CHECK-NEXT:       <key>col</key><integer>5</integer>
-// CHECK-NEXT:       <key>file</key><integer>0</integer>
-// CHECK-NEXT:      </dict>
-// CHECK-NEXT:      <key>ranges</key>
-// CHECK-NEXT:      <array>
-// CHECK-NEXT:        <array>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>37</integer>
-// CHECK-NEXT:          <key>col</key><integer>5</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>37</integer>
-// CHECK-NEXT:          <key>col</key><integer>19</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:        </array>
-// CHECK-NEXT:      </array>
-// CHECK-NEXT:      <key>depth</key><integer>0</integer>
-// CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Calling &apos;triggers_bug&apos;</string>
-// CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Calling &apos;triggers_bug&apos;</string>
-// CHECK-NEXT:     </dict>
-// CHECK-NEXT:     <dict>
-// CHECK-NEXT:      <key>kind</key><string>event</string>
-// CHECK-NEXT:      <key>location</key>
-// CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>26</integer>
-// CHECK-NEXT:       <key>col</key><integer>1</integer>
-// CHECK-NEXT:       <key>file</key><integer>0</integer>
-// CHECK-NEXT:      </dict>
-// CHECK-NEXT:      <key>depth</key><integer>1</integer>
-// CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Entered call from &apos;bar&apos;</string>
-// CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Entered call from &apos;bar&apos;</string>
-// CHECK-NEXT:     </dict>
-// CHECK-NEXT:     <dict>
-// CHECK-NEXT:      <key>kind</key><string>control</string>
-// CHECK-NEXT:      <key>edges</key>
-// CHECK-NEXT:       <array>
-// CHECK-NEXT:        <dict>
-// CHECK-NEXT:         <key>start</key>
-// CHECK-NEXT:          <array>
-// CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>26</integer>
-// CHECK-NEXT:            <key>col</key><integer>1</integer>
-// CHECK-NEXT:            <key>file</key><integer>0</integer>
-// CHECK-NEXT:           </dict>
-// CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>26</integer>
-// CHECK-NEXT:            <key>col</key><integer>4</integer>
+// CHECK-NEXT:            <key>line</key><integer>27</integer>
+// CHECK-NEXT:            <key>col</key><integer>9</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:          </array>
@@ -656,17 +324,46 @@ void test_block_arg() {
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
 // CHECK-NEXT:            <key>line</key><integer>27</integer>
-// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>col</key><integer>11</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
 // CHECK-NEXT:            <key>line</key><integer>27</integer>
-// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>col</key><integer>11</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:          </array>
 // CHECK-NEXT:        </dict>
 // CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>27</integer>
+// CHECK-NEXT:       <key>col</key><integer>11</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>27</integer>
+// CHECK-NEXT:          <key>col</key><integer>11</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>27</integer>
+// CHECK-NEXT:          <key>col</key><integer>11</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Passing null pointer value via 1st parameter &apos;p&apos;</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Passing null pointer value via 1st parameter &apos;p&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
@@ -681,11 +378,88 @@ void test_block_arg() {
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
 // CHECK-NEXT:          <key>line</key><integer>27</integer>
-// CHECK-NEXT:          <key>col</key><integer>4</integer>
+// CHECK-NEXT:          <key>col</key><integer>3</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
 // CHECK-NEXT:          <key>line</key><integer>27</integer>
+// CHECK-NEXT:          <key>col</key><integer>12</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Calling &apos;has_bug&apos;</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Calling &apos;has_bug&apos;</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>22</integer>
+// CHECK-NEXT:       <key>col</key><integer>1</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>depth</key><integer>1</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Entered call from &apos;test_has_bug&apos;</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Entered call from &apos;test_has_bug&apos;</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>22</integer>
+// CHECK-NEXT:            <key>col</key><integer>1</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>22</integer>
+// CHECK-NEXT:            <key>col</key><integer>4</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>23</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>23</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>23</integer>
+// CHECK-NEXT:       <key>col</key><integer>3</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>23</integer>
+// CHECK-NEXT:          <key>col</key><integer>4</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>23</integer>
 // CHECK-NEXT:          <key>col</key><integer>4</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -695,7 +469,324 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
+// CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:    </array>
+// CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
+// CHECK-NEXT:    <key>category</key><string>Logic error</string>
+// CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
+// CHECK-NEXT:   <key>issue_context</key><string>has_bug</string>
+// CHECK-NEXT:   <key>issue_hash</key><integer>1</integer>
+// CHECK-NEXT:   <key>location</key>
+// CHECK-NEXT:   <dict>
+// CHECK-NEXT:    <key>line</key><integer>23</integer>
+// CHECK-NEXT:    <key>col</key><integer>3</integer>
+// CHECK-NEXT:    <key>file</key><integer>0</integer>
+// CHECK-NEXT:   </dict>
+// CHECK-NEXT:   </dict>
+// CHECK-NEXT:   <dict>
+// CHECK-NEXT:    <key>path</key>
+// CHECK-NEXT:    <array>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>39</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>39</integer>
+// CHECK-NEXT:            <key>col</key><integer>4</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>39</integer>
+// CHECK-NEXT:            <key>col</key><integer>8</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>39</integer>
+// CHECK-NEXT:            <key>col</key><integer>8</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>39</integer>
+// CHECK-NEXT:       <key>col</key><integer>8</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>39</integer>
+// CHECK-NEXT:          <key>col</key><integer>8</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>39</integer>
+// CHECK-NEXT:          <key>col</key><integer>9</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Assuming &apos;p&apos; is null</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Assuming &apos;p&apos; is null</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>39</integer>
+// CHECK-NEXT:            <key>col</key><integer>8</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>39</integer>
+// CHECK-NEXT:            <key>col</key><integer>8</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>45</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>45</integer>
+// CHECK-NEXT:            <key>col</key><integer>4</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>45</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>45</integer>
+// CHECK-NEXT:            <key>col</key><integer>4</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>47</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>47</integer>
+// CHECK-NEXT:            <key>col</key><integer>16</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>47</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>47</integer>
+// CHECK-NEXT:            <key>col</key><integer>16</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>47</integer>
+// CHECK-NEXT:            <key>col</key><integer>18</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>47</integer>
+// CHECK-NEXT:            <key>col</key><integer>18</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>47</integer>
+// CHECK-NEXT:       <key>col</key><integer>18</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>47</integer>
+// CHECK-NEXT:          <key>col</key><integer>18</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>47</integer>
+// CHECK-NEXT:          <key>col</key><integer>18</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Passing null pointer value via 1st parameter &apos;p&apos;</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Passing null pointer value via 1st parameter &apos;p&apos;</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>47</integer>
+// CHECK-NEXT:       <key>col</key><integer>5</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>47</integer>
+// CHECK-NEXT:          <key>col</key><integer>5</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>47</integer>
+// CHECK-NEXT:          <key>col</key><integer>19</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Calling &apos;triggers_bug&apos;</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Calling &apos;triggers_bug&apos;</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>32</integer>
+// CHECK-NEXT:       <key>col</key><integer>1</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>depth</key><integer>1</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Entered call from &apos;bar&apos;</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Entered call from &apos;bar&apos;</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>32</integer>
+// CHECK-NEXT:            <key>col</key><integer>1</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>32</integer>
+// CHECK-NEXT:            <key>col</key><integer>4</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>33</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>33</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>33</integer>
+// CHECK-NEXT:       <key>col</key><integer>3</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>33</integer>
+// CHECK-NEXT:          <key>col</key><integer>4</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>33</integer>
+// CHECK-NEXT:          <key>col</key><integer>4</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>1</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
@@ -706,7 +797,7 @@ void test_block_arg() {
 // CHECK-NEXT:   <key>issue_hash</key><integer>1</integer>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
-// CHECK-NEXT:    <key>line</key><integer>27</integer>
+// CHECK-NEXT:    <key>line</key><integer>33</integer>
 // CHECK-NEXT:    <key>col</key><integer>3</integer>
 // CHECK-NEXT:    <key>file</key><integer>0</integer>
 // CHECK-NEXT:   </dict>
@@ -718,7 +809,7 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>45</integer>
+// CHECK-NEXT:       <key>line</key><integer>58</integer>
 // CHECK-NEXT:       <key>col</key><integer>3</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -726,12 +817,12 @@ void test_block_arg() {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>45</integer>
+// CHECK-NEXT:          <key>line</key><integer>58</integer>
 // CHECK-NEXT:          <key>col</key><integer>3</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>45</integer>
+// CHECK-NEXT:          <key>line</key><integer>58</integer>
 // CHECK-NEXT:          <key>col</key><integer>8</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -741,7 +832,7 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -751,12 +842,12 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>45</integer>
+// CHECK-NEXT:            <key>line</key><integer>58</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>45</integer>
+// CHECK-NEXT:            <key>line</key><integer>58</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -764,12 +855,12 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>46</integer>
+// CHECK-NEXT:            <key>line</key><integer>59</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>46</integer>
+// CHECK-NEXT:            <key>line</key><integer>59</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -781,7 +872,7 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>46</integer>
+// CHECK-NEXT:       <key>line</key><integer>59</integer>
 // CHECK-NEXT:       <key>col</key><integer>3</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -789,13 +880,13 @@ void test_block_arg() {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>46</integer>
+// CHECK-NEXT:          <key>line</key><integer>59</integer>
 // CHECK-NEXT:          <key>col</key><integer>3</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>46</integer>
-// CHECK-NEXT:          <key>col</key><integer>18</integer>
+// CHECK-NEXT:          <key>line</key><integer>61</integer>
+// CHECK-NEXT:          <key>col</key><integer>5</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
@@ -804,13 +895,13 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Calling anonymous block</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Calling anonymous block</string>
+// CHECK-NEXT:      <string>Calling anonymous block</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>46</integer>
+// CHECK-NEXT:       <key>line</key><integer>59</integer>
 // CHECK-NEXT:       <key>col</key><integer>3</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -818,7 +909,7 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Entered call from &apos;test_block__capture_null&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Entered call from &apos;test_block__capture_null&apos;</string>
+// CHECK-NEXT:      <string>Entered call from &apos;test_block__capture_null&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -828,12 +919,12 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>46</integer>
+// CHECK-NEXT:            <key>line</key><integer>59</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>46</integer>
+// CHECK-NEXT:            <key>line</key><integer>59</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -841,13 +932,13 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>46</integer>
-// CHECK-NEXT:            <key>col</key><integer>8</integer>
+// CHECK-NEXT:            <key>line</key><integer>60</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>46</integer>
-// CHECK-NEXT:            <key>col</key><integer>8</integer>
+// CHECK-NEXT:            <key>line</key><integer>60</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:          </array>
@@ -858,21 +949,21 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>46</integer>
-// CHECK-NEXT:       <key>col</key><integer>8</integer>
+// CHECK-NEXT:       <key>line</key><integer>60</integer>
+// CHECK-NEXT:       <key>col</key><integer>5</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
 // CHECK-NEXT:      <key>ranges</key>
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>46</integer>
-// CHECK-NEXT:          <key>col</key><integer>9</integer>
+// CHECK-NEXT:          <key>line</key><integer>60</integer>
+// CHECK-NEXT:          <key>col</key><integer>6</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>46</integer>
-// CHECK-NEXT:          <key>col</key><integer>9</integer>
+// CHECK-NEXT:          <key>line</key><integer>60</integer>
+// CHECK-NEXT:          <key>col</key><integer>6</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
@@ -881,7 +972,7 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
+// CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
@@ -889,8 +980,8 @@ void test_block_arg() {
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
-// CHECK-NEXT:    <key>line</key><integer>46</integer>
-// CHECK-NEXT:    <key>col</key><integer>8</integer>
+// CHECK-NEXT:    <key>line</key><integer>60</integer>
+// CHECK-NEXT:    <key>col</key><integer>5</integer>
 // CHECK-NEXT:    <key>file</key><integer>0</integer>
 // CHECK-NEXT:   </dict>
 // CHECK-NEXT:   </dict>
@@ -905,12 +996,12 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>50</integer>
+// CHECK-NEXT:            <key>line</key><integer>66</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>50</integer>
+// CHECK-NEXT:            <key>line</key><integer>66</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -918,12 +1009,12 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>50</integer>
+// CHECK-NEXT:            <key>line</key><integer>66</integer>
 // CHECK-NEXT:            <key>col</key><integer>12</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>50</integer>
+// CHECK-NEXT:            <key>line</key><integer>66</integer>
 // CHECK-NEXT:            <key>col</key><integer>12</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -935,7 +1026,7 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>50</integer>
+// CHECK-NEXT:       <key>line</key><integer>66</integer>
 // CHECK-NEXT:       <key>col</key><integer>12</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -943,13 +1034,13 @@ void test_block_arg() {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>50</integer>
+// CHECK-NEXT:          <key>line</key><integer>66</integer>
 // CHECK-NEXT:          <key>col</key><integer>12</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>50</integer>
-// CHECK-NEXT:          <key>col</key><integer>41</integer>
+// CHECK-NEXT:          <key>line</key><integer>69</integer>
+// CHECK-NEXT:          <key>col</key><integer>5</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
@@ -958,13 +1049,13 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Calling anonymous block</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Calling anonymous block</string>
+// CHECK-NEXT:      <string>Calling anonymous block</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>50</integer>
+// CHECK-NEXT:       <key>line</key><integer>66</integer>
 // CHECK-NEXT:       <key>col</key><integer>12</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -972,7 +1063,7 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Entered call from &apos;test_block_ret&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Entered call from &apos;test_block_ret&apos;</string>
+// CHECK-NEXT:      <string>Entered call from &apos;test_block_ret&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -982,12 +1073,12 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>50</integer>
+// CHECK-NEXT:            <key>line</key><integer>66</integer>
 // CHECK-NEXT:            <key>col</key><integer>12</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>50</integer>
+// CHECK-NEXT:            <key>line</key><integer>66</integer>
 // CHECK-NEXT:            <key>col</key><integer>12</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -995,13 +1086,13 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>50</integer>
-// CHECK-NEXT:            <key>col</key><integer>17</integer>
+// CHECK-NEXT:            <key>line</key><integer>67</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>50</integer>
-// CHECK-NEXT:            <key>col</key><integer>19</integer>
+// CHECK-NEXT:            <key>line</key><integer>67</integer>
+// CHECK-NEXT:            <key>col</key><integer>7</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:          </array>
@@ -1012,21 +1103,21 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>50</integer>
-// CHECK-NEXT:       <key>col</key><integer>17</integer>
+// CHECK-NEXT:       <key>line</key><integer>67</integer>
+// CHECK-NEXT:       <key>col</key><integer>5</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
 // CHECK-NEXT:      <key>ranges</key>
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>50</integer>
-// CHECK-NEXT:          <key>col</key><integer>17</integer>
+// CHECK-NEXT:          <key>line</key><integer>67</integer>
+// CHECK-NEXT:          <key>col</key><integer>5</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>50</integer>
-// CHECK-NEXT:          <key>col</key><integer>22</integer>
+// CHECK-NEXT:          <key>line</key><integer>67</integer>
+// CHECK-NEXT:          <key>col</key><integer>10</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
@@ -1035,7 +1126,7 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Variable &apos;q&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Variable &apos;q&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>Variable &apos;q&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1045,26 +1136,26 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>50</integer>
-// CHECK-NEXT:            <key>col</key><integer>17</integer>
+// CHECK-NEXT:            <key>line</key><integer>67</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>50</integer>
-// CHECK-NEXT:            <key>col</key><integer>19</integer>
+// CHECK-NEXT:            <key>line</key><integer>67</integer>
+// CHECK-NEXT:            <key>col</key><integer>7</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:          </array>
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>50</integer>
-// CHECK-NEXT:            <key>col</key><integer>29</integer>
+// CHECK-NEXT:            <key>line</key><integer>68</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>50</integer>
-// CHECK-NEXT:            <key>col</key><integer>34</integer>
+// CHECK-NEXT:            <key>line</key><integer>68</integer>
+// CHECK-NEXT:            <key>col</key><integer>10</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:          </array>
@@ -1075,21 +1166,21 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>50</integer>
-// CHECK-NEXT:       <key>col</key><integer>29</integer>
+// CHECK-NEXT:       <key>line</key><integer>68</integer>
+// CHECK-NEXT:       <key>col</key><integer>5</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
 // CHECK-NEXT:      <key>ranges</key>
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>50</integer>
-// CHECK-NEXT:          <key>col</key><integer>29</integer>
+// CHECK-NEXT:          <key>line</key><integer>68</integer>
+// CHECK-NEXT:          <key>col</key><integer>5</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>50</integer>
-// CHECK-NEXT:          <key>col</key><integer>36</integer>
+// CHECK-NEXT:          <key>line</key><integer>68</integer>
+// CHECK-NEXT:          <key>col</key><integer>12</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
@@ -1098,13 +1189,13 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Returning null pointer (loaded from &apos;q&apos;)</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Returning null pointer (loaded from &apos;q&apos;)</string>
+// CHECK-NEXT:      <string>Returning null pointer (loaded from &apos;q&apos;)</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>50</integer>
+// CHECK-NEXT:       <key>line</key><integer>66</integer>
 // CHECK-NEXT:       <key>col</key><integer>12</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -1112,13 +1203,13 @@ void test_block_arg() {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>50</integer>
+// CHECK-NEXT:          <key>line</key><integer>66</integer>
 // CHECK-NEXT:          <key>col</key><integer>12</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>50</integer>
-// CHECK-NEXT:          <key>col</key><integer>41</integer>
+// CHECK-NEXT:          <key>line</key><integer>69</integer>
+// CHECK-NEXT:          <key>col</key><integer>5</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
@@ -1127,7 +1218,7 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Returning to caller</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Returning to caller</string>
+// CHECK-NEXT:      <string>Returning to caller</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1137,12 +1228,12 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>50</integer>
+// CHECK-NEXT:            <key>line</key><integer>66</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>50</integer>
+// CHECK-NEXT:            <key>line</key><integer>66</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1150,12 +1241,12 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>50</integer>
+// CHECK-NEXT:            <key>line</key><integer>66</integer>
 // CHECK-NEXT:            <key>col</key><integer>12</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>50</integer>
+// CHECK-NEXT:            <key>line</key><integer>66</integer>
 // CHECK-NEXT:            <key>col</key><integer>12</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1171,12 +1262,12 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>50</integer>
+// CHECK-NEXT:            <key>line</key><integer>66</integer>
 // CHECK-NEXT:            <key>col</key><integer>12</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>50</integer>
+// CHECK-NEXT:            <key>line</key><integer>66</integer>
 // CHECK-NEXT:            <key>col</key><integer>12</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1184,12 +1275,12 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>50</integer>
+// CHECK-NEXT:            <key>line</key><integer>66</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>50</integer>
+// CHECK-NEXT:            <key>line</key><integer>66</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1201,7 +1292,7 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>50</integer>
+// CHECK-NEXT:       <key>line</key><integer>66</integer>
 // CHECK-NEXT:       <key>col</key><integer>3</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -1209,12 +1300,12 @@ void test_block_arg() {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>50</integer>
+// CHECK-NEXT:          <key>line</key><integer>66</integer>
 // CHECK-NEXT:          <key>col</key><integer>3</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>50</integer>
+// CHECK-NEXT:          <key>line</key><integer>66</integer>
 // CHECK-NEXT:          <key>col</key><integer>8</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -1224,7 +1315,7 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1234,12 +1325,12 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>50</integer>
+// CHECK-NEXT:            <key>line</key><integer>66</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>50</integer>
+// CHECK-NEXT:            <key>line</key><integer>66</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1247,12 +1338,12 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>51</integer>
+// CHECK-NEXT:            <key>line</key><integer>70</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>51</integer>
+// CHECK-NEXT:            <key>line</key><integer>70</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1264,7 +1355,7 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>51</integer>
+// CHECK-NEXT:       <key>line</key><integer>70</integer>
 // CHECK-NEXT:       <key>col</key><integer>3</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -1272,12 +1363,12 @@ void test_block_arg() {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>51</integer>
+// CHECK-NEXT:          <key>line</key><integer>70</integer>
 // CHECK-NEXT:          <key>col</key><integer>4</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>51</integer>
+// CHECK-NEXT:          <key>line</key><integer>70</integer>
 // CHECK-NEXT:          <key>col</key><integer>4</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -1287,7 +1378,7 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
+// CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
@@ -1295,10 +1386,10 @@ void test_block_arg() {
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_block_ret</string>
-// CHECK-NEXT:   <key>issue_hash</key><integer>2</integer>
+// CHECK-NEXT:   <key>issue_hash</key><integer>5</integer>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
-// CHECK-NEXT:    <key>line</key><integer>51</integer>
+// CHECK-NEXT:    <key>line</key><integer>70</integer>
 // CHECK-NEXT:    <key>col</key><integer>3</integer>
 // CHECK-NEXT:    <key>file</key><integer>0</integer>
 // CHECK-NEXT:   </dict>
@@ -1314,12 +1405,12 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>55</integer>
+// CHECK-NEXT:            <key>line</key><integer>74</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>55</integer>
+// CHECK-NEXT:            <key>line</key><integer>74</integer>
 // CHECK-NEXT:            <key>col</key><integer>9</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1327,12 +1418,12 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>56</integer>
+// CHECK-NEXT:            <key>line</key><integer>75</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>56</integer>
+// CHECK-NEXT:            <key>line</key><integer>75</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1344,7 +1435,7 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>56</integer>
+// CHECK-NEXT:       <key>line</key><integer>75</integer>
 // CHECK-NEXT:       <key>col</key><integer>3</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -1352,13 +1443,13 @@ void test_block_arg() {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>56</integer>
+// CHECK-NEXT:          <key>line</key><integer>75</integer>
 // CHECK-NEXT:          <key>col</key><integer>3</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>56</integer>
-// CHECK-NEXT:          <key>col</key><integer>17</integer>
+// CHECK-NEXT:          <key>line</key><integer>77</integer>
+// CHECK-NEXT:          <key>col</key><integer>5</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
@@ -1367,13 +1458,13 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Calling anonymous block</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Calling anonymous block</string>
+// CHECK-NEXT:      <string>Calling anonymous block</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>56</integer>
+// CHECK-NEXT:       <key>line</key><integer>75</integer>
 // CHECK-NEXT:       <key>col</key><integer>3</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -1381,7 +1472,7 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Entered call from &apos;test_block_blockvar&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Entered call from &apos;test_block_blockvar&apos;</string>
+// CHECK-NEXT:      <string>Entered call from &apos;test_block_blockvar&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1391,12 +1482,12 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>56</integer>
+// CHECK-NEXT:            <key>line</key><integer>75</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>56</integer>
+// CHECK-NEXT:            <key>line</key><integer>75</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1404,13 +1495,13 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>56</integer>
-// CHECK-NEXT:            <key>col</key><integer>8</integer>
+// CHECK-NEXT:            <key>line</key><integer>76</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>56</integer>
-// CHECK-NEXT:            <key>col</key><integer>8</integer>
+// CHECK-NEXT:            <key>line</key><integer>76</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:          </array>
@@ -1421,21 +1512,21 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>56</integer>
-// CHECK-NEXT:       <key>col</key><integer>8</integer>
+// CHECK-NEXT:       <key>line</key><integer>76</integer>
+// CHECK-NEXT:       <key>col</key><integer>5</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
 // CHECK-NEXT:      <key>ranges</key>
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>56</integer>
-// CHECK-NEXT:          <key>col</key><integer>8</integer>
+// CHECK-NEXT:          <key>line</key><integer>76</integer>
+// CHECK-NEXT:          <key>col</key><integer>5</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>56</integer>
-// CHECK-NEXT:          <key>col</key><integer>12</integer>
+// CHECK-NEXT:          <key>line</key><integer>76</integer>
+// CHECK-NEXT:          <key>col</key><integer>9</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
@@ -1444,13 +1535,13 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Null pointer value stored to &apos;p&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Null pointer value stored to &apos;p&apos;</string>
+// CHECK-NEXT:      <string>Null pointer value stored to &apos;p&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>56</integer>
+// CHECK-NEXT:       <key>line</key><integer>75</integer>
 // CHECK-NEXT:       <key>col</key><integer>3</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -1458,13 +1549,13 @@ void test_block_arg() {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>56</integer>
+// CHECK-NEXT:          <key>line</key><integer>75</integer>
 // CHECK-NEXT:          <key>col</key><integer>3</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>56</integer>
-// CHECK-NEXT:          <key>col</key><integer>17</integer>
+// CHECK-NEXT:          <key>line</key><integer>77</integer>
+// CHECK-NEXT:          <key>col</key><integer>5</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
@@ -1473,7 +1564,7 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Returning to caller</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Returning to caller</string>
+// CHECK-NEXT:      <string>Returning to caller</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1483,12 +1574,12 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>56</integer>
+// CHECK-NEXT:            <key>line</key><integer>75</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>56</integer>
+// CHECK-NEXT:            <key>line</key><integer>75</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1496,12 +1587,12 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>57</integer>
+// CHECK-NEXT:            <key>line</key><integer>78</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>57</integer>
+// CHECK-NEXT:            <key>line</key><integer>78</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1513,7 +1604,7 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>57</integer>
+// CHECK-NEXT:       <key>line</key><integer>78</integer>
 // CHECK-NEXT:       <key>col</key><integer>3</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -1521,12 +1612,12 @@ void test_block_arg() {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>57</integer>
+// CHECK-NEXT:          <key>line</key><integer>78</integer>
 // CHECK-NEXT:          <key>col</key><integer>4</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>57</integer>
+// CHECK-NEXT:          <key>line</key><integer>78</integer>
 // CHECK-NEXT:          <key>col</key><integer>4</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -1536,7 +1627,7 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
+// CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
@@ -1544,10 +1635,10 @@ void test_block_arg() {
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_block_blockvar</string>
-// CHECK-NEXT:   <key>issue_hash</key><integer>3</integer>
+// CHECK-NEXT:   <key>issue_hash</key><integer>5</integer>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
-// CHECK-NEXT:    <key>line</key><integer>57</integer>
+// CHECK-NEXT:    <key>line</key><integer>78</integer>
 // CHECK-NEXT:    <key>col</key><integer>3</integer>
 // CHECK-NEXT:    <key>file</key><integer>0</integer>
 // CHECK-NEXT:   </dict>
@@ -1563,12 +1654,12 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>61</integer>
+// CHECK-NEXT:            <key>line</key><integer>82</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>61</integer>
+// CHECK-NEXT:            <key>line</key><integer>82</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1576,12 +1667,12 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>62</integer>
+// CHECK-NEXT:            <key>line</key><integer>83</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>62</integer>
+// CHECK-NEXT:            <key>line</key><integer>83</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1593,7 +1684,7 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>62</integer>
+// CHECK-NEXT:       <key>line</key><integer>83</integer>
 // CHECK-NEXT:       <key>col</key><integer>3</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -1601,13 +1692,13 @@ void test_block_arg() {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>62</integer>
+// CHECK-NEXT:          <key>line</key><integer>83</integer>
 // CHECK-NEXT:          <key>col</key><integer>3</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>62</integer>
-// CHECK-NEXT:          <key>col</key><integer>27</integer>
+// CHECK-NEXT:          <key>line</key><integer>85</integer>
+// CHECK-NEXT:          <key>col</key><integer>7</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
@@ -1616,13 +1707,13 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Calling anonymous block</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Calling anonymous block</string>
+// CHECK-NEXT:      <string>Calling anonymous block</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>62</integer>
+// CHECK-NEXT:       <key>line</key><integer>83</integer>
 // CHECK-NEXT:       <key>col</key><integer>3</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -1630,7 +1721,7 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Entered call from &apos;test_block_arg&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Entered call from &apos;test_block_arg&apos;</string>
+// CHECK-NEXT:      <string>Entered call from &apos;test_block_arg&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1640,12 +1731,12 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>62</integer>
+// CHECK-NEXT:            <key>line</key><integer>83</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>62</integer>
+// CHECK-NEXT:            <key>line</key><integer>83</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1653,13 +1744,13 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>62</integer>
-// CHECK-NEXT:            <key>col</key><integer>15</integer>
+// CHECK-NEXT:            <key>line</key><integer>84</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>62</integer>
-// CHECK-NEXT:            <key>col</key><integer>15</integer>
+// CHECK-NEXT:            <key>line</key><integer>84</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:          </array>
@@ -1670,21 +1761,21 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>62</integer>
-// CHECK-NEXT:       <key>col</key><integer>15</integer>
+// CHECK-NEXT:       <key>line</key><integer>84</integer>
+// CHECK-NEXT:       <key>col</key><integer>5</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
 // CHECK-NEXT:      <key>ranges</key>
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>62</integer>
-// CHECK-NEXT:          <key>col</key><integer>15</integer>
+// CHECK-NEXT:          <key>line</key><integer>84</integer>
+// CHECK-NEXT:          <key>col</key><integer>5</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>62</integer>
-// CHECK-NEXT:          <key>col</key><integer>20</integer>
+// CHECK-NEXT:          <key>line</key><integer>84</integer>
+// CHECK-NEXT:          <key>col</key><integer>10</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
@@ -1693,13 +1784,13 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Null pointer value stored to &apos;p&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Null pointer value stored to &apos;p&apos;</string>
+// CHECK-NEXT:      <string>Null pointer value stored to &apos;p&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>62</integer>
+// CHECK-NEXT:       <key>line</key><integer>83</integer>
 // CHECK-NEXT:       <key>col</key><integer>3</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -1707,13 +1798,13 @@ void test_block_arg() {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>62</integer>
+// CHECK-NEXT:          <key>line</key><integer>83</integer>
 // CHECK-NEXT:          <key>col</key><integer>3</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>62</integer>
-// CHECK-NEXT:          <key>col</key><integer>27</integer>
+// CHECK-NEXT:          <key>line</key><integer>85</integer>
+// CHECK-NEXT:          <key>col</key><integer>7</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
@@ -1722,7 +1813,7 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Returning to caller</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Returning to caller</string>
+// CHECK-NEXT:      <string>Returning to caller</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1732,12 +1823,12 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>62</integer>
+// CHECK-NEXT:            <key>line</key><integer>83</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>62</integer>
+// CHECK-NEXT:            <key>line</key><integer>83</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1745,12 +1836,12 @@ void test_block_arg() {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>63</integer>
+// CHECK-NEXT:            <key>line</key><integer>86</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>63</integer>
+// CHECK-NEXT:            <key>line</key><integer>86</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1762,7 +1853,7 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>63</integer>
+// CHECK-NEXT:       <key>line</key><integer>86</integer>
 // CHECK-NEXT:       <key>col</key><integer>3</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -1770,12 +1861,12 @@ void test_block_arg() {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>63</integer>
+// CHECK-NEXT:          <key>line</key><integer>86</integer>
 // CHECK-NEXT:          <key>col</key><integer>4</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>63</integer>
+// CHECK-NEXT:          <key>line</key><integer>86</integer>
 // CHECK-NEXT:          <key>col</key><integer>4</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -1785,7 +1876,7 @@ void test_block_arg() {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
+// CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
@@ -1793,10 +1884,10 @@ void test_block_arg() {
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_block_arg</string>
-// CHECK-NEXT:   <key>issue_hash</key><integer>3</integer>
+// CHECK-NEXT:   <key>issue_hash</key><integer>5</integer>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
-// CHECK-NEXT:    <key>line</key><integer>63</integer>
+// CHECK-NEXT:    <key>line</key><integer>86</integer>
 // CHECK-NEXT:    <key>col</key><integer>3</integer>
 // CHECK-NEXT:    <key>file</key><integer>0</integer>
 // CHECK-NEXT:   </dict>
