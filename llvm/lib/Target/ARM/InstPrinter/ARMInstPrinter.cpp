@@ -302,11 +302,8 @@ void ARMInstPrinter::printSORegImmOperand(const MCInst *MI, unsigned OpNum,
   O << getRegisterName(MO1.getReg());
 
   // Print the shift opc.
-  ARM_AM::ShiftOpc ShOpc = ARM_AM::getSORegShOp(MO2.getImm());
-  O << ", " << ARM_AM::getShiftOpcStr(ShOpc);
-  if (ShOpc == ARM_AM::rrx)
-    return;
-  O << " #" << translateShiftImm(ARM_AM::getSORegOffset(MO2.getImm()));
+  printRegImmShift(O, ARM_AM::getSORegShOp(MO2.getImm()),
+                   ARM_AM::getSORegOffset(MO2.getImm()));
 }
 
 
@@ -340,31 +337,6 @@ void ARMInstPrinter::printAM2PreOrOffsetIndexOp(const MCInst *MI, unsigned Op,
   O << "]";
 }
 
-void ARMInstPrinter::printAM2PostIndexOp(const MCInst *MI, unsigned Op,
-                                         raw_ostream &O) {
-  const MCOperand &MO1 = MI->getOperand(Op);
-  const MCOperand &MO2 = MI->getOperand(Op+1);
-  const MCOperand &MO3 = MI->getOperand(Op+2);
-
-  O << "[" << getRegisterName(MO1.getReg()) << "], ";
-
-  if (!MO2.getReg()) {
-    unsigned ImmOffs = ARM_AM::getAM2Offset(MO3.getImm());
-    O << '#'
-      << ARM_AM::getAddrOpcStr(ARM_AM::getAM2Op(MO3.getImm()))
-      << ImmOffs;
-    return;
-  }
-
-  O << ARM_AM::getAddrOpcStr(ARM_AM::getAM2Op(MO3.getImm()))
-    << getRegisterName(MO2.getReg());
-
-  if (unsigned ShImm = ARM_AM::getAM2Offset(MO3.getImm()))
-    O << ", "
-    << ARM_AM::getShiftOpcStr(ARM_AM::getAM2ShiftOpc(MO3.getImm()))
-    << " #" << ShImm;
-}
-
 void ARMInstPrinter::printAddrModeTBB(const MCInst *MI, unsigned Op,
                                            raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(Op);
@@ -392,11 +364,9 @@ void ARMInstPrinter::printAddrMode2Operand(const MCInst *MI, unsigned Op,
 
   const MCOperand &MO3 = MI->getOperand(Op+2);
   unsigned IdxMode = ARM_AM::getAM2IdxMode(MO3.getImm());
+  assert(IdxMode != ARMII::IndexModePost &&
+         "Should be pre or offset index op");
 
-  if (IdxMode == ARMII::IndexModePost) {
-    printAM2PostIndexOp(MI, Op, O);
-    return;
-  }
   printAM2PreOrOffsetIndexOp(MI, Op, O);
 }
 
@@ -922,10 +892,8 @@ void ARMInstPrinter::printT2SOOperand(const MCInst *MI, unsigned OpNum,
 
   // Print the shift opc.
   assert(MO2.isImm() && "Not a valid t2_so_reg value!");
-  ARM_AM::ShiftOpc ShOpc = ARM_AM::getSORegShOp(MO2.getImm());
-  O << ", " << ARM_AM::getShiftOpcStr(ShOpc);
-  if (ShOpc != ARM_AM::rrx)
-    O << " #" << translateShiftImm(ARM_AM::getSORegOffset(MO2.getImm()));
+  printRegImmShift(O, ARM_AM::getSORegShOp(MO2.getImm()),
+                   ARM_AM::getSORegOffset(MO2.getImm()));
 }
 
 void ARMInstPrinter::printAddrModeImm12Operand(const MCInst *MI, unsigned OpNum,
