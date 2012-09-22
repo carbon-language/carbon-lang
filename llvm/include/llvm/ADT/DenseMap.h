@@ -423,6 +423,7 @@ private:
       this->grow(NumBuckets);
       LookupBucketFor(Key, TheBucket);
     }
+    assert(TheBucket);
 
     // Only update the state after we've grown our bucket space appropriately
     // so that when growing buckets we have self-consistent entry count.
