@@ -1480,9 +1480,7 @@ Tool &Hexagon_TC::SelectTool(const Compilation &C,
 }
 
 bool Hexagon_TC::IsUnwindTablesDefault() const {
-  // FIXME: Gross; we should probably have some separate target
-  // definition, possibly even reusing the one in clang.
-  return getArchName() == "x86_64";
+  return false;
 }
 
 const char *Hexagon_TC::GetDefaultRelocationModel() const {
