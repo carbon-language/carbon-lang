@@ -538,17 +538,17 @@ multiclass PSEUDO_ATOMIC_LOAD_BINOP6432<string mnemonic> {
                        !strconcat(mnemonic, "6432 PSEUDO!"), []>;
 }
 
-defm ATOMAND  : PSEUDO_ATOMIC_LOAD_BINOP6432<"ATOMAND">;
-defm ATOMOR   : PSEUDO_ATOMIC_LOAD_BINOP6432<"ATOMOR">;
-defm ATOMXOR  : PSEUDO_ATOMIC_LOAD_BINOP6432<"ATOMXOR">;
-defm ATOMNAND : PSEUDO_ATOMIC_LOAD_BINOP6432<"ATOMNAND">;
-defm ATOMADD  : PSEUDO_ATOMIC_LOAD_BINOP6432<"ATOMADD">;
-defm ATOMSUB  : PSEUDO_ATOMIC_LOAD_BINOP6432<"ATOMSUB">;
-defm ATOMMAX  : PSEUDO_ATOMIC_LOAD_BINOP6432<"ATOMMAX">;
-defm ATOMMIN  : PSEUDO_ATOMIC_LOAD_BINOP6432<"ATOMMIN">;
-defm ATOMUMAX : PSEUDO_ATOMIC_LOAD_BINOP6432<"ATOMUMAX">;
-defm ATOMUMIN : PSEUDO_ATOMIC_LOAD_BINOP6432<"ATOMUMIN">;
-defm ATOMSWAP : PSEUDO_ATOMIC_LOAD_BINOP6432<"ATOMSWAP">;
+defm ATOMAND  : PSEUDO_ATOMIC_LOAD_BINOP6432<"#ATOMAND">;
+defm ATOMOR   : PSEUDO_ATOMIC_LOAD_BINOP6432<"#ATOMOR">;
+defm ATOMXOR  : PSEUDO_ATOMIC_LOAD_BINOP6432<"#ATOMXOR">;
+defm ATOMNAND : PSEUDO_ATOMIC_LOAD_BINOP6432<"#ATOMNAND">;
+defm ATOMADD  : PSEUDO_ATOMIC_LOAD_BINOP6432<"#ATOMADD">;
+defm ATOMSUB  : PSEUDO_ATOMIC_LOAD_BINOP6432<"#ATOMSUB">;
+defm ATOMMAX  : PSEUDO_ATOMIC_LOAD_BINOP6432<"#ATOMMAX">;
+defm ATOMMIN  : PSEUDO_ATOMIC_LOAD_BINOP6432<"#ATOMMIN">;
+defm ATOMUMAX : PSEUDO_ATOMIC_LOAD_BINOP6432<"#ATOMUMAX">;
+defm ATOMUMIN : PSEUDO_ATOMIC_LOAD_BINOP6432<"#ATOMUMIN">;
+defm ATOMSWAP : PSEUDO_ATOMIC_LOAD_BINOP6432<"#ATOMSWAP">;
 
 //===----------------------------------------------------------------------===//
 // Normal-Instructions-With-Lock-Prefix Pseudo Instructions
@@ -615,7 +615,7 @@ def #NAME#16mi : Ii16<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
                        ImmMod, (outs), (ins i16mem :$dst, i16imm :$src2),
                        !strconcat("lock\n\t", mnemonic, "{w}\t",
                                   "{$src2, $dst|$dst, $src2}"),
-                       [], IIC_ALU_MEM>, LOCK;
+                       [], IIC_ALU_MEM>, OpSize, LOCK;
 
 def #NAME#32mi : Ii32<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
                        ImmOpc{3}, ImmOpc{2}, ImmOpc{1}, 1 },
@@ -636,7 +636,7 @@ def #NAME#16mi8 : Ii8<{ImmOpc8{7}, ImmOpc8{6}, ImmOpc8{5}, ImmOpc8{4},
                        ImmMod, (outs), (ins i16mem :$dst, i16i8imm :$src2),
                        !strconcat("lock\n\t", mnemonic, "{w}\t",
                                   "{$src2, $dst|$dst, $src2}"),
-                       [], IIC_ALU_MEM>, LOCK;
+                       [], IIC_ALU_MEM>, OpSize, LOCK;
 def #NAME#32mi8 : Ii8<{ImmOpc8{7}, ImmOpc8{6}, ImmOpc8{5}, ImmOpc8{4},
                        ImmOpc8{3}, ImmOpc8{2}, ImmOpc8{1}, 1 },
                        ImmMod, (outs), (ins i32mem :$dst, i32i8imm :$src2),
@@ -756,7 +756,7 @@ multiclass ATOMIC_LOAD_BINOP<bits<8> opc8, bits<8> opc, string mnemonic,
                      [(set
                         GR16:$dst,
                         (!cast<PatFrag>(frag # "_16") addr:$ptr, GR16:$val))],
-                     itin>;
+                     itin>, OpSize;
     def #NAME#32 : I<opc, MRMSrcMem, (outs GR32:$dst),
                      (ins GR32:$val, i32mem:$ptr),
                      !strconcat("lock\n\t", mnemonic,
