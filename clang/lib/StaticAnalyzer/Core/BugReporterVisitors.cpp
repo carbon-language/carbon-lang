@@ -175,11 +175,15 @@ public:
       Node = Node->getFirstPred();
 
     // Finally, see if we inlined the call.
-    if (Node)
-      if (const CallExitEnd *CEE = Node->getLocationAs<CallExitEnd>())
-        if (CEE->getCalleeContext()->getCallSite() == S)
-          BR.addVisitor(new ReturnVisitor(CEE->getCalleeContext()));
-
+    if (Node) {
+      if (const CallExitEnd *CEE = Node->getLocationAs<CallExitEnd>()) {
+        const StackFrameContext *CalleeContext = CEE->getCalleeContext();
+        if (CalleeContext->getCallSite() == S) {
+          BR.markInteresting(CalleeContext);
+          BR.addVisitor(new ReturnVisitor(CalleeContext));
+        }
+      }
+    }
   }
 
   PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
@@ -219,25 +223,24 @@ public:
     assert(RetE && "Tracking a return value for a void function");
     RetE = RetE->IgnoreParenCasts();
 
-    // See if we know that the return value is 0.
-    ProgramStateRef StNonZero, StZero;
-    llvm::tie(StNonZero, StZero) = State->assume(cast<DefinedSVal>(V));
-    if (StZero && !StNonZero) {
-      // If we're returning 0, we should track where that 0 came from.
-      bugreporter::trackNullOrUndefValue(N, RetE, BR);
-
-      if (isa<Loc>(V)) {
-        if (RetE->getType()->isObjCObjectPointerType())
-          Out << "Returning nil";
-        else
-          Out << "Returning null pointer";
-      } else {
-        Out << "Returning zero";
-      }
-    } else {
-      // FIXME: We can probably do better than this.
+    // If we can't prove the return value is 0, just mark it interesting, and
+    // make sure to track it into any further inner functions.
+    if (State->assume(cast<DefinedSVal>(V), true)) {
       BR.markInteresting(V);
-      Out << "Value returned here";
+      ReturnVisitor::addVisitorIfNecessary(N, RetE, BR);
+      return 0;
+    }
+      
+    // If we're returning 0, we should track where that 0 came from.
+    bugreporter::trackNullOrUndefValue(N, RetE, BR);
+
+    if (isa<Loc>(V)) {
+      if (RetE->getType()->isObjCObjectPointerType())
+        Out << "Returning nil";
+      else
+        Out << "Returning null pointer";
+    } else {
+      Out << "Returning zero";
     }
 
     // FIXME: We should have a more generalized location printing mechanism.
@@ -320,11 +323,15 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
     return NULL;
   satisfied = true;
 
-  // If the value that was stored came from an inlined call, make sure we
-  // step into the call.
+  // If we have an expression that provided the value, try to track where it
+  // came from.
   if (InitE) {
     InitE = InitE->IgnoreParenCasts();
-    ReturnVisitor::addVisitorIfNecessary(StoreSite, InitE, BR);
+
+    if (V.isUndef() || isa<loc::ConcreteInt>(V))
+      bugreporter::trackNullOrUndefValue(StoreSite, InitE, BR);
+    else
+      ReturnVisitor::addVisitorIfNecessary(StoreSite, InitE, BR);
   }
 
   if (!R->canPrintPretty())
@@ -545,7 +552,7 @@ void bugreporter::trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S,
         // If the contents are symbolic, find out when they became null.
         if (V.getAsLocSymbol()) {
           BugReporterVisitor *ConstraintTracker
-            = new TrackConstraintBRVisitor(cast<loc::MemRegionVal>(V), false);
+            = new TrackConstraintBRVisitor(cast<DefinedSVal>(V), false);
           report.addVisitor(ConstraintTracker);
         }
 
@@ -580,6 +587,8 @@ void bugreporter::trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S,
   } else {
     // Otherwise, if the value came from an inlined function call,
     // we should at least make sure that function isn't pruned in our output.
+    if (const Expr *E = dyn_cast<Expr>(S))
+      S = E->IgnoreParenCasts();
     ReturnVisitor::addVisitorIfNecessary(N, S, report);
   }
 }

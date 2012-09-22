@@ -98,6 +98,20 @@ void testStoreZero(int *a) {
   // expected-note@-1 {{Dereference of null pointer (loaded from variable 'a')}}
 }
 
+void usePointer(int *p) {
+  *p = 1; // expected-warning{{Dereference of null pointer}}
+  // expected-note@-1 {{Dereference of null pointer}}
+}
+
+void testUseOfNullPointer() {
+  // Test the case where an argument expression is itself a call.
+  usePointer(getZero());
+  // expected-note@-1 {{Calling 'getZero'}}
+  // expected-note@-2 {{Returning from 'getZero'}}
+  // expected-note@-3 {{Passing null pointer value via 1st parameter 'p'}}
+  // expected-note@-4 {{Calling 'usePointer'}}
+}
+
 // CHECK:  <key>diagnostics</key>
 // CHECK-NEXT:  <array>
 // CHECK-NEXT:   <dict>
@@ -130,7 +144,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Calling &apos;zero&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Calling &apos;zero&apos;</string>
+// CHECK-NEXT:      <string>Calling &apos;zero&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
@@ -144,7 +158,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Entered call from &apos;testZero&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Entered call from &apos;testZero&apos;</string>
+// CHECK-NEXT:      <string>Entered call from &apos;testZero&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -207,7 +221,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Null pointer value stored to &apos;a&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Null pointer value stored to &apos;a&apos;</string>
+// CHECK-NEXT:      <string>Null pointer value stored to &apos;a&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
@@ -236,7 +250,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Returning from &apos;zero&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Returning from &apos;zero&apos;</string>
+// CHECK-NEXT:      <string>Returning from &apos;zero&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -299,7 +313,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;a&apos;)</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Dereference of null pointer (loaded from variable &apos;a&apos;)</string>
+// CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;a&apos;)</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;a&apos;)</string>
@@ -345,7 +359,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Calling &apos;check&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Calling &apos;check&apos;</string>
+// CHECK-NEXT:      <string>Calling &apos;check&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
@@ -359,7 +373,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Entered call from &apos;testCheck&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Entered call from &apos;testCheck&apos;</string>
+// CHECK-NEXT:      <string>Entered call from &apos;testCheck&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -456,7 +470,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Assuming &apos;p&apos; is null</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Assuming &apos;p&apos; is null</string>
+// CHECK-NEXT:      <string>Assuming &apos;p&apos; is null</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
@@ -485,7 +499,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Assuming pointer value is null</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Assuming pointer value is null</string>
+// CHECK-NEXT:      <string>Assuming pointer value is null</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -548,7 +562,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Returning from &apos;check&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Returning from &apos;check&apos;</string>
+// CHECK-NEXT:      <string>Returning from &apos;check&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -611,7 +625,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;a&apos;)</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Dereference of null pointer (loaded from variable &apos;a&apos;)</string>
+// CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;a&apos;)</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;a&apos;)</string>
@@ -657,7 +671,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Variable &apos;a&apos; initialized here</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Variable &apos;a&apos; initialized here</string>
+// CHECK-NEXT:      <string>Variable &apos;a&apos; initialized here</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -720,7 +734,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Calling &apos;check&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Calling &apos;check&apos;</string>
+// CHECK-NEXT:      <string>Calling &apos;check&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
@@ -734,7 +748,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Entered call from &apos;testInitCheck&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Entered call from &apos;testInitCheck&apos;</string>
+// CHECK-NEXT:      <string>Entered call from &apos;testInitCheck&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -831,7 +845,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Assuming &apos;p&apos; is null</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Assuming &apos;p&apos; is null</string>
+// CHECK-NEXT:      <string>Assuming &apos;p&apos; is null</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -894,7 +908,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Returning from &apos;check&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Returning from &apos;check&apos;</string>
+// CHECK-NEXT:      <string>Returning from &apos;check&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -957,7 +971,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;a&apos;)</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Dereference of null pointer (loaded from variable &apos;a&apos;)</string>
+// CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;a&apos;)</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;a&apos;)</string>
@@ -1003,7 +1017,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Value assigned to &apos;a&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Value assigned to &apos;a&apos;</string>
+// CHECK-NEXT:      <string>Value assigned to &apos;a&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1066,7 +1080,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Calling &apos;check&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Calling &apos;check&apos;</string>
+// CHECK-NEXT:      <string>Calling &apos;check&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
@@ -1080,7 +1094,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Entered call from &apos;testStoreCheck&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Entered call from &apos;testStoreCheck&apos;</string>
+// CHECK-NEXT:      <string>Entered call from &apos;testStoreCheck&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1177,7 +1191,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Assuming &apos;p&apos; is null</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Assuming &apos;p&apos; is null</string>
+// CHECK-NEXT:      <string>Assuming &apos;p&apos; is null</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1240,7 +1254,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Returning from &apos;check&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Returning from &apos;check&apos;</string>
+// CHECK-NEXT:      <string>Returning from &apos;check&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1303,7 +1317,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;a&apos;)</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Dereference of null pointer (loaded from variable &apos;a&apos;)</string>
+// CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;a&apos;)</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;a&apos;)</string>
@@ -1383,7 +1397,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Calling &apos;getZero&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Calling &apos;getZero&apos;</string>
+// CHECK-NEXT:      <string>Calling &apos;getZero&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
@@ -1397,7 +1411,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Entered call from &apos;testReturnZero&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Entered call from &apos;testReturnZero&apos;</string>
+// CHECK-NEXT:      <string>Entered call from &apos;testReturnZero&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1460,7 +1474,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1523,7 +1537,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Returning null pointer (loaded from &apos;p&apos;)</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Returning null pointer (loaded from &apos;p&apos;)</string>
+// CHECK-NEXT:      <string>Returning null pointer (loaded from &apos;p&apos;)</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
@@ -1552,7 +1566,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Returning from &apos;getZero&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Returning from &apos;getZero&apos;</string>
+// CHECK-NEXT:      <string>Returning from &apos;getZero&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1649,7 +1663,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Dereference of null pointer</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Dereference of null pointer</string>
+// CHECK-NEXT:      <string>Dereference of null pointer</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer</string>
@@ -1729,7 +1743,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Calling &apos;getZero&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Calling &apos;getZero&apos;</string>
+// CHECK-NEXT:      <string>Calling &apos;getZero&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
@@ -1743,7 +1757,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Entered call from &apos;testReturnZero2&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Entered call from &apos;testReturnZero2&apos;</string>
+// CHECK-NEXT:      <string>Entered call from &apos;testReturnZero2&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1806,7 +1820,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1869,7 +1883,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Returning null pointer (loaded from &apos;p&apos;)</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Returning null pointer (loaded from &apos;p&apos;)</string>
+// CHECK-NEXT:      <string>Returning null pointer (loaded from &apos;p&apos;)</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
@@ -1898,7 +1912,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Returning from &apos;getZero&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Returning from &apos;getZero&apos;</string>
+// CHECK-NEXT:      <string>Returning from &apos;getZero&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1995,7 +2009,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Dereference of null pointer</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Dereference of null pointer</string>
+// CHECK-NEXT:      <string>Dereference of null pointer</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer</string>
@@ -2075,7 +2089,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Calling &apos;getZero&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Calling &apos;getZero&apos;</string>
+// CHECK-NEXT:      <string>Calling &apos;getZero&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
@@ -2089,7 +2103,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Entered call from &apos;testInitZero&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Entered call from &apos;testInitZero&apos;</string>
+// CHECK-NEXT:      <string>Entered call from &apos;testInitZero&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -2152,7 +2166,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -2215,7 +2229,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Returning null pointer (loaded from &apos;p&apos;)</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Returning null pointer (loaded from &apos;p&apos;)</string>
+// CHECK-NEXT:      <string>Returning null pointer (loaded from &apos;p&apos;)</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
@@ -2244,7 +2258,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Returning from &apos;getZero&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Returning from &apos;getZero&apos;</string>
+// CHECK-NEXT:      <string>Returning from &apos;getZero&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -2341,7 +2355,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Variable &apos;a&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Variable &apos;a&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>Variable &apos;a&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -2404,7 +2418,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;a&apos;)</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Dereference of null pointer (loaded from variable &apos;a&apos;)</string>
+// CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;a&apos;)</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;a&apos;)</string>
@@ -2484,7 +2498,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Calling &apos;getZero&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Calling &apos;getZero&apos;</string>
+// CHECK-NEXT:      <string>Calling &apos;getZero&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
@@ -2498,7 +2512,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Entered call from &apos;testStoreZero&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Entered call from &apos;testStoreZero&apos;</string>
+// CHECK-NEXT:      <string>Entered call from &apos;testStoreZero&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -2561,7 +2575,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -2624,7 +2638,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Returning null pointer (loaded from &apos;p&apos;)</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Returning null pointer (loaded from &apos;p&apos;)</string>
+// CHECK-NEXT:      <string>Returning null pointer (loaded from &apos;p&apos;)</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
@@ -2653,7 +2667,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Returning from &apos;getZero&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Returning from &apos;getZero&apos;</string>
+// CHECK-NEXT:      <string>Returning from &apos;getZero&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -2750,7 +2764,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Null pointer value stored to &apos;a&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Null pointer value stored to &apos;a&apos;</string>
+// CHECK-NEXT:      <string>Null pointer value stored to &apos;a&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -2813,7 +2827,7 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;a&apos;)</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Dereference of null pointer (loaded from variable &apos;a&apos;)</string>
+// CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;a&apos;)</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;a&apos;)</string>
@@ -2829,5 +2843,422 @@ void testStoreZero(int *a) {
 // CHECK-NEXT:    <key>file</key><integer>0</integer>
 // CHECK-NEXT:   </dict>
 // CHECK-NEXT:   </dict>
+// CHECK-NEXT:   <dict>
+// CHECK-NEXT:    <key>path</key>
+// CHECK-NEXT:    <array>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>108</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>108</integer>
+// CHECK-NEXT:            <key>col</key><integer>12</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>108</integer>
+// CHECK-NEXT:            <key>col</key><integer>14</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>108</integer>
+// CHECK-NEXT:            <key>col</key><integer>20</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>108</integer>
+// CHECK-NEXT:       <key>col</key><integer>14</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>108</integer>
+// CHECK-NEXT:          <key>col</key><integer>14</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>108</integer>
+// CHECK-NEXT:          <key>col</key><integer>22</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Calling &apos;getZero&apos;</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Calling &apos;getZero&apos;</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>61</integer>
+// CHECK-NEXT:       <key>col</key><integer>1</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>depth</key><integer>1</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Entered call from &apos;testUseOfNullPointer&apos;</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Entered call from &apos;testUseOfNullPointer&apos;</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>61</integer>
+// CHECK-NEXT:            <key>col</key><integer>1</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>61</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>62</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>62</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>62</integer>
+// CHECK-NEXT:       <key>col</key><integer>3</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>62</integer>
+// CHECK-NEXT:          <key>col</key><integer>3</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>62</integer>
+// CHECK-NEXT:          <key>col</key><integer>8</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>1</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>62</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>62</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>65</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>65</integer>
+// CHECK-NEXT:            <key>col</key><integer>8</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>65</integer>
+// CHECK-NEXT:       <key>col</key><integer>3</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>65</integer>
+// CHECK-NEXT:          <key>col</key><integer>3</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>65</integer>
+// CHECK-NEXT:          <key>col</key><integer>10</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>1</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Returning null pointer (loaded from &apos;p&apos;)</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Returning null pointer (loaded from &apos;p&apos;)</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>108</integer>
+// CHECK-NEXT:       <key>col</key><integer>14</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>108</integer>
+// CHECK-NEXT:          <key>col</key><integer>14</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>108</integer>
+// CHECK-NEXT:          <key>col</key><integer>22</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>1</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Returning from &apos;getZero&apos;</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Returning from &apos;getZero&apos;</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>108</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>108</integer>
+// CHECK-NEXT:            <key>col</key><integer>12</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>108</integer>
+// CHECK-NEXT:            <key>col</key><integer>14</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>108</integer>
+// CHECK-NEXT:            <key>col</key><integer>20</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>108</integer>
+// CHECK-NEXT:       <key>col</key><integer>14</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>108</integer>
+// CHECK-NEXT:          <key>col</key><integer>14</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>108</integer>
+// CHECK-NEXT:          <key>col</key><integer>22</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Passing null pointer value via 1st parameter &apos;p&apos;</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Passing null pointer value via 1st parameter &apos;p&apos;</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>108</integer>
+// CHECK-NEXT:       <key>col</key><integer>3</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>108</integer>
+// CHECK-NEXT:          <key>col</key><integer>3</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>108</integer>
+// CHECK-NEXT:          <key>col</key><integer>23</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Calling &apos;usePointer&apos;</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Calling &apos;usePointer&apos;</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>101</integer>
+// CHECK-NEXT:       <key>col</key><integer>1</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>depth</key><integer>1</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Entered call from &apos;testUseOfNullPointer&apos;</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Entered call from &apos;testUseOfNullPointer&apos;</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>101</integer>
+// CHECK-NEXT:            <key>col</key><integer>1</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>101</integer>
+// CHECK-NEXT:            <key>col</key><integer>4</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>102</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>102</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>102</integer>
+// CHECK-NEXT:       <key>col</key><integer>3</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>102</integer>
+// CHECK-NEXT:          <key>col</key><integer>4</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>102</integer>
+// CHECK-NEXT:          <key>col</key><integer>4</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>1</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:    </array>
+// CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
+// CHECK-NEXT:    <key>category</key><string>Logic error</string>
+// CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
+// CHECK-NEXT:   <key>issue_context</key><string>usePointer</string>
+// CHECK-NEXT:   <key>issue_hash</key><integer>1</integer>
+// CHECK-NEXT:   <key>location</key>
+// CHECK-NEXT:   <dict>
+// CHECK-NEXT:    <key>line</key><integer>102</integer>
+// CHECK-NEXT:    <key>col</key><integer>3</integer>
+// CHECK-NEXT:    <key>file</key><integer>0</integer>
+// CHECK-NEXT:   </dict>
+// CHECK-NEXT:   </dict>
 // CHECK-NEXT:  </array>
-// CHECK-NEXT: </dict>
