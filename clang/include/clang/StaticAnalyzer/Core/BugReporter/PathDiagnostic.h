@@ -432,10 +432,6 @@ public:
   /// 'getMessageForX()' methods to construct a specific message.
   virtual std::string getMessage(const ExplodedNode *N);
 
-  /// Prints the ordinal form of the given integer,
-  /// only valid for ValNo : ValNo > 0.
-  void printOrdinal(unsigned ValNo, llvm::raw_svector_ostream &Out);
-
   /// Produces the message of the following form:
   ///   'Msg via Nth parameter'
   virtual std::string getMessageForArg(const Expr *ArgE, unsigned ArgIndex);

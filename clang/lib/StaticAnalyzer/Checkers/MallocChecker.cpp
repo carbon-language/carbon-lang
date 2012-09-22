@@ -26,6 +26,7 @@
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringExtras.h"
 #include <climits>
 
 using namespace clang;
@@ -317,13 +318,14 @@ private:
         : StackHintGeneratorForSymbol(S, M) {}
 
       virtual std::string getMessageForArg(const Expr *ArgE, unsigned ArgIndex) {
+        // Printed parameters start at 1, not 0.
+        ++ArgIndex;
+
         SmallString<200> buf;
         llvm::raw_svector_ostream os(buf);
 
-        os << "Reallocation of ";
-        // Printed parameters start at 1, not 0.
-        printOrdinal(++ArgIndex, os);
-        os << " parameter failed";
+        os << "Reallocation of " << ArgIndex << llvm::getOrdinalSuffix(ArgIndex)
+           << " parameter failed";
 
         return os.str();
       }

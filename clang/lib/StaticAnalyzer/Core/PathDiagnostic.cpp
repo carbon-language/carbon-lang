@@ -21,6 +21,7 @@
 #include "clang/AST/ParentMap.h"
 #include "clang/AST/StmtCXX.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringExtras.h"
 
 using namespace clang;
 using namespace ento;
@@ -947,42 +948,16 @@ std::string StackHintGeneratorForSymbol::getMessage(const ExplodedNode *N){
   return getMessageForSymbolNotFound();
 }
 
-/// TODO: This is copied from clang diagnostics. Maybe we could just move it to
-/// some common place. (Same as HandleOrdinalModifier.)
-void StackHintGeneratorForSymbol::printOrdinal(unsigned ValNo,
-                                               llvm::raw_svector_ostream &Out) {
-  assert(ValNo != 0 && "ValNo must be strictly positive!");
-
-  // We could use text forms for the first N ordinals, but the numeric
-  // forms are actually nicer in diagnostics because they stand out.
-  Out << ValNo;
-
-  // It is critically important that we do this perfectly for
-  // user-written sequences with over 100 elements.
-  switch (ValNo % 100) {
-  case 11:
-  case 12:
-  case 13:
-    Out << "th"; return;
-  default:
-    switch (ValNo % 10) {
-    case 1: Out << "st"; return;
-    case 2: Out << "nd"; return;
-    case 3: Out << "rd"; return;
-    default: Out << "th"; return;
-    }
-  }
-}
-
 std::string StackHintGeneratorForSymbol::getMessageForArg(const Expr *ArgE,
-                                                        unsigned ArgIndex) {
+                                                          unsigned ArgIndex) {
+  // Printed parameters start at 1, not 0.
+  ++ArgIndex;
+
   SmallString<200> buf;
   llvm::raw_svector_ostream os(buf);
 
-  os << Msg << " via ";
-  // Printed parameters start at 1, not 0.
-  printOrdinal(++ArgIndex, os);
-  os << " parameter";
+  os << Msg << " via " << ArgIndex << llvm::getOrdinalSuffix(ArgIndex)
+     << " parameter";
 
   return os.str();
 }
