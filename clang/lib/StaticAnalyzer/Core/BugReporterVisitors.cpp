@@ -65,6 +65,9 @@ const Stmt *bugreporter::GetDerefExpr(const ExplodedNode *N) {
         return ME->getBase()->IgnoreParenCasts();
       }
     }
+    else if (const ObjCIvarRefExpr *IvarRef = dyn_cast<ObjCIvarRefExpr>(S)) {
+      return IvarRef->getBase()->IgnoreParenCasts();
+    }
     else if (const ArraySubscriptExpr *AE = dyn_cast<ArraySubscriptExpr>(S)) {
       return AE->getBase();
     }

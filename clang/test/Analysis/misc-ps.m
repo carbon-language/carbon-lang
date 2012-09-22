@@ -1150,11 +1150,11 @@ void rdar8578650(id x) {
 @implementation RDar6352035
 - (void)foo {
   RDar6352035 *friend = 0;
-  friend->c = 7; // expected-warning{{Instance variable access (via 'friend') results in a null pointer dereference}}
+  friend->c = 7; // expected-warning{{Access to instance variable 'c' results in a dereference of a null pointer (loaded from variable 'friend')}}
 }
 - (void)bar {
   self = 0;
-  c = 7; // expected-warning{{Instance variable access (via 'self') results in a null pointer dereference}}
+  c = 7; // expected-warning{{Access to instance variable 'c' results in a dereference of a null pointer (loaded from variable 'self')}}
 }
 @end
 

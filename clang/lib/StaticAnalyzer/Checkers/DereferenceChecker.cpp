@@ -91,6 +91,8 @@ void DereferenceChecker::reportBug(ProgramStateRef State, const Stmt *S,
     BT_null.reset(new BuiltinBug("Dereference of null pointer"));
 
   SmallString<100> buf;
+  llvm::raw_svector_ostream os(buf);
+
   SmallVector<SourceRange, 2> Ranges;
 
   // Walk through lvalue casts to get the original expression
@@ -112,7 +114,6 @@ void DereferenceChecker::reportBug(ProgramStateRef State, const Stmt *S,
 
   switch (S->getStmtClass()) {
   case Stmt::ArraySubscriptExprClass: {
-    llvm::raw_svector_ostream os(buf);
     os << "Array access";
     const ArraySubscriptExpr *AE = cast<ArraySubscriptExpr>(S);
     AddDerefSource(os, Ranges, AE->getBase()->IgnoreParenCasts(),
@@ -121,7 +122,6 @@ void DereferenceChecker::reportBug(ProgramStateRef State, const Stmt *S,
     break;
   }
   case Stmt::UnaryOperatorClass: {
-    llvm::raw_svector_ostream os(buf);
     os << "Dereference of null pointer";
     const UnaryOperator *U = cast<UnaryOperator>(S);
     AddDerefSource(os, Ranges, U->getSubExpr()->IgnoreParens(),
@@ -131,7 +131,6 @@ void DereferenceChecker::reportBug(ProgramStateRef State, const Stmt *S,
   case Stmt::MemberExprClass: {
     const MemberExpr *M = cast<MemberExpr>(S);
     if (M->isArrow() || bugreporter::isDeclRefExprToReference(M->getBase())) {
-      llvm::raw_svector_ostream os(buf);
       os << "Access to field '" << M->getMemberNameInfo()
          << "' results in a dereference of a null pointer";
       AddDerefSource(os, Ranges, M->getBase()->IgnoreParenCasts(),
@@ -141,21 +140,17 @@ void DereferenceChecker::reportBug(ProgramStateRef State, const Stmt *S,
   }
   case Stmt::ObjCIvarRefExprClass: {
     const ObjCIvarRefExpr *IV = cast<ObjCIvarRefExpr>(S);
-    if (const DeclRefExpr *DR =
-        dyn_cast<DeclRefExpr>(IV->getBase()->IgnoreParenCasts())) {
-      if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
-        llvm::raw_svector_ostream os(buf);
-        os << "Instance variable access (via '" << VD->getName()
-           << "') results in a null pointer dereference";
-      }
-    }
-    Ranges.push_back(IV->getSourceRange());
+    os << "Access to instance variable '" << *IV->getDecl()
+       << "' results in a dereference of a null pointer";
+    AddDerefSource(os, Ranges, IV->getBase()->IgnoreParenCasts(),
+                   State.getPtr(), N->getLocationContext(), true);
     break;
   }
   default:
     break;
   }
 
+  os.flush();
   BugReport *report =
     new BugReport(*BT_null,
                   buf.empty() ? BT_null->getDescription() : buf.str(),
