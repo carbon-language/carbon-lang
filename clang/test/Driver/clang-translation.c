@@ -1,14 +1,16 @@
-// RUN: %clang -target i386-unknown-unknown -### -S -O0 -Os %s -o %t.s -fverbose-asm -funwind-tables -fvisibility=hidden 2> %t.log
-// RUN: grep '"-triple" "i386-unknown-unknown"' %t.log
-// RUN: grep '"-S"' %t.log
-// RUN: grep '"-disable-free"' %t.log
-// RUN: grep '"-mrelocation-model" "static"' %t.log
-// RUN: grep '"-mdisable-fp-elim"' %t.log
-// RUN: grep '"-munwind-tables"' %t.log
-// RUN: grep '"-Os"' %t.log
-// RUN: grep '"-o" .*clang-translation.*' %t.log
-// RUN: grep '"-masm-verbose"' %t.log
-// RUN: grep '"-fvisibility" "hidden"' %t.log
+// RUN: %clang -target i386-unknown-unknown -### -S -O0 -Os %s -o %t.s -fverbose-asm -funwind-tables -fvisibility=hidden 2>&1 | FileCheck -check-prefix=I386 %s
+// I386: "-triple" "i386-unknown-unknown"
+// I386: "-S"
+// I386: "-disable-free"
+// I386: "-mrelocation-model" "static"
+// I386: "-mdisable-fp-elim"
+// I386: "-masm-verbose"
+// I386: "-munwind-tables"
+// I386: "-Os"
+// I386: "-fvisibility"
+// I386: "hidden"
+// I386: "-o"
+// I386: clang-translation
 // RUN: %clang -target i386-apple-darwin9 -### -S %s -o %t.s 2> %t.log
 // RUN: grep '"-target-cpu" "yonah"' %t.log
 // RUN: %clang -target x86_64-apple-darwin9 -### -S %s -o %t.s 2> %t.log
