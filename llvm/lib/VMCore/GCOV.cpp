@@ -48,7 +48,7 @@ bool GCOVFile::read(GCOVBuffer &Buffer) {
     GCOVFunction *GFun = NULL;
     if (isGCDAFile(Format)) {
       // Use existing function while reading .gcda file.
-      assert (i < Functions.size() && ".gcda data does not match .gcno data");
+      assert(i < Functions.size() && ".gcda data does not match .gcno data");
       GFun = Functions[i];
     } else if (isGCNOFile(Format)){
       GFun = new GCOVFunction();
@@ -113,7 +113,9 @@ bool GCOVFunction::read(GCOVBuffer &Buff, GCOV::GCOVFormat Format) {
   LineNumber = Buff.readInt();
 
   // read blocks.
-  assert (Buff.readBlockTag() && "Block Tag not found!");
+  bool BlockTagFound = Buff.readBlockTag();
+  (void)BlockTagFound;
+  assert(BlockTagFound && "Block Tag not found!");
   uint32_t BlockCount = Buff.readInt();
   for (int i = 0, e = BlockCount; i != e; ++i) {
     Buff.readInt(); // Block flags;
@@ -124,7 +126,7 @@ bool GCOVFunction::read(GCOVBuffer &Buff, GCOV::GCOVFormat Format) {
   while (Buff.readEdgeTag()) {
     uint32_t EdgeCount = (Buff.readInt() - 1) / 2;
     uint32_t BlockNo = Buff.readInt();
-    assert (BlockNo < BlockCount && "Unexpected Block number!");
+    assert(BlockNo < BlockCount && "Unexpected Block number!");
     for (int i = 0, e = EdgeCount; i != e; ++i) {
       Blocks[BlockNo]->addEdge(Buff.readInt());
       Buff.readInt(); // Edge flag
@@ -136,7 +138,7 @@ bool GCOVFunction::read(GCOVBuffer &Buff, GCOV::GCOVFormat Format) {
     uint32_t LineTableLength = Buff.readInt();
     uint32_t Size = Buff.getCursor() + LineTableLength*4;
     uint32_t BlockNo = Buff.readInt();
-    assert (BlockNo < BlockCount && "Unexpected Block number!");
+    assert(BlockNo < BlockCount && "Unexpected Block number!");
     GCOVBlock *Block = Blocks[BlockNo];
     Buff.readInt(); // flag
     while (Buff.getCursor() != (Size - 4)) {
