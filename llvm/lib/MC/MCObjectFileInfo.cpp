@@ -430,12 +430,20 @@ void MCObjectFileInfo::InitCOFFMCObjectFileInfo(Triple T) {
   }
 
 
-  StaticDtorSection =
-    Ctx->getCOFFSection(".dtors",
-                        COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
-                        COFF::IMAGE_SCN_MEM_READ |
-                        COFF::IMAGE_SCN_MEM_WRITE,
-                        SectionKind::getDataRel());
+  if (T.getOS() == Triple::Win32) {
+    StaticDtorSection =
+      Ctx->getCOFFSection(".CRT$XTX",
+                          COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                          COFF::IMAGE_SCN_MEM_READ,
+                          SectionKind::getReadOnly());
+  } else {
+    StaticDtorSection =
+      Ctx->getCOFFSection(".dtors",
+                          COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                          COFF::IMAGE_SCN_MEM_READ |
+                          COFF::IMAGE_SCN_MEM_WRITE,
+                          SectionKind::getDataRel());
+  }
 
   // FIXME: We're emitting LSDA info into a readonly section on COFF, even
   // though it contains relocatable pointers.  In PIC mode, this is probably a
