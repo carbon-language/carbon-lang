@@ -32,6 +32,10 @@ const Driver &ToolChain::getDriver() const {
  return D;
 }
 
+bool ToolChain::IsUnwindTablesDefault() const {
+  return false;
+}
+
 std::string ToolChain::GetFilePath(const char *Name) const {
   return D.GetFilePath(Name, *this);
 

@@ -166,7 +166,7 @@ public:
 
   /// IsUnwindTablesDefault - Does this tool chain use -funwind-tables
   /// by default.
-  virtual bool IsUnwindTablesDefault() const = 0;
+  virtual bool IsUnwindTablesDefault() const;
 
   /// GetDefaultRelocationModel - Return the LLVM name of the default
   /// relocation model for this tool chain.

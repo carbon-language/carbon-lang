@@ -1479,10 +1479,6 @@ Tool &Hexagon_TC::SelectTool(const Compilation &C,
   return *T;
 }
 
-bool Hexagon_TC::IsUnwindTablesDefault() const {
-  return false;
-}
-
 const char *Hexagon_TC::GetDefaultRelocationModel() const {
   return "static";
 }
@@ -1513,10 +1509,6 @@ TCEToolChain::~TCEToolChain() {
 
 bool TCEToolChain::IsMathErrnoDefault() const {
   return true;
-}
-
-bool TCEToolChain::IsUnwindTablesDefault() const {
-  return false;
 }
 
 const char *TCEToolChain::GetDefaultRelocationModel() const {

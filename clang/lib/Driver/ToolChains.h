@@ -155,7 +155,6 @@ public:
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
                            const ActionList &Inputs) const;
 
-  virtual bool IsUnwindTablesDefault() const;
   virtual const char *GetDefaultRelocationModel() const;
   virtual const char *GetForcedPicModel() const;
 };
@@ -540,7 +539,6 @@ public:
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
                            const ActionList &Inputs) const;
   bool IsMathErrnoDefault() const;
-  bool IsUnwindTablesDefault() const;
   const char* GetDefaultRelocationModel() const;
   const char* GetForcedPicModel() const;
 
