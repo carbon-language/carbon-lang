@@ -774,3 +774,61 @@ entry:
   %val = load i64* %gep
   ret i32 undef
 }
+
+define i32 @test20() {
+; Ensure we can track negative offsets (before the beginning of the alloca) and
+; negative relative offsets from offsets starting past the end of the alloca.
+; CHECK: @test20
+; CHECK-NOT: alloca
+; CHECK: %[[sum1:.*]] = add i32 1, 2
+; CHECK: %[[sum2:.*]] = add i32 %[[sum1]], 3
+; CHECK: ret i32 %[[sum2]]
+
+entry:
+  %a = alloca [3 x i32]
+  %gep1 = getelementptr [3 x i32]* %a, i32 0, i32 0
+  store i32 1, i32* %gep1
+  %gep2.1 = getelementptr [3 x i32]* %a, i32 0, i32 -2
+  %gep2.2 = getelementptr i32* %gep2.1, i32 3
+  store i32 2, i32* %gep2.2
+  %gep3.1 = getelementptr [3 x i32]* %a, i32 0, i32 14
+  %gep3.2 = getelementptr i32* %gep3.1, i32 -12
+  store i32 3, i32* %gep3.2
+
+  %load1 = load i32* %gep1
+  %load2 = load i32* %gep2.2
+  %load3 = load i32* %gep3.2
+  %sum1 = add i32 %load1, %load2
+  %sum2 = add i32 %sum1, %load3
+  ret i32 %sum2
+}
+
+declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind
+
+define i8 @test21() {
+; Test allocations and offsets which border on overflow of the int64_t used
+; internally. This is really awkward to really test as LLVM doesn't really
+; support such extreme constructs cleanly.
+; CHECK: @test21
+; CHECK-NOT: alloca
+; CHECK: or i8 -1, -1
+
+entry:
+  %a = alloca [2305843009213693951 x i8]
+  %gep0 = getelementptr [2305843009213693951 x i8]* %a, i64 0, i64 2305843009213693949
+  store i8 255, i8* %gep0
+  %gep1 = getelementptr [2305843009213693951 x i8]* %a, i64 0, i64 -9223372036854775807
+  %gep2 = getelementptr i8* %gep1, i64 -1
+  call void @llvm.memset.p0i8.i64(i8* %gep2, i8 0, i64 18446744073709551615, i32 1, i1 false)
+  %gep3 = getelementptr i8* %gep1, i64 9223372036854775807
+  %gep4 = getelementptr i8* %gep3, i64 9223372036854775807
+  %gep5 = getelementptr i8* %gep4, i64 -6917529027641081857
+  store i8 255, i8* %gep5
+  %cast1 = bitcast i8* %gep4 to i32*
+  store i32 0, i32* %cast1
+  %load = load i8* %gep0
+  %gep6 = getelementptr i8* %gep0, i32 1
+  %load2 = load i8* %gep6
+  %result = or i8 %load, %load2
+  ret i8 %result
+}

@@ -403,15 +403,15 @@ protected:
 
   struct OffsetUse {
     Use *U;
-    uint64_t Offset;
+    int64_t Offset;
   };
   SmallVector<OffsetUse, 8> Queue;
 
   // The active offset and use while visiting.
   Use *U;
-  uint64_t Offset;
+  int64_t Offset;
 
-  void enqueueUsers(Instruction &I, uint64_t UserOffset) {
+  void enqueueUsers(Instruction &I, int64_t UserOffset) {
     SmallPtrSet<User *, 8> UserSet;
     for (Value::use_iterator UI = I.use_begin(), UE = I.use_end();
          UI != UE; ++UI) {
@@ -423,7 +423,7 @@ protected:
     }
   }
 
-  bool computeConstantGEPOffset(GetElementPtrInst &GEPI, uint64_t &GEPOffset) {
+  bool computeConstantGEPOffset(GetElementPtrInst &GEPI, int64_t &GEPOffset) {
     GEPOffset = Offset;
     for (gep_type_iterator GTI = gep_type_begin(GEPI), GTE = gep_type_end(GEPI);
          GTI != GTE; ++GTI) {
@@ -437,12 +437,37 @@ protected:
       if (StructType *STy = dyn_cast<StructType>(*GTI)) {
         unsigned ElementIdx = OpC->getZExtValue();
         const StructLayout *SL = TD.getStructLayout(STy);
-        GEPOffset += SL->getElementOffset(ElementIdx);
+        uint64_t ElementOffset = SL->getElementOffset(ElementIdx);
+        // Check that we can continue to model this GEP in a signed 64-bit offset.
+        if (ElementOffset > INT64_MAX ||
+            (GEPOffset >= 0 &&
+             ((uint64_t)GEPOffset + ElementOffset) > INT64_MAX)) {
+          DEBUG(dbgs() << "WARNING: Encountered a cumulative offset exceeding "
+                       << "what can be represented in an int64_t!\n"
+                       << "  alloca: " << P.AI << "\n");
+          return false;
+        }
+        if (GEPOffset < 0)
+          GEPOffset = ElementOffset + (uint64_t)-GEPOffset;
+        else
+          GEPOffset += ElementOffset;
         continue;
       }
 
-      GEPOffset
-        += OpC->getZExtValue() * TD.getTypeAllocSize(GTI.getIndexedType());
+      APInt Index = OpC->getValue().sextOrTrunc(TD.getPointerSizeInBits());
+      Index *= APInt(Index.getBitWidth(),
+                     TD.getTypeAllocSize(GTI.getIndexedType()));
+      Index += APInt(Index.getBitWidth(), (uint64_t)GEPOffset,
+                     /*isSigned*/true);
+      // Check if the result can be stored in our int64_t offset.
+      if (!Index.isSignedIntN(sizeof(GEPOffset) * 8)) {
+        DEBUG(dbgs() << "WARNING: Encountered a cumulative offset exceeding "
+                     << "what can be represented in an int64_t!\n"
+                     << "  alloca: " << P.AI << "\n");
+        return false;
+      }
+
+      GEPOffset = Index.getSExtValue();
     }
     return true;
   }
@@ -495,12 +520,11 @@ private:
     return false;
   }
 
-  void insertUse(Instruction &I, uint64_t Offset, uint64_t Size,
+  void insertUse(Instruction &I, int64_t Offset, uint64_t Size,
                  bool IsSplittable = false) {
-    uint64_t BeginOffset = Offset, EndOffset = Offset + Size;
-
-    // Completely skip uses which start outside of the allocation.
-    if (BeginOffset >= AllocSize) {
+    // Completely skip uses which don't overlap the allocation.
+    if ((Offset >= 0 && (uint64_t)Offset >= AllocSize) ||
+        (Offset < 0 && (uint64_t)-Offset >= Size)) {
       DEBUG(dbgs() << "WARNING: Ignoring " << Size << " byte use @" << Offset
                    << " which starts past the end of the " << AllocSize
                    << " byte alloca:\n"
@@ -509,8 +533,22 @@ private:
       return;
     }
 
-    // Clamp the size to the allocation.
-    if (EndOffset > AllocSize) {
+    // Clamp the start to the beginning of the allocation.
+    if (Offset < 0) {
+      DEBUG(dbgs() << "WARNING: Clamping a " << Size << " byte use @" << Offset
+                   << " to start at the beginning of the alloca:\n"
+                   << "    alloca: " << P.AI << "\n"
+                   << "       use: " << I << "\n");
+      Size -= (uint64_t)-Offset;
+      Offset = 0;
+    }
+
+    uint64_t BeginOffset = Offset, EndOffset = BeginOffset + Size;
+
+    // Clamp the end offset to the end of the allocation. Note that this is
+    // formulated to handle even the case where "BeginOffset + Size" overflows.
+    assert(AllocSize >= BeginOffset); // Established above.
+    if (Size > AllocSize - BeginOffset) {
       DEBUG(dbgs() << "WARNING: Clamping a " << Size << " byte use @" << Offset
                    << " to remain within the " << AllocSize << " byte alloca:\n"
                    << "    alloca: " << P.AI << "\n"
@@ -530,7 +568,7 @@ private:
     P.Partitions.push_back(New);
   }
 
-  bool handleLoadOrStore(Type *Ty, Instruction &I, uint64_t Offset) {
+  bool handleLoadOrStore(Type *Ty, Instruction &I, int64_t Offset) {
     uint64_t Size = TD.getTypeStoreSize(Ty);
 
     // If this memory access can be shown to *statically* extend outside the
@@ -540,7 +578,8 @@ private:
     // risk of overflow.
     // FIXME: We should instead consider the pointer to have escaped if this
     // function is being instrumented for addressing bugs or race conditions.
-    if (Offset >= AllocSize || Size > AllocSize || Offset + Size > AllocSize) {
+    if (Offset < 0 || (uint64_t)Offset >= AllocSize ||
+        Size > (AllocSize - (uint64_t)Offset)) {
       DEBUG(dbgs() << "WARNING: Ignoring " << Size << " byte "
                    << (isa<LoadInst>(I) ? "load" : "store") << " @" << Offset
                    << " which extends past the end of the " << AllocSize
@@ -560,7 +599,7 @@ private:
   }
 
   bool visitGetElementPtrInst(GetElementPtrInst &GEPI) {
-    uint64_t GEPOffset;
+    int64_t GEPOffset;
     if (!computeConstantGEPOffset(GEPI, GEPOffset))
       return markAsEscaping(GEPI);
 
@@ -784,16 +823,25 @@ private:
       P.DeadUsers.push_back(&I);
   }
 
-  void insertUse(Instruction &User, uint64_t Offset, uint64_t Size) {
-    uint64_t BeginOffset = Offset, EndOffset = Offset + Size;
-
+  void insertUse(Instruction &User, int64_t Offset, uint64_t Size) {
     // If the use extends outside of the allocation, record it as a dead use
     // for elimination later.
-    if (BeginOffset >= AllocSize || Size == 0)
+    if ((uint64_t)Offset >= AllocSize ||
+        (Offset < 0 && (uint64_t)-Offset >= Size))
       return markAsDead(User);
 
-    // Bound the use by the size of the allocation.
-    if (EndOffset > AllocSize)
+    // Clamp the start to the beginning of the allocation.
+    if (Offset < 0) {
+      Size -= (uint64_t)-Offset;
+      Offset = 0;
+    }
+
+    uint64_t BeginOffset = Offset, EndOffset = BeginOffset + Size;
+
+    // Clamp the end offset to the end of the allocation. Note that this is
+    // formulated to handle even the case where "BeginOffset + Size" overflows.
+    assert(AllocSize >= BeginOffset); // Established above.
+    if (Size > AllocSize - BeginOffset)
       EndOffset = AllocSize;
 
     // NB: This only works if we have zero overlapping partitions.
@@ -812,14 +860,15 @@ private:
     }
   }
 
-  void handleLoadOrStore(Type *Ty, Instruction &I, uint64_t Offset) {
+  void handleLoadOrStore(Type *Ty, Instruction &I, int64_t Offset) {
     uint64_t Size = TD.getTypeStoreSize(Ty);
 
     // If this memory access can be shown to *statically* extend outside the
     // bounds of of the allocation, it's behavior is undefined, so simply
     // ignore it. Note that this is more strict than the generic clamping
     // behavior of insertUse.
-    if (Offset >= AllocSize || Size > AllocSize || Offset + Size > AllocSize)
+    if (Offset < 0 || (uint64_t)Offset >= AllocSize ||
+        Size > (AllocSize - (uint64_t)Offset))
       return markAsDead(I);
 
     insertUse(I, Offset, Size);
@@ -836,7 +885,7 @@ private:
     if (GEPI.use_empty())
       return markAsDead(GEPI);
 
-    uint64_t GEPOffset;
+    int64_t GEPOffset;
     if (!computeConstantGEPOffset(GEPI, GEPOffset))
       llvm_unreachable("Unable to compute constant offset for use");
 
