@@ -1,11 +1,5 @@
-; RUN: llc < %s -O0 -march=x86-64 -mcpu=corei7 | FileCheck %s --check-prefix X64
-; RUN: llc < %s -O0 -march=x86 -mcpu=corei7 | FileCheck %s --check-prefix X32
-; RUN: llc < %s -O0 -mtriple=x86_64-linux-unknonw-unknown -mcpu=corei7 -show-mc-encoding | grep xaddw | grep 0x66
-; RUN: llc < %s -O0 -mtriple=x86_64-linux-unknonw-unknown -mcpu=corei7 -show-mc-encoding | grep addw | grep 0x66
-; RUN: llc < %s -O0 -mtriple=x86_64-linux-unknonw-unknown -mcpu=corei7 -show-mc-encoding | grep subw | grep 0x66
-; RUN: llc < %s -O0 -mtriple=x86_64-linux-unknonw-unknown -mcpu=corei7 -show-mc-encoding | grep xorw | grep 0x66
-; RUN: llc < %s -O0 -mtriple=x86_64-linux-unknonw-unknown -mcpu=corei7 -show-mc-encoding | grep orw | grep 0x66
-; RUN: llc < %s -O0 -mtriple=x86_64-linux-unknonw-unknown -mcpu=corei7 -show-mc-encoding | grep andw | grep 0x66
+; RUN: llc < %s -O0 -mtriple=x86_64-unknown-unknown -mcpu=corei7 -show-mc-encoding | FileCheck %s --check-prefix X64
+; RUN: llc < %s -O0 -mtriple=i386-unknown-unknown -mcpu=corei7 | FileCheck %s --check-prefix X32
 
 @sc16 = external global i16
 
@@ -21,17 +15,17 @@ entry:
 ; X32:       incw
   %t2 = atomicrmw add  i16* @sc16, i16 3 acquire
 ; X64:       lock
-; X64:       addw $3
+; X64:       addw $3, {{.*}} # encoding: [0xf0,0x66
 ; X32:       lock
 ; X32:       addw $3
   %t3 = atomicrmw add  i16* @sc16, i16 5 acquire
 ; X64:       lock
-; X64:       xaddw
+; X64:       xaddw {{.*}} # encoding: [0xf0,0x66
 ; X32:       lock
 ; X32:       xaddw
   %t4 = atomicrmw add  i16* @sc16, i16 %t3 acquire
 ; X64:       lock
-; X64:       addw
+; X64:       addw {{.*}} # encoding: [0xf0,0x66
 ; X32:       lock
 ; X32:       addw
   ret void
@@ -49,17 +43,17 @@ define void @atomic_fetch_sub16() nounwind {
 ; X32:       decw
   %t2 = atomicrmw sub  i16* @sc16, i16 3 acquire
 ; X64:       lock
-; X64:       subw $3
+; X64:       subw $3, {{.*}} # encoding: [0xf0,0x66
 ; X32:       lock
 ; X32:       subw $3
   %t3 = atomicrmw sub  i16* @sc16, i16 5 acquire
 ; X64:       lock
-; X64:       xaddw
+; X64:       xaddw {{.*}} # encoding: [0xf0,0x66
 ; X32:       lock
 ; X32:       xaddw
   %t4 = atomicrmw sub  i16* @sc16, i16 %t3 acquire
 ; X64:       lock
-; X64:       subw
+; X64:       subw {{.*}} # encoding: [0xf0,0x66
 ; X32:       lock
 ; X32:       subw
   ret void
@@ -72,7 +66,7 @@ define void @atomic_fetch_and16() nounwind {
 ; X32:   atomic_fetch_and16
   %t1 = atomicrmw and  i16* @sc16, i16 3 acquire
 ; X64:       lock
-; X64:       andw $3
+; X64:       andw $3, {{.*}} # encoding: [0xf0,0x66
 ; X32:       lock
 ; X32:       andw $3
   %t2 = atomicrmw and  i16* @sc16, i16 5 acquire
@@ -84,7 +78,7 @@ define void @atomic_fetch_and16() nounwind {
 ; X32:       cmpxchgw
   %t3 = atomicrmw and  i16* @sc16, i16 %t2 acquire
 ; X64:       lock
-; X64:       andw
+; X64:       andw {{.*}} # encoding: [0xf0,0x66
 ; X32:       lock
 ; X32:       andw
   ret void
@@ -97,7 +91,7 @@ define void @atomic_fetch_or16() nounwind {
 ; X32:   atomic_fetch_or16
   %t1 = atomicrmw or   i16* @sc16, i16 3 acquire
 ; X64:       lock
-; X64:       orw $3
+; X64:       orw $3, {{.*}} # encoding: [0xf0,0x66
 ; X32:       lock
 ; X32:       orw $3
   %t2 = atomicrmw or   i16* @sc16, i16 5 acquire
@@ -109,7 +103,7 @@ define void @atomic_fetch_or16() nounwind {
 ; X32:       cmpxchgw
   %t3 = atomicrmw or   i16* @sc16, i16 %t2 acquire
 ; X64:       lock
-; X64:       orw
+; X64:       orw {{.*}} # encoding: [0xf0,0x66
 ; X32:       lock
 ; X32:       orw
   ret void
@@ -122,7 +116,7 @@ define void @atomic_fetch_xor16() nounwind {
 ; X32:   atomic_fetch_xor16
   %t1 = atomicrmw xor  i16* @sc16, i16 3 acquire
 ; X64:       lock
-; X64:       xorw $3
+; X64:       xorw $3, {{.*}} # encoding: [0xf0,0x66
 ; X32:       lock
 ; X32:       xorw $3
   %t2 = atomicrmw xor  i16* @sc16, i16 5 acquire
@@ -134,7 +128,7 @@ define void @atomic_fetch_xor16() nounwind {
 ; X32:       cmpxchgw
   %t3 = atomicrmw xor  i16* @sc16, i16 %t2 acquire
 ; X64:       lock
-; X64:       xorw
+; X64:       xorw {{.*}} # encoding: [0xf0,0x66
 ; X32:       lock
 ; X32:       xorw
   ret void
