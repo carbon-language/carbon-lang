@@ -1608,15 +1608,16 @@ public:
 class alias : public Option {
   Option *AliasFor;
   virtual bool handleOccurrence(unsigned pos, StringRef /*ArgName*/,
-                                StringRef Arg) {
+                                StringRef Arg) LLVM_OVERRIDE {
     return AliasFor->handleOccurrence(pos, AliasFor->ArgStr, Arg);
   }
   // Handle printing stuff...
-  virtual size_t getOptionWidth() const;
-  virtual void printOptionInfo(size_t GlobalWidth) const;
+  virtual size_t getOptionWidth() const LLVM_OVERRIDE;
+  virtual void printOptionInfo(size_t GlobalWidth) const LLVM_OVERRIDE;
 
   // Aliases do not need to print their values.
-  virtual void printOptionValue(size_t /*GlobalWidth*/, bool /*Force*/) const {}
+  virtual void printOptionValue(size_t /*GlobalWidth*/,
+                                bool /*Force*/) const LLVM_OVERRIDE {}
 
   void done() {
     if (!hasArgStr())

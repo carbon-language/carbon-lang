@@ -2836,7 +2836,7 @@ BitCastInst::BitCastInst(
 //                               CmpInst Classes
 //===----------------------------------------------------------------------===//
 
-void CmpInst::Anchor() const {}
+void CmpInst::anchor() {}
 
 CmpInst::CmpInst(Type *ty, OtherOps op, unsigned short predicate,
                  Value *LHS, Value *RHS, const Twine &Name,

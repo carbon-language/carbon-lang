@@ -55,11 +55,11 @@ namespace llvm
     ///
     const char *Scanned;
 
-    virtual void write_impl(const char *Ptr, size_t Size);
+    virtual void write_impl(const char *Ptr, size_t Size) LLVM_OVERRIDE;
 
     /// current_pos - Return the current position within the stream,
     /// not counting the bytes currently in the buffer.
-    virtual uint64_t current_pos() const { 
+    virtual uint64_t current_pos() const LLVM_OVERRIDE {
       // Our current position in the stream is all the contents which have been
       // written to the underlying stream (*not* the current position of the
       // underlying stream).

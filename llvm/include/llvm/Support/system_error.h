@@ -653,7 +653,7 @@ public:
 class _do_message : public error_category
 {
 public:
-  virtual std::string message(int ev) const;
+  virtual std::string message(int ev) const LLVM_OVERRIDE;
 };
 
 const error_category& generic_category();

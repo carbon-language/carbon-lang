@@ -24,14 +24,14 @@ namespace llvm {
 /// use the underlying stream to detect errors.
 class raw_os_ostream : public raw_ostream {
   std::ostream &OS;
-  
+
   /// write_impl - See raw_ostream::write_impl.
-  virtual void write_impl(const char *Ptr, size_t Size);
-  
+  virtual void write_impl(const char *Ptr, size_t Size) LLVM_OVERRIDE;
+
   /// current_pos - Return the current position within the stream, not
   /// counting the bytes currently in the buffer.
-  virtual uint64_t current_pos() const;
-  
+  virtual uint64_t current_pos() const LLVM_OVERRIDE;
+
 public:
   raw_os_ostream(std::ostream &O) : OS(O) {}
   ~raw_os_ostream();
