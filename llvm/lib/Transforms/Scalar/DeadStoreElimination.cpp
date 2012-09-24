@@ -30,6 +30,7 @@
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/SetVector.h"
@@ -146,7 +147,7 @@ static void DeleteDeadInstruction(Instruction *I,
 
 /// hasMemoryWrite - Does this instruction write some memory?  This only returns
 /// true for things that we can analyze with other helpers below.
-static bool hasMemoryWrite(Instruction *I) {
+static bool hasMemoryWrite(Instruction *I, const TargetLibraryInfo *TLI) {
   if (isa<StoreInst>(I))
     return true;
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
@@ -159,6 +160,26 @@ static bool hasMemoryWrite(Instruction *I) {
     case Intrinsic::init_trampoline:
     case Intrinsic::lifetime_end:
       return true;
+    }
+  }
+  if (CallSite CS = I) {
+    if (Function *F = CS.getCalledFunction()) {
+      if (TLI && TLI->has(LibFunc::strcpy) &&
+          F->getName() == TLI->getName(LibFunc::strcpy)) {
+        return true;
+      }
+      if (TLI && TLI->has(LibFunc::strncpy) &&
+          F->getName() == TLI->getName(LibFunc::strncpy)) {
+        return true;
+      }
+      if (TLI && TLI->has(LibFunc::strcat) &&
+          F->getName() == TLI->getName(LibFunc::strcat)) {
+        return true;
+      }
+      if (TLI && TLI->has(LibFunc::strncat) &&
+          F->getName() == TLI->getName(LibFunc::strncat)) {
+        return true;
+      }
     }
   }
   return false;
@@ -208,7 +229,8 @@ getLocForWrite(Instruction *Inst, AliasAnalysis &AA) {
 /// instruction if any.
 static AliasAnalysis::Location
 getLocForRead(Instruction *Inst, AliasAnalysis &AA) {
-  assert(hasMemoryWrite(Inst) && "Unknown instruction case");
+  assert(hasMemoryWrite(Inst, AA.getTargetLibraryInfo()) &&
+         "Unknown instruction case");
 
   // The only instructions that both read and write are the mem transfer
   // instructions (memcpy/memmove).
@@ -225,23 +247,29 @@ static bool isRemovable(Instruction *I) {
   if (StoreInst *SI = dyn_cast<StoreInst>(I))
     return SI->isUnordered();
 
-  IntrinsicInst *II = cast<IntrinsicInst>(I);
-  switch (II->getIntrinsicID()) {
-  default: llvm_unreachable("doesn't pass 'hasMemoryWrite' predicate");
-  case Intrinsic::lifetime_end:
-    // Never remove dead lifetime_end's, e.g. because it is followed by a
-    // free.
-    return false;
-  case Intrinsic::init_trampoline:
-    // Always safe to remove init_trampoline.
-    return true;
+  if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
+    switch (II->getIntrinsicID()) {
+    default: llvm_unreachable("doesn't pass 'hasMemoryWrite' predicate");
+    case Intrinsic::lifetime_end:
+      // Never remove dead lifetime_end's, e.g. because it is followed by a
+      // free.
+      return false;
+    case Intrinsic::init_trampoline:
+      // Always safe to remove init_trampoline.
+      return true;
 
-  case Intrinsic::memset:
-  case Intrinsic::memmove:
-  case Intrinsic::memcpy:
-    // Don't remove volatile memory intrinsics.
-    return !cast<MemIntrinsic>(II)->isVolatile();
+    case Intrinsic::memset:
+    case Intrinsic::memmove:
+    case Intrinsic::memcpy:
+      // Don't remove volatile memory intrinsics.
+      return !cast<MemIntrinsic>(II)->isVolatile();
+    }
   }
+
+  if (CallSite CS = I)  // If we assume hasMemoryWrite(I) is true,
+    return true;        // then there's nothing left to check.
+
+  return false;
 }
 
 
@@ -252,14 +280,19 @@ static bool isShortenable(Instruction *I) {
   if (isa<StoreInst>(I))
     return false;
 
-  IntrinsicInst *II = cast<IntrinsicInst>(I);
-  switch (II->getIntrinsicID()) {
-    default: return false;
-    case Intrinsic::memset:
-    case Intrinsic::memcpy:
-      // Do shorten memory intrinsics.
-      return true;
+  if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
+    switch (II->getIntrinsicID()) {
+      default: return false;
+      case Intrinsic::memset:
+      case Intrinsic::memcpy:
+        // Do shorten memory intrinsics.
+        return true;
+    }
   }
+
+  // Don't shorten libcalls calls for now.
+
+  return false;
 }
 
 /// getStoredPointerOperand - Return the pointer that is being written to.
@@ -269,12 +302,18 @@ static Value *getStoredPointerOperand(Instruction *I) {
   if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(I))
     return MI->getDest();
 
-  IntrinsicInst *II = cast<IntrinsicInst>(I);
-  switch (II->getIntrinsicID()) {
-  default: llvm_unreachable("Unexpected intrinsic!");
-  case Intrinsic::init_trampoline:
-    return II->getArgOperand(0);
+  if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
+    switch (II->getIntrinsicID()) {
+    default: llvm_unreachable("Unexpected intrinsic!");
+    case Intrinsic::init_trampoline:
+      return II->getArgOperand(0);
+    }
   }
+
+  CallSite CS(I);
+  // All the supported functions so far happen to have dest as their first
+  // argument.
+  return CS.getArgument(0);
 }
 
 static uint64_t getPointerSize(const Value *V, AliasAnalysis &AA) {
@@ -463,7 +502,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     }
 
     // If we find something that writes memory, get its memory dependence.
-    if (!hasMemoryWrite(Inst))
+    if (!hasMemoryWrite(Inst, TLI))
       continue;
 
     MemDepResult InstDep = MD->getDependency(Inst);
@@ -630,7 +669,7 @@ bool DSE::HandleFree(CallInst *F) {
     MemDepResult Dep = MD->getPointerDependencyFrom(Loc, false, InstPt, BB);
     while (Dep.isDef() || Dep.isClobber()) {
       Instruction *Dependency = Dep.getInst();
-      if (!hasMemoryWrite(Dependency) || !isRemovable(Dependency))
+      if (!hasMemoryWrite(Dependency, TLI) || !isRemovable(Dependency))
         break;
 
       Value *DepPointer =
@@ -699,7 +738,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
     --BBI;
 
     // If we find a store, check to see if it points into a dead stack value.
-    if (hasMemoryWrite(BBI) && isRemovable(BBI)) {
+    if (hasMemoryWrite(BBI, TLI) && isRemovable(BBI)) {
       // See through pointer-to-pointer bitcasts
       SmallVector<Value *, 4> Pointers;
       GetUnderlyingObjects(getStoredPointerOperand(BBI), Pointers);
