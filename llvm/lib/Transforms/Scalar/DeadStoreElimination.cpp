@@ -266,8 +266,8 @@ static bool isRemovable(Instruction *I) {
     }
   }
 
-  if (CallSite CS = I)  // If we assume hasMemoryWrite(I) is true,
-    return true;        // then there's nothing left to check.
+  if (CallSite(I))  // If we assume hasMemoryWrite(I) is true,
+    return true;    // then there's nothing left to check.
 
   return false;
 }
@@ -310,7 +310,7 @@ static Value *getStoredPointerOperand(Instruction *I) {
     }
   }
 
-  CallSite CS(I);
+  CallSite CS = I;
   // All the supported functions so far happen to have dest as their first
   // argument.
   return CS.getArgument(0);
