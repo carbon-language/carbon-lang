@@ -31,6 +31,6 @@ extension but ignore any ivars in superclass class extensions.
 @end
 
 @implementation SomeClass 
-@synthesize Property;	// expected-error {{property 'Property' attempting to use ivar 'Property' declared in super class 'Super'}}
+@synthesize Property;	// expected-error {{property 'Property' attempting to use instance variable 'Property' declared in super class 'Super'}}
 @synthesize Property1;	// OK
 @end

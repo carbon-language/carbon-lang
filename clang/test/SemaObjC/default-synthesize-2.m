@@ -41,7 +41,7 @@
 // Test3
 @interface Test3 
 { 
-  id uid;  // expected-note {{ivar is declared here}}
+  id uid;  // expected-note {{instance variable is declared here}}
 } 
 @property (readwrite, assign) id uid;  // expected-note {{property declared here}}
 @end
@@ -119,7 +119,7 @@ int* _object;
 @interface Test8
 {
   id _y;
-  id y; // expected-note {{ivar is declared here}}
+  id y; // expected-note {{instance variable is declared here}}
 }
 @property(copy) id y; // expected-note {{property declared here}}
 @end

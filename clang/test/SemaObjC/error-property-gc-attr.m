@@ -3,7 +3,7 @@
 
 @interface INTF
 {
-  id IVAR; // expected-note {{ivar is declared here}}
+  id IVAR; // expected-note {{instance variable is declared here}}
   __weak id II;
   __weak id WID;
   id ID;
@@ -19,10 +19,10 @@
 @end	
 
 @implementation INTF
-@synthesize pweak=IVAR;  // expected-error {{existing ivar 'IVAR' for __weak property 'pweak' must be __weak}}
-@synthesize NOT=II; // expected-error {{existing ivar 'II' for strong property 'NOT' may not be __weak}}
+@synthesize pweak=IVAR;  // expected-error {{existing instance variable 'IVAR' for __weak property 'pweak' must be __weak}}
+@synthesize NOT=II; // expected-error {{existing instance variable 'II' for strong property 'NOT' may not be __weak}}
 @synthesize WID;
 @synthesize ID;
-@synthesize AWEAK; // expected-error {{existing ivar 'AWEAK' for strong property 'AWEAK' may not be __weak}}
+@synthesize AWEAK; // expected-error {{existing instance variable 'AWEAK' for strong property 'AWEAK' may not be __weak}}
 @synthesize WI;
 @end

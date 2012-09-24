@@ -41,7 +41,7 @@ static void func() {
 
 @interface BaseClass {
 @public
-    Class isa; // expected-note 3 {{ivar is declared here}}
+    Class isa; // expected-note 3 {{instance variable is declared here}}
 }
 @end
 

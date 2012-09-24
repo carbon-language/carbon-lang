@@ -13,7 +13,7 @@ class CppConcreteSub : public CppAbstractBase {
 };
 
 @interface Objc  {
-    CppConcreteSub _concrete; // expected-error{{ivar type 'CppConcreteSub' is an abstract class}}
+    CppConcreteSub _concrete; // expected-error{{instance variable type 'CppConcreteSub' is an abstract class}}
 }
 - (CppAbstractBase*)abstract;
 @end

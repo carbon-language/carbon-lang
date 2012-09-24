@@ -60,5 +60,5 @@ __attribute__((objc_arc_weak_reference_unavailable))
 @end
 
 @implementation I
-@synthesize font = _font; // expected-error {{synthesis of a weak-unavailable property is disallowed because it requires synthesis of an ivar of the __weak object}}
+@synthesize font = _font; // expected-error {{synthesis of a weak-unavailable property is disallowed because it requires synthesis of an instance variable of the __weak object}}
 @end

@@ -21,9 +21,9 @@ typedef void *PV;
     __attribute__((iboutletcollection(I, 1))) id ivar1; // expected-error {{attribute takes one argument}}
     __attribute__((iboutletcollection(B))) id ivar2; // expected-error {{invalid type 'B' as argument of iboutletcollection attribute}}
     __attribute__((iboutletcollection(PV))) id ivar3; // expected-error {{invalid type 'PV' as argument of iboutletcollection attribute}}
-    __attribute__((iboutletcollection(PV))) void *ivar4; // expected-warning {{ivar with 'iboutletcollection' attribute must be an object type (invalid 'void *')}}
+    __attribute__((iboutletcollection(PV))) void *ivar4; // expected-warning {{instance variable with 'iboutletcollection' attribute must be an object type (invalid 'void *')}}
     __attribute__((iboutletcollection(int))) id ivar5; // expected-error {{type argument of iboutletcollection attribute cannot be a builtin type}}
-    __attribute__((iboutlet)) int ivar6;  // expected-warning {{ivar with 'iboutlet' attribute must be an object type}}
+    __attribute__((iboutlet)) int ivar6;  // expected-warning {{instance variable with 'iboutlet' attribute must be an object type}}
 }
 @property (nonatomic, retain) __attribute__((iboutletcollection(I,2,3))) id prop1; // expected-error {{attribute takes one argument}}
 @property (nonatomic, retain) __attribute__((iboutletcollection(B))) id prop2; // expected-error {{invalid type 'B' as argument of iboutletcollection attribute}}

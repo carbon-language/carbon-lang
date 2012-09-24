@@ -695,7 +695,7 @@ def error_bad_property_context : Error<
   "property implementation must be in a class or category implementation">;
 def error_missing_property_ivar_decl : Error<
   "synthesized property %0 must either be named the same as a compatible"
-  " ivar or must explicitly name an ivar">;
+  " instance variable or must explicitly name an instance variable">;
 def error_synthesize_weak_non_arc_or_gc : Error<
   "@synthesize of 'weak' property is only allowed in ARC or GC mode">;
 def err_arc_perform_selector_retains : Error<
@@ -713,19 +713,19 @@ def err_incomplete_synthesized_property : Error<
   "cannot synthesize property %0 with incomplete type %1">;
 
 def error_property_ivar_type : Error<
-  "type of property %0 (%1) does not match type of ivar %2 (%3)">;
+  "type of property %0 (%1) does not match type of instance variable %2 (%3)">;
 def error_property_accessor_type : Error<
   "type of property %0 (%1) does not match type of accessor %2 (%3)">;
 def error_ivar_in_superclass_use : Error<
-  "property %0 attempting to use ivar %1 declared in super class %2">;
+  "property %0 attempting to use instance variable %1 declared in super class %2">;
 def error_weak_property : Error<
-  "existing ivar %1 for __weak property %0 must be __weak">;
+  "existing instance variable %1 for __weak property %0 must be __weak">;
 def error_strong_property : Error<
-  "existing ivar %1 for strong property %0 may not be __weak">;
+  "existing instance variable %1 for strong property %0 may not be __weak">;
 def error_dynamic_property_ivar_decl : Error<
-  "dynamic property can not have ivar specification">;
+  "dynamic property can not have instance variable specification">;
 def error_duplicate_ivar_use : Error<
-  "synthesized properties %0 and %1 both claim ivar %2">;
+  "synthesized properties %0 and %1 both claim instance variable %2">;
 def error_property_implemented : Error<"property %0 is already implemented">;
 def warn_objc_property_attr_mutually_exclusive : Warning<
   "property attributes '%0' and '%1' are mutually exclusive">,
@@ -813,7 +813,7 @@ def err_friend_not_first_in_declaration : Error<
   "'friend' must appear first in a non-function declaration">;
   
 def err_abstract_type_in_decl : Error<
-  "%select{return|parameter|variable|field|ivar}0 type %1 is an abstract class">;
+  "%select{return|parameter|variable|field|instance variable}0 type %1 is an abstract class">;
 def err_allocation_of_abstract_type : Error<
   "allocating an object of abstract class type %0">;
 def err_throw_abstract_type : Error<
@@ -1028,7 +1028,7 @@ def warn_call_to_pure_virtual_member_function_from_ctor_dtor : Warning<
   "not available in the %select{constructor|destructor}1 of %2">;
 
 def note_field_decl : Note<"member is declared here">;
-def note_ivar_decl : Note<"ivar is declared here">;
+def note_ivar_decl : Note<"instance variable is declared here">;
 def note_bitfield_decl : Note<"bit-field is declared here">;
 def note_previous_decl : Note<"%0 declared here">;
 def note_member_synthesized_at : Note<
@@ -2047,7 +2047,7 @@ def warn_attribute_ibaction: Warning<
 def err_iboutletcollection_type : Error<
   "invalid type %0 as argument of iboutletcollection attribute">;
 def warn_iboutlet_object_type : Warning<
-  "%select{ivar|property}2 with %0 attribute must "
+  "%select{instance variable|property}2 with %0 attribute must "
   "be an object type (invalid %1)">,
   InGroup<DiagGroup<"invalid-iboutlet">>;
 def err_attribute_overloadable_not_function : Error<
@@ -3235,9 +3235,9 @@ def ext_forward_ref_enum_def : Extension<
 def err_redefinition_of_enumerator : Error<"redefinition of enumerator %0">;
 def err_duplicate_member : Error<"duplicate member %0">;
 def err_misplaced_ivar : Error<
-  "ivars may not be placed in %select{categories|class extension}0">;
+  "instance variable may not be placed in %select{categories|class extension}0">;
 def warn_ivars_in_interface : Warning<
-  "declaration of ivars in the interface is deprecated">,
+  "declaration of instance variables in the interface is deprecated">,
   InGroup<DiagGroup<"objc-interface-ivars">>, DefaultIgnore;
 def ext_enum_value_not_int : Extension<
   "ISO C restricts enumerator values to range of 'int' (%0 is too "
@@ -3547,7 +3547,7 @@ def err_arc_weak_unavailable_assign : Error<
   "assignment of a weak-unavailable object to a __weak object">;
 def err_arc_weak_unavailable_property : Error<
   "synthesis of a weak-unavailable property is disallowed "
-  "because it requires synthesis of an ivar of the __weak object">;
+  "because it requires synthesis of an instance variable of the __weak object">;
 def err_arc_convesion_of_weak_unavailable : Error<
   "%select{implicit conversion|cast}0 of weak-unavailable object of type %1 to"
   " a __weak object of type %2">;
@@ -3614,7 +3614,7 @@ def warn_arc_retained_property_assign : Warning<
 def err_arc_new_array_without_ownership : Error<
   "'new' cannot allocate an array of %0 with no explicit ownership">;
 def err_arc_autoreleasing_var : Error<
-  "%select{__block variables|global variables|fields|ivars}0 cannot have "
+  "%select{__block variables|global variables|fields|instance variable}0 cannot have "
   "__autoreleasing ownership">;
 def err_arc_autoreleasing_capture : Error<
   "cannot capture __autoreleasing variable in a "
@@ -3671,10 +3671,10 @@ def warn_arc_object_memaccess : Warning<
 let CategoryName = "ARC and @properties" in {
 
 def err_arc_strong_property_ownership : Error<
-  "existing ivar %1 for strong property %0 may not be "
+  "existing instance variable %1 for strong property %0 may not be "
   "%select{|__unsafe_unretained||__weak}2">;
 def err_arc_assign_property_ownership : Error<
-  "existing ivar %1 for property %0 with %select{unsafe_unretained| assign}2 "
+  "existing instance variable %1 for property %0 with %select{unsafe_unretained| assign}2 "
   "attribute must be __unsafe_unretained">;
 def err_arc_inconsistent_property_ownership : Error<
   "%select{|unsafe_unretained|strong|weak}1 property %0 may not also be "
@@ -4210,7 +4210,7 @@ def err_nogetter_property_incdec : Error<
 def error_no_subobject_property_setting : Error<
   "expression is not assignable">;
 def err_qualified_objc_access : Error<
-  "%select{property|ivar}0 access cannot be qualified with '%1'">;
+  "%select{property|instance variable}0 access cannot be qualified with '%1'">;
   
 def ext_freestanding_complex : Extension<
   "complex numbers are an extension in a freestanding C99 implementation">;
@@ -5879,7 +5879,7 @@ def err_typecheck_member_reference_ivar_suggest : Error<
 def err_property_not_found_suggest : Error<
   "property %0 not found on object of type %1; did you mean %2?">;
 def err_ivar_access_using_property_syntax_suggest : Error<
-  "property %0 not found on object of type %1; did you mean to access ivar %2?">;
+  "property %0 not found on object of type %1; did you mean to access instance variable %2?">;
 def err_property_found_suggest : Error<
   "property %0 found on object of type %1; did you mean to access "
   "it with the \".\" operator?">;

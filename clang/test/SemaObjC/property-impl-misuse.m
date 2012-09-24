@@ -12,7 +12,7 @@
 @dynamic X; // expected-note {{previous declaration is here}}
 @dynamic X; // expected-error {{property 'X' is already implemented}}
 @synthesize Y; // expected-note {{previous use is here}}
-@synthesize Z=Y; // expected-error {{synthesized properties 'Z' and 'Y' both claim ivar 'Y'}}
+@synthesize Z=Y; // expected-error {{synthesized properties 'Z' and 'Y' both claim instance variable 'Y'}}
 @end
 
 // rdar://8703553

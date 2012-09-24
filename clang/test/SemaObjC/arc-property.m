@@ -18,13 +18,13 @@
 @end
 
 @implementation MyClass
-@synthesize myString; // expected-error {{existing ivar 'myString' for strong property 'myString' may not be __weak}}
+@synthesize myString; // expected-error {{existing instance variable 'myString' for strong property 'myString' may not be __weak}}
 @synthesize myString1 = StrongIvar; // OK
-@synthesize myString2 = myString2; // expected-error {{existing ivar 'myString2' for strong property 'myString2' may not be __weak}}
+@synthesize myString2 = myString2; // expected-error {{existing instance variable 'myString2' for strong property 'myString2' may not be __weak}}
 //
 @synthesize myString3; // OK
 @synthesize myString4; // OK
-@synthesize myString5 = StrongIvar5; // expected-error {{existing ivar 'StrongIvar5' for __weak property 'myString5' must be __weak}}
+@synthesize myString5 = StrongIvar5; // expected-error {{existing instance variable 'StrongIvar5' for __weak property 'myString5' must be __weak}}
 
 @end
 
@@ -33,7 +33,7 @@
 @public
     id __unsafe_unretained x;   // should be __weak
     id __strong y;
-    id __autoreleasing z; // expected-error {{ivars cannot have __autoreleasing ownership}}
+    id __autoreleasing z; // expected-error {{instance variable cannot have __autoreleasing ownership}}
 }
 @property(weak) id x; // expected-note {{property declared here}}
 @property(weak) id y; // expected-note {{property declared here}}
@@ -41,8 +41,8 @@
 @end
 
 @implementation Foo
-@synthesize x;	// expected-error {{existing ivar 'x' for __weak property 'x' must be __weak}}
-@synthesize y;	// expected-error {{existing ivar 'y' for __weak property 'y' must be __weak}}
+@synthesize x;	// expected-error {{existing instance variable 'x' for __weak property 'x' must be __weak}}
+@synthesize y;	// expected-error {{existing instance variable 'y' for __weak property 'y' must be __weak}}
 @synthesize z;  // suppressed
 @end
 

@@ -5,7 +5,7 @@
 @public
     id __unsafe_unretained x;
     id __weak y;
-    id __autoreleasing z; // expected-error {{ivars cannot have __autoreleasing ownership}}
+    id __autoreleasing z; // expected-error {{instance variable cannot have __autoreleasing ownership}}
 }
 @property(strong) id x; // expected-note {{property declared here}}
 @property(strong) id y; // expected-note {{property declared here}}
@@ -13,8 +13,8 @@
 @end
 
 @implementation Foo
-@synthesize x; // expected-error {{existing ivar 'x' for strong property 'x' may not be __unsafe_unretained}}
-@synthesize y; // expected-error {{existing ivar 'y' for strong property 'y' may not be __weak}}
+@synthesize x; // expected-error {{existing instance variable 'x' for strong property 'x' may not be __unsafe_unretained}}
+@synthesize y; // expected-error {{existing instance variable 'y' for strong property 'y' may not be __weak}}
 @synthesize z; // suppressed
 @end
 
@@ -22,7 +22,7 @@
 @public
     id __unsafe_unretained x;
     id __weak y;
-    id __autoreleasing z; // expected-error {{ivars cannot have __autoreleasing ownership}}
+    id __autoreleasing z; // expected-error {{instance variable cannot have __autoreleasing ownership}}
 }
 @property(retain) id x; // expected-note {{property declared here}}
 @property(retain) id y; // expected-note {{property declared here}}
@@ -30,8 +30,8 @@
 @end
 
 @implementation Bar
-@synthesize x; // expected-error {{existing ivar 'x' for strong property 'x' may not be __unsafe_unretained}}
-@synthesize y; // expected-error {{existing ivar 'y' for strong property 'y' may not be __weak}}
+@synthesize x; // expected-error {{existing instance variable 'x' for strong property 'x' may not be __unsafe_unretained}}
+@synthesize y; // expected-error {{existing instance variable 'y' for strong property 'y' may not be __weak}}
 @synthesize z; // suppressed
 @end
 
@@ -39,7 +39,7 @@
 @public
     id __unsafe_unretained x;
     id __weak y;
-    id __autoreleasing z; // expected-error {{ivars cannot have __autoreleasing ownership}}
+    id __autoreleasing z; // expected-error {{instance variable cannot have __autoreleasing ownership}}
 }
 @property(copy) id x; // expected-note {{property declared here}}
 @property(copy) id y; // expected-note {{property declared here}} 
@@ -47,8 +47,8 @@
 @end
 
 @implementation Bas
-@synthesize x; // expected-error {{existing ivar 'x' for strong property 'x' may not be __unsafe_unretained}}
-@synthesize y; // expected-error {{existing ivar 'y' for strong property 'y' may not be __weak}}
+@synthesize x; // expected-error {{existing instance variable 'x' for strong property 'x' may not be __unsafe_unretained}}
+@synthesize y; // expected-error {{existing instance variable 'y' for strong property 'y' may not be __weak}}
 @synthesize z; // suppressed
 @end
 
@@ -79,7 +79,7 @@
 
 @implementation Gorf
 @synthesize x;
-@synthesize y; // expected-error {{existing ivar 'y' for property 'y' with  assign attribute must be __unsafe_unretained}}
+@synthesize y; // expected-error {{existing instance variable 'y' for property 'y' with  assign attribute must be __unsafe_unretained}}
 @synthesize z;
 @end
 
@@ -94,7 +94,7 @@
 
 @implementation Gorf2
 @synthesize x;
-@synthesize y; // expected-error {{existing ivar 'y' for property 'y' with unsafe_unretained attribute must be __unsafe_unretained}}
+@synthesize y; // expected-error {{existing instance variable 'y' for property 'y' with unsafe_unretained attribute must be __unsafe_unretained}}
 @synthesize z;
 @end
 

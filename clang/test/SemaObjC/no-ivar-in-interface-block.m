@@ -3,11 +3,11 @@
 
 @interface I
 {
-  @protected  int P_IVAR; // expected-warning {{declaration of ivars in the interface is deprecated}}
+  @protected  int P_IVAR; // expected-warning {{declaration of instance variables in the interface is deprecated}}
 
-  @public     int PU_IVAR; // expected-warning {{declaration of ivars in the interface is deprecated}}
+  @public     int PU_IVAR; // expected-warning {{declaration of instance variables in the interface is deprecated}}
 
-  @private    int PRV_IVAR; // expected-warning {{declaration of ivars in the interface is deprecated}}
+  @private    int PRV_IVAR; // expected-warning {{declaration of instance variables in the interface is deprecated}}
 }
 @end
 

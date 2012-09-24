@@ -15,7 +15,7 @@ __attribute__((objc_root_class)) @interface MyObject {
 @implementation MyObject
 
 @synthesize myMaster = _myMaster;
-@synthesize isTickledPink = _isTickledPink; // expected-error {{existing ivar '_isTickledPink' for property 'isTickledPink'}}
+@synthesize isTickledPink = _isTickledPink; // expected-error {{existing instance variable '_isTickledPink' for property 'isTickledPink'}}
 @synthesize myIntProp = _myIntProp;
 
 - (void) doSomething {
