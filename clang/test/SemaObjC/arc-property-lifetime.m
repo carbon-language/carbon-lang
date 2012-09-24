@@ -5,7 +5,7 @@
 @public
     id __unsafe_unretained x;
     id __weak y;
-    id __autoreleasing z; // expected-error {{instance variable cannot have __autoreleasing ownership}}
+    id __autoreleasing z; // expected-error {{instance variables cannot have __autoreleasing ownership}}
 }
 @property(strong) id x; // expected-note {{property declared here}}
 @property(strong) id y; // expected-note {{property declared here}}
@@ -22,7 +22,7 @@
 @public
     id __unsafe_unretained x;
     id __weak y;
-    id __autoreleasing z; // expected-error {{instance variable cannot have __autoreleasing ownership}}
+    id __autoreleasing z; // expected-error {{instance variables cannot have __autoreleasing ownership}}
 }
 @property(retain) id x; // expected-note {{property declared here}}
 @property(retain) id y; // expected-note {{property declared here}}
@@ -39,7 +39,7 @@
 @public
     id __unsafe_unretained x;
     id __weak y;
-    id __autoreleasing z; // expected-error {{instance variable cannot have __autoreleasing ownership}}
+    id __autoreleasing z; // expected-error {{instance variables cannot have __autoreleasing ownership}}
 }
 @property(copy) id x; // expected-note {{property declared here}}
 @property(copy) id y; // expected-note {{property declared here}} 

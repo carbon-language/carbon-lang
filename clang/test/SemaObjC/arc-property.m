@@ -33,7 +33,7 @@
 @public
     id __unsafe_unretained x;   // should be __weak
     id __strong y;
-    id __autoreleasing z; // expected-error {{instance variable cannot have __autoreleasing ownership}}
+    id __autoreleasing z; // expected-error {{instance variables cannot have __autoreleasing ownership}}
 }
 @property(weak) id x; // expected-note {{property declared here}}
 @property(weak) id y; // expected-note {{property declared here}}

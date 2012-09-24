@@ -4,12 +4,12 @@
 @interface A @end
 
 @interface A () { 
-  int _p0; // expected-error {{instance variable may not be placed in class extension}}
+  int _p0; // expected-error {{instance variables may not be placed in class extension}}
 }
 @property int p0;
 @end
 
 @interface A(CAT) { 
-  int _p1; // expected-error {{instance variable may not be placed in categories}}
+  int _p1; // expected-error {{instance variables may not be placed in categories}}
 }
 @end

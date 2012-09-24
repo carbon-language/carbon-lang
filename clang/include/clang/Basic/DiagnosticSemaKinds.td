@@ -3235,7 +3235,7 @@ def ext_forward_ref_enum_def : Extension<
 def err_redefinition_of_enumerator : Error<"redefinition of enumerator %0">;
 def err_duplicate_member : Error<"duplicate member %0">;
 def err_misplaced_ivar : Error<
-  "instance variable may not be placed in %select{categories|class extension}0">;
+  "instance variables may not be placed in %select{categories|class extension}0">;
 def warn_ivars_in_interface : Warning<
   "declaration of instance variables in the interface is deprecated">,
   InGroup<DiagGroup<"objc-interface-ivars">>, DefaultIgnore;
@@ -3614,7 +3614,7 @@ def warn_arc_retained_property_assign : Warning<
 def err_arc_new_array_without_ownership : Error<
   "'new' cannot allocate an array of %0 with no explicit ownership">;
 def err_arc_autoreleasing_var : Error<
-  "%select{__block variables|global variables|fields|instance variable}0 cannot have "
+  "%select{__block variables|global variables|fields|instance variables}0 cannot have "
   "__autoreleasing ownership">;
 def err_arc_autoreleasing_capture : Error<
   "cannot capture __autoreleasing variable in a "
