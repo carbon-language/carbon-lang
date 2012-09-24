@@ -2048,7 +2048,8 @@ PPCTargetLowering::LowerFormalArguments_Darwin_Or_64SVR4(
 
   SmallVector<SDValue, 8> MemOps;
   unsigned nAltivecParamsAtEnd = 0;
-  for (unsigned ArgNo = 0, e = Ins.size(); ArgNo != e; ++ArgNo) {
+  Function::const_arg_iterator FuncArg = MF.getFunction()->arg_begin();
+  for (unsigned ArgNo = 0, e = Ins.size(); ArgNo != e; ++ArgNo, ++FuncArg) {
     SDValue ArgVal;
     bool needsLoad = false;
     EVT ObjectVT = Ins[ArgNo].VT;
@@ -2103,7 +2104,8 @@ PPCTargetLowering::LowerFormalArguments_Darwin_Or_64SVR4(
           EVT ObjType = (ObjSize == 1 ? MVT::i8 :
                          (ObjSize == 2 ? MVT::i16 : MVT::i32));
           SDValue Store = DAG.getTruncStore(Val.getValue(1), dl, Val, FIN,
-                                            MachinePointerInfo(),
+                                            MachinePointerInfo(FuncArg,
+                                              CurArgOffset),
                                             ObjType, false, false, 0);
           MemOps.push_back(Store);
           ++GPR_idx;
@@ -2136,7 +2138,7 @@ PPCTargetLowering::LowerFormalArguments_Darwin_Or_64SVR4(
           }
 
           SDValue Store = DAG.getStore(Val.getValue(1), dl, Shifted, FIN,
-                                       MachinePointerInfo(),
+                                       MachinePointerInfo(FuncArg, ArgOffset),
                                        false, false, 0);
           MemOps.push_back(Store);
           ++GPR_idx;
