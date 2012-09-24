@@ -40,8 +40,14 @@
 // in a portable way by the language itself.
 namespace __sanitizer {
 
+#if defined(_WIN64)
+// 64-bit Windows uses LLP64 data model.
+typedef unsigned long long uptr;  // NOLINT
+typedef signed   long long sptr;  // NOLINT
+#else
 typedef unsigned long uptr;  // NOLINT
 typedef signed   long sptr;  // NOLINT
+#endif  // defined(_WIN64)
 typedef unsigned char u8;
 typedef unsigned short u16;  // NOLINT
 typedef unsigned int u32;

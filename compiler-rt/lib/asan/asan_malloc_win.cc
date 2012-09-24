@@ -17,8 +17,9 @@
 #include "asan_interceptors.h"
 #include "asan_internal.h"
 #include "asan_stack.h"
-
 #include "interception/interception.h"
+
+#include <stddef.h>
 
 // ---------------------- Replacement functions ---------------- {{{1
 using namespace __asan;  // NOLINT

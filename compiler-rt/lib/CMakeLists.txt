@@ -1,6 +1,6 @@
 # First, add the subdirectories which contain feature-based runtime libraries
 # and several convenience helper libraries.
-if(CMAKE_SYSTEM_NAME MATCHES "Darwin|Linux|Windows")
+if(CMAKE_SYSTEM_NAME MATCHES "Darwin|Linux")
   # AddressSanitizer is supported on Linux and Mac OS X.
   # Windows support is work in progress.
   add_subdirectory(asan)

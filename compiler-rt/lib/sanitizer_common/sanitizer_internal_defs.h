@@ -142,6 +142,8 @@ void NORETURN CheckFailed(const char *file, int line, const char *cond,
 
 // Limits for integral types. We have to redefine it in case we don't
 // have stdint.h (like in Visual Studio 9).
+#undef __INT64_C
+#undef __UINT64_C
 #if __WORDSIZE == 64
 # define __INT64_C(c)  c ## L
 # define __UINT64_C(c) c ## UL
@@ -164,7 +166,7 @@ void NORETURN CheckFailed(const char *file, int line, const char *cond,
 
 enum LinkerInitialized { LINKER_INITIALIZED = 0 };
 
-#if !defined(_WIN32) || defined(__clang__)
+#if !defined(_MSC_VER) || defined(__clang__)
 # define GET_CALLER_PC() (uptr)__builtin_return_address(0)
 # define GET_CURRENT_FRAME() (uptr)__builtin_frame_address(0)
 #else

@@ -67,9 +67,11 @@ set(SANITIZER_COMMON_CFLAGS
   -fno-exceptions
   -fomit-frame-pointer
   -funwind-tables
-  -fvisibility=hidden
   -O3
   )
+if(NOT WIN32)
+  list(APPEND SANITIZER_COMMON_CFLAGS -fvisibility=hidden)
+endif()
 check_cxx_compiler_flag(-Wno-variadic-macros SUPPORTS_NO_VARIADIC_MACROS_FLAG)
 if(SUPPORTS_NO_VARIADIC_MACROS_FLAG)
   list(APPEND SANITIZER_COMMON_CFLAGS -Wno-variadic-macros)

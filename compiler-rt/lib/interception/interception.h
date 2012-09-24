@@ -170,7 +170,11 @@
 // challenging, as we don't even pass function type to
 // INTERCEPT_FUNCTION macro, only its name.
 namespace __interception {
+#if defined(_WIN64)
+typedef unsigned long long uptr;  // NOLINT
+#else
 typedef unsigned long uptr;  // NOLINT
+#endif  // _WIN64
 }  // namespace __interception
 
 #define INCLUDED_FROM_INTERCEPTION_LIB
