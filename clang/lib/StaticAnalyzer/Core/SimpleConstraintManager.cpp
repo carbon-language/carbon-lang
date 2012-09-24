@@ -115,7 +115,9 @@ ProgramStateRef SimpleConstraintManager::assume(ProgramStateRef state,
                                                NonLoc cond,
                                                bool assumption) {
   state = assumeAux(state, cond, assumption);
-  return SU.processAssume(state, cond, assumption);
+  if (NotifyAssumeClients)
+    return SU.processAssume(state, cond, assumption);
+  return state;
 }
 
 static BinaryOperator::Opcode NegateComparison(BinaryOperator::Opcode op) {
