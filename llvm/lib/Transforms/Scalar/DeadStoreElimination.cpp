@@ -45,6 +45,7 @@ namespace {
     AliasAnalysis *AA;
     MemoryDependenceAnalysis *MD;
     DominatorTree *DT;
+    const TargetLibraryInfo *TLI;
 
     static char ID; // Pass identification, replacement for typeid
     DSE() : FunctionPass(ID), AA(0), MD(0), DT(0) {
@@ -55,6 +56,7 @@ namespace {
       AA = &getAnalysis<AliasAnalysis>();
       MD = &getAnalysis<MemoryDependenceAnalysis>();
       DT = &getAnalysis<DominatorTree>();
+      TLI = AA->getTargetLibraryInfo();
 
       bool Changed = false;
       for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
@@ -455,7 +457,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     Instruction *Inst = BBI++;
 
     // Handle 'free' calls specially.
-    if (CallInst *F = isFreeCall(Inst, AA->getTargetLibraryInfo())) {
+    if (CallInst *F = isFreeCall(Inst, TLI)) {
       MadeChange |= HandleFree(F);
       continue;
     }
@@ -484,7 +486,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
           // in case we need it.
           WeakVH NextInst(BBI);
 
-          DeleteDeadInstruction(SI, *MD, AA->getTargetLibraryInfo());
+          DeleteDeadInstruction(SI, *MD, TLI);
 
           if (NextInst == 0)  // Next instruction deleted.
             BBI = BB.begin();
@@ -531,7 +533,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
                 << *DepWrite << "\n  KILLER: " << *Inst << '\n');
 
           // Delete the store and now-dead instructions that feed it.
-          DeleteDeadInstruction(DepWrite, *MD, AA->getTargetLibraryInfo());
+          DeleteDeadInstruction(DepWrite, *MD, TLI);
           ++NumFastStores;
           MadeChange = true;
 
@@ -641,7 +643,7 @@ bool DSE::HandleFree(CallInst *F) {
       Instruction *Next = llvm::next(BasicBlock::iterator(Dependency));
 
       // DCE instructions only used to calculate that store
-      DeleteDeadInstruction(Dependency, *MD, AA->getTargetLibraryInfo());
+      DeleteDeadInstruction(Dependency, *MD, TLI);
       ++NumFastStores;
       MadeChange = true;
 
@@ -681,8 +683,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
 
     // Okay, so these are dead heap objects, but if the pointer never escapes
     // then it's leaked by this function anyways.
-    else if (isAllocLikeFn(I, AA->getTargetLibraryInfo()) &&
-             !PointerMayBeCaptured(I, true, true))
+    else if (isAllocLikeFn(I, TLI) && !PointerMayBeCaptured(I, true, true))
       DeadStackObjects.insert(I);
   }
 
@@ -726,8 +727,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
               dbgs() << '\n');
 
         // DCE instructions only used to calculate that store.
-        DeleteDeadInstruction(Dead, *MD, AA->getTargetLibraryInfo(),
-                              &DeadStackObjects);
+        DeleteDeadInstruction(Dead, *MD, TLI, &DeadStackObjects);
         ++NumFastStores;
         MadeChange = true;
         continue;
@@ -735,10 +735,9 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
     }
 
     // Remove any dead non-memory-mutating instructions.
-    if (isInstructionTriviallyDead(BBI, AA->getTargetLibraryInfo())) {
+    if (isInstructionTriviallyDead(BBI, TLI)) {
       Instruction *Inst = BBI++;
-      DeleteDeadInstruction(Inst, *MD, AA->getTargetLibraryInfo(),
-                            &DeadStackObjects);
+      DeleteDeadInstruction(Inst, *MD, TLI, &DeadStackObjects);
       ++NumFastOther;
       MadeChange = true;
       continue;
@@ -754,7 +753,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
     if (CallSite CS = cast<Value>(BBI)) {
       // Remove allocation function calls from the list of dead stack objects; 
       // there can't be any references before the definition.
-      if (isAllocLikeFn(BBI, AA->getTargetLibraryInfo()))
+      if (isAllocLikeFn(BBI, TLI))
         DeadStackObjects.remove(BBI);
 
       // If this call does not access memory, it can't be loading any of our
