@@ -35,6 +35,7 @@ our %llvm_config_info = (
  'Debug+Asserts' => { configure_options => '--disable-optimized --enable-assertions --enable-libcpp' , make_options => 'DEBUG_SYMBOLS=1'},
  'Release'       => { configure_options => '--enable-optimized --disable-assertions --enable-libcpp' , make_options => ''},
  'Release+Debug' => { configure_options => '--enable-optimized --disable-assertions --enable-libcpp' , make_options => 'DEBUG_SYMBOLS=1'},
+ 'Release+Asserts' => { configure_options => '--enable-optimized --enable-assertions --enable-libcpp' , make_options => ''},
 );
 
 our $llvm_config_href = undef;
