@@ -868,19 +868,19 @@ ABIMacOSX_i386::RegisterIsCalleeSaved (const RegisterInfo *reg_info)
             {
             case 'b': 
                 if (name[2] == 'x' || name[2] == 'p')
-                    return name[0] == '\0';
+                    return name[3] == '\0';
                 break;
             case 'd':
                 if (name[2] == 'i')
-                    return name[0] == '\0';
+                    return name[3] == '\0';
                 break;
             case 'i': 
                 if (name[2] == 'p')
-                    return name[0] == '\0';
+                    return name[3] == '\0';
                 break;
             case 's':
                 if (name[2] == 'i' || name[2] == 'p')
-                    return name[0] == '\0';
+                    return name[3] == '\0';
                 break;
             }
         }
