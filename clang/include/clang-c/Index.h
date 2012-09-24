@@ -1907,6 +1907,7 @@ enum CXCursorKind {
   /** \brief A GCC inline assembly statement extension.
    */
   CXCursor_GCCAsmStmt                    = 215,
+  CXCursor_AsmStmt                       = CXCursor_GCCAsmStmt,
 
   /** \brief Objective-C's overall \@try-\@catch-\@finally statement.
    */
