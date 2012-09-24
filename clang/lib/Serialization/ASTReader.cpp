@@ -2552,9 +2552,15 @@ void ASTReader::makeNamesVisible(const HiddenNames &Names) {
     else {
       IdentifierInfo *II = Names[I].get<IdentifierInfo *>();
       if (!II->hasMacroDefinition()) {
-        II->setHasMacroDefinition(true);
-        if (DeserializationListener)
-          DeserializationListener->MacroVisible(II);
+        // Make sure that this macro hasn't been #undef'd in the mean-time.
+        llvm::DenseMap<IdentifierInfo*, MacroInfo*>::iterator Known
+          = PP.Macros.find(II);
+        if (Known == PP.Macros.end() ||
+            Known->second->getUndefLoc().isInvalid()) {
+          II->setHasMacroDefinition(true);
+          if (DeserializationListener)
+            DeserializationListener->MacroVisible(II);
+        }
       }
     }
   }
