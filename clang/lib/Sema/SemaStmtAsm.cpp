@@ -415,8 +415,10 @@ static void buildMSAsmPieces(std::vector<std::string> &AsmStrings,
 }
 
 // Build the individual assembly instruction(s) and place them in the AsmStrings
-// vector.  These strings are fed to the AsmParser.
-static void buildMSAsmStrings(Sema &SemaRef, ArrayRef<Token> AsmToks,
+// vector.  These strings are fed to the AsmParser.  Returns true on error.
+static bool buildMSAsmStrings(Sema &SemaRef,
+                              SourceLocation AsmLoc,
+                              ArrayRef<Token> AsmToks,
                               std::vector<std::string> &AsmStrings,
                      std::vector<std::pair<unsigned,unsigned> > &AsmTokRanges) {
   assert (!AsmToks.empty() && "Didn't expect an empty AsmToks!");
@@ -437,7 +439,10 @@ static void buildMSAsmStrings(Sema &SemaRef, ArrayRef<Token> AsmToks,
       }
       if (AsmToks[i].is(tok::kw_asm)) {
         i++; // Skip __asm
-        assert(i != e && "Expected another token");
+        if (i == e) {
+          SemaRef.Diag(AsmLoc, diag::err_asm_empty);
+          return true;
+        }
       }
     }
 
@@ -449,6 +454,8 @@ static void buildMSAsmStrings(Sema &SemaRef, ArrayRef<Token> AsmToks,
   }
   AsmStrings.push_back(Asm.str());
   AsmTokRanges.push_back(std::make_pair(startTok, AsmToks.size()-1));
+
+  return false;
 }
 
 #define DEF_SIMPLE_MSASM(STR)                                                \
@@ -482,7 +489,8 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
 
   std::vector<std::string> AsmStrings;
   std::vector<std::pair<unsigned,unsigned> > AsmTokRanges;
-  buildMSAsmStrings(*this, AsmToks, AsmStrings, AsmTokRanges);
+  if (buildMSAsmStrings(*this, AsmLoc, AsmToks, AsmStrings, AsmTokRanges))
+    return StmtError();
 
   std::vector<std::vector<StringRef> > Pieces(AsmStrings.size());
   buildMSAsmPieces(AsmStrings, Pieces);

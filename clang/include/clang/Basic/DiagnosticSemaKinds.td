@@ -5097,6 +5097,7 @@ let CategoryName = "Inline Assembly Issue" in {
     "unsupported inline asm: input with type "
     "%diff{$ matching output with type $|}0,1">;
   def err_asm_unknown_register_name : Error<"unknown register name '%0' in asm">;
+  def err_asm_empty : Error<"__asm used with no assembly instructions">;
   def warn_asm_label_on_auto_decl : Warning<
     "ignored asm label '%0' on automatic variable">;
   def err_invalid_asm_cast_lvalue : Error<
