@@ -27,6 +27,7 @@
 #include "llvm/Config/llvm-config.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/Format.h"
 #include <cstdio>
 #include <ctime>
 using namespace clang;
@@ -589,27 +590,29 @@ static void ComputeDATE_TIME(SourceLocation &DATELoc, SourceLocation &TIMELoc,
     "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"
   };
 
-  char TmpBuffer[32];
-#ifdef LLVM_ON_WIN32
-  sprintf(TmpBuffer, "\"%s %2d %4d\"", Months[TM->tm_mon], TM->tm_mday,
-          TM->tm_year+1900);
-#else
-  snprintf(TmpBuffer, sizeof(TmpBuffer), "\"%s %2d %4d\"", Months[TM->tm_mon], TM->tm_mday,
-          TM->tm_year+1900);
-#endif
+  {
+    SmallString<32> TmpBuffer;
+    llvm::raw_svector_ostream TmpStream(TmpBuffer);
+    TmpStream << llvm::format("\"%s %2d %4d\"", Months[TM->tm_mon],
+                              TM->tm_mday, TM->tm_year + 1900);
+    StringRef DateStr = TmpStream.str();
+    Token TmpTok;
+    TmpTok.startToken();
+    PP.CreateString(DateStr.data(), DateStr.size(), TmpTok);
+    DATELoc = TmpTok.getLocation();
+  }
 
-  Token TmpTok;
-  TmpTok.startToken();
-  PP.CreateString(TmpBuffer, strlen(TmpBuffer), TmpTok);
-  DATELoc = TmpTok.getLocation();
-
-#ifdef LLVM_ON_WIN32
-  sprintf(TmpBuffer, "\"%02d:%02d:%02d\"", TM->tm_hour, TM->tm_min, TM->tm_sec);
-#else
-  snprintf(TmpBuffer, sizeof(TmpBuffer), "\"%02d:%02d:%02d\"", TM->tm_hour, TM->tm_min, TM->tm_sec);
-#endif
-  PP.CreateString(TmpBuffer, strlen(TmpBuffer), TmpTok);
-  TIMELoc = TmpTok.getLocation();
+  {
+    SmallString<32> TmpBuffer;
+    llvm::raw_svector_ostream TmpStream(TmpBuffer);
+    TmpStream << llvm::format("\"%02d:%02d:%02d\"",
+                              TM->tm_hour, TM->tm_min, TM->tm_sec);
+    StringRef TimeStr = TmpStream.str();
+    Token TmpTok;
+    TmpTok.startToken();
+    PP.CreateString(TimeStr.data(), TimeStr.size(), TmpTok);
+    TIMELoc = TmpTok.getLocation();
+  }
 }
 
 
