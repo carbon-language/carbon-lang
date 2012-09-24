@@ -112,15 +112,17 @@ cross-compile-build-tools:
 	  unset CFLAGS ; \
 	  unset CXXFLAGS ; \
 	  unset SDKROOT ; \
+	  unset UNIVERSAL_SDK_PATH ; \
 	  $(PROJ_SRC_DIR)/configure --build=$(BUILD_TRIPLE) \
 		--host=$(BUILD_TRIPLE) --target=$(BUILD_TRIPLE) \
 	        --disable-polly ; \
 	  cd .. ; \
 	fi; \
-	(unset SDKROOT; \
-	 $(MAKE) -C BuildTools \
+	($(MAKE) -C BuildTools \
 	  BUILD_DIRS_ONLY=1 \
 	  UNIVERSAL= \
+	  UNIVERSAL_SDK_PATH= \
+	  SDKROOT= \
 	  TARGET_NATIVE_ARCH="$(TARGET_NATIVE_ARCH)" \
 	  TARGETS_TO_BUILD="$(TARGETS_TO_BUILD)" \
 	  ENABLE_OPTIMIZED=$(ENABLE_OPTIMIZED) \
