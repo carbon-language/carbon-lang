@@ -1,5 +1,4 @@
 // FIXME: Understand why this test fails if TSan is re-execed.
-// RUN: ulimit -s 8192
 // RUN: %clangxx_tsan -O1 %s -o %t && %t 2>&1 | FileCheck %s
 #include <pthread.h>
 #include <unistd.h>
@@ -12,7 +11,7 @@ void *Thread(void *p) {
 }
 
 void MySleep() {
-  usleep(100*1000);
+  usleep(300*1000);
 }
 
 int main() {
