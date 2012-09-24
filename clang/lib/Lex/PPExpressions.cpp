@@ -206,8 +206,7 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
     if (NumberInvalid)
       return true; // a diagnostic was already reported
 
-    NumericLiteralParser Literal(Spelling.begin(), Spelling.end(),
-                                 PeekTok.getLocation(), PP);
+    NumericLiteralParser Literal(Spelling, PeekTok.getLocation(), PP);
     if (Literal.hadError)
       return true; // a diagnostic was already reported.
 

@@ -18,6 +18,7 @@
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"
 #include "clang/Basic/TokenKinds.h"
 #include <cctype>
@@ -48,8 +49,9 @@ class NumericLiteralParser {
   bool saw_exponent, saw_period, saw_ud_suffix;
 
 public:
-  NumericLiteralParser(const char *begin, const char *end,
-                       SourceLocation Loc, Preprocessor &PP);
+  NumericLiteralParser(StringRef TokSpelling,
+                       SourceLocation TokLoc,
+                       Preprocessor &PP);
   bool hadError;
   bool isUnsigned;
   bool isLong;        // This is *not* set for long long.

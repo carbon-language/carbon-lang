@@ -2644,19 +2644,20 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok, Scope *UDLScope) {
     return ActOnIntegerConstant(Tok.getLocation(), Val-'0');
   }
 
-  SmallString<512> IntegerBuffer;
-  // Add padding so that NumericLiteralParser can overread by one character.
-  IntegerBuffer.resize(Tok.getLength()+1);
-  const char *ThisTokBegin = &IntegerBuffer[0];
+  SmallString<128> SpellingBuffer;
+  // NumericLiteralParser wants to overread by one character.  Add padding to
+  // the buffer in case the token is copied to the buffer.  If getSpelling()
+  // returns a StringRef to the memory buffer, it should have a null char at
+  // the EOF, so it is also safe.
+  SpellingBuffer.resize(Tok.getLength() + 1);
 
   // Get the spelling of the token, which eliminates trigraphs, etc.
   bool Invalid = false;
-  unsigned ActualLength = PP.getSpelling(Tok, ThisTokBegin, &Invalid);
+  StringRef TokSpelling = PP.getSpelling(Tok, SpellingBuffer, &Invalid);
   if (Invalid)
     return ExprError();
 
-  NumericLiteralParser Literal(ThisTokBegin, ThisTokBegin+ActualLength,
-                               Tok.getLocation(), PP);
+  NumericLiteralParser Literal(TokSpelling, Tok.getLocation(), PP);
   if (Literal.hadError)
     return ExprError();
 
@@ -2722,7 +2723,7 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok, Scope *UDLScope) {
           Context.CharTy, llvm::APInt(32, Length + 1),
           ArrayType::Normal, 0);
       Expr *Lit = StringLiteral::Create(
-          Context, StringRef(ThisTokBegin, Length), StringLiteral::Ascii,
+          Context, StringRef(TokSpelling.data(), Length), StringLiteral::Ascii,
           /*Pascal*/false, StrTy, &TokLoc, 1);
       return BuildLiteralOperatorCall(R, OpNameInfo,
                                       llvm::makeArrayRef(&Lit, 1), TokLoc);
@@ -2738,7 +2739,7 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok, Scope *UDLScope) {
       bool CharIsUnsigned = Context.CharTy->isUnsignedIntegerType();
       llvm::APSInt Value(CharBits, CharIsUnsigned);
       for (unsigned I = 0, N = Literal.getUDSuffixOffset(); I != N; ++I) {
-        Value = ThisTokBegin[I];
+        Value = TokSpelling[I];
         TemplateArgument Arg(Context, Value, Context.CharTy);
         TemplateArgumentLocInfo ArgInfo;
         ExplicitArgs.addArgument(TemplateArgumentLoc(Arg, ArgInfo));

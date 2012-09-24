@@ -447,19 +447,19 @@ static void EncodeUCNEscape(const char *ThisTokBegin, const char *&ThisTokBuf,
 ///       floating-constant: [C99 6.4.4.2]
 ///         TODO: add rules...
 ///
-NumericLiteralParser::
-NumericLiteralParser(const char *begin, const char *end,
-                     SourceLocation TokLoc, Preprocessor &pp)
-  : PP(pp), ThisTokBegin(begin), ThisTokEnd(end) {
+NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
+                                           SourceLocation TokLoc,
+                                           Preprocessor &PP)
+  : PP(PP), ThisTokBegin(TokSpelling.begin()), ThisTokEnd(TokSpelling.end()) {
 
   // This routine assumes that the range begin/end matches the regex for integer
   // and FP constants (specifically, the 'pp-number' regex), and assumes that
   // the byte at "*end" is both valid and not part of the regex.  Because of
   // this, it doesn't have to check for 'overscan' in various places.
-  assert(!isalnum(*end) && *end != '.' && *end != '_' &&
+  assert(!isalnum(*ThisTokEnd) && *ThisTokEnd != '.' && *ThisTokEnd != '_' &&
          "Lexer didn't maximally munch?");
 
-  s = DigitsBegin = begin;
+  s = DigitsBegin = ThisTokBegin;
   saw_exponent = false;
   saw_period = false;
   saw_ud_suffix = false;
@@ -481,7 +481,7 @@ NumericLiteralParser(const char *begin, const char *end,
     if (s == ThisTokEnd) {
       // Done.
     } else if (isxdigit(*s) && !(*s == 'e' || *s == 'E')) {
-      PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, s-begin),
+      PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, s - ThisTokBegin),
               diag::err_invalid_decimal_digit) << StringRef(s, 1);
       hadError = true;
       return;
@@ -499,7 +499,7 @@ NumericLiteralParser(const char *begin, const char *end,
       if (first_non_digit != s) {
         s = first_non_digit;
       } else {
-        PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, Exponent-begin),
+        PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, Exponent - ThisTokBegin),
                 diag::err_exponent_has_no_digits);
         hadError = true;
         return;
@@ -595,7 +595,7 @@ NumericLiteralParser(const char *begin, const char *end,
     case 'j':
     case 'J':
       if (isImaginary) break;   // Cannot be repeated.
-      PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, s-begin),
+      PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, s - ThisTokBegin),
               diag::ext_imaginary_constant);
       isImaginary = true;
       continue;  // Success.
@@ -613,7 +613,7 @@ NumericLiteralParser(const char *begin, const char *end,
     }
 
     // Report an error if there are any.
-    PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, SuffixBegin-begin),
+    PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, SuffixBegin - ThisTokBegin),
             isFPConstant ? diag::err_invalid_suffix_float_constant :
                            diag::err_invalid_suffix_integer_constant)
       << StringRef(SuffixBegin, ThisTokEnd-SuffixBegin);
@@ -649,7 +649,7 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
     }
 
     if (noSignificand) {
-      PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, s-ThisTokBegin), \
+      PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, s - ThisTokBegin),
         diag::err_hexconstant_requires_digits);
       hadError = true;
       return;
