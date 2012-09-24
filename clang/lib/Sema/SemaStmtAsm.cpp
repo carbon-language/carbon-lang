@@ -392,7 +392,7 @@ static bool isSimpleMSAsm(std::vector<std::vector<StringRef> > Pieces,
   return true;
 }
 
-// Break the AsmSting into pieces (i.e., mnemonic and operands).
+// Break the AsmString into pieces (i.e., mnemonic and operands).
 static void buildMSAsmPieces(StringRef Asm, std::vector<StringRef> &Pieces) {
   std::pair<StringRef,StringRef> Split = Asm.split(' ');
 
@@ -424,8 +424,9 @@ static void buildMSAsmStrings(Sema &SemaRef, ArrayRef<Token> AsmToks,
   SmallString<512> Asm;
   unsigned startTok = 0;
   for (unsigned i = 0, e = AsmToks.size(); i < e; ++i) {
-    bool isNewAsm = i == 0 || AsmToks[i].isAtStartOfLine() ||
-      AsmToks[i].is(tok::kw_asm);
+    bool isNewAsm = ((i == 0) ||
+                     AsmToks[i].isAtStartOfLine() ||
+                     AsmToks[i].is(tok::kw_asm));
 
     if (isNewAsm) {
       if (i) {
@@ -436,7 +437,7 @@ static void buildMSAsmStrings(Sema &SemaRef, ArrayRef<Token> AsmToks,
       }
       if (AsmToks[i].is(tok::kw_asm)) {
         i++; // Skip __asm
-        assert (i != e && "Expected another token");
+        assert(i != e && "Expected another token");
       }
     }
 
