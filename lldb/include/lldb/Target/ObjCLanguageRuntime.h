@@ -68,7 +68,8 @@ public:
             if (m_is_kvo == eLazyBoolCalculate)
             {
                 const char* class_name = GetClassName().AsCString();
-                m_is_kvo = (LazyBool)(strstr(class_name,"NSKVONotifying_") == class_name);
+                if (class_name && *class_name)
+                    m_is_kvo = (LazyBool)(strstr(class_name,"NSKVONotifying_") == class_name);
             }
             return (m_is_kvo == eLazyBoolYes);
         }
@@ -81,8 +82,9 @@ public:
             if (m_is_cf == eLazyBoolCalculate)
             {
                 const char* class_name = GetClassName().AsCString();
-                m_is_cf = (LazyBool)(strcmp(class_name,"__NSCFType") == 0 ||
-                                     strcmp(class_name,"NSCFType") == 0);
+                if (class_name && *class_name)
+                    m_is_cf = (LazyBool)(strcmp(class_name,"__NSCFType") == 0 ||
+                                         strcmp(class_name,"NSCFType") == 0);
             }
             return (m_is_cf == eLazyBoolYes);
         }
