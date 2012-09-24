@@ -1714,9 +1714,9 @@ static void emitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
   raw_string_ostream OpOS(OperandFnBody);
   // Start the operand number lookup function.
   OpOS << "unsigned " << Target.getName() << ClassName << "::\n"
-       << "getMCInstOperandNumImpl(unsigned Kind, MCInst &Inst,\n"
-       << "                        const SmallVectorImpl<MCParsedAsmOperand*> "
-       << "&Operands,\n                        unsigned OperandNum, unsigned "
+       << "getMCInstOperandNum(unsigned Kind,\n"
+       << "                    const SmallVectorImpl<MCParsedAsmOperand*> "
+       << "&Operands,\n                    unsigned OperandNum, unsigned "
        << "&NumMCOperands) {\n"
        << "  assert(Kind < CVT_NUM_SIGNATURES && \"Invalid signature!\");\n"
        << "  NumMCOperands = 0;\n"
@@ -2617,10 +2617,10 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
      << "unsigned Opcode,\n"
      << "                          const SmallVectorImpl<MCParsedAsmOperand*> "
      << "&Operands);\n";
-  OS << "  unsigned getMCInstOperandNumImpl(unsigned Kind, MCInst &Inst,\n"
-     << "                           const "
+  OS << "  unsigned getMCInstOperandNum(unsigned Kind,\n"
+     << "                       const "
      << "SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n                     "
-     << "          unsigned OperandNum, unsigned &NumMCOperands);\n";
+     << "      unsigned OperandNum, unsigned &NumMCOperands);\n";
   OS << "  bool mnemonicIsValid(StringRef Mnemonic);\n";
   OS << "  unsigned MatchInstructionImpl(\n"
      << "    const SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n"

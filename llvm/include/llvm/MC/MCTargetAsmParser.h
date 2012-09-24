@@ -115,7 +115,7 @@ public:
     return Match_Success;
   }
 
-  virtual unsigned getMCInstOperandNum(unsigned Kind, MCInst &Inst,
+  virtual unsigned getMCInstOperandNum(unsigned Kind,
                            const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                                        unsigned OperandNum,
                                        unsigned &NumMCOperands) = 0;
