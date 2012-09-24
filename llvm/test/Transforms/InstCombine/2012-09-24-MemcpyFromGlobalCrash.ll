@@ -10,7 +10,7 @@ declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, 
 define void @test() {
 ; CHECK: @test
 ; CHECK: llvm.memcpy
-; CHECK ret void
+; CHECK: ret void
   %A = alloca [100 x i8]
   %a = getelementptr inbounds [100 x i8]* %A, i64 0, i64 0
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* getelementptr inbounds ([100 x i8]* @G, i64 0, i32 0), i64 100, i32 4, i1 false)
