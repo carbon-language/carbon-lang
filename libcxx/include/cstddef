@@ -62,28 +62,28 @@ struct _LIBCPP_VISIBLE nullptr_t
 
     struct __nat {int __for_bool_;};
 
-    _LIBCPP_ALWAYS_INLINE nullptr_t() {}
-    _LIBCPP_ALWAYS_INLINE nullptr_t(int __nat::*) {}
+    _LIBCPP_ALWAYS_INLINE _LIBCPP_CONSTEXPR nullptr_t() : _(0) {}
+    _LIBCPP_ALWAYS_INLINE _LIBCPP_CONSTEXPR nullptr_t(int __nat::*) : _(0) {}
 
-    _LIBCPP_ALWAYS_INLINE operator int __nat::*() const {return 0;}
+    _LIBCPP_ALWAYS_INLINE _LIBCPP_CONSTEXPR operator int __nat::*() const {return 0;}
 
     template <class _Tp>
-        _LIBCPP_ALWAYS_INLINE
+        _LIBCPP_ALWAYS_INLINE _LIBCPP_CONSTEXPR
         operator _Tp* () const {return 0;}
 
     template <class _Tp, class _Up>
         _LIBCPP_ALWAYS_INLINE
         operator _Tp _Up::* () const {return 0;}
 
-    friend _LIBCPP_ALWAYS_INLINE bool operator==(nullptr_t, nullptr_t) {return true;}
-    friend _LIBCPP_ALWAYS_INLINE bool operator!=(nullptr_t, nullptr_t) {return false;}
-    friend _LIBCPP_ALWAYS_INLINE bool operator<(nullptr_t, nullptr_t) {return false;}
-    friend _LIBCPP_ALWAYS_INLINE bool operator<=(nullptr_t, nullptr_t) {return true;}
-    friend _LIBCPP_ALWAYS_INLINE bool operator>(nullptr_t, nullptr_t) {return false;}
-    friend _LIBCPP_ALWAYS_INLINE bool operator>=(nullptr_t, nullptr_t) {return true;}
+    friend _LIBCPP_ALWAYS_INLINE _LIBCPP_CONSTEXPR bool operator==(nullptr_t, nullptr_t) {return true;}
+    friend _LIBCPP_ALWAYS_INLINE _LIBCPP_CONSTEXPR bool operator!=(nullptr_t, nullptr_t) {return false;}
+    friend _LIBCPP_ALWAYS_INLINE _LIBCPP_CONSTEXPR bool operator<(nullptr_t, nullptr_t) {return false;}
+    friend _LIBCPP_ALWAYS_INLINE _LIBCPP_CONSTEXPR bool operator<=(nullptr_t, nullptr_t) {return true;}
+    friend _LIBCPP_ALWAYS_INLINE _LIBCPP_CONSTEXPR bool operator>(nullptr_t, nullptr_t) {return false;}
+    friend _LIBCPP_ALWAYS_INLINE _LIBCPP_CONSTEXPR bool operator>=(nullptr_t, nullptr_t) {return true;}
 };
 
-inline _LIBCPP_ALWAYS_INLINE nullptr_t __get_nullptr_t() {return nullptr_t(0);}
+inline _LIBCPP_ALWAYS_INLINE _LIBCPP_CONSTEXPR nullptr_t __get_nullptr_t() {return nullptr_t(0);}
 
 #define nullptr _VSTD::__get_nullptr_t()
 
