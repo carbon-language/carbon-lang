@@ -553,30 +553,53 @@ bad:
   ret i32 %Z2
 }
 
-define i32 @test12() {
+define i8 @test12() {
+; We fully promote these to the i24 load or store size, resulting in just masks
+; and other operations that instcombine will fold, but no alloca.
+;
 ; CHECK: @test12
-; CHECK: alloca i24
-;
-; FIXME: SROA should promote accesses to this into whole i24 operations instead
-; of i8 operations.
-; CHECK: store i8 0
-; CHECK: store i8 0
-; CHECK: store i8 0
-;
-; CHECK: load i24*
 
 entry:
   %a = alloca [3 x i8]
-  %b0ptr = getelementptr [3 x i8]* %a, i64 0, i32 0
-  store i8 0, i8* %b0ptr
-  %b1ptr = getelementptr [3 x i8]* %a, i64 0, i32 1
-  store i8 0, i8* %b1ptr
-  %b2ptr = getelementptr [3 x i8]* %a, i64 0, i32 2
-  store i8 0, i8* %b2ptr
-  %iptr = bitcast [3 x i8]* %a to i24*
-  %i = load i24* %iptr
-  %ret = zext i24 %i to i32
-  ret i32 %ret
+  %b = alloca [3 x i8]
+; CHECK-NOT: alloca
+
+  %a0ptr = getelementptr [3 x i8]* %a, i64 0, i32 0
+  store i8 0, i8* %a0ptr
+  %a1ptr = getelementptr [3 x i8]* %a, i64 0, i32 1
+  store i8 0, i8* %a1ptr
+  %a2ptr = getelementptr [3 x i8]* %a, i64 0, i32 2
+  store i8 0, i8* %a2ptr
+  %aiptr = bitcast [3 x i8]* %a to i24*
+  %ai = load i24* %aiptr
+; CHCEK-NOT: store
+; CHCEK-NOT: load
+; CHECK:      %[[mask0:.*]] = and i24 undef, -256
+; CHECK-NEXT: %[[mask1:.*]] = and i24 %[[mask0]], -65281
+; CHECK-NEXT: %[[mask2:.*]] = and i24 %[[mask1]], 65535
+
+  %biptr = bitcast [3 x i8]* %b to i24*
+  store i24 %ai, i24* %biptr
+  %b0ptr = getelementptr [3 x i8]* %b, i64 0, i32 0
+  %b0 = load i8* %b0ptr
+  %b1ptr = getelementptr [3 x i8]* %b, i64 0, i32 1
+  %b1 = load i8* %b1ptr
+  %b2ptr = getelementptr [3 x i8]* %b, i64 0, i32 2
+  %b2 = load i8* %b2ptr
+; CHCEK-NOT: store
+; CHCEK-NOT: load
+; CHECK:      %[[trunc0:.*]] = trunc i24 %[[mask2]] to i8
+; CHECK-NEXT: %[[shift1:.*]] = lshr i24 %[[mask2]], 8
+; CHECK-NEXT: %[[trunc1:.*]] = trunc i24 %[[shift1]] to i8
+; CHECK-NEXT: %[[shift2:.*]] = lshr i24 %[[mask2]], 16
+; CHECK-NEXT: %[[trunc2:.*]] = trunc i24 %[[shift2]] to i8
+
+  %bsum0 = add i8 %b0, %b1
+  %bsum1 = add i8 %bsum0, %b2
+  ret i8 %bsum1
+; CHECK:      %[[sum0:.*]] = add i8 %[[trunc0]], %[[trunc1]]
+; CHECK-NEXT: %[[sum1:.*]] = add i8 %[[sum0]], %[[trunc2]]
+; CHECK-NEXT: ret i8 %[[sum1]]
 }
 
 define i32 @test13() {

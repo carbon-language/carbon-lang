@@ -1723,6 +1723,54 @@ static bool isVectorPromotionViable(const TargetData &TD,
   return true;
 }
 
+/// \brief Test whether the given alloca partition can be promoted to an int.
+///
+/// This is a quick test to check whether we can rewrite a particular alloca
+/// partition (and its newly formed alloca) into an integer alloca suitable for
+/// promotion to an SSA value. We only can ensure this for a limited set of
+/// operations, and we don't want to do the rewrites unless we are confident
+/// that the result will be promotable, so we have an early test here.
+static bool isIntegerPromotionViable(const TargetData &TD,
+                                     Type *AllocaTy,
+                                     AllocaPartitioning &P,
+                                     AllocaPartitioning::const_use_iterator I,
+                                     AllocaPartitioning::const_use_iterator E) {
+  IntegerType *Ty = dyn_cast<IntegerType>(AllocaTy);
+  if (!Ty)
+    return false;
+
+  // Check the uses to ensure the uses are (likely) promoteable integer uses.
+  // Also ensure that the alloca has a covering load or store. We don't want
+  // promote because of some other unsplittable entry (which we may make
+  // splittable later) and lose the ability to promote each element access.
+  bool WholeAllocaOp = false;
+  for (; I != E; ++I) {
+    if (LoadInst *LI = dyn_cast<LoadInst>(&*I->User)) {
+      if (LI->isVolatile() || !LI->getType()->isIntegerTy())
+        return false;
+      if (LI->getType() == Ty)
+        WholeAllocaOp = true;
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(&*I->User)) {
+      if (SI->isVolatile() || !SI->getValueOperand()->getType()->isIntegerTy())
+        return false;
+      if (SI->getValueOperand()->getType() == Ty)
+        WholeAllocaOp = true;
+    } else if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(&*I->User)) {
+      if (MI->isVolatile())
+        return false;
+      if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(&*I->User)) {
+        const AllocaPartitioning::MemTransferOffsets &MTO
+          = P.getMemTransferOffsets(*MTI);
+        if (!MTO.IsSplittable)
+          return false;
+      }
+    } else {
+      return false;
+    }
+  }
+  return WholeAllocaOp;
+}
+
 namespace {
 /// \brief Visitor to rewrite instructions using a partition of an alloca to
 /// use a new alloca.
@@ -1754,6 +1802,12 @@ class AllocaPartitionRewriter : public InstVisitor<AllocaPartitionRewriter,
   Type *ElementTy;
   uint64_t ElementSize;
 
+  // This is a convenience and flag variable that will be null unless the new
+  // alloca has a promotion-targeted integer type due to passing
+  // isIntegerPromotionViable above. If it is non-null does, the desired
+  // integer type will be stored here for easy access during rewriting.
+  IntegerType *IntPromotionTy;
+
   // The offset of the partition user currently being rewritten.
   uint64_t BeginOffset, EndOffset;
   Instruction *OldPtr;
@@ -1770,7 +1824,7 @@ public:
       OldAI(OldAI), NewAI(NewAI),
       NewAllocaBeginOffset(NewBeginOffset),
       NewAllocaEndOffset(NewEndOffset),
-      VecTy(), ElementTy(), ElementSize(),
+      VecTy(), ElementTy(), ElementSize(), IntPromotionTy(),
       BeginOffset(), EndOffset() {
   }
 
@@ -1786,6 +1840,9 @@ public:
       assert((VecTy->getScalarSizeInBits() % 8) == 0 &&
              "Only multiple-of-8 sized vector elements are viable");
       ElementSize = VecTy->getScalarSizeInBits() / 8;
+    } else if (isIntegerPromotionViable(TD, NewAI.getAllocatedType(),
+                                        P, I, E)) {
+      IntPromotionTy = cast<IntegerType>(NewAI.getAllocatedType());
     }
     bool CanSROA = true;
     for (; I != E; ++I) {
@@ -1830,6 +1887,43 @@ private:
     return IRB.getInt32(Index);
   }
 
+  Value *extractInteger(IRBuilder<> &IRB, IntegerType *TargetTy,
+                        uint64_t Offset) {
+    assert(IntPromotionTy && "Alloca is not an integer we can extract from");
+    Value *V = IRB.CreateLoad(&NewAI, getName(".load"));
+    assert(Offset >= NewAllocaBeginOffset && "Out of bounds offset");
+    uint64_t RelOffset = Offset - NewAllocaBeginOffset;
+    if (RelOffset)
+      V = IRB.CreateLShr(V, RelOffset*8, getName(".shift"));
+    if (TargetTy != IntPromotionTy) {
+      assert(TargetTy->getBitWidth() < IntPromotionTy->getBitWidth() &&
+             "Cannot extract to a larger integer!");
+      V = IRB.CreateTrunc(V, TargetTy, getName(".trunc"));
+    }
+    return V;
+  }
+
+  StoreInst *insertInteger(IRBuilder<> &IRB, Value *V, uint64_t Offset) {
+    IntegerType *Ty = cast<IntegerType>(V->getType());
+    if (Ty == IntPromotionTy)
+      return IRB.CreateStore(V, &NewAI);
+
+    assert(Ty->getBitWidth() < IntPromotionTy->getBitWidth() &&
+           "Cannot insert a larger integer!");
+    V = IRB.CreateZExt(V, IntPromotionTy, getName(".ext"));
+    assert(Offset >= NewAllocaBeginOffset && "Out of bounds offset");
+    uint64_t RelOffset = Offset - NewAllocaBeginOffset;
+    if (RelOffset)
+      V = IRB.CreateShl(V, RelOffset*8, getName(".shift"));
+
+    APInt Mask = ~Ty->getMask().zext(IntPromotionTy->getBitWidth())
+                               .shl(RelOffset*8);
+    Value *Old = IRB.CreateAnd(IRB.CreateLoad(&NewAI, getName(".oldload")),
+                               Mask, getName(".mask"));
+    return IRB.CreateStore(IRB.CreateOr(Old, V, getName(".insert")),
+                           &NewAI);
+  }
+
   void deleteIfTriviallyDead(Value *V) {
     Instruction *I = cast<Instruction>(V);
     if (isInstructionTriviallyDead(I))
@@ -1865,6 +1959,16 @@ private:
     return true;
   }
 
+  bool rewriteIntegerLoad(IRBuilder<> &IRB, LoadInst &LI) {
+    assert(!LI.isVolatile());
+    Value *Result = extractInteger(IRB, cast<IntegerType>(LI.getType()),
+                                   BeginOffset);
+    LI.replaceAllUsesWith(Result);
+    Pass.DeadInsts.push_back(&LI);
+    DEBUG(dbgs() << "          to: " << *Result << "\n");
+    return true;
+  }
+
   bool visitLoadInst(LoadInst &LI) {
     DEBUG(dbgs() << "    original: " << LI << "\n");
     Value *OldOp = LI.getOperand(0);
@@ -1873,6 +1977,8 @@ private:
 
     if (VecTy)
       return rewriteVectorizedLoadInst(IRB, LI, OldOp);
+    if (IntPromotionTy)
+      return rewriteIntegerLoad(IRB, LI);
 
     Value *NewPtr = getAdjustedAllocaPtr(IRB,
                                          LI.getPointerOperand()->getType());
@@ -1904,6 +2010,15 @@ private:
     return true;
   }
 
+  bool rewriteIntegerStore(IRBuilder<> &IRB, StoreInst &SI) {
+    assert(!SI.isVolatile());
+    StoreInst *Store = insertInteger(IRB, SI.getValueOperand(), BeginOffset);
+    Pass.DeadInsts.push_back(&SI);
+    (void)Store;
+    DEBUG(dbgs() << "          to: " << *Store << "\n");
+    return true;
+  }
+
   bool visitStoreInst(StoreInst &SI) {
     DEBUG(dbgs() << "    original: " << SI << "\n");
     Value *OldOp = SI.getOperand(1);
@@ -1912,6 +2027,8 @@ private:
 
     if (VecTy)
       return rewriteVectorizedStoreInst(IRB, SI, OldOp);
+    if (IntPromotionTy)
+      return rewriteIntegerStore(IRB, SI);
 
     Value *NewPtr = getAdjustedAllocaPtr(IRB,
                                          SI.getPointerOperand()->getType());
