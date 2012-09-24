@@ -201,9 +201,6 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
         }
     } InitializeLLVM;
     
-    llvm::setCurrentDebugType("internalize");
-    llvm::DebugFlag = true;
-    
     // 1. Create a new compiler instance.
     m_compiler.reset(new CompilerInstance());    
     
