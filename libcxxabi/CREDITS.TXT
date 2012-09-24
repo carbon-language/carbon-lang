@@ -13,9 +13,8 @@ E: hhinnant@apple.com
 D: Architect and primary coauthor of libc++abi
 
 N: Marshall Clow
-E: marshall@idio.com
 E: mclow.lists@gmail.com
-E: mclow@qualcomm.com
+E: marshall@idio.com
 D: Architect and primary coauthor of libc++abi
 
 N: Nick Kledzik
