@@ -369,7 +369,6 @@ def run_break_set_command (test, command):
                 r"^Breakpoint (?P<bpno>[0-9]+): where = (?P<module>.*)`(?P<symbol>.*)( \+ (?P<offset>[0-9]+)){0,1}, address = (?P<address>0x[0-9a-fA-F]+)$"]
     match_object = test.match (command, patterns)
     break_results = match_object.groupdict()
-    print "Break results: ", break_results
 
     # We always insert the breakpoint number, setting it to -1 if we couldn't find it
     # Also, make sure it gets stored as an integer.
@@ -405,7 +404,6 @@ def check_breakpoint_result (test, break_results, file_name=None, line_number=-1
 
     out_num_locations = break_results['num_locations']
 
-    print "Num locations: ", num_locations, " and out num locations: ", out_num_locations
     if num_locations == -1:
         test.assertTrue (out_num_locations > 0, "Expecting one or more locations, got none.")
     else:
