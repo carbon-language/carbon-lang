@@ -1082,6 +1082,11 @@ void AsmPrinter::EmitJumpTableInfo() {
 
   EmitAlignment(Log2_32(MJTI->getEntryAlignment(*TM.getTargetData())));
 
+  // Jump tables in code sections are marked with a data_region directive
+  // where that's supported.
+  if (!JTInDiffSection)
+    OutStreamer.EmitDataRegion(MCDR_DataRegionJT32);
+
   for (unsigned JTI = 0, e = JT.size(); JTI != e; ++JTI) {
     const std::vector<MachineBasicBlock*> &JTBBs = JT[JTI].MBBs;
 
@@ -1122,6 +1127,8 @@ void AsmPrinter::EmitJumpTableInfo() {
     for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii)
       EmitJumpTableEntry(MJTI, JTBBs[ii], JTI);
   }
+  if (!JTInDiffSection)
+    OutStreamer.EmitDataRegion(MCDR_DataRegionEnd);
 }
 
 /// EmitJumpTableEntry - Emit a jump table entry for the specified MBB to the

@@ -34,6 +34,10 @@ AsmWriterFlavor("x86-asm-syntax", cl::init(ATT),
              clEnumValN(Intel, "intel", "Emit Intel-style assembly"),
              clEnumValEnd));
 
+static cl::opt<bool>
+MarkedJTDataRegions("mark-data-regions", cl::init(false),
+  cl::desc("Mark code section jump table data regions."),
+  cl::Hidden);
 
 void X86MCAsmInfoDarwin::anchor() { }
 
@@ -59,6 +63,7 @@ X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const Triple &T) {
 
   SupportsDebugInformation = true;
   DwarfUsesInlineInfoSection = true;
+  UseDataRegionDirectives = MarkedJTDataRegions;
 
   // Exceptions handling
   ExceptionsType = ExceptionHandling::DwarfCFI;
