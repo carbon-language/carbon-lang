@@ -582,8 +582,8 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
       // FIXME: The getMCInstOperandNum() function does not work with tied 
       // operands or custom converters.
       unsigned NumMCOperands;
-      unsigned MCIdx = TargetParser->getMCInstOperandNum(Kind, Inst, Operands,
-                                                         i, NumMCOperands);
+      unsigned MCIdx = TargetParser->getMCInstOperandNum(Kind, Operands, i,
+                                                         NumMCOperands);
       assert (NumMCOperands && "Expected at least 1 MCOperand!");
 
       for (unsigned j = MCIdx, e = MCIdx + NumMCOperands; j != e; ++j) {
