@@ -17,6 +17,16 @@
 #include "tsan_report.h"
 #include "tsan_flags.h"
 
+// May be overriden by front-end.
+extern "C" void WEAK __tsan_malloc_hook(void *ptr, uptr size) {
+  (void)ptr;
+  (void)size;
+}
+
+extern "C" void WEAK __tsan_free_hook(void *ptr) {
+  (void)ptr;
+}
+
 namespace __tsan {
 
 static char allocator_placeholder[sizeof(Allocator)] ALIGNED(64);
@@ -107,6 +117,22 @@ MBlock *user_mblock(ThreadState *thr, void *p) {
   // CHECK_GT(thr->in_rtl, 0);
   CHECK_NE(p, (void*)0);
   return (MBlock*)allocator()->GetMetaData(p);
+}
+
+void invoke_malloc_hook(void *ptr, uptr size) {
+  Context *ctx = CTX();
+  ThreadState *thr = cur_thread();
+  if (ctx == 0 || !ctx->initialized || thr->in_rtl)
+    return;
+  __tsan_malloc_hook(ptr, size);
+}
+
+void invoke_free_hook(void *ptr) {
+  Context *ctx = CTX();
+  ThreadState *thr = cur_thread();
+  if (ctx == 0 || !ctx->initialized || thr->in_rtl)
+    return;
+  __tsan_free_hook(ptr);
 }
 
 void *internal_alloc(MBlockType typ, uptr sz) {

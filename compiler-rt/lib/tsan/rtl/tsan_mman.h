@@ -33,6 +33,10 @@ void *user_alloc_aligned(ThreadState *thr, uptr pc, uptr sz, uptr align);
 // returns the descriptor of the block.
 MBlock *user_mblock(ThreadState *thr, void *p);
 
+// Invoking malloc/free hooks that may be installed by the user.
+void invoke_malloc_hook(void *ptr, uptr size);
+void invoke_free_hook(void *ptr);
+
 enum MBlockType {
   MBlockScopedBuf,
   MBlockString,

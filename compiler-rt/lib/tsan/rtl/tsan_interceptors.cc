@@ -1,4 +1,4 @@
-//===-- tsan_interceptors_linux.cc ----------------------------------------===//
+//===-- tsan_interceptors.cc ----------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,13 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "interception/interception.h"
 #include "sanitizer_common/sanitizer_atomic.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_placement_new.h"
-#include "tsan_rtl.h"
+#include "tsan_interceptors.h"
 #include "tsan_interface.h"
 #include "tsan_platform.h"
+#include "tsan_rtl.h"
 #include "tsan_mman.h"
 
 using namespace __tsan;  // NOLINT
@@ -133,89 +133,27 @@ static unsigned g_thread_finalize_key;
 
 static void process_pending_signals(ThreadState *thr);
 
-class ScopedInterceptor {
- public:
-  ScopedInterceptor(ThreadState *thr, const char *fname, uptr pc)
-      : thr_(thr)
-      , in_rtl_(thr->in_rtl) {
-    if (thr_->in_rtl == 0) {
-      Initialize(thr);
-      FuncEntry(thr, pc);
-      thr_->in_rtl++;
-      DPrintf("#%d: intercept %s()\n", thr_->tid, fname);
-    } else {
-      thr_->in_rtl++;
-    }
+ScopedInterceptor::ScopedInterceptor(ThreadState *thr, const char *fname,
+                                     uptr pc)
+    : thr_(thr)
+    , in_rtl_(thr->in_rtl) {
+  if (thr_->in_rtl == 0) {
+    Initialize(thr);
+    FuncEntry(thr, pc);
+    thr_->in_rtl++;
+    DPrintf("#%d: intercept %s()\n", thr_->tid, fname);
+  } else {
+    thr_->in_rtl++;
   }
+}
 
-  ~ScopedInterceptor() {
-    thr_->in_rtl--;
-    if (thr_->in_rtl == 0) {
-      FuncExit(thr_);
-      process_pending_signals(thr_);
-    }
-    CHECK_EQ(in_rtl_, thr_->in_rtl);
+ScopedInterceptor::~ScopedInterceptor() {
+  thr_->in_rtl--;
+  if (thr_->in_rtl == 0) {
+    FuncExit(thr_);
+    process_pending_signals(thr_);
   }
-
- private:
-  ThreadState *const thr_;
-  const int in_rtl_;
-};
-
-#define SCOPED_INTERCEPTOR_RAW(func, ...) \
-    ThreadState *thr = cur_thread(); \
-    StatInc(thr, StatInterceptor); \
-    StatInc(thr, StatInt_##func); \
-    ScopedInterceptor si(thr, #func, \
-        (__sanitizer::uptr)__builtin_return_address(0)); \
-    const uptr pc = (uptr)&func; \
-    (void)pc; \
-/**/
-
-#define SCOPED_TSAN_INTERCEPTOR(func, ...) \
-    SCOPED_INTERCEPTOR_RAW(func, __VA_ARGS__); \
-    if (thr->in_rtl > 1) \
-      return REAL(func)(__VA_ARGS__); \
-/**/
-
-#define SCOPED_INTERCEPTOR_LIBC(func, ...) \
-    ThreadState *thr = cur_thread(); \
-    StatInc(thr, StatInterceptor); \
-    StatInc(thr, StatInt_##func); \
-    ScopedInterceptor si(thr, #func, callpc); \
-    const uptr pc = (uptr)&func; \
-    (void)pc; \
-    if (thr->in_rtl > 1) \
-      return REAL(func)(__VA_ARGS__); \
-/**/
-
-#define TSAN_INTERCEPTOR(ret, func, ...) INTERCEPTOR(ret, func, __VA_ARGS__)
-#define TSAN_INTERCEPT(func) INTERCEPT_FUNCTION(func)
-
-// May be overriden by front-end.
-extern "C" void WEAK __tsan_malloc_hook(void *ptr, uptr size) {
-  (void)ptr;
-  (void)size;
-}
-
-extern "C" void WEAK __tsan_free_hook(void *ptr) {
-  (void)ptr;
-}
-
-static void invoke_malloc_hook(void *ptr, uptr size) {
-  Context *ctx = CTX();
-  ThreadState *thr = cur_thread();
-  if (ctx == 0 || !ctx->initialized || thr->in_rtl)
-    return;
-  __tsan_malloc_hook(ptr, size);
-}
-
-static void invoke_free_hook(void *ptr) {
-  Context *ctx = CTX();
-  ThreadState *thr = cur_thread();
-  if (ctx == 0 || !ctx->initialized || thr->in_rtl)
-    return;
-  __tsan_free_hook(ptr);
+  CHECK_EQ(in_rtl_, thr_->in_rtl);
 }
 
 TSAN_INTERCEPTOR(unsigned, sleep, unsigned sec) {
@@ -560,92 +498,6 @@ TSAN_INTERCEPTOR(int, munmap, void *addr, long_t sz) {
   SCOPED_TSAN_INTERCEPTOR(munmap, addr, sz);
   int res = REAL(munmap)(addr, sz);
   return res;
-}
-
-#ifdef __LP64__
-
-// void *operator new(size_t)
-TSAN_INTERCEPTOR(void*, _Znwm, uptr sz) {
-  void *p = 0;
-  {
-    SCOPED_TSAN_INTERCEPTOR(_Znwm, sz);
-    p = user_alloc(thr, pc, sz);
-  }
-  invoke_malloc_hook(p, sz);
-  return p;
-}
-
-// void *operator new(size_t, nothrow_t)
-TSAN_INTERCEPTOR(void*, _ZnwmRKSt9nothrow_t, uptr sz) {
-  void *p = 0;
-  {
-    SCOPED_TSAN_INTERCEPTOR(_ZnwmRKSt9nothrow_t, sz);
-    p = user_alloc(thr, pc, sz);
-  }
-  invoke_malloc_hook(p, sz);
-  return p;
-}
-
-// void *operator new[](size_t)
-TSAN_INTERCEPTOR(void*, _Znam, uptr sz) {
-  void *p = 0;
-  {
-    SCOPED_TSAN_INTERCEPTOR(_Znam, sz);
-    p = user_alloc(thr, pc, sz);
-  }
-  invoke_malloc_hook(p, sz);
-  return p;
-}
-
-// void *operator new[](size_t, nothrow_t)
-TSAN_INTERCEPTOR(void*, _ZnamRKSt9nothrow_t, uptr sz) {
-  void *p = 0;
-  {
-    SCOPED_TSAN_INTERCEPTOR(_ZnamRKSt9nothrow_t, sz);
-    p = user_alloc(thr, pc, sz);
-  }
-  invoke_malloc_hook(p, sz);
-  return p;
-}
-
-#else
-#error "Not implemented"
-#endif
-
-// void operator delete(void*)
-TSAN_INTERCEPTOR(void, _ZdlPv, void *p) {
-  if (p == 0)
-    return;
-  invoke_free_hook(p);
-  SCOPED_TSAN_INTERCEPTOR(_ZdlPv, p);
-  user_free(thr, pc, p);
-}
-
-// void operator delete(void*, nothrow_t)
-TSAN_INTERCEPTOR(void, _ZdlPvRKSt9nothrow_t, void *p) {
-  if (p == 0)
-    return;
-  invoke_free_hook(p);
-  SCOPED_TSAN_INTERCEPTOR(_ZdlPvRKSt9nothrow_t, p);
-  user_free(thr, pc, p);
-}
-
-// void operator delete[](void*)
-TSAN_INTERCEPTOR(void, _ZdaPv, void *p) {
-  if (p == 0)
-    return;
-  invoke_free_hook(p);
-  SCOPED_TSAN_INTERCEPTOR(_ZdaPv, p);
-  user_free(thr, pc, p);
-}
-
-// void operator delete[](void*, nothrow_t)
-TSAN_INTERCEPTOR(void, _ZdaPvRKSt9nothrow_t, void *p) {
-  if (p == 0)
-    return;
-  invoke_free_hook(p);
-  SCOPED_TSAN_INTERCEPTOR(_ZdaPvRKSt9nothrow_t, p);
-  user_free(thr, pc, p);
 }
 
 TSAN_INTERCEPTOR(void*, memalign, uptr align, uptr sz) {
@@ -1447,7 +1299,7 @@ static void process_pending_signals(ThreadState *thr) {
           sigactions[sig].sa_handler(sig);
         if (errno != 0) {
           ScopedInRtl in_rtl;
-          StackTrace stack;
+          __tsan::StackTrace stack;
           uptr pc = signal->sigaction ?
               (uptr)sigactions[sig].sa_sigaction :
               (uptr)sigactions[sig].sa_handler;
@@ -1491,14 +1343,7 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(pvalloc);
   TSAN_INTERCEPT(posix_memalign);
 
-  TSAN_INTERCEPT(_Znwm);
-  TSAN_INTERCEPT(_ZnwmRKSt9nothrow_t);
-  TSAN_INTERCEPT(_Znam);
-  TSAN_INTERCEPT(_ZnamRKSt9nothrow_t);
-  TSAN_INTERCEPT(_ZdlPv);
-  TSAN_INTERCEPT(_ZdlPvRKSt9nothrow_t);
-  TSAN_INTERCEPT(_ZdaPv);
-  TSAN_INTERCEPT(_ZdaPvRKSt9nothrow_t);
+  ReplaceOperatorsNewAndDelete();
 
   TSAN_INTERCEPT(strlen);
   TSAN_INTERCEPT(memset);
