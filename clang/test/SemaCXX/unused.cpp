@@ -34,3 +34,15 @@ namespace derefvolatile {
     (void)y; // don't warn here, because it's a common pattern.
   }
 }
+
+// <rdar://problem/12359208>
+namespace AnonObject {
+  struct Foo {
+    Foo(const char* const message);
+    ~Foo();
+  };
+  void f() {
+    Foo("Hello World!");  // don't warn
+    int(1); // expected-warning {{expression result unused}}
+  }
+}
