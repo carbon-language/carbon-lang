@@ -149,8 +149,8 @@ void f4() {
   // finally.call-exit:  Predecessors are the @try and @catch fallthroughs
   // as well as the no-match case in the catch mechanism.  The i1 is whether
   // to rethrow and should be true only in the last case.
-  // CHECK:      phi i1
-  // CHECK-NEXT: phi i8*
+  // CHECK:      phi i8*
+  // CHECK-NEXT: phi i1
   // CHECK-NEXT: call void @objc_exception_try_exit([[EXNDATA_T]]* [[EXNDATA]])
   // CHECK-NEXT: call void @f4_help(i32 2)
   // CHECK-NEXT: br i1
