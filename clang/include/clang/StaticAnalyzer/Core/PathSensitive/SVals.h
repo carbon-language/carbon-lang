@@ -257,7 +257,7 @@ public:
 
 namespace nonloc {
 
-enum Kind { ConcreteIntKind, SymbolValKind, SymExprValKind,
+enum Kind { ConcreteIntKind, SymbolValKind,
             LocAsIntegerKind, CompoundValKind, LazyCompoundValKind };
 
 /// \brief Represents symbolic expression.
