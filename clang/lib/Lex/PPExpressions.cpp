@@ -220,10 +220,15 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
     if (Literal.hasUDSuffix())
       PP.Diag(PeekTok, diag::err_pp_invalid_udl) << /*integer*/1;
 
-    // long long is a C99 feature.
-    if (!PP.getLangOpts().C99 && Literal.isLongLong)
-      PP.Diag(PeekTok, PP.getLangOpts().CPlusPlus0x ?
-              diag::warn_cxx98_compat_longlong : diag::ext_longlong);
+    // 'long long' is a C99 or C++11 feature.
+    if (!PP.getLangOpts().C99 && Literal.isLongLong) {
+      if (PP.getLangOpts().CPlusPlus)
+        PP.Diag(PeekTok,
+             PP.getLangOpts().CPlusPlus0x ?
+             diag::warn_cxx98_compat_longlong : diag::ext_cxx11_longlong);
+      else
+        PP.Diag(PeekTok, diag::ext_c99_longlong);
+    }
 
     // Parse the integer literal into Result.
     if (Literal.GetIntegerValue(Result.Val)) {

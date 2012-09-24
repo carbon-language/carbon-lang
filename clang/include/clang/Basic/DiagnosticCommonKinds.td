@@ -78,9 +78,12 @@ def note_decl_hiding_tag_type : Note<
   "%1 %0 is hidden by a non-type declaration of %0 here">;
 
 // Sema && Lex
-def ext_longlong : Extension<
+def ext_c99_longlong : Extension<
   "'long long' is an extension when C99 mode is not enabled">,
   InGroup<LongLong>;
+def ext_cxx11_longlong : Extension<
+  "'long long' is a C++11 extension">,
+  InGroup<CXX11>;
 def warn_cxx98_compat_longlong : Warning<
   "'long long' is incompatible with C++98">,
   InGroup<CXX98CompatPedantic>, DefaultIgnore;

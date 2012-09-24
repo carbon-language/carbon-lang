@@ -698,11 +698,15 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
       case DeclSpec::TSW_longlong:
         Result = Context.LongLongTy;
 
-        // long long is a C99 feature.
-        if (!S.getLangOpts().C99)
-          S.Diag(DS.getTypeSpecWidthLoc(),
-                 S.getLangOpts().CPlusPlus0x ?
-                   diag::warn_cxx98_compat_longlong : diag::ext_longlong);
+        // 'long long' is a C99 or C++11 feature.
+        if (!S.getLangOpts().C99) {
+          if (S.getLangOpts().CPlusPlus)
+            S.Diag(DS.getTypeSpecWidthLoc(),
+                   S.getLangOpts().CPlusPlus0x ?
+                   diag::warn_cxx98_compat_longlong : diag::ext_cxx11_longlong);
+          else
+            S.Diag(DS.getTypeSpecWidthLoc(), diag::ext_c99_longlong);
+        }
         break;
       }
     } else {
@@ -713,11 +717,15 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
       case DeclSpec::TSW_longlong:
         Result = Context.UnsignedLongLongTy;
 
-        // long long is a C99 feature.
-        if (!S.getLangOpts().C99)
-          S.Diag(DS.getTypeSpecWidthLoc(),
-                 S.getLangOpts().CPlusPlus0x ?
-                   diag::warn_cxx98_compat_longlong : diag::ext_longlong);
+        // 'long long' is a C99 or C++11 feature.
+        if (!S.getLangOpts().C99) {
+          if (S.getLangOpts().CPlusPlus)
+            S.Diag(DS.getTypeSpecWidthLoc(),
+                   S.getLangOpts().CPlusPlus0x ?
+                   diag::warn_cxx98_compat_longlong : diag::ext_cxx11_longlong);
+          else
+            S.Diag(DS.getTypeSpecWidthLoc(), diag::ext_c99_longlong);
+        }
         break;
       }
     }

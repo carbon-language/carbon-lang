@@ -32,3 +32,9 @@ int *ArraySizeConversion = new int[ConvertToInt()]; // expected-warning {{implic
 
 template<typename T> class ExternTemplate {};
 extern template class ExternTemplate<int>; // expected-warning {{extern templates are incompatible with C++98}}
+
+long long ll1 = // expected-warning {{'long long' is incompatible with C++98}}
+         -42LL; // expected-warning {{'long long' is incompatible with C++98}}
+unsigned long long ull1 = // expected-warning {{'long long' is incompatible with C++98}}
+                   42ULL; // expected-warning {{'long long' is incompatible with C++98}}
+

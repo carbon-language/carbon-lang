@@ -115,7 +115,7 @@ int array2[recurse2]; // expected-warning {{variable length array}} expected-war
 namespace FloatConvert {
   typedef int a[(int)42.3];
   typedef int a[(int)42.997];
-  typedef int b[(long long)4e20]; // expected-warning {{variable length}} expected-error {{variable length}} expected-warning {{'long long' is an extension}}
+  typedef int b[(long long)4e20]; // expected-warning {{variable length}} expected-error {{variable length}} expected-warning {{'long long' is a C++11 extension}}
 }
 
 // PR12626

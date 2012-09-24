@@ -2777,11 +2777,15 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok, Scope *UDLScope) {
   } else {
     QualType Ty;
 
-    // long long is a C99 feature.
-    if (!getLangOpts().C99 && Literal.isLongLong)
-      Diag(Tok.getLocation(),
-           getLangOpts().CPlusPlus0x ?
-             diag::warn_cxx98_compat_longlong : diag::ext_longlong);
+    // 'long long' is a C99 or C++11 feature.
+    if (!getLangOpts().C99 && Literal.isLongLong) {
+      if (getLangOpts().CPlusPlus)
+        Diag(Tok.getLocation(),
+             getLangOpts().CPlusPlus0x ?
+             diag::warn_cxx98_compat_longlong : diag::ext_cxx11_longlong);
+      else
+        Diag(Tok.getLocation(), diag::ext_c99_longlong);
+    }
 
     // Get the value in the widest-possible width.
     unsigned MaxWidth = Context.getTargetInfo().getIntMaxTWidth();
