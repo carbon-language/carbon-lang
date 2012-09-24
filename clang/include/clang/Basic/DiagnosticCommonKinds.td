@@ -83,7 +83,7 @@ def ext_c99_longlong : Extension<
   InGroup<LongLong>;
 def ext_cxx11_longlong : Extension<
   "'long long' is a C++11 extension">,
-  InGroup<CXX11>;
+  InGroup<CXX11LongLong>;
 def warn_cxx98_compat_longlong : Warning<
   "'long long' is incompatible with C++98">,
   InGroup<CXX98CompatPedantic>, DefaultIgnore;
