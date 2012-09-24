@@ -44,10 +44,6 @@ class MBlazeAsmParser : public MCTargetAsmParser {
 
   bool ParseDirectiveWord(unsigned Size, SMLoc L);
 
-  bool mnemonicIsValid(StringRef Mnemonic) {
-    return mnemonicIsValidImpl(Mnemonic);
-  }
-
   bool MatchAndEmitInstruction(SMLoc IDLoc,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                                MCStreamer &Out);
