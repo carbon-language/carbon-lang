@@ -535,7 +535,8 @@ clang::Decl
         TagDecl *to_tag_decl = dyn_cast<TagDecl>(to);
         
         to_tag_decl->setHasExternalLexicalStorage();
-                        
+        to_tag_decl->setMustBuildLookupTable();
+                                
         if (log)
             log->Printf("    [ClangASTImporter] To is a TagDecl - attributes %s%s [%s->%s]",
                         (to_tag_decl->hasExternalLexicalStorage() ? " Lexical" : ""),

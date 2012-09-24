@@ -636,6 +636,23 @@ private:
     bool 
     ReplaceVariables (llvm::Function &llvm_function);
     
+    //------------------------------------------------------------------
+    /// A module-level pass to remove all global variables from the
+    /// module since it no longer should export or import any symbols.
+    //------------------------------------------------------------------
+    
+    //------------------------------------------------------------------
+    /// The top-level pass implementation
+    ///
+    /// @param[in] llvm_module
+    ///     The module currently being processed.
+    ///
+    /// @return
+    ///     True on success; false otherwise
+    //------------------------------------------------------------------
+    bool
+    StripAllGVs (llvm::Module &llvm_module);
+    
     /// Flags
     bool                                    m_resolve_vars;             ///< True if external variable references and persistent variable references should be resolved
     lldb_private::ExecutionPolicy           m_execution_policy;         ///< True if the interpreter should be used to attempt to get a static result

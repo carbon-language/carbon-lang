@@ -43,12 +43,13 @@
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/ParseAST.h"
-#include "clang/Rewrite/FrontendActions.h"
+#include "clang/Rewrite/Frontend/FrontendActions.h"
 #include "clang/Sema/SemaConsumer.h"
 #include "clang/StaticAnalyzer/Frontend/FrontendActions.h"
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/TargetSelect.h"
 
 #if !defined(__APPLE__)
@@ -199,11 +200,59 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
             llvm::DisablePrettyStackTrace = true;
         }
     } InitializeLLVM;
-        
+    
+    llvm::setCurrentDebugType("internalize");
+    llvm::DebugFlag = true;
+    
     // 1. Create a new compiler instance.
     m_compiler.reset(new CompilerInstance());    
     
-    // 2. Set options.
+    // 2. Install the target.
+
+    lldb::TargetSP target_sp;
+    if (exe_scope)
+        target_sp = exe_scope->CalculateTarget();
+    
+    // TODO: figure out what to really do when we don't have a valid target.
+    // Sometimes this will be ok to just use the host target triple (when we
+    // evaluate say "2+3", but other expressions like breakpoint conditions
+    // and other things that _are_ target specific really shouldn't just be
+    // using the host triple. This needs to be fixed in a better way.
+    if (target_sp && target_sp->GetArchitecture().IsValid())
+    {
+        std::string triple = target_sp->GetArchitecture().GetTriple().str();
+        
+        int dash_count = 0;
+        for (size_t i = 0; i < triple.size(); ++i)
+        {
+            if (triple[i] == '-')
+                dash_count++;
+            if (dash_count == 3)
+            {
+                triple.resize(i);
+                break;
+            }
+        }
+        
+        m_compiler->getTargetOpts().Triple = triple;
+    }
+    else
+    {
+        m_compiler->getTargetOpts().Triple = llvm::sys::getDefaultTargetTriple();
+    }
+    
+    if (m_compiler->getTargetOpts().Triple.find("ios") != std::string::npos)
+        m_compiler->getTargetOpts().ABI = "apcs-gnu";
+    
+    m_compiler->createDiagnostics(0, 0);
+    
+    // Create the target instance.
+    m_compiler->setTarget(TargetInfo::CreateTargetInfo(m_compiler->getDiagnostics(),
+                                                       m_compiler->getTargetOpts()));
+    
+    assert (m_compiler->hasTarget());
+    
+    // 3. Set options.
     
     lldb::LanguageType language = expr.Language();
     
@@ -247,15 +296,12 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
         if (process_sp->GetObjCLanguageRuntime())
         {
             if (process_sp->GetObjCLanguageRuntime()->GetRuntimeVersion() == eAppleObjC_V2)
-            {
-                m_compiler->getLangOpts().ObjCNonFragileABI = true;     // NOT i386
-                m_compiler->getLangOpts().ObjCNonFragileABI2 = true;    // NOT i386
-            }
+                m_compiler->getLangOpts().ObjCRuntime.set(ObjCRuntime::MacOSX, VersionTuple(10, 7));
+            else
+                m_compiler->getLangOpts().ObjCRuntime.set(ObjCRuntime::FragileMacOSX, VersionTuple(10, 7));
             
             if (process_sp->GetObjCLanguageRuntime()->HasNewLiteralsAndIndexing())
-            {
                 m_compiler->getLangOpts().DebuggerObjCLiteral = true;
-            }
         }
     }
 
@@ -269,51 +315,6 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     
     // Disable some warnings.
     m_compiler->getDiagnosticOpts().Warnings.push_back("no-unused-value");
-    
-    // Set the target triple.
-    lldb::TargetSP target_sp;
-    if (exe_scope)
-        target_sp = exe_scope->CalculateTarget();
-
-    // TODO: figure out what to really do when we don't have a valid target.
-    // Sometimes this will be ok to just use the host target triple (when we
-    // evaluate say "2+3", but other expressions like breakpoint conditions
-    // and other things that _are_ target specific really shouldn't just be 
-    // using the host triple. This needs to be fixed in a better way.
-    if (target_sp && target_sp->GetArchitecture().IsValid())
-    {
-        std::string triple = target_sp->GetArchitecture().GetTriple().str();
-        
-        int dash_count = 0;
-        for (size_t i = 0; i < triple.size(); ++i)
-        {
-            if (triple[i] == '-')
-                dash_count++;
-            if (dash_count == 3)
-            {
-                triple.resize(i);
-                break;
-            }
-        }
-        
-        m_compiler->getTargetOpts().Triple = triple;
-    }
-    else
-    {
-        m_compiler->getTargetOpts().Triple = llvm::sys::getDefaultTargetTriple();
-    }
-    
-    if (m_compiler->getTargetOpts().Triple.find("ios") != std::string::npos)
-        m_compiler->getTargetOpts().ABI = "apcs-gnu";
-        
-    // 3. Set up various important bits of infrastructure.
-    m_compiler->createDiagnostics(0, 0);
-    
-    // Create the target instance.
-    m_compiler->setTarget(TargetInfo::CreateTargetInfo(m_compiler->getDiagnostics(),
-                                                       m_compiler->getTargetOpts()));
-    
-    assert (m_compiler->hasTarget());
     
     // Inform the target of the language options
     //
@@ -509,7 +510,7 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
                                   error_stream,
                                   function_name.c_str());
         
-        ir_for_target.runOnModule(*module);
+        bool ir_can_run = ir_for_target.runOnModule(*module);
         
         Error &interpreter_error(ir_for_target.getInterpreterError());
         
@@ -532,6 +533,13 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
             else
                 err.SetErrorStringWithFormat("Interpreting the expression locally failed: %s", interpreter_error.AsCString());
 
+            return err;
+        }
+        else if (!ir_can_run)
+        {
+            err.SetErrorToGenericError();
+            err.SetErrorString("The expression could not be prepared to run in the target");
+            
             return err;
         }
         
@@ -599,7 +607,18 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
         .setAllocateGVsWithCode(true)
         .setCodeModel(CodeModel::Small)
         .setUseMCJIT(true);
-    execution_engine.reset(builder.create());
+    
+    llvm::Triple triple(module->getTargetTriple());
+    StringRef mArch;
+    StringRef mCPU;
+    SmallVector<std::string, 0> mAttrs;
+    
+    TargetMachine *target_machine = builder.selectTarget(triple,
+                                                         mArch,
+                                                         mCPU,
+                                                         mAttrs);
+    
+    execution_engine.reset(builder.create(target_machine));
         
     if (!execution_engine.get())
     {

@@ -15,7 +15,9 @@
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
+#include "llvm/PassManager.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Transforms/IPO.h"
 #include "llvm/ValueSymbolTable.h"
 
 #include "clang/AST/ASTContext.h"
@@ -2630,6 +2632,55 @@ IRForTarget::CompleteDataAllocation ()
 }
 
 bool
+IRForTarget::StripAllGVs (Module &llvm_module)
+{
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));    
+    std::vector<GlobalVariable *> global_vars;
+    std::set<GlobalVariable *>erased_vars;
+    
+    bool erased = true;
+    
+    while (erased)
+    {
+        erased = false;
+        
+        for (Module::global_iterator gi = llvm_module.global_begin(), ge = llvm_module.global_end();
+             gi != ge;
+             ++gi)
+        {
+            GlobalVariable *global_var = dyn_cast<GlobalVariable>(gi);
+        
+            global_var->removeDeadConstantUsers();
+            
+            if (global_var->use_empty())
+            {
+                if (log)
+                    log->Printf("Did remove %s",
+                                PrintValue(global_var).c_str());
+                global_var->eraseFromParent();
+                erased = true;
+                break;
+            }
+        }
+    }
+    
+    for (Module::global_iterator gi = llvm_module.global_begin(), ge = llvm_module.global_end();
+         gi != ge;
+         ++gi)
+    {
+        GlobalVariable *global_var = dyn_cast<GlobalVariable>(gi);
+
+        GlobalValue::use_iterator ui = global_var->use_begin();
+        
+        log->Printf("Couldn't remove %s because of %s",
+                    PrintValue(global_var).c_str(),
+                    PrintValue(*ui).c_str());
+    }
+    
+    return true;
+}
+
+bool
 IRForTarget::runOnModule (Module &llvm_module)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
@@ -2674,12 +2725,12 @@ IRForTarget::runOnModule (Module &llvm_module)
     
     m_reloc_placeholder = new llvm::GlobalVariable((*m_module), 
                                                    intptr_ty,
-                                                   false /* isConstant */,
+                                                   false /* IsConstant */,
                                                    GlobalVariable::InternalLinkage,
                                                    Constant::getNullValue(intptr_ty),
                                                    "reloc_placeholder",
                                                    NULL /* InsertBefore */,
-                                                   false /* ThreadLocal */,
+                                                   GlobalVariable::NotThreadLocal /* ThreadLocal */,
                                                    0 /* AddressSpace */);
         
     Function::iterator bbi;
@@ -2874,6 +2925,12 @@ IRForTarget::runOnModule (Module &llvm_module)
             log->Printf("CompleteDataAllocation() failed");
         
         return false;
+    }
+    
+    if (!StripAllGVs(llvm_module))
+    {
+        if (log)
+            log->Printf("StripAllGVs() failed");
     }
     
     if (log && log->GetVerbose())

@@ -21,11 +21,10 @@ our ($llvm_clang_basename, $llvm_clang_dirname) = fileparse ($llvm_clang_outfile
 
 our $llvm_configuration = $ENV{LLVM_CONFIGURATION};
 
-our $llvm_revision = "152265";
-our $clang_revision = "152265";
+our $llvm_revision = "HEAD";
+our $clang_revision = "HEAD";
 
 our $SRCROOT = "$ENV{SRCROOT}";
-our $llvm_dstroot_zip = "$SRCROOT/llvm.zip";
 our @archs = split (/\s+/, $ENV{ARCHS});
 my $os_release = 11;
 
@@ -57,13 +56,10 @@ our @archive_files = (
     "$llvm_configuration/lib/libclangEdit.a",
 	"$llvm_configuration/lib/libclangFrontend.a",
 	"$llvm_configuration/lib/libclangDriver.a",
-	"$llvm_configuration/lib/libclangIndex.a",
 	"$llvm_configuration/lib/libclangLex.a",
-	"$llvm_configuration/lib/libclangRewrite.a",
 	"$llvm_configuration/lib/libclangParse.a",
 	"$llvm_configuration/lib/libclangSema.a",
     "$llvm_configuration/lib/libclangSerialization.a",
-	"$llvm_configuration/lib/libEnhancedDisassembly.a",
 	"$llvm_configuration/lib/libLLVMAnalysis.a",
 	"$llvm_configuration/lib/libLLVMArchive.a",
 	"$llvm_configuration/lib/libLLVMARMAsmParser.a",
@@ -110,48 +106,6 @@ if (-e "$llvm_srcroot/lib")
 {
     print "Using existing llvm sources in: '$llvm_srcroot'\n";
     print "Using standard LLVM build directory:\n  SRC = '$llvm_srcroot'\n  DST = '$llvm_dstroot'\n";
-}
-elsif (-e $llvm_dstroot_zip)
-{
-    # Check for an old llvm source install (not the minimal zip based 
-    # install by looking for a .svn file in the llvm directory
-    chomp(my $llvm_zip_md5 = `md5 -q '$llvm_dstroot_zip'`);
-    my $llvm_zip_md5_file = "$ENV{SRCROOT}/llvm/$llvm_zip_md5";
-    if (!-e "$llvm_zip_md5_file")
-    {
-        print "Updating LLVM to use checkpoint from: '$llvm_dstroot_zip'...\n";
-        if (-d "$ENV{SRCROOT}/llvm")
-        {
-            do_command ("cd '$ENV{SRCROOT}' && rm -rf llvm", "removing old llvm repository", 1);            
-        }
-		do_command ("cd '$ENV{SRCROOT}' && unzip -q llvm.zip && touch '$llvm_zip_md5_file'", "expanding llvm.zip", 1);
-        
-    }
-    my $arch_idx = 0;
-        
-    if (!-d "${llvm_dstroot}")
-    {
-        do_command ("mkdir -p '${llvm_dstroot}'", "Creating directory '${llvm_dstroot}'", 1);
-    }
-        
-    foreach my $arch (@archs)
-    {
-        my $llvm_dstroot_arch = "${llvm_dstroot}/${arch}";
-        # Check for our symlink to our .a file
-        if (!-l "$llvm_dstroot_arch/$llvm_clang_basename")
-        {
-            # Symlink doesn't exist, make sure it isn't a normal file
-            if (-e "$llvm_dstroot_arch/$llvm_clang_basename")
-            {
-                # the .a file is a normal file which means it can't be from the 
-                # zip file, we must remove the previous arch directory
-                do_command ("rm -rf '$llvm_dstroot_arch'", "Removing old '$llvm_dstroot_arch' directory", 1);
-            }            
-            # Create a symlink to the .a file from the zip file
-            do_command ("cd '$llvm_dstroot' ; ln -s $ENV{SRCROOT}/llvm/$arch", "making llvm archive symlink", 1);
-        }
-    }
-    exit 0;
 }
 else
 {

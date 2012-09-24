@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/AST/ASTContext.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Symbol/ClangASTContext.h"

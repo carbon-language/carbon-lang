@@ -59,13 +59,42 @@ ASTStructExtractor::Initialize(ASTContext &Context)
 void
 ASTStructExtractor::ExtractFromFunctionDecl(FunctionDecl *F)
 {
-    DeclarationName struct_name(&m_ast_context->Idents.get(m_struct_name.c_str()));
-    RecordDecl::lookup_result struct_lookup = F->lookup(struct_name);
-    
-    if (struct_lookup.first == struct_lookup.second)
+    if (!F->hasBody())
         return;
     
-    RecordDecl *struct_decl = dyn_cast<RecordDecl>(*(struct_lookup.first));
+    Stmt *body_stmt = F->getBody();
+    CompoundStmt *body_compound_stmt = dyn_cast<CompoundStmt>(body_stmt);
+    
+    if (!body_compound_stmt)
+        return; // do we have to handle this?
+    
+    RecordDecl *struct_decl = NULL;
+    
+    StringRef desired_name(m_struct_name.c_str());
+    
+    for (CompoundStmt::const_body_iterator bi = body_compound_stmt->body_begin(), be = body_compound_stmt->body_end();
+         bi != be;
+         ++bi)
+    {
+        Stmt *curr_stmt = *bi;
+        DeclStmt *curr_decl_stmt = dyn_cast<DeclStmt>(curr_stmt);
+        if (!curr_decl_stmt)
+            continue;
+        DeclGroupRef decl_group = curr_decl_stmt->getDeclGroup();
+        for (Decl *candidate_decl : decl_group)
+        {
+            RecordDecl *candidate_record_decl = dyn_cast<RecordDecl>(candidate_decl);
+            if (!candidate_record_decl)
+                continue;
+            if (candidate_record_decl->getName() == desired_name)
+            {
+                struct_decl = candidate_record_decl;
+                break;
+            }
+        }
+        if (struct_decl)
+            break;
+    }
     
     if (!struct_decl)
         return;

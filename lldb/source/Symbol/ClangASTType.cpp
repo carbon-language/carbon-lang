@@ -555,6 +555,7 @@ ClangASTType::GetFormat (clang_type_t clang_type)
         case clang::BuiltinType::Half:          
         case clang::BuiltinType::ARCUnbridgedCast:          
         case clang::BuiltinType::PseudoObject:
+        case clang::BuiltinType::BuiltinFn:
             return lldb::eFormatHex;
         }
         break;
@@ -1271,7 +1272,7 @@ ClangASTType::DumpTypeDescription (clang::ASTContext *ast_context, clang_type_t 
                     if (class_interface_decl)
                     {
                         clang::PrintingPolicy policy = ast_context->getPrintingPolicy();
-                        policy.Dump = 1;
+                        policy.DumpSourceManager = &ast_context->getSourceManager();
                         class_interface_decl->print(llvm_ostrm, policy, s->GetIndentLevel());
                     }
                 }

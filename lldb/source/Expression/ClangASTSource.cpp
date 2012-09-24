@@ -439,9 +439,9 @@ ClangASTSource::FindExternalLexicalDecls (const DeclContext *decl_context,
             {
                 ASTDumper ast_dumper(decl);
                 if (const NamedDecl *context_named_decl = dyn_cast<NamedDecl>(context_decl))
-                    log->Printf("  FELD[%d] Adding [to %s] lexical decl %s", current_id, context_named_decl->getNameAsString().c_str(), ast_dumper.GetCString());
+                    log->Printf("  FELD[%d] Adding [to %sDecl %s] lexical %sDecl %s", current_id, context_named_decl->getDeclKindName(), context_named_decl->getNameAsString().c_str(), decl->getDeclKindName(), ast_dumper.GetCString());
                 else
-                    log->Printf("  FELD[%d] Adding lexical decl %s", current_id, ast_dumper.GetCString());
+                    log->Printf("  FELD[%d] Adding lexical %sDecl %s", current_id, decl->getDeclKindName(), ast_dumper.GetCString());
             }
             
             Decl *copied_decl = m_ast_importer->CopyDecl(m_ast_context, original_ctx, decl);

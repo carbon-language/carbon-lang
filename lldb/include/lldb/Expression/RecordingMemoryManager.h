@@ -281,6 +281,14 @@ public:
     virtual unsigned GetNumStubSlabs() {
         return m_default_mm_ap->GetNumStubSlabs();
     }
+    
+    //------------------------------------------------------------------
+    /// Passthrough interface stub
+    //------------------------------------------------------------------
+    virtual void *getPointerToNamedFunction(const std::string &Name,
+                                            bool AbortOnFailure = true) {
+        return m_default_mm_ap->getPointerToNamedFunction(Name, AbortOnFailure);
+    }
 
     //------------------------------------------------------------------
     /// [Convenience method for ClangExpressionParser] Look up the object in
