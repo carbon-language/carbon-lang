@@ -595,10 +595,9 @@ static void ComputeDATE_TIME(SourceLocation &DATELoc, SourceLocation &TIMELoc,
     llvm::raw_svector_ostream TmpStream(TmpBuffer);
     TmpStream << llvm::format("\"%s %2d %4d\"", Months[TM->tm_mon],
                               TM->tm_mday, TM->tm_year + 1900);
-    StringRef DateStr = TmpStream.str();
     Token TmpTok;
     TmpTok.startToken();
-    PP.CreateString(DateStr.data(), DateStr.size(), TmpTok);
+    PP.CreateString(TmpStream.str(), TmpTok);
     DATELoc = TmpTok.getLocation();
   }
 
@@ -607,10 +606,9 @@ static void ComputeDATE_TIME(SourceLocation &DATELoc, SourceLocation &TIMELoc,
     llvm::raw_svector_ostream TmpStream(TmpBuffer);
     TmpStream << llvm::format("\"%02d:%02d:%02d\"",
                               TM->tm_hour, TM->tm_min, TM->tm_sec);
-    StringRef TimeStr = TmpStream.str();
     Token TmpTok;
     TmpTok.startToken();
-    PP.CreateString(TimeStr.data(), TimeStr.size(), TmpTok);
+    PP.CreateString(TmpStream.str(), TmpTok);
     TIMELoc = TmpTok.getLocation();
   }
 }
@@ -1167,8 +1165,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
   } else {
     llvm_unreachable("Unknown identifier!");
   }
-  CreateString(OS.str().data(), OS.str().size(), Tok,
-               Tok.getLocation(), Tok.getLocation());
+  CreateString(OS.str(), Tok, Tok.getLocation(), Tok.getLocation());
 }
 
 void Preprocessor::markMacroAsUsed(MacroInfo *MI) {

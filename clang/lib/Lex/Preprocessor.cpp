@@ -378,17 +378,17 @@ StringRef Preprocessor::getSpelling(const Token &Tok,
 /// CreateString - Plop the specified string into a scratch buffer and return a
 /// location for it.  If specified, the source location provides a source
 /// location for the token.
-void Preprocessor::CreateString(const char *Buf, unsigned Len, Token &Tok,
+void Preprocessor::CreateString(StringRef Str, Token &Tok,
                                 SourceLocation ExpansionLocStart,
                                 SourceLocation ExpansionLocEnd) {
-  Tok.setLength(Len);
+  Tok.setLength(Str.size());
 
   const char *DestPtr;
-  SourceLocation Loc = ScratchBuf->getToken(Buf, Len, DestPtr);
+  SourceLocation Loc = ScratchBuf->getToken(Str.data(), Str.size(), DestPtr);
 
   if (ExpansionLocStart.isValid())
     Loc = SourceMgr.createExpansionLoc(Loc, ExpansionLocStart,
-                                       ExpansionLocEnd, Len);
+                                       ExpansionLocEnd, Str.size());
   Tok.setLocation(Loc);
 
   // If this is a raw identifier or a literal token, set the pointer data.

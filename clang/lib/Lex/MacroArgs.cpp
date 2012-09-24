@@ -291,7 +291,7 @@ Token MacroArgs::StringifyArgument(const Token *ArgToks,
     }
   }
 
-  PP.CreateString(&Result[0], Result.size(), Tok,
+  PP.CreateString(Result, Tok,
                   ExpansionLocStart, ExpansionLocEnd);
   return Tok;
 }

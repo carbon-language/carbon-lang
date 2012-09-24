@@ -251,7 +251,7 @@ void Preprocessor::Handle_Pragma(Token &Tok) {
   // where we can lex it.
   Token TmpTok;
   TmpTok.startToken();
-  CreateString(&StrVal[0], StrVal.size(), TmpTok);
+  CreateString(StrVal, TmpTok);
   SourceLocation TokLoc = TmpTok.getLocation();
 
   // Make and enter a lexer object so that we lex and expand the tokens just
@@ -683,7 +683,7 @@ IdentifierInfo *Preprocessor::ParsePragmaPushOrPopMacro(Token &Tok) {
   Token MacroTok;
   MacroTok.startToken();
   MacroTok.setKind(tok::raw_identifier);
-  CreateString(&StrVal[1], StrVal.size() - 2, MacroTok);
+  CreateString(StringRef(&StrVal[1], StrVal.size() - 2), MacroTok);
 
   // Get the IdentifierInfo of MacroToPushTok.
   return LookUpIdentifierInfo(MacroTok);

@@ -907,7 +907,7 @@ public:
   /// CreateString - Plop the specified string into a scratch buffer and set the
   /// specified token's location and length to it.  If specified, the source
   /// location provides a location of the expansion point of the token.
-  void CreateString(const char *Buf, unsigned Len, Token &Tok,
+  void CreateString(StringRef Str, Token &Tok,
                     SourceLocation ExpansionLocStart = SourceLocation(),
                     SourceLocation ExpansionLocEnd = SourceLocation());
 
