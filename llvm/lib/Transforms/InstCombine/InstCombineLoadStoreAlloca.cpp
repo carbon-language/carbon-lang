@@ -264,26 +264,28 @@ Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
     }
   }
 
-  // Check to see if this allocation is only modified by a memcpy/memmove from
-  // a constant global whose alignment is equal to or exceeds that of the
-  // allocation.  If this is the case, we can change all users to use
-  // the constant global instead.  This is commonly produced by the CFE by
-  // constructs like "void foo() { int A[] = {1,2,3,4,5,6,7,8,9...}; }" if 'A'
-  // is only subsequently read.
-  SmallVector<Instruction *, 4> ToDelete;
-  if (MemTransferInst *Copy = isOnlyCopiedFromConstantGlobal(&AI, ToDelete)) {
-    if (AI.getAlignment() <= getPointeeAlignment(Copy->getSource(), *TD)) {
-      DEBUG(dbgs() << "Found alloca equal to global: " << AI << '\n');
-      DEBUG(dbgs() << "  memcpy = " << *Copy << '\n');
-      for (unsigned i = 0, e = ToDelete.size(); i != e; ++i)
-        EraseInstFromFunction(*ToDelete[i]);
-      Constant *TheSrc = cast<Constant>(Copy->getSource());
-      Instruction *NewI
-        = ReplaceInstUsesWith(AI, ConstantExpr::getBitCast(TheSrc,
-                                                           AI.getType()));
-      EraseInstFromFunction(*Copy);
-      ++NumGlobalCopies;
-      return NewI;
+  if (TD) {
+    // Check to see if this allocation is only modified by a memcpy/memmove from
+    // a constant global whose alignment is equal to or exceeds that of the
+    // allocation.  If this is the case, we can change all users to use
+    // the constant global instead.  This is commonly produced by the CFE by
+    // constructs like "void foo() { int A[] = {1,2,3,4,5,6,7,8,9...}; }" if 'A'
+    // is only subsequently read.
+    SmallVector<Instruction *, 4> ToDelete;
+    if (MemTransferInst *Copy = isOnlyCopiedFromConstantGlobal(&AI, ToDelete)) {
+      if (AI.getAlignment() <= getPointeeAlignment(Copy->getSource(), *TD)) {
+        DEBUG(dbgs() << "Found alloca equal to global: " << AI << '\n');
+        DEBUG(dbgs() << "  memcpy = " << *Copy << '\n');
+        for (unsigned i = 0, e = ToDelete.size(); i != e; ++i)
+          EraseInstFromFunction(*ToDelete[i]);
+        Constant *TheSrc = cast<Constant>(Copy->getSource());
+        Instruction *NewI
+          = ReplaceInstUsesWith(AI, ConstantExpr::getBitCast(TheSrc,
+                                                             AI.getType()));
+        EraseInstFromFunction(*Copy);
+        ++NumGlobalCopies;
+        return NewI;
+      }
     }
   }
 
