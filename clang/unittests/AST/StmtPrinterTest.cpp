@@ -148,7 +148,6 @@ TEST(StmtPrinter, TestMSIntegerLiteral) {
     "  1i32, -1i32, 1ui32, "
     "  1i64, -1i64, 1ui64, "
     "  1i128, -1i128, 1ui128, 1Ui128,"
-    "  0x100000000i128,"
     "  0x10000000000000000i128;"
     "}",
     "A",
@@ -157,7 +156,6 @@ TEST(StmtPrinter, TestMSIntegerLiteral) {
     "1L , -1L , 1UL , "
     "1LL , -1LL , 1ULL , "
     "1 , -1 , 1U , 1U , "
-    "4294967296L , "
     "18446744073709551616i128"));
     // Should be: with semicolon
     // WRONG; all 128-bit literals should be printed as 128-bit.
