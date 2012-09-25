@@ -106,8 +106,9 @@ ProgramStateManager::removeDeadBindings(ProgramStateRef state,
                                                    SymReaper);
   NewState.setStore(newStore);
   SymReaper.setReapedStore(newStore);
-  
-  return getPersistentState(NewState);
+
+  ProgramStateRef Result = getPersistentState(NewState);
+  return ConstraintMgr->removeDeadBindings(Result, SymReaper);
 }
 
 ProgramStateRef ProgramState::bindCompoundLiteral(const CompoundLiteralExpr *CL,
@@ -686,7 +687,9 @@ bool ProgramState::isTainted(SymbolRef Sym, TaintTagType Kind) const {
   bool Tainted = false;
   for (SymExpr::symbol_iterator SI = Sym->symbol_begin(), SE =Sym->symbol_end();
        SI != SE; ++SI) {
-    assert(isa<SymbolData>(*SI));
+    if (!isa<SymbolData>(*SI))
+      continue;
+    
     const TaintTagType *Tag = get<TaintMap>(*SI);
     Tainted = (Tag && *Tag == Kind);
 
