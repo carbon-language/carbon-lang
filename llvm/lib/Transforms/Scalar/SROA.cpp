@@ -202,11 +202,11 @@ public:
   use_iterator use_begin(const_iterator I) { return Uses[I - begin()].begin(); }
   use_iterator use_end(unsigned Idx) { return Uses[Idx].end(); }
   use_iterator use_end(const_iterator I) { return Uses[I - begin()].end(); }
-  void use_insert(unsigned Idx, use_iterator UI, const PartitionUse &U) {
-    Uses[Idx].insert(UI, U);
+  void use_push_back(unsigned Idx, const PartitionUse &U) {
+    Uses[Idx].push_back(U);
   }
-  void use_insert(const_iterator I, use_iterator UI, const PartitionUse &U) {
-    Uses[I - begin()].insert(UI, U);
+  void use_push_back(const_iterator I, const PartitionUse &U) {
+    Uses[I - begin()].push_back(U);
   }
   void use_erase(unsigned Idx, use_iterator UI) { Uses[Idx].erase(UI); }
   void use_erase(const_iterator I, use_iterator UI) {
@@ -853,7 +853,7 @@ private:
       PartitionUse NewUse(std::max(I->BeginOffset, BeginOffset),
                           std::min(I->EndOffset, EndOffset),
                           &User, cast<Instruction>(*U));
-      P.Uses[I - P.begin()].push_back(NewUse);
+      P.use_push_back(I, NewUse);
       if (isa<PHINode>(U->getUser()) || isa<SelectInst>(U->getUser()))
         P.PHIOrSelectOpMap[std::make_pair(&User, U->get())]
           = std::make_pair(I - P.begin(), P.Uses[I - P.begin()].size() - 1);
@@ -1102,8 +1102,6 @@ AllocaPartitioning::AllocaPartitioning(const TargetData &TD, AllocaInst &AI)
   Uses.resize(Partitions.size());
   UseBuilder UB(TD, AI, *this);
   UB();
-  for (iterator I = Partitions.begin(), E = Partitions.end(); I != E; ++I)
-    std::stable_sort(use_begin(I), use_end(I));
 }
 
 Type *AllocaPartitioning::getCommonType(iterator I) const {
@@ -2460,8 +2458,7 @@ private:
         else {
           AllocaPartitioning::PartitionUse OtherUse = *UI;
           OtherUse.User = Load;
-          P.use_insert(PI, std::upper_bound(UI, P.use_end(PI), OtherUse),
-                       OtherUse);
+          P.use_push_back(PI, OtherUse);
         }
       }
     }
@@ -2559,7 +2556,7 @@ private:
         LoadInst *OtherLoad = IsTrueVal ? FL : TL;
         assert(OtherUse.Ptr == OtherLoad->getOperand(0));
         OtherUse.User = OtherLoad;
-        P.use_insert(PI, P.use_end(PI), OtherUse);
+        P.use_push_back(PI, OtherUse);
       }
 
       // Transfer alignment and TBAA info if present.
@@ -2576,8 +2573,6 @@ private:
       LI->replaceAllUsesWith(V);
       Pass.DeadInsts.push_back(LI);
     }
-    if (PI != P.end())
-      std::stable_sort(P.use_begin(PI), P.use_end(PI));
 
     deleteIfTriviallyDead(OldPtr);
     return NewPtr == &NewAI;
