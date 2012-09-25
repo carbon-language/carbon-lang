@@ -2272,8 +2272,9 @@ private:
                                     getName(".insert"));
     }
 
-    Value *Store = IRB.CreateStore(Src, DstPtr, II.isVolatile());
-    (void)Store;
+    StoreInst *Store = cast<StoreInst>(IRB.CreateStore(Src, DstPtr,
+                                                       II.isVolatile()));
+    Store->setAlignment(II.getAlignment());
     DEBUG(dbgs() << "          to: " << *Store << "\n");
     return !II.isVolatile();
   }
