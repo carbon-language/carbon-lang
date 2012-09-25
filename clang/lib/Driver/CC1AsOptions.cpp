@@ -18,7 +18,7 @@ using namespace clang::driver::cc1asoptions;
 static const OptTable::Info CC1AsInfoTable[] = {
 #define OPTION(NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
                HELPTEXT, METAVAR)   \
-  { NAME, HELPTEXT, METAVAR, Option::KIND##Class, PARAM, FLAGS, \
+  { NAME, HELPTEXT, METAVAR, OPT_##ID, Option::KIND##Class, PARAM, FLAGS, \
     OPT_##GROUP, OPT_##ALIAS },
 #include "clang/Driver/CC1AsOptions.inc"
 };

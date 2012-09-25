@@ -34,6 +34,7 @@ namespace driver {
       const char *Name;
       const char *HelpText;
       const char *MetaVar;
+      unsigned ID;
       unsigned char Kind;
       unsigned char Param;
       unsigned short Flags;

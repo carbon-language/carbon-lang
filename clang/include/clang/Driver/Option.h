@@ -71,9 +71,6 @@ namespace options {
   private:
     const OptTable::Info *Info;
 
-    /// The option ID.
-    OptSpecifier ID;
-
     /// Group this option is a member of, if any.
     const Option *Group;
 
@@ -81,11 +78,11 @@ namespace options {
     const Option *Alias;
 
   public:
-    Option(const OptTable::Info *Info, OptSpecifier ID,
+    Option(const OptTable::Info *Info,
            const Option *Group, const Option *Alias);
     ~Option();
 
-    unsigned getID() const { return ID.getID(); }
+    unsigned getID() const { return Info->ID; }
     OptionClass getKind() const { return OptionClass(Info->Kind); }
     StringRef getName() const { return Info->Name; }
     const Option *getGroup() const { return Group; }

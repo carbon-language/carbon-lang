@@ -138,7 +138,7 @@ Option *OptTable::CreateOption(unsigned id) const {
   const Option *Group = getOption(info.GroupID);
   const Option *Alias = getOption(info.AliasID);
 
-  Option *Opt = new Option(&info, id, Group, Alias);
+  Option *Opt = new Option(&info, Group, Alias);
 
   return Opt;
 }

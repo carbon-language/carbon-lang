@@ -17,9 +17,9 @@
 #include <algorithm>
 using namespace clang::driver;
 
-Option::Option(const OptTable::Info *info, OptSpecifier _ID,
+Option::Option(const OptTable::Info *info,
                const Option *_Group, const Option *_Alias)
-  : Info(info), ID(_ID.getID()), Group(_Group), Alias(_Alias) {
+  : Info(info), Group(_Group), Alias(_Alias) {
 
   // Multi-level aliases are not supported, and alias options cannot
   // have groups. This just simplifies option tracking, it is not an
@@ -72,7 +72,7 @@ bool Option::matches(OptSpecifier Opt) const {
     return Alias->matches(Opt);
 
   // Check exact match.
-  if (ID == Opt)
+  if (getID() == Opt.getID())
     return true;
 
   if (Group)
