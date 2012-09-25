@@ -226,6 +226,9 @@ public:
     lldb::StopInfoSP
     GetStopInfo ();
 
+    lldb::StopReason
+    GetStopReason();
+
     // This sets the stop reason to a "blank" stop reason, so you can call functions on the thread
     // without having the called function run with whatever stop reason you stopped with.
     void
@@ -721,6 +724,27 @@ public:
     virtual lldb::StopInfoSP
     GetPrivateStopReason () = 0;
 
+    //----------------------------------------------------------------------
+    // Gets the temporary resume state for a thread.
+    //
+    // This value gets set in each thread by complex debugger logic in
+    // Thread::WillResume() and an appropriate thread resume state will get
+    // set in each thread every time the process is resumed prior to calling
+    // Process::DoResume(). The lldb_private::Process subclass should adhere
+    // to the thread resume state request which will be one of:
+    //
+    //  eStateRunning   - thread will resume when process is resumed
+    //  eStateStepping  - thread should step 1 instruction and stop when process
+    //                    is resumed
+    //  eStateSuspended - thread should not execute any instructions when
+    //                    process is resumed
+    //----------------------------------------------------------------------
+    lldb::StateType
+    GetTemporaryResumeState() const
+    {
+        return m_temporary_resume_state;
+    }
+
 protected:
 
     friend class ThreadPlan;
@@ -763,18 +787,6 @@ protected:
 
     lldb::StackFrameListSP
     GetStackFrameList ();
-    
-    lldb::StateType GetTemporaryResumeState()
-    {
-        return m_temporary_resume_state;
-    }
-    
-    lldb::StateType SetTemporaryResumeState(lldb::StateType resume_state)
-    {
-        lldb::StateType old_temp_resume_state = m_temporary_resume_state;
-        m_temporary_resume_state = resume_state;
-        return old_temp_resume_state;
-    }
     
     struct ThreadState
     {

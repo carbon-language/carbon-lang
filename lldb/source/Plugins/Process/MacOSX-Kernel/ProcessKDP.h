@@ -129,13 +129,13 @@ public:
     DoHalt (bool &caused_stop);
     
     virtual lldb_private::Error
-    WillDetach ();
-    
-    virtual lldb_private::Error
     DoDetach ();
     
     virtual lldb_private::Error
     DoSignal (int signal);
+    
+    virtual lldb_private::Error
+    WillDestroy ();
     
     virtual lldb_private::Error
     DoDestroy ();
@@ -241,11 +241,9 @@ protected:
         eBroadcastBitAsyncThreadShouldExit          = (1 << 1)
     };
     
-
-    lldb_private::Error
-    InterruptIfRunning (bool discard_thread_plans,
-                        bool catch_stop_event,
-                        lldb::EventSP &stop_event_sp);
+    lldb::ThreadSP
+    GetKernelThread (lldb_private::ThreadList &old_thread_list,
+                     lldb_private::ThreadList &new_thread_list);
 
     //------------------------------------------------------------------
     /// Broadcaster event bits definitions.
@@ -253,6 +251,7 @@ protected:
     CommunicationKDP m_comm;
     lldb_private::Broadcaster m_async_broadcaster;
     lldb::thread_t m_async_thread;
+    bool m_destroy_in_process;
 
     bool
     StartAsyncThread ();

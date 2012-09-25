@@ -104,9 +104,7 @@ SBThread::GetStopReason()
         Process::StopLocker stop_locker;
         if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            StopInfoSP stop_info_sp = exe_ctx.GetThreadPtr()->GetStopInfo ();
-            if (stop_info_sp)
-                reason =  stop_info_sp->GetStopReason();
+            return exe_ctx.GetThreadPtr()->GetStopReason();
         }
         else
         {

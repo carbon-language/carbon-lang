@@ -28,7 +28,6 @@
 #include "ProcessKDP.h"
 #include "ProcessKDPLog.h"
 #include "ThreadKDP.h"
-#include "StopInfoMachException.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -102,7 +101,8 @@ ProcessKDP::ProcessKDP(Target& target, Listener &listener) :
     Process (target, listener),
     m_comm("lldb.process.kdp-remote.communication"),
     m_async_broadcaster (NULL, "lldb.process.kdp-remote.async-broadcaster"),
-    m_async_thread (LLDB_INVALID_HOST_THREAD)
+    m_async_thread (LLDB_INVALID_HOST_THREAD),
+    m_destroy_in_process (false)
 {
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncThreadShouldExit,   "async thread should exit");
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncContinue,           "async thread continue");
@@ -214,6 +214,8 @@ ProcessKDP::DoConnectRemote (const char *remote_url)
                     ArchSpec kernel_arch;
                     kernel_arch.SetArchitecture(eArchTypeMachO, cpu, sub);
                     m_target.SetArchitecture(kernel_arch);
+                    // Set the thread ID
+                    UpdateThreadListIfNeeded ();
                     SetID (1);
                     GetThreadList ();
                     SetPrivateState (eStateStopped);
@@ -233,10 +235,16 @@ ProcessKDP::DoConnectRemote (const char *remote_url)
 //                      }            
                     }
                 }
+                else
+                {
+                    puts ("KDP_CONNECT failed"); // REMOVE THIS
+                    error.SetErrorString("KDP_REATTACH failed");
+                }
             }
             else
             {
-                error.SetErrorString("KDP reattach failed");
+                puts ("KDP_REATTACH failed"); // REMOVE THIS
+                error.SetErrorString("KDP_REATTACH failed");
             }
         }
         else
@@ -320,42 +328,46 @@ ProcessKDP::DoResume ()
     if (!IS_VALID_LLDB_HOST_THREAD(m_async_thread))
         StartAsyncThread ();
 
-    const uint32_t num_threads = m_thread_list.GetSize();
-    uint32_t resume_cpu_mask = 0;
+    bool resume = false;
     
-    for (uint32_t idx = 0; idx < num_threads; ++idx)
+    // With KDP there is only one thread we can tell what to do
+    ThreadSP kernel_thread_sp (GetKernelThread(m_thread_list, m_thread_list));
+    if (kernel_thread_sp)
     {
-        ThreadSP thread_sp (m_thread_list.GetThreadAtIndex(idx));
-        const StateType thread_resume_state = thread_sp->GetState();
+        const StateType thread_resume_state = kernel_thread_sp->GetTemporaryResumeState();
         switch (thread_resume_state)
         {
-            case eStateStopped:
             case eStateSuspended:
                 // Nothing to do here when a thread will stay suspended
                 // we just leave the CPU mask bit set to zero for the thread
+                puts("REMOVE THIS: ProcessKDP::DoResume () -- thread suspended");
                 break;
                 
             case eStateStepping:
+                puts("REMOVE THIS: ProcessKDP::DoResume () -- thread stepping");
+                kernel_thread_sp->GetRegisterContext()->HardwareSingleStep (true);
+                resume = true;
+                break;
+    
             case eStateRunning:
-                thread_sp->GetRegisterContext()->HardwareSingleStep (thread_resume_state == eStateStepping);
-                // Thread ID is the bit we need for the CPU mask
-                resume_cpu_mask |= thread_sp->GetID();
+                puts("REMOVE THIS: ProcessKDP::DoResume () -- thread running");
+                kernel_thread_sp->GetRegisterContext()->HardwareSingleStep (false);
+                resume = true;
                 break;
-                
-                break;
-                
+
             default:
+                // The only valid thread resume states are listed above
                 assert (!"invalid thread resume state");
                 break;
         }
     }
-    if (log)
-        log->Printf ("ProcessKDP::DoResume () sending resume with cpu_mask = 0x%8.8x",
-                     resume_cpu_mask);
-    if (resume_cpu_mask)
+
+    if (resume)
     {
+        if (log)
+            log->Printf ("ProcessKDP::DoResume () sending resume");
         
-        if (m_comm.SendRequestResume (resume_cpu_mask))
+        if (m_comm.SendRequestResume ())
         {
             m_async_broadcaster.BroadcastEvent (eBroadcastBitAsyncContinue);
             SetPrivateState(eStateRunning);
@@ -365,11 +377,29 @@ ProcessKDP::DoResume ()
     }
     else
     {
-        error.SetErrorString ("all threads suspended");        
+        error.SetErrorString ("kernel thread is suspended");        
     }
     
     return error;
 }
+
+lldb::ThreadSP
+ProcessKDP::GetKernelThread(ThreadList &old_thread_list, ThreadList &new_thread_list)
+{
+    // KDP only tells us about one thread/core. Any other threads will usually
+    // be the ones that are read from memory by the OS plug-ins.
+    const lldb::tid_t kernel_tid = 1;
+    ThreadSP thread_sp (old_thread_list.FindThreadByID (kernel_tid, false));
+    if (!thread_sp)
+    {
+        thread_sp.reset(new ThreadKDP (shared_from_this(), kernel_tid));
+        new_thread_list.AddThread(thread_sp);
+    }
+    return thread_sp;
+}
+
+
+
 
 bool
 ProcessKDP::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_thread_list)
@@ -379,20 +409,10 @@ ProcessKDP::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_threa
     if (log && log->GetMask().Test(KDP_LOG_VERBOSE))
         log->Printf ("ProcessKDP::%s (pid = %llu)", __FUNCTION__, GetID());
     
-    // We currently are making only one thread per core and we
-    // actually don't know about actual threads. Eventually we
-    // want to get the thread list from memory and note which
-    // threads are on CPU as those are the only ones that we 
-    // will be able to resume.
-    const uint32_t cpu_mask = m_comm.GetCPUMask();
-    for (uint32_t cpu_mask_bit = 1; cpu_mask_bit & cpu_mask; cpu_mask_bit <<= 1)
-    {
-        lldb::tid_t tid = cpu_mask_bit;
-        ThreadSP thread_sp (old_thread_list.FindThreadByID (tid, false));
-        if (!thread_sp)
-            thread_sp.reset(new ThreadKDP (shared_from_this(), tid));
-        new_thread_list.AddThread(thread_sp);
-    }
+    // Even though there is a CPU mask, it doesn't mean to can see each CPU
+    // indivudually, there is really only one. Lets call this thread 1.
+    GetKernelThread (old_thread_list, new_thread_list);
+
     return new_thread_list.GetSize(false) > 0;
 }
 
@@ -409,109 +429,21 @@ ProcessKDP::DoHalt (bool &caused_stop)
 {
     Error error;
     
-//    bool timed_out = false;
-    Mutex::Locker locker;
-    
-    if (m_public_state.GetValue() == eStateAttaching)
+    if (m_comm.IsRunning())
     {
-        // We are being asked to halt during an attach. We need to just close
-        // our file handle and debugserver will go away, and we can be done...
-        m_comm.Disconnect();
-    }
-    else
-    {
-        if (!m_comm.SendRequestSuspend ())
-            error.SetErrorString ("KDP halt failed");
-    }
-    return error;
-}
-
-Error
-ProcessKDP::InterruptIfRunning (bool discard_thread_plans,
-                                bool catch_stop_event,
-                                EventSP &stop_event_sp)
-{
-    Error error;
-    
-    LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet(KDP_LOG_PROCESS));
-    
-    bool paused_private_state_thread = false;
-    const bool is_running = m_comm.IsRunning();
-    if (log)
-        log->Printf ("ProcessKDP::InterruptIfRunning(discard_thread_plans=%i, catch_stop_event=%i) is_running=%i", 
-                     discard_thread_plans, 
-                     catch_stop_event,
-                     is_running);
-    
-    if (discard_thread_plans)
-    {
-        if (log)
-            log->Printf ("ProcessKDP::InterruptIfRunning() discarding all thread plans");
-        m_thread_list.DiscardThreadPlans();
-    }
-    if (is_running)
-    {
-        if (catch_stop_event)
+        if (m_destroy_in_process)
         {
-            if (log)
-                log->Printf ("ProcessKDP::InterruptIfRunning() pausing private state thread");
-            PausePrivateStateThread();
-            paused_private_state_thread = true;
+            // If we are attemping to destroy, we need to not return an error to
+            // Halt or DoDestroy won't get called.
+            // We are also currently running, so send a process stopped event
+            SetPrivateState (eStateStopped);
         }
-        
-        bool timed_out = false;
-//        bool sent_interrupt = false;
-        Mutex::Locker locker;
-
-        // TODO: implement halt in CommunicationKDP
-//        if (!m_comm.SendInterrupt (locker, 1, sent_interrupt, timed_out))
-//        {
-//            if (timed_out)
-//                error.SetErrorString("timed out sending interrupt packet");
-//            else
-//                error.SetErrorString("unknown error sending interrupt packet");
-//            if (paused_private_state_thread)
-//                ResumePrivateStateThread();
-//            return error;
-//        }
-        
-        if (catch_stop_event)
+        else
         {
-            // LISTEN HERE
-            TimeValue timeout_time;
-            timeout_time = TimeValue::Now();
-            timeout_time.OffsetWithSeconds(5);
-            StateType state = WaitForStateChangedEventsPrivate (&timeout_time, stop_event_sp);
-            
-            timed_out = state == eStateInvalid;
-            if (log)
-                log->Printf ("ProcessKDP::InterruptIfRunning() catch stop event: state = %s, timed-out=%i", StateAsCString(state), timed_out);
-            
-            if (timed_out)
-                error.SetErrorString("unable to verify target stopped");
-        }
-        
-        if (paused_private_state_thread)
-        {
-            if (log)
-                log->Printf ("ProcessKDP::InterruptIfRunning() resuming private state thread");
-            ResumePrivateStateThread();
+            error.SetErrorString ("KDP cannot interrupt a running kernel");
         }
     }
     return error;
-}
-
-Error
-ProcessKDP::WillDetach ()
-{
-    LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet(KDP_LOG_PROCESS));
-    if (log)
-        log->Printf ("ProcessKDP::WillDetach()");
-    
-    bool discard_thread_plans = true; 
-    bool catch_stop_event = true;
-    EventSP event_sp;
-    return InterruptIfRunning (discard_thread_plans, catch_stop_event, event_sp);
 }
 
 Error
@@ -522,33 +454,47 @@ ProcessKDP::DoDetach()
     if (log)
         log->Printf ("ProcessKDP::DoDetach()");
     
-    DisableAllBreakpointSites ();
-    
-    m_thread_list.DiscardThreadPlans();
-    
-    if (m_comm.IsConnected())
+    if (m_comm.IsRunning())
     {
-
-        m_comm.SendRequestDisconnect();
-
-        size_t response_size = m_comm.Disconnect ();
-        if (log)
+        // We are running and we can't interrupt a running kernel, so we need
+        // to just close the connection to the kernel and hope for the best
+    }
+    else
+    {
+        DisableAllBreakpointSites ();
+        
+        m_thread_list.DiscardThreadPlans();
+        
+        if (m_comm.IsConnected())
         {
-            if (response_size)
-                log->PutCString ("ProcessKDP::DoDetach() detach packet sent successfully");
-            else
-                log->PutCString ("ProcessKDP::DoDetach() detach packet send failed");
+
+            m_comm.SendRequestDisconnect();
+
+            size_t response_size = m_comm.Disconnect ();
+            if (log)
+            {
+                if (response_size)
+                    log->PutCString ("ProcessKDP::DoDetach() detach packet sent successfully");
+                else
+                    log->PutCString ("ProcessKDP::DoDetach() detach packet send failed");
+            }
         }
     }
-    // Sleep for one second to let the process get all detached...
-    StopAsyncThread ();
-    
+    StopAsyncThread ();    
     m_comm.Clear();
     
     SetPrivateState (eStateDetached);
     ResumePrivateStateThread();
     
     //KillDebugserverProcess ();
+    return error;
+}
+
+Error
+ProcessKDP::WillDestroy ()
+{
+    Error error;
+    m_destroy_in_process = true;
     return error;
 }
 
@@ -639,10 +585,18 @@ ProcessKDP::DisableBreakpoint (BreakpointSite *bp_site)
             BreakpointSite::Type bp_type = bp_site->GetType();
             if (bp_type == BreakpointSite::eExternal)
             {
-                if (m_comm.SendRequestBreakpoint(false, bp_site->GetLoadAddress()))
+                if (m_destroy_in_process && m_comm.IsRunning())
+                {
+                    // We are trying to destroy our connection and we are running
                     bp_site->SetEnabled(false);
+                }
                 else
-                    error.SetErrorString ("KDP remove breakpoint failed");
+                {
+                    if (m_comm.SendRequestBreakpoint(false, bp_site->GetLoadAddress()))
+                        bp_site->SetEnabled(false);
+                    else
+                        error.SetErrorString ("KDP remove breakpoint failed");
+                }
             }
             else
             {
@@ -787,8 +741,12 @@ ProcessKDP::AsyncThread (void *arg)
                             is_running = true;
                             if (process->m_comm.WaitForPacketWithTimeoutMicroSeconds (exc_reply_packet, 1 * USEC_PER_SEC))
                             {
+                                ThreadSP thread_sp (process->GetKernelThread(process->GetThreadList(), process->GetThreadList()));
+                                thread_sp->GetRegisterContext()->InvalidateAllRegisters();
+                                static_cast<ThreadKDP *>(thread_sp.get())->SetStopInfoFrom_KDP_EXCEPTION (exc_reply_packet);
+
                                 // TODO: parse the stop reply packet
-                                is_running = false;
+                                is_running = false;                                
                                 process->SetPrivateState(eStateStopped);
                             }
                             else

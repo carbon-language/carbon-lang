@@ -204,6 +204,17 @@ Thread::GetStopInfo ()
     }
 }
 
+lldb::StopReason
+Thread::GetStopReason()
+{
+    lldb::StopInfoSP stop_info_sp (GetStopInfo ());
+    if (stop_info_sp)
+        stop_info_sp->GetStopReason();
+    return eStopReasonNone;
+}
+
+
+
 void
 Thread::SetStopInfo (const lldb::StopInfoSP &stop_info_sp)
 {
@@ -332,7 +343,7 @@ Thread::WillResume (StateType resume_state)
     m_completed_plan_stack.clear();
     m_discarded_plan_stack.clear();
 
-    SetTemporaryResumeState(resume_state);
+    m_temporary_resume_state = resume_state;
     
     // This is a little dubious, but we are trying to limit how often we actually fetch stop info from
     // the target, 'cause that slows down single stepping.  So assume that if we got to the point where

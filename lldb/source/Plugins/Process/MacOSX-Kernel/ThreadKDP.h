@@ -79,6 +79,9 @@ public:
     {
         m_thread_dispatch_qaddr = thread_dispatch_qaddr;
     }
+    
+    void
+    SetStopInfoFrom_KDP_EXCEPTION (const lldb_private::DataExtractor &exc_reply_packet);
 
 protected:
     
@@ -90,6 +93,7 @@ protected:
     std::string m_thread_name;
     std::string m_dispatch_queue_name;
     lldb::addr_t m_thread_dispatch_qaddr;
+    lldb::StopInfoSP m_cached_stop_info_sp;
     //------------------------------------------------------------------
     // Member variables.
     //------------------------------------------------------------------

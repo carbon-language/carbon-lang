@@ -111,7 +111,7 @@ public:
     bool
     IsRunning() const
     {
-        return m_public_is_running.GetValue();
+        return m_is_running.GetValue();
     }
 
     //------------------------------------------------------------------
@@ -213,9 +213,8 @@ public:
     uint32_t
     GetCPUSubtype ();
 
-    // If cpu_mask is zero, then we will resume all CPUs
     bool
-    SendRequestResume (uint32_t cpu_mask = 0);
+    SendRequestResume ();
 
     bool
     SendRequestSuspend ();
@@ -310,8 +309,7 @@ protected:
     lldb::ByteOrder m_byte_order;
     uint32_t m_packet_timeout;
     lldb_private::Mutex m_sequence_mutex;    // Restrict access to sending/receiving packets to a single thread at a time
-    lldb_private::Predicate<bool> m_public_is_running;
-    lldb_private::Predicate<bool> m_private_is_running;
+    lldb_private::Predicate<bool> m_is_running;
     uint32_t m_session_key;
     uint8_t m_request_sequence_id;
     uint8_t m_exception_sequence_id;
