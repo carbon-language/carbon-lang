@@ -1625,16 +1625,20 @@ MatchInstruction(SMLoc IDLoc, unsigned &Kind,
   unsigned Match1, Match2, Match3, Match4;
   unsigned tKind;
 
-  Match1 = MatchInstructionImpl(Operands, tKind, Inst, ErrorInfoIgnore);
+  Match1 = MatchInstructionImpl(Operands, tKind, Inst, ErrorInfoIgnore,
+                                isParsingIntelSyntax());
   if (Match1 == Match_Success) Kind = tKind;
   Tmp[Base.size()] = Suffixes[1];
-  Match2 = MatchInstructionImpl(Operands, tKind, Inst, ErrorInfoIgnore);
+  Match2 = MatchInstructionImpl(Operands, tKind, Inst, ErrorInfoIgnore,
+                                isParsingIntelSyntax());
   if (Match2 == Match_Success) Kind = tKind;
   Tmp[Base.size()] = Suffixes[2];
-  Match3 = MatchInstructionImpl(Operands, tKind, Inst, ErrorInfoIgnore);
+  Match3 = MatchInstructionImpl(Operands, tKind, Inst, ErrorInfoIgnore,
+                                isParsingIntelSyntax());
   if (Match3 == Match_Success) Kind = tKind;
   Tmp[Base.size()] = Suffixes[3];
-  Match4 = MatchInstructionImpl(Operands, tKind, Inst, ErrorInfoIgnore);
+  Match4 = MatchInstructionImpl(Operands, tKind, Inst, ErrorInfoIgnore,
+                                isParsingIntelSyntax());
   if (Match4 == Match_Success) Kind = tKind;
 
   // Restore the old token.
