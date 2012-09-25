@@ -453,14 +453,19 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned &origParentScope)
       BuildScopeInformation(AS->getSubStmt(), (newParentScope = Scopes.size()-1));
       continue;
     }
-    
-    if (const BlockExpr *BE = dyn_cast<BlockExpr>(SubStmt)) {
-        const BlockDecl *BDecl = BE->getBlockDecl();
+
+    // Disallow jumps past full-expressions that use blocks with
+    // non-trivial cleanups of their captures.  This is theoretically
+    // implementable but a lot of work which we haven't felt up to doing.
+    if (ExprWithCleanups *EWC = dyn_cast<ExprWithCleanups>(SubStmt)) {
+      for (unsigned i = 0, e = EWC->getNumObjects(); i != e; ++i) {
+        const BlockDecl *BDecl = EWC->getObject(i);
         for (BlockDecl::capture_const_iterator ci = BDecl->capture_begin(),
              ce = BDecl->capture_end(); ci != ce; ++ci) {
           VarDecl *variable = ci->getVariable();
           BuildScopeInformation(variable, BDecl, ParentScope);
         }
+      }
     }
     
     // Recursively walk the AST.

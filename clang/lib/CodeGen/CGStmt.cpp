@@ -743,6 +743,17 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
   // Emit the result value, even if unused, to evalute the side effects.
   const Expr *RV = S.getRetValue();
 
+  // Treat block literals in a return expression as if they appeared
+  // in their own scope.  This permits a small, easily-implemented
+  // exception to our over-conservative rules about not jumping to
+  // statements following block literals with non-trivial cleanups.
+  RunCleanupsScope cleanupScope(*this);
+  if (const ExprWithCleanups *cleanups =
+        dyn_cast_or_null<ExprWithCleanups>(RV)) {
+    enterFullExpression(cleanups);
+    RV = cleanups->getSubExpr();
+  }
+
   // FIXME: Clean this up by using an LValue for ReturnTemp,
   // EmitStoreThroughLValue, and EmitAnyExpr.
   if (S.getNRVOCandidate() && S.getNRVOCandidate()->isNRVOVariable() &&
@@ -779,6 +790,7 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
                                           AggValueSlot::IsNotAliased));
   }
 
+  cleanupScope.ForceCleanup();
   EmitBranchThroughCleanup(ReturnBlock);
 }
 

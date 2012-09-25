@@ -365,6 +365,7 @@ namespace test7 {
     // CHECK-NEXT: invoke void @_ZN5test71BC1ERKNS_1AEPS0_(
     // CHECK:      store i1 false, i1* [[OUTER_NEW]]
     // CHECK:      phi
+    // CHECK-NEXT: store [[B]]*
 
     // Destroy the inner A object.
     // CHECK-NEXT: load i1* [[INNER_A]]
