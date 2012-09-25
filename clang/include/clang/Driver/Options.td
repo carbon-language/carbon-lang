@@ -725,7 +725,7 @@ def index_header_map : Flag<"-index-header-map">, Flags<[CC1Option]>,
   HelpText<"Make the next included directory (-I or -F) an indexer header map">;
 def idirafter : JoinedOrSeparate<"-idirafter">, Group<clang_i_Group>, Flags<[CC1Option]>,
   HelpText<"Add directory to AFTER include search path">;
-def iframework : Joined<"-iframework">, Group<clang_i_Group>, Flags<[CC1Option]>,
+def iframework : JoinedOrSeparate<"-iframework">, Group<clang_i_Group>, Flags<[CC1Option]>,
   HelpText<"Add directory to SYSTEM framework search path">;
 def imacros : JoinedOrSeparate<"-imacros">, Group<clang_i_Group>, Flags<[CC1Option]>,
   HelpText<"Include macros from file before parsing">, MetaVarName<"<file>">;
