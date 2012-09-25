@@ -1,6 +1,4 @@
-; RUN: llc < %s | FileCheck %s
-target datalayout = "e-p:64:64:64-S128-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f16:16:16-f32:32:32-f64:64:64-f128:128:128-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
-target triple = "x86_64-apple-darwin11.4.0"
+; RUN: llc -mtriple=x86_64-apple-macosx -mcpu=core2 < %s | FileCheck %s
 
 declare i64 @testi()
 
@@ -132,3 +130,28 @@ entry:
   %call = tail call i32 (i8*, ...)* %0(i8* null, i32 0, i32 0, i32 0, i32 0, i32 0) nounwind
   ret i32 %call
 }
+
+define x86_fp80 @fp80_call(x86_fp80 %x) nounwind  {
+entry:
+; CHECK: fp80_call:
+; CHECK: jmp _fp80_callee
+  %call = tail call x86_fp80 @fp80_callee(x86_fp80 %x) nounwind
+  ret x86_fp80 %call
+}
+
+declare x86_fp80 @fp80_callee(x86_fp80)
+
+; rdar://12229511
+define x86_fp80 @trunc_fp80(x86_fp80 %x) nounwind  {
+entry:
+; CHECK: trunc_fp80
+; CHECK: callq _trunc
+; CHECK-NOT: jmp _trunc
+; CHECK: ret
+  %conv = fptrunc x86_fp80 %x to double
+  %call = tail call double @trunc(double %conv) nounwind readnone
+  %conv1 = fpext double %call to x86_fp80
+  ret x86_fp80 %conv1
+}
+
+declare double @trunc(double) nounwind readnone
