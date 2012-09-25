@@ -522,8 +522,10 @@ private:
 
   void insertUse(Instruction &I, int64_t Offset, uint64_t Size,
                  bool IsSplittable = false) {
-    // Completely skip uses which don't overlap the allocation.
-    if ((Offset >= 0 && (uint64_t)Offset >= AllocSize) ||
+    // Completely skip uses which have a zero size or don't overlap the
+    // allocation.
+    if (Size == 0 ||
+        (Offset >= 0 && (uint64_t)Offset >= AllocSize) ||
         (Offset < 0 && (uint64_t)-Offset >= Size)) {
       DEBUG(dbgs() << "WARNING: Ignoring " << Size << " byte use @" << Offset
                    << " which starts past the end of the " << AllocSize
@@ -697,6 +699,9 @@ private:
     SmallVector<std::pair<Instruction *, Instruction *>, 4> Uses;
     Visited.insert(Root);
     Uses.push_back(std::make_pair(cast<Instruction>(*U), Root));
+    // If there are no loads or stores, the access is dead. We mark that as
+    // a size zero access.
+    Size = 0;
     do {
       Instruction *I, *UsedI;
       llvm::tie(UsedI, I) = Uses.pop_back_val();
@@ -824,9 +829,9 @@ private:
   }
 
   void insertUse(Instruction &User, int64_t Offset, uint64_t Size) {
-    // If the use extends outside of the allocation, record it as a dead use
-    // for elimination later.
-    if ((uint64_t)Offset >= AllocSize ||
+    // If the use has a zero size or extends outside of the allocation, record
+    // it as a dead use for elimination later.
+    if (Size == 0 || (uint64_t)Offset >= AllocSize ||
         (Offset < 0 && (uint64_t)-Offset >= Size))
       return markAsDead(User);
 

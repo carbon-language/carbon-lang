@@ -327,3 +327,48 @@ exit:
   %load = load i32* %a
   ret i32 %load
 }
+
+define i32 @PR13905() {
+; Check a pattern where we have a chain of dead phi nodes to ensure they are
+; deleted and promotion can proceed.
+; CHECK: @PR13905
+; CHECK-NOT: alloca i32
+; CHECK: ret i32 undef
+
+entry:
+  %h = alloca i32
+  store i32 0, i32* %h
+  br i1 undef, label %loop1, label %exit
+
+loop1:
+  %phi1 = phi i32* [ null, %entry ], [ %h, %loop1 ], [ %h, %loop2 ]
+  br i1 undef, label %loop1, label %loop2
+
+loop2:
+  br i1 undef, label %loop1, label %exit
+
+exit:
+  %phi2 = phi i32* [ %phi1, %loop2 ], [ null, %entry ]
+  ret i32 undef
+}
+
+define i32 @PR13906() {
+; Another pattern which can lead to crashes due to failing to clear out dead
+; PHI nodes or select nodes. This triggers subtly differently from the above
+; cases because the PHI node is (recursively) alive, but the select is dead.
+; CHECK: @PR13906
+; CHECK-NOT: alloca
+
+entry:
+  %c = alloca i32
+  store i32 0, i32* %c
+  br label %for.cond
+
+for.cond:
+  %d.0 = phi i32* [ undef, %entry ], [ %c, %if.then ], [ %d.0, %for.cond ]
+  br i1 undef, label %if.then, label %for.cond
+
+if.then:
+  %tmpcast.d.0 = select i1 undef, i32* %c, i32* %d.0
+  br label %for.cond
+}
