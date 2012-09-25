@@ -459,9 +459,6 @@ public:
   BasicValueFactory &getBasicVals() {
     return svalBuilder->getBasicValueFactory();
   }
-  const BasicValueFactory& getBasicVals() const {
-    return svalBuilder->getBasicValueFactory();
-  }
 
   SValBuilder &getSValBuilder() {
     return *svalBuilder;

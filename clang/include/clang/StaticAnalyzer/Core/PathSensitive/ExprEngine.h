@@ -260,9 +260,6 @@ public:
   BasicValueFactory& getBasicVals() {
     return StateMgr.getBasicVals();
   }
-  const BasicValueFactory& getBasicVals() const {
-    return StateMgr.getBasicVals();
-  }
 
   // FIXME: Remove when we migrate over to just using ValueManager.
   SymbolManager& getSymbolManager() { return SymMgr; }
