@@ -41,6 +41,12 @@ class ARMMachObjectWriter : public MCMachObjectTargetWriter {
                                         const MCFixup &Fixup, MCValue Target,
                                         uint64_t &FixedValue);
 
+  bool requiresExternRelocation(MachObjectWriter *Writer,
+                                const MCAssembler &Asm,
+                                const MCFragment &Fragment,
+                                unsigned RelocType, const MCSymbolData *SD,
+                                uint64_t FixedValue);
+
 public:
   ARMMachObjectWriter(bool Is64Bit, uint32_t CPUType,
                       uint32_t CPUSubtype)
@@ -305,6 +311,46 @@ void ARMMachObjectWriter::RecordARMScatteredRelocation(MachObjectWriter *Writer,
   Writer->addRelocation(Fragment->getParent(), MRE);
 }
 
+bool ARMMachObjectWriter::requiresExternRelocation(MachObjectWriter *Writer,
+                                                   const MCAssembler &Asm,
+                                                   const MCFragment &Fragment,
+                                                   unsigned RelocType,
+                                                   const MCSymbolData *SD,
+                                                   uint64_t FixedValue) {
+  // Most cases can be identified purely from the symbol.
+  if (Writer->doesSymbolRequireExternRelocation(SD))
+    return true;
+  int64_t Value = (int64_t)FixedValue;  // The displacement is signed.
+  int64_t Range;
+  switch (RelocType) {
+  default:
+    return false;
+  case macho::RIT_ARM_Branch24Bit:
+    // PC pre-adjustment of 8 for these instructions.
+    Value -= 8;
+    // ARM BL/BLX has a 25-bit offset.
+    Range = 0x1ffffff;
+    break;
+  case macho::RIT_ARM_ThumbBranch22Bit:
+    // PC pre-adjustment of 4 for these instructions.
+    Value -= 4;
+    // Thumb BL/BLX has a 24-bit offset.
+    Range = 0xffffff;
+  }
+  // BL/BLX also use external relocations when an internal relocation
+  // would result in the target being out of range. This gives the linker
+  // enough information to generate a branch island.
+  const MCSectionData &SymSD = Asm.getSectionData(
+    SD->getSymbol().getSection());
+  Value += Writer->getSectionAddress(&SymSD);
+  Value -= Writer->getSectionAddress(Fragment.getParent());
+  // If the resultant value would be out of range for an internal relocation,
+  // use an external instead.
+  if (Value > Range || Value < -(Range + 1))
+    return true;
+  return false;
+}
+
 void ARMMachObjectWriter::RecordRelocation(MachObjectWriter *Writer,
                                            const MCAssembler &Asm,
                                            const MCAsmLayout &Layout,
@@ -373,7 +419,8 @@ void ARMMachObjectWriter::RecordRelocation(MachObjectWriter *Writer,
     }
 
     // Check whether we need an external or internal relocation.
-    if (Writer->doesSymbolRequireExternRelocation(SD)) {
+    if (requiresExternRelocation(Writer, Asm, *Fragment, RelocType, SD,
+                                 FixedValue)) {
       IsExtern = 1;
       Index = SD->getIndex();
 
