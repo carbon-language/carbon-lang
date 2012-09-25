@@ -94,16 +94,17 @@ std::string Attributes::getAsString() const {
   return Result;
 }
 
-Attributes Attribute::typeIncompatible(Type *Ty) {
-  Attributes Incompatible = None;
+Attributes Attributes::typeIncompatible(Type *Ty) {
+  Attributes Incompatible = Attribute::None;
   
   if (!Ty->isIntegerTy())
     // Attributes that only apply to integers.
-    Incompatible |= SExt | ZExt;
+    Incompatible |= Attribute::SExt | Attribute::ZExt;
   
   if (!Ty->isPointerTy())
     // Attributes that only apply to pointers.
-    Incompatible |= ByVal | Nest | NoAlias | StructRet | NoCapture;
+    Incompatible |= Attribute::ByVal | Attribute::Nest | Attribute::NoAlias |
+      Attribute::StructRet | Attribute::NoCapture;
   
   return Incompatible;
 }

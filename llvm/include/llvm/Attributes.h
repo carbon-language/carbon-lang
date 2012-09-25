@@ -276,6 +276,9 @@ public:
   Attributes operator ~ () const { return Attributes(~Bits); }
   uint64_t Raw() const { return Bits; }
 
+  /// @brief Which attributes cannot be applied to a type.
+  static Attributes typeIncompatible(Type *Ty);
+
   /// The set of Attributes set in Attributes is converted to a string of
   /// equivalent mnemonics. This is, presumably, for writing out the mnemonics
   /// for the assembly writer.
@@ -320,9 +323,6 @@ const AttrConst MutuallyIncompatible[5] = {
   {ReadNone_i | ReadOnly_i},
   {NoInline_i | AlwaysInline_i}
 };
-
-/// @brief Which attributes cannot be applied to a type.
-Attributes typeIncompatible(Type *Ty);
 
 /// This returns an integer containing an encoding of all the
 /// LLVM attributes found in the given attribute bitset.  Any

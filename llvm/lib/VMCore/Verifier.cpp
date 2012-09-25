@@ -546,7 +546,7 @@ void Verifier::VerifyParameterAttrs(Attributes Attrs, Type *Ty,
             MutI.getAsString() + " are incompatible!", V);
   }
 
-  Attributes TypeI = Attrs & Attribute::typeIncompatible(Ty);
+  Attributes TypeI = Attrs & Attributes::typeIncompatible(Ty);
   Assert1(!TypeI, "Wrong type for attribute " +
           TypeI.getAsString(), V);
 
