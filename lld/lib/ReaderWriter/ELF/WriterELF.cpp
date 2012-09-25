@@ -425,7 +425,20 @@ void SectionChunk<target_endianness, is64Bits>::write(uint8_t *chunkBuffer) {
       continue;
     uint8_t *atomContent = chunkBuffer + std::get<1>(ai);
     std::copy_n(content.data(), contentSize, atomContent);
-    // TODO Apply fixups to file buffer
+
+    for (const Reference *ref : *std::get<0>(ai)){
+      uint32_t offset = ref->offsetInAtom();
+      uint64_t targetAddress = 0;
+
+      if ( ref->target() != nullptr )
+         targetAddress = _writer.addressOfAtom(ref->target());
+
+      uint64_t fixupAddress = _writer.addressOfAtom(std::get<0>(ai)) + offset;
+      _writer.kindHandler()->applyFixup(ref->kind(), ref->addend(),
+                                        &atomContent[offset],
+                                        fixupAddress,
+                                        targetAddress);
+    }
   }
 }
 //
@@ -685,8 +698,9 @@ public:
   typedef object::Elf_Shdr_Impl<target_endianness, is64Bits> Elf_Shdr;
   ELFWriter(const WriterOptionsELF &options);
   virtual error_code writeFile(const lld::File &File, StringRef path);
+  uint64_t addressOfAtom(const Atom *atom);
   ArrayRef<Chunk<target_endianness, is64Bits>*> chunks() { return _chunks; }
-  KindHandler *kindHandler() { return _referenceKindHandler; }
+  KindHandler *kindHandler() { return _referenceKindHandler.get(); }
   
   std::vector<SectionChunk<target_endianness, is64Bits>*> sectionChunks() {
     return _sectionChunks ;
@@ -699,11 +713,18 @@ public:
 private:
   void build(const lld::File &file);
   void createChunks(const lld::File &file);
+  void buildAtomToAddressMap();
   void assignFileOffsets();
   const WriterOptionsELF &_options;
+
+/// \brief AtomToAddress: Is a mapping from an Atom to the address where
+/// it will live in the output file.
+  typedef llvm::DenseMap<const Atom*, uint64_t> AtomToAddress;
+
   ELFStringSectionChunk<target_endianness, is64Bits> *_shstrtable ;
   std::unique_ptr<KindHandler> _referenceKindHandler;
   ELFSectionHeaderChunk<target_endianness, is64Bits> *_sectionHeaderChunk;
+  AtomToAddress _atomToAddress;
   std::vector<Chunk<target_endianness, is64Bits>*> _chunks;
   const DefinedAtom *_entryAtom;
   std::vector<SectionChunk<target_endianness, is64Bits>*> _sectionChunks;
@@ -725,6 +746,7 @@ void ELFWriter<target_endianness, is64Bits>::build(const lld::File &file){
   // Create objects for each chunk.
   createChunks(file);
   assignFileOffsets();
+  buildAtomToAddressMap();
 }
 
 template<support::endianness target_endianness, bool is64Bits>
@@ -794,6 +816,20 @@ void ELFWriter<target_endianness, is64Bits>
   _chunks.push_back(_shstrtable);
 }
 
+template<support::endianness target_endianness, bool is64Bits>
+void ELFWriter<target_endianness, is64Bits>
+              ::buildAtomToAddressMap () {
+
+// _atomToAddress is a DenseMap that maps an atom its file address.
+// std::get<1>(ai) is the offset from the start of the section to the atom.
+  for (auto &chunk : _sectionChunks){
+    for (auto &ai : chunk->atoms() ) {
+      _atomToAddress[std::get<0>(ai)] = chunk->address() + std::get<1>(ai);
+    }
+  }
+  
+
+}
 
 template<support::endianness target_endianness, bool is64Bits>
 void ELFWriter<target_endianness, is64Bits>::assignFileOffsets() {
@@ -844,6 +880,11 @@ error_code ELFWriter<target_endianness, is64Bits>
   return buffer->commit();
 }
 
+template<support::endianness target_endianness, bool is64Bits>
+uint64_t ELFWriter<target_endianness, is64Bits>
+                    ::addressOfAtom(const Atom *atom) {
+  return _atomToAddress[atom];
+}
 } // namespace elf
 
 Writer *createWriterELF(const WriterOptionsELF &options) {
