@@ -389,6 +389,7 @@ def ffast_math : Flag<"-ffast-math">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Enable the *frontend*'s 'fast-math' mode. This has no effect on "
            "optimizations, but provides a preprocessor macro __FAST_MATH__ the "
            "same as GCC's -ffast-math flag.">;
+def fno_fast_math : Flag<"-fno-fast-math">, Group<f_Group>;
 def fmath_errno : Flag<"-fmath-errno">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Require math functions to indicate errors by setting errno">;
 def fno_math_errno : Flag<"-fno-math-errno">, Group<f_Group>;
