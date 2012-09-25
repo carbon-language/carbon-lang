@@ -15,6 +15,7 @@ User Guides
    Packaging
    HowToAddABuilder
    yaml2obj
+   HowToSubmitABug
 
 * `The LLVM Getting Started Guide <GettingStarted.html>`_
     
@@ -59,7 +60,7 @@ User Guides
 
    This describes new features, known bugs, and other limitations.
 
-* `How to Submit A Bug Report <HowToSubmitABug.html>`_
+* :ref:`how-to-submit-a-bug-report`
     
    Instructions for properly submitting information about any bugs you run into
    in the LLVM system.
