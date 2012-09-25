@@ -183,15 +183,15 @@ void Initialize(ThreadState *thr) {
   ctx->dead_list_tail = 0;
   InitializeFlags(&ctx->flags, env);
   InitializeSuppressions();
-  InitializeMemoryProfile();
-  InitializeMemoryFlush();
-
 #ifndef TSAN_GO
+  // Initialize external symbolizer before internal threads are started.
   const char *external_symbolizer = flags()->external_symbolizer_path;
   if (external_symbolizer != 0 && external_symbolizer[0] != '\0') {
     InitializeExternalSymbolizer(external_symbolizer);
   }
 #endif
+  InitializeMemoryProfile();
+  InitializeMemoryFlush();
 
   if (ctx->flags.verbosity)
     TsanPrintf("***** Running under ThreadSanitizer v2 (pid %d) *****\n",
