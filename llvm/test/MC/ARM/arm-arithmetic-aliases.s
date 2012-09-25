@@ -124,3 +124,7 @@ bicseq r2, r3
 @ CHECK: bicseq r2, r2, #6              @ encoding: [0x06,0x20,0xd2,0x03]
 @ CHECK: bicseq r2, r2, r3              @ encoding: [0x03,0x20,0xd2,0x01]
 @ CHECK: bicseq r2, r2, r3              @ encoding: [0x03,0x20,0xd2,0x01]
+
+add r0, pc, #123
+
+@ CHECK: adr	r0, #123                @ encoding: [0x7b,0x00,0x8f,0xe2]
