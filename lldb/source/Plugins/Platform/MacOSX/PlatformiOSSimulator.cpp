@@ -147,7 +147,7 @@ PlatformiOSSimulator::GetDescriptionStatic()
 /// Default Constructor
 //------------------------------------------------------------------
 PlatformiOSSimulator::PlatformiOSSimulator () :
-    PlatformDarwin (false),
+    PlatformDarwin (true),
     m_sdk_directory ()
 {
 }
