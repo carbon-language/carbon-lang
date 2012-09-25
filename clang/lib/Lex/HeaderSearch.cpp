@@ -905,7 +905,20 @@ Module *HeaderSearch::loadFrameworkModule(StringRef Name,
   SubmodulePath.push_back(Name);
   
   // Walk the directory structure to find any enclosing frameworks.
+#ifdef LLVM_ON_UNIX
+  // Note: as an egregious but useful hack we use the real path here, because
+  // frameworks moving from top-level frameworks to embedded frameworks tend
+  // to be symlinked from the top-level location to the embedded location,
+  // and we need to resolve lookups as if we had found the embedded location.
+  char RealDirName[PATH_MAX];
+  StringRef DirName;
+  if (realpath(Dir->getName(), RealDirName))
+    DirName = RealDirName;
+  else
+    DirName = Dir->getName();
+#else
   StringRef DirName = Dir->getName();
+#endif
   do {
     // Get the parent directory name.
     DirName = llvm::sys::path::parent_path(DirName);
