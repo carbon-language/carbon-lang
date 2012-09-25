@@ -466,37 +466,49 @@ bool SymbolReaper::isLive(SymbolRef sym) {
     markDependentsLive(sym);
     return true;
   }
-
-  if (const SymbolDerived *derived = dyn_cast<SymbolDerived>(sym)) {
-    if (isLive(derived->getParentSymbol())) {
-      markLive(sym);
-      return true;
-    }
-    return false;
+  
+  bool KnownLive;
+  
+  switch (sym->getKind()) {
+  case SymExpr::RegionValueKind:
+    // FIXME: We should be able to use isLiveRegion here (this behavior
+    // predates isLiveRegion), but doing so causes test failures. Investigate.
+    KnownLive = true;
+    break;
+  case SymExpr::ConjuredKind:
+    KnownLive = false;
+    break;
+  case SymExpr::DerivedKind:
+    KnownLive = isLive(cast<SymbolDerived>(sym)->getParentSymbol());
+    break;
+  case SymExpr::ExtentKind:
+    KnownLive = isLiveRegion(cast<SymbolExtent>(sym)->getRegion());
+    break;
+  case SymExpr::MetadataKind:
+    KnownLive = MetadataInUse.count(sym) &&
+                isLiveRegion(cast<SymbolMetadata>(sym)->getRegion());
+    if (KnownLive)
+      MetadataInUse.erase(sym);
+    break;
+  case SymExpr::SymIntKind:
+    KnownLive = isLive(cast<SymIntExpr>(sym)->getLHS());
+    break;
+  case SymExpr::IntSymKind:
+    KnownLive = isLive(cast<IntSymExpr>(sym)->getRHS());
+    break;
+  case SymExpr::SymSymKind:
+    KnownLive = isLive(cast<SymSymExpr>(sym)->getLHS()) &&
+                isLive(cast<SymSymExpr>(sym)->getRHS());
+    break;
+  case SymExpr::CastSymbolKind:
+    KnownLive = isLive(cast<SymbolCast>(sym)->getOperand());
+    break;
   }
 
-  if (const SymbolExtent *extent = dyn_cast<SymbolExtent>(sym)) {
-    if (isLiveRegion(extent->getRegion())) {
-      markLive(sym);
-      return true;
-    }
-    return false;
-  }
+  if (KnownLive)
+    markLive(sym);
 
-  if (const SymbolMetadata *metadata = dyn_cast<SymbolMetadata>(sym)) {
-    if (MetadataInUse.count(sym)) {
-      if (isLiveRegion(metadata->getRegion())) {
-        markLive(sym);
-        MetadataInUse.erase(sym);
-        return true;
-      }
-    }
-    return false;
-  }
-
-  // Interogate the symbol.  It may derive from an input value to
-  // the analyzed function/method.
-  return isa<SymbolRegionValue>(sym);
+  return KnownLive;
 }
 
 bool
