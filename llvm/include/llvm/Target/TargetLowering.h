@@ -712,6 +712,12 @@ public:
     return SupportJumpTables;
   }
 
+  /// getMinimumJumpTableEntries - return integer threshold on number of
+  /// blocks to use jump tables rather than if sequence.
+  int getMinimumJumpTableEntries() const {
+    return MinimumJumpTableEntries;
+  }
+
   /// getStackPointerRegisterToSaveRestore - If a physical register, this
   /// specifies the register that llvm.savestack/llvm.restorestack should save
   /// and restore.
@@ -1030,6 +1036,12 @@ protected:
   /// jump tables.
   void setSupportJumpTables(bool Val) {
     SupportJumpTables = Val;
+  }
+
+  /// setMinimumJumpTableEntries - Indicate the number of blocks to generate
+  /// jump tables rather than if sequence.
+  void setMinimumJumpTableEntries(int Val) {
+    MinimumJumpTableEntries = Val;
   }
 
   /// setStackPointerRegisterToSaveRestore - If set to a physical register, this
@@ -1825,6 +1837,9 @@ private:
   /// SupportJumpTables - Whether the target can generate code for jumptables.
   /// If it's not true, then each jumptable must be lowered into if-then-else's.
   bool SupportJumpTables;
+
+  /// MinimumJumpTableEntries - Number of blocks threshold to use jump tables.
+  int MinimumJumpTableEntries;
 
   /// BooleanContents - Information about the contents of the high-bits in
   /// boolean values held in a type wider than i1.  See getBooleanContents.

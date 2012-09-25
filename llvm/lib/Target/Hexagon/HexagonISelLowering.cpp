@@ -1350,6 +1350,8 @@ HexagonTargetLowering::HexagonTargetLowering(HexagonTargetMachine
     } else {
       setOperationAction(ISD::BR_JT, MVT::Other, Expand);
     }
+    // Increase jump tables cutover to 5, was 4.
+    setMinimumJumpTableEntries(5);
 
     setOperationAction(ISD::BR_CC, MVT::i32, Expand);
 

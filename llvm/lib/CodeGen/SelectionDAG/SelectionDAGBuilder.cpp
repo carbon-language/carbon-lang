@@ -2093,7 +2093,7 @@ bool SelectionDAGBuilder::handleJTSwitchCase(CaseRec &CR,
   for (CaseItr I = CR.Range.first, E = CR.Range.second; I != E; ++I)
     TSize += I->size();
 
-  if (!areJTsAllowed(TLI) || TSize.ult(4))
+  if (!areJTsAllowed(TLI) || TSize.ult(TLI.getMinimumJumpTableEntries()))
     return false;
 
   APInt Range = ComputeRange(First, Last);
@@ -2565,9 +2565,10 @@ void SelectionDAGBuilder::visitSwitch(const SwitchInst &SI) {
     if (handleSmallSwitchRange(CR, WorkList, SV, Default, SwitchMBB))
       continue;
 
-    // If the switch has more than 5 blocks, and at least 40% dense, and the
+    // If the switch has more than N blocks, and is at least 40% dense, and the
     // target supports indirect branches, then emit a jump table rather than
     // lowering the switch to a binary tree of conditional branches.
+    // N defaults to 4 and is controlled via TLS.getMinimumJumpTableEntries().
     if (handleJTSwitchCase(CR, WorkList, SV, Default, SwitchMBB))
       continue;
 
