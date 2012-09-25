@@ -2040,6 +2040,10 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
   case X86ISD::ATOMSUB64_DAG:
   case X86ISD::ATOMNAND64_DAG:
   case X86ISD::ATOMAND64_DAG:
+  case X86ISD::ATOMMAX64_DAG:
+  case X86ISD::ATOMMIN64_DAG:
+  case X86ISD::ATOMUMAX64_DAG:
+  case X86ISD::ATOMUMIN64_DAG:
   case X86ISD::ATOMSWAP64_DAG: {
     unsigned Opc;
     switch (Opcode) {
@@ -2050,6 +2054,10 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
     case X86ISD::ATOMSUB64_DAG:  Opc = X86::ATOMSUB6432;  break;
     case X86ISD::ATOMNAND64_DAG: Opc = X86::ATOMNAND6432; break;
     case X86ISD::ATOMAND64_DAG:  Opc = X86::ATOMAND6432;  break;
+    case X86ISD::ATOMMAX64_DAG:  Opc = X86::ATOMMAX6432;  break;
+    case X86ISD::ATOMMIN64_DAG:  Opc = X86::ATOMMIN6432;  break;
+    case X86ISD::ATOMUMAX64_DAG: Opc = X86::ATOMUMAX6432; break;
+    case X86ISD::ATOMUMIN64_DAG: Opc = X86::ATOMUMIN6432; break;
     case X86ISD::ATOMSWAP64_DAG: Opc = X86::ATOMSWAP6432; break;
     }
     SDNode *RetVal = SelectAtomic64(Node, Opc);

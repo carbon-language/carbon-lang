@@ -1,5 +1,4 @@
 ; RUN: llc < %s -O0 -march=x86 -mcpu=corei7 | FileCheck %s --check-prefix X32
-; XFAIL: *
 
 @sc64 = external global i64
 
