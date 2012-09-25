@@ -752,6 +752,20 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
   }
 }
 
+static bool CanFitInto64Bits(unsigned Radix, unsigned NumDigits) {
+  switch (Radix) {
+  case 2:
+    return NumDigits <= 64;
+  case 8:
+    return NumDigits <= 64 / 3; // Digits are groups of 3 bits.
+  case 10:
+    return NumDigits <= 19; // floor(log10(2^64))
+  case 16:
+    return NumDigits <= 64 / 4; // Digits are groups of 4 bits.
+  default:
+    llvm_unreachable("impossible Radix");
+  }
+}
 
 /// GetIntegerValue - Convert this numeric literal value to an APInt that
 /// matches Val's input width.  If there is an overflow, set Val to the low bits
@@ -763,13 +777,11 @@ bool NumericLiteralParser::GetIntegerValue(llvm::APInt &Val) {
   // integer. This avoids the expensive overflow checking below, and
   // handles the common cases that matter (small decimal integers and
   // hex/octal values which don't overflow).
-  unsigned MaxBitsPerDigit = 1;
-  while ((1U << MaxBitsPerDigit) < radix)
-    MaxBitsPerDigit += 1;
-  if ((SuffixBegin - DigitsBegin) * MaxBitsPerDigit <= 64) {
+  const unsigned NumDigits = SuffixBegin - DigitsBegin;
+  if (CanFitInto64Bits(radix, NumDigits)) {
     uint64_t N = 0;
-    for (s = DigitsBegin; s != SuffixBegin; ++s)
-      N = N*radix + HexDigitValue(*s);
+    for (const char *Ptr = DigitsBegin; Ptr != SuffixBegin; ++Ptr)
+      N = N * radix + HexDigitValue(*Ptr);
 
     // This will truncate the value to Val's input width. Simply check
     // for overflow by comparing.
@@ -778,15 +790,15 @@ bool NumericLiteralParser::GetIntegerValue(llvm::APInt &Val) {
   }
 
   Val = 0;
-  s = DigitsBegin;
+  const char *Ptr = DigitsBegin;
 
   llvm::APInt RadixVal(Val.getBitWidth(), radix);
   llvm::APInt CharVal(Val.getBitWidth(), 0);
   llvm::APInt OldVal = Val;
 
   bool OverflowOccurred = false;
-  while (s < SuffixBegin) {
-    unsigned C = HexDigitValue(*s++);
+  while (Ptr < SuffixBegin) {
+    unsigned C = HexDigitValue(*Ptr++);
 
     // If this letter is out of bound for this radix, reject it.
     assert(C < radix && "NumericLiteralParser ctor should have rejected this");
