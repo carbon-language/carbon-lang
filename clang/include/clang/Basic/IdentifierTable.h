@@ -54,6 +54,7 @@ class IdentifierInfo {
   // are for builtins.
   unsigned ObjCOrBuiltinID    :11;
   bool HasMacro               : 1; // True if there is a #define for this.
+  bool HadMacro               : 1; // True if there was a #define for this.
   bool IsExtension            : 1; // True if identifier is a lang extension.
   bool IsCXX11CompatKeyword   : 1; // True if identifier is a keyword in C++11.
   bool IsPoisoned             : 1; // True if identifier is poisoned.
@@ -70,8 +71,8 @@ class IdentifierInfo {
                                    // stored externally.
   bool IsModulesImport        : 1; // True if this is the 'import' contextual
                                    // keyword.
-  // 1 bit left in 32-bit word.
-  
+  // 32-bit word is filled.
+
   void *FETokenInfo;               // Managed by the language front-end.
   llvm::StringMapEntry<IdentifierInfo*> *Entry;
 
@@ -133,10 +134,18 @@ public:
     if (HasMacro == Val) return;
 
     HasMacro = Val;
-    if (Val)
+    if (Val) {
       NeedsHandleIdentifier = 1;
-    else
+      HadMacro = true;
+    } else {
       RecomputeNeedsHandleIdentifier();
+    }
+  }
+  /// \brief Returns true if this identifier was \#defined to some value at any
+  /// moment. In this case there should be an entry for the identifier in the
+  /// macro history table in Preprocessor.
+  bool hadMacroDefinition() const {
+    return HadMacro;
   }
 
   /// getTokenID - If this is a source-language token (e.g. 'for'), this API

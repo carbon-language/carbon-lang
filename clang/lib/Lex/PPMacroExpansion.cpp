@@ -32,8 +32,8 @@
 #include <ctime>
 using namespace clang;
 
-MacroInfo *Preprocessor::getInfoForMacro(IdentifierInfo *II) const {
-  assert(II->hasMacroDefinition() && "Identifier is not a macro!");
+MacroInfo *Preprocessor::getMacroInfoHistory(IdentifierInfo *II) const {
+  assert(II->hadMacroDefinition() && "Identifier has not been not a macro!");
 
   macro_iterator Pos = Macros.find(II);
   if (Pos == Macros.end()) {
@@ -42,7 +42,6 @@ MacroInfo *Preprocessor::getInfoForMacro(IdentifierInfo *II) const {
     Pos = Macros.find(II);
   }
   assert(Pos != Macros.end() && "Identifier macro info is missing!");
-  assert(Pos->second->getUndefLoc().isInvalid() && "Macro is undefined!");
   return Pos->second;
 }
 
@@ -51,9 +50,11 @@ MacroInfo *Preprocessor::getInfoForMacro(IdentifierInfo *II) const {
 void Preprocessor::setMacroInfo(IdentifierInfo *II, MacroInfo *MI,
                                 bool LoadedFromAST) {
   assert(MI && "MacroInfo should be non-zero!");
+  assert((LoadedFromAST || MI->getUndefLoc().isInvalid()) &&
+         "Undefined macros can only be registered when just LoadedFromAST");
   MI->setPreviousDefinition(Macros[II]);
   Macros[II] = MI;
-  II->setHasMacroDefinition(true);
+  II->setHasMacroDefinition(MI->getUndefLoc().isInvalid());
   if (II->isFromAST() && !LoadedFromAST)
     II->setChangedSinceDeserialization();
 }

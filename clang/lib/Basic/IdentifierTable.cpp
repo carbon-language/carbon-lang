@@ -33,6 +33,7 @@ IdentifierInfo::IdentifierInfo() {
   TokenID = tok::identifier;
   ObjCOrBuiltinID = 0;
   HasMacro = false;
+  HadMacro = false;
   IsExtension = false;
   IsCXX11CompatKeyword = false;
   IsPoisoned = false;

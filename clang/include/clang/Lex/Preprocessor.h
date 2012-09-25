@@ -366,8 +366,6 @@ private:  // Cached tokens state.
   /// allocation.
   MacroInfoChain *MICache;
 
-  MacroInfo *getInfoForMacro(IdentifierInfo *II) const;
-
 public:
   Preprocessor(DiagnosticsEngine &diags, LangOptions &opts,
                const TargetInfo *target,
@@ -467,8 +465,16 @@ public:
     if (!II->hasMacroDefinition())
       return 0;
 
-    return getInfoForMacro(II);
+    MacroInfo *MI = getMacroInfoHistory(II);
+    assert(MI->getUndefLoc().isInvalid() && "Macro is undefined!");
+    return MI;
   }
+
+  /// \brief Given an identifier, return the (probably #undef'd) MacroInfo
+  /// representing the most recent macro definition. One can iterate over all
+  /// previous macro definitions from it. This method should only be called for
+  /// identifiers that hadMacroDefinition().
+  MacroInfo *getMacroInfoHistory(IdentifierInfo *II) const;
 
   /// \brief Specify a macro for this identifier.
   void setMacroInfo(IdentifierInfo *II, MacroInfo *MI,

@@ -1674,102 +1674,112 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
   SmallVector<std::pair<const IdentifierInfo *, MacroInfo *>, 2> 
     MacrosToEmit;
   llvm::SmallPtrSet<const IdentifierInfo*, 4> MacroDefinitionsSeen;
-  for (Preprocessor::macro_iterator I = PP.macro_begin(Chain == 0), 
+  for (Preprocessor::macro_iterator I = PP.macro_begin(Chain == 0),
                                     E = PP.macro_end(Chain == 0);
        I != E; ++I) {
-    // FIXME: We'll need to store macro history in PCH.
-    if (I->first->hasMacroDefinition()) {
-      if (!IsModule || I->second->isPublic()) {
-        MacroDefinitionsSeen.insert(I->first);
-        MacrosToEmit.push_back(std::make_pair(I->first, I->second));
-      }
+    if (!IsModule || I->second->isPublic()) {
+      MacroDefinitionsSeen.insert(I->first);
+      MacrosToEmit.push_back(std::make_pair(I->first, I->second));
     }
   }
-  
+
   // Sort the set of macro definitions that need to be serialized by the
   // name of the macro, to provide a stable ordering.
-  llvm::array_pod_sort(MacrosToEmit.begin(), MacrosToEmit.end(), 
+  llvm::array_pod_sort(MacrosToEmit.begin(), MacrosToEmit.end(),
                        &compareMacroDefinitions);
-  
+
   // Resolve any identifiers that defined macros at the time they were
   // deserialized, adding them to the list of macros to emit (if appropriate).
   for (unsigned I = 0, N = DeserializedMacroNames.size(); I != N; ++I) {
     IdentifierInfo *Name
       = const_cast<IdentifierInfo *>(DeserializedMacroNames[I]);
-    if (Name->hasMacroDefinition() && MacroDefinitionsSeen.insert(Name))
+    if (Name->hadMacroDefinition() && MacroDefinitionsSeen.insert(Name))
       MacrosToEmit.push_back(std::make_pair(Name, PP.getMacroInfo(Name)));
   }
-  
+
   for (unsigned I = 0, N = MacrosToEmit.size(); I != N; ++I) {
     const IdentifierInfo *Name = MacrosToEmit[I].first;
     MacroInfo *MI = MacrosToEmit[I].second;
     if (!MI)
       continue;
-    
-    // Don't emit builtin macros like __LINE__ to the AST file unless they have
-    // been redefined by the header (in which case they are not isBuiltinMacro).
-    // Also skip macros from a AST file if we're chaining.
 
-    // FIXME: There is a (probably minor) optimization we could do here, if
-    // the macro comes from the original PCH but the identifier comes from a
-    // chained PCH, by storing the offset into the original PCH rather than
-    // writing the macro definition a second time.
-    if (MI->isBuiltinMacro() ||
-        (Chain && 
-         Name->isFromAST() && !Name->hasChangedSinceDeserialization() && 
-         MI->isFromAST() && !MI->hasChangedAfterLoad()))
-      continue;
-
-    AddIdentifierRef(Name, Record);
-    MacroOffsets[Name] = Stream.GetCurrentBitNo();
-    Record.push_back(MI->getDefinitionLoc().getRawEncoding());
-    Record.push_back(MI->isUsed());
-    Record.push_back(MI->isPublic());
-    AddSourceLocation(MI->getVisibilityLocation(), Record);
-    unsigned Code;
-    if (MI->isObjectLike()) {
-      Code = PP_MACRO_OBJECT_LIKE;
-    } else {
-      Code = PP_MACRO_FUNCTION_LIKE;
-
-      Record.push_back(MI->isC99Varargs());
-      Record.push_back(MI->isGNUVarargs());
-      Record.push_back(MI->getNumArgs());
-      for (MacroInfo::arg_iterator I = MI->arg_begin(), E = MI->arg_end();
-           I != E; ++I)
-        AddIdentifierRef(*I, Record);
+    // History of macro definitions for this identifier in chronological order.
+    SmallVector<MacroInfo*, 8> MacroHistory;
+    while (MI) {
+      MacroHistory.push_back(MI);
+      MI = MI->getPreviousDefinition();
     }
 
-    // If we have a detailed preprocessing record, record the macro definition
-    // ID that corresponds to this macro.
-    if (PPRec)
-      Record.push_back(MacroDefinitions[PPRec->findMacroDefinition(MI)]);
+    while (!MacroHistory.empty()) {
+      MI = MacroHistory.pop_back_val();
 
-    Stream.EmitRecord(Code, Record);
-    Record.clear();
+      // Don't emit builtin macros like __LINE__ to the AST file unless they
+      // have been redefined by the header (in which case they are not
+      // isBuiltinMacro).
+      // Also skip macros from a AST file if we're chaining.
 
-    // Emit the tokens array.
-    for (unsigned TokNo = 0, e = MI->getNumTokens(); TokNo != e; ++TokNo) {
-      // Note that we know that the preprocessor does not have any annotation
-      // tokens in it because they are created by the parser, and thus can't be
-      // in a macro definition.
-      const Token &Tok = MI->getReplacementToken(TokNo);
+      // FIXME: There is a (probably minor) optimization we could do here, if
+      // the macro comes from the original PCH but the identifier comes from a
+      // chained PCH, by storing the offset into the original PCH rather than
+      // writing the macro definition a second time.
+      if (MI->isBuiltinMacro() ||
+          (Chain &&
+           Name->isFromAST() && !Name->hasChangedSinceDeserialization() &&
+           MI->isFromAST() && !MI->hasChangedAfterLoad()))
+        continue;
 
-      Record.push_back(Tok.getLocation().getRawEncoding());
-      Record.push_back(Tok.getLength());
+      AddIdentifierRef(Name, Record);
+      MacroOffsets[Name] = Stream.GetCurrentBitNo();
+      AddSourceLocation(MI->getDefinitionLoc(), Record);
+      AddSourceLocation(MI->getUndefLoc(), Record);
+      Record.push_back(MI->isUsed());
+      Record.push_back(MI->isPublic());
+      AddSourceLocation(MI->getVisibilityLocation(), Record);
+      unsigned Code;
+      if (MI->isObjectLike()) {
+        Code = PP_MACRO_OBJECT_LIKE;
+      } else {
+        Code = PP_MACRO_FUNCTION_LIKE;
 
-      // FIXME: When reading literal tokens, reconstruct the literal pointer if
-      // it is needed.
-      AddIdentifierRef(Tok.getIdentifierInfo(), Record);
-      // FIXME: Should translate token kind to a stable encoding.
-      Record.push_back(Tok.getKind());
-      // FIXME: Should translate token flags to a stable encoding.
-      Record.push_back(Tok.getFlags());
+        Record.push_back(MI->isC99Varargs());
+        Record.push_back(MI->isGNUVarargs());
+        Record.push_back(MI->getNumArgs());
+        for (MacroInfo::arg_iterator I = MI->arg_begin(), E = MI->arg_end();
+             I != E; ++I)
+          AddIdentifierRef(*I, Record);
+      }
 
-      Stream.EmitRecord(PP_TOKEN, Record);
+      // If we have a detailed preprocessing record, record the macro definition
+      // ID that corresponds to this macro.
+      if (PPRec)
+        Record.push_back(MacroDefinitions[PPRec->findMacroDefinition(MI)]);
+
+      Stream.EmitRecord(Code, Record);
       Record.clear();
+
+      // Emit the tokens array.
+      for (unsigned TokNo = 0, e = MI->getNumTokens(); TokNo != e; ++TokNo) {
+        // Note that we know that the preprocessor does not have any annotation
+        // tokens in it because they are created by the parser, and thus can't
+        // be in a macro definition.
+        const Token &Tok = MI->getReplacementToken(TokNo);
+
+        Record.push_back(Tok.getLocation().getRawEncoding());
+        Record.push_back(Tok.getLength());
+
+        // FIXME: When reading literal tokens, reconstruct the literal pointer
+        // if it is needed.
+        AddIdentifierRef(Tok.getIdentifierInfo(), Record);
+        // FIXME: Should translate token kind to a stable encoding.
+        Record.push_back(Tok.getKind());
+        // FIXME: Should translate token flags to a stable encoding.
+        Record.push_back(Tok.getFlags());
+
+        Stream.EmitRecord(PP_TOKEN, Record);
+        Record.clear();
+      }
+      ++NumMacros;
     }
-    ++NumMacros;
   }
   Stream.ExitBlock();
 }
@@ -2496,17 +2506,17 @@ class ASTIdentifierTableTrait {
         II->getFETokenInfo<void>())
       return true;
 
-    return hasMacroDefinition(II, Macro);
+    return hadMacroDefinition(II, Macro);
   }
-  
-  bool hasMacroDefinition(IdentifierInfo *II, MacroInfo *&Macro) {
-    if (!II->hasMacroDefinition())
+
+  bool hadMacroDefinition(IdentifierInfo *II, MacroInfo *&Macro) {
+    if (!II->hadMacroDefinition())
       return false;
-    
-    if (Macro || (Macro = PP.getMacroInfo(II)))
+
+    if (Macro || (Macro = PP.getMacroInfoHistory(II)))
       return !Macro->isBuiltinMacro() && (!IsModule || Macro->isPublic());
-    
-    return false;    
+
+    return false;
   }
 
 public:
@@ -2530,10 +2540,11 @@ public:
     unsigned DataLen = 4; // 4 bytes for the persistent ID << 1
     MacroInfo *Macro = 0;
     if (isInterestingIdentifier(II, Macro)) {
-      DataLen += 2; // 2 bytes for builtin ID, flags
-      if (hasMacroDefinition(II, Macro))
+      DataLen += 2; // 2 bytes for builtin ID
+      DataLen += 2; // 2 bytes for flags
+      if (hadMacroDefinition(II, Macro))
         DataLen += 8;
-      
+
       for (IdentifierResolver::iterator D = IdResolver.begin(II),
                                      DEnd = IdResolver.end();
            D != DEnd; ++D)
@@ -2564,23 +2575,26 @@ public:
     }
 
     clang::io::Emit32(Out, (ID << 1) | 0x01);
-    uint32_t Bits = 0;
-    bool HasMacroDefinition = hasMacroDefinition(II, Macro);
-    Bits = (uint32_t)II->getObjCOrBuiltinID();
-    assert((Bits & 0x7ff) == Bits && "ObjCOrBuiltinID too big for ASTReader.");
+    uint32_t Bits = (uint32_t)II->getObjCOrBuiltinID();
+    assert((Bits & 0xffff) == Bits && "ObjCOrBuiltinID too big for ASTReader.");
+    clang::io::Emit16(Out, Bits);
+    Bits = 0;
+    bool HadMacroDefinition = hadMacroDefinition(II, Macro);
+    bool HasMacroDefinition = HadMacroDefinition && II->hasMacroDefinition();
     Bits = (Bits << 1) | unsigned(HasMacroDefinition);
+    Bits = (Bits << 1) | unsigned(HadMacroDefinition);
     Bits = (Bits << 1) | unsigned(II->isExtensionToken());
     Bits = (Bits << 1) | unsigned(II->isPoisoned());
     Bits = (Bits << 1) | unsigned(II->hasRevertedTokenIDToIdentifier());
     Bits = (Bits << 1) | unsigned(II->isCPlusPlusOperatorKeyword());
     clang::io::Emit16(Out, Bits);
 
-    if (HasMacroDefinition) {
+    if (HadMacroDefinition) {
       clang::io::Emit32(Out, Writer.getMacroOffset(II));
-      clang::io::Emit32(Out, 
+      clang::io::Emit32(Out,
         Writer.inferSubmoduleIDFromLocation(Macro->getDefinitionLoc()));
     }
-    
+
     // Emit the declaration IDs in reverse order, because the
     // IdentifierResolver provides the declarations as they would be
     // visible (e.g., the function "stat" would come before the struct
@@ -4447,7 +4461,7 @@ void ASTWriter::ReaderInitialized(ASTReader *Reader) {
 
 void ASTWriter::IdentifierRead(IdentID ID, IdentifierInfo *II) {
   IdentifierIDs[II] = ID;
-  if (II->hasMacroDefinition())
+  if (II->hadMacroDefinition())
     DeserializedMacroNames.push_back(II);
 }
 

@@ -527,6 +527,7 @@ IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
     return II;
   }
 
+  unsigned ObjCOrBuiltinID = ReadUnalignedLE16(d);
   unsigned Bits = ReadUnalignedLE16(d);
   bool CPlusPlusOperatorKeyword = Bits & 0x01;
   Bits >>= 1;
@@ -536,13 +537,13 @@ IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
   Bits >>= 1;
   bool ExtensionToken = Bits & 0x01;
   Bits >>= 1;
+  bool hadMacroDefinition = Bits & 0x01;
+  Bits >>= 1;
   bool hasMacroDefinition = Bits & 0x01;
   Bits >>= 1;
-  unsigned ObjCOrBuiltinID = Bits & 0x7FF;
-  Bits >>= 11;
 
   assert(Bits == 0 && "Extra bits in the identifier?");
-  DataLen -= 6;
+  DataLen -= 8;
 
   // Build the IdentifierInfo itself and link the identifier ID with
   // the new IdentifierInfo.
@@ -570,7 +571,7 @@ IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
 
   // If this identifier is a macro, deserialize the macro
   // definition.
-  if (hasMacroDefinition) {
+  if (hadMacroDefinition) {
     // FIXME: Check for conflicts?
     uint32_t Offset = ReadUnalignedLE32(d);
     unsigned LocalSubmoduleID = ReadUnalignedLE32(d);
@@ -590,10 +591,10 @@ IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
           // module is not yet visible.
           Reader.HiddenNamesMap[Owner].push_back(II);
         }
-      } 
+      }
     }
-    
-    Reader.setIdentifierIsMacro(II, F, Offset, Visible);
+
+    Reader.setIdentifierIsMacro(II, F, Offset, Visible && hasMacroDefinition);
     DataLen -= 8;
   }
 
@@ -1312,18 +1313,21 @@ void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset) {
         Error("macro must have a name in AST file");
         return;
       }
-      
-      SourceLocation Loc = ReadSourceLocation(F, Record[1]);
-      bool isUsed = Record[2];
 
+      unsigned NextIndex = 1;
+      SourceLocation Loc = ReadSourceLocation(F, Record, NextIndex);
       MacroInfo *MI = PP.AllocateMacroInfo(Loc);
-      MI->setIsUsed(isUsed);
+
+      SourceLocation UndefLoc = ReadSourceLocation(F, Record, NextIndex);
+      if (UndefLoc.isValid())
+        MI->setUndefLoc(UndefLoc);
+
+      MI->setIsUsed(Record[NextIndex++]);
       MI->setIsFromAST();
 
-      bool IsPublic = Record[3];
-      unsigned NextIndex = 4;
+      bool IsPublic = Record[NextIndex++];
       MI->setVisibility(IsPublic, ReadSourceLocation(F, Record, NextIndex));
-      
+
       if (RecType == PP_MACRO_FUNCTION_LIKE) {
         // Decode function-like macro info.
         bool isC99VarArgs = Record[NextIndex++];
@@ -2551,6 +2555,7 @@ void ASTReader::makeNamesVisible(const HiddenNames &Names) {
       D->Hidden = false;
     else {
       IdentifierInfo *II = Names[I].get<IdentifierInfo *>();
+      // FIXME: Check if this works correctly with macro history.
       if (!II->hasMacroDefinition()) {
         // Make sure that this macro hasn't been #undef'd in the mean-time.
         llvm::DenseMap<IdentifierInfo*, MacroInfo*>::iterator Known
