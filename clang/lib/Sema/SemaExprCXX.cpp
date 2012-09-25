@@ -2927,6 +2927,7 @@ static bool CheckUnaryTypeTraitTypeCompleteness(Sema &S,
   case UTT_IsEmpty:
   case UTT_IsPolymorphic:
   case UTT_IsAbstract:
+  case UTT_IsInterfaceClass:
     // Fall-through
 
   // These traits require a complete type.
@@ -3056,6 +3057,10 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
   case UTT_IsAbstract:
     if (const CXXRecordDecl *RD = T->getAsCXXRecordDecl())
       return RD->isAbstract();
+    return false;
+  case UTT_IsInterfaceClass:
+    if (const CXXRecordDecl *RD = T->getAsCXXRecordDecl())
+      return RD->isInterface();
     return false;
   case UTT_IsFinal:
     if (const CXXRecordDecl *RD = T->getAsCXXRecordDecl())

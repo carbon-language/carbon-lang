@@ -782,6 +782,7 @@ Parser::isExpressionOrTypeSpecifierSimple(tok::TokenKind Kind) {
   case tok::kw___is_convertible_to:
   case tok::kw___is_empty:
   case tok::kw___is_enum:
+  case tok::kw___is_interface_class:
   case tok::kw___is_final:
   case tok::kw___is_literal:
   case tok::kw___is_literal_type:

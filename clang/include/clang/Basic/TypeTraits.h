@@ -41,6 +41,7 @@ namespace clang {
     UTT_IsFunction,
     UTT_IsFundamental,
     UTT_IsIntegral,
+    UTT_IsInterfaceClass,
     UTT_IsLiteral,
     UTT_IsLvalueReference,
     UTT_IsMemberFunctionPointer,

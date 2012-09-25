@@ -1208,6 +1208,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw___is_class:
   case tok::kw___is_empty:
   case tok::kw___is_enum:
+  case tok::kw___is_interface_class:
   case tok::kw___is_literal:
   case tok::kw___is_arithmetic:
   case tok::kw___is_integral:

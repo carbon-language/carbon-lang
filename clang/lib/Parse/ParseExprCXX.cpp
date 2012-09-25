@@ -2457,6 +2457,7 @@ static UnaryTypeTrait UnaryTypeTraitFromTokKind(tok::TokenKind kind) {
   case tok::kw___is_function:                return UTT_IsFunction;
   case tok::kw___is_fundamental:             return UTT_IsFundamental;
   case tok::kw___is_integral:                return UTT_IsIntegral;
+  case tok::kw___is_interface_class:         return UTT_IsInterfaceClass;
   case tok::kw___is_lvalue_reference:        return UTT_IsLvalueReference;
   case tok::kw___is_member_function_pointer: return UTT_IsMemberFunctionPointer;
   case tok::kw___is_member_object_pointer:   return UTT_IsMemberObjectPointer;
