@@ -644,6 +644,11 @@ def ext_override_control_keyword : ExtWarn<
 def warn_cxx98_compat_override_control_keyword : Warning<
   "'%0' keyword is incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
+def err_override_control_interface : Error<
+  "'%0' keyword not permitted with interface types">;
+
+def err_access_specifier_interface : Error<
+  "interface types cannot specify '%select{private|protected}0' access">;
 
 def err_duplicate_virt_specifier : Error<
   "class member already marked '%0'">;

@@ -5210,11 +5210,12 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       NewFD->setImplicitlyInline();
     }
 
-    // if this is a method defined in an __interface, set pure
-    // (isVirtual will already return true)
-    if (CXXRecordDecl *Parent = dyn_cast<CXXRecordDecl>(
-        NewFD->getDeclContext())) {
-      if (Parent->getTagKind() == TTK_Interface)
+    // If this is a method defined in an __interface, and is not a constructor
+    // or an overloaded operator, then set the pure flag (isVirtual will already
+    // return true).
+    if (const CXXRecordDecl *Parent =
+          dyn_cast<CXXRecordDecl>(NewFD->getDeclContext())) {
+      if (Parent->isInterface() && cast<CXXMethodDecl>(NewFD)->isUserProvided())
         NewFD->setPure(true);
     }
 

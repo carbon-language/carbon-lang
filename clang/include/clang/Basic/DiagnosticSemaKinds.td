@@ -812,6 +812,14 @@ def err_friend_def_in_local_class : Error<
 def err_friend_not_first_in_declaration : Error<
   "'friend' must appear first in a non-function declaration">;
   
+def err_invalid_member_in_interface : Error<
+  "%select{data member |non-public member function |static member function |"
+          "user-declared constructor|user-declared destructor|operator |"
+          "nested class }0%1 is not permitted within an interface type">;
+def err_invalid_base_in_interface : Error<
+  "interface type cannot inherit from "
+  "%select{'struct|non-public 'interface|'class}0 %1'">;
+
 def err_abstract_type_in_decl : Error<
   "%select{return|parameter|variable|field|instance variable}0 type %1 is an abstract class">;
 def err_allocation_of_abstract_type : Error<

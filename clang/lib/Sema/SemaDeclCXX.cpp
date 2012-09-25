@@ -1178,10 +1178,21 @@ bool Sema::AttachBaseSpecifiers(CXXRecordDecl *Class, CXXBaseSpecifier **Bases,
       // Okay, add this new base class.
       KnownBase = Bases[idx];
       Bases[NumGoodBases++] = Bases[idx];
-      if (const RecordType *Record = NewBaseType->getAs<RecordType>())
-        if (const CXXRecordDecl *RD = cast<CXXRecordDecl>(Record->getDecl()))
-          if (RD->hasAttr<WeakAttr>())
-            Class->addAttr(::new (Context) WeakAttr(SourceRange(), Context));
+      if (const RecordType *Record = NewBaseType->getAs<RecordType>()) {
+        const CXXRecordDecl *RD = cast<CXXRecordDecl>(Record->getDecl());
+        if (Class->isInterface() &&
+              (!RD->isInterface() ||
+               KnownBase->getAccessSpecifier() != AS_public)) {
+          // The Microsoft extension __interface does not permit bases that
+          // are not themselves public interfaces.
+          Diag(KnownBase->getLocStart(), diag::err_invalid_base_in_interface)
+            << getRecordDiagFromTagKind(RD->getTagKind()) << RD->getName()
+            << RD->getSourceRange();
+          Invalid = true;
+        }
+        if (RD->hasAttr<WeakAttr>())
+          Class->addAttr(::new (Context) WeakAttr(SourceRange(), Context));
+      }
     }
   }
 
@@ -1511,6 +1522,50 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   assert(!DS.isFriendSpecified());
 
   bool isFunc = D.isDeclarationOfFunction();
+
+  if (cast<CXXRecordDecl>(CurContext)->isInterface()) {
+    // The Microsoft extension __interface only permits public member functions
+    // and prohibits constructors, destructors, operators, non-public member
+    // functions, static methods and data members.
+    unsigned InvalidDecl;
+    bool ShowDeclName = true;
+    if (!isFunc)
+      InvalidDecl = (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) ? 0 : 1;
+    else if (AS != AS_public)
+      InvalidDecl = 2;
+    else if (DS.getStorageClassSpec() == DeclSpec::SCS_static)
+      InvalidDecl = 3;
+    else switch (Name.getNameKind()) {
+      case DeclarationName::CXXConstructorName:
+        InvalidDecl = 4;
+        ShowDeclName = false;
+        break;
+
+      case DeclarationName::CXXDestructorName:
+        InvalidDecl = 5;
+        ShowDeclName = false;
+        break;
+
+      case DeclarationName::CXXOperatorName:
+      case DeclarationName::CXXConversionFunctionName:
+        InvalidDecl = 6;
+        break;
+
+      default:
+        InvalidDecl = 0;
+        break;
+    }
+
+    if (InvalidDecl) {
+      if (ShowDeclName)
+        Diag(Loc, diag::err_invalid_member_in_interface)
+          << (InvalidDecl-1) << Name;
+      else
+        Diag(Loc, diag::err_invalid_member_in_interface)
+          << (InvalidDecl-1) << "";
+      return 0;
+    }
+  }
 
   // C++ 9.2p6: A member shall not be declared to have automatic storage
   // duration (auto, register) or with the extern storage-class-specifier.

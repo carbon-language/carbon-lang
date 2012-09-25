@@ -18,6 +18,7 @@
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/ParsedTemplate.h"
 #include "clang/Sema/PrettyDeclStackTrace.h"
+#include "clang/Sema/SemaDiagnostic.h"
 #include "llvm/ADT/SmallString.h"
 #include "RAIIObjectsForParser.h"
 using namespace clang;
@@ -1668,7 +1669,8 @@ VirtSpecifiers::Specifier Parser::isCXX0XVirtSpecifier(const Token &Tok) const {
 ///       virt-specifier-seq:
 ///         virt-specifier
 ///         virt-specifier-seq virt-specifier
-void Parser::ParseOptionalCXX0XVirtSpecifierSeq(VirtSpecifiers &VS) {
+void Parser::ParseOptionalCXX0XVirtSpecifierSeq(VirtSpecifiers &VS,
+                                                bool IsInterface) {
   while (true) {
     VirtSpecifiers::Specifier Specifier = isCXX0XVirtSpecifier();
     if (Specifier == VirtSpecifiers::VS_None)
@@ -1682,10 +1684,15 @@ void Parser::ParseOptionalCXX0XVirtSpecifierSeq(VirtSpecifiers &VS) {
         << PrevSpec
         << FixItHint::CreateRemoval(Tok.getLocation());
 
-    Diag(Tok.getLocation(), getLangOpts().CPlusPlus0x ?
-         diag::warn_cxx98_compat_override_control_keyword :
-         diag::ext_override_control_keyword)
-      << VirtSpecifiers::getSpecifierName(Specifier);
+    if (IsInterface && Specifier == VirtSpecifiers::VS_Final) {
+      Diag(Tok.getLocation(), diag::err_override_control_interface)
+        << VirtSpecifiers::getSpecifierName(Specifier);
+    } else {
+      Diag(Tok.getLocation(), getLangOpts().CPlusPlus0x ?
+           diag::warn_cxx98_compat_override_control_keyword :
+           diag::ext_override_control_keyword)
+        << VirtSpecifiers::getSpecifierName(Specifier);
+    }
     ConsumeToken();
   }
 }
@@ -1906,7 +1913,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
       return;
     }
 
-    ParseOptionalCXX0XVirtSpecifierSeq(VS);
+    ParseOptionalCXX0XVirtSpecifierSeq(VS, getCurrentClass().IsInterface);
 
     // If attributes exist after the declarator, but before an '{', parse them.
     MaybeParseGNUAttributes(DeclaratorInfo, &LateParsedAttrs);
@@ -2027,7 +2034,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
     // FIXME: When g++ adds support for this, we'll need to check whether it
     // goes before or after the GNU attributes and __asm__.
-    ParseOptionalCXX0XVirtSpecifierSeq(VS);
+    ParseOptionalCXX0XVirtSpecifierSeq(VS, getCurrentClass().IsInterface);
 
     InClassInitStyle HasInClassInit = ICIS_NoInit;
     if ((Tok.is(tok::equal) || Tok.is(tok::l_brace)) && !HasInitializer) {
@@ -2256,6 +2263,15 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
       if (S->isClassScope()) {
         // We're inside a class scope, so this is a nested class.
         NonNestedClass = false;
+
+        // The Microsoft extension __interface does not permit nested classes.
+        if (getCurrentClass().IsInterface) {
+          Diag(RecordLoc, diag::err_invalid_member_in_interface)
+            << /*ErrorType=*/6
+            << (isa<NamedDecl>(TagDecl)
+                  ? cast<NamedDecl>(TagDecl)->getQualifiedNameAsString()
+                  : "<anonymous>");
+        }
         break;
       }
 
@@ -2276,7 +2292,8 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   ParseScope ClassScope(this, Scope::ClassScope|Scope::DeclScope);
 
   // Note that we are parsing a new (potentially-nested) class definition.
-  ParsingClassDefinition ParsingDef(*this, TagDecl, NonNestedClass);
+  ParsingClassDefinition ParsingDef(*this, TagDecl, NonNestedClass,
+                                    TagType == DeclSpec::TST_interface);
 
   if (TagDecl)
     Actions.ActOnTagStartDefinition(getCurScope(), TagDecl);
@@ -2288,9 +2305,14 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
     assert(isCXX0XFinalKeyword() && "not a class definition");
     FinalLoc = ConsumeToken();
 
-    Diag(FinalLoc, getLangOpts().CPlusPlus0x ?
-         diag::warn_cxx98_compat_override_control_keyword :
-         diag::ext_override_control_keyword) << "final";
+    if (TagType == DeclSpec::TST_interface) {
+      Diag(FinalLoc, diag::err_override_control_interface)
+        << "final";
+    } else {
+      Diag(FinalLoc, getLangOpts().CPlusPlus0x ?
+           diag::warn_cxx98_compat_override_control_keyword :
+           diag::ext_override_control_keyword) << "final";
+    }
   }
 
   if (Tok.is(tok::colon)) {
@@ -2373,6 +2395,13 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
           EndLoc = ASLoc.getLocWithOffset(TokLength);
           Diag(EndLoc, diag::err_expected_colon) 
             << FixItHint::CreateInsertion(EndLoc, ":");
+        }
+
+        // The Microsoft extension __interface does not permit non-public
+        // access specifiers.
+        if (TagType == DeclSpec::TST_interface && CurAS != AS_public) {
+          Diag(ASLoc, diag::err_access_specifier_interface)
+            << (CurAS == AS_protected);
         }
 
         if (Actions.ActOnAccessSpecifier(AS, ASLoc, EndLoc,
@@ -2754,10 +2783,11 @@ TypeResult Parser::ParseTrailingReturnType(SourceRange &Range) {
 /// so push that class onto our stack of classes that is currently
 /// being parsed.
 Sema::ParsingClassState
-Parser::PushParsingClass(Decl *ClassDecl, bool NonNestedClass) {
+Parser::PushParsingClass(Decl *ClassDecl, bool NonNestedClass,
+                         bool IsInterface) {
   assert((NonNestedClass || !ClassStack.empty()) &&
          "Nested class without outer class");
-  ClassStack.push(new ParsingClass(ClassDecl, NonNestedClass));
+  ClassStack.push(new ParsingClass(ClassDecl, NonNestedClass, IsInterface));
   return Actions.PushParsingClass();
 }
 
