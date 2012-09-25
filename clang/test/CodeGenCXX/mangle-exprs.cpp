@@ -190,4 +190,11 @@ namespace test4 {
 
   // CHECK: void @_ZN5test43tf3INS_1XEEEvDTnw_T_ilLi1EEE
   template void tf3<X>(X*);
+
+}
+
+namespace test5 {
+  template <typename T> void a(decltype(noexcept(T()))) {}
+  template void a<int>(decltype(noexcept(int())));
+  // CHECK: void @_ZN5test51aIiEEvDTnxcvT__EE(
 }

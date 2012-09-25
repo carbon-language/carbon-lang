@@ -2412,7 +2412,6 @@ recurse:
   case Expr::ExpressionTraitExprClass:
   case Expr::VAArgExprClass:
   case Expr::CXXUuidofExprClass:
-  case Expr::CXXNoexceptExprClass:
   case Expr::CUDAKernelCallExprClass:
   case Expr::AsTypeExprClass:
   case Expr::PseudoObjectExprClass:
@@ -2602,6 +2601,11 @@ recurse:
     Out <<"cv";
     mangleType(E->getType());
     Out <<"_E";
+    break;
+
+  case Expr::CXXNoexceptExprClass:
+    Out << "nx";
+    mangleExpression(cast<CXXNoexceptExpr>(E)->getOperand());
     break;
 
   case Expr::UnaryExprOrTypeTraitExprClass: {
