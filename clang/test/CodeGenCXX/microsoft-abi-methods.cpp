@@ -72,7 +72,7 @@ void constructors() {
 // Make sure that the Base constructor call in the Child constructor uses
 // the right calling convention:
 // CHECK: define linkonce_odr x86_thiscallcc %class.Child* @"\01??0Child@@QAE@XZ"
-// CHECK: %call = call x86_thiscallcc %class.Base* @"\01??0Base@@QAE@XZ"
+// CHECK: %{{[.0-9A-Z_a-z]+}} = call x86_thiscallcc %class.Base* @"\01??0Base@@QAE@XZ"
 // CHECK: ret
 
 // Make sure that the Base destructor call in the Child denstructor uses
