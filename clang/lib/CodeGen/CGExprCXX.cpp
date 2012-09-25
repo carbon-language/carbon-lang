@@ -1382,8 +1382,14 @@ static void EmitObjectDelete(CodeGenFunction &CGF,
         if (UseGlobalDelete) {
           // If we're supposed to call the global delete, make sure we do so
           // even if the destructor throws.
+
+          // Derive the complete-object pointer, which is what we need
+          // to pass to the deallocation function.
+          llvm::Value *completePtr =
+            CGF.CGM.getCXXABI().adjustToCompleteObject(CGF, Ptr, ElementType);
+
           CGF.EHStack.pushCleanup<CallObjectDelete>(NormalAndEHCleanup,
-                                                    Ptr, OperatorDelete, 
+                                                    completePtr, OperatorDelete,
                                                     ElementType);
         }
         

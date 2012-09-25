@@ -154,6 +154,15 @@ protected:
   llvm::Constant *getMemberPointerAdjustment(const CastExpr *E);
 
 public:
+  /// Adjust the given non-null pointer to an object of polymorphic
+  /// type to point to the complete object.
+  ///
+  /// The IR type of the result should be a pointer but is otherwise
+  /// irrelevant.
+  virtual llvm::Value *adjustToCompleteObject(CodeGenFunction &CGF,
+                                              llvm::Value *ptr,
+                                              QualType type) = 0;
+
   /// Build the signature of the given constructor variant by adding
   /// any required parameters.  For convenience, ResTy has been
   /// initialized to 'void', and ArgTys has been initialized with the

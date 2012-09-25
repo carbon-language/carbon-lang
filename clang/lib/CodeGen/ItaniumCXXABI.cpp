@@ -92,6 +92,10 @@ public:
                                           llvm::Value *Addr,
                                           const MemberPointerType *MPT);
 
+  llvm::Value *adjustToCompleteObject(CodeGenFunction &CGF,
+                                      llvm::Value *ptr,
+                                      QualType type);
+
   void BuildConstructorSignature(const CXXConstructorDecl *Ctor,
                                  CXXCtorType T,
                                  CanQualType &ResTy,
@@ -675,6 +679,25 @@ ItaniumCXXABI::EmitMemberPointerIsNotNull(CodeGenFunction &CGF,
 /// member pointers, for which '0' is a valid offset.
 bool ItaniumCXXABI::isZeroInitializable(const MemberPointerType *MPT) {
   return MPT->getPointeeType()->isFunctionType();
+}
+
+/// The Itanium ABI always places an offset to the complete object
+/// at entry -2 in the vtable.
+llvm::Value *ItaniumCXXABI::adjustToCompleteObject(CodeGenFunction &CGF,
+                                                   llvm::Value *ptr,
+                                                   QualType type) {
+  // Grab the vtable pointer as an intptr_t*.
+  llvm::Value *vtable = CGF.GetVTablePtr(ptr, CGF.IntPtrTy->getPointerTo());
+
+  // Track back to entry -2 and pull out the offset there.
+  llvm::Value *offsetPtr = 
+    CGF.Builder.CreateConstInBoundsGEP1_64(vtable, -2, "complete-offset.ptr");
+  llvm::LoadInst *offset = CGF.Builder.CreateLoad(offsetPtr);
+  offset->setAlignment(CGF.PointerAlignInBytes);
+
+  // Apply the offset.
+  ptr = CGF.Builder.CreateBitCast(ptr, CGF.Int8PtrTy);
+  return CGF.Builder.CreateInBoundsGEP(ptr, offset);
 }
 
 /// The generic ABI passes 'this', plus a VTT if it's initializing a

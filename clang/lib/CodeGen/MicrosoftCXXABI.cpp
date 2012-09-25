@@ -30,6 +30,10 @@ public:
 
   StringRef GetPureVirtualCallName() { return "_purecall"; }
 
+  llvm::Value *adjustToCompleteObject(CodeGenFunction &CGF,
+                                      llvm::Value *ptr,
+                                      QualType type);
+
   void BuildConstructorSignature(const CXXConstructorDecl *Ctor,
                                  CXXCtorType Type,
                                  CanQualType &ResTy,
@@ -93,6 +97,13 @@ public:
   static bool needThisReturn(GlobalDecl GD);
 };
 
+}
+
+llvm::Value *MicrosoftCXXABI::adjustToCompleteObject(CodeGenFunction &CGF,
+                                                     llvm::Value *ptr,
+                                                     QualType type) {
+  // FIXME: implement
+  return ptr;
 }
 
 bool MicrosoftCXXABI::needThisReturn(GlobalDecl GD) {
