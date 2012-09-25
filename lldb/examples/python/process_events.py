@@ -92,31 +92,60 @@ def main(argv):
     parser.add_option('-c', '--crash-command', action='append', type='string', metavar='CMD', dest='crash_commands', help='LLDB command interpreter commands to run in case the process crashes. This option can be specified more than once.', default=[])
     parser.add_option('-x', '--exit-command', action='append', type='string', metavar='CMD', dest='exit_commands', help='LLDB command interpreter commands to run once after the process has exited. This option can be specified more than once.', default=[])
     parser.add_option('-T', '--no-threads', action='store_false', dest='show_threads', help="Don't show threads when process stops.", default=True)
-    parser.add_option('-e', '--ignore-errors', action='store_false', dest='stop_on_error', help="Don't stop executing LLDB commands if the command returns an error. This applies to all of the LLDB command interpreter commands that get run for launch, stop, crash and exit.", default=True)
+    parser.add_option('--ignore-errors', action='store_false', dest='stop_on_error', help="Don't stop executing LLDB commands if the command returns an error. This applies to all of the LLDB command interpreter commands that get run for launch, stop, crash and exit.", default=True)
     parser.add_option('-n', '--run-count', type='int', dest='run_count', metavar='N', help='How many times to run the process in case the process exits.', default=1)
-    parser.add_option('-t', '--event-timeout', type='int', dest='event_timeout', metavar='SEC', help='Specify the timeout in seconds to wait for process state change events.', default=5)
+    parser.add_option('-t', '--event-timeout', type='int', dest='event_timeout', metavar='SEC', help='Specify the timeout in seconds to wait for process state change events.', default=lldb.UINT32_MAX)
+    parser.add_option('-e', '--environment', action='append', type='string', metavar='ENV', dest='env_vars', help='Environment variables to set in the inferior process when launching a process.')
+    parser.add_option('-d', '--working-dir', type='string', metavar='DIR', dest='working_dir', help='The the current working directory when launching a process.', default=None)
+    parser.add_option('-p', '--attach-pid', type='int', dest='attach_pid', metavar='PID', help='Specify a process to attach to by process ID.', default=-1)
+    parser.add_option('-P', '--attach-name', type='string', dest='attach_name', metavar='PROCESSNAME', help='Specify a process to attach to by name.', default=None)
+    parser.add_option('-w', '--attach-wait', action='store_true', dest='attach_wait', help='Wait for the next process to launch when attaching to a process by name.', default=False)
     try:
         (options, args) = parser.parse_args(argv)
     except:
         return
-    if not args:
+        
+    attach_info = None
+    launch_info = None
+    exe = None
+    if args:
+        exe = args.pop(0)
+        launch_info = lldb.SBLaunchInfo (args)
+        if options.env_vars:
+            launch_info.SetEnvironmentEntries(options.env_vars, True)
+        if options.working_dir:
+            launch_info.SetWorkingDirectory(options.working_dir)
+    elif options.attach_pid != -1:
+        if options.run_count == 1:
+            attach_info = lldb.SBAttachInfo (options.attach_pid)
+        else:
+            print "error: --run-count can't be used with the --attach-pid option"
+            sys.exit(1)
+    elif not options.attach_name is None:
+        if options.run_count == 1:
+            attach_info = lldb.SBAttachInfo (options.attach_name, options.attach_wait)
+        else:
+            print "error: --run-count can't be used with the --attach-name option"
+            sys.exit(1)
+    else:
         print 'error: a program path for a program to debug and its arguments are required'
         sys.exit(1)
+        
     
-    exe = args.pop(0)
 
     # Create a new debugger instance
     debugger = lldb.SBDebugger.Create()
     command_interpreter = debugger.GetCommandInterpreter()
     # Create a target from a file and arch
-    print "Creating a target for '%s'" % exe
     
+    if exe:
+        print "Creating a target for '%s'" % exe
     target = debugger.CreateTargetWithFileAndArch (exe, options.arch)
     
     if target:
         
-        # Set any breakpoints that were specified in the args
-        if options.breakpoints:
+        # Set any breakpoints that were specified in the args if we are launching
+        if launch_info and options.breakpoints:
             for bp in options.breakpoints:
                 debugger.HandleCommand( "_regexp-break %s" % (bp))
             run_commands(command_interpreter, ['breakpoint list'])
@@ -124,15 +153,27 @@ def main(argv):
         for run_idx in range(options.run_count):
             # Launch the process. Since we specified synchronous mode, we won't return
             # from this function until we hit the breakpoint at main
-            if options.run_count == 1:
-                print 'Launching "%s"...' % (exe)
-            else:
-                print 'Launching "%s"... (launch %u of %u)' % (exe, run_idx + 1, options.run_count)
+            error = lldb.SBError()
             
-            process = target.LaunchSimple (args, None, os.getcwd())
+            if launch_info:
+                if options.run_count == 1:
+                    print 'Launching "%s"...' % (exe)
+                else:
+                    print 'Launching "%s"... (launch %u of %u)' % (exe, run_idx + 1, options.run_count)
+            
+                process = target.Launch (launch_info, error)
+            else:
+                if options.attach_pid != -1:
+                    print 'Attaching to process %i...' % (options.attach_pid)
+                else:
+                    if options.attach_wait:
+                        print 'Waiting for next to process named "%s" to launch...' % (options.attach_name)
+                    else:
+                        print 'Attaching to existing process named "%s"...' % (options.attach_name)
+                process = target.Attach (attach_info, error)
             
             # Make sure the launch went ok
-            if process:
+            if process and process.GetProcessID() != lldb.LLDB_INVALID_PROCESS_ID:
                 pid = process.GetProcessID()
                 listener = lldb.SBListener("event_listener")
                 # sign up for process state change events
@@ -145,7 +186,16 @@ def main(argv):
                         state = lldb.SBProcess.GetStateFromEvent (event)
                         if state == lldb.eStateStopped:
                             if stop_idx == 0:
-                                print "process %u launched" % (pid)
+                                if launch_info:
+                                    print "process %u launched" % (pid)
+                                else:
+                                    print "attached to process %u" % (pid)
+                                    for m in target.modules:
+                                        print m
+                                    if options.breakpoints:
+                                        for bp in options.breakpoints:
+                                            debugger.HandleCommand( "_regexp-break %s" % (bp))
+                                        run_commands(command_interpreter, ['breakpoint list'])
                                 run_commands (command_interpreter, options.launch_commands)
                             else:
                                 if options.verbose:
@@ -188,6 +238,14 @@ def main(argv):
                         print "no process event for %u seconds, killing the process..." % (options.event_timeout)
                         done = True
                 process.Kill() # kill the process
+            else:
+                if error:
+                    print error
+                else:
+                    if launch_info:
+                        print 'error: launch failed'
+                    else:
+                        print 'error: attach failed'
     
     lldb.SBDebugger.Terminate()
 
