@@ -2124,7 +2124,7 @@ inline internal::Matcher<BinaryOperator> hasEitherOperand(
 
 /// \brief Matches if the operand of a unary operator matches.
 ///
-/// Example matches true (matcher = hasOperand(boolLiteral(equals(true))))
+/// Example matches true (matcher = hasUnaryOperand(boolLiteral(equals(true))))
 /// \code
 ///   !true
 /// \endcode
