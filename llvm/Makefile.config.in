@@ -61,6 +61,7 @@ endif
 
 prefix          := @prefix@
 PROJ_prefix     := $(prefix)
+program_prefix  := @program_prefix@
 PROJ_VERSION    := $(LLVMVersion)
 else
 ifndef PROJ_SRC_ROOT

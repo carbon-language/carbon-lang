@@ -63,5 +63,5 @@ ifeq ($(LLVM_CROSS_COMPILING),1)
 install:: $(DESTDIR)$(PROJ_bindir)
 	$(Echo) Installing llvm-config-host
 	$(Verb) $(ProgInstall) $(BuildLLVMToolDir)/llvm-config \
-	  $(DESTDIR)$(PROJ_bindir)/llvm-config-host
+	  $(DESTDIR)$(PROJ_bindir)/$(program_prefix)llvm-config-host
 endif

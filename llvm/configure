@@ -792,6 +792,7 @@ OCAML_LIBDIR
 ENABLE_VISIBILITY_INLINES_HIDDEN
 RPATH
 RDYNAMIC
+program_prefix
 LIBOBJS
 LTLIBOBJS'
 ac_subst_files=''
@@ -10316,7 +10317,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10319 "configure"
+#line 10320 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -21409,6 +21410,10 @@ fi
 ac_config_files="$ac_config_files bindings/ocaml/llvm/META.llvm"
 
 
+test "x$program_prefix" = "xNONE" && program_prefix=""
+
+
+
 ac_config_commands="$ac_config_commands setup"
 
 ac_config_commands="$ac_config_commands Makefile"
@@ -22334,11 +22339,12 @@ OCAML_LIBDIR!$OCAML_LIBDIR$ac_delim
 ENABLE_VISIBILITY_INLINES_HIDDEN!$ENABLE_VISIBILITY_INLINES_HIDDEN$ac_delim
 RPATH!$RPATH$ac_delim
 RDYNAMIC!$RDYNAMIC$ac_delim
+program_prefix!$program_prefix$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 95; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 96; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
@@ -22357,7 +22363,7 @@ fi
 
 cat >>$CONFIG_STATUS <<_ACEOF
 cat >"\$tmp/subs-2.sed" <<\CEOF$ac_eof
-/@[a-zA-Z_][a-zA-Z_0-9]*@/!b end
+/@[a-zA-Z_][a-zA-Z_0-9]*@/!b
 _ACEOF
 sed '
 s/[,\\&]/\\&/g; s/@/@|#_!!_#|/g
@@ -22370,8 +22376,6 @@ N; s/^.*\n//; s/[,\\&]/\\&/g; s/@/@|#_!!_#|/g; b n
 ' >>$CONFIG_STATUS <conf$$subs.sed
 rm -f conf$$subs.sed
 cat >>$CONFIG_STATUS <<_ACEOF
-:end
-s/|#_!!_#|//g
 CEOF$ac_eof
 _ACEOF
 
@@ -22619,7 +22623,7 @@ s&@abs_builddir@&$ac_abs_builddir&;t t
 s&@abs_top_builddir@&$ac_abs_top_builddir&;t t
 s&@INSTALL@&$ac_INSTALL&;t t
 $ac_datarootdir_hack
-" $ac_file_inputs | sed -f "$tmp/subs-1.sed" | sed -f "$tmp/subs-2.sed" >$tmp/out
+" $ac_file_inputs | sed -f "$tmp/subs-1.sed" | sed -f "$tmp/subs-2.sed" | sed 's/|#_!!_#|//g' >$tmp/out
 
 test -z "$ac_datarootdir_hack$ac_datarootdir_seen" &&
   { ac_out=`sed -n '/\${datarootdir}/p' "$tmp/out"`; test -n "$ac_out"; } &&

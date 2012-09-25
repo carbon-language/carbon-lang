@@ -1437,7 +1437,7 @@ install-local::
 uninstall-local::
 	$(Echo) Uninstall circumvented with NO_INSTALL
 else
-DestTool = $(DESTDIR)$(PROJ_bindir)/$(TOOLEXENAME)
+DestTool = $(DESTDIR)$(PROJ_bindir)/$(program_prefix)$(TOOLEXENAME)
 
 install-local:: $(DestTool)
 
@@ -1451,7 +1451,7 @@ uninstall-local::
 
 # TOOLALIAS install.
 ifdef TOOLALIAS
-DestToolAlias = $(DESTDIR)$(PROJ_bindir)/$(TOOLALIAS)$(EXEEXT)
+DestToolAlias = $(DESTDIR)$(PROJ_bindir)/$(program_prefix)$(TOOLALIAS)$(EXEEXT)
 
 install-local:: $(DestToolAlias)
 
