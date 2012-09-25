@@ -509,5 +509,7 @@ def warn_auto_module_import : Warning<
   "import of module '%1'">, InGroup<AutoImport>, DefaultIgnore;
 def warn_uncovered_module_header : Warning<
   "umbrella header does not include header '%0'">, InGroup<IncompleteUmbrella>;
-
+def err_expected_id_building_module : Error<
+  "expected a module name in '__building_module' expression">;
+  
 }

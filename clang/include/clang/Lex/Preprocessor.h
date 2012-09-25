@@ -98,6 +98,8 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   IdentifierInfo *Ident__has_include;              // __has_include
   IdentifierInfo *Ident__has_include_next;         // __has_include_next
   IdentifierInfo *Ident__has_warning;              // __has_warning
+  IdentifierInfo *Ident__building_module;          // __building_module
+  IdentifierInfo *Ident__MODULE__;                 // __MODULE__
 
   SourceLocation DATELoc, TIMELoc;
   unsigned CounterValue;  // Next __COUNTER__ value.

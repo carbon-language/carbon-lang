@@ -27,4 +27,13 @@ DOUBLE *dp = &d;
 void f() {
   // CHECK-PREPROCESSED: int i = INTEGER;
   int i = INTEGER; // the value was exported, the macro was not.
+  i += macros; // expanded from __MODULE__ within the 'macros' module.
 }
+
+#ifdef __MODULE__
+# error Not building a module!
+#endif
+
+#if __building_module(macros)
+# error Not building a module
+#endif
