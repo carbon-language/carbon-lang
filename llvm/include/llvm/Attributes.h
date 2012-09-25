@@ -96,6 +96,42 @@ DECLARE_LLVM_ATTRIBUTE(AddressSafety,1ULL<<32) ///< Address safety checking is o
 
 #undef DECLARE_LLVM_ATTRIBUTE
 
+/// Note that uwtable is about the ABI or the user mandating an entry in the
+/// unwind table. The nounwind attribute is about an exception passing by the
+/// function.
+/// In a theoretical system that uses tables for profiling and sjlj for
+/// exceptions, they would be fully independent. In a normal system that
+/// uses tables for both, the semantics are:
+/// nil                = Needs an entry because an exception might pass by.
+/// nounwind           = No need for an entry
+/// uwtable            = Needs an entry because the ABI says so and because
+///                      an exception might pass by.
+/// uwtable + nounwind = Needs an entry because the ABI says so.
+
+/// @brief Attributes that only apply to function parameters.
+const AttrConst ParameterOnly = {ByVal_i | Nest_i |
+    StructRet_i | NoCapture_i};
+
+/// @brief Attributes that may be applied to the function itself.  These cannot
+/// be used on return values or function parameters.
+const AttrConst FunctionOnly = {NoReturn_i | NoUnwind_i | ReadNone_i |
+  ReadOnly_i | NoInline_i | AlwaysInline_i | OptimizeForSize_i |
+  StackProtect_i | StackProtectReq_i | NoRedZone_i | NoImplicitFloat_i |
+  Naked_i | InlineHint_i | StackAlignment_i |
+  UWTable_i | NonLazyBind_i | ReturnsTwice_i | AddressSafety_i};
+
+/// @brief Parameter attributes that do not apply to vararg call arguments.
+const AttrConst VarArgsIncompatible = {StructRet_i};
+
+/// @brief Attributes that are mutually incompatible.
+const AttrConst MutuallyIncompatible[5] = {
+  {ByVal_i | Nest_i | StructRet_i},
+  {ByVal_i | Nest_i | InReg_i },
+  {ZExt_i  | SExt_i},
+  {ReadNone_i | ReadOnly_i},
+  {NoInline_i | AlwaysInline_i}
+};
+
 }  // namespace Attribute
 
 /// Attributes - A bitset of attributes.
@@ -276,99 +312,56 @@ public:
   Attributes operator ~ () const { return Attributes(~Bits); }
   uint64_t Raw() const { return Bits; }
 
-  /// @brief Which attributes cannot be applied to a type.
-  static Attributes typeIncompatible(Type *Ty);
-
   /// The set of Attributes set in Attributes is converted to a string of
   /// equivalent mnemonics. This is, presumably, for writing out the mnemonics
   /// for the assembly writer.
   /// @brief Convert attribute bits to text
   std::string getAsString() const;
+
+  /// @brief Which attributes cannot be applied to a type.
+  static Attributes typeIncompatible(Type *Ty);
+
+  /// This returns an integer containing an encoding of all the LLVM attributes
+  /// found in the given attribute bitset.  Any change to this encoding is a
+  /// breaking change to bitcode compatibility.
+  static uint64_t encodeLLVMAttributesForBitcode(Attributes Attrs) {
+    // FIXME: It doesn't make sense to store the alignment information as an
+    // expanded out value, we should store it as a log2 value.  However, we
+    // can't just change that here without breaking bitcode compatibility.  If
+    // this ever becomes a problem in practice, we should introduce new tag
+    // numbers in the bitcode file and have those tags use a more efficiently
+    // encoded alignment field.
+
+    // Store the alignment in the bitcode as a 16-bit raw value instead of a
+    // 5-bit log2 encoded value. Shift the bits above the alignment up by 11
+    // bits.
+    uint64_t EncodedAttrs = Attrs.Raw() & 0xffff;
+    if (Attrs.hasAlignmentAttr())
+      EncodedAttrs |= (1ull << 16) <<
+        ((Attrs.getRawAlignment() - 1) >> 16);
+    EncodedAttrs |= (Attrs.Raw() & (0xfffull << 21)) << 11;
+
+    return EncodedAttrs;
+  }
+
+  /// This returns an attribute bitset containing the LLVM attributes that have
+  /// been decoded from the given integer.  This function must stay in sync with
+  /// 'encodeLLVMAttributesForBitcode'.
+  static Attributes decodeLLVMAttributesForBitcode(uint64_t EncodedAttrs) {
+    // The alignment is stored as a 16-bit raw value from bits 31--16.  We shift
+    // the bits above 31 down by 11 bits.
+    unsigned Alignment = (EncodedAttrs & (0xffffull << 16)) >> 16;
+    assert((!Alignment || isPowerOf2_32(Alignment)) &&
+           "Alignment must be a power of two.");
+
+    Attributes Attrs(EncodedAttrs & 0xffff);
+    if (Alignment)
+      Attrs |= Attributes::constructAlignmentFromInt(Alignment);
+    Attrs |= Attributes((EncodedAttrs & (0xfffull << 32)) >> 11);
+
+    return Attrs;
+  }
 };
-
-namespace Attribute {
-
-/// Note that uwtable is about the ABI or the user mandating an entry in the
-/// unwind table. The nounwind attribute is about an exception passing by the
-/// function.
-/// In a theoretical system that uses tables for profiling and sjlj for
-/// exceptions, they would be fully independent. In a normal system that
-/// uses tables for both, the semantics are:
-/// nil                = Needs an entry because an exception might pass by.
-/// nounwind           = No need for an entry
-/// uwtable            = Needs an entry because the ABI says so and because
-///                      an exception might pass by.
-/// uwtable + nounwind = Needs an entry because the ABI says so.
-
-/// @brief Attributes that only apply to function parameters.
-const AttrConst ParameterOnly = {ByVal_i | Nest_i |
-    StructRet_i | NoCapture_i};
-
-/// @brief Attributes that may be applied to the function itself.  These cannot
-/// be used on return values or function parameters.
-const AttrConst FunctionOnly = {NoReturn_i | NoUnwind_i | ReadNone_i |
-  ReadOnly_i | NoInline_i | AlwaysInline_i | OptimizeForSize_i |
-  StackProtect_i | StackProtectReq_i | NoRedZone_i | NoImplicitFloat_i |
-  Naked_i | InlineHint_i | StackAlignment_i |
-  UWTable_i | NonLazyBind_i | ReturnsTwice_i | AddressSafety_i};
-
-/// @brief Parameter attributes that do not apply to vararg call arguments.
-const AttrConst VarArgsIncompatible = {StructRet_i};
-
-/// @brief Attributes that are mutually incompatible.
-const AttrConst MutuallyIncompatible[5] = {
-  {ByVal_i | Nest_i | StructRet_i},
-  {ByVal_i | Nest_i | InReg_i },
-  {ZExt_i  | SExt_i},
-  {ReadNone_i | ReadOnly_i},
-  {NoInline_i | AlwaysInline_i}
-};
-
-/// This returns an integer containing an encoding of all the
-/// LLVM attributes found in the given attribute bitset.  Any
-/// change to this encoding is a breaking change to bitcode
-/// compatibility.
-inline uint64_t encodeLLVMAttributesForBitcode(Attributes Attrs) {
-  // FIXME: It doesn't make sense to store the alignment information as an
-  // expanded out value, we should store it as a log2 value.  However, we can't
-  // just change that here without breaking bitcode compatibility.  If this ever
-  // becomes a problem in practice, we should introduce new tag numbers in the
-  // bitcode file and have those tags use a more efficiently encoded alignment
-  // field.
-
-  // Store the alignment in the bitcode as a 16-bit raw value instead of a
-  // 5-bit log2 encoded value. Shift the bits above the alignment up by
-  // 11 bits.
-
-  uint64_t EncodedAttrs = Attrs.Raw() & 0xffff;
-  if (Attrs.hasAlignmentAttr())
-    EncodedAttrs |= (1ull << 16) <<
-      ((Attrs.getRawAlignment() - 1) >> 16);
-  EncodedAttrs |= (Attrs.Raw() & (0xfffull << 21)) << 11;
-
-  return EncodedAttrs;
-}
-
-/// This returns an attribute bitset containing the LLVM attributes
-/// that have been decoded from the given integer.  This function
-/// must stay in sync with 'encodeLLVMAttributesForBitcode'.
-inline Attributes decodeLLVMAttributesForBitcode(uint64_t EncodedAttrs) {
-  // The alignment is stored as a 16-bit raw value from bits 31--16.
-  // We shift the bits above 31 down by 11 bits.
-
-  unsigned Alignment = (EncodedAttrs & (0xffffull << 16)) >> 16;
-  assert((!Alignment || isPowerOf2_32(Alignment)) &&
-         "Alignment must be a power of two.");
-
-  Attributes Attrs(EncodedAttrs & 0xffff);
-  if (Alignment)
-    Attrs |= Attributes::constructAlignmentFromInt(Alignment);
-  Attrs |= Attributes((EncodedAttrs & (0xfffull << 32)) >> 11);
-
-  return Attrs;
-}
-
-} // end namespace Attribute
 
 /// This is just a pair of values to associate a set of attributes
 /// with an index.

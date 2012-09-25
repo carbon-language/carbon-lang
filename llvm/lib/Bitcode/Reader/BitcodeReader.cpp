@@ -477,7 +477,7 @@ bool BitcodeReader::ParseAttributeBlock() {
 
       for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
         Attributes ReconstitutedAttr =
-          Attribute::decodeLLVMAttributesForBitcode(Record[i+1]);
+          Attributes::decodeLLVMAttributesForBitcode(Record[i+1]);
         Record[i+1] = ReconstitutedAttr.Raw();
       }
 
