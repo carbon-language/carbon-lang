@@ -234,6 +234,18 @@ SBBreakpoint::IsEnabled ()
         return false;
 }
 
+bool
+SBBreakpoint::IsInternal ()
+{
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+        return m_opaque_sp->IsInternal();
+    }
+    else
+        return false;
+}
+
 void
 SBBreakpoint::SetIgnoreCount (uint32_t count)
 {

@@ -63,6 +63,9 @@ public:
 
     bool
     IsEnabled ();
+    
+    bool
+    IsInternal ();
 
     uint32_t
     GetHitCount () const;
