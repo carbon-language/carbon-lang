@@ -69,3 +69,19 @@ X<int> xx;
 only<int> p2 = xx.f(0L);
 only<double> p3 = xx.g(0L, 1.0);
 only<double> p4 = xx.get_nested<double>().h(0L, 1.0, 3.14f);
+
+namespace PR12053 {
+  template <typename T>
+  auto f1(T t) -> decltype(f1(t)) {} // expected-note{{candidate template ignored}}
+  
+  void test_f1() {
+    f1(0); // expected-error{{no matching function for call to 'f1'}}
+  }
+  
+  template <typename T>
+  auto f2(T t) -> decltype(f2(&t)) {} // expected-note{{candidate template ignored}}
+  
+  void test_f2() {
+    f2(0); // expected-error{{no matching function for call to 'f2'}}
+  }
+}

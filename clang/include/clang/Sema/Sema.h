@@ -234,6 +234,12 @@ public:
   /// VisContext - Manages the stack for \#pragma GCC visibility.
   void *VisContext; // Really a "PragmaVisStack*"
 
+  /// \brief Flag indicating if Sema is building a recovery call expression.
+  ///
+  /// This flag is used to avoid building recovery call expressions
+  /// if Sema is already doing so, which would cause infinite recursions.
+  bool IsBuildingRecoveryCallExpr;
+
   /// ExprNeedsCleanups - True if the current evaluation context
   /// requires cleanups to be run at its conclusion.
   bool ExprNeedsCleanups;

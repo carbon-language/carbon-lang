@@ -9655,6 +9655,20 @@ class NoTypoCorrectionCCC : public CorrectionCandidateCallback {
     return false;
   }
 };
+
+class BuildRecoveryCallExprRAII {
+  Sema &SemaRef;
+public:
+  BuildRecoveryCallExprRAII(Sema &S) : SemaRef(S) {
+    assert(SemaRef.IsBuildingRecoveryCallExpr == false);
+    SemaRef.IsBuildingRecoveryCallExpr = true;
+  }
+
+  ~BuildRecoveryCallExprRAII() {
+    SemaRef.IsBuildingRecoveryCallExpr = false;
+  }
+};
+
 }
 
 /// Attempts to recover from a call where no functions were found.
@@ -9667,6 +9681,15 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
                       llvm::MutableArrayRef<Expr *> Args,
                       SourceLocation RParenLoc,
                       bool EmptyLookup, bool AllowTypoCorrection) {
+  // Do not try to recover if it is already building a recovery call.
+  // This stops infinite loops for template instantiations like
+  //
+  // template <typename T> auto foo(T t) -> decltype(foo(t)) {}
+  // template <typename T> auto foo(T t) -> decltype(foo(&t)) {}
+  //
+  if (SemaRef.IsBuildingRecoveryCallExpr)
+    return ExprError();
+  BuildRecoveryCallExprRAII RCE(SemaRef);
 
   CXXScopeSpec SS;
   SS.Adopt(ULE->getQualifierLoc());
