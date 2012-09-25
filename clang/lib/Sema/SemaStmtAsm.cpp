@@ -567,7 +567,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
     if (HadError) { DEF_SIMPLE_MSASM(EmptyAsmStr); return Owned(NS); }
 
     // Get the instruction descriptor.
-    llvm::MCInst Inst = Instrs[0];
+    llvm::MCInst Inst = Instrs.back();
     const llvm::MCInstrInfo *MII = TheTarget->createMCInstrInfo();
     const llvm::MCInstrDesc &Desc = MII->get(Inst.getOpcode());
     llvm::MCInstPrinter *IP =
