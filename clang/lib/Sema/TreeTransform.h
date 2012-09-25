@@ -2959,8 +2959,9 @@ bool TreeTransform<Derived>::TransformTemplateArgument(
   switch (Arg.getKind()) {
   case TemplateArgument::Null:
   case TemplateArgument::Integral:
-    Output = Input;
-    return false;
+  case TemplateArgument::Pack:
+  case TemplateArgument::Declaration:
+    llvm_unreachable("Cannot transform");
 
   case TemplateArgument::Type: {
     TypeSourceInfo *DI = Input.getTypeSourceInfo();
@@ -2971,28 +2972,6 @@ bool TreeTransform<Derived>::TransformTemplateArgument(
     if (!DI) return true;
 
     Output = TemplateArgumentLoc(TemplateArgument(DI->getType()), DI);
-    return false;
-  }
-
-  case TemplateArgument::Declaration: {
-    // FIXME: we should never have to transform one of these.
-    DeclarationName Name;
-    if (NamedDecl *ND = dyn_cast<NamedDecl>(Arg.getAsDecl()))
-      Name = ND->getDeclName();
-    TemporaryBase Rebase(*this, Input.getLocation(), Name);
-    Decl *D = getDerived().TransformDecl(Input.getLocation(), Arg.getAsDecl());
-    if (!D) return true;
-
-    Expr *SourceExpr = Input.getSourceDeclExpression();
-    if (SourceExpr) {
-      EnterExpressionEvaluationContext Unevaluated(getSema(),
-                                                   Sema::ConstantEvaluated);
-      ExprResult E = getDerived().TransformExpr(SourceExpr);
-      E = SemaRef.ActOnConstantExpression(E);
-      SourceExpr = (E.isInvalid() ? 0 : E.take());
-    }
-
-    Output = TemplateArgumentLoc(TemplateArgument(D), SourceExpr);
     return false;
   }
 
@@ -3032,35 +3011,6 @@ bool TreeTransform<Derived>::TransformTemplateArgument(
     E = SemaRef.ActOnConstantExpression(E);
     if (E.isInvalid()) return true;
     Output = TemplateArgumentLoc(TemplateArgument(E.take()), E.take());
-    return false;
-  }
-
-  case TemplateArgument::Pack: {
-    SmallVector<TemplateArgument, 4> TransformedArgs;
-    TransformedArgs.reserve(Arg.pack_size());
-    for (TemplateArgument::pack_iterator A = Arg.pack_begin(),
-                                      AEnd = Arg.pack_end();
-         A != AEnd; ++A) {
-
-      // FIXME: preserve source information here when we start
-      // caring about parameter packs.
-
-      TemplateArgumentLoc InputArg;
-      TemplateArgumentLoc OutputArg;
-      getDerived().InventTemplateArgumentLoc(*A, InputArg);
-      if (getDerived().TransformTemplateArgument(InputArg, OutputArg))
-        return true;
-
-      TransformedArgs.push_back(OutputArg.getArgument());
-    }
-
-    TemplateArgument *TransformedArgsPtr
-      = new (getSema().Context) TemplateArgument[TransformedArgs.size()];
-    std::copy(TransformedArgs.begin(), TransformedArgs.end(),
-              TransformedArgsPtr);
-    Output = TemplateArgumentLoc(TemplateArgument(TransformedArgsPtr,
-                                                  TransformedArgs.size()),
-                                 Input.getLocInfo());
     return false;
   }
   }
