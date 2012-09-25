@@ -266,8 +266,8 @@ static bool isRemovable(Instruction *I) {
     }
   }
 
-  if (CallSite(I))  // If we assume hasMemoryWrite(I) is true,
-    return true;    // then there's nothing left to check.
+  if (CallSite CS = I)
+    return CS.getInstruction()->use_empty();
 
   return false;
 }

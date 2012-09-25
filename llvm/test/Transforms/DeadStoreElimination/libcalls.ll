@@ -44,3 +44,13 @@ define void @test4(i8* %src) {
   ret void
 }
 
+define void @test5(i8* nocapture %src) {
+; CHECK: @test5
+  %dest = alloca [100 x i8], align 16
+  %arraydecay = getelementptr inbounds [100 x i8]* %dest, i64 0, i64 0
+  %call = call i8* @strcpy(i8* %arraydecay, i8* %src)
+; CHECK: %call = call i8* @strcpy
+  %arrayidx = getelementptr inbounds i8* %call, i64 10
+  store i8 97, i8* %arrayidx, align 1
+  ret void
+}
