@@ -29,6 +29,7 @@ class FI8_MOVR3216_ins<string asmstr, InstrItinClass itin>:
 //
 // I8_MOV32R instruction format (used only by MOV32R instruction)
 //
+
 class FI8_MOV32R16_ins<string asmstr, InstrItinClass itin>:
   FI8_MOV32R16<(outs CPURegs:$r32), (ins CPU16Regs:$rz),
                !strconcat(asmstr,  "\t$r32, $rz"), [], itin>;
