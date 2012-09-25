@@ -53,3 +53,20 @@ namespace PR7259 {
     return 0;
   }
 }
+
+namespace NonDependentError {
+  struct Base { Base(int); }; // expected-note 2{{candidate}}
+
+  template<typename T>
+  struct Derived1 : Base {
+    Derived1() : Base(1, 2) {} // expected-error {{no matching constructor}}
+  };
+
+  template<typename T>
+  struct Derived2 : Base {
+    Derived2() : BaseClass(1) {} // expected-error {{does not name a non-static data member or base}}
+  };
+
+  Derived1<void> d1;
+  Derived2<void> d2;
+}

@@ -2965,7 +2965,11 @@ bool Sema::SetCtorInitializers(CXXConstructorDecl *Constructor,
              NumInitializers * sizeof(CXXCtorInitializer*));
       Constructor->setCtorInitializers(baseOrMemberInitializers);
     }
-    
+
+    // Let template instantiation know whether we had errors.
+    if (AnyErrors)
+      Constructor->setInvalidDecl();
+
     return false;
   }
 
