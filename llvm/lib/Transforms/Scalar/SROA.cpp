@@ -3108,6 +3108,12 @@ bool SROA::promoteAllocas(Function &F) {
   if (PromotableAllocas.empty())
     return false;
 
+  // Ensure that the list is unique.
+  std::sort(PromotableAllocas.begin(), PromotableAllocas.end());
+  PromotableAllocas.erase(std::unique(PromotableAllocas.begin(),
+                                      PromotableAllocas.end()),
+                          PromotableAllocas.end());
+
   NumPromoted += PromotableAllocas.size();
 
   if (DT && !ForceSSAUpdater) {

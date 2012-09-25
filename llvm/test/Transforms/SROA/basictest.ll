@@ -855,3 +855,25 @@ entry:
   %result = or i8 %load, %load2
   ret i8 %result
 }
+
+%test22.struct = type { i8 }
+
+define void @test22() {
+; CHECK: @test22
+; CHECK-NOT: alloca
+; CHECK: ret void
+; PR13916
+entry:
+  %A = alloca %test22.struct
+  br i1 undef, label %if.then, label %if.end
+
+if.then:                                          ; preds = %entry
+  %tmp = bitcast %test22.struct* %A to i8*
+  %tmp1 = bitcast %test22.struct* %A to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %tmp, i8* %tmp1, i32 1, i32 1, i1 false)
+  unreachable
+
+if.end:                                           ; preds = %entry
+  %tmp2 = load %test22.struct* %A
+  ret void
+}
