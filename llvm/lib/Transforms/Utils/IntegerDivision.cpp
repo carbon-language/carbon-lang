@@ -23,11 +23,69 @@
 
 using namespace llvm;
 
+/// Generate code to compute the remainder of two signed integers. Returns the
+/// remainder, which will have the sign of the dividend. Builder's insert point
+/// should be pointing where the caller wants code generated, e.g. at the srem
+/// instruction. This will generate a urem in the process, and Builder's insert
+/// point will be pointing at the uren (if present, i.e. not folded), ready to
+/// be expanded if the user wishes
+static Value *generateSignedRemainderCode(Value *Dividend, Value *Divisor,
+                                          IRBuilder<> &Builder) {
+  ConstantInt *ThirtyOne = Builder.getInt32(31);
+
+  // ;   %dividend_sgn = ashr i32 %dividend, 31
+  // ;   %divisor_sgn  = ashr i32 %divisor, 31
+  // ;   %dvd_xor      = xor i32 %dividend, %dividend_sgn
+  // ;   %dvs_xor      = xor i32 %divisor, %divisor_sgn
+  // ;   %u_dividend   = sub i32 %dvd_xor, %dividend_sgn
+  // ;   %u_divisor    = sub i32 %dvs_xor, %divisor_sgn
+  // ;   %urem         = urem i32 %dividend, %divisor
+  // ;   %xored        = xor i32 %urem, %dividend_sgn
+  // ;   %srem         = sub i32 %xored, %dividend_sgn
+  Value *DividendSign = Builder.CreateAShr(Dividend, ThirtyOne);
+  Value *DivisorSign  = Builder.CreateAShr(Divisor, ThirtyOne);
+  Value *DvdXor       = Builder.CreateXor(Dividend, DividendSign);
+  Value *DvsXor       = Builder.CreateXor(Divisor, DivisorSign);
+  Value *UDividend    = Builder.CreateSub(DvdXor, DividendSign);
+  Value *UDivisor     = Builder.CreateSub(DvsXor, DivisorSign);
+  Value *URem         = Builder.CreateURem(UDividend, UDivisor);
+  Value *Xored        = Builder.CreateXor(URem, DividendSign);
+  Value *SRem         = Builder.CreateSub(Xored, DividendSign);
+
+  if (Instruction *URem = dyn_cast<Instruction>(URem))
+    Builder.SetInsertPoint(URem);
+
+  return SRem;
+}
+
+
+/// Generate code to compute the remainder of two unsigned integers. Returns the
+/// remainder. Builder's insert point should be pointing where the caller wants
+/// code generated, e.g. at the urem instruction. This will generate a udiv in
+/// the process, and Builder's insert point will be pointing at the udiv (if
+/// present, i.e. not folded), ready to be expanded if the user wishes
+static Value *generatedUnsignedRemainderCode(Value *Dividend, Value *Divisor,
+                                             IRBuilder<> &Builder) {
+  // Remainder = Dividend - Quotient*Divisor
+
+  // ;   %quotient  = udiv i32 %dividend, %divisor
+  // ;   %product   = mul i32 %divisor, %quotient
+  // ;   %remainder = sub i32 %dividend, %product
+  Value *Quotient  = Builder.CreateUDiv(Dividend, Divisor);
+  Value *Product   = Builder.CreateMul(Divisor, Quotient);
+  Value *Remainder = Builder.CreateSub(Dividend, Product);
+
+  if (Instruction *UDiv = dyn_cast<Instruction>(Quotient))
+    Builder.SetInsertPoint(UDiv);
+
+  return Remainder;
+}
+
 /// Generate code to divide two signed integers. Returns the quotient, rounded
-/// towards 0. Builder's insert point should be pointing at the sdiv
-/// instruction. This will generate a udiv in the process, and Builder's insert
-/// point will be pointing at the udiv (if present, i.e. not folded), ready to
-/// be expanded if the user wishes.
+/// towards 0. Builder's insert point should be pointing where the caller wants
+/// code generated, e.g. at the sdiv instruction. This will generate a udiv in
+/// the process, and Builder's insert point will be pointing at the udiv (if
+/// present, i.e. not folded), ready to be expanded if the user wishes.
 static Value *generateSignedDivisionCode(Value *Dividend, Value *Divisor,
                                          IRBuilder<> &Builder) {
   // Implementation taken from compiler-rt's __divsi3
@@ -62,8 +120,8 @@ static Value *generateSignedDivisionCode(Value *Dividend, Value *Divisor,
 }
 
 /// Generates code to divide two unsigned scalar 32-bit integers. Returns the
-/// quotient, rounded towards 0. Builder's insert point should be pointing at
-/// the udiv instruction.
+/// quotient, rounded towards 0. Builder's insert point should be pointing where
+/// the caller wants code generated, e.g. at the udiv instruction.
 static Value *generateUnsignedDivisionCode(Value *Dividend, Value *Divisor,
                                            IRBuilder<> &Builder) {
   // The basic algorithm can be found in the compiler-rt project's
@@ -265,6 +323,56 @@ static Value *generateUnsignedDivisionCode(Value *Dividend, Value *Divisor,
   return Q_5;
 }
 
+/// Generate code to calculate the remainder of two integers, replacing Rem with
+/// the generated code. This currently generates code using the udiv expansion,
+/// but future work includes generating more specialized code, e.g. when more
+/// information about the operands are known. Currently only implements 32bit
+/// scalar division (due to udiv's limitation), but future work is removing this
+/// limitation.
+///
+/// @brief Replace Rem with generated code.
+bool llvm::expandRemainder(BinaryOperator *Rem) {
+  assert((Rem->getOpcode() == Instruction::SRem ||
+          Rem->getOpcode() == Instruction::URem) &&
+         "Trying to expand remainder from a non-remainder function");
+
+  IRBuilder<> Builder(Rem);
+
+  // First prepare the sign if it's a signed remainder
+  if (Rem->getOpcode() == Instruction::SRem) {
+    Value *Remainder = generateSignedRemainderCode(Rem->getOperand(0),
+                                                   Rem->getOperand(1), Builder);
+
+    Rem->replaceAllUsesWith(Remainder);
+    Rem->dropAllReferences();
+    Rem->eraseFromParent();
+
+    // If we didn't actually generate a udiv instruction, we're done
+    BinaryOperator *BO = dyn_cast<BinaryOperator>(Builder.GetInsertPoint());
+    if (!BO || BO->getOpcode() != Instruction::URem)
+      return true;
+
+    Rem = BO;
+  }
+
+  Value *Remainder = generatedUnsignedRemainderCode(Rem->getOperand(0),
+                                                    Rem->getOperand(1),
+                                                    Builder);
+
+  Rem->replaceAllUsesWith(Remainder);
+  Rem->dropAllReferences();
+  Rem->eraseFromParent();
+
+  // Expand the udiv
+  if (BinaryOperator *UDiv = dyn_cast<BinaryOperator>(Builder.GetInsertPoint())) {
+    assert(UDiv->getOpcode() == Instruction::UDiv && "Non-udiv in expansion?");
+    expandDivision(UDiv);
+  }
+
+  return true;
+}
+
+
 /// Generate code to divide two integers, replacing Div with the generated
 /// code. This currently generates code similarly to compiler-rt's
 /// implementations, but future work includes generating more specialized code
@@ -287,7 +395,7 @@ bool llvm::expandDivision(BinaryOperator *Div) {
   if (Div->getOpcode() == Instruction::SDiv) {
     // Lower the code to unsigned division, and reset Div to point to the udiv.
     Value *Quotient = generateSignedDivisionCode(Div->getOperand(0),
-                                                Div->getOperand(1), Builder);
+                                                 Div->getOperand(1), Builder);
     Div->replaceAllUsesWith(Quotient);
     Div->dropAllReferences();
     Div->eraseFromParent();
