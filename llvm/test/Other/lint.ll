@@ -11,6 +11,8 @@ declare void @one_arg(i32)
 @CG = constant i32 7
 
 define i32 @foo() noreturn {
+  %buf = alloca i8
+  %buf2 = alloca {i8, i8}, align 2
 ; CHECK: Caller and callee calling convention differ
   call void @bar()
 ; CHECK: Null pointer dereference
@@ -26,8 +28,10 @@ define i32 @foo() noreturn {
 ; CHECK: Address one pointer dereference
   store i32 0, i32* inttoptr (i64 1 to i32*)
 ; CHECK: Memory reference address is misaligned
-  %x = inttoptr i32 1 to i32*
-  load i32* %x, align 4
+  store i8 0, i8* %buf, align 2
+; CHECK: Memory reference address is misaligned
+  %gep = getelementptr {i8, i8}* %buf2, i32 0, i32 1
+  store i8 0, i8* %gep, align 2
 ; CHECK: Division by zero
   %sd = sdiv i32 2, 0
 ; CHECK: Division by zero

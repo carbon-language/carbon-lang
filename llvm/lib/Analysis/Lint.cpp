@@ -412,14 +412,26 @@ void Lint::visitMemoryReference(Instruction &I,
   }
 
   if (TD) {
-    if (Align == 0 && Ty) Align = TD->getABITypeAlignment(Ty);
+    if (Align == 0 && Ty && Ty->isSized())
+      Align = TD->getABITypeAlignment(Ty);
 
     if (Align != 0) {
-      unsigned BitWidth = TD->getTypeSizeInBits(Ptr->getType());
-      APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
-      ComputeMaskedBits(Ptr, KnownZero, KnownOne, TD);
-      Assert1(!(KnownOne & APInt::getLowBitsSet(BitWidth, Log2_32(Align))),
-              "Undefined behavior: Memory reference address is misaligned", &I);
+      int64_t Offset = 0;
+      if (Value *Base = GetPointerBaseWithConstantOffset(Ptr, Offset, *TD)) {
+        unsigned BaseAlign = 0;
+        if (AllocaInst *AI = dyn_cast<AllocaInst>(Base)) {
+          BaseAlign = AI->getAlignment();
+          if (BaseAlign == 0 && AI->getAllocatedType()->isSized())
+            BaseAlign = TD->getABITypeAlignment(AI->getAllocatedType());
+        } else if (GlobalValue *GV = dyn_cast<GlobalVariable>(Base)) {
+          BaseAlign = GV->getAlignment();
+          if (BaseAlign == 0 && GV->getType()->getElementType()->isSized())
+            BaseAlign = TD->getABITypeAlignment(GV->getType()->getElementType());
+        }
+        Assert1((!BaseAlign || Align <= MinAlign(BaseAlign, Offset)),
+                "Undefined behavior: Memory reference address is misaligned",
+                &I);
+      }
     }
   }
 }
