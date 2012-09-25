@@ -539,6 +539,8 @@ static void clang_indexTranslationUnit_Impl(void *UserData) {
   if (!Unit)
     return;
 
+  ASTUnit::ConcurrencyCheck Check(*Unit);
+
   FileManager &FileMgr = Unit->getFileManager();
 
   if (Unit->getOriginalSourceFileName().empty())
