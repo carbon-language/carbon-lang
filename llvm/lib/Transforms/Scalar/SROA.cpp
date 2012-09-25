@@ -2228,7 +2228,10 @@ private:
     // alloca that should be re-examined after rewriting this instruction.
     if (AllocaInst *AI
           = dyn_cast<AllocaInst>(OtherPtr->stripInBoundsOffsets()))
-      Pass.Worklist.insert(AI);
+      // Don't revisit the alloca if both sides of the memory transfer are
+      // referring to the same alloca.
+      if (AI != &NewAI)
+        Pass.Worklist.insert(AI);
 
     if (EmitMemCpy) {
       Value *OurPtr
@@ -3107,12 +3110,6 @@ void SROA::deleteDeadInstructions(SmallPtrSet<AllocaInst*, 4> &DeletedAllocas) {
 bool SROA::promoteAllocas(Function &F) {
   if (PromotableAllocas.empty())
     return false;
-
-  // Ensure that the list is unique.
-  std::sort(PromotableAllocas.begin(), PromotableAllocas.end());
-  PromotableAllocas.erase(std::unique(PromotableAllocas.begin(),
-                                      PromotableAllocas.end()),
-                          PromotableAllocas.end());
 
   NumPromoted += PromotableAllocas.size();
 
