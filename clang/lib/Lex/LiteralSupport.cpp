@@ -752,7 +752,7 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
   }
 }
 
-static bool CanFitInto64Bits(unsigned Radix, unsigned NumDigits) {
+static bool alwaysFitsInto64Bits(unsigned Radix, unsigned NumDigits) {
   switch (Radix) {
   case 2:
     return NumDigits <= 64;
@@ -778,7 +778,7 @@ bool NumericLiteralParser::GetIntegerValue(llvm::APInt &Val) {
   // handles the common cases that matter (small decimal integers and
   // hex/octal values which don't overflow).
   const unsigned NumDigits = SuffixBegin - DigitsBegin;
-  if (CanFitInto64Bits(radix, NumDigits)) {
+  if (alwaysFitsInto64Bits(radix, NumDigits)) {
     uint64_t N = 0;
     for (const char *Ptr = DigitsBegin; Ptr != SuffixBegin; ++Ptr)
       N = N * radix + HexDigitValue(*Ptr);
