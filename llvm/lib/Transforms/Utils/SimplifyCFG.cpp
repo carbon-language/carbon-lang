@@ -3302,8 +3302,8 @@ SwitchLookupTable::SwitchLookupTable(Module &M,
                const SmallVector<std::pair<ConstantInt*, Constant*>, 4>& Values,
                                      Constant *DefaultValue,
                                      const TargetData *TD) {
-  assert(Values.size() && "Can't build lookup table without values.");
-  assert(TableSize >= Values.size() && "Can't fit values in table.");
+  assert(Values.size() && "Can't build lookup table without values!");
+  assert(TableSize >= Values.size() && "Can't fit values in table!");
 
   // If all values in the table are equal, this is that value.
   SingleValue = Values.begin()->second;
@@ -3431,6 +3431,8 @@ static bool ShouldBuildLookupTable(SwitchInst *SI,
   // The table density should be at least 40%. This is the same criterion as for
   // jump tables, see SelectionDAGBuilder::handleJTSwitchCase.
   // FIXME: Find the best cut-off.
+  if (SI->getNumCases() > TableSize || TableSize >= UINT64_MAX / 10)
+    return false; // TableSize overflowed, or mul below might overflow.
   if (SI->getNumCases() * 10 >= TableSize * 4)
     return true;
 
@@ -3513,10 +3515,6 @@ static bool SwitchToLookupTable(SwitchInst *SI,
   }
 
   APInt RangeSpread = MaxCaseVal->getValue() - MinCaseVal->getValue();
-  // Be careful to avoid overflow when TableSize is used in
-  // ShouldBuildLookupTable.
-  if (RangeSpread.zextOrSelf(64).ugt(UINT64_MAX / 4 - 1))
-    return false;
   uint64_t TableSize = RangeSpread.getLimitedValue() + 1;
   if (!ShouldBuildLookupTable(SI, TableSize, TD, ResultTypes))
     return false;
