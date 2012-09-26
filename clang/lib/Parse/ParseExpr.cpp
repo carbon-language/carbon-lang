@@ -1723,7 +1723,8 @@ ExprResult Parser::ParseUnaryExprOrTypeTraitExpression() {
   if (OpTok.is(tok::kw_alignof) || OpTok.is(tok::kw__Alignof))
     Diag(OpTok, diag::warn_cxx98_compat_alignof);
 
-  EnterExpressionEvaluationContext Unevaluated(Actions, Sema::Unevaluated);
+  EnterExpressionEvaluationContext Unevaluated(Actions, Sema::Unevaluated,
+                                               Sema::ReuseLambdaContextDecl);
 
   bool isCastExpr;
   ParsedType CastTy;

@@ -172,6 +172,19 @@ template<typename...T> int PR12917<T...>::n[3] = {
 PR12917<int, char, double> pr12917;
 int *pr12917_p = PR12917<int, int>::n;
 
+namespace std {
+  struct type_info;
+}
+namespace PR12123 {
+  struct A { virtual ~A(); } g;
+  struct B {
+    void f(const std::type_info& x = typeid([]()->A& { return g; }()));
+    void h();
+  };
+  void B::h() { f(); }
+}
+// CHECK: define linkonce_odr %"struct.PR12123::A"* @_ZZN7PR121231B1fERKSt9type_infoEd_NKUlvE_clEv
+
 namespace PR12808 {
   template <typename> struct B {
     int a;

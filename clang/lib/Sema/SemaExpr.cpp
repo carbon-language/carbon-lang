@@ -10135,6 +10135,14 @@ Sema::PushExpressionEvaluationContext(ExpressionEvaluationContext NewContext,
     std::swap(MaybeODRUseExprs, ExprEvalContexts.back().SavedMaybeODRUseExprs);
 }
 
+void
+Sema::PushExpressionEvaluationContext(ExpressionEvaluationContext NewContext,
+                                      ReuseLambdaContextDecl_t,
+                                      bool IsDecltype) {
+  Decl *LambdaContextDecl = ExprEvalContexts.back().LambdaContextDecl;
+  PushExpressionEvaluationContext(NewContext, LambdaContextDecl, IsDecltype);
+}
+
 void Sema::PopExpressionEvaluationContext() {
   ExpressionEvaluationContextRecord& Rec = ExprEvalContexts.back();
 
