@@ -2064,6 +2064,15 @@ private:
     // pointer to the new alloca.
     if (!isa<Constant>(II.getLength())) {
       II.setDest(getAdjustedAllocaPtr(IRB, II.getRawDest()->getType()));
+
+      Type *CstTy = II.getAlignmentCst()->getType();
+      if (!NewAI.getAlignment())
+        II.setAlignment(ConstantInt::get(CstTy, 0));
+      else
+        II.setAlignment(
+          ConstantInt::get(CstTy, MinAlign(NewAI.getAlignment(),
+                                           BeginOffset - NewAllocaBeginOffset)));
+
       deleteIfTriviallyDead(OldPtr);
       return false;
     }
@@ -2186,6 +2195,13 @@ private:
         II.setDest(getAdjustedAllocaPtr(IRB, II.getRawDest()->getType()));
       else
         II.setSource(getAdjustedAllocaPtr(IRB, II.getRawSource()->getType()));
+
+      Type *CstTy = II.getAlignmentCst()->getType();
+      if (II.getAlignment() > 1)
+        II.setAlignment(ConstantInt::get(
+            CstTy, MinAlign(II.getAlignment(),
+                            MinAlign(NewAI.getAlignment(),
+                                     BeginOffset - NewAllocaBeginOffset))));
 
       DEBUG(dbgs() << "          to: " << II << "\n");
       deleteIfTriviallyDead(OldOp);
