@@ -1,5 +1,4 @@
-; RUN: llc
-
+; RUN: llc < %s
 
 !llvm.dbg.cu = !{!0}
 

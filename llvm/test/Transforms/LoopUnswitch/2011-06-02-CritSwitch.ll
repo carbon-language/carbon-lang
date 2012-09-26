@@ -1,4 +1,4 @@
-; RUN: opt -loop-unswitch -disable-output
+; RUN: opt -loop-unswitch -disable-output < %s
 ; PR10031
 
 define i32 @test(i32 %command) {
