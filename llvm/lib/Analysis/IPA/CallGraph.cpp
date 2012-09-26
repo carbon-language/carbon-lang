@@ -141,12 +141,13 @@ private:
       for (BasicBlock::iterator II = BB->begin(), IE = BB->end();
            II != IE; ++II) {
         CallSite CS(cast<Value>(II));
-        if (CS && !isa<IntrinsicInst>(II)) {
+        if (CS) {
           const Function *Callee = CS.getCalledFunction();
-          if (Callee)
-            Node->addCalledFunction(CS, getOrInsertFunction(Callee));
-          else
+          if (!Callee)
+            // Indirect calls of intrinsics are not allowed so no need to check.
             Node->addCalledFunction(CS, CallsExternalNode);
+          else if (!Callee->isIntrinsic())
+            Node->addCalledFunction(CS, getOrInsertFunction(Callee));
         }
       }
   }
