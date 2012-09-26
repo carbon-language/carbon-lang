@@ -181,6 +181,18 @@ namespace llvm {
               SimpleTy <= MVT::LAST_VECTOR_VALUETYPE);
     }
 
+    /// is16BitVector - Return true if this is a 16-bit vector type.
+    bool is16BitVector() const {
+      return (SimpleTy == MVT::v2i8  || SimpleTy == MVT::v1i16 ||
+              SimpleTy == MVT::v16i1);
+    }
+
+    /// is32BitVector - Return true if this is a 32-bit vector type.
+    bool is32BitVector() const {
+      return (SimpleTy == MVT::v4i8  || SimpleTy == MVT::v2i16 ||
+              SimpleTy == MVT::v1i32);
+    }
+
     /// is64BitVector - Return true if this is a 64-bit vector type.
     bool is64BitVector() const {
       return (SimpleTy == MVT::v8i8  || SimpleTy == MVT::v4i16 ||
@@ -563,19 +575,12 @@ namespace llvm {
 
     /// is16BitVector - Return true if this is a 16-bit vector type.
     bool is16BitVector() const {
-      if (!isSimple())
-        return isExtended16BitVector();
-
-      return (V == MVT::v2i8  || V==MVT::v1i16 || V == MVT::v16i1);
+      return isSimple() ? V.is16BitVector() : isExtended16BitVector();
     }
 
     /// is32BitVector - Return true if this is a 32-bit vector type.
     bool is32BitVector() const {
-      if (!isSimple())
-        return isExtended32BitVector();
-
-      return (V == MVT::v4i8  || V==MVT::v2i16
-          || V==MVT::v1i32);
+      return isSimple() ? V.is32BitVector() : isExtended32BitVector();
     }
 
     /// is64BitVector - Return true if this is a 64-bit vector type.
