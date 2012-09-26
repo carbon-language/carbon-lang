@@ -56,31 +56,31 @@ bool EVT::isExtendedVector() const {
 }
 
 bool EVT::isExtended16BitVector() const {
-  return isExtendedVector() && getSizeInBits() == 16;
+  return isExtendedVector() && getExtendedSizeInBits() == 16;
 }
 
 bool EVT::isExtended32BitVector() const {
-  return isExtendedVector() && getSizeInBits() == 32;
+  return isExtendedVector() && getExtendedSizeInBits() == 32;
 }
 
 bool EVT::isExtended64BitVector() const {
-  return isExtendedVector() && getSizeInBits() == 64;
+  return isExtendedVector() && getExtendedSizeInBits() == 64;
 }
 
 bool EVT::isExtended128BitVector() const {
-  return isExtendedVector() && getSizeInBits() == 128;
+  return isExtendedVector() && getExtendedSizeInBits() == 128;
 }
 
 bool EVT::isExtended256BitVector() const {
-  return isExtendedVector() && getSizeInBits() == 256;
+  return isExtendedVector() && getExtendedSizeInBits() == 256;
 }
 
 bool EVT::isExtended512BitVector() const {
-  return isExtendedVector() && getSizeInBits() == 512;
+  return isExtendedVector() && getExtendedSizeInBits() == 512;
 }
 
 bool EVT::isExtended1024BitVector() const {
-  return isExtendedVector() && getSizeInBits() == 1024;
+  return isExtendedVector() && getExtendedSizeInBits() == 1024;
 }
 
 EVT EVT::getExtendedVectorElementType() const {
