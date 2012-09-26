@@ -11,11 +11,13 @@
 #include "MCTargetDesc/X86MCTargetDesc.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCAsmLayout.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCMachObjectWriter.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Object/MachOFormat.h"
 
 using namespace llvm;
@@ -23,7 +25,7 @@ using namespace llvm::object;
 
 namespace {
 class X86MachObjectWriter : public MCMachObjectTargetWriter {
-  void RecordScatteredRelocation(MachObjectWriter *Writer,
+  bool RecordScatteredRelocation(MachObjectWriter *Writer,
                                  const MCAssembler &Asm,
                                  const MCAsmLayout &Layout,
                                  const MCFragment *Fragment,
@@ -335,7 +337,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
   Writer->addRelocation(Fragment->getParent(), MRE);
 }
 
-void X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
+bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
                                                     const MCAssembler &Asm,
                                                     const MCAsmLayout &Layout,
                                                     const MCFragment *Fragment,
@@ -381,6 +383,19 @@ void X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
   // Relocations are written out in reverse order, so the PAIR comes first.
   if (Type == macho::RIT_Difference ||
       Type == macho::RIT_Generic_LocalDifference) {
+    // If the offset is too large to fit in a scattered relocation,
+    // we're hosed. It's an unfortunate limitation of the MachO format.
+    if (FixupOffset > 0xffffff) {
+      char Buffer[32];
+      format("0x%x", FixupOffset).print(Buffer, sizeof(Buffer));
+      Asm.getContext().FatalError(Fixup.getLoc(),
+                         Twine("Section too large, can't encode "
+                                "r_address (") + Buffer +
+                         ") into 24 bits of scattered "
+                         "relocation entry.");
+      llvm_unreachable("fatal error returned?!");
+    }
+
     macho::RelocationEntry MRE;
     MRE.Word0 = ((0         <<  0) |
                  (macho::RIT_Pair  << 24) |
@@ -389,6 +404,16 @@ void X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
                  macho::RF_Scattered);
     MRE.Word1 = Value2;
     Writer->addRelocation(Fragment->getParent(), MRE);
+  } else {
+    // If the offset is more than 24-bits, it won't fit in a scattered
+    // relocation offset field, so we fall back to using a non-scattered
+    // relocation. This is a bit risky, as if the offset reaches out of
+    // the block and the linker is doing scattered loading on this
+    // symbol, things can go badly.
+    //
+    // Required for 'as' compatibility.
+    if (FixupOffset > 0xffffff)
+      return false;
   }
 
   macho::RelocationEntry MRE;
@@ -399,6 +424,7 @@ void X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
                macho::RF_Scattered);
   MRE.Word1 = Value;
   Writer->addRelocation(Fragment->getParent(), MRE);
+  return true;
 }
 
 void X86MachObjectWriter::RecordTLVPRelocation(MachObjectWriter *Writer,
@@ -469,9 +495,11 @@ void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
   // If this is a difference or a defined symbol plus an offset, then we need a
   // scattered relocation entry. Differences always require scattered
   // relocations.
-  if (Target.getSymB())
-    return RecordScatteredRelocation(Writer, Asm, Layout, Fragment, Fixup,
-                                     Target, Log2Size, FixedValue);
+  if (Target.getSymB()) {
+    RecordScatteredRelocation(Writer, Asm, Layout, Fragment, Fixup,
+                              Target, Log2Size, FixedValue);
+    return;
+  }
 
   // Get the symbol data, if any.
   MCSymbolData *SD = 0;
@@ -483,9 +511,13 @@ void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
   uint32_t Offset = Target.getConstant();
   if (IsPCRel)
     Offset += 1 << Log2Size;
-  if (Offset && SD && !Writer->doesSymbolRequireExternRelocation(SD))
-    return RecordScatteredRelocation(Writer, Asm, Layout, Fragment, Fixup,
-                                     Target, Log2Size, FixedValue);
+  // Try to record the scattered relocation if needed. Fall back to non
+  // scattered if necessary (see comments in RecordScatteredRelocation()
+  // for details).
+  if (Offset && SD && !Writer->doesSymbolRequireExternRelocation(SD) &&
+      RecordScatteredRelocation(Writer, Asm, Layout, Fragment, Fixup,
+                                Target, Log2Size, FixedValue))
+    return;
 
   // See <reloc.h>.
   uint32_t FixupOffset = Layout.getFragmentOffset(Fragment)+Fixup.getOffset();
