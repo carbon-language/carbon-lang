@@ -15,6 +15,7 @@
 #define DEBUG_TYPE "asm-printer"
 #include "X86ATTInstPrinter.h"
 #include "X86InstComments.h"
+#include "MCTargetDesc/X86BaseInfo.h"
 #include "MCTargetDesc/X86MCTargetDesc.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -38,6 +39,12 @@ void X86ATTInstPrinter::printRegName(raw_ostream &OS,
 
 void X86ATTInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
                                   StringRef Annot) {
+  const MCInstrDesc &Desc = MII.get(MI->getOpcode());
+  uint64_t TSFlags = Desc.TSFlags;
+
+  if (TSFlags & X86II::LOCK)
+    OS << "\tlock\n";
+
   // Try to print any aliases first.
   if (!printAliasInstr(MI, OS))
     printInstruction(MI, OS);
