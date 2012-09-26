@@ -329,9 +329,15 @@ SectionChunk<target_endianness, is64Bits>::
     break;
   case DefinedAtom::typeZeroFill:
     _segmentName = "PT_LOAD";
-    _sectionName = ".bss";
+    _sectionName = sectionName;
     _flags       = ELF::SHF_ALLOC | ELF::SHF_WRITE;
     _type        = ELF::SHT_NOBITS;
+    break;
+  case DefinedAtom::typeConstant:
+    _segmentName = "PT_LOAD";
+    _sectionName = sectionName;
+    _flags       = ELF::SHF_ALLOC;
+    _type        = ELF::SHT_PROGBITS;
     break;
   default:
     llvm_unreachable("Unhandled content type for section!");
