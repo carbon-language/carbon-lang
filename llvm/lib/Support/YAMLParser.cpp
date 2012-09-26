@@ -903,6 +903,7 @@ bool Scanner::consume(uint32_t Expected) {
 void Scanner::skip(uint32_t Distance) {
   Current += Distance;
   Column += Distance;
+  assert(Current <= End && "Skipped past the end");
 }
 
 bool Scanner::isBlankOrBreak(StringRef::iterator Position) {
@@ -1239,6 +1240,12 @@ bool Scanner::scanFlowScalar(bool IsDoubleQuoted) {
       }
     }
   }
+
+  if (Current == End) {
+    setError("Expected quote at end of scalar", Current);
+    return false;
+  }
+
   skip(1); // Skip ending quote.
   Token T;
   T.Kind = Token::TK_Scalar;
