@@ -219,11 +219,11 @@ void Clang::AddPreprocessingOptions(Compilation &C,
       (A = Args.getLastArg(options::OPT_MMD))) {
     // Determine the output location.
     const char *DepFile;
-    if (Output.getType() == types::TY_Dependencies) {
-      DepFile = Output.getFilename();
-    } else if (Arg *MF = Args.getLastArg(options::OPT_MF)) {
+    if (Arg *MF = Args.getLastArg(options::OPT_MF)) {
       DepFile = MF->getValue(Args);
       C.addFailureResultFile(DepFile);
+    } else if (Output.getType() == types::TY_Dependencies) {
+      DepFile = Output.getFilename();
     } else if (A->getOption().matches(options::OPT_M) ||
                A->getOption().matches(options::OPT_MM)) {
       DepFile = "-";
