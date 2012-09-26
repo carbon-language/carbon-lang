@@ -79,6 +79,18 @@ define i32 @foo() noreturn {
 ; CHECK: Write to read-only memory
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* bitcast (i32* @CG to i8*), i8* bitcast (i32* @CG to i8*), i64 1, i32 1, i1 0)
 
+; CHECK: Undefined behavior: Buffer overflow
+  %wider = bitcast i8* %buf to i16*
+  store i16 0, i16* %wider
+; CHECK: Undefined behavior: Buffer overflow
+  %inner = getelementptr {i8, i8}* %buf2, i32 0, i32 1
+  %wider2 = bitcast i8* %inner to i16*
+  store i16 0, i16* %wider2
+; CHECK: Undefined behavior: Buffer overflow
+  %before = getelementptr i8* %buf, i32 -1
+  %wider3 = bitcast i8* %before to i16*
+  store i16 0, i16* %wider3
+
   br label %next
 
 next:

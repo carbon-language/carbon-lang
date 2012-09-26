@@ -411,27 +411,47 @@ void Lint::visitMemoryReference(Instruction &I,
             "Undefined behavior: Branch to non-blockaddress", &I);
   }
 
+  // Check for buffer overflows and misalignment.
   if (TD) {
-    if (Align == 0 && Ty && Ty->isSized())
-      Align = TD->getABITypeAlignment(Ty);
+    // Only handles memory references that read/write something simple like an
+    // alloca instruction or a global variable.
+    int64_t Offset = 0;
+    if (Value *Base = GetPointerBaseWithConstantOffset(Ptr, Offset, *TD)) {
+      // OK, so the access is to a constant offset from Ptr.  Check that Ptr is
+      // something we can handle and if so extract the size of this base object
+      // along with its alignment.
+      uint64_t BaseSize = AliasAnalysis::UnknownSize;
+      unsigned BaseAlign = 0;
 
-    if (Align != 0) {
-      int64_t Offset = 0;
-      if (Value *Base = GetPointerBaseWithConstantOffset(Ptr, Offset, *TD)) {
-        unsigned BaseAlign = 0;
-        if (AllocaInst *AI = dyn_cast<AllocaInst>(Base)) {
-          BaseAlign = AI->getAlignment();
-          if (BaseAlign == 0 && AI->getAllocatedType()->isSized())
-            BaseAlign = TD->getABITypeAlignment(AI->getAllocatedType());
-        } else if (GlobalValue *GV = dyn_cast<GlobalVariable>(Base)) {
-          BaseAlign = GV->getAlignment();
-          if (BaseAlign == 0 && GV->getType()->getElementType()->isSized())
-            BaseAlign = TD->getABITypeAlignment(GV->getType()->getElementType());
-        }
-        Assert1((!BaseAlign || Align <= MinAlign(BaseAlign, Offset)),
-                "Undefined behavior: Memory reference address is misaligned",
-                &I);
+      if (AllocaInst *AI = dyn_cast<AllocaInst>(Base)) {
+        Type *ATy = AI->getAllocatedType();
+        if (!AI->isArrayAllocation() && ATy->isSized())
+          BaseSize = TD->getTypeAllocSize(ATy);
+        BaseAlign = AI->getAlignment();
+        if (BaseAlign == 0 && ATy->isSized())
+          BaseAlign = TD->getABITypeAlignment(ATy);
+      } else if (GlobalValue *GV = dyn_cast<GlobalVariable>(Base)) {
+        Type *GTy = GV->getType()->getElementType();
+        if (GTy->isSized())
+          BaseSize = TD->getTypeAllocSize(GTy);
+        BaseAlign = GV->getAlignment();
+        if (BaseAlign == 0 && GTy->isSized())
+          BaseAlign = TD->getABITypeAlignment(GTy);
       }
+
+      // Accesses from before the start or after the end of the object are not
+      // defined.
+      Assert1(Size == AliasAnalysis::UnknownSize ||
+              BaseSize == AliasAnalysis::UnknownSize ||
+              (Offset >= 0 && Offset + Size <= BaseSize),
+              "Undefined behavior: Buffer overflow", &I);
+
+      // Accesses that say that the memory is more aligned than it is are not
+      // defined.
+      if (Align == 0 && Ty && Ty->isSized())
+        Align = TD->getABITypeAlignment(Ty);
+      Assert1(!BaseAlign || Align <= MinAlign(BaseAlign, Offset),
+              "Undefined behavior: Memory reference address is misaligned", &I);
     }
   }
 }
