@@ -810,6 +810,31 @@ public:
   StoreInst *CreateStore(Value *Val, Value *Ptr, bool isVolatile = false) {
     return Insert(new StoreInst(Val, Ptr, isVolatile));
   }
+  // Provided to resolve 'CreateAlignedLoad(Ptr, Align, "...")' correctly,
+  // instead of converting the string to 'bool' for the isVolatile parameter.
+  LoadInst *CreateAlignedLoad(Value *Ptr, unsigned Align, const char *Name) {
+    LoadInst *LI = CreateLoad(Ptr, Name);
+    LI->setAlignment(Align);
+    return LI;
+  }
+  LoadInst *CreateAlignedLoad(Value *Ptr, unsigned Align,
+                              const Twine &Name = "") {
+    LoadInst *LI = CreateLoad(Ptr, Name);
+    LI->setAlignment(Align);
+    return LI;
+  }
+  LoadInst *CreateAlignedLoad(Value *Ptr, unsigned Align, bool isVolatile,
+                              const Twine &Name = "") {
+    LoadInst *LI = CreateLoad(Ptr, isVolatile, Name);
+    LI->setAlignment(Align);
+    return LI;
+  }
+  StoreInst *CreateAlignedStore(Value *Val, Value *Ptr, unsigned Align,
+                                bool isVolatile = false) {
+    StoreInst *SI = CreateStore(Val, Ptr, isVolatile);
+    SI->setAlignment(Align);
+    return SI;
+  }
   FenceInst *CreateFence(AtomicOrdering Ordering,
                          SynchronizationScope SynchScope = CrossThread) {
     return Insert(new FenceInst(Context, Ordering, SynchScope));
