@@ -57,7 +57,6 @@ void Mips16RegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
       MachineInstr &MI = *II;
       MachineFunction &MF = *MI.getParent()->getParent();
       MachineFrameInfo *MFI = MF.getFrameInfo();
-      MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
 
       const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
       int MinCSFI = 0;
@@ -77,8 +76,7 @@ void Mips16RegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
       // getFrameRegister() returns.
       unsigned FrameReg;
 
-      if (MipsFI->isOutArgFI(FrameIndex) ||
-         (FrameIndex >= MinCSFI && FrameIndex <= MaxCSFI))
+      if (FrameIndex >= MinCSFI && FrameIndex <= MaxCSFI)
         FrameReg = Subtarget.isABI_N64() ? Mips::SP_64 : Mips::SP;
       else
         FrameReg = getFrameRegister(MF);
@@ -94,12 +92,8 @@ void Mips16RegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
       //   incoming argument, callee-saved register location or local variable.
       int64_t Offset;
 
-      if (MipsFI->isOutArgFI(FrameIndex))
-        Offset = SPOffset;
-      else
-        Offset = SPOffset + (int64_t)StackSize;
-
-      Offset    += MI.getOperand(OpNo + 1).getImm();
+      Offset = SPOffset + (int64_t)StackSize;
+      Offset += MI.getOperand(OpNo + 1).getImm();
 
       DEBUG(errs() << "Offset     : " << Offset << "\n" << "<--------->\n");
 
