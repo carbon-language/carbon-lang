@@ -662,11 +662,14 @@ private:
     bool Inserted = false;
     llvm::tie(PMI, Inserted)
       = MemTransferPartitionMap.insert(std::make_pair(&II, NewIdx));
-    if (!Inserted && Offsets.IsSplittable) {
+    if (Offsets.IsSplittable &&
+        (!Inserted || II.getRawSource() == II.getRawDest())) {
       // We've found a memory transfer intrinsic which refers to the alloca as
-      // both a source and dest. We refuse to split these to simplify splitting
-      // logic. If possible, SROA will still split them into separate allocas
-      // and then re-analyze.
+      // both a source and dest. This is detected either by direct equality of
+      // the operand values, or when we visit the intrinsic twice due to two
+      // different chains of values leading to it. We refuse to split these to
+      // simplify splitting logic. If possible, SROA will still split them into
+      // separate allocas and then re-analyze.
       Offsets.IsSplittable = false;
       P.Partitions[PMI->second].IsSplittable = false;
       P.Partitions[NewIdx].IsSplittable = false;
@@ -2228,10 +2231,7 @@ private:
     // alloca that should be re-examined after rewriting this instruction.
     if (AllocaInst *AI
           = dyn_cast<AllocaInst>(OtherPtr->stripInBoundsOffsets()))
-      // Don't revisit the alloca if both sides of the memory transfer are
-      // referring to the same alloca.
-      if (AI != &NewAI)
-        Pass.Worklist.insert(AI);
+      Pass.Worklist.insert(AI);
 
     if (EmitMemCpy) {
       Value *OurPtr
