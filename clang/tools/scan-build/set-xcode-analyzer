@@ -80,7 +80,7 @@ def main():
   except AttributeError:
     # Fall back to the default install location when using Python < 2.7.0
     xcode_path = "/Developer"
-  if (re.search("Xcode.app", xcode_path)):
+  if (xcode_path.find(".app/") != -1):
     # Cut off the 'Developer' dir, as the xcspec lies in another part
     # of the Xcode.app subtree.
     xcode_path = os.path.dirname(xcode_path)
