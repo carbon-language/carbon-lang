@@ -23,16 +23,16 @@
 @end
 
 // RUN: c-index-test -code-completion-at=%s:14:6 -std=c++11 %s | FileCheck -check-prefix=CHECK-CC1 %s
-// CHECK-CC1: ObjCInstanceMethodDecl:{ResultType id}{TypedText instanceMethod:}{Placeholder (int)}{HorizontalSpace  }{TypedText withOther:}{Placeholder (int)} (35) (parent: ObjCInterfaceDecl 'A')
+// CHECK-CC1: ObjCInstanceMethodDecl:{ResultType id}{TypedText instanceMethod:}{Placeholder (int)}{HorizontalSpace  }{TypedText withOther:}{Placeholder (int)} (35)
 
 // RUN: c-index-test -code-completion-at=%s:15:6 -std=c++11 %s | FileCheck -check-prefix=CHECK-CC2 %s
-// CHECK-CC2: ObjCClassMethodDecl:{ResultType id}{TypedText classMethod} (35) (parent: ObjCInterfaceDecl 'A')
+// CHECK-CC2: ObjCClassMethodDecl:{ResultType id}{TypedText classMethod} (35)
 
 // RUN: c-index-test -code-completion-at=%s:16:4 -std=c++11 %s | FileCheck -check-prefix=CHECK-CC3 %s
-// CHECK-CC3: ObjCInterfaceDecl:{TypedText A} (50) (parent: TranslationUnit '(null)')
+// CHECK-CC3: ObjCInterfaceDecl:{TypedText A} (50)
 // CHECK-CC3: ParmDecl:{ResultType A *}{TypedText a} (34)
-// CHECK-CC3: ObjCInterfaceDecl:{TypedText B} (50) (parent: TranslationUnit '(null)')
-// CHECK-CC3: TypedefDecl:{TypedText Class} (50) (parent: TranslationUnit '(null)')
+// CHECK-CC3: ObjCInterfaceDecl:{TypedText B} (50)
+// CHECK-CC3: TypedefDecl:{TypedText Class} (50)
 
 
 // RUN: c-index-test -code-completion-at=%s:16:21 -x objective-c++ -std=c++11 %s | FileCheck -check-prefix=CHECK-CC4 %s
@@ -46,6 +46,6 @@
 // CHECK-CC5-NEXT: NotImplemented:{ResultType B *}{TypedText self} (34)
 
 // RUN: c-index-test -code-completion-at=%s:20:11 -x objective-c++ -std=c++11 %s | FileCheck -check-prefix=CHECK-CC6 %s
-// CHECK-CC6: ObjCInstanceMethodDecl:{ResultType id}{TypedText instanceMethod:}{Placeholder (int)}{HorizontalSpace  }{TypedText withOther:}{Placeholder (int)} (37) (parent: ObjCInterfaceDecl 'A')
-// CHECK-CC6-NEXT: ObjCInstanceMethodDecl:{ResultType id}{TypedText someMethod:}{Placeholder (A *)} (32) (parent: ObjCImplementationDecl 'B')
+// CHECK-CC6: ObjCInstanceMethodDecl:{ResultType id}{TypedText instanceMethod:}{Placeholder (int)}{HorizontalSpace  }{TypedText withOther:}{Placeholder (int)} (37)
+// CHECK-CC6-NEXT: ObjCInstanceMethodDecl:{ResultType id}{TypedText someMethod:}{Placeholder (A *)} (32)
 

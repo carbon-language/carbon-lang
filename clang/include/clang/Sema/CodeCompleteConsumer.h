@@ -439,9 +439,6 @@ private:
 
   /// \brief The availability of this code-completion result.
   unsigned Availability : 2;
-
-  /// \brief The kind of the parent context.
-  unsigned ParentKind : 14;
   
   /// \brief The name of the parent context.
   StringRef ParentName;
@@ -456,7 +453,7 @@ private:
   CodeCompletionString(const Chunk *Chunks, unsigned NumChunks,
                        unsigned Priority, CXAvailabilityKind Availability,
                        const char **Annotations, unsigned NumAnnotations,
-                       CXCursorKind ParentKind, StringRef ParentName,
+                       StringRef ParentName,
                        const char *BriefComment);
   ~CodeCompletionString() { }
 
@@ -489,11 +486,6 @@ public:
 
   /// \brief Retrieve the annotation string specified by \c AnnotationNr.
   const char *getAnnotation(unsigned AnnotationNr) const;
-
-  /// \brief Retrieve parent context's cursor kind.
-  CXCursorKind getParentContextKind() const {
-    return (CXCursorKind)ParentKind;
-  }
   
   /// \brief Retrieve the name of the parent context.
   StringRef getParentContextName() const {
@@ -577,7 +569,6 @@ private:
   CodeCompletionTUInfo &CCTUInfo;
   unsigned Priority;
   CXAvailabilityKind Availability;
-  CXCursorKind ParentKind;
   StringRef ParentName;
   const char *BriefComment;
   
@@ -591,14 +582,14 @@ public:
                         CodeCompletionTUInfo &CCTUInfo)
     : Allocator(Allocator), CCTUInfo(CCTUInfo),
       Priority(0), Availability(CXAvailability_Available),
-      ParentKind(CXCursor_NotImplemented), BriefComment(NULL) { }
+      BriefComment(NULL) { }
 
   CodeCompletionBuilder(CodeCompletionAllocator &Allocator,
                         CodeCompletionTUInfo &CCTUInfo,
                         unsigned Priority, CXAvailabilityKind Availability)
     : Allocator(Allocator), CCTUInfo(CCTUInfo),
       Priority(Priority), Availability(Availability),
-      ParentKind(CXCursor_NotImplemented), BriefComment(NULL) { }
+      BriefComment(NULL) { }
 
   /// \brief Retrieve the allocator into which the code completion
   /// strings should be allocated.
@@ -642,7 +633,6 @@ public:
 
   void addBriefComment(StringRef Comment);
   
-  CXCursorKind getParentKind() const { return ParentKind; }
   StringRef getParentName() const { return ParentName; }
 };
 

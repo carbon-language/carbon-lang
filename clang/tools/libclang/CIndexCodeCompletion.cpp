@@ -223,8 +223,6 @@ clang_getCompletionParent(CXCompletionString completion_string,
   if (!CCStr)
     return createCXString((const char *)0);
   
-  if (kind)
-    *kind = CCStr->getParentContextKind();
   return createCXString(CCStr->getParentContextName(), /*DupString=*/false);
 }
 

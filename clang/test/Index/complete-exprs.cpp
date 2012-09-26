@@ -78,7 +78,7 @@ namespace N {
 // CHECK-CC4: NotImplemented:{ResultType const X *}{TypedText this} (40)
 
 // RUN: c-index-test -code-completion-at=%s:43:14 %s | FileCheck -check-prefix=CHECK-CC5 %s
-// CHECK-CC5: FieldDecl:{ResultType int}{TypedText member} (8) (parent: ClassDecl 'N::C')
+// CHECK-CC5: FieldDecl:{ResultType int}{TypedText member} (8)
 // CHECK-CC5: ParmDecl:{ResultType int}{TypedText param} (8)
-// CHECK-CC5: StructDecl:{TypedText X} (50) (parent: TranslationUnit '(null)')
-// CHECK-CC5: VarDecl:{ResultType int}{TypedText x} (12) (parent: Namespace 'N')
+// CHECK-CC5: StructDecl:{TypedText X} (50)
+// CHECK-CC5: VarDecl:{ResultType int}{TypedText x} (12)

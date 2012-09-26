@@ -2483,7 +2483,6 @@ CodeCompletionResult::CreateCodeCompletionString(ASTContext &Ctx,
     
     if (Declaration) {
       Result.addParentContext(Declaration->getDeclContext());
-      Pattern->ParentKind = Result.getParentKind();
       Pattern->ParentName = Result.getParentName();
     }
     

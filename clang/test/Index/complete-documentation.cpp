@@ -47,5 +47,5 @@ void test1() {
 // CHECK-CC2: FieldDecl:{ResultType int}{TypedText T4}{{.*}}(brief comment: Ddd.)
 
 // RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:37:6 %s | FileCheck -check-prefix=CC3 %s
-// CHECK-CC3: CXXMethod:{ResultType void}{TypedText T7}{LeftParen (}{RightParen )} (34) (parent: StructDecl 'T6')(brief comment: Fff.)
-// CHECK-CC3: CXXMethod:{ResultType void}{TypedText T8}{LeftParen (}{RightParen )} (34) (parent: StructDecl 'T6')(brief comment: Ggg.)
+// CHECK-CC3: CXXMethod:{ResultType void}{TypedText T7}{LeftParen (}{RightParen )} (34)(brief comment: Fff.)
+// CHECK-CC3: CXXMethod:{ResultType void}{TypedText T8}{LeftParen (}{RightParen )} (34)(brief comment: Ggg.)

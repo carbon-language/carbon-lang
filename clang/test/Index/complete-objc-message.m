@@ -190,11 +190,11 @@ void test_DO(DO *d, A* a) {
 }
 
 // RUN: c-index-test -code-completion-at=%s:23:19 %s | FileCheck -check-prefix=CHECK-CC1 %s
-// CHECK-CC1: {TypedText categoryClassMethod} (35) (parent: ObjCCategoryDecl 'Foo(FooTestCategory)')
-// CHECK-CC1: {TypedText classMethod1:}{Placeholder (id)}{HorizontalSpace  }{TypedText withKeyword:}{Placeholder (int)} (35) (parent: ObjCInterfaceDecl 'Foo')
-// CHECK-CC1: {TypedText classMethod2} (35) (parent: ObjCInterfaceDecl 'Foo')
-// CHECK-CC1: {TypedText new} (35) (parent: ObjCInterfaceDecl 'Foo')
-// CHECK-CC1: {TypedText protocolClassMethod} (37) (parent: ObjCProtocolDecl 'FooTestProtocol')
+// CHECK-CC1: {TypedText categoryClassMethod} (35)
+// CHECK-CC1: {TypedText classMethod1:}{Placeholder (id)}{HorizontalSpace  }{TypedText withKeyword:}{Placeholder (int)} (35)
+// CHECK-CC1: {TypedText classMethod2} (35)
+// CHECK-CC1: {TypedText new} (35)
+// CHECK-CC1: {TypedText protocolClassMethod} (37)
 // CHECK-CC1: Completion contexts:
 // CHECK-CC1-NEXT: Objective-C class method
 // CHECK-CC1-NEXT: Container Kind: ObjCInterfaceDecl
@@ -309,7 +309,7 @@ void test_DO(DO *d, A* a) {
 
 // RUN: c-index-test -code-completion-at=%s:170:16 %s | FileCheck -check-prefix=CHECK-CLASS-RESULT %s
 // CHECK-CLASS-RESULT: ObjCClassMethodDecl:{ResultType void}{TypedText class_method3} (35)
-// CHECK-CLASS-RESULT: ObjCClassMethodDecl:{ResultType void}{TypedText class_method4} (35) (parent: ObjCCategoryDecl 'A(Cat)')
+// CHECK-CLASS-RESULT: ObjCClassMethodDecl:{ResultType void}{TypedText class_method4} (35)
 
 // RUN: c-index-test -code-completion-at=%s:181:4 %s | FileCheck -check-prefix=CHECK-BLOCK-RECEIVER %s
 // CHECK-BLOCK-RECEIVER: ObjCInterfaceDecl:{TypedText A} (50)
