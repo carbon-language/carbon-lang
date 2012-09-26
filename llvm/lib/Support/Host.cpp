@@ -234,6 +234,8 @@ std::string sys::getHostCPUName() {
       case 37: // Intel Core i7, laptop version.
       case 44: // Intel Core i7 processor and Intel Xeon processor. All
                // processors are manufactured using the 32 nm process.
+      case 46: // Nehalem EX
+      case 47: // Westmere EX
         return "corei7";
 
       // SandyBridge:
