@@ -20,6 +20,7 @@ vmaddrs = {}
 DEBUG = False
 
 
+# FIXME: merge the code that calls fix_filename().
 def fix_filename(file_name):
   for path_to_cut in sys.argv[1:]:
     file_name = re.sub(".*" + path_to_cut, "", file_name)
@@ -304,29 +305,31 @@ class BreakpadSymbolizer(Symbolizer):
       return None
 
 
-def symbolize_address(system, addr, binary, offset):
-  # Use the chain of symbolizers:
-  # Breakpad symbolizer -> LLVM symbolizer -> addr2line/atos
-  # (fall back to next symbolizer if the previous one fails).
-  if not symbolizers.has_key(binary):
-    symbolizers[binary] = ChainSymbolizer(
-        [BreakpadSymbolizerFactory(addr, binary), llvm_symbolizer])
-  result = symbolizers[binary].symbolize(addr, binary, offset)
-  if result is None:
-    # Initialize system symbolizer only if other symbolizers failed.
-    symbolizers[binary].append_symbolizer(
-        SystemSymbolizerFactory(system, addr, binary))
+class SymbolizationLoop(object):
+  def __init__(self):
+    self.system = os.uname()[0]
+    if self.system in ['Linux', 'Darwin']:
+      self.llvm_symbolizer = LLVMSymbolizerFactory(self.system)
+    else:
+      raise Exception("Unknown system")
+  def symbolize_address(self, addr, binary, offset):
+    # Use the chain of symbolizers:
+    # Breakpad symbolizer -> LLVM symbolizer -> addr2line/atos
+    # (fall back to next symbolizer if the previous one fails).
+    if not symbolizers.has_key(binary):
+      symbolizers[binary] = ChainSymbolizer(
+          [BreakpadSymbolizerFactory(addr, binary), llvm_symbolizer])
     result = symbolizers[binary].symbolize(addr, binary, offset)
-  # The system symbolizer must produce some result.
-  assert(result)
-  return result
-
-def main():
-  system = os.uname()[0]
-  global llvm_symbolizer
-  llvm_symbolizer = LLVMSymbolizerFactory(system)
-  frame_no = 0
-  if system in ['Linux', 'Darwin']:
+    if result is None:
+      # Initialize system symbolizer only if other symbolizers failed.
+      symbolizers[binary].append_symbolizer(
+          SystemSymbolizerFactory(self.system, addr, binary))
+      result = symbolizers[binary].symbolize(addr, binary, offset)
+    # The system symbolizer must produce some result.
+    assert(result)
+    return result
+  def loop(self):
+    frame_no = 0
     for line in sys.stdin:
       #0 0x7f6e35cf2e45  (/blah/foo.so+0x11fe45)
       stack_trace_line_format = (
@@ -341,16 +344,15 @@ def main():
       if (frameno_str == "0"):
         # Assume that frame #0 is the first frame of new stack trace.
         frame_no = 0
-      symbolized_line = symbolize_address(system, addr, binary, offset)
+      symbolized_line = self.symbolize_address(addr, binary, offset)
       if not symbolized_line:
         print line.rstrip()
       else:
         for symbolized_frame in symbolized_line:
           print "    #" + str(frame_no) + " " + symbolized_frame.rstrip()
           frame_no += 1
-  else:
-    print 'Unknown system: ', system
 
 
 if __name__ == '__main__':
-  main()
+  loop = SymbolizationLoop()
+  loop.loop()
