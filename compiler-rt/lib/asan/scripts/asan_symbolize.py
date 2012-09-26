@@ -55,8 +55,7 @@ class LLVMSymbolizer(Symbolizer):
     if not os.path.exists(self.symbolizer_path):
       return None
     cmd = [self.symbolizer_path,
-           "--use-symbol-table=false",  # FIXME: Remove this when libObject is
-                                        # fixed.
+           "--use-symbol-table=true",
            "--demangle=false",
            "--functions=true",
            "--inlining=true"]
