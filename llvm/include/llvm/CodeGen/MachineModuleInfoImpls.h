@@ -38,7 +38,7 @@ namespace llvm {
     /// this GV is external.
     DenseMap<MCSymbol*, StubValueTy> HiddenGVStubs;
     
-    virtual void Anchor();  // Out of line virtual method.
+    virtual void anchor();  // Out of line virtual method.
   public:
     MachineModuleInfoMachO(const MachineModuleInfo &) {}
     
@@ -76,7 +76,7 @@ namespace llvm {
     /// mode.
     DenseMap<MCSymbol*, StubValueTy> GVStubs;
 
-    virtual void Anchor();  // Out of line virtual method.
+    virtual void anchor();  // Out of line virtual method.
   public:
     MachineModuleInfoELF(const MachineModuleInfo &) {}
 

@@ -267,7 +267,7 @@ MCSymbolRefExpr::getVariantKindForName(StringRef Name) {
 
 /* *** */
 
-void MCTargetExpr::Anchor() {}
+void MCTargetExpr::anchor() {}
 
 /* *** */
 

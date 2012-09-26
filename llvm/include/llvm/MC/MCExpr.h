@@ -446,7 +446,7 @@ public:
 /// NOTE: All subclasses are required to have trivial destructors because
 /// MCExprs are bump pointer allocated and not destructed.
 class MCTargetExpr : public MCExpr {
-  virtual void Anchor();
+  virtual void anchor();
 protected:
   MCTargetExpr() : MCExpr(Target) {}
   virtual ~MCTargetExpr() {}

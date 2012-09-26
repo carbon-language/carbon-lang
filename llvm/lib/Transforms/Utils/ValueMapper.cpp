@@ -21,7 +21,7 @@
 using namespace llvm;
 
 // Out of line method to get vtable etc for class.
-void ValueMapTypeRemapper::Anchor() {}
+void ValueMapTypeRemapper::anchor() {}
 
 Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM, RemapFlags Flags,
                       ValueMapTypeRemapper *TypeMapper) {

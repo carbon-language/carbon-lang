@@ -21,8 +21,8 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 
 // Out of line virtual method.
-void MachineModuleInfoMachO::Anchor() {}
-void MachineModuleInfoELF::Anchor() {}
+void MachineModuleInfoMachO::anchor() {}
+void MachineModuleInfoELF::anchor() {}
 
 static int SortSymbolPair(const void *LHS, const void *RHS) {
   typedef std::pair<MCSymbol*, MachineModuleInfoImpl::StubValueTy> PairTy;
