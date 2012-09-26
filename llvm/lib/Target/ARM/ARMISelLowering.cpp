@@ -5594,7 +5594,7 @@ ARMTargetLowering::EmitAtomicBinaryMinMax(MachineInstr *MI,
   //   ldrex dest, ptr
   //   (sign extend dest, if required)
   //   cmp dest, incr
-  //   cmov.cond scratch2, dest, incr
+  //   cmov.cond scratch2, incr, dest
   //   strex scratch, scratch2, ptr
   //   cmp scratch, #0
   //   bne- loopMBB
@@ -5617,7 +5617,7 @@ ARMTargetLowering::EmitAtomicBinaryMinMax(MachineInstr *MI,
   AddDefaultPred(BuildMI(BB, dl, TII->get(isThumb2 ? ARM::t2CMPrr : ARM::CMPrr))
                  .addReg(oldval).addReg(incr));
   BuildMI(BB, dl, TII->get(isThumb2 ? ARM::t2MOVCCr : ARM::MOVCCr), scratch2)
-         .addReg(oldval).addReg(incr).addImm(Cond).addReg(ARM::CPSR);
+         .addReg(incr).addReg(oldval).addImm(Cond).addReg(ARM::CPSR);
 
   MIB = BuildMI(BB, dl, TII->get(strOpc), scratch).addReg(scratch2).addReg(ptr);
   if (strOpc == ARM::t2STREX)
