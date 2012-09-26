@@ -1541,7 +1541,7 @@ ToolBinDir = $(DESTDIR)$(PROJ_internal_prefix)/bin
 else
 ToolBinDir = $(DESTDIR)$(PROJ_bindir)
 endif
-DestTool = $(ToolBinDir)/$(program_prefix)$(TOOLEXENAME)
+DestTool = $(ToolBinDir)/$(TOOLEXENAME)
 
 install-local:: $(DestTool)
 
@@ -1556,7 +1556,7 @@ uninstall-local::
 
 # TOOLALIAS install.
 ifdef TOOLALIAS
-DestToolAlias = $(ToolBinDir)/$(program_prefix)$(TOOLALIAS)$(EXEEXT)
+DestToolAlias = $(ToolBinDir)/$(TOOLALIAS)$(EXEEXT)
 
 install-local:: $(DestToolAlias)
 
