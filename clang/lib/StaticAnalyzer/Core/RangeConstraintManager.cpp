@@ -373,7 +373,7 @@ RangeConstraintManager::GetRange(ProgramStateRef state, SymbolRef sym) {
   // Lazily generate a new RangeSet representing all possible values for the
   // given symbol type.
   BasicValueFactory &BV = getBasicVals();
-  QualType T = sym->getType(BV.getContext());
+  QualType T = sym->getType();
 
   RangeSet Result(F, BV.getMinValue(T), BV.getMaxValue(T));
 

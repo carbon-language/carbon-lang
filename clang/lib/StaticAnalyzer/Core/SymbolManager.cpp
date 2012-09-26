@@ -324,23 +324,24 @@ const SymSymExpr *SymbolManager::getSymSymExpr(const SymExpr *lhs,
   return cast<SymSymExpr>(data);
 }
 
-QualType SymbolConjured::getType(ASTContext&) const {
+QualType SymbolConjured::getType() const {
   return T;
 }
 
-QualType SymbolDerived::getType(ASTContext &Ctx) const {
+QualType SymbolDerived::getType() const {
   return R->getValueType();
 }
 
-QualType SymbolExtent::getType(ASTContext &Ctx) const {
+QualType SymbolExtent::getType() const {
+  ASTContext &Ctx = R->getMemRegionManager()->getContext();
   return Ctx.getSizeType();
 }
 
-QualType SymbolMetadata::getType(ASTContext&) const {
+QualType SymbolMetadata::getType() const {
   return T;
 }
 
-QualType SymbolRegionValue::getType(ASTContext &C) const {
+QualType SymbolRegionValue::getType() const {
   return R->getValueType();
 }
 

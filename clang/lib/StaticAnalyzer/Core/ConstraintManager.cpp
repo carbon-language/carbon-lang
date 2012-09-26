@@ -33,8 +33,7 @@ ConditionTruthVal ConstraintManager::isNull(ProgramStateRef State,
   // Disable recursive notification of clients.
   llvm::SaveAndRestore<bool> DisableNotify(NotifyAssumeClients, false);
   
-  ProgramStateManager &Mgr = State->getStateManager();
-  QualType Ty = Sym->getType(Mgr.getContext());
+  QualType Ty = Sym->getType();
   DefinedSVal V = Loc::isLocType(Ty) ? getLocFromSymbol(State, Sym)
                                      : nonloc::SymbolVal(Sym);
   const ProgramStatePair &P = assumeDual(State, V);

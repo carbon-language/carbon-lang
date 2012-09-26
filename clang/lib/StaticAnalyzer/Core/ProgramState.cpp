@@ -737,7 +737,7 @@ DynamicTypeInfo ProgramState::getDynamicTypeInfo(const MemRegion *Reg) const {
 
   if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(Reg)) {
     SymbolRef Sym = SR->getSymbol();
-    return DynamicTypeInfo(Sym->getType(getStateManager().getContext()));
+    return DynamicTypeInfo(Sym->getType());
   }
 
   return DynamicTypeInfo();

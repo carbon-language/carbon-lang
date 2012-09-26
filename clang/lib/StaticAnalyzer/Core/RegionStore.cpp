@@ -1050,7 +1050,7 @@ SVal RegionStoreManager::getBinding(Store store, Loc L, QualType T) {
         T = TR->getLocationType();
       else {
         const SymbolicRegion *SR = cast<SymbolicRegion>(MR);
-        T = SR->getSymbol()->getType(Ctx);
+        T = SR->getSymbol()->getType();
       }
     }
     MR = GetElementZeroRegion(MR, T);
@@ -1574,7 +1574,7 @@ StoreRef RegionStoreManager::Bind(Store store, Loc L, SVal V) {
   if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(R)) {
     // Binding directly to a symbolic region should be treated as binding
     // to element 0.
-    QualType T = SR->getSymbol()->getType(Ctx);
+    QualType T = SR->getSymbol()->getType();
     if (T->isAnyPointerType() || T->isReferenceType())
       T = T->getPointeeType();
 

@@ -1109,7 +1109,7 @@ RegionOffset MemRegion::getAsOffset() const {
         // If our base region is symbolic, we don't know what type it really is.
         // Pretend the type of the symbol is the true dynamic type.
         // (This will at least be self-consistent for the life of the symbol.)
-        Ty = SR->getSymbol()->getType(getContext())->getPointeeType();
+        Ty = SR->getSymbol()->getType()->getPointeeType();
       }
       
       const CXXRecordDecl *Child = Ty->getAsCXXRecordDecl();
