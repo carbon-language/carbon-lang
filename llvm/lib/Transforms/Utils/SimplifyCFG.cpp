@@ -3240,61 +3240,127 @@ static bool GetCaseResults(SwitchInst *SI,
   return true;
 }
 
-/// BuildLookupTable - Build a lookup table with the contents of Results, using
-/// DefaultResult to fill the holes in the table. If the table ends up
-/// containing the same result in each element, set *SingleResult to that value
-/// and return NULL.
-static GlobalVariable *BuildLookupTable(Module &M,
-                                        uint64_t TableSize,
-                                        ConstantInt *Offset,
-              const SmallVector<std::pair<ConstantInt*, Constant*>, 4>& Results,
-                                        Constant *DefaultResult,
-                                        Constant **SingleResult) {
-  assert(Results.size() && "Need values to build lookup table");
-  assert(TableSize >= Results.size() && "Table needs to hold all values");
+namespace {
+  /// SwitchLookupTable - This class represents a lookup table that can be used
+  /// to replace a switch.
+  class SwitchLookupTable {
+  public:
+    /// SwitchLookupTable - Create a lookup table to use as a switch replacement
+    /// with the contents of Values, using DefaultValue to fill any holes in the
+    /// table.
+    SwitchLookupTable(Module &M,
+                      uint64_t TableSize,
+                      ConstantInt *Offset,
+               const SmallVector<std::pair<ConstantInt*, Constant*>, 4>& Values,
+                      Constant *DefaultValue);
+
+    /// BuildLookup - Build instructions with Builder to retrieve the value at
+    /// the position given by Index in the lookup table.
+    Value *BuildLookup(Value *Index, IRBuilder<> &Builder);
+
+  private:
+    // Depending on the contents of the table, it can be represented in
+    // different ways.
+    enum {
+      // For tables where each element contains the same value, we just have to
+      // store that single value and return it for each lookup.
+      SingleValueKind,
+
+      // The table is stored as an array of values. Values are retrieved by load
+      // instructions from the table.
+      ArrayKind
+    } Kind;
+
+    // For SingleValueKind, this is the single value.
+    Constant *SingleValue;
+
+    // For ArrayKind, this is the array.
+    GlobalVariable *Array;
+  };
+}
+
+SwitchLookupTable::SwitchLookupTable(Module &M,
+                                     uint64_t TableSize,
+                                     ConstantInt *Offset,
+               const SmallVector<std::pair<ConstantInt*, Constant*>, 4>& Values,
+                                     Constant *DefaultValue) {
+  assert(Values.size() && "Can't build lookup table without values.");
+  assert(TableSize >= Values.size() && "Can't fit values in table.");
 
   // If all values in the table are equal, this is that value.
-  Constant *SameResult = Results.begin()->second;
+  SingleValue = Values.begin()->second;
 
   // Build up the table contents.
-  std::vector<Constant*> TableContents(TableSize);
-  for (size_t I = 0, E = Results.size(); I != E; ++I) {
-    ConstantInt *CaseVal = Results[I].first;
-    Constant *CaseRes = Results[I].second;
+  SmallVector<Constant*, 64> TableContents(TableSize);
+  for (size_t I = 0, E = Values.size(); I != E; ++I) {
+    ConstantInt *CaseVal = Values[I].first;
+    Constant *CaseRes = Values[I].second;
+    assert(CaseRes->getType() == DefaultValue->getType());
 
-    uint64_t Idx = (CaseVal->getValue() - Offset->getValue()).getLimitedValue();
+    uint64_t Idx = (CaseVal->getValue() - Offset->getValue())
+                   .getLimitedValue();
     TableContents[Idx] = CaseRes;
 
-    if (CaseRes != SameResult)
-      SameResult = NULL;
+    if (CaseRes != SingleValue)
+      SingleValue = NULL;
   }
 
   // Fill in any holes in the table with the default result.
-  if (Results.size() < TableSize) {
-    for (unsigned i = 0; i < TableSize; ++i) {
-      if (!TableContents[i])
-        TableContents[i] = DefaultResult;
+  if (Values.size() < TableSize) {
+    for (uint64_t I = 0; I < TableSize; ++I) {
+      if (!TableContents[I])
+        TableContents[I] = DefaultValue;
     }
 
-    if (DefaultResult != SameResult)
-      SameResult = NULL;
+    if (DefaultValue != SingleValue)
+      SingleValue = NULL;
   }
 
-  // Same result was used in the entire table; just return that.
-  if (SameResult) {
-    *SingleResult = SameResult;
-    return NULL;
+  // If each element in the table contains the same value, we only need to store
+  // that single value.
+  if (SingleValue) {
+    Kind = SingleValueKind;
+    return;
   }
 
-  ArrayType *ArrayTy = ArrayType::get(DefaultResult->getType(), TableSize);
+  // Store the table in an array.
+  ArrayType *ArrayTy = ArrayType::get(DefaultValue->getType(), TableSize);
   Constant *Initializer = ConstantArray::get(ArrayTy, TableContents);
 
-  GlobalVariable *GV = new GlobalVariable(M, ArrayTy, /*constant=*/ true,
-                                          GlobalVariable::PrivateLinkage,
-                                          Initializer,
-                                          "switch.table");
-  GV->setUnnamedAddr(true);
-  return GV;
+  Array = new GlobalVariable(M, ArrayTy, /*constant=*/ true,
+                             GlobalVariable::PrivateLinkage,
+                             Initializer,
+                             "switch.table");
+  Array->setUnnamedAddr(true);
+  Kind = ArrayKind;
+}
+
+Value *SwitchLookupTable::BuildLookup(Value *Index, IRBuilder<> &Builder) {
+  switch (Kind) {
+    case SingleValueKind:
+      return SingleValue;
+    case ArrayKind: {
+      Value *GEPIndices[] = { Builder.getInt32(0), Index };
+      Value *GEP = Builder.CreateInBoundsGEP(Array, GEPIndices,
+                                             "switch.gep");
+      return Builder.CreateLoad(GEP, "switch.load");
+    }
+  }
+  llvm_unreachable("Unknown lookup table kind!");
+}
+
+/// ShouldBuildLookupTable - Determine whether a lookup table should be built
+/// for this switch, based on the number of caes, size of the table and the
+/// types of the results.
+static bool ShouldBuildLookupTable(SwitchInst *SI,
+                                   uint64_t TableSize) {
+  // The table density should be at least 40%. This is the same criterion as for
+  // jump tables, see SelectionDAGBuilder::handleJTSwitchCase.
+  // FIXME: Find the best cut-off.
+  if (SI->getNumCases() * 10 >= TableSize * 4)
+    return true;
+
+  return false;
 }
 
 /// SwitchToLookupTable - If the switch is only used to initialize one or more
@@ -3316,7 +3382,7 @@ static bool SwitchToLookupTable(SwitchInst *SI,
   // GEP needs a runtime relocation in PIC code. We should just build one big
   // string and lookup indices into that.
 
-  // Ignore the switch if the number of cases are too small.
+  // Ignore the switch if the number of cases is too small.
   // This is similar to the check when building jump tables in
   // SelectionDAGBuilder::handleJTSwitchCase.
   // FIXME: Determine the best cut-off.
@@ -3370,33 +3436,16 @@ static bool SwitchToLookupTable(SwitchInst *SI,
   }
 
   APInt RangeSpread = MaxCaseVal->getValue() - MinCaseVal->getValue();
-  // The table density should be at lest 40%. This is the same criterion as for
-  // jump tables, see SelectionDAGBuilder::handleJTSwitchCase.
-  // FIXME: Find the best cut-off.
-  // Be careful to avoid overlow in the density computation.
+  // Be careful to avoid overflow when TableSize is used in
+  // ShouldBuildLookupTable.
   if (RangeSpread.zextOrSelf(64).ugt(UINT64_MAX / 4 - 1))
     return false;
   uint64_t TableSize = RangeSpread.getLimitedValue() + 1;
-  if (SI->getNumCases() * 10 < TableSize * 4)
+  if (!ShouldBuildLookupTable(SI, TableSize))
     return false;
 
-  // Build the lookup tables.
-  SmallDenseMap<PHINode*, GlobalVariable*> LookupTables;
-  SmallDenseMap<PHINode*, Constant*> SingleResults;
-
-  Module &Mod = *CommonDest->getParent()->getParent();
-  for (SmallVector<PHINode*, 4>::iterator I = PHIs.begin(), E = PHIs.end();
-       I != E; ++I) {
-    PHINode *PHI = *I;
-
-    Constant *SingleResult = NULL;
-    LookupTables[PHI] = BuildLookupTable(Mod, TableSize, MinCaseVal,
-                                         ResultLists[PHI], DefaultResults[PHI],
-                                         &SingleResult);
-    SingleResults[PHI] = SingleResult;
-  }
-
   // Create the BB that does the lookups.
+  Module &Mod = *CommonDest->getParent()->getParent();
   BasicBlock *LookupBB = BasicBlock::Create(Mod.getContext(),
                                             "switch.lookup",
                                             CommonDest->getParent(),
@@ -3414,19 +3463,13 @@ static bool SwitchToLookupTable(SwitchInst *SI,
   // Populate the BB that does the lookups.
   Builder.SetInsertPoint(LookupBB);
   bool ReturnedEarly = false;
-  for (SmallVector<PHINode*, 4>::iterator I = PHIs.begin(), E = PHIs.end();
-       I != E; ++I) {
-    PHINode *PHI = *I;
-    // There was a single result for this phi; just use that.
-    if (Constant *SingleResult = SingleResults[PHI]) {
-      PHI->addIncoming(SingleResult, LookupBB);
-      continue;
-    }
+  for (size_t I = 0, E = PHIs.size(); I != E; ++I) {
+    PHINode *PHI = PHIs[I];
 
-    Value *GEPIndices[] = { Builder.getInt32(0), TableIndex };
-    Value *GEP = Builder.CreateInBoundsGEP(LookupTables[PHI], GEPIndices,
-                                           "switch.gep");
-    Value *Result = Builder.CreateLoad(GEP, "switch.load");
+    SwitchLookupTable Table(Mod, TableSize, MinCaseVal, ResultLists[PHI],
+                            DefaultResults[PHI]);
+
+    Value *Result = Table.BuildLookup(TableIndex, Builder);
 
     // If the result is used to return immediately from the function, we want to
     // do that right here.
