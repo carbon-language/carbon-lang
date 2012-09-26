@@ -37,13 +37,13 @@ namespace {
 class IntelJITEventListener : public JITEventListener {
   typedef DenseMap<void*, unsigned int> MethodIDMap;
 
-  IntelJITEventsWrapper& Wrapper;
+  OwningPtr<IntelJITEventsWrapper> Wrapper;
   MethodIDMap MethodIDs;
   FilenameCache Filenames;
 
 public:
-  IntelJITEventListener(IntelJITEventsWrapper& libraryWrapper)
-  : Wrapper(libraryWrapper) {
+  IntelJITEventListener(IntelJITEventsWrapper* libraryWrapper) {
+      Wrapper.reset(libraryWrapper);
   }
 
   ~IntelJITEventListener() {
@@ -94,7 +94,7 @@ static iJIT_Method_Load FunctionDescToIntelJITFormat(
 void IntelJITEventListener::NotifyFunctionEmitted(
     const Function &F, void *FnStart, size_t FnSize,
     const EmittedFunctionDetails &Details) {
-  iJIT_Method_Load FunctionMessage = FunctionDescToIntelJITFormat(Wrapper,
+  iJIT_Method_Load FunctionMessage = FunctionDescToIntelJITFormat(*Wrapper,
                                       F.getName().data(),
                                       reinterpret_cast<uint64_t>(FnStart),
                                       FnSize);
@@ -151,15 +151,15 @@ void IntelJITEventListener::NotifyFunctionEmitted(
     FunctionMessage.line_number_table = 0;
   }
 
-  Wrapper.iJIT_NotifyEvent(iJVM_EVENT_TYPE_METHOD_LOAD_FINISHED,
-                           &FunctionMessage);
+  Wrapper->iJIT_NotifyEvent(iJVM_EVENT_TYPE_METHOD_LOAD_FINISHED,
+                            &FunctionMessage);
   MethodIDs[FnStart] = FunctionMessage.method_id;
 }
 
 void IntelJITEventListener::NotifyFreeingMachineCode(void *FnStart) {
   MethodIDMap::iterator I = MethodIDs.find(FnStart);
   if (I != MethodIDs.end()) {
-    Wrapper.iJIT_NotifyEvent(iJVM_EVENT_TYPE_METHOD_UNLOAD_START, &I->second);
+    Wrapper->iJIT_NotifyEvent(iJVM_EVENT_TYPE_METHOD_UNLOAD_START, &I->second);
     MethodIDs.erase(I);
   }
 }
@@ -168,15 +168,13 @@ void IntelJITEventListener::NotifyFreeingMachineCode(void *FnStart) {
 
 namespace llvm {
 JITEventListener *JITEventListener::createIntelJITEventListener() {
-  static OwningPtr<IntelJITEventsWrapper> JITProfilingWrapper(
-                                            new IntelJITEventsWrapper);
-  return new IntelJITEventListener(*JITProfilingWrapper);
+  return new IntelJITEventListener(new IntelJITEventsWrapper);
 }
 
 // for testing
 JITEventListener *JITEventListener::createIntelJITEventListener(
                                       IntelJITEventsWrapper* TestImpl) {
-  return new IntelJITEventListener(*TestImpl);
+  return new IntelJITEventListener(TestImpl);
 }
 
 } // namespace llvm
