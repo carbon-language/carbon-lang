@@ -85,8 +85,13 @@ def main():
     # of the Xcode.app subtree.
     xcode_path = os.path.dirname(xcode_path)
   
+  foundSpec = False
   for x in FindClangSpecs(xcode_path):
+    foundSpec = True
     ModifySpec(x, path)
+    
+  if foundSpec == False:
+      print "(-) No compiler configuration file was found.  Xcode's analyzer has not been updated."
 
 if __name__ == '__main__':
   main()
