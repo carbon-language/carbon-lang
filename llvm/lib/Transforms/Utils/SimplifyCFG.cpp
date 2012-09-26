@@ -58,10 +58,10 @@ static cl::opt<bool>
 SinkCommon("simplifycfg-sink-common", cl::Hidden, cl::init(true),
        cl::desc("Sink common instructions down to the end block"));
 
-STATISTIC(NumSpeculations, "Number of speculative executed instructions");
-STATISTIC(NumLookupTables, "Number of switch instructions turned into lookup tables");
 STATISTIC(NumBitMaps, "Number of switch instructions turned into bitmaps");
+STATISTIC(NumLookupTables, "Number of switch instructions turned into lookup tables");
 STATISTIC(NumSinkCommons, "Number of common instructions sunk down to the end block");
+STATISTIC(NumSpeculations, "Number of speculative executed instructions");
 
 namespace {
   /// ValueEqualityComparisonCase - Represents a case of a switch.
@@ -3347,7 +3347,8 @@ SwitchLookupTable::SwitchLookupTable(Module &M,
     APInt TableInt(TableSize * IT->getBitWidth(), 0);
     for (uint64_t I = TableSize; I > 0; --I) {
       TableInt <<= IT->getBitWidth();
-      TableInt |= cast<ConstantInt>(TableContents[I - 1])->getZExtValue();
+      ConstantInt *Val = cast<ConstantInt>(TableContents[I - 1]);
+      TableInt |= Val->getValue().zext(TableInt.getBitWidth());
     }
     BitMap = ConstantInt::get(M.getContext(), TableInt);
     BitMapElementTy = IT;
@@ -3379,12 +3380,7 @@ Value *SwitchLookupTable::BuildLookup(Value *Index, IRBuilder<> &Builder) {
       // Cast Index to the same type as the bitmap.
       // Note: The Index is <= the number of elements in the table, so
       // truncating it to the width of the bitmask is safe.
-      Value *ShiftAmt = Index;
-      IntegerType *IndexTy = cast<IntegerType>(Index->getType());
-      if (IndexTy->getBitWidth() < MapTy->getBitWidth())
-        ShiftAmt = Builder.CreateZExt(ShiftAmt, MapTy, "switch.zext");
-      else if (IndexTy->getBitWidth() > MapTy->getBitWidth())
-        ShiftAmt = Builder.CreateTrunc(ShiftAmt, MapTy, "switch.trunc");
+      Value *ShiftAmt = Builder.CreateZExtOrTrunc(Index, MapTy, "switch.cast");
 
       // Multiply the shift amount by the element width.
       ShiftAmt = Builder.CreateMul(ShiftAmt,

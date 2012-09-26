@@ -221,8 +221,8 @@ lor.end:
 ; CHECK-NEXT: %0 = icmp ult i8 %switch.tableidx, 59
 ; CHECK-NEXT: br i1 %0, label %switch.lookup, label %lor.end
 ; CHECK: switch.lookup:
-; CHECK-NEXT: %switch.zext = zext i8 %switch.tableidx to i59
-; CHECK-NEXT: %switch.shiftamt = mul i59 %switch.zext, 1
+; CHECK-NEXT: %switch.cast = zext i8 %switch.tableidx to i59
+; CHECK-NEXT: %switch.shiftamt = mul i59 %switch.cast, 1
 ; CHECK-NEXT: %switch.downshift = lshr i59 -288230375765830623, %switch.shiftamt
 ; CHECK-NEXT: %switch.masked = trunc i59 %switch.downshift to i1
 ; CHECK-NEXT: br label %lor.end

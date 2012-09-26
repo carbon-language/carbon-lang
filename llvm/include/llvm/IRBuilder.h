@@ -995,6 +995,30 @@ public:
   Value *CreateSExt(Value *V, Type *DestTy, const Twine &Name = "") {
     return CreateCast(Instruction::SExt, V, DestTy, Name);
   }
+  /// CreateZExtOrTrunc - Create a ZExt or Trunc from the integer value V to
+  /// DestTy. Return the value untouched if the type of V is already DestTy.
+  Value *CreateZExtOrTrunc(Value *V, IntegerType *DestTy,
+                           const Twine &Name = "") {
+    assert(isa<IntegerType>(V->getType()) && "Can only zero extend integers!");
+    IntegerType *IntTy = cast<IntegerType>(V->getType());
+    if (IntTy->getBitWidth() < DestTy->getBitWidth())
+      return CreateZExt(V, DestTy, Name);
+    if (IntTy->getBitWidth() > DestTy->getBitWidth())
+      return CreateTrunc(V, DestTy, Name);
+    return V;
+  }
+  /// CreateSExtOrTrunc - Create a SExt or Trunc from the integer value V to
+  /// DestTy. Return the value untouched if the type of V is already DestTy.
+  Value *CreateSExtOrTrunc(Value *V, IntegerType *DestTy,
+                           const Twine &Name = "") {
+    assert(isa<IntegerType>(V->getType()) && "Can only sign extend integers!");
+    IntegerType *IntTy = cast<IntegerType>(V->getType());
+    if (IntTy->getBitWidth() < DestTy->getBitWidth())
+      return CreateSExt(V, DestTy, Name);
+    if (IntTy->getBitWidth() > DestTy->getBitWidth())
+      return CreateTrunc(V, DestTy, Name);
+    return V;
+  }
   Value *CreateFPToUI(Value *V, Type *DestTy, const Twine &Name = ""){
     return CreateCast(Instruction::FPToUI, V, DestTy, Name);
   }
