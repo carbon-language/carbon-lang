@@ -80,7 +80,7 @@ CreateMemSet(Value *Ptr, Value *Val, Value *Size, unsigned Align,
 
 CallInst *IRBuilderBase::
 CreateMemCpy(Value *Dst, Value *Src, Value *Size, unsigned Align,
-             bool isVolatile, MDNode *TBAATag) {
+             bool isVolatile, MDNode *TBAATag, MDNode *TBAAStructTag) {
   Dst = getCastedInt8PtrValue(Dst);
   Src = getCastedInt8PtrValue(Src);
 
@@ -94,6 +94,10 @@ CreateMemCpy(Value *Dst, Value *Src, Value *Size, unsigned Align,
   // Set the TBAA info if present.
   if (TBAATag)
     CI->setMetadata(LLVMContext::MD_tbaa, TBAATag);
+
+  // Set the TBAA Struct info if present.
+  if (TBAAStructTag)
+    CI->setMetadata(LLVMContext::MD_tbaa_struct, TBAAStructTag);
   
   return CI;  
 }

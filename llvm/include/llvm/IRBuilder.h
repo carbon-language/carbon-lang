@@ -285,12 +285,15 @@ public:
   /// If the pointers aren't i8*, they will be converted.  If a TBAA tag is
   /// specified, it will be added to the instruction.
   CallInst *CreateMemCpy(Value *Dst, Value *Src, uint64_t Size, unsigned Align,
-                         bool isVolatile = false, MDNode *TBAATag = 0) {
-    return CreateMemCpy(Dst, Src, getInt64(Size), Align, isVolatile, TBAATag);
+                         bool isVolatile = false, MDNode *TBAATag = 0,
+                         MDNode *TBAAStructTag = 0) {
+    return CreateMemCpy(Dst, Src, getInt64(Size), Align, isVolatile, TBAATag,
+                        TBAAStructTag);
   }
 
   CallInst *CreateMemCpy(Value *Dst, Value *Src, Value *Size, unsigned Align,
-                         bool isVolatile = false, MDNode *TBAATag = 0);
+                         bool isVolatile = false, MDNode *TBAATag = 0,
+                         MDNode *TBAAStructTag = 0);
 
   /// CreateMemMove - Create and insert a memmove between the specified
   /// pointers.  If the pointers aren't i8*, they will be converted.  If a TBAA
