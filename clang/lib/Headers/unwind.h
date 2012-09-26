@@ -100,7 +100,7 @@ typedef enum {
   _UVRSR_FAILED = 2  
 } _Unwind_VRS_Result; 
 
-_Unwind_VRS_Result _Unwind_VRS_Get(_Unwind_Context *context,
+_Unwind_VRS_Result _Unwind_VRS_Get(struct _Unwind_Context *context,
   _Unwind_VRS_RegClass regclass,
   uint32_t regno,
   _Unwind_VRS_DataRepresentation representation,
