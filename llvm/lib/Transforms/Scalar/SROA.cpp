@@ -1992,6 +1992,9 @@ private:
     Value *NewPtr = getAdjustedAllocaPtr(IRB,
                                          LI.getPointerOperand()->getType());
     LI.setOperand(0, NewPtr);
+    if (LI.getAlignment())
+      LI.setAlignment(MinAlign(NewAI.getAlignment(),
+                               BeginOffset - NewAllocaBeginOffset));
     DEBUG(dbgs() << "          to: " << LI << "\n");
 
     deleteIfTriviallyDead(OldOp);
@@ -2043,6 +2046,9 @@ private:
     Value *NewPtr = getAdjustedAllocaPtr(IRB,
                                          SI.getPointerOperand()->getType());
     SI.setOperand(1, NewPtr);
+    if (SI.getAlignment())
+      SI.setAlignment(MinAlign(NewAI.getAlignment(),
+                               BeginOffset - NewAllocaBeginOffset));
     DEBUG(dbgs() << "          to: " << SI << "\n");
 
     deleteIfTriviallyDead(OldOp);

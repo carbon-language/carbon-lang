@@ -28,6 +28,24 @@ entry:
   ret void
 }
 
+define void @test2() {
+; CHECK: @test2
+; CHECK: alloca i16, align 2
+; CHECK: load i8* %{{.*}}, align 1
+; CHECK: store i8 42, i8* %{{.*}}, align 1
+; CHECK: ret void
+
+entry:
+  %a = alloca { i8, i8, i8, i8 }, align 2
+  %gep1 = getelementptr { i8, i8, i8, i8 }* %a, i32 0, i32 1
+  %cast1 = bitcast i8* %gep1 to i16*
+  store volatile i16 0, i16* %cast1
+  %gep2 = getelementptr { i8, i8, i8, i8 }* %a, i32 0, i32 2
+  %result = load i8* %gep2, align 2
+  store i8 42, i8* %gep2, align 2
+  ret void
+}
+
 define void @PR13920(<2 x i64>* %a, i16* %b) {
 ; Test that alignments on memcpy intrinsics get propagated to loads and stores.
 ; CHECK: @PR13920
