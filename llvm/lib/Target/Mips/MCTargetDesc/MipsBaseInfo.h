@@ -122,14 +122,16 @@ inline static unsigned getMipsRegisterNumbering(unsigned RegEnum)
 {
   switch (RegEnum) {
   case Mips::ZERO: case Mips::ZERO_64: case Mips::F0: case Mips::D0_64:
-  case Mips::D0:   case Mips::FCC0:
+  case Mips::D0:   case Mips::FCC0:    case Mips::AC0:
     return 0;
   case Mips::AT: case Mips::AT_64: case Mips::F1: case Mips::D1_64:
+  case Mips::AC1:
     return 1;
   case Mips::V0: case Mips::V0_64: case Mips::F2: case Mips::D2_64:
-  case Mips::D1:
+  case Mips::D1: case Mips::AC2:
     return 2;
   case Mips::V1: case Mips::V1_64: case Mips::F3: case Mips::D3_64:
+  case Mips::AC3:
     return 3;
   case Mips::A0: case Mips::A0_64: case Mips::F4: case Mips::D4_64:
   case Mips::D2:
