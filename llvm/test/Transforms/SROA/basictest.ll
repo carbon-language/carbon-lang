@@ -897,18 +897,3 @@ if.end:
   %tmp2 = load i8* %gep
   ret void
 }
-
-define void @test23(<2 x i64> %a, i16* %b) {
-; CHECK: @test23
-; CHECK: store {{.*}}, align 2
-; CHECK: ret void
-; PR13920
-
-entry:
-  %a.addr = alloca <2 x i64>, align 16
-  store <2 x i64> %a, <2 x i64>* %a.addr, align 16
-  %0 = bitcast i16* %b to i8*
-  %1 = bitcast <2 x i64>* %a.addr to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %0, i8* %1, i32 16, i32 2, i1 false)
-  ret void
-}

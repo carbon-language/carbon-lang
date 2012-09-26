@@ -1896,7 +1896,8 @@ private:
   Value *extractInteger(IRBuilder<> &IRB, IntegerType *TargetTy,
                         uint64_t Offset) {
     assert(IntPromotionTy && "Alloca is not an integer we can extract from");
-    Value *V = IRB.CreateLoad(&NewAI, getName(".load"));
+    Value *V = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
+                                     getName(".load"));
     assert(Offset >= NewAllocaBeginOffset && "Out of bounds offset");
     uint64_t RelOffset = Offset - NewAllocaBeginOffset;
     if (RelOffset)
@@ -1912,7 +1913,7 @@ private:
   StoreInst *insertInteger(IRBuilder<> &IRB, Value *V, uint64_t Offset) {
     IntegerType *Ty = cast<IntegerType>(V->getType());
     if (Ty == IntPromotionTy)
-      return IRB.CreateStore(V, &NewAI);
+      return IRB.CreateAlignedStore(V, &NewAI, NewAI.getAlignment());
 
     assert(Ty->getBitWidth() < IntPromotionTy->getBitWidth() &&
            "Cannot insert a larger integer!");
@@ -1924,10 +1925,12 @@ private:
 
     APInt Mask = ~Ty->getMask().zext(IntPromotionTy->getBitWidth())
                                .shl(RelOffset*8);
-    Value *Old = IRB.CreateAnd(IRB.CreateLoad(&NewAI, getName(".oldload")),
+    Value *Old = IRB.CreateAnd(IRB.CreateAlignedLoad(&NewAI,
+                                                     NewAI.getAlignment(),
+                                                     getName(".oldload")),
                                Mask, getName(".mask"));
-    return IRB.CreateStore(IRB.CreateOr(Old, V, getName(".insert")),
-                           &NewAI);
+    return IRB.CreateAlignedStore(IRB.CreateOr(Old, V, getName(".insert")),
+                                  &NewAI, NewAI.getAlignment());
   }
 
   void deleteIfTriviallyDead(Value *V) {
@@ -1949,12 +1952,12 @@ private:
     Value *Result;
     if (LI.getType() == VecTy->getElementType() ||
         BeginOffset > NewAllocaBeginOffset || EndOffset < NewAllocaEndOffset) {
-      Result
-        = IRB.CreateExtractElement(IRB.CreateLoad(&NewAI, getName(".load")),
-                                   getIndex(IRB, BeginOffset),
-                                   getName(".extract"));
+      Result = IRB.CreateExtractElement(
+        IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(), getName(".load")),
+        getIndex(IRB, BeginOffset), getName(".extract"));
     } else {
-      Result = IRB.CreateLoad(&NewAI, getName(".load"));
+      Result = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
+                                     getName(".load"));
     }
     if (Result->getType() != LI.getType())
       Result = getValueCast(IRB, Result, LI.getType());
@@ -2002,13 +2005,14 @@ private:
         BeginOffset > NewAllocaBeginOffset || EndOffset < NewAllocaEndOffset) {
       if (V->getType() != ElementTy)
         V = getValueCast(IRB, V, ElementTy);
-      V = IRB.CreateInsertElement(IRB.CreateLoad(&NewAI, getName(".load")), V,
-                                  getIndex(IRB, BeginOffset),
+      LoadInst *LI = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
+                                           getName(".load"));
+      V = IRB.CreateInsertElement(LI, V, getIndex(IRB, BeginOffset),
                                   getName(".insert"));
     } else if (V->getType() != VecTy) {
       V = getValueCast(IRB, V, VecTy);
     }
-    StoreInst *Store = IRB.CreateStore(V, &NewAI);
+    StoreInst *Store = IRB.CreateAlignedStore(V, &NewAI, NewAI.getAlignment());
     Pass.DeadInsts.push_back(&SI);
 
     (void)Store;
@@ -2073,11 +2077,15 @@ private:
                    !TD.isLegalInteger(TD.getTypeSizeInBits(ScalarTy)))) {
       Type *SizeTy = II.getLength()->getType();
       Constant *Size = ConstantInt::get(SizeTy, EndOffset - BeginOffset);
+      unsigned Align = 1;
+      if (NewAI.getAlignment())
+        Align = MinAlign(NewAI.getAlignment(),
+                         BeginOffset - NewAllocaBeginOffset);
 
       CallInst *New
         = IRB.CreateMemSet(getAdjustedAllocaPtr(IRB,
                                                 II.getRawDest()->getType()),
-                           II.getValue(), Size, II.getAlignment(),
+                           II.getValue(), Size, Align,
                            II.isVolatile());
       (void)New;
       DEBUG(dbgs() << "          to: " << *New << "\n");
@@ -2115,11 +2123,13 @@ private:
     // If this is an element-wide memset of a vectorizable alloca, insert it.
     if (VecTy && (BeginOffset > NewAllocaBeginOffset ||
                   EndOffset < NewAllocaEndOffset)) {
-      StoreInst *Store = IRB.CreateStore(
-        IRB.CreateInsertElement(IRB.CreateLoad(&NewAI, getName(".load")), V,
-                                getIndex(IRB, BeginOffset),
+      StoreInst *Store = IRB.CreateAlignedStore(
+        IRB.CreateInsertElement(IRB.CreateAlignedLoad(&NewAI,
+                                                      NewAI.getAlignment(),
+                                                      getName(".load")),
+                                V, getIndex(IRB, BeginOffset),
                                 getName(".insert")),
-        &NewAI);
+        &NewAI, NewAI.getAlignment());
       (void)Store;
       DEBUG(dbgs() << "          to: " << *Store << "\n");
       return true;
@@ -2137,7 +2147,8 @@ private:
       assert(V->getType() == VecTy);
     }
 
-    Value *New = IRB.CreateStore(V, &NewAI, II.isVolatile());
+    Value *New = IRB.CreateAlignedStore(V, &NewAI, NewAI.getAlignment(),
+                                        II.isVolatile());
     (void)New;
     DEBUG(dbgs() << "          to: " << *New << "\n");
     return !II.isVolatile();
@@ -2227,6 +2238,11 @@ private:
     OtherPtr = getAdjustedPtr(IRB, TD, OtherPtr, RelOffset, OtherPtrTy,
                               getName("." + OtherPtr->getName()));
 
+    unsigned Align = II.getAlignment();
+    if (Align > 1)
+      Align = MinAlign(RelOffset.zextOrTrunc(64).getZExtValue(),
+                       MinAlign(II.getAlignment(), NewAI.getAlignment()));
+
     // Strip all inbounds GEPs and pointer casts to try to dig out any root
     // alloca that should be re-examined after rewriting this instruction.
     if (AllocaInst *AI
@@ -2242,8 +2258,7 @@ private:
 
       CallInst *New = IRB.CreateMemCpy(IsDest ? OurPtr : OtherPtr,
                                        IsDest ? OtherPtr : OurPtr,
-                                       Size, II.getAlignment(),
-                                       II.isVolatile());
+                                       Size, Align, II.isVolatile());
       (void)New;
       DEBUG(dbgs() << "          to: " << *New << "\n");
       return false;
@@ -2257,24 +2272,26 @@ private:
     Value *Src;
     if (IsVectorElement && !IsDest) {
       // We have to extract rather than load.
-      Src = IRB.CreateExtractElement(IRB.CreateLoad(SrcPtr,
-                                                    getName(".copyload")),
-                                     getIndex(IRB, BeginOffset),
-                                     getName(".copyextract"));
+      Src = IRB.CreateExtractElement(
+        IRB.CreateAlignedLoad(SrcPtr, Align, getName(".copyload")),
+        getIndex(IRB, BeginOffset),
+        getName(".copyextract"));
     } else {
-      Src = IRB.CreateLoad(SrcPtr, II.isVolatile(), getName(".copyload"));
+      Src = IRB.CreateAlignedLoad(SrcPtr, Align, II.isVolatile(),
+                                  getName(".copyload"));
     }
 
     if (IsVectorElement && IsDest) {
       // We have to insert into a loaded copy before storing.
-      Src = IRB.CreateInsertElement(IRB.CreateLoad(&NewAI, getName(".load")),
-                                    Src, getIndex(IRB, BeginOffset),
-                                    getName(".insert"));
+      Src = IRB.CreateInsertElement(
+        IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(), getName(".load")),
+        Src, getIndex(IRB, BeginOffset),
+        getName(".insert"));
     }
 
-    StoreInst *Store = cast<StoreInst>(IRB.CreateStore(Src, DstPtr,
-                                                       II.isVolatile()));
-    Store->setAlignment(II.getAlignment());
+    StoreInst *Store = cast<StoreInst>(
+      IRB.CreateAlignedStore(Src, DstPtr, Align, II.isVolatile()));
+    (void)Store;
     DEBUG(dbgs() << "          to: " << *Store << "\n");
     return !II.isVolatile();
   }
