@@ -47,8 +47,6 @@ TEST(IntegerDivision, SDiv) {
 
   Instruction* Quotient = dyn_cast<Instruction>(cast<User>(Ret)->getOperand(0));
   EXPECT_TRUE(Quotient && Quotient->getOpcode() == Instruction::Sub);
-
-  Builder.SetInsertPoint(BB->end());
 }
 
 TEST(IntegerDivision, UDiv) {
@@ -79,8 +77,6 @@ TEST(IntegerDivision, UDiv) {
 
   Instruction* Quotient = dyn_cast<Instruction>(cast<User>(Ret)->getOperand(0));
   EXPECT_TRUE(Quotient && Quotient->getOpcode() == Instruction::PHI);
-
-  Builder.SetInsertPoint(BB->end());
 }
 
 TEST(IntegerDivision, SRem) {
@@ -111,8 +107,6 @@ TEST(IntegerDivision, SRem) {
 
   Instruction* Remainder = dyn_cast<Instruction>(cast<User>(Ret)->getOperand(0));
   EXPECT_TRUE(Remainder && Remainder->getOpcode() == Instruction::Sub);
-
-  Builder.SetInsertPoint(BB->end());
 }
 
 TEST(IntegerDivision, URem) {
@@ -143,8 +137,6 @@ TEST(IntegerDivision, URem) {
 
   Instruction* Remainder = dyn_cast<Instruction>(cast<User>(Ret)->getOperand(0));
   EXPECT_TRUE(Remainder && Remainder->getOpcode() == Instruction::Sub);
-
-  Builder.SetInsertPoint(BB->end());
 }
 
 }
