@@ -225,12 +225,6 @@ void TokenLexer::ExpandFunctionArguments() {
           Token &Tok = ResultToks[i];
           if (Tok.is(tok::hashhash))
             Tok.setKind(tok::unknown);
-          // In Microsoft-compatibility mode, we follow MSVC's preprocessing
-          // behaviour by not considering commas from nested macro expansions
-          // as argument separators. Set a flag on the token so we can test
-          // for this later when the macro expansion is processed.
-          if (Tok.is(tok::comma) && PP.getLangOpts().MicrosoftMode)
-            Tok.setFlag(Token::IgnoredComma);
         }
 
         if(ExpandLocStart.isValid()) {
