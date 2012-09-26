@@ -129,6 +129,36 @@
                         </td>
                     </tr>
 
+                    <tr><td class="header" colspan="2">Attach to a remote gdb protocol server running on system "eorgadd", port 8000.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> gdb-remote eorgadd:8000
+                        </td>
+                        <td class="content">
+                            <b>(gdb)</b> target remote eorgadd:8000
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Attach to a remote gdb protocol server running on the local system, port 8000.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> gdb-remote 8000
+                        </td>
+                        <td class="content">
+                            <b>(gdb)</b> target remote localhost:8000
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Attach to a Darwin kernel in kdp mode on system "eorgadd".</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> kdp-remote eorgadd
+                        </td>
+                        <td class="content">
+                            <b>(gdb)</b> kdp-reattach eorgadd
+                        </td>
+                    </tr>
+
                     <tr><td class="header" colspan="2">Do a source level single step in the currently selected thread.</td></tr>
                     <tr>
                         <td class="content">
