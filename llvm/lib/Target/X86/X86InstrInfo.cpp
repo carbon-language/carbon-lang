@@ -565,6 +565,12 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     // BMI/BMI2 foldable instructions
     { X86::RORX32ri,        X86::RORX32mi,            0 },
     { X86::RORX64ri,        X86::RORX64mi,            0 },
+    { X86::SARX32rr,        X86::SARX32rm,            0 },
+    { X86::SARX64rr,        X86::SARX64rm,            0 },
+    { X86::SHRX32rr,        X86::SHRX32rm,            0 },
+    { X86::SHRX64rr,        X86::SHRX64rm,            0 },
+    { X86::SHLX32rr,        X86::SHLX32rm,            0 },
+    { X86::SHLX64rr,        X86::SHLX64rm,            0 },
   };
 
   for (unsigned i = 0, e = array_lengthof(OpTbl1); i != e; ++i) {

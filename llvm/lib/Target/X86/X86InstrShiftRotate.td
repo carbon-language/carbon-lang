@@ -896,4 +896,59 @@ let Predicates = [HasBMI2] in {
             (RORX32mi addr:$src, (ROT32L2R_imm8 imm:$shamt))>;
   def : Pat<(rotl (loadi64 addr:$src), (i8 imm:$shamt)),
             (RORX64mi addr:$src, (ROT64L2R_imm8 imm:$shamt))>;
+
+  // Prefer SARX/SHRX/SHLX over SAR/SHR/SHL with variable shift BUT not
+  // immedidate shift, i.e. the following code is considered better
+  //
+  //  mov %edi, %esi
+  //  shl $imm, %esi
+  //  ... %edi, ...
+  //
+  // than
+  //
+  //  movb $imm, %sil
+  //  shlx %sil, %edi, %esi
+  //  ... %edi, ...
+  //
+  let AddedComplexity = 1 in {
+    def : Pat<(sra GR32:$src1, GR8:$src2),
+              (SARX32rr GR32:$src1,
+                        (INSERT_SUBREG
+                          (i32 (IMPLICIT_DEF)), GR8:$src2, sub_8bit))>;
+    def : Pat<(sra GR64:$src1, GR8:$src2),
+              (SARX64rr GR64:$src1,
+                        (INSERT_SUBREG
+                          (i64 (IMPLICIT_DEF)), GR8:$src2, sub_8bit))>;
+
+    def : Pat<(srl GR32:$src1, GR8:$src2),
+              (SHRX32rr GR32:$src1,
+                        (INSERT_SUBREG
+                          (i32 (IMPLICIT_DEF)), GR8:$src2, sub_8bit))>;
+    def : Pat<(srl GR64:$src1, GR8:$src2),
+              (SHRX64rr GR64:$src1,
+                        (INSERT_SUBREG
+                          (i64 (IMPLICIT_DEF)), GR8:$src2, sub_8bit))>;
+
+    def : Pat<(shl GR32:$src1, GR8:$src2),
+              (SHLX32rr GR32:$src1,
+                        (INSERT_SUBREG
+                          (i32 (IMPLICIT_DEF)), GR8:$src2, sub_8bit))>;
+    def : Pat<(shl GR64:$src1, GR8:$src2),
+              (SHLX64rr GR64:$src1,
+                        (INSERT_SUBREG
+                          (i64 (IMPLICIT_DEF)), GR8:$src2, sub_8bit))>;
+  }
+
+  // Patterns on SARXrm/SHRXrm/SHLXrm are explicitly omitted to favor
+  //
+  //  mov (%ecx), %esi
+  //  shl $imm, $esi
+  //
+  // over
+  //
+  //  movb $imm %al
+  //  shlx %al, (%ecx), %esi
+  //
+  // As SARXrr/SHRXrr/SHLXrr is favored on variable shift, the peephole
+  // optimization will fold them into SARXrm/SHRXrm/SHLXrm if possible.
 }

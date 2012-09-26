@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin | FileCheck %s
+; RUN: llc < %s -mtriple=i386-apple-darwin -mcpu=corei7 | FileCheck %s
 ; rdar://5571034
 
 ; This requires physreg joining, %vreg13 is live everywhere:
