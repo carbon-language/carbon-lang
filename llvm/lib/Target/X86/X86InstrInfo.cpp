@@ -1140,6 +1140,10 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::VFMSUBADDPD4rr,    X86::VFMSUBADDPD4mr,     TB_ALIGN_16 },
     { X86::VFMSUBADDPS4rrY,   X86::VFMSUBADDPS4mrY,    TB_ALIGN_32 },
     { X86::VFMSUBADDPD4rrY,   X86::VFMSUBADDPD4mrY,    TB_ALIGN_32 },
+
+    // BMI/BMI2 foldable instructions
+    { X86::MULX32rr,          X86::MULX32rm,            0 },
+    { X86::MULX64rr,          X86::MULX64rm,            0 },
   };
 
   for (unsigned i = 0, e = array_lengthof(OpTbl2); i != e; ++i) {
