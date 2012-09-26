@@ -278,7 +278,8 @@ public:
   /// @brief Determine if the parameter does not alias other parameters.
   /// @param n The parameter to check. 1 is the first parameter, 0 is the return
   bool doesNotAlias(unsigned n) const {
-    return getParamAttributes(n).hasNoAliasAttr();
+    return n != 0 ? getParamAttributes(n).hasNoAliasAttr() :
+      AttributeList.getRetAttributes().hasNoAliasAttr();
   }
   void setDoesNotAlias(unsigned n, bool DoesNotAlias = true) {
     if (DoesNotAlias) addAttribute(n, Attribute::NoAlias);
