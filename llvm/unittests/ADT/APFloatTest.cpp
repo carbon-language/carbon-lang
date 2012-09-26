@@ -689,6 +689,23 @@ TEST(APFloatTest, roundToIntegral) {
   P = R;
   P.roundToIntegral(APFloat::rmNearestTiesToEven);
   EXPECT_EQ(R.convertToDouble(), P.convertToDouble());
+
+  P = APFloat::getZero(APFloat::IEEEdouble);
+  P.roundToIntegral(APFloat::rmTowardZero);
+  EXPECT_EQ(0.0, P.convertToDouble());
+  P = APFloat::getZero(APFloat::IEEEdouble, true);
+  P.roundToIntegral(APFloat::rmTowardZero);
+  EXPECT_EQ(-0.0, P.convertToDouble());
+  P = APFloat::getNaN(APFloat::IEEEdouble);
+  P.roundToIntegral(APFloat::rmTowardZero);
+  EXPECT_TRUE(IsNAN(P.convertToDouble()));
+  P = APFloat::getInf(APFloat::IEEEdouble);
+  P.roundToIntegral(APFloat::rmTowardZero);
+  EXPECT_TRUE(IsInf(P.convertToDouble()) && P.convertToDouble() > 0.0);
+  P = APFloat::getInf(APFloat::IEEEdouble, true);
+  P.roundToIntegral(APFloat::rmTowardZero);
+  EXPECT_TRUE(IsInf(P.convertToDouble()) && P.convertToDouble() < 0.0);
+
 }
 
 TEST(APFloatTest, getLargest) {
