@@ -60,6 +60,7 @@ SinkCommon("simplifycfg-sink-common", cl::Hidden, cl::init(true),
 
 STATISTIC(NumSpeculations, "Number of speculative executed instructions");
 STATISTIC(NumLookupTables, "Number of switch instructions turned into lookup tables");
+STATISTIC(NumBitMaps, "Number of switch instructions turned into bitmaps");
 STATISTIC(NumSinkCommons, "Number of common instructions sunk down to the end block");
 
 namespace {
@@ -3252,11 +3253,18 @@ namespace {
                       uint64_t TableSize,
                       ConstantInt *Offset,
                const SmallVector<std::pair<ConstantInt*, Constant*>, 4>& Values,
-                      Constant *DefaultValue);
+                      Constant *DefaultValue,
+                      const TargetData *TD);
 
     /// BuildLookup - Build instructions with Builder to retrieve the value at
     /// the position given by Index in the lookup table.
     Value *BuildLookup(Value *Index, IRBuilder<> &Builder);
+
+    /// WouldFitInRegister - Return true if a table with TableSize elements of
+    /// type ElementType would fit in a target-legal register.
+    static bool WouldFitInRegister(const TargetData *TD,
+                                   uint64_t TableSize,
+                                   const Type *ElementType);
 
   private:
     // Depending on the contents of the table, it can be represented in
@@ -3266,6 +3274,11 @@ namespace {
       // store that single value and return it for each lookup.
       SingleValueKind,
 
+      // For small tables with integer elements, we can pack them into a bitmap
+      // that fits into a target-legal register. Values are retrieved by
+      // shift and mask operations.
+      BitMapKind,
+
       // The table is stored as an array of values. Values are retrieved by load
       // instructions from the table.
       ArrayKind
@@ -3273,6 +3286,10 @@ namespace {
 
     // For SingleValueKind, this is the single value.
     Constant *SingleValue;
+
+    // For BitMapKind, this is the bitmap.
+    ConstantInt *BitMap;
+    IntegerType *BitMapElementTy;
 
     // For ArrayKind, this is the array.
     GlobalVariable *Array;
@@ -3283,7 +3300,8 @@ SwitchLookupTable::SwitchLookupTable(Module &M,
                                      uint64_t TableSize,
                                      ConstantInt *Offset,
                const SmallVector<std::pair<ConstantInt*, Constant*>, 4>& Values,
-                                     Constant *DefaultValue) {
+                                     Constant *DefaultValue,
+                                     const TargetData *TD) {
   assert(Values.size() && "Can't build lookup table without values.");
   assert(TableSize >= Values.size() && "Can't fit values in table.");
 
@@ -3323,6 +3341,21 @@ SwitchLookupTable::SwitchLookupTable(Module &M,
     return;
   }
 
+  // If the type is integer and the table fits in a register, build a bitmap.
+  if (WouldFitInRegister(TD, TableSize, DefaultValue->getType())) {
+    IntegerType *IT = cast<IntegerType>(DefaultValue->getType());
+    APInt TableInt(TableSize * IT->getBitWidth(), 0);
+    for (uint64_t I = TableSize; I > 0; --I) {
+      TableInt <<= IT->getBitWidth();
+      TableInt |= cast<ConstantInt>(TableContents[I - 1])->getZExtValue();
+    }
+    BitMap = ConstantInt::get(M.getContext(), TableInt);
+    BitMapElementTy = IT;
+    Kind = BitMapKind;
+    ++NumBitMaps;
+    return;
+  }
+
   // Store the table in an array.
   ArrayType *ArrayTy = ArrayType::get(DefaultValue->getType(), TableSize);
   Constant *Initializer = ConstantArray::get(ArrayTy, TableContents);
@@ -3339,6 +3372,32 @@ Value *SwitchLookupTable::BuildLookup(Value *Index, IRBuilder<> &Builder) {
   switch (Kind) {
     case SingleValueKind:
       return SingleValue;
+    case BitMapKind: {
+      // Type of the bitmap (e.g. i59).
+      IntegerType *MapTy = BitMap->getType();
+
+      // Cast Index to the same type as the bitmap.
+      // Note: The Index is <= the number of elements in the table, so
+      // truncating it to the width of the bitmask is safe.
+      Value *ShiftAmt = Index;
+      IntegerType *IndexTy = cast<IntegerType>(Index->getType());
+      if (IndexTy->getBitWidth() < MapTy->getBitWidth())
+        ShiftAmt = Builder.CreateZExt(ShiftAmt, MapTy, "switch.zext");
+      else if (IndexTy->getBitWidth() > MapTy->getBitWidth())
+        ShiftAmt = Builder.CreateTrunc(ShiftAmt, MapTy, "switch.trunc");
+
+      // Multiply the shift amount by the element width.
+      ShiftAmt = Builder.CreateMul(ShiftAmt,
+                      ConstantInt::get(MapTy, BitMapElementTy->getBitWidth()),
+                                   "switch.shiftamt");
+
+      // Shift down.
+      Value *DownShifted = Builder.CreateLShr(BitMap, ShiftAmt,
+                                              "switch.downshift");
+      // Mask off.
+      return Builder.CreateTrunc(DownShifted, BitMapElementTy,
+                                 "switch.masked");
+    }
     case ArrayKind: {
       Value *GEPIndices[] = { Builder.getInt32(0), Index };
       Value *GEP = Builder.CreateInBoundsGEP(Array, GEPIndices,
@@ -3349,34 +3408,52 @@ Value *SwitchLookupTable::BuildLookup(Value *Index, IRBuilder<> &Builder) {
   llvm_unreachable("Unknown lookup table kind!");
 }
 
+bool SwitchLookupTable::WouldFitInRegister(const TargetData *TD,
+                                           uint64_t TableSize,
+                                           const Type *ElementType) {
+  if (!TD)
+    return false;
+  const IntegerType *IT = dyn_cast<IntegerType>(ElementType);
+  if (!IT)
+    return false;
+  // FIXME: If the type is wider than it needs to be, e.g. i8 but all values
+  // are <= 15, we could try to narrow the type.
+  return TD->fitsInLegalInteger(TableSize * IT->getBitWidth());
+}
+
 /// ShouldBuildLookupTable - Determine whether a lookup table should be built
 /// for this switch, based on the number of caes, size of the table and the
 /// types of the results.
 static bool ShouldBuildLookupTable(SwitchInst *SI,
-                                   uint64_t TableSize) {
+                                   uint64_t TableSize,
+                                   const TargetData *TD,
+                            const SmallDenseMap<PHINode*, Type*>& ResultTypes) {
   // The table density should be at least 40%. This is the same criterion as for
   // jump tables, see SelectionDAGBuilder::handleJTSwitchCase.
   // FIXME: Find the best cut-off.
   if (SI->getNumCases() * 10 >= TableSize * 4)
     return true;
 
-  return false;
+  // If each table would fit in a register, we should build it anyway.
+  for (SmallDenseMap<PHINode*, Type*>::const_iterator I = ResultTypes.begin(),
+       E = ResultTypes.end(); I != E; ++I) {
+    if (!SwitchLookupTable::WouldFitInRegister(TD, TableSize, I->second))
+      return false;
+  }
+  return true;
 }
 
 /// SwitchToLookupTable - If the switch is only used to initialize one or more
 /// phi nodes in a common successor block with different constant values,
 /// replace the switch with lookup tables.
 static bool SwitchToLookupTable(SwitchInst *SI,
-                                IRBuilder<> &Builder) {
+                                IRBuilder<> &Builder,
+                                const TargetData* TD) {
   assert(SI->getNumCases() > 1 && "Degenerate switch?");
   // FIXME: Handle unreachable cases.
 
   // FIXME: If the switch is too sparse for a lookup table, perhaps we could
   // split off a dense part and build a lookup table for that.
-
-  // FIXME: If the results are all integers and the lookup table would fit in a
-  // target-legal register, we should store them as a bitmap and use shift/mask
-  // to look up the result.
 
   // FIXME: This creates arrays of GEPs to constant strings, which means each
   // GEP needs a runtime relocation in PIC code. We should just build one big
@@ -3441,7 +3518,7 @@ static bool SwitchToLookupTable(SwitchInst *SI,
   if (RangeSpread.zextOrSelf(64).ugt(UINT64_MAX / 4 - 1))
     return false;
   uint64_t TableSize = RangeSpread.getLimitedValue() + 1;
-  if (!ShouldBuildLookupTable(SI, TableSize))
+  if (!ShouldBuildLookupTable(SI, TableSize, TD, ResultTypes))
     return false;
 
   // Create the BB that does the lookups.
@@ -3467,7 +3544,7 @@ static bool SwitchToLookupTable(SwitchInst *SI,
     PHINode *PHI = PHIs[I];
 
     SwitchLookupTable Table(Mod, TableSize, MinCaseVal, ResultLists[PHI],
-                            DefaultResults[PHI]);
+                            DefaultResults[PHI], TD);
 
     Value *Result = Table.BuildLookup(TableIndex, Builder);
 
@@ -3537,7 +3614,7 @@ bool SimplifyCFGOpt::SimplifySwitch(SwitchInst *SI, IRBuilder<> &Builder) {
   if (ForwardSwitchConditionToPHI(SI))
     return SimplifyCFG(BB) | true;
 
-  if (SwitchToLookupTable(SI, Builder))
+  if (SwitchToLookupTable(SI, Builder, TD))
     return SimplifyCFG(BB) | true;
 
   return false;

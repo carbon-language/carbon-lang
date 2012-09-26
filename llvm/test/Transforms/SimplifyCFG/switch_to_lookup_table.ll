@@ -6,17 +6,14 @@ target triple = "x86_64-unknown-linux-gnu"
 ; The table for @f
 ; CHECK: @switch.table = private unnamed_addr constant [7 x i32] [i32 55, i32 123, i32 0, i32 -1, i32 27, i32 62, i32 1]
 
-; The int table for @h
-; CHECK: @switch.table1 = private unnamed_addr constant [4 x i8] c"*\09X\05"
-
 ; The float table for @h
-; CHECK: @switch.table2 = private unnamed_addr constant [4 x float] [float 0x40091EB860000000, float 0x3FF3BE76C0000000, float 0x4012449BA0000000, float 0x4001AE1480000000]
+; CHECK: @switch.table1 = private unnamed_addr constant [4 x float] [float 0x40091EB860000000, float 0x3FF3BE76C0000000, float 0x4012449BA0000000, float 0x4001AE1480000000]
 
 ; The table for @foostring
-; CHECK: @switch.table3 = private unnamed_addr constant [4 x i8*] [i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i8* getelementptr inbounds ([4 x i8]* @.str1, i64 0, i64 0), i8* getelementptr inbounds ([4 x i8]* @.str2, i64 0, i64 0), i8* getelementptr inbounds ([4 x i8]* @.str3, i64 0, i64 0)]
+; CHECK: @switch.table2 = private unnamed_addr constant [4 x i8*] [i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i8* getelementptr inbounds ([4 x i8]* @.str1, i64 0, i64 0), i8* getelementptr inbounds ([4 x i8]* @.str2, i64 0, i64 0), i8* getelementptr inbounds ([4 x i8]* @.str3, i64 0, i64 0)]
 
 ; The table for @earlyreturncrash
-; CHECK: @switch.table4 = private unnamed_addr constant [4 x i32] [i32 42, i32 9, i32 88, i32 5]
+; CHECK: @switch.table3 = private unnamed_addr constant [4 x i32] [i32 42, i32 9, i32 88, i32 5]
 
 ; A simple int-to-int selection switch.
 ; It is dense enough to be replaced by table lookup.
@@ -88,14 +85,15 @@ sw.epilog:
 ; CHECK-NEXT: %0 = icmp ult i32 %switch.tableidx, 4
 ; CHECK-NEXT: br i1 %0, label %switch.lookup, label %sw.epilog
 ; CHECK: switch.lookup:
-; CHECK-NEXT: %switch.gep = getelementptr inbounds [4 x i8]* @switch.table1, i32 0, i32 %switch.tableidx
-; CHECK-NEXT: %switch.load = load i8* %switch.gep
-; CHECK-NEXT: %switch.gep1 = getelementptr inbounds [4 x float]* @switch.table2, i32 0, i32 %switch.tableidx
-; CHECK-NEXT: %switch.load2 = load float* %switch.gep1
+; CHECK-NEXT: %switch.shiftamt = mul i32 %switch.tableidx, 8
+; CHECK-NEXT: %switch.downshift = lshr i32 89655594, %switch.shiftamt
+; CHECK-NEXT: %switch.masked = trunc i32 %switch.downshift to i8
+; CHECK-NEXT: %switch.gep = getelementptr inbounds [4 x float]* @switch.table1, i32 0, i32 %switch.tableidx
+; CHECK-NEXT: %switch.load = load float* %switch.gep
 ; CHECK-NEXT: br label %sw.epilog
 ; CHECK: sw.epilog:
-; CHECK-NEXT: %a.0 = phi i8 [ %switch.load, %switch.lookup ], [ 7, %entry ]
-; CHECK-NEXT: %b.0 = phi float [ %switch.load2, %switch.lookup ], [ 0x4023FAE140000000, %entry ]
+; CHECK-NEXT: %a.0 = phi i8 [ %switch.masked, %switch.lookup ], [ 7, %entry ]
+; CHECK-NEXT: %b.0 = phi float [ %switch.load, %switch.lookup ], [ 0x4023FAE140000000, %entry ]
 ; CHECK-NEXT: call void @dummy(i8 signext %a.0, float %b.0)
 ; CHECK-NEXT: ret void
 }
@@ -137,7 +135,7 @@ return:
 ; CHECK-NEXT: %0 = icmp ult i32 %switch.tableidx, 4
 ; CHECK-NEXT: br i1 %0, label %switch.lookup, label %return
 ; CHECK: switch.lookup:
-; CHECK-NEXT: %switch.gep = getelementptr inbounds [4 x i8*]* @switch.table3, i32 0, i32 %switch.tableidx
+; CHECK-NEXT: %switch.gep = getelementptr inbounds [4 x i8*]* @switch.table2, i32 0, i32 %switch.tableidx
 ; CHECK-NEXT: %switch.load = load i8** %switch.gep
 ; CHECK-NEXT: ret i8* %switch.load
 }
@@ -166,9 +164,70 @@ sw.epilog:
 
 ; CHECK: @earlyreturncrash
 ; CHECK: switch.lookup:
-; CHECK-NEXT: %switch.gep = getelementptr inbounds [4 x i32]* @switch.table4, i32 0, i32 %switch.tableidx
+; CHECK-NEXT: %switch.gep = getelementptr inbounds [4 x i32]* @switch.table3, i32 0, i32 %switch.tableidx
 ; CHECK-NEXT: %switch.load = load i32* %switch.gep
 ; CHECK-NEXT: ret i32 %switch.load
 ; CHECK: sw.epilog:
 ; CHECK-NEXT: ret i32 7
+}
+
+
+; Example 7 from http://blog.regehr.org/archives/320
+; It is not dense enough for a regular table, but the results
+; can be packed into a bitmap.
+
+define i32 @crud(i8 zeroext %c)  {
+entry:
+  %cmp = icmp ult i8 %c, 33
+  br i1 %cmp, label %lor.end, label %switch.early.test
+
+switch.early.test:
+  switch i8 %c, label %lor.rhs [
+    i8 92, label %lor.end
+    i8 62, label %lor.end
+    i8 60, label %lor.end
+    i8 59, label %lor.end
+    i8 58, label %lor.end
+    i8 46, label %lor.end
+    i8 44, label %lor.end
+    i8 34, label %lor.end
+    i8 39, label %switch.edge
+  ]
+
+switch.edge: br label %lor.end
+lor.rhs: br label %lor.end
+
+lor.end:
+  %0 = phi i1 [ true, %switch.early.test ],
+              [ false, %lor.rhs ],
+              [ true, %entry ],
+              [ true, %switch.early.test ],
+              [ true, %switch.early.test ],
+              [ true, %switch.early.test ],
+              [ true, %switch.early.test ],
+              [ true, %switch.early.test ],
+              [ true, %switch.early.test ],
+              [ true, %switch.early.test ],
+              [ true, %switch.edge ]
+  %lor.ext = zext i1 %0 to i32
+  ret i32 %lor.ext
+
+; CHECK: @crud
+; CHECK: entry:
+; CHECK-NEXT: %cmp = icmp ult i8 %c, 33
+; CHECK-NEXT: br i1 %cmp, label %lor.end, label %switch.early.test
+; CHECK: switch.early.test:
+; CHECK-NEXT: %switch.tableidx = sub i8 %c, 34
+; CHECK-NEXT: %0 = icmp ult i8 %switch.tableidx, 59
+; CHECK-NEXT: br i1 %0, label %switch.lookup, label %lor.end
+; CHECK: switch.lookup:
+; CHECK-NEXT: %switch.zext = zext i8 %switch.tableidx to i59
+; CHECK-NEXT: %switch.shiftamt = mul i59 %switch.zext, 1
+; CHECK-NEXT: %switch.downshift = lshr i59 -288230375765830623, %switch.shiftamt
+; CHECK-NEXT: %switch.masked = trunc i59 %switch.downshift to i1
+; CHECK-NEXT: br label %lor.end
+; CHECK: lor.end:
+; CHECK-NEXT: %1 = phi i1 [ true, %entry ], [ %switch.masked, %switch.lookup ], [ false, %switch.early.test ]
+; CHECK-NEXT: %lor.ext = zext i1 %1 to i32
+; CHECK-NEXT: ret i32 %lor.ext
 }
