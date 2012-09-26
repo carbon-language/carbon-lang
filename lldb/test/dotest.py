@@ -714,6 +714,7 @@ def setupSysPath():
     xcode3_build_dir = ['build']
     xcode4_build_dir = ['build', 'lldb', 'Build', 'Products']
     dbg = ['Debug']
+    dbc = ['DebugClang']
     rel = ['Release']
     bai = ['BuildAndIntegration']
     python_resource_dir = ['LLDB.framework', 'Resources', 'Python']
@@ -731,6 +732,8 @@ def setupSysPath():
     executable = ['lldb']
     dbgExec  = os.path.join(base, *(xcode3_build_dir + dbg + executable))
     dbgExec2 = os.path.join(base, *(xcode4_build_dir + dbg + executable))
+    dbcExec  = os.path.join(base, *(xcode3_build_dir + dbc + executable))
+    dbcExec2 = os.path.join(base, *(xcode4_build_dir + dbc + executable))
     relExec  = os.path.join(base, *(xcode3_build_dir + rel + executable))
     relExec2 = os.path.join(base, *(xcode4_build_dir + rel + executable))
     baiExec  = os.path.join(base, *(xcode3_build_dir + bai + executable))
@@ -742,6 +745,10 @@ def setupSysPath():
         lldbHere = dbgExec
     elif is_exe(dbgExec2):
         lldbHere = dbgExec2
+    elif is_exe(dbcExec):
+        lldbHere = dbcExec
+    elif is_exe(dbcExec2):
+        lldbHere = dbcExec2
     elif is_exe(relExec):
         lldbHere = relExec
     elif is_exe(relExec2):
@@ -790,6 +797,8 @@ def setupSysPath():
 
     dbgPath  = os.path.join(base, *(xcode3_build_dir + dbg + python_resource_dir))
     dbgPath2 = os.path.join(base, *(xcode4_build_dir + dbg + python_resource_dir))
+    dbcPath  = os.path.join(base, *(xcode3_build_dir + dbc + python_resource_dir))
+    dbcPath2 = os.path.join(base, *(xcode4_build_dir + dbc + python_resource_dir))
     relPath  = os.path.join(base, *(xcode3_build_dir + rel + python_resource_dir))
     relPath2 = os.path.join(base, *(xcode4_build_dir + rel + python_resource_dir))
     baiPath  = os.path.join(base, *(xcode3_build_dir + bai + python_resource_dir))
@@ -800,6 +809,10 @@ def setupSysPath():
         lldbPath = dbgPath
     elif os.path.isfile(os.path.join(dbgPath2, 'lldb/__init__.py')):
         lldbPath = dbgPath2
+    elif os.path.isfile(os.path.join(dbcPath, 'lldb/__init__.py')):
+        lldbPath = dbcPath
+    elif os.path.isfile(os.path.join(dbcPath2, 'lldb/__init__.py')):
+        lldbPath = dbcPath2
     elif os.path.isfile(os.path.join(relPath, 'lldb/__init__.py')):
         lldbPath = relPath
     elif os.path.isfile(os.path.join(relPath2, 'lldb/__init__.py')):
