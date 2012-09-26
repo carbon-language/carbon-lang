@@ -172,12 +172,17 @@ PathMappingList::Clear (bool notify)
 bool
 PathMappingList::RemapPath (const ConstString &path, ConstString &new_path) const
 {
+    const char *path_cstr = path.GetCString();
+    
+    if (!path_cstr)
+        return false;
+    
     const_iterator pos, end = m_pairs.end();
     for (pos = m_pairs.begin(); pos != end; ++pos)
     {
         const size_t prefixLen = pos->first.GetLength();
 
-        if (::strncmp (pos->first.GetCString(), path.GetCString(), prefixLen) == 0)
+        if (::strncmp (pos->first.GetCString(), path_cstr, prefixLen) == 0)
         {
             std::string new_path_str (pos->second.GetCString());
             new_path_str.append(path.GetCString() + prefixLen);
