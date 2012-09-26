@@ -261,7 +261,8 @@ Path::GetCurrentDirectory() {
 }
 
 #if defined(__FreeBSD__) || defined (__NetBSD__) || defined(__Bitrig__) || \
-    defined(__OpenBSD__) || defined(__minix) || defined(__FreeBSD_kernel__)
+    defined(__OpenBSD__) || defined(__minix) || defined(__FreeBSD_kernel__) || \
+    defined(__linux__) || defined(__CYGWIN__)
 static int
 test_dir(char buf[PATH_MAX], char ret[PATH_MAX],
     const char *dir, const char *bin)
@@ -337,9 +338,17 @@ Path Path::GetMainExecutable(const char *argv0, void *MainAddr) {
     return Path(exe_path);
 #elif defined(__linux__) || defined(__CYGWIN__)
   char exe_path[MAXPATHLEN];
-  ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path));
-  if (len >= 0)
-    return Path(StringRef(exe_path, len));
+  StringRef aPath("/proc/self/exe");
+  if (sys::fs::exists(aPath)) {
+      // /proc is not always mounted under Linux (chroot for example).
+      ssize_t len = readlink(aPath.str().c_str(), exe_path, sizeof(exe_path));
+      if (len >= 0)
+          return Path(StringRef(exe_path, len));
+  } else {
+      // Fall back to the classical detection.
+      if (getprogpath(exe_path, argv0) != NULL)
+          return Path(exe_path);
+  }
 #elif defined(HAVE_DLFCN_H)
   // Use dladdr to get executable path if available.
   Dl_info DLInfo;
