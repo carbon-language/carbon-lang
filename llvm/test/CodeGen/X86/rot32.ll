@@ -1,4 +1,5 @@
-; RUN: llc < %s -march=x86 | FileCheck %s
+; RUN: llc < %s -march=x86 -mcpu=corei7 | FileCheck %s
+; RUN: llc < %s -march=x86 -mcpu=core-avx2 | FileCheck %s --check-prefix=BMI2
 
 define i32 @foo(i32 %x, i32 %y, i32 %z) nounwind readnone {
 entry:
@@ -48,10 +49,23 @@ define i32 @xfoo(i32 %x, i32 %y, i32 %z) nounwind readnone {
 entry:
 ; CHECK: xfoo:
 ; CHECK: roll $7
+; BMI2: xfoo:
+; BMI2: rorxl $25
 	%0 = lshr i32 %x, 25
 	%1 = shl i32 %x, 7
 	%2 = or i32 %0, %1
 	ret i32 %2
+}
+
+define i32 @xfoop(i32* %p) nounwind readnone {
+entry:
+; BMI2: xfoop:
+; BMI2: rorxl $25, ({{.+}}), %{{.+}}
+	%x = load i32* %p
+	%a = lshr i32 %x, 25
+	%b = shl i32 %x, 7
+	%c = or i32 %a, %b
+	ret i32 %c
 }
 
 define i32 @xbar(i32 %x, i32 %y, i32 %z) nounwind readnone {
@@ -68,10 +82,23 @@ define i32 @xun(i32 %x, i32 %y, i32 %z) nounwind readnone {
 entry:
 ; CHECK: xun:
 ; CHECK: roll $25
+; BMI2: xun:
+; BMI2: rorxl $7
 	%0 = lshr i32 %x, 7
 	%1 = shl i32 %x, 25
 	%2 = or i32 %0, %1
 	ret i32 %2
+}
+
+define i32 @xunp(i32* %p) nounwind readnone {
+entry:
+; BMI2: xunp:
+; BMI2: rorxl $7, ({{.+}}), %{{.+}}
+	%x = load i32* %p
+	%a = lshr i32 %x, 7
+	%b = shl i32 %x, 25
+	%c = or i32 %a, %b
+	ret i32 %c
 }
 
 define i32 @xbu(i32 %x, i32 %y, i32 %z) nounwind readnone {

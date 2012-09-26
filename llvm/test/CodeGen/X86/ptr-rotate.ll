@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=i386-apple-darwin -o - < %s | FileCheck %s
+; RUN: llc -mtriple=i386-apple-darwin -mcpu=corei7 -o - < %s | FileCheck %s
 
 define i32 @func(i8* %A) nounwind readnone {
 entry:

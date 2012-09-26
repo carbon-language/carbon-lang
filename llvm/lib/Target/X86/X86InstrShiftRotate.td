@@ -839,6 +839,16 @@ def SHRD64mri8 : RIi8<0xAC, MRMDestMem,
 
 } // Defs = [EFLAGS]
 
+def ROT32L2R_imm8  : SDNodeXForm<imm, [{
+  // Convert a ROTL shamt to a ROTR shamt on 32-bit integer.
+  return getI8Imm(32 - N->getZExtValue());
+}]>;
+
+def ROT64L2R_imm8  : SDNodeXForm<imm, [{
+  // Convert a ROTL shamt to a ROTR shamt on 64-bit integer.
+  return getI8Imm(64 - N->getZExtValue());
+}]>;
+
 multiclass bmi_rotate<string asm, RegisterClass RC, X86MemOperand x86memop> {
 let neverHasSideEffects = 1 in {
   def ri : Ii8<0xF0, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, i8imm:$src2),
@@ -873,4 +883,17 @@ let Predicates = [HasBMI2] in {
   defm SHRX64 : bmi_shift<"shrx{q}", GR64, i64mem>, T8XD, VEX_W;
   defm SHLX32 : bmi_shift<"shlx{l}", GR32, i32mem>, T8, OpSize;
   defm SHLX64 : bmi_shift<"shlx{q}", GR64, i64mem>, T8, OpSize, VEX_W;
+
+  // Prefer RORX which is non-destructive and doesn't update EFLAGS.
+  let AddedComplexity = 10 in {
+    def : Pat<(rotl GR32:$src, (i8 imm:$shamt)),
+              (RORX32ri GR32:$src, (ROT32L2R_imm8 imm:$shamt))>;
+    def : Pat<(rotl GR64:$src, (i8 imm:$shamt)),
+              (RORX64ri GR64:$src, (ROT64L2R_imm8 imm:$shamt))>;
+  }
+
+  def : Pat<(rotl (loadi32 addr:$src), (i8 imm:$shamt)),
+            (RORX32mi addr:$src, (ROT32L2R_imm8 imm:$shamt))>;
+  def : Pat<(rotl (loadi64 addr:$src), (i8 imm:$shamt)),
+            (RORX64mi addr:$src, (ROT64L2R_imm8 imm:$shamt))>;
 }
