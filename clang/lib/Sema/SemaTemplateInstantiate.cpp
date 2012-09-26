@@ -2635,8 +2635,25 @@ bool Sema::Subst(const TemplateArgumentLoc *Args, unsigned NumArgs,
   return Instantiator.TransformTemplateArguments(Args, NumArgs, Result);
 }
 
+
+static const Decl* getCanonicalParmVarDecl(const Decl *D) {
+  // When storing ParmVarDecls in the local instantiation scope, we always
+  // want to use the ParmVarDecl from the canonical function declaration,
+  // since the map is then valid for any redeclaration or definition of that
+  // function.
+  if (const ParmVarDecl *PV = dyn_cast<ParmVarDecl>(D)) {
+    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(PV->getDeclContext())) {
+      unsigned i = PV->getFunctionScopeIndex();
+      return FD->getCanonicalDecl()->getParamDecl(i);
+    }
+  }
+  return D;
+}
+
+
 llvm::PointerUnion<Decl *, LocalInstantiationScope::DeclArgumentPack *> *
 LocalInstantiationScope::findInstantiationOf(const Decl *D) {
+  D = getCanonicalParmVarDecl(D);
   for (LocalInstantiationScope *Current = this; Current;
        Current = Current->Outer) {
 
@@ -2668,6 +2685,7 @@ LocalInstantiationScope::findInstantiationOf(const Decl *D) {
 }
 
 void LocalInstantiationScope::InstantiatedLocal(const Decl *D, Decl *Inst) {
+  D = getCanonicalParmVarDecl(D);
   llvm::PointerUnion<Decl *, DeclArgumentPack *> &Stored = LocalDecls[D];
   if (Stored.isNull())
     Stored = Inst;
@@ -2680,11 +2698,13 @@ void LocalInstantiationScope::InstantiatedLocal(const Decl *D, Decl *Inst) {
 
 void LocalInstantiationScope::InstantiatedLocalPackArg(const Decl *D, 
                                                        Decl *Inst) {
+  D = getCanonicalParmVarDecl(D);
   DeclArgumentPack *Pack = LocalDecls[D].get<DeclArgumentPack *>();
   Pack->push_back(Inst);
 }
 
 void LocalInstantiationScope::MakeInstantiatedLocalArgPack(const Decl *D) {
+  D = getCanonicalParmVarDecl(D);
   llvm::PointerUnion<Decl *, DeclArgumentPack *> &Stored = LocalDecls[D];
   assert(Stored.isNull() && "Already instantiated this local");
   DeclArgumentPack *Pack = new DeclArgumentPack;
