@@ -137,10 +137,10 @@ bool StackProtector::ContainsProtectableArray(Type *Ty, bool InStruct) const {
 /// add a guard variable to functions that call alloca, and functions with
 /// buffers larger than SSPBufferSize bytes.
 bool StackProtector::RequiresStackProtector() const {
-  if (F->hasFnAttr(Attribute::StackProtectReq))
+  if (F->getFnAttributes().hasStackProtectReqAttr())
     return true;
 
-  if (!F->hasFnAttr(Attribute::StackProtect))
+  if (!F->getFnAttributes().hasStackProtectAttr())
     return false;
 
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {

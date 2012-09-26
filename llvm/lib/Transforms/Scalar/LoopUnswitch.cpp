@@ -638,7 +638,7 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val) {
   // Check to see if it would be profitable to unswitch current loop.
 
   // Do not do non-trivial unswitch while optimizing for size.
-  if (OptimizeForSize || F->hasFnAttr(Attribute::OptimizeForSize))
+  if (OptimizeForSize || F->getFnAttributes().hasOptimizeForSizeAttr())
     return false;
 
   UnswitchNontrivialCondition(LoopCond, Val, currentLoop);

@@ -552,7 +552,7 @@ TailDuplicatePass::shouldTailDuplicate(const MachineFunction &MF,
   // compensate for the duplication.
   unsigned MaxDuplicateCount;
   if (TailDuplicateSize.getNumOccurrences() == 0 &&
-      MF.getFunction()->hasFnAttr(Attribute::OptimizeForSize))
+      MF.getFunction()->getFnAttributes().hasOptimizeForSizeAttr())
     MaxDuplicateCount = 1;
   else
     MaxDuplicateCount = TailDuplicateSize;

@@ -145,7 +145,7 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   // not user specified.
   unsigned Threshold = CurrentThreshold;
   if (!UserThreshold &&
-      Header->getParent()->hasFnAttr(Attribute::OptimizeForSize))
+      Header->getParent()->getFnAttributes().hasOptimizeForSizeAttr())
     Threshold = OptSizeUnrollThreshold;
 
   // Find trip count and trip multiple if count is not available

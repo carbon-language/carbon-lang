@@ -854,7 +854,7 @@ bool AddressSanitizer::handleFunction(Module &M, Function &F) {
   // If needed, insert __asan_init before checking for AddressSafety attr.
   maybeInsertAsanInitAtFunctionEntry(F);
 
-  if (!F.hasFnAttr(Attribute::AddressSafety)) return false;
+  if (!F.getFnAttributes().hasAddressSafetyAttr()) return false;
 
   if (!ClDebugFunc.empty() && ClDebugFunc != F.getName())
     return false;

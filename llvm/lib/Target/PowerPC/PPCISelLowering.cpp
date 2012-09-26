@@ -6002,7 +6002,7 @@ SDValue PPCTargetLowering::LowerFRAMEADDR(SDValue Op,
   bool is31 = (getTargetMachine().Options.DisableFramePointerElim(MF) ||
                MFI->hasVarSizedObjects()) &&
                   MFI->getStackSize() &&
-                  !MF.getFunction()->hasFnAttr(Attribute::Naked);
+                  !MF.getFunction()->getFnAttributes().hasNakedAttr();
   unsigned FrameReg = isPPC64 ? (is31 ? PPC::X31 : PPC::X1) :
                                 (is31 ? PPC::R31 : PPC::R1);
   SDValue FrameAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl, FrameReg,

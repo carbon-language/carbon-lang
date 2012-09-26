@@ -65,7 +65,7 @@ Pass *llvm::createAlwaysInlinerPass(bool InsertLifetime) {
 
 /// \brief Minimal filter to detect invalid constructs for inlining.
 static bool isInlineViable(Function &F) {
-  bool ReturnsTwice = F.hasFnAttr(Attribute::ReturnsTwice);
+  bool ReturnsTwice = F.getFnAttributes().hasReturnsTwiceAttr();
   for (Function::iterator BI = F.begin(), BE = F.end(); BI != BE; ++BI) {
     // Disallow inlining of functions which contain an indirect branch.
     if (isa<IndirectBrInst>(BI->getTerminator()))
@@ -114,7 +114,7 @@ InlineCost AlwaysInliner::getInlineCost(CallSite CS) {
   if (Callee->isDeclaration()) return InlineCost::getNever();
 
   // Return never for anything not marked as always inline.
-  if (!Callee->hasFnAttr(Attribute::AlwaysInline))
+  if (!Callee->getFnAttributes().hasAlwaysInlineAttr())
     return InlineCost::getNever();
 
   // Do some minimal analysis to preclude non-viable functions.

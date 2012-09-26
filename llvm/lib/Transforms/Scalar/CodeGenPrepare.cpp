@@ -149,7 +149,7 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   TLInfo = &getAnalysis<TargetLibraryInfo>();
   DT = getAnalysisIfAvailable<DominatorTree>();
   PFI = getAnalysisIfAvailable<ProfileInfo>();
-  OptSize = F.hasFnAttr(Attribute::OptimizeForSize);
+  OptSize = F.getFnAttributes().hasOptimizeForSizeAttr();
 
   /// This optimization identifies DIV instructions that can be
   /// profitably bypassed and carried out with a shorter, faster divide.

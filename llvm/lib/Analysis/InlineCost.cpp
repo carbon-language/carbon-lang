@@ -128,7 +128,7 @@ class CallAnalyzer : public InstVisitor<CallAnalyzer, bool> {
 public:
   CallAnalyzer(const TargetData *TD, Function &Callee, int Threshold)
     : TD(TD), F(Callee), Threshold(Threshold), Cost(0),
-      AlwaysInline(F.hasFnAttr(Attribute::AlwaysInline)),
+      AlwaysInline(F.getFnAttributes().hasAlwaysInlineAttr()),
       IsCallerRecursive(false), IsRecursiveCall(false),
       ExposesReturnsTwice(false), HasDynamicAlloca(false), AllocatedSize(0),
       NumInstructions(0), NumVectorInstructions(0),
@@ -613,7 +613,7 @@ bool CallAnalyzer::visitStore(StoreInst &I) {
 
 bool CallAnalyzer::visitCallSite(CallSite CS) {
   if (CS.isCall() && cast<CallInst>(CS.getInstruction())->canReturnTwice() &&
-      !F.hasFnAttr(Attribute::ReturnsTwice)) {
+      !F.getFnAttributes().hasReturnsTwiceAttr()) {
     // This aborts the entire analysis.
     ExposesReturnsTwice = true;
     return false;
@@ -1043,7 +1043,7 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS, Function *Callee,
   // something else.  Don't inline functions marked noinline or call sites
   // marked noinline.
   if (!Callee || Callee->mayBeOverridden() ||
-      Callee->hasFnAttr(Attribute::NoInline) || CS.isNoInline())
+      Callee->getFnAttributes().hasNoInlineAttr() || CS.isNoInline())
     return llvm::InlineCost::getNever();
 
   DEBUG(llvm::dbgs() << "      Analyzing call of " << Callee->getName()

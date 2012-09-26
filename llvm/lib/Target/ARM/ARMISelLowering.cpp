@@ -6326,7 +6326,7 @@ EmitStructByval(MachineInstr *MI, MachineBasicBlock *BB) const {
     UnitSize = 2;
   } else {
     // Check whether we can use NEON instructions.
-    if (!MF->getFunction()->hasFnAttr(Attribute::NoImplicitFloat) &&
+    if (!MF->getFunction()->getFnAttributes().hasNoImplicitFloatAttr() &&
         Subtarget->hasNEON()) {
       if ((Align % 16 == 0) && SizeVal >= 16) {
         ldrOpc = ARM::VLD1q32wb_fixed;
@@ -9060,7 +9060,7 @@ EVT ARMTargetLowering::getOptimalMemOpType(uint64_t Size,
 
   // See if we can use NEON instructions for this...
   if (IsZeroVal &&
-      !F->hasFnAttr(Attribute::NoImplicitFloat) &&
+      !F->getFnAttributes().hasNoImplicitFloatAttr() &&
       Subtarget->hasNEON()) {
     if (memOpAlign(SrcAlign, DstAlign, 16) && Size >= 16) {
       return MVT::v4i32;
