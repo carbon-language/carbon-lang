@@ -426,6 +426,24 @@ void test13() {
 // CHECK-NOELIDE-TREE:     &b13, 
 // CHECK-NOELIDE-TREE:     [&d13 != (no argument)]>
 
+template<typename T> struct s14 {};
+template<typename T> using a14 = s14<T>;
+typedef a14<int> b14;
+template<typename T> using c14 = b14;
+int f14(c14<int>);
+int k14 = f14(a14<char>());
+// CHECK-ELIDE-NOTREE: no matching function for call to 'f14'
+// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'a14<char>' to 'a14<int>' for 1st argument
+// CHECK-NOELIDE-NOTREE: no matching function for call to 'f14'
+// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'a14<char>' to 'a14<int>' for 1st argument
+// CHECK-ELIDE-TREE: no matching function for call to 'f14'
+// CHECK-ELIDE-TREE: candidate function not viable: no known conversion from argument type to parameter type for 1st argument
+// CHECK-ELIDE-TREE:   a14<
+// CHECK-ELIDE-TREE:     [char != int]>
+// CHECK-NOELIDE-TREE: no matching function for call to 'f14'
+// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion from argument type to parameter type for 1st argument
+// CHECK-NOELIDE-TREE:   a14<
+// CHECK-NOELIDE-TREE:     [char != int]>
 
 // CHECK-ELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-NOELIDE-NOTREE: {{[0-9]*}} errors generated.
