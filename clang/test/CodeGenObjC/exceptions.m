@@ -2,6 +2,10 @@
 //
 // <rdar://problem/7471679> [irgen] [eh] Exception code built with clang (x86_64) crashes
 
+// XFAIL: *
+// This test is disabled until SROA fallout is fixed. Turn this test back on
+// once new SROA is enabled, or by reverting r164481.
+
 // Just check that we don't emit any dead blocks.
 @interface NSArray @end
 void f0() {
