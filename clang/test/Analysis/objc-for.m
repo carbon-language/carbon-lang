@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=osx.cocoa.Loops,debug.ExprInspection -verify
+// RUN: %clang_cc1 -analyze -analyzer-checker=osx.cocoa.Loops,debug.ExprInspection -verify %s
 
 void clang_analyzer_eval(int);
 
