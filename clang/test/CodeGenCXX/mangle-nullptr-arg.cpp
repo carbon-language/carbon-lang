@@ -11,3 +11,6 @@ template<int X::*pm> struct PM {};
 // CHECK: define void @_Z5test22PMILM1Xi0EE
 void test2(PM<nullptr>) { }
 
+// CHECK: define void @_Z5test316DependentTypePtrIPiLS0_0EE
+template<typename T, T x> struct DependentTypePtr {};
+void test3(DependentTypePtr<int*,nullptr>) { }

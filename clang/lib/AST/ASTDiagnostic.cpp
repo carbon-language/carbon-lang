@@ -923,7 +923,9 @@ class TemplateDiff {
     bool isVariadic = DefaultTTPD->isParameterPack();
 
     TemplateArgument TA = DefaultTTPD->getDefaultArgument().getArgument();
-    TemplateDecl *DefaultTD = TA.getAsTemplate().getAsTemplateDecl();
+    TemplateDecl *DefaultTD = 0;
+    if (TA.getKind() != TemplateArgument::Null)
+      DefaultTD = TA.getAsTemplate().getAsTemplateDecl();
 
     if (!Iter.isEnd())
       ArgDecl = Iter->getAsTemplate().getAsTemplateDecl();

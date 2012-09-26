@@ -2464,6 +2464,7 @@ public:
     case TemplateArgument::Declaration:
     case TemplateArgument::Pack:
     case TemplateArgument::TemplateExpansion:
+    case TemplateArgument::NullPtr:
       llvm_unreachable("Pack expansion pattern has no parameter packs");
 
     case TemplateArgument::Type:
@@ -2946,6 +2947,7 @@ void TreeTransform<Derived>::InventTemplateArgumentLoc(
   case TemplateArgument::Declaration:
   case TemplateArgument::Integral:
   case TemplateArgument::Pack:
+  case TemplateArgument::NullPtr:
     Output = TemplateArgumentLoc(Arg, TemplateArgumentLocInfo());
     break;
   }
@@ -2961,7 +2963,8 @@ bool TreeTransform<Derived>::TransformTemplateArgument(
   case TemplateArgument::Integral:
   case TemplateArgument::Pack:
   case TemplateArgument::Declaration:
-    llvm_unreachable("Cannot transform");
+  case TemplateArgument::NullPtr:
+    llvm_unreachable("Unexpected TemplateArgument");
 
   case TemplateArgument::Type: {
     TypeSourceInfo *DI = Input.getTypeSourceInfo();

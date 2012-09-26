@@ -1174,10 +1174,11 @@ ExprResult TemplateInstantiator::transformNonTypeTemplateParmRef(
     result = SemaRef.Owned(argExpr);
     type = argExpr->getType();
 
-  } else if (arg.getKind() == TemplateArgument::Declaration) {
+  } else if (arg.getKind() == TemplateArgument::Declaration ||
+             arg.getKind() == TemplateArgument::NullPtr) {
     ValueDecl *VD;
-    if (Decl *D = arg.getAsDecl()) {
-      VD = cast<ValueDecl>(D);
+    if (arg.getKind() == TemplateArgument::Declaration) {
+      VD = cast<ValueDecl>(arg.getAsDecl());
 
       // Find the instantiation of the template argument.  This is
       // required for nested templates.

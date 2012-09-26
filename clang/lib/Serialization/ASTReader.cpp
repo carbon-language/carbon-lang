@@ -4555,7 +4555,9 @@ ASTReader::GetTemplateArgumentLocInfo(ModuleFile &F,
   case TemplateArgument::Null:
   case TemplateArgument::Integral:
   case TemplateArgument::Declaration:
+  case TemplateArgument::NullPtr:
   case TemplateArgument::Pack:
+    // FIXME: Is this right?
     return TemplateArgumentLocInfo();
   }
   llvm_unreachable("unexpected template argument loc");
@@ -5944,8 +5946,13 @@ ASTReader::ReadTemplateArgument(ModuleFile &F,
     return TemplateArgument();
   case TemplateArgument::Type:
     return TemplateArgument(readType(F, Record, Idx));
-  case TemplateArgument::Declaration:
-    return TemplateArgument(ReadDecl(F, Record, Idx));
+  case TemplateArgument::Declaration: {
+    ValueDecl *D = ReadDeclAs<ValueDecl>(F, Record, Idx);
+    bool ForReferenceParam = Record[Idx++];
+    return TemplateArgument(D, ForReferenceParam);
+  }
+  case TemplateArgument::NullPtr:
+    return TemplateArgument(readType(F, Record, Idx), /*isNullPtr*/true);
   case TemplateArgument::Integral: {
     llvm::APSInt Value = ReadAPSInt(Record, Idx);
     QualType T = readType(F, Record, Idx);

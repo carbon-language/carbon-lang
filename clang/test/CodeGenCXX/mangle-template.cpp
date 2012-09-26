@@ -162,11 +162,11 @@ namespace test12 {
   void use() {
     // CHECK: define internal void @_ZN6test124testIFivEXadL_ZNS_L1fEvEEEEvv(
     test<int(), &f>();
-    // CHECK: define internal void @_ZN6test124testIRFivEXadL_ZNS_L1fEvEEEEvv(
+    // CHECK: define internal void @_ZN6test124testIRFivELZNS_L1fEvEEEvv(
     test<int(&)(), f>();
     // CHECK: define internal void @_ZN6test124testIPKiXadL_ZNS_L1nEEEEEvv(
     test<const int*, &n>();
-    // CHECK: define internal void @_ZN6test124testIRKiXadL_ZNS_L1nEEEEEvv(
+    // CHECK: define internal void @_ZN6test124testIRKiLZNS_L1nEEEEvv(
     test<const int&, n>();
   }
 }

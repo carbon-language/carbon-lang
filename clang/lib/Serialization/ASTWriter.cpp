@@ -3791,7 +3791,9 @@ void ASTWriter::AddTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
   case TemplateArgument::Null:
   case TemplateArgument::Integral:
   case TemplateArgument::Declaration:
+  case TemplateArgument::NullPtr:
   case TemplateArgument::Pack:
+    // FIXME: Is this right?
     break;
   }
 }
@@ -4208,6 +4210,10 @@ void ASTWriter::AddTemplateArgument(const TemplateArgument &Arg,
     break;
   case TemplateArgument::Declaration:
     AddDeclRef(Arg.getAsDecl(), Record);
+    Record.push_back(Arg.isDeclForReferenceParam());
+    break;
+  case TemplateArgument::NullPtr:
+    AddTypeRef(Arg.getNullPtrType(), Record);
     break;
   case TemplateArgument::Integral:
     AddAPSInt(Arg.getAsIntegral(), Record);

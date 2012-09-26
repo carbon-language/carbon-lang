@@ -3684,10 +3684,13 @@ ASTContext::getCanonicalTemplateArgument(const TemplateArgument &Arg) const {
       return Arg;
 
     case TemplateArgument::Declaration: {
-      if (Decl *D = Arg.getAsDecl())
-          return TemplateArgument(D->getCanonicalDecl());
-      return TemplateArgument((Decl*)0);
+      ValueDecl *D = cast<ValueDecl>(Arg.getAsDecl()->getCanonicalDecl());
+      return TemplateArgument(D, Arg.isDeclForReferenceParam());
     }
+
+    case TemplateArgument::NullPtr:
+      return TemplateArgument(getCanonicalType(Arg.getNullPtrType()),
+                              /*isNullPtr*/true);
 
     case TemplateArgument::Template:
       return TemplateArgument(getCanonicalTemplateName(Arg.getAsTemplate()));

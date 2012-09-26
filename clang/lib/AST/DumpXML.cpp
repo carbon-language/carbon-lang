@@ -316,12 +316,12 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
     }
     case TemplateArgument::Template:
     case TemplateArgument::TemplateExpansion:
+    case TemplateArgument::NullPtr:
       // FIXME: Implement!
       break;
         
     case TemplateArgument::Declaration: {
-      if (Decl *D = A.getAsDecl())
-        visitDeclRef(D);
+      visitDeclRef(A.getAsDecl());
       break;
     }
     case TemplateArgument::Integral: {

@@ -728,10 +728,12 @@ void USRGenerator::VisitTemplateArgument(const TemplateArgument &Arg) {
     break;
 
   case TemplateArgument::Declaration:
-    if (Decl *D = Arg.getAsDecl())
-      Visit(D);
+    Visit(Arg.getAsDecl());
     break;
-      
+
+  case TemplateArgument::NullPtr:
+    break;
+
   case TemplateArgument::TemplateExpansion:
     Out << 'P'; // pack expansion of...
     // Fall through

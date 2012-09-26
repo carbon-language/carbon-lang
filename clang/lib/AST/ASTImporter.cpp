@@ -288,7 +288,7 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
       
   case TemplateArgument::Type:
     return Context.IsStructurallyEquivalent(Arg1.getAsType(), Arg2.getAsType());
-      
+
   case TemplateArgument::Integral:
     if (!Context.IsStructurallyEquivalent(Arg1.getIntegralType(), 
                                           Arg2.getIntegralType()))
@@ -297,10 +297,11 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
     return llvm::APSInt::isSameValue(Arg1.getAsIntegral(), Arg2.getAsIntegral());
       
   case TemplateArgument::Declaration:
-    if (!Arg1.getAsDecl() || !Arg2.getAsDecl())
-      return !Arg1.getAsDecl() && !Arg2.getAsDecl();
     return Context.IsStructurallyEquivalent(Arg1.getAsDecl(), Arg2.getAsDecl());
-      
+
+  case TemplateArgument::NullPtr:
+    return true; // FIXME: Is this correct?
+
   case TemplateArgument::Template:
     return IsStructurallyEquivalent(Context, 
                                     Arg1.getAsTemplate(), 
@@ -1976,11 +1977,20 @@ ASTNodeImporter::ImportTemplateArgument(const TemplateArgument &From) {
     return TemplateArgument(From, ToType);
   }
 
-  case TemplateArgument::Declaration:
-    if (Decl *To = Importer.Import(From.getAsDecl()))
-      return TemplateArgument(To);
+  case TemplateArgument::Declaration: {
+    ValueDecl *FromD = From.getAsDecl();
+    if (ValueDecl *To = cast_or_null<ValueDecl>(Importer.Import(FromD)))
+      return TemplateArgument(To, From.isDeclForReferenceParam());
     return TemplateArgument();
-      
+  }
+
+  case TemplateArgument::NullPtr: {
+    QualType ToType = Importer.Import(From.getNullPtrType());
+    if (ToType.isNull())
+      return TemplateArgument();
+    return TemplateArgument(ToType, /*isNullPtr*/true);
+  }
+
   case TemplateArgument::Template: {
     TemplateName ToTemplate = Importer.Import(From.getAsTemplate());
     if (ToTemplate.isNull())

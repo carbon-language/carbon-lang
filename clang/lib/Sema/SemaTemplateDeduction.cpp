@@ -158,9 +158,6 @@ static NonTypeTemplateParmDecl *getDeducedParameterFromExpr(Expr *E) {
 /// \brief Determine whether two declaration pointers refer to the same
 /// declaration.
 static bool isSameDeclaration(Decl *X, Decl *Y) {
-  if (!X || !Y)
-    return !X && !Y;
-
   if (NamedDecl *NX = dyn_cast<NamedDecl>(X))
     X = NX->getUnderlyingDecl();
   if (NamedDecl *NY = dyn_cast<NamedDecl>(Y))
@@ -262,7 +259,27 @@ checkDeducedTemplateArguments(ASTContext &Context,
     // If we deduced two declarations, make sure they they refer to the
     // same declaration.
     if (Y.getKind() == TemplateArgument::Declaration &&
-        isSameDeclaration(X.getAsDecl(), Y.getAsDecl()))
+        isSameDeclaration(X.getAsDecl(), Y.getAsDecl()) &&
+        X.isDeclForReferenceParam() == Y.isDeclForReferenceParam())
+      return X;
+
+    // All other combinations are incompatible.
+    return DeducedTemplateArgument();
+
+  case TemplateArgument::NullPtr:
+    // If we deduced a null pointer and a dependent expression, keep the
+    // null pointer.
+    if (Y.getKind() == TemplateArgument::Expression)
+      return X;
+
+    // If we deduced a null pointer and an integral constant, keep the
+    // integral constant.
+    if (Y.getKind() == TemplateArgument::Integral)
+      return Y;
+
+    // If we deduced two null pointers, make sure they have the same type.
+    if (Y.getKind() == TemplateArgument::NullPtr &&
+        Context.hasSameType(X.getNullPtrType(), Y.getNullPtrType()))
       return X;
 
     // All other combinations are incompatible.
@@ -356,13 +373,15 @@ DeduceNonTypeTemplateArgument(Sema &S,
 static Sema::TemplateDeductionResult
 DeduceNonTypeTemplateArgument(Sema &S,
                               NonTypeTemplateParmDecl *NTTP,
-                              Decl *D,
+                              ValueDecl *D,
                               TemplateDeductionInfo &Info,
                     SmallVectorImpl<DeducedTemplateArgument> &Deduced) {
   assert(NTTP->getDepth() == 0 &&
          "Cannot deduce non-type template argument with depth > 0");
 
-  DeducedTemplateArgument NewDeduced(D? D->getCanonicalDecl() : 0);
+  D = D ? cast<ValueDecl>(D->getCanonicalDecl()) : 0;
+  TemplateArgument New(D, NTTP->getType()->isReferenceType());
+  DeducedTemplateArgument NewDeduced(New);
   DeducedTemplateArgument Result = checkDeducedTemplateArguments(S.Context,
                                                      Deduced[NTTP->getIndex()],
                                                                  NewDeduced);
@@ -615,7 +634,7 @@ FinishArgumentPackDeduction(Sema &S,
 
     if (NewlyDeducedPacks[I].empty()) {
       // If we deduced an empty argument pack, create it now.
-      NewPack = DeducedTemplateArgument(TemplateArgument(0, 0));
+      NewPack = DeducedTemplateArgument(TemplateArgument::getEmptyPack());
     } else {
       TemplateArgument *ArgumentPack
         = new (S.Context) TemplateArgument [NewlyDeducedPacks[I].size()];
@@ -1599,7 +1618,17 @@ DeduceTemplateArguments(Sema &S,
 
   case TemplateArgument::Declaration:
     if (Arg.getKind() == TemplateArgument::Declaration &&
-        isSameDeclaration(Param.getAsDecl(), Arg.getAsDecl()))
+        isSameDeclaration(Param.getAsDecl(), Arg.getAsDecl()) &&
+        Param.isDeclForReferenceParam() == Arg.isDeclForReferenceParam())
+      return Sema::TDK_Success;
+
+    Info.FirstArg = Param;
+    Info.SecondArg = Arg;
+    return Sema::TDK_NonDeducedMismatch;
+
+  case TemplateArgument::NullPtr:
+    if (Arg.getKind() == TemplateArgument::NullPtr &&
+        S.Context.hasSameType(Param.getNullPtrType(), Arg.getNullPtrType()))
       return Sema::TDK_Success;
 
     Info.FirstArg = Param;
@@ -1870,7 +1899,11 @@ static bool isSameTemplateArg(ASTContext &Context,
              Context.getCanonicalType(Y.getAsType());
 
     case TemplateArgument::Declaration:
-      return isSameDeclaration(X.getAsDecl(), Y.getAsDecl());
+      return isSameDeclaration(X.getAsDecl(), Y.getAsDecl()) &&
+             X.isDeclForReferenceParam() == Y.isDeclForReferenceParam();
+
+    case TemplateArgument::NullPtr:
+      return Context.hasSameType(X.getNullPtrType(), Y.getNullPtrType());
 
     case TemplateArgument::Template:
     case TemplateArgument::TemplateExpansion:
@@ -1938,6 +1971,14 @@ getTrivialTemplateArgumentLoc(Sema &S,
       = S.BuildExpressionFromDeclTemplateArgument(Arg, NTTPType, Loc)
           .takeAs<Expr>();
     return TemplateArgumentLoc(TemplateArgument(E), E);
+  }
+
+  case TemplateArgument::NullPtr: {
+    Expr *E
+      = S.BuildExpressionFromDeclTemplateArgument(Arg, NTTPType, Loc)
+          .takeAs<Expr>();
+    return TemplateArgumentLoc(TemplateArgument(NTTPType, /*isNullPtr*/true),
+                               E);
   }
 
   case TemplateArgument::Integral: {
@@ -2613,7 +2654,7 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
           == Param)
         Builder.push_back(TemplateArgument(ExplicitArgs, NumExplicitArgs));
       else
-        Builder.push_back(TemplateArgument(0, 0));
+        Builder.push_back(TemplateArgument::getEmptyPack());
 
       continue;
     }
@@ -4508,6 +4549,11 @@ MarkUsedTemplateParameters(ASTContext &Ctx,
   case TemplateArgument::Null:
   case TemplateArgument::Integral:
   case TemplateArgument::Declaration:
+    break;
+
+  case TemplateArgument::NullPtr:
+    MarkUsedTemplateParameters(Ctx, TemplateArg.getNullPtrType(), OnlyDeduced,
+                               Depth, Used);
     break;
 
   case TemplateArgument::Type:
