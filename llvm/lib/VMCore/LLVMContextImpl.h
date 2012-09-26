@@ -16,6 +16,7 @@
 #define LLVM_LLVMCONTEXT_IMPL_H
 
 #include "llvm/LLVMContext.h"
+#include "AttributesImpl.h"
 #include "ConstantsContext.h"
 #include "LeaksContext.h"
 #include "llvm/Constants.h"
@@ -253,10 +254,13 @@ public:
   typedef DenseMap<DenseMapAPFloatKeyInfo::KeyTy, ConstantFP*, 
                          DenseMapAPFloatKeyInfo> FPMapTy;
   FPMapTy FPConstants;
+
+  FoldingSet<AttributesImpl> AttrsSet;
   
   StringMap<Value*> MDStringCache;
-  
+
   FoldingSet<MDNode> MDNodeSet;
+
   // MDNodes may be uniqued or not uniqued.  When they're not uniqued, they
   // aren't in the MDNodeSet, but they're still shared between objects, so no
   // one object can destroy them.  This set allows us to at least destroy them

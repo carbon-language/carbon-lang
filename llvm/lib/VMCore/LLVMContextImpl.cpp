@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "LLVMContextImpl.h"
+#include "llvm/Attributes.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
@@ -93,6 +94,11 @@ LLVMContextImpl::~LLVMContextImpl() {
        E = CDSConstants.end(); I != E; ++I)
     delete I->second;
   CDSConstants.clear();
+
+  // Destroy attributes.
+  for (FoldingSetIterator<AttributesImpl> I = AttrsSet.begin(),
+         E = AttrsSet.end(); I != E; ++I)
+    delete &*I;
   
   // Destroy MDNodes.  ~MDNode can move and remove nodes between the MDNodeSet
   // and the NonUniquedMDNodes sets, so copy the values out first.
@@ -107,6 +113,7 @@ LLVMContextImpl::~LLVMContextImpl() {
     (*I)->destroy();
   assert(MDNodeSet.empty() && NonUniquedMDNodes.empty() &&
          "Destroying all MDNodes didn't empty the Context's sets.");
+
   // Destroy MDStrings.
   DeleteContainerSeconds(MDStringCache);
 }

@@ -12,6 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Attributes.h"
+#include "AttributesImpl.h"
+#include "LLVMContextImpl.h"
 #include "llvm/Type.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/FoldingSet.h"
@@ -107,6 +109,36 @@ Attributes Attributes::typeIncompatible(Type *Ty) {
       Attribute::StructRet | Attribute::NoCapture;
   
   return Incompatible;
+}
+
+//===----------------------------------------------------------------------===//
+// AttributeImpl Definition
+//===----------------------------------------------------------------------===//
+
+Attributes::Attributes(AttributesImpl *A) : Bits(0) {}
+
+Attributes Attributes::get(LLVMContext &Context, Attributes::Builder &B) {
+  // If there are no attributes, return an empty Attributes class.
+  if (B.Bits == 0)
+    return Attributes();
+
+  // Otherwise, build a key to look up the existing attributes.
+  LLVMContextImpl *pImpl = Context.pImpl;
+  FoldingSetNodeID ID;
+  ID.AddInteger(B.Bits);
+
+  void *InsertPoint;
+  AttributesImpl *PA = pImpl->AttrsSet.FindNodeOrInsertPos(ID, InsertPoint);
+
+  if (!PA) {
+    // If we didn't find any existing attributes of the same shape then create a
+    // new one and insert it.
+    PA = new AttributesImpl(B.Bits);
+    pImpl->AttrsSet.InsertNode(PA, InsertPoint);
+  }
+
+  // Return the AttributesList that we found or created.
+  return Attributes(PA);
 }
 
 //===----------------------------------------------------------------------===//
