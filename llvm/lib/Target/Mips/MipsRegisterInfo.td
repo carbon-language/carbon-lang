@@ -14,6 +14,8 @@ let Namespace = "Mips" in {
 def sub_fpeven : SubRegIndex;
 def sub_fpodd  : SubRegIndex;
 def sub_32     : SubRegIndex;
+def sub_lo     : SubRegIndex;
+def sub_hi     : SubRegIndex;
 }
 
 // We have banks of 32 registers each.
@@ -247,33 +249,11 @@ let Namespace = "Mips" in {
   def HWR29_64 : Register<"29">;
 
   // Accum registers
-  def LO0 : Register<"ac0"> {
-    let Aliases = [LO];
-  }
-  def HI0 : Register<"hi0"> {
-    let Aliases = [HI];
-  }
-  def LO1 : Register<"ac1">;
-  def HI1 : Register<"hi1">;
-  def LO2 : Register<"ac2">;
-  def HI2 : Register<"hi2">;
-  def LO3 : Register<"ac3">;
-  def HI3 : Register<"hi3">;
-
-  let SubRegIndices = [sub_32] in {
-    def LO0_64 : RegisterWithSubRegs<"ac0", [LO0]> {
-      let Aliases = [LO64];
-    }
-    def HI0_64 : RegisterWithSubRegs<"hi0", [HI0]> {
-      let Aliases = [HI64];
-    }
-    def LO1_64 : RegisterWithSubRegs<"ac1", [LO1]>;
-    def HI1_64 : RegisterWithSubRegs<"hi1", [HI1]>;
-    def LO2_64 : RegisterWithSubRegs<"ac2", [LO2]>;
-    def HI2_64 : RegisterWithSubRegs<"hi2", [HI2]>;
-    def LO3_64 : RegisterWithSubRegs<"ac3", [LO3]>;
-    def HI3_64 : RegisterWithSubRegs<"hi3", [HI3]>;
-  }
+  let SubRegIndices = [sub_lo, sub_hi] in
+  def AC0 : RegisterWithSubRegs<"ac0", [LO, HI]>;
+  def AC1 : Register<"ac1">;
+  def AC2 : Register<"ac2">;
+  def AC3 : Register<"ac3">;
 
   def DSPCtrl : Register<"dspctrl">;
 }
@@ -357,9 +337,5 @@ def HILO64 : RegisterClass<"Mips", [i64], 64, (add HI64, LO64)>;
 def HWRegs : RegisterClass<"Mips", [i32], 32, (add HWR29)>;
 def HWRegs64 : RegisterClass<"Mips", [i64], 32, (add HWR29_64)>;
 
-// Accum Registers
-def HIRegs : RegisterClass<"Mips", [i32], 32, (sequence "HI%u", 0, 3)>;
-def LORegs : RegisterClass<"Mips", [i32], 32, (sequence "LO%u", 0, 3)>;
-
-def HI64Regs : RegisterClass<"Mips", [i64], 64, (sequence "HI%u_64", 0, 3)>;
-def LO64Regs : RegisterClass<"Mips", [i64], 64, (sequence "LO%u_64", 0, 3)>;
+// Accumulator Registers
+def ACRegs : RegisterClass<"Mips", [i64], 64, (sequence "AC%u", 0, 3)>;
