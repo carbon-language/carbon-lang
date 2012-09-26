@@ -78,7 +78,7 @@ unsigned Argument::getArgNo() const {
 /// in its containing function.
 bool Argument::hasByValAttr() const {
   if (!getType()->isPointerTy()) return false;
-  return getParent()->paramHasAttr(getArgNo()+1, Attribute::ByVal);
+  return getParent()->getParamAttributes(getArgNo()+1).hasByValAttr();
 }
 
 unsigned Argument::getParamAlignment() const {
@@ -91,21 +91,21 @@ unsigned Argument::getParamAlignment() const {
 /// it in its containing function.
 bool Argument::hasNestAttr() const {
   if (!getType()->isPointerTy()) return false;
-  return getParent()->paramHasAttr(getArgNo()+1, Attribute::Nest);
+  return getParent()->getParamAttributes(getArgNo()+1).hasNestAttr();
 }
 
 /// hasNoAliasAttr - Return true if this argument has the noalias attribute on
 /// it in its containing function.
 bool Argument::hasNoAliasAttr() const {
   if (!getType()->isPointerTy()) return false;
-  return getParent()->paramHasAttr(getArgNo()+1, Attribute::NoAlias);
+  return getParent()->getParamAttributes(getArgNo()+1).hasNoAliasAttr();
 }
 
 /// hasNoCaptureAttr - Return true if this argument has the nocapture attribute
 /// on it in its containing function.
 bool Argument::hasNoCaptureAttr() const {
   if (!getType()->isPointerTy()) return false;
-  return getParent()->paramHasAttr(getArgNo()+1, Attribute::NoCapture);
+  return getParent()->getParamAttributes(getArgNo()+1).hasNoCaptureAttr();
 }
 
 /// hasSRetAttr - Return true if this argument has the sret attribute on
@@ -114,7 +114,7 @@ bool Argument::hasStructRetAttr() const {
   if (!getType()->isPointerTy()) return false;
   if (this != getParent()->arg_begin())
     return false; // StructRet param must be first param
-  return getParent()->paramHasAttr(1, Attribute::StructRet);
+  return getParent()->getParamAttributes(1).hasStructRetAttr();
 }
 
 /// addAttr - Add a Attribute to an argument
