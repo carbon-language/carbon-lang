@@ -1172,7 +1172,7 @@ protected:
         
         m_realized = class_row_t_flags & RW_REALIZED;
         
-        lldb::addr_t class_ro_t_la = NULL;
+        lldb::addr_t class_ro_t_la = 0;
         
         if (m_realized)
         {
