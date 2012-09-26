@@ -23,6 +23,16 @@ namespace llvm {
 
 namespace llvm {
 
+  /// Generate code to calculate the remainder of two integers, replacing Rem
+  /// with the generated code. This currently generates code using the udiv
+  /// expansion, but future work includes generating more specialized code,
+  /// e.g. when more information about the operands are known. Currently only
+  /// implements 32bit scalar division (due to udiv's limitation), but future
+  /// work is removing this limitation.
+  ///
+  /// @brief Replace Rem with generated code.
+  bool expandRemainder(BinaryOperator *Rem);
+
   /// Generate code to divide two integers, replacing Div with the generated
   /// code. This currently generates code similarly to compiler-rt's
   /// implementations, but future work includes generating more specialized code
