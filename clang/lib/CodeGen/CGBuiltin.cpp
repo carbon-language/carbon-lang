@@ -402,6 +402,10 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *F = CGM.getIntrinsic(Intrinsic::trap);
     return RValue::get(Builder.CreateCall(F));
   }
+  case Builtin::BI__debugbreak: {
+    Value *F = CGM.getIntrinsic(Intrinsic::debugtrap);
+    return RValue::get(Builder.CreateCall(F));
+  }
   case Builtin::BI__builtin_unreachable: {
     if (CatchUndefined)
       EmitCheck(Builder.getFalse());
