@@ -566,7 +566,7 @@ void RangeConstraintManager::print(ProgramStateRef St, raw_ostream &Out,
 
   Out << nl << sep << "Ranges of symbol values:";
   for (ConstraintRangeTy::iterator I=Ranges.begin(), E=Ranges.end(); I!=E; ++I){
-    Out << nl << sep << I.getKey() << " : ";
+    Out << nl << ' ' << I.getKey() << " : ";
     I.getData().print(Out);
   }
   Out << nl;
