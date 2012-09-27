@@ -103,3 +103,13 @@ class SHILO_R2_FMT<bits<5> op> : DSPInst {
   let Inst{10-6} = op;
   let Inst{5-0} = 0b111000;
 }
+
+class BPOSGE32_FMT<bits<5> op> : DSPInst {
+  bits<16> offset;
+
+  let Opcode = REGIMM_OPCODE.V;
+
+  let Inst{25-21} = 0;
+  let Inst{20-16} = op;
+  let Inst{15-0} = offset;
+}

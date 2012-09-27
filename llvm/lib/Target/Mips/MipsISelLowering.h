@@ -262,6 +262,8 @@ namespace llvm {
 
     virtual unsigned getJumpTableEncoding() const;
 
+    MachineBasicBlock *EmitBPOSGE32(MachineInstr *MI,
+                                    MachineBasicBlock *BB) const;
     MachineBasicBlock *EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
                     unsigned Size, unsigned BinOpcode, bool Nand = false) const;
     MachineBasicBlock *EmitAtomicBinaryPartword(MachineInstr *MI,

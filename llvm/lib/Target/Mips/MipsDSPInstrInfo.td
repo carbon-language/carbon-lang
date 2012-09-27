@@ -103,6 +103,7 @@ class MADD_DSP_ENC : MULT_FMT<0b011100, 0b000000>;
 class MADDU_DSP_ENC : MULT_FMT<0b011100, 0b000001>;
 class MSUB_DSP_ENC : MULT_FMT<0b011100, 0b000100>;
 class MSUBU_DSP_ENC : MULT_FMT<0b011100, 0b000101>;
+class BPOSGE32_ENC : BPOSGE32_FMT<0b11100>;
 
 class EXTP_ENC : EXTR_W_TY1_FMT<0b00010>;
 class EXTPV_ENC : EXTR_W_TY1_FMT<0b00011>;
@@ -216,6 +217,23 @@ class MULT_DESC_BASE<string instr_asm> {
   string AsmString = !strconcat(instr_asm, "\t$ac, $rs, $rt");
 }
 
+class BPOSGE32_PSEUDO_DESC_BASE<SDPatternOperator OpNode, InstrItinClass itin> :
+  MipsPseudo<(outs CPURegs:$dst), (ins), "", [(set CPURegs:$dst, (OpNode))]> {
+  list<Register> Uses = [DSPCtrl];
+  bit usesCustomInserter = 1;
+}
+
+class BPOSGE32_DESC_BASE<string instr_asm, InstrItinClass itin> {
+  dag OutOperandList = (outs);
+  dag InOperandList = (ins brtarget:$offset);
+  string AsmString = !strconcat(instr_asm, "\t$offset");
+  InstrItinClass Itinerary = itin;
+  list<Register> Uses = [DSPCtrl];
+  bit isBranch = 1;
+  bit isTerminator = 1;
+  bit hasDelaySlot = 1;
+}
+
 //===----------------------------------------------------------------------===//
 // MIPS DSP Rev 1
 //===----------------------------------------------------------------------===//
@@ -259,6 +277,9 @@ class MADDU_DSP_DESC : MULT_DESC_BASE<"maddu">;
 class MSUB_DSP_DESC : MULT_DESC_BASE<"msub">;
 
 class MSUBU_DSP_DESC : MULT_DESC_BASE<"msubu">;
+
+// Misc
+class BPOSGE32_DESC : BPOSGE32_DESC_BASE<"bposge32", NoItinerary>;
 
 // Extr
 class EXTP_DESC : EXTR_W_TY1_R1_DESC_BASE<"extp", MipsEXTP, NoItinerary>;
@@ -320,6 +341,9 @@ class DPSQX_SA_W_PH_DESC : DPA_W_PH_DESC_BASE<"dpsqx_sa.w.ph">;
 
 class MULSA_W_PH_DESC : DPA_W_PH_DESC_BASE<"mulsa.w.ph">;
 
+// Pseudos.
+def BPOSGE32_PSEUDO : BPOSGE32_PSEUDO_DESC_BASE<int_mips_bposge32, NoItinerary>;
+
 // Instruction defs.
 // MIPS DSP Rev 1
 def MULSAQ_S_W_PH : MULSAQ_S_W_PH_ENC, MULSAQ_S_W_PH_DESC;
@@ -341,6 +365,7 @@ def MADD_DSP : MADD_DSP_ENC, MADD_DSP_DESC;
 def MADDU_DSP : MADDU_DSP_ENC, MADDU_DSP_DESC;
 def MSUB_DSP : MSUB_DSP_ENC, MSUB_DSP_DESC;
 def MSUBU_DSP : MSUBU_DSP_ENC, MSUBU_DSP_DESC;
+def BPOSGE32 : BPOSGE32_ENC, BPOSGE32_DESC;
 def EXTP : EXTP_ENC, EXTP_DESC;
 def EXTPV : EXTPV_ENC, EXTPV_DESC;
 def EXTPDP : EXTPDP_ENC, EXTPDP_DESC;

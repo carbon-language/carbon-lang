@@ -978,6 +978,70 @@ static MachineBasicBlock* ExpandCondMov(MachineInstr *MI, MachineBasicBlock *BB,
   return BB;
 }
 */
+
+MachineBasicBlock *
+MipsTargetLowering::EmitBPOSGE32(MachineInstr *MI, MachineBasicBlock *BB) const{
+  // $bb:
+  //  bposge32_pseudo $vr0
+  //  =>
+  // $bb:
+  //  bposge32 $tbb
+  // $fbb:
+  //  li $vr2, 0
+  //  b $sink
+  // $tbb:
+  //  li $vr1, 1
+  // $sink:
+  //  $vr0 = phi($vr2, $fbb, $vr1, $tbb)
+
+  MachineRegisterInfo &RegInfo = BB->getParent()->getRegInfo();
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  const TargetRegisterClass *RC = &Mips::CPURegsRegClass;
+  DebugLoc DL = MI->getDebugLoc();
+  const BasicBlock *LLVM_BB = BB->getBasicBlock();
+  MachineFunction::iterator It = llvm::next(MachineFunction::iterator(BB));
+  MachineFunction *F = BB->getParent();
+  MachineBasicBlock *FBB = F->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *TBB = F->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *Sink  = F->CreateMachineBasicBlock(LLVM_BB);
+  F->insert(It, FBB);
+  F->insert(It, TBB);
+  F->insert(It, Sink);
+
+  // Transfer the remainder of BB and its successor edges to Sink.
+  Sink->splice(Sink->begin(), BB, llvm::next(MachineBasicBlock::iterator(MI)),
+               BB->end());
+  Sink->transferSuccessorsAndUpdatePHIs(BB);
+
+  // Add successors.
+  BB->addSuccessor(FBB);
+  BB->addSuccessor(TBB);
+  FBB->addSuccessor(Sink);
+  TBB->addSuccessor(Sink);
+
+  // Insert the real bposge32 instruction to $BB.
+  BuildMI(BB, DL, TII->get(Mips::BPOSGE32)).addMBB(TBB);
+
+  // Fill $FBB.
+  unsigned VR2 = RegInfo.createVirtualRegister(RC);
+  BuildMI(*FBB, FBB->end(), DL, TII->get(Mips::ADDiu), VR2)
+    .addReg(Mips::ZERO).addImm(0);
+  BuildMI(*FBB, FBB->end(), DL, TII->get(Mips::B)).addMBB(Sink);
+
+  // Fill $TBB.
+  unsigned VR1 = RegInfo.createVirtualRegister(RC);
+  BuildMI(*TBB, TBB->end(), DL, TII->get(Mips::ADDiu), VR1)
+    .addReg(Mips::ZERO).addImm(1);
+
+  // Insert phi function to $Sink.
+  BuildMI(*Sink, Sink->begin(), DL, TII->get(Mips::PHI),
+          MI->getOperand(0).getReg())
+    .addReg(VR2).addMBB(FBB).addReg(VR1).addMBB(TBB);
+
+  MI->eraseFromParent();   // The pseudo instruction is gone now.
+  return Sink;
+}
+
 MachineBasicBlock *
 MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                 MachineBasicBlock *BB) const {
@@ -1086,6 +1150,8 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case Mips::ATOMIC_CMP_SWAP_I64:
   case Mips::ATOMIC_CMP_SWAP_I64_P8:
     return EmitAtomicCmpSwap(MI, BB, 8);
+  case Mips::BPOSGE32_PSEUDO:
+    return EmitBPOSGE32(MI, BB);
   }
 }
 

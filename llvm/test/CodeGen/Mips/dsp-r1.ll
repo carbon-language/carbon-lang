@@ -288,6 +288,16 @@ entry:
 
 declare i64 @llvm.mips.mthlip(i64, i32) nounwind
 
+define i32 @test__builtin_mips_bposge321(i32 %i0) nounwind readonly {
+entry:
+; CHECK: bposge32
+
+  %0 = tail call i32 @llvm.mips.bposge32()
+  ret i32 %0
+}
+
+declare i32 @llvm.mips.bposge32() nounwind readonly
+
 define i64 @test__builtin_mips_madd1(i32 %i0, i32, i64 %a0, i32 %a1, i32 %a2) nounwind readnone {
 entry:
 ; CHECK: madd
