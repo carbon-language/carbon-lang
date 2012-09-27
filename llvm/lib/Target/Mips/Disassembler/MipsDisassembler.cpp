@@ -108,6 +108,11 @@ static DecodeStatus DecodeCPURegsRegisterClass(MCInst &Inst,
                                                uint64_t Address,
                                                const void *Decoder);
 
+static DecodeStatus DecodeDSPRegsRegisterClass(MCInst &Inst,
+                                               unsigned RegNo,
+                                               uint64_t Address,
+                                               const void *Decoder);
+
 static DecodeStatus DecodeFGR64RegisterClass(MCInst &Inst,
                                              unsigned RegNo,
                                              uint64_t Address,
@@ -137,6 +142,11 @@ static DecodeStatus DecodeHWRegs64RegisterClass(MCInst &Inst,
                                                 unsigned Insn,
                                                 uint64_t Address,
                                                 const void *Decoder);
+
+static DecodeStatus DecodeACRegsRegisterClass(MCInst &Inst,
+                                              unsigned RegNo,
+                                              uint64_t Address,
+                                              const void *Decoder);
 
 static DecodeStatus DecodeBranchTarget(MCInst &Inst,
                                        unsigned Offset,
@@ -346,6 +356,13 @@ static DecodeStatus DecodeCPURegsRegisterClass(MCInst &Inst,
   return MCDisassembler::Success;
 }
 
+static DecodeStatus DecodeDSPRegsRegisterClass(MCInst &Inst,
+                                               unsigned RegNo,
+                                               uint64_t Address,
+                                               const void *Decoder) {
+  return DecodeCPURegsRegisterClass(Inst, RegNo, Address, Decoder);
+}
+
 static DecodeStatus DecodeFGR64RegisterClass(MCInst &Inst,
                                              unsigned RegNo,
                                              uint64_t Address,
@@ -460,6 +477,18 @@ static DecodeStatus DecodeHWRegs64RegisterClass(MCInst &Inst,
   if (RegNo != 29)
     return  MCDisassembler::Fail;
   Inst.addOperand(MCOperand::CreateReg(Mips::HWR29_64));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeACRegsRegisterClass(MCInst &Inst,
+                                              unsigned RegNo,
+                                              uint64_t Address,
+                                              const void *Decoder) {
+  if (RegNo >= 4)
+    return MCDisassembler::Fail;
+
+  unsigned Reg = getReg(Decoder, Mips::ACRegsRegClassID, RegNo);
+  Inst.addOperand(MCOperand::CreateReg(Reg));
   return MCDisassembler::Success;
 }
 
