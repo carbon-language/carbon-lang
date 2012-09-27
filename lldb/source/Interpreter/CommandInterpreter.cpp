@@ -485,7 +485,7 @@ CommandInterpreter::LoadCommandDictionary ()
     if (connect_kdp_remote_cmd_ap.get())
     {
         if (connect_kdp_remote_cmd_ap->AddRegexCommand("^([^:]+:[[:digit:]]+)$", "process connect --plugin kdp-remote udp://%1") &&
-            connect_kdp_remote_cmd_ap->AddRegexCommand("^(.*)$", "process connect --plugin kdp-remote udp://%1:41139"))
+            connect_kdp_remote_cmd_ap->AddRegexCommand("^(.+)$", "process connect --plugin kdp-remote udp://%1:41139"))
         {
             CommandObjectSP command_sp(connect_kdp_remote_cmd_ap.release());
             m_command_dict[command_sp->GetCommandName ()] = command_sp;
