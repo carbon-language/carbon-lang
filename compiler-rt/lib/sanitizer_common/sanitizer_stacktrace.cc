@@ -36,7 +36,7 @@ static uptr patch_pc(uptr pc) {
   return pc - 1;
 }
 
-void StackTrace::PrintStack(uptr *addr, uptr size,
+void StackTrace::PrintStack(const uptr *addr, uptr size,
                             bool symbolize, const char *strip_file_prefix,
                             SymbolizeCallback symbolize_callback ) {
   MemoryMappingLayout proc_maps;
