@@ -99,6 +99,33 @@ class PRECR_SRA_PH_W_FMT<bits<5> op> : DSPInst {
   let Inst{5-0}   = 0b010001;
 }
 
+// ABSQ_S.PH sub-class format.
+class ABSQ_S_PH_R2_FMT<bits<5> op> : DSPInst {
+  bits<5> rd;
+  bits<5> rt;
+
+  let Opcode = SPECIAL3_OPCODE.V;
+
+  let Inst{25-21} = 0;
+  let Inst{20-16} = rt;
+  let Inst{15-11} = rd;
+  let Inst{10-6}  = op;
+  let Inst{5-0}   = 0b010010;
+}
+
+
+class REPL_FMT<bits<5> op> : DSPInst {
+  bits<5> rd;
+  bits<10> imm;
+
+  let Opcode = SPECIAL3_OPCODE.V;
+
+  let Inst{25-16} = imm;
+  let Inst{15-11} = rd;
+  let Inst{10-6}  = op;
+  let Inst{5-0}   = 0b010010;
+}
+
 // SHLL.QB sub-class format.
 class SHLL_QB_FMT<bits<5> op> : DSPInst {
   bits<5> rd;

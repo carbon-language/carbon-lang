@@ -323,3 +323,16 @@ entry:
   %.fca.0.insert = insertvalue { i32 } undef, i32 %2, 0
   ret { i32 } %.fca.0.insert
 }
+
+define { i32 } @test__builtin_mips_absq_s_qb1(i32 %i0, i32 %a0.coerce) nounwind {
+entry:
+; CHECK: absq_s.qb
+
+  %0 = bitcast i32 %a0.coerce to <4 x i8>
+  %1 = tail call <4 x i8> @llvm.mips.absq.s.qb(<4 x i8> %0)
+  %2 = bitcast <4 x i8> %1 to i32
+  %.fca.0.insert = insertvalue { i32 } undef, i32 %2, 0
+  ret { i32 } %.fca.0.insert
+}
+
+declare <4 x i8> @llvm.mips.absq.s.qb(<4 x i8>) nounwind
