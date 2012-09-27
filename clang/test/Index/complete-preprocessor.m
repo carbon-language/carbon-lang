@@ -53,8 +53,8 @@ FOO(in,t) value;
 // CHECK-CC2-NEXT: NotImplemented:{TypedText undef}{HorizontalSpace  }{Placeholder macro} (40)
 // CHECK-CC2-NEXT: NotImplemented:{TypedText warning}{HorizontalSpace  }{Placeholder message} (40)
 // RUN: c-index-test -code-completion-at=%s:9:8 %s | FileCheck -check-prefix=CHECK-CC3 %s
-// CHECK-CC3: NotImplemented:{TypedText BAR} (40)
-// CHECK-CC3: NotImplemented:{TypedText FOO} (40)
+// CHECK-CC3: macro definition:{TypedText BAR} (40)
+// CHECK-CC3: macro definition:{TypedText FOO} (40)
 // RUN: c-index-test -code-completion-at=%s:11:12 %s | FileCheck -check-prefix=CHECK-CC3 %s
 // RUN: c-index-test -code-completion-at=%s:11:13 %s | FileCheck -check-prefix=CHECK-CC3 %s
 // RUN: c-index-test -code-completion-at=%s:11:5 %s | FileCheck -check-prefix=CHECK-CC4 %s

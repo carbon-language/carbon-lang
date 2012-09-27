@@ -2256,7 +2256,6 @@ void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
     
     // Adjust priority based on similar type classes.
     unsigned Priority = C->Priority;
-    CXCursorKind CursorKind = C->Kind;
     CodeCompletionString *Completion = C->Completion;
     if (!Context.getPreferredType().isNull()) {
       if (C->Kind == CXCursor_MacroDefinition) {
@@ -2290,12 +2289,11 @@ void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
       CodeCompletionBuilder Builder(getAllocator(), getCodeCompletionTUInfo(),
                                     CCP_CodePattern, C->Availability);
       Builder.AddTypedTextChunk(C->Completion->getTypedText());
-      CursorKind = CXCursor_NotImplemented;
       Priority = CCP_CodePattern;
       Completion = Builder.TakeString();
     }
     
-    AllResults.push_back(Result(Completion, Priority, CursorKind, 
+    AllResults.push_back(Result(Completion, Priority, C->Kind,
                                 C->Availability));
   }
   
