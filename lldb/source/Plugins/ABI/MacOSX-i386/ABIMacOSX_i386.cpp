@@ -687,6 +687,86 @@ ABIMacOSX_i386::GetArgumentValues (Thread &thread,
     return true;
 }
 
+Error
+ABIMacOSX_i386::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value_sp)
+{
+    Error error;
+    if (!new_value_sp)
+    {
+        error.SetErrorString("Empty value object for return value.");
+        return error;
+    }
+    
+    clang_type_t value_type = new_value_sp->GetClangType();
+    if (!value_type)
+    {
+        error.SetErrorString ("Null clang type for return value.");
+        return error;
+    }
+    
+    clang::ASTContext *ast_context = new_value_sp->GetClangAST();
+    if (!ast_context)
+    {
+        error.SetErrorString ("Null clang AST for return value.");
+        return error;
+    }
+    Thread *thread = frame_sp->GetThread().get();
+    
+    bool is_signed;
+    uint32_t count;
+    bool is_complex;
+    
+    RegisterContext *reg_ctx = thread->GetRegisterContext().get();
+
+    bool set_it_simple = false;
+    if (ClangASTContext::IsIntegerType (value_type, is_signed) || ClangASTContext::IsPointerType(value_type))
+    {
+        DataExtractor data;
+        size_t num_bytes = new_value_sp->GetData(data);
+        uint32_t offset = 0;
+        if (num_bytes <= 8)
+        {
+            const RegisterInfo *eax_info = reg_ctx->GetRegisterInfoByName("eax", 0);
+            if (num_bytes <= 4)
+            {
+                uint32_t raw_value = data.GetMaxU32(&offset, num_bytes);
+        
+                if (reg_ctx->WriteRegisterFromUnsigned (eax_info, raw_value))
+                    set_it_simple = true;
+            }
+            else
+            {
+                uint32_t raw_value = data.GetMaxU32(&offset, 4);
+        
+                if (reg_ctx->WriteRegisterFromUnsigned (eax_info, raw_value))
+                {
+                    const RegisterInfo *edx_info = reg_ctx->GetRegisterInfoByName("edx", 0);
+                    uint32_t raw_value = data.GetMaxU32(&offset, num_bytes - offset);
+                
+                    if (reg_ctx->WriteRegisterFromUnsigned (edx_info, raw_value))
+                        set_it_simple = true;
+                }
+            }
+        }
+        else
+        {
+            error.SetErrorString("We don't support returning longer than 64 bit integer values at present.");
+        }
+    }
+    else if (ClangASTContext::IsFloatingPointType (value_type, count, is_complex))
+    {
+        if (is_complex)
+            error.SetErrorString ("We don't support returning complex values at present");
+        else
+            error.SetErrorString ("We don't support returning float values at present");
+    }
+    
+    if (!set_it_simple)
+        error.SetErrorString ("We only support setting simple integer return types at present.");
+    
+    return error;
+}
+
 ValueObjectSP
 ABIMacOSX_i386::GetReturnValueObjectImpl (Thread &thread,
                                 ClangASTType &ast_type) const
@@ -772,13 +852,6 @@ ABIMacOSX_i386::GetReturnValueObjectImpl (Thread &thread,
                                     value,
                                     ConstString(""));
     return return_valobj_sp;
-}
-
-Error
-ABIMacOSX_i386::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value)
-{
-    Error return_error("I can't do that yet Jim.");
-    return return_error;
 }
 
 bool

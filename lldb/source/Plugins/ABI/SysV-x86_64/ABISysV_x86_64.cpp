@@ -550,6 +550,100 @@ ABISysV_x86_64::GetArgumentValues (Thread &thread,
     return true;
 }
 
+Error
+ABISysV_x86_64::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value_sp)
+{
+    Error error;
+    if (!new_value_sp)
+    {
+        error.SetErrorString("Empty value object for return value.");
+        return error;
+    }
+    
+    clang_type_t value_type = new_value_sp->GetClangType();
+    if (!value_type)
+    {
+        error.SetErrorString ("Null clang type for return value.");
+        return error;
+    }
+    
+    clang::ASTContext *ast_context = new_value_sp->GetClangAST();
+    if (!ast_context)
+    {
+        error.SetErrorString ("Null clang AST for return value.");
+        return error;
+    }
+    Thread *thread = frame_sp->GetThread().get();
+    
+    bool is_signed;
+    uint32_t count;
+    bool is_complex;
+    
+    RegisterContext *reg_ctx = thread->GetRegisterContext().get();
+
+    bool set_it_simple = false;
+    if (ClangASTContext::IsIntegerType (value_type, is_signed) || ClangASTContext::IsPointerType(value_type))
+    {
+        const RegisterInfo *reg_info = reg_ctx->GetRegisterInfoByName("rax", 0);
+
+        DataExtractor data;
+        size_t num_bytes = new_value_sp->GetData(data);
+        uint32_t offset = 0;
+        if (num_bytes <= 64)
+        {
+            uint64_t raw_value = data.GetMaxU64(&offset, num_bytes);
+            
+            if (reg_ctx->WriteRegisterFromUnsigned (reg_info, raw_value))
+                set_it_simple = true;
+        }
+        else
+        {
+            error.SetErrorString("We don't support returning longer than 64 bit integer values at present.");
+        }
+
+    }
+    else if (ClangASTContext::IsFloatingPointType (value_type, count, is_complex))
+    {
+        if (is_complex)
+            error.SetErrorString ("We don't support returning complex values at present");
+        else
+        {
+            size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, value_type);
+            if (bit_width <= 64)
+            {
+                const RegisterInfo *xmm0_info = reg_ctx->GetRegisterInfoByName("xmm0", 0);
+                RegisterValue xmm0_value;
+                DataExtractor data;
+                size_t num_bytes = new_value_sp->GetData(data);
+
+                unsigned char buffer[16];
+                ByteOrder byte_order = data.GetByteOrder();
+                uint32_t return_bytes;
+                
+                return_bytes = data.CopyByteOrderedData (0, num_bytes, buffer, 16, byte_order);
+                xmm0_value.SetBytes(buffer, 16, byte_order);
+                reg_ctx->WriteRegister(xmm0_info, xmm0_value);
+                set_it_simple = true;
+            }
+            else
+            {
+                // FIXME - don't know how to do 80 bit long doubles yet.
+                error.SetErrorString ("We don't support returning float values > 64 bits at present");
+            }
+        }
+    }
+    
+    if (!set_it_simple)
+    {
+        // Okay we've got a structure or something that doesn't fit in a simple register.
+        // We should figure out where it really goes, but we don't support this yet.
+        error.SetErrorString ("We only support setting simple integer and float return types at present.");
+    }
+    
+    return error;
+}
+
+
 ValueObjectSP
 ABISysV_x86_64::GetReturnValueObjectSimple (Thread &thread,
                                 ClangASTType &ast_type) const
@@ -584,7 +678,7 @@ ABISysV_x86_64::GetReturnValueObjectSimple (Thread &thread,
         // Extract the register context so we can read arguments from registers
         
         size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, value_type);
-        unsigned rax_id = reg_ctx->GetRegisterInfoByName("rax", 0)->kinds[eRegisterKindLLDB];
+        uint64_t raw_value = thread.GetRegisterContext()->ReadRegisterAsUnsigned(reg_ctx->GetRegisterInfoByName("rax", 0), 0);
         
         switch (bit_width)
         {
@@ -594,27 +688,27 @@ ABISysV_x86_64::GetReturnValueObjectSimple (Thread &thread,
             return return_valobj_sp;
         case 64:
             if (is_signed)
-                value.GetScalar() = (int64_t)(thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0));
+                value.GetScalar() = (int64_t)(raw_value);
             else
-                value.GetScalar() = (uint64_t)(thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0));
+                value.GetScalar() = (uint64_t)(raw_value);
             break;
         case 32:
             if (is_signed)
-                value.GetScalar() = (int32_t)(thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0) & 0xffffffff);
+                value.GetScalar() = (int32_t)(raw_value & 0xffffffff);
             else
-                value.GetScalar() = (uint32_t)(thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0) & 0xffffffff);
+                value.GetScalar() = (uint32_t)(raw_value & 0xffffffff);
             break;
         case 16:
             if (is_signed)
-                value.GetScalar() = (int16_t)(thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0) & 0xffff);
+                value.GetScalar() = (int16_t)(raw_value & 0xffff);
             else
-                value.GetScalar() = (uint16_t)(thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0) & 0xffff);
+                value.GetScalar() = (uint16_t)(raw_value & 0xffff);
             break;
         case 8:
             if (is_signed)
-                value.GetScalar() = (int8_t)(thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0) & 0xff);
+                value.GetScalar() = (int8_t)(raw_value & 0xff);
             else
-                value.GetScalar() = (uint8_t)(thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0) & 0xff);
+                value.GetScalar() = (uint8_t)(raw_value & 0xff);
             break;
         }
     }
@@ -957,13 +1051,6 @@ ABISysV_x86_64::GetReturnValueObjectImpl (Thread &thread, ClangASTType &ast_type
     }
         
     return return_valobj_sp;
-}
-
-Error
-ABISysV_x86_64::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value)
-{
-    Error return_error("I can't do that yet Jim.");
-    return return_error;
 }
 
 bool
