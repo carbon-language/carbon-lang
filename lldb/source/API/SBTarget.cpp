@@ -853,10 +853,19 @@ SBTarget::Attach (SBAttachInfo &sb_attach_info, SBError& error)
             if (attach_pid != LLDB_INVALID_PROCESS_ID)
             {
                 PlatformSP platform_sp = target_sp->GetPlatform();
-                ProcessInstanceInfo instance_info;
-                if (platform_sp->GetProcessInfo(attach_pid, instance_info))
+                // See if we can pre-verify if a process exists or not
+                if (platform_sp && platform_sp->IsConnected())
                 {
-                    attach_info.SetUserID(instance_info.GetEffectiveUserID());
+                    ProcessInstanceInfo instance_info;
+                    if (platform_sp->GetProcessInfo(attach_pid, instance_info))
+                    {
+                        attach_info.SetUserID(instance_info.GetEffectiveUserID());
+                    }
+                    else
+                    {
+                        error.ref().SetErrorStringWithFormat("no process found with process ID %llu", attach_pid);
+                        return sb_process;
+                    }
                 }
             }
             error.SetError (process_sp->Attach (attach_info));
