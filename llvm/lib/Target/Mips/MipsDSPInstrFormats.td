@@ -174,6 +174,18 @@ class SHILO_R2_FMT<bits<5> op> : DSPInst {
   let Inst{5-0} = 0b111000;
 }
 
+class RDDSP_FMT<bits<5> op> : DSPInst {
+  bits<5> rd;
+  bits<10> mask;
+
+  let Opcode = SPECIAL3_OPCODE.V;
+
+  let Inst{25-16} = mask;
+  let Inst{15-11} = rd;
+  let Inst{10-6} = op;
+  let Inst{5-0} = 0b111000;
+}
+
 class BPOSGE32_FMT<bits<5> op> : DSPInst {
   bits<16> offset;
 

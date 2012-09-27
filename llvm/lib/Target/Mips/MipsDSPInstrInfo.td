@@ -164,6 +164,7 @@ class SHILO_ENC : SHILO_R1_FMT<0b11010>;
 class SHILOV_ENC : SHILO_R2_FMT<0b11011>;
 class MTHLIP_ENC : SHILO_R2_FMT<0b11111>;
 
+class RDDSP_ENC : RDDSP_FMT<0b10010>;
 class ADDU_PH_ENC : ADDU_QB_FMT<0b01000>;
 class ADDU_S_PH_ENC : ADDU_QB_FMT<0b01100>;
 class SUBU_PH_ENC : ADDU_QB_FMT<0b01001>;
@@ -294,6 +295,16 @@ class MTHLIP_DESC_BASE<string instr_asm> {
   dag OutOperandList = (outs ACRegs:$ac);
   dag InOperandList = (ins CPURegs:$rs);
   string AsmString = !strconcat(instr_asm, "\t$rs, $ac");
+}
+
+class RDDSP_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
+                      InstrItinClass itin> {
+  dag OutOperandList = (outs CPURegs:$rd);
+  dag InOperandList = (ins uimm16:$mask);
+  string AsmString = !strconcat(instr_asm, "\t$rd, $mask");
+  list<dag> Pattern = [(set CPURegs:$rd, (OpNode immZExt10:$mask))];
+  InstrItinClass Itinerary = itin;
+  list<Register> Uses = [DSPCtrl];
 }
 
 class DPA_W_PH_PSEUDO_BASE<SDPatternOperator OpNode, InstrItinClass itin,
@@ -573,6 +584,8 @@ class SHILOV_DESC : SHILO_R2_DESC_BASE<"shilov">;
 
 class MTHLIP_DESC : MTHLIP_DESC_BASE<"mthlip">;
 
+class RDDSP_DESC : RDDSP_DESC_BASE<"rddsp", int_mips_rddsp, NoItinerary>;
+
 //===----------------------------------------------------------------------===//
 // MIPS DSP Rev 2
 // Addition/subtraction
@@ -719,6 +732,7 @@ def EXTRV_S_H : EXTRV_S_H_ENC, EXTRV_S_H_DESC;
 def SHILO : SHILO_ENC, SHILO_DESC;
 def SHILOV : SHILOV_ENC, SHILOV_DESC;
 def MTHLIP : MTHLIP_ENC, MTHLIP_DESC;
+def RDDSP : RDDSP_ENC, RDDSP_DESC;
 
 // MIPS DSP Rev 2
 let Predicates = [HasDSPR2] in {
