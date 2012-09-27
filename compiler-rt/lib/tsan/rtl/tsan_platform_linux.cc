@@ -153,7 +153,10 @@ static void InitDataSeg() {
   while (proc_maps.Next(&start, &end, &offset, name, ARRAY_SIZE(name))) {
     DPrintf("%p-%p %p %s\n", start, end, offset, name);
     bool is_data = offset != 0 && name[0] != 0;
-    bool is_bss = offset == 0 && name[0] == 0 && prev_is_data;
+    // BSS may get merged with [heap] in /proc/self/maps. This is not very
+    // reliable.
+    bool is_bss = offset == 0 &&
+      (name[0] == 0 || internal_strcmp(name, "[heap]") == 0) && prev_is_data;
     if (g_data_start == 0 && is_data)
       g_data_start = start;
     if (is_bss)
