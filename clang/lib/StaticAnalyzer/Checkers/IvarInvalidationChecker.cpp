@@ -45,7 +45,6 @@ class IvarInvalidationChecker :
   /// Statement visitor, which walks the method body and flags the ivars
   /// referenced in it (either directly or via property).
   class MethodCrawler : public ConstStmtVisitor<MethodCrawler> {
-    const ObjCInterfaceDecl *InterfD;
 
     /// The set of Ivars which need to be invalidated.
     IvarSet &IVars;
@@ -60,7 +59,7 @@ class IvarInvalidationChecker :
     MethodCrawler(const ObjCInterfaceDecl *InID,
                   IvarSet &InIVars, MethToIvarMapTy &InPropertySetterToIvarMap,
                   PropToIvarMapTy &InPropertyToIvarMap)
-    : InterfD(InID), IVars(InIVars),
+    : IVars(InIVars),
       PropertySetterToIvarMap(InPropertySetterToIvarMap),
       PropertyToIvarMap(InPropertyToIvarMap) {}
 
