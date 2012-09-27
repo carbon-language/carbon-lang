@@ -23,6 +23,16 @@ def immSExt6 : ImmLeaf<i32, [{return isInt<6>(Imm);}]>;
 class DSPPat<dag pattern, dag result, Predicate pred = HasDSP> :
   Pat<pattern, result>, Requires<[pred]>;
 
+class BitconvertPat<ValueType DstVT, ValueType SrcVT, RegisterClass DstRC,
+                    RegisterClass SrcRC> :
+   DSPPat<(DstVT (bitconvert (SrcVT SrcRC:$src))),
+          (COPY_TO_REGCLASS SrcRC:$src, DstRC)>;
+
+def : BitconvertPat<i32, v2i16, CPURegs, DSPRegs>;
+def : BitconvertPat<i32, v4i8, CPURegs, DSPRegs>;
+def : BitconvertPat<v2i16, i32, DSPRegs, CPURegs>;
+def : BitconvertPat<v4i8, i32, DSPRegs, CPURegs>;
+
 def : DSPPat<(v2i16 (load addr:$a)),
              (v2i16 (COPY_TO_REGCLASS (LW addr:$a), DSPRegs))>;
 def : DSPPat<(v4i8 (load addr:$a)),
