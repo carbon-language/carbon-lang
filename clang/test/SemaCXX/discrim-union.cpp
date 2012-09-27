@@ -76,7 +76,7 @@ public:
     impl(detail::select<impl_t::index(detail::type<U>())>(), move(t.value)) {}
 
   // Destruction disabled to allow use in a constant expression.
-  // FIXME: declare a destructor iff any element has a nontrivial destructor
+  // FIXME: declare a destructor if any element has a nontrivial destructor
   //~either() { impl.destroy(elem); }
 
   constexpr unsigned index() noexcept { return elem; }

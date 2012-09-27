@@ -831,7 +831,7 @@ class DiagnosticBuilder {
 
   /// \brief Status variable indicating if this diagnostic is still active.
   ///
-  // NOTE: This field is redundant with DiagObj (IsActive iff (DiagObj == 0)),
+  // NOTE: This field is redundant with DiagObj (IsActive if (DiagObj == 0)),
   // but LLVM is not currently smart enough to eliminate the null check that
   // Emit() would end up with if we used that as our status variable.
   mutable bool IsActive;

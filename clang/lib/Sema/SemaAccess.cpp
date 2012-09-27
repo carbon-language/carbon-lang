@@ -918,7 +918,7 @@ static AccessResult HasAccess(Sema &S,
 ///     let AccessToBase = Merge(Access(B_i, B_{i+1}), ACAB(i+1)) in
 ///     if Accessible(B_i, AccessToBase) then public else AccessToBase
 ///
-/// B is an accessible base of N at R iff ACAB(1) = public.
+/// B is an accessible base of N at R if ACAB(1) = public.
 ///
 /// \param FinalAccess the access of the "final step", or AS_public if
 ///   there is no final step.

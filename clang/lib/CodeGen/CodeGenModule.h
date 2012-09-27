@@ -372,7 +372,7 @@ public:
     return *ObjCRuntime;
   }
 
-  /// hasObjCRuntime() - Return true iff an Objective-C runtime has
+  /// hasObjCRuntime() - Return true if an Objective-C runtime has
   /// been configured.
   bool hasObjCRuntime() { return !!ObjCRuntime; }
 
@@ -788,15 +788,15 @@ public:
   /// which only apply to a function definintion.
   void SetLLVMFunctionAttributesForDefinition(const Decl *D, llvm::Function *F);
 
-  /// ReturnTypeUsesSRet - Return true iff the given type uses 'sret' when used
+  /// ReturnTypeUsesSRet - Return true if the given type uses 'sret' when used
   /// as a return type.
   bool ReturnTypeUsesSRet(const CGFunctionInfo &FI);
 
-  /// ReturnTypeUsesFPRet - Return true iff the given type uses 'fpret' when
+  /// ReturnTypeUsesFPRet - Return true if the given type uses 'fpret' when
   /// used as a return type.
   bool ReturnTypeUsesFPRet(QualType ResultType);
 
-  /// ReturnTypeUsesFP2Ret - Return true iff the given type uses 'fp2ret' when
+  /// ReturnTypeUsesFP2Ret - Return true if the given type uses 'fp2ret' when
   /// used as a return type.
   bool ReturnTypeUsesFP2Ret(QualType ResultType);
 

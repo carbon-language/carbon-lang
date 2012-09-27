@@ -120,7 +120,7 @@ Arg *Option::accept(const ArgList &Args, unsigned &Index) const {
     return A;
   }
   case SeparateClass:
-    // Matches iff this is an exact match.
+    // Matches if this is an exact match.
     // FIXME: Avoid strlen.
     if (getName().size() != strlen(Args.getArgString(Index)))
       return 0;
@@ -132,7 +132,7 @@ Arg *Option::accept(const ArgList &Args, unsigned &Index) const {
     return new Arg(getUnaliasedOption(),
                    Index - 2, Args.getArgString(Index - 1));
   case MultiArgClass: {
-    // Matches iff this is an exact match.
+    // Matches if this is an exact match.
     // FIXME: Avoid strlen.
     if (getName().size() != strlen(Args.getArgString(Index)))
       return 0;

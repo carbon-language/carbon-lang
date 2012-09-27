@@ -160,7 +160,7 @@
 	CHECK_OCTHEX_CONST(0x##C);		\
 	CHECK_OCTHEX_CONST(0X##C);
 
-/* True iff "long long" is at least B bits.  This presumes that (B-2)/3 is at
+/* True if "long long" is at least B bits.  This presumes that (B-2)/3 is at
    most 63.  */
 #define LLONG_AT_LEAST(B)			\
 	(LLONG_MAX >> ((B)-2)/3 >> ((B)-2)/3	\

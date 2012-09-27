@@ -1179,7 +1179,7 @@ void CodeGenFunction::emitAutoVarTypeCleanup(
   // If we haven't chosen a more specific destroyer, use the default.
   if (!destroyer) destroyer = getDestroyer(dtorKind);
 
-  // Use an EH cleanup in array destructors iff the destructor itself
+  // Use an EH cleanup in array destructors if the destructor itself
   // is being pushed as an EH cleanup.
   bool useEHCleanup = (cleanupKind & EHCleanup);
   EHStack.pushCleanup<DestroyObject>(cleanupKind, addr, type, destroyer,

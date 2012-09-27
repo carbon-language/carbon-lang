@@ -6824,7 +6824,7 @@ public:
   /// CheckMessageArgumentTypes - Check types in an Obj-C message send.
   /// \param Method - May be null.
   /// \param [out] ReturnType - The return type of the send.
-  /// \return true iff there were any incompatible types.
+  /// \return true if there were any incompatible types.
   bool CheckMessageArgumentTypes(QualType ReceiverType,
                                  Expr **Args, unsigned NumArgs, Selector Sel,
                                  ArrayRef<SourceLocation> SelectorLocs,
@@ -6851,7 +6851,7 @@ public:
   ///
   /// \param Loc - A location associated with the condition, e.g. the
   /// 'if' keyword.
-  /// \return true iff there were any errors
+  /// \return true if there were any errors
   ExprResult CheckBooleanCondition(Expr *E, SourceLocation Loc);
 
   ExprResult ActOnBooleanCondition(Scope *S, SourceLocation Loc,

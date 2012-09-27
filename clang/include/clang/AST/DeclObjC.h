@@ -1821,7 +1821,7 @@ public:
 
   // Helper methods for accessing attributes.
 
-  /// isReadOnly - Return true iff the property has a setter.
+  /// isReadOnly - Return true if the property has a setter.
   bool isReadOnly() const {
     return (PropertyAttributes & OBJC_PR_readonly);
   }

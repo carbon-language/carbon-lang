@@ -119,7 +119,7 @@ public:
     return cfgBuildOptions;
   }
 
-  /// getAddEHEdges - Return true iff we are adding exceptional edges from
+  /// getAddEHEdges - Return true if we are adding exceptional edges from
   /// callExprs.  If this is false, then try/catch statements and blocks
   /// reachable from them can appear to be dead in the CFG, analysis passes must
   /// cope with that.
