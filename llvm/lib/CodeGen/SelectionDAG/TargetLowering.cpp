@@ -1330,7 +1330,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
 
     // If all of the unknown bits are known to be zero on one side or the other
     // (but not both) turn this into an *inclusive* or.
-    //    e.g. (A & C1)^(B & C2) -> (A & C1)|(B & C2) iff C1&C2 == 0
+    //    e.g. (A & C1)^(B & C2) -> (A & C1)|(B & C2) if C1&C2 == 0
     if ((NewMask & ~KnownZero & ~KnownZero2) == 0)
       return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::OR, dl, Op.getValueType(),
                                                Op.getOperand(0),
@@ -1344,7 +1344,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     // If all of the demanded bits on one side are known, and all of the set
     // bits on that side are also known to be set on the other side, turn this
     // into an AND, as we know the bits will be cleared.
-    //    e.g. (X | C1) ^ C2 --> (X | C1) & ~C2 iff (C1&C2) == C2
+    //    e.g. (X | C1) ^ C2 --> (X | C1) & ~C2 if (C1&C2) == C2
     // NB: it is okay if more bits are known than are requested
     if ((NewMask & (KnownZero|KnownOne)) == NewMask) { // all known on one side 
       if (KnownOne == KnownOne2) { // set bits are the same on both sides
@@ -1970,7 +1970,7 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
         return DAG.getSetCC(dl, VT, And, DAG.getConstant(0, CTVT), CC);
       }
 
-      // TODO: (ctpop x) == 1 -> x && (x & x-1) == 0 iff ctpop is illegal.
+      // TODO: (ctpop x) == 1 -> x && (x & x-1) == 0 if ctpop is illegal.
     }
 
     // (zext x) == C --> x == (trunc C)
@@ -2503,7 +2503,7 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
                                 N0.getValueType()), Cond);
           }
 
-          // Turn (X^C1) == C2 into X == C1^C2 iff X&~C1 = 0.
+          // Turn (X^C1) == C2 into X == C1^C2 if X&~C1 = 0.
           if (N0.getOpcode() == ISD::XOR)
             // If we know that all of the inverted bits are zero, don't bother
             // performing the inversion.

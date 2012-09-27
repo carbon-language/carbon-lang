@@ -469,7 +469,7 @@ void BLInstrumentationEdge::setIncrement(long increment) {
   _increment = increment;
 }
 
-// True iff the edge has already been instrumented.
+// True if the edge has already been instrumented.
 bool BLInstrumentationEdge::hasInstrumentation() {
   return(_hasInstrumentation);
 }

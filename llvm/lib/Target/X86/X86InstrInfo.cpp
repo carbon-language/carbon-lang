@@ -1652,7 +1652,7 @@ static bool isSafeToClobberEFLAGS(MachineBasicBlock &MBB,
   Iter = I;
   for (unsigned i = 0; i < 4; ++i) {
     // If we make it to the beginning of the block, it's safe to clobber
-    // EFLAGS iff EFLAGS is not live-in.
+    // EFLAGS if EFLAGS is not live-in.
     if (Iter == B)
       return !MBB.isLiveIn(X86::EFLAGS);
 

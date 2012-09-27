@@ -183,7 +183,7 @@ namespace llvm {
     bool inheritRegUnits(CodeGenRegBank &RegBank);
 
     // Adopt a register unit for pressure tracking.
-    // A unit is adopted iff its unit number is >= NumNativeRegUnits.
+    // A unit is adopted if its unit number is >= NumNativeRegUnits.
     void adoptRegUnit(unsigned RUID) { RegUnits.push_back(RUID); }
 
     // Get the sum of this register's register unit weights.

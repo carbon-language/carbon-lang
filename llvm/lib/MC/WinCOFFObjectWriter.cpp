@@ -289,7 +289,7 @@ size_t StringTable::size() const {
   return Data.size();
 }
 
-/// Add String to the table iff it is not already there.
+/// Add String to the table if it is not already there.
 /// @returns the index into the string table where the string is now located.
 size_t StringTable::insert(llvm::StringRef String) {
   map::iterator i = Map.find(String);

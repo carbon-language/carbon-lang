@@ -27,7 +27,7 @@ using namespace llvm;
 // isLoop - Find out if there is a back edge in this interval...
 //
 bool Interval::isLoop() const {
-  // There is a loop in this interval iff one of the predecessors of the header
+  // There is a loop in this interval if one of the predecessors of the header
   // node lives in the interval.
   for (::pred_iterator I = ::pred_begin(HeaderNode), E = ::pred_end(HeaderNode);
        I != E; ++I)

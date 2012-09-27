@@ -172,7 +172,7 @@ static AtomicOrdering StrongerOrdering(AtomicOrdering X, AtomicOrdering Y) {
   return (AtomicOrdering)std::max(X, Y);
 }
 
-/// SafeToDestroyConstant - It is safe to destroy a constant iff it is only used
+/// SafeToDestroyConstant - It is safe to destroy a constant if it is only used
 /// by constants itself.  Note that constants cannot be cyclic, so this test is
 /// pretty easy to implement recursively.
 ///

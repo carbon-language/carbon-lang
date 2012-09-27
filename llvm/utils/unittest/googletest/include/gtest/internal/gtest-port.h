@@ -266,7 +266,7 @@
 # include <io.h>
 #endif
 
-// Defines this to true iff Google Test can use POSIX regular expressions.
+// Defines this to true if Google Test can use POSIX regular expressions.
 #ifndef GTEST_HAS_POSIX_RE
 # define GTEST_HAS_POSIX_RE (!GTEST_OS_WINDOWS)
 #endif
@@ -307,7 +307,7 @@
 #  endif  // _HAS_EXCEPTIONS
 #  define GTEST_HAS_EXCEPTIONS _HAS_EXCEPTIONS
 # elif defined(__GNUC__) && __EXCEPTIONS
-// gcc defines __EXCEPTIONS to 1 iff exceptions are enabled.
+// gcc defines __EXCEPTIONS to 1 if exceptions are enabled.
 #  define GTEST_HAS_EXCEPTIONS 1
 # elif defined(__SUNPRO_CC)
 // Sun Pro CC supports exceptions.  However, there is no compile-time way of
@@ -315,7 +315,7 @@
 // they are enabled unless the user tells us otherwise.
 #  define GTEST_HAS_EXCEPTIONS 1
 # elif defined(__IBMCPP__) && __EXCEPTIONS
-// xlC defines __EXCEPTIONS to 1 iff exceptions are enabled.
+// xlC defines __EXCEPTIONS to 1 if exceptions are enabled.
 #  define GTEST_HAS_EXCEPTIONS 1
 # elif defined(__HP_aCC)
 // Exception handling is in effect by default in HP aCC compiler. It has to
@@ -374,13 +374,13 @@
 
 # ifdef _MSC_VER
 
-#  ifdef _CPPRTTI  // MSVC defines this macro iff RTTI is enabled.
+#  ifdef _CPPRTTI  // MSVC defines this macro if RTTI is enabled.
 #   define GTEST_HAS_RTTI 1
 #  else
 #   define GTEST_HAS_RTTI 0
 #  endif
 
-// Starting with version 4.3.2, gcc defines __GXX_RTTI iff RTTI is enabled.
+// Starting with version 4.3.2, gcc defines __GXX_RTTI if RTTI is enabled.
 # elif defined(__GNUC__) && (GTEST_GCC_VER_ >= 40302)
 
 #  ifdef __GXX_RTTI
@@ -832,9 +832,9 @@ class GTEST_API_ RE {
   // Returns the string representation of the regex.
   const char* pattern() const { return pattern_; }
 
-  // FullMatch(str, re) returns true iff regular expression re matches
+  // FullMatch(str, re) returns true if regular expression re matches
   // the entire str.
-  // PartialMatch(str, re) returns true iff regular expression re
+  // PartialMatch(str, re) returns true if regular expression re
   // matches a substring of str (including str itself).
   //
   // TODO(wan@google.com): make FullMatch() and PartialMatch() work
@@ -1181,7 +1181,7 @@ class ThreadWithParam : public ThreadWithParamBase {
   // When non-NULL, used to block execution until the controller thread
   // notifies.
   Notification* const thread_can_start_;
-  bool finished_;  // true iff we know that the thread function has finished.
+  bool finished_;  // true if we know that the thread function has finished.
   pthread_t thread_;  // The native thread object.
 
   GTEST_DISALLOW_COPY_AND_ASSIGN_(ThreadWithParam);

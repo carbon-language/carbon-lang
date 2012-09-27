@@ -49,7 +49,7 @@ define i32 @test7(i32 %A) {
         ret i32 %C
 }
 
-; (A & C1)+(B & C2) -> (A & C1)|(B & C2) iff C1&C2 == 0
+; (A & C1)+(B & C2) -> (A & C1)|(B & C2) if C1&C2 == 0
 define i32 @test8(i32 %A, i32 %B) {
         %A1 = and i32 %A, 7             ; <i32> [#uses=1]
         %B1 = and i32 %B, 128           ; <i32> [#uses=1]

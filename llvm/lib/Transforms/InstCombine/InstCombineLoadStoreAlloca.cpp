@@ -368,7 +368,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
       LI.setAlignment(EffectiveLoadAlign);
   }
 
-  // load (cast X) --> cast (load X) iff safe.
+  // load (cast X) --> cast (load X) if safe.
   if (isa<CastInst>(Op))
     if (Instruction *Res = InstCombineLoadCast(*this, LI, TD))
       return Res;

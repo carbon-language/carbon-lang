@@ -1361,7 +1361,7 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
       return DAG.getMergeValues(Ops, 2, dl);
     }
 
-    // fold (ladd x, 0, y) -> 0, add x, y iff carry is unused and y has only the
+    // fold (ladd x, 0, y) -> 0, add x, y if carry is unused and y has only the
     // low bit set
     if (N1C && N1C->isNullValue() && N->hasNUsesOfValue(0, 0)) {
       APInt KnownZero, KnownOne;
@@ -1385,7 +1385,7 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
     ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
     EVT VT = N0.getValueType();
 
-    // fold (lsub 0, 0, x) -> x, -x iff x has only the low bit set
+    // fold (lsub 0, 0, x) -> x, -x if x has only the low bit set
     if (N0C && N0C->isNullValue() && N1C && N1C->isNullValue()) {
       APInt KnownZero, KnownOne;
       APInt Mask = APInt::getHighBitsSet(VT.getSizeInBits(),
@@ -1400,7 +1400,7 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
       }
     }
 
-    // fold (lsub x, 0, y) -> 0, sub x, y iff borrow is unused and y has only the
+    // fold (lsub x, 0, y) -> 0, sub x, y if borrow is unused and y has only the
     // low bit set
     if (N1C && N1C->isNullValue() && N->hasNUsesOfValue(0, 0)) {
       APInt KnownZero, KnownOne;

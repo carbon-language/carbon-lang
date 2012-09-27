@@ -258,7 +258,7 @@ namespace {
   };
 }
 
-// setPreservesCFG - This function should be called to by the pass, iff they do
+// setPreservesCFG - This function should be called to by the pass, if they do
 // not:
 //
 //  1. Add or remove basic blocks from the function

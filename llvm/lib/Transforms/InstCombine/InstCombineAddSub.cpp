@@ -200,7 +200,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   if (dyn_castFoldableMul(RHS, C2) == LHS)
     return BinaryOperator::CreateMul(LHS, AddOne(C2));
 
-  // A+B --> A|B iff A and B have no bits set in common.
+  // A+B --> A|B if A and B have no bits set in common.
   if (IntegerType *IT = dyn_cast<IntegerType>(I.getType())) {
     APInt LHSKnownOne(IT->getBitWidth(), 0);
     APInt LHSKnownZero(IT->getBitWidth(), 0);
@@ -216,7 +216,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     }
   }
 
-  // W*X + Y*Z --> W * (X+Z)  iff W == Y
+  // W*X + Y*Z --> W * (X+Z)  if W == Y
   {
     Value *W, *X, *Y, *Z;
     if (match(LHS, m_Mul(m_Value(W), m_Value(X))) &&

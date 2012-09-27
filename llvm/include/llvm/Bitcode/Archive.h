@@ -108,27 +108,27 @@ class ArchiveMember : public ilist_node<ArchiveMember> {
     /// @brief Get the data content of the archive member
     const char* getData() const { return data; }
 
-    /// @returns true iff the member is a SVR4 (non-LLVM) symbol table
+    /// @returns true if the member is a SVR4 (non-LLVM) symbol table
     /// @brief Determine if this member is a SVR4 symbol table.
     bool isSVR4SymbolTable() const { return flags&SVR4SymbolTableFlag; }
 
-    /// @returns true iff the member is a BSD4.4 (non-LLVM) symbol table
+    /// @returns true if the member is a BSD4.4 (non-LLVM) symbol table
     /// @brief Determine if this member is a BSD4.4 symbol table.
     bool isBSD4SymbolTable() const { return flags&BSD4SymbolTableFlag; }
 
-    /// @returns true iff the archive member is the LLVM symbol table
+    /// @returns true if the archive member is the LLVM symbol table
     /// @brief Determine if this member is the LLVM symbol table.
     bool isLLVMSymbolTable() const { return flags&LLVMSymbolTableFlag; }
 
-    /// @returns true iff the archive member is the ar(1) string table
+    /// @returns true if the archive member is the ar(1) string table
     /// @brief Determine if this member is the ar(1) string table.
     bool isStringTable() const { return flags&StringTableFlag; }
 
-    /// @returns true iff the archive member is a bitcode file.
+    /// @returns true if the archive member is a bitcode file.
     /// @brief Determine if this member is a bitcode file.
     bool isBitcode() const { return flags&BitcodeFlag; }
 
-    /// @returns true iff the file name contains a path (directory) component.
+    /// @returns true if the file name contains a path (directory) component.
     /// @brief Determine if the member has a path
     bool hasPath() const { return flags&HasPathFlag; }
 
@@ -137,7 +137,7 @@ class ArchiveMember : public ilist_node<ArchiveMember> {
     /// separator character (/). To avoid this, a "long format" member name is
     /// allowed that doesn't have this restriction. This method determines if
     /// that "long format" is used for this member.
-    /// @returns true iff the file name uses the long form
+    /// @returns true if the file name uses the long form
     /// @brief Determine if the member has a long file name
     bool hasLongFilename() const { return flags&HasLongFilenameFlag; }
 

@@ -1109,14 +1109,14 @@ LazyValueInfo::getPredicateOnEdge(unsigned Pred, Value *V, Constant *C,
     // If this is an equality comparison, we can try to fold it knowing that
     // "V != C1".
     if (Pred == ICmpInst::ICMP_EQ) {
-      // !C1 == C -> false iff C1 == C.
+      // !C1 == C -> false if C1 == C.
       Res = ConstantFoldCompareInstOperands(ICmpInst::ICMP_NE,
                                             Result.getNotConstant(), C, TD,
                                             TLI);
       if (Res->isNullValue())
         return False;
     } else if (Pred == ICmpInst::ICMP_NE) {
-      // !C1 != C -> true iff C1 == C.
+      // !C1 != C -> true if C1 == C.
       Res = ConstantFoldCompareInstOperands(ICmpInst::ICMP_NE,
                                             Result.getNotConstant(), C, TD,
                                             TLI);

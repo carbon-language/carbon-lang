@@ -31,7 +31,7 @@ namespace llvm {
   /// pointer is the result of a call to "__error()".
   ///
   /// Locations can also be defined in a constant-sensitive way.  For example,
-  /// it is possible to define a location that returns true iff it is passed
+  /// it is possible to define a location that returns true if it is passed
   /// into the call as a specific argument.  This is useful for modeling things
   /// like "printf", which can store to memory, but only through pointers passed
   /// with a '%n' constraint.

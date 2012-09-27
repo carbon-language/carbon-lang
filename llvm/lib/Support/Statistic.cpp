@@ -96,7 +96,7 @@ struct NameCompare {
 
 }
 
-// Print information when destroyed, iff command line option is specified.
+// Print information when destroyed, if command line option is specified.
 StatisticInfo::~StatisticInfo() {
   llvm::PrintStatistics();
 }

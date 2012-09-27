@@ -727,7 +727,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   if (!TM.Options.UseSoftFloat && Subtarget->hasVFP2() &&
       !Subtarget->isThumb1Only()) {
     // Turn f64->i64 into VMOVRRD, i64 -> f64 to VMOVDRR
-    // iff target supports vfp2.
+    // if target supports vfp2.
     setOperationAction(ISD::BITCAST, MVT::i64, Custom);
     setOperationAction(ISD::FLT_ROUNDS_, MVT::i32, Custom);
   }
@@ -7692,12 +7692,12 @@ static SDValue PerformORCombine(SDNode *N,
 
   DebugLoc DL = N->getDebugLoc();
   // 1) or (and A, mask), val => ARMbfi A, val, mask
-  //      iff (val & mask) == val
+  //      if (val & mask) == val
   //
   // 2) or (and A, mask), (and B, mask2) => ARMbfi A, (lsr B, amt), mask
-  //  2a) iff isBitFieldInvertedMask(mask) && isBitFieldInvertedMask(~mask2)
+  //  2a) if isBitFieldInvertedMask(mask) && isBitFieldInvertedMask(~mask2)
   //          && mask == ~mask2
-  //  2b) iff isBitFieldInvertedMask(~mask) && isBitFieldInvertedMask(mask2)
+  //  2b) if isBitFieldInvertedMask(~mask) && isBitFieldInvertedMask(mask2)
   //          && ~mask == mask2
   //  (i.e., copy a bitfield value into another bitfield of the same width)
 

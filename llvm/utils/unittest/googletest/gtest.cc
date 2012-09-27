@@ -173,7 +173,7 @@ namespace internal {
 // stack trace.
 const char kStackTraceMarker[] = "\nStack trace:\n";
 
-// g_help_flag is true iff the --help flag or an equivalent form is
+// g_help_flag is true if the --help flag or an equivalent form is
 // specified on the command line.
 bool g_help_flag = false;
 
@@ -187,12 +187,12 @@ GTEST_DEFINE_bool_(
 GTEST_DEFINE_bool_(
     break_on_failure,
     internal::BoolFromGTestEnv("break_on_failure", false),
-    "True iff a failed assertion should be a debugger break-point.");
+    "True if a failed assertion should be a debugger break-point.");
 
 GTEST_DEFINE_bool_(
     catch_exceptions,
     internal::BoolFromGTestEnv("catch_exceptions", true),
-    "True iff " GTEST_NAME_
+    "True if " GTEST_NAME_
     " should catch exceptions and treat them as test failures.");
 
 GTEST_DEFINE_string_(
@@ -230,7 +230,7 @@ GTEST_DEFINE_string_(
 GTEST_DEFINE_bool_(
     print_time,
     internal::BoolFromGTestEnv("print_time", true),
-    "True iff " GTEST_NAME_
+    "True if " GTEST_NAME_
     " should display elapsed time in text output.");
 
 GTEST_DEFINE_int32_(
@@ -247,13 +247,13 @@ GTEST_DEFINE_int32_(
 
 GTEST_DEFINE_bool_(
     show_internal_stack_frames, false,
-    "True iff " GTEST_NAME_ " should include internal stack frames when "
+    "True if " GTEST_NAME_ " should include internal stack frames when "
     "printing test failure stack traces.");
 
 GTEST_DEFINE_bool_(
     shuffle,
     internal::BoolFromGTestEnv("shuffle", false),
-    "True iff " GTEST_NAME_
+    "True if " GTEST_NAME_
     " should randomize tests' order on every run.");
 
 GTEST_DEFINE_int32_(
@@ -297,7 +297,7 @@ UInt32 Random::Generate(UInt32 range) {
   return state_ % range;
 }
 
-// GTestIsInitialized() returns true iff the user has initialized
+// GTestIsInitialized() returns true if the user has initialized
 // Google Test.  Useful for catching the user mistake of not initializing
 // Google Test before calling RUN_ALL_TESTS().
 //
@@ -320,17 +320,17 @@ static int SumOverTestCaseList(const std::vector<TestCase*>& case_list,
   return sum;
 }
 
-// Returns true iff the test case passed.
+// Returns true if the test case passed.
 static bool TestCasePassed(const TestCase* test_case) {
   return test_case->should_run() && test_case->Passed();
 }
 
-// Returns true iff the test case failed.
+// Returns true if the test case failed.
 static bool TestCaseFailed(const TestCase* test_case) {
   return test_case->should_run() && test_case->Failed();
 }
 
-// Returns true iff test_case contains at least one test that should
+// Returns true if test_case contains at least one test that should
 // run.
 static bool ShouldRunTestCase(const TestCase* test_case) {
   return test_case->should_run();
@@ -425,7 +425,7 @@ String UnitTestOptions::GetAbsolutePathToOutputFile() {
   return result.ToString();
 }
 
-// Returns true iff the wildcard pattern matches the string.  The
+// Returns true if the wildcard pattern matches the string.  The
 // first ':' or '\0' character in pattern marks the end of it.
 //
 // This recursive algorithm isn't very efficient, but is clear and
@@ -469,7 +469,7 @@ bool UnitTestOptions::MatchesFilter(const String& name, const char* filter) {
 
 // TODO(keithray): move String function implementations to gtest-string.cc.
 
-// Returns true iff the user-specified filter matches the test case
+// Returns true if the user-specified filter matches the test case
 // name and the test name.
 bool UnitTestOptions::FilterMatchesTest(const String &test_case_name,
                                         const String &test_name) {
@@ -887,7 +887,7 @@ const char* String::Utf16ToAnsi(LPCWSTR utf16_str)  {
 
 #endif  // GTEST_OS_WINDOWS_MOBILE
 
-// Compares two C strings.  Returns true iff they have the same content.
+// Compares two C strings.  Returns true if they have the same content.
 //
 // Unlike strcmp(), this function can handle NULL argument(s).  A NULL
 // C string is considered different to any non-NULL C string,
@@ -992,7 +992,7 @@ namespace internal {
 //   expected_value:      "5"
 //   actual_value:        "6"
 //
-// The ignoring_case parameter is true iff the assertion is a
+// The ignoring_case parameter is true if the assertion is a
 // *_STRCASEEQ*.  When it's true, the string " (ignoring case)" will
 // be inserted into the message.
 AssertionResult EqFailure(const char* expected_expression,
@@ -1224,7 +1224,7 @@ namespace {
 
 // Helper functions for implementing IsSubString() and IsNotSubstring().
 
-// This group of overloaded functions return true iff needle is a
+// This group of overloaded functions return true if needle is a
 // substring of haystack.  NULL is considered a substring of itself
 // only.
 
@@ -1542,7 +1542,7 @@ String String::ShowWideCStringQuoted(const wchar_t* wide_c_str) {
                         String::ShowWideCString(wide_c_str).c_str());
 }
 
-// Compares two wide C strings.  Returns true iff they have the same
+// Compares two wide C strings.  Returns true if they have the same
 // content.
 //
 // Unlike wcscmp(), this function can handle NULL argument(s).  A NULL
@@ -1587,7 +1587,7 @@ AssertionResult CmpHelperSTRNE(const char* s1_expression,
                             << " vs " << String::ShowWideCStringQuoted(s2);
 }
 
-// Compares two C strings, ignoring case.  Returns true iff they have
+// Compares two C strings, ignoring case.  Returns true if they have
 // the same content.
 //
 // Unlike strcasecmp(), this function can handle NULL argument(s).  A
@@ -1601,7 +1601,7 @@ bool String::CaseInsensitiveCStringEquals(const char * lhs, const char * rhs) {
   return posix::StrCaseCmp(lhs, rhs) == 0;
 }
 
-  // Compares two wide C strings, ignoring case.  Returns true iff they
+  // Compares two wide C strings, ignoring case.  Returns true if they
   // have the same content.
   //
   // Unlike wcscasecmp(), this function can handle NULL argument(s).
@@ -1661,7 +1661,7 @@ int String::Compare(const String & rhs) const {
       (length() > rhs.length()) ? 1 : 0;
 }
 
-// Returns true iff this String ends with the given suffix.  *Any*
+// Returns true if this String ends with the given suffix.  *Any*
 // String is considered to end with a NULL or empty suffix.
 bool String::EndsWith(const char* suffix) const {
   if (suffix == NULL || CStringEquals(suffix, "")) return true;
@@ -1674,7 +1674,7 @@ bool String::EndsWith(const char* suffix) const {
          CStringEquals(c_str() + this_len - suffix_len, suffix);
 }
 
-// Returns true iff this String ends with the given suffix, ignoring case.
+// Returns true if this String ends with the given suffix, ignoring case.
 // Any String is considered to end with a NULL or empty suffix.
 bool String::EndsWithCaseInsensitive(const char* suffix) const {
   if (suffix == NULL || CStringEquals(suffix, "")) return true;
@@ -1849,7 +1849,7 @@ void TestResult::Clear() {
   elapsed_time_ = 0;
 }
 
-// Returns true iff the test failed.
+// Returns true if the test failed.
 bool TestResult::Failed() const {
   for (int i = 0; i < total_part_count(); ++i) {
     if (GetTestPartResult(i).failed())
@@ -1858,22 +1858,22 @@ bool TestResult::Failed() const {
   return false;
 }
 
-// Returns true iff the test part fatally failed.
+// Returns true if the test part fatally failed.
 static bool TestPartFatallyFailed(const TestPartResult& result) {
   return result.fatally_failed();
 }
 
-// Returns true iff the test fatally failed.
+// Returns true if the test fatally failed.
 bool TestResult::HasFatalFailure() const {
   return CountIf(test_part_results_, TestPartFatallyFailed) > 0;
 }
 
-// Returns true iff the test part non-fatally failed.
+// Returns true if the test part non-fatally failed.
 static bool TestPartNonfatallyFailed(const TestPartResult& result) {
   return result.nonfatally_failed();
 }
 
-// Returns true iff the test has a non-fatal failure.
+// Returns true if the test has a non-fatal failure.
 bool TestResult::HasNonfatalFailure() const {
   return CountIf(test_part_results_, TestPartNonfatallyFailed) > 0;
 }
@@ -2170,12 +2170,12 @@ void Test::Run() {
       this, &Test::TearDown, "TearDown()");
 }
 
-// Returns true iff the current test has a fatal failure.
+// Returns true if the current test has a fatal failure.
 bool Test::HasFatalFailure() {
   return internal::GetUnitTestImpl()->current_test_result()->HasFatalFailure();
 }
 
-// Returns true iff the current test has a non-fatal failure.
+// Returns true if the current test has a non-fatal failure.
 bool Test::HasNonfatalFailure() {
   return internal::GetUnitTestImpl()->current_test_result()->
       HasNonfatalFailure();
@@ -2553,7 +2553,7 @@ const char* GetAnsiColorCode(GTestColor color) {
 
 #endif  // GTEST_OS_WINDOWS && !GTEST_OS_WINDOWS_MOBILE
 
-// Returns true iff Google Test should use colors in the output.
+// Returns true if Google Test should use colors in the output.
 bool ShouldUseColor(bool stdout_is_tty) {
   const char* const gtest_color = GTEST_FLAG(color).c_str();
 
@@ -3668,10 +3668,10 @@ internal::TimeInMillis UnitTest::elapsed_time() const {
   return impl()->elapsed_time();
 }
 
-// Returns true iff the unit test passed (i.e. all test cases passed).
+// Returns true if the unit test passed (i.e. all test cases passed).
 bool UnitTest::Passed() const { return impl()->Passed(); }
 
-// Returns true iff the unit test failed (i.e. some test case failed
+// Returns true if the unit test failed (i.e. some test case failed
 // or something outside of all tests failed).
 bool UnitTest::Failed() const { return impl()->Failed(); }
 
@@ -4040,7 +4040,7 @@ class TestCaseNameIs {
   explicit TestCaseNameIs(const String& name)
       : name_(name) {}
 
-  // Returns true iff the name of test_case matches name_.
+  // Returns true if the name of test_case matches name_.
   bool operator()(const TestCase* test_case) const {
     return test_case != NULL && strcmp(test_case->name(), name_.c_str()) == 0;
   }
@@ -4132,7 +4132,7 @@ bool UnitTestImpl::RunAllTests() {
   // protocol.
   internal::WriteToShardStatusFileIfNeeded();
 
-  // True iff we are in a subprocess for running a thread-safe-style
+  // True if we are in a subprocess for running a thread-safe-style
   // death test.
   bool in_subprocess_for_death_test = false;
 
@@ -4159,7 +4159,7 @@ bool UnitTestImpl::RunAllTests() {
   random_seed_ = GTEST_FLAG(shuffle) ?
       GetRandomSeedFromFlag(GTEST_FLAG(random_seed)) : 0;
 
-  // True iff at least one test has failed.
+  // True if at least one test has failed.
   bool failed = false;
 
   TestEventListener* repeater = listeners()->repeater();
@@ -4328,7 +4328,7 @@ Int32 Int32FromEnvOrDie(const char* var, Int32 default_val) {
 }
 
 // Given the total number of shards, the shard index, and the test id,
-// returns true iff the test should be run on this shard. The test id is
+// returns true if the test should be run on this shard. The test id is
 // some arbitrary but unique non-negative integer assigned to each test
 // method. Assumes that 0 <= shard_index < total_shards.
 bool ShouldRunTestOnShard(int total_shards, int shard_index, int test_id) {

@@ -381,7 +381,7 @@ static bool CanEvaluateTruncated(Value *V, Type *Ty) {
     break;
   case Instruction::LShr:
     // If this is a truncate of a logical shr, we can truncate it to a smaller
-    // lshr iff we know that the bits we would otherwise be shifting in are
+    // lshr if we know that the bits we would otherwise be shifting in are
     // already zeros.
     if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
       uint32_t OrigBitWidth = OrigTy->getScalarSizeInBits();
@@ -527,14 +527,14 @@ Instruction *InstCombiner::transformZExtICmp(ICmpInst *ICI, Instruction &CI,
       return ReplaceInstUsesWith(CI, In);
     }
 
-    // zext (X == 0) to i32 --> X^1      iff X has only the low bit set.
-    // zext (X == 0) to i32 --> (X>>1)^1 iff X has only the 2nd bit set.
-    // zext (X == 1) to i32 --> X        iff X has only the low bit set.
-    // zext (X == 2) to i32 --> X>>1     iff X has only the 2nd bit set.
-    // zext (X != 0) to i32 --> X        iff X has only the low bit set.
-    // zext (X != 0) to i32 --> X>>1     iff X has only the 2nd bit set.
-    // zext (X != 1) to i32 --> X^1      iff X has only the low bit set.
-    // zext (X != 2) to i32 --> (X>>1)^1 iff X has only the 2nd bit set.
+    // zext (X == 0) to i32 --> X^1      if X has only the low bit set.
+    // zext (X == 0) to i32 --> (X>>1)^1 if X has only the 2nd bit set.
+    // zext (X == 1) to i32 --> X        if X has only the low bit set.
+    // zext (X == 2) to i32 --> X>>1     if X has only the 2nd bit set.
+    // zext (X != 0) to i32 --> X        if X has only the low bit set.
+    // zext (X != 0) to i32 --> X>>1     if X has only the 2nd bit set.
+    // zext (X != 1) to i32 --> X^1      if X has only the low bit set.
+    // zext (X != 2) to i32 --> (X>>1)^1 if X has only the 2nd bit set.
     if ((Op1CV == 0 || Op1CV.isPowerOf2()) && 
         // This only works for EQ and NE
         ICI->isEquality()) {

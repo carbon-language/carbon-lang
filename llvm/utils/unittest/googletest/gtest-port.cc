@@ -124,7 +124,7 @@ RE::~RE() {
   free(const_cast<char*>(pattern_));
 }
 
-// Returns true iff regular expression re matches the entire str.
+// Returns true if regular expression re matches the entire str.
 bool RE::FullMatch(const char* str, const RE& re) {
   if (!re.is_valid_) return false;
 
@@ -132,7 +132,7 @@ bool RE::FullMatch(const char* str, const RE& re) {
   return regexec(&re.full_regex_, str, 1, &match, 0) == 0;
 }
 
-// Returns true iff regular expression re matches a substring of str
+// Returns true if regular expression re matches a substring of str
 // (including str itself).
 bool RE::PartialMatch(const char* str, const RE& re) {
   if (!re.is_valid_) return false;
@@ -173,13 +173,13 @@ void RE::Init(const char* regex) {
 
 #elif GTEST_USES_SIMPLE_RE
 
-// Returns true iff ch appears anywhere in str (excluding the
+// Returns true if ch appears anywhere in str (excluding the
 // terminating '\0' character).
 bool IsInSet(char ch, const char* str) {
   return ch != '\0' && strchr(str, ch) != NULL;
 }
 
-// Returns true iff ch belongs to the given classification.  Unlike
+// Returns true if ch belongs to the given classification.  Unlike
 // similar functions in <ctype.h>, these aren't affected by the
 // current locale.
 bool IsAsciiDigit(char ch) { return '0' <= ch && ch <= '9'; }
@@ -193,12 +193,12 @@ bool IsAsciiWordChar(char ch) {
       ('0' <= ch && ch <= '9') || ch == '_';
 }
 
-// Returns true iff "\\c" is a supported escape sequence.
+// Returns true if "\\c" is a supported escape sequence.
 bool IsValidEscape(char c) {
   return (IsAsciiPunct(c) || IsInSet(c, "dDfnrsStvwW"));
 }
 
-// Returns true iff the given atom (specified by escaped and pattern)
+// Returns true if the given atom (specified by escaped and pattern)
 // matches ch.  The result is undefined if the atom is invalid.
 bool AtomMatchesChar(bool escaped, char pattern_char, char ch) {
   if (escaped) {  // "\\p" where p is pattern_char.
@@ -240,7 +240,7 @@ bool ValidateRegex(const char* regex) {
 
   bool is_valid = true;
 
-  // True iff ?, *, or + can follow the previous atom.
+  // True if ?, *, or + can follow the previous atom.
   bool prev_repeatable = false;
   for (int i = 0; regex[i]; i++) {
     if (regex[i] == '\\') {  // An escape sequence
@@ -316,7 +316,7 @@ bool MatchRepetitionAndRegexAtHead(
   return false;
 }
 
-// Returns true iff regex matches a prefix of str.  regex must be a
+// Returns true if regex matches a prefix of str.  regex must be a
 // valid simple regular expression and not start with "^", or the
 // result is undefined.
 bool MatchRegexAtHead(const char* regex, const char* str) {
@@ -347,7 +347,7 @@ bool MatchRegexAtHead(const char* regex, const char* str) {
   }
 }
 
-// Returns true iff regex matches any substring of str.  regex must be
+// Returns true if regex matches any substring of str.  regex must be
 // a valid simple regular expression, or the result is undefined.
 //
 // The algorithm is recursive, but the recursion depth doesn't exceed
@@ -377,12 +377,12 @@ RE::~RE() {
   free(const_cast<char*>(full_pattern_));
 }
 
-// Returns true iff regular expression re matches the entire str.
+// Returns true if regular expression re matches the entire str.
 bool RE::FullMatch(const char* str, const RE& re) {
   return re.is_valid_ && MatchRegexAnywhere(re.full_pattern_, str);
 }
 
-// Returns true iff regular expression re matches a substring of str
+// Returns true if regular expression re matches a substring of str
 // (including str itself).
 bool RE::PartialMatch(const char* str, const RE& re) {
   return re.is_valid_ && MatchRegexAnywhere(re.pattern_, str);
@@ -707,7 +707,7 @@ bool ParseInt32(const Message& src_text, const char* str, Int32* value) {
 // Reads and returns the Boolean environment variable corresponding to
 // the given flag; if it's not set, returns default_value.
 //
-// The value is considered true iff it's not "0".
+// The value is considered true if it's not "0".
 bool BoolFromGTestEnv(const char* flag, bool default_value) {
   const String env_var = FlagToEnvVar(flag);
   const char* const string_value = posix::GetEnv(env_var.c_str());

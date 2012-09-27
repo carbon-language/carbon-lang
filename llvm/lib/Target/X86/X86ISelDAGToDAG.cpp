@@ -1202,7 +1202,7 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
   }
 
   case ISD::OR:
-    // Handle "X | C" as "X + C" iff X is known to have C bits clear.
+    // Handle "X | C" as "X + C" if X is known to have C bits clear.
     if (CurDAG->isBaseWithConstantOffset(N)) {
       X86ISelAddressMode Backup = AM;
       ConstantSDNode *CN = cast<ConstantSDNode>(N.getOperand(1));

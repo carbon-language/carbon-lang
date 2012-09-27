@@ -831,7 +831,7 @@ namespace llvm {
                           const SCEV *LHS, const SCEV *RHS);
 
     /// SimplifyICmpOperands - Simplify LHS and RHS in a comparison with
-    /// predicate Pred. Return true iff any changes were made. If the
+    /// predicate Pred. Return true if any changes were made. If the
     /// operands are provably equal or inequal, LHS and RHS are set to
     /// the same value and Pred is set to either ICMP_EQ or ICMP_NE.
     ///

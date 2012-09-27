@@ -315,7 +315,7 @@ Value *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
   return Builder->CreateICmpUGT(Add, LowerBound);
 }
 
-// isRunOfOnes - Returns true iff Val consists of one contiguous run of 1s with
+// isRunOfOnes - Returns true if Val consists of one contiguous run of 1s with
 // any number of 0s on either side.  The 1s are allowed to wrap from LSB to
 // MSB, so 0x000FFF0, 0x0000FFFF, and 0xFF0000FF are all runs.  0x0F0F0000 is
 // not, since all 1s are not contiguous.
@@ -335,9 +335,9 @@ static bool isRunOfOnes(ConstantInt *Val, uint32_t &MB, uint32_t &ME) {
 /// where isSub determines whether the operator is a sub.  If we can fold one of
 /// the following xforms:
 /// 
-/// ((A & N) +/- B) & Mask -> (A +/- B) & Mask iff N&Mask == Mask
-/// ((A | N) +/- B) & Mask -> (A +/- B) & Mask iff N&Mask == 0
-/// ((A ^ N) +/- B) & Mask -> (A +/- B) & Mask iff N&Mask == 0
+/// ((A & N) +/- B) & Mask -> (A +/- B) & Mask if N&Mask == Mask
+/// ((A | N) +/- B) & Mask -> (A +/- B) & Mask if N&Mask == 0
+/// ((A ^ N) +/- B) & Mask -> (A +/- B) & Mask if N&Mask == 0
 ///
 /// return (A +/- B).
 ///
@@ -752,7 +752,7 @@ Value *InstCombiner::FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
 
   // (trunc x) == C1 & (and x, CA) == C2 -> (and x, CA|CMAX) == C1|C2
   // where CMAX is the all ones value for the truncated type,
-  // iff the lower bits of C2 and CA are zero.
+  // if the lower bits of C2 and CA are zero.
   if (LHSCC == ICmpInst::ICMP_EQ && LHSCC == RHSCC &&
       LHS->hasOneUse() && RHS->hasOneUse()) {
     Value *V;
@@ -1062,9 +1062,9 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         break;
       }
       case Instruction::Add:
-        // ((A & N) + B) & AndRHS -> (A + B) & AndRHS iff N&AndRHS == AndRHS.
-        // ((A | N) + B) & AndRHS -> (A + B) & AndRHS iff N&AndRHS == 0
-        // ((A ^ N) + B) & AndRHS -> (A + B) & AndRHS iff N&AndRHS == 0
+        // ((A & N) + B) & AndRHS -> (A + B) & AndRHS if N&AndRHS == AndRHS.
+        // ((A | N) + B) & AndRHS -> (A + B) & AndRHS if N&AndRHS == 0
+        // ((A ^ N) + B) & AndRHS -> (A + B) & AndRHS if N&AndRHS == 0
         if (Value *V = FoldLogicalPlusAnd(Op0LHS, Op0RHS, AndRHS, false, I))
           return BinaryOperator::CreateAnd(V, AndRHS);
         if (Value *V = FoldLogicalPlusAnd(Op0RHS, Op0LHS, AndRHS, false, I))
@@ -1072,13 +1072,13 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         break;
 
       case Instruction::Sub:
-        // ((A & N) - B) & AndRHS -> (A - B) & AndRHS iff N&AndRHS == AndRHS.
-        // ((A | N) - B) & AndRHS -> (A - B) & AndRHS iff N&AndRHS == 0
-        // ((A ^ N) - B) & AndRHS -> (A - B) & AndRHS iff N&AndRHS == 0
+        // ((A & N) - B) & AndRHS -> (A - B) & AndRHS if N&AndRHS == AndRHS.
+        // ((A | N) - B) & AndRHS -> (A - B) & AndRHS if N&AndRHS == 0
+        // ((A ^ N) - B) & AndRHS -> (A - B) & AndRHS if N&AndRHS == 0
         if (Value *V = FoldLogicalPlusAnd(Op0LHS, Op0RHS, AndRHS, true, I))
           return BinaryOperator::CreateAnd(V, AndRHS);
 
-        // (A - N) & AndRHS -> -N & AndRHS iff A&AndRHS==0 and AndRHS
+        // (A - N) & AndRHS -> -N & AndRHS if A&AndRHS==0 and AndRHS
         // has 1's for all bits that the subtraction with A might affect.
         if (Op0I->hasOneUse() && !match(Op0LHS, m_Zero())) {
           uint32_t BitWidth = AndRHSMask.getBitWidth();
@@ -1472,7 +1472,7 @@ Value *InstCombiner::FoldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
   }
 
   // (icmp ult (X + CA), C1) | (icmp eq X, C2) -> (icmp ule (X + CA), C1)
-  //   iff C2 + CA == C1.
+  //   if C2 + CA == C1.
   if (LHSCC == ICmpInst::ICMP_ULT && RHSCC == ICmpInst::ICMP_EQ) {
     ConstantInt *AddCst;
     if (match(Val, m_Add(m_Specific(Val2), m_ConstantInt(AddCst))))
@@ -1735,7 +1735,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
     ConstantInt *C1 = 0; Value *X = 0;
     // (X & C1) | C2 --> (X | C2) & (C1|C2)
-    // iff (C1 & C2) == 0.
+    // if (C1 & C2) == 0.
     if (match(Op0, m_And(m_Value(X), m_ConstantInt(C1))) &&
         (RHS->getValue() & C1->getValue()) != 0 &&
         Op0->hasOneUse()) {
@@ -1779,7 +1779,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       return BSwap;
   }
   
-  // (X^C)|Y -> (X|Y)^C iff Y&C == 0
+  // (X^C)|Y -> (X|Y)^C if Y&C == 0
   if (Op0->hasOneUse() &&
       match(Op0, m_Xor(m_Value(A), m_ConstantInt(C1))) &&
       MaskedValueIsZero(Op1, C1->getValue())) {
@@ -1788,7 +1788,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     return BinaryOperator::CreateXor(NOr, C1);
   }
 
-  // Y|(X^C) -> (X|Y)^C iff Y&C == 0
+  // Y|(X^C) -> (X|Y)^C if Y&C == 0
   if (Op1->hasOneUse() &&
       match(Op1, m_Xor(m_Value(A), m_ConstantInt(C1))) &&
       MaskedValueIsZero(Op0, C1->getValue())) {
@@ -1830,7 +1830,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       
       if ((C1->getValue() & C2->getValue()) == 0) {
         // ((V | N) & C1) | (V & C2) --> (V|N) & (C1|C2)
-        // iff (C1&C2) == 0 and (N&~C1) == 0
+        // if (C1&C2) == 0 and (N&~C1) == 0
         if (match(A, m_Or(m_Value(V1), m_Value(V2))) &&
             ((V1 == B && MaskedValueIsZero(V2, ~C1->getValue())) ||  // (V|N)
              (V2 == B && MaskedValueIsZero(V1, ~C1->getValue()))))   // (N|V)
@@ -1846,7 +1846,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
                                                 C1->getValue()|C2->getValue()));
         
         // ((V|C3)&C1) | ((V|C4)&C2) --> (V|C3|C4)&(C1|C2)
-        // iff (C1&C2) == 0 and (C3&~C1) == 0 and (C4&~C2) == 0.
+        // if (C1&C2) == 0 and (C3&~C1) == 0 and (C4&~C2) == 0.
         ConstantInt *C3 = 0, *C4 = 0;
         if (match(A, m_Or(m_Value(V1), m_ConstantInt(C3))) &&
             (C3->getValue() & ~C1->getValue()) == 0 &&
@@ -2146,7 +2146,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
 
           }
         } else if (Op0I->getOpcode() == Instruction::Or) {
-          // (X|C1)^C2 -> X^(C1|C2) iff X&~C1 == 0
+          // (X|C1)^C2 -> X^(C1|C2) if X&~C1 == 0
           if (MaskedValueIsZero(Op0I->getOperand(0), Op0CI->getValue())) {
             Constant *NewRHS = ConstantExpr::getOr(Op0CI, RHS);
             // Anything in both C1 and C2 is known to be zero, remove it from

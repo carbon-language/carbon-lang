@@ -48,7 +48,7 @@ namespace llvm {
   public:
     ReducePassList(BugDriver &bd) : BD(bd) {}
 
-    // doTest - Return true iff running the "removed" passes succeeds, and
+    // doTest - Return true if running the "removed" passes succeeds, and
     // running the "Kept" passes fail when run on the output of the "removed"
     // passes.  If we return true, we update the current module of bugpoint.
     //

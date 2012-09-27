@@ -547,14 +547,14 @@ public:
   /// There are several places where we need to know if a cast instruction
   /// only deals with integer source and destination types. To simplify that
   /// logic, this method is provided.
-  /// @returns true iff the cast has only integral typed operand and dest type.
+  /// @returns true if the cast has only integral typed operand and dest type.
   /// @brief Determine if this is an integer-only cast.
   bool isIntegerCast() const;
 
   /// A lossless cast is one that does not alter the basic value. It implies
   /// a no-op cast but is more stringent, preventing things like int->float,
   /// long->double, or int->ptr.
-  /// @returns true iff the cast is lossless.
+  /// @returns true if the cast is lossless.
   /// @brief Determine if this is a lossless cast.
   bool isLosslessCast() const;
 
@@ -606,7 +606,7 @@ public:
 
   /// This method can be used to determine if a cast from S to DstTy using
   /// Opcode op is valid or not.
-  /// @returns true iff the proposed cast is valid.
+  /// @returns true if the proposed cast is valid.
   /// @brief Determine if a cast is valid without creating one.
   static bool castIsValid(Instruction::CastOps op, Value *S, Type *DstTy);
 

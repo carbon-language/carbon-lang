@@ -193,7 +193,7 @@ bool DominatorTree::dominates(const BasicBlockEdge &BBE,
   //      .      NormalDest
   //      .
   //
-  // Given the definition of dominance, NormalDest is dominated by X iff X
+  // Given the definition of dominance, NormalDest is dominated by X if X
   // dominates all of NormalDest's predecessors (X, B, C in the example). X
   // trivially dominates itself, so we only have to find if it dominates the
   // other predecessors. Since the only way out of X is via NormalDest, X can

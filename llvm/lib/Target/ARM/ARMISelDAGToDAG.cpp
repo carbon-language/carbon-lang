@@ -2117,7 +2117,7 @@ SDNode *ARMDAGToDAGISel::SelectV6T2BitfieldExtractOp(SDNode *N,
   if (N->getOpcode() == ISD::AND) {
     if (isOpcWithIntImmediate(N, ISD::AND, And_imm)) {
 
-      // The immediate is a mask of the low bits iff imm & (imm+1) == 0
+      // The immediate is a mask of the low bits if imm & (imm+1) == 0
       if (And_imm & (And_imm + 1))
         return NULL;
 

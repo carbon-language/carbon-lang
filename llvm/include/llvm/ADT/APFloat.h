@@ -200,7 +200,7 @@ namespace llvm {
 
     /// getNaN - Factory for QNaN values.
     ///
-    /// \param Negative - True iff the NaN generated should be negative.
+    /// \param Negative - True if the NaN generated should be negative.
     /// \param type - The unspecified fill bits for creating the NaN, 0 by
     /// default.  The value is truncated as necessary.
     static APFloat getNaN(const fltSemantics &Sem, bool Negative = false,
@@ -230,20 +230,20 @@ namespace llvm {
     /// getLargest - Returns the largest finite number in the given
     /// semantics.
     ///
-    /// \param Negative - True iff the number should be negative
+    /// \param Negative - True if the number should be negative
     static APFloat getLargest(const fltSemantics &Sem, bool Negative = false);
 
     /// getSmallest - Returns the smallest (by magnitude) finite number
     /// in the given semantics.  Might be denormalized, which implies a
     /// relative loss of precision.
     ///
-    /// \param Negative - True iff the number should be negative
+    /// \param Negative - True if the number should be negative
     static APFloat getSmallest(const fltSemantics &Sem, bool Negative = false);
 
     /// getSmallestNormalized - Returns the smallest (by magnitude)
     /// normalized finite number in the given semantics.
     ///
-    /// \param Negative - True iff the number should be negative
+    /// \param Negative - True if the number should be negative
     static APFloat getSmallestNormalized(const fltSemantics &Sem,
                                          bool Negative = false);
 

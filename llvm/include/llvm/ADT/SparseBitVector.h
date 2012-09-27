@@ -763,7 +763,7 @@ public:
     return false;
   }
 
-  // Return true iff all bits set in this SparseBitVector are
+  // Return true if all bits set in this SparseBitVector are
   // also set in RHS.
   bool contains(const SparseBitVector<ElementSize> &RHS) const {
     SparseBitVector<ElementSize> Result(*this);

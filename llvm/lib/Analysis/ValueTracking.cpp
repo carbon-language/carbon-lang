@@ -470,7 +470,7 @@ void llvm::ComputeMaskedBits(Value *V, APInt &KnownZero, APInt &KnownOne,
     return;
   }
   case Instruction::Shl:
-    // (shl X, C1) & C2 == 0   iff   (X & C2 >>u C1) == 0
+    // (shl X, C1) & C2 == 0   if   (X & C2 >>u C1) == 0
     if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
       uint64_t ShiftAmt = SA->getLimitedValue(BitWidth);
       ComputeMaskedBits(I->getOperand(0), KnownZero, KnownOne, TD, Depth+1);
@@ -482,7 +482,7 @@ void llvm::ComputeMaskedBits(Value *V, APInt &KnownZero, APInt &KnownOne,
     }
     break;
   case Instruction::LShr:
-    // (ushr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
+    // (ushr X, C1) & C2 == 0   if  (-1 >> C1) & C2 == 0
     if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
       // Compute the new bits that are at the top now.
       uint64_t ShiftAmt = SA->getLimitedValue(BitWidth);
@@ -498,7 +498,7 @@ void llvm::ComputeMaskedBits(Value *V, APInt &KnownZero, APInt &KnownOne,
     }
     break;
   case Instruction::AShr:
-    // (ashr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
+    // (ashr X, C1) & C2 == 0   if  (-1 >> C1) & C2 == 0
     if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
       // Compute the new bits that are at the top now.
       uint64_t ShiftAmt = SA->getLimitedValue(BitWidth-1);

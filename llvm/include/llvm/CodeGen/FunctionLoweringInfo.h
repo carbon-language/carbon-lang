@@ -58,7 +58,7 @@ public:
   MachineFunction *MF;
   MachineRegisterInfo *RegInfo;
   BranchProbabilityInfo *BPI;
-  /// CanLowerReturn - true iff the function's return value can be lowered to
+  /// CanLowerReturn - true if the function's return value can be lowered to
   /// registers.
   bool CanLowerReturn;
 

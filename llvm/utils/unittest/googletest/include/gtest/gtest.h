@@ -270,7 +270,7 @@ class GTEST_API_ AssertionResult {
   // Used in the EXPECT_TRUE/FALSE(bool_expression).
   explicit AssertionResult(bool success) : success_(success) {}
 
-  // Returns true iff the assertion succeeded.
+  // Returns true if the assertion succeeded.
   operator bool() const { return success_; }  // NOLINT
 
   // Returns the assertion's negation. Used with EXPECT/ASSERT_FALSE.
@@ -381,13 +381,13 @@ class GTEST_API_ Test {
   // class.
   static void TearDownTestCase() {}
 
-  // Returns true iff the current test has a fatal failure.
+  // Returns true if the current test has a fatal failure.
   static bool HasFatalFailure();
 
-  // Returns true iff the current test has a non-fatal failure.
+  // Returns true if the current test has a non-fatal failure.
   static bool HasNonfatalFailure();
 
-  // Returns true iff the current test has a (either fatal or
+  // Returns true if the current test has a (either fatal or
   // non-fatal) failure.
   static bool HasFailure() { return HasFatalFailure() || HasNonfatalFailure(); }
 
@@ -417,7 +417,7 @@ class GTEST_API_ Test {
   virtual void TearDown();
 
  private:
-  // Returns true iff the current test has the same fixture class as
+  // Returns true if the current test has the same fixture class as
   // the first test in the current test case.
   static bool HasSameFixtureClass();
 
@@ -520,16 +520,16 @@ class GTEST_API_ TestResult {
   // Returns the number of the test properties.
   int test_property_count() const;
 
-  // Returns true iff the test passed (i.e. no test part failed).
+  // Returns true if the test passed (i.e. no test part failed).
   bool Passed() const { return !Failed(); }
 
-  // Returns true iff the test failed.
+  // Returns true if the test failed.
   bool Failed() const;
 
-  // Returns true iff the test fatally failed.
+  // Returns true if the test fatally failed.
   bool HasFatalFailure() const;
 
-  // Returns true iff the test has a non-fatal failure.
+  // Returns true if the test has a non-fatal failure.
   bool HasNonfatalFailure() const;
 
   // Returns the elapsed time, in milliseconds.
@@ -720,8 +720,8 @@ class GTEST_API_ TestInfo {
   // value-parameterized test.
   const internal::scoped_ptr<const ::std::string> value_param_;
   const internal::TypeId fixture_class_id_;   // ID of the test fixture class
-  bool should_run_;                 // True iff this test should run
-  bool is_disabled_;                // True iff this test is disabled
+  bool should_run_;                 // True if this test should run
+  bool is_disabled_;                // True if this test is disabled
   bool matches_filter_;             // True if this test matches the
                                     // user-specified filter.
   internal::TestFactoryBase* const factory_;  // The factory that creates
@@ -787,10 +787,10 @@ class GTEST_API_ TestCase {
   // Gets the number of all tests in this test case.
   int total_test_count() const;
 
-  // Returns true iff the test case passed.
+  // Returns true if the test case passed.
   bool Passed() const { return !Failed(); }
 
-  // Returns true iff the test case failed.
+  // Returns true if the test case failed.
   bool Failed() const { return failed_test_count() > 0; }
 
   // Returns the elapsed time, in milliseconds.
@@ -842,17 +842,17 @@ class GTEST_API_ TestCase {
   // needed for catching exceptions thrown from TearDownTestCase().
   void RunTearDownTestCase() { (*tear_down_tc_)(); }
 
-  // Returns true iff test passed.
+  // Returns true if test passed.
   static bool TestPassed(const TestInfo* test_info) {
     return test_info->should_run() && test_info->result()->Passed();
   }
 
-  // Returns true iff test failed.
+  // Returns true if test failed.
   static bool TestFailed(const TestInfo* test_info) {
     return test_info->should_run() && test_info->result()->Failed();
   }
 
-  // Returns true iff test is disabled.
+  // Returns true if test is disabled.
   static bool TestDisabled(const TestInfo* test_info) {
     return test_info->is_disabled_;
   }
@@ -884,7 +884,7 @@ class GTEST_API_ TestCase {
   Test::SetUpTestCaseFunc set_up_tc_;
   // Pointer to the function that tears down the test case.
   Test::TearDownTestCaseFunc tear_down_tc_;
-  // True iff any test in this test case should run.
+  // True if any test in this test case should run.
   bool should_run_;
   // Elapsed time, in milliseconds.
   TimeInMillis elapsed_time_;
@@ -1155,10 +1155,10 @@ class GTEST_API_ UnitTest {
   // Gets the elapsed time, in milliseconds.
   TimeInMillis elapsed_time() const;
 
-  // Returns true iff the unit test passed (i.e. all test cases passed).
+  // Returns true if the unit test passed (i.e. all test cases passed).
   bool Passed() const;
 
-  // Returns true iff the unit test failed (i.e. some test case failed
+  // Returns true if the unit test failed (i.e. some test case failed
   // or something outside of all tests failed).
   bool Failed() const;
 
@@ -1339,7 +1339,7 @@ GTEST_API_ AssertionResult CmpHelperEQ(const char* expected_expression,
                                        BiggestInt actual);
 
 // The helper class for {ASSERT|EXPECT}_EQ.  The template argument
-// lhs_is_null_literal is true iff the first argument to ASSERT_EQ()
+// lhs_is_null_literal is true if the first argument to ASSERT_EQ()
 // is a null pointer literal.  The following default implementation is
 // for lhs_is_null_literal being false.
 template <bool lhs_is_null_literal>
@@ -2043,7 +2043,7 @@ GTEST_API_ AssertionResult DoubleLE(const char* expr1, const char* expr2,
     __FILE__, __LINE__, ::testing::Message() << (message))
 
 // Compile-time assertion for type equality.
-// StaticAssertTypeEq<type1, type2>() compiles iff type1 and type2 are
+// StaticAssertTypeEq<type1, type2>() compiles if type1 and type2 are
 // the same type.  The value it returns is not interesting.
 //
 // Instead of making StaticAssertTypeEq a class template, we make it a

@@ -70,7 +70,7 @@ public:
   /// @brief Lookup a named Value.
   Value *lookup(StringRef Name) const { return vmap.lookup(Name); }
 
-  /// @returns true iff the symbol table is empty
+  /// @returns true if the symbol table is empty
   /// @brief Determine if the symbol table is empty
   inline bool empty() const { return vmap.empty(); }
 

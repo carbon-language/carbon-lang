@@ -6082,7 +6082,7 @@ _LT_EOF
       *)
  	# The compiler driver will combine linker options so we
  	# cannot just pass the convience library names through
- 	# without $wl, iff we do not link with $LD.
+ 	# without $wl, if we do not link with $LD.
  	# Luckily, gcc supports the same syntax we need for Sun Studio.
  	# Supported since Solaris 2.6 (maybe 2.5.1?)
  	case $wlarc in
