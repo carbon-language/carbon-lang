@@ -99,3 +99,14 @@ namespacae PR12933 {
     return 0;
   }
 }
+
+// A buildbot failure from libcxx
+namespace libcxx_test {
+  template <class _Ptr, bool> struct __pointer_traits_element_type;
+  template <class _Ptr> struct __pointer_traits_element_type<_Ptr, true>;
+  template <template <class, class...> class _Sp, class _Tp, class ..._Args> struct __pointer_traits_element_type<_Sp<_Tp, _Args...>, true> {
+    typedef char type;
+  };
+  template <class T> struct B {};
+  __pointer_traits_element_type<B<int>, true>::type x;
+}

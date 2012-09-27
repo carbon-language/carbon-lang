@@ -301,7 +301,6 @@ void TemplateSpecializationTypeLoc::initializeArgLocs(ASTContext &Context,
     case TemplateArgument::Null: 
     case TemplateArgument::Declaration:
     case TemplateArgument::Integral:
-    case TemplateArgument::Pack:
     case TemplateArgument::NullPtr:
       llvm_unreachable("Impossible TemplateArgument");
 
@@ -331,7 +330,11 @@ void TemplateSpecializationTypeLoc::initializeArgLocs(ASTContext &Context,
                                             ? SourceLocation()
                                             : Loc);
       break;
-    }        
+    }
+
+    case TemplateArgument::Pack:
+      ArgInfos[i] = TemplateArgumentLocInfo();
+      break;
     }
   }
 }
