@@ -154,6 +154,9 @@ public:
     friend class Attributes;
     uint64_t Bits;
   public:
+    Builder() : Bits(0) {}
+    Builder(const Attributes &A) : Bits(A.Bits) {}
+
     void addZExtAttr() {
       Bits |= Attribute::ZExt_i;
     }
