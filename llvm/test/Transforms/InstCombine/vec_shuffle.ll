@@ -153,3 +153,38 @@ define <8 x i8> @test12a(<8 x i8> %tmp6, <8 x i8> %tmp2) nounwind {
   ret <8 x i8> %tmp3
 }
 
+; We should form a shuffle out of a select with constant condition.
+define <4 x i16> @test13a(<4 x i16> %lhs, <4 x i16> %rhs) {
+; CHECK: @test13a
+; CHECK-NEXT: shufflevector <4 x i16> %lhs, <4 x i16> %rhs, <4 x i32> <i32 0, i32 5, i32 2, i32 7>
+; CHECK-NEXT: ret
+  %A = select <4 x i1> <i1 true, i1 false, i1 true, i1 false>,
+           <4 x i16> %lhs, <4 x i16> %rhs
+  ret <4 x i16> %A
+}
+
+define <4 x i16> @test13b(<4 x i16> %lhs, <4 x i16> %rhs) {
+; CHECK: @test13b
+; CHECK-NEXT: ret <4 x i16> %lhs
+  %A = select <4 x i1> <i1 true, i1 undef, i1 true, i1 true>,
+           <4 x i16> %lhs, <4 x i16> %rhs
+  ret <4 x i16> %A
+}
+
+define <4 x i16> @test13c(<4 x i16> %lhs, <4 x i16> %rhs) {
+; CHECK: @test13c
+; CHECK-NEXT: shufflevector <4 x i16> %lhs, <4 x i16> %rhs, <4 x i32> <i32 0, i32 undef, i32 2, i32 7>
+; CHECK-NEXT: ret
+  %A = select <4 x i1> <i1 true, i1 undef, i1 true, i1 false>,
+           <4 x i16> %lhs, <4 x i16> %rhs
+  ret <4 x i16> %A
+}
+
+define <4 x i16> @test13d(<4 x i16> %lhs, <4 x i16> %rhs) {
+; CHECK: @test13d
+; CHECK: select
+; CHECK-NEXT: ret
+  %A = select <4 x i1> <i1 true, i1 icmp ugt (<4 x i16>(<4 x i16>, <4 x i16>)* @test13a, <4 x i16>(<4 x i16>, <4 x i16>)* @test13b), i1 true, i1 false>,
+           <4 x i16> %lhs, <4 x i16> %rhs
+  ret <4 x i16> %A
+}

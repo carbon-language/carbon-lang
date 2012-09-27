@@ -196,7 +196,7 @@ define <4 x float> @test_select(float %f, float %g) {
 ; CHECK-NOT: insertelement
 ; CHECK: %a3 = insertelement <4 x float> %a0, float 3.000000e+00, i32 3
 ; CHECK-NOT: insertelement
-; CHECK: %ret = select <4 x i1> <i1 true, i1 false, i1 false, i1 true>, <4 x float> %a3, <4 x float> <float undef, float 4.000000e+00, float 5.000000e+00, float undef>
+; CHECK: shufflevector <4 x float> %a3, <4 x float> <float undef, float 4.000000e+00, float 5.000000e+00, float undef>, <4 x i32> <i32 0, i32 5, i32 6, i32 3>
   %a0 = insertelement <4 x float> undef, float %f, i32 0
   %a1 = insertelement <4 x float> %a0, float 1.000000e+00, i32 1
   %a2 = insertelement <4 x float> %a1, float 2.000000e+00, i32 2
