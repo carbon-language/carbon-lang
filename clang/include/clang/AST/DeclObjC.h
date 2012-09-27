@@ -1882,6 +1882,9 @@ public:
   virtual SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(AtLoc, getLocation());
   }
+  
+  /// Get the default name of the synthesized ivar.
+  IdentifierInfo *getDefaultSynthIvarName(ASTContext &Ctx) const;
 
   /// Lookup a property by name in the specified DeclContext.
   static ObjCPropertyDecl *findPropertyDecl(const DeclContext *DC,

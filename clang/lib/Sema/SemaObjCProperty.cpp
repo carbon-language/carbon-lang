@@ -1617,16 +1617,6 @@ ObjCPropertyDecl *Sema::PropertyIfSetterOrGetter(NamedDecl *D) {
   return 0;
 }
 
-static IdentifierInfo * getDefaultSynthIvarName(ObjCPropertyDecl *Prop,
-                                                ASTContext &Ctx) {
-  SmallString<128> ivarName;
-  {
-    llvm::raw_svector_ostream os(ivarName);
-    os << '_' << Prop->getIdentifier()->getName();
-  }
-  return &Ctx.Idents.get(ivarName.str());
-}
-
 /// \brief Default synthesizes all properties which must be synthesized
 /// in class's \@implementation.
 void Sema::DefaultSynthesizeProperties(Scope *S, ObjCImplDecl* IMPDecl,
@@ -1675,7 +1665,7 @@ void Sema::DefaultSynthesizeProperties(Scope *S, ObjCImplDecl* IMPDecl,
       ActOnPropertyImplDecl(S, SourceLocation(), SourceLocation(),
                             true,
                             /* property = */ Prop->getIdentifier(),
-                            /* ivar = */ getDefaultSynthIvarName(Prop, Context),
+                            /* ivar = */ Prop->getDefaultSynthIvarName(Context),
                             Prop->getLocation()));
     if (PIDecl) {
       Diag(Prop->getLocation(), diag::warn_missing_explicit_synthesis);

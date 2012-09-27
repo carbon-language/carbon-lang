@@ -16,6 +16,7 @@
 #include "clang/AST/Stmt.h"
 #include "clang/AST/ASTMutationListener.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallString.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -91,6 +92,16 @@ ObjCPropertyDecl::findPropertyDecl(const DeclContext *DC,
       return PD;
 
   return 0;
+}
+
+IdentifierInfo *
+ObjCPropertyDecl::getDefaultSynthIvarName(ASTContext &Ctx) const {
+  SmallString<128> ivarName;
+  {
+    llvm::raw_svector_ostream os(ivarName);
+    os << '_' << getIdentifier()->getName();
+  }
+  return &Ctx.Idents.get(ivarName.str());
 }
 
 /// FindPropertyDeclaration - Finds declaration of the property given its name
