@@ -1084,6 +1084,9 @@ public:
         if (!base_method_list->Read(process_sp, ro->m_baseMethods_la))
             return false;
         
+        if (base_method_list->m_entsize != method_t::GetSize(process_sp))
+            return false;
+        
         std::auto_ptr <method_t> method;
         method.reset(new method_t);
         
@@ -1462,10 +1465,18 @@ private:
         std::string     m_name;
         std::string     m_types;
         
+        static size_t GetSize(ProcessSP &process_sp)
+        {
+            size_t ptr_size = process_sp->GetAddressByteSize();
+
+            return ptr_size     // SEL name;
+                   + ptr_size   // const char *types;
+                   + ptr_size;  // IMP imp;
+        }
+        
         bool Read(ProcessSP &process_sp, lldb::addr_t addr)
         {
-            size_t size = sizeof(uint32_t)  // uint32_t entsize_NEVER_USE;
-                        + sizeof(uint32_t); // uint32_t count;
+            size_t size = GetSize(process_sp);
             
             DataBufferHeap buffer (size, '\0');
             Error error;
