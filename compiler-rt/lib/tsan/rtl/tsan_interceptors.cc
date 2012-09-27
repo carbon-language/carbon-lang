@@ -14,6 +14,7 @@
 #include "sanitizer_common/sanitizer_atomic.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_placement_new.h"
+#include "sanitizer_common/sanitizer_stacktrace.h"
 #include "tsan_interceptors.h"
 #include "tsan_interface.h"
 #include "tsan_platform.h"
@@ -98,6 +99,10 @@ const sighandler_t SIG_IGN = (sighandler_t)1;
 const sighandler_t SIG_ERR = (sighandler_t)-1;
 const int SA_SIGINFO = 4;
 const int SIG_SETMASK = 2;
+
+namespace std {
+struct nothrow_t {};
+}  // namespace std
 
 static sigaction_t sigactions[kSigCount];
 
@@ -328,6 +333,47 @@ TSAN_INTERCEPTOR(void, cfree, void *p) {
   invoke_free_hook(p);
   SCOPED_INTERCEPTOR_RAW(cfree, p);
   user_free(thr, pc, p);
+}
+
+#define OPERATOR_NEW_BODY(mangled_name) \
+  void *p = 0; \
+  {  \
+    SCOPED_INTERCEPTOR_RAW(mangled_name, size); \
+    p = user_alloc(thr, pc, size); \
+  }  \
+  invoke_malloc_hook(p, size);  \
+  return p;
+
+void *operator new(__sanitizer::uptr size) {
+  OPERATOR_NEW_BODY(_Znwm);
+}
+void *operator new[](__sanitizer::uptr size) {
+  OPERATOR_NEW_BODY(_Znam);
+}
+void *operator new(__sanitizer::uptr size, std::nothrow_t const&) {
+  OPERATOR_NEW_BODY(_ZnwmRKSt9nothrow_t);
+}
+void *operator new[](__sanitizer::uptr size, std::nothrow_t const&) {
+  OPERATOR_NEW_BODY(_ZnamRKSt9nothrow_t);
+}
+
+#define OPERATOR_DELETE_BODY(mangled_name) \
+  if (ptr == 0) return;  \
+  invoke_free_hook(ptr);  \
+  SCOPED_INTERCEPTOR_RAW(mangled_name, ptr);  \
+  user_free(thr, pc, ptr);
+
+void operator delete(void *ptr) {
+  OPERATOR_DELETE_BODY(_ZdlPv);
+}
+void operator delete[](void *ptr) {
+  OPERATOR_DELETE_BODY(_ZdlPvRKSt9nothrow_t);
+}
+void operator delete(void *ptr, std::nothrow_t const&) {
+  OPERATOR_DELETE_BODY(_ZdaPv);
+}
+void operator delete[](void *ptr, std::nothrow_t const&) {
+  OPERATOR_DELETE_BODY(_ZdaPvRKSt9nothrow_t);
 }
 
 TSAN_INTERCEPTOR(uptr, strlen, const char *s) {
@@ -1342,8 +1388,6 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(valloc);
   TSAN_INTERCEPT(pvalloc);
   TSAN_INTERCEPT(posix_memalign);
-
-  ReplaceOperatorsNewAndDelete();
 
   TSAN_INTERCEPT(strlen);
   TSAN_INTERCEPT(memset);

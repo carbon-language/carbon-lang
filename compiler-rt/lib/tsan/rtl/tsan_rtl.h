@@ -436,7 +436,6 @@ void ALWAYS_INLINE INLINE StatInc(ThreadState *thr, StatType typ, u64 n = 1) {
 void InitializeShadowMemory();
 void InitializeInterceptors();
 void InitializeDynamicAnnotations();
-void ReplaceOperatorsNewAndDelete();
 
 void ReportRace(ThreadState *thr);
 bool OutputReport(const ScopedReport &srep,

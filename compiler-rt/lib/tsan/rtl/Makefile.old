@@ -42,8 +42,6 @@ LIBTSAN_OBJ=$(patsubst %.cc,%.o,$(LIBTSAN_SRC)) \
 
 %_linux.o: %_linux.cc Makefile.old $(LIBTSAN_HEADERS)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $<
-%_new_delete.o: %_new_delete.cc Makefile.old $(LIBTSAN_HEADERS)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $<
 %.o: %.cc Makefile.old $(LIBTSAN_HEADERS)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) $(NO_SYSROOT) -c $<
 %.o: $(INTERCEPTION)/%.cc Makefile.old $(LIBTSAN_HEADERS)
