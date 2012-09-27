@@ -37,6 +37,7 @@ FunctionPass *createARMJITCodeEmitterPass(ARMBaseTargetMachine &TM,
 
 FunctionPass *createARMLoadStoreOptimizationPass(bool PreAlloc = false);
 FunctionPass *createARMExpandPseudoPass();
+FunctionPass *createARMGlobalBaseRegPass();
 FunctionPass *createARMGlobalMergePass(const TargetLowering* tli);
 FunctionPass *createARMConstantIslandPass();
 FunctionPass *createMLxExpansionPass();

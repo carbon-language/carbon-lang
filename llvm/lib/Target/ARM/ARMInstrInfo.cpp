@@ -13,13 +13,17 @@
 
 #include "ARMInstrInfo.h"
 #include "ARM.h"
+#include "ARMConstantPoolValue.h"
 #include "ARMMachineFunctionInfo.h"
+#include "ARMTargetMachine.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
+#include "llvm/Function.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCInst.h"
 using namespace llvm;
@@ -84,3 +88,61 @@ unsigned ARMInstrInfo::getUnindexedOpcode(unsigned Opc) const {
 
   return 0;
 }
+
+namespace {
+  /// ARMCGBR - Create Global Base Reg pass. This initializes the PIC
+  /// global base register for ARM ELF.
+  struct ARMCGBR : public MachineFunctionPass {
+    static char ID;
+    ARMCGBR() : MachineFunctionPass(ID) {}
+
+    virtual bool runOnMachineFunction(MachineFunction &MF) {
+      ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+      if (AFI->getGlobalBaseReg() == 0)
+        return false;
+
+      const ARMTargetMachine *TM =
+        static_cast<const ARMTargetMachine *>(&MF.getTarget());
+      if (TM->getRelocationModel() != Reloc::PIC_)
+        return false;
+
+      LLVMContext* Context = &MF.getFunction()->getContext();
+      GlobalValue *GV = new GlobalVariable(Type::getInt32Ty(*Context), false,
+                                           GlobalValue::ExternalLinkage, 0,
+                                           "_GLOBAL_OFFSET_TABLE_");
+      unsigned Id = AFI->createPICLabelUId();
+      ARMConstantPoolValue *CPV = ARMConstantPoolConstant::Create(GV, Id);
+      unsigned Align = TM->getTargetData()->getPrefTypeAlignment(GV->getType());
+      unsigned Idx = MF.getConstantPool()->getConstantPoolIndex(CPV, Align);
+
+      MachineBasicBlock &FirstMBB = MF.front();
+      MachineBasicBlock::iterator MBBI = FirstMBB.begin();
+      DebugLoc DL = FirstMBB.findDebugLoc(MBBI);
+      unsigned GlobalBaseReg = AFI->getGlobalBaseReg();
+      unsigned Opc = TM->getSubtarget<ARMSubtarget>().isThumb2() ?
+                     ARM::t2LDRpci : ARM::LDRcp;
+      const TargetInstrInfo &TII = *TM->getInstrInfo();
+      MachineInstrBuilder MIB = BuildMI(FirstMBB, MBBI, DL,
+                                        TII.get(Opc), GlobalBaseReg)
+                                .addConstantPoolIndex(Idx);
+      if (Opc == ARM::LDRcp)
+        MIB.addImm(0);
+      AddDefaultPred(MIB);
+
+      return true;
+    }
+
+    virtual const char *getPassName() const {
+      return "ARM PIC Global Base Reg Initialization";
+    }
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesCFG();
+      MachineFunctionPass::getAnalysisUsage(AU);
+    }
+  };
+}
+
+char ARMCGBR::ID = 0;
+FunctionPass*
+llvm::createARMGlobalBaseRegPass() { return new ARMCGBR(); }

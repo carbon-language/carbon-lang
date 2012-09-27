@@ -108,6 +108,11 @@ class ARMFunctionInfo : public MachineFunctionInfo {
   /// pass.
   DenseMap<unsigned, unsigned> CPEClones;
 
+  /// GlobalBaseReg - keeps track of the virtual register initialized for
+  /// use as the global base register. This is used for PIC in some PIC
+  /// relocation models.
+  unsigned GlobalBaseReg;
+
 public:
   ARMFunctionInfo() :
     isThumb(false),
@@ -119,7 +124,7 @@ public:
     GPRCS1Frames(0), GPRCS2Frames(0), DPRCSFrames(0),
     NumAlignedDPRCS2Regs(0),
     JumpTableUId(0), PICLabelUId(0),
-    VarArgsFrameIndex(0), HasITBlocks(false) {}
+    VarArgsFrameIndex(0), HasITBlocks(false), GlobalBaseReg(0) {}
 
   explicit ARMFunctionInfo(MachineFunction &MF) :
     isThumb(MF.getTarget().getSubtarget<ARMSubtarget>().isThumb()),
@@ -130,7 +135,7 @@ public:
     GPRCS1Size(0), GPRCS2Size(0), DPRCSSize(0),
     GPRCS1Frames(32), GPRCS2Frames(32), DPRCSFrames(32),
     JumpTableUId(0), PICLabelUId(0),
-    VarArgsFrameIndex(0), HasITBlocks(false) {}
+    VarArgsFrameIndex(0), HasITBlocks(false), GlobalBaseReg(0) {}
 
   bool isThumbFunction() const { return isThumb; }
   bool isThumb1OnlyFunction() const { return isThumb && !hasThumb2; }
@@ -248,6 +253,9 @@ public:
 
   bool hasITBlocks() const { return HasITBlocks; }
   void setHasITBlocks(bool h) { HasITBlocks = h; }
+
+  unsigned getGlobalBaseReg() const { return GlobalBaseReg; }
+  void setGlobalBaseReg(unsigned Reg) { GlobalBaseReg = Reg; }
 
   void recordCPEClone(unsigned CPIdx, unsigned CPCloneIdx) {
     if (!CPEClones.insert(std::make_pair(CPCloneIdx, CPIdx)).second)
