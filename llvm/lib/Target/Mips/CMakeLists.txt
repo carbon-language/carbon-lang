@@ -11,6 +11,7 @@ tablegen(LLVM MipsGenCallingConv.inc -gen-callingconv)
 tablegen(LLVM MipsGenSubtargetInfo.inc -gen-subtarget)
 tablegen(LLVM MipsGenEDInfo.inc -gen-enhanced-disassembly-info)
 tablegen(LLVM MipsGenAsmMatcher.inc -gen-asm-matcher)
+tablegen(LLVM MipsGenMCPseudoLowering.inc -gen-pseudo-lowering)
 add_public_tablegen_target(MipsCommonTableGen)
 
 add_llvm_target(MipsCodeGen

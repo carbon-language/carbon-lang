@@ -50,6 +50,13 @@ bool MipsAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   return true;
 }
 
+bool MipsAsmPrinter::lowerOperand(const MachineOperand &MO, MCOperand &MCOp) {
+  MCOp = MCInstLowering.LowerOperand(MO);
+  return MCOp.isValid();
+}
+
+#include "MipsGenMCPseudoLowering.inc"
+
 void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   if (MI->isDebugValue()) {
     SmallString<128> Str;
@@ -58,6 +65,10 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     PrintDebugValueComment(MI, OS);
     return;
   }
+
+  // Do any auto-generated pseudo lowerings.
+  if (emitPseudoExpansionLowering(OutStreamer, MI))
+    return;
 
   MachineBasicBlock::const_instr_iterator I = MI;
   MachineBasicBlock::const_instr_iterator E = MI->getParent()->instr_end();
