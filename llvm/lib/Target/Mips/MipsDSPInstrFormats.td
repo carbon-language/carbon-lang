@@ -57,6 +57,48 @@ class RADDU_W_QB_FMT<bits<5> op> : DSPInst {
   let Inst{5-0}   = 0b010000;
 }
 
+// CMPU.EQ.QB sub-class format.
+class CMP_EQ_QB_R2_FMT<bits<5> op> : DSPInst {
+  bits<5> rs;
+  bits<5> rt;
+
+  let Opcode = SPECIAL3_OPCODE.V;
+
+  let Inst{25-21} = rs;
+  let Inst{20-16} = rt;
+  let Inst{15-11} = 0;
+  let Inst{10-6}  = op;
+  let Inst{5-0}   = 0b010001;
+}
+
+class CMP_EQ_QB_R3_FMT<bits<5> op> : DSPInst {
+  bits<5> rs;
+  bits<5> rt;
+  bits<5> rd;
+
+  let Opcode = SPECIAL3_OPCODE.V;
+
+  let Inst{25-21} = rs;
+  let Inst{20-16} = rt;
+  let Inst{15-11} = rd;
+  let Inst{10-6}  = op;
+  let Inst{5-0}   = 0b010001;
+}
+
+class PRECR_SRA_PH_W_FMT<bits<5> op> : DSPInst {
+  bits<5> rs;
+  bits<5> rt;
+  bits<5> sa;
+
+  let Opcode = SPECIAL3_OPCODE.V;
+
+  let Inst{25-21} = rs;
+  let Inst{20-16} = rt;
+  let Inst{15-11} = sa;
+  let Inst{10-6}  = op;
+  let Inst{5-0}   = 0b010001;
+}
+
 // DPA.W.PH sub-class format.
 class DPA_W_PH_FMT<bits<5> op> : DSPInst {
   bits<2> ac;

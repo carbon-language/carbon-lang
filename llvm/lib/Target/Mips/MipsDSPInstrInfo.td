@@ -106,6 +106,10 @@ class ADDSC_ENC : ADDU_QB_FMT<0b10000>;
 class ADDWC_ENC : ADDU_QB_FMT<0b10001>;
 class MODSUB_ENC : ADDU_QB_FMT<0b10010>;
 class RADDU_W_QB_ENC : RADDU_W_QB_FMT<0b10100>;
+class PRECRQ_QB_PH_ENC : CMP_EQ_QB_R3_FMT<0b01100>;
+class PRECRQ_PH_W_ENC : CMP_EQ_QB_R3_FMT<0b10100>;
+class PRECRQ_RS_PH_W_ENC : CMP_EQ_QB_R3_FMT<0b10101>;
+class PRECRQU_S_QB_PH_ENC : CMP_EQ_QB_R3_FMT<0b01111>;
 class MULEU_S_PH_QBL_ENC : ADDU_QB_FMT<0b00110>;
 class MULEU_S_PH_QBR_ENC : ADDU_QB_FMT<0b00111>;
 class MULEQ_S_W_PHL_ENC : ADDU_QB_FMT<0b11100>;
@@ -130,6 +134,18 @@ class MADD_DSP_ENC : MULT_FMT<0b011100, 0b000000>;
 class MADDU_DSP_ENC : MULT_FMT<0b011100, 0b000001>;
 class MSUB_DSP_ENC : MULT_FMT<0b011100, 0b000100>;
 class MSUBU_DSP_ENC : MULT_FMT<0b011100, 0b000101>;
+class CMPU_EQ_QB_ENC : CMP_EQ_QB_R2_FMT<0b00000>;
+class CMPU_LT_QB_ENC : CMP_EQ_QB_R2_FMT<0b00001>;
+class CMPU_LE_QB_ENC : CMP_EQ_QB_R2_FMT<0b00010>;
+class CMPGU_EQ_QB_ENC : CMP_EQ_QB_R3_FMT<0b00100>;
+class CMPGU_LT_QB_ENC : CMP_EQ_QB_R3_FMT<0b00101>;
+class CMPGU_LE_QB_ENC : CMP_EQ_QB_R3_FMT<0b00110>;
+class CMP_EQ_PH_ENC : CMP_EQ_QB_R2_FMT<0b01000>;
+class CMP_LT_PH_ENC : CMP_EQ_QB_R2_FMT<0b01001>;
+class CMP_LE_PH_ENC : CMP_EQ_QB_R2_FMT<0b01010>;
+class PACKRL_PH_ENC : CMP_EQ_QB_R3_FMT<0b01110>;
+class PICK_QB_ENC : CMP_EQ_QB_R3_FMT<0b00011>;
+class PICK_PH_ENC : CMP_EQ_QB_R3_FMT<0b01011>;
 class BPOSGE32_ENC : BPOSGE32_FMT<0b11100>;
 
 class EXTP_ENC : EXTR_W_TY1_FMT<0b00010>;
@@ -152,6 +168,9 @@ class ADDU_PH_ENC : ADDU_QB_FMT<0b01000>;
 class ADDU_S_PH_ENC : ADDU_QB_FMT<0b01100>;
 class SUBU_PH_ENC : ADDU_QB_FMT<0b01001>;
 class SUBU_S_PH_ENC : ADDU_QB_FMT<0b01101>;
+class CMPGDU_EQ_QB_ENC : CMP_EQ_QB_R3_FMT<0b11000>;
+class CMPGDU_LT_QB_ENC : CMP_EQ_QB_R3_FMT<0b11001>;
+class CMPGDU_LE_QB_ENC : CMP_EQ_QB_R3_FMT<0b11010>;
 class MULQ_S_PH_ENC : ADDU_QB_FMT<0b11110>;
 class DPA_W_PH_ENC : DPA_W_PH_FMT<0b00000>;
 class DPS_W_PH_ENC : DPA_W_PH_FMT<0b00001>;
@@ -162,6 +181,9 @@ class DPSX_W_PH_ENC : DPA_W_PH_FMT<0b01001>;
 class DPSQX_S_W_PH_ENC : DPA_W_PH_FMT<0b11001>;
 class DPSQX_SA_W_PH_ENC : DPA_W_PH_FMT<0b11011>;
 class MULSA_W_PH_ENC : DPA_W_PH_FMT<0b00010>;
+class PRECR_QB_PH_ENC : CMP_EQ_QB_R3_FMT<0b01101>;
+class PRECR_SRA_PH_W_ENC : PRECR_SRA_PH_W_FMT<0b11110>;
+class PRECR_SRA_R_PH_W_ENC : PRECR_SRA_PH_W_FMT<0b11111>;
 
 // Instruction desc.
 class ADDU_QB_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
@@ -184,6 +206,40 @@ class RADDU_W_QB_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   list<dag> Pattern = [(set RCD:$rd, (OpNode RCS:$rs))];
   InstrItinClass Itinerary = itin;
   list<Register> Defs = [DSPCtrl];
+}
+
+class CMP_EQ_QB_R2_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
+                             InstrItinClass itin, RegisterClass RCS,
+                             RegisterClass RCT = RCS> {
+  dag OutOperandList = (outs);
+  dag InOperandList = (ins RCS:$rs, RCT:$rt);
+  string AsmString = !strconcat(instr_asm, "\t$rs, $rt");
+  list<dag> Pattern = [(OpNode RCS:$rs, RCT:$rt)];
+  InstrItinClass Itinerary = itin;
+  list<Register> Defs = [DSPCtrl];
+}
+
+class CMP_EQ_QB_R3_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
+                             InstrItinClass itin, RegisterClass RCD,
+                             RegisterClass RCS,  RegisterClass RCT = RCS> {
+  dag OutOperandList = (outs RCD:$rd);
+  dag InOperandList = (ins RCS:$rs, RCT:$rt);
+  string AsmString = !strconcat(instr_asm, "\t$rd, $rs, $rt");
+  list<dag> Pattern = [(set RCD:$rd, (OpNode RCS:$rs, RCT:$rt))];
+  InstrItinClass Itinerary = itin;
+  list<Register> Defs = [DSPCtrl];
+}
+
+class PRECR_SRA_PH_W_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
+                               InstrItinClass itin, RegisterClass RCT,
+                               RegisterClass RCS = RCT> {
+  dag OutOperandList = (outs RCT:$rt);
+  dag InOperandList = (ins RCS:$rs, shamt:$sa, RCS:$src);
+  string AsmString = !strconcat(instr_asm, "\t$rt, $rs, $sa");
+  list<dag> Pattern = [(set RCT:$rt, (OpNode RCS:$src, RCS:$rs, immZExt5:$sa))];
+  InstrItinClass Itinerary = itin;
+  list<Register> Defs = [DSPCtrl];
+  string Constraints = "$src = $rt";
 }
 
 class EXTR_W_TY1_R2_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
@@ -340,6 +396,27 @@ class RADDU_W_QB_DESC : RADDU_W_QB_DESC_BASE<"raddu.w.qb", int_mips_raddu_w_qb,
                                              NoItinerary, CPURegs, DSPRegs>,
                         ClearDefs;
 
+// Precision reduce/expand
+class PRECRQ_QB_PH_DESC : CMP_EQ_QB_R3_DESC_BASE<"precrq.qb.ph",
+                                                 int_mips_precrq_qb_ph,
+                                                 NoItinerary, DSPRegs, DSPRegs>,
+                          ClearDefs;
+
+class PRECRQ_PH_W_DESC : CMP_EQ_QB_R3_DESC_BASE<"precrq.ph.w",
+                                                int_mips_precrq_ph_w,
+                                                NoItinerary, DSPRegs, CPURegs>,
+                         ClearDefs;
+
+class PRECRQ_RS_PH_W_DESC : CMP_EQ_QB_R3_DESC_BASE<"precrq_rs.ph.w",
+                                                   int_mips_precrq_rs_ph_w,
+                                                   NoItinerary, DSPRegs,
+                                                   CPURegs>;
+
+class PRECRQU_S_QB_PH_DESC : CMP_EQ_QB_R3_DESC_BASE<"precrqu_s.qb.ph",
+                                                    int_mips_precrqu_s_qb_ph,
+                                                    NoItinerary, DSPRegs,
+                                                    DSPRegs>;
+
 // Multiplication
 class MULEU_S_PH_QBL_DESC : ADDU_QB_DESC_BASE<"muleu_s.ph.qbl",
                                               int_mips_muleu_s_ph_qbl,
@@ -402,7 +479,59 @@ class MSUB_DSP_DESC : MULT_DESC_BASE<"msub">;
 
 class MSUBU_DSP_DESC : MULT_DESC_BASE<"msubu">;
 
+// Comparison
+class CMPU_EQ_QB_DESC : CMP_EQ_QB_R2_DESC_BASE<"cmpu.eq.qb",
+                                               int_mips_cmpu_eq_qb, NoItinerary,
+                                               DSPRegs>, IsCommutable;
+
+class CMPU_LT_QB_DESC : CMP_EQ_QB_R2_DESC_BASE<"cmpu.lt.qb",
+                                               int_mips_cmpu_lt_qb, NoItinerary,
+                                               DSPRegs>, IsCommutable;
+
+class CMPU_LE_QB_DESC : CMP_EQ_QB_R2_DESC_BASE<"cmpu.le.qb",
+                                               int_mips_cmpu_le_qb, NoItinerary,
+                                               DSPRegs>, IsCommutable;
+
+class CMPGU_EQ_QB_DESC : CMP_EQ_QB_R3_DESC_BASE<"cmpgu.eq.qb",
+                                                int_mips_cmpgu_eq_qb,
+                                                NoItinerary, CPURegs, DSPRegs>,
+                         IsCommutable;
+
+class CMPGU_LT_QB_DESC : CMP_EQ_QB_R3_DESC_BASE<"cmpgu.lt.qb",
+                                                int_mips_cmpgu_lt_qb,
+                                                NoItinerary, CPURegs, DSPRegs>,
+                         IsCommutable;
+
+class CMPGU_LE_QB_DESC : CMP_EQ_QB_R3_DESC_BASE<"cmpgu.le.qb",
+                                                int_mips_cmpgu_le_qb,
+                                                NoItinerary, CPURegs, DSPRegs>,
+                         IsCommutable;
+
+class CMP_EQ_PH_DESC : CMP_EQ_QB_R2_DESC_BASE<"cmp.eq.ph", int_mips_cmp_eq_ph,
+                                              NoItinerary, DSPRegs>,
+                       IsCommutable;
+
+class CMP_LT_PH_DESC : CMP_EQ_QB_R2_DESC_BASE<"cmp.lt.ph", int_mips_cmp_lt_ph,
+                                              NoItinerary, DSPRegs>,
+                       IsCommutable;
+
+class CMP_LE_PH_DESC : CMP_EQ_QB_R2_DESC_BASE<"cmp.le.ph", int_mips_cmp_le_ph,
+                                              NoItinerary, DSPRegs>,
+                       IsCommutable;
+
 // Misc
+class PACKRL_PH_DESC : CMP_EQ_QB_R3_DESC_BASE<"packrl.ph", int_mips_packrl_ph,
+                                              NoItinerary, DSPRegs, DSPRegs>,
+                       ClearDefs;
+
+class PICK_QB_DESC : CMP_EQ_QB_R3_DESC_BASE<"pick.qb", int_mips_pick_qb,
+                                            NoItinerary, DSPRegs, DSPRegs>,
+                     ClearDefs, UseDSPCtrl;
+
+class PICK_PH_DESC : CMP_EQ_QB_R3_DESC_BASE<"pick.ph", int_mips_pick_ph,
+                                            NoItinerary, DSPRegs, DSPRegs>,
+                     ClearDefs, UseDSPCtrl;
+
 class BPOSGE32_DESC : BPOSGE32_DESC_BASE<"bposge32", NoItinerary>;
 
 // Extr
@@ -460,6 +589,22 @@ class SUBU_PH_DESC : ADDU_QB_DESC_BASE<"subu.ph", int_mips_subu_ph, NoItinerary,
 class SUBU_S_PH_DESC : ADDU_QB_DESC_BASE<"subu_s.ph", int_mips_subu_s_ph,
                                          NoItinerary, DSPRegs, DSPRegs>;
 
+// Comparison
+class CMPGDU_EQ_QB_DESC : CMP_EQ_QB_R3_DESC_BASE<"cmpgdu.eq.qb",
+                                                 int_mips_cmpgdu_eq_qb,
+                                                 NoItinerary, CPURegs, DSPRegs>,
+                          IsCommutable;
+
+class CMPGDU_LT_QB_DESC : CMP_EQ_QB_R3_DESC_BASE<"cmpgdu.lt.qb",
+                                                 int_mips_cmpgdu_lt_qb,
+                                                 NoItinerary, CPURegs, DSPRegs>,
+                          IsCommutable;
+
+class CMPGDU_LE_QB_DESC : CMP_EQ_QB_R3_DESC_BASE<"cmpgdu.le.qb",
+                                                 int_mips_cmpgdu_le_qb,
+                                                 NoItinerary, CPURegs, DSPRegs>,
+                          IsCommutable;
+
 // Multiplication
 class MULQ_S_PH_DESC : ADDU_QB_DESC_BASE<"mulq_s.ph", int_mips_mulq_s_ph,
                                          NoItinerary, DSPRegs, DSPRegs>,
@@ -484,6 +629,21 @@ class DPSQX_SA_W_PH_DESC : DPA_W_PH_DESC_BASE<"dpsqx_sa.w.ph">;
 
 class MULSA_W_PH_DESC : DPA_W_PH_DESC_BASE<"mulsa.w.ph">;
 
+// Precision reduce/expand
+class PRECR_QB_PH_DESC : CMP_EQ_QB_R3_DESC_BASE<"precr.qb.ph",
+                                                int_mips_precr_qb_ph,
+                                                NoItinerary, DSPRegs, DSPRegs>;
+
+class PRECR_SRA_PH_W_DESC : PRECR_SRA_PH_W_DESC_BASE<"precr_sra.ph.w",
+                                                     int_mips_precr_sra_ph_w,
+                                                     NoItinerary, DSPRegs,
+                                                     CPURegs>, ClearDefs;
+
+class PRECR_SRA_R_PH_W_DESC : PRECR_SRA_PH_W_DESC_BASE<"precr_sra_r.ph.w",
+                                                      int_mips_precr_sra_r_ph_w,
+                                                       NoItinerary, DSPRegs,
+                                                       CPURegs>, ClearDefs;
+
 // Pseudos.
 def BPOSGE32_PSEUDO : BPOSGE32_PSEUDO_DESC_BASE<int_mips_bposge32, NoItinerary>;
 
@@ -503,6 +663,10 @@ def ADDSC : ADDSC_ENC, ADDSC_DESC;
 def ADDWC : ADDWC_ENC, ADDWC_DESC;
 def MODSUB : MODSUB_ENC, MODSUB_DESC;
 def RADDU_W_QB : RADDU_W_QB_ENC, RADDU_W_QB_DESC;
+def PRECRQ_QB_PH : PRECRQ_QB_PH_ENC, PRECRQ_QB_PH_DESC;
+def PRECRQ_PH_W : PRECRQ_PH_W_ENC, PRECRQ_PH_W_DESC;
+def PRECRQ_RS_PH_W : PRECRQ_RS_PH_W_ENC, PRECRQ_RS_PH_W_DESC;
+def PRECRQU_S_QB_PH : PRECRQU_S_QB_PH_ENC, PRECRQU_S_QB_PH_DESC;
 def MULEU_S_PH_QBL : MULEU_S_PH_QBL_ENC, MULEU_S_PH_QBL_DESC;
 def MULEU_S_PH_QBR : MULEU_S_PH_QBR_ENC, MULEU_S_PH_QBR_DESC;
 def MULEQ_S_W_PHL : MULEQ_S_W_PHL_ENC, MULEQ_S_W_PHL_DESC;
@@ -527,6 +691,18 @@ def MADD_DSP : MADD_DSP_ENC, MADD_DSP_DESC;
 def MADDU_DSP : MADDU_DSP_ENC, MADDU_DSP_DESC;
 def MSUB_DSP : MSUB_DSP_ENC, MSUB_DSP_DESC;
 def MSUBU_DSP : MSUBU_DSP_ENC, MSUBU_DSP_DESC;
+def CMPU_EQ_QB : CMPU_EQ_QB_ENC, CMPU_EQ_QB_DESC;
+def CMPU_LT_QB : CMPU_LT_QB_ENC, CMPU_LT_QB_DESC;
+def CMPU_LE_QB : CMPU_LE_QB_ENC, CMPU_LE_QB_DESC;
+def CMPGU_EQ_QB : CMPGU_EQ_QB_ENC, CMPGU_EQ_QB_DESC;
+def CMPGU_LT_QB : CMPGU_LT_QB_ENC, CMPGU_LT_QB_DESC;
+def CMPGU_LE_QB : CMPGU_LE_QB_ENC, CMPGU_LE_QB_DESC;
+def CMP_EQ_PH : CMP_EQ_PH_ENC, CMP_EQ_PH_DESC;
+def CMP_LT_PH : CMP_LT_PH_ENC, CMP_LT_PH_DESC;
+def CMP_LE_PH : CMP_LE_PH_ENC, CMP_LE_PH_DESC;
+def PACKRL_PH : PACKRL_PH_ENC, PACKRL_PH_DESC;
+def PICK_QB : PICK_QB_ENC, PICK_QB_DESC;
+def PICK_PH : PICK_PH_ENC, PICK_PH_DESC;
 def BPOSGE32 : BPOSGE32_ENC, BPOSGE32_DESC;
 def EXTP : EXTP_ENC, EXTP_DESC;
 def EXTPV : EXTPV_ENC, EXTPV_DESC;
@@ -551,6 +727,9 @@ def ADDU_PH : ADDU_PH_ENC, ADDU_PH_DESC;
 def ADDU_S_PH : ADDU_S_PH_ENC, ADDU_S_PH_DESC;
 def SUBU_PH : SUBU_PH_ENC, SUBU_PH_DESC;
 def SUBU_S_PH : SUBU_S_PH_ENC, SUBU_S_PH_DESC;
+def CMPGDU_EQ_QB : CMPGDU_EQ_QB_ENC, CMPGDU_EQ_QB_DESC;
+def CMPGDU_LT_QB : CMPGDU_LT_QB_ENC, CMPGDU_LT_QB_DESC;
+def CMPGDU_LE_QB : CMPGDU_LE_QB_ENC, CMPGDU_LE_QB_DESC;
 def MULQ_S_PH : MULQ_S_PH_ENC, MULQ_S_PH_DESC;
 def DPA_W_PH : DPA_W_PH_ENC, DPA_W_PH_DESC;
 def DPS_W_PH : DPS_W_PH_ENC, DPS_W_PH_DESC;
@@ -561,6 +740,9 @@ def DPSX_W_PH : DPSX_W_PH_ENC, DPSX_W_PH_DESC;
 def DPSQX_S_W_PH : DPSQX_S_W_PH_ENC, DPSQX_S_W_PH_DESC;
 def DPSQX_SA_W_PH : DPSQX_SA_W_PH_ENC, DPSQX_SA_W_PH_DESC;
 def MULSA_W_PH : MULSA_W_PH_ENC, MULSA_W_PH_DESC;
+def PRECR_QB_PH : PRECR_QB_PH_ENC, PRECR_QB_PH_DESC;
+def PRECR_SRA_PH_W : PRECR_SRA_PH_W_ENC, PRECR_SRA_PH_W_DESC;
+def PRECR_SRA_R_PH_W : PRECR_SRA_R_PH_W_ENC, PRECR_SRA_R_PH_W_DESC;
 
 }
 
