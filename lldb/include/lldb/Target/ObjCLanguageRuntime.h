@@ -119,7 +119,8 @@ public:
         // This should return true iff the interface could be completed
         virtual bool
         Describe (std::function <void (ObjCISA)> const &superclass_func,
-                  std::function <void (const char*, const char*)> const &method_func)
+                  std::function <void (const char*, const char*)> const &instance_method_func,
+                  std::function <void (const char*, const char*)> const &class_method_func)
         {
             return false;
         }

@@ -194,10 +194,7 @@ AppleObjCTypeVendor::GetDeclForISA(ObjCLanguageRuntime::ObjCISA isa)
     
     m_external_source->SetMetadata((uintptr_t)new_iface_decl, (uint64_t)isa);
     
-    static ConstString NSObject_name("NSObject");
-    
-    if (name != NSObject_name)
-        new_iface_decl->setHasExternalVisibleStorage();
+    new_iface_decl->setHasExternalVisibleStorage();
     
     ast_ctx->getTranslationUnitDecl()->addDecl(new_iface_decl);
     
@@ -319,7 +316,7 @@ public:
         }
     }
     
-    clang::ObjCMethodDecl *BuildMethod (clang::ObjCInterfaceDecl *interface_decl, const char *name)
+    clang::ObjCMethodDecl *BuildMethod (clang::ObjCInterfaceDecl *interface_decl, const char *name, bool instance)
     {
         lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_EXPRESSIONS));  // FIXME - a more appropriate log channel?
         
@@ -330,7 +327,7 @@ public:
         
         clang::QualType return_qual_type;
         
-        const bool isInstance = true;
+        const bool isInstance = instance;
         const bool isVariadic = false;
         const bool isSynthesized = false;
         const bool isImplicitlyDeclared = true;
@@ -516,17 +513,27 @@ AppleObjCTypeVendor::FinishDecl(clang::ObjCInterfaceDecl *interface_decl)
         interface_decl->setSuperClass(superclass_decl);
     };
     
-    auto method_func = [log, interface_decl, this](const char *name, const char *types)
+    auto instance_method_func = [log, interface_decl, this](const char *name, const char *types)
     {        
         ObjCRuntimeMethodType method_type(types);
         
-        clang::ObjCMethodDecl *method_decl = method_type.BuildMethod (interface_decl, name);
+        clang::ObjCMethodDecl *method_decl = method_type.BuildMethod (interface_decl, name, true);
         
         if (method_decl)
             interface_decl->addDecl(method_decl);
     };
     
-    if (!descriptor->Describe(superclass_func, method_func))
+    auto class_method_func = [log, interface_decl, this](const char *name, const char *types)
+    {
+        ObjCRuntimeMethodType method_type(types);
+        
+        clang::ObjCMethodDecl *method_decl = method_type.BuildMethod (interface_decl, name, false);
+        
+        if (method_decl)
+            interface_decl->addDecl(method_decl);
+    };
+    
+    if (!descriptor->Describe(superclass_func, instance_method_func, class_method_func))
         return false;
     
     if (log)

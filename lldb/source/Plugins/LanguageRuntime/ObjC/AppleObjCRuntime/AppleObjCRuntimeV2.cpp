@@ -973,7 +973,8 @@ private:
 class ClassDescriptorV2 : public ObjCLanguageRuntime::ClassDescriptor
 {
 public:
-    ClassDescriptorV2 (ValueObject &ptr_to_object)
+    ClassDescriptorV2 (ObjCLanguageRuntime &runtime, ValueObject &ptr_to_object) :
+        m_runtime(runtime)
     {
         lldb::addr_t object_la = ptr_to_object.GetValueAsUnsigned(0);
         lldb::ProcessSP process_sp = ptr_to_object.GetProcessSP();
@@ -988,7 +989,8 @@ public:
             Initialize (isa, process_sp);
     }
     
-    ClassDescriptorV2 (ObjCLanguageRuntime::ObjCISA isa, lldb::ProcessSP process_sp)
+    ClassDescriptorV2 (ObjCLanguageRuntime &runtime, ObjCLanguageRuntime::ObjCISA isa, lldb::ProcessSP process_sp) :
+        m_runtime(runtime)
     {
         Initialize (isa, process_sp);
     }
@@ -1008,10 +1010,7 @@ public:
         if (!m_valid)
             return ObjCLanguageRuntime::ClassDescriptorSP();
         
-        ProcessSP process_sp = m_process_wp.lock();
-        if (!process_sp)
-            return ObjCLanguageRuntime::ClassDescriptorSP();
-        return AppleObjCRuntime::ClassDescriptorSP(new ClassDescriptorV2(m_objc_class.m_superclass,process_sp));
+        return m_runtime.GetClassDescriptor(m_objc_class.m_superclass);
     }
     
     virtual bool
@@ -1046,7 +1045,8 @@ public:
     
     virtual bool
     Describe (std::function <void (ObjCLanguageRuntime::ObjCISA)> const &superclass_func,
-              std::function <void (const char *, const char *)> const &method_func)
+              std::function <void (const char *, const char *)> const &instance_method_func,
+              std::function <void (const char *, const char *)> const &class_method_func)
     {
         if (!m_valid)
             return false;
@@ -1075,28 +1075,47 @@ public:
             if (!ro->Read(process_sp, m_objc_class.m_data_la))
                 return false;
         }
+    
+        static ConstString NSObject_name("NSObject");
         
-        superclass_func(m_objc_class.m_superclass);
+        if (m_name != NSObject_name && superclass_func)
+            superclass_func(m_objc_class.m_superclass);
         
-        std::auto_ptr <method_list_t> base_method_list;
-        
-        base_method_list.reset(new method_list_t);
-        if (!base_method_list->Read(process_sp, ro->m_baseMethods_la))
-            return false;
-        
-        if (base_method_list->m_entsize != method_t::GetSize(process_sp))
-            return false;
-        
-        std::auto_ptr <method_t> method;
-        method.reset(new method_t);
-        
-        for (uint32_t i = 0, e = base_method_list->m_count; i < e; ++i)
+        if (instance_method_func)
         {
-            method->Read(process_sp, base_method_list->m_first_la + (i * base_method_list->m_entsize));
+            std::auto_ptr <method_list_t> base_method_list;
             
-            method_func(method->m_name.c_str(), method->m_types.c_str());
+            base_method_list.reset(new method_list_t);
+            if (!base_method_list->Read(process_sp, ro->m_baseMethods_la))
+                return false;
+            
+            if (base_method_list->m_entsize != method_t::GetSize(process_sp))
+                return false;
+            
+            std::auto_ptr <method_t> method;
+            method.reset(new method_t);
+            
+            for (uint32_t i = 0, e = base_method_list->m_count; i < e; ++i)
+            {
+                method->Read(process_sp, base_method_list->m_first_la + (i * base_method_list->m_entsize));
+                
+                instance_method_func(method->m_name.c_str(), method->m_types.c_str());
+            }
         }
         
+        if (class_method_func)
+        {
+            ObjCLanguageRuntime::ClassDescriptorSP metaclass = m_runtime.GetClassDescriptor(m_objc_class.m_isa);
+            
+            // We don't care about the metaclass's superclass, or its class methods.  Its instance methods are
+            // our class methods.
+            
+            metaclass->Describe(std::function <void (ObjCLanguageRuntime::ObjCISA)> (nullptr),
+                                class_method_func,
+                                std::function <void (const char *, const char *)> (nullptr));
+        }
+        while (0);
+            
         return true;
     }
     
@@ -1254,6 +1273,7 @@ protected:
 private:
     static const uint32_t RW_REALIZED = (1 << 31);
     
+    ObjCLanguageRuntime                &m_runtime;          // The runtime, so we can read our metaclass.
     bool                                m_valid;            // Gates whether we trust anything here at all.
     lldb::addr_t                        m_objc_class_la;    // The address of the objc_class_t.
     
@@ -1715,7 +1735,7 @@ AppleObjCRuntimeV2::GetClassDescriptor (ObjCISA isa)
     if (found != end && found->second)
         return found->second;
     
-    ClassDescriptorSP descriptor = ClassDescriptorSP(new ClassDescriptorV2(isa,m_process->CalculateProcess()));
+    ClassDescriptorSP descriptor = ClassDescriptorSP(new ClassDescriptorV2(*this, isa, m_process->CalculateProcess()));
     if (descriptor && descriptor->IsValid())
         m_isa_to_descriptor_cache[descriptor->GetISA()] = descriptor;
     return descriptor;
@@ -1740,7 +1760,7 @@ AppleObjCRuntimeV2::GetClassDescriptor (ValueObject& in_value)
     
     if (ptr_value & 1)
         return ClassDescriptorSP(new ClassDescriptorV2Tagged(in_value)); // do not save tagged pointers
-    descriptor = ClassDescriptorSP(new ClassDescriptorV2(in_value));
+    descriptor = ClassDescriptorSP(new ClassDescriptorV2(*this, in_value));
     
     if (descriptor && descriptor->IsValid())
         m_isa_to_descriptor_cache[descriptor->GetISA()] = descriptor;
@@ -1832,7 +1852,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMap_Impl()
             if (m_isa_to_descriptor_cache.count(elt.second))
                 continue;
             
-            ClassDescriptorSP descriptor_sp = ClassDescriptorSP(new ClassDescriptorV2(elt.second, process_sp));
+            ClassDescriptorSP descriptor_sp = ClassDescriptorSP(new ClassDescriptorV2(*this, elt.second, process_sp));
             
             if (log && log->GetVerbose())
                 log->Printf("AppleObjCRuntimeV2 added (ObjCISA)0x%llx (%s) from dynamic table to isa->descriptor cache", elt.second, elt.first.AsCString());
@@ -1878,7 +1898,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMap_Impl()
             if (m_isa_to_descriptor_cache.count(objc_isa))
                 continue;
             
-            ClassDescriptorSP descriptor_sp = ClassDescriptorSP(new ClassDescriptorV2(objc_isa, process_sp));
+            ClassDescriptorSP descriptor_sp = ClassDescriptorSP(new ClassDescriptorV2(*this, objc_isa, process_sp));
             
             if (log && log->GetVerbose())
                 log->Printf("AppleObjCRuntimeV2 added (ObjCISA)0x%llx (%s) from static table to isa->descriptor cache", objc_isa, descriptor_sp->GetClassName().AsCString());
