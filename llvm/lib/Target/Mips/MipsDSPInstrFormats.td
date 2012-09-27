@@ -29,6 +29,34 @@ class PseudoDSP<dag outs, dag ins, list<dag> pattern>:
   let Predicates = [HasDSP];
 }
 
+// ADDU.QB sub-class format.
+class ADDU_QB_FMT<bits<5> op> : DSPInst {
+  bits<5> rd;
+  bits<5> rs;
+  bits<5> rt;
+
+  let Opcode = SPECIAL3_OPCODE.V;
+
+  let Inst{25-21} = rs;
+  let Inst{20-16} = rt;
+  let Inst{15-11} = rd;
+  let Inst{10-6}  = op;
+  let Inst{5-0}   = 0b010000;
+}
+
+class RADDU_W_QB_FMT<bits<5> op> : DSPInst {
+  bits<5> rd;
+  bits<5> rs;
+
+  let Opcode = SPECIAL3_OPCODE.V;
+
+  let Inst{25-21} = rs;
+  let Inst{20-16} = 0;
+  let Inst{15-11} = rd;
+  let Inst{10-6}  = op;
+  let Inst{5-0}   = 0b010000;
+}
+
 // DPA.W.PH sub-class format.
 class DPA_W_PH_FMT<bits<5> op> : DSPInst {
   bits<2> ac;
