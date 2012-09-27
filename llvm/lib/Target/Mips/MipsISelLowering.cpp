@@ -868,6 +868,8 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const
     case ISD::SRL_PARTS:          return LowerShiftRightParts(Op, DAG, false);
     case ISD::LOAD:               return LowerLOAD(Op, DAG);
     case ISD::STORE:              return LowerSTORE(Op, DAG);
+    case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
+    case ISD::INTRINSIC_W_CHAIN:  return LowerINTRINSIC_W_CHAIN(Op, DAG);
   }
   return SDValue();
 }
@@ -2280,6 +2282,91 @@ SDValue MipsTargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
   //  (sdr val, baseptr)
   SDValue SDL = CreateStoreLR(MipsISD::SDL, DAG, SD, Chain, IsLittle ? 7 : 0);
   return CreateStoreLR(MipsISD::SDR, DAG, SD, SDL, IsLittle ? 0 : 7);
+}
+
+// This function expands mips intrinsic nodes which have 64-bit input operands
+// or output values.
+//
+// out64 = intrinsic-node in64
+// =>
+// lo = copy (extract-element (in64, 0))
+// hi = copy (extract-element (in64, 1))
+// mips-specific-node
+// v0 = copy lo
+// v1 = copy hi
+// out64 = merge-values (v0, v1)
+//
+static SDValue LowerDSPIntr(SDValue Op, SelectionDAG &DAG,
+                            unsigned Opc, bool HasI64In, bool HasI64Out) {
+  DebugLoc DL = Op.getDebugLoc();
+  bool HasChainIn = Op->getOperand(0).getValueType() == MVT::Other;
+  SDValue Chain = HasChainIn ? Op->getOperand(0) : DAG.getEntryNode();
+  SmallVector<SDValue, 3> Ops;
+
+  if (HasI64In) {
+    SDValue InLo = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, MVT::i32,
+                               Op->getOperand(1 + HasChainIn),
+                               DAG.getConstant(0, MVT::i32));
+    SDValue InHi = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, MVT::i32,
+                               Op->getOperand(1 + HasChainIn),
+                               DAG.getConstant(1, MVT::i32));
+
+    Chain = DAG.getCopyToReg(Chain, DL, Mips::LO, InLo, SDValue());
+    Chain = DAG.getCopyToReg(Chain, DL, Mips::HI, InHi, Chain.getValue(1));
+
+    Ops.push_back(Chain);
+    Ops.append(Op->op_begin() + HasChainIn + 2, Op->op_end());
+    Ops.push_back(Chain.getValue(1));
+  } else {
+    Ops.push_back(Chain);
+    Ops.append(Op->op_begin() + HasChainIn + 1, Op->op_end());
+  }
+
+  if (!HasI64Out)
+    return DAG.getNode(Opc, DL, Op->value_begin(), Op->getNumValues(),
+                       Ops.begin(), Ops.size());
+
+  SDValue Intr = DAG.getNode(Opc, DL, DAG.getVTList(MVT::Other, MVT::Glue),
+                             Ops.begin(), Ops.size());
+  SDValue OutLo = DAG.getCopyFromReg(Intr.getValue(0), DL, Mips::LO, MVT::i32,
+                                     Intr.getValue(1));
+  SDValue OutHi = DAG.getCopyFromReg(OutLo.getValue(1), DL, Mips::HI, MVT::i32,
+                                     OutLo.getValue(2));
+  SDValue Out = DAG.getNode(ISD::BUILD_PAIR, DL, MVT::i64, OutLo, OutHi);
+
+  if (!HasChainIn)
+    return Out;
+
+  SDValue Vals[] = { Out, OutHi.getValue(1) };
+  return DAG.getMergeValues(Vals, 2, DL);
+}
+
+SDValue MipsTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
+                                                    SelectionDAG &DAG) const {
+  switch (cast<ConstantSDNode>(Op->getOperand(0))->getZExtValue()) {
+  default:
+    return SDValue();
+  }
+}
+
+SDValue MipsTargetLowering::LowerINTRINSIC_W_CHAIN(SDValue Op,
+                                                   SelectionDAG &DAG) const {
+  switch (cast<ConstantSDNode>(Op->getOperand(1))->getZExtValue()) {
+  default:
+    return SDValue();
+  case Intrinsic::mips_extp:
+    return LowerDSPIntr(Op, DAG, MipsISD::EXTP, true, false);
+  case Intrinsic::mips_extpdp:
+    return LowerDSPIntr(Op, DAG, MipsISD::EXTPDP, true, false);
+  case Intrinsic::mips_extr_w:
+    return LowerDSPIntr(Op, DAG, MipsISD::EXTR_W, true, false);
+  case Intrinsic::mips_extr_r_w:
+    return LowerDSPIntr(Op, DAG, MipsISD::EXTR_R_W, true, false);
+  case Intrinsic::mips_extr_rs_w:
+    return LowerDSPIntr(Op, DAG, MipsISD::EXTR_RS_W, true, false);
+  case Intrinsic::mips_extr_s_h:
+    return LowerDSPIntr(Op, DAG, MipsISD::EXTR_S_H, true, false);
+  }
 }
 
 //===----------------------------------------------------------------------===//
