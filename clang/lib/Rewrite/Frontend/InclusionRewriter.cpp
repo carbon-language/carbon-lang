@@ -57,8 +57,8 @@ private:
                                   const Token &IncludeTok,
                                   StringRef FileName,
                                   bool IsAngled,
+                                  CharSourceRange FilenameRange,
                                   const FileEntry *File,
-                                  SourceLocation EndLoc,
                                   StringRef SearchPath,
                                   StringRef RelativePath);
   void WriteLineInfo(const char *Filename, int Line,
@@ -152,8 +152,8 @@ void InclusionRewriter::InclusionDirective(SourceLocation HashLoc,
                                            const Token &/*IncludeTok*/,
                                            StringRef /*FileName*/,
                                            bool /*IsAngled*/,
+                                           CharSourceRange /*FilenameRange*/,
                                            const FileEntry * /*File*/,
-                                           SourceLocation /*EndLoc*/,
                                            StringRef /*SearchPath*/,
                                            StringRef /*RelativePath*/) {
   assert(LastInsertedFileChange == FileChanges.end() && "Another inclusion "

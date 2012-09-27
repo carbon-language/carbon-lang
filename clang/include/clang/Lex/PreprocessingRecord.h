@@ -597,8 +597,8 @@ namespace clang {
                                     const Token &IncludeTok,
                                     StringRef FileName,
                                     bool IsAngled,
+                                    CharSourceRange FilenameRange,
                                     const FileEntry *File,
-                                    SourceLocation EndLoc,
                                     StringRef SearchPath,
                                     StringRef RelativePath);
     virtual void If(SourceLocation Loc, SourceRange ConditionRange);

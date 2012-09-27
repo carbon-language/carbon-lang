@@ -93,6 +93,9 @@ public:
   /// \param IsAngled Whether the file name was enclosed in angle brackets;
   /// otherwise, it was enclosed in quotes.
   ///
+  /// \param FilenameRange The character range of the quotes or angle brackets
+  /// for the written file name.
+  ///
   /// \param File The actual file that may be included by this inclusion 
   /// directive.
   ///
@@ -114,8 +117,8 @@ public:
                                   const Token &IncludeTok,
                                   StringRef FileName,
                                   bool IsAngled,
+                                  CharSourceRange FilenameRange,
                                   const FileEntry *File,
-                                  SourceLocation EndLoc,
                                   StringRef SearchPath,
                                   StringRef RelativePath) {
   }
@@ -266,14 +269,14 @@ public:
                                   const Token &IncludeTok,
                                   StringRef FileName,
                                   bool IsAngled,
+                                  CharSourceRange FilenameRange,
                                   const FileEntry *File,
-                                  SourceLocation EndLoc,
                                   StringRef SearchPath,
                                   StringRef RelativePath) {
-    First->InclusionDirective(HashLoc, IncludeTok, FileName, IsAngled, File,
-                              EndLoc, SearchPath, RelativePath);
-    Second->InclusionDirective(HashLoc, IncludeTok, FileName, IsAngled, File,
-                               EndLoc, SearchPath, RelativePath);
+    First->InclusionDirective(HashLoc, IncludeTok, FileName, IsAngled,
+                              FilenameRange, File, SearchPath, RelativePath);
+    Second->InclusionDirective(HashLoc, IncludeTok, FileName, IsAngled,
+                               FilenameRange, File, SearchPath, RelativePath);
   }
 
   virtual void EndOfMainFile() {

@@ -59,8 +59,8 @@ public:
                                   const Token &IncludeTok,
                                   StringRef FileName,
                                   bool IsAngled,
+                                  CharSourceRange FilenameRange,
                                   const FileEntry *File,
-                                  SourceLocation EndLoc,
                                   StringRef SearchPath,
                                   StringRef RelativePath);
 
@@ -132,8 +132,8 @@ void DependencyFileCallback::InclusionDirective(SourceLocation HashLoc,
                                                 const Token &IncludeTok,
                                                 StringRef FileName,
                                                 bool IsAngled,
+                                                CharSourceRange FilenameRange,
                                                 const FileEntry *File,
-                                                SourceLocation EndLoc,
                                                 StringRef SearchPath,
                                                 StringRef RelativePath) {
   if (!File) {
