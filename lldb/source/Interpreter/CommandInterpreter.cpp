@@ -268,7 +268,10 @@ CommandInterpreter::Initialize ()
     
     cmd_obj_sp = GetCommandSPExact ("process kill", false);
     if (cmd_obj_sp)
+    {
         AddAlias ("kill", cmd_obj_sp);
+        AddAlias ("k", cmd_obj_sp);
+    }
     
     cmd_obj_sp = GetCommandSPExact ("process launch", false);
     if (cmd_obj_sp)
