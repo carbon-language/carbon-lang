@@ -1860,7 +1860,7 @@ APInt APInt::udiv(const APInt& RHS) const {
     // 0 / X ===> 0
     return APInt(BitWidth, 0);
   else if (lhsWords < rhsWords || this->ult(RHS)) {
-    // X / Y ===> 0, if X < Y
+    // X / Y ===> 0, iff X < Y
     return APInt(BitWidth, 0);
   } else if (*this == RHS) {
     // X / X ===> 1
@@ -1897,7 +1897,7 @@ APInt APInt::urem(const APInt& RHS) const {
     // 0 % Y ===> 0
     return APInt(BitWidth, 0);
   } else if (lhsWords < rhsWords || this->ult(RHS)) {
-    // X % Y ===> X, if X < Y
+    // X % Y ===> X, iff X < Y
     return *this;
   } else if (*this == RHS) {
     // X % X == 0;
@@ -1929,8 +1929,8 @@ void APInt::udivrem(const APInt &LHS, const APInt &RHS,
   }
 
   if (lhsWords < rhsWords || LHS.ult(RHS)) {
-    Remainder = LHS;            // X % Y ===> X, if X < Y
-    Quotient = 0;               // X / Y ===> 0, if X < Y
+    Remainder = LHS;            // X % Y ===> X, iff X < Y
+    Quotient = 0;               // X / Y ===> 0, iff X < Y
     return;
   }
 

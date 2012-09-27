@@ -221,7 +221,7 @@ bool MSP430DAGToDAGISel::MatchAddress(SDValue N, MSP430ISelAddressMode &AM) {
   }
 
   case ISD::OR:
-    // Handle "X | C" as "X + C" if X is known to have C bits clear.
+    // Handle "X | C" as "X + C" iff X is known to have C bits clear.
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       MSP430ISelAddressMode Backup = AM;
       uint64_t Offset = CN->getSExtValue();

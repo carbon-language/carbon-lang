@@ -578,7 +578,7 @@ SDValue DAGCombiner::ReassociateOps(unsigned Opc, DebugLoc DL,
       return DAG.getNode(Opc, DL, VT, N0.getOperand(0), OpNode);
     }
     if (N0.hasOneUse()) {
-      // reassoc. (op (op x, c1), y) -> (op (op x, y), c1) if x+c1 has one use
+      // reassoc. (op (op x, c1), y) -> (op (op x, y), c1) iff x+c1 has one use
       SDValue OpNode = DAG.getNode(Opc, N0.getDebugLoc(), VT,
                                    N0.getOperand(0), N1);
       AddToWorkList(OpNode.getNode());
@@ -596,7 +596,7 @@ SDValue DAGCombiner::ReassociateOps(unsigned Opc, DebugLoc DL,
       return DAG.getNode(Opc, DL, VT, N1.getOperand(0), OpNode);
     }
     if (N1.hasOneUse()) {
-      // reassoc. (op y, (op x, c1)) -> (op (op x, y), c1) if x+c1 has one use
+      // reassoc. (op y, (op x, c1)) -> (op (op x, y), c1) iff x+c1 has one use
       SDValue OpNode = DAG.getNode(Opc, N0.getDebugLoc(), VT,
                                    N1.getOperand(0), N0);
       AddToWorkList(OpNode.getNode());
@@ -1455,7 +1455,7 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
   if (!VT.isVector() && SimplifyDemandedBits(SDValue(N, 0)))
     return SDValue(N, 0);
 
-  // fold (a+b) -> (a|b) if a and b share no bits.
+  // fold (a+b) -> (a|b) iff a and b share no bits.
   if (VT.isInteger() && !VT.isVector()) {
     APInt LHSZero, LHSOne;
     APInt RHSZero, RHSOne;
@@ -1549,7 +1549,7 @@ SDValue DAGCombiner::visitADDC(SDNode *N) {
     return CombineTo(N, N0, DAG.getNode(ISD::CARRY_FALSE,
                                         N->getDebugLoc(), MVT::Glue));
 
-  // fold (addc a, b) -> (or a, b), CARRY_FALSE if a and b share no bits.
+  // fold (addc a, b) -> (or a, b), CARRY_FALSE iff a and b share no bits.
   APInt LHSZero, LHSOne;
   APInt RHSZero, RHSOne;
   DAG.ComputeMaskedBits(N0, LHSZero, LHSOne);
@@ -1937,7 +1937,7 @@ SDValue DAGCombiner::visitUDIV(SDNode *N) {
     return DAG.getNode(ISD::SRL, N->getDebugLoc(), VT, N0,
                        DAG.getConstant(N1C->getAPIntValue().logBase2(),
                                        getShiftAmountTy(N0.getValueType())));
-  // fold (udiv x, (shl c, y)) -> x >>u (log2(c)+y) if c is power of 2
+  // fold (udiv x, (shl c, y)) -> x >>u (log2(c)+y) iff c is power of 2
   if (N1.getOpcode() == ISD::SHL) {
     if (ConstantSDNode *SHC = dyn_cast<ConstantSDNode>(N1.getOperand(0))) {
       if (SHC->getAPIntValue().isPowerOf2()) {
@@ -2642,7 +2642,7 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
       return SDValue(N, 0);   // Return N so it doesn't get rechecked!
     }
   }
-  // fold (zext_inreg (sextload x)) -> (zextload x) if load has one use
+  // fold (zext_inreg (sextload x)) -> (zextload x) iff load has one use
   if (ISD::isSEXTLoad(N0.getNode()) && ISD::isUNINDEXEDLoad(N0.getNode()) &&
       N0.hasOneUse()) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
@@ -3038,7 +3038,7 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
   // fold (or x, -1) -> -1
   if (N1C && N1C->isAllOnesValue())
     return N1;
-  // fold (or x, c) -> c if (x & ~c) == 0
+  // fold (or x, c) -> c iff (x & ~c) == 0
   if (N1C && DAG.MaskedValueIsZero(N0, ~N1C->getAPIntValue()))
     return N1;
 
@@ -3055,7 +3055,7 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
   if (ROR.getNode() != 0)
     return ROR;
   // Canonicalize (or (and X, c1), c2) -> (and (or X, c2), c1|c2)
-  // if (c1 & c2) == 0.
+  // iff (c1 & c2) == 0.
   if (N1C && N0.getOpcode() == ISD::AND && N0.getNode()->hasOneUse() &&
              isa<ConstantSDNode>(N0.getOperand(1))) {
     ConstantSDNode *C1 = cast<ConstantSDNode>(N0.getOperand(1));
@@ -3392,7 +3392,7 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
     return DAG.getNode(ISD::ZERO_EXTEND, N->getDebugLoc(), VT, V);
   }
 
-  // fold (not (or x, y)) -> (and (not x), (not y)) if x or y are setcc
+  // fold (not (or x, y)) -> (and (not x), (not y)) iff x or y are setcc
   if (N1C && N1C->getAPIntValue() == 1 && VT == MVT::i1 &&
       (N0.getOpcode() == ISD::OR || N0.getOpcode() == ISD::AND)) {
     SDValue LHS = N0.getOperand(0), RHS = N0.getOperand(1);
@@ -3404,7 +3404,7 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
       return DAG.getNode(NewOpcode, N->getDebugLoc(), VT, LHS, RHS);
     }
   }
-  // fold (not (or x, y)) -> (and (not x), (not y)) if x or y are constants
+  // fold (not (or x, y)) -> (and (not x), (not y)) iff x or y are constants
   if (N1C && N1C->isAllOnesValue() &&
       (N0.getOpcode() == ISD::OR || N0.getOpcode() == ISD::AND)) {
     SDValue LHS = N0.getOperand(0), RHS = N0.getOperand(1);
@@ -3882,7 +3882,7 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
       return DAG.getNode(ISD::SRL, N->getDebugLoc(), VT, N0.getOperand(0), N1);
   }
 
-  // fold (srl (ctlz x), "5") -> x  if x has one bit set (the low bit).
+  // fold (srl (ctlz x), "5") -> x  iff x has one bit set (the low bit).
   if (N1C && N0.getOpcode() == ISD::CTLZ &&
       N1C->getAPIntValue() == Log2_32(VT.getSizeInBits())) {
     APInt KnownZero, KnownOne;
@@ -4816,7 +4816,7 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
   if (N0.getOpcode() == ISD::TRUNCATE) {
     SDValue TruncOp = N0.getOperand(0);
     if (TruncOp.getValueType() == VT)
-      return TruncOp; // x if x size == zext size.
+      return TruncOp; // x iff x size == zext size.
     if (TruncOp.getValueType().bitsGT(VT))
       return DAG.getNode(ISD::TRUNCATE, N->getDebugLoc(), VT, TruncOp);
     return DAG.getNode(ISD::ANY_EXTEND, N->getDebugLoc(), VT, TruncOp);
@@ -5168,12 +5168,12 @@ SDValue DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
     return NarrowLoad;
 
   // fold (sext_in_reg (srl X, 24), i8) -> (sra X, 24)
-  // fold (sext_in_reg (srl X, 23), i8) -> (sra X, 23) if possible.
+  // fold (sext_in_reg (srl X, 23), i8) -> (sra X, 23) iff possible.
   // We already fold "(sext_in_reg (srl X, 25), i8) -> srl X, 25" above.
   if (N0.getOpcode() == ISD::SRL) {
     if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(N0.getOperand(1)))
       if (ShAmt->getZExtValue()+EVTBits <= VTBits) {
-        // We can turn this into an SRA if the input to the SRL is already sign
+        // We can turn this into an SRA iff the input to the SRL is already sign
         // extended enough.
         unsigned InSignBits = DAG.ComputeNumSignBits(N0.getOperand(0));
         if (VTBits-(ShAmt->getZExtValue()+EVTBits) < InSignBits)
@@ -5199,7 +5199,7 @@ SDValue DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
     CombineTo(N0.getNode(), ExtLoad, ExtLoad.getValue(1));
     return SDValue(N, 0);   // Return N so it doesn't get rechecked!
   }
-  // fold (sext_inreg (zextload x)) -> (sextload x) if load has one use
+  // fold (sext_inreg (zextload x)) -> (sextload x) iff load has one use
   if (ISD::isZEXTLoad(N0.getNode()) && ISD::isUNINDEXEDLoad(N0.getNode()) &&
       N0.hasOneUse() &&
       EVT == cast<LoadSDNode>(N0)->getMemoryVT() &&
@@ -5506,7 +5506,7 @@ SDValue DAGCombiner::visitBITCAST(SDNode *N) {
     }
   }
 
-  // bitconvert(build_pair(ld, ld)) -> ld if load locations are consecutive.
+  // bitconvert(build_pair(ld, ld)) -> ld iff load locations are consecutive.
   if (N0.getOpcode() == ISD::BUILD_PAIR) {
     SDValue CombineLD = CombineConsecutiveLoads(N0.getNode(), VT);
     if (CombineLD.getNode())
@@ -6151,8 +6151,8 @@ SDValue DAGCombiner::visitFCOPYSIGN(SDNode *N) {
 
   if (N1CFP) {
     const APFloat& V = N1CFP->getValueAPF();
-    // copysign(x, c1) -> fabs(x)       if ispos(c1)
-    // copysign(x, c1) -> fneg(fabs(x)) if isneg(c1)
+    // copysign(x, c1) -> fabs(x)       iff ispos(c1)
+    // copysign(x, c1) -> fneg(fabs(x)) iff isneg(c1)
     if (!V.isNegative()) {
       if (!LegalOperations || TLI.isOperationLegal(ISD::FABS, VT))
         return DAG.getNode(ISD::FABS, N->getDebugLoc(), VT, N0);
@@ -8764,7 +8764,7 @@ SDValue DAGCombiner::SimplifySelectCC(DebugLoc DL, SDValue N0, SDValue N1,
     EVT XType = N0.getValueType();
     EVT AType = N2.getValueType();
     if (XType.bitsGE(AType)) {
-      // and (sra X, size(X)-1, A) -> "and (srl X, C2), A" if A is a
+      // and (sra X, size(X)-1, A) -> "and (srl X, C2), A" iff A is a
       // single-bit constant.
       if (N2C && ((N2C->getAPIntValue() & (N2C->getAPIntValue()-1)) == 0)) {
         unsigned ShCtV = N2C->getAPIntValue().logBase2();

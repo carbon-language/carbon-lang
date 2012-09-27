@@ -698,7 +698,7 @@ def tLDMIA : T1I<(outs), (ins tGPR:$Rn, pred:$p, reglist:$regs, variable_ops),
 }
 
 // Writeback version is just a pseudo, as there's no encoding difference.
-// Writeback happens if the base register is not in the destination register
+// Writeback happens iff the base register is not in the destination register
 // list.
 def tLDMIA_UPD :
     InstTemplate<AddrModeNone, 0, IndexModeNone, Pseudo, GenericDomain,

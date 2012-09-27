@@ -170,17 +170,17 @@ public:
     return Val == 1;
   }
 
-  /// This function will return true if every bit in this constant is set
+  /// This function will return true iff every bit in this constant is set
   /// to true.
-  /// @returns true if this constant's bits are all set to true.
+  /// @returns true iff this constant's bits are all set to true.
   /// @brief Determine if the value is all ones.
   bool isMinusOne() const { 
     return Val.isAllOnesValue();
   }
 
-  /// This function will return true if this constant represents the largest
+  /// This function will return true iff this constant represents the largest
   /// value that may be represented by the constant's type.
-  /// @returns true if this is the largest value that may be represented 
+  /// @returns true iff this is the largest value that may be represented 
   /// by this type.
   /// @brief Determine if the value is maximal.
   bool isMaxValue(bool isSigned) const {
@@ -190,7 +190,7 @@ public:
       return Val.isMaxValue();
   }
 
-  /// This function will return true if this constant represents the smallest
+  /// This function will return true iff this constant represents the smallest
   /// value that may be represented by this constant's type.
   /// @returns true if this is the smallest value that may be represented by 
   /// this type.
@@ -202,10 +202,10 @@ public:
       return Val.isMinValue();
   }
 
-  /// This function will return true if this constant represents a value with
+  /// This function will return true iff this constant represents a value with
   /// active bits bigger than 64 bits or a value greater than the given uint64_t
   /// value.
-  /// @returns true if this constant is greater or equal to the given number.
+  /// @returns true iff this constant is greater or equal to the given number.
   /// @brief Determine if the value is greater or equal to the given number.
   bool uge(uint64_t Num) const {
     return Val.getActiveBits() > 64 || Val.getZExtValue() >= Num;

@@ -532,7 +532,7 @@ CodeGenRegister::addSubRegsPreOrder(SetVector<const CodeGenRegister*> &OSet,
 //
 // Alternatively:
 //
-//    overlap(A, B) if there exists:
+//    overlap(A, B) iff there exists:
 //    A' in { A, subregs(A) } and B' in { B, subregs(B) } such that:
 //    A' = B' or A' in aliases(B') or B' in aliases(A').
 //

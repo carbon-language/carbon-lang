@@ -104,7 +104,7 @@ bool llvm::isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum,
     return I != E;
 
   // If AllowIdenticalEdges is true, then we allow this edge to be considered
-  // non-critical if all preds come from TI's block.
+  // non-critical iff all preds come from TI's block.
   while (I != E) {
     const BasicBlock *P = *I;
     if (P != FirstPred)

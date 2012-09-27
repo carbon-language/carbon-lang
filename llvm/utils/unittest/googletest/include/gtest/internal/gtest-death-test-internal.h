@@ -256,7 +256,7 @@ InternalRunDeathTestFlag* ParseInternalRunDeathTestFlag();
 // This macro is used for implementing macros such as
 // EXPECT_DEATH_IF_SUPPORTED and ASSERT_DEATH_IF_SUPPORTED on systems where
 // death tests are not supported. Those macros must compile on such systems
-// if EXPECT_DEATH and ASSERT_DEATH compile with the same parameters on
+// iff EXPECT_DEATH and ASSERT_DEATH compile with the same parameters on
 // systems that support death tests. This allows one to write such a macro
 // on a system that does not support death tests and be sure that it will
 // compile on a death-test supporting system.
@@ -266,7 +266,7 @@ InternalRunDeathTestFlag* ParseInternalRunDeathTestFlag();
 //                for program termination. This macro has to make sure this
 //                statement is compiled but not executed, to ensure that
 //                EXPECT_DEATH_IF_SUPPORTED compiles with a certain
-//                parameter if EXPECT_DEATH compiles with it.
+//                parameter iff EXPECT_DEATH compiles with it.
 //   regex     -  A regex that a macro such as EXPECT_DEATH would use to test
 //                the output of statement.  This parameter has to be
 //                compiled but not evaluated by this macro, to ensure that

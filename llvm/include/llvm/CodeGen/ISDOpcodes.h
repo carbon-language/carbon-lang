@@ -340,7 +340,7 @@ namespace ISD {
     /// condition code in op #4, a CondCodeSDNode.
     SELECT_CC,
 
-    /// SetCC operator - This evaluates to a true value if the condition is
+    /// SetCC operator - This evaluates to a true value iff the condition is
     /// true.  If the result value type is not i1 then the high bits conform
     /// to getBooleanContents.  The operands to this are the left and right
     /// operands to compare (ops #0, and #1) and the condition code to compare

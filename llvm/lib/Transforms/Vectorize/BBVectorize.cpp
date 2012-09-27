@@ -557,7 +557,7 @@ namespace {
       // Now we have a map of all of the pairable instructions and we need to
       // select the best possible pairing. A good pairing is one such that the
       // users of the pair are also paired. This defines a (directed) forest
-      // over the pairs such that two pairs are connected if the second pair
+      // over the pairs such that two pairs are connected iff the second pair
       // uses the first.
 
       // Note that it only matters that both members of the second pair use some

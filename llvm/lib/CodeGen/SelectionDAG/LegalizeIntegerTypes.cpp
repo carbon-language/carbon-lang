@@ -447,7 +447,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_SADDSUBO(SDNode *N, unsigned ResNo) {
   if (ResNo == 1)
     return PromoteIntRes_Overflow(N);
 
-  // The operation overflowed if the result in the larger type is not the
+  // The operation overflowed iff the result in the larger type is not the
   // sign extension of its truncation to the original type.
   SDValue LHS = SExtPromotedInteger(N->getOperand(0));
   SDValue RHS = SExtPromotedInteger(N->getOperand(1));
@@ -610,7 +610,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_UADDSUBO(SDNode *N, unsigned ResNo) {
   if (ResNo == 1)
     return PromoteIntRes_Overflow(N);
 
-  // The operation overflowed if the result in the larger type is not the
+  // The operation overflowed iff the result in the larger type is not the
   // zero extension of its truncation to the original type.
   SDValue LHS = ZExtPromotedInteger(N->getOperand(0));
   SDValue RHS = ZExtPromotedInteger(N->getOperand(1));
@@ -655,17 +655,17 @@ SDValue DAGTypeLegalizer::PromoteIntRes_XMULO(SDNode *N, unsigned ResNo) {
   }
   SDValue Mul = DAG.getNode(ISD::MUL, DL, LHS.getValueType(), LHS, RHS);
 
-  // Overflow occurred if the high part of the result does not
+  // Overflow occurred iff the high part of the result does not
   // zero/sign-extend the low part.
   SDValue Overflow;
   if (N->getOpcode() == ISD::UMULO) {
-    // Unsigned overflow occurred if the high part is non-zero.
+    // Unsigned overflow occurred iff the high part is non-zero.
     SDValue Hi = DAG.getNode(ISD::SRL, DL, Mul.getValueType(), Mul,
                              DAG.getIntPtrConstant(SmallVT.getSizeInBits()));
     Overflow = DAG.getSetCC(DL, N->getValueType(1), Hi,
                             DAG.getConstant(0, Hi.getValueType()), ISD::SETNE);
   } else {
-    // Signed overflow occurred if the high part does not sign extend the low.
+    // Signed overflow occurred iff the high part does not sign extend the low.
     SDValue SExt = DAG.getNode(ISD::SIGN_EXTEND_INREG, DL, Mul.getValueType(),
                                Mul, DAG.getValueType(SmallVT));
     Overflow = DAG.getSetCC(DL, N->getValueType(1), SExt, Mul, ISD::SETNE);
@@ -2240,8 +2240,8 @@ void DAGTypeLegalizer::ExpandIntRes_UADDSUBO(SDNode *N,
                             LHS, RHS);
   SplitInteger(Sum, Lo, Hi);
 
-  // Calculate the overflow: addition overflows if a + b < a, and subtraction
-  // overflows if a - b > a.
+  // Calculate the overflow: addition overflows iff a + b < a, and subtraction
+  // overflows iff a - b > a.
   SDValue Ofl = DAG.getSetCC(dl, N->getValueType(1), Sum, LHS,
                              N->getOpcode () == ISD::UADDO ?
                              ISD::SETULT : ISD::SETUGT);

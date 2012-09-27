@@ -5316,7 +5316,7 @@ validateInstruction(MCInst &Inst,
     // instruction. We'll make the transformation in processInstruction()
     // if necessary.
     //
-    // Thumb LDM instructions are writeback if the base register is not
+    // Thumb LDM instructions are writeback iff the base register is not
     // in the register list.
     unsigned Rn = Inst.getOperand(0).getReg();
     bool hasWritebackToken =
@@ -7023,7 +7023,7 @@ processInstruction(MCInst &Inst,
     Inst.addOperand(MCOperand::CreateReg(0)); // cc_out
     break;
   case ARM::tADDi8:
-    // If the immediate is in the range 0-7, we want tADDi3 if Rd was
+    // If the immediate is in the range 0-7, we want tADDi3 iff Rd was
     // explicitly specified. From the ARM ARM: "Encoding T1 is preferred
     // to encoding T2 if <Rd> is specified and encoding T2 is preferred
     // to encoding T1 if <Rd> is omitted."
@@ -7033,7 +7033,7 @@ processInstruction(MCInst &Inst,
     }
     break;
   case ARM::tSUBi8:
-    // If the immediate is in the range 0-7, we want tADDi3 if Rd was
+    // If the immediate is in the range 0-7, we want tADDi3 iff Rd was
     // explicitly specified. From the ARM ARM: "Encoding T1 is preferred
     // to encoding T2 if <Rd> is specified and encoding T2 is preferred
     // to encoding T1 if <Rd> is omitted."

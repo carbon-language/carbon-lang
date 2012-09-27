@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file implements a simple interprocedural pass which walks the
-// call-graph, turning invoke instructions into calls, if the callee cannot
+// call-graph, turning invoke instructions into calls, iff the callee cannot
 // throw an exception, and marking functions 'nounwind' if they cannot throw.
 // It implements this as a bottom-up traversal of the call-graph.
 //

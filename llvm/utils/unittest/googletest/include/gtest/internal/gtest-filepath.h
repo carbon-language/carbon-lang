@@ -111,7 +111,7 @@ class GTEST_API_ FilePath {
                                          const FilePath& base_name,
                                          const char* extension);
 
-  // Returns true if the path is NULL or "".
+  // Returns true iff the path is NULL or "".
   bool IsEmpty() const { return c_str() == NULL || *c_str() == '\0'; }
 
   // If input name has a trailing separator character, removes it and returns

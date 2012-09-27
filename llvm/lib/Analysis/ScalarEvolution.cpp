@@ -1367,7 +1367,7 @@ const SCEV *ScalarEvolution::getAnyExtendExpr(const SCEV *Op,
 /// This form often exposes folding opportunities that are hidden in
 /// the original operand list.
 ///
-/// Return true if it appears that any interesting folding opportunities
+/// Return true iff it appears that any interesting folding opportunities
 /// may be exposed. This helps getAddRecExpr short-circuit extra work in
 /// the common case where no interesting opportunities are present, and
 /// is also used as a check to avoid infinite recursion.
@@ -5598,7 +5598,7 @@ static bool HasSameValue(const SCEV *A, const SCEV *B) {
 }
 
 /// SimplifyICmpOperands - Simplify LHS and RHS in a comparison with
-/// predicate Pred. Return true if any changes were made.
+/// predicate Pred. Return true iff any changes were made.
 ///
 bool ScalarEvolution::SimplifyICmpOperands(ICmpInst::Predicate &Pred,
                                            const SCEV *&LHS, const SCEV *&RHS,

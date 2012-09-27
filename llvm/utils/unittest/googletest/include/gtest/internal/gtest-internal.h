@@ -287,7 +287,7 @@ GTEST_FORMAT_CHAR_PTR_IMPL_(const wchar_t)
 //   expected_value:      "5"
 //   actual_value:        "6"
 //
-// The ignoring_case parameter is true if the assertion is a
+// The ignoring_case parameter is true iff the assertion is a
 // *_STRCASEEQ*.  When it's true, the string " (ignoring case)" will
 // be inserted into the message.
 GTEST_API_ AssertionResult EqFailure(const char* expected_expression,
@@ -413,14 +413,14 @@ class FloatingPoint {
   // Returns the sign bit of this number.
   Bits sign_bit() const { return kSignBitMask & u_.bits_; }
 
-  // Returns true if this is NAN (not a number).
+  // Returns true iff this is NAN (not a number).
   bool is_nan() const {
     // It's a NAN if the exponent bits are all ones and the fraction
     // bits are not entirely zeros.
     return (exponent_bits() == kExponentBitMask) && (fraction_bits() != 0);
   }
 
-  // Returns true if this number is at most kMaxUlps ULP's away from
+  // Returns true iff this number is at most kMaxUlps ULP's away from
   // rhs.  In particular, this function:
   //
   //   - returns false if either number is (or both are) NAN.
@@ -784,7 +784,7 @@ class GTEST_API_ Random {
 };
 
 // Defining a variable of type CompileAssertTypesEqual<T1, T2> will cause a
-// compiler error if T1 and T2 are different types.
+// compiler error iff T1 and T2 are different types.
 template <typename T1, typename T2>
 struct CompileAssertTypesEqual;
 
@@ -860,7 +860,7 @@ struct AddReference<T&> { typedef T& type; };  // NOLINT
     GTEST_ADD_REFERENCE_(const GTEST_REMOVE_REFERENCE_(T))
 
 // ImplicitlyConvertible<From, To>::value is a compile-time bool
-// constant that's true if type From can be implicitly converted to
+// constant that's true iff type From can be implicitly converted to
 // type To.
 template <typename From, typename To>
 class ImplicitlyConvertible {
@@ -913,7 +913,7 @@ template <typename From, typename To>
 const bool ImplicitlyConvertible<From, To>::value;
 
 // IsAProtocolMessage<T>::value is a compile-time bool constant that's
-// true if T is type ProtocolMessage, proto2::Message, or a subclass
+// true iff T is type ProtocolMessage, proto2::Message, or a subclass
 // of those.
 template <typename T>
 struct IsAProtocolMessage

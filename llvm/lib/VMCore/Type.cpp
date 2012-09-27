@@ -170,7 +170,7 @@ int Type::getFPMantissaWidth() const {
 }
 
 /// isSizedDerivedType - Derived types like structures and arrays are sized
-/// if all of the members of the type are sized as well.  Since asking for
+/// iff all of the members of the type are sized as well.  Since asking for
 /// their size is relatively uncommon, move this operation out of line.
 bool Type::isSizedDerivedType() const {
   if (this->isIntegerTy())

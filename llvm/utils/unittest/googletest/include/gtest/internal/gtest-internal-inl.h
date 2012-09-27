@@ -37,7 +37,7 @@
 #ifndef GTEST_SRC_GTEST_INTERNAL_INL_H_
 #define GTEST_SRC_GTEST_INTERNAL_INL_H_
 
-// GTEST_IMPLEMENTATION_ is defined to 1 if the current translation unit is
+// GTEST_IMPLEMENTATION_ is defined to 1 iff the current translation unit is
 // part of Google Test's implementation; otherwise it's undefined.
 #if !GTEST_IMPLEMENTATION_
 // A user is trying to include this from his code - just say no.
@@ -99,14 +99,14 @@ const char kThrowOnFailureFlag[] = "throw_on_failure";
 // A valid random seed must be in [1, kMaxRandomSeed].
 const int kMaxRandomSeed = 99999;
 
-// g_help_flag is true if the --help flag or an equivalent form is
+// g_help_flag is true iff the --help flag or an equivalent form is
 // specified on the command line.
 GTEST_API_ extern bool g_help_flag;
 
 // Returns the current time in milliseconds.
 GTEST_API_ TimeInMillis GetTimeInMillis();
 
-// Returns true if Google Test should use colors in the output.
+// Returns true iff Google Test should use colors in the output.
 GTEST_API_ bool ShouldUseColor(bool stdout_is_tty);
 
 // Formats the given time in milliseconds as seconds.
@@ -258,7 +258,7 @@ GTEST_API_ bool ShouldShard(const char* total_shards_str,
 GTEST_API_ Int32 Int32FromEnvOrDie(const char* env_var, Int32 default_val);
 
 // Given the total number of shards, the shard index, and the test id,
-// returns true if the test should be run on this shard. The test id is
+// returns true iff the test should be run on this shard. The test id is
 // some arbitrary but unique non-negative integer assigned to each test
 // method. Assumes that 0 <= shard_index < total_shards.
 GTEST_API_ bool ShouldRunTestOnShard(
@@ -341,7 +341,7 @@ class TestPropertyKeyIs {
   explicit TestPropertyKeyIs(const char* key)
       : key_(key) {}
 
-  // Returns true if the test name of test property matches on key_.
+  // Returns true iff the test name of test property matches on key_.
   bool operator()(const TestProperty& test_property) const {
     return String(test_property.key()).Compare(key_) == 0;
   }
@@ -374,14 +374,14 @@ class GTEST_API_ UnitTestOptions {
 
   // Functions for processing the gtest_filter flag.
 
-  // Returns true if the wildcard pattern matches the string.  The
+  // Returns true iff the wildcard pattern matches the string.  The
   // first ':' or '\0' character in pattern marks the end of it.
   //
   // This recursive algorithm isn't very efficient, but is clear and
   // works well enough for matching test names, which are short.
   static bool PatternMatchesString(const char *pattern, const char *str);
 
-  // Returns true if the user-specified filter matches the test case
+  // Returns true iff the user-specified filter matches the test case
   // name and the test name.
   static bool FilterMatchesTest(const String &test_case_name,
                                 const String &test_name);
@@ -550,10 +550,10 @@ class GTEST_API_ UnitTestImpl {
   // Gets the elapsed time, in milliseconds.
   TimeInMillis elapsed_time() const { return elapsed_time_; }
 
-  // Returns true if the unit test passed (i.e. all test cases passed).
+  // Returns true iff the unit test passed (i.e. all test cases passed).
   bool Passed() const { return !Failed(); }
 
-  // Returns true if the unit test failed (i.e. some test case failed
+  // Returns true iff the unit test failed (i.e. some test case failed
   // or something outside of all tests failed).
   bool Failed() const {
     return failed_test_case_count() > 0 || ad_hoc_test_result()->Failed();
@@ -870,7 +870,7 @@ class GTEST_API_ UnitTestImpl {
   // desired.
   OsStackTraceGetterInterface* os_stack_trace_getter_;
 
-  // True if PostFlagParsingInit() has been called.
+  // True iff PostFlagParsingInit() has been called.
   bool post_flag_parse_init_performed_;
 
   // The random number seed used at the beginning of the test run.

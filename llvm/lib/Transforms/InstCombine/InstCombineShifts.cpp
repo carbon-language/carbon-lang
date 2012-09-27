@@ -37,7 +37,7 @@ Instruction *InstCombiner::commonShiftTransforms(BinaryOperator &I) {
     if (Instruction *Res = FoldShiftByConstant(Op0, CUI, I))
       return Res;
 
-  // X shift (A srem B) -> X shift (A and B-1) if B is a power of 2.
+  // X shift (A srem B) -> X shift (A and B-1) iff B is a power of 2.
   // Because shifts by negative values (which could occur if A were negative)
   // are undefined.
   Value *A; const APInt *B;
@@ -85,7 +85,7 @@ static bool CanEvaluateShifted(Value *V, unsigned NumBits, bool isLeftShift,
       // TODO: Check that the input bits are already zero with MaskedValueIsZero
 #if 0
       // If this is a truncate of a logical shr, we can truncate it to a smaller
-      // lshr if we know that the bits we would otherwise be shifting in are
+      // lshr iff we know that the bits we would otherwise be shifting in are
       // already zeros.
       uint32_t OrigBitWidth = OrigTy->getScalarSizeInBits();
       uint32_t BitWidth = Ty->getScalarSizeInBits();

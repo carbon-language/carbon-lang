@@ -1700,7 +1700,7 @@ EnableTiming("time-passes", cl::location(TimePassesIsEnabled),
 void TimingInfo::createTheTimeInfo() {
   if (!TimePassesIsEnabled || TheTimeInfo) return;
 
-  // Constructed the first time this is called, if -time-passes is enabled.
+  // Constructed the first time this is called, iff -time-passes is enabled.
   // This guarantees that the object will be constructed before static globals,
   // thus it will be destroyed before them.
   static ManagedStatic<TimingInfo> TTI;

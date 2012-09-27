@@ -1280,7 +1280,7 @@ void FPS::handleCompareFP(MachineBasicBlock::iterator &I) {
 }
 
 /// handleCondMovFP - Handle two address conditional move instructions.  These
-/// instructions move a st(i) register to st(0) if a condition is true.  These
+/// instructions move a st(i) register to st(0) iff a condition is true.  These
 /// instructions require that the first operand is at the top of the stack, but
 /// otherwise don't modify the stack at all.
 void FPS::handleCondMovFP(MachineBasicBlock::iterator &I) {

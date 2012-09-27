@@ -1,5 +1,5 @@
 ; RUN: opt < %s -basicaa -gvn -asan -S | FileCheck %s
-; ASAN conflicts with load widening if the widened load accesses data out of bounds
+; ASAN conflicts with load widening iff the widened load accesses data out of bounds
 ; (while the original unwidened loads do not).
 ; http://code.google.com/p/address-sanitizer/issues/detail?id=20#c1
 

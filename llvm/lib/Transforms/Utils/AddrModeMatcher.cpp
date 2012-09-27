@@ -201,7 +201,7 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
     break;
   }
   //case Instruction::Or:
-  // TODO: We can handle "Or Val, Imm" if this OR is equivalent to an ADD.
+  // TODO: We can handle "Or Val, Imm" iff this OR is equivalent to an ADD.
   //break;
   case Instruction::Mul:
   case Instruction::Shl: {

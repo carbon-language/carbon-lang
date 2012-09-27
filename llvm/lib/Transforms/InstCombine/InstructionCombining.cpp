@@ -1724,7 +1724,7 @@ Instruction *InstCombiner::visitLandingPadInst(LandingPadInst &LI) {
         continue;
       // At this point we know that LFilter has at least one element.
       if (isa<ConstantAggregateZero>(LFilter)) { // LFilter only contains zeros.
-        // Filter is a subset of LFilter if Filter contains only zeros (as we
+        // Filter is a subset of LFilter iff Filter contains only zeros (as we
         // already know that Filter is not longer than LFilter).
         if (isa<ConstantAggregateZero>(Filter)) {
           assert(FElts <= LElts && "Should have handled this case earlier!");
@@ -1738,7 +1738,7 @@ Instruction *InstCombiner::visitLandingPadInst(LandingPadInst &LI) {
       ConstantArray *LArray = cast<ConstantArray>(LFilter);
       if (isa<ConstantAggregateZero>(Filter)) { // Filter only contains zeros.
         // Since Filter is non-empty and contains only zeros, it is a subset of
-        // LFilter if LFilter contains a zero.
+        // LFilter iff LFilter contains a zero.
         assert(FElts > 0 && "Should have eliminated the empty filter earlier!");
         for (unsigned l = 0; l != LElts; ++l)
           if (LArray->getOperand(l)->isNullValue()) {

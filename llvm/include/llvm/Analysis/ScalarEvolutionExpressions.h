@@ -318,7 +318,7 @@ namespace llvm {
     /// an expressions A+B*x where A and B are loop invariant values.
     bool isAffine() const {
       // We know that the start value is invariant.  This expression is thus
-      // affine if the step is also invariant.
+      // affine iff the step is also invariant.
       return getNumOperands() == 2;
     }
 

@@ -232,7 +232,7 @@ namespace sys {
       /// determine if the current value of \p this is a syntactically valid
       /// path name for the operating system. The path name does not need to
       /// exist, validity is simply syntactical. Empty paths are always invalid.
-      /// @returns true if the path name is syntactically legal for the
+      /// @returns true iff the path name is syntactically legal for the
       /// host operating system.
       /// @brief Determine if a path is syntactically valid or not.
       bool isValid() const;
@@ -242,7 +242,7 @@ namespace sys {
       /// if the file is empty. To get the length of the file itself, Use the
       /// PathWithStatus::getFileStatus() method and then the getSize() method
       /// on the returned FileStatus object.
-      /// @returns true if the path is empty.
+      /// @returns true iff the path is empty.
       /// @brief Determines if the path name is empty (invalid).
       bool isEmpty() const { return path.empty(); }
 

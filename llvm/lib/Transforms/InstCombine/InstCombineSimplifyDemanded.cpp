@@ -304,7 +304,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
     
     // If all of the demanded bits are known to be zero on one side or the
     // other, turn this into an *inclusive* or.
-    //    e.g. (A & C1)^(B & C2) -> (A & C1)|(B & C2) if C1&C2 == 0
+    //    e.g. (A & C1)^(B & C2) -> (A & C1)|(B & C2) iff C1&C2 == 0
     if ((DemandedMask & ~RHSKnownZero & ~LHSKnownZero) == 0) {
       Instruction *Or = 
         BinaryOperator::CreateOr(I->getOperand(0), I->getOperand(1),
@@ -315,7 +315,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
     // If all of the demanded bits on one side are known, and all of the set
     // bits on that side are also known to be set on the other side, turn this
     // into an AND, as we know the bits will be cleared.
-    //    e.g. (X | C1) ^ C2 --> (X | C1) & ~C2 if (C1&C2) == C2
+    //    e.g. (X | C1) ^ C2 --> (X | C1) & ~C2 iff (C1&C2) == C2
     if ((DemandedMask & (RHSKnownZero|RHSKnownOne)) == DemandedMask) { 
       // all known
       if ((RHSKnownOne & LHSKnownOne) == RHSKnownOne) {

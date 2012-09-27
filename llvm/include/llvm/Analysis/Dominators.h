@@ -346,7 +346,7 @@ public:
   DomTreeNodeBase<NodeT> *getRootNode() { return RootNode; }
   const DomTreeNodeBase<NodeT> *getRootNode() const { return RootNode; }
 
-  /// properlyDominates - Returns true if this dominates N and this != N.
+  /// properlyDominates - Returns true iff this dominates N and this != N.
   /// Note that this is not a constant time operation!
   ///
   bool properlyDominates(const DomTreeNodeBase<NodeT> *A,
@@ -372,7 +372,7 @@ public:
     return A;
   }
 
-  /// dominates - Returns true if A dominates B.  Note that this is not a
+  /// dominates - Returns true iff A dominates B.  Note that this is not a
   /// constant time operation!
   ///
   inline bool dominates(const DomTreeNodeBase<NodeT> *A,

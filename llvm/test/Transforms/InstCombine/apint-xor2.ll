@@ -6,7 +6,7 @@
 
 
 define i447 @test1(i447 %A, i447 %B) {
-        ;; (A & C1)^(B & C2) -> (A & C1)|(B & C2) if C1&C2 == 0
+        ;; (A & C1)^(B & C2) -> (A & C1)|(B & C2) iff C1&C2 == 0
         %A1 = and i447 %A, 70368744177664
         %B1 = and i447 %B, 70368744177663
         %C1 = xor i447 %A1, %B1
@@ -44,7 +44,7 @@ define i77 @test6(i77 %A) {
 }
 
 define i1023 @test7(i1023 %A) {
-        ;; (A | C1) ^ C2 -> (A | C1) & ~C2 if (C1&C2) == C2
+        ;; (A | C1) ^ C2 -> (A | C1) & ~C2 iff (C1&C2) == C2
         %B1 = or i1023 %A,   70368744177663
         %C1 = xor i1023 %B1, 703687463
         ret i1023 %C1

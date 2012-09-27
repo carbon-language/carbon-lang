@@ -550,7 +550,7 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
     APInt Mask(APInt::getSignBit(I.getType()->getPrimitiveSizeInBits()));
     if (MaskedValueIsZero(Op0, Mask)) {
       if (MaskedValueIsZero(Op1, Mask)) {
-        // X sdiv Y -> X udiv Y, if X and Y don't have sign bit set
+        // X sdiv Y -> X udiv Y, iff X and Y don't have sign bit set
         return BinaryOperator::CreateUDiv(Op0, Op1, I.getName());
       }
       
@@ -692,7 +692,7 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
   if (I.getType()->isIntegerTy()) {
     APInt Mask(APInt::getSignBit(I.getType()->getPrimitiveSizeInBits()));
     if (MaskedValueIsZero(Op1, Mask) && MaskedValueIsZero(Op0, Mask)) {
-      // X srem Y -> X urem Y, if X and Y don't have sign bit set
+      // X srem Y -> X urem Y, iff X and Y don't have sign bit set
       return BinaryOperator::CreateURem(Op0, Op1, I.getName());
     }
   }

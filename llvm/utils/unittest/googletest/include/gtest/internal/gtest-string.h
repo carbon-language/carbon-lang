@@ -126,7 +126,7 @@ class GTEST_API_ String {
   static const char* Utf16ToAnsi(LPCWSTR utf16_str);
 #endif
 
-  // Compares two C strings.  Returns true if they have the same content.
+  // Compares two C strings.  Returns true iff they have the same content.
   //
   // Unlike strcmp(), this function can handle NULL argument(s).  A
   // NULL C string is considered different to any non-NULL C string,
@@ -143,7 +143,7 @@ class GTEST_API_ String {
   // the converted string in double quotes.
   static String ShowWideCStringQuoted(const wchar_t* wide_c_str);
 
-  // Compares two wide C strings.  Returns true if they have the same
+  // Compares two wide C strings.  Returns true iff they have the same
   // content.
   //
   // Unlike wcscmp(), this function can handle NULL argument(s).  A
@@ -151,7 +151,7 @@ class GTEST_API_ String {
   // including the empty string.
   static bool WideCStringEquals(const wchar_t* lhs, const wchar_t* rhs);
 
-  // Compares two C strings, ignoring case.  Returns true if they
+  // Compares two C strings, ignoring case.  Returns true iff they
   // have the same content.
   //
   // Unlike strcasecmp(), this function can handle NULL argument(s).
@@ -160,7 +160,7 @@ class GTEST_API_ String {
   static bool CaseInsensitiveCStringEquals(const char* lhs,
                                            const char* rhs);
 
-  // Compares two wide C strings, ignoring case.  Returns true if they
+  // Compares two wide C strings, ignoring case.  Returns true iff they
   // have the same content.
   //
   // Unlike wcscasecmp(), this function can handle NULL argument(s).
@@ -237,7 +237,7 @@ class GTEST_API_ String {
   operator ::string() const { return ::string(c_str(), length()); }
 #endif  // GTEST_HAS_GLOBAL_STRING
 
-  // Returns true if this is an empty string (i.e. "").
+  // Returns true iff this is an empty string (i.e. "").
   bool empty() const { return (c_str() != NULL) && (length() == 0); }
 
   // Compares this with another String.
@@ -245,23 +245,23 @@ class GTEST_API_ String {
   // if this is greater than rhs.
   int Compare(const String& rhs) const;
 
-  // Returns true if this String equals the given C string.  A NULL
+  // Returns true iff this String equals the given C string.  A NULL
   // string and a non-NULL string are considered not equal.
   bool operator==(const char* a_c_str) const { return Compare(a_c_str) == 0; }
 
-  // Returns true if this String is less than the given String.  A
+  // Returns true iff this String is less than the given String.  A
   // NULL string is considered less than "".
   bool operator<(const String& rhs) const { return Compare(rhs) < 0; }
 
-  // Returns true if this String doesn't equal the given C string.  A NULL
+  // Returns true iff this String doesn't equal the given C string.  A NULL
   // string and a non-NULL string are considered not equal.
   bool operator!=(const char* a_c_str) const { return !(*this == a_c_str); }
 
-  // Returns true if this String ends with the given suffix.  *Any*
+  // Returns true iff this String ends with the given suffix.  *Any*
   // String is considered to end with a NULL or empty suffix.
   bool EndsWith(const char* suffix) const;
 
-  // Returns true if this String ends with the given suffix, not considering
+  // Returns true iff this String ends with the given suffix, not considering
   // case. Any String is considered to end with a NULL or empty suffix.
   bool EndsWithCaseInsensitive(const char* suffix) const;
 

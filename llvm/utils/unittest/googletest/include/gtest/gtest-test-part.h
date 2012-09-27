@@ -85,16 +85,16 @@ class GTEST_API_ TestPartResult {
   // Gets the message associated with the test part.
   const char* message() const { return message_.c_str(); }
 
-  // Returns true if the test part passed.
+  // Returns true iff the test part passed.
   bool passed() const { return type_ == kSuccess; }
 
-  // Returns true if the test part failed.
+  // Returns true iff the test part failed.
   bool failed() const { return type_ != kSuccess; }
 
-  // Returns true if the test part non-fatally failed.
+  // Returns true iff the test part non-fatally failed.
   bool nonfatally_failed() const { return type_ == kNonFatalFailure; }
 
-  // Returns true if the test part fatally failed.
+  // Returns true iff the test part fatally failed.
   bool fatally_failed() const { return type_ == kFatalFailure; }
  private:
   Type type_;

@@ -1825,7 +1825,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
       KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - 1);
     return;
   case ISD::SHL:
-    // (shl X, C1) & C2 == 0   if   (X & C2 >>u C1) == 0
+    // (shl X, C1) & C2 == 0   iff   (X & C2 >>u C1) == 0
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
       unsigned ShAmt = SA->getZExtValue();
 
@@ -1842,7 +1842,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
     }
     return;
   case ISD::SRL:
-    // (ushr X, C1) & C2 == 0   if  (-1 >> C1) & C2 == 0
+    // (ushr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
       unsigned ShAmt = SA->getZExtValue();
 
@@ -2356,7 +2356,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
 /// ISD::ADD with a ConstantSDNode on the right-hand side, or if it is an
 /// ISD::OR with a ConstantSDNode that is guaranteed to have the same
 /// semantics as an ADD.  This handles the equivalence:
-///     X|Cst == X+Cst if X&Cst = 0.
+///     X|Cst == X+Cst iff X&Cst = 0.
 bool SelectionDAG::isBaseWithConstantOffset(SDValue Op) const {
   if ((Op.getOpcode() != ISD::ADD && Op.getOpcode() != ISD::OR) ||
       !isa<ConstantSDNode>(Op.getOperand(1)))
@@ -2882,7 +2882,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
     assert(VT.isFloatingPoint() && EVT.isFloatingPoint() &&
            "Cannot FP_ROUND_INREG integer types");
     assert(EVT.isVector() == VT.isVector() &&
-           "FP_ROUND_INREG type should be vector if the operand "
+           "FP_ROUND_INREG type should be vector iff the operand "
            "type is vector!");
     assert((!EVT.isVector() ||
             EVT.getVectorNumElements() == VT.getVectorNumElements()) &&
@@ -2918,7 +2918,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
     assert(VT.isInteger() && EVT.isInteger() &&
            "Cannot *_EXTEND_INREG FP types");
     assert(EVT.isVector() == VT.isVector() &&
-           "SIGN_EXTEND_INREG type should be vector if the operand "
+           "SIGN_EXTEND_INREG type should be vector iff the operand "
            "type is vector!");
     assert((!EVT.isVector() ||
             EVT.getVectorNumElements() == VT.getVectorNumElements()) &&

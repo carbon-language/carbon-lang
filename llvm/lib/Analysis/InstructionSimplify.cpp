@@ -2004,7 +2004,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
           // LHS >u RHS.
           case ICmpInst::ICMP_UGT:
           case ICmpInst::ICMP_UGE:
-            // Comparison is true if the LHS <s 0.
+            // Comparison is true iff the LHS <s 0.
             if (MaxRecurse)
               if (Value *V = SimplifyICmpInst(ICmpInst::ICMP_SLT, SrcOp,
                                               Constant::getNullValue(SrcTy),
@@ -2013,7 +2013,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
             break;
           case ICmpInst::ICMP_ULT:
           case ICmpInst::ICMP_ULE:
-            // Comparison is true if the LHS >=s 0.
+            // Comparison is true iff the LHS >=s 0.
             if (MaxRecurse)
               if (Value *V = SimplifyICmpInst(ICmpInst::ICMP_SGE, SrcOp,
                                               Constant::getNullValue(SrcTy),
@@ -2171,31 +2171,31 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   // Simplify comparisons involving max/min.
   Value *A, *B;
   CmpInst::Predicate P = CmpInst::BAD_ICMP_PREDICATE;
-  CmpInst::Predicate EqP; // Chosen so that "A == max/min(A,B)" if "A EqP B".
+  CmpInst::Predicate EqP; // Chosen so that "A == max/min(A,B)" iff "A EqP B".
 
   // Signed variants on "max(a,b)>=a -> true".
   if (match(LHS, m_SMax(m_Value(A), m_Value(B))) && (A == RHS || B == RHS)) {
     if (A != RHS) std::swap(A, B); // smax(A, B) pred A.
-    EqP = CmpInst::ICMP_SGE; // "A == smax(A, B)" if "A sge B".
+    EqP = CmpInst::ICMP_SGE; // "A == smax(A, B)" iff "A sge B".
     // We analyze this as smax(A, B) pred A.
     P = Pred;
   } else if (match(RHS, m_SMax(m_Value(A), m_Value(B))) &&
              (A == LHS || B == LHS)) {
     if (A != LHS) std::swap(A, B); // A pred smax(A, B).
-    EqP = CmpInst::ICMP_SGE; // "A == smax(A, B)" if "A sge B".
+    EqP = CmpInst::ICMP_SGE; // "A == smax(A, B)" iff "A sge B".
     // We analyze this as smax(A, B) swapped-pred A.
     P = CmpInst::getSwappedPredicate(Pred);
   } else if (match(LHS, m_SMin(m_Value(A), m_Value(B))) &&
              (A == RHS || B == RHS)) {
     if (A != RHS) std::swap(A, B); // smin(A, B) pred A.
-    EqP = CmpInst::ICMP_SLE; // "A == smin(A, B)" if "A sle B".
+    EqP = CmpInst::ICMP_SLE; // "A == smin(A, B)" iff "A sle B".
     // We analyze this as smax(-A, -B) swapped-pred -A.
     // Note that we do not need to actually form -A or -B thanks to EqP.
     P = CmpInst::getSwappedPredicate(Pred);
   } else if (match(RHS, m_SMin(m_Value(A), m_Value(B))) &&
              (A == LHS || B == LHS)) {
     if (A != LHS) std::swap(A, B); // A pred smin(A, B).
-    EqP = CmpInst::ICMP_SLE; // "A == smin(A, B)" if "A sle B".
+    EqP = CmpInst::ICMP_SLE; // "A == smin(A, B)" iff "A sle B".
     // We analyze this as smax(-A, -B) pred -A.
     // Note that we do not need to actually form -A or -B thanks to EqP.
     P = Pred;
@@ -2246,26 +2246,26 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   P = CmpInst::BAD_ICMP_PREDICATE;
   if (match(LHS, m_UMax(m_Value(A), m_Value(B))) && (A == RHS || B == RHS)) {
     if (A != RHS) std::swap(A, B); // umax(A, B) pred A.
-    EqP = CmpInst::ICMP_UGE; // "A == umax(A, B)" if "A uge B".
+    EqP = CmpInst::ICMP_UGE; // "A == umax(A, B)" iff "A uge B".
     // We analyze this as umax(A, B) pred A.
     P = Pred;
   } else if (match(RHS, m_UMax(m_Value(A), m_Value(B))) &&
              (A == LHS || B == LHS)) {
     if (A != LHS) std::swap(A, B); // A pred umax(A, B).
-    EqP = CmpInst::ICMP_UGE; // "A == umax(A, B)" if "A uge B".
+    EqP = CmpInst::ICMP_UGE; // "A == umax(A, B)" iff "A uge B".
     // We analyze this as umax(A, B) swapped-pred A.
     P = CmpInst::getSwappedPredicate(Pred);
   } else if (match(LHS, m_UMin(m_Value(A), m_Value(B))) &&
              (A == RHS || B == RHS)) {
     if (A != RHS) std::swap(A, B); // umin(A, B) pred A.
-    EqP = CmpInst::ICMP_ULE; // "A == umin(A, B)" if "A ule B".
+    EqP = CmpInst::ICMP_ULE; // "A == umin(A, B)" iff "A ule B".
     // We analyze this as umax(-A, -B) swapped-pred -A.
     // Note that we do not need to actually form -A or -B thanks to EqP.
     P = CmpInst::getSwappedPredicate(Pred);
   } else if (match(RHS, m_UMin(m_Value(A), m_Value(B))) &&
              (A == LHS || B == LHS)) {
     if (A != LHS) std::swap(A, B); // A pred umin(A, B).
-    EqP = CmpInst::ICMP_ULE; // "A == umin(A, B)" if "A ule B".
+    EqP = CmpInst::ICMP_ULE; // "A == umin(A, B)" iff "A ule B".
     // We analyze this as umax(-A, -B) pred -A.
     // Note that we do not need to actually form -A or -B thanks to EqP.
     P = Pred;

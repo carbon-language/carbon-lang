@@ -1,7 +1,7 @@
 #! /usr/bin/python
 
 #this is a script to extract given named nodes from a dot file, with
-#the associated edges.  An edge is kept if for edge x -> y
+#the associated edges.  An edge is kept iff for edge x -> y
 # x and y are both nodes specified to be kept.
 
 #known issues: if a line contains '->' and is not an edge line

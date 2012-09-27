@@ -135,7 +135,7 @@ struct AddRef<T&> { typedef T& type; };  // NOLINT
 template <int k> class Get;
 
 // A helper for implementing tuple_element<k, T>.  kIndexValid is true
-// if k < the number of fields in tuple type T.
+// iff k < the number of fields in tuple type T.
 template <bool kIndexValid, int kIndex, class Tuple>
 struct TupleElement;
 
