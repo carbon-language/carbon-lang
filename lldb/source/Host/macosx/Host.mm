@@ -1552,7 +1552,6 @@ LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_info, :
         argv = (char * const*)tmp_argv;
     }
 
-
     const char *working_dir = launch_info.GetWorkingDirectory();
     if (working_dir)
     {
@@ -1605,13 +1604,21 @@ LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_info, :
                         eErrorTypePOSIX);
 
         if (error.Fail() || log)
-            error.PutToLog(log.get(), "::posix_spawnp ( pid => %i, path = '%s', file_actions = %p, attr = %p, argv = %p, envp = %p )", 
+        {
+            error.PutToLog(log.get(), "::posix_spawnp ( pid => %i, path = '%s', file_actions = %p, attr = %p, argv = %p, envp = %p )",
                            pid, 
                            exe_path, 
                            &file_actions, 
                            &attr, 
                            argv, 
                            envp);
+            if (log)
+            {
+                for (int ii=0; argv[ii]; ++ii)
+                    log->Printf("argv[%i] = '%s'", ii, argv[ii]);
+            }
+        }
+
     }
     else
     {
@@ -1624,12 +1631,19 @@ LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_info, :
                         eErrorTypePOSIX);
 
         if (error.Fail() || log)
-            error.PutToLog(log.get(), "::posix_spawnp ( pid => %i, path = '%s', file_actions = NULL, attr = %p, argv = %p, envp = %p )", 
+        {
+            error.PutToLog(log.get(), "::posix_spawnp ( pid => %i, path = '%s', file_actions = NULL, attr = %p, argv = %p, envp = %p )",
                            pid, 
                            exe_path, 
                            &attr, 
                            argv, 
                            envp);
+            if (log)
+            {
+                for (int ii=0; argv[ii]; ++ii)
+                    log->Printf("argv[%i] = '%s'", ii, argv[ii]);
+            }
+        }
     }
     
     if (working_dir)

@@ -1312,19 +1312,32 @@ Host::RunShellCommand (const char *command,
                        int *status_ptr,
                        int *signo_ptr,
                        std::string *command_output_ptr,
-                       uint32_t timeout_sec)
+                       uint32_t timeout_sec,
+                       const char *shell)
 {
     Error error;
     ProcessLaunchInfo launch_info;
-    launch_info.SetShell("/bin/bash");
-    launch_info.GetArguments().AppendArgument(command);
-    const bool localhost = true;
-    const bool will_debug = false;
-    const bool first_arg_is_full_shell_command = true;
-    launch_info.ConvertArgumentsForLaunchingInShell (error,
-                                                     localhost,
-                                                     will_debug,
-                                                     first_arg_is_full_shell_command);
+    if (shell && shell[0])
+    {
+        // Run the command in a shell
+        launch_info.SetShell(shell);
+        launch_info.GetArguments().AppendArgument(command);
+        const bool localhost = true;
+        const bool will_debug = false;
+        const bool first_arg_is_full_shell_command = true;
+        launch_info.ConvertArgumentsForLaunchingInShell (error,
+                                                         localhost,
+                                                         will_debug,
+                                                         first_arg_is_full_shell_command);
+    }
+    else
+    {
+        // No shell, just run it
+        Args args (command);
+        const bool first_arg_is_executable = true;
+        const bool first_arg_is_executable_and_argument = true;
+        launch_info.SetArguments(args, first_arg_is_executable, first_arg_is_executable_and_argument);
+    }
     
     if (working_dir)
         launch_info.SetWorkingDirectory(working_dir);
@@ -1338,7 +1351,7 @@ Host::RunShellCommand (const char *command,
         output_file_path = ::tmpnam(output_file_path_buffer);
         launch_info.AppendSuppressFileAction (STDIN_FILENO, true, false);
         launch_info.AppendOpenFileAction(STDOUT_FILENO, output_file_path, false, true);
-        launch_info.AppendDuplicateFileAction(STDERR_FILENO, STDOUT_FILENO);
+        launch_info.AppendDuplicateFileAction(STDOUT_FILENO, STDERR_FILENO);
     }
     else
     {

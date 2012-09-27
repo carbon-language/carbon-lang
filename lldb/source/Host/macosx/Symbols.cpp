@@ -30,6 +30,7 @@
 #include "lldb/Host/Host.h"
 #include "lldb/Utility/CleanUp.h"
 #include "Host/macosx/cfcpp/CFCBundle.h"
+#include "Host/macosx/cfcpp/CFCData.h"
 #include "Host/macosx/cfcpp/CFCReleaser.h"
 #include "Host/macosx/cfcpp/CFCString.h"
 #include "mach/machine.h"
@@ -582,3 +583,102 @@ Symbols::LocateExecutableSymbolFile (const ModuleSpec &module_spec)
     }
     return symbol_fspec;
 }
+
+
+
+
+bool
+Symbols::DownloadObjectAndSymbolFile (ModuleSpec &module_spec)
+{
+    bool success = false;
+    const UUID *uuid_ptr = module_spec.GetUUIDPtr();
+    if (uuid_ptr)
+    {
+        static bool g_located_dsym_for_uuid_exe = false;
+        static bool g_dsym_for_uuid_exe_exists = false;
+        static char g_dsym_for_uuid_exe_path[PATH_MAX];
+        if (!g_located_dsym_for_uuid_exe)
+        {
+            g_located_dsym_for_uuid_exe = true;
+            const char *dsym_for_uuid_exe_path_cstr = getenv("LLDB_APPLE_DSYMFORUUID_EXECUTABLE");
+            FileSpec dsym_for_uuid_exe_spec;
+            if (dsym_for_uuid_exe_path_cstr)
+            {
+                dsym_for_uuid_exe_spec.SetFile(dsym_for_uuid_exe_path_cstr, true);
+                g_dsym_for_uuid_exe_exists = dsym_for_uuid_exe_spec.Exists();
+            }
+            
+            if (!g_dsym_for_uuid_exe_exists)
+            {
+                dsym_for_uuid_exe_spec.SetFile("~rc/bin/dsymForUUID", true);
+                g_dsym_for_uuid_exe_exists = dsym_for_uuid_exe_spec.Exists();
+                if (!g_dsym_for_uuid_exe_exists)
+                {
+                    dsym_for_uuid_exe_spec.SetFile("/usr/local/bin/dsymForUUID", false);
+                }
+            }
+            
+            if (g_dsym_for_uuid_exe_exists)
+                dsym_for_uuid_exe_spec.GetPath (g_dsym_for_uuid_exe_path, sizeof(g_dsym_for_uuid_exe_path));
+        }
+        if (g_dsym_for_uuid_exe_exists)
+        {
+            StreamString command;
+            char uuid_cstr_buffer[64];
+            const char *uuid_cstr = uuid_ptr->GetAsCString(uuid_cstr_buffer, sizeof(uuid_cstr_buffer));
+            command.Printf("%s --copyExecutable %s", g_dsym_for_uuid_exe_path, uuid_cstr);
+            int exit_status = -1;
+            int signo = -1;
+            std::string command_output;
+            Error error = Host::RunShellCommand (command.GetData(),
+                                                 NULL,              // current working directory
+                                                 &exit_status,      // Exit status
+                                                 &signo,            // Signal int *
+                                                 &command_output,   // Command output
+                                                 30,                // Large timeout to allow for long dsym download times
+                                                 NULL);             // Don't run in a shell (we don't need shell expansion)
+            if (error.Success() && exit_status == 0 && !command_output.empty())
+            {
+                CFCData data (CFDataCreateWithBytesNoCopy (NULL,
+                                                           (const UInt8 *)command_output.data(),
+                                                           command_output.size(),
+                                                           kCFAllocatorNull));
+                
+                CFCReleaser<CFPropertyListRef> plist(::CFPropertyListCreateFromXMLData (NULL, data.get(), kCFPropertyListImmutable, NULL));
+                
+                if (CFGetTypeID (plist.get()) == CFDictionaryGetTypeID ())
+                {
+                    std::string str;
+                    CFCString uuid_cfstr(uuid_cstr);
+                    CFTypeRef uuid_dict = CFDictionaryGetValue ((CFDictionaryRef) plist.get(), uuid_cfstr.get());
+                    if (uuid_dict != NULL && CFGetTypeID (uuid_dict) == CFDictionaryGetTypeID ())
+                    {
+                        CFStringRef cf_str;
+                        
+                        cf_str = (CFStringRef)CFDictionaryGetValue ((CFDictionaryRef) uuid_dict, CFSTR("DBGSymbolRichExecutable"));
+                        if (cf_str && CFGetTypeID (cf_str) == CFStringGetTypeID ())
+                        {
+                            if (CFCString::FileSystemRepresentation(cf_str, str))
+                            {
+                                success = true;
+                                module_spec.GetFileSpec().SetFile (str.c_str(), true);
+                            }
+                        }
+    
+                        cf_str = (CFStringRef)CFDictionaryGetValue ((CFDictionaryRef) uuid_dict, CFSTR("DBGDSYMPath"));
+                        if (cf_str && CFGetTypeID (cf_str) == CFStringGetTypeID ())
+                        {
+                            if (CFCString::FileSystemRepresentation(cf_str, str))
+                            {
+                                success = true;
+                                module_spec.GetSymbolFileSpec().SetFile (str.c_str(), true);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return success;
+}
+

@@ -36,5 +36,13 @@ Symbols::FindSymbolFileInBundle (const FileSpec& symfile_bundle,
     return FileSpec();
 }
 
+bool
+Symbols::DownloadObjectAndSymbolFile (ModuleSpec &module_spec)
+{
+    // Fill in the module_spec.GetFileSpec() for the object file and/or the
+    // module_spec.GetSymbolFileSpec() for the debug symbols file.
+    return false;
+}
+
 
 #endif

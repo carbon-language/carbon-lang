@@ -420,7 +420,8 @@ public:
                      int *status_ptr,               // Pass NULL if you don't want the process exit status
                      int *signo_ptr,                // Pass NULL if you don't want the signal that caused the process to exit
                      std::string *command_output,   // Pass NULL if you don't want the command output
-                     uint32_t timeout_sec);         // Timeout in seconds to wait for shell program to finish
+                     uint32_t timeout_sec,
+                     const char *shell = "/bin/bash");
     
     static lldb::DataBufferSP
     GetAuxvData (lldb_private::Process *process);

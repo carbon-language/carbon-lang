@@ -24,6 +24,7 @@
 #include "lldb/Core/State.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/ValueObjectVariable.h"
+#include "lldb/Host/Symbols.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/Options.h"
@@ -4056,7 +4057,32 @@ protected:
                             symfile_spec.SetFile(symfile_path, true);
                         
                         ArchSpec arch;
-                        if (symfile_spec.Exists())
+                        bool symfile_exists = symfile_spec.Exists();
+                        // The code below was testing the new "Symbols::DownloadObjectAndSymbolFile"
+                        // functionality. Now that it works on MacOSX, it will be enabled soon with
+                        // option values (like "--uuid <UUID>" or "--file <module>", or "--frame"
+                        // for the current stack frame's module). So it is commented out for now.
+//                        if (!symfile_exists)
+//                        {
+//                            if (sym_spec.GetUUID().SetfromCString(symfile_path))
+//                            {
+//                                // A UUID was specified, look it up via UUID
+//                                if (Symbols::DownloadObjectAndSymbolFile (sym_spec))
+//                                {
+////                                    printf ("UUID: %s\n", symfile_path);
+////                                    printf ("objfile_spec: %s/%s\n",
+////                                            sym_spec.GetFileSpec().GetDirectory().GetCString(),
+////                                            sym_spec.GetFileSpec().GetFilename().GetCString());
+////                                    printf ("symfile_spec: %s/%s\n",
+////                                            sym_spec.GetSymbolFileSpec().GetDirectory().GetCString(),
+////                                            sym_spec.GetSymbolFileSpec().GetFilename().GetCString());
+//                                    symfile_spec = sym_spec.GetSymbolFileSpec();
+//                                    symfile_exists = symfile_spec.Exists();
+//                                }
+//                            }
+//                        }
+
+                        if (symfile_exists)
                         {
                             ModuleSP symfile_module_sp (new Module (symfile_spec, target->GetArchitecture()));
                             const UUID &symfile_uuid = symfile_module_sp->GetUUID();
@@ -4111,6 +4137,21 @@ protected:
                         }
                         else
                         {
+//                            sym_spec.GetSymbolFileSpec().Clear();
+//                            if (sym_spec.GetUUID().SetfromCString(symfile_path))
+//                            {
+//                                if (Symbols::DownloadObjectAndSymbolFile (sym_spec))
+//                                {
+//                                    printf ("UUID: %s\n", symfile_path);
+//                                    printf ("objfile_spec: %s/%s\n",
+//                                            sym_spec.GetFileSpec().GetDirectory().GetCString(),
+//                                            sym_spec.GetFileSpec().GetFilename().GetCString());
+//                                    printf ("symfile_spec: %s/%s\n",
+//                                            sym_spec.GetSymbolFileSpec().GetDirectory().GetCString(),
+//                                            sym_spec.GetSymbolFileSpec().GetFilename().GetCString());
+//                                }
+//                            }
+                            
                             char resolved_symfile_path[PATH_MAX];
                             result.SetStatus (eReturnStatusFailed);
                             if (symfile_spec.GetPath (resolved_symfile_path, sizeof(resolved_symfile_path)))

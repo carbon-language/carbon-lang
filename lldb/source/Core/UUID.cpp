@@ -66,9 +66,12 @@ char *
 UUID::GetAsCString (char *dst, size_t dst_len) const
 {
     const uint8_t *u = (const uint8_t *)GetBytes();
-    snprintf(dst, dst_len, "%2.2X%2.2X%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X",
-             u[0],u[1],u[2],u[3],u[4],u[5],u[6],u[7],u[8],u[9],u[10],u[11],u[12],u[13],u[14],u[15]);
-    return dst;
+    if (dst_len > snprintf (dst,
+                            dst_len,
+                            "%2.2X%2.2X%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X",
+                            u[0],u[1],u[2],u[3],u[4],u[5],u[6],u[7],u[8],u[9],u[10],u[11],u[12],u[13],u[14],u[15]))
+        return dst;
+    return NULL;
 }
 
 void
