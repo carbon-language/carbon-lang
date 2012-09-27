@@ -427,7 +427,7 @@ void LiveInterval::join(LiveInterval &Other,
 
   // If we have to apply a mapping to our base interval assignment, rewrite it
   // now.
-  if (MustMapCurValNos) {
+  if (MustMapCurValNos && !empty()) {
     // Map the first live range.
 
     iterator OutIt = begin();
