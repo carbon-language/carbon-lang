@@ -177,7 +177,14 @@ public:
     return Fold(ConstantExpr::getIntegerCast(C, DestTy, isSigned));
   }
   Constant *CreatePointerCast(Constant *C, Type *DestTy) const {
-    return ConstantExpr::getPointerCast(C, DestTy);
+    if (C->getType() == DestTy)
+      return C; // avoid calling Fold
+    return Fold(ConstantExpr::getPointerCast(C, DestTy));
+  }
+  Constant *CreateFPCast(Constant *C, Type *DestTy) const {
+    if (C->getType() == DestTy)
+      return C; // avoid calling Fold
+    return Fold(ConstantExpr::getFPCast(C, DestTy));
   }
   Constant *CreateBitCast(Constant *C, Type *DestTy) const {
     return CreateCast(Instruction::BitCast, C, DestTy);
