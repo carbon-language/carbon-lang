@@ -240,8 +240,8 @@ static SymbolRef getAsPointeeSymbol(const Expr *Expr,
 // 1) noErr / [0]
 // 2) someErr / [1, inf]
 // 3) unknown
-// If noError, returns true if (1).
-// If !noError, returns true if (2).
+// If noError, returns true iff (1).
+// If !noError, returns true iff (2).
 bool MacOSKeychainAPIChecker::definitelyReturnedError(SymbolRef RetSym,
                                                       ProgramStateRef State,
                                                       SValBuilder &Builder,

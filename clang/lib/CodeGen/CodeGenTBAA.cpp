@@ -135,7 +135,7 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
   // Enum types are distinct types. In C++ they have "underlying types",
   // however they aren't related for TBAA.
   if (const EnumType *ETy = dyn_cast<EnumType>(Ty)) {
-    // In C mode, two anonymous enums are compatible if their members
+    // In C mode, two anonymous enums are compatible iff their members
     // are the same -- see C99 6.2.7p1. For now, be conservative. We could
     // theoretically implement this by combining information about all the
     // members into a single identifying MDNode.

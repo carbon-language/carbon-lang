@@ -840,7 +840,7 @@ public:
   /// Builds the struct used for __block variables.
   QualType BuildByRefType(StringRef DeclName, QualType Ty) const;
 
-  /// Returns true if we need copy/dispose helpers for the given type.
+  /// Returns true iff we need copy/dispose helpers for the given type.
   bool BlockRequiresCopying(QualType Ty) const;
 
   /// \brief Return the uniqued reference to the type for an lvalue reference

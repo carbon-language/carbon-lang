@@ -583,7 +583,7 @@ public:
   JumpDest ReturnBlock;
 
   /// ReturnValue - The temporary alloca to hold the return value. This is null
-  /// if the function has no return value.
+  /// iff the function has no return value.
   llvm::Value *ReturnValue;
 
   /// AllocaInsertPoint - This is an instruction in the entry block before which
@@ -1655,7 +1655,7 @@ public:
 
   /// EmitAggregateCopy - Emit an aggrate copy.
   ///
-  /// \param isVolatile - True if either the source or the destination is
+  /// \param isVolatile - True iff either the source or the destination is
   /// volatile.
   void EmitAggregateCopy(llvm::Value *DestPtr, llvm::Value *SrcPtr,
                          QualType EltTy, bool isVolatile=false,

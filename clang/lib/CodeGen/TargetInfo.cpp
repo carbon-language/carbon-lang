@@ -109,7 +109,7 @@ bool TargetCodeGenInfo::isNoProtoCallVariadic(const CallArgList &args,
 
 static bool isEmptyRecord(ASTContext &Context, QualType T, bool AllowArrays);
 
-/// isEmptyField - Return true if a the field is "empty", that is it
+/// isEmptyField - Return true iff a the field is "empty", that is it
 /// is an unnamed bit-field or an (array of) empty record(s).
 static bool isEmptyField(ASTContext &Context, const FieldDecl *FD,
                          bool AllowArrays) {
@@ -141,7 +141,7 @@ static bool isEmptyField(ASTContext &Context, const FieldDecl *FD,
   return isEmptyRecord(Context, FT, AllowArrays);
 }
 
-/// isEmptyRecord - Return true if a structure contains only empty
+/// isEmptyRecord - Return true iff a structure contains only empty
 /// fields. Note that a structure with a flexible array member is not
 /// considered empty.
 static bool isEmptyRecord(ASTContext &Context, QualType T, bool AllowArrays) {
@@ -1070,7 +1070,7 @@ class X86_64ABIInfo : public ABIInfo {
   /// be passed in Memory then at least the classification of \arg Lo
   /// will be Memory.
   ///
-  /// The \arg Lo class will be NoClass if the argument is ignored.
+  /// The \arg Lo class will be NoClass iff the argument is ignored.
   ///
   /// If the \arg Lo class is ComplexX87, then the \arg Hi class will
   /// also be ComplexX87.

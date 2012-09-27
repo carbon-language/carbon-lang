@@ -597,7 +597,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   }
 
   case Builtin::BI__builtin___memcpy_chk: {
-    // fold __builtin_memcpy_chk(x, y, cst1, cst2) to memcpy if cst1<=cst2.
+    // fold __builtin_memcpy_chk(x, y, cst1, cst2) to memcpy iff cst1<=cst2.
     llvm::APSInt Size, DstSize;
     if (!E->getArg(2)->EvaluateAsInt(Size, CGM.getContext()) ||
         !E->getArg(3)->EvaluateAsInt(DstSize, CGM.getContext()))
@@ -624,7 +624,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   }
 
   case Builtin::BI__builtin___memmove_chk: {
-    // fold __builtin_memmove_chk(x, y, cst1, cst2) to memmove if cst1<=cst2.
+    // fold __builtin_memmove_chk(x, y, cst1, cst2) to memmove iff cst1<=cst2.
     llvm::APSInt Size, DstSize;
     if (!E->getArg(2)->EvaluateAsInt(Size, CGM.getContext()) ||
         !E->getArg(3)->EvaluateAsInt(DstSize, CGM.getContext()))
@@ -663,7 +663,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return RValue::get(Dest.first);
   }
   case Builtin::BI__builtin___memset_chk: {
-    // fold __builtin_memset_chk(x, y, cst1, cst2) to memset if cst1<=cst2.
+    // fold __builtin_memset_chk(x, y, cst1, cst2) to memset iff cst1<=cst2.
     llvm::APSInt Size, DstSize;
     if (!E->getArg(2)->EvaluateAsInt(Size, CGM.getContext()) ||
         !E->getArg(3)->EvaluateAsInt(DstSize, CGM.getContext()))

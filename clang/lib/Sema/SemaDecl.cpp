@@ -4799,7 +4799,7 @@ class DifferentNameValidatorCCC : public CorrectionCandidateCallback {
 /// or performing typo correction if there are no previous declarations with
 /// the same name.
 ///
-/// Returns a NamedDecl if typo correction was performed and substituting in
+/// Returns a NamedDecl iff typo correction was performed and substituting in
 /// the new declaration name does not cause new errors.
 static NamedDecl* DiagnoseInvalidRedeclaration(
     Sema &SemaRef, LookupResult &Previous, FunctionDecl *NewFD,
@@ -8237,7 +8237,7 @@ static unsigned getRedeclDiagFromTagKind(TagTypeKind Tag) {
 /// \brief Determine if tag kind is a class-key compatible with
 /// class for redeclaration (class, struct, or __interface).
 ///
-/// \returns true if the tag kind is compatible.
+/// \returns true iff the tag kind is compatible.
 static bool isClassCompatTagKind(TagTypeKind Tag)
 {
   return Tag == TTK_Struct || Tag == TTK_Class || Tag == TTK_Interface;

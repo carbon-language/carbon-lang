@@ -87,10 +87,10 @@ enum ControlFlowKind {
 /// CheckFallThrough - Check that we don't fall off the end of a
 /// Statement that should return a value.
 ///
-/// \returns AlwaysFallThrough if we always fall off the end of the statement,
-/// MaybeFallThrough if we might or might not fall off the end,
-/// NeverFallThroughOrReturn if we never fall off the end of the statement or
-/// return.  We assume NeverFallThrough if we never fall off the end of the
+/// \returns AlwaysFallThrough iff we always fall off the end of the statement,
+/// MaybeFallThrough iff we might or might not fall off the end,
+/// NeverFallThroughOrReturn iff we never fall off the end of the statement or
+/// return.  We assume NeverFallThrough iff we never fall off the end of the
 /// statement but we may return.  We assume that functions not marked noreturn
 /// will return.
 static ControlFlowKind CheckFallThrough(AnalysisDeclContext &AC) {

@@ -88,7 +88,7 @@ static int bytesSincePreviousTabOrLineBegin(StringRef SourceLine, size_t i) {
 /// \param SourceLine The line of source
 /// \param i Pointer to byte index,
 /// \param TabStop used to expand tabs
-/// \return pair(printable text, 'true' if original text was printable)
+/// \return pair(printable text, 'true' iff original text was printable)
 ///
 static std::pair<SmallString<16>, bool>
 printableTextForNextCharacter(StringRef SourceLine, size_t *i,

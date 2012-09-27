@@ -1028,8 +1028,8 @@ private:
   /// EmitMethodDescList - Emit a method description list for a list of
   /// method declarations.
   ///  - TypeName: The name for the type containing the methods.
-  ///  - IsProtocol: True if these methods are for a protocol.
-  ///  - ClassMethds: True if these are class methods.
+  ///  - IsProtocol: True iff these methods are for a protocol.
+  ///  - ClassMethds: True iff these are class methods.
   ///  - Required: When true, only "required" methods are
   ///    listed. Similarly, when false only "optional" methods are
   ///    listed. For classes this should always be true.

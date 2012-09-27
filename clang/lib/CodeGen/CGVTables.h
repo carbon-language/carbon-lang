@@ -58,7 +58,7 @@ class CodeGenVTables {
 
   /// MaybeEmitThunkAvailableExternally - Try to emit the given thunk with
   /// available_externally linkage to allow for inlining of thunks.
-  /// This will be done if optimizations are enabled and the member function
+  /// This will be done iff optimizations are enabled and the member function
   /// doesn't contain any incomplete types.
   void MaybeEmitThunkAvailableExternally(GlobalDecl GD, const ThunkInfo &Thunk);
 

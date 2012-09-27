@@ -5366,7 +5366,7 @@ namespace {
 /// Consider whether capturing the given variable can possibly lead to
 /// a retain cycle.
 static bool considerVariable(VarDecl *var, Expr *ref, RetainCycleOwner &owner) {
-  // In ARC, it's captured strongly if the variable has __strong
+  // In ARC, it's captured strongly iff the variable has __strong
   // lifetime.  In MRR, it's captured strongly if the variable is
   // __block and has an appropriate type.
   if (var->getType().getObjCLifetime() != Qualifiers::OCL_Strong)
