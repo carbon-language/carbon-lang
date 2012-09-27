@@ -214,16 +214,19 @@ public:
   bool isCXXInstanceMember() const;
 
   class LinkageInfo {
-    Linkage linkage_;
-    Visibility visibility_;
-    bool explicit_;
+    uint8_t linkage_    : 4;
+    uint8_t visibility_ : 3;
+    uint8_t explicit_   : 1;
 
     void setVisibility(Visibility V, bool E) { visibility_ = V; explicit_ = E; }
   public:
     LinkageInfo() : linkage_(ExternalLinkage), visibility_(DefaultVisibility),
                     explicit_(false) {}
     LinkageInfo(Linkage L, Visibility V, bool E)
-      : linkage_(L), visibility_(V), explicit_(E) {}
+      : linkage_(L), visibility_(V), explicit_(E) {
+      assert(linkage() == L && visibility() == V && visibilityExplicit() == E &&
+             "Enum truncated!");
+    }
 
     static LinkageInfo external() {
       return LinkageInfo();
@@ -238,8 +241,8 @@ public:
       return LinkageInfo(NoLinkage, DefaultVisibility, false);
     }
 
-    Linkage linkage() const { return linkage_; }
-    Visibility visibility() const { return visibility_; }
+    Linkage linkage() const { return (Linkage)linkage_; }
+    Visibility visibility() const { return (Visibility)visibility_; }
     bool visibilityExplicit() const { return explicit_; }
 
     void setLinkage(Linkage L) { linkage_ = L; }
