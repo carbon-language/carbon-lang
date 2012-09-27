@@ -50,6 +50,7 @@
   SomeInvalidationImplementingObject *_propIvar;
   Invalidation1Class *MultipleProtocols;
   Invalidation2Class *MultInheritance; 
+  SomeInvalidationImplementingObject *_Prop5; // invalidate via getter method
   
   // No warnings on these.
   NSObject *NObj1;
@@ -63,6 +64,10 @@
 @property (assign) SomeInvalidationImplementingObject* Prop2;
 @property (assign) SomeInvalidationImplementingObject* Prop3;
 @property (assign) SomeInvalidationImplementingObject* Prop4;
+@property (assign) SomeInvalidationImplementingObject* Prop5;
+@property (assign) SomeInvalidationImplementingObject *SynthIvarProp;
+
+
 @property (assign) NSObject* NProp0;
 @property (nonatomic, assign) NSObject* NProp1;
 @property (assign) NSObject* NProp2;
@@ -98,13 +103,16 @@
 
 - (void) invalidate {
    [Obj3 invalidate];
+   self.Prop0 = 0;
    self.Prop1 = 0;
    [self setProp2:0];
    [self setProp3:0];
    self.Prop4 = 0;
+   [[self Prop5] invalidate];
    [super invalidate];
 }// expected-warning {{Instance variable Obj1 needs to be invalidated}}
  // expected-warning@-1 {{Instance variable Obj2 needs to be invalidated}}
  // expected-warning@-2 {{Instance variable MultipleProtocols needs to be invalidated}}
  // expected-warning@-3 {{Instance variable MultInheritance needs to be invalidated}}
+ // expected-warning@-4 {{Property SynthIvarProp needs to be invalidated}}
 @end
