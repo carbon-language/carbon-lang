@@ -28,7 +28,7 @@ CONFIG_BUILD_DIR=$3
 PREFIX=$4
 debug_flag=$5
 
-if [ -n "$debug_flag" -a "$debug_flag" == "-debug" ]
+if [ -n "$debug_flag" -a "$debug_flag" = "-debug" ]
 then
     Debug=1
 else
@@ -48,7 +48,7 @@ cwd=${SRC_ROOT}/scripts
 
 for curlang in $languages
 do
-    if [ $Debug == 1 ]
+    if [ $Debug -eq 1 ]
     then
         echo "Current language is $curlang"
     fi
@@ -59,7 +59,7 @@ do
         continue
     else
 
-        if [ $Debug == 1 ]
+        if [ $Debug -eq 1 ]
         then
             echo "Found $curlang sub-directory"
         fi
@@ -70,7 +70,7 @@ do
 
         if [ -f $filename ]
         then
-            if [ $Debug == 1 ]
+            if [ $Debug -eq 1 ]
             then
                 echo "Found $curlang post-processing script for LLDB"
                 echo "Executing $curlang post-processing script..."

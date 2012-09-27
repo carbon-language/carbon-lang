@@ -39,7 +39,7 @@ debug_flag=$5
 
 if [ ! "$LLDB_DISABLE_PYTHON" = "1" ] ; then
 
-if [ -n "$debug_flag" -a "$debug_flag" == "-debug" ]
+if [ -n "$debug_flag" -a "$debug_flag" = "-debug" ]
 then
     Debug=1
 else
@@ -50,7 +50,7 @@ OS_NAME=`uname -s`
 PYTHON_VERSION=`/usr/bin/env python --version 2>&1 | sed -e 's,Python ,,' -e 's,[.][0-9],,2' -e 's,[a-z][a-z][0-9],,'`
 
 
-if [ $Debug == 1 ]
+if [ $Debug -eq 1 ]
 then
     echo "The current OS is $OS_NAME"
     echo "The Python version is $PYTHON_VERSION"
@@ -59,7 +59,7 @@ fi
 #
 #  Determine where to put the files.
 
-if [ ${OS_NAME} == "Darwin" ]
+if [ ${OS_NAME} = "Darwin" ]
 then
     # We are on a Darwin system, so all the lldb Python files can go 
     # into the LLDB.framework/Resources/Python subdirectory.
@@ -69,7 +69,7 @@ then
         echo "Error:  Unable to find LLDB.framework" >&2
         exit 1
     else
-        if [ $Debug == 1 ]
+        if [ $Debug -eq 1 ]
         then
             echo "Found ${TARGET_DIR}/LLDB.framework."
         fi
@@ -91,7 +91,7 @@ fi
 # already exist, attempt to make it.
 #
 
-if [ $Debug == 1 ]
+if [ $Debug -eq 1 ]
 then
     echo "Python files will be put in ${framework_python_dir}"
 fi
@@ -102,13 +102,13 @@ for python_dir in $python_dirs
 do
     if [ ! -d "${python_dir}" ]
     then
-        if [ $Debug == 1 ]
+        if [ $Debug -eq 1 ]
         then
             echo "Making directory ${python_dir}"
         fi
         mkdir -p "${python_dir}"
     else
-        if [ $Debug == 1 ]
+        if [ $Debug -eq 1 ]
         then
             echo "${python_dir} already exists."
         fi
@@ -126,17 +126,17 @@ done
 
 if [ ! -L "${framework_python_dir}/_lldb.so" ]
 then
-    if [ $Debug == 1 ]
+    if [ $Debug -eq 1 ]
     then
         echo "Creating symlink for _lldb.so"
     fi
-    if [ ${OS_NAME} == "Darwin" ]
+    if [ ${OS_NAME} = "Darwin" ]
     then
         cd "${framework_python_dir}"
         ln -s "../../../LLDB" _lldb.so
     fi
 else
-    if [ $Debug == 1 ]
+    if [ $Debug -eq 1 ]
     then
         echo "${framework_python_dir}/_lldb.so already exists."
     fi
@@ -243,7 +243,7 @@ create_python_package "/formatters" "${package_files}"
 package_files="${SRC_ROOT}/examples/python/symbolication.py"
 create_python_package "/utils" "${package_files}"
 
-if [ ${OS_NAME} == "Darwin" ]
+if [ ${OS_NAME} = "Darwin" ]
 then
     # lldb/macosx
     package_files="${SRC_ROOT}/examples/python/crashlog.py

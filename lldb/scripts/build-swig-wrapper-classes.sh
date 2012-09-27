@@ -32,7 +32,7 @@ debug_flag=$5
 # Check to see if we are in debug-mode or not.
 #
 
-if [ -n "$debug_flag" -a "$debug_flag" == "-debug" ]
+if [ -n "$debug_flag" -a "$debug_flag" = "-debug" ]
 then
     Debug=1
 else
@@ -49,7 +49,7 @@ then
     exit 1
 fi
 
-if [ $Debug == 1 ]
+if [ $Debug -eq 1 ]
 then
     echo "Found lldb.swig file"
 fi
@@ -69,7 +69,7 @@ else
     fi
 fi
 
-if [ ${SWIG}a == a ]
+if [ ${SWIG}a = a ]
 then
     echo Error: could not find the swig binary
     exit 1
@@ -87,7 +87,7 @@ cwd=${SRC_ROOT}/scripts
 
 for curlang in $languages
 do
-    if [ $Debug == 1 ]
+    if [ $Debug -eq 1 ]
     then
         echo "Current language is $curlang"
     fi
@@ -98,7 +98,7 @@ do
         continue
     else
 
-        if [ $Debug == 1 ]
+        if [ $Debug -eq 1 ]
         then
             echo "Found $curlang sub-directory"
         fi
@@ -113,7 +113,7 @@ do
             continue
         else
 
-            if [ $Debug == 1 ]
+            if [ $Debug -eq 1 ]
             then
                 echo "Found $curlang build script."
                 echo "Executing $curlang build script..."
