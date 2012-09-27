@@ -585,6 +585,61 @@ Symbols::LocateExecutableSymbolFile (const ModuleSpec &module_spec)
 }
 
 
+static bool
+GetModuleSpecInfoFromUUIDDictionary (CFDictionaryRef uuid_dict, ModuleSpec &module_spec)
+{
+    bool success = false;
+    if (uuid_dict != NULL && CFGetTypeID (uuid_dict) == CFDictionaryGetTypeID ())
+    {
+        std::string str;
+        CFStringRef cf_str;
+        
+        cf_str = (CFStringRef)CFDictionaryGetValue ((CFDictionaryRef) uuid_dict, CFSTR("DBGSymbolRichExecutable"));
+        if (cf_str && CFGetTypeID (cf_str) == CFStringGetTypeID ())
+        {
+            if (CFCString::FileSystemRepresentation(cf_str, str))
+                module_spec.GetFileSpec().SetFile (str.c_str(), true);
+        }
+        
+        cf_str = (CFStringRef)CFDictionaryGetValue ((CFDictionaryRef) uuid_dict, CFSTR("DBGDSYMPath"));
+        if (cf_str && CFGetTypeID (cf_str) == CFStringGetTypeID ())
+        {
+            if (CFCString::FileSystemRepresentation(cf_str, str))
+            {
+                module_spec.GetSymbolFileSpec().SetFile (str.c_str(), true);
+                success = true;
+            }
+        }
+        
+        cf_str = (CFStringRef)CFDictionaryGetValue ((CFDictionaryRef) uuid_dict, CFSTR("DBGArchitecture"));
+        if (cf_str && CFGetTypeID (cf_str) == CFStringGetTypeID ())
+        {
+            if (CFCString::FileSystemRepresentation(cf_str, str))
+                module_spec.GetArchitecture().SetTriple(str.c_str());
+        }
+
+        std::string DBGBuildSourcePath;
+        std::string DBGSourcePath;
+
+        cf_str = (CFStringRef)CFDictionaryGetValue ((CFDictionaryRef) uuid_dict, CFSTR("DBGBuildSourcePath"));
+        if (cf_str && CFGetTypeID (cf_str) == CFStringGetTypeID ())
+        {
+            CFCString::FileSystemRepresentation(cf_str, DBGBuildSourcePath);
+        }
+
+        cf_str = (CFStringRef)CFDictionaryGetValue ((CFDictionaryRef) uuid_dict, CFSTR("DBGSourcePath"));
+        if (cf_str && CFGetTypeID (cf_str) == CFStringGetTypeID ())
+        {
+            CFCString::FileSystemRepresentation(cf_str, DBGSourcePath);
+        }
+        
+        if (!DBGBuildSourcePath.empty() && !DBGSourcePath.empty())
+        {
+            module_spec.GetSourceMappingList().Append (ConstString(DBGBuildSourcePath.c_str()), ConstString(DBGSourcePath.c_str()), true);
+        }
+    }
+    return success;
+}
 
 
 bool
@@ -592,7 +647,8 @@ Symbols::DownloadObjectAndSymbolFile (ModuleSpec &module_spec)
 {
     bool success = false;
     const UUID *uuid_ptr = module_spec.GetUUIDPtr();
-    if (uuid_ptr)
+    const FileSpec *file_spec_ptr = module_spec.GetFileSpecPtr();
+    if (uuid_ptr || (file_spec_ptr && file_spec_ptr->Exists()))
     {
         static bool g_located_dsym_for_uuid_exe = false;
         static bool g_dsym_for_uuid_exe_exists = false;
@@ -623,55 +679,80 @@ Symbols::DownloadObjectAndSymbolFile (ModuleSpec &module_spec)
         }
         if (g_dsym_for_uuid_exe_exists)
         {
-            StreamString command;
             char uuid_cstr_buffer[64];
-            const char *uuid_cstr = uuid_ptr->GetAsCString(uuid_cstr_buffer, sizeof(uuid_cstr_buffer));
-            command.Printf("%s --copyExecutable %s", g_dsym_for_uuid_exe_path, uuid_cstr);
-            int exit_status = -1;
-            int signo = -1;
-            std::string command_output;
-            Error error = Host::RunShellCommand (command.GetData(),
-                                                 NULL,              // current working directory
-                                                 &exit_status,      // Exit status
-                                                 &signo,            // Signal int *
-                                                 &command_output,   // Command output
-                                                 30,                // Large timeout to allow for long dsym download times
-                                                 NULL);             // Don't run in a shell (we don't need shell expansion)
-            if (error.Success() && exit_status == 0 && !command_output.empty())
+            char file_path[PATH_MAX];
+            uuid_cstr_buffer[0] = '\0';
+            file_path[0] = '\0';
+            const char *uuid_cstr = NULL;
+
+            if (uuid_ptr)
+                uuid_cstr = uuid_ptr->GetAsCString(uuid_cstr_buffer, sizeof(uuid_cstr_buffer));
+
+            if (file_spec_ptr)
+                file_spec_ptr->GetPath(file_path, sizeof(file_path));
+            
+            StreamString command;
+            if (uuid_cstr)
+                command.Printf("%s --copyExecutable %s", g_dsym_for_uuid_exe_path, uuid_cstr);
+            else if (file_path && file_path[0])
+                command.Printf("%s --copyExecutable %s", g_dsym_for_uuid_exe_path, file_path);
+            
+            if (!command.GetString().empty())
             {
-                CFCData data (CFDataCreateWithBytesNoCopy (NULL,
-                                                           (const UInt8 *)command_output.data(),
-                                                           command_output.size(),
-                                                           kCFAllocatorNull));
-                
-                CFCReleaser<CFPropertyListRef> plist(::CFPropertyListCreateFromXMLData (NULL, data.get(), kCFPropertyListImmutable, NULL));
-                
-                if (CFGetTypeID (plist.get()) == CFDictionaryGetTypeID ())
+                int exit_status = -1;
+                int signo = -1;
+                std::string command_output;
+                Error error = Host::RunShellCommand (command.GetData(),
+                                                     NULL,              // current working directory
+                                                     &exit_status,      // Exit status
+                                                     &signo,            // Signal int *
+                                                     &command_output,   // Command output
+                                                     30,                // Large timeout to allow for long dsym download times
+                                                     NULL);             // Don't run in a shell (we don't need shell expansion)
+                if (error.Success() && exit_status == 0 && !command_output.empty())
                 {
-                    std::string str;
-                    CFCString uuid_cfstr(uuid_cstr);
-                    CFTypeRef uuid_dict = CFDictionaryGetValue ((CFDictionaryRef) plist.get(), uuid_cfstr.get());
-                    if (uuid_dict != NULL && CFGetTypeID (uuid_dict) == CFDictionaryGetTypeID ())
+                    CFCData data (CFDataCreateWithBytesNoCopy (NULL,
+                                                               (const UInt8 *)command_output.data(),
+                                                               command_output.size(),
+                                                               kCFAllocatorNull));
+                    
+                    CFCReleaser<CFDictionaryRef> plist((CFDictionaryRef)::CFPropertyListCreateFromXMLData (NULL, data.get(), kCFPropertyListImmutable, NULL));
+                    
+                    if (CFGetTypeID (plist.get()) == CFDictionaryGetTypeID ())
                     {
-                        CFStringRef cf_str;
-                        
-                        cf_str = (CFStringRef)CFDictionaryGetValue ((CFDictionaryRef) uuid_dict, CFSTR("DBGSymbolRichExecutable"));
-                        if (cf_str && CFGetTypeID (cf_str) == CFStringGetTypeID ())
+                        if (uuid_cstr)
                         {
-                            if (CFCString::FileSystemRepresentation(cf_str, str))
-                            {
-                                success = true;
-                                module_spec.GetFileSpec().SetFile (str.c_str(), true);
-                            }
+                            CFCString uuid_cfstr(uuid_cstr);
+                            CFDictionaryRef uuid_dict = (CFDictionaryRef)CFDictionaryGetValue (plist.get(), uuid_cfstr.get());
+                            success = GetModuleSpecInfoFromUUIDDictionary (uuid_dict, module_spec);
                         }
-    
-                        cf_str = (CFStringRef)CFDictionaryGetValue ((CFDictionaryRef) uuid_dict, CFSTR("DBGDSYMPath"));
-                        if (cf_str && CFGetTypeID (cf_str) == CFStringGetTypeID ())
+                        else
                         {
-                            if (CFCString::FileSystemRepresentation(cf_str, str))
+                            const CFIndex num_values = ::CFDictionaryGetCount(plist.get());
+                            if (num_values > 0)
                             {
-                                success = true;
-                                module_spec.GetSymbolFileSpec().SetFile (str.c_str(), true);
+                                std::vector<CFStringRef> keys (num_values, NULL);
+                                std::vector<CFDictionaryRef> values (num_values, NULL);
+                                ::CFDictionaryGetKeysAndValues(plist.get(), NULL, (const void **)&values[0]);
+                                if (num_values == 1)
+                                {
+                                    return GetModuleSpecInfoFromUUIDDictionary (values[0], module_spec);
+                                }
+                                else
+                                {
+                                    for (CFIndex i=0; i<num_values; ++i)
+                                    {
+                                        ModuleSpec curr_module_spec;
+                                        if (GetModuleSpecInfoFromUUIDDictionary (values[i], curr_module_spec))
+                                        {
+                                            if (module_spec.GetArchitecture() == curr_module_spec.GetArchitecture())
+                                            {
+                                                module_spec = curr_module_spec;
+                                                return true;
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

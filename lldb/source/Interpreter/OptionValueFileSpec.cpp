@@ -21,6 +21,35 @@
 using namespace lldb;
 using namespace lldb_private;
 
+
+OptionValueFileSpec::OptionValueFileSpec () :
+    OptionValue(),
+    m_current_value (),
+    m_default_value (),
+    m_data_sp(),
+    m_completion_mask (CommandCompletions::eDiskFileCompletion)
+{
+}
+
+OptionValueFileSpec::OptionValueFileSpec (const FileSpec &value) :
+    OptionValue(),
+    m_current_value (value),
+    m_default_value (value),
+    m_data_sp(),
+    m_completion_mask (CommandCompletions::eDiskFileCompletion)
+{
+}
+
+OptionValueFileSpec::OptionValueFileSpec (const FileSpec &current_value,
+                                          const FileSpec &default_value) :
+    OptionValue(),
+    m_current_value (current_value),
+    m_default_value (default_value),
+    m_data_sp(),
+    m_completion_mask (CommandCompletions::eDiskFileCompletion)
+{
+}
+
 void
 OptionValueFileSpec::DumpValue (const ExecutionContext *exe_ctx, Stream &strm, uint32_t dump_mask)
 {
@@ -101,7 +130,7 @@ OptionValueFileSpec::AutoComplete (CommandInterpreter &interpreter,
     word_complete = false;
     matches.Clear();
     CommandCompletions::InvokeCommonCompletionCallbacks (interpreter,
-                                                         CommandCompletions::eDiskFileCompletion,
+                                                         m_completion_mask,
                                                          s,
                                                          match_start_point,
                                                          max_return_elements,

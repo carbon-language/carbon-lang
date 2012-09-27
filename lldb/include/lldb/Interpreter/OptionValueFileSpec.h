@@ -22,30 +22,12 @@ namespace lldb_private {
 class OptionValueFileSpec : public OptionValue
 {
 public:
-    OptionValueFileSpec () :
-        OptionValue(),
-        m_current_value (),
-        m_default_value (),
-        m_data_sp()
-    {
-    }
+    OptionValueFileSpec ();
     
-    OptionValueFileSpec (const FileSpec &value) :
-        OptionValue(),
-        m_current_value (value),
-        m_default_value (value),
-        m_data_sp()
-    {
-    }
+    OptionValueFileSpec (const FileSpec &value);
     
     OptionValueFileSpec (const FileSpec &current_value, 
-                         const FileSpec &default_value) :
-        OptionValue(),
-        m_current_value (current_value),
-        m_default_value (default_value),
-        m_data_sp()
-    {
-    }
+                         const FileSpec &default_value);
     
     virtual 
     ~OptionValueFileSpec()
@@ -129,10 +111,17 @@ public:
     const lldb::DataBufferSP &
     GetFileContents(bool null_terminate);
     
+    void
+    SetCompletionMask (uint32_t mask)
+    {
+        m_completion_mask = mask;
+    }
+
 protected:
     FileSpec m_current_value;
     FileSpec m_default_value;
     lldb::DataBufferSP m_data_sp;
+    uint32_t m_completion_mask;
 };
 
 } // namespace lldb_private

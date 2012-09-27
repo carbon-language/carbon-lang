@@ -1801,7 +1801,7 @@ SBTarget::AddModule (const char *path,
             module_spec.GetFileSpec().SetFile(path, false);
         
         if (uuid_cstr)
-            module_spec.GetUUID().SetfromCString(uuid_cstr);
+            module_spec.GetUUID().SetFromCString(uuid_cstr);
         
         if (triple)
             module_spec.GetArchitecture().SetTriple (triple, target_sp->GetPlatform ().get());

@@ -148,7 +148,7 @@ Property::Property (const PropertyDefinition &definition) :
         {
             UUID uuid;
             if (definition.default_cstr_value)
-                uuid.SetfromCString (definition.default_cstr_value);
+                uuid.SetFromCString (definition.default_cstr_value);
             m_value_sp.reset (new OptionValueUUID(uuid));
         }
             break;

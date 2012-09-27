@@ -13,7 +13,10 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Core/Module.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Core/StringList.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -45,7 +48,7 @@ OptionValueUUID::SetValueFromCString (const char *value_cstr,
         case eVarSetOperationReplace:
         case eVarSetOperationAssign:
             {
-                if (m_uuid.SetfromCString(value_cstr) == 0)
+                if (m_uuid.SetFromCString(value_cstr) == 0)
                     error.SetErrorStringWithFormat ("invalid uuid string value '%s'", value_cstr);
                 else
                     m_value_was_set = true;
@@ -68,3 +71,50 @@ OptionValueUUID::DeepCopy () const
 {
     return OptionValueSP(new OptionValueUUID(*this));
 }
+
+size_t
+OptionValueUUID::AutoComplete (CommandInterpreter &interpreter,
+                               const char *s,
+                               int match_start_point,
+                               int max_return_elements,
+                               bool &word_complete,
+                               StringList &matches)
+{
+    word_complete = false;
+    matches.Clear();
+    ExecutionContext exe_ctx(interpreter.GetExecutionContext());
+    Target *target = exe_ctx.GetTargetPtr();
+    if (target)
+    {
+        const size_t num_modules = target->GetImages().GetSize();
+        if (num_modules > 0)
+        {
+            char uuid_cstr[64];
+            UUID::ValueType uuid_bytes;
+            const size_t num_bytes_decoded = UUID::DecodeUUIDBytesFromCString(s, uuid_bytes, NULL);
+            for (size_t i=0; i<num_modules; ++i)
+            {
+                ModuleSP module_sp (target->GetImages().GetModuleAtIndex(i));
+                if (module_sp)
+                {
+                    const UUID &module_uuid = module_sp->GetUUID();
+                    if (module_uuid.IsValid())
+                    {
+                        bool add_uuid = false;
+                        if (num_bytes_decoded == 0)
+                            add_uuid = true;
+                        else
+                            add_uuid = ::memcmp(module_uuid.GetBytes(), uuid_bytes, num_bytes_decoded) == 0;
+                        if (add_uuid)
+                        {
+                            if (module_uuid.GetAsCString(uuid_cstr, sizeof(uuid_cstr)))
+                                matches.AppendString(uuid_cstr);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return matches.GetSize();
+}
+
