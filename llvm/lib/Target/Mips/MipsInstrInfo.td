@@ -1233,3 +1233,8 @@ include "MipsCondMov.td"
 
 include "Mips16InstrFormats.td"
 include "Mips16InstrInfo.td"
+
+// DSP
+include "MipsDSPInstrFormats.td"
+include "MipsDSPInstrInfo.td"
+
