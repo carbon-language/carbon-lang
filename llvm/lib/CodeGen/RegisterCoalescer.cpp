@@ -70,7 +70,7 @@ VerifyCoalescing("verify-coalescing",
 
 // Temporary option for testing new coalescer algo.
 static cl::opt<bool>
-NewCoalescer("new-coalescer", cl::Hidden,
+NewCoalescer("new-coalescer", cl::Hidden, cl::init(true),
              cl::desc("Use new coalescer algorithm"));
 
 namespace {

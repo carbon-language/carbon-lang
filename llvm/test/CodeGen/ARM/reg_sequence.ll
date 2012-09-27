@@ -124,7 +124,6 @@ return1:
 return2:
 ; CHECK:        %return2
 ; CHECK:        vadd.i32
-; CHECK:        vorr {{q[0-9]+}}, {{q[0-9]+}}
 ; CHECK-NOT:    vmov
 ; CHECK:        vst2.32 {d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}}
   %tmp100 = extractvalue %struct.__neon_int32x4x2_t %tmp2, 0 ; <<4 x i32>> [#uses=1]
