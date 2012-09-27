@@ -64,21 +64,23 @@ public:
 };
 
 static const ObjCIvarDecl *findPropertyBackingIvar(const ObjCPropertyDecl *PD,
-                                                   ObjCInterfaceDecl *InterD,
-                                            ASTContext &Ctx) {
+                                               const ObjCInterfaceDecl *InterD,
+                                               ASTContext &Ctx) {
   // Check for synthesized ivars.
   ObjCIvarDecl *ID = PD->getPropertyIvarDecl();
   if (ID)
     return ID;
 
+  ObjCInterfaceDecl *NonConstInterD = const_cast<ObjCInterfaceDecl*>(InterD);
+
   // Check for existing "_PropName".
-  ID = InterD->lookupInstanceVariable(PD->getDefaultSynthIvarName(Ctx));
+  ID = NonConstInterD->lookupInstanceVariable(PD->getDefaultSynthIvarName(Ctx));
   if (ID)
     return ID;
 
   // Check for existing "PropName".
   IdentifierInfo *PropIdent = PD->getIdentifier();
-  ID = InterD->lookupInstanceVariable(PropIdent);
+  ID = NonConstInterD->lookupInstanceVariable(PropIdent);
 
   return ID;
 }
@@ -97,9 +99,8 @@ void DirectIvarAssignment::checkASTDecl(const ObjCImplementationDecl *D,
     ObjCPropertyDecl *PD = *I;
 
     // Find the corresponding IVar.
-    const ObjCIvarDecl *ID = findPropertyBackingIvar(PD,
-                               const_cast<ObjCInterfaceDecl*>(InterD),
-                               Mgr.getASTContext());
+    const ObjCIvarDecl *ID = findPropertyBackingIvar(PD, InterD,
+                                                     Mgr.getASTContext());
 
     if (!ID)
       continue;
@@ -117,15 +118,16 @@ void DirectIvarAssignment::checkASTDecl(const ObjCImplementationDecl *D,
     ObjCMethodDecl *M = *I;
     AnalysisDeclContext *DCtx = Mgr.getAnalysisDeclContext(M);
 
+    // Skip the init, dealloc functions and any functions that might be doing
+    // initialization based on their name.
     if (M->getMethodFamily() == OMF_init ||
         M->getMethodFamily() == OMF_dealloc ||
-        M->getSelector().getAsString().find("init") != StringRef::npos ||
-        M->getSelector().getAsString().find("Init") != StringRef::npos)
+        M->getSelector().getNameForSlot(0).find("init") != StringRef::npos ||
+        M->getSelector().getNameForSlot(0).find("Init") != StringRef::npos)
       continue;
 
     const Stmt *Body = M->getBody();
-    if (!Body)
-      continue;
+    assert(Body);
 
     MethodCrawler MC(IvarToPropMap, M->getCanonicalDecl(), InterD, BR, DCtx);
     MC.VisitStmt(Body);
@@ -137,7 +139,8 @@ void DirectIvarAssignment::MethodCrawler::VisitBinaryOperator(
   if (!BO->isAssignmentOp())
     return;
 
-  const ObjCIvarRefExpr *IvarRef = dyn_cast<ObjCIvarRefExpr>(BO->getLHS());
+  const ObjCIvarRefExpr *IvarRef =
+          dyn_cast<ObjCIvarRefExpr>(BO->getLHS()->IgnoreParenCasts());
 
   if (!IvarRef)
     return;
@@ -158,16 +161,13 @@ void DirectIvarAssignment::MethodCrawler::VisitBinaryOperator(
       if (GetterMethod && GetterMethod->getCanonicalDecl() == MD)
         return;
 
-
-      PathDiagnosticLocation IvarRefLocation =
-          PathDiagnosticLocation::createBegin(IvarRef,
-              BR.getSourceManager(), DCtx);
-
       BR.EmitBasicReport(MD,
           "Property access",
           categories::CoreFoundationObjectiveC,
           "Direct assignment to an instance variable backing a property; "
-          "use the setter instead", IvarRefLocation);
+          "use the setter instead", PathDiagnosticLocation(IvarRef,
+                                                          BR.getSourceManager(),
+                                                          DCtx));
     }
   }
 }

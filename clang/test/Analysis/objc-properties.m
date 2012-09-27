@@ -13,7 +13,7 @@
 
   @property (assign, nonatomic) MyClass* Y; // automatically synthesized, implemented
 
-  @property (assign, nonatomic) MyClass* Z; // non synthesized, implemented
+  @property (assign, nonatomic) MyClass* Z; // non synthesized ivar, implemented setter
   @property (readonly) id nonSynth;  // non synthesized, explicitly implemented to return ivar with expected name
   
   - (id) initWithPtr:(MyClass*) value;
@@ -47,7 +47,7 @@
   }
 
   - (void) someMethod: (MyClass*)In {
-    __A = In; // expected-warning {{Direct assignment to an instance variable backing a property; use the setter instead}}
+    (__A) = In; // expected-warning {{Direct assignment to an instance variable backing a property; use the setter instead}}
     _X = In; // expected-warning {{Direct assignment to an instance variable backing a property; use the setter instead}}
     _Y = In; // expected-warning {{Direct assignment to an instance variable backing a property; use the setter instead}}
     _Z = In; // expected-warning {{Direct assignment to an instance variable backing a property; use the setter instead}}
