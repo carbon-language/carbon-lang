@@ -442,3 +442,38 @@ entry:
   ret void
 }
 declare void @_Z6PrintFz(...)
+
+@a = external global i32, align 4
+@fn1.g = private unnamed_addr constant [9 x i32*] [i32* null, i32* @a, i32* null, i32* null, i32* null, i32* null, i32* null, i32* null, i32* null], align 16
+@e = external global i32, align 4
+
+define void @pr13943() nounwind uwtable ssp {
+entry:
+  %srcval = load i576* bitcast ([9 x i32*]* @fn1.g to i576*), align 16
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.inc, %entry
+  %g.0 = phi i576 [ %srcval, %entry ], [ %ins, %for.inc ]
+  %0 = load i32* @e, align 4
+  %1 = lshr i576 %g.0, 64
+  %2 = trunc i576 %1 to i64
+  %3 = inttoptr i64 %2 to i32*
+  %cmp = icmp eq i32* undef, %3
+  %conv2 = zext i1 %cmp to i32
+  %and = and i32 %conv2, %0
+  tail call void (...)* @fn3(i32 %and) nounwind
+  %tobool = icmp eq i32 undef, 0
+  br i1 %tobool, label %for.inc, label %if.then
+
+if.then:                                          ; preds = %for.cond
+  ret void
+
+for.inc:                                          ; preds = %for.cond
+  %4 = shl i576 %1, 384
+  %mask = and i576 %g.0, -726838724295606890509921801691610055141362320587174446476410459910173841445449629921945328942266354949348255351381262292727973638307841
+  %5 = and i576 %4, 726838724295606890509921801691610055141362320587174446476410459910173841445449629921945328942266354949348255351381262292727973638307840
+  %ins = or i576 %5, %mask
+  br label %for.cond
+}
+
+declare void @fn3(...)
