@@ -417,6 +417,10 @@ def IvarInvalidationChecker : Checker<"InstanceVariableInvalidation">,
   HelpText<"Check that the invalidatable instance variables are invalidated in the methods annotated with objc_instance_variable_invalidator">,
   DescFile<"IvarInvalidationChecker.cpp">;
 
+def DirectIvarAssignment : Checker<"DirectIvarAssignment">,
+  HelpText<"Check that the invalidatable instance variables are invalidated in the methods annotated with objc_instance_variable_invalidator">,
+  DescFile<"DirectIvarAssignment.cpp">;
+
 } // end "alpha.osx.cocoa"
 
 let ParentPackage = CoreFoundation in {
