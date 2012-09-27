@@ -42,15 +42,15 @@
 @end
 
 @interface SomeSubclassInvalidatableObject : SomeInvalidationImplementingObject {
-  SomeInvalidationImplementingObject *Obj1; // expected-warning{{Ivar needs to be invalidated}}
-  SomeInvalidationImplementingObject *Obj2; // expected-warning{{Ivar needs to be invalidated}}
+  SomeInvalidationImplementingObject *Obj1; 
+  SomeInvalidationImplementingObject *Obj2;
   SomeInvalidationImplementingObject *Obj3;
   SomeInvalidationImplementingObject *_Prop1;
   SomeInvalidationImplementingObject *_Prop4;
   SomeInvalidationImplementingObject *_propIvar;
-  Invalidation1Class *MultipleProtocols; // expected-warning{{Ivar needs to be invalidated}}
-  Invalidation2Class *MultInheritance; // expected-warning{{Ivar needs to be invalidated}}
-
+  Invalidation1Class *MultipleProtocols;
+  Invalidation2Class *MultInheritance; 
+  
   // No warnings on these.
   NSObject *NObj1;
   NSObject *NObj2;
@@ -103,5 +103,8 @@
    [self setProp3:0];
    self.Prop4 = 0;
    [super invalidate];
-}
+}// expected-warning {{Instance variable Obj1 needs to be invalidated}}
+ // expected-warning@-1 {{Instance variable Obj2 needs to be invalidated}}
+ // expected-warning@-2 {{Instance variable MultipleProtocols needs to be invalidated}}
+ // expected-warning@-3 {{Instance variable MultInheritance needs to be invalidated}}
 @end

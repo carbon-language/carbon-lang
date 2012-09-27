@@ -74,7 +74,7 @@ class IvarInvalidationChecker :
     void VisitChildren(const Stmt *S) {
       for (Stmt::const_child_range I = S->children(); I; ++I)
         if (*I)
-          static_cast<MethodCrawler*>(this)->Visit(*I);
+          this->Visit(*I);
     }
   };
 
@@ -94,14 +94,17 @@ public:
   void checkASTDecl(const ObjCMethodDecl *D, AnalysisManager& Mgr,
                     BugReporter &BR) const;
 
+  // TODO: We are currently ignoring the ivars coming from class extensions.
 };
 
 bool isInvalidationMethod(const ObjCMethodDecl *M) {
-  const AnnotateAttr *Ann = M->getAttr<AnnotateAttr>();
-  if (!Ann)
-    return false;
-  if (Ann->getAnnotation() == "objc_instance_variable_invalidator")
-    return true;
+  for (specific_attr_iterator<AnnotateAttr>
+       AI = M->specific_attr_begin<AnnotateAttr>(),
+       AE = M->specific_attr_end<AnnotateAttr>(); AI != AE; ++AI) {
+    const AnnotateAttr *Ann = *AI;
+    if (Ann->getAnnotation() == "objc_instance_variable_invalidator")
+      return true;
+  }
   return false;
 }
 
@@ -203,7 +206,7 @@ void IvarInvalidationChecker::checkASTDecl(const ObjCMethodDecl *D,
     const ObjCObjectPointerType *IvTy = IvQTy->getAs<ObjCObjectPointerType>();
     if (!IvTy)
       continue;
-    const ObjCInterfaceDecl *IvInterf = IvTy->getObjectType()->getInterface();
+    const ObjCInterfaceDecl *IvInterf = IvTy->getInterfaceDecl();
     if (containsInvalidationMethod(IvInterf))
       Ivars[cast<ObjCIvarDecl>(Iv->getCanonicalDecl())] = false;
   }
@@ -224,10 +227,8 @@ void IvarInvalidationChecker::checkASTDecl(const ObjCMethodDecl *D,
     // Find the setter.
     const ObjCMethodDecl *SetterD = PD->getSetterMethodDecl();
     // If we don't know the setter, do not track this ivar.
-    if (!SetterD) {
-      Ivars[cast<ObjCIvarDecl>(ID->getCanonicalDecl())] = true;
+    if (!SetterD)
       continue;
-    }
 
     // Store the mappings.
     PD = cast<ObjCPropertyDecl>(PD->getCanonicalDecl());
@@ -248,14 +249,15 @@ void IvarInvalidationChecker::checkASTDecl(const ObjCMethodDecl *D,
       const ObjCIvarDecl *IvarDecl = I->first;
 
       PathDiagnosticLocation IvarDecLocation =
-          PathDiagnosticLocation::createBegin(IvarDecl, BR.getSourceManager());
+          PathDiagnosticLocation::createEnd(D->getBody(), BR.getSourceManager(),
+                                            Mgr.getAnalysisDeclContext(D));
 
       SmallString<128> sbuf;
       llvm::raw_svector_ostream os(sbuf);
-      os << "Ivar needs to be invalidated in the '" <<
-            D->getSelector().getAsString()<< "' method";
+      os << "Instance variable "<< IvarDecl->getName()
+         << " needs to be invalidated";
 
-      BR.EmitBasicReport(IvarDecl,
+      BR.EmitBasicReport(D,
           "Incomplete invalidation",
           categories::CoreFoundationObjectiveC, os.str(),
           IvarDecLocation);

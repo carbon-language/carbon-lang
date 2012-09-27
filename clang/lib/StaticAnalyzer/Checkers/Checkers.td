@@ -415,7 +415,7 @@ def ObjCDeallocChecker : Checker<"Dealloc">,
 
 def IvarInvalidationChecker : Checker<"InstanceVariableInvalidation">,
   HelpText<"Check that the invalidatable instance variables are invalidated in the methods annotated with objc_instance_variable_invalidator">,
-  DescFile<"IvarInvalidationCheckerChecker.cpp">;
+  DescFile<"IvarInvalidationChecker.cpp">;
 
 } // end "alpha.osx.cocoa"
 
