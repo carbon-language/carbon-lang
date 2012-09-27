@@ -231,3 +231,41 @@ lor.end:
 ; CHECK-NEXT: %lor.ext = zext i1 %1 to i32
 ; CHECK-NEXT: ret i32 %lor.ext
 }
+
+; PR13946
+define i32 @overflow(i32 %type) nounwind {
+entry:
+  switch i32 %type, label %sw.default [
+    i32 -2147483648, label %sw.bb
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb1
+    i32 2, label %sw.bb2
+    i32 -2147483645, label %sw.bb3
+    i32 3, label %sw.bb3
+  ]
+
+sw.bb:
+  br label %if.end
+
+sw.bb1:
+  br label %if.end
+
+sw.bb2:
+  br label %if.end
+
+sw.bb3:
+  br label %if.end
+
+sw.default:
+  br label %if.end
+
+if.else:
+  br label %if.end
+
+if.end:
+  %dirent_type.0 = phi i32 [ 3, %sw.default ], [ 6, %sw.bb3 ], [ 5, %sw.bb2 ], [ 0, %sw.bb1 ], [ 3, %sw.bb ], [ 0, %if.else ]
+  ret i32 %dirent_type.0
+; CHECK: define i32 @overflow
+; CHECK: switch
+; CHECK: phi
+}

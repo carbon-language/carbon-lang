@@ -3414,6 +3414,10 @@ bool SwitchLookupTable::WouldFitInRegister(const TargetData *TD,
     return false;
   // FIXME: If the type is wider than it needs to be, e.g. i8 but all values
   // are <= 15, we could try to narrow the type.
+
+  // Avoid overflow, fitsInLegalInteger uses unsigned int for the width.
+  if (TableSize >= UINT_MAX/IT->getBitWidth())
+    return false;
   return TD->fitsInLegalInteger(TableSize * IT->getBitWidth());
 }
 
