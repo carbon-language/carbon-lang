@@ -393,9 +393,11 @@ public:
   OwningPtr<ExternalASTSource> ExternalSource;
   ASTMutationListener *Listener;
 
-  clang::PrintingPolicy getPrintingPolicy() const { return PrintingPolicy; }
+  const clang::PrintingPolicy &getPrintingPolicy() const {
+    return PrintingPolicy;
+  }
 
-  void setPrintingPolicy(clang::PrintingPolicy Policy) {
+  void setPrintingPolicy(const clang::PrintingPolicy &Policy) {
     PrintingPolicy = Policy;
   }
   

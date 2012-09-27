@@ -556,7 +556,8 @@ void TypePrinter::printExtVectorAfter(const ExtVectorType *T, raw_ostream &OS) {
 
 void 
 FunctionProtoType::printExceptionSpecification(raw_ostream &OS, 
-                                               PrintingPolicy Policy) const {
+                                               const PrintingPolicy &Policy)
+                                                                         const {
   
   if (hasDynamicExceptionSpec()) {
     OS << " throw(";
@@ -1343,7 +1344,8 @@ PrintTemplateArgumentList(raw_ostream &OS,
 
 void 
 FunctionProtoType::printExceptionSpecification(std::string &S, 
-                                               PrintingPolicy Policy) const {
+                                               const PrintingPolicy &Policy)
+                                                                         const {
   
   if (hasDynamicExceptionSpec()) {
     S += " throw(";

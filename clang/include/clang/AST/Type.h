@@ -3033,9 +3033,9 @@ public:
 
   // FIXME: Remove the string version.
   void printExceptionSpecification(std::string &S, 
-                                   PrintingPolicy Policy) const;
+                                   const PrintingPolicy &Policy) const;
   void printExceptionSpecification(raw_ostream &OS, 
-                                   PrintingPolicy Policy) const;
+                                   const PrintingPolicy &Policy) const;
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == FunctionProto;
