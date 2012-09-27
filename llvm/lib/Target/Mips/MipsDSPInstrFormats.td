@@ -99,6 +99,21 @@ class PRECR_SRA_PH_W_FMT<bits<5> op> : DSPInst {
   let Inst{5-0}   = 0b010001;
 }
 
+// SHLL.QB sub-class format.
+class SHLL_QB_FMT<bits<5> op> : DSPInst {
+  bits<5> rd;
+  bits<5> rt;
+  bits<5> rs_sa;
+
+  let Opcode = SPECIAL3_OPCODE.V;
+
+  let Inst{25-21} = rs_sa;
+  let Inst{20-16} = rt;
+  let Inst{15-11} = rd;
+  let Inst{10-6}  = op;
+  let Inst{5-0}   = 0b010011;
+}
+
 // DPA.W.PH sub-class format.
 class DPA_W_PH_FMT<bits<5> op> : DSPInst {
   bits<2> ac;
