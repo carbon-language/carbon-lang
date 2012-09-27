@@ -7,6 +7,7 @@ User Guides
    :hidden:
 
    CMake
+   HowToBuildOnARM
    CommandGuide/index
    DeveloperPolicy
    GettingStartedVS
@@ -27,7 +28,11 @@ User Guides
 
    An addendum to the main Getting Started guide for those using the `CMake
    build system <http://www.cmake.org>`_.
-    
+
+* :ref:`how_to_build_on_arm`
+
+   Notes on building and testing LLVM/Clang on ARM.
+
 * `Getting Started with the LLVM System using Microsoft Visual Studio
   <GettingStartedVS.html>`_
 
