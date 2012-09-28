@@ -9,13 +9,13 @@
 
 void test0(Test0 *x) {
   __weak Test0 *weakx = x;
-  [x addBlock: ^{ [weakx actNow]; }]; // expected-warning {{weak receiver may be unpredictably null in ARC mode}}
-  [x setBlock: ^{ [weakx actNow]; }]; // expected-warning {{weak receiver may be unpredictably null in ARC mode}}
-  x.block = ^{ [weakx actNow]; }; // expected-warning {{weak receiver may be unpredictably null in ARC mode}}
+  [x addBlock: ^{ [weakx actNow]; }]; // expected-warning {{weak receiver may be unpredictably set to nil}} expected-note {{assign the value to a strong variable to keep the object alive during use}}
+  [x setBlock: ^{ [weakx actNow]; }]; // expected-warning {{weak receiver may be unpredictably set to nil}} expected-note {{assign the value to a strong variable to keep the object alive during use}}
+  x.block = ^{ [weakx actNow]; }; // expected-warning {{weak receiver may be unpredictably set to nil}} expected-note {{assign the value to a strong variable to keep the object alive during use}}
 
-  [weakx addBlock: ^{ [x actNow]; }]; // expected-warning {{weak receiver may be unpredictably null in ARC mode}}
-  [weakx setBlock: ^{ [x actNow]; }]; // expected-warning {{weak receiver may be unpredictably null in ARC mode}}
-  weakx.block = ^{ [x actNow]; };     // expected-warning {{weak receiver may be unpredictably null in ARC mode}}
+  [weakx addBlock: ^{ [x actNow]; }]; // expected-warning {{weak receiver may be unpredictably set to nil}} expected-note {{assign the value to a strong variable to keep the object alive during use}}
+  [weakx setBlock: ^{ [x actNow]; }]; // expected-warning {{weak receiver may be unpredictably set to nil}} expected-note {{assign the value to a strong variable to keep the object alive during use}}
+  weakx.block = ^{ [x actNow]; };     // expected-warning {{weak receiver may be unpredictably set to nil}} expected-note {{assign the value to a strong variable to keep the object alive during use}}
 }
 
 @interface Test
@@ -36,12 +36,12 @@ void test0(Test0 *x) {
     if (self.weak_atomic_prop) {
       self.weak_atomic_prop = 0;
     }
-    [self.weak_prop Meth]; // expected-warning {{weak property may be unpredictably null in ARC mode}}
+    [self.weak_prop Meth]; // expected-warning {{weak property may be unpredictably set to nil}} expected-note {{assign the value to a strong variable to keep the object alive during use}}
     id pi = self.P;
 
-    [self.weak_atomic_prop Meth];  // expected-warning {{weak property may be unpredictably null in ARC mode}}
+    [self.weak_atomic_prop Meth];  // expected-warning {{weak property may be unpredictably set to nil}} expected-note {{assign the value to a strong variable to keep the object alive during use}}
 
-    [self.P Meth];		   // expected-warning {{weak implicit property may be unpredictably null in ARC mode}}
+    [self.P Meth];		   // expected-warning {{weak implicit property may be unpredictably set to nil}} expected-note {{assign the value to a strong variable to keep the object alive during use}}
 }
 
 - (__weak id) P { return 0; }
@@ -60,9 +60,9 @@ void test0(Test0 *x) {
 
 - (void)doSomething
 {
-    [[self parent] doSomething]; // expected-warning {{weak property may be unpredictably null in ARC mode}}
+    [[self parent] doSomething]; // expected-warning {{weak property may be unpredictably set to nil}} expected-note {{assign the value to a strong variable to keep the object alive during use}}
 
-    (void)self.parent.doSomething; // expected-warning {{weak property may be unpredictably null in ARC mode}}
+    (void)self.parent.doSomething; // expected-warning {{weak property may be unpredictably set to nil}} expected-note {{assign the value to a strong variable to keep the object alive during use}}
 }
 
 @end
@@ -74,7 +74,7 @@ void test0(Test0 *x) {
 @end
 
 void testProtocol(id <MyProtocol> input) {
-  [[input object] Meth]; // expected-warning {{weak property may be unpredictably null in ARC mode}}
-  [input.object Meth]; // expected-warning {{weak property may be unpredictably null in ARC mode}}
+  [[input object] Meth]; // expected-warning {{weak property may be unpredictably set to nil}} expected-note {{assign the value to a strong variable to keep the object alive during use}}
+  [input.object Meth]; // expected-warning {{weak property may be unpredictably set to nil}} expected-note {{assign the value to a strong variable to keep the object alive during use}}
 }
 
