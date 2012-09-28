@@ -226,7 +226,8 @@ bool CodeGenPrepare::EliminateFallThrough(Function &F) {
     // edge, just collapse it.
     BasicBlock *SinglePred = BB->getSinglePredecessor();
 
-    if (!SinglePred || SinglePred == BB) continue;
+    // Don't merge if BB's address is taken.
+    if (!SinglePred || SinglePred == BB || BB->hasAddressTaken()) continue;
 
     BranchInst *Term = dyn_cast<BranchInst>(SinglePred->getTerminator());
     if (Term && !Term->isConditional()) {
@@ -788,7 +789,7 @@ bool CodeGenPrepare::DupRetToEnableTailCallOpts(ReturnInst *RI) {
   }
 
   // If we eliminated all predecessors of the block, delete the block now.
-  if (Changed && pred_begin(BB) == pred_end(BB))
+  if (Changed && !BB->hasAddressTaken() && pred_begin(BB) == pred_end(BB))
     BB->eraseFromParent();
 
   return Changed;
