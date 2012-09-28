@@ -18,6 +18,9 @@ if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}")
     clang clang-headers FileCheck count not llvm-nm
     ${ASAN_RUNTIME_LIBRARIES}
     )
+  if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+    list(APPEND ASAN_TEST_DEPS llvm-symbolizer)
+  endif()
   set(ASAN_TEST_PARAMS
     asan_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
     )
