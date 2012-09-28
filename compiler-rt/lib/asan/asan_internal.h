@@ -62,7 +62,11 @@
 
 // If set, asan will install its own SEGV signal handler.
 #ifndef ASAN_NEEDS_SEGV
-# define ASAN_NEEDS_SEGV 1
+# ifdef ASAN_ANDROID
+#  define ASAN_NEEDS_SEGV 0
+# else
+#  define ASAN_NEEDS_SEGV 1
+# endif
 #endif
 
 // If set, asan will intercept C++ exception api call(s).
@@ -79,7 +83,11 @@
 // If set, values like allocator chunk size, as well as defaults for some flags
 // will be changed towards less memory overhead.
 #ifndef ASAN_LOW_MEMORY
-# define ASAN_LOW_MEMORY 0
+# ifdef ASAN_ANDROID
+#  define ASAN_LOW_MEMORY 1
+# else
+#  define ASAN_LOW_MEMORY 0
+# endif
 #endif
 
 // All internal functions in asan reside inside the __asan namespace
