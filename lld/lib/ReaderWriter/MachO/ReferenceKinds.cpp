@@ -40,8 +40,6 @@ KindHandler *KindHandler::makeHandler(WriterOptionsMachO::Architecture arch) {
     case WriterOptionsMachO::arch_armv7:
       return new KindHandler_arm();
       break;
-    default:
-      assert(0 && "arch not supported");
   }
 }
 
