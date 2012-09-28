@@ -13,6 +13,7 @@
 
 #include "llvm/Support/Errno.h"
 #include "llvm/Config/config.h"     // Get autoconf configuration settings
+#include "llvm/Support/raw_ostream.h"
 
 #if HAVE_STRING_H
 #include <string.h>
@@ -39,7 +40,7 @@ std::string StrError(int errnum) {
   const int MaxErrStrLen = 2000;
   char buffer[MaxErrStrLen];
   buffer[0] = '\0';
-  char* str = buffer;
+  std::string str;
 #ifdef HAVE_STRERROR_R
   // strerror_r is thread-safe.
   if (errnum)
@@ -49,6 +50,7 @@ std::string StrError(int errnum) {
     str = strerror_r(errnum,buffer,MaxErrStrLen-1);
 # else
     strerror_r(errnum,buffer,MaxErrStrLen-1);
+    str = buffer;
 # endif
 #elif HAVE_DECL_STRERROR_S // "Windows Secure API"
     if (errnum)
@@ -58,12 +60,13 @@ std::string StrError(int errnum) {
   // the buffer as fast as possible to minimize impact
   // of collision of strerror in multiple threads.
   if (errnum)
-    strncpy(buffer,strerror(errnum),MaxErrStrLen-1);
-  buffer[MaxErrStrLen-1] = '\0';
+    str = strerror(errnum);
 #else
   // Strange that this system doesn't even have strerror
   // but, oh well, just use a generic message
-  sprintf(buffer, "Error #%d", errnum);
+  raw_string_ostream stream(str);
+  stream << "Error #" << errnum;
+  stream.flush();
 #endif
   return str;
 }
