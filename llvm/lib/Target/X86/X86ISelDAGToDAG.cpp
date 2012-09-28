@@ -2525,7 +2525,13 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
                                                         MVT::i8, Reg);
 
         // Emit a testb.
-        return CurDAG->getMachineNode(X86::TEST8ri, dl, MVT::i32, Subreg, Imm);
+        SDNode *NewNode = CurDAG->getMachineNode(X86::TEST8ri, dl, MVT::i32,
+                                                 Subreg, Imm);
+        // Replace SUB|CMP with TEST, since SUB has two outputs while TEST has
+        // one, do not call ReplaceAllUsesWith.
+        ReplaceUses(SDValue(Node, (Opcode == X86ISD::SUB ? 1 : 0)),
+                    SDValue(NewNode, 0));
+        return NULL;
       }
 
       // For example, "testl %eax, $2048" to "testb %ah, $8".
@@ -2556,8 +2562,13 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
         // Emit a testb.  The EXTRACT_SUBREG becomes a COPY that can only
         // target GR8_NOREX registers, so make sure the register class is
         // forced.
-        return CurDAG->getMachineNode(X86::TEST8ri_NOREX, dl, MVT::i32,
-                                      Subreg, ShiftedImm);
+        SDNode *NewNode = CurDAG->getMachineNode(X86::TEST8ri_NOREX, dl,
+                                                 MVT::i32, Subreg, ShiftedImm);
+        // Replace SUB|CMP with TEST, since SUB has two outputs while TEST has
+        // one, do not call ReplaceAllUsesWith.
+        ReplaceUses(SDValue(Node, (Opcode == X86ISD::SUB ? 1 : 0)),
+                    SDValue(NewNode, 0));
+        return NULL;
       }
 
       // For example, "testl %eax, $32776" to "testw %ax, $32776".
@@ -2573,7 +2584,13 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
                                                         MVT::i16, Reg);
 
         // Emit a testw.
-        return CurDAG->getMachineNode(X86::TEST16ri, dl, MVT::i32, Subreg, Imm);
+        SDNode *NewNode = CurDAG->getMachineNode(X86::TEST16ri, dl, MVT::i32,
+                                                 Subreg, Imm);
+        // Replace SUB|CMP with TEST, since SUB has two outputs while TEST has
+        // one, do not call ReplaceAllUsesWith.
+        ReplaceUses(SDValue(Node, (Opcode == X86ISD::SUB ? 1 : 0)),
+                    SDValue(NewNode, 0));
+        return NULL;
       }
 
       // For example, "testq %rax, $268468232" to "testl %eax, $268468232".
@@ -2589,7 +2606,13 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
                                                         MVT::i32, Reg);
 
         // Emit a testl.
-        return CurDAG->getMachineNode(X86::TEST32ri, dl, MVT::i32, Subreg, Imm);
+        SDNode *NewNode = CurDAG->getMachineNode(X86::TEST32ri, dl, MVT::i32,
+                                                 Subreg, Imm);
+        // Replace SUB|CMP with TEST, since SUB has two outputs while TEST has
+        // one, do not call ReplaceAllUsesWith.
+        ReplaceUses(SDValue(Node, (Opcode == X86ISD::SUB ? 1 : 0)),
+                    SDValue(NewNode, 0));
+        return NULL;
       }
     }
     break;
