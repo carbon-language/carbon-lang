@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines FunctionScopeInfo and BlockScopeInfo.
+// This file defines FunctionScopeInfo and its subclasses, which contain
+// information about a single function, block, lambda, or method body.
 //
 //===----------------------------------------------------------------------===//
 

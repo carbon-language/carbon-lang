@@ -14,6 +14,7 @@ add_clang_library(clangSema
   IdentifierResolver.cpp
   JumpDiagnostics.cpp
   Scope.cpp
+  ScopeInfo.cpp
   Sema.cpp
   SemaAccess.cpp
   SemaAttr.cpp
