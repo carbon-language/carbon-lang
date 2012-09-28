@@ -159,6 +159,11 @@ public:
   /// \brief Get previous definition of the macro with the same name.
   MacroInfo *getPreviousDefinition() { return PreviousDefinition; }
 
+  /// \brief Find macro definition active in the specified source location. If
+  /// this macro was not defined there, return NULL.
+  const MacroInfo *findDefinitionAtLoc(SourceLocation L,
+                                       SourceManager &SM) const;
+
   /// \brief Get length in characters of the macro definition.
   unsigned getDefinitionLength(SourceManager &SM) const {
     if (IsDefinitionLengthCached)

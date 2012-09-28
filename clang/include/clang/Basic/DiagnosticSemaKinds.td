@@ -5667,7 +5667,7 @@ def warn_unannotated_fallthrough_per_function : Warning<
   "unannotated fall-through between switch labels in partly-annotated "
   "function">, InGroup<ImplicitFallthroughPerFunction>, DefaultIgnore;
 def note_insert_fallthrough_fixit : Note<
-  "insert '[[clang::fallthrough]];' to silence this warning">;
+  "insert '%0;' to silence this warning">;
 def note_insert_break_fixit : Note<
   "insert 'break;' to avoid fall-through">;
 def err_fallthrough_attr_wrong_target : Error<
