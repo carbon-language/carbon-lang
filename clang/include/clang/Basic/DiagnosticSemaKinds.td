@@ -710,14 +710,16 @@ def warn_receiver_is_weak : Warning <
   "unpredictably null in ARC mode">,
   InGroup<DiagGroup<"receiver-is-weak">>, DefaultIgnore;
 def warn_arc_repeated_use_of_weak : Warning <
-  "weak property is accessed multiple times in this "
-  "%select{function|method|block|lambda}0 but may be unpredictably set to nil; "
-  "assign to a strong variable to keep the object alive">,
+  "weak %select{variable|property|implicit property|instance variable}0 %1 is "
+  "accessed multiple times in this %select{function|method|block|lambda}2 "
+  "but may be unpredictably set to nil; assign to a strong variable to keep "
+  "the object alive">,
   InGroup<ARCRepeatedUseOfWeak>, DefaultIgnore;
 def warn_arc_possible_repeated_use_of_weak : Warning <
-  "weak property may be accessed multiple times in this "
-  "%select{function|method|block|lambda}0 but may be unpredictably set to nil; "
-  "assign to a strong variable to keep the object alive">,
+  "weak %select{variable|property|implicit property|instance variable}0 %1 may "
+  "be accessed multiple times in this %select{function|method|block|lambda}2 "
+  "and may be unpredictably set to nil; assign to a strong variable to keep "
+  "the object alive">,
   InGroup<ARCRepeatedUseOfWeakMaybe>, DefaultIgnore;
 def note_arc_weak_also_accessed_here : Note<
   "also accessed here">;

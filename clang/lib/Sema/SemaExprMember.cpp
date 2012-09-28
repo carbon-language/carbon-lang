@@ -13,6 +13,7 @@
 #include "clang/Sema/SemaInternal.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/Scope.h"
+#include "clang/Sema/ScopeInfo.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
@@ -1272,9 +1273,23 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
       if (warn)
         Diag(MemberLoc, diag::warn_direct_ivar_access) << IV->getDeclName();
     }
-    return Owned(new (Context) ObjCIvarRefExpr(IV, IV->getType(),
-                                               MemberLoc, BaseExpr.take(),
-                                               IsArrow));
+
+    ObjCIvarRefExpr *Result = new (Context) ObjCIvarRefExpr(IV, IV->getType(),
+                                                            MemberLoc,
+                                                            BaseExpr.take(),
+                                                            IsArrow);
+
+    if (getLangOpts().ObjCAutoRefCount) {
+      if (IV->getType().getObjCLifetime() == Qualifiers::OCL_Weak) {
+        DiagnosticsEngine::Level Level =
+          Diags.getDiagnosticLevel(diag::warn_arc_repeated_use_of_weak,
+                                   MemberLoc);
+        if (Level != DiagnosticsEngine::Ignored)
+          getCurFunction()->recordUseOfWeak(Result);
+      }
+    }
+
+    return Owned(Result);
   }
 
   // Objective-C property access.

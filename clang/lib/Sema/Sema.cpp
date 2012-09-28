@@ -82,65 +82,77 @@ static bool isSelfExpr(const Expr *E) {
   return M->getSelfDecl() == Param;
 }
 
+FunctionScopeInfo::WeakObjectProfileTy::BaseInfoTy
+FunctionScopeInfo::WeakObjectProfileTy::getBaseInfo(const Expr *E) {
+  E = E->IgnoreParenCasts();
+
+  const NamedDecl *D = 0;
+  bool IsExact = false;
+
+  switch (E->getStmtClass()) {
+  case Stmt::DeclRefExprClass:
+    D = cast<DeclRefExpr>(E)->getDecl();
+    IsExact = isa<VarDecl>(D);
+    break;
+  case Stmt::MemberExprClass: {
+    const MemberExpr *ME = cast<MemberExpr>(E);
+    D = ME->getMemberDecl();
+    IsExact = isa<CXXThisExpr>(ME->getBase()->IgnoreParenImpCasts());
+    break;
+  }
+  case Stmt::ObjCIvarRefExprClass: {
+    const ObjCIvarRefExpr *IE = cast<ObjCIvarRefExpr>(E);
+    D = IE->getDecl();
+    IsExact = isSelfExpr(IE->getBase());
+    break;
+  }
+  case Stmt::PseudoObjectExprClass: {
+    const PseudoObjectExpr *POE = cast<PseudoObjectExpr>(E);
+    const ObjCPropertyRefExpr *BaseProp =
+      dyn_cast<ObjCPropertyRefExpr>(POE->getSyntacticForm());
+    if (BaseProp) {
+      D = getBestPropertyDecl(BaseProp);
+
+      const Expr *DoubleBase = BaseProp->getBase();
+      if (const OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(DoubleBase))
+        DoubleBase = OVE->getSourceExpr();
+
+      IsExact = isSelfExpr(DoubleBase);
+    }
+    break;
+  }
+  default:
+    break;
+  }
+
+  return BaseInfoTy(D, IsExact);
+}
+
+
 FunctionScopeInfo::WeakObjectProfileTy::WeakObjectProfileTy(
                                           const ObjCPropertyRefExpr *PropE)
-    : Base(0, false), Property(getBestPropertyDecl(PropE)) {
+    : Base(0, true), Property(getBestPropertyDecl(PropE)) {
 
   if (PropE->isObjectReceiver()) {
     const OpaqueValueExpr *OVE = cast<OpaqueValueExpr>(PropE->getBase());
-    const Expr *E = OVE->getSourceExpr()->IgnoreParenCasts();
-
-    switch (E->getStmtClass()) {
-    case Stmt::DeclRefExprClass:
-      Base.setPointer(cast<DeclRefExpr>(E)->getDecl());
-      Base.setInt(isa<VarDecl>(Base.getPointer()));
-      break;
-    case Stmt::MemberExprClass: {
-      const MemberExpr *ME = cast<MemberExpr>(E);
-      Base.setPointer(ME->getMemberDecl());
-      Base.setInt(isa<CXXThisExpr>(ME->getBase()->IgnoreParenImpCasts()));
-      break;
-    }
-    case Stmt::ObjCIvarRefExprClass: {
-      const ObjCIvarRefExpr *IE = cast<ObjCIvarRefExpr>(E);
-      Base.setPointer(IE->getDecl());
-      if (isSelfExpr(IE->getBase()))
-        Base.setInt(true);
-      break;
-    }
-    case Stmt::PseudoObjectExprClass: {
-      const PseudoObjectExpr *POE = cast<PseudoObjectExpr>(E);
-      const ObjCPropertyRefExpr *BaseProp =
-        dyn_cast<ObjCPropertyRefExpr>(POE->getSyntacticForm());
-      if (BaseProp) {
-        Base.setPointer(getBestPropertyDecl(BaseProp));
-
-        const Expr *DoubleBase = BaseProp->getBase();
-        if (const OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(DoubleBase))
-          DoubleBase = OVE->getSourceExpr();
-
-        if (isSelfExpr(DoubleBase))
-          Base.setInt(true);
-      }
-      break;
-    }
-    default:
-      break;
-    }
+    const Expr *E = OVE->getSourceExpr();
+    Base = getBaseInfo(E);
   } else if (PropE->isClassReceiver()) {
     Base.setPointer(PropE->getClassReceiver());
-    Base.setInt(true);
   } else {
     assert(PropE->isSuperReceiver());
-    Base.setInt(true);
   }
 }
 
-void FunctionScopeInfo::recordUseOfWeak(const ObjCPropertyRefExpr *RefExpr) {
-  assert(RefExpr);
-  WeakUseVector &Uses =
-    WeakObjectUses[FunctionScopeInfo::WeakObjectProfileTy(RefExpr)];
-  Uses.push_back(WeakUseTy(RefExpr, RefExpr->isMessagingGetter()));
+FunctionScopeInfo::WeakObjectProfileTy::WeakObjectProfileTy(
+                                                      const DeclRefExpr *DRE)
+  : Base(0, true), Property(DRE->getDecl()) {
+  assert(isa<VarDecl>(Property));
+}
+
+FunctionScopeInfo::WeakObjectProfileTy::WeakObjectProfileTy(
+                                                  const ObjCIvarRefExpr *IvarE)
+  : Base(getBaseInfo(IvarE->getBase())), Property(IvarE->getDecl()) {
 }
 
 void FunctionScopeInfo::markSafeWeakUse(const Expr *E) {
@@ -164,22 +176,27 @@ void FunctionScopeInfo::markSafeWeakUse(const Expr *E) {
     return;
   }
 
-  if (const ObjCPropertyRefExpr *RefExpr = dyn_cast<ObjCPropertyRefExpr>(E)) {
-    // Has this property been seen as a weak property?
-    FunctionScopeInfo::WeakObjectUseMap::iterator Uses =
-      WeakObjectUses.find(FunctionScopeInfo::WeakObjectProfileTy(RefExpr));
-    if (Uses == WeakObjectUses.end())
-      return;
-
-    // Has there been a read from the property using this Expr?
-    FunctionScopeInfo::WeakUseVector::reverse_iterator ThisUse =
-      std::find(Uses->second.rbegin(), Uses->second.rend(), WeakUseTy(E, true));
-    if (ThisUse == Uses->second.rend())
-      return;
-
-    ThisUse->markSafe();
+  // Has this weak object been seen before?
+  FunctionScopeInfo::WeakObjectUseMap::iterator Uses;
+  if (const ObjCPropertyRefExpr *RefExpr = dyn_cast<ObjCPropertyRefExpr>(E))
+    Uses = WeakObjectUses.find(FunctionScopeInfo::WeakObjectProfileTy(RefExpr));
+  else if (const ObjCIvarRefExpr *IvarE = dyn_cast<ObjCIvarRefExpr>(E))
+    Uses = WeakObjectUses.find(FunctionScopeInfo::WeakObjectProfileTy(IvarE));
+  else if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
+    Uses = WeakObjectUses.find(FunctionScopeInfo::WeakObjectProfileTy(DRE));
+  else
     return;
-  }
+
+  if (Uses == WeakObjectUses.end())
+    return;
+
+  // Has there been a read from the object using this Expr?
+  FunctionScopeInfo::WeakUseVector::reverse_iterator ThisUse =
+    std::find(Uses->second.rbegin(), Uses->second.rend(), WeakUseTy(E, true));
+  if (ThisUse == Uses->second.rend())
+    return;
+
+  ThisUse->markSafe();
 }
 
 BlockScopeInfo::~BlockScopeInfo() { }

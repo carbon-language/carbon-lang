@@ -845,7 +845,8 @@ ExprResult ObjCPropertyOpBuilder::complete(Expr *SyntacticForm) {
       S.Diags.getDiagnosticLevel(diag::warn_arc_repeated_use_of_weak,
                                  SyntacticForm->getLocStart());
     if (Level != DiagnosticsEngine::Ignored)
-      S.getCurFunction()->recordUseOfWeak(SyntacticRefExpr);
+      S.getCurFunction()->recordUseOfWeak(SyntacticRefExpr,
+                                         SyntacticRefExpr->isMessagingGetter());
   }
 
   return PseudoOpBuilder::complete(SyntacticForm);

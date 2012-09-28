@@ -957,19 +957,42 @@ static void diagnoseRepeatedUseOfWeak(Sema &S,
     const WeakObjectProfileTy &Key = I->second->first;
     const WeakUseVector &Uses = I->second->second;
 
-    // For complicated expressions like self.foo.bar, it's hard to keep track
-    // of whether 'self.foo' is the same between two cases. We can only be
-    // 100% sure of a repeated use if the "base" part of the key is a variable,
-    // rather than, say, another property.
+    // For complicated expressions like 'a.b.c' and 'x.b.c', WeakObjectProfileTy
+    // may not contain enough information to determine that these are different
+    // properties. We can only be 100% sure of a repeated use in certain cases,
+    // and we adjust the diagnostic kind accordingly so that the less certain
+    // case can be turned off if it is too noisy.
     unsigned DiagKind;
     if (Key.isExactProfile())
       DiagKind = diag::warn_arc_repeated_use_of_weak;
     else
       DiagKind = diag::warn_arc_possible_repeated_use_of_weak;
 
+    // Classify the weak object being accessed for better warning text.
+    // This enum should stay in sync with the cases in
+    // warn_arc_repeated_use_of_weak and warn_arc_possible_repeated_use_of_weak.
+    enum {
+      Variable,
+      Property,
+      ImplicitProperty,
+      Ivar
+    } ObjectKind;
+
+    const NamedDecl *D = Key.getProperty();
+    if (isa<VarDecl>(D))
+      ObjectKind = Variable;
+    else if (isa<ObjCPropertyDecl>(D))
+      ObjectKind = Property;
+    else if (isa<ObjCMethodDecl>(D))
+      ObjectKind = ImplicitProperty;
+    else if (isa<ObjCIvarDecl>(D))
+      ObjectKind = Ivar;
+    else
+      llvm_unreachable("Unexpected weak object kind!");
+
     // Show the first time the object was read.
     S.Diag(FirstRead->getLocStart(), DiagKind)
-      << FunctionKind
+      << ObjectKind << D << FunctionKind
       << FirstRead->getSourceRange();
 
     // Print all the other accesses as notes.

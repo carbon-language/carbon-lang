@@ -30,6 +30,8 @@ class ReturnStmt;
 class Scope;
 class SwitchStmt;
 class VarDecl;
+class DeclRefExpr;
+class ObjCIvarRefExpr;
 class ObjCPropertyRefExpr;
 
 namespace sema {
@@ -132,6 +134,8 @@ public:
   /// [self foo].prop   | 0 (unknown)         | prop (ObjCPropertyDecl)
   /// self.prop1.prop2  | prop1 (ObjCPropertyDecl)    | prop2 (ObjCPropertyDecl)
   /// MyClass.prop      | MyClass (ObjCInterfaceDecl) | -prop (ObjCMethodDecl)
+  /// weakVar           | 0 (known)           | weakVar (VarDecl)
+  /// self->weakIvar    | self (VarDecl)      | weakIvar (ObjCIvarDecl)
   ///
   /// Objects are identified with only two Decls to make it reasonably fast to
   /// compare them.
@@ -151,6 +155,9 @@ public:
     /// case of "implicit" properties (regular methods accessed via dot syntax).
     const NamedDecl *Property;
 
+    /// Used to find the proper base profile for a given base expression.
+    static BaseInfoTy getBaseInfo(const Expr *BaseE);
+
     // For use in DenseMap.
     friend struct llvm::DenseMapInfo<WeakObjectProfileTy>;
     inline WeakObjectProfileTy();
@@ -158,6 +165,8 @@ public:
 
   public:
     WeakObjectProfileTy(const ObjCPropertyRefExpr *RE);
+    WeakObjectProfileTy(const DeclRefExpr *RE);
+    WeakObjectProfileTy(const ObjCIvarRefExpr *RE);
 
     const NamedDecl *getProperty() const { return Property; }
 
@@ -219,10 +228,11 @@ private:
   WeakObjectUseMap WeakObjectUses;
 
 public:
-  /// Record that a weak property was accessed.
+  /// Record that a weak object was accessed.
   ///
   /// Part of the implementation of -Wrepeated-use-of-weak.
-  void recordUseOfWeak(const ObjCPropertyRefExpr *PropE);
+  template <typename ExprT>
+  inline void recordUseOfWeak(const ExprT *E, bool IsRead = true);
 
   /// Record that a given expression is a "safe" access of a weak object (e.g.
   /// assigning it to a strong variable.)
@@ -518,8 +528,15 @@ FunctionScopeInfo::WeakObjectProfileTy::getSentinel() {
   return Result;
 }
 
+template <typename ExprT>
+void FunctionScopeInfo::recordUseOfWeak(const ExprT *E, bool IsRead) {
+  assert(E);
+  WeakUseVector &Uses = WeakObjectUses[WeakObjectProfileTy(E)];
+  Uses.push_back(WeakUseTy(E, IsRead));
 }
-}
+
+} // end namespace sema
+} // end namespace clang
 
 namespace llvm {
   template <>
