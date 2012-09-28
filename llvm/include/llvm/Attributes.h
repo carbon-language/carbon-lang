@@ -205,9 +205,6 @@ public:
     void addStackProtectReqAttr() {
       Bits |= Attribute::StackProtectReq_i;
     }
-    void addAlignmentAttr() {
-      Bits |= Attribute::Alignment_i;
-    }
     void addNoCaptureAttr() {
       Bits |= Attribute::NoCapture_i;
     }
@@ -226,9 +223,6 @@ public:
     void addReturnsTwiceAttr() {
       Bits |= Attribute::ReturnsTwice_i;
     }
-    void addStackAlignmentAttr() {
-      Bits |= Attribute::StackAlignment_i;
-    }
     void addUWTableAttr() {
       Bits |= Attribute::UWTable_i;
     }
@@ -244,7 +238,7 @@ public:
       assert(Align <= 0x40000000 && "Alignment too large.");
       Bits |= (Log2_32(Align) + 1) << 16;
     }
-    void addStackAlignment(unsigned Align) {
+    void addStackAlignmentAttr(unsigned Align) {
       // Default alignment, allow the target to define how to align it.
       if (Align == 0) return;
 
