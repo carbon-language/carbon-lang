@@ -206,6 +206,22 @@ class CMPGDU_EQ_QB_ENC : CMP_EQ_QB_R3_FMT<0b11000>;
 class CMPGDU_LT_QB_ENC : CMP_EQ_QB_R3_FMT<0b11001>;
 class CMPGDU_LE_QB_ENC : CMP_EQ_QB_R3_FMT<0b11010>;
 class ABSQ_S_QB_ENC : ABSQ_S_PH_R2_FMT<0b00001>;
+class ADDUH_QB_ENC : ADDUH_QB_FMT<0b00000>;
+class ADDUH_R_QB_ENC : ADDUH_QB_FMT<0b00010>;
+class SUBUH_QB_ENC : ADDUH_QB_FMT<0b00001>;
+class SUBUH_R_QB_ENC : ADDUH_QB_FMT<0b00011>;
+class ADDQH_PH_ENC : ADDUH_QB_FMT<0b01000>;
+class ADDQH_R_PH_ENC : ADDUH_QB_FMT<0b01010>;
+class SUBQH_PH_ENC : ADDUH_QB_FMT<0b01001>;
+class SUBQH_R_PH_ENC : ADDUH_QB_FMT<0b01011>;
+class ADDQH_W_ENC : ADDUH_QB_FMT<0b10000>;
+class ADDQH_R_W_ENC : ADDUH_QB_FMT<0b10010>;
+class SUBQH_W_ENC : ADDUH_QB_FMT<0b10001>;
+class SUBQH_R_W_ENC : ADDUH_QB_FMT<0b10011>;
+class MUL_PH_ENC : ADDUH_QB_FMT<0b01100>;
+class MUL_S_PH_ENC : ADDUH_QB_FMT<0b01110>;
+class MULQ_S_W_ENC : ADDUH_QB_FMT<0b10110>;
+class MULQ_RS_W_ENC : ADDUH_QB_FMT<0b10111>;
 class MULQ_S_PH_ENC : ADDU_QB_FMT<0b11110>;
 class DPA_W_PH_ENC : DPA_W_PH_FMT<0b00000>;
 class DPS_W_PH_ENC : DPA_W_PH_FMT<0b00001>;
@@ -321,6 +337,17 @@ class SHLL_QB_R2_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   dag InOperandList = (ins RC:$rt, uimm16:$rs_sa);
   string AsmString = !strconcat(instr_asm, "\t$rd, $rt, $rs_sa");
   list<dag> Pattern = [(set RC:$rd, (OpNode RC:$rt, ImmPat:$rs_sa))];
+  InstrItinClass Itinerary = itin;
+  list<Register> Defs = [DSPCtrl];
+}
+
+class ADDUH_QB_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
+                         InstrItinClass itin, RegisterClass RCD,
+                         RegisterClass RCS = RCD,  RegisterClass RCT = RCD> {
+  dag OutOperandList = (outs RCD:$rd);
+  dag InOperandList = (ins RCS:$rs, RCT:$rt);
+  string AsmString = !strconcat(instr_asm, "\t$rd, $rs, $rt");
+  list<dag> Pattern = [(set RCD:$rd, (OpNode RCS:$rs, RCT:$rt))];
   InstrItinClass Itinerary = itin;
   list<Register> Defs = [DSPCtrl];
 }
@@ -809,6 +836,48 @@ class SUBU_PH_DESC : ADDU_QB_DESC_BASE<"subu.ph", int_mips_subu_ph, NoItinerary,
 class SUBU_S_PH_DESC : ADDU_QB_DESC_BASE<"subu_s.ph", int_mips_subu_s_ph,
                                          NoItinerary, DSPRegs, DSPRegs>;
 
+class ADDUH_QB_DESC : ADDUH_QB_DESC_BASE<"adduh.qb", int_mips_adduh_qb,
+                                         NoItinerary, DSPRegs>,
+                      ClearDefs, IsCommutable;
+
+class ADDUH_R_QB_DESC : ADDUH_QB_DESC_BASE<"adduh_r.qb", int_mips_adduh_r_qb,
+                                           NoItinerary, DSPRegs>,
+                        ClearDefs, IsCommutable;
+
+class SUBUH_QB_DESC : ADDUH_QB_DESC_BASE<"subuh.qb", int_mips_subuh_qb,
+                                         NoItinerary, DSPRegs>, ClearDefs;
+
+class SUBUH_R_QB_DESC : ADDUH_QB_DESC_BASE<"subuh_r.qb", int_mips_subuh_r_qb,
+                                           NoItinerary, DSPRegs>, ClearDefs;
+
+class ADDQH_PH_DESC : ADDUH_QB_DESC_BASE<"addqh.ph", int_mips_addqh_ph,
+                                         NoItinerary, DSPRegs>,
+                      ClearDefs, IsCommutable;
+
+class ADDQH_R_PH_DESC : ADDUH_QB_DESC_BASE<"addqh_r.ph", int_mips_addqh_r_ph,
+                                           NoItinerary, DSPRegs>,
+                        ClearDefs, IsCommutable;
+
+class SUBQH_PH_DESC : ADDUH_QB_DESC_BASE<"subqh.ph", int_mips_subqh_ph,
+                                         NoItinerary, DSPRegs>, ClearDefs;
+
+class SUBQH_R_PH_DESC : ADDUH_QB_DESC_BASE<"subqh_r.ph", int_mips_subqh_r_ph,
+                                           NoItinerary, DSPRegs>, ClearDefs;
+
+class ADDQH_W_DESC : ADDUH_QB_DESC_BASE<"addqh.w", int_mips_addqh_w,
+                                        NoItinerary, CPURegs>,
+                     ClearDefs, IsCommutable;
+
+class ADDQH_R_W_DESC : ADDUH_QB_DESC_BASE<"addqh_r.w", int_mips_addqh_r_w,
+                                          NoItinerary, CPURegs>,
+                       ClearDefs, IsCommutable;
+
+class SUBQH_W_DESC : ADDUH_QB_DESC_BASE<"subqh.w", int_mips_subqh_w,
+                                        NoItinerary, CPURegs>, ClearDefs;
+
+class SUBQH_R_W_DESC : ADDUH_QB_DESC_BASE<"subqh_r.w", int_mips_subqh_r_w,
+                                          NoItinerary, CPURegs>, ClearDefs;
+
 // Comparison
 class CMPGDU_EQ_QB_DESC : CMP_EQ_QB_R3_DESC_BASE<"cmpgdu.eq.qb",
                                                  int_mips_cmpgdu_eq_qb,
@@ -830,6 +899,18 @@ class ABSQ_S_QB_DESC : ABSQ_S_PH_R2_DESC_BASE<"absq_s.qb", int_mips_absq_s_qb,
                                               NoItinerary, DSPRegs>;
 
 // Multiplication
+class MUL_PH_DESC : ADDUH_QB_DESC_BASE<"mul.ph", int_mips_mul_ph, NoItinerary,
+                                       DSPRegs>, IsCommutable;
+
+class MUL_S_PH_DESC : ADDUH_QB_DESC_BASE<"mul_s.ph", int_mips_mul_s_ph,
+                                         NoItinerary, DSPRegs>, IsCommutable;
+
+class MULQ_S_W_DESC : ADDUH_QB_DESC_BASE<"mulq_s.w", int_mips_mulq_s_w,
+                                         NoItinerary, CPURegs>, IsCommutable;
+
+class MULQ_RS_W_DESC : ADDUH_QB_DESC_BASE<"mulq_rs.w", int_mips_mulq_rs_w,
+                                          NoItinerary, CPURegs>, IsCommutable;
+
 class MULQ_S_PH_DESC : ADDU_QB_DESC_BASE<"mulq_s.ph", int_mips_mulq_s_ph,
                                          NoItinerary, DSPRegs, DSPRegs>,
                        IsCommutable;
@@ -1009,6 +1090,22 @@ def CMPGDU_EQ_QB : CMPGDU_EQ_QB_ENC, CMPGDU_EQ_QB_DESC;
 def CMPGDU_LT_QB : CMPGDU_LT_QB_ENC, CMPGDU_LT_QB_DESC;
 def CMPGDU_LE_QB : CMPGDU_LE_QB_ENC, CMPGDU_LE_QB_DESC;
 def ABSQ_S_QB : ABSQ_S_QB_ENC, ABSQ_S_QB_DESC;
+def ADDUH_QB : ADDUH_QB_ENC, ADDUH_QB_DESC;
+def ADDUH_R_QB : ADDUH_R_QB_ENC, ADDUH_R_QB_DESC;
+def SUBUH_QB : SUBUH_QB_ENC, SUBUH_QB_DESC;
+def SUBUH_R_QB : SUBUH_R_QB_ENC, SUBUH_R_QB_DESC;
+def ADDQH_PH : ADDQH_PH_ENC, ADDQH_PH_DESC;
+def ADDQH_R_PH : ADDQH_R_PH_ENC, ADDQH_R_PH_DESC;
+def SUBQH_PH : SUBQH_PH_ENC, SUBQH_PH_DESC;
+def SUBQH_R_PH : SUBQH_R_PH_ENC, SUBQH_R_PH_DESC;
+def ADDQH_W : ADDQH_W_ENC, ADDQH_W_DESC;
+def ADDQH_R_W : ADDQH_R_W_ENC, ADDQH_R_W_DESC;
+def SUBQH_W : SUBQH_W_ENC, SUBQH_W_DESC;
+def SUBQH_R_W : SUBQH_R_W_ENC, SUBQH_R_W_DESC;
+def MUL_PH : MUL_PH_ENC, MUL_PH_DESC;
+def MUL_S_PH : MUL_S_PH_ENC, MUL_S_PH_DESC;
+def MULQ_S_W : MULQ_S_W_ENC, MULQ_S_W_DESC;
+def MULQ_RS_W : MULQ_RS_W_ENC, MULQ_RS_W_DESC;
 def MULQ_S_PH : MULQ_S_PH_ENC, MULQ_S_PH_DESC;
 def DPA_W_PH : DPA_W_PH_ENC, DPA_W_PH_DESC;
 def DPS_W_PH : DPS_W_PH_ENC, DPS_W_PH_DESC;
