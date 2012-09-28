@@ -188,3 +188,11 @@ define <4 x i16> @test13d(<4 x i16> %lhs, <4 x i16> %rhs) {
            <4 x i16> %lhs, <4 x i16> %rhs
   ret <4 x i16> %A
 }
+
+define <4 x i16> @test13e(<4 x i16> %lhs, <4 x i16> %rhs) {
+; CHECK: @test13e
+; CHECK-NEXT: ret <4 x i16> %rhs
+  %A = select <4 x i1> <i1 false, i1 false, i1 false, i1 false>,
+           <4 x i16> %lhs, <4 x i16> %rhs
+  ret <4 x i16> %A
+}

@@ -930,6 +930,10 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       Value *V = Builder->CreateShuffleVector(TrueVal, FalseVal, MaskVal);
       return ReplaceInstUsesWith(SI, V);
     }
+
+    if (isa<ConstantAggregateZero>(CondVal)) {
+      return ReplaceInstUsesWith(SI, FalseVal);
+    }
   }
 
   return 0;
