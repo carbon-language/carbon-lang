@@ -628,9 +628,9 @@ bool DiagnosticIDs::ProcessDiag(DiagnosticsEngine &Diag) const {
   if (DiagLevel >= DiagnosticIDs::Error) {
     if (isUnrecoverable(DiagID))
       Diag.UnrecoverableErrorOccurred = true;
-    
+
+    Diag.ErrorOccurred = true;
     if (Diag.Client->IncludeInDiagnosticCounts()) {
-      Diag.ErrorOccurred = true;
       ++Diag.NumErrors;
     }
 
@@ -686,4 +686,3 @@ bool DiagnosticIDs::isARCDiagnostic(unsigned DiagID) {
   unsigned cat = getCategoryNumberForDiag(DiagID);
   return DiagnosticIDs::getCategoryNameFromID(cat).startswith("ARC ");
 }
-
