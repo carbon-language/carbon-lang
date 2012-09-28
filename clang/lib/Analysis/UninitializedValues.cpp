@@ -13,6 +13,7 @@
 
 #include <utility>
 #include "llvm/ADT/Optional.h"
+#include "llvm/ADT/SmallBitVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/PackedVector.h"
 #include "llvm/ADT/DenseMap.h"
@@ -98,22 +99,21 @@ static bool isAlwaysUninit(const Value v) {
 
 namespace {
 
-typedef llvm::PackedVector<Value, 2> ValueVector;
+typedef llvm::PackedVector<Value, 2, llvm::SmallBitVector> ValueVector;
 
 class CFGBlockValues {
   const CFG &cfg;
-  std::vector<ValueVector*> vals;
+  SmallVector<ValueVector, 8> vals;
   ValueVector scratch;
   DeclToIndex declToIndex;
 public:
   CFGBlockValues(const CFG &cfg);
-  ~CFGBlockValues();
 
   unsigned getNumEntries() const { return declToIndex.size(); }
   
   void computeSetOfDeclarations(const DeclContext &dc);  
   ValueVector &getValueVector(const CFGBlock *block) {
-    return *vals[block->getBlockID()];
+    return vals[block->getBlockID()];
   }
 
   void setAllScratchValues(Value V);
@@ -139,12 +139,6 @@ public:
 
 CFGBlockValues::CFGBlockValues(const CFG &c) : cfg(c), vals(0) {}
 
-CFGBlockValues::~CFGBlockValues() {
-  for (std::vector<ValueVector*>::iterator I = vals.begin(), E = vals.end();
-       I != E; ++I)
-    delete *I;
-}
-
 void CFGBlockValues::computeSetOfDeclarations(const DeclContext &dc) {
   declToIndex.computeMap(dc);
   unsigned decls = declToIndex.size();
@@ -154,7 +148,7 @@ void CFGBlockValues::computeSetOfDeclarations(const DeclContext &dc) {
     return;
   vals.resize(n);
   for (unsigned i = 0; i < n; ++i)
-    vals[i] = new ValueVector(decls);
+    vals[i].resize(decls);
 }
 
 #if DEBUG_LOGGING
