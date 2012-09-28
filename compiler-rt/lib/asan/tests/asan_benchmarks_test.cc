@@ -12,7 +12,6 @@
 // Some benchmarks for the instrumented code.
 //===----------------------------------------------------------------------===//
 
-#include "asan_test_config.h"
 #include "asan_test_utils.h"
 
 template<class T>

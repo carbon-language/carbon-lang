@@ -1,4 +1,4 @@
-//===-- asan_noinst_test.cc ----------------------===//
+//===-- asan_noinst_test.cc -----------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -17,7 +17,6 @@
 #include "asan_mapping.h"
 #include "asan_stack.h"
 #include "asan_test_utils.h"
-#include "asan_test_config.h"
 #include "sanitizer/asan_interface.h"
 
 #include <assert.h>
@@ -26,7 +25,6 @@
 #include <string.h>  // for memset()
 #include <algorithm>
 #include <vector>
-#include "gtest/gtest.h"
 
 // Simple stand-alone pseudorandom number generator.
 // Current algorithm is ANSI C linear congruential PRNG.

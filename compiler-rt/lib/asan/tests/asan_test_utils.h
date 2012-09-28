@@ -1,4 +1,4 @@
-//===-- asan_test_utils.h ------------*- C++ -*-===//
+//===-- asan_test_utils.h ---------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,6 +13,12 @@
 
 #ifndef ASAN_TEST_UTILS_H
 #define ASAN_TEST_UTILS_H
+
+#if !defined(ASAN_EXTERNAL_TEST_CONFIG)
+# define INCLUDED_FROM_ASAN_TEST_UTILS_H
+# include "asan_test_config.h"
+# undef INCLUDED_FROM_ASAN_TEST_UTILS_H
+#endif
 
 #if defined(_WIN32)
 typedef unsigned __int8  uint8_t;

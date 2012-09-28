@@ -24,7 +24,6 @@
 #include <emmintrin.h>
 #endif
 
-#include "asan_test_config.h"
 #include "asan_test_utils.h"
 
 #ifndef __APPLE__

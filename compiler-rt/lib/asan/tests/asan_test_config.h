@@ -1,4 +1,4 @@
-//===-- asan_test_config.h ------------*- C++ -*-===//
+//===-- asan_test_config.h --------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,6 +10,10 @@
 // This file is a part of AddressSanitizer, an address sanity checker.
 //
 //===----------------------------------------------------------------------===//
+#if !defined(INCLUDED_FROM_ASAN_TEST_UTILS_H)
+# error "This file should be included into asan_test_utils.h only"
+#endif
+
 #ifndef ASAN_TEST_CONFIG_H
 #define ASAN_TEST_CONFIG_H
 
