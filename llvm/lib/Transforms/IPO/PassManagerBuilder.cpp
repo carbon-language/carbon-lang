@@ -211,13 +211,12 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
     // FIXME: We shouldn't bother with this anymore.
     MPM.add(createStripDeadPrototypesPass()); // Get rid of dead prototypes
 
-    // GlobalOpt already deletes dead functions and globals, at -O3 try a
+    // GlobalOpt already deletes dead functions and globals, at -O2 try a
     // late pass of GlobalDCE.  It is capable of deleting dead cycles.
-    if (OptLevel > 2)
+    if (OptLevel > 1) {
       MPM.add(createGlobalDCEPass());         // Remove dead fns and globals.
-
-    if (OptLevel > 1)
       MPM.add(createConstantMergePass());     // Merge dup global constants
+    }
   }
   addExtensionsToPM(EP_OptimizerLast, MPM);
 }
