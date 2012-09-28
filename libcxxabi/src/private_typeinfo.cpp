@@ -9,6 +9,10 @@
 
 #include "private_typeinfo.h"
 
+#if __APPLE__
+#include <sys/syslog.h>
+#endif
+
 namespace __cxxabiv1
 {
 
@@ -437,6 +441,19 @@ __dynamic_cast(const void* static_ptr,
         info.number_of_dst_type = 1;
         // Do the  search
         dynamic_type->search_above_dst(&info, dynamic_ptr, dynamic_ptr, public_path);
+#if __APPLE__
+        // The following if should always be false because we should definitely
+        //   find (static_ptr, static_type), either on a public or private path
+        if (info.path_dst_ptr_to_static_ptr == unknown)
+        {
+            // We get here only if there is some kind of visibility problem
+            //   in client code.
+            syslog(LOG_ERR, "dynamic_cast error 1: There is a hidden visibility "
+                    "problem associated with the type_info's of %s" 
+                    " and/or %s.\n", static_type->name(), dynamic_type->name());
+            info.path_dst_ptr_to_static_ptr = public_path;
+        }
+#endif  // __APPLE__
         // Query the search.
         if (info.path_dst_ptr_to_static_ptr == public_path)
             dst_ptr = dynamic_ptr;
@@ -445,6 +462,18 @@ __dynamic_cast(const void* static_ptr,
     {
         // Not using giant short cut.  Do the search
         dynamic_type->search_below_dst(&info, dynamic_ptr, public_path);
+ #if __APPLE__
+        // The following if should always be false because we should definitely
+        //   find (static_ptr, static_type), either on a public or private path
+       if (info.path_dst_ptr_to_static_ptr == unknown &&
+            info.path_dynamic_ptr_to_static_ptr == unknown)
+        {
+            syslog(LOG_ERR, "dynamic_cast error 2: There is a hidden visibility "
+                    "problem associated with the type_info's of %s" 
+                    " and/or %s and/or %s.\n", static_type->name(), dynamic_type->name(),
+                    dst_type->name());
+        }
+#endif  // __APPLE__
         // Query the search.
         switch (info.number_to_static_ptr)
         {

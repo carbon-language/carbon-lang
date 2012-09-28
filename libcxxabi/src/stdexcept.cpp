@@ -31,13 +31,18 @@ class __libcpp_nmstr
 private:
     const char* str_;
 
-    typedef std::size_t unused_t;
-    typedef std::ptrdiff_t count_t;
+    typedef int count_t;
 
-    static const std::ptrdiff_t offset = static_cast<std::ptrdiff_t>(2*sizeof(unused_t) +
-                                                                       sizeof(count_t));
+    struct _Rep_base
+    {
+        std::size_t len;
+        std::size_t cap;
+        count_t     count;
+    };
 
-    count_t& count() const _NOEXCEPT {return (count_t&)(*(str_ - sizeof(count_t)));}
+    static const std::ptrdiff_t offset = static_cast<std::ptrdiff_t>(sizeof(_Rep_base));
+
+    count_t& count() const _NOEXCEPT {return ((_Rep_base*)(str_ - offset))->count;}
 
 #if __APPLE__
     static
@@ -70,9 +75,9 @@ public:
 __libcpp_nmstr::__libcpp_nmstr(const char* msg)
 {
     std::size_t len = strlen(msg);
-    str_ = new char[len + 1 + offset];
-    unused_t* c = (unused_t*)str_;
-    c[0] = c[1] = len;
+    str_ = static_cast<const char*>(::operator new(len + 1 + offset));
+    _Rep_base* c = (_Rep_base*)str_;
+    c->len = c->cap = len;
     str_ += offset;
     count() = 0;
     std::strcpy(const_cast<char*>(c_str()), msg);
@@ -101,7 +106,9 @@ __libcpp_nmstr::operator=(const __libcpp_nmstr& s)
     if (p != get_gcc_empty_string_storage())
 #endif
         if (__sync_add_and_fetch((count_t*)(p-sizeof(count_t)), count_t(-1)) < 0)
-            delete [] (p-offset);
+        {
+            ::operator delete(const_cast<char*>(p-offset));
+        }
     return *this;
 }
 
@@ -112,7 +119,9 @@ __libcpp_nmstr::~__libcpp_nmstr()
     if (str_ != get_gcc_empty_string_storage())
 #endif
         if (__sync_add_and_fetch(&count(), count_t(-1)) < 0)
-            delete [] (str_ - offset);
+        {
+            ::operator delete(const_cast<char*>(str_ - offset));
+        }
 }
 
 }
