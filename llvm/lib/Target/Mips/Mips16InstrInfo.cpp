@@ -84,7 +84,15 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                     unsigned SrcReg, bool isKill, int FI,
                     const TargetRegisterClass *RC,
                     const TargetRegisterInfo *TRI) const {
-  assert(false && "Implement this function.");
+  DebugLoc DL;
+  if (I != MBB.end()) DL = I->getDebugLoc();
+  MachineMemOperand *MMO = GetMemOperand(MBB, FI, MachineMemOperand::MOStore);
+  unsigned Opc = 0;
+  if (Mips::CPU16RegsRegClass.hasSubClassEq(RC))
+    Opc = Mips::SwRxSpImmX16;
+  assert(Opc && "Register class not handled!");
+  BuildMI(MBB, I, DL, get(Opc)).addReg(SrcReg, getKillRegState(isKill))
+    .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
 }
 
 void Mips16InstrInfo::
@@ -92,7 +100,16 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      unsigned DestReg, int FI,
                      const TargetRegisterClass *RC,
                      const TargetRegisterInfo *TRI) const {
-  assert(false && "Implement this function.");
+  DebugLoc DL;
+  if (I != MBB.end()) DL = I->getDebugLoc();
+  MachineMemOperand *MMO = GetMemOperand(MBB, FI, MachineMemOperand::MOLoad);
+  unsigned Opc = 0;
+
+  if (Mips::CPU16RegsRegClass.hasSubClassEq(RC))
+    Opc = Mips::LwRxSpImmX16;
+  assert(Opc && "Register class not handled!");
+  BuildMI(MBB, I, DL, get(Opc), DestReg).addFrameIndex(FI).addImm(0)
+    .addMemOperand(MMO);
 }
 
 bool Mips16InstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {

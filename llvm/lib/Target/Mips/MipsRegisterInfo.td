@@ -302,6 +302,7 @@ def CPU16Regs : RegisterClass<"Mips", [i32], 32, (add
 
 def CPURAReg : RegisterClass<"Mips", [i32], 32, (add RA)>;
 
+def CPUSPReg : RegisterClass<"Mips", [i32], 32, (add SP)>;
 
 // 64bit fp:
 // * FGR64  - 32 64-bit registers

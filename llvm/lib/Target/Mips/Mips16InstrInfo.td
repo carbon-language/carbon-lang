@@ -34,30 +34,6 @@ class FI8_MOV32R16_ins<string asmstr, InstrItinClass itin>:
   FI8_MOV32R16<(outs CPURegs:$r32), (ins CPU16Regs:$rz),
                !strconcat(asmstr,  "\t$r32, $rz"), [], itin>;
 
-//
-// EXT-RI instruction format
-//
-
-class FEXT_RI16_ins_base<bits<5> _op, string asmstr, string asmstr2,
-                         InstrItinClass itin>:
-  FEXT_RI16<_op, (outs CPU16Regs:$rx), (ins simm16:$imm),
-                  !strconcat(asmstr, asmstr2), [], itin>;
-
-class FEXT_RI16_ins<bits<5> _op, string asmstr,
-                    InstrItinClass itin>:
-  FEXT_RI16_ins_base<_op, asmstr, "\t$rx, $imm", itin>;
-
-class FEXT_RI16_PC_ins<bits<5> _op, string asmstr, InstrItinClass itin>:
-  FEXT_RI16_ins_base<_op, asmstr, "\t$rx, $$pc, $imm", itin>;
-
-
-class FEXT_2RI16_ins<bits<5> _op, string asmstr,
-                     InstrItinClass itin>:
-  FEXT_RI16<_op, (outs CPU16Regs:$rx), (ins CPU16Regs:$rx_, simm16:$imm),
-            !strconcat(asmstr, "\t$rx, $imm"), [], itin> {
-  let Constraints = "$rx_ = $rx";
-}
-
 
 //
 // RR-type instruction format
@@ -81,6 +57,38 @@ class FRR16_JALRC_RA_only_ins<bits<1> nd_, bits<1> l_,
                               string asmstr, InstrItinClass itin>:
   FRR16_JALRC<nd_, l_, 1, (outs), (ins), !strconcat(asmstr, "\t $$ra"),
               [], itin> ;
+
+//
+// EXT-RI instruction format
+//
+
+class FEXT_RI16_ins_base<bits<5> _op, string asmstr, string asmstr2,
+                         InstrItinClass itin>:
+  FEXT_RI16<_op, (outs CPU16Regs:$rx), (ins simm16:$imm),
+                  !strconcat(asmstr, asmstr2), [], itin>;
+
+class FEXT_RI16_ins<bits<5> _op, string asmstr,
+                    InstrItinClass itin>:
+  FEXT_RI16_ins_base<_op, asmstr, "\t$rx, $imm", itin>;
+
+class FEXT_RI16_PC_ins<bits<5> _op, string asmstr, InstrItinClass itin>:
+  FEXT_RI16_ins_base<_op, asmstr, "\t$rx, $$pc, $imm", itin>;
+
+
+class FEXT_2RI16_ins<bits<5> _op, string asmstr,
+                     InstrItinClass itin>:
+  FEXT_RI16<_op, (outs CPU16Regs:$rx), (ins CPU16Regs:$rx_, simm16:$imm),
+            !strconcat(asmstr, "\t$rx, $imm"), [], itin> {
+  let Constraints = "$rx_ = $rx";
+}
+// this has an explicit sp argument that we ignore to work around a problem
+// in the compiler
+class FEXT_RI16_SP_explicit_ins<bits<5> _op, string asmstr,
+                                InstrItinClass itin>:
+  FEXT_RI16<_op, (outs CPU16Regs:$rx), (ins CPUSPReg:$ry, simm16:$imm),
+                  !strconcat(asmstr, "\t$rx, $imm ( $ry ); "), [], itin> {
+}
+
 
 //
 // EXT-RRI instruction format
@@ -123,6 +131,13 @@ class ArithLogic16Defs<bit isCom=0> {
   bit neverHasSideEffects = 1;
 }
 
+class MayLoad {
+  bit mayLoad = 1;
+}
+
+class MayStore {
+  bit mayStore = 1;
+}
 //
 
 // Format: ADDIU rx, immediate MIPS16e
@@ -170,28 +185,30 @@ def JrRa16: FRR16_JALRC_RA_only_ins<0, 0, "jr", IIAlu>;
 // Purpose: Load Byte (Extended)
 // To load a byte from memory as a signed value.
 //
-def LbRxRyOffMemX16: FEXT_RRI16_mem_ins<0b10011, "lb", mem16, IIAlu>;
+def LbRxRyOffMemX16: FEXT_RRI16_mem_ins<0b10011, "lb", mem16, IILoad>, MayLoad;
 
 //
 // Format: LBU ry, offset(rx) MIPS16e
 // Purpose: Load Byte Unsigned (Extended)
 // To load a byte from memory as a unsigned value.
 //
-def LbuRxRyOffMemX16: FEXT_RRI16_mem_ins<0b10100, "lbu", mem16, IIAlu>;
+def LbuRxRyOffMemX16:
+  FEXT_RRI16_mem_ins<0b10100, "lbu", mem16, IILoad>, MayLoad;
 
 //
 // Format: LH ry, offset(rx) MIPS16e
 // Purpose: Load Halfword signed (Extended)
 // To load a halfword from memory as a signed value.
 //
-def LhRxRyOffMemX16: FEXT_RRI16_mem_ins<0b10100, "lh", mem16, IIAlu>;
+def LhRxRyOffMemX16: FEXT_RRI16_mem_ins<0b10100, "lh", mem16, IILoad>, MayLoad;
 
 //
 // Format: LHU ry, offset(rx) MIPS16e
 // Purpose: Load Halfword unsigned (Extended)
 // To load a halfword from memory as an unsigned value.
 //
-def LhuRxRyOffMemX16: FEXT_RRI16_mem_ins<0b10100, "lhu", mem16, IIAlu>;
+def LhuRxRyOffMemX16:
+  FEXT_RRI16_mem_ins<0b10100, "lhu", mem16, IILoad>, MayLoad;
 
 //
 // Format: LI rx, immediate MIPS16e
@@ -205,7 +222,13 @@ def LiRxImmX16: FEXT_RI16_ins<0b01101, "li", IIAlu>;
 // Purpose: Load Word (Extended)
 // To load a word from memory as a signed value.
 //
-def LwRxRyOffMemX16: FEXT_RRI16_mem_ins<0b10011, "lw", mem16, IIAlu>;
+def LwRxRyOffMemX16: FEXT_RRI16_mem_ins<0b10011, "lw", mem16, IILoad>, MayLoad;
+
+// Format: LW rx, offset(sp) MIPS16e
+// Purpose: Load Word (SP-Relative, Extended)
+// To load an SP-relative word from memory as a signed value.
+//
+def LwRxSpImmX16: FEXT_RI16_SP_explicit_ins<0b10110, "lw", IILoad>, MayLoad;
 
 //
 // Format: MOVE r32, rz MIPS16e
@@ -258,7 +281,7 @@ def OrRxRxRy16: FRxRxRy16_ins<0b01101, "or", IIAlu>, ArithLogic16Defs<1>;
 let ra=1, s=0,s0=1,s1=1 in
 def RestoreRaF16:
   FI8_SVRS16<0b1, (outs), (ins uimm16:$frame_size),
-             "restore \t$$ra,  $$s0, $$s1, $frame_size", [], IILoad > {
+             "restore \t$$ra,  $$s0, $$s1, $frame_size", [], IILoad >, MayLoad {
   let isCodeGenOnly = 1;
 }
 
@@ -272,7 +295,7 @@ def RestoreRaF16:
 let ra=1, s=1,s0=1,s1=1 in
 def SaveRaF16:
   FI8_SVRS16<0b1, (outs), (ins uimm16:$frame_size),
-             "save \t$$ra, $$s0, $$s1, $frame_size", [], IILoad > {
+             "save \t$$ra, $$s0, $$s1, $frame_size", [], IIStore >, MayStore {
   let isCodeGenOnly = 1;
 }
 //
@@ -280,14 +303,16 @@ def SaveRaF16:
 // Purpose: Store Byte (Extended)
 // To store a byte to memory.
 //
-def SbRxRyOffMemX16: FEXT_RRI16_mem2_ins<0b11000, "sb", mem16, IIAlu>;
+def SbRxRyOffMemX16:
+  FEXT_RRI16_mem2_ins<0b11000, "sb", mem16, IIStore>, MayStore;
 
 //
 // Format: SH ry, offset(rx) MIPS16e
 // Purpose: Store Halfword (Extended)
 // To store a halfword to memory.
 //
-def ShRxRyOffMemX16: FEXT_RRI16_mem2_ins<0b11001, "sh", mem16, IIAlu>;
+def ShRxRyOffMemX16:
+  FEXT_RRI16_mem2_ins<0b11001, "sh", mem16, IIStore>, MayStore;
 
 //
 // Format: SLL rx, ry, sa MIPS16e
@@ -351,8 +376,17 @@ def SubuRxRyRz16: FRRR16_ins<0b11, "subu", IIAlu>, ArithLogic16Defs<0>;
 // Purpose: Store Word (Extended)
 // To store a word to memory.
 //
-def SwRxRyOffMemX16: FEXT_RRI16_mem2_ins<0b11011, "sw", mem16, IIAlu>;
+def SwRxRyOffMemX16:
+  FEXT_RRI16_mem2_ins<0b11011, "sw", mem16, IIStore>, MayStore;
 
+//
+// Format: SW rx, offset(sp) MIPS16e
+// Purpose: Store Word rx (SP-Relative)
+// To store an SP-relative word to memory.
+//
+def SwRxSpImmX16: FEXT_RI16_SP_explicit_ins<0b11010, "sw", IIStore>, MayStore;
+
+//
 //
 // Format: XOR rx, ry MIPS16e
 // Purpose: Xor
