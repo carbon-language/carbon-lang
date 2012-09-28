@@ -962,7 +962,9 @@ static bool OptimizeAwayTrappingUsesOfLoads(GlobalVariable *GV, Constant *LV,
       // If we get here we could have other crazy uses that are transitively
       // loaded.
       assert((isa<PHINode>(GlobalUser) || isa<SelectInst>(GlobalUser) ||
-              isa<ConstantExpr>(GlobalUser) || isa<CmpInst>(GlobalUser)) &&
+              isa<ConstantExpr>(GlobalUser) || isa<CmpInst>(GlobalUser) ||
+              isa<BitCastInst>(GlobalUser) ||
+              isa<GetElementPtrInst>(GlobalUser)) &&
              "Only expect load and stores!");
     }
   }
