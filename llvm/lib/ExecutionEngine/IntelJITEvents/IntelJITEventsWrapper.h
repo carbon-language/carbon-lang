@@ -18,7 +18,7 @@
 #ifndef INTEL_JIT_EVENTS_WRAPPER_H
 #define INTEL_JIT_EVENTS_WRAPPER_H
 
-#include <jitprofiling.h>
+#include "jitprofiling.h"
 
 namespace llvm {
 

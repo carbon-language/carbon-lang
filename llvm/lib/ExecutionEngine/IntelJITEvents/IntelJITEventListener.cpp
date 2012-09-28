@@ -22,12 +22,12 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/ExecutionEngine/IntelJITEventsWrapper.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Errno.h"
 #include "llvm/Support/ValueHandle.h"
 #include "EventListenerCommon.h"
+#include "IntelJITEventsWrapper.h"
 
 using namespace llvm;
 using namespace llvm::jitprofiling;

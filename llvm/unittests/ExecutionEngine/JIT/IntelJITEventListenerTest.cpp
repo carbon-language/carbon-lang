@@ -11,7 +11,10 @@
 
 using namespace llvm;
 
-#include "llvm/ExecutionEngine/IntelJITEventsWrapper.h"
+// Because we want to keep the implementation details of the Intel API used to
+// communicate with Amplifier out of the public header files, the header below
+// is included from the source tree instead.
+#include "../../../lib/ExecutionEngine/IntelJITEvents/IntelJITEventsWrapper.h"
 
 #include <map>
 #include <list>

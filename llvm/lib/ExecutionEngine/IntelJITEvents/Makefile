@@ -11,7 +11,8 @@ LIBRARYNAME = LLVMIntelJITEvents
 
 include $(LEVEL)/Makefile.config
 
-SOURCES := IntelJITEventListener.cpp
-CPPFLAGS += -I$(INTEL_JITEVENTS_INCDIR) -I$(PROJ_OBJ_DIR)/.. -I$(PROJ_SRC_DIR)/..
+SOURCES := IntelJITEventListener.cpp \
+  jitprofiling.c
+CPPFLAGS += -I$(PROJ_OBJ_DIR)/.. -I$(PROJ_SRC_DIR)/..
 
 include $(LLVM_SRC_ROOT)/Makefile.rules

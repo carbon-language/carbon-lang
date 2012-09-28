@@ -273,11 +273,6 @@ LLVM-specific variables
 **LLVM_USE_INTEL_JITEVENTS**:BOOL
   Enable building support for Intel JIT Events API. Defaults to OFF
 
-**LLVM_INTEL_JITEVENTS_DIR**:PATH
-  Path to installation of Intel(R) VTune(TM) Amplifier XE 2011, used to locate
-  the ``jitprofiling`` library. Default = ``%VTUNE_AMPLIFIER_XE_2011_DIR%``
-  (Windows) | ``/opt/intel/vtune_amplifier_xe_2011`` (Linux)
-
 Executing the test suite
 ========================
 
