@@ -7726,6 +7726,19 @@ QualType Sema::CheckAssignmentOperands(Expr *LHSExpr, ExprResult &RHS,
         if (!DRE || DRE->getDecl()->hasAttr<BlocksAttr>())
           checkRetainCycles(LHSExpr, RHS.get());
 
+        // It is safe to assign a weak reference into a strong variable.
+        // Although this code can still have problems:
+        //   id x = self.weakProp;
+        //   id y = self.weakProp;
+        // we do not warn to warn spuriously when 'x' and 'y' are on separate
+        // paths through the function. This should be revisited if
+        // -Wrepeated-use-of-weak is made flow-sensitive.
+        DiagnosticsEngine::Level Level =
+          Diags.getDiagnosticLevel(diag::warn_arc_repeated_use_of_weak,
+                                   RHS.get()->getLocStart());
+        if (Level != DiagnosticsEngine::Ignored)
+          getCurFunction()->markSafeWeakUse(RHS.get());
+
       } else if (getLangOpts().ObjCAutoRefCount) {
         checkUnsafeExprAssigns(Loc, LHSExpr, RHS.get());
       }

@@ -21,6 +21,7 @@
 
 namespace clang {
 
+class Decl;
 class BlockDecl;
 class CXXMethodDecl;
 class IdentifierInfo;
@@ -29,6 +30,7 @@ class ReturnStmt;
 class Scope;
 class SwitchStmt;
 class VarDecl;
+class ObjCPropertyRefExpr;
 
 namespace sema {
 
@@ -112,6 +114,125 @@ public:
   /// current function scope.  These diagnostics are vetted for reachability
   /// prior to being emitted.
   SmallVector<PossiblyUnreachableDiag, 4> PossiblyUnreachableDiags;
+
+public:
+  /// Represents a simple identification of a weak object.
+  ///
+  /// Part of the implementation of -Wrepeated-use-of-weak.
+  ///
+  /// This is used to determine if two weak accesses refer to the same object.
+  /// Here are some examples of how various accesses are "profiled":
+  ///
+  /// Access Expression |     "Base" Decl     |          "Property" Decl
+  /// :---------------: | :-----------------: | :------------------------------:
+  /// self.property     | self (VarDecl)      | property (ObjCPropertyDecl)
+  /// self.implicitProp | self (VarDecl)      | -implicitProp (ObjCMethodDecl)
+  /// self->ivar.prop   | ivar (ObjCIvarDecl) | prop (ObjCPropertyDecl)
+  /// cxxObj.obj.prop   | obj (FieldDecl)     | prop (ObjCPropertyDecl)
+  /// [self foo].prop   | 0 (unknown)         | prop (ObjCPropertyDecl)
+  /// self.prop1.prop2  | prop1 (ObjCPropertyDecl)    | prop2 (ObjCPropertyDecl)
+  /// MyClass.prop      | MyClass (ObjCInterfaceDecl) | -prop (ObjCMethodDecl)
+  ///
+  /// Objects are identified with only two Decls to make it reasonably fast to
+  /// compare them.
+  class WeakObjectProfileTy {
+    /// The base object decl, as described in the class documentation.
+    ///
+    /// The extra flag is "true" if the Base and Property are enough to uniquely
+    /// identify the object in memory.
+    ///
+    /// \sa isExactProfile()
+    typedef llvm::PointerIntPair<const NamedDecl *, 1, bool> BaseInfoTy;
+    BaseInfoTy Base;
+
+    /// The "property" decl, as described in the class documentation.
+    ///
+    /// Note that this may not actually be an ObjCPropertyDecl, e.g. in the
+    /// case of "implicit" properties (regular methods accessed via dot syntax).
+    const NamedDecl *Property;
+
+    // For use in DenseMap.
+    friend struct llvm::DenseMapInfo<WeakObjectProfileTy>;
+    inline WeakObjectProfileTy();
+    static inline WeakObjectProfileTy getSentinel();
+
+  public:
+    WeakObjectProfileTy(const ObjCPropertyRefExpr *RE);
+
+    const NamedDecl *getProperty() const { return Property; }
+
+    /// Returns true if the object base specifies a known object in memory,
+    /// rather than, say, an instance variable or property of another object.
+    ///
+    /// Note that this ignores the effects of aliasing; that is, \c foo.bar is
+    /// considered an exact profile if \c foo is a local variable, even if
+    /// another variable \c foo2 refers to the same object as \c foo.
+    ///
+    /// For increased precision, accesses with base variables that are
+    /// properties or ivars of 'self' (e.g. self.prop1.prop2) are considered to
+    /// be exact, though this is not true for arbitrary variables
+    /// (foo.prop1.prop2).
+    bool isExactProfile() const {
+      return Base.getInt();
+    }
+
+    bool operator==(const WeakObjectProfileTy &Other) const {
+      return Base == Other.Base && Property == Other.Property;
+    }
+  };
+
+  /// Represents a single use of a weak object.
+  ///
+  /// Stores both the expression and whether the access is potentially unsafe
+  /// (i.e. it could potentially be warned about).
+  ///
+  /// Part of the implementation of -Wrepeated-use-of-weak.
+  class WeakUseTy {
+    llvm::PointerIntPair<const Expr *, 1, bool> Rep;
+  public:
+    WeakUseTy(const Expr *Use, bool IsRead) : Rep(Use, IsRead) {}
+
+    const Expr *getUseExpr() const { return Rep.getPointer(); }
+    bool isUnsafe() const { return Rep.getInt(); }
+    void markSafe() { Rep.setInt(false); }
+
+    bool operator==(const WeakUseTy &Other) const {
+      return Rep == Other.Rep;
+    }
+  };
+
+  /// Used to collect uses of a particular weak object in a function body.
+  ///
+  /// Part of the implementation of -Wrepeated-use-of-weak.
+  typedef SmallVector<WeakUseTy, 4> WeakUseVector;
+
+  /// Used to collect all uses of weak objects in a function body.
+  ///
+  /// Part of the implementation of -Wrepeated-use-of-weak.
+  typedef llvm::SmallDenseMap<WeakObjectProfileTy, WeakUseVector, 8>
+          WeakObjectUseMap;
+
+private:
+  /// Used to collect all uses of weak objects in this function body.
+  ///
+  /// Part of the implementation of -Wrepeated-use-of-weak.
+  WeakObjectUseMap WeakObjectUses;
+
+public:
+  /// Record that a weak property was accessed.
+  ///
+  /// Part of the implementation of -Wrepeated-use-of-weak.
+  void recordUseOfWeak(const ObjCPropertyRefExpr *PropE);
+
+  /// Record that a given expression is a "safe" access of a weak object (e.g.
+  /// assigning it to a strong variable.)
+  ///
+  /// Part of the implementation of -Wrepeated-use-of-weak.
+  void markSafeWeakUse(const Expr *E);
+
+  const WeakObjectUseMap &getWeakObjectUses() const {
+    return WeakObjectUses;
+  }
 
   void setHasBranchIntoScope() {
     HasBranchIntoScope = true;
@@ -387,7 +508,39 @@ public:
 
 };
 
+FunctionScopeInfo::WeakObjectProfileTy::WeakObjectProfileTy()
+  : Base(0, false), Property(0) {}
+
+FunctionScopeInfo::WeakObjectProfileTy
+FunctionScopeInfo::WeakObjectProfileTy::getSentinel() {
+  FunctionScopeInfo::WeakObjectProfileTy Result;
+  Result.Base.setInt(true);
+  return Result;
+}
+
 }
 }
+
+namespace llvm {
+  template <>
+  struct DenseMapInfo<clang::sema::FunctionScopeInfo::WeakObjectProfileTy> {
+    typedef clang::sema::FunctionScopeInfo::WeakObjectProfileTy ProfileTy;
+    static inline ProfileTy getEmptyKey() {
+      return ProfileTy();
+    }
+    static inline ProfileTy getTombstoneKey() {
+      return ProfileTy::getSentinel();
+    }
+
+    static unsigned getHashValue(const ProfileTy &Val) {
+      typedef std::pair<ProfileTy::BaseInfoTy, const clang::NamedDecl *> Pair;
+      return DenseMapInfo<Pair>::getHashValue(Pair(Val.Base, Val.Property));
+    }
+
+    static bool isEqual(const ProfileTy &LHS, const ProfileTy &RHS) {
+      return LHS == RHS;
+    }
+  };
+} // end namespace llvm
 
 #endif

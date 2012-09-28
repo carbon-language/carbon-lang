@@ -282,6 +282,9 @@ def AutomaticReferenceCounting : DiagGroup<"arc",
                                            [ARCUnsafeRetainedAssign,
                                             ARCRetainCycles,
                                             ARCNonPodMemAccess]>;
+def ARCRepeatedUseOfWeakMaybe : DiagGroup<"arc-maybe-repeated-use-of-weak">;
+def ARCRepeatedUseOfWeak : DiagGroup<"arc-repeated-use-of-weak",
+                                     [ARCRepeatedUseOfWeakMaybe]>;
 def Selector : DiagGroup<"selector">;
 def Protocol : DiagGroup<"protocol">;
 def SuperSubClassMismatch : DiagGroup<"super-class-method-mismatch">;

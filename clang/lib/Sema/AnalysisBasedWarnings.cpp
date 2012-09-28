@@ -871,6 +871,121 @@ static void DiagnoseSwitchLabelsFallthrough(Sema &S, AnalysisDeclContext &AC,
 }
 
 namespace {
+  typedef std::pair<const Stmt *,
+                    sema::FunctionScopeInfo::WeakObjectUseMap::const_iterator>
+          StmtUsesPair;
+}
+
+template<>
+class BeforeThanCompare<StmtUsesPair> {
+  const SourceManager &SM;
+
+public:
+  explicit BeforeThanCompare(const SourceManager &SM) : SM(SM) { }
+
+  bool operator()(const StmtUsesPair &LHS, const StmtUsesPair &RHS) {
+    return SM.isBeforeInTranslationUnit(LHS.first->getLocStart(),
+                                        RHS.first->getLocStart());
+  }
+};
+
+
+static void diagnoseRepeatedUseOfWeak(Sema &S,
+                                      const sema::FunctionScopeInfo *CurFn,
+                                      const Decl *D) {
+  typedef sema::FunctionScopeInfo::WeakObjectProfileTy WeakObjectProfileTy;
+  typedef sema::FunctionScopeInfo::WeakObjectUseMap WeakObjectUseMap;
+  typedef sema::FunctionScopeInfo::WeakUseVector WeakUseVector;
+
+  const WeakObjectUseMap &WeakMap = CurFn->getWeakObjectUses();
+
+  // Extract all weak objects that are referenced more than once.
+  SmallVector<StmtUsesPair, 8> UsesByStmt;
+  for (WeakObjectUseMap::const_iterator I = WeakMap.begin(), E = WeakMap.end();
+       I != E; ++I) {
+    const WeakUseVector &Uses = I->second;
+    if (Uses.size() <= 1)
+      continue;
+
+    // Find the first read of the weak object.
+    WeakUseVector::const_iterator UI = Uses.begin(), UE = Uses.end();
+    for ( ; UI != UE; ++UI) {
+      if (UI->isUnsafe())
+        break;
+    }
+
+    // If there were only writes to this object, don't warn.
+    if (UI == UE)
+      continue;
+
+    UsesByStmt.push_back(StmtUsesPair(UI->getUseExpr(), I));
+  }
+
+  if (UsesByStmt.empty())
+    return;
+
+  // Sort by first use so that we emit the warnings in a deterministic order.
+  std::sort(UsesByStmt.begin(), UsesByStmt.end(),
+            BeforeThanCompare<StmtUsesPair>(S.getSourceManager()));
+
+  // Classify the current code body for better warning text.
+  // This enum should stay in sync with the cases in
+  // warn_arc_repeated_use_of_weak and warn_arc_possible_repeated_use_of_weak.
+  // FIXME: Should we use a common classification enum and the same set of
+  // possibilities all throughout Sema?
+  enum {
+    Function,
+    Method,
+    Block,
+    Lambda
+  } FunctionKind;
+
+  if (isa<sema::BlockScopeInfo>(CurFn))
+    FunctionKind = Block;
+  else if (isa<sema::LambdaScopeInfo>(CurFn))
+    FunctionKind = Lambda;
+  else if (isa<ObjCMethodDecl>(D))
+    FunctionKind = Method;
+  else
+    FunctionKind = Function;
+
+  // Iterate through the sorted problems and emit warnings for each.
+  for (SmallVectorImpl<StmtUsesPair>::const_iterator I = UsesByStmt.begin(),
+                                                     E = UsesByStmt.end();
+       I != E; ++I) {
+    const Stmt *FirstRead = I->first;
+    const WeakObjectProfileTy &Key = I->second->first;
+    const WeakUseVector &Uses = I->second->second;
+
+    // For complicated expressions like self.foo.bar, it's hard to keep track
+    // of whether 'self.foo' is the same between two cases. We can only be
+    // 100% sure of a repeated use if the "base" part of the key is a variable,
+    // rather than, say, another property.
+    unsigned DiagKind;
+    if (Key.isExactProfile())
+      DiagKind = diag::warn_arc_repeated_use_of_weak;
+    else
+      DiagKind = diag::warn_arc_possible_repeated_use_of_weak;
+
+    // Show the first time the object was read.
+    S.Diag(FirstRead->getLocStart(), DiagKind)
+      << FunctionKind
+      << FirstRead->getSourceRange();
+
+    // Print all the other accesses as notes.
+    for (WeakUseVector::const_iterator UI = Uses.begin(), UE = Uses.end();
+         UI != UE; ++UI) {
+      if (UI->getUseExpr() == FirstRead)
+        continue;
+      S.Diag(UI->getUseExpr()->getLocStart(),
+             diag::note_arc_weak_also_accessed_here)
+        << UI->getUseExpr()->getSourceRange();
+    }
+  }
+}
+
+
+namespace {
 struct SLocSort {
   bool operator()(const UninitUse &a, const UninitUse &b) {
     // Prefer a more confident report over a less confident one.
@@ -1363,6 +1478,11 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   if (FallThroughDiagFull || FallThroughDiagPerFunction) {
     DiagnoseSwitchLabelsFallthrough(S, AC, !FallThroughDiagFull);
   }
+
+  if (S.getLangOpts().ObjCARCWeak &&
+      Diags.getDiagnosticLevel(diag::warn_arc_repeated_use_of_weak,
+                               D->getLocStart()) != DiagnosticsEngine::Ignored)
+    diagnoseRepeatedUseOfWeak(S, fscope, D);
 
   // Collect statistics about the CFG if it was built.
   if (S.CollectStats && AC.isCFGBuilt()) {

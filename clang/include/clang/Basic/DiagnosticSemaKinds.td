@@ -709,6 +709,18 @@ def warn_receiver_is_weak : Warning <
   "weak %select{receiver|property|implicit property}0 may be "
   "unpredictably null in ARC mode">,
   InGroup<DiagGroup<"receiver-is-weak">>, DefaultIgnore;
+def warn_arc_repeated_use_of_weak : Warning <
+  "weak property is accessed multiple times in this "
+  "%select{function|method|block|lambda}0 but may be unpredictably set to nil; "
+  "assign to a strong variable to keep the object alive">,
+  InGroup<ARCRepeatedUseOfWeak>, DefaultIgnore;
+def warn_arc_possible_repeated_use_of_weak : Warning <
+  "weak property may be accessed multiple times in this "
+  "%select{function|method|block|lambda}0 but may be unpredictably set to nil; "
+  "assign to a strong variable to keep the object alive">,
+  InGroup<ARCRepeatedUseOfWeakMaybe>, DefaultIgnore;
+def note_arc_weak_also_accessed_here : Note<
+  "also accessed here">;
 def err_incomplete_synthesized_property : Error<
   "cannot synthesize property %0 with incomplete type %1">;
 

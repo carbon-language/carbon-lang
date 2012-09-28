@@ -54,6 +54,132 @@ void FunctionScopeInfo::Clear() {
   Returns.clear();
   ErrorTrap.reset();
   PossiblyUnreachableDiags.clear();
+  WeakObjectUses.clear();
+}
+
+static const NamedDecl *getBestPropertyDecl(const ObjCPropertyRefExpr *PropE) {
+  if (PropE->isExplicitProperty())
+    return PropE->getExplicitProperty();
+
+  return PropE->getImplicitPropertyGetter();
+}
+
+static bool isSelfExpr(const Expr *E) {
+  E = E->IgnoreParenImpCasts();
+
+  const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E);
+  if (!DRE)
+    return false;
+
+  const ImplicitParamDecl *Param = dyn_cast<ImplicitParamDecl>(DRE->getDecl());
+  if (!Param)
+    return false;
+
+  const ObjCMethodDecl *M = dyn_cast<ObjCMethodDecl>(Param->getDeclContext());
+  if (!M)
+    return false;
+
+  return M->getSelfDecl() == Param;
+}
+
+FunctionScopeInfo::WeakObjectProfileTy::WeakObjectProfileTy(
+                                          const ObjCPropertyRefExpr *PropE)
+    : Base(0, false), Property(getBestPropertyDecl(PropE)) {
+
+  if (PropE->isObjectReceiver()) {
+    const OpaqueValueExpr *OVE = cast<OpaqueValueExpr>(PropE->getBase());
+    const Expr *E = OVE->getSourceExpr()->IgnoreParenCasts();
+
+    switch (E->getStmtClass()) {
+    case Stmt::DeclRefExprClass:
+      Base.setPointer(cast<DeclRefExpr>(E)->getDecl());
+      Base.setInt(isa<VarDecl>(Base.getPointer()));
+      break;
+    case Stmt::MemberExprClass: {
+      const MemberExpr *ME = cast<MemberExpr>(E);
+      Base.setPointer(ME->getMemberDecl());
+      Base.setInt(isa<CXXThisExpr>(ME->getBase()->IgnoreParenImpCasts()));
+      break;
+    }
+    case Stmt::ObjCIvarRefExprClass: {
+      const ObjCIvarRefExpr *IE = cast<ObjCIvarRefExpr>(E);
+      Base.setPointer(IE->getDecl());
+      if (isSelfExpr(IE->getBase()))
+        Base.setInt(true);
+      break;
+    }
+    case Stmt::PseudoObjectExprClass: {
+      const PseudoObjectExpr *POE = cast<PseudoObjectExpr>(E);
+      const ObjCPropertyRefExpr *BaseProp =
+        dyn_cast<ObjCPropertyRefExpr>(POE->getSyntacticForm());
+      if (BaseProp) {
+        Base.setPointer(getBestPropertyDecl(BaseProp));
+
+        const Expr *DoubleBase = BaseProp->getBase();
+        if (const OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(DoubleBase))
+          DoubleBase = OVE->getSourceExpr();
+
+        if (isSelfExpr(DoubleBase))
+          Base.setInt(true);
+      }
+      break;
+    }
+    default:
+      break;
+    }
+  } else if (PropE->isClassReceiver()) {
+    Base.setPointer(PropE->getClassReceiver());
+    Base.setInt(true);
+  } else {
+    assert(PropE->isSuperReceiver());
+    Base.setInt(true);
+  }
+}
+
+void FunctionScopeInfo::recordUseOfWeak(const ObjCPropertyRefExpr *RefExpr) {
+  assert(RefExpr);
+  WeakUseVector &Uses =
+    WeakObjectUses[FunctionScopeInfo::WeakObjectProfileTy(RefExpr)];
+  Uses.push_back(WeakUseTy(RefExpr, RefExpr->isMessagingGetter()));
+}
+
+void FunctionScopeInfo::markSafeWeakUse(const Expr *E) {
+  E = E->IgnoreParenImpCasts();
+
+  if (const PseudoObjectExpr *POE = dyn_cast<PseudoObjectExpr>(E)) {
+    markSafeWeakUse(POE->getSyntacticForm());
+    return;
+  }
+
+  if (const ConditionalOperator *Cond = dyn_cast<ConditionalOperator>(E)) {
+    markSafeWeakUse(Cond->getTrueExpr());
+    markSafeWeakUse(Cond->getFalseExpr());
+    return;
+  }
+
+  if (const BinaryConditionalOperator *Cond =
+        dyn_cast<BinaryConditionalOperator>(E)) {
+    markSafeWeakUse(Cond->getCommon());
+    markSafeWeakUse(Cond->getFalseExpr());
+    return;
+  }
+
+  if (const ObjCPropertyRefExpr *RefExpr = dyn_cast<ObjCPropertyRefExpr>(E)) {
+    // Has this property been seen as a weak property?
+    FunctionScopeInfo::WeakObjectUseMap::iterator Uses =
+      WeakObjectUses.find(FunctionScopeInfo::WeakObjectProfileTy(RefExpr));
+    if (Uses == WeakObjectUses.end())
+      return;
+
+    // Has there been a read from the property using this Expr?
+    FunctionScopeInfo::WeakUseVector::reverse_iterator ThisUse =
+      std::find(Uses->second.rbegin(), Uses->second.rend(), WeakUseTy(E, true));
+    if (ThisUse == Uses->second.rend())
+      return;
+
+    ThisUse->markSafe();
+    return;
+  }
 }
 
 BlockScopeInfo::~BlockScopeInfo() { }

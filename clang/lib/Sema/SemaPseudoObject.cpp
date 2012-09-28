@@ -31,6 +31,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Sema/SemaInternal.h"
+#include "clang/Sema/ScopeInfo.h"
 #include "clang/Sema/Initialization.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/Lex/Preprocessor.h"
@@ -186,7 +187,7 @@ namespace {
                                     UnaryOperatorKind opcode,
                                     Expr *op);
 
-    ExprResult complete(Expr *syntacticForm);
+    virtual ExprResult complete(Expr *syntacticForm);
 
     OpaqueValueExpr *capture(Expr *op);
     OpaqueValueExpr *captureValueAsResult(Expr *op);
@@ -238,6 +239,9 @@ namespace {
     Expr *rebuildAndCaptureObject(Expr *syntacticBase);
     ExprResult buildGet();
     ExprResult buildSet(Expr *op, SourceLocation, bool);
+    ExprResult complete(Expr *SyntacticForm);
+
+    bool isWeakProperty() const;
   };
 
  /// A PseudoOpBuilder for Objective-C array/dictionary indexing.
@@ -469,6 +473,23 @@ static ObjCMethodDecl *LookupMethodInReceiverType(Sema &S, Selector sel,
   assert(PRE->isClassReceiver() && "Invalid expression");
   QualType IT = S.Context.getObjCInterfaceType(PRE->getClassReceiver());
   return S.LookupMethodInObjectType(sel, IT, false);
+}
+
+bool ObjCPropertyOpBuilder::isWeakProperty() const {
+  QualType T;
+  if (RefExpr->isExplicitProperty()) {
+    const ObjCPropertyDecl *Prop = RefExpr->getExplicitProperty();
+    if (Prop->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_weak)
+      return true;
+
+    T = Prop->getType();
+  } else if (Getter) {
+    T = Getter->getResultType();
+  } else {
+    return false;
+  }
+
+  return T.getObjCLifetime() == Qualifiers::OCL_Weak;
 }
 
 bool ObjCPropertyOpBuilder::findGetter() {
@@ -816,6 +837,18 @@ ObjCPropertyOpBuilder::buildIncDecOperation(Scope *Sc, SourceLocation opcLoc,
   }
 
   return PseudoOpBuilder::buildIncDecOperation(Sc, opcLoc, opcode, op);
+}
+
+ExprResult ObjCPropertyOpBuilder::complete(Expr *SyntacticForm) {
+  if (S.getLangOpts().ObjCAutoRefCount && isWeakProperty()) {
+    DiagnosticsEngine::Level Level =
+      S.Diags.getDiagnosticLevel(diag::warn_arc_repeated_use_of_weak,
+                                 SyntacticForm->getLocStart());
+    if (Level != DiagnosticsEngine::Ignored)
+      S.getCurFunction()->recordUseOfWeak(SyntacticRefExpr);
+  }
+
+  return PseudoOpBuilder::complete(SyntacticForm);
 }
 
 // ObjCSubscript build stuff.
