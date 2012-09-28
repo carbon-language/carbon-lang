@@ -783,13 +783,11 @@ class TemplateDiff {
             const TemplateSpecializationType *ToArgTST =
                 GetTemplateSpecializationType(Context, ToType);
 
-            if (FromArgTST && ToArgTST) {
-              bool SameTemplate = hasSameTemplate(FromArgTST, ToArgTST);
-              if (SameTemplate) {
-                Tree.SetNode(FromArgTST->getTemplateName().getAsTemplateDecl(),
-                             ToArgTST->getTemplateName().getAsTemplateDecl());
-                DiffTemplate(FromArgTST, ToArgTST);
-              }
+            if (FromArgTST && ToArgTST &&
+                hasSameTemplate(FromArgTST, ToArgTST)) {
+              Tree.SetNode(FromArgTST->getTemplateName().getAsTemplateDecl(),
+                           ToArgTST->getTemplateName().getAsTemplateDecl());
+              DiffTemplate(FromArgTST, ToArgTST);
             }
           }
         }
@@ -824,6 +822,26 @@ class TemplateDiff {
     }
   }
 
+  /// makeTemplateList - Dump every template alias into the vector.
+  static void makeTemplateList(
+      SmallVector<const TemplateSpecializationType*, 1> &TemplateList,
+      const TemplateSpecializationType *TST) {
+    while (TST) {
+      TemplateList.push_back(TST);
+      if (!TST->isTypeAlias())
+        return;
+      TST = TST->getAliasedType()->getAs<TemplateSpecializationType>();
+    }
+  }
+
+  /// hasSameBaseTemplate - Returns true when the base templates are the same,
+  /// even if the template arguments are not.
+  static bool hasSameBaseTemplate(const TemplateSpecializationType *FromTST,
+                                  const TemplateSpecializationType *ToTST) {
+    return FromTST->getTemplateName().getAsTemplateDecl()->getIdentifier() ==
+           ToTST->getTemplateName().getAsTemplateDecl()->getIdentifier();
+  }
+
   /// hasSameTemplate - Returns true if both types are specialized from the
   /// same template declaration.  If they come from different template aliases,
   /// do a parallel ascension search to determine the highest template alias in
@@ -831,49 +849,29 @@ class TemplateDiff {
   static bool hasSameTemplate(const TemplateSpecializationType *&FromTST,
                               const TemplateSpecializationType *&ToTST) {
     // Check the top templates if they are the same.
-    if (FromTST->getTemplateName().getAsTemplateDecl()->getIdentifier() ==
-        ToTST->getTemplateName().getAsTemplateDecl()->getIdentifier())
+    if (hasSameBaseTemplate(FromTST, ToTST))
       return true;
 
     // Create vectors of template aliases.
     SmallVector<const TemplateSpecializationType*, 1> FromTemplateList,
                                                       ToTemplateList;
 
-    const TemplateSpecializationType *TempToTST = ToTST, *TempFromTST = FromTST;
-    FromTemplateList.push_back(FromTST);
-    ToTemplateList.push_back(ToTST);
-
-    // Dump every template alias into the vectors.
-    while (TempFromTST->isTypeAlias()) {
-      TempFromTST =
-          TempFromTST->getAliasedType()->getAs<TemplateSpecializationType>();
-      if (!TempFromTST)
-        break;
-      FromTemplateList.push_back(TempFromTST);
-    }
-    while (TempToTST->isTypeAlias()) {
-      TempToTST =
-          TempToTST->getAliasedType()->getAs<TemplateSpecializationType>();
-      if (!TempToTST)
-        break;
-      ToTemplateList.push_back(TempToTST);
-    }
+    makeTemplateList(FromTemplateList, FromTST);
+    makeTemplateList(ToTemplateList, ToTST);
 
     SmallVector<const TemplateSpecializationType*, 1>::reverse_iterator
         FromIter = FromTemplateList.rbegin(), FromEnd = FromTemplateList.rend(),
         ToIter = ToTemplateList.rbegin(), ToEnd = ToTemplateList.rend();
 
     // Check if the lowest template types are the same.  If not, return.
-    if ((*FromIter)->getTemplateName().getAsTemplateDecl()->getIdentifier() !=
-        (*ToIter)->getTemplateName().getAsTemplateDecl()->getIdentifier())
+    if (!hasSameBaseTemplate(*FromIter, *ToIter))
       return false;
 
     // Begin searching up the template aliases.  The bottom most template
     // matches so move up until one pair does not match.  Use the template
     // right before that one.
     for (; FromIter != FromEnd && ToIter != ToEnd; ++FromIter, ++ToIter) {
-      if ((*FromIter)->getTemplateName().getAsTemplateDecl()->getIdentifier() !=
-          (*ToIter)->getTemplateName().getAsTemplateDecl()->getIdentifier())
+      if (!hasSameBaseTemplate(*FromIter, *ToIter))
         break;
     }
 
