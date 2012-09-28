@@ -160,7 +160,7 @@ public:
     static BaseInfoTy getBaseInfo(const Expr *BaseE);
 
     // For use in DenseMap.
-    friend struct llvm::DenseMapInfo<WeakObjectProfileTy>;
+    friend class DenseMapInfo;
     inline WeakObjectProfileTy();
     static inline WeakObjectProfileTy getSentinel();
 
@@ -189,6 +189,31 @@ public:
     bool operator==(const WeakObjectProfileTy &Other) const {
       return Base == Other.Base && Property == Other.Property;
     }
+
+    // For use in DenseMap.
+    // We can't specialize the usual llvm::DenseMapInfo at the end of the file
+    // because by that point the DenseMap in FunctionScopeInfo has already been
+    // instantiated.
+    class DenseMapInfo {
+    public:
+      static inline WeakObjectProfileTy getEmptyKey() {
+        return WeakObjectProfileTy();
+      }
+      static inline WeakObjectProfileTy getTombstoneKey() {
+        return WeakObjectProfileTy::getSentinel();
+      }
+
+      static unsigned getHashValue(const WeakObjectProfileTy &Val) {
+        typedef std::pair<BaseInfoTy, const NamedDecl *> Pair;
+        return llvm::DenseMapInfo<Pair>::getHashValue(Pair(Val.Base,
+                                                           Val.Property));
+      }
+
+      static bool isEqual(const WeakObjectProfileTy &LHS,
+                          const WeakObjectProfileTy &RHS) {
+        return LHS == RHS;
+      }
+    };
   };
 
   /// Represents a single use of a weak object.
@@ -219,7 +244,8 @@ public:
   /// Used to collect all uses of weak objects in a function body.
   ///
   /// Part of the implementation of -Wrepeated-use-of-weak.
-  typedef llvm::SmallDenseMap<WeakObjectProfileTy, WeakUseVector, 8>
+  typedef llvm::SmallDenseMap<WeakObjectProfileTy, WeakUseVector, 8,
+                              WeakObjectProfileTy::DenseMapInfo>
           WeakObjectUseMap;
 
 private:
@@ -538,27 +564,5 @@ void FunctionScopeInfo::recordUseOfWeak(const ExprT *E, bool IsRead) {
 
 } // end namespace sema
 } // end namespace clang
-
-namespace llvm {
-  template <>
-  struct DenseMapInfo<clang::sema::FunctionScopeInfo::WeakObjectProfileTy> {
-    typedef clang::sema::FunctionScopeInfo::WeakObjectProfileTy ProfileTy;
-    static inline ProfileTy getEmptyKey() {
-      return ProfileTy();
-    }
-    static inline ProfileTy getTombstoneKey() {
-      return ProfileTy::getSentinel();
-    }
-
-    static unsigned getHashValue(const ProfileTy &Val) {
-      typedef std::pair<ProfileTy::BaseInfoTy, const clang::NamedDecl *> Pair;
-      return DenseMapInfo<Pair>::getHashValue(Pair(Val.Base, Val.Property));
-    }
-
-    static bool isEqual(const ProfileTy &LHS, const ProfileTy &RHS) {
-      return LHS == RHS;
-    }
-  };
-} // end namespace llvm
 
 #endif
