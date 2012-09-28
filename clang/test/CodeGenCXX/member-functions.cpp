@@ -35,6 +35,9 @@ struct S {
   static void g() { }
   
   static void f();
+
+  // RUN: grep "define linkonce_odr void @_ZN1S1vEv.*unnamed_addr" %t
+  virtual void v() {}
 };
 
 // RUN: grep "define void @_ZN1S1fEv" %t

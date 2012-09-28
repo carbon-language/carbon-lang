@@ -588,6 +588,10 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
   if (isa<CXXConstructorDecl>(D) || isa<CXXDestructorDecl>(D))
     F->setUnnamedAddr(true);
 
+  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D))
+    if (MD->isVirtual())
+      F->setUnnamedAddr(true);
+
   if (LangOpts.getStackProtector() == LangOptions::SSPOn)
     F->addFnAttr(llvm::Attribute::StackProtect);
   else if (LangOpts.getStackProtector() == LangOptions::SSPReq)
