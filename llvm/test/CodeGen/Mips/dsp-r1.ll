@@ -74,7 +74,7 @@ entry:
 
 define i32 @test__builtin_mips_extp1(i32 %i0, i32, i64 %a0) nounwind {
 entry:
-; CHECK: extp
+; CHECK: extp ${{[0-9]+}}
 
   %1 = tail call i32 @llvm.mips.extp(i64 %a0, i32 15)
   ret i32 %1
@@ -92,7 +92,7 @@ entry:
 
 define i32 @test__builtin_mips_extpdp1(i32 %i0, i32, i64 %a0) nounwind {
 entry:
-; CHECK: extpdp
+; CHECK: extpdp ${{[0-9]+}}
 
   %1 = tail call i32 @llvm.mips.extpdp(i64 %a0, i32 15)
   ret i32 %1
@@ -262,7 +262,7 @@ declare i64 @llvm.mips.maq.sa.w.phr(i64, <2 x i16>, <2 x i16>) nounwind
 
 define i64 @test__builtin_mips_shilo1(i32 %i0, i32, i64 %a0) nounwind readnone {
 entry:
-; CHECK: shilo
+; CHECK: shilo $ac{{[0-9]}}
 
   %1 = tail call i64 @llvm.mips.shilo(i64 %a0, i32 0)
   ret i64 %1
@@ -280,7 +280,7 @@ entry:
 
 define i64 @test__builtin_mips_mthlip1(i32 %i0, i32, i64 %a0, i32 %a1) nounwind {
 entry:
-; CHECK: mthlip
+; CHECK: mthlip ${{[0-9]+}}
 
   %1 = tail call i64 @llvm.mips.mthlip(i64 %a0, i32 %a1)
   ret i64 %1
@@ -290,7 +290,7 @@ declare i64 @llvm.mips.mthlip(i64, i32) nounwind
 
 define i32 @test__builtin_mips_bposge321(i32 %i0) nounwind readonly {
 entry:
-; CHECK: bposge32
+; CHECK: bposge32 $BB{{[0-9]+}}
 
   %0 = tail call i32 @llvm.mips.bposge32()
   ret i32 %0
@@ -300,7 +300,7 @@ declare i32 @llvm.mips.bposge32() nounwind readonly
 
 define i64 @test__builtin_mips_madd1(i32 %i0, i32, i64 %a0, i32 %a1, i32 %a2) nounwind readnone {
 entry:
-; CHECK: madd
+; CHECK: madd $ac{{[0-9]}}
 
   %1 = tail call i64 @llvm.mips.madd(i64 %a0, i32 %a1, i32 %a2)
   ret i64 %1
@@ -310,7 +310,7 @@ declare i64 @llvm.mips.madd(i64, i32, i32) nounwind readnone
 
 define i64 @test__builtin_mips_maddu1(i32 %i0, i32, i64 %a0, i32 %a1, i32 %a2) nounwind readnone {
 entry:
-; CHECK: maddu
+; CHECK: maddu $ac{{[0-9]}}
 
   %1 = tail call i64 @llvm.mips.maddu(i64 %a0, i32 %a1, i32 %a2)
   ret i64 %1
@@ -320,7 +320,7 @@ declare i64 @llvm.mips.maddu(i64, i32, i32) nounwind readnone
 
 define i64 @test__builtin_mips_msub1(i32 %i0, i32, i64 %a0, i32 %a1, i32 %a2) nounwind readnone {
 entry:
-; CHECK: msub
+; CHECK: msub $ac{{[0-9]}}
 
   %1 = tail call i64 @llvm.mips.msub(i64 %a0, i32 %a1, i32 %a2)
   ret i64 %1
@@ -330,7 +330,7 @@ declare i64 @llvm.mips.msub(i64, i32, i32) nounwind readnone
 
 define i64 @test__builtin_mips_msubu1(i32 %i0, i32, i64 %a0, i32 %a1, i32 %a2) nounwind readnone {
 entry:
-; CHECK: msubu
+; CHECK: msubu $ac{{[0-9]}}
 
   %1 = tail call i64 @llvm.mips.msubu(i64 %a0, i32 %a1, i32 %a2)
   ret i64 %1
@@ -340,7 +340,7 @@ declare i64 @llvm.mips.msubu(i64, i32, i32) nounwind readnone
 
 define i64 @test__builtin_mips_mult1(i32 %i0, i32 %a0, i32 %a1) nounwind readnone {
 entry:
-; CHECK: mult
+; CHECK: mult $ac{{[0-9]}}
 
   %0 = tail call i64 @llvm.mips.mult(i32 %a0, i32 %a1)
   ret i64 %0
@@ -350,7 +350,7 @@ declare i64 @llvm.mips.mult(i32, i32) nounwind readnone
 
 define i64 @test__builtin_mips_multu1(i32 %i0, i32 %a0, i32 %a1) nounwind readnone {
 entry:
-; CHECK: multu
+; CHECK: multu $ac{{[0-9]}}
 
   %0 = tail call i64 @llvm.mips.multu(i32 %a0, i32 %a1)
   ret i64 %0
@@ -492,7 +492,7 @@ declare <4 x i8> @llvm.mips.subu.s.qb(<4 x i8>, <4 x i8>) nounwind
 
 define i32 @test__builtin_mips_addsc1(i32 %i0, i32 %a0, i32 %a1) nounwind {
 entry:
-; CHECK: addsc
+; CHECK: addsc ${{[0-9]+}}
 
   %0 = tail call i32 @llvm.mips.addsc(i32 %a0, i32 %a1)
   ret i32 %0
@@ -502,7 +502,7 @@ declare i32 @llvm.mips.addsc(i32, i32) nounwind
 
 define i32 @test__builtin_mips_addwc1(i32 %i0, i32 %a0, i32 %a1) nounwind {
 entry:
-; CHECK: addwc
+; CHECK: addwc ${{[0-9]+}}
 
   %0 = tail call i32 @llvm.mips.addwc(i32 %a0, i32 %a1)
   ret i32 %0
@@ -512,7 +512,7 @@ declare i32 @llvm.mips.addwc(i32, i32) nounwind
 
 define i32 @test__builtin_mips_modsub1(i32 %i0, i32 %a0, i32 %a1) nounwind readnone {
 entry:
-; CHECK: modsub
+; CHECK: modsub ${{[0-9]+}}
 
   %0 = tail call i32 @llvm.mips.modsub(i32 %a0, i32 %a1)
   ret i32 %0
@@ -810,7 +810,7 @@ declare <2 x i16> @llvm.mips.packrl.ph(<2 x i16>, <2 x i16>) nounwind readnone
 
 define i32 @test__builtin_mips_rddsp1(i32 %i0) nounwind readonly {
 entry:
-; CHECK: rddsp
+; CHECK: rddsp ${{[0-9]+}}
 
   %0 = tail call i32 @llvm.mips.rddsp(i32 31)
   ret i32 %0
@@ -1191,7 +1191,7 @@ entry:
 
 define i32 @test__builtin_mips_bitrev1(i32 %i0, i32 %a0) nounwind readnone {
 entry:
-; CHECK: bitrev
+; CHECK: bitrev ${{[0-9]+}}
 
   %0 = tail call i32 @llvm.mips.bitrev(i32 %a0)
   ret i32 %0
@@ -1201,7 +1201,7 @@ declare i32 @llvm.mips.bitrev(i32) nounwind readnone
 
 define i32 @test__builtin_mips_lbux1(i32 %i0, i8* %a0, i32 %a1) nounwind readonly {
 entry:
-; CHECK: lbux
+; CHECK: lbux ${{[0-9]+}}
 
   %0 = tail call i32 @llvm.mips.lbux(i8* %a0, i32 %a1)
   ret i32 %0
@@ -1211,7 +1211,7 @@ declare i32 @llvm.mips.lbux(i8*, i32) nounwind readonly
 
 define i32 @test__builtin_mips_lhx1(i32 %i0, i8* %a0, i32 %a1) nounwind readonly {
 entry:
-; CHECK: lhx
+; CHECK: lhx ${{[0-9]+}}
 
   %0 = tail call i32 @llvm.mips.lhx(i8* %a0, i32 %a1)
   ret i32 %0
@@ -1221,7 +1221,7 @@ declare i32 @llvm.mips.lhx(i8*, i32) nounwind readonly
 
 define i32 @test__builtin_mips_lwx1(i32 %i0, i8* %a0, i32 %a1) nounwind readonly {
 entry:
-; CHECK: lwx
+; CHECK: lwx ${{[0-9]+}}
 
   %0 = tail call i32 @llvm.mips.lwx(i8* %a0, i32 %a1)
   ret i32 %0
@@ -1231,7 +1231,7 @@ declare i32 @llvm.mips.lwx(i8*, i32) nounwind readonly
 
 define i32 @test__builtin_mips_wrdsp1(i32 %i0, i32 %a0) nounwind {
 entry:
-; CHECK: wrdsp
+; CHECK: wrdsp ${{[0-9]+}}
 
   tail call void @llvm.mips.wrdsp(i32 %a0, i32 31)
   %0 = tail call i32 @llvm.mips.rddsp(i32 31)
