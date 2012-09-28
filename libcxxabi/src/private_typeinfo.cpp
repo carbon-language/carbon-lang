@@ -448,9 +448,9 @@ __dynamic_cast(const void* static_ptr,
         {
             // We get here only if there is some kind of visibility problem
             //   in client code.
-            syslog(LOG_ERR, "dynamic_cast error 1: There is a hidden visibility "
-                    "problem associated with the type_info's of %s" 
-                    " and/or %s.\n", static_type->name(), dynamic_type->name());
+            syslog(LOG_ERR, "dynamic_cast error 1: Both of the following type_info's "
+                    "should have public visibility.  At least of of them is hidden. %s" 
+                    ", %s.\n", static_type->name(), dynamic_type->name());
             info.path_dst_ptr_to_static_ptr = public_path;
         }
 #endif  // __APPLE__
@@ -468,9 +468,9 @@ __dynamic_cast(const void* static_ptr,
        if (info.path_dst_ptr_to_static_ptr == unknown &&
             info.path_dynamic_ptr_to_static_ptr == unknown)
         {
-            syslog(LOG_ERR, "dynamic_cast error 2: There is a hidden visibility "
-                    "problem associated with the type_info's of %s" 
-                    " and/or %s and/or %s.\n", static_type->name(), dynamic_type->name(),
+            syslog(LOG_ERR, "dynamic_cast error 2: One or more of the following type_info's "
+                            " has hidden visibility.  They should all have public visibility.  "
+                            " %s, %s, %s.\n", static_type->name(), dynamic_type->name(),
                     dst_type->name());
         }
 #endif  // __APPLE__
