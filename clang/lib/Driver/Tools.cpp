@@ -2852,7 +2852,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
          it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
     const InputInfo &II = *it;
     CmdArgs.push_back("-x");
-    CmdArgs.push_back(types::getTypeName(II.getType()));
+    if (Args.hasArg(options::OPT_rewrite_objc))
+      CmdArgs.push_back(types::getTypeName(types::TY_PP_ObjCXX));
+    else
+      CmdArgs.push_back(types::getTypeName(II.getType()));
     if (II.isFilename())
       CmdArgs.push_back(II.getFilename());
     else
