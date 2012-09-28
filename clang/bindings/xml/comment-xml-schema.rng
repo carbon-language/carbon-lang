@@ -79,6 +79,9 @@
       <optional>
         <ref name="Parameters" />
       </optional>
+      <zeroOrMore>
+        <ref name="Attribute" />
+      </zeroOrMore>
       <optional>
         <ref name="ResultDiscussion" />
       </optional>
@@ -282,6 +285,39 @@
         <param name="pattern">.*\S.*</param>
       </data>
     </element>
+  </define>
+
+  <define name="Attribute">
+   <element name="Availability">
+      <attribute name="distribution">
+          <data type="string" />
+      </attribute>
+      <optional>
+        <element name="IntroducedInVersion">
+          <data type="float" />
+        </element>
+      </optional>
+      <optional>
+        <element name="DeprecatedInVersion">
+          <data type="float" />
+        </element>
+      </optional>
+      <optional>
+        <element name="RemovedAfterVersion">
+          <data type="float" />
+        </element>
+      </optional>
+      <optional>
+        <element name="DeprecationSummary">
+          <data type="string" />
+        </element>
+      </optional>
+      <optional>
+        <element name="Unavailable">
+          <data type="boolean" />
+        </element>
+      </optional>
+   </element>
   </define>
 
   <define name="Abstract">

@@ -1170,7 +1170,62 @@ void CommentASTToXMLConverter::visitFullComment(const FullComment *C) {
     visit(Parts.Returns);
     Result << "</ResultDiscussion>";
   }
-
+  
+  if (DI->ThisDecl->hasAttrs()) {
+    const AttrVec &Attrs = DI->ThisDecl->getAttrs();
+    for (unsigned i = 0, e = Attrs.size(); i != e;) {
+      const AvailabilityAttr *AA = dyn_cast<AvailabilityAttr>(Attrs[i++]);
+      if (!AA)
+        continue;
+      // availability attribute info.
+  
+      Result << "<Availability";
+      StringRef distribution;
+      if (AA->getPlatform()) {
+        distribution = AA->getPlatform()->getName();
+        if (distribution == "macosx")
+          distribution = "OSX";
+        else
+          distribution = "iOS";
+      }
+      
+      Result << " distribution=\"";
+      Result << distribution;
+      Result << "\">";
+      VersionTuple IntroducedInVersion = AA->getIntroduced();
+      if (!IntroducedInVersion.empty()) {
+        Result << " <IntroducedInVersion>";
+        Result << IntroducedInVersion.getAsString();
+        Result << "</IntroducedInVersion>";
+      }
+      VersionTuple DeprecatedInVersion = AA->getDeprecated();
+      if (!DeprecatedInVersion.empty()) {
+        Result << " <DeprecatedInVersion>";
+        Result << DeprecatedInVersion.getAsString();
+        Result << "</DeprecatedInVersion>";
+      }
+      VersionTuple RemovedAfterVersion = AA->getObsoleted();
+      if (!RemovedAfterVersion.empty()) {
+        Result << " <RemovedAfterVersion>";
+        Result << RemovedAfterVersion.getAsString();
+        Result << "</RemovedAfterVersion>";
+      }
+      StringRef DeprecationSummary = AA->getMessage();
+      if (!DeprecationSummary.empty()) {
+        Result << " <DeprecationSummary>";
+        Result << DeprecationSummary;
+        Result << "</DeprecationSummary>";
+      }
+      Result << " <Unavailable>";
+      if (AA->getUnavailable())
+        Result << "true";
+      else
+        Result << "false";
+      Result << "</Unavailable>";
+      Result << " </Availability>";
+    }
+  }
+  
   {
     bool StartTagEmitted = false;
     for (unsigned i = 0, e = Parts.MiscBlocks.size(); i != e; ++i) {
