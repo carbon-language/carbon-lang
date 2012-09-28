@@ -936,23 +936,22 @@ static void DiagnoseSwitchLabelsFallthrough(Sema &S, AnalysisDeclContext &AC,
 }
 
 namespace {
-  typedef std::pair<const Stmt *,
-                    sema::FunctionScopeInfo::WeakObjectUseMap::const_iterator>
-          StmtUsesPair;
-}
+typedef std::pair<const Stmt *,
+                  sema::FunctionScopeInfo::WeakObjectUseMap::const_iterator>
+        StmtUsesPair;
 
-template<>
-class BeforeThanCompare<StmtUsesPair> {
+class StmtUseSorter {
   const SourceManager &SM;
 
 public:
-  explicit BeforeThanCompare(const SourceManager &SM) : SM(SM) { }
+  explicit StmtUseSorter(const SourceManager &SM) : SM(SM) { }
 
   bool operator()(const StmtUsesPair &LHS, const StmtUsesPair &RHS) {
     return SM.isBeforeInTranslationUnit(LHS.first->getLocStart(),
                                         RHS.first->getLocStart());
   }
 };
+}
 
 
 static void diagnoseRepeatedUseOfWeak(Sema &S,
@@ -991,7 +990,7 @@ static void diagnoseRepeatedUseOfWeak(Sema &S,
 
   // Sort by first use so that we emit the warnings in a deterministic order.
   std::sort(UsesByStmt.begin(), UsesByStmt.end(),
-            BeforeThanCompare<StmtUsesPair>(S.getSourceManager()));
+            StmtUseSorter(S.getSourceManager()));
 
   // Classify the current code body for better warning text.
   // This enum should stay in sync with the cases in
