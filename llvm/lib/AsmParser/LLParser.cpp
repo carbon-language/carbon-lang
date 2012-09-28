@@ -919,23 +919,13 @@ bool LLParser::ParseOptionalAddrSpace(unsigned &AddrSpace) {
 bool LLParser::ParseOptionalAttrs(Attributes &Attrs, unsigned AttrKind) {
   Attrs = Attribute::None;
   LocTy AttrLoc = Lex.getLoc();
+  bool HaveError = false;
 
   while (1) {
-    switch (Lex.getKind()) {
+    lltok::Kind Token = Lex.getKind();
+    switch (Token) {
     default:  // End of attributes.
-      if (AttrKind != 2 && (Attrs & Attribute::FunctionOnly))
-        return Error(AttrLoc, "invalid use of function-only attribute");
-
-      // As a hack, we allow "align 2" on functions as a synonym for
-      // "alignstack 2".
-      if (AttrKind == 2 &&
-          (Attrs & ~(Attribute::FunctionOnly | Attribute::Alignment)))
-        return Error(AttrLoc, "invalid use of attribute on a function");
-
-      if (AttrKind != 0 && (Attrs & Attribute::ParameterOnly))
-        return Error(AttrLoc, "invalid use of parameter-only attribute");
-
-      return false;
+      return HaveError;
     case lltok::kw_zeroext:         Attrs |= Attribute::ZExt; break;
     case lltok::kw_signext:         Attrs |= Attribute::SExt; break;
     case lltok::kw_inreg:           Attrs |= Attribute::InReg; break;
@@ -980,6 +970,51 @@ bool LLParser::ParseOptionalAttrs(Attributes &Attrs, unsigned AttrKind) {
     }
 
     }
+
+    // Perform some error checking.
+    switch (Token) {
+    default:
+      if (AttrKind == 2)
+        HaveError |= Error(AttrLoc, "invalid use of attribute on a function");
+      break;
+    case lltok::kw_align:
+      // As a hack, we allow "align 2" on functions as a synonym for
+      // "alignstack 2".
+      break;
+
+    // Parameter Only:
+    case lltok::kw_sret:
+    case lltok::kw_nocapture:
+    case lltok::kw_byval:
+    case lltok::kw_nest:
+      if (AttrKind != 0)
+        HaveError |= Error(AttrLoc, "invalid use of parameter-only attribute");
+      break;
+
+    // Function Only:
+    case lltok::kw_noreturn:
+    case lltok::kw_nounwind:
+    case lltok::kw_readnone:
+    case lltok::kw_readonly:
+    case lltok::kw_noinline:
+    case lltok::kw_alwaysinline:
+    case lltok::kw_optsize:
+    case lltok::kw_ssp:
+    case lltok::kw_sspreq:
+    case lltok::kw_noredzone:
+    case lltok::kw_noimplicitfloat:
+    case lltok::kw_naked:
+    case lltok::kw_inlinehint:
+    case lltok::kw_alignstack:
+    case lltok::kw_uwtable:
+    case lltok::kw_nonlazybind:
+    case lltok::kw_returns_twice:
+    case lltok::kw_address_safety:
+      if (AttrKind != 2)
+        HaveError |= Error(AttrLoc, "invalid use of function-only attribute");
+      break;
+    }
+
     Lex.Lex();
   }
 }
