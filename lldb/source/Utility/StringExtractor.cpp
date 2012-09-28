@@ -16,6 +16,43 @@
 // Other libraries and framework includes
 // Project includes
 
+static const uint8_t
+g_hex_ascii_to_hex_integer[256] = {
+    
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7,
+    0x8, 0x9, 255, 255, 255, 255, 255, 255,
+    255, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255,
+};
+
 static inline int
 xdigit_to_sint (char ch)
 {
@@ -101,35 +138,6 @@ StringExtractor::GetChar (char fail_value)
     return fail_value;
 }
 
-uint32_t
-StringExtractor::GetNumHexASCIICharsAtFilePos (uint32_t max) const
-{
-    uint32_t idx = m_index;
-    const size_t size = m_packet.size();
-    while (idx < size && idx - m_index < max && isxdigit(m_packet[idx]))
-        ++idx;
-    return idx - m_index;
-}
-//----------------------------------------------------------------------
-// Extract a signed character from two hex ASCII chars in the packet
-// string
-//----------------------------------------------------------------------
-int8_t
-StringExtractor::GetHexS8 (int8_t fail_value)
-{
-    if (GetNumHexASCIICharsAtFilePos(2))
-    {
-        char hi_nibble_char = m_packet[m_index];
-        char lo_nibble_char = m_packet[m_index+1];
-        char hi_nibble = xdigit_to_sint (hi_nibble_char);
-        char lo_nibble = xdigit_to_sint (lo_nibble_char);
-        m_index += 2;
-        return (hi_nibble << 4) + lo_nibble;
-    }
-    m_index = UINT32_MAX;
-    return fail_value;
-}
-
 //----------------------------------------------------------------------
 // Extract an unsigned character from two hex ASCII chars in the packet
 // string
@@ -137,14 +145,16 @@ StringExtractor::GetHexS8 (int8_t fail_value)
 uint8_t
 StringExtractor::GetHexU8 (uint8_t fail_value, bool set_eof_on_fail)
 {
-    if (GetNumHexASCIICharsAtFilePos(2))
+    uint32_t i = m_index;
+    if ((i + 2) <= m_packet.size())
     {
-        uint8_t hi_nibble_char = m_packet[m_index];
-        uint8_t lo_nibble_char = m_packet[m_index+1];
-        uint8_t hi_nibble = xdigit_to_uint (hi_nibble_char);
-        uint8_t lo_nibble = xdigit_to_uint (lo_nibble_char);
-        m_index += 2;
-        return (hi_nibble << 4) + lo_nibble;
+        const uint8_t hi_nibble = g_hex_ascii_to_hex_integer[m_packet[i]];
+        const uint8_t lo_nibble = g_hex_ascii_to_hex_integer[m_packet[i+1]];
+        if (hi_nibble < 16 && lo_nibble < 16)
+        {
+            m_index += 2;
+            return (hi_nibble << 4) + lo_nibble;
+        }
     }
     if (set_eof_on_fail || m_index >= m_packet.size())
         m_index = UINT32_MAX;
